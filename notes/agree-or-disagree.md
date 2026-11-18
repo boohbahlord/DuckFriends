@@ -5987,3 +5987,130 @@ Done (Adam): slot BOX.price 950. Chart /mnt/project-files/sheets/zombie-spawns-p
 > the parameter for max zombies per round (not the spawned at a time but the roof of how many can spawn per game) for more players can be changed accordingly for this point mechanic to work
 
 Done (Adam): l4ddrules PHASES one per round (bases 24 to round 8, 36 to 12, 72 to 20), Z_MOST 800, Z_LATE 800; every player earns what 1 player earns. Spawn rates unchanged.
+
+## Request (2026-11-18 13:46Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt2uGukypDipg2oYJSHfgCHm, 3 pictures in /mnt/project-files/refs/nov18-1346/: the alien with the Lakers jersey (25291791441265), the eagle (Charles), and the "9-12" row of Adam's Zombie hits sheet) (word for word)
+> priest or butler ALWAYS sells bow now, and for 250 points
+> He sells one given item/weapon from this given bags i will show, and never any ammo only in such way. for anytime he spawns in, he will have a guarantee(!) to be selling any one of these weapons AND a 50% chance to sell another gun/item that decreases in chance of selling another gun by 10% (+2.5 per additional player) chance each for each extra gun available (this is not shuffled but the bags themselves are):
+>
+> * Any of the bags from the slots and each having a given chance that cascades based on the slots, and what is sold is gone for that appearance from every player and cannot be bought again (limited supply), BUT there is a 25% chance that rolls a yes or no to ask IF he has another one of those given options being sold. 
+>    * every item that is white costs 300 points
+>    * every green item costs 500 points
+>    * every blue item costs 750 points
+>    * every purple item costs 1,500 points
+>    * every chair from Justin (still 1% chance of being sold) costs 3,000 points
+>
+>
+> the butler or priest can be killed AND his arrival is announced in a text where the "instant kill" or "full ammo" would display, and the butler runs up from the stairs of the balcony and breaks the barricade (the wooden barricade) IF it is in the way and runs to the place he usually stands, and he will sell those items that round BEFORE running away when the round ends. In downpour, he climbs over a fence and runs into the church as a priest to sell things.
+>
+> it is possible for the priest OR Justin's butler to spawn in EITHER map AND Justin's butler is no longer small. 
+>
+> The dialog of the seller is the same universally, saying one of these automatically when you walk up to them:
+>
+> * What can I get for you?
+> * Anything you would like?
+> * You are looking good today.
+> * Interested in buying anything?
+> * You like what I'm selling?
+> * You need anything?
+> * These are some good prices aren't they?
+> * Easy sell.
+> * You got a zombie problem?
+>
+>
+> the dialog is shuffled
+>
+> when they take damage from a player, they will say one of these first IF they aren't dead, if they take damage, they will run away and climb the fence in downpour to get away OR they will jump off the balcony to get away in cabin. these are the lines they will say once when they take damage from a player IF they arent dead:
+>
+> * Stop that!
+> * You want anything or not!?
+> * You aren't going to get anything if you keep this up.
+> * Stop!
+> * Try that again!
+> * Don't shoot!
+> * I am trying to help!
+> * What the hell!?
+>
+> * Please don't shoot!
+>
+>
+>
+>
+> the NPC will run away when the rest phase ends and zombies start to spawn in, and zombies might try and chase them like they are a player UNLESS they climb a fence OR jump off the balcony, then they give up. The zombies will not chase the corpse of one of these Merchants. The merchant cannot be revived. The merchant tries to run away the same as they do when running away from a player WHEN the zombies come back BUT they dont dialog the same as when a player damages them when doing so. 
+>
+> The merchant says this when the zombies spawn in at the beginning of the next round:
+>
+> * Gotta go!
+> * Nice doing business with you.
+> * I need to get out of here.
+> * It's not safe here anymore.
+> * I am packing my bags.
+> * I wish you luck!
+> * I am hitting the road.
+> * Have a fun time! 
+> * I am not staying. 
+> * I cannot deal with zombies.
+> * I hate zombies.
+> * The zombies are here!
+> * Run!
+> * No! Not them again!
+> * Get out while you still can!
+>
+>
+>
+> There are different NPCs with all the same voice lines, and they have a given name and look, and i want you to design them and show me pictures. Each NPC merchant dies forever during a game when they are shot and cannot come back, but another can fill their place, and different merchants arrive each time they come and go. 
+>
+> Here are some merchant ideas:
+>
+> * Brah: (the Motorcyclist)
+> * Hunter: (based on Hunter S Thompson from fear and loathing, has the same outfit and attire)
+> * Babatunde: (based on the male nigerian outfit, has the nigerian male outfit attire, will have yoruba lines that you will translate for me that are based in yoruba history and culture)
+> * Omowunmi: (based on the female nigerian outfit and has it's attire on, will have yoruba lines that translated for me in this chat that are based in yoruba history or culture)
+> * Dyson: (has the muscle shirt and the cheese on the head, sometimes is the rainbow dat boi, and it is a shuffle)
+> * 25291791441265: (is the alien with the laker's jersey in the screenshot)
+> * Charles: (is the second screenshot)
+> * Thomas: (is a wizard)
+> * Barry: (is wearing cardboard)
+> * Queen Elizabeth: (is wearing something royal and a crown)
+> * The Fool: (is wearing the Jester)
+> * Lucifer: (is wearing the full clown outfit and no devil horns pls, treat him like a normal character)
+> * Jack (is Jack in the box)
+> * Jill (is Jill in the box)
+> * Rick (is wearing police uniform
+> * Bob (is wearing the disco uniform with an afro and maybe some kind of face wear to match
+> * Veronica (is wearing a shirt and jeans, nothing else)
+> * Johnny (is wearing the doctor uniform, sometimes the police uniform, sometimes the firefighter uniform, it is random and will be different everytime they show up in a shuffle, they obv cannot have hair)
+> * Blocky Blockus (Is the block syle duck
+> * Pp (his name is Pp and he is the 2d style duck)
+> * Kyle ( is the pelican style)
+> * Gibby (is the raptor style)
+> * Jerome (is the white call duck with the birthday hat and sometimes the ribbon bow)
+> * Andy (is the mallard duck with a military helmet on
+>
+> You can give me other suggestions for merchants
+>
+> THe text for the merchant arriving is:
+> "The Merchant has Arrived"
+>
+> There is a 25% chance the merchant arrives every round AND one merchant is always there on round zero
+>
+> the angel machine costs 2500 now
+>
+> 9-12	75%	0.30 s	0.75 s	1 HP	35	1.8 s	Same as 5-8 but faster: fine; or swipe every 0.70 s for a small step up
+>
+> the screenshot of the row i pasted from the excel is the stat for every zombie AFTER round 12 now (but ignore the most at map at once, that still changes as the rounds go up)
+>
+> i never notice the mud on my screen from a mud zombie AND they arent covered in mud (the mud zombies) 
+> (mud zombie can be removed)
+>
+> the slug round in crit mode cannot pass through the next zombie after the first it kills UNLESS that is a crit too for another rolled chance
+>
+> there should be 150 rounds in the double barrel shotgun
+>
+> the ammo of the flame thrower is shown as a percetnage (100% is full and 0% is empty). make sure the zombies burn other zombies it touches relatively easier AND it takes 0.5 seconds AFTER a zombie is on fire for it's flame to spread to other zombies, and this repeats for every zombie on fire.
+>
+> make the screen shake like it does for the sniper for the double barrel shotgun
+>
+>
+> more instructions coming on optimizing frame where i answer to the spreasheet
+
+Split (Adam): Solomon = the merchant (rules, spawning, selling, fleeing, dying, lines) + zombie stats after round 12 + double barrel crit slug + fire spread. Jackal = Angel machine 2500, double barrel 150 rounds + sniper shake, flamethrower ammo as %, mud zombie removed. Noah = the merchants' looks (pictures to the owner, as asked) + suggestions. Adam = the Yoruba lines and their translations.
