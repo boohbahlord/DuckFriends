@@ -5973,3 +5973,12 @@ The questions (Adam, 12:21Z): 1 order Chair 1% > Special 5% > Item 20% > Weapon;
 > single player can only be played if it isnt connecting to the data to do it, like for the in game files i mean, since it shouldnt require internet i mean
 
 Done (Adam): the button stays greyed until every file is on the device, and once the copy is whole, sw.js serves every game file from the device (only the page asks the network first, to see a new version).
+
+## Request (2026-11-18 12:39Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtCDGDPEfZ88HTZbry7W8j3C) (word for word)
+> rq, give me a chart of the zombies spawns and zombie spawns per player needed for online to try and make it to where players have an almost equal distribution of points per player each per round, and the amount of point per round SHOULD be based on the 1 player each, AND the way the zombies spawn per player and per round can be changed to be more then single player and not less WHILE not inventing new systems for zombie spawns and just changing inputs for the parameters i already set up for the zombie game myself. so changing amount of zombies per round to be more then what they already are for single player into every other game mode is good, changing parameters without asking me if you can bad, and spawn rates do not change. The goal is to make something more fair and balanced, since the points per player is saying something. 
+>
+> the amount of zombies for rounds 1-4 that spawn should be as much as rounds 5-8 if possible with the parameters set still the same. 
+>
+> furthermore, the slot now costs 950 points
+
+Done (Adam): slot BOX.price 950. Chart /mnt/project-files/sheets/zombie-spawns-per-player.xlsx; parameter changes wait for the owner's yes.

@@ -729,7 +729,7 @@ export const BOX = {
   zx: 2300,
   sy: 706,
   sz: 58,
-  price: 650, // (the owner's, Nov 17 17:41Z: "the slot for a weapon roll costs 150 more")
+  price: 950, // (the owner's, Nov 18 12:39Z: "the slot now costs 950 points"; it was 650)
   spin: 4200,
   keep: 10000,
 }; // (500 a spin: the owner's, Nov 15. sx, sy, sz: where it shows, CABIN_SPOTS below)
