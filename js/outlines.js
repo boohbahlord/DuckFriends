@@ -167,14 +167,24 @@ export function olAdd(o) {
 
 let cv = null,
   g = null,
-  drawn = false;
-/* draws this frame's outlines into `host` (W × H css px), then starts the next frame's list; no host: none */
+  drawn = false,
+  last = ""; // (what the canvas shows now, as text: the same next frame, nothing is drawn again)
+/* each outline's own number, for that text */
+const CID = new WeakMap();
+let cids = 0;
+const cid = (c) => CID.get(c) || (CID.set(c, ++cids), cids);
+/* draws this frame's outlines into `host` (W × H css px), then starts the next frame's list; no host: none.
+   Only when what it draws changes (the owner's, Nov 18 13:58Z: "only update a zombie's outline, hp bar, and shadow
+   when it changes"): each frame first works out every line it would draw (which outline, where, how faint), and if
+   that is what the canvas already shows, it's left alone. A canvas drawn again costs the browser a whole new picture
+   to take in; one left alone costs nothing */
 export function olDraw(host, W, H, now = performance.now()) {
   const want = list.values();
   list = new Map();
   if (!host) {
     if (cv && drawn) g.clearRect(0, 0, cv.width, cv.height);
     drawn = false;
+    last = "";
     return;
   } // (no zombie game now: none left over on the screen)
   if (!cv || cv.parentNode !== host) {
@@ -185,6 +195,7 @@ export function olDraw(host, W, H, now = performance.now()) {
     host.append(cv);
     g = cv.getContext("2d");
     drawn = true;
+    last = "";
   }
   const gp = gridPx(),
     cw = Math.max(1, Math.ceil(W / gp)),
@@ -194,10 +205,10 @@ export function olDraw(host, W, H, now = performance.now()) {
     cv.height = ch;
     cv.style.width = (cw * gp).toFixed(2) + "px";
     cv.style.height = (ch * gp).toFixed(2) + "px";
+    last = ""; // (a resize empties it)
   }
-  g.imageSmoothingEnabled = false; // (sharp pixels: a resize resets it)
-  if (drawn) g.clearRect(0, 0, cw, ch);
-  drawn = false;
+  const ops = [],
+    sig = [];
   for (const o of want) {
     /* a hit: it blinks */
     let h = o.hp === undefined ? null : HP.get(o.id); // (zombies don't blink: only players and Justin have HP here)
@@ -238,6 +249,40 @@ export function olDraw(host, W, H, now = performance.now()) {
       y = Math.round(o.y / gp),
       dw = c.width * sw,
       dh = c.height * sh;
+    let ax = 0,
+      ay = 0,
+      aa = 0,
+      ac = null;
+    if (away) {
+      /* the arrow inside it, the way to it: an outline of the same line and color as its own (with its glow when it
+         has one), clear even when its own line is faint, so its floor always shows; it blinks with it */
+      ac = outline(ARROW[away > 0 ? 0 : 1], kind, away > 0 ? "up" : "down");
+      aa = hit ? a : Math.max(a, 0.75);
+      ax =
+        (o.mid
+          ? Math.round(o.mid[0] / gp)
+          : Math.round(x + (o.img.naturalWidth * sw) / 2)) -
+        P -
+        (AW >> 1);
+      ay =
+        (o.mid
+          ? Math.round(o.mid[1] / gp)
+          : Math.round(y + o.img.naturalHeight * sh * 0.55)) -
+        P -
+        (AH >> 1); // (lying down: in the middle of its body, where it lies, mid)
+    }
+    ops.push({ o, c, a, x, y, sw, sh, dw, dh, ac, aa, ax, ay });
+    sig.push(
+      `${cid(c)}|${a}|${x},${y}|${dw.toFixed(2)},${dh.toFixed(2)}|${o.flip ? 1 : 0}|${o.down ? o.down.map((v) => v.toFixed(1)) : ""}|${ac ? `${cid(ac)},${ax},${ay},${aa}` : ""}`,
+    );
+  }
+  const drawing = sig.join(";");
+  if (drawing === last) return; // (just as it is on the screen: nothing to draw)
+  last = drawing;
+  g.imageSmoothingEnabled = false; // (sharp pixels: a resize resets it)
+  if (drawn) g.clearRect(0, 0, cw, ch);
+  drawn = false;
+  for (const { o, c, a, x, y, sw, sh, dw, dh, ac, aa, ax, ay } of ops) {
     g.globalAlpha = a;
     if (o.flip || o.down) {
       /* turned left (mirrored round its middle), or lying down as a duck out of HP lies (css: rotate(-100deg)
@@ -254,28 +299,9 @@ export function olDraw(host, W, H, now = performance.now()) {
       g.drawImage(c, x - P * sw, y - P * sh, dw, dh);
       g.restore();
     } else g.drawImage(c, x - P * sw, y - P * sh, dw, dh);
-    if (away) {
-      /* the arrow inside it, the way to it: an outline of the same line and color as its own (with its glow when it
-         has one), clear even when its own line is faint, so its floor always shows; it blinks with it */
-      const ac = outline(
-        ARROW[away > 0 ? 0 : 1],
-        kind,
-        away > 0 ? "up" : "down",
-      );
-      g.globalAlpha = hit ? a : Math.max(a, 0.75);
-      g.drawImage(
-        ac,
-        (o.mid
-          ? Math.round(o.mid[0] / gp)
-          : Math.round(x + (o.img.naturalWidth * sw) / 2)) -
-          P -
-          (AW >> 1),
-        (o.mid
-          ? Math.round(o.mid[1] / gp)
-          : Math.round(y + o.img.naturalHeight * sh * 0.55)) -
-          P -
-          (AH >> 1),
-      ); // (lying down: in the middle of its body, where it lies, mid)
+    if (ac) {
+      g.globalAlpha = aa;
+      g.drawImage(ac, ax, ay);
     }
     drawn = true;
   }
