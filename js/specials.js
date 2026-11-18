@@ -15,15 +15,7 @@
    up to three colors (Primary, Secondary, Accent) under Customize → Colors. */
 import { el } from "./ui.js";
 import { fewer } from "./gfx.js";
-import {
-  BOW,
-  MEDKIT,
-  ZEBRA,
-  JAIME,
-  BOMB_SKIN,
-  CHAIR,
-  FIREBALL,
-} from "./mgjart.js";
+import { BOW, MEDKIT, ZEBRA, JAIME, BOMB_SKIN, CHAIR } from "./mgjart.js";
 import { GUNS } from "./l4ddguns.js";
 import { duckSVG, DUCK_DEFAULT } from "./duck.js";
 import { jetpackSVG } from "./jetart.js";
@@ -812,7 +804,6 @@ export function heldHTML(id, duck) {
   if (GUNS[id]) return GUNS[id].held; // (Quacky Zombies' new guns)
   if (id === "zebra") return ZEBRA;
   if (id === "chair") return CHAIR; // (Quacky Zombies: the chair from the fireplace, held out before it's thrown)
-  if (id === "fireball") return FIREBALL;
   const c = colorsOf(duck, id);
   if (id === "axe") return AXE(c);
   if (id === "sword") return SWORD(c);

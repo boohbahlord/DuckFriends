@@ -13801,19 +13801,13 @@ html.moving .mgj-field {
     transform: translateX(4%) rotate(3deg);
   }
 }
-/* the bow's arrow and his fireball, pointing the way they fly */
+/* the bow's arrow, pointing the way it flies */
 .bullet.k-arrow {
   width: calc(var(--s) * 0.8);
   margin: calc(var(--s) * -0.075) 0 0 calc(var(--s) * -0.4);
   filter: drop-shadow(0 0.1rem 0.12rem #0006);
 }
-.bullet.k-fireball {
-  width: var(--s);
-  margin: calc(var(--s) * -0.3) 0 0 calc(var(--s) * -0.5);
-  filter: drop-shadow(0 0 0.4rem #ff8c2b);
-}
-.bullet.k-arrow svg,
-.bullet.k-fireball svg {
+.bullet.k-arrow svg {
   display: block;
   width: 100%;
   height: auto;
@@ -14176,9 +14170,6 @@ html.moving .eye-zap {
   width: calc(var(--s) * 0.62);
 }
 .held[data-w="zebra"] i {
-  width: calc(var(--s) * 0.5);
-}
-.held[data-w="fireball"] i {
   width: calc(var(--s) * 0.5);
 }
 .bullet:is(.k-sniper, .k-smg, .k-ak, .k-revolver, .k-lmg, .k-slug, .k-burst) {
@@ -14954,7 +14945,7 @@ html.moving .eye-tears .tdrop.t2 {
   bottom: 6%;
   width: 104%;
   animation: fl-up 0.22s ease-out;
-} /* (a zombie set on fire by a fireball: the burning duck's flame over it) */
+} /* (a zombie set on fire: the burning duck's flame over it) */
 /* dead: the white drains to black real quick (above), then the bar fades away */
 .l4z.dead .l4z-hp {
   animation: l4z-hp-gone 0.75s linear forwards;

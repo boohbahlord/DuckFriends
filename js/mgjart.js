@@ -1,7 +1,7 @@
 /* ---------- Mad God Justin's new pictures (the Nov 3 rework) ----------
    Each is an SVG string drawn facing right, sized by the css width it's given; the rules and the board live in
    mgjrules.js and mgj.js. The same ink and the same small white shines as the other items (specials.js, mgj.js), so they
-   sit with them. Sizes, in a duck's size: the bow 0.9, the arrow 0.8, the fireball 1, the flame covers the duck, the
+   sit with them. Sizes, in a duck's size: the bow 0.9, the arrow 0.8, the flame covers the duck, the
    teleport flash 1.6 tall, Jaime 0.75 */
 import { DUCK_DEFAULT } from "./duck.js";
 
@@ -28,22 +28,6 @@ export const ARROW = `<svg viewBox="0 0 64 12" aria-hidden="true">
 <path d="M8 5.6H50" stroke="#fff" stroke-width=".6" opacity=".35"/>
 <path d="M50 2.2L63 6L50 9.8L52.4 6Z" fill="#c9d1dc" stroke="${INK}" stroke-width="1" stroke-linejoin="round"/>
 <path d="M52 3.6L60 6" stroke="#fff" stroke-width=".8" opacity=".7" stroke-linecap="round"/></svg>`;
-
-/* the fireball: a white-hot core in a round ball of fire, its flames streaming back in tongues, sparks flying off.
-   The head on the right, turned by its flight */
-export const FIREBALL = (() => {
-  const i = `fb${uid++}`;
-  return `<svg viewBox="0 0 80 48" aria-hidden="true"><defs>
-<radialGradient id="${i}h" cx=".62" cy=".42" r=".6"><stop offset="0" stop-color="#fffbe0"/><stop offset=".35" stop-color="#ffe066"/><stop offset=".7" stop-color="#ff9a1f"/><stop offset="1" stop-color="#ff4d1a"/></radialGradient>
-<linearGradient id="${i}t" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#ff7a1a"/><stop offset=".6" stop-color="#ff4d1a"/><stop offset="1" stop-color="#d7263d" stop-opacity=".0"/></linearGradient>
-<linearGradient id="${i}u" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#ffd23f"/><stop offset="1" stop-color="#ff9a1f" stop-opacity="0"/></linearGradient></defs>
-<path d="M58 7C46 6 34 2 20 4C26 7 28 9 27 11C18 10 9 12 2 17C10 18 15 20 16 22C9 24 5 28 2 33C11 31 18 32 22 35C18 38 16 41 15 45C26 41 36 41 46 42C52 42 56 41 58 41Z" fill="url(#${i}t)"/>
-<path d="M58 13C48 12 40 10 31 12C35 14 36 16 34 17C27 18 21 20 16 24C23 25 27 26 28 28C24 30 21 33 20 36C29 34 38 34 46 36C51 36 55 35 58 35Z" fill="url(#${i}u)"/>
-<circle cx="58" cy="24" r="16.6" fill="url(#${i}h)" stroke="#b3260f" stroke-width="1.8"/>
-<path d="M49 15Q55 10 62 11.6" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".7"/>
-<circle cx="61" cy="22" r="6" fill="#fffbe0" opacity=".85"/>
-<g fill="#ffd23f"><circle cx="24" cy="2.6" r="1.4"/><circle cx="9" cy="40" r="1.2"/><circle cx="31" cy="45.4" r="1.1" fill="#ff9a1f"/><circle cx="5" cy="9" r="1"/></g></svg>`;
-})();
 
 /* the burning duck: one big flame over the whole duck (the owner: "the whole duck covered in one large enough flame"),
    red outside, orange, then yellow and a pale core, its tongues licking up past the head. It flickers (css: .gduck-fire) */

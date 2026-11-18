@@ -8,7 +8,6 @@ import { svgDataURL } from "./hangout/art.js";
 import { zombieLook, kindOf } from "./l4ddrules.js";
 import { specialById, pistolIcon } from "./specials.js";
 import { GUNS } from "./l4ddguns.js";
-import { FIREBALL } from "./mgjart.js";
 import { justinSVG } from "./hangout/npcart.js";
 
 const INK = "#1c1c28";
@@ -722,12 +721,12 @@ export const ICONS = {
     `<svg viewBox="0 0 30 30">${on ? '<path d="M17 8L29 2V28L17 22Z" fill="#fff4c2" opacity=".55"/>' : ""}<rect x="2" y="11" width="11" height="8" rx="2" fill="#3b3f4a" stroke="${INK}" stroke-width="1.3"/><path d="M13 9.4L18 7.6V22.4L13 20.6Z" fill="#6b7280" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/><rect x="5" y="13.4" width="4" height="3.2" rx="1" fill="${on ? "#ffd23f" : "#8a8f99"}" stroke="${INK}" stroke-width=".8"/>${on ? "" : `<path d="M4 5L26 26" stroke="#ff3d6e" stroke-width="2.6" stroke-linecap="round"/>`}</svg>`,
 };
 
-/* a weapon's picture: the specials' bar's (the knife, the pistol, the bow …), the new guns' own (l4ddguns.js), and the
-   fireball's (Mad God Justin's) */
+/* a weapon's picture: the specials' bar's (the knife, the pistol, the bow …), and the new guns' own (l4ddguns.js) */
 export const weaponIcon = (w, duck) =>
   (w === "handgun" && pistolIcon(duck)) || // (the pistol: as the one in my duck's hand, in my colors; the owner's, Nov 17)
   (GUNS[w] && GUNS[w].icon) ||
-  (w === "fireball" ? FIREBALL : (specialById(w) || {}).icon || "");
+  (specialById(w) || {}).icon ||
+  "";
 /* a weapon as an orb, glowing in its slot's color (css: .l4orb, blue melee, red ranged, purple special, white grenades) */
 export const orbHTML = (w) =>
   `<span class="l4orb k-${kindOf(w) || "special"}"><i>${w === "justin" ? justinSVG({ size: 30, shadow: false }) : weaponIcon(w)}</i></span>`; // (the fireplace's 1 in 100: Justin himself)
