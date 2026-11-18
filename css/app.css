@@ -1594,6 +1594,14 @@ p.bad {
     grid-template-areas: "l c r";
     align-items: center;
   } /* (the middle takes what's left, so a wide row of buttons never runs under Notes) */
+  /* in a game the sides share what's left equally (each at least as wide as what's in it), so Jumps in the middle sits
+     in the middle of the screen, not of what Notes and the hotbar leave (the owner's, Nov 18 15:18Z) */
+  .game .bbar {
+    grid-template-columns: minmax(max-content, 1fr) auto minmax(
+        max-content,
+        1fr
+      );
+  }
   .bbar-c {
     flex-direction: row;
     justify-content: center;
@@ -7913,7 +7921,7 @@ html.still .spe-bone .bone-slide {
     --step: 2.2rem;
     --slot: 1.85rem;
   }
-  .bbar .tpad.armed .tpad-jump {
+  .bbar .tpad.armed .tpad-col {
     right: 4.5rem;
     bottom: 0.75rem;
   }
@@ -8021,9 +8029,16 @@ html.still .spe-bone .bone-slide {
     bottom: auto;
     top: 0.2rem;
   }
-  html:not(.keyboard):not(.phone-land) .tpad.armed .tpad-jump {
+  html:not(.keyboard):not(.phone-land) .tpad.armed .tpad-col {
     right: 4.5rem;
     bottom: 0.75rem;
+  }
+  /* with the small R above the jump button the row grows a little */
+  html:not(.keyboard):not(.phone-land) .bbar:has(.tpad.rl:not(.gone)) {
+    padding-top: 6rem;
+  }
+  html:not(.keyboard):not(.phone-land) .tpad.rl {
+    top: 1.9rem;
   }
   html:not(.keyboard) body:has(.tpad:not(.gone)) #toasts {
     left: calc(50vw - 3.15rem);
@@ -8034,9 +8049,6 @@ html.still .spe-bone .bone-slide {
   visibility: hidden;
 }
 .tpad-jump {
-  position: absolute;
-  right: 0.75rem;
-  bottom: 0.75rem;
   width: 2.3rem;
   height: 2.3rem;
   display: grid;
@@ -8051,9 +8063,47 @@ html.still .spe-bone .bone-slide {
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+}
+/* the jump button and the small R above it sit in a column that moves as the jump button did */
+.tpad-col {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  width: 2.3rem;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 0.4rem;
   transition:
     bottom 0.15s ease-out,
     right 0.15s ease-out;
+}
+.tpad-reload {
+  width: 1.7rem;
+  height: 1.7rem;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 0.14rem solid var(--line);
+  box-shadow: 0 0.12rem 0 var(--line);
+  background: #fff;
+  color: #1c1c28;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  line-height: 1;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.tpad-reload[hidden] {
+  display: none;
+}
+.tpad-reload:active {
+  transform: translateY(0.1rem);
+  box-shadow: 0 0.04rem 0 var(--line);
 }
 .tpad-jump svg {
   width: 1.15rem;
@@ -8063,7 +8113,7 @@ html.still .spe-bone .bone-slide {
   transform: translateY(0.1rem);
   box-shadow: 0 0.05rem 0 var(--line);
 }
-.tpad.armed .tpad-jump {
+.tpad.armed .tpad-col {
   bottom: 4.5rem;
 }
 /* the attack stick: see-through like the walking stick (touch.js), its knob the crosshair */
@@ -15090,6 +15140,12 @@ html.still:not(.low) .l4z.dead.nuked {
       2.4rem + clamp(1.7rem, 4.6vw, 2.8rem) + clamp(1rem, 2.6vw, 1.45rem)
     );
   }
+}
+/* a phone on its side: the Ready / End turn button in the bottom middle of the board, just above Jumps (the owner's,
+   Nov 18 15:18Z: "the ready button on mobile should be in the bottom middle of the screen WHEN it's in horizontal") */
+html.phone-land .l4-end {
+  top: auto;
+  bottom: 4.2rem; /* (the board runs under the bottom row: the button sits just over Jumps, never on it) */
 }
 .l4-end .btn {
   font-size: 1rem;

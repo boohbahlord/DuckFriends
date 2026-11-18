@@ -15,6 +15,7 @@ const REACH = 60; // the stick's reach in pixels
 const TAP = { ms: 260, px: 12 }; // a tap: short and still
 const FLICK = { out: 450, gap: 380, ang: 0.9 }; // two flicks: each out for under .45 s, back for under .38 s, about the same way
 const SWIPE = { px: 40, ms: 350 }; // a swipe: this far, this fast
+const AIM = 10; // a second finger moved this far aims (px)
 const STILL = 520; // held still this long: the specials (on a duck: its menu)
 /* where a finger never starts the stick: on something it presses or types in, or scrolls (the docked Notes and chat, the
    specials' slider, the music bar). Anywhere else it does, the bars' empty spots too, right beside a button, and on the
@@ -178,6 +179,12 @@ export function mountTouch(S, api) {
     f.x = e.clientX;
     f.y = e.clientY;
     f.moved = Math.max(f.moved, Math.hypot(f.x - f.sx, f.y - f.sy));
+    /* a second finger (the first is the stick) moved around on the board aims, the way it moves from where it went down:
+       the owner's, Nov 18 15:18Z, "A player can click the screen and move around their right finger to aim" */
+    if (hold && profile.settings.touch !== "tap" && api.aim && f.moved > AIM) {
+      f.aiming = true;
+      api.aim(f.x - f.sx, f.y - f.sy);
+    }
     if (
       profile.settings.touch === "tap" &&
       f.moved > TAP.px &&
@@ -196,6 +203,7 @@ export function mountTouch(S, api) {
     const f = fingers.get(e.pointerId);
     if (!f) return;
     fingers.delete(e.pointerId);
+    if (f.aiming && api.aim) api.aim(null); // (let go: it goes back to the way I walk)
     if (e.type !== "pointerup" || profile.settings.touch !== "tap") return;
     const dur = now - f.t,
       dx = e.clientX - f.sx,
