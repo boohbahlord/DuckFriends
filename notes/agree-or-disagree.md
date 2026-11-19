@@ -6948,3 +6948,18 @@ Adam: install count now counts every file the game needs, so coming back goes on
 "everyone should be able to be on fire not just zombies, from the flamethrower or otherwise"
 
 Jackal: Sandbox board NPCs, Justin (board and cabin), the cabin's cats and made NPCs now burn from the flamethrower and its burning ground (1 HP as lit, 3 s, not lit again while burning), with the burning duck's flame over them. Mad God Justin has no flamethrower (his loadout is unchanged), so there it burns only from what it already had.
+
+## Owner, Nov 19 16:47Z
+"it feels like a ton of my requests havent been executed into the sandbox mode and it pisses me off, like basic things not later components"
+
+Adam: Jackal audits every Sandbox request against live code (/mnt/project-files/sandbox/audit-2026-11-19.md), then fixes are split.
+
+## Owner, Nov 19 16:58Z (phone screenshot, Sandbox, axe + gun on the hotbar)
+"Its not letting me use ANY OF MY HOTBAR ON MOBILE"
+
+Adam: the host ignored hotbar items not on the duck's own keys; fixed in V103 (16:52Z). Re-tested V103 on a phone screen: axe, MP5 and chair all fire from the slider and the attack stick.
+
+## Owner, Nov 19 17:00Z
+"So who is working on, like for the graphics, who's working on that? Because it still will pop in with the original textures before it loads the pixelated version, which tells me it's still using the old pictures, which makes it much larger in file size, makes it much more to download. Do we have it to where the old files will be removed or updated accordingly when, like, all of them, not just the ones in which the files are still there, for whenever we end up like getting updates or deployments for this game? Because right now it's to the point to where it's just getting really complicated for me because of the caffeine I had, which wasn't too much, I thought, and it's annoying me. And I'm trying to figure out why, like, we're what, like, what's the road plan? What are we doing first? And why is the graphics not being worked on like it said it was? Maybe it's because we're all busy, but I don't know. Like, please explain to me."
+
+Adam: reversed the drop of ready-made pixel files (should have asked). Noah, after the size follow-up: no original picture ever shows (hidden until its pixel version is ready), ready-made pixel files for everything static, original art no longer downloaded. Road plan sent: Sandbox basics, graphics, sizes, Downpour speed, Numberat folders.
