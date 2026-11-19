@@ -21,6 +21,7 @@ import { duckRoom } from "../duck.js";
 import { esc } from "../ui.js";
 import { low } from "../gfx.js";
 import { walkOf } from "../rules.js";
+import { survSet } from "../survrules.js";
 import { JET } from "../jetpack.js";
 import {
   pixelOn,
@@ -49,6 +50,7 @@ const dirOf = (dx, dy) => (dx > 0 ? "r" : dx < 0 ? "l" : dy > 0 ? "d" : "u");
    my duck uses it (the Click to interact setting) */
 export function mountWorld(board, api) {
   const opt = (api.room().state || {}).options || {};
+  survSet(opt); // (Survival's ammo on this screen too: survrules.js)
   L.useMode(baseMode(opt), baseL4map(opt)); // (Quacky Zombies' cabin or its Downpour, or Hangout's, or Sandbox on one of them: layout.js)
   const canvas = board.querySelector(".hang-ground"),
     g = canvas.getContext("2d"),

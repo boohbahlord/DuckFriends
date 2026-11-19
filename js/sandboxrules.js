@@ -27,11 +27,13 @@ export const sbWorld = (o) =>
    board) */
 export const baseMode = (o) => {
   const w = sbWorld(o);
+  if (o && o.mode === "surv") return "l4dd"; // (Survival runs on Dead Ducks Arcade's engine: survrules.js)
   return w ? SB_WORLDS[w][0] : (o && o.mode) || "";
 };
 /* the map that mode is on (Dead Ducks Arcade's Downpour: "downpour") */
 export const baseL4map = (o) => {
   if (!o) return "";
+  if (o.mode === "surv") return "downpour"; // (Survival: Downpour only, the owner's, Nov 19 19:47Z)
   if (o.mode !== "sandbox") return o.l4map;
   const w = sbWorld(o);
   return w ? SB_WORLDS[w][1] : "";

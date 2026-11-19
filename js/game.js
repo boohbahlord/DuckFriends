@@ -7151,6 +7151,7 @@ function paintNow(force) {
     }
     $(".phase", S).textContent =
       (isSb(s) && "Sandbox") || // (on every map)
+      (s.phase === "hang" && s.options.mode === "surv" && "Survival") ||
       (s.phase === "hang" &&
         s.options.mode === "l4dd" &&
         s.options.l4map === "downpour" &&
