@@ -48,7 +48,7 @@ export function armUp(wp) {
   };
 }
 /* how near it keeps to what it's after: most of its shortest gun's reach, else close enough to swing (claw) */
-/* how far o's claw reaches to t: a Numberat file's hitbox (o.hb, sbnumberat.js) and its Size (o.sz) make it reach
+/* how far o's claw reaches to t: a Seriat file's hitbox (o.hb, sbnumberat.js) and its Size (o.sz) make it reach
    further, and a bigger one is reached sooner (all 1: the claw as it was) */
 export const reachTo = (claw, o, t, s = null) =>
   (claw *

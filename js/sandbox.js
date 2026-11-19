@@ -1,5 +1,5 @@
 /* ---------- Sandbox: the key windows (stage 1, the shell) ----------
-   The owner's Sandbox file (Nov 19): c shows the cheat sheet, b build, m make an NPC, n Numerat, h the hotbar, g the
+   The owner's Sandbox file (Nov 19): c shows the cheat sheet, b build, m make an NPC, n Seriat, h the hotbar, g the
    game's settings and p the players' settings. One press of its key opens its window and the same key
    again closes it (the owner, Nov 19 16:17Z: "clicked only once instead of twice to get it up, and clicking again closes it"). While a
    window is up, the number keys pick its options instead of switching weapons, and a mouse click on an option does the
@@ -12,7 +12,13 @@
    away (the owner's answer 7, Nov 19 10:22Z: "you can start working on i now"). */
 import { LANG } from "./langname.js";
 import { esc, toast, typing, windowOpen } from "./ui.js";
-import { isSb, sbMay, SB_KEYS_TAKEN, SB_KEY_IN_BUILD } from "./sandboxrules.js";
+import {
+  isSb,
+  sbMay,
+  SB_KEYS_TAKEN,
+  SB_KEY_IN_BUILD,
+  SB_RIGHTS,
+} from "./sandboxrules.js";
 import {
   buildRows,
   ghostHTML,
@@ -117,7 +123,19 @@ export const SB_SHEET = [
    host "decide[s] who else gets it"); the rest of p comes later */
 const rightsRows = (R) => {
   const s = R.state;
-  return Object.values(s.players)
+  /* the windows everyone may use, one switch each (not when Game Settings gave everyone all of them) */
+  const wins =
+    +s.options.sbAll === 1
+      ? []
+      : SB_RIGHTS.map(([k, n]) => {
+          const on = +s.options["sbOk" + k.toUpperCase()] === 1;
+          return {
+            label: `${n} for everyone: ${on ? "on" : "off"}`,
+            on,
+            act: (r) => r.send({ t: "sbOk", win: k, on: !on }),
+          };
+        });
+  const who = Object.values(s.players)
     .filter((p) => !p.bot && p.id !== s.hostId && p.id !== R.me)
     .map((p) => {
       const on = !!(s.sb && s.sb.ok && s.sb.ok[p.id]);
@@ -127,6 +145,7 @@ const rightsRows = (R) => {
         act: (r) => r.send({ t: "sbOk", who: p.id, on: !on }),
       };
     });
+  return [...wins, ...who];
 };
 /* the options in a window (the later stages fill the rest): [{ label, act }], or a function of the room that makes them */
 const OPTIONS = {
@@ -665,12 +684,12 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
       e.stopImmediatePropagation();
       return;
     }
-    /* n opens the Numerat window itself (numeratwin.js), for whoever may write Numerat */
+    /* n opens the Seriat window itself (numeratwin.js), for whoever may write Seriat */
     if (l === "n" && sbMay(getR().state, getR().me, "n")) {
       e.preventDefault();
       e.stopImmediatePropagation();
       if (e.repeat) return;
-      sbClose(k, false); // (another window up: Numerat takes its place)
+      sbClose(k, false); // (another window up: Seriat takes its place)
       paint();
       k.swallow = "n";
       import("./numeratwin.js").then((m) => m.openNumerat()); // (loaded when it's wanted: it brings the command line)
@@ -707,7 +726,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   addEventListener("keydown", keydown, true);
   addEventListener("keyup", keyup, true);
   addEventListener("blur", blur);
-  /* my Numberat folder's names go to the room, so home/ shows it to whoever may look (nbperms.js): every few seconds,
+  /* my Seriat folder's names go to the room, so home/ shows it to whoever may look (nbperms.js): every few seconds,
      sent only when they changed or a new Sandbox started */
   const share = setInterval(async () => {
     const R = getR();

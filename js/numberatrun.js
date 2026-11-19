@@ -1,8 +1,8 @@
-/* ---------- Numberat: files that do things (part C, bible section 14) ----------
+/* ---------- Seriat: files that do things (part C, bible section 14) ----------
    A file is lines of statements: events (when spawn, when hit, when dead, when near duck 3, when touch, every 2s),
    actions (go, attack, flee, wait, say, print), who they're for (me, nearest duck, all zombies, team), named values
    (let), blocks (def, with inputs), loops (for, while), tests (\if …\ and else), percent picks of actions, seed, use,
-   give and take. Every value in them is Numberat (numberat.js), so its line rules and principles work there too.
+   give and take. Every value in them is Seriat (numberat.js), so its line rules and principles work there too.
    compileScript() reads a file once into a plan; brain() runs that plan for the game, which hands it a host: what it
    can see (stats, ducks, NPCs, wave, time …) and do (move an NPC, say, print). The plan never touches the game itself,
    so the same file runs the same in the game and in a test.
@@ -166,7 +166,7 @@ class Stmts {
     this.p++;
     return t.v;
   }
-  /* a Numberat value from here, up to the end of the statement */
+  /* a Seriat value from here, up to the end of the statement */
   value(opts = {}) {
     let depth = 0,
       k = this.p;

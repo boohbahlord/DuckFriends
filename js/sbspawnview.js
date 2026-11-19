@@ -417,7 +417,7 @@ export function sbSettings(getR, id, tab = "") {
         if (r) r.send({ t: "sb", p: id, ...a });
       };
       const timers = {};
-      /* a Brain: its file (and the files it uses) go to the room first, from my Numberat folder (numeratwin.js, loaded
+      /* a Brain: its file (and the files it uses) go to the room first, from my Seriat folder (numeratwin.js, loaded
          when it's wanted: it brings the command line) */
       const sendBrain = (i) =>
         import("./numeratwin.js").then((m) => {

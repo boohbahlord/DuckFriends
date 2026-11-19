@@ -1,7 +1,7 @@
 /* ---------- Sandbox: board zones (stage 5), the rules ----------
    The owner's Sandbox file, "Board Build" (sandboxrules.js SB_ZONE has the words): a zone is a rectangle of the map, in a
    spawn's colors, that is "not an actual solid". What it does ("Nothing", "Damage", "Heal" or "Kill") happens to whoever
-   it hits that stands in it, once every "Seconds between" (a Numerat range there: a new pick each time, so the rate can
+   it hits that stands in it, once every "Seconds between" (a Seriat range there: a new pick each time, so the rate can
    change). "Who it hits" takes what a spawn's behavior lists take: Players, Everything, a kind, a spawn by its color or
    name, and a player's name.
    - On the board and Duck Cabin a duck loses HP as from a spawn's claw (rules.js SB_H.claw), or gets it back (SB_H.heal);

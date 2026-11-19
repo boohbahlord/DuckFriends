@@ -7,9 +7,9 @@
    notes/ (your files, for this game only), log (everything you ran this game and what came out, read-only) and
    perma-notes/ (kept on this device from game to game; only you, superuser-<you>, can open it; its files can be removed,
    the folder can't). Other players' homes show in /usr, but their files live on their own devices.
-   notes/numberat/ holds my Numberat files (Sandbox, stage 7a): unlike the rest of notes it is kept on this device from game
+   notes/seriat/ holds my Seriat files (Sandbox, stage 7a): unlike the rest of notes it is kept on this device from game
    to game, folders, files and their +x, and can be organized from here in any mode (mkdir, cp, mv, rm). A file runs only
-   in Sandbox, from the Numerat window's Run button or as ./file once chmod +x; ps lists it and kill <pid> stops it.
+   in Sandbox, from the Seriat window's Run button or as ./file once chmod +x; ps lists it and kill <pid> stops it.
 
    The room's commands go through the host: sudo runs a command as a member of the sudo group (the host always is);
    usermod, groupadd, groupmod and groupdel need it, and so does forgame (the game's settings mid-game, and mutes that
@@ -105,16 +105,16 @@ const fs = {
   code: 0,
 };
 const perma = () => (profile.permaNotes = profile.permaNotes || {});
-/* ---------- the Numerat folder (the owner's Sandbox file: "The spawns, loot, respawns, or board buid SHOULD automatically
+/* ---------- the Seriat folder (the owner's Sandbox file: "The spawns, loot, respawns, or board buid SHOULD automatically
    save the numerat files to a directory in the default pwd that can be organized in any game mode in terminial by a
    player where they can make directories, copy files, etc.") ----------
-   It lives in notes like any folder while a game lasts; after each command (and each change in the Numerat window) what
+   It lives in notes like any folder while a game lasts; after each command (and each change in the Seriat window) what
    is in it is kept on this device, profile.numerat = { f: { path in it: text }, d: [its folders], x: [its +x files] },
    and it comes back at the start of every game. 100,000 characters in all, as perma-notes */
 const NUM_MOST = 100000;
-const numRoot = () => fs.home + "/notes/" + LANG_DIR; // (the language is Numberat: the owner, Nov 19 16:42Z; its name is langname.js')
+const numRoot = () => fs.home + "/notes/" + LANG_DIR; // (the language is Seriat: the owner, Nov 19 16:42Z; its name is langname.js')
 const inNum = (path) => path.startsWith(numRoot() + "/");
-/* the help/ folder in it: Numerat's read-only help files (numerathelp.js), made again at the start of every game, never
+/* the help/ folder in it: Seriat's read-only help files (numerathelp.js), made again at the start of every game, never
    kept in the profile, and refused every change, copy and delete (the owner's, Nov 19 12:59Z) */
 const helpRoot = () => numRoot() + "/help";
 const inHelp = (path) =>
@@ -192,7 +192,7 @@ function numKeep() {
   profile.numerat = next;
   save();
 }
-/* a class's rights on a Numberat path, changed by chmod (only the bits it names): null outside Sandbox */
+/* a class's rights on a Seriat path, changed by chmod (only the bits it names): null outside Sandbox */
 function give(p, who, ch) {
   if (!Object.keys(ch).length) return false;
   const s = roomS();
@@ -206,8 +206,8 @@ function give(p, who, ch) {
   if (bits !== cur) fs.room.send({ t: "nbp", path: rel, who, bits });
   return true;
 }
-/* ---------- home/ (the owner's, Nov 19 16:12Z): /home/<name> is each player's Numberat folder; mine is the same folder as
-   ~/notes/numberat. Another player's shows the names they have (nbperms.js) to whoever has canhomes, and to whoever they
+/* ---------- home/ (the owner's, Nov 19 16:12Z): /home/<name> is each player's Seriat folder; mine is the same folder as
+   ~/notes/seriat. Another player's shows the names they have (nbperms.js) to whoever has canhomes, and to whoever they
    gave a right in it ---------- */
 const HOME = "/home";
 const meHome = () => HOME + "/" + fs.me;
@@ -272,7 +272,7 @@ function shareNames() {
   namesSent = k;
   fs.room.send({ t: "nbn", names });
 }
-/* the Numerat files running (a stub until the language comes: each only waits to be stopped), for this game */
+/* the Seriat files running (a stub until the language comes: each only waits to be stopped), for this game */
 let procs = [],
   nextPid = 100;
 function sync(ctx) {
@@ -289,7 +289,7 @@ function sync(ctx) {
     fs.vars = {};
     procs = [];
     fs.numAt = "";
-  } // notes, the log and variables last one game (the Numerat folder comes back from the device: numLoad)
+  } // notes, the log and variables last one game (the Seriat folder comes back from the device: numLoad)
   if (!fs.cwd || !fs.cwd.startsWith("/")) fs.cwd = home + "/notes";
   fs.home = home;
   fs.me = me;
@@ -320,7 +320,7 @@ const resolve = (p) =>
           ? p
           : fs.cwd + "/" + p,
   );
-const unHomeN = (p) => unHome(norm(p)); // (/home/<me>/… is ~/notes/numberat/…)
+const unHomeN = (p) => unHome(norm(p)); // (/home/<me>/… is ~/notes/seriat/…)
 const isPerma = (path) => path.startsWith(fs.home + "/perma-notes/");
 /* what a path is: a folder, a file, or nothing */
 function kind(path) {
@@ -1314,11 +1314,11 @@ function cal(now = new Date()) {
   );
   return out.join("\n");
 }
-/* the Numerat files running: ps's lines for them */
+/* the Seriat files running: ps's lines for them */
 const procLines = () =>
   procs.map(
     (p) =>
-      `${String(p.pid).padStart(3)} numberat  ${p.name}, running ${left(Date.now() - p.at)}`,
+      `${String(p.pid).padStart(3)} seriat  ${p.name}, running ${left(Date.now() - p.at)}`,
   );
 function psLines(s, all) {
   const o = s.options,
@@ -1826,7 +1826,7 @@ const CMDS = {
         return `${a}: ${t ? `text, ${lines(t).length} line${lines(t).length === 1 ? "" : "s"}` : "empty"}`;
       })
       .join("\n"),
-  /* the modes: u (mine: r, w, x), g (the file's group) and o (everyone). On a Numberat file or folder, g and o are also
+  /* the modes: u (mine: r, w, x), g (the file's group) and o (everyone). On a Seriat file or folder, g and o are also
      the rights the room's players get, this Sandbox only (nbperms.js); g+r and o+r still let a sent file be opened */
   chmod: (args) => {
     const [mode, ...files] = args;
@@ -1867,7 +1867,7 @@ const CMDS = {
         );
       if (k === "file") {
         const m = { ...(fs.meta[p] || {}) };
-        if ("x" in ch.u) m.x = ch.u.x; // (+x: a Numberat file runs as ./file)
+        if ("x" in ch.u) m.x = ch.u.x; // (+x: a Seriat file runs as ./file)
         if ("r" in ch.u) m.nr = !ch.u.r;
         if ("w" in ch.u) m.nw = !ch.u.w;
         if ("r" in ch.g) m.g = ch.g.r;
@@ -1906,7 +1906,7 @@ const CMDS = {
       );
     return g ? CMDS.chgrp([g, ...files], i, x) : "";
   },
-  /* one player's rights (and a group's, and everyone's) on my Numberat files and folders, this Sandbox only:
+  /* one player's rights (and a group's, and everyone's) on my Seriat files and folders, this Sandbox only:
      setfacl -m u:Pat:rw,g:friends:r file, setfacl -x u:Pat file, setfacl -b file (all of them away) */
   setfacl: (args) => {
     let op = "",
@@ -2623,13 +2623,13 @@ async function one(argv, stdin, meta, ctx, rs) {
   if (/^\\(mute|permmute|show|togglesuggest)$/i.test(c))
     return ctx.chat(words.map(dq).join(" "));
   const x = { ctx, sudo, meta, rs };
-  if (c.includes("/")) return runFile(c, ctx, sudo); // (./file: a Numerat file, chmod +x first)
+  if (c.includes("/")) return runFile(c, ctx, sudo); // (./file: a Seriat file, chmod +x first)
   if (
     low === "kill" &&
     args.length &&
     args.every((a) => /^-?\d+$|^-[A-Z]+$/.test(a))
   )
-    return killProcs(args); // (kill <pid>: a Numerat file; kill <name> stays the silly one)
+    return killProcs(args); // (kill <pid>: a Seriat file; kill <name> stays the silly one)
   if (isHelpName(c)) return helpPage([c, ...args].join("-")) || helpPage(c); // HelpChat, HelpGame-How, HelpGame How
   if (args.includes("--help") && MAN[low] && (CMDS[low] || TEXT[low]))
     return `${MAN[low]}\n(man ${low} shows the same; help lists the Help pages.)`;
@@ -2654,8 +2654,8 @@ async function one(argv, stdin, meta, ctx, rs) {
   fail(`✗ ${c}: command not found. help lists them.`, 127);
 }
 
-/* ---------- running a Numerat file (a stub: the language comes later) ----------
-   Only in Sandbox, and only for whoever may write Numerat there (sandboxrules.js sbCan), or with sudo. Returns what to
+/* ---------- running a Seriat file (a stub: the language comes later) ----------
+   Only in Sandbox, and only for whoever may write Seriat there (sandboxrules.js sbCan), or with sudo. Returns what to
    say; ps lists it until kill <pid> stops it */
 function startFile(path, ctx, sudo) {
   const s = ctx.room && ctx.room.state,
@@ -2727,7 +2727,7 @@ function playTop(plan, s, name) {
   return lines.slice(0, 200);
 }
 const numShared = new Map(); // (give and take between files)
-/* use 'name': the file next to the one using it, or at the Numberat folder's top; .num may be left off */
+/* use 'name': the file next to the one using it, or at the Seriat folder's top; .num may be left off */
 function useText(from, name) {
   const dir = from.slice(0, from.lastIndexOf("/"));
   for (const d of [dir, numRoot()])
@@ -2890,7 +2890,7 @@ export async function shellRun(text, ctx) {
       cleared: false,
     };
   const r = await runLine(line, env(ctx, { fun: 0, funAt: 0, sends: 0 }));
-  numKeep(); // (the Numerat folder, kept on this device)
+  numKeep(); // (the Seriat folder, kept on this device)
   fs.code = r.code;
   res.push(...lines(r.text));
   if (res.length > 1000)
@@ -2899,7 +2899,7 @@ export async function shellRun(text, ctx) {
   if (fs.log.length > 2000) fs.log.splice(0, fs.log.length - 2000);
   return { lines: res, cleared: r.cleared };
 }
-/* ---------- the Numerat window (numeratwin.js): its folder, read and written as the command line does ----------
+/* ---------- the Seriat window (numeratwin.js): its folder, read and written as the command line does ----------
    ctx: the command line's (chat.js shellCtx) */
 export const numerat = {
   root(ctx) {
@@ -2968,7 +2968,7 @@ export const numerat = {
       ? "home/" + fs.me + path.slice(numRoot().length)
       : path.replace(/^\//, ""),
   /* a path typed in the window's path bar, as Linux reads it, from the folder shown: /usr/…, ~/…, .., ., or
-     numberat/… (the way the window writes it); "file", "dir" or null for what's there */
+     seriat/… (the way the window writes it); "file", "dir" or null for what's there */
   at(ctx, text, from) {
     sync(ctx);
     const t = text.trim().replace(/\/+$/, "") || "/",
