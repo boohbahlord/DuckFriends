@@ -3666,7 +3666,7 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
       if (done.includes("h:" + n.id)) continue;
       if (
         near(n.x / HW, n.y / HH, n.z, inCabin(n.x, n.y) ? 1 : 0) &&
-        hangHit(s, n.id, by, now)
+        hangHit(s, n.id, by, now, sp)
       ) {
         done.push("h:" + n.id);
         if (n.id === "justin") justinKilled(s, by, sp);
@@ -3830,7 +3830,7 @@ function blast(s, sh, x, y, now, o = {}) {
     for (const n of hangTargets(s, now, "grenade"))
       if (
         near(n.x / HW, n.y / HH, n.z, inCabin(n.x, n.y) ? 1 : 0) &&
-        hangHit(s, n.id, sh.by, now) &&
+        hangHit(s, n.id, sh.by, now, w) &&
         n.id === "justin"
       )
         justinKilled(s, sh.by, w);
@@ -4370,7 +4370,7 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
       const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
       if (Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1)) hLock(sh, n.z);
       else continue;
-      if (hangHit(s, n.id, sh.by, now) && n.id === "justin")
+      if (hangHit(s, n.id, sh.by, now, sh.k) && n.id === "justin")
         justinKilled(s, sh.by, sh.k);
     }
   return false;

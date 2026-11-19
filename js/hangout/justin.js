@@ -407,6 +407,8 @@ const SELF_REVIVE = 120000; // nobody revived him: up by himself after 2 minutes
 /* up again (E on him, or by himself): the drinking line and a glass, or the shadow duck's lines */
 function revive(me, c) {
   me.a = "";
+  delete me.wc;
+  delete me.hit; // (whole again: his wounds and his pool go, characters.js justinWounded)
   mm.mode = "home";
   mm.next = c.now + 3000;
   if (mm.cause === "drink") {
