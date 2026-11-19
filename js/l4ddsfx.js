@@ -133,9 +133,15 @@ export function l4Hear(s, ctx) {
         });
       }
   st.flash = { ...off };
-  /* a new round (not the first look at the game) */
+  /* everyone's down: the game's ending, on both maps (not the new round's swell, not the bell: the owner, Nov 19), and
+     only once (not for a game already over as I first look) */
+  if (L && L.over && st.over !== L.over.at) {
+    if (!st.first) play("l4over");
+    st.over = L.over.at;
+  }
+  /* a new round (not the first look at the game, nor once it's over) */
   if (L && L.r !== st.r) {
-    if (st.r >= 0 && L.r > st.r && L.r > 0) {
+    if (st.r >= 0 && L.r > st.r && L.r > 0 && !L.over) {
       play("l4round"); // (everywhere alike: no x, y)
       if (layoutVariant() === "l4gs" && play("churchBell"))
         bellAt = performance.now(); // (Downpour: the church bell rings the round in, the owner's, Nov 17 12:28Z)

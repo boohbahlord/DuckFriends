@@ -35,6 +35,7 @@ export const VOL = {
   countGo: -15,
   voteTick: -25, // (the votes' seconds: very soft)
   l4round: -14,
+  l4over: -12, // (everyone's down: the game's ending, soft, Nov 19)
   // moving
   step: -19,
   zstep: -27,
@@ -257,6 +258,7 @@ const GROUPS = {
   l4dd: [
     ...[
       "l4round",
+      "l4over",
       "zstep",
       "nuke",
       "nukeRing",

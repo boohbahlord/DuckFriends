@@ -2109,7 +2109,7 @@ export function l4SafeHint() {
     board.append(hintEl);
   }
   hintEl.innerHTML =
-    "<b>Safe Keeping</b>: when you go down you keep what you bought, and <kbd>E</kbd> gets you up.";
+    "<b>Safe Keeping</b>: when you go down <kbd>E</kbd> gets you up; if you die you keep what you bought.";
   hintEl.classList.remove("on");
   void hintEl.offsetWidth;
   hintEl.classList.add("on");

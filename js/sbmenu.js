@@ -77,10 +77,13 @@ export function pointAt(s, at) {
 }
 
 /* a small menu at the screen point (cx, cy): items [{ label, act, off }]; it goes at the next click, Esc or wheel */
-let menuEl = null;
+let menuEl = null,
+  menuOff = null; // (takes away its listeners: a shut menu hears nothing more)
 export function closeMenu() {
   if (menuEl) menuEl.remove();
   menuEl = null;
+  if (menuOff) menuOff();
+  menuOff = null;
 }
 export function showMenu(parent, cx, cy, items) {
   closeMenu();
@@ -115,16 +118,25 @@ export function showMenu(parent, cx, cy, items) {
   });
   const away = (e) => {
     if (e.type === "keydown" && e.key !== "Escape") return;
-    if (m.contains(e.target)) return;
+    if (m.contains(e.target) && e.type === "pointerdown") return;
+    if (e.type === "keydown") {
+      e.preventDefault();
+      e.stopImmediatePropagation(); // (Esc only shuts this menu: the pause menu stays down)
+    }
     closeMenu();
-    removeEventListener("pointerdown", away, true);
-    removeEventListener("keydown", away, true);
   };
-  setTimeout(() => {
+  const on = setTimeout(() => {
     addEventListener("pointerdown", away, true);
     addEventListener("keydown", away, true);
+    addEventListener("wheel", away, true);
   });
   menuEl = m;
+  menuOff = () => {
+    clearTimeout(on);
+    removeEventListener("pointerdown", away, true);
+    removeEventListener("keydown", away, true);
+    removeEventListener("wheel", away, true);
+  };
 }
 
 /* "when you select spawn, it asks you what color before you place it down": the colors and No color; done(color) */

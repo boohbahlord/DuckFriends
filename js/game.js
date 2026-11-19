@@ -8359,7 +8359,7 @@ register("game", {
       setTarget: (t) => {
         target = t;
       },
-      hold: (x, y) => !!bar && bar.wheel(x, y),
+      hold: (x, y) => (!!sbk && sbk.hold(x, y)) || (!!bar && bar.wheel(x, y)), // (Sandbox: a placed thing's menu first)
       aim: (dx, dy) => {
         keyAim = dx == null ? null : [dx, dy];
       }, // (a second finger dragging on the board aims, like the aim stick's: the owner's, Nov 18 15:18Z)

@@ -15400,6 +15400,10 @@ html.still:not(.low) .l4z.dead.nuked {
     transform: translateX(-50%) scale(1);
   }
 }
+/* the end box (the owner's, Nov 19 19:27Z): "that box should be a lot more transparent ... the words inside of it and its
+   information isn't transparent at all", not at the center of the screen on a computer ("maybe it can be bigger on PC"),
+   "make it to where it doesn't show up instantly. It only shows up like 3 seconds after": no dark backdrop, so my dead
+   duck stays in view, and the card fades in after 3 s */
 .l4-over {
   position: absolute;
   inset: 0;
@@ -15407,23 +15411,54 @@ html.still:not(.low) .l4z.dead.nuked {
   display: grid;
   place-items: center;
   padding: 1rem;
-  background: #0009;
+  pointer-events: none;
 }
 .l4-over[hidden] {
   display: none;
+}
+@keyframes l4-over-in {
+  from {
+    opacity: 0;
+    visibility: hidden;
+  }
+  to {
+    opacity: 1;
+    visibility: visible;
+  }
 }
 .l4-over-card {
   max-width: 22rem;
   padding: 1.1rem 1.3rem;
   border-radius: 1rem;
-  background: var(--panel);
+  background: color-mix(in srgb, var(--panel) 16%, transparent);
   border: 0.14rem solid #dc143c;
   text-align: center;
+  color: #fff;
+  text-shadow:
+    0 0.06rem 0.3rem #000,
+    0 0 0.12rem #000;
+  pointer-events: auto;
+  animation: l4-over-in 0.5s ease 3s both;
+}
+.l4-over-card .dim {
+  opacity: 1;
+  color: #e4e6ee;
+}
+@media (min-width: 900px) {
+  .l4-over {
+    place-items: start center;
+    padding-top: 14vh;
+  }
+  .l4-over-card {
+    max-width: 30rem;
+    padding: 1.5rem 2rem;
+    font-size: 1.25rem;
+  }
 }
 .l4-over-card h2 {
   margin: 0 0 0.4rem;
   font-family: "Lilita One", sans-serif;
-  color: #dc143c;
+  color: #ff2a52;
 }
 .l4-over-btns {
   display: flex;
@@ -20069,6 +20104,10 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   background: color-mix(in srgb, var(--panel) 60%, transparent);
   cursor: pointer;
 }
+/* the mouse closes a window too (the owner's file: every window can also be clicked with the mouse) */
+.sb-win .sb-x {
+  display: grid;
+}
 /* a phone's Tools button under Leave Sandbox (js/sandbox.js): its list of the windows drops under it */
 .game .sb-tools {
   position: fixed;
@@ -20159,9 +20198,6 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 @media not all and (any-pointer: fine) {
   html:not(.keyboard) .game .sb-tools:not([hidden]) {
     display: flex;
-  }
-  html:not(.keyboard) .sb-x {
-    display: grid;
   }
   html:not(.keyboard) .sb-win .sb-tip,
   html:not(.keyboard) .sb-opt kbd {
