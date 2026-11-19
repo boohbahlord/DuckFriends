@@ -7943,8 +7943,9 @@ const unpeek = () => peek(false);
 
 /* Survival, my duck dead: watch the next duck (d 1) or the one before (-1) */
 function spec(d) {
-  if (R && watchNext(R.state, R.me, d))
-    setHTML($(".gact", S), actHTML(R.state));
+  if (!R || !watchNext(R.state, R.me, d)) return;
+  sfx.uiOn(); // (the faint click, as the menus')
+  setHTML($(".gact", S), actHTML(R.state));
 }
 /* ---------- what the buttons do ---------- */
 async function act(a) {

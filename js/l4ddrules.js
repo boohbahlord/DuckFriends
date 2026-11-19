@@ -2353,7 +2353,7 @@ function defibUse(s, id, t, me, now) {
     ...s.hang.l4a,
     [id]: { ...kit, am: { ...kit.am, defib: [c[0] - 1, 0] } },
   };
-  addFx(s, { kind: "l4medrev", by: id, who: [t], t: now }); // (the medkit's revive sound)
+  addFx(s, { kind: "l4defib", by: id, who: [t], t: now }); // (its shock: l4ddsfx.js)
   return true;
 }
 /* Justin out there, in a rest phase, at Jaime's body: his plan for the phase (jplan) and a line each visit (jbody). (No duck
@@ -2791,7 +2791,8 @@ export const MERCH = {
   EACH: 0.025, // … and more likely by this for each player past the first)
   MORE_OF: 0.5, // (each thing he has: the chance he has a second, then again a third: the owner's, Nov 19 22:25Z, "there's a 50% chance they sell one more ... and there's another 50% chance that's rolled again to see if they sell 3", for "any item that's sold, whether it be gun or otherwise")
   BACK: 0.2, // (one somebody bought from: the chance he comes again at the very next visit, else the end of the line)
-  HP: [3, 4], // (each visit's merchant rolls his HP: the owner's, Nov 19 19:27Z "They should only have 3 to 4 HP")
+  /* each visit's merchant rolls his HP as a zombie's (hp0: the owner's, Nov 19 19:47Z, merchants among those with "the
+     same range of health points as the zombies"; at 19:27Z it was "3 to 4 HP") */
   WALK: 1, // (his walk: a duck's, the owner's, Nov 18 14:22Z: "he walks at the speed of any other player and will use his
   //  sprint to get away if he has to (limited amount of sprint)")
   SPRINT: NPC_RUN, // (getting away: the shared slow speed, npcshared.js; "Merchants should be less fast when they try to escape" (the owner's, Nov 19 19:27Z). His meter still runs as long as a duck's (L4.SPRINT), and as long to fill …
@@ -2990,7 +2991,7 @@ function merchantCome(s, now, sure = false) {
   }
   const id = left[0],
     [from, route] = wayIn();
-  const hp = rint(MERCH.HP[0], MERCH.HP[1]),
+  const hp = hp0(),
     vn = (h.vn || 0) + 1; // (his visit's number this game: before, it started over at 1 whenever the last one had left)
   setMh(s, {
     vn,

@@ -49,12 +49,17 @@ export const GM = {
   FIRE_MS: [2500, 5000], // ms a criminal shoots before it hides
   WAIT_MS: [8000, 12000], // ms it waits in hiding to ambush ("wait about 10 s, then come looking")
   RUN_HP: 0.35, // its HP's share when it runs off and hides
+  PUSH: 3, // duck lengths: a duck this near one hiding has pushed into them …
+  PACK: 6, // … and every one hiding this near it turns and fights …
+  ROOM: 7, // … until no duck is this near (my numbers)
   RUN_MS: [3000, 5000],
   COVER: [140, 420], // world px: how far it looks for a place to hide
   DEAD_MS: 30000, // ms a body lies there
   BURN_MS: 2000, // ms between a flame's bites (as the merchant's, l4ddrules.js BURN.EVERY)
   DUCK: 64, // world px in a duck length
   SQUAD: [4, 7], // soldiers in a squad ("squads of 4-7")
+  SQUADS: 4, // squads at most ("1 squadron, 2 squadrons, 3 squadrons, or 4 squadrons") …
+  SQUAD_MORE: 0.5, // … and each one past the least for the players there, this likely (squads)
   FLANK: 3, // duck lengths: a duck this near is flanking it: it falls back, pistol out ("fall back when flanked")
   STAB: 1.2, // duck lengths: near enough for its knife ("knife up close")
   STAB_MS: 900, // ms between its knife's stabs
@@ -299,7 +304,9 @@ function newSniper(s, at) {
     ad: 0,
   };
 }
-/* soldiers: 1 squad for 1-2 players, 2 for 3-4, 3 for 5-6, 4 for 7-8, each of 4 to 7 coming in together at a spot
+/* soldiers: at least 1 squad for 1-2 players, 2 for 3-4, 3 for 5-6, and always 4 for 7-8 ("always, if it's not the
+   maximum, indicates a minimum": the owner's, Nov 19 19:27Z); past the least, each one more half the time (my pick), 4 at
+   most. Each of 4 to 7 coming in together at a spot
    nobody sees: its LMG, 1-2 with him, the rest riflemen ("One LMG for suppressive fire, 1-2 with him; the rest AK-47 /
    burst rifle move up") */
 function squads(s, n, H) {
@@ -324,7 +331,9 @@ function squads(s, n, H) {
       delete gm.hp0;
     }
   }
-  for (let q = 1; q <= Math.min(4, Math.ceil(n / 2)); q++) {
+  let many = Math.min(GM.SQUADS, Math.ceil(n / 2));
+  while (many < GM.SQUADS && Math.random() < GM.SQUAD_MORE) many++;
+  for (let q = 1; q <= many; q++) {
     const at = H.edge();
     if (!at) break;
     const size =
@@ -479,6 +488,22 @@ function crim(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
     o.u = now + rnd(...GM.RUN_MS);
     o.lo = 0;
   }
+  /* pushed into while hiding (the ones held back, out of the fight): every one hiding near it turns on that duck, and
+     they fight until they have room to get away (the owner's, Nov 19 19:27Z: "if you push really hard into the ones in
+     the back, and all of them will attack you until they have enough space to get away from you") */
+  if (["hide", "wait", "run"].includes(o.st) && d < GM.PUSH * GM.DUCK)
+    for (const q of gmOf(s).gb)
+      if (
+        !q.d &&
+        q.k === "c" &&
+        ["hide", "wait", "run"].includes(q.st) &&
+        Math.hypot(q.x - o.x, q.y - o.y) < GM.PACK * GM.DUCK
+      ) {
+        q.st = "fire";
+        q.cn = 1;
+        q.lo = 1;
+        q.mad = [t.id, now + 8000];
+      }
   switch (o.st) {
     case "run": {
       const dx = o.x - t.x,
@@ -518,6 +543,12 @@ function crim(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
       return;
     }
     case "fire":
+      if (o.cn) {
+        if (d < GM.ROOM * GM.DUCK) break;
+        o.cn = 0;
+        hide(o, t, now, H); // (room enough: away)
+        return;
+      } // (cornered: it fights on)
       if (now >= o.u || (!see && now - (o.seen || 0) > 1500)) {
         hide(o, t, now, H);
         return;
@@ -635,7 +666,13 @@ function soldier(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
     }
     return;
   }
-  const reach = reachOf(o.wp.p[0]);
+  const reach = reachOf(o.wp.p[0]),
+    lmg = mates.find((q) => q.ro === "lmg"),
+    /* the LMG and the rest take turns (the owner's, Nov 19 19:27Z: "When he's reloading, the other ducks take turn
+       firing at you. They take out their AK-47s, maybe their burst rifles"): while he fires, they move up and hold
+       their fire; while he reloads, or with him gone or not firing, they shoot */
+    lmgOn =
+      !!lmg && lmg !== o && lmg.st === "fire" && !(lmg.rl && lmg.rl[0] > now);
   if (o.ro === "lmg") {
     /* the LMG: somewhere it sees its duck from well off, then long bursts; whoever its rounds fly by is suppressed */
     if (!see || d > reach * 0.9) {
@@ -660,7 +697,7 @@ function soldier(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
       const g = see || !o.ls ? [t.x, t.y] : o.ls;
       go(g[0], g[1]);
     }
-    if (see && d < reach) {
+    if (see && d < reach && !lmgOn) {
       o.st = "fire";
       o.ld = Math.round(d);
       shoot(s, o, t, now, H);
@@ -680,12 +717,14 @@ function soldier(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
     if (see && d < reach * 0.45) o.u = now; // (close enough: it stops)
     return;
   }
-  if (see && d < reach) {
+  if (see && d < reach && !lmgOn) {
     o.ld = Math.round(d);
     shoot(s, o, t, now, H);
   } else {
     aim();
-    if (!see) o.u = Math.min(o.u, now + 400); // (it lost sight: it moves again soon)
+    if (!see)
+      o.u = Math.min(o.u, now + 400); // (it lost sight: it moves again soon)
+    else if (lmgOn && d > reach * 0.45) o.st = "move"; // (his turn: it moves up meanwhile, "They will slowly move up towards you")
   }
 }
 /* the sniper's beat (the owner's, Nov 19 19:47Z): no flashlight; his long laser sits on a duck 1.5 to 2.5 s, following
@@ -806,12 +845,14 @@ export function stab(o, t, now, H, s = null) {
   o.ka = o.a = now; // (o.a: its claw marks show: a swing)
   hitOn(s, o, t, +ARMS.knife.dmg || 1, "knife", now, H);
 }
+/* a target that's a zombie ({ z: the zombie }); a duck's z is the height of its feet, a number */
+const zombieOf = (t) => (t.z && typeof t.z === "object" ? t.z : null);
 /* one of them lands dmg on t with weapon w: a zombie, one of the others (the friendly squad, or the gunmen the squad
    shoots at), or a duck. Half on a duck and on each other ("half damage"), and the friendly squad's half on zombies too
    ("fight with you at half damage") */
 export function hitOn(s, o, t, dmg, w, now, H) {
   const half = Math.round(dmg * GM.DMG * 10) / 10;
-  if (t.z) H.hitZ(t.z, o.k === "f" ? half : dmg, w);
+  if (zombieOf(t)) H.hitZ(t.z, o.k === "f" ? half : dmg, w);
   else if (t.fr) {
     if (!s) return;
     const q = gmOf(s).gb.find((g) => g.i === t.fr.i);
@@ -910,7 +951,7 @@ export function shoot(s, o, t, now, H, only = null) {
     hit = false;
   for (let k = 0; k < many; k++)
     for (let p = 0; p < (A.pellets || 1); p++) {
-      const chance = t.z
+      const chance = zombieOf(t)
         ? 0.85
         : A.pellets
           ? Math.max(0, AIM.pellet - AIM.pelletDrop * len) *
@@ -1079,6 +1120,7 @@ function hurt(s, i, dmg, w, now, H) {
     if (o.i !== i || o.d) return o;
     const q = { ...o };
     takes(s, q, null, w, dmg, now, H);
+    if (!q.d) q.mad = ["@m", now + 8000]; // (the merchant shot it: it goes for him as for a player, "Their likelihood to target them depends on if they're attacked by the merchant. Then they will treat them like a player")
     return q;
   });
 }

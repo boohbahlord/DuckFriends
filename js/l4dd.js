@@ -1654,11 +1654,7 @@ function mWoundLook(wc) {
   }
   return MLOOK.get(wc);
 }
-const mMax = (m) =>
-  Math.max(
-    1,
-    +m.max || (Array.isArray(MERCH.HP) ? MERCH.HP[1] : +MERCH.HP) || 6,
-  ); // (m.max: the HP he rolled, 3 to 6, the rules')
+const mMax = (m) => Math.max(1, +m.max || 4.5); // (m.max: the HP he rolled, as a zombie's: the rules' hp0)
 function drawMerchant(ctx, t) {
   const s = ctx.state(),
     m = merchantNow(s),
