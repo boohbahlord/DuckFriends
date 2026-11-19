@@ -594,7 +594,7 @@ const NAMES = {
   axe: "Fire axe",
   sword: "Short sword",
   pan: "Cast iron pan",
-  handgun: "Pistol",
+  handgun: "M&P9 Compact", // (a real 9mm with a twelve-round magazine, as ours is here: the owner's, Nov 19)
   bow: "Bow",
   dagger: "Dagger",
   shotgun: "Shotgun",
@@ -688,31 +688,32 @@ export const PTS = {
 /* Justin's Butler's upgrades (the owner's prices; attack speed's are Adam's plan's guess, question 3): the price of the
    next one when n are bought already, how many at most */
 export const SHOP = [
-  /* the upgrades never run out (the owner's, Nov 19 19:27Z: "they do not go away. They are not a limited resource
-     anymore"): most is Infinity, each one buys again and stacks. Quick Revive is a switch, so it stays one */
+  /* the upgrades never run out at the merchant (the owner's, Nov 19 19:27Z: "they do not go away. They are not a
+     limited resource anymore"), and each one stacks up to 5 ("it can increase to 5"), so crits, cooldowns and reloads
+     never run away. Quick Revive is a switch, so it stays one */
   {
     id: "acc",
     name: "Critical Chance",
     what: "+2.5% crits",
-    most: Infinity,
+    most: 5,
   }, // (600 each, +2.5%: the owner's, Nov 16 21:47Z)
   {
     id: "as",
     name: "Attack speed",
     what: "Cooldowns 10% faster",
-    most: Infinity,
+    most: 5,
   }, // (each one 10% faster than the last)
   {
     id: "hp",
     name: "Increase HP",
     what: "+1 HP until you go down",
-    most: Infinity,
+    most: 5,
   }, // (it was "Max HP": the owner's, Nov 19 19:27Z)
   {
     id: "rl",
     name: "Faster reload",
     what: "Reloads 30% faster",
-    most: Infinity,
+    most: 5,
   },
   {
     id: "qr",

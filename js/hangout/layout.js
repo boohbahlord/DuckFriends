@@ -1063,30 +1063,35 @@ export function useMode(mode, map) {
      covers that side) */
   if (v === "l4gs")
     for (const [B, bldg, o] of [
-      ...GS.WALK_HOLES.filter((o) => o.axis === "x").map((o) => [
-        GS.STATION,
-        1,
-        o,
-      ]), // (the restroom's west hole has no peek)
+      ...GS.WALK_HOLES.map((o) => [GS.STATION, 1, o]), // (the restroom's west hole too: from inside, the ground out past it shows, as through the north holes)
       [GS.CHAPEL, 2, { at: GS.CHAPEL.y0, ...GS.CHAPEL_DOOR }],
     ])
       PEEKS.push(
-        o.at === B.y1
+        o.axis === "y"
           ? {
               bldg,
-              in: [o.a, o.at - B.wall, o.b, o.at],
-              out: [o.a - PEEK.side, o.at, o.b + PEEK.side, o.at + PEEK.deep],
+              in: [o.at, o.a, o.at, o.a], // (nothing: the roof covers it from outside)
+              out:
+                o.at === B.x0
+                  ? [o.at - PEEK.deep, o.a - PEEK.side, o.at, o.b + PEEK.side]
+                  : [o.at, o.a - PEEK.side, o.at + PEEK.deep, o.b + PEEK.side],
             }
-          : {
-              bldg,
-              in: [o.a, o.at, o.a, o.at], // (nothing)
-              out: [
-                o.a - PEEK.side,
-                o.at - B.wall - PEEK.deep,
-                o.b + PEEK.side,
-                o.at,
-              ],
-            },
+          : o.at === B.y1
+            ? {
+                bldg,
+                in: [o.a, o.at - B.wall, o.b, o.at],
+                out: [o.a - PEEK.side, o.at, o.b + PEEK.side, o.at + PEEK.deep],
+              }
+            : {
+                bldg,
+                in: [o.a, o.at, o.a, o.at], // (nothing)
+                out: [
+                  o.a - PEEK.side,
+                  o.at - B.wall - PEEK.deep,
+                  o.b + PEEK.side,
+                  o.at,
+                ],
+              },
       );
   PLATS.length = 0;
   if (!v)
