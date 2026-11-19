@@ -5702,7 +5702,7 @@ html.moving .pix-sun {
   pointer-events: none;
   container-type: size;
 }
-.game > :not(.map-layer, .pmenu, .votebox) {
+.game > :not(.map-layer, .pmenu, .votebox, .sb-win) {
   position: relative;
   z-index: 1;
 }
@@ -19540,4 +19540,84 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   );
   z-index: 7;
   pointer-events: none;
+}
+/* Sandbox's key windows (js/sandbox.js): up while c, b, m, n, h, g or p is held, kept up by a double tap. The cheat
+   sheet (c) is larger than Tab's window and somewhat see-through (the owner's Sandbox file, Nov 19); the text is about
+   11pt */
+.sb-win {
+  position: fixed;
+  left: 50%;
+  top: 3.6rem;
+  transform: translateX(-50%);
+  z-index: 6500;
+  width: min(34rem, calc(100% - 1.5rem));
+  max-height: calc(100dvh - 9rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem 0.9rem;
+  overflow: auto;
+  font-size: calc(0.9167rem * var(--ts, 1));
+  background: color-mix(in srgb, var(--panel) 80%, transparent);
+  border: 0.16rem solid var(--line);
+  border-radius: 1rem;
+  box-shadow: 0 0.6rem 1.6rem #0008;
+}
+.sb-win.sb-sheet {
+  top: 2.4rem;
+  width: min(52rem, calc(100% - 1.5rem));
+  max-height: calc(100dvh - 5rem);
+  background: color-mix(in srgb, var(--panel) 70%, transparent);
+}
+.sb-win[hidden] {
+  display: none;
+}
+.sb-win > header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.sb-win .sb-tip {
+  font-size: 0.85em;
+  opacity: 0.75;
+}
+.sb-win h2 {
+  margin: 0;
+  font-size: 1.25em;
+}
+.sb-keys {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.4rem 0.8rem;
+  margin: 0;
+  align-items: center;
+}
+.sb-keys dt,
+.sb-keys dd {
+  margin: 0;
+}
+.sb-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.sb-opt {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.6rem;
+  border: 0.12rem solid var(--line);
+  background: color-mix(in srgb, var(--panel) 60%, transparent);
+  cursor: pointer;
+}
+.sb-none {
+  margin: 0;
+  opacity: 0.7;
+}
+.sb-opt.on {
+  border-color: var(--green);
 }

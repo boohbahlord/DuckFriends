@@ -10,6 +10,7 @@
    higher ground only if it is that high at that moment; walking off an edge falls (off the deck, a long way). Other
    ducks glide to where the room says they are, and jump and fall from their own numbers (z: height, b: where the jump
    began). The activities (registry.js) add the context button, and whatever they draw. */
+import { baseMode, baseL4map } from "../sandboxrules.js";
 import * as L from "./layout.js";
 import { DRAW, GROUND, DECOR, groundColor } from "./shapes.js";
 import { svgDataURL, useHangArtCSS } from "./art.js";
@@ -49,7 +50,7 @@ const dirOf = (dx, dy) => (dx > 0 ? "r" : dx < 0 ? "l" : dy > 0 ? "d" : "u");
    my duck uses it (the Click to interact setting) */
 export function mountWorld(board, api) {
   const opt = (api.room().state || {}).options || {};
-  L.useMode(opt.mode, opt.l4map); // (Quacky Zombies' cabin or its Downpour, or Hangout's: layout.js)
+  L.useMode(baseMode(opt), baseL4map(opt)); // (Quacky Zombies' cabin or its Downpour, or Hangout's, or Sandbox on one of them: layout.js)
   const canvas = board.querySelector(".hang-ground"),
     g = canvas.getContext("2d"),
     propsBox = board.querySelector(".hang-props"),
@@ -882,7 +883,7 @@ export function mountWorld(board, api) {
          "The board or map for the zombie game should be a little more zoomed out in perspective or camera for mobile
          players in vertical OR horizontal becuz it feels cramped") */
       if (
-        R().state.options.mode === "l4dd" &&
+        baseMode(R().state.options) === "l4dd" &&
         document.documentElement.classList.contains("phone")
       )
         cam.sc /= PHONE_OUT;

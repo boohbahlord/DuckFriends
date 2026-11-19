@@ -4,10 +4,12 @@
    0 for none). One time for every way of being knocked down (a bullet, a dagger, a cat's swipe, a kill
    command), so they can't drift apart. While it lasts the duck can't move: Duck Cabin keeps it in s.hang.still
    (hangout/rules.js hangStill), the boards in s.down = { id: until } (downStill). Then it plays dead until it moves. */
+import { baseMode } from "../sandboxrules.js";
+
 export const DEAD_STILL = 6000; // ms: the Duck Cabin's default
 export const DOWN_GAMES = 1000; // ms: the boards' default (owner 2026-11-03 17:15Z: half a second longer than 0.5 s)
 export const DOWN_OK = [0, 500, 1000, 2000, 3000, 5000, 6000]; // (6 s only in Duck Cabin)
-const cabin = (s) => s.options.mode === "hang";
+const cabin = (s) => baseMode(s.options) === "hang"; // (Sandbox on Duck Cabin too)
 export const DOWN_NORMAL = 3000; // ms: the normal games' default (owner, Nov 16: their death lasts three seconds)
 export const downFor = (s) => {
   if (s.options.mode === "mgj") return 5000; // (Mad God Justin: always 5 s)
@@ -16,7 +18,7 @@ export const downFor = (s) => {
     ? v
     : cabin(s)
       ? DEAD_STILL
-      : s.options.mode === "l4dd"
+      : baseMode(s.options) === "l4dd"
         ? DOWN_GAMES
         : DOWN_NORMAL;
 };

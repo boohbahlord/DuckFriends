@@ -4,6 +4,7 @@
    on it (Duck Cabin as the real map, one picture of all of it), or a setting's description. The host (or sudo) picks;
    everyone else looks. With Vote Mode & Map on, the game and the map are voted on in their own windows as the game
    starts (vote.js). */
+import { SB_WORLDS, SB_WORLD_NAMES } from "./sandboxrules.js";
 import { esc, openWindow, setHTML } from "./ui.js";
 import { artBackdrop } from "./art.js";
 import { modesFor, modeOf, CABIN_MODES, CATS } from "./modes.js";
@@ -994,7 +995,10 @@ function mapPic(s, id, mode) {
    picked map. The screenshots were taken with the map left out, so any map shows through; Duck Cabin's games are
    screenshots of the cabin itself */
 function gamePic(s, mode) {
-  const shot = `<image href="assets/modes/${mode}.webp?v=2" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>`;
+  const shot =
+    mode === "sandbox"
+      ? "" // (Sandbox: its map alone, till it has a screenshot of its own)
+      : `<image href="assets/modes/${mode}.webp?v=2" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>`;
   if (CABIN_MODES.includes(mode))
     return `<svg class="gs-map" viewBox="0 0 480 270" role="img" aria-label="${esc(modeOf(mode).name)}">${shot}</svg>`;
   const map =
@@ -1265,15 +1269,28 @@ export function openGameSettings(R, start = null) {
       const dis = !host() || dodOn(s, "vote");
       return (
         head("Map") +
-        `<div class="arm-body"><ul class="arm-list">${row('data-pick="map" data-v="random"', "Random", "", o.mapPick === "random", dis)}${row('data-map="cabin"', "Duck Cabin", "", o.map === "cabin" && o.l4map !== "downpour", dis)}${row('data-map="downpour"', "Downpour", "", o.mode === "l4dd" && o.l4map === "downpour", dis)}${LINE}${MAPS.map(
-          ([id, name]) =>
-            row(
-              `data-map="${id}"`,
-              name,
-              "",
-              !o.mapPick && picked(o) === id,
-              dis,
-            ),
+        `<div class="arm-body"><ul class="arm-list">${row('data-pick="map" data-v="random"', "Random", "", o.mapPick === "random", dis)}${
+          o.mode === "sandbox"
+            ? Object.keys(SB_WORLDS)
+                .map((k) =>
+                  row(
+                    `data-sb="${k}"`,
+                    SB_WORLD_NAMES[k],
+                    "",
+                    !o.mapPick && o.sbMap === k,
+                    dis,
+                  ),
+                )
+                .join("") // (Sandbox: the maps with a world of their own, walked whole: sandboxrules.js)
+            : `${row('data-map="cabin"', "Duck Cabin", "", o.map === "cabin" && o.l4map !== "downpour", dis)}${row('data-map="downpour"', "Downpour", "", o.mode === "l4dd" && o.l4map === "downpour", dis)}`
+        }${LINE}${MAPS.map(([id, name]) =>
+          row(
+            `data-map="${id}"`,
+            name,
+            "",
+            !o.mapPick && picked(o) === id,
+            dis,
+          ),
         ).join("")}${LINE}${MAP_VARIANTS.map(([id, name]) =>
           row(
             `data-map="${id}"`,
@@ -1601,6 +1618,10 @@ export function openGameSettings(R, start = null) {
           }
           if (r.dataset.mode) {
             if (boss) send({ mode: r.dataset.mode });
+            return;
+          }
+          if (r.dataset.sb) {
+            if (boss) send({ sbMap: r.dataset.sb }); // (Sandbox on a world: rules.js sbMapPicked)
             return;
           }
           if (r.dataset.map === "cabin") return go("cabin"); // (Duck Cabin's own games, on a page of their own)

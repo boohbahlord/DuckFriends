@@ -36,6 +36,7 @@
      l4b  { id: { o, at } }: who is boarding up which opening, since when (one more board each BOARD_MS)
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
+import { baseMode, isSb, SB_BACK_MS } from "./sandboxrules.js";
 import { rule, keepOnly } from "./hangout/registry.js";
 import {
   W,
@@ -116,7 +117,7 @@ import {
 import { ANGEL, angelOf, angelAmmo, angelAct, angelLeft } from "./l4ddangel.js";
 import { fieldOf, askField } from "./flowfield.js";
 
-export const isL4dd = (s) => !!s && s.options.mode === "l4dd";
+export const isL4dd = (s) => !!s && baseMode(s.options) === "l4dd"; // (and Sandbox on its cabin or Downpour: sandboxrules.js)
 /* I want only the lights' stutter and the air (the wind, the rain, the fires: ambience.js) on of Hangout's activities.
    The couches, the stage, the card table and the piano's keys are still drawn, but quiet: nothing to sit on, sing into
    or play at, and nothing else to write in or switch. */
@@ -195,8 +196,11 @@ const PHASES = Array.from({ length: 20 }, (_, i) => [
   PHASE_BASE.find(([last]) => i + 1 <= last)[1],
 ]);
 const Z_EACH = 100, // the most zombies a round for each player …
-  Z_MOST = 800, // … and in all (was 400)
   Z_LATE = 800; // from round 21 on (was 144)
+export const Z_MOST = 800; // … and in all (was 400)
+/* Sandbox: the most NPCs alive at once on any map, online too. It follows the zombies' cap (the owner's, Nov 19 01:57Z),
+   so the two never drift apart */
+export const NPC_CAP = Z_MOST;
 export function zombiesFor(r, p) {
   const cap = Math.min(Z_EACH * p, Z_MOST);
   let n = 0;
@@ -1877,7 +1881,7 @@ export const waitVotes = (s) => {
 function waitTick(s, now) {
   const L = s.hang.l4,
     w = L.wait;
-  if (!w) return false;
+  if (!w || isSb(s)) return false; // (Sandbox: the rest never ends, so no zombies ever come: sandboxrules.js)
   const v = L.sv;
   if (v && L.r === 0 && now >= v.until) {
     s.hang.l4 = { ...L, sv: null }; // (a vote that ran out: nothing changes)
@@ -1959,7 +1963,7 @@ function l4Act(s, a, now) {
     return true;
   }
   if (a.do === "endturn") {
-    if (L.over || !L.wait || isHelper(s, id)) return false; // (Justin can't end a rest phase: the owner's, Nov 17 13:38Z)
+    if (L.over || !L.wait || isHelper(s, id) || isSb(s)) return false; // (Sandbox: round 0 for good, no End turn) // (Justin can't end a rest phase: the owner's, Nov 17 13:38Z)
     const v = { ...L.wait.v };
     if (a.on === false) delete v[id];
     else v[id] = 1;
@@ -1970,7 +1974,7 @@ function l4Act(s, a, now) {
   if (a.do === "sr") {
     // Change starting round: a vote "Start at round N", the asker's Yes in it
     const n = +a.n;
-    if (!START_ROUNDS.includes(n) || !srCan(s, id)) return false;
+    if (!START_ROUNDS.includes(n) || !srCan(s, id) || isSb(s)) return false;
     s.hang.l4 = {
       ...L,
       sv: { n, by: id, v: { [id]: 1 }, until: now + SR_VOTE_MS },
@@ -4439,6 +4443,12 @@ function l4Tick(s, now) {
       p4[id] = p;
       continue;
     }
+    if (p.gh && isSb(s) && now - (p.at || 0) >= SB_BACK_MS) {
+      s.hang.l4p = p4;
+      bringBack(s, id, now, ids.indexOf(id), false);
+      p4[id] = s.hang.l4p[id];
+      continue;
+    } // (Sandbox: no next round to wait for, so a ghost is back up a moment later, at a start spot, with its weapons)
     if (p.gh) continue;
     if (
       p.hp < maxHp(s, id) &&
@@ -4501,7 +4511,7 @@ function l4Tick(s, now) {
   /* nobody standing: the game is over (a duck Safe Keeping is getting up counts as standing) */
   const mine = ids.filter((id) => !isWild(s, id)), // (Justin out there doesn't keep the game going, nor end it)
     up = mine.filter((id) => standing(s, id) || !!(P4(s, id) || {}).skAt);
-  if (!up.length && mine.length) {
+  if (!up.length && mine.length && !isSb(s)) {
     s.hang.l4 = { ...s.hang.l4, over: { at: now, r: L.r } };
     s.hang.l4b = {};
     return true;
