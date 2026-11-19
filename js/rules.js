@@ -1713,7 +1713,10 @@ function seatNewcomer(s, id) {
 /* ---------- the actions ---------- */
 export function reduce(state, a, now = Date.now()) {
   const s = reduceStep(state, a, now);
-  if (s && s !== state) applyRules(s); // (Mode Rules: the options follow the mode now picked)
+  if (s && s !== state) {
+    applyRules(s); // (Mode Rules: the options follow the mode now picked)
+    sizeShots(s);
+  }
   return s;
 }
 function reduceStep(state, a, now) {
@@ -3649,6 +3652,7 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
     [far0, wide] = REACH[sp],
     far =
       far0 *
+      sizeOf(s, by) * // (a bigger duck's arm and weapon reach farther, a smaller one's not as far: as they're drawn, sizeShots)
       (sp === "hammer" && by === JUSTIN_ID && isMgj(s)
         ? MGJ_SCALE * MGJ_HAMMER
         : 1); // (Mad God Justin's bigger hammer reaches farther)
@@ -3842,18 +3846,34 @@ function attacks(s, now) {
   return ch;
 }
 /* where a bullet or a dagger is, t ms after it was fired: on the board (x, y) and, for the dagger, its height z */
+/* a duck's shots and throws leave its hand at its own Size (duck.js scaleOf: the owner's, Nov 19 16:50Z "make sure their
+   laser sights, bullets, melee attacks, item throws, and everything is consistent between sizes big and small"): each
+   new shot of a duck that isn't 100% keeps its size as sc, and flies that much higher (shotAt) and is drawn that much
+   bigger when thrown (game.js) */
+function sizeShots(s) {
+  if (!s.shots || !s.shots.length) return;
+  let ch = false;
+  const out = s.shots.map((sh) => {
+    if (sh.sc !== undefined || !sh.by) return sh;
+    ch = true;
+    return { ...sh, sc: sizeOf(s, sh.by) };
+  });
+  if (ch) s.shots = out;
+}
+/* a duck's Size, as a share (1: 100%); Justin and the computers' made ducks without one: 1 */
+const sizeOf = (s, id) =>
+  (s.players && s.players[id] && scaleOf(s.players[id].duck)) || 1;
 /* how high a swing is, in duck widths over the swinger's feet: their hand, as the screens draw it (game.js bodyAt) */
-const handUp = (s, id) =>
-  0.45 * scaleOf(((s.players && s.players[id]) || {}).duck);
+const handUp = (s, id) => 0.45 * sizeOf(s, id);
 export const shotAt = (sh, t) => ({
   x: sh.x0 + (sh.vx * t) / 1000,
   y: sh.y0 + (sh.vy * t) / 1000,
   z:
-    sh.k === "dagger"
+    (sh.k === "dagger"
       ? daggerZ(t / 1000)
       : sh.k === "grenade"
         ? grenadeZ(t / 1000)
-        : 0.41,
+        : 0.41) * (sh.sc || 1), // (a bigger duck's from higher up: its hand, sizeShots)
 });
 /* a grenade going off at (x, y): every duck within GRENADE_R plays dead and is thrown away from it, three times as far as
    the hammer throws one; Justin is knocked down (Mad God Justin: 1 damage), Duck Cabin's Justin and cats are hit. In
@@ -4168,11 +4188,12 @@ function chainShot(s, by, p, aim, now, w = "chaingun") {
         : {}),
       ...floorFirst(s, by, p, aim, now), // (a duck on my floor in its line: it stays on my floor)
     },
-    far = hang ? CHAIN_FAR * 0.25 : CHAIN_FAR; // (Hangout's world is far bigger than a board)
+    far = hang ? CHAIN_FAR * 0.25 : CHAIN_FAR, // (Hangout's world is far bigger than a board)
+    up = 0.41 * sizeOf(s, by); // (out of its gun, at my Size: sizeShots)
   let at = {
     x: p.x + (aim[0] / l) * far,
     y: p.y + (aim[1] / l) * far,
-    z: 0.41,
+    z: up,
   };
   if (hang) {
     // the cabin's walls stop it
@@ -4180,7 +4201,7 @@ function chainShot(s, by, p, aim, now, w = "chaingun") {
       const x = p.x + ((aim[0] / l) * far * i) / 80,
         y = p.y + ((aim[1] / l) * far * i) / 80;
       if ((inCabin(x * HW, y * HH) ? 1 : 0) !== sh.hin) {
-        at = { x, y, z: 0.41 };
+        at = { x, y, z: up };
         break;
       }
     }
@@ -4191,7 +4212,7 @@ function chainShot(s, by, p, aim, now, w = "chaingun") {
     at = {
       x: d.x + ((aim[0] / l) * rx) / 2,
       y: d.y + ((aim[1] / l) * ry) / 2,
-      z: 0.41,
+      z: up,
     }; // (a little past it, so the duck is surely on the line)
   }
   shotHits(s, sh, at, p.x, p.y, at.x - p.x, at.y - p.y, now);
@@ -4440,9 +4461,10 @@ function groundFire(s, now) {
 /* what a shot hit this beat, between (x0, y0) and at: the ducks, Mad God Justin, a Jaime Guard, Justin, Duck Cabin's
    Justin and cats; true when it's gone (Mad God Justin's own) */
 function shotHits(s, sh, at, x0, y0, dx, dy, now) {
-  if (at.z > -0.15 && at.z < 1.05)
+  if (at.z > -0.15)
     for (const id of s.seat) {
-      // (a dagger over a duck's head, or already fallen, hits nobody)
+      // (a dagger over a duck's head, or already fallen, hits nobody: a bigger duck's head is higher, duck.js)
+      if (at.z >= 1.05 * duckBig(s, id)) continue;
       const p = s.pos[id],
         P = s.players[id];
       if (id === sh.by || !p || p.x < 0 || !P || P.dead || isGhost(s, id))

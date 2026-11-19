@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v104",
+    version: 104,
+    date: "Nov 19, 2026",
+    title: "Sizes that line up",
+    news: [
+      "Your duck's Size now goes from 50% up to Mad God Justin's height (152%). Bullets, throws and swings come from your duck's hand at any size, and a bigger duck's swing reaches farther.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v103",
     version: 103,
     date: "Nov 19, 2026",

@@ -109,7 +109,9 @@ export function duckRoom() {
 }
 /* a duck's own size, the Size row in Customize (the owner's, Nov 19 15:52Z): its look's scale, in percent, "only be
    50% size at the smallest and 500% size at the biggest". As a share: 0.5 … 5 */
-export const DUCK_SCALE = { MIN: 50, MAX: 500 };
+/* a player's Size, in percent: Mad God Justin's height at most (the owner's, Nov 19 16:50Z: "change max size for players
+   to the size of mad god justin"; his drawing is 152/120 of a duck's height, as sandboxrules.js' NPC Size) */
+export const DUCK_SCALE = { MIN: 50, MAX: 152 };
 export const scaleOf = (look) =>
   Math.min(
     DUCK_SCALE.MAX,
