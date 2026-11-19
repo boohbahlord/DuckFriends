@@ -17115,6 +17115,32 @@ html.pixel .l4-flare::before {
     opacity: 0;
   }
 }
+/* "The Merchant has Arrived" stays 3 s, then fades over 1 s (the owner's, Nov 19 12:59Z: "shouldnt be too short or too long
+   and then fade away"; it was 2.2 s in all, the fade only the last half second) */
+.l4-got.merchant.on {
+  animation: l4-got-merchant 4s ease-out forwards;
+}
+@keyframes l4-got-merchant {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.6);
+  }
+  4% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.08);
+  }
+  8% {
+    transform: translateX(-50%) scale(1);
+  }
+  75% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) scale(1);
+  }
+}
 /* the Nuke (l4dd.js nukeScreen, owner 2026-11-16): grey pixel static over the whole board, the map grey for 7 s, then
    its colors slowly coming back; "Nuke" in crimson blood letters that hold still through it; its bodies lie 15 s */
 .l4-nuke {
