@@ -6568,6 +6568,9 @@ html.moving .gduck-fire .fl-in {
   filter: brightness(0.3) saturate(0.3) sepia(0.5);
   transition: filter 0.3s;
 }
+.gduck.burnt.burnt-lite .gduck-body {
+  filter: brightness(0.8) saturate(0.8) sepia(0.2);
+} /* (a Laser Rifle overheated in its hands: only a little burnt, the owner's, Nov 19 19:27Z; game.js burn) */
 /* a Laser Rifle overheated in its hands: the duck shakes a moment, burnt (game.js l4hot); its picture shakes, not the
    body, so the body's own animations (a heal's glow) aren't cut off or started again */
 html.moving .gduck.l4-jolt .gduck-body > * {
@@ -7227,6 +7230,13 @@ html.still .spx-disco .disco-spot {
   transform: translate(-50%, -50%);
   transition: opacity 0.15s;
   filter: drop-shadow(0 0.08rem 0.08rem #0006);
+}
+/* the Laser Rifle getting hot: the whole gun glows its barrel's color, as strong as it is hot (game.js, laserfx.js
+   laserGlow: --hot, --hg) */
+.held.lz-glow i {
+  filter: drop-shadow(0 0 calc(var(--s) * 0.025 * var(--hg)) var(--hot))
+    drop-shadow(0 0 calc(var(--s) * 0.07 * var(--hg)) var(--hot))
+    drop-shadow(0 0.08rem 0.08rem #0006) brightness(calc(1 + 0.12 * var(--hg)));
 }
 .held[data-w="dagger"] i {
   width: calc(var(--s) * 0.4);
@@ -19655,7 +19665,7 @@ html.pixel.armed :is(.board, .hang-board) {
 .vt-k-zmap .vt-maps {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
-.vt-k-zmap img.vt-still {
+img.vt-still {
   object-fit: cover;
 }
 /* a phone: one above another, bigger, the dice a short bar so both maps fit under it */
