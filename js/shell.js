@@ -67,7 +67,7 @@ import { secret } from "./unlocks.js";
 import { uiCommand } from "./hideui.js";
 import { music } from "./music.js";
 import { npcsHere, npcTag, npcByTag, npcById } from "./npcs.js";
-import { isSb, sbCan, sbWorld, SB_WORLD_NAMES } from "./sandboxrules.js";
+import { isSb, sbMay, sbWorld, SB_WORLD_NAMES } from "./sandboxrules.js";
 import { HELP } from "./numerathelp.js";
 
 const tag = (n) => String(n || "").replace(/\s+/g, "");
@@ -2306,7 +2306,7 @@ function startFile(path, ctx, sudo) {
     name = path.slice(fs.home.length + 1);
   if (!s || !isSb(s))
     fail(`✗ ${name}: Numberat files only run in Sandbox.`, 126);
-  if (!sbCan(s, ctx.room.me) && !(sudo && isSudo(s, ctx.room.me)))
+  if (!sbMay(s, ctx.room.me, "n") && !(sudo && isSudo(s, ctx.room.me)))
     fail(
       `✗ ${name}: only the host, or whoever the host lets, runs Numberat files here${isSudo(s, ctx.room.me) ? " (sudo runs it as sudo)" : ""}.`,
       126,

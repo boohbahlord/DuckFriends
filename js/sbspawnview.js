@@ -23,7 +23,7 @@ import { clawMark } from "./l4dd.js";
 import { esc, openWindow, confirmBox } from "./ui.js";
 import {
   isSb,
-  sbCan,
+  sbMay,
   sbOnBoard,
   SB_BOXES,
   SB_FLAGS,
@@ -249,7 +249,7 @@ export function sbSettings(getR, id, tab = "") {
   const R = getR(),
     pts = R && ptsOf(R.state),
     p = pts && pts[id];
-  if (!p || !sbCan(R.state, R.me)) return;
+  if (!p || !sbMay(R.state, R.me, "b")) return;
   const typed = (f) => (p.f[f] ? p.f[f].t : boxText(p, f)),
     why = (f) => (p.f[f] ? boxWhy(f, p.f[f].t) : ""),
     spawn = p.k === "spawn",
@@ -619,7 +619,7 @@ activity({
   },
   near(pos, ctx) {
     const s = ctx.state();
-    if (!s || !sbCan(s, ctx.me)) return null;
+    if (!s || !sbMay(s, ctx.me, "b")) return null;
     let best = null,
       bd = 90;
     for (const [id, p] of Object.entries(ptsOf(s))) {

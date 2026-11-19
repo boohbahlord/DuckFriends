@@ -4,7 +4,7 @@
    on it (Duck Cabin as the real map, one picture of all of it), or a setting's description. The host (or sudo) picks;
    everyone else looks. With Vote Mode & Map on, the game and the map are voted on in their own windows as the game
    starts (vote.js). */
-import { SB_WORLDS, SB_WORLD_NAMES } from "./sandboxrules.js";
+import { SB_WORLDS, SB_WORLD_NAMES, SB_RIGHTS } from "./sandboxrules.js";
 import { esc, openWindow, setHTML } from "./ui.js";
 import { artBackdrop } from "./art.js";
 import { modesFor, modeOf, CABIN_MODES, CATS } from "./modes.js";
@@ -28,6 +28,7 @@ const CAT_NAMES = {
   time: "Durations",
   round: "Round Settings",
   more: "Additional Settings",
+  rights: "Rights", // (Sandbox: who may change it)
 };
 const ON_OFF = [
   [0, "Off"],
@@ -731,6 +732,26 @@ const BY_MODE = {
       cat: "time",
       d: "After each answer is shown there are 10 seconds before the next question. Anyone can press Stop timer to hold the clock; once everyone lets go it starts again at 5 seconds.",
     },
+  ],
+  /* Sandbox: who may change it (the owner's, Nov 19: "fewer options, such as if all players get all persmisions or if
+     all players get only a select few permissions onto different buttons"). Off by default: the host, and whoever
+     the host lets in Player settings (P) */
+  sandbox: [
+    {
+      k: "sbAll",
+      n: "Everyone can change Sandbox",
+      c: ON_OFF,
+      cat: "rights",
+      d: "On: every player can use every window: Build, Make an NPC, Numberat, the hotbar's setup, Game settings and Player settings. Off: only the host and the players the host lets in Player settings (P).",
+    },
+    ...SB_RIGHTS.map(([k, n]) => ({
+      k: "sbOk" + k.toUpperCase(),
+      n: `Everyone can use ${n}`,
+      c: ON_OFF,
+      cat: "rights",
+      when: (s) => +s.options.sbAll !== 1,
+      d: `On: every player can use ${n} (${k.toUpperCase()}), even without the rights to change Sandbox.`,
+    })),
   ],
   hang: [
     {

@@ -21,7 +21,7 @@ import { keep, read, valueOf } from "./numerat.js";
 import {
   baseMode,
   isSb,
-  sbCan,
+  sbMay,
   sbOnBoard,
   SB_BOXES,
   SB_FLAGS,
@@ -329,7 +329,18 @@ function press(s, id, now) {
 
 /* ---------- the actions: { t: "sb", k, … } ---------- */
 export function sbAct(s, a, now) {
-  if (!isSb(s) || !sbCan(s, a.id)) return false;
+  if (!isSb(s)) return false;
+  /* an NPC is Make an NPC's (M); a picture's part is Build's or M's; the rest is Build's (B): the rights give them all,
+     Game Settings may give everyone one (sandboxrules.js sbMay) */
+  const may = (k) => sbMay(s, a.id, k);
+  if (
+    a.k === "npc"
+      ? !may("m")
+      : a.k === "pic"
+        ? !may("b") && !may("m")
+        : !may("b")
+  )
+    return false;
   const pts = pointsOf(s);
   if (a.k === "add") {
     const me = s.pos[a.id];

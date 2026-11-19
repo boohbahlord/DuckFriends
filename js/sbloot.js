@@ -15,7 +15,7 @@
    unless Compress was ticked (the owner's answer 6, Nov 19); s.sbImg = { loot point: its key there } */
 import {
   isSb,
-  sbCan,
+  sbMay,
   sbOnBoard,
   baseMode,
   SB_LOOT,
@@ -47,7 +47,7 @@ export const lootList = (s, p) =>
 
 /* ---------- the actions: { t: "sbl", k: "img", p, v } (an orb's own picture: its key in s.sbpic, or "" for none) ---------- */
 export function sbLootAct(s, a) {
-  if (!isSb(s) || !sbCan(s, a.id) || a.k !== "img") return false;
+  if (!isSb(s) || !sbMay(s, a.id, "b") || a.k !== "img") return false;
   const p = ((s.sb && s.sb.pts) || {})[a.p],
     v = typeof a.v === "string" ? a.v : "";
   if (!p || p.k !== "loot") return false;

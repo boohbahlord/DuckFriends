@@ -47,9 +47,27 @@ export const sbOnBoard = (s) => isSb(s) && !sbWorld(s.options);
 export function sbCan(s, id) {
   if (!isSb(s) || !id || !s.players[id] || s.players[id].bot) return false;
   if (id === s.hostId) return true;
+  if (+s.options.sbAll === 1) return true; // (Game Settings: "Everyone can change Sandbox")
   if (+s.options.dod === 1 && ((s.dod || {}).on || {}).settings) return true; // (rules.js dodOn(s, "settings"))
   return !!(s.sb && s.sb.ok && s.sb.ok[id]);
 }
+/* Game Settings can also give every player just some of the windows (the owner's, Nov 19: "if all players get only a
+   select few permissions onto different buttons"): option sbOk + the window's letter, 1 on. The rights (sbCan) give
+   them all; Player settings (p) stays with the rights */
+export const SB_RIGHTS = [
+  ["b", "Build"],
+  ["m", "Make an NPC"],
+  ["n", "Numberat"],
+  ["h", "Hotbar"],
+  ["g", "Game settings"],
+];
+export const sbMay = (s, id, k) =>
+  sbCan(s, id) ||
+  (isSb(s) &&
+    !!id &&
+    !!s.players[id] &&
+    !s.players[id].bot &&
+    +s.options["sbOk" + String(k).toUpperCase()] === 1);
 /* a downed duck in Sandbox on Dead Ducks Arcade's maps: back up this long after it bled out (no rounds to wait for) */
 export const SB_BACK_MS = 3000;
 

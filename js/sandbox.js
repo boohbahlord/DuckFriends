@@ -4,13 +4,14 @@
    closes it; a quick double tap keeps it up, and one tap of its key closes it again "IF they are already open". While a
    window is up, the number keys pick its options instead of switching weapons, and a mouse click on an option does the
    same. The cheat sheet is "somewhat" see-through and larger than Tab's window. Only c is for everyone: the others
-   belong to whoever sbCan says (the host; everyone when Democracy of Ducklings lets everyone change the settings).
+   belong to whoever sbCan says (the host; everyone when Democracy of Ducklings lets everyone change the settings), or to
+   everyone for the windows Game Settings gives everyone (sbMay).
    b places spawns (sbspawnview.js), m makes NPCs (sbmake.js) and p gives the rights; the options inside n, h and g come
    with the later stages.
    A phone has no keys: a Tools button under Leave Sandbox lists the windows, a tap on one keeps it up, and its × puts it
    away (the owner's answer 7, Nov 19 10:22Z: "you can start working on i now"). */
 import { esc, typing, windowOpen } from "./ui.js";
-import { isSb, sbCan, SB_KEYS_TAKEN, SB_KEY_IN_BUILD } from "./sandboxrules.js";
+import { isSb, sbMay, SB_KEYS_TAKEN, SB_KEY_IN_BUILD } from "./sandboxrules.js";
 import {
   buildRows,
   ghostHTML,
@@ -176,14 +177,14 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   let shown = "";
   const paint = () => {
     const R = getR();
-    sbView.build = !!R && k.open === "b" && sbCan(R.state, R.me); // (the zones show while I build: sbspawnview.js)
+    sbView.build = !!R && k.open === "b" && sbMay(R.state, R.me, "b"); // (the zones show while I build: sbspawnview.js)
     if (!k.open || !R || !isSb(R.state)) {
       box.hidden = true;
       shown = "";
       return;
     }
     const w = SB_WINS[k.open],
-      can = w.all || sbCan(R.state, R.me),
+      can = w.all || sbMay(R.state, R.me, k.open), // (the rights, or Game Settings giving everyone this window)
       opts = can ? sbOptions(k.open, R) : [];
     const sig = k.open + (can ? 1 : 0) + opts.map((o) => o.label).join("|");
     if (sig !== shown) {
@@ -215,7 +216,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
     tBtn.setAttribute("aria-expanded", on ? "true" : "false");
     if (!on || !R) return;
     tList.innerHTML = Object.entries(SB_WINS)
-      .filter(([, w]) => w.all || sbCan(R.state, R.me))
+      .filter(([key, w]) => w.all || sbMay(R.state, R.me, key))
       .map(
         ([key, w]) =>
           `<button type="button" class="sb-tools-opt" data-k="${key}">${esc(w.name)}</button>`,
@@ -286,7 +287,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   };
   sbPlace.start = (kind, label) => {
     const R = getR();
-    if (!R || !sbCan(R.state, R.me)) return;
+    if (!R || !sbMay(R.state, R.me, "b")) return;
     carry = { kind, label };
     ghost.innerHTML = ghostHTML(R.state, kind);
     ghost.classList.toggle("zone", kind === "zone");
@@ -345,7 +346,8 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   const pick = (i) => {
     const R = getR(),
       o = R && sbOptions(k.open, R)[i];
-    if (!o || !R || !(SB_WINS[k.open].all || sbCan(R.state, R.me))) return;
+    if (!o || !R || !(SB_WINS[k.open].all || sbMay(R.state, R.me, k.open)))
+      return;
     if (o.win) {
       sbClose(k, false); // (a popup of its own takes the place)
       paint();
@@ -410,7 +412,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
     if (e.code === "KeyE" && !e.repeat) {
       const R = getR(),
         s = R.state;
-      const id = sbCan(s, R.me) ? sbNearPoint(s, s.pos[R.me]) : null;
+      const id = sbMay(s, R.me, "b") ? sbNearPoint(s, s.pos[R.me]) : null;
       if (id) {
         e.preventDefault();
         e.stopImmediatePropagation();
@@ -428,7 +430,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
         s = R.state;
       if (
         !SB_KEYS_TAKEN.includes(key) &&
-        sbCan(s, R.me) &&
+        sbMay(s, R.me, "b") &&
         Object.values((s.sb && s.sb.pts) || {}).some(
           (p) => p.k === "spawn" && boxText(p, "key").toLowerCase() === key,
         )
@@ -441,7 +443,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
     }
     const l = letter(e);
     /* n opens the Numerat window itself (numeratwin.js), for whoever may write Numerat */
-    if (l === "n" && sbCan(getR().state, getR().me)) {
+    if (l === "n" && sbMay(getR().state, getR().me, "n")) {
       e.preventDefault();
       e.stopImmediatePropagation();
       if (e.repeat) return;
