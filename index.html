@@ -73,6 +73,27 @@
         <p class="veil-ping"></p>
         <div class="veil-bar"><i style="width: 35%"></i></div>
       </div>
+      <!-- (the owner's, Nov 19: a small help button at the bottom left to the light install page, get/, for a bad
+           connection; styled here, since the stylesheet may not have come yet) -->
+      <a
+        id="lite-link"
+        href="get/"
+        onclick="event.stopPropagation()"
+        style="
+          position: fixed;
+          left: 12px;
+          bottom: 12px;
+          padding: 6px 10px;
+          border: 1px solid #555;
+          border-radius: 8px;
+          color: #ccc;
+          font:
+            14px system-ui,
+            sans-serif;
+          text-decoration: none;
+        "
+        >? Slow? Install</a
+      >
     </div>
     <main id="app"></main>
     <div class="corner-tr">

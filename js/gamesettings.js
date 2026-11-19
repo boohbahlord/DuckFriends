@@ -738,6 +738,14 @@ const BY_MODE = {
      the host lets in Player settings (P) */
   sandbox: [
     {
+      k: "sbTint",
+      n: "Color over the map",
+      c: ON_OFF,
+      cat: "more",
+      when: (s) => !SB_WORLDS[s.options.sbMap],
+      d: "On: the board in Sandbox gets Mad God Justin's slowly changing color over the map. Off: the map shows plain.",
+    },
+    {
       k: "sbAll",
       n: "Everyone can change Sandbox",
       c: ON_OFF,

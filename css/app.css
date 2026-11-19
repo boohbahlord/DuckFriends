@@ -13671,6 +13671,15 @@ html.moving .mgj-field {
     --mgjc: #7a3a2c;
   }
 }
+/* Sandbox on the board: the map shows plain; the arena's color is only there when its setting is on (the owner, Nov 19
+   16:17Z: "remove the color overlay for the map here unless it is turned on") */
+.sb-board:not(.sb-tint) .mgj-field {
+  background: transparent;
+  animation: none;
+}
+.sb-board:not(.sb-tint) .mgj-field::before {
+  display: none;
+}
 .mgj-field::before {
   content: "";
   position: absolute;

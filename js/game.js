@@ -230,12 +230,12 @@ import {
 import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
 import { JET, jetHTML, myFuel, burnFuel } from "./jetpack.js";
 import { mountL4Bar, l4Slider } from "./l4ddbar.js";
-import { isSb, sbOnBoard } from "./sandboxrules.js";
+import { isSb, sbOnBoard, sbMay } from "./sandboxrules.js";
 import { mountCabinEnd } from "./hangout/cabinend.js";
 import { mountSandboxKeys } from "./sandbox.js";
 import { sbHotOn, sbLook, sbHotSig } from "./sbhotview.js";
 import { sbSlots, spawnOf } from "./sbhot.js";
-import { sbBoardMarks } from "./sbspawnview.js";
+import { sbBoardMarks, sbSettings } from "./sbspawnview.js";
 import { duckSVG, duckRoom, scaleOf } from "./duck.js";
 import {
   shownDuck,
@@ -757,7 +757,7 @@ const boardHTML = (s) =>
               : isMgj(s)
                 ? mgjBoardHTML(s)
                 : sbOnBoard(s)
-                  ? SB_BOARD
+                  ? SB_BOARD(s)
                   : isVd(s)
                     ? vdBoardHTML(s, R.me)
                     : isTv(s)
@@ -769,7 +769,8 @@ const boardHTML = (s) =>
 
 /* Sandbox on the board: the plain field, Mad God Justin's arena with nobody in it (the room's map shows through as on
    every board) */
-const SB_BOARD = `<div class="board sb-board"><div class="cols mgj-cols"><div class="col mgj-field" data-c="0"></div></div><div class="ducks"></div><div class="fxl"></div></div>`;
+const SB_BOARD = (s) =>
+  `<div class="board sb-board${+s.options.sbTint === 1 ? " sb-tint" : ""}"><div class="cols mgj-cols"><div class="col mgj-field" data-c="0"></div></div><div class="ducks"></div><div class="fxl"></div></div>`;
 /* the board's measurements, taken again when the window or the docks change */
 function measure() {
   const board = S && $(".board", S);
@@ -1287,6 +1288,15 @@ function drawDucks(now = clockNow()) {
     layer = $(".ducks", board),
     size = geo.size,
     hang = !!geo.hang;
+  if (isSb(s)) {
+    const go = (sbGo(s) || {}).id || "";
+    if (go !== lastSbGo) {
+      lastSbGo = go;
+      setHTML($(".gact", S), actHTML(s)); // (I walked to or from a spawn build: its button comes or goes)
+    }
+  }
+  if (board.classList.contains("sb-board"))
+    board.classList.toggle("sb-tint", +s.options.sbTint === 1); // (its setting changed while the game runs)
   if (pixelOn()) setDuckSize(hang ? PAGE_DUCK : size); // (the pixel look: one pixel is a 32nd of a duck, on this board; Duck Cabin's and Downpour's world, where ducks show smaller, on the pages' grid: pixel.js)
   /* each duck's element by its id, kept on the layer (a search of the layer for every duck, every frame, added up) */
   const duckEls = layer._els || (layer._els = new Map()),
@@ -6402,8 +6412,39 @@ function mgjTip(s) {
       : "Tap the special in the middle to use it"
     : "<kbd>WASD</kbd> walk · <kbd>Arrows</kbd> or the mouse aim · <kbd>Click</kbd> use";
 }
+/* Sandbox on the board: the build (spawn, respawn, loot or zone) my duck stands by, { id, label }, or null: its settings
+   open with E or the button, as on Duck Cabin and Downpour (sbspawnview.js near). The owner, Nov 19 16:17Z: "interact
+   button shows on the interactable builds". Only for who may build (B) */
+let lastSbGo = "";
+const SB_LABELS = {
+  spawn: "Spawn settings",
+  loot: "Loot settings",
+  zone: "Zone settings",
+};
+function sbGo(s) {
+  if (!isSb(s) || !sbOnBoard(s) || !me || !onBoardPhase()) return null;
+  if (!sbMay(s, R.me, "b")) return null;
+  let best = null,
+    bd = 1.6;
+  for (const [id, p] of Object.entries((s.sb && s.sb.pts) || {})) {
+    if (p.grp) continue;
+    const d = Math.hypot((p.x - me.x) / 0.03, (p.y - me.y) / 0.08);
+    if (d < bd) {
+      bd = d;
+      best = { id, label: SB_LABELS[p.k] || "Respawn settings" };
+    }
+  }
+  return best;
+}
+const sbGoOpen = () => {
+  const g = sbGo(R.state);
+  if (g) sbSettings(() => R, g.id);
+};
 /* the middle of the bottom bar: what you can do now, and how many are done */
 function actHTML(s) {
+  const sbg = sbGo(s);
+  if (sbg)
+    return `<div class="act-row"><button type="button" class="btn hang-btn" data-a="sbgo">${esc(sbg.label)} <kbd>E</kbd></button></div>`;
   const on = playing(s),
     n = on.length,
     d = on.filter((id) => s.done[id]).length,
@@ -7643,6 +7684,11 @@ function keydown(e) {
     if (!e.repeat) useKey(keyIndex(e), e.shiftKey, true);
     return;
   } // the specials' keys (Shift: keep it on)
+  if (e.code === "KeyE" && sbGo(R.state)) {
+    e.preventDefault();
+    if (!e.repeat) sbGoOpen();
+    return;
+  } // Sandbox on the board: E opens the settings of the build I stand by
   if (e.code === "KeyE" && isHang(R.state) && onBoardPhase()) {
     e.preventDefault();
     if (!e.repeat && world) world.press();
@@ -7729,6 +7775,9 @@ async function act(a) {
     case "hang":
       if (world) world.press();
       break; // Hangout: the context button
+    case "sbgo":
+      sbGoOpen();
+      break; // Sandbox on the board: the settings of the build I stand by
     case "end":
       if (isHang(s)) {
         if (world) world.press();

@@ -246,6 +246,7 @@ export const OPTIONS_DEFAULT = {
   lowGravity: 0, // 1: jumps float, slower and higher
   fun: 1, // the silly commands (lightning, love, kill, hotdog): 1 on, 0 off
   ghosts: 0, // 1: Duck Cabin's ghosts (hangout/ghosts.js): a knocked-down duck's ghost walks about until Space
+  sbTint: 0, // Sandbox on the board: 1 puts Mad God Justin's colored field over the map (off: the map shows plain)
   sbAll: 0, // Sandbox: 1, every player has all of Sandbox's rights (sandboxrules.js sbCan); 0, the host and whoever it lets
   sbOkB: 0, // Sandbox: 1, every player may use Build (B) without the rights; the same for M, N, H and G (sandboxrules.js sbMay)
   sbOkM: 0,

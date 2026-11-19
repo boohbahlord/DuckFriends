@@ -9,6 +9,28 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v101",
+    version: 101,
+    date: "Nov 19, 2026",
+    title: "Sandbox: plain maps, one-press windows",
+    news: [
+      "For Sandbox: the map shows plain unless you turn on Color over the map in Game Settings.",
+      "For Sandbox: one press of B, M, H, G, P or C opens its window and pressing it again closes it.",
+      "For Sandbox: on the board, a button shows when you stand by something you built, and opens its settings.",
+    ],
+    fixed: [],
+  },
+  {
+    id: "v100",
+    version: 100,
+    date: "Nov 19, 2026",
+    title: "A light install for slow connections",
+    news: [
+      'On a slow connection, type /get after the site\'s address (or tap "Slow? Install" at the bottom left of the loading screen): a tiny page installs the whole game on the device, picking up where it stopped if the connection drops. After that the game loads from the device.',
+    ],
+    fixed: [],
+  },
+  {
     id: "v99",
     version: 99,
     date: "Nov 19, 2026",

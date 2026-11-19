@@ -17,7 +17,13 @@ const sw =
   "serviceWorker" in navigator && isSecureContext
     ? navigator.serviceWorker
     : null;
-if (sw && inApp()) {
+/* a device that got the game from the light install page (get/index.html, the owner's, Nov 19: for a bad connection)
+   keeps its copy up to date on the website too */
+let lite = false;
+try {
+  lite = localStorage.getItem("df-lite") === "1";
+} catch {}
+if (sw && (inApp() || lite)) {
   sw.addEventListener("message", (e) => {
     const m = e.data || {};
     if (m.t !== "kept") return;
