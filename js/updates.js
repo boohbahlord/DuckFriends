@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v97",
+    version: 97,
+    date: "Nov 19, 2026",
+    title: "Faster maps",
+    news: [
+      "Sky, Pixel, Carnival Night, Starry Night, Shelter Sky & Null and Euclid's Squares run much faster on slower computers (two to three times).",
+    ],
+    fixed: [],
+  },
+  {
     id: "v96",
     version: 96,
     date: "Nov 19, 2026",
