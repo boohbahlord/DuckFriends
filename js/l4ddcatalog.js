@@ -58,7 +58,7 @@ const SAY = {
   medkit:
     "Puts your HP back to full. Held while you revive someone, it gets them up at once.",
   safekeep:
-    "A halo. When you go down you keep everything you bought, and it gets you up: E while down, or by itself when nobody else is standing. 6 seconds nothing hurts you after.",
+    "A halo, used once. When you go down it gets you up: E while down, or by itself when nobody else is standing, and 6 seconds nothing hurts you after. If you die instead, you come back with your upgrades.",
   zebra:
     "Thrown. Every zombie goes for it and bites it until it's gone. Justin's favorite.",
   adrenaline: "You walk at the game's usual speed for 20 seconds.",

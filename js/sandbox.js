@@ -17,6 +17,7 @@ import {
   sbMay,
   SB_KEYS_TAKEN,
   SB_KEY_IN_BUILD,
+  SB_POINTS,
   SB_RIGHTS,
 } from "./sandboxrules.js";
 import {
@@ -455,7 +456,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
     e.stopImmediatePropagation(); // (no walking there, no swing, no shot)
     const R = getR(),
       at = spotAt && spotAt(e.clientX, e.clientY);
-    if (R && at)
+    if (R && at && !full(R))
       R.send({
         t: "sb",
         k: "add",
@@ -489,9 +490,16 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
     const R = getR();
     return !!R && isSb(R.state) && sbMay(R.state, R.me, "b");
   };
+  /* the map holds SB_POINTS things at most: past that a click or a paste says so instead of doing nothing */
+  const full = (R) => {
+    if (Object.keys((R.state.sb && R.state.sb.pts) || {}).length < SB_POINTS)
+      return false;
+    toast(`A map holds ${SB_POINTS} things at most. Delete one first.`);
+    return true;
+  };
   const paste = (at) => {
     const R = getR();
-    if (!R || !sbClip.pt || !at) return;
+    if (!R || !sbClip.pt || !at || full(R)) return;
     R.send({
       t: "sb",
       k: "add",
@@ -501,21 +509,17 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
       pt: sbClip.pt,
     });
   };
-  const menu = (e) => {
-    if (carry) return e.preventDefault();
-    if (!rights() || !sbCheat.on || !onMap(e) || windowOpen()) return;
+  const menuAt = (cx, cy, pointOnly) => {
     const R = getR(),
-      at = spotAt && spotAt(e.clientX, e.clientY);
-    if (!at) return;
+      at = spotAt && spotAt(cx, cy);
+    if (!at) return false;
     const id = pointAt(R.state, at),
       p = id && R.state.sb.pts[id];
-    if (!p && !sbClip.pt) return; // (nothing to offer: the browser's own menu, or the game's)
-    e.preventDefault();
-    e.stopImmediatePropagation();
+    if (!p && (pointOnly || !sbClip.pt)) return false; // (nothing to offer: the browser's own menu, or the game's)
     showMenu(
       S,
-      e.clientX,
-      e.clientY,
+      cx,
+      cy,
       p
         ? [
             {
@@ -533,6 +537,22 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
           ]
         : [{ label: "Paste", act: () => paste(at) }],
     );
+    return true;
+  };
+  const menu = (e) => {
+    if (carry) return e.preventDefault();
+    if (!rights() || !sbCheat.on || !onMap(e) || windowOpen()) return;
+    if (!menuAt(e.clientX, e.clientY)) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  };
+  /* a finger held still on the map (touch.js, before the specials come up): on a placed thing its menu comes up instead
+     of the specials, so a phone's long press on a spawn always gives Properties, Copy and Cut */
+  const hold = (cx, cy) => {
+    const t = document.elementFromPoint(cx, cy);
+    if (carry || !t || !rights() || !sbCheat.on || windowOpen()) return false;
+    if (!onMap({ target: t })) return false;
+    return menuAt(cx, cy, true);
   };
   addEventListener("pointermove", pmove, true);
   addEventListener("pointerdown", pdown, true);
@@ -566,27 +586,53 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
     e.preventDefault();
     presetOf(b);
   });
-  let lp = 0;
+  /* the finger that held a row down lifts on the window that came up under it: what the browser makes of that lift
+     (a mousedown on the window's backdrop shut the preset at once) is not a press there. Eaten until 400 ms after the
+     finger is up */
+  const eatLift = (id) => {
+    let until = performance.now() + 3000;
+    const types = ["mousedown", "mouseup", "click"];
+    const off = () => {
+      for (const t of types) removeEventListener(t, eat, true);
+      removeEventListener("pointerup", up, true);
+      removeEventListener("pointercancel", up, true);
+    };
+    const eat = (e) => {
+      if (performance.now() > until) return off();
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    };
+    const up = (e) => {
+      if (e.pointerId === id) until = performance.now() + 400;
+    };
+    for (const t of types) addEventListener(t, eat, true);
+    addEventListener("pointerup", up, true);
+    addEventListener("pointercancel", up, true);
+    setTimeout(off, 3000);
+  };
+  let lp = 0,
+    lpAt = null; // (where the finger went down: a shaky finger still holds, a slide doesn't)
   box.addEventListener("pointerdown", (e) => {
     const b =
       k.open === "b" &&
       e.pointerType === "touch" &&
       e.target.closest(".sb-opt");
     clearTimeout(lp);
+    lpAt = b ? { x: e.clientX, y: e.clientY } : null;
     if (b)
       lp = setTimeout(() => {
-        box.dataset.lp = "1";
-        setTimeout(() => delete box.dataset.lp, 900); // (the click the lifting finger makes is not a pick; later ones are)
+        lpAt = null;
+        eatLift(e.pointerId);
         presetOf(b);
       }, 550);
   });
-  for (const t of ["pointerup", "pointercancel", "pointermove"])
+  box.addEventListener("pointermove", (e) => {
+    if (lpAt && Math.hypot(e.clientX - lpAt.x, e.clientY - lpAt.y) > 10)
+      clearTimeout(lp);
+  });
+  for (const t of ["pointerup", "pointercancel"])
     box.addEventListener(t, () => clearTimeout(lp));
   box.addEventListener("click", (e) => {
-    if (box.dataset.lp) {
-      delete box.dataset.lp; // (the tap that ended a long press is not a pick)
-      return;
-    }
     if (e.target.closest(".sb-x")) {
       sbClose(k, false);
       paint();
@@ -760,6 +806,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   }, 3000);
   return {
     paint,
+    hold,
     isOpen: () => !!k.open,
     destroy() {
       removeEventListener("keydown", keydown, true);
