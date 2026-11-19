@@ -19759,6 +19759,89 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   margin: 0;
   font-size: 1.25em;
 }
+.sb-win > header {
+  position: relative;
+  padding-right: 2.2rem;
+}
+.sb-x {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+  display: none;
+  place-items: center;
+  font: inherit;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: inherit;
+  border-radius: 50%;
+  border: 0.12rem solid var(--line);
+  background: color-mix(in srgb, var(--panel) 60%, transparent);
+  cursor: pointer;
+}
+/* a phone's Tools button under Leave Sandbox (js/sandbox.js): its list of the windows drops under it */
+.game .sb-tools {
+  position: fixed;
+  top: 88px;
+  left: 18px;
+  z-index: 30;
+  display: none;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+}
+.game .sb-tools-btn {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.sb-tools-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.35rem;
+  border-radius: 0.7rem;
+  border: 0.14rem solid var(--line);
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  box-shadow: 0 0.4rem 1rem #0008;
+}
+.sb-tools-list[hidden] {
+  display: none;
+}
+.sb-tools-opt {
+  text-align: left;
+  font: inherit;
+  font-size: 0.85rem;
+  color: inherit;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.5rem;
+  border: 0.12rem solid var(--line);
+  background: color-mix(in srgb, var(--panel) 60%, transparent);
+  white-space: nowrap;
+  cursor: pointer;
+}
+@media not all and (any-pointer: fine) {
+  html:not(.keyboard) .game .sb-tools:not([hidden]) {
+    display: flex;
+  }
+  html:not(.keyboard) .sb-x {
+    display: grid;
+  }
+  html:not(.keyboard) .sb-win .sb-tip,
+  html:not(.keyboard) .sb-opt kbd {
+    display: none;
+  } /* (no keys to press on a phone) */
+}
+@media (max-width: 700px) {
+  .game .sb-tools-btn,
+  .sb-tools-opt {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+  }
+}
 .sb-keys {
   display: grid;
   grid-template-columns: auto 1fr;

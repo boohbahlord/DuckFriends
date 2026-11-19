@@ -6,7 +6,9 @@
    same. The cheat sheet is "somewhat" see-through and larger than Tab's window. Only c is for everyone: the others
    belong to whoever sbCan says (the host; everyone when Democracy of Ducklings lets everyone change the settings).
    b places spawns (sbspawnview.js), m makes NPCs (sbmake.js) and p gives the rights; the options inside n, h and g come
-   with the later stages. */
+   with the later stages.
+   A phone has no keys: a Tools button under Leave Sandbox lists the windows, a tap on one keeps it up, and its × puts it
+   away (the owner's answer 7, Nov 19 10:22Z: "you can start working on i now"). */
 import { esc, typing, windowOpen } from "./ui.js";
 import { isSb, sbCan, SB_KEYS_TAKEN, SB_KEY_IN_BUILD } from "./sandboxrules.js";
 import { buildRows, sbNearPoint, sbSettings, sbView } from "./sbspawnview.js";
@@ -56,7 +58,7 @@ export const SB_SHEET = [
   ["E", "Use what you stand next to, a spawn too."],
   [
     "Spawns",
-    "In Build, place a spawn and give it a key, or put it on the hotbar in H. While Build is up, its key spawns. E on it changes it.",
+    "In Build, place a spawn and give it a key, or put it on the hotbar in H. Its key spawns any time. E on it changes it.",
   ],
   [
     "Loot",
@@ -188,10 +190,65 @@ export function mountSandboxKeys(S, getR, onOpen) {
             : opts.length
               ? `<div class="sb-opts">${opts.map((o, i) => `<button type="button" class="sb-opt${o.on ? " on" : ""}" data-i="${i}">${i < 9 ? `<kbd>${i + 1}</kbd>` : ""}${esc(o.label)}</button>`).join("")}</div>`
               : `<p class="sb-none">Nothing here yet.</p>`;
-      box.innerHTML = `<header><span class="sb-tip">Double-tap <kbd>${k.open.toUpperCase()}</kbd> to keep it open</span><h2>${esc(w.name)}</h2></header>${body}`;
+      box.innerHTML = `<header><span class="sb-tip">Double-tap <kbd>${k.open.toUpperCase()}</kbd> to keep it open</span><h2>${esc(w.name)}</h2><button type="button" class="sb-x" aria-label="Close">×</button></header>${body}`;
     }
     box.hidden = false;
   };
+  /* a phone's Tools button and its list of the windows (css/app.css shows it only on a phone or tablet) */
+  const tools = document.createElement("div");
+  tools.className = "sb-tools";
+  tools.innerHTML = `<button type="button" class="btn ghost sb-tools-btn" aria-expanded="false">Tools</button><div class="sb-tools-list" hidden></div>`;
+  S.append(tools);
+  const tBtn = tools.firstChild,
+    tList = tools.lastChild;
+  const showList = (on) => {
+    const R = getR();
+    tList.hidden = !on;
+    tBtn.setAttribute("aria-expanded", on ? "true" : "false");
+    if (!on || !R) return;
+    tList.innerHTML = Object.entries(SB_WINS)
+      .filter(([, w]) => w.all || sbCan(R.state, R.me))
+      .map(
+        ([key, w]) =>
+          `<button type="button" class="sb-tools-opt" data-k="${key}">${esc(w.name)}</button>`,
+      )
+      .join("");
+  };
+  const openWin = (key) => {
+    showList(false);
+    if (key === "n") {
+      sbClose(k, false);
+      paint();
+      import("./numeratwin.js").then((m) => m.openNumerat());
+      return;
+    }
+    k.open = key;
+    k.sticky = true; // (kept up, as a double tap keeps it: its × or Esc puts it away)
+    k.swallow = "";
+    if (onOpen) onOpen();
+    paint();
+    place();
+  };
+  tools.addEventListener("click", (e) => {
+    const o = e.target.closest(".sb-tools-opt");
+    if (o) return openWin(o.dataset.k);
+    if (e.target.closest(".sb-tools-btn")) showList(tList.hidden);
+  });
+  /* it sits under Leave Sandbox, wherever that button is (it takes two lines on a narrow phone) */
+  const place = () => {
+    const R = getR(),
+      end = S.querySelector(".cabin-end");
+    tools.hidden = !R || !isSb(R.state) || !!k.open || windowOpen();
+    if (tools.hidden) showList(false);
+    if (!end || tools.hidden) return;
+    const r = end.getBoundingClientRect(),
+      top = Math.round(r.bottom + 6) + "px",
+      left = Math.round(r.left) + "px";
+    if (tools.style.top !== top) tools.style.top = top;
+    if (tools.style.left !== left) tools.style.left = left;
+  };
+  const placing = setInterval(place, 250);
+  place();
   const pick = (i) => {
     const R = getR(),
       o = R && sbOptions(k.open, R)[i];
@@ -203,6 +260,12 @@ export function mountSandboxKeys(S, getR, onOpen) {
     o.act(R);
   };
   box.addEventListener("click", (e) => {
+    if (e.target.closest(".sb-x")) {
+      sbClose(k, false);
+      paint();
+      place();
+      return;
+    }
     const b = e.target.closest(".sb-opt");
     if (b) pick(+b.dataset.i);
     const lt = e.target.closest(".sb-lt");
@@ -258,7 +321,7 @@ export function mountSandboxKeys(S, getR, onOpen) {
         return;
       }
     }
-    /* a spawn's key: it spawns (only while Build is up: SB_KEY_IN_BUILD) */
+    /* a spawn's key: it spawns (any time: SB_KEY_IN_BUILD) */
     const sk = /^Key([A-Z])$/.exec(e.code);
     if (sk && (k.open === "b" || !SB_KEY_IN_BUILD)) {
       const key = sk[1].toLowerCase(),
@@ -327,7 +390,9 @@ export function mountSandboxKeys(S, getR, onOpen) {
       removeEventListener("keydown", keydown, true);
       removeEventListener("keyup", keyup, true);
       removeEventListener("blur", blur);
+      clearInterval(placing);
       box.remove();
+      tools.remove();
       sbView.build = false;
     },
   };

@@ -128,9 +128,9 @@ export const SB_COLORS = {
 };
 /* the keys a spawn can't take: the windows' letters and the game's own keys */
 export const SB_KEYS_TAKEN = "cbmnhgpwasdeqrtvx";
-/* the spawn key only works while the Build window is up (the head planner's pick until the owner answers "UNLESS the
-   letter is pressed outside of build mode"): false lets it work any time */
-export const SB_KEY_IN_BUILD = true;
+/* the spawn key works any time, the Build window up or not (the owner's answer, Nov 19 10:22Z: "no (not for sandbox
+   mode anyway"); true would let it work only while the Build window is up */
+export const SB_KEY_IN_BUILD = false;
 /* the most spawns and respawns on a map */
 export const SB_POINTS = 60;
 /* ---------- Sandbox's board zones (stage 5) ----------

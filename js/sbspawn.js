@@ -4,7 +4,7 @@
    what spawns (a zombie, for now), its key, and the boxes (numerat.js): the spawn limit (1, at most 100), the time
    between spawns (4 s), HP, damage and speed (tenths), and the true or false boxes (continuous spawn, can respawn,
    sprint, jump, climb walls). "in order for an entity to spawn, it must be set to a hotbar spawn item OR a key on the
-   keybaord, and only by clicking it wil it spawn": its key (while the Build window is up: SB_KEY_IN_BUILD) or the Spawn
+   keybaord, and only by clicking it wil it spawn": its key (any time, the Build window up or not: SB_KEY_IN_BUILD) or the Spawn
    button in its settings.
    - Continuous spawn off: each press makes one, while fewer than its limit are alive.
    - Continuous spawn on: a press starts a run that makes one every "time between spawns", only while nothing stands on
