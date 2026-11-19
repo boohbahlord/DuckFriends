@@ -57,6 +57,10 @@ export const SB_SHEET = [
     "In Build, place a spawn and give it a key, or put it on the hotbar in H. While Build is up, its key spawns. E on it changes it.",
   ],
   [
+    "Loot",
+    "In Build, place loot: an orb that gives what it holds to whoever walks over it. E on it changes it.",
+  ],
+  [
     "Numbers",
     "2 is always 2. 2:4 is 2 to 4. 2,4 is 2 or 4. Speed and damage take tenths (0.8:1.2). t or f for yes or no.",
   ],

@@ -6,7 +6,7 @@
    a slot as a spawn button ("in order for an entity to spawn, it must be set to a hotbar spawn item OR a key"), drawn as
    a simple 2D shape in a color, or the head of one of the things it spawns.
    s.sb.hb = { d: the default's 10 slots, lock: 1 when locked, own: { player id: their 10 slots }, ic: { spawn id:
-   [shape, color, head] } }. A slot holds a special's id, "sp:" and a spawn's id, or null.
+   [shape, color, head] }, got: { player id: [[what they took from a loot orb, until when (0: for good)]] } }. A slot holds a special's id, "sp:" and a spawn's id, or null.
    No screen here: the screen half is sbhotview.js */
 import { isSb, sbCan, SB_COLORS, SB_WHAT } from "./sandboxrules.js";
 import { sbPress } from "./sbspawn.js";
@@ -35,10 +35,21 @@ const clean = (s, a) =>
     return v && okSlot(s, v) ? v : null;
   });
 /* the slots player id plays with: the default while it's locked or they have none of their own */
-export function sbSlots(s, id) {
+const baseSlots = (s, id) => {
   const hb = hbOf(s),
     own = !hb.lock && hb.own && hb.own[id];
   return clean(s, own || hb.d || EMPTY());
+};
+export function sbSlots(s, id) {
+  const hb = hbOf(s),
+    out = baseSlots(s, id);
+  /* and what was taken from loot orbs (sbloot.js), on the empty slots */
+  for (const [v] of (hb.got || {})[id] || []) {
+    const i = out.indexOf(null);
+    if (i < 0) break;
+    if (!out.includes(v) && okSlot(s, v)) out[i] = v;
+  }
+  return out;
 }
 /* a spawn button's look: [shape, color, head]; by default a shape and a color picked from its id, so each stays the same */
 export function sbIcon(s, p) {
@@ -87,7 +98,7 @@ export function sbHotAct(s, a, now) {
       return set({ d });
     }
     if (hb.lock) return false;
-    const mine = sbSlots(s, a.id);
+    const mine = baseSlots(s, a.id);
     if (v) mine.forEach((w, j) => w === v && (mine[j] = null)); // (one slot each, as in Customize)
     mine[i] = v;
     own[a.id] = mine;
@@ -105,7 +116,7 @@ export function sbHotAct(s, a, now) {
     return set({ own });
   }
   if (!can) return false;
-  if (a.k === "def") return set({ d: sbSlots(s, a.id) });
+  if (a.k === "def") return set({ d: baseSlots(s, a.id) });
   if (a.k === "lock") return set({ lock: a.on ? 1 : 0 });
   if (a.k === "icon") {
     const p = String(a.p || "");

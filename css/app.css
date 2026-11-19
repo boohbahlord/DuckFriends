@@ -19826,6 +19826,77 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   font-size: calc(0.8rem * var(--ts, 1));
   text-shadow: 0 0.08rem 0.2rem #000c;
 }
+/* a loot orb on its spot (js/sblootview.js): Dead Ducks Arcade's orb, bobbing over the dashed ring */
+.sb-orb {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 55%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -80%);
+  animation: sb-orb-bob 1.6s ease-in-out infinite;
+}
+.sb-orb .l4orb {
+  width: 100%;
+  height: 100%;
+  border-width: 0.1rem;
+}
+.sb-orb .l4orb i {
+  font-size: 1rem;
+}
+.sb-orb-img i,
+.sb-pic img {
+  overflow: hidden;
+  border-radius: 50%;
+}
+.sb-orb-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+@keyframes sb-orb-bob {
+  50% {
+    transform: translate(-50%, -95%);
+  }
+}
+.sb-lic {
+  display: inline-grid;
+  place-items: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  margin: 0 0.25rem 0 0.15rem;
+  font-style: normal;
+  vertical-align: middle;
+}
+.sb-lic svg {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+}
+.sb-sel {
+  min-width: 0;
+  font: inherit;
+  padding: 0.3rem 0.45rem;
+  border-radius: 0.45rem;
+  border: 0.12rem solid var(--line);
+  background: var(--panel2);
+  color: inherit;
+}
+.sb-pic {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  grid-column: 2;
+}
+.sb-pic img {
+  width: 2rem;
+  height: 2rem;
+  object-fit: cover;
+}
+.sb-row:has(.sb-pic) {
+  grid-template-columns: auto minmax(0, 1fr);
+}
 /* its settings window */
 .sb-setwin {
   width: min(30rem, calc(100vw - 1.5rem));

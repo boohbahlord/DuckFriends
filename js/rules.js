@@ -25,6 +25,7 @@ import {
 } from "./sandboxrules.js";
 import { sbAct, sbTick, sbPlaceDuck, sbHpOf } from "./sbspawn.js";
 import { sbHotAct } from "./sbhot.js";
+import { sbLootAct, sbLootTick } from "./sbloot.js";
 import { onCabin } from "./sbcabin.js";
 import { stamp, took } from "./perf.js";
 import {
@@ -2283,6 +2284,9 @@ function reduceStep(state, a, now) {
     case "sbh":
       // Sandbox's hotbar: its slots, the default, the lock, a spawn button's look and press (sbhot.js)
       return sbHotAct(s, a, now) ? s : state;
+    case "sbl":
+      // Sandbox's loot orbs: an orb's own picture (sbloot.js)
+      return sbLootAct(s, a) ? s : state;
     case "cabinEnd": {
       // Hangout's End Cabin and Quacky Zombies' Exit Cabin: a click votes, another takes it back; half the people
       // (never the computers) start a CABIN_END_MS timer, and the cabin game ends when it runs out
@@ -3061,7 +3065,7 @@ function reduceStep(state, a, now) {
           jaimeRun(s, now) |
           (isL4dd(s) ? 0 : groundFire(s, now)) | // (the flamethrower's burning ground)
           pwTick(s, now, normalGame(s)) | // (the ducks' wounds going away: wounds.js)
-          (isSb(s) ? +sbTick(s, now, SB_H) : 0), // (Sandbox: its spawns, respawns and the board's zombies)
+          (isSb(s) ? +sbTick(s, now, SB_H) | +sbLootTick(s, now, SB_H) : 0), // (Sandbox: its spawns, respawns and the board's zombies; its loot orbs)
         up = standUps(s, now); // (a knocked-down duck stands up by itself when its time is up)
       const sig = () => [s.phase, s.qi, s.catchEnds, s.round, s.at].join(),
         was = sig();
