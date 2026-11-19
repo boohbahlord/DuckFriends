@@ -3209,6 +3209,14 @@ html:not(.keyboard) .l4-board .gduck:not(.mine) .gduck-name > .rainbow {
     opacity: 0;
   }
 }
+@keyframes php-lost-b {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
 .gduck-done {
   position: absolute;
   top: -0.2rem;
@@ -14232,8 +14240,25 @@ html.moving .eye-zap {
 .hang-npc.hurt .hang-npc-body {
   animation: hurt 0.4s step-end;
 }
+.gduck.hurt-b .gduck-body {
+  animation: hurt-b 0.4s step-end;
+} /* (the same flash, swapped with hurt to start it over: game.js hurt()) */
 /* (the red filters are in index.html: the owner wanted it see-through, the duck showing under it) */
 @keyframes hurt {
+  from {
+    filter: url(#hurt3);
+  }
+  35% {
+    filter: url(#hurt2);
+  }
+  65% {
+    filter: url(#hurt1);
+  }
+  90% {
+    filter: none;
+  }
+}
+@keyframes hurt-b {
   from {
     filter: url(#hurt3);
   }
@@ -17765,7 +17790,23 @@ html.pixel .hurt-edge:not(.px-own) {
   visibility: visible;
   animation: hurtedge 0.7s ease-out;
 }
+.hurt-edge.on-b {
+  visibility: visible;
+  animation: hurtedge-b 0.7s ease-out;
+} /* (the same, swapped with on to start it over: hpmeter.js blink) */
 @keyframes hurtedge {
+  0% {
+    opacity: 0;
+  }
+  12%,
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes hurtedge-b {
   0% {
     opacity: 0;
   }
@@ -19449,13 +19490,6 @@ html.pixel.armed :is(.board, .hang-board) {
   color: #1c1c28;
 }
 /* Downpour's rain (l4ddrain.js): just over the dark, under the HUD and the minimap */
-.hang-board.l4-board .l4-rain {
-  position: absolute;
-  left: 0;
-  top: 0;
-  z-index: 24001;
-  pointer-events: none;
-}
 /* the outlines of every zombie game (outlines.js): on the pixel grid, over the board; in Dead Ducks Arcade over the dark
    and the rain too, under the mud and the HUD */
 .ol-px {

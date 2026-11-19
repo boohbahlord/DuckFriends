@@ -111,14 +111,23 @@ export function mountMeter() {
   edge.className = "hurt-edge";
   edge.setAttribute("aria-hidden", "true");
   document.body.append(edge);
+  let bakedAt = -1e9;
   const blink = () => {
-    if (pixelOn()) bakeFill(edge, hurtPaint); // (its corners as pixels, made once: no filter on the whole board)
-    edge.classList.remove("on");
-    void edge.offsetWidth; // (a second hit starts it over)
-    edge.classList.add("on");
-    hurtSway(performance.now()); // (and my screen sways a little: fxmotion.js)
+    const now = performance.now();
+    if (pixelOn() && now - bakedAt > 1000) {
+      bakedAt = now;
+      bakeFill(edge, hurtPaint);
+    } // (its corners as pixels, made once: no filter on the whole board. Looked at once a second at most: it measures the board, and a crowd of zombies hit me many times a second)
+    /* a second hit starts it over: two copies of it, on and on-b (css/app.css), swapped, so the page doesn't measure
+       itself for every hit */
+    const b = edge.classList.contains("on");
+    edge.classList.toggle("on", !b);
+    edge.classList.toggle("on-b", b);
+    hurtSway(now); // (and my screen sways a little: fxmotion.js)
   };
-  edge.addEventListener("animationend", () => edge.classList.remove("on"));
+  edge.addEventListener("animationend", () =>
+    edge.classList.remove("on", "on-b"),
+  );
   let max = -1,
     hp = -1,
     k = 1,

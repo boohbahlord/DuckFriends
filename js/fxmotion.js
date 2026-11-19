@@ -149,6 +149,14 @@ export const HIT = [
   },
   { filter: "none" },
 ];
+/* a CSS animation started over without the page measuring itself: el.style.animation "none", then el.offsetWidth,
+   costs a whole style pass each time, and a crowd of zombies clawing one duck asked for several a frame (Downpour at
+   round 21). Two copies of its keyframes, name and name-b in css/app.css, swapped: a new name starts it over. */
+export function again(el, name) {
+  const nm = el.style.animationName === name + "-b" ? name : name + "-b";
+  el.style.animation = "";
+  el.style.animationName = nm;
+}
 /* how hard a hit shakes what it hit: by the HP it took (a bullet 1, a claw or a hammer more) */
 export const hitPx = (lost) => 2 + Math.min(5, Math.max(1, lost) * 1.5);
 

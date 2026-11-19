@@ -499,6 +499,7 @@ import {
   hitPx,
   wobble,
   HIT,
+  again,
 } from "./fxmotion.js";
 
 let R = null,
@@ -1207,6 +1208,7 @@ function hpFull(s, id, now) {
 /* my meter under the hotbar, and the other players' small ones in the board's corner (Quacky Zombies and Mad God
    Justin, on a computer, unless turned off in Settings) */
 let othersSig = "",
+  othersShape = "", // (their rows, names and numbers' lengths: what sets the box's size)
   othersAt = 0,
   othersBox = null, // the others' meters' box, in the board's px (measured when it changes)
   myBox = null, // my duck's box in the last frame, in the board's px
@@ -1248,13 +1250,17 @@ function drawMeters(s, board, layer, now) {
     box.className = "hpo";
     box.setAttribute("aria-hidden", "true");
     board.append(box);
-    othersSig = "";
+    othersSig = othersShape = "";
   }
   const sig = JSON.stringify(list);
   if (sig !== othersSig) {
     othersSig = sig;
     box.innerHTML = othersHpHTML(list);
-    othersBox = null; // (measured again once, below: its size changed)
+    const shape = list
+      .map(([id, n, h, m]) => [id, n, String(h).length, m].join())
+      .join(";");
+    if (shape !== othersShape) othersBox = null; // (measured again once, below: its size changed. Only a new row, name or number's length changes it: measured for every HP lost, a crowd of zombies made the page measure itself again and again)
+    othersShape = shape;
   }
   /* a duck or a zombie under them, mine or anyone's: see-through on my screen, so I see who's there (the owner's, Nov 17
      17:41Z; checked a few times a second). The box is measured only when its content or the board changes, and the
@@ -1695,9 +1701,7 @@ function drawDucks(now = clockNow()) {
         const red = bar.querySelector("b");
         if (was > hp) {
           bar.style.setProperty("--was", (was / hpMax).toFixed(3));
-          red.style.animation = "none";
-          void red.offsetWidth;
-          red.style.animation = "";
+          again(red, "php-lost"); // (started over without the page measuring itself: fxmotion.js)
           sfx.hit();
           if (id === R.me) sfx.ouch(); // (my duck quacks when it's hurt)
           hurt(d, hitPx(was - hp), hp <= 0); // (a duck hit shakes once by the HP it lost, and once more as it goes down: the owner's, Nov 17)
@@ -3678,9 +3682,11 @@ function hurt(d, px = 3, twice = false) {
   if (!(t - (d._vibAt || 0) < 250))
     vibrate(d.querySelector(".gduck-body"), px, twice); // (once per hit, not twice when two rules see the same one)
   d._vibAt = t; // (a hit shakes it once, and once more as it goes down: the owner's, Nov 17, 32 and 34)
-  d.classList.remove("hurt");
-  void d.offsetWidth;
-  d.classList.add("hurt");
+  /* the red flash started over: two copies of it, hurt and hurt-b (css/app.css), swapped, so the page doesn't measure
+     itself for every hit (a crowd of zombies clawing one duck did, several times a frame) */
+  const b = d.classList.contains("hurt");
+  d.classList.toggle("hurt", !b);
+  d.classList.toggle("hurt-b", b);
 }
 function playFx(f) {
   const s = R.state,
@@ -7980,25 +7986,30 @@ function watchInsets(S) {
   /* during a turn they only grow (a bar that gets taller pushes the board in at once, so nothing is under it), and
      they go back to the bars' own heights when the next stage starts: the board doesn't keep growing and shrinking
      (the owner's, Nov 4) */
-  const set = () => {
-    const s = R && R.state,
-      k = s ? [s.phase, s.round, s.qi].join() : "",
-      now = [
-        top.offsetHeight,
-        bot.reduce((a, e) => a + (e ? e.offsetHeight : 0), 0),
-      ];
-    const was = hi.join();
-    hi = k === turn ? now.map((v, i) => Math.max(v, hi[i])) : now;
-    turn = k;
-    if (hi.join() === was) return;
-    S.style.setProperty("--ui-top", hi[0] + "px");
-    S.style.setProperty("--ui-bot", hi[1] + "px");
-    geo = null; // (the board's new size: where the ducks stand is measured again)
-  };
+  const key = () => {
+      const s = R && R.state;
+      return s ? [s.phase, s.round, s.qi].join() : "";
+    },
+    set = () => {
+      const k = key(),
+        now = [
+          top.offsetHeight,
+          bot.reduce((a, e) => a + (e ? e.offsetHeight : 0), 0),
+        ];
+      const was = hi.join();
+      hi = k === turn ? now.map((v, i) => Math.max(v, hi[i])) : now;
+      turn = k;
+      if (hi.join() === was) return;
+      S.style.setProperty("--ui-top", hi[0] + "px");
+      S.style.setProperty("--ui-bot", hi[1] + "px");
+      geo = null; // (the board's new size: where the ducks stand is measured again)
+    };
   const ro = new ResizeObserver(set);
   for (const e of [top, ...bot]) if (e) ro.observe(e);
   set();
-  const t = setInterval(set, 500); // (a new stage with bars that didn't change size: back to their own heights)
+  const t = setInterval(() => {
+    if (key() !== turn) set();
+  }, 500); // (a new stage with bars that didn't change size: back to their own heights. Only then: measuring the bars every half second made the page measure itself, and a busy round paid for it; the ResizeObserver sees every other change)
   return () => {
     ro.disconnect();
     clearInterval(t);
