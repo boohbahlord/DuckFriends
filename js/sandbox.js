@@ -11,6 +11,7 @@
    A phone has no keys: a Tools button under Leave Sandbox lists the windows, a tap on one keeps it up, and its × puts it
    away (the owner's answer 7, Nov 19 10:22Z: "you can start working on i now"). */
 import { LANG } from "./langname.js";
+import { coverChanges } from "./loading.js";
 import { esc, toast, typing, windowOpen } from "./ui.js";
 import {
   isSb,
@@ -225,6 +226,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   box.hidden = true;
   box.setAttribute("role", "dialog");
   S.append(box);
+  const uncover = coverChanges(box); // (a window's pictures in behind the loading screen: loading.js)
   const k = sbKeys();
   let shown = "";
   let hotPick = ""; // (the loot picked in the h window: then a key puts it there)
@@ -822,6 +824,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
       closeMenu();
       chip.remove();
       sbPlace.start = null;
+      uncover();
       box.remove();
       tools.remove();
       ghost.remove();
