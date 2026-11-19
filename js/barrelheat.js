@@ -35,6 +35,9 @@ export function heatUp(id, gun) {
 /* every frame: a glow at each hot barrel's end. held: duck id → its weapon in hand (game.js; _tip, the chain gun's
    barrel end, or _end), fxl: the layer they're in, size: a duck's size */
 const GLOW = new Map(); // duck id → its glow
+/* is a weapon in hand (game.js .held) still on this board? In fxl, or with its duck in the ducks' layer under a roof
+   (game.js); _gone: hidden with its duck */
+export const heldOn = (h, fxl) => !!h && h._fxl === fxl && h.isConnected;
 export function heatDraw(held, fxl, size) {
   const now = performance.now();
   for (const [id, g] of GLOW)
@@ -45,7 +48,7 @@ export function heatDraw(held, fxl, size) {
   for (const [id, h] of held) {
     const o = HEAT.get(id),
       heat =
-        o && h.parentNode === fxl && h.dataset.w === o.gun
+        o && heldOn(h, fxl) && !h._gone && h.dataset.w === o.gun
           ? heatOf(id, now)
           : 0,
       at = h._tip || h._end;

@@ -25,6 +25,7 @@ import {
   sbOnBoard,
   sbPlayerSpot,
 } from "./sandboxrules.js";
+import { survSet } from "./survrules.js";
 import { sbAct, sbTick, sbPlaceDuck, sbHpOf } from "./sbspawn.js";
 import { hpHeal, tenths } from "./hpmath.js";
 import { sbHotAct, sbSlots } from "./sbhot.js";
@@ -500,7 +501,10 @@ const fits = (s, id) => s.seat.length >= (MIN_PLAYERS[id] || 0);
 export const randomPool = (s) => {
   const all = modesFor(s)
       .map((m) => m.id)
-      .filter((id) => id !== "l4dd" && id !== "sandbox" && fits(s, id)), // (Sandbox never ends: never from Random)
+      .filter(
+        (id) =>
+          id !== "l4dd" && id !== "surv" && id !== "sandbox" && fits(s, id),
+      ), // (Sandbox never ends: never from Random; Survival is vote-only too, the owner's, Nov 19 19:53Z)
     off = s.options.modesOff || [],
     on = all.filter((id) => !off.includes(id));
   return on.length ? on : all; // (every one turned off: Random and the vote still have games to pick from)
@@ -1722,6 +1726,7 @@ export function reduce(state, a, now = Date.now()) {
   return s;
 }
 function reduceStep(state, a, now) {
+  survSet(state.options); // (Survival: survrules.js)
   useMode(baseMode(state.options), baseL4map(state.options)); // (Duck Cabin as the room's mode has it, or Dead Ducks Arcade's Downpour, or Sandbox on one of them: hangout/layout.js)
   const s = clone(state),
     P = s.players,
@@ -3391,7 +3396,7 @@ function forgame(s, a, now) {
         o[k] = v ? 1 : 0;
       if (
         ["justin", "mgjBoard"].includes(k) &&
-        ["l4dd", "mgj"].includes(s.options.mode)
+        ["l4dd", "surv", "mgj"].includes(s.options.mode)
       )
         delete o[k]; // (never Justin on the board in Quacky Zombies or Mad God Justin: the owner's, Nov 4)
       if (k === "share" && SHARE_OK.includes(v)) o.share = v;

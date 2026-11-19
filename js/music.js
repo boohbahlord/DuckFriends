@@ -58,7 +58,7 @@ const SAD = names.filter((n) => !HAPPY.includes(n));
 const SCARY_SONGS = ["What the duck?"],
   SCARY_MAPS = ["nwk", "collage"];
 /* the owner: no music in Quacky Zombies and Mad God Justin, until we figure out what fits them */
-const QUIET = ["l4dd", "mgj"];
+const QUIET = ["l4dd", "surv", "mgj"];
 
 /* 100% music: under the game. The songs' files are about 7 dB louder than the old songs were made, so this keeps them as
    quiet as the old music was at 100% (the owner: music stays quiet by default). Nov 19, the owner: "the music's too
