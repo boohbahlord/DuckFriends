@@ -6810,3 +6810,18 @@ What should this means?
 maybe it doesnt have to mean anything"
 
 Decided (Adam): chance in percent replaces ~ weights ([attack 75%, flee 25%]); $ = one random letter, $$ two; proposed ~ = "about". Bible updated.
+
+## Owner, Nov 19 13:36Z
+"why cant they be more than 100% ?
+what if we did double percent to indicate it can be more than 100%
+
+so 100%%+50%% ? 
+
+Maybe there is a better way to do this 
+
+(quoting the Letters answer) Yes
+
+i rly like ur idea for ~
+I agree"
+
+Decided (Adam): $ lower case + caps rule, ~ = about: in. Percent over 100%: proposed shares in a pick, "more than once" alone, stats can pass 100%; waiting.

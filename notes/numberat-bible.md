@@ -64,6 +64,8 @@ HP, damage and speed take tenths.
   Outside backslashes they stay arrows.
 
 ## 5. Asterisks: input
+- `~` means "about" (owner 13:36Z: "i rly like ur idea for ~"): `~10` is 9 to 11 (give or take a tenth),
+  `~1.5` is 1.4 to 1.6.
 - `*` waits for input. With none, it is a random value within its digits and the stat's limit.
 - One `*` is one digit, `**` two, `***` three. `*` includes 0 by default (0 to 9) (owner 12:59Z).
 - Too many digits: cut from the front by default (150 into `**` gives 50). `\'ainc mormax'\`: top out instead (99).
@@ -73,7 +75,7 @@ HP, damage and speed take tenths.
   `\'ainc posbrahm'\` lets a `-*` give positives (named after Brahmagupta and Brahma).
 - `$` is a letter, as `*` is a digit (owner 13:32Z): `$` = one random letter a to z, `$$` two, `$$$` three. Waits
   for input like `*`. Named the same way: `'1$'`. Mixed: `say "zombie $$*"` might say "zombie qe7".
-  **[proposal]** lower case by default; `\'ainc caps'\` lets capitals in.
+  Lower case by default; `\'ainc caps'\` lets capitals in (owner 13:36Z: yes).
 - Named asterisks, single quotes: `'1*'` is asterisk number 1, `'2***'` asterisk number 2 with three digits. The number
   in quotes names it and is never part of the value. Double quotes are math, never names. (Keep `'1*'`; `'*1'`
   **[open]**, Adam suggested dropping it.)
@@ -141,8 +143,12 @@ Every Numberat value works anywhere a number goes below: `wait 1:3`, `every [2,4
 3. **Who**: `me`, `nearest duck`, `all zombies`, `team`: what an action or a stat applies to.
 4. **Chance in percent** (owner 13:32Z: "uses percentage with percent sign"; replaces the `~` weights):
    `[attack 75%, flee 25%]` attacks 3 times in 4. Percents take any Numberat value: `[attack 60:80%, flee 20%]`.
-   Under 100% in all: the rest is "do nothing". Over 100%: an error that says so. `30%` alone is true 3 times in 10.
-   On a stat, a percent is of its most: `((hp 50%))` = half the most HP. Kept to `[ ]`: a chance pick is still one
+   Under 100% in all: the rest is "do nothing". `30%` alone is true 3 times in 10.
+   On a stat, a percent is of its most, and can go past 100%: `((hp 50%))` = half the most HP, `((hp 150%))` = 1.5
+   times (still inside the stat's limit).
+   **[proposal, owner asked 13:36Z why not over 100%, suggested `100%%+50%%`]** no `%%` needed. A pick over 100% in
+   all is read as shares: `[attack 150%, flee 50%]` = 3 to 1. A chance alone over 100% means "more than once":
+   `150%` = once for sure, plus a 50% chance of a second time (`250%` = twice, plus 50% of a third). Kept to `[ ]`: a chance pick is still one
    pick; `( )` works a thing out and `{ }` waits.
 5. **Named values**: `let rage = 2:4`, then `rage` anywhere a number goes. Every Numberat principle applies to them
    (owner: "allow the numberat principles to apply to variables"): `let rage = \>1>\[2,4]`, `rage^2`, `"2rage"`.
@@ -153,8 +159,6 @@ Every Numberat value works anywhere a number goes below: `wait 1:3`, `every [2,4
 8. **Tests**: `\if hp in 1:5\` and `else`.
 
 ## 15. Proposals waiting for the owner
-**`~`** (owner 13:32Z: "What should this means? maybe it doesnt have to mean anything"). Proposal: "about": `~10` is
-10 give or take a tenth (9 to 11), `~1.5` is 1.4 to 1.6. Handy for speeds and times that shouldn't all match.
 
 **Several lines as one.** Doubled brackets clash with nesting (`[[3>5],2]` is a pick inside a pick; the owner's own
 `{{'**1'}+[+0,-1]}` is braces in braces; `((2:4)+1)` vs `((hp 5))`). Proposal: no symbol. A line carries on while a
