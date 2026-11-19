@@ -108,9 +108,9 @@
     <script>
       /* the way out of a stuck start. The game is 160-odd files; if one of them doesn't arrive (a hiccup on the way, or
          a broken copy kept by the browser), the game never starts and the loading bar waits forever, and a refresh
-         takes the same copies again. So: if the game hasn't started (js/later.js sets window.dfStarted once all of it is in) when a file fails,
-         or once no file has arrived for 20 s, I fetch every game file fresh from the site, drop the app's service
-         worker and load the page again, twice at most. After that the bar says so and a tap tries again. */
+         takes the same copies again. So: if the game hasn't started (js/later.js sets window.dfStarted once all of it
+         is in) when a file fails, or once no file has arrived for 20 s, I fetch every game file fresh from the site,
+         drop the app's service worker and load the page again, twice at most. After that the bar says so and a tap tries again. */
       (function () {
         var KEY = "df-retry",
           done = false,
@@ -261,6 +261,7 @@
           "./js/botduck.js": "./js/botduck.js?v=202611191855",
           "./js/bots.js": "./js/bots.js?v=202611191855",
           "./js/brackets.js": "./js/brackets.js?v=202611191855",
+          "./js/brainbuild.js": "./js/brainbuild.js?v=202611191855",
           "./js/card.js": "./js/card.js?v=202611191855",
           "./js/chat.js": "./js/chat.js?v=202611191855",
           "./js/clock.js": "./js/clock.js?v=202611191855",
@@ -679,6 +680,7 @@
         "./js/hangout/pianokeys.js?v=202611191855",
         "./js/hangout/cats.js?v=202611191855",
         "./js/hangout/shadowduck.js?v=202611191855",
+        "./js/brainbuild.js?v=202611191855",
         "./js/numeratwin.js?v=202611191855",
         "./js/updates.js?v=202611191855"
       ]

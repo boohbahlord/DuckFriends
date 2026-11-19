@@ -228,6 +228,10 @@ export function sbNearPoint(s, me) {
 /* ---------- its settings window ---------- */
 const row = (f, b, t, why) =>
   `<label class="sb-row${why ? " bad" : ""}" data-row="${f}"><span>${esc(b.name)}</span><input class="sb-box" data-f="${f}" value="${esc(t)}" maxlength="${f === "key" ? 1 : 80}" spellcheck="false" autocomplete="off"><em class="sb-why">${esc(why)}</em></label>`;
+/* the Brain box, with an arrow beside it that lists my-files/ (the owner's: "they can click an arrow beside the text
+   box ... a selection that they can scroll through of their files within that directory"): brainbuild.js */
+const brainRow = (t, why) =>
+  `<div class="sb-row sb-brainrow${why ? " bad" : ""}" data-row="brain"><span>${esc(SB_TEXT.brain.name)}</span><span class="sb-brainbox"><input class="sb-box" data-f="brain" value="${esc(t)}" maxlength="80" spellcheck="false" autocomplete="off" aria-label="${esc(SB_TEXT.brain.name)}"><button type="button" class="sb-brainarrow" data-brainlist aria-label="My files" aria-expanded="false">&#9662;</button></span><em class="sb-why">${esc(why)}</em><div class="sb-brainlist" hidden></div></div>`;
 /* a behavior list (sbbrain.js) as a dropdown of checkboxes: Players, Everything, each kind, each spawn (by its color,
    named as it's named). Its summary says what's picked */
 const summaryOf = (on) =>
@@ -384,7 +388,7 @@ export function sbSettings(getR, id, tab = "") {
       .map((f) => actRow(R.state, p, f, kinds))
       .join("")}</div>
     ${row("key", { name: "Spawn key" }, typed("key"), why("key"))}
-    ${row("brain", SB_TEXT.brain, typed("brain"), why("brain"))}
+    ${brainRow(typed("brain"), why("brain"))}
     ${Object.entries(SB_BOXES)
       .map(([f, b]) => row(f, b, typed(f), why(f)))
       .join("")}
@@ -561,6 +565,46 @@ export function sbSettings(getR, id, tab = "") {
         setTimeout(() => sbSettings(getR, to, tk), 0);
       };
       w.addEventListener("click", (e) => {
+        /* the Brain box's arrow: my-files/, and the builder for a new one */
+        const bl = e.target.closest(
+          "[data-brainlist], [data-brainfile], [data-brainnew]",
+        );
+        if (bl) {
+          const rowEl = bl.closest("[data-row=brain]"),
+            list = rowEl.querySelector(".sb-brainlist"),
+            input = rowEl.querySelector("[data-f=brain]"),
+            arrow = rowEl.querySelector("[data-brainlist]"),
+            pick = (v) => {
+              list.hidden = true;
+              arrow.setAttribute("aria-expanded", "false");
+              input.value = v;
+              input.dispatchEvent(new Event("input", { bubbles: true })); // (as if typed: it goes to the room)
+            };
+          if (bl.dataset.brainfile != null) return pick(bl.dataset.brainfile);
+          if (bl.hasAttribute("data-brainnew"))
+            return import("./brainbuild.js").then((m) =>
+              m.openBrainBuilder((path) => w.isConnected && pick(path)),
+            );
+          if (!list.hidden) {
+            list.hidden = true;
+            return arrow.setAttribute("aria-expanded", "false");
+          }
+          return import("./brainbuild.js").then(async (m) => {
+            const files = await m.myFiles();
+            list.innerHTML =
+              (files.length
+                ? files
+                    .map(
+                      (f) =>
+                        `<button type="button" class="sb-brainfile" data-brainfile="${esc(f.path)}">${esc(f.name)}</button>`,
+                    )
+                    .join("")
+                : `<em class="sb-none">Nothing in ${m.MY_FILES}/ yet</em>`) +
+              `<button type="button" class="sb-brainfile sb-brainnew" data-brainnew>Build a brain…</button>`;
+            list.hidden = false;
+            arrow.setAttribute("aria-expanded", "true");
+          });
+        }
         const c = e.target.closest("[data-col]");
         if (c) {
           w.querySelectorAll(".sb-col").forEach((b) =>

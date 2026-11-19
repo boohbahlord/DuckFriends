@@ -69,7 +69,10 @@ export const SB_SHEET = [
     "B",
     "Build: pick a spawn, respawn, loot or board zone, then click or tap the map to put it there (Esc or right-click lets go). Press it once to open it, again to close it.",
   ],
-  ["M", "Make an NPC: its look, its weapons and who it goes after."],
+  [
+    "M",
+    "Make an NPC: its look, its weapons and who it goes after. Build a brain (its first row) makes a Brain file without typing.",
+  ],
   [
     "N",
     `${LANG}: your files, kept on this device, with a terminal line. Run a file there, or chmod +x it and ./file it. ${LANG} only runs in Sandbox.`,
@@ -149,12 +152,23 @@ const rightsRows = (R) => {
   return [...wins, ...who];
 };
 /* the options in a window (the later stages fill the rest): [{ label, act }], or a function of the room that makes them */
+/* M's first row: the Brain builder, a window of its own (loaded when it's wanted: it brings the command line) */
+const BRAIN_ROW = {
+  label: "Build a brain",
+  win: true,
+  act: () => import("./brainbuild.js").then((m) => m.openBrainBuilder()),
+};
 const OPTIONS = {
   c: [],
   b: buildRows,
   m: (R) => {
     const rows = npcRows(R);
-    return [rows[0], ...kdRows(R), ...rows.slice(1)]; // (New NPC, then the four kinds' defaults, then the made ones)
+    return [
+      BRAIN_ROW, // ("at the very top, you can create the brain file": brainbuild.js)
+      rows[0],
+      ...kdRows(R),
+      ...rows.slice(1),
+    ]; // (Build a brain, New NPC, then the four kinds' defaults, then the made ones)
   },
   n: [],
   h: (R) => hotRows(R, openPut),
