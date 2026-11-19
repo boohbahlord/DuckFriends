@@ -16,6 +16,7 @@ export const UPDATES = [
     news: [
       "The game is quieter: every sound is a little softer, the music sits lower, and the burst rifle is no longer loud and harsh.",
       "For Sandbox: a respawn can import its spawn's Appearance, and loot is sorted into Effects, Jumps, Weapons and Items.",
+      "For Sandbox: files you give other players a right on now work for them. With Read they open your file. With Write they change it, and it saves into your own file while you're in the room. With Run they run it, or put ~yourname/file in a spawn's Brain box. Take the right away and your file leaves the room.",
     ],
     fixed: [],
   },

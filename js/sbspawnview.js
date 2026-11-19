@@ -430,7 +430,9 @@ export function sbSettings(getR, id, tab = "") {
           lab.classList.toggle("bad", !files);
           lab.querySelector(".sb-why").textContent = files
             ? ""
-            : `No file by that name in your ${LANG} folder (n)`;
+            : v.startsWith("~")
+              ? `No file by that name that its owner lets you run (x)`
+              : `No file by that name in your ${LANG} folder (n)`;
           if (!files) return;
           send({ k: "nbf", files });
           send({ k: "set", f: "brain", v });

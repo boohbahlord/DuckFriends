@@ -30,6 +30,11 @@ const SHARED = new Map(); // (room -> give and take's values)
 export const nbFiles = (s) => s.nb || {};
 const fileOf = (nb, n) =>
   nb[n] != null ? nb[n] : nb[n + ".num"] != null ? nb[n + ".num"] : null;
+/* a file the Brain "top" uses: another player's ("~Pat/fight") uses Pat's files (sent as "~Pat/<name>") */
+const usedBy = (nb, top, n) =>
+  top.startsWith("~")
+    ? fileOf(nb, top.slice(0, top.indexOf("/") + 1) + n)
+    : fileOf(nb, n);
 /* a line in the room's Seriat log */
 export function nbLog(s, text, now) {
   const was = s.nbo || [];
@@ -48,7 +53,7 @@ export function nbKeep(s, files) {
   const nb = { ...nbFiles(s) };
   for (const [n, t] of Object.entries(files || {})) {
     const name = String(n).slice(0, 80);
-    if (!/^[\w./ -]+$/.test(name)) continue;
+    if (!/^~?[\w./ -]+$/.test(name)) continue;
     delete nb[name];
     nb[name] = String(t == null ? "" : t).slice(0, NB_TEXT);
   }
@@ -181,7 +186,7 @@ function make(s, name, text, now) {
     return g;
   }
   const nb = nbFiles(s),
-    c = compileScript(text, { file: (n) => fileOf(nb, n) });
+    c = compileScript(text, { file: (n) => usedBy(nb, name, n) });
   if (c.errs.length) {
     for (const e of c.errs.slice(0, 5))
       nbLog(s, `✗ ${name}, line ${e.line}: ${e.why}`, now);
@@ -273,7 +278,7 @@ function make(s, name, text, now) {
       g.ch = true;
     },
     print: (t) => nbLog(g.cur.s, t, g.cur.now),
-    file: (n) => fileOf(nbFiles(g.cur.s), n),
+    file: (n) => usedBy(nbFiles(g.cur.s), name, n),
     shared: SHARED.get(room),
     error: (line, why) =>
       nbLog(g.cur.s, `✗ ${name}, line ${line}: ${why}`, g.cur.now),

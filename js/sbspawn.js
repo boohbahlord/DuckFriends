@@ -61,9 +61,9 @@ export const SB_TEXT = {
   brain: {
     name: "Brain (a Seriat file)",
     check: (t) =>
-      !t.trim() || /^[\w./ -]{1,80}$/.test(t.trim())
+      !t.trim() || /^~?[\w./ -]{1,80}$/.test(t.trim())
         ? ""
-        : "A file's name from the Seriat window (n)",
+        : "A file's name from the Seriat window (n), or ~name/file for another player's",
   },
   name: {
     name: "Name",
