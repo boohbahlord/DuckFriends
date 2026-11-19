@@ -15,6 +15,7 @@ const SLOW = 4000;
 const here = (p) => new URL(p, self.registration.scope).href;
 const PAGE = () => here("index.html");
 const META = () => here("df-meta"); // (in the cache: { v, files: { path: fingerprint }, done })
+const PART = () => here("df-part"); // (the files of a version still coming in: { path: fingerprint }, so a stopped download goes on where it was)
 
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
@@ -108,23 +109,50 @@ async function keepAll() {
       named.add(here(u));
   for (const m of html.matchAll(/(?:src|href)="((?:js|css)\/[^"]+\?v=\w+)"/g))
     named.add(here(m[1]));
+  const part = await c.match(PART()),
+    P = part ? await part.json() : {},
+    had = (p, sum) => M.files[p] === sum || P[p] === sum;
   const want = [];
   for (const u of named) if (!(await c.match(u))) want.push([u, {}]);
   for (const [p, sum] of Object.entries(list.files || {}))
-    if (M.files[p] !== sum || !(await c.match(here(p))))
-      want.push([here(p), { cache: "no-cache" }]);
+    if (!had(p, sum) || !(await c.match(here(p))))
+      want.push([here(p), { cache: "no-cache" }, p, sum]);
   const total = want.length;
   let done = 0,
-    i = 0;
+    i = 0,
+    lost = null;
+  /* on a bad connection (the owner's girlfriend's, Nov 19) one file failing doesn't stop the rest: each is tried 3
+     times, a few seconds apart, and every file that came in is written down (PART), so the next try skips it */
   const lane = async () => {
     while (i < want.length) {
-      const [u, how] = want[i++];
-      await c.put(u, await get(u, how));
-      if (++done % 10 === 0 || done === total)
+      const [u, how, p, sum] = want[i++];
+      let got = false;
+      for (let n = 0; ; n++) {
+        try {
+          await c.put(u, await get(u, how));
+          got = true;
+          break;
+        } catch (err) {
+          if (n >= 2) {
+            lost = err;
+            break;
+          }
+          await new Promise((ok) => setTimeout(ok, 3000 * (n + 1)));
+        }
+      }
+      if (p && got) P[p] = sum;
+      if (++done % 10 === 0 || done === total) {
+        await c.put(PART(), new Response(JSON.stringify(P)));
         tell(await state({ done, total }));
+      }
     }
   };
   await Promise.all([lane(), lane(), lane(), lane(), lane(), lane()]);
+  await c.put(PART(), new Response(JSON.stringify(P)));
+  if (lost) {
+    tell(await state({ done, total, lost: String(lost.message || lost) }));
+    throw lost;
+  }
   /* every file is in: the page goes over to this version, then what it no longer uses goes */
   await c.put(PAGE(), page);
   await c.put(
@@ -137,6 +165,7 @@ async function keepAll() {
     PAGE(),
     META(),
   ]);
+  await c.delete(PART());
   for (const r of await c.keys()) if (!used.has(r.url)) await c.delete(r);
   tell(await state({ done: total, total }));
 }

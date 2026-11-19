@@ -1,0 +1,209 @@
+<!doctype html>
+<!-- The light install page (the owner's, Nov 19: for a bad connection). Not linked from the game's menus: typed in as
+     /get after the site's address, or reached from the small link on the loading screen. It is only this file: no
+     scripts, fonts or pictures to load. Install keeps the whole game on the device through the site's own service
+     worker (sw.js), a file at a time; a stopped download goes on where it was. Then the game loads from the device. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Duck Friends: Install</title>
+    <meta name="theme-color" content="#14151c" />
+    <link rel="manifest" href="../manifest.webmanifest" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #14151c;
+        color: #eee;
+        font:
+          18px/1.4 system-ui,
+          sans-serif;
+      }
+      main {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        padding: 20px;
+        box-sizing: border-box;
+        text-align: center;
+      }
+      h1 {
+        margin: 0 0 6px;
+        font-size: 30px;
+      }
+      h1 b:nth-child(4n + 1) {
+        color: #ffd23f;
+      }
+      h1 b:nth-child(4n + 2) {
+        color: #3ec1d3;
+      }
+      h1 b:nth-child(4n + 3) {
+        color: #ff6b6b;
+      }
+      h1 b:nth-child(4n + 4) {
+        color: #6bcb77;
+      }
+      button,
+      a.btn {
+        display: block;
+        width: 240px;
+        padding: 14px 0;
+        border: 0;
+        border-radius: 10px;
+        font: inherit;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      #go {
+        background: #ffd23f;
+        color: #14151c;
+      }
+      #home,
+      #add {
+        background: #2a2c38;
+        color: #eee;
+      }
+      #bar {
+        width: 240px;
+        height: 12px;
+        border: 2px solid #eee;
+        display: none;
+      }
+      #bar i {
+        display: block;
+        height: 100%;
+        width: 0;
+        background: #6bcb77;
+      }
+      #say {
+        min-height: 1.4em;
+        max-width: 320px;
+        font-size: 15px;
+        opacity: 0.85;
+      }
+      [hidden] {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>
+        <b>D</b><b>u</b><b>c</b><b>k</b> <b>F</b><b>r</b><b>i</b><b>e</b><b>n</b
+        ><b>d</b><b>s</b>
+      </h1>
+      <button id="go" type="button">Install</button>
+      <div id="bar"><i></i></div>
+      <p id="say"></p>
+      <button id="add" type="button" hidden>Add to home screen</button>
+      <a id="home" class="btn" href="../">Go to Duck Friends</a>
+    </main>
+    <script>
+      (function () {
+        var go = document.getElementById("go"),
+          bar = document.getElementById("bar"),
+          fill = bar.firstChild,
+          say = document.getElementById("say"),
+          add = document.getElementById("add"),
+          sw = navigator.serviceWorker,
+          asked = null,
+          last = 0,
+          running = false;
+        var show = function (t) {
+          say.textContent = t;
+        };
+        if (!sw || !window.isSecureContext) {
+          go.hidden = true;
+          show("This browser can't install the game. Use Go to Duck Friends.");
+          return;
+        }
+        /* the browser's own Install (home screen), when it offers one */
+        addEventListener("beforeinstallprompt", function (e) {
+          e.preventDefault();
+          asked = e;
+          add.hidden = false;
+        });
+        add.onclick = function () {
+          if (!asked) return;
+          asked.prompt();
+          asked = null;
+          add.hidden = true;
+        };
+        sw.addEventListener("message", function (e) {
+          var m = e.data || {};
+          if (m.t !== "kept") return;
+          last = Date.now();
+          if (m.total) {
+            bar.style.display = "block";
+            fill.style.width = Math.round((100 * m.done) / m.total) + "%";
+          }
+          if (m.ready && (!m.total || m.done >= m.total) && !m.lost) {
+            running = false;
+            fill.style.width = "100%";
+            bar.style.display = "block";
+            go.hidden = true;
+            show("Done! The game is on this device now.");
+            document.getElementById("home").textContent = "Play";
+            return;
+          }
+          if (m.lost) {
+            show("The connection dropped. Trying again …");
+            setTimeout(keep, 5000);
+            return;
+          }
+          if (m.total)
+            show(
+              "Downloading: " +
+                m.done +
+                " of " +
+                m.total +
+                " files. Keep this page open.",
+            );
+        });
+        if (sw.startMessages) sw.startMessages();
+        var post = function (t) {
+          return sw.ready.then(function (reg) {
+            if (reg.active) reg.active.postMessage({ t: t });
+          });
+        };
+        var keep = function () {
+          running = true;
+          last = Date.now();
+          post("keep");
+        };
+        go.onclick = function () {
+          go.disabled = true;
+          go.textContent = "Installing …";
+          show("Starting …");
+          try {
+            localStorage.setItem("df-lite", "1");
+          } catch (e) {}
+          sw.register("../sw.js", { updateViaCache: "none" }).then(
+            function () {
+              keep();
+            },
+            function () {
+              go.disabled = false;
+              go.textContent = "Install";
+              show("Couldn't start. Tap Install again.");
+            },
+          );
+        };
+        /* nothing heard for 40 s: the connection may have stalled, so ask again (files already in are skipped) */
+        setInterval(function () {
+          if (running && Date.now() - last > 40000) keep();
+        }, 10000);
+        /* already installed before: say so */
+        sw.getRegistration("../").then(function (reg) {
+          if (reg && reg.active) reg.active.postMessage({ t: "kept?" });
+        });
+      })();
+    </script>
+  </body>
+</html>

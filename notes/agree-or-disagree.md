@@ -6887,3 +6887,38 @@ Decided (Adam): 1 a cropped picture is hit only where it is. 2 an erased backgro
 sounds can be enabled or disabled for templates by default in a ui menu in game settings"
 
 Adam: Sandbox has no template setting in code yet (templates = the spec's presets from Agree or Disagree / Would You Rather, line 125 of sandbox-mode-rules.txt). Asked the owner which they see (A board frame, B Agree or Disagree sounds, C other).
+
+## Owner, Nov 19 16:12Z (with a drawing of the help folders and the girlfriend's phone stuck on the loading bar)
+"Super important for my gf with terrible data. 
+i want a hidden path to be typed into search bars to make it to where the path is a low qaulity super omega minimal version that is only a download screen
+
+So imagine, a path not in index BUT in the address you type at the top of the page. 
+You type that into a forward slash after duck friends. When you go to the site with that address, the only thing is a super minimal install button for the game, and it is all there is on that AND a redirect button to take you to the homepage (index) for duckfriends. That way, her terrible data connection allows the game to load. 
+
+maybe it isnt her connection so ill show you.
+
+this is her screen in the second pic, it just doenst load
+
+there can be a small help button in bottom left of screen that is a link to this low qaulity page in the github
+
+DO THIS INSTALL PAGE THAT IS EASY TO LOAD FIRST AND THEN DEPLOY BECAUSE IT NEEDS OUT ASAP
+
+the directory for help files and any directory on the left of numberat screen can be clicked into or clicked out of, obv. this should of already been there. the directory for help files is too cluttered, make help files that are on page in their own directory 
+
+the directory for the clutter of files are a directory withtin a directory, two different paths
+
+the more simple and board help files with more text are the files also among those directories
+
+the visualization of suck is in the screenshot
+
+You click directories and it shows it's files and says it's path on the left (kinda like file explorer), and the you can click an arrow to go forward or back or use a search bar to go through the directories (using forward like linux)
+
+the home directory is a user's folder, but a new permission let's players view other players directories and go inside them inside the home directory in which a user's directory is located
+
+in the the user's directory, player's can click a permissions button to the left of the check or run, and it can be used to change permissions for that file (read, write, execute), or to give other players in a dropdown menu to modify permissions player's have within your files and directories (only yours). otherwise, players cannot read your files OR write OR execute unless you give them persmission
+
+permission has to be granted for every new sandbox session manually through this way everytime
+
+terminal can grant permissions with groups and what not, so the permissions is working to change the code in the shell for permssions in the shell and terminal as well."
+
+Done first (Adam, V100): get/index.html (/DuckFriends/get), one file, Install keeps the whole game on the device through sw.js (resumable: df-part, 3 tries a file, re-asks after 40 s quiet), browser "Add to home screen" when offered, Go to Duck Friends; "? Slow? Install" link bottom left of index.html's loading veil (removed once main.js runs); offline.js keeps the copy current on the website when localStorage df-lite. Drawing: Help DIR -> General Help files, .num directory -> .num files, particular help (named) -> particular help files. Numberat folders/permissions: Solomon next.

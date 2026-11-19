@@ -96,6 +96,7 @@ if ("serviceWorker" in navigator && isSecureContext)
     .register("sw.js", { updateViaCache: "none" })
     .catch(() => {});
 loadingScreen({ duck: profile.duck, ready: pageReady }); // (the page's own loading screen, in index.html, goes when the first screen is drawn)
+document.getElementById("lite-link")?.remove(); // (the light install link on the page's loading screen: the game came, so it goes)
 window.dfStarted = 1; // (the page's way out of a stuck start, in index.html, stands down)
 try {
   sessionStorage.removeItem("df-retry");
