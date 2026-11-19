@@ -24,6 +24,7 @@ const keepPlay = (L) => ({
   special: L.special ?? null,
   keys: L.keys ?? null,
   spc: L.spc ?? null,
+  scale: L.scale ?? null, // (its size: its hitbox goes with it, so it shows as it is hit, duck.js scaleOf)
 });
 
 /* the eight looks: a rainbow duck is the plain duck in one color; the eighth is brown, in Justin's glasses and jeans */

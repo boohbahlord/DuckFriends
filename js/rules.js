@@ -15,6 +15,7 @@
    room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). Duncelation has its
    own rules in duncerules.js: one defender in the circle, everyone else walks to Dunce or Not a Dunce. Valentine's Duck
    Date has its own in vddrules.js: The Date at the dining table, a date with each Suitor, then a Suitor Turned Down. */
+import { duckBig, scaleOf } from "./duck.js";
 import {
   baseMode,
   baseL4map,
@@ -3672,7 +3673,8 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
       p.y,
       +p.z || 0,
       hang ? (inCabin(p.x * HW, p.y * HH) ? 1 : 0) : 0,
-    );
+      duckBig(s, id),
+    ); // (a duck bigger than 100%: its hitbox too, duck.js)
     if (n) hits.push({ id, ...n });
   }
   if (sp === "knife") hits = hits.sort((a, b) => a.d - b.d).slice(0, 1);
@@ -3738,14 +3740,28 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
     !hang &&
     by !== JUSTIN_ID &&
     (isMgj(s) || sbOnBoard(s)) &&
-    mgjZombieHit(s, (x, y, big) => !!near(x, y, 0, 0, big), sp, now, by)
+    mgjZombieHit(
+      s,
+      (x, y, big, body) => {
+        if (!body) return !!near(x, y, 0, 0, big);
+        const q = body.at(p0.x, p0.y, handUp(s, by)); // (Sandbox's: its nearest part that shows to my hand, sbbody.js)
+        return !!q && !!near(q.x, q.y, 0, 0);
+      },
+      sp,
+      now,
+      by,
+    )
   )
     stab = true; // (Mad God Justin's zombies in reach too)
   if (hang)
     for (const n of hangTargets(s, now, sp)) {
       if (done.includes("h:" + n.id)) continue;
+      const q = n.at
+        ? n.at(p0.x, p0.y, handUp(s, by))
+        : { x: n.x / HW, y: n.y / HH }; // (Sandbox's NPCs: their nearest part that shows to my hand, sbbody.js)
       if (
-        near(n.x / HW, n.y / HH, n.z, inCabin(n.x, n.y) ? 1 : 0, n.r) &&
+        q &&
+        near(q.x, q.y, n.z, inCabin(n.x, n.y) ? 1 : 0, n.at ? 1 : n.r) &&
         hangHit(s, n.id, by, now, sp)
       ) {
         done.push("h:" + n.id);
@@ -3818,6 +3834,9 @@ function attacks(s, now) {
   return ch;
 }
 /* where a bullet or a dagger is, t ms after it was fired: on the board (x, y) and, for the dagger, its height z */
+/* how high a swing is, in duck widths over the swinger's feet: their hand, as the screens draw it (game.js bodyAt) */
+const handUp = (s, id) =>
+  0.45 * scaleOf(((s.players && s.players[id]) || {}).duck);
 export const shotAt = (sh, t) => ({
   x: sh.x0 + (sh.vx * t) / 1000,
   y: sh.y0 + (sh.vy * t) / 1000,
@@ -3857,7 +3876,8 @@ function blast(s, sh, x, y, now, o = {}) {
       p.y,
       +p.z || 0,
       hang ? (inCabin(p.x * HW, p.y * HH) ? 1 : 0) : 0,
-    );
+      duckBig(s, id),
+    ); // (a duck bigger than 100%: its hitbox too, duck.js)
     if (!n) continue;
     if (self && isMgj(s)) {
       if (mgjHalf(s, id, now)) hit.push(id);
@@ -3895,7 +3915,11 @@ function blast(s, sh, x, y, now, o = {}) {
   if ((isMgj(s) || sbOnBoard(s)) && sh.by !== JUSTIN_ID)
     mgjZombieHit(
       s,
-      (zx, zy, big) => !!near(zx, zy, 0, 0, big),
+      (zx, zy, big, body) => {
+        if (!body) return !!near(zx, zy, 0, 0, big);
+        const q = body.at(x, y); // (Sandbox's: its nearest part that shows, sbbody.js)
+        return !!q && !!near(q.x, q.y, 0, 0);
+      },
       "grenade",
       now,
       sh.by,
@@ -3913,13 +3937,16 @@ function blast(s, sh, x, y, now, o = {}) {
     }
   }
   if (hang)
-    for (const n of hangTargets(s, now, "grenade"))
+    for (const n of hangTargets(s, now, "grenade")) {
+      const q = n.at ? n.at(x, y) : { x: n.x / HW, y: n.y / HH }; // (Sandbox's NPCs: their nearest part that shows, sbbody.js)
       if (
-        near(n.x / HW, n.y / HH, n.z, inCabin(n.x, n.y) ? 1 : 0, n.r) &&
+        q &&
+        near(q.x, q.y, n.z, inCabin(n.x, n.y) ? 1 : 0, n.at ? 1 : n.r) &&
         hangHit(s, n.id, sh.by, now, w) &&
         n.id === "justin"
       )
         justinKilled(s, sh.by, w);
+    }
   s.fxN = (s.fxN || 0) + 1;
   s.fx = [
     ...(s.fx || []).slice(-19),
@@ -4433,7 +4460,8 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
       const ox = px - k * ux,
         oy = py - k * uy,
         od = Math.hypot(ox, oy);
-      if (od < (sh.r || 1)) {
+      if (od < (sh.r || 1) + (duckBig(s, id) - 1) / 2) {
+        // (a duck bigger than 100%: its hitbox too, duck.js)
         if (sh.got && sh.got.includes(id)) continue; // (it already took HP from this duck)
         hLock(sh, duckH(s, p)); // (the first it passes over sets its height)
         if (sh.fake) continue; // (Mad God Justin: his double's, or his own while the double is the real one: no harm)
@@ -4485,7 +4513,7 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
     }
   if (
     (isMgj(s) || sbOnBoard(s)) &&
-    mgjShot(s, sh, x0, y0, dx, dy, now, logLine)
+    mgjShot(s, sh, x0, y0, dx, dy, now, logLine, at.z)
   )
     return true; // (Mad God Justin: a duck's shot hit him, or his hit Good Justin or a Jaime)
   if (s.jm && at.z > -0.15 && at.z < 1.05 && !sh.fake) {
@@ -4554,7 +4582,11 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
         py = (n.y / HH - y0) / 0.012,
         len = ux * ux + uy * uy;
       const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
-      if (Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1) * (n.r || 1))
+      if (
+        n.line
+          ? n.line(x0, y0, x0 + dx, y0 + dy, at.z) >= 0 // (Sandbox's NPCs: where the shot, at its height, meets what shows of them, sbbody.js)
+          : Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1) * (n.r || 1)
+      )
         hLock(sh, n.z); // (n.r: a Numberat NPC's hitbox)
       else continue;
       if (hangHit(s, n.id, sh.by, now, sh.k) && n.id === "justin")

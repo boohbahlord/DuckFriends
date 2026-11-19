@@ -78,6 +78,8 @@ import { holdDown, onGetUp, invuln, hurtFx } from "./hangout/death.js";
 import { sbOnBoard } from "./sandboxrules.js";
 import { hitCode } from "./wounds.js";
 import { MAD } from "./sbbrain.js";
+import { npcBody, duOf } from "./sbbody.js";
+import { duckBig } from "./duck.js";
 import {
   E_LINES,
   DEATH_LINES,
@@ -1539,11 +1541,12 @@ function pellets(s, by, at, a0, n0, now) {
 }
 /* a shot this beat, from (x0, y0) to (x0 + dx, y0 + dy): a duck's shot that reaches Justin hits him (and is gone: true;
    on his double it counts for nothing); his shots hit Good Justin and the Jaimes. Ducks never hit each other here */
-export function mgjShot(s, sh, x0, y0, dx, dy, now, log) {
+export function mgjShot(s, sh, x0, y0, dx, dy, now, log, z = 0.41) {
   const m = s.mgj,
     sb = sbOnBoard(s); // (Sandbox's board: only its spawns' zombies, in s.mz as his are: sbspawn.js)
   if (!sb && (!m || s.phase !== "boss")) return false;
-  const near = (q, r = 1) => {
+  const near = (q, r = 1, body = null) => {
+    if (body) return body.line(x0, y0, x0 + dx, y0 + dy, z) >= 0; // (Sandbox's NPCs: where the shot, at its height z, meets what shows of it, sbbody.js)
     const ux = dx / RX,
       uy = dy / RY,
       px = (q.x - x0) / RX,
@@ -1566,7 +1569,7 @@ export function mgjShot(s, sh, x0, y0, dx, dy, now, log) {
       !sh.fake &&
       mgjZombieHit(
         s,
-        (x, y, r) => near({ x, y }, r),
+        (x, y, r, body) => near({ x, y }, r, body),
         armOf(sh.k),
         now,
         sh.by,
@@ -2516,14 +2519,15 @@ function wavesTick(s, now) {
       }
     }
     if (!best) continue;
-    const p = s.pos[best];
-    if (bd > WAVE.CLAW * 0.8) {
-      const go = Math.min(bd - WAVE.CLAW * 0.8, WAVE.SPEED * dt) / bd;
+    const p = s.pos[best],
+      claw = WAVE.CLAW + (duckBig(s, best) - 1) / 2; // (a duck bigger than 100% is reached sooner: duck.js)
+    if (bd > claw * 0.8) {
+      const go = Math.min(bd - claw * 0.8, WAVE.SPEED * dt) / bd;
       o.x = r3(o.x + (p.x - o.x) * go);
       o.y = r3(o.y + (p.y - o.y) * go);
       ch = true;
     }
-    if (bd <= WAVE.CLAW && now - o.a >= WAVE.CLAW_MS) {
+    if (bd <= claw && now - o.a >= WAVE.CLAW_MS) {
       o.a = now;
       o.f = p.x < o.x ? -1 : 1;
       mgjKnock(s, best, now);
@@ -2577,8 +2581,11 @@ export function mgjZombieHit(s, near, w, now, by, sh = null) {
   if (!z || !((isMgj(s) && s.phase === "boss") || sbOnBoard(s))) return false; // (and Sandbox's board: sbspawn.js)
   const seen = sh ? [...(sh.zh || []), ...(sh.zp || [])] : [];
   let got = z.zb.filter(
-    (o) => !o.d && !seen.includes(o.i) && near(o.x, o.y, o.hb || 1),
-  ); // (o.hb: a Numberat file's hitbox, sbnumberat.js; near takes it as how big it is)
+    (o) =>
+      !o.d &&
+      !seen.includes(o.i) &&
+      near(o.x, o.y, o.hb || 1, z.sb ? npcBody(s, o, duOf(s, by)) : null),
+  ); // (o.hb: a Numberat file's hitbox, sbnumberat.js; near takes it as how big it is. Sandbox's: its body, only where its picture shows, sbbody.js)
   if (!got.length) return false;
   if (sh)
     got.sort(
