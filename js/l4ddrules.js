@@ -139,7 +139,7 @@ import {
 /* what Sandbox lends these rules (sbcabin.js): npc(s, by, x, y, now, w, rx, ry, from, hit) puts a shot or a swing at
    (x, y) into its NPCs standing there (hit: a swing's list, every one in reach once; none: a shot, the first one, true
    when it landed) */
-export const L4_HOOKS = { npc: null };
+export const L4_HOOKS = { npc: null, gm: null }; // (gm: Survival's gunmen, gunmen.js: { tick, shot, blast, fire, near, claw })
 export const isL4dd = (s) => !!s && baseMode(s.options) === "l4dd"; // (and Sandbox on its cabin or Downpour: sandboxrules.js)
 /* I want only the lights' stutter and the air (the wind, the rain, the fires: ambience.js) on of Hangout's activities.
    The couches, the stage, the card table and the piano's keys are still drawn, but quiet: nothing to sit on, sing into
@@ -3911,6 +3911,14 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
     if (inCone((jx - px) / D, (jy - py) / D, dx, dy, far / D + 0.4))
       wildFire(s, id, now); // (Justin with no weapon burns too)
   }
+  if (L4_HOOKS.gm && s.hang.gm)
+    L4_HOOKS.gm.fire(
+      s,
+      id,
+      now,
+      (x, y) => inCone((x - px) / D, (y - py) / D, dx, dy, far / D + 0.4),
+      gmHelp(s, now),
+    ); // (Survival's gunmen in the flame: gunmen.js)
   const mm = merchantOf(s);
   if (
     mm &&
@@ -4142,6 +4150,13 @@ function wildHurt(
   if (merchantShot(s, by, x, y, now, w, rx, ry, from)) return true; // (the merchant in its way: merchantShot)
   if (npc && L4_HOOKS.npc && L4_HOOKS.npc(s, by, x, y, now, w, rx, ry, from))
     return true; // (one of Sandbox's NPCs in its way: sbcabin.js)
+  if (
+    npc &&
+    L4_HOOKS.gm &&
+    s.hang.gm &&
+    L4_HOOKS.gm.shot(s, by, x, y, now, w, rx, ry, from, null, gmHelp(s, now))
+  )
+    return true; // (one of Survival's gunmen in its way: gunmen.js)
   const id = WILD.id,
     p = s.pos[id],
     q = P4(s, id);
@@ -4253,6 +4268,20 @@ function meleeHits(s, now) {
     }
     if (L4_HOOKS.npc)
       L4_HOOKS.npc(s, k.by, bx, by, now, k.w, R, R, null, k.hit); // (Sandbox's NPCs in its bubble, each once a swing: sbcabin.js)
+    if (L4_HOOKS.gm && s.hang.gm)
+      L4_HOOKS.gm.shot(
+        s,
+        k.by,
+        bx,
+        by,
+        now,
+        k.w,
+        R,
+        R,
+        null,
+        k.hit,
+        gmHelp(s, now),
+      ); // (Survival's gunmen too: gunmen.js)
     if (
       !k.hit.includes("j") &&
       wildHurt(s, k.by, bx, by, now, k.w, R, R, null, false)
@@ -4667,6 +4696,18 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
     )
       wildDown(s, sh.by, now, "grenade", true, DEATH);
   }
+  if (L4_HOOKS.gm && s.hang.gm)
+    L4_HOOKS.gm.blast(
+      s,
+      sh.by,
+      bx,
+      by,
+      ARMS.grenade.r * wide,
+      open,
+      now,
+      sh.w,
+      gmHelp(s, now),
+    ); // (Survival's gunmen in its blast: gunmen.js)
   /* the merchant in its blast: all his HP */
   const mm = merchantOf(s);
   if (
@@ -4922,6 +4963,8 @@ function l4Tick(s, now) {
     ...up,
     ...ids.filter((id) => isWild(s, id) && standing(s, id)),
   ]);
+  if (isSurv(s) && L4_HOOKS.gm)
+    L4_HOOKS.gm.tick(s, zs, now, mine, gmHelp(s, now)); // (Survival's gunmen: gunmen.js)
   jaimesRun(s, zs, now, T);
   nukeTick(s, zs, now, ids);
   boltTick(s, zs, now, ids);
@@ -4941,6 +4984,9 @@ function l4Tick(s, now) {
   /* Survival: no rounds, its phases instead (survrules.js); a rest brings the merchant and the ghosts back */
   if (isSurv(s)) {
     survTick(s, L2, left, now, Math.max(1, mine.length), {
+      gunmen: (kind) =>
+        L4_HOOKS.gm && L4_HOOKS.gm.start(s, kind, now, gmHelp(s, now)),
+      gunDone: () => !L4_HOOKS.gm || L4_HOOKS.gm.done(s),
       walker: () => survWalker(s, L2, mine),
       speedAt: (r) =>
         Math.round(WALK * Z_SLOW * rnd(roundOf(r)[1][0], roundOf(r)[1][1])),
@@ -4994,38 +5040,7 @@ function newZombie(s, L, T, zs = []) {
      one of the nearest to the ducks (so they don't walk round the map for a minute); if all are seen, the furthest */
   let from = o.from;
   if (dp()) {
-    const dist = flowFrom(pts.map((q) => openNear(...q))),
-      fences = OPENINGS.filter((q) => q.kind === "fence"),
-      long = fences.map((q) => q.fence.climb[1] - q.fence.climb[0]),
-      all = long.reduce((a, b) => a + b, 0),
-      seen = (x, y) =>
-        pts.some(
-          ([a, b]) =>
-            Math.abs(x - a) < VIEW.x + 60 && Math.abs(y - b) < VIEW.y + 140, // (up and down a little more: a tall phone held upright sees farther that way, 15% more since the owner's Nov 18 15:18Z, world.js PHONE_OUT)
-        ),
-      far = (x, y) =>
-        Math.min(...pts.map(([a, b]) => Math.hypot(x - a, y - b)), 1e9),
-      hidden = [],
-      shown = [];
-    for (let t = 0; t < 40; t++) {
-      let r = Math.random() * all,
-        k = 0;
-      while (k < fences.length - 1 && r > long[k]) r -= long[k++];
-      const q = fences[k],
-        f = q.fence,
-        v = f.climb[0] + r,
-        [ix, iy] = byFence(f, FENCE.out - FENCE.across, v),
-        c = openNear(ix, iy);
-      if (c < 0 || !(dist[c] < Infinity) || !zOk(ix, iy, heightAt(ix, iy)))
-        continue; // (it would land in a trunk, or where nobody can be reached)
-      const at = byFence(f, FENCE.from, v);
-      (seen(...at) ? shown : hidden).push({ q, at, d: far(...at) });
-    }
-    hidden.sort((a, b) => a.d - b.d);
-    shown.sort((a, b) => b.d - a.d);
-    const pick = hidden.length
-      ? hidden[Math.floor(Math.random() * Math.min(4, hidden.length))]
-      : shown[0];
+    const pick = fenceSpot(pts);
     if (pick) {
       o = pick.q;
       from = pick.at;
@@ -5058,6 +5073,96 @@ function newZombie(s, L, T, zs = []) {
       ? [max, v, o.id, 0, 0, -1, -1, 1]
       : [max, v, o.id, size, build, hat, outfit],
   };
+}
+/* what Survival's gunmen (gunmen.js) borrow from these rules, now */
+function gmHelp(s, now) {
+  const T = now - ((s.hang.l4 && s.hang.l4.t0) || now);
+  return {
+    ids: players(s).filter((id) => !isWild(s, id)),
+    ww: W,
+    wh: H,
+    hp: () => Math.max(1, hp0()),
+    open: (x, y) => openNear(x, y) >= 0 && zOk(x, y, heightAt(x, y)),
+    hurt(id, dmg, w) {
+      const p4 = { ...(s.hang.l4p || {}) },
+        down = hurtDuck(s, p4, id, now, w, dmg);
+      s.hang.l4p = p4;
+      return down;
+    }, // (a duck, Justin out there too: true when it went down)
+    hitZ(z, dmg, w) {
+      if (strike(s, z, dmg, false, null, w)) die(z, T);
+    }, // (a zombie: nobody's points)
+    pts: (id, n) => addPts(s, id, n),
+    takes: (by, w) => zombieTakes(s, by, w),
+    up: (id) => standing(s, id),
+    wild: (id) => isWild(s, id),
+    drop(x, y) {
+      const k = pickDrop(s);
+      s.hang.l4dr = [
+        ...(s.hang.l4dr || []),
+        {
+          n: now,
+          k,
+          x: Math.round(x),
+          y: Math.round(y),
+          until: now + DROP.LIFE,
+        },
+      ];
+    }, // (a special where one fell: the owner's, "Special drops can still happen from criminals or soldiers")
+    edge() {
+      syncMap();
+      const pts = players(s)
+          .filter((id) => standing(s, id))
+          .map((id) => at(s.pos[id])),
+        pick = pts.length ? fenceSpot(pts) : null;
+      return pick ? pick.land : null;
+    }, // (a spot just inside a fence that nobody sees: where they come in, "they show up from the outside")
+    speed: WALK * walkOf(s) * NPC_RUN, // (the shared slow speed, npcshared.js)
+    T,
+  };
+}
+/* Downpour: a spot behind a fence that no duck sees, one of the nearest to the ducks (pts: where they stand), where one
+   coming over lands somewhere that leads to them: { q (its opening), at (outside, by the fence), land (inside) }, or
+   null */
+function fenceSpot(pts) {
+  const dist = flowFrom(pts.map((q) => openNear(...q))),
+    fences = OPENINGS.filter((q) => q.kind === "fence"),
+    long = fences.map((q) => q.fence.climb[1] - q.fence.climb[0]),
+    all = long.reduce((a, b) => a + b, 0),
+    seen = (x, y) =>
+      pts.some(
+        ([a, b]) =>
+          Math.abs(x - a) < VIEW.x + 60 && Math.abs(y - b) < VIEW.y + 140, // (up and down a little more: a tall phone held upright sees farther that way, 15% more since the owner's Nov 18 15:18Z, world.js PHONE_OUT)
+      ),
+    far = (x, y) =>
+      Math.min(...pts.map(([a, b]) => Math.hypot(x - a, y - b)), 1e9),
+    hidden = [],
+    shown = [];
+  for (let t = 0; t < 40; t++) {
+    let r = Math.random() * all,
+      k = 0;
+    while (k < fences.length - 1 && r > long[k]) r -= long[k++];
+    const q = fences[k],
+      f = q.fence,
+      v = f.climb[0] + r,
+      [ix, iy] = byFence(f, FENCE.out - FENCE.across, v),
+      c = openNear(ix, iy);
+    if (c < 0 || !(dist[c] < Infinity) || !zOk(ix, iy, heightAt(ix, iy)))
+      continue; // (it would land in a trunk, or where nobody can be reached)
+    const at = byFence(f, FENCE.from, v);
+    (seen(...at) ? shown : hidden).push({
+      q,
+      at,
+      d: far(...at),
+      land: [ix, iy],
+    });
+  }
+  hidden.sort((a, b) => a.d - b.d);
+  shown.sort((a, b) => b.d - a.d);
+  const pick = hidden.length
+    ? hidden[Math.floor(Math.random() * Math.min(4, hidden.length))]
+    : shown[0];
+  return pick || null;
 }
 /* Sandbox: a zombie made at a spawn (sbspawn.js), at (x, y) in shares of the map, already inside and after the ducks
    (st 2), with its spawn's HP, speed (a share of a zombie's own) and damage; its number, or 0 when the map has no room.
@@ -5164,6 +5269,20 @@ function moveZombies(s, zs, now, T, up) {
       j: true,
       m: true,
     });
+  /* Survival's gunmen: chased as Justin is (gunmen.js near: the ones a zombie may go for) */
+  if (L4_HOOKS.gm)
+    for (const g of L4_HOOKS.gm.near(s))
+      pls.push({
+        id: "@g" + g.i,
+        p: null,
+        xy: [g.x, g.y],
+        zz: heightAt(g.x, g.y),
+        dk: null,
+        way: null,
+        goal: [g.x, g.y],
+        j: true,
+        g: g.i,
+      });
   s.hidden = { ...(s.hidden || {}), l4tk: now };
   const field = pls.filter((q) => !q.j),
     dist = flowFrom(
@@ -5488,6 +5607,9 @@ function moveZombies(s, zs, now, T, up) {
         if (target.m) {
           if (merchantHurt(s, null, 1, now, "claw"))
             pls.splice(pls.indexOf(target), 1); // (the merchant: a swipe takes 1, and no line)
+        } else if (target.g) {
+          if (L4_HOOKS.gm.claw(s, target.g, z, clawDmg(), now, gmHelp(s, now)))
+            pls.splice(pls.indexOf(target), 1); // (a gunman: gunmen.js)
         } else if (
           !dodging(s, target.p, now) &&
           hurtDuck(

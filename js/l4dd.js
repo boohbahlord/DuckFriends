@@ -160,6 +160,7 @@ import {
   hitsOf,
 } from "./l4ddart.js";
 import { isSurv, survTime, clockOf } from "./survrules.js";
+import { gunLights, gunBodies } from "./gunmenview.js";
 
 const RX = 56,
   RY = 25.6; // (a zombie's room on the floor, as the rules')
@@ -1382,10 +1383,19 @@ function paint(now, ctx) {
     const c = Wd.toScreen(a.x, a.y, a.z + 26);
     holes.push([c.left * q, c.top * q, GLOW * sc, 0.55]);
     if (!up(s, id) || off[id] || sbNoLight(s, id)) continue; // (Sandbox: a flashlight only once taken from loot)
-    if (!on(c.left * q, c.top * q, CONE.far * sc)) continue; // (its light can't reach the screen: no rays)
-    const [dx, dy] = aimOf(s, id, ctx),
-      t = Math.atan2(dy, dx),
-      roof = !!deckAt(a.x, a.y, a.z), // (up on a roof: over the walls, nothing stops it)
+    const [dx, dy] = aimOf(s, id, ctx);
+    beamOf(id, a, Math.atan2(dy, dx));
+  }
+  /* Survival's criminals' flashlights too (gunmenview.js) */
+  for (const [x, y, t] of gunLights()) {
+    const a = { x, y, z: heightAt(x, y) };
+    if (seenFrom(x, y, Wd.inside, a.z)) beamOf("", a, t);
+  }
+  /* one flashlight's cone from a (world px), its angle t: its rays stop at the walls */
+  function beamOf(id, a, t) {
+    const c = Wd.toScreen(a.x, a.y, a.z + 26);
+    if (!on(c.left * q, c.top * q, CONE.far * sc)) return; // (its light can't reach the screen: no rays)
+    const roof = !!deckAt(a.x, a.y, a.z), // (up on a roof: over the walls, nothing stops it)
       pts = [],
       ends = []; // (the same rays on the floor in world px, on into the wall each one stops at: shineProps)
     for (let k = 0; k <= rays; k++) {
@@ -1426,6 +1436,7 @@ function paint(now, ctx) {
     }
     for (const o of Z.values())
       if (!o.el.hidden && o.st !== 3) lit(o.x, o.y, heightAt(o.x, o.y), 1.1);
+    for (const [x, y] of gunBodies()) lit(x, y, heightAt(x, y), 1);
   }
   litNames(s, ctx, beams);
   const f = (v) => v.toFixed(1),
