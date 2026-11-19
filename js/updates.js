@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v110",
+    version: 110,
+    date: "Nov 19, 2026",
+    title: "Build a brain without typing",
+    news: [
+      "For Sandbox: M's first row, Build a brain, makes a Brain without typing. Pick when it acts (it spawns, is hit, dies, touches a duck, a duck comes near, or every few seconds) and what it does then (attack, run away, go to the nearest duck, say something, wait, or set HP, speed or size). It's saved as a Seriat file in my-files/, and the new arrow beside a spawn's Brain box lists those files.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v109",
     version: 109,
     date: "Nov 19, 2026",

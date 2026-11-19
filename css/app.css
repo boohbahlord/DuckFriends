@@ -20532,6 +20532,155 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   outline: 0.16rem solid var(--ink);
   outline-offset: 0.1rem;
 }
+/* the Brain box: its arrow, and the list of my-files/ under it (js/sbspawnview.js brainRow) */
+.sb-brainrow {
+  grid-template-columns: minmax(0, 1fr) 11rem;
+}
+.sb-brainbox {
+  display: flex;
+  min-width: 0;
+}
+.sb-brainbox .sb-box {
+  min-width: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.sb-brainarrow {
+  flex: none;
+  width: 1.9rem;
+  font: inherit;
+  color: var(--ink);
+  background: var(--card2, rgba(255, 255, 255, 0.08));
+  border: 0.1rem solid var(--line);
+  border-left: 0;
+  border-radius: 0 0.4rem 0.4rem 0;
+  cursor: pointer;
+}
+.sb-brainlist {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  max-height: 10rem;
+  overflow-y: auto;
+  border: 0.1rem solid var(--line);
+  border-radius: 0.4rem;
+}
+.sb-brainfile {
+  font: inherit;
+  font-family: "Cascadia Code", ui-monospace, monospace;
+  text-align: left;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+}
+.sb-brainfile:hover,
+.sb-brainfile:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+}
+.sb-brainnew {
+  font-family: inherit;
+  font-weight: 700;
+  border-top: 0.1rem solid var(--line);
+}
+.sb-brainlist .sb-none {
+  padding: 0.4rem 0.6rem;
+}
+/* M's Brain builder (js/brainbuild.js): each When a card, its Do lines under it */
+.brb-win {
+  width: min(36rem, calc(100vw - 1.5rem));
+}
+.brb-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.7rem;
+}
+.brb-rule {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  padding: 0.6rem;
+  border: 0.1rem solid var(--line);
+  border-radius: 0.6rem;
+}
+.brb-when,
+.brb-do {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start; /* (its label and × beside the first line, however many lines it wraps to) */
+  gap: 0.5rem;
+  width: 100%;
+}
+.brb-mid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.5rem;
+  min-width: 0;
+}
+.brb-do {
+  padding-left: 1rem;
+}
+.brb-label {
+  min-width: 2.6rem;
+  padding-top: 0.4rem;
+  font-weight: 700;
+}
+.brb-when select,
+.brb-do select {
+  width: auto;
+  flex: 1 1 9rem;
+  min-width: 0;
+}
+.brb-do input:not([type="number"]) {
+  width: auto;
+  flex: 2 1 9rem;
+  min-width: 0;
+}
+.brb-num {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.9em;
+}
+.brb-rule input[type="number"] {
+  width: 4.6rem;
+}
+.brb-del {
+  width: 1.8rem;
+  height: 1.8rem;
+  font: inherit;
+  font-weight: 700;
+  color: var(--ink);
+  background: none;
+  border: 0.1rem solid var(--line);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.brb-add {
+  margin-top: 0.5rem;
+}
+.brb-see summary {
+  cursor: pointer;
+}
+.brb-code {
+  margin: 0.4rem 0 0;
+  padding: 0.5rem;
+  max-height: 9rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: "Cascadia Code", ui-monospace, monospace;
+  font-size: 0.85em;
+  border: 0.1rem solid var(--line);
+  border-radius: 0.4rem;
+}
+.brb-why {
+  margin: 0.4rem 0 0;
+}
 /* No color (wave 2): the rainbow, and a ring that turns through it very slowly ("emphasis on slowly") */
 .sb-col-none {
   background: conic-gradient(
