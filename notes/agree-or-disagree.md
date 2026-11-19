@@ -7158,3 +7158,8 @@ Decided (Adam): plan at /mnt/project-files/sandbox/2026-11-19-2346/plan.md, with
 "There also should be a game setting to determine what music ends up in the game, if any at all. And they can also select those tracks of those songs in a selection of tracks that they can use for that. I don't know if it's a good idea to allow them to import audio unless the audio can become compressed to 32-bit. I don't know how that works. I don't know if that's a good idea. or if there's some legal issues with that."
 
 Decided (Adam): Sandbox's G gets a Music setting (none, or which of the game's songs play), saved with the Sandbox and with made modes; in plan 2026-11-19-2346. Importing audio: question S5 to the owner (no import vs small mono files, private only).
+
+## Owner, 2026-11-19 23:50Z (spawns spawn players + groups; a simple ordered list)
+"Spawn should be able to be set to spawn players. And it should be able to have a group setting as anything in the zones will have. I don't know what we're doing right now. Give me a stupidly simple list of what we're doing in what order, because I want to get sandbox and survival done. Because I think we're scattered right now because you're stupid."
+
+Decided (Adam): a spawn can be set to spawn players (Phase 2); spawns get the same group setting as zones (Phase 5, groups cover spawns too). Order sent to the owner: Survival on first (Solomon), Sandbox phases 2-7 in order (Jackal), Save-a-Sandbox (Solomon), Noah on real pixels then the camera.
