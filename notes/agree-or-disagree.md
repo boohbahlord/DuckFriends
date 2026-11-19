@@ -6860,3 +6860,65 @@ Decided (Adam): standing rule, deploy tested batches without asking; keep worker
 "Adam u do a quick runover, correction, and edit yoruself of the help pages when they are done"
 
 Done (Adam): every help page read; examples run through the compiler; repeats/order examples that errored or meant nothing replaced, who/tests/window/files clarified (V96).
+
+## Owner, Nov 19 15:47Z
+"i want it to where not only can images be given to the custom NPCs, not only can they be pixelated, but all of their sizes can be changed, with their size limit based on the height of Justin Mad God for the images used. 
+Cropped images work obviously and allow for an enemy that is only the cropped image. The hitbox of the cropped image is it's image, not the parts that dont exist, ask me what that means. images that are erased to a shape or whatever prior to be uplaoded will have their hitbox only be the invisible obv, ask me what that means. The images for custom npcs have to be 32 bit in size like the ducks are normally tbh, and their pixels are different scale when they are larger, thus having more pixels with their larger size. Percent is obviously the best way to scale size for ducks, because otherwise they are using decimal integers."
+
+Now (Adam): uploaded NPC pictures exist (Appearance tab, s.sbpic), drawn 64 wide; hitbox is a 0.1-3 stat. Questions sent to the owner before building.
+
+## Owner, Nov 19 15:52Z (answers to Adam's 6 questions on the 15:47Z request)
+"1. yes
+2. yes yes yes
+3. if the ducks are already that size yeah
+4. more details? idk wat u mean, bigger ducks need more pixels because they r bigger, but pixels are the same size for bigger ducks.
+5. yes i think
+6. yes
+
+
+
+Size for players can now be edited in the customization menu, and they can only be 50% size at the smallest and 500% size at the biggest (hitbox stays the same for smaller ones but becomes bigger for bigger ducks)"
+
+Decided (Adam): 1 a cropped picture is hit only where it is. 2 an erased background: only the visible pixels are hit ("invisible" meant visible). 3/4 at 100% a picture is 32 pixels tall like a duck; bigger = more pixels of the same size. NPC smallest left unanswered: Adam picked 10%, biggest = Mad God Justin's height. 5 size changes picture and hitbox together; Numberat's hitbox becomes percent (10% to 300%). 6 every custom NPC can be resized (pictures, ducks, zombies). Players: a Size row in customization, 50% to 500%, every mode; hitbox stays 100% below 100% and grows above it. Build: Noah.
+
+## Owner, Nov 19 15:54Z
+"the board should not be set to agree or disagree template by default. no template is default template no matter the map for sandbox
+
+sounds can be enabled or disabled for templates by default in a ui menu in game settings"
+
+Adam: Sandbox has no template setting in code yet (templates = the spec's presets from Agree or Disagree / Would You Rather, line 125 of sandbox-mode-rules.txt). Asked the owner which they see (A board frame, B Agree or Disagree sounds, C other).
+
+## Owner, Nov 19 16:12Z (with a drawing of the help folders and the girlfriend's phone stuck on the loading bar)
+"Super important for my gf with terrible data. 
+i want a hidden path to be typed into search bars to make it to where the path is a low qaulity super omega minimal version that is only a download screen
+
+So imagine, a path not in index BUT in the address you type at the top of the page. 
+You type that into a forward slash after duck friends. When you go to the site with that address, the only thing is a super minimal install button for the game, and it is all there is on that AND a redirect button to take you to the homepage (index) for duckfriends. That way, her terrible data connection allows the game to load. 
+
+maybe it isnt her connection so ill show you.
+
+this is her screen in the second pic, it just doenst load
+
+there can be a small help button in bottom left of screen that is a link to this low qaulity page in the github
+
+DO THIS INSTALL PAGE THAT IS EASY TO LOAD FIRST AND THEN DEPLOY BECAUSE IT NEEDS OUT ASAP
+
+the directory for help files and any directory on the left of numberat screen can be clicked into or clicked out of, obv. this should of already been there. the directory for help files is too cluttered, make help files that are on page in their own directory 
+
+the directory for the clutter of files are a directory withtin a directory, two different paths
+
+the more simple and board help files with more text are the files also among those directories
+
+the visualization of suck is in the screenshot
+
+You click directories and it shows it's files and says it's path on the left (kinda like file explorer), and the you can click an arrow to go forward or back or use a search bar to go through the directories (using forward like linux)
+
+the home directory is a user's folder, but a new permission let's players view other players directories and go inside them inside the home directory in which a user's directory is located
+
+in the the user's directory, player's can click a permissions button to the left of the check or run, and it can be used to change permissions for that file (read, write, execute), or to give other players in a dropdown menu to modify permissions player's have within your files and directories (only yours). otherwise, players cannot read your files OR write OR execute unless you give them persmission
+
+permission has to be granted for every new sandbox session manually through this way everytime
+
+terminal can grant permissions with groups and what not, so the permissions is working to change the code in the shell for permssions in the shell and terminal as well."
+
+Done first (Adam, V100): get/index.html (/DuckFriends/get), one file, Install keeps the whole game on the device through sw.js (resumable: df-part, 3 tries a file, re-asks after 40 s quiet), browser "Add to home screen" when offered, Go to Duck Friends; "? Slow? Install" link bottom left of index.html's loading veil (removed once main.js runs); offline.js keeps the copy current on the website when localStorage df-lite. Drawing: Help DIR -> General Help files, .num directory -> .num files, particular help (named) -> particular help files. Numberat folders/permissions: Solomon next.

@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v100",
+    version: 100,
+    date: "Nov 19, 2026",
+    title: "A light install for slow connections",
+    news: [
+      'On a slow connection, type /get after the site\'s address (or tap "Slow? Install" at the bottom left of the loading screen): a tiny page installs the whole game on the device, picking up where it stopped if the connection drops. After that the game loads from the device.',
+    ],
+    fixed: [],
+  },
+  {
     id: "v99",
     version: 99,
     date: "Nov 19, 2026",
