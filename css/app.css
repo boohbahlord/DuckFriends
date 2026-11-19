@@ -21326,3 +21326,145 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   font-size: 0.8em;
   opacity: 0.7;
 }
+
+/* the Seriat bible (js/seriatbible.js): one long page like a Word document, in pixels (the owner's, Nov 19 23:17Z) */
+.game .sb-bible {
+  position: fixed;
+  left: 10px;
+  bottom: 96px;
+  z-index: 31;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.sb-bible[hidden] {
+  display: none;
+}
+.nm-win {
+  position: relative;
+}
+.nm-bible {
+  position: absolute;
+  top: 0.7rem;
+  right: 3.6rem;
+}
+@media (max-width: 600px) {
+  .nm-bible {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+  }
+}
+.win.sbb-win {
+  width: min(52rem, 100%);
+  max-height: calc(100dvh - 2rem);
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+  border-radius: 0;
+  border: 4px solid #1c1c28;
+  box-shadow:
+    4px 4px 0 #1c1c28,
+    -4px 0 0 #1c1c28,
+    0 -4px 0 #1c1c28;
+  background: #6f7a8c;
+  padding: 0.6rem;
+}
+.win-back:has(> .sbb-win) {
+  z-index: 70;
+}
+.sbb-win h2 {
+  margin: 0 3rem 0.5rem 0.2rem;
+  color: #fff;
+  font-family: "Jersey 15", monospace;
+  font-size: 1.5rem;
+  text-shadow: 2px 2px 0 #1c1c28;
+}
+.sbb-win .win-x {
+  border-radius: 0;
+}
+.sbb-page {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+  padding: 1.2rem 1.6rem 2rem;
+  background: #fbf8ee;
+  color: #1c1c28;
+  border: 4px solid #1c1c28;
+  image-rendering: pixelated;
+  font-family: "Jersey 15", monospace;
+  font-size: 1.2rem;
+  line-height: 1.35;
+  font-size-adjust: 0.52;
+}
+.sbb-page * {
+  font-family: inherit;
+}
+.sbb-page h1,
+.sbb-page h2,
+.sbb-page h3 {
+  margin: 1.4rem 0 0.4rem;
+  line-height: 1.1;
+  color: #1c1c28;
+  text-shadow: none;
+}
+.sbb-page h1 {
+  font-size: 2.2rem;
+  margin-top: 0;
+  border-bottom: 4px solid #1c1c28;
+}
+.sbb-page h2 {
+  font-size: 1.7rem;
+  border-bottom: 2px solid #1c1c28;
+}
+.sbb-page h3 {
+  font-size: 1.35rem;
+}
+.sbb-page p,
+.sbb-page ul {
+  margin: 0.5rem 0;
+}
+.sbb-page ul {
+  padding-left: 1.4rem;
+}
+.sbb-page li {
+  margin: 0.25rem 0;
+}
+.sbb-page code,
+.sbb-page pre {
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 0.78em;
+  background: #e8e2cf;
+  border: 2px solid #1c1c28;
+  padding: 0 0.25rem;
+  overflow-wrap: anywhere;
+}
+.sbb-page pre {
+  padding: 0.5rem 0.7rem;
+  overflow: auto;
+  white-space: pre;
+}
+.sbb-tab {
+  overflow-x: auto;
+  margin: 0.6rem 0;
+}
+.sbb-page table {
+  border-collapse: collapse;
+  min-width: 100%;
+}
+.sbb-page th,
+.sbb-page td {
+  border: 2px solid #1c1c28;
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+.sbb-page th {
+  background: #e8e2cf;
+}
+@media (max-width: 600px) {
+  .sbb-page {
+    padding: 0.8rem 0.9rem 1.5rem;
+    font-size: 1.05rem;
+  }
+}
