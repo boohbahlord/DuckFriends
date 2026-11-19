@@ -108,9 +108,11 @@ A file whose first line is `\\param\\` sets rules for every Numberat file. `\\pa
 order. Reachable from Game settings (g) and the Numberat window.
 
 ## 8. Limits per stat
-Owner: "limits are preset as usual unless player does something". **[proposal, not OK'd]** HP 0.1 to Mad God Justin's
-highest HP (hpOf in js/mgjrules.js, full room); damage 0.1 to 50; speed 0.1 to 5; spawn limit 1 to 100; time between
-spawns 0.5 s to 10 min.
+Owner 13:44Z: "Limits are set automatically if the player DOESNT define them themselves, and a help file says the limits
+and points to the help file on how to fix them". So: each stat has a preset limit (the game's normal ones, e.g. HP up
+to Mad God Justin's highest HP, speed 0.1 to 5, spawn limit 1 to 100); a player's own `\inc'lim=..'\` or
+`\rm'lim'\` replaces it. The help folder has a `limits` page listing every preset limit, which points to the page on
+changing them (line rules). A "past the limit" error names the stat and the limit and points to the same page.
 
 ## 9. Where code runs
 Files run from the Run button, a shell command, or attached/imported in g; a shell command can stop them. No separate

@@ -6840,3 +6840,8 @@ Decided (Adam): loops in bible section 14.
 "Sure"
 
 Owner 13:42Z: "1. sure" (Version 91 live with the newer fixes), "2. ?????? 3. ???????????????" (re-explained). Limits: the game's normal limits unless the owner says otherwise.
+
+## Owner, Nov 19 13:44Z (quoting the limits question)
+"Limits are set automatically if the player DOESNT define them themselves, and a help file says the limits and points to the help file on how to fix them"
+
+Decided (Adam): bible section 8.
