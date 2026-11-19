@@ -84,8 +84,13 @@ export const WALK_HOLES = [
   { id: "gs-north", axis: "x", at: STATION.y0, a: 2950, b: 3150 },
   { id: "gs-front", axis: "x", at: STATION.y1, a: 2400, b: 2800 },
   /* the restroom's west wall, so nobody is trapped in it (the owner's, Nov 19 19:27Z: "there should be a hole in the
-     bathroom wall to the left so that players cannot get trapped. That feels pretty unfair when it happens") */
-  { id: "gs-rest-w", axis: "y", at: STATION.x0, a: 1300, b: 1460 },
+     bathroom wall to the left so that players cannot get trapped. That feels pretty unfair when it happens"). A hole is
+     the wall smashed, never a doorway (19:58Z: "a hole in a wall means something's gone wrong and it's destroyed. And I
+     want to be able to see the destruction of that wall and see where to enter through it or exit from it ... Make it
+     large"): most of the wall, from a little south of the restroom's top wall down to the corner, so no piece of it
+     stands south of a duck in the hole (that piece turned see-through over the duck: "The wall does not go
+     transparent"); rubble spills out both sides, and from inside the outside shows through it (layout.js PEEKS) */
+  { id: "gs-rest-w", axis: "y", at: STATION.x0, a: 1250, b: 1750 },
 ];
 /* the boarded holes: where zombies tear the boards down and climb in (ducks never get through one). out: the side the
    outside is on (n, s, e, w) */
@@ -356,13 +361,29 @@ function planBuild(b) {
         hole: o,
         fade: true,
       });
-    else
+    else {
       put("hole", o.at - T, o.a - T, 2 * T, o.b - o.a + 2 * T, INNER, {
         z: 0,
         hole: o,
         boarded: !!o.out,
         key: o.b + T,
       });
+      /* a walk-through hole in a north-south wall: the wall's rubble on the floor both sides, so it's found from
+         inside and from outside (the roof hides the wall itself from outside) */
+      if (!o.out) {
+        put("rubble", o.at - 180, o.a, 360, o.b - o.a, 0, {
+          z: 0,
+          hole: o,
+        });
+        put("breach", o.at - 70, o.a + 40, 140, o.b - o.a - 80, 0, {
+          z: 0,
+          hole: o,
+          only: "out",
+          fade: true,
+          key: S.y1 + 3 * T, // (over the roof's edge)
+        });
+      }
+    }
   /* outside the gas station: the canopy over the pumps (a roof only), the pumps, the generator and the power box, the car
    with its hood up */
   put(
@@ -472,6 +493,28 @@ function planBuild(b) {
   line("x", C.y0, C.x0, C.x1, [[CHAPEL_DOOR.a, CHAPEL_DOOR.b]], C.wall, {
     side: "n",
   });
+  /* its entrance, the same size, smashed through the wall like the gas station's north holes (the owner's, Nov 19
+     19:58Z: "make the hole on the church be like a destroyed hole as well. It's still the same size, but it's destroyed
+     to indicate destruction") */
+  put(
+    "hole",
+    CHAPEL_DOOR.a - T,
+    C.y0 - T,
+    CHAPEL_DOOR.b - CHAPEL_DOOR.a + 2 * T,
+    2 * T,
+    C.wall,
+    {
+      z: 0,
+      hole: {
+        id: "ch-door",
+        axis: "x",
+        at: C.y0,
+        a: CHAPEL_DOOR.a,
+        b: CHAPEL_DOOR.b,
+      },
+      fade: true,
+    },
+  );
   southWall(C, []);
   /* the ladder up the gas station's back wall, outside it: drawn behind the wall (the roof's edge hides all but its
      hoops, the roof goes see-through over a duck climbing it); up to the roof and its hoops over the edge */
