@@ -12,11 +12,15 @@ export const UPDATES = [
     id: "v105",
     version: 105,
     date: "Nov 19, 2026",
-    title: "Smoother rain and swarms",
+    title: "Smoother rain, Sandbox fixes",
     news: [
       "For Dead Ducks Arcade: Downpour runs smoother in the rain and when a crowd of zombies is clawing you (hit flashes and claw marks no longer slow the game down).",
+      "For Sandbox: zones stay visible while you place them and for a moment after.",
+      "For Sandbox: an NPC's Can jump and Can climb walls settings now work on maps with heights.",
     ],
-    fixed: [],
+    fixed: [
+      "For Sandbox: dragging a finger on the phone no longer leaves your duck walking after you put something down.",
+    ],
   },
   {
     id: "v104",
