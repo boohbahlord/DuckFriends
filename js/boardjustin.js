@@ -15,9 +15,9 @@
      and it plays dead.
    - Players can shoot him back: a bullet, a dagger or `kill @Justin` kills him outright with one of his death lines: he
      lies there, silent, and is back whole on the next turn (the owner's, Nov 18). E on him is Duck Cabin's only.
-   s.justin = { x0, y0, x1, y1, t, v, k, key, next, say, shoot, list, down }: he walks from (x0, y0) to (x1, y1) from time t at
+   s.justin = { x0, y0, x1, y1, t, v, k, key, next, say, shoot, list, down, w }: he walks from (x0, y0) to (x1, y1) from time t at
    v board widths a second (every screen moves him on its own); k is the spot he picked; key the stage he's in; down when
-   he was knocked down. In
+   he was knocked down; w his wounds (wounds.js codes, justinHit). In
    Hangout he stays Duck Cabin's own (js/hangout/justin.js).
    A zebra cake thrown (the Zebra cake special, s.zcake): he runs after it, wherever he is, and eats it once it has
    landed (j.eat), as Mad God Justin does; nothing else of his happens meanwhile.
@@ -29,6 +29,7 @@
 import { E_LINES, DEATH_LINES, GOD_LINES } from "./hangout/justin.js";
 import { holdDown, downFor, invuln, hurtFx } from "./hangout/death.js";
 import { JUSTIN } from "./hangout/npcart.js";
+import { hitCode, knockable, PCRIT } from "./wounds.js";
 import { isQuack, tileAt, tileCenter, stillIn } from "./quackrules.js";
 import {
   isMgj,
@@ -130,13 +131,22 @@ export const boardMgj = (s) =>
 export function justinHit(s, by, now, log, w) {
   const j = s.justin;
   if (!justinShown(s) || j.down || isMgj(s)) return 0;
-  if (!boardMgj(s)) return justinDown(s, now, log) ? 2 : 0;
-  j.max = BJ_HP;
-  j.hp = Math.max(0, (j.hp ?? BJ_HP) - (DMG[w] || 1));
-  const at = justinAt(j, now);
+  const at = justinAt(j, now),
+    mgj = boardMgj(s);
+  if (mgj) {
+    j.max = BJ_HP;
+    j.hp = Math.max(0, (j.hp ?? BJ_HP) - (DMG[w] || 1));
+  }
+  const dies = !mgj || j.hp <= 0,
+    crit = dies && Math.random() < (PCRIT[w] || 0);
+  /* the hit feel of Dead Ducks Arcade on him too (the owner's, Nov 19 01:34Z: "not just players, not just Justin, but any
+     NPC that can take damage"): its hitmarker, the wound it leaves (game.js draws them, his blood and "−1 HP"), and on
+     the hit that kills him now and then a crit, his head blown off with a CRIT over it, as a duck's (rules.js wounded).
+     Gone when he's back up (justinTick: "spawns back with gore effects lost on the next turn") */
+  j.w = (j.w || "") + hitCode(j.w || "", w, crit, knockable(JUSTIN));
   s.fxN = (s.fxN || 0) + 1;
   s.fx = [
-    ...(s.fx || []).slice(-19),
+    ...(s.fx || []).slice(-18),
     {
       n: s.fxN,
       kind: "hitmark",
@@ -146,8 +156,20 @@ export function justinHit(s, by, now, log, w) {
       x: r3(at.x),
       y: r3(at.y),
     },
+    ...(crit
+      ? [
+          {
+            n: ++s.fxN,
+            kind: "pcrit",
+            who: [JUSTIN_ID],
+            t: now,
+            x: r3(at.x),
+            y: r3(at.y),
+          },
+        ]
+      : []),
   ];
-  if (j.hp <= 0) return justinDown(s, now, log) ? 2 : 1;
+  if (dies) return justinDown(s, now, log) ? 2 : mgj ? 1 : 0;
   if (s.players[by] && !vdSafe(s, by)) {
     if (!j.rage) j.rage = { fireAt: now + 500, hamAt: now + 800 };
     Object.assign(j.rage, { id: by, until: now + RAGE_MS });
@@ -498,6 +520,7 @@ export function justinTick(s, now, log) {
     } else if (j.dkey === turnKey(s)) return ch;
     delete j.down;
     delete j.dkey;
+    delete j.w; // (whole again: his wounds are gone)
     if (j.max) j.hp = j.max; // (the board's Mad God Justin: up with his HP full)
     j.next = now + 1000;
     j.say = Math.max(j.say, now + 4000);
