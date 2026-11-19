@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dead Ducks Arcade gunmen</title>
+    <!-- The gunmen (js/gunmen.js): soldiers and criminals as their numbers pick them, their wounds and gore, Survival's sniper in his ghillie suit, and the short sword beside the knife. Serve the folder (python3 -m http.server) and open /tools/gunmen-art.html. -->
+    <style>
+      body {
+        margin: 0;
+        padding: 18px 22px 26px;
+        background: #12172b;
+        color: #e8ecf6;
+        font-family: system-ui, sans-serif;
+        width: 1500px;
+      }
+      h1 {
+        font-size: 26px;
+        margin: 0 0 4px;
+      }
+      h2 {
+        font-size: 18px;
+        margin: 22px 0 10px;
+        color: #ffd23f;
+      }
+      p.sub {
+        margin: 0;
+        color: #9aa4c0;
+        font-size: 14px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 12px;
+      }
+      figure {
+        margin: 0;
+        padding: 8px 6px 10px;
+        background: #1d2440;
+        border-radius: 12px;
+        text-align: center;
+      }
+      .ducks {
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 2px;
+        height: 132px;
+      }
+      .ducks.many svg {
+        flex: 0 1 auto;
+      }
+      figcaption b {
+        display: block;
+        font-size: 16px;
+      }
+      figcaption small {
+        display: block;
+        font-size: 12px;
+        color: #9aa4c0;
+        margin-top: 2px;
+        line-height: 1.25;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>The gunmen</h1>
+    <p class="sub">
+      Dead Ducks Arcade and Survival. Each gunman's look comes from his number,
+      so every screen shows the same one.
+    </p>
+    <h2>Soldiers</h2>
+    <div class="grid" id="soldiers"></div>
+    <h2>Criminals</h2>
+    <div class="grid" id="criminals"></div>
+    <h2>Hit, killed, blown apart</h2>
+    <div class="grid" id="gore"></div>
+    <h2>Survival's sniper and the short sword</h2>
+    <div class="grid" id="more"></div>
+    <script type="module">
+      import "../js/game.js"; // (first, so the modules load in the game's order)
+      import { duckSVG } from "../js/duck.js";
+      import { gunmanLook } from "../js/gunmen.js";
+      import { hitsOf } from "../js/l4ddart.js";
+      import { heldHTML } from "../js/specials.js";
+      const fig = (art, name, tip) =>
+        `<figure><div class="ducks">${art}</div><figcaption><b>${name}</b><small>${tip}</small></figcaption></figure>`;
+      const what = (L) =>
+        [
+          L.outfit && L.outfit.camo,
+          L.outfit && L.outfit.id !== "fatigues" && L.outfit.id,
+          L.hat && L.hat.id !== "combat" && L.hat.id,
+          L.hat && L.hat.goggles && "goggles",
+          L.face && L.face.id,
+        ]
+          .filter(Boolean)
+          .join(", ");
+      const duck = (L, o = {}) => duckSVG(L, { size: 112, ...o });
+      const hurt = (L, codes, dead) => {
+        const h = hitsOf(codes);
+        return duck(L, {
+          dead,
+          skin: { body: "", head: h.inner, out: h.out },
+          gone: h.gone,
+        });
+      };
+      const N = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+      document.getElementById("soldiers").innerHTML = N.map((n) =>
+        fig(
+          duck(gunmanLook("soldier", n)),
+          "Soldier " + n,
+          what(gunmanLook("soldier", n)),
+        ),
+      ).join("");
+      document.getElementById("criminals").innerHTML = N.map((n) =>
+        fig(
+          duck(gunmanLook("criminal", n)),
+          "Criminal " + n,
+          what(gunmanLook("criminal", n)),
+        ),
+      ).join("");
+      const s = gunmanLook("soldier", 1),
+        c = gunmanLook("criminal", 3);
+      document.getElementById("gore").innerHTML = [
+        fig(
+          hurt(s, "b2c5B7"),
+          "Soldier, shot",
+          "bullet holes and a cut, his uniform torn round them",
+        ),
+        fig(hurt(s, "g0", true), "Soldier, grenade", "every chunk and hole"),
+        fig(hurt(s, "p0e1", true), "Soldier, crit", "beak shot off, eye out"),
+        fig(
+          hurt(c, "b1c4k2"),
+          "Criminal, shot",
+          "holes, a cut, a chunk torn out",
+        ),
+        fig(hurt(c, "x0", true), "Criminal, headshot", "head gone"),
+        fig(
+          hurt(gunmanLook("criminal", 6), "s3r5", false),
+          "Criminal, shotgun",
+          "pellets and a bruise",
+        ),
+      ].join("");
+      const blade = (svg, w) =>
+        `<div style="width:${w}px;margin:auto">${svg.replace("<svg ", '<svg width="100%" ')}</div>`;
+      document.getElementById("more").innerHTML = [
+        fig(
+          duck(gunmanLook("sniper")),
+          "Sniper",
+          "ghillie suit and hood, Downpour's greens",
+        ),
+        fig(
+          hurt(gunmanLook("sniper"), "B2c4", true),
+          "Sniper, killed",
+          "his suit torn where he was hit",
+        ),
+        fig(blade(heldHTML("knife"), 150), "Knife", "as it is"),
+        fig(
+          blade(heldHTML("sword"), 205),
+          "Short sword",
+          "redrawn: a gladius, longer, its point in the middle, a crossguard",
+        ),
+      ].join("");
+      document.body.dataset.ready = "1";
+    </script>
+  </body>
+</html>

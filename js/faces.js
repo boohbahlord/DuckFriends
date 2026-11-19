@@ -58,7 +58,13 @@ export const FACES = [
     colors: [["c1", "Diamond", "#1f4fd8"]],
   },
 ];
-export const faceById = (id) => FACES.find((f) => f.id === id) || null;
+/* the NPCs' own face items (Dead Ducks Arcade's criminals: the owner's, Nov 19 19:27Z). Never a player's: only FACES is
+   listed anywhere; faceById finds these as well */
+export const NPC_FACES = [
+  { id: "bandana", name: "Bandana", colors: [["c1", "Cloth", "#b3202a"]] },
+];
+export const faceById = (id) =>
+  FACES.find((f) => f.id === id) || NPC_FACES.find((f) => f.id === id) || null;
 /* the face items the beak can't show through (the owner's, Nov 18 14:10Z: "wearing the cardboad box, the pumpkin head,
    the paper bag, the motorcyle helmet, the gas mask, and the armored helmet will HIDE the beak (like it makes it no
    beak not under the selection but makes the beak invisible"): the duck keeps its beak pick, it just doesn't show
@@ -70,6 +76,7 @@ const OVER_BEAK = new Set([
   "moto",
   "gasmask",
   "scifi",
+  "bandana",
 ]);
 export const hidesBeak = (face) => !!(face && OVER_BEAK.has(face.id));
 /* how Customize shows the face items: in themed groups, each under a small heading */
@@ -252,6 +259,32 @@ const DRAW = {
   ) => `<defs><mask id="${id}h"><rect width="120" height="120" fill="#fff"/><path d="M79 34C81 30 87 30 90 33C88 37 82 38 79 34Z" fill="#000"/></mask></defs>
     <path d="M58 31C70 26 92 24 101 29L101 38C92 41 70 41 58 38L52 40L55 34L52 28Z" fill="${f.c1}" ${O} mask="url(#${id}h)"/>
     <path d="M79 34C81 30 87 30 90 33C88 37 82 38 79 34Z" fill="none" stroke="#1c1c28" stroke-width="1.4"/>`,
+  /* an outlaw's bandana (NPC_FACES): folded to a triangle and tied over the beak and the lower face, its point under the
+     chin, the knot and its two ends at the back of the head; a paisley print of small white curls and dots */
+  bandana: (f, id) => {
+    const c = f.c1,
+      curls = [
+        [70, 50],
+        [82, 47],
+        [94, 45],
+        [106, 44],
+        [76, 58],
+        [88, 55],
+        [100, 52],
+        [86, 63],
+      ]
+        .map(
+          ([x, y], i) =>
+            `<path d="M${x} ${y}c1.6-2.2 4.2-1.2 3.6 1c-.5 1.6-2.6 1.4-2.4-.2" stroke="#fbfbf7" stroke-width=".8" fill="none" opacity=".75"/><circle cx="${x + (i % 2 ? -3 : 4)}" cy="${y + 2.6}" r=".7" fill="#fbfbf7" opacity=".75"/>`,
+        )
+        .join("");
+    const cloth =
+      "M56 44C68 47 86 44 98 37.4C104 36 112 36.6 118 40C118.6 45.6 114 51 106 55L90 69C78 66 64 60 54 54Z";
+    return `<defs><clipPath id="${id}b"><path d="${cloth}"/></clipPath></defs>
+    <path d="M56 46L44 52M56 50L46 59" stroke="${dk(c, 0.2)}" stroke-width="3.2" stroke-linecap="round"/><circle cx="55" cy="48" r="3.6" fill="${dk(c, 0.1)}" ${O}/>
+    <path d="${cloth}" fill="${c}" ${O}/><g clip-path="url(#${id}b)">${curls}<path d="M58 51C72 54 92 50 116 43" stroke="${dk(c, 0.3)}" stroke-width="1.2" fill="none" opacity=".6"/></g>
+    <path d="M60 46.4C72 49 88 46 99 40" stroke="${lt(c, 0.35)}" stroke-width="1.1" fill="none" opacity=".7"/>`;
+  },
   vr: () => `<path d="M74 26L55 25M80 24C77 14 68 13 61 17" stroke="#2b2b2b" stroke-width="3" fill="none" stroke-linecap="round"/>
     <rect x="73" y="23" width="28" height="19" rx="5" fill="#ececf2" ${O}/><rect x="95" y="25" width="7" height="15" rx="3" fill="#1c1c28"/>
     <path d="M77 27L92 27" stroke="#fff" stroke-width="2" opacity=".8"/><circle cx="98.5" cy="32.5" r="1.4" fill="#37d421"/>`,
