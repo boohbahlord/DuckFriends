@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v117",
+    version: 117,
+    date: "Nov 19, 2026",
+    title: "Loading covers the pop-in",
+    news: [],
+    fixed: [
+      "The loading screen now stays up until a screen's pictures are in: Sandbox's map vote, every window, every game start. No more black map pictures.",
+    ],
+  },
+  {
     id: "v116",
     version: 116,
     date: "Nov 19, 2026",
