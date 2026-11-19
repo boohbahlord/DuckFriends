@@ -262,6 +262,7 @@ import { rainbowHTML } from "./art.js";
 import { statBoxHTML, ddrBoxHTML, openStats } from "./stats.js";
 import { profile, save, statMode } from "./store.js";
 import { openSettings, netLevel } from "./settings.js";
+import { setHideUi, uiHidden } from "./hideui.js";
 import { musicBarHTML, mountMusicBar } from "./musicbar.js";
 import { openCustomize, shareLook } from "./customize.js";
 import { ARM_SWING } from "./armspeed.js";
@@ -7476,6 +7477,7 @@ function openPause() {
     <button type="button" class="btn green" data-a="resume">Resume</button>
     <button type="button" class="btn ghost" data-a="custom">Customize</button>
     <button type="button" class="btn ghost" data-a="settings">Settings</button>
+    <button type="button" class="btn ghost" data-a="hideui" aria-pressed="${uiHidden()}">${uiHidden() ? "Show UI" : "Hide UI"}</button>
     <button type="button" class="btn ghost" data-a="friends">Friends</button>
     ${R && isHang(R.state) && isSudo(R.state, R.me) ? '<button type="button" class="btn yellow" data-a="lobby">Everyone back to the lobby</button>' : ""}
     <button type="button" class="btn red" data-a="leave">Leave game</button></div>
@@ -7491,6 +7493,7 @@ function openPause() {
             resume() {},
             custom: () => openCustomize(),
             settings: () => openSettings(),
+            hideui: () => toast(setHideUi(!uiHidden())), // (hide ui: hideui.js)
             friends: () => openFriends(),
             lobby: () => R.send({ t: "toLobby" }),
             leave: () => leaveTo("rooms", "Leave the game in progress?"),
@@ -8098,7 +8101,7 @@ register("game", {
     S = el(`<section class="screen game docked">
       <header class="gbar"><div class="gbar-l"><span class="round"></span><span class="phase"></span></div>${musicBarHTML()}
         <div class="gbar-r"><span class="tmeter" hidden><i></i></span><span class="timer"></span>${fsBtnHTML()}<button type="button" class="btn ghost iconbtn" data-a="players" aria-label="Players" data-tip="Players (hold Tab)">👥</button>${lsetBtnHTML()}<button type="button" class="btn ghost iconbtn" data-a="pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header>
-      <div class="map-layer"></div><div class="gmain"></div>${DOCK_HTML}${BAR_HTML('<div class="gact"></div>')}</section>`);
+      <div class="map-layer"></div><div class="gmain"></div>${DOCK_HTML}${BAR_HTML(`<div class="gact"></div>${isSb(R.state) ? '<span class="ui-cs hints"><kbd>C</kbd> Cheat sheet</span>' : ""}`)}</section>`); // (with hide ui, in Sandbox, the one word left at the bottom: the owner's, Nov 19 12:59Z, "except for cheat sheet")
     docks = mountDocks(
       S,
       isL4dd(R.state)
