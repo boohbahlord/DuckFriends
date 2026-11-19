@@ -7,6 +7,7 @@
 
 import { duckSVG, DUCK_DEFAULT } from "../duck.js";
 import { hitsOf } from "../l4ddart.js";
+import { zombieLook } from "../l4ddrules.js";
 import { JAIME } from "../mgjart.js";
 
 const O = "#1c1c28"; // the ducks' ink
@@ -412,7 +413,10 @@ const CAR_COLORS = [
      trooper: a yellow duck in his army uniform inside the gas station, his head blown off, shot through the body, in a
        pool of blood like the one that spills out of Justin (the owner's, Nov 18 10:38Z: "another dead duck with's it's
        head blown off and in a puddle of blood (like what spills out of Justin ) that is also yellow but wearing a
-       military uniform with holes in his body"). */
+       military uniform with holes in his body"); now a dead zombie in that uniform, his head still on, his bullet
+       wounds red (the owner's, Nov 19 10:22Z: "The last corpse in the gas station should be a dead zombie actually with
+       it's head still there AND it's bullet wounds not looking yellow or golden because that isn't right"): the yellow
+       was his own yellow showing where the holes tore his uniform; a zombie's skin is green. */
 const BLOOD = "#7d1424",
   BLOOD_D = "#3d0910",
   CORPSES = {
@@ -428,8 +432,10 @@ const BLOOD = "#7d1424",
       turn: 94,
     },
     trooper: {
-      look: { outfit: { id: "military" } },
-      hits: "x0B0b1B2b4b5",
+      get look() {
+        return { ...zombieLook([]), outfit: { id: "military" } }; // (Dead Ducks Arcade's zombie: l4ddrules.js; read when drawn)
+      },
+      hits: "B0b1B2b4b5",
       turn: -96,
       jpool: true,
     },

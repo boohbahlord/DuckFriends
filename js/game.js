@@ -8141,7 +8141,7 @@ register("game", {
         },
         row = mountL4Bar(S, l4),
         slide = mountHotbar(S, l4Slider(l4));
-      slide.slider.classList.add("on-duck"); // (on a phone it's on my duck, out of sight: a swipe on my duck picks, touch.js swipe; the owner's, Nov 18 15:18Z)
+      slide.slider.classList.add("on-duck"); // (on a phone in the bottom middle, and a swipe on my duck picks too, touch.js swipe; the owner's, Nov 18 15:18Z and Nov 19 10:22Z)
       bar = {
         row: row.row,
         slider: slide.slider,
@@ -8185,7 +8185,7 @@ register("game", {
         },
         tag: () => S && S.querySelector(".gduck.mine .gduck-name"), // (the switch's box under my duck, on a phone: hotbar.js peekSwitch)
       });
-      bar.slider.classList.add("on-duck"); // (on a phone it's on my duck in every mode, out of sight: a swipe on my duck picks, touch.js swipe; the owner's, Nov 18 20:58Z, "every")
+      bar.slider.classList.add("on-duck"); // (on a phone in the bottom middle, and in every mode a swipe on my duck picks too, touch.js swipe; the owner's, Nov 18 20:58Z, "every", and Nov 19 10:22Z)
     }
     pad = mountPad({
       hold: (on) => {
