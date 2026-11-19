@@ -88,7 +88,6 @@ const NAMES = [
   "Marge",
   "Bev",
   "Rita",
-  "Dot",
 ];
 const LINES = {
   arrive: [

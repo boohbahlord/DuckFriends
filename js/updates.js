@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v128",
+    version: 128,
+    date: "Nov 19, 2026",
+    title: "Walk through while invisible",
+    news: [
+      "An invisible duck walks through other ducks, NPCs and zombies, and they walk through it. Turning visible again never leaves you stuck inside anything.",
+    ],
+  },
+  {
     id: "v127",
     version: 127,
     date: "Nov 19, 2026",
