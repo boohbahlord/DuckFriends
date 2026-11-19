@@ -89,11 +89,11 @@ export const NB_RUN_WORDS = [
 const STOP = Symbol("stop");
 const HELP = {
   run: "help/files.txt",
-  who: "help/who.txt",
-  if: "help/tests.txt",
-  loop: "help/loops.txt",
-  text: "help/print.txt",
-  names: "help/names.txt",
+  who: "help/brains/who.txt",
+  if: "help/brains/tests.txt",
+  loop: "help/brains/loops.txt",
+  text: "help/brains/print.txt",
+  names: "help/brains/names.txt",
 };
 
 /* ---------- reading a line of statements ----------
@@ -831,7 +831,7 @@ export function brain(plan, host) {
     }
     no(
       "The line rules took out every value it gave, 1,000 times in a row",
-      "help/linerules.txt",
+      "help/numbers/linerules.txt",
     );
   };
   const E = (env, R) => ({

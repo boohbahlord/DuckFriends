@@ -6,6 +6,7 @@
    Duck Cabin as in Hangout, Dead Ducks Arcade's cabin and Downpour as in Dead Ducks Arcade, but with no rounds, no
    zombies and no end (s.options.sbMap picks one of those; empty: the board).
    This file has no imports, so every part of the game (the rules, the world's layout, the screen) can ask it. */
+import { LANG } from "./langname.js";
 
 /* the worlds Sandbox can be on: the mode whose world it is, and that mode's map */
 export const SB_WORLDS = {
@@ -57,7 +58,7 @@ export function sbCan(s, id) {
 export const SB_RIGHTS = [
   ["b", "Build"],
   ["m", "Make an NPC"],
-  ["n", "Numberat"],
+  ["n", LANG],
   ["h", "Hotbar"],
   ["g", "Game settings"],
 ];
