@@ -10,6 +10,7 @@
    speed (Speed: 10% faster) and has 7 seconds of sprint (a thin blue bar under my name). The rules are the host's
    (l4ddrules.js); the weapons bar is l4ddbar.js. */
 import { isInvisible } from "./invisible.js";
+import { invOn } from "./sbgod.js";
 import { sprintLeft, sprintReset } from "./stamina.js";
 import { isSb, sbNoLight } from "./sandboxrules.js";
 import { activity } from "./hangout/registry.js";
@@ -1397,6 +1398,7 @@ function paint(now, ctx) {
     if (!a || !pos || !seenFrom(a.x, a.y, Wd.inside, a.z)) continue;
     const p4 = P4(s, id);
     if (p4 && p4.gh) continue;
+    if (id !== ctx.me && invOn(s, id)) continue; // (invisible: no glow, no flashlight to anyone else, sbgod.js)
     const c = Wd.toScreen(a.x, a.y, a.z + 26);
     holes.push([c.left * q, c.top * q, GLOW * sc, 0.55]);
     if (!up(s, id) || off[id] || sbNoLight(s, id)) continue; // (Sandbox: a flashlight only once taken from loot)

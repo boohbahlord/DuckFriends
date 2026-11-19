@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v129",
+    version: 129,
+    date: "Nov 19, 2026",
+    title: "God mode",
+    news: [
+      "For Sandbox: Player settings (P) has God mode (enemies ignore you and you never die, with unlimited ammo, unlimited items and no reloading under it), Invisible, a permission row for other players and an Each player page. Every window (B, M, P, H, G) ends with a Help window.",
+    ],
+  },
+  {
     id: "v128",
     version: 128,
     date: "Nov 19, 2026",

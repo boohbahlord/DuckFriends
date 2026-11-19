@@ -45,6 +45,7 @@ import {
   SB_BACK_MS,
   SB_BOXES,
 } from "./sandboxrules.js";
+import { godOn, godHas } from "./sbgod.js";
 import { valueOf } from "./numerat.js";
 import { rule, keepOnly } from "./hangout/registry.js";
 import {
@@ -3590,13 +3591,24 @@ export function l4Use(s, a, now) {
   const dual = what === "handgun" && angelOf(s, id, what), // (the Angelic pistols: they take turns, one bullet each press)
     many = A.burst ? Math.min(A.burst, c[0]) : 1; // (the burst rifle: three rounds a press, or the rest of its clip)
   if (dual) m.alt = (m.alt || 0) ^ 1; // (which pistol fires: the left, then the right …)
-  if (kind === "grenade") m.g--;
-  else if (down) {
-    m.dg = c[0] - 1;
-    if (m.dg <= 0) startReload(s, id, m, "dg", now);
-  } else if (c) {
-    m.am[what] = [c[0] - many, c[1]];
-    if (c[0] - many <= 0) startReload(s, id, m, what, now); // (empty: it reloads by itself)
+  /* God mode's switches (sbgod.js): items (grenades, medkits, chairs …) and ammo never run out; no reloading keeps the
+     magazine full while the spare rounds go down */
+  const item = kind === "grenade" || kind === "special",
+    spare = godHas(s, id, item ? "items" : "ammo");
+  if (kind === "grenade") {
+    if (!spare) m.g--;
+  } else if (down) {
+    if (!spare) {
+      m.dg = c[0] - 1;
+      if (m.dg <= 0) startReload(s, id, m, "dg", now);
+    }
+  } else if (c && !spare) {
+    if (godHas(s, id, "reload") && c[1] > 0)
+      m.am[what] = [c[0], Math.max(0, c[1] - many)];
+    else {
+      m.am[what] = [c[0] - many, c[1]];
+      if (c[0] - many <= 0) startReload(s, id, m, what, now); // (empty: it reloads by itself)
+    }
   }
   if (kind === "melee") {
     s.hang.l4k = [
@@ -3617,7 +3629,7 @@ export function l4Use(s, a, now) {
   } else if (what === "medkit") {
     const p4 = s.hang.l4p || {};
     s.hang.l4p = { ...p4, [id]: { ...p4[id], hp: maxHp(s, id), at: now } };
-    m.am.medkit = [0, 0]; // (used up: it stays in its slot, empty, the owner's, Nov 18 12:19Z)
+    if (!spare) m.am.medkit = [0, 0]; // (used up: it stays in its slot, empty, the owner's, Nov 18 12:19Z)
   } else if (what === "adrenaline")
     s.hang.l4ad = { ...(s.hang.l4ad || {}), [id]: now + A.ms };
   else if (what === "longjump") m.lj = !m.lj;
@@ -4305,7 +4317,7 @@ const clawDmg = () => 0.6 + Math.floor(Math.random() * 5) / 10;
    every other mode, and it goes away by itself 6 to 12 seconds after the duck is up (wounds.js) */
 function hurtDuck(s, p4, id, now, w = "", dmg = 1) {
   const p = p4[id];
-  if (!p || p.dn || p.gh) return false;
+  if (!p || p.dn || p.gh || godOn(s, id)) return false; // (God mode: it never dies)
   const safe = invuln(s) || invulnOf(s, id, now); // (Invulnerability, or just up from Safe Keeping: it only flashes)
   const hp = safe ? p.hp : hpHurt(p.hp, dmg); // (dmg: 1, or a Sandbox spawn's damage box; in tenths, and up while above 0: hpmath.js)
   if (w && !safe) pwHit(s, id, w, now, hp <= 0);
@@ -5255,7 +5267,7 @@ function l4Tick(s, now) {
   /* the zombies walk, tear boards down, climb in, swipe: at every duck standing, Justin out there too (the owner's,
      Nov 17 20:02Z: "zombies will attack justin now, because they literally arent"; he only doesn't keep the game going) */
   moveZombies(s, zs, now, T, [
-    ...up,
+    ...up.filter((id) => !godOn(s, id)), // (God mode: the zombies ignore it)
     ...ids.filter((id) => isWild(s, id) && standing(s, id)),
   ]);
   if (isSurv(s) && L4_HOOKS.gm)

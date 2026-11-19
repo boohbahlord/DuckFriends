@@ -18,6 +18,8 @@
    camera and works out how it stands and falls; this file only hands it the keys, the stick and the taps, and puts its
    one context button where the Vote button goes. */
 import { isInvisible } from "./invisible.js";
+import { invOn } from "./sbgod.js";
+import { syncHidden } from "./sbgodview.js";
 import { fsBtnHTML } from "./corners.js";
 import { register, go, leaveTo } from "./router.js";
 import {
@@ -2008,6 +2010,7 @@ function drawDucks(now = clockNow()) {
         else if (k === "invisible") see = true;
         else auras.push(k);
       }
+    if (id === R.me && invOn(s, id)) see = true; // (Sandbox's Invisible switch: I see myself see-through, nobody else sees me: sbgodview.js)
     if (d._see !== see) {
       d._see = see;
       d.classList.toggle("see", see);
@@ -4899,6 +4902,7 @@ function loop(t) {
   let t0 = stamp();
   if (!geo) measure();
   if (me && onBoardPhase()) step(dt, now);
+  syncHidden(R.state, R.me); // (invisible players: nobody else sees them)
   took("my duck", t0);
   t0 = stamp();
   if (scene) scene.update(now);

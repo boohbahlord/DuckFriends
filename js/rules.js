@@ -25,6 +25,7 @@ import {
   sbOnBoard,
   sbPlayerSpot,
 } from "./sandboxrules.js";
+import { sbGodAct, godOn } from "./sbgod.js";
 import { survSet } from "./survrules.js";
 import "./gunmenrules.js"; // (Survival's gunmen: their rules hook into l4ddrules.js)
 import { sbAct, sbTick, sbPlaceDuck, sbHpOf } from "./sbspawn.js";
@@ -2320,6 +2321,9 @@ function reduceStep(state, a, now) {
     case "sb":
       // Sandbox's spawns and respawns: place one, change a box, press one (sbspawn.js)
       return sbAct(s, a, now) ? s : state;
+    case "sbg":
+      // Sandbox's God mode and invisibility: mine, or a player's if I have the rights (sbgod.js)
+      return sbGodAct(s, a) ? s : state;
     case "sbh":
       // Sandbox's hotbar: its slots, the default, the lock, a spawn button's look and press (sbhot.js)
       return sbHotAct(s, a, now) ? s : state;
@@ -3592,11 +3596,13 @@ const SB_H = {
     playing(s).filter(
       (id) =>
         s.pos[id] &&
+        !godOn(s, id) && // (God mode: they ignore it)
         s.pos[id].x >= 0 &&
         !(s.players[id] || {}).dead &&
         (!isL4dd(s) || l4Standing(s, id)),
     ), // (the zombie maps: not one that's down)
   claw(s, id, dmg, now, w = "claw") {
+    if (godOn(s, id)) return; // (God mode: it never dies)
     if (isL4dd(s)) return l4Hurt(s, id, dmg, now, w); // (the zombie maps: as their zombies hurt)
     const P = s.players[id],
       p = s.pos[id];
