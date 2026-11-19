@@ -6341,3 +6341,30 @@ Decided (Adam): testing standard cut to a brief version (notes/testing-standard.
 3. Key?
 4. Cap is based off of zombies caps for entities"
 Decided (Adam): uploads capped at 2 MB; build mode's hotbar shows every slot, all empty; NPC cap follows the zombie cap (Z_MOST 800 in js/l4ddrules.js), online too. Question 3 re-asked in plainer words.
+
+## Nov 19 10:22Z (owner, answers to Adam's 7 morning questions + bugs; 3 pictures in /mnt/project-files/refs/nov19-1022/)
+"1. yes
+2. no (not for sandbox mode anyway
+3. ? if a certain setting needs it to be whole number, then the box is whole number only, and for stats within variables typed into numerat files, we can have it return an error with reasons why for file
+4. yes
+5. 2>4 MEANS it goes in order of 2 for first spawn and 4 for next spawn, because normal operation is true random without arrow to indicate order. For example
+   1. (2>4),(3<5>7)
+   2. this example means the numerat will randomly choose between the two parenthesis groups AND THEN whichever it chooses, the inside will then be randomly chosen by number, and THEN the numbers within that parenthesis group play our until everyone is chosen with the order of it's ascension or descension, then it will take a step back out and start again (i feel like how the parenthesis works should be changed possibly because this feels like another operator already, like maybe a version of the | )
+   3. if an arrow comes first, then true random is told where to start first (making it less random). For examples:
+   4. >(2,4)>(2,3)
+   5. this means it has to choose the first box first, complete it's operation inside it, AND THEN go unto the next one AFTER it's inside is complete and do the same to it
+   6. i want to make square brackets, where the inside of it will only play ONE of it's operation before moving on, as follows:
+   7. >[2,4]>[3]
+   8. this means the first square bracket MUST come first, AND then it must choose either 2 or 4, once it chooses that as input for a spawn, then it does 3 next.
+   9. I need help in how numerat works in some notation, what the notation looks like, and how we change it. I also need to know what some notation means and where we change it or what notation meaning should be changed or is redundant
+6. YES, and the tenth of an HP is shown as being missing from it's portion of a bar or meter of it's whole integer, and how it regenerates is rounded up or down to decide which whole integer of HP within a block of a hp meter regenerates (show me a proposition demonstrating your understanding and we will try it out.
+7. Yes, you can start working on i now. BUT the update goes live as is AND we talk about what i am saying and discuss plans for it
+
+
+first screenshot from phone shows the hotbar missing from the bottom and that must be fixed AND below the duck should show the hotbar being able to move around temporarily like it does on pc
+
+the last two screenshots show corpses. Corpses arent on the board and they can overlay on top of your character, this isn't right, they should be overlayed below your duck, your duck's gun, your duck's ui, and your duck's apparel. The last corpse in the gas station should be a dead zombie actually with it's head still there AND it's bullet wounds not looking yellow or golden because that isn't right.
+
+During round 12, the corpse in the gas station disapears but the puddle of blood stays IF the body isnt on a players screen, if it is on a players screen the whole time during round 12, then it disapears on a subsequent round or rest phase where they arent on it's screen. The check for this should be every 30 secods maybe or something slow to not effect performance for checking if the body is alone and cannot be seen on the player's screen."
+Questions were: 1 deploy V90?, 2 spawn key only in build mode?, 3 2:4 whole numbers only?, 4 speed range picked once per NPC?, 5 2>4 counts 2,3,4?, 6 damage takes tenths?, 7 phone buttons for Sandbox windows now?
+Decided (Adam): V90 deploys as is now. Sandbox spawn keys work outside build mode too. Boxes that need whole numbers take whole numbers only; Numerat files give an error with reasons. 2>4 = 2 then 4 (listed values, not every number between). Damage tenths shown as a missing tenth of a HP block; Adam sends a proposition. Phone buttons for Sandbox windows: start now. Numerat notation: Adam writes a notation proposal for discussion before building.
