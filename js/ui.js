@@ -3,6 +3,7 @@
    tips that wait about a second before they show and never cover what they explain. */
 import { sfx } from "./sound.js";
 import { pxWords } from "./pxtext.js";
+import { coverChanges } from "./loading.js";
 
 export const $ = (s, r = document) => r.querySelector(s);
 export const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -59,6 +60,7 @@ export function openWindow(html, { cls = "", onOpen } = {}) {
     const close = (v) => {
       if (back.isConnected) sfx.uiClose();
       back.remove();
+      uncover();
       removeEventListener("keydown", key, true);
       if (prev && prev.focus) prev.focus();
       done(v);
@@ -80,6 +82,7 @@ export function openWindow(html, { cls = "", onOpen } = {}) {
     win.querySelector(".win-x").onclick = () => close(null);
     addEventListener("keydown", key, true);
     document.body.appendChild(back);
+    const uncover = coverChanges(win); // (its pages' pictures in behind the loading screen: loading.js)
     sfx.uiOpen();
     win.close = close;
     if (onOpen) onOpen(win, close);

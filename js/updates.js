@@ -9,6 +9,49 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v117",
+    version: 117,
+    date: "Nov 19, 2026",
+    title: "Loading covers the pop-in",
+    news: [],
+    fixed: [
+      "The loading screen now stays up until a screen's pictures are in: Sandbox's map vote, every window, every game start. No more black map pictures.",
+    ],
+  },
+  {
+    id: "v116",
+    version: 116,
+    date: "Nov 19, 2026",
+    title: "A softer ending",
+    news: [
+      "For Dead Ducks Arcade: the ending box is see-through with solid words, sits higher on a computer and shows 3 seconds after everyone's down.",
+      "For Dead Ducks Arcade: going down keeps your upgrades; only dying loses them, and Safe Keeping either gets you up or keeps them.",
+      "For Dead Ducks Arcade: someone who rejoins gets back what they had; a new joiner gets the average points and a pistol.",
+      "For Dead Ducks Arcade: when everyone's down, the game ends with its own soft, sad sound instead of the new round's sound or the church bell.",
+      "For Sandbox: on a computer, the Build, Make an NPC, Hotbar and Cheat sheet windows have an × to close them with the mouse.",
+    ],
+    fixed: [
+      "For Sandbox: Esc on the right-click menu only closes that menu (it also opened the pause menu).",
+      "For Sandbox: on a phone, a long press on a Build row keeps its preset open when you lift your finger, and a long press on a placed spawn opens Properties, Copy and Cut instead of the specials.",
+      "For Sandbox: in the Brain builder, a 0% chance no longer means every time, and number boxes show the number the brain will use.",
+      "For Sandbox: placing a 61st thing on a map tells you the map is full.",
+    ],
+  },
+  {
+    id: "v115",
+    version: 115,
+    date: "Nov 19, 2026",
+    title: "Smashed walls and the M&P9",
+    news: [
+      "The pistol is now the M&P9 Shield (the M&P9 Compact in Dead Ducks Arcade) and shows the same picture everywhere.",
+      "For Dead Ducks Arcade: each merchant upgrade can be bought up to 5 times.",
+    ],
+    fixed: [
+      "For Dead Ducks Arcade: Downpour's restroom wall is smashed wide open down to the corner, easy to spot from outside, and you can peek through it from inside. The wall no longer turns see-through when you walk into it.",
+      "For Dead Ducks Arcade: the chapel's entrance looks smashed too.",
+    ],
+  },
+  {
     id: "v114",
     version: 114,
     date: "Nov 19, 2026",

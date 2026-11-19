@@ -594,7 +594,7 @@ const NAMES = {
   axe: "Fire axe",
   sword: "Short sword",
   pan: "Cast iron pan",
-  handgun: "Pistol",
+  handgun: "M&P9 Compact", // (a real 9mm with a twelve-round magazine, as ours is here: the owner's, Nov 19)
   bow: "Bow",
   dagger: "Dagger",
   shotgun: "Shotgun",
@@ -688,36 +688,37 @@ export const PTS = {
 /* Justin's Butler's upgrades (the owner's prices; attack speed's are Adam's plan's guess, question 3): the price of the
    next one when n are bought already, how many at most */
 export const SHOP = [
-  /* the upgrades never run out (the owner's, Nov 19 19:27Z: "they do not go away. They are not a limited resource
-     anymore"): most is Infinity, each one buys again and stacks. Quick Revive is a switch, so it stays one */
+  /* the upgrades never run out at the merchant (the owner's, Nov 19 19:27Z: "they do not go away. They are not a
+     limited resource anymore"), and each one stacks up to 5 ("it can increase to 5"), so crits, cooldowns and reloads
+     never run away. Quick Revive is a switch, so it stays one */
   {
     id: "acc",
     name: "Critical Chance",
     what: "+2.5% crits",
-    most: Infinity,
+    most: 5,
   }, // (600 each, +2.5%: the owner's, Nov 16 21:47Z)
   {
     id: "as",
     name: "Attack speed",
     what: "Cooldowns 10% faster",
-    most: Infinity,
+    most: 5,
   }, // (each one 10% faster than the last)
   {
     id: "hp",
     name: "Increase HP",
-    what: "+1 HP until you go down",
-    most: Infinity,
+    what: "+1 HP until you die",
+    most: 5,
   }, // (it was "Max HP": the owner's, Nov 19 19:27Z)
   {
     id: "rl",
     name: "Faster reload",
     what: "Reloads 30% faster",
-    most: Infinity,
+    most: 5,
   },
   {
     id: "qr",
     name: "Quick Revive",
-    what: "Revive others in 3 s until you go down",
+    what: "Revive others in 3 s until you die",
     most: 1,
   }, // (750, kept until I go down: the owner's, Nov 17 11:07Z + 11:19Z)
 ];
@@ -1897,6 +1898,7 @@ function setUp(s, now) {
   powerSetUp(s); // (the power is cut: the lamps are dark; the fires burn. Its box and its four parts: l4ddpower.js)
   s.hang.l4k = [];
   s.shots = [];
+  s.hidden = { ...(s.hidden || {}), l4back: {} }; // (the ducks that left this game: what they had, for when they're back)
   players(s).forEach((id, k) => bringBack(s, id, now, k, true));
   if (dp() || s.options.wildJustin) helperIn(s, null, now, true); // (Downpour: Justin is out there, unarmed; the Justin in Duck Cabin setting brings him to the cabin too)
   newRound(s, 0, now, 0);
@@ -1975,10 +1977,46 @@ rule("l4", {
     setUp(s, now);
   },
   join(s, id) {
-    const now = Date.now();
+    const now = Date.now(),
+      back = ((s.hidden || {}).l4back || {})[id],
+      others = players(s).filter(
+        (o) => o !== id && !isWild(s, o) && !isHelper(s, o),
+      );
+    if (back) {
+      /* a duck that was in this game before (lag, a rejoin) gets back exactly what it had (the owner's, Nov 19 19:27Z:
+         "it should just carry over with what they last had during that game") */
+      bringBack(s, id, now, players(s).indexOf(id), false);
+      s.hang.l4a = { ...(s.hang.l4a || {}), [id]: back.a };
+      s.hang.l4pt = { ...(s.hang.l4pt || {}), [id]: back.pt };
+      s.hang.l4u = { ...(s.hang.l4u || {}), [id]: back.u };
+      const gone = { ...s.hidden.l4back };
+      delete gone[id];
+      s.hidden = { ...s.hidden, l4back: gone };
+      return;
+    }
     bringBack(s, id, now, players(s).indexOf(id), true);
+    /* a brand-new joiner: the average of the players' points, in fives, and the pistol (the fresh kit's) */
+    if (others.length)
+      s.hang.l4pt = {
+        ...s.hang.l4pt,
+        [id]: fives(
+          others.reduce((n, o) => n + ptsOf(s, o), 0) / others.length,
+        ),
+      };
   },
   left(s, id) {
+    if (s.hang.l4a && s.hang.l4a[id] && !isWild(s, id) && !isHelper(s, id))
+      s.hidden = {
+        ...(s.hidden || {}),
+        l4back: {
+          ...((s.hidden || {}).l4back || {}),
+          [id]: {
+            a: s.hang.l4a[id],
+            pt: ptsOf(s, id),
+            u: (s.hang.l4u || {})[id] || {},
+          },
+        },
+      };
     for (const k of ["l4p", "l4a", "l4b", "l4f", "l4pt", "l4u"])
       if (s.hang[k] && s.hang[k][id] !== undefined) {
         const o = { ...s.hang[k] };
@@ -3848,9 +3886,8 @@ function hurtDuck(s, p4, id, now, w = "", dmg = 1) {
   }
   p4[id] = { hp: 0, at: now, dn: now + L4.BLEED };
   downGun(s, id, true);
-  const u = upOf(s, id);
   if (hasSafe(s, id)) {
-    /* Safe Keeping: nothing bought is lost; up at once when nobody else is standing (or a computer), else on E */
+    /* Safe Keeping: it gets the duck up, or keeps its stuff if it dies; up at once when nobody else is standing (or a computer), else on E */
     const alone = !players(s).some((o) => {
       const q = p4[o] || P4(s, o);
       return o !== id && !!q && !q.dn && !q.gh;
@@ -3859,10 +3896,7 @@ function hurtDuck(s, p4, id, now, w = "", dmg = 1) {
       s.players[id] && !s.players[id].bot && !alone
         ? { ...p4[id], sk: 1 }
         : { ...p4[id], sk: 1, skAt: now + SAFE.GLOW };
-  } else if (u.hp || u.qr) {
-    if (u.hp) p4[id] = { ...p4[id], uhp: u.hp }; // (kept for a medkit's revive)
-    s.hang.l4u = { ...s.hang.l4u, [id]: { ...u, hp: 0, qr: 0 } }; // (down: the max HP and Quick Revive bought are gone)
-  }
+  } // (down keeps every upgrade: they go when the duck dies, bleedOut: the owner's, Nov 19 19:27Z, "you do not lose your upgrades. You only lose your upgrades when you die")
   if (s.players[id]) s.players[id].dead = true;
   if (isWild(s, id)) justinSays(s, "death"); // (a death line, as he says one in Duck Cabin)
   s.hang.still = { ...(s.hang.still || {}), [id]: now + L4.BLEED + 60000 };
@@ -3895,8 +3929,6 @@ function getUp(s, id, now, full, safe) {
   const p4 = { ...(s.hang.l4p || {}) },
     p = p4[id];
   if (!p) return;
-  if (p.uhp)
-    s.hang.l4u = { ...s.hang.l4u, [id]: { ...upOf(s, id), hp: p.uhp } };
   p4[id] = { hp: full ? maxHp(s, id) : L4.BACK_HP, at: now };
   s.hang.l4p = p4;
   downGun(s, id, false);
@@ -4553,7 +4585,19 @@ function l4Tick(s, now) {
         p = { hp: 0, at: now, dn: now + 1e13, ex: 1 }; // (Justin in Downpour bled out: dead for good, his body stays)
         s.hang.still = { ...(s.hang.still || {}), [id]: now + 1e13 };
       } else if (!rv && !p.skAt && now >= p.dn) {
+        const safe = !!p.sk || hasSafe(s, id);
         p = { hp: 0, at: now, gh: 1 }; // (bled out: a ghost until the next round)
+        /* the duck died: its upgrades go, unless it holds Safe Keeping, which then keeps them (and is spent: the
+           owner's, Nov 19 19:27Z, "you can either revive yourself, or if you die, you come back with your stuff") */
+        if (safe) {
+          const kit = kitOf(s, id);
+          if (kit && hasSafe(s, id))
+            s.hang.l4a = {
+              ...s.hang.l4a,
+              [id]: { ...kit, am: { ...kit.am, safekeep: [0, 0] } },
+            };
+          addFx(s, { kind: "l4safe", by: id, who: [id], t: now });
+        } else s.hang.l4u = { ...(s.hang.l4u || {}), [id]: {} };
         downGun(s, id, false);
         const q = s.pos[id];
         if (s.players[id]) delete s.players[id].dead;

@@ -271,9 +271,11 @@ export const SPECIALS = [
   },
   {
     id: "handgun",
-    name: "Handgun",
+    name: "M&P9 Shield", // (a real 9mm with the same seven-round magazine: the owner's, Nov 19, "the name of the real 9mm pistol whose magazine size matches ours")
     kind: "item",
-    icon: "🔫",
+    get icon() {
+      return PISTOL(["#2b2d35", "#5a3a22"]); // (the pistol in the hand, not the emoji: the owner's, Nov 19; looksOf paints it in my colors)
+    },
     tip: "Bullets fly toward your mouse; any duck one passes through plays dead. Seven shots, then it reloads (R reloads sooner). Shift and its key keeps it out: left click shoots. (Off when the host turns off the silly commands.)",
     colors: [
       ["a", P, "#2b2d35"],
@@ -815,7 +817,9 @@ const WRENCH_ICON = iconOf(WRENCH(WRENCH_COLORS));
 export const looksOf = (sp, duck) =>
   sp && sp.id === "hammer" && duck && duck.wrench
     ? { ...sp, name: "Wrench", icon: WRENCH_ICON }
-    : sp;
+    : sp && sp.id === "handgun" && duck
+      ? { ...sp, icon: pistolIcon(duck) } // (the pistol as the one in my hand, in my colors, wherever it's shown)
+      : sp;
 /* the pistol in a hotbar: drawn as the one in my duck's hand, in my colors (the owner, Nov 17 12:28Z: "the pistol in
    the hotbar should resemble the pistol in the hand of the player, so it shouldnt be green"), never the emoji */
 export const pistolIcon = (duck) => PISTOL(colorsOf(duck, "handgun"));

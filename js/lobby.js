@@ -338,6 +338,7 @@ function onState(s) {
       duck: profile.duck,
       ping: () => (room.ping ? room.ping() : 0),
       ready: pageReady,
+      max: 15000, // (its pictures in first, on a slow phone too: loading.js pageReady)
     }); // (every way into a game: the countdown's end, a vote, a game already going on)
     return;
   } // the countdown's last tone, at zero

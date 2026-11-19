@@ -126,11 +126,27 @@ def sad_trombone(sf2):
     return (a * env(len(a), 0.01, 2.0, 0.25)).astype(np.float32)
 
 
+def game_over(sf2):
+    """Dead Ducks Arcade, everyone's down (the owner, Nov 19: the bells and the new round's sound were wrong for the
+    ending, on Downpour and on the cabin): no bell and no drone, a soft, sad close. A choir sings A, F, then D down to
+    rest, over slow strings holding D minor; it swells in gently and fades away over about four seconds
+    """
+    a = play(
+        sf2,
+        [(0, 0, 0, 49, k, 80, 3.6) for k in (38, 50, 53, 57)]
+        + [(0.05, 1, 0, 52, 69, 78, 0.85), (0.9, 1, 0, 52, 65, 74, 0.85)]
+        + [(1.75, 1, 0, 52, 62, 76, 2.2)],
+        5.5,
+    )
+    return (a * env(len(a), 0.25, 2.6, 0.9)).astype(np.float32)
+
+
 MAKERS = {
     "sad_trombone": sad_trombone,
     "count_tick": count_tick,
     "count_go": count_go,
     "vote_tick": vote_tick,
     "round_start": round_start,
+    "game_over": game_over,
     "nuke_ring": nuke_ring,
 }
