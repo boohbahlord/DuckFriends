@@ -14,7 +14,7 @@
    - Never more NPCs alive on a map than the zombies' cap (l4ddrules.js Z_MOST, the owner's, Nov 19 01:57Z).
    On the board the zombies are Mad God Justin's wave zombies' kind (s.mz.zb: drawn, hit and heard as his are, with
    their HP, speed and damage from the boxes); on the zombie cabin and Downpour they are Dead Ducks Arcade's own
-   (l4ddrules.js l4Spawn), already inside. Duck Cabin gets its zombies with stage 2b. */
+   (l4ddrules.js l4Spawn), already inside; on Duck Cabin they are Sandbox's own (sbcabin.js), walking as those do. */
 import { keep, read, valueOf } from "./numerat.js";
 import {
   baseMode,
@@ -30,6 +30,7 @@ import {
 } from "./sandboxrules.js";
 import { Z_MOST, l4Spawn, l4Live } from "./l4ddrules.js";
 import { WAVE, zLook } from "./mgjrules.js";
+import { onCabin, cabinLive, cabinSpawn, cabinTick } from "./sbcabin.js";
 
 /* the boxes that aren't numbers: the name over it, its key, what spawns, and a respawn's "who" */
 export const SB_TEXT = {
@@ -91,9 +92,9 @@ export function boxText(p, f) {
 const num = (p, f) => valueOf({ ok: boxText(p, f) }, boxOf(f));
 const flag = (p, f) => num(p, f) === true;
 
-/* the maps with spawns now: the board and Dead Ducks Arcade's two (Duck Cabin with stage 2b) */
+/* the maps with spawns: the board, Dead Ducks Arcade's two and Duck Cabin (every map Sandbox is on) */
 export const spawnsHere = (s) =>
-  isSb(s) && (sbOnBoard(s) || baseMode(s.options) === "l4dd");
+  isSb(s) && (sbOnBoard(s) || baseMode(s.options) === "l4dd" || onCabin(s));
 const pointsOf = (s) => (s.sb && s.sb.pts) || {};
 
 /* the NPCs alive now, each { i, x, y, sp } (x, y: shares of the map) */
@@ -102,6 +103,7 @@ export function liveNpcs(s) {
     return ((s.mz && s.mz.zb) || [])
       .filter((o) => !o.d)
       .map((o) => ({ i: o.i, x: o.x, y: o.y, sp: o.sp }));
+  if (onCabin(s)) return cabinLive(s);
   return baseMode(s.options) === "l4dd" ? l4Live(s) : [];
 }
 
@@ -131,7 +133,15 @@ function makeOne(s, id, at) {
       dm,
       ...(flag(p, "sprint") ? { run: 1 } : {}),
     });
-  } else i = l4Spawn(s, at.x, at.y, { hp, speed: sv, sp: id, dm });
+  } else if (onCabin(s))
+    i = cabinSpawn(s, at.x, at.y, {
+      hp,
+      sv,
+      dm,
+      sp: id,
+      run: flag(p, "sprint"),
+    });
+  else i = l4Spawn(s, at.x, at.y, { hp, speed: sv, sp: id, dm });
   if (!i) return false;
   const live = { ...((s.sb && s.sb.live) || {}) };
   live[id] = [...(live[id] || []), i];
@@ -316,6 +326,7 @@ export function sbTick(s, now, H) {
   }
   if (ch) s.sb = { ...s.sb, run };
   if (sbOnBoard(s) && s.mz && s.mz.sb) ch = boardTick(s, now, H) || ch;
+  if (onCabin(s)) ch = cabinTick(s, now, H) || ch;
   return ch;
 }
 

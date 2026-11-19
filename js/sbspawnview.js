@@ -6,7 +6,10 @@
    value (numerat.js). On the board the game draws them (game.js calls sbBoardMarks); on the worlds they are an activity
    of Sandbox's own (registry.js only: "sandbox"). */
 import { activity } from "./hangout/registry.js";
-import { W, H } from "./hangout/layout.js";
+import { W, H, heightAt, sortY, seenFrom } from "./hangout/layout.js";
+import { zombieURL, zombieBox } from "./l4ddart.js";
+import { goreFree } from "./wounds.js";
+import { clawMark } from "./l4dd.js";
 import { esc, openWindow } from "./ui.js";
 import {
   isSb,
@@ -232,5 +235,121 @@ activity({
           best,
         ),
     };
+  },
+});
+
+/* ---------- Duck Cabin's zombies (sbcabin.js), drawn as Dead Ducks Arcade's are: the same picture, HP bar, wounds,
+   claw marks and fall, each gliding from where it was to where the host says over one heartbeat ---------- */
+const ZB = new Map(),
+  GLIDE = 220; // ms (a heartbeat is 200)
+function zbEl(o, layer) {
+  const el = document.createElement("div"),
+    box = zombieBox(o.l);
+  el.className = "l4z";
+  el.innerHTML = `<div class="l4z-body"><img alt="" draggable="false"></div><span class="l4z-hp"><b></b><i></i></span>`;
+  const body = el.firstChild;
+  Object.assign(body.style, {
+    width: box.w + "px",
+    height: box.h.toFixed(1) + "px",
+    left: (-box.w / 2).toFixed(1) + "px",
+    top: (-box.feet).toFixed(1) + "px",
+    transformOrigin: `${box.w / 2}px ${box.feet.toFixed(1)}px`,
+  });
+  layer.append(el);
+  return {
+    el,
+    body,
+    img: body.firstChild,
+    bar: el.querySelector(".l4z-hp"),
+    x: o.x,
+    y: o.y,
+    fx: o.x,
+    fy: o.y,
+    tx: o.x,
+    ty: o.y,
+    t0: 0,
+    a: o.a,
+    hits: null,
+  };
+}
+activity({
+  id: "sbzombies",
+  only: "sandbox",
+  unmount() {
+    for (const z of ZB.values()) z.el.remove();
+    ZB.clear();
+  },
+  draw(now, ctx) {
+    const s = ctx.state(),
+      Wd = ctx.world,
+      layer = Wd.board.querySelector(".hang-props"),
+      fxl = Wd.board.querySelector(".fxl"),
+      zb = (s && s.hang && s.hang.sbz && s.hang.sbz.zb) || [];
+    if (!layer) return;
+    const t = performance.now(),
+      sc = Wd.sc,
+      seen = new Set();
+    for (const o of zb) {
+      seen.add(o.i);
+      let z = ZB.get(o.i);
+      if (!z) ZB.set(o.i, (z = zbEl(o, layer)));
+      if (o.x !== z.tx || o.y !== z.ty) {
+        z.fx = z.x;
+        z.fy = z.y;
+        z.tx = o.x;
+        z.ty = o.y;
+        z.t0 = t;
+      }
+      const u = Math.min(1, (t - z.t0) / GLIDE);
+      z.x = z.fx + (z.tx - z.fx) * u;
+      z.y = z.fy + (z.ty - z.fy) * u;
+      const h = heightAt(z.x, z.y),
+        f = Wd.toScreen(z.x, z.y, h),
+        hide =
+          !seenFrom(z.x, z.y, Wd.inside, h) ||
+          !Wd.onView(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc);
+      if (z.el.hidden !== hide) z.el.hidden = hide;
+      if (o.a !== z.a) {
+        if (o.a > 0 && !o.d && !hide && fxl)
+          clawMark(
+            fxl,
+            f.left + (o.f || 1) * 44 * sc,
+            f.top - 36 * sc,
+            sc * 1.25,
+          );
+        z.a = o.a;
+      }
+      if (hide) continue;
+      const hits = s.options.noGore ? goreFree(o.w || "") : o.w || "";
+      if (z.hits !== hits) {
+        z.hits = hits;
+        z.img.src = zombieURL(o.l, o.i, hits);
+      }
+      const hp = (Math.max(0, o.hp) / (o.l[0] || 1)).toFixed(3);
+      if (z.hp !== hp) {
+        z.hp = hp;
+        z.bar.style.setProperty("--hp", hp);
+        if (+hp < 1) z.el.classList.add("hurt");
+      }
+      if (o.d && !z.dead) {
+        z.dead = true;
+        z.el.classList.add("dead");
+      }
+      const tr = `translate(${f.left.toFixed(1)}px, ${f.top.toFixed(1)}px)`;
+      if (z.tr !== tr) z.el.style.transform = z.tr = tr;
+      const body = `scale(${((o.f || 1) < 0 ? -sc : sc).toFixed(4)}, ${sc.toFixed(4)})${o.d ? " rotate(-100deg)" : ""}`;
+      if (z.bt !== body) z.body.style.transform = z.bt = body;
+      if (z.k !== sc) {
+        z.k = sc;
+        z.el.style.setProperty("--k", sc.toFixed(3));
+      }
+      const zi = Math.round(sortY(z.x, z.y, h)) + 10;
+      if (z.zi !== zi) z.el.style.zIndex = z.zi = zi;
+    }
+    for (const [i, z] of ZB)
+      if (!seen.has(i)) {
+        z.el.remove();
+        ZB.delete(i);
+      }
   },
 });

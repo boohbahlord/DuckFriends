@@ -844,7 +844,10 @@ const LAND = { x0: STAIRS.x0, x1: STAIRS.x1, y0: STAIRS.y0, y1: STAIRS.land };
 /* Downpour: the forest, short of the world's edge (the forest line stops nobody: the owner's, Nov 17 03:34Z). Past the
    fences only the road is open, so zombies there still climb them */
 const inWoods = (x, y) => x >= 70 && x <= W - 70 && y >= 70 && y <= H - 70;
+/* Duck Cabin (Sandbox's zombies there, sbcabin.js): the whole world; only what stands in it stops them (standable) */
+const hangMap = () => layoutVariant() === "";
 export const playable = (x, y) =>
+  (hangMap() && x > 0 && x < W && y > 0 && y < H) ||
   (dp() && (GS.inOpen(x, y) || inWoods(x, y))) ||
   (!dp() && inCabin(x, y)) ||
   inDeck(x, y) ||
@@ -1027,7 +1030,9 @@ export function syncMap() {
   spots = null;
   [GX, GY, GW, GH] = on
     ? [0, 0, Math.ceil(GS.GS_W / CELL), Math.ceil(GS.GS_H / CELL)]
-    : [1280, 580, 82, 52];
+    : hangMap()
+      ? [0, 0, Math.ceil(W / CELL), Math.ceil(H / CELL)]
+      : [1280, 580, 82, 52];
 }
 export const openingById = (id) => {
   syncMap();
@@ -5427,6 +5432,32 @@ export function wayTo(x, y, tx, ty, now) {
   if (c < 0) return null;
   return heading(flowFrom([c]), x, y); // (flowFrom keeps the fields it made)
 }
+/* ---------- for Sandbox's zombies on Duck Cabin (sbcabin.js): the same way to the ducks, the same steps ----------
+   One way for every map (the owner's, through Adam, Nov 19: no walking routes drawn by hand): the flow field over the
+   map's own solids, and stepZombie's turns round what's in the way */
+/* the walking distance to the nearest of goals ([x, y] in world px), worked out as the chase's is */
+export const chaseField = (goals) =>
+  flowFrom(
+    goals.map(([x, y]) => openNear(x, y)),
+    true,
+  );
+/* one zombie z ({ x, y } in world px) walks far px toward goal [x, y]: straight at it once nothing is in between,
+   else down the field. ducks: [{ xy, zz }], the ones it never walks into */
+export function chaseStep(z, dist, goal, far, ducks = []) {
+  const aim =
+    (Math.hypot(goal[0] - z.x, goal[1] - z.y) < 240 &&
+      walkable(z.x, z.y, ...goal) &&
+      goal) ||
+    (dist && heading(dist, z.x, z.y)) ||
+    goal;
+  stepZombie(z, aim, far, ducks);
+}
+/* a zombie's walk in world px a second at round 1, before its spawn's speed box */
+export const zWalk = () => {
+  const R = roundOf(1);
+  return WALK * Z_SLOW * ((R[1][0] + R[1][1]) / 2);
+};
+export const Z_ROOM = { RX, RY, CLAW };
 /* can a shot from (x0, y0) reach (x1, y1)? (no wall or furniture in between, at height z) */
 export function clearShot(x0, y0, x1, y1, z = 0) {
   const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 16));

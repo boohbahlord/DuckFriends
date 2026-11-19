@@ -24,6 +24,7 @@ import {
   sbPlayerSpot,
 } from "./sandboxrules.js";
 import { sbAct, sbTick } from "./sbspawn.js";
+import { onCabin } from "./sbcabin.js";
 import { stamp, took } from "./perf.js";
 import {
   boardSpeed,
@@ -3529,11 +3530,18 @@ const SB_H = {
     if (pwOn(s)) pwHit(s, id, "claw", now, !!P.dead); // (its claw wounds, as a Dead Ducks Arcade zombie leaves them)
   },
 };
-/* a duck on Sandbox's board that stands up again: at a respawn for players, if there is one */
+/* a duck on Sandbox's board or Duck Cabin that stands up again: at a respawn for players, if there is one (the zombie
+   maps bring theirs back their own way: l4ddrules.js) */
 onGetUp((s, id) => {
-  if (!sbOnBoard(s)) return false;
+  if (!sbOnBoard(s) && !onCabin(s)) return false;
   const q = sbPlayerSpot(s);
-  if (q && s.pos[id]) s.pos[id] = { ...s.pos[id], x: q.x, y: q.y };
+  if (q && s.pos[id])
+    s.pos[id] = {
+      ...s.pos[id],
+      x: q.x,
+      y: q.y,
+      ...(onCabin(s) ? { z: q.z || 0 } : {}),
+    };
   return false;
 });
 function playerKilled(s, by, id, w) {
