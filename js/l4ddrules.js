@@ -36,7 +36,14 @@
      l4b  { id: { o, at } }: who is boarding up which opening, since when (one more board each BOARD_MS)
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
-import { baseMode, isSb, SB_BACK_MS } from "./sandboxrules.js";
+import {
+  baseMode,
+  isSb,
+  sbPlayerSpot,
+  SB_BACK_MS,
+  SB_BOXES,
+} from "./sandboxrules.js";
+import { valueOf } from "./numerat.js";
 import { rule, keepOnly } from "./hangout/registry.js";
 import {
   W,
@@ -1261,7 +1268,7 @@ const zOk = (x, y, z) =>
    jc since when it chases Justin, jx till when it lets him be, nj never him (JCHASE). These went missing at every
    heartbeat before, so a zombie forgot its way up the moment it chose it (the owner's, Nov 17 19:11Z: "WHY THE FUCK ARE
    ZOMBIES NOT COMMITTING ON WALL CLIMBS EVEN WHEN IM STILL ON THE SAME FUCKING ROOF!!!") */
-const KEEP = ["cm", "k", "fl", "wp", "j", "jp", "jc", "jx", "nj"];
+const KEEP = ["cm", "k", "fl", "wp", "j", "jp", "jc", "jx", "nj", "sp", "dm"]; // (sp, dm: a Sandbox spawn's zombie, its spawn and its damage: sbspawn.js)
 /* the zombies as objects, from the state's three parts, and back (k in zp: hp · 16 + st, st up to 8, the jump) */
 function zombies(s) {
   const zp = s.hang.zp || [],
@@ -3733,11 +3740,11 @@ function fireTick(s, zs, now, T, p4) {
 }
 /* a duck takes 1 (a claw, fire); true when that put it down. A claw leaves a wound on it now and then, as hits do in
    every other mode, and it goes away by itself 6 to 12 seconds after the duck is up (wounds.js) */
-function hurtDuck(s, p4, id, now, w = "") {
+function hurtDuck(s, p4, id, now, w = "", dmg = 1) {
   const p = p4[id];
   if (!p || p.dn || p.gh) return false;
   const safe = invuln(s) || invulnOf(s, id, now); // (Invulnerability, or just up from Safe Keeping: it only flashes)
-  const hp = safe ? p.hp : p.hp - 1;
+  const hp = safe ? p.hp : Math.max(0, +(p.hp - dmg).toFixed(1)); // (dmg: 1, or a Sandbox spawn's damage box)
   if (w && !safe) pwHit(s, id, w, now, hp <= 0);
   if (hp > 0) {
     p4[id] = { ...p, hp, at: now };
@@ -4387,7 +4394,7 @@ function l4Tick(s, now) {
     return true;
   }
   meleeHits(s, now); // (first: the zombies below are read after it)
-  const T = now - L.t0,
+  const T = now - (isSb(s) && L.t0 == null ? 0 : L.t0), // (Sandbox: no round started, its zombies still claw)
     zs = zombies(s);
   /* the ducks: HP coming back, revives, bleeding out, boards going up, reloads */
   const p4 = { ...(s.hang.l4p || {}) },
@@ -4448,6 +4455,9 @@ function l4Tick(s, now) {
       s.hang.l4p = p4;
       bringBack(s, id, now, ids.indexOf(id), false);
       p4[id] = s.hang.l4p[id];
+      const q = sbPlayerSpot(s); // (at a respawn for players, if there is one: sbspawn.js)
+      if (q && s.pos[id])
+        s.pos[id] = { ...s.pos[id], x: q.x, y: q.y, z: q.z || 0 };
       continue;
     } // (Sandbox: no next round to wait for, so a ghost is back up a moment later, at a start spot, with its weapons)
     if (p.gh) continue;
@@ -4519,7 +4529,7 @@ function l4Tick(s, now) {
   }
   merchantTick(s, now); // (the merchant walks in or out, and greets)
   /* between rounds: no zombies; the drops still lie there to be taken */
-  if (s.hang.l4.wait) {
+  if (s.hang.l4.wait && !isSb(s)) {
     if (waitTick(s, now)) return true;
     const Lw = { ...s.hang.l4 };
     dropTick(s, Lw, zs, now, T, ids);
@@ -4532,7 +4542,7 @@ function l4Tick(s, now) {
     live = zs.filter((z) => z.st !== 3).length,
     extra = Math.max(0, ids.length - 1),
     L2 = { ...s.hang.l4 };
-  if (T >= 0 && L2.made + L2.owe < L2.n) {
+  if (T >= 0 && !isSb(s) && L2.made + L2.owe < L2.n) {
     const sec = Math.floor(T / 1000);
     if (sec > L2.sec) {
       L2.sec = sec;
@@ -4582,7 +4592,7 @@ function l4Tick(s, now) {
     bodies = left.filter((z) => z.st === 3 && nuked(s, z)); // (the Nuke's: they don't hold up the next round)
   if (s.hang.l4nk && s.hang.l4nk.ids && !bodies.length) s.hang.l4nk = null; // (the last of them gone)
   /* every zombie of the round came and died: the next round, and the ghosts come back */
-  if (L2.made >= L2.n && left.length === bodies.length && T >= 0) {
+  if (L2.made >= L2.n && left.length === bodies.length && T >= 0 && !isSb(s)) {
     s.hang.l4 = { ...L2, wait: { r: L2.r + 1, v: {} } }; // (the next round waits for End turn)
     store(s, bodies, false);
     merchantCome(s, now); // (the rest before the next round: half the time)
@@ -4684,6 +4694,60 @@ function newZombie(s, L, T, zs = []) {
       : [max, v, o.id, size, build, hat, outfit],
   };
 }
+/* Sandbox: a zombie made at a spawn (sbspawn.js), at (x, y) in shares of the map, already inside and after the ducks
+   (st 2), with its spawn's HP, speed (a share of a zombie's own) and damage; its number, or 0 when the map has no room.
+   l: its look as newZombie makes it, its opening the nearest one (it never needs it inside) */
+export function l4Spawn(s, x, y, o = {}) {
+  const L = s.hang.l4;
+  if (!L) return 0;
+  syncMap();
+  const [wx, wy] = [x * W, y * H],
+    op = [...OPENINGS].sort(
+      (a, b) =>
+        Math.hypot(a.in[0] - wx, a.in[1] - wy) -
+        Math.hypot(b.in[0] - wx, b.in[1] - wy),
+    )[0],
+    R = roundOf(1),
+    i = L.next || 1,
+    dress = Math.random() < 0.2 ? Math.random() : -1,
+    odd = Math.random() < 0.25,
+    size = odd && Math.random() < 0.5 ? +rnd(-1, 1).toFixed(2) : 0,
+    max = Math.max(1, Math.round(o.hp || hp0())),
+    v = Math.round(WALK * Z_SLOW * ((R[1][0] + R[1][1]) / 2) * (o.speed || 1));
+  s.hang.l4 = { ...L, next: i + 1 };
+  const zs = zombies(s);
+  zs.push({
+    i,
+    x: wx,
+    y: wy,
+    hp: max,
+    st: 2,
+    a: -1e6,
+    n: 0,
+    d: 0,
+    dir: 0,
+    ...(o.sp ? { sp: o.sp } : {}),
+    ...(o.dm ? { dm: o.dm } : {}),
+    l: [
+      max,
+      v,
+      op ? op.id : 0,
+      size,
+      odd && !size ? +rnd(-1, 1).toFixed(2) : 0,
+      dress >= 0 && dress < 0.6 ? rint(0, ZHATS.length - 1) : -1,
+      dress >= 0.4 ? rint(0, ZOUTFITS.length - 1) : -1,
+    ],
+  });
+  store(s, zs, false);
+  return i;
+}
+/* Sandbox: the zombies standing now, each { i, x, y (shares of the map), sp (its spawn) } */
+export const l4Live = (s) =>
+  s.hang && s.hang.zp
+    ? zombies(s)
+        .filter((z) => z.st !== 3)
+        .map((z) => ({ i: z.i, x: z.x / W, y: z.y / H, sp: z.sp }))
+    : [];
 function moveZombies(s, zs, now, T, up) {
   const R = roundOf(s.hang.l4.r),
     tk = (s.hidden && s.hidden.l4tk) || now - 200,
@@ -5000,7 +5064,14 @@ function moveZombies(s, zs, now, T, up) {
             pls.splice(pls.indexOf(target), 1); // (the merchant: a swipe takes 1, and no line)
         } else if (
           !dodging(s, target.p, now) &&
-          hurtDuck(s, p4, target.id, now, "claw")
+          hurtDuck(
+            s,
+            p4,
+            target.id,
+            now,
+            "claw",
+            z.dm ? valueOf({ ok: z.dm }, SB_BOXES.damage) || 1 : 1,
+          )
         )
           pls.splice(pls.indexOf(target), 1);
       }

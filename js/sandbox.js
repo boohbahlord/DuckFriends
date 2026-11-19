@@ -7,7 +7,9 @@
    belong to whoever sbCan says (the host; everyone when Democracy of Ducklings lets everyone change the settings).
    The options inside b, m, n, h, g and p come with the later stages; for now those windows are empty. */
 import { esc, typing, windowOpen } from "./ui.js";
-import { isSb, sbCan } from "./sandboxrules.js";
+import { isSb, sbCan, SB_KEYS_TAKEN, SB_KEY_IN_BUILD } from "./sandboxrules.js";
+import { buildRows, sbNearPoint, sbSettings } from "./sbspawnview.js";
+import { boxText } from "./sbspawn.js";
 
 /* each window: its key, its title, and whether it needs the host's rights */
 export const SB_WINS = {
@@ -46,6 +48,14 @@ export const SB_SHEET = [
     "While a window is up, pick its options by number or with the mouse. Weapons don't switch then.",
   ],
   ["E", "Use what you stand next to, a spawn too."],
+  [
+    "Spawns",
+    "In Build, place a spawn and give it a key. While Build is up, its key spawns. E on it changes it.",
+  ],
+  [
+    "Numbers",
+    "2 is always 2. 2:4 is 2 to 4. 2,4 is 2 or 4. Speed and damage take tenths (0.8:1.2). t or f for yes or no.",
+  ],
   ["Esc", "Close the window."],
   ["Leave Sandbox", "Top left. Half the room's votes, or the host, ends it."],
   [
@@ -73,7 +83,15 @@ const rightsRows = (R) => {
     });
 };
 /* the options in a window (the later stages fill the rest): [{ label, act }], or a function of the room that makes them */
-const OPTIONS = { c: [], b: [], m: [], n: [], h: [], g: [], p: rightsRows };
+const OPTIONS = {
+  c: [],
+  b: buildRows,
+  m: [],
+  n: [],
+  h: [],
+  g: [],
+  p: rightsRows,
+};
 export const sbOptions = (k, R) => {
   const o = OPTIONS[k] || [];
   return typeof o === "function" ? (R ? o(R) : []) : o;
@@ -204,6 +222,39 @@ export function mountSandboxKeys(S, getR, onOpen) {
       sbClose(k, false);
       paint();
       return;
+    }
+    /* E beside a spawn or a respawn opens its settings */
+    if (e.code === "KeyE" && !e.repeat) {
+      const R = getR(),
+        s = R.state;
+      const id = sbCan(s, R.me) ? sbNearPoint(s, s.pos[R.me]) : null;
+      if (id) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        sbClose(k, false);
+        paint();
+        sbSettings(getR, id);
+        return;
+      }
+    }
+    /* a spawn's key: it spawns (only while Build is up: SB_KEY_IN_BUILD) */
+    const sk = /^Key([A-Z])$/.exec(e.code);
+    if (sk && (k.open === "b" || !SB_KEY_IN_BUILD)) {
+      const key = sk[1].toLowerCase(),
+        R = getR(),
+        s = R.state;
+      if (
+        !SB_KEYS_TAKEN.includes(key) &&
+        sbCan(s, R.me) &&
+        Object.values((s.sb && s.sb.pts) || {}).some(
+          (p) => p.k === "spawn" && boxText(p, "key").toLowerCase() === key,
+        )
+      ) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        if (!e.repeat) R.send({ t: "sb", k: "key", key });
+        return;
+      }
     }
     const l = letter(e);
     if (l) {

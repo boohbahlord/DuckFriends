@@ -18,3 +18,4 @@ import "./blackjack.js";
 import "./poker.js";
 import "./ghosts.js";
 import "./ambience.js";
+import "../sbspawnview.js"; // (Sandbox: its spawns and respawns on the worlds)

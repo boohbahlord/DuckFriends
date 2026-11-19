@@ -14493,10 +14493,10 @@ html.moving .board.quake {
    bar and "−1 HP" are Dead Ducks Arcade's too, under their feet and over their heads (the owner's, Nov 19 01:34Z) */
 .mgj-z {
   position: absolute;
+  left: 0;
+  top: 0;
   pointer-events: none;
-  transition:
-    left 0.22s linear,
-    top 0.22s linear;
+  transition: transform 0.22s linear; /* (game.js placeZombies moves it by transform: cheap for 800) */
 }
 .mgj-z img {
   display: block;
@@ -19678,4 +19678,92 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 }
 .sb-opt.on {
   border-color: var(--green);
+}
+/* Sandbox's spawns and respawns (js/sbspawnview.js): a ring on the ground in its color, its name over it */
+.sb-pt {
+  position: absolute;
+  pointer-events: none;
+}
+.sb-pt svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.sb-pt-name {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: calc(0.8rem * var(--ts, 1));
+  text-shadow: 0 0.08rem 0.2rem #000c;
+}
+/* its settings window */
+.sb-setwin {
+  width: min(30rem, calc(100vw - 1.5rem));
+}
+.sb-set {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-height: calc(100dvh - 14rem);
+  overflow: auto;
+}
+.sb-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 7rem;
+  align-items: center;
+  gap: 0.2rem 0.6rem;
+}
+.sb-row > span:first-child {
+  min-width: 0;
+}
+.sb-box {
+  width: 100%;
+  font: inherit;
+  font-family: "Cascadia Code", ui-monospace, monospace;
+  padding: 0.3rem 0.45rem;
+  border-radius: 0.45rem;
+  border: 0.12rem solid var(--line);
+  background: var(--panel2);
+  color: inherit;
+}
+.sb-row.bad .sb-box {
+  border-color: #ff4d4d;
+  background: color-mix(in srgb, #ff4d4d 18%, var(--panel2));
+}
+.sb-why {
+  grid-column: 1 / -1;
+  font-style: normal;
+  font-size: 0.85em;
+  color: #ff6b6b;
+}
+.sb-why:empty {
+  display: none;
+}
+.sb-cols,
+.sb-what {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  grid-column: 2;
+  justify-content: flex-end;
+}
+.sb-row:has(.sb-cols),
+.sb-row:has(.sb-what) {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.sb-col {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: 0.14rem solid var(--line);
+  background: var(--c);
+  cursor: pointer;
+}
+.sb-col.on {
+  outline: 0.16rem solid var(--ink);
+  outline-offset: 0.1rem;
 }

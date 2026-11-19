@@ -52,3 +52,65 @@ export function sbCan(s, id) {
 }
 /* a downed duck in Sandbox on Dead Ducks Arcade's maps: back up this long after it bled out (no rounds to wait for) */
 export const SB_BACK_MS = 3000;
+
+/* ---------- Sandbox's spawns and respawns: the settings (stage 2) ----------
+   ONE list of settings that a spawn, a respawn (and later a made NPC and a zone) all read. Each box keeps the text as
+   it was typed and its last good text (numerat.js keep()), so a box written wrong never breaks anything.
+   The owner's words for each are in the Sandbox file, "Integer or numerical options for spawn" and "true of false
+   options for spawn". */
+export const SB_BOXES = {
+  limit: { name: "Spawn limit", kind: "int", min: 1, max: 100, def: "1" }, // ("cannot exceed over 100, and 1 is the default per spawn")
+  every: {
+    name: "Seconds between spawns",
+    kind: "int",
+    min: 1,
+    max: 600,
+    def: "4",
+  }, // ("default is four seconds")
+  hp: { name: "HP", kind: "int", min: 1, max: 1000, def: "3" }, // (a zombie's own: l4ddrules.js L4.HP)
+  damage: { name: "Damage", kind: "tenth", min: 0.1, max: 100, def: "1" }, // ("decimal form to the tenth place")
+  speed: { name: "Speed", kind: "tenth", min: 0.1, max: 5, def: "1" }, // ("1 is default, 0 is not allowed ... 5 is the max")
+};
+export const SB_FLAGS = {
+  cont: { name: "Continuous spawn", kind: "bool", def: "f" },
+  respawn: { name: "Can respawn", kind: "bool", def: "f" },
+  sprint: { name: "Can sprint", kind: "bool", def: "f" },
+  jump: { name: "Can jump", kind: "bool", def: "f" },
+  climb: { name: "Can climb walls", kind: "bool", def: "t" },
+};
+/* what can spawn: the zombie now; a blank NPC, Justin, the test-mode ducks and made NPCs come with the next stages */
+export const SB_WHAT = { zombie: "Zombie" };
+/* the colors a spawn can have (the board's own): its ring on the screen, and which respawns take its NPCs */
+export const SB_COLORS = {
+  red: "#ff4d4d",
+  blue: "#3f8cff",
+  green: "#3fae2a",
+  yellow: "#ffd23f",
+  purple: "#9b5de5",
+  orange: "#ff8c2b",
+  pink: "#ff6fb5",
+  white: "#f4f6fb",
+};
+/* the keys a spawn can't take: the windows' letters and the game's own keys */
+export const SB_KEYS_TAKEN = "cbmnhgpwasdeqrtvx";
+/* the spawn key only works while the Build window is up (the head planner's pick until the owner answers "UNLESS the
+   letter is pressed outside of build mode"): false lets it work any time */
+export const SB_KEY_IN_BUILD = true;
+/* the most spawns and respawns on a map */
+export const SB_POINTS = 60;
+/* where a duck comes back in Sandbox: a respawn whose "who" box says players (one of them at random), or null (where it
+   would anyway) */
+export function sbPlayerSpot(s) {
+  const rs = Object.values((s && s.sb && s.sb.pts) || {}).filter((q) => {
+    const k = q.f && q.f.who;
+    const who = k && k.ok ? k.ok : q.col;
+    return (
+      q.k === "respawn" &&
+      String(who)
+        .toLowerCase()
+        .split(/[\s,]+/)
+        .includes("players")
+    );
+  });
+  return rs.length ? rs[Math.floor(Math.random() * rs.length)] : null;
+}

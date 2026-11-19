@@ -233,6 +233,7 @@ import { mountL4Bar, l4Slider } from "./l4ddbar.js";
 import { isSb, sbOnBoard } from "./sandboxrules.js";
 import { mountCabinEnd } from "./hangout/cabinend.js";
 import { mountSandboxKeys } from "./sandbox.js";
+import { sbBoardMarks } from "./sbspawnview.js";
 import { duckSVG, duckRoom } from "./duck.js";
 import {
   shownDuck,
@@ -2685,6 +2686,7 @@ function drawDucks(now = clockNow()) {
   placeTiles(board);
   placePick(board, s);
   placeZombies(board, s, now);
+  if (geo) sbBoardMarks(board, s, (o) => place(o, 0, 1), geo.size); // (Sandbox: its spawns and respawns on the board)
   mgjSteps(s); // (the wave zombies' steps and groans: l4ddsfx.js)
   placeDesk(board, s, now);
   placeCake(board, s, now);
@@ -2987,15 +2989,23 @@ function placeDesk(board, s, now) {
    way it last clawed; a dead one falls over and fades */
 function placeZombies(board, s, now) {
   const layer = $(".ducks", board),
-    zb = (isMgj(s) && s.phase === "boss" && s.mz && s.mz.zb) || [];
+    zb =
+      (((isMgj(s) && s.phase === "boss") || sbOnBoard(s)) && s.mz && s.mz.zb) ||
+      []; // (and Sandbox's board: its spawns' zombies, sbspawn.js)
   if (!layer || !geo) return;
   const want = new Set(zb.map((o) => String(o.i))),
     fxl = $(".fxl", board),
-    ng = !!+s.options.noGore;
+    ng = !!+s.options.noGore,
+    have = new Map(); // (found once a frame, not one search for each of up to 800)
+  /* claw marks: a few at a time (Sandbox can have 800 clawing at once, and each mark is a drawing made into pixels) */
+  let marks = fxl
+    ? 4 - Math.floor(fxl.querySelectorAll(".l4-claw").length / 4)
+    : 0;
   for (const n of layer.querySelectorAll(".mgj-z"))
     if (!want.has(n.dataset.i)) n.remove();
+    else have.set(n.dataset.i, n);
   for (const o of zb) {
-    let n = layer.querySelector(`.mgj-z[data-i="${o.i}"]`);
+    let n = have.get(String(o.i));
     if (!n) {
       n = document.createElement("div");
       n.className = "mgj-z";
@@ -3063,7 +3073,7 @@ function placeZombies(board, s, now) {
     } // (dead: it falls over, lies there, then fades, its 4 s as Dead Ducks Arcade's: mgjrules.js WAVE.DEAD_MS)
     const clawing = !o.d && now - (o.a || 0) < 350;
     n.classList.toggle("claw", clawing);
-    if (clawing && n._a !== o.a && fxl)
+    if (clawing && n._a !== o.a && fxl && marks-- > 0)
       clawMark(
         fxl,
         c.left + (o.f || face) * w * 0.55,
@@ -3073,13 +3083,16 @@ function placeZombies(board, s, now) {
     n._a = o.a;
     if (n._st === st) continue;
     n._st = st;
-    Object.assign(n.style, {
-      left: (c.left - w / 2).toFixed(1) + "px",
-      top: (c.top - box.feet * k).toFixed(1) + "px",
-      width: w.toFixed(1) + "px",
-      height: (box.h * k).toFixed(1) + "px",
-      zIndex: Math.round(c.top),
-    });
+    /* moved by transform, not left and top: 800 gliding left and top made the page lay itself out again every frame
+       (Sandbox's board: about 10 frames a second) */
+    n.style.transform = `translate(${(c.left - w / 2).toFixed(1)}px, ${(c.top - box.feet * k).toFixed(1)}px)`;
+    const wh = `${w.toFixed(1)},${(box.h * k).toFixed(1)}`;
+    if (n._wh !== wh) {
+      n._wh = wh;
+      n.style.width = w.toFixed(1) + "px";
+      n.style.height = (box.h * k).toFixed(1) + "px";
+    }
+    n.style.zIndex = Math.round(c.top);
     n.style.setProperty("--face", face);
     n.style.setProperty("--feet", (box.feet * k).toFixed(1) + "px");
     n.style.setProperty("--k", k.toFixed(3));
@@ -4196,7 +4209,7 @@ const SHOT_EL = new Map(); // a shot's number → its element
 const STOP_WAIT = 700;
 function stopped(s, sh, at, hang, now) {
   const r = SHOT_SEEN.get(sh.n),
-    mgj = isMgj(s);
+    mgj = isMgj(s) || sbOnBoard(s); // (Sandbox's board: its spawns' zombies stop shots as his do)
   if (
     !r ||
     !((hang && isL4dd(s)) || mgj) ||

@@ -298,10 +298,13 @@ const MZ = {
   JUMP: 2, // duck lengths: a move longer than this in one frame is a new spot (a spawn), not a walk
   K: 0.55, // a wave zombie's step, of a duck's
   GROAN_K: 0.7,
+  MOST: 60, // (heard at most: Sandbox can have 800 on the board, and the grouping below would cost too much for them all)
 };
 let mz = null; // { z: Map(i → { x, y, acc, next }), steps: [], groans: [] }
 export function mgjSteps(s) {
-  const zb = (s && s.phase === "boss" && s.mz && s.mz.zb) || null;
+  const zb =
+    (s && (s.phase === "boss" || s.phase === "sandbox") && s.mz && s.mz.zb) ||
+    null; // (and Sandbox's board: its spawns' zombies)
   if (!zb || !zb.length) {
     mz = null; // (no waves: start fresh next time)
     return;
@@ -314,8 +317,10 @@ export function mgjSteps(s) {
     len = (dx, dy) => Math.hypot(dx / DUCK_LEN.x, dy / DUCK_LEN.y),
     seen = new Set(),
     lead = [];
+  let heard = 0;
   for (const o of zb) {
     if (o.d) continue; // (dead: no steps, no groans)
+    if (++heard > MZ.MOST) break;
     seen.add(o.i);
     let z = mz.z.get(o.i);
     if (!z) {

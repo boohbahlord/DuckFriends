@@ -74,6 +74,7 @@ import {
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
 import { ARMS, SLOT_ODDS, zombieTakes, pierceOf, ALL_HP } from "./l4ddrules.js";
 import { holdDown, onGetUp, invuln, hurtFx } from "./hangout/death.js";
+import { sbOnBoard } from "./sandboxrules.js";
 import { hitCode } from "./wounds.js";
 import {
   E_LINES,
@@ -1536,8 +1537,9 @@ function pellets(s, by, at, a0, n0, now) {
 /* a shot this beat, from (x0, y0) to (x0 + dx, y0 + dy): a duck's shot that reaches Justin hits him (and is gone: true;
    on his double it counts for nothing); his shots hit Good Justin and the Jaimes. Ducks never hit each other here */
 export function mgjShot(s, sh, x0, y0, dx, dy, now, log) {
-  const m = s.mgj;
-  if (!m || s.phase !== "boss") return false;
+  const m = s.mgj,
+    sb = sbOnBoard(s); // (Sandbox's board: only its spawns' zombies, in s.mz as his are: sbspawn.js)
+  if (!sb && (!m || s.phase !== "boss")) return false;
   const near = (q) => {
     const ux = dx / RX,
       uy = dy / RY,
@@ -1556,6 +1558,11 @@ export function mgjShot(s, sh, x0, y0, dx, dy, now, log) {
     const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
     return Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1) * MGJ_SCALE;
   }; // (he's bigger than a duck: his hitbox too)
+  if (sb)
+    return (
+      !sh.fake &&
+      mgjZombieHit(s, (x, y) => near({ x, y }), armOf(sh.k), now, sh.by, sh)
+    );
   if (sh.by === JUSTIN_ID) {
     if (sh.fake) return false;
     if (goodUp(s, now) && near(s.pos[GOOD_ID])) goodDown(s, now);
@@ -1579,7 +1586,12 @@ export function mgjShot(s, sh, x0, y0, dx, dy, now, log) {
    (i: the zombie's number, or -1), or null */
 export function mgjStop(s, sh, r, x0, y0, x1, y1, now) {
   const m = s.mgj;
-  if (!m || s.phase !== "boss" || sh.by === JUSTIN_ID || sh.fake) return null;
+  if (
+    (!sbOnBoard(s) && (!m || s.phase !== "boss")) ||
+    sh.by === JUSTIN_ID ||
+    sh.fake
+  )
+    return null;
   const ux = (x1 - x0) / RX,
     uy = (y1 - y0) / RY,
     len = ux * ux + uy * uy,
@@ -2408,7 +2420,7 @@ const waveGap = (n) =>
 export const waveOn = (s) => !!(s.mz && s.mz.on);
 const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 /* a zombie's look, as Dead Ducks Arcade's (l4ddrules.js newZombie): 1 in 4 another size or build, 1 in 5 dressed */
-function zLook() {
+export function zLook() {
   const dress = Math.random() < 0.2 ? Math.random() : -1,
     odd = Math.random() < 0.25,
     size = odd && Math.random() < 0.5 ? +rnd(-1, 1).toFixed(2) : 0;
@@ -2550,7 +2562,7 @@ export const armOf = (k) => SHOT_ARM[k] || k;
    beam through every one on it). True when the shot stops here, or a swing or blast hit any */
 export function mgjZombieHit(s, near, w, now, by, sh = null) {
   const z = s.mz;
-  if (!z || !isMgj(s) || s.phase !== "boss") return false;
+  if (!z || !((isMgj(s) && s.phase === "boss") || sbOnBoard(s))) return false; // (and Sandbox's board: sbspawn.js)
   const seen = sh ? [...(sh.zh || []), ...(sh.zp || [])] : [];
   let got = z.zb.filter((o) => !o.d && !seen.includes(o.i) && near(o.x, o.y));
   if (!got.length) return false;

@@ -15,7 +15,15 @@
    room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). Duncelation has its
    own rules in duncerules.js: one defender in the circle, everyone else walks to Dunce or Not a Dunce. Valentine's Duck
    Date has its own in vddrules.js: The Date at the dining table, a date with each Suitor, then a Suitor Turned Down. */
-import { baseMode, baseL4map, isSb, sbCan, sbOnBoard } from "./sandboxrules.js";
+import {
+  baseMode,
+  baseL4map,
+  isSb,
+  sbCan,
+  sbOnBoard,
+  sbPlayerSpot,
+} from "./sandboxrules.js";
+import { sbAct, sbTick } from "./sbspawn.js";
 import { stamp, took } from "./perf.js";
 import {
   boardSpeed,
@@ -89,6 +97,7 @@ import {
 } from "./quackrules.js";
 import {
   holdDown,
+  onGetUp,
   invuln,
   shielded,
   comeBack,
@@ -2266,6 +2275,9 @@ function reduceStep(state, a, now) {
       );
       return s;
     }
+    case "sb":
+      // Sandbox's spawns and respawns: place one, change a box, press one (sbspawn.js)
+      return sbAct(s, a, now) ? s : state;
     case "cabinEnd": {
       // Hangout's End Cabin and Quacky Zombies' Exit Cabin: a click votes, another takes it back; half the people
       // (never the computers) start a CABIN_END_MS timer, and the cabin game ends when it runs out
@@ -3043,7 +3055,8 @@ function reduceStep(state, a, now) {
           cakeGone(s, now) |
           jaimeRun(s, now) |
           (isL4dd(s) ? 0 : groundFire(s, now)) | // (the flamethrower's burning ground)
-          pwTick(s, now, normalGame(s)), // (the ducks' wounds going away: wounds.js)
+          pwTick(s, now, normalGame(s)) | // (the ducks' wounds going away: wounds.js)
+          (isSb(s) ? +sbTick(s, now, SB_H) : 0), // (Sandbox: its spawns, respawns and the board's zombies)
         up = standUps(s, now); // (a knocked-down duck stands up by itself when its time is up)
       const sig = () => [s.phase, s.qi, s.catchEnds, s.round, s.at].join(),
         was = sig();
@@ -3498,6 +3511,31 @@ export function soaks(s, id, now, dmg = 1, by) {
   s.php = n >= PHP ? rest : { ...rest, [id]: { n, t: now } };
   return n < PHP;
 }
+/* what Sandbox's spawns borrow (sbspawn.js): the ducks up on the board, and a zombie's swipe on one (dmg: its spawn's
+   damage box) */
+const SB_H = {
+  ducks: (s) =>
+    playing(s).filter(
+      (id) => s.pos[id] && s.pos[id].x >= 0 && !(s.players[id] || {}).dead,
+    ),
+  claw(s, id, dmg, now) {
+    const P = s.players[id],
+      p = s.pos[id];
+    if (!P || P.dead || !p || dodges(s, p, now)) return;
+    if (!soaks(s, id, now, dmg)) {
+      P.dead = true;
+      holdDown(s, id, now);
+    }
+    if (pwOn(s)) pwHit(s, id, "claw", now, !!P.dead); // (its claw wounds, as a Dead Ducks Arcade zombie leaves them)
+  },
+};
+/* a duck on Sandbox's board that stands up again: at a respawn for players, if there is one */
+onGetUp((s, id) => {
+  if (!sbOnBoard(s)) return false;
+  const q = sbPlayerSpot(s);
+  if (q && s.pos[id]) s.pos[id] = { ...s.pos[id], x: q.x, y: q.y };
+  return false;
+});
 function playerKilled(s, by, id, w) {
   if (!s.players[by] || by === id) return;
   s.pkN = (s.pkN || 0) + 1;
@@ -3657,7 +3695,7 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
   if (
     !hang &&
     by !== JUSTIN_ID &&
-    isMgj(s) &&
+    (isMgj(s) || sbOnBoard(s)) &&
     mgjZombieHit(s, (x, y) => !!near(x, y, 0, 0), sp, now, by)
   )
     stab = true; // (Mad God Justin's zombies in reach too)
@@ -3812,7 +3850,7 @@ function blast(s, sh, x, y, now, o = {}) {
     hit.push(id);
   }
   guardsHit(s, sh.by, near, now, w); // (a Jaime Guard in the blast: his 1 HP)
-  if (isMgj(s) && sh.by !== JUSTIN_ID)
+  if ((isMgj(s) || sbOnBoard(s)) && sh.by !== JUSTIN_ID)
     mgjZombieHit(s, (zx, zy) => !!near(zx, zy, 0, 0), "grenade", now, sh.by); // (Mad God Justin's zombies in it: all their HP, as a grenade's blast in Dead Ducks Arcade)
   if (!hang && sh.by !== JUSTIN_ID && justinShown(s)) {
     const j = justinAt(s.justin, now);
@@ -4301,7 +4339,11 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
         } // (Mad God Justin's office chair, or the Chair special's: shoved back, as the hammer does, away from it)
       }
     }
-  if (isMgj(s) && mgjShot(s, sh, x0, y0, dx, dy, now, logLine)) return true; // (Mad God Justin: a duck's shot hit him, or his hit Good Justin or a Jaime)
+  if (
+    (isMgj(s) || sbOnBoard(s)) &&
+    mgjShot(s, sh, x0, y0, dx, dy, now, logLine)
+  )
+    return true; // (Mad God Justin: a duck's shot hit him, or his hit Good Justin or a Jaime)
   if (s.jm && at.z > -0.15 && at.z < 1.05 && !sh.fake) {
     const rx = isHang(s) ? 0.006 : 0.03,
       ry = isHang(s) ? 0.012 : 0.08,
