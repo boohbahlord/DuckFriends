@@ -12,7 +12,13 @@
    away (the owner's answer 7, Nov 19 10:22Z: "you can start working on i now"). */
 import { LANG } from "./langname.js";
 import { esc, toast, typing, windowOpen } from "./ui.js";
-import { isSb, sbMay, SB_KEYS_TAKEN, SB_KEY_IN_BUILD } from "./sandboxrules.js";
+import {
+  isSb,
+  sbMay,
+  SB_KEYS_TAKEN,
+  SB_KEY_IN_BUILD,
+  SB_RIGHTS,
+} from "./sandboxrules.js";
 import {
   buildRows,
   ghostHTML,
@@ -117,7 +123,19 @@ export const SB_SHEET = [
    host "decide[s] who else gets it"); the rest of p comes later */
 const rightsRows = (R) => {
   const s = R.state;
-  return Object.values(s.players)
+  /* the windows everyone may use, one switch each (not when Game Settings gave everyone all of them) */
+  const wins =
+    +s.options.sbAll === 1
+      ? []
+      : SB_RIGHTS.map(([k, n]) => {
+          const on = +s.options["sbOk" + k.toUpperCase()] === 1;
+          return {
+            label: `${n} for everyone: ${on ? "on" : "off"}`,
+            on,
+            act: (r) => r.send({ t: "sbOk", win: k, on: !on }),
+          };
+        });
+  const who = Object.values(s.players)
     .filter((p) => !p.bot && p.id !== s.hostId && p.id !== R.me)
     .map((p) => {
       const on = !!(s.sb && s.sb.ok && s.sb.ok[p.id]);
@@ -127,6 +145,7 @@ const rightsRows = (R) => {
         act: (r) => r.send({ t: "sbOk", who: p.id, on: !on }),
       };
     });
+  return [...wins, ...who];
 };
 /* the options in a window (the later stages fill the rest): [{ label, act }], or a function of the room that makes them */
 const OPTIONS = {

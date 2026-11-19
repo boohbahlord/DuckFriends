@@ -21,6 +21,7 @@ import {
   baseL4map,
   isSb,
   sbCan,
+  SB_RIGHTS,
   sbOnBoard,
   sbPlayerSpot,
 } from "./sandboxrules.js";
@@ -2282,6 +2283,18 @@ function reduceStep(state, a, now) {
     case "sbOk": {
       // Sandbox: whoever has the rights gives them to a player or takes them back (the owner's answer 2, Nov 19
       // 01:34Z: the host "decide[s] who else gets it"). The host's own rights never go
+      /* with a window's letter (win): that window opens to every player or shuts again (Player settings, p; the owner's,
+         Nov 19 17:15Z: "determines what settings players get ... if they can access every menu or only certain ones") */
+      if (a.win !== undefined) {
+        const w = SB_RIGHTS.find(([k]) => k === a.win);
+        if (!sbCan(s, a.id) || !w) return state;
+        s.options["sbOk" + w[0].toUpperCase()] = a.on ? 1 : 0;
+        say(
+          s,
+          `${me ? me.name : "The host"} ${a.on ? "opened" : "closed"} ${w[1]} to every player.`,
+        );
+        return s;
+      }
       const who = s.players[a.who];
       if (!sbCan(s, a.id) || !who || who.bot || a.who === s.hostId)
         return state;
