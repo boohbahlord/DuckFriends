@@ -12,11 +12,13 @@ export const UPDATES = [
     id: "v105",
     version: 105,
     date: "Nov 19, 2026",
-    title: "Smoother rain, Sandbox fixes",
+    title: "File Explorer folders, pixel files, smoother rain",
     news: [
       "For Dead Ducks Arcade: Downpour runs smoother in the rain and when a crowd of zombies is clawing you (hit flashes and claw marks no longer slow the game down).",
       "For Sandbox: zones stay visible while you place them and for a moment after.",
       "For Sandbox: an NPC's Can jump and Can climb walls settings now work on maps with heights.",
+      "For Sandbox: the Numberat window's files work like File Explorer: click a folder to go in, ../ or the back arrow to go out, forward arrow, and a path bar that takes Linux paths or searches. The help files are sorted into folders, and the line numbers are easier to see.",
+      "Pictures no longer flash their smooth originals before turning into pixels. The maps, mode pictures and Duck Cabin TV now come as ready-made pixel files, a third of their old size.",
     ],
     fixed: [
       "For Sandbox: dragging a finger on the phone no longer leaves your duck walking after you put something down.",
