@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v127",
+    version: 127,
+    date: "Nov 19, 2026",
+    title: "The Seriat bible",
+    news: [
+      "For Sandbox: the Seriat bible opens in its own window, one long page, from the button at the bottom left or the one beside Theme in the Seriat window.",
+    ],
+  },
+  {
     id: "v126",
     version: 126,
     date: "Nov 19, 2026",
