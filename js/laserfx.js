@@ -15,6 +15,7 @@ import { sfx } from "./sound.js";
 import { W, H, inCabin } from "./hangout/layout.js";
 import { CANOPY } from "./hangout/stationmap.js";
 import { now as clockNow } from "./clock.js";
+import { heldOn } from "./barrelheat.js";
 
 /* the look of duck id's Laser Rifle now: { lvl: its heat 0 … 1 in steps of one beam, over: overheated }, and its key
    (the gun's picture is made again only when it changes) */
@@ -43,7 +44,8 @@ export function laserFrame(s, held, fxl, size, heard) {
     seen = new Set();
   last = t;
   for (const [id, g] of held) {
-    if (g.dataset.w !== "laser" || g.parentNode !== fxl || !g._tip) continue;
+    if (g.dataset.w !== "laser" || !heldOn(g, fxl) || g._gone || !g._tip)
+      continue;
     const q = laserHeat(s, id, now),
       f = q.h / q.max, // (0 … 1, past 1 while overheated)
       over = q.over > 0,

@@ -185,7 +185,7 @@ import {
   DUAL,
 } from "./specials.js";
 import { mountHotbar } from "./hotbar.js";
-import { heatUp, heatDraw } from "./barrelheat.js";
+import { heatUp, heatDraw, heldOn } from "./barrelheat.js";
 import { laserLook, laserArt, laserFrame, laserMeter } from "./laserfx.js";
 import { olAdd, olDraw, olFloor, olRoofed } from "./outlines.js";
 import { ammoBar, stackBars, noReload } from "./meters.js";
@@ -2375,7 +2375,9 @@ function drawDucks(now = clockNow()) {
       shotDone(b);
     } // (landed, gone, or off the screen: kept for the next shot that looks the same)
   /* the handgun or the dagger in hand, turned toward where it aims: my mouse, or the aim the others sent */
-  const handed = new Set();
+  const handed = new Set(),
+    heldEls = fxl._held || (fxl._held = new Map()),
+    lowLayer = hang && $(".ducks", board);
   for (const [id, w, pos, duck, mine] of arms) {
     const c = bodyAt(id, pos, now),
       sh = shows[id] && now < shows[id].until ? shows[id] : null;
@@ -2396,9 +2398,8 @@ function drawDucks(now = clockNow()) {
             ? Math.PI
             : 0;
     handed.add(id);
-    const heldEls = fxl._held || (fxl._held = new Map());
     let h = heldEls.get(id);
-    if (h && h.parentNode !== fxl) h = null;
+    if (h && !heldOn(h, fxl)) h = null;
     const holy = isL4dd(s) && angelOf(s, id, w), // (Dead Ducks Arcade's Angelic weapons: l4ddangel.js)
       lz = w === "laser" && (isL4dd(s) || isMgj(s)) ? laserLook(s, id) : null, // (the Laser Rifle: its barrel as hot as it is now, laserfx.js)
       hk =
@@ -2424,6 +2425,7 @@ function drawDucks(now = clockNow()) {
       );
       h._k = hk;
       h._hs = hs;
+      h._fxl = fxl; // (its board's: where it is drawn, fxl or the ducks' layer, below)
       fxl.append(h);
       heldEls.set(id, h);
       if (holy) angelGlow(h); // (its glow as thin as every other Angelic weapon's: powerart.js)
@@ -2523,10 +2525,38 @@ function drawDucks(now = clockNow()) {
       "thrown-now",
       (w === "dagger" || w === "grenade") && !!sh && now < sh.until - 500,
     ); // (the dagger or the grenade just thrown: a new one comes to hand)
+    /* the owner's, Nov 19 19:27Z, Downpour's pump roof: "the gun should be consistent with it". Under a roof, a wall or
+       a crown drawn over its duck (even over a corner of where it reaches), the weapon is drawn in the world with its
+       duck, at its duck's depth, so what covers the duck covers it alike: seen through the see-through roof with the
+       duck, hidden under the roof with it. Its duck's picture not shown (inside where I can't see, or only its outline
+       under a roof I'm not under): the weapon isn't either. Out in the open it stays in fxl, over the dark, as before */
+    const reachOut = ds * 1.6,
+      low =
+        lowLayer &&
+        dk &&
+        dk._zi !== undefined &&
+        world.under(
+          c.left - reachOut,
+          c.left + reachOut,
+          c.top - ds,
+          c.top + ds * 0.7,
+          dk._zi,
+        ),
+      home = low ? lowLayer : fxl,
+      zi = low ? String(dk._zi) : "",
+      gone = !!(hang && dk && (dk._hid || dk._olOnly));
+    if (h.parentNode !== home) home.append(h);
+    if (h.style.zIndex !== zi) h.style.zIndex = zi;
+    if (h._gone !== gone) {
+      h._gone = gone; // (its barrel's glow and the Laser Rifle's steam go with it: barrelheat.js, laserfx.js)
+      h.style.visibility = gone ? "hidden" : "";
+    }
   }
-  fxl.querySelectorAll(".held").forEach((h) => {
-    if (!handed.has(h.dataset.pid)) h.remove();
-  });
+  for (const [id, h] of heldEls)
+    if (!handed.has(id)) {
+      h.remove();
+      heldEls.delete(id);
+    }
   document.documentElement.classList.toggle(
     "armed",
     arms.some((a) => a[4]),
@@ -2542,7 +2572,7 @@ function drawDucks(now = clockNow()) {
     const hd = heldAll.get(sh.by),
       e =
         hd &&
-        hd.parentNode === fxl &&
+        heldOn(hd, fxl) &&
         (hd._ends
           ? hd._ends[
               sh.al !== undefined ? +sh.al : (hd._alt = (hd._alt || 0) ^ 1)
@@ -2567,7 +2597,7 @@ function drawDucks(now = clockNow()) {
     for (const [id, w] of arms) {
       if (id !== R.me || !MUZZLE[w]) continue;
       const hd = heldAll.get(id),
-        e = hd && hd.parentNode === fxl && hd._end,
+        e = hd && heldOn(hd, fxl) && hd._end,
         end = e && laserEnd(id);
       if (end)
         for (const m of hd._ends || [e]) lz.push([m[0], m[1], end[0], end[1]]); // (the Angelic pistols: two sights, meeting where it aims, the owner's Nov 17)
@@ -2578,7 +2608,7 @@ function drawDucks(now = clockNow()) {
     for (const [id, w] of arms) {
       if (id !== R.me || !MUZZLE[w]) continue;
       const hd = heldAll.get(id),
-        e = hd && hd.parentNode === fxl && hd._end,
+        e = hd && heldOn(hd, fxl) && hd._end,
         A = hd && hd._aim;
       if (!e || !A) continue;
       const ux = Math.cos(A[2]),
@@ -3608,7 +3638,7 @@ function flames(s, now, hang, size, fxl, heldAll) {
     hang ? world.place({ x, y }, z) : place({ x, y }, 0, 1, true);
   for (const [id, f] of Object.entries((l4 ? s.hang.l4fl : s.flame) || {})) {
     const hd = heldAll.get(id),
-      e = hd && hd.parentNode === fxl && hd._end,
+      e = hd && heldOn(hd, fxl) && hd._end,
       p = s.pos[id];
     if (now - f[1] > 220 || !e || !p) {
       FLAME_CARRY.delete(id);
@@ -4084,9 +4114,8 @@ function playFx(f) {
         : world.place({ x: f.x1 / HW, y: f.y1 / HH }, f.hz || 0),
       up = size * 0.41 * (R.state ? bigOf(R.state, f.by) : 1), // (from its gun, at its duck's Size)
       kind = f.w === "laser" ? "laser" : "chaingun", // (the Laser Rifle's beam: one red line, laserart.js BEAM)
-      gun = fxl.querySelector(
-        `.held[data-pid="${CSS.escape(f.by)}"][data-w="${kind}"]`,
-      ),
+      hd = fxl._held && fxl._held.get(f.by),
+      gun = heldOn(hd, fxl) && hd.dataset.w === kind ? hd : null,
       [x0, y0, aim] = (gun && gun._tip) || [
         a.left,
         a.top - up,
