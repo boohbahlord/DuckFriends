@@ -113,6 +113,11 @@ function snapshot(svg, vb) {
   return sameIds(new XMLSerializer().serializeToString(copy));
 }
 
+/* the same for a drawing the game makes into pixels ahead of time (tools/pixel-world.cjs): its copy as it looks now */
+export const pxSnapshot = (svg) => snapshot(svg, svg.viewBox.baseVal);
+/* a drawing's text with its ids renamed in order (sameIds): the same drawing made twice is the same text */
+export const steadyText = (text) => sameIds(text);
+
 /* a drawing's ids are often new each time it's drawn (duck.js counts them), so the same look would be a new picture
    every time (made again, and a gap while it's made). Its ids renamed in order, the same look is the same text */
 function sameIds(text) {
