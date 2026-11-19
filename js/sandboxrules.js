@@ -290,5 +290,3 @@ export const SB_DROPS = {
   speedboost: ["speed", "Speed Boost"],
   sale: ["sale", "Sale"],
 }; // (an orb's word for each, never a special's id: the Double jump is "double"; then the zombies' own name for it)
-/* an uploaded picture for an orb: a data URL no longer than this (the online actions' own cap is 200,000 letters) */
-export const SB_IMG_MAX = 150000;

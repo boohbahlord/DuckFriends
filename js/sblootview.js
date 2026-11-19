@@ -3,7 +3,7 @@
    picture it was given), and the orb's part of its settings window (sbspawnview.js sbSettings): what it holds, "a
    dropdown menu with drop down arrows PER category of loot", its numbers, how it looks, and a picture of 2 MB at most */
 import { esc, toast } from "./ui.js";
-import { SB_LOOT, SB_DROPS, SB_IMG_MAX } from "./sandboxrules.js";
+import { SB_LOOT, SB_DROPS } from "./sandboxrules.js";
 import { boxText } from "./sbspawn.js";
 import { lootOk } from "./sbloot.js";
 import { LOOT, lootOf } from "./sbhotview.js";
@@ -11,7 +11,7 @@ import { ARMS } from "./l4ddrules.js";
 import { orbHTML, weaponIcon } from "./l4ddart.js";
 import { DROP_ICONS } from "./l4dddrops.js";
 import { specialById } from "./specials.js";
-import { pictureToSquare } from "./duck.js";
+import { picFrom, sendParts } from "./sbmake.js";
 
 const nameOf = (w) =>
   (SB_DROPS[w] && SB_DROPS[w][1]) ||
@@ -28,9 +28,11 @@ export function lootCats(s) {
     ];
   return LOOT.map(([k, n]) => [n, lootOf(k).map((x) => x.id)]);
 }
+/* an orb's own picture (a data URL), or "" */
+const picOf = (s, id) => ((s.sbpic || {})[(s.sbImg || {})[id]] || {}).d || "";
 /* an orb's face: its picture, or what it looks like (its own thing, or the one in "Looks like") in an orb of its color */
 export function orbFace(s, id, p) {
-  const img = (s.sbImg || {})[id];
+  const img = picOf(s, id);
   if (img)
     return `<span class="l4orb k-special sb-orb-img"><i><img src="${esc(img)}" alt=""></i></span>`;
   const look = boxText(p, "look"),
@@ -53,7 +55,7 @@ export function lootPage(s, id, p, h) {
       .toLowerCase()
       .split(/[\s,]+/),
     look = boxText(p, "look"),
-    img = (s.sbImg || {})[id],
+    img = picOf(s, id),
     cats = lootCats(s),
     drops = cats.some(([, ws]) => ws.some((w) => SB_DROPS[w])), // (Dead Ducks Arcade's maps: unlimited ammo too, where guns keep ammo; a weapon there stays, as one bought does)
     icon = (w) =>
@@ -79,7 +81,8 @@ export function lootPage(s, id, p, h) {
           `<optgroup label="${esc(n)}">${ws.map((w) => `<option value="${w}"${look === w ? " selected" : ""}>${esc(nameOf(w))}</option>`).join("")}</optgroup>`,
       )
       .join("")}</select></div>
-    <div class="sb-row"><span>Picture (2 MB at most)</span><span class="sb-pic">${img ? `<img src="${esc(img)}" alt=""><button type="button" class="btn ghost small" data-noimg>Remove</button>` : ""}<label class="btn ghost small">${img ? "Change" : "Upload"}<input type="file" accept="image/*" hidden data-img></label></span></div>`;
+    <div class="sb-row"><span>Picture</span><span class="sb-pic">${img ? `<img src="${esc(img)}" alt=""><button type="button" class="btn ghost small" data-noimg>Remove</button>` : ""}<label class="btn ghost small">${img ? "Change" : "Upload"}<input type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden data-img></label><label><input type="checkbox" data-lsquash> Compress (pixel look)</label></span></div>
+    <p class="small dim sb-up-note">2 MB at most. Kept as it is unless Compress is ticked.</p>`;
 }
 /* its listeners: send({ k, f, v }) sends Sandbox's "sb" action for this point; getR: () => the room */
 export function lootWire(w, id, send, getR) {
@@ -109,13 +112,15 @@ export function lootWire(w, id, send, getR) {
     if (t.matches("[data-img]")) {
       const f = t.files && t.files[0];
       if (!f) return;
-      if (f.size > 2 * 1024 * 1024) return toast("That picture is over 2 MB.");
       try {
-        const v = await pictureToSquare(f, 160); // (as a duck's own picture is: duck.js)
-        if (v.length > SB_IMG_MAX) return toast("That picture is too big.");
-        const r = getR();
-        if (r) r.send({ t: "sbl", k: "img", p: id, v });
-        picShow(w, v);
+        const pic = await picFrom(
+            f,
+            !!w.querySelector("[data-lsquash]:checked"),
+          ), // (as a made NPC's: 2 MB, kept as it is unless Compress is ticked)
+          r = getR();
+        if (!r) return;
+        r.send({ t: "sbl", k: "img", p: id, v: sendParts(r, pic) });
+        picShow(w, pic.d);
       } catch (err) {
         toast(err.message);
       }

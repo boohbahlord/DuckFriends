@@ -153,7 +153,11 @@ export async function picFrom(file, squash) {
   return { d, a };
 }
 /* the picture to the room, part by part (an online action is less than 200,000 letters), then on spawn id */
-export function sendPic(R, id, { d, a }) {
+export function sendPic(R, id, pic) {
+  R.send({ t: "sb", k: "look", p: id, ap: { im: sendParts(R, pic) } });
+}
+/* only the parts: its key in s.sbpic (a loot orb's picture too: sblootview.js) */
+export function sendParts(R, { d, a }) {
   const h = picKey(d),
     n = Math.ceil(d.length / SB_PIC.PART);
   if (!(R.state.sbpic && R.state.sbpic[h]))
@@ -167,5 +171,5 @@ export function sendPic(R, id, { d, a }) {
         a,
         d: d.slice(i * SB_PIC.PART, (i + 1) * SB_PIC.PART),
       });
-  R.send({ t: "sb", k: "look", p: id, ap: { im: h } });
+  return h;
 }

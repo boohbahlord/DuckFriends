@@ -19977,6 +19977,7 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 }
 .sb-pic {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: 0.35rem;
