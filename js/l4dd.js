@@ -2607,7 +2607,7 @@ activity({
     cv = document.createElement("canvas");
     cv.className = "hang-dark l4-dark";
     cv.setAttribute("aria-hidden", "true");
-    ctx.world.board.querySelector(".hang-shade")?.after(cv);
+    ctx.world.board.querySelector(".hang-world")?.after(cv);
     g = cv.getContext("2d");
     hud = document.createElement("div");
     hud.className = "l4-hud";

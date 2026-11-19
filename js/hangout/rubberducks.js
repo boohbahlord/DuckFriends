@@ -164,7 +164,7 @@ activity({
       const hide = Wd.inside || !Wd.seen(x, y, RW * sc, RH * sc); // (inside, or off the screen: hidden, and nothing more to do)
       if (e.hidden !== hide) e.hidden = hide;
       if (hide) return;
-      const tr = `translate(${pxAt(x)}px, ${pxAt(y)}px) scale(${sc.toFixed(4)})`;
+      const tr = `${Wd.boxTr(x, y)} scale(${sc.toFixed(4)})`;
       if (e._tr !== tr) {
         e._tr = tr;
         e.style.transform = tr;

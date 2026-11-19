@@ -11949,6 +11949,16 @@ html.moving .wq-board.late .wq-card.big {
   z-index: 0;
   will-change: transform;
 } /* (world.js sizes it past the view's edges and slides it) */
+/* the world's box (world.js): the props, the ducks and the shade, slid by the camera as one */
+.hang-world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  will-change: transform;
+}
 .hang-props {
   position: absolute;
   inset: 0;

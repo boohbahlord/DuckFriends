@@ -35,7 +35,7 @@ import {
 import { applyPalette } from "../pixelpalette.js";
 
 export const BOARD_HTML =
-  '<div class="board hang-board"><canvas class="hang-ground" aria-hidden="true"></canvas><div class="hang-props"></div><div class="ducks"></div><div class="hang-shade" hidden></div><div class="fxl"></div></div>';
+  '<div class="board hang-board"><canvas class="hang-ground" aria-hidden="true"></canvas><div class="hang-world"><div class="hang-props"></div><div class="ducks"></div><div class="hang-shade" hidden></div></div><div class="fxl"></div></div>';
 /* a crown (Downpour's trees) is drawn over every duck and prop, under the dark and the rain: above the highest foot */
 const CROWN_Z = 5000;
 const SPEED = 380,
@@ -55,8 +55,37 @@ export function mountWorld(board, api) {
   const canvas = board.querySelector(".hang-ground"),
     g = canvas.getContext("2d"),
     propsBox = board.querySelector(".hang-props"),
-    shade = board.querySelector(".hang-shade");
+    shade = board.querySelector(".hang-shade"),
+    worldEl = board.querySelector(".hang-world");
   const cam = { x: 0, y: 0, sc: 1, vw: 0, vh: 0, dpr: 1, set: false };
+  /* ---------- one camera for the whole world (the owner's go, Nov 19 21:25Z) ----------
+     Everything that stands in the world (the props, the ducks, the zombies, the shade) is in one box, .hang-world, and
+     the camera only slides that box. Walking used to move every one of them on the screen each frame, about 150 of
+     them, each its own style change and paint; now each keeps its place in the box, which changes only when it moves
+     itself, and the box is one transform. Places on the screen (toScreen, place: what everything measures and aims
+     with) are as before; what's put in the box goes through local(), which takes off where the box is now.
+     at: where the box's corner is on the screen now (the camera's, to the fraction); its transform is on the grid */
+  const box = { x: 0, y: 0, tr: "" };
+  /* a place on the screen (css px) → where it goes in the world's box, on the grid: the same for the same place in the
+     world, wherever the camera is */
+  const local = (left, top) => [snap(left - box.x), snap(top - box.y)];
+  /* where the box is drawn now (css px, on the grid): taken off a place on the screen, it's where the box shows that
+     place, to the fraction (what isn't put on the grid: a weapon in hand) */
+  const shift = () => [snap(box.x), snap(box.y)];
+  /* the translate() that puts something drawn in the box at a place on the screen (css px) */
+  const boxTr = (left, top) => {
+    const [x, y] = local(left, top);
+    return `translate(${x.toFixed(2)}px, ${y.toFixed(2)}px)`;
+  };
+  function slideBox() {
+    box.x = cam.vw / 2 - cam.x * cam.sc;
+    box.y = cam.vh / 2 - cam.y * cam.sc;
+    const tr = `translate(${snap(box.x).toFixed(2)}px, ${snap(box.y).toFixed(2)}px)`;
+    if (box.tr !== tr) {
+      box.tr = tr;
+      worldEl.style.transform = tr;
+    }
+  }
   /* the pixel look: the props and whatever the activities draw, as pixels (pxdom.js; nothing happens with it off) */
   const els = new Map(); // prop id → its element (the front or only part; made the first time it comes into view)
   const all = new Map(); // prop id → all its parts' elements
@@ -137,6 +166,9 @@ export function mountWorld(board, api) {
     duck: () => api.me(),
     world: {
       toScreen,
+      local,
+      shift,
+      boxTr,
       heightAt: L.heightAt,
       get sc() {
         return cam.sc;
@@ -709,9 +741,8 @@ export function mountWorld(board, api) {
       if (!e) e = make(it);
       if (e.hidden) e.hidden = false;
       if (it.img && pixelOn()) still(e, it, sw, sh);
-      const tr = pixelOn()
-        ? `translate(${snap(sx).toFixed(2)}px, ${snap(sy).toFixed(2)}px) scale(${scs})` // (the pixel look: on the grid, as the ducks)
-        : `translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px) scale(${scs})`;
+      const [lx, ly] = local(sx, sy),
+        tr = `translate(${lx.toFixed(2)}px, ${ly.toFixed(2)}px) scale(${scs})`; // (in the world's box, on the grid as the ducks)
       if (e._tr !== tr) {
         e._tr = tr;
         e.style.transform = tr;
@@ -949,6 +980,8 @@ export function mountWorld(board, api) {
         hang: true,
       };
     },
+    local, // (a place on the screen → in the world's box: what's drawn in it, .hang-props and .ducks)
+    shift,
     /* a spot (x, y: 0 … 1) on the board, in px: its ground, at the height of whatever is there (or at height h) */
     place(p, h) {
       const x = p.x * L.W,
@@ -1057,6 +1090,7 @@ export function mountWorld(board, api) {
         cam.y += (ty - cam.y) * k;
       }
       clampCam();
+      slideBox();
       for (const a of acts()) a.step?.(dt, now, ctx);
       drawGround(now, s, tx, ty);
       boxes = duckBoxes(s);
@@ -1071,7 +1105,8 @@ export function mountWorld(board, api) {
         const a = toScreen(HOLE.l, HOLE.t),
           b = toScreen(HOLE.r, HOLE.b),
           sz = (b.left - a.left).toFixed(1) + "px",
-          tr = `translate(${a.left.toFixed(1)}px, ${a.top.toFixed(1)}px)`;
+          [lx, ly] = local(a.left, a.top),
+          tr = `translate(${lx.toFixed(2)}px, ${ly.toFixed(2)}px)`; // (in the world's box: it stays put as I walk)
         if (shade._sz !== sz) {
           shade._sz = sz;
           shade.style.width = sz;
