@@ -10,7 +10,7 @@
    (sbspawnview.js) */
 import { duckSVG } from "./duck.js";
 import { svgDataURL } from "./svgurl.js";
-import { zombieURL, zombieBox } from "./l4ddart.js";
+import { zombieURL, zombieBox, hitsOf } from "./l4ddart.js";
 import { zombieLook } from "./l4ddrules.js";
 import { esc } from "./ui.js";
 import { heldHTML } from "./specials.js";
@@ -44,15 +44,25 @@ const lookOf = (o) =>
 const PICS = new Map(),
   BOXES = new Map(),
   keyOf = (o) => JSON.stringify(o.dk || {}) + npcReady(o);
-export function npcURL(o, hits = "") {
+/* wounds: a duck-looking one shows its wounds too, as a player's duck does (game.js woundLook; Survival's gunmen) */
+export function npcURL(o, hits = "", wounds = false) {
   if (o.im && imgOf(o.im)) return imgOf(o.im);
   if (isZombie(o)) return zombieURL(o.l, o.i, hits);
-  const k = keyOf(o) + (o.d ? "+dead" : "");
+  const w = wounds ? hits : "",
+    k = keyOf(o) + (o.d ? "+dead" : "") + (w ? "+" + w : "");
   if (!PICS.has(k)) {
     if (PICS.size > 300) PICS.clear();
+    const h = w ? hitsOf(w) : null;
     PICS.set(
       k,
-      svgDataURL(duckSVG(lookOf(o), { size: 64, shadow: true, dead: !!o.d })),
+      svgDataURL(
+        duckSVG(lookOf(o), {
+          size: 64,
+          shadow: true,
+          dead: !!o.d,
+          ...(h ? { skin: { head: h.inner, out: h.out }, gone: h.gone } : {}),
+        }),
+      ),
     );
   }
   return PICS.get(k);

@@ -30,7 +30,13 @@ const GREEN = "#2f9e44", // (the other players: a slightly darker green than the
   DARK_BLUE = "#2a5bd7",
   YELLOW = "#ffd23f",
   RED = "#8a1018";
-const COLOR = { ally: GREEN, me: DARK_BLUE, justin: YELLOW, zombie: RED };
+const COLOR = {
+  ally: GREEN,
+  me: DARK_BLUE,
+  justin: YELLOW,
+  zombie: RED,
+  friend: "#b6f5a6", // (Survival's friendly squad: a light green, the owner's, Nov 19)
+};
 /* the drops lying on the ground (the owner's, Nov 18 13:58Z: "special drops like instant kill, full ammo, and all of
    those an outline of their own color AND an arrow if a floor above or below WHEN it is on the ground ... so it is not
    missed, and gas gets an orange outline"): each its own color, none of the ducks' green, blue or yellow or the

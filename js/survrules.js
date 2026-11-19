@@ -41,7 +41,24 @@ export const SV = {
   BEAM: { far: 560, half: (27 * Math.PI) / 180 }, // a flashlight (as l4dd.js CONE draws it)
   ARROWS: 300, // a bought bow's arrows ("The bow has 300 arrows")
   KIT: ["", "handgun", "", ""], // what a duck starts with ("players start out with only a pistol. No bow")
+  GUNMEN: 0.25, // a peak's chance of gunmen instead of zombies ("maybe a 25% chance, that a group of ducks come in that have guns")
+  CRIM: 0.75, // gunmen: criminals this likely, soldiers the rest ("like 75% chance") …
+  STEP: 0.05, // … each pick making its own side this much less likely, till the other side comes up ("Every time that it's a criminal, it becomes 5% chance less likely")
 };
+/* which gunmen come: "c" criminals or "s" soldiers, and the streak after it (st: [the side picked last, how many times
+   in a row]) */
+export function gunSide(st) {
+  const [side, n] = st || ["", 0],
+    pc = Math.min(
+      0.95,
+      Math.max(
+        0.05,
+        SV.CRIM + (side === "c" ? -1 : side === "s" ? 1 : 0) * SV.STEP * n,
+      ),
+    ),
+    k = Math.random() < pc ? "c" : "s";
+  return [k, [k, k === side ? n + 1 : 1]];
+}
 
 /* a shuffled bag: the next one (and what's left); a new shuffle once it's empty ("it shuffles") */
 export function nextOf(bag, all) {
@@ -82,7 +99,8 @@ export function survStart(s, now) {
 /* every heartbeat (l4ddrules.js l4Tick, which keeps the round's own numbers in L and the zombies in zs, and adds the
    ones pushed into zs): the phases go on. n: the players. h: what only l4ddrules.js can do, { walker(): a new walker
    far from everyone (or null), speedAt(level): a zombie's speed at that level's stats, go(): the merchant leaves,
-   rest(): a rest begins (the merchant comes, the ghosts are back) } */
+   rest(): a rest begins (the merchant comes, the ghosts are back), gunmen(side): a wave of gunmen comes in instead of a
+   horde ("c" criminals, "s" soldiers: gunmenrules.js), gunDone(): true once that wave is over } */
 export function survTick(s, L, zs, now, n, h) {
   let sv = { ...s.hang.sv };
   const live = zs.filter((z) => z.st !== 3),
@@ -95,7 +113,14 @@ export function survTick(s, L, zs, now, n, h) {
         if (z) zs.push(z);
       }
     }
-    if (now >= sv.until) {
+    if (now >= sv.until && sv.k && Math.random() < SV.GUNMEN) {
+      /* the peak is gunmen (never the first): the walkers don't sprint, and more keep wandering in (gunmenrules.js) */
+      const [g, gs] = gunSide(sv.gs);
+      h.gunmen(g);
+      Object.assign(L, { t0: now, n: 0, made: 0, owe: 0, acc: 0, sec: -1 });
+      sv = { ...sv, ph: "peak", t: now, until: 0, k: sv.k + 1, big: 0, g, gs };
+      h.go();
+    } else if (now >= sv.until) {
       /* the peak: the horde's size and its stats from their bags (the first one always round 9's), and every walker on
          the map sprints with it */
       let lvl = SV.FIRST,
@@ -124,11 +149,29 @@ export function survTick(s, L, zs, now, n, h) {
         t: now,
         until: 0,
         k: sv.k + 1,
+        g: "",
         big: size === Math.max(...SV.SIZES) ? 1 : 0,
         sz,
         lv,
       };
       h.go();
+    }
+  } else if (sv.ph === "peak" && sv.g) {
+    if (now >= sv.nx) {
+      sv.nx = now + SV.REST_EVERY;
+      if (walkers.length < SV.REST_MOST[0] + SV.REST_MOST[1] * n) {
+        const z = h.walker();
+        if (z) zs.push(z);
+      }
+    } // ("the lame walker zombies ... will kind of be spawning in different parts of the map")
+    if (h.gunDone()) {
+      sv = {
+        ...sv,
+        ph: "tail",
+        t: now,
+        until: now + wholeIn(SV.TAIL) * 1000,
+        nx: now,
+      };
     }
   } else if (sv.ph === "peak") {
     if (L.made >= L.n && !live.some((z) => !z.wk)) {

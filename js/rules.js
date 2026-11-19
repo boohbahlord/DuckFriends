@@ -26,6 +26,7 @@ import {
   sbPlayerSpot,
 } from "./sandboxrules.js";
 import { survSet } from "./survrules.js";
+import "./gunmenrules.js"; // (Survival's gunmen: their rules hook into l4ddrules.js)
 import { sbAct, sbTick, sbPlaceDuck, sbHpOf } from "./sbspawn.js";
 import { hpHeal, tenths } from "./hpmath.js";
 import { sbHotAct, sbSlots } from "./sbhot.js";
