@@ -302,6 +302,8 @@ const REMOTE = new Set([
   "vdTimer",
   "tv",
   "goOn",
+  "sb", // (Sandbox's spawns: the rules check the rights, sbspawn.js sbAct)
+  "sbOk", // (Sandbox's rights given or taken: only by one who has them, rules.js)
 ]);
 const LOOK = [
   "name",
