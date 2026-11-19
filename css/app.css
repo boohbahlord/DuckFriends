@@ -7253,8 +7253,8 @@ html.still .spx-disco .disco-spot {
   width: calc(var(--s) * 0.86);
 }
 .held[data-w="sword"] i {
-  width: calc(var(--s) * 0.62);
-}
+  width: calc(var(--s) * 0.8);
+} /* (the short sword redrawn longer than the knife, the owner's, Nov 19 19:47Z) */
 .held[data-w="pan"] i {
   width: calc(var(--s) * 0.66);
 }
