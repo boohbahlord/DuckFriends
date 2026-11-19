@@ -1790,6 +1790,64 @@ export function ladderSVG({ w = 80, h = 340 }) {
     F`<path d="M${l + 3} ${h * 0.55}v26M${r + 5} ${h * 0.3}v18" stroke="#9a5a2c" stroke-width="3" stroke-linecap="round" opacity="0.8"/>`;
   return wrap(w, h, s);
 }
+/* the ladder leaning on the canopy over the pumps from its west side (stationmap.js PUMP_LADDER; the owner's, Nov 19
+   20:44Z: its own picture, not the wall ladder's). Seen from the south and above as everything is: its two rails go
+   up from its feet on the ground, LEAN west of the canopy's edge, to the edge at the canopy's height z, one behind the
+   other (the ladder's width runs north to south, d); its rungs join them, so each is a short upright bar; the rails'
+   hoops curl over onto the roof. w: the box's width (LEAN + 6 + the hoops' 34), d: the ladder's width, h: the box's
+   height over the ground (z + 50). only: "body" (the rails and the rungs) or "hoops" (drawn over the canopy's roof) */
+export function leanLadderSVG({
+  w = 107,
+  d = 80,
+  h = 200,
+  z = 150,
+  only = "body",
+}) {
+  const lean = w - 40,
+    rail = 11,
+    foot = 6,
+    at = (X, Y, Z) => [X, Y + h - Z], // (a point of the ladder in the box: X east of its west side, Y south of its north side, Z up)
+    rails = [4, d - 4]; // (the back rail and the front one)
+  const railD = (Y, top) => {
+    const [x0, y0] = at(foot, Y, 0),
+      [x1, y1] = at(foot + lean, Y, z);
+    return top
+      ? F`M${x1} ${y1}L${x1 + 4} ${y1 - 26}Q${x1 + 8} ${y1 - 40} ${x1 + 20} ${y1 - 32}L${x1 + 28} ${y1 - 24}`
+      : F`M${x0} ${y0}L${x1} ${y1}`;
+  };
+  const stroke = (dd, c = "#a9b3b8") =>
+    F`<path d="${dd}" fill="none" stroke="${O}" stroke-width="${rail + 6}" stroke-linecap="round" stroke-linejoin="round"/>` +
+    F`<path d="${dd}" fill="none" stroke="${c}" stroke-width="${rail}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  let s = "";
+  if (only === "hoops") {
+    for (const Y of rails) s += stroke(railD(Y, true));
+    return wrap(w, d + h, s);
+  }
+  /* the back rail, the rungs every 30 up (each an upright bar between the rails), then the front rail over their ends */
+  s += stroke(railD(rails[0]), "#8f999e");
+  for (let Z = 24; Z < z - 8; Z += 30) {
+    const X = foot + (lean * Z) / z,
+      [, yb] = at(X, rails[0], Z),
+      [, yf] = at(X, rails[1], Z);
+    s +=
+      R(X - 4.5, yb, 9, yf - yb, "#849097", ln(3)) +
+      R(X - 2.4, yb + 3, 2.4, yf - yb - 6, "#c2cbcf");
+  }
+  s += stroke(railD(rails[1]));
+  /* the light along the front rail, its rubber feet, a little rust */
+  const [fx0, fy0] = at(foot, rails[1], 0),
+    [fx1, fy1] = at(foot + lean, rails[1], z);
+  s +=
+    F`<path d="M${fx0 + 2.6} ${fy0 - 8}L${fx1 + 2.6} ${fy1 + 6}" stroke="#d6dde0" stroke-width="3" stroke-linecap="round"/>` +
+    rails
+      .map((Y) => {
+        const [x, y] = at(foot, Y, 0);
+        return R(x - 8, y - 5, 16, 9, "#2b2d33", ln(2.4));
+      })
+      .join("") +
+    F`<path d="M${foot + lean * 0.3} ${fy0 - z * 0.3 - 2}l${lean * 0.06} ${-z * 0.06}M${foot + lean * 0.7} ${fy0 - z * 0.7 - 2}l${lean * 0.04} ${-z * 0.04}" stroke="#9a5a2c" stroke-width="3" stroke-linecap="round" opacity="0.8"/>`;
+  return wrap(w, d + h, s);
+}
 export function roofSVG({ w, d, kind = "gs", soldier = null, holes = null }) {
   const id = uid();
   if (kind === "gs") {

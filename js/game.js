@@ -17,6 +17,7 @@
    Hangout walks around Duck Cabin instead of a board: the world (hangout/world.js) draws it, follows my duck with its
    camera and works out how it stands and falls; this file only hands it the keys, the stick and the taps, and puts its
    one context button where the Vote button goes. */
+import { isInvisible } from "./invisible.js";
 import { fsBtnHTML } from "./corners.js";
 import { register, go, leaveTo } from "./router.js";
 import {
@@ -217,7 +218,9 @@ import {
   wildCrying,
   isWild,
   zombieLook,
+  slotOfPick,
 } from "./l4ddrules.js";
+import { watching, watchNext, watchHTML } from "./spectate.js";
 import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
 import {
   l4Held,
@@ -244,6 +247,7 @@ import { sbCheat } from "./sbmenu.js";
 import { sbHotOn, sbLook, sbHotSig } from "./sbhotview.js";
 import { sbSlots, spawnOf } from "./sbhot.js";
 import { sbBoardMarks, sbSettings } from "./sbspawnview.js";
+import { sbHear } from "./sbsfx.js";
 import { duckSVG, duckRoom, scaleOf } from "./duck.js";
 import {
   shownDuck,
@@ -394,6 +398,7 @@ import {
   GOLD_CHAIR,
 } from "./mgjart.js";
 import { hitsOf } from "./l4ddart.js";
+import { gunLasers } from "./gunmenview.js";
 import {
   npcURL,
   npcBox,
@@ -571,7 +576,7 @@ const jaimeHp = (s, id) => {
 };
 let padHold = false, // a phone's jump button held down (the jetpack flies)
   held = null,
-  l4Slot = 0, // Quacky Zombies: the slot in hand (0 melee, 1 and 2 ranged, 3 the special), and the weapon's before the special
+  l4Slot = 0, // Quacky Zombies: the pick in hand (0 melee, 1 and 2 ranged, 3 the item, 4 the grenades, 5 the second item: keys 1 to 6, l4ddrules.js slotOfPick), and the weapon's before an item
   l4Last = 0,
   mgjHold = "handgun", // Mad God Justin: what's out in my hand (the short sword, the pistol, the weapon picked up, the zebra cake)
   mgjBack = "handgun", // (and what goes back in hand once a picked-up weapon is used up, or the zebra cake thrown)
@@ -2639,6 +2644,7 @@ function drawDucks(now = clockNow()) {
       if (t > 0 && t < Infinity)
         lz.push([e[0], e[1], A[0] + ux * t, A[1] + uy * t]);
     }
+  if (isL4dd(s)) lz.push(...gunLasers()); // (Survival's soldiers: gunmenview.js)
   fxLasers(lz);
   heatDraw(heldAll, fxl, size);
   if (isL4dd(s) || isMgj(s)) laserFrame(s, heldAll, fxl, size, heard); // (the Laser Rifle's steam and fire: laserfx.js)
@@ -2785,6 +2791,7 @@ function drawDucks(now = clockNow()) {
   placePick(board, s);
   placeZombies(board, s, now);
   if (geo) sbBoardMarks(board, s, (o) => place(o, 0, 1), geo.size); // (Sandbox: its spawns and respawns on the board)
+  if (sbOnBoard(s)) sbHear(s, false); // (… and its sounds there: sbsfx.js)
   mgjSteps(s); // (the wave zombies' steps and groans: l4ddsfx.js)
   placeDesk(board, s, now);
   placeCake(board, s, now);
@@ -4846,6 +4853,7 @@ function bumps(x, y, now) {
 function crowd(x, y, now) {
   const out = { d: 0, b: null };
   if (!geo || jumpZ(me, now) > 0) return out; // in the air: over everyone
+  if (isInvisible(R.state, R.me, now)) return out; // (invisible: through everyone, and they through me)
   const s = R.state,
     a = place({ x, y }, 0, 1),
     rx = geo.size * 0.44,
@@ -4855,6 +4863,7 @@ function crowd(x, y, now) {
     if (id === R.me || !s.pos[id] || s.pos[id].x < 0) continue;
     const o = s.pos[id];
     if (jumpZ(o, now) > 0 || (s.players[id] || {}).dead) continue; // (in the air, or lying knocked down: walked over)
+    if (isInvisible(s, id, now)) continue;
     const kb = duckRoom((s.players[id] || {}).duck);
     const b = place(o, 0, 1),
       dx = (a.left - b.left) / (rx * (ka.x + kb.x)),
@@ -5872,8 +5881,12 @@ const playDuck = () =>
     ? {
         ...myDuck(),
         keys: [
-          ...slotsOf(R.state, R.me).map((w) => w || null),
-          ...Array(6).fill(null),
+          ...slotsOf(R.state, R.me)
+            .slice(0, 4)
+            .map((w) => w || null),
+          null, // (5: the grenades)
+          slotsOf(R.state, R.me)[4] || null, // (6: the second item)
+          ...Array(4).fill(null),
         ],
       }
     : R && isMgj(R.state)
@@ -5949,11 +5962,12 @@ function heldNow() {
     const sl = slotsOf(R.state, R.me);
     const kit = kitOf(R.state, R.me);
     if (l4Slot === 4 && !(kit && kit.g > 0)) l4Slot = sl[l4Last] ? l4Last : 0; // (the last grenade thrown: the weapon before it comes back)
-    if (l4Slot !== 4 && !sl[l4Slot]) l4Slot = sl[l4Last] ? l4Last : 0;
+    if (l4Slot !== 4 && !sl[slotOfPick(l4Slot)])
+      l4Slot = sl[l4Last] ? l4Last : 0;
     if (kit && kit.jp && sl[3] === "jetpack") return ""; // (the jetpack on: nothing else is used beside it)
     if (downArmed(R.state, R.me)) return "handgun"; // (down: the down pistol)
     if (l4Hp(R.state, R.me) <= 0) return "";
-    return l4Slot === 4 ? "grenade" : sl[l4Slot] || "";
+    return l4Slot === 4 ? "grenade" : sl[slotOfPick(l4Slot)] || "";
   }
   return held && hasKey(playDuck(), held) ? held : "";
 }
@@ -6128,9 +6142,10 @@ function useKey(i, keep, toggle = false) {
     R.send({ t: "use", what: id, face: turned() ? 1 : me.face || 1 }); // (an item: Shift and its key use it the same way)
   if (bar) setTimeout(() => bar && bar.refresh(), 60);
 }
-/* Quacky Zombies: keys 1 to 4 pick a slot. A melee or ranged weapon stays in hand once picked; the special (4)
-   switches on and off: on, it's in hand instead of the weapon, and off (or used up) that weapon is back. The Long jump
-   and the jetpack only switch themselves on and off, and the weapon stays in hand (the owner's, Nov 3) */
+/* Quacky Zombies: keys 1 to 4 pick a slot, 5 the grenades and 6 the second item (Dead Ducks Arcade and Survival). A
+   melee or ranged weapon stays in hand once picked; an item (4, 6) switches on and off: on, it's in hand instead of the
+   weapon, and off (or used up) that weapon is back. The Long jump and the jetpack only switch themselves on and off,
+   and the weapon stays in hand (the owner's, Nov 3) */
 function l4Pick(i, hint = false) {
   const sl = slotsOf(R.state, R.me),
     kit = kitOf(R.state, R.me);
@@ -6139,26 +6154,28 @@ function l4Pick(i, hint = false) {
     if (l4Slot === 4) l4Slot = l4Last;
     else if (kit && kit.g > 0) {
       if (kit.jp && sl[3] === "jetpack") fire("jetpack"); // (the jetpack goes off)
-      if (l4Slot !== 3) l4Last = l4Slot;
+      if (l4Slot < 3) l4Last = l4Slot;
       l4Slot = 4;
     } else return;
     sendMove(true);
     if (bar) bar.refresh();
     return;
   }
-  if (i > 3 || !sl[i]) return;
-  if (i !== 3 && kit && kit.jp && sl[3] === "jetpack") fire("jetpack"); // (a weapon picked: the jetpack goes off)
-  if (i === 3 && sl[3] === "safekeep") return hint ? l4SafeHint() : undefined; // (it can't be used by hand: a short note says how it works, never from the scroll wheel)
-  if (i === 3 && L4_TOGGLES.includes(sl[3])) {
-    fire(sl[3]);
+  const k = slotOfPick(i),
+    item = k >= 3;
+  if (k < 0 || !sl[k]) return;
+  if (!item && kit && kit.jp && sl[3] === "jetpack") fire("jetpack"); // (a weapon picked: the jetpack goes off)
+  if (item && sl[k] === "safekeep") return hint ? l4SafeHint() : undefined; // (it can't be used by hand: a short note says how it works, never from the scroll wheel)
+  if (item && L4_TOGGLES.includes(sl[k])) {
+    fire(sl[k]);
     if (bar) bar.refresh();
     return;
   }
-  if (i === 3) {
-    if (l4Slot === 3) l4Slot = l4Last;
+  if (item) {
+    if (l4Slot === i) l4Slot = l4Last;
     else {
-      if (l4Slot !== 4) l4Last = l4Slot;
-      l4Slot = 3;
+      if (l4Slot < 3) l4Last = l4Slot;
+      l4Slot = i;
     }
   } else l4Slot = l4Last = i;
   sendMove(true);
@@ -6467,10 +6484,11 @@ function wheelPick(dir) {
       has = (i) =>
         i === 4
           ? !!(kit && kit.g > 0)
-          : !!sl[i] && !(i === 3 && sl[3] === "safekeep");
+          : !!sl[slotOfPick(i)] && sl[slotOfPick(i)] !== "safekeep",
+      n = sl.length > 4 ? 6 : 5; // (the second item, key 6, after the grenades)
     let i = l4Slot;
-    for (let k = 0; k < 5; k++) {
-      i = (i + dir + 5) % 5;
+    for (let k = 0; k < n; k++) {
+      i = (i + dir + n) % n;
       if (i !== l4Slot && has(i)) {
         l4Pick(i);
         return true;
@@ -6610,6 +6628,7 @@ function actHTML(s) {
   if (isQuack(s) && QUACK_PHASES.includes(s.phase)) return quackActHTML(s);
   if (isVd(s) && VD_PHASES.includes(s.phase)) return vdActHTML(s);
   if (isTv(s) && TV_BOARD.includes(s.phase)) return tvActHTML(s, R.me, me);
+  if (isHang(s) && watching(s, R.me)) return watchHTML(s, R.me); // (Survival, my duck dead: the card of the one I watch: spectate.js)
   if (isHang(s)) return world ? world.buttonHTML() : ""; // Hangout: the nearest activity's button (Light off …)
   if (late())
     return `<span class="progress">You joined mid-turn: walk around and chat. You play from the next ${isBb(s) ? "match" : isLaw(s) ? "case" : isDn(s) ? "take" : "question"}. · ${d}/${n} done</span>`;
@@ -7230,6 +7249,10 @@ function paintNow(force) {
       world = mountWorld($(".hang-board", main), {
         room: () => R,
         me: () => me,
+        eye: () => {
+          const id = R && watching(R.state, R.me);
+          return id && world ? world.shown(id, R.state.pos[id]) : null;
+        }, // (Survival, my duck dead: the camera on the duck I watch, as it sees it: spectate.js)
         jumpZ,
         landsAt,
         cfg: () => jumpCfg(me),
@@ -7717,7 +7740,10 @@ function openPause() {
             hideui: () => toast(setHideUi(!uiHidden())), // (hide ui: hideui.js)
             friends: () => openFriends(),
             lobby: () => R.send({ t: "toLobby" }),
-            leave: () => leaveTo("rooms", "Leave the game in progress?"),
+            leave: () =>
+              R && R.state.solo
+                ? R.send({ t: "toLobby" }) // (Single Player: back to its own lobby, never the online rooms)
+                : leaveTo("rooms", "Leave the game in progress?"),
           })[a.dataset.a]();
         }),
     },
@@ -7819,6 +7845,15 @@ function keydown(e) {
   if (typing(e) || windowOpen()) return;
   if (world && onBoardPhase() && world.keydown(e)) return; // Hangout: an activity's keys first (the piano)
   if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (
+    (e.code === "ArrowLeft" || e.code === "ArrowRight") &&
+    R &&
+    watching(R.state, R.me)
+  ) {
+    e.preventDefault();
+    spec(e.code === "ArrowLeft" ? -1 : 1);
+    return;
+  } // (Survival, my duck dead: the arrows go from one duck I watch to the next)
   if (MOVE_KEYS.includes(e.code) && onBoardPhase()) {
     if (!e.code.startsWith("Shift")) e.preventDefault();
     keys.add(e.code);
@@ -7925,6 +7960,12 @@ const resized = () => {
 };
 const unpeek = () => peek(false);
 
+/* Survival, my duck dead: watch the next duck (d 1) or the one before (-1) */
+function spec(d) {
+  if (!R || !watchNext(R.state, R.me, d)) return;
+  sfx.uiOn(); // (the faint click, as the menus')
+  setHTML($(".gact", S), actHTML(R.state));
+}
 /* ---------- what the buttons do ---------- */
 async function act(a) {
   const s = R.state;
@@ -8065,7 +8106,9 @@ async function act(a) {
       R.send({ t: "toLobby" });
       break;
     case "leave":
-      leaveTo("rooms", "Leave the room?");
+      if (R && R.state.solo)
+        R.send({ t: "toLobby" }); // (Single Player: back to its own lobby)
+      else leaveTo("rooms", "Leave the room?");
       break;
     case "notes": {
       const t = await pickNote();
@@ -8257,6 +8300,13 @@ function l4Press(e) {
 }
 register("game", {
   guard: () => !!activeRoom(),
+  /* the browser's Back in Single Player: back to its own lobby, never the online rooms */
+  back() {
+    const r = activeRoom();
+    if (!r || !r.state.solo) return false;
+    r.send({ t: "toLobby" });
+    return true;
+  },
   exit() {
     const r = activeRoom();
     if (r) {
@@ -8520,6 +8570,7 @@ register("game", {
       if (b && !b.disabled) {
         if (b.dataset.a === "pause") openPause();
         else if (b.dataset.a === "lset") openLobbySettings(R);
+        else if (b.dataset.a === "spec") spec(+b.dataset.d);
         else {
           if (b.dataset.a === "hang" || b.classList.contains("vote-btn"))
             sfx.holdClick(); // (the use button, and the Vote button when Hold to vote is off: no hold, still the click)

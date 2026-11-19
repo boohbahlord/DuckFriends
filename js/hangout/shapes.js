@@ -470,6 +470,7 @@ const SK = Object.fromEntries(
     "bellSVG",
     "corpseSVG",
     "ladderSVG",
+    "leanLadderSVG",
   ].map((n) => [n, atK(SA[n])]),
 );
 const GS_DRAW = {
@@ -545,6 +546,23 @@ const GS_DRAW = {
     gsPart(p, () => SK.ladderSVG({ w: p.w, h: p.d + p.h }), {
       opt: { fade: false }, // (it stays while a duck climbs it, seen between its rungs)
     }),
+  /* the ladder leaning on the canopy (stationmap.js PUMP_LADDER): its rails and rungs at its own depth, its hoops over
+     the canopy's roof (p.hoopKey: the canopy's depth, just past it) */
+  leanladder: (p) => [
+    ...gsPart(p, () => SK.leanLadderSVG({ w: p.w, d: p.d, h: p.h, z: p.zt }), {
+      opt: { fade: false },
+    }),
+    part(
+      () =>
+        SK.leanLadderSVG({ w: p.w, d: p.d, h: p.h, z: p.zt, only: "hoops" }),
+      p.x,
+      p.y - p.z - p.h,
+      p.w,
+      p.d + p.h,
+      p.hoopKey,
+      { fade: false },
+    ),
+  ],
   corpse: (p) =>
     p.who === "trooper"
       ? ["pool", "body"].flatMap((only) =>

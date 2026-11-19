@@ -9,6 +9,54 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v128",
+    version: 128,
+    date: "Nov 19, 2026",
+    title: "Walk through while invisible",
+    news: [
+      "An invisible duck walks through other ducks, NPCs and zombies, and they walk through it. Turning visible again never leaves you stuck inside anything.",
+    ],
+  },
+  {
+    id: "v127",
+    version: 127,
+    date: "Nov 19, 2026",
+    title: "The Seriat bible",
+    news: [
+      "For Sandbox: the Seriat bible opens in its own window, one long page, from the button at the bottom left or the one beside Theme in the Seriat window.",
+    ],
+  },
+  {
+    id: "v126",
+    version: 126,
+    date: "Nov 19, 2026",
+    title: "Two item slots",
+    news: [
+      "For Dead Ducks Arcade: two item slots; the second is key 6, after the grenades.",
+      "For Dead Ducks Arcade: a merchant may have 2 or 3 of anything he sells, and he never runs out of upgrades.",
+      "For Dead Ducks Arcade: merchants have as much HP as a zombie.",
+      "For Sandbox: Seriat and the command line always wear the Nous Within Kenoma look. Pick a variation with the Theme box in Seriat's top right or the theme command (theme chalice).",
+      "For Sandbox: Seriat accepts '*1' as a name for asterisk 1 (same as '1*'), and a line rule's strength can be a Seriat value.",
+    ],
+    fixed: [],
+  },
+  {
+    id: "v125",
+    version: 125,
+    date: "Nov 19, 2026",
+    title: "Single Player stays home",
+    news: [
+      "For Dead Ducks Arcade: a melee that wears out breaks with its own crack sound.",
+      "For Dead Ducks Arcade: other players' outline is a slightly darker green, and Justin answers every hit that hurts him with an aggressive line.",
+      "The merchant rings a little bell when he arrives and when he runs off.",
+      "For Sandbox: placing, cutting, loot orbs and cheat mode all have their own soft sounds, and Seriat's Run and Stop each make a soft tick.",
+    ],
+    fixed: [
+      "In Single Player, leaving a game takes you back to the Single Player lobby, never the online rooms, and leaving that lobby goes to the front page.",
+      "In Single Player, the start counts 2, 1, 0, and Exit Cabin counts 5 seconds.",
+    ],
+  },
+  {
     id: "v124",
     version: 124,
     date: "Nov 19, 2026",

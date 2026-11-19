@@ -27,6 +27,8 @@ import {
   tintOf,
   endless,
   slotFor,
+  slotOfPick,
+  pickOfSlot,
   durLeft,
 } from "./l4ddrules.js";
 import { now as clockNow } from "./clock.js";
@@ -40,6 +42,7 @@ const count = (w, m) => {
   const c = (m.am || {})[w];
   if (endless(w)) return "∞"; // (the Laser Rifle never runs out, it only overheats; nor do the bow's arrows)
   if (w === "jetpack" && c) return Math.ceil(c[0] / 1000) + "s"; // (its flight left, in seconds)
+  if (w === "defib" && c) return String(c[0]); // (they stack: how many I have)
   if (w === "flamer" && c)
     return Math.ceil((c[0] / ARMS.flamer.all) * 100) + "%"; // (its tank left)
   if (ARMS[w] && ARMS[w].kind === "melee" && ARMS[w].dur)
@@ -63,11 +66,12 @@ const reloadMeter = (s, me, w, m) => {
     gone = Math.max(0, all - (m.rl - now));
   return `<span class="l4s-rl" style="--rl:${Math.round(all)}ms;--rd:-${Math.round(gone)}ms" aria-hidden="true"></span>`;
 };
-/* the slot the weapon I'm about to take would go to (api.to: l4dd.js l4To), -1 for none, and that weapon. That slot gets
-   a ring (it stays with animations off) and a glow inside in the weapon's own color (the owner's, Nov 19 19:27Z) */
+/* the pick (game.js l4Pick: keys 1 to 6) of the slot the weapon I'm about to take would go to (api.to: l4dd.js l4To),
+   -1 for none, and that weapon. That slot gets a ring (it stays with animations off) and a glow inside in the weapon's
+   own color (the owner's, Nov 19 19:27Z) */
 const toSlot = (s, me, api) => {
   const w = (api.to && api.to()) || "";
-  return w ? [slotFor(s, me, w, api.held()), w] : [-1, ""];
+  return w ? [pickOfSlot(slotFor(s, me, w, api.held())), w] : [-1, ""];
 };
 const toGlow = (w) =>
   `<b class="l4to ${tintOf(w) || "c-plain"}" aria-hidden="true"></b>`;
@@ -98,14 +102,21 @@ export function mountL4Bar(S, api) {
     if (next === sig) return;
     sig = next;
     /* one slot: [key, the weapon (or "" when empty), its kind, what a press does]; down, only the down pistol (the
-       owner's, Nov 17 11:07Z) */
-    const slots = down
-      ? [["", "handgun", "ranged", "dg"]]
-      : [
-          ...sl.map((w, i) => [String(i + 1), w, SLOT_KINDS[i], String(i)]),
-          ["5", "grenade", "grenade", "grenade"],
-          ...(dark ? [] : [["0", "fl", "light", "fl"]]),
-        ];
+       owner's, Nov 17 11:07Z). The second item slot (Dead Ducks Arcade, Survival) comes after the grenades, key 6 */
+    const one = (w, i) => [
+        String(pickOfSlot(i) + 1),
+        w,
+        SLOT_KINDS[i],
+        String(pickOfSlot(i)),
+      ],
+      slots = down
+        ? [["", "handgun", "ranged", "dg"]]
+        : [
+            ...sl.slice(0, 4).map(one),
+            ["5", "grenade", "grenade", "grenade"],
+            ...sl.slice(4, 5).map((w) => one(w, 4)),
+            ...(dark ? [] : [["0", "fl", "light", "fl"]]),
+          ];
     if (down) {
       const n = count("dg", m);
       row.innerHTML = `<div class="l4slots"><button type="button" class="l4s k-ranged c-plain sel l4s-down" aria-label="Pistol, ${n}" disabled>${reloadMeter(s, me, "dg", m)}<i>${weaponIcon("handgun", duckOf(s, me))}</i><kbd>R</kbd><small>${n}</small></button></div>`;
@@ -154,7 +165,7 @@ export function mountL4Bar(S, api) {
 }
 
 /* ---------- phones: the slots in the specials' slider ----------
-   The slider (hotbar.js) holds my five slots in the bar's order, each in its color (not the flashlight: on a phone it
+   The slider (hotbar.js) holds my slots in the bar's order (the second item after the grenades), each in its color (not the flashlight: on a phone it
    just stays on, one thing less to think of; the owner's, Nov 4). Sliding to the melee or a ranged weapon puts it in
    hand (it stays there, as on a computer), and sliding to the special puts the special in hand instead. The grenades
    don't change what's in hand: with them in the middle the attack stick throws one. The purple switch takes the
@@ -171,14 +182,20 @@ export function l4Slider(api) {
       : null;
   };
   const lightOff = (k) => !!(k.s.hang.l4f || {})[k.me] || sbNoLight(k.s, k.me);
-  /* the key index of a slot: 0 to 3 the slots, 4 the grenades, 5 the flashlight */
+  /* the key index of a slot: its pick (0 to 3 the slots, 4 the grenades, 5 the second item), 6 the flashlight */
   const keys = () => {
     const k = kit();
     if (!k) return [];
     if (downArmed(k.s, k.me)) return ["handgun"]; // (down: only the down pistol)
-    return [...k.sl.map((w) => w || null), "grenade"];
+    return [
+      ...k.sl.slice(0, 4).map((w) => w || null),
+      "grenade",
+      ...k.sl.slice(4, 5).map((w) => w || null),
+    ];
   };
-  const kindAt = (i) => SLOT_KINDS[i] || (i === 4 ? "grenade" : "light");
+  const kindAt = (i) =>
+    i === 4 ? "grenade" : i === 6 ? "light" : SLOT_KINDS[slotOfPick(i)];
+  const isItem = (i) => i === 3 || i === 5;
   const look = (id) => {
     const k = id && kit();
     if (!k) return null;
@@ -193,7 +210,8 @@ export function l4Slider(api) {
             cls: "k-ranged c-plain",
           }
         : null; // (down: the down pistol, never Angelic; a plain slot, as the pistol's always is)
-    const i = id === "grenade" ? 4 : id === "fl" ? 5 : k.sl.indexOf(id);
+    const i =
+      id === "grenade" ? 4 : id === "fl" ? 6 : pickOfSlot(k.sl.indexOf(id));
     if (i < 0) return null;
     return {
       id,
@@ -204,8 +222,8 @@ export function l4Slider(api) {
           : angelOf(k.s, k.me, id)
             ? holy(weaponIcon(id, duckOf(k.s, k.me)))
             : weaponIcon(id, duckOf(k.s, k.me)),
-      off: out(k.s, k.me) || (i < 5 && spent(id, k.m)),
-      keep: i === 3 || i === 5,
+      off: out(k.s, k.me) || (i !== 6 && spent(id, k.m)),
+      keep: isItem(i) || i === 6,
       cls: `k-${kindAt(i)}${id === "fl" ? "" : " " + tintOf(id, angelOf(k.s, k.me, id))}${i === toSlot(k.s, k.me, api)[0] ? " l4s-to" : ""}`.trim(), // (its own color; the ring where what I'm about to take goes)
     };
   };
@@ -230,21 +248,21 @@ export function l4Slider(api) {
     use(i, keep) {
       const k = kit();
       if (!k || out(k.s, k.me)) return;
-      if (i === 5) api.flash();
-      else if (i === 3 && keep) api.pick(3);
-      else if (i === 3) api.fire(k.sl[3]);
+      if (i === 6) api.flash();
+      else if (isItem(i) && keep) api.pick(i);
+      else if (isItem(i)) api.fire(k.sl[slotOfPick(i)]);
       else if (i === 4 && !keep) api.fire("grenade"); // (a tap on the grenades picked: one is thrown)
     },
     select(i) {
       const k = kit();
       if (k && downArmed(k.s, k.me)) return; // (down: nothing else to pick)
-      if (i === 3 && k && ["longjump", "jetpack"].includes(k.sl[3])) return; // (sliding to them changes nothing: a tap or the switch turns them on or off)
       if (
-        i < 3 ||
-        (i === 3 && api.slot() !== 3) ||
-        (i === 4 && api.slot() !== 4)
+        isItem(i) &&
+        k &&
+        ["longjump", "jetpack"].includes(k.sl[slotOfPick(i)])
       )
-        api.pick(i); // (the one in the middle is the one picked, grenades too)
+        return; // (sliding to them changes nothing: a tap or the switch turns them on or off)
+      if (i < 3 || (i >= 3 && api.slot() !== i)) api.pick(i); // (the one in the middle is the one picked, grenades too)
     },
     current: () => api.held() || null,
     cool: () => [],
@@ -255,7 +273,7 @@ export function l4Slider(api) {
       const [to, toW] = k ? toSlot(k.s, k.me, api) : [-1, ""];
       return (
         (k ? reloadMeter(k.s, k.me, w, k.m) : "") +
-        (to >= 0 && k.sl[to] === id ? toGlow(toW) : "") +
+        (to >= 0 && k.sl[slotOfPick(to)] === id ? toGlow(toW) : "") +
         (n ? `<small class="sp-n">${n}</small>` : "")
       );
     },
