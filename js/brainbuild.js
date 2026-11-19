@@ -39,7 +39,7 @@ export const BB_DO = {
   wait: ["Wait (seconds)", { min: 0.1, max: 60, def: 1 }],
   hp: ["Set HP", { min: 1, max: 1000, def: 10 }],
   speed: ["Set speed", { min: 0.1, max: 5, def: 1 }],
-  hitbox: ["Set size (%)", { min: 10, max: 300, def: 100 }],
+  hitbox: ["Set size (%)", { min: 10, max: 152, def: 100 }], // (as a spawn's Size box: SB_BOXES.size)
 };
 
 const clamp = (v, b) => {
