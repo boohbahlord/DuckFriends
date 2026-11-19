@@ -279,6 +279,15 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   tools.className = "sb-tools";
   tools.innerHTML = `<button type="button" class="btn ghost sb-tools-btn" aria-expanded="false">Tools</button><div class="sb-tools-list" hidden></div>`;
   S.append(tools);
+  /* the Seriat bible's own button, bottom left, where the cheat mode note used to sit (the owner's, Nov 19 23:17Z) */
+  const bible = document.createElement("button");
+  bible.type = "button";
+  bible.className = "btn ghost sb-bible";
+  bible.hidden = true;
+  bible.textContent = `${LANG} bible`;
+  bible.onclick = () =>
+    import("./seriatbible.js").then((m) => m.openSeriatBible());
+  S.append(bible);
   /* the note, bottom left, as Sandbox comes up: which key is the cheat sheet and, for whoever may build, cheat mode;
      then it fades away. Cheat mode's own switch is in the cheat sheet (the owner's, Nov 19 21:59Z: "cheat mode on or
      off in the bottom left, we move that somewhere else ... It should be in the cheat sheet ... all in one text that
@@ -396,9 +405,21 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   };
   /* the cheat note rides just above whatever is lowest at the bottom left (the Jumps count on a phone, the bar on a
      computer), so it never sits on the Notes button */
+  const seatBible = () => {
+    const R = getR(),
+      a = S.querySelector(".jumps-slot, .bbar");
+    bible.hidden = !R || !isSb(R.state) || !!k.open || windowOpen() || !a;
+    if (bible.hidden) return;
+    const top =
+      Math.round(a.getBoundingClientRect().top - bible.offsetHeight - 6) + "px";
+    if (bible.style.top !== top) {
+      bible.style.top = top;
+      bible.style.bottom = "auto";
+    }
+  };
   const seatChip = () => {
     if (chip.hidden) return;
-    const a = S.querySelector(".jumps-slot, .bbar");
+    const a = bible.hidden ? S.querySelector(".jumps-slot, .bbar") : bible;
     if (!a) return;
     const r = a.getBoundingClientRect(),
       top = Math.round(r.top - chip.offsetHeight - 6) + "px";
@@ -410,6 +431,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   const seating = setInterval(() => {
     seat();
     paintChip();
+    seatBible();
     seatChip();
   }, 250);
   /* ---------- putting down what Build picked: it rides on my mouse until a click on the map puts it there (a phone:
@@ -853,6 +875,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
       removeEventListener("contextmenu", menu, true);
       closeMenu();
       chip.remove();
+      bible.remove();
       sbPlace.start = null;
       uncover();
       box.remove();
