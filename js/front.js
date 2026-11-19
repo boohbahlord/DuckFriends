@@ -5,7 +5,7 @@ import { register, go } from "./router.js";
 import { el } from "./ui.js";
 import { pitSVG, heroDuckSVG, rainbowHTML } from "./art.js";
 import { openSettings } from "./settings.js";
-import { openCustomize } from "./customize.js";
+import { rest, net, soon } from "./later.js";
 /* the Updates page (every version's words: one of the biggest files) comes once the first screen is up, not before it
    (the owner's, Nov 19: a slow phone's first load) */
 const updates = () => import("./updates.js");
@@ -13,7 +13,6 @@ import { mountCornerMusicBar } from "./musicbar.js";
 import { installBtnHTML, install } from "./homeapp.js";
 import { inApp } from "./corners.js";
 import { keptState, onKept } from "./offline.js";
-import { createLocalRoom } from "./net.js";
 
 let mbarOff = null,
   keptOff = null;
@@ -32,17 +31,22 @@ const soloBtnHTML = () =>
   inApp()
     ? `<button type="button" class="btn big ghost site-btn solo-btn" data-a="solo"${keptState().ready ? "" : " disabled"}>Single Player<small>${soloNote(keptState())}</small></button>`
     : "";
+/* (the room code and Customize come with the rest of the game, after the first screen: later.js) */
+const openCustomize = () =>
+  soon(() => import("./customize.js")).then((m) => m.openCustomize());
 function playSolo() {
-  go(
-    "lobby",
-    createLocalRoom({
-      name: "Single Player",
-      test: false,
-      computers: 0,
-      max: 1,
-      solo: true,
-      options: { dod: 0, mode: "l4dd" },
-    }),
+  soon(rest).then(() =>
+    go(
+      "lobby",
+      net().createLocalRoom({
+        name: "Single Player",
+        test: false,
+        computers: 0,
+        max: 1,
+        solo: true,
+        options: { dod: 0, mode: "l4dd" },
+      }),
+    ),
   );
 }
 

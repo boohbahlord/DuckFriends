@@ -45,6 +45,29 @@ while todo:
         )
         todo.append(to)
 pre = "\n".join(f'<link rel="modulepreload" href="./js/{m}?v={v}" />' for m in order)
+# … and the rest of the game, which js/later.js asks for once the first screen is up (the owner's, Nov 19): what its
+# import()s bring, the closest first, then every other module, so the installed app and a later window find them near
+later_src = open(os.path.join(js, "later.js"), encoding="utf-8").read()
+todo = [
+    os.path.normpath(r).replace(os.sep, "/")
+    for r in re.findall(r"import\(\s*[\"']\./([^\"']+)[\"']", later_src)
+]
+rest = []
+while todo:
+    m = todo.pop(0)
+    if m in order or m in rest or m not in mods:
+        continue
+    rest.append(m)
+    src = open(os.path.join(js, m), encoding="utf-8").read()
+    for a, b in step.findall(src):
+        todo.append(
+            os.path.normpath(os.path.join(os.path.dirname(m), a or b)).replace(
+                os.sep, "/"
+            )
+        )
+rest += [m for m in mods if m not in order and m not in rest]
+later = json.dumps([f"./js/{m}?v={v}" for m in rest], separators=(",", ":"))
+pre += f'\n<script type="application/json" id="df-later">{later}</script>'
 pre = "<!-- preload -->\n" + pre + "\n<!-- /preload -->"
 if "<!-- preload -->" in html:
     html = re.sub(
@@ -91,7 +114,9 @@ print(
     len(mods),
     "modules,",
     len(order),
-    "preloaded,",
+    "first,",
+    len(rest),
+    "after,",
     len(kept),
     "files for Single Player",
 )

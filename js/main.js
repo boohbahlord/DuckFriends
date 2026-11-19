@@ -13,13 +13,10 @@ import "./front.js";
 import { pixelOn, pxImgWatch, gridPx } from "./pixel.js"; // (first: the pixel look's class goes on before anything draws)
 import { pxWatch } from "./pxdom.js";
 import { pxEmojiWatch } from "./pxtext.js";
-import "./rooms.js";
-import "./lobby.js";
-import "./game.js";
 import "./music.js";
 import "./keynav.js";
 import { acct, onAccount, accountStart, signIn } from "./account.js";
-import { openFriends } from "./friends.js";
+import { rest, soon } from "./later.js";
 import { showSplash } from "./splash.js";
 import { fullOnFirstTap, fsBtnHTML } from "./corners.js";
 import { loadingScreen, pageReady } from "./loading.js";
@@ -74,7 +71,10 @@ const paintCorner = () => {
       "Sign in with Google: your duck, name and settings follow you to any device, and you can have friends.";
   }
 };
-corner.onclick = () => (acct.uid ? openFriends() : signIn());
+corner.onclick = () =>
+  acct.uid
+    ? soon(rest).then(() => import("./friends.js").then((m) => m.openFriends()))
+    : signIn();
 onAccount(paintCorner);
 paintCorner();
 /* the account's profile came in: show it */
@@ -97,10 +97,8 @@ if ("serviceWorker" in navigator && isSecureContext)
     .catch(() => {});
 loadingScreen({ duck: profile.duck, ready: pageReady }); // (the page's own loading screen, in index.html, goes when the first screen is drawn)
 document.getElementById("lite-link")?.remove(); // (the light install link on the page's loading screen: the game came, so it goes)
-window.dfStarted = 1; // (the page's way out of a stuck start, in index.html, stands down)
-try {
-  sessionStorage.removeItem("df-retry");
-} catch {}
+/* the rest of the game (the rooms, the lobby, the game, every mode's rules), now that the first screen is up: later.js */
+rest();
 setTimeout(accountStart, 300);
 setTimeout(askConnection, 600); // once, on the first visit   // a device that signed in before connects after the first screen is up
 

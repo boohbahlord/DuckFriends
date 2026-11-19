@@ -9,7 +9,7 @@ import { openWindow, toast, esc } from "./ui.js";
 import { rainbowHTML } from "./art.js";
 import { profile, NAME_OK } from "./store.js";
 import { acct } from "./account.js";
-import { connect } from "./online.js";
+const connect = () => import("./online.js").then((m) => m.connect()); // (online.js comes after the first screen)
 
 export const REPORT_MAX = 1000;
 
