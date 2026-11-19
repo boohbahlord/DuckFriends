@@ -6,7 +6,7 @@
    burns for GROUND ms (a patch every PATCH ms, MOST at once). Shared by the rules (rules.js, l4ddrules.js) and the
    screens (game.js, fx.js). Distances are in duck lengths (Dead Ducks Arcade: DUCK world px each) */
 export const FLAME = {
-  TANK: 500, // (puffs: 500 at 10 a second is 50 seconds, 2% a second)
+  TANK: 175, // (puffs: it was 500, 50 seconds; now 35% of that: the owner's, Nov 19 19:27Z, "it still says 100%, but it has only 35% as much ammo")
   COOL: 100, // ms between puffs
   GAP: 300, // ms without a puff and the next one starts a new hold
   REACH: [2, 6], // duck lengths: as it starts, and once held GROW ms

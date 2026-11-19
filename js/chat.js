@@ -1124,6 +1124,8 @@ export function chatWidget() {
         if (m.mine) return `<p class="sys note">${esc(m.text)}</p>`;
         if (m.opts)
           return `<p class="sys">${name(m.by)} ${esc(optsWords(m))}</p>`;
+        if (m.buy && s.players[m.by])
+          return `<p class="sys">${name(m.by)} ${esc(m.buy)}</p>`; // (a merchant's sale: the buyer's tag, then what it bought)
         if (m.sys)
           return `<p class="sys${m.small ? " small" : ""}">${esc(m.text)}</p>`;
         if (m.npc)

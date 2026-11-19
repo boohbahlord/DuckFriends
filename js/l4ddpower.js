@@ -52,8 +52,8 @@ export const PW = {
   PUMP: 150, // Downpour: a quarter can (25%) of gas at a pump (the owner's, Nov 18 12:19Z: "the gas pump now give 25% gas to a jerry can for 150 points each")
   REACH: 130, // world px from there
   DP_GAS: 8, // Downpour: the rounds of gas the generator holds as the game starts
-  CAN_ZOMBIE: 0.01, // jerry cans: from a zombie that dies (the owner's, Nov 18 12:19Z: "Gasoline is still a 1% chance of dropping in zombies"),
-  CAN_ROUND: 0.01, // and at a round's start in a part's spot (each 1% only: the owner's, Nov 17 13:43Z)
+  CAN_ZOMBIE: 0.0075, // jerry cans: from a zombie that dies (the owner's, Nov 18 12:19Z: "Gasoline is still a 1% chance of dropping in zombies"; then 75% of that, Nov 19 19:27Z: "multiplying it by 3/4"; Duck Cabin and Downpour share it),
+  CAN_ROUND: 0.0075, // and at a round's start in a part's spot (each 1% only: the owner's, Nov 17 13:43Z; 75% of that now)
   FULL: 4, // quarter cans (rounds) in a full jerry can (the owner's, Nov 18 12:19Z: "4 rounds for a 100% full jerry can, 3 rounds for 75%, and 2 rounds for 50%, and 1 round for 25%")
   CANS: 3, // jerry cans the row holds at most (the owner's, Nov 18 12:19Z: "only three Jerry cans can be held on the left screen by all players")
   TAKE: 75, // world px: how near a duck walks to take what lies on the floor
