@@ -8126,6 +8126,14 @@ register("game", {
           S,
           () => R,
           () => pm && pm.isOpen() && pm.close(),
+          (cx, cy) => {
+            // (Build: where on the map a click or tap lands, the same way walkTo reads it)
+            if (!geo) measure();
+            const board = S && origin($(".board", S));
+            if (!board || !geo) return null;
+            const r = board.getBoundingClientRect();
+            return unplace(cx - r.left, cy - r.top);
+          },
         )
       : null;
     placed = placeKey(R.state);

@@ -19862,6 +19862,44 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   line-height: 1.2;
   white-space: nowrap;
 }
+/* Build's picked thing rides on the mouse until a click or tap puts it down (js/sandbox.js) */
+.sb-ghost {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0.8;
+  filter: drop-shadow(0 0.25rem 0.3rem #0008);
+}
+.sb-ghost[hidden] {
+  display: none;
+}
+.sb-ghost > * {
+  display: block;
+  width: 3.2rem;
+  height: 3.2rem;
+  transform: translate(-50%, -50%);
+}
+.sb-ghost-zone {
+  box-sizing: border-box;
+  border: 0.18rem dashed var(--c);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--c) 25%, transparent);
+}
+.game .sb-cancel {
+  position: fixed;
+  top: 88px;
+  left: 18px;
+  z-index: 31;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.game .sb-cancel[hidden] {
+  display: none;
+}
 .sb-tools-list {
   display: flex;
   flex-direction: column;
