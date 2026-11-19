@@ -27,6 +27,7 @@ export const SETTINGS_DEFAULT = {
   chatSide: "left",
   chatFloat: true,
   otherHp: true, // the other players' HP meters, in every mode (a computer)
+  hideUi: false, // hide ui: the bars' dark bands and the words at the bottom hidden, mine alone (hideui.js)
   shapes: "moving",
   sound: 100,
   sfx: 100,

@@ -5812,6 +5812,35 @@ html.map-on .game .gbar,
 html.map-on .game .bbar {
   background: color-mix(in srgb, var(--bg) 62%, transparent);
 }
+/* ---------- hide ui (the owner's, Nov 19 12:59Z: "this hides everything but the top right buttons … the text chat
+   ("abc"), the leave sandbox or leave other button, the vote button, and hot bar. It hides the black outline above and
+   below the screen AND it hides the text on the bottom (except for cheat sheet …)"; hideui.js) ----------
+   Mine alone: the bars' dark bands go see-through, and the round's name, the song bar, Notes, the keys' words and the
+   jump counter go. What I play with stays: the top right buttons and the timer, the chat, Leave and End, the vote and
+   use buttons, the hotbar with my HP, a phone's jump button and Sandbox's Tools. In Sandbox, on a computer, "C Cheat
+   sheet" stays at the bottom, alone */
+.ui-cs {
+  display: none;
+}
+html.hide-ui .game :is(.gbar, .bbar) {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+html.hide-ui .game .gbar {
+  justify-content: flex-end;
+} /* (the top right buttons stay where they were) */
+html.hide-ui
+  .game
+  :is(.gbar-l, .gbar > .mbar, .notes-tab, .hints:not(.ui-cs), .jumps-slot) {
+  display: none !important;
+}
+html.hide-ui.keyboard .game .ui-cs {
+  display: flex;
+  text-shadow:
+    0 0 0.2rem #000,
+    0 0.05rem 0.1rem #000;
+} /* (no bar behind it now: a dark edge so it reads on any map) */
 @media (max-width: 760px) {
   .set-arm .arm-h,
   .armory .arm-menu > .arm-h {

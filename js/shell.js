@@ -64,6 +64,7 @@ import { vdStats, turnedDown } from "./vddrules.js";
 import { tvStats } from "./triviarules.js";
 import { setPerf, perfOn } from "./perf.js";
 import { secret } from "./unlocks.js";
+import { uiCommand } from "./hideui.js";
 import { music } from "./music.js";
 import { npcsHere, npcTag, npcByTag, npcById } from "./npcs.js";
 import { isSb, sbCan, sbWorld, SB_WORLD_NAMES } from "./sandboxrules.js";
@@ -1301,6 +1302,9 @@ const CMDS = {
     const on = setPerf(want ? want === "on" : !perfOn());
     return on ? "Frame-rate readout on (top left)." : "Frame-rate readout off.";
   },
+  /* hide ui: the bars, the words at the bottom and the song bar go, mine alone (again, or show ui: back; hideui.js) */
+  hide: (args) => uiCommand("hide", args[0]),
+  show: (args) => uiCommand("show", args[0]),
   clear: () => null,
   exit: (a, i, x) => {
     x.ctx.close();

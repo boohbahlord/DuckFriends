@@ -193,5 +193,9 @@ export const MAN = {
     "\\mute bubble ping text all on|off @names: hides those from you until you leave the room. Justin, the cats, Justin's Butler (@JustinsButler) and the shadow duck (@ShadowDuck) can be muted too.",
   "\\permmute":
     "\\permmute [-f] …: the same, kept on this device (-f: no question first).",
-  "\\show": "\\show mute | permmute | players.",
+  "\\show": "\\show mute | permmute | players | ui.",
+  "\\hide":
+    "\\hide ui: the same as hide ui in the command line (\\show ui brings it back).",
+  hide: "hide ui: hides the top and bottom bars' dark bands, the words at the bottom, the song bar and the round's name, on your screen only (kept on this device). The top right buttons, the chat (ABC), the Leave and End buttons, the vote buttons and the hotbar stay; in Sandbox, C Cheat sheet stays. hide ui again, or show ui, brings it all back. Also in the pause menu, and \\hide ui in the chat.",
+  show: "show ui: brings back what hide ui hid.",
 };
