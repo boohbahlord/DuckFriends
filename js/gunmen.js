@@ -10,9 +10,9 @@ import { CAMO } from "./outfits.js";
 /* the picks, each from its number: one list per part of the look; "" is none */
 const SOLDIER = {
   colors: ["#ffd23f", "#ffd23f", "#ffd23f", "#f2c230", "#ffdc5e"], // (rubber ducks: mostly the plain yellow)
-  /* the camouflage they wear in the game: only what fits Downpour (the owner's, Nov 19 22:09Z: "it's not a desert").
+  /* the camouflage they wear in the game: only what fits Downpour (the owner's, Nov 19 22:09Z: "it's not a desert"; urban, his pick on the picture sheet, Nov 19).
      Every set, desert too, stays for Sandbox's appearances (CAMO_SETS) */
-  camo: ["woodland", "urban"],
+  camo: ["urban"],
   vests: ["#3d4430", "#4a4536", "#2e3136", "#5a523c"],
   collars: ["#3b4a2a", "#7d7a4c", "#8a2a22", "#2b2e34", "#c9b37a", "#1f4f7a"],
   faces: [
