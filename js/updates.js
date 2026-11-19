@@ -9,6 +9,19 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v94",
+    version: 94,
+    date: "Nov 19, 2026",
+    title: "Faster Night Show, Numberat line rules",
+    news: [
+      "The Night Show map and the menus' background run much faster on slower computers.",
+      "For Sandbox: Numberat line rules: \\'rm0'\\ keeps 0 out, \\!'rm1'\\ covers the whole file, more ! wins, and asterisk-only and line-picked rules work too.",
+      "For Sandbox: give a line its own limit with \\inc'lim=25'\\, or none with \\rm'lim'\\. A value past a limit names the stat and points to help/limits.txt.",
+      "For Sandbox: new help pages in the Numberat window's help folder for every part of the language built so far.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v93",
     version: 93,
     date: "Nov 19, 2026",
