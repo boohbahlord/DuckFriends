@@ -26,7 +26,7 @@ import {
   roofHoleOver,
 } from "./hangout/layout.js";
 
-const GREEN = "#5be35b",
+const GREEN = "#2f9e44", // (the other players: a slightly darker green than the friendly squad's light green, the owner's, Nov 19 19:27Z)
   DARK_BLUE = "#2a5bd7",
   YELLOW = "#ffd23f",
   RED = "#8a1018";
