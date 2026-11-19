@@ -3647,12 +3647,12 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
     uy = aim[1] / ry / al;
   const side = hang ? (inCabin(p0.x * HW, p0.y * HH) ? 1 : 0) : 0,
     z0 = hang ? +p0.z || 0 : 0;
-  const near = (x, y, z, inSide) => {
-    // where (x, y) is from the swinger, in duck lengths, if it's in reach
+  const near = (x, y, z, inSide, big = 1) => {
+    // where (x, y) is from the swinger, in duck lengths, if it's in reach (big: a Numberat NPC's hitbox, reached sooner)
     if (hang && (inSide !== side || Math.abs(z - z0) > 48)) return null;
     const dx = (x - p0.x) / rx,
       dy = (y - p0.y) / ry,
-      d = Math.hypot(dx, dy);
+      d = Math.max(0, Math.hypot(dx, dy) - (big - 1) / 2);
     if (d > far) return null;
     const along = dx * ux + dy * uy;
     return d < 0.7 || along / d >= wide ? { d, dx, dy } : null; // (one standing right on top is hit whatever the aim)
@@ -3737,14 +3737,14 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
     !hang &&
     by !== JUSTIN_ID &&
     (isMgj(s) || sbOnBoard(s)) &&
-    mgjZombieHit(s, (x, y) => !!near(x, y, 0, 0), sp, now, by)
+    mgjZombieHit(s, (x, y, big) => !!near(x, y, 0, 0, big), sp, now, by)
   )
     stab = true; // (Mad God Justin's zombies in reach too)
   if (hang)
     for (const n of hangTargets(s, now, sp)) {
       if (done.includes("h:" + n.id)) continue;
       if (
-        near(n.x / HW, n.y / HH, n.z, inCabin(n.x, n.y) ? 1 : 0) &&
+        near(n.x / HW, n.y / HH, n.z, inCabin(n.x, n.y) ? 1 : 0, n.r) &&
         hangHit(s, n.id, by, now, sp)
       ) {
         done.push("h:" + n.id);
@@ -3836,12 +3836,12 @@ function blast(s, sh, x, y, now, o = {}) {
     [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08],
     side = sh.hin || 0,
     hit = [];
-  const near = (px, py, pz, inSide) => {
+  const near = (px, py, pz, inSide, big = 1) => {
     if (hang && (inSide !== side || Math.abs(pz - (sh.hz || 0)) > 48))
       return null;
     const dx = (px - x) / rx,
       dy = (py - y) / ry,
-      d = Math.hypot(dx, dy);
+      d = Math.max(0, Math.hypot(dx, dy) - (big - 1) / 2); // (big: a Numberat NPC's hitbox)
     return d <= GRENADE_R * (o.wide || 1) ? { d, dx, dy } : null;
   };
   for (const id of s.seat) {
@@ -3892,7 +3892,13 @@ function blast(s, sh, x, y, now, o = {}) {
   }
   guardsHit(s, sh.by, near, now, w); // (a Jaime Guard in the blast: his 1 HP)
   if ((isMgj(s) || sbOnBoard(s)) && sh.by !== JUSTIN_ID)
-    mgjZombieHit(s, (zx, zy) => !!near(zx, zy, 0, 0), "grenade", now, sh.by); // (Mad God Justin's zombies in it: all their HP, as a grenade's blast in Dead Ducks Arcade)
+    mgjZombieHit(
+      s,
+      (zx, zy, big) => !!near(zx, zy, 0, 0, big),
+      "grenade",
+      now,
+      sh.by,
+    ); // (Mad God Justin's zombies in it: all their HP, as a grenade's blast in Dead Ducks Arcade)
   if (!hang && sh.by !== JUSTIN_ID && justinShown(s)) {
     const j = justinAt(s.justin, now);
     if (j && near(j.x, j.y, 0, 0)) {
@@ -3908,7 +3914,7 @@ function blast(s, sh, x, y, now, o = {}) {
   if (hang)
     for (const n of hangTargets(s, now, "grenade"))
       if (
-        near(n.x / HW, n.y / HH, n.z, inCabin(n.x, n.y) ? 1 : 0) &&
+        near(n.x / HW, n.y / HH, n.z, inCabin(n.x, n.y) ? 1 : 0, n.r) &&
         hangHit(s, n.id, sh.by, now, w) &&
         n.id === "justin"
       )
@@ -4451,7 +4457,8 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
         py = (n.y / HH - y0) / 0.012,
         len = ux * ux + uy * uy;
       const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
-      if (Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1)) hLock(sh, n.z);
+      if (Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1) * (n.r || 1))
+        hLock(sh, n.z); // (n.r: a Numberat NPC's hitbox)
       else continue;
       if (hangHit(s, n.id, sh.by, now, sh.k) && n.id === "justin")
         justinKilled(s, sh.by, sh.k);

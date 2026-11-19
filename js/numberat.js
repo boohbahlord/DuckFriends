@@ -212,6 +212,8 @@ const FN1 = {
   up: (v) => Math.ceil(v - 1e-9),
   down: (v) => Math.floor(v + 1e-9),
 };
+/* an NPC's stats, read and set by name (numberatrun.js): "z hp" is NPC z's HP */
+export const NB_STATS = ["hp", "speed", "damage", "hitbox"];
 const RESERVED = new Set([
   "else",
   "in",
@@ -618,6 +620,23 @@ class Parser {
       }
       if (RESERVED.has(t.v)) no(`"${t.v}" can't start a value`);
       if (this.names) this.names.push({ v: t.v, line: t.line });
+      const st = this.peek();
+      if (
+        st &&
+        st.t === "word" &&
+        NB_STATS.includes(st.v) &&
+        !NB_STATS.includes(t.v)
+      ) {
+        this.i++; // (z hp: NPC z's HP)
+        return (ctx) => {
+          if (!ctx.stat)
+            no(
+              `"${t.v} ${st.v}" is an NPC's: it works in files`,
+              "help/names.txt",
+            );
+          return ctx.stat(t.v, st.v);
+        };
+      }
       return (ctx) => {
         if (!ctx.name)
           no(

@@ -2347,7 +2347,7 @@ function startFile(path, ctx, sudo) {
   const npc = c.plan.whens.length + c.plan.everys.length;
   return [
     ...out,
-    `▶ ${name} is running (pid ${pid}).${npc ? " Its when and every parts are for NPCs, which come with the next part of Numberat." : ""} kill ${pid} stops it.`,
+    `▶ ${name} is running (pid ${pid}).${npc ? " Its when and every parts are for NPCs: write its name in a spawn's Brain box (b)." : ""} kill ${pid} stops it.`,
   ].join("\n");
 }
 /* a file's own lines (not its when's and every's), played now: what they print, in order. Its waits go by at once */

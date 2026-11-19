@@ -1543,14 +1543,14 @@ export function mgjShot(s, sh, x0, y0, dx, dy, now, log) {
   const m = s.mgj,
     sb = sbOnBoard(s); // (Sandbox's board: only its spawns' zombies, in s.mz as his are: sbspawn.js)
   if (!sb && (!m || s.phase !== "boss")) return false;
-  const near = (q) => {
+  const near = (q, r = 1) => {
     const ux = dx / RX,
       uy = dy / RY,
       px = (q.x - x0) / RX,
       py = (q.y - y0) / RY,
       len = ux * ux + uy * uy;
     const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
-    return Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1);
+    return Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1) * r;
   };
   const nearHim = (q) => {
     const ux = dx / RX,
@@ -1564,7 +1564,14 @@ export function mgjShot(s, sh, x0, y0, dx, dy, now, log) {
   if (sb)
     return (
       !sh.fake &&
-      mgjZombieHit(s, (x, y) => near({ x, y }), armOf(sh.k), now, sh.by, sh)
+      mgjZombieHit(
+        s,
+        (x, y, r) => near({ x, y }, r),
+        armOf(sh.k),
+        now,
+        sh.by,
+        sh,
+      )
     );
   if (sh.by === JUSTIN_ID) {
     if (sh.fake) return false;
@@ -1575,7 +1582,9 @@ export function mgjShot(s, sh, x0, y0, dx, dy, now, log) {
     return false;
   }
   if (shotThrown(s, sh, x0, y0, dx, dy, now)) return true;
-  if (mgjZombieHit(s, (x, y) => near({ x, y }), armOf(sh.k), now, sh.by, sh))
+  if (
+    mgjZombieHit(s, (x, y, r) => near({ x, y }, r), armOf(sh.k), now, sh.by, sh)
+  )
     return true; // (one of his zombies in the way: it stops there, but the shots that go through them)
   return mgjHitAt(s, sh.by, now, nearHim, log, shotDmg(sh.k));
 }
@@ -2567,7 +2576,9 @@ export function mgjZombieHit(s, near, w, now, by, sh = null) {
   const z = s.mz;
   if (!z || !((isMgj(s) && s.phase === "boss") || sbOnBoard(s))) return false; // (and Sandbox's board: sbspawn.js)
   const seen = sh ? [...(sh.zh || []), ...(sh.zp || [])] : [];
-  let got = z.zb.filter((o) => !o.d && !seen.includes(o.i) && near(o.x, o.y));
+  let got = z.zb.filter(
+    (o) => !o.d && !seen.includes(o.i) && near(o.x, o.y, o.hb || 1),
+  ); // (o.hb: a Numberat file's hitbox, sbnumberat.js; near takes it as how big it is)
   if (!got.length) return false;
   if (sh)
     got.sort(

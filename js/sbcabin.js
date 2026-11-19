@@ -25,7 +25,7 @@ import {
 import { hitCode } from "./wounds.js";
 import { WAVE, zLook } from "./mgjrules.js";
 import { MAD } from "./sbbrain.js";
-import { fight, keepAt } from "./sbarms.js";
+import { fight, keepAt, reachTo } from "./sbarms.js";
 
 export const onCabin = (s) => isSb(s) && baseMode(s.options) === "hang";
 /* the worlds these walk on: Duck Cabin and the zombie maps (there, every kind but a zombie: those are the map's own) */
@@ -116,6 +116,7 @@ export function cabinTick(s, now, H0) {
     const to = d.goal || d.flee;
     if (!to) continue;
     const bd = far(me, to),
+      claw = reachTo(CLAW, o, to), // (its hitbox, and its foe's: sbarms.js)
       v =
         zWalk() *
         (o.sv || 1) *
@@ -135,8 +136,8 @@ export function cabinTick(s, now, H0) {
         pls,
       );
     } else if (
-      bd > (d.foe ? keepAt(o, CLAW) : CLAW * 0.9) ||
-      (d.foe && o.wp && bd > CLAW && !sees(o, to))
+      bd > (d.foe ? keepAt(o, claw) : claw * 0.9) ||
+      (d.foe && o.wp && bd > claw && !sees(o, to))
     )
       chaseStep(o, fieldTo(to), [to.x, to.y], v * dt, pls); // (a gun keeps its distance, once nothing's in the way: sbarms.js)
     if (Math.abs(o.x - x0) > 0.5) o.f = o.x > x0 ? 1 : -1;
@@ -146,7 +147,7 @@ export function cabinTick(s, now, H0) {
         o,
         to,
         bd,
-        CLAW,
+        claw,
         now,
         WAVE.CLAW_MS,
         (dm, w) => H0.strike(s, now, me, d.foe, Hs, o, dm, w),
@@ -216,6 +217,7 @@ rule("sbz", {
         x: o.x,
         y: o.y,
         z: heightAt(o.x, o.y),
+        ...(o.hb && o.hb !== 1 ? { r: o.hb } : {}), // (a Numberat file's hitbox: sbnumberat.js)
       }));
   },
   hit(s, id, by, now, w) {
@@ -258,7 +260,7 @@ L4_HOOKS.npc = (s, by, x, y, now, w, rx, ry, from, hit) => {
   if (!isSb(s) || baseMode(s.options) !== "l4dd") return false;
   const near = zbOf(s).filter((o) => {
     if (o.d || (hit && hit.includes("c" + o.i))) return false;
-    if (Math.hypot((o.x - x) / rx, (o.y - y) / ry) >= 1) return false;
+    if (Math.hypot((o.x - x) / rx, (o.y - y) / ry) >= (o.hb || 1)) return false; // (its hitbox: sbnumberat.js)
     const h = heightAt(o.x, o.y);
     return (
       !from ||
