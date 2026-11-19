@@ -9,6 +9,32 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v124",
+    version: 124,
+    date: "Nov 19, 2026",
+    title: "Melee weapons wear out",
+    news: [
+      "For Dead Ducks Arcade: melee weapons now wear down and break. Each shows a percent bar like ammo, 100% is 450 damage dealt (the cast iron pan 50), and at 0% it is gone for good and its slot is empty. Angelic melee weapons never break.",
+    ],
+    fixed: [
+      "The start screen waits until your duck is on its cloud, so the duck never pops in.",
+      "No loading screen comes up in the middle of a game, for example when you open a window in Sandbox.",
+      "For Sandbox: each loot list holds only its own kind, so Jumps holds only the jumps.",
+    ],
+  },
+  {
+    id: "v123",
+    version: 123,
+    date: "Nov 19, 2026",
+    title: "Zombies keep up with you",
+    news: [
+      "For Dead Ducks Arcade: the flamethrower's burning ground is now little pixel flames that flicker, matching everything else on fire.",
+    ],
+    fixed: [
+      "For Dead Ducks Arcade: zombies chase you while you keep moving, instead of walking to where you last stood (like the fireplace) and bunching up there.",
+    ],
+  },
+  {
     id: "v122",
     version: 122,
     date: "Nov 19, 2026",

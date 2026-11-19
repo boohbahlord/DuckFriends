@@ -252,9 +252,15 @@ const SKIP = 0.25,
    adrenaline shot, the chair): 0.75 s (the owner's, Nov 16). Not the jetpack or the Long jump (switched on
    and off), nor Jaime (his own, longer) */
 export const ITEM_COOL = 750;
+/* a melee weapon breaks (the owner's, Nov 19 22:41Z): its bar is 100% of the damage it can deal, HP actually taken off
+   (not overkill), 450 for each, the cast iron pan only 50 ("cast irons is only 50 damage"). At 0% it is gone for good
+   and its slot is empty; it is never refilled. An Angelic melee weapon never breaks. One number for each weapon: ARMS'
+   dur */
+export const MELEE_DUR = 450;
 export const ARMS = {
   knife: {
     kind: "melee",
+    dur: MELEE_DUR,
     cool: ARM_COOL.knife,
     dmg: 1,
     swing: ARM_SWING.knife,
@@ -263,6 +269,7 @@ export const ARMS = {
   }, // (four a second, as in every mode)
   hammer: {
     kind: "melee",
+    dur: MELEE_DUR,
     cool: ARM_COOL.hammer,
     dmg: [3, 5], // (3 to 5: the owner's, Nov 18 15:28Z)
     swing: ARM_SWING.hammer,
@@ -274,6 +281,7 @@ export const ARMS = {
      half its swings, and half its hits a headshot (crit) */
   axe: {
     kind: "melee",
+    dur: MELEE_DUR,
     cool: ARM_COOL.axe,
     dmg: [1, 4],
     swing: ARM_SWING.axe,
@@ -282,6 +290,7 @@ export const ARMS = {
   },
   sword: {
     kind: "melee",
+    dur: MELEE_DUR,
     cool: ARM_COOL.sword,
     dmg: [1, 2], // (1 to 2: the owner's, Nov 18 15:25Z)
     swing: ARM_SWING.sword,
@@ -290,6 +299,7 @@ export const ARMS = {
   },
   pan: {
     kind: "melee",
+    dur: 50,
     cool: ARM_COOL.pan,
     dmg: 5, // (5: the owner's, Nov 18 15:28Z, "The pan has 5 damage"; 2 to 6 at 15:25Z)
     crit: 0.5,
@@ -1258,11 +1268,18 @@ function openNear(x, y) {
    late (the zombies' chase, every heartbeat): a field not made yet is asked of the worker (flowfield.js), and until it
    answers, the zombies keep to the last field they had, the ducks' spots one heartbeat or so ago; so a big crowd's new
    field never holds up a frame (the owner's, Nov 18 14:20Z). Only the very first one, or with no worker, is worked out
-   here at once */
+   here at once. Every answer that comes back newer than the field they have is theirs at once: a duck that never stops
+   (herding them) changes cells faster than the worker answers, so waiting for the field of the cell it is in now kept
+   them on the field of where it last stood still (the fireplace) for as long as it kept walking (the owner's, Nov 19
+   22:35Z: "they will keep walking to the fireplace even when I walk away from it"; "they kind of get caught in each
+   other in a circle") */
 const FLOWS = new Map(),
   FLOWS_KEPT = 48;
 let lastLate = null, // (the last field the chase had, and the grid it was made on)
-  lastLateRev = -1;
+  lastLateRev = -1,
+  lateN = 0, // (how many fields the chase asked for so far …
+  lastLateN = 0; // … and which of them it has)
+const askedN = new Map(); // (the key of a field asked for: its number, the newest asking)
 const keep = (key, dist) => {
   FLOWS.set(key, dist);
   if (FLOWS.size > FLOWS_KEPT) FLOWS.delete(FLOWS.keys().next().value);
@@ -1282,16 +1299,27 @@ function flowFrom(starts, late = false) {
       lastLate &&
       lastLateRev === walkRev &&
       askField(key, cs, grid(), walkRev, (k, rev, d) => {
-        if (rev === walkRev) keep(k, d); // (a field for a grid made again since is dropped)
+        if (rev !== walkRev) return; // (a field for a grid made again since is dropped)
+        keep(k, d);
+        const n = askedN.get(k) || 0;
+        askedN.delete(k);
+        if (n > lastLateN) {
+          lastLate = d;
+          lastLateN = n;
+        } // (newer than the one they have: theirs now)
       })
-    )
+    ) {
+      askedN.set(key, ++lateN);
+      if (askedN.size > FLOWS_KEPT) askedN.delete(askedN.keys().next().value);
       return lastLate;
+    }
     dist = fieldOf(grid(), cs);
     keep(key, dist);
   }
   if (late) {
     lastLate = dist;
     lastLateRev = walkRev;
+    lastLateN = ++lateN;
   }
   return dist;
 }
@@ -1481,6 +1509,9 @@ function freshKit() {
   for (const w of sl) if (fullAmmo(w)) am[w] = fullAmmo(w);
   return { sl: [...sl], am, rl: 0, rw: "", g: ARMS.grenade.start, u: {} };
 }
+/* the damage a melee weapon in kit m can still deal (its full dur until it has been used): kit.du { weapon: left } */
+export const durLeft = (m, w) =>
+  m && m.du && m.du[w] != null ? m.du[w] : (ARMS[w] || {}).dur || 0;
 export const kitOf = (s, id) => ((s && s.hang && s.hang.l4a) || {})[id] || null;
 export const slotsOf = (s, id) => (kitOf(s, id) || {}).sl || START;
 /* is w one of this duck's weapons? (what it can hold out and use; the grenades are always there) */
@@ -2668,6 +2699,9 @@ function give(s, id, w, hand0) {
     ang = { ...(kit.ang || {}) };
   delete am[old];
   delete ang[old]; // (its Angelic power goes with it: l4ddangel.js)
+  const du = { ...(kit.du || {}) };
+  delete du[old];
+  delete du[w]; // (a melee weapon comes whole)
   if (fullAmmo(w)) am[w] = fullAmmo(w);
   const sl = [...kit.sl];
   sl[k] = w;
@@ -2678,6 +2712,7 @@ function give(s, id, w, hand0) {
       sl,
       am,
       ang,
+      du,
       ...(kit.rw === old ? { rl: 0, rw: "" } : {}),
     },
   };
@@ -4213,6 +4248,22 @@ function wildFire(s, by, now) {
   s.hang.l4fire = { z: F.z || {}, p: { ...(F.p || {}), [id]: now + BURN.P } };
   wildDown(s, by, now, "flamer", false, ["f0"]);
 }
+/* a melee weapon wears down by the HP it took off (the owner's, Nov 19 22:41Z): at 0 it is gone, its slot empty, for
+   good. Angelic ones never wear; not in Sandbox */
+export function wearDown(s, by, w, dealt) {
+  const kit = kitOf(s, by),
+    i = kit ? kit.sl.indexOf(w) : -1;
+  if (i < 0 || !(dealt > 0) || isSb(s) || !ARMS[w] || !ARMS[w].dur) return;
+  if (ARMS[w].kind !== "melee" || angelOf(s, by, w)) return;
+  const left = tenths(durLeft(kit, w) - dealt),
+    du = { ...(kit.du || {}) },
+    sl = [...kit.sl];
+  if (left <= 0) {
+    sl[i] = "";
+    delete du[w];
+  } else du[w] = left;
+  s.hang.l4a = { ...s.hang.l4a, [by]: { ...kit, sl, du } };
+}
 function meleeHits(s, now) {
   const ks = (s.hang.l4k || []).filter(
     (k) => now - k.t <= (ARMS[k.w] || ARMS.knife).swing,
@@ -4241,8 +4292,10 @@ function meleeHits(s, now) {
       const dmg = Array.isArray(A.dmg)
         ? A.dmg[0] + Math.floor(Math.random() * (A.dmg[1] - A.dmg[0] + 1))
         : A.dmg; // (the fire axe: 1 to 4)
-      if (strike(s, z, dmg, headshot(s, k.by, k.w, z, now), k.by, k.w))
-        die(z, T);
+      const hp0 = z.hp,
+        dead = strike(s, z, dmg, headshot(s, k.by, k.w, z, now), k.by, k.w);
+      wearDown(s, k.by, k.w, hp0 - Math.max(0, z.hp)); // (the HP it took off, not the overkill)
+      if (dead) die(z, T);
       else if (z.st === 2) knockZ(z, k.dx, k.dy, KNOCK[k.w] || KNOCK.knife); // (alive: pushed back, KNOCK)
       any = true;
     }

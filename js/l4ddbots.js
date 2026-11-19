@@ -570,6 +570,7 @@ function wildMove(s, id, now, p, x, y, near, run, out, forced = false) {
   });
 }
 function shoot(s, id, now, m, w, ax, ay, out) {
+  if (!w) return; // (a melee weapon that broke: nothing in that slot)
   if (now - ((m.u || {})[w] || 0) < l4Cool(s, id, w)) return;
   out.push({
     t: "use",
