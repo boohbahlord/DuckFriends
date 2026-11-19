@@ -5,6 +5,7 @@
    number boxes and the true or false boxes. A box written wrong turns red and says why; the spawn keeps its last good
    value (numerat.js). On the board the game draws them (game.js calls sbBoardMarks); on the worlds they are an activity
    of Sandbox's own (registry.js only: "sandbox"). */
+import { LANG } from "./langname.js";
 import { activity } from "./hangout/registry.js";
 import { W, H, heightAt, sortY, seenFrom, bodyZ } from "./hangout/layout.js";
 import {
@@ -78,8 +79,11 @@ function markSVG(p) {
 }
 /* what my screen shows of Sandbox's build: zones only while my Build window is up (sandbox.js sets it) or a zone's
    window is open ("Sections colored from board build is invisible", the owner's Sandbox file) */
-export const sbView = { build: false };
-const building = () => sbView.build || !!document.querySelector(".sb-zonewin");
+export const sbView = { build: false, until: 0 };
+const building = () =>
+  sbView.build ||
+  sbView.until > performance.now() ||
+  !!document.querySelector(".sb-zonewin");
 /* a mark's element on the layer (made the first time) */
 function markEl(layer, have, key, cls) {
   let n = have.get(key);
@@ -422,7 +426,7 @@ export function sbSettings(getR, id, tab = "") {
           lab.classList.toggle("bad", !files);
           lab.querySelector(".sb-why").textContent = files
             ? ""
-            : "No file by that name in your Numberat folder (n)";
+            : `No file by that name in your ${LANG} folder (n)`;
           if (!files) return;
           send({ k: "nbf", files });
           send({ k: "set", f: "brain", v });

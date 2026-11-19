@@ -69,6 +69,7 @@ import { music } from "./music.js";
 import { npcsHere, npcTag, npcByTag, npcById } from "./npcs.js";
 import { isSb, sbMay, sbWorld, SB_WORLD_NAMES } from "./sandboxrules.js";
 import { HELP, EXAMPLES } from "./numerathelp.js";
+import { LANG, LANG_DIR } from "./langname.js";
 import { compileScript, brain } from "./numberatrun.js";
 
 const tag = (n) => String(n || "").replace(/\s+/g, "");
@@ -110,15 +111,16 @@ const perma = () => (profile.permaNotes = profile.permaNotes || {});
    is in it is kept on this device, profile.numerat = { f: { path in it: text }, d: [its folders], x: [its +x files] },
    and it comes back at the start of every game. 100,000 characters in all, as perma-notes */
 const NUM_MOST = 100000;
-const numRoot = () => fs.home + "/notes/numberat"; // (the language is Numberat: the owner, Nov 19 16:42Z)
+const numRoot = () => fs.home + "/notes/" + LANG_DIR; // (the language is Numberat: the owner, Nov 19 16:42Z; its name is langname.js')
 const inNum = (path) => path.startsWith(numRoot() + "/");
 /* the help/ folder in it: Numerat's read-only help files (numerathelp.js), made again at the start of every game, never
    kept in the profile, and refused every change, copy and delete (the owner's, Nov 19 12:59Z) */
 const helpRoot = () => numRoot() + "/help";
 const inHelp = (path) =>
-  path === helpRoot() || path.startsWith(helpRoot() + "/");
-/* examples/ next to it: ready brain files, read-only too (not changed or deleted), but they CAN be copied: that's what they're for */
-const exRoot = () => numRoot() + "/examples";
+  (path === helpRoot() || path.startsWith(helpRoot() + "/")) && !inEx(path);
+/* help/examples/: ready brain files, read-only too (not changed or deleted), but they CAN be copied: that's what they're
+   for (the owner's drawing, Nov 19 16:12Z: the .num files have their own folder inside help/) */
+const exRoot = () => helpRoot() + "/examples";
 const inEx = (path) => path === exRoot() || path.startsWith(exRoot() + "/");
 const inRo = (path) => inHelp(path) || inEx(path);
 const NO_HELP = (path) =>
@@ -135,8 +137,12 @@ function numLoad() {
     fs.meta[root + "/" + f] = { ...(fs.meta[root + "/" + f] || {}), x: true };
   fs.dirs.add(helpRoot());
   for (const [f, t] of Object.entries(HELP)) {
-    fs.files[helpRoot() + "/" + f] = t;
-    fs.meta[helpRoot() + "/" + f] = { ro: true, t: 0 };
+    const at = helpRoot() + "/" + f,
+      dir = at.slice(0, at.lastIndexOf("/")); // (a particular help's own folder: numbers/, math/ …)
+    fs.dirs.add(dir);
+    fs.meta[dir] = { ro: true, t: 0 };
+    fs.files[at] = t;
+    fs.meta[at] = { ro: true, t: 0 };
   }
   fs.meta[helpRoot()] = { ro: true, t: 0 };
   fs.dirs.add(exRoot());
@@ -328,7 +334,7 @@ function writeFile(p, text, append) {
       NUM_MOST
     )
       fail(
-        `✗ ${name}: the Numberat folder is full (100,000 characters in all). rm a file there to make room.`,
+        `✗ ${name}: the ${LANG} folder is full (100,000 characters in all). rm a file there to make room.`,
       );
   }
   fs.meta[path] = { ...(fs.meta[path] || {}), t: Date.now() };
@@ -2318,10 +2324,10 @@ function startFile(path, ctx, sudo) {
   const s = ctx.room && ctx.room.state,
     name = path.slice(fs.home.length + 1);
   if (!s || !isSb(s))
-    fail(`✗ ${name}: Numberat files only run in Sandbox.`, 126);
+    fail(`✗ ${name}: ${LANG} files only run in Sandbox.`, 126);
   if (!sbMay(s, ctx.room.me, "n") && !(sudo && isSudo(s, ctx.room.me)))
     fail(
-      `✗ ${name}: only the host, or whoever the host lets, runs Numberat files here${isSudo(s, ctx.room.me) ? " (sudo runs it as sudo)" : ""}.`,
+      `✗ ${name}: only the host, or whoever the host lets, runs ${LANG} files here${isSudo(s, ctx.room.me) ? " (sudo runs it as sudo)" : ""}.`,
       126,
     );
   const was = procs.find((p) => p.path === path);
@@ -2587,19 +2593,76 @@ export const numerat = {
     walk(numRoot(), 0);
     return out;
   },
+  /* one folder's own files and folders (the window's left side, as File Explorer: the owner's, Nov 19 16:12Z and
+     17:15Z), folders first, each { path, name, dir, ro } */
+  list(ctx, dir) {
+    sync(ctx);
+    return list(dir)
+      .sort((a, b) => b.endsWith("/") - a.endsWith("/") || a.localeCompare(b))
+      .map((n) => {
+        const name = n.replace(/\/$/, ""),
+          path = dir + "/" + name;
+        return { path, name, dir: n.endsWith("/"), ro: inRo(path) };
+      });
+  },
+  /* a path typed in the window's path bar, as Linux reads it, from the folder shown: /usr/…, ~/…, .., ., or
+     numberat/… (the way the window writes it); "file", "dir" or null for what's there */
+  at(ctx, text, from) {
+    sync(ctx);
+    const t = text.trim().replace(/\/+$/, "") || "/",
+      top = numRoot().slice(0, numRoot().lastIndexOf("/")),
+      p = norm(
+        t === "~"
+          ? fs.home
+          : t.startsWith("~/")
+            ? fs.home + t.slice(1)
+            : t.startsWith("/")
+              ? t
+              : t === LANG_DIR || t.startsWith(LANG_DIR + "/")
+                ? top + "/" + t
+                : from + "/" + t,
+      );
+    let k = null;
+    try {
+      k = kind(p);
+    } catch {
+      k = null;
+    }
+    return { path: p, kind: k, inside: p === numRoot() || inNum(p) };
+  },
+  /* every file and folder under dir whose name has q in it (the path bar's search) */
+  find(ctx, q, dir) {
+    sync(ctx);
+    const w = q.trim().toLowerCase();
+    if (!w) return [];
+    return [...Object.keys(fs.files), ...fs.dirs]
+      .filter(
+        (p) =>
+          p.startsWith(dir + "/") &&
+          p.split("/").pop().toLowerCase().includes(w),
+      )
+      .sort((a, b) => fs.dirs.has(b) - fs.dirs.has(a) || a.localeCompare(b))
+      .slice(0, 100)
+      .map((p) => ({
+        path: p,
+        name: p.slice(dir.length + 1),
+        dir: fs.dirs.has(p),
+        ro: inRo(p),
+      }));
+  },
   read(ctx, path) {
     sync(ctx);
     return fs.files[path] ?? null;
   },
   write(ctx, path, text) {
     sync(ctx);
-    if (!inNum(path)) fail("✗ That is not in the Numberat folder.");
+    if (!inNum(path)) fail(`✗ That is not in the ${LANG} folder.`);
     writeFile(path, text, false);
     numKeep();
   },
   mkdir(ctx, path) {
     sync(ctx);
-    if (!inNum(path)) fail("✗ That is not in the Numberat folder.");
+    if (!inNum(path)) fail(`✗ That is not in the ${LANG} folder.`);
     CMDS.mkdir([path]);
     numKeep();
   },

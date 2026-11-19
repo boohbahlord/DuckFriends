@@ -68,6 +68,7 @@ export function cabinSpawn(s, x, y, o) {
           sv: o.sv,
           dm: o.dm,
           ...(o.run ? { run: 1 } : {}),
+          ...(o.up != null ? { up: o.up } : {}),
           ...(o.look || {}), // (its kind, look, name and weapons: sbspawn.js makeOne)
         },
       ],

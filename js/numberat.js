@@ -48,7 +48,7 @@ function lex(text) {
     if (say && (c === '"' || c === "'")) {
       const end = src.indexOf(c, i + 1);
       if (end < 0 || src.slice(i + 1, end).includes("\n"))
-        no(`A ${c} is never closed`, "help/print.txt");
+        no(`A ${c} is never closed`, "help/brains/print.txt");
       push("str", src.slice(i + 1, end), { q: c });
       i = end + 1;
       continue;
@@ -500,7 +500,7 @@ class Parser {
         r = this.product();
       a = (ctx) => {
         const d = num(r(ctx));
-        if (d === 0) no("Can't divide by 0", "help/math.txt");
+        if (d === 0) no("Can't divide by 0", "help/math/math.txt");
         const n = num(l(ctx));
         return mod ? ((n % d) + d) % d : n / d; // (mod: what's left over, spawned mod 3)
       };
@@ -632,7 +632,7 @@ class Parser {
           if (!ctx.stat)
             no(
               `"${t.v} ${st.v}" is an NPC's: it works in files`,
-              "help/names.txt",
+              "help/brains/names.txt",
             );
           return ctx.stat(t.v, st.v);
         };
@@ -641,7 +641,7 @@ class Parser {
         if (!ctx.name)
           no(
             `"${t.v}" isn't a value here (names work in files)`,
-            "help/names.txt",
+            "help/brains/names.txt",
           );
         return ctx.name(t.v);
       };
@@ -837,7 +837,7 @@ function percent(a) {
    the later one. Readings: the quotes are only marks (\'inc0'\ = \inc'0'\); a rule's own value can be any Numberat
    value, and it covers every number that value can give ('n[1,5,[1:4]]' is lines 1 to 5) */
 const CAP = 1000000; // (\rm'lim'\: "no limit on this line (hidden cap 1,000,000)")
-const RULES = "help/linerules.txt";
+const RULES = "help/numbers/linerules.txt";
 function parseRule(raw, line, order) {
   const r = {
     str: 0,

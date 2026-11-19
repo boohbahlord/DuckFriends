@@ -142,7 +142,7 @@ import {
 import { DROP_ICONS } from "./l4dddrops.js";
 import { popHP } from "./hpmeter.js";
 import { fxHitAt, fxEye, heavyOff, fxSparks, fxSteam } from "./fx.js";
-import { vibrate, hitPx, HIT } from "./fxmotion.js";
+import { vibrate, hitPx, HIT, again } from "./fxmotion.js";
 import { pixelOn, gridPx, snap, raster, rasterReady } from "./pixel.js";
 import { olAdd, olFloor, olRoofed, olPic, DROP_OL } from "./outlines.js";
 import { confirmBox } from "./ui.js";
@@ -550,16 +550,26 @@ function claw(x, y, dir, ctx) {
 }
 /* a zombie's claw marks, three white slashes at (left, top) in layer fx, k times the cats' size: Dead Ducks Arcade's,
    and Mad God Justin's wave zombies' (game.js placeZombies) */
+let clawPic = null; // (one mark, made once and copied: reading its drawing anew for every swipe added up in a crowd)
+const CLAW_MAX = 8; // (marks on a layer at once: a swarm at round 21 swiped dozens a second, each a glowing drawing to paint, and a few more marks on one duck didn't show)
 export function clawMark(fx, left, top, k) {
-  const el = document.createElement("div");
-  el.className = "hang-npc-claw l4-claw";
-  el.innerHTML =
-    '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M10 6C16 16 18 26 14 36M19 4C25 14 27 24 23 34M28 6C34 16 36 26 32 36" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/></svg>';
+  if ((fx._claws || 0) >= CLAW_MAX) return;
+  if (!clawPic) {
+    clawPic = document.createElement("div");
+    clawPic.className = "hang-npc-claw l4-claw";
+    clawPic.innerHTML =
+      '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M10 6C16 16 18 26 14 36M19 4C25 14 27 24 23 34M28 6C34 16 36 26 32 36" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/></svg>';
+  }
+  const el = clawPic.cloneNode(true);
   el.style.left = left.toFixed(1) + "px";
   el.style.top = top.toFixed(1) + "px";
   el.style.setProperty("--k", k.toFixed(3));
   fx.append(el);
-  setTimeout(() => el.remove(), 1100);
+  fx._claws = (fx._claws || 0) + 1;
+  setTimeout(() => {
+    el.remove();
+    fx._claws--;
+  }, 1100);
 }
 /* its picture with the wounds it has now, made only when they changed and it's on a screen */
 function wounds(o, l, i) {
@@ -1806,10 +1816,7 @@ function mHurt(s, m, dead, p, sc, hide) {
   /* he lost some */
   if (bar) {
     bar.style.setProperty("--was", (was / max).toFixed(3));
-    const red = bar.querySelector("b");
-    red.style.animation = "none";
-    void red.offsetWidth;
-    red.style.animation = "";
+    again(bar.querySelector("b"), "php-lost"); // (fxmotion.js)
   }
   if (hide) return;
   const img = butler.body.firstChild;
