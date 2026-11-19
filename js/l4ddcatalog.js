@@ -179,12 +179,12 @@ export function catalogHTML() {
       "Upgrades",
       SHOP.map((it) =>
         row(UP_ICONS[it.id], it.name, it.what, [
-          ["Most", it.most],
+          ["Most", isFinite(it.most) ? it.most : "No limit"],
           [
             it.most > 1 ? "Prices" : "Price",
-            Array.from({ length: it.most }, (_, n) => priceOf(it.id, n)).join(
-              ", ",
-            ),
+            Array.from({ length: isFinite(it.most) ? it.most : 3 }, (_, n) =>
+              priceOf(it.id, n),
+            ).join(", ") + (isFinite(it.most) ? "" : ", …"),
           ],
         ]),
       ),

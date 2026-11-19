@@ -1063,7 +1063,11 @@ export function useMode(mode, map) {
      covers that side) */
   if (v === "l4gs")
     for (const [B, bldg, o] of [
-      ...GS.WALK_HOLES.map((o) => [GS.STATION, 1, o]),
+      ...GS.WALK_HOLES.filter((o) => o.axis === "x").map((o) => [
+        GS.STATION,
+        1,
+        o,
+      ]), // (the restroom's west hole has no peek)
       [GS.CHAPEL, 2, { at: GS.CHAPEL.y0, ...GS.CHAPEL_DOOR }],
     ])
       PEEKS.push(
