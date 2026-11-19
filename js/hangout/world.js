@@ -27,7 +27,6 @@ import {
   gridPx,
   snap,
   setDuckSize,
-  setCamScale,
   PAGE_DUCK,
   raster,
   rasterReady,
@@ -895,7 +894,6 @@ export function mountWorld(board, api) {
         /* the pixel look: one of the ground canvas' pixels is one pixel of the grid (the pages' and every other map's, so
            Duck Cabin's and Downpour's pixels are theirs too: set here first, so the ground is right from its first frame) */
         setDuckSize(PAGE_DUCK); // (the pages' grid, as every other map: pixel.js)
-        setCamScale(cam.sc); // (the porch's string lights, made into pixels by a filter under this zoom: px-fc)
         const gp = gridPx();
         cam.dpr = 1 / gp;
         EDGE = Math.ceil(96 / gp) * gp;

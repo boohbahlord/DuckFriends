@@ -17689,9 +17689,12 @@ html.moving .hpm-ammo.rl {
     radial-gradient(circle at 0 100%, var(--hc), transparent var(--hr)),
     radial-gradient(circle at 100% 100%, var(--hc), transparent var(--hr));
 }
-html.pixel .hurt-edge {
+html.pixel .hurt-edge:not(.px-own) {
   filter: url(#px-f);
 }
+.hurt-edge.px-own {
+  background: none;
+} /* (its corners drawn once as pixels instead: pxbake.js bakeFill) */
 .hurt-edge.on {
   visibility: visible;
   animation: hurtedge 0.7s ease-out;
@@ -18845,13 +18848,18 @@ html.pixel img.px {
   image-rendering: pixelated;
 }
 html.pixel .map-layer:not(.px-own),
-html.pixel #shapes,
+html.pixel #shapes:not(.px-own),
 html.pixel .spx-flames {
   filter: url(#px-f);
 } /* (every map, moving as before, drawn on the grid: pixel.js' filter) */
-html.pixel .hg-porch {
-  filter: url(#px-fc);
-} /* (shown under Duck Cabin's zoom: the filter made for it, so its pixels are the grid's too) */
+/* a map's pictures made into pixels once (pxbake.js): shown sharp, one pixel to a grid square (what moves is drawn on
+   a canvas of the grid's pixels each frame) */
+.px-baked {
+  image-rendering: pixelated;
+}
+.px-gone {
+  visibility: hidden !important;
+} /* (what moves, still moving out of sight: its pixels are on the canvas) */
 html.pixel .spx-flames {
   mix-blend-mode: screen;
 } /* (the filter makes the flames one picture: it's that picture that lights the duck now) */
