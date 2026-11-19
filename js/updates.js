@@ -15,6 +15,7 @@ export const UPDATES = [
     title: "Numberat is now Seriat",
     news: [
       "For Sandbox: the number language is now called Seriat, everywhere: the n window, its help, the man pages and its folder (notes/seriat). Your files come along.",
+      "For Sandbox: the Player settings window (P) can now open each window to every player.",
     ],
     fixed: [],
   },
