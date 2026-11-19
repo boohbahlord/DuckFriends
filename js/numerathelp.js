@@ -3,7 +3,7 @@
    help lies and their given principles or basic operators help files; the help files are text files that cannot be
    copied or deleted or changed". shell.js puts these in the Numerat folder at the start of every game (never kept in the
    profile) and refuses every change to them. Only what is built is written here (part A: values, orders, brackets,
-   math, asterisks, percents). This file has no imports. */
+   math, asterisks, percents; part B: line rules and limits). This file has no imports. */
 export const HELP = {
   "index.txt": `Numberat help
 These files are read-only: you can read them here and with cat,
@@ -19,6 +19,7 @@ Simple first:
   math.txt       + - / ^ and "2[1,5]"
   asterisks.txt  *, **, -*, $ letters, '1*' and =
   asteriskrules.txt  mormax, mormini, negbrahm, posbrahm, caps
+  linerules.txt  \\'rm0'\\, \\!'rm1'\\, lin, and a line's own limit
   percents.txt   [3 60%, 5 40%], 30%, 150%
   limits.txt     the limits every box has, and what to do past one
   window.txt     this window: files, Run, Check, wrap, autocomplete
@@ -163,8 +164,48 @@ don't define a limit yourself, the box uses the one below.
 
 Write a number past a limit and the box says "N at least" or
 "N at most" and keeps its last good value. Fix it by writing a
-number inside the limit. Writing your own limit will come with the
-line rules; until then these are the limits.
+number inside the limit, or by giving the line its own limit at
+its start (more in linerules.txt):
+
+  \\inc'lim=25'\\ 2:20     this line's top is 25
+  \\inc'lim=***'\\ 2:900   at most 999
+  \\rm'lim'\\ 2000         no limit on this line (1,000,000 at most)
+  \\!inc'lim=25'\\         the whole file's top is 25
+`,
+  "linerules.txt": `Line rules
+
+Written at the start of a line, between backslashes, before the value.
+
+Numbers in or out:
+  \\'rm0'\\ 0:3       0 never comes out: the line plays again (1 to 3)
+  \\'inc0'\\ 0:3      0 may come out (it can undo a rule above)
+  \\'rm2'\\ 1:4       no 2
+  \\'rm**'\\          no results with 2 digits
+  \\'rm**:****'\\     no results with 2 to 4 digits
+  \\'rm{3,[2:5]}'\\   a rule's value is Numberat too: no 2 to 5
+If a line can't give anything the rules let out, it stops after
+1,000 tries and says why (the NPC doesn't spawn).
+
+Asterisks only:
+  \\'arm0'\\ *        the asterisk never gives 0 (1 to 9)
+  \\'ainc0'\\         asterisks may give 0
+  \\'a2 rm0'\\        asterisk 2 ('2*') only; also \\''a2'inc0'\\
+  \\'ainc negbrahm'\\ \\'arm0'\\ *+10    1 to 19, never 10
+
+Which lines:
+  \\'rm1'\\           this line only
+  \\!'rm1'\\          the whole file
+  \\'n1:4 rm0'\\      lines 1 to 4 (any value: 'n[1,5,[2:3]]')
+  \\lin!!'inc1'\\     this line, as strong as !!
+
+The strongest rule wins: more ! is stronger. \\!!'inc1'\\ beats
+\\!'rm1'\\. With the same number of !, the later rule wins.
+
+  \\!'rm1'\\
+  [1:5]                 2 to 5
+  \\lin!!'inc1'\\ [1:5]  1 to 5
+
+Limits: see limits.txt. Asterisk rules (mormax ...): asteriskrules.txt.
 `,
   "window.txt": `The Numberat window
 
