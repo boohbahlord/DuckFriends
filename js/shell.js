@@ -372,7 +372,10 @@ function guard(path, write) {
   if (t) {
     const s = roomS(),
       r = t.rel ? nbRights(s, t.id, t.rel, fs.meId) : "---";
-    if (!canHomes(s, fs.meId) && !kind(path))
+    if (
+      !canHomes(s, fs.meId) &&
+      (!kind(path) || (!t.rel && !theirNames(t).length))
+    )
       fail(
         `✗ ${path}: Permission denied (looking in other players' folders takes canhomes, or a right ${t.name} gives you)`,
       );
