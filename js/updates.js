@@ -9,6 +9,20 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v95",
+    version: 95,
+    date: "Nov 19, 2026",
+    title: "Numberat files that do things",
+    news: [
+      "For Sandbox: Numberat files can now hold statements: let, def, for, while, \\if … else, print and say, seed, use, give and take, plus when and every for NPCs.",
+      "For Sandbox: Run won't start a file with mistakes; it lists them by line. Otherwise it prints what the file's own lines say.",
+      "For Sandbox: new help pages: files, names, who, tests, loops, print, line rules, asterisk rules and percents.",
+    ],
+    fixed: [
+      "For Sandbox: NPCs that spawn in a zone now always stay inside it.",
+    ],
+  },
+  {
     id: "v94",
     version: 94,
     date: "Nov 19, 2026",

@@ -177,9 +177,8 @@ Every Numberat value works anywhere a number goes below: `wait 1:3`, `every [2,4
 12. **Smallest, biggest, leftover**: `min 3 hp`, `max 1 speed`, `mod`: `\if spawned mod 3 == 0\` = every 3rd spawn.
 13. **Blocks with inputs**: `def hurt(n) { ((hp hp-n)) }`, then `hurt 3`.
 14. **Text with values**, bash style: inside double quotes in `print`/`say`, asterisks, `$` letters and named values
-    are worked out (`say "zombie $$*"` might say "zombie qe7"; `say "rage is rage"` says "rage is 7"); inside single
-    quotes the text stays exactly as typed (`say 'zombie $$*'` says "zombie $$*"). A value can also sit outside the
-    quotes: `say "rage is " rage`. After `print`/`say`, quotes are text; everywhere else double quotes still multiply.
+    are worked out (`say "zombie $$*"` might say "zombie qe7"; every name is worked out too, so `say "rage is rage"` says "7 is 7"); inside single
+    quotes the text stays exactly as typed (`say 'zombie $$*'` says "zombie $$*"). To keep a word, put it in single quotes and the value beside it: `say 'rage is ' rage`. After `print`/`say`, quotes are text; everywhere else double quotes still multiply.
 15. **Same random every run**: `seed 42`. Without it, random as usual.
 16. **Built-in names**: `wave` (Dead Ducks Arcade's round number, the owner's word; `round` is taken by rounding),
     `time`, `alive`, `dead`, `spawned`.
