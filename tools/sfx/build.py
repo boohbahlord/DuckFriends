@@ -1100,6 +1100,20 @@ SOUNDS = {
             KENNEY_RPG,
         ),
     ),
+    # a melee breaking (the owner, Nov 19: "every melee, when it breaks, should have the same sound"): a sharp crack
+    # of something giving way, with a dull, darker clink of metal under it, short and not loud
+    "meleeBreak": dict(
+        layers=[
+            ("oga:board-broken/crack01.flac", 0.17, 0.4, 0, 1),
+            ("gh:melee/clang-dull-1.flac", 0.02, 0.3, 0.01, 0.3, 2200),
+        ],
+        rate=0.94,
+        lp=3000,
+        credit=(
+            "Independent.nu, 35 Wooden Cracks/Hits/Destructions (crack01); alienistcog, clang (freesound 124711, from Stendhal)",
+            "https://opengameart.org/content/35-wooden-crackshitsdestructions",
+        ),
+    ),
     "panHit": dict(
         layers=[
             ("gh:melee/clang-dull-1.flac", 0.15, 0.27, 0, 1),
