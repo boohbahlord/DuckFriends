@@ -4,7 +4,7 @@
    and the sounds: the power going out, coming on, a jerry can found, gas pumped, gas poured. l4dd.js calls these. */
 import { heightAt, seenFrom, sortY, layoutVariant } from "./hangout/layout.js";
 import { olAdd, olFloor, olPic } from "./outlines.js";
-import { svgDataURL } from "./hangout/art.js";
+import { svgDataURL } from "./svgurl.js";
 import { play } from "./sound.js";
 import {
   PW,

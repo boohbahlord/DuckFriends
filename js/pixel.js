@@ -6,7 +6,7 @@
    much cheaper to draw than the drawings it replaces.
    It is the game's only look (owner, Nov 16: it replaces the old one, with no setting): <html> has the class "pixel"
    (index.html), and css/app.css keys on it. */
-import { svgDataURL } from "./hangout/art.js";
+import { svgDataURL } from "./svgurl.js";
 import { applyPalette } from "./pixelpalette.js";
 import { hasRb, rbSprite, RB_N } from "./rainbowskin.js";
 

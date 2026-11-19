@@ -9,7 +9,7 @@
    heldOf) and its shots are lines to where they went (npcShot). Used on the board (game.js placeZombies) and on Duck Cabin
    (sbspawnview.js) */
 import { duckSVG } from "./duck.js";
-import { svgDataURL } from "./hangout/art.js";
+import { svgDataURL } from "./svgurl.js";
 import { zombieURL, zombieBox } from "./l4ddart.js";
 import { zombieLook } from "./l4ddrules.js";
 import { esc } from "./ui.js";
