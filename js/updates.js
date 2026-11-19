@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v113",
+    version: 113,
+    date: "Nov 19, 2026",
+    title: "Lighter settings keep the countdown",
+    news: [],
+    fixed: [
+      "With Animations off or any lighter performance setting, the start's countdown and the loading screen show again, and notes like the merchant's arrival stay long enough to read.",
+    ],
+  },
+  {
     id: "v112",
     version: 112,
     date: "Nov 19, 2026",
