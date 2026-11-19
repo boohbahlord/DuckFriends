@@ -45,6 +45,7 @@
    ctx = { state(), me, send(action), world } (world: toScreen, heightAt, sc, vw and vh (the board's size, without making the
    browser lay the page out again), board, propEl(id), at(id) → where a duck is drawn { x, y, z } in world px, or null, shines(l) → is that light on now). */
 import { baseMode, baseL4map, isSb } from "../sandboxrules.js";
+import { isSurv } from "../survrules.js";
 export const RULES = new Map(); // k → its rules
 export const ACTS = new Map(); // id → its screen part
 export const rule = (k, r) => {
@@ -67,8 +68,9 @@ export const keepOnly = (mode, rules, acts, quiet = []) => {
     quiet: new Set(quiet),
   });
 };
-const runs = (mode, key, o, kind, sb = false) => {
+const runs = (mode, key, o, kind, sb = false, sv = false) => {
   if (o.only === "sandbox") return sb; // (Sandbox's own parts, on whichever world it is on: sbspawnview.js)
+  if (o.only === "surv") return sv; // (Survival's own parts, on Downpour: gunmenview.js)
   if (mode === "l4dd-dp")
     return o.only
       ? o.only === "l4dd"
@@ -89,17 +91,21 @@ const modeOf = (s) => {
   return m === "l4dd" && baseL4map(o) === "downpour" ? "l4dd-dp" : m;
 };
 export const rulesOf = (s) =>
-  [...RULES].filter(([k, r]) => runs(modeOf(s), k, r, "rules", isSb(s)));
+  [...RULES].filter(([k, r]) =>
+    runs(modeOf(s), k, r, "rules", isSb(s), isSurv(s)),
+  );
 const actsCache = new Map(); // mode → [its screen parts] (the activities all register as the page loads)
 export function actsOf(s) {
   const sb = isSb(s),
+    sv = isSurv(s),
     mode = modeOf(s),
-    c = actsCache.get(mode + (sb ? "+sb" : ""));
+    key = mode + (sb ? "+sb" : "") + (sv ? "+surv" : ""),
+    c = actsCache.get(key);
   if (c && c.n === ACTS.size) return c.list;
   const quiet = (KEEP.get(mode) || {}).quiet || new Set(),
     list = [...ACTS.values()]
-      .filter((a) => runs(mode, a.id, a, "acts", sb))
+      .filter((a) => runs(mode, a.id, a, "acts", sb, sv))
       .map((a) => (quiet.has(a.id) ? hush(a) : a));
-  actsCache.set(mode + (sb ? "+sb" : ""), { n: ACTS.size, list });
+  actsCache.set(key, { n: ACTS.size, list });
   return list;
 }

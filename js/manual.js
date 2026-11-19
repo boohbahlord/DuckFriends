@@ -176,6 +176,8 @@ export const MAN = {
   mode: "sudo mode <aod | wyr | ddr | bb | sc | quack | law | dunce | mgj | vdd | trivia | hang>: the game type, in the lobby. mode alone lists them. hang is Hangout: no rounds, no winners, just Duck Cabin.",
   start: "sudo start: starts the game from the lobby, like the Start button.",
   secret: "Some codes unlock things.",
+  theme:
+    "theme [name]: the look of Seriat's window and of this command line, one of the Nous Within Kenoma book's variations: kenoma, crossroads, architectured, ten, chalice or fool. theme alone says the one you have. Tab finishes the name, Enter applies it; the Theme box in the top right of the Seriat window is the same choice. Kept on this device.",
   fps: "fps [on | off]: a small readout at the top left: frames a second, how long each part of a frame takes, long tasks and the page's elements. It stays on, on this device, until fps off (?fps in the address turns it on too).",
   forgame:
     "forgame show: the game's settings (anyone). sudo forgame all-timer off|on · timer off|on catch-up|answer|writing [seconds] · turn-end everyone|half|2/3|3/4 · order random|rotate · freeroam on|off · discussion on|off (the Discussion round after each vote, off by default) · unvote-stops on|off (taking a vote back below the share stops the countdown) · gravity low|normal · silly on|off · justin on|off (Duck Cabin's Justin on the board; he never counts) · ghosts on|off (Duck Cabin: a knocked-down duck's ghost walks about until Space) · and mutes everyone sees: forgame [roundsN] [stage[N] voting lobby writing discussing stats] \\mute on|off bubble ping text all @names (roundsN: for N turns; stage2 voting: the next two voting stages; @names can be Justin and the other characters too).",

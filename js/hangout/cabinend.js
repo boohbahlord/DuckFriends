@@ -3,7 +3,7 @@
    click again takes the vote back (never Enter or E). Half of the people (not the computers) start a 10 second timer
    that shows on the button; fewer than half stops it. The rules are in js/rules.js (`cabinEnd`, `cabinOver`). */
 import { cabinVotes, cabinNeeded, isHang } from "../rules.js";
-import { isSb, sbOnBoard } from "../sandboxrules.js";
+import { isSb, sbOnBoard, baseL4map } from "../sandboxrules.js";
 import {
   isL4dd,
   srOpen,
@@ -112,7 +112,7 @@ export function mountCabinEnd(S, getR) {
         !(R.state.players[R.me] || {}).bot, // (and Sandbox's Leave Sandbox, on the board too)
       c = s.cabinEnd || {},
       left = c.at ? Math.max(0, Math.ceil((c.at - Date.now()) / 1000)) : 0,
-      txt = `${isSb(s) ? "Leave Sandbox" : isL4dd(s) ? (s.options.l4map === "downpour" ? "Exit Downpour" : "Exit Cabin") : "End Cabin"} ${cabinVotes(s)}/${cabinNeeded(s)}${c.at ? ` · ${left}s` : ""}`;
+      txt = `${isSb(s) ? "Leave Sandbox" : isL4dd(s) ? (baseL4map(s.options) === "downpour" ? "Exit Downpour" : "Exit Cabin") : "End Cabin"} ${cabinVotes(s)}/${cabinNeeded(s)}${c.at ? ` · ${left}s` : ""}`;
     b.hidden = !on;
     b.classList.toggle("on", !!(c.by || {})[R.me]);
     b.classList.toggle("ticking", !!c.at);

@@ -1,5 +1,5 @@
 {
-"v": "202611192320",
+"v": "202611192329",
 "files": {
 "assets/app/apple-touch-icon.png": "cda48ff597",
 "assets/app/icon-192.png": "8e062adfdc",
@@ -76,6 +76,7 @@
 "assets/px/modes/mgj.webp": "8f2a2dc0d9",
 "assets/px/modes/quack.webp": "455972abe3",
 "assets/px/modes/sc.webp": "12fe46b5e2",
+"assets/px/modes/surv.webp": "e3f62724cd",
 "assets/px/modes/trivia.webp": "8e5d15638c",
 "assets/px/modes/vdd.webp": "a205097af3",
 "assets/px/modes/wyr.webp": "a356b14812",
