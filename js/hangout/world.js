@@ -993,6 +993,12 @@ export function mountWorld(board, api) {
       );
     },
     coverAt: (l, r, t, b, zi) => coverAt(l, r, t, b, zi), // (the outlines: outlines.js; zi, its z-index)
+    /* is anything drawn over a box on the screen (l, r, t, b) at z-index zi, see-through now or not, even a corner of it?
+       (game.js: a weapon in hand is drawn with its duck then, so it shows the way its duck does) */
+    under: (l, r, t, b, zi) => {
+      const d = { l, r, t, b };
+      return covers.some((c) => zi < c.z && covered(d, c.l, c.r, c.t, c.b) > 0);
+    },
     frameOf,
     /* where a duck is drawn: { x, y, z } in world px, or null (the outlines: its floor) */
     at(id) {
