@@ -151,7 +151,9 @@ cycling `[2,4]` that many times, then `[5,7,9]` or `[3,5]` a digit minus 1 or 2 
 Every Numberat value works anywhere a number goes below: `wait 1:3`, `every [2,4]s`, `when near duck '1*'`.
 1. **Events**, code that runs when something happens: `when spawn`, `when hit`, `when dead`, `when near duck 3`,
    `when touch`, `every 2s`. Owner: "Code for more, like hitbox of duck for example": every stat of a duck or NPC can be
-   read and set by name, its hitbox too: `((hitbox 1.5))`, `\if hitbox > 2\`. **[open]** the full list of stats.
+   read and set by name, its hitbox too: `((hitbox 1.5))`, `\if hitbox > 2\` (0.1 to 3: bigger to hit, longer
+   reach; live V99). Another NPC's stat is `z hp` with `z` from a loop: `for z in team ((z hp z hp+1))` (live V99).
+   **[open]** the full list of stats.
 2. **Actions**: `go nearest duck`, `attack`, `flee`, `wait 1.5`, `say "hi"` (quotes as in print).
 3. **Who**: `me`, `nearest duck`, `all zombies`, `team`: what an action or a stat applies to.
 4. **Chance in percent** (owner 13:32Z: "uses percentage with percent sign"; replaces the `~` weights):

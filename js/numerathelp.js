@@ -385,7 +385,7 @@ every 1s \\if hp < 5\\ flee else go nearest duck
 when hit \\if hp < 5\\ flee
 `,
   "healer.num": `# A healer: every few seconds each NPC on its team gets 1 HP more.
-# (z hp is NPC z's HP: see names.txt. Each healer up gives its own.)
+# (z hp is NPC z's HP: see names.txt. Each healer on the board gives its own 1 HP.)
 every [3,5]s for z in team ((z hp z hp+1))
 `,
   "rage-give.num": `# The first of a pair: this file makes rage and gives it to the other file.

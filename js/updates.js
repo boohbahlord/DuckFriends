@@ -12,9 +12,11 @@ export const UPDATES = [
     id: "v99",
     version: 99,
     date: "Nov 19, 2026",
-    title: "Smoother Downpour",
+    title: "Smoother Downpour, smarter brains",
     news: [
       "For Dead Ducks Arcade: Downpour runs smoother on slower computers.",
+      "For Sandbox: a Brain file's hitbox now counts. A bigger hitbox makes an NPC easier to hit and lets its claw reach further.",
+      'For Sandbox: a Brain file can read another NPC\'s stats ("z hp"), so the healer example now gives each NPC on its team 1 HP.',
     ],
     fixed: [],
   },
