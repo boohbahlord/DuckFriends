@@ -44,8 +44,7 @@ function setGrid() {
    ducks', so the pixels match. (The usual pixelate filter: a 1 × 1 dot tiled every square, kept where the picture is,
    then grown to fill its square.) */
 let filt = null,
-  filtMade = [], // (each filter's markup as last made)
-  camK = 1; // (the zoom Duck Cabin's props are shown at: setCamScale)
+  filtMade = []; // (each filter's markup as last made)
 /* one filter, in the screen's pixels: n of them to a square, k to a css px of its layer. A 1 × 1 dot (one screen pixel,
    so one color) is kept in each square, then grown to fill it: an odd square grows round its middle; an even one grows
    to one less, then is laid over itself a pixel right and a pixel down (a grown dot can only be an odd size) */
@@ -69,13 +68,9 @@ function filterGrid() {
     document.body.append(filt);
   }
   const n = Math.round(grid * dprAt);
-  /* px-fc: for a layer that is itself shown zoomed (a Duck Cabin prop, scaled by the camera): the filter works before
-     the zoom, so its squares are made 1/zoom as big, and come out one grid square on the screen like everything else
-     (owner, Nov 16: one pixel size for every background) */
-  const want = [
-    filterHTML("px-f", n, dprAt),
-    filterHTML("px-fc", n, dprAt * camK),
-  ];
+  /* (px-fc, the porch's filter under Duck Cabin's zoom, is gone: its lights are a picture made on the grid already,
+     pxdom.js, so the filter only drew those same pixels again each frame) */
+  const want = [filterHTML("px-f", n, dprAt)];
   want.forEach((h, i) => {
     if (filtMade[i] === h) return; // (made again only when it changed)
     filtMade[i] = h;
@@ -84,12 +79,6 @@ function filterGrid() {
     if (filt.children[i]) filt.children[i].replaceWith(t.firstChild);
     else filt.append(t.firstChild);
   });
-}
-/* the zoom Duck Cabin shows its props at (world.js' camera) */
-export function setCamScale(k) {
-  if (!(k > 0) || Math.abs(k - camK) < 0.001) return;
-  camK = k;
-  filterGrid();
 }
 if (document.readyState === "loading")
   addEventListener("DOMContentLoaded", filterGrid);

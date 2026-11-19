@@ -659,7 +659,7 @@ function draw(now) {
       a = lo + (hi - lo) * bez(n % 2 ? 1 - f : f); // (2.2 s each way, alternate)
     }
     ctx.globalAlpha = a;
-    ctx.drawImage(r.bm, 0, r.y);
+    ctx.drawImage(r.bm, r.x || 0, r.y);
   }
 }
 const tick = (now) => {
@@ -674,8 +674,15 @@ onmessage = (e) => {
   if ("moving" in m) { const was = moving && on; moving = m.moving; light = m.light; on = m.on; draw(performance.now()); if (moving && on && !was) next(); }
 };`;
 let floorURL = null;
-export async function floorCanvas(root) {
-  const imgs = [...root.querySelectorAll(":scope > img.bd-dots[data-y]")];
+export async function floorCanvas(root, g = 0) {
+  const baked = g > 0, // (the rows already made into pixels, pxbake.js: drawn as they are, one pixel to a square)
+    imgs = [
+      ...root.querySelectorAll(
+        baked
+          ? ":scope > canvas.bd-dots.px-baked[data-y]"
+          : ":scope > img.bd-dots[data-y]",
+      ),
+    ];
   if (
     !imgs.length ||
     typeof Worker !== "function" ||
@@ -694,6 +701,7 @@ export async function floorCanvas(root) {
     bottom = Math.max(...rows.map((r) => r.y1));
   if (!W || !H) return;
   try {
+    if (baked) return await floorPixels(root, imgs, rows, g);
     await Promise.all(imgs.map((im) => im.decode()));
     const out = [];
     for (const r of rows) {
@@ -729,29 +737,70 @@ export async function floorCanvas(root) {
       });
     imgs[0].before(cv);
     for (const im of imgs) im.remove();
-    wk.postMessage({ canvas: off, rows: out, ...state() }, [
-      off,
-      ...out.map((r) => r.bm),
-    ]);
-    /* the page's motion setting and theme as they change; stopped while hidden, and for good once it's gone */
-    let was = JSON.stringify(state());
-    const tell = () => {
-      const st = state(),
-        k = JSON.stringify(st);
-      if (k !== was) {
-        was = k;
-        wk.postMessage(st);
-      }
-    };
-    const mo = new MutationObserver(tell);
-    mo.observe(html, { attributes: true, attributeFilter: ["class"] });
-    document.addEventListener("visibilitychange", tell);
-    const watch = setInterval(() => {
-      if (cv.isConnected) return tell();
-      clearInterval(watch);
-      mo.disconnect();
-      document.removeEventListener("visibilitychange", tell);
-      wk.terminate();
-    }, 1000);
+    floorRun(root, cv, wk, off, out);
   } catch {} // (anything that fails leaves the pictures as they were)
+}
+/* the rows made into pixels (pxbake.js): one canvas with a pixel for each grid square, shown sharp */
+async function floorPixels(root, cvs, rows, g) {
+  const top = Math.min(...cvs.map((c) => c._at[1])),
+    W = Math.max(...cvs.map((c) => c._at[0] + c.width)),
+    H = Math.max(...cvs.map((c) => c._at[1] + c.height)) - top,
+    out = [];
+  for (let k = 0; k < cvs.length; k++) {
+    const c = cvs[k];
+    out.push({
+      bm: await createImageBitmap(c),
+      x: c._at[0],
+      y: c._at[1] - top,
+      dl: rows[k].dl,
+    });
+  }
+  if (!cvs[0].isConnected) return;
+  const cv = document.createElement("canvas");
+  cv.className = "bd-layer bd-floor px-baked";
+  cv.style.cssText = `top:${(top * g).toFixed(3)}px;width:${(W * g).toFixed(3)}px;height:${(H * g).toFixed(3)}px`;
+  cv.width = W;
+  cv.height = H;
+  floorURL =
+    floorURL ||
+    URL.createObjectURL(new Blob([FLOOR_WORKER], { type: "text/javascript" }));
+  const wk = new Worker(floorURL),
+    off = cv.transferControlToOffscreen();
+  cvs[0].before(cv);
+  for (const c of cvs) c.remove();
+  floorRun(root, cv, wk, off, out);
+}
+/* the worker drawing the floor, told when the page's motion setting or theme changes; stopped while hidden, and for
+   good once it's gone */
+function floorRun(root, cv, wk, off, out) {
+  const html = document.documentElement,
+    state = () => ({
+      moving: html.classList.contains("moving"),
+      light: root.id === "shapes" && !html.classList.contains("dark"),
+      on: !document.hidden && cv.isConnected && !!cv.getClientRects().length,
+    });
+  wk.postMessage({ canvas: off, rows: out, ...state() }, [
+    off,
+    ...out.map((r) => r.bm),
+  ]);
+  /* the page's motion setting and theme as they change; stopped while hidden, and for good once it's gone */
+  let was = JSON.stringify(state());
+  const tell = () => {
+    const st = state(),
+      k = JSON.stringify(st);
+    if (k !== was) {
+      was = k;
+      wk.postMessage(st);
+    }
+  };
+  const mo = new MutationObserver(tell);
+  mo.observe(html, { attributes: true, attributeFilter: ["class"] });
+  document.addEventListener("visibilitychange", tell);
+  const watch = setInterval(() => {
+    if (cv.isConnected) return tell();
+    clearInterval(watch);
+    mo.disconnect();
+    document.removeEventListener("visibilitychange", tell);
+    wk.terminate();
+  }, 1000);
 }

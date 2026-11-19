@@ -8,6 +8,8 @@
 import { esc } from "./ui.js";
 import { mirrorBars } from "./meters.js";
 import { hurtSway } from "./fxmotion.js";
+import { bakeFill } from "./pxbake.js";
+import { pixelOn } from "./pixel.js";
 import { hpText, tenths } from "./hpmath.js";
 
 /* a meter shows one block for each HP; with more HP than this, each block holds a few, so the blocks stay blocks */
@@ -67,6 +69,28 @@ const WHITE_MS = 500, // a hit's blocks: fully white in this long
   BACK_MS = 1000, // an HP back: from white to full red in this long
   BLINK_MS = 120; // one blink (on and off) while a hit's blocks whiten; faster with each hit more
 
+/* the hurt corners as css/app.css draws them (.hurt-edge: four circles of --hc fading out by --hr), for pxbake.js */
+export function hurtPaint(x, w, h, el) {
+  x.fillStyle = getComputedStyle(el).getPropertyValue("--hc");
+  const c = x.fillStyle, // (read back as rgba(r, g, b, a) or #rrggbb)
+    clear = c.startsWith("#") ? c + "00" : c.replace(/,\s*[\d.]+\)$/, ", 0)"), // (the same color, see-through: a fade to it stays red)
+    r = Math.min(
+      0.27 * Math.max(innerWidth, innerHeight),
+      0.4 * Math.hypot(w, h),
+    ); // (--hr: min(27vmax, 40%))
+  for (const [cx, cy] of [
+    [0, 0],
+    [w, 0],
+    [0, h],
+    [w, h],
+  ]) {
+    const g = x.createRadialGradient(cx, cy, 0, cx, cy, r);
+    g.addColorStop(0, c);
+    g.addColorStop(1, clear);
+    x.fillStyle = g;
+    x.fillRect(0, 0, w, h);
+  }
+}
 /* my meter: mounted once, then set every frame (it only changes what changed). set(hp, max, sprint, tired, regen):
    sprint is 0 … 1, or null where sprinting never runs out (no blue bar then); regen is how far the next HP is to coming
    back, 0 … 1, or null (no regen) */
@@ -88,6 +112,7 @@ export function mountMeter() {
   edge.setAttribute("aria-hidden", "true");
   document.body.append(edge);
   const blink = () => {
+    if (pixelOn()) bakeFill(edge, hurtPaint); // (its corners as pixels, made once: no filter on the whole board)
     edge.classList.remove("on");
     void edge.offsetWidth; // (a second hit starts it over)
     edge.classList.add("on");
