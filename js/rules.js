@@ -2386,6 +2386,12 @@ function reduceStep(state, a, now) {
       if (!me || !p || p.x < 0 || !boardPhases(s).includes(s.phase))
         return state;
       if (isL4dd(s)) return l4Use(s, a, now) ? s : state; // (Quacky Zombies: its own weapons, l4ddrules.js)
+      /* the normal games: a downed duck can't use a weapon, and neither can one just back from dying, in its spawn protection,
+         where what it shot or swung hurt nobody anyway (the owner's, Nov 19 16:30Z: "when players are downed in normal modes
+         they should not be able to do damage or use their weapons" and "they still get their invulnerability frames where they
+         cannot fire or attack with weapons during"). Sandbox keeps its own downs */
+      if (normalGame(s) && !isSb(s) && (me.dead || shielded(s, a.id, now)))
+        return state;
       const downGun =
         isMgj(s) && sp === "handgun" && !!me.dead && mgjOut(s, a.id); // (Mad God Justin: out of HP, the down pistol still fires: the owner's, Nov 17 11:07Z)
       if (
