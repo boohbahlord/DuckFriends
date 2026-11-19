@@ -9,6 +9,20 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v103",
+    version: 103,
+    date: "Nov 19, 2026",
+    title: "Throw the chair, everyone burns",
+    news: [
+      "For Sandbox: NPCs and Justin catch fire from the flamethrower now, and burn for 3 seconds.",
+      "For Dead Ducks Arcade: less work when the screen shakes, so heavy fights run a little lighter.",
+    ],
+    fixed: [
+      "For Sandbox: the chair (and anything else put on the hotbar) now works; with a weapon in hand, the chair's key puts it away and throws.",
+      "For Sandbox: the language is called Numberat everywhere, its folder too (notes/numberat).",
+    ],
+  },
+  {
     id: "v102",
     version: 102,
     date: "Nov 19, 2026",
