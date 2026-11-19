@@ -6880,3 +6880,10 @@ Now (Adam): uploaded NPC pictures exist (Appearance tab, s.sbpic), drawn 64 wide
 Size for players can now be edited in the customization menu, and they can only be 50% size at the smallest and 500% size at the biggest (hitbox stays the same for smaller ones but becomes bigger for bigger ducks)"
 
 Decided (Adam): 1 a cropped picture is hit only where it is. 2 an erased background: only the visible pixels are hit ("invisible" meant visible). 3/4 at 100% a picture is 32 pixels tall like a duck; bigger = more pixels of the same size. NPC smallest left unanswered: Adam picked 10%, biggest = Mad God Justin's height. 5 size changes picture and hitbox together; Numberat's hitbox becomes percent (10% to 300%). 6 every custom NPC can be resized (pictures, ducks, zombies). Players: a Size row in customization, 50% to 500%, every mode; hitbox stays 100% below 100% and grows above it. Build: Noah.
+
+## Owner, Nov 19 15:54Z
+"the board should not be set to agree or disagree template by default. no template is default template no matter the map for sandbox
+
+sounds can be enabled or disabled for templates by default in a ui menu in game settings"
+
+Adam: Sandbox has no template setting in code yet (templates = the spec's presets from Agree or Disagree / Would You Rather, line 125 of sandbox-mode-rules.txt). Asked the owner which they see (A board frame, B Agree or Disagree sounds, C other).
