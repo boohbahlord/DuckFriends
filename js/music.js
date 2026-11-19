@@ -17,7 +17,7 @@
 import { profile } from "./store.js";
 import { activeRoom } from "./later.js"; // (the room code comes after the first screen)
 import { now as clockNow } from "./clock.js";
-import { ceiling, sfxContext } from "./sound.js";
+import { ceiling, sfxContext, modeDb } from "./sound.js";
 import { netLevel } from "./settings.js";
 import { baseMode } from "./sandboxrules.js";
 
@@ -65,7 +65,10 @@ const QUIET = ["l4dd", "mgj"];
    loud, maybe … it's something that you play with friends", so 4 dB under that (was 0.45) */
 const BASE = 0.28;
 const LV = () =>
-  BASE * (profile.settings.sound / 100) * (profile.settings.music / 100);
+  BASE *
+  (profile.settings.sound / 100) *
+  (profile.settings.music / 100) *
+  10 ** (((modeDb() || {}).music || 0) / 20); // (a mode's own loudness: sound.js MODE_DB)
 
 /* ---------- the next song ----------
    A random pick that leans away from the songs heard most recently (each song's chance grows with the minutes since it

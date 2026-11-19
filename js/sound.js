@@ -24,6 +24,7 @@
 import { profile } from "./store.js";
 import { FILES } from "./sfxlist.js";
 import { netLevel } from "./settings.js";
+import { activeRoom } from "./later.js"; // (the room code comes after the first screen)
 
 /* how loud each sound is, in dB, the owner's to change: 0 plays the file as it is (each file peaks a little under full
    scale). Tiers: the menus' sounds faint, footsteps quiet (a duck's very quiet, a zombie's far quieter), the weapons
@@ -312,6 +313,23 @@ const HEAD = 0.7;
 const level = () =>
   HEAD * (profile.settings.sound / 100) * ((profile.settings.sfx ?? 100) / 100);
 
+/* each mode's own loudness, in dB over everything else (the Settings sliders stay as they are). I want Survival a
+   little louder than the rest, about as loud as the whole game was before Nov 19, but its annoying guns as quiet as
+   they are now (KEEP). Keyed by the mode's id (s.options.mode); music.js reads .music */
+export const MODE_DB = { surv: { sfx: 3, music: 4 } };
+const KEEP = new Set(["burst", "tommy", "ump"]); // (the guns the owner found loud and harsh, Nov 19)
+/* the mode being played: only on the game screen (the lobby and the menus keep the usual loudness) */
+export function modeDb() {
+  if (document.body.dataset.screen !== "game") return null;
+  const r = activeRoom(),
+    s = r && r.state;
+  return (s && s.options && MODE_DB[s.options.mode]) || null;
+}
+const modeK = (name) => {
+  const m = !KEEP.has(name) && modeDb();
+  return m && m.sfx ? 10 ** (m.sfx / 20) : 1;
+};
+
 /* "now" on the sound clock, plus a lead. Firefox only moves currentTime between tasks, so a sound set during a long frame
    read a clock that had stopped and landed in the past: if the clock hasn't moved since I last looked, I add the time
    that has passed since then (at most a quarter of a second) */
@@ -473,6 +491,7 @@ function voice(name, o = {}, loops = false) {
       (o.k ?? 1) *
       far *
       (side && side.lp ? 0.8 : 1) *
+      modeK(name) *
       10 ** ((VOL[name] || 0) / 20),
     low = lite();
   if (!list.length || k < 0.002 || !level()) return null;
