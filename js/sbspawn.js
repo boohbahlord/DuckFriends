@@ -33,6 +33,7 @@ import {
   SB_COLORS,
   SB_KEYS_TAKEN,
   SB_POINTS,
+  SB_LOOT,
 } from "./sandboxrules.js";
 import { Z_MOST, l4Spawn, l4Live } from "./l4ddrules.js";
 import { WAVE, zLook } from "./mgjrules.js";
@@ -95,7 +96,12 @@ const words = (t) =>
     .filter(Boolean);
 /* a box's settings (number, true or false, or text) */
 export const boxOf = (f) =>
-  SB_BOXES[f] || SB_FLAGS[f] || SB_PLAYER[f] || SB_TEXT[f] || null;
+  SB_BOXES[f] ||
+  SB_FLAGS[f] ||
+  SB_PLAYER[f] ||
+  SB_TEXT[f] ||
+  SB_LOOT[f] || // (a loot orb's: stage 4b, sbloot.js)
+  null;
 /* is this text good for box f? "" or why not */
 export function boxWhy(f, t) {
   const b = boxOf(f);
@@ -307,7 +313,7 @@ export function sbAct(s, a, now) {
   const pts = pointsOf(s);
   if (a.k === "add") {
     const me = s.pos[a.id];
-    if (!me || !["spawn", "respawn"].includes(a.kind)) return false;
+    if (!me || !["spawn", "respawn", "loot"].includes(a.kind)) return false; // (loot: an orb's spot, sbloot.js)
     if (Object.keys(pts).length >= SB_POINTS) return false;
     const n = ((s.sb && s.sb.n) || 0) + 1,
       cols = Object.keys(SB_COLORS),
@@ -499,6 +505,8 @@ export function sbAct(s, a, now) {
 /* which boxes a point takes: a respawn its "who" and what it imported; a spawn its own, and its Players tab's (a +
    page for players only those) */
 function canSet(p, f) {
+  if (p.k === "loot") return !!SB_LOOT[f] || f === "name"; // (a loot orb's own boxes: sbloot.js)
+  if (SB_LOOT[f]) return false;
   if (p.k === "respawn") return f === "who" || (p.im || []).includes(f);
   if (f === "who") return false;
   if (p.pg === "pl") return !!SB_PLAYER[f] || f === "pwho" || f === "name";

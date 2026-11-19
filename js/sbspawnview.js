@@ -42,9 +42,11 @@ import {
   picFrom,
   sendPic,
 } from "./sbmake.js";
+import { orbFace, lootRing, lootPage, lootWire } from "./sblootview.js";
 
 /* a point's picture: the hollow ring and its middle dot (a respawn: four points on the ring too) */
 function markSVG(p) {
+  if (p.k === "loot") return lootRing(SB_COLORS[p.col] || "#fff"); // (a loot orb's spot: sblootview.js)
   const c = SB_COLORS[p.col] || "#fff",
     pts =
       p.k === "respawn"
@@ -57,15 +59,17 @@ function markSVG(p) {
         : "";
   return `<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="40" fill="none" stroke="#fff" stroke-opacity="0.55" stroke-width="12"/><circle cx="50" cy="50" r="40" fill="none" stroke="${c}" stroke-opacity="0.75" stroke-width="6"/><circle cx="50" cy="50" r="11" fill="#fff" fill-opacity="0.8" stroke="${c}" stroke-width="3"/>${pts}</svg>`;
 }
-/* the points on a layer: at(p) → { left, top } where its middle is (board px), size its width */
-function drawMarks(layer, pts, at, size) {
+/* the points on a layer: at(p) → { left, top } where its middle is (board px), size its width; s: the room's state (a
+   loot point's orb and its picture) */
+function drawMarks(layer, pts, at, size, s) {
   const have = new Map();
   for (const n of layer.querySelectorAll(".sb-pt")) have.set(n.dataset.p, n);
   for (const [id, n] of have) if (!pts[id] || pts[id].grp) n.remove();
   for (const [id, p] of Object.entries(pts)) {
     if (p.grp) continue; // (a spawn's + page: drawn as its spawn)
     let n = have.get(id);
-    const sig = `${p.k} ${p.col} ${boxText(p, "name")}`;
+    const orb = p.k === "loot" && p.orb && p.orb.dn == null, // (a zombie drop draws itself: l4dd.js)
+      sig = `${p.k} ${p.col} ${boxText(p, "name")} ${orb ? p.orb.w + boxText(p, "look") + ((s && s.sbImg) || {})[id] : ""}`;
     if (!n) {
       n = document.createElement("div");
       n.className = "sb-pt";
@@ -74,7 +78,7 @@ function drawMarks(layer, pts, at, size) {
     }
     if (n._sig !== sig) {
       n._sig = sig;
-      n.innerHTML = `<span class="sb-pt-name" style="color:${SB_COLORS[p.col] || "#fff"}">${esc(boxText(p, "name"))}</span>${markSVG(p)}`;
+      n.innerHTML = `<span class="sb-pt-name" style="color:${SB_COLORS[p.col] || "#fff"}">${esc(boxText(p, "name"))}</span>${markSVG(p)}${orb ? `<span class="sb-orb">${orbFace(s, id, p)}</span>` : ""}`;
     }
     const c = at(p),
       st = `${c.left.toFixed(1)},${c.top.toFixed(1)},${size.toFixed(1)}`;
@@ -94,7 +98,7 @@ const ptsOf = (s) => (isSb(s) && s.sb && s.sb.pts) || {};
 export function sbBoardMarks(board, s, place, size) {
   const layer = board && board.querySelector(".ducks");
   if (!layer) return;
-  drawMarks(layer, sbOnBoard(s) ? ptsOf(s) : {}, place, size * 1.3);
+  drawMarks(layer, sbOnBoard(s) ? ptsOf(s) : {}, place, size * 1.3, s);
 }
 /* the point nearest my duck (me: its spot, shares of the map), within reach, or null: on the board 1.5 duck lengths, on
    a world 90 world px (as its E button: the zombie maps' own E would take the key first) */
@@ -170,6 +174,7 @@ export function sbSettings(getR, id, tab = "") {
   const typed = (f) => (p.f[f] ? p.f[f].t : boxText(p, f)),
     why = (f) => (p.f[f] ? boxWhy(f, p.f[f].t) : ""),
     spawn = p.k === "spawn",
+    loot = p.k === "loot", // (a loot orb's spot: sblootview.js)
     baseId = p.grp && pts[p.grp] ? p.grp : id,
     pages = Object.entries(pts).filter(([, q]) => q.grp === baseId),
     players = p.pg === "pl" || (!p.grp && tab === "pl"),
@@ -257,9 +262,9 @@ export function sbSettings(getR, id, tab = "") {
             : row(f, SB_BOXES[f], typed(f), why(f)),
       )
       .join("")}`;
-  const html = `<h2>${spawn ? "Spawn" : "Respawn"}</h2>${head}
-  <div class="sb-set">${!spawn ? respawn() : players ? playersPage() : look ? lookPage(R.state, p) : entity()}</div>
-  <p class="acts">${spawn && !players && !look ? `<button type="button" class="btn" data-go>Spawn</button>` : ""}${!spawn ? `<button type="button" class="btn" data-imp>Import settings</button>` : ""}<button type="button" class="btn ghost" data-del>${p.grp ? "Delete page" : "Delete"}</button></p>`;
+  const html = `<h2>${loot ? "Loot" : spawn ? "Spawn" : "Respawn"}</h2>${head}
+  <div class="sb-set">${loot ? lootPage(R.state, id, p, { row, flagRow, typed, why, colorRow }) : !spawn ? respawn() : players ? playersPage() : look ? lookPage(R.state, p) : entity()}</div>
+  <p class="acts">${spawn && !players && !look ? `<button type="button" class="btn" data-go>Spawn</button>` : ""}${!spawn && !loot ? `<button type="button" class="btn" data-imp>Import settings</button>` : ""}<button type="button" class="btn ghost" data-del>${p.grp ? "Delete page" : "Delete"}</button></p>`;
   openWindow(html, {
     cls: "sb-setwin",
     onOpen(w, close) {
@@ -268,6 +273,7 @@ export function sbSettings(getR, id, tab = "") {
         if (r) r.send({ t: "sb", p: id, ...a });
       };
       const timers = {};
+      if (loot) lootWire(w, id, send, getR);
       w.addEventListener("input", (e) => {
         const i = e.target.closest(".sb-box");
         if (!i) return;
@@ -446,6 +452,10 @@ export const buildRows = (R) =>
           label: "Place a respawn here",
           act: (r) => r.send({ t: "sb", k: "add", kind: "respawn" }),
         },
+        {
+          label: "Place loot here",
+          act: (r) => r.send({ t: "sb", k: "add", kind: "loot" }),
+        }, // (an orb's spot: sbloot.js)
       ]
     : [];
 
@@ -465,6 +475,7 @@ activity({
       spawnsHere(s) ? ptsOf(s) : {},
       (p) => ctx.world.toScreen(p.x * W, p.y * H, p.z || 0),
       size,
+      s,
     );
   },
   near(pos, ctx) {
@@ -483,7 +494,12 @@ activity({
     if (!best) return null;
     const k = ptsOf(s)[best].k;
     return {
-      label: k === "spawn" ? "Spawn settings" : "Respawn settings",
+      label:
+        k === "spawn"
+          ? "Spawn settings"
+          : k === "loot"
+            ? "Loot settings"
+            : "Respawn settings",
       d: bd,
       act: () =>
         sbSettings(

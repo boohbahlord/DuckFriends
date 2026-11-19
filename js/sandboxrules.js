@@ -160,3 +160,65 @@ export function sbPlayerSpot(s, id) {
     .map(([pid, q]) => ({ ...q, id: pid }));
   return rs.length ? rs[Math.floor(Math.random() * rs.length)] : null;
 }
+
+/* ---------- Sandbox's loot orbs (stage 4b) ----------
+   The owner's Sandbox file, "Loot Spawns": "Spawn Orbs can be placed on the ground and what they are is a dropdown menu
+   with drop down arrows PER category of loot", "multiple selections selected at a time to incidicate randomness", "also
+   include special drops from zombies", "how often they spawn, and even if they respawn", "if they are temporary,
+   unlimited, unlimited ammo, different damage (maybe loot can even deal damage to players)", and "Loot can have
+   different appearances based on other loot or image can be imported" (2 MB at most, the owner's, Nov 19 01:57Z).
+   A loot point is a point as a spawn is ({ k: "loot", … } in s.sb.pts), with these boxes */
+export const SB_LOOT = {
+  loot: {
+    name: "What it holds",
+    check: (t) =>
+      String(t)
+        .split(/[\s,]+/)
+        .filter(Boolean).length
+        ? String(t).length <= 300
+          ? ""
+          : "Too many"
+        : "Pick at least one",
+    def: "hotdog, maxammo",
+  },
+  again: {
+    name: "Seconds before it comes back",
+    kind: "int",
+    min: 1,
+    max: 600,
+    def: "10",
+  },
+  keep: {
+    name: "Seconds you keep it (0: for good)",
+    kind: "int",
+    min: 0,
+    max: 600,
+    def: "0",
+  },
+  hurt: {
+    name: "Damage to whoever takes it",
+    kind: "tenth",
+    min: 0,
+    max: 100,
+    def: "0",
+  },
+  back: { name: "Comes back", kind: "bool", def: "t" },
+  inf: { name: "Unlimited ammo", kind: "bool", def: "f" },
+  look: {
+    name: "Looks like",
+    check: (t) => (String(t).length <= 24 ? "" : "24 letters at most"),
+    def: "",
+  },
+};
+/* the zombies' special drops an orb can hold (l4ddrules.js DROPS): on Dead Ducks Arcade's maps only, for now (on the
+   others nothing would use them yet) */
+export const SB_DROPS = {
+  maxammo: ["ammo", "Max Ammo"],
+  nuke: ["nuke", "Nuke"],
+  instakill: ["kill", "Instant Kill"],
+  doublepoints: ["double", "Double Points"],
+  speedboost: ["speed", "Speed Boost"],
+  sale: ["sale", "Sale"],
+}; // (an orb's word for each, never a special's id: the Double jump is "double"; then the zombies' own name for it)
+/* an uploaded picture for an orb: a data URL no longer than this (the online actions' own cap is 200,000 letters) */
+export const SB_IMG_MAX = 150000;

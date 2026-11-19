@@ -5494,3 +5494,23 @@ export const l4Down = (s, id) => {
   const p = P4(s, id);
   return p && p.dn && !p.ex ? p.dn : 0; // (Justin dead for good: no down meter, the owner's, Nov 17 13:30Z)
 };
+
+/* ---------- Sandbox's loot orbs on these maps (sbloot.js) ----------
+   a weapon taken from an orb goes into duck id's slots as one bought or spun does (give), full; inf: unlimited ammo (as
+   much as never runs out in a sitting); and an orb's damage on the duck that takes it (as a claw does) */
+export function l4Loot(s, id, w, inf) {
+  if (!ARMS[w] || !give(s, id, w)) return false;
+  const kit = kitOf(s, id),
+    full = fullAmmo(w);
+  if (inf && kit && full)
+    s.hang.l4a = {
+      ...s.hang.l4a,
+      [id]: { ...kit, am: { ...kit.am, [w]: [full[0], 9999] } },
+    };
+  return true;
+}
+export function l4Hurt(s, id, dmg, now) {
+  const p4 = { ...(s.hang.l4p || {}) };
+  hurtDuck(s, p4, id, now, "claw", dmg);
+  s.hang.l4p = p4;
+}
