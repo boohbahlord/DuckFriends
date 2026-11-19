@@ -86,8 +86,9 @@ addEventListener("popstate", async (e) => {
     );
     asking = false;
     if (yes) {
+      if (screens[cur].back && screens[cur].back()) return; // (a screen that goes back its own way: Single Player's game)
       if (screens[cur].exit) screens[cur].exit();
-      go("rooms");
+      go(screens[cur].backTo ? screens[cur].backTo() : "rooms");
     }
     return;
   }

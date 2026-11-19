@@ -9,6 +9,22 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v125",
+    version: 125,
+    date: "Nov 19, 2026",
+    title: "Single Player stays home",
+    news: [
+      "For Dead Ducks Arcade: a melee that wears out breaks with its own crack sound.",
+      "For Dead Ducks Arcade: other players' outline is a slightly darker green, and Justin answers every hit that hurts him with an aggressive line.",
+      "The merchant rings a little bell when he arrives and when he runs off.",
+      "For Sandbox: placing, cutting, loot orbs and cheat mode all have their own soft sounds, and Seriat's Run and Stop each make a soft tick.",
+    ],
+    fixed: [
+      "In Single Player, leaving a game takes you back to the Single Player lobby, never the online rooms, and leaving that lobby goes to the front page.",
+      "In Single Player, the start counts 2, 1, 0, and Exit Cabin counts 5 seconds.",
+    ],
+  },
+  {
     id: "v124",
     version: 124,
     date: "Nov 19, 2026",

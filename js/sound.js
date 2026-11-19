@@ -36,6 +36,11 @@ export const VOL = {
   voteTick: -25, // (the votes' seconds: very soft)
   l4round: -14,
   l4over: -12, // (everyone's down: the game's ending, soft, Nov 19)
+  svHorde: -14, // (Survival: a horde coming, far off; svCalm: its last zombie down)
+  svCalm: -16,
+  defib: -12, // (Survival's defibrillator: a dead duck brought back)
+  merchantIn: -18, // (the merchant at his spot; merchantOut: running off)
+  merchantOut: -20,
   // moving
   step: -19,
   zstep: -27,
@@ -106,6 +111,16 @@ export const VOL = {
   axeHit: -10, // (… and its own hit)
   swordHit: -14,
   panHit: -12,
+  break: -10, // (a melee breaking, and any item that breaks once it runs out: one sound for all, the owner, Nov 19)
+  // Sandbox: something set down in build mode, and cut or deleted; a loot orb coming; cheat mode on and off
+  sbPlace: -16,
+  sbCut: -20,
+  sbOrb: -20,
+  cheatOn: -20,
+  cheatOff: -22,
+  // Seriat's window: a .se file set running, and stopped (a quiet tick each)
+  seRun: -22,
+  seStop: -24,
   hitArrow: -8,
   hitClaw: -10,
   // a round that missed, landing on the floor or a wall
@@ -250,7 +265,8 @@ const GROUPS = {
     ...["fire", "fireLight", "trombone"],
     ...["jetStart", "jetLoop", "jetStop", "chomp", "sip"],
     ...["knife", "hammer", "chair", "throw", "cakeThrow", "bonk"],
-    ...["axe", "sword", "pan", "axeHit", "swordHit", "panHit"],
+    ...["axe", "sword", "pan", "axeHit", "swordHit", "panHit", "break"],
+    ...["sbPlace", "sbCut", "sbOrb", "cheatOn", "cheatOff", "seRun", "seStop"],
     ...["boom", "boomSmall", "meteor", "tileIn", "quack"],
     ...["laser", "laserHiss", "laserSteam", "gore", "miss"],
     ...Object.keys(VOL).filter((n) => /^(reload|hit|land)[A-Z]/.test(n)),
@@ -259,6 +275,11 @@ const GROUPS = {
     ...[
       "l4round",
       "l4over",
+      "svHorde",
+      "svCalm",
+      "defib",
+      "merchantIn",
+      "merchantOut",
       "zstep",
       "nuke",
       "nukeRing",
@@ -857,6 +878,7 @@ addEventListener(
       );
     if (!b || b.disabled || b.classList.contains("win-x")) return; // (a window's X: its closing sound)
     if (b.classList.contains("vote-btn") || b.dataset.a === "hang") return; // (the Vote button and the use button click their own way: game.js, sfx.holdClick)
+    if (b.hasAttribute("data-run")) return; // (Seriat's Run and Stop: their own ticks, numeratwin.js)
     if (b.type === "checkbox") play(b.checked ? "uiOn" : "uiOff");
     else if (b.getAttribute("aria-pressed") === "false") play("uiOn");
     else if (b.hasAttribute("aria-pressed"))

@@ -1,0 +1,50 @@
+/* ---------- Sandbox's sounds ----------
+   What I want heard in Sandbox (the owner, Nov 19: "check for anything in which needs sounds"), read from the state, so
+   every player hears them:
+   - a point set down in build mode (a spawn, a respawn, a zone, loot: s.sb.pts), a soft knock (sbPlace); one cut or
+     deleted, the same knock backwards and quieter (sbCut);
+   - a loot orb coming (sbOrb), and one taken (Dead Ducks Arcade's own pickup, dropGot). On the zombie maps an orb can be
+     a zombie's drop (its dn), which already has its own sounds (l4ddsfx.js dropIn, l4dd.js dropGot): those are left be.
+   On a world each comes from its spot and fades with distance; on the board it is heard by all alike.
+   sbHear(s, world): world true on Duck Cabin, the zombie cabin and Downpour (their activity below), false on the board
+   (game.js). Cheat mode (sandbox.js) is my own switch, so its chime is played there (sbCheatSound). */
+import { play } from "./sound.js";
+import { isSb } from "./sandboxrules.js";
+import { activity } from "./hangout/registry.js";
+import { W, H } from "./hangout/layout.js";
+
+let seen = null; // id → { orb: its orb or null, dn: a zombie drop's number }
+export function sbHear(s, world) {
+  if (!isSb(s)) {
+    seen = null;
+    return;
+  }
+  const pts = (s.sb && s.sb.pts) || {};
+  const first = !seen,
+    now = new Map(),
+    at = (p) => (world ? { x: p.x * W, y: p.y * H } : {}),
+    orbAt = (p, o) =>
+      at(o && Number.isFinite(o.x) && Number.isFinite(o.y) ? o : p); // (an orb in a zone lies there)
+  for (const [id, p] of Object.entries(pts)) {
+    const was = seen && seen.get(id),
+      orb = p.orb || null;
+    now.set(id, { orb, p });
+    if (first) continue;
+    if (!was) play("sbPlace", at(p));
+    else if (orb && !was.orb && orb.dn == null)
+      play("sbOrb", orbAt(p, orb)); // (a zombie's drop has its own: l4ddsfx.js dropIn)
+    else if (!orb && was.orb && was.orb.dn == null)
+      play("dropGot", orbAt(p, was.orb));
+  }
+  if (seen && !first)
+    for (const [id, was] of seen) if (!now.has(id)) play("sbCut", at(was.p));
+  seen = now;
+}
+/* cheat mode, switched on or off (sandbox.js): a short chime up, or down */
+export const sbCheatSound = (on) => play(on ? "cheatOn" : "cheatOff");
+
+activity({
+  id: "sbsfx",
+  only: "sandbox",
+  onState: (s) => sbHear(s, true),
+});

@@ -11,6 +11,7 @@ instruments (its license: LICENSES.md).
 | countGo | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
 | voteTick | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
 | l4round | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
+| svCalm | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
 | l4over | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
 | step | Kenney, Impact Sounds (footstep_wood) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
 | zstep | Kenney, Impact Sounds (footstep_carpet) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
@@ -86,6 +87,17 @@ instruments (its license: LICENSES.md).
 | l4crack | rubberduck, 100 CC0 metal and wood SFX and 75 CC0 breaking / falling / hit SFX; Independent.nu, 35 wooden cracks, hits, destructions — https://opengameart.org/content/100-cc0-metal-and-wood-sfx | CC0 1.0 |
 | l4nail | bart, 68 Workshop Sounds (wood hammering); Kenney, Impact Sounds (impactPlank_medium) — https://opengameart.org/content/68-workshop-sounds | CC0 1.0 |
 | l4groan | artisticdude, Zombies Sound Pack — https://opengameart.org/content/zombies-sound-pack | CC0 1.0 |
+| merchantIn | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
+| merchantOut | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
+| seRun | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
+| seStop | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
+| sbPlace | Kenney, Impact Sounds (impactSoft_medium) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| sbCut | Kenney, Impact Sounds (impactSoft_medium) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| sbOrb | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
+| cheatOn | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
+| cheatOff | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
+| defib | Electricity Game Sound Pack (charge, snaploop); Kenney, Impact Sounds (impactSoft_heavy) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| svHorde | artisticdude, Zombies Sound Pack — https://opengameart.org/content/zombies-sound-pack | CC0 1.0 |
 | l4slot | Kenney, RPG Audio (metalClick) and Impact Sounds (impactBell_heavy) — https://kenney.nl/assets/rpg-audio | CC0 1.0 |
 | l4till | Kenney, RPG Audio (handleCoins) and Interface Sounds (glass) — https://kenney.nl/assets/rpg-audio | CC0 1.0 |
 | dropIn | Kenney, Interface Sounds (glass) — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
@@ -125,6 +137,7 @@ instruments (its license: LICENSES.md).
 | pan | Jordan Irwin (AntumDeluge), melee swings (from Stendhal) — https://opengameart.org/node/100746 | CC0 1.0 |
 | axeHit | Kenney, RPG Audio (chop) and Impact Sounds (impactPunch_heavy) — https://kenney.nl/assets/rpg-audio | CC0 1.0 |
 | swordHit | Kenney, RPG Audio (knifeSlice2); lostchocolatelab, clang (freesound 1468, from Stendhal) — https://kenney.nl/assets/rpg-audio | CC0 1.0 |
+| break | Independent.nu, 35 Wooden Cracks/Hits/Destructions (crack01); alienistcog, clang (freesound 124711, from Stendhal) — https://opengameart.org/content/35-wooden-crackshitsdestructions | CC0 1.0 |
 | panHit | alienistcog, clang (freesound 124711, from Stendhal); Kenney, RPG Audio (metalPot3) — https://freesound.org/people/alienistcog/sounds/124711/ | CC0 1.0 |
 | powerUp | CogFireStudios, electric motor start (freesound 619835); joe_anderson22, machinery (freesound 392983); Kenney, Impact Sounds (both via CDDA-Soundpacks) — https://freesound.org/s/619835/ | CC0 1.0 |
 | powerDown | GiocoSound, engine stop (freesound 401553, via CDDA-Soundpacks); Kenney, Impact Sounds — https://freesound.org/people/GiocoSound/sounds/401553/ | CC0 1.0 |
