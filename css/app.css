@@ -12114,6 +12114,32 @@ html.sprint-blur .hang-board::after {
 .gact .act-row:has(.hang-btn) {
   order: -1;
 } /* (a Vote button, if one ever shows with it, stays under it) */
+/* Survival, my duck dead: the card of the duck I watch, where the Vote button goes (js/spectate.js), small as a button */
+.act-row.spec {
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+}
+.act-row.spec .pcard {
+  min-height: 0;
+  padding: 0.15rem 0.7rem 0.15rem 0.3rem;
+  gap: 0.4rem;
+  box-shadow: none;
+  max-width: 14rem;
+}
+.act-row.spec .pcard-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.spec-down {
+  margin-left: 0.3rem;
+  color: var(--red);
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+.spec-go {
+  min-width: 2.2rem;
+}
 .gmain[data-phase="hang"] {
   touch-action: none;
 }
@@ -14415,6 +14441,20 @@ html.moving .eye-zap {
 }
 /* the flamethrower's fire on my duck (game.js crimson): my screen blinks in and out of crimson; with the heavy effects
    off, a steady faint red */
+/* Survival: an LMG's rounds flying by me darken my screen's corners a moment (gunmenview.js) */
+.gm-sup {
+  position: fixed;
+  inset: 0;
+  z-index: 8990;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, #0000 42%, #000000d9 100%);
+  opacity: 0;
+  transition: opacity 0.35s;
+}
+.gm-sup.on {
+  opacity: 1;
+  transition: opacity 0.12s;
+}
 html.crimson body::after {
   content: "";
   position: fixed;
@@ -14813,7 +14853,8 @@ html.moving .board.quake {
   margin: 0.3rem 0 0.5rem;
 }
 .mgj-z img.sb-held,
-.l4z-body img.sb-held {
+.l4z-body img.sb-held,
+.hang-npc-body img.sb-held {
   position: absolute;
   height: auto;
   animation: none;
@@ -14827,7 +14868,8 @@ html.moving .board.quake {
   width: calc(var(--k, 1) * 64px * var(--gw, 0.34));
   transform: translate(-50%, -50%) scaleX(var(--face, 1));
 }
-.l4z-body img.sb-held {
+.l4z-body img.sb-held,
+.hang-npc-body img.sb-held {
   left: 92%;
   top: calc(var(--feet) - 28.8px * var(--zk, 1));
   width: calc(64px * var(--gw, 0.34) * var(--zk, 1));
@@ -16408,6 +16450,11 @@ body:has(.l4-shopping, .win-back) :is(.l4-sr, .l4-srv, .l4-srb) {
 .l4-up-t small {
   color: var(--dim);
   font-size: calc(0.8rem * var(--ts));
+}
+/* how many of it the merchant has, after its name */
+.l4-up-n {
+  color: var(--dim);
+  font-size: 0.85em;
 }
 .l4-up-lv {
   display: flex;

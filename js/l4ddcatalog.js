@@ -24,6 +24,7 @@ import {
   endless,
 } from "./l4ddrules.js";
 import { BOMB } from "./jaimebomb.js";
+import { survOn } from "./survrules.js";
 import { orbHTML, UP_ICONS } from "./l4ddart.js";
 import { DROP_ICONS } from "./l4dddrops.js";
 
@@ -59,6 +60,8 @@ const SAY = {
     "Its grenades fly straight and go off on the first zombie or wall they hit, and kill every zombie in the blast.",
   medkit:
     "Puts your HP back to full. Held while you revive someone, it gets them up at once.",
+  defib:
+    "Survival only. Hold it out by a dead player and press E: they're back up. They stack.",
   safekeep:
     "A halo, used once. When you go down it gets you up: E while down, or by itself when nobody else is standing, and 6 seconds nothing hurts you after. If you die instead, you come back with your upgrades.",
   zebra:
@@ -130,6 +133,8 @@ function stats(w) {
   if (w === "jaimebomb") out.push(["Blast", `${num(BOMB.wide)}x a grenade's`]);
   /* a merchant: the bow always, anything in the bags maybe (the owner's, Nov 18 13:46Z) */
   if (w === "bow") out.push(["Every merchant sells it", merchantPrice(w)]);
+  else if (w === "defib")
+    out.push(["A merchant may sell it", merchantPrice(w)]); // (DEFIB: his own roll)
   else if (
     [...Object.values(SLOT_BAGS), ...Object.values(WEAPON_BAGS)].some((b) =>
       bagThings(b).includes(w),
@@ -159,7 +164,7 @@ const weaponRow = (w) => row(orbHTML(w), weaponName(w), SAY[w] || "", stats(w));
 
 /* the whole tab: a heading and a list for each category */
 export function catalogHTML() {
-  const all = [...POOL, "grenade"], // (no Jaime Bomb in the zombie modes any more: the owner's, Nov 18 12:19Z)
+  const all = [...POOL, ...(survOn() ? ["defib"] : []), "grenade"], // (Survival: the defibrillator) // (no Jaime Bomb in the zombie modes any more: the owner's, Nov 18 12:19Z)
     of = (k) => all.filter((w) => kindOf(w) === k);
   const cats = [
     ["Melee", of("melee").map(weaponRow)],

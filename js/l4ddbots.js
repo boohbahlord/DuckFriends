@@ -37,7 +37,9 @@ import {
   JBODY,
   endless,
   wetSlow,
+  hasLeft,
 } from "./l4ddrules.js";
+import { isSurv } from "./survrules.js";
 import { walkOf } from "./rules.js";
 import { WANDER } from "./hangout/justin.js";
 import { NPC_RUN } from "./npcshared.js";
@@ -99,23 +101,27 @@ export function l4Bot(s, id, now, out) {
         ax: +(ax / W).toFixed(4),
         ay: +(ay / H).toFixed(4),
       });
-  /* a teammate down: go to it and hold E (the hold goes on by itself until the revive is done) */
-  const down = s.seat
-    .filter(
-      (t) =>
-        t !== id &&
-        ((h.l4p || {})[t] || {}).dn &&
-        !((h.l4p || {})[t] || {}).ex &&
-        s.pos[t],
-    ) // (down, not dead: the dead are never revived)
-    .map((t) => ({ t, x: s.pos[t].x * W, y: s.pos[t].y * H }))
-    .sort(
-      (a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y),
-    )[0];
+  /* a teammate down: go to it and hold E (the hold goes on by itself until the revive is done); in Survival with a
+     defibrillator, a dead player too (the defibrillator out in hand) */
+  const defib = isSurv(s) && hasLeft(s, id, "defib"),
+    dead = (t) => !!((h.l4p || {})[t] || {}).ex,
+    down = s.seat
+      .filter(
+        (t) =>
+          t !== id &&
+          ((h.l4p || {})[t] || {}).dn &&
+          (!dead(t) || (defib && !isWild(s, t) && !isHelper(s, t))) &&
+          s.pos[t],
+      ) // (down, not dead: the dead are never revived, but by the defibrillator)
+      .map((t) => ({ t, x: s.pos[t].x * W, y: s.pos[t].y * H }))
+      .sort(
+        (a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y),
+      )[0];
   if (down && Math.hypot(down.x - x, down.y - y) < 900) {
     const d = Math.hypot(down.x - x, down.y - y),
       rv = ((h.l4p || {})[down.t] || {}).rv;
     if (d < L4.REACH * 0.9) {
+      if (dead(down.t)) send(x, y, "defib", down.x - x, down.y - y); // (in hand first)
       if (!rv || rv.by !== id)
         out.push({ t: "hang", k: "l4", do: "rev", on: down.t, hold: true, id });
       return;
@@ -171,14 +177,13 @@ export function l4Bot(s, id, now, out) {
   }
   /* the special from the fireplace, now and then, with a zombie close (the medkit waits for low HP below; the long
      jump and the jetpack stay as they are) */
-  const sp = sl[3];
-  if (
-    ["jaime", "jaimebomb", "zebra", "adrenaline"].includes(sp) &&
-    m.am[sp] &&
-    m.am[sp][0] > 0 &&
-    bd < 400 &&
-    now - (u[sp] || 0) > 6000
-  ) {
+  const sp = [sl[3], sl[4]].find(
+    (w) =>
+      ["jaime", "jaimebomb", "zebra", "adrenaline"].includes(w) &&
+      m.am[w] &&
+      m.am[w][0] > 0,
+  ); // (either item slot)
+  if (sp && bd < 400 && now - (u[sp] || 0) > 6000) {
     out.push({
       t: "use",
       id,
@@ -196,7 +201,7 @@ export function l4Bot(s, id, now, out) {
     ),
     hp = ((h.l4p || {})[id] || {}).hp,
     w =
-      sl[3] === "medkit" && hp <= 1 && hp < maxHp(s, id)
+      hasLeft(s, id, "medkit") && hp <= 1 && hp < maxHp(s, id)
         ? "medkit"
         : bd < 75 || !loaded.length
           ? sl[0]
