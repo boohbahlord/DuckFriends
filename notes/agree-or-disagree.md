@@ -6751,3 +6751,8 @@ what do you think? or should it be something besidess double square or dounble s
 What new operators should be added to numerat to make it more capable for carrying out it's job for programming the ai and glueing between other files and all of that ?"
 
 Decided (Adam): Word + LibreOffice copies made from notes/numberat-bible.md (/mnt/project-files/sandbox/numerat/numberat-bible.docx/.odt; regenerate both whenever the bible changes). Proposals in bible section 14: open brackets carry the line (no doubled brackets); 8 new operator ideas. Waiting for the owner.
+
+## Owner, Nov 19 13:17Z (quoting Adam's pixel answer and plan)
+"Yeah it sounds like we should have pixel files made ahead of time for better performance"
+
+Decided (Adam): go for the slow-computer plan. Noah: measure with the CPU slowed on purpose, then bake every picture into ready-made pixel files and drop the live map filter, measuring again after. Solomon: zombies in WebGL after his Sandbox fixes, if the measurement still shows drawing as the cost.
