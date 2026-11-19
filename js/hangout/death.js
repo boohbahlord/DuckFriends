@@ -27,7 +27,7 @@ export const downFor = (s) => {
    protection: nothing hurts it, and what it shoots, swings or blows up hurts nobody (s.prot[id] = until) */
 export const SPAWN_MS = 2500;
 export const normalGame = (s) =>
-  !["l4dd", "mgj", "hang"].includes(s.options.mode);
+  !["l4dd", "surv", "mgj", "hang"].includes(s.options.mode);
 export const shielded = (s, id, now) => !!(s.prot && s.prot[id] > now);
 export function comeBack(s, id, now) {
   if (!normalGame(s)) return;
@@ -45,7 +45,7 @@ const live = (o, now) => {
 };
 /* Invulnerability: no hit takes a duck down, it only flashes red (s.hurt[id] = when; the screens flash on a new stamp).
    Never in Quacky Zombies or Mad God Justin (the owner's, Nov 4), from the settings or the command line */
-export const NO_INVULN = ["l4dd", "mgj"];
+export const NO_INVULN = ["l4dd", "surv", "mgj"];
 export const invuln = (s) =>
   +s.options.invuln === 1 && !NO_INVULN.includes(s.options.mode);
 export function hurtFx(s, id, now) {

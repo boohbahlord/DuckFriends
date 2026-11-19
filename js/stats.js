@@ -14,6 +14,8 @@ import { duckSVG } from "./duck.js";
 import { nameHTML } from "./name.js";
 import { openWindow, esc } from "./ui.js";
 import { profile, STAT_MODES } from "./store.js";
+import { SURV_READY } from "./modes.js";
+import { clockOf } from "./survrules.js";
 import { fmtJumps } from "./format.js";
 import { bbBoxHTML } from "./brackets.js";
 import { lawBoxHTML } from "./court.js";
@@ -120,6 +122,11 @@ function totalsHTML(p, t, mode = "aod") {
     return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">all time · ${mode === "l4r16" ? "Round 16 Start" : "Dead Ducks Arcade"}</div></div></header>
       <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Rounds cleared</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Best round</dt><dd>${t.titles ? fmtJumps(t.titles) : "—"}</dd><dt>Zombies killed</dt><dd>${fmtJumps(t.kills || 0)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
   }
+  if (mode === "surv") {
+    // Survival: games, the longest time survived, zombies killed
+    return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">all time · Survival</div></div></header>
+      <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Best time</dt><dd>${t.titles ? clockOf(t.titles) : "—"}</dd><dt>Zombies killed</dt><dd>${fmtJumps(t.kills || 0)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
+  }
   if (mode === "vdd") {
     // Valentine's Duck Date: their games, dates, Valentines and Turned Downs, and their games as The Date
     return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">all time · Valentine's Duck Date</div></div></header>
@@ -167,7 +174,13 @@ export function openStats(s, id, me) {
   const all = id === me ? profile.stats : p.stats;
   openWindow(
     `<h2>Stats</h2><div class="row stat-tabs" role="tablist"><button type="button" class="tile" data-st="game">This game</button><button type="button" class="tile" data-st="all">All time</button>
-      <select class="stat-mode" aria-label="Game mode">${STAT_MODES.map(([m, n]) => `<option value="${m}">${esc(n)}</option>`).join("")}</select></div><div class="stats-one"></div><p class="small dim stat-note"></p>`,
+      <select class="stat-mode" aria-label="Game mode">${STAT_MODES.filter(
+        ([m]) => m !== "surv" || SURV_READY,
+      )
+        .map(([m, n]) => `<option value="${m}">${esc(n)}</option>`)
+        .join(
+          "",
+        )}</select></div><div class="stats-one"></div><p class="small dim stat-note"></p>`,
     {
       cls: "win-small",
       onOpen(w) {

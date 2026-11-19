@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v120",
+    version: 120,
+    date: "Nov 19, 2026",
+    title: "Guns fade with their ducks",
+    news: [],
+    fixed: [
+      "For Dead Ducks Arcade: under the pump roof and other see-through roofs, the gun in your hand fades with your duck, and a hidden duck's gun no longer shows on top of the roof.",
+    ],
+  },
+  {
     id: "v119",
     version: 119,
     date: "Nov 19, 2026",
