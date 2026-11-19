@@ -21541,3 +21541,21 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
     font-size: 1.05rem;
   }
 }
+/* the help pages of Sandbox's windows (js/sbhelp.js): the bible's pixel page, a few lines at a time */
+.sbh-win {
+  width: min(34rem, 100%);
+}
+.sbh-page {
+  min-height: 12rem;
+}
+.sbh-page p {
+  font-size: 1.3rem;
+}
+.sbh-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+  color: #fff;
+}
