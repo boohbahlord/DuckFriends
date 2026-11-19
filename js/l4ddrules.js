@@ -4460,7 +4460,9 @@ function l4Tick(s, now) {
       s.hang.l4p = p4;
       bringBack(s, id, now, ids.indexOf(id), false);
       p4[id] = s.hang.l4p[id];
-      const q = sbPlayerSpot(s, id); // (at a respawn for players, or a spawn whose Players tab is on: sandboxrules.js)
+      const q = sbPlayerSpot(s, id, W, H, (x, y, z) =>
+        standable(x * W, y * H, z),
+      ); // (at a respawn for players, a spawn whose Players tab is on, or in a zone: sandboxrules.js)
       if (q && s.pos[id])
         s.pos[id] = { ...s.pos[id], x: q.x, y: q.y, z: q.z || 0 };
       continue;
@@ -5509,8 +5511,45 @@ export function l4Loot(s, id, w, inf) {
     };
   return true;
 }
-export function l4Hurt(s, id, dmg, now) {
+export function l4Hurt(s, id, dmg, now, w = "claw") {
   const p4 = { ...(s.hang.l4p || {}) };
-  hurtDuck(s, p4, id, now, "claw", dmg);
+  hurtDuck(s, p4, id, now, w, dmg);
   s.hang.l4p = p4;
+}
+/* Sandbox's zones (sbzone.js): a duck up gets amt HP back, up to its most */
+export function l4Heal(s, id, amt) {
+  const p = (s.hang.l4p || {})[id],
+    max = maxHp(s, id);
+  if (!p || p.dn || p.gh || p.hp >= max) return false;
+  s.hang.l4p = {
+    ...s.hang.l4p,
+    [id]: { ...p, hp: Math.min(max, +(p.hp + amt).toFixed(1)) },
+  };
+  return true;
+}
+/* Sandbox's zones: each zombie standing where on({ x, y: shares of the map, z: the ground's height there, sp }) says
+   loses amt HP ("damage", whole HP, at least 1), gets it back ("heal", up to its most) or dies ("kill") */
+export function l4Zone(s, on, fx, amt, now) {
+  if (!s.hang || !s.hang.zp) return false;
+  const zs = zombies(s);
+  let any = false;
+  for (const z of zs) {
+    if (
+      z.st === 3 ||
+      !on({ x: z.x / W, y: z.y / H, z: heightAt(z.x, z.y), sp: z.sp })
+    )
+      continue;
+    const hp =
+      fx === "heal"
+        ? Math.min(z.l[0], z.hp + Math.max(1, Math.round(amt)))
+        : fx === "kill"
+          ? 0
+          : Math.max(0, z.hp - Math.max(1, Math.round(amt)));
+    if (hp === z.hp) continue;
+    z.hp = hp;
+    if (hp <= 0) die(z, now);
+    any = true;
+  }
+  if (any) store(s, zs, true);
+  return any;
 }

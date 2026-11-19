@@ -8,6 +8,8 @@
      zombie drop lies there as the zombies' own do, taken and worn as theirs are (s.hang.l4dr); only those two kinds
      can be picked there.
    - "Damage to whoever takes it" hurts the duck that takes it (a claw's hurt).
+   - A zone whose "Loot spawns here" names the orb's point (its color or its name) has the orb lie there instead, at a
+     spot in it at random each time (stage 5, sbzone.js): p.orb.x, y, z.
    The orb is on its point: p.orb = { w, at, dn: a zombie drop's number }, p.gone = when it was last taken. An uploaded
    picture for an orb is kept apart, in s.sbImg (so the room only sends it again when it changes) */
 import {
@@ -20,7 +22,7 @@ import {
   SB_IMG_MAX,
 } from "./sandboxrules.js";
 import { valueOf } from "./numerat.js";
-import { boxText, spawnsHere } from "./sbspawn.js";
+import { boxText, spawnsHere, zoneSpot, zonesFor } from "./sbspawn.js";
 import { W, H } from "./hangout/layout.js";
 import { ARMS, DROP, l4Loot, l4Hurt } from "./l4ddrules.js";
 
@@ -95,24 +97,31 @@ function due(q, now) {
   return back && now - q.gone >= (Number.isFinite(t) ? t : 10) * 1000;
 }
 function lay(s, q, w, now) {
-  if (!Object.hasOwn(SB_DROPS, w)) return { w, at: now };
+  const zs = zonesFor(s, "lt", q), // (a zone that names it: the orb lies in it, anywhere: sbzone.js)
+    at = zs.length
+      ? zoneSpot(s, zs[Math.floor(Math.random() * zs.length)])
+      : null,
+    p = at || q,
+    where = at ? { x: at.x, y: at.y, z: at.z } : {};
+  if (!Object.hasOwn(SB_DROPS, w)) return { w, at: now, ...where };
   const n = now + Math.random(); // (its own number among the zombies' drops)
   s.hang.l4dr = [
     ...((s.hang && s.hang.l4dr) || []),
     {
       n,
       k: SB_DROPS[w][0],
-      x: Math.round(q.x * W),
-      y: Math.round(q.y * H),
+      x: Math.round(p.x * W),
+      y: Math.round(p.y * H),
       until: now + DROP.LIFE,
     },
   ];
-  return { w, at: now, dn: n };
+  return { w, at: now, dn: n, ...where };
 }
 /* the duck that walks over orb q (on the board within a duck's length, on a world within the zombies' drops' reach,
    on its floor), or null */
-function takerOf(s, q, H0) {
-  const board = sbOnBoard(s);
+function takerOf(s, q0, H0) {
+  const board = sbOnBoard(s),
+    q = q0.orb && q0.orb.x != null ? q0.orb : q0; // (an orb lying in a zone)
   for (const id of H0.ducks(s)) {
     const me = s.pos[id];
     if (!me) continue;

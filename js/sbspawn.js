@@ -34,7 +34,10 @@ import {
   SB_KEYS_TAKEN,
   SB_POINTS,
   SB_LOOT,
+  SB_ZONE,
+  sbZoneSpot,
 } from "./sandboxrules.js";
+import { W as WW, H as WH, standable } from "./hangout/layout.js";
 import { Z_MOST, l4Spawn, l4Live } from "./l4ddrules.js";
 import { WAVE, zLook } from "./mgjrules.js";
 import { onCabin, cabinLive, cabinSpawn, cabinTick } from "./sbcabin.js";
@@ -101,6 +104,7 @@ export const boxOf = (f) =>
   SB_PLAYER[f] ||
   SB_TEXT[f] ||
   SB_LOOT[f] || // (a loot orb's: stage 4b, sbloot.js)
+  SB_ZONE[f] || // (a zone's: stage 5, sbzone.js)
   null;
 /* is this text good for box f? "" or why not */
 export function boxWhy(f, t) {
@@ -230,7 +234,23 @@ function lookOf(ap) {
   if (ap.k === "blank" || ap.k === "test") return { dk: botDuck() };
   return {};
 }
-/* one NPC from spawn id at (x, y) (its spawn, or a respawn); false at the cap */
+/* ---------- the zones (stage 5): where things spawn ----------
+   a spot at random in zone q (on a world, one a duck can stand on) */
+export const zoneSpot = (s, q) =>
+  sbZoneSpot(s, q, WW, WH, (x, y, z) => standable(x * WW, y * WH, z));
+/* the zones whose box f ("ent" or "lt") names point p, by its color or its name */
+export function zonesFor(s, f, p) {
+  const tags = [p.col, boxText(p, "name").toLowerCase()];
+  return Object.values(pointsOf(s)).filter(
+    (q) => q.k === "zone" && words(boxText(q, f)).some((w) => tags.includes(w)),
+  );
+}
+/* where spawn id makes one: in a zone that names it (one of them at random), or on the spawn itself */
+function entSpot(s, p) {
+  const zs = zonesFor(s, "ent", p);
+  return zs.length ? zoneSpot(s, zs[Math.floor(Math.random() * zs.length)]) : p;
+}
+/* one NPC from spawn id at (x, y) (its spawn, a zone, or a respawn); false at the cap */
 function makeOne(s, id, at) {
   const p = pointsOf(s)[id];
   if (!p || liveNpcs(s).length >= Z_MOST) return false;
@@ -304,7 +324,7 @@ function press(s, id, now) {
     s.sb = { ...s.sb, run: { ...runs, [id]: now } };
     return true; // (the tick makes the first at once)
   }
-  return makeOne(s, id, p);
+  return makeOne(s, id, entSpot(s, p));
 }
 
 /* ---------- the actions: { t: "sb", k, … } ---------- */
@@ -313,7 +333,8 @@ export function sbAct(s, a, now) {
   const pts = pointsOf(s);
   if (a.k === "add") {
     const me = s.pos[a.id];
-    if (!me || !["spawn", "respawn", "loot"].includes(a.kind)) return false; // (loot: an orb's spot, sbloot.js)
+    if (!me || !["spawn", "respawn", "loot", "zone"].includes(a.kind))
+      return false; // (loot: an orb's spot, sbloot.js; zone: sbzone.js)
     if (Object.keys(pts).length >= SB_POINTS) return false;
     const n = ((s.sb && s.sb.n) || 0) + 1,
       cols = Object.keys(SB_COLORS),
@@ -419,10 +440,9 @@ export function sbAct(s, a, now) {
         : b.blank && !t.trim()
           ? { t, ok: "" }
           : keep(was, t, b);
-    s.sb = {
-      ...s.sb,
-      pts: { ...pts, [a.p]: { ...p, f: { ...p.f, [f]: k } } },
-    };
+    const q = { ...p, f: { ...p.f, [f]: k } };
+    if (f === "zw" || f === "zh") q[f] = valueOf(k, b, () => 0.5); // (a zone's size, as a number: a range's middle)
+    s.sb = { ...s.sb, pts: { ...pts, [a.p]: q } };
     return true;
   }
   if (a.k === "del") {
@@ -506,7 +526,9 @@ export function sbAct(s, a, now) {
    page for players only those) */
 function canSet(p, f) {
   if (p.k === "loot") return !!SB_LOOT[f] || f === "name"; // (a loot orb's own boxes: sbloot.js)
-  if (SB_LOOT[f]) return false;
+  if (p.k === "zone")
+    return !!SB_ZONE[f] || ["name", "pon", "pwho"].includes(f); // (a zone's own, and players spawning in it)
+  if (SB_LOOT[f] || SB_ZONE[f]) return false;
   if (p.k === "respawn") return f === "who" || (p.im || []).includes(f);
   if (f === "who") return false;
   if (p.pg === "pl") return !!SB_PLAYER[f] || f === "pwho" || f === "name";
@@ -530,7 +552,9 @@ function statsAt(q) {
 /* put duck id where it spawns now (a respawn for players, or a spawn whose Players tab is on for it), with what that
    gives it; nothing when there's none */
 export function sbPlaceDuck(s, id) {
-  const q = sbPlayerSpot(s, id);
+  const q = sbPlayerSpot(s, id, WW, WH, (x, y, z) =>
+    standable(x * WW, y * WH, z),
+  );
   if (!q || !s.pos[id]) return false;
   s.pos[id] = {
     ...s.pos[id],
@@ -581,7 +605,7 @@ function backAt(s, sp) {
           words(boxText(q, "who")).some((w) => mine.includes(w)),
       )
       .map(([id, q]) => ({ ...q, id }));
-  return rs.length ? rs[Math.floor(Math.random() * rs.length)] : p;
+  return rs.length ? rs[Math.floor(Math.random() * rs.length)] : entSpot(s, p); // (none: where it first spawns)
 }
 /* ---------- the host's heartbeat ----------
    H: what the rules lend it (rules.js): ducks(s) the ducks up on the board, claw(s, id, dmg, now) a zombie's swipe on a
@@ -651,8 +675,9 @@ export function sbTick(s, now, H) {
       ch = true;
       continue;
     }
-    if (taken(p, npcs)) continue;
-    if (makeOne(s, id, p)) {
+    const spot = entSpot(s, p);
+    if (spot === p && taken(p, npcs)) continue; // (in a zone: there's room)
+    if (makeOne(s, id, spot)) {
       npcs = liveNpcs(s);
       run[id] = now + 1000 * Math.max(1, num(p, "every") || 4);
       if (aliveOf(s, id, new Set(npcs.map((o) => o.i))) >= limit)
