@@ -18,8 +18,8 @@
    Sandbox: no rounds, no end; on any map, mess around (sandboxrules.js, sandbox.js). */
 import { esc } from "./ui.js";
 
-/* Survival shows in the lists once it's all built (true since Nov 19: all of it is) */
-export const SURV_READY = true;
+/* Survival shows in the lists once it's all built (true then) */
+export const SURV_READY = false;
 export const MODES = [
   {
     id: "aod",

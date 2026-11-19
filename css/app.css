@@ -12114,6 +12114,32 @@ html.sprint-blur .hang-board::after {
 .gact .act-row:has(.hang-btn) {
   order: -1;
 } /* (a Vote button, if one ever shows with it, stays under it) */
+/* Survival, my duck dead: the card of the duck I watch, where the Vote button goes (js/spectate.js), small as a button */
+.act-row.spec {
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+}
+.act-row.spec .pcard {
+  min-height: 0;
+  padding: 0.15rem 0.7rem 0.15rem 0.3rem;
+  gap: 0.4rem;
+  box-shadow: none;
+  max-width: 14rem;
+}
+.act-row.spec .pcard-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.spec-down {
+  margin-left: 0.3rem;
+  color: var(--red);
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+.spec-go {
+  min-width: 2.2rem;
+}
 .gmain[data-phase="hang"] {
   touch-action: none;
 }

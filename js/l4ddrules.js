@@ -1492,7 +1492,7 @@ export const l4Holds = (s, id, w) =>
 export const ptsOf = (s, id) => ((s && s.hang && s.hang.l4pt) || {})[id] ?? 0;
 export const upOf = (s, id) => ((s && s.hang && s.hang.l4u) || {})[id] || {};
 export const maxHp = (s, id) =>
-  isWild(s, id) ? WILD.hp : L4.HP + (upOf(s, id).hp || 0);
+  isWild(s, id) ? wildMax(s) : L4.HP + (upOf(s, id).hp || 0);
 /* a weapon's wait between uses (each Attack speed: 10% shorter), a reload's time (Faster reload: 30% shorter), the
    headshot chance (headOf, below) */
 export const l4Cool = (s, id, w) =>
@@ -1631,7 +1631,8 @@ function newRound(s, r, now, wait) {
 function bringBack(s, id, now, k, fresh) {
   const p4 = { ...(s.hang.l4p || {}) },
     was = p4[id] || {};
-  p4[id] = { hp: isWild(s, id) ? WILD.hp : L4.HP, at: now };
+  if (isWild(s, id) && (fresh || !s.hang.l4jhp)) s.hang.l4jhp = hp0(); // (Justin out there: his HP rolled as a zombie's, each game)
+  p4[id] = { hp: isWild(s, id) ? wildMax(s) : L4.HP, at: now };
   s.hang.l4p = p4;
   downGun(s, id, false);
   if (fresh) {
@@ -2515,6 +2516,10 @@ export const isHelper = (s, id) => !!(s.players[id] && s.players[id].helper);
    can revive him, he never comes back, not at a new round either). He is the fireplace's Justin (helperIn, the same
    player and brain) with no weapon and no points */
 export const WILD = { hp: 6, regen: 60000, id: "b-justin" };
+/* his HP: rolled as a zombie's is, once a game (s.hang.l4jhp: the owner's, Nov 19 22:25Z, "Justin, I don't know if he
+   has as much HP as the zombies, but he should. And you know, HP can be randomly determined in that way"); WILD.hp
+   before a roll */
+const wildMax = (s) => (s && s.hang && s.hang.l4jhp) || WILD.hp;
 /* the zombies and Justin out there (the owner's, Nov 17 20:37Z: "zombies dont chase justin forever they give up very
    quickly and the last 1/10th of zombies never chase justin. ZOmbies need to be twice as close to justin to want to
    chase him compared to a player"): to a zombie he counts as far times as far as he is; one that has chased him give ms

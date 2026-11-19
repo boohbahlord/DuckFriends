@@ -218,6 +218,7 @@ import {
   isWild,
   zombieLook,
 } from "./l4ddrules.js";
+import { watching, watchNext, watchHTML } from "./spectate.js";
 import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
 import {
   l4Held,
@@ -6601,6 +6602,7 @@ function actHTML(s) {
   if (isQuack(s) && QUACK_PHASES.includes(s.phase)) return quackActHTML(s);
   if (isVd(s) && VD_PHASES.includes(s.phase)) return vdActHTML(s);
   if (isTv(s) && TV_BOARD.includes(s.phase)) return tvActHTML(s, R.me, me);
+  if (isHang(s) && watching(s, R.me)) return watchHTML(s, R.me); // (Survival, my duck dead: the card of the one I watch: spectate.js)
   if (isHang(s)) return world ? world.buttonHTML() : ""; // Hangout: the nearest activity's button (Light off …)
   if (late())
     return `<span class="progress">You joined mid-turn: walk around and chat. You play from the next ${isBb(s) ? "match" : isLaw(s) ? "case" : isDn(s) ? "take" : "question"}. · ${d}/${n} done</span>`;
@@ -7221,6 +7223,10 @@ function paintNow(force) {
       world = mountWorld($(".hang-board", main), {
         room: () => R,
         me: () => me,
+        eye: () => {
+          const id = R && watching(R.state, R.me);
+          return id && world ? world.shown(id, R.state.pos[id]) : null;
+        }, // (Survival, my duck dead: the camera on the duck I watch, as it sees it: spectate.js)
         jumpZ,
         landsAt,
         cfg: () => jumpCfg(me),
@@ -7810,6 +7816,15 @@ function keydown(e) {
   if (typing(e) || windowOpen()) return;
   if (world && onBoardPhase() && world.keydown(e)) return; // Hangout: an activity's keys first (the piano)
   if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (
+    (e.code === "ArrowLeft" || e.code === "ArrowRight") &&
+    R &&
+    watching(R.state, R.me)
+  ) {
+    e.preventDefault();
+    spec(e.code === "ArrowLeft" ? -1 : 1);
+    return;
+  } // (Survival, my duck dead: the arrows go from one duck I watch to the next)
   if (MOVE_KEYS.includes(e.code) && onBoardPhase()) {
     if (!e.code.startsWith("Shift")) e.preventDefault();
     keys.add(e.code);
@@ -7916,6 +7931,11 @@ const resized = () => {
 };
 const unpeek = () => peek(false);
 
+/* Survival, my duck dead: watch the next duck (d 1) or the one before (-1) */
+function spec(d) {
+  if (R && watchNext(R.state, R.me, d))
+    setHTML($(".gact", S), actHTML(R.state));
+}
 /* ---------- what the buttons do ---------- */
 async function act(a) {
   const s = R.state;
@@ -8511,6 +8531,7 @@ register("game", {
       if (b && !b.disabled) {
         if (b.dataset.a === "pause") openPause();
         else if (b.dataset.a === "lset") openLobbySettings(R);
+        else if (b.dataset.a === "spec") spec(+b.dataset.d);
         else {
           if (b.dataset.a === "hang" || b.classList.contains("vote-btn"))
             sfx.holdClick(); // (the use button, and the Vote button when Hold to vote is off: no hold, still the click)

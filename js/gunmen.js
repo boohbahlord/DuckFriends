@@ -10,7 +10,8 @@
      their own cooldowns nobody sees, endless ammo that still reloads, no grenades. They come in from outside the
      fences where nobody sees them. A kill is worth 5 times a zombie's points; now and then one drops a special.
    s.hang.gm = { n: the last one's number, gb: [gunman], k: this wave's side ("c" | "s" | ""), bk: how many are left in
-   the back line, nb: when the next one from it comes in }
+   the back line, nb: when the next one from it comes in, fnb: the friendly squad's last names not used yet this game
+   (allies.js) }
    A gunman: { i, k, x, y (world px), hp, l: [its most HP], f (facing: 1 right, -1 left), dk (its look: a duck's), wp
    { p: [its guns] }, mg (each gun's rounds left), rl (when each one's reload ends), hw (the gun in its hands), sh (its
    last shot: [when, x, y]), st (what it's doing: "in" coming, "fire", "hide", "wait", "look", "run"), u (until when),
@@ -42,6 +43,7 @@ export const GM = {
   BACK_MS: [3000, 6000], // ms before one from the back line takes a fallen one's place
   DMG: 0.5, // their hits on ducks: half ("criminals do half as much damage, like the soldiers do")
   PTS: 5, // a kill's points: 5 times a zombie's
+  SOLDIER_HP: 2, // soldiers (both sides, the sniper too) get this much HP on top of their roll ("The soldiers, both enemy and ally versions, should have plus additional HP on top of what they randomly start out with": the owner's, Nov 19 22:25Z; the 2 is my pick)
   DROP: 0.15, // each one's chance of leaving a special where it falls
   DEFEND: 160, // world px: a zombie this near is shot first ("defend themselves from zombies that are walkers, that are too close")
   FIRE_MS: [2500, 5000], // ms a criminal shoots before it hides
@@ -155,7 +157,7 @@ const SOLDIER_GUNS = {
 export function newGunman(s, k, x, y, H, ro = "") {
   const gm = gmOf(s),
     i = gm.n + 1,
-    hp = H.hp(),
+    hp = H.hp() + (k === "c" ? 0 : GM.SOLDIER_HP), // (criminals: their roll alone)
     guns = ro ? SOLDIER_GUNS[ro]() : [pick(pick(CRIM_GUNS))];
   if (!["handgun", "revolver"].includes(guns[0]) && !guns.includes("handgun"))
     guns.push("handgun"); // (a pistol besides)
@@ -273,7 +275,7 @@ function perch(ducks, H, not = null) {
 function newSniper(s, at) {
   const gm = gmOf(s),
     i = gm.n + 1,
-    hp = gm.hp0();
+    hp = gm.hp0() + GM.SOLDIER_HP;
   gm.n = i;
   return {
     i,

@@ -14,15 +14,7 @@
    s.hang.gm keeps: turn { id: 1 } the players they've turned on, fk { id: [kill times] }, fl { id: { i: when lit } },
    fs (until when one is talking), fb { list: [what's left of its bag] }, fph (the phase they saw last), pd { id: 1 }
    the ducks down, tk { id: when they answered it } (until it walks off) */
-import {
-  GM,
-  gmOf,
-  pick,
-  newGunman,
-  shoot,
-  stab,
-  suppress,
-} from "./gunmen.js";
+import { GM, gmOf, pick, newGunman, shoot, stab, suppress } from "./gunmen.js";
 import { clearShot, chaseStep } from "./l4ddrules.js";
 import { heightAt } from "./hangout/layout.js";
 import { CHAPEL, CHAPEL_DOOR } from "./hangout/stationmap.js";
@@ -166,8 +158,10 @@ export function friendsCome(s, now, H) {
   const y = CHAPEL.y0 + 110,
     size =
       GM.SQUAD[0] + Math.floor(Math.random() * (GM.SQUAD[1] - GM.SQUAD[0] + 1)),
-    sup = 1 + Math.floor(Math.random() * 2),
-    names = [...NAMES];
+    sup = 1 + Math.floor(Math.random() * 2);
+  /* their last names from a bag kept all game (gm.fnb): no name comes again till every one has been used (the owner's,
+     Nov 19 22:25Z: "the ally soldiers should have different random name variations, and names don't repeat") */
+  let names = gm.fnb && gm.fnb.length ? [...gm.fnb] : [...NAMES];
   for (let k = 0; k < size; k++) {
     /* two rows, every other one further in, so their names never overlap */
     const x0 = CHAPEL_DOOR.a - 60,
@@ -187,12 +181,14 @@ export function friendsCome(s, now, H) {
         k === 0 ? "lmg" : k <= sup ? "sup" : "rifle",
       ),
       last = names.splice(Math.floor(Math.random() * names.length), 1)[0];
+    if (!names.length) names = NAMES.filter((n) => n !== last); // (all used: a new bag)
     o.nm = `${k === size - 1 ? "Lt." : pick(RANKS)} ${last}`;
     o.hm = [Math.round(at[0]), Math.round(at[1])];
     o.st = "rest";
     if (k === size - 1) o.ldr = 1;
     gm.gb.push(o);
   }
+  gm.fnb = names;
   H.notice("help"); // ("Help has Arrived", as the merchant's)
   say(
     gm,
