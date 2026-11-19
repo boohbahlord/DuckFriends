@@ -35,6 +35,7 @@ const MODES = [
   "mgj",
   "quack",
   "sc",
+  "surv",
   "trivia",
   "vdd",
   "wyr",

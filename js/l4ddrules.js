@@ -4935,9 +4935,25 @@ function l4Tick(s, now) {
         const still = { ...(s.hang.still || {}) };
         delete still[id];
         s.hang.still = still;
-      } else if (!rv && !p.skAt && now >= p.dn && isWild(s, id)) {
+      } else if (
+        !rv &&
+        !p.skAt &&
+        now >= p.dn &&
+        (isWild(s, id) || isSurv(s))
+      ) {
         p = { hp: 0, at: now, dn: now + 1e13, ex: 1 }; // (Justin in Downpour bled out: dead for good, his body stays)
         s.hang.still = { ...(s.hang.still || {}), [id]: now + 1e13 };
+        /* Survival: a duck that bleeds out is dead, as Justin: no ghost, no coming back at a rest (the owner's, Nov 19
+           22:25Z: "in survival, when players die, they do not come back"), only a defibrillator brings it back
+           (defib); it watches the others meanwhile (l4dd.js spectate) */
+        if (isSurv(s) && !isWild(s, id)) {
+          if (s.players[id]) s.players[id].dead = true;
+          s.hang.l4u = { ...(s.hang.l4u || {}), [id]: {} }; // (its upgrades go, as a ghost's)
+          downGun(s, id, false);
+          const b = { ...(s.hang.l4b || {}) };
+          delete b[id];
+          s.hang.l4b = b;
+        }
       } else if (!rv && !p.skAt && now >= p.dn) {
         const safe = !!p.sk || hasSafe(s, id);
         p = { hp: 0, at: now, gh: 1 }; // (bled out: a ghost until the next round)
