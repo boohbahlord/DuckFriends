@@ -17,7 +17,6 @@
 import {
   GM,
   gmOf,
-  rnd,
   pick,
   newGunman,
   shoot,
@@ -304,8 +303,14 @@ export function friend(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
   }
   const d = ducks.filter((q) => !q.j).sort((a, b) => dist(a) - dist(b))[0];
   o.st = "in";
-  if (d && dist(d) > FR.NEAR * GM.DUCK)
-    go(d.x + rnd(-40, 40), d.y + rnd(-30, 30));
+  /* each its own place round that duck (a ring, by its number), so they spread out instead of piling up */
+  const a = o.i * 2.4,
+    spot = d && [
+      d.x + Math.cos(a) * FR.NEAR * 0.6 * GM.DUCK,
+      d.y + Math.sin(a) * FR.NEAR * 0.4 * GM.DUCK,
+    ];
+  if (spot && Math.hypot(spot[0] - o.x, spot[1] - o.y) > GM.DUCK)
+    go(spot[0], spot[1]);
   o.ad = d
     ? Math.round((Math.atan2(d.y - o.y, d.x - o.x) * 180) / Math.PI)
     : o.ad;
