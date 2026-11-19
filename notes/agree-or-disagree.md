@@ -6756,3 +6756,36 @@ Decided (Adam): Word + LibreOffice copies made from notes/numberat-bible.md (/mn
 "Yeah it sounds like we should have pixel files made ahead of time for better performance"
 
 Decided (Adam): go for the slow-computer plan. Noah: measure with the CPU slowed on purpose, then bake every picture into ready-made pixel files and drop the live map filter, measuring again after. Solomon: zombies in WebGL after his Sandbox fixes, if the measurement still shows drawing as the cost.
+
+## Owner, Nov 19 13:21Z (answers to Adam's 8 operator ideas)
+"1. when is good, yeah 
+
+
+Code for more, like hitbox of duck for example
+
+2. yes
+
+
+3. sure
+
+
+4. yes, but should it be sqaure bracket or something else? or it could be many different brackets or paranthesis building from the principles. allow the numberat principles to apply to variables (?)
+
+
+5. sure???
+
+
+6. yeah
+
+
+7. sure 
+
+
+8. sure 
+
+
+
+
+update the numberat bible accordingly"
+
+Decided (Adam): all 8 in the bible (section 14); every stat (hitbox too) readable and settable by name; weights stay in [ ] and take any Numberat value; Numberat principles apply to named values. Word/LibreOffice copies remade.
