@@ -24,7 +24,15 @@ import {
 } from "./sbspawnview.js";
 import { boxText } from "./sbspawn.js";
 import { npcRows } from "./sbmake.js";
-import { hotRows, lootHTML, openPut, sbHotOn } from "./sbhotview.js";
+import { sbSlots } from "./sbhot.js";
+import {
+  hotKeyPut,
+  hotRows,
+  hotWinHTML,
+  openPut,
+  sbHotOn,
+  sbHotSig,
+} from "./sbhotview.js";
 
 /* each window: its key, its title, and whether it needs the host's rights */
 export const SB_WINS = {
@@ -37,7 +45,7 @@ export const SB_WINS = {
   p: { name: "Player settings" },
 };
 /* the cheat sheet's words: what every key does in Sandbox (the owner's file: "Cheat sheet describes a shit ton in a large
-   page popup"). Each later stage adds its own lines here as it lands. The loot preview (stage 4) goes under them: sbhotview.js lootHTML */
+   page popup"). Each later stage adds its own lines here as it lands. The loot lives in the h window now: sbhotview.js hotWinHTML */
 export const SB_SHEET = [
   ["C", "This cheat sheet. Press it once to open it, again to close it."],
   [
@@ -162,6 +170,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   S.append(box);
   const k = sbKeys();
   let shown = "";
+  let hotPick = ""; // (the loot picked in the h window: then a key puts it there)
   const paint = () => {
     const R = getR();
     sbView.build =
@@ -174,18 +183,29 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
     const w = SB_WINS[k.open],
       can = w.all || sbMay(R.state, R.me, k.open), // (the rights, or Game Settings giving everyone this window)
       opts = can ? sbOptions(k.open, R) : [];
-    const sig = k.open + (can ? 1 : 0) + opts.map((o) => o.label).join("|");
+    const hotWin = k.open === "h" && can && sbHotOn(R.state);
+    const sig =
+      k.open +
+      (can ? 1 : 0) +
+      opts.map((o) => o.label).join("|") +
+      (hotWin
+        ? hotPick +
+          JSON.stringify((R.state.sb || {}).hb || {}) +
+          JSON.stringify(sbSlots(R.state, R.me)) +
+          sbHotSig(R.state) +
+          Object.keys((R.state.sb || {}).pts || {}).length
+        : "");
     if (sig !== shown) {
       shown = sig;
       box.classList.toggle("sb-sheet", k.open === "c");
       box.setAttribute("aria-label", w.name);
       const body =
         k.open === "c"
-          ? `<dl class="sb-keys">${SB_SHEET.map(([kk, t]) => `<dt><kbd>${kk}</kbd></dt><dd>${esc(t)}</dd>`).join("")}</dl>${sbHotOn(R.state) ? lootHTML((R.state.players[R.me] || {}).duck) : ""}`
+          ? `<dl class="sb-keys">${SB_SHEET.map(([kk, t]) => `<dt><kbd>${kk}</kbd></dt><dd>${esc(t)}</dd>`).join("")}</dl>`
           : !can
             ? `<p class="sb-none">Only the host can change this.</p>`
             : opts.length
-              ? `<div class="sb-opts">${opts.map((o, i) => `<button type="button" class="sb-opt${o.on ? " on" : ""}" data-i="${i}">${i < 9 ? `<kbd>${i + 1}</kbd>` : ""}${esc(o.label)}</button>`).join("")}</div>`
+              ? `<div class="sb-opts${hotWin ? " sb-hotopts" : ""}">${opts.map((o, i) => `<button type="button" class="sb-opt${o.on ? " on" : ""}" data-i="${i}">${i < 9 ? `<kbd>${i + 1}</kbd>` : ""}${esc(o.label)}</button>`).join("")}</div>${hotWin ? hotWinHTML(R, hotPick) : ""}`
               : `<p class="sb-none">Nothing here yet.</p>`;
       box.innerHTML = `<header><span class="sb-tip">Press <kbd>${k.open.toUpperCase()}</kbd> again to close</span><h2>${esc(w.name)}</h2><button type="button" class="sb-x" aria-label="Close">×</button></header>${body}`;
     }
@@ -365,9 +385,17 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
     if (b) pick(+b.dataset.i);
     const lt = e.target.closest(".sb-lt");
     if (lt) {
+      hotPick = hotPick === lt.dataset.v ? "" : lt.dataset.v; // (picked; again to let go)
+      shown = "";
+      paint();
+    }
+    const key = e.target.closest(".sp-key[data-i]");
+    if (key && hotPick) hotKeyPut(getR(), hotPick, key);
+    if (e.target.closest("[data-look]")) {
+      const v = hotPick;
       sbClose(k, false);
       paint();
-      openPut(getR, lt.dataset.v); // (the cheat sheet's loot: onto a key)
+      openPut(getR, v); // (a spawn button's look and name)
     }
   });
   const mine = (e) => {

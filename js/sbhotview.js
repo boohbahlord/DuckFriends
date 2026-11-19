@@ -84,17 +84,62 @@ export const LOOT = [
 ];
 export const lootOf = (kind) =>
   SPECIALS.filter((x) => x.kind === kind && !x.only && !x.off);
-/* the cheat sheet's part under its keys: each one a button that opens the popup */
-export function lootHTML(duck) {
-  return `<section class="sb-loot" aria-label="Loot"><h3>Loot</h3><p class="sb-none">Pick one to put it on your hotbar.</p>${LOOT.map(
+/* a row of the hotbar's keys: slots (the ids on them), to ("me" or "def"), off (can't be changed), v (the one picked: its keys
+   show pressed) */
+function keysHTML(s, duck, slots, to, off, v) {
+  return `<div class="sp-keys sp-pick sb-put" role="group">${KEYS.slice(
+    0,
+    SB_SLOTS,
+  )
+    .map((n, i) => {
+      const x = slotLook(s, slots[i], duck);
+      return `<button type="button" class="sp-key${x ? " full" : ""}" data-to="${to}" data-i="${i}" aria-pressed="${!!v && slots[i] === v}" aria-label="Key ${n}${x ? ": " + esc(x.name) : ": empty"}"${off ? " disabled" : ""}><b>${n}</b>${x ? `<i>${x.icon}</i>` : ""}</button>`;
+    })
+    .join("")}</div>`;
+}
+/* the h window's part under its option rows (the owner's, Nov 19 17:15Z: "any loot at all, you get on the hotbar menu ... the
+   hotbar that is yours, the hotbar that is the default, will be below all those options you're scrolling through"): all the
+   loot by group in a list that scrolls, and your hotbar and the default one always under it. Pick a loot, then a key; the
+   loot stays picked, so the next key takes it too, with no way back to go. picked: the loot's id */
+export function hotWinHTML(R, picked) {
+  const s = R.state,
+    hb = (s.sb && s.sb.hb) || {},
+    can = sbMay(s, R.me, "h"),
+    duck = (s.players[R.me] || {}).duck,
+    btn = (id, sp, tip) =>
+      `<button type="button" class="sb-lt" data-v="${esc(id)}" aria-pressed="${picked === id}" data-tip="${esc(tip || "")}"><i>${sp.icon}</i><span>${esc(sp.name)}</span></button>`,
+    spawns = Object.entries((s.sb && s.sb.pts) || {}).filter(
+      ([, q]) => q.k === "spawn" && !q.grp,
+    ),
+    it = picked && slotLook(s, picked, duck);
+  const list = `<div class="sb-lootlist" tabindex="0" aria-label="Loot">${LOOT.map(
     ([k, n]) =>
       `<h4>${esc(n)}</h4><div class="sb-lts">${lootOf(k)
-        .map((x) => {
-          const sp = looksOf(x, duck);
-          return `<button type="button" class="sb-lt" data-v="${x.id}" data-tip="${esc(sp.tip || "")}"><i>${sp.icon}</i><span>${esc(sp.name)}</span></button>`;
-        })
+        .map((x) => btn(x.id, looksOf(x, duck), looksOf(x, duck).tip))
         .join("")}</div>`,
-  ).join("")}</section>`;
+  ).join("")}${
+    spawns.length && can
+      ? `<h4>Spawn buttons</h4><div class="sb-lts">${spawns
+          .map(([p]) =>
+            btn("sp:" + p, slotLook(s, "sp:" + p, duck), "Spawns it."),
+          )
+          .join("")}</div>`
+      : ""
+  }</div>`;
+  const now = it
+    ? `<p class="sb-picked"><i>${it.icon}</i><span><b>${esc(it.name)}</b>: pick a key to put it there, again to take it off.</span>${picked.startsWith("sp:") && can ? ` <button type="button" class="btn small ghost" data-look>Its look…</button>` : ""}</p>`
+    : `<p class="sb-none sb-picked">Pick a loot above, then a key below.</p>`;
+  return `${list}${now}<h3>Your hotbar</h3>${hb.lock ? `<p class="sb-none">The hotbar is locked.</p>` : ""}${keysHTML(s, duck, sbSlots(s, R.me), "me", !!hb.lock, picked)}${can ? `<h3>Everyone's default</h3>${keysHTML(s, duck, hb.d || [], "def", false, picked)}` : ""}`;
+}
+/* a key of the h window pressed with `v` picked: put it there, or take it off if it is there already */
+export function hotKeyPut(R, v, el) {
+  const to = el.dataset.to,
+    i = +el.dataset.i,
+    slots =
+      to === "def"
+        ? ((R.state.sb || {}).hb || {}).d || []
+        : sbSlots(R.state, R.me);
+  R.send({ t: "sbh", k: "put", to, i, v: slots[i] === v ? null : v });
 }
 
 /* ---------- the h window ---------- */
@@ -142,13 +187,6 @@ export function hotRows(R, openPut) {
       act: (r) => r.send({ t: "sbh", k: "clear", to: "def" }),
     },
   );
-  for (const [p, q] of Object.entries((s.sb && s.sb.pts) || {}))
-    if (q.k === "spawn" && !q.grp)
-      rows.push({
-        label: `Spawn button: ${spawnName(s, p)}`,
-        win: true,
-        act: () => openPut(() => R, "sp:" + p),
-      });
   return rows;
 }
 
@@ -167,16 +205,7 @@ export function openPut(getR, v) {
       it = slotLook(s, v, duck);
     if (!it)
       return `<h2>Gone</h2><p class="sb-none">It isn't here anymore.</p>`;
-    const keys = (slots, to, off) =>
-      `<div class="sp-keys sp-pick sb-put" role="group">${KEYS.slice(
-        0,
-        SB_SLOTS,
-      )
-        .map((n, i) => {
-          const x = slotLook(s, slots[i], duck);
-          return `<button type="button" class="sp-key${x ? " full" : ""}" data-to="${to}" data-i="${i}" aria-pressed="${slots[i] === v}" aria-label="Key ${n}${x ? ": " + esc(x.name) : ": empty"}"${off ? " disabled" : ""}><b>${n}</b>${x ? `<i>${x.icon}</i>` : ""}</button>`;
-        })
-        .join("")}</div>`;
+    const keys = (slots, to, off) => keysHTML(s, duck, slots, to, off, v);
     let look = "";
     if (p && can) {
       const [sh, c, h] = sbIcon(s, p),
