@@ -8,7 +8,7 @@
    rules.js keeps the votes (s.vt) and the clock; the lobby paints this window while it's up. */
 import { fsBtnHTML } from "./corners.js";
 import { esc } from "./ui.js";
-import { rainbowHTML, artBackdrop, gameSymbol, diceSVG } from "./art.js";
+import { rainbowHTML, gameSymbol, diceSVG } from "./art.js";
 import { modeOf, CATS, CABIN_MODES } from "./modes.js";
 import { mapName, mapForm, mountPreview } from "./maps.js";
 import { isNwk } from "./nwk.js";
@@ -47,6 +47,8 @@ function modeRow(id) {
     cabin = CABIN_MODES.includes(id);
   return `<button type="button" class="vt-mode${dice ? " vt-dice" : ""}" data-v="${id}"><span class="sym">${dice ? diceSVG(50) : gameSymbol(id, 50)}</span><span class="t">${esc(dice ? "Random" : modeOf(id).name)}${cabin ? "<small>Duck Cabin</small>" : ""}</span><span class="n"></span><span class="who"></span></button>`;
 }
+/* a map's picture: its drawing (art.js artBackdrop) made into pixels ahead of time (tools/pixel-files.cjs), so nothing
+   is made on the device and the vote shows at once (the owner's, Nov 19 20:04Z: black pictures on a slow phone) */
 function mapTile(id) {
   if (id === DICE)
     return `<button type="button" class="vt-map vt-dice" data-v="${DICE}"><span class="vt-pic"><span class="vt-die">${diceSVG(96)}</span></span><span class="vt-name">Random</span><span class="vt-n"></span><span class="vt-ducks"></span></button>`;
@@ -54,7 +56,7 @@ function mapTile(id) {
     [name, form] = mapName(id).split(/ \((.+)\)$/);
   if (isNwk(f.map))
     return `<button type="button" class="vt-map" data-v="${id}"><span class="vt-pic" data-still="${id}"></span><span class="vt-name">${esc(name)}${form ? ` <i>(${esc(form)})</i>` : ""}</span><span class="vt-n"></span><span class="vt-ducks"></span></button>`; // (its picture: a still of the map itself, stills())
-  return `<button type="button" class="vt-map" data-v="${id}"><span class="vt-pic"><svg class="vt-still${f.grey ? " grey" : ""}" viewBox="0 0 480 270" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${artBackdrop(f.map)}</svg></span><span class="vt-name">${esc(name)}${form ? ` <i>(${esc(form)})</i>` : ""}</span><span class="vt-n"></span><span class="vt-ducks"></span></button>`;
+  return `<button type="button" class="vt-map" data-v="${id}"><span class="vt-pic"><img class="vt-still${f.grey ? " grey" : ""}" src="assets/px/vote/${f.map}.webp" data-pxready data-pxok alt="" draggable="false"></span><span class="vt-name">${esc(name)}${form ? ` <i>(${esc(form)})</i>` : ""}</span><span class="vt-n"></span><span class="vt-ducks"></span></button>`;
 }
 function zmapTile(id) {
   if (id === DICE) return mapTile(DICE);
