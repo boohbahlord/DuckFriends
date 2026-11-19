@@ -54,6 +54,14 @@ export function mountHotbar(S, api) {
       ? { ...sp, icon: pistolIcon(duck) } // (as the one in my hand, not the emoji)
       : sp;
   };
+  /* Sandbox's hotbar is "full and empty" (the owner's answer, Nov 19 01:57Z): every slot shows from the start, an empty
+     one as an empty square, on a computer and in a phone's slider (api.full() → true); in the slider an empty slot is
+     HOLE and its number */
+  const full = () => !!(api.full && api.full()),
+    HOLE = "empty:",
+    hole = (id) => typeof id === "string" && id.startsWith(HOLE),
+    lookS = (id) =>
+      hole(id) ? { id, name: "Empty slot", icon: "", cls: "empty" } : look(id);
   const dots = (id) =>
     api.dots
       ? api.dots(id)
@@ -76,6 +84,7 @@ export function mountHotbar(S, api) {
       k.map(dots),
       api.sig && api.sig(),
     ]);
+    bar.classList.toggle("full", full());
     if (now === sig) return;
     sig = now;
     bar.innerHTML = KEYS.map((n, i) => {
@@ -260,7 +269,7 @@ export function mountHotbar(S, api) {
     const tr = el.querySelector(".sp-track");
     tr.innerHTML = list
       .map(([id]) => {
-        const sp = look(id);
+        const sp = lookS(id);
         return `<span class="sp-slot${sp.cls ? " " + sp.cls : ""}"><i>${sp.icon}</i></span>`;
       })
       .join("");
@@ -281,7 +290,9 @@ export function mountHotbar(S, api) {
     el.classList.add("go");
   }
   function drawSlide(k, on, cd) {
-    list = k.map((id, i) => [id, i]).filter(([id]) => id && look(id));
+    list = full()
+      ? KEYS.map((_, i) => [k[i] && look(k[i]) ? k[i] : HOLE + i, i])
+      : k.map((id, i) => [id, i]).filter(([id]) => id && look(id));
     slide.classList.toggle("none", !list.length);
     const sig = JSON.stringify([
       list,
@@ -294,7 +305,7 @@ export function mountHotbar(S, api) {
     if (sig !== slideSig) {
       slideSig = sig;
       const html = list.map(([id, i]) => {
-          const sp = look(id);
+          const sp = lookS(id);
           return `<button type="button" class="sp-slot${sp.cls ? " " + sp.cls : ""}${on.has(id) ? " on" : ""}${cd[i] && !cd[i][3] ? " cool" : ""}${sp.off ? " off" : ""}" role="option" aria-label="${esc(sp.name)}"><i>${sp.icon}</i>${drain(cd[i])}${dots(id)}</button>`;
         }),
         ids = JSON.stringify(list);
@@ -406,7 +417,7 @@ export function mountHotbar(S, api) {
     closeWheel,
     slider: slide,
     row: bar,
-    current: () => cur,
+    current: () => (hole(cur) ? null : cur),
     /* phones: the slider is on my duck, out of sight (the owner's, Nov 18 15:18Z: "The hotbar should
        be on the player's [duck] for now on in mobile and swiping on their duck shows the selection AND it fades away
        like it does on PC"): a swipe on my duck picks the one beside the picked one (d: 1 the next, -1 the one before),

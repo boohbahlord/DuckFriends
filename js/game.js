@@ -8171,6 +8171,7 @@ register("game", {
             : keysOf(playDuck()), // (Sandbox: its spawn buttons too)
         own: (id) => (R && sbHotOn(R.state) ? sbLook(R.state, id) : null),
         sig: () => (R && sbHotOn(R.state) ? sbHotSig(R.state) : ""),
+        full: () => !!R && sbHotOn(R.state), // (Sandbox: every slot shows, the empty ones too: hotbar.js)
         kept: keptNow,
         use: useKey,
         cool,
