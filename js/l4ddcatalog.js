@@ -17,6 +17,7 @@ import {
   priceOf,
   BOX,
   WEAPON_BAGS,
+  bagThings,
   merchantPrice,
   critOf,
   missOf,
@@ -46,7 +47,8 @@ const SAY = {
   ak: "Hold to fire. Harder hits.",
   lmg: "Hold to fire. A huge magazine.",
   dbarrel:
-    "Two slugs, each one a kill, the body thrown back. A crit kills the next zombie too, and goes past it only on another crit.",
+    "Two slugs. Each goes through zombie after zombie: 6 damage to the first, then 1 or 1.5 less to each one after.",
+  dbuck: "Two shells of buckshot: the shotgun's pellets, each 1 or 1.5 harder.",
   flamer:
     "Hold to burn everything in front of you; the longer you hold, the farther it reaches. The ground burns and the fire spreads.",
   burst: "Three rounds a click, as hard as the AK-47.",
@@ -93,7 +95,7 @@ function stats(w) {
       A.dmg >= 99 || A.dmg === "all"
         ? "Kills"
         : Array.isArray(A.dmg)
-          ? `${A.dmg[0]} to ${A.dmg[1]}`
+          ? `${num(A.dmg[0] + (A.plus ? A.plus[0] : 0))} to ${num(A.dmg[1] + (A.plus ? A.plus[1] : 0))}` // (the buckshot double barrel's pellets: 1 or 1.5 more)
           : num(A.dmg),
     ]);
   if (w === "glauncher" || w === "grenade") out.push(["Damage", "Kills"]);
@@ -130,7 +132,7 @@ function stats(w) {
   if (w === "bow") out.push(["Every merchant sells it", merchantPrice(w)]);
   else if (
     [...Object.values(SLOT_BAGS), ...Object.values(WEAPON_BAGS)].some((b) =>
-      b.includes(w),
+      bagThings(b).includes(w),
     )
   )
     out.push(["A merchant may sell it", merchantPrice(w)]);

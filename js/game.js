@@ -215,6 +215,7 @@ import {
 import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
 import {
   l4Held,
+  l4To,
   peekAgain as l4PeekAgain,
   l4Got,
   sprintLeft,
@@ -595,7 +596,7 @@ let pm = null,
 let recorded = ""; // the last round counted in my all-time stats
 let lastLog = -1,
   bubbles = {}, // chat bubbles over the ducks: { [player]: { text, until, n, at (when it came) } }
-  npcDownAt = {}, // (an NPC: when I first saw it down, to cut what it was saying)
+  npcDownAt = {}; // (an NPC: when I first saw it down, to cut what it was saying)
 let lastClose = 0; // Lawyering: the closing arguments last announced
 let bbZoom = 0,
   losers = new Set(),
@@ -3649,6 +3650,7 @@ function crimson(ms) {
 const NEW_GUN_SFX = {
   laser: (o) => sfx.laser(o),
   dbarrel: (o) => sfx.dbarrel(o),
+  dbuck: (o) => sfx.dbarrel(o),
   burst: (o) => {
     for (let i = 0; i < ARMS.burst.burst; i++)
       setTimeout(() => sfx.burst(o), i * ARMS.burst.gap);
@@ -8269,6 +8271,7 @@ register("game", {
           fire,
           grenade: () => l4Pick(4),
           flash: () => R.send({ t: "hang", k: "l4", do: "fl" }),
+          to: l4To, // (the weapon I'm about to take: its slot lights up)
         },
         row = mountL4Bar(S, l4),
         slide = mountHotbar(S, l4Slider(l4));

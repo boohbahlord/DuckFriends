@@ -15873,32 +15873,32 @@ html.moving .l4-heat.hot::after {
 }
 /* each one's own color (l4ddrules.js tintOf; the owner's, Nov 18 12:19Z): green, blue, purple (it glows), the chair's
    gold, an Angelic weapon's red; a jerry can's orb orange, glowing (l4ddpowerui.js) */
-:is(.l4s, .l4orb, .sp-slot).c-green {
+:is(.l4s, .l4orb, .sp-slot, .l4to).c-green {
   --c: #2fae4a;
   --cl: #a6f0b4;
   --cd: #135a22;
 }
-:is(.l4s, .l4orb, .sp-slot).c-blue {
+:is(.l4s, .l4orb, .sp-slot, .l4to).c-blue {
   --c: #3d7be0;
   --cl: #a9c9ff;
   --cd: #173a80;
 }
-:is(.l4s, .l4orb, .sp-slot).c-purple {
+:is(.l4s, .l4orb, .sp-slot, .l4to).c-purple {
   --c: #9a4de0;
   --cl: #dcbcff;
   --cd: #461a80;
 }
-:is(.l4s, .l4orb, .sp-slot).c-gold {
+:is(.l4s, .l4orb, .sp-slot, .l4to).c-gold {
   --c: #e2b12a;
   --cl: #fff0a8;
   --cd: #7a5608;
 }
-:is(.l4s, .l4orb, .sp-slot).c-red {
+:is(.l4s, .l4orb, .sp-slot, .l4to).c-red {
   --c: #e0463d;
   --cl: #ffb0a6;
   --cd: #7e1a15;
 }
-:is(.l4s, .l4orb, .sp-slot).c-orange {
+:is(.l4s, .l4orb, .sp-slot, .l4to).c-orange {
   --c: #f07a1a;
   --cl: #ffd2a0;
   --cd: #7a3404;
@@ -15921,7 +15921,7 @@ html.moving .l4-heat.hot::after {
 /* no color (the dagger, the knife, the pistol, the pan, the adrenaline shot, the bow: the owner's, Nov 18 12:32Z, "a
    normal looking slot like it is in the default game, so no color"): the orb a plain grey; the slot as the other
    games' slots look (below, after the slots' own colors) */
-:is(.l4s, .l4orb, .sp-slot).c-plain {
+:is(.l4s, .l4orb, .sp-slot, .l4to).c-plain {
   --c: #8a8f9c;
   --cl: #e4e6ec;
   --cd: #3c404c;
@@ -17460,6 +17460,35 @@ html.pixel .l4-flare::before {
   box-shadow:
     0 0 0 2px #6dff8a,
     0 0 8px #3ee06a;
+}
+/* the slot what I'm about to take goes to (l4ddbar.js toSlot; the owner's, Nov 19 19:27Z): a white ring that stays still
+   with animations off, and a glow inside it in that weapon's own color, breathing */
+.l4s.l4s-to,
+.sp-slot.l4s-to {
+  outline: 0.14rem solid #fff;
+  outline-offset: 0.12rem;
+}
+.l4s.l4s-to:disabled {
+  opacity: 0.85;
+}
+.l4to {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0.55rem 0.2rem var(--cl),
+    inset 0 0 0 0.12rem var(--c);
+  animation: l4to-glow 1.2s ease-in-out infinite;
+}
+@keyframes l4to-glow {
+  50% {
+    opacity: 0.4;
+  }
+}
+html.still .l4to {
+  animation: none;
 }
 /* ---------- HP meters (hpmeter.js): the owner's picture, a bronze badge with a heart joined to a bronze-framed bar of
    red blocks, one for each HP, black where they're gone (black, not white, and a little thinner: owner 2026-11-04
