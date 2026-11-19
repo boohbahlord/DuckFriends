@@ -1,7 +1,7 @@
 /* ---------- Sandbox: the key windows (stage 1, the shell) ----------
    The owner's Sandbox file (Nov 19): c shows the cheat sheet, b build, m make an NPC, n Numerat, h the hotbar, g the
-   game's settings and p the players' settings. Each one works like Tab: held down, its window shows and letting go
-   closes it; a quick double tap keeps it up, and one tap of its key closes it again "IF they are already open". While a
+   game's settings and p the players' settings. One press of its key opens its window and the same key
+   again closes it (the owner, Nov 19 16:17Z: "clicked only once instead of twice to get it up, and clicking again closes it"). While a
    window is up, the number keys pick its options instead of switching weapons, and a mouse click on an option does the
    same. The cheat sheet is "somewhat" see-through and larger than Tab's window. Only c is for everyone: the others
    belong to whoever sbCan says (the host; everyone when Democracy of Ducklings lets everyone change the settings), or to
@@ -38,13 +38,10 @@ export const SB_WINS = {
 /* the cheat sheet's words: what every key does in Sandbox (the owner's file: "Cheat sheet describes a shit ton in a large
    page popup"). Each later stage adds its own lines here as it lands. The loot preview (stage 4) goes under them: sbhotview.js lootHTML */
 export const SB_SHEET = [
-  [
-    "C",
-    "This cheat sheet. Hold it to look, double-tap it to keep it up, tap it once to put it away.",
-  ],
+  ["C", "This cheat sheet. Press it once to open it, again to close it."],
   [
     "B",
-    "Build: pick a spawn, respawn, loot or board zone, then click or tap the map to put it there (Esc or right-click lets go). Hold, double-tap or tap it like C.",
+    "Build: pick a spawn, respawn, loot or board zone, then click or tap the map to put it there (Esc or right-click lets go). Press it once to open it, again to close it.",
   ],
   ["M", "Make an NPC: its look, its weapons and who it goes after."],
   [
@@ -84,9 +81,6 @@ export const SB_SHEET = [
     "The host can change everything. With Democracy of Ducklings letting all change settings, everyone can.",
   ],
 ];
-/* how fast two taps must be to count as a double tap, and how short a press is a tap */
-const TAP_MS = 300;
-const DOUBLE_MS = 350;
 
 /* p, for now: one switch a player, to give them the rights or take them back (the owner's answer 2, Nov 19 01:34Z: the
    host "decide[s] who else gets it"); the rest of p comes later */
@@ -122,41 +116,29 @@ export const sbOptions = (k, R) => {
 };
 
 /* the key windows' state, kept apart from the screen so the tests can run it without a page:
-   open: the window up ("" none), sticky: kept up by a double tap, at: when its key went down, tap: when a quick tap of
-   it ended (for the double tap), swallow: the key-up that belongs to a press that closed it */
+   open: the window up ("" none), sticky: always true now (a window stays up until its key is pressed again, Esc or ×),
+   swallow: the key-up that belongs to a press that closed it. The owner, Nov 19 16:17Z: "the buttons for sanbox unique
+   to it like b, m, or h ... is now clicked only once instead of twice to get it up, and clicking again closes it" */
 export function sbKeys() {
   return { open: "", sticky: false, at: 0, tap: 0, tapKey: "", swallow: "" };
 }
-/* a window's key went down (not a repeat) at t: what is up now */
+/* a window's key went down (not a repeat) at t: what is up now. One press opens it, the same key again closes it */
 export function sbDown(k, key, t) {
-  if (k.open === key && k.sticky) {
-    // (one tap of its key closes a window kept up)
+  if (k.open === key) {
     k.open = "";
     k.sticky = false;
     k.swallow = key;
     return k;
   }
-  const dbl = k.tapKey === key && t - k.tap < DOUBLE_MS;
   k.open = key;
-  k.sticky = dbl;
+  k.sticky = true;
   k.at = t;
-  k.swallow = dbl ? key : "";
-  k.tap = 0;
-  k.tapKey = "";
+  k.swallow = "";
   return k;
 }
-/* a window's key came up at t */
-export function sbUp(k, key, t) {
-  if (k.swallow === key) {
-    k.swallow = "";
-    return k;
-  }
-  if (k.open !== key || k.sticky) return k;
-  if (t - k.at < TAP_MS) {
-    k.tap = t;
-    k.tapKey = key;
-  }
-  k.open = "";
+/* a window's key came up: nothing to do, but the key-up of a press that closed it is eaten */
+export function sbUp(k, key) {
+  if (k.swallow === key) k.swallow = "";
   return k;
 }
 /* close whatever is up (Esc, a lost window focus while a key is held, leaving the game) */
@@ -203,7 +185,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
             : opts.length
               ? `<div class="sb-opts">${opts.map((o, i) => `<button type="button" class="sb-opt${o.on ? " on" : ""}" data-i="${i}">${i < 9 ? `<kbd>${i + 1}</kbd>` : ""}${esc(o.label)}</button>`).join("")}</div>`
               : `<p class="sb-none">Nothing here yet.</p>`;
-      box.innerHTML = `<header><span class="sb-tip">Double-tap <kbd>${k.open.toUpperCase()}</kbd> to keep it open</span><h2>${esc(w.name)}</h2><button type="button" class="sb-x" aria-label="Close">×</button></header>${body}`;
+      box.innerHTML = `<header><span class="sb-tip">Press <kbd>${k.open.toUpperCase()}</kbd> again to close</span><h2>${esc(w.name)}</h2><button type="button" class="sb-x" aria-label="Close">×</button></header>${body}`;
     }
     box.hidden = false;
   };
@@ -236,7 +218,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
       return;
     }
     k.open = key;
-    k.sticky = true; // (kept up, as a double tap keeps it: its × or Esc puts it away)
+    k.sticky = true; // (kept up: its key again, its × or Esc puts it away)
     k.swallow = "";
     if (onOpen) onOpen();
     paint();
