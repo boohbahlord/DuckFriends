@@ -15,6 +15,7 @@ import { play, loadSounds } from "./sound.js";
 import { heightAt, layoutVariant } from "./hangout/layout.js";
 import { OPENINGS, BUTLER, BOX, zombiesOf, ptsOf } from "./l4ddrules.js";
 import { groundAt, stepOf } from "./ground.js";
+import { isSurv } from "./survrules.js";
 import { DUCK_LEN } from "./mgjrules.js";
 
 const rnd = (a, b) => a + Math.random() * (b - a);
@@ -147,9 +148,18 @@ export function l4Hear(s, ctx) {
     if (!st.first) play("l4over");
     st.over = L.over.at;
   }
+  /* Survival has no rounds (its L.r is only a horde's level), so no new round's swell and no bell: a horde coming is
+     many zombies groaning far off, and its last one down the air letting go (s.hang.sv's phases: survrules.js) */
+  const sv = isSurv(s) && h.sv;
+  if (sv && sv.ph !== st.sv) {
+    if (!st.first && !L.over)
+      if (sv.ph === "peak") play("svHorde");
+      else if (sv.ph === "tail" && st.sv === "peak") play("svCalm");
+    st.sv = sv.ph;
+  }
   /* a new round (not the first look at the game, nor once it's over) */
   if (L && L.r !== st.r) {
-    if (st.r >= 0 && L.r > st.r && L.r > 0 && !L.over) {
+    if (st.r >= 0 && L.r > st.r && L.r > 0 && !L.over && !isSurv(s)) {
       play("l4round"); // (everywhere alike: no x, y)
       if (layoutVariant() === "l4gs" && play("churchBell"))
         bellAt = performance.now(); // (Downpour: the church bell rings the round in, the owner's, Nov 17 12:28Z)
@@ -157,8 +167,8 @@ export function l4Hear(s, ctx) {
     st.r = L.r;
   }
   /* every zombie of the round down (all of them came, none left standing): one chime, the last note of What the duck?
-     (the owner's, Nov 17 12:28Z) */
-  if (L && L.r > 0 && L.n > 0 && L.made >= L.n && st.clr !== L.r) {
+     (the owner's, Nov 17 12:28Z; not in Survival, which has svCalm above) */
+  if (L && L.r > 0 && L.n > 0 && L.made >= L.n && st.clr !== L.r && !sv) {
     const up = zombiesOf(s).some((z) => z.st !== 3);
     if (!up) {
       if (!st.first) play("cleared"); // (not for a round already done as I first look)

@@ -135,6 +135,13 @@ SOUNDS = {
         kbps=48,
         credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
     ),
+    # Survival, a horde's last zombie down (s.hang.sv: the peak turns to its tail): soundfont.py calm
+    "svCalm": dict(
+        sf="calm",
+        lp=3000,
+        kbps=48,
+        credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
+    ),
     # everyone's down (Dead Ducks Arcade's ending, both maps): soundfont.py game_over
     "l4over": dict(
         sf="game_over",
@@ -720,6 +727,25 @@ SOUNDS = {
         ],
         lp=2600,
         rate=0.92,
+        credit=("artisticdude, Zombies Sound Pack", OGA_URL["zombies"]),
+    ),
+    # Survival, a horde coming (s.hang.sv: the rest turns to a peak): many zombies groaning far off at once, low, dark
+    # and swelling in, heard rather than announced (the phases are never announced)
+    "svHorde": dict(
+        layers=[
+            ("oga:zombie-groan/zombie-1.wav", 0, 0.85, 0, 0.8),
+            ("oga:zombie-groan/zombie-10.wav", 0, 0.68, 0.25, 0.7),
+            ("oga:zombie-groan/zombie-15.wav", 0, 0.87, 0.55, 0.9),
+            ("oga:zombie-groan/zombie-5.wav", 0, 0.5, 0.85, 0.6),
+            ("oga:zombie-groan/zombie-1.wav", 0, 0.85, 1.1, 0.7),
+            ("oga:zombie-groan/zombie-10.wav", 0, 0.68, 1.45, 0.8),
+            ("oga:zombie-groan/zombieYell1.wav", 0, 0.38, 1.7, 0.4),
+            ("oga:zombie-groan/zombie-15.wav", 0, 0.87, 1.9, 0.6),
+        ],
+        rate=0.8,
+        lp=1300,
+        fin=0.9,
+        pre="afade=t=out:st=2.4:d=0.9",
         credit=("artisticdude, Zombies Sound Pack", OGA_URL["zombies"]),
     ),
     # the fireplace's spin, 4.2 s: a prize wheel's clicker slowing down, then a bell as it stops on a weapon

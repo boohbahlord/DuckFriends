@@ -36,6 +36,8 @@ export const VOL = {
   voteTick: -25, // (the votes' seconds: very soft)
   l4round: -14,
   l4over: -12, // (everyone's down: the game's ending, soft, Nov 19)
+  svHorde: -14, // (Survival: a horde coming, far off; svCalm: its last zombie down)
+  svCalm: -16,
   // moving
   step: -19,
   zstep: -27,
@@ -260,6 +262,8 @@ const GROUPS = {
     ...[
       "l4round",
       "l4over",
+      "svHorde",
+      "svCalm",
       "zstep",
       "nuke",
       "nukeRing",
