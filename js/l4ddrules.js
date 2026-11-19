@@ -84,7 +84,7 @@ import { MERCHANTS, merchantById, merchantLook } from "./merchants.js";
 import { linesOf } from "./merchantlines.js";
 import { invuln } from "./hangout/death.js";
 import { JET } from "./jetpack.js";
-import { hOk, hLock, shotFeet, MID } from "./heights.js";
+import { hOk, hLock, shotFeet, MID, SAME_FLOOR } from "./heights.js";
 import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
@@ -3980,8 +3980,8 @@ function catchFire(s, z, by, now, T) {
 }
 /* the flamethrower (flamer.js), one puff: it reaches farther the longer it's held, up to a wall; every zombie in its
    cone catches fire, and the ground at its end burns for a while. s.hang.l4fl = { id: [the hold's start, this puff,
-   ax, ay, reach] } (every screen draws the stream from it: l4dd.js), s.hang.l4gf = [[x, y, until, by]] the burning
-   patches */
+   ax, ay, reach] } (every screen draws the stream from it: l4dd.js), s.hang.l4gf = [[x, y, until, by, h]] the burning
+   patches (h: the height of the floor each is on) */
 function flame(s, id, m, px, py, dx, dy, hz, now) {
   const fl = { ...(s.hang.l4fl || {}) },
     was = fl[id],
@@ -4000,10 +4000,14 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
   const zs = zombies(s),
     T = now - s.hang.l4.t0;
   let any = false;
+  /* the stream goes as a bullet does (the owner's, Nov 19 21:59Z: "The fire that's shot from a flamethrower can in the
+     ways in which the bullets do, but it cannot go through the bottom of the roof"): over a roof's ledge, never under
+     a roof to one below it, nor up through one (canShoot: layout.js slabBetween) */
   for (const z of zs)
     if (
       z.st !== 3 &&
-      inCone((z.x - px) / D, (z.y - py) / D, dx, dy, far / D + 0.4)
+      inCone((z.x - px) / D, (z.y - py) / D, dx, dy, far / D + 0.4) &&
+      canShoot(z, px, py, hz)
     ) {
       catchFire(s, z, id, now, T);
       any = true;
@@ -4012,7 +4016,10 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
   const jp = s.pos[WILD.id];
   if (jp && wildOpen(s, WILD.id)) {
     const [jx, jy] = at(jp);
-    if (inCone((jx - px) / D, (jy - py) / D, dx, dy, far / D + 0.4))
+    if (
+      inCone((jx - px) / D, (jy - py) / D, dx, dy, far / D + 0.4) &&
+      !slabBetween(px, py, hz, jx, jy, +jp.z || 0)
+    )
       wildFire(s, id, now); // (Justin with no weapon burns too)
   }
   if (L4_HOOKS.gm && s.hang.gm)
@@ -4029,16 +4036,20 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
     mm.st !== "dead" &&
     mm.st !== "jump" &&
     now - (mm.burnt || 0) >= BURN.EVERY &&
-    inCone((mm.x - px) / D, (mm.y - py) / D, dx, dy, far / D + 0.4)
+    inCone((mm.x - px) / D, (mm.y - py) / D, dx, dy, far / D + 0.4) &&
+    !slabBetween(px, py, hz, mm.x, mm.y, heightAt(mm.x, mm.y))
   ) {
     s.hang.l4m = { ...mm, burnt: now };
     merchantHurt(s, id, 1, now, "flamer"); // (the merchant in the flame: 1 HP, once every 3 s while he's in it)
   }
   const gx = px + dx * far,
-    gy = py + dy * far;
+    gy = py + dy * far,
+    gd = deckAt(gx, gy, hz),
+    gz = gd ? gd.h : heightAt(gx, gy); // (the floor it lands on: the roof I'm on, or the ground past its ledge)
   if (
     now - (m.gf || 0) >= FLAME.PATCH &&
-    !(flood(gx, gy) && !deckAt(gx, gy, hz))
+    !(flood(gx, gy) && !gd) &&
+    !(dp() && slabBetween(px, py, hz, gx, gy, gz)) // (none under a roof I'm on top of)
   ) {
     m.gf = now;
     s.hang.l4gf = [
@@ -4048,6 +4059,7 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
         Math.round(gy),
         now + FLAME.GROUND + (ang ? ANGEL.FLAME_GROUND : 0),
         id,
+        Math.round(gz),
       ],
     ];
   }
@@ -4056,7 +4068,10 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
    BURN.SPREAD ms (half a second), and so on from each one it lights; the burning ground lights any zombie on it; old
    streams and patches go (the owner's, Nov 18 13:46Z: "make sure the zombies burn other zombies it touches relatively
    easier AND it takes 0.5 seconds AFTER a zombie is on fire for it's flame to spread to other zombies, and this repeats
-   for every zombie on fire") */
+   for every zombie on fire"). Fire never crosses floors (the owner's, Nov 19 21:59Z: "Fire does not spread across
+   verticality ... the flame that spreads between zombies, they actually have to touch the zombie on the same elevation
+   level"): a patch lights only a zombie on its own floor (its height, g[4]), and a burning zombie only one at its own
+   height (SAME_FLOOR), so one on a roof and one below never light each other */
 const TOUCH_Z = 2.2; // (in a zombie's hit room, 26 by 22 world px: was 1.6, now a little farther, so it catches easier)
 function flameTick(s, zs, now, T) {
   const gf = s.hang.l4gf;
@@ -4064,9 +4079,13 @@ function flameTick(s, zs, now, T) {
     const left = gf.filter((g) => g[2] > now),
       r = FLAME.PATCH_R * FLAME.DUCK;
     if (left.length !== gf.length) s.hang.l4gf = left.length ? left : null;
-    for (const [x, y, , by] of left)
+    for (const [x, y, , by, h] of left)
       for (const z of zs)
-        if (z.st !== 3 && Math.hypot(z.x - x, (z.y - y) * 1.3) < r)
+        if (
+          z.st !== 3 &&
+          Math.hypot(z.x - x, (z.y - y) * 1.3) < r &&
+          (!dp() || Math.abs(zombieZ(z) - (h || 0)) < SAME_FLOOR)
+        )
           catchFire(s, z, by, now, T);
   }
   const fz = (s.hang.l4fire || {}).z;
@@ -4085,7 +4104,8 @@ function flameTick(s, zs, now, T) {
           b !== a &&
           b.st !== 3 &&
           !(fz[b.i] && fz[b.i][0] > now) &&
-          Math.hypot((a.x - b.x) / 26, (a.y - b.y) / 22) < TOUCH_Z
+          Math.hypot((a.x - b.x) / 26, (a.y - b.y) / 22) < TOUCH_Z &&
+          (!dp() || Math.abs(zombieZ(a) - zombieZ(b)) < SAME_FLOOR)
         )
           catchFire(s, b, fz[a.i][2], now, T);
   }
@@ -4583,7 +4603,8 @@ export function l4Shots(s, now) {
             now,
             BLAST_HALF * (ang ? ANGEL.GL_RADIUS : 1),
           ) || hitAny;
-        if (ang) burnAt(s, sh.by, at[0], at[1], now); // (Angelic: a smaller blast, and the ground there on fire)
+        if (ang)
+          burnAt(s, sh.by, at[0], at[1], now, blastZ(at[0], at[1], sh.hz || 0)); // (Angelic: a smaller blast, and the ground there on fire)
         continue;
       }
       sh.lx = x1 / W;
@@ -4743,7 +4764,7 @@ function fling(z, sh, hz) {
 }
 
 /* the Angelic grenade launcher's fire: a few burning patches round where it went off, as the flamethrower's ground */
-function burnAt(s, by, x, y, now) {
+function burnAt(s, by, x, y, now, z0 = 0) {
   const r = ARMS.grenade.r * ANGEL.GL_RADIUS * BLAST_HALF,
     out = [];
   for (let k = 0; k < ANGEL.GL_FIRE; k++) {
@@ -4752,7 +4773,13 @@ function burnAt(s, by, x, y, now) {
     const px = x + Math.cos(a) * d,
       py = y + Math.sin(a) * d * 0.8;
     if (playable(px, py) && !flood(px, py))
-      out.push([Math.round(px), Math.round(py), now + FLAME.GROUND, by]); // (none on the water)
+      out.push([
+        Math.round(px),
+        Math.round(py),
+        now + FLAME.GROUND,
+        by,
+        Math.round(blastZ(px, py, z0)),
+      ]); // (none on the water; each on its own floor: the roof where it went off, or the ground past its ledge)
   }
   s.hang.l4gf = [
     ...(s.hang.l4gf || [])
