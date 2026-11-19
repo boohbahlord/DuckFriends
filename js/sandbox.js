@@ -11,7 +11,7 @@
    A phone has no keys: a Tools button under Leave Sandbox lists the windows, a tap on one keeps it up, and its × puts it
    away (the owner's answer 7, Nov 19 10:22Z: "you can start working on i now"). */
 import { LANG } from "./langname.js";
-import { esc, typing, windowOpen } from "./ui.js";
+import { esc, toast, typing, windowOpen } from "./ui.js";
 import { isSb, sbMay, SB_KEYS_TAKEN, SB_KEY_IN_BUILD } from "./sandboxrules.js";
 import {
   buildRows,
@@ -25,6 +25,16 @@ import {
 import { boxText } from "./sbspawn.js";
 import { npcRows } from "./sbmake.js";
 import { hotRows, lootHTML, openPut, sbHotOn } from "./sbhotview.js";
+import {
+  closeMenu,
+  openPreset,
+  patternOf,
+  pointAt,
+  sbCheat,
+  sbClip,
+  sbPresets,
+  showMenu,
+} from "./sbmenu.js";
 
 /* each window: its key, its title, and whether it needs the host's rights */
 export const SB_WINS = {
@@ -63,6 +73,18 @@ export const SB_SHEET = [
     "While a window is up, pick its options by number or with the mouse. Weapons don't switch then.",
   ],
   ["E", "Use what you stand next to, a spawn too."],
+  [
+    "Shift+C",
+    "Cheat mode on or off, for whoever may build. While it is off, B, M, N, G, P, E on a build and the right-click menu wait. It starts on.",
+  ],
+  [
+    "Right-click",
+    "On a thing you placed: Properties, Copy, Cut. On an empty spot: Paste. A long press does it on a phone. Shift+V pastes where the mouse is.",
+  ],
+  [
+    "Presets",
+    "Right-click (or long press) a row in Build to set its name, color and what it spawns before you place it. Hold Shift while you place and it keeps placing.",
+  ],
   [
     "Spawns",
     "In Build, pick a spawn and click where it goes, then give it a key, or put it on the hotbar in H. Its key spawns any time. E on it changes it.",
@@ -196,6 +218,47 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   tools.className = "sb-tools";
   tools.innerHTML = `<button type="button" class="btn ghost sb-tools-btn" aria-expanded="false">Tools</button><div class="sb-tools-list" hidden></div>`;
   S.append(tools);
+  /* cheat mode's note, bottom left, for whoever has rights */
+  const chip = document.createElement("button");
+  chip.type = "button";
+  chip.className = "sb-cheat";
+  chip.hidden = true;
+  S.append(chip);
+  const hasRights = () => {
+    const R = getR();
+    return (
+      !!R &&
+      isSb(R.state) &&
+      ["b", "m", "n", "g"].some((x) => sbMay(R.state, R.me, x))
+    );
+  };
+  const paintChip = () => {
+    const sig = hasRights() + "" + sbCheat.on;
+    if (chip.dataset.sig === sig) return;
+    chip.dataset.sig = sig;
+    chip.hidden = !hasRights();
+    chip.classList.toggle("on", sbCheat.on);
+    chip.innerHTML = `Cheat mode ${sbCheat.on ? "on" : "off"} <kbd>Shift</kbd>+<kbd>C</kbd>`;
+  };
+  const toggleCheat = () => {
+    if (!hasRights()) return;
+    sbCheat.on = !sbCheat.on;
+    if (!sbCheat.on) {
+      closeMenu();
+      if (k.open && k.open !== "c" && k.open !== "h") {
+        sbClose(k, false);
+        paint();
+      }
+    }
+    paintChip();
+  };
+  chip.addEventListener("click", toggleCheat);
+  /* the windows that are rights (c and h are for everyone): shut while cheat mode is off */
+  const cheatShut = (key) => {
+    if (sbCheat.on || key === "c" || key === "h" || !hasRights()) return false;
+    toast("Cheat mode is off. Press Shift+C to turn it on.");
+    return true;
+  };
   const tBtn = tools.firstChild,
     tList = tools.lastChild;
   const showList = (on) => {
@@ -213,6 +276,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   };
   const openWin = (key) => {
     showList(false);
+    if (cheatShut(key)) return;
     if (key === "n") {
       sbClose(k, false);
       paint();
@@ -247,7 +311,24 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
       if (el.style.left !== left) el.style.left = left;
     }
   };
-  const seating = setInterval(seat, 250);
+  /* the cheat note rides just above whatever is lowest at the bottom left (the Jumps count on a phone, the bar on a
+     computer), so it never sits on the Notes button */
+  const seatChip = () => {
+    if (chip.hidden) return;
+    const a = S.querySelector(".jumps-slot, .bbar");
+    if (!a) return;
+    const r = a.getBoundingClientRect(),
+      top = Math.round(r.top - chip.offsetHeight - 6) + "px";
+    if (chip.style.top !== top) {
+      chip.style.top = top;
+      chip.style.bottom = "auto";
+    }
+  };
+  const seating = setInterval(() => {
+    seat();
+    paintChip();
+    seatChip();
+  }, 250);
   /* ---------- putting down what Build picked: it rides on my mouse until a click on the map puts it there (a phone:
      the next tap). Esc, a right click or Cancel puts it back. Nothing else on the map hears that click ---------- */
   const ghost = document.createElement("div"),
@@ -316,8 +397,16 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
     const R = getR(),
       at = spotAt && spotAt(e.clientX, e.clientY);
     if (R && at)
-      R.send({ t: "sb", k: "add", kind: carry.kind, x: at.x, y: at.y });
+      R.send({
+        t: "sb",
+        k: "add",
+        kind: carry.kind,
+        x: at.x,
+        y: at.y,
+        ...(sbPresets[carry.kind] ? { pt: sbPresets[carry.kind] } : {}),
+      });
     eat = performance.now();
+    if (e.shiftKey && e.pointerType === "mouse") return; // (Shift held: it keeps going, the next click puts down another)
     drop();
   };
   const swallow = (e) => {
@@ -334,8 +423,56 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
     e.preventDefault();
     e.stopImmediatePropagation();
   };
+  /* the right-click menu: on a placed thing Properties, Copy and Cut; on an empty spot Paste (a long press on a phone makes
+     the same event). Only for whoever may build, with cheat mode on */
+  const rights = () => {
+    const R = getR();
+    return !!R && isSb(R.state) && sbMay(R.state, R.me, "b");
+  };
+  const paste = (at) => {
+    const R = getR();
+    if (!R || !sbClip.pt || !at) return;
+    R.send({
+      t: "sb",
+      k: "add",
+      kind: sbClip.pt.k,
+      x: at.x,
+      y: at.y,
+      pt: sbClip.pt,
+    });
+  };
   const menu = (e) => {
-    if (carry) e.preventDefault();
+    if (carry) return e.preventDefault();
+    if (!rights() || !sbCheat.on || !onMap(e) || windowOpen()) return;
+    const R = getR(),
+      at = spotAt && spotAt(e.clientX, e.clientY);
+    if (!at) return;
+    const id = pointAt(R.state, at),
+      p = id && R.state.sb.pts[id];
+    if (!p && !sbClip.pt) return; // (nothing to offer: the browser's own menu, or the game's)
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    showMenu(
+      S,
+      e.clientX,
+      e.clientY,
+      p
+        ? [
+            {
+              label: "Properties",
+              act: () => sbSettings(getR, id),
+            },
+            { label: "Copy", act: () => (sbClip.pt = patternOf(p)) },
+            {
+              label: "Cut",
+              act: () => {
+                sbClip.pt = patternOf(p);
+                getR().send({ t: "sb", k: "del", p: id });
+              },
+            },
+          ]
+        : [{ label: "Paste", act: () => paste(at) }],
+    );
   };
   addEventListener("pointermove", pmove, true);
   addEventListener("pointerdown", pdown, true);
@@ -354,7 +491,42 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
     }
     o.act(R);
   };
+  /* a Build row's preset: a right-click, or a long press on a phone */
+  const presetOf = (b) => {
+    const R = getR(),
+      row = R && sbOptions("b", R)[+b.dataset.i];
+    if (!row || !row.kind) return;
+    sbClose(k, false);
+    paint();
+    openPreset(getR, row.kind, row.name || row.label, seat);
+  };
+  box.addEventListener("contextmenu", (e) => {
+    const b = k.open === "b" && e.target.closest(".sb-opt");
+    if (!b) return;
+    e.preventDefault();
+    presetOf(b);
+  });
+  let lp = 0;
+  box.addEventListener("pointerdown", (e) => {
+    const b =
+      k.open === "b" &&
+      e.pointerType === "touch" &&
+      e.target.closest(".sb-opt");
+    clearTimeout(lp);
+    if (b)
+      lp = setTimeout(() => {
+        box.dataset.lp = "1";
+        setTimeout(() => delete box.dataset.lp, 900); // (the click the lifting finger makes is not a pick; later ones are)
+        presetOf(b);
+      }, 550);
+  });
+  for (const t of ["pointerup", "pointercancel", "pointermove"])
+    box.addEventListener(t, () => clearTimeout(lp));
   box.addEventListener("click", (e) => {
+    if (box.dataset.lp) {
+      delete box.dataset.lp; // (the tap that ended a long press is not a pick)
+      return;
+    }
     if (e.target.closest(".sb-x")) {
       sbClose(k, false);
       paint();
@@ -408,8 +580,26 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
       paint();
       return;
     }
+    if (e.shiftKey && e.code === "KeyC") {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if (!e.repeat) toggleCheat();
+      return;
+    }
+    if (e.shiftKey && e.code === "KeyV" && !e.repeat) {
+      const R = getR(),
+        at = spotAt && mx >= 0 && spotAt(mx, my);
+      if (rights() && sbCheat.on && sbClip.pt) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        paste(
+          at || { x: R.state.pos[R.me].x, y: R.state.pos[R.me].y }, // (no mouse yet: where I stand)
+        );
+        return;
+      }
+    }
     /* E beside a spawn or a respawn opens its settings */
-    if (e.code === "KeyE" && !e.repeat) {
+    if (e.code === "KeyE" && !e.repeat && sbCheat.on) {
       const R = getR(),
         s = R.state;
       const id = sbMay(s, R.me, "b") ? sbNearPoint(s, s.pos[R.me]) : null;
@@ -442,6 +632,11 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
       }
     }
     const l = letter(e);
+    if (l && !e.repeat && cheatShut(l)) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      return;
+    }
     /* n opens the Numerat window itself (numeratwin.js), for whoever may write Numerat */
     if (l === "n" && sbMay(getR().state, getR().me, "n")) {
       e.preventDefault();
@@ -497,6 +692,8 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
       for (const t of ["mousedown", "mouseup", "pointerup", "click"])
         removeEventListener(t, swallow, true);
       removeEventListener("contextmenu", menu, true);
+      closeMenu();
+      chip.remove();
       sbPlace.start = null;
       box.remove();
       tools.remove();

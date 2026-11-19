@@ -233,6 +233,7 @@ import { mountL4Bar, l4Slider } from "./l4ddbar.js";
 import { isSb, sbOnBoard, sbMay } from "./sandboxrules.js";
 import { mountCabinEnd } from "./hangout/cabinend.js";
 import { mountSandboxKeys } from "./sandbox.js";
+import { sbCheat } from "./sbmenu.js";
 import { sbHotOn, sbLook, sbHotSig } from "./sbhotview.js";
 import { sbSlots, spawnOf } from "./sbhot.js";
 import { sbBoardMarks, sbSettings } from "./sbspawnview.js";
@@ -6446,7 +6447,7 @@ const SB_LABELS = {
 };
 function sbGo(s) {
   if (!isSb(s) || !sbOnBoard(s) || !me || !onBoardPhase()) return null;
-  if (!sbMay(s, R.me, "b")) return null;
+  if (!sbMay(s, R.me, "b") || !sbCheat.on) return null;
   let best = null,
     bd = 1.6;
   for (const [id, p] of Object.entries((s.sb && s.sb.pts) || {})) {
