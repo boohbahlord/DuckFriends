@@ -6922,3 +6922,13 @@ permission has to be granted for every new sandbox session manually through this
 terminal can grant permissions with groups and what not, so the permissions is working to change the code in the shell for permssions in the shell and terminal as well."
 
 Done first (Adam, V100): get/index.html (/DuckFriends/get), one file, Install keeps the whole game on the device through sw.js (resumable: df-part, 3 tries a file, re-asks after 40 s quiet), browser "Add to home screen" when offered, Go to Duck Friends; "? Slow? Install" link bottom left of index.html's loading veil (removed once main.js runs); offline.js keeps the copy current on the website when localStorage df-lite. Drawing: Help DIR -> General Help files, .num directory -> .num files, particular help (named) -> particular help files. Numberat folders/permissions: Solomon next.
+
+## Owner, Nov 19 16:17Z (screenshot: Sandbox on a checkerboard map, a blue-grey tint over the whole board circled; saved /mnt/project-files/sandbox/owner-2026-11-19-1617-map-overlay.png)
+"remove the color overlay for the map here unless it is turned on 
+
+the buttons for sanbox unique to it like b, m, or h and all of which is now clicked only once instead of twice to get it up, and clicking again closes it"
+
+## Owner, Nov 19 16:17Z
+"interact button shows on the interactable builds"
+
+Adam: given to Jackal (Sandbox small fixes) before his pxdom job.
