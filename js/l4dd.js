@@ -913,7 +913,7 @@ export function l4Got(k) {
     gotEl.classList.add("nuke");
     nukeScreen(gotEl);
     sfx.nuke();
-  } else sfx.dropGot();
+  } else if (k !== "merchant") sfx.dropGot(); // (the merchant's arrival has his own bell: l4ddsfx.js)
 }
 /* ---------- the Nuke on the screen (owner 2026-11-16) ----------
    Grey pixel static sweeps out from the middle in a circle and covers the screen in a second (NUKE.SWEEP: the zombies
