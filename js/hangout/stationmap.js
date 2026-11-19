@@ -83,6 +83,9 @@ export const WALK_HOLES = [
   { id: "gs-back", axis: "x", at: STATION.y0, a: 1300, b: 1460 },
   { id: "gs-north", axis: "x", at: STATION.y0, a: 2950, b: 3150 },
   { id: "gs-front", axis: "x", at: STATION.y1, a: 2400, b: 2800 },
+  /* the restroom's west wall, so nobody is trapped in it (the owner's, Nov 19 19:27Z: "there should be a hole in the
+     bathroom wall to the left so that players cannot get trapped. That feels pretty unfair when it happens") */
+  { id: "gs-rest-w", axis: "y", at: STATION.x0, a: 1300, b: 1460 },
 ];
 /* the boarded holes: where zombies tear the boards down and climb in (ducks never get through one). out: the side the
    outside is on (n, s, e, w) */
