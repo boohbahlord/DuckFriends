@@ -92,6 +92,13 @@ export const WALK_HOLES = [
      transparent"); rubble spills out both sides, and from inside the outside shows through it (layout.js PEEKS) */
   { id: "gs-rest-w", axis: "y", at: STATION.x0, a: 1250, b: 1750 },
 ];
+/* the stretch of a walk-through hole in a north-south wall a duck really gets through, [from, to] along it: its feet
+   (layout.js FOOT, 16 world px) clear of the wall's broken end north of it and of the wall south of it (the gas station's
+   south wall, T thick, where the restroom's runs up to its corner). T: the walls' half thickness (the plan's) */
+const walkSpan = (o, T) => [
+  o.a + 16 / K,
+  o.b - 16 / K - (o.b === STATION.y1 ? T : 0),
+];
 /* the boarded holes: where zombies tear the boards down and climb in (ducks never get through one). out: the side the
    outside is on (n, s, e, w) */
 export const BOARDED = [
@@ -136,6 +143,20 @@ export const PUMP_LADDER = { at: 1400, y0: 2185, y1: 2265, side: "w" };
 export const ROOF_HOLES = [
   { id: "hole-se", x0: 2900, y0: 1165, x1: 3460, y1: 1720 },
   { id: "hole-rest", x0: 1250, y0: 1350, x1: 1450, y1: 1550 },
+  /* the roof's south-west corner broken off over the restroom's smashed west wall, as far along it as the way through
+     it (the owner's, Nov 19 22:41Z: "break a little bit of the corner of the roof as well, and make that like entire
+     breaking of that part of that roof on that side of that wall like transparent ... Where it's just a big hole in the
+     side ... that you can see into the bathroom"; 22:42Z: "the size of the space that you can actually enter and leave
+     through"). corner: drawn as a bite out of the corner (stationart.js roofHole), open to the roof's west and south
+     edges */
+  {
+    id: "hole-rest-w",
+    x0: STATION.x0 - 30,
+    y0: 1277,
+    x1: 1240,
+    y1: STATION.y1 + 30,
+    corner: "sw",
+  },
 ];
 /* the gas station's two doorways onto the aisles, in the storeroom's and the restroom's east wall (x = at), from y = a
    to b: open gaps, drawn open (layout.js puts them in OPENINGS, so the wall south of each starts at its foot instead of
@@ -302,6 +323,12 @@ function planBuild(b) {
         put("stub", x0 - T, B.y1 - T, x1 - x0 + 2 * T, 2 * T, 14, {
           only: "in",
           z: 0,
+          /* its west end smashed where a hole in the west wall runs up to the corner (the restroom's) */
+          broken:
+            cur === B.x0 &&
+            WALK_HOLES.some(
+              (o) => o.axis === "y" && o.at === B.x0 && o.b === B.y1,
+            ),
         });
       cur = c;
     }
@@ -373,18 +400,14 @@ function planBuild(b) {
         key: o.b + T,
       });
       /* a walk-through hole in a north-south wall: the wall's rubble on the floor both sides, so it's found from
-         inside and from outside (the roof hides the wall itself from outside) */
+         inside and from outside, exactly as long as the way through it (walkSpan: the owner's, Nov 19 22:42Z). From
+         outside the roof's corner is broken off over it (ROOF_HOLES), so it's seen through that (no breach drawn over
+         the roof's edge any more: the owner's, Nov 19 22:41Z, "remove that") */
       if (!o.out) {
-        put("rubble", o.at - 180, o.a, 360, o.b - o.a, 0, {
+        const [ya, yb] = walkSpan(o, T);
+        put("rubble", o.at - 180, ya, 360, yb - ya, 0, {
           z: 0,
           hole: o,
-        });
-        put("breach", o.at - 70, o.a + 40, 140, o.b - o.a - 80, 0, {
-          z: 0,
-          hole: o,
-          only: "out",
-          fade: true,
-          key: S.y1 + 3 * T, // (over the roof's edge)
         });
       }
     }
@@ -555,6 +578,7 @@ function planBuild(b) {
               o.y0 - (B.y0 - 30),
               o.x1 - o.x0,
               o.y1 - o.y0,
+              ...(o.corner ? [o.corner] : []),
             ])
           : null, // (the same, the holes broken through it)
       key: B.y1 + 2 * T, // (in front of the south wall's top: the roof's edge (the sign's red band) covers it, no grey slab over the red: the owner's, Nov 17 05:46Z)
