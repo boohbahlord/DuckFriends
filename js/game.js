@@ -186,7 +186,13 @@ import {
 } from "./specials.js";
 import { mountHotbar } from "./hotbar.js";
 import { heatUp, heatDraw, heldOn } from "./barrelheat.js";
-import { laserLook, laserArt, laserFrame, laserMeter } from "./laserfx.js";
+import {
+  laserLook,
+  laserArt,
+  laserGlow,
+  laserFrame,
+  laserMeter,
+} from "./laserfx.js";
 import { olAdd, olDraw, olFloor, olRoofed } from "./outlines.js";
 import { ammoBar, stackBars, noReload } from "./meters.js";
 import { LASER, BEAM } from "./laserart.js";
@@ -2418,9 +2424,10 @@ function drawDucks(now = clockNow()) {
             : heldHTML(w, duck),
         pic = dual ? angelic(dualPistolHTML(duck)) : holy ? angelic(art) : art;
       /* every gun as long in the hand as its l4ddguns.js w (--gw, css .held i): one number for each, so no new gun is
-         left at a knife's size */
+         left at a knife's size. The Laser Rifle getting hot: the whole gun glows (laserfx.js laserGlow) */
+      const [gc, gs] = lz ? laserGlow(lz) : ["", ""];
       h = el(
-        `<div class="held${holy ? " angelic" : ""}${dual ? " dual" : ""}" data-pid="${esc(id)}" data-w="${w}" style="--s:${hs.toFixed(0)}px${GUNS[w] ? `;--gw:${GUNS[w].w}` : ""}"><i>${pic}</i></div>`,
+        `<div class="held${holy ? " angelic" : ""}${dual ? " dual" : ""}${gc}" data-pid="${esc(id)}" data-w="${w}" style="--s:${hs.toFixed(0)}px${GUNS[w] ? `;--gw:${GUNS[w].w}` : ""}${gs}"><i>${pic}</i></div>`,
       );
       h._k = hk;
       h._hs = hs;
@@ -3687,12 +3694,15 @@ const NEW_GUN_SFX = {
   },
   flamer: (o) => sfx.flamer(o),
 };
-/* charred, then the burns fade in a few seconds; with flames first for `fire` ms (the fire special, not a grenade) */
-function burn(dk, fire = 0) {
+/* charred, then the burns fade in a few seconds; with flames first for `fire` ms (the fire special, not a grenade).
+   lite: only a little (the Laser Rifle overheated, the owner's, Nov 19 19:27Z: "Player doesn't get the burnt effect as
+   badly, just a little bit") */
+function burn(dk, fire = 0, lite = false) {
   if (!dk) return;
   clearTimeout(dk._fireT);
   clearTimeout(dk._burnT);
   dk.classList.remove("burnt", "unburn", "onfire");
+  dk.classList.toggle("burnt-lite", lite);
   dk.classList.add(fire ? "onfire" : "burnt");
   if (fire)
     dk._fireT = setTimeout(() => {
@@ -3700,7 +3710,7 @@ function burn(dk, fire = 0) {
       dk.classList.add("burnt");
     }, fire);
   dk._burnT = setTimeout(() => {
-    dk.classList.remove("burnt");
+    dk.classList.remove("burnt", "burnt-lite");
     dk.classList.add("unburn");
     dk._burnT = setTimeout(() => dk.classList.remove("unburn"), 2600);
   }, fire + 2400);
@@ -4187,7 +4197,7 @@ function playFx(f) {
     sfx.laserHiss(heard(f.by));
     const dk = S.querySelector(`.gduck[data-pid="${CSS.escape(f.by)}"]`);
     if (dk) {
-      burn(dk);
+      burn(dk, 0, true);
       clearTimeout(dk._joltT);
       dk.classList.remove("l4-jolt");
       void dk.offsetWidth;
