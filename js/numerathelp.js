@@ -4,7 +4,7 @@
    copied or deleted or changed". shell.js puts these in the Seriat folder at the start of every game (never kept in the
    profile) and refuses every change to them. Only what is built is written here (part A: values, orders, brackets,
    math, asterisks, percents; part B: line rules and limits; part C: statements).
-   The owner's (Nov 19 16:12Z, with a drawing): help/ itself holds the general files, the examples (.num files) have their
+   The owner's (Nov 19 16:12Z, with a drawing): help/ itself holds the general files, the examples (.se files) have their
    own folder, and each particular help topic its own named folder with its files (HELP_IN). */
 import { LANG } from "./langname.js";
 
@@ -32,12 +32,35 @@ export function helpAt(name) {
   return "help/" + name;
 }
 const HELP_FLAT = {
-  "index.txt": `${LANG} help
+  "0-start-here.txt": `${LANG}: start here
+A programming language is a list of instructions a computer follows
+in order, one line after another. You write what you want, ${LANG}
+reads it, and the game does it. Nothing runs by guessing: it does
+exactly what the line says.
+
+Numbers come first. Everything starts from one:
+  2        the number 2, always
+  2:4      a random number from 2 to 4, a new one each time
+  30%      a chance: 1 three times in 10, else 0
+
+A variable is a name that holds a number, so you can use it again
+and change it later. Two kinds:
+  let rage = 3     your own name: you give it a value, and it stays
+                   what you left it until you change it
+  hp   speed       a stat of an NPC: the game already knows it, and
+                   it moves by itself when the NPC is hit or healed
+Your own variable is a box you fill. A stat is a meter the game fills.
+
+Then come words that do things (go, flee, say), and tests (if) that
+choose between them. The pages below add one idea each: read this one
+first, then the numbers/ folder.
+
+${LANG} help
 These files are read-only: you can read them here and with cat,
 but they can't be changed, copied or deleted.
 
 Here, in help/:
-  index.txt      this page
+  0-start-here.txt  this page (read it first)
   window.txt     the ${LANG} window: files, Run, Check, wrap, autocomplete
   files.txt      files that do things: when spawn, when hit, every 2s, use
   limits.txt     the limits every box has, and what to do past one
@@ -282,6 +305,8 @@ Stats, read and set (an NPC's, inside a when):
 Another NPC's: z hp, where z is one (for z in team ...):
   for z in team ((z hp z hp+1))       each one gets 1 HP more
 Built-in: wave (the round), time (seconds), alive, dead, spawned.
+hppct: its own HP as a percent of its most (30 is under a third).
+
 Math words: round 2.5 (3)  up 2.1 (3)  down 2.9 (2)
             min 3 hp  max 1 speed  spawned mod 3
 
@@ -305,12 +330,12 @@ Blocks:
   "tests.txt": `Tests
 
 Between backslashes, < and > compare (outside, they're arrows):
-  \\if hp < 5\\ flee else go nearest duck
+  \\if hppct < 30\\ flee else go nearest duck
   \\if hp == 5\\ ...      equal (one = names a value)
   \\if hp not 5\\ ...     not equal
   \\if hp in 1:5\\ ...    one of; also in [2,4,6]
   <= and >= work too
-  \\if not hp > 5\\  \\if hp < 5 and wave > 2\\
+  \\if not hppct > 30\\  \\if hppct < 30 and wave > 2\\
   and, or, nand, xor
   \\if spawned mod 3 == 0\\ say "every 3rd"
 `,
@@ -319,7 +344,7 @@ Between backslashes, < and > compare (outside, they're arrows):
   for n in 1:5 { say "wave n" }     1, 2, 3, 4, 5
   for n in [2,4] print "n"          2, then 4
   for z in all zombies { ((z speed ~1.2)) }
-  while \\hp < 5\\ { flee; wait 1 }
+  while \\hppct < 30\\ { flee; wait 1 }
 
 Every loop stops after 1,000 rounds with an error, and so does
 anything that runs a long time without a wait, so a mistake can't
@@ -411,40 +436,40 @@ export const HELP = Object.fromEntries(
 /* ---------- help/examples/ (the owner's Nov 19 15:18Z via Adam): ready brain files, read-only like help/ ----------
    Players copy one (cp) and write its name in a spawn's Brain box. Each was run through compileScript with 0 errors. */
 export const EXAMPLES = {
-  "chaser.num": `# A chaser: runs at the nearest duck, and bites when it is close.
+  "chaser.se": `# A chaser: runs at the nearest duck, and bites when it is close.
 # Copy it, then write its name in a spawn's Brain box.
 when spawn { ((speed 1.2:1.6)); go nearest duck }
 every 2s go nearest duck
 when near duck 1 attack
 `,
-  "coward.num": `# A coward: it chases, but flees whenever it has under 5 HP.
-when spawn ((hp 8))
-every 1s \\if hp < 5\\ flee else go nearest duck
-when hit \\if hp < 5\\ flee
+  "coward.se": `# A coward: it chases, but flees whenever it has under 30% of its HP.
+# (hppct is its HP as a percent of its most.)
+every 1s \\if hppct < 30\\ flee else go nearest duck
+when hit \\if hppct < 30\\ flee
 `,
-  "healer.num": `# A healer: every few seconds each NPC on its team gets 1 HP more.
+  "healer.se": `# A healer: every few seconds each NPC on its team gets 1 HP more.
 # (z hp is NPC z's HP: see help/brains/names.txt. Each healer on the board gives its own 1 HP.)
 every [3,5]s for z in team ((z hp z hp+1))
 `,
-  "rage-give.num": `# The first of a pair: this file makes rage and gives it to the other file.
+  "rage-give.se": `# The first of a pair: this file makes rage and gives it to the other file.
 # Put this one in one spawn's Brain box and rage-take in another's.
 let rage = 2:4
 give rage
 when spawn ((hp "2rage"))
 `,
-  "rage-take.num": `# The second of a pair: it takes the rage rage-give made, and its speed follows it.
+  "rage-take.se": `# The second of a pair: it takes the rage rage-give made, and its speed follows it.
 # (Give it first: when this file starts, rage-give has to have run.)
 take rage
 when spawn ((speed rage))
 `,
-  "talker.num": `# A talker: every few seconds it says one of three lines, with random letters.
+  "talker.se": `# A talker: every few seconds it says one of three lines, with random letters.
 # $ is a random letter, * a random digit (help/math/asterisks.txt).
 every [2,4]s {
   let n = 1:3
   \\if n == 1\\ say "brains $$*" else \\if n == 2\\ say "hello $$$" else say "moan $*"
 }
 `,
-  "waves.num": `# Waves: each NPC is faster and tougher the later the wave. wave is the round.
+  "waves.se": `# Waves: each NPC is faster and tougher the later the wave. wave is the round.
 # Speed 1 at wave 0, up to 5 at wave 40; HP 3 plus the wave.
 when spawn { ((speed min 5 1+wave/10)); ((hp 3+wave)) }
 every 2s \\if wave > 3\\ go nearest duck

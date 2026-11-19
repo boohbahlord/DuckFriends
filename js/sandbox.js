@@ -230,6 +230,8 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   const k = sbKeys();
   let shown = "";
   let hotPick = ""; // (the loot picked in the h window: then a key puts it there)
+  const mayBuild = (R) =>
+    ["b", "m", "n", "g"].some((x) => sbMay(R.state, R.me, x)); // (cheat mode is theirs)
   const paint = () => {
     const R = getR();
     sbView.build =
@@ -247,6 +249,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
       k.open +
       (can ? 1 : 0) +
       opts.map((o) => o.label).join("|") +
+      (k.open === "c" ? sbCheat.on + "" + mayBuild(R) : "") +
       (hotWin
         ? hotPick +
           JSON.stringify((R.state.sb || {}).hb || {}) +
@@ -260,7 +263,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
       box.setAttribute("aria-label", w.name);
       const body =
         k.open === "c"
-          ? `<dl class="sb-keys">${SB_SHEET.map(([kk, t]) => `<dt><kbd>${kk}</kbd></dt><dd>${esc(t)}</dd>`).join("")}</dl>`
+          ? `${mayBuild(R) ? `<p class="sb-cheatrow"><button type="button" class="btn small${sbCheat.on ? "" : " ghost"}" data-cheat aria-pressed="${sbCheat.on}">Cheat mode: ${sbCheat.on ? "on" : "off"}</button> <kbd>Shift</kbd>+<kbd>C</kbd></p>` : ""}<dl class="sb-keys">${SB_SHEET.map(([kk, t]) => `<dt><kbd>${kk}</kbd></dt><dd>${esc(t)}</dd>`).join("")}</dl>`
           : !can
             ? `<p class="sb-none">Only the host can change this.</p>`
             : opts.length
@@ -275,12 +278,17 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   tools.className = "sb-tools";
   tools.innerHTML = `<button type="button" class="btn ghost sb-tools-btn" aria-expanded="false">Tools</button><div class="sb-tools-list" hidden></div>`;
   S.append(tools);
-  /* cheat mode's note, bottom left, for whoever has rights */
-  const chip = document.createElement("button");
-  chip.type = "button";
+  /* the note, bottom left, as Sandbox comes up: which key is the cheat sheet and, for whoever may build, cheat mode;
+     then it fades away. Cheat mode's own switch is in the cheat sheet (the owner's, Nov 19 21:59Z: "cheat mode on or
+     off in the bottom left, we move that somewhere else ... It should be in the cheat sheet ... all in one text that
+     pops on and then fades away when you load into Sandbox") */
+  const chip = document.createElement("div");
   chip.className = "sb-cheat";
+  chip.setAttribute("aria-hidden", "true");
   chip.hidden = true;
   S.append(chip);
+  let chipFrom = 0; // (from when it is first seen: not under the loading screen)
+  const CHIP_MS = 7000; // (6 s, then a 1 s fade: css/app.css .sb-cheat)
   const hasRights = () => {
     const R = getR();
     return (
@@ -290,12 +298,26 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
     );
   };
   const paintChip = () => {
-    const sig = hasRights() + "" + sbCheat.on;
+    const R = getR();
+    if (
+      !chipFrom &&
+      R &&
+      isSb(R.state) &&
+      !document.querySelector(".veil.loading")
+    )
+      chipFrom = performance.now();
+    if (!chipFrom || performance.now() - chipFrom > CHIP_MS) {
+      chip.hidden = true;
+      return;
+    }
+    const keys = document.documentElement.classList.contains("keyboard"),
+      sig = hasRights() + "" + sbCheat.on + keys;
+    chip.hidden = false;
     if (chip.dataset.sig === sig) return;
     chip.dataset.sig = sig;
-    chip.hidden = !hasRights();
-    chip.classList.toggle("on", sbCheat.on);
-    chip.innerHTML = `Cheat mode ${sbCheat.on ? "on" : "off"} <kbd>Shift</kbd>+<kbd>C</kbd>`;
+    chip.innerHTML = keys
+      ? `<kbd>C</kbd> Cheat sheet${hasRights() ? ` · <kbd>Shift</kbd>+<kbd>C</kbd> Cheat mode ${sbCheat.on ? "on" : "off"}` : ""}`
+      : `Tools: the cheat sheet${hasRights() ? ` and cheat mode (${sbCheat.on ? "on" : "off"})` : ""}`;
   };
   const toggleCheat = () => {
     if (!hasRights()) return;
@@ -308,8 +330,10 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
       }
     }
     paintChip();
+    if (k.open === "c")
+      paint(); // (its button says on or off)
+    else toast(`Cheat mode ${sbCheat.on ? "on" : "off"}.`);
   };
-  chip.addEventListener("click", toggleCheat);
   /* the windows that are rights (c and h are for everyone): shut while cheat mode is off */
   const cheatShut = (key) => {
     if (sbCheat.on || key === "c" || key === "h" || !hasRights()) return false;
@@ -635,6 +659,10 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   for (const t of ["pointerup", "pointercancel"])
     box.addEventListener(t, () => clearTimeout(lp));
   box.addEventListener("click", (e) => {
+    if (e.target.closest("[data-cheat]")) {
+      toggleCheat();
+      return;
+    }
     if (e.target.closest(".sb-x")) {
       sbClose(k, false);
       paint();

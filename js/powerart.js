@@ -148,7 +148,7 @@ export function powerBoxSVG({
       .map((y) => R(dx - 2, y, 4, 7, G1, `rx="1" ${ln(1.2)}`))
       .join("") +
     R(dx + dw - 9, dy + dh / 2 - 9, 4.6, 18, G0, `rx="2" ${ln(1.4)}`) +
-    `<path d="M${n1(vx)} ${n1(vy - 11)}L${n1(vx + 12.5)} ${n1(vy + 10)}H${n1(vx - 12.5)}Z" fill="#ffd23f" ${ln(1.8)} stroke-linejoin="round"/>` +
+    `<path d="M${n1(vx)} ${n1(vy - 11)}L${n1(vx + 12.5)} ${n1(vy + 10)}H${n1(vx - 12.5)}Z" fill="#ffd23f" ${ln(1.8)}/>` +
     `<path d="M${n1(vx + 1.6)} ${n1(vy - 4.6)}L${n1(vx - 3)} ${n1(vy + 2.4)}H${n1(vx + 0.8)}L${n1(vx - 1.6)} ${n1(vy + 8)}L${n1(vx + 3.6)} ${n1(vy + 0.6)}H${n1(vx - 0.2)}Z" fill="#1c1c28"/>`;
   /* the fuel sign on its post: a yellow plate, a gas pump, and the gauge (empty at the left, full at the right) */
   const sx = 3,

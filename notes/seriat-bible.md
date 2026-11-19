@@ -185,7 +185,8 @@ Every Seriat value works anywhere a number goes below: `wait 1:3`, `every [2,4]s
     quotes the text stays exactly as typed (`say 'zombie $$*'` says "zombie $$*"). To keep a word, put it in single quotes and the value beside it: `say 'rage is ' rage`. After `print`/`say`, quotes are text; everywhere else double quotes still multiply.
 15. **Same random every run**: `seed 42`. Without it, random as usual.
 16. **Built-in names**: `wave` (Dead Ducks Arcade's round number, the owner's word; `round` is taken by rounding),
-    `time`, `alive`, `dead`, `spawned`.
+    `time`, `alive`, `dead`, `spawned`. `hppct` is an NPC's own HP as a percent of its most (30 means under a third), read inside a `when`: `\if hppct < 30\` (owner Nov 19 21:59Z, "change that to a percentage"; a plain `hp < 30%` would be read as a chance).
+    Files end in `.se` (the owner's, Nov 19 21:59Z); old `.num` files still open.
 
 ## 16. Worked examples (Adam, Nov 19 13:25Z, in the owner's style)
 1. Speed that sticks per NPC: `{1.0:1.*}='1*'\>>\||"['1*'][1,2]"`: picks 1.0 to 1.9 (asterisk 1), then times 1 or 2,
