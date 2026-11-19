@@ -310,7 +310,7 @@ export function sbSettings(getR, id, tab = "") {
           `<label><input type="radio" name="sb-pick" data-pick="${v}"${pick === v ? " checked" : ""}> ${n}</label>`,
       )
       .join("")}</span></div>
-    <div class="sb-acts" data-row="acts"${onlyZ(what) ? " hidden" : ""}>${Object.keys(
+    <div class="sb-actrows" data-row="acts"${onlyZ(what) ? " hidden" : ""}>${Object.keys(
       SB_ACTS,
     )
       .map((f) => actRow(R.state, p, f, kinds))
