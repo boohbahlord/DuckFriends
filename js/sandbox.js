@@ -28,7 +28,7 @@ export const SB_WINS = {
   c: { name: "Cheat sheet", all: true },
   b: { name: "Build" },
   m: { name: "Make an NPC" },
-  n: { name: "Numerat" },
+  n: { name: "Numberat" },
   h: { name: "Hotbar", all: true }, // (its rows say who may do what: sbhotview.js hotRows)
   g: { name: "Game settings" },
   p: { name: "Player settings" },
@@ -47,7 +47,7 @@ export const SB_SHEET = [
   ["M", "Make an NPC: its look, its weapons and who it goes after."],
   [
     "N",
-    "Numerat: your files, kept on this device, with a terminal line. Run a file there, or chmod +x it and ./file it. Numerat only runs in Sandbox.",
+    "Numberat: your files, kept on this device, with a terminal line. Run a file there, or chmod +x it and ./file it. Numberat only runs in Sandbox.",
   ],
   [
     "H",
@@ -55,7 +55,7 @@ export const SB_SHEET = [
   ],
   [
     "G",
-    "Game settings for this Sandbox: where Numerat files are brought in to run.",
+    "Game settings for this Sandbox: where Numberat files are brought in to run.",
   ],
   ["P", "Player settings: who else may change Sandbox."],
   [

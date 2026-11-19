@@ -23,7 +23,7 @@ export function openNumerat() {
   const ctx = shellCtx(),
     root = numerat.root(ctx),
     st = { file: "", dir: root, out: [], busy: false };
-  const html = `<h2>Numerat</h2>
+  const html = `<h2>Numberat</h2>
   <div class="nm">
     <aside class="nm-side">
       <div class="nm-new"><button type="button" class="btn small ghost" data-new="file">New file</button><button type="button" class="btn small ghost" data-new="dir">New directory</button></div>
