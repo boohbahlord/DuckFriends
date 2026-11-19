@@ -1,0 +1,38 @@
+# The site, published (the owner's, Nov 19): on each push to main, GitHub Pages gets the repo's files with the comments
+# blanked out of js/ and css/ (tools/publish.mjs), a third less for a slow phone to download. It takes over from Pages
+# serving main as it is once Settings → Pages → Source is "GitHub Actions"; until then this does nothing players see.
+name: Publish the site
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "notes/**"
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Blank the comments
+        run: |
+          npm install --no-save --prefix "$RUNNER_TEMP/pub" acorn@8.14.0
+          NODE_PATH="$RUNNER_TEMP/pub/node_modules" node tools/publish.mjs _site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4
