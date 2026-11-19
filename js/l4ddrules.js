@@ -4261,6 +4261,7 @@ export function wearDown(s, by, w, dealt) {
   if (left <= 0) {
     sl[i] = "";
     delete du[w];
+    s.hang.l4brk = { n: ((s.hang.l4brk || {}).n || 0) + 1, by }; // (everyone hears it break: l4ddsfx.js)
   } else du[w] = left;
   s.hang.l4a = { ...s.hang.l4a, [by]: { ...kit, sl, du } };
 }

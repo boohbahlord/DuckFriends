@@ -1100,9 +1100,10 @@ SOUNDS = {
             KENNEY_RPG,
         ),
     ),
-    # a melee breaking (the owner, Nov 19: "every melee, when it breaks, should have the same sound"): a sharp crack
+    # a melee breaking, and any item that breaks once it runs out (the owner, Nov 19: "every melee, when it breaks,
+    # should have the same sound"): a sharp crack
     # of something giving way, with a dull, darker clink of metal under it, short and not loud
-    "meleeBreak": dict(
+    "break": dict(
         layers=[
             ("oga:board-broken/crack01.flac", 0.17, 0.4, 0, 1),
             ("gh:melee/clang-dull-1.flac", 0.02, 0.3, 0.01, 0.3, 2200),

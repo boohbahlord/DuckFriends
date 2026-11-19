@@ -125,7 +125,7 @@ instruments (its license: LICENSES.md).
 | pan | Jordan Irwin (AntumDeluge), melee swings (from Stendhal) — https://opengameart.org/node/100746 | CC0 1.0 |
 | axeHit | Kenney, RPG Audio (chop) and Impact Sounds (impactPunch_heavy) — https://kenney.nl/assets/rpg-audio | CC0 1.0 |
 | swordHit | Kenney, RPG Audio (knifeSlice2); lostchocolatelab, clang (freesound 1468, from Stendhal) — https://kenney.nl/assets/rpg-audio | CC0 1.0 |
-| meleeBreak | Independent.nu, 35 Wooden Cracks/Hits/Destructions (crack01); alienistcog, clang (freesound 124711, from Stendhal) — https://opengameart.org/content/35-wooden-crackshitsdestructions | CC0 1.0 |
+| break | Independent.nu, 35 Wooden Cracks/Hits/Destructions (crack01); alienistcog, clang (freesound 124711, from Stendhal) — https://opengameart.org/content/35-wooden-crackshitsdestructions | CC0 1.0 |
 | panHit | alienistcog, clang (freesound 124711, from Stendhal); Kenney, RPG Audio (metalPot3) — https://freesound.org/people/alienistcog/sounds/124711/ | CC0 1.0 |
 | powerUp | CogFireStudios, electric motor start (freesound 619835); joe_anderson22, machinery (freesound 392983); Kenney, Impact Sounds (both via CDDA-Soundpacks) — https://freesound.org/s/619835/ | CC0 1.0 |
 | powerDown | GiocoSound, engine stop (freesound 401553, via CDDA-Soundpacks); Kenney, Impact Sounds — https://freesound.org/people/GiocoSound/sounds/401553/ | CC0 1.0 |

@@ -133,6 +133,14 @@ export function l4Hear(s, ctx) {
         });
       }
   st.flash = { ...off };
+  /* a melee worn down to nothing breaks (l4ddrules.js wearDown): the one sound every item makes as it breaks (the
+     owner, Nov 19), mine full, another duck's by how far it is; not for one already broken as I first look */
+  const brk = h.l4brk;
+  if (brk && st.brk !== brk.n) {
+    const a = brk.by !== ctx.me && ctx.world.at(brk.by);
+    if (!st.first) play("break", a ? { x: a.x, y: a.y } : {});
+    st.brk = brk.n;
+  }
   /* everyone's down: the game's ending, on both maps (not the new round's swell, not the bell: the owner, Nov 19), and
      only once (not for a game already over as I first look) */
   if (L && L.over && st.over !== L.over.at) {

@@ -117,7 +117,7 @@
   "pan": { "n": 1 },
   "axeHit": { "n": 1 },
   "swordHit": { "n": 1 },
-  "meleeBreak": { "n": 1 },
+  "break": { "n": 1 },
   "panHit": { "n": 1 },
   "powerUp": { "n": 1 },
   "powerDown": { "n": 1 },
