@@ -487,6 +487,7 @@ import {
   fxLasers,
   fxFlame,
   fxGroundFire,
+  fxGround,
   fxBlood,
   heavyOff,
   fxKnock,
@@ -3700,15 +3701,25 @@ function flames(s, now, hang, size, fxl, heldAll) {
     FLAME_CARRY.set(id, want - n);
     fxFlame(e[0], e[1], e[2], far, n, FLAMER.CONE, band);
   }
-  if (half < 1 && frameNo % 2) return; // (half: the ground's flicker every other frame)
+  /* the burning ground: each patch's little pixel flames (fx.js fxGround), and a few embers flying up off it */
+  const ground = [];
   for (const g of (l4 ? s.hang.l4gf : s.gfire) || []) {
     const left = g[2] - now;
     if (left <= 0) continue;
     const a = l4
       ? spot(g[0] / HW, g[1] / HH, g[4] || 0) // (on its own floor: a roof's, or the ground)
       : spot(g[0], g[1], hang ? g[5] || 0 : 0);
-    fxGroundFire(a.left, a.top, size * 0.45, left < 1000 ? 1 : 3); // (dying down in its last second)
+    ground.push([
+      a.left,
+      a.top,
+      size * 0.45,
+      left < 1000, // (dying down in its last second)
+      Math.round((g[0] * 7.31 + g[1]) * (l4 ? 1 : 1e4)), // (its own, from where it is: its flames keep their places)
+    ]);
+    if (!(half < 1 && frameNo % 2) && Math.random() < 0.5)
+      fxGroundFire(a.left, a.top, size * 0.4, 1); // (half: its embers every other frame)
   }
+  fxGround(ground);
 }
 /* my screen blinks in and out of crimson while it shakes (the flamethrower's fire on my duck, the owner's, Nov 16): a
    steady faint red instead with the heavy effects off (css/app.css html.crimson) */

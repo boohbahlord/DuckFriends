@@ -104,6 +104,7 @@ export function fxMount(fxl, W, H, size) {
     g = cv.getContext("2d");
     fxl.prepend(cv);
     LIFE.fill(0); // (a new board: what was flying on the last one is gone)
+    ground = [];
     alive = 0;
     dirty(); // (cleared on the next frame)
   }
@@ -688,9 +689,10 @@ export function fxFlame(x, y, ang, far, n, cone, band) {
     );
   } // (napalm: dark smoke rising off it)
 }
-/* a patch of burning ground at (x, y) on the screen, r css px across: a few flickering flame pixels this frame */
+/* a few flame pixels flickering up off (x, y) on the screen, r css px across: the embers over the burning ground and the
+   Laser Rifle's hot end */
 export function fxGroundFire(x, y, r, n = 2) {
-  if (fxOff(x, y)) return; // (a patch of fire far off my screen: nothing to make, every frame)
+  if (fxOff(x, y)) return; // (far off my screen: nothing to make, every frame)
   for (let k = 0; k < n; k++) {
     const a = rnd(0, Math.PI * 2),
       d = r * Math.sqrt(Math.random());
@@ -706,6 +708,114 @@ export function fxGroundFire(x, y, r, n = 2) {
       Math.random() < 0.4 ? 9 : 10,
       Math.random() < 0.25 ? 2 : 1,
     );
+  }
+}
+
+/* ---------- the burning ground (the owner's, Nov 19 21:59Z: "the fire effect isn't pixelated properly ... I think
+   it's using the old image for that") ----------
+   It was only loose flame pixels, which read as specks next to the pixel flames on a burning duck. Now each patch is a
+   few little flames drawn pixel by pixel, the same look as those: a red edge, then orange, yellow and a white heart,
+   outlined dark. Each flickers through its own frames, and in its last second only small ones are left. 1 red,
+   2 orange, 3 yellow, 4 white; "." nothing */
+const GF_BIG = [
+    [
+      "....1....",
+      "....1....",
+      "...11....",
+      "...121.1.",
+      ".1.121.1.",
+      ".1.1221..",
+      ".11232211",
+      "112333221",
+      "123343321",
+      "123444321",
+      ".1234431.",
+      "..11111..",
+    ],
+    [
+      "....1....",
+      "....11...",
+      ".1..121..",
+      ".1.1221..",
+      "..11232.1",
+      ".112332.1",
+      "112333221",
+      "122344321",
+      "123444321",
+      "123444321",
+      ".1234321.",
+      "..11111..",
+    ],
+    [
+      ".........",
+      ".....1...",
+      "..1..1...",
+      "..1.121..",
+      "..11221.1",
+      ".1122321.",
+      ".1233321.",
+      "112334321",
+      "123444321",
+      "123444321",
+      ".1234321.",
+      "..11111..",
+    ],
+  ],
+  GF_SMALL = [
+    ["..1..", "..1..", ".121.", ".1231", "12331", "13431", ".111."],
+    [".1...", ".11..", ".121.", "12321", "13431", "13431", ".111."],
+    ["...1.", "..11.", ".121.", "12321", "12331", "13431", ".111."],
+  ],
+  GF_INK = ["", "#f92726", "#fe8508", "#fcdb4e", "#ffffff"],
+  GF_LINE = "#4c0110"; // (all from the game's palette, as INK above)
+let gfMade = null, // [big frames, small frames]: canvases, one pixel to the grid's square
+  ground = []; // (this frame's burning patches: fxGround)
+/* a flame's frame as a little canvas, a pixel round it for its dark outline */
+function gfSprite(rows) {
+  const h = rows.length,
+    w = Math.max(...rows.map((r) => r.length)),
+    c = document.createElement("canvas");
+  c.width = w + 2;
+  c.height = h + 2;
+  const x = c.getContext("2d"),
+    at = (i, j) => (rows[j] && rows[j][i] > "0" ? 1 : 0);
+  for (let j = -1; j <= h; j++)
+    for (let i = -1; i <= w; i++) {
+      const v = at(i, j);
+      if (v) x.fillStyle = GF_INK[rows[j][i]];
+      else if (at(i - 1, j) || at(i + 1, j) || at(i, j - 1) || at(i, j + 1))
+        x.fillStyle = GF_LINE;
+      else continue;
+      x.fillRect(i + 1, j + 1, 1, 1);
+    }
+  return c;
+}
+/* the burning patches to draw this frame: [[x, y, r, its last second, seed]], (x, y) the middle of each on the screen
+   (css px), r how far its flames spread, seed a number of its own so its flames keep their places */
+export function fxGround(list) {
+  ground = list;
+}
+/* a number from 0 to 1 out of two others, always the same for the same two */
+const gfHash = (a, b) => {
+  const h = Math.imul((a | 0) ^ Math.imul(b + 1, 0x9e3779b1), 0x85ebca6b);
+  return ((h ^ (h >>> 13)) >>> 0) / 4294967296;
+};
+function groundDraw(now, gp, W, H) {
+  if (!gfMade) gfMade = [GF_BIG.map(gfSprite), GF_SMALL.map(gfSprite)];
+  for (const [x, y, r, dying, seed] of ground) {
+    const n = low ? 2 : 4; // (Low: fewer flames to a patch)
+    for (let k = 0; k < n; k++) {
+      const small = dying || k >= 3, // (a little one beside three big ones; only little ones in its last second)
+        set = gfMade[small ? 1 : 0],
+        a = gfHash(seed, k) * Math.PI * 2,
+        d = r * (k ? 0.35 + 0.65 * gfHash(seed, k + 9) : 0.1),
+        f = set[(Math.floor(now / 110 + gfHash(seed, k + 19) * 3) + k) % 3],
+        px = Math.round((x + Math.cos(a) * d) / gp - f.width / 2),
+        py = Math.round((y + Math.sin(a) * d * 0.5) / gp - f.height + 1);
+      if (px + f.width < 0 || py + f.height < 0 || px > W || py > H) continue;
+      g.drawImage(f, px, py);
+      mark(px, py, Math.max(f.width, f.height));
+    }
   }
 }
 
@@ -802,10 +912,12 @@ export function fxFrame(now = performance.now()) {
   if (dx1 > dx0) g.clearRect(dx0, dy0, dx1 - dx0, dy1 - dy0);
   dx0 = dy0 = 1e5;
   dx1 = dy1 = -1e5;
-  if (!alive && !lasers.length && !SPR.length) return;
+  if (!alive && !lasers.length && !SPR.length && !ground.length) return;
   const gp = gridPx(),
     W = cv.width,
     H = cv.height;
+  g.globalAlpha = 1;
+  if (ground.length) groundDraw(now, gp, W, H); // (under the flying pixels: its embers go up over it)
   let n = 0;
   for (let i = 0; i < MAX; i++) {
     if (!LIFE[i]) continue;
