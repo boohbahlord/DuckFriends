@@ -186,7 +186,13 @@ import {
 } from "./specials.js";
 import { mountHotbar } from "./hotbar.js";
 import { heatUp, heatDraw, heldOn } from "./barrelheat.js";
-import { laserLook, laserArt, laserFrame, laserMeter } from "./laserfx.js";
+import {
+  laserLook,
+  laserArt,
+  laserGlow,
+  laserFrame,
+  laserMeter,
+} from "./laserfx.js";
 import { olAdd, olDraw, olFloor, olRoofed } from "./outlines.js";
 import { ammoBar, stackBars, noReload } from "./meters.js";
 import { LASER, BEAM } from "./laserart.js";
@@ -1245,7 +1251,12 @@ function drawMeters(s, board, layer, now) {
     return;
   }
   const list = s.seat
-    .filter((id) => id !== R.me && s.players[id])
+    .filter(
+      (id) =>
+        id !== R.me &&
+        s.players[id] &&
+        !(isL4dd(s) && (s.players[id].helper || s.players[id].wild)),
+    ) // (Dead Ducks Arcade and Survival: only the players, never Justin's bar, the owner's, Nov 19 19:27Z)
     .map((id) => [id, s.players[id].name, hpFull(s, id, now)])
     .filter(([, , h]) => h)
     .map(([id, n, h]) => [id, n, h[0], h[1]]);
@@ -1850,7 +1861,9 @@ function drawDucks(now = clockNow()) {
               : ""
           : olP
             ? olP.helper || olP.wild
-              ? "justin" // (Dead Ducks Arcade's Justins: the helper from the fireplace, and Downpour's, out there)
+              ? dead
+                ? "" // (dead, no outline round him: the owner's, Nov 19 19:27Z "when he dies, there's no outline around his character")
+                : "justin" // (Dead Ducks Arcade's Justins: the helper from the fireplace, and Downpour's, out there)
               : olMine
                 ? "me"
                 : "ally"
@@ -2418,9 +2431,10 @@ function drawDucks(now = clockNow()) {
             : heldHTML(w, duck),
         pic = dual ? angelic(dualPistolHTML(duck)) : holy ? angelic(art) : art;
       /* every gun as long in the hand as its l4ddguns.js w (--gw, css .held i): one number for each, so no new gun is
-         left at a knife's size */
+         left at a knife's size. The Laser Rifle getting hot: the whole gun glows (laserfx.js laserGlow) */
+      const [gc, gs] = lz ? laserGlow(lz) : ["", ""];
       h = el(
-        `<div class="held${holy ? " angelic" : ""}${dual ? " dual" : ""}" data-pid="${esc(id)}" data-w="${w}" style="--s:${hs.toFixed(0)}px${GUNS[w] ? `;--gw:${GUNS[w].w}` : ""}"><i>${pic}</i></div>`,
+        `<div class="held${holy ? " angelic" : ""}${dual ? " dual" : ""}${gc}" data-pid="${esc(id)}" data-w="${w}" style="--s:${hs.toFixed(0)}px${GUNS[w] ? `;--gw:${GUNS[w].w}` : ""}${gs}"><i>${pic}</i></div>`,
       );
       h._k = hk;
       h._hs = hs;
@@ -3085,6 +3099,31 @@ function sendDu(s) {
   duAt = t;
   R.send({ t: "sb", k: "du", du });
 }
+/* the way a zombie on the board walks (n: its element, x: where it is now): turned only once it keeps going the other way
+   a moment (FACE_HOLD). Bumping into another or a wall pushed it back and forth a few px, and its picture flipped each
+   time, as if squished (the owner's, Nov 19 19:27Z: "I do not want a squish effect on zombies, for example, when they
+   walk into each other or walk into a wall"); as Dead Ducks Arcade's zombies, l4dd.js */
+const FACE_HOLD = 300;
+function walkFace(n, x, now) {
+  const f = n._f || 1,
+    dir =
+      n._x === undefined || Math.abs(x - n._x) < 0.5 ? 0 : x < n._x ? -1 : 1;
+  if (!dir || dir === f) {
+    if (dir) n._went = 1;
+    n._turn = 0;
+    return f;
+  }
+  if (!n._went) {
+    n._went = 1;
+    return dir; // (its first steps: the way it goes at once)
+  }
+  if (n._turn !== dir) {
+    n._turn = dir;
+    n._turnAt = now;
+    return f;
+  }
+  return now - n._turnAt >= FACE_HOLD ? dir : f;
+}
 function placeZombies(board, s, now) {
   const layer = $(".ducks", board),
     zb =
@@ -3128,11 +3167,7 @@ function placeZombies(board, s, now) {
       face =
         o.wp || (sbOnBoard(s) && o.f)
           ? o.f || 1 // (a made NPC: the way the host turned it, so its weapon points at what it shoots: sbarms.js; Sandbox's: the way it walks, as its hits are worked out, sbbody.js)
-          : n._x === undefined || Math.abs(c.left - n._x) < 0.5
-            ? n._f || 1
-            : c.left < n._x
-              ? -1
-              : 1, // (the way it walks)
+          : walkFace(n, c.left, now), // (the way it walks)
       st = `${c.left.toFixed(1)},${c.top.toFixed(1)},${w.toFixed(1)},${face},${o.d ? 1 : 0}`;
     n._x = c.left;
     n._f = face;
@@ -3687,12 +3722,15 @@ const NEW_GUN_SFX = {
   },
   flamer: (o) => sfx.flamer(o),
 };
-/* charred, then the burns fade in a few seconds; with flames first for `fire` ms (the fire special, not a grenade) */
-function burn(dk, fire = 0) {
+/* charred, then the burns fade in a few seconds; with flames first for `fire` ms (the fire special, not a grenade).
+   lite: only a little (the Laser Rifle overheated, the owner's, Nov 19 19:27Z: "Player doesn't get the burnt effect as
+   badly, just a little bit") */
+function burn(dk, fire = 0, lite = false) {
   if (!dk) return;
   clearTimeout(dk._fireT);
   clearTimeout(dk._burnT);
   dk.classList.remove("burnt", "unburn", "onfire");
+  dk.classList.toggle("burnt-lite", lite);
   dk.classList.add(fire ? "onfire" : "burnt");
   if (fire)
     dk._fireT = setTimeout(() => {
@@ -3700,7 +3738,7 @@ function burn(dk, fire = 0) {
       dk.classList.add("burnt");
     }, fire);
   dk._burnT = setTimeout(() => {
-    dk.classList.remove("burnt");
+    dk.classList.remove("burnt", "burnt-lite");
     dk.classList.add("unburn");
     dk._burnT = setTimeout(() => dk.classList.remove("unburn"), 2600);
   }, fire + 2400);
@@ -4187,7 +4225,7 @@ function playFx(f) {
     sfx.laserHiss(heard(f.by));
     const dk = S.querySelector(`.gduck[data-pid="${CSS.escape(f.by)}"]`);
     if (dk) {
-      burn(dk);
+      burn(dk, 0, true);
       clearTimeout(dk._joltT);
       dk.classList.remove("l4-jolt");
       void dk.offsetWidth;
