@@ -5,16 +5,17 @@
    profile) and refuses every change to them. Only what is built is written here: the plain values. This file has no
    imports. */
 export const HELP = {
-  "index.txt": `Numerat help
+  "index.txt": `Numberat help
 These files are read-only: you can read them here and with cat,
 but they can't be changed, copied or deleted.
 
   values.txt     numbers as you write them in a box: 2, 2:4, 2,4
   tenths.txt     the boxes that take tenths
   truefalse.txt  the t and f boxes
+  limits.txt     the limits every box has, and what to do past one
   window.txt     this window: files, Run, Check, wrap, autocomplete
 
-More pages come as more of Numerat is built.
+More pages come as more of Numberat is built.
 `,
   "values.txt": `Plain values
 
@@ -38,7 +39,31 @@ Boxes that take tenths (speed and damage) read 0.8, 1.5 and so on.
 
 The true or false boxes take t or f (true or false also work).
 `,
-  "window.txt": `The Numerat window
+  "limits.txt": `Limits
+
+Every box has limits. They are set for you automatically: if you
+don't define a limit yourself, the box uses the one below.
+
+  Spawn limit                  1 to 100        (starts at 1)
+  Seconds between spawns       1 to 600        (starts at 4)
+  HP                           1 to 1000       (starts at 3)
+  Damage                       0.1 to 100      (starts at 1)
+  Speed                        0.1 to 5        (starts at 1)
+  Players' HP                  1 to 100
+  Players' speed               0.1 to 5
+  Zone width and height        1 to 40 duck lengths (start at 4)
+  Zone HP each time            0.1 to 100      (starts at 1)
+  Zone seconds between         0.1 to 60       (starts at 1)
+  Seconds before it comes back 1 to 600        (starts at 10)
+  Seconds you keep it          0 to 600        (0 is for good)
+  Damage to whoever takes it   0 to 100        (starts at 0)
+
+Write a number past a limit and the box says "N at least" or
+"N at most" and keeps its last good value. Fix it by writing a
+number inside the limit. Writing your own limit will come with the
+line rules; until then these are the limits.
+`,
+  "window.txt": `The Numberat window
 
   Files (left)   New file, New directory; click a file to open it.
                  Your files are kept on this device from game to game.
