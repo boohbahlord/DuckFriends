@@ -1,6 +1,7 @@
 /* ---------- Downpour's rain (Dead Ducks Arcade's second map) ----------
-   The owner's map is night in heavy rain. One canvas over the board, just over the dark (so the rain shows faintly
-   everywhere, brighter in a flashlight's or a lamp's light, as rain does), under the HUD:
+   The owner's map is night in heavy rain. Drawn on a canvas off the page and shown through the outlines' canvas, just
+   over the dark (so the rain shows faintly everywhere, brighter in a flashlight's or a lamp's light, as rain does), under
+   the HUD (outlines.js olUnder: one whole-screen canvas fewer changing every frame):
      - streaks falling, slanted with the wind, as many as the screen is wide;
      - drops landing: a short ring on the ground, wider and slower on the water (the flood over the road, puddles);
      - ripples round everyone wading in the flood (my duck, the others, the zombies), as they move.
@@ -10,6 +11,7 @@
 import { low } from "./gfx.js";
 import { windowOpen } from "./ui.js";
 import { gridPx } from "./pixel.js";
+import { olUnder } from "./outlines.js";
 import {
   inShallow,
   inDeep,
@@ -31,11 +33,10 @@ const WIND = 0.22; // the slant: across for each px down
 const FALL = 1500; // css px a second (about; each drop a little faster or slower)
 
 export function rainMount(board) {
-  cv = document.createElement("canvas");
-  cv.className = "l4-rain";
-  cv.setAttribute("aria-hidden", "true");
-  board.querySelector(".l4-dark")?.after(cv) || board.append(cv);
+  cv = document.createElement("canvas"); // (off the page: the outlines' canvas shows it, outlines.js olUnder)
+  cv.hidden = true;
   g = cv.getContext("2d");
+  olUnder(() => (cv && !cv.hidden ? cv : null));
   drops = [];
   rings = [];
   wades.clear();
@@ -43,7 +44,7 @@ export function rainMount(board) {
   wasW = 0;
 }
 export function rainUnmount() {
-  cv?.remove();
+  olUnder(null);
   cv = g = null;
   drops = [];
   rings = [];
@@ -71,9 +72,6 @@ export function rainDraw(now, ctx, who, on, hit) {
     wasW = w;
     cv.width = Math.round(w * dpr);
     cv.height = Math.round(h * dpr);
-    cv.style.width = w + "px";
-    cv.style.height = h + "px";
-    cv.style.imageRendering = "pixelated";
   }
   const dt = Math.min(0.1, last ? (now - last) / 1000 : 0.016);
   last = now;

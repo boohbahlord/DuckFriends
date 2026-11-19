@@ -168,7 +168,16 @@ export function olAdd(o) {
 let cv = null,
   g = null,
   drawn = false,
-  last = ""; // (what the canvas shows now, as text: the same next frame, nothing is drawn again)
+  last = "", // (what the canvas shows now, as text: the same next frame, nothing is drawn again)
+  under = null, // (a picture drawn first each frame, under the outlines: Downpour's rain, l4ddrain.js)
+  underOn = false;
+/* fn() gives a canvas (as big as this one's, on the same grid) to draw under the outlines this frame, or null; null:
+   none. Downpour's rain is drawn here instead of on a canvas of its own: a whole-screen canvas that changes every frame
+   costs the browser a new picture of everything under it, and this one changes most frames anyway (about 28 fps
+   against 58 on Downpour's round 21, the computer 4x slower) */
+export function olUnder(fn) {
+  under = fn;
+}
 /* each outline's own number, for that text */
 const CID = new WeakMap();
 let cids = 0;
@@ -276,12 +285,18 @@ export function olDraw(host, W, H, now = performance.now()) {
       `${cid(c)}|${a}|${x},${y}|${dw.toFixed(2)},${dh.toFixed(2)}|${o.flip ? 1 : 0}|${o.down ? o.down.map((v) => v.toFixed(1)) : ""}|${ac ? `${cid(ac)},${ax},${ay},${aa}` : ""}`,
     );
   }
-  const drawing = sig.join(";");
-  if (drawing === last) return; // (just as it is on the screen: nothing to draw)
+  const drawing = sig.join(";"),
+    pic = under && under();
+  if (drawing === last && !pic && !underOn) return; // (just as it is on the screen: nothing to draw)
   last = drawing;
   g.imageSmoothingEnabled = false; // (sharp pixels: a resize resets it)
-  if (drawn) g.clearRect(0, 0, cw, ch);
+  if (drawn || underOn) g.clearRect(0, 0, cw, ch);
   drawn = false;
+  underOn = !!pic;
+  if (pic) {
+    g.globalAlpha = 1;
+    g.drawImage(pic, 0, 0);
+  }
   for (const { o, c, a, x, y, sw, sh, dw, dh, ac, aa, ax, ay } of ops) {
     g.globalAlpha = a;
     if (o.flip || o.down) {
