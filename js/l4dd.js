@@ -872,9 +872,10 @@ export function l4Got(k) {
       void b.offsetWidth;
       b.classList.add("l4-flash"); // (Max Ammo: every hotbar box flashes in its own color, quickly fading)
     }
-  gotEl.classList.remove("on", "nuke");
+  gotEl.classList.remove("on", "nuke", "merchant");
   void gotEl.offsetWidth;
   gotEl.classList.add("on");
+  if (k === "merchant") gotEl.classList.add("merchant"); // (3 s, then a 1 s fade: css l4-got-merchant)
   if (k === "nuke") {
     gotEl.classList.add("nuke");
     nukeScreen(gotEl);
