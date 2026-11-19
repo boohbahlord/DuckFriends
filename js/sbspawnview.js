@@ -24,8 +24,9 @@ import { goreFree } from "./wounds.js";
 import { clawMark } from "./l4dd.js";
 import { FLAME } from "./mgjart.js";
 import { now as clockNow } from "./clock.js";
-import { esc, openWindow, confirmBox } from "./ui.js";
-import { sbPresets } from "./sbmenu.js";
+import { esc, openWindow, confirmBox, toast } from "./ui.js";
+import { sbPresets, sbCheat, colSwatches, NOCOL_NOTE } from "./sbmenu.js";
+import { activeRoom } from "./net.js";
 import {
   isSb,
   sbMay,
@@ -38,6 +39,7 @@ import {
   SB_WHAT,
   SB_PLAYER,
   SB_COLORS,
+  SB_NOCOL,
   SB_ZONE,
   SB_FX,
   sbZoneBox,
@@ -63,10 +65,20 @@ import {
   sendPic,
 } from "./sbmake.js";
 
+/* a color as CSS: No color is the rainbow's (the element under it has .sb-rb, which turns currentColor round the rainbow,
+   very slowly) */
+export const colCSS = (col) =>
+  col === SB_NOCOL ? "currentColor" : SB_COLORS[col] || "#fff";
+/* "Hide (unless cheat mode)": a point I don't see now */
+function hiddenNow(s, p) {
+  if (boxText(p, "hide") !== "t") return false;
+  const R = activeRoom();
+  return !(sbCheat.on && R && s && sbMay(s, R.me, "b"));
+}
 /* a point's picture: the hollow ring and its middle dot (a respawn: four points on the ring too) */
 function markSVG(p) {
   if (p.k === "loot") return lootRing(SB_COLORS[p.col] || "#fff"); // (a loot orb's spot: sblootview.js)
-  const c = SB_COLORS[p.col] || "#fff",
+  const c = colCSS(p.col),
     pts =
       p.k === "respawn"
         ? [0, 90, 180, 270]
@@ -153,6 +165,7 @@ function drawMarks(layer, pts, at, size, s) {
   for (const n of layer.querySelectorAll(".sb-pt")) have.set(n.dataset.p, n);
   for (const [id, p] of Object.entries(pts)) {
     if (p.grp) continue; // (a spawn's + page: drawn as its spawn)
+    if (hiddenNow(s, p)) continue;
     if (p.k === "zone") {
       if (!seeZones) continue;
       want.add(id);
@@ -169,7 +182,8 @@ function drawMarks(layer, pts, at, size, s) {
       sig = `${p.k} ${p.col} ${boxText(p, "name")} ${away ? "" : face}`;
     if (n._sig !== sig) {
       n._sig = sig;
-      n.innerHTML = `<span class="sb-pt-name" style="color:${SB_COLORS[p.col] || "#fff"}">${esc(boxText(p, "name"))}</span>${markSVG(p)}${orb && !away ? `<span class="sb-orb">${orbFace(s, id, p)}</span>` : ""}`;
+      n.classList.toggle("sb-rb", p.col === SB_NOCOL);
+      n.innerHTML = `<span class="sb-pt-name" style="color:${colCSS(p.col)}">${esc(boxText(p, "name"))}</span>${markSVG(p)}${orb && !away ? `<span class="sb-orb">${orbFace(s, id, p)}</span>` : ""}`;
     }
     placeAt(n, at(p), size);
     if (away) {
@@ -302,14 +316,37 @@ export function sbSettings(getR, id, tab = "") {
             "",
           )}<span class="sb-plus"><button type="button" class="sb-tab" data-plus aria-label="Add a page">+</button><span class="sb-plus-pick" hidden><button type="button" class="sb-tab" data-page="ent">Entity page</button><button type="button" class="sb-tab" data-page="pl">Player page</button></span></span></div>`
       : "",
-    colorRow = `<div class="sb-row"><span>Color</span><span class="sb-cols">${Object.entries(
-      SB_COLORS,
-    )
-      .map(
-        ([k, c]) =>
-          `<button type="button" class="sb-col${p.col === k ? " on" : ""}" data-col="${k}" style="--c:${c}" aria-label="${k}"></button>`,
-      )
-      .join("")}</span></div>`;
+    linked = (spawn || p.k === "respawn") && !p.grp,
+    colorRow = `<div class="sb-row"><span>Color</span><span class="sb-cols">${colSwatches(
+      p.col,
+      "data-col",
+      linked,
+    )}</span></div>${
+      linked
+        ? `${p.col === SB_NOCOL ? "" : `<p class="sb-tip">Every ${p.k} of this color has these settings.</p>`}${flagRow("hide", SB_FLAGS.hide, typed("hide"), why("hide"))}`
+        : ""
+    }`,
+    /* a spawn's Trigger together: the colors whose spawns go off with it (sbspawn.js press) */
+    tgRow = () => {
+      const used = [
+        ...new Set(
+          Object.values(pts)
+            .filter((q) => q.k === "spawn" && !q.grp && q.pg !== "pl")
+            .map((q) => q.col),
+        ),
+      ].filter((c) => c !== p.col || c === SB_NOCOL);
+      return pickRow(
+        "tg",
+        SB_TEXT.tg.name,
+        used.map((c) => [
+          c,
+          c === SB_NOCOL ? "No color" : c[0].toUpperCase() + c.slice(1),
+        ]),
+        boxText(p, "tg")
+          .toLowerCase()
+          .split(/[\s,]+/),
+      );
+    };
   /* the settings "Use these settings" switches: marked, and hidden while it's off (they don't count then) */
   const own = (html) =>
     SB_OWN.reduce(
@@ -321,8 +358,9 @@ export function sbSettings(getR, id, tab = "") {
       html,
     );
   const entity = () =>
-    own(`${row("name", { name: "Name" }, typed("name"), why("name"))}
-    ${colorRow}
+    own(`${colorRow}
+    ${p.grp ? "" : tgRow()}
+    ${row("name", { name: "Name" }, typed("name"), why("name"))}
     <div class="sb-row"><span>Spawns</span><span class="sb-what">${kinds
       .map(
         ([k, n]) =>
@@ -351,7 +389,7 @@ export function sbSettings(getR, id, tab = "") {
       .map(([f, b]) => row(f, b, typed(f), why(f)))
       .join("")}
     ${Object.entries(SB_FLAGS)
-      .filter(([f]) => f !== "sets")
+      .filter(([f]) => f !== "sets" && f !== "hide")
       .map(([f, b]) => flagRow(f, b, typed(f), why(f)))
       .join("")}`);
   const playersPage =
@@ -360,9 +398,8 @@ export function sbSettings(getR, id, tab = "") {
     ${row("pwho", { name: "Who spawns here" }, typed("pwho"), why("pwho"))}
     ${row("php", { name: "HP (blank: the game's)" }, typed("php"), why("php"))}
     ${row("pspd", { name: "Speed (blank: the game's)" }, typed("pspd"), why("pspd"))}`;
-  const respawn =
-    () => `${row("name", { name: "Name" }, typed("name"), why("name"))}
-    ${colorRow}
+  const respawn = () => `${colorRow}
+    ${row("name", { name: "Name" }, typed("name"), why("name"))}
     ${row("who", { name: "Who respawns here" }, typed("who"), why("who"))}
     ${(p.im || [])
       .filter((f) => f !== "ap")
@@ -530,6 +567,9 @@ export function sbSettings(getR, id, tab = "") {
             b.classList.toggle("on", b === c),
           );
           send({ k: "set", f: "col", v: c.dataset.col });
+          if (c.dataset.col === SB_NOCOL) toast(NOCOL_NOTE, 4500);
+          setTimeout(() => w.isConnected && again(id, tab), 400); // (its new color's settings show, once the room has it)
+          return;
         }
         const tb = e.target.closest("[data-tab]");
         if (tb && !tb.classList.contains("on"))
@@ -709,15 +749,19 @@ export const buildRows = (R) =>
             : r.send({ t: "sb", k: "add", kind }),
       }))
     : [];
-/* what I'm putting down, drawn on my mouse: its mark in the color it will get (a zone: its box, dashed) */
-export function ghostHTML(s, kind) {
+/* what I'm putting down, drawn on my mouse: its mark in the color it will get (picked first for a spawn or a respawn; a
+   zone: its box, dashed) */
+export function ghostHTML(s, kind, picked) {
   const used = Object.values(ptsOf(s)).map((p) => p.col),
     col =
+      picked ||
       Object.keys(SB_COLORS).find((c) => !used.includes(c)) ||
       Object.keys(SB_COLORS)[0];
   return kind === "zone"
     ? `<span class="sb-ghost-zone" style="--c:${SB_COLORS[col]}"></span>`
-    : markSVG({ k: kind, col });
+    : col === SB_NOCOL
+      ? `<span class="sb-rb">${markSVG({ k: kind, col })}</span>`
+      : markSVG({ k: kind, col });
 }
 
 /* the worlds (the zombie cabin, Downpour): the points drawn on the ground, and E beside one opens it */

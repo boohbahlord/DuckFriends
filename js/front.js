@@ -6,7 +6,9 @@ import { el } from "./ui.js";
 import { pitSVG, heroDuckSVG, rainbowHTML } from "./art.js";
 import { openSettings } from "./settings.js";
 import { openCustomize } from "./customize.js";
-import { openUpdates, hasNewUpdate } from "./updates.js";
+/* the Updates page (every version's words: one of the biggest files) comes once the first screen is up, not before it
+   (the owner's, Nov 19: a slow phone's first load) */
+const updates = () => import("./updates.js");
 import { mountCornerMusicBar } from "./musicbar.js";
 import { installBtnHTML, install } from "./homeapp.js";
 import { inApp } from "./corners.js";
@@ -59,7 +61,7 @@ register("front", {
           ${soloBtnHTML()}
           <button type="button" class="btn big ghost" data-a="customize">Customize</button>
           <button type="button" class="btn big ghost" data-a="settings">Settings</button>
-          <button type="button" class="btn big ghost up-btn" data-a="updates">Updates${hasNewUpdate() ? '<i class="up-dot" aria-label="New"></i>' : ""}</button>
+          <button type="button" class="btn big ghost up-btn" data-a="updates">Updates</button>
           ${installBtnHTML()}
           <a class="btn big ghost site-btn" href="https://boohbahlord.github.io/Nous-Within-Kenoma/">My Other Website<small>Nous Within Kenoma</small></a>
         </div>
@@ -70,11 +72,21 @@ register("front", {
     s.querySelector('[data-a="play"]').onclick = () => go("rooms");
     s.querySelector('[data-a="customize"]').onclick = () => openCustomize();
     s.querySelector('[data-a="settings"]').onclick = () => openSettings();
-    s.querySelector('[data-a="updates"]').onclick = () => {
-      openUpdates();
+    const upBtn = s.querySelector('[data-a="updates"]');
+    let upOpened = false;
+    upBtn.onclick = () => {
+      upOpened = true;
+      updates().then((m) => m.openUpdates());
       const d = s.querySelector(".up-dot");
       if (d) d.remove();
     };
+    updates().then((m) => {
+      if (m.hasNewUpdate() && !upOpened && !upBtn.querySelector(".up-dot"))
+        upBtn.insertAdjacentHTML(
+          "beforeend",
+          '<i class="up-dot" aria-label="New"></i>',
+        );
+    });
     const solo = s.querySelector('[data-a="solo"]');
     if (solo) {
       solo.onclick = () => keptState().ready && playSolo();
