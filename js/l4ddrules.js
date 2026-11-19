@@ -1251,11 +1251,12 @@ const room = (ax, ay, bx, by) => Math.hypot((ax - bx) / RX, (ay - by) / RY);
 const zOk = (x, y, z) =>
   playable(x, y) && standable(x, y, z, STEP, null, true) && !onPlatform(x, y); // (Downpour: zombies wade the deep flood, climb the fallen tree)
 /* what a zombie keeps from one heartbeat to the next besides its spot, hp and state (in s.hidden.l4z, the host's only):
-   cm its way up kept to, k the roof it is up, fl its flank and wp its spot round the side, j its jump onto the canopy;
+   cm its way up kept to, k the roof it is up, fl its flank and wp its spot round the side, j its jump onto the canopy
+   and jp the spot it jumps from (jumpOn);
    jc since when it chases Justin, jx till when it lets him be, nj never him (JCHASE). These went missing at every
    heartbeat before, so a zombie forgot its way up the moment it chose it (the owner's, Nov 17 19:11Z: "WHY THE FUCK ARE
    ZOMBIES NOT COMMITTING ON WALL CLIMBS EVEN WHEN IM STILL ON THE SAME FUCKING ROOF!!!") */
-const KEEP = ["cm", "k", "fl", "wp", "j", "jc", "jx", "nj"];
+const KEEP = ["cm", "k", "fl", "wp", "j", "jp", "jc", "jx", "nj"];
 /* the zombies as objects, from the state's three parts, and back (k in zp: hp · 16 + st, st up to 8, the jump) */
 function zombies(s) {
   const zp = s.hang.zp || [],
@@ -1798,6 +1799,7 @@ function setUp(s, now) {
   s.hang.brd = Object.fromEntries(
     OPENINGS.filter((o) => !o.nb).map((o) => [o.id, L4.BOARDS]),
   ); // (Downpour's fences have no boards)
+  delete s.pw; // (every duck starts the game whole: no wounds or head off left from the last one, wounds.js)
   s.hang.l4p = {};
   s.hang.l4a = {};
   s.hang.l4pt = {};
@@ -2359,6 +2361,11 @@ export function helperOut(s) {
   s.seat = s.seat.filter((t) => t !== id);
   if (s.pos) delete s.pos[id];
   if (s.rainbow) delete s.rainbow[id];
+  if (s.pw && s.pw[id]) {
+    const pw = { ...s.pw };
+    delete pw[id];
+    s.pw = pw;
+  } // (his wounds go with him: a retry's Justin starts whole, his head on. The owner's, Nov 19 01:00Z: "Justin spawned in without his head in a retry of the game")
   if (s.hang)
     for (const k of ["l4p", "l4a", "l4b", "l4f", "l4pt", "l4u", "l4box"])
       if (s.hang[k] && s.hang[k][id] !== undefined) {
@@ -5077,7 +5084,10 @@ function flankSpot(z, q) {
    most near by gas station wall before getting on the roof and doing a jump animation for this") ----------
    A duck on the canopy: a zombie climbs the gas station's wall nearest it, walks the roof to its south edge over the
    canopy, and jumps across (st 8: z.j [x0, y0, x1, y1, h0, h1], an arc JUMP.arc high), 1 time in 20 short of it, down
-   to the ground (JUMP.fail) */
+   to the ground (JUMP.fail). It picks its spot on the roof's edge once (z.jp [x, the duck]) and keeps it till it jumps,
+   or till that duck leaves the canopy (the owner's, Nov 19 01:00Z: "zombies should pick a part to jump onto the gas
+   pump from and commit, not going left and right over and over until the player stands still because that is ripe
+   for exploit") */
 const JUMP = { speed: 300, arc: 40, fail: 0.05, in: 30 };
 function jumpOn(z, pls, far) {
   const C = canopyDeck(),
@@ -5086,13 +5096,24 @@ function jumpOn(z, pls, far) {
   for (const p of pls)
     if (p.dk === C && (!q || room(z.x, z.y, ...p.xy) < room(z.x, z.y, ...q.xy)))
       q = p;
-  if (!q) return false;
-  const x = Math.min(
-      Math.max(q.xy[0], Math.max(C.x0, S.x0) + JUMP.in),
-      Math.min(C.x1, S.x1) - JUMP.in,
-    ),
+  if (!q) {
+    delete z.jp;
+    return false;
+  }
+  if (!z.jp || !pls.some((p) => p.dk === C && p.id === z.jp[1]))
+    z.jp = [
+      Math.round(
+        Math.min(
+          Math.max(q.xy[0], Math.max(C.x0, S.x0) + JUMP.in),
+          Math.min(C.x1, S.x1) - JUMP.in,
+        ),
+      ),
+      q.id,
+    ]; // (its spot, picked once: kept while its duck stays on the canopy)
+  const x = z.jp[0],
     y = S.y1 - 10;
   if (!walkTo(z, x, y, far)) return true;
+  delete z.jp;
   const fell = Math.random() < JUMP.fail,
     y1 = fell ? (S.y1 + C.y0) / 2 : C.y0 + JUMP.in;
   z.st = 8;
