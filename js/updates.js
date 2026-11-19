@@ -9,6 +9,20 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v126",
+    version: 126,
+    date: "Nov 19, 2026",
+    title: "Two item slots",
+    news: [
+      "For Dead Ducks Arcade: two item slots; the second is key 6, after the grenades.",
+      "For Dead Ducks Arcade: a merchant may have 2 or 3 of anything he sells, and he never runs out of upgrades.",
+      "For Dead Ducks Arcade: merchants have as much HP as a zombie.",
+      "For Sandbox: Seriat and the command line always wear the Nous Within Kenoma look. Pick a variation with the Theme box in Seriat's top right or the theme command (theme chalice).",
+      "For Sandbox: Seriat accepts '*1' as a name for asterisk 1 (same as '1*'), and a line rule's strength can be a Seriat value.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v125",
     version: 125,
     date: "Nov 19, 2026",
