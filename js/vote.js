@@ -18,6 +18,7 @@ import { voteIds, voteLeft, DICE, voteNeeds } from "./rules.js";
 import { lobbyVote } from "./players.js";
 import { now } from "./clock.js";
 import { sfx } from "./sound.js";
+import { coverPictures } from "./loading.js";
 
 let W = null; // the window while it's up: { el, R, key, sig, hov, live, raf, hold, pause }
 
@@ -111,6 +112,7 @@ function build(R, pause) {
     stills: [],
   };
   stills();
+  coverPictures(el); // (the maps' pictures in before it shows, behind the loading screen: the owner's, Nov 19 20:04Z)
   const pick = (e) => e.target.closest && e.target.closest("[data-v]");
   el.addEventListener("click", (e) => {
     if (e.target.closest(".vt-pause")) return W.pause && W.pause();
