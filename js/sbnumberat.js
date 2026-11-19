@@ -228,7 +228,7 @@ function make(s, name, text, now) {
           ? SB_BOXES.speed.max
           : n === "damage"
             ? SB_BOXES.damage.max
-            : HB.MOST,
+            : 100, // (hitbox: already a percent of its usual size, so ((hitbox 150%)) is ((hitbox 150)), never a share of 300)
     get: (w) => {
       const st = g.cur.s;
       if (w === "wave") return (st.hang && st.hang.l4 && st.hang.l4.r) || 0;
