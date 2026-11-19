@@ -78,6 +78,27 @@ export const SB_FLAGS = {
   jump: { name: "Can jump", kind: "bool", def: "f" },
   climb: { name: "Can climb walls", kind: "bool", def: "t" },
 };
+/* a respawn's "Import settings" (the owner's Sandbox file): the spawn's settings it can take on, by category, in the
+   spawn menu's order ("Options import in the order of the menu they come from"). What comes back there (an NPC, or a
+   duck at a respawn for players) takes the respawn's values over its own spawn's */
+export const SB_IMPORT = [
+  ["Numbers", ["hp", "damage", "speed"]],
+  ["True or false", ["sprint", "jump", "climb"]],
+  ["Behavior", ["target", "ignore", "avoid", "protect"]],
+];
+/* a spawn's Players tab: ducks spawn here (they start, join and come back from being down here) when it's on, the ones
+   its "who" names (players, or their names), with its HP and speed; blank is the game's own */
+export const SB_PLAYER = {
+  pon: { name: "Players spawn here", kind: "bool", def: "f" },
+  php: { name: "Players' HP", kind: "int", min: 1, max: 100, blank: true },
+  pspd: {
+    name: "Players' speed",
+    kind: "tenth",
+    min: 0.1,
+    max: 5,
+    blank: true,
+  },
+};
 /* what can spawn (the owner's Sandbox file): a zombie; a Blank NPC (a duck with a random look: "randomize appearance" is
    on by default); Justin (as he is in the cabin); a duck from Test Mode (a computer's look and name, and no vote: it
    isn't a player). Made NPCs come with stage 3. The zombie maps take only zombies for now (their guns hit only theirs) */
@@ -113,19 +134,29 @@ export const SB_KEYS_TAKEN = "cbmnhgpwasdeqrtvx";
 export const SB_KEY_IN_BUILD = true;
 /* the most spawns and respawns on a map */
 export const SB_POINTS = 60;
-/* where a duck comes back in Sandbox: a respawn whose "who" box says players (one of them at random), or null (where it
-   would anyway) */
-export function sbPlayerSpot(s) {
-  const rs = Object.values((s && s.sb && s.sb.pts) || {}).filter((q) => {
-    const k = q.f && q.f.who;
-    const who = k && k.ok ? k.ok : q.col;
-    return (
-      q.k === "respawn" &&
-      String(who)
-        .toLowerCase()
-        .split(/[\s,]+/)
-        .includes("players")
-    );
-  });
+/* where duck id comes back (or starts, or joins) in Sandbox: a respawn whose "who" box says players or its name, or a
+   spawn whose Players tab is on for it (one of them at random), as { id, …the point }, or null (where it would anyway) */
+export function sbPlayerSpot(s, id) {
+  const pts = (s && s.sb && s.sb.pts) || {},
+    name = String((s.players[id] || {}).name || "")
+      .trim()
+      .toLowerCase(),
+    said = (q, f, def) => {
+      const k = q.f && q.f[f];
+      return String(k && k.ok ? k.ok : def).toLowerCase();
+    },
+    names = (t) => t.split(",").map((w) => w.trim()),
+    forMe = (t) =>
+      t.split(/[\s,]+/).includes("players") ||
+      (!!name && names(t).includes(name));
+  const rs = Object.entries(pts)
+    .filter(([, q]) =>
+      q.k === "respawn"
+        ? forMe(said(q, "who", q.col))
+        : q.k === "spawn" &&
+          ["t", "true"].includes(said(q, "pon", "f")) &&
+          forMe(said(q, "pwho", "players")),
+    )
+    .map(([pid, q]) => ({ ...q, id: pid }));
   return rs.length ? rs[Math.floor(Math.random() * rs.length)] : null;
 }

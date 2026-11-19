@@ -10,7 +10,7 @@ import { W, H, heightAt, sortY, seenFrom } from "./hangout/layout.js";
 import { npcURL, npcBox, npcName, isZombie } from "./sbnpcart.js";
 import { goreFree } from "./wounds.js";
 import { clawMark } from "./l4dd.js";
-import { esc, openWindow } from "./ui.js";
+import { esc, openWindow, confirmBox } from "./ui.js";
 import {
   isSb,
   sbCan,
@@ -20,10 +20,12 @@ import {
   SB_WHAT,
   SB_WHAT_ZMAPS,
   SB_ACTS,
+  SB_IMPORT,
+  SB_PLAYER,
   SB_COLORS,
   baseMode,
 } from "./sandboxrules.js";
-import { boxText, boxWhy, spawnsHere } from "./sbspawn.js";
+import { boxText, boxWhy, spawnsHere, sbWalkOf } from "./sbspawn.js";
 
 /* a point's picture: the hollow ring and its middle dot (a respawn: four points on the ring too) */
 function markSVG(p) {
@@ -43,8 +45,9 @@ function markSVG(p) {
 function drawMarks(layer, pts, at, size) {
   const have = new Map();
   for (const n of layer.querySelectorAll(".sb-pt")) have.set(n.dataset.p, n);
-  for (const [id, n] of have) if (!pts[id]) n.remove();
+  for (const [id, n] of have) if (!pts[id] || pts[id].grp) n.remove();
   for (const [id, p] of Object.entries(pts)) {
+    if (p.grp) continue; // (a spawn's + page: drawn as its spawn)
     let n = have.get(id);
     const sig = `${p.k} ${p.col} ${boxText(p, "name")}`;
     if (!n) {
@@ -85,6 +88,7 @@ export function sbNearPoint(s, me) {
   let best = null,
     bd = board ? 1.5 : 90;
   for (const [id, p] of Object.entries(ptsOf(s))) {
+    if (p.grp) continue;
     const d = board
       ? Math.hypot((p.x - me.x) / 0.03, (p.y - me.y) / 0.08)
       : Math.hypot((p.x - me.x) * W, (p.y - me.y) * H);
@@ -129,38 +133,65 @@ function actRow(s, p, f, kinds) {
   const on = opts.filter(([v]) => picked.includes(v)).map(([, n]) => n);
   return `<div class="sb-row"><span>${esc(SB_ACTS[f])}</span><details class="sb-acts" data-act="${f}"><summary>${esc(on.join(", ") || "Nothing")}</summary><span class="sb-what">${boxes.join("")}</span></details></div>`;
 }
-/* id: the point; getR: () => the room */
-export function sbSettings(getR, id) {
+/* ---------- the settings window ----------
+   A spawn's window has tabs at the top (the owner's Sandbox file): Entities (what it spawns), Players (ducks spawning
+   there) and a + that adds a page of either kind, each with its own name (sbspawn.js "page": a point of its own at the
+   same spot, its grp the spawn's). A respawn's has Import settings (importWin). id: the point; tab: "pl" for a spawn's
+   Players tab; getR: () => the room */
+const nameOf = (f) =>
+  (SB_BOXES[f] || SB_FLAGS[f] || SB_PLAYER[f] || {}).name || SB_ACTS[f] || f;
+const flagRow = (f, b, t, why) =>
+  row(f, { name: `${b.name} (t or f)` }, t, why);
+export function sbSettings(getR, id, tab = "") {
   const R = getR(),
-    p = R && ptsOf(R.state)[id];
+    pts = R && ptsOf(R.state),
+    p = pts && pts[id];
   if (!p || !sbCan(R.state, R.me)) return;
   const typed = (f) => (p.f[f] ? p.f[f].t : boxText(p, f)),
     why = (f) => (p.f[f] ? boxWhy(f, p.f[f].t) : ""),
     spawn = p.k === "spawn",
+    baseId = p.grp && pts[p.grp] ? p.grp : id,
+    pages = Object.entries(pts).filter(([, q]) => q.grp === baseId),
+    players = p.pg === "pl" || (!p.grp && tab === "pl"),
+    zmaps = baseMode(R.state.options) === "l4dd",
     what = boxText(p, "what").split(/[\s,]+/),
     kinds = Object.keys(SB_WHAT).filter(
-      (k) => baseMode(R.state.options) !== "l4dd" || SB_WHAT_ZMAPS.includes(k),
+      (k) => !zmaps || SB_WHAT_ZMAPS.includes(k),
     ), // (the zombie maps: zombies only, for now)
-    pick = boxText(p, "pick");
-  const html = `<h2>${spawn ? "Spawn" : "Respawn"}</h2>
-  <div class="sb-set">
-    ${row("name", { name: "Name" }, typed("name"), why("name"))}
-    <div class="sb-row"><span>Color</span><span class="sb-cols">${Object.entries(
+    pick = boxText(p, "pick"),
+    tabs = [
+      [baseId, "", "Entities"],
+      [baseId, "pl", "Players"],
+      ...pages.map(([q, P]) => [q, "", boxText(P, "name")]),
+    ],
+    on = (t) => t[0] === id && (p.grp ? true : t[1] === (players ? "pl" : ""));
+  const head = spawn
+      ? `<div class="sb-tabs" role="tablist">${tabs
+          .map(
+            (t) =>
+              `<button type="button" class="sb-tab${on(t) ? " on" : ""}" role="tab" aria-selected="${on(t)}" data-tab="${t[0]}" data-tk="${t[1]}">${esc(t[2])}</button>`,
+          )
+          .join(
+            "",
+          )}<span class="sb-plus"><button type="button" class="sb-tab" data-plus aria-label="Add a page">+</button><span class="sb-plus-pick" hidden><button type="button" class="sb-tab" data-page="ent">Entity page</button><button type="button" class="sb-tab" data-page="pl">Player page</button></span></span></div>`
+      : "",
+    colorRow = `<div class="sb-row"><span>Color</span><span class="sb-cols">${Object.entries(
       SB_COLORS,
     )
       .map(
         ([k, c]) =>
           `<button type="button" class="sb-col${p.col === k ? " on" : ""}" data-col="${k}" style="--c:${c}" aria-label="${k}"></button>`,
       )
+      .join("")}</span></div>`;
+  const entity =
+    () => `${row("name", { name: "Name" }, typed("name"), why("name"))}
+    ${colorRow}
+    <div class="sb-row"><span>Spawns</span><span class="sb-what">${kinds
+      .map(
+        (k) =>
+          `<label><input type="checkbox" data-what="${k}"${what.includes(k) ? " checked" : ""}> ${esc(SB_WHAT[k])}</label>`,
+      )
       .join("")}</span></div>
-    ${
-      spawn
-        ? `<div class="sb-row"><span>Spawns</span><span class="sb-what">${kinds
-            .map(
-              (k) =>
-                `<label><input type="checkbox" data-what="${k}"${what.includes(k) ? " checked" : ""}> ${esc(SB_WHAT[k])}</label>`,
-            )
-            .join("")}</span></div>
     <div class="sb-row" data-row="pick"${what.filter((k) => kinds.includes(k)).length > 1 ? "" : " hidden"}><span>Which one</span><span class="sb-what">${[
       ["random", "Random"],
       ["shuffle", "Shuffle"],
@@ -171,7 +202,7 @@ export function sbSettings(getR, id) {
       )
       .join("")}</span></div>
     ${
-      baseMode(R.state.options) === "l4dd"
+      zmaps
         ? "" // (the zombie maps' zombies walk their own way for now: l4ddrules.js)
         : Object.keys(SB_ACTS)
             .map((f) => actRow(R.state, p, f, kinds))
@@ -182,12 +213,30 @@ export function sbSettings(getR, id) {
       .map(([f, b]) => row(f, b, typed(f), why(f)))
       .join("")}
     ${Object.entries(SB_FLAGS)
-      .map(([f, b]) => row(f, { name: `${b.name} (t or f)` }, typed(f), why(f)))
-      .join("")}`
-        : row("who", { name: "Who respawns here" }, typed("who"), why("who"))
-    }
-  </div>
-  <p class="acts">${spawn ? `<button type="button" class="btn" data-go>Spawn</button>` : ""}<button type="button" class="btn ghost" data-del>Delete</button></p>`;
+      .map(([f, b]) => flagRow(f, b, typed(f), why(f)))
+      .join("")}`;
+  const playersPage =
+    () => `${p.grp ? row("name", { name: "Name" }, typed("name"), why("name")) : ""}
+    ${flagRow("pon", SB_PLAYER.pon, typed("pon"), why("pon"))}
+    ${row("pwho", { name: "Who spawns here" }, typed("pwho"), why("pwho"))}
+    ${row("php", { name: "HP (blank: the game's)" }, typed("php"), why("php"))}
+    ${row("pspd", { name: "Speed (blank: the game's)" }, typed("pspd"), why("pspd"))}`;
+  const respawn =
+    () => `${row("name", { name: "Name" }, typed("name"), why("name"))}
+    ${colorRow}
+    ${row("who", { name: "Who respawns here" }, typed("who"), why("who"))}
+    ${(p.im || [])
+      .map((f) =>
+        SB_ACTS[f]
+          ? actRow(R.state, p, f, Object.keys(SB_WHAT))
+          : SB_FLAGS[f]
+            ? flagRow(f, SB_FLAGS[f], typed(f), why(f))
+            : row(f, SB_BOXES[f], typed(f), why(f)),
+      )
+      .join("")}`;
+  const html = `<h2>${spawn ? "Spawn" : "Respawn"}</h2>${head}
+  <div class="sb-set">${!spawn ? respawn() : players ? playersPage() : entity()}</div>
+  <p class="acts">${spawn && !players ? `<button type="button" class="btn" data-go>Spawn</button>` : ""}${!spawn ? `<button type="button" class="btn" data-imp>Import settings</button>` : ""}<button type="button" class="btn ghost" data-del>${p.grp ? "Delete page" : "Delete"}</button></p>`;
   openWindow(html, {
     cls: "sb-setwin",
     onOpen(w, close) {
@@ -230,6 +279,11 @@ export function sbSettings(getR, id) {
           v: on.map((c) => c.dataset.what).join(", "),
         });
       });
+      /* again, as it is now (another tab, a new page, what was imported) */
+      const again = (to, tk = "") => {
+        close(null);
+        setTimeout(() => sbSettings(getR, to, tk), 0);
+      };
       w.addEventListener("click", (e) => {
         const c = e.target.closest("[data-col]");
         if (c) {
@@ -238,11 +292,92 @@ export function sbSettings(getR, id) {
           );
           send({ k: "set", f: "col", v: c.dataset.col });
         }
+        const tb = e.target.closest("[data-tab]");
+        if (tb && !tb.classList.contains("on"))
+          return again(tb.dataset.tab, tb.dataset.tk);
+        if (e.target.closest("[data-plus]")) {
+          w.querySelector(".sb-plus-pick").hidden = false;
+          e.target.closest("[data-plus]").hidden = true;
+        }
+        const pg = e.target.closest("[data-page]");
+        if (pg) {
+          const r = getR(),
+            had = new Set(Object.keys(ptsOf(r.state)));
+          r.send({ t: "sb", k: "page", p: baseId, kind: pg.dataset.page });
+          setTimeout(() => {
+            const made = Object.keys(ptsOf(getR().state)).find(
+              (q) => !had.has(q),
+            );
+            again(made || id);
+          }, 300);
+        }
         if (e.target.closest("[data-go]")) send({ k: "go" });
+        if (e.target.closest("[data-imp]"))
+          importWin(getR, id, () => again(id));
         if (e.target.closest("[data-del]")) {
           send({ k: "del" });
           close(null);
         }
+      });
+    },
+  });
+}
+/* a respawn's Import settings (the owner's Sandbox file): the spawn's settings by category, each a dropdown whose bold
+   first row checks all of it; "Import" for the ones checked, or with none checked "Import all options" after an "Are you
+   sure?". The button stays at the bottom while the list scrolls; options import in the spawn menu's order (sbspawn.js) */
+function importWin(getR, id, then) {
+  const p = ptsOf(getR().state)[id];
+  if (!p) return;
+  const had = p.im || [],
+    html = `<h2>Import settings</h2>
+  <div class="sb-imp">${SB_IMPORT.map(
+    ([cat, fs], i) =>
+      `<details class="sb-cat"><summary>${esc(cat)}</summary><label class="sb-cat-all"><input type="checkbox" data-cat="${i}"> <b>${esc(cat)}</b></label>${fs
+        .map(
+          (f) =>
+            `<label><input type="checkbox" data-in="${i}" value="${f}"${had.includes(f) ? " checked disabled" : ""}> ${esc(nameOf(f))}</label>`,
+        )
+        .join("")}</details>`,
+  ).join("")}</div>
+  <p class="acts sb-imp-go"><button type="button" class="btn" data-imp-go>Import all options</button></p>`;
+  openWindow(html, {
+    cls: "sb-impwin",
+    onOpen(w, close) {
+      const picked = () =>
+          [...w.querySelectorAll("[data-in]:checked:not(:disabled)")].map(
+            (c) => c.value,
+          ),
+        label = () =>
+          (w.querySelector("[data-imp-go]").textContent = picked().length
+            ? "Import"
+            : "Import all options");
+      w.addEventListener("change", (e) => {
+        const t = e.target;
+        if (t.matches("[data-cat]"))
+          w.querySelectorAll(
+            `[data-in="${t.dataset.cat}"]:not(:disabled)`,
+          ).forEach((c) => (c.checked = t.checked));
+        if (t.matches("[data-in]")) {
+          const i = t.dataset.in,
+            all = [...w.querySelectorAll(`[data-in="${i}"]`)];
+          w.querySelector(`[data-cat="${i}"]`).checked = all.every(
+            (c) => c.checked,
+          );
+        }
+        label();
+      });
+      w.addEventListener("click", async (e) => {
+        if (!e.target.closest("[data-imp-go]")) return;
+        let fs = picked();
+        if (!fs.length) {
+          if (!(await confirmBox("Import all options", "Are you sure?")))
+            return;
+          fs = SB_IMPORT.flatMap(([, f]) => f);
+        }
+        const r = getR();
+        if (r) r.send({ t: "sb", k: "imp", p: id, fs });
+        close(null);
+        setTimeout(then, 300);
       });
     },
   });
@@ -267,6 +402,8 @@ export const buildRows = (R) =>
 activity({
   id: "sbpoints",
   only: "sandbox",
+  /* my walk: a spawn's Players tab or a respawn may give me another speed (sbspawn.js sbWalkOf) */
+  speed: (pos, ctx) => sbWalkOf(ctx.state(), ctx.me),
   draw(now, ctx) {
     const s = ctx.state(),
       layer = ctx.world.board.querySelector(".ducks");
@@ -285,6 +422,7 @@ activity({
     let best = null,
       bd = 90;
     for (const [id, p] of Object.entries(ptsOf(s))) {
+      if (p.grp) continue;
       const d = Math.hypot(p.x * W - pos.x, p.y * H - pos.y);
       if (d < bd) {
         bd = d;

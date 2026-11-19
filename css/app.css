@@ -19789,6 +19789,69 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .sb-row:has(.sb-acts) > span:first-child {
   padding-top: 0.3rem; /* (level with its dropdown's first line, open or shut) */
 }
+/* a spawn's tabs: Entities, Players, its + pages and the + (sbspawnview.js) */
+.sb-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0 0 0.6rem;
+}
+.sb-tab {
+  font: inherit;
+  font-size: 0.9em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 0.45rem;
+  border: 0.12rem solid var(--line);
+  background: var(--panel2);
+  color: inherit;
+  cursor: pointer;
+  max-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sb-tab.on {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+}
+.sb-plus,
+.sb-plus-pick {
+  display: inline-flex;
+  gap: 0.3rem;
+}
+.sb-plus-pick[hidden] {
+  display: none;
+}
+/* a respawn's Import settings: the categories scroll, the button stays at the bottom */
+.sb-impwin {
+  width: min(24rem, calc(100vw - 1.5rem));
+}
+.sb-imp {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: calc(100dvh - 14rem);
+  overflow: auto;
+}
+.sb-cat summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.25rem 0.45rem;
+  border-radius: 0.45rem;
+  background: var(--panel2);
+}
+.sb-cat label {
+  display: block;
+  padding: 0.2rem 0.45rem 0.2rem 1.2rem;
+}
+.sb-cat .sb-cat-all {
+  padding-left: 0.45rem;
+}
+.sb-imp-go {
+  position: sticky;
+  bottom: 0;
+}
 /* a behavior list: a dropdown of checkboxes, what's picked written on it */
 .sb-acts {
   min-width: 0;

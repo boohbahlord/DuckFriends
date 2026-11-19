@@ -23,7 +23,7 @@ import {
   sbOnBoard,
   sbPlayerSpot,
 } from "./sandboxrules.js";
-import { sbAct, sbTick } from "./sbspawn.js";
+import { sbAct, sbTick, sbPlaceDuck, sbHpOf } from "./sbspawn.js";
 import { onCabin } from "./sbcabin.js";
 import { stamp, took } from "./perf.js";
 import {
@@ -3501,16 +3501,17 @@ export const dmgOf = (s, k) => {
     ? d[0] + Math.floor(Math.random() * (d[1] - d[0] + 1))
     : d;
 };
-export function soaks(s, id, now, dmg = 1, by) {
+export function soaks(s, id, now, dmg = 1, by, raw = false) {
   if (isMgj(s)) return false;
   if (normalGame(s) && (shielded(s, id, now) || (by && shielded(s, by, now))))
     return true; // (spawn protection: nothing hurts a duck that just came back, and what it shoots hurts nobody)
   if (invuln(s)) return hurtFx(s, id, now); // (Invulnerability: the hit only flashes)
-  const n = phpLost(s, id, now) + dmg,
+  const max = sbHpOf(s, id) || PHP, // (Sandbox: a spawn's or a respawn's HP for it, sbspawn.js)
+    n = phpLost(s, id, now) + (dmg >= PHP && !raw ? max : dmg), // (a crit, the slug, the chain gun: all of it, whatever it has)
     rest = { ...s.php };
   delete rest[id];
-  s.php = n >= PHP ? rest : { ...rest, [id]: { n, t: now } };
-  return n < PHP;
+  s.php = n >= max ? rest : { ...rest, [id]: { n, t: now } };
+  return n < max;
 }
 /* what Sandbox's spawns borrow (sbspawn.js): the ducks up on the board, and a zombie's swipe on one (dmg: its spawn's
    damage box) */
@@ -3523,10 +3524,10 @@ const SB_H = {
     const P = s.players[id],
       p = s.pos[id];
     if (!P || P.dead || !p || dodges(s, p, now)) return;
-    if (!soaks(s, id, now, dmg)) {
+    if (!soaks(s, id, now, dmg, null, true)) {
       P.dead = true;
       holdDown(s, id, now);
-    }
+    } // (raw: a spawn's damage box is only that much, never "all of it")
     if (pwOn(s)) pwHit(s, id, "claw", now, !!P.dead); // (its claw wounds, as a Dead Ducks Arcade zombie leaves them)
   },
 };
@@ -3534,14 +3535,7 @@ const SB_H = {
    maps bring theirs back their own way: l4ddrules.js) */
 onGetUp((s, id) => {
   if (!sbOnBoard(s) && !onCabin(s)) return false;
-  const q = sbPlayerSpot(s);
-  if (q && s.pos[id])
-    s.pos[id] = {
-      ...s.pos[id],
-      x: q.x,
-      y: q.y,
-      ...(onCabin(s) ? { z: q.z || 0 } : {}),
-    };
+  sbPlaceDuck(s, id);
   return false;
 });
 function playerKilled(s, by, id, w) {

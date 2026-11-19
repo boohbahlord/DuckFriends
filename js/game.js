@@ -384,6 +384,7 @@ import {
 } from "./mgjart.js";
 import { hitsOf } from "./l4ddart.js";
 import { npcURL, npcBox, npcName, isZombie } from "./sbnpcart.js";
+import { sbHpOf, sbWalkOf } from "./sbspawn.js";
 import { angelic, angelGlow } from "./powerart.js"; // (after l4ddart.js: Noah's note on an old import cycle)
 import { angelOf } from "./l4ddangel.js";
 import { BOMB } from "./jaimebomb.js";
@@ -1182,7 +1183,8 @@ function hpFull(s, id, now) {
           ]
         : [s.justin.down ? 0 : 1, 1]; // (Justin on the board without Mad God Justin's HP: one hit takes his 1, as always)
   if (!seated || !onBoardPhase()) return null;
-  return [s.players[id].dead ? 0 : Math.max(0, PHP - phpLost(s, id, now)), PHP];
+  const max = sbHpOf(s, id) || PHP; // (Sandbox: a spawn's or a respawn's HP for it)
+  return [s.players[id].dead ? 0 : Math.max(0, max - phpLost(s, id, now)), max];
 }
 /* my meter under the hotbar, and the other players' small ones in the board's corner (Quacky Zombies and Mad God
    Justin, on a computer, unless turned off in Settings) */
@@ -1631,7 +1633,7 @@ function drawDucks(now = clockNow()) {
                   !dead &&
                   !isL4dd(s) &&
                   onBoardPhase()
-                ? PHP
+                ? sbHpOf(s, id) || PHP
                 : 0, // (every other mode: always shown, as in Dead Ducks Arcade; the owner's, Nov 18 16:43Z: "the health meter ... from zombies is in every game mode now")
       hp = !hpMax
         ? -1
@@ -1651,7 +1653,7 @@ function drawDucks(now = clockNow()) {
                 ? s.mgj && !dead
                   ? Math.max(0, hpMax - ((s.mgj.lost || {})[id] || 0))
                   : -1
-                : PHP - lost;
+                : hpMax - lost;
     if (d._hp !== hp) {
       /* the normal game's bar only shows once a hit is counted, so the first HP lost comes from a full bar (the same
          flash and sound as every later one) */
@@ -4809,7 +4811,10 @@ function step(dt, now) {
     onTree = [1, (geo.tl.h * share) / row.h];
   } // (Trivia: the same speed on the screen in any row, however tall)
   const mul =
-    (sprinting ? SPEED.sprint : 1) * (isMgj(s) ? MGJ_SLOW : 1) * walkOf(s); // (Mad God Justin: the ducks a fifth slower; the lobby's Walking speed)
+    (sprinting ? SPEED.sprint : 1) *
+    (isMgj(s) ? MGJ_SLOW : 1) *
+    walkOf(s) *
+    sbWalkOf(s, R.me); // (Mad God Justin: the ducks a fifth slower; the lobby's Walking speed; Sandbox: a spawn's or a respawn's speed for me)
   const sx = (turned() ? SPEED.px : SPEED.x) * mul * onTree[0],
     sy = (turned() ? SPEED.py : SPEED.y) * mul * onTree[1];
   let [lo, hi] = xBounds();

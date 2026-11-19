@@ -26,6 +26,10 @@ import {
   SB_WHAT,
   SB_WHAT_ZMAPS,
   SB_ACTS,
+  SB_IMPORT,
+  SB_PLAYER,
+  sbPlayerSpot,
+  sbOnWorld,
   SB_COLORS,
   SB_KEYS_TAKEN,
   SB_POINTS,
@@ -66,6 +70,10 @@ export const SB_TEXT = {
     check: (t) =>
       words(t).length ? "" : "Write a color, a spawn's name or players",
   },
+  pwho: {
+    name: "Who spawns here",
+    check: (t) => (words(t).length ? "" : "Write players or their names"),
+  },
   pick: {
     name: "Pick",
     check: (t) =>
@@ -84,12 +92,14 @@ const words = (t) =>
     .split(/[\s,]+/)
     .filter(Boolean);
 /* a box's settings (number, true or false, or text) */
-export const boxOf = (f) => SB_BOXES[f] || SB_FLAGS[f] || SB_TEXT[f] || null;
+export const boxOf = (f) =>
+  SB_BOXES[f] || SB_FLAGS[f] || SB_PLAYER[f] || SB_TEXT[f] || null;
 /* is this text good for box f? "" or why not */
 export function boxWhy(f, t) {
   const b = boxOf(f);
   if (!b) return "No such box";
   if (b.check) return b.check(String(t == null ? "" : t));
+  if (b.blank && !String(t == null ? "" : t).trim()) return ""; // (blank: the game's own)
   const r = read(t, b);
   return r.ok ? "" : r.why;
 }
@@ -101,6 +111,7 @@ export function boxText(p, f) {
     return p ? `${p.col[0].toUpperCase()}${p.col.slice(1)}` : "";
   if (f === "what") return "zombie";
   if (f === "pick") return "random";
+  if (f === "pwho") return "players";
   if (f === "who") return p ? p.col : "";
   if (f === "key") return "";
   const b = boxOf(f);
@@ -162,10 +173,14 @@ function makeOne(s, id, at) {
   if (!p || liveNpcs(s).length >= Z_MOST) return false;
   const k = kindFor(s, id, p);
   if (!k) return false;
-  const hp = Math.max(1, num(p, "hp") || 1),
-    sv = num(p, "speed") || 1, // (picked once and kept: "a number is selected and it sticks with it")
-    dm = boxText(p, "damage"),
-    kind = k === "zombie" ? {} : { k, ...dressFor(s, k) };
+  const by = (f) => ((at.im || []).includes(f) ? at : p), // (coming back at a respawn: what it imported, over its spawn's)
+    hp = Math.max(1, num(by("hp"), "hp") || 1),
+    sv = num(by("speed"), "speed") || 1, // (picked once and kept: "a number is selected and it sticks with it")
+    dm = boxText(by("damage"), "damage"),
+    kind = {
+      ...(k === "zombie" ? {} : { k, ...dressFor(s, k) }),
+      ...(at.id && (at.im || []).length ? { rp: at.id } : {}), // (its behavior lists too: think)
+    };
   let i;
   if (sbOnBoard(s)) {
     const l = zLook();
@@ -182,7 +197,7 @@ function makeOne(s, id, at) {
       sp: id,
       sv,
       dm,
-      ...(flag(p, "sprint") ? { run: 1 } : {}),
+      ...(flag(by("sprint"), "sprint") ? { run: 1 } : {}),
       ...kind,
     });
   } else if (onCabin(s))
@@ -191,7 +206,7 @@ function makeOne(s, id, at) {
       sv,
       dm,
       sp: id,
-      run: flag(p, "sprint"),
+      run: flag(by("sprint"), "sprint"),
       ...kind,
     });
   else i = l4Spawn(s, at.x, at.y, { hp, speed: sv, sp: id, dm });
@@ -210,10 +225,10 @@ function taken(p, npcs) {
     ry = 0.08;
   return npcs.some((o) => Math.hypot((o.x - p.x) / rx, (o.y - p.y) / ry) < 0.8);
 }
-/* a press of spawn id's key or Spawn button */
+/* a press of spawn id's key or Spawn button (or a hotbar's spawn button: sbPress) */
 function press(s, id, now) {
   const p = pointsOf(s)[id];
-  if (!p || p.k !== "spawn" || !spawnsHere(s)) return false;
+  if (!p || p.k !== "spawn" || p.pg === "pl" || !spawnsHere(s)) return false;
   const npcs = liveNpcs(s),
     alive = new Set(npcs.map((o) => o.i)),
     limit = Math.max(1, num(p, "limit") || 1),
@@ -275,12 +290,14 @@ export function sbAct(s, a, now) {
       return true;
     }
     const b = boxOf(f);
-    if (!b || (f === "who") !== (p.k === "respawn")) return false;
+    if (!b || !canSet(p, f)) return false;
     const was = p.f[f],
-      t = String(a.v == null ? "" : a.v).slice(0, 80),
+      t = String(a.v == null ? "" : a.v).slice(0, SB_ACTS[f] ? 200 : 80),
       k = b.check
         ? { t, ok: b.check(t) ? (was && was.ok) || "" : t }
-        : keep(was, t, b);
+        : b.blank && !t.trim()
+          ? { t, ok: "" }
+          : keep(was, t, b);
     s.sb = {
       ...s.sb,
       pts: { ...pts, [a.p]: { ...p, f: { ...p.f, [f]: k } } },
@@ -288,16 +305,122 @@ export function sbAct(s, a, now) {
     return true;
   }
   if (a.k === "del") {
-    const rest = { ...pts };
-    delete rest[a.p];
-    const run = { ...((s.sb && s.sb.run) || {}) };
-    delete run[a.p];
+    const rest = { ...pts },
+      run = { ...((s.sb && s.sb.run) || {}) };
+    for (const [id, q] of Object.entries(pts))
+      if (id === a.p || q.grp === a.p) {
+        delete rest[id];
+        delete run[id];
+      } // (a spawn's own + pages go with it)
     s.sb = { ...s.sb, pts: rest, run };
+    return true;
+  }
+  if (a.k === "imp") {
+    if (p.k !== "respawn" || !Array.isArray(a.fs)) return false;
+    const all = SB_IMPORT.flatMap(([, fs]) => fs),
+      im = all.filter((f) => a.fs.includes(f) || (p.im || []).includes(f)); // (in the spawn menu's order)
+    if (!im.length) return false;
+    const from = Object.values(pts).find(
+        (q) => q.k === "spawn" && q.col === p.col && q.pg !== "pl",
+      ), // (its values start as its color's spawn's)
+      f = { ...p.f };
+    for (const k of im) if (!f[k] && from && from.f[k]) f[k] = { ...from.f[k] };
+    s.sb = { ...s.sb, pts: { ...pts, [a.p]: { ...p, im, f } } };
+    return true;
+  }
+  if (a.k === "page") {
+    if (p.k !== "spawn" || p.grp || !["ent", "pl"].includes(a.kind))
+      return false;
+    if (Object.keys(pts).length >= SB_POINTS) return false;
+    const n = ((s.sb && s.sb.n) || 0) + 1,
+      cols = Object.keys(SB_COLORS),
+      used = Object.values(pts).map((q) => q.col),
+      col = cols.find((c) => !used.includes(c)) || cols[(n - 1) % cols.length];
+    s.sb = {
+      ...s.sb,
+      n,
+      pts: {
+        ...pts,
+        ["p" + n]: {
+          k: "spawn",
+          x: p.x,
+          y: p.y,
+          z: p.z,
+          col,
+          grp: a.p,
+          pg: a.kind,
+          f: {},
+        },
+      },
+    };
     return true;
   }
   if (a.k === "go") return press(s, a.p, now);
   return false;
 }
+
+/* which boxes a point takes: a respawn its "who" and what it imported; a spawn its own, and its Players tab's (a +
+   page for players only those) */
+function canSet(p, f) {
+  if (p.k === "respawn") return f === "who" || (p.im || []).includes(f);
+  if (f === "who") return false;
+  if (p.pg === "pl") return !!SB_PLAYER[f] || f === "pwho" || f === "name";
+  return true;
+}
+
+/* ---------- the ducks: where they spawn, and the HP and speed a spawn or a respawn gives them ----------
+   s.sb.pl = { id: { hp, sp } }, set each time a duck is put at one (blank or not imported: the game's own) */
+function statsAt(q) {
+  const v = (f) => {
+    const n = num(q, f);
+    return Number.isFinite(n) ? n : 0;
+  };
+  if (q.k === "respawn")
+    return {
+      hp: (q.im || []).includes("hp") ? v("hp") : 0,
+      sp: (q.im || []).includes("speed") ? v("speed") : 0,
+    };
+  return { hp: v("php"), sp: v("pspd") };
+}
+/* put duck id where it spawns now (a respawn for players, or a spawn whose Players tab is on for it), with what that
+   gives it; nothing when there's none */
+export function sbPlaceDuck(s, id) {
+  const q = sbPlayerSpot(s, id);
+  if (!q || !s.pos[id]) return false;
+  s.pos[id] = {
+    ...s.pos[id],
+    x: q.x,
+    y: q.y,
+    ...(sbOnWorld(s) ? { z: q.z || 0 } : {}),
+  };
+  const st = statsAt(q),
+    pl = { ...((s.sb && s.sb.pl) || {}) };
+  if (st.hp || st.sp)
+    pl[id] = {
+      ...(st.hp ? { hp: st.hp } : {}),
+      ...(st.sp ? { sp: st.sp } : {}),
+    };
+  else delete pl[id];
+  s.sb = { ...s.sb, pl };
+  return true;
+}
+/* a duck's HP in Sandbox (0: the game's own) and its walk (1 as usual); the zombie maps keep their own HP */
+export const sbHpOf = (s, id) =>
+  (isSb(s) &&
+    baseMode(s.options) !== "l4dd" &&
+    s.sb &&
+    s.sb.pl &&
+    s.sb.pl[id] &&
+    s.sb.pl[id].hp) ||
+  0;
+export const sbWalkOf = (s, id) =>
+  (isSb(s) &&
+    baseMode(s.options) !== "l4dd" &&
+    s.sb &&
+    s.sb.pl &&
+    s.sb.pl[id] &&
+    s.sb.pl[id].sp) ||
+  1;
 
 /* where something of spawn sp comes back: a respawn whose "who" names its color or its name (one of them at random),
    or the spawn itself */
@@ -306,11 +429,13 @@ function backAt(s, sp) {
     p = pts[sp];
   if (!p) return null;
   const mine = [p.col, boxText(p, "name").toLowerCase()],
-    rs = Object.values(pts).filter(
-      (q) =>
-        q.k === "respawn" &&
-        words(boxText(q, "who")).some((w) => mine.includes(w)),
-    );
+    rs = Object.entries(pts)
+      .filter(
+        ([, q]) =>
+          q.k === "respawn" &&
+          words(boxText(q, "who")).some((w) => mine.includes(w)),
+      )
+      .map(([id, q]) => ({ ...q, id }));
   return rs.length ? rs[Math.floor(Math.random() * rs.length)] : p;
 }
 /* ---------- the host's heartbeat ----------
@@ -319,6 +444,19 @@ function backAt(s, sp) {
 export function sbTick(s, now, H) {
   if (!spawnsHere(s) || !s.sb) return false;
   let ch = false;
+  /* a duck that joins: where it spawns (a spawn's Players tab, or a respawn for players), if there's one. The ducks here
+     when Sandbox began only get noted */
+  const ids = s.seat.filter((id) => s.pos[id]),
+    seen = s.sb.seen;
+  if (
+    !seen ||
+    ids.length !== seen.length ||
+    ids.some((id) => !seen.includes(id))
+  ) {
+    if (seen) for (const id of ids) if (!seen.includes(id)) sbPlaceDuck(s, id);
+    s.sb = { ...s.sb, seen: ids };
+    ch = true;
+  }
   const pts = pointsOf(s);
   let npcs = liveNpcs(s);
   const alive = new Set(npcs.map((o) => o.i));
@@ -392,15 +530,17 @@ export function think(s, now, npcs, at, H, far, duckAt) {
     memo = new Map(),
     set = (p, f) => !!(p.f && p.f[f]),
     lists = (o) => {
-      const k = o.sp + "|" + (o.k || "zombie");
+      const k = o.sp + "|" + (o.k || "zombie") + "|" + (o.rp || ""),
+        r = o.rp && pts[o.rp],
+        of = (p, f) => (r && (r.im || []).includes(f) ? r : p); // (came back at a respawn that imported it: the respawn's)
       if (!memo.has(k))
         memo.set(
           k,
           listsOf(
             pts[o.sp] || { f: {} },
             o,
-            (p, f) => (p.col ? boxText(p, f) : ""),
-            set,
+            (p, f) => (of(p, f).col ? boxText(of(p, f), f) : ""),
+            (p, f) => set(of(p, f), f),
           ),
         );
       return memo.get(k);
@@ -526,3 +666,5 @@ function boardTick(s, now, H) {
   z.zb = z.zb.filter((o) => !o.d || now - o.d < WAVE.DEAD_MS);
   return ch || z.zb.length !== n0;
 }
+/* the same press from elsewhere (a hotbar's spawn button), the rights checked by its caller */
+export const sbPress = (s, id, now) => press(s, id, now);

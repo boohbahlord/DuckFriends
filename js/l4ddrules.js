@@ -4460,7 +4460,7 @@ function l4Tick(s, now) {
       s.hang.l4p = p4;
       bringBack(s, id, now, ids.indexOf(id), false);
       p4[id] = s.hang.l4p[id];
-      const q = sbPlayerSpot(s); // (at a respawn for players, if there is one: sbspawn.js)
+      const q = sbPlayerSpot(s, id); // (at a respawn for players, or a spawn whose Players tab is on: sandboxrules.js)
       if (q && s.pos[id])
         s.pos[id] = { ...s.pos[id], x: q.x, y: q.y, z: q.z || 0 };
       continue;
