@@ -4027,9 +4027,11 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
       s,
       id,
       now,
-      (x, y) => inCone((x - px) / D, (y - py) / D, dx, dy, far / D + 0.4),
+      (x, y, z = heightAt(x, y)) =>
+        inCone((x - px) / D, (y - py) / D, dx, dy, far / D + 0.4) &&
+        !slabBetween(px, py, hz, x, y, z),
       gmHelp(s, now),
-    ); // (Survival's gunmen in the flame: gunmen.js)
+    ); // (Survival's gunmen in the flame, as the zombies: over a ledge, never under a roof; gunmen.js)
   const mm = merchantOf(s);
   if (
     mm &&

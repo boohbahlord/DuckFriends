@@ -1033,13 +1033,19 @@ function blast(s, by, bx, bY, r, open, now, w, H) {
   });
   return any;
 }
-/* in a flamethrower's flame (inFlame(x, y)): 1 HP every so often */
+/* in a flamethrower's flame (inFlame(x, y, z): its cone, with nothing solid between, so a sniper on a roof is never lit
+   from under it): 1 HP every so often */
 function fire(s, by, now, inFlame, H) {
   if (!gmOf(s)) return;
   const gm = (s.hang.gm = { ...gmOf(s) });
   let any = false;
   gm.gb = gm.gb.map((o) => {
-    if (o.d || o.hid || now - (o.bt || 0) < GM.BURN_MS || !inFlame(o.x, o.y))
+    if (
+      o.d ||
+      o.hid ||
+      now - (o.bt || 0) < GM.BURN_MS ||
+      !inFlame(o.x, o.y, o.z)
+    )
       return o;
     const q = { ...o, bt: now };
     if (q.k === "f") friendLit(s, q, by, now);
