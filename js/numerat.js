@@ -53,9 +53,9 @@ export function read(text, box = {}) {
     if (a > b) [a, b] = [b, a]; // (4:2 is 2 to 4)
     const whole = !ends.some((x) => x.includes(".")); // ("2:4" is whole numbers even where the box takes tenths)
     if (box.min != null && a < box.min)
-      return { ok: false, why: `${box.min} at least` };
+      return { ok: false, why: fits(a, box).why };
     if (box.max != null && b > box.max)
-      return { ok: false, why: `${box.max} at most` };
+      return { ok: false, why: fits(b, box).why };
     v.push(whole ? [a, b] : [a, b, "tenths"]);
   }
   return { ok: true, v };
@@ -81,14 +81,15 @@ function readCode(t, box) {
   if (!c.ok) return { ok: false, why: c.why };
   for (let k = 0; k < 40; k++) {
     const r = c.prog.run();
-    const why = r.why || fits(r.v, box).why;
+    const why = r.why || fits(r.v, box, r.lim).why;
     if (why) return { ok: false, why };
   }
   return { ok: true, v: { code: t } };
 }
 /* a value from a program: the box's kind (whole numbers rounded, t/f: a number is true unless 0, so 30% is true 3
-   times in 10) and its limits. { v } or { why } */
-function fits(v, box = {}) {
+   times in 10) and its limits: the box's own top, or the line's own (\inc'lim=25'\, \rm'lim'\ for none). { v } or
+   { why } */
+function fits(v, box = {}, lim = null) {
   const kind = box.kind || "int";
   if (v === NOTHING) return { why: "It came out as nothing" };
   if (kind === "bool") {
@@ -100,8 +101,16 @@ function fits(v, box = {}) {
   if (typeof v !== "number" || !Number.isFinite(v))
     return { why: "A number goes here" };
   const n = kind === "int" ? Math.round(v) : tenth(v);
-  if (box.min != null && n < box.min) return { why: `${box.min} at least` };
-  if (box.max != null && n > box.max) return { why: `${box.max} at most` };
+  const max = lim != null ? lim : box.max,
+    what = box.name ? `${box.name} ` : "";
+  if (box.min != null && n < box.min)
+    return {
+      why: `${what}${box.min} at least (it gave ${n}). See help/limits.txt`,
+    };
+  if (max != null && n > max)
+    return {
+      why: `Past the limit: ${what}${max} at most${lim != null ? " (this line's limit)" : ""} (it gave ${n}). See help/limits.txt`,
+    };
   return { v: n };
 }
 
@@ -113,7 +122,7 @@ export function pick(v, box = {}, r = Math.random) {
     const p = progFor(v.code, box.kind || "int");
     if (!p.ok) return NaN;
     const r1 = p.prog.run(r),
-      f = r1.why ? r1 : fits(r1.v, box);
+      f = r1.why ? r1 : fits(r1.v, box, r1.lim);
     return f.why ? NaN : f.v; // (a spawn this time can't take it: valueOf() gives the box's own value)
   }
   if (!Array.isArray(v) || !v.length) return NaN;
