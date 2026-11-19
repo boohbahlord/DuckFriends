@@ -729,6 +729,20 @@ SOUNDS = {
         rate=0.92,
         credit=("artisticdude, Zombies Sound Pack", OGA_URL["zombies"]),
     ),
+    # Survival's defibrillator bringing a dead duck back, at once (no charging up): a short electric whine, then the
+    # shock, a heavy soft thump with a snap of sparks on it
+    "defib": dict(
+        layers=[
+            ("gh:angel/charge.opus", 1.0, 0.35, 0, 0.35, 3000),
+            ("kn:jump-land/impactSoft_heavy_000.ogg", 0, 0.5, 0.33, 1),
+            ("gh:angel/snaploop.opus", 0.5, 0.12, 0.33, 0.35, 2500),
+        ],
+        lp=4000,
+        credit=(
+            "Electricity Game Sound Pack (charge, snaploop); Kenney, Impact Sounds (impactSoft_heavy)",
+            "https://kenney.nl/assets/impact-sounds",
+        ),
+    ),
     # Survival, a horde coming (s.hang.sv: the rest turns to a peak): many zombies groaning far off at once, low, dark
     # and swelling in, heard rather than announced (the phases are never announced)
     "svHorde": dict(

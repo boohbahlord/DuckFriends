@@ -83,6 +83,7 @@ export const FILES = {
   l4nail: { n: 3 },
   l4groan: { n: 4 },
   svHorde: { n: 1 },
+  defib: { n: 1 },
   l4slot: { n: 1 },
   l4till: { n: 1 },
   dropIn: { n: 1 },

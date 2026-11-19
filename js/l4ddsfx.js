@@ -16,6 +16,7 @@ import { heightAt, layoutVariant } from "./hangout/layout.js";
 import { OPENINGS, BUTLER, BOX, zombiesOf, ptsOf } from "./l4ddrules.js";
 import { groundAt, stepOf } from "./ground.js";
 import { isSurv } from "./survrules.js";
+import { FILES } from "./sfxlist.js";
 import { DUCK_LEN } from "./mgjrules.js";
 
 const rnd = (a, b) => a + Math.random() * (b - a);
@@ -34,7 +35,10 @@ const STRIDE = 44, // world px a duck walks for each footstep
   Z_K = 0.45, // a zombie's step, of a duck's (the owner: "even far quieter for zombies"; in water too)
   FALL = 50, // world px: landing this far below where it jumped from is a fall (a thud), not a jump
   CLIMB = [450, 800], // ms between one zombie's rattles, climbing the fence (Downpour)
-  CLIMBS = 2; // rattles at once at most (the nearest climbers)
+  CLIMBS = 2, // rattles at once at most (the nearest climbers)
+  GM_SHOTS = 3, // Survival's gunmen: shots heard each time the state comes in, at most
+  GM_K = 0.8, // … each as loud as this much of a duck's
+  GM_GUN = { dbuck: "dbarrel" }; // (a gunman's gun whose sound has another name)
 /* Downpour's church bell (sound.js "churchBell"), rung as each round starts: its four strikes, s after it starts
    (Noah's bell swings on these: bellStrikes()) */
 export const BELL = [0.01, 2.12, 4.24, 6.35];
@@ -99,6 +103,10 @@ export function l4Hear(s, ctx) {
         const a = ctx.world.at(f.by);
         play("l4till", a ? { x: a.x, y: a.y } : {});
         rang.add(f.by);
+      } else if (f.n > st.fx && f.kind === "l4defib") {
+        /* Survival's defibrillator: the dead duck brought back, its shock where that duck lies */
+        const a = ctx.world.at((f.who || [])[0] || f.by);
+        play("defib", a ? { x: a.x, y: a.y } : {});
       }
     st.fx = s.fxN || 0;
   }
@@ -147,6 +155,23 @@ export function l4Hear(s, ctx) {
   if (L && L.over && st.over !== L.over.at) {
     if (!st.first) play("l4over");
     st.over = L.over.at;
+  }
+  /* Survival's gunmen (gunmenrules.js s.hang.gm.gb): a new last shot (sh[0]) is a shot, its gun's own sound where the
+     gunman stands, a little quieter than a duck's; a few at most each time, so a firefight never drowns everything */
+  const gb = (h.gm && h.gm.gb) || [],
+    shot = st.gmShot || (st.gmShot = {});
+  let shots = 0;
+  for (const o of gb) {
+    const t = (o.sh && o.sh[0]) || 0;
+    if (shot[o.i] === t) continue;
+    shot[o.i] = t;
+    if (!t || st.first || o.d || shots++ >= GM_SHOTS) continue; // (not the shots already fired as I first look)
+    play(GM_GUN[o.hw] || (FILES[o.hw] ? o.hw : "handgun"), {
+      x: o.x,
+      y: o.y,
+      k: GM_K,
+      yield: true,
+    });
   }
   /* Survival has no rounds (its L.r is only a horde's level), so no new round's swell and no bell: a horde coming is
      many zombies groaning far off, and its last one down the air letting go (s.hang.sv's phases: survrules.js) */

@@ -87,6 +87,7 @@ instruments (its license: LICENSES.md).
 | l4crack | rubberduck, 100 CC0 metal and wood SFX and 75 CC0 breaking / falling / hit SFX; Independent.nu, 35 wooden cracks, hits, destructions — https://opengameart.org/content/100-cc0-metal-and-wood-sfx | CC0 1.0 |
 | l4nail | bart, 68 Workshop Sounds (wood hammering); Kenney, Impact Sounds (impactPlank_medium) — https://opengameart.org/content/68-workshop-sounds | CC0 1.0 |
 | l4groan | artisticdude, Zombies Sound Pack — https://opengameart.org/content/zombies-sound-pack | CC0 1.0 |
+| defib | Electricity Game Sound Pack (charge, snaploop); Kenney, Impact Sounds (impactSoft_heavy) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
 | svHorde | artisticdude, Zombies Sound Pack — https://opengameart.org/content/zombies-sound-pack | CC0 1.0 |
 | l4slot | Kenney, RPG Audio (metalClick) and Impact Sounds (impactBell_heavy) — https://kenney.nl/assets/rpg-audio | CC0 1.0 |
 | l4till | Kenney, RPG Audio (handleCoins) and Interface Sounds (glass) — https://kenney.nl/assets/rpg-audio | CC0 1.0 |

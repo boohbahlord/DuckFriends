@@ -38,6 +38,7 @@ export const VOL = {
   l4over: -12, // (everyone's down: the game's ending, soft, Nov 19)
   svHorde: -14, // (Survival: a horde coming, far off; svCalm: its last zombie down)
   svCalm: -16,
+  defib: -12, // (Survival's defibrillator: a dead duck brought back)
   // moving
   step: -19,
   zstep: -27,
@@ -264,6 +265,7 @@ const GROUPS = {
       "l4over",
       "svHorde",
       "svCalm",
+      "defib",
       "zstep",
       "nuke",
       "nukeRing",
