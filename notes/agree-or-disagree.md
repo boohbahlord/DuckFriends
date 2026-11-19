@@ -6943,3 +6943,8 @@ players cannot go down in normal social or comp social game modes, they just die
 in the select key for spawn in sandbox, the game should have it only allow keys that arent allocated to browser or game, and no fn keys for f3 or anything like that"
 
 Adam: install count now counts every file the game needs, so coming back goes on from where it was (files were never lost: only the count restarted); the page tells Firefox users to use the browser menu's Add to Home screen (only Chrome-type browsers let a page offer the Android install). Downed rules -> Jackal. Spawn key: already one letter only (no F keys, digits or symbols), never the window letters or the game's keys (SB_KEYS_TAKEN "cbmnhgpwasdeqrtvx").
+
+## Owner, Nov 19 16:21Z
+"everyone should be able to be on fire not just zombies, from the flamethrower or otherwise"
+
+Jackal: Sandbox board NPCs, Justin (board and cabin), the cabin's cats and made NPCs now burn from the flamethrower and its burning ground (1 HP as lit, 3 s, not lit again while burning), with the burning duck's flame over them. Mad God Justin has no flamethrower (his loadout is unchanged), so there it burns only from what it already had.

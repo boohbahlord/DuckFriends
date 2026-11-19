@@ -21,6 +21,8 @@ import {
 } from "./sbnpcart.js";
 import { goreFree } from "./wounds.js";
 import { clawMark } from "./l4dd.js";
+import { FLAME } from "./mgjart.js";
+import { now as clockNow } from "./clock.js";
 import { esc, openWindow, confirmBox } from "./ui.js";
 import {
   isSb,
@@ -852,6 +854,17 @@ activity({
         z.a = o.a;
       }
       if (hide) continue;
+      /* on fire (any fire: rules.js flameThings keeps it in s.flamed for 3 s): the burning duck's flame over it */
+      const lit = ((s.flamed || {})["h:sbz" + o.i] || 0) > clockNow() && !o.d;
+      if (z.lit !== lit) {
+        z.lit = lit;
+        if (lit && !z.body.querySelector(".gduck-fire"))
+          z.body.insertAdjacentHTML(
+            "beforeend",
+            `<span class="gduck-fire" aria-hidden="true">${FLAME}</span>`,
+          );
+        z.el.classList.toggle("onfire", lit);
+      }
       const hits = s.options.noGore ? goreFree(o.w || "") : o.w || "",
         pic = hits + (o.d && !isZombie(o) ? "+dead" : "");
       if (z.hits !== pic) {
