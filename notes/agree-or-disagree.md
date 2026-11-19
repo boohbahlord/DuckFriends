@@ -6828,3 +6828,10 @@ Decided (Adam): $ lower case + caps rule, ~ = about: in. Percent over 100%: prop
 
 ## Owner, Nov 19 13:38Z (to percent over 100%: shares in a pick, more than once alone, stats past 100%)
 "yes"
+
+## Owner, Nov 19 13:40Z
+"we need for loops in numberat right?"
+
+Owner, 13:41Z (to for + while, 1,000-round stop): "yes"
+
+Decided (Adam): loops in bible section 14.

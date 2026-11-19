@@ -156,6 +156,9 @@ Every Numberat value works anywhere a number goes below: `wait 1:3`, `every [2,4
 6. **Reusable blocks**: `def charge { ... }`, then `charge` runs it. `stop` ends a block early.
 7. **Joining files**: `use 'zombie-base'` pulls in another file's values and blocks; `give rage` / `take rage` share a
    value between files while the game runs.
+9. **Loops** (owner 13:41Z: yes): `for z in all zombies { ((z speed ~1.2)) }`, `for n in 1:5 { say "wave n" }`
+   (any Numberat value as the range), `while \hp < 5\ { flee }`. Every loop stops after 1,000 rounds with an error,
+   so a mistake can't freeze the game. The value repeats (`\>3>\||`) stay for values.
 8. **Tests**: `\if hp in 1:5\` and `else`.
 
 ## 15. Proposals waiting for the owner
