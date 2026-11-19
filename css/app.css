@@ -4542,11 +4542,12 @@ html.moving .cl-sq {
 /* The King's Festival (vellum.js): only the vellum, its edges a little darker, as on the book's page; tiles as
    see-through as on every map, names on dark plates */
 .scene.vellum {
-  background: #ba966c url(../assets/maps/vellum/vellum.webp) center / cover
+  background: #ba966c url(../assets/px/maps/vellum.webp) center / cover
     no-repeat;
 }
 .mini-map.mm-vellum {
-  background: #ba966c url(../assets/maps/vellum/vellum.webp) center / cover;
+  background: #ba966c url(../assets/px/maps/vellum.webp) center / cover;
+  image-rendering: pixelated; /* (already pixels: tools/pixel-files.cjs) */
 }
 .vl-edge,
 .mm-vellum::after {
@@ -9899,10 +9900,12 @@ html.moving .ec-glow {
   pointer-events: none;
 }
 .mm-rabbit {
-  background: url(../assets/maps/rabbit-hole.jpg) center / cover;
+  background: url(../assets/px/maps/rabbit-hole.webp) center / cover;
+  image-rendering: pixelated; /* (already pixels: tools/pixel-files.cjs) */
 }
 .mm-stars {
-  background: url(../assets/maps/starry-night.jpg) center / cover;
+  background: url(../assets/px/maps/starry-night.webp) center / cover;
+  image-rendering: pixelated; /* (already pixels: tools/pixel-files.cjs) */
 }
 html.moving .mm-rabbit {
   animation: rhspin 40s linear infinite;
@@ -18910,8 +18913,21 @@ html.pixel .nm * {
   font-family: "Cascadia Code", Consolas, monospace !important;
   font-size-adjust: none;
 }
-html.pixel img.px {
+html.pixel img.px,
+img[data-pxready] {
   image-rendering: pixelated;
+} /* (data-pxready: made as pixels ahead of time, tools/pixel-files.cjs) */
+/* a picture is never seen as itself first, only as its pixels (the owner's, Nov 19 17:00Z): hidden until pixel.js has
+   made them (data-pxok), or until it's one made as pixels ahead of time (tools/pixel-files.cjs). Not a map's: the
+   filter or pxbake.js make those into pixels where they are */
+html.pixel
+  img:not(.px, [data-pxok]):not(
+    .map-layer img,
+    #shapes img,
+    [data-nopx] img,
+    .hurt-edge img
+  ) {
+  opacity: 0 !important;
 }
 html.pixel .map-layer:not(.px-own),
 html.pixel #shapes:not(.px-own),

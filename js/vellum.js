@@ -5,7 +5,7 @@
    While it's played the interface takes the Ether & Kenoma look, burnt amber, in the chapter's blackletter (Grenze
    Gotisch): css/app.css, html.map-is-vellum. */
 
-export const VELLUM = "assets/maps/vellum/vellum.webp";
+export const VELLUM = "assets/px/maps/vellum.webp";
 
 /* the map: the page (css draws it) and its darker edges */
 export function vellumScene(layer) {

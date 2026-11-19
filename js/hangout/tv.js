@@ -1,9 +1,9 @@
 /* ---------- the TV: seven channels, the next one with E (or the context button) by anyone standing by it ----------
    The channels: static, the Night Show map, the fractal (Rabbit Hole of Ducklings), the Starry Night map, Ether's
-   Crossroads, a duck in a bubble bath, a pixel kitten. Each is one still picture (assets/tv, a few KB each, taken from
-   the maps' own scenes and the drawings this file had): I want the TV to cost nothing, so nothing on it moves. The
-   channel is the room's (s.hang.tv), so everyone watches the same one; a change clicks the knob and shows static for
-   a moment. The picture lives in the TV's screen strip (shapes.js' tvParts, part 'screen'), laid flat on the screen's
+   Crossroads, a duck in a bubble bath, a pixel kitten. Each is one still picture (assets/px/tv, a few KB each, taken
+   from the maps' own scenes and the drawings this file had, made into pixels ahead of time by tools/pixel-files.cjs):
+   I want the TV to cost nothing, so nothing on it moves. The channel is the room's (s.hang.tv), so everyone watches
+   the same one; a change clicks the knob and shows static for a moment. The picture lives in the TV's screen strip (shapes.js' tvParts, part 'screen'), laid flat on the screen's
    face, so it sorts with the TV. In a blackout (power.js) it's off: a dark screen, and no button. */
 import { rule, activity } from "./registry.js";
 import { PROPS, TV, W, H } from "./layout.js";
@@ -29,8 +29,8 @@ rule("tv", {
   },
 });
 
-/* ---------- on the screen: one still picture a channel (assets/tv, small and compressed: nothing on it moves) ---------- */
-const STILL = (c) => `assets/tv/${CH[c]}.webp`;
+/* ---------- on the screen: one still picture a channel (assets/px/tv, small, already pixels: nothing on it moves) ---------- */
+const STILL = (c) => `assets/px/tv/${CH[c]}.webp`;
 let el = null,
   pic = null,
   img = null,
@@ -46,7 +46,7 @@ function attach(strip) {
   pic.className = "tv-pic";
   pic.style.cssText = `width:${sc.w * F}px;height:${sc.h * F}px;transform:matrix(${k.toFixed(4)}, ${(-k).toFixed(4)}, 0, ${(1 / F).toFixed(4)}, ${(sc.x - x0).toFixed(2)}, ${sc.y.toFixed(2)})`;
   pic.innerHTML =
-    '<img class="tv-still" alt="" draggable="false" decoding="async"><i class="tv-glass"></i>';
+    '<img class="tv-still" alt="" draggable="false" decoding="async" data-pxready data-pxok><i class="tv-glass"></i>';
   strip.append(pic);
   img = pic.querySelector("img");
   shown = "";
