@@ -54,7 +54,7 @@ export function sbCan(s, id) {
 export const SB_BACK_MS = 3000;
 
 /* ---------- Sandbox's spawns and respawns: the settings (stage 2) ----------
-   ONE list of settings that a spawn, a respawn (and later a made NPC and a zone) all read. Each box keeps the text as
+   ONE list of settings that a spawn, a respawn, a made NPC and a zone (SB_ZONE, below) all read. Each box keeps the text as
    it was typed and its last good text (numerat.js keep()), so a box written wrong never breaks anything.
    The owner's words for each are in the Sandbox file, "Integer or numerical options for spawn" and "true of false
    options for spawn". */
@@ -134,9 +134,78 @@ export const SB_KEYS_TAKEN = "cbmnhgpwasdeqrtvx";
 export const SB_KEY_IN_BUILD = true;
 /* the most spawns and respawns on a map */
 export const SB_POINTS = 60;
-/* where duck id comes back (or starts, or joins) in Sandbox: a respawn whose "who" box says players or its name, or a
-   spawn whose Players tab is on for it (one of them at random), as { id, …the point }, or null (where it would anyway) */
-export function sbPlayerSpot(s, id) {
+/* ---------- Sandbox's board zones (stage 5) ----------
+   The owner's Sandbox file, "Board Build": "A large sqaure amount of pixels CAN be used to overwrite the board with an
+   effect (not an actual solid). It is transparent and assigned any color that the spawns or respawns has." A zone can be
+   where players, entities or loot spawn; it can damage, heal (each at its own rate) or kill. Its settings work as a
+   spawn's do, its colors as theirs. "Sections colored from board build is invisible": a zone is seen only while the
+   Build window is up (sbspawnview.js). A zone is a point as a spawn is ({ k: "zone", …, zw, zh: its size in duck
+   lengths } in s.sb.pts), with these boxes */
+export const SB_FX = {
+  none: "Nothing",
+  damage: "Damage",
+  heal: "Heal",
+  kill: "Kill",
+};
+const listBox = (name, def) => ({
+  name,
+  check: (t) => (String(t).length <= 200 ? "" : "200 letters at most"),
+  def,
+});
+export const SB_ZONE = {
+  zw: { name: "Width (duck lengths)", kind: "int", min: 1, max: 40, def: "4" },
+  zh: { name: "Height (duck lengths)", kind: "int", min: 1, max: 40, def: "4" },
+  fx: {
+    name: "What it does",
+    check: (t) =>
+      SB_FX[String(t).trim()] ? "" : "Nothing, damage, heal or kill",
+    def: "none",
+  },
+  amt: { name: "HP each time", kind: "tenth", min: 0.1, max: 100, def: "1" },
+  rate: {
+    name: "Seconds between",
+    kind: "tenth",
+    min: 0.1,
+    max: 60,
+    def: "1",
+  }, // ("they can heal or damage at different rates")
+  zwho: listBox("Who it hits", "players"), // (Players, Everything, a kind, a spawn by its color or name, a player's name)
+  ent: listBox("Entities spawn here", ""), // (spawns, by their color or name: what they make comes in the zone)
+  lt: listBox("Loot spawns here", ""), // (loot spots, by their color or name: their orbs lie in the zone)
+};
+/* a duck length in a world's px, for a zone's size there (on the board: 0.03 of it across, 0.08 up and down) */
+export const SB_ZONE_PX = 48;
+/* zone p's rectangle, [x0, y0, x1, y1] in shares of the map (W, H: a world's size in px) */
+export function sbZoneBox(s, p, W = 1, H = 1) {
+  const [rx, ry] = sbOnBoard(s)
+      ? [0.03, 0.08]
+      : [SB_ZONE_PX / W, SB_ZONE_PX / H],
+    hw = ((p.zw || 4) * rx) / 2,
+    hh = ((p.zh || 4) * ry) / 2;
+  return [p.x - hw, p.y - hh, p.x + hw, p.y + hh];
+}
+/* a spot at random inside zone p, { x, y, z }: on the board within its edges; on a world one a duck can stand on (ok(x, y,
+   z), in shares), or the zone's middle, where its builder stood */
+export function sbZoneSpot(s, p, W = 1, H = 1, ok = null) {
+  const [x0, y0, x1, y1] = sbZoneBox(s, p, W, H),
+    board = sbOnBoard(s),
+    z = p.z || 0;
+  for (let i = 0; i < 12; i++) {
+    let x = x0 + Math.random() * (x1 - x0),
+      y = y0 + Math.random() * (y1 - y0);
+    if (board) {
+      x = Math.min(0.99, Math.max(0.01, x));
+      y = Math.min(0.97, Math.max(0.03, y));
+    }
+    if (!ok || ok(x, y, z)) return { x: +x.toFixed(4), y: +y.toFixed(4), z };
+  }
+  return { x: p.x, y: p.y, z };
+}
+
+/* where duck id comes back (or starts, or joins) in Sandbox: a respawn whose "who" box says players or its name, a
+   spawn whose Players tab is on for it, or a zone whose players spawn there (one of them at random; in a zone a spot in
+   it at random: W, H, ok as for sbZoneSpot), as { id, …the point }, or null (where it would anyway) */
+export function sbPlayerSpot(s, id, W = 1, H = 1, ok = null) {
   const pts = (s && s.sb && s.sb.pts) || {},
     name = String((s.players[id] || {}).name || "")
       .trim()
@@ -153,12 +222,13 @@ export function sbPlayerSpot(s, id) {
     .filter(([, q]) =>
       q.k === "respawn"
         ? forMe(said(q, "who", q.col))
-        : q.k === "spawn" &&
+        : (q.k === "spawn" || q.k === "zone") &&
           ["t", "true"].includes(said(q, "pon", "f")) &&
           forMe(said(q, "pwho", "players")),
     )
     .map(([pid, q]) => ({ ...q, id: pid }));
-  return rs.length ? rs[Math.floor(Math.random() * rs.length)] : null;
+  const q = rs.length ? rs[Math.floor(Math.random() * rs.length)] : null;
+  return q && q.k === "zone" ? { ...q, ...sbZoneSpot(s, q, W, H, ok) } : q;
 }
 
 /* ---------- Sandbox's loot orbs (stage 4b) ----------

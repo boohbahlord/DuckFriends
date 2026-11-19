@@ -9,7 +9,7 @@
    with the later stages. */
 import { esc, typing, windowOpen } from "./ui.js";
 import { isSb, sbCan, SB_KEYS_TAKEN, SB_KEY_IN_BUILD } from "./sandboxrules.js";
-import { buildRows, sbNearPoint, sbSettings } from "./sbspawnview.js";
+import { buildRows, sbNearPoint, sbSettings, sbView } from "./sbspawnview.js";
 import { boxText } from "./sbspawn.js";
 import { npcRows } from "./sbmake.js";
 import { hotRows, lootHTML, openPut, sbHotOn } from "./sbhotview.js";
@@ -166,6 +166,7 @@ export function mountSandboxKeys(S, getR, onOpen) {
   let shown = "";
   const paint = () => {
     const R = getR();
+    sbView.build = !!R && k.open === "b" && sbCan(R.state, R.me); // (the zones show while I build: sbspawnview.js)
     if (!k.open || !R || !isSb(R.state)) {
       box.hidden = true;
       shown = "";
@@ -316,6 +317,7 @@ export function mountSandboxKeys(S, getR, onOpen) {
       removeEventListener("keyup", keyup, true);
       removeEventListener("blur", blur);
       box.remove();
+      sbView.build = false;
     },
   };
 }

@@ -26,6 +26,7 @@ import {
 import { sbAct, sbTick, sbPlaceDuck, sbHpOf } from "./sbspawn.js";
 import { sbHotAct } from "./sbhot.js";
 import { sbLootAct, sbLootTick } from "./sbloot.js";
+import { sbZoneTick } from "./sbzone.js";
 import { onCabin } from "./sbcabin.js";
 import { stamp, took } from "./perf.js";
 import {
@@ -3065,7 +3066,11 @@ function reduceStep(state, a, now) {
           jaimeRun(s, now) |
           (isL4dd(s) ? 0 : groundFire(s, now)) | // (the flamethrower's burning ground)
           pwTick(s, now, normalGame(s)) | // (the ducks' wounds going away: wounds.js)
-          (isSb(s) ? +sbTick(s, now, SB_H) | +sbLootTick(s, now, SB_H) : 0), // (Sandbox: its spawns, respawns and the board's zombies; its loot orbs)
+          (isSb(s)
+            ? +sbTick(s, now, SB_H) |
+              +sbLootTick(s, now, SB_H) |
+              +sbZoneTick(s, now, SB_H)
+            : 0), // (Sandbox: its spawns, respawns and the board's zombies; its loot orbs; its zones)
         up = standUps(s, now); // (a knocked-down duck stands up by itself when its time is up)
       const sig = () => [s.phase, s.qi, s.catchEnds, s.round, s.at].join(),
         was = sig();
@@ -3537,6 +3542,16 @@ const SB_H = {
       holdDown(s, id, now);
     } // (raw: a spawn's damage box is only that much, never "all of it")
     if (pwOn(s)) pwHit(s, id, w, now, !!P.dead); // (its claw wounds, as a Dead Ducks Arcade zombie leaves them; a made NPC's weapon, that weapon's)
+  },
+  /* a zone's heal (sbzone.js): amt of what duck id lost comes back */
+  heal(s, id, amt, now) {
+    const h = (s.php || {})[id];
+    if (!h || now - h.t >= PHP_BACK) return;
+    const n = Math.round((h.n - amt) * 10) / 10,
+      rest = { ...s.php };
+    if (n > 0) rest[id] = { ...h, n };
+    else delete rest[id];
+    s.php = rest;
   },
 };
 /* a duck on Sandbox's board or Duck Cabin that stands up again: at a respawn for players, if there is one (the zombie

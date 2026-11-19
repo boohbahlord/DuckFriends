@@ -19898,6 +19898,27 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   font-size: calc(0.8rem * var(--ts, 1));
   text-shadow: 0 0.08rem 0.2rem #000c;
 }
+/* a board zone (js/sbspawnview.js zoneMark), seen only while building: see-through in its color, its name over its top
+   edge */
+.sb-zone {
+  box-sizing: border-box;
+  background: color-mix(in srgb, var(--c) 22%, transparent);
+  border: 0.15rem dashed color-mix(in srgb, var(--c) 85%, transparent);
+}
+.sb-zone .sb-pt-name {
+  left: 50%;
+  bottom: 100%;
+}
+.sb-zone-dot {
+  position: absolute;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  margin: -0.15rem 0 0 -0.15rem; /* (its spot counts from the box's outer edge, its border included) */
+  transform: translate(-50%, -50%);
+  background: #fffc;
+  border: 0.12rem solid var(--c);
+}
 /* a loot orb on its spot (js/sblootview.js): Dead Ducks Arcade's orb, bobbing over the dashed ring */
 .sb-orb {
   position: absolute;
