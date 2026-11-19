@@ -7696,6 +7696,16 @@ html.still .spe-bone .bone-slide {
 .hk.empty {
   display: none;
 }
+/* Sandbox's hotbar is "full and empty" (the owner's answer, Nov 19 01:57Z): every square shows, an empty one too, on a
+   computer and in a phone's slider (hotbar.js full) */
+.hotbar.full .hk.empty {
+  display: grid;
+}
+.sp-slot.empty {
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  border-color: color-mix(in srgb, var(--ink) 34%, transparent);
+  box-shadow: none;
+}
 .hk i {
   font-style: normal;
   font-size: calc(var(--hk) * 0.5);
