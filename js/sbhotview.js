@@ -6,6 +6,7 @@
 import { esc, openWindow } from "./ui.js";
 import { isSb, sbMay, SB_COLORS, SB_WHAT } from "./sandboxrules.js";
 import { isL4dd } from "./l4ddrules.js";
+import { WEAPONS } from "./rules.js";
 import { boxText } from "./sbspawn.js";
 import { sbSlots, sbIcon, spawnOf, SB_SHAPES, SB_SLOTS } from "./sbhot.js";
 import { SPECIALS, KEYS, specialById, looksOf, keysOf } from "./specials.js";
@@ -80,10 +81,20 @@ function slotLook(s, id, duck) {
 export const LOOT = [
   ["effect", "Effects"],
   ["jump", "Jumps"],
+  ["weapon", "Weapons"], // (the owner's, Nov 19 17:15Z: a dropdown per category, "some are weapons, some are items")
   ["item", "Items"],
 ];
 export const lootOf = (kind) =>
-  SPECIALS.filter((x) => x.kind === kind && !x.only && !x.off);
+  SPECIALS.filter(
+    (x) =>
+      !x.only &&
+      !x.off &&
+      (kind === "weapon"
+        ? x.kind === "item" && WEAPONS.includes(x.id)
+        : x.kind === "item"
+          ? !WEAPONS.includes(x.id)
+          : x.kind === kind),
+  );
 /* a row of the hotbar's keys: slots (the ids on them), to ("me" or "def"), off (can't be changed), v (the one picked: its keys
    show pressed) */
 function keysHTML(s, duck, slots, to, off, v) {

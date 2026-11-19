@@ -387,6 +387,10 @@ In front of a value, the count plays just that value:
                  it, and given rights end when a new Sandbox starts.
                  Looking in others' folders takes canhomes (groups).
                  The terminal does the same: chmod, setfacl, getfacl.
+  Their files    what a player lets you read opens here; with Write you
+                 change it (they must be in the room: it saves on their
+                 device), with Run you run it, or put ~name/file in a
+                 spawn's Brain box.
   Run / Stop     starts the open file, or stops it.
   Check          reads the open file and lists what it can't read, with
                  the line numbers. It starts nothing.
