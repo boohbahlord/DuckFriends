@@ -80,6 +80,7 @@ import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
   woundCode,
+  hitCode,
   knockable,
   pwHit,
   pwAdd,
@@ -3206,7 +3207,7 @@ function strike(s, z, dmg, head, by, w = "") {
 function wound(s, z, w, head) {
   const zw = s.hang.zw || {},
     had = zw[z.i] || "";
-  const add = head ? (had.includes("x") ? "" : "x0") : woundCode(had, w); // (wounds.js)
+  const add = hitCode(had, w, head); // (wounds.js)
   if (add) s.hang.zw = { ...zw, [z.i]: had + add };
 }
 /* a mark that comes once and stays, past the 6 wounds (owner 2026-11-04 06:44Z): g a grenade's gore, f burnt by fire */

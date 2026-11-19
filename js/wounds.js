@@ -154,6 +154,25 @@ export function woundCode(had, w, can = {}) {
   return had.includes(add) ? "" : add;
 }
 
+/* the wound a hit leaves on something that has `had`: its head blown off on a headshot or a crit (x0, once), else a
+   wound as woundCode gives. Dead Ducks Arcade's zombies, Mad God Justin's wave zombies and Justin on the board */
+export const hitCode = (had, w, head, can = {}) =>
+  head ? (had.includes("x") ? "" : "x0") : woundCode(had, w, can);
+/* the weapon a newest wound tells of, for its blood when no shot hit it (a knife, a hammer): fx.js fxHitAt's kinds */
+export const BY_WOUND = {
+  b: "handgun",
+  B: "ak",
+  s: "pellet",
+  c: "knife",
+  r: "hammer",
+  a: "arrow",
+  k: "sniper",
+  g: "chaingun",
+};
+/* the kind of the wound added between `had` and `now` (codes only ever grow at the end), or "" */
+export const newWound = (had = "", now = "") =>
+  now.length > had.length ? now[had.length] : "";
+
 /* ---------- killed by an explosion (the owner's nuke, Nov 16 16:13Z) ----------
    A few looks made beforehand, put on in one step (no animation): torn apart and burnt, with the head blown off, or
    the beak and the eye gone, or more chunks out. explodedLook(seed) gives one look's codes, the same for the same seed:

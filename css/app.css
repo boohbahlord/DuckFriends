@@ -14489,7 +14489,8 @@ html.moving .board.quake {
   }
 }
 /* Mad God Justin's zombie waves: Dead Ducks Arcade's own zombie pictures, gliding between the host's beats, a lunge
-   when one claws, and a dead one falls over and fades */
+   when one claws, and a dead one falls over, lies there and fades as Dead Ducks Arcade's do (.l4z.dead below). Their HP
+   bar and "−1 HP" are Dead Ducks Arcade's too, under their feet and over their heads (the owner's, Nov 19 01:34Z) */
 .mgj-z {
   position: absolute;
   pointer-events: none;
@@ -14504,12 +14505,15 @@ html.moving .board.quake {
   transform-origin: 50% var(--feet, 85%);
   transform: scaleX(var(--face, 1));
 }
+.mgj-z .l4z-hp {
+  left: calc(50% - 17px * var(--k, 1));
+  top: calc(var(--feet, 85%) + 4px * var(--k, 1));
+}
+.mgj-z .hp-pop {
+  bottom: calc(100% + var(--up, 0) * 0.7rem);
+}
 .mgj-z.claw img {
   animation: mgjzclaw 0.35s ease-out;
-}
-.mgj-z.dead {
-  opacity: 0;
-  transition: opacity 1s ease-in 0.4s;
 }
 .mgj-z.dead img {
   transform: scaleX(var(--face, 1)) rotate(-100deg);
@@ -14963,7 +14967,8 @@ html.moving .eye-tears .tdrop.t2 {
   user-select: none;
   -webkit-user-drag: none;
 }
-.l4z:not(.hurt) .l4z-hp {
+.l4z:not(.hurt) .l4z-hp,
+.mgj-z:not(.hurt) .l4z-hp {
   display: none; /* (an unhurt zombie has no HP bar yet: l4dd.js) */
 }
 .l4z-hp {
@@ -14997,7 +15002,8 @@ html.moving .eye-tears .tdrop.t2 {
   animation: fl-up 0.22s ease-out;
 } /* (a zombie set on fire: the burning duck's flame over it) */
 /* dead: the white drains to black real quick (above), then the bar fades away */
-.l4z.dead .l4z-hp {
+.l4z.dead .l4z-hp,
+.mgj-z.dead .l4z-hp {
   animation: l4z-hp-gone 0.75s linear forwards;
 }
 @keyframes l4z-hp-gone {
@@ -15009,7 +15015,8 @@ html.moving .eye-tears .tdrop.t2 {
     opacity: 0;
   }
 }
-.l4z.dead {
+.l4z.dead,
+.mgj-z.dead {
   animation: l4z-die 4s linear forwards;
 }
 @keyframes l4z-die {
@@ -15022,11 +15029,15 @@ html.moving .eye-tears .tdrop.t2 {
   }
 } /* (lying down solid for 1.25 s, then slowly fading, gone in 4 s: L4.DEAD_MS; owner, Nov 16) */
 html.low .l4z.dead,
-html.low .l4z.dead.nuked {
+html.low .l4z.dead.nuked,
+html.low .mgj-z.dead,
+html.low .jd-body {
   animation: none;
 } /* (Low graphics or Data saving: no fade (Low stops every animation, so the fade would end at once and the body never
      show); it lies there solid and l4dd.js LOW_DEAD takes it off my screen at 2 s, the Nuke's too) */
-html.still:not(.low) .l4z.dead {
+html.still:not(.low) .l4z.dead,
+html.still:not(.low) .mgj-z.dead,
+html.still:not(.low) .jd-body {
   animation-duration: 4s !important;
 }
 html.still:not(.low) .l4z.dead.nuked {
@@ -18106,6 +18117,49 @@ html.still .l4-miss {
 }
 /* the Jaime Bomb's Jaime after it went off (game.js jaimeBody): his body flies over a little arc (--dx, --dy, --h),
    turning over until it lies on its side (--r), and fades a few seconds after it lands */
+/* a Jaime killed by a hit (game.js jaimeFell): he falls over where he stood as Mad God Justin's wave zombies do
+   (.mgj-z.dead), a pool of blood spreading under him as under a duck that died (.gduck-pool, over JPOOL.ms), then he
+   fades as their bodies do (l4z-die: 4 s) */
+.jd-body {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 3;
+  animation: l4z-die 4s linear forwards;
+}
+.jd-body > b {
+  position: absolute;
+  left: calc(var(--sz) * -0.5);
+  bottom: 0;
+  width: var(--sz);
+  display: block;
+  transform-origin: 50% 88%;
+  scale: var(--f) 1;
+  animation: jd-fall 0.3s ease-in forwards;
+}
+.jd-body svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.jd-body .gduck-pool {
+  translate: calc(var(--sz) * -0.35 * var(--f)) 0;
+  animation: jd-pool 6s ease-out forwards;
+}
+@keyframes jd-fall {
+  to {
+    rotate: calc(-100deg * var(--f));
+  }
+}
+@keyframes jd-pool {
+  from {
+    scale: 0.15;
+  }
+  to {
+    scale: 1;
+  }
+}
 .jb-body {
   position: absolute;
   width: var(--w);

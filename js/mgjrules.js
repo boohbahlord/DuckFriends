@@ -65,6 +65,7 @@ import {
   snapLine,
   jaimeCount,
   jaimeSays,
+  jaimeDead,
   anyOf,
   JAIME_MAD,
   JAIME_HURT,
@@ -73,6 +74,7 @@ import {
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
 import { ARMS, SLOT_ODDS, zombieTakes, pierceOf, ALL_HP } from "./l4ddrules.js";
 import { holdDown, onGetUp, invuln, hurtFx } from "./hangout/death.js";
+import { hitCode } from "./wounds.js";
 import {
   E_LINES,
   DEATH_LINES,
@@ -2155,8 +2157,8 @@ function jaimeTick(s, now, log, fx) {
   }
   return ch;
 }
-/* a Jaime is hit (1 HP): he's gone in a poof. how: what got him (a controller or the chair: a line from Justin). A
-   Jaime Bomb has 3 HP, and when they're gone his bomb goes off */
+/* a Jaime is hit (1 HP): a hitmarker, and he falls bleeding where he stood (jaimebomb.js jaimeDead). how: what got him
+   (a controller or the chair: a line from Justin). A Jaime Bomb has 3 HP, and when they're gone his bomb goes off */
 function jaimeDies(s, id, now, log, fx, how) {
   const m = s.mgj,
     p = s.pos[id];
@@ -2178,9 +2180,9 @@ function jaimeDies(s, id, now, log, fx, how) {
   m.jaimes = rest;
   delete s.pos[id];
   if (!p) return;
-  fx({ kind: "poof", x: p.x, y: p.y, who: [id] });
+  fx({ kind: "hitmark", x: p.x, y: p.y });
+  fx(jaimeDead(p, id, how, now));
   if (how === "controller" || how === "chair") {
-    fx({ kind: "hitmark", x: p.x, y: p.y });
     const j = s.justin;
     if (now > (j.gotJ || 0) && Math.random() < 0.6) {
       j.gotJ = now + 4000;
@@ -2377,7 +2379,8 @@ export function mgjStats(s, all = false) {
    or still to come, he's calmer (his attacks come WAVE.CALM times as late), he'd rather eat, and no lightning comes
    from the edges. Ducks' guns, melee and grenades hurt them as they hurt Dead Ducks Arcade's zombies (each has WAVE.HP;
    mgjZombieHit).
-   s.mz = { zb: [{ i, x, y, hp, a (its last claw), l (its look: l4ddart.js zombieURL), d (when it died) }], n (the
+   s.mz = { zb: [{ i, x, y, hp, a (its last claw), l (its look: l4ddart.js zombieURL), d (when it died), w (its wounds:
+   wounds.js codes) }], n (the
    next one's number), on (a wave is out), next (the next wave), left (still to come), sp (the next ones' second) } */
 export const WAVE = {
   EVERY: [30000, 60000],
@@ -2393,7 +2396,7 @@ export const WAVE = {
   CALM: 1.8,
   EAT: [9000, 14000],
   MAX: 40, // (on the board at once, at most: the rest wait their turn)
-  DEAD_MS: 1500,
+  DEAD_MS: 4000, // (a body lies there as long as Dead Ducks Arcade's, L4.DEAD_MS: the owner's, Nov 19 01:34Z, "everything" with its feel)
 };
 const extra = (s) => Math.max(0, playing(s).length - 1);
 const waveGap = (n) =>
@@ -2571,7 +2574,10 @@ export function mgjZombieHit(s, near, w, now, by, sh = null) {
     if (sh) sh.zh = [...(sh.zh || []), o.i];
     hit = true;
     o.hp = t.dmg >= ALL_HP ? 0 : o.hp - t.dmg;
+    o.w = (o.w || "") + hitCode(o.w || "", w, t.head); // (its wounds, as Dead Ducks Arcade's zombie gets them: l4ddrules.js wound)
     if (o.hp <= 0) o.d = now;
+    if (o.d && (w === "grenade" || w === "glauncher") && !o.w.includes("g0"))
+      o.w += "g0"; // (a blast's gore: every chunk, cuts and big holes, as there)
     fx({ kind: t.head ? "l4crit" : "hitmark", b: 1, x: o.x, y: o.y });
   }
   return sh ? (sh.zh || []).length >= most : hit;

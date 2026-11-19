@@ -15,6 +15,7 @@ import { play, loadSounds } from "./sound.js";
 import { heightAt, layoutVariant } from "./hangout/layout.js";
 import { OPENINGS, BUTLER, BOX, zombiesOf, ptsOf } from "./l4ddrules.js";
 import { groundAt, stepOf } from "./ground.js";
+import { DUCK_LEN } from "./mgjrules.js";
 
 const rnd = (a, b) => a + Math.random() * (b - a);
 export const SOUNDS = {};
@@ -284,5 +285,77 @@ export function l4Steps(dt, ctx) {
       rate: rnd(0.88, 1.12), // (the same groans, never twice at quite the same pitch)
       k: 0.9,
     });
+  }
+}
+
+/* ---------- Mad God Justin's zombie waves ----------
+   His wave zombies (mgjrules.js s.mz) shuffle and groan as Quacky Zombies' do (Adam, Nov 19, for the owner's "this is
+   the new feel and vibe of the game"). They walk the board, where every sound is heard by all (no distances): so the
+   same caps as above, a close group as one, and quieter than in Quacky Zombies. game.js calls this every frame. */
+const MZ = {
+  STRIDE: 0.7, // duck lengths a wave zombie walks for each footstep
+  GROUP: 2, // duck lengths: wave zombies this close together are one group
+  JUMP: 2, // duck lengths: a move longer than this in one frame is a new spot (a spawn), not a walk
+  K: 0.55, // a wave zombie's step, of a duck's
+  GROAN_K: 0.7,
+};
+let mz = null; // { z: Map(i → { x, y, acc, next }), steps: [], groans: [] }
+export function mgjSteps(s) {
+  const zb = (s && s.phase === "boss" && s.mz && s.mz.zb) || null;
+  if (!zb || !zb.length) {
+    mz = null; // (no waves: start fresh next time)
+    return;
+  }
+  if (!mz) {
+    mz = { z: new Map(), steps: [], groans: [] };
+    loadSounds("l4dd"); // (zstep and l4groan: fetched once, as the first wave comes)
+  }
+  const now = performance.now(),
+    len = (dx, dy) => Math.hypot(dx / DUCK_LEN.x, dy / DUCK_LEN.y),
+    seen = new Set(),
+    lead = [];
+  for (const o of zb) {
+    if (o.d) continue; // (dead: no steps, no groans)
+    seen.add(o.i);
+    let z = mz.z.get(o.i);
+    if (!z) {
+      mz.z.set(
+        o.i,
+        (z = { x: o.x, y: o.y, acc: 0, next: now + rnd(0, GROAN[1]) }),
+      );
+      continue;
+    }
+    const d = len(o.x - z.x, o.y - z.y);
+    z.x = o.x;
+    z.y = o.y;
+    if (d < MZ.JUMP) z.acc += d;
+    const g = lead.find((l) => len(l.z.x - z.x, l.z.y - z.y) < MZ.GROUP);
+    if (g) {
+      g.n++;
+      g.acc = Math.max(g.acc, z.acc);
+      z.acc %= MZ.STRIDE; // (the group's leader steps for it)
+    } else lead.push({ z, n: 1, acc: z.acc });
+  }
+  for (const i of mz.z.keys()) if (!seen.has(i)) mz.z.delete(i);
+  mz.steps = mz.steps.filter((t) => now - t < 1000);
+  let steps = 0;
+  for (const l of lead) {
+    if (l.acc < MZ.STRIDE) continue;
+    l.z.acc %= MZ.STRIDE;
+    if (steps++ >= Z_STEPS || mz.steps.length >= Z_PER_S) continue;
+    mz.steps.push(now);
+    play("zstep", {
+      k: MZ.K * Math.min(1, 0.7 + 0.08 * l.n),
+      rate: rnd(0.92, 1.08),
+      yield: true, // (a duck's step is never cut for a zombie's)
+    });
+  }
+  mz.groans = mz.groans.filter((t) => now - t < 1200);
+  for (const l of lead) {
+    if (now < l.z.next) continue;
+    l.z.next = now + rnd(GROAN[0], GROAN[1]) / Math.min(2, Math.sqrt(l.n));
+    if (mz.groans.length >= GROANS) continue;
+    mz.groans.push(now);
+    play("l4groan", { rate: rnd(0.88, 1.12), k: MZ.GROAN_K, yield: true });
   }
 }

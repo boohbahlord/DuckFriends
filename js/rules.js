@@ -135,6 +135,7 @@ import {
   snapLine,
   jaimeCount,
   jaimeSays,
+  jaimeDead,
   anyOf as anyLine,
   JAIME_HURT,
   JUSTIN_AT_JAIME,
@@ -3595,7 +3596,7 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
     if (n) hits.push({ id, ...n });
   }
   if (sp === "knife") hits = hits.sort((a, b) => a.d - b.d).slice(0, 1);
-  if (sp !== "knife" || !hits.length) guardsHit(s, by, near, now); // (a Jaime Guard in reach: his 1 HP)
+  if (sp !== "knife" || !hits.length) guardsHit(s, by, near, now, sp); // (a Jaime Guard in reach: his 1 HP)
   for (const h of hits) {
     logHit(s, by, h.id, now);
     const crit = critRoll(s, sp);
@@ -3810,7 +3811,7 @@ function blast(s, sh, x, y, now, o = {}) {
     );
     hit.push(id);
   }
-  guardsHit(s, sh.by, near, now); // (a Jaime Guard in the blast: his 1 HP)
+  guardsHit(s, sh.by, near, now, w); // (a Jaime Guard in the blast: his 1 HP)
   if (isMgj(s) && sh.by !== JUSTIN_ID)
     mgjZombieHit(s, (zx, zy) => !!near(zx, zy, 0, 0), "grenade", now, sh.by); // (Mad God Justin's zombies in it: all their HP, as a grenade's blast in Dead Ducks Arcade)
   if (!hang && sh.by !== JUSTIN_ID && justinShown(s)) {
@@ -4325,6 +4326,7 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
         return on || null;
       },
       now,
+      sh.k,
     );
   } // (a Jaime Guard it passes: his 1 HP)
   if (
@@ -4606,9 +4608,10 @@ function jaimeRun(s, now) {
       }
       ch = true;
       J.hp = (J.hp || 1) - 1;
+      fx({ kind: "hitmark", who: [], x: J.x, y: J.y });
       if (J.hp <= 0) {
         if (J.bomb) jaimeBlows(s, id, J, [dx / (d || 1), dy / (d || 1)], now);
-        else fx({ kind: "poof", x: J.x, y: J.y, who: [id] });
+        else fx(jaimeDead(J, id, k, now)); // (he falls, bleeding: jaimebomb.js)
         continue;
       } // (Justin's first answer to a Jaime coming for him: a controller or his chair, at once; a Jaime Bomb takes 3)
     }
@@ -4884,8 +4887,8 @@ function guardShoots(s, J, aim, now) {
   s.shots = [...(s.shots || []), ...out];
 }
 /* hits on the Jaime Guards: every Guard but `by`'s own that near(x, y, z, side) reaches (anything but null) loses his
-   1 HP and is gone in a poof, with an "ouch" line */
-function guardsHit(s, by, near, now) {
+   1 HP, with an "ouch" line, a hitmarker, and falls bleeding where he stood (w: the weapon; jaimebomb.js jaimeDead) */
+function guardsHit(s, by, near, now, w = "") {
   if (!s.jm || isMgj(s)) return [];
   const hang = isHang(s),
     got = Object.entries(s.jm)
@@ -4907,10 +4910,11 @@ function guardsHit(s, by, near, now) {
     const J = rest[id];
     delete rest[id];
     jaimeSays(s, id, anyLine(JAIME_HURT));
-    s.fxN = (s.fxN || 0) + 1;
+    s.fxN = (s.fxN || 0) + 2;
     s.fx = [
-      ...(s.fx || []).slice(-19),
-      { n: s.fxN, kind: "poof", x: J.x, y: J.y, who: [id], t: now },
+      ...(s.fx || []).slice(-18),
+      { n: s.fxN - 1, kind: "hitmark", by, who: [], x: J.x, y: J.y, t: now },
+      { n: s.fxN, ...jaimeDead(J, id, w, now) },
     ];
   }
   s.jm = Object.keys(rest).length ? rest : null;
