@@ -4294,7 +4294,7 @@ function meleeHits(s, now) {
         : A.dmg; // (the fire axe: 1 to 4)
       const hp0 = z.hp,
         dead = strike(s, z, dmg, headshot(s, k.by, k.w, z, now), k.by, k.w);
-      wearDown(s, k.by, k.w, hp0 - z.hp);
+      wearDown(s, k.by, k.w, hp0 - Math.max(0, z.hp)); // (the HP it took off, not the overkill)
       if (dead) die(z, T);
       else if (z.st === 2) knockZ(z, k.dx, k.dy, KNOCK[k.w] || KNOCK.knife); // (alive: pushed back, KNOCK)
       any = true;
