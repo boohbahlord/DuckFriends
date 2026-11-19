@@ -709,7 +709,7 @@ function counting(s, now) {
   dealRainbow(s); // (Rainbow Ducks: each duck's look for this game)
   s.phase = "countdown";
   s.at = now;
-  s.ends = now + COUNTDOWN * 1000;
+  s.ends = now + (s.solo ? SOLO_COUNTDOWN : COUNTDOWN) * 1000;
   return s;
 }
 /* a game is over: Vote return counts it (both votes come back when it's time), then Random's next game; null when the
@@ -796,6 +796,9 @@ function beginGame(s, now) {
 export const WALKS = { slow: 0.6, normal: 1, fast: 1.5 };
 export const walkOf = (s) => WALKS[s && s.options && s.options.walk] || 1;
 export const COUNTDOWN = 5;
+/* Single Player's start counts only 2, 1, 0 (the owner's, Nov 19 23:10Z: "it starts at second number 2, goes to 1, and
+   then 0 in single player") */
+export const SOLO_COUNTDOWN = 2;
 export const VOTE_GRACE = 5; // seconds at the start of a question before anyone can lock a vote (a stray Enter can't)
 
 /* every action works on a copy of the state, so a rule that fails halfway leaves the room as it was. The state is plain
@@ -2343,6 +2346,10 @@ function reduceStep(state, a, now) {
       return s;
     }
     case "toLobby":
+      /* Single Player: leaving a game goes back to its own lobby, whatever the game (the owner's, Nov 19 23:10Z: "When
+         you quit a game in single player, it should not take you back to the rooms for multiplayer") */
+      if (boss && s.solo && s.phase !== "lobby")
+        return backToLobby(s, "Back to the lobby.");
       if (boss && sbHere(s))
         return backToLobby(s, `${me.name} took everyone back to the lobby.`); // (Hangout and Sandbox: the host ends it whenever)
       if (boss && s.phase === "over") {
@@ -5379,6 +5386,8 @@ function skipRound(s, now) {
 }
 /* the people in the cabin who voted to end it, and how many it takes: half of them, rounded up */
 export const CABIN_END_MS = 10000;
+/* Single Player's Exit Cabin counts 5 s (the owner's, Nov 19 23:10Z: "only 5 seconds") */
+export const SOLO_CABIN_END_MS = 5000;
 export const cabinVotes = (s) =>
   humanIds(s).filter((id) => ((s.cabinEnd || {}).by || {})[id]).length;
 export const cabinNeeded = (s) =>
@@ -5389,7 +5398,7 @@ function cabinCheck(s, now) {
   const c = s.cabinEnd;
   if (!c) return false;
   const enough = cabinVotes(s) >= cabinNeeded(s),
-    at = enough ? c.at || now + CABIN_END_MS : 0;
+    at = enough ? c.at || now + (s.solo ? SOLO_CABIN_END_MS : CABIN_END_MS) : 0;
   if (at === c.at) return false;
   c.at = at;
   return true;

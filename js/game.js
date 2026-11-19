@@ -7717,7 +7717,10 @@ function openPause() {
             hideui: () => toast(setHideUi(!uiHidden())), // (hide ui: hideui.js)
             friends: () => openFriends(),
             lobby: () => R.send({ t: "toLobby" }),
-            leave: () => leaveTo("rooms", "Leave the game in progress?"),
+            leave: () =>
+              R && R.state.solo
+                ? R.send({ t: "toLobby" }) // (Single Player: back to its own lobby, never the online rooms)
+                : leaveTo("rooms", "Leave the game in progress?"),
           })[a.dataset.a]();
         }),
     },
@@ -8065,7 +8068,9 @@ async function act(a) {
       R.send({ t: "toLobby" });
       break;
     case "leave":
-      leaveTo("rooms", "Leave the room?");
+      if (R && R.state.solo)
+        R.send({ t: "toLobby" }); // (Single Player: back to its own lobby)
+      else leaveTo("rooms", "Leave the room?");
       break;
     case "notes": {
       const t = await pickNote();
@@ -8257,6 +8262,13 @@ function l4Press(e) {
 }
 register("game", {
   guard: () => !!activeRoom(),
+  /* the browser's Back in Single Player: back to its own lobby, never the online rooms */
+  back() {
+    const r = activeRoom();
+    if (!r || !r.state.solo) return false;
+    r.send({ t: "toLobby" });
+    return true;
+  },
   exit() {
     const r = activeRoom();
     if (r) {
