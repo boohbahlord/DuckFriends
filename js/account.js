@@ -8,10 +8,13 @@
      inv/{to}/{id}          a friend's invite to their room
    No email and no Google name or picture is stored: friends see the player's own name and duck. Rooms keep their own
    guest sign-in per tab (online.js); this is a second connection. */
-import { CONFIG, EMU, sdk, whyNot } from "./online.js";
+/* (online.js brings the rules of every mode with it: it comes after the first screen, when signing in starts) */
+let ON = null;
+const online = () => import("./online.js").then((m) => (ON = m));
+const whyNot = (e) => (ON ? ON.whyNot(e) : String((e && e.message) || e));
 import { profile, onSave, replaceProfile } from "./store.js";
 import { who } from "./who.js";
-import { activeRoom } from "./net.js";
+import { activeRoom } from "./later.js"; // (the room code comes after the first screen)
 import { toast } from "./ui.js";
 
 const HINT = "df-signed-in"; // this device was signed in: connect at start
@@ -43,6 +46,7 @@ function app() {
   return (
     appP ||
     (appP = (async () => {
+      const { CONFIG, EMU, sdk } = await online();
       const { A: App, U, D } = await sdk();
       const a =
         App.getApps().find((x) => x.name === "[DEFAULT]") ||

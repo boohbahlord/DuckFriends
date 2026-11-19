@@ -4,7 +4,7 @@
    bottom bar where a screen has one (so nothing overlaps it), otherwise on its own. */
 import { profile, save, statMode } from "./store.js";
 import { fmtJumps } from "./format.js";
-import { activeRoom } from "./net.js";
+import { activeRoom } from "./later.js"; // (the room code comes after the first screen)
 import { checkUnlocks, justinIn } from "./unlocks.js";
 
 /* in a room's bottom bar (.jumps-slot), Justin Kills goes under Jumps in the same box whenever Justin is in the game */

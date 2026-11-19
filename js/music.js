@@ -15,7 +15,7 @@
    No pops (CLAUDE.md): every file starts and ends at silence; each song has its own level (a gain) that only ever glides,
    from 0 as it starts and to 0 before it stops, set a little ahead of the clock; the music bar's slider glides too. */
 import { profile } from "./store.js";
-import { activeRoom } from "./net.js";
+import { activeRoom } from "./later.js"; // (the room code comes after the first screen)
 import { now as clockNow } from "./clock.js";
 import { ceiling, sfxContext } from "./sound.js";
 import { netLevel } from "./settings.js";

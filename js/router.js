@@ -4,6 +4,7 @@
    room). render may return nothing when it has nothing to show (no room any more); the rooms screen shows instead. The
    browser's back button walks back through the screens; inside a room it asks first. Closing the tab inside a room asks too. */
 import { confirmBox } from "./ui.js";
+import { rest, soon } from "./later.js";
 
 const screens = {};
 let cur = null,
@@ -17,6 +18,11 @@ export const current = () => cur;
 const guarded = () => !!(cur && screens[cur].guard && screens[cur].guard());
 
 function show(name, arg) {
+  /* a screen of the rest of the game, asked for before the rest is here (later.js): the loading screen until it is */
+  if (!screens[name]) {
+    soon(rest).then(() => screens[name] && show(name, arg));
+    return;
+  }
   if (cur && screens[cur].leave) screens[cur].leave();
   cur = name;
   const root = document.getElementById("app"),

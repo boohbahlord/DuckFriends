@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v111",
+    version: 111,
+    date: "Nov 19, 2026",
+    title: "A much quicker front screen",
+    news: [
+      "On slow connections the front screen comes up much sooner (about a third of the wait), and the rest of the game keeps loading behind it.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v110",
     version: 110,
     date: "Nov 19, 2026",
