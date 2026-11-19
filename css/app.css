@@ -54,6 +54,8 @@
   font-weight: 500;
   font-display: swap;
 }
+/* Cascadia Code, the command line's and Numerat's letters, self-hosted (SIL Open Font License:
+   assets/fonts/cascadia-code-OFL.txt) */
 @font-face {
   font-family: "Cascadia Code";
   src: url(../assets/fonts/cascadia-code-latin-200-normal.woff2) format("woff2");
@@ -5702,7 +5704,7 @@ html.moving .pix-sun {
   pointer-events: none;
   container-type: size;
 }
-.game > :not(.map-layer, .pmenu, .votebox) {
+.game > :not(.map-layer, .pmenu, .votebox, .sb-win) {
   position: relative;
   z-index: 1;
 }
@@ -14489,14 +14491,18 @@ html.moving .board.quake {
   }
 }
 /* Mad God Justin's zombie waves: Dead Ducks Arcade's own zombie pictures, gliding between the host's beats, a lunge
-   when one claws, and a dead one falls over and fades */
+   when one claws, and a dead one falls over, lies there and fades as Dead Ducks Arcade's do (.l4z.dead below). Their HP
+   bar and "−1 HP" are Dead Ducks Arcade's too, under their feet and over their heads (the owner's, Nov 19 01:34Z) */
 .mgj-z {
   position: absolute;
+  left: 0;
+  top: 0;
   pointer-events: none;
-  transition:
-    left 0.22s linear,
-    top 0.22s linear;
+  transition: transform 0.22s linear; /* (game.js placeZombies moves it by transform: cheap for 800) */
 }
+.zb-many > .mgj-z {
+  transition: none;
+} /* (more than 100: no glide, game.js ZB_GLIDE) */
 .mgj-z img {
   display: block;
   width: 100%;
@@ -14504,12 +14510,15 @@ html.moving .board.quake {
   transform-origin: 50% var(--feet, 85%);
   transform: scaleX(var(--face, 1));
 }
+.mgj-z .l4z-hp {
+  left: calc(50% - 17px * var(--k, 1));
+  top: calc(var(--feet, 85%) + 4px * var(--k, 1));
+}
+.mgj-z .hp-pop {
+  bottom: calc(100% + var(--up, 0) * 0.7rem);
+}
 .mgj-z.claw img {
   animation: mgjzclaw 0.35s ease-out;
-}
-.mgj-z.dead {
-  opacity: 0;
-  transition: opacity 1s ease-in 0.4s;
 }
 .mgj-z.dead img {
   transform: scaleX(var(--face, 1)) rotate(-100deg);
@@ -14519,6 +14528,102 @@ html.moving .board.quake {
   40% {
     transform: scaleX(var(--face, 1)) translateX(14%) rotate(8deg);
   }
+}
+/* Sandbox's NPCs with a name (Justin, a Test NPC, sbnpcart.js): the players' name tag, over its head (its HP bar is
+   under its feet); on Duck Cabin its feet are where it stands, so it goes up its height (--top, sbspawnview.js) */
+.sb-npc-name {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%);
+  font-size: calc(0.7rem * var(--ts, 1));
+  opacity: 0.72;
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--panel) 70%, transparent);
+  border-radius: 0.4rem;
+  padding: 0 0.3rem;
+  pointer-events: none;
+}
+.l4z .sb-npc-name {
+  bottom: auto;
+  top: var(--top, 0);
+  transform: translate(-50%, -100%);
+}
+.mgj-z.dead .sb-npc-name,
+.l4z.dead .sb-npc-name {
+  display: none;
+}
+/* a made NPC's weapon (sbnpcart.js heldOf): in front of it at its middle, as long as the weapon is in a duck's hand
+   (css .held i), turned the way it faces. On the board its box is the duck's width (--k: 64 px of the drawing); on Duck
+   Cabin it sits in the body, which turns with it */
+/* a spawn's Appearance tab (sbmake.js): Customize's tiles, the picked one outlined as a picked tile is */
+.sb-aps {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5.2rem, 1fr));
+  gap: 0.4rem;
+  margin: 0.4rem 0 0.6rem;
+}
+.sb-ap {
+  min-height: 4.8rem;
+}
+.sb-ap input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.sb-ap.on {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 0.14rem var(--blue);
+  background: color-mix(in srgb, var(--blue) 12%, var(--panel));
+}
+.sb-ap:focus-within {
+  outline: 0.14rem solid var(--ink);
+  outline-offset: 0.1rem;
+}
+.sb-ap-pic {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 2.8rem;
+}
+.sb-ap-pic svg,
+.sb-ap-pic img {
+  width: auto;
+  height: 100%;
+  max-height: 2.8rem;
+}
+.sb-ap-own {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+.sb-up-pic {
+  max-height: 2.4rem;
+  border-radius: 0.3rem;
+}
+/* Make an NPC's Randomize appearance (over the menu) and Delete (under it): apart from the rows */
+.arm-rand {
+  margin: 0.3rem 0 0.5rem;
+}
+.mgj-z img.sb-held,
+.l4z-body img.sb-held {
+  position: absolute;
+  height: auto;
+  animation: none;
+  transition: none;
+  filter: drop-shadow(0 0.08rem 0.08rem #0006);
+  pointer-events: none;
+}
+.mgj-z img.sb-held {
+  left: calc(50% + 42% * var(--face, 1));
+  top: calc(var(--feet, 85%) - var(--k, 1) * 28.8px);
+  width: calc(var(--k, 1) * 64px * var(--gw, 0.34));
+  transform: translate(-50%, -50%) scaleX(var(--face, 1));
+}
+.l4z-body img.sb-held {
+  left: 92%;
+  top: calc(var(--feet) - 28.8px);
+  width: calc(64px * var(--gw, 0.34));
+  transform: translate(-50%, -50%);
 }
 /* Mad God Justin's pickups: a glowing token that fades in where it lies, bobbing a little */
 .mgj-pick {
@@ -14963,7 +15068,8 @@ html.moving .eye-tears .tdrop.t2 {
   user-select: none;
   -webkit-user-drag: none;
 }
-.l4z:not(.hurt) .l4z-hp {
+.l4z:not(.hurt) .l4z-hp,
+.mgj-z:not(.hurt) .l4z-hp {
   display: none; /* (an unhurt zombie has no HP bar yet: l4dd.js) */
 }
 .l4z-hp {
@@ -14997,7 +15103,8 @@ html.moving .eye-tears .tdrop.t2 {
   animation: fl-up 0.22s ease-out;
 } /* (a zombie set on fire: the burning duck's flame over it) */
 /* dead: the white drains to black real quick (above), then the bar fades away */
-.l4z.dead .l4z-hp {
+.l4z.dead .l4z-hp,
+.mgj-z.dead .l4z-hp {
   animation: l4z-hp-gone 0.75s linear forwards;
 }
 @keyframes l4z-hp-gone {
@@ -15009,7 +15116,8 @@ html.moving .eye-tears .tdrop.t2 {
     opacity: 0;
   }
 }
-.l4z.dead {
+.l4z.dead,
+.mgj-z.dead {
   animation: l4z-die 4s linear forwards;
 }
 @keyframes l4z-die {
@@ -15022,11 +15130,15 @@ html.moving .eye-tears .tdrop.t2 {
   }
 } /* (lying down solid for 1.25 s, then slowly fading, gone in 4 s: L4.DEAD_MS; owner, Nov 16) */
 html.low .l4z.dead,
-html.low .l4z.dead.nuked {
+html.low .l4z.dead.nuked,
+html.low .mgj-z.dead,
+html.low .jd-body {
   animation: none;
 } /* (Low graphics or Data saving: no fade (Low stops every animation, so the fade would end at once and the body never
      show); it lies there solid and l4dd.js LOW_DEAD takes it off my screen at 2 s, the Nuke's too) */
-html.still:not(.low) .l4z.dead {
+html.still:not(.low) .l4z.dead,
+html.still:not(.low) .mgj-z.dead,
+html.still:not(.low) .jd-body {
   animation-duration: 4s !important;
 }
 html.still:not(.low) .l4z.dead.nuked {
@@ -18106,6 +18218,53 @@ html.still .l4-miss {
 }
 /* the Jaime Bomb's Jaime after it went off (game.js jaimeBody): his body flies over a little arc (--dx, --dy, --h),
    turning over until it lies on its side (--r), and fades a few seconds after it lands */
+/* a Jaime killed by a hit (game.js jaimeFell): he falls over where he stood as Mad God Justin's wave zombies do
+   (.mgj-z.dead), a pool of blood spreading under him as under a duck that died (.gduck-pool, over JPOOL.ms), then he
+   fades as their bodies do (l4z-die: 4 s) */
+.jd-body {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 3;
+  animation: l4z-die 4s linear forwards;
+}
+.jd-body > b {
+  position: absolute;
+  left: calc(var(--sz) * -0.5);
+  bottom: 0;
+  width: var(--sz);
+  display: block;
+  transform-origin: 50% 88%;
+  scale: var(--f) 1;
+  animation: jd-fall 0.3s ease-in forwards;
+}
+.jd-body svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.jd-body .gduck-pool {
+  translate: calc(var(--sz) * -0.35 * var(--f)) 0;
+  animation: jd-pool 6s ease-out forwards;
+}
+/* Duck Cabin's Justin knocked down by a hit (hangout/characters.js): the same pool, spreading under him */
+.hang-npc-pool {
+  animation: jd-pool 6s ease-out forwards;
+}
+@keyframes jd-fall {
+  to {
+    rotate: calc(-100deg * var(--f));
+  }
+}
+@keyframes jd-pool {
+  from {
+    scale: 0.15;
+  }
+  to {
+    scale: 1;
+  }
+}
 .jb-body {
   position: absolute;
   width: var(--w);
@@ -18602,6 +18761,21 @@ html.pixel *::before,
 html.pixel *::after {
   font-family: "Jersey 15", monospace !important;
   font-size-adjust: 0.52;
+}
+/* except the command line's and Numerat's letters: Cascadia Code in every look (the owner's Sandbox file: "All terminal
+   text and numerat text should be cascadia monospace font") */
+html.pixel .chat-panel[data-mode="cmd"] .chat-in,
+html.pixel .chat-log .cmd-line,
+html.pixel .chat-log .cmd-line *,
+html.pixel .chat-log .from-cmd code,
+html.pixel .chat-log .from-cmd .cmd-out,
+html.pixel .chat-log .from-cmd .cmd-out *,
+html.pixel .chat-sugg li,
+html.pixel .chat-sugg li *,
+html.pixel .nm,
+html.pixel .nm * {
+  font-family: "Cascadia Code", Consolas, monospace !important;
+  font-size-adjust: none;
 }
 html.pixel img.px {
   image-rendering: pixelated;
@@ -19540,4 +19714,595 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   );
   z-index: 7;
   pointer-events: none;
+}
+/* Sandbox's key windows (js/sandbox.js): up while c, b, m, n, h, g or p is held, kept up by a double tap. The cheat
+   sheet (c) is larger than Tab's window and somewhat see-through (the owner's Sandbox file, Nov 19); the text is about
+   11pt */
+.sb-win {
+  position: fixed;
+  left: 50%;
+  top: 3.6rem;
+  transform: translateX(-50%);
+  z-index: 6500;
+  width: min(34rem, calc(100% - 1.5rem));
+  max-height: calc(100dvh - 9rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem 0.9rem;
+  overflow: auto;
+  font-size: calc(0.9167rem * var(--ts, 1));
+  background: color-mix(in srgb, var(--panel) 80%, transparent);
+  border: 0.16rem solid var(--line);
+  border-radius: 1rem;
+  box-shadow: 0 0.6rem 1.6rem #0008;
+}
+.sb-win.sb-sheet {
+  top: 2.4rem;
+  width: min(52rem, calc(100% - 1.5rem));
+  max-height: calc(100dvh - 5rem);
+  background: color-mix(in srgb, var(--panel) 70%, transparent);
+}
+.sb-win[hidden] {
+  display: none;
+}
+.sb-win > header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.sb-win .sb-tip {
+  font-size: 0.85em;
+  opacity: 0.75;
+}
+.sb-win h2 {
+  margin: 0;
+  font-size: 1.25em;
+}
+.sb-keys {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.4rem 0.8rem;
+  margin: 0;
+  align-items: center;
+}
+.sb-keys dt,
+.sb-keys dd {
+  margin: 0;
+}
+.sb-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.sb-opt {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.6rem;
+  border: 0.12rem solid var(--line);
+  background: color-mix(in srgb, var(--panel) 60%, transparent);
+  cursor: pointer;
+}
+.sb-none {
+  margin: 0;
+  opacity: 0.7;
+}
+.sb-opt.on {
+  border-color: var(--green);
+}
+/* Sandbox's hotbar (js/sbhotview.js): the cheat sheet's loot under its keys, each one a button with its picture */
+.sb-loot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border-top: 0.12rem solid var(--line);
+  padding-top: 0.5rem;
+}
+.sb-loot h3,
+.sb-loot h4,
+.sb-putwin h3 {
+  margin: 0.2rem 0 0;
+  font-size: 1em;
+}
+.sb-loot h4 {
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+.sb-lts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.75rem, 1fr));
+  gap: 0.3rem;
+}
+.sb-lt {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  padding: 0.3rem 0.45rem;
+  font: inherit;
+  font-size: 0.9em;
+  color: inherit;
+  text-align: left;
+  border-radius: 0.5rem;
+  border: 0.12rem solid var(--line);
+  background: color-mix(in srgb, var(--panel) 60%, transparent);
+  cursor: pointer;
+}
+.sb-lt:hover,
+.sb-lt:focus-visible {
+  border-color: var(--blue);
+}
+.sb-lt span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sb-lt i,
+.sb-put-h i {
+  flex: none;
+  font-style: normal;
+  font-size: 1.3rem;
+  line-height: 1;
+}
+.sb-lt i svg,
+.sb-put-h i svg {
+  width: 1.3em;
+  height: auto;
+  display: block;
+}
+/* the popup that puts one on a key: its look (a spawn button's shapes, colors and heads), then the keys */
+.sb-putwin {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.sb-put-h {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+.sb-looks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.sb-look {
+  width: 2.6rem;
+  height: 2.6rem;
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  border: 0.12rem solid var(--line);
+  background: var(--panel2);
+  cursor: pointer;
+}
+.sb-look[aria-pressed="true"] {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 0.1rem var(--blue);
+}
+.sb-look svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.sb-putwin .sb-cols {
+  justify-content: flex-start;
+}
+/* Sandbox's spawns and respawns (js/sbspawnview.js): a ring on the ground in its color, its name over it */
+.sb-pt {
+  position: absolute;
+  pointer-events: none;
+}
+.sb-pt svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.sb-pt-name {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: calc(0.8rem * var(--ts, 1));
+  text-shadow: 0 0.08rem 0.2rem #000c;
+}
+/* a board zone (js/sbspawnview.js zoneMark), seen only while building: see-through in its color, its name over its top
+   edge */
+.sb-zone {
+  box-sizing: border-box;
+  background: color-mix(in srgb, var(--c) 22%, transparent);
+  border: 0.15rem dashed color-mix(in srgb, var(--c) 85%, transparent);
+}
+.sb-zone .sb-pt-name {
+  left: 50%;
+  bottom: 100%;
+}
+.sb-zone-dot {
+  position: absolute;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  margin: -0.15rem 0 0 -0.15rem; /* (its spot counts from the box's outer edge, its border included) */
+  transform: translate(-50%, -50%);
+  background: #fffc;
+  border: 0.12rem solid var(--c);
+}
+/* a loot orb on its spot (js/sblootview.js): Dead Ducks Arcade's orb, bobbing over the dashed ring */
+.sb-orb {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 55%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -80%);
+  animation: sb-orb-bob 1.6s ease-in-out infinite;
+}
+.sb-orb .l4orb {
+  width: 100%;
+  height: 100%;
+  border-width: 0.1rem;
+}
+.sb-orb .l4orb i {
+  font-size: 1rem;
+}
+.sb-orb-img i,
+.sb-pic img {
+  overflow: hidden;
+  border-radius: 50%;
+}
+.sb-orb-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+@keyframes sb-orb-bob {
+  50% {
+    transform: translate(-50%, -95%);
+  }
+}
+.sb-lic {
+  display: inline-grid;
+  place-items: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  margin: 0 0.25rem 0 0.15rem;
+  font-style: normal;
+  vertical-align: middle;
+}
+.sb-lic svg {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+}
+.sb-sel {
+  min-width: 0;
+  font: inherit;
+  padding: 0.3rem 0.45rem;
+  border-radius: 0.45rem;
+  border: 0.12rem solid var(--line);
+  background: var(--panel2);
+  color: inherit;
+}
+.sb-pic {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  grid-column: 2;
+}
+.sb-pic img {
+  width: 2rem;
+  height: 2rem;
+  object-fit: cover;
+}
+.sb-row:has(.sb-pic) {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+/* its settings window */
+.sb-setwin {
+  width: min(30rem, calc(100vw - 1.5rem));
+}
+.sb-set {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-height: calc(100dvh - 14rem);
+  overflow: auto;
+}
+.sb-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 7rem;
+  align-items: center;
+  gap: 0.2rem 0.6rem;
+}
+.sb-row > span:first-child {
+  min-width: 0;
+}
+.sb-acts {
+  display: contents; /* (the behavior lists, kept together only so the zombie maps can hide them) */
+}
+.sb-box {
+  width: 100%;
+  font: inherit;
+  font-family: "Cascadia Code", ui-monospace, monospace;
+  padding: 0.3rem 0.45rem;
+  border-radius: 0.45rem;
+  border: 0.12rem solid var(--line);
+  background: var(--panel2);
+  color: inherit;
+}
+.sb-row.bad .sb-box {
+  border-color: #ff4d4d;
+  background: color-mix(in srgb, #ff4d4d 18%, var(--panel2));
+}
+.sb-why {
+  grid-column: 1 / -1;
+  font-style: normal;
+  font-size: 0.85em;
+  color: #ff6b6b;
+}
+.sb-why:empty {
+  display: none;
+}
+.sb-cols,
+.sb-what {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  grid-column: 2;
+  justify-content: flex-end;
+}
+.sb-row:has(.sb-cols),
+.sb-row:has(.sb-what) {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.sb-row:has(.sb-acts) {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+}
+.sb-row:has(.sb-acts) > span:first-child {
+  padding-top: 0.3rem; /* (level with its dropdown's first line, open or shut) */
+}
+/* a spawn's tabs: Entities, Players, its + pages and the + (sbspawnview.js) */
+.sb-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0 0 0.6rem;
+}
+.sb-tab {
+  font: inherit;
+  font-size: 0.9em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 0.45rem;
+  border: 0.12rem solid var(--line);
+  background: var(--panel2);
+  color: inherit;
+  cursor: pointer;
+  max-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sb-tab.on {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+}
+.sb-plus,
+.sb-plus-pick {
+  display: inline-flex;
+  gap: 0.3rem;
+}
+.sb-plus-pick[hidden] {
+  display: none;
+}
+/* a respawn's Import settings: the categories scroll, the button stays at the bottom */
+.sb-impwin {
+  width: min(24rem, calc(100vw - 1.5rem));
+}
+.sb-imp {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: calc(100dvh - 14rem);
+  overflow: auto;
+}
+.sb-cat summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.25rem 0.45rem;
+  border-radius: 0.45rem;
+  background: var(--panel2);
+}
+.sb-cat label {
+  display: block;
+  padding: 0.2rem 0.45rem 0.2rem 1.2rem;
+}
+.sb-cat .sb-cat-all {
+  padding-left: 0.45rem;
+}
+.sb-imp-go {
+  position: sticky;
+  bottom: 0;
+}
+/* a behavior list: a dropdown of checkboxes, what's picked written on it */
+.sb-acts {
+  min-width: 0;
+  justify-self: end;
+  max-width: 100%;
+}
+.sb-acts summary {
+  cursor: pointer;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0.2rem 0.45rem;
+  border-radius: 0.45rem;
+  border: 0.12rem solid var(--line);
+  background: var(--panel2);
+}
+.sb-acts[open] .sb-what {
+  margin-top: 0.35rem;
+}
+.sb-col {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: 0.14rem solid var(--line);
+  background: var(--c);
+  cursor: pointer;
+}
+.sb-col.on {
+  outline: 0.16rem solid var(--ink);
+  outline-offset: 0.1rem;
+}
+
+/* ---------- Sandbox: the Numerat window (js/numeratwin.js), as an editor: files on the left, the code, a terminal
+   line under it; every letter Cascadia Code, as the command line's ---------- */
+.nm-win {
+  width: min(60rem, calc(100vw - 1.5rem));
+}
+.nm {
+  display: grid;
+  grid-template-columns: minmax(9rem, 14rem) minmax(0, 1fr);
+  gap: 0.8rem;
+  height: min(36rem, calc(100dvh - 8rem));
+  font-family: "Cascadia Code", Consolas, monospace;
+}
+.nm-side,
+.nm-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 0;
+  min-width: 0;
+}
+.nm-new {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.nm-new .btn {
+  flex: 1 1 auto;
+}
+.nm-name {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.nm-why {
+  color: var(--red, #ff6b6b);
+  font-size: 0.8rem;
+  font-style: normal;
+}
+.nm-why:empty {
+  display: none;
+}
+.nm-tree {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin: 0;
+  padding: 0.3rem 0;
+  list-style: none;
+  border: 0.12rem solid var(--line);
+  border-radius: 0.45rem;
+}
+.nm-item {
+  padding: 0.2rem 0.5rem 0.2rem calc(0.5rem + var(--d) * 0.9rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  font-weight: 200;
+}
+.nm-item:hover {
+  background: color-mix(in srgb, var(--fg, #fff) 8%, transparent);
+}
+.nm-item.on {
+  background: color-mix(in srgb, var(--blue, #3f8cff) 30%, transparent);
+}
+.nm-dir {
+  font-weight: 400;
+}
+.nm-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.nm-path {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dim);
+}
+.nm-code,
+.nm-in {
+  font: inherit;
+  font-weight: 200;
+  color: inherit;
+  background: #0006;
+  border: 0.12rem solid var(--line);
+  border-radius: 0.45rem;
+  padding: 0.4rem 0.5rem;
+  min-width: 0;
+}
+.nm-code {
+  flex: 3;
+  min-height: 0;
+  resize: none;
+  tab-size: 2;
+  white-space: pre;
+}
+.nm-term {
+  flex: 2;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 0.12rem solid var(--line);
+  border-radius: 0.45rem;
+  background: #000a;
+}
+.nm-out {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.4rem 0.5rem;
+  font-weight: 200;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.nm-line {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.4rem 0.4rem;
+}
+.nm-line .nm-in {
+  flex: 1;
+}
+/* a phone: the files over the code */
+@media (max-width: 40rem) {
+  .nm {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    height: calc(100dvh - 7rem);
+  }
+  .nm-tree {
+    max-height: 7rem;
+  }
 }

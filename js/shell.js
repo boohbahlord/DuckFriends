@@ -7,6 +7,9 @@
    notes/ (your files, for this game only), log (everything you ran this game and what came out, read-only) and
    perma-notes/ (kept on this device from game to game; only you, superuser-<you>, can open it; its files can be removed,
    the folder can't). Other players' homes show in /usr, but their files live on their own devices.
+   notes/numerat/ holds my Numerat files (Sandbox, stage 7a): unlike the rest of notes it is kept on this device from game
+   to game, folders, files and their +x, and can be organized from here in any mode (mkdir, cp, mv, rm). A file runs only
+   in Sandbox, from the Numerat window's Run button or as ./file once chmod +x; ps lists it and kill <pid> stops it.
 
    The room's commands go through the host: sudo runs a command as a member of the sudo group (the host always is);
    usermod, groupadd, groupmod and groupdel need it, and so does forgame (the game's settings mid-game, and mutes that
@@ -63,6 +66,7 @@ import { setPerf, perfOn } from "./perf.js";
 import { secret } from "./unlocks.js";
 import { music } from "./music.js";
 import { npcsHere, npcTag, npcByTag, npcById } from "./npcs.js";
+import { isSb, sbCan, sbWorld, SB_WORLD_NAMES } from "./sandboxrules.js";
 
 const tag = (n) => String(n || "").replace(/\s+/g, "");
 const fail = (msg, code = 1) => {
@@ -96,6 +100,42 @@ const fs = {
   code: 0,
 };
 const perma = () => (profile.permaNotes = profile.permaNotes || {});
+/* ---------- the Numerat folder (the owner's Sandbox file: "The spawns, loot, respawns, or board buid SHOULD automatically
+   save the numerat files to a directory in the default pwd that can be organized in any game mode in terminial by a
+   player where they can make directories, copy files, etc.") ----------
+   It lives in notes like any folder while a game lasts; after each command (and each change in the Numerat window) what
+   is in it is kept on this device, profile.numerat = { f: { path in it: text }, d: [its folders], x: [its +x files] },
+   and it comes back at the start of every game. 100,000 characters in all, as perma-notes */
+const NUM_MOST = 100000;
+const numRoot = () => fs.home + "/notes/numerat";
+const inNum = (path) => path.startsWith(numRoot() + "/");
+function numLoad() {
+  const N = profile.numerat || {},
+    root = numRoot();
+  fs.dirs.add(root);
+  for (const d of N.d || []) fs.dirs.add(root + "/" + d);
+  for (const [f, t] of Object.entries(N.f || {})) fs.files[root + "/" + f] = t;
+  for (const f of N.x || [])
+    fs.meta[root + "/" + f] = { ...(fs.meta[root + "/" + f] || {}), x: true };
+}
+function numKeep() {
+  const root = numRoot(),
+    rel = (p) => p.slice(root.length + 1),
+    f = {},
+    x = [];
+  for (const [p, t] of Object.entries(fs.files))
+    if (inNum(p)) {
+      f[rel(p)] = t;
+      if ((fs.meta[p] || {}).x) x.push(rel(p));
+    }
+  const next = { f, d: [...fs.dirs].filter(inNum).map(rel).sort(), x };
+  if (JSON.stringify(next) === JSON.stringify(profile.numerat || {})) return;
+  profile.numerat = next;
+  save();
+}
+/* the Numerat files running (a stub until the language comes: each only waits to be stopped), for this game */
+let procs = [],
+  nextPid = 100;
 function sync(ctx) {
   const s = ctx.room && ctx.room.state,
     me = ctx.meName,
@@ -108,9 +148,15 @@ function sync(ctx) {
     fs.meta = {};
     fs.log = [];
     fs.vars = {};
-  } // notes, the log and variables last one game
+    procs = [];
+    fs.numAt = "";
+  } // notes, the log and variables last one game (the Numerat folder comes back from the device: numLoad)
   if (!fs.cwd || !fs.cwd.startsWith("/")) fs.cwd = home + "/notes";
   fs.home = home;
+  if (fs.numAt !== home) {
+    fs.numAt = home;
+    numLoad();
+  }
   fs.people = s ? s.seat.map((id) => tag(s.players[id].name)) : [me];
 }
 const norm = (p) => {
@@ -231,6 +277,21 @@ function writeFile(p, text, append) {
   const total = Object.values(fs.files).reduce((a, t) => a + t.length, 0);
   if (total + text.length > 200000)
     fail("✗ Your notes are full (200,000 characters this game).");
+  if (inNum(path)) {
+    const all = Object.entries(fs.files).reduce(
+      (a, [k, t]) => a + (inNum(k) && k !== path ? t.length : 0),
+      0,
+    );
+    if (
+      all +
+        (append && fs.files[path] ? fs.files[path].length : 0) +
+        text.length >
+      NUM_MOST
+    )
+      fail(
+        `✗ ${name}: the Numerat folder is full (100,000 characters in all). rm a file there to make room.`,
+      );
+  }
   fs.meta[path] = { ...(fs.meta[path] || {}), t: Date.now() };
   if (isPerma(path)) {
     // kept on this device: 100,000 characters in all, so the profile still saves
@@ -328,7 +389,7 @@ function longRow(path, name) {
       ? "drwx------"
       : path === fs.home + "/log"
         ? "-r--------"
-        : `-rw-${m.g ? "r" : "-"}--${m.o ? "r" : "-"}--`;
+        : `-rw${m.x ? "x" : "-"}${m.g ? "r" : "-"}--${m.o ? "r" : "-"}--`;
   return [
     perms,
     owner(path),
@@ -1030,28 +1091,36 @@ function cal(now = new Date()) {
   );
   return out.join("\n");
 }
+/* the Numerat files running: ps's lines for them */
+const procLines = () =>
+  procs.map(
+    (p) =>
+      `${String(p.pid).padStart(3)} numerat  ${p.name}, running ${left(Date.now() - p.at)}`,
+  );
 function psLines(s, all) {
   const o = s.options,
     st = STAGE[s.phase] || "lobby",
     now = Date.now(),
     n = s.seat.length,
     done = s.seat.filter((id) => s.done && s.done[id]).length;
+  const sb = isSb(s) && s.phase !== "lobby"; // (Sandbox: no rounds, no stages, no turns)
   const out = [
     "PID WHAT     DOING",
-    `  1 game     ${modeOf(o.mode).name} on ${mapName(o.map)}${s.phase === "lobby" ? ", in the lobby" : o.mode === "hang" ? ", hanging out" : `, round ${s.round + 1}`}`,
+    `  1 game     ${modeOf(o.mode).name} on ${sbWorld(o) ? SB_WORLD_NAMES[sbWorld(o)] : mapName(o.map)}${s.phase === "lobby" ? ", in the lobby" : o.mode === "hang" ? ", hanging out" : sb ? "" : `, round ${s.round + 1}`}`,
   ];
-  if (s.phase !== "lobby" && !(o.mode === "hang" && s.phase === "hang"))
+  if (s.phase !== "lobby" && !sb && !(o.mode === "hang" && s.phase === "hang"))
     out.push(
       `  2 ${st.padEnd(8)} ${["answer", "discuss", "results", "bracket"].includes(s.phase) || s.done ? `${done} of ${n} have ended their turn` : ""}`,
     );
-  if (s.ends && s.ends > now)
+  if (s.ends && s.ends > now && !sb)
     out.push(`  3 timer    ${left(s.ends - now)} left`);
-  if (s.catchEnds && s.catchEnds > now)
+  if (s.catchEnds && s.catchEnds > now && !sb)
     out.push(`  4 catch-up ${left(s.catchEnds - now)} left for the rest`);
   if (s.vote)
     out.push(
       `  5 vote     ${s.vote.kind} vote, ${Object.keys(s.vote.yes).length} yes · ${Object.keys(s.vote.no).length} no`,
     );
+  out.push(...procLines());
   if (all) {
     out.push(
       "",
@@ -1328,7 +1397,7 @@ const CMDS = {
     for (const a of args) {
       const p = findPath(a);
       guard(p, true);
-      if (kind(p) !== "dir" || !fs.dirs.has(p))
+      if (kind(p) !== "dir" || !fs.dirs.has(p) || p === numRoot())
         fail(
           `✗ rmdir: ${a}: ${kind(p) ? "that folder stays" : "No such file or directory"}`,
         );
@@ -1347,6 +1416,7 @@ const CMDS = {
       if (
         p === fs.home + "/perma-notes" ||
         p === fs.home + "/notes" ||
+        p === numRoot() ||
         p === fs.home
       )
         fail(`✗ rm: ${a}: that folder stays.`);
@@ -1405,7 +1475,8 @@ const CMDS = {
       if (
         sp === fs.home + "/log" ||
         sp === fs.home + "/notes" ||
-        sp === fs.home + "/perma-notes"
+        sp === fs.home + "/perma-notes" ||
+        sp === numRoot()
       )
         fail(`✗ mv: ${src}: that stays where it is.`);
       if (!kind(sp))
@@ -1531,15 +1602,17 @@ const CMDS = {
     const set = {},
       nm = mode.match(/^[0-7]?([67])([0-7])([0-7])$/);
     if (nm) {
+      set.x = nm[1] === "7"; // (+x: a Numerat file runs as ./file)
       set.g = +nm[2] >= 4;
       set.o = +nm[3] >= 4;
     } else
       for (const part of mode.split(",")) {
         const m = part.match(/^([ugoa]*)([+-=])([rwx]+)$/);
         if (!m) fail(`✗ chmod: invalid mode: '${mode}'`);
-        if (!m[3].includes("r")) continue;
         const on = m[2] !== "-",
           who = m[1] || "a";
+        if (m[3].includes("x") && /[ua]/.test(who)) set.x = on;
+        if (!m[3].includes("r")) continue;
         if (/[ga]/.test(who)) set.g = on;
         if (/[oa]/.test(who)) set.o = on;
       }
@@ -1884,7 +1957,7 @@ const CMDS = {
     const s = needRoom(x.ctx);
     if (!s.startedAt || s.phase === "lobby") return "The game hasn't started.";
     const m = Math.floor((Date.now() - s.startedAt) / 60000);
-    return `up ${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}, ${s.seat.length} players, round ${s.round + 1}`;
+    return `up ${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}, ${s.seat.length} players${isSb(s) ? "" : `, round ${s.round + 1}`}`; // (Sandbox has no rounds)
   },
   ps: (args, i, x) =>
     psLines(
@@ -2161,6 +2234,13 @@ async function one(argv, stdin, meta, ctx, rs) {
   if (/^\\(mute|permmute|show|togglesuggest)$/i.test(c))
     return ctx.chat(words.map(dq).join(" "));
   const x = { ctx, sudo, meta, rs };
+  if (c.includes("/")) return runFile(c, ctx, sudo); // (./file: a Numerat file, chmod +x first)
+  if (
+    low === "kill" &&
+    args.length &&
+    args.every((a) => /^-?\d+$|^-[A-Z]+$/.test(a))
+  )
+    return killProcs(args); // (kill <pid>: a Numerat file; kill <name> stays the silly one)
   if (isHelpName(c)) return helpPage([c, ...args].join("-")) || helpPage(c); // HelpChat, HelpGame-How, HelpGame How
   if (args.includes("--help") && MAN[low] && (CMDS[low] || TEXT[low]))
     return `${MAN[low]}\n(man ${low} shows the same; help lists the Help pages.)`;
@@ -2183,6 +2263,49 @@ async function one(argv, stdin, meta, ctx, rs) {
   if (BUILTIN_NAMES.includes(low))
     return fail(`✗ ${c}: command not found (did you mean ${low}?)`, 127);
   fail(`✗ ${c}: command not found. help lists them.`, 127);
+}
+
+/* ---------- running a Numerat file (a stub: the language comes later) ----------
+   Only in Sandbox, and only for whoever may write Numerat there (sandboxrules.js sbCan), or with sudo. Returns what to
+   say; ps lists it until kill <pid> stops it */
+function startFile(path, ctx, sudo) {
+  const s = ctx.room && ctx.room.state,
+    name = path.slice(fs.home.length + 1);
+  if (!s || !isSb(s))
+    fail(`✗ ${name}: Numerat files only run in Sandbox.`, 126);
+  if (!sbCan(s, ctx.room.me) && !(sudo && isSudo(s, ctx.room.me)))
+    fail(
+      `✗ ${name}: only the host, or whoever the host lets, runs Numerat files here${isSudo(s, ctx.room.me) ? " (sudo runs it as sudo)" : ""}.`,
+      126,
+    );
+  const was = procs.find((p) => p.path === path);
+  if (was) return `${name} is already running (pid ${was.pid}).`;
+  const pid = nextPid++;
+  procs.push({ pid, path, name, at: Date.now() });
+  return `▶ ${name} is running (pid ${pid}). Numerat's language is coming: for now the file does nothing. kill ${pid} stops it.`;
+}
+function runFile(c, ctx, sudo) {
+  const path = resolve(c),
+    k = kind(path);
+  if (!k) fail(`✗ ${c}: No such file or directory`, 127);
+  guard(path, false);
+  if (k === "dir") fail(`✗ ${c}: Is a directory`, 126);
+  if (!(fs.meta[path] || {}).x)
+    fail(
+      `✗ ${c}: Permission denied (chmod +x ${c.split("/").pop()} first)`,
+      126,
+    );
+  return startFile(path, ctx, sudo);
+}
+function killProcs(args) {
+  const out = [];
+  for (const a of args.filter((a) => /^\d+$/.test(a))) {
+    const i = procs.findIndex((p) => p.pid === +a);
+    if (i < 0) fail(`✗ kill: (${a}) - No such process`);
+    out.push(`■ ${procs[i].name} stopped.`);
+    procs.splice(i, 1);
+  }
+  return out.join("\n");
 }
 
 /* the game's own variables, which can't be changed */
@@ -2314,6 +2437,7 @@ export async function shellRun(text, ctx) {
       cleared: false,
     };
   const r = await runLine(line, env(ctx, { fun: 0, funAt: 0, sends: 0 }));
+  numKeep(); // (the Numerat folder, kept on this device)
   fs.code = r.code;
   res.push(...lines(r.text));
   if (res.length > 1000)
@@ -2322,6 +2446,54 @@ export async function shellRun(text, ctx) {
   if (fs.log.length > 2000) fs.log.splice(0, fs.log.length - 2000);
   return { lines: res, cleared: r.cleared };
 }
+/* ---------- the Numerat window (numeratwin.js): its folder, read and written as the command line does ----------
+   ctx: the command line's (chat.js shellCtx) */
+export const numerat = {
+  root(ctx) {
+    sync(ctx);
+    return numRoot();
+  },
+  /* everything in the folder, each { path, name, dir, depth }, folders first at each level */
+  tree(ctx) {
+    sync(ctx);
+    const out = [],
+      walk = (dir, depth) => {
+        const names = list(dir).sort(
+          (a, b) => b.endsWith("/") - a.endsWith("/") || a.localeCompare(b),
+        );
+        for (const n of names) {
+          const dirN = n.endsWith("/"),
+            path = dir + "/" + n.replace(/\/$/, "");
+          out.push({ path, name: n.replace(/\/$/, ""), dir: dirN, depth });
+          if (dirN) walk(path, depth + 1);
+        }
+      };
+    walk(numRoot(), 0);
+    return out;
+  },
+  read(ctx, path) {
+    sync(ctx);
+    return fs.files[path] ?? null;
+  },
+  write(ctx, path, text) {
+    sync(ctx);
+    if (!inNum(path)) fail("✗ That is not in the Numerat folder.");
+    writeFile(path, text, false);
+    numKeep();
+  },
+  mkdir(ctx, path) {
+    sync(ctx);
+    if (!inNum(path)) fail("✗ That is not in the Numerat folder.");
+    CMDS.mkdir([path]);
+    numKeep();
+  },
+  running: (path) => procs.find((p) => p.path === path) || null,
+  run(ctx, path) {
+    sync(ctx);
+    return startFile(path, ctx, false);
+  },
+  stop: (pid) => killProcs([String(pid)]),
+};
 /* ↑ and ↓, and Ctrl+R */
 export const shellHistory = () => fs.hist;
 

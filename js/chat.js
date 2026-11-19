@@ -985,7 +985,7 @@ async function chatCommand(text, r) {
   return setMutes(text, permanent, r.state, r.me);
 }
 /* what the command line needs from here: the room, your name, these commands and the customization ones */
-function shellCtx() {
+export function shellCtx() {
   const r = activeRoom(),
     s = r && r.state,
     me = s && s.players[r.me];

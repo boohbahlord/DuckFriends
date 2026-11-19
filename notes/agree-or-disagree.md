@@ -6272,3 +6272,99 @@ Owner, Nov 18 20:58Z: "1. keep it as 6
 2. every 
 3. what is he testing?"
 Decided: Mad God Justin stays 6. Noah puts the on-duck phone hotbar in every mode with a hotbar. Test plan explained to the owner; waiting for the go.
+
+## Owner, Nov 19 01:00Z
+"are the gun sizes fixed yet?
+
+Justin spawned in without his head in a retry of the game after i died in the zommbie game so fix that (he later regenerated it)
+
+zombies should pick a part to jump onto the gas pump from and commit, not going left and right over and over until the player stands still because that is ripe for exploit"
+Decided: gun sizes are fixed in Version 89 (live 21:46Z Nov 18). Solomon: Justin's head comes back with him on a retry (a new game starts him whole), and a zombie climbing to the gas pump roof picks one spot and commits to it.
+
+## Owner, Nov 19 01:01Z: "big one" (attached: "Sandbox mode rules.docx")
+The whole spec, word for word, is in /mnt/project-files/sandbox/sandbox-mode-rules.txt (the .docx beside it). New mode "sandbox": cheat sheet c, build b (spawns, respawns, loot orbs, board zones), make NPC m, Numerat n (the owner's number language), hotbar h, game rules g, player settings p; saved custom game modes playable in vote/random/online. Also: "test every game mode to make it like zombies" (Mad God Justin HP stays).
+Decided: Adam's plan + usage plan + 18 questions in the doc https://claude.ai/artifact/QBUb17b36zxdBP1wAMg1j9 (stages 0-9, Stage 0 = zombie controls in every existing mode). Nothing built until the owner answers and says go.
+
+Adam re-posted the 18 questions in chat (01:14Z; owner on a phone). Owner's answers, Nov 19 01:34Z (voice to text), word for word:
+"1. It's on any map and if it's on a map like the Hangout version of Cabin, if it's on a map like the zombie version of Cabin, if it's on a map like Downpour, then players can walk around the entire thing and do everything they could normally do on that map. And on that map for Sandbox, if there was a preset, like Agree or Disagree, it does not work on that map. Like, they cannot build that mode on that map. And modes can only be set to a certain kind of map. All maps that are squared, simple, confined boards, like Agree or Disagree, Would You Rather, so on and so forth, that same shape and format or layout, they are all the same, right? Those are basically just one map, really. Like, yeah, there's different background pages, but it's just one map. Whereas the special maps they get their own dedicated map for their game mode. So if it's set to Downpour, then that game mode they made can only be on Downpour. And And all those files they saved in Numerat can be saved permanently across any version of Sandbox on any map, and they can be inputted into anything. And saving the files in the Numerat directory does not make them run. It's when you actually have a place to put them. Okay, so that would probably have to be a thing you can do in the game settings. In the game settings field where you click G, you probably can have a place to input those files, to import them, so they have a place to run if they aren't actually in the built objects themselves. And that's pretty important. That's my answer to number 1.
+
+2. Yes, to number 2. And if every player can change the game settings from the democracy of ducklings, then every player has access to everything the host has in Sandbox, and only if that's true. And if the host is switched in democracy of ducklings, then so it is the case that in that game mode, that the new host, not the old one, is the one who has the private access to all of that, and they decide who else gets it, if democracy of ducklings didn't already give it to everyone by de facto of the one mode I had already mentioned.
+
+3. Where is sandbox picked? It's under special.
+
+4. Yeah, default NPC behavior uses what's already works.
+
+5. We'll make it 800. That's like the invisible cap. And maybe it might say that in the cheat sheet if there's extra room for that, but it's so unimportant that I wouldn't worry about that.
+
+6. The uploaded image for any avatar or anything else is never compressed, not unless the player hits a checkbox when they've selected it or before they select it to make it compressed. Otherwise, images they upload do not compress. And by compress, what I mean is the whole 32-bit thing we have going on. I imagine that it doesn't have to be the exact pixel size of what it was when it was uploaded if it's already smaller, if you know what I mean.
+
+7. Random can pick custom modes only if it is voted on. So in the vote round for game modes, in the custom game modes, there will be an option that just says vote for random game modes to be allowed. And if it passes, then the vote will replay. Like, it resets and replays once it passes to where now they vote for game modes again, but now the custom game modes are an option. Okay, so they're an option in their own custom game section, just like anything else.
+
+8. both.
+
+9. Other players can save a copy, and any player's saved game mode that isn't a copy can show on the custom game modes. And that is something that below the custom game modes is just a little checkbox that only one of the players have to click for it to show the game modes that are custom that everyone in the lobby has, not just the host. So that can be selected during the vote game mode section, and people can then play a game mode that the host doesn't have, but they have, and everyone can see it and vote for it. The picture for a game mode, if there is one, can be selected by a player by uploading an image. And if they don't, then they can basically just have a colored background, a simple 2D shape in front of it. And they can also upload a custom duck they made. As a symbol in front of the 2D shape if they want to. Or they can use some like weapon that's already in the game, or some other NPCs that are already in the game to put in front of it, things like that.
+
+10. True 
+
+11. A
+
+Note, we need an operation for and we can all it: and
+
+12. ES for number 12, and we can also add things like XOR and other similar things beyond the simples
+
+13. It can be executed by a run button in the window, and there is a command in either normal terminal or just a normal terminal in our version of Bash that can then cancel the numerat file that's been executed. Like, it can stop it. And the terminal in numerat is just normal Bash terminal, by the way. It isn't anything that isn't that. But numerat mode exists in that terminal too, just so that you could do commands in it, like, let's say, setting a variable temporarily during the game. And that is also a process that can be killed, by the way, is setting a variable's name in Sandbox or doing other things like that in the numerat there. You know what, actually just remove numerat mode from terminal, because that saves a lot of issues from happening. Like, it stops a lot of issues from happening. So no numerat version where you type numerat in the terminal, none of that. We're not doing that. But what I will say is that we run a numerat file in one way by just executing it with a bash command in the terminal, or we can have it be something that you use the game settings, or you import into the spawn nodes or anything like that, like we've already mentioned before in other ways, like attaching it to a spawn, like you said, or a loot orb and things like that. Or a zone, you know.
+
+14. A
+
+15. all of these. And there should also be a survive, just a pure survive. Like that's all you do is you just survive and that's it. There's no actual winning. It's just like a record of surviving. So yeah, all of those for 15 and more.
+
+16. Yes, but it's not just that. It's that the prompt itself is something that, like, what it asks you to type into it. Like, the very thing it asks you can be edited by the players in Sandbox. And not only that, it could be an or. Where Kind of like where in Would You Rather, it's two boxes you type into. And, you know, it's two boxes between an or and Would You Rather. So, like, that feature, for example, can also be in this, right? So that's pretty important. So, yeah.
+
+17. Yeah
+
+18. Yes, and not only that, but like even like how NPCs react to damage. Like not just players, not just Justin, but any NPC that can take damage, and anyone else and everything. You know, even the game, the screen shaking, all of that. Yeah, like it's all going to be like that. Like this is the new feel and vibe of the game. I never wanted it to just be zombies that has that kind of feel and that look and that punchiness, that player feedback. You know, it's going to be for everything.
+
+I think we need to focus on making Sandbox just a thing you can fuck around in before we focus on making Sandbox this thing that saves game modes and creates game modes. And the reason I wanted to like make Numerac binary or something similar was to make a pure coding language, because maybe I want to use that outside of the game, but maybe that's not possible because I'm also really dumb when it comes to understanding that properly, because I'm new to coding still. But you can tell that I have a lot of coding thinking in my brain. I'm good at it because of how I'm trying to make a coding language, but yeah."
+Decided (Adam): playground first (stages 0-7: feel everywhere, shell, spawns, NPC maker, loot/hotbar, zones, Numerat); game rules g + saving/sharing custom modes (stages 8-9) after. Sandbox under Special. Any map: simple boards are one map type; special maps (Duck Cabin, Downpour ...) are walked in fully, as in their own modes. Live NPC cap 800. Uploads kept as they are unless "compress" (pixel look) is ticked. Numerat: plain JavaScript; no numerat mode in the terminal; files run by a Run button, by a bash command, attached to a spawn/orb/zone, or imported in g; a bash command stops a running file; words and, or, not, nand, xor. Stage 0 (Noah) and stage 1 (Solomon) start now.
+
+## Nov 19 01:41Z (owner, after Adam's testing reply)
+"Idk wat that means but have every worker question ur decision"
+Decided (Adam): every worker (Solomon the 2nd, Noah, Jackal, Miles Jr.) reviews Adam's Sandbox reading (README, plan doc, decisions under the 01:34Z answers, stage order, testing standard) against the owner's own file and answers, and sends Adam every point they think is wrong or missing. Adam fixes what is wrong and brings real disagreements to the owner in plain words.
+
+## Nov 19 01:43Z (owner)
+"Testing should be brief and resource efficient. Emphasis on brief. Testing with a compiler should ne enough right?"
+Decided (Adam): testing standard cut to a brief version (notes/testing-standard.md): automatic checks + a headless run with 0 errors, one line per owner sentence the change covers, edges only where numbers/states are involved, Chromium phone + computer by code (Firefox, sideways, online only when relevant), a one-pass regression script, 3-6 line report. Answer to the owner: no, syntax checks alone miss things like the knife-sized guns; a short run of the game is still needed.
+
+## Nov 19 01:57Z (owner, answers to Adam's 4 questions of 01:55Z: 1 upload size cap 2 MB?, 2 "full and empty hotbar" = every slot shows but holds nothing?, 3 spawn key only in build mode?, 4 online NPC cap lower, like 300?)
+"1. Yeah
+2. yes
+3. Key?
+4. Cap is based off of zombies caps for entities"
+Decided (Adam): uploads capped at 2 MB; build mode's hotbar shows every slot, all empty; NPC cap follows the zombie cap (Z_MOST 800 in js/l4ddrules.js), online too. Question 3 re-asked in plainer words.
+
+## Nov 19 10:22Z (owner, answers to Adam's 7 morning questions + bugs; 3 pictures in /mnt/project-files/refs/nov19-1022/)
+"1. yes
+2. no (not for sandbox mode anyway
+3. ? if a certain setting needs it to be whole number, then the box is whole number only, and for stats within variables typed into numerat files, we can have it return an error with reasons why for file
+4. yes
+5. 2>4 MEANS it goes in order of 2 for first spawn and 4 for next spawn, because normal operation is true random without arrow to indicate order. For example
+   1. (2>4),(3<5>7)
+   2. this example means the numerat will randomly choose between the two parenthesis groups AND THEN whichever it chooses, the inside will then be randomly chosen by number, and THEN the numbers within that parenthesis group play our until everyone is chosen with the order of it's ascension or descension, then it will take a step back out and start again (i feel like how the parenthesis works should be changed possibly because this feels like another operator already, like maybe a version of the | )
+   3. if an arrow comes first, then true random is told where to start first (making it less random). For examples:
+   4. >(2,4)>(2,3)
+   5. this means it has to choose the first box first, complete it's operation inside it, AND THEN go unto the next one AFTER it's inside is complete and do the same to it
+   6. i want to make square brackets, where the inside of it will only play ONE of it's operation before moving on, as follows:
+   7. >[2,4]>[3]
+   8. this means the first square bracket MUST come first, AND then it must choose either 2 or 4, once it chooses that as input for a spawn, then it does 3 next.
+   9. I need help in how numerat works in some notation, what the notation looks like, and how we change it. I also need to know what some notation means and where we change it or what notation meaning should be changed or is redundant
+6. YES, and the tenth of an HP is shown as being missing from it's portion of a bar or meter of it's whole integer, and how it regenerates is rounded up or down to decide which whole integer of HP within a block of a hp meter regenerates (show me a proposition demonstrating your understanding and we will try it out.
+7. Yes, you can start working on i now. BUT the update goes live as is AND we talk about what i am saying and discuss plans for it
+
+
+first screenshot from phone shows the hotbar missing from the bottom and that must be fixed AND below the duck should show the hotbar being able to move around temporarily like it does on pc
+
+the last two screenshots show corpses. Corpses arent on the board and they can overlay on top of your character, this isn't right, they should be overlayed below your duck, your duck's gun, your duck's ui, and your duck's apparel. The last corpse in the gas station should be a dead zombie actually with it's head still there AND it's bullet wounds not looking yellow or golden because that isn't right.
+
+During round 12, the corpse in the gas station disapears but the puddle of blood stays IF the body isnt on a players screen, if it is on a players screen the whole time during round 12, then it disapears on a subsequent round or rest phase where they arent on it's screen. The check for this should be every 30 secods maybe or something slow to not effect performance for checking if the body is alone and cannot be seen on the player's screen."
+Questions were: 1 deploy V90?, 2 spawn key only in build mode?, 3 2:4 whole numbers only?, 4 speed range picked once per NPC?, 5 2>4 counts 2,3,4?, 6 damage takes tenths?, 7 phone buttons for Sandbox windows now?
+Decided (Adam): V90 deploys as is now. Sandbox spawn keys work outside build mode too. Boxes that need whole numbers take whole numbers only; Numerat files give an error with reasons. 2>4 = 2 then 4 (listed values, not every number between). Damage tenths shown as a missing tenth of a HP block; Adam sends a proposition. Phone buttons for Sandbox windows: start now. Numerat notation: Adam writes a notation proposal for discussion before building.

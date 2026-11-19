@@ -214,7 +214,7 @@ export async function joinOnlineRoom(entry, passkey = "") {
 }
 
 /* ---------- the state in the database: one JSON string per part ---------- */
-const EACH = ["players", "pos", "cards", "hang"]; // (Hangout: each activity's part of s.hang its own string, so a ball rolling never sends the chalk drawing again)
+const EACH = ["players", "pos", "cards", "hang", "sbpic"]; // (Hangout: each activity's part of s.hang its own string, so a ball rolling never sends the chalk drawing again; Sandbox: each uploaded picture once, sbspawn.js)
 function encode(s) {
   const out = {};
   for (const [k, v] of Object.entries(s)) {
@@ -295,12 +295,16 @@ const REMOTE = new Set([
   "cancel",
   "toLobby",
   "cabinEnd",
+  "sbh",
+  "sbl",
   "songs",
   "hang",
   "dnEnd",
   "vdTimer",
   "tv",
   "goOn",
+  "sb", // (Sandbox's spawns: the rules check the rights, sbspawn.js sbAct)
+  "sbOk", // (Sandbox's rights given or taken: only by one who has them, rules.js)
 ]);
 const LOOK = [
   "name",

@@ -29,6 +29,12 @@ import "./cats.js";
 import "./justin.js";
 import "./shadowduck.js";
 import { pxAt } from "../pxdom.js";
+import { hitCode, knockable, PCRIT, goreFree } from "../wounds.js";
+import { hitsOf } from "../l4ddart.js";
+import { JUSTIN_POOL } from "./stationart.js";
+import { popHP } from "../hpmeter.js";
+import { fxHitAt } from "../fx.js";
+import { vibrate, hitPx, HIT } from "../fxmotion.js";
 
 const PETS = { annabelle: "Pet Annabelle", bubbles: "Pet Bubbles" }; // who E can pet (Oreo and Opal won't have it)
 const DUCK = 64,
@@ -71,8 +77,9 @@ rule("npc", {
       ...(q ? [{ id: "shadow", x: q.x, y: q.y, z: q.z }] : []),
     ];
   },
-  hit(s, id, by, now) {
+  hit(s, id, by, now, w) {
     const got = npcHit(s, id, by, now);
+    if (got && id === "justin") justinWounded(s, w, now);
     if (got && id === "shadow") {
       s.shkN = (s.shkN || 0) + 1;
       s.shk = [...(s.shk || []).slice(-9), { n: s.shkN, by }];
@@ -80,6 +87,33 @@ rule("npc", {
     return got;
   },
 });
+/* Justin knocked down by a duck's hit: Dead Ducks Arcade's hit feel on him too (the owner's, Nov 19 01:34Z: "any NPC that
+   can take damage"). The wound the weapon leaves (wounds.js; his record's wc), now and then a crit that blows his head
+   off with a CRIT over him (PCRIT, the pcrit fx, as a duck's), and hit, the hits he took, so every screen bleeds him
+   and shows "−1 HP" once for each (draw below). Both go when he's up again (justin.js revive) */
+function justinWounded(s, w, now) {
+  const r = s.hang.npc.justin,
+    p = r && npcAt(r, now);
+  if (!r) return;
+  const crit = Math.random() < (PCRIT[w] || 0),
+    wc = (r.wc || "") + hitCode(r.wc || "", w, crit, knockable(JUSTIN));
+  s.hang.npc = { ...s.hang.npc, justin: { ...r, wc, hit: (r.hit || 0) + 1 } };
+  if (crit && p) {
+    s.fxN = (s.fxN || 0) + 1;
+    s.fx = [
+      ...(s.fx || []).slice(-19),
+      {
+        n: s.fxN,
+        kind: "pcrit",
+        who: ["justin"],
+        t: now,
+        x: +(p.x / W).toFixed(4),
+        y: +(p.y / H).toFixed(4),
+        hz: Math.round(p.z || 0),
+      },
+    ];
+  }
+}
 /* doors open for whoever walks through */
 addOpeners((s) => {
   const t = clockNow(),
@@ -136,15 +170,33 @@ function make(id) {
     sayN: 0,
   };
 }
+/* Justin hit (justinWounded): shaken by the HP he lost and once more as he goes down, a red blink, his blood, "−1 HP" */
+function bleed(o, r, ctx, noGore) {
+  const sc = ctx.world.sc,
+    f = ctx.world.toScreen(o.x, o.y, o.z);
+  vibrate(o.body, hitPx(1), true);
+  o.body.animate(HIT, 320);
+  popHP(o.el, -1, true);
+  if (!noGore && !o.el.hidden && fxl)
+    fxHitAt(
+      f.left,
+      f.top,
+      o.bh * sc * 0.42,
+      null,
+      DUCK * sc,
+      "small",
+      JUSTIN.color,
+    );
+}
 /* its drawing for its pose: each one made once and kept, so a walk only swaps two drawings back and forth */
 function dress(id, o) {
-  const [key, pose, step, dead] = o.want || [];
+  const [key, pose, step, dead, wc] = o.want || [];
   if (!key || key === o.pose) return;
   o.pose = key;
   let n = o.looks.get(key);
   if (!n) {
     const t = document.createElement("template");
-    t.innerHTML = svgFor(id, pose, step);
+    t.innerHTML = svgFor(id, pose, step, wc);
     n = [...t.content.childNodes];
     o.looks.set(key, n);
   }
@@ -157,6 +209,11 @@ function dress(id, o) {
   o.dead = !!dead;
   o.el.classList.toggle("dead", dead);
 }
+/* his wounds on his drawing (l4ddart.js hitsOf, as game.js woundLook does for every duck) */
+const woundsOn = (wc) => {
+  const h = hitsOf(wc);
+  return { skin: { head: h.inner, out: h.out }, gone: h.gone };
+};
 /* what's in Justin's hand: his gun, a glass */
 const HAND = {
   gun: () =>
@@ -164,7 +221,7 @@ const HAND = {
   drink: () => `<span class="hang-npc-held glass">${glassSVG()}</span>`,
   cake: () => `<span class="hang-npc-held cake"><i>${ZEBRA}</i></span>`, // (the Zebra cake special's, a bite at a time)
 };
-function svgFor(id, pose, step) {
+function svgFor(id, pose, step, wc = "") {
   const b = BRAINS.get(id);
   if (!b) return "";
   if (b.kind === "cat") return catSVG(id, { pose, step });
@@ -174,6 +231,7 @@ function svgFor(id, pose, step) {
         size: DUCK,
         shadow: pose !== "dead",
         dead: pose === "dead",
+        ...(wc ? woundsOn(wc) : {}),
       }) + (HAND[pose] ? HAND[pose]() : "")
     );
   if (b.svg) return b.svg(pose); // (a character that draws itself: the Butler)
@@ -331,7 +389,28 @@ activity({
       } // (a duck waddles: a little bob)
       else if (pose === "dead") pose = "loaf";
       if (pose === "walk") step = Math.floor(o.dist / 16) % 2 ? 1 : -1;
-      o.want = [pose + step, pose, step, r.a === "dead"];
+      const wc = id === "justin" ? r.wc || "" : "",
+        shownWc = s.options && +s.options.noGore ? goreFree(wc) : wc; // (Gore off: only a knocked-off hat shows)
+      o.want = [pose + step + shownWc, pose, step, r.a === "dead", shownWc];
+      if (o.duck && o.hit !== r.hit) {
+        if (r.hit && o.met) bleed(o, r, ctx, !!+(s.options || {}).noGore);
+        o.hit = r.hit;
+      } // (a duck's hit on Justin: he shakes, blinks, bleeds and "−1 HP" rises over him; not for hits from before I came)
+      o.met = true;
+      const pooled =
+        o.duck && r.a === "dead" && !!r.hit && !+(s.options || {}).noGore;
+      if (!!o.pool !== pooled) {
+        if (pooled) {
+          o.pool = document.createElement("span");
+          o.pool.className = "gduck-pool hang-npc-pool";
+          o.pool.setAttribute("aria-hidden", "true");
+          o.pool.innerHTML = `<svg viewBox="-60 -26 120 52" width="120" height="52">${JUSTIN_POOL}</svg>`;
+          o.el.prepend(o.pool);
+        } else {
+          o.pool.remove();
+          o.pool = null;
+        }
+      } // (knocked down by a hit: a pool of blood spreads under him, as under any duck that died; gone when he's up)
       if (!o.el.hidden || !o.pose) dress(id, o); // (off the screen, its drawing waits till it's seen: draw())
       if (
         r.a === "eat" &&
@@ -467,6 +546,10 @@ activity({
         o.el.style.opacity = o.op.toFixed(3);
       }
       o.el.style.transform = `translate(${pxAt(f.left)}px, ${pxAt(f.top)}px)`;
+      if (o.pool && o.sz !== sc) {
+        o.sz = sc;
+        o.el.style.setProperty("--sz", (DUCK * sc).toFixed(1) + "px");
+      } // (his pool, as wide as a dead duck's: css .gduck-pool)
       o.body.style.transform = `${o.bob ? `translateY(${(-o.bob * sc).toFixed(1)}px) ` : ""}scale(${(o.f < 0 ? -sc : sc).toFixed(4)}, ${sc.toFixed(4)})`;
       if (o.sc !== sc) {
         // (the bubble sits over its head)

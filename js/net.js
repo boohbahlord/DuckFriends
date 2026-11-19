@@ -3,18 +3,13 @@
    A TEST room lives on this device, with computers; this device is the host and runs the rules. Online rooms (online.js,
    Firebase) have the same parts, so the screens never change. */
 import { safeReduce, newRoom } from "./rules.js";
-import { STYLES } from "./styles.js";
-import { OUTFITS } from "./outfits.js";
 import { botActions } from "./bots.js";
+import { botDuck, BOT_DUCKS, PATS, any } from "./botduck.js";
 import { profile, cleanStats } from "./store.js";
-import { HATS } from "./hats.js";
-import { FACES } from "./faces.js";
-import { EYES } from "./eyes.js";
-import { BEAKS } from "./beaks.js";
 import { now } from "./clock.js";
 import { who } from "./who.js";
 import { publicKey } from "./secret.js";
-import { watchKills, isLocked } from "./unlocks.js";
+import { watchKills } from "./unlocks.js";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 export const myPlayer = (id) => ({
@@ -109,50 +104,6 @@ export function createLocalRoom({
 }
 
 /* a computer player: "Computer N", a random duck and card */
-const BOT_DUCKS = [
-  "#ffd23f",
-  "#ff8c2b",
-  "#ef3b3b",
-  "#ff7eb6",
-  "#9b5de5",
-  "#2fa4ff",
-  "#14c6b4",
-  "#8ee03c",
-  "#f4f4f0",
-  "#3b3f4a",
-];
-const PATS = [
-  "none",
-  "none",
-  "dots",
-  "stripes",
-  "stars",
-  "hearts",
-  "checks",
-  "waves",
-];
-const METALS = [
-  "none",
-  "none",
-  "none",
-  "none",
-  "gold",
-  "silver",
-  "bronze",
-  "rose",
-  "chrome",
-];
-const any = (a) => a[Math.floor(Math.random() * a.length)];
-/* now and then a computer is a mallard, an eagle or the like, in that style's colors */
-function botStyle() {
-  if (Math.random() > 0.3) return {};
-  const st = any(STYLES.slice(1).filter((x) => !isLocked("style", x.id))); // (computers never wear what players unlock)
-  return {
-    style: st.id,
-    ...Object.fromEntries((st.colors || []).map(([k, , c]) => [k, c])),
-    ...(st.match ? { beak: st.match } : {}),
-  };
-}
 function botPlayer(s) {
   const used = new Set(s.seat.map((id) => s.players[id].name));
   let n = 1;
@@ -161,38 +112,7 @@ function botPlayer(s) {
     id: "b-" + uid(),
     name: "Computer-" + n,
     bot: true,
-    duck: {
-      color: any(BOT_DUCKS),
-      pattern: any(PATS),
-      patternColor: "#ffffff",
-      metal: any(METALS),
-      image: null,
-      hat:
-        Math.random() < 0.5
-          ? {
-              id: any(HATS.filter((x) => !isLocked("hat", x.id))).id,
-              ketchup: Math.random() < 0.5,
-            }
-          : null,
-      face:
-        Math.random() < 0.25
-          ? { id: any(FACES.filter((x) => !isLocked("face", x.id))).id }
-          : null,
-      eyes: Math.random() < 0.3 ? any(EYES).id : "default",
-      beak: Math.random() < 0.25 ? any(BEAKS).id : "default",
-      build: Math.random() < 0.4 ? any([-1, -0.5, 0.5, 1]) : 0,
-      size: Math.random() < 0.3 ? any([-1, -0.5, 0.5, 1]) : 0,
-      keys: [
-        Math.random() < 0.35
-          ? any(["zap", "flames", "hearts", "poison", "notes", "trombone"])
-          : null,
-      ],
-      outfit:
-        Math.random() < 0.3
-          ? { id: any(OUTFITS.filter((x) => !isLocked("outfit", x.id))).id }
-          : null,
-      ...botStyle(),
-    },
+    duck: botDuck(),
     card: {
       kind: "color",
       color: any(BOT_DUCKS),

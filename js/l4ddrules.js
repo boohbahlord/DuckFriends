@@ -36,6 +36,14 @@
      l4b  { id: { o, at } }: who is boarding up which opening, since when (one more board each BOARD_MS)
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
+import {
+  baseMode,
+  isSb,
+  sbPlayerSpot,
+  SB_BACK_MS,
+  SB_BOXES,
+} from "./sandboxrules.js";
+import { valueOf } from "./numerat.js";
 import { rule, keepOnly } from "./hangout/registry.js";
 import {
   W,
@@ -79,6 +87,7 @@ import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
   woundCode,
+  hitCode,
   knockable,
   pwHit,
   pwAdd,
@@ -116,7 +125,11 @@ import {
 import { ANGEL, angelOf, angelAmmo, angelAct, angelLeft } from "./l4ddangel.js";
 import { fieldOf, askField } from "./flowfield.js";
 
-export const isL4dd = (s) => !!s && s.options.mode === "l4dd";
+/* what Sandbox lends these rules (sbcabin.js): npc(s, by, x, y, now, w, rx, ry, from, hit) puts a shot or a swing at
+   (x, y) into its NPCs standing there (hit: a swing's list, every one in reach once; none: a shot, the first one, true
+   when it landed) */
+export const L4_HOOKS = { npc: null };
+export const isL4dd = (s) => !!s && baseMode(s.options) === "l4dd"; // (and Sandbox on its cabin or Downpour: sandboxrules.js)
 /* I want only the lights' stutter and the air (the wind, the rain, the fires: ambience.js) on of Hangout's activities.
    The couches, the stage, the card table and the piano's keys are still drawn, but quiet: nothing to sit on, sing into
    or play at, and nothing else to write in or switch. */
@@ -195,8 +208,11 @@ const PHASES = Array.from({ length: 20 }, (_, i) => [
   PHASE_BASE.find(([last]) => i + 1 <= last)[1],
 ]);
 const Z_EACH = 100, // the most zombies a round for each player …
-  Z_MOST = 800, // … and in all (was 400)
   Z_LATE = 800; // from round 21 on (was 144)
+export const Z_MOST = 800; // … and in all (was 400)
+/* Sandbox: the most NPCs alive at once on any map, online too. It follows the zombies' cap (the owner's, Nov 19 01:57Z),
+   so the two never drift apart */
+export const NPC_CAP = Z_MOST;
 export function zombiesFor(r, p) {
   const cap = Math.min(Z_EACH * p, Z_MOST);
   let n = 0;
@@ -832,7 +848,10 @@ const LAND = { x0: STAIRS.x0, x1: STAIRS.x1, y0: STAIRS.y0, y1: STAIRS.land };
 /* Downpour: the forest, short of the world's edge (the forest line stops nobody: the owner's, Nov 17 03:34Z). Past the
    fences only the road is open, so zombies there still climb them */
 const inWoods = (x, y) => x >= 70 && x <= W - 70 && y >= 70 && y <= H - 70;
+/* Duck Cabin (Sandbox's zombies there, sbcabin.js): the whole world; only what stands in it stops them (standable) */
+const hangMap = () => layoutVariant() === "";
 export const playable = (x, y) =>
+  (hangMap() && x > 0 && x < W && y > 0 && y < H) ||
   (dp() && (GS.inOpen(x, y) || inWoods(x, y))) ||
   (!dp() && inCabin(x, y)) ||
   inDeck(x, y) ||
@@ -1015,7 +1034,9 @@ export function syncMap() {
   spots = null;
   [GX, GY, GW, GH] = on
     ? [0, 0, Math.ceil(GS.GS_W / CELL), Math.ceil(GS.GS_H / CELL)]
-    : [1280, 580, 82, 52];
+    : hangMap()
+      ? [0, 0, Math.ceil(W / CELL), Math.ceil(H / CELL)]
+      : [1280, 580, 82, 52];
 }
 export const openingById = (id) => {
   syncMap();
@@ -1232,7 +1253,7 @@ const players = (s) => s.seat.filter((id) => s.players[id] && s.pos[id]);
 const P4 = (s, id) => ((s.hang && s.hang.l4p) || {})[id] || null;
 export const isDown = (s, id) => !!(P4(s, id) && P4(s, id).dn);
 export const isGhost4 = (s, id) => !!(P4(s, id) && P4(s, id).gh);
-const standing = (s, id) => {
+export const standing = (s, id) => {
   const p = P4(s, id);
   return !!p && !p.dn && !p.gh;
 };
@@ -1251,11 +1272,12 @@ const room = (ax, ay, bx, by) => Math.hypot((ax - bx) / RX, (ay - by) / RY);
 const zOk = (x, y, z) =>
   playable(x, y) && standable(x, y, z, STEP, null, true) && !onPlatform(x, y); // (Downpour: zombies wade the deep flood, climb the fallen tree)
 /* what a zombie keeps from one heartbeat to the next besides its spot, hp and state (in s.hidden.l4z, the host's only):
-   cm its way up kept to, k the roof it is up, fl its flank and wp its spot round the side, j its jump onto the canopy;
+   cm its way up kept to, k the roof it is up, fl its flank and wp its spot round the side, j its jump onto the canopy
+   and jp the spot it jumps from (jumpOn);
    jc since when it chases Justin, jx till when it lets him be, nj never him (JCHASE). These went missing at every
    heartbeat before, so a zombie forgot its way up the moment it chose it (the owner's, Nov 17 19:11Z: "WHY THE FUCK ARE
    ZOMBIES NOT COMMITTING ON WALL CLIMBS EVEN WHEN IM STILL ON THE SAME FUCKING ROOF!!!") */
-const KEEP = ["cm", "k", "fl", "wp", "j", "jc", "jx", "nj"];
+const KEEP = ["cm", "k", "fl", "wp", "j", "jp", "jc", "jx", "nj", "sp", "dm"]; // (sp, dm: a Sandbox spawn's zombie, its spawn and its damage: sbspawn.js)
 /* the zombies as objects, from the state's three parts, and back (k in zp: hp · 16 + st, st up to 8, the jump) */
 function zombies(s) {
   const zp = s.hang.zp || [],
@@ -1798,6 +1820,7 @@ function setUp(s, now) {
   s.hang.brd = Object.fromEntries(
     OPENINGS.filter((o) => !o.nb).map((o) => [o.id, L4.BOARDS]),
   ); // (Downpour's fences have no boards)
+  delete s.pw; // (every duck starts the game whole: no wounds or head off left from the last one, wounds.js)
   s.hang.l4p = {};
   s.hang.l4a = {};
   s.hang.l4pt = {};
@@ -1875,7 +1898,7 @@ export const waitVotes = (s) => {
 function waitTick(s, now) {
   const L = s.hang.l4,
     w = L.wait;
-  if (!w) return false;
+  if (!w || isSb(s)) return false; // (Sandbox: the rest never ends, so no zombies ever come: sandboxrules.js)
   const v = L.sv;
   if (v && L.r === 0 && now >= v.until) {
     s.hang.l4 = { ...L, sv: null }; // (a vote that ran out: nothing changes)
@@ -1957,7 +1980,7 @@ function l4Act(s, a, now) {
     return true;
   }
   if (a.do === "endturn") {
-    if (L.over || !L.wait || isHelper(s, id)) return false; // (Justin can't end a rest phase: the owner's, Nov 17 13:38Z)
+    if (L.over || !L.wait || isHelper(s, id) || isSb(s)) return false; // (Sandbox: round 0 for good, no End turn) // (Justin can't end a rest phase: the owner's, Nov 17 13:38Z)
     const v = { ...L.wait.v };
     if (a.on === false) delete v[id];
     else v[id] = 1;
@@ -1968,7 +1991,7 @@ function l4Act(s, a, now) {
   if (a.do === "sr") {
     // Change starting round: a vote "Start at round N", the asker's Yes in it
     const n = +a.n;
-    if (!START_ROUNDS.includes(n) || !srCan(s, id)) return false;
+    if (!START_ROUNDS.includes(n) || !srCan(s, id) || isSb(s)) return false;
     s.hang.l4 = {
       ...L,
       sv: { n, by: id, v: { [id]: 1 }, until: now + SR_VOTE_MS },
@@ -2359,6 +2382,11 @@ export function helperOut(s) {
   s.seat = s.seat.filter((t) => t !== id);
   if (s.pos) delete s.pos[id];
   if (s.rainbow) delete s.rainbow[id];
+  if (s.pw && s.pw[id]) {
+    const pw = { ...s.pw };
+    delete pw[id];
+    s.pw = pw;
+  } // (his wounds go with him: a retry's Justin starts whole, his head on. The owner's, Nov 19 01:00Z: "Justin spawned in without his head in a retry of the game")
   if (s.hang)
     for (const k of ["l4p", "l4a", "l4b", "l4f", "l4pt", "l4u", "l4box"])
       if (s.hang[k] && s.hang[k][id] !== undefined) {
@@ -3195,7 +3223,7 @@ function strike(s, z, dmg, head, by, w = "") {
 function wound(s, z, w, head) {
   const zw = s.hang.zw || {},
     had = zw[z.i] || "";
-  const add = head ? (had.includes("x") ? "" : "x0") : woundCode(had, w); // (wounds.js)
+  const add = hitCode(had, w, head); // (wounds.js)
   if (add) s.hang.zw = { ...zw, [z.i]: had + add };
 }
 /* a mark that comes once and stays, past the 6 wounds (owner 2026-11-04 06:44Z): g a grenade's gore, f burnt by fire */
@@ -3721,11 +3749,11 @@ function fireTick(s, zs, now, T, p4) {
 }
 /* a duck takes 1 (a claw, fire); true when that put it down. A claw leaves a wound on it now and then, as hits do in
    every other mode, and it goes away by itself 6 to 12 seconds after the duck is up (wounds.js) */
-function hurtDuck(s, p4, id, now, w = "") {
+function hurtDuck(s, p4, id, now, w = "", dmg = 1) {
   const p = p4[id];
   if (!p || p.dn || p.gh) return false;
   const safe = invuln(s) || invulnOf(s, id, now); // (Invulnerability, or just up from Safe Keeping: it only flashes)
-  const hp = safe ? p.hp : p.hp - 1;
+  const hp = safe ? p.hp : Math.max(0, +(p.hp - dmg).toFixed(1)); // (dmg: 1, or a Sandbox spawn's damage box)
   if (w && !safe) pwHit(s, id, w, now, hp <= 0);
   if (hp > 0) {
     p4[id] = { ...p, hp, at: now };
@@ -3815,8 +3843,21 @@ function getUp(s, id, now, full, safe) {
    walking (the owner's, Nov 17 20:37Z: "WHEN HE TRIES TO DODGE, IT ISNT SOME ANIMATION THAT IS DONE BY MATH, HE SIMPLLY
    TRIES MOVING OUT THE WAY LIKE A PLAYER DOES! ... Justin isnt supposed to be hard for players to kill"). from: the
    shooter's [x, y, feet], for the one rule (nothing solid between: layout.js slabBetween) */
-function wildHurt(s, by, x, y, now, w, rx = 26, ry = 22, from = null) {
+function wildHurt(
+  s,
+  by,
+  x,
+  y,
+  now,
+  w,
+  rx = 26,
+  ry = 22,
+  from = null,
+  npc = true,
+) {
   if (merchantShot(s, by, x, y, now, w, rx, ry, from)) return true; // (the merchant in its way: merchantShot)
+  if (npc && L4_HOOKS.npc && L4_HOOKS.npc(s, by, x, y, now, w, rx, ry, from))
+    return true; // (one of Sandbox's NPCs in its way: sbcabin.js)
   const id = WILD.id,
     p = s.pos[id],
     q = P4(s, id);
@@ -3920,9 +3961,11 @@ function meleeHits(s, now) {
         inCabin(qx, qy) ? 1 : 0,
       ); // (shove counts in those duck lengths: this way it goes `far` world px whichever way)
     }
+    if (L4_HOOKS.npc)
+      L4_HOOKS.npc(s, k.by, bx, by, now, k.w, A.r + 22, A.r + 22, null, k.hit); // (Sandbox's NPCs in its bubble, each once a swing: sbcabin.js)
     if (
       !k.hit.includes("j") &&
-      wildHurt(s, k.by, bx, by, now, k.w, A.r + 22, A.r + 22)
+      wildHurt(s, k.by, bx, by, now, k.w, A.r + 22, A.r + 22, null, false)
     )
       k.hit.push("j"); // (Justin out in Downpour, once for each swing)
   }
@@ -4375,7 +4418,7 @@ function l4Tick(s, now) {
     return true;
   }
   meleeHits(s, now); // (first: the zombies below are read after it)
-  const T = now - L.t0,
+  const T = now - (isSb(s) && L.t0 == null ? 0 : L.t0), // (Sandbox: no round started, its zombies still claw)
     zs = zombies(s);
   /* the ducks: HP coming back, revives, bleeding out, boards going up, reloads */
   const p4 = { ...(s.hang.l4p || {}) },
@@ -4432,6 +4475,17 @@ function l4Tick(s, now) {
       p4[id] = p;
       continue;
     }
+    if (p.gh && isSb(s) && now - (p.at || 0) >= SB_BACK_MS) {
+      s.hang.l4p = p4;
+      bringBack(s, id, now, ids.indexOf(id), false);
+      p4[id] = s.hang.l4p[id];
+      const q = sbPlayerSpot(s, id, W, H, (x, y, z) =>
+        standable(x * W, y * H, z),
+      ); // (at a respawn for players, a spawn whose Players tab is on, or in a zone: sandboxrules.js)
+      if (q && s.pos[id])
+        s.pos[id] = { ...s.pos[id], x: q.x, y: q.y, z: q.z || 0 };
+      continue;
+    } // (Sandbox: no next round to wait for, so a ghost is back up a moment later, at a start spot, with its weapons)
     if (p.gh) continue;
     if (
       p.hp < maxHp(s, id) &&
@@ -4494,14 +4548,14 @@ function l4Tick(s, now) {
   /* nobody standing: the game is over (a duck Safe Keeping is getting up counts as standing) */
   const mine = ids.filter((id) => !isWild(s, id)), // (Justin out there doesn't keep the game going, nor end it)
     up = mine.filter((id) => standing(s, id) || !!(P4(s, id) || {}).skAt);
-  if (!up.length && mine.length) {
+  if (!up.length && mine.length && !isSb(s)) {
     s.hang.l4 = { ...s.hang.l4, over: { at: now, r: L.r } };
     s.hang.l4b = {};
     return true;
   }
   merchantTick(s, now); // (the merchant walks in or out, and greets)
   /* between rounds: no zombies; the drops still lie there to be taken */
-  if (s.hang.l4.wait) {
+  if (s.hang.l4.wait && !isSb(s)) {
     if (waitTick(s, now)) return true;
     const Lw = { ...s.hang.l4 };
     dropTick(s, Lw, zs, now, T, ids);
@@ -4514,7 +4568,7 @@ function l4Tick(s, now) {
     live = zs.filter((z) => z.st !== 3).length,
     extra = Math.max(0, ids.length - 1),
     L2 = { ...s.hang.l4 };
-  if (T >= 0 && L2.made + L2.owe < L2.n) {
+  if (T >= 0 && !isSb(s) && L2.made + L2.owe < L2.n) {
     const sec = Math.floor(T / 1000);
     if (sec > L2.sec) {
       L2.sec = sec;
@@ -4564,7 +4618,7 @@ function l4Tick(s, now) {
     bodies = left.filter((z) => z.st === 3 && nuked(s, z)); // (the Nuke's: they don't hold up the next round)
   if (s.hang.l4nk && s.hang.l4nk.ids && !bodies.length) s.hang.l4nk = null; // (the last of them gone)
   /* every zombie of the round came and died: the next round, and the ghosts come back */
-  if (L2.made >= L2.n && left.length === bodies.length && T >= 0) {
+  if (L2.made >= L2.n && left.length === bodies.length && T >= 0 && !isSb(s)) {
     s.hang.l4 = { ...L2, wait: { r: L2.r + 1, v: {} } }; // (the next round waits for End turn)
     store(s, bodies, false);
     merchantCome(s, now); // (the rest before the next round: half the time)
@@ -4666,6 +4720,60 @@ function newZombie(s, L, T, zs = []) {
       : [max, v, o.id, size, build, hat, outfit],
   };
 }
+/* Sandbox: a zombie made at a spawn (sbspawn.js), at (x, y) in shares of the map, already inside and after the ducks
+   (st 2), with its spawn's HP, speed (a share of a zombie's own) and damage; its number, or 0 when the map has no room.
+   l: its look as newZombie makes it, its opening the nearest one (it never needs it inside) */
+export function l4Spawn(s, x, y, o = {}) {
+  const L = s.hang.l4;
+  if (!L) return 0;
+  syncMap();
+  const [wx, wy] = [x * W, y * H],
+    op = [...OPENINGS].sort(
+      (a, b) =>
+        Math.hypot(a.in[0] - wx, a.in[1] - wy) -
+        Math.hypot(b.in[0] - wx, b.in[1] - wy),
+    )[0],
+    R = roundOf(1),
+    i = L.next || 1,
+    dress = Math.random() < 0.2 ? Math.random() : -1,
+    odd = Math.random() < 0.25,
+    size = odd && Math.random() < 0.5 ? +rnd(-1, 1).toFixed(2) : 0,
+    max = Math.max(1, Math.round(o.hp || hp0())),
+    v = Math.round(WALK * Z_SLOW * ((R[1][0] + R[1][1]) / 2) * (o.speed || 1));
+  s.hang.l4 = { ...L, next: i + 1 };
+  const zs = zombies(s);
+  zs.push({
+    i,
+    x: wx,
+    y: wy,
+    hp: max,
+    st: 2,
+    a: -1e6,
+    n: 0,
+    d: 0,
+    dir: 0,
+    ...(o.sp ? { sp: o.sp } : {}),
+    ...(o.dm ? { dm: o.dm } : {}),
+    l: [
+      max,
+      v,
+      op ? op.id : 0,
+      size,
+      odd && !size ? +rnd(-1, 1).toFixed(2) : 0,
+      dress >= 0 && dress < 0.6 ? rint(0, ZHATS.length - 1) : -1,
+      dress >= 0.4 ? rint(0, ZOUTFITS.length - 1) : -1,
+    ],
+  });
+  store(s, zs, false);
+  return i;
+}
+/* Sandbox: the zombies standing now, each { i, x, y (shares of the map), sp (its spawn) } */
+export const l4Live = (s) =>
+  s.hang && s.hang.zp
+    ? zombies(s)
+        .filter((z) => z.st !== 3)
+        .map((z) => ({ i: z.i, x: z.x / W, y: z.y / H, sp: z.sp }))
+    : [];
 function moveZombies(s, zs, now, T, up) {
   const R = roundOf(s.hang.l4.r),
     tk = (s.hidden && s.hidden.l4tk) || now - 200,
@@ -4982,7 +5090,14 @@ function moveZombies(s, zs, now, T, up) {
             pls.splice(pls.indexOf(target), 1); // (the merchant: a swipe takes 1, and no line)
         } else if (
           !dodging(s, target.p, now) &&
-          hurtDuck(s, p4, target.id, now, "claw")
+          hurtDuck(
+            s,
+            p4,
+            target.id,
+            now,
+            "claw",
+            z.dm ? valueOf({ ok: z.dm }, SB_BOXES.damage) || 1 : 1,
+          )
         )
           pls.splice(pls.indexOf(target), 1);
       }
@@ -5077,7 +5192,10 @@ function flankSpot(z, q) {
    most near by gas station wall before getting on the roof and doing a jump animation for this") ----------
    A duck on the canopy: a zombie climbs the gas station's wall nearest it, walks the roof to its south edge over the
    canopy, and jumps across (st 8: z.j [x0, y0, x1, y1, h0, h1], an arc JUMP.arc high), 1 time in 20 short of it, down
-   to the ground (JUMP.fail) */
+   to the ground (JUMP.fail). It picks its spot on the roof's edge once (z.jp [x, the duck]) and keeps it till it jumps,
+   or till that duck leaves the canopy (the owner's, Nov 19 01:00Z: "zombies should pick a part to jump onto the gas
+   pump from and commit, not going left and right over and over until the player stands still because that is ripe
+   for exploit") */
 const JUMP = { speed: 300, arc: 40, fail: 0.05, in: 30 };
 function jumpOn(z, pls, far) {
   const C = canopyDeck(),
@@ -5086,13 +5204,24 @@ function jumpOn(z, pls, far) {
   for (const p of pls)
     if (p.dk === C && (!q || room(z.x, z.y, ...p.xy) < room(z.x, z.y, ...q.xy)))
       q = p;
-  if (!q) return false;
-  const x = Math.min(
-      Math.max(q.xy[0], Math.max(C.x0, S.x0) + JUMP.in),
-      Math.min(C.x1, S.x1) - JUMP.in,
-    ),
+  if (!q) {
+    delete z.jp;
+    return false;
+  }
+  if (!z.jp || !pls.some((p) => p.dk === C && p.id === z.jp[1]))
+    z.jp = [
+      Math.round(
+        Math.min(
+          Math.max(q.xy[0], Math.max(C.x0, S.x0) + JUMP.in),
+          Math.min(C.x1, S.x1) - JUMP.in,
+        ),
+      ),
+      q.id,
+    ]; // (its spot, picked once: kept while its duck stays on the canopy)
+  const x = z.jp[0],
     y = S.y1 - 10;
   if (!walkTo(z, x, y, far)) return true;
+  delete z.jp;
   const fell = Math.random() < JUMP.fail,
     y1 = fell ? (S.y1 + C.y0) / 2 : C.y0 + JUMP.in;
   z.st = 8;
@@ -5324,6 +5453,32 @@ export function wayTo(x, y, tx, ty, now) {
   if (c < 0) return null;
   return heading(flowFrom([c]), x, y); // (flowFrom keeps the fields it made)
 }
+/* ---------- for Sandbox's zombies on Duck Cabin (sbcabin.js): the same way to the ducks, the same steps ----------
+   One way for every map (the owner's, through Adam, Nov 19: no walking routes drawn by hand): the flow field over the
+   map's own solids, and stepZombie's turns round what's in the way */
+/* the walking distance to the nearest of goals ([x, y] in world px), worked out as the chase's is */
+export const chaseField = (goals) =>
+  flowFrom(
+    goals.map(([x, y]) => openNear(x, y)),
+    true,
+  );
+/* one zombie z ({ x, y } in world px) walks far px toward goal [x, y]: straight at it once nothing is in between,
+   else down the field. ducks: [{ xy, zz }], the ones it never walks into */
+export function chaseStep(z, dist, goal, far, ducks = []) {
+  const aim =
+    (Math.hypot(goal[0] - z.x, goal[1] - z.y) < 240 &&
+      walkable(z.x, z.y, ...goal) &&
+      goal) ||
+    (dist && heading(dist, z.x, z.y)) ||
+    goal;
+  stepZombie(z, aim, far, ducks);
+}
+/* a zombie's walk in world px a second at round 1, before its spawn's speed box */
+export const zWalk = () => {
+  const R = roundOf(1);
+  return WALK * Z_SLOW * ((R[1][0] + R[1][1]) / 2);
+};
+export const Z_ROOM = { RX, RY, CLAW };
 /* can a shot from (x0, y0) reach (x1, y1)? (no wall or furniture in between, at height z) */
 export function clearShot(x0, y0, x1, y1, z = 0) {
   const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 16));
@@ -5360,3 +5515,60 @@ export const l4Down = (s, id) => {
   const p = P4(s, id);
   return p && p.dn && !p.ex ? p.dn : 0; // (Justin dead for good: no down meter, the owner's, Nov 17 13:30Z)
 };
+
+/* ---------- Sandbox's loot orbs on these maps (sbloot.js) ----------
+   a weapon taken from an orb goes into duck id's slots as one bought or spun does (give), full; inf: unlimited ammo (as
+   much as never runs out in a sitting); and an orb's damage on the duck that takes it (as a claw does) */
+export function l4Loot(s, id, w, inf) {
+  if (!ARMS[w] || !give(s, id, w)) return false;
+  const kit = kitOf(s, id),
+    full = fullAmmo(w);
+  if (inf && kit && full)
+    s.hang.l4a = {
+      ...s.hang.l4a,
+      [id]: { ...kit, am: { ...kit.am, [w]: [full[0], 9999] } },
+    };
+  return true;
+}
+export function l4Hurt(s, id, dmg, now, w = "claw") {
+  const p4 = { ...(s.hang.l4p || {}) };
+  hurtDuck(s, p4, id, now, w, dmg);
+  s.hang.l4p = p4;
+}
+/* Sandbox's zones (sbzone.js): a duck up gets amt HP back, up to its most */
+export function l4Heal(s, id, amt) {
+  const p = (s.hang.l4p || {})[id],
+    max = maxHp(s, id);
+  if (!p || p.dn || p.gh || p.hp >= max) return false;
+  s.hang.l4p = {
+    ...s.hang.l4p,
+    [id]: { ...p, hp: Math.min(max, +(p.hp + amt).toFixed(1)) },
+  };
+  return true;
+}
+/* Sandbox's zones: each zombie standing where on({ x, y: shares of the map, z: the ground's height there, sp }) says
+   loses amt HP ("damage", whole HP, at least 1), gets it back ("heal", up to its most) or dies ("kill") */
+export function l4Zone(s, on, fx, amt, now) {
+  if (!s.hang || !s.hang.zp) return false;
+  const zs = zombies(s);
+  let any = false;
+  for (const z of zs) {
+    if (
+      z.st === 3 ||
+      !on({ x: z.x / W, y: z.y / H, z: heightAt(z.x, z.y), sp: z.sp })
+    )
+      continue;
+    const hp =
+      fx === "heal"
+        ? Math.min(z.l[0], z.hp + Math.max(1, Math.round(amt)))
+        : fx === "kill"
+          ? 0
+          : Math.max(0, z.hp - Math.max(1, Math.round(amt)));
+    if (hp === z.hp) continue;
+    z.hp = hp;
+    if (hp <= 0) die(z, now);
+    any = true;
+  }
+  if (any) store(s, zs, true);
+  return any;
+}

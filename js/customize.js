@@ -6,7 +6,16 @@
    Name, Card and Colors. Each opens a grid of small picture tiles, three to a row; Colors opens the list of what can be
    colored beside a grid of swatches. Every change shows at once, is kept, and goes to the room you are in. */
 import { profile, save, NAME_OK, cleanName, cleanStats } from "./store.js";
-import { openWindow, esc, toast, onMenu, el, navSig, refocus } from "./ui.js";
+import {
+  openWindow,
+  confirmBox,
+  esc,
+  toast,
+  onMenu,
+  el,
+  navSig,
+  refocus,
+} from "./ui.js";
 import {
   SPECIALS,
   KEYS,
@@ -60,6 +69,81 @@ import { jetHTML } from "./jetpack.js";
 import { ROUNDS_ART, TRACE } from "./l4ddguns.js";
 import { GUNS_NEW, AUTO } from "./rules.js";
 import { pxWords } from "./pxtext.js";
+import { botDuck, BOT_DUCKS, any } from "./botduck.js";
+import { weaponName } from "./l4ddrules.js";
+import { NPC_GUNS, NPC_MELEE } from "./sbarms.js";
+import { npcSave, npcDel, npcList, npcName } from "./sbnpcs.js";
+import { SB_WHAT, SB_ACTS } from "./sandboxrules.js";
+
+/* ---------- making an NPC (Sandbox's m window, sbnpcs.js) ----------
+   The same menu dresses one of my NPCs instead of my duck: NPC is the one open (null: my own duck). It has no card, no
+   font and no specials, and two pages of its own at the bottom: its weapons and its behavior */
+let NPC = null;
+const duckNow = () => (NPC ? NPC.duck : profile.duck);
+/* a duck page's own "Randomize …" (the owner's file: "randomize hats" or "randomize styles") */
+const RAND_OF = {
+  hat: "Randomize hats",
+  face: "Randomize faces",
+  eyes: "Randomize eyes",
+  beak: "Randomize beaks",
+  outfit: "Randomize outfits",
+  body: "Randomize body",
+  style: "Randomize styles",
+  skin: "Randomize skins",
+  colors: "Randomize colors",
+};
+const free = (kind, id) => !isLocked(kind, id) || unlocked(kind, id); // (never something still locked)
+const coin = (p) => Math.random() < p;
+/* a random pick for one page of look D (all of them: a whole random duck, as a computer's: botduck.js) */
+function randomize(D, k) {
+  if (k === "all") {
+    const keep = { keys: D.keys };
+    for (const f of Object.keys(D)) delete D[f];
+    Object.assign(D, botDuck(), keep);
+    return;
+  }
+  if (k === "hat") {
+    const h = HATS.filter((x) => free("hat", x.id));
+    D.hat = coin(0.8) && h.length ? { id: any(h).id } : null;
+  } else if (k === "face") {
+    const f = FACES.filter((x) => free("face", x.id));
+    D.face = coin(0.6) && f.length ? { id: any(f).id } : null;
+  } else if (k === "eyes")
+    D.eyes = any(EYES.filter((x) => free("eyes", x.id))).id;
+  else if (k === "beak") D.beak = any(BEAKS).id;
+  else if (k === "outfit") {
+    const o = OUTFITS.filter((x) => free("outfit", x.id));
+    D.outfit = coin(0.7) && o.length ? { id: any(o).id } : null;
+  } else if (k === "body") {
+    D.build = any(BUILDS)[0];
+    D.size = any(SIZES)[0];
+  } else if (k === "style") {
+    const st = any(STYLES.filter((x) => free("style", x.id)));
+    if (st.pages && !boxed(D.style)) D.prevStyle = D.style;
+    D.style = st.id;
+  } else if (k === "skin") {
+    D.image = null;
+    if (coin(0.3)) {
+      const m = DUCK_METALS.slice(1).filter(([v]) => free("skin", "m:" + v));
+      D.metal = m.length ? any(m)[0] : "none";
+    } else {
+      D.metal = "none";
+      D.pattern = any(DUCK_PATTERNS)[0];
+    }
+  } else if (k === "colors") {
+    const hex = () =>
+      "#" +
+      Array.from({ length: 3 }, () =>
+        Math.floor(Math.random() * 256)
+          .toString(16)
+          .padStart(2, "0"),
+      ).join("");
+    D.color = coin(0.5) ? any(BOT_DUCKS) : hex();
+    D.patternColor = hex();
+    D.metal = "none";
+    D.image = null;
+  }
+}
 
 /* sends your look to the room you are in */
 export function shareLook() {
@@ -93,7 +177,7 @@ const ROUND_OF = { dbarrel: "slug" };
    show the duck he'd go back to, and picking one turns him back */
 const DUCK_PAGES = ["hat", "face", "eyes", "beak", "outfit", "body", "skin"];
 const offJack = (k) => {
-  const st = styleById(profile.duck.style);
+  const st = styleById(duckNow().style);
   return !!(st && st.pages && DUCK_PAGES.includes(k) && !st.pages.includes(k));
 };
 /* Dat Boi's ranks, in the order they open (unlocks.js) */
@@ -120,7 +204,7 @@ const boxed = (id) => !!styleById(id).pages; // (Jack in a Box or Dat Boi)
 const styleLabel = (D) =>
   D.style === "jack" && D.jill ? "Jill in a Box" : styleById(D.style).name;
 /* the menu, top to bottom as on the duck; then the rest below a line */
-const ROWS = [
+const ROWS_ME = [
   ["hat", "Hat"],
   ["face", "Face"],
   ["eyes", "Eyes"],
@@ -135,6 +219,18 @@ const ROWS = [
   ["specials", "Specials"],
   ["colors", "Colors"],
 ];
+/* an NPC's: its look, then its name and colors, then its weapons and behavior at the bottom (the owner's file) */
+const ROWS_NPC = [
+  ...ROWS_ME.slice(0, 9),
+  ["name", "Name"],
+  ["colors", "Colors"],
+  null,
+  ["weapons", "Weapons"],
+  ["behavior", "Behavior"],
+];
+const rows = () => (NPC ? ROWS_NPC : ROWS_ME);
+const randBtn = (k) =>
+  `<p class="arm-rand"><button type="button" class="btn small" data-a="rand" data-v="${k}">${k === "all" ? "Randomize appearance" : RAND_OF[k]}</button></p>`;
 const nameOf = (list, v, none = "None") => {
   const f = list.find((x) => x[0] === v);
   return f ? f[1] : none;
@@ -159,7 +255,7 @@ const headPic = (look) =>
     'viewBox="54 9 77 58" width="64" height="48" style="overflow:hidden"',
   );
 const valueOf = (k) => {
-  const D = profile.duck,
+  const D = duckNow(),
     C = profile.card;
   return {
     hat: D.hat && hatById(D.hat.id) ? hatById(D.hat.id).name : "None",
@@ -180,7 +276,9 @@ const valueOf = (k) => {
           : D.metal !== "none"
             ? nameOf([...DUCK_METALS, RAINBOW_SKIN], D.metal)
             : nameOf(DUCK_PATTERNS, D.pattern, "Plain"),
-    name: profile.name,
+    name: NPC ? NPC.name : profile.name,
+    weapons: NPC ? armsLine(NPC.w) : "",
+    behavior: NPC ? behLine(NPC.beh) : "",
     card: C.image ? "Your picture" : nameOf(CARD_PATTERNS, C.pattern, "Plain"),
     specials: ((k) =>
       k.length === 1
@@ -190,6 +288,33 @@ const valueOf = (k) => {
           : "None")(keysOf(D).filter(Boolean)),
     colors: "",
   }[k];
+};
+/* an NPC's weapons and behavior in a few words, for the menu */
+const armsLine = (w) =>
+  [...w.p, w.m]
+    .filter(Boolean)
+    .map(weaponName)
+    .concat(w.sw ? ["Swipe"] : [])
+    .join(", ") || "None";
+const behLine = (b) =>
+  b.target ? `Targets ${behWords(b.target)}` : "Targets nothing";
+/* the behavior lists' choices: Players, Everything, each kind that spawns, and each NPC I made ("c:" its id) */
+const behChoices = () => [
+  ["players", "Players"],
+  ["everything", "Everything"],
+  ...Object.entries(SB_WHAT),
+  ...npcList().map((n) => ["c:" + n.id, n.name]),
+];
+const behWords = (t) => {
+  const on = String(t || "")
+    .toLowerCase()
+    .split(/[\s,]+/);
+  return (
+    behChoices()
+      .filter(([v]) => on.includes(v))
+      .map(([, n]) => n)
+      .join(", ") || "nothing"
+  );
 };
 /* a grid of picture tiles, three to a row */
 /* a locked tile (unlocks.js): a padlock at its top left, faded and its hint as its tip; picked, it only shows on the
@@ -259,14 +384,17 @@ let lastPage = null,
   unkeying = false; // the Specials page's Remove from hotbar is on: a special tapped comes off its key
 const openFolds = new Set();
 
-export function openCustomize(page = lastPage) {
+/* opts.npc: one of my NPCs (sbnpcs.js) to dress instead of my duck (Sandbox's m window); the promise ends when it shuts */
+export function openCustomize(page = lastPage, opts = {}) {
   loadSounds("game"); // (the specials' previews: each gun's own sound)
   if (page === "duck") page = null; // (the old tab name)
+  NPC = opts.npc || null;
+  if (NPC && !ROWS_NPC.some((r) => r && r[0] === page)) page = null;
   return openWindow(
-    `<div class="armory"><div class="arm-menu"></div><div class="arm-stage" data-nonav><div class="arm-duck"></div><div class="arm-card"></div><p class="hints arm-keys">${NAV_HINTS}</p></div></div>`,
+    `<div class="armory${NPC ? " arm-npc" : ""}"><div class="arm-menu"></div><div class="arm-stage" data-nonav><div class="arm-duck"></div><div class="arm-card"${NPC ? " hidden" : ""}></div><p class="hints arm-keys">${NAV_HINTS}</p></div></div>`,
     {
       cls: "win-armory win-full",
-      onOpen(w) {
+      onOpen(w, close) {
         openFolds.clear();
         keyFor = null;
         unkeying = false;
@@ -277,14 +405,14 @@ export function openCustomize(page = lastPage) {
         const me = () => ({
           id: "me",
           name: profile.name,
-          duck: profile.duck,
+          duck: duckNow(),
           card: profile.card,
           nameStyle: profile.nameStyle,
         });
         /* the big duck; while an effect's color is being picked, the effect plays around its head */
         const stage = () => {
           const sp = colorSpecial(),
-            D = profile.duck,
+            D = duckNow(),
             look = !peek
               ? D
               : peek.kind === "style"
@@ -306,8 +434,8 @@ export function openCustomize(page = lastPage) {
                           ? peek.id
                           : { id: peek.id },
                     }; // (the eyes and Dat Boi's rank are kept as their id alone)
-          duckBox.innerHTML = `<span class="arm-pic">${duckSVG(look, { size: 220, title: profile.name })}${sp && sp.kind === "effect" ? `<span class="sp-fx">${momentHTML(sp.id, profile.duck)}</span>` : ""}</span>`; // (effects sit on the duck, not on the whole panel)
-          cardBox.innerHTML = cardHTML(me(), { size: 52 });
+          duckBox.innerHTML = `<span class="arm-pic">${duckSVG(look, { size: 220, title: NPC ? NPC.name : profile.name })}${sp && sp.kind === "effect" ? `<span class="sp-fx">${momentHTML(sp.id, duckNow())}</span>` : ""}</span>`; // (effects sit on the duck, not on the whole panel)
+          if (!NPC) cardBox.innerHTML = cardHTML(me(), { size: 52 });
         };
         const colorSpecial = () =>
           lastPage === "colors" && lastColor.startsWith("sp-")
@@ -334,7 +462,7 @@ export function openCustomize(page = lastPage) {
           if (id === "jetpack") {
             pic.querySelectorAll(".gduck-jet").forEach((e) => e.remove());
             pic.style.setProperty("--sz", w.width.toFixed(0) + "px");
-            pic.insertAdjacentHTML("afterbegin", jetHTML(profile.duck));
+            pic.insertAdjacentHTML("afterbegin", jetHTML(duckNow()));
             duckBox.classList.remove("fly");
             void duckBox.offsetWidth;
             duckBox.classList.add("fly");
@@ -347,7 +475,7 @@ export function openCustomize(page = lastPage) {
           if (sp.kind === "effect") {
             pic.querySelectorAll(".sp-prev-fx").forEach((e) => e.remove());
             const fx = el(
-              `<span class="sp-fx sp-prev-fx">${momentHTML(id, profile.duck)}</span>`,
+              `<span class="sp-fx sp-prev-fx">${momentHTML(id, duckNow())}</span>`,
             );
             pic.append(fx);
             setTimeout(() => fx.remove(), 5000);
@@ -370,7 +498,7 @@ export function openCustomize(page = lastPage) {
                     x,
                     y - w.width * 0.42,
                     w.width,
-                    colorsOf(profile.duck, "double")[0],
+                    colorsOf(duckNow(), "double")[0],
                   ),
                 );
                 pic.append(pf);
@@ -383,26 +511,26 @@ export function openCustomize(page = lastPage) {
               confettiRain(3500);
               return;
             }
-            const els = pressFX(id, x, y, w.width, 1, profile.duck);
+            const els = pressFX(id, x, y, w.width, 1, duckNow());
             /* the handgun: its slow bullet crosses the whole preview */
             if (id === "handgun")
               els.push(
                 el(
-                  `<div class="spe spe-shot" style="left:${(x + w.width * 0.62).toFixed(0)}px;top:${(y - w.width * 0.48).toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - x + 40)}px">${BULLET(colorsOf(profile.duck, "handgun")[2])}</div>`,
+                  `<div class="spe spe-shot" style="left:${(x + w.width * 0.62).toFixed(0)}px;top:${(y - w.width * 0.48).toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - x + 40)}px">${BULLET(colorsOf(duckNow(), "handgun")[2])}</div>`,
                 ),
               );
             /* the dagger: thrown from the beak, it spins up and over and falls away */
             if (id === "dagger")
               els.push(
                 el(
-                  `<div class="spe spe-dthrow" style="left:${(x + w.width * 0.4).toFixed(0)}px;top:${(y - w.width * 0.55).toFixed(0)}px;--s:${w.width.toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - x)}px"><b><i>${daggerHTML(profile.duck)}</i></b></div>`,
+                  `<div class="spe spe-dthrow" style="left:${(x + w.width * 0.4).toFixed(0)}px;top:${(y - w.width * 0.55).toFixed(0)}px;--s:${w.width.toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - x)}px"><b><i>${daggerHTML(duckNow())}</i></b></div>`,
                 ),
               );
             /* the grenade: thrown from the hand like the dagger, tumbling slower */
             if (id === "grenade")
               els.push(
                 el(
-                  `<div class="spe spe-dthrow spe-gthrow" style="left:${(x + w.width * 0.4).toFixed(0)}px;top:${(y - w.width * 0.55).toFixed(0)}px;--s:${w.width.toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - x)}px"><b><i>${heldHTML("grenade", profile.duck)}</i></b></div>`,
+                  `<div class="spe spe-dthrow spe-gthrow" style="left:${(x + w.width * 0.4).toFixed(0)}px;top:${(y - w.width * 0.55).toFixed(0)}px;--s:${w.width.toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - x)}px"><b><i>${heldHTML("grenade", duckNow())}</i></b></div>`,
                 ),
               );
             /* the bow: drawn back in the hand, then its arrow flies across the preview */
@@ -451,7 +579,7 @@ export function openCustomize(page = lastPage) {
             )
               els.push(
                 el(
-                  `<div class="held spe-wield" data-w="${id}" style="left:${x.toFixed(0)}px;top:${(y - w.width * 0.45).toFixed(0)}px;--s:${w.width.toFixed(0)}px"><i>${heldHTML(id, profile.duck)}</i></div>`,
+                  `<div class="held spe-wield" data-w="${id}" style="left:${x.toFixed(0)}px;top:${(y - w.width * 0.45).toFixed(0)}px;--s:${w.width.toFixed(0)}px"><i>${heldHTML(id, duckNow())}</i></div>`,
                 ),
               );
             /* Quacky Zombies' guns: in the duck's hand with a kick, and their bullets (three for the ones that fire while the
@@ -459,7 +587,7 @@ export function openCustomize(page = lastPage) {
             if (GUNS_NEW.includes(id)) {
               els.push(
                 el(
-                  `<div class="held spe-wield spe-gun" data-w="${id}" style="left:${x.toFixed(0)}px;top:${(y - w.width * 0.45).toFixed(0)}px;--s:${w.width.toFixed(0)}px"><i>${heldHTML(id, profile.duck)}</i></div>`,
+                  `<div class="held spe-wield spe-gun" data-w="${id}" style="left:${x.toFixed(0)}px;top:${(y - w.width * 0.45).toFixed(0)}px;--s:${w.width.toFixed(0)}px"><i>${heldHTML(id, duckNow())}</i></div>`,
                 ),
               );
               const far = Math.round(
@@ -476,7 +604,7 @@ export function openCustomize(page = lastPage) {
               else if (id === "glauncher")
                 els.push(
                   el(
-                    `<div class="spe spe-shot spe-lgren" style="left:${sx}px;top:${sy}px;--s:${w.width.toFixed(0)}px;--dx:${far}px">${GRENADE(colorsOf(profile.duck, "grenade"), false)}</div>`,
+                    `<div class="spe spe-shot spe-lgren" style="left:${sx}px;top:${sy}px;--s:${w.width.toFixed(0)}px;--dx:${far}px">${GRENADE(colorsOf(duckNow(), "grenade"), false)}</div>`,
                   ),
                 );
               else if (ROUNDS_ART[ROUND_OF[id] || id])
@@ -537,9 +665,10 @@ export function openCustomize(page = lastPage) {
           }
         };
         const changed = (redraw = true) => {
-          save();
+          if (NPC) npcSave();
+          else save();
           stage();
-          shareLook();
+          if (!NPC) shareLook();
           if (redraw) show(lastPage, true);
           const sp = colorSpecial();
           if (sp && sp.kind !== "effect") {
@@ -563,15 +692,70 @@ export function openCustomize(page = lastPage) {
           if (!keep) stage(); // (the Specials page shows the special on the big duck)
           /* Jack in a Box takes only the pages his style lists; on the others the tiles show the duck he'd turn back into */
           const D = offJack(k)
-              ? { ...profile.duck, style: profile.duck.prevStyle || "rubber" }
-              : profile.duck,
+              ? { ...duckNow(), style: duckNow().prevStyle || "rubber" }
+              : duckNow(),
             C = profile.card,
             N = profile.nameStyle;
           let html = "";
           if (!k) {
             html =
-              head("Customize") +
-              `<div class="arm-body"><ul class="arm-list">${ROWS.map((r) => (r ? `<li><button type="button" class="arm-row" data-p="${r[0]}"><span>${esc(r[1])}…</span><span class="val">${esc(valueOf(r[0]) || "")}</span></button></li>` : '<li class="arm-line" aria-hidden="true"></li>')).join("")}</ul></div>`;
+              head(NPC ? "Make an NPC" : "Customize") +
+              `<div class="arm-body">${NPC ? randBtn("all") : ""}<ul class="arm-list">${rows()
+                .map((r) =>
+                  r
+                    ? `<li><button type="button" class="arm-row" data-p="${r[0]}"><span>${esc(r[1])}…</span><span class="val">${esc(valueOf(r[0]) || "")}</span></button></li>`
+                    : '<li class="arm-line" aria-hidden="true"></li>',
+                )
+                .join(
+                  "",
+                )}</ul>${NPC ? '<p class="arm-rand"><button type="button" class="btn ghost small" data-a="npcdel">Delete this NPC</button></p>' : ""}</div>`;
+          } else if (k === "name" && NPC) {
+            html =
+              head("Name") +
+              `<div class="arm-body"><div class="row"><input class="cz-name cz-npc" maxlength="20" value="${esc(NPC.name)}" spellcheck="false" aria-label="Name"></div>
+            <p class="small dim">Shown over it, and how its spawns list it.</p></div>`;
+          } else if (k === "weapons") {
+            const tile = (w) => [
+              w,
+              `<span class="sp-icon">${specialById(w) ? specialById(w).icon : ""}</span>`,
+              weaponName(w),
+            ];
+            const none = ["none", '<span class="sp-icon">∅</span>', "None"],
+              W = NPC.w;
+            html =
+              head("Weapons") +
+              `<div class="arm-body arm-weapons"><h3>Primary 1</h3>${grid("np0", [none, ...NPC_GUNS.map(tile)], W.p[0] || "none")}
+            <h3>Primary 2</h3>${grid("np1", [none, ...NPC_GUNS.map(tile)], W.p[1] || "none")}
+            <h3>Melee</h3>${grid("nmel", [none, ...NPC_MELEE.map(tile)], W.m || "none")}
+            <h3>Zombie swipe</h3><div class="row small-tiles">${[
+              [1, "On"],
+              [0, "Off"],
+            ]
+              .map(
+                ([v, n]) =>
+                  `<button type="button" class="tile" data-g="nsw" data-v="${v}" aria-pressed="${+!!W.sw === v}">${n}</button>`,
+              )
+              .join("")}</div>
+            <p class="small dim">Its ammo never runs out, but it reloads. Up close it uses its melee weapon or its swipe.</p></div>`;
+          } else if (k === "behavior") {
+            const B = NPC.beh;
+            html =
+              head("Behavior") +
+              `<div class="arm-body arm-beh">${Object.entries(SB_ACTS)
+                .map(([f, label]) => {
+                  const on = String(B[f] || "")
+                    .toLowerCase()
+                    .split(/[\s,]+/);
+                  return `<div class="sb-row"><span>${esc(label)}</span><details class="sb-acts" data-beh="${f}"><summary>${esc(behWords(B[f]).replace(/^n/, "N"))}</summary><span class="sb-what">${behChoices()
+                    .filter(([v]) => v !== "c:" + NPC.id || f !== "protect")
+                    .map(
+                      ([v, n]) =>
+                        `<label><input type="checkbox" value="${esc(v)}" data-label="${esc(n)}"${on.includes(v) ? " checked" : ""}> ${esc(n)}</label>`,
+                    )
+                    .join("")}</span></details></div>`;
+                })
+                .join("")}
+            <p class="small dim">Its spawns use these unless they set their own. It fights back at whatever hurts it.</p></div>`;
           } else if (k === "hat") {
             const pic = (id) =>
               duckSVG(
@@ -943,6 +1127,11 @@ export function openCustomize(page = lastPage) {
           const f = document.activeElement,
             had = menu.contains(f) && navSig(f),
             from = had && f.dataset.a === "back" && prev; // (the focus stays on the same tile, or the row just come back to)
+          if (NPC && k && RAND_OF[k])
+            html = html.replace(
+              /(<div class="arm-body[^"]*">)/,
+              "$1" + randBtn(k),
+            ); // (each page's own Randomize, at its top)
           menu.innerHTML = html;
           if (peek)
             menu
@@ -978,7 +1167,16 @@ export function openCustomize(page = lastPage) {
               pick.querySelector(".cnote"),
             );
           }
-          if (k === "name") {
+          if (k === "name" && NPC) {
+            const inp = menu.querySelector(".cz-npc");
+            inp.oninput = () => {
+              const n = npcName(inp.value);
+              if (!n) return;
+              NPC.name = n;
+              npcSave();
+              stage();
+            };
+          } else if (k === "name") {
             const inp = menu.querySelector(".cz-name");
             inp.oninput = () => {
               const c = cleanName(inp.value);
@@ -1007,7 +1205,7 @@ export function openCustomize(page = lastPage) {
         };
         /* what can be colored now (a target shows only when it is in use) */
         function colorTargets() {
-          const D = profile.duck,
+          const D = duckNow(),
             C = profile.card,
             N = profile.nameStyle,
             hd = D.hat && hatById(D.hat.id),
@@ -1117,6 +1315,7 @@ export function openCustomize(page = lastPage) {
               fd.colors.length > 1 && fd.name,
               true,
             ]);
+          if (NPC) return out; // (an NPC has no card, no name colors and no specials)
           out.push([
             "card",
             "Card",
@@ -1172,7 +1371,7 @@ export function openCustomize(page = lastPage) {
           return out;
         }
         menu.addEventListener("click", (e) => {
-          const D = profile.duck,
+          const D = duckNow(),
             C = profile.card,
             N = profile.nameStyle;
           const row = e.target.closest(".arm-row[data-p]");
@@ -1194,6 +1393,23 @@ export function openCustomize(page = lastPage) {
             if (a.dataset.a === "back") {
               keyFor = null;
               show(null);
+              return;
+            }
+            if (a.dataset.a === "rand") {
+              peek = null;
+              randomize(D, a.dataset.v);
+              changed();
+              return;
+            } // (a whole random look, or one page's)
+            if (a.dataset.a === "npcdel") {
+              const n = NPC;
+              confirmBox("Delete this NPC?", n.name, "Delete", "Keep").then(
+                (yes) => {
+                  if (!yes) return;
+                  npcDel(n.id);
+                  close(null);
+                },
+              );
               return;
             }
             if (a.dataset.a === "preview") {
@@ -1369,6 +1585,18 @@ export function openCustomize(page = lastPage) {
             csize: () => {
               C.size = v;
             },
+            np0: () => {
+              NPC.w.p[0] = v === "none" ? "" : v;
+            },
+            np1: () => {
+              NPC.w.p[1] = v === "none" ? "" : v;
+            },
+            nmel: () => {
+              NPC.w.m = v === "none" ? "" : v;
+            },
+            nsw: () => {
+              NPC.w.sw = v === "1";
+            },
           })[t.dataset.g]();
           changed();
         });
@@ -1408,10 +1636,19 @@ export function openCustomize(page = lastPage) {
         );
         menu.addEventListener("change", async (e) => {
           const o = e.target.dataset.o,
-            up = e.target.dataset.up;
+            up = e.target.dataset.up,
+            beh = e.target.closest("[data-beh]");
+          if (beh) {
+            const on = [...beh.querySelectorAll("input:checked")];
+            NPC.beh[beh.dataset.beh] = on.map((c) => c.value).join(", ");
+            beh.querySelector("summary").textContent =
+              on.map((c) => c.dataset.label).join(", ") || "Nothing";
+            npcSave();
+            return;
+          } // (an NPC's behavior list: the dropdown stays open)
           if (o === "ketchup") {
-            profile.duck.hat = {
-              ...profile.duck.hat,
+            duckNow().hat = {
+              ...duckNow().hat,
               ketchup: e.target.checked,
             };
             changed();
@@ -1423,7 +1660,7 @@ export function openCustomize(page = lastPage) {
           if (up) {
             try {
               const d = await pictureToSquare(e.target.files[0], 160);
-              if (up === "duck") profile.duck.image = d;
+              if (up === "duck") duckNow().image = d;
               else profile.card.image = d;
               changed();
             } catch (err) {
@@ -1435,5 +1672,8 @@ export function openCustomize(page = lastPage) {
         show(page);
       },
     },
-  );
+  ).then((v) => {
+    NPC = null;
+    return v;
+  });
 }

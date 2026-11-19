@@ -65,6 +65,7 @@ import {
   snapLine,
   jaimeCount,
   jaimeSays,
+  jaimeDead,
   anyOf,
   JAIME_MAD,
   JAIME_HURT,
@@ -73,6 +74,9 @@ import {
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
 import { ARMS, SLOT_ODDS, zombieTakes, pierceOf, ALL_HP } from "./l4ddrules.js";
 import { holdDown, onGetUp, invuln, hurtFx } from "./hangout/death.js";
+import { sbOnBoard } from "./sandboxrules.js";
+import { hitCode } from "./wounds.js";
+import { MAD } from "./sbbrain.js";
 import {
   E_LINES,
   DEATH_LINES,
@@ -1534,8 +1538,9 @@ function pellets(s, by, at, a0, n0, now) {
 /* a shot this beat, from (x0, y0) to (x0 + dx, y0 + dy): a duck's shot that reaches Justin hits him (and is gone: true;
    on his double it counts for nothing); his shots hit Good Justin and the Jaimes. Ducks never hit each other here */
 export function mgjShot(s, sh, x0, y0, dx, dy, now, log) {
-  const m = s.mgj;
-  if (!m || s.phase !== "boss") return false;
+  const m = s.mgj,
+    sb = sbOnBoard(s); // (Sandbox's board: only its spawns' zombies, in s.mz as his are: sbspawn.js)
+  if (!sb && (!m || s.phase !== "boss")) return false;
   const near = (q) => {
     const ux = dx / RX,
       uy = dy / RY,
@@ -1554,6 +1559,11 @@ export function mgjShot(s, sh, x0, y0, dx, dy, now, log) {
     const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
     return Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1) * MGJ_SCALE;
   }; // (he's bigger than a duck: his hitbox too)
+  if (sb)
+    return (
+      !sh.fake &&
+      mgjZombieHit(s, (x, y) => near({ x, y }), armOf(sh.k), now, sh.by, sh)
+    );
   if (sh.by === JUSTIN_ID) {
     if (sh.fake) return false;
     if (goodUp(s, now) && near(s.pos[GOOD_ID])) goodDown(s, now);
@@ -1577,7 +1587,12 @@ export function mgjShot(s, sh, x0, y0, dx, dy, now, log) {
    (i: the zombie's number, or -1), or null */
 export function mgjStop(s, sh, r, x0, y0, x1, y1, now) {
   const m = s.mgj;
-  if (!m || s.phase !== "boss" || sh.by === JUSTIN_ID || sh.fake) return null;
+  if (
+    (!sbOnBoard(s) && (!m || s.phase !== "boss")) ||
+    sh.by === JUSTIN_ID ||
+    sh.fake
+  )
+    return null;
   const ux = (x1 - x0) / RX,
     uy = (y1 - y0) / RY,
     len = ux * ux + uy * uy,
@@ -2155,8 +2170,8 @@ function jaimeTick(s, now, log, fx) {
   }
   return ch;
 }
-/* a Jaime is hit (1 HP): he's gone in a poof. how: what got him (a controller or the chair: a line from Justin). A
-   Jaime Bomb has 3 HP, and when they're gone his bomb goes off */
+/* a Jaime is hit (1 HP): a hitmarker, and he falls bleeding where he stood (jaimebomb.js jaimeDead). how: what got him
+   (a controller or the chair: a line from Justin). A Jaime Bomb has 3 HP, and when they're gone his bomb goes off */
 function jaimeDies(s, id, now, log, fx, how) {
   const m = s.mgj,
     p = s.pos[id];
@@ -2178,9 +2193,9 @@ function jaimeDies(s, id, now, log, fx, how) {
   m.jaimes = rest;
   delete s.pos[id];
   if (!p) return;
-  fx({ kind: "poof", x: p.x, y: p.y, who: [id] });
+  fx({ kind: "hitmark", x: p.x, y: p.y });
+  fx(jaimeDead(p, id, how, now));
   if (how === "controller" || how === "chair") {
-    fx({ kind: "hitmark", x: p.x, y: p.y });
     const j = s.justin;
     if (now > (j.gotJ || 0) && Math.random() < 0.6) {
       j.gotJ = now + 4000;
@@ -2377,7 +2392,8 @@ export function mgjStats(s, all = false) {
    or still to come, he's calmer (his attacks come WAVE.CALM times as late), he'd rather eat, and no lightning comes
    from the edges. Ducks' guns, melee and grenades hurt them as they hurt Dead Ducks Arcade's zombies (each has WAVE.HP;
    mgjZombieHit).
-   s.mz = { zb: [{ i, x, y, hp, a (its last claw), l (its look: l4ddart.js zombieURL), d (when it died) }], n (the
+   s.mz = { zb: [{ i, x, y, hp, a (its last claw), l (its look: l4ddart.js zombieURL), d (when it died), w (its wounds:
+   wounds.js codes) }], n (the
    next one's number), on (a wave is out), next (the next wave), left (still to come), sp (the next ones' second) } */
 export const WAVE = {
   EVERY: [30000, 60000],
@@ -2393,7 +2409,7 @@ export const WAVE = {
   CALM: 1.8,
   EAT: [9000, 14000],
   MAX: 40, // (on the board at once, at most: the rest wait their turn)
-  DEAD_MS: 1500,
+  DEAD_MS: 4000, // (a body lies there as long as Dead Ducks Arcade's, L4.DEAD_MS: the owner's, Nov 19 01:34Z, "everything" with its feel)
 };
 const extra = (s) => Math.max(0, playing(s).length - 1);
 const waveGap = (n) =>
@@ -2405,7 +2421,7 @@ const waveGap = (n) =>
 export const waveOn = (s) => !!(s.mz && s.mz.on);
 const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 /* a zombie's look, as Dead Ducks Arcade's (l4ddrules.js newZombie): 1 in 4 another size or build, 1 in 5 dressed */
-function zLook() {
+export function zLook() {
   const dress = Math.random() < 0.2 ? Math.random() : -1,
     odd = Math.random() < 0.25,
     size = odd && Math.random() < 0.5 ? +rnd(-1, 1).toFixed(2) : 0;
@@ -2547,7 +2563,7 @@ export const armOf = (k) => SHOT_ARM[k] || k;
    beam through every one on it). True when the shot stops here, or a swing or blast hit any */
 export function mgjZombieHit(s, near, w, now, by, sh = null) {
   const z = s.mz;
-  if (!z || !isMgj(s) || s.phase !== "boss") return false;
+  if (!z || !((isMgj(s) && s.phase === "boss") || sbOnBoard(s))) return false; // (and Sandbox's board: sbspawn.js)
   const seen = sh ? [...(sh.zh || []), ...(sh.zp || [])] : [];
   let got = z.zb.filter((o) => !o.d && !seen.includes(o.i) && near(o.x, o.y));
   if (!got.length) return false;
@@ -2571,7 +2587,11 @@ export function mgjZombieHit(s, near, w, now, by, sh = null) {
     if (sh) sh.zh = [...(sh.zh || []), o.i];
     hit = true;
     o.hp = t.dmg >= ALL_HP ? 0 : o.hp - t.dmg;
+    o.w = (o.w || "") + hitCode(o.w || "", w, t.head); // (its wounds, as Dead Ducks Arcade's zombie gets them: l4ddrules.js wound)
     if (o.hp <= 0) o.d = now;
+    if (z.sb && by) o.mad = ["p:" + by, now + MAD]; // (Sandbox's: it goes after whoever hurt it, sbbrain.js)
+    if (o.d && (w === "grenade" || w === "glauncher") && !o.w.includes("g0"))
+      o.w += "g0"; // (a blast's gore: every chunk, cuts and big holes, as there)
     fx({ kind: t.head ? "l4crit" : "hitmark", b: 1, x: o.x, y: o.y });
   }
   return sh ? (sh.zh || []).length >= most : hit;

@@ -19,6 +19,7 @@ import { activeRoom } from "./net.js";
 import { now as clockNow } from "./clock.js";
 import { ceiling, sfxContext } from "./sound.js";
 import { netLevel } from "./settings.js";
+import { baseMode } from "./sandboxrules.js";
 
 /* every song: its name, its file and its length (s, the files' own) */
 const SONGS = [
@@ -155,7 +156,7 @@ const noMusic = () => {
     document.body.dataset.screen === "game" &&
     !!s &&
     !!s.options &&
-    QUIET.includes(s.options.mode)
+    QUIET.includes(baseMode(s.options)) // (Sandbox on the zombie maps: none either)
   );
 };
 /* the owner (Nov 17 20:37Z): "the music fades out when the lobby count starts and the is gone by the last two seconds IF

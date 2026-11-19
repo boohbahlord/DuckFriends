@@ -10,6 +10,7 @@
    speed (Speed: 10% faster) and has 7 seconds of sprint (a thin blue bar under my name). The rules are the host's
    (l4ddrules.js); the weapons bar is l4ddbar.js. */
 import { sprintLeft, sprintReset } from "./stamina.js";
+import { isSb } from "./sandboxrules.js";
 import { activity } from "./hangout/registry.js";
 import { votesDue } from "./rules.js";
 import {
@@ -113,7 +114,7 @@ import {
 import { hOk, hLock } from "./heights.js";
 import { ammoBar, stackBars, noReload } from "./meters.js";
 import { laserMeter } from "./laserfx.js";
-import { goreFree } from "./wounds.js";
+import { goreFree, BY_WOUND, newWound } from "./wounds.js";
 import { catalogHTML } from "./l4ddcatalog.js";
 import {
   pwMount,
@@ -140,7 +141,7 @@ import {
 import { DROP_ICONS } from "./l4dddrops.js";
 import { popHP } from "./hpmeter.js";
 import { fxHitAt, fxEye, heavyOff, fxSparks, fxSteam } from "./fx.js";
-import { vibrate, hitPx } from "./fxmotion.js";
+import { vibrate, hitPx, HIT } from "./fxmotion.js";
 import { pixelOn, gridPx, snap, raster, rasterReady } from "./pixel.js";
 import { olAdd, olFloor, olRoofed, olPic, DROP_OL } from "./outlines.js";
 import { confirmBox } from "./ui.js";
@@ -542,41 +543,23 @@ function claw(x, y, dir, ctx) {
   if (!fxl) return;
   const px = x + Math.cos(dir) * 44,
     py = y + Math.sin(dir) * 22,
-    f = ctx.world.toScreen(px, py, heightAt(px, py) + 36),
-    el = document.createElement("div");
+    f = ctx.world.toScreen(px, py, heightAt(px, py) + 36);
+  clawMark(fxl, f.left, f.top, ctx.world.sc * 1.25); // (a little bigger than the cats')
+  play("swipe", { x: px, y: py });
+}
+/* a zombie's claw marks, three white slashes at (left, top) in layer fx, k times the cats' size: Dead Ducks Arcade's,
+   and Mad God Justin's wave zombies' (game.js placeZombies) */
+export function clawMark(fx, left, top, k) {
+  const el = document.createElement("div");
   el.className = "hang-npc-claw l4-claw";
   el.innerHTML =
     '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M10 6C16 16 18 26 14 36M19 4C25 14 27 24 23 34M28 6C34 16 36 26 32 36" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/></svg>';
-  el.style.left = f.left.toFixed(1) + "px";
-  el.style.top = f.top.toFixed(1) + "px";
-  el.style.setProperty("--k", (ctx.world.sc * 1.25).toFixed(3)); // (a little bigger than the cats')
-  fxl.append(el);
+  el.style.left = left.toFixed(1) + "px";
+  el.style.top = top.toFixed(1) + "px";
+  el.style.setProperty("--k", k.toFixed(3));
+  fx.append(el);
   setTimeout(() => el.remove(), 1100);
-  play("swipe", { x: px, y: py });
 }
-/* a hit's red blink (as the l4z-hit keyframes were) */
-const HIT = [
-  { filter: "none", easing: "ease-out" },
-  {
-    filter: "brightness(1.3) sepia(1) saturate(9) hue-rotate(-38deg)",
-    offset: 0.35,
-    easing: "ease-out",
-  },
-  { filter: "none" },
-];
-/* the weapon a zombie's newest wound (wounds.js codes) tells of, for its blood when no shot hit it (a knife, a hammer) */
-const BY_WOUND = {
-  b: "handgun",
-  B: "ak",
-  s: "pellet",
-  c: "knife",
-  r: "hammer",
-  a: "arrow",
-  k: "sniper",
-  g: "chaingun",
-};
-const newWound = (had = "", now = "") =>
-  now.length > had.length ? now[had.length] : "";
 /* its picture with the wounds it has now, made only when they changed and it's on a screen */
 function wounds(o, l, i) {
   const want = o.ng ? goreFree(o.want) : o.want; // (Gore off: none of them shows. o.ng, the setting as seeZombies last saw it: draw() asks too, and before, it left the setting out, so with Gore off a zombie on the screen got its gore back every frame and lost it again every update, a new picture each time)
@@ -1030,14 +1013,16 @@ function seeHud(s, ctx) {
   if (roundShown !== L.r) {
     if (roundShown >= 0 && L.r > roundShown)
       record(s, L, L.r - roundShown === 1, ctx.me);
-    hud.innerHTML = `<span class="l4-round-w">Round</span> <b>${L.r}</b>`;
+    hud.innerHTML = isSb(s)
+      ? '<span class="l4-round-w">Sandbox</span>'
+      : `<span class="l4-round-w">Round</span> <b>${L.r}</b>`; // (Sandbox: no rounds to count)
     hud.classList.remove("new");
     void hud.offsetWidth;
     if (roundShown >= 0) hud.classList.add("new"); // (a new round: it pulses)
     roundShown = L.r;
   }
   /* between rounds: End turn (Ready before round 1), with how many pressed it and how many it takes */
-  const w = !L.over && L.wait,
+  const w = !L.over && !isSb(s) && L.wait, // (Sandbox: round 0 for good, with no Ready to press)
     mine = !!(w && w.v[ctx.me]),
     es = w ? [L.r, mine, waitVotes(s), waitNeed(s), startOf(s)].join() : "";
   if (es !== endSig) {
