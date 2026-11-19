@@ -11,6 +11,7 @@ import {
   npcURL,
   npcBox,
   npcName,
+  npcSay,
   isZombie,
   npcPics,
   npcReady,
@@ -46,6 +47,7 @@ import {
   madeOf,
   kdOf,
   ownOn,
+  SB_TEXT,
 } from "./sbspawn.js";
 import { orbFace, lootRing, lootPage, lootWire } from "./sblootview.js";
 import {
@@ -337,6 +339,7 @@ export function sbSettings(getR, id, tab = "") {
       .map((f) => actRow(R.state, p, f, kinds))
       .join("")}</div>
     ${row("key", { name: "Spawn key" }, typed("key"), why("key"))}
+    ${row("brain", SB_TEXT.brain, typed("brain"), why("brain"))}
     ${Object.entries(SB_BOXES)
       .map(([f, b]) => row(f, b, typed(f), why(f)))
       .join("")}
@@ -407,6 +410,21 @@ export function sbSettings(getR, id, tab = "") {
         if (r) r.send({ t: "sb", p: id, ...a });
       };
       const timers = {};
+      /* a Brain: its file (and the files it uses) go to the room first, from my Numberat folder (numeratwin.js, loaded
+         when it's wanted: it brings the command line) */
+      const sendBrain = (i) =>
+        import("./numeratwin.js").then((m) => {
+          const v = i.value.trim(),
+            files = m.brainFiles(v),
+            lab = i.closest(".sb-row");
+          lab.classList.toggle("bad", !files);
+          lab.querySelector(".sb-why").textContent = files
+            ? ""
+            : "No file by that name in your Numberat folder (n)";
+          if (!files) return;
+          send({ k: "nbf", files });
+          send({ k: "set", f: "brain", v });
+        });
       if (loot) lootWire(w, id, send, getR);
       w.addEventListener("input", (e) => {
         const i = e.target.closest(".sb-box");
@@ -421,6 +439,8 @@ export function sbSettings(getR, id, tab = "") {
             (r) => (r.hidden = /^f/i.test(i.value.trim())),
           ); // (off: what it spawns comes as it is)
         clearTimeout(timers[f]);
+        if (f === "brain" && !bad && i.value.trim())
+          return (timers[f] = setTimeout(() => sendBrain(i), 250));
         timers[f] = setTimeout(() => send({ k: "set", f, v: i.value }), 250);
       });
       w.addEventListener("change", (e) => {
@@ -875,6 +895,7 @@ activity({
         z.dead = true;
         z.el.classList.add("dead");
       }
+      npcSay(z.el, o);
       const tr = `translate(${f.left.toFixed(1)}px, ${f.top.toFixed(1)}px)`;
       if (z.tr !== tr) z.el.style.transform = z.tr = tr;
       const body = `scale(${((o.f || 1) < 0 ? -sc : sc).toFixed(4)}, ${sc.toFixed(4)})${o.d ? " rotate(-100deg)" : ""}`;
@@ -882,8 +903,7 @@ activity({
       if (z.k !== sc) {
         z.k = sc;
         z.el.style.setProperty("--k", sc.toFixed(3));
-        if (z.nm)
-          z.nm.style.setProperty("--top", (-z.tall * sc - 2).toFixed(1) + "px"); // (its name over its head)
+        z.el.style.setProperty("--top", (-z.tall * sc - 2).toFixed(1) + "px"); // (its name, and what it says, over its head)
       }
       const zi = o.d ? bodyZ(z.x, z.y, h) : Math.round(sortY(z.x, z.y, h)) + 10; // (dead: under every duck, layout.js)
       if (z.zi !== zi) z.el.style.zIndex = z.zi = zi;

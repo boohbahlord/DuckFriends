@@ -390,6 +390,7 @@ import {
   npcURL,
   npcBox,
   npcName,
+  npcSay,
   isZombie,
   npcPics,
   npcReady,
@@ -3134,6 +3135,7 @@ function placeZombies(board, s, now) {
         k * 1.25,
       ); // (its claw marks on the duck it swiped, as Dead Ducks Arcade's: l4dd.js clawMark)
     n._a = o.a;
+    npcSay(n, o); // (Sandbox: what its Numberat file has it say, sbnumberat.js)
     if (n._st === st) continue;
     n._st = st;
     /* moved by transform, not left and top: 800 gliding left and top made the page lay itself out again every frame

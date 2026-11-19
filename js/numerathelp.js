@@ -242,9 +242,10 @@ Joining files:
   take rage            rage, as another file gave it
 Plain value lines (2:4, >2>4 ...) work in files too.
 
-Coming next: NPCs run a file's when's and every's once a spawn
-uses that file as its Brain. Until then, Run plays the file's own
-lines and says which parts wait for that.
+In the game: write the file's name in a spawn's Brain box
+(b, its Entities page), and its NPCs run it. print and its
+mistakes show in this terminal. Saved with no mistakes, a
+file goes to the room again by itself.
 `,
   "names.txt": `Names
 

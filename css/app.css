@@ -14592,6 +14592,41 @@ html.moving .board.quake {
 .l4z.dead .sb-npc-name {
   display: none;
 }
+/* what a Numberat file has an NPC say (sbnumberat.js): a chat bubble over its name, as the ducks' (.gduck-say) */
+.sb-npc-say {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 1.2rem);
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: min(12rem, 50vw);
+  padding: 0.2rem 0.55rem;
+  border-radius: 0.8rem;
+  background: #ffffffa8;
+  color: #1c1c28d0;
+  font-size: calc(0.75rem * var(--ts, 1));
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+  box-shadow: 0 0.15rem 0.4rem #0003;
+  z-index: 1;
+}
+.sb-npc-say::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  margin-left: -0.3rem;
+  border: 0.3rem solid transparent;
+  border-top-color: #ffffffa8;
+}
+.l4z .sb-npc-say {
+  bottom: auto;
+  top: var(--top, 0);
+  transform: translate(-50%, calc(-100% - 1.3rem));
+}
 /* a made NPC's weapon (sbnpcart.js heldOf): in front of it at its middle, as long as the weapon is in a duck's hand
    (css .held i), turned the way it faces. On the board its box is the duck's width (--k: 64 px of the drawing); on Duck
    Cabin it sits in the body, which turns with it */

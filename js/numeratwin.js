@@ -10,11 +10,47 @@
    wrap unless text wrap is turned on" (the gutter, Wrap); "auto complete is there by default" (the code's words, the
    terminal's commands); "there should be other options besides run ... such as something to test code without running it"
    (Check); "the help files ... cannot be copied or deleted or changed" (the help/ folder, read-only here too);
-   "anything can be done in that terminal as it can be in the terminal in the bottom left" (the command line itself). */
+   "anything can be done in that terminal as it can be in the terminal in the bottom left" (the command line itself).
+   Part D (sbnumberat.js): a spawn's Brain box names a file here; what its NPCs print, and its mistakes, show in this
+   terminal too, and a file a Brain uses goes to the room again once it's saved with no mistakes. */
 import { esc, openWindow } from "./ui.js";
 import { numerat, shellRun, shellSuggest, shellHistory } from "./shell.js";
 import { check, WORDS } from "./numerat.js";
 import { shellCtx } from "./chat.js";
+import { activeRoom } from "./net.js";
+import { isSb, sbMay } from "./sandboxrules.js";
+import { NB_TEXT } from "./sbnumberat.js";
+import { boxText } from "./sbspawn.js";
+
+const SEND_MOST = 20; // (files sent with one Brain: 20 of 8,000 letters stay under what one action may carry)
+/* a spawn's Brain box: the files it sends to the room, each by the name it's written with; null when there's no such
+   file */
+export function brainFiles(name) {
+  const all = numerat.bundle(shellCtx(), name);
+  if (!all) return null;
+  return Object.fromEntries(
+    Object.entries(all)
+      .slice(0, SEND_MOST)
+      .map(([n, t]) => [n, t.slice(0, NB_TEXT)]),
+  );
+}
+/* every Brain in this room whose files aren't the room's any more (one was saved since): sent again */
+function resendBrains() {
+  const R = activeRoom(),
+    s = R && R.state;
+  if (!s || !isSb(s) || !sbMay(s, R.me, "b")) return;
+  const names = new Set(
+    Object.values((s.sb && s.sb.pts) || {})
+      .filter((p) => p.k === "spawn")
+      .map((p) => boxText(p, "brain").trim())
+      .filter(Boolean),
+  );
+  for (const n of names) {
+    const files = brainFiles(n);
+    if (files && Object.entries(files).some(([k, v]) => (s.nb || {})[k] !== v))
+      R.send({ t: "sb", k: "nbf", files });
+  }
+}
 
 const NAME_OK = /^[\w.-]{1,40}$/;
 let wrapOn = false; // (Wrap: off unless turned on; kept while the page is open)
@@ -117,8 +153,9 @@ export function openNumerat() {
         setText(t);
         paint();
       };
-      /* the code saves as it's typed */
-      let timer = 0;
+      /* the code saves as it's typed; once it has no mistakes, the Brains that use it get it */
+      let timer = 0,
+        sendT = 0;
       const keep = () => {
         clearTimeout(timer);
         if (!st.file || numerat.ro(st.file)) return;
@@ -126,8 +163,28 @@ export function openNumerat() {
           numerat.write(ctx, st.file, code.value);
         } catch (e) {
           say([e.message]);
+          return;
         }
+        clearTimeout(sendT);
+        sendT = setTimeout(() => {
+          if (
+            !check(code.value, (n) => numerat.use(ctx, st.file, n)).errs.length
+          )
+            resendBrains();
+        }, 600);
       };
+      /* the room's Numberat log (what Brains print, and their mistakes): shown here as it comes */
+      let seen = 0;
+      const logT = setInterval(() => {
+        if (!w.isConnected) return clearInterval(logT);
+        const R = activeRoom(),
+          log = (R && R.state && R.state.nbo) || [];
+        const n = (log.at(-1) || {}).n || 0;
+        if (n < seen) seen = 0; // (another room)
+        const fresh = log.filter((l) => l.n > seen);
+        seen = n;
+        if (fresh.length) say(fresh.map((l) => "🧠 " + l.t));
+      }, 500);
       /* autocomplete in the code: the words Numerat has (true, false) for what's typed since the last space; Tab takes it */
       let acList = [];
       const hideAc = () => {
