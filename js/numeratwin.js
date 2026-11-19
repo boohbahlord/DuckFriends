@@ -22,6 +22,13 @@ import { numerat, shellRun, shellSuggest, shellHistory } from "./shell.js";
 import { check, WORDS } from "./numerat.js";
 import { shellCtx } from "./chat.js";
 import { activeRoom } from "./net.js";
+import {
+  SERIAT_THEMES,
+  seriatTheme,
+  setSeriatTheme,
+  useSeriatTheme,
+  freeSeriatTheme,
+} from "./seriattheme.js";
 import { isSb, sbMay } from "./sandboxrules.js";
 import { NB_TEXT } from "./sbnumberat.js";
 import { boxText } from "./sbspawn.js";
@@ -78,9 +85,17 @@ export function openNumerat() {
       <div class="nm-term" aria-label="Terminal"><div class="nm-out" aria-live="polite"></div><ul class="nm-sugg" role="listbox" hidden></ul><form class="nm-line"><span class="nm-ps">$</span><input class="nm-in" spellcheck="false" autocomplete="off" aria-label="Command"></form></div>
     </section>
   </div>`;
-  return openWindow(html, {
+  useSeriatTheme("window"); // (the book's look while it is up)
+  const picker = `<label class="nm-theme"><span class="nm-themelab">Theme</span><select class="nm-themesel" aria-label="Theme">${SERIAT_THEMES.map(
+    ([n, , label]) =>
+      `<option value="${n}"${n === seriatTheme() ? " selected" : ""}>${esc(label)}</option>`,
+  ).join("")}</select></label>`;
+  const shown = openWindow(picker + html, {
     cls: "nm-win",
     onOpen(w) {
+      w.querySelector(".nm-themesel").addEventListener("change", (e) =>
+        setSeriatTheme(e.target.value),
+      );
       const $ = (q) => w.querySelector(q),
         code = $(".nm-code"),
         ed = $(".nm-ed"),
@@ -613,4 +628,6 @@ export function openNumerat() {
       paint();
     },
   });
+  shown.then(() => freeSeriatTheme("window"));
+  return shown;
 }
