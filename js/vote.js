@@ -36,8 +36,8 @@ const SOLO_TITLE = {
 const titleOf = (s, k) => (s.solo ? SOLO_TITLE : TITLE)[k];
 /* Quacky Zombies' own map vote (rules.js ZMAPS): each of its maps as one picture of it */
 const ZPIC = {
-  cabin: ["assets/maps/duck-cabin-zombies.jpg", "Duck Cabin"], // (closer in and a little lighter than the whole map's picture, so it reads as clearly as Downpour's: the owner, Nov 17)
-  downpour: ["assets/maps/downpour.jpg", "Downpour"],
+  cabin: ["assets/px/maps/duck-cabin-zombies.webp", "Duck Cabin"], // (closer in and a little lighter than the whole map's picture, so it reads as clearly as Downpour's: the owner, Nov 17)
+  downpour: ["assets/px/maps/downpour.webp", "Downpour"],
 };
 
 /* one choice: a game's row or a map's picture */
@@ -58,7 +58,7 @@ function mapTile(id) {
 function zmapTile(id) {
   if (id === DICE) return mapTile(DICE);
   const [src, name] = ZPIC[id];
-  return `<button type="button" class="vt-map" data-v="${id}"><span class="vt-pic"><img class="vt-still" src="${src}" alt="" draggable="false"></span><span class="vt-name">${esc(name)}</span><span class="vt-n"></span><span class="vt-ducks"></span></button>`;
+  return `<button type="button" class="vt-map" data-v="${id}"><span class="vt-pic"><img class="vt-still" src="${src}" data-pxready data-pxok alt="" draggable="false"></span><span class="vt-name">${esc(name)}</span><span class="vt-n"></span><span class="vt-ducks"></span></button>`;
 }
 function bodyHTML(s, k) {
   const ids = voteIds(s, k);

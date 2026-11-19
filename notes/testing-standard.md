@@ -32,3 +32,30 @@ A stage waits until the stages under it passed and merged (order in `/mnt/projec
 ## Bug report (one per bug, short)
 Steps, expected (owner's words), actual, setup (browser, device, map, role), how often, severity
 (1 crash or stuck, 2 broken, 3 wrong, 4 polish). After one bug, poke the area around it: bugs cluster (Myers).
+
+## Bug hunting: the first layer (owner, Nov 19 17:15Z: "You should have principles on how to search and find for bugs")
+The owner kept finding basic bugs that a first pass should have caught (a stuck phone joystick while building a zone,
+the board moving while placing a spawn, a chair that never threw). Before any PR, and in a bug-hunt session, the
+worker plays the feature like a player and runs this checklist. It comes from Whittaker's _How to Break Software_
+(input and state attacks), Bach's SFDPOT heuristic and session-based testing (Kaner, Bach & Pettichord), Myers
+(bugs cluster) and Schultz & Bryant (game-flow and controls testing).
+
+1. **Every control, every way in** (Function, Operations): each button, key and menu row of the feature is used once
+   with the mouse, once with its key, and once by touch on a phone. A thing that only works one way is a bug.
+2. **Use it as the owner would, start to finish** (a tour): open, pick, place, change, use, close, and use it again.
+   Then the same while moving, while holding a weapon, while down, and as a non-host.
+3. **Interrupt it** (Whittaker's state attacks): open another window, press Esc, rotate the phone, lift the finger
+   mid-drag, switch weapon, die, or leave the game in the middle of the action. Afterwards, everything (joystick,
+   keys, camera, board) must work as before. Stuck input is severity 1.
+4. **Do it twice, do it fast, undo it**: double taps, the same key again, place two in a row, delete and place again.
+5. **Bad and edge input** (Data): empty, 0, the limit, past the limit, decimals, letters where numbers go, very long
+   text. Every number box and every limit the owner gave gets checked at, below and above.
+6. **Does anything move that shouldn't** (Structure): screenshots before and after the action at phone and PC sizes;
+   board, bars and buttons stay put, nothing overlaps, nothing goes off screen.
+7. **On every surface it lives on** (Platform): board, Duck Cabin, Downpour (for Sandbox), PC and phone, and Firefox
+   when keys, touch or layout are involved.
+8. **Did it actually do the thing** (oracle): check the result in the state (`window._r.state`), not just that no
+   error appeared. "No console errors" is not a pass.
+9. **Bugs cluster**: after finding one, spend five minutes on everything next to it.
+
+The PR note lists which of 1 to 8 were run and what failed. Adam re-runs 3 and 8 himself before a deploy.

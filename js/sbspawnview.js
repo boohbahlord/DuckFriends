@@ -79,8 +79,11 @@ function markSVG(p) {
 }
 /* what my screen shows of Sandbox's build: zones only while my Build window is up (sandbox.js sets it) or a zone's
    window is open ("Sections colored from board build is invisible", the owner's Sandbox file) */
-export const sbView = { build: false };
-const building = () => sbView.build || !!document.querySelector(".sb-zonewin");
+export const sbView = { build: false, until: 0 };
+const building = () =>
+  sbView.build ||
+  sbView.until > performance.now() ||
+  !!document.querySelector(".sb-zonewin");
 /* a mark's element on the layer (made the first time) */
 function markEl(layer, have, key, cls) {
   let n = have.get(key);

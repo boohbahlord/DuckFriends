@@ -164,7 +164,8 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   let shown = "";
   const paint = () => {
     const R = getR();
-    sbView.build = !!R && k.open === "b" && sbMay(R.state, R.me, "b"); // (the zones show while I build: sbspawnview.js)
+    sbView.build =
+      !!R && (k.open === "b" || !!carry) && sbMay(R.state, R.me, "b"); // (the zones show while I build, and while I put something down: sbspawnview.js)
     if (!k.open || !R || !isSb(R.state)) {
       box.hidden = true;
       shown = "";
@@ -268,6 +269,8 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   };
   const drop = () => {
     carry = null;
+    sbView.build = k.open === "b";
+    sbView.until = performance.now() + 4000; // (the zones stay up a moment after: I see where it went)
     ghost.hidden = cancel.hidden = true;
     S.classList.remove("sb-placing");
     seat();
@@ -276,6 +279,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
     const R = getR();
     if (!R || !sbMay(R.state, R.me, "b")) return;
     carry = { kind, label };
+    sbView.build = true;
     ghost.innerHTML = ghostHTML(R.state, kind);
     ghost.classList.toggle("zone", kind === "zone");
     ghost.hidden = mx < 0; // (a phone: nothing on a finger until it taps)
@@ -318,6 +322,15 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   };
   const swallow = (e) => {
     if (performance.now() - eat > 600) return;
+    /* a finger's pointerup is never eaten: the walking stick (touch.js) listens for it on the window, and a finger lifted
+       within 600 ms of a placing left the duck walking for good (the owner, Nov 19 17:15Z: "phone joystick stuck after
+       picking Zone in Build"). Only the mouse's own up and the click it makes belong to the placing */
+    if (e.type.startsWith("pointer") && e.pointerType !== "mouse") return;
+    if (
+      e.target.closest &&
+      e.target.closest(".tpad, .sb-tools, .sb-win, button")
+    )
+      return;
     e.preventDefault();
     e.stopImmediatePropagation();
   };
