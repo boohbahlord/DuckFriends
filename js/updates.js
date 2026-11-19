@@ -12,12 +12,15 @@ export const UPDATES = [
     id: "v115",
     version: 115,
     date: "Nov 19, 2026",
-    title: "The M&P9",
+    title: "Smashed walls and the M&P9",
     news: [
       "The pistol is now the M&P9 Shield (the M&P9 Compact in Dead Ducks Arcade) and shows the same picture everywhere.",
       "For Dead Ducks Arcade: each merchant upgrade can be bought up to 5 times.",
     ],
-    fixed: [],
+    fixed: [
+      "For Dead Ducks Arcade: Downpour's restroom wall is smashed wide open down to the corner, easy to spot from outside, and you can peek through it from inside. The wall no longer turns see-through when you walk into it.",
+      "For Dead Ducks Arcade: the chapel's entrance looks smashed too.",
+    ],
   },
   {
     id: "v114",

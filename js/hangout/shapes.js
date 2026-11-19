@@ -602,6 +602,36 @@ export const DRAW = {
     ),
   ],
   doorway: () => [],
+  /* a smashed north-south wall seen from outside, over the roof's edge (stationmap.js) */
+  breach: (p) => [
+    part(
+      () => SA.wallBreach({ w: p.w, d: p.d, seed: Math.round(p.x + p.y) }),
+      p.x,
+      p.y,
+      p.w,
+      p.d,
+      p.key,
+      { only: "out", fade: p.fade },
+    ),
+  ],
+  /* the rubble out of a smashed north-south wall, flat on the floor under everyone (stationmap.js) */
+  rubble: (p) => [
+    part(
+      () =>
+        SA.wallRubble({
+          w: p.w,
+          d: p.d,
+          seed: Math.round(p.x + p.y),
+          skin: skinOf(p),
+        }),
+      p.x,
+      p.y,
+      p.w,
+      p.d,
+      p.y,
+      { layer: "floor" },
+    ),
+  ],
   /* Quacky Zombies' holes (layout.js' L4_HOLES): the wall's own drawing over the gap with the hole broken through it,
      sorted just in front of the wall pieces either side (it covers their ends, whichever came into view first) */
   hole(p) {
@@ -655,18 +685,28 @@ export const DRAW = {
     const sp = p.map
       ? SA.SPLINTER[skinOf(p)]
       : ["#c98a52", "#b97a44", "#6e3a1a"];
+    const big = p.map ? 2 : 1; // (Downpour's: a big broken end, a smashed wall, not a doorway: the owner's, Nov 19 19:58Z)
     const jag = (up) =>
-      `<svg class="hg hg-wall" viewBox="0 0 24 20" width="24" height="20" overflow="visible" aria-hidden="true"><path d="${up ? `M0 20V12L4 6L8 11L12 4L16 9L20 5L24 11V20Z` : `M0 0V9L4 15L8 10L12 17L16 11L20 16L24 9V0Z`}" fill="${up ? sp[0] : sp[1]}" stroke="#1c1c28" stroke-width="2.4" stroke-linejoin="round"/><path d="${up ? "M3 14L7 9M14 10L18 8" : "M4 6L8 10M15 5L19 11"}" stroke="${sp[2]}" stroke-width="2" stroke-linecap="round"/></svg>`;
+      `<svg class="hg hg-wall" viewBox="0 0 24 20" width="${24 * big}" height="${20 * big}" overflow="visible" aria-hidden="true"><path d="${up ? `M0 20V12L4 6L8 11L12 4L16 9L20 5L24 11V20Z` : `M0 0V9L4 15L8 10L12 17L16 11L20 16L24 9V0Z`}" fill="${up ? sp[0] : sp[1]}" stroke="#1c1c28" stroke-width="2.4" stroke-linejoin="round"/><path d="${up ? "M3 14L7 9M14 10L18 8" : "M4 6L8 10M15 5L19 11"}" stroke="${sp[2]}" stroke-width="2" stroke-linecap="round"/></svg>`;
+    const sx = p.x - 12 * (big - 1); // (centered on the wall's line)
     return [
-      part(() => jag(false), p.x, o.a + T - 8, 24, 20, o.a + T + 1, {
-        only: "in",
-      }),
+      part(
+        () => jag(false),
+        sx,
+        o.a + T - 8 * big,
+        24 * big,
+        20 * big,
+        o.a + T + 1,
+        {
+          only: "in",
+        },
+      ),
       part(
         () => jag(true),
-        p.x,
-        o.b - T - 14,
-        24,
-        20,
+        sx,
+        o.b - T - 14 * big,
+        24 * big,
+        20 * big,
         (south ? south.key : o.b + T) + 1,
         {
           only: "in",
