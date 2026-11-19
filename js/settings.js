@@ -53,6 +53,7 @@ export function applySettings() {
   h.classList.toggle("noshapes", s.shapes === "off");
   h.classList.toggle("nojumps", !!s.jumpsHidden);
   h.classList.toggle("mouse-move", !!s.mouseMove);
+  h.classList.toggle("hide-ui", !!s.hideUi); // (hide ui: hideui.js, css/app.css)
   h.style.setProperty("--font", fontCSS(s.font));
   h.style.setProperty("--ts", s.textSize / 100);
   h.style.setProperty("--ui", s.uiSize / 100);
@@ -98,6 +99,7 @@ const PAGES = {
     ])}
       <div class="row" style="margin-top:.5rem">${check("chatFloat", "Floating messages", "The newest message, and rule changes and silly commands from others, float by the chat button for a moment while the chat is closed.")}</div></div>
     <div class="sect"><h3>Jumps</h3><div class="row">${check("jumpsSci", "Scientific notation", "12,345 shows as 1.23 × 10⁴.")}${check("jumpsHidden", "Hide the jump counter")}</div></div>
+    <div class="sect"><h3>Screen</h3><div class="row">${check("hideUi", "Hide UI", "In a game: no dark bars above and below, no words at the bottom. The top right buttons, the chat, the Leave and vote buttons and the hotbar stay. hide ui in the command line or \\hide ui in the chat does the same.")}</div></div>
     <div class="sect"><h3>HP</h3><div class="row">${check("otherHp", "Other players' HP", "Every game mode, on a computer: everyone else's HP, small, in the board's bottom right corner.")}</div></div>`,
   controls: () => `
     <div class="sect"><h3>Your duck</h3><div class="row">${check("mouseMove", "Mouse moves your duck", "Click a column to walk your duck there.")}${check("multipleChoice", "Show multiple choice", "Buttons for the seven answers; choosing one jumps your duck there.")}${check("clickUse", "Click to interact", "On Duck Cabin, a click or a tap on a thing near your duck uses it: sit, play, read …")}</div></div>

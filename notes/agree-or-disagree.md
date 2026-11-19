@@ -6368,3 +6368,480 @@ the last two screenshots show corpses. Corpses arent on the board and they can o
 During round 12, the corpse in the gas station disapears but the puddle of blood stays IF the body isnt on a players screen, if it is on a players screen the whole time during round 12, then it disapears on a subsequent round or rest phase where they arent on it's screen. The check for this should be every 30 secods maybe or something slow to not effect performance for checking if the body is alone and cannot be seen on the player's screen."
 Questions were: 1 deploy V90?, 2 spawn key only in build mode?, 3 2:4 whole numbers only?, 4 speed range picked once per NPC?, 5 2>4 counts 2,3,4?, 6 damage takes tenths?, 7 phone buttons for Sandbox windows now?
 Decided (Adam): V90 deploys as is now. Sandbox spawn keys work outside build mode too. Boxes that need whole numbers take whole numbers only; Numerat files give an error with reasons. 2>4 = 2 then 4 (listed values, not every number between). Damage tenths shown as a missing tenth of a HP block; Adam sends a proposition. Phone buttons for Sandbox windows: start now. Numerat notation: Adam writes a notation proposal for discussion before building.
+
+## Nov 19 10:30Z (owner, on Adam's Numerat proposal 10:27Z: 1 values, 2 arrows, 3 ( ) replaces |, 4 [ ] one pick, 5 $ goes, 6 *n repeat replaces || >>n|| <<n||, 7 (( )) becomes =; HP tenths)
+"3. let's make the | not go, the parentheses should be something else
+4. yes
+5. sure
+6. idk about the asterix idea for 3 i disagree with this notation, the old was good. 
+   1. Let's make the Asterix been an awaiting input, and without input, it will just be a random possible value within it's limit (limits should be defined for different stats, so max HP will be based off the most maximum HP for Mad god justin possible)
+7. idk wat ur saying this is too dense
+
+
+'HP tenths: 4 HP shows 4 blocks. Take 1.5 damage and you have 2.5: two full blocks and one half-empty block. Healing fills the half block first (rounds up to 3), then whole blocks. Any HP above 0, even 0.1, keeps you standing.'
+I agree with the HP decimal system
+
+we need more dicussion here ab numerat based off what i said"
+Decided (Adam): | stays; [ ] = one pick; $ goes; || >>n|| <<n|| stay as the owner wrote them; * = waiting for input, random within the stat's limit if none; each stat gets limits (max HP = Mad God Justin's highest possible HP). HP tenths approved: build it. ( ) and (( )) still under discussion.
+
+## Nov 19 12:16Z (owner, Numerat notation, word for word; also kept at /mnt/project-files/sandbox/numerat/owner-2026-11-19-1216.txt)
+"to indicate something has to play in ascension or descension arrow amount of time is NOW using this around the arrows \>2>\ or \>n>\ or \>*>\
+descending is the same
+\<2<\
+
+This is also down for anything that goes into a double line ||
+\>2>\||
+
+asterix or * can just await input from a file IF it is not defined. 
+an asterix can only be one number if it is one asterix, so:
+This means * could be 1-10. To allow zero for asterix, we simply use other operators
+0:*
+or
+0 or *
+Now we could also use asterix to wait for input
+
+We can have it done with equal sign
+
+[2,4:3,5]=*
+now the asterix is defined but is no dif then the actual equation without the equal, so we fix that now
+[2,3,5]=*+*
+now this says that the asterix is doubled, and so if the output from sqaure bracket said 3, then the other side of the equal sign says 3+3 which equals six, so now the hp is six now
+
+to specify a distinction bewteen different asterix, we can do this:
+'*1'
+or 
+'1*'
+but not
+"1*"
+or
+"*1"
+
+before we go further onto the example for this, new operator
+{}
+Squigle bracket says to wait for everything to be defined, and it takes the number as a input waiting to be used for more only if an equal follows it, and it takes one of the numbers inside without it, and everytime it runs it will reset it's operation if another operator inside doesnt tell it to repeat first.
+
+single quotes says this is the number 1 asterix or *
+so that means we can do this
+
+{\>1,2>\[2,[3>5],5]}='1*'\>>\||{[2,4]='2*'}\>>\||'1*'+'2*'='3*'
+
+this means that the first square bracket plays once or twice, and it could either be 2, 3, 5, or 5. Then that equals first Asterix, and that comes before if 2 or 4 is second Asterix, which then becomes first Asterix input plus second Asterix input equals 3rd Asterix input, in which third is the first assignment to a spawn's hp.
+
+using quotes from earlier means the amount of something, so multiplication
+
+"[1,5]2"
+or
+"2[1,5]"
+this means we can take however much of the sqaure bracket randomly selected number and then multiply it by 2, so now it is either 2 or 10 health
+
+[6,10]/2
+this means the number inside is divided by two, and so, it means that 5 or 10 will be divided by two, which equals 4 or 5
+
+{[6,10]/2}='1*'\>>\||{"2['1*']"}
+
+this means the first spawns stat (let's say hp) is:
+3 or 5 multiplied by two equals hp
+the Asterix which is used elsewhere that awaits further input before a final input unto first spawn.
+
+for exponents, we can do this
+^
+
+So [3,6]^2
+This means first spawn can have 9 or 36 hp
+
+the decimals will not be assumed between a range EVEN IF the stat allows for decimal, so, how we do this is like this
+1.[0:*]
+this means 0-9 in the tenth place, where 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 are possible
+that could be 1.0 or even 1.5, it is a range within the sqaure bracket ofc.
+and like always, examples build unto next princples, like math, so the use of sqaure bracket is really useful or not depending on the larger context, since we dont have to use sqaure bracket here
+1.0:*
+period means anything following is a tenth place of it's integer, to make it a decimal
+"{1.[0:*]}2"
+now there we go, the decimal number is multipled by two
+
+we can also do this
+*.*
+this means the first number is 1-9 and the tenth place is also
+
+to not include zero, we do this
+
+1.*
+
+this means the tenth place could be 1 through 9
+so...
+
+but why not ten?
+
+because ten takes two digits, and an asterix assumes one digit, so that means we do this:
+**
+now this could be 1-99
+to make it zero, we do this
+{\>>\{'**1'}+[+0,-1]}='2***'
+remember, single quotes tells asterix to not use the two, but only to denot which asterix this is
+so this SHOULD equal 0-100 now, because the three asterix after the equal are awaiting input from the squiggle brackets
+
+to make asterix assume 0 in place of one, then we do this at the beginning of a line on a script or input line
+\'inc0'\
+this stands to include for a line
+to remove from inputs or outputs, where an HP will not get this value AND it has to replay the line until it can (if impossible the entity doesnt spawn and an error is read back)
+we do this
+\'rm0'\
+this means anywhere in which a zero comes up, it cannot happen
+this gets tricky, because something like this can be done
+\'rm**'\
+this means anywhere in which a double digit comes out, it replays the line until it is not a double digit output
+we then can also do this
+\'rm**:****'\
+this means any digits more then tens up until the amount of digits of a thousand is removed and it replays until it can work
+\!'inc1'\
+the exclamation before single quotes says it MUST include one in every line of the script or file, and it will override the removal of one on a line if it exists as well
+in order to have a line not remove one, we increase the amount of exclamation
+\!!'inc1'\
+this means if a \!'rm1'\ exists at the beginning of a line that tells the whole script to remove 1, then it must be overrided by double exclamation of \!!'inc1'\
+if we want a line to be overriden but not the whole script, we do this
+\lin!!'inc1'\
+so if there was a \!'rm1'\ on the script that said the whole file overrides, now the double arrow in either direction says that for this line, it will not remove 1, and it has to overide with more exclamations
+exclamations can be multipled, added, and so on
+\lin["**"=!]'inc1'\
+this means that an asterix multiplies an asterix
+
+to make this better, we can use this for asterix
+
+\lin!!'ainc0'\
+the a letter before inc means we are telling numerat this is for asterix only, so now every asterix includes 0
+so now... * will equal 0-9
+
+to remove is the same with rm
+\'arm0'\
+
+to say which asterix in a line (not file), we do this
+\''a2'inc0'\
+this means for second asterix, we include 0
+to apply to script is the usual
+\!''a2'inc0'\
+there we go, now all the lines of a script
+
+to say which lines for anything in a script, we simply do this
+'n'
+so...
+\'n1'''a2'inc0'\
+or
+\'n1:4'''a2'inc0'\
+or
+\'n[9,[5],[>[2],>[1],[3]<],3],+1]'''a2'inc0'\
+or
+\'n[1,5,[1:4]]'''a2'inc0'\
+
+this means we can use include or remove command with squiggle brackets and maybe sqaure brackets
+\!a2'rm{3,[2:5]}'\
+
+Certain things to note, sqaure brackets and parenthesis are chosen first randomly unless specified a different order with a pointer ">"
+
+To use backwards starts or descending order start, we use arrow backwards at the end "<"
+
+[1,3][2,4]<
+This means the far right sqaure bracket comes next, it checks for a point to the left of it, thee isnt one, so then it assumes to start over at the pointer IF pointer is first
+
+to make pointer not do that and to continue a path all the way through ... 
+[1,3][2,4]\<!<\
+This means it will descend through the first sqaure bracket first AND THEN 1,3
+
+We can use asterix for many things, such as ...
+\>[*+0:*]=*>\[2,4]\>>\||[5,7,9],[3,5]\>*-[1,2]>\||10
+This means for a stat or input, it will cycle through the left of || until the cycle number is finished, which the asterix on the left inside the square bracket MUST be added from + wit the range of zero through asterix, then it plays that number between the arrows inside it say the next amount of how muxh the folloing plays
+
+a symbol for infinity or limitlessness is not possible since that is bascially the asterix sorta kinda not rly
+
+the limit of things can be defined or removed as such
+
+\rm'lim'\
+this remove limits for hp for example for that line (dangerous stuff, i know), so the invisible limit is 1,000,000
+the inclusion of limit on a lines value
+\inc'lim=25'\
+there we go
+or
+\inc'lim=***\
+now it cannot be more then 999
+\inc'lim={***+[+0,+1]}\
+
+to have a file define something for all files in a game mode, you can write a bash script for that prob, like i guarantee it is possible for within the game
+
+make sure there is a manaual command for bash and all those things
+
+If you need this maybe? i used this for my myys2 terminal but can be changed for you and how you use it for our purposes:
+## For manual:
+```bash
+pacman -S --needed man-db man-pages-posix less mingw-w64-ucrt-x86_64-bat
+```
+
+## For file type coloring:
+```bash
+cat >> ~/.bashrc <<'EOF'
+# colors
+eval "$(dircolors -b)"
+alias ls='ls --color=auto'
+alias grep='grep --color=auto'
+EOF
+source ~/.bashrc
+```
+
+## For missing other commands (not built into the shell by default):
+```bash
+for c in ls cp mv rm cat grep sed awk find xargs sort uniq head tail wc cut tr tee diff patch tar gzip zip unzip curl wget ssh scp rsync git man less nano vim nvim tree file which ps top watch free df du ln chmod bat make gcc python3; do type -P "$c" >/dev/null && echo "ok       $c" || echo "MISSING  $c"; done
+```
+
+## Download for most other Linux commands not from the shell:
+```bash
+pacman -S --needed diffutils patch zip unzip wget tree file procps-ng nano git
+
+
+
+i feel liike text editor should be like vs code btw but maybe they can use nano?
+i feel like we can have have text wrap able to be turned on and off at the top
+
+also color coding the code as needed for different categories help
+
+limits are preset as usual unless player does something
+
+IMPORTANT:
+this code is like mat, components give rise to new logical possibilities, so we need to understand that examples introduce other  components unneccessary for some things.
+Make sure to test possibilities of the code.
+
+I feel like the code will get really slow when operatioons might happen for lots and lots of spawn, which is why i wanted it written in binary to make the code since that is how every other language is built, and that removes the layers of trouble, but u can ask me
+
+C. Okay and yes for (())
+
+now for some notation, it might be a problem and might need fixed
+
+can spaces be used without changing the code? hmmm
+
+note, if numbers add into an asterix, the amount of asterixes cutoff additional digits which cannot fit into it's code
+
+ALSO, two sqaured squiggle brackets make the code across multiple lines behave as one line 
+
+{{
+>
+\!!'inc0'\
+("('*1')2")+
+("('*2')2)=
+{'3***'}
+}}
+
+This reads much better and spacces might be a good idea if it doens't contradict anything
+
+maybe zero is already included in asterix by default AND it can be enabled or disabled in scripts as usual
+
+there is a file that is also accessible in game settings AND in numerat that can change all numerat files with it's code, and it's determined by the code on top of the page
+
+\\param\\
+
+This determines the parameters for every file
+it can also be named in order to say which files play in what order that are a param
+
+\\param1\\
+\\param2\\
+and so on
+no decimals and more then one digit can be used
+
+any operators i should add? where can it be imporved? what is redundant? what can be fixed?
+
+We should write a note file for numerat
+
+I think numerat is already a name for something, so i want new names that are similiar that use suffix or roots or what not, anything like that, im forgetting some terms im leaving out fuck, other things too i mean
+
+one name came to mind
+zumberat
+"
+Decided (Adam): written up as notes/numerat.md (the language as the owner defined it, the conflicts and typos found, suggestions, questions). Nothing built until the owner settles the questions. V91 still waiting for the owner's go.
+
+## Owner, Nov 19 12:59Z (answers to the Numerat questions, plus Sandbox fixes)
+"
+1. lin needs to stay because then it doesnt have to be retyped for certain lines more then one but not the whole file AND lin can be used to overwrite multiple lines of the exclamation alone, so exclamation before lin means that it's given lines will overwrite the previous overwrite or settings
+2. yes
+3. it becomes 50 by default unless this is used
+   1. \'ainc mormax'\
+   2. the 'mormax' is short for mormax
+   3. this means mormax has an inverse called 'mormini', maybe. idk how it works you can help
+   4. there can be negative numbers or positive in a a negetive asterix if it is set like this
+   5. \'ainc negbrahm'\
+   6. named after Brahmagupta and brahma in hinduism, this allows for negatives lower then zero in an asterix
+   7. \'ainc posbrahm'\
+   8. this allows for positives in a negative asterix -*
+   9. yes, asterix can be defined as making any of it's numbers negative with the negative or minus sign
+4. "1.0:* could mean 1.0 to 1.9, or 1.0 to 9. Which one?"
+   1. My bad, 1.0 to 9 is correct, for decimal it is like this
+   2. 1.0:1.*
+5. huh? explain i dont understand what ur saying
+6. yes
+7. but why would it do that ? 
+   1. new idea for print statements
+   2. print "Hello, world!"
+   3. print 'Hello, world!'
+   4. The single quotes versus double quotes works like it does in bash, and spaces or white characters become characters according to bash rules around quotes inside here
+   5. print statements should be able to be used inside scripts and events for different builds, such as spawns, entities, and so on.
+   6. there is an option for M that allows entities default settings to be edited, and entity rules cannot be changed for default entities. This is a easier access that works. Make sure that spawn can have settings turned off so entities spawn as they are, much like how respawn does it.
+8. Is numberat availible and not copyrighted or claimed?
+
+
+For speed, i want to know about the difference we can get for web assembly, yes.
+You think web assembly would improve zombies performance on bad computers? i bet it does.
+
+Numberat should have a help file that cannot be edited or changed in the 'n' window
+
+there should be other options besides run, like i said, such as something to test code without running it
+
+the number lines should be able to be seen automatically, and text extends outwards without wrap unless text wrap is turned on
+auto complete is there by default
+
+the help files for numerat have a directory called "help", where simple or more complex help lies and their given principles or basic operators help files
+the help files are text files that cannot be copied or deleted or changed
+
+players should be able to have all their normal movement patterns and zombie mechanics (besides flashlight, but flashlight can be added as loot), such as their default movement speed, sprint, and everything. movement speed differs from zombie maps versus the small board maps
+
+when i click build and try to select a thing to build by clicking or the number, nothing shows up
+
+i have done almost no testing for sandbox mode
+
+settings for sandbox mode can configured like other game modes but fewer options, such as if all players get all persmisions or if all players get only a select few permissions onto different buttons
+
+Build should be where any of it's items are accessible to be placed and what it has is selected by mouse and then placed on your mouse for you to choose where to place it on the board with your mouse
+
+the terminal can be brought up and typed into to hide most UI, simply by typing 
+hide ui
+this hides everything but the top right buttons for things like fullscreen or pause and  what not, or doesnt hide the text chat ("abc"), the leave sandbox or leave other button, the vote button, and hot bar. It hides the black outline above and below the screen AND it hides the text on the bottom (except for cheat sheet, it keeps that there for this by itself. This is a command to make ui less cluttered and provide better visibility. this command can be fonnd in pause settings OR in text chat commands and not just terminal 
+
+in numerat, anything can be done in that terminal as it can be in the terminal in the bottom left of any game mode outside of numerat
+
+The merchant has arrived text shouldnt be too short or too long and then fade away, but idk how long or short it is, havent checked.
+"
+
+Owner, 12:59Z (edited): "we need more discussion prob since numerat is a big deal"
+
+Decided (Adam): Numerat stays in discussion, nothing built yet; decisions added to notes/numerat.md. The Sandbox fixes (Build, movement, settings, M defaults, hide ui, merchant text, n window editor) go to workers now.
+
+## Owner, Nov 19 13:06Z
+"5. no, we should just do this 
+   1. \\if hp < 5\\
+
+7. yes
+
+
+yes to the mormini idea
+
+8. numberat is good to go then
+
+
+do we not use web gl?
+also, art and visuals shouldnt be the the old files, but rather, is the files remade into pixels, because ultimately that runs better, idk if we have done that yet. u tell me if im wrong or dont understand
+
+we need to have a numberat bible for claude which is the updated version of it's rules, operators, and examples, and so on
+
+idk wat u means ab vers 91, like wat ab it?"
+
+Decided (Adam): `\if hp < 5\` (inside backslashes < > compare); spaces ignored outside quotes; mormini as proposed; name Numberat. Bible written: notes/numberat-bible.md (linked from CLAUDE.md). WebGL and pre-made pixel files answered in chat (plan, waits for a go).
+
+## Owner, Nov 19 13:16Z
+"Make this file in microsoft word instead and also in libre write, just for me, you can use the file you wrote as the bible.
+
+Should double sqaure brackets be in place of squiggle ? 
+Then double squigle brackets means it is a multi line version of the single squiggle brackets
+
+what do you think? or should it be something besidess double square or dounble squiggle bracket FOR "several lines count as one"
+
+What new operators should be added to numerat to make it more capable for carrying out it's job for programming the ai and glueing between other files and all of that ?"
+
+Decided (Adam): Word + LibreOffice copies made from notes/numberat-bible.md (/mnt/project-files/sandbox/numerat/numberat-bible.docx/.odt; regenerate both whenever the bible changes). Proposals in bible section 14: open brackets carry the line (no doubled brackets); 8 new operator ideas. Waiting for the owner.
+
+## Owner, Nov 19 13:17Z (quoting Adam's pixel answer and plan)
+"Yeah it sounds like we should have pixel files made ahead of time for better performance"
+
+Decided (Adam): go for the slow-computer plan. Noah: measure with the CPU slowed on purpose, then bake every picture into ready-made pixel files and drop the live map filter, measuring again after. Solomon: zombies in WebGL after his Sandbox fixes, if the measurement still shows drawing as the cost.
+
+## Owner, Nov 19 13:21Z (answers to Adam's 8 operator ideas)
+"1. when is good, yeah 
+
+
+Code for more, like hitbox of duck for example
+
+2. yes
+
+
+3. sure
+
+
+4. yes, but should it be sqaure bracket or something else? or it could be many different brackets or paranthesis building from the principles. allow the numberat principles to apply to variables (?)
+
+
+5. sure???
+
+
+6. yeah
+
+
+7. sure 
+
+
+8. sure 
+
+
+
+
+update the numberat bible accordingly"
+
+Decided (Adam): all 8 in the bible (section 14); every stat (hitbox too) readable and settable by name; weights stay in [ ] and take any Numberat value; Numberat principles apply to named values. Word/LibreOffice copies remade.
+
+## Owner, Nov 19 13:25Z
+"show me some complex examples of my numberat similiar to how i wrote it"
+
+Decided (Adam): 5 worked examples, bible section 16, sent in chat.
+
+## Owner, Nov 19 13:32Z
+"make version of numberat that uses percentage with percent sign
+
+make numberat also have asterisk for a single letter: which is this 
+$
+
+Dollar sign now means it can be any letter digit, just a single one
+$$
+two means any two random letters
+
+What should this means? 
+~
+maybe it doesnt have to mean anything"
+
+Decided (Adam): chance in percent replaces ~ weights ([attack 75%, flee 25%]); $ = one random letter, $$ two; proposed ~ = "about". Bible updated.
+
+## Owner, Nov 19 13:36Z
+"why cant they be more than 100% ?
+what if we did double percent to indicate it can be more than 100%
+
+so 100%%+50%% ? 
+
+Maybe there is a better way to do this 
+
+(quoting the Letters answer) Yes
+
+i rly like ur idea for ~
+I agree"
+
+Decided (Adam): $ lower case + caps rule, ~ = about: in. Percent over 100%: proposed shares in a pick, "more than once" alone, stats can pass 100%; waiting.
+
+## Owner, Nov 19 13:38Z (to percent over 100%: shares in a pick, more than once alone, stats past 100%)
+"yes"
+
+## Owner, Nov 19 13:40Z
+"we need for loops in numberat right?"
+
+Owner, 13:41Z (to for + while, 1,000-round stop): "yes"
+
+Decided (Adam): loops in bible section 14.
+
+## Owner, Nov 19 13:43Z (quoting: "would mean the same as { [2,4]+[1:3] }. If yes, we don't need {{ }}.")
+"Sure"
+
+Owner 13:42Z: "1. sure" (Version 91 live with the newer fixes), "2. ?????? 3. ???????????????" (re-explained). Limits: the game's normal limits unless the owner says otherwise.
+
+## Owner, Nov 19 13:44Z (quoting the limits question)
+"Limits are set automatically if the player DOESNT define them themselves, and a help file says the limits and points to the help file on how to fix them"
+
+Decided (Adam): bible section 8.

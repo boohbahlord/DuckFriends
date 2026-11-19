@@ -4,6 +4,7 @@
    right onto the middle of the board and knocks everyone down. A win: the LOSER podium (Duncelation's) rises under him.
    Also the stats: the awards (Most Damage, Killing Blow, Hit the Most, Most Jumps), each player's box, and every fight. */
 import { esc, el } from "./ui.js";
+import { hpText } from "./hpmath.js";
 import { duckSVG } from "./duck.js";
 import { nameHTML } from "./name.js";
 import { cloudHTML } from "./brackets.js";
@@ -62,7 +63,7 @@ const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 export const mgjHPHTML = (s) => {
   const m = s.mgj || { hp: 0, max: 1 },
     hp = Math.max(0, m.hp);
-  return `<span class="mgj-hp-name">Justin</span>${meterHTML(hp, m.max, "", "j")}<b class="mgj-hp-n">${hp} / ${m.max} HP</b>`; // (the HP meter's blocks: hpmeter.js)
+  return `<span class="mgj-hp-name">Justin</span>${meterHTML(hp, m.max, "", "j")}<b class="mgj-hp-n">${hpText(hp)} / ${m.max} HP</b>`; // (the HP meter's blocks: hpmeter.js)
 };
 /* the board: the field, the podium (a win), the cloud and the HP bar */
 export const mgjBoardHTML = (

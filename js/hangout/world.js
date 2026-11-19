@@ -977,6 +977,12 @@ export function mountWorld(board, api) {
         ? Math.round(h.key) + 11
         : Math.round(L.sortY(a.x, a.y, a.z)) + 10; // (seen from outside through a hole in a roof: over that roof, layout.js)
     },
+    /* … lying dead there: under every duck standing (layout.js bodyZ) */
+    bodyKey(id, pos) {
+      const a = at(id, pos),
+        h = !inside && L.roofHoleOver(a.x, a.y, a.z);
+      return h ? Math.round(h.key) + 11 : L.bodyZ(a.x, a.y, a.z);
+    },
     hidden(id, pos) {
       const a = at(id, pos);
       return (

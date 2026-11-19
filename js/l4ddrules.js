@@ -36,6 +36,7 @@
      l4b  { id: { o, at } }: who is boarding up which opening, since when (one more board each BOARD_MS)
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
+import { hpHeal, hpHurt, tenths } from "./hpmath.js";
 import {
   baseMode,
   isSb,
@@ -1747,6 +1748,33 @@ function nukeTick(s, zs, now, ids) {
     (hp * PTS.HIT + crits * PTS.NUKE_CRIT) *
     ((s.hang.l4on || {}).double ? 2 : 1);
   for (const id of ids) addPts(s, id, each); // (every duck gets the points for all of it: the owner's, Nov 4)
+}
+/* Downpour: the trooper's body in the gas station (stationmap.js TROOPER) is gone from round 12 on, its pool of blood
+   left where it lay, but only once nobody can see it: whoever is in the gas station or near it would, so it waits for
+   a round or a rest when they're all away (the owner's, Nov 19 10:22Z: "the corpse in the gas station disapears but
+   the puddle of blood stays IF the body isnt on a players screen ... The check for this should be every 30 secods maybe
+   or something slow"). s.hang.l4.tg: gone. The host's clock for the next look: s.hidden.l4tg */
+export const TROOP = { ROUND: 12, EVERY: 30000, SEE_X: 1100, SEE_Y: 800 };
+function troopTick(s, now, ids) {
+  const L = s.hang.l4,
+    hid = s.hidden || {};
+  if (!dp() || !L || L.tg || (L.r || 0) < TROOP.ROUND) return;
+  if (hid.l4tg && now < hid.l4tg) return;
+  s.hidden = { ...hid, l4tg: now + TROOP.EVERY };
+  const sees = (id) => {
+    const p = s.pos[id];
+    if (!p || isWild(s, id) || p.x < 0) return false;
+    const x = p.x * W,
+      y = p.y * H;
+    return (
+      whereIn(x, y, +p.z || 0) === STATION ||
+      Math.hypot(
+        (x - GS.TROOPER.x) / TROOP.SEE_X,
+        (y - GS.TROOPER.y) / TROOP.SEE_Y,
+      ) < 1
+    ); // (in there, or near enough that a screen could show it through a window or a hole in the roof)
+  };
+  if (!ids.some(sees)) s.hang.l4 = { ...L, tg: 1 };
 }
 /* Downpour's lightning (the owner's, Nov 16 23:15Z): each round has a 1% chance of a strike, some time in it, on a
    zombie out in the open that a duck has on screen. It dies burnt (no points: nobody killed it), and each strike has a
@@ -3753,7 +3781,7 @@ function hurtDuck(s, p4, id, now, w = "", dmg = 1) {
   const p = p4[id];
   if (!p || p.dn || p.gh) return false;
   const safe = invuln(s) || invulnOf(s, id, now); // (Invulnerability, or just up from Safe Keeping: it only flashes)
-  const hp = safe ? p.hp : Math.max(0, +(p.hp - dmg).toFixed(1)); // (dmg: 1, or a Sandbox spawn's damage box)
+  const hp = safe ? p.hp : hpHurt(p.hp, dmg); // (dmg: 1, or a Sandbox spawn's damage box; in tenths, and up while above 0: hpmath.js)
   if (w && !safe) pwHit(s, id, w, now, hp <= 0);
   if (hp > 0) {
     p4[id] = { ...p, hp, at: now };
@@ -4390,7 +4418,7 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
     )
       s.hang.l4p = {
         ...s.hang.l4p,
-        [sh.by]: { ...q, hp: q.hp - cut, at: now },
+        [sh.by]: { ...q, hp: tenths(q.hp - cut), at: now },
       };
   }
   addFx(s, {
@@ -4491,7 +4519,7 @@ function l4Tick(s, now) {
       p.hp < maxHp(s, id) &&
       now - p.at >= (isWild(s, id) ? WILD.regen : L4.REGEN)
     )
-      p4[id] = { ...p, hp: p.hp + 1, at: now };
+      p4[id] = { ...p, hp: hpHeal(p.hp, 1, maxHp(s, id)), at: now }; // (a part-empty block fills first: hpmath.js)
   }
   s.hang.l4p = p4;
   const am = s.hang.l4a || {};
@@ -4554,6 +4582,7 @@ function l4Tick(s, now) {
     return true;
   }
   merchantTick(s, now); // (the merchant walks in or out, and greets)
+  troopTick(s, now, ids); // (the rests between rounds too)
   /* between rounds: no zombies; the drops still lie there to be taken */
   if (s.hang.l4.wait && !isSb(s)) {
     if (waitTick(s, now)) return true;
@@ -5129,6 +5158,7 @@ export function fenceZ(x, y, id) {
 const CL = { out: 26, in: 14, step: 40, speed: 0.25 };
 const COMMIT_NEAR = 4;
 const CHURCH = 2, // (layout.js whereIn: the chapel)
+  STATION = 1, // (and the gas station)
   TEAR_NEAR = 2.2; // duck lengths (room): a duck this close outside the church takes a zombie off the window it tears at // duck lengths (room): a duck that left the floor this close to a zombie keeping to its way up
 /* the edge of a roof nearest (x, y): d its deck (stationmap.js DECKS), o how far outside its edge (< 0: inside), nx ny
    the way out. only: that deck's (a zombie up a wall or on a roof keeps to its own, z.k) */
@@ -5542,7 +5572,7 @@ export function l4Heal(s, id, amt) {
   if (!p || p.dn || p.gh || p.hp >= max) return false;
   s.hang.l4p = {
     ...s.hang.l4p,
-    [id]: { ...p, hp: Math.min(max, +(p.hp + amt).toFixed(1)) },
+    [id]: { ...p, hp: hpHeal(p.hp, amt, max) },
   };
   return true;
 }

@@ -4,7 +4,7 @@
    what spawns (a zombie, for now), its key, and the boxes (numerat.js): the spawn limit (1, at most 100), the time
    between spawns (4 s), HP, damage and speed (tenths), and the true or false boxes (continuous spawn, can respawn,
    sprint, jump, climb walls). "in order for an entity to spawn, it must be set to a hotbar spawn item OR a key on the
-   keybaord, and only by clicking it wil it spawn": its key (while the Build window is up: SB_KEY_IN_BUILD) or the Spawn
+   keybaord, and only by clicking it wil it spawn": its key (any time, the Build window up or not: SB_KEY_IN_BUILD) or the Spawn
    button in its settings.
    - Continuous spawn off: each press makes one, while fewer than its limit are alive.
    - Continuous spawn on: a press starts a run that makes one every "time between spawns", only while nothing stands on
@@ -38,7 +38,7 @@ import {
   SB_ZONE,
   sbZoneSpot,
 } from "./sandboxrules.js";
-import { W as WW, H as WH, standable } from "./hangout/layout.js";
+import { W as WW, H as WH, standable, heightAt } from "./hangout/layout.js";
 import { Z_MOST, l4Spawn, l4Live } from "./l4ddrules.js";
 import { WAVE, zLook } from "./mgjrules.js";
 import { onCabin, sbzOn, cabinLive, cabinSpawn, cabinTick } from "./sbcabin.js";
@@ -336,6 +336,16 @@ export function sbAct(s, a, now) {
     if (!me || !["spawn", "respawn", "loot", "zone"].includes(a.kind))
       return false; // (loot: an orb's spot, sbloot.js; zone: sbzone.js)
     if (Object.keys(pts).length >= SB_POINTS) return false;
+    /* where: the spot picked on the map (Build: picked, then put down where the mouse or a tap says, the owner's, Nov 19
+       12:59Z), or where I stand */
+    const at =
+        Number.isFinite(a.x) && Number.isFinite(a.y)
+          ? {
+              x: Math.min(1, Math.max(0, a.x)),
+              y: Math.min(1, Math.max(0, a.y)),
+            }
+          : null,
+      z = at ? (sbOnBoard(s) ? 0 : heightAt(at.x * WW, at.y * WH)) : +me.z || 0;
     const n = ((s.sb && s.sb.n) || 0) + 1,
       cols = Object.keys(SB_COLORS),
       used = Object.values(pts).map((p) => p.col),
@@ -347,9 +357,9 @@ export function sbAct(s, a, now) {
         ...pts,
         ["p" + n]: {
           k: a.kind,
-          x: +(+me.x).toFixed(4),
-          y: +(+me.y).toFixed(4),
-          z: Math.round(+me.z || 0),
+          x: +(at ? at.x : +me.x).toFixed(4),
+          y: +(at ? at.y : +me.y).toFixed(4),
+          z: Math.round(z),
           col,
           f: {},
         },

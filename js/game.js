@@ -262,6 +262,7 @@ import { rainbowHTML } from "./art.js";
 import { statBoxHTML, ddrBoxHTML, openStats } from "./stats.js";
 import { profile, save, statMode } from "./store.js";
 import { openSettings, netLevel } from "./settings.js";
+import { setHideUi, uiHidden } from "./hideui.js";
 import { musicBarHTML, mountMusicBar } from "./musicbar.js";
 import { openCustomize, shareLook } from "./customize.js";
 import { ARM_SWING } from "./armspeed.js";
@@ -1754,14 +1755,15 @@ function drawDucks(now = clockNow()) {
     const body = `scaleX(${fx})${deadPose ? " rotate(-100deg) translateY(-12%)" : ""}`,
       squish = `scale(${sx}, ${sy})`,
       sh = (1 - Math.min(0.6, z / (size * 3.2))).toFixed(3);
-    if (d._tr !== tr) {
+    if (d._tr !== tr || d._dz !== deadPose) {
       d._tr = tr;
+      d._dz = deadPose;
       d.style.transform = tr;
-      if (!hang) d.style.zIndex = Math.round(at.top);
+      if (!hang) d.style.zIndex = deadPose ? 1 : Math.round(at.top); // (lying dead: under every duck standing, the owner's, Nov 19 10:22Z)
     }
     if (hang) {
-      // Hangout: in front of what it stands in front of; unseen through the cabin's walls
-      const zi = world.key(id, pos),
+      // Hangout: in front of what it stands in front of; unseen through the cabin's walls; lying dead, under every duck
+      const zi = deadPose ? world.bodyKey(id, pos) : world.key(id, pos),
         hid = world.hidden(id, pos);
       if (d._zi !== zi) {
         d._zi = zi;
@@ -3048,7 +3050,7 @@ function placeZombies(board, s, now) {
           : c.left < n._x
             ? -1
             : 1, // (the way it walks)
-      st = `${c.left.toFixed(1)},${c.top.toFixed(1)},${w.toFixed(1)},${face}`;
+      st = `${c.left.toFixed(1)},${c.top.toFixed(1)},${w.toFixed(1)},${face},${o.d ? 1 : 0}`;
     n._x = c.left;
     n._f = face;
     const was = n._hp,
@@ -3143,7 +3145,7 @@ function placeZombies(board, s, now) {
       n.style.width = w.toFixed(1) + "px";
       n.style.height = (box.h * k).toFixed(1) + "px";
     }
-    n.style.zIndex = Math.round(c.top);
+    n.style.zIndex = o.d ? 1 : Math.round(c.top); // (dead: under every duck, the owner's, Nov 19 10:22Z)
     n.style.setProperty("--face", face);
     n.style.setProperty("--feet", (box.feet * k).toFixed(1) + "px");
     n.style.setProperty("--k", k.toFixed(3));
@@ -4494,7 +4496,8 @@ const roams = () =>
   isQuack(R.state) ||
   isVd(R.state) ||
   isTv(R.state) ||
-  isHang(R.state); // anywhere on the board (else inside my column)
+  isHang(R.state) ||
+  isSb(R.state); // anywhere on the board (else inside my column). Sandbox's board has no columns at all
 const canWalk = () =>
   onBoardPhase() &&
   !locked() &&
@@ -7475,6 +7478,7 @@ function openPause() {
     <button type="button" class="btn green" data-a="resume">Resume</button>
     <button type="button" class="btn ghost" data-a="custom">Customize</button>
     <button type="button" class="btn ghost" data-a="settings">Settings</button>
+    <button type="button" class="btn ghost" data-a="hideui" aria-pressed="${uiHidden()}">${uiHidden() ? "Show UI" : "Hide UI"}</button>
     <button type="button" class="btn ghost" data-a="friends">Friends</button>
     ${R && isHang(R.state) && isSudo(R.state, R.me) ? '<button type="button" class="btn yellow" data-a="lobby">Everyone back to the lobby</button>' : ""}
     <button type="button" class="btn red" data-a="leave">Leave game</button></div>
@@ -7490,6 +7494,7 @@ function openPause() {
             resume() {},
             custom: () => openCustomize(),
             settings: () => openSettings(),
+            hideui: () => toast(setHideUi(!uiHidden())), // (hide ui: hideui.js)
             friends: () => openFriends(),
             lobby: () => R.send({ t: "toLobby" }),
             leave: () => leaveTo("rooms", "Leave the game in progress?"),
@@ -8097,7 +8102,7 @@ register("game", {
     S = el(`<section class="screen game docked">
       <header class="gbar"><div class="gbar-l"><span class="round"></span><span class="phase"></span></div>${musicBarHTML()}
         <div class="gbar-r"><span class="tmeter" hidden><i></i></span><span class="timer"></span>${fsBtnHTML()}<button type="button" class="btn ghost iconbtn" data-a="players" aria-label="Players" data-tip="Players (hold Tab)">👥</button>${lsetBtnHTML()}<button type="button" class="btn ghost iconbtn" data-a="pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header>
-      <div class="map-layer"></div><div class="gmain"></div>${DOCK_HTML}${BAR_HTML('<div class="gact"></div>')}</section>`);
+      <div class="map-layer"></div><div class="gmain"></div>${DOCK_HTML}${BAR_HTML(`<div class="gact"></div>${isSb(R.state) ? '<span class="ui-cs hints"><kbd>C</kbd> Cheat sheet</span>' : ""}`)}</section>`); // (with hide ui, in Sandbox, the one word left at the bottom: the owner's, Nov 19 12:59Z, "except for cheat sheet")
     docks = mountDocks(
       S,
       isL4dd(R.state)
@@ -8122,6 +8127,14 @@ register("game", {
           S,
           () => R,
           () => pm && pm.isOpen() && pm.close(),
+          (cx, cy) => {
+            // (Build: where on the map a click or tap lands, the same way walkTo reads it)
+            if (!geo) measure();
+            const board = S && origin($(".board", S));
+            if (!board || !geo) return null;
+            const r = board.getBoundingClientRect();
+            return unplace(cx - r.left, cy - r.top);
+          },
         )
       : null;
     placed = placeKey(R.state);
@@ -8141,7 +8154,7 @@ register("game", {
         },
         row = mountL4Bar(S, l4),
         slide = mountHotbar(S, l4Slider(l4));
-      slide.slider.classList.add("on-duck"); // (on a phone it's on my duck, out of sight: a swipe on my duck picks, touch.js swipe; the owner's, Nov 18 15:18Z)
+      slide.slider.classList.add("on-duck"); // (on a phone in the bottom middle, and a swipe on my duck picks too, touch.js swipe; the owner's, Nov 18 15:18Z and Nov 19 10:22Z)
       bar = {
         row: row.row,
         slider: slide.slider,
@@ -8170,6 +8183,7 @@ register("game", {
             : keysOf(playDuck()), // (Sandbox: its spawn buttons too)
         own: (id) => (R && sbHotOn(R.state) ? sbLook(R.state, id) : null),
         sig: () => (R && sbHotOn(R.state) ? sbHotSig(R.state) : ""),
+        full: () => !!R && sbHotOn(R.state), // (Sandbox: every slot shows, the empty ones too: hotbar.js)
         kept: keptNow,
         use: useKey,
         cool,
@@ -8185,7 +8199,7 @@ register("game", {
         },
         tag: () => S && S.querySelector(".gduck.mine .gduck-name"), // (the switch's box under my duck, on a phone: hotbar.js peekSwitch)
       });
-      bar.slider.classList.add("on-duck"); // (on a phone it's on my duck in every mode, out of sight: a swipe on my duck picks, touch.js swipe; the owner's, Nov 18 20:58Z, "every")
+      bar.slider.classList.add("on-duck"); // (on a phone in the bottom middle, and in every mode a swipe on my duck picks too, touch.js swipe; the owner's, Nov 18 20:58Z, "every", and Nov 19 10:22Z)
     }
     pad = mountPad({
       hold: (on) => {

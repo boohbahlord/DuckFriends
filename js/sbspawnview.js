@@ -6,7 +6,7 @@
    value (numerat.js). On the board the game draws them (game.js calls sbBoardMarks); on the worlds they are an activity
    of Sandbox's own (registry.js only: "sandbox"). */
 import { activity } from "./hangout/registry.js";
-import { W, H, heightAt, sortY, seenFrom } from "./hangout/layout.js";
+import { W, H, heightAt, sortY, seenFrom, bodyZ } from "./hangout/layout.js";
 import {
   npcURL,
   npcBox,
@@ -310,7 +310,7 @@ export function sbSettings(getR, id, tab = "") {
           `<label><input type="radio" name="sb-pick" data-pick="${v}"${pick === v ? " checked" : ""}> ${n}</label>`,
       )
       .join("")}</span></div>
-    <div class="sb-acts" data-row="acts"${onlyZ(what) ? " hidden" : ""}>${Object.keys(
+    <div class="sb-actrows" data-row="acts"${onlyZ(what) ? " hidden" : ""}>${Object.keys(
       SB_ACTS,
     )
       .map((f) => actRow(R.state, p, f, kinds))
@@ -565,28 +565,38 @@ function importWin(getR, id, then) {
   });
 }
 
-/* the Build window's options (sandbox.js): place a spawn, a respawn, loot or a zone where I stand */
+/* the Build window's options (sandbox.js): a spawn, a respawn, loot (an orb's spot: sbloot.js) or a zone (sbzone.js).
+   Picking one puts it on my mouse, and a click on the map puts it down there; a phone's next tap does (the owner's, Nov
+   19 12:59Z: "what it has is selected by mouse and then placed on your mouse for you to choose where to place it on the
+   board with your mouse"). sbPlace.start: sandbox.js' */
+export const sbPlace = { start: null };
+const BUILD = [
+  ["spawn", "Spawn"],
+  ["respawn", "Respawn"],
+  ["loot", "Loot"],
+  ["zone", "Zone"],
+];
 export const buildRows = (R) =>
   spawnsHere(R.state)
-    ? [
-        {
-          label: "Place a spawn here",
-          act: (r) => r.send({ t: "sb", k: "add", kind: "spawn" }),
-        },
-        {
-          label: "Place a respawn here",
-          act: (r) => r.send({ t: "sb", k: "add", kind: "respawn" }),
-        },
-        {
-          label: "Place loot here",
-          act: (r) => r.send({ t: "sb", k: "add", kind: "loot" }),
-        }, // (an orb's spot: sbloot.js)
-        {
-          label: "Place a zone here",
-          act: (r) => r.send({ t: "sb", k: "add", kind: "zone" }),
-        }, // (a zone round where I stand: sbzone.js)
-      ]
+    ? BUILD.map(([kind, label]) => ({
+        label,
+        win: true, // (the window goes: what I picked is on my mouse now)
+        act: (r) =>
+          sbPlace.start
+            ? sbPlace.start(kind, label)
+            : r.send({ t: "sb", k: "add", kind }),
+      }))
     : [];
+/* what I'm putting down, drawn on my mouse: its mark in the color it will get (a zone: its box, dashed) */
+export function ghostHTML(s, kind) {
+  const used = Object.values(ptsOf(s)).map((p) => p.col),
+    col =
+      Object.keys(SB_COLORS).find((c) => !used.includes(c)) ||
+      Object.keys(SB_COLORS)[0];
+  return kind === "zone"
+    ? `<span class="sb-ghost-zone" style="--c:${SB_COLORS[col]}"></span>`
+    : markSVG({ k: kind, col });
+}
 
 /* the worlds (the zombie cabin, Downpour): the points drawn on the ground, and E beside one opens it */
 activity({
@@ -787,7 +797,7 @@ activity({
         if (z.nm)
           z.nm.style.setProperty("--top", (-z.tall * sc - 2).toFixed(1) + "px"); // (its name over its head)
       }
-      const zi = Math.round(sortY(z.x, z.y, h)) + 10;
+      const zi = o.d ? bodyZ(z.x, z.y, h) : Math.round(sortY(z.x, z.y, h)) + 10; // (dead: under every duck, layout.js)
       if (z.zi !== zi) z.el.style.zIndex = z.zi = zi;
     }
     for (const [i, z] of ZB)

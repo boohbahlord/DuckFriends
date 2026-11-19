@@ -10,7 +10,7 @@
    speed (Speed: 10% faster) and has 7 seconds of sprint (a thin blue bar under my name). The rules are the host's
    (l4ddrules.js); the weapons bar is l4ddbar.js. */
 import { sprintLeft, sprintReset } from "./stamina.js";
-import { isSb } from "./sandboxrules.js";
+import { isSb, sbNoLight } from "./sandboxrules.js";
 import { activity } from "./hangout/registry.js";
 import { votesDue } from "./rules.js";
 import {
@@ -20,6 +20,7 @@ import {
   inCabin,
   seenFrom,
   sortY,
+  bodyZ,
   roofHoleOver,
   heightAt,
   W,
@@ -871,9 +872,10 @@ export function l4Got(k) {
       void b.offsetWidth;
       b.classList.add("l4-flash"); // (Max Ammo: every hotbar box flashes in its own color, quickly fading)
     }
-  gotEl.classList.remove("on", "nuke");
+  gotEl.classList.remove("on", "nuke", "merchant");
   void gotEl.offsetWidth;
   gotEl.classList.add("on");
+  if (k === "merchant") gotEl.classList.add("merchant"); // (3 s, then a 1 s fade: css l4-got-merchant)
   if (k === "nuke") {
     gotEl.classList.add("nuke");
     nukeScreen(gotEl);
@@ -1331,7 +1333,7 @@ function paint(now, ctx) {
     if (p4 && p4.gh) continue;
     const c = Wd.toScreen(a.x, a.y, a.z + 26);
     holes.push([c.left * q, c.top * q, GLOW * sc, 0.55]);
-    if (!up(s, id) || off[id]) continue;
+    if (!up(s, id) || off[id] || sbNoLight(s, id)) continue; // (Sandbox: a flashlight only once taken from loot)
     if (!on(c.left * q, c.top * q, CONE.far * sc)) continue; // (its light can't reach the screen: no rays)
     const [dx, dy] = aimOf(s, id, ctx),
       t = Math.atan2(dy, dx),
@@ -1666,10 +1668,13 @@ function drawMerchant(ctx, t) {
   mHurt(s, m, dead, p, sc, hide);
   if (hide) return;
   const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
-  if (butler.tr !== tr) {
+  if (butler.tr !== tr || butler.dz !== dead) {
     butler.tr = tr;
+    butler.dz = dead;
     butler.el.style.transform = tr;
-    butler.el.style.zIndex = Math.round(sortY(mAt.x, mAt.y, z)) + 10;
+    butler.el.style.zIndex = dead
+      ? bodyZ(mAt.x, mAt.y, z) // (dead: under every duck, layout.js)
+      : Math.round(sortY(mAt.x, mAt.y, z)) + 10;
   }
   pxPic(butler, butler.body.firstChild, 64 * sc, butler.bh * sc);
   if (butler.k !== sc) {
@@ -1760,7 +1765,7 @@ function drawCorpses(ctx) {
     if (o.tr !== tr) {
       o.tr = tr;
       o.el.style.transform = tr;
-      o.el.style.zIndex = Math.round(sortY(c.x, c.y, z)) + 9; // (just behind anyone standing where he lies)
+      o.el.style.zIndex = bodyZ(c.x, c.y, z); // (under every duck: layout.js)
     }
     pxPic(o, o.body.firstChild, 64 * sc, o.bh * sc);
     if (o.k !== sc) {
@@ -2770,7 +2775,9 @@ activity({
           ? AT_BOARDS
           : hole
             ? Math.round(hole.key) + 11 // (over the roof, in its hole)
-            : Math.round(sortY(o.x, o.y, z)) + 10,
+            : o.st === 3
+              ? bodyZ(o.x, o.y, z) // (dead: under every duck, layout.js)
+              : Math.round(sortY(o.x, o.y, z)) + 10,
         onCam = Wd.onView(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc),
         hide =
           unseen ||
@@ -2935,6 +2942,9 @@ activity({
     seePool(ctx.state(), ctx);
     drawMerchant(ctx, t);
     drawCorpses(ctx);
+    const tg = !!(ctx.state().hang.l4 || {}).tg;
+    if (ctx.world.board.classList.contains("trooper-gone") !== tg)
+      ctx.world.board.classList.toggle("trooper-gone", tg); // (his body gone, his pool left: l4ddrules.js troopTick)
     drawEgg(ctx, now);
     drawBox(ctx);
     pwDraw(ctx);

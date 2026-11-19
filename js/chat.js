@@ -44,6 +44,7 @@ import { sfx } from "./sound.js";
 import { hooks } from "./hooks.js";
 import { settingText } from "./gamesettings.js";
 import { DOD_NEWS } from "./lobbysettings.js";
+import { uiCommand } from "./hideui.js";
 import {
   npcById,
   npcByTag,
@@ -740,20 +741,25 @@ const CHAT_CMDS = [
   "\\mute",
   "\\permmute",
   "\\show",
+  "\\hide",
   "\\togglesuggest",
 ];
 const MUTE_WORDS = ["bubble", "ping", "text", "all", "on", "off", "-f"],
-  SHOW_WORDS = ["mute", "permmute", "players"];
+  SHOW_WORDS = ["mute", "permmute", "players", "ui"];
 function chatSuggest(line, s, me) {
   if (profile.settings.chatSuggest === false) return []; // \togglesuggest
-  const mw = line.match(/^\\(mute|permmute|show)\s+(?:[^@]*\s)?([a-z-]*)$/i); // \mute bubble ping on …
+  const mw = line.match(
+    /^\\(mute|permmute|show|hide)\s+(?:[^@]*\s)?([a-z-]*)$/i,
+  ); // \mute bubble ping on …
   if (mw) {
     const opts =
-        mw[1].toLowerCase() === "show"
-          ? SHOW_WORDS
-          : MUTE_WORDS.filter(
-              (w) => w !== "-f" || mw[1].toLowerCase() === "permmute",
-            ),
+        mw[1].toLowerCase() === "hide"
+          ? ["ui"]
+          : mw[1].toLowerCase() === "show"
+            ? SHOW_WORDS
+            : MUTE_WORDS.filter(
+                (w) => w !== "-f" || mw[1].toLowerCase() === "permmute",
+              ),
       p = mw[2].toLowerCase(),
       pre = line.slice(0, line.length - mw[2].length);
     return opts
@@ -797,6 +803,7 @@ const HELP = [
   "\\mute bubble ping text on @name @name2: mute what you list (all = everything; off undoes it) until you leave the room",
   "\\permmute … the same, kept on this device (it asks first; -f skips the question)",
   "\\show mute · \\show permmute · \\show players",
+  "\\hide ui: hides the bars and the words at the bottom on your screen (\\show ui brings them back)",
   "\\togglesuggest: suggestions in the chat on or off",
   "clear (or \\clear): clears the chat on your screen",
   "Shift+T or the symbol at the bottom left: the command line",
@@ -944,6 +951,8 @@ async function chatCommand(text, r) {
     save();
     return `Chat suggestions ${profile.settings.chatSuggest ? "on" : "off"}. \\togglesuggest switches them again.`;
   }
+  const ui = text.match(/^\\(hide|show)\s+ui\s*$/i);
+  if (ui) return uiCommand(ui[1].toLowerCase(), "ui"); // (hide ui, mine alone: hideui.js)
   if (!/^\\(show|mute|permmute|unmute|muteping|unmuteping)/i.test(text))
     return null;
   if (!r) return "That works in a room.";

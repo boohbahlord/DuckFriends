@@ -9,6 +9,34 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v91",
+    version: 91,
+    date: "Nov 19, 2026",
+    title: "HP in tenths, hide ui, and Sandbox fixes",
+    news: [
+      "HP can now be in tenths: a hit of 1.5 leaves a half-empty block, healing fills that block first, and any HP above 0 keeps you standing.",
+      "For Sandbox: on a phone, a Tools button under Leave Sandbox opens every Sandbox window.",
+      "For Sandbox: a spawn's key works any time, not only while Build is open.",
+      "For Sandbox: your hotbar shows all its slots from the start, the empty ones too.",
+      "For Dead Ducks Arcade: on Downpour, the dead trooper in the gas station is gone from round 12 once nobody's looking. His blood stays.",
+      "Type hide ui in the command line (or \\hide ui in the chat, or Hide UI in the pause menu) to hide the bars and the words at the bottom; show ui brings them back.",
+      "For Sandbox: what you pick in Build rides on your mouse, and a click puts it down there (on a phone, tap where).",
+      "For Sandbox: on Dead Ducks Arcade's maps, nobody has a flashlight until they pick one up from loot (Gear, then Flashlight).",
+      "For Sandbox: the Numerat window shows line numbers and doesn't wrap lines unless Wrap is on.",
+      "For Sandbox: the Numerat window has autocomplete and a Check button that finds mistakes without running the file.",
+      "For Sandbox: the Numerat window has a read-only help folder.",
+      'For Dead Ducks Arcade: "The Merchant has Arrived" stays on screen for 3 seconds, then fades out.',
+    ],
+    fixed: [
+      "On phones, the hotbar is back at the bottom in every mode, and switching slots shows it under your duck for a moment.",
+      "Bodies lie under every duck, its gun, its tag and its outfit.",
+      "For Dead Ducks Arcade: the body in Downpour's gas station is a dead zombie, with its head on and red bullet wounds.",
+      "For Sandbox: the behavior dropdowns in a spawn's window look right again.",
+      "For Sandbox: ducks can walk and sprint on the board again.",
+      "For Sandbox: Build's things no longer hide under your duck.",
+    ],
+  },
+  {
     id: "v90",
     version: 90,
     date: "Nov 19, 2026",

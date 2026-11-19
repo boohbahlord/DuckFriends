@@ -1157,6 +1157,15 @@ export function sortY(x, y, z) {
     return y;
   return STAGE.cy + STAGE.ry + 1 + ((y - BACK) / (LOW - BACK)) * (BAND - 1);
 }
+/* the z-index of a body lying dead at (x, y), its feet at height z: on the ground, under every duck standing, its gun,
+   its tag and its outfit, over the floor's own things (the owner's, Nov 19 10:22Z: "they should be overlayed below your
+   duck, your duck's gun, your duck's ui, and your duck's apparel"); up on a roof, the deck or the stage, just behind
+   anyone standing where it lies */
+export const BODY_Z = 4; // (over the floor's parts, 2, and a dead duck's pool, 3: l4dd.js)
+export function bodyZ(x, y, z) {
+  const k = sortY(x, y, z);
+  return k === y ? BODY_Z : Math.round(k) + 5;
+}
 /* where someone arrives: outside the front door (k: the k-th of n, spread out; a free spot) */
 export function spawnAt(k = 0, n = 1) {
   if (variant === "l4gs") return gsSpawn(k);

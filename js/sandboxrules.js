@@ -128,9 +128,9 @@ export const SB_COLORS = {
 };
 /* the keys a spawn can't take: the windows' letters and the game's own keys */
 export const SB_KEYS_TAKEN = "cbmnhgpwasdeqrtvx";
-/* the spawn key only works while the Build window is up (the head planner's pick until the owner answers "UNLESS the
-   letter is pressed outside of build mode"): false lets it work any time */
-export const SB_KEY_IN_BUILD = true;
+/* the spawn key works any time, the Build window up or not (the owner's answer, Nov 19 10:22Z: "no (not for sandbox
+   mode anyway"); true would let it work only while the Build window is up */
+export const SB_KEY_IN_BUILD = false;
 /* the most spawns and respawns on a map */
 export const SB_POINTS = 60;
 /* ---------- Sandbox's board zones (stage 5) ----------
@@ -289,3 +289,9 @@ export const SB_DROPS = {
   speedboost: ["speed", "Speed Boost"],
   sale: ["sale", "Sale"],
 }; // (an orb's word for each, never a special's id: the Double jump is "double"; then the zombies' own name for it)
+/* gear an orb can hold on Dead Ducks Arcade's maps: the flashlight. In Sandbox a duck there has none until it takes one
+   (the owner's, Nov 19: every zombie mechanic "besides flashlight, but flashlight can be added as loot"); it keeps it
+   for good, in s.sb.fl */
+export const SB_GEAR = { flashlight: "Flashlight" };
+export const sbNoLight = (s, id) =>
+  isSb(s) && baseMode(s.options) === "l4dd" && !((s.sb && s.sb.fl) || {})[id];
