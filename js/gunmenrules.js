@@ -28,7 +28,7 @@ import {
 import { heightAt, slabBetween, deckOver, PROPS } from "./hangout/layout.js";
 import { DECKS } from "./hangout/stationmap.js";
 import { woundCode, DEATH } from "./wounds.js";
-import { botDuck } from "./botduck.js";
+import { gunmanLook } from "./gunmen.js";
 import {
   friend,
   friendsTick,
@@ -120,38 +120,18 @@ export const pick = (xs) => xs[Math.floor(Math.random() * xs.length)];
 export const gmOf = (s) => (s.hang && s.hang.gm) || null;
 const alive = (s) => ((gmOf(s) || {}).gb || []).filter((o) => !o.d);
 
-/* a criminal's look: a random duck's color in street clothes, now and then something on its face or its head (the
-   owner's: "maybe glasses versus other facial apparel, different collared ducks maybe"; Noah draws their own later) */
-function crimLook() {
-  const d = botDuck();
-  return {
-    ...d,
-    pattern: "none",
-    metal: "none",
-    keys: null,
-    style: "rubber",
-    outfit: { id: pick(["hoodie", "leather", "jeans", "plaid", "shirt"]) },
-    face:
-      Math.random() < 0.6
-        ? { id: pick(["ski", "shades", "glasses", "bag", "aviators", "patch"]) }
-        : null,
-    hat: Math.random() < 0.35 ? { id: pick(["cap", "bucket"]) } : null,
-  };
-}
-/* a soldier's look: a random duck's color in uniform and helmet (Noah draws theirs later) */
-function soldierLook() {
-  const d = botDuck();
-  return {
-    ...d,
-    pattern: "none",
-    metal: "none",
-    keys: null,
-    style: "rubber",
-    outfit: { id: "military" },
-    face: null,
-    hat: { id: "helmet" },
-  };
-}
+/* a gunman's look from its number: Noah's (gunmen.js gunmanLook), the same on every screen; a plain rubber duck
+   under it */
+const lookOf = (kind, i) => ({
+  pattern: "none",
+  metal: "none",
+  keys: null,
+  style: "rubber",
+  outfit: null,
+  face: null,
+  hat: null,
+  ...gunmanLook(kind, i),
+});
 /* a soldier's guns by its part in the squad: the LMG, the ones with him (an AK-47), or a rifleman (an AK-47 or the
    burst rifle); a pistol and a knife besides */
 const SOLDIER_GUNS = {
@@ -176,7 +156,7 @@ export function newGunman(s, k, x, y, H, ro = "") {
     hp,
     l: [hp],
     f: 1,
-    dk: k === "c" ? crimLook() : soldierLook(),
+    dk: lookOf(k === "c" ? "criminal" : "soldier", i),
     wp: { p: guns },
     mg: guns.map(magOf),
     rl: guns.map(() => 0),
@@ -221,20 +201,6 @@ function start(s, kind, now, H) {
       );
   }
   return true;
-}
-/* the sniper: in the map's greens, a ghillie suit (Noah draws it; till then a plain green duck) */
-function ghillieLook() {
-  return {
-    ...botDuck(),
-    color: "#4f6b2e",
-    pattern: "none",
-    metal: "none",
-    keys: null,
-    style: "rubber",
-    outfit: null,
-    face: null,
-    hat: null,
-  };
 }
 /* where the sniper can lie in wait: under a tree's crown inside the fences, or up on the gas station's roof; one far
    enough off from every duck, nobody seeing it (ducks: { x, y }) */
@@ -293,7 +259,7 @@ function newSniper(s, at) {
     hp,
     l: [hp],
     f: 1,
-    dk: ghillieLook(),
+    dk: lookOf("sniper", i),
     wp: { p: ["sniper", "ump"] },
     mg: [magOf("sniper"), magOf("ump")],
     rl: [0, 0],
