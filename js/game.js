@@ -3658,7 +3658,8 @@ function against(hex) {
 /* the flamethrowers firing (flamer.js), each frame: a stream out of each one's nozzle the way its gun points, as far as
    the room's state says it reaches, its pixels coming faster the longer it's held (an exponential growth); and every
    patch of burning ground flickering until it burns out. s.flame (s.hang.l4fl in Dead Ducks Arcade): { id: [the hold's
-   start, its last puff, ux, uy, reach] }; s.gfire (s.hang.l4gf): [[x, y, until …]] */
+   start, its last puff, ux, uy, reach] }; s.gfire (s.hang.l4gf): [[x, y, until …]] (Dead Ducks Arcade's with its
+   floor's height last: [x, y, until, by, h]) */
 const FLAME_CARRY = new Map();
 let flamesAt = 0;
 function flames(s, now, hang, size, fxl, heldAll) {
@@ -3693,7 +3694,7 @@ function flames(s, now, hang, size, fxl, heldAll) {
     const left = g[2] - now;
     if (left <= 0) continue;
     const a = l4
-      ? spot(g[0] / HW, g[1] / HH, 0)
+      ? spot(g[0] / HW, g[1] / HH, g[4] || 0) // (on its own floor: a roof's, or the ground)
       : spot(g[0], g[1], hang ? g[5] || 0 : 0);
     fxGroundFire(a.left, a.top, size * 0.45, left < 1000 ? 1 : 3); // (dying down in its last second)
   }
