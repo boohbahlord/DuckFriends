@@ -365,6 +365,7 @@ export function sbSettings(getR, id, tab = "") {
     ${colorRow}
     ${row("who", { name: "Who respawns here" }, typed("who"), why("who"))}
     ${(p.im || [])
+      .filter((f) => f !== "ap")
       .map((f) =>
         SB_ACTS[f]
           ? actRow(R.state, p, f, kindsFor(R.state))
@@ -372,7 +373,9 @@ export function sbSettings(getR, id, tab = "") {
             ? flagRow(f, SB_FLAGS[f], typed(f), why(f))
             : row(f, SB_BOXES[f], typed(f), why(f)),
       )
-      .join("")}`;
+      .join(
+        "",
+      )}${(p.im || []).includes("ap") ? `<p class="sb-none">Appearance: the look its spawn had when it was imported.</p>` : ""}`;
   /* a zone's page: what it does and to whom, its size, and what spawns in it (sandboxrules.js SB_ZONE) */
   const zonePage = () => {
     const fx = SB_FX[boxText(p, "fx").trim()]

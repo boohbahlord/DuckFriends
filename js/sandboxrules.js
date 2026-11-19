@@ -114,11 +114,14 @@ export const SB_IMPORT = [
   ["Numbers", ["hp", "damage", "speed", "size"]],
   ["True or false", ["sprint", "jump", "climb"]],
   ["Behavior", ["target", "ignore", "avoid", "protect"]],
+  ["Appearance", ["ap"]], // (its spawn's look, copied: not a box, so SB_OWN leaves it out)
 ];
 /* what a spawn's "Use these settings" switches, and what M's defaults for a kind can change (the owner's, Nov 19: "an
    option for M that allows entities default settings to be edited ... Make sure that spawn can have settings turned
    off so entities spawn as they are, much like how respawn does it"): the same settings a respawn can import */
-export const SB_OWN = SB_IMPORT.flatMap(([, fs]) => fs);
+export const SB_OWN = SB_IMPORT.flatMap(([, fs]) => fs).filter(
+  (f) => f !== "ap",
+);
 /* a spawn's Players tab: ducks spawn here (they start, join and come back from being down here) when it's on, the ones
    its "who" names (players, or their names), with its HP and speed; blank is the game's own */
 export const SB_PLAYER = {
