@@ -36,7 +36,7 @@
      l4b  { id: { o, at } }: who is boarding up which opening, since when (one more board each BOARD_MS)
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
-import { duckBig } from "./duck.js";
+import { duckBig, scaleOf } from "./duck.js";
 import { hpHeal, hpHurt, tenths } from "./hpmath.js";
 import {
   baseMode,
@@ -3949,12 +3949,14 @@ function meleeHits(s, now) {
     const p = s.pos[k.by],
       A = ARMS[k.w] || ARMS.knife;
     if (!p || k.miss || !standing(s, k.by)) continue;
-    const [px, py] = at(p),
-      bx = px + k.dx * A.at,
-      by = py + k.dy * A.at;
+    const sz = scaleOf((s.players[k.by] || {}).duck), // (my Size: a bigger duck's swing reaches farther and wider, a smaller one's not as far, as they're drawn; the owner's, Nov 19 16:50Z)
+      R = (A.r + 22) * sz,
+      [px, py] = at(p),
+      bx = px + k.dx * A.at * sz,
+      by = py + k.dy * A.at * sz;
     for (const z of zs) {
       if (z.st === 3 || k.hit.includes(z.i)) continue;
-      if (Math.hypot(z.x - bx, z.y - by) > A.r + 22) continue; // (a round bubble: as far up and down as to the sides, the owner's, Nov 18 15:18Z "Make sure melee weapons have the same range in any direction". It was squashed up and down, 1.4 times shorter)
+      if (Math.hypot(z.x - bx, z.y - by) > R) continue; // (a round bubble: as far up and down as to the sides, the owner's, Nov 18 15:18Z "Make sure melee weapons have the same range in any direction". It was squashed up and down, 1.4 times shorter)
       k.hit.push(z.i);
       if (missed(s, k.by, k.w, z, now)) continue; // (this one isn't hit by this swing; the others in it still can be)
       const dmg = Array.isArray(A.dmg)
@@ -3972,7 +3974,7 @@ function meleeHits(s, now) {
         continue;
       const [qx, qy] = at(q);
       if (
-        Math.hypot(qx - bx, qy - by) > A.r + 22 ||
+        Math.hypot(qx - bx, qy - by) > R ||
         Math.abs((+q.z || 0) - (+p.z || 0)) > 48
       )
         continue;
@@ -3991,10 +3993,10 @@ function meleeHits(s, now) {
       ); // (shove counts in those duck lengths: this way it goes `far` world px whichever way)
     }
     if (L4_HOOKS.npc)
-      L4_HOOKS.npc(s, k.by, bx, by, now, k.w, A.r + 22, A.r + 22, null, k.hit); // (Sandbox's NPCs in its bubble, each once a swing: sbcabin.js)
+      L4_HOOKS.npc(s, k.by, bx, by, now, k.w, R, R, null, k.hit); // (Sandbox's NPCs in its bubble, each once a swing: sbcabin.js)
     if (
       !k.hit.includes("j") &&
-      wildHurt(s, k.by, bx, by, now, k.w, A.r + 22, A.r + 22, null, false)
+      wildHurt(s, k.by, bx, by, now, k.w, R, R, null, false)
     )
       k.hit.push("j"); // (Justin out in Downpour, once for each swing)
   }
