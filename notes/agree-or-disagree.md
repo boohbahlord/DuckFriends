@@ -7067,3 +7067,8 @@ Decided (Adam): every melee weapon, the starting knife too, has a percent bar; 1
 "cast irons is only 50 damage for the cast iron."
 
 Decided (Adam): read as the pan's 100% = 50 damage dealt (about 10 hits); every other melee 450. Passed to Jackal with the durability job.
+
+## Owner, 2026-11-19 22:44:55Z (Angelic melee)
+"When a weapon is made angelic, it does not break. A melee weapon, that is. A melee weapon."
+
+Decided (Adam): an Angelic melee never breaks (no wear from then on). Passed to Jackal with the durability job.
