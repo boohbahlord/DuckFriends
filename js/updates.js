@@ -19,8 +19,10 @@ export const UPDATES = [
       "For Sandbox: right-click a placed thing for Properties, Copy and Cut; right-click an empty spot or press Shift+V to paste.",
       "For Sandbox: Shift+C turns cheat mode on or off for whoever may build (shown bottom left).",
       "For Sandbox: home/ in the n window holds a folder for every player. The Permissions button (next to Check) lets you lock your own files or give other players, groups or everyone Read, Write or Run until the Sandbox restarts. Looking in other players' folders takes the new canhomes permission (sudo has it). New commands: setfacl, getfacl, chown :group, and a fuller chmod.",
+      "For Sandbox: all loot is now in the H hotbar window, picked from a scrolling list with your hotbar and the default hotbar under it.",
+      "Faster first load on slow connections: the game asks for all its files at once.",
     ],
-    fixed: [],
+    fixed: ["A slow load is no longer restarted halfway."],
   },
   {
     id: "v105",
