@@ -6334,3 +6334,10 @@ Decided (Adam): every worker (Solomon the 2nd, Noah, Jackal, Miles Jr.) reviews 
 ## Nov 19 01:43Z (owner)
 "Testing should be brief and resource efficient. Emphasis on brief. Testing with a compiler should ne enough right?"
 Decided (Adam): testing standard cut to a brief version (notes/testing-standard.md): automatic checks + a headless run with 0 errors, one line per owner sentence the change covers, edges only where numbers/states are involved, Chromium phone + computer by code (Firefox, sideways, online only when relevant), a one-pass regression script, 3-6 line report. Answer to the owner: no, syntax checks alone miss things like the knife-sized guns; a short run of the game is still needed.
+
+## Nov 19 01:57Z (owner, answers to Adam's 4 questions of 01:55Z: 1 upload size cap 2 MB?, 2 "full and empty hotbar" = every slot shows but holds nothing?, 3 spawn key only in build mode?, 4 online NPC cap lower, like 300?)
+"1. Yeah
+2. yes
+3. Key?
+4. Cap is based off of zombies caps for entities"
+Decided (Adam): uploads capped at 2 MB; build mode's hotbar shows every slot, all empty; NPC cap follows the zombie cap (Z_MOST 800 in js/l4ddrules.js), online too. Question 3 re-asked in plainer words.
