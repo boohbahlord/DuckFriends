@@ -24,6 +24,7 @@ import {
   sbPlayerSpot,
 } from "./sandboxrules.js";
 import { sbAct, sbTick, sbPlaceDuck, sbHpOf } from "./sbspawn.js";
+import { hpHeal, tenths } from "./hpmath.js";
 import { sbHotAct } from "./sbhot.js";
 import { sbLootAct, sbLootTick } from "./sbloot.js";
 import { sbZoneTick } from "./sbzone.js";
@@ -3522,7 +3523,7 @@ export function soaks(s, id, now, dmg = 1, by, raw = false) {
     return true; // (spawn protection: nothing hurts a duck that just came back, and what it shoots hurts nobody)
   if (invuln(s)) return hurtFx(s, id, now); // (Invulnerability: the hit only flashes)
   const max = sbHpOf(s, id) || PHP, // (Sandbox: a spawn's or a respawn's HP for it, sbspawn.js)
-    n = phpLost(s, id, now) + (dmg >= PHP && !raw ? max : dmg), // (a crit, the slug, the chain gun: all of it, whatever it has)
+    n = tenths(phpLost(s, id, now) + (dmg >= PHP && !raw ? max : dmg)), // (a crit, the slug, the chain gun: all of it, whatever it has; in tenths, up while any HP is left: hpmath.js)
     rest = { ...s.php };
   delete rest[id];
   s.php = n >= max ? rest : { ...rest, [id]: { n, t: now } };
@@ -3554,7 +3555,8 @@ const SB_H = {
   heal(s, id, amt, now) {
     const h = (s.php || {})[id];
     if (!h || now - h.t >= PHP_BACK) return;
-    const n = Math.round((h.n - amt) * 10) / 10,
+    const max = sbHpOf(s, id) || PHP,
+      n = tenths(max - hpHeal(max - h.n, amt, max)), // (a part-empty block fills first: hpmath.js)
       rest = { ...s.php };
     if (n > 0) rest[id] = { ...h, n };
     else delete rest[id];

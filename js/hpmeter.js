@@ -8,6 +8,7 @@
 import { esc } from "./ui.js";
 import { mirrorBars } from "./meters.js";
 import { hurtSway } from "./fxmotion.js";
+import { hpText, tenths } from "./hpmath.js";
 
 /* a meter shows one block for each HP; with more HP than this, each block holds a few, so the blocks stay blocks */
 const MOST_BLOCKS = 40;
@@ -50,7 +51,7 @@ export function meterHTML(hp, max, cls = "", key = "") {
           ? `<i style="--f:${f.toFixed(2)}"></i>`
           : "<i></i>";
   }
-  return `<span class="hpm${cls ? " " + cls : ""}${low(hp, max) ? " low" : ""}" style="--nb:${n}" role="meter" aria-valuemin="0" aria-valuemax="${max}" aria-valuenow="${hp}"><span class="hpm-row">${badgeSVG(key)}<span class="hpm-bar"><span class="hpm-blocks">${bl}</span></span></span></span>`;
+  return `<span class="hpm${cls ? " " + cls : ""}${low(hp, max) ? " low" : ""}" style="--nb:${n}" role="meter" aria-valuemin="0" aria-valuemax="${max}" aria-valuenow="${hpText(hp)}"><span class="hpm-row">${badgeSVG(key)}<span class="hpm-bar"><span class="hpm-blocks">${bl}</span></span></span></span>`;
 }
 const low = (hp, max) => hp > 0 && hp <= max * 0.2;
 
@@ -210,7 +211,7 @@ export function mountMeter() {
           if (f > 0 && f < 1) b.style.setProperty("--f", f.toFixed(2));
           else b.style.removeProperty("--f");
         });
-        el.setAttribute("aria-valuenow", h);
+        el.setAttribute("aria-valuenow", hpText(h));
         el.classList.toggle("low", low(h, max));
       }
       paint(now, regen);
@@ -252,7 +253,8 @@ export function othersHpHTML(list) {
 /* the numbers are kept when done and handed out again (a pool: owner 2026-11-15), instead of a new element for every
    hit; put back in the page, the rise starts over by itself */
 const POPS_KEPT = [];
-export function popHP(host, n, small = false) {
+export function popHP(host, n0, small = false) {
+  const n = tenths(n0); // (in tenths: "−1.5 HP", the owner's, Nov 19 10:30Z)
   if (!host || !n) return;
   let p = POPS_KEPT.pop();
   if (!p) {
@@ -260,7 +262,7 @@ export function popHP(host, n, small = false) {
     p.setAttribute("aria-hidden", "true");
   }
   p.className = `hp-pop ${n > 0 ? "up" : "down"}${small ? " small" : ""}`;
-  p.textContent = `${n > 0 ? "+" : "−"}${Math.abs(n)} HP`;
+  p.textContent = `${n > 0 ? "+" : "−"}${hpText(Math.abs(n))} HP`;
   const live = host.querySelectorAll(".hp-pop").length;
   p.style.setProperty("--dx", (Math.random() * 16 - 8).toFixed(0) + "px");
   p.style.setProperty("--up", live);

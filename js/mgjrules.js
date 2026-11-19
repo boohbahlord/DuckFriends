@@ -1,4 +1,5 @@
 import { ARM_COOL } from "./armspeed.js";
+import { hpHeal, tenths } from "./hpmath.js";
 /* ---------- the rules of Mad God Justin ----------
    A boss fight: every duck has the knife (1), the pistol (2: it never reloads, in place of the bow, the owner's,
    Nov 16), Jaime (3, from a pool everyone shares), the weapon it picked
@@ -128,7 +129,7 @@ export function mgjSoak(s, id, now, dmg = 1) {
   if (!max || !m || !P || P.dead || s.phase !== "boss") return false;
   if (((m.safe || {})[id] || 0) > now) return true;
   m.safe = { ...m.safe, [id]: now + SOAK_MS };
-  const lost = ((m.lost || {})[id] || 0) + dmg; // (the office chair takes 2, owner 2026-11-03 17:15Z)
+  const lost = tenths(((m.lost || {})[id] || 0) + dmg); // (the office chair takes 2, owner 2026-11-03 17:15Z; in tenths, up while any HP is left: hpmath.js)
   if (lost >= max) {
     const rest = { ...m.lost };
     delete rest[id];
@@ -149,7 +150,7 @@ export function mgjHalf(s, id, now) {
   const lost = (m.lost || {})[id] || 0,
     cut = Math.floor((max - lost) / 2);
   if (!cut) return false;
-  m.lost = { ...m.lost, [id]: lost + cut };
+  m.lost = { ...m.lost, [id]: tenths(lost + cut) };
   hurtFx(s, id, now);
   return true;
 }
@@ -1390,7 +1391,8 @@ function pickTick(s, now, at, log, fx) {
       if (Math.hypot((p.x - m.plus.x) / RX, (p.y - m.plus.y) / RY) > 1.1)
         continue;
       const lost = { ...m.lost },
-        left = lost[id] - 1;
+        most = mgjPHp(s),
+        left = tenths(most - hpHeal(most - lost[id], 1, most)); // (a part-empty block fills first: hpmath.js)
       if (left > 0) lost[id] = left;
       else delete lost[id];
       m.lost = lost;
