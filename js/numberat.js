@@ -89,12 +89,13 @@ function lex(text) {
       const end = src.indexOf("'", i + 1);
       if (end < 0) no("A ' is never closed");
       const raw = src.slice(i + 1, end),
-        m = /^(\d+)(\*+|\$+)$/.exec(raw);
-      if (m)
+        m = /^(\d+)(\*+|\$+)$/.exec(raw),
+        f = /^(\*+|\$+)(\d+)$/.exec(raw); // ('*1' is the same as '1*', the owner's, Nov 19)
+      if (m || f)
         push("name", raw, {
-          key: "'" + m[1] + m[2][0],
-          n: m[2].length,
-          kind: m[2][0],
+          key: "'" + (m ? m[1] + m[2][0] : f[2] + f[1][0]),
+          n: (m ? m[2] : f[1]).length,
+          kind: (m ? m[2] : f[1])[0],
         });
       // ('1*' is asterisk number 1, '2***' number 2 with three digits, '1$' a named letter)
       else push("quote", raw);
@@ -857,7 +858,18 @@ function parseRule(raw, line, order) {
     while (b) {
       let m;
       if ((m = /^!+/.exec(b))) r.str += m[0].length;
-      else if ((m = /^lin\b|^lin(?=!)/.exec(b))) lin = true;
+      else if (b[0] === "[") {
+        // (math on !: a strength that is a Seriat value, like \lin["**"=!]'inc1'\; the owner's, Nov 19)
+        let d = 0,
+          e = 0;
+        for (; e < b.length; e++) {
+          if (b[e] === "[") d++;
+          else if (b[e] === "]" && --d === 0) break;
+        }
+        if (d) bad();
+        r.str = strength(b.slice(1, e).replace(/=\s*!+\s*$/, ""));
+        m = [b.slice(0, e + 1)];
+      } else if ((m = /^lin\b|^lin(?=!)/.exec(b))) lin = true;
       else if ((m = /^n(?=[\d[({*~-])/.exec(b))) {
         const rest = b.slice(1),
           cut = /\s+(?=a\d|a?inc|a?rm|lin|!)/.exec(rest); // ('n2:3 rm0': the lines, then the rule)
@@ -907,6 +919,20 @@ function subject(text, act) {
   return { k: "set", has: possible(t, "A rule's value").has };
 }
 /* a bit of Seriat inside a rule, compiled as a value */
+function strength(text) {
+  const fn = sub(text, "A strength");
+  let r = 12345;
+  const rand = () => (r = (r * 1103515245 + 12345) % 2147483648) / 2147483648;
+  try {
+    const v = fn(newCtx(rand, NO_RULES));
+    if (typeof v !== "number")
+      no(`A strength must be a number, not "${text}"`, RULES);
+    return Math.max(0, Math.floor(v));
+  } catch (e) {
+    if (!(e instanceof NbError)) throw e;
+    no(`A strength: ${e.why}`, RULES);
+  }
+}
 function sub(text, what) {
   const p = new Parser(lex(text), { states: [] });
   const fn = p.expr();
