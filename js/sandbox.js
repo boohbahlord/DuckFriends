@@ -19,18 +19,39 @@ export const SB_WINS = {
   g: { name: "Game settings" },
   p: { name: "Player settings" },
 };
-/* the cheat sheet's words (a first draft; the head planner writes the real ones). The loot preview (stage 4) goes under
-   them */
+/* the cheat sheet's words: what every key does in Sandbox (the owner's file: "Cheat sheet describes a shit ton in a large
+   page popup"). Each later stage adds its own lines here as it lands. The loot preview (stage 4) goes under them */
 export const SB_SHEET = [
-  ["C", "This cheat sheet"],
-  ["B", "Build: spawns, respawns, loot and boards"],
-  ["M", "Make an NPC"],
-  ["N", "Numerat"],
-  ["H", "Hotbar"],
-  ["G", "Game settings"],
-  ["P", "Player settings"],
-  ["1-9", "Pick an option while a window is up"],
-  ["Esc", "Close the window"],
+  [
+    "C",
+    "This cheat sheet. Hold it to look, double-tap it to keep it up, tap it once to put it away.",
+  ],
+  [
+    "B",
+    "Build: place spawns, respawns, loot and board zones. Hold, double-tap or tap it like C.",
+  ],
+  ["M", "Make an NPC: its look, its weapons and who it goes after."],
+  [
+    "N",
+    "Numerat: your files and their help page. Numerat only runs in Sandbox.",
+  ],
+  ["H", "Hotbar: what you carry and what you can spawn from it."],
+  [
+    "G",
+    "Game settings for this Sandbox: where Numerat files are brought in to run.",
+  ],
+  ["P", "Player settings: who else may change Sandbox."],
+  [
+    "1-9",
+    "While a window is up, pick its options by number or with the mouse. Weapons don't switch then.",
+  ],
+  ["E", "Use what you stand next to, a spawn too."],
+  ["Esc", "Close the window."],
+  ["Leave Sandbox", "Top left. Half the room's votes, or the host, ends it."],
+  [
+    "Who",
+    "The host can change everything. With Democracy of Ducklings letting all change settings, everyone can.",
+  ],
 ];
 /* how fast two taps must be to count as a double tap, and how short a press is a tap */
 const TAP_MS = 300;
