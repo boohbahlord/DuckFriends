@@ -126,6 +126,7 @@ import {
 } from "./l4ddpower.js";
 import { ANGEL, angelOf, angelAmmo, angelAct, angelLeft } from "./l4ddangel.js";
 import { fieldOf, askField } from "./flowfield.js";
+import { NPC_RUN } from "./npcshared.js";
 
 /* what Sandbox lends these rules (sbcabin.js): npc(s, by, x, y, now, w, rx, ry, from, hit) puts a shot or a swing at
    (x, y) into its NPCs standing there (hit: a swing's list, every one in reach once; none: a shot, the first one, true
@@ -2162,13 +2163,15 @@ function justinBody(s, what, id, now, mx, my) {
 }
 /* what a merchant sold, said in the chat by the buyer's tag (the owner's, Nov 19 19:27Z: "what the merchant sells to a
    player should be said in the text chat in the bottom left"); chat.js shows the name as it shows a tag */
-const soldSays = (s, id, text) =>
+const soldSays = (s, id, text) => {
+  setMh(s, { sold: 1 }); // (bought from: he may come straight back, merchantCome)
   logIn(s, {
     sys: true,
     by: id,
     buy: text,
     text: (s.players[id] || {}).name + " " + text,
   });
+};
 /* the merchant: the one upgrade he offers me this visit (upOffer; the Butler's, SHOP), from beside him while he's
    selling, while I have the points; gas in the cabin (powerGas); or something from his stock (merchantBuy) */
 function buy(s, id, what, mx, my, hand, now) {
@@ -2516,13 +2519,16 @@ function give(s, id, w, hand0) {
    balcony in the cabin, over the fence on Downpour. When the next round's zombies come he says a leaving line and runs
    the same way, and the zombies chase him as they do a duck (as they do Justin out there: JCHASE) until he's over the
    fence or off the balcony. He can be killed (by anyone's weapons, or the zombies' claws), and stays dead for the rest
-   of the game, his body left where he fell (the zombies leave it be); no revive. Each visit is a different merchant
-   (a bag of the ones alive). He has 6 HP and walks as a duck does, with a duck's sprint to get away (merchantSprints).
+   of the game, his body left where he fell (the zombies leave it be); no revive. The merchants come in turn from a line
+   (merchantCome): the last one goes to its end, one somebody bought from may come straight back (MERCH.BACK), and one a
+   player hurt never comes back. He has 3 or 4 HP and walks as a duck does, and gets away no faster: the shared slow
+   speed (npcshared.js NPC_RUN, merchantSprints).
    s.hang.l4m (online): { v: the visit, id: who (merchants.js), roll: his look, st: "in" (walking in), "here", "out"
    (running away), "fight" (Phil going after foe, the duck that hurt him), "jump" (off the balcony or over the fence:
    gone in a moment) or "dead", x, y (world px), f: his facing, hits: the times a player hurt him,
    hp, stock: [[weapon, price]], say: { n, t, text } his last line, c: 1 while he's past the zombies' reach }
-   s.hidden.l4mh (the host's): { left: the merchants' bag, dead: [ids], bags: his weapon bags (bagRoll), lines: the
+   s.hidden.l4mh (the host's): { left: the merchants' line, dead: [ids], ban: [ids] (hurt by a player: never again),
+   cur: the last one to come, sold: 1 once somebody bought from him, bags: his weapon bags (bagRoll), lines: the
    three line bags, near: { id: 1 } the ducks he greeted standing by him, route: [legs], p: the leg he's on, t: since
    when, tk: his last step } */
 export const MERCH = {
@@ -2533,10 +2539,11 @@ export const MERCH = {
   LESS: 0.1, // … each one after it less likely by this …
   EACH: 0.025, // … and more likely by this for each player past the first)
   AGAIN: 0.25, // (a buy: the chance he has another)
-  HP: [3, 6], // (each visit's merchant rolls his HP: the owner's, Nov 18 15:35Z "give the merchants 3 to 6 HP, where it could vary")
+  BACK: 0.2, // (one somebody bought from: the chance he comes again at the very next visit, else the end of the line)
+  HP: [3, 4], // (each visit's merchant rolls his HP: the owner's, Nov 19 19:27Z "They should only have 3 to 4 HP")
   WALK: 1, // (his walk: a duck's, the owner's, Nov 18 14:22Z: "he walks at the speed of any other player and will use his
   //  sprint to get away if he has to (limited amount of sprint)")
-  SPRINT: 1.75, // (his sprint: a duck's (game.js SPEED.sprint), as long as a duck's (L4.SPRINT), and as long to fill …
+  SPRINT: NPC_RUN, // (getting away: the shared slow speed, npcshared.js; "Merchants should be less fast when they try to escape" (the owner's, Nov 19 19:27Z). His meter still runs as long as a duck's (L4.SPRINT), and as long to fill …
   CHASED: 450, // … used running away when a zombie is this near (world px) or a player just hurt him (HURT_MS)
   HURT_MS: 3000,
   STAB: 70, // (world px: Phil's knife reaches a duck this near …
@@ -2561,7 +2568,14 @@ export const stockPrice = (s, p) => (saleOn(s) ? fives(p / 2, 1) : p);
 function merchantSetUp(s) {
   s.hang.l4m = null;
   s.hang.l4mc = []; // (the bodies of the ones killed: a new game, none)
-  setMh(s, { left: [], dead: [], bags: { b: {} }, route: null });
+  setMh(s, {
+    left: [],
+    dead: [],
+    ban: [],
+    cur: "",
+    bags: { b: {} },
+    route: null,
+  });
 }
 /* a line of one kind ("greet", "hurt", "leave"), from his bag of them */
 function merchantSays(s, kind, now) {
@@ -2681,12 +2695,23 @@ function merchantCome(s, now) {
   if (m0 && m0.st !== "dead") return; // (one at a time)
   const h = mh(s),
     dead = h.dead || [],
-    alive = MERCHANTS.map((m) => m.id).filter((id) => !dead.includes(id));
-  if (!alive.length) return; // (every one of them killed)
+    ban = [...(h.ban || [])],
+    prev = h.cur;
+  /* the line (the owner's, Nov 19 19:27Z): the last one to come goes to the end of it. One a player hurt and who lived
+     never comes back ("Merchants that are shot at go straight to the back of the line forever"); one somebody bought
+     from may come straight back ("they have a 20% chance of coming back, and they're not removed from the shuffle") */
+  if (prev && h.hurt && !dead.includes(prev) && !ban.includes(prev))
+    ban.push(prev);
+  const alive = MERCHANTS.map((m) => m.id).filter(
+    (id) => !dead.includes(id) && !ban.includes(id),
+  );
+  if (!alive.length) return setMh(s, { ban, cur: "" }); // (every one of them killed or shot at)
   let left = (h.left || []).filter((id) => alive.includes(id));
-  if (!left.length) {
-    left = shuffled(alive);
-    if (left.length > 1 && m0 && left[0] === m0.id) left.push(left.shift()); // (never the same one twice running)
+  for (const id of shuffled(alive)) if (!left.includes(id)) left.push(id); // (a new game's, or one missing)
+  if (prev && alive.includes(prev)) {
+    left = left.filter((id) => id !== prev);
+    if (h.sold && Math.random() < MERCH.BACK) left.unshift(prev);
+    else left.push(prev);
   }
   const id = left[0],
     [from, route] = wayIn();
@@ -2694,7 +2719,10 @@ function merchantCome(s, now) {
     vn = (h.vn || 0) + 1; // (his visit's number this game: before, it started over at 1 whenever the last one had left)
   setMh(s, {
     vn,
-    left: left.slice(1),
+    left,
+    ban,
+    cur: id,
+    sold: 0,
     lines: {},
     hurt: 0,
     sp: 1,
