@@ -100,7 +100,7 @@ export function survStart(s, now) {
    ones pushed into zs): the phases go on. n: the players. h: what only l4ddrules.js can do, { walker(): a new walker
    far from everyone (or null), speedAt(level): a zombie's speed at that level's stats, go(): the merchant leaves,
    rest(): a rest begins (the merchant comes, the ghosts are back), gunmen(side): a wave of gunmen comes in instead of a
-   horde ("c" criminals, "s" soldiers: gunmen.js), gunDone(): true once that wave is over } */
+   horde ("c" criminals, "s" soldiers: gunmenrules.js), gunDone(): true once that wave is over } */
 export function survTick(s, L, zs, now, n, h) {
   let sv = { ...s.hang.sv };
   const live = zs.filter((z) => z.st !== 3),
@@ -114,7 +114,7 @@ export function survTick(s, L, zs, now, n, h) {
       }
     }
     if (now >= sv.until && sv.k && Math.random() < SV.GUNMEN) {
-      /* the peak is gunmen (never the first): the walkers don't sprint, and more keep wandering in (gunmen.js) */
+      /* the peak is gunmen (never the first): the walkers don't sprint, and more keep wandering in (gunmenrules.js) */
       const [g, gs] = gunSide(sv.gs);
       h.gunmen(g);
       Object.assign(L, { t0: now, n: 0, made: 0, owe: 0, acc: 0, sec: -1 });

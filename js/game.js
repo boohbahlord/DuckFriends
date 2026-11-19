@@ -217,6 +217,7 @@ import {
   wildCrying,
   isWild,
   zombieLook,
+  slotOfPick,
 } from "./l4ddrules.js";
 import { watching, watchNext, watchHTML } from "./spectate.js";
 import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
@@ -572,7 +573,7 @@ const jaimeHp = (s, id) => {
 };
 let padHold = false, // a phone's jump button held down (the jetpack flies)
   held = null,
-  l4Slot = 0, // Quacky Zombies: the slot in hand (0 melee, 1 and 2 ranged, 3 the special), and the weapon's before the special
+  l4Slot = 0, // Quacky Zombies: the pick in hand (0 melee, 1 and 2 ranged, 3 the item, 4 the grenades, 5 the second item: keys 1 to 6, l4ddrules.js slotOfPick), and the weapon's before an item
   l4Last = 0,
   mgjHold = "handgun", // Mad God Justin: what's out in my hand (the short sword, the pistol, the weapon picked up, the zebra cake)
   mgjBack = "handgun", // (and what goes back in hand once a picked-up weapon is used up, or the zebra cake thrown)
@@ -5864,8 +5865,12 @@ const playDuck = () =>
     ? {
         ...myDuck(),
         keys: [
-          ...slotsOf(R.state, R.me).map((w) => w || null),
-          ...Array(6).fill(null),
+          ...slotsOf(R.state, R.me)
+            .slice(0, 4)
+            .map((w) => w || null),
+          null, // (5: the grenades)
+          slotsOf(R.state, R.me)[4] || null, // (6: the second item)
+          ...Array(4).fill(null),
         ],
       }
     : R && isMgj(R.state)
@@ -5941,11 +5946,12 @@ function heldNow() {
     const sl = slotsOf(R.state, R.me);
     const kit = kitOf(R.state, R.me);
     if (l4Slot === 4 && !(kit && kit.g > 0)) l4Slot = sl[l4Last] ? l4Last : 0; // (the last grenade thrown: the weapon before it comes back)
-    if (l4Slot !== 4 && !sl[l4Slot]) l4Slot = sl[l4Last] ? l4Last : 0;
+    if (l4Slot !== 4 && !sl[slotOfPick(l4Slot)])
+      l4Slot = sl[l4Last] ? l4Last : 0;
     if (kit && kit.jp && sl[3] === "jetpack") return ""; // (the jetpack on: nothing else is used beside it)
     if (downArmed(R.state, R.me)) return "handgun"; // (down: the down pistol)
     if (l4Hp(R.state, R.me) <= 0) return "";
-    return l4Slot === 4 ? "grenade" : sl[l4Slot] || "";
+    return l4Slot === 4 ? "grenade" : sl[slotOfPick(l4Slot)] || "";
   }
   return held && hasKey(playDuck(), held) ? held : "";
 }
@@ -6120,9 +6126,10 @@ function useKey(i, keep, toggle = false) {
     R.send({ t: "use", what: id, face: turned() ? 1 : me.face || 1 }); // (an item: Shift and its key use it the same way)
   if (bar) setTimeout(() => bar && bar.refresh(), 60);
 }
-/* Quacky Zombies: keys 1 to 4 pick a slot. A melee or ranged weapon stays in hand once picked; the special (4)
-   switches on and off: on, it's in hand instead of the weapon, and off (or used up) that weapon is back. The Long jump
-   and the jetpack only switch themselves on and off, and the weapon stays in hand (the owner's, Nov 3) */
+/* Quacky Zombies: keys 1 to 4 pick a slot, 5 the grenades and 6 the second item (Dead Ducks Arcade and Survival). A
+   melee or ranged weapon stays in hand once picked; an item (4, 6) switches on and off: on, it's in hand instead of the
+   weapon, and off (or used up) that weapon is back. The Long jump and the jetpack only switch themselves on and off,
+   and the weapon stays in hand (the owner's, Nov 3) */
 function l4Pick(i, hint = false) {
   const sl = slotsOf(R.state, R.me),
     kit = kitOf(R.state, R.me);
@@ -6131,26 +6138,28 @@ function l4Pick(i, hint = false) {
     if (l4Slot === 4) l4Slot = l4Last;
     else if (kit && kit.g > 0) {
       if (kit.jp && sl[3] === "jetpack") fire("jetpack"); // (the jetpack goes off)
-      if (l4Slot !== 3) l4Last = l4Slot;
+      if (l4Slot < 3) l4Last = l4Slot;
       l4Slot = 4;
     } else return;
     sendMove(true);
     if (bar) bar.refresh();
     return;
   }
-  if (i > 3 || !sl[i]) return;
-  if (i !== 3 && kit && kit.jp && sl[3] === "jetpack") fire("jetpack"); // (a weapon picked: the jetpack goes off)
-  if (i === 3 && sl[3] === "safekeep") return hint ? l4SafeHint() : undefined; // (it can't be used by hand: a short note says how it works, never from the scroll wheel)
-  if (i === 3 && L4_TOGGLES.includes(sl[3])) {
-    fire(sl[3]);
+  const k = slotOfPick(i),
+    item = k >= 3;
+  if (k < 0 || !sl[k]) return;
+  if (!item && kit && kit.jp && sl[3] === "jetpack") fire("jetpack"); // (a weapon picked: the jetpack goes off)
+  if (item && sl[k] === "safekeep") return hint ? l4SafeHint() : undefined; // (it can't be used by hand: a short note says how it works, never from the scroll wheel)
+  if (item && L4_TOGGLES.includes(sl[k])) {
+    fire(sl[k]);
     if (bar) bar.refresh();
     return;
   }
-  if (i === 3) {
-    if (l4Slot === 3) l4Slot = l4Last;
+  if (item) {
+    if (l4Slot === i) l4Slot = l4Last;
     else {
-      if (l4Slot !== 4) l4Last = l4Slot;
-      l4Slot = 3;
+      if (l4Slot < 3) l4Last = l4Slot;
+      l4Slot = i;
     }
   } else l4Slot = l4Last = i;
   sendMove(true);
@@ -6459,10 +6468,11 @@ function wheelPick(dir) {
       has = (i) =>
         i === 4
           ? !!(kit && kit.g > 0)
-          : !!sl[i] && !(i === 3 && sl[3] === "safekeep");
+          : !!sl[slotOfPick(i)] && sl[slotOfPick(i)] !== "safekeep",
+      n = sl.length > 4 ? 6 : 5; // (the second item, key 6, after the grenades)
     let i = l4Slot;
-    for (let k = 0; k < 5; k++) {
-      i = (i + dir + 5) % 5;
+    for (let k = 0; k < n; k++) {
+      i = (i + dir + n) % n;
       if (i !== l4Slot && has(i)) {
         l4Pick(i);
         return true;

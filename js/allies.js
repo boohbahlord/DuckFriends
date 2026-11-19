@@ -3,7 +3,7 @@
    in the church by its front doors, with "Help has Arrived" as the merchant's notice. Each has a name under it and a
    light green outline; one of them talks at a time (the lines the owner approved, each list played through before any
    line comes again). They hang about through the rest, then fight with us: zombies and the gunmen, at half damage, and
-   they can die. The gunmen shoot at them as they do at us (gunmen.js).
+   they can die. The gunmen shoot at them as they do at us (gunmenrules.js).
    Friendly fire (only the player who did it is ever targeted):
    - in a peak, one killed is forgiven; 2 killed within 15 s (never by an explosive) turn the squad on that player;
      lighting more than one with fire within 15 s does too;
@@ -14,7 +14,15 @@
    s.hang.gm keeps: turn { id: 1 } the players they've turned on, fk { id: [kill times] }, fl { id: { i: when lit } },
    fs (until when one is talking), fb { list: [what's left of its bag] }, fph (the phase they saw last), pd { id: 1 }
    the ducks down, tk { id: when they answered it } (until it walks off) */
-import { GM, gmOf, pick, newGunman, shoot, stab, suppress } from "./gunmen.js";
+import {
+  GM,
+  gmOf,
+  pick,
+  newGunman,
+  shoot,
+  stab,
+  suppress,
+} from "./gunmenrules.js";
 import { clearShot, chaseStep } from "./l4ddrules.js";
 import { heightAt } from "./hangout/layout.js";
 import { CHAPEL, CHAPEL_DOOR } from "./hangout/stationmap.js";
@@ -135,7 +143,7 @@ function say(gm, k, now, o = null, force = false) {
   return true;
 }
 
-/* a rest begins: maybe they come (H: gunmen.js' helper from l4ddrules.js) */
+/* a rest begins: maybe they come (H: gunmenrules.js' helper from l4ddrules.js) */
 export function friendsCome(s, now, H) {
   const gm0 = gmOf(s);
   if (gm0 && alive(gm0).length) return;
@@ -246,7 +254,7 @@ export function friendsTick(s, gm, ducks, now, H) {
   gm.tk = tk;
 }
 
-/* one of them, its beat. o is its own copy in gm.gb (gunmen.js tick) */
+/* one of them, its beat. o is its own copy in gm.gb (gunmenrules.js tick) */
 export function friend(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
   const gm = gmOf(s),
     sv = s.hang.sv || {},

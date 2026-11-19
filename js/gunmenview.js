@@ -1,4 +1,4 @@
-/* ---------- Survival: the gunmen on the screen (their rules: gunmen.js) ----------
+/* ---------- Survival: the gunmen on the screen (their rules: gunmenrules.js) ----------
    Drawn as Sandbox's NPCs are (npcview.js): their duck look with its wounds, HP bar, the gun in their hands and their
    shots, their fall, each gliding over one heartbeat, and the zombies' red outline while a wall or a roof hides them. Their flashlights are lit as the ducks' are (l4dd.js paint asks
    gunLights() for them): off while they wait in ambush or run ("flashlights off while ambushing or running") */
@@ -16,7 +16,7 @@ const ZB = new Map(),
   LASERS = []; // this frame's laser sights: [x0, y0, x1, y1] on the screen (game.js hands them to fx.js)
 let supEl = null,
   shookAt = 0;
-const BURNS = 2200; // ms a flame's bite shows it burning (gunmen.js GM.BURN_MS, and a little)
+const BURNS = 2200; // ms a flame's bite shows it burning (gunmenrules.js GM.BURN_MS, and a little)
 activity({
   id: "gunmen",
   only: "surv",

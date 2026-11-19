@@ -16448,6 +16448,11 @@ body:has(.l4-shopping, .win-back) :is(.l4-sr, .l4-srv, .l4-srb) {
   color: var(--dim);
   font-size: calc(0.8rem * var(--ts));
 }
+/* how many of it the merchant has, after its name */
+.l4-up-n {
+  color: var(--dim);
+  font-size: 0.85em;
+}
 .l4-up-lv {
   display: flex;
   gap: 0.2rem;

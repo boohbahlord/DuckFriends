@@ -139,7 +139,7 @@ import {
 /* what Sandbox lends these rules (sbcabin.js): npc(s, by, x, y, now, w, rx, ry, from, hit) puts a shot or a swing at
    (x, y) into its NPCs standing there (hit: a swing's list, every one in reach once; none: a shot, the first one, true
    when it landed) */
-export const L4_HOOKS = { npc: null, gm: null }; // (gm: Survival's gunmen, gunmen.js: { tick, shot, blast, fire, near, claw })
+export const L4_HOOKS = { npc: null, gm: null }; // (gm: Survival's gunmen, gunmenrules.js: { tick, shot, blast, fire, near, claw })
 export const isL4dd = (s) => !!s && baseMode(s.options) === "l4dd"; // (and Sandbox on its cabin or Downpour: sandboxrules.js)
 /* I want only the lights' stutter and the air (the wind, the rain, the fires: ambience.js) on of Hangout's activities.
    The couches, the stage, the card table and the piano's keys are still drawn, but quiet: nothing to sit on, sing into
@@ -331,6 +331,7 @@ export const ARMS = {
     life: 420,
   },
   medkit: { kind: "special", cool: ITEM_COOL, all: 1 },
+  defib: { kind: "special", cool: ITEM_COOL, all: 1 }, // (Survival's defibrillator: DEFIB)
   grenade: {
     kind: "grenade",
     cool: ITEM_COOL,
@@ -568,9 +569,17 @@ export const inHand = (w, s, id) => {
   const c = s && kindOf(w) === "special" && ((kitOf(s, id) || {}).am || {})[w];
   return c && c[0] <= 0 ? "" : w;
 };
-/* the slots, in order (keys 1 to 4; the grenades are G): blue, red, red, purple, and the grenades white */
+/* the slots, in order (keys 1 to 4; the grenades are 5): blue, red, red, purple, and the grenades white. Dead Ducks
+   Arcade and Survival have a second item slot after the grenades, key 6 (the owner's, Nov 19 22:25Z: "In Dead Ducks
+   Arcade and in Survival, there is now 2 item slots"): the kit's fifth (freshKit); Sandbox keeps one */
 export const START = ["knife", "handgun", "bow", ""];
-export const SLOT_KINDS = ["melee", "ranged", "ranged", "special"];
+export const SLOT_KINDS = ["melee", "ranged", "ranged", "special", "special"];
+/* the item slots in a kit's slots (3, and 4 when there are two) */
+export const ITEM_SLOTS = [3, 4];
+/* a pick (game.js l4Pick: 0 to 3 the slots, 4 the grenades, 5 the second item, as keys 1 to 6) and its slot, -1 for the
+   grenades */
+export const slotOfPick = (i) => (i < 4 ? i : i === 5 ? 4 : -1);
+export const pickOfSlot = (k) => (k < 4 ? k : 5);
 /* every weapon there is (the Items page lists them all: l4ddcatalog.js) */
 export const WEAPONS = [
   "knife",
@@ -652,6 +661,7 @@ const NAMES = {
   dagger: "Dagger",
   shotgun: "Shotgun",
   medkit: "Medkit",
+  defib: "Defibrillator",
   safekeep: "Safe Keeping",
   grenade: "Grenade",
   sniper: "Barrett .50 Cal", // (the owner's, Nov 18 12:19Z: named after its look)
@@ -682,6 +692,22 @@ export const weaponName = (w) => (isPw(w) ? pwName(w) : NAMES[w] || w);
    orb"): green, blue, purple (glowing) or the chair's gold. The dagger, the knife, the pistol, the pan, the adrenaline
    shot and the bow have no color: a plain slot, as in the other games (the owner's, 12:32Z: "they are a normal looking
    slot like it is in the default game, so no color"). One not here keeps its slot's color (the grenades) */
+/* what each color costs at a merchant (MERCH.PRICES) */
+const TIER_PRICES = {
+  plain: 300,
+  green: 500,
+  blue: 750,
+  purple: 1500,
+  gold: 3000,
+};
+/* Survival's defibrillator (the owner's, Nov 19 22:25Z): a merchant has one 25% of the time on his first visit, and 15%
+   more likely each visit after ("25% chance every time a merchant shows up ... let's make it 15% every time the merchant
+   comes"), back to 25% once one came (my reading). Held while I go up to a dead player, it brings them back; they stack
+   ("It's kind of like ammo"). It costs 950 rounded up to a color's price, and has that color ("Whatever it rounds up to
+   in cost. Of whatever tier it rounds up to. And that will determine its color"): purple, 1,500 */
+export const DEFIB = { FIRST: 0.25, UP: 0.15, ASK: 950 };
+const tierFor = (p) =>
+  Object.keys(TIER_PRICES).find((k) => TIER_PRICES[k] >= p) || "gold";
 const TINTS = {
   dagger: "plain",
   knife: "plain",
@@ -711,6 +737,7 @@ const TINTS = {
   flamer: "purple",
   laser: "purple",
   chair: "gold",
+  defib: tierFor(DEFIB.ASK),
 };
 /* its color's class (css .l4s, .l4orb, .sp-slot: c-plain, c-green, c-blue, c-purple, c-gold, c-red), "" for its slot's own;
    holy: an Angelic one, red */
@@ -1475,11 +1502,12 @@ export const magIn = (m, w) =>
         ? ANGEL.PISTOL.MAG
         : 1)
     : 0;
-function freshKit() {
+function freshKit(s) {
   const am = {},
-    sl = survOn() ? SV.KIT : START; // (Survival: the pistol only)
+    sl = [...(survOn() ? SV.KIT : START)]; // (Survival: the pistol only)
   for (const w of sl) if (fullAmmo(w)) am[w] = fullAmmo(w);
-  return { sl: [...sl], am, rl: 0, rw: "", g: ARMS.grenade.start, u: {} };
+  if (!isSb(s)) sl.push(""); // (the second item slot: not in Sandbox)
+  return { sl, am, rl: 0, rw: "", g: ARMS.grenade.start, u: {} };
 }
 export const kitOf = (s, id) => ((s && s.hang && s.hang.l4a) || {})[id] || null;
 export const slotsOf = (s, id) => (kitOf(s, id) || {}).sl || START;
@@ -1636,7 +1664,7 @@ function bringBack(s, id, now, k, fresh) {
   s.hang.l4p = p4;
   downGun(s, id, false);
   if (fresh) {
-    s.hang.l4a = { ...(s.hang.l4a || {}), [id]: freshKit() };
+    s.hang.l4a = { ...(s.hang.l4a || {}), [id]: freshKit(s) };
     s.hang.l4pt = {
       ...(s.hang.l4pt || {}),
       [id]: PTS.START + ((s.hang.l4 && s.hang.l4.bonus) || 0),
@@ -2266,7 +2294,7 @@ function l4Act(s, a, now) {
     }
     const [tx, ty] = at(pos);
     if (Math.hypot(tx - mx, ty - my) > L4.REACH * 1.6) return false;
-    if (tp.ex) return false; // (Justin in Downpour, dead for good)
+    if (tp.ex) return defibUse(s, id, t, me, now); // (dead for good: only Survival's defibrillator brings a player back)
     if (tp.rv && tp.rv.by !== id && s.pos[tp.rv.by]) return false; // (someone else is at it)
     if (me.w === "medkit" && hasLeft(s, id, "medkit")) {
       /* a medkit in my hand: up at once, full, with what they bought; the medkit is used up (the owner's, Nov 16), and
@@ -2310,6 +2338,23 @@ function l4Act(s, a, now) {
   if (a.do === "pump") return powerPump(s, id, now, mx, my, PH);
   if (a.do === "angel") return angelAct(s, id, a, now, mx, my, PH);
   return false;
+}
+/* Survival: the defibrillator in my hand brings dead player t back (the owner's, Nov 19 22:25Z: "you go up to a dead duck
+   that is a player and only a player, and you revive them"): up at once, as after a revive, and one defibrillator is
+   used (the slot stays, empty, as a medkit's) */
+function defibUse(s, id, t, me, now) {
+  if (!isSurv(s) || isWild(s, t) || isHelper(s, t) || !s.players[t])
+    return false;
+  if (me.w !== "defib" || !hasLeft(s, id, "defib")) return false;
+  getUp(s, t, now, false);
+  const kit = kitOf(s, id),
+    c = kit.am.defib;
+  s.hang.l4a = {
+    ...s.hang.l4a,
+    [id]: { ...kit, am: { ...kit.am, defib: [c[0] - 1, 0] } },
+  };
+  addFx(s, { kind: "l4medrev", by: id, who: [t], t: now }); // (the medkit's revive sound)
+  return true;
 }
 /* Justin out there, in a rest phase, at Jaime's body: his plan for the phase (jplan) and a line each visit (jbody). (No duck
    can give him a weapon any more: the owner's, Nov 17 20:02Z, "make it to where you cannot give justin a weapon
@@ -2357,7 +2402,7 @@ function buy(s, id, what, mx, my, hand, now) {
     up = upOf(s, id),
     n = up[what] || 0;
   if (!it || n >= it.most || !atMerchant(s, mx, my)) return false;
-  if (upOffer(s, id) !== what) return false; // (only the one he offers me, once a visit)
+  if (upOffer(s, id) !== what) return false; // (only the one he offers me)
   const price = priceFor(s, id, what, n);
   if (ptsOf(s, id) < price) return false;
   addPts(s, id, -price);
@@ -2371,8 +2416,13 @@ function buy(s, id, what, mx, my, hand, now) {
   } // (its half price is spent)
   s.hang.l4u = { ...(s.hang.l4u || {}), [id]: { ...up, [what]: n + 1 } };
   soldSays(s, id, `bought ${it.name} from the merchant for ${price}.`);
+  /* he never runs out of upgrades (the owner's, Nov 19 22:25Z: "Upgrades are unlimited in terms of however many there
+     are"): the same one again while I can have more of it, else another I can still get */
   const mm = merchantOf(s);
-  s.hang.l4m = { ...mm, ups: { ...(mm.ups || {}), [id]: "" } }; // (bought: none more this visit)
+  s.hang.l4m = {
+    ...mm,
+    ups: { ...(mm.ups || {}), [id]: n + 1 < it.most ? what : upFor(s, id) },
+  };
   if (what === "hp") {
     const p4 = s.hang.l4p || {};
     if (p4[id]) s.hang.l4p = { ...p4, [id]: { ...p4[id], hp: p4[id].hp + 1 } };
@@ -2607,7 +2657,7 @@ function helperIn(s, by, now, wild = false) {
   };
   s.seat.push(id);
   bringBack(s, id, now, players(s).length, true);
-  const kit = freshKit();
+  const kit = freshKit(s);
   kit.sl = wild ? ["", "", "", ""] : ["knife", "chaingun", "handgun", ""];
   kit.am = wild
     ? {}
@@ -2654,15 +2704,27 @@ export function helperOut(s) {
 /* weapon w into duck id's slots, full: a melee weapon or a special takes its own slot, a ranged one the ranged weapon
    in hand (hand, else the one the duck holds out, else the first ranged slot) */
 /* the slot w would go to in duck id's bar (hand0: the weapon it holds), or -1 when it can't take it: a melee weapon the
-   first, a special the fourth, a ranged weapon the place of the ranged one in hand, else the first ranged slot. The
-   hotbar shows it before it's taken (l4ddbar.js) */
+   first, a ranged weapon the place of the ranged one in hand, else the first ranged slot; a special an empty item slot,
+   else one used up, else the one in hand, else the first (ITEM_SLOTS). The hotbar shows it before it's taken
+   (l4ddbar.js) */
 export function slotFor(s, id, w, hand0) {
   const kit = kitOf(s, id),
     kind = kindOf(w);
   if (!kit || kit.sl.includes(w)) return -1;
   const hand = kit.sl.includes(hand0) ? hand0 : ((s.pos || {})[id] || {}).w;
   if (kind === "ranged") return [1, 2].find((i) => kit.sl[i] === hand) ?? 1; // (no ranged weapon in hand: it takes the first ranged slot's place)
-  return kind === "melee" ? 0 : kind === "special" ? 3 : -1;
+  if (kind !== "special") return kind === "melee" ? 0 : -1;
+  const its = ITEM_SLOTS.filter((i) => i < kit.sl.length),
+    used = (i) => {
+      const c = (kit.am || {})[kit.sl[i]];
+      return !!c && c[0] + c[1] <= 0;
+    };
+  return (
+    its.find((i) => !kit.sl[i]) ??
+    its.find(used) ??
+    its.find((i) => kit.sl[i] === hand) ??
+    3
+  );
 }
 function give(s, id, w, hand0) {
   const kit = kitOf(s, id),
@@ -2698,8 +2760,10 @@ function give(s, id, w, hand0) {
    thing for sure from his own bags, the fireplace's (bagRoll: the golden chair 1%, the specials 5%, the items 20%, else
    the weapon bags in turns), and a 50% chance of another, each one after it 10% less likely, and 2.5% more likely for
    each player past the first; never ammo, never the grenade. Its price is its color's: plain 300, green 500, blue 750,
-   purple 1,500, the golden chair 3,000. What's bought is gone for this visit, for everyone, unless a 25% chance says he
-   has another. He offers each duck one of the Butler's upgrades (SHOP) a visit, one it can still get (upOffers), and
+   purple 1,500, the golden chair 3,000. He has one of each, half the time two, and a quarter of the time three
+   (MERCH.MORE_OF); the last one bought is gone for this visit, for everyone. In Survival he may have the defibrillator
+   too (DEFIB). He offers each duck one of the Butler's upgrades (SHOP), one it can still get (upOffers), and never runs
+   out of them (buy), and
    in the cabin he always has gas (the pump's 25% for the pump's price, never running out). The Sale halves his prices
    too.
    Walking up to him he greets you; a player who hurts him and doesn't kill him gets one line, and he runs: off the
@@ -2721,11 +2785,11 @@ function give(s, id, w, hand0) {
 export const MERCH = {
   COME: 0.5, // (each rest's chance, round zero's too: the owner's, Nov 18 15:35Z "they come in at the rest phase, and it's a 50% chance that they do. It's not guaranteed")
   BOW: 250,
-  PRICES: { plain: 300, green: 500, blue: 750, purple: 1500, gold: 3000 },
+  PRICES: TIER_PRICES,
   MORE: 0.5, // (the second thing's chance …
   LESS: 0.1, // … each one after it less likely by this …
   EACH: 0.025, // … and more likely by this for each player past the first)
-  AGAIN: 0.25, // (a buy: the chance he has another)
+  MORE_OF: 0.5, // (each thing he has: the chance he has a second, then again a third: the owner's, Nov 19 22:25Z, "there's a 50% chance they sell one more ... and there's another 50% chance that's rolled again to see if they sell 3", for "any item that's sold, whether it be gun or otherwise")
   BACK: 0.2, // (one somebody bought from: the chance he comes again at the very next visit, else the end of the line)
   HP: [3, 4], // (each visit's merchant rolls his HP: the owner's, Nov 19 19:27Z "They should only have 3 to 4 HP")
   WALK: 1, // (his walk: a duck's, the owner's, Nov 18 14:22Z: "he walks at the speed of any other player and will use his
@@ -2789,7 +2853,17 @@ function merchantSays(s, kind, now) {
     say: { n: ((m.say && m.say.n) || 0) + 1, t: now, text },
   };
 }
-/* his stock for a visit: the bow, one sure thing, then the chances of more (each different) */
+/* how many of a thing he has: 1, a 50% chance of 2, and of those half have 3 (MERCH.MORE_OF) */
+const howMany = () =>
+  Math.random() < MERCH.MORE_OF ? (Math.random() < MERCH.MORE_OF ? 3 : 2) : 1;
+/* Survival: does this visit's merchant have the defibrillator? (DEFIB: more likely each visit he hasn't) */
+function defibRoll(s) {
+  const miss = mh(s).dfMiss || 0,
+    yes = Math.random() < DEFIB.FIRST + DEFIB.UP * miss;
+  setMh(s, { dfMiss: yes ? 0 : miss + 1 });
+  return yes;
+}
+/* his stock for a visit: the bow, one sure thing, then the chances of more (each different); [weapon, price, how many] */
 function merchantStock(s) {
   const stock = [["bow", MERCH.BOW]],
     has = (w) => stock.some(([x]) => x === w),
@@ -2808,19 +2882,21 @@ function merchantStock(s) {
     stock.push([w, merchantPrice(w)]);
   }
   setMh(s, { bags });
-  return stock;
+  if (isSurv(s) && defibRoll(s)) stock.push(["defib", merchantPrice("defib")]);
+  return stock.map(([w, p]) => [w, p, howMany()]);
 }
-/* his upgrades this visit: one for each duck, from the ones it can still get (the owner's, Nov 18 14:20Z: "they only
-   sell one per visit"); { id: upgrade id, or "" (none left, or bought) } */
+/* his upgrades this visit: one for each duck, from the ones it can still get (the owner's, Nov 18 14:20Z); bought, it's
+   there again (buy); { id: upgrade id, or "" (none left) } */
 function upOffers(s) {
   const ups = {};
-  for (const id of players(s)) {
-    if (isWild(s, id)) continue;
-    const up = upOf(s, id),
-      can = SHOP.filter((it) => (up[it.id] || 0) < it.most);
-    ups[id] = can.length ? can[rint(0, can.length - 1)].id : "";
-  }
+  for (const id of players(s)) if (!isWild(s, id)) ups[id] = upFor(s, id);
   return ups;
+}
+/* one upgrade duck id can still get, at random ("" none) */
+function upFor(s, id) {
+  const up = upOf(s, id),
+    can = SHOP.filter((it) => (up[it.id] || 0) < it.most);
+  return can.length ? can[rint(0, can.length - 1)].id : "";
 }
 /* the upgrade he offers duck id this visit ("" none) */
 export const upOffer = (s, id) => ((merchantOf(s) || {}).ups || {})[id] || "";
@@ -3139,7 +3215,7 @@ function merchantShoots(s, zs, now) {
   setMh(s, { gx: now + rnd(...MERCH.GUN_GAP[m.gun]) });
   const A = ARMS[m.gun],
     len = dist(t) / 64,
-    chance = t.z ? 0.85 : Math.max(0.06, 0.25 - 0.03 * len); // (as the gunmen aim, gunmen.js AIM)
+    chance = t.z ? 0.85 : Math.max(0.06, 0.25 - 0.03 * len); // (as the gunmen aim, gunmenrules.js AIM)
   let dmg = 0;
   for (let k = 0; k < (m.gun === "chaingun" ? 5 : 1); k++)
     if (Math.random() < chance)
@@ -3314,7 +3390,13 @@ function merchantBuy(s, id, w, mx, my, hand, now) {
   const price = stockPrice(s, m.stock[i][1]),
     have = kit.sl.includes(w);
   if (ptsOf(s, id) < price) return false;
-  if (have) {
+  if (have && w === "defib") {
+    const c = (kit.am || {}).defib || [0, 0];
+    s.hang.l4a = {
+      ...s.hang.l4a,
+      [id]: { ...kit, am: { ...kit.am, defib: [c[0] + 1, 0] } },
+    }; // (they stack: one more)
+  } else if (have) {
     if (kindOf(w) !== "special" || hasLeft(s, id, w)) return false; // (one I have, or a gun of mine: no ammo from him)
     s.hang.l4a = {
       ...s.hang.l4a,
@@ -3328,8 +3410,13 @@ function merchantBuy(s, id, w, mx, my, hand, now) {
     `bought the ${weaponName(w)} from the merchant for ${price}.`,
   );
   addFx(s, { kind: "l4buy", by: id, who: [], w, t: now }); // (the cash register: l4ddsfx.js)
-  if (Math.random() >= MERCH.AGAIN)
-    s.hang.l4m = { ...m, stock: m.stock.filter((_, k) => k !== i) }; // (gone for this visit; 1 time in 4 he has another)
+  const left = (m.stock[i][2] || 1) - 1;
+  s.hang.l4m = {
+    ...m,
+    stock: left
+      ? m.stock.map((x, k) => (k === i ? [x[0], x[1], left] : x))
+      : m.stock.filter((_, k) => k !== i),
+  }; // (one fewer; the last one bought, gone for this visit)
   return true;
 }
 
@@ -3427,6 +3514,7 @@ export function l4Use(s, a, now) {
   if (!down && kind !== "grenade" && !m0.sl.includes(what)) return false;
   if ((kind === "melee" || kind === "ranged") && swims(s, id)) return false; // (swimming: put away)
   if (what === "safekeep") return false; // (never by hand: it works by itself)
+  if (what === "defib") return false; // (only on a dead player: the revive's hold, defibUse)
   const m = { ...m0, u: { ...m0.u }, am: { ...m0.am } };
   finishReload(m, now);
   if (now - (m.u[what] || 0) < l4Cool(s, id, what) * (A.auto ? 0.8 : 1))
@@ -4036,7 +4124,7 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
         inCone((x - px) / D, (y - py) / D, dx, dy, far / D + 0.4) &&
         !slabBetween(px, py, hz, x, y, z),
       gmHelp(s, now),
-    ); // (Survival's gunmen in the flame, as the zombies: over a ledge, never under a roof; gunmen.js)
+    ); // (Survival's gunmen in the flame, as the zombies: over a ledge, never under a roof; gunmenrules.js)
   const mm = merchantOf(s);
   if (
     mm &&
@@ -4287,7 +4375,7 @@ function wildHurt(
     s.hang.gm &&
     L4_HOOKS.gm.shot(s, by, x, y, now, w, rx, ry, from, null, gmHelp(s, now))
   )
-    return true; // (one of Survival's gunmen in its way: gunmen.js)
+    return true; // (one of Survival's gunmen in its way: gunmenrules.js)
   const id = WILD.id,
     p = s.pos[id],
     q = P4(s, id);
@@ -4412,7 +4500,7 @@ function meleeHits(s, now) {
         null,
         k.hit,
         gmHelp(s, now),
-      ); // (Survival's gunmen too: gunmen.js)
+      ); // (Survival's gunmen too: gunmenrules.js)
     if (
       !k.hit.includes("j") &&
       wildHurt(s, k.by, bx, by, now, k.w, R, R, null, false)
@@ -4845,7 +4933,7 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
       now,
       sh.w,
       gmHelp(s, now),
-    ); // (Survival's gunmen in its blast: gunmen.js)
+    ); // (Survival's gunmen in its blast: gunmenrules.js)
   /* the merchant in its blast: all his HP */
   const mm = merchantOf(s);
   if (
@@ -5118,7 +5206,7 @@ function l4Tick(s, now) {
     ...ids.filter((id) => isWild(s, id) && standing(s, id)),
   ]);
   if (isSurv(s) && L4_HOOKS.gm)
-    L4_HOOKS.gm.tick(s, zs, now, mine, gmHelp(s, now)); // (Survival's gunmen: gunmen.js)
+    L4_HOOKS.gm.tick(s, zs, now, mine, gmHelp(s, now)); // (Survival's gunmen: gunmenrules.js)
   if (isSurv(s)) merchantShoots(s, zs, now); // (and an armed merchant fighting back)
   jaimesRun(s, zs, now, T);
   nukeTick(s, zs, now, ids);
@@ -5230,7 +5318,7 @@ function newZombie(s, L, T, zs = []) {
       : [max, v, o.id, size, build, hat, outfit],
   };
 }
-/* what Survival's gunmen (gunmen.js) borrow from these rules, now */
+/* what Survival's gunmen (gunmenrules.js) borrow from these rules, now */
 function gmHelp(s, now) {
   const T = now - ((s.hang.l4 && s.hang.l4.t0) || now);
   return {
@@ -5427,7 +5515,7 @@ function moveZombies(s, zs, now, T, up) {
       j: true,
       m: true,
     });
-  /* Survival's gunmen: chased as Justin is (gunmen.js near: the ones a zombie may go for) */
+  /* Survival's gunmen: chased as Justin is (gunmenrules.js near: the ones a zombie may go for) */
   if (L4_HOOKS.gm)
     for (const g of L4_HOOKS.gm.near(s))
       pls.push({
@@ -5767,7 +5855,7 @@ function moveZombies(s, zs, now, T, up) {
             pls.splice(pls.indexOf(target), 1); // (the merchant: a swipe takes 1, and no line)
         } else if (target.g) {
           if (L4_HOOKS.gm.claw(s, target.g, z, clawDmg(), now, gmHelp(s, now)))
-            pls.splice(pls.indexOf(target), 1); // (a gunman: gunmen.js)
+            pls.splice(pls.indexOf(target), 1); // (a gunman: gunmenrules.js)
         } else if (
           !dodging(s, target.p, now) &&
           hurtDuck(

@@ -2317,13 +2317,12 @@ function peek(tag, s, me) {
       '<span class="sp-slide"><span class="sp-track"></span></span>';
     tag.append(el);
   }
+  const one = (x, i) =>
+    x ? [x, `k-${SLOT_KINDS[i]} ${tintOf(x, angelOf(s, me, x))}`.trim()] : null; // (each in its own color: l4ddrules.js tintOf)
   const list = [
-    ...m.sl.map((x, i) =>
-      x
-        ? [x, `k-${SLOT_KINDS[i]} ${tintOf(x, angelOf(s, me, x))}`.trim()]
-        : null,
-    ), // (each in its own color: l4ddrules.js tintOf)
+    ...m.sl.slice(0, 4).map(one),
     m.g > 0 ? ["grenade", "k-grenade"] : null,
+    ...m.sl.slice(4, 5).map((x) => one(x, 4)), // (the second item, after the grenades as on the bar)
   ].filter(Boolean);
   const to = Math.max(
       0,
@@ -2413,13 +2412,16 @@ function shopFill(s, ctx) {
      up can be bought full again); a Sale strikes the old price through */
   shop.guns.innerHTML = stock.length
     ? stock
-        .map(([w, p]) => {
+        .map(([w, p, n]) => {
           const have = !!kit && kit.sl.includes(w),
-            again = have && kindOf(w) === "special" && !hasLeft(s, me, w),
+            again =
+              have &&
+              kindOf(w) === "special" &&
+              (w === "defib" || !hasLeft(s, me, w)), // (defibrillators stack: always one more)
             price = stockPrice(s, p),
             was = price < p ? `<s>${p}</s> ` : "",
             off = (have && !again) || pts < price;
-          return `<li class="l4-up l4-buyw"><i class="l4-up-ic">${orbHTML(w)}</i><span class="l4-up-t"><b>${weaponName(w)}</b><small>${kindWord(w)}</small></span><button type="button" class="btn small ${have && !again ? "" : "yellow"} l4-up-buy" data-buy="${w}"${off ? " disabled" : ""}>${have && !again ? "Owned" : was + price}</button></li>`;
+          return `<li class="l4-up l4-buyw"><i class="l4-up-ic">${orbHTML(w)}</i><span class="l4-up-t"><b>${weaponName(w)}${n > 1 ? ` <span class="l4-up-n">x${n}</span>` : ""}</b><small>${kindWord(w)}</small></span><button type="button" class="btn small ${have && !again ? "" : "yellow"} l4-up-buy" data-buy="${w}"${off ? " disabled" : ""}>${have && !again ? "Owned" : was + price}</button></li>`;
         })
         .join("")
     : '<li class="l4-up l4-sold">Sold out</li>';
@@ -2527,9 +2529,12 @@ function holdTarget(pos, ctx) {
     return { kind: "sk", d: 0 }; // (down, with Safe Keeping: E gets me up)
   if (!s.hang || !s.hang.l4 || s.hang.l4.over || !up(s, me)) return null;
   let best = null;
+  /* Survival: a dead player comes back with the defibrillator in my hand (l4ddrules.js defibUse) */
+  const defib = isSurv(s) && heldFn() === "defib" && hasLeft(s, me, "defib"),
+    back = (id) => defib && !isWild(s, id) && !(s.players[id] || {}).helper;
   for (const id of s.seat) {
     const p = P4(s, id);
-    if (id === me || !p || !p.dn || p.ex) continue; // (dead for good: no revive, no button; the owner's, Nov 17 20:37Z, "JUSTIN CANNOT BE REVIVED WHEN DEAD NOR CAN ANY PLAYER WHEN DEAD SO THE FUCKING REVIVE BUTTON GOES AWAY")
+    if (id === me || !p || !p.dn || (p.ex && !back(id))) continue; // (dead for good: no revive, no button; the owner's, Nov 17 20:37Z, "JUSTIN CANNOT BE REVIVED WHEN DEAD NOR CAN ANY PLAYER WHEN DEAD SO THE FUCKING REVIVE BUTTON GOES AWAY")
     const a = ctx.world.at(id);
     if (!a) continue;
     const d = Math.hypot(a.x - pos.x, a.y - pos.y);
@@ -2620,6 +2625,8 @@ function holdLabel(t, s, ctx, now) {
       return `Reviving… ${Math.max(0, Math.ceil((reviveMs(s, ctx.me) - (now - rv.at)) / 1000))}`;
     if (heldFn() === "medkit")
       return `Revive ${t.name || ""} with the medkit`.replace("  ", " "); // (at once: the owner's, Nov 16)
+    if (heldFn() === "defib")
+      return `Revive ${t.name || ""} with the defibrillator`.replace("  ", " ");
     return `Revive ${t.name || ""}`.trim();
   }
   const mine = ((s.hang.l4b || {})[ctx.me] || {}).o === t.o;
