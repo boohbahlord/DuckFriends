@@ -32,7 +32,7 @@ import {
 } from "./hangout/layout.js";
 import { sway, stutterOf, lightNow } from "./hangout/flicker.js";
 import { play, setListener } from "./hangout/sounds.js";
-import { svgDataURL } from "./hangout/art.js";
+import { svgDataURL } from "./svgurl.js";
 import { justinSVG } from "./hangout/npcart.js";
 import { merchantById, merchantSVG, merchantLook } from "./merchants.js";
 import { FLAME, TELEPORT } from "./mgjart.js";

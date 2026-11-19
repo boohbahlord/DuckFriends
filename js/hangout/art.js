@@ -158,15 +158,7 @@ html.moving .hg-smoke{animation:hgsm 7s linear infinite}
 html.moving .hg-spark{animation:hgsp 1.9s linear infinite}
 @keyframes hgsp{0%{transform:translate(0,0);opacity:0}10%{opacity:1}100%{transform:translate(8px,-80px);opacity:0}}
 `;
-/* a drawing as a data: URL, for an <img> (the browser then keeps it as a picture: cheap for big still things like the
-   forest bands; its CSS classes no longer move and nothing outside its box shows) */
-export const svgDataURL = (svg) =>
-  "data:image/svg+xml;charset=utf-8," +
-  encodeURIComponent(
-    /^<svg[^>]*\sxmlns=/.test(svg)
-      ? svg
-      : svg.replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" '),
-  ); // (a drawing that names its xmlns already keeps just the one: twice, and Firefox shows a broken picture)
+export { svgDataURL } from "../svgurl.js"; // (its own file now: svgurl.js)
 export function useHangArtCSS(doc = document) {
   if (doc.getElementById("hg-art-css")) return;
   const s = doc.createElement("style");
