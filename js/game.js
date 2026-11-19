@@ -383,7 +383,17 @@ import {
   GOLD_CHAIR,
 } from "./mgjart.js";
 import { hitsOf } from "./l4ddart.js";
-import { npcURL, npcBox, npcName, isZombie } from "./sbnpcart.js";
+import {
+  npcURL,
+  npcBox,
+  npcName,
+  isZombie,
+  npcPics,
+  npcReady,
+  heldOf,
+  handAt,
+  npcShot,
+} from "./sbnpcart.js";
 import { sbHpOf, sbWalkOf } from "./sbspawn.js";
 import { angelic, angelGlow } from "./powerart.js"; // (after l4ddart.js: Noah's note on an old import cycle)
 import { angelOf } from "./l4ddangel.js";
@@ -2997,6 +3007,7 @@ function placeZombies(board, s, now) {
       (((isMgj(s) && s.phase === "boss") || sbOnBoard(s)) && s.mz && s.mz.zb) ||
       []; // (and Sandbox's board: its spawns' zombies, sbspawn.js)
   if (!layer || !geo) return;
+  npcPics(s.sbpic); // (the room's uploaded pictures: a spawn's Appearance tab)
   const want = new Set(zb.map((o) => String(o.i))),
     fxl = $(".fxl", board),
     ng = !!+s.options.noGore,
@@ -3027,8 +3038,9 @@ function placeZombies(board, s, now) {
       box = npcBox(o),
       w = geo.size,
       k = w / box.w,
-      face =
-        n._x === undefined || Math.abs(c.left - n._x) < 0.5
+      face = o.wp
+        ? o.f || 1 // (a made NPC: the way the host turned it, so its weapon points at what it shoots: sbarms.js)
+        : n._x === undefined || Math.abs(c.left - n._x) < 0.5
           ? n._f || 1
           : c.left < n._x
             ? -1
@@ -3061,10 +3073,40 @@ function placeZombies(board, s, now) {
     n._hp = o.hp;
     n._w = wc;
     /* its wounds on its picture (Gore off: only a knocked-off hat), made only when they change */
-    const pic = (ng ? goreFree(wc) : wc) + (o.d && !isZombie(o) ? "+dead" : "");
+    const pic =
+      (ng ? goreFree(wc) : wc) +
+      (o.d && !isZombie(o) ? "+dead" : "") +
+      npcReady(o);
     if (n._pic !== pic) {
       n._pic = pic;
       n._img.src = npcURL(o, ng ? goreFree(wc) : wc);
+    }
+    /* a made NPC: the weapon in its hand, and its shots (sbarms.js) */
+    const hd = heldOf(o);
+    if ((hd && hd.w) !== n._hw) {
+      n._hw = hd && hd.w;
+      n.querySelector(".sb-held")?.remove();
+      if (hd)
+        n.insertAdjacentHTML(
+          "beforeend",
+          `<img class="sb-held" alt="" draggable="false" src="${hd.url}" style="--gw:${hd.gw}">`,
+        );
+    }
+    if (o.sh && o.sh[0] !== n._shot) {
+      const fresh = n._shot !== undefined && now - o.sh[0] < 1500;
+      n._shot = o.sh[0];
+      if (fresh && fxl) {
+        const hand = handAt(box),
+          t = place({ x: o.sh[1], y: o.sh[2] }, 0, 1);
+        npcShot(
+          fxl,
+          c.left + (hand.x - box.w / 2) * k * face,
+          c.top - (box.feet - hand.y) * k,
+          t.left,
+          t.top - w * 0.45,
+          o.hw,
+        );
+      }
     }
     /* its HP bar: shown once it's hurt, then stays; a hit's white drains to the red (css/app.css, .l4z-hp) */
     const sh = (Math.max(0, o.hp) / (o.l[0] || 1)).toFixed(3);

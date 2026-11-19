@@ -1,0 +1,134 @@
+/* ---------- Sandbox: a made NPC's weapons in a fight (stage 3) ----------
+   The owner's Sandbox file, "Entity Creation": a made NPC can hold two primary weapons and/or a melee weapon from the
+   zombie mode, "it will have infinite ammo AND have to reload", and the zombie's swipe can be given as well. Its spawn
+   gives it o.wp = { p: [two primaries], m (melee), sw (the swipe) }; in a fight it keeps as far off as its guns reach and
+   shoots, with the other gun while one reloads, and up close it swings its melee weapon or swipes. Each weapon hits as
+   hard and as often as it does in the zombie mode (l4ddrules.js ARMS). Its fight lives on it: mg (the rounds left in
+   each gun's magazine), rl (when each one's reload ends), fa (its last shot), ma (its last melee swing), hw (what it
+   holds now) and sh (its last shot: [when, x, y of where it went], for the screen's tracer) */
+import { ARMS, WEAPONS } from "./l4ddrules.js";
+
+/* what it can hold: its guns and the bow (not the thrown dagger), and the melee weapons */
+export const NPC_GUNS = WEAPONS.filter(
+  (w) =>
+    ARMS[w].kind === "ranged" && ARMS[w].dmg !== undefined && w !== "dagger",
+);
+export const NPC_MELEE = WEAPONS.filter((w) => ARMS[w].kind === "melee");
+/* how far each gun reaches, in duck lengths (the sniper across the map, the shotguns only close) */
+const REACH = {
+  sniper: 14,
+  bow: 9,
+  revolver: 8,
+  shotgun: 3.5,
+  dbarrel: 3.5,
+};
+export const reachOf = (w) => REACH[w] || 7;
+/* a kit as a player sent it, cleaned: only weapons it can hold, each in its own place */
+export function cleanArms(w) {
+  const x = w || {},
+    p = Array.isArray(x.p) ? x.p : [],
+    gun = (g) => (NPC_GUNS.includes(g) ? g : "");
+  return {
+    p: [gun(p[0]), gun(p[1])],
+    m: NPC_MELEE.includes(x.m) ? x.m : "",
+    sw: !!x.sw,
+  };
+}
+const gunsOf = (o) => ((o.wp && o.wp.p) || []).filter(Boolean);
+/* a new one's kit in its hands: full magazines, the first gun out (or its melee weapon) */
+export function armUp(wp) {
+  const W = cleanArms(wp),
+    guns = W.p.filter(Boolean);
+  if (!guns.length && !W.m) return W.sw ? {} : { wp: W }; // (only the swipe: a plain one; nothing: it never attacks)
+  return {
+    wp: W,
+    mg: W.p.map((g) => (g && ARMS[g].mag) || 0),
+    hw: guns[0] || W.m,
+  };
+}
+/* how near it keeps to what it's after: most of its shortest gun's reach, else close enough to swing (claw) */
+export const keepAt = (o, claw) => {
+  const g = gunsOf(o);
+  return g.length
+    ? Math.max(claw * 0.9, Math.min(...g.map(reachOf)) * 0.7)
+    : claw * 0.9;
+};
+/* one roll of a weapon's damage: a number, or a whole number from the first to the second; the double barrel's "all"
+   is what a duck has (4) */
+const roll = (d) =>
+  d === "all"
+    ? 4
+    : Array.isArray(d)
+      ? d[0] + Math.floor(Math.random() * (d[1] - d[0] + 1))
+      : +d || 1;
+const BEAT = 250; // ms: the most time a beat's shots are counted over (the host's heartbeat is 200)
+const reloadMs = (w) =>
+  ARMS[w].reload || (ARMS[w].shell ? ARMS[w].shell * ARMS[w].mag : 1500);
+
+/* one beat of NPC o fighting what it's after (to, its spot; bd duck lengths off). claw: how near a swing reaches; clawMs:
+   the swipe's wait. hit(dmg, w) lands a blow (dmg null: the spawn's own damage box, the swipe); sees(to), where there
+   are walls: nothing's in the way of a shot. Gives "claw" (a swing or a swipe: its claw marks show), "shot", or "" */
+export function fight(o, to, bd, claw, now, clawMs, hit, sees = null) {
+  const W = o.wp;
+  if (!W) {
+    if (bd > claw || now - o.a < clawMs) return ""; // (a plain one: the zombie's swipe)
+    o.a = now;
+    hit(null, "claw");
+    return "claw";
+  }
+  if (bd <= claw) {
+    if (W.m && now - (o.ma || 0) >= ARMS[W.m].cool) {
+      o.ma = o.a = now;
+      o.hw = W.m;
+      hit(roll(ARMS[W.m].dmg), W.m);
+      return "claw";
+    }
+    if (W.sw && now - o.a >= clawMs) {
+      o.a = now;
+      hit(null, "claw");
+      return "claw";
+    }
+  }
+  /* its guns: reloads that are done fill the magazine; it shoots the one in hand, or the other while that reloads */
+  const mg = [...(o.mg || [0, 0])],
+    rl = [...(o.rl || [0, 0])];
+  W.p.forEach((g, i) => {
+    if (g && ARMS[g].mag && mg[i] <= 0 && rl[i] && rl[i] <= now) {
+      mg[i] = ARMS[g].mag;
+      rl[i] = 0;
+    }
+  });
+  const ready = (i) =>
+      W.p[i] && (!ARMS[W.p[i]].mag || mg[i] > 0) && bd <= reachOf(W.p[i]),
+    i = [0, 1]
+      .filter(ready)
+      .sort((a, b) => +(W.p[b] === o.hw) - +(W.p[a] === o.hw))[0]; // (the one in hand first)
+  o.mg = mg;
+  o.rl = rl;
+  if (i === undefined || (sees && !sees(to))) return "";
+  const g = W.p[i],
+    A = ARMS[g];
+  if (now - (o.fa || 0) < A.cool) return "";
+  /* a beat is longer than the fast guns' wait: every shot it had time for in the last beat (never a whole magazine at
+     once after a wait), up to what's left in its magazine */
+  let n = Math.max(1, Math.floor(Math.min(BEAT, now - (o.fa || 0)) / A.cool));
+  if (A.mag) n = Math.min(n, mg[i]);
+  let dmg = 0;
+  for (let k = 0; k < n; k++)
+    dmg +=
+      roll(A.dmg) *
+      (A.pellets
+        ? bd < reachOf(g) / 2
+          ? A.pellets
+          : Math.ceil(A.pellets / 2)
+        : 1); // (a shotgun: every pellet up close)
+  o.fa = now;
+  o.hw = g;
+  o.sh = [now, Math.round(to.x * 1000) / 1000, Math.round(to.y * 1000) / 1000];
+  if (A.mag) {
+    mg[i] -= n;
+    if (mg[i] <= 0) rl[i] = now + reloadMs(g);
+  }
+  hit(Math.round(dmg * 10) / 10, g);
+  return "shot";
+}

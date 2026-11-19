@@ -5,11 +5,13 @@
    window is up, the number keys pick its options instead of switching weapons, and a mouse click on an option does the
    same. The cheat sheet is "somewhat" see-through and larger than Tab's window. Only c is for everyone: the others
    belong to whoever sbCan says (the host; everyone when Democracy of Ducklings lets everyone change the settings).
-   The options inside b, m, n, h, g and p come with the later stages; for now those windows are empty. */
+   b places spawns (sbspawnview.js), m makes NPCs (sbmake.js) and p gives the rights; the options inside n, h and g come
+   with the later stages. */
 import { esc, typing, windowOpen } from "./ui.js";
 import { isSb, sbCan, SB_KEYS_TAKEN, SB_KEY_IN_BUILD } from "./sandboxrules.js";
 import { buildRows, sbNearPoint, sbSettings } from "./sbspawnview.js";
 import { boxText } from "./sbspawn.js";
+import { npcRows } from "./sbmake.js";
 
 /* each window: its key, its title, and whether it needs the host's rights */
 export const SB_WINS = {
@@ -86,7 +88,7 @@ const rightsRows = (R) => {
 const OPTIONS = {
   c: [],
   b: buildRows,
-  m: [],
+  m: npcRows,
   n: [],
   h: [],
   g: [],
@@ -185,7 +187,10 @@ export function mountSandboxKeys(S, getR, onOpen) {
     const R = getR(),
       o = R && sbOptions(k.open, R)[i];
     if (!o || !R || !(SB_WINS[k.open].all || sbCan(R.state, R.me))) return;
-    o.act(R);
+    if (o.act(R) === "close") {
+      sbClose(k, false); // (the option opened a window of its own: Make an NPC's Customize)
+      paint();
+    }
   };
   box.addEventListener("click", (e) => {
     const b = e.target.closest(".sb-opt");

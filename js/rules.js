@@ -3520,7 +3520,7 @@ const SB_H = {
     playing(s).filter(
       (id) => s.pos[id] && s.pos[id].x >= 0 && !(s.players[id] || {}).dead,
     ),
-  claw(s, id, dmg, now) {
+  claw(s, id, dmg, now, w = "claw") {
     const P = s.players[id],
       p = s.pos[id];
     if (!P || P.dead || !p || dodges(s, p, now)) return;
@@ -3528,7 +3528,7 @@ const SB_H = {
       P.dead = true;
       holdDown(s, id, now);
     } // (raw: a spawn's damage box is only that much, never "all of it")
-    if (pwOn(s)) pwHit(s, id, "claw", now, !!P.dead); // (its claw wounds, as a Dead Ducks Arcade zombie leaves them)
+    if (pwOn(s)) pwHit(s, id, w, now, !!P.dead); // (its claw wounds, as a Dead Ducks Arcade zombie leaves them; a made NPC's weapon, that weapon's)
   },
 };
 /* a duck on Sandbox's board or Duck Cabin that stands up again: at a respawn for players, if there is one (the zombie
