@@ -9,6 +9,19 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v121",
+    version: 121,
+    date: "Nov 19, 2026",
+    title: "A glowing laser, no more squish",
+    news: [
+      "For Dead Ducks Arcade: the Laser Rifle glows all over as it heats up, and overheating only burns your duck a little.",
+    ],
+    fixed: [
+      "For Dead Ducks Arcade: dead Justin has no outline, and Justin's health bar no longer shows in the bottom right.",
+      "Zombies and Sandbox NPCs no longer squish back and forth when they bump into each other or a wall.",
+    ],
+  },
+  {
     id: "v120",
     version: 120,
     date: "Nov 19, 2026",
