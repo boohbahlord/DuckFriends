@@ -135,6 +135,13 @@ SOUNDS = {
         kbps=48,
         credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
     ),
+    # everyone's down (Dead Ducks Arcade's ending, both maps): soundfont.py game_over
+    "l4over": dict(
+        sf="game_over",
+        lp=4000,
+        kbps=48,
+        credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
+    ),
     # ---- footsteps: a duck on wood, light and higher; a zombie, slow, heavy and dull ----
     "step": dict(
         takes=[
