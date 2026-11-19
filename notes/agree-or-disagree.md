@@ -6789,3 +6789,8 @@ Code for more, like hitbox of duck for example
 update the numberat bible accordingly"
 
 Decided (Adam): all 8 in the bible (section 14); every stat (hitbox too) readable and settable by name; weights stay in [ ] and take any Numberat value; Numberat principles apply to named values. Word/LibreOffice copies remade.
+
+## Owner, Nov 19 13:25Z
+"show me some complex examples of my numberat similiar to how i wrote it"
+
+Decided (Adam): 5 worked examples, bible section 16, sent in chat.

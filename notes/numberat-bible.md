@@ -152,3 +152,29 @@ Every Numberat value works anywhere a number goes below: `wait 1:3`, `every [2,4
 **Several lines as one.** Doubled brackets clash with nesting (`[[3>5],2]` is a pick inside a pick; the owner's own
 `{{'**1'}+[+0,-1]}` is braces in braces; `((2:4)+1)` vs `((hp 5))`). Proposal: no symbol. A line carries on while a
 bracket is still open, so `{` opened on one line and closed three lines later is one line. `{{ }}` is freed.
+
+## 16. Worked examples (Adam, Nov 19 13:25Z, in the owner's style)
+1. Speed that sticks per NPC: `{1.0:1.*}='1*'\>>\||"['1*'][1,2]"`: picks 1.0 to 1.9 (asterisk 1), then times 1 or 2,
+   so 1.0 to 3.8.
+2. HP in waves: `>[3,5]>[6:8]>[10,12]\>2>\|| | [20:25]`: spawns 1 to 3 get 3 or 5, then 6 to 8, then 10 or 12; that
+   plays twice (6 spawns), then every later spawn gets 20 to 25.
+3. Negatives with no zero: `\'ainc negbrahm'\ \'arm0'\ *+10`: the digit goes -9 to 9 but never 0, plus 10, so 1 to 19
+   but never 10.
+4. A file rule and a line that beats it:
+   ```
+   \!'rm1'\                # no 1 anywhere in this file
+   [1:5]                   # 2 to 5
+   \lin!!'inc1'\ [1:5]     # 1 to 5: !! beats !
+   ```
+5. A zombie brain:
+   ```
+   use 'zombie-base'
+   let rage = {[1,2]+[0:*]}
+   when spawn ((hp "2rage"))
+   when hit [attack~rage, flee~1]
+   when near duck 3 { \if hp < 5\ flee else go nearest duck }
+   every [2,4]s say "brains"
+   give rage
+   ```
+   Rage is 1 to 11. HP is twice the rage. When hit, it attacks rage times as often as it flees. Near a duck, under
+   5 HP it runs, otherwise it chases. Every 2 or 4 seconds it says "brains". Other files can take its rage.
