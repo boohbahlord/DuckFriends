@@ -6368,3 +6368,18 @@ the last two screenshots show corpses. Corpses arent on the board and they can o
 During round 12, the corpse in the gas station disapears but the puddle of blood stays IF the body isnt on a players screen, if it is on a players screen the whole time during round 12, then it disapears on a subsequent round or rest phase where they arent on it's screen. The check for this should be every 30 secods maybe or something slow to not effect performance for checking if the body is alone and cannot be seen on the player's screen."
 Questions were: 1 deploy V90?, 2 spawn key only in build mode?, 3 2:4 whole numbers only?, 4 speed range picked once per NPC?, 5 2>4 counts 2,3,4?, 6 damage takes tenths?, 7 phone buttons for Sandbox windows now?
 Decided (Adam): V90 deploys as is now. Sandbox spawn keys work outside build mode too. Boxes that need whole numbers take whole numbers only; Numerat files give an error with reasons. 2>4 = 2 then 4 (listed values, not every number between). Damage tenths shown as a missing tenth of a HP block; Adam sends a proposition. Phone buttons for Sandbox windows: start now. Numerat notation: Adam writes a notation proposal for discussion before building.
+
+## Nov 19 10:30Z (owner, on Adam's Numerat proposal 10:27Z: 1 values, 2 arrows, 3 ( ) replaces |, 4 [ ] one pick, 5 $ goes, 6 *n repeat replaces || >>n|| <<n||, 7 (( )) becomes =; HP tenths)
+"3. let's make the | not go, the parentheses should be something else
+4. yes
+5. sure
+6. idk about the asterix idea for 3 i disagree with this notation, the old was good. 
+   1. Let's make the Asterix been an awaiting input, and without input, it will just be a random possible value within it's limit (limits should be defined for different stats, so max HP will be based off the most maximum HP for Mad god justin possible)
+7. idk wat ur saying this is too dense
+
+
+'HP tenths: 4 HP shows 4 blocks. Take 1.5 damage and you have 2.5: two full blocks and one half-empty block. Healing fills the half block first (rounds up to 3), then whole blocks. Any HP above 0, even 0.1, keeps you standing.'
+I agree with the HP decimal system
+
+we need more dicussion here ab numerat based off what i said"
+Decided (Adam): | stays; [ ] = one pick; $ goes; || >>n|| <<n|| stay as the owner wrote them; * = waiting for input, random within the stat's limit if none; each stat gets limits (max HP = Mad God Justin's highest possible HP). HP tenths approved: build it. ( ) and (( )) still under discussion.
