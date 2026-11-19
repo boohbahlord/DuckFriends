@@ -51,6 +51,68 @@ const ITEMS = [
   ...MODES.map((m) => [`modes/${m}.webp`, 480, 270, "avg"]),
   ...TV.map((c) => [`tv/${c}.webp`, 156, 120, "avg"]),
 ];
+/* the map vote's pictures (the owner's, Nov 19 20:04Z: its pictures were made on the device, black for seconds on a
+   slow phone). Each is the map's own drawing in the game (art.js artBackdrop), drawn big in the page and made into
+   pixels the same way; the size is about the most the vote ever shows one at (a quarter of its 70rem box) */
+const VOTE = [160, 90];
+
+/* a map's vote picture made into pixels in the page: a PNG's bytes, as base64. Its drawing's own pictures (a map's
+   photo, the collage's drawing) are put inside it first, so it draws as one picture */
+async function madeTile(page, map, w, h) {
+  return page.evaluate(
+    async ([map, w, h]) => {
+      const { artBackdrop } = await import("/js/art.js");
+      const { applyPalette } = await import("/js/pixelpalette.js");
+      let body = artBackdrop(map);
+      for (const [, href] of body.matchAll(/href="([^"]+)"/g)) {
+        if (href.startsWith("data:")) continue;
+        const b = await (await fetch("/" + href.replace(/^\//, ""))).blob();
+        const url = await new Promise((ok) => {
+          const r = new FileReader();
+          r.onload = () => ok(r.result);
+          r.readAsDataURL(b);
+        });
+        body = body.split(`href="${href}"`).join(`href="${url}"`);
+      }
+      const big = [w * 6, h * 6],
+        box = document.createElement("div");
+      box.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" preserveAspectRatio="xMidYMid slice" width="${big[0]}" height="${big[1]}">${body}</svg>`; // (read as the page reads it, then written out as a file: Night Show's drawing names its width twice)
+      const svg = new XMLSerializer().serializeToString(box.firstElementChild),
+        img = new Image();
+      img.src = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
+      await img.decode().catch(() => {
+        const bad = new DOMParser()
+          .parseFromString(svg, "image/svg+xml")
+          .querySelector("parsererror");
+        throw new Error(
+          `${map}: ${bad ? bad.textContent.slice(0, 200) : "won't draw"}`,
+        );
+      });
+      const c = document.createElement("canvas");
+      c.width = w;
+      c.height = h;
+      const x = c.getContext("2d", { willReadFrequently: true });
+      x.imageSmoothingEnabled = true;
+      x.imageSmoothingQuality = "high"; // (as pixel.js make: each pixel the average of what it covers)
+      x.drawImage(img, 0, 0, w, h);
+      x.putImageData(applyPalette(x.getImageData(0, 0, w, h)), 0, 0);
+      return c.toDataURL("image/png").split(",")[1];
+    },
+    [map, w, h],
+  );
+}
+async function voteMaps(page) {
+  return page.evaluate(async () => {
+    const { VOTE_MAPS } = await import("/js/rules.js");
+    const { mapForm } = await import("/js/maps.js");
+    const { isNwk } = await import("/js/nwk.js");
+    return [
+      ...new Set(
+        VOTE_MAPS.map((id) => mapForm(id).map).filter((m) => !isNwk(m)),
+      ),
+    ]; // (Nous Within Kenoma's are the map itself, drawn still: vote.js stills)
+  });
+}
 
 /* a little server for the browser: the game's own scripts, and the originals */
 function serve() {
@@ -133,9 +195,18 @@ async function made(page, src, w, h, how) {
   await page.goto(`http://127.0.0.1:${srv.address().port}/`);
   let before = 0,
     after = 0;
-  for (const [src, w, h, how] of ITEMS) {
+  const items = [
+    ...ITEMS,
+    ...(await voteMaps(page)).map((m) => [`vote/${m}.webp`, ...VOTE, "tile"]),
+  ];
+  for (const [src, w, h, how] of items) {
     if (!src.startsWith(only)) continue;
-    const png = Buffer.from(await made(page, src, w, h, how), "base64"),
+    const png = Buffer.from(
+        await (how === "tile"
+          ? madeTile(page, src.slice(5, -5), w, h)
+          : made(page, src, w, h, how)),
+        "base64",
+      ),
       out = path.join(OUT, src.replace(/\.\w+$/, ".webp")),
       tmp = out + ".png";
     fs.mkdirSync(path.dirname(out), { recursive: true });
@@ -147,7 +218,7 @@ async function made(page, src, w, h, how) {
       out,
     ]); // (lossless: the pixels stay exactly as made)
     fs.unlinkSync(tmp);
-    const a = fs.statSync(path.join(SRC, src)).size,
+    const a = how === "tile" ? 0 : fs.statSync(path.join(SRC, src)).size, // (a vote picture has no original: the drawing)
       z = fs.statSync(out).size;
     before += a;
     after += z;

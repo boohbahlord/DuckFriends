@@ -19655,7 +19655,7 @@ html.pixel.armed :is(.board, .hang-board) {
 .vt-k-zmap .vt-maps {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
-.vt-k-zmap img.vt-still {
+img.vt-still {
   object-fit: cover;
 }
 /* a phone: one above another, bigger, the dice a short bar so both maps fit under it */
