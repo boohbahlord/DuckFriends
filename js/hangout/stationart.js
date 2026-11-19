@@ -158,6 +158,45 @@ export const SPLINTER = {
   ch: ["#d9d4c6", "#c2bcad", "#8a8476"],
 };
 
+/* the rubble out of a smashed north-south wall, w × d flat on the floor, the wall's line down its middle: broken chunks
+   of the wall (its own colours), dust, a few rusty rods, thick at the line and thinning out both sides (the owner's,
+   Nov 19 19:58Z: "I want to be able to see the destruction of that wall") */
+export function wallRubble({ w, d, seed = 1, skin = "gs" }) {
+  const r = rnd(seed),
+    c = SPLINTER[skin] || SPLINTER.gs,
+    mid = w / 2;
+  let s = "";
+  /* dust: a pale smear along the line */
+  s += F`<ellipse cx="${mid}" cy="${d / 2}" rx="${w * 0.42}" ry="${d * 0.5}" fill="${c[2]}" opacity=".28"/>`;
+  /* chunks: most of them by the line, fewer and smaller further out */
+  const n = Math.round(d / 7);
+  for (let i = 0; i < n; i++) {
+    const spread = r() < 0.5 ? 0.2 : 0.46,
+      bx = mid + (r() * 2 - 1) * w * spread,
+      by = 8 + r() * (d - 16),
+      z = (9 + r() * 12) * (1 - (0.6 * Math.abs(bx - mid)) / w),
+      a = r() * Math.PI;
+    const pts = Array.from({ length: 5 }, (_, k) => {
+      const t = a + (k / 5) * Math.PI * 2,
+        f = 0.6 + r() * 0.5;
+      return [bx + Math.cos(t) * z * 1.3 * f, by + Math.sin(t) * z * f];
+    });
+    s += F`<path d="M${pts.map(([x, y]) => n1(x) + " " + n1(y)).join("L")}Z" fill="${c[r() < 0.5 ? 0 : 1]}" ${ln(1.6)}/>`;
+  }
+  /* rods bent out of the broken wall */
+  for (let i = 0; i < 3; i++) {
+    const y0 = d * (0.2 + r() * 0.6),
+      x1 = mid + (r() * 2 - 1) * w * 0.3,
+      y1 = y0 + (r() - 0.5) * 30;
+    s += F`<path d="M${mid} ${y0}L${x1} ${y1}" stroke="${O}" stroke-width="5" stroke-linecap="round"/><path d="M${mid} ${y0}L${x1} ${y1}" stroke="#9a5a2c" stroke-width="2.4" stroke-linecap="round"/>`;
+  }
+  return wrap(w, d, s);
+}
+/* the same smashed hole seen from outside, where the roof's edge hides the wall: a ragged dark breach across the roof's
+   edge and the ground at its foot, broken concrete round it and rods sticking out (roofHole's look, in its box) */
+export const wallBreach = ({ w, d, seed = 1 }) =>
+  wrap(w, d, roofHole(0, 0, w, d, seed));
+
 /* ---------- the gas station's insides ---------- */
 /* a store shelf (a gondola) w long, d deep, h tall: three shelves of cans, boxes and bottles, picked over; empty: nothing
    left on it at all */
