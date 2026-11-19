@@ -20511,6 +20511,54 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   font-size: 0.85rem;
   padding: 0.3rem 0.45rem;
 }
+/* Permissions: my own Read, Write, Run, and a player's (a group's, everyone's), over the code */
+.nm-perm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.45rem 0.55rem;
+  border: 0.12rem solid var(--line);
+  border-radius: 0.45rem;
+  background: #0006;
+  font-size: 0.85rem;
+  font-weight: 200;
+}
+.nm-perm[hidden] {
+  display: none;
+}
+.nm-perm-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.8rem;
+}
+.nm-perm-row label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.nm-perm-who {
+  min-width: 2.5rem;
+}
+.nm-perm-sel {
+  max-width: 11rem;
+  padding: 0.2rem 0.35rem;
+}
+.nm-perm-list {
+  color: var(--dim);
+}
+.nm-perm-note {
+  color: var(--dim);
+  font-size: 0.78rem;
+}
+.nm-perm-note:empty {
+  display: none;
+}
+.nm-other {
+  color: var(--dim);
+}
 .nm-note {
   padding: 0.2rem 0.5rem;
   color: var(--dim);

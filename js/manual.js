@@ -14,6 +14,7 @@ export const PERMS_GIVE = {
   canmute: "may forgame \\mute others",
   cankick: "may kick players",
   cansettings: "may change the game with forgame",
+  canhomes: "may look in other players' Numberat folders (home/)",
 };
 
 export const MAN = {
@@ -75,7 +76,13 @@ export const MAN = {
   stat: "stat file: a file's size, permissions, group and when it changed.",
   file: "file name: what something is: a folder, text, an empty file or a command.",
   chmod:
-    "chmod g+r|g-r|o+r|o-r|a+r|a-r|640|644|600 file: who may open the file once you send it. Today only sudo can open a sent file; g+r lets its group open it too (chgrp sets the group), o+r lets everyone. perma-notes stay private. chmod +x (or 755) file: a Numberat file runs as ./file, in Sandbox; chmod -x (or 644) takes it away.",
+    "chmod [ugoa][+-=][rwx] or 755 file: u is you, g the file's group (chgrp), o everyone. u-w makes a file read-only, even for you; u-r hides its words from you; +x (or 755) lets a Numberat file run as ./file in Sandbox. g+r and o+r let a sent file be opened (only sudo can, otherwise). On your files and folders in home/<you> (your Numberat folder), g and o are also what the room's players may do with them, in Sandbox, until a new Sandbox starts. perma-notes stay private.",
+  chown:
+    "chown :group file: sets the file's group (as chgrp). A file can't be given to another player (it stays on its maker's device): give them rights with setfacl.",
+  setfacl:
+    "setfacl -m u:name:rwx[,g:group:r,o::r] file: what one player (a group, everyone) may do with one of your Numberat files or folders: r read it, w change it, x run it. setfacl -x u:name file takes them away, setfacl -b file takes every one away. Sandbox only; a new Sandbox starts with none. A folder's rights cover everything in it. The Numberat window's Permissions button does the same.",
+  getfacl:
+    "getfacl file: who may do what with it: you (user::), each player, its group and everyone (other::). On another player's file: your rights.",
   chgrp:
     "chgrp group file: the group a file belongs to (a group you are in; sudo: any group). With chmod g+r, that group may open the file when you send it.",
   tee: "tee [-a] files…: writes what comes through | into files and passes it on (-a: adds to the end). gamestats | tee stats1",

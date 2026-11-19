@@ -70,6 +70,7 @@ import { npcsHere, npcTag, npcByTag, npcById } from "./npcs.js";
 import { isSb, sbMay, sbWorld, SB_WORLD_NAMES } from "./sandboxrules.js";
 import { HELP, EXAMPLES } from "./numerathelp.js";
 import { LANG, LANG_DIR } from "./langname.js";
+import { nbBy, nbRights, nbGiven, canHomes } from "./nbperms.js";
 import { compileScript, brain } from "./numberatrun.js";
 
 const tag = (n) => String(n || "").replace(/\s+/g, "");
@@ -135,6 +136,15 @@ function numLoad() {
   for (const [f, t] of Object.entries(N.f || {})) fs.files[root + "/" + f] = t;
   for (const f of N.x || [])
     fs.meta[root + "/" + f] = { ...(fs.meta[root + "/" + f] || {}), x: true };
+  for (const [k, l] of [
+    ["nr", N.nr],
+    ["nw", N.nw],
+  ])
+    for (const f of l || [])
+      fs.meta[root + "/" + f] = {
+        ...(fs.meta[root + "/" + f] || {}),
+        [k]: true,
+      }; // (my own read and write, turned off: chmod u-r, u-w)
   fs.dirs.add(helpRoot());
   for (const [f, t] of Object.entries(HELP)) {
     const at = helpRoot() + "/" + f,
@@ -156,11 +166,16 @@ function numKeep() {
   const root = numRoot(),
     rel = (p) => p.slice(root.length + 1),
     f = {},
-    x = [];
+    x = [],
+    nr = [],
+    nw = [];
   for (const [p, t] of Object.entries(fs.files))
     if (inNum(p) && !inRo(p)) {
       f[rel(p)] = t;
-      if ((fs.meta[p] || {}).x) x.push(rel(p));
+      const m = fs.meta[p] || {};
+      if (m.x) x.push(rel(p));
+      if (m.nr) nr.push(rel(p));
+      if (m.nw) nw.push(rel(p));
     }
   const next = {
     f,
@@ -169,10 +184,93 @@ function numKeep() {
       .map(rel)
       .sort(),
     x,
+    ...(nr.length ? { nr } : {}),
+    ...(nw.length ? { nw } : {}),
   };
+  shareNames();
   if (JSON.stringify(next) === JSON.stringify(profile.numerat || {})) return;
   profile.numerat = next;
   save();
+}
+/* a class's rights on a Numberat path, changed by chmod (only the bits it names): null outside Sandbox */
+function give(p, who, ch) {
+  if (!Object.keys(ch).length) return false;
+  const s = roomS();
+  if (!s || !isSb(s) || !fs.room.send) return null;
+  const rel = p === numRoot() ? "" : p.slice(numRoot().length + 1),
+    cur = (nbGiven(s, fs.meId, rel).find(([w]) => w === who) || [, ""])[1],
+    bits = "rwx"
+      .split("")
+      .filter((b) => (b in ch ? ch[b] : cur.includes(b)))
+      .join("");
+  if (bits !== cur) fs.room.send({ t: "nbp", path: rel, who, bits });
+  return true;
+}
+/* ---------- home/ (the owner's, Nov 19 16:12Z): /home/<name> is each player's Numberat folder; mine is the same folder as
+   ~/notes/numberat. Another player's shows the names they have (nbperms.js) to whoever has canhomes, and to whoever they
+   gave a right in it ---------- */
+const HOME = "/home";
+const meHome = () => HOME + "/" + fs.me;
+const unHome = (p) =>
+  p === meHome() || p.startsWith(meHome() + "/")
+    ? numRoot() + p.slice(meHome().length)
+    : p;
+const roomS = () => (fs.room && fs.room.state) || null;
+const idOf = (name) => {
+  const s = roomS();
+  return s
+    ? s.seat.find((id) => s.players[id] && tag(s.players[id].name) === name)
+    : null;
+};
+const nameOf = (id) => {
+  const s = roomS();
+  return s && s.players[id] ? tag(s.players[id].name) : id;
+};
+/* /home/<someone else>/…: { id, name, rel } */
+function theirs(path) {
+  const m = path.match(/^\/home\/([^/]+)(?:\/(.+))?$/);
+  if (!m || m[1] === fs.me) return null;
+  const id = idOf(m[1]);
+  return id ? { id, name: m[1], rel: m[2] || "" } : null;
+}
+/* the names in their folder I may see: all of them with canhomes, else only what they gave me a right on */
+function theirNames(t) {
+  const s = roomS(),
+    n = nbBy(s, t.id).n || [];
+  if (canHomes(s, fs.meId)) return n;
+  const ok = n.filter(
+    (x) => nbRights(s, t.id, x.replace(/\/$/, ""), fs.meId) !== "---",
+  );
+  return [
+    ...new Set(
+      ok.flatMap((x) => {
+        const parts = x.replace(/\/$/, "").split("/");
+        return parts.map(
+          (_, i) =>
+            parts.slice(0, i + 1).join("/") +
+            (i < parts.length - 1 || x.endsWith("/") ? "/" : ""),
+        );
+      }),
+    ),
+  ];
+}
+/* my folder's names, told to the room once they change (in Sandbox only) */
+let namesSent = "";
+function shareNames() {
+  const s = roomS();
+  if (!s || !isSb(s) || !fs.room.send || !fs.me) return;
+  const root = numRoot(),
+    names = [
+      ...Object.keys(fs.files).filter((p) => inNum(p) && !inRo(p)),
+      ...[...fs.dirs].filter((d) => inNum(d) && !inRo(d)).map((d) => d + "/"),
+    ]
+      .map((p) => p.slice(root.length + 1))
+      .sort()
+      .slice(0, 300);
+  const k = s.startedAt + ":" + names.join("|");
+  if (k === namesSent) return;
+  namesSent = k;
+  fs.room.send({ t: "nbn", names });
 }
 /* the Numerat files running (a stub until the language comes: each only waits to be stopped), for this game */
 let procs = [],
@@ -194,6 +292,9 @@ function sync(ctx) {
   } // notes, the log and variables last one game (the Numerat folder comes back from the device: numLoad)
   if (!fs.cwd || !fs.cwd.startsWith("/")) fs.cwd = home + "/notes";
   fs.home = home;
+  fs.me = me;
+  fs.room = ctx.room || null;
+  fs.meId = ctx.room ? ctx.room.me : null;
   if (fs.numAt !== home) {
     fs.numAt = home;
     numLoad();
@@ -210,7 +311,7 @@ const norm = (p) => {
   return "/" + out.join("/");
 };
 const resolve = (p) =>
-  norm(
+  unHomeN(
     p === "~"
       ? fs.home
       : p.startsWith("~/")
@@ -219,12 +320,23 @@ const resolve = (p) =>
           ? p
           : fs.cwd + "/" + p,
   );
+const unHomeN = (p) => unHome(norm(p)); // (/home/<me>/… is ~/notes/numberat/…)
 const isPerma = (path) => path.startsWith(fs.home + "/perma-notes/");
 /* what a path is: a folder, a file, or nothing */
 function kind(path) {
   const h = fs.home,
     parts = path.split("/").filter(Boolean);
-  if (["/", "/usr", "/bin", "/dev"].includes(path)) return "dir";
+  if (["/", "/usr", "/bin", "/dev", HOME].includes(path)) return "dir";
+  const t = theirs(path);
+  if (t) {
+    if (!t.rel) return "dir";
+    const n = theirNames(t);
+    return n.includes(t.rel)
+      ? "file"
+      : n.includes(t.rel + "/") || n.some((x) => x.startsWith(t.rel + "/"))
+        ? "dir"
+        : null;
+  }
   if (path === "/dev/null") return "file";
   if (parts[0] === "bin")
     return MINE.includes(parts[1]) && parts.length === 2 ? "file" : null;
@@ -256,6 +368,22 @@ const findPath = (p) => {
 };
 function guard(path, write) {
   if (write && inRo(path)) fail(NO_HELP(path));
+  const t = theirs(path);
+  if (t) {
+    const s = roomS(),
+      r = t.rel ? nbRights(s, t.id, t.rel, fs.meId) : "---";
+    if (!canHomes(s, fs.meId) && !kind(path))
+      fail(
+        `✗ ${path}: Permission denied (looking in other players' folders takes canhomes, or a right ${t.name} gives you)`,
+      );
+    if (write)
+      fail(
+        r.includes("w")
+          ? `✗ ${path}: it is on ${t.name}'s device; writing there comes with shared copies (next)`
+          : `✗ ${path}: Permission denied (${t.name} hasn't given you w on it)`,
+      );
+    return;
+  }
   const parts = path.split("/").filter(Boolean),
     h = fs.home;
   if (parts[0] === "bin")
@@ -302,13 +430,33 @@ function readFile(p) {
   if (path === fs.home + "/log")
     return fs.log.join("\n") + (fs.log.length ? "\n" : "");
   if (isPerma(path)) return perma()[path.split("/").pop()];
+  const t = theirs(path);
+  if (t) {
+    if (!nbRights(roomS(), t.id, t.rel, fs.meId).includes("r"))
+      fail(`✗ ${p}: Permission denied (${t.name} hasn't given you r on it)`);
+    return theirText(t);
+  }
+  if ((fs.meta[path] || {}).nr)
+    fail(
+      `✗ ${p}: Permission denied (its read is off: chmod u+r ${path.split("/").pop()})`,
+    );
   return fs.files[path];
+}
+/* another player's file I may read: its copy in the room (part B: shared copies) */
+function theirText(t) {
+  fail(
+    `✗ ${t.rel}: it is on ${t.name}'s device; its words come here once shared copies are built (next)`,
+  );
 }
 function writeFile(p, text, append) {
   if (p === "/dev/null") return;
   const path = resolve(p);
   guard(path, true);
   if (kind(path) === "dir") fail(`✗ ${p}: Is a directory`);
+  if (fs.files[path] !== undefined && (fs.meta[path] || {}).nw)
+    fail(
+      `✗ ${p}: Permission denied (its write is off: chmod u+w ${path.split("/").pop()})`,
+    );
   const parent = path.slice(0, path.lastIndexOf("/"));
   if (kind(parent) !== "dir") fail(`✗ ${p}: No such file or directory`);
   const name = path.split("/").pop();
@@ -377,7 +525,24 @@ function list(path) {
         )
         .map((f) => f.slice(pre.length + 1) + (fs.dirs.has(f) ? "/" : ""))
         .sort();
-  if (path === "/") return ["bin/", "dev/", "usr/"];
+  if (path === "/") return ["bin/", "dev/", "home/", "usr/"];
+  if (path === HOME) return fs.people.map((n) => n + "/");
+  const t = theirs(path);
+  if (t) {
+    guard(path, false);
+    const pre = t.rel ? t.rel + "/" : "";
+    return [
+      ...new Set(
+        theirNames(t)
+          .filter((x) => x.startsWith(pre) && x !== pre)
+          .map((x) => {
+            const rest = x.slice(pre.length),
+              i = rest.indexOf("/");
+            return i < 0 ? rest : rest.slice(0, i + 1);
+          }),
+      ),
+    ].sort();
+  }
   if (path === "/dev") return ["null"];
   if (path === "/usr") return fs.people.map((n) => n + "/");
   if (path === "/bin") return MINE;
@@ -428,13 +593,23 @@ const stamp = (t) =>
 function longRow(path, name) {
   const k = kind(path),
     m = fs.meta[path] || {};
+  const fmt = (b) =>
+      ["r", "w", "x"].map((c) => (b.includes(c) ? c : "-")).join(""),
+    t = theirs(path),
+    s = roomS(),
+    num = inNum(path) || path === numRoot(),
+    rel = path === numRoot() ? "" : path.slice(numRoot().length + 1),
+    given = num && !inRo(path) && s && isSb(s) ? nbGiven(s, fs.meId, rel) : [],
+    of = (w) => (given.find(([x]) => x === w) || [, ""])[1];
   const perms = path.startsWith("/bin")
     ? "----x--x--x"
-    : k === "dir"
-      ? "drwx------"
+    : t
+      ? `${k === "dir" ? "d" : "-"}${t.rel ? nbRights(s, t.id, t.rel, fs.meId) : "r-x"}------`
       : path === fs.home + "/log"
         ? "-r--------"
-        : `-rw${m.x ? "x" : "-"}${m.g ? "r" : "-"}--${m.o ? "r" : "-"}--`;
+        : k === "dir" && !num
+          ? "drwx------"
+          : `${k === "dir" ? "d" : "-"}${k === "dir" ? "rwx" : fmt((m.nr ? "" : "r") + (m.nw ? "" : "w") + (m.x ? "x" : ""))}${fmt(of("@g:" + m.grp) || m.gb || (m.g ? "r" : ""))}${fmt(of("@o") || (m.o ? "r" : ""))}${given.some(([w]) => !w.startsWith("@")) ? "+" : ""}`;
   return [
     perms,
     owner(path),
@@ -1648,39 +1823,198 @@ const CMDS = {
         return `${a}: ${t ? `text, ${lines(t).length} line${lines(t).length === 1 ? "" : "s"}` : "empty"}`;
       })
       .join("\n"),
+  /* the modes: u (mine: r, w, x), g (the file's group) and o (everyone). On a Numberat file or folder, g and o are also
+     the rights the room's players get, this Sandbox only (nbperms.js); g+r and o+r still let a sent file be opened */
   chmod: (args) => {
     const [mode, ...files] = args;
     if (!mode || !files.length) fail(`✗ chmod: usage: ${MAN.chmod}`);
-    const set = {},
-      nm = mode.match(/^[0-7]?([67])([0-7])([0-7])$/);
-    if (nm) {
-      set.x = nm[1] === "7"; // (+x: a Numerat file runs as ./file)
-      set.g = +nm[2] >= 4;
-      set.o = +nm[3] >= 4;
-    } else
+    const ch = { u: {}, g: {}, o: {} },
+      nm = mode.match(/^[0-7]?([0-7])([0-7])([0-7])$/);
+    if (nm)
+      ["u", "g", "o"].forEach((c, k) => {
+        const d = +nm[k + 1];
+        ch[c] = { r: !!(d & 4), w: !!(d & 2), x: !!(d & 1) };
+      });
+    else
       for (const part of mode.split(",")) {
-        const m = part.match(/^([ugoa]*)([+-=])([rwx]+)$/);
-        if (!m) fail(`✗ chmod: invalid mode: '${mode}'`);
-        const on = m[2] !== "-",
-          who = m[1] || "a";
-        if (m[3].includes("x") && /[ua]/.test(who)) set.x = on;
-        if (!m[3].includes("r")) continue;
-        if (/[ga]/.test(who)) set.g = on;
-        if (/[oa]/.test(who)) set.o = on;
+        const m = part.match(/^([ugoa]*)([+-=])([rwx]*)$/);
+        if (!m || (!m[3] && m[2] !== "="))
+          fail(`✗ chmod: invalid mode: '${mode}'`);
+        const who = (m[1] || "a").replace("a", "ugo");
+        for (const c of "ugo")
+          if (who.includes(c))
+            for (const b of "rwx")
+              if (m[3].includes(b)) ch[c][b] = m[2] !== "-";
+              else if (m[2] === "=") ch[c][b] = false;
       }
+    let away = false;
     for (const f of files) {
-      const p = findPath(f);
+      const p = findPath(f),
+        k = kind(p);
       guard(p, true);
-      if (kind(p) !== "file")
-        fail(`✗ chmod: cannot access '${f}': No such file`);
+      if (!k) fail(`✗ chmod: cannot access '${f}': No such file`);
       if (isPerma(p))
         fail(
           `✗ chmod: ${f}: perma-notes stay private (only superuser-${owner(p)}).`,
         );
-      fs.meta[p] = { ...(fs.meta[p] || {}), ...set };
+      const num = inNum(p) || p === numRoot();
+      if (k === "dir" && !num)
+        fail(
+          `✗ chmod: ${f}: only files, and the folders in home/${fs.me} (for other players)`,
+        );
+      if (k === "file") {
+        const m = { ...(fs.meta[p] || {}) };
+        if ("x" in ch.u) m.x = ch.u.x; // (+x: a Numberat file runs as ./file)
+        if ("r" in ch.u) m.nr = !ch.u.r;
+        if ("w" in ch.u) m.nw = !ch.u.w;
+        if ("r" in ch.g) m.g = ch.g.r;
+        const gb = "rwx"
+          .split("")
+          .filter((b) => (b in ch.g ? ch.g[b] : (m.gb || "").includes(b)))
+          .join("");
+        if (Object.keys(ch.g).length) m.gb = gb; // (its group's bits, as ls -l shows them; with a group, the room's too)
+        if ("r" in ch.o) m.o = ch.o.r;
+        if (!m.nr) delete m.nr;
+        if (!m.nw) delete m.nw;
+        fs.meta[p] = m;
+      }
+      if (num) {
+        const grp = (fs.meta[p] || {}).grp;
+        if (
+          give(p, "@o", ch.o) === null ||
+          (grp && give(p, "@g:" + grp, ch.g) === null)
+        )
+          away = true;
+      }
+    }
+    numKeep();
+    return away && (ch.g.w || ch.g.x || ch.o.w || ch.o.x)
+      ? "(Rights for other players work in Sandbox, and a new Sandbox starts with none.)"
+      : "";
+  },
+  /* another player can't be given a file (it stays on its maker's device): chown :group sets its group, as chgrp */
+  chown: (args, i, x) => {
+    const [spec, ...files] = args;
+    if (!spec || !files.length) fail(`✗ chown: usage: ${MAN.chown}`);
+    const [u, g] = spec.split(":");
+    if (u && u !== fs.me)
+      fail(
+        `✗ chown: changing ownership of '${files[0]}': Operation not permitted (a file stays with the player who made it, on their device; give ${u} rights with setfacl -m u:${u}:rw ${files[0]})`,
+      );
+    return g ? CMDS.chgrp([g, ...files], i, x) : "";
+  },
+  /* one player's rights (and a group's, and everyone's) on my Numberat files and folders, this Sandbox only:
+     setfacl -m u:Pat:rw,g:friends:r file, setfacl -x u:Pat file, setfacl -b file (all of them away) */
+  setfacl: (args) => {
+    let op = "",
+      spec = "";
+    const files = [];
+    for (let k = 0; k < args.length; k++) {
+      const a = args[k];
+      if (a === "-m" || a === "-x") {
+        op = a[1];
+        spec = args[++k] || "";
+      } else if (a === "-b") op = "b";
+      else files.push(a);
+    }
+    if (!op || !files.length || (op !== "b" && !spec))
+      fail(`✗ setfacl: usage: ${MAN.setfacl}`);
+    const s = roomS();
+    if (!s || !isSb(s))
+      fail(
+        "✗ setfacl: rights for other players work in Sandbox (and a new Sandbox starts with none)",
+      );
+    const ents =
+      op === "b"
+        ? []
+        : spec
+            .split(",")
+            .filter(Boolean)
+            .map((e) => {
+              const m = e.match(
+                /^(u|user|g|group|o|other):([^:]*)(?::([rwx-]*))?$/,
+              );
+              if (!m || (op === "m" && m[3] === undefined))
+                fail(
+                  `✗ setfacl: ${e}: write it u:name:rwx, g:group:rwx or o::rwx`,
+                );
+              const c = m[1][0];
+              let who = "@o";
+              if (c === "u") {
+                if (!m[2] || m[2] === fs.me)
+                  fail(`✗ setfacl: ${e}: your own rights are chmod u+rwx`);
+                who = idOf(m[2]);
+                if (!who)
+                  fail(`✗ setfacl: ${m[2]}: no player by that name here`);
+              } else if (c === "g") {
+                if (!(s.groups || {})[m[2]])
+                  fail(`✗ setfacl: ${m[2]}: no such group (groups shows them)`);
+                who = "@g:" + m[2];
+              }
+              return [who, (m[3] || "").replace(/-/g, "")];
+            });
+    for (const f of files) {
+      const p = findPath(f);
+      guard(p, true);
+      if (!kind(p)) fail(`✗ setfacl: ${f}: No such file or directory`);
+      if (!inNum(p) && p !== numRoot())
+        fail(`✗ setfacl: ${f}: only your files and folders in home/${fs.me}`);
+      const rel = p === numRoot() ? "" : p.slice(numRoot().length + 1);
+      const list =
+        op === "b"
+          ? nbGiven(s, fs.meId, rel).map(([w]) => [w, ""])
+          : ents.map(([w, b]) => [w, op === "x" ? "" : b]);
+      for (const [who, bits] of list)
+        fs.room.send({
+          t: "nbp",
+          path: rel,
+          who,
+          bits: "rwx"
+            .split("")
+            .filter((c) => bits.includes(c))
+            .join(""),
+        });
     }
     return "";
   },
+  /* who may do what with a file or folder: its owner, mine, its group, the players and everyone */
+  getfacl: (args) =>
+    args
+      .map((f) => {
+        const p = findPath(f),
+          k = kind(p);
+        guard(p, false);
+        if (!k) fail(`✗ getfacl: ${f}: No such file or directory`);
+        const s = roomS(),
+          t = theirs(p);
+        if (t)
+          return [
+            `# file: home/${t.name}/${t.rel}`,
+            `# owner: ${t.name}`,
+            `your rights: ${nbRights(s, t.id, t.rel, fs.meId)}`,
+          ].join("\n");
+        const m = fs.meta[p] || {},
+          num = inNum(p) || p === numRoot(),
+          rel = p === numRoot() ? "" : p.slice(numRoot().length + 1),
+          given = num && s && isSb(s) ? nbGiven(s, fs.meId, rel) : [],
+          fmt = (b) =>
+            ["r", "w", "x"].map((c) => (b.includes(c) ? c : "-")).join(""),
+          of = (w) => (given.find(([x]) => x === w) || [, ""])[1];
+        return [
+          `# file: ${num ? `home/${fs.me}${rel ? "/" + rel : ""}` : f}`,
+          `# owner: ${fs.me}`,
+          `# group: ${m.grp || fs.me}`,
+          `user::${k === "dir" ? "rwx" : fmt((m.nr ? "" : "r") + (m.nw ? "" : "w") + (m.x ? "x" : ""))}`,
+          ...given
+            .filter(([w]) => !w.startsWith("@"))
+            .map(([w, b]) => `user:${nameOf(w)}:${fmt(b)}`),
+          ...given
+            .filter(([w]) => w.startsWith("@g:"))
+            .map(([w, b]) => `group:${w.slice(3)}:${fmt(b)}`),
+          `other::${fmt(of("@o") || (m.o ? "r" : ""))}`,
+        ].join("\n");
+      })
+      .join("\n\n"),
   chgrp: (args, i, x) => {
     const [g, ...files] = args,
       s = needRoom(x.ctx),
@@ -2597,14 +2931,39 @@ export const numerat = {
      17:15Z), folders first, each { path, name, dir, ro } */
   list(ctx, dir) {
     sync(ctx);
+    if (dir === HOME)
+      return [fs.me, ...fs.people.filter((n) => n !== fs.me)].map((name) => ({
+        path: name === fs.me ? numRoot() : HOME + "/" + name,
+        name,
+        dir: true,
+        ro: false,
+        other: name !== fs.me,
+      })); // (home/: mine first, then everyone else's)
     return list(dir)
       .sort((a, b) => b.endsWith("/") - a.endsWith("/") || a.localeCompare(b))
       .map((n) => {
         const name = n.replace(/\/$/, ""),
           path = dir + "/" + name;
-        return { path, name, dir: n.endsWith("/"), ro: inRo(path) };
+        return {
+          path,
+          name,
+          dir: n.endsWith("/"),
+          ro: inRo(path),
+          other: !!theirs(path),
+        };
       });
   },
+  home: () => HOME,
+  /* my folder's names to the room (sandbox.js asks every few seconds) */
+  share(ctx) {
+    sync(ctx);
+    shareNames();
+  },
+  /* the window's way of writing a path: home/<me>/…, home/<them>/… */
+  rel: (path) =>
+    path === numRoot() || inNum(path)
+      ? "home/" + fs.me + path.slice(numRoot().length)
+      : path.replace(/^\//, ""),
   /* a path typed in the window's path bar, as Linux reads it, from the folder shown: /usr/…, ~/…, .., ., or
      numberat/… (the way the window writes it); "file", "dir" or null for what's there */
   at(ctx, text, from) {
@@ -2620,15 +2979,23 @@ export const numerat = {
               ? t
               : t === LANG_DIR || t.startsWith(LANG_DIR + "/")
                 ? top + "/" + t
-                : from + "/" + t,
+                : (t === "home" || t.startsWith("home/")) &&
+                    !kind(unHomeN(from + "/" + t))
+                  ? "/" + t
+                  : from + "/" + t,
       );
+    const q = unHome(p);
     let k = null;
     try {
-      k = kind(p);
+      k = kind(q);
     } catch {
       k = null;
     }
-    return { path: p, kind: k, inside: p === numRoot() || inNum(p) };
+    return {
+      path: q,
+      kind: k,
+      inside: q === HOME || !!theirs(q) || q === numRoot() || inNum(q),
+    };
   },
   /* every file and folder under dir whose name has q in it (the path bar's search) */
   find(ctx, q, dir) {
@@ -2650,9 +3017,61 @@ export const numerat = {
         ro: inRo(p),
       }));
   },
+  /* a file's words; another player's, or one whose read I turned off, throws why not */
   read(ctx, path) {
     sync(ctx);
+    if (theirs(path) || (fs.meta[path] || {}).nr) return readFile(path);
     return fs.files[path] ?? null;
+  },
+  /* the Permissions button: for one of my files or folders, my own bits (files), what each player, group and everyone
+     has, and who's in the room to give rights to; null when it isn't mine */
+  perms(ctx, path) {
+    sync(ctx);
+    if ((path !== numRoot() && !inNum(path)) || inRo(path)) return null;
+    const s = roomS(),
+      rel = path === numRoot() ? "" : path.slice(numRoot().length + 1),
+      m = fs.meta[path] || {},
+      sb = !!s && isSb(s);
+    return {
+      rel,
+      file: kind(path) === "file",
+      own: (m.nr ? "" : "r") + (m.nw ? "" : "w") + (m.x ? "x" : ""),
+      sb,
+      given: sb ? nbGiven(s, fs.meId, rel) : [],
+      players: s
+        ? s.seat
+            .filter(
+              (id) => id !== fs.meId && s.players[id] && !s.players[id].bot,
+            )
+            .map((id) => [id, s.players[id].name])
+        : [],
+      groups: s ? Object.keys(s.groups || {}) : [],
+      label: (w) =>
+        w === "@o"
+          ? "Everyone"
+          : w.startsWith("@g:")
+            ? "Group " + w.slice(3)
+            : s && s.players[w]
+              ? s.players[w].name
+              : w,
+    };
+  },
+  /* my own bits on a file ("rw", "rx" …), kept on this device */
+  setOwn(ctx, path, bits) {
+    sync(ctx);
+    CMDS.chmod([`u=${bits}`, path]);
+  },
+  /* a player's (a group's, everyone's) rights on my file or folder, this Sandbox */
+  give(ctx, path, who, bits) {
+    sync(ctx);
+    const s = roomS();
+    if (!s || !isSb(s) || !fs.room.send) return;
+    fs.room.send({
+      t: "nbp",
+      path: path === numRoot() ? "" : path.slice(numRoot().length + 1),
+      who,
+      bits,
+    });
   },
   write(ctx, path, text) {
     sync(ctx);
@@ -2722,6 +3141,9 @@ const FILE_CMDS = [
   "file",
   "chmod",
   "chgrp",
+  "chown",
+  "setfacl",
+  "getfacl",
   "source",
   ".",
   "cut",
@@ -2781,7 +3203,8 @@ const WORDS = {
   map: SH_MAPS.map((m) => m[0]),
   mode: MODES.map((m) => m.id),
   song: ["list", "now", "on", "off", "all", ...music.tracks.map(qn)],
-  chmod: ["g+r", "g-r", "o+r", "o-r", "a+r", "a-r", "640", "644", "600"],
+  chmod: ["+x", "u-w", "u+w", "o+r", "o-r", "g+r", "g-r", "755", "644", "600"],
+  setfacl: ["-m", "-x", "-b"],
   totalstats: ["-m", ...STAT_MODES.map(([m]) => m)],
   gamestats: ["-m"],
   roundstats: ["-m"],

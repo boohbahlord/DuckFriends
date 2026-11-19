@@ -471,6 +471,17 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   addEventListener("keydown", keydown, true);
   addEventListener("keyup", keyup, true);
   addEventListener("blur", blur);
+  /* my Numberat folder's names go to the room, so home/ shows it to whoever may look (nbperms.js): every few seconds,
+     sent only when they changed or a new Sandbox started */
+  const share = setInterval(async () => {
+    const R = getR();
+    if (!R || !isSb(R.state) || R.state.phase === "lobby") return;
+    const [{ numerat }, { shellCtx }] = await Promise.all([
+      import("./shell.js"),
+      import("./chat.js"),
+    ]);
+    numerat.share(shellCtx());
+  }, 3000);
   return {
     paint,
     isOpen: () => !!k.open,
@@ -479,6 +490,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
       removeEventListener("keyup", keyup, true);
       removeEventListener("blur", blur);
       clearInterval(seating);
+      clearInterval(share);
       removeEventListener("pointermove", pmove, true);
       removeEventListener("pointerdown", pdown, true);
       for (const t of ["mousedown", "mouseup", "pointerup", "click"])
