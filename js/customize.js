@@ -852,7 +852,7 @@ export function openCustomize(page = lastPage, opts = {}) {
                 BUILDS.map(([v, n]) => [String(v), pic({ build: v }), n]),
                 String(+D.build || 0),
               )}
-            <h3>Size</h3>${grid(
+            <h3>Shape</h3>${grid(
               "size",
               SIZES.map(([v, n]) => [String(v), pic({ size: v }), n]),
               String(+D.size || 0),
