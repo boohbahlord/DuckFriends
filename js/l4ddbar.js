@@ -27,6 +27,7 @@ import {
   tintOf,
   endless,
   slotFor,
+  durLeft,
 } from "./l4ddrules.js";
 import { now as clockNow } from "./clock.js";
 import { sbNoLight } from "./sandboxrules.js";
@@ -41,6 +42,10 @@ const count = (w, m) => {
   if (w === "jetpack" && c) return Math.ceil(c[0] / 1000) + "s"; // (its flight left, in seconds)
   if (w === "flamer" && c)
     return Math.ceil((c[0] / ARMS.flamer.all) * 100) + "%"; // (its tank left)
+  if (ARMS[w] && ARMS[w].kind === "melee" && ARMS[w].dur)
+    return m.ang && m.ang[w]
+      ? "∞"
+      : Math.ceil((durLeft(m, w) / ARMS[w].dur) * 100) + "%"; // (a melee weapon's bar, in percent: it breaks at 0; Angelic: never)
   if (!c || ARMS[w].all <= 1) return "";
   return ARMS[w].mag ? `${m.rw === w ? "…" : c[0]} | ${c[1]}` : String(c[0]);
 };
