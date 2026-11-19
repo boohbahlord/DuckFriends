@@ -594,7 +594,7 @@ const NAMES = {
   axe: "Fire axe",
   sword: "Short sword",
   pan: "Cast iron pan",
-  handgun: "Pistol",
+  handgun: "M&P9 Compact", // (a real 9mm with a twelve-round magazine, as ours is here: the owner's, Nov 19)
   bow: "Bow",
   dagger: "Dagger",
   shotgun: "Shotgun",
