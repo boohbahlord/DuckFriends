@@ -838,9 +838,11 @@ export function mountWorld(board, api) {
      the wall climbs it, at about a walk; at the top, my duck steps onto the roof. Let go of the stick and it holds on;
      push away (or sideways off it) and it lets go and falls. True while my duck is on it (nothing else moves it) */
   const CLIMB = 150; // px a second
-  function climb(me, x, y, ax, ay, dt, ev) {
-    if (me.j || me.jf || !L.atLadder(x, y)) return (me.lad = false);
-    const top = L.ladderTop();
+  function climb(me, x, y, ax0, ay0, dt, ev) {
+    const A = !me.j && !me.jf && L.ladderAt(x, y);
+    if (!A) return (me.lad = false);
+    const top = L.ladderTop(A),
+      [ax, ay] = A.side === "w" ? [-ay0, ax0] : [ax0, ay0]; // (the canopy's, from its left: pushing east climbs it)
     if (!me.lad) {
       if (!(ay > 0.5 && Math.abs(ax) < 0.7 && me.vz == null)) return false;
       me.lad = true;
