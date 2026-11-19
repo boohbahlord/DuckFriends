@@ -9,6 +9,19 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v92",
+    version: 92,
+    date: "Nov 19, 2026",
+    title: "Sandbox rights, defaults and Numberat",
+    news: [
+      "For Sandbox: Game Settings has a Rights section: let everyone change Sandbox, or give everyone just Build, Make an NPC, Numberat, the Hotbar or Game settings.",
+      "For Sandbox: M has each built-in kind's defaults (Zombie, Blank NPC, Justin, Test NPC): set their HP, damage, speed and behavior once for every spawn.",
+      'For Sandbox: a spawn\'s "Use these settings" set to f makes what it spawns come as it is.',
+      "For Sandbox: Numerat is now called Numberat, and its help folder has a limits page.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v91",
     version: 91,
     date: "Nov 19, 2026",

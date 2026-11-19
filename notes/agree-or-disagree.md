@@ -6845,3 +6845,13 @@ Owner 13:42Z: "1. sure" (Version 91 live with the newer fixes), "2. ?????? 3. ??
 "Limits are set automatically if the player DOESNT define them themselves, and a help file says the limits and points to the help file on how to fix them"
 
 Decided (Adam): bible section 8.
+
+## Owner, Nov 19 13:52Z (voice to text, answers to Adam's 7 missing basics)
+"Yes to number one. I'm in voice to text right now reading this before I go. For number two, let me read this. Yes. Yes to number 2, I mean, sorry. Yes to number 3. Yeah. Yeah, to number 4, I mean. Yes, numbers inside text, please. I imagine single and double quotes will change what is inside a text, inside of, let's say, prints or says, um, as in, is asterisk actually going to be um, a random number in that text that's printed or said in the say command, or is it rather just the plain text as it is? And if it's not determined by single or double quotes for that, then we can do some other operator for that. Yes. Number 6 is a great idea. Yes to that. Yes to number 7. I imagine that round might already be used for something in game, so maybe it can be called waves for anything related to zombies. So yeah."
+
+Decided (Adam): all 7 in the bible (section 14, items 10-16). Double quotes in print/say work values out, single quotes keep plain text (bash). Zombie round number = `wave`.
+
+## Owner, Nov 19 14:05Z
+"I'm busy or gone, never ask me if I want something live. Just push it out and deploy it. And make sure to do what you got to do to keep working after the deployment is done, because I'm going to be busy and things have to get done while I'm busy."
+
+Decided (Adam): standing rule, deploy tested batches without asking; keep workers going after each deploy.

@@ -8,7 +8,7 @@
    s.sb.hb = { d: the default's 10 slots, lock: 1 when locked, own: { player id: their 10 slots }, ic: { spawn id:
    [shape, color, head] }, got: { player id: [[what they took from a loot orb, until when (0: for good)]] } }. A slot holds a special's id, "sp:" and a spawn's id, or null.
    No screen here: the screen half is sbhotview.js */
-import { isSb, sbCan, SB_COLORS, SB_WHAT } from "./sandboxrules.js";
+import { isSb, sbMay, SB_COLORS, SB_WHAT } from "./sandboxrules.js";
 import { sbPress } from "./sbspawn.js";
 
 export const SB_SLOTS = 10;
@@ -75,7 +75,7 @@ export function sbIcon(s, p) {
 export function sbHotAct(s, a, now) {
   if (!isSb(s) || !s.players[a.id]) return false;
   const hb = hbOf(s),
-    can = sbCan(s, a.id),
+    can = sbMay(s, a.id, "h"),
     own = { ...(hb.own || {}) },
     set = (next) => {
       s.sb = { ...s.sb, hb: { ...hb, ...next } };

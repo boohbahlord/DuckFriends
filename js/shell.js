@@ -67,7 +67,7 @@ import { secret } from "./unlocks.js";
 import { uiCommand } from "./hideui.js";
 import { music } from "./music.js";
 import { npcsHere, npcTag, npcByTag, npcById } from "./npcs.js";
-import { isSb, sbCan, sbWorld, SB_WORLD_NAMES } from "./sandboxrules.js";
+import { isSb, sbMay, sbWorld, SB_WORLD_NAMES } from "./sandboxrules.js";
 import { HELP } from "./numerathelp.js";
 
 const tag = (n) => String(n || "").replace(/\s+/g, "");
@@ -315,7 +315,7 @@ function writeFile(p, text, append) {
       NUM_MOST
     )
       fail(
-        `✗ ${name}: the Numerat folder is full (100,000 characters in all). rm a file there to make room.`,
+        `✗ ${name}: the Numberat folder is full (100,000 characters in all). rm a file there to make room.`,
       );
   }
   fs.meta[path] = { ...(fs.meta[path] || {}), t: Date.now() };
@@ -1121,7 +1121,7 @@ function cal(now = new Date()) {
 const procLines = () =>
   procs.map(
     (p) =>
-      `${String(p.pid).padStart(3)} numerat  ${p.name}, running ${left(Date.now() - p.at)}`,
+      `${String(p.pid).padStart(3)} numberat  ${p.name}, running ${left(Date.now() - p.at)}`,
   );
 function psLines(s, all) {
   const o = s.options,
@@ -2305,17 +2305,17 @@ function startFile(path, ctx, sudo) {
   const s = ctx.room && ctx.room.state,
     name = path.slice(fs.home.length + 1);
   if (!s || !isSb(s))
-    fail(`✗ ${name}: Numerat files only run in Sandbox.`, 126);
-  if (!sbCan(s, ctx.room.me) && !(sudo && isSudo(s, ctx.room.me)))
+    fail(`✗ ${name}: Numberat files only run in Sandbox.`, 126);
+  if (!sbMay(s, ctx.room.me, "n") && !(sudo && isSudo(s, ctx.room.me)))
     fail(
-      `✗ ${name}: only the host, or whoever the host lets, runs Numerat files here${isSudo(s, ctx.room.me) ? " (sudo runs it as sudo)" : ""}.`,
+      `✗ ${name}: only the host, or whoever the host lets, runs Numberat files here${isSudo(s, ctx.room.me) ? " (sudo runs it as sudo)" : ""}.`,
       126,
     );
   const was = procs.find((p) => p.path === path);
   if (was) return `${name} is already running (pid ${was.pid}).`;
   const pid = nextPid++;
   procs.push({ pid, path, name, at: Date.now() });
-  return `▶ ${name} is running (pid ${pid}). Numerat's language is coming: for now the file does nothing. kill ${pid} stops it.`;
+  return `▶ ${name} is running (pid ${pid}). Numberat's language is coming: for now the file does nothing. kill ${pid} stops it.`;
 }
 function runFile(c, ctx, sudo) {
   const path = resolve(c),
@@ -2516,13 +2516,13 @@ export const numerat = {
   },
   write(ctx, path, text) {
     sync(ctx);
-    if (!inNum(path)) fail("✗ That is not in the Numerat folder.");
+    if (!inNum(path)) fail("✗ That is not in the Numberat folder.");
     writeFile(path, text, false);
     numKeep();
   },
   mkdir(ctx, path) {
     sync(ctx);
-    if (!inNum(path)) fail("✗ That is not in the Numerat folder.");
+    if (!inNum(path)) fail("✗ That is not in the Numberat folder.");
     CMDS.mkdir([path]);
     numKeep();
   },

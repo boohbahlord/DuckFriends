@@ -4,7 +4,7 @@
    something on a key, as the special selection in Customize does ("which they have to add to their hotbar in a popup
    similar to the popup from special selection in customize") */
 import { esc, openWindow } from "./ui.js";
-import { isSb, sbCan, SB_COLORS, SB_WHAT } from "./sandboxrules.js";
+import { isSb, sbMay, SB_COLORS, SB_WHAT } from "./sandboxrules.js";
 import { isL4dd } from "./l4ddrules.js";
 import { boxText } from "./sbspawn.js";
 import { sbSlots, sbIcon, spawnOf, SB_SHAPES, SB_SLOTS } from "./sbhot.js";
@@ -101,7 +101,7 @@ export function lootHTML(duck) {
 export function hotRows(R, openPut) {
   const s = R.state,
     hb = (s.sb && s.sb.hb) || {},
-    can = sbCan(s, R.me),
+    can = sbMay(s, R.me, "h"),
     duck = (s.players[R.me] || {}).duck,
     rows = [];
   if (!sbHotOn(s))
@@ -162,7 +162,7 @@ export function openPut(getR, v) {
   const body = (R) => {
     const s = R.state,
       hb = (s.sb && s.sb.hb) || {},
-      can = sbCan(s, R.me),
+      can = sbMay(s, R.me, "h"),
       duck = (s.players[R.me] || {}).duck,
       it = slotLook(s, v, duck);
     if (!it)
@@ -217,7 +217,7 @@ export function openPut(getR, v) {
         const now = JSON.stringify([
           (R.state.sb || {}).hb || 0,
           (R.state.sb || {}).pts || 0,
-          sbCan(R.state, R.me),
+          sbMay(R.state, R.me, "h"),
         ]);
         if (now === sig) return;
         sig = now;

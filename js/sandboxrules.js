@@ -47,9 +47,27 @@ export const sbOnBoard = (s) => isSb(s) && !sbWorld(s.options);
 export function sbCan(s, id) {
   if (!isSb(s) || !id || !s.players[id] || s.players[id].bot) return false;
   if (id === s.hostId) return true;
+  if (+s.options.sbAll === 1) return true; // (Game Settings: "Everyone can change Sandbox")
   if (+s.options.dod === 1 && ((s.dod || {}).on || {}).settings) return true; // (rules.js dodOn(s, "settings"))
   return !!(s.sb && s.sb.ok && s.sb.ok[id]);
 }
+/* Game Settings can also give every player just some of the windows (the owner's, Nov 19: "if all players get only a
+   select few permissions onto different buttons"): option sbOk + the window's letter, 1 on. The rights (sbCan) give
+   them all; Player settings (p) stays with the rights */
+export const SB_RIGHTS = [
+  ["b", "Build"],
+  ["m", "Make an NPC"],
+  ["n", "Numberat"],
+  ["h", "Hotbar"],
+  ["g", "Game settings"],
+];
+export const sbMay = (s, id, k) =>
+  sbCan(s, id) ||
+  (isSb(s) &&
+    !!id &&
+    !!s.players[id] &&
+    !s.players[id].bot &&
+    +s.options["sbOk" + String(k).toUpperCase()] === 1);
 /* a downed duck in Sandbox on Dead Ducks Arcade's maps: back up this long after it bled out (no rounds to wait for) */
 export const SB_BACK_MS = 3000;
 
@@ -72,6 +90,7 @@ export const SB_BOXES = {
   speed: { name: "Speed", kind: "tenth", min: 0.1, max: 5, def: "1" }, // ("1 is default, 0 is not allowed ... 5 is the max")
 };
 export const SB_FLAGS = {
+  sets: { name: "Use these settings", kind: "bool", def: "t" }, // (off: what it spawns comes as it is, sbspawn.js ownOn)
   cont: { name: "Continuous spawn", kind: "bool", def: "f" },
   respawn: { name: "Can respawn", kind: "bool", def: "f" },
   sprint: { name: "Can sprint", kind: "bool", def: "f" },
@@ -86,6 +105,10 @@ export const SB_IMPORT = [
   ["True or false", ["sprint", "jump", "climb"]],
   ["Behavior", ["target", "ignore", "avoid", "protect"]],
 ];
+/* what a spawn's "Use these settings" switches, and what M's defaults for a kind can change (the owner's, Nov 19: "an
+   option for M that allows entities default settings to be edited ... Make sure that spawn can have settings turned
+   off so entities spawn as they are, much like how respawn does it"): the same settings a respawn can import */
+export const SB_OWN = SB_IMPORT.flatMap(([, fs]) => fs);
 /* a spawn's Players tab: ducks spawn here (they start, join and come back from being down here) when it's on, the ones
    its "who" names (players, or their names), with its HP and speed; blank is the game's own */
 export const SB_PLAYER = {

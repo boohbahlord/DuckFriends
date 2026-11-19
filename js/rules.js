@@ -245,6 +245,12 @@ export const OPTIONS_DEFAULT = {
   lowGravity: 0, // 1: jumps float, slower and higher
   fun: 1, // the silly commands (lightning, love, kill, hotdog): 1 on, 0 off
   ghosts: 0, // 1: Duck Cabin's ghosts (hangout/ghosts.js): a knocked-down duck's ghost walks about until Space
+  sbAll: 0, // Sandbox: 1, every player has all of Sandbox's rights (sandboxrules.js sbCan); 0, the host and whoever it lets
+  sbOkB: 0, // Sandbox: 1, every player may use Build (B) without the rights; the same for M, N, H and G (sandboxrules.js sbMay)
+  sbOkM: 0,
+  sbOkN: 0,
+  sbOkH: 0,
+  sbOkG: 0,
   hangTime: 15, // Hangout's time limit in minutes when Random or the vote picked it: 0 (none), 5, 10, 15, 20, 30 (never when the host picks it)
   ghostBusy: 1, // 1: no ghost from a duck busy with an activity (chalk, piano, guestbook, cards, a seat …): it just gets up
   justin: 0, // 1: Duck Cabin's Justin walks the boards too, as a joke (js/boardjustin.js); he never counts

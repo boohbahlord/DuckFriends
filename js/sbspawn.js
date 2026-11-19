@@ -21,13 +21,14 @@ import { keep, read, valueOf } from "./numerat.js";
 import {
   baseMode,
   isSb,
-  sbCan,
+  sbMay,
   sbOnBoard,
   SB_BOXES,
   SB_FLAGS,
   SB_WHAT,
   SB_ACTS,
   SB_IMPORT,
+  SB_OWN,
   SB_PLAYER,
   sbPlayerSpot,
   sbOnWorld,
@@ -132,6 +133,43 @@ export function boxText(p, f) {
 }
 const num = (p, f) => valueOf({ ok: boxText(p, f) }, boxOf(f));
 const flag = (p, f) => num(p, f) === true;
+
+/* ---------- a kind's own settings, set in M (s.sb.kd = { kind: { f: its boxes } }), and a spawn's "Use these
+   settings" ----------
+   What a spawn makes reads each of SB_OWN from: a respawn that imported it; else the spawn, when its settings are on and
+   it wrote that box; else the kind's defaults from M, when written; else the game's own (SB_BOXES' defaults) */
+const NONE = { f: {} };
+export const kdOf = (s, k) => ((s.sb && s.sb.kd) || {})[k] || null;
+export const ownOn = (p) => !p || !p.f || flag(p, "sets");
+function fromFor(s, p, k, at = {}) {
+  const kd = kdOf(s, k) || NONE,
+    own = ownOn(p);
+  return (f) =>
+    (at.im || []).includes(f)
+      ? at
+      : own && p.f[f]
+        ? p
+        : kd.f[f]
+          ? kd
+          : own
+            ? p
+            : NONE;
+}
+/* a kind's behavior lists from M, for sbbrain.js listsOf (where nothing else set them), or null when M set none */
+function kdLists(s, k) {
+  const kd = kdOf(s, k);
+  if (!kd || !Object.keys(SB_ACTS).some((f) => kd.f[f])) return null;
+  return Object.fromEntries(
+    Object.keys(SB_ACTS).map((f) => [
+      f,
+      kd.f[f]
+        ? boxText(kd, f)
+        : f === "target" && k === "zombie"
+          ? "players"
+          : "",
+    ]),
+  );
+}
 
 /* the maps with spawns: the board, Dead Ducks Arcade's two and Duck Cabin (every map Sandbox is on) */
 export const spawnsHere = (s) =>
@@ -255,13 +293,13 @@ function makeOne(s, id, at) {
   if (!p || liveNpcs(s).length >= Z_MOST) return false;
   const k = kindFor(s, id, p);
   if (!k) return false;
-  const by = (f) => ((at.im || []).includes(f) ? at : p), // (coming back at a respawn: what it imported, over its spawn's)
+  const by = fromFor(s, p, k, at), // (coming back at a respawn: what it imported, over its spawn's; then M's defaults)
     hp = Math.max(1, num(by("hp"), "hp") || 1),
     sv = num(by("speed"), "speed") || 1, // (picked once and kept: "a number is selected and it sticks with it")
     dm = boxText(by("damage"), "damage"),
     kind = {
       ...(k === "zombie" ? {} : { k, ...dressFor(s, k) }),
-      ...lookOf(p.ap),
+      ...(ownOn(p) ? lookOf(p.ap) : {}), // (its settings off: it looks as it is)
       ...(at.id && (at.im || []).length ? { rp: at.id } : {}), // (its behavior lists too: think)
     };
   let i;
@@ -329,7 +367,18 @@ function press(s, id, now) {
 
 /* ---------- the actions: { t: "sb", k, … } ---------- */
 export function sbAct(s, a, now) {
-  if (!isSb(s) || !sbCan(s, a.id)) return false;
+  if (!isSb(s)) return false;
+  /* an NPC is Make an NPC's (M); a picture's part is Build's or M's; the rest is Build's (B): the rights give them all,
+     Game Settings may give everyone one (sandboxrules.js sbMay) */
+  const may = (k) => sbMay(s, a.id, k);
+  if (
+    a.k === "npc" || a.k === "kd"
+      ? !may("m")
+      : a.k === "pic"
+        ? !may("b") && !may("m")
+        : !may("b")
+  )
+    return false;
   const pts = pointsOf(s);
   if (a.k === "add") {
     const me = s.pos[a.id];
@@ -422,6 +471,28 @@ export function sbAct(s, a, now) {
         };
     }
     s.hidden = { ...hid, sbup: up };
+    return true;
+  }
+  /* M's defaults for a kind: kind, f (one of SB_OWN), v (its text; "" for the game's own); reset: all of them back */
+  if (a.k === "kd") {
+    const kind = String(a.kind || ""),
+      f = String(a.f || ""),
+      all = { ...((s.sb && s.sb.kd) || {}) };
+    if (!SB_WHAT[kind]) return false;
+    if (a.reset) delete all[kind];
+    else {
+      const b = boxOf(f);
+      if (!b || !SB_OWN.includes(f)) return false;
+      const fs = { ...((all[kind] || NONE).f || {}) },
+        t = String(a.v == null ? "" : a.v).slice(0, SB_ACTS[f] ? 200 : 80);
+      if (t === "" && !SB_ACTS[f]) delete fs[f];
+      else
+        fs[f] = b.check
+          ? { t, ok: b.check(t) ? (fs[f] && fs[f].ok) || "" : t }
+          : keep(fs[f], t, b);
+      all[kind] = { f: fs };
+    }
+    s.sb = { ...s.sb, kd: all };
     return true;
   }
   const p = pts[a.p];
@@ -712,16 +783,17 @@ export function think(s, now, npcs, at, H, far, duckAt) {
     lists = (o) => {
       const k = o.sp + "|" + (o.k || "zombie") + "|" + (o.rp || ""),
         r = o.rp && pts[o.rp],
+        sp = pts[o.sp] && ownOn(pts[o.sp]) ? pts[o.sp] : NONE, // (its settings off: none of the spawn's lists)
         of = (p, f) => (r && (r.im || []).includes(f) ? r : p); // (came back at a respawn that imported it: the respawn's)
       if (!memo.has(k))
         memo.set(
           k,
           listsOf(
-            pts[o.sp] || { f: {} },
+            sp,
             o,
             (p, f) => (of(p, f).col ? boxText(of(p, f), f) : ""),
             (p, f) => set(of(p, f), f),
-            (madeOf(s, o.k) || {}).beh, // (a made NPC: its own lists, where the spawn set none)
+            (madeOf(s, o.k) || {}).beh || kdLists(s, o.k || "zombie"), // (a made NPC: its own lists, where the spawn set none; a kind: M's)
           ),
         );
       return memo.get(k);
