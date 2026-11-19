@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v98",
+    version: 98,
+    date: "Nov 19, 2026",
+    title: "Example brains",
+    news: [
+      "For Sandbox: the Numberat folder has an examples folder of ready brain files you can copy: a chaser, a coward, a healer, a talker, waves, and a pair that share a value.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v97",
     version: 97,
     date: "Nov 19, 2026",
