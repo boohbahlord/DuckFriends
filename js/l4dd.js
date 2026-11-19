@@ -10,6 +10,7 @@
    speed (Speed: 10% faster) and has 7 seconds of sprint (a thin blue bar under my name). The rules are the host's
    (l4ddrules.js); the weapons bar is l4ddbar.js. */
 import { sprintLeft, sprintReset } from "./stamina.js";
+import { isSb } from "./sandboxrules.js";
 import { activity } from "./hangout/registry.js";
 import { votesDue } from "./rules.js";
 import {
@@ -1012,14 +1013,16 @@ function seeHud(s, ctx) {
   if (roundShown !== L.r) {
     if (roundShown >= 0 && L.r > roundShown)
       record(s, L, L.r - roundShown === 1, ctx.me);
-    hud.innerHTML = `<span class="l4-round-w">Round</span> <b>${L.r}</b>`;
+    hud.innerHTML = isSb(s)
+      ? '<span class="l4-round-w">Sandbox</span>'
+      : `<span class="l4-round-w">Round</span> <b>${L.r}</b>`; // (Sandbox: no rounds to count)
     hud.classList.remove("new");
     void hud.offsetWidth;
     if (roundShown >= 0) hud.classList.add("new"); // (a new round: it pulses)
     roundShown = L.r;
   }
   /* between rounds: End turn (Ready before round 1), with how many pressed it and how many it takes */
-  const w = !L.over && L.wait,
+  const w = !L.over && !isSb(s) && L.wait, // (Sandbox: round 0 for good, with no Ready to press)
     mine = !!(w && w.v[ctx.me]),
     es = w ? [L.r, mine, waitVotes(s), waitNeed(s), startOf(s)].join() : "";
   if (es !== endSig) {

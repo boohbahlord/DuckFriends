@@ -15,6 +15,7 @@
    room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). Duncelation has its
    own rules in duncerules.js: one defender in the circle, everyone else walks to Dunce or Not a Dunce. Valentine's Duck
    Date has its own in vddrules.js: The Date at the dining table, a date with each Suitor, then a Suitor Turned Down. */
+import { baseMode, baseL4map, isSb, sbCan, sbOnBoard } from "./sandboxrules.js";
 import { stamp, took } from "./perf.js";
 import {
   boardSpeed,
@@ -215,6 +216,7 @@ export const SHORT = ["−−−", "−−", "−", "0", "+", "++", "+++"];
 export const OPTIONS_DEFAULT = {
   order: "random", // random | rotate: the order of the round's questions
   share: 0.67, // how many players must vote to start the countdown: .5, .67, .75, 1 (half by default with the Discussion round on)
+  sbMap: "", // Sandbox's world: "" (the board, on the room's map) | "cabin" (Duck Cabin) | "zcabin" (Dead Ducks Arcade's cabin) | "downpour" (sandboxrules.js)
   l4map: "cabin", // Quacky Zombies' map: "cabin" | "downpour", picked by everyone in its own map vote before each game (ZMAPS)
   answerTime: 0, // the default answer time in seconds: 0 (off), 30, 60, 90. I want no answer timer by default; a question's writer can still pick one
   catchUp: 15, // 0 (off), 15, 30, 45: the countdown once enough players have voted (everyone voting ends it at once)
@@ -472,7 +474,7 @@ const fits = (s, id) => s.seat.length >= (MIN_PLAYERS[id] || 0);
 export const randomPool = (s) => {
   const all = modesFor(s)
       .map((m) => m.id)
-      .filter((id) => id !== "l4dd" && fits(s, id)),
+      .filter((id) => id !== "l4dd" && id !== "sandbox" && fits(s, id)), // (Sandbox never ends: never from Random)
     off = s.options.modesOff || [],
     on = all.filter((id) => !off.includes(id));
   return on.length ? on : all; // (every one turned off: Random and the vote still have games to pick from)
@@ -577,7 +579,7 @@ function closeVote(s) {
   if (vt.k === "mode") return setMode(s, won || "aod");
   if (vt.k === "zmap") {
     s.options.l4map = ZMAPS.includes(won) ? won : anyOf(ZMAPS); // (the dice: either one)
-    useMode(s.options.mode, s.options.l4map);
+    useMode(baseMode(s.options), baseL4map(s.options));
     return;
   }
   setMap(s, won);
@@ -619,6 +621,21 @@ function cabinMap(s) {
       s.mapGreyed = o.map === "collage" && o.mapGrey ? 1 : 0;
     }
   }
+}
+/* in Duck Cabin's games or Sandbox, playing (no rounds: the End Cabin or Leave Sandbox vote ends it) */
+const sbHere = (s) =>
+  (isHang(s) && s.phase === "hang") || (sbOnBoard(s) && s.phase === "sandbox");
+/* Sandbox on the board: where a duck comes in (anywhere; the spawn points are stage 2) */
+const sbSpot = () => ({
+  x: +(0.1 + 0.8 * Math.random()).toFixed(4),
+  y: +(0.15 + 0.7 * Math.random()).toFixed(4),
+});
+/* Sandbox: a map picked on the Map page. Duck Cabin's row (or a world row, sbMap) puts it on that world; any other map
+   (or a vote, or Random) puts it on the board */
+function sbMapPicked(s, o) {
+  if ("sbMap" in o) return;
+  if (o.map === "cabin") s.options.sbMap = s.options.sbMap || "cabin";
+  else if (o.map || o.mapPick) s.options.sbMap = "";
 }
 /* the countdown or a vote is over: the next vote, or the game */
 function nextVote(s, now) {
@@ -722,6 +739,12 @@ function beginGame(s, now) {
     hangStart(s, now);
     return enter(s, "hang", now);
   }
+  if (sbOnBoard(s)) {
+    s.pos = {};
+    s.lock = {};
+    for (const id of s.seat) s.pos[id] = sbSpot();
+    return enter(s, "sandbox", now); // (Sandbox on the board: one phase that never ends, till Leave Sandbox)
+  }
   s.dn = null;
   if (isDn(s)) dnStart(s);
   s.mgj = null;
@@ -778,7 +801,7 @@ export const isSc = (s) => s.options.mode === "sc";
 export const isLaw = (s) => s.options.mode === "law";
 /* Duck Cabin's world: Hangout, and Quacky Zombies on the same map (its own rules: l4ddrules.js) */
 export const isHang = (s) =>
-  s.options.mode === "hang" || s.options.mode === "l4dd";
+  baseMode(s.options) === "hang" || baseMode(s.options) === "l4dd"; // (Sandbox on a world map runs as that world's mode: sandboxrules.js)
 /* a match in Bicker Brackets: seed A on the left, B on the right; Who is the Quack?: vote (left) or more clues; Lawyering:
    the offense (sword) on the left, the defense (shield) on the right, and between them a wider strip with the attorneys'
    circle; Duncelation: Dunce on the left, Not a Dunce on the right, and the same strip with the defender's circle */
@@ -825,23 +848,25 @@ export const startX = (s) => (twoSided(s) || isSc(s) ? 0.5 : colX(3)); // where 
 export const boardPhases = (s) =>
   isHang(s)
     ? ["hang"]
-    : isBb(s)
-      ? ["answer", "tie", "discuss", "bracket"]
-      : isSc(s)
-        ? SC_BOARD
-        : isQuack(s)
-          ? ["clue", "choice", "accuse", "reveal"]
-          : isLaw(s)
-            ? ["answer", "discuss", ...ATT_PHASES]
-            : isDn(s)
-              ? ["answer", "discuss", "dunced"]
-              : isMgj(s)
-                ? ["boss", "mgjend"]
-                : isVd(s)
-                  ? VD_PHASES
-                  : isTv(s)
-                    ? TV_BOARD
-                    : ["answer", "discuss", "results"];
+    : sbOnBoard(s)
+      ? ["sandbox"]
+      : isBb(s)
+        ? ["answer", "tie", "discuss", "bracket"]
+        : isSc(s)
+          ? SC_BOARD
+          : isQuack(s)
+            ? ["clue", "choice", "accuse", "reveal"]
+            : isLaw(s)
+              ? ["answer", "discuss", ...ATT_PHASES]
+              : isDn(s)
+                ? ["answer", "discuss", "dunced"]
+                : isMgj(s)
+                  ? ["boss", "mgjend"]
+                  : isVd(s)
+                    ? VD_PHASES
+                    : isTv(s)
+                      ? TV_BOARD
+                      : ["answer", "discuss", "results"];
 const humanIds = (s) => s.seat.filter((id) => !s.players[id].bot);
 /* who plays now: a player who joined in the middle of a turn they can't take part in walks around until the next one */
 export const playing = (s) =>
@@ -1477,6 +1502,7 @@ function advance(s, now, force = false) {
   if (isQuack(s) && QUACK_PHASES.includes(s.phase))
     return quackAdvance(s, now, force);
   if (isHang(s)) return s; // (no turns: the cabin stays open until the room goes back to the lobby)
+  if (sbOnBoard(s)) return s; // (Sandbox: no turns either, till Leave Sandbox)
   if (isMgj(s)) {
     const was = s.phase,
       next = mgjAdvance(s, now, force, logLine);
@@ -1597,6 +1623,10 @@ function seatNewcomer(s, id) {
     if (ph === "hang") hangJoin(s, id);
     return;
   } // Hangout: at the front door, at once
+  if (sbOnBoard(s)) {
+    if (ph === "sandbox") s.pos[id] = sbSpot();
+    return;
+  } // (Sandbox on the board: in at once, anywhere)
   if (isVd(s)) return vdJoin(s, id); // (Valentine's Duck Date: a Suitor from the next turn)
   if (s.options.lateJoin === "watch") {
     // (Players who join mid-game: Watch until the next round: they walk about and chat, and play from the next turn)
@@ -1663,10 +1693,7 @@ export function reduce(state, a, now = Date.now()) {
   return s;
 }
 function reduceStep(state, a, now) {
-  useMode(
-    state.options && state.options.mode,
-    state.options && state.options.l4map,
-  ); // (Duck Cabin as the room's mode has it, or Dead Ducks Arcade's Downpour: hangout/layout.js)
+  useMode(baseMode(state.options), baseL4map(state.options)); // (Duck Cabin as the room's mode has it, or Dead Ducks Arcade's Downpour, or Sandbox on one of them: hangout/layout.js)
   const s = clone(state),
     P = s.players,
     me = P[a.id],
@@ -1836,12 +1863,17 @@ function reduceStep(state, a, now) {
            nobody */
         if (o.mode && !("modePick" in o)) s.options.modePick = "";
         if (o.map && !("mapPick" in o)) s.options.mapPick = "";
-        if (o.map === "cabin" && !o.mode && !isHang(s)) {
+        if (isSb(s)) sbMapPicked(s, o);
+        else if (o.map === "cabin" && !o.mode && !isHang(s)) {
           s.options.mode = "hang"; // Duck Cabin and its games are one: picking the map picks Hangout,
           s.options.modePick = "";
         } else if ((o.map || o.mapPick || o.modePick) && !o.mode && isHang(s))
           s.options.mode = "aod"; // and another map (or a vote, or Random) leaves Duck Cabin
-        if (isHang(s) && !s.options.modePick) {
+        if (isSb(s) && !sbOnBoard(s)) {
+          keepRoomMap(s);
+          s.options.map = "cabin"; // (Sandbox on a world: the room's map waits for it, as with Duck Cabin's games)
+          s.options.mapPick = "";
+        } else if (isHang(s) && !s.options.modePick) {
           s.options.map = "cabin"; // (the host's Hangout; one from Random or the vote keeps the map's settings)
           s.options.mapPick = "";
           delete s.roomMap;
@@ -2218,10 +2250,27 @@ function reduceStep(state, a, now) {
       s.reviewVotes[a.id] = true;
       if (reviewCount(s) >= needed(s)) s.review = true;
       return s;
+    case "sbOk": {
+      // Sandbox: whoever has the rights gives them to a player or takes them back (the owner's answer 2, Nov 19
+      // 01:34Z: the host "decide[s] who else gets it"). The host's own rights never go
+      const who = s.players[a.who];
+      if (!sbCan(s, a.id) || !who || who.bot || a.who === s.hostId)
+        return state;
+      const ok = { ...((s.sb || {}).ok || {}) };
+      if (a.on) ok[a.who] = true;
+      else delete ok[a.who];
+      s.sb = { ...(s.sb || {}), ok };
+      say(
+        s,
+        `${me ? me.name : "The host"} ${a.on ? "let" : "stopped"} ${who.name} ${a.on ? "change" : "changing"} Sandbox.`,
+      );
+      return s;
+    }
     case "cabinEnd": {
       // Hangout's End Cabin and Quacky Zombies' Exit Cabin: a click votes, another takes it back; half the people
       // (never the computers) start a CABIN_END_MS timer, and the cabin game ends when it runs out
-      if (!isHang(s) || s.phase !== "hang" || !me || me.bot) return state;
+      // (and Sandbox's Leave Sandbox, on the board too)
+      if (!sbHere(s) || !me || me.bot) return state;
       const c = (s.cabinEnd = s.cabinEnd || { by: {}, at: 0 });
       c.by = c.by || {}; // (online, an empty list of votes doesn't come back)
       if (c.by[a.id]) delete c.by[a.id];
@@ -2230,8 +2279,8 @@ function reduceStep(state, a, now) {
       return s;
     }
     case "toLobby":
-      if (boss && isHang(s) && s.phase === "hang")
-        return backToLobby(s, `${me.name} took everyone back to the lobby.`); // (Hangout: the host ends it whenever)
+      if (boss && sbHere(s))
+        return backToLobby(s, `${me.name} took everyone back to the lobby.`); // (Hangout and Sandbox: the host ends it whenever)
       if (boss && s.phase === "over") {
         s.phase = "lobby";
         s.round = 0;
@@ -2966,7 +3015,7 @@ function reduceStep(state, a, now) {
         s.vote = null;
         return s;
       }
-      if (isHang(s) && s.phase === "hang" && cabinTick(s, now)) return s;
+      if (sbHere(s) && cabinTick(s, now)) return s;
       if (
         isL4dd(s) &&
         s.phase === "hang" &&
@@ -5097,7 +5146,11 @@ function cabinTick(s, now) {
   const was = s.cabinEnd.at,
     changed = cabinCheck(s, now);
   if (s.cabinEnd.at && now >= s.cabinEnd.at) {
-    cabinOver(s, now);
+    cabinOver(
+      s,
+      now,
+      isSb(s) ? "The ducks voted to leave Sandbox." : undefined,
+    );
     return true;
   }
   return changed || was !== s.cabinEnd.at;

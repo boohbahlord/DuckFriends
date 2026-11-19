@@ -230,7 +230,9 @@ import {
 import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
 import { JET, jetHTML, myFuel, burnFuel } from "./jetpack.js";
 import { mountL4Bar, l4Slider } from "./l4ddbar.js";
+import { isSb, sbOnBoard } from "./sandboxrules.js";
 import { mountCabinEnd } from "./hangout/cabinend.js";
+import { mountSandboxKeys } from "./sandbox.js";
 import { duckSVG, duckRoom } from "./duck.js";
 import {
   shownDuck,
@@ -565,6 +567,7 @@ let draftT = 0;
 let pm = null,
   idleOff = null,
   cabinEndOff = null, // (Hangout and Quacky Zombies: the End Cabin vote)
+  sbk = null, // (Sandbox: the key windows c, b, m, n, h, g, p)
   mbarOff = null; // the player menu (Tab), and the away watch
 let recorded = ""; // the last round counted in my all-time stats
 let lastLog = -1,
@@ -733,15 +736,20 @@ const boardHTML = (s) =>
               ? dnBoardHTML(s)
               : isMgj(s)
                 ? mgjBoardHTML(s)
-                : isVd(s)
-                  ? vdBoardHTML(s, R.me)
-                  : isTv(s)
-                    ? tvBoardHTML(s, R.me)
-                    : `<div class="board${!isWyr(s) && !isDdr(s) && s.options.aodColors === "gr" ? " aod-gr" : ""}">
+                : sbOnBoard(s)
+                  ? SB_BOARD
+                  : isVd(s)
+                    ? vdBoardHTML(s, R.me)
+                    : isTv(s)
+                      ? tvBoardHTML(s, R.me)
+                      : `<div class="board${!isWyr(s) && !isDdr(s) && s.options.aodColors === "gr" ? " aod-gr" : ""}">
   ${isWyr(s) ? wyrColsHTML(s) : isDdr(s) ? ddrColsHTML() : `<div class="cols">${COLS.map((c, i) => `<div class="col c${i + 1}" data-c="${i}"><span class="col-name">${esc(c)}<span class="cb-mark">${SHORT[i]}</span></span></div>`).join("")}</div>`}
   <div class="ducks"></div><div class="fxl"></div>
   ${s.phase === "answer" || s.phase === "discuss" ? `<div class="topover">${lordHTML(s)}<p class="question">${fontHTML(writerFont(s), esc(isWyr(s) ? "Would you rather" : s.qs[s.qi].text))}</p></div>` : ""}</div>`; // (Would You Rather: the choices are on the tiles)
 
+/* Sandbox on the board: the plain field, Mad God Justin's arena with nobody in it (the room's map shows through as on
+   every board) */
+const SB_BOARD = `<div class="board sb-board"><div class="cols mgj-cols"><div class="col mgj-field" data-c="0"></div></div><div class="ducks"></div><div class="fxl"></div></div>`;
 /* the board's measurements, taken again when the window or the docks change */
 function measure() {
   const board = S && $(".board", S);
@@ -6622,6 +6630,7 @@ function storyActHTML(s, d, n, need, count) {
 }
 const TITLES = {
   hang: "Duck Cabin",
+  sandbox: "Sandbox",
   submit: "Write a question",
   answer: "Vote",
   discuss: "Talk it over",
@@ -6956,6 +6965,7 @@ function paintNow(force) {
       );
     }
     $(".phase", S).textContent =
+      (isSb(s) && "Sandbox") || // (on every map)
       (s.phase === "hang" &&
         s.options.mode === "l4dd" &&
         s.options.l4map === "downpour" &&
@@ -6983,7 +6993,7 @@ function paintNow(force) {
   } // Mad God Justin: the knife always out; his HP
   else if (held === "knife" && !hasKey(myDuck(), "knife")) held = null;
   const round =
-    s.phase === "over" || isHang(s)
+    s.phase === "over" || isHang(s) || isSb(s)
       ? ""
       : isMgj(s)
         ? `Fight ${s.round + 1}`
@@ -7110,6 +7120,7 @@ function paintNow(force) {
   if ($(".topover .lord", S)) $(".topover .lord", S)._sig = lordSig;
   setHTML($(".gact", S), actHTML(s));
   pm.paint();
+  if (sbk) sbk.paint(); // (Sandbox: who may use the windows can change with the host)
   /* new chat messages float over their sender's duck (whispers only for the two of you; muted bubbles stay hidden) */
   if (lastLog < 0) lastLog = s.logN || 0;
   if ((s.logN || 0) > lastLog) {
@@ -7969,6 +7980,8 @@ register("game", {
     mbarOff = null;
     if (cabinEndOff) cabinEndOff();
     cabinEndOff = null;
+    if (sbk) sbk.destroy();
+    sbk = null;
     if (insetsOff) insetsOff();
     insetsOff = null;
     lastKey = -1;
@@ -8025,7 +8038,15 @@ register("game", {
     mbarOff = mountMusicBar(S);
     insetsOff = watchInsets(S);
     pm = mountPlayers(S, () => R);
-    cabinEndOff = isHang(R.state) ? mountCabinEnd(S, () => R) : null;
+    cabinEndOff =
+      isHang(R.state) || isSb(R.state) ? mountCabinEnd(S, () => R) : null; // (Sandbox: Leave Sandbox on every map)
+    sbk = isSb(R.state)
+      ? mountSandboxKeys(
+          S,
+          () => R,
+          () => pm && pm.isOpen() && pm.close(),
+        )
+      : null;
     placed = placeKey(R.state);
     idleOff = trackIdle(() => R);
     hooks.resetDuck = resetDuck;

@@ -44,6 +44,7 @@
                                  cabin, the deck and its stairs); the world never makes what stands wholly outside it
    ctx = { state(), me, send(action), world } (world: toScreen, heightAt, sc, vw and vh (the board's size, without making the
    browser lay the page out again), board, propEl(id), at(id) → where a duck is drawn { x, y, z } in world px, or null, shines(l) → is that light on now). */
+import { baseMode, baseL4map } from "../sandboxrules.js";
 export const RULES = new Map(); // k → its rules
 export const ACTS = new Map(); // id → its screen part
 export const rule = (k, r) => {
@@ -83,8 +84,8 @@ const hush = (a) =>
    quiet parts (the couches, the stage, the card table, the piano, the TV) */
 const modeOf = (s) => {
   const o = (s && s.options) || {},
-    m = o.mode || "hang";
-  return m === "l4dd" && o.l4map === "downpour" ? "l4dd-dp" : m;
+    m = baseMode(o) || "hang"; // (Sandbox on a world: that world's mode, sandboxrules.js)
+  return m === "l4dd" && baseL4map(o) === "downpour" ? "l4dd-dp" : m;
 };
 export const rulesOf = (s) =>
   [...RULES].filter(([k, r]) => runs(modeOf(s), k, r, "rules"));
