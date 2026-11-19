@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v112",
+    version: 112,
+    date: "Nov 19, 2026",
+    title: "A third less to download",
+    news: [
+      "The game is now about a third smaller to download, so on slow connections rooms are ready sooner.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v111",
     version: 111,
     date: "Nov 19, 2026",
