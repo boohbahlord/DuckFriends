@@ -68,11 +68,19 @@ function resendBrains() {
 const NAME_OK = /^[\w.-]{1,40}$/;
 let wrapOn = false; // (Wrap: off unless turned on; kept while the page is open)
 
+/* the bible's button, top right: its window opens above this one (js/seriatbible.js) */
+const $b = (w) =>
+  w
+    .querySelector("[data-bible]")
+    .addEventListener("click", () =>
+      import("./seriatbible.js").then((m) => m.openSeriatBible()),
+    );
+
 export function openNumerat() {
   const ctx = shellCtx(),
     root = numerat.root(ctx),
     st = { file: "", dir: root, q: "", out: [], busy: false };
-  const html = `<h2>${esc(LANG)}</h2>
+  const html = `<h2>${esc(LANG)}</h2><button type="button" class="btn small ghost nm-bible" data-bible>${esc(LANG)} bible</button>
   <div class="nm">
     <aside class="nm-side">
       <div class="nm-nav"><button type="button" class="btn small ghost nm-arrow" data-back aria-label="Back" title="Back">&larr;</button><button type="button" class="btn small ghost nm-arrow" data-fwd aria-label="Forward" title="Forward">&rarr;</button><form class="nm-go"><input class="nm-in nm-addr" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Path or search" placeholder="Path or search"></form></div>
@@ -94,6 +102,7 @@ export function openNumerat() {
   const shown = openWindow(picker + html, {
     cls: "nm-win",
     onOpen(w) {
+      $b(w);
       w.querySelector(".nm-themesel").addEventListener("change", (e) =>
         setSeriatTheme(e.target.value),
       );
