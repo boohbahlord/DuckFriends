@@ -29,7 +29,13 @@ const SHARED = new Map(); // (room -> give and take's values)
 
 export const nbFiles = (s) => s.nb || {};
 const fileOf = (nb, n) =>
-  nb[n] != null ? nb[n] : nb[n + ".num"] != null ? nb[n + ".num"] : null;
+  nb[n] != null
+    ? nb[n]
+    : nb[n + ".se"] != null
+      ? nb[n + ".se"]
+      : nb[n + ".num"] != null
+        ? nb[n + ".num"]
+        : null;
 /* a file the Brain "top" uses: another player's ("~Pat/fight") uses Pat's files (sent as "~Pat/<name>") */
 const usedBy = (nb, top, n) =>
   top.startsWith("~")

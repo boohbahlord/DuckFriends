@@ -290,9 +290,17 @@ export function mountHotbar(S, api) {
     el.classList.add("go");
   }
   function drawSlide(k, on, cd) {
-    list = full()
-      ? KEYS.map((_, i) => [k[i] && look(k[i]) ? k[i] : HOLE + i, i])
-      : k.map((id, i) => [id, i]).filter(([id]) => id && look(id));
+    /* what I hold, and the FIRST empty slot only, to scroll to when I want nothing in hand (the owner's, Nov 19 21:59Z:
+       1, 2, 3 and 0 full, so it goes 3, then 4, then 0). Not in a game with slots of its own (Quacky Zombies) */
+    let gap = !!api.look;
+    list = [];
+    KEYS.forEach((_, i) => {
+      if (k[i] && look(k[i])) list.push([k[i], i]);
+      else if (!gap) {
+        gap = true;
+        list.push([HOLE + i, i]);
+      }
+    });
     slide.classList.toggle("none", !list.length);
     const sig = JSON.stringify([
       list,

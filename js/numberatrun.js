@@ -31,6 +31,8 @@ const LOOPS = 1000; // ("Every loop stops after 1,000 rounds with an error")
 const BUSY = 20000; // (statements one task may run between two waits)
 export { NB_STATS }; // (an NPC's stats: numberat.js reads "z hp" with them)
 export const NB_BUILT = ["wave", "time", "alive", "dead", "spawned"];
+/* hppct: its HP as a percent of its most (the owner's, Nov 19 21:59Z: examples use percentages, not 8 HP or 5 HP) */
+const NB_PCT = "hppct";
 const EVENTS = ["spawn", "hit", "dead", "touch", "near"];
 const KINDS = {
   duck: "duck",
@@ -85,6 +87,7 @@ export const NB_RUN_WORDS = [
   "max",
   ...NB_STATS,
   ...NB_BUILT,
+  NB_PCT,
 ];
 const STOP = Symbol("stop");
 const HELP = {
@@ -160,6 +163,7 @@ class Stmts {
     if (
       HEADS.has(t.v) ||
       NB_BUILT.includes(t.v) ||
+      t.v === NB_PCT ||
       ["t", "f", "true", "false", "me"].includes(t.v)
     )
       no(`"${t.v}" is taken, pick another name`, HELP.names);
@@ -695,6 +699,7 @@ function read(text, plan, errs, opts, seen, from) {
         !file.known.has(n.v) &&
         !plan.defs.has(n.v) &&
         !NB_BUILT.includes(n.v) &&
+        n.v !== NB_PCT &&
         !NB_STATS.includes(n.v) &&
         !(opts.known && opts.known.has(n.v))
       )
@@ -787,6 +792,11 @@ export function brain(plan, host) {
       if (s.vars.has(w)) return s.vars.get(w);
     if (globals.has(w)) return globals.get(w);
     if (NB_BUILT.includes(w)) return host.get(w);
+    if (w === NB_PCT) {
+      if (env.me == null)
+        no(`${w} is an NPC's: use it inside a when`, HELP.names);
+      return (host.stat(env.me, "hp") * 100) / (host.most(env.me, "hp") || 1);
+    }
     if (NB_STATS.includes(w)) {
       if (env.me == null)
         no(`${w} is an NPC's: use it inside a when`, HELP.names);

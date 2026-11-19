@@ -117,7 +117,7 @@ export const SB_FLAGS = {
   auto: { name: "Auto spawn", kind: "bool", def: "f" },
   /* "under the colors to hide spawn, and it only hides spawn when cheat mode isn't on": its ring shows only to whoever
      has cheat mode on (sbmenu.js sbCheat); it still works */
-  hide: { name: "Hide (unless cheat mode)", kind: "bool", def: "f" },
+  hide: { name: "Hide (unless cheat mode)", kind: "bool", def: "t" },
   respawn: { name: "Can respawn", kind: "bool", def: "f" },
   sprint: { name: "Can sprint", kind: "bool", def: "f" },
   jump: { name: "Can jump", kind: "bool", def: "f" },

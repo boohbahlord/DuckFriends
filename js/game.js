@@ -2021,28 +2021,30 @@ function drawDucks(now = clockNow()) {
       shows[id].what !== "grenade" &&
       shows[id].what; // (a dagger or a grenade thrown without keeping it out: only the one in the air)
     const w =
-      (id === JUSTIN_ID || id === JUSTIN2) && isMgj(s)
-        ? !mgjGone(s, now) &&
-          (shows[id] && now < shows[id].until ? shows[id].what : pos.w)
-        : (isMgj(s) && s.phase === "boss"
-            ? (mgjOut(s, id) && (s.players[id] || {}).dead
-                ? "handgun" // (out of HP: the down pistol, the owner's, Nov 17 11:07Z)
-                : mine
-                  ? held
-                  : jaimes.includes(id)
-                    ? "knife"
-                    : pos.w) || MGJ_MELEE
-            : jm[id]
-              ? jm[id].w || "knife" // (the Jaime special's, and Quacky Zombies' Jaime: his knife always out; a Jaime Guard's, his weapon)
-              : isL4dd(s)
-                ? downArmed(s, id)
-                  ? "handgun" // (down: the down pistol, the owner's, Nov 17 11:07Z)
-                  : l4Hp(s, id) > 0 &&
-                    !l4Swims(s, id) && // (Downpour: swimming, it's put away)
-                    inHand(mine ? heldNow() : pos.w, s, id)
-                : mine
-                  ? held && hasKey(p.duck, held) && held
-                  : pos.w) || shown; // (Quacky Zombies: in hand while it's up) // (Mad God Justin: every duck's knife always out; his hammer swing over his gun)   // (Mad God Justin: every duck's knife always out)   // (a dagger thrown without keeping it out: only the one in the air)
+      mine && held === "none" && isMgj(s)
+        ? null // (Mad God Justin: an empty slot picked, nothing in hand)
+        : (id === JUSTIN_ID || id === JUSTIN2) && isMgj(s)
+          ? !mgjGone(s, now) &&
+            (shows[id] && now < shows[id].until ? shows[id].what : pos.w)
+          : (isMgj(s) && s.phase === "boss"
+              ? (mgjOut(s, id) && (s.players[id] || {}).dead
+                  ? "handgun" // (out of HP: the down pistol, the owner's, Nov 17 11:07Z)
+                  : mine
+                    ? held
+                    : jaimes.includes(id)
+                      ? "knife"
+                      : pos.w) || MGJ_MELEE
+              : jm[id]
+                ? jm[id].w || "knife" // (the Jaime special's, and Quacky Zombies' Jaime: his knife always out; a Jaime Guard's, his weapon)
+                : isL4dd(s)
+                  ? downArmed(s, id)
+                    ? "handgun" // (down: the down pistol, the owner's, Nov 17 11:07Z)
+                    : l4Hp(s, id) > 0 &&
+                      !l4Swims(s, id) && // (Downpour: swimming, it's put away)
+                      inHand(mine ? heldNow() : pos.w, s, id)
+                  : mine
+                    ? held && hasKey(p.duck, held) && held
+                    : pos.w) || shown; // (Quacky Zombies: in hand while it's up) // (Mad God Justin: every duck's knife always out; his hammer swing over his gun)   // (Mad God Justin: every duck's knife always out)   // (a dagger thrown without keeping it out: only the one in the air)
     if (w) arms.push([id, w, pos, p.duck, mine]);
     if (pos.dj && d._dj !== pos.dj) {
       d._dj = pos.dj;
@@ -2607,7 +2609,7 @@ function drawDucks(now = clockNow()) {
   /* Dead Ducks Arcade: the laser sights, out of each gun to the end of its flashlight (l4dd.js), never the bow's. I only
      see my own laser sight, never another duck's or Justin's (the owner's, Nov 16) */
   const lz = [];
-  if (isL4dd(s))
+  if (isL4dd(s) && sightOn())
     for (const [id, w] of arms) {
       if (id !== R.me || !MUZZLE[w]) continue;
       const hd = heldAll.get(id),
@@ -2618,7 +2620,10 @@ function drawDucks(now = clockNow()) {
     }
   /* Mad God Justin: the same laser sights (the owner's, Nov 16), with no flashlight to end in: on through where it aims
      (my mouse) to the board's edge */
-  if (isMgj(s) && s.phase === "boss")
+  if (
+    ((isMgj(s) && s.phase === "boss") || !(isMgj(s) || isL4dd(s))) &&
+    sightOn()
+  )
     for (const [id, w] of arms) {
       if (id !== R.me || !MUZZLE[w]) continue;
       const hd = heldAll.get(id),
@@ -3359,7 +3364,13 @@ function placeRevive(board, s, now) {
 function mgjRevive(on) {
   mgjRv = on;
   if (R)
-    R.send({ t: "use", what: "revive", hold: on ? 1 : 0, face: 1, w: mgjHold }); // (w: the medkit out in my hand gets it up at once)
+    R.send({
+      t: "use",
+      what: "revive",
+      hold: on ? 1 : 0,
+      face: 1,
+      w: mgjHold === "none" ? "" : mgjHold,
+    }); // (w: the medkit out in my hand gets it up at once)
 }
 /* Mad God Justin's zebra cake, or the Zebra cake special's (s.zcake): spinning on its way, then lying where it landed
    until Justin eats it (Hangout: hidden on the other side of the cabin's walls) */
@@ -5884,6 +5895,7 @@ function mgjBackIfGone(s) {
     (s.mgj.cake || clockNow() - (s.mgj.zebraAt || 0) < CAKE_EVERY);
   if (
     (mgjHold !== MGJ_MELEE &&
+      mgjHold !== "none" && // (an empty slot picked: nothing in hand)
       mgjHold !== "handgun" &&
       mgjHold !== "zebra" &&
       mgjHold !== myPick()) ||
@@ -5904,6 +5916,20 @@ function mgjOut2(id) {
   if (mgjHold !== id && (mgjHold === MGJ_MELEE || mgjHold === "handgun"))
     mgjBack = mgjHold; // (the one to go back to)
   mgjHold = held = id;
+  sendMove(true);
+}
+/* L (PC, every mode; the owner's, Nov 19 21:59Z): my laser sight on or off, and my flashlight with it. Starts
+   the way the mode had it: on in Quacky Zombies and Mad God Justin, off in the others */
+let sightPref = null;
+const sightOn = () =>
+  sightPref != null ? sightPref : !!R && (isL4dd(R.state) || isMgj(R.state));
+function toggleSight() {
+  const on = !sightOn();
+  sightPref = on;
+  if (R && isL4dd(R.state)) {
+    const off = !!((R.state.hang.l4f || {})[R.me] || 0);
+    if (off === on) R.send({ t: "hang", k: "l4", do: "fl" }); // (the flashlight goes with it)
+  }
   sendMove(true);
 }
 /* the weapon in my duck's hand: the one kept out (Shift and its key); Quacky Zombies: always the one in the slot
@@ -5950,7 +5976,7 @@ function slidPick(i) {
   const id = keysOf(playDuck())[i];
   if (!R) return;
   if (isMgj(R.state)) {
-    if (mgjToggles(id)) useKey(i, false);
+    if (mgjToggles(id) || !id) useKey(i, false);
   } else if (onBoardPhase()) selectKey(i, false); // (the one in the middle is the one picked: a weapon goes in hand)
 }
 /* phones: the special in the slider's middle tapped: used (a weapon attacks the way the duck faces) */
@@ -6036,6 +6062,14 @@ function useKey(i, keep, toggle = false) {
     }
   }
   if (bar) bar.show(i);
+  /* an empty slot puts the weapon away (the owner's, Nov 19 21:59Z: no Shift to put it away; "you just switch to an empty
+     hotbar using the number key") */
+  if (!keysOf(playDuck())[i]) {
+    if (isMgj(R.state)) mgjHold = "none";
+    held = isMgj(R.state) ? "none" : null;
+    sendMove(true);
+    return;
+  }
   if (isMgj(R.state)) {
     const id = keysOf(playDuck())[i];
     if (mgjToggles(id))
@@ -7786,6 +7820,11 @@ function keydown(e) {
     e.preventDefault();
     keys.add("Space"); // (held: the jetpack keeps going up)
     if (!e.repeat) jump();
+    return;
+  }
+  if (e.code === "KeyL" && onBoardPhase() && me) {
+    e.preventDefault();
+    if (!e.repeat) toggleSight();
     return;
   }
   if (keyIndex(e) >= 0 && onBoardPhase()) {

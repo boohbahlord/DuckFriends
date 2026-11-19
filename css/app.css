@@ -5800,7 +5800,9 @@ html.moving .pix-sun {
   pointer-events: none;
   container-type: size;
 }
-.game > :not(.map-layer, .pmenu, .votebox, .sb-win) {
+/* (not Sandbox's right-click menu either: made "relative" it took room in the screen and pushed the board aside, the
+   owner's, Nov 19 21:59Z) */
+.game > :not(.map-layer, .pmenu, .votebox, .sb-win, .sb-ctx) {
   position: relative;
   z-index: 1;
 }
@@ -19878,6 +19880,12 @@ html.map-is-nwk::before {
     inset 0 0 0 2px #050301,
     inset 0 0 40px rgba(0, 0, 0, 0.6);
 }
+/* the owner's, Nov 19 21:59Z: "the top right of the pause menu buttons are actually clipped off and cut off at the
+   top": the glass's case and its dark rim covered the top 6 px, where the top bar's buttons begin. The bar starts
+   below them */
+html.map-is-nwk .gbar {
+  padding-top: calc(4.8px + var(--nk-bez) + 4px);
+}
 /* the scanlines, with the faintest flicker */
 html.map-is-nwk::after {
   content: "";
@@ -20533,12 +20541,24 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .sb-setwin {
   width: min(30rem, calc(100vw - 1.5rem));
 }
+/* the owner's, Nov 19 21:59Z: the slide bar "moved a little bit more to the right so that it's out of the way", in the
+   UI's colors, and no cut-off color dots or stray slide bar: the box reaches into the window's right edge (its
+   scrollbar sits there), and room above and below keeps the picked dot's ring and the focus ring inside it */
 .sb-set {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
   max-height: calc(100dvh - 14rem);
-  overflow: auto;
+  overflow: hidden auto;
+  margin: -0.3rem -0.85rem -0.3rem -0.3rem;
+  padding: 0.3rem 0.85rem 0.3rem 0.3rem;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--ink) 35%, transparent) transparent;
+}
+.sb-win,
+.sb-win .sb-imp {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--ink) 35%, transparent) transparent;
 }
 .sb-row {
   display: grid;
@@ -21230,6 +21250,8 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   left: 10px;
   bottom: 96px;
   z-index: 31;
+  pointer-events: none;
+  animation: sb-note-out 1s ease 6s forwards;
   padding: 0.25rem 0.6rem;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent);
@@ -21239,8 +21261,16 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   line-height: 1.2;
   cursor: pointer;
 }
-.game .sb-cheat.on {
-  border-color: var(--green);
+@keyframes sb-note-out {
+  to {
+    opacity: 0;
+  }
+}
+.sb-cheatrow {
+  margin: 0 0 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 .game .sb-cheat kbd {
   font-size: 0.7rem;
@@ -21281,4 +21311,31 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .sb-ctx button:disabled {
   opacity: 0.45;
   cursor: default;
+}
+/* the owner's, Nov 19 21:59Z: a true or false setting is a button on the right, and a spawn's window has a header over each
+   of its three parts */
+.sb-tog {
+  font: inherit;
+  padding: 0.3rem 0.45rem;
+  border-radius: 0.45rem;
+  border: 0.12rem solid var(--line);
+  background: var(--panel2);
+  color: inherit;
+  cursor: pointer;
+}
+.sb-tog.on {
+  border-color: #4cc36a;
+  background: color-mix(in srgb, #4cc36a 25%, var(--panel2));
+}
+.sb-sect {
+  margin: 0.6rem 0 0.1rem;
+  font-size: 0.95em;
+  opacity: 0.8;
+  border-bottom: 0.1rem solid var(--line);
+}
+.sb-brainhead {
+  display: block;
+  padding: 0.2rem 0.4rem 0;
+  font-size: 0.8em;
+  opacity: 0.7;
 }
