@@ -118,7 +118,22 @@ export const HATS = [
     colors: [["c1", "Hair", "#ff4a1c"]],
   },
 ];
-export const hatById = (id) => HATS.find((h) => h.id === id) || null;
+/* the NPCs' own hats (Dead Ducks Arcade's soldiers and criminals, Survival's sniper: the owner's, Nov 19 19:27Z). Never a
+   player's: only HATS is listed anywhere; hatById finds these as well */
+export const NPC_HATS = [
+  {
+    id: "combat",
+    name: "Combat helmet",
+    colors: [
+      ["c1", "Cover", "#5b6a3c"],
+      ["c2", "Spots", "#3b4a2a"],
+    ],
+  },
+  { id: "beanie", name: "Beanie", colors: [["c1", "Knit", "#26262e"]] },
+  { id: "ghillie", name: "Ghillie hood" },
+];
+export const hatById = (id) =>
+  HATS.find((h) => h.id === id) || NPC_HATS.find((h) => h.id === id) || null;
 /* how Customize shows the hats: in themed groups, each under a small heading */
 export const HAT_GROUPS = [
   [
@@ -480,6 +495,84 @@ const DRAW = {
     <path d="M-26 2.6C-12 6.6 14 6.6 29 2.6" stroke="${mix(h.c1, 255, 0.25)}" stroke-width=".9" fill="none" opacity=".7"/>
     <path d="M-20-14C-16-23-6-27 4-27" stroke="#fff" stroke-width="3" fill="none" opacity=".18" stroke-linecap="round"/>
     <path d="M14-24C20-20 24-13 25-5" stroke="${dk(h.c1, 0.4)}" stroke-width="2" fill="none" opacity=".35" stroke-linecap="round"/>`,
+  /* a soldier's modern combat helmet (NPC_HATS): a lower dome cut up over the ears, in a cloth cover with spots of its
+     camouflage, a rail along its side, the night-vision mount on its front and the chin strap; goggles (h.goggles)
+     strapped round it, their lenses resting on its front */
+  combat: (h, id) => {
+    const spots = [
+      [-14, -18, 6, 3.4, -20],
+      [2, -24, 5, 2.8, 15],
+      [14, -12, 5.4, 3, -30],
+      [-4, -8, 6, 3, 10],
+      [-20, -4, 4, 2.4, 30],
+    ]
+      .map(
+        ([x, y, rx, ry, a]) =>
+          `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" transform="rotate(${a} ${x} ${y})" fill="${h.c2}"/>`,
+      )
+      .join("");
+    return `<defs><clipPath id="${id}cb"><path d="M-25 3C-27-17-13-29 2-29C18-29 28-18 26 0L20 1C17-4 12-4 10 2C-2 5-14 5-25 3Z"/></clipPath>
+      <radialGradient id="${id}cs" cx=".32" cy=".25" r=".85"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".3"/></radialGradient></defs>
+      <path d="M-10 4C-10 14-6 22 0 27" stroke="#1d1e1a" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".85"/>
+      <path d="M-25 3C-27-17-13-29 2-29C18-29 28-18 26 0L20 1C17-4 12-4 10 2C-2 5-14 5-25 3Z" fill="${h.c1}" ${O}/>
+      <g clip-path="url(#${id}cb)">${spots}<path d="M-25 3C-27-17-13-29 2-29C18-29 28-18 26 0L20 1C17-4 12-4 10 2C-2 5-14 5-25 3Z" fill="url(#${id}cs)"/></g>
+      <rect x="-12" y="-9" width="20" height="3.4" rx="1.2" fill="#2a2b27" stroke="#1c1c28" stroke-width=".8"/>
+      <path d="M19-20L25-18L24.4-10L18.6-11Z" fill="#2a2b27" stroke="#1c1c28" stroke-width=".9" stroke-linejoin="round"/><circle cx="21.6" cy="-14.6" r="1" fill="#55574e"/>
+      ${
+        h.goggles
+          ? `<path d="M-25-8C-12-4 8-6 18-12" stroke="#1d1e1a" stroke-width="2.6" fill="none"/><rect x="9" y="-22" width="14" height="9" rx="4" fill="#3a3b35" ${O}/><rect x="11" y="-20.2" width="10" height="5.4" rx="2.6" fill="#9cc6c9"/><path d="M12.4-19L16-19" stroke="#fff" stroke-width="1" opacity=".7" stroke-linecap="round"/>`
+          : ""
+      }
+      <path d="M-21-14C-17-23-7-27 3-27" stroke="#fff" stroke-width="2.6" fill="none" opacity=".16" stroke-linecap="round"/>`;
+  },
+  /* a criminal's knit beanie (NPC_HATS): snug over the head, ribbed, its cuff folded up */
+  beanie: (h) => {
+    const ribs = [-18, -12, -6, 0, 6, 12, 18]
+      .map(
+        (x) =>
+          `<path d="M${x} ${-3 + Math.abs(x) * 0.05}C${x * 0.92} -14 ${x * 0.7} -22 ${x * 0.5} -26" stroke="${dk(h.c1, 0.25)}" stroke-width=".9" fill="none"/>`,
+      )
+      .join("");
+    return `<path d="M-24 2C-26-18-12-28 1-28C16-28 27-18 25 2Z" fill="${h.c1}" ${O}/>${ribs}
+      <path d="M-18-16C-13-23-5-26 3-26" stroke="#fff" stroke-width="2.4" fill="none" opacity=".14" stroke-linecap="round"/>
+      <path d="M-27 6C-12 11 14 11 28 6L27-4C13 0-12 0-26-4Z" fill="${dk(h.c1, 0.1)}" ${O}/>
+      ${[-22, -16, -10, -4, 2, 8, 14, 20, 25]
+        .map(
+          (x) =>
+            `<path d="M${x} ${-2.4 + Math.abs(x) * 0.04}V${7 - Math.abs(x) * 0.05}" stroke="${dk(h.c1, 0.32)}" stroke-width=".9"/>`,
+        )
+        .join("")}`;
+  },
+  /* the ghillie hood (NPC_HATS, Survival's sniper): a mop of the suit's strands over the top and back of his head, down
+     onto his shoulders, a fringe over his brow; his eye and beak look out */
+  ghillie: () => {
+    const C = [
+      "#1b4c24",
+      "#162c1f",
+      "#358226",
+      "#2c5a2a",
+      "#5d6b3a",
+      "#7a7448",
+    ];
+    let n = 5,
+      s = "";
+    const rnd = () => (n = (n * 9301 + 49297) % 233280) / 233280;
+    const tuft = (x, y, len, a0, a1) => {
+      const a = (a0 + rnd() * (a1 - a0)) * (Math.PI / 180),
+        l = len * (0.7 + rnd() * 0.6);
+      s += `<path d="M${x.toFixed(1)} ${y.toFixed(1)}Q${(x + Math.cos(a) * l * 0.5 + (rnd() - 0.5) * 5).toFixed(1)} ${(y + Math.sin(a) * l * 0.5).toFixed(1)} ${(x + Math.cos(a) * l).toFixed(1)} ${(y + Math.sin(a) * l).toFixed(1)}" stroke="${C[Math.floor(rnd() * C.length)]}" stroke-width="${(1.8 + rnd() * 1.6).toFixed(1)}" fill="none" stroke-linecap="round"/>`;
+    };
+    for (let i = 0; i < 70; i++) {
+      const t = (i / 70) * Math.PI * 1.15 + Math.PI * 0.92,
+        r = 20 + rnd() * 9;
+      tuft(Math.cos(t) * r, 12 + Math.sin(t) * r * 0.95, 12, 60, 130);
+    }
+    for (let i = 0; i < 26; i++)
+      tuft(-28 + rnd() * 14, 6 + rnd() * 30, 14, 80, 110); // (down his back)
+    for (let i = 0; i < 16; i++)
+      tuft(-4 + rnd() * 26, -6 + rnd() * 6, 9, 70, 110); // (the fringe over his brow)
+    return `<path d="M-28 34C-34 10-24-14 0-16C20-17 30-6 28 4C18-2 6 0 0 8C-6 16-10 28-12 40Z" fill="#1f3320" ${O}/>${s}`;
+  },
   /* each ball shows the eye picked under Eyes (h.look, from the duck), scaled into it; no eyes leaves plain balls */
   antennae: (h, id) => {
     const c = h.c1,

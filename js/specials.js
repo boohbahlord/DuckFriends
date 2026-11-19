@@ -51,12 +51,18 @@ const AXE = ([a, b, c]) =>
 <path d="M45 12.4L48.2 2.6Q49.6 .6 51 2.4L53.8 12.4L54.6 23.6L58.4 30.6Q46.6 37.4 33.8 34.6Q39.6 30.4 41.4 25.6Q42.8 23.6 45 23.2Z" fill="${a}" stroke="${INK}" stroke-width="1.5" stroke-linejoin="round"/>
 <path d="M36.6 33.2Q47.4 34.8 56.8 28.4L58.4 30.6Q46.6 37.4 33.8 34.6Z" fill="${c}" stroke="${INK}" stroke-width="1" stroke-linejoin="round"/><path d="M36.8 35Q47 36.4 57.2 30.6" fill="none" stroke="#fff" stroke-width="1" opacity=".9"/>
 <rect x="45.6" y="15.4" width="8.2" height="6.4" rx="1" fill="#000" opacity=".22"/><path d="M48.6 4.4L47.2 12M44.4 25.2Q42.6 28.4 39.8 31" fill="none" stroke="#fff" stroke-width="1.3" opacity=".4" stroke-linecap="round"/></svg>`;
-/* the short sword: a broad straight blade with a fuller down its middle to a sharp point, a wide brass guard, a leather
-   wrapped grip and a round pommel. Colors: blade, grip, guard and pommel */
+/* the short sword (redrawn, the owner's, Nov 19 19:47Z: "clearly different from the knife"): a gladius. Its blade
+   double-edged and straight, as long again as the knife's, a ridge down its middle with its upper half bright and its
+   lower half in shadow, and a long symmetric point (the knife's edge curves up to its tip; this one's two edges meet
+   in the middle); a wide crossguard with rounded ends standing out past the blade on both sides; a grip wrapped in
+   leather and a big round pommel. Colors: blade, grip, guard and pommel */
 const SWORD = ([a, b, c]) =>
-  `<svg viewBox="0 0 50 18"><circle cx="3.6" cy="9" r="2.8" fill="${c}" stroke="${INK}" stroke-width="1.2"/><rect x="5.8" y="6.2" width="8.4" height="5.6" rx="1.6" fill="${b}" stroke="${INK}" stroke-width="1.2"/><path d="M8 6.4L10 11.6M10.8 6.4L12.8 11.6" stroke="${INK}" stroke-width=".9" opacity=".45"/>
-<rect x="13.6" y="1.4" width="3.8" height="15.2" rx="1.4" fill="${c}" stroke="${INK}" stroke-width="1.2"/><path d="M14.6 3V8" stroke="#fff" stroke-width=".9" opacity=".5"/>
-<path d="M17.4 4.6H39.2Q43.6 5.4 48.8 9Q43.6 12.6 39.2 13.4H17.4Z" fill="${a}" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/><path d="M19 9H41.4" stroke="${INK}" stroke-width="1.1" opacity=".35"/><path d="M19 6.9H41" stroke="#fff" stroke-width="1.1" opacity=".7"/></svg>`;
+  `<svg viewBox="0 0 66 20"><circle cx="3.8" cy="10" r="3.2" fill="${c}" stroke="${INK}" stroke-width="1.2"/><circle cx="3" cy="9" r="1" fill="#fff" opacity=".45"/>
+<rect x="6.4" y="7.4" width="10" height="5.2" rx="1.6" fill="${b}" stroke="${INK}" stroke-width="1.1"/><path d="M8.4 7.6L10.4 12.4M11.2 7.6L13.2 12.4M14 7.6L16 12.4" stroke="${INK}" stroke-width=".8" opacity=".5"/>
+<path d="M16.6 2.6Q16.4 .8 18.2 1L19.6 1.4Q20.8 1.8 20.6 3.2V16.8Q20.8 18.2 19.6 18.6L18.2 19Q16.4 19.2 16.6 17.4Z" fill="${c}" stroke="${INK}" stroke-width="1.15" stroke-linejoin="round"/><path d="M18 3.4V8" stroke="#fff" stroke-width=".9" opacity=".5" stroke-linecap="round"/>
+<path d="M20.6 6.4H24L50 6.8Q56 7.6 64.8 10Q56 12.4 50 13.2L24 13.6H20.6Z" fill="${a}" stroke="${INK}" stroke-width="1.2" stroke-linejoin="round"/>
+<path d="M22.4 10H52Q57 10 62.6 10V10.2Q56 12.1 50 12.9L24 13.3H22.4Z" fill="${INK}" opacity=".2"/><path d="M22.4 10H59" stroke="${INK}" stroke-width=".8" opacity=".45"/>
+<path d="M24 8H50Q55 8.6 59 9.6" fill="none" stroke="#fff" stroke-width="1" opacity=".75"/><path d="M20.6 6.4H24V13.6H20.6" fill="none" stroke="${INK}" stroke-width=".7" opacity=".4"/></svg>`;
 /* the cast iron pan: seen from above, a heavy black round pan with a thick rim, its dark cooking surface with a dull
    shine, a pour spout notch on each side, and its long iron handle with the hanging hole. Colors: iron, handle, rim
    shine */
