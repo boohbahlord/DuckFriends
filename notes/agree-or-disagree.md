@@ -7062,3 +7062,8 @@ Decided (Adam): passed to Noah with the 22:41Z art fix; the drawn break spans ex
 "150 damage is stupid. If 40 zombies is 150 damage, then geez, maybe 100% is should be 600 damage, in my opinion. And maybe when you get you know, the knife, that applies as well. Like, it can break, and that's fine. But, you know, just to be more conservative, we'll have it to where 450 damages, 100%."
 
 Decided (Adam): every melee weapon, the starting knife too, has a percent bar; 100% = 450 damage actually dealt (HP taken off); it falls with each hit; at 0% the weapon is gone for good and its hotbar slot is empty (no refill). Dead Ducks Arcade and Survival (the zombie modes, where the 22:41Z ask came from). Built by Jackal, checked by Adam.
+
+## Owner, 2026-11-19 22:44Z (the pan's durability)
+"cast irons is only 50 damage for the cast iron."
+
+Decided (Adam): read as the pan's 100% = 50 damage dealt (about 10 hits); every other melee 450. Passed to Jackal with the durability job.
