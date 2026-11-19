@@ -3,7 +3,7 @@
    help lies and their given principles or basic operators help files; the help files are text files that cannot be
    copied or deleted or changed". shell.js puts these in the Numerat folder at the start of every game (never kept in the
    profile) and refuses every change to them. Only what is built is written here (part A: values, orders, brackets,
-   math, asterisks, percents; part B: line rules and limits). This file has no imports. */
+   math, asterisks, percents; part B: line rules and limits; part C: statements). This file has no imports. */
 export const HELP = {
   "index.txt": `Numberat help
 These files are read-only: you can read them here and with cat,
@@ -23,6 +23,14 @@ Simple first:
   percents.txt   [3 60%, 5 40%], 30%, 150%
   limits.txt     the limits every box has, and what to do past one
   window.txt     this window: files, Run, Check, wrap, autocomplete
+
+Files that do things:
+  files.txt      when spawn, when hit, every 2s, use, give, take
+  names.txt      let, def, the stats (hp ...) and wave, time ...
+  who.txt        me, nearest duck, all zombies, team; go, attack, flee
+  tests.txt      \\if hp < 5\\ ... else, ==, not, in, and, or
+  loops.txt      for, while, and the 1,000 rounds stop
+  print.txt      print and say, "..." and '...'
 
 Notes: # starts a note, the rest of the line is skipped.
 Spaces and line breaks don't change anything: [2, 4] = [2,4].
@@ -206,6 +214,94 @@ The strongest rule wins: more ! is stronger. \\!!'inc1'\\ beats
   \\lin!!'inc1'\\ [1:5]  1 to 5
 
 Limits: see limits.txt. Asterisk rules (mormax ...): asteriskrules.txt.
+`,
+  "files.txt": `Files that do things
+
+A file is lines of statements. Its own lines play once when it
+starts (Run); its when's and every's play for each NPC it runs.
+
+  when spawn ((hp 10))         when an NPC comes in
+  when hit [attack 75%, flee 25%]
+  when dead print 'gone'
+  when near duck 3 flee        a duck 3 or nearer (near zombie too)
+  when touch say "boop"
+  every [2,4]s say "brains"    each NPC, every 2 or 4 seconds
+  wait 1.5                     sleep a little, then go on
+  stop                         end this block now
+  seed 42                      the same random numbers every run
+
+Blocks: { } around several lines, or ; between statements:
+  when spawn { go nearest duck; wait 1; attack }
+
+Joining files:
+  use 'zombie-base'    its values, blocks and when's come in too
+  give rage            other files can take rage
+  take rage            rage, as another file gave it
+Plain value lines (2:4, >2>4 ...) work in files too.
+`,
+  "names.txt": `Names
+
+  let rage = {[1,2]+[0:*]}    rage is 1 to 11, worked out now
+  let r2 = rage^2             names work anywhere a number goes
+  ((hp "2rage"))              "…" multiplies: twice the rage
+
+Stats, read and set (an NPC's, inside a when):
+  hp  speed  damage  hitbox
+  ((hp 5))  ((hp hp-1))  ((hp 50%))   50% is half its most
+Built-in: wave (the round), time (seconds), alive, dead, spawned.
+Math words: round 2.5 (3)  up 2.1 (3)  down 2.9 (2)
+            min 3 hp  max 1 speed  spawned mod 3
+
+Blocks:
+  def charge { go nearest duck; wait 1; attack }
+  def hurt(n) { ((hp hp-n)) }
+  when hit hurt 3
+`,
+  "who.txt": `Who
+
+  me              this NPC
+  nearest duck    nearest zombie
+  all ducks       all zombies
+  team            the NPCs this file runs
+
+  go nearest duck     attack     flee     (attack and flee: the
+  nearest duck when no one is named)
+  ((all zombies speed 2))
+  for z in all zombies { ((z speed ~1.2)) }
+`,
+  "tests.txt": `Tests
+
+Between backslashes, < and > compare (outside, they're arrows):
+  \\if hp < 5\\ flee else go nearest duck
+  \\if hp == 5\\ ...      equal (one = names a value)
+  \\if hp not 5\\ ...     not equal
+  \\if hp in 1:5\\ ...    one of; also in [2,4,6]
+  <=  >=
+  \\if not hp > 5\\  \\if hp < 5 and wave > 2\\
+  and, or, nand, xor
+  \\if spawned mod 3 == 0\\ say "every 3rd"
+`,
+  "loops.txt": `Loops
+
+  for n in 1:5 { say "wave n" }     1, 2, 3, 4, 5
+  for n in [2,4] print "n"          2, then 4
+  for z in all zombies { ((z speed ~1.2)) }
+  while \\hp < 5\\ { flee; wait 1 }
+
+Every loop stops after 1,000 rounds with an error, and so does
+anything that runs a long time without a wait, so a mistake can't
+freeze the game.
+`,
+  "print.txt": `print and say
+
+  print "Hello, world!"     shows in the terminal
+  say "brains"              the NPC says it (no NPC: the terminal)
+
+As in bash:
+  "zombie $$*"     double quotes work out asterisks, $ letters and
+                   names: zombie qe7. "wave n" in a for says wave 1
+  'zombie $$*'     single quotes: exactly as typed
+  'rage is ' rage  text, then a value beside it: rage is 7
 `,
   "window.txt": `The Numberat window
 
