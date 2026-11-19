@@ -148,7 +148,11 @@
             fill.style.width = "100%";
             bar.style.display = "block";
             go.hidden = true;
-            show("Done! The game is on this device now.");
+            show(
+              asked
+                ? "Done! The game is on this device now."
+                : "Done! The game is on this device now. To put it on your home screen: the browser's menu (⋮), then Add to Home screen or Install.",
+            );
             document.getElementById("home").textContent = "Play";
             return;
           }
@@ -163,7 +167,7 @@
                 m.done +
                 " of " +
                 m.total +
-                " files. Keep this page open.",
+                " files. If you leave, come back here: it goes on where it stopped.",
             );
         });
         if (sw.startMessages) sw.startMessages();

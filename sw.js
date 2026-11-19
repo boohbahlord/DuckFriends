@@ -117,8 +117,12 @@ async function keepAll() {
   for (const [p, sum] of Object.entries(list.files || {}))
     if (!had(p, sum) || !(await c.match(here(p))))
       want.push([here(p), { cache: "no-cache" }, p, sum]);
-  const total = want.length;
-  let done = 0,
+  /* the count the page shows is of every file the game needs, so coming back to the page after leaving it goes on
+     from where it was instead of seeming to start over (the owner's, Nov 19 16:30Z) */
+  const all = named.size + Object.keys(list.files || {}).length,
+    total = all,
+    start = all - want.length;
+  let done = start,
     i = 0,
     lost = null;
   /* on a bad connection (the owner's girlfriend's, Nov 19) one file failing doesn't stop the rest: each is tried 3

@@ -6932,3 +6932,14 @@ the buttons for sanbox unique to it like b, m, or h and all of which is now clic
 "interact button shows on the interactable builds"
 
 Adam: given to Jackal (Sandbox small fixes) before his pxdom job.
+
+## Owner, Nov 19 16:30Z (screenshots: the girlfriend's phone on /get, "Installing …", "Downloading: 50 of 485 files")
+"so idky it doesnt show as installing in the ui of her android and only in the website or why it started over the progress when she left the site... this seems like it could cause errors, no? maybe im wrong, idk. 
+
+when players are downed in normal modes they should not be able to do damage or use their weapons, this is fucking obvious
+
+players cannot go down in normal social or comp social game modes, they just die and the time it takes for them to spawn back goes into effect, and they still get their invulnerability frames where they cannot fire or attack with weapons during. 
+
+in the select key for spawn in sandbox, the game should have it only allow keys that arent allocated to browser or game, and no fn keys for f3 or anything like that"
+
+Adam: install count now counts every file the game needs, so coming back goes on from where it was (files were never lost: only the count restarted); the page tells Firefox users to use the browser menu's Add to Home screen (only Chrome-type browsers let a page offer the Android install). Downed rules -> Jackal. Spawn key: already one letter only (no F keys, digits or symbols), never the window letters or the game's keys (SB_KEYS_TAKEN "cbmnhgpwasdeqrtvx").
