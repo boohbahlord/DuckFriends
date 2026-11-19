@@ -6,7 +6,7 @@
    value (numerat.js). On the board the game draws them (game.js calls sbBoardMarks); on the worlds they are an activity
    of Sandbox's own (registry.js only: "sandbox"). */
 import { activity } from "./hangout/registry.js";
-import { W, H, heightAt, sortY, seenFrom } from "./hangout/layout.js";
+import { W, H, heightAt, sortY, seenFrom, bodyZ } from "./hangout/layout.js";
 import {
   npcURL,
   npcBox,
@@ -787,7 +787,7 @@ activity({
         if (z.nm)
           z.nm.style.setProperty("--top", (-z.tall * sc - 2).toFixed(1) + "px"); // (its name over its head)
       }
-      const zi = Math.round(sortY(z.x, z.y, h)) + 10;
+      const zi = o.d ? bodyZ(z.x, z.y, h) : Math.round(sortY(z.x, z.y, h)) + 10; // (dead: under every duck, layout.js)
       if (z.zi !== zi) z.el.style.zIndex = z.zi = zi;
     }
     for (const [i, z] of ZB)

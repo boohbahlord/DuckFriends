@@ -1754,14 +1754,15 @@ function drawDucks(now = clockNow()) {
     const body = `scaleX(${fx})${deadPose ? " rotate(-100deg) translateY(-12%)" : ""}`,
       squish = `scale(${sx}, ${sy})`,
       sh = (1 - Math.min(0.6, z / (size * 3.2))).toFixed(3);
-    if (d._tr !== tr) {
+    if (d._tr !== tr || d._dz !== deadPose) {
       d._tr = tr;
+      d._dz = deadPose;
       d.style.transform = tr;
-      if (!hang) d.style.zIndex = Math.round(at.top);
+      if (!hang) d.style.zIndex = deadPose ? 1 : Math.round(at.top); // (lying dead: under every duck standing, the owner's, Nov 19 10:22Z)
     }
     if (hang) {
-      // Hangout: in front of what it stands in front of; unseen through the cabin's walls
-      const zi = world.key(id, pos),
+      // Hangout: in front of what it stands in front of; unseen through the cabin's walls; lying dead, under every duck
+      const zi = deadPose ? world.bodyKey(id, pos) : world.key(id, pos),
         hid = world.hidden(id, pos);
       if (d._zi !== zi) {
         d._zi = zi;
@@ -3048,7 +3049,7 @@ function placeZombies(board, s, now) {
           : c.left < n._x
             ? -1
             : 1, // (the way it walks)
-      st = `${c.left.toFixed(1)},${c.top.toFixed(1)},${w.toFixed(1)},${face}`;
+      st = `${c.left.toFixed(1)},${c.top.toFixed(1)},${w.toFixed(1)},${face},${o.d ? 1 : 0}`;
     n._x = c.left;
     n._f = face;
     const was = n._hp,
@@ -3143,7 +3144,7 @@ function placeZombies(board, s, now) {
       n.style.width = w.toFixed(1) + "px";
       n.style.height = (box.h * k).toFixed(1) + "px";
     }
-    n.style.zIndex = Math.round(c.top);
+    n.style.zIndex = o.d ? 1 : Math.round(c.top); // (dead: under every duck, the owner's, Nov 19 10:22Z)
     n.style.setProperty("--face", face);
     n.style.setProperty("--feet", (box.feet * k).toFixed(1) + "px");
     n.style.setProperty("--k", k.toFixed(3));
