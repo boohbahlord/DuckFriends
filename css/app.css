@@ -7933,15 +7933,10 @@ html.still .spe-bone .bone-slide {
   }
 } /* (a phone on its side: one short row, so the slider sits in it, a little smaller, and the jump button sits beside
      the attack stick instead of above it) */
-/* on a phone, in every mode: the hotbar is on my duck, no more in the bottom middle (the owner's, Nov 18 15:18Z, and
-   20:58Z: "every"): a swipe on my duck picks (touch.js), and the box under it shows the switch and fades, as on a
-   computer in Dead Ducks Arcade (l4dd.js peek; hotbar.js peekSwitch in the other modes).
-   The slider stays, out of sight and out of the row */
-.sp-phone.on-duck {
-  position: absolute;
-  visibility: hidden;
-  pointer-events: none;
-}
+/* on a phone, in every mode: the slider is back in the bottom middle (the owner's, Nov 19 10:22Z: "the hotbar missing
+   from the bottom and that must be fixed AND below the duck should show the hotbar being able to move around
+   temporarily like it does on pc"), and a swipe on my duck still picks (touch.js), the box under my duck showing the
+   switch and fading, as on a computer (l4dd.js peek; hotbar.js peekSwitch in the other modes) */
 .bbar {
   position: relative;
 }

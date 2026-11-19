@@ -228,7 +228,7 @@ export function mountHotbar(S, api) {
     track.classList.remove("sliding");
     lay();
     if (tell && cur !== was && api.select) api.select(list[j][1]);
-    if (cur !== was) peekSwitch(false);
+    if (cur !== was) peekSwitch(false, was);
   };
   /* phones, with the slider on my duck (every mode but Dead Ducks Arcade, which has its own: l4dd.js peek; the owner's,
      Nov 18 20:58Z, "every"): the switch in a small box under my duck, the slider in little, scrolling from the one I
@@ -236,15 +236,15 @@ export function mountHotbar(S, api) {
      (css .l4-peek). again: shown even with nothing switched (a swipe on my duck at the end of the row). api.tag() → my
      name tag (only a game that wants the box gives it) */
   let peekWas = null;
-  function peekSwitch(again) {
+  function peekSwitch(again, prev = null) {
     if (!api.tag || getComputedStyle(slide).display === "none") return;
     const to = curI(),
       tag = api.tag();
     if (to < 0 || !tag) return;
     if (peekWas === null && !again) {
-      peekWas = cur;
-      return;
-    } // (not when the game starts: only a switch)
+      peekWas = prev === null ? cur : prev;
+      if (prev === null) return;
+    } // (not when the game starts: only a switch; the very first switch shows too, from the one I had)
     if (cur === peekWas && !again) return;
     const from = list.findIndex(([id]) => id === peekWas);
     peekWas = cur;
