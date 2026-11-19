@@ -6383,3 +6383,273 @@ I agree with the HP decimal system
 
 we need more dicussion here ab numerat based off what i said"
 Decided (Adam): | stays; [ ] = one pick; $ goes; || >>n|| <<n|| stay as the owner wrote them; * = waiting for input, random within the stat's limit if none; each stat gets limits (max HP = Mad God Justin's highest possible HP). HP tenths approved: build it. ( ) and (( )) still under discussion.
+
+## Nov 19 12:16Z (owner, Numerat notation, word for word; also kept at /mnt/project-files/sandbox/numerat/owner-2026-11-19-1216.txt)
+"to indicate something has to play in ascension or descension arrow amount of time is NOW using this around the arrows \>2>\ or \>n>\ or \>*>\
+descending is the same
+\<2<\
+
+This is also down for anything that goes into a double line ||
+\>2>\||
+
+asterix or * can just await input from a file IF it is not defined. 
+an asterix can only be one number if it is one asterix, so:
+This means * could be 1-10. To allow zero for asterix, we simply use other operators
+0:*
+or
+0 or *
+Now we could also use asterix to wait for input
+
+We can have it done with equal sign
+
+[2,4:3,5]=*
+now the asterix is defined but is no dif then the actual equation without the equal, so we fix that now
+[2,3,5]=*+*
+now this says that the asterix is doubled, and so if the output from sqaure bracket said 3, then the other side of the equal sign says 3+3 which equals six, so now the hp is six now
+
+to specify a distinction bewteen different asterix, we can do this:
+'*1'
+or 
+'1*'
+but not
+"1*"
+or
+"*1"
+
+before we go further onto the example for this, new operator
+{}
+Squigle bracket says to wait for everything to be defined, and it takes the number as a input waiting to be used for more only if an equal follows it, and it takes one of the numbers inside without it, and everytime it runs it will reset it's operation if another operator inside doesnt tell it to repeat first.
+
+single quotes says this is the number 1 asterix or *
+so that means we can do this
+
+{\>1,2>\[2,[3>5],5]}='1*'\>>\||{[2,4]='2*'}\>>\||'1*'+'2*'='3*'
+
+this means that the first square bracket plays once or twice, and it could either be 2, 3, 5, or 5. Then that equals first Asterix, and that comes before if 2 or 4 is second Asterix, which then becomes first Asterix input plus second Asterix input equals 3rd Asterix input, in which third is the first assignment to a spawn's hp.
+
+using quotes from earlier means the amount of something, so multiplication
+
+"[1,5]2"
+or
+"2[1,5]"
+this means we can take however much of the sqaure bracket randomly selected number and then multiply it by 2, so now it is either 2 or 10 health
+
+[6,10]/2
+this means the number inside is divided by two, and so, it means that 5 or 10 will be divided by two, which equals 4 or 5
+
+{[6,10]/2}='1*'\>>\||{"2['1*']"}
+
+this means the first spawns stat (let's say hp) is:
+3 or 5 multiplied by two equals hp
+the Asterix which is used elsewhere that awaits further input before a final input unto first spawn.
+
+for exponents, we can do this
+^
+
+So [3,6]^2
+This means first spawn can have 9 or 36 hp
+
+the decimals will not be assumed between a range EVEN IF the stat allows for decimal, so, how we do this is like this
+1.[0:*]
+this means 0-9 in the tenth place, where 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 are possible
+that could be 1.0 or even 1.5, it is a range within the sqaure bracket ofc.
+and like always, examples build unto next princples, like math, so the use of sqaure bracket is really useful or not depending on the larger context, since we dont have to use sqaure bracket here
+1.0:*
+period means anything following is a tenth place of it's integer, to make it a decimal
+"{1.[0:*]}2"
+now there we go, the decimal number is multipled by two
+
+we can also do this
+*.*
+this means the first number is 1-9 and the tenth place is also
+
+to not include zero, we do this
+
+1.*
+
+this means the tenth place could be 1 through 9
+so...
+
+but why not ten?
+
+because ten takes two digits, and an asterix assumes one digit, so that means we do this:
+**
+now this could be 1-99
+to make it zero, we do this
+{\>>\{'**1'}+[+0,-1]}='2***'
+remember, single quotes tells asterix to not use the two, but only to denot which asterix this is
+so this SHOULD equal 0-100 now, because the three asterix after the equal are awaiting input from the squiggle brackets
+
+to make asterix assume 0 in place of one, then we do this at the beginning of a line on a script or input line
+\'inc0'\
+this stands to include for a line
+to remove from inputs or outputs, where an HP will not get this value AND it has to replay the line until it can (if impossible the entity doesnt spawn and an error is read back)
+we do this
+\'rm0'\
+this means anywhere in which a zero comes up, it cannot happen
+this gets tricky, because something like this can be done
+\'rm**'\
+this means anywhere in which a double digit comes out, it replays the line until it is not a double digit output
+we then can also do this
+\'rm**:****'\
+this means any digits more then tens up until the amount of digits of a thousand is removed and it replays until it can work
+\!'inc1'\
+the exclamation before single quotes says it MUST include one in every line of the script or file, and it will override the removal of one on a line if it exists as well
+in order to have a line not remove one, we increase the amount of exclamation
+\!!'inc1'\
+this means if a \!'rm1'\ exists at the beginning of a line that tells the whole script to remove 1, then it must be overrided by double exclamation of \!!'inc1'\
+if we want a line to be overriden but not the whole script, we do this
+\lin!!'inc1'\
+so if there was a \!'rm1'\ on the script that said the whole file overrides, now the double arrow in either direction says that for this line, it will not remove 1, and it has to overide with more exclamations
+exclamations can be multipled, added, and so on
+\lin["**"=!]'inc1'\
+this means that an asterix multiplies an asterix
+
+to make this better, we can use this for asterix
+
+\lin!!'ainc0'\
+the a letter before inc means we are telling numerat this is for asterix only, so now every asterix includes 0
+so now... * will equal 0-9
+
+to remove is the same with rm
+\'arm0'\
+
+to say which asterix in a line (not file), we do this
+\''a2'inc0'\
+this means for second asterix, we include 0
+to apply to script is the usual
+\!''a2'inc0'\
+there we go, now all the lines of a script
+
+to say which lines for anything in a script, we simply do this
+'n'
+so...
+\'n1'''a2'inc0'\
+or
+\'n1:4'''a2'inc0'\
+or
+\'n[9,[5],[>[2],>[1],[3]<],3],+1]'''a2'inc0'\
+or
+\'n[1,5,[1:4]]'''a2'inc0'\
+
+this means we can use include or remove command with squiggle brackets and maybe sqaure brackets
+\!a2'rm{3,[2:5]}'\
+
+Certain things to note, sqaure brackets and parenthesis are chosen first randomly unless specified a different order with a pointer ">"
+
+To use backwards starts or descending order start, we use arrow backwards at the end "<"
+
+[1,3][2,4]<
+This means the far right sqaure bracket comes next, it checks for a point to the left of it, thee isnt one, so then it assumes to start over at the pointer IF pointer is first
+
+to make pointer not do that and to continue a path all the way through ... 
+[1,3][2,4]\<!<\
+This means it will descend through the first sqaure bracket first AND THEN 1,3
+
+We can use asterix for many things, such as ...
+\>[*+0:*]=*>\[2,4]\>>\||[5,7,9],[3,5]\>*-[1,2]>\||10
+This means for a stat or input, it will cycle through the left of || until the cycle number is finished, which the asterix on the left inside the square bracket MUST be added from + wit the range of zero through asterix, then it plays that number between the arrows inside it say the next amount of how muxh the folloing plays
+
+a symbol for infinity or limitlessness is not possible since that is bascially the asterix sorta kinda not rly
+
+the limit of things can be defined or removed as such
+
+\rm'lim'\
+this remove limits for hp for example for that line (dangerous stuff, i know), so the invisible limit is 1,000,000
+the inclusion of limit on a lines value
+\inc'lim=25'\
+there we go
+or
+\inc'lim=***\
+now it cannot be more then 999
+\inc'lim={***+[+0,+1]}\
+
+to have a file define something for all files in a game mode, you can write a bash script for that prob, like i guarantee it is possible for within the game
+
+make sure there is a manaual command for bash and all those things
+
+If you need this maybe? i used this for my myys2 terminal but can be changed for you and how you use it for our purposes:
+## For manual:
+```bash
+pacman -S --needed man-db man-pages-posix less mingw-w64-ucrt-x86_64-bat
+```
+
+## For file type coloring:
+```bash
+cat >> ~/.bashrc <<'EOF'
+# colors
+eval "$(dircolors -b)"
+alias ls='ls --color=auto'
+alias grep='grep --color=auto'
+EOF
+source ~/.bashrc
+```
+
+## For missing other commands (not built into the shell by default):
+```bash
+for c in ls cp mv rm cat grep sed awk find xargs sort uniq head tail wc cut tr tee diff patch tar gzip zip unzip curl wget ssh scp rsync git man less nano vim nvim tree file which ps top watch free df du ln chmod bat make gcc python3; do type -P "$c" >/dev/null && echo "ok       $c" || echo "MISSING  $c"; done
+```
+
+## Download for most other Linux commands not from the shell:
+```bash
+pacman -S --needed diffutils patch zip unzip wget tree file procps-ng nano git
+
+
+
+i feel liike text editor should be like vs code btw but maybe they can use nano?
+i feel like we can have have text wrap able to be turned on and off at the top
+
+also color coding the code as needed for different categories help
+
+limits are preset as usual unless player does something
+
+IMPORTANT:
+this code is like mat, components give rise to new logical possibilities, so we need to understand that examples introduce other  components unneccessary for some things.
+Make sure to test possibilities of the code.
+
+I feel like the code will get really slow when operatioons might happen for lots and lots of spawn, which is why i wanted it written in binary to make the code since that is how every other language is built, and that removes the layers of trouble, but u can ask me
+
+C. Okay and yes for (())
+
+now for some notation, it might be a problem and might need fixed
+
+can spaces be used without changing the code? hmmm
+
+note, if numbers add into an asterix, the amount of asterixes cutoff additional digits which cannot fit into it's code
+
+ALSO, two sqaured squiggle brackets make the code across multiple lines behave as one line 
+
+{{
+>
+\!!'inc0'\
+("('*1')2")+
+("('*2')2)=
+{'3***'}
+}}
+
+This reads much better and spacces might be a good idea if it doens't contradict anything
+
+maybe zero is already included in asterix by default AND it can be enabled or disabled in scripts as usual
+
+there is a file that is also accessible in game settings AND in numerat that can change all numerat files with it's code, and it's determined by the code on top of the page
+
+\\param\\
+
+This determines the parameters for every file
+it can also be named in order to say which files play in what order that are a param
+
+\\param1\\
+\\param2\\
+and so on
+no decimals and more then one digit can be used
+
+any operators i should add? where can it be imporved? what is redundant? what can be fixed?
+
+We should write a note file for numerat
+
+I think numerat is already a name for something, so i want new names that are similiar that use suffix or roots or what not, anything like that, im forgetting some terms im leaving out fuck, other things too i mean
+
+one name came to mind
+zumberat
+"
+Decided (Adam): written up as notes/numerat.md (the language as the owner defined it, the conflicts and typos found, suggestions, questions). Nothing built until the owner settles the questions. V91 still waiting for the owner's go.
