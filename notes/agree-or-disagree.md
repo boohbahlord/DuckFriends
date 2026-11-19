@@ -6272,3 +6272,11 @@ Owner, Nov 18 20:58Z: "1. keep it as 6
 2. every 
 3. what is he testing?"
 Decided: Mad God Justin stays 6. Noah puts the on-duck phone hotbar in every mode with a hotbar. Test plan explained to the owner; waiting for the go.
+
+## Owner, Nov 19 01:00Z
+"are the gun sizes fixed yet?
+
+Justin spawned in without his head in a retry of the game after i died in the zommbie game so fix that (he later regenerated it)
+
+zombies should pick a part to jump onto the gas pump from and commit, not going left and right over and over until the player stands still because that is ripe for exploit"
+Decided: gun sizes are fixed in Version 89 (live 21:46Z Nov 18). Solomon: Justin's head comes back with him on a retry (a new game starts him whole), and a zombie climbing to the gas pump roof picks one spot and commits to it.
