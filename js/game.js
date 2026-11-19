@@ -17,6 +17,7 @@
    Hangout walks around Duck Cabin instead of a board: the world (hangout/world.js) draws it, follows my duck with its
    camera and works out how it stands and falls; this file only hands it the keys, the stick and the taps, and puts its
    one context button where the Vote button goes. */
+import { isInvisible } from "./invisible.js";
 import { fsBtnHTML } from "./corners.js";
 import { register, go, leaveTo } from "./router.js";
 import {
@@ -4852,6 +4853,7 @@ function bumps(x, y, now) {
 function crowd(x, y, now) {
   const out = { d: 0, b: null };
   if (!geo || jumpZ(me, now) > 0) return out; // in the air: over everyone
+  if (isInvisible(R.state, R.me, now)) return out; // (invisible: through everyone, and they through me)
   const s = R.state,
     a = place({ x, y }, 0, 1),
     rx = geo.size * 0.44,
@@ -4861,6 +4863,7 @@ function crowd(x, y, now) {
     if (id === R.me || !s.pos[id] || s.pos[id].x < 0) continue;
     const o = s.pos[id];
     if (jumpZ(o, now) > 0 || (s.players[id] || {}).dead) continue; // (in the air, or lying knocked down: walked over)
+    if (isInvisible(s, id, now)) continue;
     const kb = duckRoom((s.players[id] || {}).duck);
     const b = place(o, 0, 1),
       dx = (a.left - b.left) / (rx * (ka.x + kb.x)),
