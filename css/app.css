@@ -21373,3 +21373,29 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   font-size: 0.8em;
   opacity: 0.7;
 }
+/* Seriat's Theme box, in the window's top right beside the X (the owner's, Nov 19 21:59Z; seriattheme.js) */
+.nm-win {
+  position: relative;
+}
+.nm-theme {
+  position: absolute;
+  top: 0.55rem;
+  right: 3.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85em;
+}
+.nm-themesel {
+  font: inherit;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.4rem;
+  border: 0.12rem solid var(--line);
+  background: var(--panel2);
+  color: inherit;
+}
+@media (max-width: 600px) {
+  .nm-themelab {
+    display: none;
+  }
+}

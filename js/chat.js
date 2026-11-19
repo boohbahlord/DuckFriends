@@ -45,6 +45,7 @@ import { hooks } from "./hooks.js";
 import { settingText } from "./gamesettings.js";
 import { DOD_NEWS } from "./lobbysettings.js";
 import { uiCommand } from "./hideui.js";
+import { useSeriatTheme, freeSeriatTheme } from "./seriattheme.js";
 import {
   npcById,
   npcByTag,
@@ -1209,7 +1210,13 @@ export function chatWidget() {
     inp.maxLength = m === "cmd" ? CMD_MAX : 500; // a command line can be longer than a chat message
     drawLog();
     refresh();
+    cmdLook();
   };
+  /* the command line up wears the book's look (seriattheme.js: the owner's, Nov 19 21:59Z, "terminal mode on the text chat") */
+  const cmdLook = () =>
+    ui.open && ui.mode === "cmd"
+      ? useSeriatTheme("chat")
+      : freeSeriatTheme("chat");
   const openPanel = (m) => {
     ui.open = true;
     panel.hidden = false;
@@ -1221,6 +1228,7 @@ export function chatWidget() {
     log.scrollTop = 1e9;
     inp.focus();
     refresh(); // always open on the newest message
+    cmdLook();
   };
   const closePanel = () => {
     ui.open = false;
@@ -1229,6 +1237,7 @@ export function chatWidget() {
     btn.setAttribute("aria-pressed", "false");
     inp.blur();
     if (w.onToggle) w.onToggle();
+    cmdLook();
   };
   w.openChat = openPanel;
   w.close = closePanel;
@@ -1558,6 +1567,7 @@ export function chatWidget() {
   if (r0) lastN = r0.state.logN || 0;
   const unsub = r0 ? r0.on(onState) : () => {};
   w.destroy = () => {
+    freeSeriatTheme("chat");
     unsub();
     if (float) float.remove();
     float = null;
