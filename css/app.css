@@ -19985,6 +19985,13 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   opacity: 0.8;
   filter: drop-shadow(0 0.25rem 0.3rem #0008);
 }
+/* while something rides on the mouse or finger, a drag on the map is the placing and nothing else: the page never scrolls or
+   pans under it (the owner, Nov 19 17:15Z: the board moving while he placed a spawn) */
+.sb-placing,
+.sb-placing .board {
+  touch-action: none;
+  overscroll-behavior: none;
+}
 .sb-ghost[hidden] {
   display: none;
 }

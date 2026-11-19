@@ -1271,8 +1271,8 @@ const at = (p) => [p.x * W, p.y * H];
 /* the ellipse distance between two spots on the floor: 1 is two ducks touching */
 const room = (ax, ay, bx, by) => Math.hypot((ax - bx) / RX, (ay - by) / RY);
 /* where zombies can stand inside (the walls, the furniture, the beds stop them; the outside too) */
-const zOk = (x, y, z) =>
-  playable(x, y) && standable(x, y, z, STEP, null, true) && !onPlatform(x, y); // (Downpour: zombies wade the deep flood, climb the fallen tree)
+const zOk = (x, y, z, up = STEP) =>
+  playable(x, y) && standable(x, y, z, up, null, true) && !onPlatform(x, y); // (Downpour: zombies wade the deep flood, climb the fallen tree)
 /* what a zombie keeps from one heartbeat to the next besides its spot, hp and state (in s.hidden.l4z, the host's only):
    cm its way up kept to, k the roof it is up, fl its flank and wp its spot round the side, j its jump onto the canopy
    and jp the spot it jumps from (jumpOn);
@@ -5380,7 +5380,8 @@ function stepZombie(z, aim, far, pls) {
       zz = heightAt(z.x, z.y),
       stuckIn = !zOk(z.x, z.y, zz);
     const ok = (x, y) => {
-      if (stuckIn ? !playable(x, y) : !zOk(x, y, zz)) return false;
+      if (stuckIn ? !playable(x, y) : !zOk(x, y, zz, z.up ?? STEP))
+        return false; // (z.up: how high a Sandbox NPC steps, its Can jump and Can climb walls, sbspawn.js)
       for (const q of pls) {
         if (Math.abs((q.zz || 0) - zz) > 50) continue; // (a duck up on a roof over it: it walks under it)
         const now = room(z.x, z.y, ...q.xy),
