@@ -89,8 +89,8 @@ The true or false boxes take t or f (true or false also work).
 
 Repeats, the count between backslashed arrows, then ||:
   >2>4\\>2>\\|| | 9   2, 4, 2, 4, then 9 for good
-  \\<2<\\||           the same, the other way
-  \\>*>\\||           a count from 0 to 9
+  4<2\\<2<\\|| | 9   4, 2, 4, 2, then 9 (the other way)
+  >2>4\\>*>\\|| | 9   2, 4 played 0 to 9 times, then 9
   \\>1,2>\\[2,4]      in front of a value: play it 1 or 2 times
 The last part of a line keeps playing. An order keeps its place
 from one spawn to the next.
@@ -241,6 +241,10 @@ Joining files:
   give rage            other files can take rage
   take rage            rage, as another file gave it
 Plain value lines (2:4, >2>4 ...) work in files too.
+
+Coming next: NPCs run a file's when's and every's once a spawn
+uses that file as its Brain. Until then, Run plays the file's own
+lines and says which parts wait for that.
 `,
   "names.txt": `Names
 
@@ -263,8 +267,8 @@ Blocks:
   "who.txt": `Who
 
   me              this NPC
-  nearest duck    nearest zombie
-  all ducks       all zombies
+  nearest duck    the nearest duck (also: nearest zombie)
+  all ducks       every duck (also: all zombies)
   team            the NPCs this file runs
 
   go nearest duck     attack     flee     (attack and flee: the
@@ -279,7 +283,7 @@ Between backslashes, < and > compare (outside, they're arrows):
   \\if hp == 5\\ ...      equal (one = names a value)
   \\if hp not 5\\ ...     not equal
   \\if hp in 1:5\\ ...    one of; also in [2,4,6]
-  <=  >=
+  <= and >= work too
   \\if not hp > 5\\  \\if hp < 5 and wave > 2\\
   and, or, nand, xor
   \\if spawned mod 3 == 0\\ say "every 3rd"
@@ -328,15 +332,17 @@ Examples
 `,
   "repeats.txt": `Repeats
 
-Between backslashed arrows, write how many times; then ||.
-  >[3,5]\\>2>\\||   in order, 2 times
-  \\>1,2>\\[2,4]    the count in front: play the group once or twice
-  \\>>\\||          repeat in order
+Write how many times between backslashed arrows, then ||.
+Everything before it plays that many times; what follows | plays after.
 
-Examples
-  >[3,5]\\>2>\\||     3 or 5, in order, 2 times
-  <[3,5]\\<2<\\||     the same, descending
-  >[3,5]\\>>\\||      3 or 5, then again in order
+  >2>4\\>2>\\|| | 9     2, 4, 2, 4, then 9 for good
+  4<2\\<2<\\|| | 9      4, 2, 4, 2, then 9 (descending)
+  >2>4>6\\>2>\\|| | 1   2, 4, 6, 2, 4, 6, then 1
+  >2>4\\>*>\\|| | 9     2, 4 played 0 to 9 times, then 9
+  2>4\\>>\\||           2 and 4 in order, again and again
+
+In front of a value, the count plays just that value:
+  \\>1,2>\\[2,4]        one pick of 2 or 4, played once or twice
 `,
   "window.txt": `The Numberat window
 
@@ -348,7 +354,7 @@ Examples
   Wrap           long lines run off to the right; turn Wrap on to fold them.
   Autocomplete   suggestions show as you type; Tab takes the first one
                  (in the terminal too, where the arrow keys pick).
-  Notes          Check skips blank lines and lines that start with #.
+  Notes          # starts a note: Check and Run skip the rest of the line.
   Terminal       the bottom line is the command line itself: anything it can
                  do works here.
 `,

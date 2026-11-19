@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v96",
+    version: 96,
+    date: "Nov 19, 2026",
+    title: "Numberat help, checked",
+    news: [],
+    fixed: [
+      "For Sandbox: the Numberat help pages were read through and corrected: repeats, order, who and tests have clearer examples that all work as written.",
+    ],
+  },
+  {
     id: "v95",
     version: 95,
     date: "Nov 19, 2026",
