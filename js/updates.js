@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v109",
+    version: 109,
+    date: "Nov 19, 2026",
+    title: "Spawns that follow their color",
+    news: [
+      "For Sandbox: a spawn's settings now belong to its color, so every red spawn works the same. Build asks the color before you place a spawn or respawn. No color gives a slowly turning rainbow ring that stands alone. New: Trigger together (more colors go off with one press), Auto spawn (it keeps spawning by itself), Hide (only shows in cheat mode), a Spawn limit of 0 for no limit, and tenths of a second between spawns.",
+      "The first screen comes up a little sooner on slow connections: the Updates page loads just after it.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v108",
     version: 108,
     date: "Nov 19, 2026",
