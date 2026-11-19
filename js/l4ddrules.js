@@ -36,6 +36,7 @@
      l4b  { id: { o, at } }: who is boarding up which opening, since when (one more board each BOARD_MS)
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
+import { hpHeal, hpHurt, tenths } from "./hpmath.js";
 import {
   baseMode,
   isSb,
@@ -3753,7 +3754,7 @@ function hurtDuck(s, p4, id, now, w = "", dmg = 1) {
   const p = p4[id];
   if (!p || p.dn || p.gh) return false;
   const safe = invuln(s) || invulnOf(s, id, now); // (Invulnerability, or just up from Safe Keeping: it only flashes)
-  const hp = safe ? p.hp : Math.max(0, +(p.hp - dmg).toFixed(1)); // (dmg: 1, or a Sandbox spawn's damage box)
+  const hp = safe ? p.hp : hpHurt(p.hp, dmg); // (dmg: 1, or a Sandbox spawn's damage box; in tenths, and up while above 0: hpmath.js)
   if (w && !safe) pwHit(s, id, w, now, hp <= 0);
   if (hp > 0) {
     p4[id] = { ...p, hp, at: now };
@@ -4390,7 +4391,7 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
     )
       s.hang.l4p = {
         ...s.hang.l4p,
-        [sh.by]: { ...q, hp: q.hp - cut, at: now },
+        [sh.by]: { ...q, hp: tenths(q.hp - cut), at: now },
       };
   }
   addFx(s, {
@@ -4491,7 +4492,7 @@ function l4Tick(s, now) {
       p.hp < maxHp(s, id) &&
       now - p.at >= (isWild(s, id) ? WILD.regen : L4.REGEN)
     )
-      p4[id] = { ...p, hp: p.hp + 1, at: now };
+      p4[id] = { ...p, hp: hpHeal(p.hp, 1, maxHp(s, id)), at: now }; // (a part-empty block fills first: hpmath.js)
   }
   s.hang.l4p = p4;
   const am = s.hang.l4a || {};
@@ -5542,7 +5543,7 @@ export function l4Heal(s, id, amt) {
   if (!p || p.dn || p.gh || p.hp >= max) return false;
   s.hang.l4p = {
     ...s.hang.l4p,
-    [id]: { ...p, hp: Math.min(max, +(p.hp + amt).toFixed(1)) },
+    [id]: { ...p, hp: hpHeal(p.hp, amt, max) },
   };
   return true;
 }
