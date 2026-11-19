@@ -6718,3 +6718,24 @@ The merchant has arrived text shouldnt be too short or too long and then fade aw
 Owner, 12:59Z (edited): "we need more discussion prob since numerat is a big deal"
 
 Decided (Adam): Numerat stays in discussion, nothing built yet; decisions added to notes/numerat.md. The Sandbox fixes (Build, movement, settings, M defaults, hide ui, merchant text, n window editor) go to workers now.
+
+## Owner, Nov 19 13:06Z
+"5. no, we should just do this 
+   1. \\if hp < 5\\
+
+7. yes
+
+
+yes to the mormini idea
+
+8. numberat is good to go then
+
+
+do we not use web gl?
+also, art and visuals shouldnt be the the old files, but rather, is the files remade into pixels, because ultimately that runs better, idk if we have done that yet. u tell me if im wrong or dont understand
+
+we need to have a numberat bible for claude which is the updated version of it's rules, operators, and examples, and so on
+
+idk wat u means ab vers 91, like wat ab it?"
+
+Decided (Adam): `\if hp < 5\` (inside backslashes < > compare); spaces ignored outside quotes; mormini as proposed; name Numberat. Bible written: notes/numberat-bible.md (linked from CLAUDE.md). WebGL and pre-made pixel files answered in chat (plan, waits for a go).

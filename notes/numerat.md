@@ -1,5 +1,7 @@
 # Numerat: the language (working notes)
 
+SUPERSEDED by `notes/numberat-bible.md` (Nov 19 13:06Z). Kept as the history of the discussion.
+
 Sources, newest wins: the owner's file (`/mnt/project-files/sandbox/sandbox-mode-rules-clean.txt` lines 74-140,
 175-177, 293-305), the owner's answers of Nov 19 10:22Z and 10:30Z, and the owner's long notation message of Nov 19
 12:16Z (word for word in `/mnt/project-files/sandbox/numerat/owner-2026-11-19-1216.txt` and at the end of
