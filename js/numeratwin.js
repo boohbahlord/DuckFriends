@@ -25,7 +25,7 @@ import { activeRoom } from "./net.js";
 import { isSb, sbMay } from "./sandboxrules.js";
 import { NB_TEXT } from "./sbnumberat.js";
 import { boxText } from "./sbspawn.js";
-import { LANG, LANG_DIR } from "./langname.js";
+import { LANG } from "./langname.js";
 
 const SEND_MOST = 20; // (files sent with one Brain: 20 of 8,000 letters stay under what one action may carry)
 /* a spawn's Brain box: the files it sends to the room, each by the name it's written with; null when there's no such
@@ -73,8 +73,8 @@ export function openNumerat() {
       <ul class="nm-tree" role="list"></ul>
     </aside>
     <section class="nm-main">
-      <div class="nm-bar"><span class="nm-path"></span><label class="nm-wrap"><input type="checkbox" data-wrap> Wrap</label><button type="button" class="btn small ghost" data-check disabled>Check</button><button type="button" class="btn small" data-run disabled>Run</button></div>
-      <div class="nm-ed"><pre class="nm-gut" aria-hidden="true"><div>1</div></pre><textarea class="nm-code" wrap="off" spellcheck="false" autocomplete="off" aria-label="Code" placeholder="Pick a file, or make a new one" disabled></textarea><div class="nm-mirror" aria-hidden="true"></div><ul class="nm-ac" role="listbox" hidden></ul></div>
+      <div class="nm-bar"><span class="nm-path"></span><label class="nm-wrap"><input type="checkbox" data-wrap> Wrap</label><button type="button" class="btn small ghost" data-perm disabled>Permissions</button><button type="button" class="btn small ghost" data-check disabled>Check</button><button type="button" class="btn small" data-run disabled>Run</button></div>
+      <div class="nm-perm" hidden></div><div class="nm-ed"><pre class="nm-gut" aria-hidden="true"><div>1</div></pre><textarea class="nm-code" wrap="off" spellcheck="false" autocomplete="off" aria-label="Code" placeholder="Pick a file, or make a new one" disabled></textarea><div class="nm-mirror" aria-hidden="true"></div><ul class="nm-ac" role="listbox" hidden></ul></div>
       <div class="nm-term" aria-label="Terminal"><div class="nm-out" aria-live="polite"></div><ul class="nm-sugg" role="listbox" hidden></ul><form class="nm-line"><span class="nm-ps">$</span><input class="nm-in" spellcheck="false" autocomplete="off" aria-label="Command"></form></div>
     </section>
   </div>`;
@@ -87,7 +87,9 @@ export function openNumerat() {
         gut = $(".nm-gut"),
         mirror = $(".nm-mirror"),
         ac = $(".nm-ac"),
-        rel = (p) => LANG_DIR + p.slice(root.length),
+        rel = (p) => numerat.rel(p),
+        top = numerat.home(), // (home/: everyone's folder; mine is root)
+        up = (d) => (d === root ? top : d.slice(0, d.lastIndexOf("/"))),
         addr = $(".nm-addr");
       /* where I've been, for Back and Forward: each { dir, q } (q: a search) */
       const hist = [{ dir: root, q: "" }];
@@ -136,7 +138,7 @@ export function openNumerat() {
         gutter();
       };
       const row = (it, label = it.name) =>
-        `<li class="nm-item${it.ro ? " nm-ro" : ""}${it.dir ? " nm-dir" : ""}${it.path === st.file ? " on" : ""}" data-p="${esc(it.path)}"${it.dir ? " data-dir" : ""}>${esc(label)}${it.dir ? "/" : ""}</li>`;
+        `<li class="nm-item${it.ro ? " nm-ro" : ""}${it.other ? " nm-other" : ""}${it.dir ? " nm-dir" : ""}${it.path === st.file ? " on" : ""}" data-p="${esc(it.path)}"${it.dir ? " data-dir" : ""}>${esc(label)}${it.dir ? "/" : ""}</li>`;
       const paint = () => {
         const items = st.q
           ? numerat.find(ctx, st.q, st.dir)
@@ -144,11 +146,8 @@ export function openNumerat() {
         $(".nm-tree").innerHTML =
           (st.q
             ? `<li class="nm-note">Search for “${esc(st.q)}” in ${esc(rel(st.dir))}/</li>`
-            : st.dir !== root
-              ? row(
-                  { path: st.dir.slice(0, st.dir.lastIndexOf("/")), dir: true },
-                  "..",
-                )
+            : st.dir !== top
+              ? row({ path: up(st.dir), dir: true }, "..")
               : "") +
           (items.map((it) => row(it)).join("") ||
             `<li class="nm-note">${st.q ? "Nothing here by that name" : "Empty folder"}</li>`);
@@ -158,8 +157,15 @@ export function openNumerat() {
         $("[data-fwd]").disabled = hi >= hist.length - 1;
         $(".nm-path").textContent = st.file ? rel(st.file) : rel(st.dir) + "/";
         const run = $("[data-run]"),
-          ro = !!st.file && numerat.ro(st.file); // (the help files)
-        run.disabled = !st.file || ro;
+          mine = !!st.file && !!numerat.perms(ctx, st.file),
+          ro =
+            !!st.file &&
+            (numerat.ro(st.file) || // (the help files)
+              !mine || // (another player's)
+              !numerat.perms(ctx, st.file).own.includes("w")); // (my own, with its write off)
+        run.disabled = !st.file || !mine;
+        $("[data-perm]").disabled = !numerat.perms(ctx, st.file || st.dir);
+        if (!permEl.hidden) permPaint();
         run.textContent = st.file && numerat.running(st.file) ? "Stop" : "Run";
         $("[data-check]").disabled = !st.file || ro;
         code.disabled = !st.file;
@@ -190,7 +196,13 @@ export function openNumerat() {
         ); // (a folder removed since: the top)
       };
       const open = (path) => {
-        const t = numerat.read(ctx, path);
+        let t = null;
+        try {
+          t = numerat.read(ctx, path);
+        } catch (err) {
+          say([err.message]); // (another player's file, or one whose read I turned off: why it doesn't open)
+          return;
+        }
         if (t == null) return;
         st.file = path;
         setText(t);
@@ -217,7 +229,8 @@ export function openNumerat() {
         }, 600);
       };
       /* the room's Numberat log (what Brains print, and their mistakes): shown here as it comes */
-      let seen = 0;
+      let seen = 0,
+        lastNbp = null;
       const logT = setInterval(() => {
         if (!w.isConnected) return clearInterval(logT);
         const R = activeRoom(),
@@ -227,6 +240,11 @@ export function openNumerat() {
         const fresh = log.filter((l) => l.n > seen);
         seen = n;
         if (fresh.length) say(fresh.map((l) => "🧠 " + l.t));
+        const np = R && R.state && R.state.nbp;
+        if (np !== lastNbp) {
+          lastNbp = np;
+          paint(); // (names and rights other players gave: home/ and Permissions as they are now)
+        }
       }, 500);
       /* autocomplete in the code: the words Numerat has (true, false) for what's typed since the last space; Tab takes it */
       let acList = [];
@@ -315,6 +333,10 @@ export function openNumerat() {
           nameIn.focus();
           return;
         }
+        if (e.target.closest("[data-perm]")) {
+          permEl.hidden = !permEl.hidden;
+          return paint();
+        }
         if (e.target.closest("[data-back]")) return walk(-1);
         if (e.target.closest("[data-fwd]")) return walk(1);
         const it = e.target.closest(".nm-item");
@@ -389,6 +411,66 @@ export function openNumerat() {
           form.hidden = true;
         }
       });
+      /* Permissions (the owner's, Nov 19 16:12Z): for my open file, or the folder shown when no file is open: my own
+         Read, Write and Run (a file's), and what a player picked in the list (or a group, or everyone) may do, until a
+         new Sandbox starts */
+      const permEl = $(".nm-perm");
+      let permWho = "";
+      const permAt = () => st.file || st.dir;
+      const box = (k, on, attr, off = false) =>
+        `<label><input type="checkbox" ${attr}="${k}"${on ? " checked" : ""}${off ? " disabled" : ""}> ${{ r: "Read", w: "Write", x: "Run" }[k]}</label>`;
+      function permPaint() {
+        const P = numerat.perms(ctx, permAt());
+        if (!P) {
+          permEl.hidden = true;
+          return;
+        }
+        const whos = [
+          ...P.players.map(([id, n]) => [id, n]),
+          ...P.groups.map((g) => ["@g:" + g, "Group " + g]),
+          ["@o", "Everyone"],
+        ];
+        if (!whos.some(([w]) => w === permWho)) permWho = (whos[0] || [""])[0];
+        const has = (P.given.find(([w]) => w === permWho) || [, ""])[1] || "";
+        permEl.innerHTML =
+          `<div class="nm-perm-row"><b>${esc(P.rel ? P.rel.split("/").pop() : "home/" + rel(root).split("/")[1])}</b></div>` +
+          (P.file
+            ? `<div class="nm-perm-row"><span class="nm-perm-who">Me</span>${["r", "w", "x"].map((k) => box(k, P.own.includes(k), "data-own")).join("")}</div>`
+            : "") +
+          `<div class="nm-perm-row"><select class="nm-in nm-perm-sel" aria-label="Player"${P.sb ? "" : " disabled"}>${whos.map(([w, n]) => `<option value="${esc(w)}"${w === permWho ? " selected" : ""}>${esc(n)}</option>`).join("")}</select>${["r", "w", "x"].map((k) => box(k, has.includes(k), "data-give", !P.sb)).join("")}</div>` +
+          `<div class="nm-perm-row nm-perm-list">${
+            P.sb
+              ? P.given.length
+                ? P.given
+                    .map(([w, b]) => `${esc(P.label(w))}: ${esc(b)}`)
+                    .join(" · ")
+                : "Nobody else can read, change or run it."
+              : `Rights for other players work in Sandbox.`
+          }</div>` +
+          `<em class="nm-perm-note">${P.sb ? "Given rights last until a new Sandbox starts." : ""}</em>`;
+      }
+      permEl.addEventListener("change", (e) => {
+        const P = numerat.perms(ctx, permAt());
+        if (!P) return;
+        if (e.target.matches(".nm-perm-sel")) {
+          permWho = e.target.value;
+          return permPaint();
+        }
+        const pick = (attr) =>
+          [...permEl.querySelectorAll(`[${attr}]`)]
+            .filter((c) => c.checked)
+            .map((c) => c.getAttribute(attr))
+            .join("");
+        try {
+          if (e.target.hasAttribute("data-own"))
+            numerat.setOwn(ctx, permAt(), pick("data-own"));
+          else if (e.target.hasAttribute("data-give"))
+            numerat.give(ctx, permAt(), permWho, pick("data-give"));
+        } catch (err) {
+          say([err.message]);
+        }
+        setTimeout(paint, 0); // (the room's answer: online it comes a moment later, and the log poll paints again)
+      });
       /* the path bar: a Linux path goes there (a file opens, in its folder); anything else is searched for in the folder
          shown */
       $(".nm-go").addEventListener("submit", (e) => {
@@ -399,7 +481,7 @@ export function openNumerat() {
         const r = numerat.at(ctx, t, st.dir);
         if (r.kind && !r.inside) {
           say([
-            `✗ ${t}: only the ${LANG_DIR} folder shows here (the terminal below reaches the rest)`,
+            `✗ ${t}: only home/ shows here (the terminal below reaches the rest)`,
           ]);
           return paint();
         }
