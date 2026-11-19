@@ -170,7 +170,7 @@ Results keep tenths at most. Dividing by 0 is an error.
 and gives *+* (3 gives 6).
 Named ones, in single quotes: '1*' is asterisk number 1, '2***'
 asterisk number 2 with three digits, '1$' letter number 1. The
-number in quotes is only a name.
+number in quotes is only a name. '*1' means the same as '1*'.
   {[2,4]='1*'}\\>>\\|| '1*'+1     names 2 or 4, then adds 1
 
 Too many digits for the asterisks: cut from the front
@@ -250,6 +250,7 @@ Which lines:
   \\!'rm1'\\          the whole file
   \\'n1:4 rm0'\\      lines 1 to 4 (any value: 'n[1,5,[2:3]]')
   \\lin!!'inc1'\\     this line, as strong as !!
+  \\lin["**"=!]'inc1'\\  strength is a value: 10 to 99
 
 The strongest rule wins: more ! is stronger. \\!!'inc1'\\ beats
 \\!'rm1'\\. With the same number of !, the later rule wins.
