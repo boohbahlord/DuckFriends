@@ -3,15 +3,19 @@
    shots, their fall, each gliding over one heartbeat, and the zombies' red outline while a wall or a roof hides them. Their flashlights are lit as the ducks' are (l4dd.js paint asks
    gunLights() for them): off while they wait in ambush or run ("flashlights off while ambushing or running") */
 import { activity } from "./hangout/registry.js";
-import { npcURL } from "./sbnpcart.js";
+import { npcURL, handAt } from "./sbnpcart.js";
+import { shake } from "./fxmotion.js";
 import { drawNpcs, dropNpcs } from "./npcview.js";
 import { now as clockNow } from "./clock.js";
 import { olAdd, olFloor, olRoofed } from "./outlines.js";
-import { whereIn } from "./hangout/layout.js";
+import { whereIn, heightAt } from "./hangout/layout.js";
 
 const ZB = new Map(),
   LIT = new Map(), // gunman → [x, y (where it's drawn), its aim in radians]
-  SEEN = []; // [x, y] of each one alive on the screen now
+  SEEN = [], // [x, y] of each one alive on the screen now
+  LASERS = []; // this frame's laser sights: [x0, y0, x1, y1] on the screen (game.js hands them to fx.js)
+let supEl = null,
+  shookAt = 0;
 const BURNS = 2200; // ms a flame's bite shows it burning (gunmen.js GM.BURN_MS, and a little)
 activity({
   id: "gunmen",
@@ -20,6 +24,9 @@ activity({
     dropNpcs(ZB);
     LIT.clear();
     SEEN.length = 0;
+    LASERS.length = 0;
+    supEl?.remove();
+    supEl = null;
   },
   draw(now, ctx) {
     const s = ctx.state(),
@@ -69,11 +76,43 @@ activity({
     /* where each one is drawn now (a light just off the screen still shines onto it) */
     LIT.clear();
     SEEN.length = 0;
+    LASERS.length = 0;
+    const sc = Wd.sc;
     for (const o of gb) {
       const z = ZB.get(o.i);
       if (!z || o.d) continue;
+      const a = ((o.ad || 0) * Math.PI) / 180;
       if (!z.el.hidden) SEEN.push([z.x, z.y]);
-      if (o.lo) LIT.set(o.i, [z.x, z.y, ((o.ad || 0) * Math.PI) / 180]);
+      if (o.lo) LIT.set(o.i, [z.x, z.y, a]);
+      /* a soldier's laser sight, out of its gun to what it aims at ("Soldiers have laser sights") */
+      if (o.ld > 0 && !z.el.hidden) {
+        const f = Wd.toScreen(z.x, z.y, heightAt(z.x, z.y)),
+          hand = handAt(z.box),
+          ex = z.x + Math.cos(a) * o.ld,
+          ey = z.y + Math.sin(a) * o.ld,
+          e = Wd.toScreen(ex, ey, heightAt(ex, ey));
+        LASERS.push([
+          f.left + (hand.x - z.box.w / 2) * sc * (o.f || 1),
+          f.top - (z.box.feet - hand.y) * sc,
+          e.left,
+          e.top - 29 * sc,
+        ]);
+      }
+    }
+    /* an LMG's rounds flying by me: my screen shakes and its corners go dark ("suppressive fire (screen shake, dark
+       corners)") */
+    const sup = ((s.hang.gm && s.hang.gm.sp) || {})[ctx.me] > clockNow();
+    if (sup && !supEl) {
+      supEl = document.createElement("div");
+      supEl.className = "gm-sup";
+      supEl.setAttribute("aria-hidden", "true");
+      document.body.append(supEl);
+    }
+    if (supEl && supEl.classList.contains("on") !== sup)
+      supEl.classList.toggle("on", sup);
+    if (sup && now - shookAt > 120) {
+      shookAt = now;
+      shake(0.22);
     }
   },
 });
@@ -81,3 +120,5 @@ activity({
 export const gunLights = () => [...LIT.values()];
 /* where each one alive stands on the screen now (a beam lights them up as it does a zombie) */
 export const gunBodies = () => SEEN;
+/* the soldiers' laser sights this frame */
+export const gunLasers = () => LASERS;

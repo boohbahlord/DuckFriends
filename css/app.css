@@ -14400,6 +14400,20 @@ html.moving .eye-zap {
 }
 /* the flamethrower's fire on my duck (game.js crimson): my screen blinks in and out of crimson; with the heavy effects
    off, a steady faint red */
+/* Survival: an LMG's rounds flying by me darken my screen's corners a moment (gunmenview.js) */
+.gm-sup {
+  position: fixed;
+  inset: 0;
+  z-index: 8990;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, #0000 42%, #000000d9 100%);
+  opacity: 0;
+  transition: opacity 0.35s;
+}
+.gm-sup.on {
+  opacity: 1;
+  transition: opacity 0.12s;
+}
 html.crimson body::after {
   content: "";
   position: fixed;

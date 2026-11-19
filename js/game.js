@@ -388,6 +388,7 @@ import {
   GOLD_CHAIR,
 } from "./mgjart.js";
 import { hitsOf } from "./l4ddart.js";
+import { gunLasers } from "./gunmenview.js";
 import {
   npcURL,
   npcBox,
@@ -2589,6 +2590,7 @@ function drawDucks(now = clockNow()) {
       if (t > 0 && t < Infinity)
         lz.push([e[0], e[1], A[0] + ux * t, A[1] + uy * t]);
     }
+  if (isL4dd(s)) lz.push(...gunLasers()); // (Survival's soldiers: gunmenview.js)
   fxLasers(lz);
   heatDraw(heldAll, fxl, size);
   if (isL4dd(s) || isMgj(s)) laserFrame(s, heldAll, fxl, size, heard); // (the Laser Rifle's steam and fire: laserfx.js)

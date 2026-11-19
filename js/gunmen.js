@@ -44,6 +44,14 @@ export const GM = {
   DEAD_MS: 30000, // ms a body lies there
   BURN_MS: 2000, // ms between a flame's bites (as the merchant's, l4ddrules.js BURN.EVERY)
   DUCK: 64, // world px in a duck length
+  SQUAD: [4, 7], // soldiers in a squad ("squads of 4-7")
+  FLANK: 3, // duck lengths: a duck this near is flanking it: it falls back, pistol out ("fall back when flanked")
+  STAB: 1.2, // duck lengths: near enough for its knife ("knife up close")
+  STAB_MS: 900, // ms between its knife's stabs
+  RIFLE_MOVE: [1800, 2800], // ms a rifleman moves up …
+  RIFLE_FIRE: [2200, 3600], // … and ms it stops and shoots
+  SUPPRESS_MS: 1400, // ms my screen shakes and darkens after an LMG burst flies by me
+  SUPPRESS_R: 120, // world px: how near its rounds fly to suppress a duck
 };
 /* the criminals' guns, and how each fires: rounds a burst, ms from one burst to the next (their hidden cooldowns), and
    the magazine a gun with none gets */
@@ -60,10 +68,20 @@ const FIRE = {
   ump: { n: 3, gap: [2200, 3200] },
   shotgun: { n: 1, gap: [2000, 2800], mag: 6 },
   dbuck: { n: 1, gap: [1800, 2600] },
+  ak: { n: 4, gap: [1600, 2400] },
+  burst: { n: 3, gap: [1400, 2000] },
+  lmg: { n: 12, gap: [1200, 1800] }, // (long bursts: suppressive fire)
 };
 /* how far each gun is fired from (duck lengths) and how likely a round is to hit a duck there: AIM.near up close, less
    for each duck length, never under AIM.min; a sprinting duck is harder to hit */
-const REACH = { shotgun: 3.5, dbuck: 3.5, revolver: 8 };
+const REACH = {
+  shotgun: 3.5,
+  dbuck: 3.5,
+  revolver: 8,
+  ak: 9,
+  burst: 9,
+  lmg: 11,
+};
 const reachOf = (w) => (REACH[w] || 7) * GM.DUCK;
 const AIM = {
   near: 0.25,
@@ -72,6 +90,7 @@ const AIM = {
   sprint: 0.6,
   pellet: 0.35, // (a shotgun's: each pellet, up close, PELLET_DROP less for each duck length)
   pelletDrop: 0.08,
+  lmg: 0.02, // (the LMG's rounds: "very unlikely to hit")
 };
 
 const rnd = (a, b) => a + Math.random() * (b - a);
@@ -97,29 +116,52 @@ function crimLook() {
     hat: Math.random() < 0.35 ? { id: pick(["cap", "bucket"]) } : null,
   };
 }
-function newGunman(s, k, x, y, H) {
+/* a soldier's look: a random duck's color in uniform and helmet (Noah draws theirs later) */
+function soldierLook() {
+  const d = botDuck();
+  return {
+    ...d,
+    pattern: "none",
+    metal: "none",
+    keys: null,
+    style: "rubber",
+    outfit: { id: "military" },
+    face: null,
+    hat: { id: "helmet" },
+  };
+}
+/* a soldier's guns by its part in the squad: the LMG, the ones with him (an AK-47), or a rifleman (an AK-47 or the
+   burst rifle); a pistol and a knife besides */
+const SOLDIER_GUNS = {
+  lmg: () => ["lmg", "handgun"],
+  sup: () => ["ak", "handgun"],
+  rifle: () => [pick(["ak", "burst"]), "handgun"],
+};
+function newGunman(s, k, x, y, H, ro = "") {
   const gm = gmOf(s),
     i = gm.n + 1,
     hp = H.hp(),
-    guns = [pick(pick(CRIM_GUNS))];
-  if (!["handgun", "revolver"].includes(guns[0])) guns.push("handgun"); // (a pistol besides)
+    guns = k === "s" ? SOLDIER_GUNS[ro]() : [pick(pick(CRIM_GUNS))];
+  if (!["handgun", "revolver"].includes(guns[0]) && !guns.includes("handgun"))
+    guns.push("handgun"); // (a pistol besides)
   gm.n = i;
   return {
     i,
     k,
+    ...(ro ? { ro } : {}),
     x: Math.round(x),
     y: Math.round(y),
     hp,
     l: [hp],
     f: 1,
-    dk: crimLook(),
+    dk: k === "s" ? soldierLook() : crimLook(),
     wp: { p: guns },
     mg: guns.map(magOf),
     rl: guns.map(() => 0),
     hw: guns[0],
     st: "in",
     u: 0,
-    lo: 1,
+    lo: k === "c" ? 1 : 0, // (soldiers: laser sights, no flashlights)
     ad: 0,
   };
 }
@@ -141,6 +183,7 @@ function start(s, kind, now, H) {
     nb: 0,
   };
   const gm = s.hang.gm;
+  if (kind === "s") return squads(s, n, H);
   /* they come in a few groups, each at its own spot nobody sees */
   for (let made = 0; made < front; ) {
     const at = H.edge();
@@ -150,6 +193,36 @@ function start(s, kind, now, H) {
       gm.gb.push(
         newGunman(s, kind, at[0] + rnd(-30, 30), at[1] + rnd(-20, 20), H),
       );
+  }
+  return true;
+}
+/* soldiers: 1 squad for 1-2 players, 2 for 3-4, 3 for 5-6, 4 for 7-8, each of 4 to 7 coming in together at a spot
+   nobody sees: its LMG, 1-2 with him, the rest riflemen ("One LMG for suppressive fire, 1-2 with him; the rest AK-47 /
+   burst rifle move up") */
+function squads(s, n, H) {
+  const gm = s.hang.gm;
+  gm.bk = 0;
+  gm.sq = {};
+  for (let q = 1; q <= Math.min(4, Math.ceil(n / 2)); q++) {
+    const at = H.edge();
+    if (!at) break;
+    const size =
+        GM.SQUAD[0] +
+        Math.floor(Math.random() * (GM.SQUAD[1] - GM.SQUAD[0] + 1)),
+      sup = 1 + Math.floor(Math.random() * 2);
+    gm.sq[q] = { n: size, at: [Math.round(at[0]), Math.round(at[1])] };
+    for (let k = 0; k < size; k++) {
+      const o = newGunman(
+        s,
+        "s",
+        at[0] + rnd(-50, 50),
+        at[1] + rnd(-30, 30),
+        H,
+        k === 0 ? "lmg" : k <= sup ? "sup" : "rifle",
+      );
+      o.sq = q;
+      gm.gb.push(o);
+    }
   }
   return true;
 }
@@ -187,10 +260,16 @@ function tick(s, zs, now, ids, H) {
       return fields.get(k) || null;
     };
   s.hang.gm = gm;
+  if (gm.sp)
+    gm.sp = Object.fromEntries(
+      Object.entries(gm.sp).filter(([, u]) => u > now),
+    );
   for (const o of gm.gb) {
     if (o.d) continue;
-    crim(s, o, zs, ducks, pls, fieldTo, now, dt, H);
+    if (o.k === "s") soldier(s, o, zs, ducks, pls, fieldTo, now, dt, H);
+    else crim(s, o, zs, ducks, pls, fieldTo, now, dt, H);
   }
+  gm.gb = gm.gb.filter((o) => !o.gone); // (soldiers who got away)
   apart(gm.gb.filter((o) => !o.d));
   /* the back line: one takes a fallen one's place, a moment later */
   const front = GM.FRONT * Math.max(1, ids.length),
@@ -325,6 +404,178 @@ function crim(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
   if (see && d < reach) shoot(s, o, t, now, H);
   else o.ad = Math.round((Math.atan2(t.y - o.y, t.x - o.x) * 180) / Math.PI);
 }
+/* one soldier's beat. They leave zombies alone unless one claws them; shoot Justin only when there's nobody else; the
+   squad keeps on one duck, but a soldier turns on whoever shoots it or comes near ("switch target when shot or
+   approached"); one too near is knifed, or shot with the pistol as it falls back; at half strength the squad goes back
+   the way it came and leaves */
+function soldier(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
+  const gm = gmOf(s),
+    sq = (gm.sq || {})[o.sq] || { n: 1, at: [o.x, o.y] },
+    mates = gm.gb.filter((q) => !q.d && q.k === "s" && q.sq === o.sq),
+    sees = (t) =>
+      clearShot(o.x, o.y, t.x, t.y, heightAt(o.x, o.y)) &&
+      Math.abs(heightAt(o.x, o.y) - (t.z || 0)) < 60,
+    dist = (t) => Math.hypot(t.x - o.x, t.y - o.y),
+    go = (x, y, k = 1) => {
+      const x0 = o.x;
+      chaseStep(o, fieldTo(x, y), [x, y], H.speed * k * dt, pls);
+      if (Math.abs(o.x - x0) > 0.5) o.f = o.x > x0 ? 1 : -1;
+    },
+    away = (t, far = 200) => {
+      const dx = o.x - t.x,
+        dy = o.y - t.y,
+        n = Math.hypot(dx, dy) || 1;
+      go(o.x + (dx / n) * far, o.y + (dy / n) * far);
+    };
+  o.ld = 0;
+  /* a zombie that clawed it, still near: that one first */
+  const zt = o.zc && zs.find((z) => z.i === o.zc && z.st !== 3);
+  if (zt && Math.hypot(zt.x - o.x, zt.y - o.y) < GM.DEFEND * 1.5) {
+    if (Math.hypot(zt.x - o.x, zt.y - o.y) < GM.STAB * GM.DUCK)
+      stab(o, { z: zt, x: zt.x, y: zt.y }, now, H);
+    else shoot(s, o, { z: zt, x: zt.x, y: zt.y }, now, H);
+    return;
+  }
+  if (!zt) o.zc = 0;
+  /* half the squad down: back the way they came, and gone */
+  if (!sq.out && mates.length * 2 <= sq.n) sq.out = 1;
+  const near = ducks
+      .filter((d) => !d.j && dist(d) < GM.FLANK * GM.DUCK)
+      .sort((a, b) => dist(a) - dist(b))[0],
+    mad = o.mad && o.mad[1] > now && ducks.find((d) => d.id === o.mad[0]),
+    lead = mates.reduce(
+      (c, q) => [c[0] + q.x / mates.length, c[1] + q.y / mates.length],
+      [0, 0],
+    ),
+    t =
+      near ||
+      mad ||
+      ducks
+        .slice()
+        .sort(
+          (a, b) =>
+            Math.hypot(a.x - lead[0], a.y - lead[1]) * (a.j ? 3 : 1) -
+            Math.hypot(b.x - lead[0], b.y - lead[1]) * (b.j ? 3 : 1),
+        )[0];
+  if (sq.out) {
+    o.st = "out";
+    go(sq.at[0], sq.at[1], 1.15);
+    if (Math.hypot(o.x - sq.at[0], o.y - sq.at[1]) < 40) o.gone = 1;
+    if (t && sees(t) && dist(t) < reachOf("handgun")) {
+      o.hw = "handgun";
+      shoot(s, o, t, now, H);
+      o.ld = Math.round(dist(t));
+    }
+    return;
+  }
+  if (!t) {
+    o.st = "look";
+    return;
+  }
+  o.tg = "p:" + t.id;
+  const see = sees(t),
+    d = dist(t);
+  if (see) {
+    o.ls = [Math.round(t.x), Math.round(t.y)];
+    o.seen = now;
+  }
+  const aim = () =>
+    (o.ad = Math.round((Math.atan2(t.y - o.y, t.x - o.x) * 180) / Math.PI));
+  /* flanked: the knife up close, else the pistol as it falls back toward the others */
+  if (near && t === near) {
+    o.st = "back";
+    if (d < GM.STAB * GM.DUCK) {
+      stab(o, t, now, H);
+      return;
+    }
+    away(t);
+    if (see) {
+      o.hw = "handgun";
+      shoot(s, o, t, now, H, ["handgun"]);
+      o.ld = Math.round(d);
+    }
+    return;
+  }
+  const reach = reachOf(o.wp.p[0]);
+  if (o.ro === "lmg") {
+    /* the LMG: somewhere it sees its duck from well off, then long bursts; whoever its rounds fly by is suppressed */
+    if (!see || d > reach * 0.9) {
+      const g = see || !o.ls ? [t.x, t.y] : o.ls;
+      go(g[0], g[1]);
+      o.st = "in";
+      aim();
+      return;
+    }
+    if (d < 5 * GM.DUCK) away(t, 160);
+    o.st = "fire";
+    o.ld = Math.round(d);
+    if (shoot(s, o, t, now, H)) suppress(s, o, t, ducks, now);
+    return;
+  }
+  if (o.ro === "sup") {
+    /* with the LMG: keeps by him, shooting what he shoots at */
+    const m = mates.find((q) => q.ro === "lmg");
+    if (m && Math.hypot(m.x - o.x, m.y - o.y) > 2 * GM.DUCK)
+      go(m.x + rnd(-60, 60), m.y + rnd(-40, 40));
+    else if (!m && (!see || d > reach * 0.85)) {
+      const g = see || !o.ls ? [t.x, t.y] : o.ls;
+      go(g[0], g[1]);
+    }
+    if (see && d < reach) {
+      o.st = "fire";
+      o.ld = Math.round(d);
+      shoot(s, o, t, now, H);
+    } else aim();
+    return;
+  }
+  /* a rifleman: moves up a while, then stops and shoots a while, closer each time (never too close) */
+  if (!o.u || now >= o.u) {
+    const moving = o.st !== "move" && (!see || d > reach * 0.55);
+    o.st = moving ? "move" : "fire";
+    o.u = now + rnd(...(moving ? GM.RIFLE_MOVE : GM.RIFLE_FIRE));
+  }
+  if (o.st === "move") {
+    const g = see || !o.ls ? [t.x, t.y] : o.ls;
+    go(g[0], g[1]);
+    aim();
+    if (see && d < reach * 0.45) o.u = now; // (close enough: it stops)
+    return;
+  }
+  if (see && d < reach) {
+    o.ld = Math.round(d);
+    shoot(s, o, t, now, H);
+  } else {
+    aim();
+    if (!see) o.u = Math.min(o.u, now + 400); // (it lost sight: it moves again soon)
+  }
+}
+/* its knife on t (a duck or a zombie): the knife's own damage, half on a duck */
+function stab(o, t, now, H) {
+  o.ad = Math.round((Math.atan2(t.y - o.y, t.x - o.x) * 180) / Math.PI);
+  o.f = t.x < o.x ? -1 : 1;
+  if (now - (o.ka || 0) < GM.STAB_MS) return;
+  o.ka = o.a = now; // (o.a: its claw marks show: a swing)
+  const dmg = +ARMS.knife.dmg || 1;
+  if (t.z) H.hitZ(t.z, dmg, "knife");
+  else H.hurt(t.id, Math.round(dmg * GM.DMG * 10) / 10, "knife");
+}
+/* an LMG burst at t: every duck its rounds fly near is suppressed a moment (its screen shakes and darkens) */
+function suppress(s, o, t, ducks, now) {
+  const gm = gmOf(s),
+    sp = { ...(gm.sp || {}) },
+    dx = t.x - o.x,
+    dy = t.y - o.y,
+    L = Math.hypot(dx, dy) || 1;
+  for (const d of ducks) {
+    const u = Math.max(
+        0,
+        Math.min(1.3, ((d.x - o.x) * dx + (d.y - o.y) * dy) / L / L),
+      ),
+      off = Math.hypot(o.x + dx * u - d.x, o.y + dy * u - d.y);
+    if (off < GM.SUPPRESS_R) sp[d.id] = now + GM.SUPPRESS_MS;
+  }
+  gm.sp = sp;
+}
 /* off to a place it can't be seen from where its duck stands, to reload there */
 function hide(o, t, now, H) {
   o.st = "hide";
@@ -355,7 +606,7 @@ function reload(o, now) {
 }
 
 /* ---------- shooting: t is a duck { id, x, y, sp } or a zombie { z, x, y } ---------- */
-function shoot(s, o, t, now, H) {
+function shoot(s, o, t, now, H, only = null) {
   o.ad = Math.round((Math.atan2(t.y - o.y, t.x - o.x) * 180) / Math.PI);
   o.f = t.x < o.x ? -1 : 1;
   /* its guns: a reload that's done fills it; the one in its hands, or the other while that one reloads */
@@ -367,13 +618,17 @@ function shoot(s, o, t, now, H) {
   });
   const d = Math.hypot(t.x - o.x, t.y - o.y),
     i = o.wp.p.findIndex(
-      (g, k) => o.mg[k] > 0 && !o.rl[k] && d <= reachOf(g) * 1.1,
+      (g, k) =>
+        (!only || only.includes(g)) &&
+        o.mg[k] > 0 &&
+        !o.rl[k] &&
+        d <= reachOf(g) * 1.1,
     );
-  if (i < 0) return;
+  if (i < 0) return false;
   const g = o.wp.p[i],
     F = FIRE[g] || { n: 1, gap: [1200, 1800] };
   o.hw = g;
-  if (now < (o.nx || 0)) return;
+  if (now < (o.nx || 0)) return false;
   /* a burst's rounds, a beat's worth at a time (its gun's own wait between them) */
   if (!o.bn) o.bn = F.n;
   const many = Math.min(
@@ -399,8 +654,10 @@ function shoot(s, o, t, now, H) {
         : A.pellets
           ? Math.max(0, AIM.pellet - AIM.pelletDrop * len) *
             (t.sp ? AIM.sprint : 1)
-          : Math.max(AIM.min, AIM.near - AIM.drop * len) *
-            (t.sp ? AIM.sprint : 1);
+          : g === "lmg"
+            ? AIM.lmg
+            : Math.max(AIM.min, AIM.near - AIM.drop * len) *
+              (t.sp ? AIM.sprint : 1);
       if (Math.random() >= chance) continue;
       hit = true;
       dmg += Array.isArray(A.dmg)
@@ -415,9 +672,11 @@ function shoot(s, o, t, now, H) {
     Math.round(t.x + Math.cos(a) * off),
     Math.round(t.y + Math.sin(a) * off * 0.5),
   ];
-  if (!hit) return;
-  if (t.z) H.hitZ(t.z, dmg, g);
-  else H.hurt(t.id, Math.round(dmg * GM.DMG * 10) / 10, g);
+  if (hit) {
+    if (t.z) H.hitZ(t.z, dmg, g);
+    else H.hurt(t.id, Math.round(dmg * GM.DMG * 10) / 10, g);
+  }
+  return true;
 }
 
 /* never in each other */
