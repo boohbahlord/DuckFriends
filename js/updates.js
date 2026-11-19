@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v115",
+    version: 115,
+    date: "Nov 19, 2026",
+    title: "The M&P9",
+    news: [
+      "The pistol is now the M&P9 Shield (the M&P9 Compact in Dead Ducks Arcade) and shows the same picture everywhere.",
+      "For Dead Ducks Arcade: each merchant upgrade can be bought up to 5 times.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v114",
     version: 114,
     date: "Nov 19, 2026",
