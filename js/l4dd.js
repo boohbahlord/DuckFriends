@@ -9,6 +9,7 @@
    it (a ranged one only with a ranged weapon in hand to swap: else big words and a buzz say so). My duck walks at half
    speed (Speed: 10% faster) and has 7 seconds of sprint (a thin blue bar under my name). The rules are the host's
    (l4ddrules.js); the weapons bar is l4ddbar.js. */
+import { isInvisible } from "./invisible.js";
 import { sprintLeft, sprintReset } from "./stamina.js";
 import { isSb, sbNoLight } from "./sandboxrules.js";
 import { activity } from "./hangout/registry.js";
@@ -3156,7 +3157,8 @@ activity({
     const p = P4(ctx.state(), id);
     return !!p && !!(p.ex || p.gh);
   },
-  crowd(x, y) {
+  crowd(x, y, me, ctx) {
+    if (isInvisible(ctx.state(), ctx.me, clockNow())) return 0; // (invisible: through the zombies)
     let d = 0;
     for (const o of Z.values()) {
       if (o.st === 3 || o.st === 0 || o.st === 1) continue;
