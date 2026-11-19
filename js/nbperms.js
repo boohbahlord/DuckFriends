@@ -94,3 +94,74 @@ export function nbRights(s, owner, path, viewer) {
 /* the rights given on exactly this path: [[who, bits]] (players, @o, @g:group) */
 export const nbGiven = (s, owner, path) =>
   Object.entries((nbBy(s, owner).g || {})[path] || {});
+
+/* ---------- shared copies (part B): "players cannot read your files OR write OR execute unless you give them
+   persmission". A file stays on its owner's device; once someone else may read or run it, the owner's device puts a
+   copy in the room (s.nbs, for this Sandbox only, like s.nbp): { at, by: { owner: { path: { t: text, w: who wrote it
+   last, n: how many times someone else wrote it } } } }. A player with w writes the copy, and the owner's device saves
+   it into the owner's own file (so writing needs the owner in the room) ---------- */
+export const NBS_FILES = 20; // (copies one player has in the room, like Brains)
+export const NBS_TEXT = 8000; // (letters in each)
+const NAME_OK = /^[\w.-]{1,40}$/;
+
+const copiesOf = (s) =>
+  s && s.nbs && s.nbs.at === s.startedAt ? s.nbs.by || {} : {};
+/* one copy: { t, w, n }, or null */
+export const nbCopy = (s, owner, path) =>
+  (copiesOf(s)[owner] || {})[path] || null;
+/* every copy one owner has in the room: { path: { t, w, n } } */
+export const nbCopies = (s, owner) => copiesOf(s)[owner] || {};
+
+/* does anyone but the owner have r or x on this path (on it or a folder over it)? Then its copy goes to the room */
+export function nbOut(s, owner, path) {
+  const g = nbBy(s, owner).g || {},
+    parts = String(path).split("/").filter(Boolean);
+  for (let i = 0; i <= parts.length; i++)
+    for (const b of Object.values(g[parts.slice(0, i).join("/")] || {}))
+      if (/[rx]/.test(b)) return true;
+  return false;
+}
+
+/* { t: "nbs", files: { path: text }, seen: { path: n } }: the owner's copies, all of them (what isn't there goes,
+   except a write the owner's device hadn't seen yet). { t: "nbw", owner, path, text }: a write by one with w */
+export function nbShareAct(s, a) {
+  const me = a.id;
+  if (!isSb(s) || !s.players[me]) return false;
+  const by = { ...copiesOf(s) };
+  if (a.t === "nbs") {
+    if (!a.files || typeof a.files !== "object") return false;
+    const cur = by[me] || {},
+      seen = a.seen && typeof a.seen === "object" ? a.seen : {},
+      next = {};
+    for (const [path, e] of Object.entries(cur))
+      if (e.w !== me && e.n > (+seen[path] || 0)) next[path] = e; // (a write still on its way to me)
+    for (const [path, text] of Object.entries(a.files)) {
+      if (Object.keys(next).length >= NBS_FILES) break;
+      if (!PATH_OK(path) || !path || next[path] || !nbOut(s, me, path))
+        continue;
+      next[path] = {
+        t: String(text ?? "").slice(0, NBS_TEXT),
+        w: me,
+        n: (cur[path] || {}).n || 0,
+      };
+    }
+    if (Object.keys(next).length) by[me] = next;
+    else delete by[me];
+  } else {
+    const owner = String(a.owner || ""),
+      path = String(a.path || ""),
+      text = a.text;
+    if (owner === me || !s.players[owner] || s.players[owner].bot) return false;
+    if (!PATH_OK(path) || !path || !NAME_OK.test(path.split("/").pop()))
+      return false;
+    if (typeof text !== "string" || text.length > NBS_TEXT) return false;
+    if (!nbRights(s, owner, path, me).includes("w")) return false;
+    const cur = { ...(by[owner] || {}) };
+    if (!cur[path] && Object.keys(cur).length >= NBS_FILES) return false;
+    if (cur[path] && cur[path].t === text) return false; // (the same words: nothing for the owner to save)
+    cur[path] = { t: text, w: me, n: ((cur[path] || {}).n || 0) + 1 };
+    by[owner] = cur;
+  }
+  s.nbs = { at: s.startedAt, by };
+  return true;
+}

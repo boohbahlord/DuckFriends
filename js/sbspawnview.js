@@ -402,6 +402,7 @@ export function sbSettings(getR, id, tab = "") {
     ${row("name", { name: "Name" }, typed("name"), why("name"))}
     ${row("who", { name: "Who respawns here" }, typed("who"), why("who"))}
     ${(p.im || [])
+      .filter((f) => f !== "ap")
       .map((f) =>
         SB_ACTS[f]
           ? actRow(R.state, p, f, kindsFor(R.state))
@@ -409,7 +410,9 @@ export function sbSettings(getR, id, tab = "") {
             ? flagRow(f, SB_FLAGS[f], typed(f), why(f))
             : row(f, SB_BOXES[f], typed(f), why(f)),
       )
-      .join("")}`;
+      .join(
+        "",
+      )}${(p.im || []).includes("ap") ? `<p class="sb-none">Appearance: the look its spawn had when it was imported.</p>` : ""}`;
   /* a zone's page: what it does and to whom, its size, and what spawns in it (sandboxrules.js SB_ZONE) */
   const zonePage = () => {
     const fx = SB_FX[boxText(p, "fx").trim()]
@@ -464,7 +467,9 @@ export function sbSettings(getR, id, tab = "") {
           lab.classList.toggle("bad", !files);
           lab.querySelector(".sb-why").textContent = files
             ? ""
-            : `No file by that name in your ${LANG} folder (n)`;
+            : v.startsWith("~")
+              ? `No file by that name that its owner lets you run (x)`
+              : `No file by that name in your ${LANG} folder (n)`;
           if (!files) return;
           send({ k: "nbf", files });
           send({ k: "set", f: "brain", v });
