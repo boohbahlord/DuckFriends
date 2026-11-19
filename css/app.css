@@ -2610,7 +2610,7 @@ html:not(.keyboard) .game.docked > :is(header, .bbar) {
   border-radius: 0;
   box-shadow: none;
 }
-.game.hang .hang-board > :not(canvas, .hang-props, .ducks, .hang-shade, .fxl) {
+.game.hang .hang-board > :not(canvas, .hang-world, .fxl) {
   margin-top: var(--ui-top, 0);
   margin-bottom: var(--ui-bot, 0);
 } /* (its words and windows: Round N, my points, the guestbook, the Butler, the cards … just under the top bar, or

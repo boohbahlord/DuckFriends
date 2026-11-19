@@ -853,7 +853,11 @@ activity({
     drawMarks(
       layer,
       spawnsHere(s) ? ptsOf(s) : {},
-      (p) => ctx.world.toScreen(p.x * W, p.y * H, p.z || 0),
+      (p) => {
+        const f = ctx.world.toScreen(p.x * W, p.y * H, p.z || 0),
+          [left, top] = ctx.world.local(f.left, f.top); // (the ducks' layer is in the world's box: world.js)
+        return { left, top };
+      },
       size,
       s,
     );
@@ -1049,7 +1053,7 @@ activity({
         z.el.classList.add("dead");
       }
       npcSay(z.el, o);
-      const tr = `translate(${f.left.toFixed(1)}px, ${f.top.toFixed(1)}px)`;
+      const tr = Wd.boxTr(f.left, f.top);
       if (z.tr !== tr) z.el.style.transform = z.tr = tr;
       const body = `scale(${((o.f || 1) < 0 ? -sc : sc).toFixed(4)}, ${sc.toFixed(4)})${o.d ? " rotate(-100deg)" : ""}`;
       if (z.bt !== body) z.body.style.transform = z.bt = body;

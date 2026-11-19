@@ -42,7 +42,6 @@ import { nameHTML } from "../name.js";
 import { rainbowHTML } from "../art.js";
 import { duckSVG } from "../duck.js";
 import { jPoker } from "./justin.js";
-import { pxAt } from "../pxdom.js";
 
 export const BET = 15000,
   TURN = 20000,
@@ -1335,7 +1334,7 @@ activity({
       a.top + TOP.h * sc > -30;
     if (v.art.hidden !== !vis) v.art.hidden = !vis;
     if (vis) {
-      const tr = `translate(${pxAt(a.left)}px, ${pxAt(a.top)}px) scale(${sc.toFixed(4)})`;
+      const tr = `${Wd.boxTr(a.left, a.top)} scale(${sc.toFixed(4)})`;
       if (v.art._tr !== tr) {
         v.art._tr = tr;
         v.art.style.transform = tr;

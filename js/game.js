@@ -3399,9 +3399,10 @@ function placeCake(board, s, now) {
     bowl = geo.hang && c.toilet && now >= c.stop, // (Quacky Zombies: in the toilet's bowl, over the toilet)
     at = bowl ? world.place(p, c.toilet) : place(p, 0, 1),
     w = geo.size * (bowl ? 0.5 : 0.7);
+  const [cl, ct] = geo.hang ? world.local(at.left, at.top) : [at.left, at.top]; // (Hangout: the ducks' layer is in the world's box, world.js)
   Object.assign(n.style, {
-    left: at.left.toFixed(1) + "px",
-    top: (at.top - w * 0.3).toFixed(1) + "px",
+    left: cl.toFixed(1) + "px",
+    top: (ct - w * 0.3).toFixed(1) + "px",
     width: w.toFixed(1) + "px",
     zIndex: bowl
       ? world.key("", { x: p.x, y: p.y + 0.012 }) + 1

@@ -65,13 +65,13 @@ export function mountWorld(board, api) {
      itself, and the box is one transform. Places on the screen (toScreen, place: what everything measures and aims
      with) are as before; what's put in the box goes through local(), which takes off where the box is now.
      at: where the box's corner is on the screen now (the camera's, to the fraction); its transform is on the grid */
-  const box = { x: 0, y: 0, tr: "" };
+  const box = { x: 0, y: 0, sx: 0, sy: 0, tr: "" }; // (sx, sy: where it's drawn, on the grid)
   /* a place on the screen (css px) → where it goes in the world's box, on the grid: the same for the same place in the
      world, wherever the camera is */
-  const local = (left, top) => [snap(left - box.x), snap(top - box.y)];
+  const local = (left, top) => [snap(left) - box.sx, snap(top) - box.sy]; // (on the grid as before: the box is on it too)
   /* where the box is drawn now (css px, on the grid): taken off a place on the screen, it's where the box shows that
      place, to the fraction (what isn't put on the grid: a weapon in hand) */
-  const shift = () => [snap(box.x), snap(box.y)];
+  const shift = () => [box.sx, box.sy];
   /* the translate() that puts something drawn in the box at a place on the screen (css px) */
   const boxTr = (left, top) => {
     const [x, y] = local(left, top);
@@ -80,7 +80,9 @@ export function mountWorld(board, api) {
   function slideBox() {
     box.x = cam.vw / 2 - cam.x * cam.sc;
     box.y = cam.vh / 2 - cam.y * cam.sc;
-    const tr = `translate(${snap(box.x).toFixed(2)}px, ${snap(box.y).toFixed(2)}px)`;
+    box.sx = snap(box.x);
+    box.sy = snap(box.y);
+    const tr = `translate(${box.sx.toFixed(2)}px, ${box.sy.toFixed(2)}px)`;
     if (box.tr !== tr) {
       box.tr = tr;
       worldEl.style.transform = tr;
