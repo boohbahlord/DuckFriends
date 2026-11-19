@@ -355,7 +355,7 @@ activity({
       width: `calc(100% + ${2 * REACH_PAST}px)`,
       height: `calc(100% + ${2 * REACH_PAST}px)`,
     }); // (past the view, so it can slide)
-    ctx.world.board.querySelector(".hang-shade")?.after(cv);
+    ctx.world.board.querySelector(".hang-world")?.after(cv);
     g = cv.getContext("2d");
     was = null;
     darkSince = 0;

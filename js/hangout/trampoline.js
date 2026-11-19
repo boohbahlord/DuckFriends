@@ -90,7 +90,7 @@ activity({
       hide = Wd.inside || !Wd.seen(f.left, f.top - TH * sc, TW * sc, TH * sc); // (inside, or off the screen: hidden)
     if (back.hidden !== hide) back.hidden = front.hidden = hide;
     if (hide) return;
-    const tr = `translate(${pxAt(f.left)}px, ${pxAt(f.top - TH * sc)}px) scale(${sc.toFixed(4)})`;
+    const tr = `${Wd.boxTr(f.left, f.top - TH * sc)} scale(${sc.toFixed(4)})`;
     if (back._tr !== tr) {
       back._tr = front._tr = tr;
       back.style.transform = front.style.transform = tr;
@@ -127,7 +127,7 @@ activity({
         dents.set(id, e);
       }
       const p = Wd.toScreen(a.x, a.y, MAT);
-      e.style.transform = `translate(${pxAt(p.left)}px, ${pxAt(p.top)}px) scale(${(sc * (0.7 + 0.4 * dip)).toFixed(4)})`;
+      e.style.transform = `${Wd.boxTr(p.left, p.top)} scale(${(sc * (0.7 + 0.4 * dip)).toFixed(4)})`;
       e.style.opacity = dip.toFixed(2);
     }
     for (const id of bounced.keys()) if (!s.pos[id]) bounced.delete(id);

@@ -327,7 +327,7 @@ activity({
           a.top + q.h * sc > -30;
       if (q.e.hidden !== !vis) q.e.hidden = !vis;
       if (!vis) continue;
-      const tr = `translate(${pxAt(a.left)}px, ${pxAt(a.top)}px) scale(${scs})`;
+      const tr = `${Wd.boxTr(a.left, a.top)} scale(${scs})`;
       if (q.e._tr !== tr) {
         q.e._tr = tr;
         q.e.style.transform = tr;

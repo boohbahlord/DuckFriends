@@ -177,7 +177,7 @@ export function drawNpcs(ctx, list, ZB, layer, fxl, opt = {}) {
     }
     npcSay(z.el, o);
     if (opt.each) opt.each(o, z, Wd);
-    const tr = `translate(${f.left.toFixed(1)}px, ${f.top.toFixed(1)}px)`;
+    const tr = Wd.boxTr(f.left, f.top); // (in the world's box: world.js)
     if (z.tr !== tr) z.el.style.transform = z.tr = tr;
     const body = `scale(${((o.f || 1) < 0 ? -sc : sc).toFixed(4)}, ${sc.toFixed(4)})${o.d ? " rotate(-100deg)" : ""}`;
     if (z.bt !== body) z.body.style.transform = z.bt = body;

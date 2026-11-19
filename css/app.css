@@ -2610,7 +2610,7 @@ html:not(.keyboard) .game.docked > :is(header, .bbar) {
   border-radius: 0;
   box-shadow: none;
 }
-.game.hang .hang-board > :not(canvas, .hang-props, .ducks, .hang-shade, .fxl) {
+.game.hang .hang-board > :not(canvas, .hang-world, .fxl) {
   margin-top: var(--ui-top, 0);
   margin-bottom: var(--ui-bot, 0);
 } /* (its words and windows: Round N, my points, the guestbook, the Butler, the cards … just under the top bar, or
@@ -11949,6 +11949,25 @@ html.moving .wq-board.late .wq-card.big {
   z-index: 0;
   will-change: transform;
 } /* (world.js sizes it past the view's edges and slides it) */
+/* the world's box (world.js): the props, the ducks and the shade, slid by the camera as one */
+.hang-art-ground {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 0;
+  transform-origin: 0 0;
+  image-rendering: pixelated;
+  pointer-events: none;
+} /* (the ground from the pixel files: hangout/world.js drawArtGround) */
+.hang-world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  will-change: transform;
+}
 .hang-props {
   position: absolute;
   inset: 0;
@@ -12209,6 +12228,13 @@ html.sprint-blur .hang-board::after {
 .hang-board.blackout .door-lit {
   filter: brightness(0.5);
 }
+.hp.dim .hg-flicker {
+  opacity: 0.18 !important;
+} /* (a lamppost's lantern stuttering: flicker.js DIP) */
+.hp.hp-art {
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+} /* (a prop shown from the pixel files: hangout/pxworld.js) */
 .hp.unlit-f .hg-f,
 .hp.unlit-c .hg-c,
 .hp.unlit-l .hg-l {
@@ -17450,10 +17476,11 @@ html.pixel .l4-flare::before {
     opacity: 0;
   }
 }
-.hang-board.l4-greyed :is(.hang-ground, .hang-props, .ducks) {
+.hang-board.l4-greyed :is(.hang-ground, .hang-art-ground, .hang-props, .ducks) {
   filter: grayscale(1);
 }
-.hang-board.l4-greying :is(.hang-ground, .hang-props, .ducks) {
+.hang-board.l4-greying
+  :is(.hang-ground, .hang-art-ground, .hang-props, .ducks) {
   filter: grayscale(0);
   transition: filter 3s linear;
 }

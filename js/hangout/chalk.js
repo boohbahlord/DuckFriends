@@ -19,7 +19,6 @@ import { puffHTML } from "../specials.js";
 import { mix } from "../duck.js";
 import { sfx } from "../sound.js";
 import { fewer } from "../gfx.js";
-import { pxAt } from "../pxdom.js";
 
 const FLOOR = PROPS.find((p) => p.kind === "chalkfloor"),
   CHALK = PROPS.find((p) => p.kind === "chalk"),
@@ -540,7 +539,7 @@ activity({
       w.board.classList.toggle("hang-pen", pen);
     } // (holding chalk: a pen for the mouse)
     if (vis) {
-      const tr = `translate(${pxAt(a.left)}px, ${pxAt(a.top)}px) scale(${sc.toFixed(4)})`;
+      const tr = `${w.boxTr(a.left, a.top)} scale(${sc.toFixed(4)})`;
       if (v.tr !== tr) {
         v.tr = tr;
         v.cv.style.transform = tr;

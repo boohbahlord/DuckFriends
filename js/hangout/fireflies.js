@@ -73,7 +73,7 @@ activity({
     cv.setAttribute("aria-hidden", "true");
     cv.style.cssText =
       "position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:25000"; // (over the world and its shade, under the effects)
-    ctx.world.board.querySelector(".hang-shade")?.after(cv);
+    ctx.world.board.querySelector(".hang-world")?.after(cv);
     g = cv.getContext("2d");
     sprite = glowSprite();
     flies = [];
