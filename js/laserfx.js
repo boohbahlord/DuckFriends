@@ -9,7 +9,7 @@
    game.js calls laserLook for the gun's picture and laserFrame every frame, in Dead Ducks Arcade and in Mad God Justin
    (a pickup there). */
 import { laserHeat, dp } from "./l4ddrules.js";
-import { LASER } from "./laserart.js";
+import { LASER, hotColor } from "./laserart.js";
 import { fxSteam, fxGroundFire } from "./fx.js";
 import { sfx } from "./sound.js";
 import { W, H, inCabin } from "./hangout/layout.js";
@@ -25,6 +25,18 @@ export function laserLook(s, id) {
   return { lvl, over, key: over ? "-hot" : "-h" + Math.round(lvl * q.max) };
 }
 export const laserArt = (look) => LASER(look.lvl, look.over);
+/* the whole gun glowing as it heats up (the owner's, Nov 19 19:27Z: "When the laser gun is overheating, the whole gun
+   starts to glow with it"): its class and style in hand (game.js .held, css .lz-glow), none while it's still cool. The
+   glow's color is its barrel's end's, as strong as it is hot, strongest overheated */
+export function laserGlow(look) {
+  const g = look.over ? 1.4 : Math.max(0, (look.lvl - 0.2) / 0.8);
+  return g > 0
+    ? [
+        " lz-glow",
+        `;--hot:${hotColor(look.lvl, look.over)};--hg:${g.toFixed(2)}`,
+      ]
+    : ["", ""];
+}
 
 /* is it raining on (x, y) in the world? Downpour, out from under a roof */
 const wet = (x, y) =>
