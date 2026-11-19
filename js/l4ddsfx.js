@@ -156,6 +156,14 @@ export function l4Hear(s, ctx) {
     if (!st.first) play("l4over");
     st.over = L.over.at;
   }
+  /* the merchant: a little shop bell as he gets to his spot, the same bell down as he runs off; from where he stands */
+  const mc = h.l4m,
+    mst = mc ? mc.st : "";
+  if (mst !== st.mst) {
+    if (!st.first && mc && (mst === "here" || mst === "out"))
+      play(mst === "here" ? "merchantIn" : "merchantOut", { x: mc.x, y: mc.y });
+    st.mst = mst;
+  }
   /* Survival's gunmen (gunmenrules.js s.hang.gm.gb): a new last shot (sh[0]) is a shot, its gun's own sound where the
      gunman stands, a little quieter than a duck's; a few at most each time, so a firefight never drowns everything */
   const gb = (h.gm && h.gm.gb) || [],
