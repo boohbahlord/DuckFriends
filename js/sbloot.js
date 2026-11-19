@@ -9,7 +9,8 @@
      can be picked there.
    - "Damage to whoever takes it" hurts the duck that takes it (a claw's hurt).
    The orb is on its point: p.orb = { w, at, dn: a zombie drop's number }, p.gone = when it was last taken. An uploaded
-   picture for an orb is kept apart, in s.sbImg (so the room only sends it again when it changes) */
+   picture for an orb is sent in parts as a made NPC's is (sbmake.js sendParts) and kept in s.sbpic, as it was uploaded
+   unless Compress was ticked (the owner's answer 6, Nov 19); s.sbImg = { loot point: its key there } */
 import {
   isSb,
   sbCan,
@@ -17,7 +18,6 @@ import {
   baseMode,
   SB_LOOT,
   SB_DROPS,
-  SB_IMG_MAX,
 } from "./sandboxrules.js";
 import { valueOf } from "./numerat.js";
 import { boxText, spawnsHere } from "./sbspawn.js";
@@ -40,14 +40,13 @@ export const lootOk = (s, w) =>
 export const lootList = (s, p) =>
   words(boxText(p, "loot")).filter((w) => lootOk(s, w));
 
-/* ---------- the actions: { t: "sbl", k: "img", p, v } (an orb's own picture, or "" for none) ---------- */
+/* ---------- the actions: { t: "sbl", k: "img", p, v } (an orb's own picture: its key in s.sbpic, or "" for none) ---------- */
 export function sbLootAct(s, a) {
   if (!isSb(s) || !sbCan(s, a.id) || a.k !== "img") return false;
   const p = ((s.sb && s.sb.pts) || {})[a.p],
     v = typeof a.v === "string" ? a.v : "";
   if (!p || p.k !== "loot") return false;
-  if (v && (!/^data:image\/[a-z+]+;base64,/.test(v) || v.length > SB_IMG_MAX))
-    return false;
+  if (v && !(/^[a-z0-9]{1,24}$/.test(v) && (s.sbpic || {})[v])) return false;
   const img = { ...(s.sbImg || {}) };
   if (v) img[a.p] = v;
   else delete img[a.p];
