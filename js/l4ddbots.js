@@ -40,6 +40,7 @@ import {
 } from "./l4ddrules.js";
 import { walkOf } from "./rules.js";
 import { WANDER } from "./hangout/justin.js";
+import { NPC_RUN } from "./npcshared.js";
 
 const SEE = 460; // world px: how far a computer looks for a zombie to shoot
 const TOO_CLOSE = 95;
@@ -282,6 +283,7 @@ const lastAt = new Map(), // Justin → when he last walked
 const GUN_RANK = [
   "lmg",
   "dbarrel",
+  "dbuck",
   "ak",
   "burst",
   "laser",
@@ -331,7 +333,7 @@ function justinBot(s, id, now, out) {
       if (!want) br.out = false;
       br.left = Math.min(1, br.left + dt / L4.SPRINT);
     }
-    return go ? walkPx * 1.75 : walkPx; // (world.js SPRINT)
+    return go ? walkPx * NPC_RUN : walkPx; // (the shared slow speed, npcshared.js: "if he does sprint, he sprints slower", the owner's, Nov 19 19:27Z. It was a duck's sprint, world.js SPRINT)
   };
   const send = (nx, ny, w, ax, ay, j = 0) =>
     out.push({
@@ -462,9 +464,10 @@ function justinBot(s, id, now, out) {
       ay: ay / H,
     });
 }
-/* Justin out there with no weapon (the owner's, Nov 17): he runs from the nearest zombies and from a shot that flies
-   close (sprinting only while one is close, with his meter: a duck's own), cries and sprints off when he's hurt, never
-   jumps to dodge, and otherwise strolls about as he does in Duck Cabin */
+/* Justin out there with no weapon (the owner's, Nov 17; Nov 19 19:27Z: "he still tries to protect himself"): he walks
+   away from the nearest zombies (running only from one really close, with his meter: a duck's own, at the shared slow
+   speed), cries and runs off when he's hurt, never jumps or dodges, and otherwise strolls about as he does in Duck
+   Cabin */
 const wander = new Map(); // Justin → { x, y, until }
 /* where Justin strolls to, his Duck Cabin way (hangout/justin.js WANDER, the owner's, Nov 17 19:11Z: "HE SHOULD BE CASUALLY
    WALKING AROUND WHICH IS ALREADY IN HIS CHARACTER SHEET! STOP REWRITING CODE TERRIBLY FOR THINGS ALREADY FIGURED OUT!"):
@@ -488,29 +491,6 @@ function wanderSpot(id, now, x, y) {
   }
   if (w) wander.set(id, w);
   return w;
-}
-const scare = new Map(); // Justin → until when he's running off from a shot
-/* shots flying close to Justin (the owner's, Nov 17 18:05Z: "justin takes a second before running away when an enemy starts
-   shooting in his direction without actually damaging him"): he runs from them only once they've kept coming for
-   HEARD.wait ms, and then from where the last one passed, for HEARD.keep ms after it. A burst ends after HEARD.gap ms
-   with none. Returns that spot as a threat (as wildMove's zombies), or null */
-const HEARD = { wait: 1000, keep: 2500, gap: 1500 },
-  SCARE_ARMED = 140, // world px: how close a shot scares him with a gun
-  SCARE_BARE = 260; // (and with none)
-const heard = new Map(); // Justin → { from: the burst's first shot, last, x, y }
-function shotScare(s, id, now, x, y, far) {
-  let h = heard.get(id);
-  for (const sh of s.shots || []) {
-    if (sh.by === id || sh.lx === undefined) continue;
-    const sx = sh.lx * W,
-      sy = sh.ly * H;
-    if (Math.hypot(sx - x, sy - y) >= far) continue;
-    if (!h || now - h.last > HEARD.gap) h = { from: now };
-    h = { ...h, last: now, x: sx, y: sy };
-  }
-  if (h) heard.set(id, h);
-  if (!h || now - h.from < HEARD.wait || now - h.last > HEARD.keep) return null;
-  return { z: { x: h.x, y: h.y }, d: Math.hypot(h.x - x, h.y - y) };
 }
 /* in a rest phase Justin may go to Jaime's body: he asks the rules for this phase's plan once (half the time two visits),
    walks there, and the rules make him say a line each time he's there; true while it's walking him */
@@ -548,12 +528,11 @@ function jaimeVisit(s, id, now, p, x, y, run, out) {
   return true;
 }
 function wildMove(s, id, now, p, x, y, near, run, out, forced = false) {
-  /* only the zombies scare him, and a duck's shots that keep flying close (after a second: shotScare); never the ducks
-     themselves (the owner's, Nov 17 18:05Z: "justin should be running from zombies not every player") */
+  /* only the zombies scare him, and being hurt; never the ducks themselves (the owner's, Nov 17 18:05Z: "justin should be
+     running from zombies not every player"), and no longer the shots flying by him: running from those before they
+     landed was the dodging (the owner's, Nov 19 19:27Z: "Justin should stop dodging bullets like a fucking god") */
   const threats = [...near],
-    shot = shotScare(s, id, now, x, y, forced ? SCARE_ARMED : SCARE_BARE),
-    cry = wildCrying(s, id, now) && s.hang.l4jcry; // (hurt: crying, he sprints off from where it came from, l4ddrules.js CRY)
-  if (shot) threats.push(shot);
+    cry = wildCrying(s, id, now) && s.hang.l4jcry; // (hurt: crying, he runs off from where it came from, l4ddrules.js CRY)
   if (cry)
     threats.push({
       z: { x: cry.x, y: cry.y },
@@ -564,10 +543,11 @@ function wildMove(s, id, now, p, x, y, near, run, out, forced = false) {
     scared = forced || !!cry || d0 < KEEP * 1.4;
   const w = scared ? null : wanderSpot(id, now, x, y);
   let [nx, ny] = [x, y];
-  /* he sprints only with a reason (the owner's, Nov 17 19:11Z: "WHY IS JUSTIN ALWAYS SPRINTING WITHOUT EVER STOPPING"): a
-     zombie close (KEEP) or the shots that scared him; one farther off and he walks away from it. His meter is a duck's
-     own (run: L4.SPRINT to empty, as long to fill, and none until he stops wanting it once it ran out) */
-  const far = run(forced || !!cry || (!!shot && shot.d === d0) || d0 < KEEP);
+  /* he runs only with a reason, and less often (the owner's, Nov 17 19:11Z: "WHY IS JUSTIN ALWAYS SPRINTING WITHOUT EVER
+     STOPPING", and Nov 19 19:27Z: "he shouldn't sprint as often"): hurt, or a zombie really close (CLOSE); one farther off
+     and he walks away from it. His meter is a duck's own (run: L4.SPRINT to empty, as long to fill, and none until he
+     stops wanting it once it ran out) */
+  const far = run(forced || !!cry || d0 < CLOSE);
   if (scared) [nx, ny] = away(x, y, far, threats);
   else if (w && !w.rest) {
     const to = wayTo(x, y, w.x, w.y, now) || [w.x, w.y];

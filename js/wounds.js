@@ -72,6 +72,7 @@ const WOUND_OF = {
   burst: "big",
   revolver: "big",
   dbarrel: "big",
+  dbuck: "shot",
   slug: "big",
   chaingun: "big",
   chain: "big", // (the chain gun's shot outside Quacky Zombies, rules.js chainShot)

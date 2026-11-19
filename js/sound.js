@@ -736,6 +736,7 @@ const RELOAD_S = {
   glauncher: 4,
   burst: 2,
   dbarrel: 2, // (a second a shell: one shell plays it faster)
+  dbuck: 2,
   flamer: 4,
 };
 function reload(w, o = {}) {
@@ -760,6 +761,7 @@ const RELOAD = {
   glauncher: "reloadGlauncher",
   burst: "reloadBurst",
   dbarrel: "reloadDbarrel",
+  dbuck: "reloadDbarrel",
   flamer: "reloadFlamer",
 };
 

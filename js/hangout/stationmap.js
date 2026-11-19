@@ -129,6 +129,10 @@ export const CHAPEL_DOOR = { a: 2000, b: 2600 };
    every direction": a car is 420 long, and its dark mouth, drawn in its box, is at least two thirds of the box across);
    the restroom's stays as it was */
 export const LADDER = { at: 550, x0: 1160, x1: 1240, side: "n" };
+/* the ladder leaning on the canopy over the pumps, on its left (west) side (the owner's, Nov 19 19:27Z: "Add a ladder to
+   the gas pump roof to the left of it. It's kind of leaning over onto it ... zombies or players could use that ladder
+   as well"): climbed from outside, pushing east (side "w"), y0 … y1 along the canopy's edge at x `at` */
+export const PUMP_LADDER = { at: 1400, y0: 2185, y1: 2265, side: "w" };
 export const ROOF_HOLES = [
   { id: "hole-se", x0: 2900, y0: 1165, x1: 3460, y1: 1720 },
   { id: "hole-rest", x0: 1250, y0: 1350, x1: 1450, y1: 1550 },
@@ -397,6 +401,15 @@ function planBuild(b) {
       z: CANOPY.z,
       key: CANOPY.y1,
     },
+  );
+  /* the ladder leaning on the canopy's left side: up to the canopy and its hoops over the edge */
+  put(
+    "ladder",
+    PUMP_LADDER.at - 70,
+    PUMP_LADDER.y0,
+    PUMP_LADDER.y1 - PUMP_LADDER.y0,
+    10,
+    CANOPY.z + 46,
   );
   for (const p of PUMPS) solid("pump", p, 140);
   solid(
@@ -834,6 +847,7 @@ for (const o of [
   CHAPEL_DOOR,
   INNER_DOORS,
   LADDER,
+  PUMP_LADDER,
   ROOF_HOLES,
   GEN,
   POWER_SPOT,

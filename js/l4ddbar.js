@@ -26,6 +26,7 @@ import {
   downArmed,
   tintOf,
   endless,
+  slotFor,
 } from "./l4ddrules.js";
 import { now as clockNow } from "./clock.js";
 import { sbNoLight } from "./sandboxrules.js";
@@ -57,6 +58,14 @@ const reloadMeter = (s, me, w, m) => {
     gone = Math.max(0, all - (m.rl - now));
   return `<span class="l4s-rl" style="--rl:${Math.round(all)}ms;--rd:-${Math.round(gone)}ms" aria-hidden="true"></span>`;
 };
+/* the slot the weapon I'm about to take would go to (api.to: l4dd.js l4To), -1 for none, and that weapon. That slot gets
+   a ring (it stays with animations off) and a glow inside in the weapon's own color (the owner's, Nov 19 19:27Z) */
+const toSlot = (s, me, api) => {
+  const w = (api.to && api.to()) || "";
+  return w ? [slotFor(s, me, w, api.held()), w] : [-1, ""];
+};
+const toGlow = (w) =>
+  `<b class="l4to ${tintOf(w) || "c-plain"}" aria-hidden="true"></b>`;
 const out = (s, me) => {
   const p = (s.hang.l4p || {})[me] || {};
   return !!(p.dn || p.gh);
@@ -79,7 +88,8 @@ export function mountL4Bar(S, api) {
       off = !!(s.hang.l4f || {})[me],
       dark = sbNoLight(s, me), // (Sandbox: no flashlight till one is taken from loot)
       down = downArmed(s, me),
-      next = JSON.stringify([m, held, off, out, down, dark]);
+      [to, toW] = toSlot(s, me, api),
+      next = JSON.stringify([m, held, off, out, down, dark, to, toW]);
     if (next === sig) return;
     sig = next;
     /* one slot: [key, the weapon (or "" when empty), its kind, what a press does]; down, only the down pistol (the
@@ -111,7 +121,8 @@ export function mountL4Bar(S, api) {
       const on =
         (w === "jetpack" && m && m.jp) || (w === "longjump" && m && m.lj); // (switched on: a green ring)
       const tint = w && w !== "fl" ? tintOf(w, angelOf(s, me, w)) : ""; // (its own color: l4ddrules.js tintOf)
-      return `<button type="button" class="l4s k-${kind}${tint ? " " + tint : ""}${w && w === held ? " sel" : ""}${empty ? " empty" : ""}${on ? " on" : ""}" data-l4w="${does}" aria-label="${name}${n ? ", " + n : ""}"${out || (!w && does !== "fl") ? " disabled" : ""}>${w ? reloadMeter(s, me, w, m) : ""}<i>${icon}</i><kbd>${key}</kbd>${n ? `<small>${n}</small>` : ""}</button>`;
+      const into = does === String(to); // (what I'm about to take goes here)
+      return `<button type="button" class="l4s k-${kind}${tint ? " " + tint : ""}${w && w === held ? " sel" : ""}${empty ? " empty" : ""}${on ? " on" : ""}${into ? " l4s-to" : ""}" data-l4w="${does}" aria-label="${name}${n ? ", " + n : ""}"${out || (!w && does !== "fl") ? " disabled" : ""}>${w ? reloadMeter(s, me, w, m) : ""}${into ? toGlow(toW) : ""}<i>${icon}</i><kbd>${key}</kbd>${n ? `<small>${n}</small>` : ""}</button>`;
     };
     /* (my HP isn't here any more: it's the red meter under the hotbar, hpmeter.js; owner 2026-11-04 03:16Z) */
     row.innerHTML = `<div class="l4slots">${slots.map(slot).join("")}</div>`;
@@ -190,7 +201,7 @@ export function l4Slider(api) {
             : weaponIcon(id, duckOf(k.s, k.me)),
       off: out(k.s, k.me) || (i < 5 && spent(id, k.m)),
       keep: i === 3 || i === 5,
-      cls: `k-${kindAt(i)}${id === "fl" ? "" : " " + tintOf(id, angelOf(k.s, k.me, id))}`.trim(), // (its own color)
+      cls: `k-${kindAt(i)}${id === "fl" ? "" : " " + tintOf(id, angelOf(k.s, k.me, id))}${i === toSlot(k.s, k.me, api)[0] ? " l4s-to" : ""}`.trim(), // (its own color; the ring where what I'm about to take goes)
     };
   };
   return {
@@ -236,14 +247,23 @@ export function l4Slider(api) {
       const k = id && kit(),
         w = k && downArmed(k.s, k.me) ? "dg" : id, // (down: the down pistol's bullets)
         n = k ? count(w === "fl" ? "" : w, k.m) : "";
+      const [to, toW] = k ? toSlot(k.s, k.me, api) : [-1, ""];
       return (
         (k ? reloadMeter(k.s, k.me, w, k.m) : "") +
+        (to >= 0 && k.sl[to] === id ? toGlow(toW) : "") +
         (n ? `<small class="sp-n">${n}</small>` : "")
       );
     },
     sig() {
       const k = kit();
-      return k ? JSON.stringify([k.m, lightOff(k), out(k.s, k.me)]) : "";
+      return k
+        ? JSON.stringify([
+            k.m,
+            lightOff(k),
+            out(k.s, k.me),
+            toSlot(k.s, k.me, api),
+          ])
+        : "";
     },
   };
 }
