@@ -28,6 +28,7 @@ import {
   endless,
 } from "./l4ddrules.js";
 import { now as clockNow } from "./clock.js";
+import { sbNoLight } from "./sandboxrules.js";
 
 /* what a slot says under it: the magazine and the rest, or how many are left */
 const count = (w, m) => {
@@ -76,8 +77,9 @@ export function mountL4Bar(S, api) {
       out = !!(p.dn || p.gh),
       held = api.held(),
       off = !!(s.hang.l4f || {})[me],
+      dark = sbNoLight(s, me), // (Sandbox: no flashlight till one is taken from loot)
       down = downArmed(s, me),
-      next = JSON.stringify([m, held, off, out, down]);
+      next = JSON.stringify([m, held, off, out, down, dark]);
     if (next === sig) return;
     sig = next;
     /* one slot: [key, the weapon (or "" when empty), its kind, what a press does]; down, only the down pistol (the
@@ -87,7 +89,7 @@ export function mountL4Bar(S, api) {
       : [
           ...sl.map((w, i) => [String(i + 1), w, SLOT_KINDS[i], String(i)]),
           ["5", "grenade", "grenade", "grenade"],
-          ["0", "fl", "light", "fl"],
+          ...(dark ? [] : [["0", "fl", "light", "fl"]]),
         ];
     if (down) {
       const n = count("dg", m);
@@ -152,7 +154,7 @@ export function l4Slider(api) {
       ? { s, me, m: kitOf(s, me), sl: slotsOf(s, me) }
       : null;
   };
-  const lightOff = (k) => !!(k.s.hang.l4f || {})[k.me];
+  const lightOff = (k) => !!(k.s.hang.l4f || {})[k.me] || sbNoLight(k.s, k.me);
   /* the key index of a slot: 0 to 3 the slots, 4 the grenades, 5 the flashlight */
   const keys = () => {
     const k = kit();
