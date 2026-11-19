@@ -85,3 +85,32 @@ export function valueOf(kept, box = {}, r = Math.random) {
   const d = k.ok ? k : read("", box);
   return d.ok ? pick(d.v, box, r) : NaN;
 }
+
+/* the words a file can have today, for the Numerat window's autocomplete */
+export const WORDS = ["true", "false"];
+
+/* Check (the Numerat window): reads a whole file without running anything. Blank lines and lines that start with # (a note)
+   are skipped; every other line must be a plain value (a number, a range, a comma list, tenths) or t / f. Gives
+   { n: lines read, errs: [{ line, why }] }, line counted from 1 */
+export function check(text) {
+  const errs = [];
+  let n = 0;
+  String(text == null ? "" : text)
+    .split("\n")
+    .forEach((raw, i) => {
+      const t = raw.trim();
+      if (!t || t.startsWith("#")) return;
+      n++;
+      if (/^(t|f|true|false)$/i.test(t)) return;
+      const r = read(t, { kind: "tenth" });
+      if (!r.ok)
+        errs.push({
+          line: i + 1,
+          why:
+            r.why === "Only numbers, : and , here"
+              ? "that notation isn't built yet (plain values and # notes only so far)"
+              : r.why,
+        });
+    });
+  return { n, errs };
+}

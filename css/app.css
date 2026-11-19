@@ -20357,6 +20357,7 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 }
 .nm-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
 }
@@ -20368,7 +20369,6 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   white-space: nowrap;
   color: var(--dim);
 }
-.nm-code,
 .nm-in {
   font: inherit;
   font-weight: 200;
@@ -20379,12 +20379,124 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   padding: 0.4rem 0.5rem;
   min-width: 0;
 }
-.nm-code {
+/* the code: line numbers always at its left, no wrap unless Wrap is on (the owner's, Nov 19 12:59Z) */
+.nm-ed {
+  position: relative;
   flex: 3;
   min-height: 0;
+  display: flex;
+  border: 0.12rem solid var(--line);
+  border-radius: 0.45rem;
+  background: #0006;
+  overflow: hidden;
+}
+.nm-gut {
+  flex: none;
+  min-width: 2.2rem;
+  margin: 0;
+  padding: 0.4rem 0.45rem 0.4rem 0.5rem;
+  overflow: hidden;
+  text-align: right;
+  font: inherit;
+  font-weight: 200;
+  line-height: 1.5;
+  color: var(--dim);
+  border-right: 0.1rem solid var(--line);
+  user-select: none;
+  -webkit-user-select: none;
+}
+.nm-code {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  font: inherit;
+  font-weight: 200;
+  line-height: 1.5;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  padding: 0.4rem 0.5rem;
   resize: none;
   tab-size: 2;
   white-space: pre;
+  overflow: auto;
+  overflow-wrap: normal;
+}
+.nm-code:focus {
+  outline: none;
+}
+.nm-ed:focus-within {
+  border-color: var(--blue, #3f8cff);
+}
+.nm-wrap-on .nm-code {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+/* a hidden copy of the text at the code's width, to measure how tall each folded line is */
+.nm-mirror {
+  position: absolute;
+  left: 0;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+  box-sizing: border-box;
+  padding: 0.4rem 0.5rem;
+  font: inherit;
+  font-weight: 200;
+  line-height: 1.5;
+  tab-size: 2;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+.nm-ac,
+.nm-sugg {
+  margin: 0;
+  padding: 0.15rem;
+  list-style: none;
+  font-weight: 200;
+}
+.nm-ac {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.5rem;
+  z-index: 2;
+  background: var(--panel, #20232d);
+  border: 0.12rem solid var(--line);
+  border-radius: 0.4rem;
+}
+.nm-ac[hidden],
+.nm-sugg[hidden] {
+  display: none;
+}
+.nm-ac li,
+.nm-sugg li {
+  padding: 0.1rem 0.5rem;
+  cursor: pointer;
+  border-radius: 0.25rem;
+}
+.nm-ac li[aria-selected="true"],
+.nm-sugg li[aria-selected="true"] {
+  background: color-mix(in srgb, var(--blue, #3f8cff) 35%, transparent);
+}
+.nm-sugg {
+  flex: none;
+  max-height: 6.5rem;
+  overflow: auto;
+  border-top: 0.1rem solid var(--line);
+}
+.nm-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 200;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.nm-ro {
+  color: var(--dim);
+  font-style: italic;
 }
 .nm-term {
   flex: 2;
