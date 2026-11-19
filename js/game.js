@@ -2299,7 +2299,7 @@ function drawDucks(now = clockNow()) {
         ).duck,
         [vx, vy] = toScreen(sh.vx, sh.vy),
         ang = `--ang:${Math.atan2(vy, vx).toFixed(3)}rad`,
-        sz = `--s:${size.toFixed(0)}px`,
+        sz = `--s:${(size * (sh.sc || 1)).toFixed(0)}px`, // (thrown by a bigger or smaller duck: as big as it was in that duck's hand, rules.js sizeShots)
         spin = vx < 0 ? "ccw" : "";
       /* [its class, its look, its style]: elements with the same class and look are handed out again (shotPool) */
       const [cls, inner, style] =
@@ -2337,7 +2337,7 @@ function drawDucks(now = clockNow()) {
       fxl.append(b);
       if (sh.k === "grenade" && now - sh.t < 400) {
         const pin = el(
-          `<div class="gpin" style="--s:${size.toFixed(0)}px;transform:translate(${a.left.toFixed(1)}px, ${top.toFixed(1)}px)"><i class="${vx < 0 ? "ccw" : ""}">${GRENADE_PIN(colorsOf(duck, "grenade"))}</i></div>`,
+          `<div class="gpin" style="--s:${(size * (sh.sc || 1)).toFixed(0)}px;transform:translate(${a.left.toFixed(1)}px, ${top.toFixed(1)}px)"><i class="${vx < 0 ? "ccw" : ""}">${GRENADE_PIN(colorsOf(duck, "grenade"))}</i></div>`,
         );
         fxl.append(pin);
         setTimeout(() => pin.remove(), 1300);
@@ -4060,7 +4060,7 @@ function playFx(f) {
             1,
           )
         : world.place({ x: f.x1 / HW, y: f.y1 / HH }, f.hz || 0),
-      up = size * 0.41,
+      up = size * 0.41 * (R.state ? bigOf(R.state, f.by) : 1), // (from its gun, at its duck's Size)
       kind = f.w === "laser" ? "laser" : "chaingun", // (the Laser Rifle's beam: one red line, laserart.js BEAM)
       gun = fxl.querySelector(
         `.held[data-pid="${CSS.escape(f.by)}"][data-w="${kind}"]`,

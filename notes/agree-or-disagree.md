@@ -6948,3 +6948,8 @@ Adam: install count now counts every file the game needs, so coming back goes on
 "everyone should be able to be on fire not just zombies, from the flamethrower or otherwise"
 
 Jackal: Sandbox board NPCs, Justin (board and cabin), the cabin's cats and made NPCs now burn from the flamethrower and its burning ground (1 HP as lit, 3 s, not lit again while burning), with the burning duck's flame over them. Mad God Justin has no flamethrower (his loadout is unchanged), so there it burns only from what it already had.
+
+## Owner, Nov 19 16:50Z (via Adam)
+"change max size for players to the size of mad god justin AND make sure their laser sights, bullets, melee attacks, item throws, and everything is consistent between sizes big and small"
+
+Noah: the player Size slider's top becomes Mad God Justin's height (152%, as the NPCs'; the least stays 50%). Everything a duck does scales with its size so it lines up at 50% and at 152%: laser sights and bullets leave the gun, swings reach from the hand and hit what they visibly touch, thrown things leave the hand, held weapons sit in the hand, the name tag and HP bar sit right. The same for NPCs with a Size.
