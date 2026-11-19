@@ -46,7 +46,7 @@ import { onCabin, sbzOn, cabinLive, cabinSpawn, cabinTick } from "./sbcabin.js";
 import { listsOf, decide, MAD } from "./sbbrain.js";
 import { botDuck } from "./botduck.js";
 import { JUSTIN } from "./hangout/npcart.js";
-import { armUp, cleanArms, fight, keepAt } from "./sbarms.js";
+import { armUp, cleanArms, fight, keepAt, reachTo } from "./sbarms.js";
 import { nbThink, nbOrder, nbKeep } from "./sbnumberat.js";
 
 /* the boxes that aren't numbers: the name over it, its key, what spawns, and a respawn's "who" */
@@ -888,14 +888,15 @@ function boardTick(s, now, H) {
     if (!to) continue;
     const x0 = o.x,
       bd = far(me, to),
+      claw = reachTo(WAVE.CLAW, o, to), // (its hitbox, and its foe's: sbarms.js)
       sp = WAVE.SPEED * (o.sv || 1) * (o.run && bd > 4 ? 1.5 : 1); // (can sprint: half as fast again while far off)
     if (d.flee) {
       const go = Math.min(1, (sp * dt) / Math.max(bd, 1e-3));
       o.x = Math.min(0.99, Math.max(0.01, o.x - (to.x - o.x) * go));
       o.y = Math.min(0.97, Math.max(0.03, o.y - (to.y - o.y) * go));
       ch = true;
-    } else if (bd > (d.foe ? keepAt(o, WAVE.CLAW) : WAVE.CLAW * 0.8)) {
-      const stop = d.foe ? keepAt(o, WAVE.CLAW) : WAVE.CLAW * 0.8, // (a gun keeps its distance: sbarms.js)
+    } else if (bd > (d.foe ? keepAt(o, claw) : claw * 0.8)) {
+      const stop = d.foe ? keepAt(o, claw) : claw * 0.8, // (a gun keeps its distance: sbarms.js)
         go = Math.min(bd - stop, sp * dt) / bd;
       o.x += (to.x - o.x) * go;
       o.y += (to.y - o.y) * go;
@@ -904,7 +905,7 @@ function boardTick(s, now, H) {
     if (o.wp && Math.abs(o.x - x0) > 1e-4) o.f = o.x > x0 ? 1 : -1; // (a made NPC's weapon points the way it goes, or at what it hits)
     if (
       d.foe &&
-      fight(o, to, bd, WAVE.CLAW, now, WAVE.CLAW_MS, (dm, w) =>
+      fight(o, to, bd, claw, now, WAVE.CLAW_MS, (dm, w) =>
         strike(s, now, me, d.foe, H, o, dm, w),
       )
     ) {

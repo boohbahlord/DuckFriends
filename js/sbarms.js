@@ -47,6 +47,10 @@ export function armUp(wp) {
   };
 }
 /* how near it keeps to what it's after: most of its shortest gun's reach, else close enough to swing (claw) */
+/* how far o's claw reaches to t: a Numberat file's hitbox (o.hb, sbnumberat.js) makes it reach further, and a bigger
+   one is reached sooner (both 1: the claw as it was) */
+export const reachTo = (claw, o, t) =>
+  (claw * ((o.hb || 1) + ((t && t.o && t.o.hb) || 1))) / 2;
 export const keepAt = (o, claw) => {
   const g = gunsOf(o);
   return g.length
