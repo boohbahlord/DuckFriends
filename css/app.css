@@ -14527,6 +14527,30 @@ html.moving .board.quake {
     transform: scaleX(var(--face, 1)) translateX(14%) rotate(8deg);
   }
 }
+/* Sandbox's NPCs with a name (Justin, a Test NPC, sbnpcart.js): the players' name tag, over its head (its HP bar is
+   under its feet); on Duck Cabin its feet are where it stands, so it goes up its height (--top, sbspawnview.js) */
+.sb-npc-name {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%);
+  font-size: calc(0.7rem * var(--ts, 1));
+  opacity: 0.72;
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--panel) 70%, transparent);
+  border-radius: 0.4rem;
+  padding: 0 0.3rem;
+  pointer-events: none;
+}
+.l4z .sb-npc-name {
+  bottom: auto;
+  top: var(--top, 0);
+  transform: translate(-50%, -100%);
+}
+.mgj-z.dead .sb-npc-name,
+.l4z.dead .sb-npc-name {
+  display: none;
+}
 /* Mad God Justin's pickups: a glowing token that fades in where it lies, bobbing a little */
 .mgj-pick {
   position: absolute;
@@ -19757,6 +19781,33 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .sb-row:has(.sb-cols),
 .sb-row:has(.sb-what) {
   grid-template-columns: auto minmax(0, 1fr);
+}
+.sb-row:has(.sb-acts) {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+}
+.sb-row:has(.sb-acts) > span:first-child {
+  padding-top: 0.3rem; /* (level with its dropdown's first line, open or shut) */
+}
+/* a behavior list: a dropdown of checkboxes, what's picked written on it */
+.sb-acts {
+  min-width: 0;
+  justify-self: end;
+  max-width: 100%;
+}
+.sb-acts summary {
+  cursor: pointer;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0.2rem 0.45rem;
+  border-radius: 0.45rem;
+  border: 0.12rem solid var(--line);
+  background: var(--panel2);
+}
+.sb-acts[open] .sb-what {
+  margin-top: 0.35rem;
 }
 .sb-col {
   width: 1.5rem;

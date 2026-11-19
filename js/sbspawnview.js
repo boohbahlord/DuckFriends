@@ -7,7 +7,7 @@
    of Sandbox's own (registry.js only: "sandbox"). */
 import { activity } from "./hangout/registry.js";
 import { W, H, heightAt, sortY, seenFrom } from "./hangout/layout.js";
-import { zombieURL, zombieBox } from "./l4ddart.js";
+import { npcURL, npcBox, npcName, isZombie } from "./sbnpcart.js";
 import { goreFree } from "./wounds.js";
 import { clawMark } from "./l4dd.js";
 import { esc, openWindow } from "./ui.js";
@@ -18,7 +18,10 @@ import {
   SB_BOXES,
   SB_FLAGS,
   SB_WHAT,
+  SB_WHAT_ZMAPS,
+  SB_ACTS,
   SB_COLORS,
+  baseMode,
 } from "./sandboxrules.js";
 import { boxText, boxWhy, spawnsHere } from "./sbspawn.js";
 
@@ -96,6 +99,36 @@ export function sbNearPoint(s, me) {
 /* ---------- its settings window ---------- */
 const row = (f, b, t, why) =>
   `<label class="sb-row${why ? " bad" : ""}" data-row="${f}"><span>${esc(b.name)}</span><input class="sb-box" data-f="${f}" value="${esc(t)}" maxlength="${f === "key" ? 1 : 80}" spellcheck="false" autocomplete="off"><em class="sb-why">${esc(why)}</em></label>`;
+/* a behavior list (sbbrain.js) as a dropdown of checkboxes: Players, Everything, each kind, each spawn (by its color,
+   named as it's named). Its summary says what's picked */
+const summaryOf = (on) =>
+  on.map((c) => c.dataset.label).join(", ") || "Nothing";
+function actRow(s, p, f, kinds) {
+  const k = p.f[f],
+    picked = (
+      k
+        ? boxText(p, f)
+        : f === "target" && boxText(p, "what").includes("zombie")
+          ? "players"
+          : ""
+    )
+      .toLowerCase()
+      .split(/[\s,]+/), // (never set: a zombie goes after the players, sbbrain.js)
+    opts = [
+      ["players", "Players"],
+      ["everything", "Everything"],
+      ...kinds.map((k) => [k, SB_WHAT[k]]),
+      ...Object.values(ptsOf(s))
+        .filter((q) => q.k === "spawn")
+        .map((q) => [q.col, `${boxText(q, "name")} spawn`]),
+    ].filter((o, i, all) => all.findIndex((x) => x[0] === o[0]) === i),
+    boxes = opts.map(
+      ([v, n]) =>
+        `<label><input type="checkbox" value="${esc(v)}" data-label="${esc(n)}"${picked.includes(v) ? " checked" : ""}> ${esc(n)}</label>`,
+    );
+  const on = opts.filter(([v]) => picked.includes(v)).map(([, n]) => n);
+  return `<div class="sb-row"><span>${esc(SB_ACTS[f])}</span><details class="sb-acts" data-act="${f}"><summary>${esc(on.join(", ") || "Nothing")}</summary><span class="sb-what">${boxes.join("")}</span></details></div>`;
+}
 /* id: the point; getR: () => the room */
 export function sbSettings(getR, id) {
   const R = getR(),
@@ -104,7 +137,11 @@ export function sbSettings(getR, id) {
   const typed = (f) => (p.f[f] ? p.f[f].t : boxText(p, f)),
     why = (f) => (p.f[f] ? boxWhy(f, p.f[f].t) : ""),
     spawn = p.k === "spawn",
-    what = boxText(p, "what").split(/[\s,]+/);
+    what = boxText(p, "what").split(/[\s,]+/),
+    kinds = Object.keys(SB_WHAT).filter(
+      (k) => baseMode(R.state.options) !== "l4dd" || SB_WHAT_ZMAPS.includes(k),
+    ), // (the zombie maps: zombies only, for now)
+    pick = boxText(p, "pick");
   const html = `<h2>${spawn ? "Spawn" : "Respawn"}</h2>
   <div class="sb-set">
     ${row("name", { name: "Name" }, typed("name"), why("name"))}
@@ -118,14 +155,28 @@ export function sbSettings(getR, id) {
       .join("")}</span></div>
     ${
       spawn
-        ? `<div class="sb-row"><span>Spawns</span><span class="sb-what">${Object.entries(
-            SB_WHAT,
-          )
+        ? `<div class="sb-row"><span>Spawns</span><span class="sb-what">${kinds
             .map(
-              ([k, n]) =>
-                `<label><input type="checkbox" data-what="${k}"${what.includes(k) ? " checked" : ""}> ${esc(n)}</label>`,
+              (k) =>
+                `<label><input type="checkbox" data-what="${k}"${what.includes(k) ? " checked" : ""}> ${esc(SB_WHAT[k])}</label>`,
             )
             .join("")}</span></div>
+    <div class="sb-row" data-row="pick"${what.filter((k) => kinds.includes(k)).length > 1 ? "" : " hidden"}><span>Which one</span><span class="sb-what">${[
+      ["random", "Random"],
+      ["shuffle", "Shuffle"],
+    ]
+      .map(
+        ([v, n]) =>
+          `<label><input type="radio" name="sb-pick" data-pick="${v}"${pick === v ? " checked" : ""}> ${n}</label>`,
+      )
+      .join("")}</span></div>
+    ${
+      baseMode(R.state.options) === "l4dd"
+        ? "" // (the zombie maps' zombies walk their own way for now: l4ddrules.js)
+        : Object.keys(SB_ACTS)
+            .map((f) => actRow(R.state, p, f, kinds))
+            .join("")
+    }
     ${row("key", { name: "Spawn key" }, typed("key"), why("key"))}
     ${Object.entries(SB_BOXES)
       .map(([f, b]) => row(f, b, typed(f), why(f)))
@@ -157,11 +208,27 @@ export function sbSettings(getR, id) {
         timers[f] = setTimeout(() => send({ k: "set", f, v: i.value }), 250);
       });
       w.addEventListener("change", (e) => {
-        if (!e.target.matches("[data-what]")) return;
-        const v = [...w.querySelectorAll("[data-what]:checked")]
-          .map((c) => c.dataset.what)
-          .join(", ");
-        send({ k: "set", f: "what", v });
+        const t = e.target;
+        if (t.matches("[data-pick]"))
+          return send({ k: "set", f: "pick", v: t.dataset.pick });
+        const act = t.closest("[data-act]");
+        if (act) {
+          const on = [...act.querySelectorAll("input:checked")];
+          act.querySelector("summary").textContent = summaryOf(on);
+          return send({
+            k: "set",
+            f: act.dataset.act,
+            v: on.map((c) => c.value).join(", "),
+          });
+        }
+        if (!t.matches("[data-what]")) return;
+        const on = [...w.querySelectorAll("[data-what]:checked")];
+        w.querySelector('[data-row="pick"]').hidden = on.length < 2; // (Random or Shuffle: only with more than one)
+        send({
+          k: "set",
+          f: "what",
+          v: on.map((c) => c.dataset.what).join(", "),
+        });
       });
       w.addEventListener("click", (e) => {
         const c = e.target.closest("[data-col]");
@@ -244,9 +311,9 @@ const ZB = new Map(),
   GLIDE = 220; // ms (a heartbeat is 200)
 function zbEl(o, layer) {
   const el = document.createElement("div"),
-    box = zombieBox(o.l);
+    box = npcBox(o);
   el.className = "l4z";
-  el.innerHTML = `<div class="l4z-body"><img alt="" draggable="false"></div><span class="l4z-hp"><b></b><i></i></span>`;
+  el.innerHTML = `<div class="l4z-body"><img alt="" draggable="false"></div><span class="l4z-hp"><b></b><i></i></span>${npcName(o)}`;
   const body = el.firstChild;
   Object.assign(body.style, {
     width: box.w + "px",
@@ -261,6 +328,8 @@ function zbEl(o, layer) {
     body,
     img: body.firstChild,
     bar: el.querySelector(".l4z-hp"),
+    nm: el.querySelector(".sb-npc-name"),
+    tall: box.feet,
     x: o.x,
     y: o.y,
     fx: o.x,
@@ -320,10 +389,11 @@ activity({
         z.a = o.a;
       }
       if (hide) continue;
-      const hits = s.options.noGore ? goreFree(o.w || "") : o.w || "";
-      if (z.hits !== hits) {
-        z.hits = hits;
-        z.img.src = zombieURL(o.l, o.i, hits);
+      const hits = s.options.noGore ? goreFree(o.w || "") : o.w || "",
+        pic = hits + (o.d && !isZombie(o) ? "+dead" : "");
+      if (z.hits !== pic) {
+        z.hits = pic;
+        z.img.src = npcURL(o, hits);
       }
       const hp = (Math.max(0, o.hp) / (o.l[0] || 1)).toFixed(3);
       if (z.hp !== hp) {
@@ -342,6 +412,8 @@ activity({
       if (z.k !== sc) {
         z.k = sc;
         z.el.style.setProperty("--k", sc.toFixed(3));
+        if (z.nm)
+          z.nm.style.setProperty("--top", (-z.tall * sc - 2).toFixed(1) + "px"); // (its name over its head)
       }
       const zi = Math.round(sortY(z.x, z.y, h)) + 10;
       if (z.zi !== zi) z.el.style.zIndex = z.zi = zi;

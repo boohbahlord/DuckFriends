@@ -382,7 +382,8 @@ import {
   edgeHTML,
   GOLD_CHAIR,
 } from "./mgjart.js";
-import { hitsOf, zombieURL, zombieBox } from "./l4ddart.js";
+import { hitsOf } from "./l4ddart.js";
+import { npcURL, npcBox, npcName, isZombie } from "./sbnpcart.js";
 import { angelic, angelGlow } from "./powerart.js"; // (after l4ddart.js: Noah's note on an old import cycle)
 import { angelOf } from "./l4ddangel.js";
 import { BOMB } from "./jaimebomb.js";
@@ -3013,15 +3014,15 @@ function placeZombies(board, s, now) {
       n = document.createElement("div");
       n.className = "mgj-z";
       n.dataset.i = o.i;
-      n.innerHTML = `<img alt="" draggable="false" src="${zombieURL(o.l, o.i)}"><span class="l4z-hp"><b></b><i></i></span>`;
+      n.innerHTML = `<img alt="" draggable="false" src="${npcURL(o)}"><span class="l4z-hp"><b></b><i></i></span>${npcName(o)}`; // (Sandbox's: a zombie, or a duck of another kind, its name over it: sbnpcart.js)
       n._img = n.firstChild;
-      n._bar = n.lastChild;
+      n._bar = n.querySelector(".l4z-hp");
       n._w = "";
       n._pic = "";
       layer.append(n);
     }
     const c = place(o, 0, 1),
-      box = zombieBox(o.l),
+      box = npcBox(o),
       w = geo.size,
       k = w / box.w,
       face =
@@ -3050,7 +3051,7 @@ function placeZombies(board, s, now) {
         null,
         w,
         BY_WOUND[nw],
-        zombieLook(o.l).color,
+        (isZombie(o) ? zombieLook(o.l) : o.dk || {}).color,
       );
       if (nw === "e" && !ng)
         fxEye(c.left, c.top, box.h * k * 0.75, Math.random() < 0.5 ? -1 : 1);
@@ -3058,10 +3059,10 @@ function placeZombies(board, s, now) {
     n._hp = o.hp;
     n._w = wc;
     /* its wounds on its picture (Gore off: only a knocked-off hat), made only when they change */
-    const pic = ng ? goreFree(wc) : wc;
+    const pic = (ng ? goreFree(wc) : wc) + (o.d && !isZombie(o) ? "+dead" : "");
     if (n._pic !== pic) {
       n._pic = pic;
-      n._img.src = zombieURL(o.l, o.i, pic);
+      n._img.src = npcURL(o, ng ? goreFree(wc) : wc);
     }
     /* its HP bar: shown once it's hurt, then stays; a hit's white drains to the red (css/app.css, .l4z-hp) */
     const sh = (Math.max(0, o.hp) / (o.l[0] || 1)).toFixed(3);

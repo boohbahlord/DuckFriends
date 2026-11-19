@@ -76,6 +76,7 @@ import { ARMS, SLOT_ODDS, zombieTakes, pierceOf, ALL_HP } from "./l4ddrules.js";
 import { holdDown, onGetUp, invuln, hurtFx } from "./hangout/death.js";
 import { sbOnBoard } from "./sandboxrules.js";
 import { hitCode } from "./wounds.js";
+import { MAD } from "./sbbrain.js";
 import {
   E_LINES,
   DEATH_LINES,
@@ -2588,6 +2589,7 @@ export function mgjZombieHit(s, near, w, now, by, sh = null) {
     o.hp = t.dmg >= ALL_HP ? 0 : o.hp - t.dmg;
     o.w = (o.w || "") + hitCode(o.w || "", w, t.head); // (its wounds, as Dead Ducks Arcade's zombie gets them: l4ddrules.js wound)
     if (o.hp <= 0) o.d = now;
+    if (z.sb && by) o.mad = ["p:" + by, now + MAD]; // (Sandbox's: it goes after whoever hurt it, sbbrain.js)
     if (o.d && (w === "grenade" || w === "glauncher") && !o.w.includes("g0"))
       o.w += "g0"; // (a blast's gore: every chunk, cuts and big holes, as there)
     fx({ kind: t.head ? "l4crit" : "hitmark", b: 1, x: o.x, y: o.y });

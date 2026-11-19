@@ -78,8 +78,23 @@ export const SB_FLAGS = {
   jump: { name: "Can jump", kind: "bool", def: "f" },
   climb: { name: "Can climb walls", kind: "bool", def: "t" },
 };
-/* what can spawn: the zombie now; a blank NPC, Justin, the test-mode ducks and made NPCs come with the next stages */
-export const SB_WHAT = { zombie: "Zombie" };
+/* what can spawn (the owner's Sandbox file): a zombie; a Blank NPC (a duck with a random look: "randomize appearance" is
+   on by default); Justin (as he is in the cabin); a duck from Test Mode (a computer's look and name, and no vote: it
+   isn't a player). Made NPCs come with stage 3. The zombie maps take only zombies for now (their guns hit only theirs) */
+export const SB_WHAT = {
+  zombie: "Zombie",
+  blank: "Blank NPC",
+  justin: "Justin",
+  test: "Test NPC",
+};
+export const SB_WHAT_ZMAPS = ["zombie"];
+/* a spawn's four behavior lists: each takes Players, Everything, a kind (SB_WHAT) and a spawn by its name or color */
+export const SB_ACTS = {
+  target: "Target",
+  ignore: "Ignore",
+  avoid: "Avoid",
+  protect: "Protect",
+};
 /* the colors a spawn can have (the board's own): its ring on the screen, and which respawns take its NPCs */
 export const SB_COLORS = {
   red: "#ff4d4d",

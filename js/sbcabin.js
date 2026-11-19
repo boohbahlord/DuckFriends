@@ -9,8 +9,7 @@
 import { rule } from "./hangout/registry.js";
 import { W, H, heightAt } from "./hangout/layout.js";
 import { isGhost } from "./hangout/death.js";
-import { baseMode, isSb, SB_BOXES } from "./sandboxrules.js";
-import { valueOf } from "./numerat.js";
+import { baseMode, isSb } from "./sandboxrules.js";
 import {
   chaseField,
   chaseStep,
@@ -21,10 +20,12 @@ import {
 } from "./l4ddrules.js";
 import { hitCode } from "./wounds.js";
 import { WAVE, zLook } from "./mgjrules.js";
+import { MAD } from "./sbbrain.js";
 
 export const onCabin = (s) => isSb(s) && baseMode(s.options) === "hang";
 const SPRINT = { K: 1.5, FAR: 300 }; // (half as fast again, while more than 300 px off)
-const NEAR = 12; // (the most others each one is kept apart from in a beat)
+const NEAR = 12, // (the most others each one is kept apart from in a beat)
+  FIELDS = 6; // (the most new ways worked out in a beat, besides the one to the ducks)
 
 const zbOf = (s) => (s.hang && s.hang.sbz && s.hang.sbz.zb) || [];
 /* the zombies standing now, each { i, x, y (shares of the map), sp } */
@@ -58,6 +59,7 @@ export function cabinSpawn(s, x, y, o) {
           sv: o.sv,
           dm: o.dm,
           ...(o.run ? { run: 1 } : {}),
+          ...(o.k ? { k: o.k, dk: o.dk, ...(o.nm ? { nm: o.nm } : {}) } : {}),
         },
       ],
     },
@@ -73,45 +75,63 @@ export function cabinTick(s, now, H0) {
   const dt = Math.min(0.35, Math.max(0, (now - (z.t || now)) / 1000)),
     zb = z.zb.map((o) => ({ ...o })),
     live = zb.filter((o) => !o.d),
-    ducks = H0.ducks(s)
-      .filter((id) => !isGhost(s, id))
-      .map((id) => {
-        const p = s.pos[id],
-          x = p.x * W,
-          y = p.y * H;
-        return { id, xy: [x, y], zz: +p.z || heightAt(x, y) };
-      });
+    Hs = { ...H0, ducks: (s) => H0.ducks(s).filter((id) => !isGhost(s, id)) },
+    duckAt = (id) => ({ x: s.pos[id].x * W, y: s.pos[id].y * H }),
+    pls = Hs.ducks(s).map((id) => {
+      const q = duckAt(id);
+      return { xy: [q.x, q.y], zz: +s.pos[id].z || heightAt(q.x, q.y) };
+    }); // (the ducks it never walks into)
   const { RX, RY, CLAW } = Z_ROOM,
-    room = (o, q) => Math.hypot((o.x - q.xy[0]) / RX, (o.y - q.xy[1]) / RY);
-  const dist =
-    ducks.length && live.length ? chaseField(ducks.map((q) => q.xy)) : null;
-  for (const o of live) {
-    let best = null,
-      bd = Infinity;
-    for (const q of ducks) {
-      const d = room(o, q);
-      if (d < bd) {
-        bd = d;
-        best = q;
-      }
-    }
-    if (!best) continue;
-    const far = Math.hypot(o.x - best.xy[0], o.y - best.xy[1]),
-      v = zWalk() * (o.sv || 1) * (o.run && far > SPRINT.FAR ? SPRINT.K : 1);
-    if (bd > CLAW * 0.9) {
-      const x0 = o.x;
-      chaseStep(o, dist, best.xy, v * dt, ducks);
-      if (Math.abs(o.x - x0) > 0.5) o.f = o.x > x0 ? 1 : -1;
-    }
-    if (bd <= CLAW && now - o.a >= WAVE.CLAW_MS) {
-      o.a = now;
-      o.f = best.xy[0] < o.x ? -1 : 1;
-      H0.claw(
-        s,
-        best.id,
-        Math.max(0.1, valueOf({ ok: o.dm }, SB_BOXES.damage) || 1),
-        now,
+    far = (a, b) => Math.hypot((a.x - b.x) / RX, (a.y - b.y) / RY);
+  /* the ways: one field to every duck (most go after the ducks), and a few more a beat to whatever else they're after
+     (the others walk straight, turning round what's in the way, until there's one for them) */
+  const toDucks =
+      pls.length && live.length ? chaseField(pls.map((q) => q.xy)) : null,
+    fields = new Map(),
+    fieldTo = (t) => {
+      if (t.duck) return toDucks;
+      const k = Math.floor(t.x / 40) * 1000 + Math.floor(t.y / 40);
+      if (!fields.has(k) && fields.size < FIELDS)
+        fields.set(k, chaseField([[t.x, t.y]]));
+      return fields.get(k) || null;
+    };
+  for (const { me, o, d } of H0.think(
+    s,
+    now,
+    live,
+    (o) => ({ x: o.x, y: o.y }),
+    Hs,
+    far,
+    duckAt,
+  )) {
+    const to = d.goal || d.flee;
+    if (!to) continue;
+    const bd = far(me, to),
+      v =
+        zWalk() *
+        (o.sv || 1) *
+        (o.run && Math.hypot(o.x - to.x, o.y - to.y) > SPRINT.FAR
+          ? SPRINT.K
+          : 1),
+      x0 = o.x;
+    if (d.flee) {
+      const dx = o.x - to.x,
+        dy = o.y - to.y,
+        n = Math.hypot(dx, dy) || 1;
+      chaseStep(
+        o,
+        null,
+        [o.x + (dx / n) * 200, o.y + (dy / n) * 200],
+        v * dt,
+        pls,
       );
+    } else if (bd > CLAW * 0.9)
+      chaseStep(o, fieldTo(to), [to.x, to.y], v * dt, pls);
+    if (Math.abs(o.x - x0) > 0.5) o.f = o.x > x0 ? 1 : -1;
+    if (d.foe && bd <= CLAW && now - o.a >= WAVE.CLAW_MS) {
+      o.a = now;
+      o.f = to.x < o.x ? -1 : 1;
+      H0.strike(s, now, me, d.foe, Hs, o);
     }
   }
   apart(live, RX, RY);
@@ -195,6 +215,7 @@ rule("sbz", {
                 ...q,
                 hp: Math.max(0, hp),
                 w: wd,
+                mad: ["p:" + by, now + MAD], // (it goes after whoever hurt it: sbbrain.js)
                 ...(hp <= 0 ? { d: now } : {}),
               }
             : q,

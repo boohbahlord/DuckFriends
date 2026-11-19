@@ -24,6 +24,8 @@ import {
   SB_BOXES,
   SB_FLAGS,
   SB_WHAT,
+  SB_WHAT_ZMAPS,
+  SB_ACTS,
   SB_COLORS,
   SB_KEYS_TAKEN,
   SB_POINTS,
@@ -31,6 +33,9 @@ import {
 import { Z_MOST, l4Spawn, l4Live } from "./l4ddrules.js";
 import { WAVE, zLook } from "./mgjrules.js";
 import { onCabin, cabinLive, cabinSpawn, cabinTick } from "./sbcabin.js";
+import { listsOf, decide, MAD } from "./sbbrain.js";
+import { botDuck } from "./botduck.js";
+import { JUSTIN } from "./hangout/npcart.js";
 
 /* the boxes that aren't numbers: the name over it, its key, what spawns, and a respawn's "who" */
 export const SB_TEXT = {
@@ -61,6 +66,17 @@ export const SB_TEXT = {
     check: (t) =>
       words(t).length ? "" : "Write a color, a spawn's name or players",
   },
+  pick: {
+    name: "Pick",
+    check: (t) =>
+      ["random", "shuffle"].includes(t.trim()) ? "" : "Random or shuffle",
+  },
+  ...Object.fromEntries(
+    Object.entries(SB_ACTS).map(([f, name]) => [
+      f,
+      { name, check: (t) => (t.length <= 200 ? "" : "200 letters at most") },
+    ]),
+  ),
 };
 const words = (t) =>
   String(t || "")
@@ -84,6 +100,7 @@ export function boxText(p, f) {
   if (f === "name")
     return p ? `${p.col[0].toUpperCase()}${p.col.slice(1)}` : "";
   if (f === "what") return "zombie";
+  if (f === "pick") return "random";
   if (f === "who") return p ? p.col : "";
   if (f === "key") return "";
   const b = boxOf(f);
@@ -108,13 +125,47 @@ export function liveNpcs(s) {
 }
 
 /* ---------- making one ---------- */
+/* the kind spawn id makes next: its one kind, or with more than one, any of them (Random) or each once in a random order
+   before any again (Shuffle: its bag in s.sb.bag). The zombie maps make only zombies (SB_WHAT_ZMAPS) */
+function kindFor(s, id, p) {
+  let ks = words(boxText(p, "what")).filter((k) => SB_WHAT[k]);
+  if (baseMode(s.options) === "l4dd")
+    ks = ks.filter((k) => SB_WHAT_ZMAPS.includes(k));
+  if (ks.length < 2) return ks[0] || null;
+  if (boxText(p, "pick") !== "shuffle")
+    return ks[Math.floor(Math.random() * ks.length)];
+  const bags = { ...((s.sb && s.sb.bag) || {}) };
+  let bag = (bags[id] || []).filter((k) => ks.includes(k));
+  if (!bag.length) bag = [...ks].sort(() => Math.random() - 0.5);
+  const k = bag.shift();
+  bags[id] = bag;
+  s.sb = { ...s.sb, bag: bags };
+  return k;
+}
+/* what a duck-shaped NPC wears, and the name over it: a Blank NPC a random look, Justin his, a Test NPC a computer's
+   look and name */
+function dressFor(s, k) {
+  if (k === "justin") return { dk: { ...JUSTIN }, nm: "Justin" };
+  if (k === "blank") return { dk: botDuck() };
+  if (k === "test") {
+    const taken = new Set(Object.values(s.players).map((P) => P.name)); // (never a computer player's name: net.js botPlayer)
+    let n = ((s.sb && s.sb.tn) || 0) + 1;
+    while (taken.has("Computer-" + n)) n++;
+    s.sb = { ...s.sb, tn: n };
+    return { dk: botDuck(), nm: "Computer-" + n };
+  }
+  return {};
+}
 /* one NPC from spawn id at (x, y) (its spawn, or a respawn); false at the cap */
 function makeOne(s, id, at) {
   const p = pointsOf(s)[id];
   if (!p || liveNpcs(s).length >= Z_MOST) return false;
+  const k = kindFor(s, id, p);
+  if (!k) return false;
   const hp = Math.max(1, num(p, "hp") || 1),
     sv = num(p, "speed") || 1, // (picked once and kept: "a number is selected and it sticks with it")
-    dm = boxText(p, "damage");
+    dm = boxText(p, "damage"),
+    kind = k === "zombie" ? {} : { k, ...dressFor(s, k) };
   let i;
   if (sbOnBoard(s)) {
     const l = zLook();
@@ -132,6 +183,7 @@ function makeOne(s, id, at) {
       sv,
       dm,
       ...(flag(p, "sprint") ? { run: 1 } : {}),
+      ...kind,
     });
   } else if (onCabin(s))
     i = cabinSpawn(s, at.x, at.y, {
@@ -140,6 +192,7 @@ function makeOne(s, id, at) {
       dm,
       sp: id,
       run: flag(p, "sprint"),
+      ...kind,
     });
   else i = l4Spawn(s, at.x, at.y, { hp, speed: sv, sp: id, dm });
   if (!i) return false;
@@ -326,8 +379,71 @@ export function sbTick(s, now, H) {
   }
   if (ch) s.sb = { ...s.sb, run };
   if (sbOnBoard(s) && s.mz && s.mz.sb) ch = boardTick(s, now, H) || ch;
-  if (onCabin(s)) ch = cabinTick(s, now, H) || ch;
+  if (onCabin(s)) ch = cabinTick(s, now, { ...H, think, strike }) || ch;
   return ch;
+}
+
+/* ---------- thinking: the behavior lists (sbbrain.js), the same on every map ----------
+   npcs: the NPCs up (any shape), at(o) and duckAt(id): an NPC's and a duck's spot as { x, y } in the map's units (the
+   board: shares of it; the worlds: world px), far(a, b): duck lengths between two. Gives each its decision; o.fo keeps what it is after (a guard sees
+   what comes for its charge) */
+export function think(s, now, npcs, at, H, far, duckAt) {
+  const pts = pointsOf(s),
+    memo = new Map(),
+    set = (p, f) => !!(p.f && p.f[f]),
+    lists = (o) => {
+      const k = o.sp + "|" + (o.k || "zombie");
+      if (!memo.has(k))
+        memo.set(
+          k,
+          listsOf(
+            pts[o.sp] || { f: {} },
+            o,
+            (p, f) => (p.col ? boxText(p, f) : ""),
+            set,
+          ),
+        );
+      return memo.get(k);
+    },
+    tags = new Map();
+  for (const [id, p] of Object.entries(pts))
+    tags.set(id, [p.col, boxText(p, "name").toLowerCase()]);
+  const ducks = H.ducks(s).map((id) => ({
+      key: "p:" + id,
+      duck: true,
+      id,
+      ...duckAt(id),
+    })),
+    them = npcs.map((o) => ({
+      key: "n:" + o.i,
+      k: o.k || "zombie",
+      tags: tags.get(o.sp) || [],
+      mad: o.mad,
+      fo: o.fo,
+      o,
+      ...at(o),
+    })),
+    all = [...ducks, ...them];
+  return them.map((me) => {
+    const d = decide(me, lists(me.o), all, ducks, far, now),
+      fo = d.foe ? d.foe.key : undefined;
+    if (me.o.fo !== fo) {
+      if (fo) me.o.fo = fo;
+      else delete me.o.fo;
+    }
+    return { me, o: me.o, d };
+  });
+}
+/* a claw of NPC o (thing me) on foe: a duck loses HP as from a zombie (H.claw); an NPC loses it too, and goes after
+   whoever clawed it (sbbrain.js MAD) */
+export function strike(s, now, me, foe, H, o) {
+  const dmg = Math.max(0.1, valueOf({ ok: o.dm }, SB_BOXES.damage) || 1);
+  if (foe.duck) return H.claw(s, foe.id, dmg, now);
+  const q = foe.o;
+  if (!q || q.d) return;
+  q.hp = Math.max(0, Math.round((q.hp - dmg) * 10) / 10);
+  q.mad = [me.key, now + MAD];
+  if (q.hp <= 0) q.d = now;
 }
 
 /* ---------- the board's zombies: as Mad God Justin's wave zombies walk (mgjrules.js wavesTick), at each one's speed and
@@ -341,37 +457,31 @@ function boardTick(s, now, H) {
     dt = Math.min(0.4, Math.max(0, (now - (z.t || now)) / 1000));
   z.t = now;
   const live = z.zb.filter((o) => !o.d),
-    ducks = H.ducks(s);
+    far = (a, b) => Math.hypot((a.x - b.x) / RX, (a.y - b.y) / RY);
   let ch = false;
-  for (const o of live) {
-    let best = null,
-      bd = Infinity;
-    for (const id of ducks) {
-      const p = s.pos[id],
-        d = Math.hypot((p.x - o.x) / RX, (p.y - o.y) / RY);
-      if (d < bd) {
-        bd = d;
-        best = id;
-      }
-    }
-    if (!best) continue;
-    const p = s.pos[best],
+  const spot = (o) => ({ x: o.x, y: o.y });
+  for (const { me, o, d } of think(s, now, live, spot, H, far, (id) =>
+    spot(s.pos[id]),
+  )) {
+    const to = d.goal || d.flee;
+    if (!to) continue;
+    const bd = far(me, to),
       sp = WAVE.SPEED * (o.sv || 1) * (o.run && bd > 4 ? 1.5 : 1); // (can sprint: half as fast again while far off)
-    if (bd > WAVE.CLAW * 0.8) {
+    if (d.flee) {
+      const go = Math.min(1, (sp * dt) / Math.max(bd, 1e-3));
+      o.x = Math.min(0.99, Math.max(0.01, o.x - (to.x - o.x) * go));
+      o.y = Math.min(0.97, Math.max(0.03, o.y - (to.y - o.y) * go));
+      ch = true;
+    } else if (bd > WAVE.CLAW * 0.8) {
       const go = Math.min(bd - WAVE.CLAW * 0.8, sp * dt) / bd;
-      o.x += (p.x - o.x) * go;
-      o.y += (p.y - o.y) * go;
+      o.x += (to.x - o.x) * go;
+      o.y += (to.y - o.y) * go;
       ch = true;
     }
-    if (bd <= WAVE.CLAW && now - o.a >= WAVE.CLAW_MS) {
+    if (d.foe && bd <= WAVE.CLAW && now - o.a >= WAVE.CLAW_MS) {
       o.a = now;
-      o.f = p.x < o.x ? -1 : 1;
-      H.claw(
-        s,
-        best,
-        Math.max(0.1, valueOf({ ok: o.dm }, SB_BOXES.damage) || 1),
-        now,
-      );
+      o.f = to.x < o.x ? -1 : 1;
+      strike(s, now, me, d.foe, H, o);
       ch = true;
     }
   }
