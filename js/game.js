@@ -3088,6 +3088,17 @@ function placeZombies(board, s, now) {
     }
     n._hp = o.hp;
     n._w = wc;
+    /* on fire (the flamethrower or any fire: rules.js flameThings, o.bn): the burning duck's flame over it for 3 s */
+    const lit = (o.bn || 0) > clockNow() && !o.d;
+    if (n._lit !== lit) {
+      n._lit = lit;
+      if (lit && !n.querySelector(".gduck-fire"))
+        n.insertAdjacentHTML(
+          "beforeend",
+          `<span class="gduck-fire" aria-hidden="true">${FLAME}</span>`,
+        );
+      n.classList.toggle("onfire", lit);
+    }
     /* its wounds on its picture (Gore off: only a knocked-off hat), made only when they change */
     const pic =
       (ng ? goreFree(wc) : wc) +

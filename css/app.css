@@ -15179,7 +15179,8 @@ html.moving .eye-tears .tdrop.t2 {
   background: #fff;
   transition: transform 0.18s ease-in 0.12s;
 }
-.l4z.onfire .gduck-fire {
+.l4z.onfire .gduck-fire,
+.mgj-z.onfire .gduck-fire {
   display: block;
   bottom: 6%;
   width: 104%;
