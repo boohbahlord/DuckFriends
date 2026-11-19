@@ -2734,6 +2734,16 @@ export const MERCH = {
   GREET: 220, // (world px: a duck this near gets a greeting)
   SAY: 3500, // (ms a line shows: l4dd.js)
   LATE: 25000, // (ms: stuck on his way in, he's at his spot; running away this long, he's gone)
+  /* Survival (the owner's, Nov 19 19:27Z and 19:47Z): each rest a 50% chance he has a gun, and shot or hurt he fights
+     back with it (a pistol, half the time a revolver; Dyson a chain gun; Lucifer never: he always runs); after the
+     fight he runs off half the time, else stays on the map, hiding */
+  ARMED: 0.5,
+  GUN_GAP: {
+    handgun: [900, 1400],
+    revolver: [1000, 1500],
+    chaingun: [500, 800],
+  }, // (ms between his shots: my guesses)
+  FIGHT_MS: 8000, // (ms he fights back before he runs or hides)
 };
 export const merchantOf = (s) => (s && s.hang && s.hang.l4m) || null;
 /* is he standing at his spot, selling? */
@@ -2932,12 +2942,22 @@ function merchantCome(s, now, sure = false) {
     stock: merchantStock(s),
     ups: upOffers(s),
     say: null,
+    ...(isSurv(s) && id !== "lucifer" && Math.random() < MERCH.ARMED
+      ? {
+          gun:
+            id === "dyson"
+              ? "chaingun"
+              : Math.random() < 0.5
+                ? "revolver"
+                : "handgun",
+        }
+      : {}),
   };
 }
 /* the zombies are coming: a leaving line, and he runs */
 function merchantGo(s, now) {
   const m = merchantOf(s);
-  if (!m || !["in", "here", "fight"].includes(m.st)) return;
+  if (!m || !["in", "here", "fight", "shoot", "hide"].includes(m.st)) return;
   merchantSays(s, "leave", now);
   merchantRun(s, now);
 }
@@ -2947,7 +2967,7 @@ function merchantRun(s, now) {
   s.hang.l4m = { ...merchantOf(s), st: "out", stock: [] };
 }
 /* he's hurt: by player `by` (a line, once a visit, then he runs) or by a zombie (null); n HP. True when it killed him */
-function merchantHurt(s, by, n, now, w = "", how = "") {
+function merchantHurt(s, by, n, now, w = "", how = "", from = "") {
   const m = merchantOf(s);
   if (!m || m.st === "dead" || m.st === "jump") return false;
   const hp = Math.max(0, m.hp - n),
@@ -3003,6 +3023,20 @@ function merchantHurt(s, by, n, now, w = "", how = "") {
     setMh(s, { hurt: 1 });
     merchantSays(s, "hurt", now); // ("these are the lines they will say once when they take damage from a player")
   }
+  /* Survival: armed, he fights back at whoever hurt him (from: one of the gunmen, "g" + its number; a zombie: the
+     nearest one) */
+  if (m.gun && m.st !== "shoot") {
+    s.hang.l4m = {
+      ...merchantOf(s),
+      st: "shoot",
+      foe: by || from || "",
+      fu: now + MERCH.FIGHT_MS,
+      stock: [],
+    };
+    setMh(s, { route: null, t: now });
+    return false;
+  }
+  if (m.gun) return false; // (fighting already)
   /* Phil the Murderous (merchants.js fights) hits back: from his second hit on he goes after whoever hurt him with
      his knife (the owner's, Nov 18 14:10Z: "he will hit back at players when he takes second damage with a knife (has
      a 50% chance of missing when he uses it and it does 1 damage only)") */
@@ -3059,6 +3093,75 @@ function merchantFight(s, m0, now, dt) {
     f: fx < m.x ? -1 : 1,
   };
 }
+/* Survival: armed and hurt, he shoots back (zs: the zombies, live, as l4Tick moves them) at whoever hurt him: a duck,
+   one of the gunmen, or else the nearest zombie; when it's gone, far off or the fight's time is up, he runs half the
+   time, else hides where he is */
+function merchantShoots(s, zs, now) {
+  const m = merchantOf(s);
+  if (!m || m.st !== "shoot") return;
+  const foe = m.foe || "",
+    gm = s.hang.gm,
+    dist = (q) => Math.hypot(q.x - m.x, q.y - m.y);
+  let t = null;
+  if (s.players[foe]) {
+    if (standing(s, foe) && s.pos[foe]) {
+      const [x, y] = at(s.pos[foe]);
+      t = { id: foe, x, y };
+    }
+  } else if (foe[0] === "g" && gm) {
+    const g = gm.gb.find((q) => "g" + q.i === foe && !q.d && !q.hid);
+    if (g) t = { g, x: g.x, y: g.y };
+  }
+  if (!t) {
+    const z = zs
+      .filter((q) => q.st !== 3 && dist(q) < 400)
+      .sort((a, b) => dist(a) - dist(b))[0];
+    if (z) t = { z, x: z.x, y: z.y };
+  }
+  if (!t || dist(t) > MERCH.FOE_FAR || now > m.fu) {
+    if (Math.random() < 0.5) merchantRun(s, now);
+    else s.hang.l4m = { ...m, st: "hide", foe: "" };
+    return;
+  }
+  const f = t.x < m.x ? -1 : 1;
+  if (
+    now < (mh(s).gx || 0) ||
+    !clearShot(m.x, m.y, t.x, t.y, heightAt(m.x, m.y))
+  ) {
+    if (m.f !== f) s.hang.l4m = { ...m, f };
+    return;
+  }
+  setMh(s, { gx: now + rnd(...MERCH.GUN_GAP[m.gun]) });
+  const A = ARMS[m.gun],
+    len = dist(t) / 64,
+    chance = t.z ? 0.85 : Math.max(0.06, 0.25 - 0.03 * len); // (as the gunmen aim, gunmen.js AIM)
+  let dmg = 0;
+  for (let k = 0; k < (m.gun === "chaingun" ? 5 : 1); k++)
+    if (Math.random() < chance)
+      dmg += Array.isArray(A.dmg) ? rint(A.dmg[0], A.dmg[1]) : +A.dmg || 1;
+  const a = Math.random() * 2 * Math.PI,
+    off = dmg ? 0 : 30 + Math.random() * 40;
+  s.hang.l4m = {
+    ...m,
+    f,
+    sh: [
+      now,
+      Math.round(t.x + Math.cos(a) * off),
+      Math.round(t.y + Math.sin(a) * off * 0.5),
+    ],
+  };
+  if (!dmg) return;
+  if (t.z) {
+    if (strike(s, t.z, dmg, false, null, m.gun)) die(t.z, now - s.hang.l4.t0);
+  } else if (t.g) {
+    if (L4_HOOKS.gm)
+      L4_HOOKS.gm.hurt(s, t.g.i, dmg / 2, m.gun, now, gmHelp(s, now));
+  } else {
+    const p4 = { ...(s.hang.l4p || {}) };
+    hurtDuck(s, p4, t.id, now, m.gun, Math.round(dmg * 5) / 10); // (half, as the gunmen's)
+    s.hang.l4p = p4;
+  }
+}
 /* a shot or a swing at (x, y) by duck `by` with weapon w: on him? (as wildHurt for Justin: 1 HP, a crit all of them) */
 function merchantShot(s, by, x, y, now, w, rx, ry, from) {
   const m = merchantOf(s);
@@ -3105,6 +3208,7 @@ function merchantTick(s, now) {
     dt = Math.min(0.35, Math.max(0.05, (now - (h.tk || now - 200)) / 1000));
   setMh(s, { tk: now });
   if (m0.st === "fight") return merchantFight(s, m0, now, dt);
+  if (m0.st === "shoot" || m0.st === "hide") return; // (Survival: he stands his ground, merchantShoots; or hides there)
   if (!leg || now - (h.t || now) > MERCH.LATE) {
     /* his way done (or taking too long): at his spot, or gone */
     if (m0.st === "in") {
@@ -4965,6 +5069,7 @@ function l4Tick(s, now) {
   ]);
   if (isSurv(s) && L4_HOOKS.gm)
     L4_HOOKS.gm.tick(s, zs, now, mine, gmHelp(s, now)); // (Survival's gunmen: gunmen.js)
+  if (isSurv(s)) merchantShoots(s, zs, now); // (and an armed merchant fighting back)
   jaimesRun(s, zs, now, T);
   nukeTick(s, zs, now, ids);
   boltTick(s, zs, now, ids);
@@ -5118,6 +5223,7 @@ function gmHelp(s, now) {
         pick = pts.length ? fenceSpot(pts) : null;
       return pick ? pick.land : null;
     }, // (a spot just inside a fence that nobody sees: where they come in, "they show up from the outside")
+    mhurt: (i, dmg, w) => merchantHurt(s, null, dmg, now, w, "", "g" + i), // (one of them shot the merchant)
     notice: (k) => addFx(s, { kind: "l4drop", k, who: [], t: now }), // (a notice for everyone, as "The Merchant has Arrived": l4dd.js l4Got)
     speed: WALK * walkOf(s) * NPC_RUN, // (the shared slow speed, npcshared.js)
     T,

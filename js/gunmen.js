@@ -387,12 +387,17 @@ function tick(s, zs, now, ids, H) {
       Object.entries(gm.sp).filter(([, u]) => u > now),
     );
   /* the friendly squad (allies.js) are shot at too, as the ducks are; the sniper keeps to the ducks */
-  const foes = [
-    ...ducks,
-    ...gm.gb
-      .filter((o) => o.k === "f" && !o.d)
-      .map((o) => ({ id: "@f" + o.i, x: o.x, y: o.y, z: 0, fr: o })),
-  ];
+  const m = s.hang.l4m,
+    foes = [
+      ...ducks,
+      ...gm.gb
+        .filter((o) => o.k === "f" && !o.d)
+        .map((o) => ({ id: "@f" + o.i, x: o.x, y: o.y, z: 0, fr: o })),
+      /* the merchant too, when nothing else is near (as Justin out there): armed, he shoots back (l4ddrules.js) */
+      ...(m && ["in", "here", "out", "shoot", "hide"].includes(m.st) && !m.c
+        ? [{ id: "@m", x: m.x, y: m.y, z: 0, j: true, mc: 1 }]
+        : []),
+    ];
   friendsTick(s, gm, ducks, now, H);
   for (const o of gm.gb) {
     if (o.d) continue;
@@ -809,6 +814,8 @@ export function hitOn(s, o, t, dmg, w, now, H) {
     if (!s) return;
     const q = gmOf(s).gb.find((g) => g.i === t.fr.i);
     if (q && !q.d) takes(s, q, null, w, half, now, H);
+  } else if (t.mc) {
+    if (o.k !== "f") H.mhurt(o.i, half, w);
   } else H.hurt(t.id, half, w);
 }
 /* an LMG burst at t: every duck its rounds fly near is suppressed a moment (its screen shakes and darkens) */
@@ -1056,12 +1063,24 @@ function claw(s, i, z, dmg, now, H) {
   });
   return dead;
 }
+/* one of them hit by the merchant (l4ddrules.js merchantShoots): dmg HP, nobody's points */
+function hurt(s, i, dmg, w, now, H) {
+  if (!gmOf(s)) return;
+  const gm = (s.hang.gm = { ...gmOf(s) });
+  gm.gb = gm.gb.map((o) => {
+    if (o.i !== i || o.d) return o;
+    const q = { ...o };
+    takes(s, q, null, w, dmg, now, H);
+    return q;
+  });
+}
 /* the ones a zombie may go for (never the sniper under a tree's crown, nor while he's away: "zombies can't find him") */
 const near = (s) =>
   alive(s).filter((o) => !o.hid && !(o.k === "sn" && o.pk === "tree"));
 
 /* what l4ddrules.js asks (every call brings H: what it lends, gmHelp) */
 L4_HOOKS.gm = {
+  hurt,
   start,
   tick,
   done,

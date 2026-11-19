@@ -161,6 +161,7 @@ import {
 } from "./l4ddart.js";
 import { isSurv, survTime, clockOf } from "./survrules.js";
 import { gunLights, gunBodies } from "./gunmenview.js";
+import { heldOf, npcShot } from "./sbnpcart.js";
 
 const RX = 56,
   RY = 25.6; // (a zombie's room on the floor, as the rules')
@@ -1760,6 +1761,34 @@ function drawMerchant(ctx, t) {
   }
   /* his sprint, and Phil's knife: my own two thin bars, under his tag */
   mBars(s, m, dead);
+  /* Survival: armed and fighting back, his gun in his hand and his shots (l4ddrules.js merchantShoots) */
+  const gun = m.st === "shoot" && !dead ? m.gun || "" : "";
+  if (butler.gun !== gun) {
+    butler.gun = gun;
+    butler.body.querySelector(".sb-held")?.remove();
+    const hd = gun && heldOf({ hw: gun });
+    if (hd) {
+      butler.body.style.setProperty("--feet", butler.feet.toFixed(1) + "px");
+      butler.body.insertAdjacentHTML(
+        "beforeend",
+        `<img class="sb-held" alt="" draggable="false" src="${hd.url}" style="--gw:${hd.gw}">`,
+      );
+    }
+  }
+  if (butler.shot === undefined) butler.shot = m.sh ? m.sh[0] : 0; // (only shots from now on)
+  if (m.sh && m.sh[0] !== butler.shot) {
+    butler.shot = m.sh[0];
+    const to = Wd.toScreen(m.sh[1], m.sh[2], heightAt(m.sh[1], m.sh[2]));
+    if (Date.now() - m.sh[0] < 1500)
+      npcShot(
+        Wd.board.querySelector(".fxl"),
+        p.left + 0.42 * 64 * sc * (m.f < 0 ? -1 : 1),
+        p.top - 28.8 * sc,
+        to.left,
+        to.top - 29 * sc,
+        m.gun,
+      );
+  }
   /* his words */
   const now = clockNow(),
     say = m.say;
@@ -2662,7 +2691,7 @@ activity({
     mapMount(ctx.world.board);
     rainMount(ctx.world.board); // (Downpour's rain: l4ddrain.js)
     pwMount(ctx, layer);
-    angelMount(ctx, layer);
+    if (!isSurv(ctx.state())) angelMount(ctx, layer); // (Survival has no Angel machine: the owner's, Nov 19 19:27Z)
     sqEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     sqEl.classList.add("l4-spinsq");
     sqEl.setAttribute("data-nopx", ""); // (a thin line: no pixel picture of it)
