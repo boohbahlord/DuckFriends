@@ -6986,3 +6986,14 @@ Decided (Adam), plan in /mnt/project-files/sandbox/plan-2026-11-19-1715.md:
 "Because as it stands right now, if you just like look at the number at page when you click in, it's completely terrible. Like I can't use that because I just look at it and I don't even like, I can use complex, I can use NeoVim. Okay. I've used NeoVim for probably like over a year now. I'm not very good at it. I don't know most of the shortcuts, but I can use it. And I've coded things in Bash and other languages before, and I've watched a lot of programming stuff. I mean, I've tried making a coding language for this, so I feel like I know what I'm talking about when I say that the directory structure is so bad that it's a huge problem. Like, it isn't just a little, like, incy-wincy, whatever, do it later. We need to fucking fix the goddamn directory structure and how you navigate through it in the UI on the left of the files in which you're typing from. Not only that, I don't know if I can actually see the number lines in number at. We need to rename that as well, because just saying that name, like, I don't know if the voice to text is picking it up. Number at, right? NUMBERAT is what I've been trying to say. I don't know what the voice to text has been thinking about that and what it thinks or what it picks it up as, but we need to make it to where it has a different name, because saying it out loud just sounds terrible. Like that at the end, it makes it sound like some kind of rat or something. It sounds awful to say. We need a word that just sounds better to say that isn't already used."
 
 Adam: the folders job moved to the front for Solomon (navigation built without a plan step; permissions plan first); line numbers exist (numeratwin.js gutter), Solomon checks they're clearly visible. Name card sent: Tally (recommended), Ordo, Numo, keep Numberat.
+
+## Owner, Nov 19 18:06:16Z (Joseph's thread)
+"seriat it is"
+
+## Owner, Nov 19 18:06:28Z (Joseph's thread)
+"the whole mention of name in  documents or game becomes seriat"
+
+Decided (Adam): the language is Seriat everywhere players and notes see it: every game text, help page, man page, the
+n window, ps, the folder (notes/seriat), old Updates lines, the bible (notes/seriat-bible.md and its .docx/.odt in
+/mnt/project-files/sandbox/numerat/), CLAUDE.md, memory. The words quoted above stay word for word. Inner code names
+(numberat.js, numeratwin.js, profile.numerat) stay. The file ending (.num) waits on the owner (Joseph asked).

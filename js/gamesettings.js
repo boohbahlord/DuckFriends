@@ -750,7 +750,7 @@ const BY_MODE = {
       n: "Everyone can change Sandbox",
       c: ON_OFF,
       cat: "rights",
-      d: "On: every player can use every window: Build, Make an NPC, Numberat, the hotbar's setup, Game settings and Player settings. Off: only the host and the players the host lets in Player settings (P).",
+      d: "On: every player can use every window: Build, Make an NPC, Seriat, the hotbar's setup, Game settings and Player settings. Off: only the host and the players the host lets in Player settings (P).",
     },
     ...SB_RIGHTS.map(([k, n]) => ({
       k: "sbOk" + k.toUpperCase(),

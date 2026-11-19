@@ -1,5 +1,5 @@
 /* ---------- Sandbox: the key windows (stage 1, the shell) ----------
-   The owner's Sandbox file (Nov 19): c shows the cheat sheet, b build, m make an NPC, n Numerat, h the hotbar, g the
+   The owner's Sandbox file (Nov 19): c shows the cheat sheet, b build, m make an NPC, n Seriat, h the hotbar, g the
    game's settings and p the players' settings. One press of its key opens its window and the same key
    again closes it (the owner, Nov 19 16:17Z: "clicked only once instead of twice to get it up, and clicking again closes it"). While a
    window is up, the number keys pick its options instead of switching weapons, and a mouse click on an option does the
@@ -665,12 +665,12 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
       e.stopImmediatePropagation();
       return;
     }
-    /* n opens the Numerat window itself (numeratwin.js), for whoever may write Numerat */
+    /* n opens the Seriat window itself (numeratwin.js), for whoever may write Seriat */
     if (l === "n" && sbMay(getR().state, getR().me, "n")) {
       e.preventDefault();
       e.stopImmediatePropagation();
       if (e.repeat) return;
-      sbClose(k, false); // (another window up: Numerat takes its place)
+      sbClose(k, false); // (another window up: Seriat takes its place)
       paint();
       k.swallow = "n";
       import("./numeratwin.js").then((m) => m.openNumerat()); // (loaded when it's wanted: it brings the command line)
@@ -707,7 +707,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   addEventListener("keydown", keydown, true);
   addEventListener("keyup", keyup, true);
   addEventListener("blur", blur);
-  /* my Numberat folder's names go to the room, so home/ shows it to whoever may look (nbperms.js): every few seconds,
+  /* my Seriat folder's names go to the room, so home/ shows it to whoever may look (nbperms.js): every few seconds,
      sent only when they changed or a new Sandbox started */
   const share = setInterval(async () => {
     const R = getR();

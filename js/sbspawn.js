@@ -57,13 +57,13 @@ import { nbThink, nbOrder, nbKeep } from "./sbnumberat.js";
 
 /* the boxes that aren't numbers: the name over it, its key, what spawns, and a respawn's "who" */
 export const SB_TEXT = {
-  /* a Numberat file from the n window that its NPCs run (sbnumberat.js): blank, they think by their lists */
+  /* a Seriat file from the n window that its NPCs run (sbnumberat.js): blank, they think by their lists */
   brain: {
-    name: "Brain (a Numberat file)",
+    name: "Brain (a Seriat file)",
     check: (t) =>
       !t.trim() || /^[\w./ -]{1,80}$/.test(t.trim())
         ? ""
-        : "A file's name from the Numberat window (n)",
+        : "A file's name from the Seriat window (n)",
   },
   name: {
     name: "Name",
@@ -565,7 +565,7 @@ export function sbAct(s, a, now) {
     s.hidden = { ...hid, sbup: up };
     return true;
   }
-  /* the Numberat files a Brain box names (and the files they use), sent by the player who set it: sbnumberat.js */
+  /* the Seriat files a Brain box names (and the files they use), sent by the player who set it: sbnumberat.js */
   if (a.k === "nbf")
     return !!a.files && typeof a.files === "object" && nbKeep(s, a.files);
   /* M's defaults for a kind: kind, f (one of SB_OWN), v (its text; "" for the game's own); reset: all of them back */
@@ -910,7 +910,7 @@ export function think(s, now, npcs, at, H, far, duckAt) {
         brains.set(o.sp, pts[o.sp] ? boxText(pts[o.sp], "brain").trim() : "");
       return brains.get(o.sp);
     };
-  const nbCh = nbThink(s, now, them, all, ducks, far, brainOf); // (the NPCs that run a Numberat file)
+  const nbCh = nbThink(s, now, them, all, ducks, far, brainOf); // (the NPCs that run a Seriat file)
   const out = them.map((me) => {
     const d = nbOrder(me, all) || decide(me, lists(me.o), all, ducks, far, now),
       fo = d.foe ? d.foe.key : undefined;

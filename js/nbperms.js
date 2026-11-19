@@ -1,4 +1,4 @@
-/* ---------- Numberat: everyone's home folder, and the rights players give each other (the owner's, Nov 19 16:12Z) ----------
+/* ---------- Seriat: everyone's home folder, and the rights players give each other (the owner's, Nov 19 16:12Z) ----------
    "the home directory is a user's folder, but a new permission let's players view other players directories and go inside
    them inside the home directory in which a user's directory is located ... players can click a permissions button ...
    to change permissions for that file (read, write, execute), or to give other players in a dropdown menu to modify

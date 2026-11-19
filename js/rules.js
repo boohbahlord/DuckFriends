@@ -2303,7 +2303,7 @@ function reduceStep(state, a, now) {
       return sbHotAct(s, a, now) ? s : state;
     case "nbn":
     case "nbp":
-      // Numberat: my folder's names and the rights I give other players, for this Sandbox (nbperms.js)
+      // Seriat: my folder's names and the rights I give other players, for this Sandbox (nbperms.js)
       return nbPermAct(s, a) ? s : state;
     case "sbl":
       // Sandbox's loot orbs: an orb's own picture (sbloot.js)
@@ -3668,7 +3668,7 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
   const side = hang ? (inCabin(p0.x * HW, p0.y * HH) ? 1 : 0) : 0,
     z0 = hang ? +p0.z || 0 : 0;
   const near = (x, y, z, inSide, big = 1) => {
-    // where (x, y) is from the swinger, in duck lengths, if it's in reach (big: a Numberat NPC's hitbox, reached sooner)
+    // where (x, y) is from the swinger, in duck lengths, if it's in reach (big: a Seriat NPC's hitbox, reached sooner)
     if (hang && (inSide !== side || Math.abs(z - z0) > 48)) return null;
     const dx = (x - p0.x) / rx,
       dy = (y - p0.y) / ry,
@@ -3895,7 +3895,7 @@ function blast(s, sh, x, y, now, o = {}) {
       return null;
     const dx = (px - x) / rx,
       dy = (py - y) / ry,
-      d = Math.max(0, Math.hypot(dx, dy) - (big - 1) / 2); // (big: a Numberat NPC's hitbox)
+      d = Math.max(0, Math.hypot(dx, dy) - (big - 1) / 2); // (big: a Seriat NPC's hitbox)
     return d <= GRENADE_R * (o.wide || 1) ? { d, dx, dy } : null;
   };
   for (const id of s.seat) {
@@ -4623,7 +4623,7 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
           ? n.line(x0, y0, x0 + dx, y0 + dy, at.z) >= 0 // (Sandbox's NPCs: where the shot, at its height, meets what shows of them, sbbody.js)
           : Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1) * (n.r || 1)
       )
-        hLock(sh, n.z); // (n.r: a Numberat NPC's hitbox)
+        hLock(sh, n.z); // (n.r: a Seriat NPC's hitbox)
       else continue;
       if (hangHit(s, n.id, sh.by, now, sh.k) && n.id === "justin")
         justinKilled(s, sh.by, sh.k);
