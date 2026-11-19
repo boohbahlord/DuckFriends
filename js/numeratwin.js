@@ -18,6 +18,7 @@
    a Linux path (.., ~/notes/seriat/help, seriat/help/math) or, when nothing is there by that name, searches the
    folder shown for it. Folders never fold open or shut in place. */
 import { esc, openWindow } from "./ui.js";
+import { sfx } from "./sound.js";
 import { numerat, shellRun, shellSuggest, shellHistory } from "./shell.js";
 import { check, WORDS } from "./numerat.js";
 import { shellCtx } from "./chat.js";
@@ -389,6 +390,7 @@ export function openNumerat() {
           const on = numerat.running(st.file);
           try {
             say([on ? numerat.stop(on.pid) : numerat.run(ctx, st.file)]);
+            sfx[on ? "seStop" : "seRun"](); // (a quiet tick: running, or stopped)
           } catch (err) {
             say([err.message]);
           }

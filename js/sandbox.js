@@ -32,6 +32,7 @@ import {
 } from "./sbspawnview.js";
 import { boxText } from "./sbspawn.js";
 import { npcRows } from "./sbmake.js";
+import { sbCheatSound } from "./sbsfx.js";
 import { sbSlots } from "./sbhot.js";
 import {
   hotKeyPut,
@@ -322,6 +323,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   const toggleCheat = () => {
     if (!hasRights()) return;
     sbCheat.on = !sbCheat.on;
+    sbCheatSound(sbCheat.on); // (a short chime up, or down: sbsfx.js)
     if (!sbCheat.on) {
       closeMenu();
       if (k.open && k.open !== "c" && k.open !== "h") {

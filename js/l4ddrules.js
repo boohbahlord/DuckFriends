@@ -2563,8 +2563,9 @@ export const wildCrying = (s, id, now) => {
    player, an aggressive line; going down, a death line. Each list is a shuffled bag, every line once before any comes again (s.hang.l4jl { key: [line
    numbers left] }) */
 const LINES = { jaime: JUSTIN_AT_JAIME, death: DEATH_LINES, angry: GOD_LINES };
-/* hurt by a player, an aggressive line (his GOD_LINES, a bag of them), at most one every ANGRY_MS */
-const ANGRY_MS = 3000;
+/* hurt by a player, an aggressive line (his GOD_LINES, a bag of them), every single time (the owner's, Nov 19 19:27Z:
+   "He should dialogue every time you damage him in an aggressive way"); a new line takes the place of the one over him
+   (one bubble for each duck, game.js bubbles), so they never stack */
 /* his everyday lines, all of them, as often as in Duck Cabin (the owner's, Nov 17 20:02Z: "he sounds off all his annoying
    lines unrestricted like he does in cabin with the same frequency"): justin.js' own timings, a random one of E_LINES
    every SAY_EVERY seconds and one of his GOD_LINES every GOD_EVERY seconds, whatever is going on round him */
@@ -4221,10 +4222,7 @@ function wildDown(s, by, now, w, all, codes) {
   if (!down && p4[id] && p4[id].hp < was) {
     const [hx, hy] = s.pos[by] ? at(s.pos[by]) : at(s.pos[id]);
     s.hang.l4jcry = { t: now, x: Math.round(hx), y: Math.round(hy) }; // (he cries, and runs from there: CRY)
-    if (s.players[by] && by !== id && now - (s.hang.l4ja || 0) >= ANGRY_MS) {
-      s.hang.l4ja = now;
-      justinSays(s, "angry");
-    } // (a player hurt him: one of his aggressive lines, the owner's, Nov 19 19:27Z: "He should dialogue every time you damage him in an aggressive way, based off of his aggressive lines")
+    if (s.players[by] && by !== id) justinSays(s, "angry"); // (a player hurt him: one of his aggressive lines, the owner's, Nov 19 19:27Z: "He should dialogue every time you damage him in an aggressive way, based off of his aggressive lines")
   }
   if (down) {
     if (codes) pwAdd(s, id, codes, now, true);
@@ -4261,6 +4259,7 @@ export function wearDown(s, by, w, dealt) {
   if (left <= 0) {
     sl[i] = "";
     delete du[w];
+    s.hang.l4brk = { n: ((s.hang.l4brk || {}).n || 0) + 1, by }; // (everyone hears it break: l4ddsfx.js)
   } else du[w] = left;
   s.hang.l4a = { ...s.hang.l4a, [by]: { ...kit, sl, du } };
 }

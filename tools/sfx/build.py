@@ -135,6 +135,13 @@ SOUNDS = {
         kbps=48,
         credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
     ),
+    # Survival, a horde's last zombie down (s.hang.sv: the peak turns to its tail): soundfont.py calm
+    "svCalm": dict(
+        sf="calm",
+        lp=3000,
+        kbps=48,
+        credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
+    ),
     # everyone's down (Dead Ducks Arcade's ending, both maps): soundfont.py game_over
     "l4over": dict(
         sf="game_over",
@@ -722,6 +729,105 @@ SOUNDS = {
         rate=0.92,
         credit=("artisticdude, Zombies Sound Pack", OGA_URL["zombies"]),
     ),
+    # the merchant arriving at his spot (open for business) and running off: a little shop bell, up, then down
+    "merchantIn": dict(
+        sf="merchant_in",
+        lp=3500,
+        credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
+    ),
+    "merchantOut": dict(
+        sf="merchant_out",
+        lp=3500,
+        credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
+    ),
+    # Seriat's window: a .se file set running, and stopped, a quiet tick each
+    "seRun": dict(
+        sf="se_run",
+        lp=3000,
+        fin=0.008,
+        room=False,
+        credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
+    ),
+    "seStop": dict(
+        sf="se_stop",
+        lp=2600,
+        fin=0.008,
+        room=False,
+        credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
+    ),
+    # Sandbox: something set down in build mode (a spawn, a respawn, a zone, loot), a soft knock; cut or deleted, the
+    # same knock played backwards and quieter
+    "sbPlace": dict(
+        layers=[("kn:jump-land/impactSoft_medium_000.ogg", 0, 0.3, 0, 1)],
+        rate=1.15,
+        lp=3000,
+        room=False,
+        credit=(
+            "Kenney, Impact Sounds (impactSoft_medium)",
+            "https://kenney.nl/assets/impact-sounds",
+        ),
+    ),
+    "sbCut": dict(
+        layers=[("kn:jump-land/impactSoft_medium_000.ogg", 0, 0.3, 0, 1)],
+        rate=1.15,
+        lp=2400,
+        pre="areverse",
+        fin=0.02,
+        room=False,
+        credit=(
+            "Kenney, Impact Sounds (impactSoft_medium)",
+            "https://kenney.nl/assets/impact-sounds",
+        ),
+    ),
+    # Sandbox: a loot orb coming (taking one is Dead Ducks Arcade's dropGot); cheat mode on and off
+    "sbOrb": dict(
+        sf="orb",
+        lp=5000,
+        credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
+    ),
+    "cheatOn": dict(
+        sf="cheat_on",
+        lp=4000,
+        credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
+    ),
+    "cheatOff": dict(
+        sf="cheat_off",
+        lp=4000,
+        credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
+    ),
+    # Survival's defibrillator bringing a dead duck back, at once (no charging up): a short electric whine, then the
+    # shock, a heavy soft thump with a snap of sparks on it
+    "defib": dict(
+        layers=[
+            ("gh:angel/charge.opus", 1.0, 0.35, 0, 0.35, 3000),
+            ("kn:jump-land/impactSoft_heavy_000.ogg", 0, 0.5, 0.33, 1),
+            ("gh:angel/snaploop.opus", 0.5, 0.12, 0.33, 0.35, 2500),
+        ],
+        lp=4000,
+        credit=(
+            "Electricity Game Sound Pack (charge, snaploop); Kenney, Impact Sounds (impactSoft_heavy)",
+            "https://kenney.nl/assets/impact-sounds",
+        ),
+    ),
+    # Survival, a horde coming (s.hang.sv: the rest turns to a peak): many zombies groaning far off at once, low, dark
+    # and swelling in, heard rather than announced (the phases are never announced)
+    "svHorde": dict(
+        layers=[
+            ("oga:zombie-groan/zombie-1.wav", 0, 0.85, 0, 0.8),
+            ("oga:zombie-groan/zombie-10.wav", 0, 0.68, 0.25, 0.7),
+            ("oga:zombie-groan/zombie-15.wav", 0, 0.87, 0.55, 0.9),
+            ("oga:zombie-groan/zombie-5.wav", 0, 0.5, 0.85, 0.6),
+            ("oga:zombie-groan/zombie-1.wav", 0, 0.85, 1.1, 0.7),
+            ("oga:zombie-groan/zombie-10.wav", 0, 0.68, 1.45, 0.8),
+            ("oga:zombie-groan/zombieYell1.wav", 0, 0.38, 1.7, 0.4),
+            ("oga:zombie-groan/zombie-15.wav", 0, 0.87, 1.9, 0.6),
+        ],
+        rate=0.8,
+        lp=1300,
+        fin=0.9,
+        pre="afade=t=out:st=2.4:d=0.9",
+        credit=("artisticdude, Zombies Sound Pack", OGA_URL["zombies"]),
+    ),
     # the fireplace's spin, 4.2 s: a prize wheel's clicker slowing down, then a bell as it stops on a weapon
     "l4slot": dict(
         layers=[
@@ -1098,6 +1204,21 @@ SOUNDS = {
         credit=(
             "Kenney, RPG Audio (knifeSlice2); lostchocolatelab, clang (freesound 1468, from Stendhal)",
             KENNEY_RPG,
+        ),
+    ),
+    # a melee breaking, and any item that breaks once it runs out (the owner, Nov 19: "every melee, when it breaks,
+    # should have the same sound"): a sharp crack
+    # of something giving way, with a dull, darker clink of metal under it, short and not loud
+    "break": dict(
+        layers=[
+            ("oga:board-broken/crack01.flac", 0.17, 0.4, 0, 1),
+            ("gh:melee/clang-dull-1.flac", 0.02, 0.3, 0.01, 0.3, 2200),
+        ],
+        rate=0.94,
+        lp=3000,
+        credit=(
+            "Independent.nu, 35 Wooden Cracks/Hits/Destructions (crack01); alienistcog, clang (freesound 124711, from Stendhal)",
+            "https://opengameart.org/content/35-wooden-crackshitsdestructions",
         ),
     ),
     "panHit": dict(
