@@ -6835,3 +6835,8 @@ Decided (Adam): $ lower case + caps rule, ~ = about: in. Percent over 100%: prop
 Owner, 13:41Z (to for + while, 1,000-round stop): "yes"
 
 Decided (Adam): loops in bible section 14.
+
+## Owner, Nov 19 13:43Z (quoting: "would mean the same as { [2,4]+[1:3] }. If yes, we don't need {{ }}.")
+"Sure"
+
+Owner 13:42Z: "1. sure" (Version 91 live with the newer fixes), "2. ?????? 3. ???????????????" (re-explained). Limits: the game's normal limits unless the owner says otherwise.

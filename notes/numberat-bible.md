@@ -17,7 +17,8 @@ old wording; history and word-for-word quotes live in `notes/agree-or-disagree.m
 - Spaces and line breaks don't change meaning: `[2, 4]` = `[2,4]` (owner 13:06Z: yes). Inside quotes in `print`, spaces
   are kept, bash style (section 10).
 - `#` starts a note; the rest of the line is ignored (owner 12:59Z: yes).
-- `{{ ... }}`: everything between, over several lines, counts as one line.
+- A line carries on while a bracket is still open (owner 13:43Z: yes): `{ [2,4]` then `+[1:3] }` on the next line
+  = `{ [2,4]+[1:3] }`. `{{ }}` is gone.
 - A value a stat can't take stops the file with an error that says why. Never break the game.
 
 ## 1. Values
@@ -55,7 +56,6 @@ HP, damage and speed take tenths.
 | `[ ]` | take ONE pick from inside, then move on | `>[2,4]>[3]` = 2 or 4, then 3 |
 | `{ }` | wait until everything inside is defined. With `=` after it, the result becomes an input for later; without, it gives one of the numbers inside. Each run starts it over unless something inside repeats it | `{[2,4]='2*'}` |
 | `(( ))` | set a thing to a number | `((hp 5))` = HP becomes 5 |
-| `{{ }}` | several lines count as one | |
 
 ## 4. Math
 - `+` add, `-` subtract, `/` divide, `^` power: `[6,10]/2` = 3 or 5; `[3,6]^2` = 9 or 36.
@@ -160,12 +160,6 @@ Every Numberat value works anywhere a number goes below: `wait 1:3`, `every [2,4
 9. **Loops** (owner 13:41Z: yes): `for z in all zombies { ((z speed ~1.2)) }`, `for n in 1:5 { say "wave n" }`
    (any Numberat value as the range), `while \hp < 5\ { flee }`. Every loop stops after 1,000 rounds with an error,
    so a mistake can't freeze the game. The value repeats (`\>3>\||`) stay for values.
-
-## 15. Proposals waiting for the owner
-
-**Several lines as one.** Doubled brackets clash with nesting (`[[3>5],2]` is a pick inside a pick; the owner's own
-`{{'**1'}+[+0,-1]}` is braces in braces; `((2:4)+1)` vs `((hp 5))`). Proposal: no symbol. A line carries on while a
-bracket is still open, so `{` opened on one line and closed three lines later is one line. `{{ }}` is freed.
 
 ## 16. Worked examples (Adam, Nov 19 13:25Z, in the owner's style)
 1. Speed that sticks per NPC: `{1.0:1.*}='1*'\>>\||"['1*'][1,2]"`: picks 1.0 to 1.9 (asterisk 1), then times 1 or 2,
