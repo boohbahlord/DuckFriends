@@ -128,3 +128,20 @@ WebAssembly only if measuring with 800 NPCs shows it's needed.
 1. `'*1'`: keep or drop? 2. One shape for line rules? 3. Math on `!`? 4. Limits (section 8). 5. The owner's long
 example `\>[*+0:*]=*>\[2,4]\>>\||[5,7,9],[3,5]\>*-[1,2]>\||10`, Adam's reading: a count from 0 to a random digit,
 cycling `[2,4]` that many times, then `[5,7,9]` or `[3,5]` a digit minus 1 or 2 times, 10 times.
+
+## 14. Proposals waiting for the owner (Nov 19 13:16Z)
+**Several lines as one.** Owner asked: `[[ ]]` or `{{ }}` (as a many-line `{ }`), or something else? Adam: doubled
+brackets clash with nesting (`[[3>5],2]` is a pick inside a pick; the owner's own `{{'**1'}+[+0,-1]}` is braces in
+braces; `((2:4)+1)` vs `((hp 5))`). Proposal: no symbol at all. A line carries on while a bracket is still open, as in
+most languages, so `{` opened on one line and closed three lines later is one line. `{{ }}` is freed.
+
+**New operators for NPC brains and for joining files** (all proposals):
+1. Events: `when spawn`, `when hit`, `when dead`, `when near duck 3`, `every 2s`: code that runs when something happens.
+2. Actions: `go nearest duck`, `attack`, `flee`, `wait 1.5`, `say "..."` (with print's quotes).
+3. Who: `me`, `nearest duck`, `all zombies`, `team`: what an action or a stat applies to.
+4. Weighted chance: `[attack~3, flee~1]` = attack 3 times as often; `30%` alone = true 3 times in 10.
+5. Named values: `let rage = 2:4`, then `rage` anywhere (words instead of only numbered asterisks).
+6. Blocks you reuse: `def charge { ... }`, then `charge` runs it. `stop` ends a block early.
+7. Joining files: `use 'zombie-base'` pulls another file's values and blocks in; `give rage` / `take rage` share a
+   value between files while the game runs.
+8. Ranges in tests: `\if hp in 1:5\`, plus `else`.

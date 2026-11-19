@@ -6739,3 +6739,15 @@ we need to have a numberat bible for claude which is the updated version of it's
 idk wat u means ab vers 91, like wat ab it?"
 
 Decided (Adam): `\if hp < 5\` (inside backslashes < > compare); spaces ignored outside quotes; mormini as proposed; name Numberat. Bible written: notes/numberat-bible.md (linked from CLAUDE.md). WebGL and pre-made pixel files answered in chat (plan, waits for a go).
+
+## Owner, Nov 19 13:16Z
+"Make this file in microsoft word instead and also in libre write, just for me, you can use the file you wrote as the bible.
+
+Should double sqaure brackets be in place of squiggle ? 
+Then double squigle brackets means it is a multi line version of the single squiggle brackets
+
+what do you think? or should it be something besidess double square or dounble squiggle bracket FOR "several lines count as one"
+
+What new operators should be added to numerat to make it more capable for carrying out it's job for programming the ai and glueing between other files and all of that ?"
+
+Decided (Adam): Word + LibreOffice copies made from notes/numberat-bible.md (/mnt/project-files/sandbox/numerat/numberat-bible.docx/.odt; regenerate both whenever the bible changes). Proposals in bible section 14: open brackets carry the line (no doubled brackets); 8 new operator ideas. Waiting for the owner.
