@@ -25,6 +25,7 @@ import { clawMark } from "./l4dd.js";
 import { FLAME } from "./mgjart.js";
 import { now as clockNow } from "./clock.js";
 import { esc, openWindow, confirmBox } from "./ui.js";
+import { sbPresets } from "./sbmenu.js";
 import {
   isSb,
   sbMay,
@@ -693,7 +694,9 @@ const BUILD = [
 export const buildRows = (R) =>
   spawnsHere(R.state)
     ? BUILD.map(([kind, label]) => ({
-        label,
+        label: sbPresets[kind] ? `${label} (preset)` : label,
+        kind,
+        name: label,
         win: true, // (the window goes: what I picked is on my mouse now)
         act: (r) =>
           sbPlace.start

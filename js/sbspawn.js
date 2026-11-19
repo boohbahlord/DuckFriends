@@ -402,6 +402,42 @@ function press(s, id, now) {
   return makeOne(s, id, entSpot(s, p));
 }
 
+/* point p with box f set to the text v (what typing in a box does; a pasted or preset point's boxes go through it too) */
+function withField(p, f, v) {
+  const b = boxOf(f),
+    was = p.f[f],
+    t = String(v == null ? "" : v).slice(0, SB_ACTS[f] ? 200 : 80),
+    k = b.check
+      ? { t, ok: b.check(t) ? (was && was.ok) || "" : t }
+      : b.blank && !t.trim()
+        ? { t, ok: "" }
+        : keep(was, t, b);
+  const q = { ...p, f: { ...p.f, [f]: k } };
+  if (f === "zw" || f === "zh") q[f] = valueOf(k, b, () => 0.5); // (a zone's size, as a number: a range's middle)
+  return q;
+}
+/* the point a preset or a copy (a.pt: { col, f: { box: text }, im, ap }) makes out of a new bare one: only what its kind
+   has, each box read as if typed (the owner's, Nov 19 17:15Z: a preset before placing, copy and paste) */
+function fromPattern(q, pt) {
+  if (!pt || typeof pt !== "object") return q;
+  if (SB_COLORS[pt.col]) q = { ...q, col: pt.col };
+  if (q.k === "respawn" && Array.isArray(pt.im)) {
+    const all = SB_IMPORT.flatMap(([, fs]) => fs);
+    q = { ...q, im: all.filter((f) => pt.im.includes(f)) };
+  }
+  if (
+    q.k === "spawn" &&
+    pt.ap &&
+    typeof pt.ap === "object" &&
+    JSON.stringify(pt.ap).length < 4000
+  )
+    q = { ...q, ap: pt.ap };
+  for (const [f, v] of Object.entries(pt.f || {}))
+    if (typeof v === "string" && boxOf(f) && canSet(q, f))
+      q = withField(q, f, v);
+  return q;
+}
+
 /* ---------- the actions: { t: "sb", k, … } ---------- */
 export function sbAct(s, a, now) {
   if (!isSb(s)) return false;
@@ -457,14 +493,17 @@ export function sbAct(s, a, now) {
       n,
       pts: {
         ...pts,
-        ["p" + n]: {
-          k: a.kind,
-          x: +(at ? at.x : +me.x).toFixed(4),
-          y: +(at ? at.y : +me.y).toFixed(4),
-          z: Math.round(z),
-          col,
-          f: {},
-        },
+        ["p" + n]: fromPattern(
+          {
+            k: a.kind,
+            x: +(at ? at.x : +me.x).toFixed(4),
+            y: +(at ? at.y : +me.y).toFixed(4),
+            z: Math.round(z),
+            col,
+            f: {},
+          },
+          a.pt,
+        ),
       },
     };
     return true;
@@ -570,15 +609,7 @@ export function sbAct(s, a, now) {
     }
     const b = boxOf(f);
     if (!b || !canSet(p, f)) return false;
-    const was = p.f[f],
-      t = String(a.v == null ? "" : a.v).slice(0, SB_ACTS[f] ? 200 : 80),
-      k = b.check
-        ? { t, ok: b.check(t) ? (was && was.ok) || "" : t }
-        : b.blank && !t.trim()
-          ? { t, ok: "" }
-          : keep(was, t, b);
-    const q = { ...p, f: { ...p.f, [f]: k } };
-    if (f === "zw" || f === "zh") q[f] = valueOf(k, b, () => 0.5); // (a zone's size, as a number: a range's middle)
+    const q = withField(p, f, a.v);
     s.sb = { ...s.sb, pts: { ...pts, [a.p]: q } };
     return true;
   }

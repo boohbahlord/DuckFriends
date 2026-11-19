@@ -28,6 +28,7 @@ import { sbAct, sbTick, sbPlaceDuck, sbHpOf } from "./sbspawn.js";
 import { hpHeal, tenths } from "./hpmath.js";
 import { sbHotAct, sbSlots } from "./sbhot.js";
 import { sbLootAct, sbLootTick } from "./sbloot.js";
+import { nbPermAct } from "./nbperms.js";
 import { sbZoneTick } from "./sbzone.js";
 import { onCabin } from "./sbcabin.js";
 import { stamp, took } from "./perf.js";
@@ -2300,6 +2301,10 @@ function reduceStep(state, a, now) {
     case "sbh":
       // Sandbox's hotbar: its slots, the default, the lock, a spawn button's look and press (sbhot.js)
       return sbHotAct(s, a, now) ? s : state;
+    case "nbn":
+    case "nbp":
+      // Numberat: my folder's names and the rights I give other players, for this Sandbox (nbperms.js)
+      return nbPermAct(s, a) ? s : state;
     case "sbl":
       // Sandbox's loot orbs: an orb's own picture (sbloot.js)
       return sbLootAct(s, a) ? s : state;
@@ -3140,6 +3145,7 @@ export const GROUP_PERMS = [
   "canmute",
   "cankick",
   "cansettings",
+  "canhomes",
 ];
 export const permOk = (p) =>
   GROUP_PERMS.includes(p) || /^slow([5-9]|[1-9]\d|[1-5]\d\d|600)$/.test(p); // slow30: one message every 30 s (5 to 600)

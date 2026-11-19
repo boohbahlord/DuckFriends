@@ -9,6 +9,22 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v106",
+    version: 106,
+    date: "Nov 19, 2026",
+    title: "Copy, paste and cheat mode",
+    news: [
+      "For Sandbox: hold Shift while placing to keep placing.",
+      "For Sandbox: right-click (or long press) a Build item to set it up before placing it.",
+      "For Sandbox: right-click a placed thing for Properties, Copy and Cut; right-click an empty spot or press Shift+V to paste.",
+      "For Sandbox: Shift+C turns cheat mode on or off for whoever may build (shown bottom left).",
+      "For Sandbox: home/ in the n window holds a folder for every player. The Permissions button (next to Check) lets you lock your own files or give other players, groups or everyone Read, Write or Run until the Sandbox restarts. Looking in other players' folders takes the new canhomes permission (sudo has it). New commands: setfacl, getfacl, chown :group, and a fuller chmod.",
+      "For Sandbox: all loot is now in the H hotbar window, picked from a scrolling list with your hotbar and the default hotbar under it.",
+      "Faster first load on slow connections: the game asks for all its files at once.",
+    ],
+    fixed: ["A slow load is no longer restarted halfway."],
+  },
+  {
     id: "v105",
     version: 105,
     date: "Nov 19, 2026",

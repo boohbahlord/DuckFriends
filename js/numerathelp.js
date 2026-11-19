@@ -373,13 +373,20 @@ In front of a value, the count plays just that value:
   "window.txt": `The ${LANG} window
 
   Files (left)   one folder at a time, as File Explorer: click a folder
-                 to go in, ../ to go out, a file to open it.
+                 to go in, ../ to go out, a file to open it. You start
+                 in home/<you>; one up, home/ has everyone's folder.
   <- and ->      Back and Forward: the folders you were just in.
   Path bar       where you are. Type a path and Enter to go there, as
                  in Linux: .., help/math, ~/notes/${LANG.toLowerCase()}/help.
                  Anything else is searched for in the folder shown.
   New file, New directory: made in the folder shown.
                  Your files are kept on this device from game to game.
+  Permissions    for your open file (or the folder shown): your own
+                 Read, Write and Run, and what a player, a group or
+                 everyone may do with it. Nobody can, unless you give
+                 it, and given rights end when a new Sandbox starts.
+                 Looking in others' folders takes canhomes (groups).
+                 The terminal does the same: chmod, setfacl, getfacl.
   Run / Stop     starts the open file, or stops it.
   Check          reads the open file and lists what it can't read, with
                  the line numbers. It starts nothing.
