@@ -7163,3 +7163,8 @@ Decided (Adam): Sandbox's G gets a Music setting (none, or which of the game's s
 "Spawn should be able to be set to spawn players. And it should be able to have a group setting as anything in the zones will have. I don't know what we're doing right now. Give me a stupidly simple list of what we're doing in what order, because I want to get sandbox and survival done. Because I think we're scattered right now because you're stupid."
 
 Decided (Adam): a spawn can be set to spawn players (Phase 2); spawns get the same group setting as zones (Phase 5, groups cover spawns too). Order sent to the owner: Survival on first (Solomon), Sandbox phases 2-7 in order (Jackal), Save-a-Sandbox (Solomon), Noah on real pixels then the camera.
+
+## Owner, 2026-11-19 23:51Z (furious: Jackal never touches Sandbox)
+"Why the fuck are we having Jackal touch? No, Jackal does not touch Sandbox. Do not let them do Sandbox. You're retarded. You're fucking retarded. Zones? Fucking zones for Jackal? Are you fucking kidding me? Are you stupid? They do not get to touch anything in Sandbox, you retard. You guys put Jackal up to way too much. Putting Jackal for the floors and for the ceilings? Are you fucking stupid? I'm screaming on the top of my lungs more than I have the whole day. More than ever."
+
+Decided (Adam): Jackal stopped at once and never touches Sandbox again. Sandbox work: Adam builds Phase 2 now, Solomon takes the rest after Survival and the save. Jackal gets only small non-Sandbox jobs.
