@@ -26,7 +26,7 @@ import {
 } from "./sandboxrules.js";
 import { sbAct, sbTick, sbPlaceDuck, sbHpOf } from "./sbspawn.js";
 import { hpHeal, tenths } from "./hpmath.js";
-import { sbHotAct } from "./sbhot.js";
+import { sbHotAct, sbSlots } from "./sbhot.js";
 import { sbLootAct, sbLootTick } from "./sbloot.js";
 import { sbZoneTick } from "./sbzone.js";
 import { onCabin } from "./sbcabin.js";
@@ -2386,12 +2386,20 @@ function reduceStep(state, a, now) {
       if (!me || !p || p.x < 0 || !boardPhases(s).includes(s.phase))
         return state;
       if (isL4dd(s)) return l4Use(s, a, now) ? s : state; // (Quacky Zombies: its own weapons, l4ddrules.js)
+      /* the normal games: a downed duck can't use a weapon, and neither can one just back from dying, in its spawn protection,
+         where what it shot or swung hurt nobody anyway (the owner's, Nov 19 16:30Z: "when players are downed in normal modes
+         they should not be able to do damage or use their weapons" and "they still get their invulnerability frames where they
+         cannot fire or attack with weapons during"). Sandbox keeps its own downs */
+      if (normalGame(s) && !isSb(s) && (me.dead || shielded(s, a.id, now)))
+        return state;
+      if (isSb(s) && me.dead) return state; // (Sandbox: a downed duck can't use a weapon either)
       const downGun =
         isMgj(s) && sp === "handgun" && !!me.dead && mgjOut(s, a.id); // (Mad God Justin: out of HP, the down pistol still fires: the owner's, Nov 17 11:07Z)
       if (
         isMgj(s)
           ? s.phase !== "boss" || (me.dead && !downGun)
-          : !PRESS.includes(sp) || !onKeys(me.duck, sp)
+          : !PRESS.includes(sp) ||
+            !(isSb(s) ? sbSlots(s, a.id).includes(sp) : onKeys(me.duck, sp))
       )
         return state; // (Mad God Justin: not while down, but the down pistol)
       if (isMgj(s) && ["revive", "jaime", "zebra"].includes(sp))
@@ -4258,6 +4266,14 @@ function duckFlame(s, by, p, aim, now) {
     if (inCone((q.x - p.x) / rx, (q.y - p.y) / ry, ux, uy, far + 0.3))
       scorch(s, by, id, now);
   }
+  flameThings(
+    s,
+    by,
+    (x, y, z, sd, big = 1) =>
+      (!hang || (sd === side && Math.abs((+z || 0) - z0) <= 48)) &&
+      inCone((x - p.x) / rx, (y - p.y) / ry, ux, uy, far + 0.3 * big),
+    now,
+  );
   if (patch)
     s.gfire = [
       ...(s.gfire || []).filter((g) => g[2] > now).slice(1 - FLAME.MOST),
@@ -4270,6 +4286,82 @@ function duckFlame(s, by, p, aim, now) {
         Math.round(z0),
       ],
     ];
+}
+/* everything that isn't a duck, in the flamethrower's fire or on its burning ground (the owner's, Nov 19 16:21Z:
+   "everyone should be able to be on fire not just zombies, from the flamethrower or otherwise"): Sandbox's NPCs on the
+   board, Justin (the board's, Mad God Justin's and the cabin's), his double, a Jaime Guard, the cabin's cats and made
+   NPCs. Each takes 1 HP as it's lit, burns THING_BURN ms and isn't lit again while it burns, as a duck is in Dead Ducks
+   Arcade (BURN.P). near(x, y, z, side, big): is that spot, in shares of the map, in the fire. True when something
+   was lit */
+const THING_BURN = 3000;
+function flameThings(s, by, near, now) {
+  if (by === JUSTIN_ID) return false;
+  const fl = {};
+  for (const [k, u] of Object.entries(s.flamed || {})) if (u > now) fl[k] = u;
+  const lit = (k) => {
+    if (fl[k] > now) return false;
+    fl[k] = now + THING_BURN;
+    return true;
+  };
+  const hang = isHang(s);
+  let any = false;
+  if (!hang && (isMgj(s) || sbOnBoard(s)) && s.mz && s.mz.zb) {
+    /* Sandbox's NPCs and Mad God Justin's zombies: the ones not burning already */
+    const ok = new Map(
+      s.mz.zb
+        .filter((o) => !o.d && !(o.bn > now))
+        .map((o) => [o.x + "," + o.y, o]),
+    );
+    const hp0 = new Map([...ok.values()].map((o) => [o, o.hp]));
+    if (
+      ok.size &&
+      mgjZombieHit(
+        s,
+        (x, y, big) => ok.has(x + "," + y) && !!near(x, y, 0, 0, big),
+        "flamer",
+        now,
+        by,
+      )
+    )
+      for (const [o, hp] of hp0)
+        if (o.hp < hp || o.d) {
+          o.bn = now + THING_BURN;
+          any = true;
+        }
+  }
+  if (!hang && isMgj(s)) {
+    if (
+      mgjHitAt(
+        s,
+        by,
+        now,
+        (b) => !!near(b.x, b.y, 0, 0, MGJ_SCALE) && lit("mgj:" + (b.id || "j")),
+        logLine,
+        DMG.flamer || 1,
+      )
+    )
+      any = true;
+  } else if (!hang && justinShown(s) && !s.justin.down) {
+    const j = justinAt(s.justin, now);
+    if (j && near(j.x, j.y, 0, 0) && lit("justin")) {
+      const got = justinHit(s, by, now, logLine, "flamer");
+      if (got === 2) justinKilled(s, by, "flamer");
+      if (got) any = true;
+    }
+  }
+  if (hang)
+    for (const n of hangTargets(s, now, "flamer"))
+      if (
+        near(n.x / HW, n.y / HH, n.z, inCabin(n.x, n.y) ? 1 : 0, n.r) &&
+        lit("h:" + n.id) &&
+        hangHit(s, n.id, by, now, "flamer")
+      ) {
+        any = true;
+        if (n.id === "justin") justinKilled(s, by, "flamer");
+      }
+  if (any || Object.keys(fl).length !== Object.keys(s.flamed || {}).length)
+    s.flamed = { ...(s.flamed || {}), ...fl };
+  return any;
 }
 /* a duck in the flamethrower's fire or on its burning ground: 1 HP, once a FLAME.BURN ms at most, set burning a moment
    then burnt (and on its own screen, a crimson blink and a shake: game.js) */
@@ -4331,6 +4423,18 @@ function groundFire(s, now) {
       ch = true;
     }
   }
+  for (const [gx, gy, , by, side, z] of left)
+    if (
+      flameThings(
+        s,
+        by,
+        (x, y, zz, sd) =>
+          Math.hypot((x - gx) / rx, (y - gy) / ry) < FLAME.PATCH_R &&
+          (!hang || (sd === side && Math.abs((+zz || 0) - z) < 48)),
+        now,
+      )
+    )
+      ch = true;
   return ch;
 }
 /* what a shot hit this beat, between (x0, y0) and at: the ducks, Mad God Justin, a Jaime Guard, Justin, Duck Cabin's
