@@ -110,6 +110,12 @@ export const VOL = {
   swordHit: -14,
   panHit: -12,
   break: -10, // (a melee breaking, and any item that breaks once it runs out: one sound for all, the owner, Nov 19)
+  // Sandbox: something set down in build mode, and cut or deleted; a loot orb coming; cheat mode on and off
+  sbPlace: -16,
+  sbCut: -20,
+  sbOrb: -20,
+  cheatOn: -20,
+  cheatOff: -22,
   hitArrow: -8,
   hitClaw: -10,
   // a round that missed, landing on the floor or a wall
@@ -255,6 +261,7 @@ const GROUPS = {
     ...["jetStart", "jetLoop", "jetStop", "chomp", "sip"],
     ...["knife", "hammer", "chair", "throw", "cakeThrow", "bonk"],
     ...["axe", "sword", "pan", "axeHit", "swordHit", "panHit", "break"],
+    ...["sbPlace", "sbCut", "sbOrb", "cheatOn", "cheatOff"],
     ...["boom", "boomSmall", "meteor", "tileIn", "quack"],
     ...["laser", "laserHiss", "laserSteam", "gore", "miss"],
     ...Object.keys(VOL).filter((n) => /^(reload|hit|land)[A-Z]/.test(n)),

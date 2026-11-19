@@ -149,6 +149,24 @@ def calm(sf2):
     return (a * env(len(a), 1.0, 0.7, 0.8)).astype(np.float32)
 
 
+def orb(sf2):
+    """Sandbox, a loot orb coming: a soft, small sparkle, two high notes on a celesta (E6, then B6), quiet"""
+    a = play(sf2, [(0, 0, 0, 8, 88, 60, 0.4), (0.09, 0, 0, 8, 95, 50, 0.5)], 1.2)
+    return (a * env(len(a), 0.006, 0.25, 0.25)).astype(np.float32)
+
+
+def cheat_on(sf2):
+    """Sandbox, cheat mode on: a short chime up a fifth on a vibraphone (C5, G5)"""
+    a = play(sf2, [(0, 0, 0, 11, 72, 70, 0.3), (0.11, 0, 0, 11, 79, 74, 0.5)], 1.1)
+    return (a * env(len(a), 0.006, 0.3, 0.22)).astype(np.float32)
+
+
+def cheat_off(sf2):
+    """Sandbox, cheat mode off: the same chime down (G5, C5), a little softer"""
+    a = play(sf2, [(0, 0, 0, 11, 79, 64, 0.3), (0.11, 0, 0, 11, 72, 60, 0.5)], 1.1)
+    return (a * env(len(a), 0.006, 0.3, 0.22)).astype(np.float32)
+
+
 MAKERS = {
     "sad_trombone": sad_trombone,
     "count_tick": count_tick,
@@ -157,5 +175,8 @@ MAKERS = {
     "round_start": round_start,
     "game_over": game_over,
     "calm": calm,
+    "orb": orb,
+    "cheat_on": cheat_on,
+    "cheat_off": cheat_off,
     "nuke_ring": nuke_ring,
 }

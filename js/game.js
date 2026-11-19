@@ -244,6 +244,7 @@ import { sbCheat } from "./sbmenu.js";
 import { sbHotOn, sbLook, sbHotSig } from "./sbhotview.js";
 import { sbSlots, spawnOf } from "./sbhot.js";
 import { sbBoardMarks, sbSettings } from "./sbspawnview.js";
+import { sbHear } from "./sbsfx.js";
 import { duckSVG, duckRoom, scaleOf } from "./duck.js";
 import {
   shownDuck,
@@ -2785,6 +2786,7 @@ function drawDucks(now = clockNow()) {
   placePick(board, s);
   placeZombies(board, s, now);
   if (geo) sbBoardMarks(board, s, (o) => place(o, 0, 1), geo.size); // (Sandbox: its spawns and respawns on the board)
+  if (sbOnBoard(s)) sbHear(s, false); // (… and its sounds there: sbsfx.js)
   mgjSteps(s); // (the wave zombies' steps and groans: l4ddsfx.js)
   placeDesk(board, s, now);
   placeCake(board, s, now);
