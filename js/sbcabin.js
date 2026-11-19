@@ -103,7 +103,7 @@ export function cabinTick(s, now, H0) {
         fields.set(k, chaseField([[t.x, t.y]]));
       return fields.get(k) || null;
     };
-  for (const { me, o, d } of H0.think(
+  const plans = H0.think(
     s,
     now,
     live,
@@ -111,7 +111,8 @@ export function cabinTick(s, now, H0) {
     Hs,
     far,
     duckAt,
-  )) {
+  );
+  for (const { me, o, d } of plans) {
     const to = d.goal || d.flee;
     if (!to) continue;
     const bd = far(me, to),

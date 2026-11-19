@@ -1103,6 +1103,7 @@ export function brain(plan, host) {
   };
   B.remove = (id) => {
     timers.delete(id);
+    near.delete(id);
     for (const t of [...tasks]) if (t.me === id) drop(t);
   };
   /* something happened to NPC id: its when's play. near: arg is how near the duck (or zombie) is, and of what */
@@ -1124,6 +1125,42 @@ export function brain(plan, host) {
       }
       task(w.body, id, w.line);
     }
+  };
+  /* how near NPC id is to the nearest duck (of: "duck") or other NPC (of: "zombie", "npc"): its when near's play as it
+     comes that near (not again until it has gone further off); touching (one duck length) plays its when touch */
+  const near = new Map(); // (id -> what it was near last time: "k" for when number k, "t" for touching)
+  B.near = (id, of, d) => {
+    const was = near.get(id) || new Set();
+    plan.whens.forEach((w, k) => {
+      if (w.ev !== "near" || w.of !== of) return;
+      let n;
+      try {
+        n = num(val({ me: id, scope: scope(null) }, w.v, w.R), "How near");
+      } catch (e) {
+        if (!(e instanceof NbError)) throw e;
+        host.error(w.line, e.why);
+        return;
+      }
+      if (d <= n) {
+        if (!was.has(k)) task(w.body, id, w.line);
+        was.add(k);
+      } else was.delete(k);
+    });
+    near.set(id, was);
+  };
+  B.touch = (id, on) => {
+    const was = near.get(id) || new Set();
+    if (on && !was.has("t")) B.fire("touch", id);
+    if (on) was.add("t");
+    else was.delete("t");
+    near.set(id, was);
+  };
+  /* what the game has to measure for this file (nothing it doesn't use: 800 NPCs) */
+  B.needs = {
+    duck: plan.whens.some((w) => w.ev === "near" && w.of === "duck"),
+    zombie: plan.whens.some((w) => w.ev === "near" && w.of !== "duck"),
+    touch: plan.whens.some((w) => w.ev === "touch"),
+    every: plan.everys.length > 0,
   };
   /* time moves on: the waits that are over wake, and the every's that are due play */
   B.tick = () => {

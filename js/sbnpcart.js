@@ -77,6 +77,21 @@ export function npcBox(o) {
 /* the name over one that has one (Justin, a Test NPC, a made NPC) */
 export const npcName = (o) =>
   o.nm ? `<span class="sb-npc-name">${esc(o.nm)}</span>` : "";
+/* what its Numberat file has it say (sbnumberat.js o.nbs), in a bubble over it until the host takes it away; el: its
+   element, the bubble kept on it as el._say */
+export function npcSay(el, o) {
+  const t = !o.d && o.nbs ? o.nbs[0] : "";
+  if (el._say === t) return;
+  el._say = t;
+  let b = el.querySelector(".sb-npc-say");
+  if (!t) return b && b.remove();
+  if (!b) {
+    b = document.createElement("span");
+    b.className = "sb-npc-say";
+    el.append(b);
+  }
+  b.textContent = t;
+}
 
 /* ---------- a made NPC's weapon and shots ---------- */
 /* how long each weapon is in the hand, in duck widths (as css .held i: the guns' own from l4ddguns.js) */
