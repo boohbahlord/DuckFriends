@@ -74,12 +74,12 @@ export function hangTargets(s, now, k) {
       if (r.targets) out.push(...r.targets(s, now, k));
   return out;
 }
-/* one of them was hit by player `by`: true when s.hang changed */
-export function hangHit(s, id, by, now) {
+/* one of them was hit by player `by` (w: the weapon or the shot's kind): true when s.hang changed */
+export function hangHit(s, id, by, now, w = "") {
   let ch = false;
   if (s.hang)
     for (const [, r] of rulesOf(s))
-      if (r.hit && r.hit(s, id, by, now)) ch = true;
+      if (r.hit && r.hit(s, id, by, now, w)) ch = true;
   return ch;
 }
 /* a duck that can't move for now (shot by Justin: s.hang.still = { id: until }) */

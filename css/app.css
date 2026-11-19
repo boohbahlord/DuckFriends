@@ -18147,6 +18147,10 @@ html.still .l4-miss {
   translate: calc(var(--sz) * -0.35 * var(--f)) 0;
   animation: jd-pool 6s ease-out forwards;
 }
+/* Duck Cabin's Justin knocked down by a hit (hangout/characters.js): the same pool, spreading under him */
+.hang-npc-pool {
+  animation: jd-pool 6s ease-out forwards;
+}
 @keyframes jd-fall {
   to {
     rotate: calc(-100deg * var(--f));
