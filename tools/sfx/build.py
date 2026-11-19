@@ -729,6 +729,32 @@ SOUNDS = {
         rate=0.92,
         credit=("artisticdude, Zombies Sound Pack", OGA_URL["zombies"]),
     ),
+    # the merchant arriving at his spot (open for business) and running off: a little shop bell, up, then down
+    "merchantIn": dict(
+        sf="merchant_in",
+        lp=3500,
+        credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
+    ),
+    "merchantOut": dict(
+        sf="merchant_out",
+        lp=3500,
+        credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
+    ),
+    # Seriat's window: a .se file set running, and stopped, a quiet tick each
+    "seRun": dict(
+        sf="se_run",
+        lp=3000,
+        fin=0.008,
+        room=False,
+        credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
+    ),
+    "seStop": dict(
+        sf="se_stop",
+        lp=2600,
+        fin=0.008,
+        room=False,
+        credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
+    ),
     # Sandbox: something set down in build mode (a spawn, a respawn, a zone, loot), a soft knock; cut or deleted, the
     # same knock played backwards and quieter
     "sbPlace": dict(

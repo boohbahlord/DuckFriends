@@ -167,6 +167,37 @@ def cheat_off(sf2):
     return (a * env(len(a), 0.006, 0.3, 0.22)).astype(np.float32)
 
 
+def merchant_in(sf2):
+    """the merchant at his spot, open for business: a little shop bell (a music box), two quick notes (G5, then C6: low, so it never pierces)"""
+    a = play(sf2, [(0, 0, 0, 10, 79, 66, 0.5), (0.12, 0, 0, 10, 84, 60, 0.7)], 1.4)
+    return (a * env(len(a), 0.006, 0.35, 0.3)).astype(np.float32)
+
+
+def merchant_out(sf2):
+    """the merchant running off: the same bell, down and softer (C6, then G5)"""
+    a = play(sf2, [(0, 0, 0, 10, 84, 56, 0.5), (0.12, 0, 0, 10, 79, 50, 0.7)], 1.4)
+    return (a * env(len(a), 0.006, 0.35, 0.3)).astype(np.float32)
+
+
+def tick_of(sf2, key, vel):
+    """a quiet tick on a marimba, from silence: 10 ms of nothing, then a soft 8 ms swell in, so its attack never clicks"""
+    a = play(sf2, [(0.01, 0, 0, 12, key, vel, 0.08)], 0.4)
+    lead = int(0.01 * SR)
+    e = np.zeros(len(a))
+    e[lead:] = env(len(a) - lead, 0.008, 0.04, 0.05)
+    return (a * e).astype(np.float32)
+
+
+def se_run(sf2):
+    """Seriat, a .se file set running (its window only): a quiet, high tick (C6)"""
+    return tick_of(sf2, 84, 60)
+
+
+def se_stop(sf2):
+    """Seriat, a .se file stopped: the same tick, a fifth lower and softer (F5)"""
+    return tick_of(sf2, 77, 54)
+
+
 MAKERS = {
     "sad_trombone": sad_trombone,
     "count_tick": count_tick,
@@ -178,5 +209,9 @@ MAKERS = {
     "orb": orb,
     "cheat_on": cheat_on,
     "cheat_off": cheat_off,
+    "merchant_in": merchant_in,
+    "merchant_out": merchant_out,
+    "se_run": se_run,
+    "se_stop": se_stop,
     "nuke_ring": nuke_ring,
 }
