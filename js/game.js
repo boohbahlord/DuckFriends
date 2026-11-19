@@ -266,6 +266,7 @@ import { canAdd, requestFriend } from "./account.js";
 import { mountDocks, DOCK_HTML, BAR_HTML } from "./dock.js";
 import { countJump } from "./jumps.js";
 import { sfx, loadSounds, jetsOff, hush, OTHERS } from "./sound.js";
+import { mgjSteps } from "./l4ddsfx.js";
 import { feet } from "./feet.js";
 import { mountMap } from "./maps.js";
 import { knockOff, bothOff } from "./duel.js";
@@ -2639,6 +2640,7 @@ function drawDucks(now = clockNow()) {
   placeTiles(board);
   placePick(board, s);
   placeZombies(board, s, now);
+  mgjSteps(s); // (the wave zombies' steps and groans: l4ddsfx.js)
   placeDesk(board, s, now);
   placeCake(board, s, now);
   placeRevive(board, s, now);
