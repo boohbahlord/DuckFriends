@@ -205,6 +205,11 @@ const AWAY = 260; // walked this far off: his shop closes
 /* the weapon in my hand (game.js tells me how to ask) */
 let heldFn = () => "";
 export const l4Held = (f) => (heldFn = f);
+/* the weapon I'm about to take (the owner's, Nov 19 19:27Z): mine waiting at the fireplace (or the car) while I stand at
+   it, or the merchant's I'm pointing at; the hotbar lights the slot it would go to (l4ddbar.js) */
+let nearTo = "",
+  shopTo = "";
+export const l4To = () => shopTo || nearTo;
 const up = (s, id) => {
   const p = P4(s, id);
   return !!p && !p.dn && !p.gh;
@@ -2349,6 +2354,7 @@ function openShop(ctx) {
   addEventListener("keydown", shopEsc, true);
 }
 function closeShop() {
+  shopTo = "";
   if (!shop || !shop.open) return;
   shop.open = false;
   shop.el.hidden = true;
@@ -2376,6 +2382,16 @@ function shopEl(ctx) {
   for (const t of ["pointerdown", "click", "wheel", "touchstart"])
     el.addEventListener(t, (e) => e.stopPropagation(), { passive: true }); // (a tap on the page never walks the duck)
   el.querySelector(".hang-book-x").onclick = closeShop;
+  /* pointing at (or tabbing to) a weapon he sells: its slot lights up in my hotbar */
+  const pointAt = (e) => {
+    const li = e.target.closest && e.target.closest(".l4-buyw"),
+      b = li && li.querySelector("[data-buy]");
+    shopTo = b && ARMS[b.dataset.buy] ? b.dataset.buy : "";
+  };
+  el.addEventListener("pointerover", pointAt);
+  el.addEventListener("focusin", pointAt);
+  el.addEventListener("pointerleave", () => (shopTo = ""));
+  el.addEventListener("focusout", () => (shopTo = ""));
   el.addEventListener("click", (e) => {
     const tab = e.target.closest("[data-tab]");
     if (tab) {
@@ -2990,6 +3006,7 @@ activity({
   },
   near(pos, ctx) {
     const t = holdTarget(pos, ctx);
+    nearTo = t && t.kind === "take" ? t.w : "";
     if (!t) return null;
     const s = ctx.state();
     return {

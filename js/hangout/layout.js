@@ -202,22 +202,38 @@ export function slabBetween(ax, ay, az, bx, by, bz) {
   if (deckAt(ax, ay, az) === deckAt(bx, by, bz)) return false; // (one floor)
   return !!deckOver(ax, ay, az) || !!deckOver(bx, by, bz);
 }
-/* the ladder up the gas station's back wall (stationmap.js LADDER): is (x, y) at its foot, outside, where a duck climbs
-   it? And where a duck steps off it onto the roof */
+/* the ladders (stationmap.js): up the gas station's back wall (LADDER, side "n"), and leaning on the canopy over the
+   pumps from its left (PUMP_LADDER, side "w"). ladderAt: the one whose foot (x, y) is at, outside, where a duck climbs
+   it (null: none). ladderTop: where a duck steps off it onto the roof, and that roof's height */
 const LADDER_REACH = 34; // (how far out from the wall's face a duck still holds it)
-export function atLadder(x, y) {
-  if (variant !== "l4gs") return false;
+const LADDER_LEAN = 40; // (the canopy's ladder: its foot this far out from the canopy's edge)
+export function ladderAt(x, y) {
+  if (variant !== "l4gs") return null;
   const A = GS.LADDER,
-    face = A.at - T;
-  return (
-    x > A.x0 - 10 && x < A.x1 + 10 && y < face && y > face - FOOT - LADDER_REACH
-  );
+    face = A.at - T,
+    B = GS.PUMP_LADDER,
+    out = B.at - LADDER_LEAN;
+  if (
+    x > A.x0 - 10 &&
+    x < A.x1 + 10 &&
+    y < face &&
+    y > face - FOOT - LADDER_REACH
+  )
+    return A;
+  if (
+    y > B.y0 - 10 &&
+    y < B.y1 + 10 &&
+    x < out + FOOT &&
+    x > out - LADDER_REACH
+  )
+    return B;
+  return null;
 }
-export const ladderTop = () => ({
-  x: (GS.LADDER.x0 + GS.LADDER.x1) / 2,
-  y: GS.LADDER.at + T + FOOT + 4,
-  h: GS.STATION.wall,
-});
+export const atLadder = (x, y) => !!ladderAt(x, y);
+export const ladderTop = (A = GS.LADDER) =>
+  A.side === "w"
+    ? { x: A.at + FOOT + 4, y: (A.y0 + A.y1) / 2, h: GS.CANOPY.z }
+    : { x: (A.x0 + A.x1) / 2, y: A.at + T + FOOT + 4, h: GS.STATION.wall };
 
 /* ---------- the props: everything that stands in the world ----------
    { id, kind, x, y, w, d, h, z } is a box: its footprint (x, y the north-west corner, w across, d deep) on ground at
