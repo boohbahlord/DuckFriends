@@ -6653,3 +6653,68 @@ one name came to mind
 zumberat
 "
 Decided (Adam): written up as notes/numerat.md (the language as the owner defined it, the conflicts and typos found, suggestions, questions). Nothing built until the owner settles the questions. V91 still waiting for the owner's go.
+
+## Owner, Nov 19 12:59Z (answers to the Numerat questions, plus Sandbox fixes)
+"
+1. lin needs to stay because then it doesnt have to be retyped for certain lines more then one but not the whole file AND lin can be used to overwrite multiple lines of the exclamation alone, so exclamation before lin means that it's given lines will overwrite the previous overwrite or settings
+2. yes
+3. it becomes 50 by default unless this is used
+   1. \'ainc mormax'\
+   2. the 'mormax' is short for mormax
+   3. this means mormax has an inverse called 'mormini', maybe. idk how it works you can help
+   4. there can be negative numbers or positive in a a negetive asterix if it is set like this
+   5. \'ainc negbrahm'\
+   6. named after Brahmagupta and brahma in hinduism, this allows for negatives lower then zero in an asterix
+   7. \'ainc posbrahm'\
+   8. this allows for positives in a negative asterix -*
+   9. yes, asterix can be defined as making any of it's numbers negative with the negative or minus sign
+4. "1.0:* could mean 1.0 to 1.9, or 1.0 to 9. Which one?"
+   1. My bad, 1.0 to 9 is correct, for decimal it is like this
+   2. 1.0:1.*
+5. huh? explain i dont understand what ur saying
+6. yes
+7. but why would it do that ? 
+   1. new idea for print statements
+   2. print "Hello, world!"
+   3. print 'Hello, world!'
+   4. The single quotes versus double quotes works like it does in bash, and spaces or white characters become characters according to bash rules around quotes inside here
+   5. print statements should be able to be used inside scripts and events for different builds, such as spawns, entities, and so on.
+   6. there is an option for M that allows entities default settings to be edited, and entity rules cannot be changed for default entities. This is a easier access that works. Make sure that spawn can have settings turned off so entities spawn as they are, much like how respawn does it.
+8. Is numberat availible and not copyrighted or claimed?
+
+
+For speed, i want to know about the difference we can get for web assembly, yes.
+You think web assembly would improve zombies performance on bad computers? i bet it does.
+
+Numberat should have a help file that cannot be edited or changed in the 'n' window
+
+there should be other options besides run, like i said, such as something to test code without running it
+
+the number lines should be able to be seen automatically, and text extends outwards without wrap unless text wrap is turned on
+auto complete is there by default
+
+the help files for numerat have a directory called "help", where simple or more complex help lies and their given principles or basic operators help files
+the help files are text files that cannot be copied or deleted or changed
+
+players should be able to have all their normal movement patterns and zombie mechanics (besides flashlight, but flashlight can be added as loot), such as their default movement speed, sprint, and everything. movement speed differs from zombie maps versus the small board maps
+
+when i click build and try to select a thing to build by clicking or the number, nothing shows up
+
+i have done almost no testing for sandbox mode
+
+settings for sandbox mode can configured like other game modes but fewer options, such as if all players get all persmisions or if all players get only a select few permissions onto different buttons
+
+Build should be where any of it's items are accessible to be placed and what it has is selected by mouse and then placed on your mouse for you to choose where to place it on the board with your mouse
+
+the terminal can be brought up and typed into to hide most UI, simply by typing 
+hide ui
+this hides everything but the top right buttons for things like fullscreen or pause and  what not, or doesnt hide the text chat ("abc"), the leave sandbox or leave other button, the vote button, and hot bar. It hides the black outline above and below the screen AND it hides the text on the bottom (except for cheat sheet, it keeps that there for this by itself. This is a command to make ui less cluttered and provide better visibility. this command can be fonnd in pause settings OR in text chat commands and not just terminal 
+
+in numerat, anything can be done in that terminal as it can be in the terminal in the bottom left of any game mode outside of numerat
+
+The merchant has arrived text shouldnt be too short or too long and then fade away, but idk how long or short it is, havent checked.
+"
+
+Owner, 12:59Z (edited): "we need more discussion prob since numerat is a big deal"
+
+Decided (Adam): Numerat stays in discussion, nothing built yet; decisions added to notes/numerat.md. The Sandbox fixes (Build, movement, settings, M defaults, hide ui, merchant text, n window editor) go to workers now.

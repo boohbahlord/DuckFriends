@@ -5,7 +5,9 @@ Sources, newest wins: the owner's file (`/mnt/project-files/sandbox/sandbox-mode
 12:16Z (word for word in `/mnt/project-files/sandbox/numerat/owner-2026-11-19-1216.txt` and at the end of
 `notes/agree-or-disagree.md`). Owner: "this code is like math, components give rise to new logical possibilities ...
 Make sure to test possibilities of the code." Status: notation still being settled with the owner; only the plain
-values (part 1) are built (`js/numerat.js`).
+values (part 1) are built (`js/numerat.js`). Owner 12:59Z: "we need more discussion prob since numerat is a big deal"
+(answers word for word in `/mnt/project-files/sandbox/numerat/owner-2026-11-19-1259.txt`). Section 14 holds those
+answers; they win over anything above.
 
 ## 1. Values
 | Write | Means |
@@ -125,3 +127,25 @@ after 1,000 tries per line, with an error. Measure with 800 NPCs; move the runne
 5. Comparing in `if` with words (`over`, `under`, `is`)?
 6. A name: Zumberat, Numberat, or keep Numerat?
 7. The limits in section 8.
+
+## 14. Owner's answers, Nov 19 12:59Z (these win)
+1. `lin` stays: it saves retyping a rule for several lines (not the whole file). `!` before `lin` makes those lines
+   override earlier overrides or settings.
+2. `*` includes 0 by default.
+3. Cut to fit: 150 into `**` gives 50 by default. `\'ainc mormax'\` makes it top out instead (99). `mormini` is the
+   inverse, meaning left to me. Proposal: a number too small for its asterisks (e.g. -3 into a plain `*`) loses its
+   sign by default (3), the mirror of losing front digits; `mormini` raises it to the smallest allowed (0) instead.
+   - `-*`: an asterisk can be made negative with the minus sign.
+   - `\'ainc negbrahm'\` lets an asterisk go below zero (named after Brahmagupta and Brahma).
+   - `\'ainc posbrahm'\` lets a negative asterisk `-*` give positives.
+4. `1.0:*` = 1.0 to 9. Tenths are written `1.0:1.*`.
+5. Comparing in `if`: owner didn't follow the question; re-explained in plain words (waiting).
+6. `#` notes: yes.
+7. Spaces: owner asked why they'd be ignored; explained (waiting). New: `print "Hello, world!"` / `print 'Hello,
+   world!'`, quotes and spaces as in bash, usable in scripts and events (spawns, entities ...).
+8. Name: owner likes "Numberat"; quick search found no software or trademark by that exact name (not a legal check).
+
+Also asked for (n window): a help file and a read-only `help` directory (simple to complex help, by principle and
+operator; can't be copied, deleted or changed), a way to test code without running it besides Run, line numbers
+always shown, no wrap unless text wrap is on, autocomplete on by default, and anything the bottom-left terminal can do
+works in the n terminal. WebAssembly: owner wants to know the difference it makes.
