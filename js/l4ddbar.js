@@ -170,7 +170,7 @@ export function l4Slider(api) {
       return id === "handgun"
         ? {
             id,
-            name: "Pistol",
+            name: weaponName("handgun"),
             icon: weaponIcon(id, duckOf(k.s, k.me)),
             off: false,
             keep: false,

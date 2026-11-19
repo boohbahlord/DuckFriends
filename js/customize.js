@@ -719,7 +719,7 @@ export function openCustomize(page = lastPage, opts = {}) {
           } else if (k === "weapons") {
             const tile = (w) => [
               w,
-              `<span class="sp-icon">${specialById(w) ? specialById(w).icon : ""}</span>`,
+              `<span class="sp-icon">${specialById(w) ? looksOf(specialById(w), D).icon : ""}</span>`,
               weaponName(w),
             ];
             const none = ["none", '<span class="sp-icon">∅</span>', "None"],
@@ -960,7 +960,7 @@ export function openCustomize(page = lastPage, opts = {}) {
               open = specialById(keyFor),
               phone = touchOnly(); // (only a touch screen: pointer.js)
             const box = (n, i, id, attrs) =>
-              `<button type="button" class="sp-key${id ? " full" : ""}${isOff(id) ? " off" : ""}" data-i="${i}" ${attrs}><b>${n}</b>${id ? `<i>${specialById(id).icon}</i>` : ""}</button>`;
+              `<button type="button" class="sp-key${id ? " full" : ""}${isOff(id) ? " off" : ""}" data-i="${i}" ${attrs}><b>${n}</b>${id ? `<i>${looksOf(specialById(id), D).icon}</i>` : ""}</button>`;
             const tiles = (kind) =>
               SPECIALS.filter((x) => x.kind === kind && !x.only)
                 .map((sp) => {
