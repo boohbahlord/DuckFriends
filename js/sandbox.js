@@ -15,6 +15,7 @@ import { isSb, sbMay, SB_KEYS_TAKEN, SB_KEY_IN_BUILD } from "./sandboxrules.js";
 import {
   buildRows,
   ghostHTML,
+  kdRows,
   sbNearPoint,
   sbPlace,
   sbSettings,
@@ -106,7 +107,10 @@ const rightsRows = (R) => {
 const OPTIONS = {
   c: [],
   b: buildRows,
-  m: npcRows,
+  m: (R) => {
+    const rows = npcRows(R);
+    return [rows[0], ...kdRows(R), ...rows.slice(1)]; // (New NPC, then the four kinds' defaults, then the made ones)
+  },
   n: [],
   h: (R) => hotRows(R, openPut),
   g: [],

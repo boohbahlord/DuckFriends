@@ -29,6 +29,8 @@ import {
   SB_FLAGS,
   SB_ACTS,
   SB_IMPORT,
+  SB_OWN,
+  SB_WHAT,
   SB_PLAYER,
   SB_COLORS,
   SB_ZONE,
@@ -36,7 +38,15 @@ import {
   sbZoneBox,
   baseMode,
 } from "./sandboxrules.js";
-import { boxText, boxWhy, spawnsHere, sbWalkOf, madeOf } from "./sbspawn.js";
+import {
+  boxText,
+  boxWhy,
+  spawnsHere,
+  sbWalkOf,
+  madeOf,
+  kdOf,
+  ownOn,
+} from "./sbspawn.js";
 import { orbFace, lootRing, lootPage, lootWire } from "./sblootview.js";
 import {
   kindsFor,
@@ -291,8 +301,18 @@ export function sbSettings(getR, id, tab = "") {
           `<button type="button" class="sb-col${p.col === k ? " on" : ""}" data-col="${k}" style="--c:${c}" aria-label="${k}"></button>`,
       )
       .join("")}</span></div>`;
-  const entity =
-    () => `${row("name", { name: "Name" }, typed("name"), why("name"))}
+  /* the settings "Use these settings" switches: marked, and hidden while it's off (they don't count then) */
+  const own = (html) =>
+    SB_OWN.reduce(
+      (h, f) =>
+        h.replace(
+          `data-row="${f}"`,
+          `data-row="${f}" data-own${ownOn(p) ? "" : " hidden"}`,
+        ),
+      html,
+    );
+  const entity = () =>
+    own(`${row("name", { name: "Name" }, typed("name"), why("name"))}
     ${colorRow}
     <div class="sb-row"><span>Spawns</span><span class="sb-what">${kinds
       .map(
@@ -310,6 +330,7 @@ export function sbSettings(getR, id, tab = "") {
           `<label><input type="radio" name="sb-pick" data-pick="${v}"${pick === v ? " checked" : ""}> ${n}</label>`,
       )
       .join("")}</span></div>
+    ${flagRow("sets", SB_FLAGS.sets, typed("sets"), why("sets"))}
     <div class="sb-actrows" data-row="acts"${onlyZ(what) ? " hidden" : ""}>${Object.keys(
       SB_ACTS,
     )
@@ -320,8 +341,9 @@ export function sbSettings(getR, id, tab = "") {
       .map(([f, b]) => row(f, b, typed(f), why(f)))
       .join("")}
     ${Object.entries(SB_FLAGS)
+      .filter(([f]) => f !== "sets")
       .map(([f, b]) => flagRow(f, b, typed(f), why(f)))
-      .join("")}`;
+      .join("")}`);
   const playersPage =
     () => `${p.grp ? row("name", { name: "Name" }, typed("name"), why("name")) : ""}
     ${flagRow("pon", SB_PLAYER.pon, typed("pon"), why("pon"))}
@@ -394,6 +416,10 @@ export function sbSettings(getR, id, tab = "") {
           lab = i.closest(".sb-row");
         lab.classList.toggle("bad", !!bad);
         lab.querySelector(".sb-why").textContent = bad;
+        if (f === "sets" && !bad)
+          w.querySelectorAll("[data-own]").forEach(
+            (r) => (r.hidden = /^f/i.test(i.value.trim())),
+          ); // (off: what it spawns comes as it is)
         clearTimeout(timers[f]);
         timers[f] = setTimeout(() => send({ k: "set", f, v: i.value }), 250);
       });
@@ -500,6 +526,68 @@ export function sbSettings(getR, id, tab = "") {
           send({ k: "del" });
           close(null);
         }
+      });
+    },
+  });
+}
+/* ---------- M: a kind's defaults (sbspawn.js kdOf) ----------
+   The four kinds that come with Sandbox, each with the settings a spawn can give it; what's written here is what every
+   one of that kind starts with, wherever a spawn didn't write its own (or has "Use these settings" off). The rows in M */
+export const kdRows = (R) =>
+  Object.entries(SB_WHAT).map(([k, n]) => ({
+    label: `${n}: defaults`,
+    win: true,
+    act: (r) => kindDefaults(() => r, k),
+  }));
+export function kindDefaults(getR, kind) {
+  const R = getR();
+  if (!R || !SB_WHAT[kind] || !sbMay(R.state, R.me, "m")) return;
+  const kd = kdOf(R.state, kind) || { f: {} },
+    p = { k: "kd", col: "red", f: { ...kd.f, what: { t: kind, ok: kind } } }, // (as a spawn of it alone would be)
+    typed = (f) => (kd.f[f] ? kd.f[f].t : boxText(p, f)),
+    why = (f) => (kd.f[f] ? boxWhy(f, kd.f[f].t) : ""),
+    kinds = kindsFor(R.state),
+    html = `<h2>${esc(SB_WHAT[kind])}: defaults</h2>
+  <p class="small dim">Every ${esc(SB_WHAT[kind])} starts with these, unless its spawn sets its own.</p>
+  <div class="sb-set">${SB_OWN.map((f) =>
+    SB_ACTS[f]
+      ? actRow(R.state, p, f, kinds)
+      : SB_FLAGS[f]
+        ? flagRow(f, SB_FLAGS[f], typed(f), why(f))
+        : row(f, SB_BOXES[f], typed(f), why(f)),
+  ).join("")}</div>
+  <p class="acts"><button type="button" class="btn ghost" data-kdreset>The game's own</button></p>`;
+  openWindow(html, {
+    cls: "sb-setwin",
+    onOpen(w, close) {
+      const send = (a) => {
+        const r = getR();
+        if (r) r.send({ t: "sb", k: "kd", kind, ...a });
+      };
+      const timers = {};
+      w.addEventListener("input", (e) => {
+        const i = e.target.closest(".sb-box");
+        if (!i) return;
+        const f = i.dataset.f,
+          bad = i.value.trim() ? boxWhy(f, i.value) : "",
+          lab = i.closest(".sb-row");
+        lab.classList.toggle("bad", !!bad);
+        lab.querySelector(".sb-why").textContent = bad;
+        clearTimeout(timers[f]);
+        timers[f] = setTimeout(() => send({ f, v: i.value.trim() }), 250); // (emptied: the game's own again)
+      });
+      w.addEventListener("change", (e) => {
+        const act = e.target.closest("[data-act]");
+        if (!act) return;
+        const on = [...act.querySelectorAll("input:checked")];
+        act.querySelector("summary").textContent = summaryOf(on);
+        send({ f: act.dataset.act, v: on.map((c) => c.value).join(", ") });
+      });
+      w.addEventListener("click", (e) => {
+        if (!e.target.closest("[data-kdreset]")) return;
+        send({ reset: true });
+        close(null);
+        setTimeout(() => kindDefaults(getR, kind), 300);
       });
     },
   });

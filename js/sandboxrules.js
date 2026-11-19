@@ -90,6 +90,7 @@ export const SB_BOXES = {
   speed: { name: "Speed", kind: "tenth", min: 0.1, max: 5, def: "1" }, // ("1 is default, 0 is not allowed ... 5 is the max")
 };
 export const SB_FLAGS = {
+  sets: { name: "Use these settings", kind: "bool", def: "t" }, // (off: what it spawns comes as it is, sbspawn.js ownOn)
   cont: { name: "Continuous spawn", kind: "bool", def: "f" },
   respawn: { name: "Can respawn", kind: "bool", def: "f" },
   sprint: { name: "Can sprint", kind: "bool", def: "f" },
@@ -104,6 +105,10 @@ export const SB_IMPORT = [
   ["True or false", ["sprint", "jump", "climb"]],
   ["Behavior", ["target", "ignore", "avoid", "protect"]],
 ];
+/* what a spawn's "Use these settings" switches, and what M's defaults for a kind can change (the owner's, Nov 19: "an
+   option for M that allows entities default settings to be edited ... Make sure that spawn can have settings turned
+   off so entities spawn as they are, much like how respawn does it"): the same settings a respawn can import */
+export const SB_OWN = SB_IMPORT.flatMap(([, fs]) => fs);
 /* a spawn's Players tab: ducks spawn here (they start, join and come back from being down here) when it's on, the ones
    its "who" names (players, or their names), with its HP and speed; blank is the game's own */
 export const SB_PLAYER = {
