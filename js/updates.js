@@ -9,6 +9,23 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v118",
+    version: 118,
+    date: "Nov 19, 2026",
+    title: "Two double barrels and a ladder",
+    news: [
+      "For Dead Ducks Arcade: the double barrel is now two guns. The Slug double barrel does 6 damage and goes through zombie after zombie, 1 or 1.5 less each time. The Buckshot double barrel fires shotgun pellets that each hit 1 or 1.5 harder.",
+      "For Dead Ducks Arcade: standing at your spin, or pointing at a weapon in the merchant's shop, lights up the hotbar slot it will go to.",
+      "For Dead Ducks Arcade: a ladder leans on the pump roof's left side, for players and zombies.",
+      "For Dead Ducks Arcade: merchants have 3 to 4 HP and run more slowly. One you bought from may come right back; one you shot never comes again.",
+    ],
+    fixed: [
+      "For Dead Ducks Arcade: zombies stop climbing after you once you're off the roof.",
+      "For Dead Ducks Arcade: Justin no longer dodges every shot, sprints less and more slowly, and gets angry when a player hurts him.",
+      "Characters stop talking the moment they go down.",
+    ],
+  },
+  {
     id: "v117",
     version: 117,
     date: "Nov 19, 2026",
