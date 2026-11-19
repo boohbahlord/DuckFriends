@@ -165,7 +165,9 @@ function drawMarks(layer, pts, at, size, s) {
   for (const n of layer.querySelectorAll(".sb-pt")) have.set(n.dataset.p, n);
   for (const [id, p] of Object.entries(pts)) {
     if (p.grp) continue; // (a spawn's + page: drawn as its spawn)
-    if (hiddenNow(s, p)) continue;
+    const hid = hiddenNow(s, p),
+      orbOut = p.k === "loot" && !!p.orb && p.orb.dn == null;
+    if (hid && !orbOut) continue; // (Hide: a loot point hides its ring and name, never its orb, the owner's "that appearance is hidden")
     if (p.k === "zone") {
       if (!seeZones) continue;
       want.add(id);
@@ -179,11 +181,11 @@ function drawMarks(layer, pts, at, size, s) {
         : "",
       away = orb && p.orb.x != null, // (its orb lies in a zone: drawn there, sbloot.js)
       n = markEl(layer, have, id, "sb-pt"),
-      sig = `${p.k} ${p.col} ${boxText(p, "name")} ${away ? "" : face}`;
+      sig = `${p.k} ${p.col} ${boxText(p, "name")} ${away ? "" : face} ${hid}`;
     if (n._sig !== sig) {
       n._sig = sig;
       n.classList.toggle("sb-rb", p.col === SB_NOCOL);
-      n.innerHTML = `<span class="sb-pt-name" style="color:${colCSS(p.col)}">${esc(boxText(p, "name"))}</span>${markSVG(p)}${orb && !away ? `<span class="sb-orb">${orbFace(s, id, p)}</span>` : ""}`;
+      n.innerHTML = `${hid ? "" : `<span class="sb-pt-name" style="color:${colCSS(p.col)}">${esc(boxText(p, "name"))}</span>${markSVG(p)}`}${orb && !away ? `<span class="sb-orb">${orbFace(s, id, p)}</span>` : ""}`;
     }
     placeAt(n, at(p), size);
     if (away) {
