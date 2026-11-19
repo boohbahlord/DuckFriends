@@ -38,7 +38,7 @@ export const SB_SHEET = [
   ["M", "Make an NPC: its look, its weapons and who it goes after."],
   [
     "N",
-    "Numerat: your files and their help page. Numerat only runs in Sandbox.",
+    "Numerat: your files, kept on this device, with a terminal line. Run a file there, or chmod +x it and ./file it. Numerat only runs in Sandbox.",
   ],
   [
     "H",
@@ -278,6 +278,17 @@ export function mountSandboxKeys(S, getR, onOpen) {
       }
     }
     const l = letter(e);
+    /* n opens the Numerat window itself (numeratwin.js), for whoever may write Numerat */
+    if (l === "n" && sbCan(getR().state, getR().me)) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if (e.repeat) return;
+      sbClose(k, false); // (another window up: Numerat takes its place)
+      paint();
+      k.swallow = "n";
+      import("./numeratwin.js").then((m) => m.openNumerat()); // (loaded when it's wanted: it brings the command line)
+      return;
+    }
     if (l) {
       e.preventDefault();
       e.stopImmediatePropagation();

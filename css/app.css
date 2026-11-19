@@ -54,6 +54,8 @@
   font-weight: 500;
   font-display: swap;
 }
+/* Cascadia Code, the command line's and Numerat's letters, self-hosted (SIL Open Font License:
+   assets/fonts/cascadia-code-OFL.txt) */
 @font-face {
   font-family: "Cascadia Code";
   src: url(../assets/fonts/cascadia-code-latin-200-normal.woff2) format("woff2");
@@ -18760,6 +18762,21 @@ html.pixel *::after {
   font-family: "Jersey 15", monospace !important;
   font-size-adjust: 0.52;
 }
+/* except the command line's and Numerat's letters: Cascadia Code in every look (the owner's Sandbox file: "All terminal
+   text and numerat text should be cascadia monospace font") */
+html.pixel .chat-panel[data-mode="cmd"] .chat-in,
+html.pixel .chat-log .cmd-line,
+html.pixel .chat-log .cmd-line *,
+html.pixel .chat-log .from-cmd code,
+html.pixel .chat-log .from-cmd .cmd-out,
+html.pixel .chat-log .from-cmd .cmd-out *,
+html.pixel .chat-sugg li,
+html.pixel .chat-sugg li *,
+html.pixel .nm,
+html.pixel .nm * {
+  font-family: "Cascadia Code", Consolas, monospace !important;
+  font-size-adjust: none;
+}
 html.pixel img.px {
   image-rendering: pixelated;
 }
@@ -20147,4 +20164,142 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .sb-col.on {
   outline: 0.16rem solid var(--ink);
   outline-offset: 0.1rem;
+}
+
+/* ---------- Sandbox: the Numerat window (js/numeratwin.js), as an editor: files on the left, the code, a terminal
+   line under it; every letter Cascadia Code, as the command line's ---------- */
+.nm-win {
+  width: min(60rem, calc(100vw - 1.5rem));
+}
+.nm {
+  display: grid;
+  grid-template-columns: minmax(9rem, 14rem) minmax(0, 1fr);
+  gap: 0.8rem;
+  height: min(36rem, calc(100dvh - 8rem));
+  font-family: "Cascadia Code", Consolas, monospace;
+}
+.nm-side,
+.nm-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 0;
+  min-width: 0;
+}
+.nm-new {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.nm-new .btn {
+  flex: 1 1 auto;
+}
+.nm-name {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.nm-why {
+  color: var(--red, #ff6b6b);
+  font-size: 0.8rem;
+  font-style: normal;
+}
+.nm-why:empty {
+  display: none;
+}
+.nm-tree {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin: 0;
+  padding: 0.3rem 0;
+  list-style: none;
+  border: 0.12rem solid var(--line);
+  border-radius: 0.45rem;
+}
+.nm-item {
+  padding: 0.2rem 0.5rem 0.2rem calc(0.5rem + var(--d) * 0.9rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  font-weight: 200;
+}
+.nm-item:hover {
+  background: color-mix(in srgb, var(--fg, #fff) 8%, transparent);
+}
+.nm-item.on {
+  background: color-mix(in srgb, var(--blue, #3f8cff) 30%, transparent);
+}
+.nm-dir {
+  font-weight: 400;
+}
+.nm-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.nm-path {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dim);
+}
+.nm-code,
+.nm-in {
+  font: inherit;
+  font-weight: 200;
+  color: inherit;
+  background: #0006;
+  border: 0.12rem solid var(--line);
+  border-radius: 0.45rem;
+  padding: 0.4rem 0.5rem;
+  min-width: 0;
+}
+.nm-code {
+  flex: 3;
+  min-height: 0;
+  resize: none;
+  tab-size: 2;
+  white-space: pre;
+}
+.nm-term {
+  flex: 2;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 0.12rem solid var(--line);
+  border-radius: 0.45rem;
+  background: #000a;
+}
+.nm-out {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.4rem 0.5rem;
+  font-weight: 200;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.nm-line {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.4rem 0.4rem;
+}
+.nm-line .nm-in {
+  flex: 1;
+}
+/* a phone: the files over the code */
+@media (max-width: 40rem) {
+  .nm {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    height: calc(100dvh - 7rem);
+  }
+  .nm-tree {
+    max-height: 7rem;
+  }
 }

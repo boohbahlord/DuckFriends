@@ -75,7 +75,7 @@ export const MAN = {
   stat: "stat file: a file's size, permissions, group and when it changed.",
   file: "file name: what something is: a folder, text, an empty file or a command.",
   chmod:
-    "chmod g+r|g-r|o+r|o-r|a+r|a-r|640|644|600 file: who may open the file once you send it. Today only sudo can open a sent file; g+r lets its group open it too (chgrp sets the group), o+r lets everyone. perma-notes stay private.",
+    "chmod g+r|g-r|o+r|o-r|a+r|a-r|640|644|600 file: who may open the file once you send it. Today only sudo can open a sent file; g+r lets its group open it too (chgrp sets the group), o+r lets everyone. perma-notes stay private. chmod +x (or 755) file: a Numerat file runs as ./file, in Sandbox; chmod -x (or 644) takes it away.",
   chgrp:
     "chgrp group file: the group a file belongs to (a group you are in; sudo: any group). With chmod g+r, that group may open the file when you send it.",
   tee: "tee [-a] files…: writes what comes through | into files and passes it on (-a: adds to the end). gamestats | tee stats1",
@@ -145,7 +145,7 @@ export const MAN = {
   write:
     "write @name message: a private message, the same as \\@name in the chat. A group with nosend can't.",
   /* the room and the game */
-  ps: "ps [aux]: what the game is running: the game, the stage, the turn, the timers; aux: every player too.",
+  ps: "ps [aux]: what the game is running: the game, the stage, the turn, the timers, and the Numerat files running (kill <pid> stops one); aux: every player too.",
   top: "top: the players by Jumps, with their connection; it keeps updating until Ctrl+C (a minute at most).",
   hostname: 'hostname: the room\'s name. sudo hostname "new name": renames it.',
   uname:
@@ -185,7 +185,7 @@ export const MAN = {
   lightning:
     "lightning @name: strikes a duck with lightning (a silly command).",
   love: "love @name @name: two ducks float up in a heart (a silly command).",
-  kill: "kill @name: a duck plays dead until it moves (a silly command).",
+  kill: "kill @name: a duck plays dead until it moves (a silly command). kill <pid>: stops a Numerat file that is running (ps shows its pid).",
   hotdog:
     "hotdog @name: a hotdog hangs around a duck for a while (a silly command).",
   fire: "fire @name: a duck catches fire and stays burnt for a few seconds (a silly command).",
