@@ -5916,9 +5916,10 @@ function mgjOut2(id) {
   sendMove(true);
 }
 /* L (PC, every mode; the owner's, Nov 19 21:59Z): my laser sight on or off, and my flashlight with it. Starts
-   off until I press L: it was always on in Quacky Zombies and Mad God Justin before */
-let sightPref = false;
-const sightOn = () => sightPref;
+   the way the mode had it: on in Quacky Zombies and Mad God Justin, off in the others */
+let sightPref = null;
+const sightOn = () =>
+  sightPref != null ? sightPref : !!R && (isL4dd(R.state) || isMgj(R.state));
 function toggleSight() {
   const on = !sightOn();
   sightPref = on;
