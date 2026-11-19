@@ -2392,6 +2392,7 @@ function reduceStep(state, a, now) {
          cannot fire or attack with weapons during"). Sandbox keeps its own downs */
       if (normalGame(s) && !isSb(s) && (me.dead || shielded(s, a.id, now)))
         return state;
+      if (isSb(s) && me.dead) return state; // (Sandbox: a downed duck can't use a weapon either)
       const downGun =
         isMgj(s) && sp === "handgun" && !!me.dead && mgjOut(s, a.id); // (Mad God Justin: out of HP, the down pistol still fires: the owner's, Nov 17 11:07Z)
       if (

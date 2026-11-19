@@ -20,6 +20,7 @@ export const UPDATES = [
     fixed: [
       "For Sandbox: the chair (and anything else put on the hotbar) now works; with a weapon in hand, the chair's key puts it away and throws.",
       "For Sandbox: the language is called Numberat everywhere, its folder too (notes/numberat).",
+      "Players who are down or just respawned can no longer fire or attack with weapons (every game except Dead Ducks Arcade, Mad God Justin and Sandbox).",
     ],
   },
   {
