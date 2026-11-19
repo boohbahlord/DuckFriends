@@ -2831,7 +2831,7 @@ function playTop(plan, s, name) {
   return lines.slice(0, 200);
 }
 const numShared = new Map(); // (give and take between files)
-/* use 'name': the file next to the one using it, or at the Seriat folder's top; .num may be left off */
+/* use 'name': the file next to the one using it, or at the Seriat folder's top; .se (or the old .num) may be left off */
 function useText(from, name) {
   const t = theirs(from);
   if (t) {
@@ -2840,12 +2840,13 @@ function useText(from, name) {
         ? t.rel.slice(0, t.rel.lastIndexOf("/") + 1)
         : "";
     for (const d of [dir, ""])
-      for (const n of [name, name + ".num"]) if (c[d + n]) return c[d + n].t;
+      for (const n of [name, name + ".se", name + ".num"])
+        if (c[d + n]) return c[d + n].t;
     return null;
   }
   const dir = from.slice(0, from.lastIndexOf("/"));
   for (const d of [dir, numRoot()])
-    for (const n of [name, name + ".num"]) {
+    for (const n of [name, name + ".se", name + ".num"]) {
       const p = d + "/" + n;
       if (inNum(p) && fs.files[p] != null) return fs.files[p];
     }
@@ -3215,7 +3216,7 @@ export const numerat = {
     numKeep();
   },
   ro: (path) => inRo(path),
-  /* another file, for use 'name': next to the file using it, then at the folder's top; .num may be left off */
+  /* another file, for use 'name': next to the file using it, then at the folder's top; .se (or the old .num) may be left off */
   use(ctx, from, name) {
     sync(ctx);
     return useText(from, name);
@@ -3234,6 +3235,7 @@ export const numerat = {
       text = m
         ? (
             nbCopy(roomS(), t.id, t.rel) ||
+            nbCopy(roomS(), t.id, t.rel + ".se") ||
             nbCopy(roomS(), t.id, t.rel + ".num") || { t: null }
           ).t
         : useText(top, name.split("/").pop());
