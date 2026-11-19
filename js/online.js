@@ -305,8 +305,8 @@ const REMOTE = new Set([
   "goOn",
   "sb", // (Sandbox's spawns: the rules check the rights, sbspawn.js sbAct)
   "sbOk", // (Sandbox's rights given or taken: only by one who has them, rules.js)
-  "nbn", // (the names in my Numberat folder, nbperms.js)
-  "nbp", // (a right I give on my own Numberat files, nbperms.js)
+  "nbn", // (the names in my Seriat folder, nbperms.js)
+  "nbp", // (a right I give on my own Seriat files, nbperms.js)
   "nbs", // (my shared copies, nbperms.js)
   "nbw", // (a write into another player's file, if they gave me w: nbperms.js)
 ]);

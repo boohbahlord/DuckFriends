@@ -1,11 +1,11 @@
-# The Numberat bible
+# The Seriat bible
 
 The language as it stands now: every rule, operator and example in one place, with the newest answer folded in.
 This is the source of truth for Claude. When the owner settles something, update this file the same day and drop the
 old wording; history and word-for-word quotes live in `notes/agree-or-disagree.md` and
 `/mnt/project-files/sandbox/numerat/` (owner-2026-11-19-1216.txt, owner-2026-11-19-1259.txt).
 
-- Name: **Numberat** (owner, Nov 19 13:06Z: "numberat is good to go"). Code names (`js/numerat.js`, `numeratwin.js`) stay.
+- Name: **Seriat** (owner, Nov 19 13:06Z: "seriat is good to go"). Code names (`js/numerat.js`, `numeratwin.js`) stay.
 - Owner: "this code is like math, components give rise to new logical possibilities ... Make sure to test
   possibilities of the code."
 - Built so far: sections 0 to 6, 8, 9 (logic words), 10 and 14, in `js/numberat.js` (values, line rules, limits) and
@@ -103,10 +103,10 @@ HP, damage and speed take tenths.
 | `\'rm**'\`, `\'rm**:****'\` | no 2-digit results; no 2- to 4-digit results |
 | `\'ainc0'\`, `\'arm0'\` | asterisks only |
 | `\''a2'inc0'\` | asterisk 2 only |
-| `\'n1:4'''a2'inc0'\` | lines 1 to 4 only (any Numberat value can pick the lines: `'n[1,5,[1:4]]'`) |
+| `\'n1:4'''a2'inc0'\` | lines 1 to 4 only (any Seriat value can pick the lines: `'n[1,5,[1:4]]'`) |
 | `\!'inc1'\` | the whole file. More `!` wins: `\!!'inc1'\` beats `\!'rm1'\` |
 | `\lin!!'inc1'\` | `lin` = the given lines (not the whole file) at strength `!!`; saves retyping a rule on several lines. `!` before `lin` makes those lines override earlier overrides and settings (owner 12:59Z) |
-| `\!a2'rm{3,[2:5]}'\` | rule values can be Numberat too |
+| `\!a2'rm{3,[2:5]}'\` | rule values can be Seriat too |
 | `\rm'lim'\` | no limit on this line (hidden cap 1,000,000) |
 | `\inc'lim=25'\`, `\inc'lim=***'\` | this line's limit is 25; at most 999 |
 | `\'ainc mormax'\`, `mormini`, `negbrahm`, `posbrahm` | section 5 |
@@ -115,8 +115,8 @@ HP, damage and speed take tenths.
 **[open]** `\lin["**"=!]'inc1'\` (math on `!`) has no clear meaning yet.
 
 ## 7. Param files
-A file whose first line is `\\param\\` sets rules for every Numberat file. `\\param1\\`, `\\param2\\` ... set the
-order. Reachable from Game settings (g) and the Numberat window.
+A file whose first line is `\\param\\` sets rules for every Seriat file. `\\param1\\`, `\\param2\\` ... set the
+order. Reachable from Game settings (g) and the Seriat window.
 
 ## 8. Limits per stat
 Owner 13:44Z: "Limits are set automatically if the player DOESNT define them themselves, and a help file says the limits
@@ -148,7 +148,7 @@ example `\>[*+0:*]=*>\[2,4]\>>\||[5,7,9],[3,5]\>*-[1,2]>\||10`, Adam's reading: 
 cycling `[2,4]` that many times, then `[5,7,9]` or `[3,5]` a digit minus 1 or 2 times, 10 times.
 
 ## 14. NPC brains and joining files (owner said yes, Nov 19 13:21Z)
-Every Numberat value works anywhere a number goes below: `wait 1:3`, `every [2,4]s`, `when near duck '1*'`.
+Every Seriat value works anywhere a number goes below: `wait 1:3`, `every [2,4]s`, `when near duck '1*'`.
 1. **Events**, code that runs when something happens: `when spawn`, `when hit`, `when dead`, `when near duck 3`,
    `when touch`, `every 2s`. Owner: "Code for more, like hitbox of duck for example": every stat of a duck or NPC can be
    read and set by name, its hitbox too: `((hitbox 150%))` (= `((hitbox 150))`), `\if hitbox > 200\` (in percent, 10% to 300%,
@@ -157,7 +157,7 @@ Every Numberat value works anywhere a number goes below: `wait 1:3`, `every [2,4
 2. **Actions**: `go nearest duck`, `attack`, `flee`, `wait 1.5`, `say "hi"` (quotes as in print).
 3. **Who**: `me`, `nearest duck`, `all zombies`, `team`: what an action or a stat applies to.
 4. **Chance in percent** (owner 13:32Z: "uses percentage with percent sign"; replaces the `~` weights):
-   `[attack 75%, flee 25%]` attacks 3 times in 4. Percents take any Numberat value: `[attack 60:80%, flee 20%]`.
+   `[attack 75%, flee 25%]` attacks 3 times in 4. Percents take any Seriat value: `[attack 60:80%, flee 20%]`.
    Under 100% in all: the rest is "do nothing". `30%` alone is true 3 times in 10.
    On a stat, a percent is of its most, and can go past 100%: `((hp 50%))` = half the most HP, `((hp 150%))` = 1.5
    times (still inside the stat's limit).
@@ -165,15 +165,15 @@ Every Numberat value works anywhere a number goes below: `wait 1:3`, `every [2,4
    all is read as shares: `[attack 150%, flee 50%]` = 3 to 1. A chance alone over 100% means "more than once":
    `150%` = once for sure, plus a 50% chance of a second time (`250%` = twice, plus 50% of a third). Kept to `[ ]`: a chance pick is still one
    pick; `( )` works a thing out and `{ }` waits.
-5. **Named values**: `let rage = 2:4`, then `rage` anywhere a number goes. Every Numberat principle applies to them
-   (owner: "allow the numberat principles to apply to variables"): `let rage = \>1>\[2,4]`, `rage^2`, `"2rage"`.
+5. **Named values**: `let rage = 2:4`, then `rage` anywhere a number goes. Every Seriat principle applies to them
+   (owner: "allow the seriat principles to apply to variables"): `let rage = \>1>\[2,4]`, `rage^2`, `"2rage"`.
    **[open]** owner answered "sure???"; explained again in chat.
 6. **Reusable blocks**: `def charge { ... }`, then `charge` runs it. `stop` ends a block early.
 7. **Joining files**: `use 'zombie-base'` pulls in another file's values and blocks; `give rage` / `take rage` share a
    value between files while the game runs.
 8. **Tests**: `\if hp in 1:5\` and `else`.
 9. **Loops** (owner 13:41Z: yes): `for z in all zombies { ((z speed ~1.2)) }`, `for n in 1:5 { say "wave n" }`
-   (any Numberat value as the range), `while \hp < 5\ { flee }`. Every loop stops after 1,000 rounds with an error,
+   (any Seriat value as the range), `while \hp < 5\ { flee }`. Every loop stops after 1,000 rounds with an error,
    so a mistake can't freeze the game. The value repeats (`\>3>\||`) stay for values.
 10. **Equal, not equal** (owner 13:52Z: yes to all 7 basics): inside `\if ...\`, `==` is equal and `not` is not equal:
     `\if hp == 5\`, `\if hp not 5\`. (`=` stays "name this".)

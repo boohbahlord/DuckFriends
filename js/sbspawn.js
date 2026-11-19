@@ -57,13 +57,13 @@ import { nbThink, nbOrder, nbKeep } from "./sbnumberat.js";
 
 /* the boxes that aren't numbers: the name over it, its key, what spawns, and a respawn's "who" */
 export const SB_TEXT = {
-  /* a Numberat file from the n window that its NPCs run (sbnumberat.js): blank, they think by their lists */
+  /* a Seriat file from the n window that its NPCs run (sbnumberat.js): blank, they think by their lists */
   brain: {
-    name: "Brain (a Numberat file)",
+    name: "Brain (a Seriat file)",
     check: (t) =>
       !t.trim() || /^~?[\w./ -]{1,80}$/.test(t.trim())
         ? ""
-        : "A file's name from the Numberat window (n), or ~name/file for another player's",
+        : "A file's name from the Seriat window (n), or ~name/file for another player's",
   },
   name: {
     name: "Name",
@@ -402,6 +402,42 @@ function press(s, id, now) {
   return makeOne(s, id, entSpot(s, p));
 }
 
+/* point p with box f set to the text v (what typing in a box does; a pasted or preset point's boxes go through it too) */
+function withField(p, f, v) {
+  const b = boxOf(f),
+    was = p.f[f],
+    t = String(v == null ? "" : v).slice(0, SB_ACTS[f] ? 200 : 80),
+    k = b.check
+      ? { t, ok: b.check(t) ? (was && was.ok) || "" : t }
+      : b.blank && !t.trim()
+        ? { t, ok: "" }
+        : keep(was, t, b);
+  const q = { ...p, f: { ...p.f, [f]: k } };
+  if (f === "zw" || f === "zh") q[f] = valueOf(k, b, () => 0.5); // (a zone's size, as a number: a range's middle)
+  return q;
+}
+/* the point a preset or a copy (a.pt: { col, f: { box: text }, im, ap }) makes out of a new bare one: only what its kind
+   has, each box read as if typed (the owner's, Nov 19 17:15Z: a preset before placing, copy and paste) */
+function fromPattern(q, pt) {
+  if (!pt || typeof pt !== "object") return q;
+  if (SB_COLORS[pt.col]) q = { ...q, col: pt.col };
+  if (q.k === "respawn" && Array.isArray(pt.im)) {
+    const all = SB_IMPORT.flatMap(([, fs]) => fs);
+    q = { ...q, im: all.filter((f) => pt.im.includes(f)) };
+  }
+  if (
+    q.k === "spawn" &&
+    pt.ap &&
+    typeof pt.ap === "object" &&
+    JSON.stringify(pt.ap).length < 4000
+  )
+    q = { ...q, ap: pt.ap };
+  for (const [f, v] of Object.entries(pt.f || {}))
+    if (typeof v === "string" && boxOf(f) && canSet(q, f))
+      q = withField(q, f, v);
+  return q;
+}
+
 /* ---------- the actions: { t: "sb", k, … } ---------- */
 export function sbAct(s, a, now) {
   if (!isSb(s)) return false;
@@ -457,14 +493,17 @@ export function sbAct(s, a, now) {
       n,
       pts: {
         ...pts,
-        ["p" + n]: {
-          k: a.kind,
-          x: +(at ? at.x : +me.x).toFixed(4),
-          y: +(at ? at.y : +me.y).toFixed(4),
-          z: Math.round(z),
-          col,
-          f: {},
-        },
+        ["p" + n]: fromPattern(
+          {
+            k: a.kind,
+            x: +(at ? at.x : +me.x).toFixed(4),
+            y: +(at ? at.y : +me.y).toFixed(4),
+            z: Math.round(z),
+            col,
+            f: {},
+          },
+          a.pt,
+        ),
       },
     };
     return true;
@@ -526,7 +565,7 @@ export function sbAct(s, a, now) {
     s.hidden = { ...hid, sbup: up };
     return true;
   }
-  /* the Numberat files a Brain box names (and the files they use), sent by the player who set it: sbnumberat.js */
+  /* the Seriat files a Brain box names (and the files they use), sent by the player who set it: sbnumberat.js */
   if (a.k === "nbf")
     return !!a.files && typeof a.files === "object" && nbKeep(s, a.files);
   /* M's defaults for a kind: kind, f (one of SB_OWN), v (its text; "" for the game's own); reset: all of them back */
@@ -570,15 +609,7 @@ export function sbAct(s, a, now) {
     }
     const b = boxOf(f);
     if (!b || !canSet(p, f)) return false;
-    const was = p.f[f],
-      t = String(a.v == null ? "" : a.v).slice(0, SB_ACTS[f] ? 200 : 80),
-      k = b.check
-        ? { t, ok: b.check(t) ? (was && was.ok) || "" : t }
-        : b.blank && !t.trim()
-          ? { t, ok: "" }
-          : keep(was, t, b);
-    const q = { ...p, f: { ...p.f, [f]: k } };
-    if (f === "zw" || f === "zh") q[f] = valueOf(k, b, () => 0.5); // (a zone's size, as a number: a range's middle)
+    const q = withField(p, f, a.v);
     s.sb = { ...s.sb, pts: { ...pts, [a.p]: q } };
     return true;
   }
@@ -879,7 +910,7 @@ export function think(s, now, npcs, at, H, far, duckAt) {
         brains.set(o.sp, pts[o.sp] ? boxText(pts[o.sp], "brain").trim() : "");
       return brains.get(o.sp);
     };
-  const nbCh = nbThink(s, now, them, all, ducks, far, brainOf); // (the NPCs that run a Numberat file)
+  const nbCh = nbThink(s, now, them, all, ducks, far, brainOf); // (the NPCs that run a Seriat file)
   const out = them.map((me) => {
     const d = nbOrder(me, all) || decide(me, lists(me.o), all, ducks, far, now),
       fo = d.foe ? d.foe.key : undefined;

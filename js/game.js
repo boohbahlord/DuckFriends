@@ -233,6 +233,7 @@ import { mountL4Bar, l4Slider } from "./l4ddbar.js";
 import { isSb, sbOnBoard, sbMay } from "./sandboxrules.js";
 import { mountCabinEnd } from "./hangout/cabinend.js";
 import { mountSandboxKeys } from "./sandbox.js";
+import { sbCheat } from "./sbmenu.js";
 import { sbHotOn, sbLook, sbHotSig } from "./sbhotview.js";
 import { sbSlots, spawnOf } from "./sbhot.js";
 import { sbBoardMarks, sbSettings } from "./sbspawnview.js";
@@ -3185,7 +3186,7 @@ function placeZombies(board, s, now) {
         k * 1.25,
       ); // (its claw marks on the duck it swiped, as Dead Ducks Arcade's: l4dd.js clawMark)
     n._a = o.a;
-    npcSay(n, o); // (Sandbox: what its Numberat file has it say, sbnumberat.js)
+    npcSay(n, o); // (Sandbox: what its Seriat file has it say, sbnumberat.js)
     if (n._st === st) continue;
     n._st = st;
     /* moved by transform, not left and top: 800 gliding left and top made the page lay itself out again every frame
@@ -6446,7 +6447,7 @@ const SB_LABELS = {
 };
 function sbGo(s) {
   if (!isSb(s) || !sbOnBoard(s) || !me || !onBoardPhase()) return null;
-  if (!sbMay(s, R.me, "b")) return null;
+  if (!sbMay(s, R.me, "b") || !sbCheat.on) return null;
   let best = null,
     bd = 1.6;
   for (const [id, p] of Object.entries((s.sb && s.sb.pts) || {})) {

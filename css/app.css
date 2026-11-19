@@ -54,7 +54,7 @@
   font-weight: 500;
   font-display: swap;
 }
-/* Cascadia Code, the command line's and Numerat's letters, self-hosted (SIL Open Font License:
+/* Cascadia Code, the command line's and Seriat's letters, self-hosted (SIL Open Font License:
    assets/fonts/cascadia-code-OFL.txt) */
 @font-face {
   font-family: "Cascadia Code";
@@ -14645,7 +14645,7 @@ html.moving .board.quake {
 .l4z.dead .sb-npc-name {
   display: none;
 }
-/* what a Numberat file has an NPC say (sbnumberat.js): a chat bubble over its name, as the ducks' (.gduck-say) */
+/* what a Seriat file has an NPC say (sbnumberat.js): a chat bubble over its name, as the ducks' (.gduck-say) */
 .sb-npc-say {
   position: absolute;
   left: 50%;
@@ -18939,7 +18939,7 @@ html.pixel *::after {
   font-family: "Jersey 15", monospace !important;
   font-size-adjust: 0.52;
 }
-/* except the command line's and Numerat's letters: Cascadia Code in every look (the owner's Sandbox file: "All terminal
+/* except the command line's and Seriat's letters: Cascadia Code in every look (the owner's Sandbox file: "All terminal
    text and numerat text should be cascadia monospace font") */
 html.pixel .chat-panel[data-mode="cmd"] .chat-in,
 html.pixel .chat-log .cmd-line,
@@ -20134,6 +20134,49 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   font-size: 0.9em;
   opacity: 0.8;
 }
+/* the h window's loot: its own list that scrolls, so the hotbar keys under it stay in sight */
+.sb-lootlist {
+  flex: none;
+  max-height: min(26vh, 16rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.2rem 0.3rem 0.2rem 0;
+  border-top: 0.12rem solid var(--line);
+}
+.sb-hotopts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.3rem;
+}
+.sb-lootlist h4 {
+  margin: 0.2rem 0 0;
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+.sb-win h3 {
+  margin: 0.2rem 0 0;
+  font-size: 1em;
+}
+.sb-picked {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.sb-picked i {
+  font-style: normal;
+}
+.sb-picked i svg {
+  width: 1.3em;
+  height: auto;
+  display: block;
+}
+.sb-lt[aria-pressed="true"] {
+  border-color: var(--green);
+}
 .sb-lts {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(8.75rem, 1fr));
@@ -20490,7 +20533,7 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   outline-offset: 0.1rem;
 }
 
-/* ---------- Sandbox: the Numerat window (js/numeratwin.js), as an editor: files on the left, the code, a terminal
+/* ---------- Sandbox: the Seriat window (js/numeratwin.js), as an editor: files on the left, the code, a terminal
    line under it; every letter Cascadia Code, as the command line's ---------- */
 .nm-win {
   width: min(60rem, calc(100vw - 1.5rem));
@@ -20820,4 +20863,63 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   .nm-tree {
     max-height: 7rem;
   }
+}
+
+/* Sandbox's cheat mode note, bottom left, and the right-click menu (js/sbmenu.js, js/sandbox.js) */
+.game .sb-cheat {
+  position: fixed;
+  left: 10px;
+  bottom: 96px;
+  z-index: 31;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent);
+  background: color-mix(in srgb, var(--panel) 80%, transparent);
+  color: var(--ink);
+  font-size: 0.78rem;
+  line-height: 1.2;
+  cursor: pointer;
+}
+.game .sb-cheat.on {
+  border-color: var(--green);
+}
+.game .sb-cheat kbd {
+  font-size: 0.7rem;
+}
+.sb-cheat[hidden] {
+  display: none;
+}
+.sb-ctx {
+  position: fixed;
+  z-index: 60;
+  height: fit-content;
+  width: max-content;
+  display: grid;
+  grid-auto-rows: max-content;
+  align-content: start;
+  min-width: 9rem;
+  padding: 0.25rem;
+  gap: 0.15rem;
+  border-radius: 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent);
+  background: var(--panel);
+  box-shadow: 0 0.4rem 1rem #0008;
+}
+.sb-ctx button {
+  text-align: left;
+  padding: 0.4rem 0.7rem;
+  border: 0;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.sb-ctx button:hover:not(:disabled),
+.sb-ctx button:focus-visible {
+  background: color-mix(in srgb, var(--blue) 35%, transparent);
+}
+.sb-ctx button:disabled {
+  opacity: 0.45;
+  cursor: default;
 }

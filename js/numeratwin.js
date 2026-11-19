@@ -1,8 +1,8 @@
-/* ---------- Sandbox: the Numerat window (stage 7a, the files without the language) ----------
+/* ---------- Sandbox: the Seriat window (stage 7a, the files without the language) ----------
    The owner's Sandbox file: "clicking “n” will bring up the numerat files you have made ... You can click (new file) OR
    (new directory) at the left (similar to VS code). You can also see a terminal line in the bottom half of this numerat
    window, and you can see the code above the long ractangle of terminal window (like VS code)."
-   The files are the command line's own (shell.js numerat: notes/numberat/, kept on this device from game to game), so
+   The files are the command line's own (shell.js numerat: notes/seriat/, kept on this device from game to game), so
    what's made here shows in ls and what's made there shows here. The code saves as it's typed. Run starts the open file
    (a stub until the language comes: it only runs until it's stopped); its terminal line is the command line itself.
    Every letter in it is Cascadia Code, as the command line's.
@@ -15,7 +15,7 @@
    terminal too, and a file a Brain uses goes to the room again once it's saved with no mistakes.
    The left side is File Explorer (the owner's, Nov 19 16:12Z and 17:15Z): one folder at a time; a folder is clicked
    into, ../ (or Back) clicks out of it, Back and Forward walk where I've been, and the path bar shows where I am and takes
-   a Linux path (.., ~/notes/numberat/help, numberat/help/math) or, when nothing is there by that name, searches the
+   a Linux path (.., ~/notes/seriat/help, seriat/help/math) or, when nothing is there by that name, searches the
    folder shown for it. Folders never fold open or shut in place. */
 import { esc, openWindow } from "./ui.js";
 import { numerat, shellRun, shellSuggest, shellHistory } from "./shell.js";
@@ -231,7 +231,7 @@ export function openNumerat() {
             resendBrains();
         }, 600);
       };
-      /* the room's Numberat log (what Brains print, and their mistakes): shown here as it comes */
+      /* the room's Seriat log (what Brains print, and their mistakes): shown here as it comes */
       let seen = 0,
         lastNbp = null,
         lastNbs = null;
@@ -263,7 +263,7 @@ export function openNumerat() {
           }
         }
       }, 500);
-      /* autocomplete in the code: the words Numerat has (true, false) for what's typed since the last space; Tab takes it */
+      /* autocomplete in the code: the words Seriat has (true, false) for what's typed since the last space; Tab takes it */
       let acList = [];
       const hideAc = () => {
         acList = [];

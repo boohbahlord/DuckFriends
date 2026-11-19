@@ -25,6 +25,7 @@ import { clawMark } from "./l4dd.js";
 import { FLAME } from "./mgjart.js";
 import { now as clockNow } from "./clock.js";
 import { esc, openWindow, confirmBox } from "./ui.js";
+import { sbPresets } from "./sbmenu.js";
 import {
   isSb,
   sbMay,
@@ -416,7 +417,7 @@ export function sbSettings(getR, id, tab = "") {
         if (r) r.send({ t: "sb", p: id, ...a });
       };
       const timers = {};
-      /* a Brain: its file (and the files it uses) go to the room first, from my Numberat folder (numeratwin.js, loaded
+      /* a Brain: its file (and the files it uses) go to the room first, from my Seriat folder (numeratwin.js, loaded
          when it's wanted: it brings the command line) */
       const sendBrain = (i) =>
         import("./numeratwin.js").then((m) => {
@@ -695,7 +696,9 @@ const BUILD = [
 export const buildRows = (R) =>
   spawnsHere(R.state)
     ? BUILD.map(([kind, label]) => ({
-        label,
+        label: sbPresets[kind] ? `${label} (preset)` : label,
+        kind,
+        name: label,
         win: true, // (the window goes: what I picked is on my mouse now)
         act: (r) =>
           sbPlace.start

@@ -1,6 +1,6 @@
-# Numerat: the language (working notes)
+# Seriat: the language (working notes)
 
-SUPERSEDED by `notes/numberat-bible.md` (Nov 19 13:06Z). Kept as the history of the discussion.
+SUPERSEDED by `notes/seriat-bible.md` (Nov 19 13:06Z). Kept as the history of the discussion.
 
 Sources, newest wins: the owner's file (`/mnt/project-files/sandbox/sandbox-mode-rules-clean.txt` lines 74-140,
 175-177, 293-305), the owner's answers of Nov 19 10:22Z and 10:30Z, and the owner's long notation message of Nov 19
@@ -70,13 +70,13 @@ asterixes cutoff additional digits").
 | `\lin!!'inc1'\` | this line only, at strength `!!` |
 | `\'ainc0'\`, `\'arm0'\` | asterisks only |
 | `\''a2'inc0'\` | asterisk 2 only |
-| `\'n1:4'''a2'inc0'\` | lines 1 to 4 only (any Numerat value can pick the lines) |
+| `\'n1:4'''a2'inc0'\` | lines 1 to 4 only (any Seriat value can pick the lines) |
 | `\rm'lim'\` | no limit on this line (hidden cap 1,000,000) |
 | `\inc'lim=25'\` | this line's limit is 25 |
 
 ## 7. Param files
-A file whose first line is `\\param\\` sets rules for every Numerat file. `\\param1\\`, `\\param2\\` … set the order
-when there are several. Reachable from Game settings (g) and from the Numerat window.
+A file whose first line is `\\param\\` sets rules for every Seriat file. `\\param1\\`, `\\param2\\` … set the order
+when there are several. Reachable from Game settings (g) and from the Seriat window.
 
 ## 8. Limits for each stat (owner: "limits are preset as usual unless player does something")
 Proposed, waiting for the owner's OK: HP 0.1 to Mad God Justin's highest HP (hpOf in js/mgjrules.js with a full
@@ -90,7 +90,7 @@ room); damage 0.1 to 50; speed 0.1 to 5; spawn limit 1 to 100; time between spaw
   Not possible in a browser game: curl, wget, ssh, scp, rsync, git, make, gcc, python3.
 
 ## 10. Speed (owner: "i wanted it written in binary")
-A browser can't run raw machine code; its fast option is WebAssembly. Plan: when a file is saved, Numerat is turned
+A browser can't run raw machine code; its fast option is WebAssembly. Plan: when a file is saved, Seriat is turned
 once into a small ready-made plan (compiled), so each spawn only follows a few quick steps. Replays from `rm` stop
 after 1,000 tries per line, with an error. Measure with 800 NPCs; move the runner to WebAssembly only if it's slow.
 
@@ -118,7 +118,7 @@ after 1,000 tries per line, with an error. Measure with 800 NPCs; move the runne
   and, or, nand, xor.
 - `#` for a note to yourself: the rest of the line is ignored.
 - Drop: math on `!` (8), the `'*1'` order (keep only `'1*'`), and the second way to write tenths (6).
-- Name: the owner's file first spelled it "Numberat". Other forms: Zumberat (owner's), Numberat, Numerata. I check
+- Name: the owner's file first spelled it "Seriat". Other forms: Zumberat (owner's), Seriat, Numerata. I check
   any picked name isn't already taken before switching.
 
 ## 13. Questions for the owner (short list)
@@ -127,7 +127,7 @@ after 1,000 tries per line, with an error. Measure with 800 NPCs; move the runne
 3. Cut to fit: 150 into `**` becomes 50 or 99?
 4. `1.0:*`: 1.0 to 1.9, or 1.0 to 9?
 5. Comparing in `if` with words (`over`, `under`, `is`)?
-6. A name: Zumberat, Numberat, or keep Numerat?
+6. A name: Zumberat, Seriat, or keep Seriat?
 7. The limits in section 8.
 
 ## 14. Owner's answers, Nov 19 12:59Z (these win)
@@ -145,7 +145,7 @@ after 1,000 tries per line, with an error. Measure with 800 NPCs; move the runne
 6. `#` notes: yes.
 7. Spaces: owner asked why they'd be ignored; explained (waiting). New: `print "Hello, world!"` / `print 'Hello,
    world!'`, quotes and spaces as in bash, usable in scripts and events (spawns, entities ...).
-8. Name: owner likes "Numberat"; quick search found no software or trademark by that exact name (not a legal check).
+8. Name: owner likes "Seriat"; quick search found no software or trademark by that exact name (not a legal check).
 
 Also asked for (n window): a help file and a read-only `help` directory (simple to complex help, by principle and
 operator; can't be copied, deleted or changed), a way to test code without running it besides Run, line numbers

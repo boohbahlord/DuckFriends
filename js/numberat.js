@@ -1,5 +1,5 @@
-/* ---------- Numberat: the language (part A: values) ----------
-   The rules are in notes/numberat-bible.md (the source of truth). This part is sections 0 to 5 and the percent picks
+/* ---------- Seriat: the language (part A: values) ----------
+   The rules are in notes/seriat-bible.md (the source of truth). This part is sections 0 to 5 and the percent picks
    (14.4): plain values, ranges, tenths, the asterisks and the $ letters, ~, order arrows and repeats, the four kinds of
    brackets, math, = and the asterisk rules mormax, mormini, negbrahm, posbrahm and caps.
    "this code is like math, components give rise to new logical possibilities", so every piece is a small part that
@@ -8,7 +8,7 @@
    A program keeps its own place in its orders and repeats between runs (spawn 1, spawn 2 ...); each run starts its
    inputs (the asterisks) and its { } groups over.
    Bad writing never breaks the game: compile() and run() give { why } and the caller keeps its last good value.
-   No imports, so the rules, the boxes and the Numberat window all use this one compiler. */
+   No imports, so the rules, the boxes and the Seriat window all use this one compiler. */
 
 export const NOTHING = Symbol("nothing"); // (a pick that landed on "do nothing", or a repeat that played 0 times)
 const MOST = 1000; // a repeat plays at most this many times
@@ -127,7 +127,7 @@ function lex(text) {
       i++;
       continue;
     }
-    no(`"${c}" isn't part of Numberat`);
+    no(`"${c}" isn't part of Seriat`);
   }
   return out;
 }
@@ -834,7 +834,7 @@ function percent(a) {
    line's result) | "all" (asterisks only) | a number (that named asterisk only), act: "inc" | "rm", what }. what is
    { k: "set", has(v) } (numbers), { k: "digits", lo, hi } (results with that many digits), { k: "flag", name } (mormax
    …) or { k: "lim", fn } (the line's limit; fn null: no limit, the hidden cap). The strongest rule wins (more !), then
-   the later one. Readings: the quotes are only marks (\'inc0'\ = \inc'0'\); a rule's own value can be any Numberat
+   the later one. Readings: the quotes are only marks (\'inc0'\ = \inc'0'\); a rule's own value can be any Seriat
    value, and it covers every number that value can give ('n[1,5,[1:4]]' is lines 1 to 5) */
 const CAP = 1000000; // (\rm'lim'\: "no limit on this line (hidden cap 1,000,000)")
 const RULES = "help/numbers/linerules.txt";
@@ -906,7 +906,7 @@ function subject(text, act) {
   if (d) return { k: "digits", lo: d[1].length, hi: (d[2] || d[1]).length };
   return { k: "set", has: possible(t, "A rule's value").has };
 }
-/* a bit of Numberat inside a rule, compiled as a value */
+/* a bit of Seriat inside a rule, compiled as a value */
 function sub(text, what) {
   const p = new Parser(lex(text), { states: [] });
   const fn = p.expr();
@@ -1010,7 +1010,7 @@ function lineRules(toks, line) {
   return { rules, rest: toks.slice(k) };
 }
 
-/* ---------- compile: a line of Numberat into a program ----------
+/* ---------- compile: a line of Seriat into a program ----------
    { ok: true, prog } or { ok: false, why }. prog.run(r) gives { v, lim } (v a number, letters, t/f or NOTHING; lim the
    line's own limit when a rule gives one: a number, or CAP for no limit) or { why }. A box is a file of one line, so
    a file rule (\!'rm1'\) works there too */
@@ -1211,7 +1211,7 @@ export {
   REPLAY,
 };
 
-/* the words Numberat knows so far, for the window's autocomplete */
+/* the words Seriat knows so far, for the window's autocomplete */
 export const NB_WORDS = [
   "true",
   "false",

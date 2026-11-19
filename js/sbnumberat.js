@@ -1,5 +1,5 @@
-/* ---------- Sandbox: NPCs that run a Numberat file (Numberat part D) ----------
-   The owner: "programming the ai". A spawn's Brain box names a file from the Numberat window (n); its text (and the
+/* ---------- Sandbox: NPCs that run a Seriat file (Seriat part D) ----------
+   The owner: "programming the ai". A spawn's Brain box names a file from the Seriat window (n); its text (and the
    files it uses) come to the room with the box (s.nb = { name: text }: its own part of the state, so it goes online only
    when a file changes), so the host can read it. The host keeps one
    brain for each file (numberatrun.js brain()), and every NPC of every spawn that names the file is one of its NPCs:
@@ -8,7 +8,7 @@
    - its actions are kept on the NPC: o.nbo = { a: go | attack | flee, k: who } is what it goes after (in place of its
      behavior lists, sbbrain.js decide(), until it's gone), o.nbs = [text, until] what it says, and its stats (hp, sv,
      dm, hb) are its own;
-   - print and its mistakes go to the room's Numberat log (s.nbo, its own part too), which the Numberat window shows.
+   - print and its mistakes go to the room's Seriat log (s.nbo, its own part too), which the Seriat window shows.
    An NPC whose spawn names no file thinks as before. The brains are the host's only: if the host changes, they start
    over. Everything here runs inside sbspawn.js think(), on the board and on the worlds the same. */
 import { compileScript, brain } from "./numberatrun.js";
@@ -35,7 +35,7 @@ const usedBy = (nb, top, n) =>
   top.startsWith("~")
     ? fileOf(nb, top.slice(0, top.indexOf("/") + 1) + n)
     : fileOf(nb, n);
-/* a line in the room's Numberat log */
+/* a line in the room's Seriat log */
 export function nbLog(s, text, now) {
   const was = s.nbo || [];
   s.nbo = [

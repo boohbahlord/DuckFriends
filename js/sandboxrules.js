@@ -41,7 +41,7 @@ export const sbOnWorld = (s) => isSb(s) && !!sbWorld(s.options);
 /* Sandbox on the board: its one phase, "sandbox" */
 export const sbOnBoard = (s) => isSb(s) && !sbWorld(s.options);
 
-/* who may build (b), make NPCs (m), write Numerat (n), set the hotbar (h), the game (g) and the players (p): the host;
+/* who may build (b), make NPCs (m), write Seriat (n), set the hotbar (h), the game (g) and the players (p): the host;
    everyone when Democracy of Ducklings lets everyone change the settings (the owner's answer 2, Nov 19 01:34Z); and
    whoever the host lets (p, later: s.sb.ok = { id: true }). A new host takes the old one's place at once, since this
    asks who the host is now */

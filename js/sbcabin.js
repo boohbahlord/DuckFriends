@@ -215,7 +215,7 @@ rule("sbz", {
     return zbOf(s)
       .filter((o) => !o.d)
       .map((o) => {
-        const b = npcBody(s, o, DU_WORLD); // (only where its picture shows, at its size and its Numberat hitbox: sbbody.js)
+        const b = npcBody(s, o, DU_WORLD); // (only where its picture shows, at its size and its Seriat hitbox: sbbody.js)
         return {
           id: "sbz" + o.i,
           x: o.x,
