@@ -91,9 +91,9 @@ export const lootOf = (kind) =>
       !x.off &&
       (kind === "weapon"
         ? x.kind === "item" && WEAPONS.includes(x.id)
-        : x.kind === "item"
-          ? !WEAPONS.includes(x.id)
-          : x.kind === kind),
+        : kind === "item"
+          ? x.kind === "item" && !WEAPONS.includes(x.id)
+          : x.kind === kind), // (each list holds only its own kind: Jumps only the jumps)
   );
 /* a row of the hotbar's keys: slots (the ids on them), to ("me" or "def"), off (can't be changed), v (the one picked: its keys
    show pressed) */

@@ -6,6 +6,7 @@ import { duckSVG } from "./duck.js";
 import { cloudSVG, FRIDGE } from "./art.js";
 import { profile } from "./store.js";
 import { dive } from "./sound.js";
+import { picturesIn } from "./loading.js";
 
 const block = (ch, i) =>
   `<span class="sb-block" style="--c:${FRIDGE[i % FRIDGE.length]};--r:${(((i * 37) % 9) - 4) * 0.9}deg;--d:${(i * 0.09).toFixed(2)}s">${ch}</span>`;
@@ -20,7 +21,7 @@ export function showSplash() {
     )
     .join("");
   const s = document.createElement("div");
-  s.className = "splash";
+  s.className = "splash wait"; // (unseen, over the loading screen, until its duck and cloud are drawn: no pop-in)
   s.setAttribute("role", "button");
   s.setAttribute("aria-label", "Tap to start");
   s.tabIndex = 0;
@@ -57,7 +58,14 @@ export function showSplash() {
   const away = () => {
     if (document.body.dataset.screen !== "front") close(false);
   };
-  for (const k of ["pointerdown", "keydown"]) addEventListener(k, go, true);
   document.addEventListener("screen", away);
-  s.focus({ preventScroll: true });
+  /* the owner's, Nov 19 22:45Z: "make it to where it keeps loading until that duck is on the cloud". The start screen
+     shows only once its pictures are in (the duck and the cloud with the pixel look); till then the page's loading
+     screen stays, and a tap does nothing */
+  picturesIn(s, 10000).then(() => {
+    if (gone) return;
+    s.classList.remove("wait");
+    for (const k of ["pointerdown", "keydown"]) addEventListener(k, go, true);
+    s.focus({ preventScroll: true });
+  });
 }

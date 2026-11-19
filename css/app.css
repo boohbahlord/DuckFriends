@@ -13317,6 +13317,9 @@ html.moving .hp.hang-shimmer {
   overflow: hidden;
   transition: background-color 1.2s ease 0.25s;
 }
+.splash.wait {
+  opacity: 0; /* (not visibility: pxdom.js copies it into the pixel drawing, which would come out empty) */
+}
 .sp-stage {
   position: relative;
   width: min(300px, 72vw);
