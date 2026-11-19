@@ -43,6 +43,7 @@ import {
   closeMenu,
   openPreset,
   patternOf,
+  pickColor,
   pointAt,
   sbCheat,
   sbClip,
@@ -395,12 +396,17 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
     S.classList.remove("sb-placing");
     seat();
   };
-  sbPlace.start = (kind, label) => {
+  sbPlace.start = (kind, label, col) => {
     const R = getR();
     if (!R || !sbMay(R.state, R.me, "b")) return;
-    carry = { kind, label };
+    /* a spawn or a respawn: its color first (wave 2), then it rides on my mouse in that color */
+    if ((kind === "spawn" || kind === "respawn") && !col)
+      return pickColor(label, (sbPresets[kind] || {}).col || "", (c) =>
+        sbPlace.start(kind, label, c),
+      );
+    carry = { kind, label, col };
     sbView.build = true;
-    ghost.innerHTML = ghostHTML(R.state, kind);
+    ghost.innerHTML = ghostHTML(R.state, kind, col);
     ghost.classList.toggle("zone", kind === "zone");
     ghost.hidden = mx < 0; // (a phone: nothing on a finger until it taps)
     cancel.textContent = `Cancel ${label.toLowerCase()}`;
@@ -442,6 +448,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
         kind: carry.kind,
         x: at.x,
         y: at.y,
+        ...(carry.col ? { col: carry.col } : {}),
         ...(sbPresets[carry.kind] ? { pt: sbPresets[carry.kind] } : {}),
       });
     eat = performance.now();

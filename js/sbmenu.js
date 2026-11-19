@@ -5,9 +5,9 @@
    only for players who have rights; C alone still opens the cheat sheet for everyone).
    A pattern is what a placed thing keeps of itself: { k, col, f: { box: text }, im, ap }. The host builds a new point from
    one (sbspawn.js fromPattern), reading each box as if it were typed. Kept on this device only. */
-import { esc, openWindow } from "./ui.js";
+import { esc, openWindow, toast } from "./ui.js";
 import { W, H } from "./hangout/layout.js";
-import { SB_COLORS, sbOnBoard, sbZoneBox } from "./sandboxrules.js";
+import { SB_COLORS, SB_NOCOL, sbOnBoard, sbZoneBox } from "./sandboxrules.js";
 import { kindsFor } from "./sbmake.js";
 
 export const sbClip = { pt: null }; // (what Copy or Cut kept)
@@ -16,6 +16,23 @@ export const sbPresets = {}; // (kind: the pattern Build puts down for it)
    Build's menus and Properties wait for it */
 export const sbCheat = { on: true };
 
+/* the color buttons: the eight, and No color after them where it may be (attr: data-col …; on: the one picked) */
+export function colSwatches(on, attr, nocol) {
+  return (
+    Object.entries(SB_COLORS)
+      .map(
+        ([k, c]) =>
+          `<button type="button" class="sb-col${on === k ? " on" : ""}" ${attr}="${k}" style="--c:${c}" aria-label="${k}" title="${k[0].toUpperCase() + k.slice(1)}"></button>`,
+      )
+      .join("") +
+    (nocol
+      ? `<button type="button" class="sb-col sb-col-none${on === SB_NOCOL ? " on" : ""}" ${attr}="${SB_NOCOL}" aria-label="No color" title="No color"></button>`
+      : "")
+  );
+}
+/* "maybe there's a note by that when you select it that pops up temporarily" */
+export const NOCOL_NOTE =
+  "No color: its ring slowly turns through the rainbow, and it keeps settings of its own (no other spawn shares them).";
 /* the pattern of point p */
 export function patternOf(p) {
   const f = {};
@@ -110,27 +127,53 @@ export function showMenu(parent, cx, cy, items) {
   menuEl = m;
 }
 
+/* "when you select spawn, it asks you what color before you place it down": the colors and No color; done(color) */
+export function pickColor(label, cur, done) {
+  openWindow(
+    `<h2>${esc(label)}: which color?</h2>
+    <div class="sb-cols sb-pickcols">${colSwatches(cur, "data-pick", true)}</div>`,
+    {
+      cls: "sb-setwin sb-putwin sb-colwin",
+      onOpen(w, close) {
+        w.addEventListener("click", (e) => {
+          const c = e.target.closest("[data-pick]");
+          if (!c) return;
+          close();
+          if (c.dataset.pick === SB_NOCOL) toast(NOCOL_NOTE, 4500);
+          done(c.dataset.pick);
+        });
+      },
+    },
+  );
+}
+
 /* Build's preset for a kind: its name, color and, for a spawn, what it spawns (set before placing; each placing, Shift's
    repeats too, comes out as it says) */
 export function openPreset(getR, kind, label, done) {
   const R = getR();
   if (!R) return;
-  const cur = sbPresets[kind] || { f: {} },
+  /* a spawn's or a respawn's settings are its color's (wave 2): "if you right-click it to configure it, it'll ask you
+     which color first" */
+  const linked = kind === "spawn" || kind === "respawn",
+    cur = sbPresets[kind] || { f: {} },
     what = (cur.f.what || "").split(/[\s,]+/).filter(Boolean),
     kinds = kind === "spawn" ? kindsFor(R.state) : [];
   openWindow(
     `<h2>${esc(label)} preset</h2>
     <p class="sb-tip">Everything you put down as ${esc(label.toLowerCase())} comes out like this. Shift while you put it down keeps going.</p>
     <div class="sb-set">
+    ${
+      linked
+        ? `<div class="sb-row"><span>Color first</span><span class="sb-cols">${colSwatches(cur.col, "data-pcol", true)}</span></div>
+    <p class="sb-tip">What you set here is that color's: every ${esc(label.toLowerCase())} of it takes it.</p>`
+        : ""
+    }
     <label class="sb-row"><span>Name</span><input class="sb-box" data-pf="name" maxlength="20" value="${esc(cur.f.name || "")}" placeholder="its color's name"></label>
-    <div class="sb-row"><span>Color</span><span class="sb-cols"><button type="button" class="sb-col${cur.col ? "" : " on"}" data-pcol="" aria-label="next free color" style="--c:#8888">·</button>${Object.entries(
-      SB_COLORS,
-    )
-      .map(
-        ([k, c]) =>
-          `<button type="button" class="sb-col${cur.col === k ? " on" : ""}" data-pcol="${k}" style="--c:${c}" aria-label="${k}"></button>`,
-      )
-      .join("")}</span></div>
+    ${
+      linked
+        ? ""
+        : `<div class="sb-row"><span>Color</span><span class="sb-cols"><button type="button" class="sb-col${cur.col ? "" : " on"}" data-pcol="" aria-label="next free color" style="--c:#8888">·</button>${colSwatches(cur.col, "data-pcol", false)}</span></div>`
+    }
     ${
       kind === "spawn"
         ? `<div class="sb-row"><span>Spawns</span><span class="sb-what">${kinds
@@ -151,6 +194,7 @@ export function openPreset(getR, kind, label, done) {
           const c = e.target.closest("[data-pcol]");
           if (c) {
             col = c.dataset.pcol;
+            if (col === SB_NOCOL) toast(NOCOL_NOTE, 4500);
             w.querySelectorAll("[data-pcol]").forEach((x) =>
               x.classList.toggle("on", x === c),
             );

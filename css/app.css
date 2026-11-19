@@ -20532,6 +20532,59 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   outline: 0.16rem solid var(--ink);
   outline-offset: 0.1rem;
 }
+/* No color (wave 2): the rainbow, and a ring that turns through it very slowly ("emphasis on slowly") */
+.sb-col-none {
+  background: conic-gradient(
+    #ff4d4d,
+    #ff8c2b,
+    #ffd23f,
+    #3fae2a,
+    #3f8cff,
+    #9b5de5,
+    #ff6fb5,
+    #ff4d4d
+  );
+}
+.sb-pickcols {
+  justify-content: center;
+  gap: 0.6rem;
+}
+.sb-pickcols .sb-col {
+  width: 2.2rem;
+  height: 2.2rem;
+}
+.sb-rb {
+  animation: sb-rb 48s linear infinite;
+}
+@keyframes sb-rb {
+  0%,
+  100% {
+    color: #ff4d4d;
+  }
+  14% {
+    color: #ff8c2b;
+  }
+  28% {
+    color: #ffd23f;
+  }
+  43% {
+    color: #3fae2a;
+  }
+  57% {
+    color: #3f8cff;
+  }
+  71% {
+    color: #9b5de5;
+  }
+  86% {
+    color: #ff6fb5;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sb-rb {
+    animation-duration: 240s;
+  }
+}
 
 /* ---------- Sandbox: the Seriat window (js/numeratwin.js), as an editor: files on the left, the code, a terminal
    line under it; every letter Cascadia Code, as the command line's ---------- */
