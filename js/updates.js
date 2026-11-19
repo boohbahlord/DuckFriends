@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v101",
+    version: 101,
+    date: "Nov 19, 2026",
+    title: "Sandbox: plain maps, one-press windows",
+    news: [
+      "For Sandbox: the map shows plain unless you turn on Color over the map in Game Settings.",
+      "For Sandbox: one press of B, M, H, G, P or C opens its window and pressing it again closes it.",
+      "For Sandbox: on the board, a button shows when you stand by something you built, and opens its settings.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v100",
     version: 100,
     date: "Nov 19, 2026",
