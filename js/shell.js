@@ -2597,6 +2597,22 @@ export const numerat = {
     sync(ctx);
     return useText(from, name);
   },
+  /* a spawn's Brain box (sbnumberat.js): the file it names, from the folder's top, and every file it uses, each kept
+     under the name it's written with; null when there's no such file */
+  bundle(ctx, name) {
+    sync(ctx);
+    const top = numRoot() + "/" + name,
+      text = useText(top, name.split("/").pop());
+    if (text == null) return null;
+    const files = { [name]: text },
+      seen = (n) => {
+        if (!(n in files)) files[n] = useText(top, n);
+        return files[n];
+      };
+    compileScript(text, { file: seen });
+    for (const [n, t] of Object.entries(files)) if (t == null) delete files[n];
+    return files;
+  },
   running: (path) => procs.find((p) => p.path === path) || null,
   run(ctx, path) {
     sync(ctx);

@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v97",
+    version: 97,
+    date: "Nov 19, 2026",
+    title: "Faster maps, and NPC brains",
+    news: [
+      "Sky, Pixel, Carnival Night, Starry Night, Shelter Sky & Null and Euclid's Squares run much faster on slower computers (two to three times).",
+      "For Sandbox: a spawn's new Brain box runs a Numberat file from the n window. Its NPCs follow the file's when and every: they go, attack or flee, say things over their heads, and change their own HP, speed and damage.",
+      "For Sandbox: what a Brain prints, and its mistakes, show in the n window's terminal. A file saved with no mistakes reaches its NPCs straight away.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v96",
     version: 96,
     date: "Nov 19, 2026",

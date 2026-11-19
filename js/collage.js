@@ -13,6 +13,9 @@
    The sky, the band, the patches and the halftones melt into the black at their borders; the tree stays black.
    Everyone sees the same picture (a fixed seed). "Black and white" (options.mapGrey) turns it all into greys. */
 
+import { pixelOn, gridPx } from "./pixel.js";
+import { bakeStill, unbake } from "./pxbake.js";
+
 const SEED = 20261103;
 const rng = (k) => () => (k = (k * 16807) % 2147483647) / 2147483647;
 
@@ -650,7 +653,7 @@ export function collageScene(layer, s) {
     const W = layer.clientWidth,
       H = layer.clientHeight;
     if (!W || !H) return;
-    const key = W + "x" + H + grey();
+    const key = W + "x" + H + grey() + "/" + gridPx();
     if (key === drawn) return;
     drawn = key;
     clearTimeout(timer);
@@ -668,6 +671,14 @@ export function collageScene(layer, s) {
       if (old) old.remove();
       squaresOf(live, W, H);
       sc.classList.add("ready");
+      /* the pixel look: the picture made into pixels once, and the squares and the static drawn each frame on one canvas
+         of the grid's pixels (pxbake.js), instead of the filter on the whole page every frame */
+      unbake(sc, layer);
+      if (pixelOn())
+        bakeStill(sc, ":scope > canvas.cl-pic", layer, {
+          sel: ".cl-live > .cl-sq, :scope > canvas.cl-static",
+          before: live,
+        });
     })();
     pump();
   };
@@ -676,6 +687,7 @@ export function collageScene(layer, s) {
     rtimer = setTimeout(draw, drawn ? 200 : 0);
   });
   ro.observe(layer);
+  addEventListener("pxgrid", draw); // (the grid changed: made into pixels again on the new one)
   draw();
   return {
     update(now) {
@@ -697,6 +709,8 @@ export function collageScene(layer, s) {
       clearTimeout(timer);
       clearTimeout(rtimer);
       ro.disconnect();
+      removeEventListener("pxgrid", draw);
+      layer.classList.remove("px-own");
       sc.remove();
     },
   };

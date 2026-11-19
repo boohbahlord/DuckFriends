@@ -47,9 +47,18 @@ import { listsOf, decide, MAD } from "./sbbrain.js";
 import { botDuck } from "./botduck.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { armUp, cleanArms, fight, keepAt } from "./sbarms.js";
+import { nbThink, nbOrder, nbKeep } from "./sbnumberat.js";
 
 /* the boxes that aren't numbers: the name over it, its key, what spawns, and a respawn's "who" */
 export const SB_TEXT = {
+  /* a Numberat file from the n window that its NPCs run (sbnumberat.js): blank, they think by their lists */
+  brain: {
+    name: "Brain (a Numberat file)",
+    check: (t) =>
+      !t.trim() || /^[\w./ -]{1,80}$/.test(t.trim())
+        ? ""
+        : "A file's name from the Numberat window (n)",
+  },
   name: {
     name: "Name",
     check: (t) => (t.trim().length <= 20 ? "" : "20 letters at most"),
@@ -324,7 +333,8 @@ function makeOne(s, id, at) {
       ...(flag(by("sprint"), "sprint") ? { run: 1 } : {}),
       ...kind,
     });
-  } else if (onCabin(s) || k !== "zombie") {
+  } else if (onCabin(s) || k !== "zombie" || boxText(p, "brain").trim()) {
+    // (a zombie with a Brain walks as Sandbox's own do, so its file can steer it: sbnumberat.js)
     const c = cabinSpawn(s, at.x, at.y, {
       hp,
       sv,
@@ -476,6 +486,9 @@ export function sbAct(s, a, now) {
     s.hidden = { ...hid, sbup: up };
     return true;
   }
+  /* the Numberat files a Brain box names (and the files they use), sent by the player who set it: sbnumberat.js */
+  if (a.k === "nbf")
+    return !!a.files && typeof a.files === "object" && nbKeep(s, a.files);
   /* M's defaults for a kind: kind, f (one of SB_OWN), v (its text; "" for the game's own); reset: all of them back */
   if (a.k === "kd") {
     const kind = String(a.kind || ""),
@@ -819,9 +832,16 @@ export function think(s, now, npcs, at, H, far, duckAt) {
       o,
       ...at(o),
     })),
-    all = [...ducks, ...them];
-  return them.map((me) => {
-    const d = decide(me, lists(me.o), all, ducks, far, now),
+    all = [...ducks, ...them],
+    brains = new Map(),
+    brainOf = (o) => {
+      if (!brains.has(o.sp))
+        brains.set(o.sp, pts[o.sp] ? boxText(pts[o.sp], "brain").trim() : "");
+      return brains.get(o.sp);
+    };
+  const nbCh = nbThink(s, now, them, all, ducks, far, brainOf); // (the NPCs that run a Numberat file)
+  const out = them.map((me) => {
+    const d = nbOrder(me, all) || decide(me, lists(me.o), all, ducks, far, now),
       fo = d.foe ? d.foe.key : undefined;
     if (me.o.fo !== fo) {
       if (fo) me.o.fo = fo;
@@ -829,6 +849,8 @@ export function think(s, now, npcs, at, H, far, duckAt) {
     }
     return { me, o: me.o, d };
   });
+  out.ch = nbCh; // (a file changed something: an NPC's stats, what it says)
+  return out;
 }
 /* a blow of NPC o (thing me) on foe: its claw (the spawn's damage box), or d from one of its weapons (w: sbarms.js). A
    duck loses HP as from a zombie (H.claw); an NPC loses it too, and goes after whoever hit it (sbbrain.js MAD) */
@@ -859,9 +881,9 @@ function boardTick(s, now, H) {
     far = (a, b) => Math.hypot((a.x - b.x) / RX, (a.y - b.y) / RY);
   let ch = false;
   const spot = (o) => ({ x: o.x, y: o.y });
-  for (const { me, o, d } of think(s, now, live, spot, H, far, (id) =>
-    spot(s.pos[id]),
-  )) {
+  const plans = think(s, now, live, spot, H, far, (id) => spot(s.pos[id]));
+  if (plans.ch) ch = true;
+  for (const { me, o, d } of plans) {
     const to = d.goal || d.flee;
     if (!to) continue;
     const x0 = o.x,

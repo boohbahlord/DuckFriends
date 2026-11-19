@@ -242,9 +242,12 @@ Joining files:
   take rage            rage, as another file gave it
 Plain value lines (2:4, >2>4 ...) work in files too.
 
-Coming next: NPCs run a file's when's and every's once a spawn
-uses that file as its Brain. Until then, Run plays the file's own
-lines and says which parts wait for that.
+In the game: open Build (b), pick a spawn, and on its Entities
+page write the file's name in the Brain box. Its NPCs then run
+the file's when's and every's. print and the file's mistakes
+show in this terminal. Save the file with no mistakes and its
+NPCs get the new version straight away.
+A spawn with no Brain plays as before.
 `,
   "names.txt": `Names
 
@@ -253,7 +256,7 @@ lines and says which parts wait for that.
   ((hp "2rage"))              "…" multiplies: twice the rage
 
 Stats, read and set (an NPC's, inside a when):
-  hp  speed  damage  hitbox
+  hp  speed  damage  hitbox (kept, but it doesn't change hits yet)
   ((hp 5))  ((hp hp-1))  ((hp 50%))   50% is half its most
 Built-in: wave (the round), time (seconds), alive, dead, spawned.
 Math words: round 2.5 (3)  up 2.1 (3)  down 2.9 (2)

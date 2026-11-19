@@ -6,7 +6,8 @@
    times over 6 s, how much main-thread time went to making pixels (pixel.js, pixelpalette.js, pxdom.js), and the same
    again with the live #px-f filter switched off, to see what the filter costs.
    Env: RATE (4), SECS (6), URL (http://localhost:8765/), RUNS (1), OFF (a selector to switch off instead), TOP (the n
-   files taking most time), FN (by function, with TOP) */
+   files taking most time), FN (by function, with TOP), SETTLE (ms
+   after the game starts before measuring: 2000) */
 const { chromium } = require("playwright");
 const RATE = +process.env.RATE || 4,
   SECS = +process.env.SECS || 6,
@@ -20,7 +21,7 @@ const NO_FILTER = process.env.OFF
 
 async function start(p, mode, extra) {
   await p.evaluate(
-    async ([mode, extra]) => {
+    async ([mode, extra, settle]) => {
       const wait = (ms) => new Promise((r) => setTimeout(r, ms));
       const net = await import("./js/net.js");
       const router = await import("./js/router.js");
@@ -40,9 +41,9 @@ async function start(p, mode, extra) {
           room.send({ t: "vote", v: extra.l4map || "downpour" });
         await wait(1000);
       }
-      await wait(2000);
+      await wait(settle);
     },
-    [mode, extra],
+    [mode, extra, +process.env.SETTLE || 2000],
   );
 }
 /* frames over SECS s, with a CPU profile of the same time */

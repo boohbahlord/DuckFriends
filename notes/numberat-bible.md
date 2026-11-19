@@ -10,8 +10,10 @@ old wording; history and word-for-word quotes live in `notes/agree-or-disagree.m
   possibilities of the code."
 - Built so far: sections 0 to 6, 8, 9 (logic words), 10 and 14, in `js/numberat.js` (values, line rules, limits) and
   `js/numberatrun.js` (statements, parts A to C, Nov 19). The boxes, the files, Check and Run in the n window all use
-  them (`js/numerat.js` reads plain values itself and compiles the rest). Not hooked up yet: NPCs running a file's
-  `when`/`every` parts in the game (Run plays only the file's own lines and prints them). Readings taken where the rules didn't say: `1.*` is 1.0 to
+  them (`js/numerat.js` reads plain values itself and compiles the rest). Part D (`js/sbnumberat.js`): a spawn's Brain
+  box names a file; the file and the files it uses go to the room (`s.nb`), the host runs one brain per file, and its
+  NPCs' when/every, go/attack/flee, say and stats come from it; print and mistakes go to `s.nbo`, shown in the n
+  window. `hitbox` is kept on the NPC but doesn't change its hits yet. Readings taken where the rules didn't say: `1.*` is 1.0 to
   1.9 (`*` includes 0, owner 12:59Z); side by side groups take turns in a shuffled order, one pick from each; a
   program keeps its place in its orders between spawns, shared by every box with the same text. Line rules: the
   quotes are only marks (`\'a2 rm0'\` = `\''a2'rm0'\`); a rule's value covers every number it can give; with the
