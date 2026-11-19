@@ -9,6 +9,27 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v122",
+    version: 122,
+    date: "Nov 19, 2026",
+    title: "Fire stays on its floor, L for the laser",
+    news: [
+      "L turns the laser sight and the flashlight on or off in every mode. Each mode starts the way it was.",
+      "An empty hotbar slot puts your weapon away. On a phone, the slider stops only on the first empty slot.",
+      'For Sandbox: true or false settings are buttons, the spawn window has section headers, Hide starts on, and "Name" is now "Variable name".',
+      "For Sandbox: Seriat files end in .se, the examples use percentages, and the first help file is a simple start.",
+      "For Sandbox: cheat mode's switch is in the cheat sheet. A note shows the keys when Sandbox starts, then fades.",
+    ],
+    fixed: [
+      "For Dead Ducks Arcade: fire stays on its own floor. The flamethrower goes over a roof's edge like a bullet but never under a roof, burning ground lights only zombies on its floor, and a burning zombie only lights zombies on its own floor.",
+      "For Dead Ducks Arcade: Duck Cabin's power box shows again.",
+      "For Sandbox: the settings' slide bar sits at the window's edge in the UI's colors, no color dot is cut off, and the right-click menu no longer pushes the board aside.",
+      "For Sandbox: hidden loot still shows its orb.",
+      "For Sandbox: the Brain builder's size stops at 152%, like a spawn's Size box.",
+      "The top bar's buttons are no longer cut off at the top in the Kenoma look.",
+    ],
+  },
+  {
     id: "v121",
     version: 121,
     date: "Nov 19, 2026",
