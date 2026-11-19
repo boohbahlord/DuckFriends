@@ -61,9 +61,9 @@ export const SB_TEXT = {
   brain: {
     name: "Brain (a Seriat file)",
     check: (t) =>
-      !t.trim() || /^[\w./ -]{1,80}$/.test(t.trim())
+      !t.trim() || /^~?[\w./ -]{1,80}$/.test(t.trim())
         ? ""
-        : "A file's name from the Seriat window (n)",
+        : "A file's name from the Seriat window (n), or ~name/file for another player's",
   },
   name: {
     name: "Name",
@@ -323,7 +323,11 @@ function makeOne(s, id, at) {
       (flag(by("jump"), "jump") ? STEP : 0),
     kind = {
       ...(k === "zombie" ? {} : { k, ...dressFor(s, k) }),
-      ...(ownOn(p) ? lookOf(p.ap) : {}), // (its settings off: it looks as it is)
+      ...(at.id && (at.im || []).includes("ap") && at.ap
+        ? lookOf(at.ap) // (coming back at a respawn that imported Appearance: its look)
+        : ownOn(p)
+          ? lookOf(p.ap)
+          : {}), // (its settings off: it looks as it is)
       ...(at.id && (at.im || []).length ? { rp: at.id } : {}), // (its behavior lists too: think)
       ...(sz !== 1 ? { sz } : {}),
     };
@@ -634,7 +638,9 @@ export function sbAct(s, a, now) {
       ), // (its values start as its color's spawn's)
       f = { ...p.f };
     for (const k of im) if (!f[k] && from && from.f[k]) f[k] = { ...from.f[k] };
-    s.sb = { ...s.sb, pts: { ...pts, [a.p]: { ...p, im, f } } };
+    const q = { ...p, im, f };
+    if (im.includes("ap") && !p.ap && from && from.ap) q.ap = from.ap; // (Appearance: its spawn's look, as it is now)
+    s.sb = { ...s.sb, pts: { ...pts, [a.p]: q } };
     return true;
   }
   if (a.k === "page") {

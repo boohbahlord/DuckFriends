@@ -29,7 +29,7 @@ import { sbAct, sbTick, sbPlaceDuck, sbHpOf } from "./sbspawn.js";
 import { hpHeal, tenths } from "./hpmath.js";
 import { sbHotAct, sbSlots } from "./sbhot.js";
 import { sbLootAct, sbLootTick } from "./sbloot.js";
-import { nbPermAct } from "./nbperms.js";
+import { nbPermAct, nbShareAct } from "./nbperms.js";
 import { sbZoneTick } from "./sbzone.js";
 import { onCabin } from "./sbcabin.js";
 import { stamp, took } from "./perf.js";
@@ -2318,6 +2318,10 @@ function reduceStep(state, a, now) {
     case "nbp":
       // Seriat: my folder's names and the rights I give other players, for this Sandbox (nbperms.js)
       return nbPermAct(s, a) ? s : state;
+    case "nbs":
+    case "nbw":
+      // Seriat: my shared copies, and a write into another player's file they let me write (nbperms.js)
+      return nbShareAct(s, a) ? s : state;
     case "sbl":
       // Sandbox's loot orbs: an orb's own picture (sbloot.js)
       return sbLootAct(s, a) ? s : state;
