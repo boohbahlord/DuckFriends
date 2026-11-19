@@ -596,6 +596,7 @@ function wounds(o, l, i) {
    (a change right after a beat is part of it), and each zombie keeps the glide time it started with (o.g), a little
    over a beat, so it is still on its way when the next one comes instead of stopping and starting */
 const GLIDE = { min: 120, max: 400, even: 0.35, over: 1.1, same: 90 };
+const FACE_HOLD = 300; // ms a zombie keeps going the other way before it turns (no flipping back and forth on a bump)
 function seeZombies(s, ctx, now) {
   const zs = zombiesOf(s);
   let fresh = false;
@@ -633,7 +634,19 @@ function seeZombies(s, ctx, now) {
         o.fx = o.x = z.x;
         o.fy = o.y = z.y;
       } // (far: there at once, both ways; before, only across, and it slid the rest down or up)
-      if (Math.abs(z.x - o.x) > 2) o.face = z.x > o.x ? 1 : -1;
+      /* which way it faces: turned only once it keeps going the other way a moment (FACE_HOLD). Bumping into another
+         zombie or a wall pushed it back and forth a few px, and its picture flipped each time, as if squished (the
+         owner's, Nov 19 19:27Z: "I do not want a squish effect on zombies, for example, when they walk into each other
+         or walk into a wall") */
+      const dir = Math.abs(z.x - o.x) > 2 ? (z.x > o.x ? 1 : -1) : 0;
+      if (!dir || dir === o.face) o.turn = 0;
+      else if (!o.went)
+        o.face = dir; // (its first steps: the way it goes at once)
+      else if (o.turn !== dir) {
+        o.turn = dir;
+        o.turnAt = now;
+      } else if (now - o.turnAt >= FACE_HOLD) o.face = dir;
+      if (dir) o.went = 1;
     }
     const shown = !o.el.hidden; // (one no camera here sees: only its numbers change, its look waits until it's seen)
     if (z.hp < o.hp && shown && o.st !== 3)
