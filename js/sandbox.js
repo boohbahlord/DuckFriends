@@ -12,6 +12,7 @@ import { isSb, sbCan, SB_KEYS_TAKEN, SB_KEY_IN_BUILD } from "./sandboxrules.js";
 import { buildRows, sbNearPoint, sbSettings } from "./sbspawnview.js";
 import { boxText } from "./sbspawn.js";
 import { npcRows } from "./sbmake.js";
+import { hotRows, lootHTML, openPut, sbHotOn } from "./sbhotview.js";
 
 /* each window: its key, its title, and whether it needs the host's rights */
 export const SB_WINS = {
@@ -19,12 +20,12 @@ export const SB_WINS = {
   b: { name: "Build" },
   m: { name: "Make an NPC" },
   n: { name: "Numerat" },
-  h: { name: "Hotbar" },
+  h: { name: "Hotbar", all: true }, // (its rows say who may do what: sbhotview.js hotRows)
   g: { name: "Game settings" },
   p: { name: "Player settings" },
 };
 /* the cheat sheet's words: what every key does in Sandbox (the owner's file: "Cheat sheet describes a shit ton in a large
-   page popup"). Each later stage adds its own lines here as it lands. The loot preview (stage 4) goes under them */
+   page popup"). Each later stage adds its own lines here as it lands. The loot preview (stage 4) goes under them: sbhotview.js lootHTML */
 export const SB_SHEET = [
   [
     "C",
@@ -39,7 +40,10 @@ export const SB_SHEET = [
     "N",
     "Numerat: your files and their help page. Numerat only runs in Sandbox.",
   ],
-  ["H", "Hotbar: what you carry and what you can spawn from it."],
+  [
+    "H",
+    "Hotbar: use your Customize hotbar or empty it. The host can lock it, make one everyone's default and add spawn buttons.",
+  ],
   [
     "G",
     "Game settings for this Sandbox: where Numerat files are brought in to run.",
@@ -52,7 +56,7 @@ export const SB_SHEET = [
   ["E", "Use what you stand next to, a spawn too."],
   [
     "Spawns",
-    "In Build, place a spawn and give it a key. While Build is up, its key spawns. E on it changes it.",
+    "In Build, place a spawn and give it a key, or put it on the hotbar in H. While Build is up, its key spawns. E on it changes it.",
   ],
   [
     "Numbers",
@@ -90,7 +94,7 @@ const OPTIONS = {
   b: buildRows,
   m: npcRows,
   n: [],
-  h: [],
+  h: (R) => hotRows(R, openPut),
   g: [],
   p: rightsRows,
 };
@@ -173,7 +177,7 @@ export function mountSandboxKeys(S, getR, onOpen) {
       box.setAttribute("aria-label", w.name);
       const body =
         k.open === "c"
-          ? `<dl class="sb-keys">${SB_SHEET.map(([kk, t]) => `<dt><kbd>${kk}</kbd></dt><dd>${esc(t)}</dd>`).join("")}</dl>`
+          ? `<dl class="sb-keys">${SB_SHEET.map(([kk, t]) => `<dt><kbd>${kk}</kbd></dt><dd>${esc(t)}</dd>`).join("")}</dl>${sbHotOn(R.state) ? lootHTML((R.state.players[R.me] || {}).duck) : ""}`
           : !can
             ? `<p class="sb-none">Only the host can change this.</p>`
             : opts.length
@@ -187,14 +191,21 @@ export function mountSandboxKeys(S, getR, onOpen) {
     const R = getR(),
       o = R && sbOptions(k.open, R)[i];
     if (!o || !R || !(SB_WINS[k.open].all || sbCan(R.state, R.me))) return;
-    if (o.act(R) === "close") {
-      sbClose(k, false); // (the option opened a window of its own: Make an NPC's Customize)
+    if (o.win) {
+      sbClose(k, false); // (a popup of its own takes the place)
       paint();
     }
+    o.act(R);
   };
   box.addEventListener("click", (e) => {
     const b = e.target.closest(".sb-opt");
     if (b) pick(+b.dataset.i);
+    const lt = e.target.closest(".sb-lt");
+    if (lt) {
+      sbClose(k, false);
+      paint();
+      openPut(getR, lt.dataset.v); // (the cheat sheet's loot: onto a key)
+    }
   });
   const mine = (e) => {
     const R = getR();

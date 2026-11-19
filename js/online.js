@@ -295,6 +295,7 @@ const REMOTE = new Set([
   "cancel",
   "toLobby",
   "cabinEnd",
+  "sbh",
   "songs",
   "hang",
   "dnEnd",

@@ -32,7 +32,8 @@ const drain = (c) =>
    dots(id) → the dots under a key, when the game has its own (Mad God Justin: the uses left of a weapon picked up),
    select(i) → the slider picked key i, tap(i) → its middle one was tapped, current() → the id the game wants in the slider's middle (or null).
    A game with slots of its own (Quacky Zombies) gives look(id) → { id, name, icon, off, keep, cls } for each (keep:
-   false, the square can't switch it; cls, the slot's color) and sig() → what changes how they look */
+   false, the square can't switch it; cls, the slot's color) and sig() → what changes how they look. own(id) → the same for
+   only some slots (Sandbox's spawn buttons), null for the rest, which look as specials do */
 export function mountHotbar(S, api) {
   const bar = document.createElement("div");
   bar.className = "hotbar gone";
@@ -45,6 +46,8 @@ export function mountHotbar(S, api) {
     coolT = 0;
   const look = (id) => {
     if (api.look) return api.look(id);
+    const own = api.own && api.own(id); // (a slot the game draws itself, the rest the specials: Sandbox's spawn buttons)
+    if (own) return own;
     const duck = api.duck && api.duck(),
       sp = looksOf(specialById(id), duck);
     return sp && sp.id === "handgun"
@@ -71,6 +74,7 @@ export function mountHotbar(S, api) {
       api.ammo && api.ammo(),
       api.duck && !!(api.duck() || {}).wrench,
       k.map(dots),
+      api.sig && api.sig(),
     ]);
     if (now === sig) return;
     sig = now;

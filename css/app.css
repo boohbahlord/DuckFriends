@@ -19778,6 +19778,105 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .sb-opt.on {
   border-color: var(--green);
 }
+/* Sandbox's hotbar (js/sbhotview.js): the cheat sheet's loot under its keys, each one a button with its picture */
+.sb-loot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border-top: 0.12rem solid var(--line);
+  padding-top: 0.5rem;
+}
+.sb-loot h3,
+.sb-loot h4,
+.sb-putwin h3 {
+  margin: 0.2rem 0 0;
+  font-size: 1em;
+}
+.sb-loot h4 {
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+.sb-lts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.75rem, 1fr));
+  gap: 0.3rem;
+}
+.sb-lt {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  padding: 0.3rem 0.45rem;
+  font: inherit;
+  font-size: 0.9em;
+  color: inherit;
+  text-align: left;
+  border-radius: 0.5rem;
+  border: 0.12rem solid var(--line);
+  background: color-mix(in srgb, var(--panel) 60%, transparent);
+  cursor: pointer;
+}
+.sb-lt:hover,
+.sb-lt:focus-visible {
+  border-color: var(--blue);
+}
+.sb-lt span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sb-lt i,
+.sb-put-h i {
+  flex: none;
+  font-style: normal;
+  font-size: 1.3rem;
+  line-height: 1;
+}
+.sb-lt i svg,
+.sb-put-h i svg {
+  width: 1.3em;
+  height: auto;
+  display: block;
+}
+/* the popup that puts one on a key: its look (a spawn button's shapes, colors and heads), then the keys */
+.sb-putwin {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.sb-put-h {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+.sb-looks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.sb-look {
+  width: 2.6rem;
+  height: 2.6rem;
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  border: 0.12rem solid var(--line);
+  background: var(--panel2);
+  cursor: pointer;
+}
+.sb-look[aria-pressed="true"] {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 0.1rem var(--blue);
+}
+.sb-look svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.sb-putwin .sb-cols {
+  justify-content: flex-start;
+}
 /* Sandbox's spawns and respawns (js/sbspawnview.js): a ring on the ground in its color, its name over it */
 .sb-pt {
   position: absolute;

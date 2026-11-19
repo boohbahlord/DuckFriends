@@ -518,6 +518,7 @@ function zbEl(o, layer) {
     body,
     box,
     rd: npcReady(o),
+    shot: o.sh ? o.sh[0] : 0, // (only shots from now on are drawn)
     img: body.firstChild,
     bar: el.querySelector(".l4z-hp"),
     nm: el.querySelector(".sb-npc-name"),
@@ -604,7 +605,7 @@ activity({
           );
       }
       if (o.sh && o.sh[0] !== z.shot) {
-        const fresh = z.shot !== undefined && Date.now() - o.sh[0] < 1500;
+        const fresh = Date.now() - o.sh[0] < 1500;
         z.shot = o.sh[0];
         if (fresh && fxl) {
           const hand = handAt(z.box),

@@ -40,12 +40,12 @@ export const npcRows = (R) => {
           still = npcById(n.id);
         if (still && s.sb && s.sb.cn && s.sb.cn[n.id]) shareNpc(r, still);
       });
-    return "close"; // (the m window goes: Customize takes the screen)
   };
   return [
-    { label: "New NPC", act: (r) => open(r, npcNew()) },
+    { label: "New NPC", win: true, act: (r) => open(r, npcNew()) }, // (win: the m window goes, Customize takes the screen)
     ...npcList().map((n) => ({
       label: `Change ${n.name}`,
+      win: true,
       act: (r) => open(r, npcById(n.id)),
     })),
   ];
