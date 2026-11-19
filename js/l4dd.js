@@ -2312,7 +2312,7 @@ function shopFill(s, ctx) {
             price = priceFor(s, me, it.id, n),
             was =
               price < priceOf(it.id, n) ? `<s>${priceOf(it.id, n)}</s> ` : ""; // (a Sale: the old price struck through)
-          return `<li class="l4-up"><i class="l4-up-ic">${UP_ICONS[it.id]}</i><span class="l4-up-t"><b>${it.name}</b><small>${it.what}</small></span><span class="l4-up-lv" aria-label="${n} of ${it.most}">${Array.from({ length: it.most }, (_, i) => `<i${i < n ? ' class="on"' : ""}></i>`).join("")}</span><button type="button" class="btn small ${max ? "" : "yellow"} l4-up-buy" data-buy="${it.id}"${max || pts < price ? " disabled" : ""}>${max ? "Max" : was + price}</button></li>`;
+          return `<li class="l4-up"><i class="l4-up-ic">${UP_ICONS[it.id]}</i><span class="l4-up-t"><b>${it.name}</b><small>${it.what}</small></span><span class="l4-up-lv" aria-label="${isFinite(it.most) ? `${n} of ${it.most}` : `bought ${n}`}">${isFinite(it.most) ? Array.from({ length: it.most }, (_, i) => `<i${i < n ? ' class="on"' : ""}></i>`).join("") : `x${n}`}</span><button type="button" class="btn small ${max ? "" : "yellow"} l4-up-buy" data-buy="${it.id}"${max || pts < price ? " disabled" : ""}>${max ? "Max" : was + price}</button></li>`;
         })
         .join("")
     : '<li class="l4-up l4-sold">No upgrade for you this visit</li>';

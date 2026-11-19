@@ -108,9 +108,9 @@
     <script>
       /* the way out of a stuck start. The game is 160-odd files; if one of them doesn't arrive (a hiccup on the way, or
          a broken copy kept by the browser), the game never starts and the loading bar waits forever, and a refresh
-         takes the same copies again. So: if the game hasn't started (main.js sets window.dfStarted) when a file fails,
-         or once no file has arrived for 20 s, I fetch every game file fresh from the site, drop the app's service
-         worker and load the page again, twice at most. After that the bar says so and a tap tries again. */
+         takes the same copies again. So: if the game hasn't started (js/later.js sets window.dfStarted once all of it
+         is in) when a file fails, or once no file has arrived for 20 s, I fetch every game file fresh from the site,
+         drop the app's service worker and load the page again, twice at most. After that the bar says so and a tap tries again. */
       (function () {
         var KEY = "df-retry",
           done = false,
@@ -245,6 +245,7 @@
           setTimeout(watch, 1000);
         };
         setTimeout(watch, 20000);
+        window.dfStuck = stuck; // (the rest of the game, loaded after the first screen, calls it when a file didn't come: js/later.js)
       })();
     </script>
     <script type="importmap">
@@ -367,6 +368,7 @@
           "./js/langname.js": "./js/langname.js?v=202611192004",
           "./js/laserart.js": "./js/laserart.js?v=202611192004",
           "./js/laserfx.js": "./js/laserfx.js?v=202611192004",
+          "./js/later.js": "./js/later.js?v=202611192004",
           "./js/loading.js": "./js/loading.js?v=202611192004",
           "./js/lobby.js": "./js/lobby.js?v=202611192004",
           "./js/lobbysettings.js": "./js/lobbysettings.js?v=202611192004",
@@ -481,13 +483,10 @@
     <link rel="modulepreload" href="./js/pixel.js?v=202611192004" />
     <link rel="modulepreload" href="./js/pxdom.js?v=202611192004" />
     <link rel="modulepreload" href="./js/pxtext.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/rooms.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/lobby.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/game.js?v=202611192004" />
     <link rel="modulepreload" href="./js/music.js?v=202611192004" />
     <link rel="modulepreload" href="./js/keynav.js?v=202611192004" />
     <link rel="modulepreload" href="./js/account.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/friends.js?v=202611192004" />
+    <link rel="modulepreload" href="./js/later.js?v=202611192004" />
     <link rel="modulepreload" href="./js/splash.js?v=202611192004" />
     <link rel="modulepreload" href="./js/corners.js?v=202611192004" />
     <link rel="modulepreload" href="./js/loading.js?v=202611192004" />
@@ -504,198 +503,188 @@
     <link rel="modulepreload" href="./js/hangout/npcart.js?v=202611192004" />
     <link rel="modulepreload" href="./js/sound.js?v=202611192004" />
     <link rel="modulepreload" href="./js/format.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/net.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/customize.js?v=202611192004" />
     <link rel="modulepreload" href="./js/musicbar.js?v=202611192004" />
     <link rel="modulepreload" href="./js/offline.js?v=202611192004" />
     <link rel="modulepreload" href="./js/svgurl.js?v=202611192004" />
     <link rel="modulepreload" href="./js/pixelpalette.js?v=202611192004" />
     <link rel="modulepreload" href="./js/rainbowskin.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/online.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/rules.js?v=202611192004" />
     <link rel="modulepreload" href="./js/clock.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/card.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/players.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/democracy.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/lobbysettings.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/gamesettings.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/stats.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/dock.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/maps.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/vote.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/stamina.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/world.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/layout.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/rules.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/death.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/ghosts.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/grenade.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/story.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/court.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/brackets.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/chat.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/specials.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hotbar.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/barrelheat.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/laserfx.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/outlines.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/meters.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/laserart.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/l4ddrules.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/l4ddguns.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/l4dd.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hpmeter.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/jetpack.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/l4ddbar.js?v=202611192004" />
     <link rel="modulepreload" href="./js/sandboxrules.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/cabinend.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/sandbox.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/sbmenu.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/sbhotview.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/sbhot.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/sbspawnview.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/looks.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/boardjustin.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hideui.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/armspeed.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/notes.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/l4ddsfx.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/feet.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/duel.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hooks.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/touch.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/phonepad.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/quackrules.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/quack.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/duncerules.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/dunce.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/mgjrules.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/mgjart.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/l4ddart.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/sbnpcart.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/sbspawn.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/powerart.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/l4ddangel.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/jaimebomb.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/wounds.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/faces.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/beaks.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/mgj.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/vddrules.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/vdd.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/triviarules.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/trivia.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/perf.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/fx.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/flamer.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/gfx.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/fxmotion.js?v=202611192004" />
     <link rel="modulepreload" href="./js/who.js?v=202611192004" />
     <link rel="modulepreload" href="./js/datboi.js?v=202611192004" />
+    <link rel="modulepreload" href="./js/faces.js?v=202611192004" />
+    <link rel="modulepreload" href="./js/beaks.js?v=202611192004" />
     <link rel="modulepreload" href="./js/eyes.js?v=202611192004" />
     <link rel="modulepreload" href="./js/styles.js?v=202611192004" />
     <link rel="modulepreload" href="./js/outfits.js?v=202611192004" />
     <link rel="modulepreload" href="./js/sfxlist.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/bots.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/botduck.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/secret.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/color.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/sbarms.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/sbnpcs.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/l4ddwire.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hpmath.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/sbloot.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/nbperms.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/sbzone.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/sbcabin.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/npcs.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/justin.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/heights.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/looksrules.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/shapes.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/art.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/flicker.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/registry.js?v=202611192004" />
-    <link
-      rel="modulepreload"
-      href="./js/hangout/activities.js?v=202611192004"
-    />
-    <link
-      rel="modulepreload"
-      href="./js/hangout/stationmap.js?v=202611192004"
-    />
-    <link rel="modulepreload" href="./js/shell.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/helppages.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/numerat.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/merchants.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/merchantlines.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/water.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/l4ddpower.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/flowfield.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/sounds.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/l4ddmap.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/l4ddrain.js?v=202611192004" />
-    <link
-      rel="modulepreload"
-      href="./js/hangout/stationart.js?v=202611192004"
-    />
-    <link rel="modulepreload" href="./js/l4ddcatalog.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/l4ddpowerui.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/l4ddangelui.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/l4dddrops.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/jetart.js?v=202611192004" />
     <link rel="modulepreload" href="./js/langname.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/sbmake.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/sblootview.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/ground.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/sbbrain.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/sbbody.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/sbnumberat.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/triviabank.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/blackjack.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/npc.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/l4ddbots.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/dpground.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/lamp.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/tv.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/stage.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/seats.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/soccer.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/pool.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/piano.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/chalk.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/book.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/doors.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/fireflies.js?v=202611192004" />
-    <link
-      rel="modulepreload"
-      href="./js/hangout/characters.js?v=202611192004"
-    />
-    <link rel="modulepreload" href="./js/hangout/power.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/poker.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/ambience.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/bash.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/textutils.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/manual.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/numerathelp.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/numberatrun.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/numberat.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/beachball.js?v=202611192004" />
-    <link
-      rel="modulepreload"
-      href="./js/hangout/rubberducks.js?v=202611192004"
-    />
-    <link
-      rel="modulepreload"
-      href="./js/hangout/trampoline.js?v=202611192004"
-    />
-    <link rel="modulepreload" href="./js/hangout/falls.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/pianokeys.js?v=202611192004" />
-    <link rel="modulepreload" href="./js/hangout/cats.js?v=202611192004" />
-    <link
-      rel="modulepreload"
-      href="./js/hangout/shadowduck.js?v=202611192004"
-    />
+    <script type="application/json" id="df-later">
+      [
+        "./js/net.js?v=202611192004",
+        "./js/rooms.js?v=202611192004",
+        "./js/lobby.js?v=202611192004",
+        "./js/game.js?v=202611192004",
+        "./js/friends.js?v=202611192004",
+        "./js/rules.js?v=202611192004",
+        "./js/bots.js?v=202611192004",
+        "./js/botduck.js?v=202611192004",
+        "./js/secret.js?v=202611192004",
+        "./js/online.js?v=202611192004",
+        "./js/card.js?v=202611192004",
+        "./js/players.js?v=202611192004",
+        "./js/democracy.js?v=202611192004",
+        "./js/lobbysettings.js?v=202611192004",
+        "./js/gamesettings.js?v=202611192004",
+        "./js/customize.js?v=202611192004",
+        "./js/stats.js?v=202611192004",
+        "./js/dock.js?v=202611192004",
+        "./js/maps.js?v=202611192004",
+        "./js/vote.js?v=202611192004",
+        "./js/stamina.js?v=202611192004",
+        "./js/hangout/world.js?v=202611192004",
+        "./js/hangout/layout.js?v=202611192004",
+        "./js/hangout/rules.js?v=202611192004",
+        "./js/hangout/death.js?v=202611192004",
+        "./js/hangout/ghosts.js?v=202611192004",
+        "./js/grenade.js?v=202611192004",
+        "./js/story.js?v=202611192004",
+        "./js/court.js?v=202611192004",
+        "./js/brackets.js?v=202611192004",
+        "./js/chat.js?v=202611192004",
+        "./js/specials.js?v=202611192004",
+        "./js/hotbar.js?v=202611192004",
+        "./js/barrelheat.js?v=202611192004",
+        "./js/laserfx.js?v=202611192004",
+        "./js/outlines.js?v=202611192004",
+        "./js/meters.js?v=202611192004",
+        "./js/laserart.js?v=202611192004",
+        "./js/l4ddrules.js?v=202611192004",
+        "./js/l4ddguns.js?v=202611192004",
+        "./js/l4dd.js?v=202611192004",
+        "./js/hpmeter.js?v=202611192004",
+        "./js/jetpack.js?v=202611192004",
+        "./js/l4ddbar.js?v=202611192004",
+        "./js/hangout/cabinend.js?v=202611192004",
+        "./js/sandbox.js?v=202611192004",
+        "./js/sbmenu.js?v=202611192004",
+        "./js/sbhotview.js?v=202611192004",
+        "./js/sbhot.js?v=202611192004",
+        "./js/sbspawnview.js?v=202611192004",
+        "./js/looks.js?v=202611192004",
+        "./js/boardjustin.js?v=202611192004",
+        "./js/hideui.js?v=202611192004",
+        "./js/armspeed.js?v=202611192004",
+        "./js/notes.js?v=202611192004",
+        "./js/l4ddsfx.js?v=202611192004",
+        "./js/feet.js?v=202611192004",
+        "./js/duel.js?v=202611192004",
+        "./js/hooks.js?v=202611192004",
+        "./js/touch.js?v=202611192004",
+        "./js/phonepad.js?v=202611192004",
+        "./js/quackrules.js?v=202611192004",
+        "./js/quack.js?v=202611192004",
+        "./js/duncerules.js?v=202611192004",
+        "./js/dunce.js?v=202611192004",
+        "./js/mgjrules.js?v=202611192004",
+        "./js/mgjart.js?v=202611192004",
+        "./js/l4ddart.js?v=202611192004",
+        "./js/sbnpcart.js?v=202611192004",
+        "./js/sbspawn.js?v=202611192004",
+        "./js/powerart.js?v=202611192004",
+        "./js/l4ddangel.js?v=202611192004",
+        "./js/jaimebomb.js?v=202611192004",
+        "./js/wounds.js?v=202611192004",
+        "./js/mgj.js?v=202611192004",
+        "./js/vddrules.js?v=202611192004",
+        "./js/vdd.js?v=202611192004",
+        "./js/triviarules.js?v=202611192004",
+        "./js/trivia.js?v=202611192004",
+        "./js/perf.js?v=202611192004",
+        "./js/fx.js?v=202611192004",
+        "./js/flamer.js?v=202611192004",
+        "./js/gfx.js?v=202611192004",
+        "./js/fxmotion.js?v=202611192004",
+        "./js/hpmath.js?v=202611192004",
+        "./js/sbloot.js?v=202611192004",
+        "./js/nbperms.js?v=202611192004",
+        "./js/sbzone.js?v=202611192004",
+        "./js/sbcabin.js?v=202611192004",
+        "./js/npcs.js?v=202611192004",
+        "./js/hangout/justin.js?v=202611192004",
+        "./js/heights.js?v=202611192004",
+        "./js/looksrules.js?v=202611192004",
+        "./js/hangout/blackjack.js?v=202611192004",
+        "./js/hangout/npc.js?v=202611192004",
+        "./js/l4ddbots.js?v=202611192004",
+        "./js/triviabank.js?v=202611192004",
+        "./js/l4ddwire.js?v=202611192004",
+        "./js/color.js?v=202611192004",
+        "./js/sbarms.js?v=202611192004",
+        "./js/sbnpcs.js?v=202611192004",
+        "./js/hangout/shapes.js?v=202611192004",
+        "./js/hangout/art.js?v=202611192004",
+        "./js/hangout/flicker.js?v=202611192004",
+        "./js/hangout/registry.js?v=202611192004",
+        "./js/hangout/activities.js?v=202611192004",
+        "./js/hangout/stationmap.js?v=202611192004",
+        "./js/shell.js?v=202611192004",
+        "./js/helppages.js?v=202611192004",
+        "./js/numerat.js?v=202611192004",
+        "./js/merchants.js?v=202611192004",
+        "./js/merchantlines.js?v=202611192004",
+        "./js/hangout/water.js?v=202611192004",
+        "./js/l4ddpower.js?v=202611192004",
+        "./js/flowfield.js?v=202611192004",
+        "./js/hangout/sounds.js?v=202611192004",
+        "./js/l4ddmap.js?v=202611192004",
+        "./js/l4ddrain.js?v=202611192004",
+        "./js/hangout/stationart.js?v=202611192004",
+        "./js/l4ddcatalog.js?v=202611192004",
+        "./js/l4ddpowerui.js?v=202611192004",
+        "./js/l4ddangelui.js?v=202611192004",
+        "./js/l4dddrops.js?v=202611192004",
+        "./js/jetart.js?v=202611192004",
+        "./js/sbmake.js?v=202611192004",
+        "./js/sblootview.js?v=202611192004",
+        "./js/ground.js?v=202611192004",
+        "./js/sbbrain.js?v=202611192004",
+        "./js/sbbody.js?v=202611192004",
+        "./js/sbnumberat.js?v=202611192004",
+        "./js/hangout/seats.js?v=202611192004",
+        "./js/hangout/dpground.js?v=202611192004",
+        "./js/hangout/lamp.js?v=202611192004",
+        "./js/hangout/tv.js?v=202611192004",
+        "./js/hangout/stage.js?v=202611192004",
+        "./js/hangout/soccer.js?v=202611192004",
+        "./js/hangout/pool.js?v=202611192004",
+        "./js/hangout/piano.js?v=202611192004",
+        "./js/hangout/chalk.js?v=202611192004",
+        "./js/hangout/book.js?v=202611192004",
+        "./js/hangout/doors.js?v=202611192004",
+        "./js/hangout/fireflies.js?v=202611192004",
+        "./js/hangout/characters.js?v=202611192004",
+        "./js/hangout/power.js?v=202611192004",
+        "./js/hangout/poker.js?v=202611192004",
+        "./js/hangout/ambience.js?v=202611192004",
+        "./js/bash.js?v=202611192004",
+        "./js/textutils.js?v=202611192004",
+        "./js/manual.js?v=202611192004",
+        "./js/numerathelp.js?v=202611192004",
+        "./js/numberatrun.js?v=202611192004",
+        "./js/numberat.js?v=202611192004",
+        "./js/hangout/beachball.js?v=202611192004",
+        "./js/hangout/rubberducks.js?v=202611192004",
+        "./js/hangout/trampoline.js?v=202611192004",
+        "./js/hangout/falls.js?v=202611192004",
+        "./js/hangout/pianokeys.js?v=202611192004",
+        "./js/hangout/cats.js?v=202611192004",
+        "./js/hangout/shadowduck.js?v=202611192004",
+        "./js/brainbuild.js?v=202611192004",
+        "./js/numeratwin.js?v=202611192004",
+        "./js/updates.js?v=202611192004"
+      ]
+    </script>
     <!-- /preload -->
     <script type="module" src="js/main.js?v=202611192004"></script>
   </body>

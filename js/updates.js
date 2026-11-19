@@ -9,6 +9,52 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v114",
+    version: 114,
+    date: "Nov 19, 2026",
+    title: "Dead Ducks Arcade, rebalanced",
+    news: [
+      "For Dead Ducks Arcade: at most 72 zombies a round for each player.",
+      "For Dead Ducks Arcade: zombies have half an HP less and hit for 0.6 to 1.",
+      "For Dead Ducks Arcade: the MP5 holds 25, the pistol and revolver carry 50% more, the grenade launcher half and the flamethrower 35% of its fuel; grenades and the launcher blast half as wide, and you start with 4 grenades.",
+      "For Dead Ducks Arcade: gasoline drops 25% less often.",
+      "For Dead Ducks Arcade: the merchant's upgrades never run out (Max HP is now Increase HP) and every sale shows in the chat.",
+    ],
+    fixed: [
+      "For Dead Ducks Arcade: Downpour's restroom has a hole in its left wall so nobody gets trapped.",
+    ],
+  },
+  {
+    id: "v113",
+    version: 113,
+    date: "Nov 19, 2026",
+    title: "Lighter settings keep the countdown",
+    news: [],
+    fixed: [
+      "With Animations off or any lighter performance setting, the start's countdown and the loading screen show again, and notes like the merchant's arrival stay long enough to read.",
+    ],
+  },
+  {
+    id: "v112",
+    version: 112,
+    date: "Nov 19, 2026",
+    title: "A third less to download",
+    news: [
+      "The game is now about a third smaller to download, so on slow connections rooms are ready sooner.",
+    ],
+    fixed: [],
+  },
+  {
+    id: "v111",
+    version: 111,
+    date: "Nov 19, 2026",
+    title: "A much quicker front screen",
+    news: [
+      "On slow connections the front screen comes up much sooner (about a third of the wait), and the rest of the game keeps loading behind it.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v110",
     version: 110,
     date: "Nov 19, 2026",

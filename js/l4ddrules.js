@@ -209,7 +209,7 @@ const PHASES = Array.from({ length: 20 }, (_, i) => [
   i + 1,
   PHASE_BASE.find(([last]) => i + 1 <= last)[1],
 ]);
-const Z_EACH = 100, // the most zombies a round for each player …
+const Z_EACH = 72, // the most zombies a round for each player …
   Z_LATE = 800; // from round 21 on (was 144)
 export const Z_MOST = 800; // … and in all (was 400)
 /* Sandbox: the most NPCs alive at once on any map, online too. It follows the zombies' cap (the owner's, Nov 19 01:57Z),
@@ -294,8 +294,8 @@ export const ARMS = {
     cool: ARM_COOL.handgun,
     dmg: [1, 3], // (1 to 3: the owner's, Nov 18 15:19Z)
     speed: ARM_SPEED.handgun,
-    mag: 8,
-    all: 72 + 5 * 8, // (5 more magazines: the owner's, Nov 16)
+    mag: 12, // (50% more, its magazines are so small: the owner's, Nov 19 19:27Z)
+    all: (72 + 5 * 8) * 1.5,
     reload: ARM_RELOAD,
   },
   bow: {
@@ -327,8 +327,8 @@ export const ARMS = {
     cool: ITEM_COOL,
     far: 300,
     r: 210,
-    start: 2,
-    most: 3,
+    start: 4, // (players start with 4: the owner's, Nov 19 19:27Z)
+    most: 4,
   }, // (r: 50% wider than its first 140, owner 2026-11-04)
   /* the owner's new ones (Stage 3). The sniper's bullet goes through every zombie to the wall, 2 or 3 to each, a bolt
      action between shots; the SMG, the AK-47 and the LMG fire as long as the button is down; the chain gun (15 a second) hits at once
@@ -354,7 +354,7 @@ export const ARMS = {
     cool: 80,
     dmg: [1, 2], // (1 to 2: the owner's, Nov 18 16:43Z)
     speed: 1100,
-    mag: 20,
+    mag: 25, // (the owner's, Nov 19 19:27Z: "MP5 should have 25 bullets")
     all: 20 * 17, // (13 magazines, 160 and 5 more: the owner's, Nov 16; then 25% more, rounded up: the owner's, Nov 18 16:43Z)
     reload: 1400,
     k: "smg",
@@ -410,12 +410,12 @@ export const ARMS = {
     cool: 333, // (3 a second: the owner's, Nov 18 16:43Z)
     dmg: [2, 4], // (2 to 4: the owner's, Nov 18 16:43Z)
     speed: 1150,
-    mag: 5,
-    all: 75 + 5 * 5, // (5 more magazines: the owner's, Nov 16)
+    mag: 8, // (50% more: 7.5 up; the owner's, Nov 19 19:27Z)
+    all: (75 + 5 * 5) * 1.5,
     reload: 1700,
     k: "revolver",
   },
-  glauncher: { kind: "ranged", cool: 1200, all: 23, speed: 900, far: 760 }, // (all: 15, and 50% more with no magazine: the owner's, Nov 16)
+  glauncher: { kind: "ranged", cool: 1200, all: 12, speed: 900, far: 760 }, // (all: 15, and 50% more with no magazine: the owner's, Nov 16; half as many: Nov 19 19:27Z)
   lmg: {
     kind: "ranged",
     auto: true,
@@ -494,6 +494,8 @@ export const ARMS = {
   chair: { kind: "special", cool: ITEM_COOL, all: 3, dmg: 3, speed: 600 },
 };
 /* a hit's damage: the weapon's, or a roll between its two (the sniper's 2 to 3) */
+/* the grenade's and the grenade launcher's blast, half as wide (the owner's, Nov 19 19:27Z: "half the blast radius") */
+const BLAST_HALF = 0.5;
 const dmgOf = (A) =>
   Array.isArray(A.dmg) ? rint(A.dmg[0], A.dmg[1]) : A.dmg || 1;
 /* fire (the owner's): a zombie burns 8 s and takes 1 every 2 s (the first as it's lit: 4 in all), and fire on a zombie
@@ -686,10 +688,32 @@ export const PTS = {
 /* Justin's Butler's upgrades (the owner's prices; attack speed's are Adam's plan's guess, question 3): the price of the
    next one when n are bought already, how many at most */
 export const SHOP = [
-  { id: "acc", name: "Critical Chance", what: "+2.5% crits", most: 2 }, // (600 each, +2.5%, twice: the owner's, Nov 16 21:47Z)
-  { id: "as", name: "Attack speed", what: "Cooldowns 10% faster", most: 2 }, // (2, the owner's, Nov 16 21:21Z; was 5)
-  { id: "hp", name: "Max HP", what: "+1 HP until you go down", most: 2 },
-  { id: "rl", name: "Faster reload", what: "Reloads 30% faster", most: 1 },
+  /* the upgrades never run out (the owner's, Nov 19 19:27Z: "they do not go away. They are not a limited resource
+     anymore"): most is Infinity, each one buys again and stacks. Quick Revive is a switch, so it stays one */
+  {
+    id: "acc",
+    name: "Critical Chance",
+    what: "+2.5% crits",
+    most: Infinity,
+  }, // (600 each, +2.5%: the owner's, Nov 16 21:47Z)
+  {
+    id: "as",
+    name: "Attack speed",
+    what: "Cooldowns 10% faster",
+    most: Infinity,
+  }, // (each one 10% faster than the last)
+  {
+    id: "hp",
+    name: "Increase HP",
+    what: "+1 HP until you go down",
+    most: Infinity,
+  }, // (it was "Max HP": the owner's, Nov 19 19:27Z)
+  {
+    id: "rl",
+    name: "Faster reload",
+    what: "Reloads 30% faster",
+    most: Infinity,
+  },
   {
     id: "qr",
     name: "Quick Revive",
@@ -789,7 +813,7 @@ const RX = 56,
    quarter of the time, 3 a quarter, 4 half. Rolled the rarer first (the owner's, Nov 18 10:38Z), the same odds */
 const hp0 = () => {
   const r = Math.random();
-  return r < 0.25 ? 5 : r < 0.5 ? 3 : 4;
+  return (r < 0.25 ? 5 : r < 0.5 ? 3 : 4) - 0.5; // (half an HP less: the owner's, Nov 19 19:27Z, "decrease that by half a health point")
 };
 const ZHATS = [
   "cap",
@@ -1297,7 +1321,7 @@ function zombies(s) {
       i,
       x: zp[k + 1],
       y: zp[k + 2],
-      hp: Math.floor(zp[k + 3] / 16),
+      hp: Math.floor(zp[k + 3] / 16) / 10, // (in tenths: a zombie's HP can be 3.5)
       st: zp[k + 3] % 16,
       a: sw[0],
       dir: sw[1],
@@ -1315,7 +1339,12 @@ function store(s, zs, keepStatic) {
     mine = {},
     zl = {};
   for (const z of zs) {
-    zp.push(z.i, Math.round(z.x), Math.round(z.y), z.hp * 16 + z.st);
+    zp.push(
+      z.i,
+      Math.round(z.x),
+      Math.round(z.y),
+      Math.round(z.hp * 10) * 16 + z.st,
+    );
     if (z.a > -1e5) sw[z.i] = [Math.round(z.a), z.dir];
     mine[z.i] = [Math.round(z.n), Math.round(z.d)];
     const x = {};
@@ -1433,7 +1462,7 @@ export const reloadOf = (s, id, w, c) =>
         Math.min(ARMS[w].mag - (c ? c[0] : 0), c ? c[1] : ARMS[w].mag),
       )
     : ARMS[w].reload || 1500) *
-  (upOf(s, id).rl ? 0.7 : 1) *
+  Math.pow(0.7, upOf(s, id).rl || 0) *
   (angelOf(s, id, w)
     ? w === "handgun"
       ? ANGEL.PISTOL.RELOAD
@@ -2131,11 +2160,23 @@ function justinBody(s, what, id, now, mx, my) {
   justinSays(s, "jaime");
   return true;
 }
+/* what a merchant sold, said in the chat by the buyer's tag (the owner's, Nov 19 19:27Z: "what the merchant sells to a
+   player should be said in the text chat in the bottom left"); chat.js shows the name as it shows a tag */
+const soldSays = (s, id, text) =>
+  logIn(s, {
+    sys: true,
+    by: id,
+    buy: text,
+    text: (s.players[id] || {}).name + " " + text,
+  });
 /* the merchant: the one upgrade he offers me this visit (upOffer; the Butler's, SHOP), from beside him while he's
    selling, while I have the points; gas in the cabin (powerGas); or something from his stock (merchantBuy) */
 function buy(s, id, what, mx, my, hand, now) {
-  if (what === "gas")
-    return !dp() && atMerchant(s, mx, my) && powerGas(s, id, now, PH);
+  if (what === "gas") {
+    const ok = !dp() && atMerchant(s, mx, my) && powerGas(s, id, now, PH);
+    if (ok) soldSays(s, id, "bought 25% of a jerry can from the merchant.");
+    return ok;
+  }
   if (!SHOP.some((x) => x.id === what))
     return merchantBuy(s, id, what, mx, my, hand, now);
   const it = SHOP.find((x) => x.id === what),
@@ -2155,6 +2196,7 @@ function buy(s, id, what, mx, my, hand, now) {
     };
   } // (its half price is spent)
   s.hang.l4u = { ...(s.hang.l4u || {}), [id]: { ...up, [what]: n + 1 } };
+  soldSays(s, id, `bought ${it.name} from the merchant for ${price}.`);
   const mm = merchantOf(s);
   s.hang.l4m = { ...mm, ups: { ...(mm.ups || {}), [id]: "" } }; // (bought: none more this visit)
   if (what === "hp") {
@@ -2959,6 +3001,11 @@ function merchantBuy(s, id, w, mx, my, hand, now) {
     };
   } else if (!give(s, id, w, hand)) return false;
   addPts(s, id, -price);
+  soldSays(
+    s,
+    id,
+    `bought the ${weaponName(w)} from the merchant for ${price}.`,
+  );
   addFx(s, { kind: "l4buy", by: id, who: [], w, t: now }); // (the cash register: l4ddsfx.js)
   if (Math.random() >= MERCH.AGAIN)
     s.hang.l4m = { ...m, stock: m.stock.filter((_, k) => k !== i) }; // (gone for this visit; 1 time in 4 he has another)
@@ -3232,7 +3279,7 @@ function strike(s, z, dmg, head, by, w = "") {
   const on = s.hang.l4on || {},
     all = head || !!on.kill, // (Instant Kill: every hit takes all its HP, 5 points for each)
     took = all ? z.hp : Math.min(z.hp, dmg);
-  z.hp = all ? 0 : Math.max(0, z.hp - dmg);
+  z.hp = all ? 0 : Math.max(0, tenths(z.hp - dmg));
   addPts(s, by, (head ? PTS.HEAD : PTS.HIT * took) * (on.double ? 2 : 1));
   if (z.hp <= 0) {
     /* the zombies each duck killed this game (the overall stats' Zombies killed: l4dd.js record) */
@@ -3776,6 +3823,8 @@ function fireTick(s, zs, now, T, p4) {
     Object.keys(fz).length || Object.keys(fp).length ? { z: fz, p: fp } : null;
   if (JSON.stringify(out) !== JSON.stringify(F)) s.hang.l4fire = out;
 }
+/* a zombie's claw: 0.6 to 1, in tenths */
+const clawDmg = () => 0.6 + Math.floor(Math.random() * 5) / 10;
 /* a duck takes 1 (a claw, fire); true when that put it down. A claw leaves a wound on it now and then, as hits do in
    every other mode, and it goes away by itself 6 to 12 seconds after the duck is up (wounds.js) */
 function hurtDuck(s, p4, id, now, w = "", dmg = 1) {
@@ -4135,8 +4184,16 @@ export function l4Shots(s, now) {
         wall = walled(x, y, sh.hz);
       if (wall || age >= GRENADE_MS) {
         hitAny =
-          boom(s, sh, wall ? sh.lx * W : x, wall ? sh.ly * H : y, zs, T, now) ||
-          hitAny;
+          boom(
+            s,
+            sh,
+            wall ? sh.lx * W : x,
+            wall ? sh.ly * H : y,
+            zs,
+            T,
+            now,
+            BLAST_HALF,
+          ) || hitAny;
         continue;
       }
       sh.lx = x / W;
@@ -4173,8 +4230,16 @@ export function l4Shots(s, now) {
       if (at) {
         const ang = angelOf(s, sh.by, "glauncher");
         hitAny =
-          boom(s, sh, at[0], at[1], zs, T, now, ang ? ANGEL.GL_RADIUS : 1) ||
-          hitAny;
+          boom(
+            s,
+            sh,
+            at[0],
+            at[1],
+            zs,
+            T,
+            now,
+            BLAST_HALF * (ang ? ANGEL.GL_RADIUS : 1),
+          ) || hitAny;
         if (ang) burnAt(s, sh.by, at[0], at[1], now); // (Angelic: a smaller blast, and the ground there on fire)
         continue;
       }
@@ -4334,7 +4399,7 @@ function fling(z, sh, hz) {
 
 /* the Angelic grenade launcher's fire: a few burning patches round where it went off, as the flamethrower's ground */
 function burnAt(s, by, x, y, now) {
-  const r = ARMS.grenade.r * ANGEL.GL_RADIUS,
+  const r = ARMS.grenade.r * ANGEL.GL_RADIUS * BLAST_HALF,
     out = [];
   for (let k = 0; k < ANGEL.GL_FIRE; k++) {
     const a = (k / ANGEL.GL_FIRE) * Math.PI * 2,
@@ -4770,7 +4835,7 @@ export function l4Spawn(s, x, y, o = {}) {
     dress = Math.random() < 0.2 ? Math.random() : -1,
     odd = Math.random() < 0.25,
     size = odd && Math.random() < 0.5 ? +rnd(-1, 1).toFixed(2) : 0,
-    max = Math.max(1, Math.round(o.hp || hp0())),
+    max = Math.max(1, o.hp ? Math.round(o.hp) : hp0()),
     v = Math.round(WALK * Z_SLOW * ((R[1][0] + R[1][1]) / 2) * (o.speed || 1));
   s.hang.l4 = { ...L, next: i + 1 };
   const zs = zombies(s);
@@ -5128,7 +5193,7 @@ function moveZombies(s, zs, now, T, up) {
             target.id,
             now,
             "claw",
-            z.dm ? valueOf({ ok: z.dm }, SB_BOXES.damage) || 1 : 1,
+            z.dm ? valueOf({ ok: z.dm }, SB_BOXES.damage) || 1 : clawDmg(), // (the owner's, Nov 19 19:27Z: "zombies could do anywhere from 0.6 to 1 damage")
           )
         )
           pls.splice(pls.indexOf(target), 1);

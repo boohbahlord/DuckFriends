@@ -1213,10 +1213,76 @@ html.dys * {
   font-style: normal !important;
 }
 
-/* ---------- no movement ---------- */
-html.still *,
-html.still *::before,
-html.still *::after {
+/* ---------- no movement ----------
+   Animations off (and Low graphics, Data saving, Poor connection) end every animation and transition at once, except
+   the ones that tell something (the owner's, Nov 19 19:27Z: "make sure the performance modes don't just make certain
+   things disappear, like the loading screen or the countdown"): the screen darkening over the start's countdown and
+   the loading screen's bar, the notes that come and go (what a drop is, the merchant's arrival, Democracy's news, a
+   duck's chat, a duck's words), the points and the HP gained or lost, the hitmarkers, the red edge when I'm hurt.
+   Without their time they showed for no time at all (the countdown sat under a black screen). */
+html.still
+  *:not(
+    :where(
+      .veil,
+      .veil *,
+      .dod-news,
+      .chat-float,
+      .hurt-edge,
+      .hp-pop,
+      .mgj-hit,
+      .mgj-pick,
+      .l4-got,
+      .l4-say,
+      .l4-hint,
+      .l4-pts-pop,
+      .l4-duck-pop,
+      .l4-nuke,
+      .l4-peek,
+      .l4-vitals
+    )
+  ),
+html.still
+  *:not(
+    :where(
+      .veil,
+      .veil *,
+      .dod-news,
+      .chat-float,
+      .hurt-edge,
+      .hp-pop,
+      .mgj-hit,
+      .mgj-pick,
+      .l4-got,
+      .l4-say,
+      .l4-hint,
+      .l4-pts-pop,
+      .l4-duck-pop,
+      .l4-nuke,
+      .l4-peek,
+      .l4-vitals
+    )
+  )::before,
+html.still
+  *:not(
+    :where(
+      .veil,
+      .veil *,
+      .dod-news,
+      .chat-float,
+      .hurt-edge,
+      .hp-pop,
+      .mgj-hit,
+      .mgj-pick,
+      .l4-got,
+      .l4-say,
+      .l4-hint,
+      .l4-pts-pop,
+      .l4-duck-pop,
+      .l4-nuke,
+      .l4-peek,
+      .l4-vitals
+    )
+  )::after {
   animation-duration: 0s !important;
   animation-iteration-count: 1 !important;
   transition-duration: 0s !important;
