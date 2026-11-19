@@ -28,6 +28,13 @@ import { heightAt, slabBetween, deckOver, PROPS } from "./hangout/layout.js";
 import { DECKS } from "./hangout/stationmap.js";
 import { woundCode, DEATH } from "./wounds.js";
 import { botDuck } from "./botduck.js";
+import {
+  friend,
+  friendsTick,
+  friendHurt,
+  friendLit,
+  friendsCome,
+} from "./allies.js";
 
 export const GM = {
   CRIM_EACH: 8, // criminals for each player in all …
@@ -101,9 +108,9 @@ const AIM = {
   lmg: 0.02, // (the LMG's rounds: "very unlikely to hit")
 };
 
-const rnd = (a, b) => a + Math.random() * (b - a);
-const pick = (xs) => xs[Math.floor(Math.random() * xs.length)];
-const gmOf = (s) => (s.hang && s.hang.gm) || null;
+export const rnd = (a, b) => a + Math.random() * (b - a);
+export const pick = (xs) => xs[Math.floor(Math.random() * xs.length)];
+export const gmOf = (s) => (s.hang && s.hang.gm) || null;
 const alive = (s) => ((gmOf(s) || {}).gb || []).filter((o) => !o.d);
 
 /* a criminal's look: a random duck's color in street clothes, now and then something on its face or its head (the
@@ -145,11 +152,11 @@ const SOLDIER_GUNS = {
   sup: () => ["ak", "handgun"],
   rifle: () => [pick(["ak", "burst"]), "handgun"],
 };
-function newGunman(s, k, x, y, H, ro = "") {
+export function newGunman(s, k, x, y, H, ro = "") {
   const gm = gmOf(s),
     i = gm.n + 1,
     hp = H.hp(),
-    guns = k === "s" ? SOLDIER_GUNS[ro]() : [pick(pick(CRIM_GUNS))];
+    guns = ro ? SOLDIER_GUNS[ro]() : [pick(pick(CRIM_GUNS))];
   if (!["handgun", "revolver"].includes(guns[0]) && !guns.includes("handgun"))
     guns.push("handgun"); // (a pistol besides)
   gm.n = i;
@@ -162,7 +169,7 @@ function newGunman(s, k, x, y, H, ro = "") {
     hp,
     l: [hp],
     f: 1,
-    dk: k === "s" ? soldierLook() : crimLook(),
+    dk: k === "c" ? crimLook() : soldierLook(),
     wp: { p: guns },
     mg: guns.map(magOf),
     rl: guns.map(() => 0),
@@ -184,6 +191,9 @@ function start(s, kind, now, H) {
     all = GM.CRIM_EACH * n,
     front = GM.FRONT * n;
   s.hang.gm = {
+    ...(gmOf(s) || {}), // (the friendly squad's own: allies.js)
+    sq: {},
+    sp: {},
     n: (gmOf(s) || {}).n || 0,
     gb: ((gmOf(s) || {}).gb || []).filter((o) => !o.d), // (bodies of the last wave go)
     k: kind,
@@ -349,7 +359,10 @@ function tick(s, zs, now, ids, H) {
       ...gm0,
       gb: gm0.gb
         .filter((o) => !o.d || now - o.d < GM.DEAD_MS)
-        .map((o) => ({ ...o })),
+        .map((o) => ({
+          ...o,
+          ...(o.mg ? { mg: [...o.mg], rl: [...o.rl] } : {}),
+        })),
     },
     dt = Math.min(0.35, Math.max(0.05, (now - (gm0.t || now - 200)) / 1000)),
     ducks = ids
@@ -373,11 +386,20 @@ function tick(s, zs, now, ids, H) {
     gm.sp = Object.fromEntries(
       Object.entries(gm.sp).filter(([, u]) => u > now),
     );
+  /* the friendly squad (allies.js) are shot at too, as the ducks are; the sniper keeps to the ducks */
+  const foes = [
+    ...ducks,
+    ...gm.gb
+      .filter((o) => o.k === "f" && !o.d)
+      .map((o) => ({ id: "@f" + o.i, x: o.x, y: o.y, z: 0, fr: o })),
+  ];
+  friendsTick(s, gm, ducks, now, H);
   for (const o of gm.gb) {
     if (o.d) continue;
-    if (o.k === "sn") sniper(s, o, zs, ducks, now, H);
-    else if (o.k === "s") soldier(s, o, zs, ducks, pls, fieldTo, now, dt, H);
-    else crim(s, o, zs, ducks, pls, fieldTo, now, dt, H);
+    if (o.k === "f") friend(s, o, zs, ducks, pls, fieldTo, now, dt, H);
+    else if (o.k === "sn") sniper(s, o, zs, ducks, now, H);
+    else if (o.k === "s") soldier(s, o, zs, foes, pls, fieldTo, now, dt, H);
+    else crim(s, o, zs, foes, pls, fieldTo, now, dt, H);
   }
   gm.gb = gm.gb.filter((o) => !o.gone); // (soldiers who got away)
   apart(gm.gb.filter((o) => !o.d && o.k !== "sn"));
@@ -542,7 +564,7 @@ function soldier(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
   const zt = o.zc && zs.find((z) => z.i === o.zc && z.st !== 3);
   if (zt && Math.hypot(zt.x - o.x, zt.y - o.y) < GM.DEFEND * 1.5) {
     if (Math.hypot(zt.x - o.x, zt.y - o.y) < GM.STAB * GM.DUCK)
-      stab(o, { z: zt, x: zt.x, y: zt.y }, now, H);
+      stab(o, { z: zt, x: zt.x, y: zt.y }, now, H, s);
     else shoot(s, o, { z: zt, x: zt.x, y: zt.y }, now, H);
     return;
   }
@@ -595,7 +617,7 @@ function soldier(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
   if (near && t === near) {
     o.st = "back";
     if (d < GM.STAB * GM.DUCK) {
-      stab(o, t, now, H);
+      stab(o, t, now, H, s);
       return;
     }
     away(t);
@@ -703,7 +725,7 @@ function sniper(s, o, zs, ducks, now, H) {
   if (zt && dist(zt) < GM.DEFEND * 1.5) {
     o.ld = 0;
     if (dist(zt) < GM.STAB * GM.DUCK)
-      stab(o, { z: zt, x: zt.x, y: zt.y }, now, H);
+      stab(o, { z: zt, x: zt.x, y: zt.y }, now, H, s);
     else shoot(s, o, { z: zt, x: zt.x, y: zt.y }, now, H, ["ump"]);
     return;
   }
@@ -712,7 +734,7 @@ function sniper(s, o, zs, ducks, now, H) {
   if (close) {
     o.ld = 0;
     o.st = "close";
-    if (dist(close) < GM.STAB * GM.DUCK) stab(o, close, now, H);
+    if (dist(close) < GM.STAB * GM.DUCK) stab(o, close, now, H, s);
     else shoot(s, o, close, now, H, ["ump"]);
     return;
   }
@@ -770,17 +792,27 @@ function sniper(s, o, zs, ducks, now, H) {
   if (now >= o.u) move(); // (a long while with nobody in his sights: he moves on)
 }
 /* its knife on t (a duck or a zombie): the knife's own damage, half on a duck */
-function stab(o, t, now, H) {
+export function stab(o, t, now, H, s = null) {
   o.ad = Math.round((Math.atan2(t.y - o.y, t.x - o.x) * 180) / Math.PI);
   o.f = t.x < o.x ? -1 : 1;
   if (now - (o.ka || 0) < GM.STAB_MS) return;
   o.ka = o.a = now; // (o.a: its claw marks show: a swing)
-  const dmg = +ARMS.knife.dmg || 1;
-  if (t.z) H.hitZ(t.z, dmg, "knife");
-  else H.hurt(t.id, Math.round(dmg * GM.DMG * 10) / 10, "knife");
+  hitOn(s, o, t, +ARMS.knife.dmg || 1, "knife", now, H);
+}
+/* one of them lands dmg on t with weapon w: a zombie, one of the others (the friendly squad, or the gunmen the squad
+   shoots at), or a duck. Half on a duck and on each other ("half damage"), and the friendly squad's half on zombies too
+   ("fight with you at half damage") */
+export function hitOn(s, o, t, dmg, w, now, H) {
+  const half = Math.round(dmg * GM.DMG * 10) / 10;
+  if (t.z) H.hitZ(t.z, o.k === "f" ? half : dmg, w);
+  else if (t.fr) {
+    if (!s) return;
+    const q = gmOf(s).gb.find((g) => g.i === t.fr.i);
+    if (q && !q.d) takes(s, q, null, w, half, now, H);
+  } else H.hurt(t.id, half, w);
 }
 /* an LMG burst at t: every duck its rounds fly near is suppressed a moment (its screen shakes and darkens) */
-function suppress(s, o, t, ducks, now) {
+export function suppress(s, o, t, ducks, now) {
   const gm = gmOf(s),
     sp = { ...(gm.sp || {}) },
     dx = t.x - o.x,
@@ -826,7 +858,7 @@ function reload(o, now) {
 }
 
 /* ---------- shooting: t is a duck { id, x, y, sp } or a zombie { z, x, y } ---------- */
-function shoot(s, o, t, now, H, only = null) {
+export function shoot(s, o, t, now, H, only = null) {
   o.ad = Math.round((Math.atan2(t.y - o.y, t.x - o.x) * 180) / Math.PI);
   o.f = t.x < o.x ? -1 : 1;
   /* its guns: a reload that's done fills it; the one in its hands, or the other while that one reloads */
@@ -892,10 +924,7 @@ function shoot(s, o, t, now, H, only = null) {
     Math.round(t.x + Math.cos(a) * off),
     Math.round(t.y + Math.sin(a) * off * 0.5),
   ];
-  if (hit) {
-    if (t.z) H.hitZ(t.z, dmg, g);
-    else H.hurt(t.id, Math.round(dmg * GM.DMG * 10) / 10, g);
-  }
+  if (hit) hitOn(s, o, t, dmg, g, now, H);
   return true;
 }
 
@@ -937,15 +966,16 @@ function takes(s, o, by, w, t, now, H, how = "") {
         ? had + DEATH.filter((c) => !had.includes(c)).join("")
         : had + woundCode(had, w);
   o.hp = hp;
+  if (!hp) {
+    o.d = now;
+    o.lo = 0;
+  }
+  if (o.k === "f") return friendHurt(s, o, by, w, now, how); // (the friendly squad: no points, no drops; friendly fire)
   if (by && s.players[by]) {
     H.pts(by, (head ? 25 : 5 * took) * GM.PTS); // (5 times a zombie's: the owner's, "I agree with the point system for killing soldiers or criminals")
     o.mad = [by, now + 8000];
   }
-  if (!hp) {
-    o.d = now;
-    o.lo = 0;
-    if (Math.random() < GM.DROP) H.drop(o.x, o.y);
-  }
+  if (!hp && Math.random() < GM.DROP) H.drop(o.x, o.y);
 }
 /* a shot or a swing at (x, y): on one of them? (hit: a swing's list, each once) */
 function shot(s, by, x, y, now, w, rx, ry, from, hit, H) {
@@ -964,7 +994,7 @@ function shot(s, by, x, y, now, w, rx, ry, from, hit, H) {
     (a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y),
   );
   let any = false;
-  s.hang.gm = { ...gm, gb: gm.gb.map((o) => ({ ...o })) };
+  s.hang.gm = { ...gm, gb: gm.gb.map((o) => ({ ...o })) }; // (its own copy: allies.js writes into it too)
   for (const o0 of near) {
     const o = s.hang.gm.gb.find((q) => q.i === o0.i),
       t = H.takes(by, w);
@@ -978,10 +1008,10 @@ function shot(s, by, x, y, now, w, rx, ry, from, hit, H) {
 }
 /* a grenade's blast: all their HP (r: its reach, open(x, y, z): nothing solid between) */
 function blast(s, by, bx, bY, r, open, now, w, H) {
-  const gm = gmOf(s);
-  if (!gm) return;
+  if (!gmOf(s)) return;
+  const gm = (s.hang.gm = { ...gmOf(s) }); // (its own copy: allies.js writes the squad's friendly fire into it)
   let any = false;
-  const gb = gm.gb.map((o) => {
+  gm.gb = gm.gb.map((o) => {
     if (
       o.d ||
       o.hid ||
@@ -990,42 +1020,40 @@ function blast(s, by, bx, bY, r, open, now, w, H) {
     )
       return o;
     const q = { ...o };
-    takes(s, q, by, w || "grenade", q.hp, now, H, "blast");
+    takes(s, q, by, w || "grenade", q.k === "f" ? 1 : q.hp, now, H, "blast"); // (a player's explosive does 1 to the friendly squad)
     any = true;
     return q;
   });
-  if (any) s.hang.gm = { ...gm, gb };
+  return any;
 }
 /* in a flamethrower's flame (inFlame(x, y)): 1 HP every so often */
 function fire(s, by, now, inFlame, H) {
-  const gm = gmOf(s);
-  if (!gm) return;
+  if (!gmOf(s)) return;
+  const gm = (s.hang.gm = { ...gmOf(s) });
   let any = false;
-  const gb = gm.gb.map((o) => {
+  gm.gb = gm.gb.map((o) => {
     if (o.d || o.hid || now - (o.bt || 0) < GM.BURN_MS || !inFlame(o.x, o.y))
       return o;
     const q = { ...o, bt: now };
+    if (q.k === "f") friendLit(s, q, by, now);
     takes(s, q, by, "flamer", 1, now, H);
     any = true;
     return q;
   });
-  if (any) s.hang.gm = { ...gm, gb };
+  return any;
 }
 /* a zombie's claw on gunman i: true when it killed it */
 function claw(s, i, z, dmg, now, H) {
-  const gm = gmOf(s);
-  if (!gm) return false;
+  if (!gmOf(s)) return false;
+  const gm = (s.hang.gm = { ...gmOf(s) });
   let dead = false;
-  s.hang.gm = {
-    ...gm,
-    gb: gm.gb.map((o) => {
-      if (o.i !== i || o.d) return o;
-      const q = { ...o, zc: z.i };
-      takes(s, q, null, "claw", dmg, now, H);
-      dead = !!q.d;
-      return q;
-    }),
-  };
+  gm.gb = gm.gb.map((o) => {
+    if (o.i !== i || o.d) return o;
+    const q = { ...o, zc: z.i };
+    takes(s, q, null, "claw", dmg, now, H);
+    dead = !!q.d;
+    return q;
+  });
   return dead;
 }
 /* the ones a zombie may go for (never the sniper under a tree's crown, nor while he's away: "zombies can't find him") */
@@ -1033,4 +1061,14 @@ const near = (s) =>
   alive(s).filter((o) => !o.hid && !(o.k === "sn" && o.pk === "tree"));
 
 /* what l4ddrules.js asks (every call brings H: what it lends, gmHelp) */
-L4_HOOKS.gm = { start, tick, done, shot, blast, fire, claw, near };
+L4_HOOKS.gm = {
+  start,
+  tick,
+  done,
+  shot,
+  blast,
+  fire,
+  claw,
+  near,
+  rest: friendsCome,
+};

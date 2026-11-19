@@ -4993,6 +4993,7 @@ function l4Tick(s, now) {
       go: () => merchantGo(s, now),
       rest: () => {
         merchantCome(s, now, true);
+        if (L4_HOOKS.gm) L4_HOOKS.gm.rest(s, now, gmHelp(s, now)); // (the friendly squad, now and then: allies.js)
         ids.forEach((id, k) => {
           if (isGhost4(s, id)) bringBack(s, id, now, k, false);
         });
@@ -5117,6 +5118,7 @@ function gmHelp(s, now) {
         pick = pts.length ? fenceSpot(pts) : null;
       return pick ? pick.land : null;
     }, // (a spot just inside a fence that nobody sees: where they come in, "they show up from the outside")
+    notice: (k) => addFx(s, { kind: "l4drop", k, who: [], t: now }), // (a notice for everyone, as "The Merchant has Arrived": l4dd.js l4Got)
     speed: WALK * walkOf(s) * NPC_RUN, // (the shared slow speed, npcshared.js)
     T,
   };

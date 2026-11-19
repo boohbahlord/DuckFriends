@@ -42,7 +42,8 @@ activity({
       /* the zombies' red line while something hides them; none inside a building (the owner's: "inside buildings
          their outline is hidden"), and the sniper's never */
       ol: (o, z, f, unseen, h, sc) => {
-        if (o.k === "sn" || whereIn(z.x, z.y, h)) return false;
+        const fr = o.k === "f"; // (the friendly squad: a light green one always, as a player's, never hidden inside)
+        if (o.k === "sn" || (!fr && whereIn(z.x, z.y, h))) return false;
         const me = Wd.at(ctx.me),
           w = z.box.w * sc,
           hh = z.box.h * sc,
@@ -65,7 +66,7 @@ activity({
           w,
           h: hh,
           flip: (o.f || 1) < 0,
-          kind: "zombie",
+          kind: fr ? "friend" : "zombie",
           hidden: hid,
           floor: Math.sign(
             olFloor(z.x, z.y, h) - (me ? olFloor(me.x, me.y, me.z) : 0),

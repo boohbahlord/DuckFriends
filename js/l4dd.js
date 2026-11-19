@@ -878,11 +878,13 @@ export function l4Got(k) {
   gotEl.innerHTML =
     k === "merchant"
       ? rainbowHTML("The Merchant has Arrived", { seed: 5 }) // (the owner's, Nov 18 13:46Z: "THe text for the merchant arriving is: \"The Merchant has Arrived\"")
-      : k === "sale"
-        ? '<span class="l4-got-gold">Sale</span>' // (in gold metal letters, the owner's, Nov 16)
-        : k === "nuke"
-          ? '<span class="l4-got-nuke">Nuke</span>' // (crimson blood letters that hold still, the owner's, Nov 16)
-          : `<span class="l4-got-ic">${DROP_ICONS[k] || ""}</span>${rainbowHTML(dropName(k) + "!", { seed: DROPS_SEED[k] || 1 })}`;
+      : k === "help"
+        ? rainbowHTML("Help has Arrived", { seed: 9 }) // (Survival's friendly squad, as the merchant's: allies.js)
+        : k === "sale"
+          ? '<span class="l4-got-gold">Sale</span>' // (in gold metal letters, the owner's, Nov 16)
+          : k === "nuke"
+            ? '<span class="l4-got-nuke">Nuke</span>' // (crimson blood letters that hold still, the owner's, Nov 16)
+            : `<span class="l4-got-ic">${DROP_ICONS[k] || ""}</span>${rainbowHTML(dropName(k) + "!", { seed: DROPS_SEED[k] || 1 })}`;
   if (k === "ammo")
     for (const b of document.querySelectorAll(".l4s, .sp-slot")) {
       b.classList.remove("l4-flash");
@@ -892,7 +894,7 @@ export function l4Got(k) {
   gotEl.classList.remove("on", "nuke", "merchant");
   void gotEl.offsetWidth;
   gotEl.classList.add("on");
-  if (k === "merchant") gotEl.classList.add("merchant"); // (3 s, then a 1 s fade: css l4-got-merchant)
+  if (k === "merchant" || k === "help") gotEl.classList.add("merchant"); // (3 s, then a 1 s fade: css l4-got-merchant)
   if (k === "nuke") {
     gotEl.classList.add("nuke");
     nukeScreen(gotEl);
