@@ -10,6 +10,9 @@
    With the endless zoom (the Zoom entry of Vote Maps and Random, or the map's Zoom setting), the camera keeps going
    into the first point, forever: the tiny squares grow, and new ones keep showing up inside them (zoomer below). */
 
+import { pixelOn, gridPx } from "./pixel.js";
+import { bakeStill } from "./pxbake.js";
+
 /* the three points the squares shrink into, as parts of the page's width and height (as in the owner's picture) */
 const POINTS = [
   [0.53, 0.4],
@@ -300,7 +303,7 @@ export function euclidScene(layer, s) {
     if (!W || !H) return;
     const lite = html.classList.contains("low");
     k = Math.min(lite ? 1 : 2, devicePixelRatio || 1);
-    const key = W + "x" + H + "@" + k;
+    const key = W + "x" + H + "@" + k + "/" + gridPx();
     if (key === drawn) return;
     drawn = key;
     const pic = document.createElement("canvas");
@@ -315,12 +318,17 @@ export function euclidScene(layer, s) {
     z = zooms ? zoomer(W, H) : null; // (a new page size starts the zoom over, from the still map)
     L = 0;
     E = 0;
+    /* the pixel look: the still map made into pixels once (pxbake.js), instead of the filter every frame; the zoom
+       draws itself every frame, so it stays under the filter */
+    layer.classList.remove("px-own");
+    if (pixelOn() && !zooms) bakeStill(sc, ":scope > canvas.eu-pic", layer);
   };
   const ro = new ResizeObserver(() => {
     clearTimeout(timer);
     timer = setTimeout(draw, drawn ? 200 : 0);
   });
   ro.observe(layer);
+  addEventListener("pxgrid", draw); // (the grid changed: made into pixels again on the new one)
   draw();
   return {
     update() {
@@ -340,6 +348,8 @@ export function euclidScene(layer, s) {
     destroy() {
       clearTimeout(timer);
       ro.disconnect();
+      removeEventListener("pxgrid", draw);
+      layer.classList.remove("px-own");
       sc.remove();
     },
   };

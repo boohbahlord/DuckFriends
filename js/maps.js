@@ -19,7 +19,7 @@
    starry night sky, and it is not in the Map window. */
 import { duckSVG } from "./duck.js";
 import { pixelOn, gridPx } from "./pixel.js";
-import { bakeBackdrop } from "./pxbake.js";
+import { bakeBackdrop, bakeStill, bakeSvg, unbake } from "./pxbake.js";
 import { esc } from "./ui.js";
 import {
   backdropSVG,
@@ -207,6 +207,27 @@ function skyScene(layer, s, cur) {
   const sun = sc.querySelector(".sky-sun"),
     moon = sc.querySelector(".sky-moon");
   let last = "";
+  /* the pixel look: the sky, the stars, the sun, the moon and the clouds painted each frame on one canvas of the grid's
+     pixels (pxbake.js; each made once into a picture by the browser), instead of the filter on the whole page every
+     frame; made again for a new size or a new grid */
+  let baked = "",
+    bt = 0;
+  const bake = () => {
+    const k = [layer.clientWidth, layer.clientHeight, gridPx()].join();
+    if (!pixelOn() || k === baked || !layer.clientWidth) return;
+    baked = k;
+    unbake(sc, layer);
+    sc.querySelectorAll(
+      ".sky-stars > i, .sky-sun, .sky-moon, .sky-cloud",
+    ).forEach((e) => e.classList.add("px-shot"));
+    bakeStill(sc, null, layer, { sel: ".px-shot", before: "first", bg: true });
+  };
+  const ro = new ResizeObserver(() => {
+    clearTimeout(bt);
+    bt = setTimeout(bake, baked ? 200 : 0);
+  });
+  ro.observe(layer);
+  addEventListener("pxgrid", bake);
   return {
     update(now) {
       const t = (now % 120000) / 120000,
@@ -241,6 +262,10 @@ function skyScene(layer, s, cur) {
       stars.style.opacity = day ? 0 : p < 0.85 ? 1 : 1 - (p - 0.85) / 0.15;
     },
     destroy() {
+      clearTimeout(bt);
+      ro.disconnect();
+      removeEventListener("pxgrid", bake);
+      layer.classList.remove("px-own");
       sc.remove();
       if (cur.cols) cur.cols.classList.remove("night");
     },
@@ -262,9 +287,10 @@ function pixelScene(layer) {
     const W = layer.clientWidth,
       H = layer.clientHeight;
     if (!W || !H) return;
-    const key = W + "x" + H;
+    const key = W + "x" + H + "/" + gridPx();
     if (key === drawn) return;
     drawn = key;
+    unbake(sc, layer); // (the filter again until the new one is made into pixels)
     const u = Math.max(3, Math.round(H / 110)),
       cw = Math.ceil(W / u),
       ch = Math.ceil(H / u),
@@ -387,14 +413,27 @@ function pixelScene(layer) {
       y += b;
     }
     sun.style.cssText = `left:${(cw * 0.68 * u).toFixed(0)}px;top:${(hy * u).toFixed(0)}px;width:${(u * 16).toFixed(0)}px;height:${(u * 16).toFixed(0)}px`;
+    /* the pixel look: the sky and the world made into pixels once, the sun (it breathes) painted each frame on a
+       canvas of the grid's pixels (pxbake.js), instead of the filter on the whole page every frame */
+    if (pixelOn())
+      bakeStill(
+        sc,
+        ":scope > canvas",
+        layer,
+        { sel: ":scope > .pix-sun" },
+        true,
+      );
   };
   const ro = new ResizeObserver(draw);
   ro.observe(layer);
+  addEventListener("pxgrid", draw); // (the grid changed: made into pixels again on the new one)
   draw();
   return {
     update() {},
     destroy() {
       ro.disconnect();
+      removeEventListener("pxgrid", draw);
+      layer.classList.remove("px-own");
       sc.remove();
     },
   };
@@ -437,11 +476,39 @@ function cabinScene(layer) {
   const sc = document.createElement("div");
   sc.className = "scene cabin";
   layer.append(sc);
+  const done = cssBaked(layer, sc);
   return {
     update() {},
     destroy() {
+      done();
       sc.remove();
     },
+  };
+}
+/* the pixel look for a scene drawn only by its css (Duck Cabin's night sky, Tiles' checkerboard): made into pixels once
+   (pxbake.js), not by the filter every frame; again for a new size or a new grid. Returns its undoing */
+function cssBaked(layer, sc) {
+  let baked = "",
+    bt = 0;
+  const bake = () => {
+    const k = [layer.clientWidth, layer.clientHeight, gridPx()].join();
+    if (!pixelOn() || k === baked || !layer.clientWidth) return;
+    baked = k;
+    unbake(layer);
+    sc.classList.add("px-shot");
+    bakeStill(layer, null, layer, { sel: ":scope > .scene" });
+  };
+  const ro = new ResizeObserver(() => {
+    clearTimeout(bt);
+    bt = setTimeout(bake, baked ? 200 : 0);
+  });
+  ro.observe(layer);
+  addEventListener("pxgrid", bake);
+  return () => {
+    clearTimeout(bt);
+    ro.disconnect();
+    removeEventListener("pxgrid", bake);
+    unbake(layer);
   };
 }
 
@@ -871,10 +938,27 @@ function starsScene(layer) {
       im.src = URL.createObjectURL(b);
       im.decode()
         .then(() => (cv.isConnected ? cv.replaceWith(im) : Promise.reject()))
+        .then(bake)
         .catch(() => URL.revokeObjectURL(im.src));
     });
     sc.classList.add("ready");
   }
+  /* the pixel look: the sky, its turning stars, its twinkling bright ones and the haze drawn each frame on one canvas of
+     the grid's pixels (pxbake.js; the bright ones each made once into a picture by the browser), instead of the filter
+     on the whole page every frame; made again with each new sky (a new size) or a new grid */
+  const bake = () => {
+    unbake(sc, layer);
+    if (!pixelOn() || !sc.querySelector(".st-spin > img.st-sky")) return;
+    sc.querySelectorAll(".st-b, .st-haze").forEach((e) =>
+      e.classList.add("px-shot"),
+    );
+    bakeStill(sc, null, layer, {
+      sel: ".st-spin > .st-sky, .st-bright > .st-b, :scope > .st-haze",
+      before: "first",
+      bg: true,
+      every: 64, // (15 a second: a slow turn and slow twinkles)
+    });
+  };
   const pump = () => {
     if (!job) return;
     const t = performance.now();
@@ -901,7 +985,12 @@ function starsScene(layer) {
     rtimer = setTimeout(draw, drawn ? 200 : 0);
   });
   ro.observe(layer);
+  addEventListener("pxgrid", bake);
   draw();
+  /* the shooting stars, together in a box the page's size (the pixel look puts that box on the grid: css/app.css) */
+  const mets = document.createElement("div");
+  mets.className = "st-mets";
+  sc.append(mets);
   /* a shooting star, somewhere in the upper sky, heading down to one side */
   const meteor = (delay = 0) => {
     const W = layer.clientWidth,
@@ -913,7 +1002,7 @@ function starsScene(layer) {
     m.className = "st-met";
     m.innerHTML = "<i></i>";
     m.style.cssText = `left:${((right ? 0.05 : 0.45) + Math.random() * 0.5) * W}px;top:${(0.04 + Math.random() * 0.45) * H}px;--a:${(right ? a : 180 - a).toFixed(0)}deg;--go:${(260 + Math.random() * 380).toFixed(0)}px;--len:${(120 + Math.random() * 140).toFixed(0)}px;--t:${t.toFixed(2)}s;--dl:${delay.toFixed(2)}s`;
-    sc.append(m);
+    mets.append(m);
     setTimeout(() => m.remove(), (t + delay) * 1000 + 200);
   };
   return {
@@ -933,6 +1022,8 @@ function starsScene(layer) {
       clearTimeout(timer);
       clearTimeout(rtimer);
       ro.disconnect();
+      removeEventListener("pxgrid", bake);
+      layer.classList.remove("px-own");
       sc.remove();
     },
   };
@@ -956,13 +1047,33 @@ function carnivalScene(layer) {
           : "0 0 1600 900",
       );
     };
-  const ro = new ResizeObserver(fit);
+  /* the pixel look: the still drawing made into pixels once, its turning wheel, waving flag and twinkling lights drawn
+     each frame on one canvas of the grid's pixels (pxbake.js), instead of the filter on the whole page every frame;
+     made again for a new size or a new grid */
+  let baked = "",
+    bt = 0;
+  const bake = () => {
+    const k = [layer.clientWidth, layer.clientHeight, gridPx()].join();
+    if (!pixelOn() || k === baked || !layer.clientWidth) return;
+    baked = k;
+    unbake(sc, layer);
+    bakeSvg(sc, svg, layer, ".cn-wheel, .cn-car, .cn-bulb, .cn-star, .cn-flag");
+  };
+  const ro = new ResizeObserver(() => {
+    fit();
+    clearTimeout(bt);
+    bt = setTimeout(bake, baked ? 200 : 0);
+  });
   ro.observe(layer);
+  addEventListener("pxgrid", bake);
   fit();
   return {
     update() {},
     destroy() {
+      clearTimeout(bt);
       ro.disconnect();
+      removeEventListener("pxgrid", bake);
+      layer.classList.remove("px-own");
       sc.remove();
     },
   };
@@ -1038,7 +1149,14 @@ function tilesScene(layer) {
   const sc = document.createElement("div");
   sc.className = "scene tiles";
   layer.append(sc);
-  return { update() {}, destroy: () => sc.remove() };
+  const done = cssBaked(layer, sc);
+  return {
+    update() {},
+    destroy() {
+      done();
+      sc.remove();
+    },
+  };
 }
 export const SCENES = {
   board: nightScene,

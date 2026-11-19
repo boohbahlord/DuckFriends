@@ -3,7 +3,8 @@
    8766) and NEW (this folder, on 8765). Only the map shows (everything over it hidden), motion off, so both are still.
    For each screen: how many screen pixels differ (any channel by more than TOL), as a share of the screen.
    node tools/pixel-diff.cjs [screen …]   Screens: front (the menus' background), board (Night Show) …; MAP=… for another
-   map on the board. Env: BASE, NEW, TOL (8), SHOT (a folder: saves both and the difference) */
+   map on the board. Env: BASE, NEW, TOL (8), SHOT (a folder: saves both and the difference), HIDE (a selector left out
+   of both, for what's drawn by chance) */
 const { chromium } = require("playwright");
 const fs = require("fs");
 const BASE = process.env.BASE || "http://localhost:8766/",
@@ -61,6 +62,10 @@ async function shot(b, url, dev, screen) {
     );
   await p.waitForTimeout(2500);
   await p.addStyleTag({ content: ONLY_MAP });
+  if (process.env.HIDE)
+    await p.addStyleTag({
+      content: `html body .map-layer :is(${process.env.HIDE}), html body .map-layer :is(${process.env.HIDE}) * { visibility: hidden !important; }`,
+    }); // (what differs by chance on each load: Shelter Sky & Null's squares and static)
   await p.waitForTimeout(500);
   const own = await p.evaluate(
     () =>
