@@ -137,7 +137,7 @@ export async function myFiles() {
   try {
     return numerat
       .list(c, dir)
-      .filter((it) => !it.dir && it.name.endsWith(".num"))
+      .filter((it) => !it.dir && /\.(se|num)$/.test(it.name))
       .map((it) => ({
         name: it.name,
         path: MY_FILES + "/" + it.name,
@@ -150,7 +150,7 @@ export async function myFiles() {
 
 const NEW_ROW = () => ({ on: "spawn", ch: 100, acts: [{ k: "say", v: "hi" }] });
 
-/* the builder's window; done(path) once it saved (path: "my-files/name.num") */
+/* the builder's window; done(path) once it saved (path: "my-files/name.se") */
 export async function openBrainBuilder(done) {
   const mine = (await myFiles()).filter((f) => bbRows(f.text));
   let rows = [NEW_ROW()];
@@ -280,7 +280,9 @@ export async function openBrainBuilder(done) {
           if (t.matches("[data-bopen]")) {
             const f = mine.find((x) => x.name === t.value);
             rows = f ? bbRows(f.text) : [NEW_ROW()];
-            $("[data-bname]").value = f ? f.name.replace(/\.num$/, "") : "";
+            $("[data-bname]").value = f
+              ? f.name.replace(/\.(se|num)$/, "")
+              : "";
             return paint();
           }
         });
@@ -309,12 +311,12 @@ export async function openBrainBuilder(done) {
               const { numerat, c, dir } = await folder();
               if (numerat.at(c, dir, numerat.root(c)).kind !== "dir")
                 numerat.mkdir(c, dir);
-              numerat.write(c, `${dir}/${name}.num`, code);
+              numerat.write(c, `${dir}/${name}.se`, code);
             } catch (err) {
               $(".brb-why").textContent = err.message;
               return;
             }
-            const path = `${MY_FILES}/${name}.num`;
+            const path = `${MY_FILES}/${name}.se`;
             toast(
               `Saved ${path}: write it in a spawn's Brain box, or pick it with its arrow.`,
               4500,

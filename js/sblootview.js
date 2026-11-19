@@ -3,7 +3,7 @@
    picture it was given), and the orb's part of its settings window (sbspawnview.js sbSettings): what it holds, "a
    dropdown menu with drop down arrows PER category of loot", its numbers, how it looks, and a picture of 2 MB at most */
 import { esc, toast } from "./ui.js";
-import { SB_LOOT, SB_DROPS, SB_GEAR } from "./sandboxrules.js";
+import { SB_LOOT, SB_DROPS, SB_GEAR, SB_FLAGS } from "./sandboxrules.js";
 import { boxText } from "./sbspawn.js";
 import { lootOk } from "./sbloot.js";
 import { LOOT, lootOf } from "./sbhotview.js";
@@ -78,8 +78,9 @@ export function lootPage(s, id, p, h) {
         )
         .join("")}</span></details></div>`;
     };
-  return `${h.row("name", { name: "Name" }, h.typed("name"), h.why("name"))}
+  return `${h.row("name", { name: "Variable name" }, h.typed("name"), h.why("name"))}
     ${h.colorRow}
+    ${h.flagRow("hide", SB_FLAGS.hide, h.typed("hide"), h.why("hide"))}
     ${cats.map(drop).join("")}
     <p class="sb-none" data-row="loot">${picked.filter((w) => lootOk(s, w)).length > 1 ? "One of these at random each time." : picked.some((w) => lootOk(s, w)) ? "" : "Pick at least one."}</p>
     ${(drops ? ["again", "hurt"] : ["again", "keep", "hurt"]).map((f) => h.row(f, SB_LOOT[f], h.typed(f), h.why(f))).join("")}

@@ -280,8 +280,14 @@ function pickRow(f, label, opts, picked) {
    Players tab; getR: () => the room */
 const nameOf = (f) =>
   (SB_BOXES[f] || SB_FLAGS[f] || SB_PLAYER[f] || {}).name || SB_ACTS[f] || f;
-const flagRow = (f, b, t, why) =>
-  row(f, { name: `${b.name} (t or f)` }, t, why);
+/* a true or false setting as a button on the right that reads true or false (the owner's, Nov 19 21:59Z: "make it a
+   button ... when you click the button, it will say true or false"); a hidden box under it carries the value as t or f */
+const flagRow = (f, b, t, why) => {
+  const on = !/^f/i.test(String(t).trim()) && String(t).trim() !== "";
+  return `<div class="sb-row${why ? " bad" : ""}" data-row="${f}"><span>${esc(b.name)}</span><button type="button" class="sb-tog${on ? " on" : ""}" data-tog="${f}" aria-pressed="${on}">${on ? "true" : "false"}</button><input type="hidden" class="sb-box" data-f="${f}" value="${on ? "t" : "f"}"><em class="sb-why">${esc(why)}</em></div>`;
+};
+/* a header over one part of a spawn's window */
+const sect = (t) => `<h3 class="sb-sect">${t}</h3>`;
 export function sbSettings(getR, id, tab = "") {
   const R = getR(),
     pts = R && ptsOf(R.state),
@@ -362,9 +368,9 @@ export function sbSettings(getR, id, tab = "") {
       html,
     );
   const entity = () =>
-    own(`${colorRow}
+    own(`${sect("Spawn")}${colorRow}
     ${p.grp ? "" : tgRow()}
-    ${row("name", { name: "Name" }, typed("name"), why("name"))}
+    ${row("name", { name: "Variable name" }, typed("name"), why("name"))}
     <div class="sb-row"><span>Spawns</span><span class="sb-what">${kinds
       .map(
         ([k, n]) =>
@@ -381,7 +387,6 @@ export function sbSettings(getR, id, tab = "") {
           `<label><input type="radio" name="sb-pick" data-pick="${v}"${pick === v ? " checked" : ""}> ${n}</label>`,
       )
       .join("")}</span></div>
-    ${flagRow("sets", SB_FLAGS.sets, typed("sets"), why("sets"))}
     <div class="sb-actrows" data-row="acts"${onlyZ(what) ? " hidden" : ""}>${Object.keys(
       SB_ACTS,
     )
@@ -389,21 +394,24 @@ export function sbSettings(getR, id, tab = "") {
       .join("")}</div>
     ${row("key", { name: "Spawn key" }, typed("key"), why("key"))}
     ${brainRow(typed("brain"), why("brain"))}
-    ${Object.entries(SB_BOXES)
-      .map(([f, b]) => row(f, b, typed(f), why(f)))
-      .join("")}
+    ${sect("True or false")}
+    ${flagRow("sets", SB_FLAGS.sets, typed("sets"), why("sets"))}
     ${Object.entries(SB_FLAGS)
       .filter(([f]) => f !== "sets" && f !== "hide")
       .map(([f, b]) => flagRow(f, b, typed(f), why(f)))
+      .join("")}
+    ${sect("Numbers")}
+    ${Object.entries(SB_BOXES)
+      .map(([f, b]) => row(f, b, typed(f), why(f)))
       .join("")}`);
   const playersPage =
-    () => `${p.grp ? row("name", { name: "Name" }, typed("name"), why("name")) : ""}
+    () => `${p.grp ? row("name", { name: "Variable name" }, typed("name"), why("name")) : ""}
     ${flagRow("pon", SB_PLAYER.pon, typed("pon"), why("pon"))}
     ${row("pwho", { name: "Who spawns here" }, typed("pwho"), why("pwho"))}
     ${row("php", { name: "HP (blank: the game's)" }, typed("php"), why("php"))}
     ${row("pspd", { name: "Speed (blank: the game's)" }, typed("pspd"), why("pspd"))}`;
   const respawn = () => `${colorRow}
-    ${row("name", { name: "Name" }, typed("name"), why("name"))}
+    ${row("name", { name: "Variable name" }, typed("name"), why("name"))}
     ${row("who", { name: "Who respawns here" }, typed("who"), why("who"))}
     ${(p.im || [])
       .filter((f) => f !== "ap")
@@ -430,8 +438,8 @@ export function sbSettings(getR, id, tab = "") {
         boxText(p, f)
           .toLowerCase()
           .split(/[\s,]+/);
-    return `${row("name", { name: "Name" }, typed("name"), why("name"))}
-    ${colorRow}
+    return `${row("name", { name: "Variable name" }, typed("name"), why("name"))}
+    ${colorRow}${flagRow("hide", SB_FLAGS.hide, typed("hide"), why("hide"))}
     <div class="sb-row"><span>${esc(SB_ZONE.fx.name)}</span><span class="sb-what">${Object.entries(
       SB_FX,
     )
@@ -565,6 +573,16 @@ export function sbSettings(getR, id, tab = "") {
         setTimeout(() => sbSettings(getR, to, tk), 0);
       };
       w.addEventListener("click", (e) => {
+        const tog = e.target.closest("[data-tog]");
+        if (tog) {
+          const box = tog.closest(".sb-row").querySelector(".sb-box"),
+            on = !/^t/i.test(box.value);
+          box.value = on ? "t" : "f";
+          tog.classList.toggle("on", on);
+          tog.setAttribute("aria-pressed", on);
+          tog.textContent = on ? "true" : "false";
+          return box.dispatchEvent(new Event("input", { bubbles: true }));
+        }
         /* the Brain box's arrow: my-files/, and the builder for a new one */
         const bl = e.target.closest(
           "[data-brainlist], [data-brainfile], [data-brainnew]",
@@ -589,9 +607,13 @@ export function sbSettings(getR, id, tab = "") {
             list.hidden = true;
             return arrow.setAttribute("aria-expanded", "false");
           }
-          return import("./brainbuild.js").then(async (m) => {
+          return Promise.all([
+            import("./brainbuild.js"),
+            import("./numerathelp.js"),
+          ]).then(async ([m, h]) => {
             const files = await m.myFiles();
             list.innerHTML =
+              `<span class="sb-brainhead">My files</span>` +
               (files.length
                 ? files
                     .map(
@@ -600,6 +622,13 @@ export function sbSettings(getR, id, tab = "") {
                     )
                     .join("")
                 : `<em class="sb-none">Nothing in ${m.MY_FILES}/ yet</em>`) +
+              `<span class="sb-brainhead">Examples</span>` +
+              Object.keys(h.EXAMPLES)
+                .map(
+                  (n) =>
+                    `<button type="button" class="sb-brainfile" data-brainfile="help/examples/${esc(n)}">${esc(n)}</button>`,
+                )
+                .join("") +
               `<button type="button" class="sb-brainfile sb-brainnew" data-brainnew>Build a brain…</button>`;
             list.hidden = false;
             arrow.setAttribute("aria-expanded", "true");
