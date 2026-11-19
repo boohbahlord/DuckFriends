@@ -8,9 +8,11 @@ old wording; history and word-for-word quotes live in `notes/agree-or-disagree.m
 - Name: **Numberat** (owner, Nov 19 13:06Z: "numberat is good to go"). Code names (`js/numerat.js`, `numeratwin.js`) stay.
 - Owner: "this code is like math, components give rise to new logical possibilities ... Make sure to test
   possibilities of the code."
-- Built so far: plain values (section 1), `t`/`f`, `#` notes. Everything else is agreed on paper only and is not built
-  until the owner says the notation is settled (owner 12:59Z: "we need more discussion prob since numerat is a big
-  deal").
+- Built so far: sections 0 to 5 and the percent picks (14.4), in `js/numberat.js` (part A, Nov 19). The boxes, the
+  files and Check in the n window all use it (`js/numerat.js` reads plain values itself and compiles the rest). Next:
+  line rules and limits (part B), then section 14 (part C). Readings taken where the rules didn't say: `1.*` is 1.0 to
+  1.9 (`*` includes 0, owner 12:59Z); side by side groups take turns in a shuffled order, one pick from each; a
+  program keeps its place in its orders between spawns, shared by every box with the same text.
 - Marks: **[open]** = not settled yet; **[proposal]** = Adam's idea, the owner hasn't said yes.
 
 ## 0. Reading a file
@@ -30,7 +32,7 @@ old wording; history and word-for-word quotes live in `notes/agree-or-disagree.m
 | `1.0:*` | 1.0 to 9 | 6.3 |
 | `1.0:1.*` | 1.0 to 1.9 (how to write a tenths range) | 1.4 |
 | `1.[0:9]`, `1.[0:*]` | 1 and a tenth digit 0 to 9 | 1.0 to 1.9 |
-| `1.*` | 1.1 to 1.9 (the asterisk is one digit) | 1.7 |
+| `1.*` | 1.0 to 1.9 (the asterisk is one digit, 0 included) | 1.7 |
 | `*.*` | a digit and a tenth digit | 4.2 |
 | `t`, `f` | true, false | |
 
