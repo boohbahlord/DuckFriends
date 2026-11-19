@@ -33,6 +33,8 @@ import {
   sbPlayerSpot,
   sbOnWorld,
   SB_COLORS,
+  SB_NOCOL,
+  sbColOk,
   SB_KEYS_TAKEN,
   SB_POINTS,
   SB_LOOT,
@@ -97,6 +99,12 @@ export const SB_TEXT = {
     name: "Who spawns here",
     check: (t) => (words(t).length ? "" : "Write players or their names"),
   },
+  /* "a button under the color, where you basically select ... all my red spawns ... I can click multiple, all of which
+     will trigger at the same time": the colors whose spawns go off with this one */
+  tg: {
+    name: "Trigger together",
+    check: (t) => (words(t).every((w) => sbColOk(w)) ? "" : "Colors only"),
+  },
   pick: {
     name: "Pick",
     check: (t) =>
@@ -137,7 +145,11 @@ export function boxText(p, f) {
   const k = p && p.f && p.f[f];
   if (k && k.ok != null && k.ok !== "") return k.ok;
   if (f === "name")
-    return p ? `${p.col[0].toUpperCase()}${p.col.slice(1)}` : "";
+    return p
+      ? p.col === SB_NOCOL
+        ? "No color"
+        : `${p.col[0].toUpperCase()}${p.col.slice(1)}`
+      : "";
   if (f === "what") return "zombie";
   if (f === "pick") return "random";
   if (f === "pwho") return "players";
@@ -384,13 +396,40 @@ function taken(p, npcs) {
     ry = 0.08;
   return npcs.some((o) => Math.hypot((o.x - p.x) / rx, (o.y - p.y) / ry) < 0.8);
 }
-/* a press of spawn id's key or Spawn button (or a hotbar's spawn button: sbPress) */
-function press(s, id, now) {
+/* how many of a spawn's may be alive at once: 0 is no limit (the map's cap still holds) */
+function limitOf(p) {
+  const n = num(p, "limit");
+  return n === 0 ? Infinity : Math.max(1, n || 1);
+}
+const gap = (p) => 1000 * Math.max(0.1, num(p, "every") || 4); // (decimal seconds between spawns)
+/* a press of spawn id's key or Spawn button (or a hotbar's spawn button: sbPress), and the spawns of every color its
+   Trigger together names with it; done: the ones pressed already this time */
+function press(s, id, now, done = new Set()) {
+  const p = pointsOf(s)[id];
+  if (!p || done.has(id)) return false;
+  done.add(id);
+  const tg = words(boxText(p, "tg"));
+  let any = pressOne(s, id, now);
+  if (tg.length)
+    for (const [q, P] of Object.entries(pointsOf(s)))
+      if (
+        P.k === "spawn" &&
+        !P.grp &&
+        P.pg !== "pl" &&
+        tg.includes(P.col) &&
+        !done.has(q)
+      ) {
+        done.add(q);
+        any = pressOne(s, q, now) || any;
+      }
+  return any;
+}
+function pressOne(s, id, now) {
   const p = pointsOf(s)[id];
   if (!p || p.k !== "spawn" || p.pg === "pl" || !spawnsHere(s)) return false;
   const npcs = liveNpcs(s),
     alive = new Set(npcs.map((o) => o.i)),
-    limit = Math.max(1, num(p, "limit") || 1),
+    limit = limitOf(p),
     have = aliveOf(s, id, alive);
   if (have >= limit) return false;
   if (flag(p, "cont")) {
@@ -420,7 +459,11 @@ function withField(p, f, v) {
    has, each box read as if typed (the owner's, Nov 19 17:15Z: a preset before placing, copy and paste) */
 function fromPattern(q, pt) {
   if (!pt || typeof pt !== "object") return q;
-  if (SB_COLORS[pt.col]) q = { ...q, col: pt.col };
+  if (
+    SB_COLORS[pt.col] ||
+    (pt.col === SB_NOCOL && ["spawn", "respawn"].includes(q.k))
+  )
+    q = { ...q, col: pt.col };
   if (q.k === "respawn" && Array.isArray(pt.im)) {
     const all = SB_IMPORT.flatMap(([, fs]) => fs);
     q = { ...q, im: all.filter((f) => pt.im.includes(f)) };
@@ -436,6 +479,40 @@ function fromPattern(q, pt) {
     if (typeof v === "string" && boxOf(f) && canSet(q, f))
       q = withField(q, f, v);
   return q;
+}
+
+/* ---------- a color's settings (wave 2, the owner's, Nov 19: "let's make it to where each spawn carries the properties
+   of all of its given colors"): every spawn of a color has the same settings, and so does every respawn of a color;
+   each keeps its own name and spot. No color, a spawn's + page, a loot orb and a zone stand alone ---------- */
+const OWN_ONLY = ["name"];
+/* the other points that share point id's settings */
+function kinOf(pts, id, col = pts[id] && pts[id].col) {
+  const p = pts[id];
+  if (!p || !["spawn", "respawn"].includes(p.k) || p.grp || col === SB_NOCOL)
+    return [];
+  return Object.keys(pts).filter(
+    (q) => q !== id && pts[q].k === p.k && pts[q].col === col && !pts[q].grp,
+  );
+}
+/* point q with p's settings (all but its own name) */
+function likeIt(q, p) {
+  const f = { ...p.f };
+  for (const k of OWN_ONLY) {
+    if (q.f[k]) f[k] = q.f[k];
+    else delete f[k];
+  }
+  const r = { ...q, f };
+  delete r.im;
+  delete r.ap;
+  if (p.im) r.im = [...p.im];
+  if (p.ap) r.ap = p.ap;
+  return r;
+}
+/* point id changed: every point of its color takes its settings */
+function spread(pts, id) {
+  const out = { ...pts };
+  for (const q of kinOf(pts, id)) out[q] = likeIt(pts[q], pts[id]);
+  return out;
 }
 
 /* ---------- the actions: { t: "sb", k, … } ---------- */
@@ -487,25 +564,42 @@ export function sbAct(s, a, now) {
     const n = ((s.sb && s.sb.n) || 0) + 1,
       cols = Object.keys(SB_COLORS),
       used = Object.values(pts).map((p) => p.col),
-      col = cols.find((c) => !used.includes(c)) || cols[(n - 1) % cols.length];
-    s.sb = {
-      ...s.sb,
-      n,
-      pts: {
-        ...pts,
-        ["p" + n]: fromPattern(
-          {
-            k: a.kind,
-            x: +(at ? at.x : +me.x).toFixed(4),
-            y: +(at ? at.y : +me.y).toFixed(4),
-            z: Math.round(z),
-            col,
-            f: {},
-          },
-          a.pt,
-        ),
-      },
+      pt = a.pt && typeof a.pt === "object" ? a.pt : null,
+      /* the color picked before placing ("when you select spawn, it asks you what color before you place it down"), a
+         pasted one's own, or the next free one */
+      nocol = ["spawn", "respawn"].includes(a.kind),
+      ok = (c) => !!SB_COLORS[c] || (nocol && c === SB_NOCOL),
+      col = ok(a.col)
+        ? a.col
+        : pt && ok(pt.col)
+          ? pt.col
+          : cols.find((c) => !used.includes(c)) || cols[(n - 1) % cols.length],
+      id = "p" + n;
+    let all = {
+      ...pts,
+      [id]: fromPattern(
+        {
+          k: a.kind,
+          x: +(at ? at.x : +me.x).toFixed(4),
+          y: +(at ? at.y : +me.y).toFixed(4),
+          z: Math.round(z),
+          col,
+          f: {},
+        },
+        pt && { ...pt, col },
+      ),
     };
+    const kin = kinOf(all, id),
+      set =
+        pt &&
+        ((pt.f && Object.keys(pt.f).some((f) => !OWN_ONLY.includes(f))) ||
+          pt.im ||
+          pt.ap);
+    if (kin.length)
+      all = set
+        ? spread(all, id) // (a preset or a paste: its color takes it)
+        : { ...all, [id]: likeIt(all[id], all[kin[0]]) }; // (a bare one: its color's settings)
+    s.sb = { ...s.sb, n, pts: all };
     return true;
   }
   /* a made NPC comes into the room (or comes again, changed): its look, name, weapons and behavior */
@@ -593,24 +687,43 @@ export function sbAct(s, a, now) {
   const p = pts[a.p];
   if (!p) {
     if (a.k !== "key") return false;
-    const key = String(a.key || "").toLowerCase();
+    const key = String(a.key || "").toLowerCase(),
+      done = new Set(); // (each spawn once, however many of its color and Trigger together name it)
     let any = false;
     for (const [id, q] of Object.entries(pts))
       if (q.k === "spawn" && boxText(q, "key").toLowerCase() === key)
-        any = press(s, id, now) || any;
+        any = press(s, id, now, done) || any;
     return any;
   }
   if (a.k === "set") {
     const f = String(a.f || "");
     if (f === "col") {
-      if (!SB_COLORS[a.v]) return false;
-      s.sb = { ...s.sb, pts: { ...pts, [a.p]: { ...p, col: a.v } } };
+      if (
+        !sbColOk(a.v) ||
+        (a.v === SB_NOCOL && !["spawn", "respawn"].includes(p.k))
+      )
+        return false;
+      const kin = kinOf(pts, a.p, a.v);
+      s.sb = {
+        ...s.sb,
+        pts: {
+          ...pts,
+          [a.p]: kin.length
+            ? likeIt({ ...p, col: a.v }, pts[kin[0]]) // (it takes on its new color's settings)
+            : { ...p, col: a.v },
+        },
+      };
       return true;
     }
     const b = boxOf(f);
     if (!b || !canSet(p, f)) return false;
     const q = withField(p, f, a.v);
-    s.sb = { ...s.sb, pts: { ...pts, [a.p]: q } };
+    s.sb = {
+      ...s.sb,
+      pts: OWN_ONLY.includes(f)
+        ? { ...pts, [a.p]: q }
+        : spread({ ...pts, [a.p]: q }, a.p),
+    };
     return true;
   }
   if (a.k === "del") {
@@ -634,7 +747,7 @@ export function sbAct(s, a, now) {
       ), // (its values start as its color's spawn's)
       f = { ...p.f };
     for (const k of im) if (!f[k] && from && from.f[k]) f[k] = { ...from.f[k] };
-    s.sb = { ...s.sb, pts: { ...pts, [a.p]: { ...p, im, f } } };
+    s.sb = { ...s.sb, pts: spread({ ...pts, [a.p]: { ...p, im, f } }, a.p) };
     return true;
   }
   if (a.k === "page") {
@@ -683,7 +796,7 @@ export function sbAct(s, a, now) {
             : null,
       q = { ...p, ...(ap ? { ap } : {}) };
     if (!ap) delete q.ap;
-    s.sb = { ...s.sb, pts: { ...pts, [a.p]: q } };
+    s.sb = { ...s.sb, pts: spread({ ...pts, [a.p]: q }, a.p) };
     return true;
   }
   if (a.k === "go") return press(s, a.p, now);
@@ -697,7 +810,8 @@ function canSet(p, f) {
   if (p.k === "zone")
     return !!SB_ZONE[f] || ["name", "pon", "pwho"].includes(f); // (a zone's own, and players spawning in it)
   if (SB_LOOT[f] || SB_ZONE[f]) return false;
-  if (p.k === "respawn") return f === "who" || (p.im || []).includes(f);
+  if (p.k === "respawn")
+    return ["who", "name", "hide"].includes(f) || (p.im || []).includes(f);
   if (f === "who") return false;
   if (p.pg === "pl") return !!SB_PLAYER[f] || f === "pwho" || f === "name";
   return true;
@@ -806,7 +920,7 @@ export function sbTick(s, now, H) {
     const p = pts[id];
     if (p && flag(p, "respawn"))
       for (let k = left.length; k < ids.length; k++)
-        rq.push([id, now + 1000 * Math.max(1, num(p, "every") || 4)]);
+        rq.push([id, now + gap(p)]);
     if (left.length) live[id] = left;
     else delete live[id];
     ch = true;
@@ -828,16 +942,31 @@ export function sbTick(s, now, H) {
   }
   /* the continuous spawns running: one each "time between spawns", while nothing stands on the spawn */
   const run = { ...(s.sb.run || {}) };
+  /* Auto spawn: a run starts by itself whenever fewer than its limit are alive (the first at once, later ones a "time
+     between spawns" after) */
+  for (const [id, p] of Object.entries(pts))
+    if (
+      p.k === "spawn" &&
+      !p.grp &&
+      p.pg !== "pl" &&
+      !run[id] &&
+      flag(p, "auto") &&
+      aliveOf(s, id, new Set(npcs.map((o) => o.i))) < limitOf(p)
+    ) {
+      const was = (s.sb.au || {})[id];
+      run[id] = was ? Math.max(now, was + gap(p)) : now;
+      ch = true;
+    }
   for (const [id, at] of Object.entries(run)) {
     const p = pts[id];
-    if (!p || !flag(p, "cont")) {
+    if (!p || (!flag(p, "cont") && !flag(p, "auto"))) {
       delete run[id];
       ch = true;
       continue;
     }
     if (now < at) continue;
     const ids = new Set(npcs.map((o) => o.i)),
-      limit = Math.max(1, num(p, "limit") || 1);
+      limit = limitOf(p);
     if (aliveOf(s, id, ids) >= limit) {
       delete run[id]; // (the limit's alive: the run is over)
       ch = true;
@@ -847,7 +976,9 @@ export function sbTick(s, now, H) {
     if (spot === p && taken(p, npcs)) continue; // (in a zone: there's room)
     if (makeOne(s, id, spot)) {
       npcs = liveNpcs(s);
-      run[id] = now + 1000 * Math.max(1, num(p, "every") || 4);
+      if (flag(p, "auto"))
+        s.sb = { ...s.sb, au: { ...(s.sb.au || {}), [id]: now } }; // (when it made its last)
+      run[id] = now + gap(p);
       if (aliveOf(s, id, new Set(npcs.map((o) => o.i))) >= limit)
         delete run[id];
       ch = true;

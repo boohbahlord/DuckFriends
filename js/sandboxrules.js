@@ -78,14 +78,22 @@ export const SB_BACK_MS = 3000;
    The owner's words for each are in the Sandbox file, "Integer or numerical options for spawn" and "true of false
    options for spawn". */
 export const SB_BOXES = {
-  limit: { name: "Spawn limit", kind: "int", min: 1, max: 100, def: "1" }, // ("cannot exceed over 100, and 1 is the default per spawn")
+  /* 0: no limit (the owner's, Nov 19: "Spawn limit can be turned off. It can be set to 0"), still never past the zombies'
+     cap on a map (sbspawn.js limitOf) */
+  limit: {
+    name: "Spawn limit (0: none)",
+    kind: "int",
+    min: 0,
+    max: 100,
+    def: "1",
+  }, // ("cannot exceed over 100, and 1 is the default per spawn")
   every: {
     name: "Seconds between spawns",
-    kind: "int",
-    min: 1,
+    kind: "tenth",
+    min: 0.1,
     max: 600,
     def: "4",
-  }, // ("default is four seconds")
+  }, // ("default is four seconds"; "you can do a decimal point for time in between spawns")
   hp: { name: "HP", kind: "int", min: 1, max: 1000, def: "3" }, // (a zombie's own: l4ddrules.js L4.HP)
   damage: { name: "Damage", kind: "tenth", min: 0.1, max: 100, def: "1" }, // ("decimal form to the tenth place")
   speed: { name: "Speed", kind: "tenth", min: 0.1, max: 5, def: "1" }, // ("1 is default, 0 is not allowed ... 5 is the max")
@@ -102,6 +110,12 @@ export const SB_BOXES = {
 export const SB_FLAGS = {
   sets: { name: "Use these settings", kind: "bool", def: "t" }, // (off: what it spawns comes as it is, sbspawn.js ownOn)
   cont: { name: "Continuous spawn", kind: "bool", def: "f" },
+  /* "Auto spawn means it spawns regardless. Like it will just always keep spawning unless it's turned off ... below
+     continuous spawn": no key or button needed, one each "time between spawns" while fewer than its limit are alive */
+  auto: { name: "Auto spawn", kind: "bool", def: "f" },
+  /* "under the colors to hide spawn, and it only hides spawn when cheat mode isn't on": its ring shows only to whoever
+     has cheat mode on (sbmenu.js sbCheat); it still works */
+  hide: { name: "Hide (unless cheat mode)", kind: "bool", def: "f" },
   respawn: { name: "Can respawn", kind: "bool", def: "f" },
   sprint: { name: "Can sprint", kind: "bool", def: "f" },
   jump: { name: "Can jump", kind: "bool", def: "f" },
@@ -159,6 +173,10 @@ export const SB_COLORS = {
   pink: "#ff6fb5",
   white: "#f4f6fb",
 };
+/* "There should be a no color option, which just kind of makes the spawn point maybe like a rainbow color that slowly
+   changes, very slowly": a spawn or respawn of No color shares its settings with nobody */
+export const SB_NOCOL = "none";
+export const sbColOk = (c) => !!SB_COLORS[c] || c === SB_NOCOL;
 /* the keys a spawn can't take: the windows' letters and the game's own keys */
 export const SB_KEYS_TAKEN = "cbmnhgpwasdeqrtvx";
 /* the spawn key works any time, the Build window up or not (the owner's answer, Nov 19 10:22Z: "no (not for sandbox
