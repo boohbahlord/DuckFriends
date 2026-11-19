@@ -178,10 +178,13 @@ function words(svg) {
   }
   return g.childNodes.length ? g : null;
 }
+/* classes that only move the board (its quake shake is a transform animation) change no pixel of a drawing: left out of
+   the key, every shake made all the walls and the HP badge into pictures again (Downpour: dozens a second) */
+const MOTION = /(^|\s)quake(?=\s|$)/g;
 function around(svg, root) {
   let s = "";
   for (let e = svg; e && e !== root; e = e.parentElement)
-    s += (e.getAttribute("class") || "") + "|";
+    s += (e.getAttribute("class") || "").replace(MOTION, "") + "|";
   return s;
 }
 
