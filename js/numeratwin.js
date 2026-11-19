@@ -228,7 +228,7 @@ export function openNumerat() {
         }
         if (e.target.closest("[data-check]") && st.file) {
           keep();
-          const r = check(code.value),
+          const r = check(code.value, (n) => numerat.use(ctx, st.file, n)),
             name = rel(st.file);
           say(
             r.errs.length

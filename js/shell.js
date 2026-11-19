@@ -69,6 +69,7 @@ import { music } from "./music.js";
 import { npcsHere, npcTag, npcByTag, npcById } from "./npcs.js";
 import { isSb, sbMay, sbWorld, SB_WORLD_NAMES } from "./sandboxrules.js";
 import { HELP } from "./numerathelp.js";
+import { compileScript, brain } from "./numberatrun.js";
 
 const tag = (n) => String(n || "").replace(/\s+/g, "");
 const fail = (msg, code = 1) => {
@@ -2313,9 +2314,73 @@ function startFile(path, ctx, sudo) {
     );
   const was = procs.find((p) => p.path === path);
   if (was) return `${name} is already running (pid ${was.pid}).`;
+  /* read it first: a file with mistakes doesn't start, and says where they are */
+  const c = compileScript(fs.files[path] || "", {
+    file: (n) => useText(path, n),
+  });
+  if (c.errs.length)
+    fail(
+      [
+        ...c.errs
+          .slice(0, 10)
+          .map((e) => `✗ ${name}, line ${e.line}: ${e.why}`),
+        ...(c.errs.length > 10 ? [`… ${c.errs.length - 10} more`] : []),
+        `${name} didn't start.`,
+      ].join("\n"),
+      1,
+    );
+  const out = playTop(c.plan, s, name);
   const pid = nextPid++;
   procs.push({ pid, path, name, at: Date.now() });
-  return `▶ ${name} is running (pid ${pid}). Numberat's language is coming: for now the file does nothing. kill ${pid} stops it.`;
+  const npc = c.plan.whens.length + c.plan.everys.length;
+  return [
+    ...out,
+    `▶ ${name} is running (pid ${pid}).${npc ? " Its when and every parts are for NPCs, which come with the next part of Numberat." : ""} kill ${pid} stops it.`,
+  ].join("\n");
+}
+/* a file's own lines (not its when's and every's), played now: what they print, in order. Its waits go by at once */
+function playTop(plan, s, name) {
+  const lines = [];
+  let t = 0;
+  const host = {
+    now: () => t,
+    stat: () => 0,
+    set() {},
+    most: () => 0,
+    get: (w) =>
+      w === "wave"
+        ? (s.hang && s.hang.l4 && s.hang.l4.r) || 0
+        : w === "time"
+          ? t
+          : w === "alive"
+            ? ((s.mz && s.mz.zb) || []).filter((o) => !o.d).length
+            : 0,
+    who: () => [],
+    act() {},
+    say: (me, text) => lines.push(text),
+    print: (text) => lines.push(text),
+    file: () => null,
+    shared: numShared,
+    error: (line, why) => lines.push(`✗ ${name}, line ${line}: ${why}`),
+  };
+  const b = brain(plan, host);
+  b.start();
+  for (let k = 0; k < 1000 && b.tasks.length; k++) {
+    t = Math.min(...b.tasks.map((x) => x.wake));
+    b.tick();
+  }
+  return lines.slice(0, 200);
+}
+const numShared = new Map(); // (give and take between files)
+/* use 'name': the file next to the one using it, or at the Numberat folder's top; .num may be left off */
+function useText(from, name) {
+  const dir = from.slice(0, from.lastIndexOf("/"));
+  for (const d of [dir, numRoot()])
+    for (const n of [name, name + ".num"]) {
+      const p = d + "/" + n;
+      if (inNum(p) && fs.files[p] != null) return fs.files[p];
+    }
+  return null;
 }
 function runFile(c, ctx, sudo) {
   const path = resolve(c),
@@ -2527,6 +2592,11 @@ export const numerat = {
     numKeep();
   },
   ro: (path) => inHelp(path),
+  /* another file, for use 'name': next to the file using it, then at the folder's top; .num may be left off */
+  use(ctx, from, name) {
+    sync(ctx);
+    return useText(from, name);
+  },
   running: (path) => procs.find((p) => p.path === path) || null,
   run(ctx, path) {
     sync(ctx);

@@ -8,14 +8,18 @@ old wording; history and word-for-word quotes live in `notes/agree-or-disagree.m
 - Name: **Numberat** (owner, Nov 19 13:06Z: "numberat is good to go"). Code names (`js/numerat.js`, `numeratwin.js`) stay.
 - Owner: "this code is like math, components give rise to new logical possibilities ... Make sure to test
   possibilities of the code."
-- Built so far: sections 0 to 6, 8 and the percent picks (14.4), in `js/numberat.js` (parts A and B, Nov 19). The boxes, the
-  files and Check in the n window all use it (`js/numerat.js` reads plain values itself and compiles the rest). Next:
-  section 14 (part C). Readings taken where the rules didn't say: `1.*` is 1.0 to
+- Built so far: sections 0 to 6, 8, 9 (logic words), 10 and 14, in `js/numberat.js` (values, line rules, limits) and
+  `js/numberatrun.js` (statements, parts A to C, Nov 19). The boxes, the files, Check and Run in the n window all use
+  them (`js/numerat.js` reads plain values itself and compiles the rest). Not hooked up yet: NPCs running a file's
+  `when`/`every` parts in the game (Run plays only the file's own lines and prints them). Readings taken where the rules didn't say: `1.*` is 1.0 to
   1.9 (`*` includes 0, owner 12:59Z); side by side groups take turns in a shuffled order, one pick from each; a
   program keeps its place in its orders between spawns, shared by every box with the same text. Line rules: the
   quotes are only marks (`\'a2 rm0'\` = `\''a2'rm0'\`); a rule's value covers every number it can give; with the
   same number of `!` the later rule wins; a `!` rule without `lin` is for the whole file, lines before it too; a
-  replay keeps the orders where they were; `lim` sets the top only (the stat's lowest stays).
+  replay keeps the orders where they were; `lim` sets the top only (the stat's lowest stays). Statements: inside
+  double quotes every let/for/def name is worked out, so `say "rage is rage"` says "7 is 7" (write
+  `say 'rage is ' rage`); `let` works its value out once, when it runs; `for n in 3` is 1 to 3, `for n in [2,4]` is
+  each; `attack`/`flee` with no one named mean the nearest duck; `team` is the NPCs the file runs.
 - Marks: **[open]** = not settled yet; **[proposal]** = Adam's idea, the owner hasn't said yes.
 
 ## 0. Reading a file
@@ -173,9 +177,8 @@ Every Numberat value works anywhere a number goes below: `wait 1:3`, `every [2,4
 12. **Smallest, biggest, leftover**: `min 3 hp`, `max 1 speed`, `mod`: `\if spawned mod 3 == 0\` = every 3rd spawn.
 13. **Blocks with inputs**: `def hurt(n) { ((hp hp-n)) }`, then `hurt 3`.
 14. **Text with values**, bash style: inside double quotes in `print`/`say`, asterisks, `$` letters and named values
-    are worked out (`say "zombie $$*"` might say "zombie qe7"; `say "rage is rage"` says "rage is 7"); inside single
-    quotes the text stays exactly as typed (`say 'zombie $$*'` says "zombie $$*"). A value can also sit outside the
-    quotes: `say "rage is " rage`. After `print`/`say`, quotes are text; everywhere else double quotes still multiply.
+    are worked out (`say "zombie $$*"` might say "zombie qe7"; every name is worked out too, so `say "rage is rage"` says "7 is 7"); inside single
+    quotes the text stays exactly as typed (`say 'zombie $$*'` says "zombie $$*"). To keep a word, put it in single quotes and the value beside it: `say 'rage is ' rage`. After `print`/`say`, quotes are text; everywhere else double quotes still multiply.
 15. **Same random every run**: `seed 42`. Without it, random as usual.
 16. **Built-in names**: `wave` (Dead Ducks Arcade's round number, the owner's word; `round` is taken by rounding),
     `time`, `alive`, `dead`, `spawned`.

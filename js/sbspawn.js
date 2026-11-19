@@ -285,7 +285,9 @@ export function zonesFor(s, f, p) {
 /* where spawn id makes one: in a zone that names it (one of them at random), or on the spawn itself */
 function entSpot(s, p) {
   const zs = zonesFor(s, "ent", p);
-  return zs.length ? zoneSpot(s, zs[Math.floor(Math.random() * zs.length)]) : p;
+  return zs.length
+    ? { ...zoneSpot(s, zs[Math.floor(Math.random() * zs.length)]), inz: 1 }
+    : p;
 }
 /* one NPC from spawn id at (x, y) (its spawn, a zone, or a respawn); false at the cap */
 function makeOne(s, id, at) {
@@ -310,8 +312,9 @@ function makeOne(s, id, at) {
     i = ++s.mz.n;
     s.mz.zb.push({
       i,
-      x: +(at.x + (Math.random() - 0.5) * 0.02).toFixed(3),
-      y: +(at.y + (Math.random() - 0.5) * 0.03).toFixed(3),
+      // (a little scatter round a spawn, but never from a spot picked in a zone: it would end up outside the zone)
+      x: +(at.x + (at.inz ? 0 : (Math.random() - 0.5) * 0.02)).toFixed(4),
+      y: +(at.y + (at.inz ? 0 : (Math.random() - 0.5) * 0.03)).toFixed(4),
       hp,
       a: 0,
       l,

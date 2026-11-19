@@ -32,16 +32,28 @@ function lex(text) {
     src = String(text == null ? "" : text);
   let i = 0,
     line = 1,
-    depth = 0;
+    depth = 0,
+    say = false; // (after print or say: quotes are text, as in bash)
   const push = (t, v, extra = {}) => out.push({ t, v, line, ...extra });
   while (i < src.length) {
     const c = src[i];
     if (c === "\n") {
-      push(depth > 0 ? "sp" : "nl", "\n"); // (a line carries on while a bracket is still open)
+      // (a line carries on while a bracket is still open; inside a { } block the break still ends a statement)
+      push(depth > 0 ? "sp" : "nl", "\n", depth > 0 ? { soft: true } : {});
       line++;
       i++;
+      say = false;
       continue;
     }
+    if (say && (c === '"' || c === "'")) {
+      const end = src.indexOf(c, i + 1);
+      if (end < 0 || src.slice(i + 1, end).includes("\n"))
+        no(`A ${c} is never closed`, "help/print.txt");
+      push("str", src.slice(i + 1, end), { q: c });
+      i = end + 1;
+      continue;
+    }
+    if (c === ";" || c === "}") say = false;
     if (c === " " || c === "\t" || c === "\r") {
       push("sp", " ");
       while (i < src.length && /[ \t\r]/.test(src[i])) i++;
@@ -105,11 +117,12 @@ function lex(text) {
       let w = "";
       while (i < src.length && /[a-z0-9_]/i.test(src[i])) w += src[i++];
       push("word", w.toLowerCase());
+      if (/^(print|say)$/i.test(w)) say = true;
       continue;
     }
     if ("([{".includes(c)) depth++;
     if (")]}".includes(c)) depth = Math.max(0, depth - 1);
-    if ('()[]{}+-/^:,<>|=~%"!'.includes(c)) {
+    if ('()[]{}+-/^:,<>|=~%"!;'.includes(c)) {
       push("op", c);
       i++;
       continue;
@@ -193,6 +206,25 @@ function digits(ctx, int, frac, which) {
   return tenth(v);
 }
 
+/* words that do a job in values (anything else is a name: a let, a stat, wave …) */
+const FN1 = {
+  round: (v) => Math.round(v),
+  up: (v) => Math.ceil(v - 1e-9),
+  down: (v) => Math.floor(v + 1e-9),
+};
+const RESERVED = new Set([
+  "else",
+  "in",
+  "not",
+  "and",
+  "or",
+  "xor",
+  "nand",
+  "mod",
+  "if",
+  "s",
+]);
+
 /* ---------- the parser ---------- */
 class Parser {
   constructor(toks, prog) {
@@ -204,6 +236,7 @@ class Parser {
     this.braces = []; // (the { } groups being read: their parts start over each run)
   }
   peek(o = 0) {
+    if (this.end != null && this.i + o >= this.end) return undefined; // (a statement's value stops at its line's end)
     return this.toks[this.i + o];
   }
   is(v, o = 0) {
@@ -218,7 +251,7 @@ class Parser {
     return this.toks[this.i++];
   }
   done() {
-    return this.i >= this.toks.length;
+    return this.i >= (this.end != null ? this.end : this.toks.length);
   }
   /* a part with a place kept between runs (an order, a repeat): made here, so { } can start it over */
   state(s) {
@@ -294,6 +327,7 @@ class Parser {
 
   /* > and <: the listed values in order. An arrow first fixes the start; side by side groups take turns */
   seq() {
+    if (this.noArrows) return this.juxt(); // (inside \if …\, < and > compare)
     let lead = null;
     if (this.is(">") || this.is("<")) lead = this.toks[this.i++].v;
     const items = [this.juxt()];
@@ -386,7 +420,9 @@ class Parser {
       no("Give every choice a percent, or none of them");
     if (!weighted) {
       const vs = items.map((x) => x.v);
-      return (ctx) => vs[rnd(ctx, vs.length)](ctx);
+      const fn = (ctx) => vs[rnd(ctx, vs.length)](ctx);
+      fn.opts = vs; // (for "in" and "for": each of them)
+      return fn;
     }
     return (ctx) => {
       const ws = items.map((x) => Math.max(0, num(x.w(ctx), "A percent")));
@@ -408,9 +444,22 @@ class Parser {
       return { v: percent(v) };
     }
     if (this.startsValue() && !this.quoted) {
-      const w = this.sum();
-      this.take("%");
-      return { v, w };
+      const at = this.i,
+        named = this.names && this.names.length;
+      let w = null;
+      try {
+        w = this.sum();
+      } catch (e) {
+        if (!(e instanceof NbError)) throw e;
+      }
+      if (w && this.is("%")) {
+        this.i++;
+        return { v, w };
+      }
+      if (w && this.peek() && this.peek().t !== "word" && !this.end)
+        this.take("%");
+      this.i = at; // (a word after a value: the statement's next part, not a percent)
+      if (this.names) this.names.length = named;
     }
     return { v };
   }
@@ -418,6 +467,7 @@ class Parser {
     const t = this.peek();
     if (!t) return false;
     if (t.t === "num" || t.t === "name" || t.t === "let") return true;
+    if (t.t === "word") return !RESERVED.has(t.v);
     return (
       t.t === "op" &&
       (t.v === "~" || t.v === "{" || (t.v === '"' && !this.quoted))
@@ -439,17 +489,20 @@ class Parser {
   }
   term() {
     let a = this.product();
-    while (this.is("/")) {
+    for (;;) {
+      const mod =
+        this.peek() && this.peek().t === "word" && this.peek().v === "mod";
+      if (!this.is("/") && !mod) return a;
       this.i++;
       const l = a,
         r = this.product();
       a = (ctx) => {
         const d = num(r(ctx));
-        if (d === 0) no("Can't divide by 0");
-        return num(l(ctx)) / d;
+        if (d === 0) no("Can't divide by 0", "help/math.txt");
+        const n = num(l(ctx));
+        return mod ? ((n % d) + d) % d : n / d; // (mod: what's left over, spawned mod 3)
       };
     }
-    return a;
   }
   /* inside "…", side by side multiplies: "[1,5]2" = "2[1,5]" = 2 or 10 */
   product() {
@@ -495,11 +548,15 @@ class Parser {
     this.i++;
     const b = this.atom();
     const tenths = !!(a.tenths || b.tenths);
-    return (ctx) => {
+    const span = (ctx) => {
       let lo = num(a.lo ? a.lo(ctx) : a(ctx), "A range's start"),
         hi = num(b.hi ? b.hi(ctx) : b(ctx), "A range's end");
       if (lo > hi) [lo, hi] = [hi, lo]; // (4:2 is 2 to 4)
-      if (tenths || !Number.isInteger(lo) || !Number.isInteger(hi)) {
+      return [lo, hi, tenths || !Number.isInteger(lo) || !Number.isInteger(hi)];
+    };
+    const fn = (ctx) => {
+      const [lo, hi, t10] = span(ctx);
+      if (t10) {
         const l = Math.ceil(tenth(lo) * 10 - 1e-9),
           h = Math.floor(tenth(hi) * 10 + 1e-9);
         if (h < l) return tenth(lo);
@@ -507,6 +564,8 @@ class Parser {
       }
       return lo + rnd(ctx, hi - lo + 1);
     };
+    fn.span = span; // (for "in" and "for": every number of the range)
+    return fn;
   }
   atom() {
     const t = this.peek();
@@ -546,7 +605,27 @@ class Parser {
       this.i++;
       if (t.v === "t" || t.v === "true") return () => true;
       if (t.v === "f" || t.v === "false") return () => false;
-      no(`"${t.v}" isn't a value (words like that come in a later part)`);
+      if (FN1[t.v]) {
+        const a = this.unary(),
+          f = FN1[t.v]; // (round 2.5 is 3, up 2.1 is 3, down 2.9 is 2)
+        return (ctx) => f(num(a(ctx), `${t.v}'s value`));
+      }
+      if (t.v === "min" || t.v === "max") {
+        const a = this.unary(),
+          b = this.unary(),
+          f = Math[t.v]; // (min 3 hp: the smaller of 3 and hp)
+        return (ctx) => f(num(a(ctx)), num(b(ctx)));
+      }
+      if (RESERVED.has(t.v)) no(`"${t.v}" can't start a value`);
+      if (this.names) this.names.push({ v: t.v, line: t.line });
+      return (ctx) => {
+        if (!ctx.name)
+          no(
+            `"${t.v}" isn't a value here (names work in files)`,
+            "help/names.txt",
+          );
+        return ctx.name(t.v);
+      };
     }
     if (t.t === "bs") {
       const rep = this.repeatOf(t.v);
@@ -904,7 +983,7 @@ function lineRules(toks, line) {
   while (k < toks.length && (toks[k].t === "sp" || toks[k].t === "bs")) {
     const t = toks[k];
     if (t.t === "bs") {
-      if (/^[<>]/.test(t.v.trim())) break; // (a repeat, not a rule)
+      if (/^[<>]|^if\b/.test(t.v.trim())) break; // (a repeat or an \if …\, not a rule)
       rules.push(parseRule(t.v, t.line || line, rules.length));
     }
     k++;
@@ -1093,6 +1172,25 @@ export function compileFile(text) {
   errs.sort((a, b) => a.line - b.line);
   return { n: lines.length + errs.length + ruleOnly, errs, lines };
 }
+
+/* the pieces the statements (numberatrun.js) build on */
+export {
+  build,
+  lex,
+  Parser,
+  NbError,
+  no,
+  num,
+  out,
+  tenth,
+  lineRules,
+  judge,
+  newCtx,
+  possible,
+  NO_RULES,
+  MOST_TRIES,
+  REPLAY,
+};
 
 /* the words Numberat knows so far, for the window's autocomplete */
 export const NB_WORDS = [

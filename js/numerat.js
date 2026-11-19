@@ -11,7 +11,8 @@
    Numberat window all use the one compiler.
    Bad writing never breaks the game: read() says why, and the box keeps its last good value (keep()).
    This file imports only numberat.js, so it can be used anywhere, in the game or outside it. */
-import { compile, compileFile, NB_WORDS, NOTHING } from "./numberat.js";
+import { compile, NB_WORDS, NOTHING } from "./numberat.js";
+import { compileScript, NB_RUN_WORDS } from "./numberatrun.js";
 
 /* a box's kind: "int" (whole numbers), "tenth" (tenths) or "bool" (t or f); min and max: what it allows */
 const NUM = /^-?(?:\d+(?:\.\d*)?|\.\d+)$/;
@@ -153,23 +154,28 @@ export function valueOf(kept, box = {}, r = Math.random) {
 }
 
 /* the words a file can have today, for the Numerat window's autocomplete */
-export const WORDS = [...new Set(["true", "false", ...NB_WORDS])];
+export const WORDS = [
+  ...new Set(["true", "false", ...NB_WORDS, ...NB_RUN_WORDS]),
+];
 
-/* Check (the Numberat window): reads a whole file and plays each line a few times on its own, without running the file
-   in the game. Blank lines and # notes are skipped; a line carries on while a bracket is still open. Gives
-   { n: lines read, errs: [{ line, why }] }, line counted from 1 */
-export function check(text) {
-  const f = compileFile(String(text == null ? "" : text));
-  const errs = [...f.errs];
-  for (const { line, prog } of f.lines) {
-    for (let k = 0; k < 20; k++) {
-      const r = prog.run();
-      if (r.why) {
-        errs.push({ line, why: r.why });
-        break;
+/* Check (the Numberat window): reads a whole file, statements and values, and plays each value line a few times on
+   its own, without running the file in the game. Blank lines and # notes are skipped; a line carries on while a bracket
+   is still open. file(name): another file's text, for use. Gives { n: lines read, errs: [{ line, why }] }, line counted
+   from 1 */
+export function check(text, file) {
+  const c = compileScript(String(text == null ? "" : text), { file });
+  const errs = [...c.errs];
+  if (c.plan)
+    for (const s of c.plan.top) {
+      if (s.k !== "line") continue;
+      for (let k = 0; k < 20; k++) {
+        const r = s.prog.run();
+        if (r.why) {
+          errs.push({ line: s.line, why: r.why });
+          break;
+        }
       }
     }
-  }
   errs.sort((a, b) => a.line - b.line);
-  return { n: f.n, errs };
+  return { n: c.n, errs };
 }

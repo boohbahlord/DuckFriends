@@ -3,7 +3,7 @@
    help lies and their given principles or basic operators help files; the help files are text files that cannot be
    copied or deleted or changed". shell.js puts these in the Numerat folder at the start of every game (never kept in the
    profile) and refuses every change to them. Only what is built is written here (part A: values, orders, brackets,
-   math, asterisks, percents; part B: line rules and limits). This file has no imports. */
+   math, asterisks, percents; part B: line rules and limits; part C: statements). This file has no imports. */
 export const HELP = {
   "index.txt": `Numberat help
 These files are read-only: you can read them here and with cat,
@@ -12,9 +12,12 @@ but they can't be changed, copied or deleted.
 Simple first:
   values.txt     numbers as you write them in a box: 2, 2:4, 2,4
   tenths.txt     tenths: 1.5, 1.0:1.*, 1.[0:9]
+  ranges.txt     the colon: 2:4, 1.0:1.*
+  lists.txt      the comma: 2,4
   truefalse.txt  the t and f boxes
   about.txt      ~10: about 10
   order.txt      2>4 in order, | and repeats
+  repeats.txt    play something again: \\>2>\\||
   brackets.txt   ( ) [ ] { } and lines that carry on
   math.txt       + - / ^ and "2[1,5]"
   asterisks.txt  *, **, -*, $ letters, '1*' and =
@@ -22,17 +25,15 @@ Simple first:
   linerules.txt  \\'rm0'\\, \\!'rm1'\\, lin, and a line's own limit
   percents.txt   [3 60%, 5 40%], 30%, 150%
   limits.txt     the limits every box has, and what to do past one
-  ranges.txt     the colon: 2:4, 1.0:1.*
-  lists.txt      the comma: 2,4
-  order.txt      the arrows and |: 2>4, >2>4>5
-  repeats.txt    play something again: \\>2>\\||
-  brackets.txt   ( ) [ ] { }
-  math.txt       + - / ^ and multiplying
-  about.txt      ~10, about this much
-  asterisks.txt  * is a digit, $ is a letter, '1*' names one
-  chance.txt     percent picks: [3 60%, 5 40%], 30%
-  asrules.txt    \\'ainc ...'\\ rules for asterisks
   window.txt     this window: files, Run, Check, wrap, autocomplete
+
+Files that do things:
+  files.txt      when spawn, when hit, every 2s, use, give, take
+  names.txt      let, def, the stats (hp ...) and wave, time ...
+  who.txt        me, nearest duck, all zombies, team; go, attack, flee
+  tests.txt      \\if hp < 5\\ ... else, ==, not, in, and, or
+  loops.txt      for, while, and the 1,000 rounds stop
+  print.txt      print and say, "..." and '...'
 
 Notes: # starts a note, the rest of the line is skipped.
 Spaces and line breaks don't change anything: [2, 4] = [2,4].
@@ -217,6 +218,94 @@ The strongest rule wins: more ! is stronger. \\!!'inc1'\\ beats
 
 Limits: see limits.txt. Asterisk rules (mormax ...): asteriskrules.txt.
 `,
+  "files.txt": `Files that do things
+
+A file is lines of statements. Its own lines play once when it
+starts (Run); its when's and every's play for each NPC it runs.
+
+  when spawn ((hp 10))         when an NPC comes in
+  when hit [attack 75%, flee 25%]
+  when dead print 'gone'
+  when near duck 3 flee        a duck 3 or nearer (near zombie too)
+  when touch say "boop"
+  every [2,4]s say "brains"    each NPC, every 2 or 4 seconds
+  wait 1.5                     sleep a little, then go on
+  stop                         end this block now
+  seed 42                      the same random numbers every run
+
+Blocks: { } around several lines, or ; between statements:
+  when spawn { go nearest duck; wait 1; attack }
+
+Joining files:
+  use 'zombie-base'    its values, blocks and when's come in too
+  give rage            other files can take rage
+  take rage            rage, as another file gave it
+Plain value lines (2:4, >2>4 ...) work in files too.
+`,
+  "names.txt": `Names
+
+  let rage = {[1,2]+[0:*]}    rage is 1 to 11, worked out now
+  let r2 = rage^2             names work anywhere a number goes
+  ((hp "2rage"))              "…" multiplies: twice the rage
+
+Stats, read and set (an NPC's, inside a when):
+  hp  speed  damage  hitbox
+  ((hp 5))  ((hp hp-1))  ((hp 50%))   50% is half its most
+Built-in: wave (the round), time (seconds), alive, dead, spawned.
+Math words: round 2.5 (3)  up 2.1 (3)  down 2.9 (2)
+            min 3 hp  max 1 speed  spawned mod 3
+
+Blocks:
+  def charge { go nearest duck; wait 1; attack }
+  def hurt(n) { ((hp hp-n)) }
+  when hit hurt 3
+`,
+  "who.txt": `Who
+
+  me              this NPC
+  nearest duck    nearest zombie
+  all ducks       all zombies
+  team            the NPCs this file runs
+
+  go nearest duck     attack     flee     (attack and flee: the
+  nearest duck when no one is named)
+  ((all zombies speed 2))
+  for z in all zombies { ((z speed ~1.2)) }
+`,
+  "tests.txt": `Tests
+
+Between backslashes, < and > compare (outside, they're arrows):
+  \\if hp < 5\\ flee else go nearest duck
+  \\if hp == 5\\ ...      equal (one = names a value)
+  \\if hp not 5\\ ...     not equal
+  \\if hp in 1:5\\ ...    one of; also in [2,4,6]
+  <=  >=
+  \\if not hp > 5\\  \\if hp < 5 and wave > 2\\
+  and, or, nand, xor
+  \\if spawned mod 3 == 0\\ say "every 3rd"
+`,
+  "loops.txt": `Loops
+
+  for n in 1:5 { say "wave n" }     1, 2, 3, 4, 5
+  for n in [2,4] print "n"          2, then 4
+  for z in all zombies { ((z speed ~1.2)) }
+  while \\hp < 5\\ { flee; wait 1 }
+
+Every loop stops after 1,000 rounds with an error, and so does
+anything that runs a long time without a wait, so a mistake can't
+freeze the game.
+`,
+  "print.txt": `print and say
+
+  print "Hello, world!"     shows in the terminal
+  say "brains"              the NPC says it (no NPC: the terminal)
+
+As in bash:
+  "zombie $$*"     double quotes work out asterisks, $ letters and
+                   names: zombie qe7. "wave n" in a for says wave 1
+  'zombie $$*'     single quotes: exactly as typed
+  'rage is ' rage  text, then a value beside it: rage is 7
+`,
   "ranges.txt": `Ranges (the colon)
 
   2:4       a new random whole number from 2 to 4, each time
@@ -237,19 +326,6 @@ Examples
   5,10,20   5, 10 or 20
   [2,4]     one pick of 2 or 4, then on to the next part
 `,
-  "order.txt": `Order (the arrows and |)
-
-With no arrow, every pick is random.
-  2>4       the listed values in order: 2, then 4 (not the ones between)
-  2<4       the other way round
-  >2>4>5    an arrow first fixes the start: 2, 4, 5, 2, 4 ...
-  2>4>5     starts at a random one, then goes on in order
-  |         everything before it finishes, then what comes after it
-
-Examples
-  >[2,4]>[3]   2 or 4, then 3, then 2 or 4 again ...
-  >3>6|10      3, then 6, then 10 from then on
-`,
   "repeats.txt": `Repeats
 
 Between backslashed arrows, write how many times; then ||.
@@ -261,76 +337,6 @@ Examples
   >[3,5]\\>2>\\||     3 or 5, in order, 2 times
   <[3,5]\\<2<\\||     the same, descending
   >[3,5]\\>>\\||      3 or 5, then again in order
-`,
-  "brackets.txt": `Brackets
-
-  ( )   work this out first, as in math: (2:4)+1 is 3 to 5
-  [ ]   take ONE pick from inside, then move on: [2,4]
-  { }   wait until everything inside is defined, then give its result
-  (( )) set a thing to a number (comes with the game's stats)
-
-Spaces and line breaks don't change meaning: [2, 4] is [2,4].
-A line carries on while a bracket is still open.
-Side by side, [1,3][2,4] take turns in a shuffled order, one pick each.
-`,
-  "math.txt": `Math
-
-  +  add     -  subtract     /  divide     ^  power
-  "..."      multiply, with double quotes
-
-Examples
-  [6,10]/2     3 or 5
-  [3,6]^2      9 or 36
-  "[1,5]2"     2 or 10
-  (2:4)+1      3 to 5
-`,
-  "about.txt": `About (the wave)
-
-  ~10    9 to 11
-  ~1.5   1.4 to 1.6
-
-"Around this much", without writing the range.
-`,
-  "asterisks.txt": `Asterisks and letters
-
-  *      one digit, 0 to 9 (waits for input; with none, a random one)
-  **     two digits
-  -*     a negative digit, -9 to 0
-  $      one letter a to z ($$ two, $$$ three)
-  '1*'   asterisk number 1: named so it can be used again
-  =      names what came before it
-
-Examples
-  [2,3,5]=*+*              2, 3 or 5, then added to itself
-  {[2,4]}='1*'\\>>\\||'1*'+'1*'   2 or 4, kept as asterisk 1, then doubled
-  '1$'                    a letter, named 1
-
-A number with too many digits is cut from the front: 150 into ** is 50.
-`,
-  "chance.txt": `Chance (percent)
-
-  [3 60%, 5 40%]    3 six times in ten, 5 four times in ten
-  [3 60:80%, 5 20%] a percent can be a range too
-  30%               true 3 times in 10
-  150%              once for sure, plus a 50% chance of a second time
-
-Examples
-  [3 75%, 5 25%]    3 three times in four
-  250%              twice, plus a 50% chance of a third
-`,
-  "asrules.txt": `Asterisk rules
-
-Put one at the start of a line, between backslashes:
-  \\'ainc mormax'\\     too many digits top out (99) instead of being cut
-  \\'ainc mormini'\\    too small a number is raised to the lowest allowed
-  \\'ainc negbrahm'\\   asterisks can go below zero
-  \\'ainc posbrahm'\\   a -* can give positives
-  \\'ainc caps'\\       $ letters can be capitals
-
-Examples
-  \\'ainc mormax'\\ **     two digits, never cut down
-  \\'ainc negbrahm'\\ *+10   -9 to 9, plus 10
-Other line rules come as more of Numberat is built.
 `,
   "window.txt": `The Numberat window
 
