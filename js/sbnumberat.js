@@ -15,6 +15,9 @@ import { compileScript, brain } from "./numberatrun.js";
 import { valueOf } from "./numerat.js";
 import { SB_BOXES } from "./sandboxrules.js";
 
+/* a file's hitbox, in percent: 10% to 300% (was 0.1 to 3; the owner's, Nov 19 15:52Z) */
+const HB = { LEAST: 10, MOST: 300 };
+
 export const NB_FILES = 30; // (files a room keeps)
 export const NB_TEXT = 8000; // (letters in each)
 const TOUCH = 1; // duck lengths: touching
@@ -203,7 +206,7 @@ function make(s, name, text, now) {
           ? o.sv || 1
           : n === "damage"
             ? valueOf({ ok: o.dm }, SB_BOXES.damage) || 1
-            : o.hb || 1;
+            : Math.round((o.hb || 1) * 100); // (hitbox: in percent, the owner's, Nov 19 15:52Z)
     },
     set: (id, n, v) => {
       const o = npc(id);
@@ -216,7 +219,7 @@ function make(s, name, text, now) {
         o.sv = Math.min(SB_BOXES.speed.max, Math.max(SB_BOXES.speed.min, v)); // (as the Speed box: never 0)
       else if (n === "damage")
         o.dm = String(Math.min(SB_BOXES.damage.max, Math.max(0.1, v)));
-      else o.hb = Math.min(3, Math.max(0.1, v));
+      else o.hb = Math.min(HB.MOST, Math.max(HB.LEAST, v)) / 100; // (kept as a share: sbbody.js)
     },
     most: (id, n) =>
       n === "hp"
@@ -225,7 +228,7 @@ function make(s, name, text, now) {
           ? SB_BOXES.speed.max
           : n === "damage"
             ? SB_BOXES.damage.max
-            : 3,
+            : 100, // (hitbox: already a percent of its usual size, so ((hitbox 150%)) is ((hitbox 150)), never a share of 300)
     get: (w) => {
       const st = g.cur.s;
       if (w === "wave") return (st.hang && st.hang.l4 && st.hang.l4.r) || 0;

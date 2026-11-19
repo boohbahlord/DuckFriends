@@ -88,6 +88,15 @@ export const SB_BOXES = {
   hp: { name: "HP", kind: "int", min: 1, max: 1000, def: "3" }, // (a zombie's own: l4ddrules.js L4.HP)
   damage: { name: "Damage", kind: "tenth", min: 0.1, max: 100, def: "1" }, // ("decimal form to the tenth place")
   speed: { name: "Speed", kind: "tenth", min: 0.1, max: 5, def: "1" }, // ("1 is default, 0 is not allowed ... 5 is the max")
+  /* how big what it spawns is, picture and hitbox together, in percent of a duck (the owner's, Nov 19 15:47Z: "Percent is
+     obviously the best way to scale size"): 10% the smallest, the biggest as tall as Mad God Justin */
+  size: {
+    name: "Size (%)",
+    kind: "int",
+    min: 10,
+    max: 152,
+    def: "100",
+  }, // (152: Justin's drawing is 152 tall where a duck's is 120 (duck.js), times his size in his mode, mgjrules.js MGJ_SCALE 1.2)
 };
 export const SB_FLAGS = {
   sets: { name: "Use these settings", kind: "bool", def: "t" }, // (off: what it spawns comes as it is, sbspawn.js ownOn)
@@ -101,7 +110,7 @@ export const SB_FLAGS = {
    spawn menu's order ("Options import in the order of the menu they come from"). What comes back there (an NPC, or a
    duck at a respawn for players) takes the respawn's values over its own spawn's */
 export const SB_IMPORT = [
-  ["Numbers", ["hp", "damage", "speed"]],
+  ["Numbers", ["hp", "damage", "speed", "size"]],
   ["True or false", ["sprint", "jump", "climb"]],
   ["Behavior", ["target", "ignore", "avoid", "protect"]],
 ];

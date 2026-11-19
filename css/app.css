@@ -5127,6 +5127,22 @@ html.moving .pix-sun {
   color: var(--dim);
   margin: 0.8rem 0 0.35rem;
 }
+/* my duck's Size, in percent (customize.js): a slider and its number */
+.arm-scale {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.arm-scale input {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--blue);
+}
+.arm-scale output {
+  min-width: 3.2em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
 .arm-fold {
   margin-top: 0.8rem;
 }
@@ -14704,10 +14720,10 @@ html.moving .board.quake {
 }
 .l4z-body img.sb-held {
   left: 92%;
-  top: calc(var(--feet) - 28.8px);
-  width: calc(64px * var(--gw, 0.34));
+  top: calc(var(--feet) - 28.8px * var(--zk, 1));
+  width: calc(64px * var(--gw, 0.34) * var(--zk, 1));
   transform: translate(-50%, -50%);
-}
+} /* (--zk: its spawn's Size, sbspawnview.js) */
 /* Mad God Justin's pickups: a glowing token that fades in where it lies, bobbing a little */
 .mgj-pick {
   position: absolute;

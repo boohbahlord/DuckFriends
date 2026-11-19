@@ -64,8 +64,7 @@
         background: #ffd23f;
         color: #14151c;
       }
-      #home,
-      #add {
+      #home {
         background: #2a2c38;
         color: #eee;
       }
@@ -80,6 +79,11 @@
         height: 100%;
         width: 0;
         background: #6bcb77;
+      }
+      #add {
+        max-width: 320px;
+        font-size: 15px;
+        color: #ffd23f;
       }
       #say {
         min-height: 1.4em;
@@ -101,7 +105,7 @@
       <button id="go" type="button">Install</button>
       <div id="bar"><i></i></div>
       <p id="say"></p>
-      <button id="add" type="button" hidden>Add to home screen</button>
+      <p id="add" hidden></p>
       <a id="home" class="btn" href="../">Go to Duck Friends</a>
     </main>
     <script>
@@ -124,17 +128,28 @@
           return;
         }
         /* the browser's own Install (home screen), when it offers one */
+        /* the browser's own Install, as on any installable site: Chrome, Edge and Samsung Internet let a page open it
+           (beforeinstallprompt); Firefox and Safari keep it in their own menu, so the page says where (the owner's,
+           Nov 19 16:31Z: "it sshould install like anything") */
         addEventListener("beforeinstallprompt", function (e) {
           e.preventDefault();
           asked = e;
-          add.hidden = false;
         });
-        add.onclick = function () {
-          if (!asked) return;
-          asked.prompt();
-          asked = null;
-          add.hidden = true;
+        addEventListener("appinstalled", function () {
+          add.hidden = false;
+          add.textContent = "Added to your home screen.";
+        });
+        var ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+        var menuHint = function () {
+          add.hidden = false;
+          add.textContent = ios
+            ? "To add it to your home screen like any app: tap Share, then Add to Home Screen."
+            : "To add it to your home screen like any app: tap the browser's menu (⋮), then Install (or Add app to Home screen).";
         };
+        /* the worker from the start, so the browser sees the game as installable */
+        sw.register("../sw.js", { updateViaCache: "none" }).catch(
+          function () {},
+        );
         sw.addEventListener("message", function (e) {
           var m = e.data || {};
           if (m.t !== "kept") return;
@@ -163,7 +178,7 @@
                 m.done +
                 " of " +
                 m.total +
-                " files. Keep this page open.",
+                " files. If you leave, come back here: it goes on where it stopped.",
             );
         });
         if (sw.startMessages) sw.startMessages();
@@ -178,6 +193,10 @@
           post("keep");
         };
         go.onclick = function () {
+          if (asked) {
+            asked.prompt();
+            asked = null;
+          } else menuHint();
           go.disabled = true;
           go.textContent = "Installing …";
           show("Starting …");

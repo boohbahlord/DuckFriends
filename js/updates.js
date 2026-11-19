@@ -9,6 +9,19 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v102",
+    version: 102,
+    date: "Nov 19, 2026",
+    title: "Duck sizes, and an easier install",
+    news: [
+      "You can set your duck's size in Customize > Body, from 50% to 500%. A bigger duck is easier to hit; a smaller one is just smaller. The old body Size is now called Shape.",
+      "For Sandbox: every spawn has a Size (%) from 10% to 152% (Mad God Justin's height). An NPC can only be hit where its picture shows, so a cropped or erased picture is hit only on what's left.",
+      "For Sandbox: Numberat's hitbox is now in percent, 10% to 300%: ((hitbox 150%)) makes an NPC one and a half times as big to hit.",
+      "The install page (/get) now opens your browser's own Install where it can, or says where it is in the browser's menu, and its count goes on where it stopped if you leave and come back.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v101",
     version: 101,
     date: "Nov 19, 2026",
