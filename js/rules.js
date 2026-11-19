@@ -2157,7 +2157,8 @@ function reduceStep(state, a, now) {
         !isHang(s) &&
         !isMgj(s) &&
         !isVd(s) &&
-        !isTv(s)
+        !isTv(s) &&
+        !isSb(s)
       ) {
         // after answering: inside your own column; no answer, no board (late joiners roam; over the bracket anyone does)
         const c = s.lock[a.id];

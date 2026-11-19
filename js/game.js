@@ -4496,7 +4496,8 @@ const roams = () =>
   isQuack(R.state) ||
   isVd(R.state) ||
   isTv(R.state) ||
-  isHang(R.state); // anywhere on the board (else inside my column)
+  isHang(R.state) ||
+  isSb(R.state); // anywhere on the board (else inside my column). Sandbox's board has no columns at all
 const canWalk = () =>
   onBoardPhase() &&
   !locked() &&
