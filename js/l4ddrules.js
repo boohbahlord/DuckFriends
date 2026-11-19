@@ -126,6 +126,15 @@ import {
 } from "./l4ddpower.js";
 import { ANGEL, angelOf, angelAmmo, angelAct, angelLeft } from "./l4ddangel.js";
 import { fieldOf, askField } from "./flowfield.js";
+import { NPC_RUN } from "./npcshared.js";
+import {
+  isSurv,
+  survOn,
+  SV,
+  survStart,
+  survTick,
+  survWatch,
+} from "./survrules.js";
 
 /* what Sandbox lends these rules (sbcabin.js): npc(s, by, x, y, now, w, rx, ry, from, hit) puts a shot or a swing at
    (x, y) into its NPCs standing there (hit: a swing's list, every one in reach once; none: a shot, the first one, true
@@ -433,15 +442,35 @@ export const ARMS = {
      shell it loads (shell); 150 shells in all. The flamethrower: its tank (flamer.js), everything in its cone catches
      fire. The burst rifle (an AUG): three rounds a press (burst, gap ms apart), 21 a clip, the AK-47's damage. Where the
      owner gave no number (the crits, the speeds, the burst rifle's ammo and reload) they are guesses */
+  /* the double barrel is two now, in a bag of their own inside the shotguns' bag (the owner's, Nov 19 19:27Z: "the double
+     barrel shotgun within its bag of shotguns will have its own bag for a variant"). The slug double barrel: 6 to the
+     first one it hits, then through it and on, each next one taking 1 or 1.5 less than the one before (a new roll each
+     time), until it would do nothing ("it will continuously pass through its targets until it cannot do any possible
+     more damage"). The buckshot double barrel: the shotgun's pellets, each 1 or 1.5 harder ("plus 1 to 1.5 damage"),
+     with the slug's two shells and reload */
   dbarrel: {
     kind: "ranged",
     cool: 280,
-    dmg: "all",
+    dmg: 6,
+    less: [1, 1.5],
     speed: 1500,
     mag: 2,
     all: 150, // (the owner's, Nov 18 13:46Z: "there should be 150 rounds in the double barrel shotgun")
     shell: 1000, // (ms a shell: one shell loads in 1 s, two in 2 s)
     k: "slug",
+  },
+  dbuck: {
+    kind: "ranged",
+    cool: 280,
+    dmg: [1, 3], // (the shotgun's, each pellet)
+    plus: [1, 1.5],
+    speed: ARM_SPEED.shotgun,
+    mag: 2,
+    all: 150, // (my guess: the slug's)
+    shell: 1000,
+    pellets: 5,
+    spread: 0.3,
+    life: 420,
   },
   flamer: {
     kind: "ranged",
@@ -497,7 +526,10 @@ export const ARMS = {
 /* the grenade's and the grenade launcher's blast, half as wide (the owner's, Nov 19 19:27Z: "half the blast radius") */
 const BLAST_HALF = 0.5;
 const dmgOf = (A) =>
-  Array.isArray(A.dmg) ? rint(A.dmg[0], A.dmg[1]) : A.dmg || 1;
+  (Array.isArray(A.dmg) ? rint(A.dmg[0], A.dmg[1]) : A.dmg || 1) +
+  oneOf(A.plus); // (the buckshot double barrel's pellets: 1 or 1.5 more)
+/* one of two, at even odds (the double barrels' 1 or 1.5); 0 with none */
+const oneOf = (two) => (two ? two[Math.random() < 0.5 ? 0 : 1] : 0);
 /* fire (the owner's): a zombie burns 8 s and takes 1 every 2 s (the first as it's lit: 4 in all), and fire on a zombie
    already burning starts its 8 s again (the owner's, Nov 18 16:43Z, "1 damage for every 2 seconds for 8 seconds per
    enemy"; it was 6 s and 3 s); a duck takes 1 as it's lit and burns 3 s, and anyone on fire who touches a duck lights
@@ -552,6 +584,7 @@ export const WEAPONS = [
   "revolver",
   "shotgun",
   "dbarrel",
+  "dbuck",
   "smg",
   "tommy",
   "ump",
@@ -580,12 +613,32 @@ export const SLOT_BAGS = {
 export const WEAPON_BAGS = {
   melee: ["axe", "sword", "hammer"],
   weak: ["dagger", "knife", "pan", "bow"],
-  shotgun: ["shotgun", "dbarrel"],
+  shotgun: ["shotgun", "dbl"],
   pistol: ["revolver", "handgun"],
   smg: ["tommy", "ump", "smg"],
   rifle: ["ak", "burst"],
   heavy: ["sniper", "glauncher", "lmg"],
 };
+/* the bags inside a bag: when the shotguns' bag gives "dbl", the double barrels' own bag gives one of its two, in its own
+   shuffled turns (the owner's, Nov 19 19:27Z) */
+export const INNER_BAGS = { dbl: ["dbarrel", "dbuck"] };
+/* everything a bag can give, the inner bags' things in place of the inner bags */
+/* Survival's bags: no Laser Rifle, chain gun or cast iron pan; the sniper is a special; twice the items ("They also have
+   twice as many options for items") */
+const SURV_BAGS = {
+  odds: { ...SLOT_ODDS, item: SLOT_ODDS.item * 2 },
+  slot: { ...SLOT_BAGS, special: ["flamer", "sniper"] },
+  weapon: {
+    ...WEAPON_BAGS,
+    weak: ["dagger", "knife", "bow"],
+    heavy: ["glauncher", "lmg"],
+  },
+};
+const bagsNow = () =>
+  survOn()
+    ? SURV_BAGS
+    : { odds: SLOT_ODDS, slot: SLOT_BAGS, weapon: WEAPON_BAGS };
+export const bagThings = (bag) => bag.flatMap((x) => INNER_BAGS[x] || [x]);
 export const POOL = [...WEAPONS, ...ITEMS];
 /* their names, as players see them */
 const NAMES = {
@@ -610,7 +663,8 @@ const NAMES = {
   revolver: "Revolver",
   glauncher: "Grenade launcher",
   lmg: "M249 SAW",
-  dbarrel: "Double barrel",
+  dbarrel: "Slug double barrel",
+  dbuck: "Buckshot double barrel",
   flamer: "Flamethrower",
   burst: "Steyr AUG",
   laser: "Laser Rifle",
@@ -643,6 +697,7 @@ const TINTS = {
   revolver: "green",
   zebra: "blue",
   dbarrel: "blue",
+  dbuck: "blue",
   tommy: "blue",
   ump: "blue",
   smg: "blue",
@@ -1304,7 +1359,25 @@ const zOk = (x, y, z, up = STEP) =>
    jc since when it chases Justin, jx till when it lets him be, nj never him (JCHASE). These went missing at every
    heartbeat before, so a zombie forgot its way up the moment it chose it (the owner's, Nov 17 19:11Z: "WHY THE FUCK ARE
    ZOMBIES NOT COMMITTING ON WALL CLIMBS EVEN WHEN IM STILL ON THE SAME FUCKING ROOF!!!") */
-const KEEP = ["cm", "k", "fl", "wp", "j", "jp", "jc", "jx", "nj", "sp", "dm"]; // (sp, dm: a Sandbox spawn's zombie, its spawn and its damage: sbspawn.js)
+const KEEP = [
+  "cm",
+  "k",
+  "fl",
+  "wp",
+  "j",
+  "jp",
+  "jc",
+  "jx",
+  "nj",
+  "sp",
+  "dm",
+  "wk",
+  "wt",
+  "wd",
+  "wn",
+  "lt",
+  "lw",
+]; // (sp, dm: a Sandbox spawn's zombie, its spawn and its damage: sbspawn.js)
 /* the zombies as objects, from the state's three parts, and back (k in zp: hp · 16 + st, st up to 8, the jump) */
 function zombies(s) {
   const zp = s.hang.zp || [],
@@ -1371,11 +1444,21 @@ export const zombiesOf = zombies;
 /* a weapon's ammo, full: [in the magazine, the rest], or [all of it, 0] without a magazine; none for melee */
 /* a ranged weapon whose ammo never runs out (no `all`: the Laser Rifle, the bow) */
 export const endless = (w) =>
-  !!ARMS[w] && ARMS[w].kind === "ranged" && ARMS[w].all === undefined;
+  !!ARMS[w] &&
+  ARMS[w].kind === "ranged" &&
+  ARMS[w].all === undefined &&
+  !(w === "bow" && survOn()); // (Survival: the bow has 300 arrows)
+/* Survival: every gun holds half as much ("every weapon now has half as much ammo"), never less than a magazine; the
+   bow 300 arrows */
 export const fullAmmo = (w) => {
   const a = ARMS[w];
+  if (w === "bow" && survOn()) return [SV.ARROWS, 0];
   if (!a || a.all === undefined) return null;
-  return a.mag ? [a.mag, a.all - a.mag] : [a.all, 0];
+  const all =
+    survOn() && a.kind === "ranged"
+      ? Math.max(a.mag || 1, Math.ceil(a.all / 2))
+      : a.all;
+  return a.mag ? [a.mag, all - a.mag] : [all, 0];
 };
 /* … and as full as duck id's own is: an Angelic weapon holds more (l4ddangel.js) */
 export const fullFor = (s, id, w) =>
@@ -1393,9 +1476,10 @@ export const magIn = (m, w) =>
         : 1)
     : 0;
 function freshKit() {
-  const am = {};
-  for (const w of START) if (fullAmmo(w)) am[w] = fullAmmo(w);
-  return { sl: [...START], am, rl: 0, rw: "", g: ARMS.grenade.start, u: {} };
+  const am = {},
+    sl = survOn() ? SV.KIT : START; // (Survival: the pistol only)
+  for (const w of sl) if (fullAmmo(w)) am[w] = fullAmmo(w);
+  return { sl: [...sl], am, rl: 0, rw: "", g: ARMS.grenade.start, u: {} };
 }
 export const kitOf = (s, id) => ((s && s.hang && s.hang.l4a) || {})[id] || null;
 export const slotsOf = (s, id) => (kitOf(s, id) || {}).sl || START;
@@ -1915,7 +1999,53 @@ function setUp(s, now) {
   }; // (round 0: no zombies until enough ducks are ready)
   giveBonus(s, s.hang.l4.sr);
   merchantSetUp(s);
+  if (isSurv(s)) return survSetUp(s, now);
   merchantCome(s, now); // (round zero's rest: half the time, as every rest)
+}
+/* Survival (survrules.js): no round 0 and no Ready, a rest at once, with the merchant and a few walkers about. No power
+   ("The power for survival is off. There's no electricity. There is no angel machine"): no lights, no gas, no pump */
+function survSetUp(s, now) {
+  s.hang.l4 = { ...s.hang.l4, r: SV.FIRST, wait: null, n: 0, dq: [] };
+  s.hang.pw = null;
+  s.hang.pk = [];
+  s.hang.power = 0;
+  survStart(s, now);
+  merchantCome(s, now, true);
+  const L = { ...s.hang.l4 },
+    zs = [],
+    ids = players(s).filter((id) => !isWild(s, id));
+  for (let k = SV.START[0] + SV.START[1] * ids.length; k > 0; k--) {
+    const z = survWalker(s, L, ids);
+    if (z) zs.push(z);
+  }
+  s.hang.l4 = L;
+  store(s, zs, false);
+}
+/* a walker, somewhere far from every duck that none of them sees, inside the fences where it can reach them; null when
+   there's no such spot. L: the round, as l4Tick keeps it (its numbers go on) */
+const walkSpeed = () => Math.round(WALK * Z_SLOW * ROUNDS[0][1][0] * SV.WALK_K);
+function survWalker(s, L, ids) {
+  syncMap();
+  const pts = ids.filter((id) => standing(s, id)).map((id) => at(s.pos[id]));
+  if (!pts.length) return null;
+  const dist = flowFrom(pts.map((q) => openNear(...q))),
+    away = SV.FAR * W;
+  for (let t = 0; t < 60; t++) {
+    const x = rnd(40, W - 40),
+      y = rnd(40, H - 40),
+      c = openNear(x, y);
+    if (c < 0 || !(dist[c] < Infinity) || !zOk(x, y, heightAt(x, y))) continue;
+    if (
+      pts.some(
+        ([a, b]) =>
+          Math.hypot(x - a, y - b) < away ||
+          (Math.abs(x - a) < VIEW.x + 60 && Math.abs(y - b) < VIEW.y + 140),
+      )
+    )
+      continue;
+    return zombieAt(L, x, y, { v: walkSpeed(), wk: 1 });
+  }
+  return null;
 }
 /* the starting round (the owner's, Nov 16): every game begins in round 0 and goes on to round `sr` (the "Start on round"
    setting: 1, 5, 9, 13 or 21) once everyone is ready; a starting round past 1 gives every duck bonus points, in round 0
@@ -2087,7 +2217,8 @@ function l4Act(s, a, now) {
   if (a.do === "sr") {
     // Change starting round: a vote "Start at round N", the asker's Yes in it
     const n = +a.n;
-    if (!START_ROUNDS.includes(n) || !srCan(s, id) || isSb(s)) return false;
+    if (!START_ROUNDS.includes(n) || !srCan(s, id) || isSb(s) || isSurv(s))
+      return false;
     s.hang.l4 = {
       ...L,
       sv: { n, by: id, v: { [id]: 1 }, until: now + SR_VOTE_MS },
@@ -2171,6 +2302,8 @@ function l4Act(s, a, now) {
     return justinBody(s, a.do, id, now, mx, my);
   if (a.do === "buy")
     return buy(s, id, String(a.what || ""), mx, my, a.hand, now);
+  if (isSurv(s) && ["box", "power", "pump", "angel"].includes(a.do))
+    return false; // (Survival: no slot machine, no power, no pump, no Angel machine)
   if (a.do === "box") return fireplace(s, id, a, now, mx, my);
   if (a.do === "power") return powerAct(s, id, now, mx, my, PH);
   if (a.do === "pump") return powerPump(s, id, now, mx, my, PH);
@@ -2200,13 +2333,15 @@ function justinBody(s, what, id, now, mx, my) {
 }
 /* what a merchant sold, said in the chat by the buyer's tag (the owner's, Nov 19 19:27Z: "what the merchant sells to a
    player should be said in the text chat in the bottom left"); chat.js shows the name as it shows a tag */
-const soldSays = (s, id, text) =>
+const soldSays = (s, id, text) => {
+  setMh(s, { sold: 1 }); // (bought from: he may come straight back, merchantCome)
   logIn(s, {
     sys: true,
     by: id,
     buy: text,
     text: (s.players[id] || {}).name + " " + text,
   });
+};
 /* the merchant: the one upgrade he offers me this visit (upOffer; the Butler's, SHOP), from beside him while he's
    selling, while I have the points; gas in the cabin (powerGas); or something from his stock (merchantBuy) */
 function buy(s, id, what, mx, my, hand, now) {
@@ -2335,23 +2470,28 @@ function fireRoll(s, id, kit) {
    the items by SLOT_ODDS, else the weapon bags; has(w): what's skipped and keeps its place. [what it gave (or null),
    the bags after] */
 function bagRoll(bags0, has) {
-  const bags = { ...bags0, b: { ...(bags0.b || {}) } };
+  const bags = { ...bags0, b: { ...(bags0.b || {}) } },
+    { odds, slot, weapon } = bagsNow();
   for (const k of ["chair", "special", "item"]) {
-    if (Math.random() >= SLOT_ODDS[k]) continue;
-    const [w, rest] = fromBag(bags[k], SLOT_BAGS[k], has);
+    if (Math.random() >= odds[k]) continue;
+    const [w, rest] = fromBag(bags[k], slot[k], has);
     bags[k] = rest;
     if (w) return [w, bags]; // (the duck has all of that bag: on to the next)
   }
   /* the weapon bags, in turns: the next one that still has something for this duck (one it has all of is skipped and
      keeps its turn) */
-  const names = Object.keys(WEAPON_BAGS),
-    can = (n) => WEAPON_BAGS[n].some((w) => !has(w));
+  const names = Object.keys(weapon),
+    owns = (x) => (INNER_BAGS[x] || [x]).every(has), // (an inner bag: the duck has all of it)
+    can = (n) => weapon[n].some((w) => !owns(w));
   const [n, turns] = fromBag(bags.w, names, (x) => !can(x));
   bags.w = turns;
   if (!n) return [null, bags];
-  const [w, rest] = fromBag(bags.b[n], WEAPON_BAGS[n], has);
+  const [w, rest] = fromBag(bags.b[n], weapon[n], owns);
   bags.b[n] = rest;
-  return [w, bags];
+  if (!INNER_BAGS[w]) return [w, bags];
+  const [w2, rest2] = fromBag(bags.b[w], INNER_BAGS[w], has);
+  bags.b[w] = rest2;
+  return [w2, bags];
 }
 /* the fireplace's Justin (the owner's, Nov 4): 1 spin in 100 lands on him (never while he's already here), and a
    moment later he climbs out of the fire and joins as another player, to help. He starts with 1,500 points of his own,
@@ -2388,10 +2528,12 @@ export const wildCrying = (s, id, now) => {
   const c = isWild(s, id) && s.hang && s.hang.l4jcry;
   return !!c && now < c.t + CRY.ms && !isDown(s, id);
 };
-/* what Justin says besides his everyday lines: at Jaime's body and at a Jaime sent in, his lines against Jaime; going
-   down, a death line. Each list is a shuffled bag, every line once before any comes again (s.hang.l4jl { key: [line
+/* what Justin says besides his everyday lines: at Jaime's body and at a Jaime sent in, his lines against Jaime; hurt by a
+   player, an aggressive line; going down, a death line. Each list is a shuffled bag, every line once before any comes again (s.hang.l4jl { key: [line
    numbers left] }) */
-const LINES = { jaime: JUSTIN_AT_JAIME, death: DEATH_LINES };
+const LINES = { jaime: JUSTIN_AT_JAIME, death: DEATH_LINES, angry: GOD_LINES };
+/* hurt by a player, an aggressive line (his GOD_LINES, a bag of them), at most one every ANGRY_MS */
+const ANGRY_MS = 3000;
 /* his everyday lines, all of them, as often as in Duck Cabin (the owner's, Nov 17 20:02Z: "he sounds off all his annoying
    lines unrestricted like he does in cabin with the same frequency"): justin.js' own timings, a random one of E_LINES
    every SAY_EVERY seconds and one of his GOD_LINES every GOD_EVERY seconds, whatever is going on round him */
@@ -2506,16 +2648,21 @@ export function helperOut(s) {
 }
 /* weapon w into duck id's slots, full: a melee weapon or a special takes its own slot, a ranged one the ranged weapon
    in hand (hand, else the one the duck holds out, else the first ranged slot) */
+/* the slot w would go to in duck id's bar (hand0: the weapon it holds), or -1 when it can't take it: a melee weapon the
+   first, a special the fourth, a ranged weapon the place of the ranged one in hand, else the first ranged slot. The
+   hotbar shows it before it's taken (l4ddbar.js) */
+export function slotFor(s, id, w, hand0) {
+  const kit = kitOf(s, id),
+    kind = kindOf(w);
+  if (!kit || kit.sl.includes(w)) return -1;
+  const hand = kit.sl.includes(hand0) ? hand0 : ((s.pos || {})[id] || {}).w;
+  if (kind === "ranged") return [1, 2].find((i) => kit.sl[i] === hand) ?? 1; // (no ranged weapon in hand: it takes the first ranged slot's place)
+  return kind === "melee" ? 0 : kind === "special" ? 3 : -1;
+}
 function give(s, id, w, hand0) {
   const kit = kitOf(s, id),
-    kind = kindOf(w),
-    hand = kit && kit.sl.includes(hand0) ? hand0 : (s.pos[id] || {}).w;
-  if (!kit) return false;
-  let k = kind === "melee" ? 0 : kind === "special" ? 3 : -1;
-  if (kind === "ranged") {
-    k = [1, 2].find((i) => kit.sl[i] === hand) ?? 1; // (no ranged weapon in hand: it takes the first ranged slot's place)
-  }
-  if (k < 0 || kit.sl.includes(w)) return false;
+    k = slotFor(s, id, w, hand0);
+  if (k < 0) return false;
   const old = kit.sl[k],
     am = { ...kit.am },
     ang = { ...(kit.ang || {}) };
@@ -2554,13 +2701,16 @@ function give(s, id, w, hand0) {
    balcony in the cabin, over the fence on Downpour. When the next round's zombies come he says a leaving line and runs
    the same way, and the zombies chase him as they do a duck (as they do Justin out there: JCHASE) until he's over the
    fence or off the balcony. He can be killed (by anyone's weapons, or the zombies' claws), and stays dead for the rest
-   of the game, his body left where he fell (the zombies leave it be); no revive. Each visit is a different merchant
-   (a bag of the ones alive). He has 6 HP and walks as a duck does, with a duck's sprint to get away (merchantSprints).
+   of the game, his body left where he fell (the zombies leave it be); no revive. The merchants come in turn from a line
+   (merchantCome): the last one goes to its end, one somebody bought from may come straight back (MERCH.BACK), and one a
+   player hurt never comes back. He has 3 or 4 HP and walks as a duck does, and gets away no faster: the shared slow
+   speed (npcshared.js NPC_RUN, merchantSprints).
    s.hang.l4m (online): { v: the visit, id: who (merchants.js), roll: his look, st: "in" (walking in), "here", "out"
    (running away), "fight" (Phil going after foe, the duck that hurt him), "jump" (off the balcony or over the fence:
    gone in a moment) or "dead", x, y (world px), f: his facing, hits: the times a player hurt him,
    hp, stock: [[weapon, price]], say: { n, t, text } his last line, c: 1 while he's past the zombies' reach }
-   s.hidden.l4mh (the host's): { left: the merchants' bag, dead: [ids], bags: his weapon bags (bagRoll), lines: the
+   s.hidden.l4mh (the host's): { left: the merchants' line, dead: [ids], ban: [ids] (hurt by a player: never again),
+   cur: the last one to come, sold: 1 once somebody bought from him, bags: his weapon bags (bagRoll), lines: the
    three line bags, near: { id: 1 } the ducks he greeted standing by him, route: [legs], p: the leg he's on, t: since
    when, tk: his last step } */
 export const MERCH = {
@@ -2571,10 +2721,11 @@ export const MERCH = {
   LESS: 0.1, // … each one after it less likely by this …
   EACH: 0.025, // … and more likely by this for each player past the first)
   AGAIN: 0.25, // (a buy: the chance he has another)
-  HP: [3, 6], // (each visit's merchant rolls his HP: the owner's, Nov 18 15:35Z "give the merchants 3 to 6 HP, where it could vary")
+  BACK: 0.2, // (one somebody bought from: the chance he comes again at the very next visit, else the end of the line)
+  HP: [3, 4], // (each visit's merchant rolls his HP: the owner's, Nov 19 19:27Z "They should only have 3 to 4 HP")
   WALK: 1, // (his walk: a duck's, the owner's, Nov 18 14:22Z: "he walks at the speed of any other player and will use his
   //  sprint to get away if he has to (limited amount of sprint)")
-  SPRINT: 1.75, // (his sprint: a duck's (game.js SPEED.sprint), as long as a duck's (L4.SPRINT), and as long to fill …
+  SPRINT: NPC_RUN, // (getting away: the shared slow speed, npcshared.js; "Merchants should be less fast when they try to escape" (the owner's, Nov 19 19:27Z). His meter still runs as long as a duck's (L4.SPRINT), and as long to fill …
   CHASED: 450, // … used running away when a zombie is this near (world px) or a player just hurt him (HURT_MS)
   HURT_MS: 3000,
   STAB: 70, // (world px: Phil's knife reaches a duck this near …
@@ -2599,7 +2750,14 @@ export const stockPrice = (s, p) => (saleOn(s) ? fives(p / 2, 1) : p);
 function merchantSetUp(s) {
   s.hang.l4m = null;
   s.hang.l4mc = []; // (the bodies of the ones killed: a new game, none)
-  setMh(s, { left: [], dead: [], bags: { b: {} }, route: null });
+  setMh(s, {
+    left: [],
+    dead: [],
+    ban: [],
+    cur: "",
+    bags: { b: {} },
+    route: null,
+  });
 }
 /* a line of one kind ("greet", "hurt", "leave"), from his bag of them */
 function merchantSays(s, kind, now) {
@@ -2623,8 +2781,10 @@ function merchantStock(s) {
     extra = Math.max(0, players(s).filter((id) => !isWild(s, id)).length - 1);
   let bags = mh(s).bags || { b: {} },
     w;
-  [w, bags] = bagRoll(bags, has);
-  if (w) stock.push([w, merchantPrice(w)]);
+  for (let k = survOn() ? 2 : 1; k > 0; k--) {
+    [w, bags] = bagRoll(bags, has);
+    if (w) stock.push([w, merchantPrice(w)]);
+  } // (Survival: he's where the weapons come from now, "they're going to have more options for guns": two sure things)
   for (let k = 0; ; k++) {
     const p = MERCH.MORE - MERCH.LESS * k + MERCH.EACH * extra;
     if (p <= 0 || Math.random() >= p) break;
@@ -2713,18 +2873,29 @@ function wayOut(x, y) {
   ];
 }
 /* a merchant comes, in a rest (round zero's, or between two rounds), half the time */
-function merchantCome(s, now) {
-  if (Math.random() >= MERCH.COME) return;
+function merchantCome(s, now, sure = false) {
+  if (!sure && Math.random() >= MERCH.COME) return; // (Survival: every rest, sure)
   const m0 = merchantOf(s);
   if (m0 && m0.st !== "dead") return; // (one at a time)
   const h = mh(s),
     dead = h.dead || [],
-    alive = MERCHANTS.map((m) => m.id).filter((id) => !dead.includes(id));
-  if (!alive.length) return; // (every one of them killed)
+    ban = [...(h.ban || [])],
+    prev = h.cur;
+  /* the line (the owner's, Nov 19 19:27Z): the last one to come goes to the end of it. One a player hurt and who lived
+     never comes back ("Merchants that are shot at go straight to the back of the line forever"); one somebody bought
+     from may come straight back ("they have a 20% chance of coming back, and they're not removed from the shuffle") */
+  if (prev && h.hurt && !dead.includes(prev) && !ban.includes(prev))
+    ban.push(prev);
+  const alive = MERCHANTS.map((m) => m.id).filter(
+    (id) => !dead.includes(id) && !ban.includes(id),
+  );
+  if (!alive.length) return setMh(s, { ban, cur: "" }); // (every one of them killed or shot at)
   let left = (h.left || []).filter((id) => alive.includes(id));
-  if (!left.length) {
-    left = shuffled(alive);
-    if (left.length > 1 && m0 && left[0] === m0.id) left.push(left.shift()); // (never the same one twice running)
+  for (const id of shuffled(alive)) if (!left.includes(id)) left.push(id); // (a new game's, or one missing)
+  if (prev && alive.includes(prev)) {
+    left = left.filter((id) => id !== prev);
+    if (h.sold && Math.random() < MERCH.BACK) left.unshift(prev);
+    else left.push(prev);
   }
   const id = left[0],
     [from, route] = wayIn();
@@ -2732,7 +2903,10 @@ function merchantCome(s, now) {
     vn = (h.vn || 0) + 1; // (his visit's number this game: before, it started over at 1 whenever the last one had left)
   setMh(s, {
     vn,
-    left: left.slice(1),
+    left,
+    ban,
+    cur: id,
+    sold: 0,
     lines: {},
     hurt: 0,
     sp: 1,
@@ -3236,7 +3410,7 @@ export function l4Use(s, a, now) {
       hin: inCabin(px, py) ? 1 : 0,
       ...more,
     });
-    if (what === "shotgun") {
+    if (A.pellets) {
       const a0 = Math.atan2(dy, dx),
         out = [];
       for (let i = 0; i < A.pellets; i++) {
@@ -3992,6 +4166,10 @@ function wildDown(s, by, now, w, all, codes) {
   if (!down && p4[id] && p4[id].hp < was) {
     const [hx, hy] = s.pos[by] ? at(s.pos[by]) : at(s.pos[id]);
     s.hang.l4jcry = { t: now, x: Math.round(hx), y: Math.round(hy) }; // (he cries, and runs from there: CRY)
+    if (s.players[by] && by !== id && now - (s.hang.l4ja || 0) >= ANGRY_MS) {
+      s.hang.l4ja = now;
+      justinSays(s, "angry");
+    } // (a player hurt him: one of his aggressive lines, the owner's, Nov 19 19:27Z: "He should dialogue every time you damage him in an aggressive way, based off of his aggressive lines")
   }
   if (down) {
     if (codes) pwAdd(s, id, codes, now, true);
@@ -4321,22 +4499,24 @@ export function l4Shots(s, now) {
         break;
       }
       if (w === "dbarrel") {
-        /* the double barrel's slug: all the HP of the zombie it hits, its body thrown back. A crit's goes on to the next
-           zombie in its way, kills it too, and goes on past it only if that one is a crit of its own, a new roll each
-           time (the owner's, Nov 18 13:46Z: "the slug round in crit mode cannot pass through the next zombie after the
-           first it kills UNLESS that is a crit too for another rolled chance"), until a zombie that isn't or the wall */
+        /* the slug double barrel's slug: through every zombie in its way, each once, 6 to the first and 1 or 1.5 less to
+           each one after (sh.d: what the next one takes), until it would do nothing (the owner's, Nov 19 19:27Z). A crit
+           still takes all of that one's HP. One it kills blows to pieces and is thrown back */
         let stop = false;
         for (const z of nearby(grid, zs, x, y))
           if (near(z) && !(sh.hit || []).includes(z.i) && !past(sh, w, z)) {
-            const head = headshot(s, sh.by, w, z, now);
+            const head = headshot(s, sh.by, w, z, now),
+              dmg = sh.d === undefined ? A.dmg : sh.d;
             sh.hit = [...(sh.hit || []), z.i];
-            strike(s, z, z.hp, head, sh.by, w);
-            die(z, T);
-            mark(s, z, "g0"); // (chunks blown through it: l4ddart.js)
-            slugs.push([Math.round(z.x), Math.round(z.y), head ? 1 : 0]);
-            fling(z, sh, sh.hz);
+            if (strike(s, z, dmg, head, sh.by, w)) {
+              die(z, T);
+              mark(s, z, "g0"); // (chunks blown through it: l4ddart.js)
+              slugs.push([Math.round(z.x), Math.round(z.y), head ? 1 : 0]);
+              fling(z, sh, sh.hz);
+            }
             hitAny = true;
-            if (!head) {
+            sh.d = tenths(dmg - oneOf(A.less));
+            if (sh.d <= 0) {
               stop = true;
               break;
             }
@@ -4758,6 +4938,24 @@ function l4Tick(s, now) {
     ),
     bodies = left.filter((z) => z.st === 3 && nuked(s, z)); // (the Nuke's: they don't hold up the next round)
   if (s.hang.l4nk && s.hang.l4nk.ids && !bodies.length) s.hang.l4nk = null; // (the last of them gone)
+  /* Survival: no rounds, its phases instead (survrules.js); a rest brings the merchant and the ghosts back */
+  if (isSurv(s)) {
+    survTick(s, L2, left, now, Math.max(1, mine.length), {
+      walker: () => survWalker(s, L2, mine),
+      speedAt: (r) =>
+        Math.round(WALK * Z_SLOW * rnd(roundOf(r)[1][0], roundOf(r)[1][1])),
+      go: () => merchantGo(s, now),
+      rest: () => {
+        merchantCome(s, now, true);
+        ids.forEach((id, k) => {
+          if (isGhost4(s, id)) bringBack(s, id, now, k, false);
+        });
+      },
+    });
+    s.hang.l4 = L2;
+    store(s, left, false);
+    return true;
+  }
   /* every zombie of the round came and died: the next round, and the ghosts come back */
   if (L2.made >= L2.n && left.length === bodies.length && T >= 0 && !isSb(s)) {
     s.hang.l4 = { ...L2, wait: { r: L2.r + 1, v: {} } }; // (the next round waits for End turn)
@@ -4865,11 +5063,20 @@ function newZombie(s, L, T, zs = []) {
    (st 2), with its spawn's HP, speed (a share of a zombie's own) and damage; its number, or 0 when the map has no room.
    l: its look as newZombie makes it, its opening the nearest one (it never needs it inside) */
 export function l4Spawn(s, x, y, o = {}) {
-  const L = s.hang.l4;
-  if (!L) return 0;
+  if (!s.hang.l4) return 0;
+  const L = { ...s.hang.l4 },
+    z = zombieAt(L, x * W, y * H, o);
+  s.hang.l4 = L;
+  const zs = zombies(s);
+  zs.push(z);
+  store(s, zs, false);
+  return z.i;
+}
+/* a zombie at (wx, wy), in world px, already inside (st 2), its number the round's next (L.next goes on): o.hp, o.speed
+   (a share of a zombie's own), o.v (its speed itself), o.sp and o.dm (l4Spawn), o.wk (a walker: survrules.js) */
+function zombieAt(L, wx, wy, o = {}) {
   syncMap();
-  const [wx, wy] = [x * W, y * H],
-    op = [...OPENINGS].sort(
+  const op = [...OPENINGS].sort(
       (a, b) =>
         Math.hypot(a.in[0] - wx, a.in[1] - wy) -
         Math.hypot(b.in[0] - wx, b.in[1] - wy),
@@ -4880,10 +5087,11 @@ export function l4Spawn(s, x, y, o = {}) {
     odd = Math.random() < 0.25,
     size = odd && Math.random() < 0.5 ? +rnd(-1, 1).toFixed(2) : 0,
     max = Math.max(1, o.hp ? Math.round(o.hp) : hp0()),
-    v = Math.round(WALK * Z_SLOW * ((R[1][0] + R[1][1]) / 2) * (o.speed || 1));
-  s.hang.l4 = { ...L, next: i + 1 };
-  const zs = zombies(s);
-  zs.push({
+    v =
+      o.v ||
+      Math.round(WALK * Z_SLOW * ((R[1][0] + R[1][1]) / 2) * (o.speed || 1));
+  L.next = i + 1;
+  return {
     i,
     x: wx,
     y: wy,
@@ -4895,6 +5103,7 @@ export function l4Spawn(s, x, y, o = {}) {
     dir: 0,
     ...(o.sp ? { sp: o.sp } : {}),
     ...(o.dm ? { dm: o.dm } : {}),
+    ...(o.wk ? { wk: 1 } : {}),
     l: [
       max,
       v,
@@ -4904,9 +5113,7 @@ export function l4Spawn(s, x, y, o = {}) {
       dress >= 0 && dress < 0.6 ? rint(0, ZHATS.length - 1) : -1,
       dress >= 0.4 ? rint(0, ZOUTFITS.length - 1) : -1,
     ],
-  });
-  store(s, zs, false);
-  return i;
+  };
 }
 /* Sandbox: the zombies standing now, each { i, x, y (shares of the map), sp (its spawn) } */
 export const l4Live = (s) =>
@@ -4934,6 +5141,10 @@ function moveZombies(s, zs, now, T, up) {
         dk,
         way,
         goal: (way && climbSpot(way, xy)) || xy,
+        alt:
+          dk && dk.kind === "canopy"
+            ? { way: dk, goal: ladderFoot() } // (or up the ladder on its left: whichever is nearer the zombie)
+            : null,
         j: isWild(s, id), // (Justin out there: JCHASE)
       };
     });
@@ -4956,11 +5167,14 @@ function moveZombies(s, zs, now, T, up) {
   s.hidden = { ...(s.hidden || {}), l4tk: now };
   const field = pls.filter((q) => !q.j),
     dist = flowFrom(
-      (field.length ? field : pls).map((q) => openNear(...q.goal)),
+      (field.length ? field : pls).flatMap((q) =>
+        [q.goal, ...(q.alt ? [q.alt.goal] : [])].map((g) => openNear(...g)),
+      ),
       true,
     ); // (to a duck up on a roof: to the foot of its wall. The players only: a zombie after Justin finds its own way, wayTo)
   const p4 = { ...s.hang.l4p },
-    eating = { ...((s.hidden && s.hidden.l4ze) || {}) };
+    eating = { ...((s.hidden && s.hidden.l4ze) || {}) },
+    ducks = pls.filter((q) => !q.m); // (what a walker notices: never the merchant)
   let cake = cakeDown(s, now);
   for (const k of Object.keys(eating))
     if (k !== "fx" && eating[k] <= now) delete eating[k];
@@ -5051,6 +5265,20 @@ function moveZombies(s, zs, now, T, up) {
       // up a wall onto a roof (its own: z.k), straight in from its edge, slowly (its height: climbZ)
       const e = edgeOf(z.x, z.y, deckOf(z)),
         far = v * dt * CL.speed;
+      if (!pls.some((q) => reaches(q, e.d))) {
+        /* nobody left up there (off the roof, not just jumping on it): it gives up its climb and climbs back down (the
+           owner's, Nov 19 19:27Z: "If a player jumps off a roof, zombies will stop committing to their climb if they
+           jump off. Not if they jump in the air, but if they are off the roof") */
+        z.x += e.nx * far;
+        z.y += e.ny * far;
+        if (e.o + far >= CL.out) {
+          z.st = 2;
+          z.n = 0;
+          delete z.k;
+          delete z.cm;
+        }
+        continue;
+      }
       z.x -= e.nx * far;
       z.y -= e.ny * far;
       if (e.o - far <= -CL.in) {
@@ -5073,11 +5301,39 @@ function moveZombies(s, zs, now, T, up) {
       }
       continue;
     }
+    /* Survival: a walker wanders about until a duck comes close or shines its flashlight on it, then comes for that one
+       only (survrules.js survWatch) */
+    if (
+      z.wk &&
+      z.st === 2 &&
+      survWatch(
+        z,
+        ducks,
+        now,
+        W,
+        H,
+        s.hang.l4f || {},
+        (xy) => room(z.x, z.y, ...xy),
+        clearShot,
+      )
+    ) {
+      wander(z, v * dt, pls, now);
+      continue;
+    }
     let target = null,
       best = Infinity;
-    /* how far a duck counts as, to this zombie: Justin twice his distance, or out of mind (JCHASE) */
+    /* how far a duck counts as, to this zombie: Justin twice his distance, or out of mind (JCHASE); a walker, only the
+       one it came for */
     const far = (q) =>
-      !q.j ? 1 : z.nj || (z.jx || 0) > now ? Infinity : JCHASE.far;
+      z.wk
+        ? q.id === z.wt
+          ? 1
+          : Infinity
+        : !q.j
+          ? 1
+          : z.nj || (z.jx || 0) > now
+            ? Infinity
+            : JCHASE.far;
     if (z.st === 7) {
       /* on a roof: straight at the nearest duck up there; a hole underfoot and it falls in; nobody left up there (or
          the cake down), it walks off the nearest edge and drops */
@@ -5148,12 +5404,7 @@ function moveZombies(s, zs, now, T, up) {
          leave the floor into a location NEAR ENOUGH to them during the commit" */
       let goal = null;
       const cm = z.cm && pls.find((q) => q.id === z.cm[0]);
-      if (
-        cm &&
-        !(
-          cm.way !== GS.DECKS[z.cm[3]] && room(z.x, z.y, ...cm.xy) < COMMIT_NEAR
-        )
-      ) {
+      if (cm && reaches(cm, GS.DECKS[z.cm[3]])) {
         target = cm;
         goal = [z.cm[1], z.cm[2]];
         best = room(z.x, z.y, ...goal);
@@ -5168,9 +5419,17 @@ function moveZombies(s, zs, now, T, up) {
         }
         if (!target) continue;
         goal = target.goal;
+        let way = target.way;
+        if (
+          target.alt &&
+          room(z.x, z.y, ...target.alt.goal) < room(z.x, z.y, ...goal)
+        ) {
+          goal = target.alt.goal;
+          way = target.alt.way;
+          best = room(z.x, z.y, ...goal);
+        } // (the canopy's ladder is nearer than the gas station's wall: up the ladder)
         if (target.j) best = room(z.x, z.y, ...goal); // (how far it really is, for what follows)
-        if (target.way)
-          z.cm = [target.id, goal[0], goal[1], GS.DECKS.indexOf(target.way)]; // (its way up, from now on)
+        if (way) z.cm = [target.id, goal[0], goal[1], GS.DECKS.indexOf(way)]; // (its way up, from now on)
       }
       /* at the foot of its wall, outside: up it goes. Never from inside, under the roof (the owner's, Nov 17 20:02Z: "WHEN
          THEY TRY TO ATTACK A PLAYER ON THE ROOF, THEY TRY TO GET ON THE ROOF, THEY DONT TRY TO GO UNDER IT FROM THE
@@ -5250,6 +5509,29 @@ function moveZombies(s, zs, now, T, up) {
   s.hidden = { ...s.hidden, l4ze: eating };
   separate(zs);
 }
+/* Survival: a walker wandering, slowly, from one spot near it to the next, standing about at each a while (z.wd: where
+   it's going, z.wn: when it goes on, or gives up going there) */
+function wander(z, far, pls, now) {
+  if (!z.wd && now < (z.wn || 0)) return;
+  if (!z.wd || now >= z.wn) {
+    delete z.wd;
+    for (let t = 0; t < 8 && !z.wd; t++) {
+      const a = Math.random() * 2 * Math.PI,
+        r = rnd(120, SV.ROAM),
+        x = Math.round(z.x + Math.cos(a) * r),
+        y = Math.round(z.y + Math.sin(a) * r);
+      if (openNear(x, y) >= 0 && walkable(z.x, z.y, x, y)) z.wd = [x, y];
+    }
+    z.wn = now + (z.wd ? 12000 : rnd(...SV.IDLE));
+    if (!z.wd) return;
+  }
+  if (Math.hypot(z.x - z.wd[0], z.y - z.wd[1]) < 24) {
+    delete z.wd;
+    z.wn = now + rnd(...SV.IDLE);
+    return;
+  }
+  stepZombie(z, z.wd, far, pls);
+}
 /* how high a zombie climbing a fence (its opening id) is, at (x, y) (0 once down): up at its walking speed, then falling
    from the top */
 export function fenceZ(x, y, id) {
@@ -5268,7 +5550,15 @@ export function fenceZ(x, y, id) {
    nearest the duck (CL.out outside it), climbs straight up the wall onto it (st 6, slower than it walks: CL.speed of its
    walk), and walks the roof at it (st 7). Its height comes from where it is, as on a fence */
 const CL = { out: 26, in: 14, step: 40, speed: 0.25 };
-const COMMIT_NEAR = 4;
+/* does a way up deck d still lead to duck q? Its own way (the deck it is on, or the gas station's roof for the canopy),
+   or the canopy's ladder. Once q is off the roof (landed, not just jumping) it doesn't, and a zombie keeping to that
+   way gives it up at once (the owner's, Nov 19 19:27Z; it used to keep to it unless the duck was near) */
+const reaches = (q, d) => !!d && (q.way === d || (!!q.alt && q.alt.way === d));
+/* the foot of the canopy's ladder (stationmap.js PUMP_LADDER), where a zombie starts up it: the canopy's edge, as a wall */
+const ladderFoot = () => [
+  GS.PUMP_LADDER.at - CL.out,
+  (GS.PUMP_LADDER.y0 + GS.PUMP_LADDER.y1) / 2,
+];
 const CHURCH = 2, // (layout.js whereIn: the chapel)
   STATION = 1, // (and the gas station)
   TEAR_NEAR = 2.2; // duck lengths (room): a duck this close outside the church takes a zombie off the window it tears at // duck lengths (room): a duck that left the floor this close to a zombie keeping to its way up

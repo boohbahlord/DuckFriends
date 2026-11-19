@@ -185,8 +185,14 @@ import {
   DUAL,
 } from "./specials.js";
 import { mountHotbar } from "./hotbar.js";
-import { heatUp, heatDraw } from "./barrelheat.js";
-import { laserLook, laserArt, laserFrame, laserMeter } from "./laserfx.js";
+import { heatUp, heatDraw, heldOn } from "./barrelheat.js";
+import {
+  laserLook,
+  laserArt,
+  laserGlow,
+  laserFrame,
+  laserMeter,
+} from "./laserfx.js";
 import { olAdd, olDraw, olFloor, olRoofed } from "./outlines.js";
 import { ammoBar, stackBars, noReload } from "./meters.js";
 import { LASER, BEAM } from "./laserart.js";
@@ -215,6 +221,7 @@ import {
 import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
 import {
   l4Held,
+  l4To,
   peekAgain as l4PeekAgain,
   l4Got,
   sprintLeft,
@@ -488,6 +495,7 @@ import {
 } from "./fx.js";
 import { FLAME as FLAMER, flameRate, band } from "./flamer.js";
 import { low } from "./gfx.js";
+import { isNpc, npcDown } from "./npcshared.js";
 import {
   sway,
   kick,
@@ -593,7 +601,8 @@ let pm = null,
   mbarOff = null; // the player menu (Tab), and the away watch
 let recorded = ""; // the last round counted in my all-time stats
 let lastLog = -1,
-  bubbles = {}; // chat bubbles over the ducks: { [player]: { text, until, n } }
+  bubbles = {}, // chat bubbles over the ducks: { [player]: { text, until, n, at (when it came) } }
+  npcDownAt = {}; // (an NPC: when I first saw it down, to cut what it was saying)
 let lastClose = 0; // Lawyering: the closing arguments last announced
 let bbZoom = 0,
   losers = new Set(),
@@ -1242,7 +1251,12 @@ function drawMeters(s, board, layer, now) {
     return;
   }
   const list = s.seat
-    .filter((id) => id !== R.me && s.players[id])
+    .filter(
+      (id) =>
+        id !== R.me &&
+        s.players[id] &&
+        !(isL4dd(s) && (s.players[id].helper || s.players[id].wild)),
+    ) // (Dead Ducks Arcade and Survival: only the players, never Justin's bar, the owner's, Nov 19 19:27Z)
     .map((id) => [id, s.players[id].name, hpFull(s, id, now)])
     .filter(([, , h]) => h)
     .map(([id, n, h]) => [id, n, h[0], h[1]]);
@@ -1847,7 +1861,9 @@ function drawDucks(now = clockNow()) {
               : ""
           : olP
             ? olP.helper || olP.wild
-              ? "justin" // (Dead Ducks Arcade's Justins: the helper from the fireplace, and Downpour's, out there)
+              ? dead
+                ? "" // (dead, no outline round him: the owner's, Nov 19 19:27Z "when he dies, there's no outline around his character")
+                : "justin" // (Dead Ducks Arcade's Justins: the helper from the fireplace, and Downpour's, out there)
               : olMine
                 ? "me"
                 : "ally"
@@ -2120,8 +2136,17 @@ function drawDucks(now = clockNow()) {
       d._op = op;
       d.classList.toggle("on-pod", op);
     } // (on the podium: no shadow on the ground below it)
-    const say = bubbles[id],
-      saying = !!say && now < say.until; // their newest chat message, for a few seconds
+    let say = bubbles[id];
+    /* an NPC that goes down or dies stops talking at once: a line it started before is cut (one said as it fell, a death
+       line, still shows). npcshared.js */
+    if (isNpc(s, id) && npcDown(s, id)) {
+      if (!npcDownAt[id]) npcDownAt[id] = now;
+      if (say && (say.at || 0) < npcDownAt[id] - 150) {
+        delete bubbles[id];
+        say = null;
+      }
+    } else if (npcDownAt[id]) delete npcDownAt[id];
+    const saying = !!say && now < say.until; // their newest chat message, for a few seconds
     if (saying) {
       const sb = d.querySelector(".gduck-say");
       if (sb._n !== say.n) {
@@ -2362,7 +2387,9 @@ function drawDucks(now = clockNow()) {
       shotDone(b);
     } // (landed, gone, or off the screen: kept for the next shot that looks the same)
   /* the handgun or the dagger in hand, turned toward where it aims: my mouse, or the aim the others sent */
-  const handed = new Set();
+  const handed = new Set(),
+    heldEls = fxl._held || (fxl._held = new Map()),
+    lowLayer = hang && $(".ducks", board);
   for (const [id, w, pos, duck, mine] of arms) {
     const c = bodyAt(id, pos, now),
       sh = shows[id] && now < shows[id].until ? shows[id] : null;
@@ -2383,9 +2410,8 @@ function drawDucks(now = clockNow()) {
             ? Math.PI
             : 0;
     handed.add(id);
-    const heldEls = fxl._held || (fxl._held = new Map());
     let h = heldEls.get(id);
-    if (h && h.parentNode !== fxl) h = null;
+    if (h && !heldOn(h, fxl)) h = null;
     const holy = isL4dd(s) && angelOf(s, id, w), // (Dead Ducks Arcade's Angelic weapons: l4ddangel.js)
       lz = w === "laser" && (isL4dd(s) || isMgj(s)) ? laserLook(s, id) : null, // (the Laser Rifle: its barrel as hot as it is now, laserfx.js)
       hk =
@@ -2405,12 +2431,14 @@ function drawDucks(now = clockNow()) {
             : heldHTML(w, duck),
         pic = dual ? angelic(dualPistolHTML(duck)) : holy ? angelic(art) : art;
       /* every gun as long in the hand as its l4ddguns.js w (--gw, css .held i): one number for each, so no new gun is
-         left at a knife's size */
+         left at a knife's size. The Laser Rifle getting hot: the whole gun glows (laserfx.js laserGlow) */
+      const [gc, gs] = lz ? laserGlow(lz) : ["", ""];
       h = el(
-        `<div class="held${holy ? " angelic" : ""}${dual ? " dual" : ""}" data-pid="${esc(id)}" data-w="${w}" style="--s:${hs.toFixed(0)}px${GUNS[w] ? `;--gw:${GUNS[w].w}` : ""}"><i>${pic}</i></div>`,
+        `<div class="held${holy ? " angelic" : ""}${dual ? " dual" : ""}${gc}" data-pid="${esc(id)}" data-w="${w}" style="--s:${hs.toFixed(0)}px${GUNS[w] ? `;--gw:${GUNS[w].w}` : ""}${gs}"><i>${pic}</i></div>`,
       );
       h._k = hk;
       h._hs = hs;
+      h._fxl = fxl; // (its board's: where it is drawn, fxl or the ducks' layer, below)
       fxl.append(h);
       heldEls.set(id, h);
       if (holy) angelGlow(h); // (its glow as thin as every other Angelic weapon's: powerart.js)
@@ -2510,10 +2538,38 @@ function drawDucks(now = clockNow()) {
       "thrown-now",
       (w === "dagger" || w === "grenade") && !!sh && now < sh.until - 500,
     ); // (the dagger or the grenade just thrown: a new one comes to hand)
+    /* the owner's, Nov 19 19:27Z, Downpour's pump roof: "the gun should be consistent with it". Under a roof, a wall or
+       a crown drawn over its duck (even over a corner of where it reaches), the weapon is drawn in the world with its
+       duck, at its duck's depth, so what covers the duck covers it alike: seen through the see-through roof with the
+       duck, hidden under the roof with it. Its duck's picture not shown (inside where I can't see, or only its outline
+       under a roof I'm not under): the weapon isn't either. Out in the open it stays in fxl, over the dark, as before */
+    const reachOut = ds * 1.6,
+      low =
+        lowLayer &&
+        dk &&
+        dk._zi !== undefined &&
+        world.under(
+          c.left - reachOut,
+          c.left + reachOut,
+          c.top - ds,
+          c.top + ds * 0.7,
+          dk._zi,
+        ),
+      home = low ? lowLayer : fxl,
+      zi = low ? String(dk._zi) : "",
+      gone = !!(hang && dk && (dk._hid || dk._olOnly));
+    if (h.parentNode !== home) home.append(h);
+    if (h.style.zIndex !== zi) h.style.zIndex = zi;
+    if (h._gone !== gone) {
+      h._gone = gone; // (its barrel's glow and the Laser Rifle's steam go with it: barrelheat.js, laserfx.js)
+      h.style.visibility = gone ? "hidden" : "";
+    }
   }
-  fxl.querySelectorAll(".held").forEach((h) => {
-    if (!handed.has(h.dataset.pid)) h.remove();
-  });
+  for (const [id, h] of heldEls)
+    if (!handed.has(id)) {
+      h.remove();
+      heldEls.delete(id);
+    }
   document.documentElement.classList.toggle(
     "armed",
     arms.some((a) => a[4]),
@@ -2529,7 +2585,7 @@ function drawDucks(now = clockNow()) {
     const hd = heldAll.get(sh.by),
       e =
         hd &&
-        hd.parentNode === fxl &&
+        heldOn(hd, fxl) &&
         (hd._ends
           ? hd._ends[
               sh.al !== undefined ? +sh.al : (hd._alt = (hd._alt || 0) ^ 1)
@@ -2554,7 +2610,7 @@ function drawDucks(now = clockNow()) {
     for (const [id, w] of arms) {
       if (id !== R.me || !MUZZLE[w]) continue;
       const hd = heldAll.get(id),
-        e = hd && hd.parentNode === fxl && hd._end,
+        e = hd && heldOn(hd, fxl) && hd._end,
         end = e && laserEnd(id);
       if (end)
         for (const m of hd._ends || [e]) lz.push([m[0], m[1], end[0], end[1]]); // (the Angelic pistols: two sights, meeting where it aims, the owner's Nov 17)
@@ -2565,7 +2621,7 @@ function drawDucks(now = clockNow()) {
     for (const [id, w] of arms) {
       if (id !== R.me || !MUZZLE[w]) continue;
       const hd = heldAll.get(id),
-        e = hd && hd.parentNode === fxl && hd._end,
+        e = hd && heldOn(hd, fxl) && hd._end,
         A = hd && hd._aim;
       if (!e || !A) continue;
       const ux = Math.cos(A[2]),
@@ -3043,6 +3099,31 @@ function sendDu(s) {
   duAt = t;
   R.send({ t: "sb", k: "du", du });
 }
+/* the way a zombie on the board walks (n: its element, x: where it is now): turned only once it keeps going the other way
+   a moment (FACE_HOLD). Bumping into another or a wall pushed it back and forth a few px, and its picture flipped each
+   time, as if squished (the owner's, Nov 19 19:27Z: "I do not want a squish effect on zombies, for example, when they
+   walk into each other or walk into a wall"); as Dead Ducks Arcade's zombies, l4dd.js */
+const FACE_HOLD = 300;
+function walkFace(n, x, now) {
+  const f = n._f || 1,
+    dir =
+      n._x === undefined || Math.abs(x - n._x) < 0.5 ? 0 : x < n._x ? -1 : 1;
+  if (!dir || dir === f) {
+    if (dir) n._went = 1;
+    n._turn = 0;
+    return f;
+  }
+  if (!n._went) {
+    n._went = 1;
+    return dir; // (its first steps: the way it goes at once)
+  }
+  if (n._turn !== dir) {
+    n._turn = dir;
+    n._turnAt = now;
+    return f;
+  }
+  return now - n._turnAt >= FACE_HOLD ? dir : f;
+}
 function placeZombies(board, s, now) {
   const layer = $(".ducks", board),
     zb =
@@ -3086,11 +3167,7 @@ function placeZombies(board, s, now) {
       face =
         o.wp || (sbOnBoard(s) && o.f)
           ? o.f || 1 // (a made NPC: the way the host turned it, so its weapon points at what it shoots: sbarms.js; Sandbox's: the way it walks, as its hits are worked out, sbbody.js)
-          : n._x === undefined || Math.abs(c.left - n._x) < 0.5
-            ? n._f || 1
-            : c.left < n._x
-              ? -1
-              : 1, // (the way it walks)
+          : walkFace(n, c.left, now), // (the way it walks)
       st = `${c.left.toFixed(1)},${c.top.toFixed(1)},${w.toFixed(1)},${face},${o.d ? 1 : 0}`;
     n._x = c.left;
     n._f = face;
@@ -3594,7 +3671,7 @@ function flames(s, now, hang, size, fxl, heldAll) {
     hang ? world.place({ x, y }, z) : place({ x, y }, 0, 1, true);
   for (const [id, f] of Object.entries((l4 ? s.hang.l4fl : s.flame) || {})) {
     const hd = heldAll.get(id),
-      e = hd && hd.parentNode === fxl && hd._end,
+      e = hd && heldOn(hd, fxl) && hd._end,
       p = s.pos[id];
     if (now - f[1] > 220 || !e || !p) {
       FLAME_CARRY.delete(id);
@@ -3638,18 +3715,22 @@ function crimson(ms) {
 const NEW_GUN_SFX = {
   laser: (o) => sfx.laser(o),
   dbarrel: (o) => sfx.dbarrel(o),
+  dbuck: (o) => sfx.dbarrel(o),
   burst: (o) => {
     for (let i = 0; i < ARMS.burst.burst; i++)
       setTimeout(() => sfx.burst(o), i * ARMS.burst.gap);
   },
   flamer: (o) => sfx.flamer(o),
 };
-/* charred, then the burns fade in a few seconds; with flames first for `fire` ms (the fire special, not a grenade) */
-function burn(dk, fire = 0) {
+/* charred, then the burns fade in a few seconds; with flames first for `fire` ms (the fire special, not a grenade).
+   lite: only a little (the Laser Rifle overheated, the owner's, Nov 19 19:27Z: "Player doesn't get the burnt effect as
+   badly, just a little bit") */
+function burn(dk, fire = 0, lite = false) {
   if (!dk) return;
   clearTimeout(dk._fireT);
   clearTimeout(dk._burnT);
   dk.classList.remove("burnt", "unburn", "onfire");
+  dk.classList.toggle("burnt-lite", lite);
   dk.classList.add(fire ? "onfire" : "burnt");
   if (fire)
     dk._fireT = setTimeout(() => {
@@ -3657,7 +3738,7 @@ function burn(dk, fire = 0) {
       dk.classList.add("burnt");
     }, fire);
   dk._burnT = setTimeout(() => {
-    dk.classList.remove("burnt");
+    dk.classList.remove("burnt", "burnt-lite");
     dk.classList.add("unburn");
     dk._burnT = setTimeout(() => dk.classList.remove("unburn"), 2600);
   }, fire + 2400);
@@ -4069,9 +4150,8 @@ function playFx(f) {
         : world.place({ x: f.x1 / HW, y: f.y1 / HH }, f.hz || 0),
       up = size * 0.41 * (R.state ? bigOf(R.state, f.by) : 1), // (from its gun, at its duck's Size)
       kind = f.w === "laser" ? "laser" : "chaingun", // (the Laser Rifle's beam: one red line, laserart.js BEAM)
-      gun = fxl.querySelector(
-        `.held[data-pid="${CSS.escape(f.by)}"][data-w="${kind}"]`,
-      ),
+      hd = fxl._held && fxl._held.get(f.by),
+      gun = heldOn(hd, fxl) && hd.dataset.w === kind ? hd : null,
       [x0, y0, aim] = (gun && gun._tip) || [
         a.left,
         a.top - up,
@@ -4145,7 +4225,7 @@ function playFx(f) {
     sfx.laserHiss(heard(f.by));
     const dk = S.querySelector(`.gduck[data-pid="${CSS.escape(f.by)}"]`);
     if (dk) {
-      burn(dk);
+      burn(dk, 0, true);
       clearTimeout(dk._joltT);
       dk.classList.remove("l4-jolt");
       void dk.offsetWidth;
@@ -7138,6 +7218,7 @@ function paintNow(force) {
     }
     $(".phase", S).textContent =
       (isSb(s) && "Sandbox") || // (on every map)
+      (s.phase === "hang" && s.options.mode === "surv" && "Survival") ||
       (s.phase === "hang" &&
         s.options.mode === "l4dd" &&
         s.options.l4map === "downpour" &&
@@ -7313,6 +7394,7 @@ function paintNow(force) {
               : m.text,
           until: clockNow() + 5500,
           n: m.n,
+          at: clockNow(),
         }; // (a sent file opens only for sudo, unless chmod let its group or everyone)
     for (const m of s.log)
       if (
@@ -8157,6 +8239,7 @@ register("game", {
     idleOff = null;
     lastLog = -1;
     bubbles = {};
+    npcDownAt = {};
     if (bar) bar.destroy();
     bar = null;
     if (meter) meter.remove();
@@ -8256,6 +8339,7 @@ register("game", {
           fire,
           grenade: () => l4Pick(4),
           flash: () => R.send({ t: "hang", k: "l4", do: "fl" }),
+          to: l4To, // (the weapon I'm about to take: its slot lights up)
         },
         row = mountL4Bar(S, l4),
         slide = mountHotbar(S, l4Slider(l4));

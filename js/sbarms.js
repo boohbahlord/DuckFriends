@@ -22,6 +22,7 @@ const REACH = {
   revolver: 8,
   shotgun: 3.5,
   dbarrel: 3.5,
+  dbuck: 3.5,
 };
 export const reachOf = (w) => REACH[w] || 7;
 /* a kit as a player sent it, cleaned: only weapons it can hold, each in its own place */
@@ -61,8 +62,7 @@ export const keepAt = (o, claw) => {
     ? Math.max(claw * 0.9, Math.min(...g.map(reachOf)) * 0.7)
     : claw * 0.9;
 };
-/* one roll of a weapon's damage: a number, or a whole number from the first to the second; the double barrel's "all"
-   is what a duck has (4) */
+/* one roll of a weapon's damage: a number, or a whole number from the first to the second ("all": what a duck has, 4) */
 const roll = (d) =>
   d === "all"
     ? 4
@@ -124,7 +124,7 @@ export function fight(o, to, bd, claw, now, clawMs, hit, sees = null) {
   let dmg = 0;
   for (let k = 0; k < n; k++)
     dmg +=
-      roll(A.dmg) *
+      (roll(A.dmg) + (A.plus ? A.plus[Math.random() < 0.5 ? 0 : 1] : 0)) *
       (A.pellets
         ? bd < reachOf(g) / 2
           ? A.pellets

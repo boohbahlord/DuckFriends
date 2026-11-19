@@ -6568,6 +6568,9 @@ html.moving .gduck-fire .fl-in {
   filter: brightness(0.3) saturate(0.3) sepia(0.5);
   transition: filter 0.3s;
 }
+.gduck.burnt.burnt-lite .gduck-body {
+  filter: brightness(0.8) saturate(0.8) sepia(0.2);
+} /* (a Laser Rifle overheated in its hands: only a little burnt, the owner's, Nov 19 19:27Z; game.js burn) */
 /* a Laser Rifle overheated in its hands: the duck shakes a moment, burnt (game.js l4hot); its picture shakes, not the
    body, so the body's own animations (a heal's glow) aren't cut off or started again */
 html.moving .gduck.l4-jolt .gduck-body > * {
@@ -7227,6 +7230,13 @@ html.still .spx-disco .disco-spot {
   transform: translate(-50%, -50%);
   transition: opacity 0.15s;
   filter: drop-shadow(0 0.08rem 0.08rem #0006);
+}
+/* the Laser Rifle getting hot: the whole gun glows its barrel's color, as strong as it is hot (game.js, laserfx.js
+   laserGlow: --hot, --hg) */
+.held.lz-glow i {
+  filter: drop-shadow(0 0 calc(var(--s) * 0.025 * var(--hg)) var(--hot))
+    drop-shadow(0 0 calc(var(--s) * 0.07 * var(--hg)) var(--hot))
+    drop-shadow(0 0.08rem 0.08rem #0006) brightness(calc(1 + 0.12 * var(--hg)));
 }
 .held[data-w="dagger"] i {
   width: calc(var(--s) * 0.4);
@@ -15908,32 +15918,32 @@ html.moving .l4-heat.hot::after {
 }
 /* each one's own color (l4ddrules.js tintOf; the owner's, Nov 18 12:19Z): green, blue, purple (it glows), the chair's
    gold, an Angelic weapon's red; a jerry can's orb orange, glowing (l4ddpowerui.js) */
-:is(.l4s, .l4orb, .sp-slot).c-green {
+:is(.l4s, .l4orb, .sp-slot, .l4to).c-green {
   --c: #2fae4a;
   --cl: #a6f0b4;
   --cd: #135a22;
 }
-:is(.l4s, .l4orb, .sp-slot).c-blue {
+:is(.l4s, .l4orb, .sp-slot, .l4to).c-blue {
   --c: #3d7be0;
   --cl: #a9c9ff;
   --cd: #173a80;
 }
-:is(.l4s, .l4orb, .sp-slot).c-purple {
+:is(.l4s, .l4orb, .sp-slot, .l4to).c-purple {
   --c: #9a4de0;
   --cl: #dcbcff;
   --cd: #461a80;
 }
-:is(.l4s, .l4orb, .sp-slot).c-gold {
+:is(.l4s, .l4orb, .sp-slot, .l4to).c-gold {
   --c: #e2b12a;
   --cl: #fff0a8;
   --cd: #7a5608;
 }
-:is(.l4s, .l4orb, .sp-slot).c-red {
+:is(.l4s, .l4orb, .sp-slot, .l4to).c-red {
   --c: #e0463d;
   --cl: #ffb0a6;
   --cd: #7e1a15;
 }
-:is(.l4s, .l4orb, .sp-slot).c-orange {
+:is(.l4s, .l4orb, .sp-slot, .l4to).c-orange {
   --c: #f07a1a;
   --cl: #ffd2a0;
   --cd: #7a3404;
@@ -15956,7 +15966,7 @@ html.moving .l4-heat.hot::after {
 /* no color (the dagger, the knife, the pistol, the pan, the adrenaline shot, the bow: the owner's, Nov 18 12:32Z, "a
    normal looking slot like it is in the default game, so no color"): the orb a plain grey; the slot as the other
    games' slots look (below, after the slots' own colors) */
-:is(.l4s, .l4orb, .sp-slot).c-plain {
+:is(.l4s, .l4orb, .sp-slot, .l4to).c-plain {
   --c: #8a8f9c;
   --cl: #e4e6ec;
   --cd: #3c404c;
@@ -17495,6 +17505,35 @@ html.pixel .l4-flare::before {
   box-shadow:
     0 0 0 2px #6dff8a,
     0 0 8px #3ee06a;
+}
+/* the slot what I'm about to take goes to (l4ddbar.js toSlot; the owner's, Nov 19 19:27Z): a white ring that stays still
+   with animations off, and a glow inside it in that weapon's own color, breathing */
+.l4s.l4s-to,
+.sp-slot.l4s-to {
+  outline: 0.14rem solid #fff;
+  outline-offset: 0.12rem;
+}
+.l4s.l4s-to:disabled {
+  opacity: 0.85;
+}
+.l4to {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0.55rem 0.2rem var(--cl),
+    inset 0 0 0 0.12rem var(--c);
+  animation: l4to-glow 1.2s ease-in-out infinite;
+}
+@keyframes l4to-glow {
+  50% {
+    opacity: 0.4;
+  }
+}
+html.still .l4to {
+  animation: none;
 }
 /* ---------- HP meters (hpmeter.js): the owner's picture, a bronze badge with a heart joined to a bronze-framed bar of
    red blocks, one for each HP, black where they're gone (black, not white, and a little thinner: owner 2026-11-04
@@ -19626,7 +19665,7 @@ html.pixel.armed :is(.board, .hang-board) {
 .vt-k-zmap .vt-maps {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
-.vt-k-zmap img.vt-still {
+img.vt-still {
   object-fit: cover;
 }
 /* a phone: one above another, bigger, the dice a short bar so both maps fit under it */

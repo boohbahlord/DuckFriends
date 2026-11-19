@@ -18,6 +18,8 @@
    Sandbox: no rounds, no end; on any map, mess around (sandboxrules.js, sandbox.js). */
 import { esc } from "./ui.js";
 
+/* Survival shows in the lists once it's all built (true then) */
+export const SURV_READY = false;
 export const MODES = [
   {
     id: "aod",
@@ -97,6 +99,18 @@ export const MODES = [
     name: "Dead Ducks Arcade",
     tip: "The power's out in Duck Cabin and zombie ducks are coming, round after round. Board up the doors and holes, revive each other, and see how long you last. It can only be played on the Duck Cabin map.",
   },
+  /* Survival (the owner's, Nov 19 19:27Z): Dead Ducks Arcade's zombies without rounds, swelling and calming on Downpour.
+     It stays out of every list (SURV_READY) until all of it is built: no unfinished mode goes live */
+  ...(SURV_READY
+    ? [
+        {
+          id: "surv",
+          cat: "special",
+          name: "Survival",
+          tip: "No rounds: the zombies keep coming on Downpour, calm one moment and a horde the next. Buy from the merchants, stay together and see how long you last.",
+        },
+      ]
+    : []),
   {
     id: "sandbox",
     cat: "special",
@@ -107,7 +121,7 @@ export const MODES = [
 export const modeOf = (id) => MODES.find((m) => m.id === id) || MODES[0];
 /* Single Player (the owner's, Nov 18): the room on the device with no internet plays only these, and everything that
    lists the games (the votes, Random, Game Settings) lists only these there */
-export const SOLO_MODES = ["hang", "l4dd", "mgj", "sandbox"];
+export const SOLO_MODES = ["hang", "l4dd", "surv", "mgj", "sandbox"];
 export const modesFor = (s) =>
   s && s.solo ? MODES.filter((m) => SOLO_MODES.includes(m.id)) : MODES;
 export const CABIN_MODES = ["hang", "l4dd"]; // (Duck Cabin's own games: picking one picks the map)

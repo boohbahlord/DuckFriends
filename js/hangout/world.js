@@ -21,6 +21,7 @@ import { duckRoom } from "../duck.js";
 import { esc } from "../ui.js";
 import { low } from "../gfx.js";
 import { walkOf } from "../rules.js";
+import { survSet } from "../survrules.js";
 import { JET } from "../jetpack.js";
 import {
   pixelOn,
@@ -49,6 +50,7 @@ const dirOf = (dx, dy) => (dx > 0 ? "r" : dx < 0 ? "l" : dy > 0 ? "d" : "u");
    my duck uses it (the Click to interact setting) */
 export function mountWorld(board, api) {
   const opt = (api.room().state || {}).options || {};
+  survSet(opt); // (Survival's ammo on this screen too: survrules.js)
   L.useMode(baseMode(opt), baseL4map(opt)); // (Quacky Zombies' cabin or its Downpour, or Hangout's, or Sandbox on one of them: layout.js)
   const canvas = board.querySelector(".hang-ground"),
     g = canvas.getContext("2d"),
@@ -838,9 +840,11 @@ export function mountWorld(board, api) {
      the wall climbs it, at about a walk; at the top, my duck steps onto the roof. Let go of the stick and it holds on;
      push away (or sideways off it) and it lets go and falls. True while my duck is on it (nothing else moves it) */
   const CLIMB = 150; // px a second
-  function climb(me, x, y, ax, ay, dt, ev) {
-    if (me.j || me.jf || !L.atLadder(x, y)) return (me.lad = false);
-    const top = L.ladderTop();
+  function climb(me, x, y, ax0, ay0, dt, ev) {
+    const A = !me.j && !me.jf && L.ladderAt(x, y);
+    if (!A) return (me.lad = false);
+    const top = L.ladderTop(A),
+      [ax, ay] = A.side === "w" ? [-ay0, ax0] : [ax0, ay0]; // (the canopy's, from its left: pushing east climbs it)
     if (!me.lad) {
       if (!(ay > 0.5 && Math.abs(ax) < 0.7 && me.vz == null)) return false;
       me.lad = true;
@@ -989,6 +993,12 @@ export function mountWorld(board, api) {
       );
     },
     coverAt: (l, r, t, b, zi) => coverAt(l, r, t, b, zi), // (the outlines: outlines.js; zi, its z-index)
+    /* is anything drawn over a box on the screen (l, r, t, b) at z-index zi, see-through now or not, even a corner of it?
+       (game.js: a weapon in hand is drawn with its duck then, so it shows the way its duck does) */
+    under: (l, r, t, b, zi) => {
+      const d = { l, r, t, b };
+      return covers.some((c) => zi < c.z && covered(d, c.l, c.r, c.t, c.b) > 0);
+    },
     frameOf,
     /* where a duck is drawn: { x, y, z } in world px, or null (the outlines: its floor) */
     at(id) {

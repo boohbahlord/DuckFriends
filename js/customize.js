@@ -641,6 +641,7 @@ export function openCustomize(page = lastPage, opts = {}) {
               chaingun: sfx.chaingun,
               glauncher: sfx.glauncher,
               dbarrel: sfx.dbarrel,
+              dbuck: sfx.dbarrel,
               burst: () =>
                 [0, 70, 140].forEach((ms) => setTimeout(() => sfx.burst(), ms)),
               dagger: sfx.throw,

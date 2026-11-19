@@ -159,6 +159,7 @@ import {
   weaponIcon,
   hitsOf,
 } from "./l4ddart.js";
+import { isSurv, survTime, clockOf } from "./survrules.js";
 
 const RX = 56,
   RY = 25.6; // (a zombie's room on the floor, as the rules')
@@ -205,6 +206,11 @@ const AWAY = 260; // walked this far off: his shop closes
 /* the weapon in my hand (game.js tells me how to ask) */
 let heldFn = () => "";
 export const l4Held = (f) => (heldFn = f);
+/* the weapon I'm about to take (the owner's, Nov 19 19:27Z): mine waiting at the fireplace (or the car) while I stand at
+   it, or the merchant's I'm pointing at; the hotbar lights the slot it would go to (l4ddbar.js) */
+let nearTo = "",
+  shopTo = "";
+export const l4To = () => shopTo || nearTo;
 const up = (s, id) => {
   const p = P4(s, id);
   return !!p && !p.dn && !p.gh;
@@ -588,6 +594,7 @@ function wounds(o, l, i) {
    (a change right after a beat is part of it), and each zombie keeps the glide time it started with (o.g), a little
    over a beat, so it is still on its way when the next one comes instead of stopping and starting */
 const GLIDE = { min: 120, max: 400, even: 0.35, over: 1.1, same: 90 };
+const FACE_HOLD = 300; // ms a zombie keeps going the other way before it turns (no flipping back and forth on a bump)
 function seeZombies(s, ctx, now) {
   const zs = zombiesOf(s);
   let fresh = false;
@@ -625,7 +632,19 @@ function seeZombies(s, ctx, now) {
         o.fx = o.x = z.x;
         o.fy = o.y = z.y;
       } // (far: there at once, both ways; before, only across, and it slid the rest down or up)
-      if (Math.abs(z.x - o.x) > 2) o.face = z.x > o.x ? 1 : -1;
+      /* which way it faces: turned only once it keeps going the other way a moment (FACE_HOLD). Bumping into another
+         zombie or a wall pushed it back and forth a few px, and its picture flipped each time, as if squished (the
+         owner's, Nov 19 19:27Z: "I do not want a squish effect on zombies, for example, when they walk into each other
+         or walk into a wall") */
+      const dir = Math.abs(z.x - o.x) > 2 ? (z.x > o.x ? 1 : -1) : 0;
+      if (!dir || dir === o.face) o.turn = 0;
+      else if (!o.went)
+        o.face = dir; // (its first steps: the way it goes at once)
+      else if (o.turn !== dir) {
+        o.turn = dir;
+        o.turnAt = now;
+      } else if (now - o.turnAt >= FACE_HOLD) o.face = dir;
+      if (dir) o.went = 1;
     }
     const shown = !o.el.hidden; // (one no camera here sees: only its numbers change, its look waits until it's seen)
     if (z.hp < o.hp && shown && o.st !== 3)
@@ -1018,11 +1037,33 @@ function recordKills(s, st, game, me) {
   if (k > kzDone) st.kills = (st.kills || 0) + k - kzDone;
   kzDone = Math.max(kzDone, k);
 }
+/* Survival: a timer where the round would be, in its font (the owner's: "a timer replaces the round number"); the
+   stats: a game once it starts, the best time (in seconds, as titles) once everyone's down */
+let clockShown = -1;
+function seeClock(s) {
+  if (!hud || !isSurv(s) || !s.hang.l4) return;
+  const t = Math.floor(survTime(s, clockNow()) / 1000);
+  if (t === clockShown) return;
+  clockShown = t;
+  hud.innerHTML = `<b>${clockOf(t)}</b>`;
+}
+function survRecord(s, L) {
+  if (s.test) return;
+  const st = profile.stats[statMode(s)],
+    game = `${s.id}:${s.startedAt}:${L.g || 0}`;
+  if (!st || profile.stats.lastGame === game) return;
+  profile.stats.lastGame = game;
+  st.games++;
+  save();
+}
 /* ---------- the HUD: "Round N", and the end ---------- */
 function seeHud(s, ctx) {
   const L = s.hang.l4;
   if (!hud || !L) return;
-  if (roundShown !== L.r) {
+  if (isSurv(s)) {
+    seeClock(s);
+    survRecord(s, L);
+  } else if (roundShown !== L.r) {
     if (roundShown >= 0 && L.r > roundShown)
       record(s, L, L.r - roundShown === 1, ctx.me);
     hud.innerHTML = isSb(s)
@@ -1054,6 +1095,11 @@ function seeHud(s, ctx) {
     const st = profile.stats[statMode(s)];
     if (st) {
       recordKills(s, st, `${s.id}:${s.startedAt}:${L.g || 0}`, ctx.me);
+      if (isSurv(s))
+        st.titles = Math.max(
+          st.titles || 0,
+          Math.floor(survTime(s, L.over.at) / 1000),
+        ); // (Survival: the best time)
       save();
     }
   } // (the game ends: the zombies of its last round count too)
@@ -1065,7 +1111,11 @@ function seeHud(s, ctx) {
     hostName = (s.players[s.hostId] || {}).name || "the host";
   /* from the vote or Random, the room moves on by itself after a moment (rules.js L4_OVER_MS) */
   const moving = votesDue(s).length || s.options.modePick === "random";
-  over.innerHTML = `<div class="l4-over-card"><h2>Everyone's down</h2><p>You made it to <b>Round ${L.over.r}</b>.</p>${
+  const kz = ((s.hang && s.hang.l4kz) || {})[ctx.me] || 0,
+    said = isSurv(s)
+      ? `You lasted <b>${clockOf(survTime(s, L.over.at) / 1000)}</b> and killed <b>${kz}</b> ${kz === 1 ? "zombie" : "zombies"}.`
+      : `You made it to <b>Round ${L.over.r}</b>.`;
+  over.innerHTML = `<div class="l4-over-card"><h2>Everyone's down</h2><p>${said}</p>${
     moving
       ? `<p class="small dim">${votesDue(s).length ? "On to the vote in a moment." : "On to the next game in a moment."}</p>`
       : host
@@ -1257,6 +1307,7 @@ function paint(now, ctx) {
     cones = [],
     beams = []; // (the same flashlights in the world's px, for the names: litNames)
   const on = (x, y, r) => x + r > 0 && x - r < w && y + r > 0 && y - r < h;
+  seeClock(s); // (Survival's timer goes on between states too)
   lits();
   const lights = powerOn(s) ? LIT_ON : LIT;
   for (const l of Wd.inside ? lights.in : lights.out) {
@@ -2349,6 +2400,7 @@ function openShop(ctx) {
   addEventListener("keydown", shopEsc, true);
 }
 function closeShop() {
+  shopTo = "";
   if (!shop || !shop.open) return;
   shop.open = false;
   shop.el.hidden = true;
@@ -2376,6 +2428,16 @@ function shopEl(ctx) {
   for (const t of ["pointerdown", "click", "wheel", "touchstart"])
     el.addEventListener(t, (e) => e.stopPropagation(), { passive: true }); // (a tap on the page never walks the duck)
   el.querySelector(".hang-book-x").onclick = closeShop;
+  /* pointing at (or tabbing to) a weapon he sells: its slot lights up in my hotbar */
+  const pointAt = (e) => {
+    const li = e.target.closest && e.target.closest(".l4-buyw"),
+      b = li && li.querySelector("[data-buy]");
+    shopTo = b && ARMS[b.dataset.buy] ? b.dataset.buy : "";
+  };
+  el.addEventListener("pointerover", pointAt);
+  el.addEventListener("focusin", pointAt);
+  el.addEventListener("pointerleave", () => (shopTo = ""));
+  el.addEventListener("focusout", () => (shopTo = ""));
   el.addEventListener("click", (e) => {
     const tab = e.target.closest("[data-tab]");
     if (tab) {
@@ -2441,13 +2503,15 @@ function holdTarget(pos, ctx) {
       best = { kind: "board", o: o.id, d, n };
   }
   if (best) return best;
-  const pt =
-    pwTarget(pos, s, NEAR) || // (the power box, on the balcony: l4ddpowerui.js)
-    angelTarget(pos, s, NEAR); // (the Angel machine, on the stage: l4ddangelui.js)
+  const sv = isSurv(s), // (Survival: no power, no pump, no Angel machine and no slot machine)
+    pt =
+      !sv &&
+      (pwTarget(pos, s, NEAR) || // (the power box, on the balcony: l4ddpowerui.js)
+        angelTarget(pos, s, NEAR)); // (the Angel machine, on the stage: l4ddangelui.js)
   if (pt) return pt;
   const now = clockNow(),
     db = Math.max(Math.abs(BOX.zx - pos.x), Math.abs(BOX.y - pos.y)); // (a square, as its yellow line shows it: spinSquare)
-  if (db < NEAR) {
+  if (db < NEAR && !sv) {
     const b = boxNow(s, now, me); // (my own spin: anyone else's doesn't stop me)
     if (!b) return { kind: "box", d: db };
     if (now >= b.t + BOX.spin && b.w !== HELPER.w)
@@ -2629,7 +2693,7 @@ activity({
     B.clear();
     D.clear();
     overShown = endSig = drawn = boxSig = upSig = slotSig = onSig = litSig = "";
-    roundShown = -1;
+    roundShown = clockShown = -1;
     ptsShown = -1;
     l4Reset();
     boxSpun = false;
@@ -2990,6 +3054,7 @@ activity({
   },
   near(pos, ctx) {
     const t = holdTarget(pos, ctx);
+    nearTo = t && t.kind === "take" ? t.w : "";
     if (!t) return null;
     const s = ctx.state();
     return {

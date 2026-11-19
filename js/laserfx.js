@@ -9,12 +9,13 @@
    game.js calls laserLook for the gun's picture and laserFrame every frame, in Dead Ducks Arcade and in Mad God Justin
    (a pickup there). */
 import { laserHeat, dp } from "./l4ddrules.js";
-import { LASER } from "./laserart.js";
+import { LASER, hotColor } from "./laserart.js";
 import { fxSteam, fxGroundFire } from "./fx.js";
 import { sfx } from "./sound.js";
 import { W, H, inCabin } from "./hangout/layout.js";
 import { CANOPY } from "./hangout/stationmap.js";
 import { now as clockNow } from "./clock.js";
+import { heldOn } from "./barrelheat.js";
 
 /* the look of duck id's Laser Rifle now: { lvl: its heat 0 … 1 in steps of one beam, over: overheated }, and its key
    (the gun's picture is made again only when it changes) */
@@ -25,6 +26,18 @@ export function laserLook(s, id) {
   return { lvl, over, key: over ? "-hot" : "-h" + Math.round(lvl * q.max) };
 }
 export const laserArt = (look) => LASER(look.lvl, look.over);
+/* the whole gun glowing as it heats up (the owner's, Nov 19 19:27Z: "When the laser gun is overheating, the whole gun
+   starts to glow with it"): its class and style in hand (game.js .held, css .lz-glow), none while it's still cool. The
+   glow's color is its barrel's end's, as strong as it is hot, strongest overheated */
+export function laserGlow(look) {
+  const g = look.over ? 1.4 : Math.max(0, (look.lvl - 0.2) / 0.8);
+  return g > 0
+    ? [
+        " lz-glow",
+        `;--hot:${hotColor(look.lvl, look.over)};--hg:${g.toFixed(2)}`,
+      ]
+    : ["", ""];
+}
 
 /* is it raining on (x, y) in the world? Downpour, out from under a roof */
 const wet = (x, y) =>
@@ -43,7 +56,8 @@ export function laserFrame(s, held, fxl, size, heard) {
     seen = new Set();
   last = t;
   for (const [id, g] of held) {
-    if (g.dataset.w !== "laser" || g.parentNode !== fxl || !g._tip) continue;
+    if (g.dataset.w !== "laser" || !heldOn(g, fxl) || g._gone || !g._tip)
+      continue;
     const q = laserHeat(s, id, now),
       f = q.h / q.max, // (0 … 1, past 1 while overheated)
       over = q.over > 0,

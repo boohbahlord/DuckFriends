@@ -72,6 +72,7 @@ const WOUND_OF = {
   burst: "big",
   revolver: "big",
   dbarrel: "big",
+  dbuck: "shot",
   slug: "big",
   chaingun: "big",
   chain: "big", // (the chain gun's shot outside Quacky Zombies, rules.js chainShot)
@@ -281,7 +282,7 @@ export function pwExploded(s, id, seed, now) {
    coming back on (spot 1) */
 /* the modes that aren't the normal games: there a knocked-off hat comes back by itself, as it did (in the normal games it
    stays off until the duck comes back from dying: rules.js) */
-const NOT_NORMAL = ["l4dd", "mgj", "hang"];
+const NOT_NORMAL = ["l4dd", "surv", "mgj", "hang"];
 export function pwCodes(s, id, now) {
   const w = (s.pw || {})[id];
   if (!w) return "";
