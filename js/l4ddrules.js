@@ -125,6 +125,10 @@ import {
 import { ANGEL, angelOf, angelAmmo, angelAct, angelLeft } from "./l4ddangel.js";
 import { fieldOf, askField } from "./flowfield.js";
 
+/* what Sandbox lends these rules (sbcabin.js): npc(s, by, x, y, now, w, rx, ry, from, hit) puts a shot or a swing at
+   (x, y) into its NPCs standing there (hit: a swing's list, every one in reach once; none: a shot, the first one, true
+   when it landed) */
+export const L4_HOOKS = { npc: null };
 export const isL4dd = (s) => !!s && baseMode(s.options) === "l4dd"; // (and Sandbox on its cabin or Downpour: sandboxrules.js)
 /* I want only the lights' stutter and the air (the wind, the rain, the fires: ambience.js) on of Hangout's activities.
    The couches, the stage, the card table and the piano's keys are still drawn, but quiet: nothing to sit on, sing into
@@ -1249,7 +1253,7 @@ const players = (s) => s.seat.filter((id) => s.players[id] && s.pos[id]);
 const P4 = (s, id) => ((s.hang && s.hang.l4p) || {})[id] || null;
 export const isDown = (s, id) => !!(P4(s, id) && P4(s, id).dn);
 export const isGhost4 = (s, id) => !!(P4(s, id) && P4(s, id).gh);
-const standing = (s, id) => {
+export const standing = (s, id) => {
   const p = P4(s, id);
   return !!p && !p.dn && !p.gh;
 };
@@ -3839,8 +3843,21 @@ function getUp(s, id, now, full, safe) {
    walking (the owner's, Nov 17 20:37Z: "WHEN HE TRIES TO DODGE, IT ISNT SOME ANIMATION THAT IS DONE BY MATH, HE SIMPLLY
    TRIES MOVING OUT THE WAY LIKE A PLAYER DOES! ... Justin isnt supposed to be hard for players to kill"). from: the
    shooter's [x, y, feet], for the one rule (nothing solid between: layout.js slabBetween) */
-function wildHurt(s, by, x, y, now, w, rx = 26, ry = 22, from = null) {
+function wildHurt(
+  s,
+  by,
+  x,
+  y,
+  now,
+  w,
+  rx = 26,
+  ry = 22,
+  from = null,
+  npc = true,
+) {
   if (merchantShot(s, by, x, y, now, w, rx, ry, from)) return true; // (the merchant in its way: merchantShot)
+  if (npc && L4_HOOKS.npc && L4_HOOKS.npc(s, by, x, y, now, w, rx, ry, from))
+    return true; // (one of Sandbox's NPCs in its way: sbcabin.js)
   const id = WILD.id,
     p = s.pos[id],
     q = P4(s, id);
@@ -3944,9 +3961,11 @@ function meleeHits(s, now) {
         inCabin(qx, qy) ? 1 : 0,
       ); // (shove counts in those duck lengths: this way it goes `far` world px whichever way)
     }
+    if (L4_HOOKS.npc)
+      L4_HOOKS.npc(s, k.by, bx, by, now, k.w, A.r + 22, A.r + 22, null, k.hit); // (Sandbox's NPCs in its bubble, each once a swing: sbcabin.js)
     if (
       !k.hit.includes("j") &&
-      wildHurt(s, k.by, bx, by, now, k.w, A.r + 22, A.r + 22)
+      wildHurt(s, k.by, bx, by, now, k.w, A.r + 22, A.r + 22, null, false)
     )
       k.hit.push("j"); // (Justin out in Downpour, once for each swing)
   }

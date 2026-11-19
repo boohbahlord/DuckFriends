@@ -14,7 +14,9 @@
    - Never more NPCs alive on a map than the zombies' cap (l4ddrules.js Z_MOST, the owner's, Nov 19 01:57Z).
    On the board the zombies are Mad God Justin's wave zombies' kind (s.mz.zb: drawn, hit and heard as his are, with
    their HP, speed and damage from the boxes); on the zombie cabin and Downpour they are Dead Ducks Arcade's own
-   (l4ddrules.js l4Spawn), already inside; on Duck Cabin they are Sandbox's own (sbcabin.js), walking as those do. */
+   (l4ddrules.js l4Spawn), already inside; on Duck Cabin they are Sandbox's own (sbcabin.js), walking as those do. Every
+   other kind (a Blank NPC, Justin, a Test NPC, a made NPC) is Sandbox's own on every world, the zombie maps too, where
+   their guns and swings hit them (l4ddrules.js L4_HOOKS). */
 import { keep, read, valueOf } from "./numerat.js";
 import {
   baseMode,
@@ -24,7 +26,6 @@ import {
   SB_BOXES,
   SB_FLAGS,
   SB_WHAT,
-  SB_WHAT_ZMAPS,
   SB_ACTS,
   SB_IMPORT,
   SB_PLAYER,
@@ -40,7 +41,7 @@ import {
 import { W as WW, H as WH, standable } from "./hangout/layout.js";
 import { Z_MOST, l4Spawn, l4Live } from "./l4ddrules.js";
 import { WAVE, zLook } from "./mgjrules.js";
-import { onCabin, cabinLive, cabinSpawn, cabinTick } from "./sbcabin.js";
+import { onCabin, sbzOn, cabinLive, cabinSpawn, cabinTick } from "./sbcabin.js";
 import { listsOf, decide, MAD } from "./sbbrain.js";
 import { botDuck } from "./botduck.js";
 import { JUSTIN } from "./hangout/npcart.js";
@@ -144,7 +145,7 @@ export function liveNpcs(s) {
       .filter((o) => !o.d)
       .map((o) => ({ i: o.i, x: o.x, y: o.y, sp: o.sp }));
   if (onCabin(s)) return cabinLive(s);
-  return baseMode(s.options) === "l4dd" ? l4Live(s) : [];
+  return baseMode(s.options) === "l4dd" ? [...l4Live(s), ...cabinLive(s)] : []; // (the zombie maps: theirs, and every other kind)
 }
 
 /* ---------- made NPCs (stage 3: the m window, sbnpcs.js) ----------
@@ -191,11 +192,9 @@ function cleanLook(s, dk) {
 
 /* ---------- making one ---------- */
 /* the kind spawn id makes next: its one kind, or with more than one, any of them (Random) or each once in a random order
-   before any again (Shuffle: its bag in s.sb.bag). The zombie maps make only zombies (SB_WHAT_ZMAPS) */
+   before any again (Shuffle: its bag in s.sb.bag) */
 function kindFor(s, id, p) {
   let ks = words(boxText(p, "what")).filter((k) => SB_WHAT[k] || madeOf(s, k));
-  if (baseMode(s.options) === "l4dd")
-    ks = ks.filter((k) => SB_WHAT_ZMAPS.includes(k));
   if (ks.length < 2) return ks[0] || null;
   if (boxText(p, "pick") !== "shuffle")
     return ks[Math.floor(Math.random() * ks.length)];
@@ -284,8 +283,8 @@ function makeOne(s, id, at) {
       ...(flag(by("sprint"), "sprint") ? { run: 1 } : {}),
       ...kind,
     });
-  } else if (onCabin(s))
-    i = cabinSpawn(s, at.x, at.y, {
+  } else if (onCabin(s) || k !== "zombie") {
+    const c = cabinSpawn(s, at.x, at.y, {
       hp,
       sv,
       dm,
@@ -293,7 +292,8 @@ function makeOne(s, id, at) {
       run: flag(by("sprint"), "sprint"),
       look: kind,
     });
-  else i = l4Spawn(s, at.x, at.y, { hp, speed: sv, sp: id, dm });
+    i = c ? "c" + c : 0; // (the zombie maps: Sandbox's own, walking as on Duck Cabin, beside the map's zombies)
+  } else i = l4Spawn(s, at.x, at.y, { hp, speed: sv, sp: id, dm });
   if (!i) return false;
   const live = { ...((s.sb && s.sb.live) || {}) };
   live[id] = [...(live[id] || []), i];
@@ -687,7 +687,7 @@ export function sbTick(s, now, H) {
   }
   if (ch) s.sb = { ...s.sb, run };
   if (sbOnBoard(s) && s.mz && s.mz.sb) ch = boardTick(s, now, H) || ch;
-  if (onCabin(s)) ch = cabinTick(s, now, { ...H, think, strike }) || ch;
+  if (sbzOn(s)) ch = cabinTick(s, now, { ...H, think, strike }) || ch;
   return ch;
 }
 

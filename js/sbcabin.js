@@ -6,9 +6,10 @@
    box), run (it may sprint), w (its wounds), d (when it died), and a duck-shaped one's k, dk, nm and weapons (sbarms.js)
    }] }.
    Shots, daggers and swings hit them as they hit Justin (hangout/rules.js hangTargets and hangHit); each takes what a
-   Dead Ducks Arcade zombie takes (zombieTakes). */
+   Dead Ducks Arcade zombie takes (zombieTakes). On the zombie maps every kind but a zombie is one of these too, and
+   the guns and swings there hit them (L4_HOOKS, l4ddrules.js wildHurt). */
 import { rule } from "./hangout/registry.js";
-import { W, H, heightAt } from "./hangout/layout.js";
+import { W, H, heightAt, slabBetween } from "./hangout/layout.js";
 import { isGhost } from "./hangout/death.js";
 import { baseMode, isSb } from "./sandboxrules.js";
 import {
@@ -19,6 +20,7 @@ import {
   zombieTakes,
   ALL_HP,
   clearShot,
+  L4_HOOKS,
 } from "./l4ddrules.js";
 import { hitCode } from "./wounds.js";
 import { WAVE, zLook } from "./mgjrules.js";
@@ -26,6 +28,9 @@ import { MAD } from "./sbbrain.js";
 import { fight, keepAt } from "./sbarms.js";
 
 export const onCabin = (s) => isSb(s) && baseMode(s.options) === "hang";
+/* the worlds these walk on: Duck Cabin and the zombie maps (there, every kind but a zombie: those are the map's own) */
+export const sbzOn = (s) =>
+  isSb(s) && ["hang", "l4dd"].includes(baseMode(s.options));
 const SPRINT = { K: 1.5, FAR: 300 }; // (half as fast again, while more than 300 px off)
 const NEAR = 12, // (the most others each one is kept apart from in a beat)
   FIELDS = 6; // (the most new ways worked out in a beat, besides the one to the ducks)
@@ -35,7 +40,7 @@ const zbOf = (s) => (s.hang && s.hang.sbz && s.hang.sbz.zb) || [];
 export const cabinLive = (s) =>
   zbOf(s)
     .filter((o) => !o.d)
-    .map((o) => ({ i: o.i, x: o.x / W, y: o.y / H, sp: o.sp }));
+    .map((o) => ({ i: "c" + o.i, x: o.x / W, y: o.y / H, sp: o.sp })); // ("c": never the same as a zombie map's own)
 
 /* one zombie at (x, y), shares of the map: its number */
 export function cabinSpawn(s, x, y, o) {
@@ -214,31 +219,60 @@ rule("sbz", {
   },
   hit(s, id, by, now, w) {
     if (!String(id).startsWith("sbz")) return false;
-    const i = +String(id).slice(3),
-      z = s.hang.sbz,
-      o = z && z.zb.find((q) => q.i === i && !q.d);
-    if (!o) return false;
-    const t = zombieTakes(s, by, w);
-    if (!t) return false; // (a miss)
-    const hp = t.dmg >= ALL_HP ? 0 : o.hp - t.dmg,
-      wd = (o.w || "") + hitCode(o.w || "", w, t.head);
-    s.hang = {
-      ...s.hang,
-      sbz: {
-        ...z,
-        zb: z.zb.map((q) =>
-          q === o
-            ? {
-                ...q,
-                hp: Math.max(0, hp),
-                w: wd,
-                mad: ["p:" + by, now + MAD], // (it goes after whoever hurt it: sbbrain.js)
-                ...(hp <= 0 ? { d: now } : {}),
-              }
-            : q,
-        ),
-      },
-    };
-    return true;
+    return npcHit(s, +String(id).slice(3), by, now, w);
   },
 });
+
+/* NPC i takes a hit from duck by with weapon w: what a Dead Ducks Arcade zombie takes (zombieTakes); false on a miss */
+function npcHit(s, i, by, now, w) {
+  const z = s.hang.sbz,
+    o = z && z.zb.find((q) => q.i === i && !q.d);
+  if (!o) return false;
+  const t = zombieTakes(s, by, w);
+  if (!t) return false; // (a miss)
+  const hp = t.dmg >= ALL_HP ? 0 : o.hp - t.dmg,
+    wd = (o.w || "") + hitCode(o.w || "", w, t.head);
+  s.hang = {
+    ...s.hang,
+    sbz: {
+      ...z,
+      zb: z.zb.map((q) =>
+        q === o
+          ? {
+              ...q,
+              hp: Math.max(0, hp),
+              w: wd,
+              mad: ["p:" + by, now + MAD], // (it goes after whoever hurt it: sbbrain.js)
+              ...(hp <= 0 ? { d: now } : {}),
+            }
+          : q,
+      ),
+    },
+  };
+  return true;
+}
+
+/* … and on the zombie maps, where shots and swings are Dead Ducks Arcade's own (l4ddrules.js wildHurt) */
+L4_HOOKS.npc = (s, by, x, y, now, w, rx, ry, from, hit) => {
+  if (!isSb(s) || baseMode(s.options) !== "l4dd") return false;
+  const near = zbOf(s).filter((o) => {
+    if (o.d || (hit && hit.includes("c" + o.i))) return false;
+    if (Math.hypot((o.x - x) / rx, (o.y - y) / ry) >= 1) return false;
+    const h = heightAt(o.x, o.y);
+    return (
+      !from ||
+      (Math.abs(from[2] - h) <= 48 && !slabBetween(...from, o.x, o.y, h))
+    ); // (on its floor, nothing solid between)
+  });
+  if (hit) {
+    for (const o of near) {
+      hit.push("c" + o.i);
+      npcHit(s, o.i, by, now, w);
+    }
+    return near.length > 0;
+  }
+  near.sort(
+    (a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y),
+  );
+  return near.some((o) => npcHit(s, o.i, by, now, w)); // (a miss goes on by)
+};

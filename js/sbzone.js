@@ -6,7 +6,8 @@
    name, and a player's name.
    - On the board and Duck Cabin a duck loses HP as from a spawn's claw (rules.js SB_H.claw), or gets it back (SB_H.heal);
      on the zombie maps as their zombies hurt (l4ddrules.js l4Hurt, l4Heal).
-   - NPCs lose or get back their HP the same way, up to what they spawned with; on the zombie maps, whole HP (theirs).
+   - NPCs lose or get back their HP the same way, up to what they spawned with; the zombie maps' own zombies, whole HP
+     (theirs).
    - On a world a zone is on its own floor: only what stands within 40 px of the height it was placed at.
    Where things spawn in a zone is sbspawn.js (zoneSpot, zonesFor), sandboxrules.js (players) and sbloot.js (loot).
    The zones' clocks are the host's own (s.hidden.sbzt), never sent. */
@@ -21,7 +22,6 @@ import { valueOf } from "./numerat.js";
 import { boxText, spawnsHere } from "./sbspawn.js";
 import { W, H, heightAt } from "./hangout/layout.js";
 import { l4Hurt, l4Heal, l4Zone } from "./l4ddrules.js";
-import { onCabin } from "./sbcabin.js";
 
 const words = (t) =>
   String(t || "")
@@ -104,16 +104,17 @@ function hitAll(s, pts, p, now, H0) {
       (who.includes(q.col) || who.includes(boxText(q, "name").toLowerCase()))
     );
   };
-  if (zmaps)
-    return (
-      l4Zone(
-        s,
-        (o) => inside(s, p, box, o.x, o.y, o.z) && hits("zombie", o.sp),
-        fx,
-        amt,
-        now,
-      ) || ch
-    );
+  if (
+    zmaps &&
+    l4Zone(
+      s,
+      (o) => inside(s, p, box, o.x, o.y, o.z) && hits("zombie", o.sp),
+      fx,
+      amt,
+      now,
+    )
+  )
+    ch = true;
   const npc = (o) => {
     const max = (o.l && o.l[0]) || o.hp,
       hp = fx === "heal" ? Math.min(max, o.hp + amt) : Math.max(0, o.hp - amt);
@@ -127,7 +128,7 @@ function hitAll(s, pts, p, now, H0) {
     s.mz.zb = s.mz.zb.map((o) =>
       !o.d && inside(s, p, box, o.x, o.y, 0) && hits(o.k, o.sp) ? npc(o) : o,
     );
-  else if (onCabin(s) && s.hang && s.hang.sbz) {
+  else if (s.hang && s.hang.sbz) {
     const z = s.hang.sbz,
       zb = z.zb.map((o) =>
         !o.d &&

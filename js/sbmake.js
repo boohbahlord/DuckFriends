@@ -52,8 +52,7 @@ export const npcRows = (R) => {
 };
 
 /* the kinds a spawn can make, with their names: the four, the room's made NPCs (anyone's), then mine not in it yet */
-export function kindsFor(s, zmaps) {
-  if (zmaps) return [["zombie", SB_WHAT.zombie]]; // (the zombie maps: zombies only, for now)
+export function kindsFor(s) {
   const cn = (s.sb && s.sb.cn) || {},
     mine = npcList().filter((n) => !cn[n.id]);
   return [

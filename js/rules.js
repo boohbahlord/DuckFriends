@@ -194,6 +194,8 @@ import {
 import {
   isL4dd,
   l4Use,
+  l4Hurt,
+  standing as l4Standing,
   l4Reload,
   l4Shots,
   l4Holds,
@@ -3531,9 +3533,14 @@ export function soaks(s, id, now, dmg = 1, by, raw = false) {
 const SB_H = {
   ducks: (s) =>
     playing(s).filter(
-      (id) => s.pos[id] && s.pos[id].x >= 0 && !(s.players[id] || {}).dead,
-    ),
+      (id) =>
+        s.pos[id] &&
+        s.pos[id].x >= 0 &&
+        !(s.players[id] || {}).dead &&
+        (!isL4dd(s) || l4Standing(s, id)),
+    ), // (the zombie maps: not one that's down)
   claw(s, id, dmg, now, w = "claw") {
+    if (isL4dd(s)) return l4Hurt(s, id, dmg, now, w); // (the zombie maps: as their zombies hurt)
     const P = s.players[id],
       p = s.pos[id];
     if (!P || P.dead || !p || dodges(s, p, now)) return;

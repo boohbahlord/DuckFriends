@@ -108,7 +108,6 @@ export const SB_WHAT = {
   justin: "Justin",
   test: "Test NPC",
 };
-export const SB_WHAT_ZMAPS = ["zombie"];
 /* a spawn's four behavior lists: each takes Players, Everything, a kind (SB_WHAT) and a spawn by its name or color */
 export const SB_ACTS = {
   target: "Target",

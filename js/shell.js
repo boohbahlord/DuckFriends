@@ -66,7 +66,7 @@ import { setPerf, perfOn } from "./perf.js";
 import { secret } from "./unlocks.js";
 import { music } from "./music.js";
 import { npcsHere, npcTag, npcByTag, npcById } from "./npcs.js";
-import { isSb, sbCan } from "./sandboxrules.js";
+import { isSb, sbCan, sbWorld, SB_WORLD_NAMES } from "./sandboxrules.js";
 
 const tag = (n) => String(n || "").replace(/\s+/g, "");
 const fail = (msg, code = 1) => {
@@ -1103,17 +1103,18 @@ function psLines(s, all) {
     now = Date.now(),
     n = s.seat.length,
     done = s.seat.filter((id) => s.done && s.done[id]).length;
+  const sb = isSb(s) && s.phase !== "lobby"; // (Sandbox: no rounds, no stages, no turns)
   const out = [
     "PID WHAT     DOING",
-    `  1 game     ${modeOf(o.mode).name} on ${mapName(o.map)}${s.phase === "lobby" ? ", in the lobby" : o.mode === "hang" ? ", hanging out" : `, round ${s.round + 1}`}`,
+    `  1 game     ${modeOf(o.mode).name} on ${sbWorld(o) ? SB_WORLD_NAMES[sbWorld(o)] : mapName(o.map)}${s.phase === "lobby" ? ", in the lobby" : o.mode === "hang" ? ", hanging out" : sb ? "" : `, round ${s.round + 1}`}`,
   ];
-  if (s.phase !== "lobby" && !(o.mode === "hang" && s.phase === "hang"))
+  if (s.phase !== "lobby" && !sb && !(o.mode === "hang" && s.phase === "hang"))
     out.push(
       `  2 ${st.padEnd(8)} ${["answer", "discuss", "results", "bracket"].includes(s.phase) || s.done ? `${done} of ${n} have ended their turn` : ""}`,
     );
-  if (s.ends && s.ends > now)
+  if (s.ends && s.ends > now && !sb)
     out.push(`  3 timer    ${left(s.ends - now)} left`);
-  if (s.catchEnds && s.catchEnds > now)
+  if (s.catchEnds && s.catchEnds > now && !sb)
     out.push(`  4 catch-up ${left(s.catchEnds - now)} left for the rest`);
   if (s.vote)
     out.push(
@@ -1956,7 +1957,7 @@ const CMDS = {
     const s = needRoom(x.ctx);
     if (!s.startedAt || s.phase === "lobby") return "The game hasn't started.";
     const m = Math.floor((Date.now() - s.startedAt) / 60000);
-    return `up ${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}, ${s.seat.length} players, round ${s.round + 1}`;
+    return `up ${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}, ${s.seat.length} players${isSb(s) ? "" : `, round ${s.round + 1}`}`; // (Sandbox has no rounds)
   },
   ps: (args, i, x) =>
     psLines(

@@ -20028,6 +20028,9 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .sb-row > span:first-child {
   min-width: 0;
 }
+.sb-acts {
+  display: contents; /* (the behavior lists, kept together only so the zombie maps can hide them) */
+}
 .sb-box {
   width: 100%;
   font: inherit;

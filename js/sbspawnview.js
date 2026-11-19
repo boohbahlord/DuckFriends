@@ -260,7 +260,8 @@ export function sbSettings(getR, id, tab = "") {
     players = p.pg === "pl" || (!p.grp && tab === "pl"),
     zmaps = baseMode(R.state.options) === "l4dd",
     what = boxText(p, "what").split(/[\s,]+/),
-    kinds = kindsFor(R.state, zmaps), // (the zombie maps: zombies only, for now)
+    kinds = kindsFor(R.state),
+    onlyZ = (ks) => zmaps && !ks.some((k) => k && k !== "zombie"), // (the zombie maps' zombies walk their own way: l4ddrules.js)
     look = spawn && !players && tab === "ap", // (its Appearance tab: sbmake.js)
     pick = boxText(p, "pick"),
     tabs = [
@@ -309,13 +310,11 @@ export function sbSettings(getR, id, tab = "") {
           `<label><input type="radio" name="sb-pick" data-pick="${v}"${pick === v ? " checked" : ""}> ${n}</label>`,
       )
       .join("")}</span></div>
-    ${
-      zmaps
-        ? "" // (the zombie maps' zombies walk their own way for now: l4ddrules.js)
-        : Object.keys(SB_ACTS)
-            .map((f) => actRow(R.state, p, f, kinds))
-            .join("")
-    }
+    <div class="sb-acts" data-row="acts"${onlyZ(what) ? " hidden" : ""}>${Object.keys(
+      SB_ACTS,
+    )
+      .map((f) => actRow(R.state, p, f, kinds))
+      .join("")}</div>
     ${row("key", { name: "Spawn key" }, typed("key"), why("key"))}
     ${Object.entries(SB_BOXES)
       .map(([f, b]) => row(f, b, typed(f), why(f)))
@@ -336,7 +335,7 @@ export function sbSettings(getR, id, tab = "") {
     ${(p.im || [])
       .map((f) =>
         SB_ACTS[f]
-          ? actRow(R.state, p, f, kindsFor(R.state, false))
+          ? actRow(R.state, p, f, kindsFor(R.state))
           : SB_FLAGS[f]
             ? flagRow(f, SB_FLAGS[f], typed(f), why(f))
             : row(f, SB_BOXES[f], typed(f), why(f)),
@@ -449,6 +448,8 @@ export function sbSettings(getR, id, tab = "") {
         if (!t.matches("[data-what]")) return;
         const on = [...w.querySelectorAll("[data-what]:checked")];
         w.querySelector('[data-row="pick"]').hidden = on.length < 2; // (Random or Shuffle: only with more than one)
+        const acts = w.querySelector('[data-row="acts"]');
+        if (acts) acts.hidden = onlyZ(on.map((c) => c.dataset.what));
         sendKinds(
           getR(),
           on.map((c) => c.dataset.what),
