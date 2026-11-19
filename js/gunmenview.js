@@ -37,6 +37,7 @@ activity({
     if (!layer) return;
     drawNpcs(ctx, gb, ZB, layer, fxl, {
       pic: (o, hits) => npcURL(o, hits, true),
+      hide: (o) => !!o.hid, // (the sniper on his way to a new spot: nobody sees him go)
       lit: (o) => !o.d && !!o.bt && clockNow() - o.bt < BURNS,
       /* the zombies' red line while something hides them; none inside a building (the owner's: "inside buildings
          their outline is hidden"), and the sniper's never */
@@ -82,11 +83,12 @@ activity({
       const z = ZB.get(o.i);
       if (!z || o.d) continue;
       const a = ((o.ad || 0) * Math.PI) / 180;
-      if (!z.el.hidden) SEEN.push([z.x, z.y]);
+      if (!z.el.hidden && o.k !== "sn") SEEN.push([z.x, z.y]); // (never the sniper: a beam doesn't give him away)
       if (o.lo) LIT.set(o.i, [z.x, z.y, a]);
       /* a soldier's laser sight, out of its gun to what it aims at ("Soldiers have laser sights") */
-      if (o.ld > 0 && !z.el.hidden) {
-        const f = Wd.toScreen(z.x, z.y, heightAt(z.x, z.y)),
+      if (o.ld > 0 && !o.hid) {
+        /* (the sniper's too, longer: on the duck he's about to shoot, even from under a tree's crown or off my screen) */
+        const f = Wd.toScreen(z.x, z.y, o.z || heightAt(z.x, z.y)),
           hand = handAt(z.box),
           ex = z.x + Math.cos(a) * o.ld,
           ey = z.y + Math.sin(a) * o.ld,

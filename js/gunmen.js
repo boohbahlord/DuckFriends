@@ -24,7 +24,8 @@ import {
   chaseField,
   chaseStep,
 } from "./l4ddrules.js";
-import { heightAt, slabBetween } from "./hangout/layout.js";
+import { heightAt, slabBetween, deckOver, PROPS } from "./hangout/layout.js";
+import { DECKS } from "./hangout/stationmap.js";
 import { woundCode, DEATH } from "./wounds.js";
 import { botDuck } from "./botduck.js";
 
@@ -52,6 +53,13 @@ export const GM = {
   RIFLE_FIRE: [2200, 3600], // … and ms it stops and shoots
   SUPPRESS_MS: 1400, // ms my screen shakes and darkens after an LMG burst flies by me
   SUPPRESS_R: 120, // world px: how near its rounds fly to suppress a duck
+  SNIPER: 0.2, // a soldier wave's chance of a lone sniper (none while one lives)
+  SNIPE: [6, 26], // duck lengths: how near and how far off he takes his shot from
+  LOCK_MS: [1500, 2500], // ms his laser sits on a duck before the shot
+  SNIPE_HIT: 0.85, // that shot's chance to hit
+  MOVE_MS: [6000, 10000], // ms he's away, moving to a new spot nobody sees
+  PERCH_MS: [14000, 22000], // ms he keeps to one spot with nothing in his sights before he moves on
+  CLOSE: 2.5, // duck lengths: a duck this near and he fights it off (UMP, knife)
 };
 /* the criminals' guns, and how each fires: rounds a burst, ms from one burst to the next (their hidden cooldowns), and
    the magazine a gun with none gets */
@@ -181,6 +189,7 @@ function start(s, kind, now, H) {
     k: kind,
     bk: all - front,
     nb: 0,
+    wv: ((gmOf(s) || {}).wv || 0) + 1, // (this wave's number: the sniper's one shot a wave)
   };
   const gm = s.hang.gm;
   if (kind === "s") return squads(s, n, H);
@@ -196,6 +205,88 @@ function start(s, kind, now, H) {
   }
   return true;
 }
+/* the sniper: in the map's greens, a ghillie suit (Noah draws it; till then a plain green duck) */
+function ghillieLook() {
+  return {
+    ...botDuck(),
+    color: "#4f6b2e",
+    pattern: "none",
+    metal: "none",
+    keys: null,
+    style: "rubber",
+    outfit: null,
+    face: null,
+    hat: null,
+  };
+}
+/* where the sniper can lie in wait: under a tree's crown inside the fences, or up on the gas station's roof; one far
+   enough off from every duck, nobody seeing it (ducks: { x, y }) */
+function perch(ducks, H, not = null) {
+  const out = [],
+    roof = DECKS.find((d) => d.kind === "roof" && d.bldg === 1);
+  for (const p of PROPS) {
+    if (p.kind !== "tree") continue;
+    const x = p.x + 18,
+      y = p.y - 26; // (just behind its trunk: under its crown)
+    if (H.open(x, y)) out.push([x, y, 0, "tree"]);
+  }
+  if (roof)
+    for (let k = 0; k < 12; k++) {
+      const x = roof.x0 + 60 + Math.random() * (roof.x1 - roof.x0 - 120),
+        y = roof.y0 + 60 + Math.random() * (roof.y1 - roof.y0 - 120);
+      if (
+        !roof.holes.some(
+          (h) =>
+            x > h.x0 - 40 && x < h.x1 + 40 && y > h.y0 - 40 && y < h.y1 + 40,
+        )
+      )
+        out.push([x, y, roof.h, "roof"]);
+    }
+  const fit = out.filter(([x, y, z]) => {
+    if (not && Math.hypot(x - not[0], y - not[1]) < 6 * GM.DUCK) return false;
+    const ds = ducks.map((d) => Math.hypot(d.x - x, d.y - y)),
+      near = Math.min(...ds, 1e9);
+    return (
+      near > GM.SNIPE[0] * GM.DUCK * 1.3 &&
+      near < GM.SNIPE[1] * GM.DUCK * 0.8 &&
+      !ducks.some(
+        (d) =>
+          Math.abs(d.x - x) < 700 &&
+          Math.abs(d.y - y) < 500 &&
+          clearShot(d.x, d.y, x, y, Math.max(z, d.z || 0)) &&
+          !z,
+      ) // (one under a tree nobody sees from close by; the roof, nobody walks up there unseen)
+    );
+  });
+  return fit.length ? pick(fit) : null;
+}
+function newSniper(s, at) {
+  const gm = gmOf(s),
+    i = gm.n + 1,
+    hp = gm.hp0();
+  gm.n = i;
+  return {
+    i,
+    k: "sn",
+    ro: "sn",
+    x: Math.round(at[0]),
+    y: Math.round(at[1]),
+    ...(at[2] ? { z: at[2] } : {}),
+    pk: at[3],
+    hp,
+    l: [hp],
+    f: 1,
+    dk: ghillieLook(),
+    wp: { p: ["sniper", "ump"] },
+    mg: [magOf("sniper"), magOf("ump")],
+    rl: [0, 0],
+    hw: "sniper",
+    st: "perch",
+    u: 0,
+    lo: 0,
+    ad: 0,
+  };
+}
 /* soldiers: 1 squad for 1-2 players, 2 for 3-4, 3 for 5-6, 4 for 7-8, each of 4 to 7 coming in together at a spot
    nobody sees: its LMG, 1-2 with him, the rest riflemen ("One LMG for suppressive fire, 1-2 with him; the rest AK-47 /
    burst rifle move up") */
@@ -203,6 +294,24 @@ function squads(s, n, H) {
   const gm = s.hang.gm;
   gm.bk = 0;
   gm.sq = {};
+  /* now and then a lone sniper too, while there's none already */
+  if (Math.random() < GM.SNIPER && !gm.gb.some((o) => o.k === "sn" && !o.d)) {
+    const at = perch(
+      H.ids
+        .filter((id) => s.pos[id])
+        .map((id) => ({
+          x: s.pos[id].x * H.ww,
+          y: s.pos[id].y * H.wh,
+          z: +s.pos[id].z || 0,
+        })),
+      H,
+    );
+    if (at) {
+      gm.hp0 = H.hp;
+      gm.gb.push(newSniper(s, at));
+      delete gm.hp0;
+    }
+  }
   for (let q = 1; q <= Math.min(4, Math.ceil(n / 2)); q++) {
     const at = H.edge();
     if (!at) break;
@@ -266,11 +375,12 @@ function tick(s, zs, now, ids, H) {
     );
   for (const o of gm.gb) {
     if (o.d) continue;
-    if (o.k === "s") soldier(s, o, zs, ducks, pls, fieldTo, now, dt, H);
+    if (o.k === "sn") sniper(s, o, zs, ducks, now, H);
+    else if (o.k === "s") soldier(s, o, zs, ducks, pls, fieldTo, now, dt, H);
     else crim(s, o, zs, ducks, pls, fieldTo, now, dt, H);
   }
   gm.gb = gm.gb.filter((o) => !o.gone); // (soldiers who got away)
-  apart(gm.gb.filter((o) => !o.d));
+  apart(gm.gb.filter((o) => !o.d && o.k !== "sn"));
   /* the back line: one takes a fallen one's place, a moment later */
   const front = GM.FRONT * Math.max(1, ids.length),
     up = gm.gb.filter((o) => !o.d && o.k === "c").length;
@@ -549,6 +659,116 @@ function soldier(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
     if (!see) o.u = Math.min(o.u, now + 400); // (it lost sight: it moves again soon)
   }
 }
+/* the sniper's beat (the owner's, Nov 19 19:47Z): no flashlight; his long laser sits on a duck 1.5 to 2.5 s, following
+   one that moves slowly, then the shot; one shot a wave. A duck sprinting breaks it, and he moves to a new spot nobody
+   sees (away a while: nobody sees him go). A duck too near: his UMP, or his knife. Under a tree's crown zombies never
+   find him; a zombie that claws him anyway (on the roof) is shot */
+const roofOver = (x, y, z) => {
+  const d = deckOver(x, y, z);
+  return d && d.kind === "roof" ? d : null; // (a building's roof hides who's under it; the pumps' canopy doesn't)
+};
+function sniper(s, o, zs, ducks, now, H) {
+  const gm = gmOf(s),
+    h = o.z || heightAt(o.x, o.y),
+    dist = (t) => Math.hypot(t.x - o.x, t.y - o.y),
+    sees = (t) =>
+      !o.hid &&
+      clearShot(o.x, o.y, t.x, t.y, Math.max(h, t.z || 0)) &&
+      roofOver(t.x, t.y, t.z || 0) === roofOver(o.x, o.y, h),
+    move = () => {
+      o.hid = 1;
+      o.st = "move";
+      o.ld = 0;
+      o.tg = "";
+      o.u = now + rnd(...GM.MOVE_MS);
+    };
+  if (o.hid) {
+    if (now < o.u) return;
+    const at = perch(ducks, H, [o.x, o.y]);
+    if (!at) {
+      o.u = now + 2000;
+      return;
+    }
+    o.x = Math.round(at[0]);
+    o.y = Math.round(at[1]);
+    if (at[2]) o.z = at[2];
+    else delete o.z;
+    o.pk = at[3];
+    o.hid = 0;
+    o.st = "perch";
+    o.u = now + rnd(...GM.PERCH_MS);
+    return;
+  }
+  const zt = o.zc && zs.find((z) => z.i === o.zc && z.st !== 3);
+  if (zt && dist(zt) < GM.DEFEND * 1.5) {
+    o.ld = 0;
+    if (dist(zt) < GM.STAB * GM.DUCK)
+      stab(o, { z: zt, x: zt.x, y: zt.y }, now, H);
+    else shoot(s, o, { z: zt, x: zt.x, y: zt.y }, now, H, ["ump"]);
+    return;
+  }
+  if (!zt) o.zc = 0;
+  const close = ducks.find((d) => dist(d) < GM.CLOSE * GM.DUCK && sees(d));
+  if (close) {
+    o.ld = 0;
+    o.st = "close";
+    if (dist(close) < GM.STAB * GM.DUCK) stab(o, close, now, H);
+    else shoot(s, o, close, now, H, ["ump"]);
+    return;
+  }
+  if (o.st === "close") move(); // (it got away from him, or he from it: he moves on)
+  if (o.st === "aim") {
+    const t = ducks.find((d) => "p:" + d.id === o.tg);
+    if (!t || t.sp || !sees(t) || dist(t) > GM.SNIPE[1] * GM.DUCK) {
+      move(); // (it sprinted off, or went out of his sight: he moves to safety)
+      return;
+    }
+    o.ad = Math.round((Math.atan2(t.y - o.y, t.x - o.x) * 180) / Math.PI);
+    o.f = t.x < o.x ? -1 : 1;
+    o.ld = Math.round(dist(t));
+    if (now < o.u) return;
+    /* the shot */
+    o.wv = gm.wv;
+    o.hw = "sniper";
+    const hit = Math.random() < GM.SNIPE_HIT,
+      A = ARMS.sniper,
+      dmg = Array.isArray(A.dmg)
+        ? A.dmg[0] + Math.floor(Math.random() * (A.dmg[1] - A.dmg[0] + 1))
+        : +A.dmg || 4,
+      a = Math.random() * 2 * Math.PI,
+      off = hit ? 0 : 30 + Math.random() * 40;
+    o.sh = [
+      now,
+      Math.round(t.x + Math.cos(a) * off),
+      Math.round(t.y + Math.sin(a) * off * 0.5),
+    ];
+    if (hit) H.hurt(t.id, Math.round(dmg * GM.DMG * 10) / 10, "sniper");
+    move();
+    return;
+  }
+  /* on his perch: his one shot this wave, on a duck in his sights that isn't sprinting */
+  o.st = "perch";
+  o.ld = 0;
+  if (!o.u) o.u = now + rnd(...GM.PERCH_MS);
+  if (o.wv !== gm.wv && gm.k) {
+    const t = ducks
+      .filter(
+        (d) =>
+          !d.sp &&
+          dist(d) > GM.SNIPE[0] * GM.DUCK &&
+          dist(d) < GM.SNIPE[1] * GM.DUCK &&
+          sees(d),
+      )
+      .sort((a, b) => (a.j ? 1 : 0) - (b.j ? 1 : 0) || dist(a) - dist(b))[0];
+    if (t) {
+      o.st = "aim";
+      o.tg = "p:" + t.id;
+      o.u = now + rnd(...GM.LOCK_MS);
+      return;
+    }
+  }
+  if (now >= o.u) move(); // (a long while with nobody in his sights: he moves on)
+}
 /* its knife on t (a duck or a zombie): the knife's own damage, half on a duck */
 function stab(o, t, now, H) {
   o.ad = Math.round((Math.atan2(t.y - o.y, t.x - o.x) * 180) / Math.PI);
@@ -734,9 +954,10 @@ function shot(s, by, x, y, now, w, rx, ry, from, hit, H) {
   const near = gm.gb.filter(
     (o) =>
       !o.d &&
+      !o.hid &&
       !(hit && hit.includes("g" + o.i)) &&
       Math.hypot((o.x - x) / rx, (o.y - y) / ry) < 1 &&
-      (!from || !slabBetween(...from, o.x, o.y, heightAt(o.x, o.y))),
+      (!from || !slabBetween(...from, o.x, o.y, o.z || heightAt(o.x, o.y))),
   );
   if (!near.length) return false;
   near.sort(
@@ -763,8 +984,9 @@ function blast(s, by, bx, bY, r, open, now, w, H) {
   const gb = gm.gb.map((o) => {
     if (
       o.d ||
+      o.hid ||
       Math.hypot(o.x - bx, (o.y - bY) * 1.25) >= r ||
-      !open(o.x, o.y, heightAt(o.x, o.y))
+      !open(o.x, o.y, o.z || heightAt(o.x, o.y))
     )
       return o;
     const q = { ...o };
@@ -780,7 +1002,8 @@ function fire(s, by, now, inFlame, H) {
   if (!gm) return;
   let any = false;
   const gb = gm.gb.map((o) => {
-    if (o.d || now - (o.bt || 0) < GM.BURN_MS || !inFlame(o.x, o.y)) return o;
+    if (o.d || o.hid || now - (o.bt || 0) < GM.BURN_MS || !inFlame(o.x, o.y))
+      return o;
     const q = { ...o, bt: now };
     takes(s, q, by, "flamer", 1, now, H);
     any = true;
@@ -805,8 +1028,9 @@ function claw(s, i, z, dmg, now, H) {
   };
   return dead;
 }
-/* the ones a zombie may go for */
-const near = (s) => alive(s);
+/* the ones a zombie may go for (never the sniper under a tree's crown, nor while he's away: "zombies can't find him") */
+const near = (s) =>
+  alive(s).filter((o) => !o.hid && !(o.k === "sn" && o.pk === "tree"));
 
 /* what l4ddrules.js asks (every call brings H: what it lends, gmHelp) */
 L4_HOOKS.gm = { start, tick, done, shot, blast, fire, claw, near };

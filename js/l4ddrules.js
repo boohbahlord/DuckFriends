@@ -5276,7 +5276,7 @@ function moveZombies(s, zs, now, T, up) {
         id: "@g" + g.i,
         p: null,
         xy: [g.x, g.y],
-        zz: heightAt(g.x, g.y),
+        zz: g.z || heightAt(g.x, g.y),
         dk: null,
         way: null,
         goal: [g.x, g.y],
