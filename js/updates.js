@@ -9,6 +9,25 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v91",
+    version: 91,
+    date: "Nov 19, 2026",
+    title: "HP in tenths, and Sandbox on phones",
+    news: [
+      "HP can now be in tenths: a hit of 1.5 leaves a half-empty block, healing fills that block first, and any HP above 0 keeps you standing.",
+      "For Sandbox: on a phone, a Tools button under Leave Sandbox opens every Sandbox window.",
+      "For Sandbox: a spawn's key works any time, not only while Build is open.",
+      "For Sandbox: your hotbar shows all its slots from the start, the empty ones too.",
+      "For Dead Ducks Arcade: on Downpour, the dead trooper in the gas station is gone from round 12 once nobody's looking. His blood stays.",
+    ],
+    fixed: [
+      "On phones, the hotbar is back at the bottom in every mode, and switching slots shows it under your duck for a moment.",
+      "Bodies lie under every duck, its gun, its tag and its outfit.",
+      "For Dead Ducks Arcade: the body in Downpour's gas station is a dead zombie, with its head on and red bullet wounds.",
+      "For Sandbox: the behavior dropdowns in a spawn's window look right again.",
+    ],
+  },
+  {
     id: "v90",
     version: 90,
     date: "Nov 19, 2026",
