@@ -210,6 +210,7 @@ import {
   weaponName,
   wildCrying,
   isWild,
+  zombieLook,
 } from "./l4ddrules.js";
 import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
 import {
@@ -224,6 +225,7 @@ import {
   shotStop,
   POOL_SVG,
   JPOOL,
+  clawMark,
 } from "./l4dd.js";
 import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
 import { JET, jetHTML, myFuel, burnFuel } from "./jetpack.js";
@@ -379,7 +381,8 @@ import {
 import { hitsOf, zombieURL, zombieBox } from "./l4ddart.js";
 import { angelic, angelGlow } from "./powerart.js"; // (after l4ddart.js: Noah's note on an old import cycle)
 import { angelOf } from "./l4ddangel.js";
-import { pwCodes, goreFree } from "./wounds.js";
+import { BOMB } from "./jaimebomb.js";
+import { pwCodes, goreFree, BY_WOUND, newWound } from "./wounds.js";
 import { hatLayers, HAT_TOP } from "./hats.js";
 import { faceLayer } from "./faces.js";
 import { beakSVG } from "./beaks.js";
@@ -475,6 +478,7 @@ import {
   VIB,
   hitPx,
   wobble,
+  HIT,
 } from "./fxmotion.js";
 
 let R = null,
@@ -515,11 +519,22 @@ const isJustin = (id) => id === JUSTIN_ID || id === JUSTIN2;
 const bigOf = (s, id) => (isJustin(id) && isMgj(s) ? MGJ_SCALE : 1);
 /* a Jaime (Mad God Justin's, or the Jaime special's, s.jm): his look, and "Jaime" under him, never the name of the duck
    that sent him (the owner's, Nov 3) */
+const jaimeOf = (s, id) =>
+  ((isMgj(s) ? s.mgj && s.mgj.jaimes : s.jm) || {})[id] || null;
 const jaimeLook = (s, id) => ({
   ...JAIME,
   name: "Jaime",
-  bomb: !!(((isMgj(s) ? s.mgj && s.mgj.jaimes : s.jm) || {})[id] || {}).bomb,
+  bomb: !!(jaimeOf(s, id) || {}).bomb,
 }); // (the Jaime Bomb: his dynamite on, BOMB_SKIN)
+/* a Jaime's HP, as [HP, most]: a Jaime Bomb's 3, every other Jaime's 1 (rules.js, mgjrules.js; jaimebomb.js BOMB.hp),
+   shown in his tag and taken off with "−1 HP" as anyone's (the owner's, Nov 19 01:34Z). None in Quacky Zombies, where
+   nothing hurts him */
+const jaimeHp = (s, id) => {
+  const J = !isL4dd(s) && jaimeOf(s, id);
+  if (!J) return null;
+  const most = J.bomb ? BOMB.hp : 1;
+  return [Math.max(0, J.hp ?? most), most];
+};
 let padHold = false, // a phone's jump button held down (the jetpack flies)
   held = null,
   l4Slot = 0, // Quacky Zombies: the slot in hand (0 melee, 1 and 2 ranged, 3 the special), and the weapon's before the special
@@ -1127,7 +1142,9 @@ let frameNo = 0;
    Mad God Justin's (the players' and his), the board's Mad God Justin's, and the normal game's 3 (back after a while
    without a hit) on the boards and in Duck Cabin */
 function hpFull(s, id, now) {
-  const seated = s.seat.includes(id) && s.players[id];
+  const seated = s.seat.includes(id) && s.players[id],
+    jh = jaimeHp(s, id);
+  if (jh) return jh;
   if (isL4dd(s))
     return seated && s.phase === "hang"
       ? [Math.max(0, l4Hp(s, id) || 0), maxHp(s, id)]
@@ -1145,12 +1162,14 @@ function hpFull(s, id, now) {
     ];
   }
   if (id === JUSTIN_ID)
-    return boardMgj(s) && justinShown(s)
-      ? [
-          s.justin.down ? 0 : Math.max(0, s.justin.hp ?? BJ_HP),
-          s.justin.max || BJ_HP,
-        ]
-      : null;
+    return !justinShown(s)
+      ? null
+      : boardMgj(s)
+        ? [
+            s.justin.down ? 0 : Math.max(0, s.justin.hp ?? BJ_HP),
+            s.justin.max || BJ_HP,
+          ]
+        : [s.justin.down ? 0 : 1, 1]; // (Justin on the board without Mad God Justin's HP: one hit takes his 1, as always)
   if (!seated || !onBoardPhase()) return null;
   return [s.players[id].dead ? 0 : Math.max(0, PHP - phpLost(s, id, now)), PHP];
 }
@@ -1439,9 +1458,11 @@ function drawDucks(now = clockNow()) {
       wc =
         id === JUSTIN_ID && isMgj(s)
           ? mgjGore(s)
-          : s.players[id] && !g && s.pw
-            ? pwCodes(s, id, now)
-            : "", // (its wounds: wounds.js; Mad God Justin's by his HP, mgjGore)
+          : id === JUSTIN_ID
+            ? s.justin.w || ""
+            : s.players[id] && !g && s.pw
+              ? pwCodes(s, id, now)
+              : "", // (its wounds: wounds.js; Mad God Justin's by his HP, mgjGore; Justin on the board's by his hits, boardjustin.js justinHit)
       sig = JSON.stringify([
         look,
         p.name,
@@ -1576,37 +1597,50 @@ function drawDucks(now = clockNow()) {
         s.phase === "hang" &&
         (s.seat.includes(id) ||
           (isWild(s, id) && l4Hp(s, id) >= 0 && l4Hp(s, id) < maxHp(s, id))), // (Justin out there: his HP once he's hit, as anyone's; the owner's, Nov 18 15:35Z: "When Justin gets hit, his health bar shows in the zombie game")
-      bj = id === JUSTIN_ID && !g && boardMgj(s), // (the board's Mad God Justin: his 10 HP, always shown while he's up)
+      bj = id === JUSTIN_ID && !g && !isMgj(s) && !hang && justinShown(s), // (Justin on the board: the board's Mad God Justin's 10 HP, or his 1, always shown while he's up; the owner's, Nov 19 01:34Z, HP for "everything")
+      ja = !g && jaimes.includes(id) ? jaimeHp(s, id) : null, // (a Jaime: his own)
       lost =
         !l4 && !isMgj(s) && !g && s.seat.includes(id) && !dead
           ? phpLost(s, id, now)
           : 0,
       hpMax = bj
-        ? s.justin.max || BJ_HP
-        : l4
-          ? maxHp(s, id)
-          : isMgj(s)
-            ? !g && s.seat.includes(id) && s.phase === "boss"
-              ? mgjPHp(s)
-              : 0
-            : !g && s.seat.includes(id) && !dead && !isL4dd(s) && onBoardPhase()
-              ? PHP
-              : 0, // (every other mode: always shown, as in Dead Ducks Arcade; the owner's, Nov 18 16:43Z: "the health meter ... from zombies is in every game mode now")
+        ? boardMgj(s)
+          ? s.justin.max || BJ_HP
+          : 1
+        : ja
+          ? ja[1]
+          : l4
+            ? maxHp(s, id)
+            : isMgj(s)
+              ? !g && s.seat.includes(id) && s.phase === "boss"
+                ? mgjPHp(s)
+                : 0
+              : !g &&
+                  s.seat.includes(id) &&
+                  !dead &&
+                  !isL4dd(s) &&
+                  onBoardPhase()
+                ? PHP
+                : 0, // (every other mode: always shown, as in Dead Ducks Arcade; the owner's, Nov 18 16:43Z: "the health meter ... from zombies is in every game mode now")
       hp = !hpMax
         ? -1
         : bj
           ? dead
             ? -1
-            : (s.justin.hp ?? hpMax)
-          : l4
-            ? !dead && l4Hp(s, id) > 0
-              ? l4Hp(s, id)
-              : -1
-            : isMgj(s)
-              ? s.mgj && !dead
-                ? Math.max(0, hpMax - ((s.mgj.lost || {})[id] || 0))
+            : boardMgj(s)
+              ? (s.justin.hp ?? hpMax)
+              : 1
+          : ja
+            ? ja[0]
+            : l4
+              ? !dead && l4Hp(s, id) > 0
+                ? l4Hp(s, id)
                 : -1
-              : PHP - lost;
+              : isMgj(s)
+                ? s.mgj && !dead
+                  ? Math.max(0, hpMax - ((s.mgj.lost || {})[id] || 0))
+                  : -1
+                : PHP - lost;
     if (d._hp !== hp) {
       /* the normal game's bar only shows once a hit is counted, so the first HP lost comes from a full bar (the same
          flash and sound as every later one) */
@@ -1643,8 +1677,11 @@ function drawDucks(now = clockNow()) {
     const hv = !g && hpFull(s, id === JUSTIN2 ? JUSTIN_ID : id, now),
       hk = hv ? hv[1] + "/" + s.phase : "";
     const bled =
-      hv && d._hk === hk && d._hv > hv[0] && id !== JUSTIN2 ? d._hv - hv[0] : 0;
-    if (hv && d._hk === hk && d._hv !== hv[0] && id !== JUSTIN2)
+        hv && d._hk === hk && d._hv > hv[0] && id !== JUSTIN2
+          ? d._hv - hv[0]
+          : 0,
+      rose = id === JUSTIN_ID && d._hv === 0 && hv && hv[0] > 0; // (Justin back up, whole: no "+N HP" for it)
+    if (hv && d._hk === hk && d._hv !== hv[0] && id !== JUSTIN2 && !rose)
       popHP(d.querySelector(".gduck-lift"), hv[0] - d._hv, touchOnly());
     d._hk = hk;
     d._hv = hv ? hv[0] : -1;
@@ -2942,7 +2979,9 @@ function placeZombies(board, s, now) {
   const layer = $(".ducks", board),
     zb = (isMgj(s) && s.phase === "boss" && s.mz && s.mz.zb) || [];
   if (!layer || !geo) return;
-  const want = new Set(zb.map((o) => String(o.i)));
+  const want = new Set(zb.map((o) => String(o.i))),
+    fxl = $(".fxl", board),
+    ng = !!+s.options.noGore;
   for (const n of layer.querySelectorAll(".mgj-z"))
     if (!want.has(n.dataset.i)) n.remove();
   for (const o of zb) {
@@ -2951,7 +2990,11 @@ function placeZombies(board, s, now) {
       n = document.createElement("div");
       n.className = "mgj-z";
       n.dataset.i = o.i;
-      n.innerHTML = `<img alt="" draggable="false" src="${zombieURL(o.l, o.i)}">`;
+      n.innerHTML = `<img alt="" draggable="false" src="${zombieURL(o.l, o.i)}"><span class="l4z-hp"><b></b><i></i></span>`;
+      n._img = n.firstChild;
+      n._bar = n.lastChild;
+      n._w = "";
+      n._pic = "";
       layer.append(n);
     }
     const c = place(o, 0, 1),
@@ -2967,11 +3010,57 @@ function placeZombies(board, s, now) {
       st = `${c.left.toFixed(1)},${c.top.toFixed(1)},${w.toFixed(1)},${face}`;
     n._x = c.left;
     n._f = face;
-    n.classList.toggle("dead", !!o.d);
-    n.classList.toggle("claw", now - (o.a || 0) < 350);
-    if (n._hp !== undefined && o.hp < n._hp)
-      vibrate(n.querySelector("img"), hitPx(n._hp - o.hp), !!o.d); // (a wave zombie hit shakes once by the HP it lost, and once more as it dies: the owner's, Nov 17, 32)
+    const was = n._hp,
+      wc = o.w || "";
+    /* a hit, as on Dead Ducks Arcade's zombies (l4dd.js seeZombies; the owner's, Nov 19 01:34Z: "this is the new feel and
+       vibe of the game"): it shakes once by the HP it lost and once more as it dies, blinks red, "−N HP" over it, and
+       bleeds by the wound it got, an eye flying when that's what it lost */
+    if (was !== undefined && o.hp < was && !n._dead) {
+      vibrate(n._img, hitPx(was - o.hp), !!o.d);
+      if (!o.d) n._img.animate(HIT, 320);
+      popHP(n, o.hp - was, true);
+      const nw = newWound(n._w, wc);
+      fxHitAt(
+        c.left,
+        c.top,
+        box.h * k * 0.55,
+        null,
+        w,
+        BY_WOUND[nw],
+        zombieLook(o.l).color,
+      );
+      if (nw === "e" && !ng)
+        fxEye(c.left, c.top, box.h * k * 0.75, Math.random() < 0.5 ? -1 : 1);
+    }
     n._hp = o.hp;
+    n._w = wc;
+    /* its wounds on its picture (Gore off: only a knocked-off hat), made only when they change */
+    const pic = ng ? goreFree(wc) : wc;
+    if (n._pic !== pic) {
+      n._pic = pic;
+      n._img.src = zombieURL(o.l, o.i, pic);
+    }
+    /* its HP bar: shown once it's hurt, then stays; a hit's white drains to the red (css/app.css, .l4z-hp) */
+    const sh = (Math.max(0, o.hp) / (o.l[0] || 1)).toFixed(3);
+    if (n._sh !== sh) {
+      n._sh = sh;
+      n._bar.style.setProperty("--hp", sh);
+      if (+sh < 1) n.classList.add("hurt");
+    }
+    if (!!o.d !== !!n._dead) {
+      n._dead = !!o.d;
+      n.classList.toggle("dead", !!o.d);
+    } // (dead: it falls over, lies there, then fades, its 4 s as Dead Ducks Arcade's: mgjrules.js WAVE.DEAD_MS)
+    const clawing = !o.d && now - (o.a || 0) < 350;
+    n.classList.toggle("claw", clawing);
+    if (clawing && n._a !== o.a && fxl)
+      clawMark(
+        fxl,
+        c.left + (o.f || face) * w * 0.55,
+        c.top - w * 0.45,
+        k * 1.25,
+      ); // (its claw marks on the duck it swiped, as Dead Ducks Arcade's: l4dd.js clawMark)
+    n._a = o.a;
     if (n._st === st) continue;
     n._st = st;
     Object.assign(n.style, {
@@ -2983,6 +3072,7 @@ function placeZombies(board, s, now) {
     });
     n.style.setProperty("--face", face);
     n.style.setProperty("--feet", (box.feet * k).toFixed(1) + "px");
+    n.style.setProperty("--k", k.toFixed(3));
   }
 }
 /* Mad God Justin: the pickup that faded in, where it lies (it goes once taken, or when the next one comes) */
@@ -3793,7 +3883,9 @@ function playFx(f) {
     sfx.teleport();
   } else if (f.kind === "hitmark") {
     // a hit on Justin, his double (the same marker: the owner's) or a Jaime: the hitmarker
-    const at = place({ x: f.x, y: f.y }, 0, 1),
+    const at = geo.hang
+        ? world.place({ x: f.x, y: f.y }, f.hz || 0)
+        : place({ x: f.x, y: f.y }, 0, 1),
       n = el(
         `<div class="mgj-hit" style="left:${at.left.toFixed(1)}px;top:${(at.top - size * 0.5 * MGJ_SCALE).toFixed(1)}px;width:${(size * 0.55).toFixed(0)}px">${HITMARK}</div>`,
       );
@@ -4049,6 +4141,10 @@ function playFx(f) {
     setTimeout(() => word.remove(), 1200);
   } else if (f.kind === "jbomb") {
     jaimeBody(f, place, size); // (the Jaime Bomb went off: his body flies)
+  } else if (f.kind === "jdead") {
+    jaimeFell(f, place, size); // (a Jaime killed by a hit: he falls, bleeding)
+    if ((f.w || "").includes("x0") && !(f.w || "").includes("g0"))
+      playFx({ ...f, kind: "pcrit" }); // (a crit took his head off: the CRIT over him, as a duck's)
   } else if (f.kind === "eat") {
     sfx.chomp();
   } else if (f.kind === "edge") {
@@ -4267,6 +4363,40 @@ function jaimeBody(f, place, size) {
     700,
   );
   setTimeout(() => n.remove(), 7000);
+}
+
+/* a Jaime killed by a hit (rules.js, mgjrules.js: jaimebomb.js jaimeDead): as a hit duck or Dead Ducks Arcade's zombie,
+   he shakes and blinks red, bleeds, "−1 HP" rises over him, and he falls over where he stood with the wound that killed
+   him on him (Gore off: none), a pool of blood spreading under him (as under a duck that died: .gduck-pool, POOL_SVG),
+   then fades as a zombie's body does, gone in 4 s (css .jd-body). The owner's, Nov 19 01:34Z: "any NPC that can take
+   damage ... it's all going to be like that" */
+function jaimeFell(f, place, size) {
+  const fxl = S && $(".fxl", S);
+  if (!fxl) return;
+  const a = geo.hang
+      ? world.place({ x: f.x, y: f.y }, f.hz || 0)
+      : place({ x: f.x, y: f.y }, 0, 1),
+    gore = !+R.state.options.noGore,
+    wc = gore ? f.w || "" : goreFree(f.w || ""),
+    n = el(
+      `<div class="jd-body" style="left:${a.left.toFixed(1)}px;top:${a.top.toFixed(1)}px;--sz:${size.toFixed(0)}px;--f:${f.face < 0 ? -1 : 1}" aria-hidden="true">${gore ? `<span class="gduck-pool">${POOL_SVG}</span>` : ""}<b>${duckSVG(JAIME.duck, { size: 64, shadow: false, dead: true, ...(wc ? woundLook(wc) : {}) })}</b></div>`,
+    );
+  fxl.append(n);
+  const body = n.querySelector("b");
+  vibrate(body, hitPx(1), true);
+  body.animate(HIT, 320);
+  popHP(n, -1, true);
+  fxHitAt(
+    a.left,
+    a.top,
+    size * 0.42,
+    f.who && f.who[0],
+    size,
+    "small",
+    JAIME.duck.color,
+  );
+  sfx.hit();
+  setTimeout(() => n.remove(), 4000);
 }
 
 /* ---------- my duck ---------- */
