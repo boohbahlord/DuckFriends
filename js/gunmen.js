@@ -10,7 +10,9 @@ import { CAMO } from "./outfits.js";
 /* the picks, each from its number: one list per part of the look; "" is none */
 const SOLDIER = {
   colors: ["#ffd23f", "#ffd23f", "#ffd23f", "#f2c230", "#ffdc5e"], // (rubber ducks: mostly the plain yellow)
-  camo: ["woodland", "woodland", "desert", "urban"],
+  /* the camouflage they wear in the game: only what fits Downpour (the owner's, Nov 19 22:09Z: "it's not a desert").
+     Every set, desert too, stays for Sandbox's appearances (CAMO_SETS) */
+  camo: ["woodland", "urban"],
   vests: ["#3d4430", "#4a4536", "#2e3136", "#5a523c"],
   collars: ["#3b4a2a", "#7d7a4c", "#8a2a22", "#2b2e34", "#c9b37a", "#1f4f7a"],
   faces: [
@@ -64,8 +66,13 @@ const at = (list, n, salt) =>
       list.length
   ];
 
-/* kind: "soldier", "criminal" or "sniper" */
-export function gunmanLook(kind, n = 0) {
+/* every camouflage set, each with all its soldiers' variations: Sandbox's appearances (the owner's, Nov 19 22:09Z: "here
+   is the desert soldiers, and it shows all the variations of which") */
+export const CAMO_SETS = ["woodland", "urban", "desert"];
+
+/* kind: "soldier", "criminal" or "sniper". camo (soldiers): one set's name to wear only that one, or a list to pick
+   from by number; the game's own list when left out */
+export function gunmanLook(kind, n = 0, { camo: wear } = {}) {
   if (kind === "sniper")
     return {
       color: "#ffd23f",
@@ -82,7 +89,7 @@ export function gunmanLook(kind, n = 0) {
       ...(face ? { face: { ...face } } : {}),
     };
   }
-  const camo = at(SOLDIER.camo, n, 2),
+  const camo = typeof wear === "string" ? wear : at(wear || SOLDIER.camo, n, 2),
     face = at(SOLDIER.faces, n, 5);
   return {
     color: at(SOLDIER.colors, n, 1),

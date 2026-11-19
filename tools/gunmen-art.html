@@ -66,11 +66,17 @@
   <body>
     <h1>The gunmen</h1>
     <p class="sub">
-      Dead Ducks Arcade and Survival. Each gunman's look comes from his number,
-      so every screen shows the same one.
+      Dead Ducks Arcade and Survival, as the game shows them: made into pixels
+      at a Downpour duck's size on a computer (32 pixels across), shown 4 times
+      bigger here. Each gunman's look comes from his number, so every screen
+      shows the same one.
     </p>
-    <h2>Soldiers</h2>
-    <div class="grid" id="soldiers"></div>
+    <h2>Soldiers, woodland camouflage</h2>
+    <div class="grid" id="woodland"></div>
+    <h2>Soldiers, urban camouflage</h2>
+    <div class="grid" id="urban"></div>
+    <h2>Soldiers, desert camouflage (Sandbox only, not in Downpour)</h2>
+    <div class="grid" id="desert"></div>
     <h2>Criminals</h2>
     <div class="grid" id="criminals"></div>
     <h2>Hit, killed, blown apart</h2>
@@ -80,7 +86,8 @@
     <script type="module">
       import "../js/game.js"; // (first, so the modules load in the game's order)
       import { duckSVG } from "../js/duck.js";
-      import { gunmanLook } from "../js/gunmen.js";
+      import { gunmanLook, CAMO_SETS } from "../js/gunmen.js";
+      import { rasterReady } from "../js/pixel.js";
       import { hitsOf } from "../js/l4ddart.js";
       import { heldHTML } from "../js/specials.js";
       const fig = (art, name, tip) =>
@@ -105,13 +112,12 @@
         });
       };
       const N = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-      document.getElementById("soldiers").innerHTML = N.map((n) =>
-        fig(
-          duck(gunmanLook("soldier", n)),
-          "Soldier " + n,
-          what(gunmanLook("soldier", n)),
-        ),
-      ).join("");
+      for (const camo of CAMO_SETS) {
+        const L = (n) => gunmanLook("soldier", n, { camo });
+        document.getElementById(camo).innerHTML = N.slice(0, 6)
+          .map((n) => fig(duck(L(n)), "Soldier " + n, what(L(n))))
+          .join("");
+      }
       document.getElementById("criminals").innerHTML = N.map((n) =>
         fig(
           duck(gunmanLook("criminal", n)),
@@ -141,8 +147,8 @@
           "pellets and a bruise",
         ),
       ].join("");
-      const blade = (svg, w) =>
-        `<div style="width:${w}px;margin:auto">${svg.replace("<svg ", '<svg width="100%" ')}</div>`;
+      const blade = (svg, w, game) =>
+        `<div style="width:${w}px;margin:auto" data-game="${game}">${svg.replace("<svg ", '<svg width="100%" ')}</div>`;
       document.getElementById("more").innerHTML = [
         fig(
           duck(gunmanLook("sniper")),
@@ -154,13 +160,43 @@
           "Sniper, killed",
           "his suit torn where he was hit",
         ),
-        fig(blade(heldHTML("knife"), 150), "Knife", "as it is"),
+        fig(blade(heldHTML("knife"), 150, 28), "Knife", "as it is"),
         fig(
-          blade(heldHTML("sword"), 205),
+          blade(heldHTML("sword"), 205, 38),
           "Short sword",
           "redrawn: a gladius, longer, its point in the middle, a crossguard",
         ),
       ].join("");
+      /* each drawing made into pixels the game's way (pixel.js: drawn small, each pixel the average of what it covers,
+         then the game's colors), at the size the game shows it: a duck 63 css px across in Downpour on a computer, the
+         knife 28 and the short sword 38 in the hand, 2 css px to a pixel. Shown 4 times bigger, its pixels square */
+      const ZOOM = 4,
+        DUCK_GAME = 63;
+      const svgs = [...document.querySelectorAll(".ducks svg")].filter(
+        (e) => !e.ownerSVGElement,
+      );
+      await Promise.all(
+        svgs.map(async (e, i) => {
+          const r = e.getBoundingClientRect(),
+            wrap = e.closest("[data-game]"),
+            game = wrap ? +wrap.dataset.game : (DUCK_GAME * r.width) / 112,
+            copy = e.cloneNode(true);
+          copy.setAttribute("width", r.width);
+          copy.setAttribute("height", r.height);
+          copy.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+          const url = await rasterReady(
+            "g" + i,
+            copy.outerHTML,
+            game,
+            (game * r.height) / r.width,
+          );
+          const img = new Image();
+          img.src = url;
+          await img.decode();
+          img.style.cssText = `width:${img.naturalWidth * ZOOM}px;height:${img.naturalHeight * ZOOM}px;image-rendering:pixelated;align-self:center`;
+          (wrap || e).replaceWith(img);
+        }),
+      );
       document.body.dataset.ready = "1";
     </script>
   </body>
