@@ -7,7 +7,17 @@
    of Sandbox's own (registry.js only: "sandbox"). */
 import { activity } from "./hangout/registry.js";
 import { W, H, heightAt, sortY, seenFrom } from "./hangout/layout.js";
-import { npcURL, npcBox, npcName, isZombie } from "./sbnpcart.js";
+import {
+  npcURL,
+  npcBox,
+  npcName,
+  isZombie,
+  npcPics,
+  npcReady,
+  heldOf,
+  handAt,
+  npcShot,
+} from "./sbnpcart.js";
 import { goreFree } from "./wounds.js";
 import { clawMark } from "./l4dd.js";
 import { esc, openWindow, confirmBox } from "./ui.js";
@@ -17,16 +27,22 @@ import {
   sbOnBoard,
   SB_BOXES,
   SB_FLAGS,
-  SB_WHAT,
-  SB_WHAT_ZMAPS,
   SB_ACTS,
   SB_IMPORT,
   SB_PLAYER,
   SB_COLORS,
   baseMode,
 } from "./sandboxrules.js";
-import { boxText, boxWhy, spawnsHere, sbWalkOf } from "./sbspawn.js";
+import { boxText, boxWhy, spawnsHere, sbWalkOf, madeOf } from "./sbspawn.js";
 import { orbFace, lootRing, lootPage, lootWire } from "./sblootview.js";
+import {
+  kindsFor,
+  sendKinds,
+  lookPage,
+  lookFor,
+  picFrom,
+  sendPic,
+} from "./sbmake.js";
 
 /* a point's picture: the hollow ring and its middle dot (a respawn: four points on the ring too) */
 function markSVG(p) {
@@ -113,19 +129,23 @@ const summaryOf = (on) =>
   on.map((c) => c.dataset.label).join(", ") || "Nothing";
 function actRow(s, p, f, kinds) {
   const k = p.f[f],
+    what = boxText(p, "what").split(/[\s,]+/),
+    made = what.length === 1 && madeOf(s, what[0]), // (one made NPC: its own lists, sbnpcs.js)
     picked = (
       k
         ? boxText(p, f)
-        : f === "target" && boxText(p, "what").includes("zombie")
-          ? "players"
-          : ""
+        : made
+          ? made.beh[f] || ""
+          : f === "target" && what.includes("zombie")
+            ? "players"
+            : ""
     )
       .toLowerCase()
       .split(/[\s,]+/), // (never set: a zombie goes after the players, sbbrain.js)
     opts = [
       ["players", "Players"],
       ["everything", "Everything"],
-      ...kinds.map((k) => [k, SB_WHAT[k]]),
+      ...kinds,
       ...Object.values(ptsOf(s))
         .filter((q) => q.k === "spawn")
         .map((q) => [q.col, `${boxText(q, "name")} spawn`]),
@@ -160,16 +180,18 @@ export function sbSettings(getR, id, tab = "") {
     players = p.pg === "pl" || (!p.grp && tab === "pl"),
     zmaps = baseMode(R.state.options) === "l4dd",
     what = boxText(p, "what").split(/[\s,]+/),
-    kinds = Object.keys(SB_WHAT).filter(
-      (k) => !zmaps || SB_WHAT_ZMAPS.includes(k),
-    ), // (the zombie maps: zombies only, for now)
+    kinds = kindsFor(R.state, zmaps), // (the zombie maps: zombies only, for now)
+    look = spawn && !players && tab === "ap", // (its Appearance tab: sbmake.js)
     pick = boxText(p, "pick"),
     tabs = [
       [baseId, "", "Entities"],
       [baseId, "pl", "Players"],
+      [baseId, "ap", "Appearance"],
       ...pages.map(([q, P]) => [q, "", boxText(P, "name")]),
     ],
-    on = (t) => t[0] === id && (p.grp ? true : t[1] === (players ? "pl" : ""));
+    on = (t) =>
+      t[0] === id &&
+      (p.grp ? true : t[1] === (players ? "pl" : look ? "ap" : ""));
   const head = spawn
       ? `<div class="sb-tabs" role="tablist">${tabs
           .map(
@@ -193,11 +215,12 @@ export function sbSettings(getR, id, tab = "") {
     ${colorRow}
     <div class="sb-row"><span>Spawns</span><span class="sb-what">${kinds
       .map(
-        (k) =>
-          `<label><input type="checkbox" data-what="${k}"${what.includes(k) ? " checked" : ""}> ${esc(SB_WHAT[k])}</label>`,
+        ([k, n]) =>
+          `<label><input type="checkbox" data-what="${esc(k)}"${what.includes(k) ? " checked" : ""}> ${esc(n)}</label>`,
       )
       .join("")}</span></div>
-    <div class="sb-row" data-row="pick"${what.filter((k) => kinds.includes(k)).length > 1 ? "" : " hidden"}><span>Which one</span><span class="sb-what">${[
+    ${p.grp ? `<div class="sb-row"><span>Appearance</span><span class="sb-what"><button type="button" class="btn small ghost" data-ap>Change…</button></span></div>` : ""}
+    <div class="sb-row" data-row="pick"${what.filter((k) => kinds.some((x) => x[0] === k)).length > 1 ? "" : " hidden"}><span>Which one</span><span class="sb-what">${[
       ["random", "Random"],
       ["shuffle", "Shuffle"],
     ]
@@ -233,15 +256,15 @@ export function sbSettings(getR, id, tab = "") {
     ${(p.im || [])
       .map((f) =>
         SB_ACTS[f]
-          ? actRow(R.state, p, f, Object.keys(SB_WHAT))
+          ? actRow(R.state, p, f, kindsFor(R.state, false))
           : SB_FLAGS[f]
             ? flagRow(f, SB_FLAGS[f], typed(f), why(f))
             : row(f, SB_BOXES[f], typed(f), why(f)),
       )
       .join("")}`;
   const html = `<h2>${loot ? "Loot" : spawn ? "Spawn" : "Respawn"}</h2>${head}
-  <div class="sb-set">${loot ? lootPage(R.state, id, p, { row, flagRow, typed, why, colorRow }) : !spawn ? respawn() : players ? playersPage() : entity()}</div>
-  <p class="acts">${spawn && !players ? `<button type="button" class="btn" data-go>Spawn</button>` : ""}${!spawn && !loot ? `<button type="button" class="btn" data-imp>Import settings</button>` : ""}<button type="button" class="btn ghost" data-del>${p.grp ? "Delete page" : "Delete"}</button></p>`;
+  <div class="sb-set">${loot ? lootPage(R.state, id, p, { row, flagRow, typed, why, colorRow }) : !spawn ? respawn() : players ? playersPage() : look ? lookPage(R.state, p) : entity()}</div>
+  <p class="acts">${spawn && !players && !look ? `<button type="button" class="btn" data-go>Spawn</button>` : ""}${!spawn && !loot ? `<button type="button" class="btn" data-imp>Import settings</button>` : ""}<button type="button" class="btn ghost" data-del>${p.grp ? "Delete page" : "Delete"}</button></p>`;
   openWindow(html, {
     cls: "sb-setwin",
     onOpen(w, close) {
@@ -276,9 +299,36 @@ export function sbSettings(getR, id, tab = "") {
             v: on.map((c) => c.value).join(", "),
           });
         }
+        if (t.matches("[data-look]")) {
+          w.querySelectorAll(".sb-ap").forEach((l) =>
+            l.classList.toggle("on", l.contains(t)),
+          );
+          return send({ k: "look", ap: lookFor(t.dataset.look) });
+        }
+        if (t.matches("[data-up]")) {
+          const r = getR(),
+            note = w.querySelector(".sb-up-note");
+          note.textContent = "Sending…";
+          return picFrom(
+            t.files[0],
+            w.querySelector("[data-squash]").checked,
+          ).then(
+            (pic) => {
+              sendPic(r, id, pic);
+              setTimeout(() => again(id, "ap"), 400);
+            },
+            (err) => {
+              note.textContent = err.message;
+            },
+          );
+        }
         if (!t.matches("[data-what]")) return;
         const on = [...w.querySelectorAll("[data-what]:checked")];
         w.querySelector('[data-row="pick"]').hidden = on.length < 2; // (Random or Shuffle: only with more than one)
+        sendKinds(
+          getR(),
+          on.map((c) => c.dataset.what),
+        ); // (a made NPC of mine: to the room first)
         send({
           k: "set",
           f: "what",
@@ -317,6 +367,7 @@ export function sbSettings(getR, id, tab = "") {
             again(made || id);
           }, 300);
         }
+        if (e.target.closest("[data-ap]")) return again(id, "ap");
         if (e.target.closest("[data-go]")) send({ k: "go" });
         if (e.target.closest("[data-imp]"))
           importWin(getR, id, () => again(id));
@@ -476,10 +527,14 @@ function zbEl(o, layer) {
     top: (-box.feet).toFixed(1) + "px",
     transformOrigin: `${box.w / 2}px ${box.feet.toFixed(1)}px`,
   });
+  body.style.setProperty("--feet", box.feet.toFixed(1) + "px"); // (a made NPC's weapon, at its middle: css .sb-held)
   layer.append(el);
   return {
     el,
     body,
+    box,
+    rd: npcReady(o),
+    shot: o.sh ? o.sh[0] : 0, // (only shots from now on are drawn)
     img: body.firstChild,
     bar: el.querySelector(".l4z-hp"),
     nm: el.querySelector(".sb-npc-name"),
@@ -509,12 +564,17 @@ activity({
       fxl = Wd.board.querySelector(".fxl"),
       zb = (s && s.hang && s.hang.sbz && s.hang.sbz.zb) || [];
     if (!layer) return;
+    npcPics(s.sbpic); // (the room's uploaded pictures: a spawn's Appearance tab)
     const t = performance.now(),
       sc = Wd.sc,
       seen = new Set();
     for (const o of zb) {
       seen.add(o.i);
       let z = ZB.get(o.i);
+      if (z && z.rd !== npcReady(o)) {
+        z.el.remove(); // (its picture came in: its box is the picture's now)
+        z = null;
+      }
       if (!z) ZB.set(o.i, (z = zbEl(o, layer)));
       if (o.x !== z.tx || o.y !== z.ty) {
         z.fx = z.x;
@@ -548,6 +608,33 @@ activity({
       if (z.hits !== pic) {
         z.hits = pic;
         z.img.src = npcURL(o, hits);
+      }
+      /* a made NPC: the weapon in its hand, and its shots (sbarms.js) */
+      const hd = heldOf(o);
+      if ((hd && hd.w) !== z.hw) {
+        z.hw = hd && hd.w;
+        z.body.querySelector(".sb-held")?.remove();
+        if (hd)
+          z.body.insertAdjacentHTML(
+            "beforeend",
+            `<img class="sb-held" alt="" draggable="false" src="${hd.url}" style="--gw:${hd.gw}">`,
+          );
+      }
+      if (o.sh && o.sh[0] !== z.shot) {
+        const fresh = Date.now() - o.sh[0] < 1500;
+        z.shot = o.sh[0];
+        if (fresh && fxl) {
+          const hand = handAt(z.box),
+            to = Wd.toScreen(o.sh[1], o.sh[2], heightAt(o.sh[1], o.sh[2]));
+          npcShot(
+            fxl,
+            f.left + (hand.x - z.box.w / 2) * sc * (o.f || 1),
+            f.top - (z.box.feet - hand.y) * sc,
+            to.left,
+            to.top - 29 * sc,
+            o.hw,
+          );
+        }
       }
       const hp = (Math.max(0, o.hp) / (o.l[0] || 1)).toFixed(3);
       if (z.hp !== hp) {

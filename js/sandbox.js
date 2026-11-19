@@ -5,11 +5,13 @@
    window is up, the number keys pick its options instead of switching weapons, and a mouse click on an option does the
    same. The cheat sheet is "somewhat" see-through and larger than Tab's window. Only c is for everyone: the others
    belong to whoever sbCan says (the host; everyone when Democracy of Ducklings lets everyone change the settings).
-   The options inside b, m, n, h, g and p come with the later stages; for now those windows are empty. */
+   b places spawns (sbspawnview.js), m makes NPCs (sbmake.js) and p gives the rights; the options inside n, h and g come
+   with the later stages. */
 import { esc, typing, windowOpen } from "./ui.js";
 import { isSb, sbCan, SB_KEYS_TAKEN, SB_KEY_IN_BUILD } from "./sandboxrules.js";
 import { buildRows, sbNearPoint, sbSettings } from "./sbspawnview.js";
 import { boxText } from "./sbspawn.js";
+import { npcRows } from "./sbmake.js";
 import { hotRows, lootHTML, openPut, sbHotOn } from "./sbhotview.js";
 
 /* each window: its key, its title, and whether it needs the host's rights */
@@ -94,7 +96,7 @@ const rightsRows = (R) => {
 const OPTIONS = {
   c: [],
   b: buildRows,
-  m: [],
+  m: npcRows,
   n: [],
   h: (R) => hotRows(R, openPut),
   g: [],

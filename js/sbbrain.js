@@ -19,18 +19,20 @@ const words = (t) =>
     .split(/[\s,]+/)
     .filter(Boolean);
 /* the lists of spawn p for one of its NPCs, o (box(p, f): what the box says, sbspawn.js boxText; set(p, f): was it
-   ever written) */
-export function listsOf(p, o, box, set) {
-  const T = set(p, "target")
-    ? words(box(p, "target"))
-    : (o.k || "zombie") === "zombie"
-      ? ["players"]
-      : [];
+   ever written; def: a made NPC's own lists, which it keeps where the spawn wrote none: sbnpcs.js) */
+export function listsOf(p, o, box, set, def = null) {
+  const of = (f) => words(set(p, f) || !def ? box(p, f) : def[f]);
+  const T =
+    set(p, "target") || def
+      ? of("target")
+      : (o.k || "zombie") === "zombie"
+        ? ["players"]
+        : [];
   const L = {
     T,
-    I: words(box(p, "ignore")),
-    A: words(box(p, "avoid")),
-    P: words(box(p, "protect")),
+    I: of("ignore"),
+    A: of("avoid"),
+    P: of("protect"),
   };
   L.np = [L.T, L.A, L.P].some((ws) =>
     ws.some((w) => w !== "players" && w !== "player"),

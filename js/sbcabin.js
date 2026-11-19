@@ -3,7 +3,8 @@
    zombies walk (l4ddrules.js chaseField and chaseStep: the flow field over the map's own solids, then turns round
    what's in the way), never a route drawn by hand. They live in s.hang.sbz = { n, zb: [{ i, x, y (world px), hp, a (its
    last claw), f (which way it faces), l (its look: mgjrules.js zLook), sp (its spawn), sv (its speed), dm (its damage
-   box), run (it may sprint), w (its wounds), d (when it died) }] }.
+   box), run (it may sprint), w (its wounds), d (when it died), and a duck-shaped one's k, dk, nm and weapons (sbarms.js)
+   }] }.
    Shots, daggers and swings hit them as they hit Justin (hangout/rules.js hangTargets and hangHit); each takes what a
    Dead Ducks Arcade zombie takes (zombieTakes). */
 import { rule } from "./hangout/registry.js";
@@ -17,10 +18,12 @@ import {
   Z_ROOM,
   zombieTakes,
   ALL_HP,
+  clearShot,
 } from "./l4ddrules.js";
 import { hitCode } from "./wounds.js";
 import { WAVE, zLook } from "./mgjrules.js";
 import { MAD } from "./sbbrain.js";
+import { fight, keepAt } from "./sbarms.js";
 
 export const onCabin = (s) => isSb(s) && baseMode(s.options) === "hang";
 const SPRINT = { K: 1.5, FAR: 300 }; // (half as fast again, while more than 300 px off)
@@ -59,7 +62,7 @@ export function cabinSpawn(s, x, y, o) {
           sv: o.sv,
           dm: o.dm,
           ...(o.run ? { run: 1 } : {}),
-          ...(o.k ? { k: o.k, dk: o.dk, ...(o.nm ? { nm: o.nm } : {}) } : {}),
+          ...(o.look || {}), // (its kind, look, name and weapons: sbspawn.js makeOne)
         },
       ],
     },
@@ -125,14 +128,26 @@ export function cabinTick(s, now, H0) {
         v * dt,
         pls,
       );
-    } else if (bd > CLAW * 0.9)
-      chaseStep(o, fieldTo(to), [to.x, to.y], v * dt, pls);
+    } else if (
+      bd > (d.foe ? keepAt(o, CLAW) : CLAW * 0.9) ||
+      (d.foe && o.wp && bd > CLAW && !sees(o, to))
+    )
+      chaseStep(o, fieldTo(to), [to.x, to.y], v * dt, pls); // (a gun keeps its distance, once nothing's in the way: sbarms.js)
     if (Math.abs(o.x - x0) > 0.5) o.f = o.x > x0 ? 1 : -1;
-    if (d.foe && bd <= CLAW && now - o.a >= WAVE.CLAW_MS) {
-      o.a = now;
+    if (
+      d.foe &&
+      fight(
+        o,
+        to,
+        bd,
+        CLAW,
+        now,
+        WAVE.CLAW_MS,
+        (dm, w) => H0.strike(s, now, me, d.foe, Hs, o, dm, w),
+        (t) => sees(o, t),
+      )
+    )
       o.f = to.x < o.x ? -1 : 1;
-      H0.strike(s, now, me, d.foe, Hs, o);
-    }
   }
   apart(live, RX, RY);
   for (const o of live) {
@@ -149,6 +164,8 @@ export function cabinTick(s, now, H0) {
   };
   return true;
 }
+/* a made NPC's shot from o to t goes through no wall */
+const sees = (o, t) => clearShot(o.x, o.y, t.x, t.y, heightAt(o.x, o.y));
 /* never in each other: two too close are pushed apart, each only against a few in its own and the next cells */
 function apart(live, RX, RY) {
   const grid = new Map(),

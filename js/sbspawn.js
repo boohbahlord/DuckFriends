@@ -41,6 +41,7 @@ import { onCabin, cabinLive, cabinSpawn, cabinTick } from "./sbcabin.js";
 import { listsOf, decide, MAD } from "./sbbrain.js";
 import { botDuck } from "./botduck.js";
 import { JUSTIN } from "./hangout/npcart.js";
+import { armUp, cleanArms, fight, keepAt } from "./sbarms.js";
 
 /* the boxes that aren't numbers: the name over it, its key, what spawns, and a respawn's "who" */
 export const SB_TEXT = {
@@ -62,10 +63,11 @@ export const SB_TEXT = {
   what: {
     name: "Spawns",
     check: (t) =>
-      words(t).every((w) => SB_WHAT[w]) && words(t).length
+      words(t).every((w) => SB_WHAT[w] || /^c:[a-z0-9]{1,24}$/.test(w)) &&
+      words(t).length
         ? ""
         : `Pick from: ${Object.keys(SB_WHAT).join(", ")}`,
-  },
+  }, // (and made NPCs, "c:" and their id: madeOf)
   who: {
     name: "Who respawns here",
     check: (t) =>
@@ -141,11 +143,53 @@ export function liveNpcs(s) {
   return baseMode(s.options) === "l4dd" ? l4Live(s) : [];
 }
 
+/* ---------- made NPCs (stage 3: the m window, sbnpcs.js) ----------
+   A player's made NPC comes into the room when a spawn takes it (the "npc" action): s.sb.cn = { id: { name, duck, w,
+   beh } }. Its kind is "c:" and its id. Pictures (a made duck's own picture, a spawn's uploaded one) are kept once each in
+   s.sbpic = { key: { d (the picture), a (its height over its width) } }, a part of the state that goes to the players
+   once (online.js EACH), and the NPCs only name them: a duck's picture is "#" and its key, an uploaded look o.im */
+export const madeOf = (s, k) =>
+  (String(k || "").startsWith("c:") &&
+    s.sb &&
+    s.sb.cn &&
+    s.sb.cn[k.slice(2)]) ||
+  null;
+export const SB_PIC = {
+  MOST: 2 * 1024 * 1024, // (the owner's, Nov 19 01:57Z: 2 MB at most)
+  PART: 150000, // (letters a part: an online action is less than 200,000: database.rules.json)
+  PARTS: 20,
+  KEEP: 12, // (the most pictures in a room)
+};
+/* a key for a picture (FNV-1a over its text, and its length) */
+export function picKey(t) {
+  let h = 2166136261;
+  for (let i = 0; i < t.length; i++) {
+    h ^= t.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0).toString(36) + t.length.toString(36);
+}
+const isPic = (d) =>
+  typeof d === "string" && /^data:image\/(png|jpeg|gif|webp);base64,/.test(d);
+/* a look as a player sent it, cleaned and made small: its own picture (if any) kept apart in s.sbpic */
+function cleanLook(s, dk) {
+  if (!dk || typeof dk !== "object" || Array.isArray(dk)) return null;
+  const D = { ...dk, keys: [] };
+  if (isPic(D.image) && D.image.length < 400000) {
+    const h = picKey(D.image),
+      imgs = s.sbpic || {};
+    if (!imgs[h] && Object.keys(imgs).length < SB_PIC.KEEP)
+      s.sbpic = { ...imgs, [h]: { d: D.image, a: 1 } };
+    D.image = (s.sbpic || {})[h] ? "#" + h : null;
+  } else D.image = null;
+  return JSON.stringify(D).length < 6000 ? D : null;
+}
+
 /* ---------- making one ---------- */
 /* the kind spawn id makes next: its one kind, or with more than one, any of them (Random) or each once in a random order
    before any again (Shuffle: its bag in s.sb.bag). The zombie maps make only zombies (SB_WHAT_ZMAPS) */
 function kindFor(s, id, p) {
-  let ks = words(boxText(p, "what")).filter((k) => SB_WHAT[k]);
+  let ks = words(boxText(p, "what")).filter((k) => SB_WHAT[k] || madeOf(s, k));
   if (baseMode(s.options) === "l4dd")
     ks = ks.filter((k) => SB_WHAT_ZMAPS.includes(k));
   if (ks.length < 2) return ks[0] || null;
@@ -162,6 +206,8 @@ function kindFor(s, id, p) {
 /* what a duck-shaped NPC wears, and the name over it: a Blank NPC a random look, Justin his, a Test NPC a computer's
    look and name */
 function dressFor(s, k) {
+  const c = madeOf(s, k);
+  if (c) return { dk: { ...c.duck }, nm: c.name, ...armUp(c.w) }; // (a made NPC: its look, its name and its weapons)
   if (k === "justin") return { dk: { ...JUSTIN }, nm: "Justin" };
   if (k === "blank") return { dk: botDuck() };
   if (k === "test") {
@@ -171,6 +217,17 @@ function dressFor(s, k) {
     s.sb = { ...s.sb, tn: n };
     return { dk: botDuck(), nm: "Computer-" + n };
   }
+  return {};
+}
+/* what a spawn's Appearance tab puts on what it spawns (p.ap): a duck's look (dk: a made NPC's, or the player's own), an
+   NPC's (k: a zombie, Justin, or a random duck as a Blank or Test NPC wears), or an uploaded picture (im) */
+function lookOf(ap) {
+  if (!ap) return {};
+  if (ap.im) return { im: ap.im };
+  if (ap.dk) return { dk: { ...ap.dk } };
+  if (ap.k === "zombie") return { zl: 1 };
+  if (ap.k === "justin") return { dk: { ...JUSTIN } };
+  if (ap.k === "blank" || ap.k === "test") return { dk: botDuck() };
   return {};
 }
 /* one NPC from spawn id at (x, y) (its spawn, or a respawn); false at the cap */
@@ -185,6 +242,7 @@ function makeOne(s, id, at) {
     dm = boxText(by("damage"), "damage"),
     kind = {
       ...(k === "zombie" ? {} : { k, ...dressFor(s, k) }),
+      ...lookOf(p.ap),
       ...(at.id && (at.im || []).length ? { rp: at.id } : {}), // (its behavior lists too: think)
     };
   let i;
@@ -213,7 +271,7 @@ function makeOne(s, id, at) {
       dm,
       sp: id,
       run: flag(by("sprint"), "sprint"),
-      ...kind,
+      look: kind,
     });
   else i = l4Spawn(s, at.x, at.y, { hp, speed: sv, sp: id, dm });
   if (!i) return false;
@@ -276,6 +334,63 @@ export function sbAct(s, a, now) {
         },
       },
     };
+    return true;
+  }
+  /* a made NPC comes into the room (or comes again, changed): its look, name, weapons and behavior */
+  if (a.k === "npc") {
+    const n = a.n || {},
+      id = String(n.id || ""),
+      cn = (s.sb && s.sb.cn) || {};
+    if (!/^[a-z0-9]{1,24}$/.test(id)) return false;
+    if (!cn[id] && Object.keys(cn).length >= 50) return false;
+    const duck = cleanLook(s, n.duck);
+    if (!duck) return false;
+    const beh = {};
+    for (const f of Object.keys(SB_ACTS))
+      beh[f] = String((n.beh || {})[f] || "").slice(0, 200);
+    s.sb = {
+      ...s.sb,
+      cn: {
+        ...cn,
+        [id]: {
+          name:
+            String(n.name || "NPC")
+              .trim()
+              .slice(0, 20) || "NPC",
+          duck,
+          w: cleanArms(n.w),
+          beh,
+        },
+      },
+    };
+    return true;
+  }
+  /* a part of an uploaded picture (the parts come one by one, each under an online action's size); the host keeps the
+     parts to itself (s.hidden) until the last one is in */
+  if (a.k === "pic") {
+    const h = String(a.h || ""),
+      of = Math.floor(+a.of),
+      n = Math.floor(+a.n),
+      imgs = s.sbpic || {};
+    if (!/^[a-z0-9]{1,24}$/.test(h) || imgs[h]) return false;
+    if (!(of >= 1 && of <= SB_PIC.PARTS && n >= 0 && n < of)) return false;
+    if (typeof a.d !== "string" || a.d.length > SB_PIC.PART) return false;
+    if (Object.keys(imgs).length >= SB_PIC.KEEP) return false;
+    const hid = s.hidden || {},
+      up = { ...(hid.sbup || {}) },
+      parts = [...(up[h] || [])];
+    parts[n] = a.d;
+    up[h] = parts;
+    if (parts.filter((x) => typeof x === "string").length === of) {
+      const d = parts.join("");
+      delete up[h];
+      if (isPic(d) && d.length <= SB_PIC.MOST * 1.4)
+        s.sbpic = {
+          ...imgs,
+          [h]: { d, a: Math.min(4, Math.max(0.25, +a.a || 1)) },
+        };
+    }
+    s.hidden = { ...hid, sbup: up };
     return true;
   }
   const p = pts[a.p];
@@ -359,6 +474,28 @@ export function sbAct(s, a, now) {
         },
       },
     };
+    return true;
+  }
+  /* the spawn's Appearance tab: what those it spawns look like (null: their own look) */
+  if (a.k === "look") {
+    if (p.k !== "spawn" || p.pg === "pl") return false;
+    const v = a.ap || {},
+      ap = v.im
+        ? (s.sbpic || {})[v.im]
+          ? { im: String(v.im) }
+          : null
+        : v.dk
+          ? (() => {
+              const dk = cleanLook(s, v.dk),
+                from = String(v.from || "").slice(0, 30); // (which one it was, for the tab: "me" or a made NPC's kind)
+              return dk && { dk, ...(from ? { from } : {}) };
+            })()
+          : SB_WHAT[v.k]
+            ? { k: v.k }
+            : null,
+      q = { ...p, ...(ap ? { ap } : {}) };
+    if (!ap) delete q.ap;
+    s.sb = { ...s.sb, pts: { ...pts, [a.p]: q } };
     return true;
   }
   if (a.k === "go") return press(s, a.p, now);
@@ -549,6 +686,7 @@ export function think(s, now, npcs, at, H, far, duckAt) {
             o,
             (p, f) => (of(p, f).col ? boxText(of(p, f), f) : ""),
             (p, f) => set(of(p, f), f),
+            (madeOf(s, o.k) || {}).beh, // (a made NPC: its own lists, where the spawn set none)
           ),
         );
       return memo.get(k);
@@ -582,11 +720,14 @@ export function think(s, now, npcs, at, H, far, duckAt) {
     return { me, o: me.o, d };
   });
 }
-/* a claw of NPC o (thing me) on foe: a duck loses HP as from a zombie (H.claw); an NPC loses it too, and goes after
-   whoever clawed it (sbbrain.js MAD) */
-export function strike(s, now, me, foe, H, o) {
-  const dmg = Math.max(0.1, valueOf({ ok: o.dm }, SB_BOXES.damage) || 1);
-  if (foe.duck) return H.claw(s, foe.id, dmg, now);
+/* a blow of NPC o (thing me) on foe: its claw (the spawn's damage box), or d from one of its weapons (w: sbarms.js). A
+   duck loses HP as from a zombie (H.claw); an NPC loses it too, and goes after whoever hit it (sbbrain.js MAD) */
+export function strike(s, now, me, foe, H, o, d = null, w = "claw") {
+  const dmg = Math.max(
+    0.1,
+    d != null ? d : valueOf({ ok: o.dm }, SB_BOXES.damage) || 1,
+  );
+  if (foe.duck) return H.claw(s, foe.id, dmg, now, w);
   const q = foe.o;
   if (!q || q.d) return;
   q.hp = Math.max(0, Math.round((q.hp - dmg) * 10) / 10);
@@ -613,23 +754,29 @@ function boardTick(s, now, H) {
   )) {
     const to = d.goal || d.flee;
     if (!to) continue;
-    const bd = far(me, to),
+    const x0 = o.x,
+      bd = far(me, to),
       sp = WAVE.SPEED * (o.sv || 1) * (o.run && bd > 4 ? 1.5 : 1); // (can sprint: half as fast again while far off)
     if (d.flee) {
       const go = Math.min(1, (sp * dt) / Math.max(bd, 1e-3));
       o.x = Math.min(0.99, Math.max(0.01, o.x - (to.x - o.x) * go));
       o.y = Math.min(0.97, Math.max(0.03, o.y - (to.y - o.y) * go));
       ch = true;
-    } else if (bd > WAVE.CLAW * 0.8) {
-      const go = Math.min(bd - WAVE.CLAW * 0.8, sp * dt) / bd;
+    } else if (bd > (d.foe ? keepAt(o, WAVE.CLAW) : WAVE.CLAW * 0.8)) {
+      const stop = d.foe ? keepAt(o, WAVE.CLAW) : WAVE.CLAW * 0.8, // (a gun keeps its distance: sbarms.js)
+        go = Math.min(bd - stop, sp * dt) / bd;
       o.x += (to.x - o.x) * go;
       o.y += (to.y - o.y) * go;
       ch = true;
     }
-    if (d.foe && bd <= WAVE.CLAW && now - o.a >= WAVE.CLAW_MS) {
-      o.a = now;
+    if (o.wp && Math.abs(o.x - x0) > 1e-4) o.f = o.x > x0 ? 1 : -1; // (a made NPC's weapon points the way it goes, or at what it hits)
+    if (
+      d.foe &&
+      fight(o, to, bd, WAVE.CLAW, now, WAVE.CLAW_MS, (dm, w) =>
+        strike(s, now, me, d.foe, H, o, dm, w),
+      )
+    ) {
       o.f = to.x < o.x ? -1 : 1;
-      strike(s, now, me, d.foe, H, o);
       ch = true;
     }
   }

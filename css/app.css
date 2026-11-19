@@ -14551,6 +14551,78 @@ html.moving .board.quake {
 .l4z.dead .sb-npc-name {
   display: none;
 }
+/* a made NPC's weapon (sbnpcart.js heldOf): in front of it at its middle, as long as the weapon is in a duck's hand
+   (css .held i), turned the way it faces. On the board its box is the duck's width (--k: 64 px of the drawing); on Duck
+   Cabin it sits in the body, which turns with it */
+/* a spawn's Appearance tab (sbmake.js): Customize's tiles, the picked one outlined as a picked tile is */
+.sb-aps {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5.2rem, 1fr));
+  gap: 0.4rem;
+  margin: 0.4rem 0 0.6rem;
+}
+.sb-ap {
+  min-height: 4.8rem;
+}
+.sb-ap input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.sb-ap.on {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 0.14rem var(--blue);
+  background: color-mix(in srgb, var(--blue) 12%, var(--panel));
+}
+.sb-ap:focus-within {
+  outline: 0.14rem solid var(--ink);
+  outline-offset: 0.1rem;
+}
+.sb-ap-pic {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 2.8rem;
+}
+.sb-ap-pic svg,
+.sb-ap-pic img {
+  width: auto;
+  height: 100%;
+  max-height: 2.8rem;
+}
+.sb-ap-own {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+.sb-up-pic {
+  max-height: 2.4rem;
+  border-radius: 0.3rem;
+}
+/* Make an NPC's Randomize appearance (over the menu) and Delete (under it): apart from the rows */
+.arm-rand {
+  margin: 0.3rem 0 0.5rem;
+}
+.mgj-z img.sb-held,
+.l4z-body img.sb-held {
+  position: absolute;
+  height: auto;
+  animation: none;
+  transition: none;
+  filter: drop-shadow(0 0.08rem 0.08rem #0006);
+  pointer-events: none;
+}
+.mgj-z img.sb-held {
+  left: calc(50% + 42% * var(--face, 1));
+  top: calc(var(--feet, 85%) - var(--k, 1) * 28.8px);
+  width: calc(var(--k, 1) * 64px * var(--gw, 0.34));
+  transform: translate(-50%, -50%) scaleX(var(--face, 1));
+}
+.l4z-body img.sb-held {
+  left: 92%;
+  top: calc(var(--feet) - 28.8px);
+  width: calc(64px * var(--gw, 0.34));
+  transform: translate(-50%, -50%);
+}
 /* Mad God Justin's pickups: a glowing token that fades in where it lies, bobbing a little */
 .mgj-pick {
   position: absolute;
