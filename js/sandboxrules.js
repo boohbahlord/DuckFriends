@@ -219,7 +219,16 @@ export function sbZoneSpot(s, p, W = 1, H = 1, ok = null) {
       x = Math.min(0.99, Math.max(0.01, x));
       y = Math.min(0.97, Math.max(0.03, y));
     }
-    if (!ok || ok(x, y, z)) return { x: +x.toFixed(4), y: +y.toFixed(4), z };
+    // (rounded to 4 places, never out past the zone's edge: the rounding could take it 0.00005 outside)
+    x = Math.min(
+      Math.floor(x1 * 1e4) / 1e4,
+      Math.max(Math.ceil(x0 * 1e4) / 1e4, +x.toFixed(4)),
+    );
+    y = Math.min(
+      Math.floor(y1 * 1e4) / 1e4,
+      Math.max(Math.ceil(y0 * 1e4) / 1e4, +y.toFixed(4)),
+    );
+    if (!ok || ok(x, y, z)) return { x, y, z };
   }
   return { x: p.x, y: p.y, z };
 }
