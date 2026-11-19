@@ -729,6 +729,46 @@ SOUNDS = {
         rate=0.92,
         credit=("artisticdude, Zombies Sound Pack", OGA_URL["zombies"]),
     ),
+    # Sandbox: something set down in build mode (a spawn, a respawn, a zone, loot), a soft knock; cut or deleted, the
+    # same knock played backwards and quieter
+    "sbPlace": dict(
+        layers=[("kn:jump-land/impactSoft_medium_000.ogg", 0, 0.3, 0, 1)],
+        rate=1.15,
+        lp=3000,
+        room=False,
+        credit=(
+            "Kenney, Impact Sounds (impactSoft_medium)",
+            "https://kenney.nl/assets/impact-sounds",
+        ),
+    ),
+    "sbCut": dict(
+        layers=[("kn:jump-land/impactSoft_medium_000.ogg", 0, 0.3, 0, 1)],
+        rate=1.15,
+        lp=2400,
+        pre="areverse",
+        fin=0.02,
+        room=False,
+        credit=(
+            "Kenney, Impact Sounds (impactSoft_medium)",
+            "https://kenney.nl/assets/impact-sounds",
+        ),
+    ),
+    # Sandbox: a loot orb coming (taking one is Dead Ducks Arcade's dropGot); cheat mode on and off
+    "sbOrb": dict(
+        sf="orb",
+        lp=5000,
+        credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
+    ),
+    "cheatOn": dict(
+        sf="cheat_on",
+        lp=4000,
+        credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
+    ),
+    "cheatOff": dict(
+        sf="cheat_off",
+        lp=4000,
+        credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
+    ),
     # Survival's defibrillator bringing a dead duck back, at once (no charging up): a short electric whine, then the
     # shock, a heavy soft thump with a snap of sparks on it
     "defib": dict(
