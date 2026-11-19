@@ -19974,6 +19974,10 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   background: color-mix(in srgb, var(--panel) 60%, transparent);
   cursor: pointer;
 }
+/* the mouse closes a window too (the owner's file: every window can also be clicked with the mouse) */
+.sb-win .sb-x {
+  display: grid;
+}
 /* a phone's Tools button under Leave Sandbox (js/sandbox.js): its list of the windows drops under it */
 .game .sb-tools {
   position: fixed;
@@ -20064,9 +20068,6 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 @media not all and (any-pointer: fine) {
   html:not(.keyboard) .game .sb-tools:not([hidden]) {
     display: flex;
-  }
-  html:not(.keyboard) .sb-x {
-    display: grid;
   }
   html:not(.keyboard) .sb-win .sb-tip,
   html:not(.keyboard) .sb-opt kbd {

@@ -43,9 +43,14 @@ export const BB_DO = {
 };
 
 const clamp = (v, b) => {
-  const n = +v;
+  const n = v === "" || v == null ? NaN : +v; // (an emptied box: its default)
   if (!Number.isFinite(n)) return b.def;
   return Math.round(Math.min(b.max, Math.max(b.min, n)) * 10) / 10;
+};
+/* a row's chance in whole percents, 1 to 100: left empty, 100 (every time); 0 or less is 1, never "every time" */
+const chanceOf = (v) => {
+  const n = v === "" || v == null ? 100 : +v;
+  return Number.isFinite(n) ? Math.round(Math.min(100, Math.max(1, n))) : 100;
 };
 /* words to say: kept as typed (in single quotes, so nothing in them is worked out) */
 const words = (t) =>
@@ -83,7 +88,7 @@ export function bbCode(rows) {
     .map((r) => ({
       on: r.on,
       ...(BB_WHEN[r.on][2] ? { n: clamp(r.n, BB_WHEN[r.on][2]) } : {}),
-      ch: Math.round(Math.min(100, Math.max(1, +r.ch || 100))),
+      ch: chanceOf(r.ch),
       acts: (r.acts || [])
         .filter((a) => BB_DO[a.k])
         .map((a) => ({ k: a.k, ...(a.v != null ? { v: a.v } : {}) })),
@@ -262,6 +267,15 @@ export async function openBrainBuilder(done) {
           if (t.matches("[data-k]")) {
             rows[i].acts[j] = { k: t.value };
             return paint();
+          }
+          /* a number box left past its limits shows the number the brain will use */
+          if (t.matches("[data-n]"))
+            t.value = clamp(t.value, BB_WHEN[rows[i].on][2]);
+          if (t.matches("[data-ch]")) t.value = chanceOf(t.value);
+          if (t.matches("[data-v]") && t.type === "number") {
+            const b = BB_DO[rows[i].acts[j].k][1];
+            t.value = rows[i].acts[j].v = clamp(t.value, b);
+            check();
           }
           if (t.matches("[data-bopen]")) {
             const f = mine.find((x) => x.name === t.value);
