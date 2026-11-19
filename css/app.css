@@ -20525,8 +20525,41 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   border: 0.12rem solid var(--line);
   border-radius: 0.45rem;
 }
+/* the left side, as File Explorer: Back, Forward and the path bar over one folder's files (js/numeratwin.js) */
+.nm-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.nm-arrow {
+  flex: none;
+  min-width: 2.2rem;
+  padding-inline: 0.4rem;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+.nm-arrow:disabled {
+  opacity: 0.35;
+}
+.nm-go {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+.nm-addr {
+  flex: 1;
+  width: 100%;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.45rem;
+}
+.nm-note {
+  padding: 0.2rem 0.5rem;
+  color: var(--dim);
+  font-size: 0.85rem;
+  font-weight: 200;
+}
 .nm-item {
-  padding: 0.2rem 0.5rem 0.2rem calc(0.5rem + var(--d) * 0.9rem);
+  padding: 0.2rem 0.5rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -20585,10 +20618,11 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   overflow: hidden;
   text-align: right;
   font: inherit;
-  font-weight: 200;
+  font-weight: 400;
   line-height: 1.5;
-  color: var(--dim);
-  border-right: 0.1rem solid var(--line);
+  color: color-mix(in srgb, currentColor 72%, transparent);
+  background: color-mix(in srgb, currentColor 7%, transparent);
+  border-right: 0.12rem solid var(--line); /* (clearly seen on a phone and a computer: the owner wasn't sure he saw them, Nov 19 17:17Z) */
   user-select: none;
   -webkit-user-select: none;
 }

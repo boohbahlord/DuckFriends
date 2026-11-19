@@ -10,6 +10,7 @@
    with the later stages.
    A phone has no keys: a Tools button under Leave Sandbox lists the windows, a tap on one keeps it up, and its × puts it
    away (the owner's answer 7, Nov 19 10:22Z: "you can start working on i now"). */
+import { LANG } from "./langname.js";
 import { esc, typing, windowOpen } from "./ui.js";
 import { isSb, sbMay, SB_KEYS_TAKEN, SB_KEY_IN_BUILD } from "./sandboxrules.js";
 import {
@@ -30,7 +31,7 @@ export const SB_WINS = {
   c: { name: "Cheat sheet", all: true },
   b: { name: "Build" },
   m: { name: "Make an NPC" },
-  n: { name: "Numberat" },
+  n: { name: LANG },
   h: { name: "Hotbar", all: true }, // (its rows say who may do what: sbhotview.js hotRows)
   g: { name: "Game settings" },
   p: { name: "Player settings" },
@@ -46,7 +47,7 @@ export const SB_SHEET = [
   ["M", "Make an NPC: its look, its weapons and who it goes after."],
   [
     "N",
-    "Numberat: your files, kept on this device, with a terminal line. Run a file there, or chmod +x it and ./file it. Numberat only runs in Sandbox.",
+    `${LANG}: your files, kept on this device, with a terminal line. Run a file there, or chmod +x it and ./file it. ${LANG} only runs in Sandbox.`,
   ],
   [
     "H",
@@ -54,7 +55,7 @@ export const SB_SHEET = [
   ],
   [
     "G",
-    "Game settings for this Sandbox: where Numberat files are brought in to run.",
+    `Game settings for this Sandbox: where ${LANG} files are brought in to run.`,
   ],
   ["P", "Player settings: who else may change Sandbox."],
   [
