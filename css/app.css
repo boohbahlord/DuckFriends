@@ -3209,6 +3209,14 @@ html:not(.keyboard) .l4-board .gduck:not(.mine) .gduck-name > .rainbow {
     opacity: 0;
   }
 }
+@keyframes php-lost-b {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
 .gduck-done {
   position: absolute;
   top: -0.2rem;
@@ -4542,11 +4550,12 @@ html.moving .cl-sq {
 /* The King's Festival (vellum.js): only the vellum, its edges a little darker, as on the book's page; tiles as
    see-through as on every map, names on dark plates */
 .scene.vellum {
-  background: #ba966c url(../assets/maps/vellum/vellum.webp) center / cover
+  background: #ba966c url(../assets/px/maps/vellum.webp) center / cover
     no-repeat;
 }
 .mini-map.mm-vellum {
-  background: #ba966c url(../assets/maps/vellum/vellum.webp) center / cover;
+  background: #ba966c url(../assets/px/maps/vellum.webp) center / cover;
+  image-rendering: pixelated; /* (already pixels: tools/pixel-files.cjs) */
 }
 .vl-edge,
 .mm-vellum::after {
@@ -9899,10 +9908,12 @@ html.moving .ec-glow {
   pointer-events: none;
 }
 .mm-rabbit {
-  background: url(../assets/maps/rabbit-hole.jpg) center / cover;
+  background: url(../assets/px/maps/rabbit-hole.webp) center / cover;
+  image-rendering: pixelated; /* (already pixels: tools/pixel-files.cjs) */
 }
 .mm-stars {
-  background: url(../assets/maps/starry-night.jpg) center / cover;
+  background: url(../assets/px/maps/starry-night.webp) center / cover;
+  image-rendering: pixelated; /* (already pixels: tools/pixel-files.cjs) */
 }
 html.moving .mm-rabbit {
   animation: rhspin 40s linear infinite;
@@ -14232,8 +14243,25 @@ html.moving .eye-zap {
 .hang-npc.hurt .hang-npc-body {
   animation: hurt 0.4s step-end;
 }
+.gduck.hurt-b .gduck-body {
+  animation: hurt-b 0.4s step-end;
+} /* (the same flash, swapped with hurt to start it over: game.js hurt()) */
 /* (the red filters are in index.html: the owner wanted it see-through, the duck showing under it) */
 @keyframes hurt {
+  from {
+    filter: url(#hurt3);
+  }
+  35% {
+    filter: url(#hurt2);
+  }
+  65% {
+    filter: url(#hurt1);
+  }
+  90% {
+    filter: none;
+  }
+}
+@keyframes hurt-b {
   from {
     filter: url(#hurt3);
   }
@@ -17765,7 +17793,23 @@ html.pixel .hurt-edge:not(.px-own) {
   visibility: visible;
   animation: hurtedge 0.7s ease-out;
 }
+.hurt-edge.on-b {
+  visibility: visible;
+  animation: hurtedge-b 0.7s ease-out;
+} /* (the same, swapped with on to start it over: hpmeter.js blink) */
 @keyframes hurtedge {
+  0% {
+    opacity: 0;
+  }
+  12%,
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes hurtedge-b {
   0% {
     opacity: 0;
   }
@@ -18910,8 +18954,21 @@ html.pixel .nm * {
   font-family: "Cascadia Code", Consolas, monospace !important;
   font-size-adjust: none;
 }
-html.pixel img.px {
+html.pixel img.px,
+img[data-pxready] {
   image-rendering: pixelated;
+} /* (data-pxready: made as pixels ahead of time, tools/pixel-files.cjs) */
+/* a picture is never seen as itself first, only as its pixels (the owner's, Nov 19 17:00Z): hidden until pixel.js has
+   made them (data-pxok), or until it's one made as pixels ahead of time (tools/pixel-files.cjs). Not a map's: the
+   filter or pxbake.js make those into pixels where they are */
+html.pixel
+  img:not(.px, [data-pxok]):not(
+    .map-layer img,
+    #shapes img,
+    [data-nopx] img,
+    .hurt-edge img
+  ) {
+  opacity: 0 !important;
 }
 html.pixel .map-layer:not(.px-own),
 html.pixel #shapes:not(.px-own),
@@ -19449,13 +19506,6 @@ html.pixel.armed :is(.board, .hang-board) {
   color: #1c1c28;
 }
 /* Downpour's rain (l4ddrain.js): just over the dark, under the HUD and the minimap */
-.hang-board.l4-board .l4-rain {
-  position: absolute;
-  left: 0;
-  top: 0;
-  z-index: 24001;
-  pointer-events: none;
-}
 /* the outlines of every zombie game (outlines.js): on the pixel grid, over the board; in Dead Ducks Arcade over the dark
    and the rain too, under the mud and the HUD */
 .ol-px {
@@ -19950,6 +20000,13 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   pointer-events: none;
   opacity: 0.8;
   filter: drop-shadow(0 0.25rem 0.3rem #0008);
+}
+/* while something rides on the mouse or finger, a drag on the map is the placing and nothing else: the page never scrolls or
+   pans under it (the owner, Nov 19 17:15Z: the board moving while he placed a spawn) */
+.sb-placing,
+.sb-placing .board {
+  touch-action: none;
+  overscroll-behavior: none;
 }
 .sb-ghost[hidden] {
   display: none;
@@ -20484,8 +20541,41 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   border: 0.12rem solid var(--line);
   border-radius: 0.45rem;
 }
+/* the left side, as File Explorer: Back, Forward and the path bar over one folder's files (js/numeratwin.js) */
+.nm-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.nm-arrow {
+  flex: none;
+  min-width: 2.2rem;
+  padding-inline: 0.4rem;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+.nm-arrow:disabled {
+  opacity: 0.35;
+}
+.nm-go {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+.nm-addr {
+  flex: 1;
+  width: 100%;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.45rem;
+}
+.nm-note {
+  padding: 0.2rem 0.5rem;
+  color: var(--dim);
+  font-size: 0.85rem;
+  font-weight: 200;
+}
 .nm-item {
-  padding: 0.2rem 0.5rem 0.2rem calc(0.5rem + var(--d) * 0.9rem);
+  padding: 0.2rem 0.5rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -20544,10 +20634,11 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   overflow: hidden;
   text-align: right;
   font: inherit;
-  font-weight: 200;
+  font-weight: 400;
   line-height: 1.5;
-  color: var(--dim);
-  border-right: 0.1rem solid var(--line);
+  color: color-mix(in srgb, currentColor 72%, transparent);
+  background: color-mix(in srgb, currentColor 7%, transparent);
+  border-right: 0.12rem solid var(--line); /* (clearly seen on a phone and a computer: the owner wasn't sure he saw them, Nov 19 17:17Z) */
   user-select: none;
   -webkit-user-select: none;
 }

@@ -10,6 +10,7 @@
    with the later stages.
    A phone has no keys: a Tools button under Leave Sandbox lists the windows, a tap on one keeps it up, and its × puts it
    away (the owner's answer 7, Nov 19 10:22Z: "you can start working on i now"). */
+import { LANG } from "./langname.js";
 import { esc, typing, windowOpen } from "./ui.js";
 import { isSb, sbMay, SB_KEYS_TAKEN, SB_KEY_IN_BUILD } from "./sandboxrules.js";
 import {
@@ -30,7 +31,7 @@ export const SB_WINS = {
   c: { name: "Cheat sheet", all: true },
   b: { name: "Build" },
   m: { name: "Make an NPC" },
-  n: { name: "Numberat" },
+  n: { name: LANG },
   h: { name: "Hotbar", all: true }, // (its rows say who may do what: sbhotview.js hotRows)
   g: { name: "Game settings" },
   p: { name: "Player settings" },
@@ -46,7 +47,7 @@ export const SB_SHEET = [
   ["M", "Make an NPC: its look, its weapons and who it goes after."],
   [
     "N",
-    "Numberat: your files, kept on this device, with a terminal line. Run a file there, or chmod +x it and ./file it. Numberat only runs in Sandbox.",
+    `${LANG}: your files, kept on this device, with a terminal line. Run a file there, or chmod +x it and ./file it. ${LANG} only runs in Sandbox.`,
   ],
   [
     "H",
@@ -54,7 +55,7 @@ export const SB_SHEET = [
   ],
   [
     "G",
-    "Game settings for this Sandbox: where Numberat files are brought in to run.",
+    `Game settings for this Sandbox: where ${LANG} files are brought in to run.`,
   ],
   ["P", "Player settings: who else may change Sandbox."],
   [
@@ -163,7 +164,8 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   let shown = "";
   const paint = () => {
     const R = getR();
-    sbView.build = !!R && k.open === "b" && sbMay(R.state, R.me, "b"); // (the zones show while I build: sbspawnview.js)
+    sbView.build =
+      !!R && (k.open === "b" || !!carry) && sbMay(R.state, R.me, "b"); // (the zones show while I build, and while I put something down: sbspawnview.js)
     if (!k.open || !R || !isSb(R.state)) {
       box.hidden = true;
       shown = "";
@@ -267,6 +269,8 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   };
   const drop = () => {
     carry = null;
+    sbView.build = k.open === "b";
+    sbView.until = performance.now() + 4000; // (the zones stay up a moment after: I see where it went)
     ghost.hidden = cancel.hidden = true;
     S.classList.remove("sb-placing");
     seat();
@@ -275,6 +279,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
     const R = getR();
     if (!R || !sbMay(R.state, R.me, "b")) return;
     carry = { kind, label };
+    sbView.build = true;
     ghost.innerHTML = ghostHTML(R.state, kind);
     ghost.classList.toggle("zone", kind === "zone");
     ghost.hidden = mx < 0; // (a phone: nothing on a finger until it taps)
@@ -317,6 +322,15 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   };
   const swallow = (e) => {
     if (performance.now() - eat > 600) return;
+    /* a finger's pointerup is never eaten: the walking stick (touch.js) listens for it on the window, and a finger lifted
+       within 600 ms of a placing left the duck walking for good (the owner, Nov 19 17:15Z: "phone joystick stuck after
+       picking Zone in Build"). Only the mouse's own up and the click it makes belong to the placing */
+    if (e.type.startsWith("pointer") && e.pointerType !== "mouse") return;
+    if (
+      e.target.closest &&
+      e.target.closest(".tpad, .sb-tools, .sb-win, button")
+    )
+      return;
     e.preventDefault();
     e.stopImmediatePropagation();
   };

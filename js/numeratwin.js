@@ -12,7 +12,11 @@
    (Check); "the help files ... cannot be copied or deleted or changed" (the help/ folder, read-only here too);
    "anything can be done in that terminal as it can be in the terminal in the bottom left" (the command line itself).
    Part D (sbnumberat.js): a spawn's Brain box names a file here; what its NPCs print, and its mistakes, show in this
-   terminal too, and a file a Brain uses goes to the room again once it's saved with no mistakes. */
+   terminal too, and a file a Brain uses goes to the room again once it's saved with no mistakes.
+   The left side is File Explorer (the owner's, Nov 19 16:12Z and 17:15Z): one folder at a time; a folder is clicked
+   into, ../ (or Back) clicks out of it, Back and Forward walk where I've been, and the path bar shows where I am and takes
+   a Linux path (.., ~/notes/numberat/help, numberat/help/math) or, when nothing is there by that name, searches the
+   folder shown for it. Folders never fold open or shut in place. */
 import { esc, openWindow } from "./ui.js";
 import { numerat, shellRun, shellSuggest, shellHistory } from "./shell.js";
 import { check, WORDS } from "./numerat.js";
@@ -21,6 +25,7 @@ import { activeRoom } from "./net.js";
 import { isSb, sbMay } from "./sandboxrules.js";
 import { NB_TEXT } from "./sbnumberat.js";
 import { boxText } from "./sbspawn.js";
+import { LANG, LANG_DIR } from "./langname.js";
 
 const SEND_MOST = 20; // (files sent with one Brain: 20 of 8,000 letters stay under what one action may carry)
 /* a spawn's Brain box: the files it sends to the room, each by the name it's written with; null when there's no such
@@ -58,13 +63,14 @@ let wrapOn = false; // (Wrap: off unless turned on; kept while the page is open)
 export function openNumerat() {
   const ctx = shellCtx(),
     root = numerat.root(ctx),
-    st = { file: "", dir: root, out: [], busy: false };
-  const html = `<h2>Numberat</h2>
+    st = { file: "", dir: root, q: "", out: [], busy: false };
+  const html = `<h2>${esc(LANG)}</h2>
   <div class="nm">
     <aside class="nm-side">
+      <div class="nm-nav"><button type="button" class="btn small ghost nm-arrow" data-back aria-label="Back" title="Back">&larr;</button><button type="button" class="btn small ghost nm-arrow" data-fwd aria-label="Forward" title="Forward">&rarr;</button><form class="nm-go"><input class="nm-in nm-addr" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Path or search" placeholder="Path or search"></form></div>
       <div class="nm-new"><button type="button" class="btn small ghost" data-new="file">New file</button><button type="button" class="btn small ghost" data-new="dir">New directory</button></div>
       <form class="nm-name" hidden><input class="nm-in" maxlength="40" spellcheck="false" autocomplete="off" aria-label="Name"><em class="nm-why"></em></form>
-      <ul class="nm-tree" role="tree"></ul>
+      <ul class="nm-tree" role="list"></ul>
     </aside>
     <section class="nm-main">
       <div class="nm-bar"><span class="nm-path"></span><label class="nm-wrap"><input type="checkbox" data-wrap> Wrap</label><button type="button" class="btn small ghost" data-check disabled>Check</button><button type="button" class="btn small" data-run disabled>Run</button></div>
@@ -81,7 +87,11 @@ export function openNumerat() {
         gut = $(".nm-gut"),
         mirror = $(".nm-mirror"),
         ac = $(".nm-ac"),
-        rel = (p) => "numberat" + p.slice(root.length);
+        rel = (p) => LANG_DIR + p.slice(root.length),
+        addr = $(".nm-addr");
+      /* where I've been, for Back and Forward: each { dir, q } (q: a search) */
+      const hist = [{ dir: root, q: "" }];
+      let hi = 0;
       const say = (ls) => {
         st.out.push(...ls);
         if (st.out.length > 200) st.out.splice(0, st.out.length - 200);
@@ -125,16 +135,27 @@ export function openNumerat() {
         hideAc();
         gutter();
       };
+      const row = (it, label = it.name) =>
+        `<li class="nm-item${it.ro ? " nm-ro" : ""}${it.dir ? " nm-dir" : ""}${it.path === st.file ? " on" : ""}" data-p="${esc(it.path)}"${it.dir ? " data-dir" : ""}>${esc(label)}${it.dir ? "/" : ""}</li>`;
       const paint = () => {
-        const items = numerat.tree(ctx);
+        const items = st.q
+          ? numerat.find(ctx, st.q, st.dir)
+          : numerat.list(ctx, st.dir);
         $(".nm-tree").innerHTML =
-          `<li class="nm-item nm-dir${st.dir === root && !st.file ? " on" : ""}" data-p="${esc(root)}" data-dir style="--d:0">numberat/</li>` +
-          items
-            .map(
-              (it) =>
-                `<li class="nm-item${it.ro ? " nm-ro" : ""}${it.dir ? " nm-dir" : ""}${it.path === st.file || (it.dir && it.path === st.dir && !st.file) ? " on" : ""}" data-p="${esc(it.path)}"${it.dir ? " data-dir" : ""} style="--d:${it.depth + 1}">${esc(it.name)}${it.dir ? "/" : ""}</li>`,
-            )
-            .join("");
+          (st.q
+            ? `<li class="nm-note">Search for “${esc(st.q)}” in ${esc(rel(st.dir))}/</li>`
+            : st.dir !== root
+              ? row(
+                  { path: st.dir.slice(0, st.dir.lastIndexOf("/")), dir: true },
+                  "..",
+                )
+              : "") +
+          (items.map((it) => row(it)).join("") ||
+            `<li class="nm-note">${st.q ? "Nothing here by that name" : "Empty folder"}</li>`);
+        if (document.activeElement !== addr)
+          addr.value = st.q || rel(st.dir) + "/";
+        $("[data-back]").disabled = hi <= 0;
+        $("[data-fwd]").disabled = hi >= hist.length - 1;
         $(".nm-path").textContent = st.file ? rel(st.file) : rel(st.dir) + "/";
         const run = $("[data-run]"),
           ro = !!st.file && numerat.ro(st.file); // (the help files)
@@ -145,11 +166,33 @@ export function openNumerat() {
         code.readOnly = ro;
         if (ro) $(".nm-path").textContent += "  (read-only)";
       };
+      /* a folder (or a search in it) shown: a new step for Back, unless it's Back or Forward itself */
+      const go = (dir, q = "", step = true) => {
+        st.dir = dir;
+        st.q = q;
+        if (step && (hist[hi].dir !== dir || hist[hi].q !== q)) {
+          hist.splice(hi + 1);
+          hist.push({ dir, q });
+          if (hist.length > 100) hist.shift();
+          hi = hist.length - 1;
+        }
+        $(".nm-tree").scrollTop = 0;
+        paint();
+      };
+      const walk = (by) => {
+        if (hi + by < 0 || hi + by >= hist.length) return;
+        hi += by;
+        const h = hist[hi];
+        go(
+          numerat.at(ctx, h.dir, root).kind === "dir" ? h.dir : root,
+          h.q,
+          false,
+        ); // (a folder removed since: the top)
+      };
       const open = (path) => {
         const t = numerat.read(ctx, path);
         if (t == null) return;
         st.file = path;
-        st.dir = path.slice(0, path.lastIndexOf("/"));
         setText(t);
         paint();
       };
@@ -272,15 +315,13 @@ export function openNumerat() {
           nameIn.focus();
           return;
         }
+        if (e.target.closest("[data-back]")) return walk(-1);
+        if (e.target.closest("[data-fwd]")) return walk(1);
         const it = e.target.closest(".nm-item");
         if (it) {
           keep();
-          if (it.hasAttribute("data-dir")) {
-            st.dir = it.dataset.p;
-            st.file = "";
-            setText("");
-            paint();
-          } else open(it.dataset.p);
+          if (it.hasAttribute("data-dir")) go(it.dataset.p);
+          else open(it.dataset.p);
           return;
         }
         if (e.target.closest("[data-check]") && st.file) {
@@ -323,14 +364,12 @@ export function openNumerat() {
           return (why.textContent =
             "Letters, numbers, ., - and _ (40 at most)");
         const path = st.dir + "/" + n;
-        if (numerat.tree(ctx).some((it) => it.path === path))
+        if (numerat.at(ctx, path, root).kind)
           return (why.textContent = "That name is taken here");
         try {
           if (making === "dir") {
             numerat.mkdir(ctx, path);
-            st.dir = path;
-            st.file = "";
-            setText("");
+            go(path);
           } else {
             numerat.write(ctx, path, "");
             st.file = path;
@@ -350,6 +389,30 @@ export function openNumerat() {
           form.hidden = true;
         }
       });
+      /* the path bar: a Linux path goes there (a file opens, in its folder); anything else is searched for in the folder
+         shown */
+      $(".nm-go").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const t = addr.value.trim();
+        addr.blur();
+        if (!t) return paint();
+        const r = numerat.at(ctx, t, st.dir);
+        if (r.kind && !r.inside) {
+          say([
+            `✗ ${t}: only the ${LANG_DIR} folder shows here (the terminal below reaches the rest)`,
+          ]);
+          return paint();
+        }
+        if (r.kind === "dir") return go(r.path);
+        if (r.kind === "file") {
+          keep();
+          go(r.path.slice(0, r.path.lastIndexOf("/")));
+          return open(r.path);
+        }
+        go(st.dir, t.replace(/^.*\//, "") || t); // (the last part of what was typed)
+      });
+      addr.addEventListener("focus", () => addr.select());
+      addr.addEventListener("blur", () => setTimeout(paint, 0));
       /* the terminal line: the command line itself */
       const line = $(".nm-line"),
         lineIn = line.querySelector(".nm-in"),
@@ -444,8 +507,8 @@ export function openNumerat() {
           st.file = ""; // (removed or moved from here)
           setText("");
         } else if (st.file) setText(numerat.read(ctx, st.file));
-        if (!numerat.tree(ctx).some((it) => it.path === st.dir)) st.dir = root;
-        paint();
+        if (numerat.at(ctx, st.dir, root).kind !== "dir") go(root);
+        else paint();
       });
       setWrap(wrapOn);
       paint();

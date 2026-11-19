@@ -3,45 +3,60 @@
    help lies and their given principles or basic operators help files; the help files are text files that cannot be
    copied or deleted or changed". shell.js puts these in the Numerat folder at the start of every game (never kept in the
    profile) and refuses every change to them. Only what is built is written here (part A: values, orders, brackets,
-   math, asterisks, percents; part B: line rules and limits; part C: statements). This file has no imports. */
-export const HELP = {
-  "index.txt": `Numberat help
+   math, asterisks, percents; part B: line rules and limits; part C: statements).
+   The owner's (Nov 19 16:12Z, with a drawing): help/ itself holds the general files, the examples (.num files) have their
+   own folder, and each particular help topic its own named folder with its files (HELP_IN). */
+import { LANG } from "./langname.js";
+
+/* the folder each particular help file is in, inside help/ (the rest are help/'s own: the general ones) */
+const HELP_IN = {
+  numbers: [
+    "values.txt",
+    "tenths.txt",
+    "ranges.txt",
+    "lists.txt",
+    "truefalse.txt",
+    "about.txt",
+    "percents.txt",
+    "linerules.txt",
+  ],
+  order: ["order.txt", "repeats.txt", "brackets.txt"],
+  math: ["math.txt", "asterisks.txt", "asteriskrules.txt"],
+  brains: ["names.txt", "who.txt", "tests.txt", "loops.txt", "print.txt"],
+};
+/* a help file's path from the language's folder, by its name: helpAt("limits.txt") = "help/limits.txt",
+   helpAt("math.txt") = "help/math/math.txt" (the mistakes point to it) */
+export function helpAt(name) {
+  for (const [d, names] of Object.entries(HELP_IN))
+    if (names.includes(name)) return `help/${d}/${name}`;
+  return "help/" + name;
+}
+const HELP_FLAT = {
+  "index.txt": `${LANG} help
 These files are read-only: you can read them here and with cat,
 but they can't be changed, copied or deleted.
 
-Simple first:
-  values.txt     numbers as you write them in a box: 2, 2:4, 2,4
-  tenths.txt     tenths: 1.5, 1.0:1.*, 1.[0:9]
-  ranges.txt     the colon: 2:4, 1.0:1.*
-  lists.txt      the comma: 2,4
-  truefalse.txt  the t and f boxes
-  about.txt      ~10: about 10
-  order.txt      2>4 in order, | and repeats
-  repeats.txt    play something again: \\>2>\\||
-  brackets.txt   ( ) [ ] { } and lines that carry on
-  math.txt       + - / ^ and "2[1,5]"
-  asterisks.txt  *, **, -*, $ letters, '1*' and =
-  asteriskrules.txt  mormax, mormini, negbrahm, posbrahm, caps
-  linerules.txt  \\'rm0'\\, \\!'rm1'\\, lin, and a line's own limit
-  percents.txt   [3 60%, 5 40%], 30%, 150%
+Here, in help/:
+  index.txt      this page
+  window.txt     the ${LANG} window: files, Run, Check, wrap, autocomplete
+  files.txt      files that do things: when spawn, when hit, every 2s, use
   limits.txt     the limits every box has, and what to do past one
-  window.txt     this window: files, Run, Check, wrap, autocomplete
 
-Files that do things:
-  files.txt      when spawn, when hit, every 2s, use, give, take
-  names.txt      let, def, the stats (hp ...) and wave, time ...
-  who.txt        me, nearest duck, all zombies, team; go, attack, flee
-  tests.txt      \\if hp < 5\\ ... else, ==, not, in, and, or
-  loops.txt      for, while, and the 1,000 rounds stop
-  print.txt      print and say, "..." and '...'
+Folders (click one to go in):
+  numbers/       values (2, 2:4, 2,4), tenths, ranges, lists, true or
+                 false, about (~10), percents, line rules
+  order/         2>4 in order, | and repeats, brackets
+  math/          + - / ^, asterisks (*, $ letters), asterisk rules
+  brains/        names and stats, who (me, nearest duck), tests (if),
+                 loops, print and say
+  examples/      ready brain files (a chaser, a coward, a healer, a
+                 talker, waves, a pair that share a value): copy one
+                 with cp and write its name in a spawn's Brain box
 
 Notes: # starts a note, the rest of the line is skipped.
 Spaces and line breaks don't change anything: [2, 4] = [2,4].
-  Next to this folder, examples/ has ready brain files (a chaser,
-  a coward, a healer, a talker, waves, a pair that share a value).
-  Copy one with cp and write its name in a spawn's Brain box.
 
-More pages come as more of Numberat is built.
+More pages come as more of ${LANG} is built.
 `,
   "values.txt": `Plain values
 
@@ -137,7 +152,7 @@ number in quotes is only a name.
 
 Too many digits for the asterisks: cut from the front
 (150 into ** gives 50). Below zero: it loses its sign (-3 into * is 3).
-See asteriskrules.txt to change that.
+See math/asteriskrules.txt to change that.
 `,
   "asteriskrules.txt": `Asterisk rules
 
@@ -180,7 +195,7 @@ don't define a limit yourself, the box uses the one below.
 Write a number past a limit and the box says "N at least" or
 "N at most" and keeps its last good value. Fix it by writing a
 number inside the limit, or by giving the line its own limit at
-its start (more in linerules.txt):
+its start (more in numbers/linerules.txt):
 
   \\inc'lim=25'\\ 2:20     this line's top is 25
   \\inc'lim=***'\\ 2:900   at most 999
@@ -197,7 +212,7 @@ Numbers in or out:
   \\'rm2'\\ 1:4       no 2
   \\'rm**'\\          no results with 2 digits
   \\'rm**:****'\\     no results with 2 to 4 digits
-  \\'rm{3,[2:5]}'\\   a rule's value is Numberat too: no 2 to 5
+  \\'rm{3,[2:5]}'\\   a rule's value is ${LANG} too: no 2 to 5
 If a line can't give anything the rules let out, it stops after
 1,000 tries and says why (the NPC doesn't spawn).
 
@@ -220,7 +235,7 @@ The strongest rule wins: more ! is stronger. \\!!'inc1'\\ beats
   [1:5]                 2 to 5
   \\lin!!'inc1'\\ [1:5]  1 to 5
 
-Limits: see limits.txt. Asterisk rules (mormax ...): asteriskrules.txt.
+Limits: see help/limits.txt. Asterisk rules (mormax ...): math/asteriskrules.txt.
 `,
   "files.txt": `Files that do things
 
@@ -355,9 +370,15 @@ Everything before it plays that many times; what follows | plays after.
 In front of a value, the count plays just that value:
   \\>1,2>\\[2,4]        one pick of 2 or 4, played once or twice
 `,
-  "window.txt": `The Numberat window
+  "window.txt": `The ${LANG} window
 
-  Files (left)   New file, New directory; click a file to open it.
+  Files (left)   one folder at a time, as File Explorer: click a folder
+                 to go in, ../ to go out, a file to open it.
+  <- and ->      Back and Forward: the folders you were just in.
+  Path bar       where you are. Type a path and Enter to go there, as
+                 in Linux: .., help/math, ~/notes/${LANG.toLowerCase()}/help.
+                 Anything else is searched for in the folder shown.
+  New file, New directory: made in the folder shown.
                  Your files are kept on this device from game to game.
   Run / Stop     starts the open file, or stops it.
   Check          reads the open file and lists what it can't read, with
@@ -371,7 +392,12 @@ In front of a value, the count plays just that value:
 `,
 };
 
-/* ---------- examples/ (the owner's Nov 19 15:18Z via Adam): ready brain files, read-only like help/ ----------
+/* every help file by its path in help/ ("numbers/values.txt"), as shell.js puts them in */
+export const HELP = Object.fromEntries(
+  Object.entries(HELP_FLAT).map(([f, t]) => [helpAt(f).slice(5), t]),
+);
+
+/* ---------- help/examples/ (the owner's Nov 19 15:18Z via Adam): ready brain files, read-only like help/ ----------
    Players copy one (cp) and write its name in a spawn's Brain box. Each was run through compileScript with 0 errors. */
 export const EXAMPLES = {
   "chaser.num": `# A chaser: runs at the nearest duck, and bites when it is close.
@@ -386,7 +412,7 @@ every 1s \\if hp < 5\\ flee else go nearest duck
 when hit \\if hp < 5\\ flee
 `,
   "healer.num": `# A healer: every few seconds each NPC on its team gets 1 HP more.
-# (z hp is NPC z's HP: see names.txt. Each healer on the board gives its own 1 HP.)
+# (z hp is NPC z's HP: see help/brains/names.txt. Each healer on the board gives its own 1 HP.)
 every [3,5]s for z in team ((z hp z hp+1))
 `,
   "rage-give.num": `# The first of a pair: this file makes rage and gives it to the other file.
@@ -401,7 +427,7 @@ take rage
 when spawn ((speed rage))
 `,
   "talker.num": `# A talker: every few seconds it says one of three lines, with random letters.
-# $ is a random letter, * a random digit (asterisks.txt).
+# $ is a random letter, * a random digit (help/math/asterisks.txt).
 every [2,4]s {
   let n = 1:3
   \\if n == 1\\ say "brains $$*" else \\if n == 2\\ say "hello $$$" else say "moan $*"

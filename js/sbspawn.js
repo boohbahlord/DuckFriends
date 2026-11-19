@@ -39,7 +39,13 @@ import {
   SB_ZONE,
   sbZoneSpot,
 } from "./sandboxrules.js";
-import { W as WW, H as WH, standable, heightAt } from "./hangout/layout.js";
+import {
+  W as WW,
+  H as WH,
+  STEP,
+  standable,
+  heightAt,
+} from "./hangout/layout.js";
 import { Z_MOST, l4Spawn, l4Live } from "./l4ddrules.js";
 import { WAVE, zLook } from "./mgjrules.js";
 import { onCabin, sbzOn, cabinLive, cabinSpawn, cabinTick } from "./sbcabin.js";
@@ -309,6 +315,12 @@ function makeOne(s, id, at) {
     sv = num(by("speed"), "speed") || 1, // (picked once and kept: "a number is selected and it sticks with it")
     dm = boxText(by("damage"), "damage"),
     sz = (num(by("size"), "size") || 100) / 100, // (its Size: picture and hitbox, sbbody.js)
+    /* how high it steps up where the map has heights: Can climb walls (on by default) is the way up a step, Can jump (off by
+       default) a step more, as a duck's jump does (the owner's, Nov 19 Sandbox file: "setting IF NPC can jump" and "can climb
+       walls"); neither: it stays on its level */
+    up =
+      (flag(by("climb"), "climb") ? STEP : 0) +
+      (flag(by("jump"), "jump") ? STEP : 0),
     kind = {
       ...(k === "zombie" ? {} : { k, ...dressFor(s, k) }),
       ...(ownOn(p) ? lookOf(p.ap) : {}), // (its settings off: it looks as it is)
@@ -341,7 +353,8 @@ function makeOne(s, id, at) {
     boxText(p, "brain").trim() ||
     kind.sz ||
     kind.im ||
-    kind.dk
+    kind.dk ||
+    up !== STEP
   ) {
     // (a zombie with a Brain walks as Sandbox's own do, so its file can steer it: sbnumberat.js; one with its own look or
     // Size too, which the map's own zombies don't have)
@@ -351,6 +364,7 @@ function makeOne(s, id, at) {
       dm,
       sp: id,
       run: flag(by("sprint"), "sprint"),
+      up,
       look: kind,
     });
     i = c ? "c" + c : 0; // (the zombie maps: Sandbox's own, walking as on Duck Cabin, beside the map's zombies)
