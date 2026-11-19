@@ -197,7 +197,8 @@ SOUNDS = {
             ("oga:guns-pistol/A_42P.wav", 5.0, 0.12, 0.002, 0.35, 1500),
         ],
         rate=0.92,
-        drive=4,
+        drive=2,  # (softer, the owner's, Nov 19: "less harsh on the ears"; was drive 4, no lowpass)
+        lp=4000,
         credit=GUNS + ("M45 SMG and PPSh bursts, 1911 .45",),
     ),
     # the UMP-45 (.45, slower and heavier: a shot every 0.30 s): the .45 pistol's crack with an AK's body under it
@@ -953,8 +954,9 @@ SOUNDS = {
     ),
     # the burst rifle: one round of its three (an SKS's crack; the AK-47 and the LMG have their own)
     "burst": dict(
-        layers=[("gh:gun-burst/sks.wav", 0, 0.7, 0, 1)],
-        drive=4,
+        layers=[("gh:gun-burst/sks.wav", 0, 0.4, 0, 1)],
+        drive=1.5,  # (softer and darker, the owner's, Nov 19: "really loud and harsh"; was drive 4, 0.7 s, no lowpass)
+        lp=3200,
         credit=(
             "Tabasco, Gunshot Sounds (SKS)",
             "https://opengameart.org/content/gunshot-sounds",

@@ -31,7 +31,7 @@ import { netLevel } from "./settings.js";
 export const VOL = {
   // the lobby countdown and Dead Ducks Arcade's new round (far off and faint)
   countTick: -13,
-  countGo: -12,
+  countGo: -15,
   voteTick: -25, // (the votes' seconds: very soft)
   l4round: -14,
   // moving
@@ -58,20 +58,20 @@ export const VOL = {
   fire: -16,
   fireLight: -12,
   // the Sad Trombone special
-  trombone: -8,
+  trombone: -11,
   // guns: each its own shot
   handgun: -6,
   revolver: -7,
   smg: -7,
-  tommy: -8, // (the Tommy gun)
-  ump: -7, // (the UMP-45: heavier)
+  tommy: -12, // (the Tommy gun; softer, the owner's, Nov 19: as loud as the LMG)
+  ump: -11, // (the UMP-45: heavier; as loud as the LMG, Nov 19)
   ak: -9,
   lmg: -8,
   chaingun: -9,
   sniper: -12,
   shotgun: -7,
   dbarrel: -5, // (the double barrel: louder than the pump shotgun)
-  burst: -9, // (the burst rifle: one round of its three)
+  burst: -16, // (the burst rifle: one round of its three; the owner, Nov 19: "really loud and harsh", now as loud as the LMG for all three)
   pump: -15,
   glauncher: -10,
   bow: -12, // (quieter: the owner, Nov 18 15:18Z "with quieter audio")
@@ -99,11 +99,11 @@ export const VOL = {
   hitBig: -11,
   hitHeavy: -10,
   hitShot: -10,
-  hitBlade: -11,
+  hitBlade: -14,
   hitBlunt: -10,
   axeHit: -10, // (… and its own hit)
-  swordHit: -11,
-  panHit: -9,
+  swordHit: -14,
+  panHit: -12,
   hitArrow: -8,
   hitClaw: -10,
   // a round that missed, landing on the floor or a wall
@@ -125,24 +125,24 @@ export const VOL = {
   bonk: -13,
   // explosions: one boom for every explosive (the Jaime Bomb plays it louder: SFX.boomBig); the meteor and the nuke
   // are their own, longer and the loudest of all ("more catastrophic", the owner, Nov 16)
-  boom: -7,
-  boomSmall: -10, // (the Angelic pistol's blast: the boom made a little weaker, the owner, Nov 17)
-  meteor: -3,
-  nuke: -2,
+  boom: -10,
+  boomSmall: -13, // (the Angelic pistol's blast: the boom made a little weaker, the owner, Nov 17)
+  meteor: -6,
+  nuke: -5,
   nukeRing: -22, // (the ears ringing, under the nuke's roar)
   // the laser gun: its beam (one a second), the hiss as it overheats, and a light steam off its hot barrel (SFX.steam)
   laser: -10,
-  laserHiss: -12,
+  laserHiss: -16,
   laserSteam: -24,
   // a crit's gush of gore, a miss's wispy blip
   gore: -12,
-  miss: -15,
+  miss: -20,
   // the weather (ambience.js): a light rain over Downpour, the wind round the cabin; Downpour's church bell as a round
   // starts, and the chime once every zombie is down (the last note of What the duck?)
   rain: -27,
   wind: -25,
   churchBell: -13,
-  cleared: -9,
+  cleared: -13,
   // the menus: faint
   uiPress: -13,
   uiOn: -23,
@@ -183,7 +183,7 @@ export const VOL = {
   gulp: -12,
   whoosh: -16,
   swipe: -12,
-  meow: -14,
+  meow: -17,
   purr: -18,
   hiss: -14,
   static: -32, // (the TV with no channel, on a loop: a quiet, even hiss)
@@ -306,9 +306,11 @@ export function ceiling(a, dest) {
   return q;
 }
 
-/* Volume times Sound effects (Settings) */
+/* Volume times Sound effects (Settings), under HEAD: every sound 3 dB quieter than it was (the owner, Nov 19: "the
+   audio design is a background that provides feedback and it fills the air", for a game played talking with friends) */
+const HEAD = 0.7;
 const level = () =>
-  (profile.settings.sound / 100) * ((profile.settings.sfx ?? 100) / 100);
+  HEAD * (profile.settings.sound / 100) * ((profile.settings.sfx ?? 100) / 100);
 
 /* "now" on the sound clock, plus a lead. Firefox only moves currentTime between tasks, so a sound set during a long frame
    read a clock that had stopped and landed in the past: if the clock hasn't moved since I last looked, I add the time

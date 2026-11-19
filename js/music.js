@@ -61,8 +61,9 @@ const SCARY_SONGS = ["What the duck?"],
 const QUIET = ["l4dd", "mgj"];
 
 /* 100% music: under the game. The songs' files are about 7 dB louder than the old songs were made, so this keeps them as
-   quiet as the old music was at 100% (the owner: music stays quiet by default) */
-const BASE = 0.45;
+   quiet as the old music was at 100% (the owner: music stays quiet by default). Nov 19, the owner: "the music's too
+   loud, maybe … it's something that you play with friends", so 4 dB under that (was 0.45) */
+const BASE = 0.28;
 const LV = () =>
   BASE * (profile.settings.sound / 100) * (profile.settings.music / 100);
 
