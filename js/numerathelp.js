@@ -260,8 +260,11 @@ A spawn with no Brain plays as before.
   ((hp "2rage"))              "…" multiplies: twice the rage
 
 Stats, read and set (an NPC's, inside a when):
-  hp  speed  damage  hitbox (kept, but it doesn't change hits yet)
+  hp  speed  damage  hitbox (0.1 to 3: how big it is to hit,
+                             and how far it reaches)
   ((hp 5))  ((hp hp-1))  ((hp 50%))   50% is half its most
+Another NPC's: z hp, where z is one (for z in team ...):
+  for z in team ((z hp z hp+1))       each one gets 1 HP more
 Built-in: wave (the round), time (seconds), alive, dead, spawned.
 Math words: round 2.5 (3)  up 2.1 (3)  down 2.9 (2)
             min 3 hp  max 1 speed  spawned mod 3
@@ -381,9 +384,9 @@ when spawn ((hp 8))
 every 1s \\if hp < 5\\ flee else go nearest duck
 when hit \\if hp < 5\\ flee
 `,
-  "healer.num": `# A healer: every few seconds the whole team is topped up to its most HP.
-# (100% is all of a stat's most: see names.txt)
-every [3,5]s ((team hp 100%))
+  "healer.num": `# A healer: every few seconds each NPC on its team gets 1 HP more.
+# (z hp is NPC z's HP: see names.txt. Each healer on the board gives its own 1 HP.)
+every [3,5]s for z in team ((z hp z hp+1))
 `,
   "rage-give.num": `# The first of a pair: this file makes rage and gives it to the other file.
 # Put this one in one spawn's Brain box and rage-take in another's.

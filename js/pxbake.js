@@ -9,7 +9,7 @@
    grid's pixels (a pixel for each square, picked as the filter picks it), where it is at that moment: its CSS animation
    still moves it, out of sight, and the canvas copies it. Then the root is marked px-own and the filter leaves it
    (css/app.css). */
-import { gridPx } from "./pixel.js";
+import { gridPx, afterPaint } from "./pixel.js";
 
 /* the filter's sampling: n screen pixels to a square, and the one it keeps in each (pixel.js filterHTML) */
 function grid() {
@@ -154,6 +154,31 @@ export async function bakeBackdrop(root, mark = root) {
   if (parts.length && !(await movers(root, parts, G))) return false;
   mark.classList.add("px-own");
   return true;
+}
+
+/* draw(now) for a canvas of moving parts, at most every `ms`, while it's on the page and seen, each time once the frame
+   is on the screen (afterPaint: reading where the parts are costs nothing then). Seen: an IntersectionObserver says
+   when it's out of sight (the menus' background in a game), where asking the canvas itself each frame (offsetParent)
+   laid the page out again */
+function frames(cv, ms, draw, gone = null) {
+  let seen = true,
+    at0 = 0;
+  const io = new IntersectionObserver((es) => {
+    seen = es[es.length - 1].isIntersecting;
+  });
+  io.observe(cv);
+  const tick = (now) => {
+    if (!cv.isConnected) {
+      io.disconnect();
+      if (gone) gone();
+      return;
+    }
+    requestAnimationFrame(tick);
+    if (now - at0 < ms || document.hidden || !seen) return;
+    at0 = now;
+    afterPaint(() => cv.isConnected && draw(now));
+  };
+  requestAnimationFrame(tick);
 }
 
 /* ---------- what moves, drawn each frame on the grid ----------
@@ -396,13 +421,27 @@ async function movers(root, parts, G, before, bg = false, every = 32) {
     rootCs = getComputedStyle(root);
   /* a canvas pixel's middle lands on the screen pixel the filter keeps in its square */
   const shift = (n / 2 - at - 0.5) / d;
+  /* nothing in it moves by itself (no animation or transition from its parts up to root: Duck Cabin's and Tiles'
+     scenes): nothing read or drawn again until something under root, or round it, changes its classes or style.
+     Reading its place each frame made the browser work out the page's styles again mid-game (Downpour) */
+  const moves = (cs) =>
+      cs.animationName.split(",").some((a) => a.trim() !== "none") ||
+      cs.transitionDuration.split(",").some((t) => parseFloat(t) > 0),
+    stillNow = () =>
+      !live && ![rootCs, ...[...nodes.values()].map((n) => n.cs)].some(moves);
   let last = "",
-    at0 = 0;
-  const draw = (now) => {
-    if (!cv.isConnected) return;
-    requestAnimationFrame(draw);
-    if (now - at0 < every || document.hidden || !cv.offsetParent) return; // (not shown: the menus' background in a game)
-    at0 = now;
+    still = stillNow(),
+    changed = false;
+  const mo = new MutationObserver(() => (changed = true)),
+    look = { attributes: true, attributeFilter: ["class", "style"] };
+  mo.observe(root, { ...look, subtree: true });
+  for (let e = root.parentElement; e; e = e.parentElement) mo.observe(e, look);
+  const draw = () => {
+    if (still && last && !changed) return;
+    if (changed) {
+      changed = false;
+      still = stillNow();
+    }
     const memo = new Map(),
       now2 = chains.map((c) => [
         matrixOf(c.leaf, memo),
@@ -455,7 +494,7 @@ async function movers(root, parts, G, before, bg = false, every = 32) {
   if (before === "first") root.prepend(cv);
   else (before || parts[0].closest(".pg-train") || parts[0]).before(cv);
   for (const el of parts) el.classList.add("px-gone"); // (out of sight: css/app.css)
-  requestAnimationFrame(draw);
+  frames(cv, every, draw, () => mo.disconnect());
   return true;
 }
 
@@ -616,13 +655,8 @@ export async function bakeSvg(root, svg, mark, anim) {
       .scale(1 / g)
       .translate(shift, shift)
       .translate(-rb.left, -rb.top); // (the page's corner to root's, then to the grid's pixels)
-  let at0 = 0,
-    last = "";
-  const draw = (now) => {
-    if (!cv.isConnected) return;
-    requestAnimationFrame(draw);
-    if (now - at0 < 64 || document.hidden || !cv.offsetParent) return; // (15 a second: slow turns and twinkles)
-    at0 = now;
+  let last = "";
+  const draw = () => {
     const where = items.map((it) =>
         it.leaves
           ? null
@@ -652,7 +686,7 @@ export async function bakeSvg(root, svg, mark, anim) {
   };
   svg.after(under, cv);
   svg.classList.add("px-gone");
-  requestAnimationFrame(draw);
+  frames(cv, 64, draw); // (15 a second: slow turns and twinkles)
   mark.classList.add("px-own");
   return true;
 }

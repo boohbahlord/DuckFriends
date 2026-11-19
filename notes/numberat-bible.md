@@ -13,7 +13,7 @@ old wording; history and word-for-word quotes live in `notes/agree-or-disagree.m
   them (`js/numerat.js` reads plain values itself and compiles the rest). Part D (`js/sbnumberat.js`): a spawn's Brain
   box names a file; the file and the files it uses go to the room (`s.nb`), the host runs one brain per file, and its
   NPCs' when/every, go/attack/flee, say and stats come from it; print and mistakes go to `s.nbo`, shown in the n
-  window. `hitbox` is kept on the NPC but doesn't change its hits yet. Readings taken where the rules didn't say: `1.*` is 1.0 to
+  window. `hitbox` (0.1 to 3, 1 as it was) makes an NPC bigger to hit and its claw reach further. Readings taken where the rules didn't say: `1.*` is 1.0 to
   1.9 (`*` includes 0, owner 12:59Z); side by side groups take turns in a shuffled order, one pick from each; a
   program keeps its place in its orders between spawns, shared by every box with the same text. Line rules: the
   quotes are only marks (`\'a2 rm0'\` = `\''a2'rm0'\`); a rule's value covers every number it can give; with the
@@ -151,7 +151,9 @@ cycling `[2,4]` that many times, then `[5,7,9]` or `[3,5]` a digit minus 1 or 2 
 Every Numberat value works anywhere a number goes below: `wait 1:3`, `every [2,4]s`, `when near duck '1*'`.
 1. **Events**, code that runs when something happens: `when spawn`, `when hit`, `when dead`, `when near duck 3`,
    `when touch`, `every 2s`. Owner: "Code for more, like hitbox of duck for example": every stat of a duck or NPC can be
-   read and set by name, its hitbox too: `((hitbox 1.5))`, `\if hitbox > 2\`. **[open]** the full list of stats.
+   read and set by name, its hitbox too: `((hitbox 1.5))`, `\if hitbox > 2\` (0.1 to 3: bigger to hit, longer
+   reach; live V99). Another NPC's stat is `z hp` with `z` from a loop: `for z in team ((z hp z hp+1))` (live V99).
+   **[open]** the full list of stats.
 2. **Actions**: `go nearest duck`, `attack`, `flee`, `wait 1.5`, `say "hi"` (quotes as in print).
 3. **Who**: `me`, `nearest duck`, `all zombies`, `team`: what an action or a stat applies to.
 4. **Chance in percent** (owner 13:32Z: "uses percentage with percent sign"; replaces the `~` weights):

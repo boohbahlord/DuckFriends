@@ -24,11 +24,12 @@ import {
   NOTHING,
   MOST_TRIES,
   REPLAY,
+  NB_STATS,
 } from "./numberat.js";
 
 const LOOPS = 1000; // ("Every loop stops after 1,000 rounds with an error")
 const BUSY = 20000; // (statements one task may run between two waits)
-export const NB_STATS = ["hp", "speed", "damage", "hitbox"];
+export { NB_STATS }; // (an NPC's stats: numberat.js reads "z hp" with them)
 export const NB_BUILT = ["wave", "time", "alive", "dead", "spawned"];
 const EVENTS = ["spawn", "hit", "dead", "touch", "near"];
 const KINDS = {
@@ -807,6 +808,16 @@ export function brain(plan, host) {
     for (let k = 0; k < MOST_TRIES; k++) {
       const ctx = newCtx(rand, R);
       ctx.name = (w) => lookup(env, w);
+      /* z hp: another NPC's stat (z from for z in team, or a name let to one) */
+      ctx.stat = (w, n) => {
+        const id = lookup(env, w);
+        if (typeof id !== "string")
+          no(
+            `"${w}" isn't an NPC, so it has no ${n} (for z in team gives NPCs)`,
+            HELP.names,
+          );
+        return host.stat(id, n);
+      };
       let v;
       try {
         v = fn(ctx);
@@ -831,6 +842,16 @@ export function brain(plan, host) {
     if (fn.span) {
       const ctx = newCtx(rand, R);
       ctx.name = (w) => lookup(env, w);
+      /* z hp: another NPC's stat (z from for z in team, or a name let to one) */
+      ctx.stat = (w, n) => {
+        const id = lookup(env, w);
+        if (typeof id !== "string")
+          no(
+            `"${w}" isn't an NPC, so it has no ${n} (for z in team gives NPCs)`,
+            HELP.names,
+          );
+        return host.stat(id, n);
+      };
       const [lo, hi, t10] = fn.span(ctx);
       return (
         typeof x === "number" &&

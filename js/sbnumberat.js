@@ -213,7 +213,7 @@ function make(s, name, text, now) {
         o.hp = Math.min(CAP, Math.max(0, v));
         if (o.hp <= 0 && !o.d) o.d = g.cur.now;
       } else if (n === "speed")
-        o.sv = Math.min(SB_BOXES.speed.max, Math.max(0, v));
+        o.sv = Math.min(SB_BOXES.speed.max, Math.max(SB_BOXES.speed.min, v)); // (as the Speed box: never 0)
       else if (n === "damage")
         o.dm = String(Math.min(SB_BOXES.damage.max, Math.max(0.1, v)));
       else o.hb = Math.min(3, Math.max(0.1, v));

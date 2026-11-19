@@ -103,6 +103,26 @@ export const gridPx = () => grid;
 /* a place on the screen, on the grid (ducks and things snap to it, so their pixels line up with the map's) */
 export const snap = (v) => Math.round(v / grid) * grid;
 
+/* fn once the frame being drawn is on the screen (call it from a requestAnimationFrame): the page's layout is still
+   fresh then, so reading where things are and how big costs nothing. Read during a frame, after the game moved
+   things, each read made the browser lay the whole page out again first (Downpour's many zombies: a third of a
+   second in every six) */
+const painted = new MessageChannel(),
+  afterFns = [];
+painted.port1.onmessage = () => {
+  for (const fn of afterFns.splice(0))
+    try {
+      fn();
+    } catch (e) {
+      setTimeout(() => {
+        throw e;
+      }); // (seen in the console, the others still run)
+    }
+};
+export function afterPaint(fn) {
+  if (afterFns.push(fn) === 1) painted.port2.postMessage(0);
+}
+
 /* ---------- pictures made into pixels, once ---------- */
 const made = new Map(), // full key -> object URL
   making = new Map(); // full key -> Promise<url>

@@ -14,6 +14,7 @@ import {
   raster,
   rasterReady,
   rainbowSteps,
+  afterPaint,
 } from "./pixel.js";
 import { hasRb, RB_N } from "./rainbowskin.js";
 
@@ -83,10 +84,8 @@ function unturned(svg) {
 }
 
 /* a copy of the drawing as it looks now, as SVG text: every part's CSS (from classes, and from the classes of what
-   holds it) written into the part itself, so the picture is made as it's seen */
+   holds it) written into the part itself, so the picture is made as it's seen (read with its hiding rule off: make) */
 function snapshot(svg, vb) {
-  const hid = svg.hasAttribute("data-px");
-  svg.removeAttribute("data-px"); // (the hiding rule out of the way while I read how it looks)
   const copy = svg.cloneNode(true);
   copy.querySelectorAll("image.pxi, g.pxt, svg.pxw").forEach((e) => e.remove());
   const from = [svg, ...svg.querySelectorAll("*")].filter(
@@ -106,7 +105,6 @@ function snapshot(svg, vb) {
   copy.querySelectorAll("text").forEach((t) => {
     if (!t.querySelector("textPath")) t.remove();
   }); // (its words stay words: words(), over the picture)
-  if (hid) svg.setAttribute("data-px", ""); // (a new drawing stays seen until its picture is there: show())
   copy.removeAttribute("data-px");
   copy.removeAttribute("class");
   copy.setAttribute("xmlns", NS);
@@ -142,14 +140,9 @@ function words(svg) {
     (t) => !t.closest("g.pxt") && !t.querySelector("textPath"),
   );
   if (!list.length) return null;
-  const hid = svg.hasAttribute("data-px");
-  svg.removeAttribute("data-px"); // (as in snapshot(): read them as they look)
   const g = document.createElementNS(NS, "g"),
     inv = svg.getScreenCTM()?.inverse();
-  if (!inv) {
-    if (hid) svg.setAttribute("data-px", "");
-    return null;
-  }
+  if (!inv) return null;
   g.setAttribute("class", "pxt");
   g.setAttribute("pointer-events", "none");
   for (const t of list) {
@@ -183,7 +176,6 @@ function words(svg) {
     c.setAttribute("style", st + `opacity:${op}`);
     g.append(c);
   }
-  if (hid) svg.setAttribute("data-px", "");
   return g.childNodes.length ? g : null;
 }
 function around(svg, root) {
@@ -196,13 +188,27 @@ function around(svg, root) {
 /* one drawing as pixels (or as it was, with the look off). Safe to call again: it only makes a new picture when the
    drawing, the classes around it or its size on the screen changed */
 const state = new WeakMap(); // svg -> { key, at, timer, img }
-export function pxSvgEl(svg, root = document.body) {
-  if (!pixelOn()) return unPx(svg);
-  if (svg.closest("[data-nopx]") || svg.ownerSVGElement) return; // (inside another drawing: that one carries it)
+const sizeOf = (svg) => {
   const vb = svg.viewBox && svg.viewBox.baseVal;
-  if (!vb || !vb.width || !vb.height) return; // (no viewBox: nothing to fit a picture to)
-  const size = shownSize(svg, vb);
-  if (!size) return; // (not on the screen yet: made when it shows, pxRefresh)
+  return vb && vb.width && vb.height ? shownSize(svg, vb) : null;
+};
+export function pxSvgEl(svg, root = document.body, size) {
+  const job = plan(svg, root, size);
+  if (job) make([job]);
+}
+/* whether a drawing needs a new picture, and at what size: only reads, nothing changed on the page yet (null: it
+   doesn't, or not now) */
+const requeue = new WeakMap(); // root -> its pxWatch's want(): a drawing that waits for PACE goes back in its queue
+function plan(svg, root, size) {
+  if (!pixelOn()) {
+    unPx(svg);
+    return null;
+  }
+  if (svg.closest("[data-nopx]") || svg.ownerSVGElement) return null; // (inside another drawing: that one carries it)
+  const vb = svg.viewBox && svg.viewBox.baseVal;
+  if (!vb || !vb.width || !vb.height) return null; // (no viewBox: nothing to fit a picture to)
+  if (size === undefined) size = shownSize(svg, vb); // (or read already: pxWatch's flush)
+  if (!size) return null; // (not on the screen yet: made when it shows, pxRefresh)
   const g = gridPx(),
     cw = Math.max(1, Math.round(size[0] / g)),
     ch = Math.max(1, Math.round(size[1] / g)),
@@ -213,23 +219,38 @@ export function pxSvgEl(svg, root = document.body) {
     st.key === key &&
     ((st.img && st.img.isConnected) || (st.win && st.win.isConnected))
   )
-    return;
+    return null;
   const wait = st.at + PACE - performance.now();
   if (wait > 0) {
     if (!st.timer)
       st.timer = setTimeout(() => {
         st.timer = 0;
-        pxSvgEl(svg, root);
+        const want = requeue.get(root);
+        if (want) want(svg);
+        else pxSvgEl(svg, root);
       }, wait);
-    return;
+    return null;
   }
   st.key = key;
   st.at = performance.now();
+  return { svg, st, key, vb, w: cw * g, h: ch * g };
+}
+/* the drawings' new pictures. Every drawing is read first (as it looks: its hiding rule taken off all of them at
+   once), then every picture put in: read one by one between the changes, the browser worked out the whole page's
+   styles again for each */
+function make(jobs) {
   css();
-  const text = snapshot(svg, vb),
-    w = cw * g,
-    h = ch * g,
-    k = "d" + hash(text);
+  const hid = jobs.map((j) => j.svg.hasAttribute("data-px"));
+  for (const j of jobs) j.svg.removeAttribute("data-px");
+  for (const j of jobs) {
+    j.text = snapshot(j.svg, j.vb);
+    j.tx = words(j.svg);
+  }
+  jobs.forEach((j, i) => hid[i] && j.svg.setAttribute("data-px", "")); // (a new drawing stays seen until its picture is there: show)
+  for (const j of jobs) put(j);
+}
+function put({ svg, st, key, vb, w, h, text, tx }) {
+  const k = "d" + hash(text);
   if (hasRb(text)) return rbShow(svg, st, key, text, vb, w, h);
   let img = st.img;
   if (!img || img.parentNode !== svg) {
@@ -251,8 +272,7 @@ export function pxSvgEl(svg, root = document.body) {
     if (tx) svg.append(tx);
     svg.setAttribute("data-px", ""); // (hidden only once its picture is there: never a gap)
   };
-  const tx = words(svg),
-    ext = inlined(text);
+  const ext = inlined(text);
   if (ext) ext.then((t) => rasterReady(k, t, w, h)).then(show);
   else {
     const u = raster(k, text, w, h);
@@ -373,18 +393,26 @@ export function pxWatch(root, { skip = "" } = {}) {
     else if (was) stop();
     return !root.isConnected;
   };
+  /* once the frame is on the screen (afterPaint), every size read first, then every picture made: a size read after a
+     picture went in made the browser lay the page out again, once per drawing */
   const flush = () => {
-    raf = 0;
     if (gone()) return;
-    const list = queued;
+    const list = [...queued].filter((svg) => svg.isConnected);
     queued = new Set();
-    for (const svg of list) if (svg.isConnected) pxSvgEl(svg, root);
+    const sizes = list.map(sizeOf),
+      jobs = list.map((svg, i) => plan(svg, root, sizes[i])).filter(Boolean);
+    if (jobs.length) make(jobs);
   };
   const want = (svg) => {
     if (!svg || (skip && svg.closest(skip))) return;
     queued.add(svg);
-    if (!raf) raf = requestAnimationFrame(flush);
+    if (!raf)
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        afterPaint(flush);
+      });
   };
+  requeue.set(root, want);
   const scan = (n) => {
     if (n.nodeType !== 1 || (skip && n.closest(skip))) return;
     if (n.tagName === "svg") want(n.ownerSVGElement || n);
@@ -439,6 +467,8 @@ export function pxWatch(root, { skip = "" } = {}) {
     removeEventListener("resize", all);
     if (raf) cancelAnimationFrame(raf);
     raf = 0;
+    queued = new Set(); // (a flush already on its way finds nothing to do)
+    if (requeue.get(root) === want) requeue.delete(root);
   }
   return stop;
 }
