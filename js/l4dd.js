@@ -20,6 +20,7 @@ import {
   inCabin,
   seenFrom,
   sortY,
+  bodyZ,
   roofHoleOver,
   heightAt,
   W,
@@ -1666,10 +1667,13 @@ function drawMerchant(ctx, t) {
   mHurt(s, m, dead, p, sc, hide);
   if (hide) return;
   const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
-  if (butler.tr !== tr) {
+  if (butler.tr !== tr || butler.dz !== dead) {
     butler.tr = tr;
+    butler.dz = dead;
     butler.el.style.transform = tr;
-    butler.el.style.zIndex = Math.round(sortY(mAt.x, mAt.y, z)) + 10;
+    butler.el.style.zIndex = dead
+      ? bodyZ(mAt.x, mAt.y, z) // (dead: under every duck, layout.js)
+      : Math.round(sortY(mAt.x, mAt.y, z)) + 10;
   }
   pxPic(butler, butler.body.firstChild, 64 * sc, butler.bh * sc);
   if (butler.k !== sc) {
@@ -1760,7 +1764,7 @@ function drawCorpses(ctx) {
     if (o.tr !== tr) {
       o.tr = tr;
       o.el.style.transform = tr;
-      o.el.style.zIndex = Math.round(sortY(c.x, c.y, z)) + 9; // (just behind anyone standing where he lies)
+      o.el.style.zIndex = bodyZ(c.x, c.y, z); // (under every duck: layout.js)
     }
     pxPic(o, o.body.firstChild, 64 * sc, o.bh * sc);
     if (o.k !== sc) {
@@ -2770,7 +2774,9 @@ activity({
           ? AT_BOARDS
           : hole
             ? Math.round(hole.key) + 11 // (over the roof, in its hole)
-            : Math.round(sortY(o.x, o.y, z)) + 10,
+            : o.st === 3
+              ? bodyZ(o.x, o.y, z) // (dead: under every duck, layout.js)
+              : Math.round(sortY(o.x, o.y, z)) + 10,
         onCam = Wd.onView(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc),
         hide =
           unseen ||
@@ -2935,6 +2941,9 @@ activity({
     seePool(ctx.state(), ctx);
     drawMerchant(ctx, t);
     drawCorpses(ctx);
+    const tg = !!(ctx.state().hang.l4 || {}).tg;
+    if (ctx.world.board.classList.contains("trooper-gone") !== tg)
+      ctx.world.board.classList.toggle("trooper-gone", tg); // (his body gone, his pool left: l4ddrules.js troopTick)
     drawEgg(ctx, now);
     drawBox(ctx);
     pwDraw(ctx);

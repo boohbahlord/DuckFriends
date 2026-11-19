@@ -453,8 +453,9 @@ const pool = (cx, cy, w, seed) => {
   }
   return s;
 };
-/* the body itself, kind's, w plan px wide, lying on its side with its middle at (cx, cy): svg markup */
-export function corpse(kind, cx, cy, w = 100, flip = false) {
+/* the body itself, kind's, w plan px wide, lying on its side with its middle at (cx, cy): svg markup. only: "pool" its
+   blood alone, "body" the body alone (the trooper's body goes, its pool stays: l4ddrules.js troopTick) */
+export function corpse(kind, cx, cy, w = 100, flip = false, only = "") {
   const C = CORPSES[kind],
     h = hitsOf(C.hits),
     duck = duckSVG(
@@ -474,9 +475,13 @@ export function corpse(kind, cx, cy, w = 100, flip = false) {
     k = w / 120,
     put = (body, dx = 0, dy = 0) =>
       F`<g transform="translate(${cx + dx} ${cy + dy})${flip ? " scale(-1 1)" : ""} rotate(${C.turn}) scale(${k}) translate(${-vb[0] - 60} ${-vb[1] - vb[3] * 0.62})">${body}</g>`;
-  let s = C.jpool
-    ? F`<g transform="translate(${cx} ${cy + w * 0.05}) scale(${(w * 1.5) / 120})" opacity=".92">${JUSTIN_POOL}</g>`
-    : pool(cx, cy + w * 0.05, w * 1.1, w + cy);
+  let s =
+    only === "body"
+      ? ""
+      : C.jpool
+        ? F`<g transform="translate(${cx} ${cy + w * 0.05}) scale(${(w * 1.5) / 120})" opacity=".92">${JUSTIN_POOL}</g>`
+        : pool(cx, cy + w * 0.05, w * 1.1, w + cy);
+  if (only === "pool") return s;
   if (!C.cut) return s + put(inner);
   /* cut up: the head off, a hand's width from the rest, the cut's edges raw */
   const id = uid();
@@ -487,8 +492,8 @@ export function corpse(kind, cx, cy, w = 100, flip = false) {
   return s;
 }
 /* one of them on its own, for the chapel's floor: w × d */
-export function corpseSVG({ w = 140, d = 70, kind = "jaime" } = {}) {
-  return wrap(w, d, corpse(kind, w / 2, d * 0.55, w * 0.72));
+export function corpseSVG({ w = 140, d = 70, kind = "jaime", only = "" } = {}) {
+  return wrap(w, d, corpse(kind, w / 2, d * 0.55, w * 0.72, false, only));
 }
 
 /* a car stopped on the road, w × d (east-west), h tall: from above its hood, windshield, roof, rear window and trunk;

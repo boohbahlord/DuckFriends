@@ -521,9 +521,23 @@ const GS_DRAW = {
       opt: { fade: false }, // (it stays while a duck climbs it, seen between its rungs)
     }),
   corpse: (p) =>
-    gsPart(p, () => SK.corpseSVG({ w: p.w, d: p.d + p.h, kind: p.who }), {
-      opt: { fade: false },
-    }),
+    p.who === "trooper"
+      ? ["pool", "body"].flatMap((only) =>
+          gsPart(
+            p,
+            () => SK.corpseSVG({ w: p.w, d: p.d + p.h, kind: p.who, only }),
+            {
+              opt: {
+                fade: false,
+                layer: "floor",
+                ...(only === "body" ? { cls: "gs-trooper" } : {}),
+              },
+            },
+          ),
+        ) // (his body goes from round 12, his pool stays: l4ddrules.js troopTick, l4dd.js)
+      : gsPart(p, () => SK.corpseSVG({ w: p.w, d: p.d + p.h, kind: p.who }), {
+          opt: { fade: false, layer: "floor" }, // (on the floor, under every duck: the owner's, Nov 19 10:22Z)
+        }),
   canopy: (p) => [
     part(
       () => SK.canopySVG({ w: p.w, d: p.d, edge: 40 * GS.K }),

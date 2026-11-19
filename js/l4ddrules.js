@@ -1748,6 +1748,33 @@ function nukeTick(s, zs, now, ids) {
     ((s.hang.l4on || {}).double ? 2 : 1);
   for (const id of ids) addPts(s, id, each); // (every duck gets the points for all of it: the owner's, Nov 4)
 }
+/* Downpour: the trooper's body in the gas station (stationmap.js TROOPER) is gone from round 12 on, its pool of blood
+   left where it lay, but only once nobody can see it: whoever is in the gas station or near it would, so it waits for
+   a round or a rest when they're all away (the owner's, Nov 19 10:22Z: "the corpse in the gas station disapears but
+   the puddle of blood stays IF the body isnt on a players screen ... The check for this should be every 30 secods maybe
+   or something slow"). s.hang.l4.tg: gone. The host's clock for the next look: s.hidden.l4tg */
+export const TROOP = { ROUND: 12, EVERY: 30000, SEE_X: 1100, SEE_Y: 800 };
+function troopTick(s, now, ids) {
+  const L = s.hang.l4,
+    hid = s.hidden || {};
+  if (!dp() || !L || L.tg || (L.r || 0) < TROOP.ROUND) return;
+  if (hid.l4tg && now < hid.l4tg) return;
+  s.hidden = { ...hid, l4tg: now + TROOP.EVERY };
+  const sees = (id) => {
+    const p = s.pos[id];
+    if (!p || isWild(s, id) || p.x < 0) return false;
+    const x = p.x * W,
+      y = p.y * H;
+    return (
+      whereIn(x, y, +p.z || 0) === STATION ||
+      Math.hypot(
+        (x - GS.TROOPER.x) / TROOP.SEE_X,
+        (y - GS.TROOPER.y) / TROOP.SEE_Y,
+      ) < 1
+    ); // (in there, or near enough that a screen could show it through a window or a hole in the roof)
+  };
+  if (!ids.some(sees)) s.hang.l4 = { ...L, tg: 1 };
+}
 /* Downpour's lightning (the owner's, Nov 16 23:15Z): each round has a 1% chance of a strike, some time in it, on a
    zombie out in the open that a duck has on screen. It dies burnt (no points: nobody killed it), and each strike has a
    1% chance of another one right after. Waits while there's no such zombie. s.hang.l4lt { next: when it strikes (0:
@@ -4554,6 +4581,7 @@ function l4Tick(s, now) {
     return true;
   }
   merchantTick(s, now); // (the merchant walks in or out, and greets)
+  troopTick(s, now, ids); // (the rests between rounds too)
   /* between rounds: no zombies; the drops still lie there to be taken */
   if (s.hang.l4.wait && !isSb(s)) {
     if (waitTick(s, now)) return true;
@@ -5129,6 +5157,7 @@ export function fenceZ(x, y, id) {
 const CL = { out: 26, in: 14, step: 40, speed: 0.25 };
 const COMMIT_NEAR = 4;
 const CHURCH = 2, // (layout.js whereIn: the chapel)
+  STATION = 1, // (and the gas station)
   TEAR_NEAR = 2.2; // duck lengths (room): a duck this close outside the church takes a zombie off the window it tears at // duck lengths (room): a duck that left the floor this close to a zombie keeping to its way up
 /* the edge of a roof nearest (x, y): d its deck (stationmap.js DECKS), o how far outside its edge (< 0: inside), nx ny
    the way out. only: that deck's (a zombie up a wall or on a roof keeps to its own, z.k) */

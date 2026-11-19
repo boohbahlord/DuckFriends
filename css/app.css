@@ -15911,6 +15911,10 @@ html.moving .l4-heat.hot::after {
   color: #ffd23f;
   font-weight: inherit;
 }
+/* Downpour: the trooper's body gone from round 12, his pool of blood left (l4ddrules.js troopTick) */
+.trooper-gone .gs-trooper {
+  display: none;
+}
 /* Justin's blood, spreading under him once he's down (l4dd.js seePool); placed at its middle */
 .l4-jpool {
   position: absolute;
