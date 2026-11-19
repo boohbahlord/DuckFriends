@@ -6860,3 +6860,9 @@ Decided (Adam): standing rule, deploy tested batches without asking; keep worker
 "Adam u do a quick runover, correction, and edit yoruself of the help pages when they are done"
 
 Done (Adam): every help page read; examples run through the compiler; repeats/order examples that errored or meant nothing replaced, who/tests/window/files clarified (V96).
+
+## Owner, Nov 19 15:47Z
+"i want it to where not only can images be given to the custom NPCs, not only can they be pixelated, but all of their sizes can be changed, with their size limit based on the height of Justin Mad God for the images used. 
+Cropped images work obviously and allow for an enemy that is only the cropped image. The hitbox of the cropped image is it's image, not the parts that dont exist, ask me what that means. images that are erased to a shape or whatever prior to be uplaoded will have their hitbox only be the invisible obv, ask me what that means. The images for custom npcs have to be 32 bit in size like the ducks are normally tbh, and their pixels are different scale when they are larger, thus having more pixels with their larger size. Percent is obviously the best way to scale size for ducks, because otherwise they are using decimal integers."
+
+Now (Adam): uploaded NPC pictures exist (Appearance tab, s.sbpic), drawn 64 wide; hitbox is a 0.1-3 stat. Questions sent to the owner before building.
