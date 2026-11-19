@@ -233,6 +233,8 @@ import { mountL4Bar, l4Slider } from "./l4ddbar.js";
 import { isSb, sbOnBoard } from "./sandboxrules.js";
 import { mountCabinEnd } from "./hangout/cabinend.js";
 import { mountSandboxKeys } from "./sandbox.js";
+import { sbHotOn, sbLook, sbHotSig } from "./sbhotview.js";
+import { sbSlots, spawnOf } from "./sbhot.js";
 import { sbBoardMarks } from "./sbspawnview.js";
 import { duckSVG, duckRoom } from "./duck.js";
 import {
@@ -5682,7 +5684,9 @@ const playDuck = () =>
             ...Array(5).fill(null),
           ],
         }
-      : myDuck();
+      : R && sbHotOn(R.state)
+        ? { ...myDuck(), keys: sbSlots(R.state, R.me) } // (Sandbox's own hotbar: sbhot.js; its spawn buttons aren't specials)
+        : myDuck();
 /* Mad God Justin: a picked-up weapon used up, or the zebra cake thrown: back to the one out before (on each new state,
    and when the slider asks what's in hand, so it never picks the next one over by itself) */
 function mgjBackIfGone(s) {
@@ -5792,7 +5796,7 @@ function padWeapon() {
   return (WEAPONS.includes(id) ? id === held : THROWS.includes(id) && !held) &&
     sp &&
     !sp.off &&
-    unlocked("special", id)
+    (unlocked("special", id) || sbHotOn(R.state))
     ? id
     : null; // (a weapon is used only while it is the one in hand)
 }
@@ -5837,6 +5841,14 @@ function useKey(i, keep, toggle = false) {
     l4Pick(i, toggle || touchOnly()); // (Safe Keeping's note: only on its number key on a computer, on a tap on a phone)
     return;
   }
+  if (sbHotOn(R.state)) {
+    const v = sbSlots(R.state, R.me)[i];
+    if (spawnOf(v)) {
+      if (bar) bar.show(i);
+      R.send({ t: "sbh", k: "go", v }); // (a spawn button: it spawns)
+      return;
+    }
+  }
   if (bar) bar.show(i);
   if (isMgj(R.state)) {
     const id = keysOf(playDuck())[i];
@@ -5849,7 +5861,7 @@ function useKey(i, keep, toggle = false) {
   } // (Mad God Justin's own keys)
   const id = keysOf(playDuck())[i],
     sp = specialById(id);
-  if (!sp || sp.off || !unlocked("special", id)) return; // (a special that's off for now, or still locked, does nothing)
+  if (!sp || sp.off || !(unlocked("special", id) || sbHotOn(R.state))) return; // (a special that's off for now, or still locked, does nothing; in Sandbox the loot is everyone's)
   lastKey = i;
   if (WEAPONS.includes(id) || id === "jetpack") {
     selectKey(i, toggle);
@@ -8107,7 +8119,14 @@ register("game", {
       }; // (Quacky Zombies: its own weapons bar on a computer; on a phone its slots in the slider, as in every mode)
     } else {
       bar = mountHotbar(S, {
-        keys: () => keysOf(playDuck()),
+        keys: () =>
+          R && sbHotOn(R.state)
+            ? sbSlots(R.state, R.me).map((v) =>
+                spawnOf(v) || specialById(v) ? v : null,
+              )
+            : keysOf(playDuck()), // (Sandbox: its spawn buttons too)
+        own: (id) => (R && sbHotOn(R.state) ? sbLook(R.state, id) : null),
+        sig: () => (R && sbHotOn(R.state) ? sbHotSig(R.state) : ""),
         kept: keptNow,
         use: useKey,
         cool,

@@ -24,6 +24,7 @@ import {
   sbPlayerSpot,
 } from "./sandboxrules.js";
 import { sbAct, sbTick, sbPlaceDuck, sbHpOf } from "./sbspawn.js";
+import { sbHotAct } from "./sbhot.js";
 import { onCabin } from "./sbcabin.js";
 import { stamp, took } from "./perf.js";
 import {
@@ -2279,6 +2280,9 @@ function reduceStep(state, a, now) {
     case "sb":
       // Sandbox's spawns and respawns: place one, change a box, press one (sbspawn.js)
       return sbAct(s, a, now) ? s : state;
+    case "sbh":
+      // Sandbox's hotbar: its slots, the default, the lock, a spawn button's look and press (sbhot.js)
+      return sbHotAct(s, a, now) ? s : state;
     case "cabinEnd": {
       // Hangout's End Cabin and Quacky Zombies' Exit Cabin: a click votes, another takes it back; half the people
       // (never the computers) start a CABIN_END_MS timer, and the cabin game ends when it runs out
