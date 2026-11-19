@@ -6855,3 +6855,8 @@ Decided (Adam): all 7 in the bible (section 14, items 10-16). Double quotes in p
 "I'm busy or gone, never ask me if I want something live. Just push it out and deploy it. And make sure to do what you got to do to keep working after the deployment is done, because I'm going to be busy and things have to get done while I'm busy."
 
 Decided (Adam): standing rule, deploy tested batches without asking; keep workers going after each deploy.
+
+## Owner, Nov 19 14:58Z
+"Adam u do a quick runover, correction, and edit yoruself of the help pages when they are done"
+
+Done (Adam): every help page read; examples run through the compiler; repeats/order examples that errored or meant nothing replaced, who/tests/window/files clarified (V96).
