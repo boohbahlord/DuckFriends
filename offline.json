@@ -1,5 +1,5 @@
 {
-"v": "202611192045",
+"v": "202611192053",
 "files": {
 "assets/app/apple-touch-icon.png": "cda48ff597",
 "assets/app/icon-192.png": "8e062adfdc",
@@ -86,6 +86,16 @@
 "assets/px/tv/rabbit.webp": "5ad56c6f46",
 "assets/px/tv/stars.webp": "f3932ac703",
 "assets/px/tv/static.webp": "ddcc726cc3",
+"assets/px/vote/board.webp": "5d6658e0db",
+"assets/px/vote/carnival.webp": "efd6690cb4",
+"assets/px/vote/collage.webp": "29c341f9e0",
+"assets/px/vote/euclid.webp": "ada686b01c",
+"assets/px/vote/pixel.webp": "78801e9fd4",
+"assets/px/vote/rabbit.webp": "f0d7812143",
+"assets/px/vote/sky.webp": "952a5563a7",
+"assets/px/vote/stars.webp": "2f0a15e289",
+"assets/px/vote/tiles.webp": "a1a9d5d161",
+"assets/px/vote/vellum.webp": "c75fbdb5ea",
 "assets/sfx/adrenaline.mp3": "9fb413b583",
 "assets/sfx/ak.mp3": "ec4c9e102b",
 "assets/sfx/angelOrb.mp3": "32165933ed",
