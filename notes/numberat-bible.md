@@ -146,7 +146,7 @@ Every Numberat value works anywhere a number goes below: `wait 1:3`, `every [2,4
    Under 100% in all: the rest is "do nothing". `30%` alone is true 3 times in 10.
    On a stat, a percent is of its most, and can go past 100%: `((hp 50%))` = half the most HP, `((hp 150%))` = 1.5
    times (still inside the stat's limit).
-   **[proposal, owner asked 13:36Z why not over 100%, suggested `100%%+50%%`]** no `%%` needed. A pick over 100% in
+   Over 100% (owner 13:38Z: yes; no `%%`): A pick over 100% in
    all is read as shares: `[attack 150%, flee 50%]` = 3 to 1. A chance alone over 100% means "more than once":
    `150%` = once for sure, plus a 50% chance of a second time (`250%` = twice, plus 50% of a third). Kept to `[ ]`: a chance pick is still one
    pick; `( )` works a thing out and `{ }` waits.
