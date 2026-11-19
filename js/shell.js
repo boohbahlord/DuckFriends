@@ -68,7 +68,7 @@ import { uiCommand } from "./hideui.js";
 import { music } from "./music.js";
 import { npcsHere, npcTag, npcByTag, npcById } from "./npcs.js";
 import { isSb, sbMay, sbWorld, SB_WORLD_NAMES } from "./sandboxrules.js";
-import { HELP } from "./numerathelp.js";
+import { HELP, EXAMPLES } from "./numerathelp.js";
 import { compileScript, brain } from "./numberatrun.js";
 
 const tag = (n) => String(n || "").replace(/\s+/g, "");
@@ -117,8 +117,14 @@ const inNum = (path) => path.startsWith(numRoot() + "/");
 const helpRoot = () => numRoot() + "/help";
 const inHelp = (path) =>
   path === helpRoot() || path.startsWith(helpRoot() + "/");
+/* examples/ next to it: ready brain files, read-only too (not changed or deleted), but they CAN be copied: that's what they're for */
+const exRoot = () => numRoot() + "/examples";
+const inEx = (path) => path === exRoot() || path.startsWith(exRoot() + "/");
+const inRo = (path) => inHelp(path) || inEx(path);
 const NO_HELP = (path) =>
-  `✗ ${path}: Permission denied (the help files are read-only: they can't be changed, copied or deleted).`;
+  inEx(path)
+    ? `✗ ${path}: Permission denied (the example files are read-only: copy one with cp, then change the copy).`
+    : `✗ ${path}: Permission denied (the help files are read-only: they can't be changed, copied or deleted).`;
 function numLoad() {
   const N = profile.numerat || {},
     root = numRoot();
@@ -133,6 +139,12 @@ function numLoad() {
     fs.meta[helpRoot() + "/" + f] = { ro: true, t: 0 };
   }
   fs.meta[helpRoot()] = { ro: true, t: 0 };
+  fs.dirs.add(exRoot());
+  for (const [f, t] of Object.entries(EXAMPLES)) {
+    fs.files[exRoot() + "/" + f] = t;
+    fs.meta[exRoot() + "/" + f] = { ro: true, t: 0 };
+  }
+  fs.meta[exRoot()] = { ro: true, t: 0 };
 }
 function numKeep() {
   const root = numRoot(),
@@ -140,14 +152,14 @@ function numKeep() {
     f = {},
     x = [];
   for (const [p, t] of Object.entries(fs.files))
-    if (inNum(p) && !inHelp(p)) {
+    if (inNum(p) && !inRo(p)) {
       f[rel(p)] = t;
       if ((fs.meta[p] || {}).x) x.push(rel(p));
     }
   const next = {
     f,
     d: [...fs.dirs]
-      .filter((d) => inNum(d) && !inHelp(d))
+      .filter((d) => inNum(d) && !inRo(d))
       .map(rel)
       .sort(),
     x,
@@ -237,7 +249,7 @@ const findPath = (p) => {
   return kind(b) ? b : a;
 };
 function guard(path, write) {
-  if (write && inHelp(path)) fail(NO_HELP(path));
+  if (write && inRo(path)) fail(NO_HELP(path));
   const parts = path.split("/").filter(Boolean),
     h = fs.home;
   if (parts[0] === "bin")
@@ -299,14 +311,14 @@ function writeFile(p, text, append) {
       `✗ ${name}: a file name is letters, numbers, ., - and _ (40 at most).`,
     );
   const total = Object.entries(fs.files).reduce(
-    (a, [k, t]) => a + (inHelp(k) ? 0 : t.length),
+    (a, [k, t]) => a + (inRo(k) ? 0 : t.length),
     0,
   );
   if (total + text.length > 200000)
     fail("✗ Your notes are full (200,000 characters this game).");
   if (inNum(path)) {
     const all = Object.entries(fs.files).reduce(
-      (a, [k, t]) => a + (inNum(k) && !inHelp(k) && k !== path ? t.length : 0),
+      (a, [k, t]) => a + (inNum(k) && !inRo(k) && k !== path ? t.length : 0),
       0,
     );
     if (
@@ -1388,7 +1400,7 @@ const CMDS = {
     if (!args.length) fail("✗ touch: missing file operand");
     for (const a of args) {
       const p = resolve(a);
-      if (inHelp(p)) fail(NO_HELP(p));
+      if (inRo(p)) fail(NO_HELP(p));
       if (!kind(p)) writeFile(a, "", true);
       else fs.meta[p] = { ...(fs.meta[p] || {}), t: Date.now() };
     }
@@ -2567,7 +2579,7 @@ export const numerat = {
             name: n.replace(/\/$/, ""),
             dir: dirN,
             depth,
-            ro: inHelp(path), // (the help files: read-only)
+            ro: inRo(path), // (the help files: read-only)
           });
           if (dirN) walk(path, depth + 1);
         }
@@ -2591,7 +2603,7 @@ export const numerat = {
     CMDS.mkdir([path]);
     numKeep();
   },
-  ro: (path) => inHelp(path),
+  ro: (path) => inRo(path),
   /* another file, for use 'name': next to the file using it, then at the folder's top; .num may be left off */
   use(ctx, from, name) {
     sync(ctx);

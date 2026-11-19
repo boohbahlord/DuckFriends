@@ -37,6 +37,10 @@ Files that do things:
 
 Notes: # starts a note, the rest of the line is skipped.
 Spaces and line breaks don't change anything: [2, 4] = [2,4].
+  Next to this folder, examples/ has ready brain files (a chaser,
+  a coward, a healer, a talker, waves, a pair that share a value).
+  Copy one with cp and write its name in a spawn's Brain box.
+
 More pages come as more of Numberat is built.
 `,
   "values.txt": `Plain values
@@ -360,5 +364,48 @@ In front of a value, the count plays just that value:
   Notes          # starts a note: Check and Run skip the rest of the line.
   Terminal       the bottom line is the command line itself: anything it can
                  do works here.
+`,
+};
+
+/* ---------- examples/ (the owner's Nov 19 15:18Z via Adam): ready brain files, read-only like help/ ----------
+   Players copy one (cp) and write its name in a spawn's Brain box. Each was run through compileScript with 0 errors. */
+export const EXAMPLES = {
+  "chaser.num": `# A chaser: runs at the nearest duck, and bites when it is close.
+# Copy it, then write its name in a spawn's Brain box.
+when spawn { ((speed 1.2:1.6)); go nearest duck }
+every 2s go nearest duck
+when near duck 1 attack
+`,
+  "coward.num": `# A coward: it chases, but flees whenever it has under 5 HP.
+when spawn ((hp 8))
+every 1s \\if hp < 5\\ flee else go nearest duck
+when hit \\if hp < 5\\ flee
+`,
+  "healer.num": `# A healer: every few seconds the whole team is topped up to its most HP.
+# (100% is all of a stat's most: see names.txt)
+every [3,5]s ((team hp 100%))
+`,
+  "rage-give.num": `# The first of a pair: this file makes rage and gives it to the other file.
+# Put this one in one spawn's Brain box and rage-take in another's.
+let rage = 2:4
+give rage
+when spawn ((hp "2rage"))
+`,
+  "rage-take.num": `# The second of a pair: it takes the rage rage-give made, and its speed follows it.
+# (Give it first: when this file starts, rage-give has to have run.)
+take rage
+when spawn ((speed rage))
+`,
+  "talker.num": `# A talker: every few seconds it says one of three lines, with random letters.
+# $ is a random letter, * a random digit (asterisks.txt).
+every [2,4]s {
+  let n = 1:3
+  \\if n == 1\\ say "brains $$*" else \\if n == 2\\ say "hello $$$" else say "moan $*"
+}
+`,
+  "waves.num": `# Waves: each NPC is faster and tougher the later the wave. wave is the round.
+# Speed 1 at wave 0, up to 5 at wave 40; HP 3 plus the wave.
+when spawn { ((speed min 5 1+wave/10)); ((hp 3+wave)) }
+every 2s \\if wave > 3\\ go nearest duck
 `,
 };
