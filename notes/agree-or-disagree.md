@@ -6794,3 +6794,19 @@ Decided (Adam): all 8 in the bible (section 14); every stat (hitbox too) readabl
 "show me some complex examples of my numberat similiar to how i wrote it"
 
 Decided (Adam): 5 worked examples, bible section 16, sent in chat.
+
+## Owner, Nov 19 13:32Z
+"make version of numberat that uses percentage with percent sign
+
+make numberat also have asterisk for a single letter: which is this 
+$
+
+Dollar sign now means it can be any letter digit, just a single one
+$$
+two means any two random letters
+
+What should this means? 
+~
+maybe it doesnt have to mean anything"
+
+Decided (Adam): chance in percent replaces ~ weights ([attack 75%, flee 25%]); $ = one random letter, $$ two; proposed ~ = "about". Bible updated.

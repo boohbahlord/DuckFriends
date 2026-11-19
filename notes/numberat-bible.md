@@ -46,7 +46,7 @@ HP, damage and speed take tenths.
   `\>n>\`, `\>*>\` (count from input), `\>>\||` (repeat in order).
 - `[1,3][2,4]<`: start from the right. `[1,3][2,4]\<!<\`: keep going through every group instead of starting over.
 - Side by side, `[ ]` and `( )` groups are picked in random order unless arrows say otherwise.
-- `$` is gone.
+- `$` no longer means a random pick across `|` (see section 5 for its new meaning).
 
 ## 3. Brackets
 | Write | Means | Example |
@@ -71,6 +71,9 @@ HP, damage and speed take tenths.
   its sign by default (3); `\'ainc mormini'\` raises it to the lowest allowed instead (0).
 - Negative asterisks: `-*` is a negative digit (-9 to 0). `\'ainc negbrahm'\` lets an asterisk go below zero;
   `\'ainc posbrahm'\` lets a `-*` give positives (named after Brahmagupta and Brahma).
+- `$` is a letter, as `*` is a digit (owner 13:32Z): `$` = one random letter a to z, `$$` two, `$$$` three. Waits
+  for input like `*`. Named the same way: `'1$'`. Mixed: `say "zombie $$*"` might say "zombie qe7".
+  **[proposal]** lower case by default; `\'ainc caps'\` lets capitals in.
 - Named asterisks, single quotes: `'1*'` is asterisk number 1, `'2***'` asterisk number 2 with three digits. The number
   in quotes names it and is never part of the value. Double quotes are math, never names. (Keep `'1*'`; `'*1'`
   **[open]**, Adam suggested dropping it.)
@@ -136,10 +139,11 @@ Every Numberat value works anywhere a number goes below: `wait 1:3`, `every [2,4
    read and set by name, its hitbox too: `((hitbox 1.5))`, `\if hitbox > 2\`. **[open]** the full list of stats.
 2. **Actions**: `go nearest duck`, `attack`, `flee`, `wait 1.5`, `say "hi"` (quotes as in print).
 3. **Who**: `me`, `nearest duck`, `all zombies`, `team`: what an action or a stat applies to.
-4. **Weighted chance**, inside the pick bracket, since a weighted pick is still one pick: `[attack~3, flee~1]` attacks
-   3 times as often. Weights take any Numberat value: `[attack~1:3, flee~[1,2]]`. `30%` alone is true 3 times in 10.
-   Owner asked whether other brackets could carry weights; Adam: keep them to `[ ]`, because `( )` works a thing out
-   and `{ }` waits, neither picks.
+4. **Chance in percent** (owner 13:32Z: "uses percentage with percent sign"; replaces the `~` weights):
+   `[attack 75%, flee 25%]` attacks 3 times in 4. Percents take any Numberat value: `[attack 60:80%, flee 20%]`.
+   Under 100% in all: the rest is "do nothing". Over 100%: an error that says so. `30%` alone is true 3 times in 10.
+   On a stat, a percent is of its most: `((hp 50%))` = half the most HP. Kept to `[ ]`: a chance pick is still one
+   pick; `( )` works a thing out and `{ }` waits.
 5. **Named values**: `let rage = 2:4`, then `rage` anywhere a number goes. Every Numberat principle applies to them
    (owner: "allow the numberat principles to apply to variables"): `let rage = \>1>\[2,4]`, `rage^2`, `"2rage"`.
    **[open]** owner answered "sure???"; explained again in chat.
@@ -148,7 +152,10 @@ Every Numberat value works anywhere a number goes below: `wait 1:3`, `every [2,4
    value between files while the game runs.
 8. **Tests**: `\if hp in 1:5\` and `else`.
 
-## 15. Proposal waiting for the owner
+## 15. Proposals waiting for the owner
+**`~`** (owner 13:32Z: "What should this means? maybe it doesnt have to mean anything"). Proposal: "about": `~10` is
+10 give or take a tenth (9 to 11), `~1.5` is 1.4 to 1.6. Handy for speeds and times that shouldn't all match.
+
 **Several lines as one.** Doubled brackets clash with nesting (`[[3>5],2]` is a pick inside a pick; the owner's own
 `{{'**1'}+[+0,-1]}` is braces in braces; `((2:4)+1)` vs `((hp 5))`). Proposal: no symbol. A line carries on while a
 bracket is still open, so `{` opened on one line and closed three lines later is one line. `{{ }}` is freed.
@@ -171,10 +178,10 @@ bracket is still open, so `{` opened on one line and closed three lines later is
    use 'zombie-base'
    let rage = {[1,2]+[0:*]}
    when spawn ((hp "2rage"))
-   when hit [attack~rage, flee~1]
+   when hit [attack 75%, flee 25%]
    when near duck 3 { \if hp < 5\ flee else go nearest duck }
    every [2,4]s say "brains"
    give rage
    ```
-   Rage is 1 to 11. HP is twice the rage. When hit, it attacks rage times as often as it flees. Near a duck, under
+   Rage is 1 to 11. HP is twice the rage. When hit, it attacks 3 times in 4 and flees the rest. Near a duck, under
    5 HP it runs, otherwise it chases. Every 2 or 4 seconds it says "brains". Other files can take its rage.
