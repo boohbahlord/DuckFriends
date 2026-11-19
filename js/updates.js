@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v108",
+    version: 108,
+    date: "Nov 19, 2026",
+    title: "Quieter, and respawns that look the part",
+    news: [
+      "The game is quieter: every sound is a little softer, the music sits lower, and the burst rifle is no longer loud and harsh.",
+      "For Sandbox: a respawn can import its spawn's Appearance, and loot is sorted into Effects, Jumps, Weapons and Items.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v107",
     version: 107,
     date: "Nov 19, 2026",
