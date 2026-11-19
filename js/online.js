@@ -307,6 +307,8 @@ const REMOTE = new Set([
   "sbOk", // (Sandbox's rights given or taken: only by one who has them, rules.js)
   "nbn", // (the names in my Numberat folder, nbperms.js)
   "nbp", // (a right I give on my own Numberat files, nbperms.js)
+  "nbs", // (my shared copies, nbperms.js)
+  "nbw", // (a write into another player's file, if they gave me w: nbperms.js)
 ]);
 const LOOK = [
   "name",

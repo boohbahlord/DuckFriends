@@ -158,12 +158,15 @@ export function openNumerat() {
         $(".nm-path").textContent = st.file ? rel(st.file) : rel(st.dir) + "/";
         const run = $("[data-run]"),
           mine = !!st.file && !!numerat.perms(ctx, st.file),
+          given = st.file ? numerat.theirs(ctx, st.file) : null, // (another player's: the rights they gave me)
           ro =
             !!st.file &&
             (numerat.ro(st.file) || // (the help files)
-              !mine || // (another player's)
-              !numerat.perms(ctx, st.file).own.includes("w")); // (my own, with its write off)
-        run.disabled = !st.file || !mine;
+              (given
+                ? !given.includes("w")
+                : !mine || // (not in home/)
+                  !numerat.perms(ctx, st.file).own.includes("w"))); // (my own, with its write off)
+        run.disabled = !st.file || !(mine || (given && given.includes("x")));
         $("[data-perm]").disabled = !numerat.perms(ctx, st.file || st.dir);
         if (!permEl.hidden) permPaint();
         run.textContent = st.file && numerat.running(st.file) ? "Stop" : "Run";
@@ -230,7 +233,8 @@ export function openNumerat() {
       };
       /* the room's Numberat log (what Brains print, and their mistakes): shown here as it comes */
       let seen = 0,
-        lastNbp = null;
+        lastNbp = null,
+        lastNbs = null;
       const logT = setInterval(() => {
         if (!w.isConnected) return clearInterval(logT);
         const R = activeRoom(),
@@ -240,10 +244,23 @@ export function openNumerat() {
         const fresh = log.filter((l) => l.n > seen);
         seen = n;
         if (fresh.length) say(fresh.map((l) => "🧠 " + l.t));
-        const np = R && R.state && R.state.nbp;
+        const np = R && R.state && R.state.nbp,
+          ns = R && R.state && R.state.nbs;
         if (np !== lastNbp) {
           lastNbp = np;
           paint(); // (names and rights other players gave: home/ and Permissions as they are now)
+        }
+        if (ns !== lastNbs) {
+          lastNbs = ns;
+          if (st.file && document.activeElement !== code) {
+            let t = null;
+            try {
+              t = numerat.read(ctx, st.file);
+            } catch {
+              /* (their copy went: what's shown stays) */
+            }
+            if (t != null && t !== code.value) setText(t); // (another player's file, or mine that someone wrote)
+          }
         }
       }, 500);
       /* autocomplete in the code: the words Numerat has (true, false) for what's typed since the last space; Tab takes it */

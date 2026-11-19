@@ -80,7 +80,7 @@ export const MAN = {
   chown:
     "chown :group file: sets the file's group (as chgrp). A file can't be given to another player (it stays on its maker's device): give them rights with setfacl.",
   setfacl:
-    "setfacl -m u:name:rwx[,g:group:r,o::r] file: what one player (a group, everyone) may do with one of your Numberat files or folders: r read it, w change it, x run it. setfacl -x u:name file takes them away, setfacl -b file takes every one away. Sandbox only; a new Sandbox starts with none. A folder's rights cover everything in it. The Numberat window's Permissions button does the same.",
+    "setfacl -m u:name:rwx[,g:group:r,o::r] file: what one player (a group, everyone) may do with one of your Numberat files or folders: r read it, w change it, x run it. setfacl -x u:name file takes them away, setfacl -b file takes every one away. Sandbox only; a new Sandbox starts with none. A folder's rights cover everything in it. The Numberat window's Permissions button does the same. What they may read or run is copied to the room while you're in it; what they write is saved into your own file.",
   getfacl:
     "getfacl file: who may do what with it: you (user::), each player, its group and everyone (other::). On another player's file: your rights.",
   chgrp:

@@ -70,7 +70,17 @@ import { npcsHere, npcTag, npcByTag, npcById } from "./npcs.js";
 import { isSb, sbMay, sbWorld, SB_WORLD_NAMES } from "./sandboxrules.js";
 import { HELP, EXAMPLES } from "./numerathelp.js";
 import { LANG, LANG_DIR } from "./langname.js";
-import { nbBy, nbRights, nbGiven, canHomes } from "./nbperms.js";
+import {
+  nbBy,
+  nbRights,
+  nbGiven,
+  canHomes,
+  nbCopy,
+  nbCopies,
+  nbOut,
+  NBS_FILES,
+  NBS_TEXT,
+} from "./nbperms.js";
 import { compileScript, brain } from "./numberatrun.js";
 
 const tag = (n) => String(n || "").replace(/\s+/g, "");
@@ -188,6 +198,7 @@ function numKeep() {
     ...(nw.length ? { nw } : {}),
   };
   shareNames();
+  shareCopies();
   if (JSON.stringify(next) === JSON.stringify(profile.numerat || {})) return;
   profile.numerat = next;
   save();
@@ -271,6 +282,55 @@ function shareNames() {
   if (k === namesSent) return;
   namesSent = k;
   fs.room.send({ t: "nbn", names });
+}
+/* my shared copies (nbperms.js): what someone else may read or run goes to the room, and what someone with w wrote
+   there comes into my own files first */
+let copiesSent = "",
+  copiesAt = 0;
+const applied = {}; // (path -> the write I saved last, this Sandbox)
+function takeWrites() {
+  const s = roomS();
+  if (!s || !isSb(s) || !fs.meId) return false;
+  const root = numRoot();
+  let got = false;
+  for (const [rel, c] of Object.entries(nbCopies(s, fs.meId))) {
+    const k = s.startedAt + ":" + rel;
+    if (c.w === fs.meId || c.n <= (applied[k] || 0)) continue;
+    applied[k] = c.n;
+    const path = root + "/" + rel,
+      dir = path.slice(0, path.lastIndexOf("/"));
+    if (dir !== root && !fs.dirs.has(dir)) continue; // (its folder is gone)
+    fs.files[path] = String(c.t);
+    got = true;
+  }
+  return got;
+}
+function shareCopies() {
+  const s = roomS();
+  if (!s || !isSb(s) || !fs.room.send || !fs.meId) return;
+  const root = numRoot(),
+    files = {};
+  for (const [p, t] of Object.entries(fs.files)) {
+    if (!inNum(p) || inRo(p) || Object.keys(files).length >= NBS_FILES)
+      continue;
+    const rel = p.slice(root.length + 1);
+    if (nbOut(s, fs.meId, rel)) files[rel] = t.slice(0, NBS_TEXT);
+  }
+  const have = nbCopies(s, fs.meId),
+    same =
+      Object.keys(have).length === Object.keys(files).length &&
+      Object.entries(files).every(
+        ([rel, t]) => have[rel] && have[rel].w === fs.meId && have[rel].t === t,
+      );
+  if (same) return;
+  const k = s.startedAt + ":" + JSON.stringify(files);
+  if (k === copiesSent && Date.now() - copiesAt < 10000) return; // (sent: on its way)
+  copiesSent = k;
+  copiesAt = Date.now();
+  const seen = {};
+  for (const rel of Object.keys(have))
+    seen[rel] = applied[s.startedAt + ":" + rel] || 0;
+  fs.room.send({ t: "nbs", files, seen });
 }
 /* the Numerat files running (a stub until the language comes: each only waits to be stopped), for this game */
 let procs = [],
@@ -366,7 +426,7 @@ const findPath = (p) => {
   const b = norm("/usr/" + p);
   return kind(b) ? b : a;
 };
-function guard(path, write) {
+function guard(path, write, into) {
   if (write && inRo(path)) fail(NO_HELP(path));
   const t = theirs(path);
   if (t) {
@@ -374,16 +434,17 @@ function guard(path, write) {
       r = t.rel ? nbRights(s, t.id, t.rel, fs.meId) : "---";
     if (
       !canHomes(s, fs.meId) &&
-      (!kind(path) || (!t.rel && !theirNames(t).length))
+      ((!kind(path) && !(write && into && r.includes("w"))) || // (a new file where I may write)
+        (!t.rel && !theirNames(t).length))
     )
       fail(
         `✗ ${path}: Permission denied (looking in other players' folders takes canhomes, or a right ${t.name} gives you)`,
       );
-    if (write)
+    if (write && !r.includes("w"))
+      fail(`✗ ${path}: Permission denied (${t.name} hasn't given you w on it)`);
+    if (write && !into)
       fail(
-        r.includes("w")
-          ? `✗ ${path}: it is on ${t.name}'s device; writing there comes with shared copies (next)`
-          : `✗ ${path}: Permission denied (${t.name} hasn't given you w on it)`,
+        `✗ ${path}: it is on ${t.name}'s device: only its words can be written (echo … > ${path.split("/").pop()}, or the n window)`,
       );
     return;
   }
@@ -445,16 +506,58 @@ function readFile(p) {
     );
   return fs.files[path];
 }
-/* another player's file I may read: its copy in the room (part B: shared copies) */
+/* another player's file I may read or run: its copy in the room (nbperms.js), put there by their device */
 function theirText(t) {
-  fail(
-    `✗ ${t.rel}: it is on ${t.name}'s device; its words come here once shared copies are built (next)`,
-  );
+  const c = nbCopy(roomS(), t.id, t.rel);
+  if (!c)
+    fail(
+      `✗ ${t.rel}: ${t.name}'s copy isn't here yet (it comes a few seconds after a right is given, while ${t.name} is in the room)`,
+    );
+  return c.t;
+}
+/* writing another player's file they gave me w on: through the room, and their device saves it into their own file.
+   > empties the file first and >> then adds what came out, faster than the room answers: so what I sent last (these
+   10 seconds) is what >> adds to */
+const sentTheirs = new Map(); // (id/path -> { text, at })
+function writeTheirs(t, p, text, append) {
+  if (!t.rel || kind(resolve(p)) === "dir") fail(`✗ ${p}: Is a directory`);
+  const name = t.rel.split("/").pop(),
+    up = t.rel.includes("/") ? t.rel.slice(0, t.rel.lastIndexOf("/")) : "";
+  if (!/^[\w.-]{1,40}$/.test(name))
+    fail(
+      `✗ ${name}: a file name is letters, numbers, ., - and _ (40 at most).`,
+    );
+  if (up && kind(`${HOME}/${t.name}/${up}`) !== "dir")
+    fail(`✗ ${p}: No such file or directory`);
+  const k = t.id + "/" + t.rel,
+    was = sentTheirs.get(k),
+    all =
+      (append
+        ? was && Date.now() - was.at < 10000
+          ? was.text
+          : theirText(t)
+        : "") + text;
+  if (all.length > NBS_TEXT)
+    fail(
+      `✗ ${p}: ${NBS_TEXT.toLocaleString("en-US")} letters at most in another player's file.`,
+    );
+  if (
+    !kind(resolve(p)) &&
+    Object.keys(nbCopies(roomS(), t.id)).length >= NBS_FILES
+  )
+    fail(`✗ ${p}: ${t.name} has ${NBS_FILES} files shared already.`);
+  const c = nbCopy(roomS(), t.id, t.rel);
+  if ((was && Date.now() - was.at < 10000 ? was.text : c && c.t) === all && c)
+    return; // (nothing changed: a write would only undo what they changed since)
+  sentTheirs.set(k, { text: all, at: Date.now() });
+  fs.room.send({ t: "nbw", owner: t.id, path: t.rel, text: all });
 }
 function writeFile(p, text, append) {
   if (p === "/dev/null") return;
   const path = resolve(p);
-  guard(path, true);
+  guard(path, true, true);
+  const t = theirs(path);
+  if (t) return writeTheirs(t, p, text, append);
   if (kind(path) === "dir") fail(`✗ ${p}: Is a directory`);
   if (fs.files[path] !== undefined && (fs.meta[path] || {}).nw)
     fail(
@@ -2659,7 +2762,8 @@ async function one(argv, stdin, meta, ctx, rs) {
    say; ps lists it until kill <pid> stops it */
 function startFile(path, ctx, sudo) {
   const s = ctx.room && ctx.room.state,
-    name = path.slice(fs.home.length + 1);
+    t = theirs(path),
+    name = t ? `~${t.name}/${t.rel}` : path.slice(fs.home.length + 1);
   if (!s || !isSb(s))
     fail(`✗ ${name}: ${LANG} files only run in Sandbox.`, 126);
   if (!sbMay(s, ctx.room.me, "n") && !(sudo && isSudo(s, ctx.room.me)))
@@ -2670,7 +2774,7 @@ function startFile(path, ctx, sudo) {
   const was = procs.find((p) => p.path === path);
   if (was) return `${name} is already running (pid ${was.pid}).`;
   /* read it first: a file with mistakes doesn't start, and says where they are */
-  const c = compileScript(fs.files[path] || "", {
+  const c = compileScript((t ? theirText(t) : fs.files[path]) || "", {
     file: (n) => useText(path, n),
   });
   if (c.errs.length)
@@ -2729,6 +2833,16 @@ function playTop(plan, s, name) {
 const numShared = new Map(); // (give and take between files)
 /* use 'name': the file next to the one using it, or at the Numberat folder's top; .num may be left off */
 function useText(from, name) {
+  const t = theirs(from);
+  if (t) {
+    const c = nbCopies(roomS(), t.id),
+      dir = t.rel.includes("/")
+        ? t.rel.slice(0, t.rel.lastIndexOf("/") + 1)
+        : "";
+    for (const d of [dir, ""])
+      for (const n of [name, name + ".num"]) if (c[d + n]) return c[d + n].t;
+    return null;
+  }
   const dir = from.slice(0, from.lastIndexOf("/"));
   for (const d of [dir, numRoot()])
     for (const n of [name, name + ".num"]) {
@@ -2743,7 +2857,10 @@ function runFile(c, ctx, sudo) {
   if (!k) fail(`✗ ${c}: No such file or directory`, 127);
   guard(path, false);
   if (k === "dir") fail(`✗ ${c}: Is a directory`, 126);
-  if (!(fs.meta[path] || {}).x)
+  const t = theirs(path);
+  if (t && !nbRights(roomS(), t.id, t.rel, fs.meId).includes("x"))
+    fail(`✗ ${c}: Permission denied (${t.name} hasn't given you x on it)`, 126);
+  if (!t && !(fs.meta[path] || {}).x)
     fail(
       `✗ ${c}: Permission denied (chmod +x ${c.split("/").pop()} first)`,
       126,
@@ -2960,7 +3077,9 @@ export const numerat = {
   /* my folder's names to the room (sandbox.js asks every few seconds) */
   share(ctx) {
     sync(ctx);
+    if (takeWrites()) numKeep();
     shareNames();
+    shareCopies();
   },
   /* the window's way of writing a path: home/<me>/…, home/<them>/… */
   rel: (path) =>
@@ -3078,9 +3197,16 @@ export const numerat = {
   },
   write(ctx, path, text) {
     sync(ctx);
+    if (theirs(path)) return writeFile(path, text, false); // (through the room: their device saves it)
     if (!inNum(path)) fail(`✗ That is not in the ${LANG} folder.`);
     writeFile(path, text, false);
     numKeep();
+  },
+  /* the rights I have on another player's file or folder ("rw-" …), or null when it's mine (or not in home/) */
+  theirs(ctx, path) {
+    sync(ctx);
+    const t = theirs(path);
+    return t ? nbRights(roomS(), t.id, t.rel, fs.meId) : null;
   },
   mkdir(ctx, path) {
     sync(ctx);
@@ -3098,13 +3224,24 @@ export const numerat = {
      under the name it's written with; null when there's no such file */
   bundle(ctx, name) {
     sync(ctx);
-    const top = numRoot() + "/" + name,
-      text = useText(top, name.split("/").pop());
+    /* ~<them>/file: another player's file they gave me x on (its copy in the room), and the files it uses are theirs */
+    const m = name.match(/^~([^/]+)\/(.+)$/),
+      top = m ? `${HOME}/${m[1]}/${m[2]}` : numRoot() + "/" + name,
+      t = m && theirs(top);
+    if (m && (!t || !/x/.test(nbRights(roomS(), t.id, t.rel, fs.meId))))
+      return null;
+    const pre = m ? `~${m[1]}/` : "",
+      text = m
+        ? (
+            nbCopy(roomS(), t.id, t.rel) ||
+            nbCopy(roomS(), t.id, t.rel + ".num") || { t: null }
+          ).t
+        : useText(top, name.split("/").pop());
     if (text == null) return null;
     const files = { [name]: text },
       seen = (n) => {
-        if (!(n in files)) files[n] = useText(top, n);
-        return files[n];
+        if (!(pre + n in files)) files[pre + n] = useText(top, n);
+        return files[pre + n];
       };
     compileScript(text, { file: seen });
     for (const [n, t] of Object.entries(files)) if (t == null) delete files[n];
