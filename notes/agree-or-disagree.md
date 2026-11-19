@@ -7122,3 +7122,11 @@ Decided (Adam): added to the same later slimming item. Before that pass, study g
 "These names fucking suck. Just make it basic, normal people names, goddammit. Why the fuck do we have to make everything special and retarded and reinvent the wheel? Stop trying to be different and quirky."
 
 Decided (Adam): the friendly squad gets basic, normal people names. Joseph's first plain list was rejected by the owner too (23:33Z); Adam swaps js/allies.js NAMES once Joseph sends the list the owner OKs. Names still never repeat.
+
+## Owner, 2026-11-19 23:33Z (Joseph's thread: the soldiers' names, again)
+"Okay, some of these names just sound like it's just fucking chosen out of a baby's name book, okay? Are you fucking kidding me? Like, when I hear Bob, that's real fucking shit. When I hear Steve or Dave, that's real fucking shit. But once we start fucking talking about, like, I don't know, Jess, Megan, Mike, Chris, like, what the fuck kind of names are these? Like, do you not understand the pattern I'm talking about? Like, what kind of fucking names are these?"
+
+## Owner, 2026-11-19 23:33:47Z
+"You can use women names that are the equivalent of those because I like those names."
+
+Decided (Joseph, final): plain first names, no ranks. Men: Bob, Steve, Dave, Gary, Larry, Jerry, Carl, Frank, Earl, Doug, Phil, Hank, Bill, Rick, Ron, Don, Jim, Ted, Walt, Stan, Gus, Ed, Joe, Roy, Ray, Lou, Hal, Norm, Glen, Dale. Women: Linda, Barb, Carol, Donna, Pam, Deb, Sue, Peg, Joan, Judy, Kathy, Nancy, Janet, Brenda, Doris, Gail, Marge, Bev, Rita, Dot. Done in js/allies.js by Adam; names never repeat.

@@ -36,39 +36,59 @@ export const FR = {
 };
 const BOOMS = ["grenade", "glauncher", "jaimebomb"]; // (explosives: kills by these are never counted)
 
-/* the owner's approved words (friendly-squad-words.md, Nov 19 19:40Z) */
-const RANKS = ["Pvt.", "Cpl.", "Sgt."];
+/* plain first names, no ranks: the owner's own pick (Nov 19 23:33Z: "when I hear Bob, that's real fucking shit", and
+   women names that are the equivalent of those) */
 const NAMES = [
-  "Hale",
-  "Brooks",
-  "Ortega",
-  "Novak",
-  "Reyes",
-  "Okafor",
-  "Walsh",
-  "Kowalski",
-  "Tran",
-  "Mercer",
-  "Delgado",
-  "Haynes",
-  "Petrov",
-  "Lindqvist",
-  "Abara",
-  "Castillo",
-  "Dunn",
-  "Fischer",
-  "Grady",
-  "Ibarra",
-  "Kane",
-  "Laszlo",
-  "Moreau",
-  "Nakamura",
-  "Pike",
-  "Quinn",
-  "Rourke",
-  "Sato",
-  "Vance",
-  "Wolfe",
+  "Bob",
+  "Steve",
+  "Dave",
+  "Gary",
+  "Larry",
+  "Jerry",
+  "Carl",
+  "Frank",
+  "Earl",
+  "Doug",
+  "Phil",
+  "Hank",
+  "Bill",
+  "Rick",
+  "Ron",
+  "Don",
+  "Jim",
+  "Ted",
+  "Walt",
+  "Stan",
+  "Gus",
+  "Ed",
+  "Joe",
+  "Roy",
+  "Ray",
+  "Lou",
+  "Hal",
+  "Norm",
+  "Glen",
+  "Dale",
+  "Linda",
+  "Barb",
+  "Carol",
+  "Donna",
+  "Pam",
+  "Deb",
+  "Sue",
+  "Peg",
+  "Joan",
+  "Judy",
+  "Kathy",
+  "Nancy",
+  "Janet",
+  "Brenda",
+  "Doris",
+  "Gail",
+  "Marge",
+  "Bev",
+  "Rita",
+  "Dot",
 ];
 const LINES = {
   arrive: [
@@ -167,7 +187,7 @@ export function friendsCome(s, now, H) {
     size =
       GM.SQUAD[0] + Math.floor(Math.random() * (GM.SQUAD[1] - GM.SQUAD[0] + 1)),
     sup = 1 + Math.floor(Math.random() * 2);
-  /* their last names from a bag kept all game (gm.fnb): no name comes again till every one has been used (the owner's,
+  /* their names from a bag kept all game (gm.fnb): no name comes again till every one has been used (the owner's,
      Nov 19 22:25Z: "the ally soldiers should have different random name variations, and names don't repeat") */
   let names = gm.fnb && gm.fnb.length ? [...gm.fnb] : [...NAMES];
   for (let k = 0; k < size; k++) {
@@ -188,9 +208,9 @@ export function friendsCome(s, now, H) {
         H,
         k === 0 ? "lmg" : k <= sup ? "sup" : "rifle",
       ),
-      last = names.splice(Math.floor(Math.random() * names.length), 1)[0];
-    if (!names.length) names = NAMES.filter((n) => n !== last); // (all used: a new bag)
-    o.nm = `${k === size - 1 ? "Lt." : pick(RANKS)} ${last}`;
+      nm = names.splice(Math.floor(Math.random() * names.length), 1)[0];
+    if (!names.length) names = NAMES.filter((n) => n !== nm); // (all used: a new bag)
+    o.nm = nm;
     o.hm = [Math.round(at[0]), Math.round(at[1])];
     o.st = "rest";
     if (k === size - 1) o.ldr = 1;
