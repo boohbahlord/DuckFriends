@@ -34,7 +34,7 @@ const ON_OFF = [
   [0, "Off"],
   [1, "On"],
 ];
-const NO_TURNS = ["hang", "l4dd", "vdd"];
+const NO_TURNS = ["hang", "l4dd", "surv", "vdd"];
 const HOST = [
   {
     k: "share",
