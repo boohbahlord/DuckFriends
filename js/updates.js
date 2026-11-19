@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v105",
+    version: 105,
+    date: "Nov 19, 2026",
+    title: "Smoother rain and swarms",
+    news: [
+      "For Dead Ducks Arcade: Downpour runs smoother in the rain and when a crowd of zombies is clawing you (hit flashes and claw marks no longer slow the game down).",
+    ],
+    fixed: [],
+  },
+  {
     id: "v104",
     version: 104,
     date: "Nov 19, 2026",
