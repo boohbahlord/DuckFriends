@@ -407,7 +407,7 @@ function openPause() {
             custom: () => openCustomize(),
             settings: () => openSettings(),
             friends: () => openFriends(),
-            leave: () => leaveTo("rooms"),
+            leave: () => leaveTo(R && R.state.solo ? "front" : "rooms"), // (Single Player: the front page)
           })[a.dataset.a]();
         }),
     },
@@ -454,6 +454,7 @@ function renameRoom() {
 
 register("lobby", {
   guard: () => !!activeRoom(),
+  backTo: () => (R && R.state.solo ? "front" : "rooms"), // (Single Player's Back: the front page)
   exit() {
     const r = activeRoom();
     if (r) {
@@ -511,7 +512,8 @@ register("lobby", {
     );
     lastSeat = 0;
     mbarOff = mountMusicBar(S);
-    S.querySelector(".lobby-x").onclick = () => leaveTo("rooms");
+    S.querySelector(".lobby-x").onclick = () =>
+      leaveTo(R && R.state.solo ? "front" : "rooms"); // (Single Player: the front page, never the online rooms)
     S.querySelector(".lobby-pause").onclick = () => openPause();
     const info = S.querySelector(".lmenu-info");
     S.querySelector(".lmenu").addEventListener("pointerover", (e) => {
