@@ -9,6 +9,19 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v93",
+    version: 93,
+    date: "Nov 19, 2026",
+    title: "Numberat speaks math",
+    news: [
+      "For Sandbox: Numberat now understands orders (2>4), repeats, brackets, math, asterisks, named asterisks, ~ and percent picks, in spawn boxes and in files.",
+      "For Sandbox: Check in the Numberat window reads the full language and says which line is wrong and why.",
+    ],
+    fixed: [
+      "For Sandbox: 2:4 in a speed or damage box now gives whole numbers, as written; 0.8:1.2 still gives tenths.",
+    ],
+  },
+  {
     id: "v92",
     version: 92,
     date: "Nov 19, 2026",

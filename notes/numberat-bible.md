@@ -32,7 +32,7 @@ old wording; history and word-for-word quotes live in `notes/agree-or-disagree.m
 | `1.0:*` | 1.0 to 9 | 6.3 |
 | `1.0:1.*` | 1.0 to 1.9 (how to write a tenths range) | 1.4 |
 | `1.[0:9]`, `1.[0:*]` | 1 and a tenth digit 0 to 9 | 1.0 to 1.9 |
-| `1.*` | 1.1 to 1.9 (the asterisk is one digit) | 1.7 |
+| `1.*` | 1.0 to 1.9 (the asterisk is one digit, 0 included) | 1.7 |
 | `*.*` | a digit and a tenth digit | 4.2 |
 | `t`, `f` | true, false | |
 
