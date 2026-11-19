@@ -1251,7 +1251,12 @@ function drawMeters(s, board, layer, now) {
     return;
   }
   const list = s.seat
-    .filter((id) => id !== R.me && s.players[id])
+    .filter(
+      (id) =>
+        id !== R.me &&
+        s.players[id] &&
+        !(isL4dd(s) && (s.players[id].helper || s.players[id].wild)),
+    ) // (Dead Ducks Arcade and Survival: only the players, never Justin's bar, the owner's, Nov 19 19:27Z)
     .map((id) => [id, s.players[id].name, hpFull(s, id, now)])
     .filter(([, , h]) => h)
     .map(([id, n, h]) => [id, n, h[0], h[1]]);
@@ -1856,7 +1861,9 @@ function drawDucks(now = clockNow()) {
               : ""
           : olP
             ? olP.helper || olP.wild
-              ? "justin" // (Dead Ducks Arcade's Justins: the helper from the fireplace, and Downpour's, out there)
+              ? dead
+                ? "" // (dead, no outline round him: the owner's, Nov 19 19:27Z "when he dies, there's no outline around his character")
+                : "justin" // (Dead Ducks Arcade's Justins: the helper from the fireplace, and Downpour's, out there)
               : olMine
                 ? "me"
                 : "ally"
@@ -3092,6 +3099,31 @@ function sendDu(s) {
   duAt = t;
   R.send({ t: "sb", k: "du", du });
 }
+/* the way a zombie on the board walks (n: its element, x: where it is now): turned only once it keeps going the other way
+   a moment (FACE_HOLD). Bumping into another or a wall pushed it back and forth a few px, and its picture flipped each
+   time, as if squished (the owner's, Nov 19 19:27Z: "I do not want a squish effect on zombies, for example, when they
+   walk into each other or walk into a wall"); as Dead Ducks Arcade's zombies, l4dd.js */
+const FACE_HOLD = 300;
+function walkFace(n, x, now) {
+  const f = n._f || 1,
+    dir =
+      n._x === undefined || Math.abs(x - n._x) < 0.5 ? 0 : x < n._x ? -1 : 1;
+  if (!dir || dir === f) {
+    if (dir) n._went = 1;
+    n._turn = 0;
+    return f;
+  }
+  if (!n._went) {
+    n._went = 1;
+    return dir; // (its first steps: the way it goes at once)
+  }
+  if (n._turn !== dir) {
+    n._turn = dir;
+    n._turnAt = now;
+    return f;
+  }
+  return now - n._turnAt >= FACE_HOLD ? dir : f;
+}
 function placeZombies(board, s, now) {
   const layer = $(".ducks", board),
     zb =
@@ -3135,11 +3167,7 @@ function placeZombies(board, s, now) {
       face =
         o.wp || (sbOnBoard(s) && o.f)
           ? o.f || 1 // (a made NPC: the way the host turned it, so its weapon points at what it shoots: sbarms.js; Sandbox's: the way it walks, as its hits are worked out, sbbody.js)
-          : n._x === undefined || Math.abs(c.left - n._x) < 0.5
-            ? n._f || 1
-            : c.left < n._x
-              ? -1
-              : 1, // (the way it walks)
+          : walkFace(n, c.left, now), // (the way it walks)
       st = `${c.left.toFixed(1)},${c.top.toFixed(1)},${w.toFixed(1)},${face},${o.d ? 1 : 0}`;
     n._x = c.left;
     n._f = face;
