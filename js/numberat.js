@@ -20,8 +20,9 @@ class NbError extends Error {
     this.why = why;
   }
 }
-const no = (why) => {
-  throw new NbError(why);
+/* an error says why, and which help page tells more */
+const no = (why, page) => {
+  throw new NbError(page ? `${why}. See ${page}` : why);
 };
 
 /* ---------- reading the text into pieces ---------- */
@@ -119,7 +120,7 @@ function lex(text) {
 }
 
 /* ---------- the parts, each compiled to a function of the run (ctx) ----------
-   ctx: { r: random numbers, b: the inputs named so far (Map), f: the line's asterisk rules } */
+   ctx: { r: random numbers, b: the inputs named so far (Map), R: the line's rules (judge()), fresh: the { } started } */
 const rnd = (ctx, n) => Math.min(n - 1, Math.floor(ctx.r() * n)); // (0 … n-1)
 const tenth = (n) => Math.round(n * 10) / 10;
 const out = (v) => (typeof v === "number" ? tenth(v) : v); // (a result keeps tenths at most)
@@ -131,7 +132,13 @@ const num = (v, what = "this") => {
 };
 
 /* an input put into an asterisk: cut to its digits, its sign as the rules say (bible section 5) */
-function fit(v, n, f, neg) {
+function fit(v, n, F, neg) {
+  const f = {
+    posbrahm: F("posbrahm"),
+    negbrahm: F("negbrahm"),
+    mormini: F("mormini"),
+    mormax: F("mormax"),
+  };
   if (typeof v === "string") no(`"${v}" is letters; an asterisk takes numbers`);
   if (typeof v === "boolean") v = v ? 1 : 0;
   num(v);
@@ -156,11 +163,11 @@ function fit(v, n, f, neg) {
   return sign * tenth(ip + fr);
 }
 const LETTERS = "abcdefghijklmnopqrstuvwxyz";
-function letters(ctx, n) {
+function letters(ctx, n, key) {
   let s = "";
   for (let k = 0; k < n; k++) {
     const l = LETTERS[rnd(ctx, 26)];
-    s += ctx.f.caps && ctx.r() < 0.5 ? l.toUpperCase() : l;
+    s += ctx.R.flag("caps", key) && ctx.r() < 0.5 ? l.toUpperCase() : l;
   }
   return s;
 }
@@ -169,7 +176,13 @@ function letters(ctx, n) {
    "hi" its biggest (a range's ends) */
 function digits(ctx, int, frac, which) {
   const d = (ch) =>
-    ch === "*" ? (which === "lo" ? 0 : which === "hi" ? 9 : rnd(ctx, 10)) : +ch;
+    ch === "*"
+      ? which === "lo"
+        ? 0
+        : which === "hi"
+          ? 9
+          : draw(ctx, "*1", () => rnd(ctx, 10)) // (each * is a digit the asterisk rules can take out)
+      : +ch;
   let v = 0;
   for (const ch of int) v = v * 10 + d(ch);
   let p = 0.1;
@@ -630,35 +643,57 @@ function star(t, neg) {
   const n = t.int.length,
     key = (neg ? "-" : "") + "*" + n,
     top = 10 ** n - 1;
+  const F = (ctx) => (x) => ctx.R.flag(x, key);
   const fn = (ctx) => {
-    if (ctx.b.has(key)) return fit(ctx.b.get(key), n, ctx.f, neg);
+    if (ctx.b.has(key))
+      return kept(ctx, fit(ctx.b.get(key), n, F(ctx), neg), key);
     if (ctx.b.has("*" + n) && neg)
-      return fit(ctx.b.get("*" + n), n, ctx.f, true);
-    const d = rnd(ctx, top + 1);
-    if (neg) return ctx.f.posbrahm && ctx.r() < 0.5 ? d : -d;
-    return ctx.f.negbrahm && ctx.r() < 0.5 ? -d : d; // (negbrahm: below zero too)
+      return kept(ctx, fit(ctx.b.get("*" + n), n, F(ctx), true), key);
+    return draw(ctx, key, () => {
+      const d = rnd(ctx, top + 1);
+      if (neg) return ctx.R.flag("posbrahm", key) && ctx.r() < 0.5 ? d : -d;
+      return ctx.R.flag("negbrahm", key) && ctx.r() < 0.5 ? -d : d; // (negbrahm: below zero too)
+    });
   };
   fn.lo = (ctx) =>
-    ctx.b.has(key) ? fn(ctx) : neg || ctx.f.negbrahm ? -top : 0;
+    ctx.b.has(key) ? fn(ctx) : neg || ctx.R.flag("negbrahm", key) ? -top : 0;
   fn.hi = (ctx) =>
-    ctx.b.has(key) ? fn(ctx) : neg && !ctx.f.posbrahm ? 0 : top;
+    ctx.b.has(key) ? fn(ctx) : neg && !ctx.R.flag("posbrahm", key) ? 0 : top;
   fn.only = key;
   return fn;
+}
+/* an asterisk with no input: a random value, again until the asterisk rules let it (\'arm0'\) */
+function draw(ctx, key, roll) {
+  for (let k = 0; k < MOST_TRIES; k++) {
+    const v = roll();
+    if (!ctx.R.astOut(v, key)) return v;
+  }
+  no(`The asterisk rules take out every value this asterisk can give`, RULES);
+}
+/* an input an asterisk rule takes out: the line plays again */
+function kept(ctx, v, key) {
+  if (ctx.R.astOut(v, key)) throw REPLAY;
+  return v;
 }
 /* '1*', '2***', '1$': a named asterisk or letter, the number in quotes its name (never part of the value) */
 function named(t) {
   const top = 10 ** t.n - 1;
+  const F = (ctx) => (x) => ctx.R.flag(x, t.key);
   const fn = (ctx) => {
     if (t.kind === "$")
       return ctx.b.has(t.key)
         ? fitLetters(ctx.b.get(t.key), t.n)
-        : letters(ctx, t.n);
-    if (ctx.b.has(t.key)) return fit(ctx.b.get(t.key), t.n, ctx.f, false);
-    const d = rnd(ctx, top + 1);
-    return ctx.f.negbrahm && ctx.r() < 0.5 ? -d : d;
+        : letters(ctx, t.n, t.key);
+    if (ctx.b.has(t.key))
+      return kept(ctx, fit(ctx.b.get(t.key), t.n, F(ctx), false), t.key);
+    return draw(ctx, t.key, () => {
+      const d = rnd(ctx, top + 1);
+      return ctx.R.flag("negbrahm", t.key) && ctx.r() < 0.5 ? -d : d;
+    });
   };
   if (t.kind === "*") {
-    fn.lo = (ctx) => (ctx.b.has(t.key) ? fn(ctx) : ctx.f.negbrahm ? -top : 0);
+    fn.lo = (ctx) =>
+      ctx.b.has(t.key) ? fn(ctx) : ctx.R.flag("negbrahm", t.key) ? -top : 0;
     fn.hi = (ctx) => (ctx.b.has(t.key) ? fn(ctx) : top);
   }
   fn.only = t.key;
@@ -696,40 +731,207 @@ function percent(a) {
   };
 }
 
-/* ---------- the line rules this part reads: \'ainc mormax'\ and the others of section 5 ----------
-   The rest of the line rules (inc0, rm0, lin, limits …) are part B */
-function lineRules(toks, f) {
+/* ---------- line rules (bible section 6): \ ... \ at the start of a line ----------
+   A rule: { str: how many !, scope: "line" | "file" | "lines" (with lines: the line numbers it covers), ast: null (the
+   line's result) | "all" (asterisks only) | a number (that named asterisk only), act: "inc" | "rm", what }. what is
+   { k: "set", has(v) } (numbers), { k: "digits", lo, hi } (results with that many digits), { k: "flag", name } (mormax
+   …) or { k: "lim", fn } (the line's limit; fn null: no limit, the hidden cap). The strongest rule wins (more !), then
+   the later one. Readings: the quotes are only marks (\'inc0'\ = \inc'0'\); a rule's own value can be any Numberat
+   value, and it covers every number that value can give ('n[1,5,[1:4]]' is lines 1 to 5) */
+const CAP = 1000000; // (\rm'lim'\: "no limit on this line (hidden cap 1,000,000)")
+const RULES = "help/linerules.txt";
+function parseRule(raw, line, order) {
+  const r = {
+    str: 0,
+    scope: "line",
+    lines: null,
+    ast: null,
+    act: null,
+    what: null,
+    line,
+    order,
+  };
+  let lin = false;
+  const bits = raw.split("'").filter((x) => x.trim() !== "");
+  const bad = () => no(`"\\${raw}\\" isn't a line rule I know`, RULES);
+  for (let k = 0; k < bits.length; k++) {
+    let b = bits[k].trim();
+    while (b) {
+      let m;
+      if ((m = /^!+/.exec(b))) r.str += m[0].length;
+      else if ((m = /^lin\b|^lin(?=!)/.exec(b))) lin = true;
+      else if ((m = /^n(?=[\d[({*~-])/.exec(b))) {
+        const rest = b.slice(1),
+          cut = /\s+(?=a\d|a?inc|a?rm|lin|!)/.exec(rest); // ('n2:3 rm0': the lines, then the rule)
+        r.lines = possible(
+          cut ? rest.slice(0, cut.index) : rest,
+          "Which lines",
+        );
+        b = cut ? rest.slice(cut.index).trim() : "";
+        continue;
+      } else if ((m = /^a(\d+)(?!\d)/.exec(b))) r.ast = +m[1];
+      else if ((m = /^a(?=inc|rm)/.exec(b))) r.ast = r.ast || "all";
+      else if ((m = /^(inc|rm)/.exec(b))) {
+        r.act = m[1];
+        let rest = b.slice(m[0].length).trim();
+        if (!rest && k + 1 < bits.length) rest = bits[++k].trim(); // (\inc'lim=25'\)
+        if (!rest) no(`"\\${raw}\\" says ${r.act} but not what`, RULES);
+        r.what = subject(rest, r.act);
+        b = "";
+        continue;
+      } else bad();
+      b = b.slice(m[0].length).trim();
+    }
+  }
+  if (!r.act) bad();
+  if (r.lines) r.scope = "lines";
+  else if (r.str > 0 && !lin) r.scope = "file";
+  if (r.what.k === "flag" && r.ast == null) r.ast = "all"; // (mormax and the others are about asterisks)
+  return r;
+}
+function subject(text, act) {
+  const t = text.replace(/\s+/g, " ").trim();
+  if (RULE_WORDS.includes(t)) return { k: "flag", name: t };
+  if (/^[a-z]+$/.test(t) && t !== "lim")
+    no(`"${t}" isn't a rule word (${RULE_WORDS.join(", ")}, lim)`, RULES);
+  if (t === "lim") {
+    if (act === "inc") no(`Give the limit: \\inc'lim=25'\\`, "help/limits.txt");
+    return { k: "lim", fn: null };
+  }
+  const m = /^lim\s*=\s*([\s\S]+)$/.exec(t);
+  if (m) {
+    if (act === "rm")
+      no(`\\rm'lim'\\ takes no number (it means no limit)`, "help/limits.txt");
+    return { k: "lim", fn: sub(m[1], "A limit") };
+  }
+  const d = /^(\*+)(?::(\*+))?$/.exec(t);
+  if (d) return { k: "digits", lo: d[1].length, hi: (d[2] || d[1]).length };
+  return { k: "set", has: possible(t, "A rule's value").has };
+}
+/* a bit of Numberat inside a rule, compiled as a value */
+function sub(text, what) {
+  const p = new Parser(lex(text), { states: [] });
+  const fn = p.expr();
+  if (!p.done()) no(`${what}: "${text}" isn't one value`, RULES);
+  return fn;
+}
+/* every number a value can give: exact for numbers, ranges and lists (brackets left out), else from many tries */
+function possible(text, what) {
+  const plain = text.replace(/[[\](){}\s]/g, "");
+  const N = String.raw`-?\d+(?:\.\d)?`;
+  if (new RegExp(`^${N}(?::${N})?(?:,${N}(?::${N})?)*$`).test(plain)) {
+    const parts = plain.split(",").map((x) => {
+      const [a, b = a] = x.split(":"),
+        tenths = /\./.test(x);
+      return { lo: Math.min(+a, +b), hi: Math.max(+a, +b), tenths };
+    });
+    return {
+      has: (v) =>
+        typeof v === "number" &&
+        parts.some(
+          (x) =>
+            v >= x.lo - 1e-9 &&
+            v <= x.hi + 1e-9 &&
+            (x.tenths || Number.isInteger(v)),
+        ),
+    };
+  }
+  const fn = sub(text, what),
+    seen = new Set();
+  let r = 12345; // (a fixed seed, so a rule means the same thing every time)
+  const rand = () => (r = (r * 1103515245 + 12345) % 2147483648) / 2147483648;
+  for (let k = 0; k < 4000; k++) {
+    const ctx = newCtx(rand, NO_RULES);
+    try {
+      const v = fn(ctx);
+      if (typeof v === "number") seen.add(tenth(v));
+    } catch (e) {
+      if (!(e instanceof NbError)) throw e;
+      no(`${what}: ${e.why}`, RULES);
+    }
+  }
+  return { has: (v) => typeof v === "number" && seen.has(tenth(v)) };
+}
+const digitCount = (v) => String(Math.trunc(Math.abs(v))).length;
+function covers(w, v) {
+  if (w.k === "set") return w.has(v);
+  if (w.k === "digits")
+    return (
+      typeof v === "number" && digitCount(v) >= w.lo && digitCount(v) <= w.hi
+    );
+  return false;
+}
+/* the rules a line follows, made into questions: is a flag on, is this number out, what's the limit */
+function judge(rules) {
+  const best = (test) => {
+    let b = null;
+    for (const r of rules)
+      if (
+        test(r) &&
+        (!b ||
+          r.str > b.str ||
+          (r.str === b.str &&
+            (r.line > b.line || (r.line === b.line && r.order > b.order))))
+      )
+        b = r;
+    return b;
+  };
+  const astIs = (r, key) =>
+    r.ast === "all" || (r.ast != null && key === "'" + r.ast + "*");
+  const out = (v, test) => {
+    const b = best((r) => test(r) && covers(r.what, v));
+    return !!b && b.act === "rm";
+  };
+  const lim = best((r) => r.what.k === "lim");
+  return {
+    flag: (name, key) => {
+      const b = best(
+        (r) => r.what.k === "flag" && r.what.name === name && astIs(r, key),
+      );
+      return !!b && b.act === "inc";
+    },
+    astOut: (v, key) => out(v, (r) => astIs(r, key)),
+    resOut: (v) => out(v, (r) => r.ast == null),
+    lim: lim && { off: lim.act === "rm", fn: lim.what.fn },
+    any: rules.some((r) => r.what.k !== "flag" && r.what.k !== "lim"),
+  };
+}
+const NO_RULES = judge([]);
+/* the rules written at the start of a line, and what's left: { rules, rest } */
+function lineRules(toks, line) {
+  const rules = [];
   let k = 0;
   while (k < toks.length && (toks[k].t === "sp" || toks[k].t === "bs")) {
     const t = toks[k];
     if (t.t === "bs") {
-      if (/^[<>]/.test(t.v)) break; // (a repeat, not a rule)
-      const m = /^'ainc\s+([a-z]+)'$/.exec(t.v.trim());
-      if (!m) no(`The line rule "\\${t.v}\\" isn't built yet`);
-      if (!RULE_WORDS.includes(m[1]))
-        no(`"${m[1]}" isn't an asterisk rule (${RULE_WORDS.join(", ")})`);
-      f[m[1]] = true;
+      if (/^[<>]/.test(t.v.trim())) break; // (a repeat, not a rule)
+      rules.push(parseRule(t.v, t.line || line, rules.length));
     }
     k++;
   }
-  return toks.slice(k);
+  return { rules, rest: toks.slice(k) };
 }
 
 /* ---------- compile: a line of Numberat into a program ----------
-   { ok: true, prog } or { ok: false, why }. prog.run(r) gives { v } (a number, letters, t/f or NOTHING) or { why } */
+   { ok: true, prog } or { ok: false, why }. prog.run(r) gives { v, lim } (v a number, letters, t/f or NOTHING; lim the
+   line's own limit when a rule gives one: a number, or CAP for no limit) or { why }. A box is a file of one line, so
+   a file rule (\!'rm1'\) works there too */
 export function compile(text) {
-  try {
-    const toks = lex(text).filter((t) => t.t !== "nl" || false);
-    return { ok: true, prog: build(toks) };
-  } catch (e) {
-    if (e instanceof NbError) return { ok: false, why: e.why };
-    throw e;
-  }
+  const f = compileFile(text);
+  if (f.errs.length) return { ok: false, why: f.errs[0].why };
+  if (!f.lines.length) return { ok: false, why: "Write a value" };
+  if (f.lines.length > 1)
+    return { ok: false, why: "One line here (a box takes one value)" };
+  return { ok: true, prog: f.lines[0].prog };
 }
-function build(toks0) {
-  const f = {},
-    toks = lineRules(toks0, f),
-    prog = { states: [], f };
+const REPLAY = Symbol("replay");
+const MOST_TRIES = 1000; // ("stop after 1,000 tries; then the NPC doesn't spawn and an error says why")
+function newCtx(r, R) {
+  return { r, b: new Map(), R, fresh: new Set() };
+}
+function build(toks, rules) {
+  const R = judge(rules),
+    prog = { states: [] };
   const p = new Parser(toks, prog);
   const segs = p.program().map((s, k, all) => ({
     ...s,
@@ -746,36 +948,82 @@ function build(toks0) {
     st.limit = null;
     for (const s of prog.states) s.reset();
   };
-  prog.run = (r = Math.random) => {
-    const ctx = { r, b: new Map(), f, fresh: new Set() };
-    try {
-      let last = NOTHING;
-      for (const s of segs) {
-        if (!s.def) continue;
-        const n = s.count ? s.count(ctx) : 1;
-        for (let j = 0; j < Math.min(n, MOST); j++) last = s.node(ctx);
+  /* one play of the line */
+  const once = (ctx) => {
+    let last = NOTHING;
+    for (const s of segs) {
+      if (!s.def) continue;
+      const n = s.count ? s.count(ctx) : 1;
+      for (let j = 0; j < Math.min(n, MOST); j++) last = s.node(ctx);
+    }
+    if (!vals.length) return out(last);
+    // (a part whose count came out 0 plays nothing: the next one plays. Once round, the line gives nothing)
+    for (let tries = 0; tries <= vals.length; tries++) {
+      const s = segs[vals[st.cur]];
+      if (st.limit == null) {
+        const n = s.count
+          ? s.count(ctx)
+          : st.cur === vals.length - 1
+            ? Infinity
+            : 1;
+        st.limit = n === Infinity ? Infinity : n * s.len;
       }
-      if (!vals.length) return { v: out(last) };
-      // (a part whose count came out 0 plays nothing: the next one plays. Once round, the line gives nothing)
-      for (let tries = 0; tries <= vals.length; tries++) {
-        const s = segs[vals[st.cur]];
-        if (st.limit == null) {
-          const n = s.count
-            ? s.count(ctx)
-            : st.cur === vals.length - 1
-              ? Infinity
-              : 1;
-          st.limit = n === Infinity ? Infinity : n * s.len;
-        }
-        if (st.limit === 0) {
-          next();
+      if (st.limit === 0) {
+        next();
+        continue;
+      }
+      const v = s.node(ctx);
+      if (++st.used >= st.limit) next();
+      return out(v);
+    }
+    return NOTHING;
+  };
+  /* a line rule took a result out: play again from the same place (orders don't move on), at most 1,000 times */
+  const save = () => [
+    { ...st },
+    prog.states.map((x) => ({ ...x, deck: x.deck && [...x.deck] })),
+  ];
+  const load = ([a, b]) => {
+    Object.assign(st, a);
+    prog.states.forEach((x, k) => Object.assign(x, b[k]));
+  };
+  prog.run = (r = Math.random) => {
+    try {
+      const was = R.any ? save() : null;
+      let v = NOTHING,
+        ctx;
+      for (let tries = 0; ; tries++) {
+        if (tries >= MOST_TRIES)
+          no(
+            `The line rules took out every value it gave, ${MOST_TRIES} times in a row (it can't spawn)`,
+            RULES,
+          );
+        ctx = newCtx(r, R);
+        try {
+          v = once(ctx);
+        } catch (e) {
+          if (e !== REPLAY) throw e;
+          load(was);
           continue;
         }
-        const v = s.node(ctx);
-        if (++st.used >= st.limit) next();
-        return { v: out(v) };
+        if (R.any && R.resOut(v)) {
+          load(was);
+          continue;
+        }
+        break;
       }
-      return { v: NOTHING };
+      let lim = null;
+      if (R.lim) {
+        if (R.lim.off) lim = CAP;
+        else {
+          const x = num(
+            R.lim.fn.hi ? R.lim.fn.hi(ctx) : R.lim.fn(ctx),
+            "A limit",
+          );
+          lim = Math.min(CAP, x);
+        }
+      }
+      return { v, lim };
     } catch (e) {
       if (e instanceof NbError) return { why: e.why };
       throw e;
@@ -802,13 +1050,16 @@ export function compileFile(text) {
     const at = String(text).split("\n").length;
     return { n: 0, errs: [{ line: at, why: e.why }], lines };
   }
+  /* first the lines and their rules (a rule for the whole file or for other lines can sit anywhere), then each line */
+  const all = [];
   let cur = [];
   const flush = () => {
     const real = cur.filter((t) => t.t !== "sp");
     if (real.length) {
       const line = real[0].line;
       try {
-        lines.push({ line, prog: build(cur) });
+        const { rules, rest } = lineRules(cur, line);
+        all.push({ line, rules, rest });
       } catch (e) {
         if (!(e instanceof NbError)) throw e;
         errs.push({ line, why: e.why });
@@ -821,8 +1072,37 @@ export function compileFile(text) {
     else cur.push(t);
   }
   flush();
-  return { n: lines.length + errs.length, errs, lines };
+  const wide = all.flatMap((l) => l.rules.filter((r) => r.scope !== "line"));
+  let ruleOnly = 0;
+  for (const l of all) {
+    if (!l.rest.some((t) => t.t !== "sp")) {
+      ruleOnly++; // (a line of rules only: it gives no value)
+      continue;
+    }
+    const mine = [
+      ...l.rules.filter((r) => r.scope === "line"),
+      ...wide.filter((r) => r.scope === "file" || r.lines.has(l.line)),
+    ];
+    try {
+      lines.push({ line: l.line, prog: build(l.rest, mine) });
+    } catch (e) {
+      if (!(e instanceof NbError)) throw e;
+      errs.push({ line: l.line, why: e.why });
+    }
+  }
+  errs.sort((a, b) => a.line - b.line);
+  return { n: lines.length + errs.length + ruleOnly, errs, lines };
 }
 
 /* the words Numberat knows so far, for the window's autocomplete */
-export const NB_WORDS = ["true", "false", "ainc", ...RULE_WORDS];
+export const NB_WORDS = [
+  "true",
+  "false",
+  "ainc",
+  "arm",
+  "inc",
+  "rm",
+  "lin",
+  "lim",
+  ...RULE_WORDS,
+];

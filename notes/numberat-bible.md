@@ -8,11 +8,14 @@ old wording; history and word-for-word quotes live in `notes/agree-or-disagree.m
 - Name: **Numberat** (owner, Nov 19 13:06Z: "numberat is good to go"). Code names (`js/numerat.js`, `numeratwin.js`) stay.
 - Owner: "this code is like math, components give rise to new logical possibilities ... Make sure to test
   possibilities of the code."
-- Built so far: sections 0 to 5 and the percent picks (14.4), in `js/numberat.js` (part A, Nov 19). The boxes, the
+- Built so far: sections 0 to 6, 8 and the percent picks (14.4), in `js/numberat.js` (parts A and B, Nov 19). The boxes, the
   files and Check in the n window all use it (`js/numerat.js` reads plain values itself and compiles the rest). Next:
-  line rules and limits (part B), then section 14 (part C). Readings taken where the rules didn't say: `1.*` is 1.0 to
+  section 14 (part C). Readings taken where the rules didn't say: `1.*` is 1.0 to
   1.9 (`*` includes 0, owner 12:59Z); side by side groups take turns in a shuffled order, one pick from each; a
-  program keeps its place in its orders between spawns, shared by every box with the same text.
+  program keeps its place in its orders between spawns, shared by every box with the same text. Line rules: the
+  quotes are only marks (`\'a2 rm0'\` = `\''a2'rm0'\`); a rule's value covers every number it can give; with the
+  same number of `!` the later rule wins; a `!` rule without `lin` is for the whole file, lines before it too; a
+  replay keeps the orders where they were; `lim` sets the top only (the stat's lowest stays).
 - Marks: **[open]** = not settled yet; **[proposal]** = Adam's idea, the owner hasn't said yes.
 
 ## 0. Reading a file

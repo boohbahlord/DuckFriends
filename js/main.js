@@ -2,6 +2,7 @@
 import "./pointer.js"; // (first: a computer or a phone, before anything asks)
 import { applySettings, askConnection } from "./settings.js";
 import { backdropHTML, floorCanvas } from "./art.js";
+import { bakeBackdrop } from "./pxbake.js";
 import { profile, save } from "./store.js";
 import { $, toast } from "./ui.js";
 import { start, current } from "./router.js";
@@ -9,7 +10,7 @@ import { showJumps } from "./jumps.js";
 import { checkUnlocks, takeOffLocked } from "./unlocks.js";
 import "./homeapp.js"; // (early: it keeps the browser's install offer for the front page's button)
 import "./front.js";
-import { pixelOn, pxImgWatch } from "./pixel.js"; // (first: the pixel look's class goes on before anything draws)
+import { pixelOn, pxImgWatch, gridPx } from "./pixel.js"; // (first: the pixel look's class goes on before anything draws)
 import { pxWatch } from "./pxdom.js";
 import { pxEmojiWatch } from "./pxtext.js";
 import "./rooms.js";
@@ -28,17 +29,23 @@ applySettings();
 /* the carnival behind the page, redrawn to fit when the window or the theme changes */
 let lastBD = "";
 const drawShapes = () => {
-  const k = [innerWidth, innerHeight, profile.settings.theme].join();
+  const k = [innerWidth, innerHeight, profile.settings.theme, gridPx()].join();
   if (k === lastBD) return;
   lastBD = k;
-  $("#shapes").innerHTML = backdropHTML(
+  const sh = $("#shapes");
+  sh.classList.remove("px-own"); // (the filter again until the new one is made into pixels)
+  sh.innerHTML = backdropHTML(
     innerWidth,
     innerHeight,
     profile.settings.theme === "dark",
   );
-  floorCanvas($("#shapes"));
+  if (!pixelOn()) return floorCanvas(sh);
+  bakeBackdrop(sh).then((ok) =>
+    floorCanvas(sh, ok && sh.isConnected ? gridPx() : 0),
+  ); // (its pictures made into pixels once: pxbake.js)
 };
 document.addEventListener("settings", drawShapes);
+addEventListener("pxgrid", drawShapes);
 let rsT = null;
 addEventListener("resize", () => {
   clearTimeout(rsT);

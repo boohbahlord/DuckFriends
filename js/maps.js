@@ -19,6 +19,7 @@
    starry night sky, and it is not in the Map window. */
 import { duckSVG } from "./duck.js";
 import { pixelOn, gridPx } from "./pixel.js";
+import { bakeBackdrop } from "./pxbake.js";
 import { esc } from "./ui.js";
 import {
   backdropSVG,
@@ -406,19 +407,26 @@ function nightScene(layer) {
   layer.append(sc);
   let drawn = "";
   const draw = () => {
-    const k = layer.clientWidth + "x" + layer.clientHeight;
+    const k = [layer.clientWidth, layer.clientHeight, gridPx()].join();
     if (k === drawn || !layer.clientWidth) return;
     drawn = k;
+    layer.classList.remove("px-own"); // (the filter again until the new one is made into pixels)
     sc.innerHTML = backdropHTML(layer.clientWidth, layer.clientHeight, true);
-    floorCanvas(sc);
+    if (!pixelOn()) return floorCanvas(sc);
+    bakeBackdrop(sc, layer).then((ok) =>
+      floorCanvas(sc, ok && sc.isConnected ? gridPx() : 0),
+    ); // (its pictures made into pixels once: pxbake.js)
   };
   const ro = new ResizeObserver(draw);
   ro.observe(layer);
+  addEventListener("pxgrid", draw); // (the grid changed: made into pixels again on the new one)
   draw();
   return {
     update() {},
     destroy() {
       ro.disconnect();
+      removeEventListener("pxgrid", draw);
+      layer.classList.remove("px-own");
       sc.remove();
     },
   };
