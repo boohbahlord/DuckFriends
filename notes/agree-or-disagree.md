@@ -6866,3 +6866,17 @@ Done (Adam): every help page read; examples run through the compiler; repeats/or
 Cropped images work obviously and allow for an enemy that is only the cropped image. The hitbox of the cropped image is it's image, not the parts that dont exist, ask me what that means. images that are erased to a shape or whatever prior to be uplaoded will have their hitbox only be the invisible obv, ask me what that means. The images for custom npcs have to be 32 bit in size like the ducks are normally tbh, and their pixels are different scale when they are larger, thus having more pixels with their larger size. Percent is obviously the best way to scale size for ducks, because otherwise they are using decimal integers."
 
 Now (Adam): uploaded NPC pictures exist (Appearance tab, s.sbpic), drawn 64 wide; hitbox is a 0.1-3 stat. Questions sent to the owner before building.
+
+## Owner, Nov 19 15:52Z (answers to Adam's 6 questions on the 15:47Z request)
+"1. yes
+2. yes yes yes
+3. if the ducks are already that size yeah
+4. more details? idk wat u mean, bigger ducks need more pixels because they r bigger, but pixels are the same size for bigger ducks.
+5. yes i think
+6. yes
+
+
+
+Size for players can now be edited in the customization menu, and they can only be 50% size at the smallest and 500% size at the biggest (hitbox stays the same for smaller ones but becomes bigger for bigger ducks)"
+
+Decided (Adam): 1 a cropped picture is hit only where it is. 2 an erased background: only the visible pixels are hit ("invisible" meant visible). 3/4 at 100% a picture is 32 pixels tall like a duck; bigger = more pixels of the same size. NPC smallest left unanswered: Adam picked 10%, biggest = Mad God Justin's height. 5 size changes picture and hitbox together; Numberat's hitbox becomes percent (10% to 300%). 6 every custom NPC can be resized (pictures, ducks, zombies). Players: a Size row in customization, 50% to 500%, every mode; hitbox stays 100% below 100% and grows above it. Build: Noah.
