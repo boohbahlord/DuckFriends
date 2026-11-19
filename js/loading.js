@@ -151,7 +151,10 @@ const BIG = 0.01, // (of the screen)
   HUGE = 0.3;
 const covering = new WeakSet();
 export function coverPictures(root) {
-  if (!root || covering.has(root)) return;
+  /* never in the middle of a game (the owner's, Nov 19 22:52Z: "in the game that's already playing, either it be the
+     next turn or the next round or clicking an object, no loading is allowed"): only while a game loads */
+  if (!root || covering.has(root) || document.body.dataset.screen === "game")
+    return;
   const now = () => {
     if (!root.isConnected || covering.has(root)) return null;
     const w = waiting(root);

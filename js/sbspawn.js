@@ -812,9 +812,9 @@ export function sbAct(s, a, now) {
 /* which boxes a point takes: a respawn its "who" and what it imported; a spawn its own, and its Players tab's (a +
    page for players only those) */
 function canSet(p, f) {
-  if (p.k === "loot") return !!SB_LOOT[f] || f === "name"; // (a loot orb's own boxes: sbloot.js)
+  if (p.k === "loot") return !!SB_LOOT[f] || f === "name" || f === "hide"; // (a loot orb's own boxes: sbloot.js)
   if (p.k === "zone")
-    return !!SB_ZONE[f] || ["name", "pon", "pwho"].includes(f); // (a zone's own, and players spawning in it)
+    return !!SB_ZONE[f] || ["name", "pon", "pwho", "hide"].includes(f); // (a zone's own, and players spawning in it)
   if (SB_LOOT[f] || SB_ZONE[f]) return false;
   if (p.k === "respawn")
     return ["who", "name", "hide"].includes(f) || (p.im || []).includes(f);
