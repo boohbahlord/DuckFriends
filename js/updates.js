@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v123",
+    version: 123,
+    date: "Nov 19, 2026",
+    title: "Zombies keep up with you",
+    news: [
+      "For Dead Ducks Arcade: the flamethrower's burning ground is now little pixel flames that flicker, matching everything else on fire.",
+    ],
+    fixed: [
+      "For Dead Ducks Arcade: zombies chase you while you keep moving, instead of walking to where you last stood (like the fireplace) and bunching up there.",
+    ],
+  },
+  {
     id: "v122",
     version: 122,
     date: "Nov 19, 2026",

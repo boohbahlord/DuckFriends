@@ -1268,11 +1268,18 @@ function openNear(x, y) {
    late (the zombies' chase, every heartbeat): a field not made yet is asked of the worker (flowfield.js), and until it
    answers, the zombies keep to the last field they had, the ducks' spots one heartbeat or so ago; so a big crowd's new
    field never holds up a frame (the owner's, Nov 18 14:20Z). Only the very first one, or with no worker, is worked out
-   here at once */
+   here at once. Every answer that comes back newer than the field they have is theirs at once: a duck that never stops
+   (herding them) changes cells faster than the worker answers, so waiting for the field of the cell it is in now kept
+   them on the field of where it last stood still (the fireplace) for as long as it kept walking (the owner's, Nov 19
+   22:35Z: "they will keep walking to the fireplace even when I walk away from it"; "they kind of get caught in each
+   other in a circle") */
 const FLOWS = new Map(),
   FLOWS_KEPT = 48;
 let lastLate = null, // (the last field the chase had, and the grid it was made on)
-  lastLateRev = -1;
+  lastLateRev = -1,
+  lateN = 0, // (how many fields the chase asked for so far …
+  lastLateN = 0; // … and which of them it has)
+const askedN = new Map(); // (the key of a field asked for: its number, the newest asking)
 const keep = (key, dist) => {
   FLOWS.set(key, dist);
   if (FLOWS.size > FLOWS_KEPT) FLOWS.delete(FLOWS.keys().next().value);
@@ -1292,16 +1299,27 @@ function flowFrom(starts, late = false) {
       lastLate &&
       lastLateRev === walkRev &&
       askField(key, cs, grid(), walkRev, (k, rev, d) => {
-        if (rev === walkRev) keep(k, d); // (a field for a grid made again since is dropped)
+        if (rev !== walkRev) return; // (a field for a grid made again since is dropped)
+        keep(k, d);
+        const n = askedN.get(k) || 0;
+        askedN.delete(k);
+        if (n > lastLateN) {
+          lastLate = d;
+          lastLateN = n;
+        } // (newer than the one they have: theirs now)
       })
-    )
+    ) {
+      askedN.set(key, ++lateN);
+      if (askedN.size > FLOWS_KEPT) askedN.delete(askedN.keys().next().value);
       return lastLate;
+    }
     dist = fieldOf(grid(), cs);
     keep(key, dist);
   }
   if (late) {
     lastLate = dist;
     lastLateRev = walkRev;
+    lastLateN = ++lateN;
   }
   return dist;
 }
