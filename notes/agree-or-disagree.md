@@ -6330,3 +6330,7 @@ Decided (Adam): playground first (stages 0-7: feel everywhere, shell, spawns, NP
 ## Nov 19 01:41Z (owner, after Adam's testing reply)
 "Idk wat that means but have every worker question ur decision"
 Decided (Adam): every worker (Solomon the 2nd, Noah, Jackal, Miles Jr.) reviews Adam's Sandbox reading (README, plan doc, decisions under the 01:34Z answers, stage order, testing standard) against the owner's own file and answers, and sends Adam every point they think is wrong or missing. Adam fixes what is wrong and brings real disagreements to the owner in plain words.
+
+## Nov 19 01:43Z (owner)
+"Testing should be brief and resource efficient. Emphasis on brief. Testing with a compiler should ne enough right?"
+Decided (Adam): testing standard cut to a brief version (notes/testing-standard.md): automatic checks + a headless run with 0 errors, one line per owner sentence the change covers, edges only where numbers/states are involved, Chromium phone + computer by code (Firefox, sideways, online only when relevant), a one-pass regression script, 3-6 line report. Answer to the owner: no, syntax checks alone miss things like the knife-sized guns; a short run of the game is still needed.
