@@ -14498,6 +14498,9 @@ html.moving .board.quake {
   pointer-events: none;
   transition: transform 0.22s linear; /* (game.js placeZombies moves it by transform: cheap for 800) */
 }
+.zb-many > .mgj-z {
+  transition: none;
+} /* (more than 100: no glide, game.js ZB_GLIDE) */
 .mgj-z img {
   display: block;
   width: 100%;

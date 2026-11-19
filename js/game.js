@@ -2987,6 +2987,7 @@ function placeDesk(board, s, now) {
 
 /* Mad God Justin: his zombie waves (mgjrules.js wavesTick), each where the host says it is, gliding there (css), the
    way it last clawed; a dead one falls over and fades */
+const ZB_GLIDE = 100;
 function placeZombies(board, s, now) {
   const layer = $(".ducks", board),
     zb =
@@ -3001,6 +3002,8 @@ function placeZombies(board, s, now) {
   let marks = fxl
     ? 4 - Math.floor(fxl.querySelectorAll(".l4-claw").length / 4)
     : 0;
+  /* a crowd (more than ZB_GLIDE) steps from beat to beat instead of gliding: 800 transitions cost even a graphics card */
+  layer.classList.toggle("zb-many", zb.length > ZB_GLIDE);
   for (const n of layer.querySelectorAll(".mgj-z"))
     if (!want.has(n.dataset.i)) n.remove();
     else have.set(n.dataset.i, n);
