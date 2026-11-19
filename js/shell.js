@@ -64,9 +64,11 @@ import { vdStats, turnedDown } from "./vddrules.js";
 import { tvStats } from "./triviarules.js";
 import { setPerf, perfOn } from "./perf.js";
 import { secret } from "./unlocks.js";
+import { uiCommand } from "./hideui.js";
 import { music } from "./music.js";
 import { npcsHere, npcTag, npcByTag, npcById } from "./npcs.js";
 import { isSb, sbMay, sbWorld, SB_WORLD_NAMES } from "./sandboxrules.js";
+import { HELP } from "./numerathelp.js";
 
 const tag = (n) => String(n || "").replace(/\s+/g, "");
 const fail = (msg, code = 1) => {
@@ -109,6 +111,13 @@ const perma = () => (profile.permaNotes = profile.permaNotes || {});
 const NUM_MOST = 100000;
 const numRoot = () => fs.home + "/notes/numerat";
 const inNum = (path) => path.startsWith(numRoot() + "/");
+/* the help/ folder in it: Numerat's read-only help files (numerathelp.js), made again at the start of every game, never
+   kept in the profile, and refused every change, copy and delete (the owner's, Nov 19 12:59Z) */
+const helpRoot = () => numRoot() + "/help";
+const inHelp = (path) =>
+  path === helpRoot() || path.startsWith(helpRoot() + "/");
+const NO_HELP = (path) =>
+  `✗ ${path}: Permission denied (the help files are read-only: they can't be changed, copied or deleted).`;
 function numLoad() {
   const N = profile.numerat || {},
     root = numRoot();
@@ -117,6 +126,12 @@ function numLoad() {
   for (const [f, t] of Object.entries(N.f || {})) fs.files[root + "/" + f] = t;
   for (const f of N.x || [])
     fs.meta[root + "/" + f] = { ...(fs.meta[root + "/" + f] || {}), x: true };
+  fs.dirs.add(helpRoot());
+  for (const [f, t] of Object.entries(HELP)) {
+    fs.files[helpRoot() + "/" + f] = t;
+    fs.meta[helpRoot() + "/" + f] = { ro: true, t: 0 };
+  }
+  fs.meta[helpRoot()] = { ro: true, t: 0 };
 }
 function numKeep() {
   const root = numRoot(),
@@ -124,11 +139,18 @@ function numKeep() {
     f = {},
     x = [];
   for (const [p, t] of Object.entries(fs.files))
-    if (inNum(p)) {
+    if (inNum(p) && !inHelp(p)) {
       f[rel(p)] = t;
       if ((fs.meta[p] || {}).x) x.push(rel(p));
     }
-  const next = { f, d: [...fs.dirs].filter(inNum).map(rel).sort(), x };
+  const next = {
+    f,
+    d: [...fs.dirs]
+      .filter((d) => inNum(d) && !inHelp(d))
+      .map(rel)
+      .sort(),
+    x,
+  };
   if (JSON.stringify(next) === JSON.stringify(profile.numerat || {})) return;
   profile.numerat = next;
   save();
@@ -214,6 +236,7 @@ const findPath = (p) => {
   return kind(b) ? b : a;
 };
 function guard(path, write) {
+  if (write && inHelp(path)) fail(NO_HELP(path));
   const parts = path.split("/").filter(Boolean),
     h = fs.home;
   if (parts[0] === "bin")
@@ -274,12 +297,15 @@ function writeFile(p, text, append) {
     fail(
       `✗ ${name}: a file name is letters, numbers, ., - and _ (40 at most).`,
     );
-  const total = Object.values(fs.files).reduce((a, t) => a + t.length, 0);
+  const total = Object.entries(fs.files).reduce(
+    (a, [k, t]) => a + (inHelp(k) ? 0 : t.length),
+    0,
+  );
   if (total + text.length > 200000)
     fail("✗ Your notes are full (200,000 characters this game).");
   if (inNum(path)) {
     const all = Object.entries(fs.files).reduce(
-      (a, [k, t]) => a + (inNum(k) && k !== path ? t.length : 0),
+      (a, [k, t]) => a + (inNum(k) && !inHelp(k) && k !== path ? t.length : 0),
       0,
     );
     if (
@@ -1276,6 +1302,9 @@ const CMDS = {
     const on = setPerf(want ? want === "on" : !perfOn());
     return on ? "Frame-rate readout on (top left)." : "Frame-rate readout off.";
   },
+  /* hide ui: the bars, the words at the bottom and the song bar go, mine alone (again, or show ui: back; hideui.js) */
+  hide: (args) => uiCommand("hide", args[0]),
+  show: (args) => uiCommand("show", args[0]),
   clear: () => null,
   exit: (a, i, x) => {
     x.ctx.close();
@@ -1358,6 +1387,7 @@ const CMDS = {
     if (!args.length) fail("✗ touch: missing file operand");
     for (const a of args) {
       const p = resolve(a);
+      if (inHelp(p)) fail(NO_HELP(p));
       if (!kind(p)) writeFile(a, "", true);
       else fs.meta[p] = { ...(fs.meta[p] || {}), t: Date.now() };
     }
@@ -1443,6 +1473,7 @@ const CMDS = {
         sk = kind(sp);
       guard(sp, false);
       if (!sk) fail(`✗ cp: cannot stat '${src}': No such file or directory`);
+      if (inHelp(sp)) fail(NO_HELP(sp)); // (the help files can't be copied)
       const to =
         dk === "dir" ? resolve(dst) + "/" + sp.split("/").pop() : resolve(dst);
       if (sk === "file") {
@@ -1452,14 +1483,16 @@ const CMDS = {
       if (!o.r && !o.R)
         fail(`✗ cp: -r not specified; omitting directory '${src}'`);
       CMDS.mkdir(["-p", to]);
-      for (const f of Object.keys(fs.files).filter((f) =>
-        f.startsWith(sp + "/"),
+      for (const f of Object.keys(fs.files).filter(
+        (f) => f.startsWith(sp + "/") && !inHelp(f),
       )) {
         const t = to + f.slice(sp.length);
         CMDS.mkdir(["-p", t.slice(0, t.lastIndexOf("/"))]);
         writeFile(t, fs.files[f], false);
       }
-      for (const d of [...fs.dirs].filter((d) => d.startsWith(sp + "/")))
+      for (const d of [...fs.dirs].filter(
+        (d) => d.startsWith(sp + "/") && !inHelp(d),
+      ))
         fs.dirs.add(to + d.slice(sp.length));
     }
     return "";
@@ -2464,7 +2497,13 @@ export const numerat = {
         for (const n of names) {
           const dirN = n.endsWith("/"),
             path = dir + "/" + n.replace(/\/$/, "");
-          out.push({ path, name: n.replace(/\/$/, ""), dir: dirN, depth });
+          out.push({
+            path,
+            name: n.replace(/\/$/, ""),
+            dir: dirN,
+            depth,
+            ro: inHelp(path), // (the help files: read-only)
+          });
           if (dirN) walk(path, depth + 1);
         }
       };
@@ -2487,6 +2526,7 @@ export const numerat = {
     CMDS.mkdir([path]);
     numKeep();
   },
+  ro: (path) => inHelp(path),
   running: (path) => procs.find((p) => p.path === path) || null,
   run(ctx, path) {
     sync(ctx);

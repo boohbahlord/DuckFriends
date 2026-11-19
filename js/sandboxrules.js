@@ -57,7 +57,7 @@ export function sbCan(s, id) {
 export const SB_RIGHTS = [
   ["b", "Build"],
   ["m", "Make an NPC"],
-  ["n", "Numerat"],
+  ["n", "Numberat"],
   ["h", "Hotbar"],
   ["g", "Game settings"],
 ];
@@ -307,3 +307,9 @@ export const SB_DROPS = {
   speedboost: ["speed", "Speed Boost"],
   sale: ["sale", "Sale"],
 }; // (an orb's word for each, never a special's id: the Double jump is "double"; then the zombies' own name for it)
+/* gear an orb can hold on Dead Ducks Arcade's maps: the flashlight. In Sandbox a duck there has none until it takes one
+   (the owner's, Nov 19: every zombie mechanic "besides flashlight, but flashlight can be added as loot"); it keeps it
+   for good, in s.sb.fl */
+export const SB_GEAR = { flashlight: "Flashlight" };
+export const sbNoLight = (s, id) =>
+  isSb(s) && baseMode(s.options) === "l4dd" && !((s.sb && s.sb.fl) || {})[id];

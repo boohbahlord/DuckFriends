@@ -6718,3 +6718,130 @@ The merchant has arrived text shouldnt be too short or too long and then fade aw
 Owner, 12:59Z (edited): "we need more discussion prob since numerat is a big deal"
 
 Decided (Adam): Numerat stays in discussion, nothing built yet; decisions added to notes/numerat.md. The Sandbox fixes (Build, movement, settings, M defaults, hide ui, merchant text, n window editor) go to workers now.
+
+## Owner, Nov 19 13:06Z
+"5. no, we should just do this 
+   1. \\if hp < 5\\
+
+7. yes
+
+
+yes to the mormini idea
+
+8. numberat is good to go then
+
+
+do we not use web gl?
+also, art and visuals shouldnt be the the old files, but rather, is the files remade into pixels, because ultimately that runs better, idk if we have done that yet. u tell me if im wrong or dont understand
+
+we need to have a numberat bible for claude which is the updated version of it's rules, operators, and examples, and so on
+
+idk wat u means ab vers 91, like wat ab it?"
+
+Decided (Adam): `\if hp < 5\` (inside backslashes < > compare); spaces ignored outside quotes; mormini as proposed; name Numberat. Bible written: notes/numberat-bible.md (linked from CLAUDE.md). WebGL and pre-made pixel files answered in chat (plan, waits for a go).
+
+## Owner, Nov 19 13:16Z
+"Make this file in microsoft word instead and also in libre write, just for me, you can use the file you wrote as the bible.
+
+Should double sqaure brackets be in place of squiggle ? 
+Then double squigle brackets means it is a multi line version of the single squiggle brackets
+
+what do you think? or should it be something besidess double square or dounble squiggle bracket FOR "several lines count as one"
+
+What new operators should be added to numerat to make it more capable for carrying out it's job for programming the ai and glueing between other files and all of that ?"
+
+Decided (Adam): Word + LibreOffice copies made from notes/numberat-bible.md (/mnt/project-files/sandbox/numerat/numberat-bible.docx/.odt; regenerate both whenever the bible changes). Proposals in bible section 14: open brackets carry the line (no doubled brackets); 8 new operator ideas. Waiting for the owner.
+
+## Owner, Nov 19 13:17Z (quoting Adam's pixel answer and plan)
+"Yeah it sounds like we should have pixel files made ahead of time for better performance"
+
+Decided (Adam): go for the slow-computer plan. Noah: measure with the CPU slowed on purpose, then bake every picture into ready-made pixel files and drop the live map filter, measuring again after. Solomon: zombies in WebGL after his Sandbox fixes, if the measurement still shows drawing as the cost.
+
+## Owner, Nov 19 13:21Z (answers to Adam's 8 operator ideas)
+"1. when is good, yeah 
+
+
+Code for more, like hitbox of duck for example
+
+2. yes
+
+
+3. sure
+
+
+4. yes, but should it be sqaure bracket or something else? or it could be many different brackets or paranthesis building from the principles. allow the numberat principles to apply to variables (?)
+
+
+5. sure???
+
+
+6. yeah
+
+
+7. sure 
+
+
+8. sure 
+
+
+
+
+update the numberat bible accordingly"
+
+Decided (Adam): all 8 in the bible (section 14); every stat (hitbox too) readable and settable by name; weights stay in [ ] and take any Numberat value; Numberat principles apply to named values. Word/LibreOffice copies remade.
+
+## Owner, Nov 19 13:25Z
+"show me some complex examples of my numberat similiar to how i wrote it"
+
+Decided (Adam): 5 worked examples, bible section 16, sent in chat.
+
+## Owner, Nov 19 13:32Z
+"make version of numberat that uses percentage with percent sign
+
+make numberat also have asterisk for a single letter: which is this 
+$
+
+Dollar sign now means it can be any letter digit, just a single one
+$$
+two means any two random letters
+
+What should this means? 
+~
+maybe it doesnt have to mean anything"
+
+Decided (Adam): chance in percent replaces ~ weights ([attack 75%, flee 25%]); $ = one random letter, $$ two; proposed ~ = "about". Bible updated.
+
+## Owner, Nov 19 13:36Z
+"why cant they be more than 100% ?
+what if we did double percent to indicate it can be more than 100%
+
+so 100%%+50%% ? 
+
+Maybe there is a better way to do this 
+
+(quoting the Letters answer) Yes
+
+i rly like ur idea for ~
+I agree"
+
+Decided (Adam): $ lower case + caps rule, ~ = about: in. Percent over 100%: proposed shares in a pick, "more than once" alone, stats can pass 100%; waiting.
+
+## Owner, Nov 19 13:38Z (to percent over 100%: shares in a pick, more than once alone, stats past 100%)
+"yes"
+
+## Owner, Nov 19 13:40Z
+"we need for loops in numberat right?"
+
+Owner, 13:41Z (to for + while, 1,000-round stop): "yes"
+
+Decided (Adam): loops in bible section 14.
+
+## Owner, Nov 19 13:43Z (quoting: "would mean the same as { [2,4]+[1:3] }. If yes, we don't need {{ }}.")
+"Sure"
+
+Owner 13:42Z: "1. sure" (Version 91 live with the newer fixes), "2. ?????? 3. ???????????????" (re-explained). Limits: the game's normal limits unless the owner says otherwise.
+
+## Owner, Nov 19 13:44Z (quoting the limits question)
+"Limits are set automatically if the player DOESNT define them themselves, and a help file says the limits and points to the help file on how to fix them"
+
+Decided (Adam): bible section 8.

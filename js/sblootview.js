@@ -3,18 +3,19 @@
    picture it was given), and the orb's part of its settings window (sbspawnview.js sbSettings): what it holds, "a
    dropdown menu with drop down arrows PER category of loot", its numbers, how it looks, and a picture of 2 MB at most */
 import { esc, toast } from "./ui.js";
-import { SB_LOOT, SB_DROPS } from "./sandboxrules.js";
+import { SB_LOOT, SB_DROPS, SB_GEAR } from "./sandboxrules.js";
 import { boxText } from "./sbspawn.js";
 import { lootOk } from "./sbloot.js";
 import { LOOT, lootOf } from "./sbhotview.js";
 import { ARMS } from "./l4ddrules.js";
-import { orbHTML, weaponIcon } from "./l4ddart.js";
+import { orbHTML, weaponIcon, ICONS } from "./l4ddart.js";
 import { DROP_ICONS } from "./l4dddrops.js";
 import { specialById } from "./specials.js";
 import { picFrom, sendParts } from "./sbmake.js";
 
 const nameOf = (w) =>
   (SB_DROPS[w] && SB_DROPS[w][1]) ||
+  SB_GEAR[w] ||
   (specialById(w) || {}).name ||
   w[0].toUpperCase() + w.slice(1);
 /* the categories an orb can pick from here: the Customize groups on the board and Duck Cabin; the weapons and the
@@ -25,6 +26,7 @@ export function lootCats(s) {
     return [
       ["Weapons", Object.keys(ARMS).filter((w) => lootOk(s, w))],
       ["Zombie drops", drops],
+      ["Gear", Object.keys(SB_GEAR).filter((w) => lootOk(s, w))],
     ];
   return LOOT.map(([k, n]) => [n, lootOf(k).map((x) => x.id)]);
 }
@@ -37,9 +39,12 @@ export function orbFace(s, id, p) {
     return `<span class="l4orb k-special sb-orb-img"><i><img src="${esc(img)}" alt=""></i></span>`;
   const look = boxText(p, "look"),
     w =
-      look && (specialById(look) || ARMS[look] || SB_DROPS[look])
+      look &&
+      (specialById(look) || ARMS[look] || SB_DROPS[look] || SB_GEAR[look])
         ? look
         : p.orb.w;
+  if (w === "flashlight")
+    return `<span class="l4orb k-grenade"><i>${ICONS.flashlight(true)}</i></span>`;
   return SB_DROPS[w]
     ? `<span class="l4orb k-grenade"><i>${DROP_ICONS[SB_DROPS[w][0]] || ""}</i></span>`
     : orbHTML(w);
@@ -59,7 +64,11 @@ export function lootPage(s, id, p, h) {
     cats = lootCats(s),
     drops = cats.some(([, ws]) => ws.some((w) => SB_DROPS[w])), // (Dead Ducks Arcade's maps: unlimited ammo too, where guns keep ammo; a weapon there stays, as one bought does)
     icon = (w) =>
-      SB_DROPS[w] ? DROP_ICONS[SB_DROPS[w][0]] || "" : weaponIcon(w) || "",
+      w === "flashlight"
+        ? ICONS.flashlight(true)
+        : SB_DROPS[w]
+          ? DROP_ICONS[SB_DROPS[w][0]] || ""
+          : weaponIcon(w) || "",
     drop = ([n, ws]) => {
       const on = ws.filter((w) => picked.includes(w));
       return `<div class="sb-row"><span>${esc(n)}</span><details class="sb-acts" data-lcat><summary>${esc(on.map(nameOf).join(", ") || "Nothing")}</summary><span class="sb-what sb-lootpick">${ws

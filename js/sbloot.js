@@ -5,8 +5,8 @@
    - On the board and Duck Cabin, what's taken goes on the duck's hotbar (sbhot.js sbSlots: s.sb.hb.got), for good or
      for "Seconds you keep it".
    - On Dead Ducks Arcade's maps a weapon goes into the duck's slots, as one bought does (l4ddrules.js l4Loot), and a
-     zombie drop lies there as the zombies' own do, taken and worn as theirs are (s.hang.l4dr); only those two kinds
-     can be picked there.
+     zombie drop lies there as the zombies' own do, taken and worn as theirs are (s.hang.l4dr); a flashlight lights the
+     duck's way from then on (s.sb.fl, sandboxrules.js SB_GEAR); only those three kinds can be picked there.
    - "Damage to whoever takes it" hurts the duck that takes it (a claw's hurt).
    - A zone whose "Loot spawns here" names the orb's point (its color or its name) has the orb lie there instead, at a
      spot in it at random each time (stage 5, sbzone.js): p.orb.x, y, z.
@@ -20,6 +20,7 @@ import {
   baseMode,
   SB_LOOT,
   SB_DROPS,
+  SB_GEAR,
 } from "./sandboxrules.js";
 import { valueOf } from "./numerat.js";
 import { boxText, spawnsHere, zoneSpot, zonesFor } from "./sbspawn.js";
@@ -36,7 +37,9 @@ const zmaps = (s) => baseMode(s.options) === "l4dd";
 /* can w be in an orb on this map */
 export const lootOk = (s, w) =>
   zmaps(s)
-    ? Object.hasOwn(SB_DROPS, w) || Object.hasOwn(ARMS, w)
+    ? Object.hasOwn(SB_DROPS, w) ||
+      Object.hasOwn(ARMS, w) ||
+      Object.hasOwn(SB_GEAR, w)
     : !Object.hasOwn(SB_DROPS, w) && /^[a-z0-9]+$/.test(w);
 /* what orb p may hold here */
 export const lootList = (s, p) =>
@@ -138,7 +141,9 @@ function take(s, q, by, now, H0) {
   const w = q.orb.w,
     keep = num(q, "keep"),
     hurt = num(q, "hurt");
-  if (zmaps(s)) l4Loot(s, by, w, num(q, "inf") === true);
+  if (zmaps(s) && w === "flashlight")
+    s.sb = { ...s.sb, fl: { ...(s.sb.fl || {}), [by]: 1 } }; // (a flashlight: kept for good)
+  else if (zmaps(s)) l4Loot(s, by, w, num(q, "inf") === true);
   else {
     const hb = (s.sb && s.sb.hb) || {},
       mine = ((hb.got || {})[by] || []).filter(([v]) => v !== w);

@@ -12,6 +12,8 @@ serves `main`, so merging to `main` is deploying).
   Read it only when working on those parts.
 - `notes/map-building-rules.md`: rules for building any walkable map (size, see-through covers, walls, holes, rooms,
   light, water, zombie paths, phone UI). Read it before building or changing a map.
+- `notes/numberat-bible.md`: the Numberat language (Sandbox's number code), current rules, operators and examples.
+  Read it before touching Numberat; update it the day the owner settles something.
 - `notes/ref/`: the owner's reference pictures (board colors, the Halo Reach lobby idea).
 
 ## How it fits together

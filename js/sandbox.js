@@ -12,7 +12,14 @@
    away (the owner's answer 7, Nov 19 10:22Z: "you can start working on i now"). */
 import { esc, typing, windowOpen } from "./ui.js";
 import { isSb, sbMay, SB_KEYS_TAKEN, SB_KEY_IN_BUILD } from "./sandboxrules.js";
-import { buildRows, sbNearPoint, sbSettings, sbView } from "./sbspawnview.js";
+import {
+  buildRows,
+  ghostHTML,
+  sbNearPoint,
+  sbPlace,
+  sbSettings,
+  sbView,
+} from "./sbspawnview.js";
 import { boxText } from "./sbspawn.js";
 import { npcRows } from "./sbmake.js";
 import { hotRows, lootHTML, openPut, sbHotOn } from "./sbhotview.js";
@@ -36,7 +43,7 @@ export const SB_SHEET = [
   ],
   [
     "B",
-    "Build: place spawns, respawns, loot and board zones. Hold, double-tap or tap it like C.",
+    "Build: pick a spawn, respawn, loot or board zone, then click or tap the map to put it there (Esc or right-click lets go). Hold, double-tap or tap it like C.",
   ],
   ["M", "Make an NPC: its look, its weapons and who it goes after."],
   [
@@ -59,7 +66,7 @@ export const SB_SHEET = [
   ["E", "Use what you stand next to, a spawn too."],
   [
     "Spawns",
-    "In Build, place a spawn and give it a key, or put it on the hotbar in H. Its key spawns any time. E on it changes it.",
+    "In Build, pick a spawn and click where it goes, then give it a key, or put it on the hotbar in H. Its key spawns any time. E on it changes it.",
   ],
   [
     "Loot",
@@ -157,9 +164,10 @@ export function sbClose(k, held) {
   return k;
 }
 
-/* getR: () => the room; onOpen: called when a window comes up (the game closes Tab's window); returns a function that
-   takes the windows away */
-export function mountSandboxKeys(S, getR, onOpen) {
+/* getR: () => the room; onOpen: called when a window comes up (the game closes Tab's window); spotAt(clientX, clientY):
+   the spot on the map under that point of the screen ({ x, y }: shares of it), or null (game.js); returns a function
+   that takes the windows away */
+export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   const box = document.createElement("div");
   box.className = "sb-win";
   box.hidden = true;
@@ -228,28 +236,113 @@ export function mountSandboxKeys(S, getR, onOpen) {
     k.swallow = "";
     if (onOpen) onOpen();
     paint();
-    place();
+    seat();
   };
   tools.addEventListener("click", (e) => {
     const o = e.target.closest(".sb-tools-opt");
     if (o) return openWin(o.dataset.k);
     if (e.target.closest(".sb-tools-btn")) showList(tList.hidden);
   });
-  /* it sits under Leave Sandbox, wherever that button is (it takes two lines on a narrow phone) */
-  const place = () => {
+  /* it sits under Leave Sandbox, wherever that button is (it takes two lines on a narrow phone); Cancel takes its place
+     while I'm putting something down */
+  const seat = () => {
     const R = getR(),
       end = S.querySelector(".cabin-end");
-    tools.hidden = !R || !isSb(R.state) || !!k.open || windowOpen();
+    tools.hidden = !R || !isSb(R.state) || !!k.open || windowOpen() || !!carry;
     if (tools.hidden) showList(false);
-    if (!end || tools.hidden) return;
+    if (!end) return;
     const r = end.getBoundingClientRect(),
       top = Math.round(r.bottom + 6) + "px",
       left = Math.round(r.left) + "px";
-    if (tools.style.top !== top) tools.style.top = top;
-    if (tools.style.left !== left) tools.style.left = left;
+    for (const el of [tools, cancel]) {
+      if (el.style.top !== top) el.style.top = top;
+      if (el.style.left !== left) el.style.left = left;
+    }
   };
-  const placing = setInterval(place, 250);
-  place();
+  const seating = setInterval(seat, 250);
+  /* ---------- putting down what Build picked: it rides on my mouse until a click on the map puts it there (a phone:
+     the next tap). Esc, a right click or Cancel puts it back. Nothing else on the map hears that click ---------- */
+  const ghost = document.createElement("div"),
+    cancel = document.createElement("button");
+  ghost.className = "sb-ghost";
+  ghost.hidden = true;
+  ghost.setAttribute("aria-hidden", "true");
+  cancel.type = "button";
+  cancel.className = "btn ghost sb-cancel";
+  cancel.hidden = true;
+  S.append(ghost, cancel);
+  let carry = null, // ({ kind, label }: what I'm putting down)
+    eat = 0, // (the click after the press that put it down: nobody else's)
+    mx = -1,
+    my = -1;
+  const follow = () => {
+    if (!carry || mx < 0) return;
+    ghost.style.transform = `translate(${mx}px, ${my}px)`;
+  };
+  const drop = () => {
+    carry = null;
+    ghost.hidden = cancel.hidden = true;
+    S.classList.remove("sb-placing");
+    seat();
+  };
+  sbPlace.start = (kind, label) => {
+    const R = getR();
+    if (!R || !sbMay(R.state, R.me, "b")) return;
+    carry = { kind, label };
+    ghost.innerHTML = ghostHTML(R.state, kind);
+    ghost.classList.toggle("zone", kind === "zone");
+    ghost.hidden = mx < 0; // (a phone: nothing on a finger until it taps)
+    cancel.textContent = `Cancel ${label.toLowerCase()}`;
+    cancel.hidden = false;
+    S.classList.add("sb-placing");
+    follow();
+    seat();
+  };
+  cancel.addEventListener("click", drop);
+  const onMap = (e) =>
+    !!e.target.closest(".board") &&
+    !e.target.closest(
+      "button, .btn, a, input, textarea, select, .win, .sb-win, .tpad, .sb-tools, .cabin-end, .sb-cancel",
+    );
+  const pmove = (e) => {
+    if (e.pointerType !== "mouse") return;
+    mx = e.clientX;
+    my = e.clientY;
+    if (!carry) return;
+    if (ghost.hidden) ghost.hidden = false;
+    follow();
+  };
+  const pdown = (e) => {
+    if (!carry) return;
+    if (e.button === 2) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      return drop(); // (a right click: put it back)
+    }
+    if (!onMap(e)) return;
+    e.preventDefault();
+    e.stopImmediatePropagation(); // (no walking there, no swing, no shot)
+    const R = getR(),
+      at = spotAt && spotAt(e.clientX, e.clientY);
+    if (R && at)
+      R.send({ t: "sb", k: "add", kind: carry.kind, x: at.x, y: at.y });
+    eat = performance.now();
+    drop();
+  };
+  const swallow = (e) => {
+    if (performance.now() - eat > 600) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  };
+  const menu = (e) => {
+    if (carry) e.preventDefault();
+  };
+  addEventListener("pointermove", pmove, true);
+  addEventListener("pointerdown", pdown, true);
+  for (const t of ["mousedown", "mouseup", "pointerup", "click"])
+    addEventListener(t, swallow, true);
+  addEventListener("contextmenu", menu, true);
+  seat();
   const pick = (i) => {
     const R = getR(),
       o = R && sbOptions(k.open, R)[i];
@@ -265,7 +358,7 @@ export function mountSandboxKeys(S, getR, onOpen) {
     if (e.target.closest(".sb-x")) {
       sbClose(k, false);
       paint();
-      place();
+      seat();
       return;
     }
     const b = e.target.closest(".sb-opt");
@@ -302,6 +395,12 @@ export function mountSandboxKeys(S, getR, onOpen) {
       return;
     }
     if (!mine(e)) return;
+    if (e.key === "Escape" && carry && !k.open) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      drop();
+      return;
+    }
     if (e.key === "Escape" && k.open) {
       e.preventDefault();
       e.stopImmediatePropagation();
@@ -392,9 +491,17 @@ export function mountSandboxKeys(S, getR, onOpen) {
       removeEventListener("keydown", keydown, true);
       removeEventListener("keyup", keyup, true);
       removeEventListener("blur", blur);
-      clearInterval(placing);
+      clearInterval(seating);
+      removeEventListener("pointermove", pmove, true);
+      removeEventListener("pointerdown", pdown, true);
+      for (const t of ["mousedown", "mouseup", "pointerup", "click"])
+        removeEventListener(t, swallow, true);
+      removeEventListener("contextmenu", menu, true);
+      sbPlace.start = null;
       box.remove();
       tools.remove();
+      ghost.remove();
+      cancel.remove();
       sbView.build = false;
     },
   };

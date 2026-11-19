@@ -5812,6 +5812,35 @@ html.map-on .game .gbar,
 html.map-on .game .bbar {
   background: color-mix(in srgb, var(--bg) 62%, transparent);
 }
+/* ---------- hide ui (the owner's, Nov 19 12:59Z: "this hides everything but the top right buttons … the text chat
+   ("abc"), the leave sandbox or leave other button, the vote button, and hot bar. It hides the black outline above and
+   below the screen AND it hides the text on the bottom (except for cheat sheet …)"; hideui.js) ----------
+   Mine alone: the bars' dark bands go see-through, and the round's name, the song bar, Notes, the keys' words and the
+   jump counter go. What I play with stays: the top right buttons and the timer, the chat, Leave and End, the vote and
+   use buttons, the hotbar with my HP, a phone's jump button and Sandbox's Tools. In Sandbox, on a computer, "C Cheat
+   sheet" stays at the bottom, alone */
+.ui-cs {
+  display: none;
+}
+html.hide-ui .game :is(.gbar, .bbar) {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+html.hide-ui .game .gbar {
+  justify-content: flex-end;
+} /* (the top right buttons stay where they were) */
+html.hide-ui
+  .game
+  :is(.gbar-l, .gbar > .mbar, .notes-tab, .hints:not(.ui-cs), .jumps-slot) {
+  display: none !important;
+}
+html.hide-ui.keyboard .game .ui-cs {
+  display: flex;
+  text-shadow:
+    0 0 0.2rem #000,
+    0 0.05rem 0.1rem #000;
+} /* (no bar behind it now: a dark edge so it reads on any map) */
 @media (max-width: 760px) {
   .set-arm .arm-h,
   .armory .arm-menu > .arm-h {
@@ -17115,6 +17144,32 @@ html.pixel .l4-flare::before {
     opacity: 0;
   }
 }
+/* "The Merchant has Arrived" stays 3 s, then fades over 1 s (the owner's, Nov 19 12:59Z: "shouldnt be too short or too long
+   and then fade away"; it was 2.2 s in all, the fade only the last half second) */
+.l4-got.merchant.on {
+  animation: l4-got-merchant 4s ease-out forwards;
+}
+@keyframes l4-got-merchant {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.6);
+  }
+  4% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.08);
+  }
+  8% {
+    transform: translateX(-50%) scale(1);
+  }
+  75% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) scale(1);
+  }
+}
 /* the Nuke (l4dd.js nukeScreen, owner 2026-11-16): grey pixel static over the whole board, the map grey for 7 s, then
    its colors slowly coming back; "Nuke" in crimson blood letters that hold still through it; its bodies lie 15 s */
 .l4-nuke {
@@ -19807,6 +19862,44 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   line-height: 1.2;
   white-space: nowrap;
 }
+/* Build's picked thing rides on the mouse until a click or tap puts it down (js/sandbox.js) */
+.sb-ghost {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0.8;
+  filter: drop-shadow(0 0.25rem 0.3rem #0008);
+}
+.sb-ghost[hidden] {
+  display: none;
+}
+.sb-ghost > * {
+  display: block;
+  width: 3.2rem;
+  height: 3.2rem;
+  transform: translate(-50%, -50%);
+}
+.sb-ghost-zone {
+  box-sizing: border-box;
+  border: 0.18rem dashed var(--c);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--c) 25%, transparent);
+}
+.game .sb-cancel {
+  position: fixed;
+  top: 88px;
+  left: 18px;
+  z-index: 31;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.game .sb-cancel[hidden] {
+  display: none;
+}
 .sb-tools-list {
   display: flex;
   flex-direction: column;
@@ -20331,6 +20424,7 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 }
 .nm-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
 }
@@ -20342,7 +20436,6 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   white-space: nowrap;
   color: var(--dim);
 }
-.nm-code,
 .nm-in {
   font: inherit;
   font-weight: 200;
@@ -20353,12 +20446,124 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   padding: 0.4rem 0.5rem;
   min-width: 0;
 }
-.nm-code {
+/* the code: line numbers always at its left, no wrap unless Wrap is on (the owner's, Nov 19 12:59Z) */
+.nm-ed {
+  position: relative;
   flex: 3;
   min-height: 0;
+  display: flex;
+  border: 0.12rem solid var(--line);
+  border-radius: 0.45rem;
+  background: #0006;
+  overflow: hidden;
+}
+.nm-gut {
+  flex: none;
+  min-width: 2.2rem;
+  margin: 0;
+  padding: 0.4rem 0.45rem 0.4rem 0.5rem;
+  overflow: hidden;
+  text-align: right;
+  font: inherit;
+  font-weight: 200;
+  line-height: 1.5;
+  color: var(--dim);
+  border-right: 0.1rem solid var(--line);
+  user-select: none;
+  -webkit-user-select: none;
+}
+.nm-code {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  font: inherit;
+  font-weight: 200;
+  line-height: 1.5;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  padding: 0.4rem 0.5rem;
   resize: none;
   tab-size: 2;
   white-space: pre;
+  overflow: auto;
+  overflow-wrap: normal;
+}
+.nm-code:focus {
+  outline: none;
+}
+.nm-ed:focus-within {
+  border-color: var(--blue, #3f8cff);
+}
+.nm-wrap-on .nm-code {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+/* a hidden copy of the text at the code's width, to measure how tall each folded line is */
+.nm-mirror {
+  position: absolute;
+  left: 0;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+  box-sizing: border-box;
+  padding: 0.4rem 0.5rem;
+  font: inherit;
+  font-weight: 200;
+  line-height: 1.5;
+  tab-size: 2;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+.nm-ac,
+.nm-sugg {
+  margin: 0;
+  padding: 0.15rem;
+  list-style: none;
+  font-weight: 200;
+}
+.nm-ac {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.5rem;
+  z-index: 2;
+  background: var(--panel, #20232d);
+  border: 0.12rem solid var(--line);
+  border-radius: 0.4rem;
+}
+.nm-ac[hidden],
+.nm-sugg[hidden] {
+  display: none;
+}
+.nm-ac li,
+.nm-sugg li {
+  padding: 0.1rem 0.5rem;
+  cursor: pointer;
+  border-radius: 0.25rem;
+}
+.nm-ac li[aria-selected="true"],
+.nm-sugg li[aria-selected="true"] {
+  background: color-mix(in srgb, var(--blue, #3f8cff) 35%, transparent);
+}
+.nm-sugg {
+  flex: none;
+  max-height: 6.5rem;
+  overflow: auto;
+  border-top: 0.1rem solid var(--line);
+}
+.nm-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 200;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.nm-ro {
+  color: var(--dim);
+  font-style: italic;
 }
 .nm-term {
   flex: 2;
