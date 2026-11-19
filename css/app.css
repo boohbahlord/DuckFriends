@@ -20134,6 +20134,49 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   font-size: 0.9em;
   opacity: 0.8;
 }
+/* the h window's loot: its own list that scrolls, so the hotbar keys under it stay in sight */
+.sb-lootlist {
+  flex: none;
+  max-height: min(26vh, 16rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.2rem 0.3rem 0.2rem 0;
+  border-top: 0.12rem solid var(--line);
+}
+.sb-hotopts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.3rem;
+}
+.sb-lootlist h4 {
+  margin: 0.2rem 0 0;
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+.sb-win h3 {
+  margin: 0.2rem 0 0;
+  font-size: 1em;
+}
+.sb-picked {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.sb-picked i {
+  font-style: normal;
+}
+.sb-picked i svg {
+  width: 1.3em;
+  height: auto;
+  display: block;
+}
+.sb-lt[aria-pressed="true"] {
+  border-color: var(--green);
+}
 .sb-lts {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(8.75rem, 1fr));
