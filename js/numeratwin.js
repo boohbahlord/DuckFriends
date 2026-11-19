@@ -2,7 +2,7 @@
    The owner's Sandbox file: "clicking “n” will bring up the numerat files you have made ... You can click (new file) OR
    (new directory) at the left (similar to VS code). You can also see a terminal line in the bottom half of this numerat
    window, and you can see the code above the long ractangle of terminal window (like VS code)."
-   The files are the command line's own (shell.js numerat: notes/numerat/, kept on this device from game to game), so
+   The files are the command line's own (shell.js numerat: notes/numberat/, kept on this device from game to game), so
    what's made here shows in ls and what's made there shows here. The code saves as it's typed. Run starts the open file
    (a stub until the language comes: it only runs until it's stopped); its terminal line is the command line itself.
    Every letter in it is Cascadia Code, as the command line's.
@@ -81,7 +81,7 @@ export function openNumerat() {
         gut = $(".nm-gut"),
         mirror = $(".nm-mirror"),
         ac = $(".nm-ac"),
-        rel = (p) => "numerat" + p.slice(root.length);
+        rel = (p) => "numberat" + p.slice(root.length);
       const say = (ls) => {
         st.out.push(...ls);
         if (st.out.length > 200) st.out.splice(0, st.out.length - 200);
@@ -128,7 +128,7 @@ export function openNumerat() {
       const paint = () => {
         const items = numerat.tree(ctx);
         $(".nm-tree").innerHTML =
-          `<li class="nm-item nm-dir${st.dir === root && !st.file ? " on" : ""}" data-p="${esc(root)}" data-dir style="--d:0">numerat/</li>` +
+          `<li class="nm-item nm-dir${st.dir === root && !st.file ? " on" : ""}" data-p="${esc(root)}" data-dir style="--d:0">numberat/</li>` +
           items
             .map(
               (it) =>

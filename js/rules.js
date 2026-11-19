@@ -26,7 +26,7 @@ import {
 } from "./sandboxrules.js";
 import { sbAct, sbTick, sbPlaceDuck, sbHpOf } from "./sbspawn.js";
 import { hpHeal, tenths } from "./hpmath.js";
-import { sbHotAct } from "./sbhot.js";
+import { sbHotAct, sbSlots } from "./sbhot.js";
 import { sbLootAct, sbLootTick } from "./sbloot.js";
 import { sbZoneTick } from "./sbzone.js";
 import { onCabin } from "./sbcabin.js";
@@ -2391,7 +2391,8 @@ function reduceStep(state, a, now) {
       if (
         isMgj(s)
           ? s.phase !== "boss" || (me.dead && !downGun)
-          : !PRESS.includes(sp) || !onKeys(me.duck, sp)
+          : !PRESS.includes(sp) ||
+            !(isSb(s) ? sbSlots(s, a.id).includes(sp) : onKeys(me.duck, sp))
       )
         return state; // (Mad God Justin: not while down, but the down pistol)
       if (isMgj(s) && ["revive", "jaime", "zebra"].includes(sp))

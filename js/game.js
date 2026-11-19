@@ -5876,7 +5876,9 @@ function padWeapon() {
   if (isMgj(R.state))
     return R.state.phase === "boss" && mgjToggles(id) ? id : null;
   const sp = specialById(id);
-  return (WEAPONS.includes(id) ? id === held : THROWS.includes(id) && !held) &&
+  return (WEAPONS.includes(id)
+    ? id === held
+    : THROWS.includes(id) && (!held || isSb(R.state))) &&
     sp &&
     !sp.off &&
     (unlocked("special", id) || sbHotOn(R.state))
@@ -5973,6 +5975,10 @@ function useKey(i, keep, toggle = false) {
         id === "longjump" ? "long" : id === "shortjump" ? "short" : "double",
       );
   } else if (THROWS.includes(id)) {
+    if (held && isSb(R.state)) {
+      held = null; // (Sandbox: the key puts the weapon in hand away and throws; the owner's, Nov 19 16:38Z, "WHY THE FUCK CAN I NOT THROW THE CHAIR IN SANDBOX")
+      sendMove(true);
+    }
     if (!held) fire(id); // (the Chair and the Zebra cake: thrown toward the mouse, but not with a weapon in hand)
   } else if (me && me.x >= 0)
     R.send({ t: "use", what: id, face: turned() ? 1 : me.face || 1 }); // (an item: Shift and its key use it the same way)

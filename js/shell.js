@@ -7,7 +7,7 @@
    notes/ (your files, for this game only), log (everything you ran this game and what came out, read-only) and
    perma-notes/ (kept on this device from game to game; only you, superuser-<you>, can open it; its files can be removed,
    the folder can't). Other players' homes show in /usr, but their files live on their own devices.
-   notes/numerat/ holds my Numerat files (Sandbox, stage 7a): unlike the rest of notes it is kept on this device from game
+   notes/numberat/ holds my Numberat files (Sandbox, stage 7a): unlike the rest of notes it is kept on this device from game
    to game, folders, files and their +x, and can be organized from here in any mode (mkdir, cp, mv, rm). A file runs only
    in Sandbox, from the Numerat window's Run button or as ./file once chmod +x; ps lists it and kill <pid> stops it.
 
@@ -110,7 +110,7 @@ const perma = () => (profile.permaNotes = profile.permaNotes || {});
    is in it is kept on this device, profile.numerat = { f: { path in it: text }, d: [its folders], x: [its +x files] },
    and it comes back at the start of every game. 100,000 characters in all, as perma-notes */
 const NUM_MOST = 100000;
-const numRoot = () => fs.home + "/notes/numerat";
+const numRoot = () => fs.home + "/notes/numberat"; // (the language is Numberat: the owner, Nov 19 16:42Z)
 const inNum = (path) => path.startsWith(numRoot() + "/");
 /* the help/ folder in it: Numerat's read-only help files (numerathelp.js), made again at the start of every game, never
    kept in the profile, and refused every change, copy and delete (the owner's, Nov 19 12:59Z) */
