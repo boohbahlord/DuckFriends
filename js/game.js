@@ -236,7 +236,7 @@ import { mountSandboxKeys } from "./sandbox.js";
 import { sbHotOn, sbLook, sbHotSig } from "./sbhotview.js";
 import { sbSlots, spawnOf } from "./sbhot.js";
 import { sbBoardMarks, sbSettings } from "./sbspawnview.js";
-import { duckSVG, duckRoom } from "./duck.js";
+import { duckSVG, duckRoom, scaleOf } from "./duck.js";
 import {
   shownDuck,
   shownNameStyle,
@@ -535,8 +535,11 @@ const DOWN_TURN = (-100 * Math.PI) / 180; // (a duck lying dead is turned this f
 const BODY = "~body"; // a Duck Cabin ghost's body is drawn as a duck of its own: its player's id and this
 const JUSTIN2 = "justin2"; // Mad God Justin's double, drawn as a duck of its own
 const isJustin = (id) => id === JUSTIN_ID || id === JUSTIN2;
-/* how big a duck is drawn against the others: Mad God Justin and his double a little bigger */
-const bigOf = (s, id) => (isJustin(id) && isMgj(s) ? MGJ_SCALE : 1);
+/* how big a duck is drawn against the others: Mad God Justin and his double a little bigger; a player at their own Size
+   (Customize, duck.js scaleOf: 50% to 500%, every mode) */
+const bigOf = (s, id) =>
+  (isJustin(id) && isMgj(s) ? MGJ_SCALE : 1) *
+  (s.players[id] ? scaleOf(shownDuck(s, s.players[id])) : 1);
 /* a Jaime (Mad God Justin's, or the Jaime special's, s.jm): his look, and "Jaime" under him, never the name of the duck
    that sent him (the owner's, Nov 3) */
 const jaimeOf = (s, id) =>
@@ -3016,12 +3019,32 @@ function placeDesk(board, s, now) {
 /* Mad God Justin: his zombie waves (mgjrules.js wavesTick), each where the host says it is, gliding there (css), the
    way it last clawed; a dead one falls over and fades */
 const ZB_GLIDE = 100;
+/* Sandbox on the board: how big a duck is on my screen, in the board's shares, [a, b, c, d] (one duck width across the
+   screen is (a, b) on the board, one down is (c, d)), so the host hits its NPCs where I see them (sbbody.js). Sent when
+   it changes, and again if the room lost it */
+let duAt = 0;
+function sendDu(s) {
+  if (!geo || geo.hang || geo.sc || geo.tl || geo.qp || !sbOnBoard(s)) return;
+  const { W, H, size, labelH } = geo,
+    du = (
+      turned()
+        ? [0, size / (0.8 * W), -size / H, 0]
+        : [size / W, 0, 0, size / (H - size * 1.08 - labelH)]
+    ).map((v) => +v.toFixed(4)), // (as place() puts the board on the screen)
+    had = ((s.sb && s.sb.du) || {})[R.me];
+  if (!du.every(Number.isFinite) || (had && had.join() === du.join())) return;
+  const t = performance.now();
+  if (t - duAt < 1500) return; // (one on its way)
+  duAt = t;
+  R.send({ t: "sb", k: "du", du });
+}
 function placeZombies(board, s, now) {
   const layer = $(".ducks", board),
     zb =
       (((isMgj(s) && s.phase === "boss") || sbOnBoard(s)) && s.mz && s.mz.zb) ||
       []; // (and Sandbox's board: its spawns' zombies, sbspawn.js)
   if (!layer || !geo) return;
+  sendDu(s);
   npcPics(s.sbpic); // (the room's uploaded pictures: a spawn's Appearance tab)
   const want = new Set(zb.map((o) => String(o.i))),
     fxl = $(".fxl", board),
@@ -3052,15 +3075,17 @@ function placeZombies(board, s, now) {
     }
     const c = place(o, 0, 1),
       box = npcBox(o),
-      w = geo.size,
-      k = w / box.w,
-      face = o.wp
-        ? o.f || 1 // (a made NPC: the way the host turned it, so its weapon points at what it shoots: sbarms.js)
-        : n._x === undefined || Math.abs(c.left - n._x) < 0.5
-          ? n._f || 1
-          : c.left < n._x
-            ? -1
-            : 1, // (the way it walks)
+      ds = geo.size * (o.sz || 1), // (its size: a duck's, at its spawn's Size, sbspawn.js)
+      k = ds / 64, // (px to one of its box's units: a duck's box is 64 wide)
+      w = box.w * k,
+      face =
+        o.wp || (sbOnBoard(s) && o.f)
+          ? o.f || 1 // (a made NPC: the way the host turned it, so its weapon points at what it shoots: sbarms.js; Sandbox's: the way it walks, as its hits are worked out, sbbody.js)
+          : n._x === undefined || Math.abs(c.left - n._x) < 0.5
+            ? n._f || 1
+            : c.left < n._x
+              ? -1
+              : 1, // (the way it walks)
       st = `${c.left.toFixed(1)},${c.top.toFixed(1)},${w.toFixed(1)},${face},${o.d ? 1 : 0}`;
     n._x = c.left;
     n._f = face;
@@ -3079,7 +3104,7 @@ function placeZombies(board, s, now) {
         c.top,
         box.h * k * 0.55,
         null,
-        w,
+        ds,
         BY_WOUND[nw],
         (isZombie(o) ? zombieLook(o.l) : o.dk || {}).color,
       );
@@ -3119,7 +3144,7 @@ function placeZombies(board, s, now) {
           c.left + (hand.x - box.w / 2) * k * face,
           c.top - (box.feet - hand.y) * k,
           t.left,
-          t.top - w * 0.45,
+          t.top - geo.size * 0.45, // (a duck's middle, where it went)
           o.hw,
         );
       }
@@ -3140,8 +3165,8 @@ function placeZombies(board, s, now) {
     if (clawing && n._a !== o.a && fxl && marks-- > 0)
       clawMark(
         fxl,
-        c.left + (o.f || face) * w * 0.55,
-        c.top - w * 0.45,
+        c.left + (o.f || face) * ds * 0.55,
+        c.top - ds * 0.45,
         k * 1.25,
       ); // (its claw marks on the duck it swiped, as Dead Ducks Arcade's: l4dd.js clawMark)
     n._a = o.a;

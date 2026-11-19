@@ -3,12 +3,15 @@
    is a duck in its own look (o.dk), lying down with its eyes shut once it's dead. A spawn's Appearance tab can give it
    another look (sbspawn.js lookOf): a duck's (o.dk, on a zombie too), a zombie's (o.zl), or an uploaded picture (o.im,
    one of the room's pictures, s.sbpic, which the screens hand me: npcPics). Its box is as a zombie's: 64 wide, as tall as
-   its drawing, its feet 10 units over the bottom (a picture's at its bottom). A made NPC's weapon is in its hand (o.hw:
+   its drawing, its feet 10 units over the bottom; a picture's is as tall as a duck is drawn (32 of the grid's pixels, the
+   owner's, Nov 19 15:47Z: "32 bit in size like the ducks are normally"), its feet at its bottom. Its spawn's Size (o.sz)
+   makes all of it bigger or smaller: the screens draw it at that size, and sbbody.js hits it there. A made NPC's weapon is in its hand (o.hw:
    heldOf) and its shots are lines to where they went (npcShot). Used on the board (game.js placeZombies) and on Duck Cabin
    (sbspawnview.js) */
 import { duckSVG } from "./duck.js";
 import { svgDataURL } from "./hangout/art.js";
 import { zombieURL, zombieBox } from "./l4ddart.js";
+import { zombieLook } from "./l4ddrules.js";
 import { esc } from "./ui.js";
 import { heldHTML } from "./specials.js";
 import { GUNS, TRACE } from "./l4ddguns.js";
@@ -54,10 +57,13 @@ export function npcURL(o, hits = "") {
   }
   return PICS.get(k);
 }
+/* a picture's height in a box's units (64: a duck's box): a duck's drawing fills about 70% of its box, its 32 pixels
+   (pixel.js FILL) */
+const PIC_H = 64 * 0.7;
 export function npcBox(o) {
   if (o.im && imgOf(o.im)) {
-    const h = 64 * (IMGS[o.im].a || 1);
-    return { w: 64, h, feet: h };
+    const a = IMGS[o.im].a || 1;
+    return { w: PIC_H / a, h: PIC_H, feet: PIC_H };
   }
   if (isZombie(o)) return zombieBox(o.l);
   const k = keyOf(o);
@@ -73,6 +79,20 @@ export function npcBox(o) {
     });
   }
   return BOXES.get(k);
+}
+/* what its hits are tested against (sbbody.js): its picture without its shadow or wounds, the size of npcBox's box, and
+   a key for it (one shape for every zombie of a build, every duck of a look, each picture) */
+export function npcShape(o) {
+  if (o.im && imgOf(o.im)) return { k: "i" + o.im, url: () => imgOf(o.im) };
+  if (isZombie(o))
+    return {
+      k: "z" + [o.l[3], o.l[4], o.l[5], o.l[6], o.l[7]].join(),
+      url: () => svgDataURL(duckSVG(zombieLook(o.l), { size: 64, dead: true })),
+    };
+  return {
+    k: "d" + keyOf(o),
+    url: () => svgDataURL(duckSVG(lookOf(o), { size: 64 })),
+  }; // (url: made only when its shape isn't made yet)
 }
 /* the name over one that has one (Justin, a Test NPC, a made NPC) */
 export const npcName = (o) =>

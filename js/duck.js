@@ -107,6 +107,19 @@ const clamp1 = (v) => Math.max(-1, Math.min(1, +v || 0));
 export function duckRoom() {
   return { x: 1, y: 1 };
 }
+/* a duck's own size, the Size row in Customize (the owner's, Nov 19 15:52Z): its look's scale, in percent, "only be
+   50% size at the smallest and 500% size at the biggest". As a share: 0.5 … 5 */
+export const DUCK_SCALE = { MIN: 50, MAX: 500 };
+export const scaleOf = (look) =>
+  Math.min(
+    DUCK_SCALE.MAX,
+    Math.max(DUCK_SCALE.MIN, +(look && look.scale) || 100),
+  ) / 100;
+/* … and its hitbox: "the hitbox stays the same for smaller ones but becomes bigger for bigger ducks" */
+export const hitScaleOf = (look) => Math.max(1, scaleOf(look));
+/* player id's, in room state s (the rules' hits: rules.js, mgjrules.js, l4ddrules.js, sbarms.js) */
+export const duckBig = (s, id) =>
+  hitScaleOf(((s && s.players && s.players[id]) || {}).duck);
 
 let uid = 0;
 export const mix = (hex, to, t) => {

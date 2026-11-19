@@ -308,10 +308,12 @@ function makeOne(s, id, at) {
     hp = Math.max(1, num(by("hp"), "hp") || 1),
     sv = num(by("speed"), "speed") || 1, // (picked once and kept: "a number is selected and it sticks with it")
     dm = boxText(by("damage"), "damage"),
+    sz = (num(by("size"), "size") || 100) / 100, // (its Size: picture and hitbox, sbbody.js)
     kind = {
       ...(k === "zombie" ? {} : { k, ...dressFor(s, k) }),
       ...(ownOn(p) ? lookOf(p.ap) : {}), // (its settings off: it looks as it is)
       ...(at.id && (at.im || []).length ? { rp: at.id } : {}), // (its behavior lists too: think)
+      ...(sz !== 1 ? { sz } : {}),
     };
   let i;
   if (sbOnBoard(s)) {
@@ -333,8 +335,16 @@ function makeOne(s, id, at) {
       ...(flag(by("sprint"), "sprint") ? { run: 1 } : {}),
       ...kind,
     });
-  } else if (onCabin(s) || k !== "zombie" || boxText(p, "brain").trim()) {
-    // (a zombie with a Brain walks as Sandbox's own do, so its file can steer it: sbnumberat.js)
+  } else if (
+    onCabin(s) ||
+    k !== "zombie" ||
+    boxText(p, "brain").trim() ||
+    kind.sz ||
+    kind.im ||
+    kind.dk
+  ) {
+    // (a zombie with a Brain walks as Sandbox's own do, so its file can steer it: sbnumberat.js; one with its own look or
+    // Size too, which the map's own zombies don't have)
     const c = cabinSpawn(s, at.x, at.y, {
       hp,
       sv,
@@ -381,6 +391,22 @@ function press(s, id, now) {
 /* ---------- the actions: { t: "sb", k, … } ---------- */
 export function sbAct(s, a, now) {
   if (!isSb(s)) return false;
+  /* anyone's screen: how big a duck is on it, for its hits on the NPCs (sbbody.js; game.js sendDu) */
+  if (a.k === "du") {
+    if (
+      !s.players[a.id] ||
+      !Array.isArray(a.du) ||
+      a.du.length !== 4 ||
+      !a.du.every((v) => Number.isFinite(v) && Math.abs(v) < 2) ||
+      Math.abs(a.du[0] * a.du[3] - a.du[1] * a.du[2]) < 1e-6
+    )
+      return false;
+    s.sb = {
+      ...s.sb,
+      du: { ...((s.sb && s.sb.du) || {}), [a.id]: a.du.map(Number) },
+    };
+    return true;
+  }
   /* an NPC is Make an NPC's (M); a picture's part is Build's or M's; the rest is Build's (B): the rights give them all,
      Game Settings may give everyone one (sandboxrules.js sbMay) */
   const may = (k) => sbMay(s, a.id, k);
@@ -888,7 +914,7 @@ function boardTick(s, now, H) {
     if (!to) continue;
     const x0 = o.x,
       bd = far(me, to),
-      claw = reachTo(WAVE.CLAW, o, to), // (its hitbox, and its foe's: sbarms.js)
+      claw = reachTo(WAVE.CLAW, o, to, s), // (its hitbox, and its foe's: sbarms.js)
       sp = WAVE.SPEED * (o.sv || 1) * (o.run && bd > 4 ? 1.5 : 1); // (can sprint: half as fast again while far off)
     if (d.flee) {
       const go = Math.min(1, (sp * dt) / Math.max(bd, 1e-3));
@@ -902,7 +928,7 @@ function boardTick(s, now, H) {
       o.y += (to.y - o.y) * go;
       ch = true;
     }
-    if (o.wp && Math.abs(o.x - x0) > 1e-4) o.f = o.x > x0 ? 1 : -1; // (a made NPC's weapon points the way it goes, or at what it hits)
+    if (Math.abs(o.x - x0) > 1e-4) o.f = o.x > x0 ? 1 : -1; // (the way it goes: a made NPC's weapon points it, or at what it hits; and its picture faces it, so it's hit where it shows, sbbody.js)
     if (
       d.foe &&
       fight(o, to, bd, claw, now, WAVE.CLAW_MS, (dm, w) =>

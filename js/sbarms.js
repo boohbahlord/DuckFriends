@@ -6,6 +6,7 @@
    hard and as often as it does in the zombie mode (l4ddrules.js ARMS). Its fight lives on it: mg (the rounds left in
    each gun's magazine), rl (when each one's reload ends), fa (its last shot), ma (its last melee swing), hw (what it
    holds now) and sh (its last shot: [when, x, y of where it went], for the screen's tracer) */
+import { duckBig } from "./duck.js";
 import { ARMS, WEAPONS } from "./l4ddrules.js";
 
 /* what it can hold: its guns and the bow (not the thrown dagger), and the melee weapons */
@@ -47,10 +48,13 @@ export function armUp(wp) {
   };
 }
 /* how near it keeps to what it's after: most of its shortest gun's reach, else close enough to swing (claw) */
-/* how far o's claw reaches to t: a Numberat file's hitbox (o.hb, sbnumberat.js) makes it reach further, and a bigger
-   one is reached sooner (both 1: the claw as it was) */
-export const reachTo = (claw, o, t) =>
-  (claw * ((o.hb || 1) + ((t && t.o && t.o.hb) || 1))) / 2;
+/* how far o's claw reaches to t: a Numberat file's hitbox (o.hb, sbnumberat.js) and its Size (o.sz) make it reach
+   further, and a bigger one is reached sooner (all 1: the claw as it was) */
+export const reachTo = (claw, o, t, s = null) =>
+  (claw *
+    (bigOf(o) + (t && t.o ? bigOf(t.o) : t && t.duck ? duckBig(s, t.id) : 1))) /
+  2; // (and its spawn's Size, o.sz; a duck bigger than 100%: duck.js)
+const bigOf = (o) => (o.hb || 1) * (o.sz || 1);
 export const keepAt = (o, claw) => {
   const g = gunsOf(o);
   return g.length
