@@ -26,6 +26,7 @@ import { hitCode } from "./wounds.js";
 import { WAVE, zLook } from "./mgjrules.js";
 import { MAD } from "./sbbrain.js";
 import { fight, keepAt, reachTo } from "./sbarms.js";
+import { npcBody, DU_WORLD } from "./sbbody.js";
 
 export const onCabin = (s) => isSb(s) && baseMode(s.options) === "hang";
 /* the worlds these walk on: Duck Cabin and the zombie maps (there, every kind but a zombie: those are the map's own) */
@@ -116,7 +117,7 @@ export function cabinTick(s, now, H0) {
     const to = d.goal || d.flee;
     if (!to) continue;
     const bd = far(me, to),
-      claw = reachTo(CLAW, o, to), // (its hitbox, and its foe's: sbarms.js)
+      claw = reachTo(CLAW, o, to, s), // (its hitbox, and its foe's: sbarms.js)
       v =
         zWalk() *
         (o.sv || 1) *
@@ -212,13 +213,21 @@ rule("sbz", {
   targets(s) {
     return zbOf(s)
       .filter((o) => !o.d)
-      .map((o) => ({
-        id: "sbz" + o.i,
-        x: o.x,
-        y: o.y,
-        z: heightAt(o.x, o.y),
-        ...(o.hb && o.hb !== 1 ? { r: o.hb } : {}), // (a Numberat file's hitbox: sbnumberat.js)
-      }));
+      .map((o) => {
+        const b = npcBody(s, o, DU_WORLD); // (only where its picture shows, at its size and its Numberat hitbox: sbbody.js)
+        return {
+          id: "sbz" + o.i,
+          x: o.x,
+          y: o.y,
+          z: heightAt(o.x, o.y),
+          at(fx, fy, up = 0) {
+            const q = b.at(fx * W, fy * H, up);
+            return q && { x: q.x / W, y: q.y / H };
+          }, // (in shares of the world, as rules.js has them)
+          line: (x0, y0, x1, y1, up = 0) =>
+            b.line(x0 * W, y0 * H, x1 * W, y1 * H, up),
+        };
+      });
   },
   hit(s, id, by, now, w) {
     if (!String(id).startsWith("sbz")) return false;
@@ -256,11 +265,13 @@ function npcHit(s, i, by, now, w) {
 }
 
 /* … and on the zombie maps, where shots and swings are Dead Ducks Arcade's own (l4ddrules.js wildHurt) */
+const HIT_UP = 0.41; // (duck widths over the ground: where a shot flies, rules.js shotAt)
 L4_HOOKS.npc = (s, by, x, y, now, w, rx, ry, from, hit) => {
   if (!isSb(s) || baseMode(s.options) !== "l4dd") return false;
   const near = zbOf(s).filter((o) => {
     if (o.d || (hit && hit.includes("c" + o.i))) return false;
-    if (Math.hypot((o.x - x) / rx, (o.y - y) / ry) >= (o.hb || 1)) return false; // (its hitbox: sbnumberat.js)
+    const q = npcBody(s, o, DU_WORLD).at(x, y, HIT_UP); // (its nearest part that shows, from the height a shot flies: sbbody.js)
+    if (!q || Math.hypot((q.x - x) / rx, (q.y - y) / ry) >= 1) return false;
     const h = heightAt(o.x, o.y);
     return (
       !from ||

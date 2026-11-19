@@ -765,7 +765,9 @@ const ZB = new Map(),
   GLIDE = 220; // ms (a heartbeat is 200)
 function zbEl(o, layer) {
   const el = document.createElement("div"),
-    box = npcBox(o);
+    k = o.sz || 1, // (its spawn's Size: as big on the page, so the pixel look gives it more pixels, never bigger ones)
+    b = npcBox(o),
+    box = { w: b.w * k, h: b.h * k, feet: b.feet * k };
   el.className = "l4z";
   el.innerHTML = `<div class="l4z-body"><img alt="" draggable="false"></div><span class="l4z-hp"><b></b><i></i></span>${npcName(o)}`;
   const body = el.firstChild;
@@ -777,6 +779,7 @@ function zbEl(o, layer) {
     transformOrigin: `${box.w / 2}px ${box.feet.toFixed(1)}px`,
   });
   body.style.setProperty("--feet", box.feet.toFixed(1) + "px"); // (a made NPC's weapon, at its middle: css .sb-held)
+  body.style.setProperty("--zk", k); // (and as big as it is)
   layer.append(el);
   return {
     el,
@@ -835,19 +838,25 @@ activity({
       const u = Math.min(1, (t - z.t0) / GLIDE);
       z.x = z.fx + (z.tx - z.fx) * u;
       z.y = z.fy + (z.ty - z.fy) * u;
-      const h = heightAt(z.x, z.y),
+      const zs = sc * (o.sz || 1), // (its spawn's Size, sbspawn.js: z.box is already that big)
+        h = heightAt(z.x, z.y),
         f = Wd.toScreen(z.x, z.y, h),
         hide =
           !seenFrom(z.x, z.y, Wd.inside, h) ||
-          !Wd.onView(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc);
+          !Wd.onView(
+            f.left - (z.box.w / 2 + 8) * sc,
+            f.top - (z.box.feet + 10) * sc,
+            (z.box.w + 16) * sc,
+            (z.box.h + 10) * sc,
+          );
       if (z.el.hidden !== hide) z.el.hidden = hide;
       if (o.a !== z.a) {
         if (o.a > 0 && !o.d && !hide && fxl)
           clawMark(
             fxl,
-            f.left + (o.f || 1) * 44 * sc,
-            f.top - 36 * sc,
-            sc * 1.25,
+            f.left + (o.f || 1) * 44 * zs,
+            f.top - 36 * zs,
+            zs * 1.25,
           );
         z.a = o.a;
       }
@@ -873,7 +882,7 @@ activity({
         const fresh = Date.now() - o.sh[0] < 1500;
         z.shot = o.sh[0];
         if (fresh && fxl) {
-          const hand = handAt(z.box),
+          const hand = handAt(z.box), // (in its box, already its Size)
             to = Wd.toScreen(o.sh[1], o.sh[2], heightAt(o.sh[1], o.sh[2]));
           npcShot(
             fxl,

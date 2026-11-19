@@ -42,6 +42,8 @@ import {
   SIZES,
   pictureToSquare,
   duckSVG,
+  DUCK_SCALE,
+  scaleOf,
 } from "./duck.js";
 import {
   CARD_PATTERNS,
@@ -837,9 +839,15 @@ export function openCustomize(page = lastPage, opts = {}) {
                 { ...D, image: null, ...look },
                 { size: 58, shadow: false },
               );
+            const pct = Math.round(scaleOf(D) * 100);
+            /* how big my duck is, every mode (the owner's, Nov 19 15:52Z): its hitbox grows with it past 100%. Not an
+               NPC's: its spawn's Size sets that (sbspawn.js) */
+            const scale = NPC
+              ? ""
+              : `<h3>Size (%)</h3><div class="arm-scale"><input type="range" min="${DUCK_SCALE.MIN}" max="${DUCK_SCALE.MAX}" step="10" value="${pct}" data-o="scale" aria-label="Size in percent"><output>${pct}%</output></div>`;
             html =
               head("Body") +
-              `<div class="arm-body arm-bodies"><h3>Build</h3>${grid(
+              `<div class="arm-body arm-bodies">${scale}<h3>Build</h3>${grid(
                 "build",
                 BUILDS.map(([v, n]) => [String(v), pic({ build: v }), n]),
                 String(+D.build || 0),
@@ -1634,6 +1642,10 @@ export function openCustomize(page = lastPage, opts = {}) {
           },
           true,
         );
+        menu.addEventListener("input", (e) => {
+          if (e.target.dataset.o === "scale")
+            e.target.nextElementSibling.textContent = e.target.value + "%"; // (its number as it slides; kept when let go: change)
+        });
         menu.addEventListener("change", async (e) => {
           const o = e.target.dataset.o,
             up = e.target.dataset.up,
@@ -1655,6 +1667,12 @@ export function openCustomize(page = lastPage, opts = {}) {
           }
           if (o === "rainbow") {
             profile.nameStyle.rainbow = e.target.checked;
+            changed();
+          }
+          if (o === "scale") {
+            const v = Math.round(+e.target.value / 10) * 10;
+            if (v === 100) delete duckNow().scale;
+            else duckNow().scale = v;
             changed();
           }
           if (up) {

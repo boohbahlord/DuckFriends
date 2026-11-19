@@ -36,6 +36,7 @@
      l4b  { id: { o, at } }: who is boarding up which opening, since when (one more board each BOARD_MS)
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
+import { duckBig } from "./duck.js";
 import { hpHeal, hpHurt, tenths } from "./hpmath.js";
 import {
   baseMode,
@@ -5104,7 +5105,7 @@ function moveZombies(s, zs, now, T, up) {
        floor (zFloor), never one up on a roof over it or down below it, nor one up the ladder */
     const d = room(z.x, z.y, ...target.xy);
     if (
-      d < CLAW &&
+      d < CLAW + (duckBig(s, target.id) - 1) / 2 && // (a duck bigger than 100% is reached sooner: duck.js)
       zFloor(z) === target.dk &&
       Math.abs(target.zz - zombieZ(z)) < 50
     ) {
