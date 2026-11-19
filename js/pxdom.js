@@ -7,7 +7,15 @@
    made off), by pixel.js' raster(): small on the grid, through the game's palette, cached. When the drawing changes
    (its parts, its classes or the classes of what holds it), it's made again, at most every PACE ms per drawing.
    Only with the pixel look on (pixel.js' pixelOn()). */
-import { pixelOn, gridPx, snap, raster, rasterReady } from "./pixel.js";
+import {
+  pixelOn,
+  gridPx,
+  snap,
+  raster,
+  rasterReady,
+  rainbowSteps,
+} from "./pixel.js";
+import { hasRb, RB_N } from "./rainbowskin.js";
 
 const NS = "http://www.w3.org/2000/svg",
   PACE = 120, // (ms between two new pictures of one drawing that keeps changing)
@@ -34,19 +42,44 @@ function css() {
   const s = document.createElement("style");
   s.id = "pxdom-css";
   s.textContent =
-    "svg[data-px]>:not(image.pxi,g.pxt){opacity:0!important}" +
+    "svg[data-px]>:not(image.pxi,g.pxt,svg.pxw){opacity:0!important}" +
     "image.pxi{image-rendering:pixelated;pointer-events:none}";
   document.head.append(s);
 }
 
-/* the box a drawing's viewBox fills on the screen, in css px (as the browser fits it: meet, unless it says none) */
+/* the box a drawing's viewBox fills on the screen, in css px (as the browser fits it: meet, slice or none). A sliced
+   drawing (cut to fill its box, as the front page's ball pit) is shown bigger than its box: made at the box's size, its
+   pixels came out stretched, bigger than everything else's (owner, Nov 16: one pixel size for every background) */
 function shownSize(svg, vb) {
   const r = svg.getBoundingClientRect();
   if (!r.width || !r.height) return null;
-  if ((svg.getAttribute("preserveAspectRatio") || "").startsWith("none"))
-    return [r.width, r.height];
-  const k = Math.min(r.width / vb.width, r.height / vb.height);
+  const [w, h] = unturned(svg) || [r.width, r.height];
+  const par = svg.getAttribute("preserveAspectRatio") || "";
+  if (par.startsWith("none")) return [w, h];
+  const k = (par.includes("slice") ? Math.max : Math.min)(
+    w / vb.width,
+    h / vb.height,
+  );
   return [vb.width * k, vb.height * k];
+}
+/* what turns as it flies or is held (a weapon in hand, a bullet, an arrow, a thrown dagger or grenade, the grenade's
+   pin, the zebra cake, the Jaime Bomb's Jaime flying off): its box on the screen is the box round it turned, so a long
+   thin one pointing up or down measured as a sliver and was made with barely any pixels, and kept that way (the
+   owner's, Nov 18 10:38Z: "when i first picked up the laser gun ... it was rendered as being almost barely any pixels",
+   and "grenades and bow projectiles unseen"). Its size unturned instead: its own width and height, times how much the
+   board is scaled. A dead duck's pool of blood too, which grows from small (game.js .gduck-pool): made at its full
+   size, not at the size it starts from. Null for everything else */
+const TURNS =
+  ".held, .bullet, .thrown, .gpin, .mgj-cake, .jb-body, .gduck-pool";
+function unturned(svg) {
+  const host = svg.closest(TURNS);
+  if (!host || !svg.clientWidth || !svg.clientHeight) return null;
+  const up = host.parentElement,
+    k =
+      up && up.offsetWidth
+        ? up.getBoundingClientRect().width / up.offsetWidth
+        : 1;
+  return [svg.clientWidth * k, svg.clientHeight * k];
 }
 
 /* a copy of the drawing as it looks now, as SVG text: every part's CSS (from classes, and from the classes of what
@@ -55,9 +88,9 @@ function snapshot(svg, vb) {
   const hid = svg.hasAttribute("data-px");
   svg.removeAttribute("data-px"); // (the hiding rule out of the way while I read how it looks)
   const copy = svg.cloneNode(true);
-  copy.querySelectorAll("image.pxi, g.pxt").forEach((e) => e.remove());
+  copy.querySelectorAll("image.pxi, g.pxt, svg.pxw").forEach((e) => e.remove());
   const from = [svg, ...svg.querySelectorAll("*")].filter(
-      (e) => !e.closest("image.pxi, g.pxt"),
+      (e) => !e.closest("image.pxi, g.pxt, svg.pxw"),
     ),
     to = [copy, ...copy.querySelectorAll("*")];
   for (let i = 0; i < from.length && i < to.length; i++) {
@@ -98,6 +131,7 @@ function sameIds(text) {
 /* the drawing's text without my picture in it, and the classes around it: when these change, it's made again */
 const ownText = (svg) =>
   svg.outerHTML
+    .replace(/<svg class="pxw"[\s\S]*?<\/svg>/g, "")
     .replace(/<image class="pxi"[^>]*>(<\/image>)?/g, "")
     .replace(/<g class="pxt">[\s\S]*?<\/g>/g, "");
 
@@ -175,7 +209,11 @@ export function pxSvgEl(svg, root = document.body) {
     key = cw + "x" + ch + "|" + around(svg, root) + ownText(svg);
   let st = state.get(svg);
   if (!st) state.set(svg, (st = { key: "", at: 0, timer: 0, img: null }));
-  if (st.key === key && st.img && st.img.isConnected) return;
+  if (
+    st.key === key &&
+    ((st.img && st.img.isConnected) || (st.win && st.win.isConnected))
+  )
+    return;
   const wait = st.at + PACE - performance.now();
   if (wait > 0) {
     if (!st.timer)
@@ -192,6 +230,7 @@ export function pxSvgEl(svg, root = document.body) {
     w = cw * g,
     h = ch * g,
     k = "d" + hash(text);
+  if (hasRb(text)) return rbShow(svg, st, key, text, vb, w, h);
   let img = st.img;
   if (!img || img.parentNode !== svg) {
     img = document.createElementNS(NS, "image");
@@ -207,6 +246,7 @@ export function pxSvgEl(svg, root = document.body) {
     if (!url || st.key !== key) return;
     img.setAttribute("href", url);
     if (img.parentNode !== svg) svg.append(img);
+    if (st.win) st.win.remove();
     svg.querySelectorAll(":scope > g.pxt").forEach((e) => e.remove());
     if (tx) svg.append(tx);
     svg.setAttribute("data-px", ""); // (hidden only once its picture is there: never a gap)
@@ -219,6 +259,43 @@ export function pxSvgEl(svg, root = document.body) {
     if (u) show(u);
     else rasterReady(k, text, w, h).then(show);
   }
+}
+
+/* a drawing wearing the rainbow skin (rainbowskin.js): every step of the rainbow's turn in one tall picture, seen
+   through a window the drawing's size (svg.pxw), stepped through by css (image.rbsp) */
+function rbShow(svg, st, key, text, vb, w, h) {
+  const R = rainbowSteps(text, vb.width, vb.height, w, h);
+  let win = st.win;
+  if (!win) {
+    win = document.createElementNS(NS, "svg");
+    win.setAttribute("class", "pxw");
+    win.setAttribute("overflow", "hidden");
+    const im = document.createElementNS(NS, "image");
+    im.setAttribute("class", "pxi rbsp");
+    im.setAttribute("preserveAspectRatio", "none");
+    win.append(im);
+    st.win = win;
+  }
+  win.setAttribute("x", vb.x);
+  win.setAttribute("y", vb.y);
+  win.setAttribute("width", vb.width);
+  win.setAttribute("height", vb.height);
+  win.setAttribute("viewBox", `0 0 ${vb.width} ${vb.height}`);
+  const im = win.firstChild;
+  im.setAttribute("width", vb.width);
+  im.setAttribute("height", vb.height * RB_N);
+  im.style.setProperty("--rbh", vb.height + "px");
+  const show = (url) => {
+    if (!url || st.key !== key) return;
+    im.setAttribute("href", url);
+    if (win.parentNode !== svg) svg.append(win);
+    if (st.img) st.img.remove();
+    svg.querySelectorAll(":scope > g.pxt").forEach((e) => e.remove());
+    svg.setAttribute("data-px", "");
+  };
+  const u = raster(R.key, R.sprite, R.w, R.h);
+  if (u) show(u);
+  else rasterReady(R.key, R.sprite, R.w, R.h).then(show);
 }
 
 /* a drawing made into a picture can't load its own pictures (an <image> of a file: a mode's screenshot, a map's photo),
@@ -259,7 +336,9 @@ function inlined(text) {
 function unPx(svg) {
   if (!svg.hasAttribute("data-px")) return;
   svg.removeAttribute("data-px");
-  svg.querySelectorAll("image.pxi, :scope > g.pxt").forEach((e) => e.remove());
+  svg
+    .querySelectorAll("image.pxi, :scope > g.pxt, :scope > svg.pxw")
+    .forEach((e) => e.remove());
   state.delete(svg);
 }
 
@@ -322,13 +401,19 @@ export function pxWatch(root, { skip = "" } = {}) {
             [...r.addedNodes, ...r.removedNodes].every(
               (n) =>
                 n.nodeType === 1 &&
-                (n.classList?.contains("pxi") || n.classList?.contains("pxt")),
+                (n.classList?.contains("pxi") ||
+                  n.classList?.contains("pxt") ||
+                  n.classList?.contains("pxw")),
             )
           )
             continue; // (my own picture going in)
           want(rootSvg(t));
         } else r.addedNodes.forEach(scan);
-      } else if (t.tagName === "image" && t.classList.contains("pxi")) continue;
+      } else if (
+        (t.tagName === "image" && t.classList.contains("pxi")) ||
+        (t.tagName === "svg" && t.classList.contains("pxw"))
+      )
+        continue;
       else if (t.tagName === "svg" || t.ownerSVGElement) want(rootSvg(t));
       else if (r.attributeName === "class" || r.attributeName === "hidden")
         scan(t); // (a class on something that holds drawings, or it shows again: they may look different)

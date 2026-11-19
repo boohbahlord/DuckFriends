@@ -4,11 +4,13 @@
    when they die; the boards over the openings; the dark over everything (the power is cut) with the
    fires and every duck's flashlight cut out of it (a cone the way it aims, stopped by the walls); "Round N"
    at the top, my points under it (a +N pops up for each one earned); the end. Hold E by a downed duck to revive it, or
-   by an opening to board it up; key 0 switches my flashlight. Justin's Butler stands by the card table: E by him opens
-   his shop. E at the fireplace spins it for a weapon: it flickers through them over the fire, lands on one, and E takes
+   by an opening to board it up; key 0 switches my flashlight. A merchant comes now and then and stands by the card
+   table (on Downpour in the chapel): E by him opens his shop (drawMerchant). E at the fireplace spins it for a weapon: it flickers through them over the fire, lands on one, and E takes
    it (a ranged one only with a ranged weapon in hand to swap: else big words and a buzz say so). My duck walks at half
    speed (Speed: 10% faster) and has 7 seconds of sprint (a thin blue bar under my name). The rules are the host's
    (l4ddrules.js); the weapons bar is l4ddbar.js. */
+import { sprintLeft, sprintReset } from "./stamina.js";
+import { isSb } from "./sandboxrules.js";
 import { activity } from "./hangout/registry.js";
 import { votesDue } from "./rules.js";
 import {
@@ -18,29 +20,52 @@ import {
   inCabin,
   seenFrom,
   sortY,
+  roofHoleOver,
   heightAt,
   W,
   H,
   LIGHTS,
   PROPS,
   layoutRev,
+  deckAt,
 } from "./hangout/layout.js";
 import { sway, stutterOf, lightNow } from "./hangout/flicker.js";
 import { play, setListener } from "./hangout/sounds.js";
 import { svgDataURL } from "./hangout/art.js";
-import { butlerSVG, justinSVG } from "./hangout/npcart.js";
+import { justinSVG } from "./hangout/npcart.js";
+import { merchantById, merchantSVG, merchantLook } from "./merchants.js";
 import { FLAME, TELEPORT } from "./mgjart.js";
 import { rainbowHTML } from "./art.js";
 import { low } from "./gfx.js";
 import { mapMount, mapUnmount, mapDraw } from "./l4ddmap.js";
+import { rainMount, rainUnmount, rainDraw } from "./l4ddrain.js";
 import { nameHTML } from "./name.js";
 import { profile, save, statMode } from "./store.js";
 import { sfx } from "./sound.js";
-import { l4Hear, l4Steps, l4Reset } from "./l4ddsfx.js";
+import { l4Hear, l4Steps, l4Reset, bellStrikes } from "./l4ddsfx.js";
 import { now as clockNow } from "./clock.js";
+import {
+  inShallow,
+  inDeep,
+  WADE,
+  FLARE,
+  STATION,
+  PUMPS,
+} from "./hangout/stationmap.js";
+import { floatDuck, SINK, WADE_SINK, SLOW as SWIM } from "./hangout/water.js";
+import {
+  fenceLean,
+  BELL_ANGLES,
+  BELL_REST,
+  JUSTIN_POOL,
+} from "./hangout/stationart.js";
 import {
   L4,
   OPENINGS,
+  syncMap,
+  dp,
+  fenceZ,
+  zombieZ,
   playable,
   zombiesOf,
   startSpot,
@@ -49,39 +74,79 @@ import {
   upOf,
   ptsOf,
   slotsOf,
-  BUTLER,
+  SLOT_KINDS,
   BOX,
   POOL,
   boxNow,
   HELPER,
   weaponName,
+  tintOf,
   priceFor,
+  reviveMs,
   saleOn,
   dropName,
   TOILET,
   waitNeed,
   waitVotes,
-  isR16,
-  GUN_SHOP,
-  gunPrice,
-  AMMO_PRICE,
+  startOf,
   kitOf,
   openingById,
   reloadOf,
   l4Cool,
   kindOf,
   ARMS,
-  SAFE,
-  safePrice,
   zombieLook,
+  magIn,
+  fullFor,
+  downArmed,
+  WILD,
+  isWild,
+  pierceOf,
+  shotArm,
+  shotWalled,
+  hasLeft,
+  merchantOf,
+  upOffer,
+  selling,
+  stockPrice,
+  MERCH,
 } from "./l4ddrules.js";
-import { goreFree } from "./wounds.js";
-import { touchOnly } from "./pointer.js";
+import { hOk, hLock } from "./heights.js";
+import { ammoBar, stackBars, noReload } from "./meters.js";
+import { laserMeter } from "./laserfx.js";
+import { goreFree, BY_WOUND, newWound } from "./wounds.js";
 import { catalogHTML } from "./l4ddcatalog.js";
+import {
+  pwMount,
+  pwUnmount,
+  pwSee,
+  pwDraw,
+  pwTarget,
+  pwLabel,
+  pumpLabel,
+  pwTap,
+  pwOrbHTML,
+  isPw,
+} from "./l4ddpowerui.js";
+import { powerOn, powerNext, PW, gasFull, pumpZone } from "./l4ddpower.js";
+import {
+  angelMount,
+  angelUnmount,
+  angelSee,
+  angelDraw,
+  angelTarget,
+  angelLabel,
+  angelTap,
+} from "./l4ddangelui.js";
 import { DROP_ICONS } from "./l4dddrops.js";
 import { popHP } from "./hpmeter.js";
-import { fxHitAt, fxEye, heavyOff } from "./fx.js";
+import { fxHitAt, fxEye, heavyOff, fxSparks, fxSteam } from "./fx.js";
+import { vibrate, hitPx, HIT } from "./fxmotion.js";
 import { pixelOn, gridPx, snap, raster, rasterReady } from "./pixel.js";
+import { olAdd, olFloor, olRoofed, olPic, DROP_OL } from "./outlines.js";
+import { confirmBox } from "./ui.js";
+import { angelOf, ANGEL } from "./l4ddangel.js";
+import { angelic, jerrySVG } from "./powerart.js"; // (after l4ddart.js, as game.js imports it)
 import { hashText } from "./pxdom.js";
 import {
   zombieURL,
@@ -91,27 +156,50 @@ import {
   orbHTML,
   UP_ICONS,
   weaponIcon,
+  hitsOf,
 } from "./l4ddart.js";
 
 const RX = 56,
   RY = 25.6; // (a zombie's room on the floor, as the rules')
 const SPEED = 0.6 * 1.05; // my duck at 63% of Duck Cabin's walk: I wanted it 20% faster than the half it was, then 5% more (Nov 3; sprint goes from it)
 const DARK = 0.84; // how dark the dark is: still dark, but I wanted it a little lighter than 0.93
+const DARK_ON = 0.5; // … and with the power on: the lights are on, still night
 const CONE = { far: 560, half: (27 * Math.PI) / 180 }; // the flashlight: how far, and half its width
 const GLOW = 80; // world px: the faint light round every duck
+const LOW_DEAD = 2000; // ms a dead zombie shows on my screen with Low graphics or Data saving (the rules keep it L4.DEAD_MS)
 /* where each opening's moonlight falls: just inside its wall (the deck's stairs: on their top) */
-const MOON = Object.fromEntries(
-  OPENINGS.map((o) => {
-    const k =
-      o.kind === "stairs"
-        ? 0
-        : Math.sign(o.axis === "y" ? o.in[0] - o.x : o.in[1] - o.y);
-    return [o.id, o.axis === "y" ? [o.x + k * 36, o.y] : [o.x, o.y + k * 36]];
-  }),
-);
+let moon = null,
+  moonRev = -1;
+const MOON = () => {
+  if (moonRev !== layoutRev()) {
+    syncMap();
+    moonRev = layoutRev();
+    moon = Object.fromEntries(
+      OPENINGS.filter((o) => !o.rim).map((o) => {
+        const k =
+          o.kind === "stairs"
+            ? 0
+            : Math.sign(o.axis === "y" ? o.in[0] - o.x : o.in[1] - o.y);
+        return [
+          o.id,
+          o.axis === "y" ? [o.x + k * 36, o.y] : [o.x, o.y + k * 36],
+        ];
+      }),
+    );
+  }
+  return moon;
+};
 const P4 = (s, id) => ((s && s.hang && s.hang.l4p) || {})[id] || null;
-const BUTLER_NAME = "Justin's Butler";
-const NEAR = 130; // world px: how near E works at the Butler and the fireplace
+/* the merchant here now (the rules' s.hang.l4m) and who he is (merchants.js) */
+const merchantNow = (s) => {
+  const m = merchantOf(s);
+  return m ? { ...m, who: merchantById(m.id) } : null;
+};
+const shopName = (s) => {
+  const m = merchantNow(s);
+  return (m && m.who && !m.who.hideName && m.who.name) || "The Merchant"; // (the soldier's name is never shown: "his name is classified info", the owner's, Nov 18 14:10Z)
+};
+const NEAR = 130; // world px: how near E works at the merchant and the fireplace
 const AWAY = 260; // walked this far off: his shop closes
 /* the weapon in my hand (game.js tells me how to ask) */
 let heldFn = () => "";
@@ -133,6 +221,46 @@ const walls = () => {
   }
   return WALLS;
 };
+/* the props a flashlight lights where it points (the owner, Nov 17: "they should shine onto the objects they are aimed at
+   as well"): every one standing up off the floor, the walls, the cars and the fences too; not the trees (their crowns
+   hang over the ducks), the roofs, the holes */
+const UNLIT = new Set(["tree", "roof", "gsroof", "canopy", "hole", "gslamp"]);
+let LIT_PROPS = [],
+  litPropsRev = -1;
+const litProps = () => {
+  if (litPropsRev !== layoutRev()) {
+    litPropsRev = layoutRev();
+    LIT_PROPS = PROPS.filter(
+      (p) => p.h >= 12 && !p.layer && !UNLIT.has(p.kind),
+    );
+  }
+  return LIT_PROPS;
+};
+/* the part of the polygon pts ([[x, y] …]) inside the box x0 … x1, y0 … y1, or null (Sutherland–Hodgman) */
+function clipBox(pts, x0, y0, x1, y1) {
+  for (const [i, v, k] of [
+    [0, x0, 1],
+    [0, x1, -1],
+    [1, y0, 1],
+    [1, y1, -1],
+  ]) {
+    const out = [];
+    for (let n = 0; n < pts.length; n++) {
+      const a = pts[n],
+        b = pts[(n + 1) % pts.length],
+        ina = (a[i] - v) * k >= 0,
+        inb = (b[i] - v) * k >= 0;
+      if (ina) out.push(a);
+      if (ina !== inb) {
+        const t = (v - a[i]) / (b[i] - a[i]);
+        out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+      }
+    }
+    pts = out;
+    if (pts.length < 3) return null;
+  }
+  return pts;
+}
 /* how far a ray from (x, y) along (dx, dy) goes before a wall, at most far */
 function rayTo(x, y, dx, dy, far) {
   let best = far;
@@ -196,7 +324,13 @@ const Z = new Map(); // zombie number → how it's drawn here
 const B = new Map(); // opening id → its boards' element
 const D = new Map(); // a drop's number → its element
 const DROP_LIGHT = { r: 120, k: 0.55 }; // the light round a drop on the floor
-const DROP_ENDING = 10000; // ms: a drop blinks in its last 10 s
+/* a drop blinks in its last 10 s, faster and faster as it's about to go (the owner's, Nov 17 13:43Z): each step is
+   [ms left, the blink's step] (css/app.css, .l4-drop[data-end]) */
+const DROP_BLINK = [
+  [10000, 1],
+  [5000, 2],
+  [2000, 3],
+];
 let layer = null,
   fxl = null,
   cv = null,
@@ -205,20 +339,70 @@ let layer = null,
   endEl = null, // the End turn button between rounds (Ready in round 0)
   endSig = "",
   over = null,
-  zpSig = "",
   snapAt = 0,
   gap = 200,
   roundShown = -1, // (none yet)
   overShown = "",
-  stamina = 1,
-  tired = false,
   holding = null,
   walkDir = [1, 0],
   lastXY = null,
   drawn = "";
 /* the Butler, the fireplace's weapon, my points, the big words, his shop */
-/* my sprint left (0 … 1) and whether I'm too tired to sprint, for the HP meter's blue bar (game.js) */
-export const sprintLeft = () => [stamina, tired];
+/* my sprint left (0 … 1) and whether I'm too tired to sprint: now in every mode (stamina.js) */
+export { sprintLeft };
+/* every zombie on my screen: its box in the board's px, from its last drawing (game.js: the others' HP meters turn
+   see-through over one) */
+export function l4ZBoxes() {
+  const out = [];
+  for (const o of Z.values())
+    if (o.el && !o.el.hidden && o.sk)
+      out.push({
+        l: o.sx - (o.bw * o.sk) / 2,
+        r: o.sx + (o.bw * o.sk) / 2,
+        t: o.sy - o.bh * o.sk,
+        b: o.sy,
+      });
+  return out;
+}
+/* where a shot I draw stops (the owner's, Nov 17 20:37Z: "BULLETS THAT DO NOT PASS THROUGH ZOMBIES WILL NO LONGER PASS
+   THRU ZOMBIES ... LIKE IF U SHOOT A PISTOL THE BULLET KIND IS SEEN GOING PAST THEM A BIT AND IT LOOKS WRONG"). The
+   host finds a hit at its next beat and my screen hears of it later still, while I draw the shot flying on and the
+   zombies gliding a beat behind (gap); so on my screen it stops where it meets them as I draw them. From where I last
+   drew it (x0, y0) to where I draw it now (x1, y1), in shares of the world, it looks as l4ddrules.js l4Shots does: a
+   step every 12 px, the first wall taller than it, a zombie's 26 by 22 px at a height it can reach (heights.js; its
+   height set by the first one it meets, r.lh). r: what I know of this shot: skip, the zombies it has gone past (a miss,
+   or one the sniper went through), n, how many it has hit; the one that makes it most (its weapon's pierceOf, or 1)
+   stops it. { x, y } where it stops, in shares of the world, and i: that zombie's number (-1: a wall), or null */
+export function shotStop(s, sh, r, x0, y0, x1, y1) {
+  const most = Math.max(1, pierceOf(s, sh.by, shotArm(sh))),
+    ax = x0 * W,
+    ay = y0 * H,
+    bx = x1 * W,
+    by = y1 * H,
+    steps = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) / 12)),
+    q = { hz: sh.hz }; // (its height, kept here: the shot itself is the room's state)
+  for (let k = 1; k <= steps; k++) {
+    const x = ax + ((bx - ax) * k) / steps,
+      y = ay + ((by - ay) * k) / steps;
+    if (shotWalled(sh, x, y)) return { x: x / W, y: y / H, i: -1 };
+    for (const [i, o] of Z) {
+      if (
+        o.st === 3 ||
+        o.z === undefined ||
+        r.skip.has(i) ||
+        Math.hypot((o.x - x) / 26, (o.y - y) / 22) >= 1
+      )
+        continue;
+      q.lh = r.lh ?? sh.lh;
+      if (!hOk(q, o.z, o.x, o.y, sh.x0 * W, sh.y0 * H)) continue;
+      hLock(q, o.z);
+      r.lh = q.lh;
+      r.skip.add(i);
+      if (++r.n >= most) return { x: x / W, y: y / H, i };
+    }
+  }
+  return null;
+}
 let butler = null,
   onEl = null,
   onSig = "",
@@ -235,16 +419,31 @@ let butler = null,
 
 /* the pixel look (pixel.js): a place on the screen on the grid, so things' pixels line up with the map's and the ducks' */
 const at = (v) => (pixelOn() ? snap(v).toFixed(2) : v.toFixed(1));
+/* a picture's short name (its text's hash), made once for each picture: the same text (every zombie that looks the
+   same) is hashed once, not once for each of them */
+const UK = new Map();
+function ukOf(url) {
+  let k = UK.get(url);
+  if (!k) {
+    if (UK.size > 600) UK.clear(); // (as l4ddart.js keeps its pictures: the newest few hundred)
+    UK.set(url, (k = hashText(url)));
+  }
+  return k;
+}
 /* the pixel look: a still picture (a zombie, the Butler) as pixels at the size it shows, w × h css px; its drawing until
-   they're made. o keeps what it shows: o.url (the drawing) and o.pxk */
+   they're made (a zombie: nothing until they're made, zombieEl). o keeps what it shows: o.url (the drawing), o.uk (its
+   short name) and o.pxk. Asked every frame for every zombie on the screen, so it checks by the short name: before, it
+   glued the whole drawing (7 to 11 KB of text) into the check each time, a megabyte of throwaway text a frame in a big
+   crowd (the owner's, Nov 18 14:20Z: "i want more frames") */
 function pxPic(o, img, w, h) {
   if (!pixelOn()) return;
   const g = gridPx(),
-    k = o.url + "@" + Math.round(w / g) + "x" + Math.round(h / g);
+    uk = o.uk || (o.uk = ukOf(o.url)),
+    k = uk + "@" + Math.round(w / g) + "x" + Math.round(h / g);
   if (o.pxk === k) return;
   o.pxk = k;
   img.classList.add("px");
-  const key = "z" + (o.uk || (o.uk = hashText(o.url))),
+  const key = "z" + uk,
     u = raster(key, o.url, w, h);
   if (u) img.src = u;
   else
@@ -252,17 +451,58 @@ function pxPic(o, img, w, h) {
       if (v && o.pxk === k) img.src = v;
     });
 }
-const LIT = {
-  in: LIGHTS.filter((l) => l.only === "in" && !l.el),
-  out: LIGHTS.filter((l) => l.only !== "in" && !l.el),
-};
+/* … and with the power on (l4ddpower.js), the electric ones too: the lamps, the stage, the sink, the balcony's windows
+   and the porch's string lights (made again for the map: layout.js' LIGHTS are the room's map's) */
+let LIT = null,
+  LIT_ON = null,
+  litRev = -1;
+function lits() {
+  if (litRev === layoutRev()) return;
+  litRev = layoutRev();
+  LIT = {
+    in: LIGHTS.filter((l) => l.only === "in" && !l.el),
+    out: LIGHTS.filter((l) => l.only !== "in" && !l.el),
+  };
+  LIT_ON = {
+    in: LIGHTS.filter((l) => l.only === "in"),
+    out: LIGHTS.filter((l) => l.only !== "in"),
+  };
+}
 
+/* a zombie's outline (outlines.js), f: where it stands on the screen, dip: how far it's sunk in the flood, hidden: true
+   when a wall hides it, or null to ask whether a wall, a roof or a crown drawn over it covers it (zi: the z-index it's
+   drawn at, so only what is really drawn over it counts: the owner's, Nov 17 19:11Z). Returns whether something hides
+   it: then it shows only as its line, never its picture (the owner's, Nov 17 17:41Z) */
+function zOutline(Wd, o, f, dip, sc, hidden, z, myFloor, zi = 0) {
+  const w = o.bw * sc,
+    h = o.bh * sc,
+    y = f.top + (dip - o.feet) * sc,
+    hid =
+      hidden ??
+      Wd.coverAt(f.left - w * 0.4, f.left + w * 0.4, y + h * 0.1, f.top, zi);
+  olAdd({
+    id: "z" + o.i,
+    img: o.img,
+    x: f.left - w / 2,
+    y,
+    w,
+    h,
+    flip: o.face < 0,
+    kind: "zombie",
+    hidden: hid,
+    floor: Math.sign(olFloor(o.x, o.y, z) - myFloor),
+  });
+  return hid;
+}
 function zombieEl(z) {
   const el = document.createElement("div"),
     box = zombieBox(z.l);
   el.className = "l4z";
   const url = zombieURL(z.l, z.i);
-  el.innerHTML = `<div class="l4z-body"><img alt="" draggable="false" src="${url}"></div><span class="l4z-hp"><i></i></span>`;
+  /* the pixel look: no src yet, its pixels come in draw() (pxPic) at once when a zombie that looks the same has them
+     already; until then it shows nothing rather than its live drawing (a whole wave of them would be drawn as drawings
+     for a moment, each its own) */
+  el.innerHTML = `<div class="l4z-body"><img alt="" draggable="false"${pixelOn() ? "" : ` src="${url}"`}></div><span class="l4z-hp"><b></b><i></i></span>`;
   const body = el.firstChild;
   body.style.width = box.w + "px";
   body.style.height = box.h.toFixed(1) + "px";
@@ -273,7 +513,8 @@ function zombieEl(z) {
   return {
     el,
     body,
-    bar: el.querySelector(".l4z-hp i"),
+    feet: box.feet, // (its feet in its body's own px: a swimmer's waterline is SINK over them)
+    bar: el.querySelector(".l4z-hp"), // (--hp on it: the red and the white behind it, css/app.css)
     x: z.x,
     y: z.y,
     fx: z.x,
@@ -284,6 +525,8 @@ function zombieEl(z) {
     face: 1,
     hp: z.hp,
     st: z.st,
+    k: z.k,
+    j: z.j,
     a: z.a,
     sh: "",
     hits: "",
@@ -300,59 +543,57 @@ function claw(x, y, dir, ctx) {
   if (!fxl) return;
   const px = x + Math.cos(dir) * 44,
     py = y + Math.sin(dir) * 22,
-    f = ctx.world.toScreen(px, py, heightAt(px, py) + 36),
-    el = document.createElement("div");
+    f = ctx.world.toScreen(px, py, heightAt(px, py) + 36);
+  clawMark(fxl, f.left, f.top, ctx.world.sc * 1.25); // (a little bigger than the cats')
+  play("swipe", { x: px, y: py });
+}
+/* a zombie's claw marks, three white slashes at (left, top) in layer fx, k times the cats' size: Dead Ducks Arcade's,
+   and Mad God Justin's wave zombies' (game.js placeZombies) */
+export function clawMark(fx, left, top, k) {
+  const el = document.createElement("div");
   el.className = "hang-npc-claw l4-claw";
   el.innerHTML =
     '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M10 6C16 16 18 26 14 36M19 4C25 14 27 24 23 34M28 6C34 16 36 26 32 36" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/></svg>';
-  el.style.left = f.left.toFixed(1) + "px";
-  el.style.top = f.top.toFixed(1) + "px";
-  el.style.setProperty("--k", (ctx.world.sc * 1.25).toFixed(3)); // (a little bigger than the cats')
-  fxl.append(el);
+  el.style.left = left.toFixed(1) + "px";
+  el.style.top = top.toFixed(1) + "px";
+  el.style.setProperty("--k", k.toFixed(3));
+  fx.append(el);
   setTimeout(() => el.remove(), 1100);
-  play("swipe", { x: px, y: py });
 }
-/* a hit's red blink (as the l4z-hit keyframes were) */
-const HIT = [
-  { filter: "none", easing: "ease-out" },
-  {
-    filter: "brightness(1.3) sepia(1) saturate(9) hue-rotate(-38deg)",
-    offset: 0.35,
-    easing: "ease-out",
-  },
-  { filter: "none" },
-];
-/* the weapon a zombie's newest wound (wounds.js codes) tells of, for its blood when no shot hit it (a knife, a hammer) */
-const BY_WOUND = {
-  b: "handgun",
-  B: "ak",
-  s: "pellet",
-  c: "knife",
-  r: "hammer",
-  a: "arrow",
-  k: "sniper",
-  g: "chaingun",
-};
-const newWound = (had = "", now = "") =>
-  now.length > had.length ? now[had.length] : "";
 /* its picture with the wounds it has now, made only when they changed and it's on a screen */
-function wounds(o, l, i, noGore) {
-  const want = noGore ? goreFree(o.want) : o.want; // (Gore off: none of them shows)
+function wounds(o, l, i) {
+  const want = o.ng ? goreFree(o.want) : o.want; // (Gore off: none of them shows. o.ng, the setting as seeZombies last saw it: draw() asks too, and before, it left the setting out, so with Gore off a zombie on the screen got its gore back every frame and lost it again every update, a new picture each time)
   if (o.hits === want) return;
   o.hits = want;
   o.url = zombieURL(l, i, o.hits);
   o.uk = "";
   if (!pixelOn()) o.img.src = o.url; // (the pixel look: draw() shows it, as pixels)
 }
-/* the zombies in a new state: where each glides to, its hits, its swipes, its death */
+/* the zombies in a new state: where each glides to, its hits, its swipes, its death.
+   A new beat is one where a zombie moved. Before, any change counted (a hit's HP between two beats too), and every
+   change cut the glide's time for all of them at once: the bigger the crowd and the more shots, the more often they
+   jumped ahead, then stood till the next beat (the owner's, Nov 18 10:38Z: "we need to make sure zombies dont jitter or
+   feel slow on the computer (like kinda laggy feeling) when mobs get large"). Now the time between beats is evened out
+   (a change right after a beat is part of it), and each zombie keeps the glide time it started with (o.g), a little
+   over a beat, so it is still on its way when the next one comes instead of stopping and starting */
+const GLIDE = { min: 120, max: 400, even: 0.35, over: 1.1, same: 90 };
 function seeZombies(s, ctx, now) {
-  const zs = zombiesOf(s),
-    sig = (s.hang.zp || []).join();
-  const fresh = sig !== zpSig;
-  if (fresh) {
-    gap = Math.max(120, Math.min(400, snapAt ? now - snapAt : 200));
+  const zs = zombiesOf(s);
+  let fresh = false;
+  for (const z of zs) {
+    const o = Z.get(z.i);
+    if (!o || z.x !== o.tx || z.y !== o.ty) {
+      fresh = true;
+      break;
+    }
+  }
+  if (fresh && (!snapAt || now - snapAt >= GLIDE.same)) {
+    const beat = Math.max(
+      GLIDE.min,
+      Math.min(GLIDE.max, snapAt ? now - snapAt : 200),
+    );
+    gap += (beat - gap) * GLIDE.even;
     snapAt = now;
-    zpSig = sig;
   }
   const seen = new Set();
   for (const z of zs) {
@@ -368,10 +609,16 @@ function seeZombies(s, ctx, now) {
       o.tx = z.x;
       o.ty = z.y;
       o.t0 = now;
-      if (Math.hypot(z.x - o.x, z.y - o.y) > 300) o.fx = o.x = z.x; // (far: there at once)
+      o.g = gap * GLIDE.over;
+      if (Math.hypot(z.x - o.x, z.y - o.y) > 300) {
+        o.fx = o.x = z.x;
+        o.fy = o.y = z.y;
+      } // (far: there at once, both ways; before, only across, and it slid the rest down or up)
       if (Math.abs(z.x - o.x) > 2) o.face = z.x > o.x ? 1 : -1;
     }
     const shown = !o.el.hidden; // (one no camera here sees: only its numbers change, its look waits until it's seen)
+    if (z.hp < o.hp && shown && o.st !== 3)
+      vibrate(o.img, hitPx(o.hp - z.hp), z.st === 3); // (a zombie hit shakes once by the HP it lost, and once more as it dies: the owner's, Nov 17, 32)
     if (z.hp < o.hp && z.st !== 3 && shown) o.img.animate(HIT, 320); // (hit: a red blink, started over without the page measuring itself)
     if (o.hp !== undefined && z.hp !== o.hp && o.st !== 3 && shown)
       popHP(o.el, z.hp - o.hp, true); // (the HP it lost or got back, small over its head: hpmeter.js)
@@ -411,17 +658,21 @@ function seeZombies(s, ctx, now) {
           `<span class="gduck-fire" aria-hidden="true">${FLAME}</span>`,
         );
       o.el.classList.toggle("onfire", lit);
-    } // (set on fire by a fireball: one big flame over it, as a duck's)
+    } // (set on fire: one big flame over it, as a duck's)
     o.want = (s.hang.zw || {})[z.i] || "";
     o.l = z.l;
-    if (shown) wounds(o, z.l, z.i, s.options.noGore); // (the wounds its hits left: holes, cuts, bruises, an arrow, a chunk gone, its head blown off; l4ddart.js)
+    o.ng = !!s.options.noGore;
+    if (shown) wounds(o, z.l, z.i); // (the wounds its hits left: holes, cuts, bruises, an arrow, a chunk gone, its head blown off; l4ddart.js)
     const sh = (Math.max(0, z.hp) / (z.l[0] || 1)).toFixed(3);
     if (o.sh !== sh) {
       o.sh = sh;
       o.bar.style.setProperty("--hp", sh);
+      if (+sh < 1) o.el.classList.add("hurt"); // (its HP bar shows once it has taken damage, then stays: the owner's, Nov 17. A hit: what it lost turns white, then drains fast; dead, it drains to black, then fades: css/app.css, the owner's, Nov 17 17:41Z)
     }
     o.hp = z.hp;
     o.st = z.st;
+    o.k = z.k; // (the roof it climbs or walks, and its jump onto the canopy: l4ddrules.js zombieZ)
+    o.j = z.j;
     o.a = z.a;
   }
   for (const [i, o] of Z)
@@ -464,8 +715,112 @@ function seeDrops(s) {
     el.className = "l4-drop k-" + d.k;
     el.innerHTML = `<i>${DROP_ICONS[d.k] || ""}</i>`;
     layer.append(el);
-    D.set(d.n, { el, x: d.x, y: d.y, until: d.until });
+    D.set(d.n, { el, n: d.n, kind: d.k, x: d.x, y: d.y, until: d.until });
   }
+}
+/* a drop's outline on the ground, in its own color, and its arrow when it's a floor away (outlines.js DROP_OL, the
+   owner's, Nov 18 13:58Z), so one under a tree's crown, a roof or out of sight isn't missed: its symbol's shape, where
+   the drop's box is (css .l4-drop: 46 × 46, its foot 16 over the spot), still at the middle of its bob. Gone with the
+   drop once it's picked up (seeDrops) */
+function dropOutline(Wd, o, p, sc, unseen, myFloor) {
+  const w = 46 * sc,
+    x = p.left - 23 * sc,
+    y = p.top - 62 * sc,
+    img =
+      DROP_ICONS[o.kind] && olPic("drop-" + o.kind, DROP_ICONS[o.kind], w, w);
+  if (!img) return;
+  olAdd({
+    id: "dr" + o.n,
+    img,
+    x,
+    y,
+    w,
+    h: w,
+    kind: "drop_" + (DROP_OL[o.kind] ? o.kind : "ammo"),
+    hidden:
+      unseen ||
+      Wd.coverAt(x, x + w, y, y + w, Math.round(sortY(o.x, o.y, 0)) + 10),
+    floor: Math.sign(olFloor(o.x, o.y, 0) - myFloor),
+  });
+}
+/* between rounds (every zombie dead, before the ducks are ready), a thin yellow square on the ground round the fireplace or
+   Downpour's car: stand inside it to spin for a weapon (the owner, Nov 17) */
+let sqEl = null,
+  sqSig = "";
+function spinSquare(s, ctx) {
+  const L = s.hang.l4,
+    Wd = ctx.world,
+    rest = !!(sqEl && L && !L.over && L.wait);
+  if (!sqEl) return;
+  /* the car (or the fireplace), and on Downpour a square round each gas pump too: where something can be bought or
+     done (the owner's, Nov 17 18:05Z: "the gas pumps now get a small sqaure around them in the rest phase as well") */
+  const spots = [
+      [BOX.zx - NEAR, BOX.y - NEAR, BOX.zx + NEAR, BOX.y + NEAR],
+      ...(dp() ? PUMPS.map(pumpZone) : []),
+    ],
+    polys = sqEl.children;
+  /* (an <svg> has no .hidden: display does it) */
+  if ((sqEl.style.display !== "none") !== rest)
+    sqEl.style.display = rest ? "" : "none";
+  if (!rest) return;
+  let sig = Wd.sc.toFixed(3);
+  // (a pump's square is just where its button shows: by its south side, l4ddpower.js pumpZone)
+  spots.forEach(([x0, y0, x1, y1], i) => {
+    const cx = (x0 + x1) / 2,
+      cy = (y0 + y1) / 2;
+    const poly = polys[i];
+    if (!poly) return;
+    const on = seenFrom(cx, cy, Wd.inside);
+    if ((poly.style.display !== "none") !== on)
+      poly.style.display = on ? "" : "none";
+    if (!on) return;
+    const z = heightAt(cx, cy),
+      pts = [
+        [-1, -1],
+        [1, -1],
+        [1, 1],
+        [-1, 1],
+      ]
+        .map(([a, b]) => {
+          const p = Wd.toScreen(a < 0 ? x0 : x1, b < 0 ? y0 : y1, z);
+          return p.left.toFixed(1) + "," + p.top.toFixed(1);
+        })
+        .join(" ");
+    sig += "|" + pts;
+    if (poly.getAttribute("points") !== pts) poly.setAttribute("points", pts);
+  });
+  if (sig === sqSig) return;
+  sqSig = sig;
+  sqEl.style.setProperty("--k", Wd.sc.toFixed(3));
+}
+/* Justin out there, once he's dead (bled out, dead for good: nobody can revive him now): a pool of blood spreads out under him over
+   JPOOL.ms (the owner's, Nov 17 18:05Z: "on death a blood pool spreads"); none with Gore off. Its own few dark ellipses,
+   as flat as the floor. Every other duck that dies has the same one (game.js .gduck-pool) */
+export const JPOOL = { ms: 6000 };
+// (its shapes: stationart.js JUSTIN_POOL, the trooper in the gas station lies in the same)
+export const POOL_SVG = `<svg viewBox="-60 -26 120 52" width="120" height="52">${JUSTIN_POOL}</svg>`;
+let poolEl = null,
+  poolAt = 0,
+  poolSig = "";
+function seePool(s, ctx) {
+  if (!poolEl) return;
+  const Wd = ctx.world,
+    q = P4(s, WILD.id),
+    down = !!(q && q.ex && isWild(s, WILD.id)),
+    a = down && !+s.options.noGore ? Wd.at(WILD.id) : null,
+    show = !!a && seenFrom(a.x, a.y, Wd.inside, a.z);
+  if (!down) poolAt = 0;
+  else if (!poolAt) poolAt = clockNow();
+  if (poolEl.hidden !== !show) poolEl.hidden = !show;
+  if (!show) return;
+  const k = Math.min(1, (clockNow() - poolAt) / JPOOL.ms),
+    grow = 0.15 + 0.85 * (1 - (1 - k) * (1 - k)),
+    p = Wd.toScreen(a.x, a.y + 4, a.z),
+    sig = `${p.left.toFixed(1)} ${p.top.toFixed(1)} ${(Wd.sc * grow).toFixed(3)}`;
+  if (sig === poolSig) return;
+  poolSig = sig;
+  poolEl.style.transform = `translate(${p.left.toFixed(1)}px, ${p.top.toFixed(1)}px) scale(${(Wd.sc * grow).toFixed(3)})`;
+  poolEl.style.zIndex = a.z < 1 ? 3 : Math.round(sortY(a.x, a.y - 30, a.z)); // (on the floor under the ducks; on a roof, just under him)
 }
 /* Instant Kill, Double Points, Speed Boost and Sale: each one on, by name with the seconds it has left, in a row at the
    top middle (the owner's, Nov 16), under the points (and under the Ready button between rounds). While Instant Kill is
@@ -503,11 +858,13 @@ function seeOn(s, ctx) {
 export function l4Got(k) {
   if (!gotEl) return;
   gotEl.innerHTML =
-    k === "sale"
-      ? '<span class="l4-got-gold">Sale</span>' // (in gold metal letters, the owner's, Nov 16)
-      : k === "nuke"
-        ? '<span class="l4-got-nuke">Nuke</span>' // (crimson blood letters that hold still, the owner's, Nov 16)
-        : `<span class="l4-got-ic">${DROP_ICONS[k] || ""}</span>${rainbowHTML(dropName(k) + "!", { seed: DROPS_SEED[k] || 1 })}`;
+    k === "merchant"
+      ? rainbowHTML("The Merchant has Arrived", { seed: 5 }) // (the owner's, Nov 18 13:46Z: "THe text for the merchant arriving is: \"The Merchant has Arrived\"")
+      : k === "sale"
+        ? '<span class="l4-got-gold">Sale</span>' // (in gold metal letters, the owner's, Nov 16)
+        : k === "nuke"
+          ? '<span class="l4-got-nuke">Nuke</span>' // (crimson blood letters that hold still, the owner's, Nov 16)
+          : `<span class="l4-got-ic">${DROP_ICONS[k] || ""}</span>${rainbowHTML(dropName(k) + "!", { seed: DROPS_SEED[k] || 1 })}`;
   if (k === "ammo")
     for (const b of document.querySelectorAll(".l4s, .sp-slot")) {
       b.classList.remove("l4-flash");
@@ -624,7 +981,9 @@ const DROPS_SEED = { kill: 3, ammo: 7, nuke: 2, speed: 9, double: 4, sale: 6 };
 
 /* my all-time stats (not in test rooms): a game once its first round starts, a round each time one is cleared, and the
    best round reached; with Round 16 Start on, its own stats (store.js statMode) */
-function record(s, L, cleared) {
+let kzGame = "",
+  kzDone = 0; // the zombies I killed this game that the all-time stats already hold
+function record(s, L, cleared, me) {
   if (s.test) return;
   const st = profile.stats[statMode(s)];
   if (!st) return;
@@ -634,7 +993,18 @@ function record(s, L, cleared) {
     st.games++;
   } else if (cleared) st.rounds++; // (round 0 to 1, or to 16, isn't one cleared)
   st.titles = Math.max(st.titles || 0, L.r);
+  recordKills(s, st, game, me);
   save();
+}
+/* Zombies killed, all time: what I killed since the last time it was written (the owner's, Nov 17 13:30Z) */
+function recordKills(s, st, game, me) {
+  if (kzGame !== game) {
+    kzGame = game;
+    kzDone = 0;
+  }
+  const k = ((s.hang && s.hang.l4kz) || {})[me] || 0;
+  if (k > kzDone) st.kills = (st.kills || 0) + k - kzDone;
+  kzDone = Math.max(kzDone, k);
 }
 /* ---------- the HUD: "Round N", and the end ---------- */
 function seeHud(s, ctx) {
@@ -642,30 +1012,39 @@ function seeHud(s, ctx) {
   if (!hud || !L) return;
   if (roundShown !== L.r) {
     if (roundShown >= 0 && L.r > roundShown)
-      record(s, L, L.r - roundShown === 1);
-    hud.innerHTML = `<span class="l4-round-w">Round</span> <b>${L.r}</b>`;
+      record(s, L, L.r - roundShown === 1, ctx.me);
+    hud.innerHTML = isSb(s)
+      ? '<span class="l4-round-w">Sandbox</span>'
+      : `<span class="l4-round-w">Round</span> <b>${L.r}</b>`; // (Sandbox: no rounds to count)
     hud.classList.remove("new");
     void hud.offsetWidth;
     if (roundShown >= 0) hud.classList.add("new"); // (a new round: it pulses)
     roundShown = L.r;
   }
   /* between rounds: End turn (Ready before round 1), with how many pressed it and how many it takes */
-  const w = !L.over && L.wait,
+  const w = !L.over && !isSb(s) && L.wait, // (Sandbox: round 0 for good, with no Ready to press)
     mine = !!(w && w.v[ctx.me]),
-    es = w ? [L.r, mine, waitVotes(s), waitNeed(s), isR16(s)].join() : "";
+    es = w ? [L.r, mine, waitVotes(s), waitNeed(s), startOf(s)].join() : "";
   if (es !== endSig) {
     endSig = es;
     endEl.hidden = !w;
     ctx.world.board.classList.toggle("l4-waiting", !!w);
     if (w) {
       const word = L.r === 0 ? "Ready" : "End turn",
-        next = L.r === 0 && isR16(s) ? 16 : w.r;
+        next = L.r === 0 ? startOf(s) : w.r;
       endEl.innerHTML = `<button type="button" class="btn ${mine ? "purple" : "yellow"}" aria-pressed="${mine}">${word}${mine ? " ✓" : ""} <span class="l4-end-n">${waitVotes(s)}/${waitNeed(s)}</span></button><span class="l4-end-say">${mine ? `Round ${next} starts when ${waitNeed(s)} ${waitNeed(s) === 1 ? "duck is" : "ducks are"} ${L.r === 0 ? "ready" : "done"}` : L.r === 0 ? `Ready for round ${next}?` : `Round ${L.r} cleared`}</span>`;
     }
   }
   const end = L.over ? JSON.stringify(L.over) + (s.hostId === ctx.me) : "";
   if (end === overShown) return;
   overShown = end;
+  if (L.over && !s.test) {
+    const st = profile.stats[statMode(s)];
+    if (st) {
+      recordKills(s, st, `${s.id}:${s.startedAt}:${L.g || 0}`, ctx.me);
+      save();
+    }
+  } // (the game ends: the zombies of its last round count too)
   if (!L.over) {
     over.hidden = true;
     return;
@@ -738,7 +1117,7 @@ export function laserEnd(id) {
     return null;
   const Wd = ctx.world,
     a = Wd.at(id);
-  if (!a || !seenFrom(a.x, a.y, Wd.inside)) return null;
+  if (!a || !seenFrom(a.x, a.y, Wd.inside, a.z)) return null;
   const [dx, dy] = aimOf(s, id, ctx),
     l = Math.hypot(dx, dy),
     d = rayTo(a.x, a.y, dx / l, dy / l, CONE.far),
@@ -778,6 +1157,81 @@ function litNames(s, ctx, beams) {
   for (const el of Wd.board.querySelectorAll(".gduck[data-pid]"))
     el.classList.toggle("l4-lit", lit.includes(el.dataset.pid));
 }
+/* ---------- Downpour: the church bell and the roof's flare, as each round starts (the owner's, Nov 17 12:28Z) ----------
+   The bell swings to its own strikes (l4ddsfx.js bellStrikes: when each sounds): out to one side on a strike, through
+   the middle and out to the other on the next, settling after the last. Its drawing is one of BELL_ANGLES, the nearest */
+const SWING = 30, // degrees out at a strike
+  SWING_IN = 0.6, // strikes' gaps it takes to swing all the way out
+  SWING_OUT = 1.2; // how fast it settles after the last (larger: sooner)
+let bellEl = null,
+  bellLook = 0;
+function bellSwing(ctx, now) {
+  if (!bellEl || !bellEl.isConnected) {
+    if (now - bellLook < 500) return; // (only made while the tower is near the view: world.js)
+    bellLook = now;
+    bellEl = ctx.world.board.querySelector('.hp-tower[data-part="bell"]');
+    if (!bellEl) return;
+  }
+  const t = bellStrikes();
+  let a = 0;
+  if (t) {
+    const gap = (t[t.length - 1] - t[0]) / (t.length - 1),
+      u = (now - t[0]) / gap,
+      last = t.length - 1,
+      k =
+        u < 0
+          ? 0
+          : u < SWING_IN
+            ? u / SWING_IN
+            : u <= last
+              ? 1
+              : Math.exp(-(u - last) * SWING_OUT);
+    if (k > 0.03) a = SWING * k * Math.cos(Math.PI * u); // (a strike at every whole u: out at one side or the other)
+  }
+  let best = BELL_REST;
+  BELL_ANGLES.forEach((v, i) => {
+    if (Math.abs(v - a) < Math.abs(BELL_ANGLES[best] - a)) best = i;
+  });
+  ctx.world.frameOf(bellEl, best);
+}
+/* the dead soldier's flare on the gas station's roof lights as the bell starts and burns red a while: a glow, sparks
+   and smoke (the light it throws: paint) */
+const FLARE_MS = 14000;
+let flareEl = null,
+  fxAt = 0;
+const flareOn = (now) => {
+  const t = bellStrikes();
+  return !!t && now >= t[0] && now < t[0] + FLARE_MS;
+};
+function flareDraw(ctx, now) {
+  const Wd = ctx.world,
+    on = dp() && !Wd.inside && flareOn(now);
+  if (!on) {
+    if (flareEl && !flareEl.hidden) flareEl.hidden = true;
+    return;
+  }
+  if (!flareEl || !flareEl.isConnected) {
+    flareEl = document.createElement("div");
+    flareEl.className = "l4-flare";
+    flareEl.setAttribute("aria-hidden", "true");
+    layer.append(flareEl);
+  }
+  if (flareEl.hidden) flareEl.hidden = false;
+  const p = Wd.toScreen(FLARE.x, FLARE.y, STATION.wall + 4),
+    left = (now - bellStrikes()[0]) / FLARE_MS; // (0 lit … 1 out)
+  flareEl.style.transform = `translate(${p.left.toFixed(1)}px, ${p.top.toFixed(1)}px)`;
+  flareEl.style.setProperty("--k", Wd.sc.toFixed(3));
+  flareEl.style.setProperty(
+    "--f",
+    (left > 0.85 ? (1 - left) / 0.15 : 1).toFixed(2),
+  ); // (dying down at the end)
+  flareEl.style.zIndex = Math.round(STATION.y1) + 60; // (over the roof it lies on: world.js gives the roof its south edge, and a little)
+  if (now - fxAt > 70 && left < 0.92) {
+    fxAt = now;
+    fxSparks(p.left, p.top, 2 * Wd.sc, 1);
+    if (Math.random() < 0.35) fxSteam(p.left, p.top - 6 * Wd.sc);
+  }
+}
 function paint(now, ctx) {
   CTX = ctx;
   const Wd = ctx.world,
@@ -791,7 +1245,9 @@ function paint(now, ctx) {
     cones = [],
     beams = []; // (the same flashlights in the world's px, for the names: litNames)
   const on = (x, y, r) => x + r > 0 && x - r < w && y + r > 0 && y - r < h;
-  for (const l of Wd.inside ? LIT.in : LIT.out) {
+  lits();
+  const lights = powerOn(s) ? LIT_ON : LIT;
+  for (const l of Wd.inside ? lights.in : lights.out) {
     const fl = sway(l, ln),
       p = Wd.toScreen(l.x, l.y, heightAt(l.x, l.y) + (l.z || 0)),
       x = p.left * q,
@@ -801,9 +1257,11 @@ function paint(now, ctx) {
       holes.push([x, y, r, Math.min(0.72, l.k * 1.45) * fl * stutterOf(l, ln)]); // (dimmer than Hangout's blackout: the owner wants it very dark)
   }
   /* each opening lets a little moonlight in, more as its boards come down: the way in shows in the dark */
-  const brd = s.hang.brd || {};
+  const brd = s.hang.brd || {},
+    mn = MOON(); // (first: it brings OPENINGS up to the map in play, before they're gone through)
   for (const o of OPENINGS) {
-    const [x0, y0] = MOON[o.id];
+    if (!mn[o.id]) continue;
+    const [x0, y0] = mn[o.id];
     if (inCabin(x0, y0) !== Wd.inside) continue;
     const p = Wd.toScreen(x0, y0, heightAt(x0, y0)),
       r = 120 * sc;
@@ -815,14 +1273,42 @@ function paint(now, ctx) {
         0.2 + 0.05 * (5 - (brd[o.id] ?? 5)),
       ]);
   }
-  /* Justin's Butler stands in a little light, and the fireplace's weapon glows while it's out */
-  if (Wd.inside) {
-    const p = Wd.toScreen(BUTLER.x, BUTLER.y, 30);
-    if (on(p.left * q, p.top * q, 100 * sc))
-      holes.push([p.left * q, p.top * q, 100 * sc, 0.5]);
-    if (boxNow(s, clockNow())) {
-      const o = Wd.toScreen(BOX.x, 706, 58);
+  /* the merchant stands in a little light while he sells, and the fireplace's weapon glows while it's out */
+  if (dp() || Wd.inside) {
+    const mm = merchantOf(s);
+    if (mm && mm.st === "here") {
+      const p = Wd.toScreen(mm.x, mm.y, 30);
+      if (
+        seenFrom(mm.x, mm.y, Wd.inside) &&
+        on(p.left * q, p.top * q, 100 * sc)
+      )
+        holes.push([p.left * q, p.top * q, 100 * sc, 0.5]);
+    }
+    if (boxNow(s, clockNow()) && seenFrom(BOX.sx, BOX.sy, Wd.inside)) {
+      const o = Wd.toScreen(BOX.sx, BOX.sy, BOX.sz);
       holes.push([o.left * q, o.top * q, 130 * sc, 0.6]);
+    }
+  }
+  /* the roof's flare, while it burns */
+  const pt = performance.now();
+  if (dp() && !Wd.inside && flareOn(pt)) {
+    const p = Wd.toScreen(FLARE.x, FLARE.y, STATION.wall + 4),
+      r = 260 * sc * (0.92 + 0.08 * Math.sin(pt / 53));
+    if (on(p.left * q, p.top * q, r))
+      holes.push([p.left * q, p.top * q, r, 0.55]);
+  }
+  /* the Angel machine and the power box glow (css: crimson and electric yellow, the owner's Nov 17), so a soft light
+     breathes round each of them in the dark too */
+  {
+    const br = 0.5 + 0.5 * Math.sin((performance.now() / 2600) * 2 * Math.PI);
+    for (const [x, y, z, r] of [
+      [ANGEL.X, ANGEL.Y, ANGEL.Z + 70, 90],
+      [PW.X, PW.Y, heightAt(PW.X, PW.Y) + 70, 80],
+    ]) {
+      if (!seenFrom(x, y, Wd.inside)) continue;
+      const p = Wd.toScreen(x, y, z);
+      if (on(p.left * q, p.top * q, r * sc))
+        holes.push([p.left * q, p.top * q, r * sc, 0.32 + 0.16 * br]);
     }
   }
   /* the drops glow on the floor */
@@ -840,7 +1326,7 @@ function paint(now, ctx) {
   for (const id of s.seat) {
     const a = Wd.at(id),
       pos = s.pos[id];
-    if (!a || !pos || !seenFrom(a.x, a.y, Wd.inside)) continue;
+    if (!a || !pos || !seenFrom(a.x, a.y, Wd.inside, a.z)) continue;
     const p4 = P4(s, id);
     if (p4 && p4.gh) continue;
     const c = Wd.toScreen(a.x, a.y, a.z + 26);
@@ -849,17 +1335,28 @@ function paint(now, ctx) {
     if (!on(c.left * q, c.top * q, CONE.far * sc)) continue; // (its light can't reach the screen: no rays)
     const [dx, dy] = aimOf(s, id, ctx),
       t = Math.atan2(dy, dx),
-      pts = [];
+      roof = !!deckAt(a.x, a.y, a.z), // (up on a roof: over the walls, nothing stops it)
+      pts = [],
+      ends = []; // (the same rays on the floor in world px, on into the wall each one stops at: shineProps)
     for (let k = 0; k <= rays; k++) {
       const u = t - CONE.half + (2 * CONE.half * k) / rays,
         ux = Math.cos(u),
         uy = Math.sin(u),
-        d = rayTo(a.x, a.y, ux, uy, CONE.far),
-        e = Wd.toScreen(a.x + ux * d, a.y + uy * d, a.z);
+        d = roof ? CONE.far : rayTo(a.x, a.y, ux, uy, CONE.far),
+        e = Wd.toScreen(a.x + ux * d, a.y + uy * d, a.z),
+        d2 = d < CONE.far - 1 ? d + 26 : d; // (a wall is 24 thick)
       pts.push([e.left * q, e.top * q, d]);
+      ends.push([a.x + ux * d2, a.y + uy * d2]);
     }
     const o = Wd.toScreen(a.x, a.y, a.z);
-    cones.push([o.left * q, o.top * q, pts, CONE.far * sc]);
+    cones.push([
+      o.left * q,
+      o.top * q,
+      pts,
+      CONE.far * sc,
+      [a.x, a.y, ends],
+      roof,
+    ]);
     BEAMS.push([a.x, a.y, t]);
     beams.push([id, a.x, a.y, t, pts.map((e) => e[2])]);
   }
@@ -874,7 +1371,7 @@ function paint(now, ctx) {
     };
     for (const id of s.seat) {
       const a = Wd.at(id);
-      if (a && s.pos[id] && seenFrom(a.x, a.y, Wd.inside))
+      if (a && s.pos[id] && seenFrom(a.x, a.y, Wd.inside, a.z))
         lit(a.x, a.y, a.z, 1);
     }
     for (const o of Z.values())
@@ -900,7 +1397,7 @@ function paint(now, ctx) {
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.globalCompositeOperation = "source-over";
   g.clearRect(0, 0, w, h);
-  g.fillStyle = `rgba(3,4,10,${DARK})`;
+  g.fillStyle = `rgba(3,4,10,${powerOn(s) ? DARK_ON : DARK})`;
   g.fillRect(0, 0, w, h);
   g.globalCompositeOperation = "destination-out";
   const st = stamp();
@@ -909,7 +1406,21 @@ function paint(now, ctx) {
     g.drawImage(st, x - r, y - r, 2 * r, 2 * r);
   }
   g.globalAlpha = 1;
-  /* a cone: three passes, each a little narrower, so its middle is as bright as the lights on and its edges soft */
+  /* a cone: three passes, each a little narrower, so its middle is as bright as the lights on and its edges soft. On Low
+     graphics or Data saving: one pass, one plain shade, about as bright as the soft one on average */
+  if (low()) {
+    g.fillStyle = "rgba(0,0,0,.55)";
+    for (const [ox, oy, pts] of cones) {
+      g.beginPath();
+      g.moveTo(ox, oy);
+      for (const p of pts) g.lineTo(p[0], p[1]);
+      g.closePath();
+      g.fill();
+    }
+    shineProps(Wd, cones, q);
+    g.globalCompositeOperation = "source-over";
+    return;
+  }
   for (const [ox, oy, pts, far] of cones) {
     const rg = g.createRadialGradient(ox, oy, 0, ox, oy, far);
     rg.addColorStop(0, "rgba(0,0,0,.62)");
@@ -927,13 +1438,90 @@ function paint(now, ctx) {
       g.fill();
     }
   }
+  shineProps(Wd, cones, q);
   g.globalCompositeOperation = "source-over";
 }
+/* a flashlight lights what it points at, not just the floor (the owner, Nov 17): the part of each prop's footprint inside
+   a cone (on into the wall a ray stops at), raised up the prop's height, so its front and its top show in the light as
+   bright as the floor there. paint() has the dark cutting (destination-out) */
+function shineProps(Wd, cones, q) {
+  const sc = Wd.sc * q,
+    plain = low();
+  for (const c of cones) {
+    if (c[5]) continue; // (from up on a roof: the roof's top is all it lights)
+    const [ax, ay, ends] = c[4],
+      poly = [[ax, ay], ...ends];
+    let x0 = ax,
+      y0 = ay,
+      x1 = ax,
+      y1 = ay;
+    for (const [x, y] of ends) {
+      x0 = Math.min(x0, x);
+      y0 = Math.min(y0, y);
+      x1 = Math.max(x1, x);
+      y1 = Math.max(y1, y);
+    }
+    for (const p of litProps()) {
+      let l = p.x,
+        r = p.x + p.w;
+      if (p.kind === "fence") {
+        const t = fenceLean(p, W); // (its top leans out toward the map's edge: all of that lights)
+        if (t > 0) r += t;
+        else l += t;
+      }
+      if (l > x1 || r < x0 || p.y > y1 || p.y + p.d < y0) continue;
+      const el = Wd.propEl(p.id); // (only what's drawn now: not what's left out of this map, or hidden from in here)
+      if (!el || el.hidden) continue;
+      const part = clipBox(poly, l, p.y, r, p.y + p.d);
+      if (!part) continue;
+      /* as bright as the cone's floor that far out (its three passes: about 0.9 near, fading out from 0.7 of the way) */
+      let mx = 0,
+        my = 0;
+      for (const [x, y] of part) {
+        mx += x / part.length;
+        my += y / part.length;
+      }
+      const u = Math.hypot(mx - ax, my - ay) / CONE.far,
+        k = plain ? 0.55 : u < 0.7 ? 0.9 : (0.9 * (1 - u)) / 0.3;
+      if (k < 0.03) continue;
+      const lo = part.map(([x, y]) => {
+          const e = Wd.toScreen(x, y, p.z);
+          return [e.left * q, e.top * q];
+        }),
+        H = p.h * sc,
+        hi = lo.map(([x, y]) => [x, y - H]);
+      /* the footprint, its copy at the top, and the band each edge sweeps between them, all wound the same way so they
+         add up (nonzero) */
+      g.globalAlpha = Math.min(1, k);
+      g.beginPath();
+      const shape = (s) => {
+        let a2 = 0;
+        for (let n = 0; n < s.length; n++) {
+          const [xa, ya] = s[n],
+            [xb, yb] = s[(n + 1) % s.length];
+          a2 += xa * yb - xb * ya;
+        }
+        if (Math.abs(a2) < 1e-3) return;
+        if (a2 < 0) s = s.slice().reverse();
+        g.moveTo(s[0][0], s[0][1]);
+        for (let n = 1; n < s.length; n++) g.lineTo(s[n][0], s[n][1]);
+        g.closePath();
+      };
+      shape(lo);
+      shape(hi);
+      for (let n = 0; n < lo.length; n++) {
+        const m = (n + 1) % lo.length;
+        shape([lo[n], lo[m], hi[m], hi[n]]);
+      }
+      g.fillStyle = "#000";
+      g.fill("nonzero");
+    }
+  }
+  g.globalAlpha = 1;
+}
 
-/* ---------- Justin's Butler, standing by the card table ---------- */
-/* the Butler is small (the pixel look shrank him by mistake and the owner loved it, Nov 16: kept); Justin isn't */
-const BUTLER_K = 0.7; // (about the size he showed at on a computer)
-function butlerEl(svg = butlerSVG({ size: 64 }), name = BUTLER_NAME) {
+/* ---------- a character standing on the board: the merchant, or Justin in the toilet ---------- */
+function butlerEl(svg, name) {
   const v = svg
       .match(/viewBox="([^"]+)"/)[1]
       .split(" ")
@@ -943,7 +1531,7 @@ function butlerEl(svg = butlerSVG({ size: 64 }), name = BUTLER_NAME) {
     el = document.createElement("div");
   el.className = "hang-npc duck l4-butler";
   const url = svgDataURL(svg);
-  el.innerHTML = `<div class="hang-npc-body"><img alt="" draggable="false" src="${url}" style="width:100%;height:100%"></div><span class="gduck-name hang-npc-name">${nameHTML(name)}</span>`;
+  el.innerHTML = `<div class="hang-npc-body"><img alt="" draggable="false" src="${url}" style="width:100%;height:100%"></div><span class="gduck-name hang-npc-name">${nameHTML(name)}<span class="gduck-hp" aria-hidden="true"><b></b><i></i></span></span>`; // (the HP in his tag, as a player's: shown once he's hurt, the merchant's)
   const body = el.firstChild;
   body.style.width = "64px";
   body.style.height = h.toFixed(1) + "px";
@@ -951,7 +1539,347 @@ function butlerEl(svg = butlerSVG({ size: 64 }), name = BUTLER_NAME) {
   body.style.top = (-feet).toFixed(1) + "px";
   body.style.transformOrigin = `32px ${feet.toFixed(1)}px`;
   layer.append(el);
-  return { el, body, url, bh: h };
+  return { el, body, url, bh: h, feet };
+}
+/* ---------- the merchant (the rules' s.hang.l4m) ----------
+   He's a duck's size now (the owner's, Nov 18 13:46Z: "Justin's butler is no longer small"), in his look for this visit
+   (merchants.js, rolled by the rules so everyone sees the same one). He glides to where the rules have him (walking
+   in, at his spot, running off), faces the way he goes, fades as he jumps off the balcony or drops over the fence, and
+   lies dead where he fell. His lines show in a bubble over him for MERCH.SAY ms.
+   Hurt, he is anyone else (the owner's, Nov 18 15:35Z: "The merchants should have a health bar like anyone else. It
+   should show their sprint meter when they're moving like anyone else. And if it's the Phil, the murderous, when he
+   uses his knife, it has a cooldown meter just like anyone else ... any merchant that gets damage gets gore effects ...
+   When a merchant gets hit, their health bar shows ... if the merchant falls over and dies, they have a puddle of blood
+   leaving their corpse, and their corpse stays there permanently"):
+     - his HP (m.hp of m.max, the rules') in his tag, a player's red blocks, once he's lost one, and it stays up;
+     - a hit: the red blink, the shake, "−1 HP" over him, and his blood with bits of him in his color, as a zombie's;
+     - his wounds (m.w, wounds.js codes, as a player's) on his picture, his head gone after a crit (the rules' l4crit
+       fx bursts it, as a zombie's: game.js); none with Gore off;
+     - his sprint (m.sp, 0 to 1) as my thin blue bar under his tag while it isn't full; Phil's knife (the rules'
+       l4mstab fx) as my white cooldown bar, MERCH.STAB_MS long;
+     - dead: a pool of blood spreads under him (as every duck's: game.js .gduck-pool), and he and it stay for good */
+let mSig = "",
+  mAt = null,
+  mSeen = { v: null, hp: null, alive: false, fx: 0, stab: 0 },
+  mPoolAt = 0;
+/* his wound codes as I draw them (Gore off: only a hat knocked off), and the look they give duckSVG (game.js woundLook) */
+const mWounds = (s, m) => {
+  const w = typeof m.w === "string" ? m.w : "";
+  return +s.options.noGore ? goreFree(w) : w;
+};
+const MLOOK = new Map();
+function mWoundLook(wc) {
+  if (!wc) return {};
+  if (!MLOOK.has(wc)) {
+    if (MLOOK.size > 60) MLOOK.clear();
+    const h = hitsOf(wc);
+    MLOOK.set(wc, { skin: { head: h.inner, out: h.out }, gone: h.gone });
+  }
+  return MLOOK.get(wc);
+}
+const mMax = (m) =>
+  Math.max(
+    1,
+    +m.max || (Array.isArray(MERCH.HP) ? MERCH.HP[1] : +MERCH.HP) || 6,
+  ); // (m.max: the HP he rolled, 3 to 6, the rules')
+function drawMerchant(ctx, t) {
+  const s = ctx.state(),
+    m = merchantNow(s),
+    Wd = ctx.world,
+    sc = Wd.sc,
+    dead = !!m && m.st === "dead",
+    wc = m ? mWounds(s, m) : "",
+    sig = m && m.who ? [m.v, m.id, m.roll, dead ? 1 : 0].join() : "";
+  if (sig !== mSig) {
+    mSig = sig;
+    butler?.el.remove();
+    butler = null;
+    if (!sig) return;
+    const hid = !!m.who.hideName;
+    butler = butlerEl(
+      merchantSVG(m.who, m.roll, {
+        size: 64,
+        dead,
+        ...(hid ? { title: "The Merchant" } : {}),
+        ...mWoundLook(wc),
+      }),
+      m.who.name,
+    );
+    butler.wc = wc;
+    const tag = butler.el.querySelector(".hang-npc-name");
+    if (hid) {
+      for (const n of [...tag.childNodes])
+        if (!n.classList || !n.classList.contains("gduck-hp")) n.remove();
+      tag.classList.add("bar-only");
+    } // (no name over the soldier: his tag is his HP bar only, as the other ducks' in Dead Ducks Arcade)
+    butler.tag = tag;
+    butler.hpEl = tag.querySelector(".gduck-hp");
+    butler.el.classList.add("l4-merchant");
+    butler.el.classList.toggle("dead", dead);
+    butler.say = document.createElement("div");
+    butler.say.className = "hang-npc-say";
+    butler.el.prepend(butler.say);
+    butler.sayN = 0;
+    if (!mAt || mAt.v !== m.v) mAt = { v: m.v, x: m.x, y: m.y, t };
+    if (mSeen.v !== m.v) {
+      mSeen = { v: m.v, hp: null, alive: !dead, fx: fxTop(s), stab: 0 };
+      mPoolAt = 0;
+    }
+    if (dead) {
+      if (!mPoolAt) mPoolAt = mSeen.alive ? clockNow() : -1; // (seen falling: the pool spreads; dead when I came: there already)
+      butler.pool = document.createElement("span");
+      butler.pool.className = "l4-jpool l4-mpool";
+      butler.pool.setAttribute("aria-hidden", "true");
+      butler.pool.innerHTML = POOL_SVG;
+      butler.el.prepend(butler.pool);
+    }
+  }
+  if (!butler) return;
+  /* his wounds now (a new picture only when they change) */
+  if (butler.wc !== wc) {
+    butler.wc = wc;
+    butler.url = svgDataURL(
+      merchantSVG(m.who, m.roll, {
+        size: 64,
+        dead,
+        ...(m.who.hideName ? { title: "The Merchant" } : {}),
+        ...mWoundLook(wc),
+      }),
+    );
+    butler.uk = "";
+    butler.pxk = "";
+    if (!pixelOn()) butler.body.firstChild.src = butler.url;
+  }
+  /* glide (a big jump: there at once) */
+  const dt = Math.min(0.1, Math.max(0, (t - mAt.t) / 1000)),
+    gap = Math.hypot(m.x - mAt.x, m.y - mAt.y),
+    k = gap > 300 ? 1 : Math.min(1, dt * 10);
+  mAt.x += (m.x - mAt.x) * k;
+  mAt.y += (m.y - mAt.y) * k;
+  mAt.t = t;
+  const z = heightAt(mAt.x, mAt.y),
+    p = Wd.toScreen(mAt.x, mAt.y, z),
+    hide =
+      !seenFrom(mAt.x, mAt.y, Wd.inside) ||
+      !Wd.onView(p.left - 60, p.top - 140, 120, 160);
+  if (butler.el.hidden !== hide) butler.el.hidden = hide;
+  mHurt(s, m, dead, p, sc, hide);
+  if (hide) return;
+  const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
+  if (butler.tr !== tr) {
+    butler.tr = tr;
+    butler.el.style.transform = tr;
+    butler.el.style.zIndex = Math.round(sortY(mAt.x, mAt.y, z)) + 10;
+  }
+  pxPic(butler, butler.body.firstChild, 64 * sc, butler.bh * sc);
+  if (butler.k !== sc) {
+    butler.k = sc;
+    butler.body.style.transform = `scale(${sc.toFixed(4)})`;
+    butler.el.style.setProperty("--nt", (2 * sc).toFixed(1) + "px");
+    butler.el.style.setProperty("--h", (butler.feet * sc).toFixed(1) + "px");
+  }
+  butler.el.classList.toggle("flip", !dead && m.f < 0);
+  butler.el.classList.toggle("gone", m.st === "jump");
+  /* his blood, under him for good once he's dead (none with Gore off) */
+  if (butler.pool) {
+    const off = !!+s.options.noGore;
+    if (butler.pool.hidden !== off) butler.pool.hidden = off;
+    const kp = mPoolAt < 0 ? 1 : Math.min(1, (clockNow() - mPoolAt) / JPOOL.ms),
+      grow = 0.15 + 0.85 * (1 - (1 - kp) * (1 - kp)),
+      pk = `translate(${(-butler.feet * 0.42 * sc).toFixed(1)}px, ${(4 * sc).toFixed(1)}px) scale(${(sc * grow).toFixed(3)})`; // (where he lies: on his side, his head the way he fell)
+    if (butler.poolK !== pk) {
+      butler.poolK = pk;
+      butler.pool.style.transform = pk;
+    }
+  }
+  /* his sprint, and Phil's knife: my own two thin bars, under his tag */
+  mBars(s, m, dead);
+  /* his words */
+  const now = clockNow(),
+    say = m.say;
+  if (say && say.n !== butler.sayN) {
+    butler.sayN = say.n;
+    butler.say.textContent = say.text;
+  }
+  const on = !!say && !dead && now < say.t + MERCH.SAY;
+  if (butler.el.classList.contains("saying") !== on)
+    butler.el.classList.toggle("saying", on);
+}
+/* the merchants killed before this one: their bodies stay where they fell for the rest of the game, each in its pool
+   of blood (the rules' s.hang.l4mc: { v, id, roll, x, y, f, w, t }; the owner's "their corpse stays there
+   permanently"). The one still lying in s.hang.l4m is drawMerchant's */
+const CORPSES = new Map(); // visit → { el, body, url, bh, feet, pool, … }
+function drawCorpses(ctx) {
+  const s = ctx.state(),
+    Wd = ctx.world,
+    sc = Wd.sc,
+    list = Array.isArray(s.hang.l4mc) ? s.hang.l4mc : [],
+    cur = merchantOf(s),
+    gore = !+s.options.noGore,
+    seen = new Set();
+  for (const c of list) {
+    if (!c || (cur && cur.v === c.v && cur.st === "dead")) continue;
+    const who = merchantById(c.id);
+    if (!who) continue;
+    const wc = gore ? c.w || "" : goreFree(c.w || ""),
+      key = c.v + "|" + wc;
+    seen.add(c.v);
+    let o = CORPSES.get(c.v);
+    if (o && o.key !== key) {
+      o.el.remove();
+      o = null;
+    }
+    if (!o) {
+      o = butlerEl(
+        merchantSVG(who, c.roll, {
+          size: 64,
+          dead: true,
+          ...(who.hideName ? { title: "The Merchant" } : {}),
+          ...mWoundLook(wc),
+        }),
+        who.name,
+      );
+      o.key = key;
+      o.el.classList.add("l4-merchant", "dead");
+      o.el.querySelector(".hang-npc-name")?.remove(); // (his name went with him)
+      o.pool = document.createElement("span");
+      o.pool.className = "l4-jpool";
+      o.pool.setAttribute("aria-hidden", "true");
+      o.pool.innerHTML = POOL_SVG;
+      o.el.prepend(o.pool);
+      CORPSES.set(c.v, o);
+    }
+    const z = heightAt(c.x, c.y),
+      p = Wd.toScreen(c.x, c.y, z),
+      hide =
+        !seenFrom(c.x, c.y, Wd.inside) ||
+        !Wd.onView(p.left - 60, p.top - 140, 120, 160);
+    if (o.el.hidden !== hide) o.el.hidden = hide;
+    if (hide) continue;
+    const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
+    if (o.tr !== tr) {
+      o.tr = tr;
+      o.el.style.transform = tr;
+      o.el.style.zIndex = Math.round(sortY(c.x, c.y, z)) + 9; // (just behind anyone standing where he lies)
+    }
+    pxPic(o, o.body.firstChild, 64 * sc, o.bh * sc);
+    if (o.k !== sc) {
+      o.k = sc;
+      o.body.style.transform = `scale(${sc.toFixed(4)})`;
+      o.pool.style.transform = `translate(${(-o.feet * 0.42 * sc).toFixed(1)}px, ${(4 * sc).toFixed(1)}px) scale(${sc.toFixed(3)})`;
+    }
+    if (o.pool.hidden !== !gore) o.pool.hidden = !gore;
+  }
+  for (const [v, o] of CORPSES)
+    if (!seen.has(v)) {
+      o.el.remove();
+      CORPSES.delete(v);
+    }
+}
+/* the newest fx number (only the ones after it are new to me) */
+const fxTop = (s) =>
+  (s.fx || []).reduce((n, f) => Math.max(n, f && f.n ? f.n : 0), 0);
+/* his HP in his tag, and a hit on him as on anyone: the blink, the shake, the HP lost over him, his blood */
+function mHurt(s, m, dead, p, sc, hide) {
+  const max = mMax(m),
+    hp = dead ? 0 : m.hp == null ? max : Math.max(0, +m.hp || 0),
+    was = mSeen.hp;
+  mSeen.hp = hp;
+  if (!dead) mSeen.alive = true;
+  const bar = butler.hpEl,
+    show = !dead && hp < max; // (once he's lost one: then it stays up, the owner's "When a merchant gets hit, their health bar shows")
+  butler.el.classList.toggle("php", show);
+  if (bar && show) {
+    bar.style.setProperty("--hp", (hp / max).toFixed(3));
+    bar.style.setProperty("--n", max);
+  }
+  if (was === null || hp >= was) {
+    if (bar && was !== hp)
+      bar.style.setProperty("--was", (hp / max).toFixed(3));
+    return;
+  }
+  /* he lost some */
+  if (bar) {
+    bar.style.setProperty("--was", (was / max).toFixed(3));
+    const red = bar.querySelector("b");
+    red.style.animation = "none";
+    void red.offsetWidth;
+    red.style.animation = "";
+  }
+  if (hide) return;
+  const img = butler.body.firstChild;
+  vibrate(img, hitPx(was - hp), dead);
+  if (!dead) img.animate(HIT, 320);
+  popHP(butler.el, hp - was, true);
+  fxHitAt(
+    p.left,
+    p.top,
+    butler.feet * sc * 0.55,
+    null,
+    64 * sc,
+    BY_WOUND[newWound(butler.hitW || "", butler.wc || "")],
+    (merchantLook(m.who, m.roll) || {}).color,
+  ); // (his blood, by the wound he got, with bits of him in his color, fx.js)
+  butler.hitW = butler.wc;
+}
+/* his sprint (m.sp, the rules': 0 to 1) and Phil's knife waiting to stab again (the rules' l4mstab fx, MERCH.STAB_MS) */
+function mBars(s, m, dead) {
+  const tag = butler.tag;
+  if (!tag) return;
+  let sp = tag.querySelector(".l4-sprint");
+  if (!sp) {
+    sp = document.createElement("span");
+    sp.className = "l4-sprint full";
+    sp.setAttribute("aria-hidden", "true");
+    sp.innerHTML = "<i></i>";
+    tag.append(sp);
+  }
+  const left = dead || !(m.sp >= 0) ? 1 : Math.min(1, +m.sp),
+    v = left.toFixed(3);
+  if (sp._v !== v) {
+    sp._v = v;
+    sp.style.setProperty("--sp", v);
+    sp.classList.toggle("full", left >= 1);
+    sp.classList.toggle("tired", left <= 0.05);
+  }
+  const top = fxTop(s);
+  if (top > mSeen.fx) {
+    for (const f of s.fx || [])
+      if (f && f.n > mSeen.fx && f.kind === "l4mstab")
+        mSeen.stab = Math.max(mSeen.stab, f.t || 0);
+    mSeen.fx = top;
+  }
+  let cl = tag.querySelector(".l4-cool");
+  if (!cl) {
+    cl = document.createElement("span");
+    cl.className = "l4-cool off";
+    cl.setAttribute("aria-hidden", "true");
+    cl.innerHTML = "<i></i>";
+    tag.append(cl);
+  }
+  const wait = mSeen.stab ? mSeen.stab + MERCH.STAB_MS - clockNow() : 0,
+    cv = !dead && wait > 0 ? Math.min(1, wait / MERCH.STAB_MS).toFixed(3) : "0";
+  if (cl._v !== cv) {
+    cl._v = cv;
+    cl.style.setProperty("--cl", cv);
+    cl.classList.toggle("off", cv === "0");
+  }
+  /* stacked as mine are (meters.js stackBars: white, then blue, each a row only while it shows), without my own
+     reload's red flash */
+  const rows = [
+    [cl, 0.12, cv !== "0"],
+    [sp, 0.2, left < 1],
+  ];
+  let y = 0.1;
+  for (const [e, h, shown] of rows) {
+    if (!shown) continue;
+    const tp = `calc(100% + ${y.toFixed(2)}rem)`;
+    if (e._top !== tp) {
+      e._top = tp;
+      e.style.top = tp;
+    }
+    y += h + 0.1;
+  }
 }
 
 /* a secret (not in Updates): a zebra cake in the toilet's bowl, and Justin teleported in beside it, eating it for as
@@ -981,7 +1909,8 @@ function drawEgg(ctx, now) {
     } // (a blue flash as he comes and goes)
     egg.chomp = now + 400;
   }
-  const hide = !on || !Wd.inside || !Wd.seen(p.left - 40, p.top - 90, 80, 110);
+  const hide =
+    !on || !Wd.inside || !Wd.onView(p.left - 40, p.top - 90, 80, 110);
   if (egg.el.hidden !== hide) egg.el.hidden = hide;
   if (hide) return;
   const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
@@ -1022,7 +1951,8 @@ function drawBox(ctx) {
     now = clockNow(),
     b = boxNow(s, now, ctx.me) || boxNow(s, now), // (mine, else the newest anyone spun)
     Wd = ctx.world;
-  if (!b || !Wd.inside) {
+  if (!b || !(Wd.inside || dp())) {
+    // (the cabin's is by the fireplace, inside; Downpour's outside, behind the car: it never showed there till Nov 17)
     if (!boxEl.hidden) boxEl.hidden = true;
     if (!b) {
       boxSig = "";
@@ -1035,7 +1965,9 @@ function drawBox(ctx) {
   if (sig !== boxSig) {
     const first = !boxSig;
     boxSig = sig;
-    boxEl.querySelector(".l4-box-orb").innerHTML = orbHTML(w);
+    boxEl.querySelector(".l4-box-orb").innerHTML = isPw(w)
+      ? pwOrbHTML(w)
+      : orbHTML(w); // (a part for the power box, or a jerry can: l4ddpowerui.js)
     const me = ctx.duck(),
       close =
         me && Math.hypot(me.x * W - BOX.x, me.y * H - BOX.y) < 900 && !first;
@@ -1054,15 +1986,17 @@ function drawBox(ctx) {
     landed && b.t + BOX.spin + BOX.keep - now < 3000,
   ); // (its last 3 seconds: it blinks)
   const sc = Wd.sc,
-    p = Wd.toScreen(BOX.x, 706, 58),
-    hide = !Wd.seen(p.left - 60, p.top - 80, 120, 140);
+    p = Wd.toScreen(BOX.sx, BOX.sy, BOX.sz),
+    hide =
+      !seenFrom(BOX.sx, BOX.sy, Wd.inside) ||
+      !Wd.onView(p.left - 60, p.top - 80, 120, 140);
   if (boxEl.hidden !== hide) boxEl.hidden = hide;
   if (hide) return;
   const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
   if (boxEl._tr !== tr) {
     boxEl._tr = tr;
     boxEl.style.transform = tr;
-    boxEl.style.zIndex = Math.round(sortY(BOX.x, 712, 0)) + 20;
+    boxEl.style.zIndex = Math.round(sortY(BOX.sx, BOX.sy + 6, 0)) + 20;
   }
   if (boxEl._k !== sc) {
     boxEl._k = sc;
@@ -1158,15 +2092,16 @@ export function l4SafeHint() {
     board.append(hintEl);
   }
   hintEl.innerHTML =
-    "<b>Safe Keeping</b> works by itself. When you go down you keep everything you bought, and it gets you up: press <kbd>E</kbd> (or tap the button) while down, or at once if nobody else is standing. Then 6 seconds nothing can hurt you. Used up after.";
+    "<b>Safe Keeping</b>: when you go down you keep what you bought, and <kbd>E</kbd> gets you up.";
   hintEl.classList.remove("on");
   void hintEl.offsetWidth;
   hintEl.classList.add("on");
 }
 
 /* ---------- under my duck's sprint bar (the owner's, Nov 16) ----------
-   A second, white bar: the cooldown running now, shrinking as it runs out (a reload, the melee weapon's swing, or an
-   item's 0.75 s: the longest one when two run at once); hidden when none is. And under it, when I switch slots, a
+   A second, white bar: the cooldown running now, shrinking as it runs out (a reload, the melee weapon's swing, a
+   shotgun's or a sniper's wait between shots (the owner's, Nov 17), or an item's 0.75 s: the longest one when two run
+   at once); hidden when none is. And under it, when I switch slots, a
    tiny grey row of what's in my slots, the one in hand bright, that slides in and quickly fades */
 function coolBar(tag, s, me) {
   const m = kitOf(s, me),
@@ -1174,13 +2109,17 @@ function coolBar(tag, s, me) {
   let left = 0,
     all = 1;
   if (m) {
-    if (m.rl > now && m.rw && ARMS[m.rw]) {
+    if (m.rl > now && m.rw && (ARMS[m.rw] || m.rw === "dg")) {
       left = m.rl - now;
-      all = m.rt || reloadOf(s, me, m.rw);
+      all = m.rt || reloadOf(s, me, m.rw === "dg" ? "handgun" : m.rw); // (the down pistol's: the pistol's)
     }
     for (const [w, t] of Object.entries(m.u || {})) {
       const k = kindOf(w);
-      if (k === "ranged" || !ARMS[w]) continue; // (a gun's wait between shots isn't one: too quick to show)
+      if (
+        !ARMS[w] ||
+        (k === "ranged" && (ARMS[w].auto || l4Cool(s, me, w) < 300))
+      )
+        continue; // (a fast gun's wait between shots is too quick to show; a shotgun's or a sniper's shows, the owner's Nov 17)
       const c = l4Cool(s, me, w),
         l = t + c - now;
       if (l > left) {
@@ -1204,25 +2143,107 @@ function coolBar(tag, s, me) {
     el.classList.toggle("off", v === "0");
   }
 }
-let peekW = null;
+/* the ammo of what's in my hand, for the yellow bar (meters.js): { f, rl, dry, nr: a reload can't be done } or null (a melee weapon, the Laser
+   Rifle: its heat has its own meter, the jetpack) */
+export function l4Ammo(s, me, w) {
+  const m = kitOf(s, me),
+    now = clockNow();
+  if (!m) return null;
+  if (downArmed(s, me)) w = "dg"; // (down: the down pistol)
+  const rl = !!w && m.rw === w && m.rl > now;
+  if (w === "dg")
+    return m.dg === undefined
+      ? null
+      : { f: rl ? 0 : m.dg / ARMS.handgun.mag, rl, dry: false }; // (its bullets never run out)
+  if (w === "grenade")
+    return { f: m.g / ARMS.grenade.most, rl: false, dry: m.g <= 0 };
+  if (!w || !ARMS[w] || kindOf(w) !== "ranged" || w === "laser") return null;
+  const c = (m.am || {})[w];
+  if (!c) return null;
+  if (w === "flamer") return { f: c[0] / ARMS.flamer.all, rl, dry: c[0] <= 0 }; // (its tank)
+  const mag = magIn(m, w);
+  if (mag)
+    return {
+      f: rl ? 0 : c[0] / mag,
+      rl,
+      dry: !rl && c[0] <= 0 && c[1] <= 0,
+      nr: !rl && c[1] <= 0 && c[0] < mag, // (no ammo left to reload it with)
+    };
+  const all = (fullFor(s, me, w) || [0])[0];
+  return all > 1 ? { f: c[0] / all, rl: false, dry: c[0] <= 0 } : null; // (the bow: its arrows left)
+}
+let dryW = "";
+/* the yellow bar under my duck, and the bars stacked (meters.js); a gun just run dry, its reload can't be done: the
+   white bar flashes red */
+function ammoBars(tag, s, me) {
+  const w = heldFn() || "",
+    a = l4Ammo(s, me, w),
+    dry = a && a.dry ? w : "";
+  if (dry && dry !== dryW && w !== "grenade") noReload();
+  dryW = dry;
+  ammoBar(tag, a);
+  stackBars(tag);
+}
+/* a slot switch: a small box under my duck, the phone's slider in little (hotbar.js, the same slots in their colors): it
+   scrolls from the slot I had to the one now in hand, the one in the middle bigger, then fades out quickly (the
+   owner, Nov 17: on a computer and a phone) */
+let peekW = null,
+  peekNow = false;
+/* the box again, even with nothing switched: a swipe on my duck on a phone (touch.js), which always shows the selection
+   (the owner's, Nov 18 15:18Z) */
+export const peekAgain = () => {
+  peekNow = true;
+};
 function peek(tag, s, me) {
   const m = kitOf(s, me),
     w = heldFn() || "";
-  if (!m || w === peekW) return;
-  const first = peekW === null;
+  if (!m || (w === peekW && !peekNow)) return;
+  const first = peekW === null,
+    was = peekW;
   peekW = w;
+  peekNow = false;
   if (first) return; // (not when the game starts: only a switch)
   let el = tag.querySelector(".l4-peek");
   if (!el) {
     el = document.createElement("span");
     el.className = "l4-peek";
     el.setAttribute("aria-hidden", "true");
+    el.innerHTML =
+      '<span class="sp-slide"><span class="sp-track"></span></span>';
     tag.append(el);
   }
-  el.innerHTML = [...m.sl.filter(Boolean), m.g > 0 ? "grenade" : ""]
-    .filter(Boolean)
-    .map((x) => `<i${x === w ? ' class="on"' : ""}>${weaponIcon(x)}</i>`)
+  const list = [
+    ...m.sl.map((x, i) =>
+      x
+        ? [x, `k-${SLOT_KINDS[i]} ${tintOf(x, angelOf(s, me, x))}`.trim()]
+        : null,
+    ), // (each in its own color: l4ddrules.js tintOf)
+    m.g > 0 ? ["grenade", "k-grenade"] : null,
+  ].filter(Boolean);
+  const to = Math.max(
+      0,
+      list.findIndex(([x]) => x === w),
+    ),
+    from = list.findIndex(([x]) => x === was),
+    track = el.querySelector(".sp-track");
+  track.innerHTML = list
+    .map(
+      ([x, cls]) =>
+        `<span class="sp-slot ${cls}"><i>${angelOf(s, me, x) ? angelic(weaponIcon(x, (s.players[me] || {}).duck)) : weaponIcon(x, (s.players[me] || {}).duck)}</i></span>`,
+    )
     .join("");
+  const lay = (at) =>
+    track.querySelectorAll(".sp-slot").forEach((b, j) => {
+      const a = Math.abs(j - at);
+      b.style.transform = `translateX(calc(var(--step) * ${j - at})) scale(${(1 + 0.32 * Math.max(0, 1 - a)).toFixed(3)})`;
+      b.style.opacity = a > 1.6 ? 0 : 1;
+      b.classList.toggle("mid", a < 0.5);
+    });
+  track.classList.add("sliding"); // (at the old slot at once, then it scrolls)
+  lay(from < 0 ? to : from);
+  void track.offsetWidth;
+  track.classList.remove("sliding");
+  lay(to);
   el.classList.remove("go");
   void el.offsetWidth;
   el.classList.add("go");
@@ -1236,12 +2257,14 @@ function say(text) {
   sfx.nope();
 }
 
-/* ---------- Justin's Butler's shop: a page over the board, as the guestbook's ---------- */
+/* ---------- the merchant's shop: a page over the board, as the guestbook's ---------- */
 function shopFill(s, ctx) {
   const me = ctx.me,
     up = upOf(s, me),
     pts = ptsOf(s, me),
     kit = kitOf(s, me),
+    m = merchantNow(s),
+    stock = (m && m.stock) || [],
     sig = JSON.stringify([
       up,
       pts,
@@ -1249,44 +2272,61 @@ function shopFill(s, ctx) {
       saleOn(s),
       kit && kit.sl,
       kit && kit.am,
+      m && [m.v, m.id, m.roll],
+      stock,
+      upOffer(s, me),
+      gasFull(s),
     ]);
   if (sig === shop.sig) return;
   shop.sig = sig;
   shop.pts.textContent = pts;
-  shop.list.innerHTML = SHOP.map((it) => {
-    const n = up[it.id] || 0,
-      max = n >= it.most,
-      price = priceFor(s, me, it.id, n),
-      was = price < priceOf(it.id, n) ? `<s>${priceOf(it.id, n)}</s> ` : ""; // (a Sale: the old price struck through)
-    return `<li class="l4-up"><i class="l4-up-ic">${UP_ICONS[it.id]}</i><span class="l4-up-t"><b>${it.name}</b><small>${it.what}</small></span><span class="l4-up-lv" aria-label="${n} of ${it.most}">${Array.from({ length: it.most }, (_, i) => `<i${i < n ? ' class="on"' : ""}></i>`).join("")}</span><button type="button" class="btn small ${max ? "" : "yellow"} l4-up-buy" data-buy="${it.id}"${max || pts < price ? " disabled" : ""}>${max ? "Max" : was + price}</button></li>`;
-  }).join("");
-  /* his guns: Buy (a price), Refill (a price) once I have it, Full when it's full (the knife: Owned) */
-  shop.guns.innerHTML = GUN_SHOP.map((w) => {
-    const have = !!kit && kit.sl.includes(w),
-      price = gunPrice(s, me, w),
-      off = !price || pts < price,
-      label = have
-        ? price
-          ? `Refill ${price}`
-          : price === 0
-            ? "Full"
-            : "Owned"
-        : `Buy ${price}`;
-    return `<li class="l4-up l4-buyw"><i class="l4-up-ic">${orbHTML(w)}</i><span class="l4-up-t"><b>${weaponName(w)}</b><small>${gunWhat(w)}</small></span><button type="button" class="btn small ${price ? "yellow" : ""} l4-up-buy" data-buy="${w}"${off ? " disabled" : ""}>${label}</button></li>`;
-  }).join("");
-  /* Safe Keeping (the owner's, Nov 16): into the special slot, one at a time */
-  {
-    const have = !!kit && kit.sl.includes("safekeep"),
-      price = safePrice(s),
-      was = price < SAFE.PRICE ? `<s>${SAFE.PRICE}</s> ` : "";
-    shop.guns.innerHTML += `<li class="l4-up l4-buyw"><i class="l4-up-ic">${orbHTML("safekeep")}</i><span class="l4-up-t"><b>Safe Keeping</b><small>Keeps what you bought and gets you up</small></span><button type="button" class="btn small ${have ? "" : "yellow"} l4-up-buy" data-buy="safekeep"${have || pts < price ? " disabled" : ""}>${have ? "Owned" : was + price}</button></li>`;
+  /* who's selling: his name over the page, his picture by his words */
+  const who = m && m.who ? [m.v, m.id, m.roll].join() : "";
+  if (shop.who !== who) {
+    shop.who = who;
+    shop.title.innerHTML = rainbowHTML(shopName(s), { seed: 5 });
+    shop.me.innerHTML =
+      m && m.who
+        ? merchantSVG(m.who, m.roll, { size: 40, title: shopName(s) })
+        : "";
+  }
+  /* the one upgrade he offers me this visit (the owner's, Nov 18 14:20Z: "they only sell one per visit") */
+  const offer = SHOP.filter((it) => it.id === upOffer(s, me));
+  shop.list.innerHTML = offer.length
+    ? offer
+        .map((it) => {
+          const n = up[it.id] || 0,
+            max = n >= it.most,
+            price = priceFor(s, me, it.id, n),
+            was =
+              price < priceOf(it.id, n) ? `<s>${priceOf(it.id, n)}</s> ` : ""; // (a Sale: the old price struck through)
+          return `<li class="l4-up"><i class="l4-up-ic">${UP_ICONS[it.id]}</i><span class="l4-up-t"><b>${it.name}</b><small>${it.what}</small></span><span class="l4-up-lv" aria-label="${n} of ${it.most}">${Array.from({ length: it.most }, (_, i) => `<i${i < n ? ' class="on"' : ""}></i>`).join("")}</span><button type="button" class="btn small ${max ? "" : "yellow"} l4-up-buy" data-buy="${it.id}"${max || pts < price ? " disabled" : ""}>${max ? "Max" : was + price}</button></li>`;
+        })
+        .join("")
+    : '<li class="l4-up l4-sold">No upgrade for you this visit</li>';
+  /* what he has this visit (the rules' merchantStock): Buy (its price), Owned when I have it (an item of mine that's used
+     up can be bought full again); a Sale strikes the old price through */
+  shop.guns.innerHTML = stock.length
+    ? stock
+        .map(([w, p]) => {
+          const have = !!kit && kit.sl.includes(w),
+            again = have && kindOf(w) === "special" && !hasLeft(s, me, w),
+            price = stockPrice(s, p),
+            was = price < p ? `<s>${p}</s> ` : "",
+            off = (have && !again) || pts < price;
+          return `<li class="l4-up l4-buyw"><i class="l4-up-ic">${orbHTML(w)}</i><span class="l4-up-t"><b>${weaponName(w)}</b><small>${kindWord(w)}</small></span><button type="button" class="btn small ${have && !again ? "" : "yellow"} l4-up-buy" data-buy="${w}"${off ? " disabled" : ""}>${have && !again ? "Owned" : was + price}</button></li>`;
+        })
+        .join("")
+    : '<li class="l4-up l4-sold">Sold out</li>';
+  /* Duck Cabin: his gas, always (the pump's 25% at the pump's price) */
+  if (!dp()) {
+    const full = gasFull(s);
+    shop.guns.innerHTML += `<li class="l4-up l4-buyw"><i class="l4-up-ic"><span class="l4orb c-orange"><i>${jerrySVG(25)}</i></span></i><span class="l4-up-t"><b>Gas</b><small>25% of a jerry can</small></span><button type="button" class="btn small ${full ? "" : "yellow"} l4-up-buy" data-buy="gas"${full || pts < PW.PUMP ? " disabled" : ""}>${full ? "Full" : PW.PUMP}</button></li>`;
   }
 }
-const gunWhat = (w) => {
-  if (w === "knife") return "Melee";
-  const [p, n] = AMMO_PRICE[w] || AMMO_PRICE.gun;
-  return `${p} points for ${n} ${w === "bow" ? "arrows" : "bullets"}`;
-};
+/* what kind of thing it is, under its name */
+const kindWord = (w) =>
+  ({ melee: "Melee", ranged: "Gun", special: "Item" })[kindOf(w)] || "";
 function openShop(ctx) {
   if (!shop || shop.open) return;
   shop.open = true;
@@ -1316,12 +2356,11 @@ function shopEl(ctx) {
   const el = document.createElement("div");
   el.className = "hang-book l4-shop";
   el.hidden = true;
-  el.innerHTML = `<div class="hang-book-head"><h3 class="hang-book-title">${rainbowHTML(BUTLER_NAME, { seed: 5 })}</h3><span class="l4-shop-pts"><b>0</b> points</span><button type="button" class="win-x hang-book-x" aria-label="Close">×</button></div>
+  el.innerHTML = `<div class="hang-book-head"><h3 class="hang-book-title"></h3><span class="l4-shop-pts"><b>0</b> points</span><button type="button" class="win-x hang-book-x" aria-label="Close">×</button></div>
       <div class="tabs l4-shop-tabs" role="tablist"><button type="button" class="tab" role="tab" aria-selected="true" data-tab="buy">Shop</button><button type="button" class="tab" role="tab" aria-selected="false" data-tab="items">Items</button></div>
       <div class="l4-shop-list" data-pane="buy"><ul class="l4-shop-ups"></ul><h4 class="l4-shop-h">Weapons</h4><ul class="l4-shop-guns"></ul></div>
       <div class="l4-shop-list l4-shop-items" data-pane="items" hidden>${catalogHTML()}</div>
-      ${touchOnly() ? "" : '<p class="l4-shop-key"><kbd>B</kbd> buys ammo for the gun in your hand, at his price</p>'}
-      <p class="l4-shop-say"><span class="l4-shop-me">${butlerSVG({ size: 40 })}</span><q>The fireplace is where you see what weapon you get.</q></p>`;
+      <p class="l4-shop-say"><span class="l4-shop-me"></span><q>The fireplace is where you see what weapon you get.</q></p>`;
   for (const t of ["pointerdown", "click", "wheel", "touchstart"])
     el.addEventListener(t, (e) => e.stopPropagation(), { passive: true }); // (a tap on the page never walks the duck)
   el.querySelector(".hang-book-x").onclick = closeShop;
@@ -1336,14 +2375,18 @@ function shopEl(ctx) {
       return;
     }
     const b = e.target.closest("[data-buy]");
-    if (b && !b.disabled)
-      ctx.send({
-        t: "hang",
-        k: "l4",
-        do: "buy",
-        what: b.dataset.buy,
-        hand: heldFn(),
-      }); // (a gun takes the place of the ranged one in hand, as the fireplace's)
+    if (!b || b.disabled) return;
+    const w = b.dataset.buy,
+      hand = heldFn(),
+      send = () => ctx.send({ t: "hang", k: "l4", do: "buy", what: w, hand }); // (a gun takes the place of the ranged one in hand, as the fireplace's)
+    const st = ctx.state(),
+      it = ((merchantOf(st) || {}).stock || []).find(([x]) => x === w);
+    if (!it) return send(); // (an upgrade, or gas)
+    /* from his stock: only once I say Yes (the owner's, Nov 16 22:21Z); No, the X and Esc keep my points */
+    confirmBox(
+      `Are you sure you want to buy the ${weaponName(w)}?`,
+      `${stockPrice(st, it[1])} points`,
+    ).then((yes) => yes && send());
   });
   ctx.world.board.append(el);
   return {
@@ -1353,6 +2396,9 @@ function shopEl(ctx) {
     pts: el.querySelector(".l4-shop-pts b"),
     list: el.querySelector(".l4-shop-ups"),
     guns: el.querySelector(".l4-shop-guns"),
+    title: el.querySelector(".hang-book-title"),
+    me: el.querySelector(".l4-shop-me"),
+    who: "",
   };
 }
 
@@ -1367,7 +2413,7 @@ function holdTarget(pos, ctx) {
   let best = null;
   for (const id of s.seat) {
     const p = P4(s, id);
-    if (id === me || !p || !p.dn) continue;
+    if (id === me || !p || !p.dn || p.ex) continue; // (dead for good: no revive, no button; the owner's, Nov 17 20:37Z, "JUSTIN CANNOT BE REVIVED WHEN DEAD NOR CAN ANY PLAYER WHEN DEAD SO THE FUCKING REVIVE BUTTON GOES AWAY")
     const a = ctx.world.at(id);
     if (!a) continue;
     const d = Math.hypot(a.x - pos.x, a.y - pos.y);
@@ -1376,40 +2422,33 @@ function holdTarget(pos, ctx) {
   }
   if (best) return best;
   for (const o of OPENINGS) {
+    if (o.nb) continue; // (Downpour's fence: nothing to board up)
     const d = Math.hypot(o.in[0] - pos.x, o.in[1] - pos.y),
       n = (s.hang.brd || {})[o.id] || 0;
     if (d < L4.REACH && n < L4.BOARDS && (!best || d < best.d))
       best = { kind: "board", o: o.id, d, n };
   }
   if (best) return best;
+  const pt =
+    pwTarget(pos, s, NEAR) || // (the power box, on the balcony: l4ddpowerui.js)
+    angelTarget(pos, s, NEAR); // (the Angel machine, on the stage: l4ddangelui.js)
+  if (pt) return pt;
   const now = clockNow(),
-    db = Math.hypot(BOX.x - pos.x, BOX.y - pos.y);
+    db = Math.max(Math.abs(BOX.zx - pos.x), Math.abs(BOX.y - pos.y)); // (a square, as its yellow line shows it: spinSquare)
   if (db < NEAR) {
     const b = boxNow(s, now, me); // (my own spin: anyone else's doesn't stop me)
     if (!b) return { kind: "box", d: db };
     if (now >= b.t + BOX.spin && b.w !== HELPER.w)
       return { kind: "take", d: db, w: b.w }; // (Justin climbs out by himself)
   }
-  const ds = Math.hypot(BUTLER.x - pos.x, BUTLER.y - pos.y);
+  const m = merchantOf(s);
+  if (!selling(s)) return null;
+  const ds = Math.hypot(m.x - pos.x, m.y - pos.y);
   if (ds < NEAR || (shop && shop.open && ds < AWAY))
     return { kind: "shop", d: ds };
   return null;
 }
-/* B: ammo for the gun in hand, at the Butler's price, from anywhere (only one of his guns, not full, with the points) */
-function buyAmmo(ctx) {
-  const s = ctx.state(),
-    me = ctx.me,
-    w = heldFn();
-  if (!s.hang || !s.hang.l4 || s.hang.l4.over || !up(s, me)) return;
-  const kit = kitOf(s, me),
-    price = gunPrice(s, me, w);
-  if (!kit || !kit.sl.includes(w) || !GUN_SHOP.includes(w) || w === "knife")
-    return say("The Butler doesn't sell ammo for that");
-  if (!price) return say("It's full");
-  if (ptsOf(s, me) < price) return say("Not enough points");
-  ctx.send({ t: "hang", k: "l4", do: "ammo", what: w });
-}
-/* E (a tap) at the Butler or the fireplace */
+/* E (a tap) at the merchant or the fireplace */
 function tap(t, ctx) {
   if (t.kind === "shop") return shop.open ? closeShop() : openShop(ctx);
   const s = ctx.state(),
@@ -1420,8 +2459,14 @@ function tap(t, ctx) {
   } else if (t.kind === "take") {
     ctx.send({ t: "hang", k: "l4", do: "box", hand: heldFn() }); // (a ranged weapon takes the place of the one in hand, else the first)
   } else if (t.kind === "sk") ctx.send({ t: "hang", k: "l4", do: "sk" });
+  else if (t.kind === "power") pwTap(ctx);
+  else if (t.kind === "pump") {
+    if (gasFull(s)) return say("The jerry cans are full");
+    if (ptsOf(s, me) < PW.PUMP) return say("Not enough points");
+    ctx.send({ t: "hang", k: "l4", do: "pump" });
+  } else if (t.kind === "angel") angelTap(ctx, heldFn(), say);
 }
-const TAPS = ["box", "take", "shop", "sk"];
+const TAPS = ["box", "take", "shop", "sk", "power", "pump", "angel"];
 function startHold(t, ctx) {
   if (!t) return;
   holding = t;
@@ -1448,10 +2493,13 @@ function holdLabel(t, s, ctx, now) {
   if (t.kind === "take") return `Take the ${weaponName(t.w)}`;
   if (t.kind === "shop") return shop && shop.open ? "Close" : "Shop";
   if (t.kind === "sk") return "Get up (Safe Keeping)";
+  if (t.kind === "power") return pwLabel(s);
+  if (t.kind === "pump") return pumpLabel(s);
+  if (t.kind === "angel") return angelLabel(s, ctx.me, heldFn());
   if (t.kind === "rev") {
     const rv = (P4(s, t.on) || {}).rv;
     if (rv && rv.by === ctx.me)
-      return `Reviving… ${Math.max(0, Math.ceil((L4.REVIVE - (now - rv.at)) / 1000))}`;
+      return `Reviving… ${Math.max(0, Math.ceil((reviveMs(s, ctx.me) - (now - rv.at)) / 1000))}`;
     if (heldFn() === "medkit")
       return `Revive ${t.name || ""} with the medkit`.replace("  ", " "); // (at once: the owner's, Nov 16)
     return `Revive ${t.name || ""}`.trim();
@@ -1462,41 +2510,20 @@ function holdLabel(t, s, ctx, now) {
     : `Board up ${t.n}/${L4.BOARDS}`;
 }
 
-/* ---------- phones: where my duck aims without a mouse ---------- */
-/* the nearest zombie I can see (in front of me first), else the way I last walked: a direction in board units */
-export function l4TouchAim(me) {
-  if (!me) return null;
-  const x = me.x * W,
-    y = me.y * H,
-    inside = inCabin(x, y);
-  let best = null,
-    bd = 520;
-  for (const o of Z.values()) {
-    if (o.st === 3 || !seenFrom(o.x, o.y, inside)) continue;
-    const dx = o.x - x,
-      dy = o.y - y,
-      d = Math.hypot(dx, dy),
-      ahead = (dx * walkDir[0] + dy * walkDir[1]) / (d || 1),
-      score = d * (ahead > 0.3 ? 1 : 1.6); // (one behind me counts as further)
-    if (score < bd && rayTo(x, y, dx / d, dy / d, d) >= d - 1) {
-      bd = score;
-      best = [dx, dy];
-    }
-  }
-  const [ax, ay] = best || walkDir;
-  return [ax / W, ay / H];
-}
-
 activity({
   id: "l4",
   only: "l4dd",
   /* the only ground anyone sees: the cabin, the deck and its stairs (the zombies come up them). The forest, the pool and
      the yard can't be reached, so the world doesn't make them: the deck runs smoother */
-  area: [
-    [CABIN.x0, CABIN.y0, CABIN.x1, CABIN.y1],
-    [DECK.x0, DECK.y0, DECK.x1, DECK.y1],
-    [STAIRS.x0, STAIRS.y0, STAIRS.x1, STAIRS.y1],
-  ],
+  get area() {
+    return dp()
+      ? null // (Downpour: all of it is played on)
+      : [
+          [CABIN.x0, CABIN.y0, CABIN.x1, CABIN.y1],
+          [DECK.x0, DECK.y0, DECK.x1, DECK.y1],
+          [STAIRS.x0, STAIRS.y0, STAIRS.x1, STAIRS.y1],
+        ];
+  },
   mount(ctx) {
     setListener(() => ctx.world.at(ctx.me));
     layer = ctx.world.board.querySelector(".hang-props");
@@ -1557,8 +2584,31 @@ activity({
     killEl.setAttribute("aria-hidden", "true");
     ctx.world.board.append(hud, over, ptsEl, endEl, sayEl, onEl, gotEl, killEl);
     mapMount(ctx.world.board);
+    rainMount(ctx.world.board); // (Downpour's rain: l4ddrain.js)
+    pwMount(ctx, layer);
+    angelMount(ctx, layer);
+    sqEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    sqEl.classList.add("l4-spinsq");
+    sqEl.setAttribute("data-nopx", ""); // (a thin line: no pixel picture of it)
+    sqEl.innerHTML = "<polygon/><polygon/><polygon/>"; // (the car, then Downpour's two gas pumps)
+    sqEl.style.display = "none";
+    sqSig = "";
+    layer.append(sqEl);
+    poolEl = document.createElement("div");
+    poolEl.className = "l4-jpool";
+    poolEl.setAttribute("aria-hidden", "true");
+    poolEl.innerHTML = POOL_SVG;
+    poolEl.hidden = true;
+    poolAt = 0;
+    poolSig = "";
+    layer.append(poolEl);
     shop = shopEl(ctx);
-    butler = butlerEl();
+    butler = null; // (the merchant: drawMerchant makes him when he comes)
+    mSig = "";
+    mAt = null;
+    mSeen = { v: null, hp: null, alive: false, fx: 0, stab: 0 };
+    mPoolAt = 0;
+    CORPSES.clear(); // (the old screen's are gone with its layer)
     egg = butlerEl(justinSVG({ size: 64 }), "Justin");
     egg.el.classList.replace("l4-butler", "l4-egg");
     egg.el.hidden = true;
@@ -1566,22 +2616,12 @@ activity({
     Z.clear();
     B.clear();
     D.clear();
-    zpSig =
-      overShown =
-      endSig =
-      drawn =
-      boxSig =
-      upSig =
-      slotSig =
-      onSig =
-      litSig =
-        "";
+    overShown = endSig = drawn = boxSig = upSig = slotSig = onSig = litSig = "";
     roundShown = -1;
     ptsShown = -1;
     l4Reset();
     boxSpun = false;
-    stamina = 1;
-    tired = false;
+    sprintReset();
     peekW = null;
     holding = null;
   },
@@ -1594,6 +2634,9 @@ activity({
     D.clear();
     cv?.remove();
     mapUnmount();
+    rainUnmount();
+    pwUnmount();
+    angelUnmount();
     hud?.remove();
     over?.remove();
     closeShop();
@@ -1611,11 +2654,15 @@ activity({
       butler && butler.el,
       egg && egg.el,
       shop && shop.el,
+      sqEl,
+      poolEl,
     ])
       e?.remove();
+    sqEl = poolEl = null;
     cv = g = hud = endEl = over = layer = fxl = null;
     ptsEl = sayEl = onEl = gotEl = killEl = boxEl = butler = shop = null;
     vitEl = hintEl = null;
+    bellEl = flareEl = null;
     vitShown = "";
     ctx?.world?.board.classList.remove("blackout", "l4-board");
   },
@@ -1625,7 +2672,11 @@ activity({
     seeZombies(s, ctx, now);
     seeBoards(s);
     seeDrops(s);
+    pwSee(s, ctx);
+    angelSee(s);
+    ctx.world.board.classList.toggle("blackout", !powerOn(s)); // (the balcony's bulbs and the stage's lights: off till the power's on)
     seeOn(s, ctx);
+    spinSquare(s, ctx);
     seeHud(s, ctx);
     seePts(s, ctx);
     l4Hear(s, ctx); // (its sounds: l4ddsfx.js)
@@ -1639,11 +2690,14 @@ activity({
       sl.some((w) => w && !had.includes(w)) &&
       !(
         ctx.duck() &&
-        Math.hypot(ctx.duck().x * W - BUTLER.x, ctx.duck().y * H - BUTLER.y) <
-          320
+        merchantOf(s) &&
+        Math.hypot(
+          ctx.duck().x * W - merchantOf(s).x,
+          ctx.duck().y * H - merchantOf(s).y,
+        ) < 320
       )
     )
-      sfx.done();
+      sfx.done(); // (not for what I bought from the merchant: his till rings)
     upSig = u;
     slotSig = sl.join();
     if (holding && !up(s, ctx.me)) holding = null;
@@ -1666,9 +2720,13 @@ activity({
         shop.open &&
         (!up(ctx.state(), ctx.me) ||
           !ctx.world.inside ||
-          Math.hypot(BUTLER.x - x, BUTLER.y - y) > AWAY)
+          !selling(ctx.state()) ||
+          Math.hypot(
+            merchantOf(ctx.state()).x - x,
+            merchantOf(ctx.state()).y - y,
+          ) > AWAY)
       )
-        closeShop(); // (walked off, or down: it closes)
+        closeShop(); // (walked off, down, or he ran: it closes)
       if (holding) {
         const t = holdTarget({ x, y }, ctx);
         if (
@@ -1682,31 +2740,90 @@ activity({
   },
   draw(now, ctx) {
     if (!layer) return;
+    syncMap(); // (the openings, the Butler's or the Priest's spot, for the map in play: on a player's screen too, which runs no rules)
     const Wd = ctx.world,
       sc = Wd.sc,
-      t = performance.now();
+      t = performance.now(),
+      meAt = Wd.at(ctx.me),
+      myFloor = meAt ? olFloor(meAt.x, meAt.y, meAt.z) : 0; // (for the outlines: a zombie a floor away)
     /* the zombies, gliding from where they were to where the host says, one heartbeat's time */
     for (const o of Z.values()) {
-      const u = Math.min(1, (t - o.t0) / gap);
+      const u = Math.min(1, (t - o.t0) / (o.g || gap));
       o.x = o.fx + (o.tx - o.fx) * u;
       o.y = o.fy + (o.ty - o.fy) * u;
-      const z = heightAt(o.x, o.y),
-        f = Wd.toScreen(o.x, o.y, z),
+      const up =
+          o.st === 5
+            ? fenceZ(o.x, o.y, o.l[2])
+            : o.st === 6 || o.st === 7 || o.st === 8
+              ? zombieZ(o) - heightAt(o.x, o.y)
+              : 0, // (Downpour: up a fence, or dropping off it; up a wall, or on a roof)
+        z = heightAt(o.x, o.y) + up,
+        lean =
+          o.st === 5 && up && openingById(o.l[2])?.axis === "y"
+            ? fenceLean({ x: o.x, h: up }, W)
+            : 0, // (on the west or east fence: on its face, which leans out as it goes up, stationart.js)
+        f = Wd.toScreen(o.x + lean, o.y, z),
         door = atBoards(o, Wd.inside),
+        hole = !Wd.inside && roofHoleOver(o.x, o.y, z), // (Downpour: seen from outside through a hole in the gas station's roof)
+        unseen = !(door || hole || seenFrom(o.x, o.y, Wd.inside, z)),
+        zi = door
+          ? AT_BOARDS
+          : hole
+            ? Math.round(hole.key) + 11 // (over the roof, in its hole)
+            : Math.round(sortY(o.x, o.y, z)) + 10,
+        onCam = Wd.onView(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc),
         hide =
-          !(door || seenFrom(o.x, o.y, Wd.inside)) ||
-          !Wd.seen(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc);
+          unseen ||
+          !onCam ||
+          (o.diedAt !== undefined && t - o.diedAt > LOW_DEAD && low()); // (Low graphics or Data saving: a body is gone from my screen at 2 s, css/app.css html.low; the rules still keep it its 4 s)
       if (o.el.hidden !== hide) o.el.hidden = hide;
+      o.z = z; // (its height as I draw it: shotStop)
+      if (onCam && unseen && o.st !== 3)
+        zOutline(Wd, o, f, 0, sc, true, z, myFloor); // (on the other side of a wall: its red line)
       if (hide) continue;
       wounds(o, o.l, o.i); // (come into sight: the wounds it got out of it)
       pxPic(o, o.img, o.bw * sc, o.bh * sc);
       o.sx = f.left;
       o.sy = f.top;
       o.sk = sc; // (where it stands on the screen: its blood comes out of it there, seeZombies)
-      const tr = `translate(${at(f.left)}px, ${at(f.top)}px)`;
+      /* Downpour: one swimming the deep flood sits in the water to its waterline, bobbing, as a duck does (water.js);
+         one wading the shallow flood, its bottom fifth under it */
+      const dip =
+        !dp() || o.st === 3
+          ? 0
+          : inDeep(o.x, o.y)
+            ? SINK + Math.sin(t / 520 + o.i) * 2.2
+            : inShallow(o.x, o.y) && o.st !== 5
+              ? WADE_SINK * o.feet
+              : 0;
+      const olOnly =
+        o.st !== 3 &&
+        zOutline(
+          Wd,
+          o,
+          f,
+          dip,
+          sc,
+          (!door && olRoofed(o.x, o.y, z, meAt)) || null, // (under a roof I'm not under: always its line, outlines.js)
+          z,
+          myFloor,
+          zi,
+        ); // (really behind a wall, under a roof: its line only)
+      if (o.olOnly !== olOnly) {
+        o.olOnly = olOnly;
+        o.el.classList.toggle("ol-only", olOnly);
+      }
+      const tr = `translate(${at(f.left)}px, ${at(f.top + dip * sc)}px)`;
       if (o.tr !== tr) {
         o.tr = tr;
         o.el.style.transform = tr;
+      }
+      const clip = dip
+        ? `polygon(-300% -300%, 400% -300%, 400% ${(o.feet - dip).toFixed(1)}px, -300% ${(o.feet - dip).toFixed(1)}px)`
+        : "";
+      if (o.clip !== clip) {
+        o.clip = clip;
+        o.body.style.clipPath = clip;
       }
       const body = `scale(${(o.face < 0 ? -sc : sc).toFixed(4)}, ${sc.toFixed(4)})${o.st === 3 ? " rotate(-100deg)" : ""}`;
       if (o.bt !== body) {
@@ -1717,13 +2834,45 @@ activity({
         o.k = sc;
         o.el.style.setProperty("--k", sc.toFixed(3));
       }
-      const zi = door ? AT_BOARDS : Math.round(sortY(o.x, o.y, z)) + 10;
       if (o.zi !== zi) {
         o.zi = zi;
         o.el.style.zIndex = zi;
       }
     }
+    /* Downpour: a duck in the deep flood swims, sunk to its waterline and bobbing, as in the Hangout pool; one in the
+       shallow flood wades, its bottom fifth under it (water.js) */
+    if (dp())
+      for (const d of Wd.board.querySelectorAll(".ducks .gduck")) {
+        const id = d.dataset.pid,
+          a = id && Wd.at(id),
+          wet = !!a && a.z <= heightAt(a.x, a.y) + 4;
+        floatDuck(
+          d,
+          wet && inDeep(a.x, a.y),
+          id ? (id.charCodeAt(0) + id.length * 7.3) % 6.28 : 0,
+          now,
+          sc,
+          wet && inShallow(a.x, a.y),
+        );
+      }
     mapDraw(t, ctx, ctx.state(), Z.values(), (id) => up(ctx.state(), id)); // (the minimap: l4ddmap.js)
+    if (dp()) {
+      const who = [];
+      for (const id of ctx.state().seat) {
+        const a = Wd.at(id);
+        if (a) who.push([id, a.x, a.y]);
+      }
+      for (const o of Z.values())
+        if (o.st !== 3) who.push(["z" + o.i, o.x, o.y]);
+      const hit = (ctx.state().hang.l4lt || {}).hit;
+      rainDraw(
+        t,
+        ctx,
+        who,
+        true,
+        hit && clockNow() - hit[2] < 600 ? hit : null,
+      ); // (and the lightning: l4ddrules.js boltTick)
+    } else rainDraw(t, ctx, [], false);
     const beat = new Set();
     for (const o of Z.values()) if (atBoards(o, Wd.inside)) beat.add(o.l[2]);
     /* the boards: inside, the door's and the holes'; outside (on the deck), the stairs' */
@@ -1734,7 +2883,7 @@ activity({
         p = Wd.toScreen(o.x, o.y, 0),
         hide =
           out === Wd.inside ||
-          !Wd.seen(
+          !Wd.onView(
             p.left + b.box.l * sc,
             p.top + b.box.t * sc,
             b.box.w * sc,
@@ -1756,10 +2905,11 @@ activity({
     const tn = clockNow();
     for (const o of D.values()) {
       const p = Wd.toScreen(o.x, o.y, 0),
-        hide =
-          !seenFrom(o.x, o.y, Wd.inside) ||
-          !Wd.seen(p.left - 40, p.top - 80, 80, 100);
+        unseen = !seenFrom(o.x, o.y, Wd.inside),
+        onCam = Wd.onView(p.left - 40, p.top - 80, 80, 100),
+        hide = unseen || !onCam;
       if (o.el.hidden !== hide) o.el.hidden = hide;
+      if (onCam) dropOutline(Wd, o, p, sc, unseen, myFloor); // (out of sight too: then its line only)
       if (hide) continue;
       const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
       if (o.tr !== tr) {
@@ -1771,38 +2921,28 @@ activity({
         o.k = sc;
         o.el.style.setProperty("--k", sc.toFixed(3));
       }
-      const end = o.until - tn < DROP_ENDING;
+      const left = o.until - tn;
+      let end = 0;
+      for (const [ms, k] of DROP_BLINK) if (left < ms) end = k;
       if (o.end !== end) {
         o.end = end;
-        o.el.classList.toggle("ending", end);
+        o.el.classList.toggle("ending", end > 0);
+        o.el.dataset.end = end;
       }
     }
     seeOn(ctx.state(), ctx);
-    /* Justin's Butler */
-    {
-      const z = heightAt(BUTLER.x, BUTLER.y),
-        p = Wd.toScreen(BUTLER.x, BUTLER.y, z),
-        hide = !Wd.inside || !Wd.seen(p.left - 40, p.top - 90, 80, 110);
-      if (butler.el.hidden !== hide) butler.el.hidden = hide;
-      if (!hide) {
-        const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
-        if (butler.tr !== tr) {
-          butler.tr = tr;
-          butler.el.style.transform = tr;
-          butler.el.style.zIndex =
-            Math.round(sortY(BUTLER.x, BUTLER.y, z)) + 10;
-        }
-        const bk = sc * BUTLER_K;
-        pxPic(butler, butler.body.firstChild, 64 * bk, butler.bh * bk);
-        if (butler.k !== sc) {
-          butler.k = sc;
-          butler.body.style.transform = `scale(${bk.toFixed(4)})`;
-          butler.el.style.setProperty("--nt", (2 * sc).toFixed(1) + "px");
-        }
-      }
-    }
+    spinSquare(ctx.state(), ctx);
+    seePool(ctx.state(), ctx);
+    drawMerchant(ctx, t);
+    drawCorpses(ctx);
     drawEgg(ctx, now);
     drawBox(ctx);
+    pwDraw(ctx);
+    angelDraw(ctx);
+    if (dp()) {
+      bellSwing(ctx, t); // (the bell's times are the page's clock: performance.now())
+      flareDraw(ctx, t);
+    }
     paint(now, ctx);
     /* my sprint: a thin blue bar under my name, while it isn't full (and under my HP meter: game.js asks sprintLeft()) */
     const tag = Wd.board.querySelector(".gduck.mine .gduck-name");
@@ -1815,7 +2955,8 @@ activity({
         sp.innerHTML = "<i></i>";
         tag.append(sp);
       }
-      const v = stamina.toFixed(3);
+      const [stamina, tired] = sprintLeft(),
+        v = stamina.toFixed(3);
       if (sp._v !== v) {
         sp._v = v;
         sp.style.setProperty("--sp", v);
@@ -1824,6 +2965,8 @@ activity({
       }
       const st = ctx.state();
       coolBar(tag, st, ctx.me);
+      ammoBars(tag, st, ctx.me); // (and the yellow ammo bar, the three stacked: meters.js)
+      laserMeter(tag, st, ctx.me, heldFn()); // (the Laser Rifle's heat: laserfx.js)
       peek(tag, st, ctx.me);
     }
     safeLook(ctx);
@@ -1834,6 +2977,7 @@ activity({
     const s = ctx.state();
     return {
       label: holdLabel(t, s, ctx, Date.now()),
+      faded: t.kind === "power" && powerNext(s) === "", // (nothing to fit, turn on or pour in: the button fades, the owner's, Nov 17 18:05Z)
       d: t.d,
       act: () =>
         TAPS.includes(t.kind)
@@ -1844,10 +2988,6 @@ activity({
     };
   },
   keydown(e, ctx) {
-    if (e.code === "KeyB") {
-      if (!e.repeat) buyAmmo(ctx);
-      return true;
-    }
     if (e.code === "Digit0" || e.code === "Numpad0") {
       if (!e.repeat) ctx.send({ t: "hang", k: "l4", do: "fl" });
       return true;
@@ -1871,23 +3011,23 @@ activity({
     return false;
   },
   propClass(p, s) {
-    if (["lamp", "sink", "post", "tv"].includes(p.kind)) return "off";
+    if (["lamp", "sink", "post", "tv"].includes(p.kind))
+      return powerOn(s) ? "" : "off"; // (the power box: l4ddpower.js)
     if (p.id === "door-front")
       return ((s.hang && s.hang.brd) || {}).front > 0 ? "" : "open"; // (boarded shut; open once the zombies tear the last board down)
     if (p.kind === "door") return "open";
     return "";
   },
-  light: (p, s, l) => (l && l.el ? false : undefined), // (the power is cut: only the fires and the candles shine)
+  light: (p, s, l) =>
+    (l && l.el && !powerOn(s)) || (p && p.hood && s.hang && s.hang.l4hood)
+      ? false
+      : undefined, // (the power is cut: only the fires and the candles shine, till the power box is mended. Downpour's hood-up car glows till it's first used)
   blocked: (x, y) => !playable(x, y), // (only the cabin and the deck; the deck's edge is the map's)
-  /* a wall turns see-through over a zombie behind it too, as over a duck (the owner's, Nov 15: you find your friends
-     and see what's coming) */
-  hiders: (ctx) => {
-    const out = [],
-      ins = ctx.world.inside;
-    for (const o of Z.values())
-      if (o.st !== 3 && !o.el.hidden && inCabin(o.x, o.y) === ins)
-        out.push([o.x, o.y]);
-    return out;
+  /* the dead are walked over (the owner's, Nov 17 20:37Z: "YOU CAN WALK OVER DEAD BODIES ... I CANT WALK OVER JUSTIN'S DEAD
+     BODY"): Justin dead for good, a duck that bled out (a ghost) */
+  passable(id, ctx) {
+    const p = P4(ctx.state(), id);
+    return !!p && !!(p.ex || p.gh);
   },
   crowd(x, y) {
     let d = 0;
@@ -1900,19 +3040,13 @@ activity({
     return d;
   },
   speed: (pos, ctx) =>
-    ((ctx.state().hang.l4ad || {})[ctx.me] || 0) > clockNow()
+    (((ctx.state().hang.l4ad || {})[ctx.me] || 0) > clockNow()
       ? 1
-      : SPEED * (upOf(ctx.state(), ctx.me).sp ? 1.1 : 1), // (Speed, from the Butler: 10% faster; an adrenaline shot: Duck Cabin's own walk, for 20 s)
-  sprint(on, dt) {
-    if (on && !tired && stamina > 0) {
-      stamina = Math.max(0, stamina - (dt * 1000) / L4.SPRINT);
-      if (stamina <= 0) tired = true;
-      return true;
-    }
-    if (!on) tired = false; // (it can sprint again as soon as Shift is let go)
-    stamina = Math.min(1, stamina + (dt * 1000) / L4.SPRINT);
-    return false;
-  },
+      : SPEED * (upOf(ctx.state(), ctx.me).sp ? 1.1 : 1)) * // (Speed, from the Butler: 10% faster; an adrenaline shot: Duck Cabin's own walk, for 20 s)
+    (dp() && inShallow(pos.x, pos.y) ? WADE : 1) * // (Downpour: the flood over the road, 30% slower: the owner's)
+    (dp() && inDeep(pos.x, pos.y) && pos.z <= heightAt(pos.x, pos.y) + 4
+      ? SWIM
+      : 1), // (… and its deep end swum, as slow as in the Hangout pool)
   spawn(ctx) {
     const s = ctx.state(),
       k = Math.max(0, s.seat.indexOf(ctx.me));

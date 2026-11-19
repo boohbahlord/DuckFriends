@@ -60,8 +60,11 @@ const glassDef = (id) =>
 /* round logs in rows R high, the rows lined up so one ends at y0 */
 const logDef = (id, y0 = 0, r = 17) =>
   F`<pattern id="${id}" width="240" height="${r}" patternUnits="userSpaceOnUse" y="${y0}"><rect width="240" height="${r}" fill="#a65a2a"/><rect y="${r * 0.12}" width="240" height="${r * 0.32}" fill="#d98d4e" opacity=".6"/><rect y="${r * 0.7}" width="240" height="${r * 0.3}" fill="#5e2a10" opacity=".5"/><path d="M0 ${r - 0.7}H240" stroke="#3a1906" stroke-width="1.5"/><path d="M30 ${r * 0.55}h34M122 ${r * 0.45}h22M182 ${r * 0.6}h40" stroke="#7a3a16" stroke-width="1" opacity=".6"/></pattern>`;
+/* the cabin's shingles: their color, a lighter band on each row and the dark lines between them. Slate grey, not green:
+   a green roof blended into the grass around it (the owner, Nov 17), and a red one into the logs */
+export const ROOF = { base: "#454c5c", hi: "#8a93a6", line: "#1d2029" };
 const shingleDef = (id, sy = 1, rot = 0) =>
-  F`<pattern id="${id}" width="56" height="48" patternUnits="userSpaceOnUse"${sy !== 1 || rot ? F` patternTransform="${rot ? `rotate(${rot})` : ""}${sy !== 1 ? ` scale(1 ${sy})` : ""}"` : ""}><rect width="56" height="48" fill="#2b5747"/><rect width="56" height="7" fill="#4f866d" opacity=".35"/><rect y="24" width="56" height="7" fill="#4f866d" opacity=".35"/><path d="M0 23H56M0 47H56" stroke="#14302a" stroke-width="2.6"/><path d="M14 0V23M42 0V23M0 24V47M28 24V47M56 24V47" stroke="#14302a" stroke-width="1.8"/></pattern>`;
+  F`<pattern id="${id}" width="56" height="48" patternUnits="userSpaceOnUse"${sy !== 1 || rot ? F` patternTransform="${rot ? `rotate(${rot})` : ""}${sy !== 1 ? ` scale(1 ${sy})` : ""}"` : ""}><rect width="56" height="48" fill="${ROOF.base}"/><rect width="56" height="7" fill="${ROOF.hi}" opacity=".35"/><rect y="24" width="56" height="7" fill="${ROOF.hi}" opacity=".35"/><path d="M0 23H56M0 47H56" stroke="${ROOF.line}" stroke-width="2.6"/><path d="M14 0V23M42 0V23M0 24V47M28 24V47M56 24V47" stroke="${ROOF.line}" stroke-width="1.8"/></pattern>`;
 const stoneStripDef = (id, hh = 16, y0 = 0) =>
   F`<pattern id="${id}" width="100" height="${hh}" patternUnits="userSpaceOnUse" y="${y0}"><rect width="100" height="${hh}" fill="#3a3c44"/><rect x="1.5" y="1.5" width="28" height="${hh - 3}" rx="4" fill="#80858f"/><rect x="32" y="1.5" width="22" height="${hh - 3}" rx="4" fill="#6d727c"/><rect x="56" y="1.5" width="26" height="${hh - 3}" rx="4" fill="#8f8a82"/><rect x="84" y="1.5" width="14.5" height="${hh - 3}" rx="4" fill="#757079"/></pattern>`;
 /* hand-laid stones filling a box */
@@ -738,7 +741,7 @@ export const CHIMNEY = { d0: 12, d1: 102, rise: 150 };
 export const chimneyTop = (wallH, roofH = 520, d = 1600) =>
   wallH + roofH * Math.min(1, CHIMNEY.d1 / (d / 2)) + CHIMNEY.rise;
 /* ---------- the cabin, outside ----------
-   Round orange-brown logs, a steep dark green shingle roof whose ridge runs east-west, a big A-frame gable over the back
+   Round orange-brown logs, a steep slate grey shingle roof whose ridge runs east-west, a big A-frame gable over the back
    door (the triangle window) facing the deck, a stone chimney, glowing windows, string lights along the eave, and a
    little porch roof over the front door on the north side (the door itself faces away). x positions are from the
    cabin's west wall. Box: w × (d + 290); its bottom is the south wall's foot (foot: y = h), the footprint's north

@@ -7,6 +7,7 @@
    3), and his body flies off the other way from where he was running, headless and torn apart (game.js: the jbomb fx).
    rules.js, l4ddrules.js and mgjrules.js each run their own Jaimes; this is what they share. */
 import { E_LINES } from "./hangout/justin.js";
+import { hitCode, PCRIT, DEATH } from "./wounds.js";
 
 export const BOMB = {
   chance: 0.05, // (1 Jaime in 20 has the bomb)
@@ -114,6 +115,23 @@ export const flyTo = (x, y, ux, uy, rx, ry) => {
     c = (v) => +Math.max(0, Math.min(1, v)).toFixed(4);
   return [c(x - (ux / l) * BOMB.fly * rx), c(y - (uy / l) * BOMB.fly * ry)];
 };
+/* a Jaime killed by a hit (not by his bomb): he falls over where he stood, the wound that killed him on him and a pool of
+   blood spreading under him (game.js jaimeFell), in place of the poof (the owner's, Nov 19 01:34Z: "any NPC that can
+   take damage", with Dead Ducks Arcade's feel). w: what killed him; a grenade tears him apart as it does a duck
+   (wounds.js DEATH), and now and then a weapon's crit blows his head off (PCRIT) */
+export const jaimeDead = (J, id, w, now) => ({
+  kind: "jdead",
+  x: J.x,
+  y: J.y,
+  who: [id],
+  face: (J.face || 1) < 0 ? -1 : 1,
+  w:
+    w === "grenade" || w === "glauncher"
+      ? DEATH.join("")
+      : hitCode("", w, Math.random() < (PCRIT[w] || 0)),
+  ...(J.z ? { hz: Math.round(+J.z || 0) } : {}),
+  t: now,
+});
 /* toward the Jaime Bomb's unlock (unlocks.js): { by } a Jaime sent, { id } a Jaime's hit on a duck, { got } a Jaime
    Bomb taken from Quacky Zombies' fireplace */
 export function jaimeCount(s, o) {

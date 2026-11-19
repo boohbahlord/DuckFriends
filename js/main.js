@@ -7,6 +7,7 @@ import { $, toast } from "./ui.js";
 import { start, current } from "./router.js";
 import { showJumps } from "./jumps.js";
 import { checkUnlocks, takeOffLocked } from "./unlocks.js";
+import "./homeapp.js"; // (early: it keeps the browser's install offer for the front page's button)
 import "./front.js";
 import { pixelOn, pxImgWatch } from "./pixel.js"; // (first: the pixel look's class goes on before anything draws)
 import { pxWatch } from "./pxdom.js";
@@ -19,6 +20,7 @@ import "./keynav.js";
 import { acct, onAccount, accountStart, signIn } from "./account.js";
 import { openFriends } from "./friends.js";
 import { showSplash } from "./splash.js";
+import { fullOnFirstTap, fsBtnHTML } from "./corners.js";
 import { loadingScreen, pageReady } from "./loading.js";
 
 applySettings();
@@ -52,6 +54,7 @@ setTimeout(checkUnlocks, 2500);
 
 /* ---------- Sign in (top right); once signed in it opens Friends, with a count of invites and requests ---------- */
 const corner = $("#signin");
+corner.insertAdjacentHTML("beforebegin", fsBtnHTML()); // (full screen, left of Sign in / Friends)
 const paintCorner = () => {
   corner.classList.remove("off");
   if (acct.uid) {
@@ -79,7 +82,17 @@ addEventListener("duck-profile", () => {
 
 start("front");
 showSplash();
+fullOnFirstTap(); // (a phone: the first tap on the start screen goes full screen)
+/* the installed app: sw.js lets the browser offer "Install" (a phone's home screen, a computer's apps) */
+if ("serviceWorker" in navigator && isSecureContext)
+  navigator.serviceWorker
+    .register("sw.js", { updateViaCache: "none" })
+    .catch(() => {});
 loadingScreen({ duck: profile.duck, ready: pageReady }); // (the page's own loading screen, in index.html, goes when the first screen is drawn)
+window.dfStarted = 1; // (the page's way out of a stuck start, in index.html, stands down)
+try {
+  sessionStorage.removeItem("df-retry");
+} catch {}
 setTimeout(accountStart, 300);
 setTimeout(askConnection, 600); // once, on the first visit   // a device that signed in before connects after the first screen is up
 

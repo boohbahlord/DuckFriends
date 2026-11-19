@@ -1,0 +1,306 @@
+<!doctype html>
+<!-- Dead Ducks Arcade's second map, from above: what layout.js and stationmap.js build (walls, holes, boards, the
+     forest, the road and its flood), and where a duck can walk from the start (a flood fill over standable()). -->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Second map, from above</title>
+    <style>
+      body {
+        margin: 0;
+        background: #15171c;
+        color: #ddd;
+        font: 13px sans-serif;
+      }
+      #key {
+        padding: 8px 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 16px;
+      }
+      #key i {
+        display: inline-block;
+        width: 14px;
+        height: 10px;
+        margin-right: 5px;
+        vertical-align: -1px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="key"></div>
+    <canvas id="c"></canvas>
+    <script type="module">
+      import * as L from "../js/hangout/layout.js";
+      import * as GS from "../js/hangout/stationmap.js";
+      L.useMode("l4dd", "downpour");
+      const S = Number(new URLSearchParams(location.search).get("s") || 0.2);
+      const c = document.getElementById("c"),
+        g = c.getContext("2d");
+      c.width = L.W * S;
+      c.height = L.H * S;
+      g.scale(S, S);
+      const rect = (r, fill, stroke, lw = 6) => {
+        g.beginPath();
+        g.rect(r[0], r[1], r[2] - r[0], r[3] - r[1]);
+        if (fill) {
+          g.fillStyle = fill;
+          g.fill();
+        }
+        if (stroke) {
+          g.strokeStyle = stroke;
+          g.lineWidth = lw;
+          g.stroke();
+        }
+      };
+      const COL = {
+        grass: "#23331f",
+        forest: "#14200f",
+        road: "#3a3a3e",
+        shallow: "rgba(90,140,200,.55)",
+        deep: "rgba(40,80,170,.85)",
+        reach: "rgba(255,216,77,.2)",
+        floor: "#4a3d30",
+        wall: "#e8e8e8",
+        tree: "#7a5532",
+        thing: "#9aa0a8",
+        walk: "#4cd964",
+        board: "#ff4040",
+        fence: "#c9b27a",
+      };
+      // the ground: forest everywhere, the open ground inside the line, the road, the floors
+      g.fillStyle = COL.forest;
+      g.fillRect(0, 0, L.W, L.H);
+      g.fillStyle = COL.grass;
+      for (const P of [GS.TOP, GS.BOT]) {
+        g.beginPath();
+        P.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y)));
+        g.closePath();
+        g.fill();
+      }
+      rect([0, GS.ROAD.y0, L.W, GS.ROAD.y1], COL.road);
+      g.strokeStyle = "#bbb";
+      g.lineWidth = 6;
+      g.setLineDash([60, 60]);
+      g.beginPath();
+      g.moveTo(0, GS.ROAD.mid);
+      g.lineTo(L.W, GS.ROAD.mid);
+      g.stroke();
+      g.setLineDash([]);
+      rect(GS.SHALLOW, COL.shallow);
+      rect(GS.DEEP, COL.deep);
+      for (const B of [GS.STATION, GS.CHAPEL])
+        rect([B.x0, B.y0, B.x1, B.y1], COL.floor);
+      // where a duck can walk from the start, and where zombies can walk from past the fences
+      const STEP = 20,
+        NX = Math.ceil(L.W / STEP),
+        NY = Math.ceil(L.H / STEP);
+      function fill(starts, zombie) {
+        const seen = new Uint8Array(NX * NY),
+          q = [];
+        for (const [x, y] of starts) {
+          const i = Math.floor(x / STEP),
+            j = Math.floor(y / STEP);
+          seen[j * NX + i] = 1;
+          q.push([i, j]);
+        }
+        while (q.length) {
+          const [i, j] = q.pop(),
+            x = i * STEP + STEP / 2,
+            y = j * STEP + STEP / 2,
+            z = L.heightAt(x, y);
+          for (const [di, dj] of [
+            [1, 0],
+            [-1, 0],
+            [0, 1],
+            [0, -1],
+          ]) {
+            const a = i + di,
+              b = j + dj;
+            if (a < 0 || b < 0 || a >= NX || b >= NY || seen[b * NX + a])
+              continue;
+            const nx = a * STEP + STEP / 2,
+              ny = b * STEP + STEP / 2;
+            if (!L.standable(nx, ny, z, L.STEP + 2, null, zombie)) continue;
+            seen[b * NX + a] = 1;
+            q.push([a, b]);
+          }
+        }
+        return seen;
+      }
+      const sp = L.spawnAt(0),
+        duck = fill([[sp.x, sp.y]], false);
+      /* the zombies' ground: from just inside each fence's climbing spot (the forest line stops nobody now: the owner's,
+         Nov 17 03:34Z, so a zombie walks the forest too) */
+      const zomb = fill(
+        GS.FENCES.map((f) => [f.x - f.out * 80, (f.climb[0] + f.climb[1]) / 2]),
+        true,
+      );
+      g.fillStyle = COL.reach;
+      let woods = 0,
+        lost = 0;
+      for (let j = 0; j < NY; j++)
+        for (let i = 0; i < NX; i++)
+          if (duck[j * NX + i]) {
+            const x = i * STEP + STEP / 2,
+              y = j * STEP + STEP / 2;
+            g.fillRect(i * STEP, j * STEP, STEP, STEP);
+            if (!GS.inOpen(x, y)) woods++;
+            if (!zomb[j * NX + i]) lost++; // (a duck's spot no zombie reaches)
+          }
+      // the forest line: only an idea of how thick the trees grow
+      g.setLineDash([30, 24]);
+      g.strokeStyle = "rgba(255,255,255,.55)";
+      g.lineWidth = 4;
+      for (const P of [GS.TOP, GS.BOT]) {
+        g.beginPath();
+        P.forEach(([x, y], k) => (k ? g.lineTo(x, y) : g.moveTo(x, y)));
+        g.stroke();
+      }
+      g.setLineDash([]);
+      // the props
+      for (const p of L.PROPS) {
+        const r = [p.x, p.y, p.x + p.w, p.y + p.d];
+        if (p.kind === "tree") {
+          // (its trunk, and its crown faintly round it)
+          const b = p.block || r,
+            cx = (b[0] + b[2]) / 2,
+            cy = (b[1] + b[3]) / 2;
+          g.fillStyle = "rgba(60,110,50,.3)";
+          g.beginPath();
+          g.arc(cx, cy, 135 * (0.9 + (p.big - 0.85) * 0.6), 0, 7);
+          g.fill();
+          g.fillStyle = COL.tree;
+          g.beginPath();
+          g.ellipse(cx, cy, (b[2] - b[0]) / 2, (b[3] - b[1]) / 2, 0, 0, 7);
+          g.fill();
+        } else if (p.kind === "wall") rect(r, COL.wall);
+        else if (p.kind === "fence") rect(r, COL.fence);
+        else if (p.kind === "canopy")
+          (g.setLineDash([40, 30]),
+            rect(r, null, "#c8c8c8", 6),
+            g.setLineDash([]));
+        else if (p.kind === "fallen") {
+          const F = p.fallen;
+          g.strokeStyle = COL.tree;
+          g.lineWidth = 2 * F.half;
+          g.lineCap = "round";
+          g.beginPath();
+          g.moveTo(F.x0, F.y0);
+          g.lineTo(F.x1, F.y1);
+          g.stroke();
+          g.lineCap = "butt";
+        } else if (p.kind === "hole") {
+          const o = p.hole,
+            hr =
+              o.axis === "x"
+                ? [o.a, o.at - 22, o.b, o.at + 22]
+                : [o.at - 22, o.a, o.at + 22, o.b];
+          rect(hr, p.boarded ? COL.board : COL.walk);
+        } else if (p.kind === "priest") {
+          g.fillStyle = "#b07ae0";
+          g.beginPath();
+          g.arc(p.x + 30, p.y + 20, 34, 0, 7);
+          g.fill();
+        } else if (p.kind === "l4angel") rect(r, "#ff5a8a");
+        else if (p.kind === "l4power") rect(r, "#ffd84d");
+        else if (p.kind === "car" && p.hood) {
+          g.fillStyle = "rgba(255,178,74,.25)";
+          g.beginPath();
+          g.ellipse(3470 * GS.K, 2090 * GS.K, 330 * GS.K, 230 * GS.K, 0, 0, 7);
+          g.fill();
+          rect(r, "#c98a3a");
+        } else if (p.layer !== "none" && p.solid) rect(r, COL.thing);
+      }
+      // where zombies climb the fences
+      for (const f of GS.FENCES)
+        rect(
+          [
+            f.x + f.out * 40 - 14,
+            f.climb[0],
+            f.x + f.out * 40 + 14,
+            f.climb[1],
+          ],
+          "#ff9a3a",
+        );
+      // the power box parts' spots
+      g.font = `bold ${70 * GS.K}px sans-serif`;
+      g.textAlign = "center";
+      for (const s of GS.PART_SPOTS) {
+        g.fillStyle = "#ff5a5a";
+        g.beginPath();
+        g.arc(s.x, s.y, 22, 0, 7);
+        g.fill();
+        g.fillStyle = "#fff";
+        g.fillText(s.can.split("").join(" "), s.x, s.y - 34);
+      }
+      // labels
+      g.font = `bold ${90 * GS.K}px sans-serif`;
+      g.fillStyle = "rgba(255,255,255,.85)";
+      for (const [t, x, y] of [
+        ["GAS STATION", 2300, 470],
+        ["CHAPEL", 2300, 3560],
+        ["deep flood", 500, 3290],
+        ["shallow flood (slow)", 2250, 3290],
+        ["Priest", 2550, 5270],
+        ["hood up", 3520, 2310],
+        ["generator", 3750, 960],
+        ["tower", 3150, 3820],
+      ])
+        g.fillText(t, x * GS.K, y * GS.K);
+      const items = [
+        [COL.wall, "wall"],
+        [COL.walk, "hole anyone walks through"],
+        [COL.board, "boarded hole (zombies only)"],
+        ["#ff9a3a", "zombies climb the fence here"],
+        [COL.tree, "tree trunk (its crown faintly round it)"],
+        [
+          "rgba(255,255,255,.55)",
+          "the forest line (dashed: trees thin out inside it)",
+        ],
+        [COL.shallow, "shallow flood"],
+        [COL.deep, "deep flood (no ducks)"],
+        ["#ffd84d", "power box"],
+        ["#ff5a8a", "Angel machine"],
+        ["#ff5a5a", "part spot (T toolbox, G gas, F fuse, S switch)"],
+        ["rgba(255,216,77,.5)", "where a duck can walk"],
+      ];
+      document.getElementById("key").innerHTML =
+        items
+          .map(([c, t]) => `<span><i style="background:${c}"></i>${t}</span>`)
+          .join("") +
+        `<span>${L.PROPS.filter((p) => p.kind === "tree").length} trees; ${woods} walkable cells in the forest; ${lost} cells a duck reaches and a zombie doesn't</span>`;
+      window.DONE = {
+        woods,
+        lost,
+        spots: GS.LINE_SPOTS.filter(
+          ([x, y]) =>
+            zomb[Math.floor(y / STEP) * NX + Math.floor(x / STEP)] &&
+            L.standable(x, y, 0, L.STEP, null, true),
+        ).length,
+        lineSpots: GS.LINE_SPOTS.length,
+        reach: duck.reduce((n, v) => n + v, 0),
+        start: [sp.x, sp.y],
+        at: Object.fromEntries(
+          [
+            ["storeroom", 1350, 1030],
+            ["restroom", 1350, 1430],
+            ["aisles", 2300, 1000],
+            ["pumps", 2300, 2350],
+            ["road", 2300, 3050],
+            ["chapel", 2300, 4500],
+            ["altar", 2300, 5420],
+            ["powerE", 3834, 1207],
+            ["hood", 3270, 2090],
+          ].map(([n, x, y]) => [
+            n,
+            duck[
+              Math.floor((y * GS.K) / STEP) * NX + Math.floor((x * GS.K) / STEP)
+            ],
+          ]),
+        ),
+        trees: L.PROPS.filter((p) => p.kind === "tree").length,
+      };
+    </script>
+  </body>
+</html>

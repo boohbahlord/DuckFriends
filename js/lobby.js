@@ -4,6 +4,7 @@
    them saying what the row under the pointer does. Right: the party, one player card per row; click your own to rename it; right-click any card for its
    options. Bottom left: the keys (the arrow keys move around the lobby, Enter picks, Shift+Enter right-clicks). The X at
    the top right leaves the room. */
+import { fsBtnHTML } from "./corners.js";
 import { register, go, leaveTo } from "./router.js";
 import {
   el,
@@ -134,13 +135,15 @@ function paint() {
   }
   const bots = s.seat.filter((id) => s.players[id].bot).length;
   $(".lobby-sub", S).textContent = [
-    s.test
-      ? "TEST room"
-      : s.open
-        ? "Open room"
-        : R.passkey
-          ? `Private room · passkey: ${R.passkey}`
-          : "Private room",
+    s.solo
+      ? "Single Player · on this device"
+      : s.test
+        ? "TEST room"
+        : s.open
+          ? "Open room"
+          : R.passkey
+            ? `Private room · passkey: ${R.passkey}`
+            : "Private room",
     bots
       ? `${bots} computer${bots === 1 ? "" : "s"}, acting after ${s.options.botWait} s`
       : "",
@@ -349,6 +352,9 @@ function onState(s) {
       lastCount = left;
     }
   } else {
+    // the countdown ran out into the votes (Vote Mode & Map): its last tone, if the vote came before I saw the zero
+    if (counting && lastCount > 0 && s.phase === "countdown" && s.vt)
+      sfx.count(true);
     if (counting) brighten(); // (cancelled: the screen comes back)
     counting = false;
     lastCount = -1;
@@ -478,7 +484,7 @@ register("lobby", {
       setTimeout(() => go("game", R));
     }
     S = el(`<section class="screen lobby docked">
-      <header class="lbar">${musicBarHTML()}<button type="button" class="btn ghost iconbtn lobby-pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button><button type="button" class="win-x lobby-x" aria-label="Leave the room" data-tip="Leave the room">×</button></header>
+      <header class="lbar">${musicBarHTML()}${fsBtnHTML()}<button type="button" class="btn ghost iconbtn lobby-pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button><button type="button" class="win-x lobby-x" aria-label="Leave the room" data-tip="Leave the room">×</button></header>
       <div class="gmain lmain">
       <div class="lobby-left">
         <p class="dod-pop" role="status" hidden></p>

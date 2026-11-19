@@ -4,9 +4,10 @@
    on it (Duck Cabin as the real map, one picture of all of it), or a setting's description. The host (or sudo) picks;
    everyone else looks. With Vote Mode & Map on, the game and the map are voted on in their own windows as the game
    starts (vote.js). */
+import { SB_WORLDS, SB_WORLD_NAMES } from "./sandboxrules.js";
 import { esc, openWindow, setHTML } from "./ui.js";
 import { artBackdrop } from "./art.js";
-import { MODES, modeOf, CABIN_MODES, CATS } from "./modes.js";
+import { modesFor, modeOf, CABIN_MODES, CATS } from "./modes.js";
 import { MAPS, MAP_VARIANTS, mapName, mapForm } from "./maps.js";
 import {
   OPTIONS_DEFAULT,
@@ -629,11 +630,24 @@ const BY_MODE = {
   ],
   l4dd: [
     {
-      k: "l4r16",
-      n: "Round 16 Start",
-      c: ON_OFF,
+      k: "l4start",
+      n: "Start on round",
+      c: [
+        [1, "1"],
+        [5, "5"],
+        [9, "9"],
+        [13, "13"],
+        [21, "21"],
+      ],
       cat: "round",
-      d: "Once everyone is ready, the game skips to round 16, and every duck starts with 3,000 points. It counts toward its own stats, Round 16 Start, not the usual ones.",
+      d: "Every game starts in round 0. Once everyone is ready it goes on to this round, and every duck gets bonus points in round 0: 750 for round 5, 1,750 for round 9, 2,500 for round 13, 5,000 for round 21. From 13 on it counts toward its own stats, Round 16 Start. In round 0 the ducks can vote to change it.",
+    },
+    {
+      k: "wildJustin",
+      n: "Justin in Duck Cabin",
+      c: ON_OFF,
+      cat: "rules",
+      d: "On: Justin is out in Duck Cabin too, as he is on Downpour. He never has a weapon, and zombies go for him. Downpour always has him.",
     },
   ],
   vdd: [
@@ -907,7 +921,7 @@ export function infoUnder(W, at) {
 /* which games a setting is shown for: the picked one, or every game Vote Game Mode or Random can land on */
 const games = (s) =>
   s.options.modePick === "vote"
-    ? MODES.map((m) => m.id)
+    ? modesFor(s).map((m) => m.id)
     : s.options.modePick === "random"
       ? randomPool(s)
       : [s.options.mode || "aod"];
@@ -981,7 +995,10 @@ function mapPic(s, id, mode) {
    picked map. The screenshots were taken with the map left out, so any map shows through; Duck Cabin's games are
    screenshots of the cabin itself */
 function gamePic(s, mode) {
-  const shot = `<image href="assets/modes/${mode}.webp?v=2" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>`;
+  const shot =
+    mode === "sandbox"
+      ? "" // (Sandbox: its map alone, till it has a screenshot of its own)
+      : `<image href="assets/modes/${mode}.webp?v=2" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>`;
   if (CABIN_MODES.includes(mode))
     return `<svg class="gs-map" viewBox="0 0 480 270" role="img" aria-label="${esc(modeOf(mode).name)}">${shot}</svg>`;
   const map =
@@ -991,10 +1008,16 @@ function gamePic(s, mode) {
 }
 
 /* ---------- the screen ---------- */
-const openFolds = new Set(["host:rules", "mode:rules"]); // (the categories left open, from one visit to the next)
+const openFolds = new Set([
+  "host:rules",
+  "mode:rules",
+  "cat:social",
+  "cat:comp",
+  "cat:special",
+]); // (the categories left open, from one visit to the next)
 /* the Modes in Random & Vote row's value: All, or how many are on */
 const poolVal = (s) => {
-  const all = MODES,
+  const all = modesFor(s),
     off = (s.options.modesOff || []).filter((id) =>
       all.some((m) => m.id === id),
     );
@@ -1054,6 +1077,13 @@ export function openGameSettings(R, start = null) {
         ? "Random"
         : mapName(s.options.map);
 
+  /* Gore and Heavy effects: a "Low" chip by their name while my own Low graphics (Settings → Performance: Graphics Low,
+     Data saving or Poor connection) lighten them on my screen, whatever the room picked (fx.js) */
+  const lowChip = (k) =>
+    (k === "noGore" || k === "noFx") &&
+    document.documentElement.classList.contains("low")
+      ? ` <span class="gs-low" data-tip="${esc(k === "noGore" ? "Your Low graphics: less blood on your screen, and it goes sooner." : "Your Low graphics: no smoke or screen shake on your screen, only a tiny muzzle flash.")}">Low</span>`
+      : "";
   /* a setting as the old Game options showed it: its name over its choices. mr: the game mode whose Mode Rule this is
      (with Same as General first) */
   const tiles = (s, o, mr = "") => {
@@ -1071,7 +1101,7 @@ export function openGameSettings(R, start = null) {
           ? o.c.filter((x) => x[0] !== 6000)
           : o.c),
       ];
-    return `<div class="sect gs-set${faded ? " faded" : ""}" data-d="${esc(o.k)}"${mr ? ` data-mr="${esc(mr)}"` : ""}><h3>${esc(o.n)}</h3><div class="row">${c
+    return `<div class="sect gs-set${faded ? " faded" : ""}" data-d="${esc(o.k)}"${mr ? ` data-mr="${esc(mr)}"` : ""}><h3>${esc(o.n)}${lowChip(o.k)}</h3><div class="row">${c
       .map(
         ([v, n]) =>
           `<button type="button" class="tile" data-k="${o.k}" data-v="${v}"${mr ? ` data-mr="${esc(mr)}"` : ""} aria-pressed="${cur === v}"${ro}>${esc(n)}</button>`,
@@ -1139,15 +1169,17 @@ export function openGameSettings(R, start = null) {
         mid = !["lobby", "over", "countdown"].includes(s.phase);
       return (
         head("Modes in Random & Vote") +
-        `<div class="arm-body"><ul class="arm-list">${MODES.map((m) =>
-          row(
-            `data-pool="${esc(m.id)}"`,
-            m.name,
-            off.includes(m.id) ? "Off" : "On",
-            !off.includes(m.id),
-            !host() || (mid && m.id === o.mode),
-          ),
-        ).join("")}</ul></div>`
+        `<div class="arm-body"><ul class="arm-list">${modesFor(s)
+          .map((m) =>
+            row(
+              `data-pool="${esc(m.id)}"`,
+              m.name,
+              off.includes(m.id) ? "Off" : "On",
+              !off.includes(m.id),
+              !host() || (mid && m.id === o.mode),
+            ),
+          )
+          .join("")}</ul></div>`
       );
     }
     if (page === "saves") {
@@ -1168,18 +1200,33 @@ export function openGameSettings(R, start = null) {
         head("Vote Mode & Map") +
         `<div class="arm-body"><ul class="arm-list">${row('data-pick="vote" data-v="vote"', "Vote Mode & Map", voting(s) ? "On" : "Off", voting(s), !host() || dodOn(s, "vote"))}</ul>${voting(s) ? VOTE_SETS.map((x) => tiles(s, x)).join("") : ""}</div>`
       );
+    /* Game mode: each category (Social, Social Competitive, Special) is a heading with an arrow that folds its modes
+       away; they start open, with their modes listed under them (owner, Nov 16 22:36Z) */
     if (page === "mode") {
-      const cur = modeOf(o.mode).cat;
+      const dis = !host() || dodOn(s, "vote");
       return (
         head("Game mode") +
-        `<div class="arm-body"><ul class="arm-list">${row('data-pick="mode" data-v="random"', "Random", "", o.modePick === "random", !host() || dodOn(s, "vote"))}${LINE}${CATS.map(
-          ([id, name]) =>
-            row(
-              `data-cat="${id}"`,
-              name,
-              !o.modePick && cur === id ? modeOf(o.mode).name : "",
-            ),
-        ).join("")}</ul></div>`
+        `<div class="arm-body"><ul class="arm-list">${row('data-pick="mode" data-v="random"', "Random", "", o.modePick === "random", dis)}${LINE}</ul>${CATS.filter(
+          ([id]) => modesFor(s).some((m) => m.cat === id),
+        )
+          .map(
+            ([id, name]) =>
+              `<details class="arm-fold gs-fold gs-cat" data-fold="cat:${id}"${openFolds.has("cat:" + id) ? " open" : ""}><summary>${esc(name)}</summary><ul class="arm-list">${modesFor(
+                s,
+              )
+                .filter((m) => m.cat === id)
+                .map((m) =>
+                  row(
+                    `data-mode="${m.id}"`,
+                    m.name,
+                    "",
+                    !o.modePick && o.mode === m.id,
+                    dis,
+                  ),
+                )
+                .join("")}</ul></details>`,
+          )
+          .join("")}</div>`
       );
     }
     if (page.startsWith("cat:")) {
@@ -1187,9 +1234,8 @@ export function openGameSettings(R, start = null) {
         dis = !host() || dodOn(s, "vote");
       return (
         head(CATS.find((c) => c[0] === cat)[1]) +
-        `<div class="arm-body"><ul class="arm-list">${MODES.filter(
-          (m) => m.cat === cat,
-        )
+        `<div class="arm-body"><ul class="arm-list">${modesFor(s)
+          .filter((m) => m.cat === cat)
           .map((m) =>
             row(
               `data-mode="${m.id}"`,
@@ -1223,15 +1269,28 @@ export function openGameSettings(R, start = null) {
       const dis = !host() || dodOn(s, "vote");
       return (
         head("Map") +
-        `<div class="arm-body"><ul class="arm-list">${row('data-pick="map" data-v="random"', "Random", "", o.mapPick === "random", dis)}${row('data-map="cabin"', "Duck Cabin", "", o.map === "cabin", dis)}${LINE}${MAPS.map(
-          ([id, name]) =>
-            row(
-              `data-map="${id}"`,
-              name,
-              "",
-              !o.mapPick && picked(o) === id,
-              dis,
-            ),
+        `<div class="arm-body"><ul class="arm-list">${row('data-pick="map" data-v="random"', "Random", "", o.mapPick === "random", dis)}${
+          o.mode === "sandbox"
+            ? Object.keys(SB_WORLDS)
+                .map((k) =>
+                  row(
+                    `data-sb="${k}"`,
+                    SB_WORLD_NAMES[k],
+                    "",
+                    !o.mapPick && o.sbMap === k,
+                    dis,
+                  ),
+                )
+                .join("") // (Sandbox: the maps with a world of their own, walked whole: sandboxrules.js)
+            : `${row('data-map="cabin"', "Duck Cabin", "", o.map === "cabin" && o.l4map !== "downpour", dis)}${row('data-map="downpour"', "Downpour", "", o.mode === "l4dd" && o.l4map === "downpour", dis)}`
+        }${LINE}${MAPS.map(([id, name]) =>
+          row(
+            `data-map="${id}"`,
+            name,
+            "",
+            !o.mapPick && picked(o) === id,
+            dis,
+          ),
         ).join("")}${LINE}${MAP_VARIANTS.map(([id, name]) =>
           row(
             `data-map="${id}"`,
@@ -1272,7 +1331,7 @@ export function openGameSettings(R, start = null) {
       .join("");
     return (
       head("Game Options") +
-      `<div class="arm-body gs-opts">${host() ? "" : '<p class="small dim gs-ro">Only the host (or sudo) changes these.</p>'}<h3 class="gs-h">Host Settings</h3>${folds(s, hostList, "host", { more: room(s) })}<h3 class="gs-h gs-big">Game mode Settings</h3>${own || `<p class="small dim gs-none">${esc(gs.length > 1 ? "These games have no settings of their own." : `${modeOf(gs[0]).name} has no settings of its own.`)}</p>`}${host() ? '<p class="acts"><button type="button" class="btn ghost" data-a="reset">Defaults</button></p>' : ""}</div>`
+      `<div class="arm-body gs-opts">${host() ? "" : '<p class="small dim gs-ro">Only the host (or sudo) changes these.</p>'}<h3 class="gs-h">Host Settings</h3>${folds(s, hostList, "host", { more: s.solo ? "" : room(s) })}<h3 class="gs-h gs-big">Game mode Settings</h3>${own || `<p class="small dim gs-none">${esc(gs.length > 1 ? "These games have no settings of their own." : `${modeOf(gs[0]).name} has no settings of its own.`)}</p>`}${host() ? '<p class="acts"><button type="button" class="btn ghost" data-a="reset">Defaults</button></p>' : ""}</div>`
     );
   }
 
@@ -1328,7 +1387,8 @@ export function openGameSettings(R, start = null) {
     if (p.kind === "cat")
       return card(
         CATS.find((c) => c[0] === p.id)[1],
-        MODES.filter((m) => m.cat === p.id)
+        modesFor(s)
+          .filter((m) => m.cat === p.id)
           .map((m) => m.name)
           .join(", "),
       );
@@ -1390,7 +1450,8 @@ export function openGameSettings(R, start = null) {
       W,
       (peekSel && menu.querySelector(peekSel)) ||
         menu.querySelector('.arm-row[aria-pressed="true"]') ||
-        (page === "mode" && menu.querySelector(`[data-cat="${cat}"]`)) ||
+        (page === "mode" &&
+          menu.querySelector(`[data-fold="cat:${cat}"] > summary`)) ||
         (!page && menu.querySelector('[data-p="mode"]')),
     );
   };
@@ -1559,7 +1620,15 @@ export function openGameSettings(R, start = null) {
             if (boss) send({ mode: r.dataset.mode });
             return;
           }
+          if (r.dataset.sb) {
+            if (boss) send({ sbMap: r.dataset.sb }); // (Sandbox on a world: rules.js sbMapPicked)
+            return;
+          }
           if (r.dataset.map === "cabin") return go("cabin"); // (Duck Cabin's own games, on a page of their own)
+          if (r.dataset.map === "downpour") {
+            if (boss) send({ mode: "l4dd", l4map: "downpour" }); // (Downpour: Dead Ducks Arcade's own map; its map vote still comes first, the owner's, Nov 17)
+            return;
+          }
           if (r.dataset.map && boss) {
             const f = mapForm(r.dataset.map); // (Vote Maps and Random go off: rules.js)
             send(

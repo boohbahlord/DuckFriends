@@ -243,7 +243,16 @@ export const BUTLER = {
   face: { id: "monocle" },
   outfit: { id: "tux" },
 };
+/* Downpour's Priest (he does the Butler's job in the chapel): an old pale duck in a black cassock with the Roman collar,
+   little round glasses */
+export const PRIEST = {
+  color: "#e9e4d6",
+  face: { id: "glasses" },
+  outfit: { id: "priest" },
+};
 export const justinSVG = (o = {}) => duckSVG(JUSTIN, { title: "Justin", ...o });
+export const priestSVG = (o = {}) =>
+  duckSVG(PRIEST, { title: "The Priest", ...o });
 export const butlerSVG = (o = {}) =>
   duckSVG(BUTLER, { title: "Justin's Butler", ...o });
 export const shadowSVG = (o = {}) =>

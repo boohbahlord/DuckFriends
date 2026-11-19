@@ -14,7 +14,8 @@
    Trivia: everyone writes a question; for each one, walk onto the right answer (or type one and its writer grades it).
    Hangout: no rounds, no winners, no stats; everyone hangs out in Duck Cabin (couches, the piano, the chalk floor, the
    guestbook, the stage, the pool, the trampoline, soccer, the campfire) until the room goes back to the lobby.
-   Quacky Zombies: Duck Cabin with the power cut; zombie ducks come in round after round, until nobody is standing. */
+   Quacky Zombies: Duck Cabin with the power cut; zombie ducks come in round after round, until nobody is standing.
+   Sandbox: no rounds, no end; on any map, mess around (sandboxrules.js, sandbox.js). */
 import { esc } from "./ui.js";
 
 export const MODES = [
@@ -96,8 +97,19 @@ export const MODES = [
     name: "Dead Ducks Arcade",
     tip: "The power's out in Duck Cabin and zombie ducks are coming, round after round. Board up the doors and holes, revive each other, and see how long you last. It can only be played on the Duck Cabin map.",
   },
+  {
+    id: "sandbox",
+    cat: "special",
+    name: "Sandbox",
+    tip: "No rounds and no end: mess around on any map. Hold C for the cheat sheet. Leave Sandbox at the top left when you're done.",
+  },
 ];
 export const modeOf = (id) => MODES.find((m) => m.id === id) || MODES[0];
+/* Single Player (the owner's, Nov 18): the room on the device with no internet plays only these, and everything that
+   lists the games (the votes, Random, Game Settings) lists only these there */
+export const SOLO_MODES = ["hang", "l4dd", "mgj", "sandbox"];
+export const modesFor = (s) =>
+  s && s.solo ? MODES.filter((m) => SOLO_MODES.includes(m.id)) : MODES;
 export const CABIN_MODES = ["hang", "l4dd"]; // (Duck Cabin's own games: picking one picks the map)
 /* the three kinds of game on the Game Settings screen's Game mode page. Duck Cabin's own games sit with the others
    (Hangout with the social games, Quacky Zombies by Mad God Justin with the special ones); the Map page's Duck Cabin
@@ -208,5 +220,10 @@ ${[
 <ellipse cx="14" cy="14.4" rx="10.6" ry="8.6" fill="#3f7a34" stroke="#1c1c28" stroke-width="1.2"/><path d="M23.6 14.6l5 1.2-5 2.4z" fill="#b06a1e" stroke="#1c1c28" stroke-width=".9" stroke-linejoin="round"/>
 <path d="M16 9.6l3.6 3.6M19.6 9.6L16 13.2" stroke="#1c1c28" stroke-width="1.5" stroke-linecap="round"/><path d="M8.4 18.4c2.4 1.4 5.6 1.4 8 .2" stroke="#1c1c28" stroke-width="1.1" fill="none" stroke-linecap="round"/>
 <path d="M3 3.4l3.4 4.2M6.6 2.4l.4 4.6M1.6 7.4l4 1.4" stroke="#c0182b" stroke-width="1.3" stroke-linecap="round"/></svg>`;
+  if (m.id === "sandbox")
+    return `<svg viewBox="0 0 30 24" width="${size}" height="${size * 0.8}" role="img" aria-label="${esc(m.name)}">
+<path d="M2 12H28V21.4C28 22.3 27.3 23 26.4 23H3.6C2.7 23 2 22.3 2 21.4Z" fill="#e8c27a" stroke="#1c1c28" stroke-width="1.2" stroke-linejoin="round"/><path d="M2 12C6 9.6 9.4 10.8 13 12C17 13.2 22 9.8 28 12" fill="#f4d998" stroke="#1c1c28" stroke-width="1.1" stroke-linejoin="round"/>
+<rect x="5" y="3" width="6.4" height="6.4" rx="1.2" fill="#2fa4ff" stroke="#1c1c28" stroke-width="1"/><circle cx="16.4" cy="6.4" r="3.4" fill="#ef3b3b" stroke="#1c1c28" stroke-width="1"/><path d="M23.6 2.4L27.4 9.4H19.8Z" fill="#37d421" stroke="#1c1c28" stroke-width="1" stroke-linejoin="round"/>
+<circle cx="8" cy="17.4" r="1" fill="#c89a4a"/><circle cx="15" cy="19.4" r="1" fill="#c89a4a"/><circle cx="22.4" cy="16.8" r="1" fill="#c89a4a"/></svg>`;
   return ""; // (Agree or Disagree's symbol is art.js's symbolSVG)
 }

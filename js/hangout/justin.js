@@ -269,9 +269,9 @@ const WALK = 300,
   SPRINT = 620;
 const SHOOT_ODDS = 0.15,
   SHOOT_AFTER = 4000; // E, then 4 seconds later, sometimes a shot
-const GOD_EVERY = [120, 240],
+export const GOD_EVERY = [120, 240],
   STRIKE = 1600; // seconds between his strikes from the sky; ms from his line to the strike
-const SAY_EVERY = [45, 90],
+export const SAY_EVERY = [45, 90],
   RANT_EVERY = [840, 1560],
   DRINK_EVERY = [360, 600],
   HOTDOG_EVERY = [120, 240]; // seconds
@@ -281,6 +281,9 @@ const RANGE = 360,
 const LINE = 4000,
   HEARD = 5000; // each shadow line: shown this long, and the next one this long after (never two bubbles at once); E on him: he stays still at least this long
 const sec = (rand, [a, b]) => (a + rand() * (b - a)) * 1000;
+/* his stroll: off to a spot, then he stands about there until WANDER seconds have gone by since he set off (Dead Ducks
+   Arcade's Justin strolls the same way: l4ddbots.js wanderSpot) */
+export const WANDER = [10, 40];
 const CAKE_EAT_MS = 2500; // (as Mad God Justin's)
 /* where the zebra cake is (world px): as mgjrules.js' cakeAt */
 const cakeAt = (k, now) => {
@@ -404,6 +407,8 @@ const SELF_REVIVE = 120000; // nobody revived him: up by himself after 2 minutes
 /* up again (E on him, or by himself): the drinking line and a glass, or the shadow duck's lines */
 function revive(me, c) {
   me.a = "";
+  delete me.wc;
+  delete me.hit; // (whole again: his wounds and his pool go, characters.js justinWounded)
   mm.mode = "home";
   mm.next = c.now + 3000;
   if (mm.cause === "drink") {
@@ -741,7 +746,7 @@ brain("justin", {
     if (to && c.go(me, to[0], to[1], WALK, DRY)) {
       me.a = "";
       mm.mode = "wander";
-      mm.next = c.now + 10000 + c.rand() * 30000;
+      mm.next = c.now + sec(c.rand, WANDER);
       return true;
     }
     mm.next = c.now + 1000;

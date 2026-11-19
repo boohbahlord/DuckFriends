@@ -6,7 +6,10 @@
    leads it along; a fast swipe sprints that way.
    Jumping is the up-arrow button's (phonepad.js): I want it to replace tapping the board to jump.
    Either way, a finger held still for half a second brings up the specials around it (hotbar.js); held still on a duck,
-   it opens that duck's menu instead. */
+   it opens that duck's menu instead.
+   On a phone the hotbar is on my duck, in every mode (the owner's, Nov 18 15:18Z: "swiping on their duck shows the
+   selection", and 20:58Z: "every"): a finger that goes down on my own duck never starts the stick; sliding it left or right picks the next
+   slot or the one before, one for every SWIPE.step it goes, and a tap on my duck uses the one picked. */
 import { profile } from "./store.js";
 import { el } from "./ui.js";
 
@@ -14,25 +17,29 @@ export const stick = { x: 0, y: 0, sprint: false, shown: false }; // the joystic
 const REACH = 60; // the stick's reach in pixels
 const TAP = { ms: 260, px: 12 }; // a tap: short and still
 const FLICK = { out: 450, gap: 380, ang: 0.9 }; // two flicks: each out for under .45 s, back for under .38 s, about the same way
-const SWIPE = { px: 40, ms: 350 }; // a swipe: this far, this fast
+const SWIPE = { px: 40, ms: 350, step: 36 }; // a swipe: this far, this fast (on my duck: a slot for every step px)
+const AIM = 10; // a second finger moved this far aims (px)
 const STILL = 520; // held still this long: the specials (on a duck: its menu)
-/* where a finger never starts the stick: on something it presses or types in, or reads and scrolls (the docked Notes and
-   chat, the specials' slider, the music bar). Anywhere else it does, the bars' empty spots too, right beside a button
-   (the owner's, Nov 4) */
+/* where a finger never starts the stick: on something it presses or types in, or scrolls (the docked Notes and chat, the
+   specials' slider, the music bar). Anywhere else it does, the bars' empty spots too, right beside a button, and on the
+   results' cards, the choice rows and the write area's own space, which only hold words (the owner's, Nov 4 and
+   Nov 17 13:30Z: "IF THE UI ISNT AN INTERACTIVE BUTTON OR THINGY, THEN YOUR MOVEMENT JOYSTICK CAN BE PLACED WHEREVER") */
 const NOT_HERE =
-  "button, a, input, select, textarea, label, [role=button], [role=slider], .statpanel, .mc, .dock-panel, .sp-phone, .mbar, .pmenu, .votebox, .sc-write";
+  "button, a, input, select, textarea, label, [role=button], [role=slider], .dock-panel, .sp-phone, .mbar, .pmenu";
 const BARS = ".gbar, .bbar, .dock-l, .dock-r, .dock-b"; // (Tap to move walks where I tap: never under a bar)
 const angDiff = (a, b) =>
   Math.abs(((a - b + 3 * Math.PI) % (2 * Math.PI)) - Math.PI);
 
 /* api: active(), walkTo(clientX, clientY, sprint), duckAt() → {x, y} on screen, getTarget(), setTarget(t),
-   hold(clientX, clientY) → true when the specials came up */
+   hold(clientX, clientY) → true when the specials came up, swipe (or null): { on() → my duck takes swipes now,
+   nudge(d) → picks the next slot (1) or the one before (-1), tap() → uses the one picked } */
 export function mountTouch(S, api) {
   let hold = null; // the finger on the stick
   let push = null; // the last flick out: { ang, at, back } (back: when it came back to the middle)
   const fingers = new Map(); // every other finger: id → where it went down and how far it moved
   let pad = null,
-    knob = null;
+    knob = null,
+    swiping = null; // the finger on my own duck (on a phone): { id, x (where its last slot was picked), t, moved }
 
   const reset = () => {
     stick.x = stick.y = 0;
@@ -86,10 +93,12 @@ export function mountTouch(S, api) {
   };
 
   function down(e) {
+    const panel = e.target.closest(".statpanel");
     if (
       e.pointerType === "mouse" ||
       !api.active() ||
       e.target.closest(NOT_HERE) ||
+      (panel && !panel.classList.contains("fit")) ||
       (profile.settings.touch === "tap" && e.target.closest(BARS))
     )
       return;
@@ -104,6 +113,15 @@ export function mountTouch(S, api) {
         moved: 0,
       },
       onDuck = !!e.target.closest(".gduck");
+    if (
+      !swiping &&
+      api.swipe &&
+      e.target.closest(".gduck.mine") &&
+      api.swipe.on()
+    ) {
+      swiping = { id: f.id, sx: f.sx, sy: f.sy, x: f.x, t: now, moved: 0 };
+      return;
+    } // (my duck: its hotbar, never the stick)
     if (profile.settings.touch === "tap") {
       f.prev = api.getTarget();
       api.walkTo(f.x, f.y, false);
@@ -125,7 +143,16 @@ export function mountTouch(S, api) {
       fingers.set(f.id, f);
       return;
     }
-    hold = { ...f, ox: f.x, oy: f.y, out: false };
+    /* a phone on its side: the stick's middle stays a little in from the screen's left, right and bottom edges, so my thumb
+       can push it all the way out (REACH) even from a corner, as the right stick does (the owner, Nov 17) */
+    const side = document.documentElement.classList.contains("phone-land"),
+      room = REACH + 6;
+    hold = {
+      ...f,
+      ox: side ? Math.max(room, Math.min(innerWidth - room, f.x)) : f.x,
+      oy: side ? Math.min(innerHeight - room, f.y) : f.y,
+      out: false,
+    };
     setTimeout(() => {
       if (hold && hold.id === f.id) show();
     }, TAP.ms); // held still: the stick shows where it is
@@ -140,6 +167,18 @@ export function mountTouch(S, api) {
   }
   function move(e) {
     const now = performance.now();
+    if (swiping && e.pointerId === swiping.id) {
+      swiping.moved = Math.max(
+        swiping.moved,
+        Math.hypot(e.clientX - swiping.sx, e.clientY - swiping.sy),
+      );
+      const dx = e.clientX - swiping.x;
+      if (Math.abs(dx) >= SWIPE.step) {
+        swiping.x += Math.sign(dx) * SWIPE.step;
+        api.swipe.nudge(dx < 0 ? 1 : -1); // (left: the next one, as the slider went)
+      }
+      return;
+    }
     if (hold && e.pointerId === hold.id) {
       hold.moved = Math.max(
         hold.moved,
@@ -166,6 +205,12 @@ export function mountTouch(S, api) {
     f.x = e.clientX;
     f.y = e.clientY;
     f.moved = Math.max(f.moved, Math.hypot(f.x - f.sx, f.y - f.sy));
+    /* a second finger (the first is the stick) moved around on the board aims, the way it moves from where it went down:
+       the owner's, Nov 18 15:18Z, "A player can click the screen and move around their right finger to aim" */
+    if (hold && profile.settings.touch !== "tap" && api.aim && f.moved > AIM) {
+      f.aiming = true;
+      api.aim(f.x - f.sx, f.y - f.sy);
+    }
     if (
       profile.settings.touch === "tap" &&
       f.moved > TAP.px &&
@@ -175,6 +220,17 @@ export function mountTouch(S, api) {
   }
   function up(e) {
     const now = performance.now();
+    if (swiping && e.pointerId === swiping.id) {
+      const sw = swiping;
+      swiping = null;
+      if (
+        e.type === "pointerup" &&
+        sw.moved < TAP.px &&
+        now - sw.t < TAP.ms * 1.5
+      )
+        api.swipe.tap(); // (a tap on my duck: the one picked is used)
+      return;
+    }
     if (hold && e.pointerId === hold.id) {
       if (hold.out && push) push.back = now; // a flick that lets go counts as coming back
       hold = null;
@@ -184,6 +240,7 @@ export function mountTouch(S, api) {
     const f = fingers.get(e.pointerId);
     if (!f) return;
     fingers.delete(e.pointerId);
+    if (f.aiming && api.aim) api.aim(null); // (let go: it goes back to the way I walk)
     if (e.type !== "pointerup" || profile.settings.touch !== "tap") return;
     const dur = now - f.t,
       dx = e.clientX - f.sx,
@@ -198,16 +255,28 @@ export function mountTouch(S, api) {
     }
   }
 
+  /* a panel that has nothing to scroll doesn't take the finger for the page (touch-action: none, css .fit): the stick can
+     start on it. One that does scroll keeps its scrolling, and no stick starts on it (the owner's, Nov 17 13:30Z) */
+  const fit = () => {
+    for (const p of S.querySelectorAll(".statpanel")) {
+      const ok = p.scrollHeight <= p.clientHeight + 2;
+      if (p.classList.contains("fit") !== ok) p.classList.toggle("fit", ok);
+    }
+  };
+  const fitTimer = setInterval(fit, 400);
+  fit();
   S.addEventListener("pointerdown", down);
   addEventListener("pointermove", move);
   addEventListener("pointerup", up);
   addEventListener("pointercancel", up);
   return () => {
+    clearInterval(fitTimer);
     S.removeEventListener("pointerdown", down);
     removeEventListener("pointermove", move);
     removeEventListener("pointerup", up);
     removeEventListener("pointercancel", up);
     hold = null;
+    swiping = null;
     reset();
     if (pad) pad.remove();
     pad = null;

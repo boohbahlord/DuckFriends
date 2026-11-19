@@ -15,18 +15,9 @@
    up to three colors (Primary, Secondary, Accent) under Customize → Colors. */
 import { el } from "./ui.js";
 import { fewer } from "./gfx.js";
-import {
-  BOW,
-  MEDKIT,
-  ZEBRA,
-  JAIME,
-  BOMB_SKIN,
-  CHAIR,
-  FIREBALL,
-} from "./mgjart.js";
+import { BOW, MEDKIT, ZEBRA, JAIME, BOMB_SKIN, CHAIR } from "./mgjart.js";
 import { GUNS } from "./l4ddguns.js";
 import { duckSVG, DUCK_DEFAULT } from "./duck.js";
-import { jetpackSVG } from "./jetart.js";
 export { SHOT_SPEED } from "./rules.js";
 
 /* the trombone, side on: the mouthpiece at the left end (at the beak), the slide reaching forward, the bell above it */
@@ -51,19 +42,28 @@ const KNIFE = ([a, b, c]) =>
    top; a long wooden handle, a little wider at the grip. Colors: head, handle, the band under the head */
 const HAMMER = ([a, b, c]) =>
   `<svg viewBox="0 0 56 30"><path d="M3 11.8Q1.4 11.8 1.4 13.6V16.6Q1.4 18.4 3.2 18.3L37 17.6V12.6L3.2 11.8Z" fill="${b}" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/><path d="M5 13.4L32 13.9" stroke="#fff" stroke-width="1.1" opacity=".3"/><path d="M6 16.8L30 16.4" stroke="${INK}" stroke-width=".7" opacity=".22"/><rect x="33.4" y="11.6" width="4.2" height="7" rx="1" fill="${c}" stroke="${INK}" stroke-width="1.1"/><rect x="37" y="1.4" width="17.4" height="27.2" rx="5.6" fill="${a}" stroke="${INK}" stroke-width="1.4"/><path d="M39.6 7.4Q39.6 4 43 4H45.4" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".4"/><path d="M40.2 10.4V20" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".22"/><path d="M51.6 6V24.6" stroke="${INK}" stroke-width="1.2" stroke-linecap="round" opacity=".2"/></svg>`;
-/* the new melees (the owner's, Nov 16), placeholders until Noah's art: each points right, its handle at the left, as
-   the hammer. The fire axe: a long handle, a red head with a spike on top and the steel blade underneath (the side that
-   leads the swing). Colors: head, handle, blade */
+/* the new melees (the owner's, Nov 16): each points right, its handle at the left, as the hammer. The fire axe, like
+   the one in Left 4 Dead 2: a long varnished handle with a dark rubber grip at its end, a red head with a pick at the
+   back (top) and a broad steel blade below (the side that leads the swing), its edge ground bright. Colors: head,
+   handle, blade */
 const AXE = ([a, b, c]) =>
-  `<svg viewBox="0 0 60 32"><path d="M2.8 13.6Q1.2 13.6 1.2 15.2V17.2Q1.2 18.8 2.9 18.7L47 17.8V14.4Z" fill="${b}" stroke="${INK}" stroke-width="1.2" stroke-linejoin="round"/><path d="M5 15L41 15.3" stroke="#fff" stroke-width=".9" opacity=".3"/><path d="M42.4 9.6L45.4 1.6L48.4 9.6Z" fill="${a}" stroke="${INK}" stroke-width="1.1" stroke-linejoin="round"/><rect x="40.2" y="9" width="10.6" height="11.6" rx="1.6" fill="${a}" stroke="${INK}" stroke-width="1.2"/><path d="M42 11.2H48.6" stroke="#fff" stroke-width=".9" opacity=".35"/><path d="M39.6 20.2H51.4Q55.6 24.4 57.4 30.4Q46 32 34.6 30.4Q36.4 24.4 39.6 20.2Z" fill="${c}" stroke="${INK}" stroke-width="1.2" stroke-linejoin="round"/><path d="M36.4 29.2Q46 30.4 55.8 29.2" fill="none" stroke="#fff" stroke-width="1" opacity=".7"/></svg>`;
-/* the short sword: a straight blade to a point, a crossguard, a wrapped grip and a round pommel. Colors: blade, grip,
-   guard and pommel */
+  `<svg viewBox="0 0 62 36"><path d="M2.8 15.6Q1 15.6 1 17.4V19.4Q1 21.2 2.9 21.1L49 20.2V16.6Z" fill="${b}" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"/><path d="M4 17.2L44 17.6" stroke="#fff" stroke-width="1.2" opacity=".35"/><path d="M4 19.8L44 19.4" stroke="${INK}" stroke-width=".9" opacity=".25"/><path d="M14 16.6V21M24 16.8V20.8" stroke="${INK}" stroke-width=".7" opacity=".2"/>
+<path d="M45 12.4L48.2 2.6Q49.6 .6 51 2.4L53.8 12.4L54.6 23.6L58.4 30.6Q46.6 37.4 33.8 34.6Q39.6 30.4 41.4 25.6Q42.8 23.6 45 23.2Z" fill="${a}" stroke="${INK}" stroke-width="1.5" stroke-linejoin="round"/>
+<path d="M36.6 33.2Q47.4 34.8 56.8 28.4L58.4 30.6Q46.6 37.4 33.8 34.6Z" fill="${c}" stroke="${INK}" stroke-width="1" stroke-linejoin="round"/><path d="M36.8 35Q47 36.4 57.2 30.6" fill="none" stroke="#fff" stroke-width="1" opacity=".9"/>
+<rect x="45.6" y="15.4" width="8.2" height="6.4" rx="1" fill="#000" opacity=".22"/><path d="M48.6 4.4L47.2 12M44.4 25.2Q42.6 28.4 39.8 31" fill="none" stroke="#fff" stroke-width="1.3" opacity=".4" stroke-linecap="round"/></svg>`;
+/* the short sword: a broad straight blade with a fuller down its middle to a sharp point, a wide brass guard, a leather
+   wrapped grip and a round pommel. Colors: blade, grip, guard and pommel */
 const SWORD = ([a, b, c]) =>
-  `<svg viewBox="0 0 52 16"><circle cx="3.4" cy="8" r="2.4" fill="${c}" stroke="${INK}" stroke-width="1"/><rect x="5.4" y="5.6" width="8" height="4.8" rx="1.4" fill="${b}" stroke="${INK}" stroke-width="1"/><path d="M7.4 5.8V10.2M10 5.8V10.2" stroke="${INK}" stroke-width=".7" opacity=".4"/><rect x="13" y="1.6" width="3" height="12.8" rx="1.2" fill="${c}" stroke="${INK}" stroke-width="1"/><path d="M16 5.4H43L50.6 8L43 10.6H16Z" fill="${a}" stroke="${INK}" stroke-width="1.1" stroke-linejoin="round"/><path d="M17.4 8H44" stroke="${INK}" stroke-width=".6" opacity=".3"/><path d="M17.4 6.6H42.6" stroke="#fff" stroke-width=".8" opacity=".6"/></svg>`;
-/* the cast iron pan: a round black pan seen from above, a darker inside with a shine, and its long handle. Colors: iron,
-   handle, rim shine */
+  `<svg viewBox="0 0 50 18"><circle cx="3.6" cy="9" r="2.8" fill="${c}" stroke="${INK}" stroke-width="1.2"/><rect x="5.8" y="6.2" width="8.4" height="5.6" rx="1.6" fill="${b}" stroke="${INK}" stroke-width="1.2"/><path d="M8 6.4L10 11.6M10.8 6.4L12.8 11.6" stroke="${INK}" stroke-width=".9" opacity=".45"/>
+<rect x="13.6" y="1.4" width="3.8" height="15.2" rx="1.4" fill="${c}" stroke="${INK}" stroke-width="1.2"/><path d="M14.6 3V8" stroke="#fff" stroke-width=".9" opacity=".5"/>
+<path d="M17.4 4.6H39.2Q43.6 5.4 48.8 9Q43.6 12.6 39.2 13.4H17.4Z" fill="${a}" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/><path d="M19 9H41.4" stroke="${INK}" stroke-width="1.1" opacity=".35"/><path d="M19 6.9H41" stroke="#fff" stroke-width="1.1" opacity=".7"/></svg>`;
+/* the cast iron pan: seen from above, a heavy black round pan with a thick rim, its dark cooking surface with a dull
+   shine, a pour spout notch on each side, and its long iron handle with the hanging hole. Colors: iron, handle, rim
+   shine */
 const PAN = ([a, b, c]) =>
-  `<svg viewBox="0 0 58 32"><path d="M2.6 13.6Q1 13.6 1 15.2V16.8Q1 18.4 2.6 18.4L28 17.6V14.4Z" fill="${b}" stroke="${INK}" stroke-width="1.2" stroke-linejoin="round"/><circle cx="5.4" cy="16" r="1.3" fill="#0008"/><circle cx="42" cy="16" r="14.6" fill="${a}" stroke="${INK}" stroke-width="1.3"/><circle cx="42" cy="16" r="11.6" fill="#0005" stroke="${c}" stroke-width="1"/><path d="M33.6 9.6Q38 5.6 44 5.6" fill="none" stroke="#fff" stroke-width="1.2" opacity=".35" stroke-linecap="round"/></svg>`;
+  `<svg viewBox="0 0 60 34"><path d="M3 13.8Q1 13.8 1 15.8V18.2Q1 20.2 3 20.2L28.6 19.2V14.8Z" fill="${b}" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/><ellipse cx="6" cy="17" rx="2" ry="1.3" fill="#0b0b0e"/><path d="M10 16H26" stroke="#fff" stroke-width=".9" opacity=".2"/>
+<circle cx="43" cy="17" r="15.6" fill="${a}" stroke="${INK}" stroke-width="1.5"/><circle cx="43" cy="17" r="12.4" fill="#14151a" stroke="${c}" stroke-width="1.2" opacity=".95"/><path d="M33.6 10.6Q37.8 6.2 44 6" fill="none" stroke="#fff" stroke-width="1.6" opacity=".3" stroke-linecap="round"/><path d="M46.6 25.6Q51.4 24 53.4 19.6" fill="none" stroke="${c}" stroke-width="1.2" opacity=".5" stroke-linecap="round"/>
+<path d="M41 1.6Q43 .4 45 1.6" fill="none" stroke="${INK}" stroke-width="1.2"/><path d="M41 32.4Q43 33.6 45 32.4" fill="none" stroke="${INK}" stroke-width="1.2"/></svg>`;
 /* the grenade: a round pineapple grenade, its body in a grid of rounded lumps with a shine at the top left; the metal cap
    with the lever curving down its right side, and the pin's ring at the left (thrown: no pin, it falls off as it leaves
    the hand, GRENADE_PIN). Colors: body, metal, ring */
@@ -211,15 +211,6 @@ export const SPECIALS = [
     tip: "Its key turns your duck see-through, like the shadow duck; press it again to turn it back.",
   },
   {
-    id: "jetpack",
-    name: "Jetpack",
-    kind: "effect",
-    get icon() {
-      return `<span class="sp-jet">${jetpackSVG()}</span>`;
-    },
-    tip: "Its key puts a jetpack on your duck's back (again: off). Hold Space to fly up, Shift keeps the height, let go to come down. 10 seconds of flight; it fills up again on the ground. Not in Mad God Justin.",
-  },
-  {
     id: "longjump",
     name: "Long jump",
     kind: "jump",
@@ -321,11 +312,11 @@ export const SPECIALS = [
     id: "axe",
     name: "Fire axe",
     kind: "item",
-    icon: iconOf(AXE(["#c62f2f", "#7a4a2e", "#c9ced8"])),
+    icon: iconOf(AXE(["#c62f2f", "#b8864e", "#c9ced8"])),
     tip: "A big swing in front of you, toward your mouse: 1 to 4 damage to every duck in it. A little faster than the hammer. Shift and its key keeps it out: left click swings. (Off when the host turns off the silly commands.)",
     colors: [
       ["a", P, "#c62f2f"],
-      ["b", S2, "#7a4a2e"],
+      ["b", S2, "#b8864e"],
       ["c", A, "#c9ced8"],
     ],
   },
@@ -395,7 +386,7 @@ export const SPECIALS = [
      (unlocks.js) */
   {
     id: "sniper",
-    name: "Sniper",
+    name: "Barrett .50 Cal",
     kind: "item",
     get icon() {
       return GUNS.sniper.icon;
@@ -404,12 +395,30 @@ export const SPECIALS = [
   },
   {
     id: "smg",
-    name: "SMG",
+    name: "MP5",
     kind: "item",
     get icon() {
       return GUNS.smg.icon;
     },
     tip: "Fires toward your mouse as long as the button is down. 20 shots, then it reloads (R reloads sooner). Shift and its key keeps it out: hold the left button. (Off when the host turns off the silly commands.)",
+  },
+  {
+    id: "tommy",
+    name: "Tommy gun",
+    kind: "item",
+    get icon() {
+      return GUNS.tommy.icon;
+    },
+    tip: "Fires toward your mouse as long as the button is down. A 50-round drum, then it reloads (R reloads sooner). Shift and its key keeps it out: hold the left button. (Off when the host turns off the silly commands.)",
+  },
+  {
+    id: "ump",
+    name: "UMP-45",
+    kind: "item",
+    get icon() {
+      return GUNS.ump.icon;
+    },
+    tip: "Fires toward your mouse as long as the button is down, 2 HP a bullet, a little slower than the Tommy gun. 20 shots, then it reloads (R reloads sooner). Shift and its key keeps it out: hold the left button. (Off when the host turns off the silly commands.)",
   },
   {
     id: "ak",
@@ -431,7 +440,7 @@ export const SPECIALS = [
   },
   {
     id: "lmg",
-    name: "LMG",
+    name: "M249 SAW",
     kind: "item",
     get icon() {
       return GUNS.lmg.icon;
@@ -467,7 +476,7 @@ export const SPECIALS = [
   },
   {
     id: "burst",
-    name: "Burst rifle",
+    name: "Steyr AUG",
     kind: "item",
     get icon() {
       return GUNS.burst.icon;
@@ -506,6 +515,16 @@ export const SPECIALS = [
     only: "l4dd",
     icon: MEDKIT,
     tip: "Gets your HP back.",
+  },
+  {
+    id: "laser",
+    name: "Laser Rifle",
+    kind: "item",
+    only: "mgj", // (never a duck's own special: Dead Ducks Arcade's weapon spin gives it, and Mad God Justin's pickups)
+    get icon() {
+      return GUNS.laser.icon;
+    },
+    tip: "A red beam once a second through everything in its line, as long as the button is down. Never runs out, but six in a row overheat it for 8 seconds.",
   },
   {
     id: "jaime",
@@ -656,6 +675,16 @@ const WGUN = ([a, b]) =>
   `<svg viewBox="0 0 40 24"><path d="M4 8h24l4-3h5v8h-5l-2 2H18l-2 7h-6l2-7H4Z" fill="${a}" stroke="#1c1c28" stroke-width="1.5" stroke-linejoin="round"/><rect x="12" y="2" width="9" height="6" rx="2" fill="${b}" stroke="#1c1c28" stroke-width="1.3"/></svg>`;
 const PISTOL = ([a, b]) =>
   `<svg viewBox="0 0 40 24"><path d="M17 11l-2 10H8l2-10Z" fill="${b}" stroke="#0e0e14" stroke-width="1.4" stroke-linejoin="round"/><path d="M4 5h30v6H4Z" fill="${a}" stroke="#0e0e14" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 11l4 4" stroke="#0e0e14" stroke-width="1.4"/></svg>`;
+/* the Angelic default pistol (the owner's, Nov 16): two pistols, one in each hand, the far one a little behind and
+   up, darker. Set further apart (the owner, Nov 17): the far one's muzzle at DUAL.far, the near one's at DUAL.near (in
+   its viewBox, DUAL.box), so each gets its own laser sight (game.js). As wide in the hand as DUAL.w duck sizes (one
+   pistol is 0.34) */
+export const DUAL = { box: [48, 42], far: [42, 8], near: [34, 26], w: 0.56 };
+export function dualPistolHTML(duck) {
+  const c = colorsOf(duck, "handgun"),
+    one = PISTOL(c).replace(/^<svg[^>]*>|<\/svg>$/g, "");
+  return `<svg viewBox="0 0 48 42"><defs><filter id="dual-far"><feComponentTransfer><feFuncR type="linear" slope=".62"/><feFuncG type="linear" slope=".62"/><feFuncB type="linear" slope=".62"/></feComponentTransfer></filter></defs><g transform="translate(8 0)" filter="url(#dual-far)">${one}</g><g transform="translate(0 18)">${one}</g></svg>`;
+}
 const DOG =
   '<svg viewBox="0 0 40 20"><rect x="2" y="5" width="36" height="10" rx="5" fill="#eab36a" stroke="#1c1c28" stroke-width="1.4"/><rect x="5" y="7" width="30" height="6" rx="3" fill="#c0502b"/><path d="M7 9l3 2 3-2 3 2 3-2 3 2 3-2 3 2 3-2" stroke="#ffd23f" stroke-width="1.4" fill="none"/></svg>';
 export function pressFX(id, x, y, size, face, duck) {
@@ -765,7 +794,6 @@ export function heldHTML(id, duck) {
   if (GUNS[id]) return GUNS[id].held; // (Quacky Zombies' new guns)
   if (id === "zebra") return ZEBRA;
   if (id === "chair") return CHAIR; // (Quacky Zombies: the chair from the fireplace, held out before it's thrown)
-  if (id === "fireball") return FIREBALL;
   const c = colorsOf(duck, id);
   if (id === "axe") return AXE(c);
   if (id === "sword") return SWORD(c);
@@ -788,6 +816,9 @@ export const looksOf = (sp, duck) =>
   sp && sp.id === "hammer" && duck && duck.wrench
     ? { ...sp, name: "Wrench", icon: WRENCH_ICON }
     : sp;
+/* the pistol in a hotbar: drawn as the one in my duck's hand, in my colors (the owner, Nov 17 12:28Z: "the pistol in
+   the hotbar should resemble the pistol in the hand of the player, so it shouldnt be green"), never the emoji */
+export const pistolIcon = (duck) => PISTOL(colorsOf(duck, "handgun"));
 /* the handgun's magazine under its key: a dot for each of its seven shots, full until fired */
 export const ammoHTML = (left, n = 7) =>
   `<span class="ammo" aria-label="${left} of ${n} shots">${Array.from({ length: n }, (_, i) => `<i${i < left ? ' class="full"' : ""}></i>`).join("")}</span>`;

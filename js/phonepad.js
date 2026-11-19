@@ -20,13 +20,14 @@ const CROSS =
 
 /* api: active() → the board is on (buttons show), weapon() → the weapon in the slider's middle (or null), aim(dx, dy)
    → aim that way on the screen (null: stop aiming), attack() → attacks, and says in ms when it can again, jump(),
-   hold(on) → the jump button held down or let go */
+   hold(on) → the jump button held down or let go, reloadOn() → what is in hand can be reloaded (the small R shows), reload() */
 export function mountPad(api) {
   const box = el(
-    `<div class="tpad gone"><div class="tpad-atk" role="button" aria-label="Aim and attack" hidden><div class="tpad-ring" aria-hidden="true"></div><i aria-hidden="true">${CROSS}</i></div><button type="button" class="tpad-jump" aria-label="Jump">${ARROW}</button></div>`,
+    `<div class="tpad gone"><div class="tpad-atk" role="button" aria-label="Aim and attack" hidden><div class="tpad-ring" aria-hidden="true"></div><i aria-hidden="true">${CROSS}</i></div><div class="tpad-col"><button type="button" class="tpad-jump" aria-label="Jump">${ARROW}</button><button type="button" class="tpad-reload" aria-label="Reload" hidden>R</button></div></div>`,
   );
   const atk = box.querySelector(".tpad-atk"),
     jumpBtn = box.querySelector(".tpad-jump"),
+    rlBtn = box.querySelector(".tpad-reload"),
     knob = atk.querySelector("i");
   let push = null; // the finger on the stick: { id, x, y (the stick's middle), firing, t (the next attack) }
 
@@ -36,6 +37,10 @@ export function mountPad(api) {
     box.classList.toggle("gone", !on);
     box.classList.toggle("armed", !!w);
     atk.hidden = !w;
+    jumpBtn.hidden = !!(api.noJump && api.noJump()); // (a duck that's down can't jump: only its down pistol)
+    const rl = !!on && !!api.reloadOn && !!api.reloadOn(); // (the small R above the jump button: the guns that reload)
+    rlBtn.hidden = !rl;
+    box.classList.toggle("rl", rl);
     if (!w && push) letGo();
   };
   const tick = setInterval(sync, 150);
@@ -48,6 +53,14 @@ export function mountPad(api) {
   });
   for (const t of ["pointerup", "pointercancel", "pointerleave"])
     jumpBtn.addEventListener(t, () => api.hold?.(false));
+
+  /* the small R above the jump button reloads what's in hand (the owner's, Nov 18 15:18Z: "a small "r" button on mobile
+     above the jump button that allows players to reload now and clicking it does a reload animation"): the slot's own
+     reload meter fills as for the R key */
+  rlBtn.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    if (api.active()) api.reload();
+  });
 
   /* pushed past the edge: it attacks as often as the weapon allows */
   const again = () => {
@@ -100,7 +113,7 @@ export function mountPad(api) {
   }
   atk.addEventListener("pointerup", letGo);
   atk.addEventListener("pointercancel", letGo);
-  for (const b of [atk, jumpBtn])
+  for (const b of [atk, jumpBtn, rlBtn])
     b.addEventListener("contextmenu", (e) => e.preventDefault());
 
   return {

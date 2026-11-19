@@ -5,11 +5,11 @@
    slot's color, and the pictures on Justin's Butler's upgrades. Preview: tools/l4dd-art.html */
 import { duckSVG } from "./duck.js";
 import { svgDataURL } from "./hangout/art.js";
-import { zombieLook, kindOf } from "./l4ddrules.js";
-import { specialById } from "./specials.js";
+import { zombieLook, kindOf, tintOf } from "./l4ddrules.js";
+import { specialById, pistolIcon } from "./specials.js";
 import { GUNS } from "./l4ddguns.js";
-import { FIREBALL } from "./mgjart.js";
 import { justinSVG } from "./hangout/npcart.js";
+import { GOLD_CHAIR } from "./mgjart.js";
 
 const INK = "#1c1c28";
 
@@ -571,7 +571,7 @@ export const HIT_CODES = { kinds: HIT_KINDS, spots: HIT_AT.length };
 const LOOKS = new Map();
 export function zombieURL(l, n = 0, hits = "") {
   const w = woundsOf(n, l[6] >= 0),
-    k = [l[3], l[4], l[5], l[6], l[7], w.join("+"), hits].join();
+    k = [l[3], l[4], l[5], l[6], l[7], l[8], w.join("+"), hits].join();
   if (!LOOKS.has(k)) {
     if (LOOKS.size > 600) LOOKS.clear(); // (wounds make many pictures: I keep only the newest few hundred)
     const sk = woundSkin(w),
@@ -722,14 +722,18 @@ export const ICONS = {
     `<svg viewBox="0 0 30 30">${on ? '<path d="M17 8L29 2V28L17 22Z" fill="#fff4c2" opacity=".55"/>' : ""}<rect x="2" y="11" width="11" height="8" rx="2" fill="#3b3f4a" stroke="${INK}" stroke-width="1.3"/><path d="M13 9.4L18 7.6V22.4L13 20.6Z" fill="#6b7280" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/><rect x="5" y="13.4" width="4" height="3.2" rx="1" fill="${on ? "#ffd23f" : "#8a8f99"}" stroke="${INK}" stroke-width=".8"/>${on ? "" : `<path d="M4 5L26 26" stroke="#ff3d6e" stroke-width="2.6" stroke-linecap="round"/>`}</svg>`,
 };
 
-/* a weapon's picture: the specials' bar's (the knife, the pistol, the bow …), the new guns' own (l4ddguns.js), and the
-   fireball's (Mad God Justin's) */
-export const weaponIcon = (w) =>
+const GOLD_CHAIR_ICON = GOLD_CHAIR.replace("<svg ", '<svg class="sp-chair" ');
+/* a weapon's picture: the specials' bar's (the knife, the pistol, the bow …), and the new guns' own (l4ddguns.js) */
+export const weaponIcon = (w, duck) =>
+  (w === "handgun" && pistolIcon(duck)) ||
+  (w === "chair" && GOLD_CHAIR_ICON) || // (here the chair is golden: the owner's, Nov 18 12:19Z) // (the pistol: as the one in my duck's hand, in my colors; the owner's, Nov 17)
   (GUNS[w] && GUNS[w].icon) ||
-  (w === "fireball" ? FIREBALL : (specialById(w) || {}).icon || "");
-/* a weapon as an orb, glowing in its slot's color (css: .l4orb, blue melee, red ranged, purple special, white grenades) */
+  (specialById(w) || {}).icon ||
+  "";
+/* a weapon as an orb, glowing in its own color (l4ddrules.js tintOf) or else its slot's (css: .l4orb, blue melee, red
+   ranged, purple special, white grenades) */
 export const orbHTML = (w) =>
-  `<span class="l4orb k-${kindOf(w) || "special"}"><i>${w === "justin" ? justinSVG({ size: 30, shadow: false }) : weaponIcon(w)}</i></span>`; // (the fireplace's 1 in 100: Justin himself)
+  `<span class="l4orb k-${kindOf(w) || "special"}${tintOf(w) ? " " + tintOf(w) : ""}"><i>${w === "justin" ? justinSVG({ size: 30, shadow: false }) : weaponIcon(w)}</i></span>`; // (the fireplace's 1 in 100: Justin himself)
 /* Justin's Butler's upgrades: accuracy (a crosshair), attack speed (a lightning bolt), max HP (a green heart), speed
    (a running arrow), faster reload (a bullet in a turning arrow) */
 export const UP_ICONS = {
@@ -738,4 +742,5 @@ export const UP_ICONS = {
   hp: `<svg viewBox="0 0 30 30"><path d="M15 26C6 19 2.5 14.5 2.5 9.8 2.5 6.2 5.3 3.5 8.8 3.5 11.6 3.5 13.7 5.1 15 7.4 16.3 5.1 18.4 3.5 21.2 3.5 24.7 3.5 27.5 6.2 27.5 9.8 27.5 14.5 24 19 15 26Z" fill="#1fb85c" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/><path d="M15 10V19M10.5 14.5H19.5" stroke="#f4f4f0" stroke-width="2.6" stroke-linecap="round"/></svg>`,
   sp: `<svg viewBox="0 0 30 30"><path d="M3 9H11M1.5 15H9M3 21H11" stroke="#9cc2ff" stroke-width="2.2" stroke-linecap="round"/><path d="M12 6L21 15L12 24M18 6L27 15L18 24" fill="none" stroke="#3d7be0" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   rl: `<svg viewBox="0 0 30 30"><path d="M24.5 11A10.5 10.5 0 1 0 25 19" fill="none" stroke="#c9a24a" stroke-width="2.6" stroke-linecap="round"/><path d="M26.5 5.5L25.2 12.2L18.8 10.2" fill="none" stroke="#c9a24a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 11H16A4 4 0 0 1 16 19H12Z" fill="#e0a43a" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/><rect x="9" y="11" width="3.6" height="8" rx="1" fill="#c98a3a" stroke="${INK}" stroke-width="1.3"/></svg>`,
+  qr: `<svg viewBox="0 0 30 30"><rect x="12.5" y="1.8" width="5" height="3.6" rx="1" fill="#c9cdd6" stroke="${INK}" stroke-width="1.3"/><path d="M23.2 6.6L25.6 4.2" stroke="${INK}" stroke-width="2.2" stroke-linecap="round"/><circle cx="15" cy="17" r="11" fill="#f4f4f0" stroke="${INK}" stroke-width="1.6"/><path d="M15 11.2V22.8M9.2 17H20.8" stroke="#e8424d" stroke-width="4" stroke-linecap="round"/><path d="M15 7.5A9.5 9.5 0 0 1 24.5 17" fill="none" stroke="#3d7be0" stroke-width="2" stroke-linecap="round"/></svg>`, // (Quick Revive: a stopwatch with a red cross)
 };

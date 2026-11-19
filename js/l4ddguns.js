@@ -4,6 +4,7 @@
    held: in a duck's hand; icon: the weapons bar's picture (turned 45°, its grip down at the left, filling a square);
    w: how wide it is in the hand, in duck sizes. Their bullets are here too (the screens turn them the way they fly).
    Preview: tools/l4dd-art.html */
+import { LASER } from "./laserart.js";
 const INK = "#2a2d38";
 /* the colors they share: the guns' dark metal, lighter metal, the underside, polymer, two woods and their grain */
 const M1 = "#33384a",
@@ -26,28 +27,54 @@ const box = (x, y, w, h, r, fill, sw = 1.1) =>
 const part = (d, fill, sw = 1.1) =>
   `<path d="${d}" fill="${fill}" stroke="${INK}" stroke-width="${sw}" stroke-linejoin="round"/>`;
 
-/* the sniper: a bolt-action rifle. A wooden stock with a dip under the grip, the dark receiver with the bolt's handle
-   bent down, a long thin barrel past a lighter wooden forend, a muzzle brake; the scope on two rings over it, its glass
-   catching the light */
-const SNIPER = `<svg viewBox="0 0 84 22">${part("M2.4 7.4L22 9.2V14.4L13.4 15.2Q9.6 15.4 7.8 18.2L4.6 18.8Q1.4 19.1 1.4 15.8V8.8Q1.4 7.3 2.4 7.4Z", WOOD, 1.15)}<path d="M1.6 9.4V16" stroke="#2b1a10" stroke-width="2.2"/>${shine("M5 9.6L19.4 10.8", 0.3)}
-<path d="M23.2 13.6Q22.8 17.4 25.8 17.4Q28.6 17.4 28.4 13.6" fill="none" stroke="${INK}" stroke-width="1.1"/><path d="M25.4 13.4L26.2 16.2" stroke="${INK}" stroke-width="1.1" stroke-linecap="round"/>
-${box(36, 9.8, 22, 4.4, 1.8, "#a0612f")}<path d="M40 12.6H55" stroke="${GRAIN}" stroke-width=".7" opacity=".7"/>
-${box(36, 8.8, 43, 2.6, 0.9, M2, 1)}${shine("M38 9.6H77", 0.3, 0.6)}
-${box(77.6, 7.8, 5.6, 4.6, 0.9, M1, 1)}<path d="M79.4 8.6V11.6M81.4 8.6V11.6" stroke="#0e0e14" stroke-width=".8"/>
-${box(20.4, 8, 16.4, 5.8, 1.2, M1, 1.15)}${shine("M22 9.3H35", 0.25)}
-<path d="M33.6 11.4L35.8 15.6" stroke="${INK}" stroke-width="2.6" stroke-linecap="round"/><path d="M33.6 11.4L35.8 15.6" stroke="${M2}" stroke-width="1.2" stroke-linecap="round"/><circle cx="36.1" cy="16.2" r="1.6" fill="${M2}" stroke="${INK}" stroke-width=".9"/>
-${box(24.4, 5.6, 2.6, 2.8, 0.6, M0, 0.9)}${box(32.4, 5.6, 2.6, 2.8, 0.6, M0, 0.9)}
-${part("M17.6 1.6L21 2.8V6.6L17.6 7.8Z", M0, 1)}${box(20.6, 2.6, 18.4, 4.2, 1.6, POLY, 1.1)}${part("M38.6 2.8L44.2 1.2V8.2L38.6 6.6Z", M0, 1)}
-${box(28, 0.6, 3, 2.2, 0.6, M2, 0.8)}<ellipse cx="43.4" cy="4.7" rx=".9" ry="2.6" fill="#7fd0ff" opacity=".9"/>${shine("M22.6 3.6H36.6", 0.35, 0.7)}</svg>`;
+/* the sniper, a Barrett .50 Cal (the owner's, Nov 18 12:19Z: "give it the look of a Barret 50 caliber"): long and
+   heavy, all dark metal. The stock with its black recoil pad and the monopod under it, the pistol grip, the big box
+   magazine in front of it; the long upper receiver running out over the barrel, cut through with its row of square
+   holes; the carry handle; the bipod folded under; the barrel out to the big two-chambered arrowhead muzzle brake; the
+   scope on its rail, its glass catching the light */
+const SNIPER = `<svg viewBox="0 0 96 24">${part("M3.4 7.6H21V14.6L16.6 15.2V17.6H12.4V15.6L4.4 16.2Q2.4 16.4 2.4 14.4V9Q2.4 7.6 3.4 7.6Z", M1, 1.15)}${box(0.8, 6.8, 2.8, 10.2, 1, "#14161c", 1)}${shine("M5 9.2H19.4", 0.24)}
+${part("M24.6 14.6H29.8L28 22.4Q27.6 23.6 26.2 23.4L24.2 23Q23 22.6 23.4 21.4Z", POLY, 1.1)}<path d="M29.8 15.2Q29.6 19 32 19" fill="none" stroke="${INK}" stroke-width="1.1"/>
+${box(32.6, 14.2, 7.4, 7.8, 1, M0, 1.1)}<path d="M34.2 16.4H38.4M34.2 18.6H38.4" stroke="#fff" stroke-width=".55" opacity=".16"/>
+${[60.4, 62.8].map((y, k) => `<path d="M${60 + k * 1.4} ${12.4 + k * 0.6}L${79 - k} ${13 + k * 0.5}" stroke="${INK}" stroke-width="2.4" stroke-linecap="round"/><path d="M${60 + k * 1.4} ${12.4 + k * 0.6}L${79 - k} ${13 + k * 0.5}" stroke="${M0}" stroke-width="1" stroke-linecap="round"/>`).join("")}
+${box(64, 8, 23, 2.6, 0.8, M2, 1)}${shine("M65.6 8.8H85.6", 0.26, 0.6)}
+${part("M86.6 5.6H90.2L91 6.6H92.4L95 9.3L92.4 12H91L90.2 13H86.6Z", M1, 1)}<path d="M88.4 6.8V11.8M91.6 7.6V11" stroke="#0e0e14" stroke-width="1"/>
+${box(20.4, 9.2, 26, 6, 1.2, M1, 1.1)}<path d="M22.4 12.4H44" stroke="${INK}" stroke-width=".7" opacity=".4"/>
+${box(20, 5.4, 45, 4.6, 1.2, M2, 1.15)}${[48.6, 52.8, 57, 61.2].map((x) => `<rect x="${x - 1.3}" y="6.4" width="2.6" height="2.6" rx=".4" fill="#14161c"/>`).join("")}${shine("M22 6.5H46", 0.28)}
+<path d="M48 5.4V2.6Q48 1.4 49.2 1.4H56.6Q57.8 1.4 57.8 2.6V5.4" fill="none" stroke="${INK}" stroke-width="2.6"/><path d="M48 5.4V2.6Q48 1.4 49.2 1.4H56.6Q57.8 1.4 57.8 2.6V5.4" fill="none" stroke="${M0}" stroke-width="1.1"/>
+${box(22.4, 4.2, 20.4, 1.4, 0.4, M0, 0.8)}${part("M23.2 0.8L26 1.6V4.2H23.2Z", M0, 0.9)}${box(25.6, 0.8, 13.8, 3.4, 1.2, POLY, 1.05)}${part("M39 1.2L43.6 0.2V4.8L39 3.8Z", M0, 0.9)}
+<ellipse cx="42.9" cy="2.5" rx=".8" ry="2" fill="#7fd0ff" opacity=".9"/>${shine("M27 1.9H38.2", 0.35, 0.6)}</svg>`;
 
-/* the submachine gun: small and boxy. A folding wire stock, the dark receiver, a straight magazine down in front of the
-   trigger, the pistol grip behind it, a short barrel with a front post */
-const SMG = `<svg viewBox="0 0 46 28"><path d="M3 7.6H12.6M3 7.6V15.4H12" fill="none" stroke="${INK}" stroke-width="3.4" stroke-linejoin="round"/><path d="M3 7.6H12.6M3 7.6V15.4H12" fill="none" stroke="${M2}" stroke-width="1.6" stroke-linejoin="round"/>${box(1, 6, 3.4, 11, 1.2, POLY, 1)}
-${part("M14.4 12.2H19.6L18.2 20.6Q17.9 21.8 16.6 21.8H13.8Q12.4 21.8 12.7 20.4Z", POLY, 1.1)}<path d="M14.6 15H18.2M14.4 17H17.8M14.2 19H17.4" stroke="#fff" stroke-width=".55" opacity=".18"/>
-<path d="M19.4 12.4Q19.2 16.2 21.4 16.2H22.8" fill="none" stroke="${INK}" stroke-width="1.1"/><path d="M20.8 12.2L21.4 14.6" stroke="${INK}" stroke-width="1" stroke-linecap="round"/>
-${part("M22.4 12.2H27.6L28.8 25.4Q28.8 26.8 27.4 26.8H24.6Q23.2 26.8 23.2 25.4Z", M0, 1.1)}${shine("M24.4 14.2L24.8 24.6", 0.22, 0.7)}
-${box(32, 7.2, 9.4, 3.8, 0.9, M2, 1)}${box(40.6, 7.8, 4.2, 2.6, 0.7, M0, 0.9)}${part("M37.6 7.4V4.4H39V7.4", M1, 0.9)}
-${box(11, 5.4, 22, 7, 1.6, M1, 1.15)}${shine("M12.8 6.9H31", 0.26)}<rect x="27" y="8.4" width="4.4" height="1.6" rx=".6" fill="#14161c" opacity=".6"/>${part("M13 5.6V3.6H15.4V5.6", M1, 0.9)}<circle cx="29.2" cy="4.6" r="1.1" fill="${M2}" stroke="${INK}" stroke-width=".8"/></svg>`;
+/* the submachine gun, an MP5 (the owner's, Nov 18 12:19Z: "rename it to MP5 and give it the look of an MP5"): slim and
+   black. The fixed polymer stock, the long thin receiver with the drum rear sight on top, the pistol grip and its
+   trigger guard, the magazine curving forward, the cocking tube over the tapered handguard with its handle sticking
+   up at the front, the short barrel with its three lugs, and the ring of the front sight */
+const SMG = `<svg viewBox="0 0 56 28">${part("M2.2 6.8L13.6 8.4V13.8L4.4 17.2Q1.4 18.2 1.4 15.2V8.2Q1.4 6.7 2.2 6.8Z", POLY, 1.15)}<path d="M1.6 8.6V15.4" stroke="#0e0e14" stroke-width="2"/>${shine("M4.2 8.8L12 9.8", 0.2)}
+${part("M17.2 11.2H22L20.8 19.8Q20.5 21 19.2 21H16.6Q15.3 21 15.6 19.6Z", POLY, 1.1)}<path d="M17.2 14H20.6M17 16H20.2M16.8 18H19.8" stroke="#fff" stroke-width=".55" opacity=".16"/>
+<path d="M22 11.6Q21.8 15.4 24.4 15.4H26" fill="none" stroke="${INK}" stroke-width="1.1"/><path d="M23.2 11.4L23.8 13.8" stroke="${INK}" stroke-width="1" stroke-linecap="round"/>
+${part("M26.4 11.2H31.2Q31.8 17.6 35 24L31.2 25.8Q27.6 18.8 26.4 11.2Z", M0, 1.1)}${shine("M28.4 13.4Q29.2 18.6 31.6 23.2", 0.2, 0.7)}
+${box(34.8, 5.2, 12.4, 2.4, 1, M2, 0.95)}<path d="M44.2 5.4L46.6 2.6" stroke="${INK}" stroke-width="2.4" stroke-linecap="round"/><path d="M44.2 5.4L46.6 2.6" stroke="${M2}" stroke-width="1" stroke-linecap="round"/>
+${part("M34.2 7.4H45.4L46.4 8.6V12.2L45.4 13.4H34.2Z", POLY, 1.1)}<path d="M36.6 8.8V12M38.8 8.8V12M41 8.8V12M43.2 8.8V12" stroke="#fff" stroke-width=".5" opacity=".14"/>
+${box(46, 8.8, 6.6, 2.4, 0.7, M2, 0.95)}${box(51.4, 8.2, 3.2, 3.6, 0.7, M1, 0.9)}<path d="M52.4 8.6V11.4M53.6 8.6V11.4" stroke="#0e0e14" stroke-width=".6"/>
+<path d="M48.6 8.8V5.8" stroke="${INK}" stroke-width="1.6"/><circle cx="48.6" cy="4.6" r="1.6" fill="none" stroke="${INK}" stroke-width="1.6"/><circle cx="48.6" cy="4.6" r="1.6" fill="none" stroke="${M2}" stroke-width=".6"/>
+${box(12.4, 5.8, 22.6, 5.6, 1.6, M1, 1.15)}${shine("M14.2 7.1H33", 0.26)}${part("M14.2 5.8V3.6Q14.2 2.6 15.4 2.6H17.4Q18.6 2.6 18.6 3.6V5.8", M0, 0.9)}<circle cx="16.4" cy="3.8" r=".6" fill="#14161c"/></svg>`;
+
+/* the Tommy gun (the owner's, Nov 17): a wooden stock and wooden grip, the dark receiver with a cooling-fin barrel, a vertical
+   foregrip under it and the round drum magazine under the receiver (placeholder art until Noah's) */
+const TOMMY = `<svg viewBox="0 0 60 30">${part("M2.4 8.6L16 9.8V13.4L6 17Q1.6 18.2 1.6 14.6V10Q1.6 8.5 2.4 8.6Z", WOOD, 1.15)}${shine("M4.6 10.4L14.4 11.2", 0.3)}
+${part("M17.4 13H21.8L20.8 19.4Q20.5 20.6 19.2 20.4L17.2 20Q16.2 19.7 16.5 18.6Z", WOOD, 1.1)}
+<circle cx="29.6" cy="21.4" r="6.4" fill="${M1}" stroke="${INK}" stroke-width="1.15"/><circle cx="29.6" cy="21.4" r="2.6" fill="${M2}" stroke="${INK}" stroke-width=".9"/><path d="M29.6 15.4V18.8M29.6 24V27.4M23.6 21.4H27M32.2 21.4H35.6" stroke="${INK}" stroke-width=".8"/>
+${part("M40 12.6H44.4V19.4Q44.4 20.6 43.2 20.6H41.2Q40 20.6 40 19.4Z", WOOD, 1.1)}
+${box(40, 8.2, 17, 3.2, 0.9, M2, 1)}<path d="M43 8.4V11.2M46 8.4V11.2M49 8.4V11.2M52 8.4V11.2" stroke="${INK}" stroke-width=".7"/>${box(55.4, 8.8, 3.6, 2.2, 0.7, M0, 0.9)}
+${box(13, 6.6, 28, 6.4, 1.6, M1, 1.15)}${shine("M14.8 8H39", 0.26)}<circle cx="36" cy="9.8" r="1.3" fill="${M2}" stroke="${INK}" stroke-width=".8"/></svg>`;
+
+/* the UMP-45 (the owner's, Nov 17): a compact one in dark polymer, a short stock, a long slightly curved magazine, a rail on
+   top and a short barrel (placeholder art until Noah's) */
+const UMP = `<svg viewBox="0 0 52 28">${part("M2.4 7.4L14 8.4V12.6L5 14.8Q1.6 15.6 1.6 12.4V8.8Q1.6 7.3 2.4 7.4Z", POLY, 1.15)}
+${part("M15.4 12H19.6L18.4 19.8Q18.1 21 16.8 20.8H15Q13.8 20.5 14.2 19.4Z", POLY, 1.1)}
+<path d="M19.4 12.2Q19.2 16 21.4 16H23" fill="none" stroke="${INK}" stroke-width="1.1"/>
+${part("M25 12H30.4L32.4 24.6Q32.6 26.4 31 26.4H28.4Q27 26.4 26.8 25Z", M0, 1.1)}${shine("M27.2 14L28.6 24", 0.22, 0.7)}
+${box(36, 7.2, 10, 3.6, 0.9, M2, 1)}${box(45.4, 7.8, 4.4, 2.4, 0.7, M0, 0.9)}
+${box(11, 5.6, 26, 7, 1.8, POLY, 1.15)}${shine("M13 7H35", 0.26)}${box(14, 3.8, 18, 1.8, 0.5, M2, 0.8)}</svg>`;
 
 /* the AK-47: its orange-brown wood (the stock sloping down, the grip, the handguard over and under the barrel), the dark
    receiver with its cover, the curved magazine sweeping forward, the gas tube, the tall front sight and the slanted
@@ -177,7 +204,9 @@ const iconOf = (svg, k = 1) => {
 /* every new gun: its picture in the hand, its icon, and how wide it is in the hand (duck sizes) */
 export const GUNS = {
   sniper: { held: SNIPER, icon: iconOf(SNIPER, 0.8), w: 1.25 },
-  smg: { held: SMG, icon: iconOf(SMG, 0.72), w: 0.52 },
+  smg: { held: SMG, icon: iconOf(SMG, 0.74), w: 0.74 }, // (an MP5: a little shorter than the UMP-45, as the real ones are)
+  tommy: { held: TOMMY, icon: iconOf(TOMMY, 0.8), w: 0.92 }, // (almost the AK-47's size: the owner's, Nov 18 10:38Z)
+  ump: { held: UMP, icon: iconOf(UMP, 0.78), w: 0.78 }, // (a little shorter than the Tommy gun, as the real ones are)
   ak: { held: AK, icon: iconOf(AK, 0.8), w: 1 },
   chaingun: { held: CHAINGUN, icon: iconOf(CHAINGUN, 0.8), w: 1.05 },
   revolver: { held: REVOLVER, icon: iconOf(REVOLVER, 0.72), w: 0.44 },
@@ -186,6 +215,7 @@ export const GUNS = {
   dbarrel: { held: DBARREL, icon: iconOf(DBARREL, 0.8), w: 1.15 },
   flamer: { held: FLAMER, icon: iconOf(FLAMER, 0.8), w: 1.1 },
   burst: { held: BURST, icon: iconOf(BURST, 0.8), w: 0.85 },
+  laser: { held: LASER(0), icon: iconOf(LASER(0), 0.8), w: 1.1 }, // (its barrel's heat: game.js draws LASER(heat))
   safekeep: { icon: HALO, w: 0.5 }, // (never in hand: only its picture)
   adrenaline: {
     held: ADRENALINE,
@@ -207,6 +237,14 @@ export const ROUNDS_ART = {
   smg: {
     w: 22,
     svg: `<svg viewBox="0 0 20 8"><path d="M0 4h11" stroke="#ffd84a" stroke-width="1.8" opacity=".55"/><path d="M8 1.9h6.2q4 .3 5.4 2.1q-1.4 1.8-5.4 2.1H8Z" fill="#e0b04a" stroke="#6a4c12" stroke-width=".8"/></svg>`,
+  },
+  tommy: {
+    w: 26,
+    svg: `<svg viewBox="0 0 24 9"><path d="M0 4.5h12" stroke="#ffd84a" stroke-width="2" opacity=".55"/><path d="M9 2.2h7q4.4.3 6.4 2.3q-2 2-6.4 2.3H9Z" fill="#d9a54a" stroke="#6a4c12" stroke-width=".9"/></svg>`,
+  },
+  ump: {
+    w: 24,
+    svg: `<svg viewBox="0 0 22 9"><path d="M0 4.5h11" stroke="#ffd84a" stroke-width="1.9" opacity=".55"/><path d="M8 2.1h6.6q4 .3 5.8 2.4q-1.8 2-5.8 2.3H8Z" fill="#e0b04a" stroke="#6a4c12" stroke-width=".9"/></svg>`,
   },
   ak: {
     w: 30,

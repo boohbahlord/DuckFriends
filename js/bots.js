@@ -56,7 +56,7 @@ import {
   DN_GRACE,
   DUNCE_TAKES,
 } from "./duncerules.js";
-import { isMgj, mgjGone, PICK_WEAPONS } from "./mgjrules.js";
+import { isMgj, mgjGone, PICK_WEAPONS, MGJ_MELEE } from "./mgjrules.js";
 import { isL4dd } from "./l4ddrules.js";
 import { l4Bot } from "./l4ddbots.js";
 import {
@@ -427,7 +427,7 @@ function mgjBot(s, id, now, out) {
       x: p.x + (pk.x - p.x) * k,
       y: p.y + (pk.y - p.y) * k,
       j: jump,
-      w: "knife",
+      w: MGJ_MELEE,
       ax,
       ay,
     });
@@ -441,18 +441,18 @@ function mgjBot(s, id, now, out) {
       x: p.x + (j.x - p.x) * k,
       y: p.y + (j.y - p.y) * k,
       j: jump,
-      w: "knife",
+      w: MGJ_MELEE,
       ax,
       ay,
     });
     return;
   }
   if (jump !== (p.j || 0))
-    out.push({ t: "move", id, x: p.x, y: p.y, j: jump, w: "knife", ax, ay });
+    out.push({ t: "move", id, x: p.x, y: p.y, j: jump, w: MGJ_MELEE, ax, ay });
   if (now - (stabbed.get(id) || 0) > 1100 + Math.random() * 600) {
     stabbed.set(id, now);
     if (stabbed.size > 100) stabbed.delete(stabbed.keys().next().value);
-    out.push({ t: "use", id, what: "knife", face: ax < 0 ? -1 : 1, ax, ay });
+    out.push({ t: "use", id, what: MGJ_MELEE, face: ax < 0 ? -1 : 1, ax, ay });
   }
 }
 /* Valentine's Duck Date: a computer that is The Date writes a topic, lets the date run (with the timer off, it moves on

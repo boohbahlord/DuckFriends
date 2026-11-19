@@ -65,11 +65,13 @@ KENNEY_IFACE = "https://kenney.nl/assets/interface-sounds"
 KENNEY_RPG = "https://kenney.nl/assets/rpg-audio"
 KENNEY_CASINO = "https://kenney.nl/assets/casino-audio"
 KENNEY_JINGLES = "https://kenney.nl/assets/music-jingles"
+KENNEY_DIGITAL = "https://kenney.nl/assets/digital-audio"
 KI = "kn:kenney_impactsounds/Audio/"
 KF = "kn:kenney_interfacesounds/Audio/"
 KU = "kn:kenney_uiaudio/Audio/"
 KR = "kn:kenney_rpgaudio/Audio/"
 KC = "kn:kenney_casinoaudio/Audio/"
+KD = "kn:kenney_digitalaudio/Audio/"
 GR = "oga:guns-reload/"
 EC = GR + "equipmentclicks.wav"
 C3 = GR + "equipment_clicks3.wav"
@@ -121,6 +123,11 @@ SOUNDS = {
     "countGo": dict(
         sf="count_go",
         lp=3800,
+        credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
+    ),
+    "voteTick": dict(
+        sf="vote_tick",
+        lp=2400,
         credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
     ),
     "l4round": dict(
@@ -180,6 +187,28 @@ SOUNDS = {
         layers=[("oga:guns-smg/P_30P.wav", 0.96, 0.4, 0, 1)],
         drive=4,
         credit=GUNS + ("PPSh",),
+    ),
+    # the Tommy gun (.45, quick and chattering: a shot every 120 ms): one shot of an M45's burst, a PPSh's crack on top
+    # and a .45's low thump under it (each cut before its recording's next shot)
+    "tommy": dict(
+        layers=[
+            ("oga:guns-smg/G_33P.wav", 4.253, 0.095, 0, 1),
+            ("oga:guns-smg/P_32P.wav", 4.444, 0.04, 0.001, 0.4),
+            ("oga:guns-pistol/A_42P.wav", 5.0, 0.12, 0.002, 0.35, 1500),
+        ],
+        rate=0.92,
+        drive=4,
+        credit=GUNS + ("M45 SMG and PPSh bursts, 1911 .45",),
+    ),
+    # the UMP-45 (.45, slower and heavier: a shot every 0.30 s): the .45 pistol's crack with an AK's body under it
+    "ump": dict(
+        layers=[
+            ("oga:guns-pistol/A_42P.wav", 5.0, 0.14, 0, 1),
+            ("oga:guns-rifle-lmg/C_29P.wav", 1.069, 0.085, 0.003, 0.5, 2500),
+        ],
+        rate=0.88,
+        drive=4,
+        credit=GUNS + ("1911 .45, AK-47 burst",),
     ),
     "sniper": dict(
         layers=[("oga:guns-sniper/W_29P.wav", 0.56, 1.2, 0, 1)],
@@ -632,6 +661,17 @@ SOUNDS = {
     "uiClose": ui(KF + "close_001.ogg"),
     "nope": ui(KF + "error_004.ogg"),
     "tick": ui(KF + "tick_001.ogg"),
+    # the Vote button held: a soft sweep rising as it fills, darkened at its top so it never shrills, then a crisp click
+    # when it is full (the owner, Nov 17 19:22Z)
+    "holdFill": one(
+        KF + "maximize_005.ogg",
+        0.6,
+        ("Kenney, Interface Sounds", KENNEY_IFACE),
+        room=False,
+        kbps=32,
+        lp=2600,
+    ),
+    "holdClick": ui(KF + "click_001.ogg"),
     "done": ui(KF + "confirmation_001.ogg"),
     "bell": ui(KF + "bong_001.ogg"),
     "ping": ui(KF + "glass_001.ogg"),
@@ -1060,6 +1100,381 @@ SOUNDS = {
             "alienistcog, clang (freesound 124711, from Stendhal); Kenney, RPG Audio (metalPot3)",
             "https://freesound.org/people/alienistcog/sounds/124711/",
         ),
+    ),
+    # ==== batch 6: Dead Ducks Arcade's power box and the Angel machine (the owner, Nov 16 17:22Z) ====
+    # the power on: the breaker thrown, a motor starting, the machines' hum coming up under it
+    "powerUp": dict(
+        layers=[
+            (KI + "impactMetal_heavy_002.ogg", 0, 0.5, 0, 0.8, 2000),
+            ("gh:power/motor_start_ping.ogg", 0, 1.7, 0.05, 1),
+            ("gh:power-hum/machinery.ogg~2.2", 0, 2.2, 0.35, 0.45, 1500),
+        ],
+        credit=(
+            "CogFireStudios, electric motor start (freesound 619835); joe_anderson22, machinery (freesound 392983); "
+            "Kenney, Impact Sounds (both via CDDA-Soundpacks)",
+            "https://freesound.org/s/619835/",
+        ),
+    ),
+    # the power out: the breaker drops and the machine winds down to a stop (the owner: "sound like the machine went off")
+    "powerDown": dict(
+        layers=[
+            (KI + "impactMetal_heavy_003.ogg", 0, 0.5, 0, 0.7, 1800),
+            ("gh:power/engine_stop_combustion.ogg", 0.4, 1.6, 0.03, 1, 3000),
+        ],
+        credit=(
+            "GiocoSound, engine stop (freesound 401553, via CDDA-Soundpacks); Kenney, Impact Sounds",
+            "https://freesound.org/people/GiocoSound/sounds/401553/",
+        ),
+    ),
+    # a part (or a jerry can) picked up: a grab and a little clink
+    "partGot": dict(
+        layers=[
+            (KR + "handleSmallLeather.ogg", 0, 0.4, 0, 1),
+            (KI + "impactMetal_light_002.ogg", 0, 0.3, 0.06, 0.5),
+        ],
+        credit=("Kenney, RPG Audio and Impact Sounds", KENNEY_RPG),
+    ),
+    # a part fitted into the box: set in, latched
+    "partIn": dict(
+        layers=[
+            (KI + "impactPlate_medium_000.ogg", 0, 0.3, 0, 0.8, 2500),
+            (KR + "metalLatch.ogg", 0.03, 0.2, 0.14, 1),
+            (C3, 19.78, 0.15, 0.3, 0.6),
+        ],
+        credit=(
+            "Kenney, Impact Sounds and RPG Audio; LFA, Equipment Clicks III",
+            OGA_URL["clicks3"],
+        ),
+    ),
+    # gas poured in: the cap off, the stream, the can glugging
+    "gasPour": dict(
+        layers=[
+            ("oga:drink/bottle-open-01.flac", 0.25, 0.4, 0, 0.7),
+            ("gh:pour/tap-water-2.opus", 2.5, 1.6, 0.3, 0.8, 2500),
+            ("oga:drink/Drink_01.wav", 0.05, 0.45, 0.6, 0.6, 2000),
+            ("oga:drink/Drink_02.wav", 0, 0.44, 1.15, 0.6, 2000),
+        ],
+        credit=(
+            "Owlish Media, tap water and drinks; qubodup, Liquid bottle drink set (bottle-open-01)",
+            "https://opengameart.org/content/202-more-sound-effects",
+        ),
+    ),
+    # the Angel machine at work, its whole 5 s: the machine's hum, its glow rising, sparks snapping
+    "angelWork": dict(
+        layers=[
+            ("gh:power-hum/machinery.ogg~5", 0, 5.0, 0, 0.6, 1500),
+            ("gh:angel/charge.opus", 0, 4.1, 0.2, 0.45),
+            ("gh:angel/snaploop.opus", 0.4, 4.4, 0.4, 0.7),
+        ],
+        lp=7000,
+        kbps=48,
+        credit=(
+            "joe_anderson22, machinery (freesound 392983); Electricity Game Sound Pack (charge, snaploop)",
+            "https://opengameart.org/content/electricity-game-sound-pack",
+        ),
+    ),
+    # the orb out: a magic shimmer and a zap
+    "angelOrb": dict(
+        layers=[
+            ("gh:angel/magical_1.opus", 0.05, 1.5, 0, 1),
+            ("gh:angel/teleport.opus", 0, 0.7, 0, 0.4),
+        ],
+        credit=(
+            "JaggedStone, Magic Spell SFX (magical_1); Electricity Game Sound Pack (teleport)",
+            "https://opengameart.org/content/magic-spell-sfx",
+        ),
+    ),
+    # ==== batch 7: the Sad Trombone special and fire (the owner, Nov 16 17:44Z) ====
+    "trombone": dict(
+        sf="sad_trombone",
+        lp=6000,
+        kbps=48,
+        credit=("GeneralUser GS SoundFont (S. Christian Collins), trombone", None),
+    ),
+    # fire: a crackle on a loop while something burns (sound.js burn), and the whoosh as it catches (sound.js fire)
+    "fire": dict(
+        layers=[("gh:flamer/fire_loop.opus", 15.0, 3.8, 0, 1)],
+        lp=6000,
+        loop=2.0,
+        kbps=40,
+        credit=(
+            "PagDev, Fireplace Sound Loop",
+            "https://opengameart.org/content/fireplace-sound-loop",
+        ),
+    ),
+    "fireLight": dict(
+        layers=[("gh:flamer/attack-fire-3.flac", 0, 0.64, 0, 1)],
+        lp=6000,
+        credit=(
+            "Nic3_one, fire attack (freesound 166555, from Stendhal)",
+            "https://freesound.org/people/Nic3_one/sounds/166555/",
+        ),
+    ),
+    # ==== batch 8 (the owner, Nov 17) ====
+    # the Angelic pistol's blast: the grenade's boom made a little weaker (a touch higher, less low end, a shorter tail)
+    "boomSmall": dict(
+        layers=[
+            ("oga:explosion-big/explosion.wav", 0, 0.8, 0, 1),
+            ("oga:explosion-big/lowFrequency_explosion_000.ogg", 0.05, 0.9, 0, 0.45),
+            ("oga:explosion-small/explosionCrunch_000.ogg", 0, 0.6, 0.01, 0.35),
+        ],
+        rate=1.12,
+        drive=1.8,
+        credit=(
+            "TinyWorlds, Explosion (explosion); Kenney, Sci-fi Sounds (lowFrequency_explosion_000, "
+            "explosionCrunch_000)",
+            OGA_URL["scifi"],
+        ),
+    ),
+    # the laser gun: its beam (one a second), the hiss as it overheats, and the steam off its hot barrel (on a loop)
+    "laser": dict(
+        layers=[
+            (KD + "laser9.ogg", 0.112, 0.55, 0, 1, 5000),
+            (KD + "laser3.ogg", 0.107, 0.45, 0, 0.5, 5000),
+        ],
+        rate=0.92,
+        lp=6000,
+        fin=0.02,
+        credit=("Kenney, Digital Audio (laser9, laser3)", KENNEY_DIGITAL),
+    ),
+    "laserHiss": dict(
+        layers=[("oga:jetpack-stop/steam_hisses_-_Marker_4.wav", 0, 1.2, 0, 1)],
+        lp=6000,
+        credit=("bart, Steam Release Sounds", OGA_URL["steam"]),
+    ),
+    "laserSteam": dict(
+        layers=[("oga:laser-steam/steam_hisses_-_Marker_3-start.wav~3", 0, 3.0, 0, 1)],
+        lp=3500,
+        loop=1.5,
+        room=False,
+        kbps=32,
+        credit=("bart, Steam Release Sounds", OGA_URL["steam"]),
+    ),
+    # ---- the owner's Nov 17 12:28Z batch: Downpour, the cabin, every zombie game ----
+    # footsteps by the ground: the same light step (Kenney's, as "step" on wood), on grass, on concrete or the road, on
+    # a metal roof, and through the road's shallow water (the step with a splash over it)
+    "stepGrass": dict(
+        takes=[
+            [
+                (
+                    f"kn:kenney_impactsounds/Audio/footstep_grass_00{i}.ogg",
+                    0,
+                    0.4,
+                    0,
+                    1,
+                    4000,
+                )
+            ]
+            for i in range(5)
+        ],
+        rate=1.26,
+        lp=5000,
+        fin=0.01,
+        room=False,
+        kbps=32,
+        credit=("Kenney, Impact Sounds (footstep_grass)", KENNEY_IMPACT),
+    ),
+    "stepHard": dict(
+        takes=[
+            [
+                (
+                    f"kn:kenney_impactsounds/Audio/footstep_concrete_00{i}.ogg",
+                    0,
+                    0.4,
+                    0,
+                    1,
+                    4500,
+                )
+            ]
+            for i in range(5)
+        ],
+        rate=1.26,
+        lp=6000,
+        fin=0.01,
+        room=False,
+        kbps=32,
+        credit=("Kenney, Impact Sounds (footstep_concrete)", KENNEY_IMPACT),
+    ),
+    "stepMetal": dict(
+        takes=[
+            [
+                (
+                    f"kn:kenney_impactsounds/Audio/footstep_concrete_00{i}.ogg",
+                    0,
+                    0.4,
+                    0,
+                    1,
+                    4500,
+                ),
+                (
+                    f"kn:kenney_impactsounds/Audio/impactMetal_light_00{i}.ogg",
+                    0,
+                    0.3,
+                    0.003,
+                    0.16,
+                    3000,
+                ),
+            ]
+            for i in (0, 1, 2, 4)  # (Kenney's fourth rang too sharp)
+        ],
+        rate=1.26,
+        lp=6000,
+        fin=0.01,
+        room=False,
+        kbps=32,
+        credit=(
+            "Kenney, Impact Sounds (footstep_concrete, impactMetal_light)",
+            KENNEY_IMPACT,
+        ),
+    ),
+    "stepWater": dict(
+        takes=[
+            [
+                (f"gh:water-wade/walk_water_{i + 1}.ogg", 0, 0.38, 0, 1),
+                (
+                    f"kn:kenney_impactsounds/Audio/footstep_wood_00{i % 5}.ogg",
+                    0,
+                    0.3,
+                    0,
+                    0.3,
+                ),
+            ]
+            for i in (1, 2, 4, 6, 8)
+        ],
+        lp=5000,
+        room=False,
+        kbps=32,
+        credit=(
+            "dawidwmika (walk_water, CC0, via CDDA-Soundpacks); Kenney, Impact Sounds",
+            "https://freesound.org/s/372518/",
+        ),
+    ),
+    # swimming the deep flood: a paddle's splash a stroke
+    "swim": dict(
+        takes=[
+            [("gh:swim/splash_01.opus", 0, 0.55, 0, 1)],
+            [("gh:swim/splash_02.opus", 0, 0.5, 0, 1)],
+            [("gh:swim/loop_water_01.opus", 0.2, 0.5, 0, 1)],
+        ],
+        lp=4000,
+        room=False,
+        kbps=32,
+        credit=(
+            "rubberduck (CC0, via EternityForest/Free-SFX)",
+            "https://opengameart.org/users/rubberduck",
+        ),
+    ),
+    # a zombie climbing the chain-link fence: its rattle (quiet, a few at once at most)
+    "climb": dict(
+        takes=[
+            [(f"gh:fence-climb/smash_fail_chain_link{n}.ogg", 0, 0.8, 0, 1)]
+            for n in ("", "_1", "_2")
+        ],
+        rate=0.9,
+        lp=5000,
+        room=False,
+        kbps=32,
+        credit=(
+            "Breviceps (CC0, via CDDA-Soundpacks)",
+            "https://freesound.org/people/Breviceps/sounds/458963/",
+        ),
+    ),
+    # a duck landing from a fall (off the fence, the balcony, a roof): a body's thud
+    "thud": dict(
+        takes=[
+            [
+                (
+                    f"kn:kenney_impactsounds/Audio/impactSoft_heavy_00{i}.ogg",
+                    0,
+                    0.5,
+                    0,
+                    1,
+                ),
+                (
+                    f"kn:kenney_impactsounds/Audio/impactPunch_heavy_00{i}.ogg",
+                    0,
+                    0.3,
+                    0.004,
+                    0.35,
+                    2500,
+                ),
+            ]
+            for i in range(3)
+        ],
+        rate=0.85,
+        fin=0.016,
+        kbps=32,
+        credit=(
+            "Kenney, Impact Sounds (impactSoft_heavy, impactPunch_heavy)",
+            KENNEY_IMPACT,
+        ),
+    ),
+    # a crit: a gush of gore
+    "gore": dict(
+        layers=[("gh:gore/zombie_gibbed_1.ogg", 0, 1.2, 0, 1, 3000)],
+        lp=3500,
+        fin=0.01,
+        kbps=40,
+        credit=(
+            "PaulMorek (CC0, via CDDA-Soundpacks)",
+            "https://freesound.org/people/PaulMorek/sounds/196725/",
+        ),
+    ),
+    # a miss: a wispy falling swish with a soft falling blip in it
+    "miss": dict(
+        layers=[
+            ("kn:kenney_interfacesounds/Audio/minimize_005.ogg", 0, 0.53, 0, 1, 3000),
+            ("kn:kenney_digitalaudio/Audio/highDown.ogg", 0, 0.4, 0.01, 0.45, 2500),
+        ],
+        rate=0.85,
+        fin=0.02,
+        kbps=32,
+        credit=(
+            "Kenney, Interface Sounds (minimize_005) and Digital Audio (highDown)",
+            KENNEY_IFACE,
+        ),
+    ),
+    # weather: a light rain over Downpour, and the wind round the cabin, gusting (long loops)
+    "rain": dict(
+        layers=[("gh:rain/heavyrain.ogg", 6.0, 9.0, 0, 1, 3000)],
+        lp=3500,
+        loop=8.0,
+        room=False,
+        kbps=32,
+        credit=(
+            "Ali@k (CC0, via CDDA-Soundpacks)",
+            "https://freesound.org/people/Ali@k/sounds/128907/",
+        ),
+    ),
+    "wind": dict(
+        layers=[("gh:wind/WEATHER_SNOWSTORM.ogg", 2.0, 22.0, 0, 1)],
+        lp=4000,
+        loop=20.0,
+        room=False,
+        kbps=32,
+        credit=(
+            "guyburns (CC0, via CDDA-Soundpacks)",
+            "https://freesound.org/people/guyburns/sounds/473815/",
+        ),
+    ),
+    # Downpour's church bell, at the start of every round: four strikes about 2.12 s apart (Noah's swing follows them)
+    "churchBell": dict(
+        layers=[("gh:church-bell/church_bells.ogg", 0.004, 9.9, 0, 1)],
+        lp=5000,
+        room=False,
+        kbps=48,
+        credit=(
+            "Nox_Sound (CC0, via CDDA-Soundpacks)",
+            "https://freesound.org/people/Nox_Sound/sounds/563885/",
+        ),
+    ),
+    # every zombie down: the last note of our own What the duck? (2:44), a single chime
+    "cleared": dict(
+        layers=[("assets/music/what-the-duck.mp3", 164.008, 3.6, 0, 1)],
+        fin=0.015,
+        room=False,
+        kbps=48,
+        credit=("Duck Friends' own song What the duck? (assets/music)", None),
     ),
 }
 

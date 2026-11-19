@@ -43,6 +43,16 @@ const WOUND = {
     ],
   }, // (a zombie's claw on a duck in Quacky Zombies: cuts and bruises)
   blunt: { p: 0.55, kinds: [["r", 1]], beak: 0.08, eye: 0.07, hat: 0.3 }, // (a blow knocks the beak off, an eye out, the hat off)
+  laser: {
+    p: 0.6,
+    kinds: [
+      ["b", 0.4],
+      ["B", 0.2],
+      ["c", 0.4],
+    ],
+    beak: 0.1,
+    eye: 0.1,
+  }, // (the Laser Rifle's beam: holes, cuts, an eye or the beak burnt off; the owner's, Nov 17)
   arrow: {
     p: 0.5,
     kinds: [
@@ -54,6 +64,8 @@ const WOUND = {
 const WOUND_OF = {
   handgun: "small",
   smg: "small",
+  tommy: "small",
+  ump: "small",
   lmg: "small",
   sniper: "big",
   ak: "big",
@@ -76,6 +88,7 @@ const WOUND_OF = {
   bow: "arrow",
   arrow: "arrow",
   claw: "claw",
+  laser: "laser",
 };
 /* what can be knocked off: every hat and face item but hair, horns, what floats or grows on the head, a full helmet or
    head cover, and paint (the owner's "only appropriate ones, so not a full helmet like a motorcycle helmet or face
@@ -93,14 +106,18 @@ const STAYS = {
     "clownpaint",
   ],
 };
-/* what duck look `d` wears that a hit could knock off: { hat, face } */
+/* what duck look `d` wears that a hit could knock off: { hat, face, beak }. Jack in a Box and an uploaded picture
+   show no hat or face item, and they and Dat Boi have no beak, so nothing of those flies off them */
 const idOf = (v) => (v && typeof v === "object" ? v.id : v) || "";
 export const knockable = (d) => {
   const hat = idOf(d && d.hat),
-    face = idOf(d && d.face);
+    face = idOf(d && d.face),
+    style = d && d.style,
+    shown = !(d && d.image) && style !== "jack";
   return {
-    hat: !!hat && hat !== "none" && !STAYS.hat.includes(hat),
-    face: !!face && face !== "none" && !STAYS.face.includes(face),
+    hat: shown && !!hat && hat !== "none" && !STAYS.hat.includes(hat),
+    face: shown && !!face && face !== "none" && !STAYS.face.includes(face),
+    beak: shown && style !== "datboi",
   };
 };
 export const KNOCKED = 10000; // (ms a knocked-off hat or face item stays off: the owner's "in like 10 seconds")
@@ -117,7 +134,8 @@ export function woundCode(had, w, can = {}) {
   } // (knocked off: it doesn't count as a wound)
   if (had.replace(/[gfhm][01]/g, "").length >= 12 || Math.random() >= W.p)
     return "";
-  if (W.beak && Math.random() < W.beak && !had.includes("p")) return "p0";
+  const beak = can.beak !== false && !had.includes("p");
+  if (W.beak && Math.random() < W.beak && beak) return "p0";
   if (W.eye && Math.random() < W.eye && !had.includes("e")) return "e0";
   let r = Math.random(),
     kind = W.kinds[W.kinds.length - 1][0];
@@ -128,18 +146,32 @@ export function woundCode(had, w, can = {}) {
     }
   if (W.chunk && Math.random() < W.chunk) {
     const q = Math.random();
-    kind =
-      q < 0.2 && !had.includes("p")
-        ? "p"
-        : q < 0.35 && !had.includes("e")
-          ? "e"
-          : "k"; // (a bullet tears a chunk out, or shoots the beak off or an eye out)
+    kind = q < 0.2 && beak ? "p" : q < 0.35 && !had.includes("e") ? "e" : "k"; // (a bullet tears a chunk out, or shoots the beak off or an eye out)
   }
   if (kind === "p" || kind === "e") return kind + "0";
   const spots = kind === "a" || kind === "k" ? 6 : 8,
     add = kind + Math.floor(Math.random() * spots);
   return had.includes(add) ? "" : add;
 }
+
+/* the wound a hit leaves on something that has `had`: its head blown off on a headshot or a crit (x0, once), else a
+   wound as woundCode gives. Dead Ducks Arcade's zombies, Mad God Justin's wave zombies and Justin on the board */
+export const hitCode = (had, w, head, can = {}) =>
+  head ? (had.includes("x") ? "" : "x0") : woundCode(had, w, can);
+/* the weapon a newest wound tells of, for its blood when no shot hit it (a knife, a hammer): fx.js fxHitAt's kinds */
+export const BY_WOUND = {
+  b: "handgun",
+  B: "ak",
+  s: "pellet",
+  c: "knife",
+  r: "hammer",
+  a: "arrow",
+  k: "sniper",
+  g: "chaingun",
+};
+/* the kind of the wound added between `had` and `now` (codes only ever grow at the end), or "" */
+export const newWound = (had = "", now = "") =>
+  now.length > had.length ? now[had.length] : "";
 
 /* ---------- killed by an explosion (the owner's nuke, Nov 16 16:13Z) ----------
    A few looks made beforehand, put on in one step (no animation): torn apart and burnt, with the head blown off, or
@@ -172,6 +204,8 @@ export const PCRIT = {
   arrow: 0.05,
   sniper: 0.05,
   smg: 0.0175,
+  tommy: 0.05,
+  ump: 0.05,
   ak: 0.03,
   revolver: 0.04,
   lmg: 0.0125,
@@ -206,7 +240,7 @@ export function pwHit(s, id, w, now, down) {
   if (c) pwAdd(s, id, [c], now, down);
 }
 /* the host's heartbeat: each duck's clock stops while it's down and starts once it's up; wounds that ran out go */
-export function pwTick(s, now) {
+export function pwTick(s, now, keep = false) {
   if (!s.pw) return false;
   let ch = false;
   const next = {};
@@ -217,6 +251,15 @@ export function pwTick(s, now) {
       continue;
     }
     let o = w;
+    if (keep) {
+      /* the normal games: a wound stays until the duck dies and comes back (rules.js), so a live duck's clock is stopped */
+      if (!P.dead && w.at) {
+        o = { m: settled(w, now), at: 0 };
+        ch = true;
+      }
+      next[id] = o;
+      continue;
+    }
     if (P.dead && w.at) o = { m: settled(w, now), at: 0 };
     else if (!P.dead && !w.at) o = { m: w.m, at: now };
     const m = settled(o, now);
@@ -236,11 +279,18 @@ export function pwExploded(s, id, seed, now) {
 }
 /* the wounds duck id shows now (for l4ddart.js hitsOf): a knocked-off hat or face item in its last BACK ms shows
    coming back on (spot 1) */
+/* the modes that aren't the normal games: there a knocked-off hat comes back by itself, as it did (in the normal games it
+   stays off until the duck comes back from dying: rules.js) */
+const NOT_NORMAL = ["l4dd", "mgj", "hang"];
 export function pwCodes(s, id, now) {
   const w = (s.pw || {})[id];
   if (!w) return "";
   return settled(w, now)
     .filter(([, l]) => l > 0)
-    .map(([c, l]) => ("hm".includes(c[0]) && l < BACK ? c[0] + "1" : c))
+    .map(([c, l]) =>
+      "hm".includes(c[0]) && l < BACK && NOT_NORMAL.includes(s.options.mode)
+        ? c[0] + "1"
+        : c,
+    )
     .join("");
 }

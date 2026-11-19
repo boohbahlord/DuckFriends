@@ -7,6 +7,15 @@
    purple switch right of it, and the aim-and-attack stick with the jump button above it (phonepad.js); my HP shows on
    my duck's green bar. */
 import { ICONS, weaponIcon } from "./l4ddart.js";
+import { angelic } from "./powerart.js";
+import { angelOf } from "./l4ddangel.js";
+/* my duck's look (its pistol's colors) */
+const duckOf = (s, me) => (s.players[me] || {}).duck;
+/* an Angelic weapon's icon: Noah's look on a drawing; an emoji (the pistol's) gets the same glow and halo from css */
+const holy = (icon) => {
+  const a = angelic(icon);
+  return a !== icon ? a : `<span class="l4-holy">${icon}</span>`;
+};
 import {
   ARMS,
   slotsOf,
@@ -14,14 +23,19 @@ import {
   SLOT_KINDS,
   weaponName,
   reloadOf,
+  downArmed,
+  tintOf,
+  endless,
 } from "./l4ddrules.js";
 import { now as clockNow } from "./clock.js";
 
 /* what a slot says under it: the magazine and the rest, or how many are left */
 const count = (w, m) => {
   if (!m) return "";
+  if (w === "dg") return `${m.rw === "dg" ? "…" : m.dg} | ∞`; // (the down pistol: its bullets never run out)
   if (w === "grenade") return String(m.g);
   const c = (m.am || {})[w];
+  if (endless(w)) return "∞"; // (the Laser Rifle never runs out, it only overheats; nor do the bow's arrows)
   if (w === "jetpack" && c) return Math.ceil(c[0] / 1000) + "s"; // (its flight left, in seconds)
   if (w === "flamer" && c)
     return Math.ceil((c[0] / ARMS.flamer.all) * 100) + "%"; // (its tank left)
@@ -62,23 +76,40 @@ export function mountL4Bar(S, api) {
       out = !!(p.dn || p.gh),
       held = api.held(),
       off = !!(s.hang.l4f || {})[me],
-      next = JSON.stringify([m, held, off, out]);
+      down = downArmed(s, me),
+      next = JSON.stringify([m, held, off, out, down]);
     if (next === sig) return;
     sig = next;
-    /* one slot: [key, the weapon (or "" when empty), its kind, what a press does] */
-    const slots = [
-      ...sl.map((w, i) => [String(i + 1), w, SLOT_KINDS[i], String(i)]),
-      ["5", "grenade", "grenade", "grenade"],
-      ["0", "fl", "light", "fl"],
-    ];
+    /* one slot: [key, the weapon (or "" when empty), its kind, what a press does]; down, only the down pistol (the
+       owner's, Nov 17 11:07Z) */
+    const slots = down
+      ? [["", "handgun", "ranged", "dg"]]
+      : [
+          ...sl.map((w, i) => [String(i + 1), w, SLOT_KINDS[i], String(i)]),
+          ["5", "grenade", "grenade", "grenade"],
+          ["0", "fl", "light", "fl"],
+        ];
+    if (down) {
+      const n = count("dg", m);
+      row.innerHTML = `<div class="l4slots"><button type="button" class="l4s k-ranged c-plain sel l4s-down" aria-label="Pistol, ${n}" disabled>${reloadMeter(s, me, "dg", m)}<i>${weaponIcon("handgun", duckOf(s, me))}</i><kbd>R</kbd><small>${n}</small></button></div>`;
+      return;
+    } // (R reloads it; it fires as the pistol always does)
     const slot = ([key, w, kind, does]) => {
       const n = w ? count(w, m) : "",
         empty = !w || spent(w, m),
         name = w === "fl" ? "Flashlight" : w ? weaponName(w) : "Special",
-        icon = w === "fl" ? ICONS.flashlight(!off) : w ? weaponIcon(w) : "";
+        icon =
+          w === "fl"
+            ? ICONS.flashlight(!off)
+            : w && angelOf(s, me, w)
+              ? holy(weaponIcon(w, duckOf(s, me))) // (Angelic: l4ddangel.js)
+              : w
+                ? weaponIcon(w, duckOf(s, me))
+                : "";
       const on =
         (w === "jetpack" && m && m.jp) || (w === "longjump" && m && m.lj); // (switched on: a green ring)
-      return `<button type="button" class="l4s k-${kind}${w && w === held ? " sel" : ""}${empty ? " empty" : ""}${on ? " on" : ""}" data-l4w="${does}" aria-label="${name}${n ? ", " + n : ""}"${out || (!w && does !== "fl") ? " disabled" : ""}>${w ? reloadMeter(s, me, w, m) : ""}<i>${icon}</i><kbd>${key}</kbd>${n ? `<small>${n}</small>` : ""}</button>`;
+      const tint = w && w !== "fl" ? tintOf(w, angelOf(s, me, w)) : ""; // (its own color: l4ddrules.js tintOf)
+      return `<button type="button" class="l4s k-${kind}${tint ? " " + tint : ""}${w && w === held ? " sel" : ""}${empty ? " empty" : ""}${on ? " on" : ""}" data-l4w="${does}" aria-label="${name}${n ? ", " + n : ""}"${out || (!w && does !== "fl") ? " disabled" : ""}>${w ? reloadMeter(s, me, w, m) : ""}<i>${icon}</i><kbd>${key}</kbd>${n ? `<small>${n}</small>` : ""}</button>`;
     };
     /* (my HP isn't here any more: it's the red meter under the hotbar, hpmeter.js; owner 2026-11-04 03:16Z) */
     row.innerHTML = `<div class="l4slots">${slots.map(slot).join("")}</div>`;
@@ -126,21 +157,38 @@ export function l4Slider(api) {
   const keys = () => {
     const k = kit();
     if (!k) return [];
+    if (downArmed(k.s, k.me)) return ["handgun"]; // (down: only the down pistol)
     return [...k.sl.map((w) => w || null), "grenade"];
   };
   const kindAt = (i) => SLOT_KINDS[i] || (i === 4 ? "grenade" : "light");
   const look = (id) => {
     const k = id && kit();
     if (!k) return null;
+    if (downArmed(k.s, k.me))
+      return id === "handgun"
+        ? {
+            id,
+            name: "Pistol",
+            icon: weaponIcon(id, duckOf(k.s, k.me)),
+            off: false,
+            keep: false,
+            cls: "k-ranged c-plain",
+          }
+        : null; // (down: the down pistol, never Angelic; a plain slot, as the pistol's always is)
     const i = id === "grenade" ? 4 : id === "fl" ? 5 : k.sl.indexOf(id);
     if (i < 0) return null;
     return {
       id,
       name: id === "fl" ? "Flashlight" : weaponName(id),
-      icon: id === "fl" ? ICONS.flashlight(!lightOff(k)) : weaponIcon(id),
+      icon:
+        id === "fl"
+          ? ICONS.flashlight(!lightOff(k))
+          : angelOf(k.s, k.me, id)
+            ? holy(weaponIcon(id, duckOf(k.s, k.me)))
+            : weaponIcon(id, duckOf(k.s, k.me)),
       off: out(k.s, k.me) || (i < 5 && spent(id, k.m)),
       keep: i === 3 || i === 5,
-      cls: `k-${kindAt(i)}`,
+      cls: `k-${kindAt(i)}${id === "fl" ? "" : " " + tintOf(id, angelOf(k.s, k.me, id))}`.trim(), // (its own color)
     };
   };
   return {
@@ -171,6 +219,7 @@ export function l4Slider(api) {
     },
     select(i) {
       const k = kit();
+      if (k && downArmed(k.s, k.me)) return; // (down: nothing else to pick)
       if (i === 3 && k && ["longjump", "jetpack"].includes(k.sl[3])) return; // (sliding to them changes nothing: a tap or the switch turns them on or off)
       if (
         i < 3 ||
@@ -183,9 +232,10 @@ export function l4Slider(api) {
     cool: () => [],
     dots(id) {
       const k = id && kit(),
-        n = k ? count(id === "fl" ? "" : id, k.m) : "";
+        w = k && downArmed(k.s, k.me) ? "dg" : id, // (down: the down pistol's bullets)
+        n = k ? count(w === "fl" ? "" : w, k.m) : "";
       return (
-        (k ? reloadMeter(k.s, k.me, id, k.m) : "") +
+        (k ? reloadMeter(k.s, k.me, w, k.m) : "") +
         (n ? `<small class="sp-n">${n}</small>` : "")
       );
     },

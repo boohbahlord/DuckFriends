@@ -5,9 +5,10 @@
    as a little 3D toy. Metals use banded reflections (a bright sky, a dark horizon, a lighter floor) and a shine that
    sweeps across them now and then. A hat (hats.js) adds headroom above the duck's box. A style (styles.js) dresses the
    same body as a mallard, a call duck, a raptor, an eagle or a pelican, or builds it of blocks or flat shapes. */
+import { rbGrad, rbShade } from "./rainbowskin.js";
 import { hatLayers, HAT_TOP } from "./hats.js";
 import { datboiSVG, onHead } from "./datboi.js";
-import { faceLayer } from "./faces.js";
+import { faceLayer, hidesBeak } from "./faces.js";
 import { beakSVG } from "./beaks.js";
 import { eyesSVG } from "./eyes.js";
 import {
@@ -54,6 +55,9 @@ export const DUCK_METALS = [
   ["silver", "Silver"],
   ["bronze", "Bronze"],
 ];
+/* the rainbow skin (rainbowskin.js): picked where the metals are (metal "rainbow"), locked until its jumps (unlocks.js);
+   never a hat's metal */
+export const RAINBOW_SKIN = ["rainbow", "Rainbow"];
 /* each metal: sky (top reflection), light, mid, horizon (the dark band), floor (the lower reflection), edge */
 export const METAL = {
   gold: ["#fffdf0", "#ffe47a", "#e8a91c", "#5e3a00", "#ffd24a", "#4a2c00"],
@@ -200,6 +204,10 @@ export function duckSVG(
 ) {
   const L = { ...DUCK_DEFAULT, ...plainLook(look || {}) },
     id = "dk" + ++uid;
+  /* a hat or a face item knocked off (gone), or coming back on (half see-through): on every kind of duck, Dat Boi and
+     the flat ones too (the owner saw a hat fly off and stay on at once) */
+  const worn = (svg, g) =>
+    !gone || g === undefined ? svg : g ? `<g opacity="${g}">${svg}</g>` : "";
   if (L.style === "jack") {
     // Jack (or Jill) in a Box: not a duck; only the eyes and the colors draw on him, the rest stays stored
     return `<svg class="duck jack" viewBox="0 0 120 120" width="${size}" height="${size}" role="img" aria-label="${esc(title || styleName(L))}">
@@ -213,7 +221,7 @@ ${shadow ? `<ellipse cx="64" cy="109" rx="38" ry="6.4" fill="#000" opacity=".22"
       k = 1 + 0.1 * clamp1(L.size);
     return `<svg class="duck datboi${L.rank === "rainbow" ? " rainbow" : ""}${top ? " hatted" : ""}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${((size * (120 + top)) / 120).toFixed(1)}" role="img" aria-label="${esc(title || styleName(L))}">
 ${k !== 1 ? `<g transform="translate(56 106) scale(${k.toFixed(3)}) translate(-56 -106)">` : ""}
-${shadow ? `<ellipse cx="55" cy="106.4" rx="26" ry="4.8" fill="#000" opacity=".22"/>` : ""}${onHead(hat.back)}<g class="dbr">${datboiSVG(L, id, dead)}</g>${onHead(face)}${onHead(hat.front)}${k !== 1 ? "</g>" : ""}${extra}</svg>`;
+${shadow ? `<ellipse cx="55" cy="106.4" rx="26" ry="4.8" fill="#000" opacity=".22"/>` : ""}${onHead(worn(hat.back, gone && gone.hat))}<g class="dbr">${datboiSVG(L, id, dead)}</g>${onHead(worn(face, gone && gone.face))}${onHead(worn(hat.front, gone && gone.hat))}${k !== 1 ? "</g>" : ""}${extra}</svg>`;
   }
   if (L.image) {
     // an uploaded square picture, standing like a card, with the same little shadow
@@ -226,6 +234,13 @@ ${shadow ? `<ellipse cx="60" cy="110" rx="40" ry="7" fill="#000" opacity=".22"/>
 <rect x="14" y="10" width="92" height="92" rx="16" fill="none" stroke="#00000055" stroke-width="2.4"/>
 ${dead ? '<path d="M24 20L96 92M96 20L24 92" stroke="#e01b1b" stroke-width="10" stroke-linecap="round" opacity=".9"/>' : ""}${extra}</svg>`;
   }
+  /* the beak, unless it's been shot off, or a helmet or a mask over the whole face hides it (on fully: knocked off or
+     coming back on, the beak shows) */
+  const beak =
+    (gone && gone.beak) ||
+    (hidesBeak(L.face) && !(gone && gone.face !== undefined))
+      ? ""
+      : beakSVG(L);
   const st = styleById(L.style),
     hat = hatLayers(L.hat, L, dead),
     face = faceLayer(L.face, L, dead),
@@ -254,10 +269,10 @@ ${dead ? '<path d="M24 20L96 92M96 20L24 92" stroke="#e01b1b" stroke-width="10" 
     return `<svg class="duck flat${top ? " hatted" : ""}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${((size * (120 + top)) / 120).toFixed(1)}" role="img" aria-label="${esc(title || "Duck")}">
 ${k !== 1 ? `<g transform="translate(60 108) scale(${k.toFixed(3)}) translate(-60 -108)">` : ""}
 ${shadow ? `<ellipse cx="58" cy="109" rx="${(44 * (1 + 0.16 * fat)).toFixed(1)}" ry="7" fill="#000" opacity=".22"/>` : ""}
-${hat.back}${OF ? OF.back : ""}<g${bt}>${blocks ? blocksBody(L.color) : geoBody(L.color)}</g>${cloth}
+${worn(hat.back, gone && gone.hat)}${OF ? OF.back : ""}<g${bt}>${blocks ? blocksBody(L.color) : geoBody(L.color)}</g>${cloth}
 ${OF && OF.bare ? `<g${bt}>${blocks ? blocksBody(L.color, "w") : geoWing(L.color)}</g>` : ""}
 ${OF && OF.sleeve ? `<g${bt}>${OF.sleeve}</g>` : ""}${OF && OF.over ? `<g${bt}>${OF.over}</g>` : ""}
-${beakSVG(L)}${zap ? "" : eyes}${face}${zap ? eyes : ""}${hat.front}${k !== 1 ? "</g>" : ""}${extra}</svg>`;
+${beak}${zap || (gone && gone.eyes) ? "" : eyes}${worn(face, gone && gone.face)}${zap && !(gone && gone.eyes) ? eyes : ""}${worn(hat.front, gone && gone.hat)}${k !== 1 ? "</g>" : ""}${extra}</svg>`;
   }
   const noHead = !!(gone && gone.head),
     holes =
@@ -289,11 +304,9 @@ ${beakSVG(L)}${zap ? "" : eyes}${face}${zap ? eyes : ""}${hat.front}${k !== 1 ? 
           )
           .join("")
       : "";
-  /* a hat or a face item knocked off (gone), or coming back on (half see-through) */
-  const worn = (svg, g) =>
-    !gone || g === undefined ? svg : g ? `<g opacity="${g}">${svg}</g>` : "";
   const own = !st.fixed,
-    M = own && L.metal !== "none" && METAL[L.metal];
+    M = own && L.metal !== "none" && METAL[L.metal],
+    RB = own && L.metal === "rainbow"; // (the rainbow skin: rainbowskin.js. Not a metal: no reflections, its own shading)
   /* the body's and the head's colors (most styles: one color; a mallard or an eagle: a head of its own) */
   const bodyC = st.fixed ? L.tint || st.body : styleColor(L, st, "color"),
     headC = st.fixed
@@ -304,28 +317,37 @@ ${beakSVG(L)}${zap ? "" : eyes}${face}${zap ? eyes : ""}${hat.front}${k !== 1 ? 
         ? styleColor(L, st, "color2")
         : bodyC; // (Vote colors, looks.js: L.tint recolors the mallard's body and all of the call duck)
   const tone = (c) =>
-    M
-      ? { base: M[2], light: M[1], dark: M[5], edge: M[5] }
-      : {
-          base: c,
-          light: mix(c, 255, 0.5),
-          dark: mix(c, 0, 0.32),
-          edge: mix(c, 0, 0.45),
-        };
+    RB
+      ? {
+          base: `url(#${id}rb)`,
+          light: `url(#${id}rl)`,
+          dark: `url(#${id}rd)`,
+          edge: `url(#${id}re)`,
+        }
+      : M
+        ? { base: M[2], light: M[1], dark: M[5], edge: M[5] }
+        : {
+            base: c,
+            light: mix(c, 255, 0.5),
+            dark: mix(c, 0, 0.32),
+            edge: mix(c, 0, 0.45),
+          };
   const TB = tone(bodyC),
     TH = tone(headC),
     dark = TB.dark,
     edge = TB.edge;
   const pat =
-    own && !M && L.pattern !== "none"
+    own && !M && !RB && L.pattern !== "none"
       ? patternDef(id, L.pattern, L.patternColor || "#ffffff")
       : "";
   /* fills: a soft ball of light for colors; banded reflections for metals */
   /* a metal mirrors the room: a bright sky, a hard dark horizon, a lighter floor, and dark edges */
   const fill = (gid, cx, cy, T) =>
-    M
-      ? metalBands(gid, M)
-      : `<radialGradient id="${gid}" cx="${cx}" cy="${cy}" r=".8"><stop offset="0" stop-color="${T.light}"/><stop offset=".5" stop-color="${T.base}"/><stop offset="1" stop-color="${T.dark}"/></radialGradient>`;
+    RB
+      ? rbGrad(gid) + rbShade(gid + "s", cx, cy)
+      : M
+        ? metalBands(gid, M)
+        : `<radialGradient id="${gid}" cx="${cx}" cy="${cy}" r=".8"><stop offset="0" stop-color="${T.light}"/><stop offset=".5" stop-color="${T.base}"/><stop offset="1" stop-color="${T.dark}"/></radialGradient>`;
   /* the body: wider and a little taller when fat (it grows from the ground up), narrower when skinny; the whole duck a
      little bigger or smaller */
   const SL = styleLayers(L, st, id, BODY, bt),
@@ -359,14 +381,14 @@ ${pat}${offCloth}
 <mask id="${id}nh"><rect width="120" height="120" fill="#fff"/>${noHead ? "" : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="#000"/>`}</mask>
 ${holes ? `<mask id="${id}g" maskUnits="userSpaceOnUse" x="-20" y="-40" width="160" height="180"><rect x="-20" y="-40" width="160" height="180" fill="#fff"/>${holes}</mask>` : ""}
 ${rips && OF ? `<mask id="${id}r" maskUnits="userSpaceOnUse" x="-20" y="-40" width="160" height="180"><rect x="-20" y="-40" width="160" height="180" fill="#fff"/>${rips}</mask>` : ""}${rips && OF && OF.cloth ? `<filter id="${id}wh"><feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"/></filter><mask id="${id}cm" maskUnits="userSpaceOnUse" x="-20" y="-40" width="160" height="180"><g filter="url(#${id}wh)"><g${bt}>${OF.cloth}</g></g></mask>` : ""}
-${M ? metalGlints(id) : ""}
+${M ? metalGlints(id) : ""}${RB ? rbGrad(id + "rb") + rbGrad(id + "rl", 0.5) + rbGrad(id + "rd", -0.32) + rbGrad(id + "re", -0.45) : ""}
 </defs>
 ${k !== 1 ? `<g transform="translate(60 108) scale(${k.toFixed(3)}) translate(-60 -108)">` : ""}
 ${shadow ? `<ellipse cx="58" cy="109" rx="${(44 * (1 + 0.16 * fat)).toFixed(1)}" ry="7" fill="#000" opacity=".22"/>` : ""}
 ${holes ? `<g mask="url(#${id}g)">` : ""}
 ${noHead ? "" : worn(hat.back, gone && gone.hat)}${SL.back || ""}${OF ? OF.back : ""}
 <path d="${BODY}" fill="url(#${id}b)"${bt}/>
-${noHead ? "" : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="url(#${id}h)"/>`}
+${noHead ? "" : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="url(#${id}h)"/>`}${RB ? `<path d="${BODY}" fill="url(#${id}bs)"${bt}/>${noHead ? "" : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="url(#${id}hs)"/>`}` : ""}
 <g clip-path="url(#${id}c)">
   ${pat ? `<rect x="0" y="0" width="120" height="120" fill="url(#${id}p)" opacity=".92"/>` : ""}
   ${SL.under || ""}
@@ -404,7 +426,7 @@ ${OF && OF.over ? ripped(`<g${bt}>${OF.over}</g>`) : ""}
 ${
   noHead
     ? ""
-    : `${gone && gone.beak ? "" : beakSVG(L)}
+    : `${beak}
 ${zap || (gone && gone.eyes) ? "" : eyes}
 ${worn(face, gone && gone.face)}
 ${zap && !(gone && gone.eyes) ? eyes : ""}

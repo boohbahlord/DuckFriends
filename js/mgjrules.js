@@ -12,8 +12,8 @@ import { ARM_COOL } from "./armspeed.js";
      and the pump shotgun a cone of pellets at a duck close enough. After each burst he reloads; while he reloads he
      sprints at a duck to hammer it, and a duck that comes up close gets the hammer too. He walks faster than before and
      every attack comes sooner (PACE).
-   - His throws, each held up first (the tell): the controllers every way at once, the office chair, and every 14 s a
-     fireball (1 damage, and the duck burns for 3.5 s: a burning duck lights every duck it touches).
+   - His throws, each held up first (the tell): the controllers every way at once and the office chair. (No fireball any
+     more: the owner's, Nov 18 10:38Z, "we are removing the fireball from everything in the game".)
    - The edge lightning, every 10 s by itself: the board's edges glow for 0.6 s, then a flash runs along them and hits
      every duck and Jaime there (not him).
    - When he touches the board's edge he flashes blue and jumps to a spot far from it, once every 15 s at most.
@@ -65,27 +65,30 @@ import {
   snapLine,
   jaimeCount,
   jaimeSays,
+  jaimeDead,
   anyOf,
   JAIME_MAD,
   JAIME_HURT,
   JUSTIN_AT_JAIME,
 } from "./jaimebomb.js";
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
-import { ARMS } from "./l4ddrules.js";
+import { ARMS, SLOT_ODDS, zombieTakes, pierceOf, ALL_HP } from "./l4ddrules.js";
 import { holdDown, onGetUp, invuln, hurtFx } from "./hangout/death.js";
+import { sbOnBoard } from "./sandboxrules.js";
+import { hitCode } from "./wounds.js";
+import { MAD } from "./sbbrain.js";
 import {
   E_LINES,
   DEATH_LINES,
   GOD_LINES,
   WIN_LINES,
-  LOSE_LINES,
 } from "./hangout/justin.js";
 
 export const isMgj = (s) => s.options.mode === "mgj";
 /* no time limit (the owner, Nov 3): the fight goes on until he's at 0 HP or every duck is out of HP. What his HP sets off:
-   the Xbox once he has lost XB_LOST HP, the meteor once he's down to MET_AT HP (it gives MET_HEAL back) */
-export const XB_LOST = 20,
-  MET_AT = 10,
+   the Xbox once he's down to XB_AT of his HP, the meteor once he's down to MET_AT of it (it gives MET_HEAL back) */
+export const XB_AT = 2 / 3, // (the Xbox once he's at or under this fraction of his HP: the owner's, Nov 17)
+  MET_AT = 1 / 3, // (the meteor once he's at or under this fraction)
   MET_HEAL = 20;
 /* each time his attacks get faster (the Xbox, then the meteor: j.fast counts them), they come FAST_SOON times as soon
    and the controllers and the chair fly FAST_FLY times as fast; his bullets keep their speed */
@@ -192,7 +195,9 @@ export const BURST = {
   },
   JUSTIN_SHOT = 0.22, // (his bullets' speed, board widths a second: the owner, his bullets never fly faster)
   SG_ODDS = 0.35, // (a duck close enough: how often he takes the shotgun instead of a burst)
-  PACE = 0.6;
+  PACE = 0.6,
+  HAMMER_TELL = 350, // ms he winds up his hammer up close (the owner's, Nov 17 13:07Z: the hints should not be as long)
+  GUN_TELL = 300; // ms he aims before a burst or the shotgun (game.js draws his aim; shorter, the owner's, Nov 17 13:07Z)
 /* his throws (the owner's): now and then 8 Xbox One controllers every way at once, bullet hell, to dodge; less often a
    big black office chair at a duck, slow but wide, that knocks down and shoves back like the hammer. Each is held up
    first (the tell), so there's time to move */
@@ -204,20 +209,17 @@ export const THROW_TELL = 800, // ms the controllers are held up before they fly
   CHAIR_SPEED = 0.11, // (was 0.085)
   CHAIR_R = 2.4, // how near it hits, in duck lengths (a bullet's is 1)
   CHAIR_LIFE = 16000;
-/* the rework (the owner's, Nov 3): his fireball, every FB_EVERY ms with its tell; the duck it hits burns for BURN_MS
-   and looks burnt for BURNT_MS, and while it burns it lights every duck it touches (TOUCH duck lengths) */
-export const FB_EVERY = 14000,
-  FB_TELL = 800,
-  FB_SPEED = 0.25, // (was 0.2)
-  FB_R = 1.2,
-  FB_LIFE = 9000,
-  BURN_MS = 3500,
+/* a burning duck (the rework, the owner's, Nov 3) burns for BURN_MS and looks burnt for BURNT_MS, and while it burns it
+   lights every duck it touches (TOUCH duck lengths). His fireball, that set it burning, is gone (the owner's, Nov 18
+   10:38Z: "we are removing the fireball from everything in the game") */
+export const BURN_MS = 3500,
   BURNT_MS = 7000,
   TOUCH = 1.1;
 /* the edge lightning: every EDGE_EVERY ms the edges glow for EDGE_WARN ms, then the flash hits every duck and Jaime
-   within EDGE of the board's edge (in board widths and heights) */
-export const EDGE_EVERY = 10000,
-  EDGE_WARN = 600,
+   within EDGE of the board's edge (in board widths and heights). Less often, with a longer warning (the owner's, Nov 17
+   11:07Z: "Make lightning less frequent", "more of a hint"; it was every 10 s, warned 0.6 s before) */
+export const EDGE_EVERY = 18000,
+  EDGE_WARN = 1200,
   EDGE = { x: 0.05, y: 0.1 };
 export const onEdge = (p) =>
   p.x < EDGE.x || p.x > 1 - EDGE.x || p.y < EDGE.y || p.y > 1 - EDGE.y;
@@ -261,20 +263,25 @@ const JAIME_OUCH = [
   ];
 /* what the ducks hold here (rules.js' move: w), and the cooldowns of their own here: the knife and the pistol, as fast
    as in every mode */
-export const MGJ_HOLD = ["knife", "handgun"];
+export const MGJ_MELEE = "sword"; // (the owner's, Nov 17: the ducks start with the short sword, not the knife)
+export const MGJ_HOLD = [MGJ_MELEE, "handgun"];
 /* what a duck can have out in its hand here (rules.js' move: w): the knife, the bow, the zebra cake, or the weapon it
    picked up (the owner's, Nov 3: whatever it switches to stays out, but Jaime) */
 export const mgjHolds = (s, id, w) =>
   MGJ_HOLD.includes(w) ||
   w === "zebra" ||
   (!!w && !!s.mgj && (s.mgj.held || {})[id] === w);
-const MGJ_COOL = { knife: ARM_COOL.knife, handgun: ARM_COOL.handgun }; // (as fast as in every mode: the knife four a second, the pistol five)
+const MGJ_COOL = {
+  sword: ARM_COOL.sword,
+  knife: ARM_COOL.knife,
+  handgun: ARM_COOL.handgun,
+}; // (as fast as in every mode: the knife four a second, the pistol five)
 export const mgjCool = (sp) =>
   MGJ_COOL[sp] || (MGJ_GUNS.includes(sp) ? ARMS[sp].cool : 0); // (a gun picked up: Quacky Zombies' own)
 /* getting a downed duck up (the owner's, Nov 3, in place of the medkit): stand within REVIVE.REACH duck lengths of it and
-   hold E (a phone: the Revive button) for REVIVE.MS (2.5 s: half as long, the owner's, Nov 16); with the medkit picked
-   up out in my hand it's at once (the owner's, Nov 16) */
-export const REVIVE = { MS: 2500, REACH: 2 };
+   hold E (a phone: the Revive button) for REVIVE.MS (3 s, always: the owner's, Nov 17 11:19Z; it was 2.5 s); with the
+   medkit picked up out in my hand it's at once (the owner's, Nov 16) */
+export const REVIVE = { MS: 3000, REACH: 2 };
 /* the Xbox (the owner's): once a game, once he has lost XB_LOST HP, a desk comes in with his Xbox and a monitor on it;
    he runs to it and turns the Xbox off (the light and the screen go dark), fades away, as for the meteor, and comes back
    with faster attacks and his HP up by 1, and 1 more for every player (never past full). XB: ms the desk takes to come
@@ -283,45 +290,46 @@ export const XB = { IN: 900, FADE: 500, GONE: 3400, OUT: 1200 };
 const SPEED = 0.25, // (owner 2026-11-03 22:13Z: he moves faster; was 0.2)
   RX = 0.03,
   RY = 0.08;
+export const DUCK_LEN = { x: RX, y: RY }; // (a duck length, in board widths and heights: game.js' hints)
 /* the pickups: every PICK_EVERY ms one fades in, picked by these odds (the owner's, in percent): "sky" is lightning or
    fire (half and half) and hits him as it shows, as the meteor does (1 damage); "good" is Good
    Justin God. A weapon waits until a duck walks over it or the next one comes */
-export const PICK_EVERY = 15000,
+export const PLUS_LIFE = 10000,
+  PLUS_EVERY = 30000, // (the owner's, Nov 17: a little plus sign every 30 s, +1 HP to the duck that walks over it)
+  PLUS_CHANCE = 1 / 3, // (… but not common, the owner's, Nov 17 13:43Z: every 30 s only a 1 in 3 chance, so about one a minute and a half)
+  PICK_EVERY = 15000,
   PICK_FADE = 700,
   PICK_HIT = 1100, // ms after it shows: lightning or fire strikes him, the meteor starts to fall, Good Justin comes
   PICK_LAND = 1500, // the meteor's fall
   PICKS = [
-    ["sniper", 16],
-    ["ak", 18],
-    ["lmg", 16],
-    ["shotgun", 16],
-    ["glauncher", 10],
-    ["chaingun", 5], // (rarer)
-    ["medkit", 10.5],
-    ["sky", 5],
-    ["meteor", 2.5],
     ["good", 1],
-  ]; // (only the powerful guns drop now, and the medkit is back: the owner's, Nov 16; the hammer, the dagger and the handgun are gone)
+    ["meteor", 2.5],
+    ["sky", 5],
+  ]; // (the rarest first: the owner's, Nov 18 10:38Z; the guns and the medkit come from their bags: pickKind)
 /* a gun picked up works as it does in Quacky Zombies (its magazine, R to reload, full auto, the shotgun's spread, the
    sniper's bullet going through) and stays on key 4 until its shots are gone (MGJ_GUNS); the medkit puts my HP back to
    full, or gets a downed duck up at once when I hold it out over it */
 export const MGJ_GUNS = [
-  "sniper",
-  "ak",
-  "lmg",
-  "shotgun",
-  "glauncher",
   "chaingun",
-];
+  "glauncher",
+  "lmg",
+  "tommy",
+  "ump",
+  "smg",
+  "ak",
+  "burst",
+  "shotgun",
+  "dbarrel",
+]; // (no sniper, Laser Rifle or flamethrower here: the owner's, Nov 18 12:19Z and 12:32Z)
 export const PICK_WEAPONS = [...MGJ_GUNS, "medkit"];
-/* the shots a gun picked up comes with: two magazines, or a quarter of Quacky Zombies' ammo for a gun with no magazine
-   (the shotgun 18, the grenade launcher 6); the chain gun its 300 */
+/* the shots a gun picked up comes with (the owner's, Nov 17): only its one magazine, the shotgun never runs out, the LMG 30 */
+export const INF_AMMO = 9999; // (the shotgun picked up never runs out: the owner's, Nov 17; a number, as the state is JSON)
 export const pickAmmo = (k) =>
-  k === "chaingun"
-    ? ARMS.chaingun.all
-    : ARMS[k].mag
-      ? 2 * ARMS[k].mag
-      : Math.round(ARMS[k].all / 4); // (the chain gun all 300 of its rounds, as everywhere: the owner's, Nov 16)
+  k === "shotgun" || k === "laser"
+    ? INF_AMMO // (the Laser Rifle never runs out anywhere: it only overheats)
+    : k === "lmg" || k === "chaingun"
+      ? 30 // (the LMG and the chain gun only 30 rounds here: the owner's, Nov 17)
+      : (mgjMag(k) || [ARMS[k].all])[0]; // (every other gun only its one magazine)
 /* a gun's magazine here ([shots, reload ms], or null): Quacky Zombies' own; the pistol's never runs out. Every gun picked
    up has to reload here (the owner's, Nov 16), so the ones with no magazine in Quacky Zombies get one: the shotgun 6
    shells, the grenade launcher 3 (as in the other modes) and the chain gun a belt of 100 of its 300 (my guesses) */
@@ -345,7 +353,7 @@ export const ammoOf = (s, id) =>
 /* one shot from the gun picked up; the last one and it's gone (back to the one out before) */
 export function mgjSpend(s, id) {
   const m = s.mgj,
-    left = ammoOf(s, id) - 1;
+    left = ammoOf(s, id) >= INF_AMMO ? INF_AMMO : ammoOf(s, id) - 1;
   if (left > 0) m.ammo = { ...m.ammo, [id]: left };
   else dropHeld(m, id);
 }
@@ -363,14 +371,18 @@ export const usesOf = (s, id) =>
 /* how much each hit takes off him (we decided: a picked-up weapon hits harder than the knife; each pellet 1) */
 export const DMG = {
   knife: 1,
+  sword: 1,
   hammer: 2,
   dagger: 2,
   handgun: 1, // (the pistol everyone has)
   pellet: 1,
   arrow: 1,
-  ak: 2, // (the guns picked up hit him as they hit a zombie; the sniper 2 or 3, shotDmg)
+  ak: 2, // (a bullet from a picked-up gun hits him as it hits a zombie: shotDmg reads l4ddrules.js ARMS first)
   lmg: 1,
+  tommy: 1,
+  ump: 2, // (the UMP-45: 2 a bullet)
   chain: 1, // (the chain gun 1 a bullet here, not all his HP)
+  laser: 1, // (the Laser Rifle's beam)
   lgren: 3, // (the grenade launcher's blast)
   jaime: 1,
   jaimebomb: 3, // (the Jaime Bomb takes only 3 off him: the owner's, jaimebomb.js)
@@ -422,6 +434,7 @@ export function mgjStart(s, now) {
     n: ((s.mgj && s.mgj.n) || 0) + 1,
     hp: max,
     max,
+    cnt: n, // (the ducks his HP was counted for: one who joins mid-fight adds its share, mgjAdvance)
     dmg: {},
     hits: {},
     kill: null,
@@ -433,6 +446,8 @@ export function mgjStart(s, now) {
     shotgun: true, // (the owner: he has the shotgun from the start now)
     over: 0,
     pickAt: now + PICK_EVERY,
+    plusAt: now + PLUS_EVERY,
+    plus: null,
     // I want his Xbox turned off only once a game, and only after the first 45 seconds: a new fight ("Try again")
     // keeps it off
     xbUsed: !!(s.mgj && s.mgj.xbUsed),
@@ -455,6 +470,7 @@ export function mgjStart(s, now) {
     cake: null,
     zebraAt: 0,
   };
+  s.mz = { zb: [], n: 0, on: 0, next: now + waveGap(n), left: 0, sp: 0 }; // (his zombie waves: wavesTick)
   s.pos = {};
   s.lock = {};
   s.shots = [];
@@ -484,7 +500,6 @@ export function mgjStart(s, now) {
     hamAt: now + SPAWN_MS + 5000 * PACE,
     ctlAt: now + SPAWN_MS + rnd(9000, 13000) * PACE,
     chairAt: now + SPAWN_MS + rnd(18000, 26000) * PACE,
-    fbAt: now + SPAWN_MS + rnd(5000, 8000) * PACE,
     dashAt: now + SPAWN_MS + rnd(6000, 9000) * PACE,
     tpAt: 0,
     eatAt: now + rnd(25000, 40000),
@@ -526,6 +541,19 @@ export function mgjHurt(s, id) {
     m.hits = { ...m.hits, [id]: (m.hits[id] || 0) + 1 };
 }
 
+/* the owner (Nov 17): his HP must grow with the players. A duck who joins mid-fight adds its share (to his full HP and
+   to what he has left); one who leaves takes nothing away. Called when a duck joins (rules.js) and as the fight goes */
+export function mgjCount(s) {
+  const m = s.mgj,
+    n = playing(s).length;
+  if (!m || s.phase !== "boss" || n <= (m.cnt || 1)) return false;
+  const more = hpOf(n) - hpOf(m.cnt || 1);
+  m.max += more;
+  m.hp += more;
+  m.cnt = n;
+  return true;
+}
+
 /* what ends a stage: HP 0 (a win) or the timer (a loss); the podium's time; Try again on the stats */
 export function mgjAdvance(s, now, force, log) {
   const m = s.mgj;
@@ -533,6 +561,7 @@ export function mgjAdvance(s, now, force, log) {
   if (s.phase === "boss") {
     if (m.hp <= 0) return mgjEnd(s, now, true, log);
     const on = playing(s);
+    mgjCount(s);
     if (mgjPHp(s) && on.length && on.every((id) => mgjOut(s, id)))
       return mgjEnd(s, now, false, log, true); // (every duck is out of HP: Justin wins)
     if (force) return mgjEnd(s, now, false, log);
@@ -556,6 +585,7 @@ function mgjEnd(s, now, won, log, allOut = false) {
     line = (text) => log(s, { npc: JUSTIN_ID, name: "Justin", text });
   m.won = won;
   m.over = now;
+  s.mz = null; // (his zombies go with the fight)
   /* every duck out of HP: they all lie dead until the next fight starts (the dead look, no new art); otherwise the
      ducks out of HP get up: the fight is over */
   m.allOut = !won && allOut;
@@ -592,8 +622,8 @@ function mgjEnd(s, now, won, log, allOut = false) {
       w: "",
     });
     if (m.gj) m.gj.down = 0; // (Good Justin God gets up to cheer)
-    m.rage1 = any(LOSE_LINES);
-    line(m.rage1);
+    /* at 0 HP he dies there (game.js: lying, bleeding, no more crying), and the dead say nothing (the owner's, Nov 18
+       12:19Z: "justin cannot make dialog when outright dead in zombies or mad god justin"): no losing lines */
     s.mgjWinN = (s.mgjWinN || 0) + 1;
     s.mgjWins = [
       ...(s.mgjWins || []).slice(-9),
@@ -642,8 +672,9 @@ export function mgjTick(s, now, log) {
   if (!m || !s.justin || !boardPhases(s).includes(s.phase)) return false;
   const n0 = (s.shots || []).length,
     up = s.phase === "boss" && reviveTick(s, now, log),
+    zw = s.phase === "boss" && wavesTick(s, now),
     ch = brain(s, now, log);
-  return twin(s, now, n0) || ch || up;
+  return twin(s, now, n0) || ch || up || zw;
 }
 const fxOf = (s, now) => (o) => {
   s.fxN = (s.fxN || 0) + 1;
@@ -669,12 +700,7 @@ function brain(s, now, log) {
       log(s, { npc: GOOD_ID, name: GOOD_NAME, text: any(WIN_LINES) });
       return true;
     }
-    if (m.won && !m.rage && now - s.at >= MGJ_ZAP + 2800) {
-      m.rage = true; // (his rage goes on while he cries)
-      line(any(LOSE_LINES.filter((x) => x !== m.rage1)) || any(LOSE_LINES));
-      return true;
-    }
-    return false;
+    return false; // (dead, he has no more lines: mgjEnd)
   }
   let ch = false;
   const at = justinAt(j, now);
@@ -686,7 +712,8 @@ function brain(s, now, log) {
     ...(goodUp(s, now) ? [GOOD_ID] : []),
   ];
   const far = (p, q = at) => Math.hypot((p.x - q.x) / RX, (p.y - q.y) / RY); // in duck lengths
-  const soon = (ms) => ms * PACE * FAST_SOON ** (+j.fast || 0); // (every attack sooner than it used to; after his Xbox and his meteor, sooner still)
+  const soon = (ms) =>
+    ms * PACE * FAST_SOON ** (+j.fast || 0) * (waveOn(s) ? WAVE.CALM : 1); // (every attack sooner than it used to; after his Xbox and his meteor, sooner still; while his zombies are out, later)
   const stop = () =>
     Object.assign(j, {
       k: null,
@@ -702,12 +729,13 @@ function brain(s, now, log) {
   };
 
   /* the meteor */
-  if (!m.met && !m.metDone && !(m.xb && !m.xb.done) && m.hp <= MET_AT) {
+  if (!m.met && !m.metDone && !(m.xb && !m.xb.done) && m.hp <= m.max * MET_AT) {
     m.met = { at: now };
     delete j.swing;
     delete j.tell;
     delete j.dash;
     delete j.eat;
+    delete j.sg;
     m.cake = null;
     m.dup = null;
     stop();
@@ -764,7 +792,7 @@ function brain(s, now, log) {
     ch = true; // (he goes after the real one, when the double is out)
 
   /* the Xbox: the desk comes in, he runs over, turns it off, fades away, comes back faster */
-  if (!m.xb && !m.xbUsed && !m.met && m.max - m.hp >= XB_LOST) {
+  if (!m.xb && !m.xbUsed && !m.met && m.hp <= m.max * XB_AT) {
     const spot = deskSpot(s, at);
     const side = at.x < spot.x ? -1 : 1,
       to = {
@@ -776,6 +804,7 @@ function brain(s, now, log) {
     delete j.tell;
     delete j.dash;
     delete j.eat;
+    delete j.sg;
     m.cake = null;
     m.dup = null;
     Object.assign(j, {
@@ -846,7 +875,7 @@ function brain(s, now, log) {
     return true;
   }
   if (now >= j.eatAt && !j.swing && !j.tell) {
-    j.eatAt = now + rnd(30000, 45000);
+    j.eatAt = now + (waveOn(s) ? rnd(...WAVE.EAT) : rnd(30000, 45000)); // (while his zombies are out he'd rather eat)
     stop();
     j.eat = { k: any(FOODS), at: now, until: now + EAT_MS };
     return true;
@@ -871,6 +900,50 @@ function brain(s, now, log) {
       dy = p.y - at.y,
       d = Math.hypot(dx, dy) || 1;
     return [dx / d, dy / d];
+  };
+  /* the shotgun's cone of pellets at q (a duck's spot) */
+  const shotgunAt = (q) => {
+    const ux = (q.x - at.x) / RX,
+      uy = (q.y - at.y) / RY,
+      a0 = Math.atan2(uy, ux);
+    fx({
+      kind: "use",
+      what: "shotgun",
+      who: [],
+      face: ux < 0 ? -1 : 1,
+      ax: +Math.cos(a0).toFixed(3),
+      ay: +Math.sin(a0).toFixed(3),
+    });
+    const n0 = s.fxN;
+    for (let i = 0; i < PELLETS; i++) {
+      const a = a0 + SPREAD * ((i / (PELLETS - 1)) * 2 - 1) + rnd(-0.04, 0.04),
+        bx = Math.cos(a) * RX,
+        by = Math.sin(a) * RY,
+        bl = Math.hypot(bx, by);
+      s.shots = [
+        ...(s.shots || []),
+        {
+          n: n0 * 10 + i,
+          by: JUSTIN_ID,
+          k: "pellet",
+          x0: at.x,
+          y0: at.y,
+          vx: +((bx / bl) * PELLET_SPEED).toFixed(4),
+          vy: +((by / bl) * PELLET_SPEED).toFixed(4),
+          t: now,
+          lx: at.x,
+          ly: at.y,
+          life: PELLET_LIFE,
+        },
+      ];
+    }
+    Object.assign(j, {
+      w: "shotgun",
+      ax: +(Math.cos(a0) * RX).toFixed(4),
+      ay: +(Math.sin(a0) * RY).toFixed(4),
+      sgR: now + PUMP,
+      fireAt: now + soon(rnd(700, 1000)),
+    });
   };
   const swingNow = (id) => {
     const p = s.pos[id],
@@ -1023,6 +1096,15 @@ function brain(s, now, log) {
     j.next = now + 600;
     return true;
   }
+  /* the shotgun aimed (the tell): the pellets go at the duck where it stands now */
+  if (j.sg) {
+    if (now < j.sg.at) return ch;
+    const q = s.pos[j.sg.id];
+    delete j.sg;
+    if (q && q.x >= 0) shotgunAt(q);
+    else j.fireAt = now + 300;
+    return true;
+  }
   /* a burst going on: the next bullet at its duck, until the burst is done; then the reload */
   if (j.burst) {
     const B = j.burst,
@@ -1071,22 +1153,15 @@ function brain(s, now, log) {
     Object.assign(j, { w: B.w, ax: +ax.toFixed(3), ay: +ay.toFixed(3) });
     return true;
   }
-  if (now >= j.chairAt || now >= j.ctlAt || now >= j.fbAt) {
-    const k =
-      now >= j.fbAt ? "fireball" : now >= j.chairAt ? "chair" : "controller";
+  if (now >= j.chairAt || now >= j.ctlAt) {
+    const k = now >= j.chairAt ? "chair" : "controller";
     stop();
     j.tell = {
       k,
       id: any(them),
-      at:
-        now +
-        (k === "chair" ? CHAIR_TELL : k === "fireball" ? FB_TELL : THROW_TELL),
+      at: now + (k === "chair" ? CHAIR_TELL : THROW_TELL),
     };
-    if (k === "fireball") {
-      j.fbAt = now + soon(FB_EVERY);
-      j.ctlAt = Math.max(j.ctlAt, now + 2500);
-      j.chairAt = Math.max(j.chairAt, now + 2500);
-    } else if (k === "chair") {
+    if (k === "chair") {
       j.chairAt = now + soon(rnd(15000, 22000));
       j.ctlAt = Math.max(j.ctlAt, now + 4500);
     } else j.ctlAt = now + soon(rnd(8000, 12000));
@@ -1101,7 +1176,7 @@ function brain(s, now, log) {
   /* a duck up close gets the hammer (a moment's wind-up, so it can step away) */
   if (now >= j.hamAt && nearest[1] < 1.8) {
     stop();
-    j.swing = { id: nearest[0], at: now + 350 };
+    j.swing = { id: nearest[0], at: now + HAMMER_TELL };
     j.hamAt = now + soon(3000);
     return true;
   }
@@ -1148,55 +1223,22 @@ function brain(s, now, log) {
       [ax, ay] = aimAt(p);
     const close = them.filter((t) => far(s.pos[t]) < 9);
     if (m.shotgun && now >= j.sgR && close.length && Math.random() < SG_ODDS) {
-      // the shotgun: a cone of pellets at a duck close enough
-      const q = s.pos[any(close)],
-        ux = (q.x - at.x) / RX,
-        uy = (q.y - at.y) / RY,
-        a0 = Math.atan2(uy, ux);
-      fx({
-        kind: "use",
-        what: "shotgun",
-        who: [],
-        face: ux < 0 ? -1 : 1,
-        ax: +Math.cos(a0).toFixed(3),
-        ay: +Math.sin(a0).toFixed(3),
-      });
-      const n0 = s.fxN;
-      for (let i = 0; i < PELLETS; i++) {
-        const a =
-            a0 + SPREAD * ((i / (PELLETS - 1)) * 2 - 1) + rnd(-0.04, 0.04),
-          bx = Math.cos(a) * RX,
-          by = Math.sin(a) * RY,
-          bl = Math.hypot(bx, by);
-        s.shots = [
-          ...(s.shots || []),
-          {
-            n: n0 * 10 + i,
-            by: JUSTIN_ID,
-            k: "pellet",
-            x0: at.x,
-            y0: at.y,
-            vx: +((bx / bl) * PELLET_SPEED).toFixed(4),
-            vy: +((by / bl) * PELLET_SPEED).toFixed(4),
-            t: now,
-            lx: at.x,
-            ly: at.y,
-            life: PELLET_LIFE,
-          },
-        ];
-      }
+      // the shotgun at a duck close enough: aimed first (the tell), then a cone of pellets (shotgunAt)
+      const id = any(close);
+      j.sg = { id, at: now + GUN_TELL };
+      j.sgR = now + GUN_TELL + PUMP;
+      j.fireAt = now + GUN_TELL + soon(rnd(700, 1000));
+      const [sx, sy] = aimAt(s.pos[id]);
       Object.assign(j, {
         w: "shotgun",
-        ax: +(Math.cos(a0) * RX).toFixed(4),
-        ay: +(Math.sin(a0) * RY).toFixed(4),
-        sgR: now + PUMP,
-        fireAt: now + soon(rnd(700, 1000)),
+        ax: +sx.toFixed(3),
+        ay: +sy.toFixed(3),
       });
       return true;
     }
     /* the LMG or the SMG: a burst at the duck (the bullets go out one by one, above) */
     const w = Math.random() < 0.5 ? "lmg" : "smg";
-    j.burst = { w, id, left: BURST[w].n, at: now };
+    j.burst = { w, id, left: BURST[w].n, at: now + GUN_TELL }; // (aimed first: the tell)
     Object.assign(j, { w, ax: +ax.toFixed(3), ay: +ay.toFixed(3) });
     return true;
   }
@@ -1221,12 +1263,50 @@ function brain(s, now, log) {
 }
 
 /* ---------- the pickups ---------- */
+/* what comes next: the sky, the meteor and Good Justin as they did (SKY, their own odds); else a medkit (the Item bag's
+   chance, as the fireplace's); else a gun from the bags (the owner's, Nov 18 12:19Z and 12:32Z: "the chain gun only has
+   a 5% chance of spawning for it's bag that is rolled first"): the chain gun 5% first, else the next of three bags
+   that take turns, heavy (the grenade launcher, the M249), rifles (the Tommy gun, the UMP-45, the MP5, the AK-47, the
+   AUG) and shotguns (the shotgun, the double barrel), each giving the next one of its own. Every bag shuffles: each of
+   its things once before any comes again (s.hidden.mgjb, the host's only) */
+const SKY = PICKS;
+export const MGJ_CHAIN = 0.05;
+export const MGJ_BAGS = {
+  heavy: ["glauncher", "lmg"],
+  rifle: ["tommy", "ump", "smg", "ak", "burst"],
+  shotgun: ["shotgun", "dbarrel"],
+};
+const mix = (xs) => {
+  const a = [...xs];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+/* the next one of a bag (left: its things left, in their shuffled order; all of them when it's empty) */
+const nextOf = (left, all) => {
+  const rest = left && left.length ? left : mix(all);
+  return [rest[0], rest.slice(1)];
+};
+function bagGun(s) {
+  const b = (s.hidden && s.hidden.mgjb) || { b: {} },
+    [k, turns] = nextOf(b.w, Object.keys(MGJ_BAGS)),
+    [w, rest] = nextOf(b.b[k], MGJ_BAGS[k]);
+  s.hidden = {
+    ...(s.hidden || {}),
+    mgjb: { w: turns, b: { ...b.b, [k]: rest } },
+  };
+  return w;
+}
 const pickKind = (s) => {
-  const list = PICKS.filter(([k]) => k !== "good" || !s.mgj.gj),
-    sum = list.reduce((a, [, w]) => a + w, 0);
-  let r = Math.random() * sum;
-  for (const [k, w] of list) if ((r -= w) < 0) return k;
-  return list[0][0];
+  const list = SKY.filter(([k]) => k !== "good" || !s.mgj.gj),
+    r = Math.random() * 100;
+  let at = 0;
+  for (const [k, w] of list) if (r < (at += w)) return k;
+  if (Math.random() < SLOT_ODDS.item) return "medkit";
+  if (Math.random() < MGJ_CHAIN) return "chaingun";
+  return bagGun(s);
 };
 function pickTick(s, now, at, log, fx) {
   const m = s.mgj;
@@ -1295,6 +1375,44 @@ function pickTick(s, now, at, log, fx) {
       ch = true;
       break;
     }
+  /* the owner's, Nov 17: it felt constant because an untaken plus stayed until the next one; now it goes after PLUS_LIFE */
+  if (m.plus && now - m.plus.t >= PLUS_LIFE) {
+    m.plus = null;
+    ch = true;
+  }
+  /* the plus sign: +1 HP to the first duck that walks over it (a duck at full HP leaves it be) */
+  if (m.plus && now - m.plus.t >= PICK_FADE * 0.5)
+    for (const id of playing(s)) {
+      const p = s.pos[id],
+        Pl = s.players[id];
+      if (!p || p.x < 0 || !Pl || Pl.dead || !((m.lost || {})[id] > 0))
+        continue;
+      if (Math.hypot((p.x - m.plus.x) / RX, (p.y - m.plus.y) / RY) > 1.1)
+        continue;
+      const lost = { ...m.lost },
+        left = lost[id] - 1;
+      if (left > 0) lost[id] = left;
+      else delete lost[id];
+      m.lost = lost;
+      fx({ kind: "pickup", what: "plus", who: [id], by: id });
+      m.plus = null;
+      ch = true;
+      break;
+    }
+  const plusNow = now >= m.plusAt;
+  if (plusNow) m.plusAt = now + PLUS_EVERY;
+  if (plusNow && Math.random() < PLUS_CHANCE) {
+    let x = 0.5,
+      y = 0.5;
+    for (let i = 0; i < 12; i++) {
+      x = rnd(0.1, 0.9);
+      y = rnd(0.14, 0.86);
+      if (Math.hypot((x - at.x) / RX, (y - at.y) / RY) > 4) break;
+    }
+    m.plusN = (m.plusN || 0) + 1;
+    m.plus = { n: m.plusN, k: "plus", x: r3(x), y: r3(y), t: now };
+    ch = true;
+  }
   /* the next one fades in (a weapon nobody took goes away) */
   if (now >= m.pickAt) {
     m.pickAt = now + PICK_EVERY;
@@ -1420,8 +1538,9 @@ function pellets(s, by, at, a0, n0, now) {
 /* a shot this beat, from (x0, y0) to (x0 + dx, y0 + dy): a duck's shot that reaches Justin hits him (and is gone: true;
    on his double it counts for nothing); his shots hit Good Justin and the Jaimes. Ducks never hit each other here */
 export function mgjShot(s, sh, x0, y0, dx, dy, now, log) {
-  const m = s.mgj;
-  if (!m || s.phase !== "boss") return false;
+  const m = s.mgj,
+    sb = sbOnBoard(s); // (Sandbox's board: only its spawns' zombies, in s.mz as his are: sbspawn.js)
+  if (!sb && (!m || s.phase !== "boss")) return false;
   const near = (q) => {
     const ux = dx / RX,
       uy = dy / RY,
@@ -1440,6 +1559,11 @@ export function mgjShot(s, sh, x0, y0, dx, dy, now, log) {
     const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
     return Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1) * MGJ_SCALE;
   }; // (he's bigger than a duck: his hitbox too)
+  if (sb)
+    return (
+      !sh.fake &&
+      mgjZombieHit(s, (x, y) => near({ x, y }), armOf(sh.k), now, sh.by, sh)
+    );
   if (sh.by === JUSTIN_ID) {
     if (sh.fake) return false;
     if (goodUp(s, now) && near(s.pos[GOOD_ID])) goodDown(s, now);
@@ -1449,7 +1573,67 @@ export function mgjShot(s, sh, x0, y0, dx, dy, now, log) {
     return false;
   }
   if (shotThrown(s, sh, x0, y0, dx, dy, now)) return true;
+  if (mgjZombieHit(s, (x, y) => near({ x, y }), armOf(sh.k), now, sh.by, sh))
+    return true; // (one of his zombies in the way: it stops there, but the shots that go through them)
   return mgjHitAt(s, sh.by, now, nearHim, log, shotDmg(sh.k));
+}
+/* where a duck's shot I draw stops (the owner's, Nov 17 20:37Z: "BULLETS THAT DO NOT PASS THROUGH ZOMBIES WILL NO
+   LONGER PASS THRU ZOMBIES ... THE BULLET KIND IS SEEN GOING PAST THEM A BIT"): the host finds its hit at its next beat
+   and my screen hears of it later, while I draw it flying on; so on my screen it stops where it meets, as mgjShot sees
+   them, his thrown chair or a controller (shotThrown), one of his wave zombies it doesn't go through (mgjZombieHit),
+   or him or his double (mgjBodies). From where I last drew it (x0, y0) to where I draw it now (x1, y1), board shares,
+   in the order it gets to them. r: what I know of this shot: skip, the wave zombies it has gone past (sh.zp, sh.zh, or
+   by my own look), n, how many it has hit; the one that makes it pierceOf (or 1) stops it. { x, y, i } where it stops
+   (i: the zombie's number, or -1), or null */
+export function mgjStop(s, sh, r, x0, y0, x1, y1, now) {
+  const m = s.mgj;
+  if (
+    (!sbOnBoard(s) && (!m || s.phase !== "boss")) ||
+    sh.by === JUSTIN_ID ||
+    sh.fake
+  )
+    return null;
+  const ux = (x1 - x0) / RX,
+    uy = (y1 - y0) / RY,
+    len = ux * ux + uy * uy,
+    /* how far along (0 … 1) it comes nearest to q, if that's within room of it (in a duck's length); else -1 */
+    along = (q, room) => {
+      const px = (q.x - x0) / RX,
+        py = (q.y - y0) / RY,
+        k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
+      return Math.hypot(px - k * ux, py - k * uy) < room ? k : -1;
+    },
+    meets = []; // [k, the zombie's number or -1]
+  for (const th of s.shots || []) {
+    if (th.by !== JUSTIN_ID || th.dead || th.fake) continue;
+    if (th.k !== "chair" && th.k !== "controller") continue;
+    const k = along(
+      {
+        x: th.x0 + (th.vx * (now - th.t)) / 1000,
+        y: th.y0 + (th.vy * (now - th.t)) / 1000,
+      },
+      th.k === "chair" ? 1.6 : 1,
+    );
+    if (k >= 0) meets.push([k, -1]);
+  }
+  for (const o of (s.mz && s.mz.zb) || []) {
+    if (o.d || r.skip.has(o.i)) continue;
+    const k = along(o, sh.r || 1);
+    if (k >= 0) meets.push([k, o.i]);
+  }
+  for (const b of mgjBodies(s, now)) {
+    const k = along(b, (sh.r || 1) * MGJ_SCALE);
+    if (k >= 0) meets.push([k, -1]);
+  }
+  const most = Math.max(1, pierceOf(s, sh.by, armOf(sh.k)));
+  for (const [k, i] of meets.sort((a, b) => a[0] - b[0])) {
+    if (i >= 0) {
+      r.skip.add(i);
+      if (++r.n < most) continue; // (the sniper's: on through it)
+    }
+    return { x: x0 + (x1 - x0) * k, y: y0 + (y1 - y0) * k, i };
+  }
+  return null;
 }
 /* I want a duck's bullet (any gun) that crosses his thrown chair or one of his controllers to stop on it and be gone:
    they block bullets and never break (owner, Nov 16 16:47Z) */
@@ -1470,25 +1654,45 @@ function shotThrown(s, sh, x0, y0, dx, dy, now) {
       k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
     if (Math.hypot(px - k * ux, py - k * uy) >= (th.k === "chair" ? 1.6 : 1))
       continue;
+    th.blk = now; // (it blinks a see-through white: the owner's, Nov 17 13:07Z)
     return true;
   }
   return false;
 }
 
-const shotDmg = (k) =>
-  k === "sniper" ? (Math.random() < 0.5 ? 2 : 3) : DMG[k] || 1;
+/* a bullet's damage on him: a picked-up gun's as it hits a zombie (l4ddrules.js ARMS, by the bullet's look k), so the
+   owner's numbers there follow here (Nov 18 16:43Z); anything else DMG's */
+const shotDmg = (k) => {
+  const w = Object.keys(ARMS).find((g) => ARMS[g].k === k),
+    d = w && ARMS[w].dmg;
+  if (Array.isArray(d))
+    return d[0] + Math.floor(Math.random() * (d[1] - d[0] + 1));
+  return typeof d === "number" ? d : DMG[k] || 1;
+};
 /* the grenade launcher's grenade, between (x0, y0) and at this beat: true when it got to him (it goes off there) */
 export function mgjLgren(s, sh, x0, y0, at, now) {
   if (!s.justin || s.phase !== "boss" || sh.by === JUSTIN_ID) return false;
-  const j = justinAt(s.justin, now);
-  if (!j) return false;
-  const ux = (at.x - x0) / RX,
+  const j = justinAt(s.justin, now),
+    ux = (at.x - x0) / RX,
     uy = (at.y - y0) / RY,
-    px = (j.x - x0) / RX,
-    py = (j.y - y0) / RY,
-    len = ux * ux + uy * uy,
-    k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
-  if (Math.hypot(px - k * ux, py - k * uy) >= MGJ_SCALE) return false;
+    len = ux * ux + uy * uy;
+  /* how far along this beat's flight (0 … 1) it reaches q, with room r (duck lengths) round it; -1: it doesn't */
+  const along = (q, r) => {
+    const px = (q.x - x0) / RX,
+      py = (q.y - y0) / RY,
+      k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
+    return Math.hypot(px - k * ux, py - k * uy) < r ? k : -1;
+  };
+  /* him, or one of his zombies: it goes off on the first it reaches, as it does on Dead Ducks Arcade's zombies (the
+     owner's, Nov 17 19:11Z: "WHY THE FUCKING IS THE GRENADE LAUNCHER PASSING THRU THE ZOMBIES"); its blast (rules.js
+     blast) then takes the zombies round it */
+  let k = j ? along(j, MGJ_SCALE) : -1;
+  for (const o of (s.mz && s.mz.zb) || []) {
+    if (o.d) continue;
+    const q = along(o, 1);
+    if (q >= 0 && (k < 0 || q < k)) k = q;
+  }
+  if (k < 0) return false;
   at.x = x0 + k * (at.x - x0);
   at.y = y0 + k * (at.y - y0);
   return true;
@@ -1597,8 +1801,8 @@ function deskSpot(s, at) {
   }
   return { x: best.x, y: best.y };
 }
-/* the throw itself: CTL_N controllers spread evenly every way (turned a little at random each time), or the chair or
-   the fireball at q (the board's Mad God Justin throws them too, boardjustin.js) */
+/* the throw itself: CTL_N controllers spread evenly every way (turned a little at random each time), or the chair at q
+   (the board's Mad God Justin throws them too, boardjustin.js) */
 export function throwIt(s, k, at, q, now, fx) {
   const dir = (a, v) => {
     const bx = Math.cos(a) * RX,
@@ -1606,7 +1810,7 @@ export function throwIt(s, k, at, q, now, fx) {
       bl = Math.hypot(bx, by);
     return [+((bx / bl) * v).toFixed(4), +((by / bl) * v).toFixed(4)];
   };
-  const one = k === "chair" || k === "fireball",
+  const one = k === "chair",
     a0 =
       one && q
         ? Math.atan2((q.y - at.y) / RY, (q.x - at.x) / RX)
@@ -1624,8 +1828,8 @@ export function throwIt(s, k, at, q, now, fx) {
   for (let i = 0; i < n; i++) {
     const [vx, vy] = dir(
       a0 + (i * Math.PI * 2) / n,
-      (k === "chair" ? CHAIR_SPEED : k === "fireball" ? FB_SPEED : CTL_SPEED) *
-        (k === "fireball" ? 1 : FAST_FLY ** (+(s.justin || {}).fast || 0)), // (faster attacks: the controllers and the chair fly faster)
+      (k === "chair" ? CHAIR_SPEED : CTL_SPEED) *
+        FAST_FLY ** (+(s.justin || {}).fast || 0), // (faster attacks: the controllers and the chair fly faster)
     );
     s.shots = [
       ...(s.shots || []),
@@ -1640,20 +1844,15 @@ export function throwIt(s, k, at, q, now, fx) {
         t: now,
         lx: at.x,
         ly: at.y,
-        life:
-          k === "chair" ? CHAIR_LIFE : k === "fireball" ? FB_LIFE : CTL_LIFE,
-        ...(k === "chair"
-          ? { r: CHAIR_R }
-          : k === "fireball"
-            ? { r: FB_R }
-            : {}),
+        life: k === "chair" ? CHAIR_LIFE : CTL_LIFE,
+        ...(k === "chair" ? { r: CHAIR_R } : {}),
       },
     ];
   }
 }
 
 /* ---------- the rework (the owner's, Nov 3) ---------- */
-/* a hit on a duck from anything of his (the fireball, a burning duck, the edge lightning): its HP, or down. True when
+/* a hit on a duck from anything of his (a burning duck, the edge lightning): its HP, or down. True when
    it hurt (not while nothing can hurt it, nor in the air) */
 export function mgjKnock(s, id, now) {
   if (id === GOOD_ID) {
@@ -1682,7 +1881,7 @@ export const mgjBurning = (s, id, now) =>
   ((s.mgj && s.mgj.burn) || {})[id] > now;
 const alive = (o, now) =>
   Object.fromEntries(Object.entries(o || {}).filter(([, v]) => v > now));
-/* the burns run out; a burning duck lights every duck it touches (that takes 1 HP, as the fireball does) */
+/* the burns run out; a burning duck lights every duck it touches (that takes 1 HP) */
 function burnTick(s, now) {
   const m = s.mgj,
     burn = alive(m.burn, now),
@@ -1712,6 +1911,11 @@ function burnTick(s, now) {
    before: game.js reads edgeAt) */
 function edgeTick(s, now, fx) {
   const m = s.mgj;
+  if (waveOn(s)) {
+    if (m.edgeAt - now > EDGE_WARN + 1000) return false;
+    m.edgeAt = now + EDGE_WARN + 5000;
+    return true;
+  } // (no lightning from the edges while his zombies are out: the owner's, Nov 17 11:07Z. The hold is a change, so it's kept)
   if (now < m.edgeAt) return false;
   m.edgeAt = now + EDGE_EVERY;
   m.edgeLast = now;
@@ -1733,7 +1937,6 @@ function later(s, now, ms) {
   const m = s.mgj,
     j = s.justin;
   m.edgeAt = Math.max(m.edgeAt || 0, now + ms + EDGE_WARN);
-  j.fbAt = Math.max(j.fbAt || 0, now + ms);
   j.dashAt = Math.max(j.dashAt || 0, now + ms);
 }
 
@@ -1967,8 +2170,8 @@ function jaimeTick(s, now, log, fx) {
   }
   return ch;
 }
-/* a Jaime is hit (1 HP): he's gone in a poof. how: what got him (a controller or the chair: a line from Justin). A
-   Jaime Bomb has 3 HP, and when they're gone his bomb goes off */
+/* a Jaime is hit (1 HP): a hitmarker, and he falls bleeding where he stood (jaimebomb.js jaimeDead). how: what got him
+   (a controller or the chair: a line from Justin). A Jaime Bomb has 3 HP, and when they're gone his bomb goes off */
 function jaimeDies(s, id, now, log, fx, how) {
   const m = s.mgj,
     p = s.pos[id];
@@ -1990,9 +2193,9 @@ function jaimeDies(s, id, now, log, fx, how) {
   m.jaimes = rest;
   delete s.pos[id];
   if (!p) return;
-  fx({ kind: "poof", x: p.x, y: p.y, who: [id] });
+  fx({ kind: "hitmark", x: p.x, y: p.y });
+  fx(jaimeDead(p, id, how, now));
   if (how === "controller" || how === "chair") {
-    fx({ kind: "hitmark", x: p.x, y: p.y });
     const j = s.justin;
     if (now > (j.gotJ || 0) && Math.random() < 0.6) {
       j.gotJ = now + 4000;
@@ -2084,6 +2287,11 @@ function getUp(s, by, id, now, full) {
   const out = { ...m.out };
   delete out[id];
   m.out = out;
+  if (s.mag && s.mag[id]) {
+    const mag = { ...s.mag };
+    delete mag[id];
+    s.mag = mag;
+  } // (the down pistol goes: its magazine with it)
   const lost = { ...m.lost };
   if (max && !full)
     lost[id] = max - Math.ceil(max / 2); // (it stands up at half its HP: 3 of 6)
@@ -2175,4 +2383,216 @@ export function mgjStats(s, all = false) {
     if (f.won && f.kill) P(f.kill).kills++;
   }
   return { per, fights: list };
+}
+
+/* ---------- his zombie waves (the owner's, Nov 17 11:07Z, and 11:19Z: "each player after the first") ----------
+   Every 30 to 60 s, and 5 to 10 s later for each duck after the first, Justin calls a wave: 6 zombies, and 3 more for
+   each duck after the first (half the owner's first numbers: "waves can be half the size", Nov 17 16:23Z), come in from the board's edges, 1 to 3 a second, twice as many a second for every 2
+   ducks after the first. They walk at the nearest duck and claw it (1 HP, as his own hits). While any of them are out,
+   or still to come, he's calmer (his attacks come WAVE.CALM times as late), he'd rather eat, and no lightning comes
+   from the edges. Ducks' guns, melee and grenades hurt them as they hurt Dead Ducks Arcade's zombies (each has WAVE.HP;
+   mgjZombieHit).
+   s.mz = { zb: [{ i, x, y, hp, a (its last claw), l (its look: l4ddart.js zombieURL), d (when it died), w (its wounds:
+   wounds.js codes) }], n (the
+   next one's number), on (a wave is out), next (the next wave), left (still to come), sp (the next ones' second) } */
+export const WAVE = {
+  EVERY: [30000, 60000],
+  LATER: [5000, 10000], // (each duck after the first)
+  N: 6,
+  PER: 3, // (each duck after the first)
+  RATE: [1, 3], // (a second, doubled for every 2 ducks after the first)
+  HP: 3,
+  SPEED: 3.2, // duck lengths a second
+  CLAW: 1.0, // duck lengths: in reach
+  CLAW_MS: 1200,
+  CAKE: 0.7, // duck lengths: at a zebra cake, biting it
+  CALM: 1.8,
+  EAT: [9000, 14000],
+  MAX: 40, // (on the board at once, at most: the rest wait their turn)
+  DEAD_MS: 4000, // (a body lies there as long as Dead Ducks Arcade's, L4.DEAD_MS: the owner's, Nov 19 01:34Z, "everything" with its feel)
+};
+const extra = (s) => Math.max(0, playing(s).length - 1);
+const waveGap = (n) =>
+  rnd(...WAVE.EVERY) +
+  Array.from({ length: Math.max(0, n - 1) }, () => rnd(...WAVE.LATER)).reduce(
+    (a, b) => a + b,
+    0,
+  );
+export const waveOn = (s) => !!(s.mz && s.mz.on);
+const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+/* a zombie's look, as Dead Ducks Arcade's (l4ddrules.js newZombie): 1 in 4 another size or build, 1 in 5 dressed */
+export function zLook() {
+  const dress = Math.random() < 0.2 ? Math.random() : -1,
+    odd = Math.random() < 0.25,
+    size = odd && Math.random() < 0.5 ? +rnd(-1, 1).toFixed(2) : 0;
+  return [
+    WAVE.HP,
+    0,
+    "",
+    size,
+    odd && !size ? +rnd(-1, 1).toFixed(2) : 0,
+    dress >= 0 && dress < 0.6 ? rint(0, 13) : -1, // (one of the 14 zombie hats)
+    dress >= 0.4 ? rint(0, 11) : -1, // (one of the 12 outfits)
+  ];
+}
+/* a spot on the board's edge, out of everyone's way */
+function edgeSpot() {
+  const t = Math.random();
+  return Math.random() < 0.5
+    ? { x: r3(0.02 + 0.96 * t), y: Math.random() < 0.5 ? 0.04 : 0.96 }
+    : { x: Math.random() < 0.5 ? 0.02 : 0.98, y: r3(0.06 + 0.88 * t) };
+}
+function wavesTick(s, now) {
+  const z = s.mz;
+  if (!z || !s.mgj || s.mgj.met || mgjGone(s, now)) return false;
+  let ch = false;
+  const dt = Math.min(0.4, Math.max(0, (now - (z.t || now)) / 1000));
+  z.t = now;
+  const live = z.zb.filter((o) => !o.d);
+  if (!z.on && now >= z.next) {
+    Object.assign(z, {
+      on: 1,
+      left: WAVE.N + WAVE.PER * extra(s),
+      sp: now,
+    });
+    say(s, "Justin calls his zombies!");
+    ch = true;
+  }
+  /* coming in: 1 to 3 a second (doubled for every 2 ducks after the first) */
+  if (z.on && z.left > 0 && now >= z.sp) {
+    z.sp = now + 1000;
+    let k = Math.min(
+      z.left,
+      rint(...WAVE.RATE) * 2 ** Math.floor(extra(s) / 2),
+      WAVE.MAX - live.length,
+    );
+    z.left -= Math.max(0, k);
+    for (; k > 0; k--) {
+      const o = { i: ++z.n, ...edgeSpot(), hp: WAVE.HP, a: 0, l: zLook() };
+      z.zb.push(o);
+      live.push(o);
+    }
+    ch = true;
+  }
+  /* each walks at the nearest duck still up, and claws it once in reach (never through a jump) */
+  const ducks = playing(s).filter(
+    (id) => s.pos[id] && s.pos[id].x >= 0 && !(s.players[id] || {}).dead,
+  );
+  /* a zebra cake lying there draws every one of them to it, to bite it until it's gone (eaten by him), as on Dead Ducks
+     Arcade (l4ddrules.js moveZombies): the owner's, Nov 17 19:11Z, "WTF IS THE ZEBRA CAKE NOT WORKING ON THE ZOMBIES" */
+  const c = s.mgj.cake,
+    cake = c && !c.eat && now >= c.stop ? cakeAt(c, now) : null;
+  for (const o of live) {
+    if (cake) {
+      const d = Math.hypot((cake.x - o.x) / RX, (cake.y - o.y) / RY);
+      if (d > WAVE.CAKE) {
+        const go = Math.min(d - WAVE.CAKE, WAVE.SPEED * dt) / d;
+        o.x = r3(o.x + (cake.x - o.x) * go);
+        o.y = r3(o.y + (cake.y - o.y) * go);
+        o.f = cake.x < o.x ? -1 : 1;
+        ch = true;
+      }
+      continue; // (biting it: no duck clawed)
+    }
+    let best = null,
+      bd = Infinity;
+    for (const id of ducks) {
+      const p = s.pos[id],
+        d = Math.hypot((p.x - o.x) / RX, (p.y - o.y) / RY);
+      if (d < bd) {
+        bd = d;
+        best = id;
+      }
+    }
+    if (!best) continue;
+    const p = s.pos[best];
+    if (bd > WAVE.CLAW * 0.8) {
+      const go = Math.min(bd - WAVE.CLAW * 0.8, WAVE.SPEED * dt) / bd;
+      o.x = r3(o.x + (p.x - o.x) * go);
+      o.y = r3(o.y + (p.y - o.y) * go);
+      ch = true;
+    }
+    if (bd <= WAVE.CLAW && now - o.a >= WAVE.CLAW_MS) {
+      o.a = now;
+      o.f = p.x < o.x ? -1 : 1;
+      mgjKnock(s, best, now);
+      ch = true;
+    }
+  }
+  /* never in each other: two too close are pushed apart */
+  for (let a = 0; a < live.length; a++)
+    for (let b = a + 1; b < live.length; b++) {
+      const A = live[a],
+        B = live[b],
+        ex = (A.x - B.x) / RX,
+        ey = (A.y - B.y) / RY,
+        e = Math.hypot(ex, ey);
+      if (e >= 0.9) continue;
+      const k = e > 1e-3 ? (0.9 - e) / 2 / e : 0.2,
+        ux = e > 1e-3 ? ex * k : Math.random() - 0.5,
+        uy = e > 1e-3 ? ey * k : Math.random() - 0.5;
+      A.x = r3(Math.min(0.99, Math.max(0.01, A.x + ux * RX)));
+      A.y = r3(Math.min(0.97, Math.max(0.03, A.y + uy * RY)));
+      B.x = r3(Math.min(0.99, Math.max(0.01, B.x - ux * RX)));
+      B.y = r3(Math.min(0.97, Math.max(0.03, B.y - uy * RY)));
+    }
+  /* the bodies go after a moment; the wave is over once none is left, or to come */
+  const n0 = z.zb.length;
+  z.zb = z.zb.filter((o) => !o.d || now - o.d < WAVE.DEAD_MS);
+  if (z.zb.length !== n0) ch = true;
+  if (z.on && z.left <= 0 && !z.zb.some((o) => !o.d)) {
+    z.on = 0;
+    z.next = now + waveGap(playing(s).length);
+    ch = true;
+  }
+  return ch;
+}
+/* the weapon a shot's kind comes from (rules.js names some shots after what they are) */
+const SHOT_ARM = {
+  pellet: "shotgun",
+  arrow: "bow",
+  chain: "chaingun",
+  slug: "dbarrel",
+  lgren: "glauncher",
+};
+export const armOf = (k) => SHOT_ARM[k] || k;
+/* duck by's hit on the zombies with weapon w: near(x, y) says which are in reach. Each takes what a Dead Ducks Arcade
+   zombie takes from w (l4ddrules.js zombieTakes: its damage, its headshots and its misses; the owner's, Nov 17 16:23Z),
+   with "CRIT" or "missed" over it as there. sh: a shot, from (sh.x0, sh.y0); it hits the nearest first, each zombie once
+   (sh.zh), goes on past the ones it missed (sh.zp) and stops at the first it hits, or after pierceOf (the Laser Rifle's
+   beam through every one on it). True when the shot stops here, or a swing or blast hit any */
+export function mgjZombieHit(s, near, w, now, by, sh = null) {
+  const z = s.mz;
+  if (!z || !((isMgj(s) && s.phase === "boss") || sbOnBoard(s))) return false; // (and Sandbox's board: sbspawn.js)
+  const seen = sh ? [...(sh.zh || []), ...(sh.zp || [])] : [];
+  let got = z.zb.filter((o) => !o.d && !seen.includes(o.i) && near(o.x, o.y));
+  if (!got.length) return false;
+  if (sh)
+    got.sort(
+      (a, b) =>
+        Math.hypot(a.x - sh.x0, a.y - sh.y0) -
+        Math.hypot(b.x - sh.x0, b.y - sh.y0),
+    );
+  const fx = fxOf(s, now),
+    most = !sh || w === "laser" ? Infinity : Math.max(1, pierceOf(s, by, w));
+  let hit = false;
+  for (const o of got) {
+    if (sh && (sh.zh || []).length >= most) break;
+    const t = zombieTakes(s, by, w);
+    if (!t) {
+      if (sh) sh.zp = [...(sh.zp || []), o.i];
+      fx({ kind: "l4miss", b: 1, x: o.x, y: o.y });
+      continue;
+    }
+    if (sh) sh.zh = [...(sh.zh || []), o.i];
+    hit = true;
+    o.hp = t.dmg >= ALL_HP ? 0 : o.hp - t.dmg;
+    o.w = (o.w || "") + hitCode(o.w || "", w, t.head); // (its wounds, as Dead Ducks Arcade's zombie gets them: l4ddrules.js wound)
+    if (o.hp <= 0) o.d = now;
+    if (z.sb && by) o.mad = ["p:" + by, now + MAD]; // (Sandbox's: it goes after whoever hurt it, sbbrain.js)
+    if (o.d && (w === "grenade" || w === "glauncher") && !o.w.includes("g0"))
+      o.w += "g0"; // (a blast's gore: every chunk, cuts and big holes, as there)
+    fx({ kind: t.head ? "l4crit" : "hitmark", b: 1, x: o.x, y: o.y });
+  }
+  return sh ? (sh.zh || []).length >= most : hit;
 }

@@ -23,8 +23,9 @@ import { pxAt } from "../pxdom.js";
 import { pixelOn, gridPx } from "../pixel.js";
 
 export const WATER = POOL.h; // the water's surface: a duck floats with its feet there
-const SINK = 16; // how far into the water a floating duck sits (world px)
-const SLOW = 0.55; // swimming speed, of walking speed
+export const SINK = 16; // how far into the water a floating duck sits (world px)
+export const WADE_SINK = 0.2; // a duck wading shallow water: its bottom fifth under it (Downpour's road, the owner's, Nov 17 11:07Z)
+export const SLOW = 0.55; // swimming speed, of walking speed (Downpour's deep flood too, ducks' and zombies')
 /* a duck at (x, y) with its feet at z is in the water (not on the steps) */
 export const swimming = (x, y, z) =>
   inPool(x, y) && heightAt(x, y) === WATER && z <= WATER + 4;
@@ -63,6 +64,58 @@ export function wallGlow(side, a = 1) {
     if (glows[i].side === side) glows.splice(i, 1); // (a quick second hit starts that wall's glow over, it doesn't pile up)
   glows.push({ side, t: T, a: cl(a, 0.45, 1) });
 }
+/* a duck's drawing (d: its .gduck) in the water or out of it: in (sw), sunk to the waterline, bobbing (ph: its own
+   phase) with a ring of water round it; wading (wade, Downpour's shallow flood), its bottom fifth under the water, the
+   ring round it, no bob; out, as it was. The pool's ducks, and Downpour's in its flood (l4dd.js) */
+export function floatDuck(d, sw, ph, now, sc, wade = false) {
+  const body = d.querySelector(".gduck-body");
+  if (!body) return;
+  if (wade && !sw) {
+    if (d._wade) return;
+    if (d._swim) floatDuck(d, false, ph, now, sc); // (out of the deep first)
+    d._wade = true;
+    const k = `${WADE_SINK * 100}%`,
+      c = `${100 - WADE_SINK * 100}%`;
+    body.style.translate = `0 ${k}`;
+    body.style.clipPath = `polygon(-300% -300%, 400% -300%, 400% ${c}, -300% ${c})`;
+    d.classList.add("hang-wade");
+    ring(d);
+    return;
+  }
+  if (d._wade) {
+    d._wade = false;
+    d.classList.remove("hang-wade");
+    body.style.translate = body.style.clipPath = "";
+  }
+  if (sw) {
+    const bob = Math.sin(now / 520 + ph) * 2.2,
+      dip = ((SINK + bob) * sc).toFixed(1),
+      tilt = (Math.sin(now / 760 + ph * 2) * 2.5).toFixed(1);
+    if (d._dip !== dip) {
+      d._dip = dip;
+      body.style.translate = `0 ${dip}px`;
+      body.style.rotate = `${tilt}deg`;
+      body.style.clipPath = `polygon(-300% -300%, 400% -300%, 400% calc(100% - ${dip}px), -300% calc(100% - ${dip}px))`;
+    }
+    if (!d._swim) {
+      d._swim = true;
+      d.classList.add("hang-swim");
+      ring(d);
+    }
+  } else if (d._swim) {
+    d._swim = false;
+    d._dip = null;
+    d.classList.remove("hang-swim");
+    body.style.translate = body.style.rotate = body.style.clipPath = "";
+  }
+}
+/* the ring of water round a duck in it (shown by .hang-swim or .hang-wade: css/app.css) */
+const ring = (d) =>
+  d.querySelector(".hang-wl") ||
+  d.insertAdjacentHTML(
+    "beforeend",
+    '<div class="hang-wl" aria-hidden="true"><svg viewBox="0 0 100 28" preserveAspectRatio="none"><path class="wl-front" d="M4 14A46 11 0 0 0 96 14"/><path class="wl-shine" d="M22 21Q34 25 46 23"/></svg></div>',
+  );
 /* a ring that spreads on the water from (x, y); k: how big (a duck swimming about .5, a cannonball 1.5) */
 export function ripple(x, y, k = 0.5, r0 = 26) {
   if (ripples.length > 180) ripples.splice(0, ripples.length - 180);
@@ -293,35 +346,8 @@ activity({
       if (!drawSplash(splashes[i], W.toScreen, sc)) splashes.splice(i, 1);
     /* the ducks: in the water, sunk to the waterline and bobbing */
     for (const d of board.querySelectorAll(".ducks .gduck")) {
-      const o = seen.get(d.dataset.pid),
-        sw = !!o && o.sw && !W.inside,
-        body = d.querySelector(".gduck-body");
-      if (!body) continue;
-      if (sw) {
-        const bob = Math.sin(now / 520 + o.ph) * 2.2,
-          dip = ((SINK + bob) * sc).toFixed(1),
-          tilt = (Math.sin(now / 760 + o.ph * 2) * 2.5).toFixed(1);
-        if (d._dip !== dip) {
-          d._dip = dip;
-          body.style.translate = `0 ${dip}px`;
-          body.style.rotate = `${tilt}deg`;
-          body.style.clipPath = `polygon(-300% -300%, 400% -300%, 400% calc(100% - ${dip}px), -300% calc(100% - ${dip}px))`;
-        }
-        if (!d._swim) {
-          d._swim = true;
-          d.classList.add("hang-swim");
-          if (!d.querySelector(".hang-wl"))
-            d.insertAdjacentHTML(
-              "beforeend",
-              '<div class="hang-wl" aria-hidden="true"><svg viewBox="0 0 100 28" preserveAspectRatio="none"><path class="wl-front" d="M4 14A46 11 0 0 0 96 14"/><path class="wl-shine" d="M22 21Q34 25 46 23"/></svg></div>',
-            );
-        }
-      } else if (d._swim) {
-        d._swim = false;
-        d._dip = null;
-        d.classList.remove("hang-swim");
-        body.style.translate = body.style.rotate = body.style.clipPath = "";
-      }
+      const o = seen.get(d.dataset.pid);
+      floatDuck(d, !!o && o.sw && !W.inside, o && o.ph, now, sc);
     }
     /* the ripples, on a canvas of their own over the water (under every duck and prop) */
     if (!water) return;

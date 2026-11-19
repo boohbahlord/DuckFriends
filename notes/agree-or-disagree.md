@@ -4783,3 +4783,1561 @@ Decided (picked by Jackal): any gun's bullet that crosses his thrown chair or a 
 
 - Adam: Jackal's #312 broke the chair after 6 hits and a controller after 2; changed so they block bullets and never
   break (mgjrules.js shotThrown). Shipped in Version 37 with Miles Jr.'s #311 (owner's go 16:47Z) and Noah's gun art #313.
+- Version 38: Solomon's #314 (double barrel, flamethrower, burst rifle) with #301 (fire axe, short sword, cast iron pan),
+  Miles Jr.'s #316 (each new gun's and melee's own sounds), Noah's #317 (melee art; gun art was #313).
+
+## Request (2026-11-16 16:50Z + 16:52Z + 17:22Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtY1K55R8P5LZ8nWRvvUwzAK): power box and the Angel machine (Dead Ducks Arcade)
+> there should be a the power box on the balcony in the zombie game, and it can be turned on to bring all the lights back, including on the porch, and doing so means finding the lever to put back on it, wires, a tool box, and another item i cannot think of, have adam talk about this with me and tell him to hold on planning for this until i give him the final plan
+
+> the power box btw will be on the back left up against the wall of the cabin on the balcony, to the left where it is not in the way of any holes in the wall or anything like that
+
+The final plan (17:22Z, with a picture of a machine, saved as /mnt/project-files/refs/angel-machine-2026-11-16/owner-machine-reference.png):
+> it will be a fuse, a switch/lever or whatever it is called, a tool box, and gas can with gas in it
+>
+> the locations that 3 of 4 of these items can spawn in: the bathroom sink, the kitchen counter, a zombie that drops one of these in the first five rounds (it will always have one), on the couch, in the shop from Justin's butler (one of four will always spawn here, costs 250 points), or in the fireplace as a random chance (five percent chance and it rolls before the weapons or items in terms of chance, and it becomes another 10% chance for anyone for ever player that rolls for the fireplace unto it is got)
+>
+> Any of these items go in the middle left of the screen (rly small for mobile), and using 'e' button on the power will make it show a fraction below it (0/4 for example or 3/4 if three of four parts are found)
+>
+> The power supply when turned on will last for 6 rounds the first time and will turn off at the beginning of the seventh round. After it first turns off, there is a 5% chance that a jerry can drops from the fireplace, a 1% chance one drops from a zombie, and a 5% chance one spawns in one of the mentioned spawn locations on the map. Every jerry can has a chance of differing amounts of fuel. A full jerry can lasts twelve rounds (5% chance before the next rolls and so on), a 3/4 full jerry can last 9 rounds (25% chance before next roll), and a 1/2 full jerry can last 6 rounds (50% chance before next roll if failed like the others), a 1/4 chance the jerry can lasts 3 rounds (75% chance after the last one was rolled and failed like all the others), and a almost empty jerry can that lasts 1 round (100% chance if the others weren't gotten.) A jerry can can only be gotten again IF the power box hasn't run out of supply yet. There should be a place near the power supply that indicates it runs on fuel.
+>
+> The stage now has a machine that looks sort of like the screenshot i just sent but not colored that when you put your weapons into it, it takes five seconds to work on it while it glows and shoots sparks and smoke out until it comes back as an orb that only the player that put the weapon in there can use, and the weapon is "Angelic" version. The Angelic version of a gun has +1 damage, 20% faster attack speed, and two extra magazines (one for lmg) and a fraction or percentage boosts to other guns that are an ammo increase equivalent (like for bow, both shotguns, and stuff like that).
+>
+> The bow now has arrows pass through one enemy at a time in it's angelic form
+>
+> The sniper passes through two additional enemies now
+>
+> the grenade does not go in this device
+>
+> the flamethrower shoots further faster now and the flame stays  for 2.5 seconds longer
+>
+> the default pistol becomes dual wielded and every bullet instantly kills and every crit causes a default grenade explosion
+>
+> the grenade launcher has 1/3rd the explosion radius and sets fire to it's place it explodes on
+>
+> the reloads and thus their sounds are 20% faster now too, now just the attacks
+>
+> the chain gun now has bullets pass through two zombies
+>
+> and more ideas later, got to go to class soon
+>
+> items cannot be put into this machine, such as jetpack or med pack
+>
+> Melees can
+>
+> the angel machine only works when there is power, and weapons still come out and finish their process even if power is cut IF they were in the middle of their process in the machine the player paid for. It costs 1,000 points.
+>
+> to get a jerry can, remember, the full jerry can rolls first, and if it fails, the next full one rolls, and so on. Flashlight turn off automatically for the player when power come back on and the flashlights turn on when power goes out
+>
+> there is a sound for power goes out that makes it sound like the machine went off, and another sound for the machines and everything turning on
+>
+> the tv turns on when power is back and so do all the lights on the balcony and porch
+>
+> remember, when an item like gas or something else drops from a dead zombie, it stays there permenantly till a player walks over it. All players share the pool of these power supply components or gas when picked up.
+> The jerry cans say their amount of gas in percent, and so, one around is a percent for the almost empty jerry can by math done by understanding how much gas is in the full jerry can based on the amount of rounds it lasts for.
+
+- Adam: the spec for the workers is /mnt/project-files/notes/power-and-angel-machine.md. Solomon = rules (PR 1 power, PR 2
+  Angel machine), Noah = art, Miles Jr. = sounds. Questions sent to the owner: the grenade launcher's radius, and when
+  jerry cans can appear.
+
+## Request (2026-11-16 17:28Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt6b5n65ZVSbPw6RjPrwqVQR): 6 HP and respawn in the normal modes
+> in the normal game modes, like agree or disagree, lawyeringn, and all of those, the ducks will have six health now, and when they die, their body returns to normal when they come back. Now their death lasts three seconds before they come back to life and their duck blinks with trnasparency until they fade in for 2.5 seconds to indicate vulnerability frames, in which their weapons or explosives do not do damage until it is over
+
+- Adam: given to Jackal. PHP 3 -> 6 (HIT_DMG unchanged), 3 s dead, wounds cleared on standing up, 2.5 s blinking fade-in
+  during which the duck can't be hurt AND its own weapons deal no damage (both readings).
+
+> that means they keep their wounds until they die in those modes
+
+- Adam (17:28Z follow-up): wounds no longer fade while alive in the normal modes; they clear only on coming back.
+  HP regeneration (PHP_BACK 6 s) left as is; asked the owner.
+
+> make sure they lose their hats and other items blown off and they wont return until they revive, that is important detail. some hats like the birthday hat come off and stay on the head at the same time and that has to be fixed
+
+- Adam (17:29Z): knocked-off items stay off until the duck comes back (Jackal, same PR); the hat both off and on bug
+  (birthday hat) goes to Noah (his #309 gore).
+## Nov 16, 17:28Z: normal modes, 6 HP, 3 s death, spawn protection, wounds stay
+Owner: "in the normal game modes, like agree or disagree, lawyeringn, and all of those, the ducks will have six health now, and when they die, their body returns to normal when they come back. Now their death lasts three seconds before they come back to life and their duck blinks with trnasparency until they fade in for 2.5 seconds to indicate vulnerability frames, in which their weapons or explosives do not do damage until it is over"
+Owner: "that means they keep their wounds until they die in those modes"
+Owner: "make sure they lose their hats and other items blown off and they wont return until they revive, that is important detail. some hats like the birthday hat come off and stay on the head at the same time and that has to be fixed" (the hat bug is Noah's)
+Decided: PHP 6 (the slug and chain gun still take it all); the boards' default down time is 3 s (the host's Down time setting still overrides it); a duck that comes back gets its wounds and knocked-off items cleared and 2.5 s of spawn protection (blinks, fades in; nothing hurts it, and its own weapons and explosives hurt nobody); in the normal games wounds and knocked-off hats no longer fade while the duck is alive. Not Quacky Zombies, Mad God Justin or Hangout. HP regeneration (6 s) untouched.
+
+
+- Version 40: Noah's #322, knocked-off hats no longer also drawn on Blocks, 2D shape and Dat Boi ducks (owner 17:29Z).
+- Version 41: Solomon's #325 power box PR 1 (with Noah's #323 art and Miles Jr.'s #319 sounds). Angel machine = PR 2, next.
+
+## Request (2026-11-16 17:44Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt89HYSgtFNSGq7W5jYnnTY5): trombone and fire sounds
+> miles needs to do a trombone sound effect and a fire sound effect
+
+- Version 42: Miles Jr.'s #327. sfx.trombone (the Sad Trombone special), sfx.fire (the fire special) and sfx.burn
+  (burning ducks) were already called but silent; now they have sounds. Asked the owner where else they should play.
+- Version 43: Solomon's #329 Angel machine + Angelic weapons (picks: no-mag guns and the double barrel +20% ammo, flamethrower 1/3 farther and 1.6x sooner, dual pistols 2 ammo a press, crit blast spares the shooter, ANGEL.GL_RADIUS 1/3 until the owner answers).
+
+## Request (2026-11-16 19:41Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtSKQqhrdKgYJfR4wkUh6EzU): performance settings answer
+> U can see other players gun effects and animations and all those things matter ljke the data saving
+
+- Adam: the vote result (/mnt/project-files/notes/performance-vote.md) gets built, keeping every player's gun effects
+  and animations visible on Low (a tiny muzzle flash stays). Noah = effects, Miles Jr. = sound caps, Solomon = Dead
+  Ducks Arcade + position sends.
+## Owner, Nov 16 19:41Z (msg cmsg_01LTpp6fzv8sfYUR5KoHADKtSKQqhrdKgYJfR4wkUh6EzU): the performance vote, go
+> U can see other players gun effects and animations and all those things matter ljke the data saving
+
+- Adam split the vote (notes in /mnt/project-files/notes/performance-vote.md). Solomon: line 5 and line 8. With Low
+  graphics or Data saving, on my own screen only in Dead Ducks Arcade: a dead zombie lies there solid and is gone at 2 s
+  (the Nuke's too; Low stops every animation, so it doesn't fade), the flamethrower's stream and its burning ground at
+  half their pixels, the flashlight cones one plain shade. Poor connection: my duck's updates every 600 ms instead of
+  220 ms while it stands still on the ground (moving stays at 220 ms). The rules are untouched.
+
+
+- Version 44: the performance vote built: Noah #332 (effects), Miles Jr. #331 (sound caps), Solomon #333 (Dead Ducks Arcade, position sends).
+- Version 45: Noah's #335, dead zombies no longer vanish at once with Animations off (found by Solomon).
+
+## Request (2026-11-16 21:21Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt6VGNoDkdQvKDkfZF6hXGff): Dead Ducks Arcade numbers
+## Owner, Nov 16 21:21Z (msg cmsg_01LTpp6fzv8sfYUR5KoHADKt6VGNoDkdQvKDkfZF6hXGff): Dead Ducks Arcade numbers
+
+
+> make zombies spawn in twice as fast
+>
+> make the item that spawns in the fireplace for getting the power grid back up available for purchase for 750 points from Justin's butler
+>
+> make the faster attack speed upgrade only have two upgrades
+>
+> what are the crit chance table per weapon?
+> what are the spawn rates per round?
+> what is the health of the zombies?
+
+- Adam: answers in /mnt/project-files/notes/dead-ducks-numbers-2026-11-16.md. Changes to Solomon: spawn rate and its cap
+  x2, the fireplace part also at the Butler for 750, Attack speed upgrade most 2.
+- Solomon (Adam's split): zombies come twice as fast (each second adds 2 x 1.5^extra, cap 10 + 6 per extra player; the
+  25% skip and the most-on-the-board limit unchanged); the fireplace's power part also sold by the Butler for 750 (gone
+  from both once taken from either; not sold while it's out in a spin); Attack speed most 2 (a duck with more keeps
+  them). Adam answers the three questions.
+
+
+- Version 46: Solomon's #337 (spawn x2, fireplace part at the Butler for 750, Attack speed most 2).
+
+## Request (2026-11-16 21:47Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtGgjwpY4sECrEb7mjf9SqM8): crits, misses, zombie HP, starting round (Dead Ducks Arcade)
+> there should be a percent chance that a bullet or melee misses, and it has a text that says "missed" in small white text over it's enemy, but the bullet (if it is a projectile, arrows or grenade launcher included) will keep traveling until it hits the next enemy or not, like usual, and it still has the same chance to miss again
+>
+> all melee have a crit chance
+>
+> for now on, every weapon has a 2.5% crit chance unless it damages reasonably slower, so melee, shotgun, double barrel shotgun, pistol, sniper, bow, all of those and more have 5% crit chance.
+> Every crit upgrade costs 600 and increases crit chance by 2.5% for every weapon that has crit chance, and that can only be done up to two times.
+>
+> The Angelic weapons now glow a dark crimson red around them AND have doubled crit chance (does not double the crit from the upgrade from Justin's butler.
+>
+> the miss chance (or critical failure) is 5% for things that damage faster (chain gun, ak47, so on) and is 2.5% for things that hit slower
+>
+> The cast iron pan has it's own system for crit and misses
+>
+> the zombie spawns has to be done differently because this is confusing in terms of the math, also i want zombies to spawn in faster after ten seconds for every beginning of the round,  so after ten seconds. 
+>
+> I also want zombies to have 3 hp by default, and there is 50% roll for chance they spawn with 4 hp, and another 50% roll after that one if they fail where they have 5 hp, and they get only 3 hp if they fail both those rolls. Simple code.
+>
+> In the lobby settings for the zombie game mode, the start on round is a drop down menu where you choose to start at rounds 1(default, and starts in round 0 like all of them), round 5, 9,13,and21. The rounds spawn in with the bonus points in round zero when you  choose to start on these rounds.
+>
+> the game when ur in it at round 0, you can see a button below exit cabin that says "change starting round", and doing so will change the starting round for players. Doing so starts a vote of "start at round {input round number voted here}" at the top middle of the screen, and players can vote yes or no in buttons on their screen's bottom middle like the vote buttons, saying no will just make it to where that player cannot vote for a starting round again, someone else needs to start it. if it is passed in round zero, only in round zero it could even be, then it will give points for that round INSIDE OF round 0, not waiting for the next round. Below the change starting round is a text that says in white letters "Starting round set to 1", and that text disapears when the first actual round starts where zombies spawn in, just like the change starting round button will disapear (a starting round vote being passed makes the vote starting round disapear but not the starting round set to {round number here})
+>
+> each round range is a difficulty, so players get 750 points at round 5, 1,750 at round 9, 2,500 points at round 13, and 5,000 points at round 21. 
+>
+> Let's figure out a new system for the zombies per round thing and also double the spawn rate for zombies after the first ten seconds
+
+- Adam: spec /mnt/project-files/notes/crits-misses-start-round.md. Solomon = crits, misses, zombie HP, upgrade; Jackal = starting
+  round setting and vote; Noah = Angelic crimson glow. New zombies-per-round system proposed to the owner first.
+- Decided (Jackal, from Adam's spec): "Start on round" 1/5/9/13/21 replaces Round 16 Start (l4r16); the bonus is given at once in round 0 (L.bonus, so a change gives or takes only the difference); the vote passes with the room's share of Yes, falls when it can't, lasts 30 s; one passed change per game; From round 13 on it counts toward the Round 16 Start stats.
+
+- Version 47: #339 (Noah), #340 (Jackal), #341 (Solomon), merged as #342.
+
+## Request (2026-11-16 22:02Z to 22:16Z, owner, angry): zombies per round, still planning (Dead Ducks Arcade)
+> 'A duck that already bought more than 2 keeps them.'
+> THE STATS AND THINGS A DUCK HAS FROM THE LAST GAME DOESNT CARRY INTO THIS ONE [...] BECAUSE DUCKS START OUT RESET AT EVERY ZOMBIE GAME
+>
+> ROUND 1-4 IS 12 ZOMBIES
+> ROUND 4-8 IS 24 ZOMBIES
+> ROUND 9-12 IS 36 ZOMBIES
+> ROUND 13-20 IS 72 ZOMBIES
+> ROUND 21 AND UP IS 144 ZOMBIES (?)
+>
+> EVERY ROUND IS A FRACTIN MORE ZOMBIES PER PLAYER BASED ON IT'S place in a round [...] nominator is the round wihtin a phase [...] denom is the last count of the amount of rounds in a phase [...] 10 times 1/4 is equal to 12.5 which rounds down to 12. That means 12 zombies if two players. [...] 10(2(1/4))=15 zombies
+>
+> now, can you make a chart with no suggestions to me that demonstrates this concept, where different spreadsheets show different number of players. When more zombies per round, it is green, if less zombies then a previous round, then red.
+>
+> DO i have to double the amount of zombies by default for this as i have above? such as 72 into 144? i hope not, explain that to me.
+>
+> I am still planning and figuring out what i want for my game
+>
+> (22:16Z) the amount of zombies cannot become greater then 100 per player, and the total maximum amount of zombies that are allowed no matter the players per round is 400
+>
+> NOW IF there is a round that is detected as being less then a previous round, then the code will automatically have it become equal to the amount of zombies as the previous round for every subsequent round UNTIL there are more zombies
+
+- Adam: Adam's 6+4r proposal was rejected. Formula read as floor(base × (1 + (players − 1) × n/d)), with cap min(100 × players, 400), then held at the previous round's count when lower. Sheet: /mnt/project-files/charts/zombies-per-round.xlsx (1 to 6 players). Round 21+ can't be worked out for 2+ players (no last round). Nothing built yet; the owner is still planning. The wrong "keeps them" comments were removed in V47.
+
+## Request (2026-11-16 22:21Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt1qXZN93YeAjhHRV725zj9o): Angelic ammo, buy pop-up, crit fixes; zombies per round final (Dead Ducks Arcade)
+> okay cool i like this
+>
+> now another thing, ammo cannot be refilled on the guns that become angelic, and it will say so in the shop AND it wont let you buy a gun from the shop unless you click a yes or no pop up window (with an X in the top corner that also means no) that asks if you are sure you want to buy it, this is for Justin's butler.
+>
+> also grenades and grenade launcher doesnt have critical strike chance AND the grenade by itself cannot miss. Flame thrower should also still not have critical chance
+>
+> this is final now
+>
+> we can start all the plans adam
+
+- Adam: all to Solomon in one PR (Version 48). Zombies per round = the sheet (/mnt/project-files/charts/zombies-per-round.xlsx);
+  round 21+ = max(round 20's count, min(144, cap)) (Adam's pick, told the owner); spawns x2 after the first 10 s of a
+  round. No refills for Angelic guns anywhere (Butler Refill, B key, Max Ammo), shop says so. Butler gun buys ask "Are you
+  sure" (Yes / No / X / Esc). No crits on grenade, grenade launcher, flamethrower; the thrown grenade never misses.
+
+## Request (2026-11-16 22:36Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtYDJKZM1MJJZG9rx1s1gDpf): Game mode headings fold
+> for the game mode options, make these a drop down arrow that collpases the game modes BUT they are already expanded under their heading, i.e. 'Social' 'Social Competitive' or 'Special'
+
+- Adam: the Game mode page lists each category as an open fold (the existing arm-fold/gs-fold style) with its modes under it;
+  the arrow folds it, remembered while the page is open (openFolds). Version 49.
+
+## Request (2026-11-16 22:38Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtUn9YxaNn9V78wK1wv1TYnR): second Dead Ducks Arcade map
+> new special map idea, the quacky zombie has two maps, the cabin AND another one.
+>
+> this other map is something an availible AI can suggest that is simple to make that we can use for a map
+
+- Adam: Noah suggests 3 or 4 simple map ideas; the owner picks before anything is built.
+
+## Request (2026-11-16 22:28Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtMeaHkBoPhSc2MkjTofkcJZ): no held synths; What the duck? on scary maps
+> what the duck now plays on scarier maps naturally as apart of the shuffle but any happy looking map it doesnt (so like nous within kenoma can play what the duck)
+>
+> the synths being held down during ponderful ruffles that become louder and are the same notes has to be revised into anything and changed of their instrument while not becoming louder because it is disgustingly bad and terrible, same with the synths in waddle before you paddle BECAUSSE IT LITERALLY IS THE SAME NOTE AND FUCKING SUCKS WHILE DROWNING OUT THE OTHERWISE GOOD MUSIC!
+>
+> NO SYNTHS CAN BE HELD DOWN FOR THE SAME NOTES INDEFINTELY BECAUSE I HEAR IT AGAIN IN OUTER SPACE SWIM COMMUTE AND IT'S SO LOUD AND UGLY WTF!!! HOW THE FUCK DID THIS SHIT PASS RETARD!!! INFINITE POND TOO!??!?! WHAT THE FUCK!?!?!?! DUCKLINGS IN A ROW?!?!?! IS THIS IN EVERY FUCKING SONG!!?!?!??! THE SYNTHS SOUND LIKE SHIT AND ARE SO BAD!!!
+>
+> THE FUCKING SYNTHS IN SPRING IN A BOX TOO?!?!?!? DONT ALLOW THIS BULLSHIT FOR ANY SONG!!!!! OMFG IT IS IN FEATHER BOUND TOO!?!?!? THIS IS BULLSHIT!!! FIX THE SYNTH AND HAVE IT COMPLEMENT THE MUSIC YOU DUMB FUCK
+
+Then (22:33Z): "the electric piano notes can sensibly be used for long if you know" and "keyword is can". (22:42Z): "make
+sure the violin isnt too loud in what the duck, it sounded too loud to me, but everything seems good." (22:45Z): "yeah these
+are all good to go we can put them in the game"
+
+- Miles Jr.: the Warm Pad (re-struck on itself, so it stacked and grew) became an electric piano at one level, each chord
+  rung out for a bar then moving a note a beat; a note struck again ends its last one; long notes end within a bar;
+  the Bowed Glass, Crystal and drone parts became flute, glockenspiel, violin and pizzicato; What the duck?'s violin about
+  7 dB down. In the game: js/music.js plays assets/music/ (64 kbps; lo/ 32 kbps on Data saving or Poor connection); the
+  menus play the happier songs; rooms share one song list (s.music); What the duck? is in the shuffle only when the map
+  is Nous Within Kenoma or Shelter Sky & Null; no music in Quacky Zombies and Mad God Justin.
+
+- Version 50: Miles Jr.'s #346 (the 11 songs back, owner OK 22:45Z in Miles Jr.'s thread).
+
+## Request (2026-11-16 22:53Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtVcsVSypdfT3gufhdSibp5N): second map floor plan
+> do the gas station floor plan again, but make a two lane road with cars blocking the road that are not moving and the other side of the road is the chapel but flipped upside down.
+>
+> the chapel can have a wide entrance for sure to make it easier for ducks to escape AND the pew are randomly missing and some broken in half to allow traffic or flow between them.
+>
+> redo the floor plan now and add a place for tree trunks on the outskirt of the map and on fallen tree over the right side of the road
+>
+> remember this is just the floor plan
+
+- Adam: floor plan only, /mnt/project-files/refs/zombie-map-plans-2026-11-16/gas-station-chapel.png (script in Adam's
+  scratchpad, plan2.py). Nothing built.
+
+## Request (2026-11-16 23:32Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt4oTNDzDY4LgnMrLrRa6QVz): Downpour's fences
+> instead of zombies coming through holes on fences, they rather climb the fence according to their speed like a ladder before falling down it's height from where they climbed it. THe fence should be sort of tall because cool
+
+- Solomon the 2nd: the fences across the road's ends are solid and 200 tall (no holes); a zombie walks to the fence,
+  climbs it at its own walking speed, then drops down the other side (l4ddrules.js st 5, fenceZ).
+
+## Request (2026-11-17 00:17Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt1m3BhxdBgZcLBBxgbp619T): picking Downpour
+> The quacky zombies takes players to a vote screen of the maps and it only shows those two maps for players to vote for.
+
+- Solomon the 2nd: before every Quacky Zombies game, everyone gets a "Vote for Map" window with only Random, Duck Cabin
+  and Downpour (rules.js ZMAPS, vote kind "zmap", 0:20 like the map vote; vote.js zmapTile, pictures
+  assets/maps/duck-cabin.jpg and assets/maps/downpour.jpg). Its result sets options.l4map. Also built for Downpour
+  (owner 23:15Z, 23:23Z, 23:29Z): rain and wading ripples, power lights, lightning, mud zombies; Noah drew the art.
+
+## Request (2026-11-16 23:15Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt5jgfAw1XCisXPag7V226bj): second Dead Ducks Arcade map, the gas station and chapel (Swamp Fever mood)
+Pictures: /mnt/project-files/refs/zombie-map-plans-2026-11-16/owner/forest-line.png (red line = where the forest
+reaches), owner/gas-station-holes.png (circles = holes in the gas station's walls).
+> this shows where the forest extends to, and the forest extends to there not as an invisible wall, but the rest of the map has a fence with holes in it that zombies get in through. There are also barricades inside of buildings of course. Make sure to add a wall. Make sure to add holes in the walls to the places i circled here AND the restroom has a door to go into it from the inside towards the aisles as well
+>
+> the map is night time and raining,  where the round kinda sinks down more then the grass ground in terms of elevation and thus if flooding with water (use water effect from pool maybe? idk how good of an idea that is). The water in that center will slow ducks down by 30%
+>
+> The flooding water rises up so high that ducks cant go towards it because the left side of road actually has even lower elevation near before the exit of the map
+>
+> the generator and power supply are still in the game and is to the right of the gas station, there, turning it on will brings lights to the gas station, the gas station pump area, and the church.
+>
+> the toolbox will be found on an empty shelf or on he top front or back of car and can be picked up by walking over it, the gas is found at the pump in a jerry can, the fuse is found in the storeroom or on a church pew, and the switch is found in the restroom, shelf, top or front of car, church pew, or at one of the pumps.
+>
+> the npc they go to for buying things now is the priest church at the church named "Priest" who serves the roll that Justin's butler did
+>
+> the restroom toilet nis the same toilet from the cabin so that way we dont mess it up.
+>
+> focus on the skeleton first, then the details, then the rain and water, and then the lighting last.
+>
+> im not too worried ab making this map super lightweight, i just want it to be cool and not take a crazy amount of time and resources to make whenever we now have everything as 32 bit or whatever, so yeah.
+>
+> On this map, there is a 1% chance that a random zombie will be struck with lightning while on a player's screen once. Every 1% chance rolls another 1% chance to see if it happens twice in the same round. THe lightning only hits the zombie.
+>
+> Quick question what is the tower?
+>
+> ALSO, there should be a car with a lifted up hood, and that car's hood lifted up to it's engine is the same function as the fireplace and it is near the gas station. It kinda glows until the first player uses it.
+>
+> give me an idea of how much harder or easier this will be then cabin
+>
+> I imagine the swamp fever map specifically from L4D2 as inspiration, not any other map from that game
+>
+> some zombie ducks will have mud all over them, and them hitting you gets mud on you screen, and these ones are a 4% chance of spawning, and mud hits the corners of your screen and fade away after ten seconds and they have one less healthpoint then usual, the muddy zombies that are rare
+## Nov 16, 23:29Z: gas meter under the power box
+Owner (part of a longer message about gas, relayed by Adam): "In this game mode and the other, there is a meter below the power box that tells how much gas is in it in boxes of twelths similiar to a HP bar, but it is yellow because electric, and it is slightly transparent. The meter is on the power box in both game modes."
+Decided (Jackal): gasMeter(rounds) in js/l4ddpowerui.js gives the meter's HTML (12 boxes, one per round of a full can; more than 12 shows full); the cabin's power box draws it under itself, and Downpour calls the same function.
+
+- Owner 2026-11-17 00:57Z (Downpour trees, after Noah's four kinds A cypress, B live oak, C dead snag, D willow): "Get rid kf the drapes and try A, B, and D, and maybe slight variations to those trees"
+  - Decided: trees A, B and D only, with slight variations of each, and no hanging moss or drapes. Noah draws them at the 60% scale and sends pictures before they go in.
+- Owner 2026-11-17 00:58Z (after the 60% pictures): "Good we'll try and go with this size version for now"
+  - Decided: Downpour stays at K = 0.6. It deploys after the new trees are in and the owner has seen them.
+- Owner 2026-11-17 03:34Z (with a sketch, /mnt/project-files/refs/downpour-trees-2026-11-17/owner/tree-scale-sketch.jpg: a duck under a big tree crown, the trunk about as wide as the duck, the crown about 4 to 5 ducks across): "Tree line isnt a literal line of trees, it is a imaginary line, where inside it, trees could possibly be found, but more sparsely. Trees are supposed to be bigger then ducks, and leaves, like rooves and walls, go over them, covering ducks like a wall and revealing whats under them accordingly. The screenshot i send is for size comparison and scale. The tree line is a imaginary conceptual line related to the density of the trees that both players and zombies can then obv cross either way"
+  - Decided: Downpour's deploy (Version 52) is held. The forest line is no longer a row of trees or a wall: it only marks where the trees get dense, and ducks and zombies cross it both ways (only trunks block). Trees are drawn at the sketch's size, and their leaves are a roof layer over ducks that reveals what's under it, like the cabin's roofs. Solomon does the map and the reveal; Noah does the bigger tree art.
+- Owner 2026-11-17 04:16Z (on Solomon's forest and crown pictures): "Ok"
+  - Version 52 (PR #354) is live: Downpour, with the zombie map vote, the big trees, the open forest line and crowns as roofs.
+
+## Owner 2026-11-17 05:46Z: Downpour fix list (10 screenshots: /mnt/project-files/refs/downpour-fixes-2026-11-17/, numbered as the owner refers to them)
+"Lots of fixes to downpour will be happening:
+
+This first screenshot shows the cabin map visibility in the vote screen being messed up 
+
+This second and third screenshot shows a problem of the fun and laser sight not being set to follow the movement direction of a duck on mobile, and the gun just floats with it's laser in an awkward way that should of been easily caught during any of the bug testing.
+
+The fourth screenshot show the change starting round round is fucking huge and way way too large on mobile and the round set button is equally too large, so it takes up a shit ton of space obnoxiously on an already small screen for mobile users. Screenshot four also shows how the holes in the walls not only arent holes that are from destruction, like how they are in cabin map for zombies in many places, but the top of the wall is found on the ground as that thick grey rectangle... like seriously ?! How tf does this shit pass. Furthermore in this screenshot, the wall has a grey bar at the top of the right wall from the inside that doesnt fully connect to it's intersecting wall above it by their intersection, which is obviously retarded and can never be allowed in other places like it because this violates perception rules. There is also foliage from a tree no clipping through a wall, which has to not be pushed inside the building from the view of the duck ever.
+
+Note, the fence is not visbible and not seen anywhere, so fucking shame on you retard. Furthermore, too many trees, make half as many as before to make them more sparse. Another point, just like how zombies behind walls are revealed by making the wall transparent to all players WHERE a zombie or other player is behind in zombies, so it will be the same for being under a roof, being under the roof of the pumps, being under the foliage of a tree, and everything else. Zombies would get stuck on trees and other places and not know to move around them, so fix the ai so it knows to maneuver around objects that stop it's track to the player or else the zombies arent coming to the player, but rather, to the fault of you, the players have to search for the zombies, which will never be how this game mode works. Ai fix comes after trees are changed AND zombies are revealed with a transparency of the surface that hides them.
+
+Screenshot five further shows the obnoxiousness of the large button, the other hole in the wall not being my intention while being a fucking mess, and the foliage is no clipping inside the building again.
+
+Screenshot six shows how the change start round and starting round button and info ui is not hidden while other ui is opened on screen, which is absolutely fucking broken and not something i should even need to tell u not do. The priest wasn't said tk be small either, make them a normal size.
+
+Screenshot seven once again shows the many aforementioned problems, but further more, shows the white bullshit that is certainly too large to be a coffin, so remove the whole raised platform that was never even meant to be a coffin (its not a fucking funeral home) and push the angel machine against the wall and make the wall constantly transparent to show it IF EVEN a fourth of the angel machine's object is hidden from the players. The wall on the bottom WILL behave in the logic it ought to for it's role not only in what i say, but also for the consistency and coherency of hoe other walls would work in it's bottom or south position for perspective and rules otherwise, you fucking retard.
+
+Screenshot 8 pissed me the fuck off because you made a restroom that isnt even a fucking restroom. The restroom should have a similiar format or almosg exact format to the bathroom from cabin, but only missing a bathtub since this is a restroom at a gas station, so a sink, mirror above the sink, and a toilet, with the sink, mirror, and toilet up against the top wall in the same direction and size of the objects as they are in cabin. The pickup in the restroom isnt working on mobile and i havent checked on pc. Walls dont shine when u put a flashlight on them and most things dont either. 
+
+Make the game generator alreafy on without needing to find parts and have it set up to hold 8 rounds worth of gas, and players still have to feed it gas like usual but they dont need to repair it now.
+
+Flashlights should just stop at the floor, they should shine onto the objrcts they are aimed at as well.
+
+The map for cabin for zombies and hangout AND the gas station for zombies should become one pixel sixe unifornly like the page backgrounds for other maps btw
+
+The fences will be chain linked fence btw and holding ur light to it helps see that.
+
+Shining light on cars also help illuminate the parts of cars it goes over within the cone of the light
+
+Now for the last two screenshots
+
+The second last screenshot shows that the entrnace/exit door to the gas station is hidden, which is already against what we did for cabin completely! The door to the gas station is also meant to be deatroys like a large hole where the door is no longer there because a huge hole in the wall and parts of the glass (so one big hole) is what's left from the destruction, which zombies can pass through. I quite literally had a picture that had red circles on the gas station for parts where i want holes to be, but fuck me i guess and just ignore my shit. When i said hold, i didnt meanneat orderly doorframes or doors, i meant literal destruction of a wall like in cabin u retards.
+
+The last picture shoes some weird overlap of the textures where the front of the gas station doesnt knoe what it wants to show, since the overlap is having the thick grey rectangle cover the larger and wider red front... so remove the grey thick rectangles off the red one where it overlaps then
+
+Another thing, make the place where the water is deeper the same color and look, and instead make it to where ducks swim in it like they do the pool in hangout when they get in it, and so do zombies, at the speed they travel. Guns cannot be used while swimming nor bows, so they are temporarily untoggled ONLY WHILE swimming, same with melee. Zombies can still hit and attack while swimming, players can not.
+
+Write a not of these mistakes and take not for working on building or maps like these in the future, because multiple principles that a human would intuively expect you to know were violated in execution of the creation of this map. 
+
+I expect these problems to be fixed
+
+Also, one more thing, the last pitch sound that plays when the counter hits 0 on the lobby countdown isnt heard and needs to be put back, and miles jr does that
+
+I will send other screenshots about something else after i send this"
+  - Decided (Adam): Solomon fixes, in the owner's order: trees halved; reveal under every cover; then zombie steering around obstacles; then holes, walls, the door, the front, foliage, chapel, restroom, generator, swimming, and the Priest's size. Noah does one pixel size on the cabin (Zombies and Hangout) and Downpour, flashlights lighting objects, the chain-link fence, and the cabin's vote picture. Jackal does the phone starting-round UI (smaller, hidden under other UI) and the phone gun and laser following the movement direction. Miles Jr. does the countdown's last beep. Adam writes notes/map-building-rules.md. The generator change is read as Downpour only. Everything ships in one deploy (Version 53) after phone and PC tests.
+
+## Owner 2026-11-17 05:55Z: landscape phones (5 screenshots: /mnt/project-files/refs/landscape-2026-11-17/)
+"The game is unplayable in horizontal mode.
+
+For mobile only when in horizontal mode (so not computers with touchscreen), the ui is still large and compressed down and across the screen rather then being resizes and repositioned to accustom a mobile player in horizontal mode, as shown in the screenshots. This makes the game unplayable in that mode and is thus unacceptable. When the game loads on mobile, the game will be full screen in it's browser and thus hiding the browser ui at the top that limits room, and to exit full-screen will be a button to the left of the friend menu button on the top right with the appropriate and usual symbol for such, that helps players leave the full-screen and enter it by clicking that button. Clicking that button makes it glow for four seconds before fading (effect doesnt stack over the last if clicked multiple time)
+
+Ui must be ajdusted for horizontal play AND we should check for bugs in games like would you rather, agree or disagree, brackets, trivia, and whose the quack to mak3 sure we know horizontal screen has the player shown on the tile to computer and vertical players that they chose and vice versa, and we should bug check for players who switch between vertical and horizontal as well. The game goes into full screen automatically when they click the button to play the game when it first loads."
+  - Decided (Adam): Adam builds it. A phone-landscape layout (phones only, never touchscreen laptops), full screen on the first Play press on phones, and a full-screen button left of the friends button that glows for 4 s without stacking. Then a check of tiles across landscape, portrait and PC players in Would You Rather, Agree or Disagree, Brackets, Trivia and Who is the Quack, including players who turn their phone mid-game.
+- Owner 2026-11-17 05:57Z (the tile bug to check for): "An example about the bug I'm talking about. Let's say that in Would You Rather, one option is eat a banana and the other option is eat an apple. Well, then it should follow that mobile users, when they're on the apple option, eat an apple option, and everyone else is on the eat a banana option. And let's say those other people are on PC and they themselves are on mobile. The only mobile player is the only one who chose apple. Then it should say banana for computer players and apple for mobile players on both sides of the player's screen, because it has been a glitch that has happened in the past that we tried to correct for and fix. It might have been fixed for some game modes where a mobile player in brackets and other game modes would be voting for something that was the opposite of what they intended, because on their screen they might have thought they were voting for apples and they did see apples, but when the computer player saw it, they saw them standing on banana and they voted on banana. And it should also be the same for whenever we're doing this for the checking of horizontal players versus vertical players when it comes to mobile screen orientations, and even for players that switch them in between the game."
+  - Decided: test every social mode with a PC, a portrait and a landscape player in one online room, plus a player who turns the phone. Each player's pick must show as the same option on every screen.
+- Owner 2026-11-17 06:01Z (Dat Boi's rainbow): "Someone make sure that the rainbow dot boy skin is actually a rainbow skin, like in the way that I imagine, where the skin has a literal rainbow across its skin, and the rainbow revolves, like each color changes into the next in accordance to a rainbow. And every color of the rainbow kind of has blurred lines where the colors kind of naturally transition into each other, like a natural rainbow, not having stark, blocks of colors beside each other. So yeah, every color of the rainbow slowly changes to its next color in the order of the rainbow, and every color it changes into, it slowly fades into, not too slowly, and it cycles through all of the colors of the rainbow for every stripe of the rainbow and its undefined value, where it's undefined non-value, but in border, like a natural rainbow. And that skin can also be unlocked apart from the dat boy. And that skin, to be unlocked, has to have as many jumps as it does for the rainbow skin for dat boy. I don't know why it's saying a period and then a B when I say the name of the thing I've been referring to this whole time. So I'm going to spell it out. What I've been referring to is D-A-T space B-O-I. [...] I don't need an explanation as to why, though. I just know it's stupid. Yeah."
+  - Decided: Noah makes Dat Boi's rainbow rank a smooth rainbow across the skin (soft blends, no blocks), with every stripe cycling to the next rainbow color, and adds the same rainbow as its own skin, unlocked at the same Jumps as Dat Boi's rainbow rank. Pictures go to the owner first.
+- Owner 2026-11-17 06:04Z (voice to text; "noose within Konoma" = Nous Within Kenoma; screenshots in /mnt/project-files/refs/kenoma-look-2026-11-17/): "Here are some screenshots. The first screenshot is of Ether's Crossroads. It still doesn't look like my noose within Konoma site in the UI or in the text, and it should also be the same for the noose within Konoma maps, because if you look at the second screenshot, there is the little lines like you see in a old vintage computer in a terminal screen that go through the screen. I'll give you, like, so here's the thing. One of you literally did that site, and you know the inspiration for the noose within Konoma UI. I don't understand why we decided to drop that for the maps that carry its UI and its page background for the noose within Konoma sites, right? And that includes like even the small little details. That should be fixed."
+  - Decided: Noah makes every Duck Friends map that carries the Nous Within Kenoma look (Ether's Crossroads and the other Kenoma maps) match the book site's current terminal look exactly: UI, text, scanlines and small details. Duck Friends only; the book site isn't touched.
+## Nov 17, 05:46Z: Dead Ducks Arcade phone fixes (from the Downpour fixes message, Adam gave Jackal two items)
+Owner (the two items, word for word): "This second and third screenshot shows a problem of the fun and laser sight not being set to follow the movement direction of a duck on mobile, and the gun just floats with it's laser in an awkward way" and "the change starting round round is fucking huge and way way too large on mobile and the round set button is equally too large" and "Screenshot six shows how the change start round and starting round button and info ui is not hidden while other ui is opened on screen".
+Decided (Jackal): on a phone the Change starting round button, its round list and "Starting round set to N" use a small font (near the PC's on its screen) and hide while the shop/Priest or any window (pause, settings) is open. The phone's gun now points where the duck aims (the nearest zombie in sight, else the way it walks), the same as its laser and flashlight: the gun used the phone's emulated mouse position instead, which it kept after 4 s. A mouse that moves later than a touch still aims on a computer, even on a touch screen.
+Changed (Adam, Nov 17 06:01Z): the owner said "movement direction", so on a phone the gun and its laser (and the flashlight) point only the way the duck last walked, and keep it while it stands still; no aiming at the nearest zombie.
+- Owner 2026-11-17 06:55Z (4 screenshots: /mnt/project-files/refs/phone-aim-2026-11-17/): "First screenshot still shows gun now moving with the movement of the duck, because the direction of the duck's movement when the right joystick isnt being used should determine where weapons and items move in every game mode as if it was the right joystick, until the right joystick overides while used to determine it's direction like you would with aiming with a mouse
+
+Furthermore, on horizontal mode, the joystick should be in the bottom right exactly, but should have a little space away from it. The reason being, which is demonstrated partly by the screenshots, is that the aiming ui and control will expect me to push further out when i physically cant because of the limitation of my screen and the corner the UI was placed next to the screen. The solution is a small amount of symmetrical displacement away from that corner for both the left and right joysticks WHEN in horizontal mode
+
+The last screenshot shows another ui error at the top of the screen for vertical mode."
+  - Then: "What else is still being worked on"
+  - Decided: Jackal does phone aim in every mode: weapons and items, and the gun drawing itself, turn to the walk direction like a mouse aim, and the right joystick overrides it while held. He also moves both joysticks in landscape a small, equal distance in from the bottom corners. Adam fixes the upright phone's top row on Rooms (music bar, full-screen button and Sign in overlapping).
+
+- 2026-11-17 06:58Z (in Noah's thread, with a screenshot): "The cabin's roof or the grass xhould be a different shade of green or whatever color the roof ACTUALLY is because it blends into the color of the grass, which is a problem"
+  - Decided: Noah made the Duck Cabin roof slate grey (ROOF in js/hangout/art.js) and rebuilt both cabin pictures (PR #363, waiting on the owner's OK of the color). Ships in Version 54 if OK'd.
+
+## Request (2026-11-17 06:07Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtUY58qmwSkfBRwpisTkN6ik): zombie pathing, one known way on every map
+> Yeah, zombie pathing, or how it walks, maneuvers, should be universal even onto the cabin map. And how they navigate should be a simple principle in the code, which is probably already on other people's GitHubs or other places online where someone already figured out the solution to that problem, and we don't have to reinvent the real wheel to the simple problem that tells the AI how to navigate around objects and things in order to get to its destination, which for the zombies is the players that it's trying to kill. And we're doing it like that. So, like, none of this drawing paths or anything, some complicated set algorithm that the zombies take. No. It should be something else that's actually a universal that is from within the zombies file simply themselves in a way in which the solution was already solved.
+
+- Solomon the 2nd: kept the zombies' flow field (a Dijkstra map, the standard way games move many enemies to the
+  players; built from each map's own solids, the same code on Downpour and the cabin, no paths drawn by hand) and added
+  the other standard half, obstacle avoidance from Reynolds' steering behaviors (l4ddrules.js stepZombie: turn 30, 60,
+  90 degrees until a step is free; straight at a duck only with nothing in between). No zombie stuck on either map.
+
+## Nov 17, 06:55Z: phone aim follows the walk direction in every mode; joysticks in landscape
+Owner: "First screenshot still shows gun now moving with the movement of the duck, because the direction of the duck's movement when the right joystick isnt being used should determine where weapons and items move in every game mode as if it was the right joystick, until the right joystick overides while used to determine it's direction like you would with aiming with a mouse"
+Owner: "Further more, on horizontal mode, the joystick should be in the bottom right exactly, but should have a little space away from it. The reason being, which is demonstrated partly by the screenshots, is that the aiming ui and control will expect me to push further out when i physically cant because of the limitation of my screen and the corner the UI was placed next to the screen. The solution is a small amount of symmetrical displacement away from that corner for both the left and right joysticks WHEN in horizontal mode"
+Owner: "The last screenshot shows another ui error at the top of the screen for vertical mode." (screenshot 4-portrait-top.jpg; not part of this job)
+Decided (Jackal, from Adam): on a phone (html.phone, never a touchscreen laptop) the gun, its laser, the flashlight, throws and swings aim the way the duck last walked (game.js trackWalk, walkScr, in every mode), until the right stick is held, and again after it's let go. On its side (phone-land) the aim stick and jump button sit 3.8rem in from the right edge, and the walking stick's middle stays 66 px in from the left, right and bottom edges.
+
+- 2026-11-17 08:06Z (with a screenshot of Chrome's "To exit full screen, drag from the top and touch the back button" bubble over the Vote for Game Mode list): "Is it possible to remove that gray pop-up that pops up on the screen, or to like reduce it to like 2 seconds? Because it's really fucking annoying when you full screen and it shows that shit. Because like you can see it's blocking the UI, and you know the instinct of the player is to click it to get out of the way because they're trying to click the UI below it. That actually makes it stay longer. Next thing you know, it's like there forever, and the player just gets pissed off. Like there has to be a way to get rid of that."
+- 2026-11-17 08:11Z: "Yeah install from the guthub page, and it updates and everything.
+
+I want the file to be able to still detect mobile versus computer vs all that and screen rotation still, so does it automatically do that?"
+  - Decided (Adam): the bubble is Chrome's own; a page can't hide or shorten it. Duck Friends is now installable (manifest.webmanifest: display fullscreen, orientation any, icons in assets/app/; sw.js keeps no copies and fetches the page with no-cache, so every deploy reaches the app on its next open). Inside the installed app (html.app, fullscreen.js inApp) the full-screen button and the first tap's full screen are off, so the bubble never shows. Phone/PC detection, touchscreen laptops, rotation and phone-land are unchanged (same page).
+
+- 2026-11-17 09:02Z (screenshot: desktop Chrome, black page, the green loading bar at about a third): "sometimes the game doesnt finish loading
+
+like i keep refreshing and it wont load"
+- 09:03Z: "it has been a problem where sometimes the browser wont load, and i would have to refresh it to load, but that isnt working on my computer vers now is what is happenign"
+- 09:04Z: "is there a launch file as a layer that calls to the repo that is hung up and waiting for an answer that can only be answered in the application vers and not the website ? if so, we can just have it given a way out of that with simple logic"
+  - Found (Adam): the bar at a third with no duck is index.html's own loading screen, so main.js never started. Nothing at start waits on the app (the app check is an instant yes/no, the service worker registers on the side). The game is ~167 module files; if one fails to arrive or the browser keeps a broken copy, the whole game never starts, and a refresh reuses the same copies. Owner's "way out" built: index.html's guard (window.dfStarted from main.js) refetches every game file with cache "reload", drops the service worker and reloads, at most twice; then "Duck Friends didn't load. Tap to try again." sw.js no longer touches requests (no fetch handler; still installable). Version 57.
+
+- 2026-11-17 09:38Z (screenshot: V57's "Duck Friends didn't load. Tap to try again." on the touchscreen laptop, desktop Chrome): "it is still doing it on browser, but maybe it is me
+
+what i did was close it and open a tab and click the site again and it said this. if i click it then it says failed to load over and over
+
+when i try and open it from recent deployment on my chrome from my repo then it still does the same thing even when refreshed or clicked
+
+i tried on my phone and it works
+
+could it possibly be the new mobile features loading on my laptop that has touchscreen ? (those are supposed to load as laptops by default btw)
+maybe it is another new mobile feature like the fullscreen automatically turning on in the game (that should only be for mobile, but the fullscreen button can stay on both"
+  - Found (Adam): not reproducible with a touchscreen Windows Chrome setup (it loads, gets the PC UI; auto full screen is already phone-only via isPhone). 47 duck looks and 39 settings profiles all load. So it's something on that machine (an add-on blocking a file, or its saved data). V58: the stuck screen now names the file that didn't arrive or the error, to find it.
+
+- 2026-11-17 09:49Z (screenshot only, the laptop's V58 line): "Not arriving: js/fullscreen.js (blocked), js/euclid.js (503), js/gamesettings.js (503)"
+  - Fixed (Adam, V59): an extension on the owner's laptop blocks any file named fullscreen.js; renamed to js/corners.js (never name a game file after full screen, ads, popups, trackers, etc.). The 503s were GitHub Pages answering the guard's 167 fetches at once: the guard now fetches six at a time and asks a 5xx file once more after a second.
+
+- 2026-11-17 10:05Z: "install duck friends should be an option on the main menu below updates button"
+  - Done (Adam, V60): js/homeapp.js keeps Chrome/Edge's beforeinstallprompt and shows it from an "Install / Duck Friends" button under Updates (site-btn style, like My Other Website, so it doesn't wrap); no offer = a toast with how-to (iOS Share > Add to Home Screen, Firefox can't); hidden inside the app. Phone on its side: the front column made shorter so all six buttons fit.
+
+## Request (2026-11-17 11:07Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtEbDjGth79w7nbJDzBPrjB6): Mad God Justin, Dead Ducks Arcade, new guns (word for word)
+> in mad god justin, shotguns gets infinite amount of ammo when held and picked up and every gun with a magazine gets only that magazine worth. 
+> LMG only gets 30 rounds worth in mad god justin
+> 
+> have the meteor and justin turning off his xbox be based on a fraction of Justin's health in mad god justin before the condition is met
+> 
+> Mad god Justin can now be played on the zombie version of the cabin map WITHOUT the lightnign on it now as a possible vote
+> 
+> the special maps should also include the downpour map in the lobby selection becuz it is not there
+> 
+> The glow around the anegelic guns should be much smaller and less pixels while glowing softly in a breathing pattern AND the halo is transparent (other players can see ur angelic effect on ur weapon)
+> 
+> angelic pistol SHOULD have double the bullets per magazine (because dual wield), the guns should be further apart, there should be two laser sights from them that converge to a point, and the explosion radius should be half of that of a grenade and the explosion be a modified version of the same sound to make the boom sound a little weaker then a grenade or grenade launcher. The alternating shot for the angelic gun wasnt added, where it is supposed to alternate between one gun is shot, then another, one bullet at a time for each of one pistol that are dual wield. the fire rate for dual wield is obviously twice as fast but the reload twice as long
+> 
+> the water should be seen over the entire road AND the perception of the ground descending into the road needs to be done with colors or shading and other principles that can be looked up to make sure topography of the ground and high it lowers there is conveyed, and water should submerge the bottom fifth of ducks while they walk through it
+> 
+> jerry cans only have a 1% chance of being dropped from zombies now
+> 
+> the revive should be five seconds by default 
+> the quick revive makes it three seconds
+> the revive animation pauses the timer of a player dying, and their duck becomes more and more greyscale while they are down and dying AND they get a free pistol with infinite ammo they can shoot while down but still needing to reload WHILE they are down and waiting to die or be revived, and that particular pistol goes away when they are revived.
+> 
+> the weapons spinned for at the car in down pour SHOULD be on the ground behind the car not inside the car, so player's can see the weapons spinning
+> 
+> a thin yellow sqaure line for the radius you have to  be in to spin for a weapon at the car OR in the cabin mode will be shown WHEN all zombies are dead before players ready up AND the angel machine softy glows a new red like the angelic guns AND the generator glows a electric yellow similiar to the angelic glow AND the priest or Justin's butler glows a soft golden metal glow like those two former
+> 
+> the melee weapon for mad god justin players start out with now is the short sword, not the knife 
+> 
+> new weapon idea: laser gun
+> The laser gun shoots red lasers that goes across the screen like the lines for the chain gun and pass through every enemy for one damage, the laser has a glow to it and is a red straight line (little bigger then the chain gun) that does 1 damage per second (meaning that a laser one shoots one line per second), and it passes through every enemy and has no crit or miss chance. The laser gun gets 1/5th hotter for every second it is used and takes 1 second for it to cool down 1/5th of the time, but if it is held down for more then 5/5 (so it climbs to 6/5) then it hisses and the duck jitters with a burn effect (does no damage) while it takes eight seconds to cool off back to zero before it can be used again, and in that time the laser gun has little fire pixels and the metal starts to glow orange from it. it has infinite ammo. The angelic version of the gun has a 1/3rd chance to do two damage to any singular enemy it passes through AND the fire rate is now one shot per 0.75 seconds with a 0.75 cooldown and a 6/6 cooldown maximum now before cooling down (7/6 is when it overheats). The gore effect is holes, cuts, or losing eyes or beaks, and ducks get the  burnt when they die from they die from it (burn or burnt effect in this large paragraph is not the fire effect but the toasted charred look already existent). There is a meter below a duck that is a little thin in height but not too thin, and not too long, and the meter fills up in blocks that go from red and closer to orange before heating up, and when it overheats, the oranage flashes with white while the meter ui shakes. the meter has light steam coming from it AND the laser gun has more whenever it overheats as well. The gun steams up in sound and visual effect MORE when it is in the rain. the end of the barrel is what overheats in appearance and glows while changing color btw, not the whole gun. I want different gun looks sent to me so i can see what they look like. 
+> 
+> I want a tommy gun with the same stats as the SMG but slower fire rate but larger ammo capacity and 5% critical chance and only 2.5% chance of missing (like a 50 round capacity). Suggest a different SMG idea for a slow fire rate SMG maybe, what about a UMP45? I think that sounds like a good idea.
+> 
+> LMG now has 100 bullets and twice the reload time
+> 
+> a cooldown meter appears on the bottom of the health bar of a duck that is white or maybe some other color available that starts full and runs down and empty WHENEVER reloads are happening OR shots are being taken between semi autos (like the shotguns or snipers), the meter is rly thin and just right below the health meter ON the duck, not the one in the bottom corner.
+> 
+> Below a duck, switching weapons will show a small box below the duck on PC and mobile now that scrolls in a visual design LIKE the one on the bottom middle screen of mobile, and it fades out super quickly between switching
+> 
+> Guns that are fired for a long time that have large ammo capacities and calibers with high fire rates (lmg or chain gun) will now start to glow hotter and hotter at the tip of the barrel now as they heat up
+> 
+> Ask more important questions for clarity
+> 
+> players cannot walk through or inside the angel machine so fix that. 
+> 
+> LMG, Sniper, especially chain gun, shotguns somewhat, and high caliber weapons in general SHOULD shake the screen more, alongside explosions (small explosions less so)
+> 
+> One the mad god justin gme, little plus signs spawn in once every thirty seconds that grant +1 HP to a player when they are collected
+> 
+> Make sure that Justin's health multiplies correctly when more players are in the game REAL QUICKLY please
+> 
+> Justin can spawn in a wave of 12 zombies from the walls of a screen every 30-60 seconds AND the zombies spawn one-three every second and that amount is doubled once for every +2 players (the spawnrate does, and the amount of zombies increases by 6 per player but delays the spawn of each wave for 5-10 seconds per player). The zombies will have justin become less aggressive during that time and will have him prefer to run and eat WHILE lightning stops coming from the walls
+> 
+> Make lightning less frequent in mad god Justin AND give more of a hint to players of the faster attacks or moves and lightning. Every player should have an animated hint or something PER attack IF there isnt one.
+
+Then (11:08Z): "tell me of what questions they have here and WHO"
+
+- Adam, Justin's HP first (V61): at the start it was already counted right (1 duck 180, 2: 200, 4: 240, 6: 280 = 160 + 20 a duck), but a duck joining mid-fight added nothing. Now each joiner adds its 20 (mgjCount, called on join).
+
+- 2026-11-17 11:11Z (screenshot: /mnt/project-files/refs/nov17-1107-batch/downpour-fence-glitch.png): "so the ground on this dark side changes visually as you walk around and there is an invisible wall instead of a fence around the whole map, which means i was disobeyed again. There must be a fence around the whole map WHERE the invisible wall is AND this ugly dark ground will be replaced with the normal grass before topography work is done"
+  - Given to Solomon, FIRST in his list (before the road water/topography).
+
+- Owner's answers (11:19Z) to the 5 questions (1 Xbox at 2/3 HP left, meteor at 1/3; 2 Quick Revive; 3 waves per extra player; 4 Tommy/UMP stats; 5 where new guns come from): "1. yes
+2. it costs only 750 and yes and yes (revive is 3 seconds in mad god justin and brings players up to half health there
+3. yes each player after the first there in that case
+4. we can do the tommy gun and the UMP-45, and the UMP-45 does slightly more damage for slower fire rate then the tommy gun (ask me ab the stats)
+5. yes the spin and justin pick ups, not the butler's shop"
+- 11:21Z, the UMP-45 stats (Adam had proposed every 150 ms, 30 rounds, 1 damage with a 1 in 4 chance of 2): "once every every 0.30 with a 20 round mag with 2 damage per second and same crit and miss chance and same reload"
+  - Read as: fires every 0.30 s, 20 rounds, 2 damage per bullet, 5% crit, 2.5% miss, 1.6 s reload (Solomon builds it).
+## Request (2026-11-17 11:11Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt7Dz9UQp5MzPxtXYbSUEMVM): Downpour's fence round the map, grass instead of the dark ground (word for word)
+Picture: /mnt/project-files/refs/nov17-1107-batch/downpour-fence-glitch.png
+> so the ground on this dark side changes visually as you walk around and there is an invisible wall instead of a fence around the whole map, which means i was disobeyed again. There must be a fence around the whole map WHERE the invisible wall is AND this ugly dark ground will be replaced with the normal grass before topography work is done
+
+Done (Solomon the 2nd): the chain-link fence now runs round the whole map on the line where a duck stops (stationmap.js
+RIM; the north and south sides face on, fencex); the road's two fences are its pieces across the road, the only ones
+zombies climb. The forest floor is gone: grass everywhere, past the edges too (dpground.js). The "changing" ground was
+the space past the map's edge: nothing was painted there, so the ground canvas kept old pictures as you walked.
+
+- Miles Jr., sounds: the Angelic pistol's blast gets its own boom (`boomSmall`: the grenade's recordings, a little higher
+  and thinner, 3 dB under the grenade), played for any blast with `wide` < 1 (Solomon passes `wide: 0.5` with the half
+  radius). The laser gun's sounds are ready for Noah's build: `sfx.laser(o)` each shot, `sfx.laserHiss(o)` on overheat,
+  `sfx.steam(id, heat, { x, y, rain })` every tick (heat 0 cold to 1 at the limit, more once overheated; rain doubles it;
+  0 lets it fade). Tommy gun and UMP45 shots wait for the owner's OK on their stats.
+- Miles Jr., Tommy gun and UMP-45 shots (Adam 11:22Z: the Tommy gun fires every 120 ms from a 50-round drum; the
+  UMP-45 fires every 0.30 s, 20 rounds, 2 damage a bullet): `sfx.tommy(o)` is one M45 shot from a burst, with a PPSh's
+  crack on top and a .45's thump under it; `sfx.ump(o)` is the .45 pistol's shot with an AK's body under it, lower and
+  heavier. Each is cut before its recording's next shot or echo, so fast fire never doubles up. Both reload with the
+  SMG's reload for now (`sfx.reload("tommy" | "ump")`).
+
+### Laser gun look (owner, 2026-11-17 11:20Z and 11:22Z, in Noah's thread)
+"combine the heavy laser and the laser rifle, and make more of the barrel get hotter not just the tip"
+"yes to the gun laser gun u did
+
+call it "Laser Rifle""
+Decided: the combined look (js/laserart.js), named "Laser Rifle".
+
+## Request (2026-11-17 12:28Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtXgrWCnevvpmcvKUSrdqUK4): Downpour fence, roofs and heights, bullet heights, outlines, Justin in Downpour, sounds (word for word)
+Picture: /mnt/project-files/refs/nov17-1228-batch/fence-walkthrough.png (a duck on the road inside the fence line)
+> players can go through the fence, that makes the fence pointless. Nobody goes through the fence, and for now on, zombies spawn outside the fence and climb over it like i said, no longer spawning inside the map
+>
+> there are two doors to the other rooms in the gas station that are closed, so dont do that because players need to walk thru there
+>
+> the pistol in the hotbar should resemble the pistol in the hand of the player, so it shouldnt be green becuz the on in the player's hand isnt
+>
+> there is no longer a fence on either side of the rode or on the slope down into it AND the road and it's water should extend across the left and to the right, not becoming invisible
+>
+> invisible walls do not stop bullets if they did before and zombies climbing the fence can be shot from below the ground no matter how high up they are
+>
+> miles can probably make a sound for the fence climbing sound for the zombie that will be quiet enough and have a limit for the sound AND a falling sound for when you fall off the fence or the balcony (like the sound of the impact)
+> The water should have a sound when your walking thru it and another sound for swimming thru it (quieter for zombies
+>
+> add a ladder on the back left wall that leans onto the top of the roof of the gas station that can be walked on AND zombies can climb up on all the walls AND there is a huge hole on the top of the gas station roof on the bottom right that players or zombies can fall into to get inside (that means rain is seen falling into the part of the hole from the inside of the gas station, as if a roof wasnt there)
+>
+> The roof of the gas pumps can be jumped onto from there AND it will not become transparent FOR players who are on either roof and only for players on either roof BUT a duck's outline can be seen through walls in a green color that softly glows when they are a floor below them AND there is a different fall time (slightly shorter) from the pump roof as opposed to the higher up gas station roof. 
+>
+> In this game for now on, a game design will be borrowed. In doom, enemies lower then you or higher up then you will have bullets go up or down to them in their different Y axis coordinate EVEN IF your not on the same Y axis coordinate so to speak. If a zombie is on the same hieght as you, the bullet hits them first. Bullets are sent down to a layer BASED upon this AND IF the bullet passes on it's height level THEN it stays on that height level, for example, a laser gun is shot from a roof top of the gas station towards a zombie on the gas pump (roughly the same height level even tho the gas pump roof is a little lower), that means the laser will pass through it and into ONLY zombies on that same level, so which zombie the projectile passes thru first determines it's height, and the script only plays on maps where the zombie ISNT on the same height, and maybe parts also dont play in the script unless other conditions are met to. 
+>
+> The roof of the gas pump should be slightly lower WHERE a player has a slight fall (only slight) onto landing on top of this roof, and they can land on it i think, right? From the bottom floor, or below a vertical level, allies glow green with a up arrow inside their outline and it is more faint WHEREAS players below have an outline with a down arrow in relation to the player higher up. 
+>
+> Remember the fall times
+>
+> bullets hitting other surfaces and making sounds on things not zombies should be quieter
+>
+> critical hits now have a gushing gore sound miles can do AND missing sound effect sounds like a wispy blip error maybe
+>
+> there should be a slight rain sound in downpour that isnt too loud
+> there should be a slight wind sound in all versions of cabin that comes and goes that is more gentle but sounds muffled from inside the cabin and more clear on the balcony or while outside
+>
+> fires should have a sound effect AND the sound of fire can be heard at a fire place if your closer to it 
+>
+> a flare can be set on the roof of the gas station that goes off whenever a round starts and the church bells rings in the beginning of a round
+>
+> When all zombies are dead, a snippet from what the quack plays at for cabin or downpour at the last note i think after 2:40 something, like it is a single chime note or something
+>
+> some cars should have broken windows and another might have a dead yellow duck laying on the hood that is bloodied as a corpse with a hole in the head, and another corpse in the church floor for a jaime that is cut up, then a soldier duck without a beak and scratches and rot that is a corpse on the roof of the gas station
+>
+> another hole in the gas station roof can be added over the bathroom. 
+>
+> Fallinng doesnt deal damage to ducks when they jump 
+>
+> Also the bullets verticality rule applies to all game modes now and even players in jetpacks
+>
+> zombie ducks dont get invlunerability frames for anything
+>
+> zombies can only spawn behind fences or at the ends of the road if they arent spawning on a player's screen where they can be seen
+>
+> in downpour, Justin can be seen alive and running from zombies without weapons or a way to defend himself, and he still has all the usual lines AND can be killed by players (he has 6 hp that regens 1 hp every minute AND he can be revived AND if he dies then he is dead forever AND he doesnt spawn back or come back during new rounds when he is downed or any state)
+>
+> A player CAN click on Justin when he glows light blue outside of active zombie rounds (so the rest phase) and give him a weapon or click the vote button to give him a weapon where he can defend himself (it costs money to do this and it is a purchase of the pistol from the butler), and in that case players cannot kill him AND he defends himself without following players AND his points for kills goes to the player that gave him the gun. The only gun they can give him is the pistol where he has unlimited ammo AND Justin has more aggressive lines towards the zombies while fighting. In the resting phase, you can go up to Justin and click the vote button and choose what gun to buy for him (it costs +100 extra points on top of the gun you buy him), but if it is outside of the rest phases then it automatically buys him the default pistol. Justin can spring like other players and has invulnerability frames while jumping and can explore any part of the map to escape zombies.
+>
+> Justin might make comments about Jaime while next to his dead body.
+>
+> When Justin dies, his dead body doesn't disappear and stays there for the rest of the game. Justin doesnt follow players but wont run away from them when he has a weapon but he might if they shoot near him since it scares him and he sprints away when shot. 
+>
+> Justin has as much sprint as the other players, like the meter and everything, and he also has reload animations for guns. When Justin is through a wall above or below, he gets a blue outline.
+>
+> every player has their outline ALSO when they are behind walls or under roofs or anything like that. The outline for an ally also exists super omega faintly when nothing hides them AND their outline blinks when they take damage (same for Justin)
+>
+> There is a dead simple non glow and thin dark red outline for zombies behind cover of walls or under roofs and everything like that, and they also get the arrows (super faint version) when they are a floor above you or a floor below you
+>
+> The green outlines translate to mad god Justin now and then blue for the good justin if he spawns in that game mode 
+>
+> every zombie game has these outlines now
+>
+> make sure the red outlines are easy to run on computer
+>
+> Make sure the rain looks the same without eating up resources along with any other visual that can look the same without eating up resources
+>
+> the footstep sound should be the same but altered slightly to sound different for different grounds (such as water in the road when walking thru it, grass, concrete/hard surface, wood, and maybe another im not thinking of), the sounds should also sound they like are above or below you depening on the hieght of players or if they come from other directiojns towards you as well if they dont already (zombie steps change according to this too)
+
+Split (Adam, 12:40Z). Read as: the fence stops everyone (no gaps), the fence pieces missing on the road's banks and slopes at
+the map's edge come back, and the road and its water keep being drawn past the fence to the left and right edges.
+- Solomon the 2nd (A, urgent, then B): A = solid fence (no gaps on the road's slopes), zombies spawn only outside the fence or at the road's
+  ends, never on anyone's screen, and climb over; the two closed gas station doors open; road + water drawn past the fence
+  both ways; invisible walls never stop bullets; fence climbers shootable from the ground at any height; no fall damage
+  from a jump; zombies get no invulnerability frames. B (plan to Adam first) = floors: gas station roof (ladder on the back
+  left wall, zombies climb every wall), pump roof a little lower and reachable by jumping from it, shorter fall from the pump
+  roof, the two roof holes (bottom right, over the bathroom) you fall through with rain seen inside, roofs stay solid for
+  ducks on a roof; then bullet heights (Doom) in every mode, jetpacks too. His Mad God Justin waves (item 9) finish first
+  only if nearly done.
+- Jackal: Tommy gun + UMP-45 (moved from Solomon; numbers in the 11:19Z/11:21Z answers), then Justin in Downpour (6 HP, regen
+  1 a minute, revive, dead for good, body stays; gifting a gun in the rest phase by the blue glow / vote button, pistol
+  during a round; kills' points to the giver; sprint meter, i-frames on jumps, reload animations; runs from zombies and from
+  shots near him). New Justin lines go to the owner before they ship.
+- Noah: outlines in every zombie game (allies green glow behind cover, very faint when seen, blink on damage, up/down arrows
+  a floor away; Justin blue; zombies thin dark red, faint arrows; cheap on a computer; Mad God Justin too), the hotbar pistol
+  drawn like the one in the hand (not green), rain as cheap as possible with the same look; then the props: ladder, roof holes,
+  broken car windows, the corpses (bloodied yellow duck with a head wound on a car hood, cut-up Jaime on the chapel floor,
+  beakless scratched rotting soldier duck on the gas station roof), the flare on the roof at each round's start.
+- Miles Jr.: every sound in the message (fence climbing quiet and capped, fall impact, wading and swimming quieter for zombies,
+  quieter impacts on things that aren't zombies, crit gore gush, miss blip, light rain in Downpour, gentle wind in every
+  cabin muffled inside, fire and the fireplace by distance, church bells at a round's start, the round-cleared chime from the
+  song at about 2:40, footsteps by ground and by height/direction, zombies' too).
+
+## Request (2026-11-17 12:29Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtMcDKJ85bVppJNztnj9Hrzd): the church bell's animation, the Angel machine see-through (word for word)
+> church bell should have an animation while it sounds and the sound is done first and the bell's animation matches the sound effect and synchronizes with it and the angel machine should become transparent like the walls when it covers your duck in downpour
+
+Split (Adam): Miles Jr. makes the bell's sound first and gives Noah its strike times; Noah animates the bell to those
+times. Solomon adds the Angel machine turning see-through over a duck in Downpour to his urgent part A.
+
+## Request (2026-11-17 12:45Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtPo3aj3qcC2mgyXPL1eskHe): Safe Keeping text, the spin square, the orb, zombie HP, the ammo bar (word for word)
+Picture: /mnt/project-files/refs/nov17-1228-batch/orb-over-car-S.png (the S circled on the hood-up car, the yellow square beside it)
+> safe keeping popup text cannot be triggered by scrolling on pc and it has to be clicked in ur hotbar on mobile to actually show the text (it is smaler text on mobile), it should be more biref text and it should only show text on pc when you click it's corresponding number on number key 
+>
+> the yellow ground near the car will teleport and move around after a round began when i bought something off of it prior so that should be fixed
+>
+> the orb for the weapon drop should be over top the car where the S is circled in my screenshot
+>
+> Zombies health should only appear after they have taken damage, then the HP bar for a zombie stays
+>
+> In the white bar for cooldowns, just below it is a yellow bar, and the yellow bar will be a bar like the white one but for ammo. So for double barrel, it fades in and empties to half whenever a round is shot, and then it emtpies to a empty black bar, and flashes white while reloading takes place, it only appears when it is empty (so black, and maybe it blinks a slow dark grey when magazine is empty), when it reloads it blinks white. If fully loaded and no bullets are shot, it fades away, otherwise the meter stays. A consumable like a grenade would have it's meter to indicate how many grenades you have IF it is less then the max, so it also displays ammo for a bow as well, and the meter gets closer to the bottom till it runs out. The meter stays black when it cannot be reloaded and it stays visible when that empty weapon is held. The spring meter goes below this, and the meters may pop in and out, so if the sprint meter was already below and then a bullet is shot, then the yellow bar appears below the white bar and above the blue sprint bar. 
+>
+> If a reload cannot be done, then the white bar already in the game flashes red. 
+>
+> The bars are also in the default game modes also IF they are relevent, so like there is infinite sprint in some game modes so they dont have a sprint bar
+>
+> the yellow bar only changes colors in blinks or becomes black under certain conditions listed but you can ask for clarification adam in the chat not a document
+
+Read as (Adam): the yellow bar is the magazine (or the count of a consumable: grenades, arrows), under the white cooldown
+bar and above the blue sprint bar. It shows whenever it isn't full, stays while the weapon has been fired, and fades away
+when full and unfired. It empties a step per shot. Empty, it is black, with a slow dark grey blink. While reloading it
+blinks white. With no ammo left to reload, it stays black and stays shown while that weapon is held. The white bar
+flashes red when a reload can't be done. All modes, where relevant (no sprint bar where sprint is endless).
+Split: Jackal = Safe Keeping text (short; PC only on its number key, never on scroll; phone on its hotbar tap), the spin
+square staying put after a round starts, the orb over the car's S, zombie HP bar only once hurt and then kept. Noah = the
+yellow ammo bar and the white bar's red flash, after the outlines.
+
+## Request (2026-11-17 12:52Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtKpnBKTvCEaK1F7CbKddb52): Justin's lines in Downpour, no new ones (word for word)
+Jackal's 12 new lines (8 fighting, 4 at Jaime's body) were shown to the owner. Answer:
+> Next to Jaime’s body:
+>
+> He says awful lines to him that are already coded in the game and he only does it in a rest phase when he stops by it, which happens 1/2 the time about only twice per rest phase, and the quotes shuffle
+>
+> Fighting with his pistol:
+> He says the aggresive lines he already has that wouldnt be impossible to imagine for him to say to zombie 
+>
+> That "not impossible for justin to say" assumes he is crazy and appply to the Jaime lines too
+
+Decided: no new lines. Jackal picks existing lines only (fighting: aggressive ones a crazy Justin could shout at zombies;
+at Jaime's body: his awful existing lines toward Jaime, rest phase only, when he stops by it, 1/2 chance, about twice
+per rest phase, shuffled).
+- Miles Jr., the 12:28Z sounds (all real CC0 recordings, every take click-checked at game volume):
+  - Footsteps by the ground (js/ground.js `groundAt`, my own reading of each map until Solomon's floor function plugs in
+    through `setFloor`): wood ("step", as before), grass, hard (the gas station), metal (anything high up on Downpour: a
+    roof, a car), shallow water, and a swimming stroke in deep water (the cabin's pool, Downpour's flood). Kenney's
+    footsteps, one family, so they stay "the same step". Zombies: the same ground steps, lower and about 7 dB quieter;
+    their old shuffle stays on floors.
+  - Every positional sound now comes from its side (a stereo pan, never all in one ear) and, when the sound passes a
+    height (o.z), sounds through a floor: muffled (900 Hz below me, 1600 Hz above) and a little quieter.
+  - Zombies climbing Downpour's fence rattle it (at most 2 at once, the nearest). A fall (landing 50+ px below where the
+    duck last stood: the deck, the balcony, a roof) lands with a thud; a plain jump doesn't.
+  - Bullets landing on anything but flesh: 5 dB quieter. Crits (zombies and ducks): a gore gush. Misses: a wispy
+    falling blip.
+  - js/hangout/ambience.js: a light rain over Downpour, the wind round both cabins (swelling and dying away every 6 to 14
+    s), each muffled and quieter indoors; every lit fireplace and campfire crackles where it stands (through the walls
+    from another room).
+  - Downpour: the church bell rings every new round in (strikes 0.01, 2.12, 4.24, 6.35 s after it starts; l4ddsfx.js
+    `bellStrikes()` gives them as page times for Noah's swing). Every zombie of a round down: one chime, the last note
+    of What the duck? (2:44).
+
+## Request (2026-11-17 13:07Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtUooHjVNtWdiV5ts9dc3aBc): app lobby, full-screen button, Mad God Justin list, the shooting glitch (word for word)
+Pictures: /mnt/project-files/refs/nov17-1228-batch/app-lobby-not-pixel.png (the installed app's lobby, the backdrop
+circled), /mnt/project-files/refs/nov17-1228-batch/duck-duplicate-angel.png (a second copy of the owner's duck above it by the Angel machine)
+> why is this background not pixelated and looks different? why is there not a button to fullscreen the game in the top right? like just because it cant do it automatically in pc doesnt mean we remove the button
+>
+> i said the chain gun gets 30 bullets in mad justin game mode but that does seem true
+>
+> mad justin game mode gets only a second long sprint that recharges as fast as it was lost 
+>
+> the laser rifle should be in the mad god justin game
+>
+> the weapons drop chance should be based off the slot or roll mechanic at the fireplace or car from the zombie game mode
+>
+> Justin's projectiles that block bullets blink a transparent white whenever they are shot
+>
+> the hints should not be as long (the lightning is fine tho)
+>
+> the +1 hp was only once every thirty seconds i thought, why does it feel constant ?
+>
+> Justin should have a 50% chance to not dodge correctly from attacks in the zombie game mode because he is too good at dodging attacks AND there is a setting in lobby to add this form of justin we made into the cabin zombie mode as well
+>
+>
+> New game breaking glitch, so my duck would start shooting all the magazine after pressing shoot once and wouldnt stop, would lose control of his movement while it happened, and his duck would duplicate as it happened. This is game breaking and is something that comes before other things when it becomes availible after the whatever stuff is finished. the yellow sqaure from the care does follow the player though in downpour. if it was my hardware or keys and not the game, then i would notice it in other applications using these buttons as such, but i dont. Idk if it is because my laptop has a touchscreen (it wasnt touched for a fact) or somethig else, but it is game breaking.
+
+Split (Adam): the glitch first = Solomon right after his part A (before B). Adam = the app's lobby backdrop and the
+full-screen button back on PC (in the app too). Jackal = the Mad God Justin list (chain gun 30 rounds, 1 s sprint
+recharging as fast, Laser Rifle check, drop odds from the spin's odds, his blocking projectiles blink see-through white
+when shot, shorter hints but the lightning's, +1 HP really once per 30 s), the yellow square following the player in
+Downpour (Q68 answered), Downpour Justin dodging badly half the time, and a lobby setting adding him to the cabin map.
+
+## Request (2026-11-17 13:30Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtAhVD2AeeTbb1vSMwdqhRm1, furious): phone joystick blocked, hold-to-vote, Justin in zombies, vote Next button and beeps, backdrop pixels, cursor sizes (word for word)
+Pictures: /mnt/project-files/refs/nov17-1330-batch/ (1 results cards circled over the board, the jump button over the cards; 2 typing: jump/attack gone; 3 the jump button over Send; 4 the front page backdrop not pixelated)
+> On mobile, the jump or shooting button should move with the ui, not lay on top of it, further mote, when typing in text, the jump and attack button disappears. Also furthermore, other UI elements circled in the first screen shot SHOULD NEVER block the movement circle NOR the options on the board itself BECAUSE the movement circle IS FUCKING NEEDED TO VOTE! ANOTHER GAME BREAKING BUG I ALREADY WAS TOLD WAS FIX WEEKS AGO! IF THE UI ISNT AN INTERACTIVE BUTTON OR THINGY, THEN YOUR MOVEMENT JOYSTICK CAN BE PLACED WHEREVER THE SCREEN IS TOUCHED APART FROM INTERACTIVES! INCLUDING EVERY SINGLE PART OF THE BOARD! Tex box u click to type into? Interactive. Unfaded button that works and does something like vote? Interactive. 
+>
+> New feature, the vote buttons or interact with board (the mobile equivalent of clicking 'e' button) will now have to be held down for half a second, but this can be changed in settings for the mobile player. Vote button for options you stand over on the board now also take the same amount of time to hold down their button on PC and can also be changed in settings.
+>
+> When Justin dies in a zombie game mode, his down meter disapears, and he can not have a pistol or use a pistol while down unless he already had been given a gun at one point for zombies. Killing justin in zombies counts for a killing justin meter.
+>
+> The overall stats for players should also track the amount of zombies killed if it doesnt.
+>
+> A duck that is hit by a zombie has a mostly transparent blood color of red blink on the corner of their playable screen AND when they take damage in general. 
+>
+> When the timer is shown in the vote phases for game mode or map it should show a next button in red that can be clicked AFTER they voted to speed up the count down by a fraction of the amount of player they are (so for three players, it goes 33% faster if they are the only one that clicks next).
+> There is a very small volume of a soft beep noise for each click of a second in the vote for game mode or map and it it synced to the speed of how the seconds go down, and the last five seconds sound like the lobby countdown where the number 0 gets a sound like the lobby does at number 0 or second 0 of the finished countdown (but a version quieter for this vote for map or game mode like all of the beeps are for this ).
+>
+>  The count of seconds is uhh  a dif beep from the last 5 (technically 6 becuz we count the zero's ding noise)
+>
+> Yeah fix this mobile things and remember the problem where the back page is not pixelated on main menu or whatever and it pisses me off, shown in the lat3sr screen shot where almost nothing is pixelat3d 
+>
+> Also the mouse is too large and so is the pointer when it hovers over a button AND the crosshair is a good size for weapons dont change that, but their sizes of these can be changed in settings (including the size of the crosshair)
+
+Split (Adam): Jackal (high) = the phone joystick anywhere but real interactives (every part of the board, the results
+cards included) with a test that guards it, the jump/attack buttons moving with the layout instead of over it and staying
+while typing; then hold-to-vote 0.5 s (phone E/Vote, PC Vote over a board option; a setting); then Justin in zombies (no
+down meter once dead, no down pistol unless he was given a gun, his kills count for Justin Kills) and zombies killed in
+the overall stats. Noah (high) = the backdrop pixels first (front page, lobby, everywhere), then the red corner blink on
+damage, then cursor and hover pointer smaller with Mouse / Pointer / Crosshair size settings (crosshair default
+unchanged). Miles Jr. = the vote countdown's quiet ticks (last 5 + the zero ding like the lobby's, quieter). Adam = the
+red Next button in the mode/map votes (after voting; each click speeds the countdown by 1/players).
+
+## Request (2026-11-17 13:38Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtTvWDC11xrV25bGqYxcVeif, furious): projectiles gone, yellow square, missing door, Justin ending rounds (word for word)
+Picture: /mnt/project-files/refs/nov17-1338-batch/gas-station-missing-door.png (the storeroom's east wall, "NO DOOR")
+> chairs were just floating in the top left corner of the screen and the projectiles were showing at all in the mad justinn game mode, completely game breaking, no bullets seen, and no any other projectile (not even controlers i think)
+>
+> it is also happening in the downpour game mode
+>
+> when i go inside the gas station the yellow square follows me into there (who tf seriosuly fucked up something so simple!? its just a yellow sqaure!! for downpour from the car with the slots btw
+>
+>
+> still a door missing from one of the rooms in gas station
+>
+> JUSTIN CANNOT END ROUNDS IN THE REST PHASE OF THE GAME! THAT IS GAME BREAKING
+>
+> Im going to class soon.
+
+## Request (2026-11-17 13:38Z, edited 13:43Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtEvK6ax1WZ9QyJfYZrMVyjY) (word for word)
+> there is a lot not released yet, make sure to not forget any goals i laid out
+>
+> one more thing if you see this, the jerrry cans are a 1% chance of dropping only
+>
+> make the special drops last 30 seconds and that blink out more and more as they are about to despawn
+>
+> make sure the +1 HP in mad justin is not common it was far too many in one of my early tests on an early vers
+
+Done (Adam), live in V74/V75: projectiles fixed in V74 (#401's gun-reload CSS had been put inside the `.bullet, .thrown,`
+list). V75: the yellow square never hid (an `<svg>` has no `.hidden`), now display none inside; the storeroom's doorway
+moved to the middle of its wall (770 to 930; at 950 to 1110 the restroom's wall face hid it); Justin never presses End
+turn and the rules refuse it from him (read as: only players end a rest phase); jerry cans 1% from every source
+(fireplace, zombie, round start); drops last 30 s and blink faster in their last 10, 5 and 2 s; Mad God Justin's plus sign
+is a 1 in 3 roll every 30 s.
+
+## Request (2026-11-17 16:22Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt6SohjrYYZJryEPMAseuPcy): the wind inside the cabin (word for word)
+> i liked miles audio, i am just worried about not being able to hear the wind from the inside of the cabin based off the clip becuz it made it so quiet rather then editing the audio
+>
+> now what r u askingn me and why r u sending sm stuf?
+
+Given to Miles Jr.: inside the cabin the wind stays about as loud and is muffled (lowpass, a little lower), not just
+turned down. Adam answered: the two open calls are the size of Mad God Justin's waves with 4 ducks (30 zombies) and the
+zombie cabin being a backdrop to his usual fight (B, the real 3D cabin, would be a big rebuild).
+
+## Request (2026-11-17 16:23Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtGDiaogQBH8FjRvGR3rgsxy): Mad God Justin's waves, gun damage (word for word)
+> waves can be half the size ig is the solution
+>
+> guns do their normal damage from zombies in mad god justin and other game modes as well btw
+
+Given to Solomon the 2nd: WAVE.N 6, WAVE.PER 3; Mad God Justin's wave zombies take Dead Ducks Arcade's damage from every
+weapon (ARMS dmg, crits, misses, reusing l4ddrules.js); check the other modes' HIT_DMG matches.
+
+## Request (2026-11-17 17:41Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt8ZveGwoPfnrtdgLW2PNoe7, upset): why requests were missed, new rules, 34 items (word for word)
+> why did you guys not do so many of my requests?
+> do not send me pictures or any audio, just do the code and talk to eachother if need be, and if adam needs to talk to me they can, but they use text only for me and they only write plans in formats that are memory efficient for everyone else to save my usage
+>
+> Adam, tell me ur understanding of things you want me to confirm your right ab when i tell u these things, but first tell me why u havent been doing everything i tell u guys to, where u guys blatantly ignore commands or say u did something when u didnt
+>
+> questions help make this work
+>
+> do not bug tesst every change, we are not deploying anything till i said and bug testing only comes when i say it can, since we are saving usage while still keeping effort high for those it should be for
+>
+> when jackal messes something up more then five times already in the same basic area, then we should consider taking not how he will make bugs or mistakes that are more costly to fix in that area then it is worth to give him said particular task, since we want the tasks that are done properly without a ton of corrections
+>
+> so there are some options i dont think were added.
+>
+> let's start out on what needs more work though or mentioning some things unfixed:
+>
+> * the fucking placement of the orb for the slots of the weapons/items on the car did NOT get fucking fixed
+> * cars should not jiggle or move at all in the map
+> * the zombies should NOT be able to have the surface they hide behind become transparent anymore AND when their red outline shows IT DOES NOT show their image or avatar, only the outline, same with any duck's outline for now on and forever in any game mode.
+> * when on a second floor or first, whatever it may be, zombies pick one way up that wall, fence, or ladder unto the target that is a player and they commit UNLESS the player is back on the floor or verticality close enough to them, because if not, a exploit will happen where the zombies go back and forth with the player's movements IF they are on the low ground and the player is on the top of the surface, which means they are NOT actually able to fight the enemy and the player is NOT immersed any longer
+> * i said justin was supposed to also deliver his normal lines intermediately, but this was not done, which means u disobeyed
+> * justin should be running from zombies not every player regardless of what the player is doing, and justin takes a second before running away when an enemy starts shooting in his direction without actually damaging him
+> * justin should actually be using his fucking weapon on the zombies like i told u to, and killing them as a goal
+> * justin's points earned for killing zombies is now earned in a pot, that at the end of the round will then equally distributed amongst every player, but the lowest unit of points is five, so if it distributes unevenly, then a random player gets those spare points in a shuffle
+> * the red glow around the lmg is thicker then the ak47, so why tf is it not having a consistent effect to what the ak47 has? i have talked about this till i am blue in the face
+> * i specifically said for the holes in the roof of the gas station to be large, but instead they are small, and that must be fixed while keeping it's same look because it looks nice
+> * the gas pumps now get a small sqaure around them in the rest phase as well to indicate that is a place where something can be bought from or an action can be carried out
+> * some 5% of zombies will break at the barricades of the church if the mob of zombies is more then 20, and then, that zombie commits to breaking the window it locked on to in that church until it is done or a player leaves the church, then it chases them, and they only attack the window if the near by player it targets within these conditions is in the church for 8 seconds
+> * Justin should be able to run from zombies when he doesnt have a gun and then calm down his mmovement pattern when he seems safe enough
+> * 5% of zombies who spawn in will have a pattern where they try to attack the player from a different path and direction from the other zombies if it is availible, as a way to add difficulty to players making a train of zombies to herd or shepard
+> * the angel machine now says angel machine in the font and lettering of the nous within kenoma site AND the machine has a transparent fuzzy grey and white static on the machine at all times. The angel machine costs 200 points more.
+> * the slot for a weapon roll costs 150 more
+> * when a player takes damage, the bar on their health should blink into white before the drain drains like a single bar per meter, and if another health is lost during this animation, the duration of the animation of the bar of health of a player is extended for 1/3rd the time with more blinking, and when the blinking approaches the white fully in half a second THEN it will drain empty where health was lost. When health is regenerating, a very very transparent red tries to fill up in the bar's space where the next health point would regen to, and when it comes back, at full, it goes white and starts to blink into red, before approaching an absolute red, which this moment it becomes white it immediately starts approaching red in a second, which means the health is already back. When a hit is taken, the natural regen resets the animation and it's progress to regenerating the 1 hp
+> * the safe keeping now cost 4000 points from the priest
+> * the chance of an item is now 20% for it's bag instead of 15%
+> * the meter on the bottom of a player's screen now has all the same cooldown meter, sprint meter, and ammo meter PLUS the health regen animation now
+> * zombies health becomes white and drains in a similiar but simpler and faster way now when they take damage and the meter drains to black real quick before it disappears with a fade when they die
+> * the top of the roof for the gas pump shouldn't block the movement patterns of players, that is outright stupid and i know why and you know why
+> * the verticality where a player on a second story can shoot down at another zombie of the first story ground SHOULD be implemented and it's vice versa like i said IF a cieling isnt blocking it from happening (so the hole means zombies can be shot down into below when they are under the hole where the ducks on the roof can see them without an outline for example, unless the natural target priority hits the duck on the same floor of a coordinate a little bit further back in the same direction of the bullet's path, since this mechanic based off of old classic doom games (which is what i meant) focuses on automatically everytime unless the same direction of enemy has no one which CAN be shot IN that direction ON the same floor.
+> * scroll wheel goes to the next availible item in the slot or hotbar list on mobile and pc whenever the box in between it and the other is empty, so for example, bow at key number 3, nothing at 4, but a grenade at five, then the scroll wheel will skip the empty one and go straight to the grenade and same if it were more empty slots in the hotbar. this should of already been in the game tbh
+> * wait cars arent jigglingn the map just kinda jiggle if u move, well.... it shouldnt be that big of a deal right? idk it prob doesnt matter and saves my usage plan to not care
+> * the bottom right health bar of justin and other players should always be availible OVER the board like any other ui, but it isnt, it gets engulfed by the black outside the building ur inside of OR the even gets under shelves in the gas station (seriously claude wtf!?!?!). I shouldnt have had to tell u that ui becomes inconsistent
+> * when you are outside of the church, it shouldnt show the inside for any reason, same with any wall or building, because the outline is the new universal system, and it only shows underneath it IF you are under that roof, in the buildinng, under that foliage, or in that wall, it doesnt care if it is an ally or justin or enemy, it will not make it tranparent unless ur player is in it. When on top of a building, such as the gas station roof or pump roof, it therefor should never become transparent
+> * the sound of the electric coming back on or it shutting off should be louder
+> * when Justin dies, a puddle of blood seaps from his corpse, and it is possible to do intense gore to him, such as burning him alive with flamethrower if he doesnt have a weapon, blowing his head off with crit chance, or all the gore form a bomb, it's all the same
+> * to get gas at the pump, you have to be closer to the pumps and only at the side facing down
+> * zombies can only be seen in their image AND outline while under a surface (as well as justin or players) IF you also under that surface
+> * i dont know if the weapons are actually random like i told u to because i got the lmg a lot, but it could be by chance, but i swear i always get the lmg a lot
+> * shooting guns causes a slight vibration in your duck that is non existent for a bow, pistol, or light things like that, but smg it is ever so faint, the ak47 or what not more so, and lmg or sniper it is more, with chain gun being most. the vibration in ur duck obv doesnt happen when throwing a dagger though OR using a melee. the vibration is similiar pattern to the fire rate of the gun and the strength of the vibration should be pretty faint generally but gets worse with bigger calibers and more power guns. THe grenades AND grenade launcher throwing grenades doesnt make you vibrate.
+> * no gun can be reloaded while running except for shotguns
+> * the corners should be more noticiable when you stake damage and it should sway or shake your screen a little and ur duck should quack
+> * ducks, if they dont die, will vibrate a single time or once according to the power of the bullet and how strongly it makes the player vibrate
+> * ducks vibrating from recoil or power of a gun dont messes with movement pattern unless it is the chain gun, then there are physics there obv
+> * laser gun doesnt make player vibrate nor has recoil, but it makes smoke and steam rise up from ducks or zombies it hits
+>
+>
+>
+> Any violence effect on a duck translates to pvp or players killling npcs in any game mode outside of zombies and the guns all work or function the same universally
+>
+> why did you guys not do so many of my requests?
+
+Adam's numbered reading (1-34) and Q69-Q71: Adam's thread, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtYH86KXCrpdYzHwgem9HXaf. Waiting for the owner to confirm before splitting. Rules: no pictures or audio, nothing deploys and no bug testing until the owner says so, Jackal off areas he has messed up more than 5 times.
+
+## Answers (2026-11-17 18:05Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtB6mYULsJQkhCko9yknzhf6) to Adam's 1-34 and Q69-Q71 (word for word)
+> you only have to be on the edge to shoot zombies AT the wall before the edge your own, such as when you are trying to shoot at them WHILE they are climbing
+>
+> 1. yes i sent a picture earlier today with a circled S for a fucking reason
+> 2. yeah let it go
+> 3. yes
+> 4. yes, it keeps to it until it has climbed the wall and then targets the player as usual OR it resorts to what you described IF they leave the floor into a location NEAR ENOUGH to them during the commit
+> 5. yes, all of his normal lines, including reacting to a player spawning a jaime in or even other things, just like his script is supposed to do roughly within the confines of this map and mode
+> 6. yes
+> 7. yes, and he keeps distance and puts survival above killing zombies if he is in imminent danger.
+> 8. yes, and the point box has a small text below it that says "Points from Justin to Everyone: {point pot amount here}", and the amount gets distributed. Please type a better phrase that communicates it to the player simply i failed i think idk, like the addition i just added here for the other thingy
+> 9. not the barrel glow from shooting the gun but the angelic red glow only in terms of not being too thick, and it should be like that for every angelic weapon or thingy
+> 10. yes
+> 11. yes, but the pumps effective range where u use them has changed, also make the button faded out for the generator if you have no gas to give or anything to do in the cabin mode to build it for all zombies or whatever u get it put it together what im trying to say
+> 12. actually no, zombies treat the barricades as a path of least resistance like anything else and will try and break the windows down on the way throuhg that path they choose, and they commit to breaking a window if the player isnt very close to them outside the church
+> 13. yes
+> 14. yyes
+> 15. yes
+> 16. yes
+> 17. yes
+> 18. yes
+> 19. yes
+> 20. yes but fast
+> 21. yes, since the pumps below act as objects on top of the roof which is a problem (also make it to where the zombies can jump onto the gas pump roof with only a 5% chance of failing once they are on the gas station roof, and their path of least resistance is the climbing of the most near by gas station wall before getting on the roof and doing a jump animation for this
+> 22. yes and (incredibly rare use case prob not even possible yet coming up) it targets lower targets the target closer when deciding between up or bottom, if not because one up and one down is same distance then it is random shuffled (this rare use case can be done last)
+> 23. yes
+> 24. yes becuz its fucking ui, also make it tiny bit bigger on pc and transparent (or more transparent if it is a little already) when a zombie or player is underneath it for player's visability
+> 25. yes
+> 26. yes
+> 27. yes
+> 28. good
+> 29. yes
+> 30. yes, and weapons without reload like bows and dagger doesnt have their cooldowns count as reloading, make sure that is true for melee as well and general attack cooldowns because their is a real distinction
+> 31. yes
+> 32. yes AND they can shake once as they die
+> 33. yes
+> 34. yes
+>
+>
+> q69 (for 30): running means sprinting with shift yes
+> q70: im not going thru that again, i did too much work already, look at all my messages again recently today where u think u missed things if need be
+> q71 (for 10): the one on the bottom right of the gas station can be OVER the diameter of a car in length in every direction and the small one for the bathroom can stay the same tbh it's fine
+>
+> okay i answered
+
+Plan and split: /mnt/project-files/notes/nov17-1741-plan.md.
+
+## Request (2026-11-17 19:11Z, owner, furious, after Version 83)
+
+> WHY THE FUCK DOES IT SAY IN THE LARGEST FONT ACROSS THE SCREEN "CANNOT RELOAD WHILE SPRINTING"  !?!?!?!?!??
+>
+> I DIDNT ASK FOR THAT! I PUT ALL OF THIS EFFORT INTO THIS VISUAL CUES AND NOW WE ARE JUST SPELLINNG IT OUT LOUDLY IN A WAY THAT BLOCKS THE SCREEN WITH SOMETHING LESS LIKE HANDHOLING AND MORE LIKE INSULTING ARE PLAYERS AS MINDLESS RETARDS WITH A POPUP LIKE A VIRUS!?!???!?!?!?! ARE WE FUCKING KIDDING !?!?!?!?!?!?!!
+>
+> REMOVE THAT AND ALSO REMOVING THE NO RELOADING LIKE SPRINGTING STUFF BECAUSE FUCK IT IT ISNT FUN
+>
+> in mad god justin, the game should have weapons behave as they do normally, SO WHY THE FUCKING IS THE GRENADE LAUNCHER PASSING THRU THE ZOMBIES!?!?!? WHY THE FUCK IS JUSTIN NOT DIALOGUING ANYMORE IN HIS OWN FUCKING GAME MODE!?!?!?!?!?!?!?! WTF!!!!!
+> WTF IS THE ZEBRA CAKE NOT WORKING ON THE ZOMBIES!?!?!?!?!
+> WHY IS IT THAT WHEN I HOLD DOWN TO FIRE THAT THE GUN DOESNT FIRE!!?!?!?! THIS ARENT BUGS! THIS IS YOU NOT EVEN LISTENIGN WHEN I SAY MAKE THE WEAPONS BEHAVE AS THEY DO IN THE ZOMBIE GAME MODE eEVEN FOR THE MAD GOD JUSTIN GAME MODE AND THAT MEANS IT SHOULD HAVE THE CODE OBEY THAT COMMAND IN SMALL DETAILS LIKE THAT WHICH DONT BREAK THE GAME OR RUIN IT'S POINT OR PURPOSE!
+>
+> HAVE YOU BEEN MAKING SURE TO PUT NOTES IN OUR CODE!?!?!?
+>
+> ALSO ! WHY THE FUCK ARE ZOMBIES NOT COMMITTING ON WALL CLIMBS EVEN WHEN IM STILL ON THE SAME FUCKING ROOF!!!
+>
+> WHEN IM IN THE CHURCH AND I SEE THE FUCKING HOLE THE ZOMBIES COME IN FROM I SHOULD BE ABLE TO SEE THEIR AVATAR BECAUSE NOW WALL IS IN THE WAY ! I KNOW WHY IT IS LIKE THAT BUT CLEARLY I SAID SURFACES OR WALLS HIDING THEM, BUT IF THEY COME FROM THE OUTSIDE AND INTO THE INSIDE IN THOSE PLACES ON EITHER CABIN OR GAS STATION THEN THEY HAVE TO NOT BE OUTLINES WITHOUT IMAGE BECAUSE I CAN LITERALLY KNOW BY LOOKING AND SO CAN U THAT NOTHING HIDES THEM
+>
+> the sprint should be removed from mad god justin
+>
+> justin's npc is supposed to same have same reload, weapon cooldown, and sprint +sprint cooldown as everyone else in zombies or default game modes (dont count the boss battle in mad god justin tho), SO WHY IS JUSTIN ALWAYS SPRINTING WITHOUT EVER STOPPING !!?!?!? IF THERE ARE NO ZOMBIES ALSO, THEN WHY IS HE SPRINTING!?!?! WHERE IS HE EVEN GOING TO IF THERE ARE NO ZOMBIES IN THE REST PHASES!?!?! HE SHOULD BE CASUALLY WALKING AROUND WHICH IS ALREADY IN HIS CHARACTER SHEET! STOP REWRITING CODE TERRIBLY FOR THINGS ALREADY FIGURED OUT!
+>
+> every point earned is supposed to be 5 at the lowest, that is the lowest common factor or whatever you call it for everything, that is the lowest unit of money, so why is it when i say justin distributes the money equally in fractions between other players (not counting himself) that I END UP WITH FUCKING 554 POINTS! I LITERALLY TOLD U IN THE LAST COMMAND! GO THROUGH MY COMMMANDS TODAY ADAM AND SEE WHAT YOU DIDNT IMPLEMENT AND FUCKING ASK ME!
+
+## Request (2026-11-17 19:22Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt4so8imzuysMvMdsiLAxV7F): the map vote screen (word for word)
+
+> THE MAPS FOR NOUS WITHIN KENOMA OUGHT TO BE SET NEXT TO EACHOTHER FOR NOW ON AND SAME FOR OTHER MAPS IN THE VOTE MAP SCREEN IN THIS LAYOUT
+>
+> MAP FIRST, THEN FOR THAT MAP IN WHICH THERE ARE VARIATIONS, IT'S VARITIONS FOLLOW AFTER UNTIL ALL VARIATIONS ARE FOLLOWED, THEN AFTER THOSE COMES THE NEXT MAP, AND MAPS ARE IN ORDER WHERE THE last maps are the ones with the most variations and the first of the last of those are the ones with the least amount of variations.
+>
+> the maps need to be fixed to show what they actually look like for the ones that are rly dark and messed up on the vote maps menu without changing the pixel size, like idk what it is but the nous within kenoma maps dont represent the maps well at all
+>
+> remember that every variation of maps is only elected in a bag of that map it's based off of in random and that those shuffle if the map comes up again in random
+>
+> random comes first in the top left instead now instead of top middle
+>
+> the button for voting makes a sound as it fills up AND it glows as you click it or hold it down more and more until a click noise when it is full (yes i know the hold down enter button is fast for it)
+>
+> if it cannot be selected by enter on PC then you simply do not have to hold it down but it still gets a click noise
+
+(the last line added by the owner's edit at 19:23Z)
+
+## Request (2026-11-17 20:02Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtHx9q6JoErRpquu3xqn9SUH, furious, with a screenshot of the small Laser Rifle in the duck's hand) (word for word)
+
+> REPEAT BACK TO ME IN UR OWN UNDERSTANDING WHAT IM SAYING BEFORE FIXING THIS SHIT, NUMBER IT!
+>
+> the laser gun is too small and is supposed to be as big as the ak47 or something around that size
+>
+> zombies will attack justin now, because they literally arent
+>
+> dont censor most of justin's lines his character is not supposed to make sense
+>
+> i cant believe i have to say this... ZOMBIES CANNOT CANNOT CANNOT HIT SOMEONE ON A FLOOR ABOVE THEM AND VICE VERSA!! THEY CANT! BECAUSE THOSE RULES I DESCRIBED ONLY APPLIED TO PROJECTILES THAT PLAYERS USE !!!! FURTHERMORE, ZOMBIES GET A RED OUTLINE WHEN UNDER THE ROOF! THEY JUST DO ! FURTHER MORE AGAIN, WHEN THEY TRY TO ATTACK A PLAYER ON THE ROOF, THEY TRY TO GET ON THE ROOF, THEY DONT TRY TO GO UNDER IT FROM THE INSIDE OF THE BUILDING AND ATTACK FROM THE FUCKING FLOOR ! AND ILL SAY
+>
+> THIS AGAIN, PROJECTILES WILL NEVER SHOOT AT ENEMIES INSIDE A BUILDING IF THEY ARE ON A ROOFTOP UNLESS THEY ARE EXPOSED BY A HOLE IN A CIELINNG THEY ARE DIRECTLY UNDERNEATH!!!!!!!!!! FUCKING RETARD! ZOMBIES CANNOT FUCKING HIT PLAYERS FROM THE INSIDE OF THE BUILDING WHILE THE PLAYERS ARE LITERALLY ON THE ROOF AND VICE VERSA AND SAME GOES FOR GUNS! NO SHIT! AND GUNS DO NOT GO THROUGH WALLS, NO SHIT! IT IS LITERALLY BASIC BUOILION LOGIC OR TRUE AND FALSE PROPOSITION TO FIGURE OUT THAT YOU DONT HAVE PLAYERS SHOOT THROUGHT CIELINNGS ! THE ONLY WAY A PLAYER CAN SHOOT DOWN INTO THE GROUUND LEVEL IS BY SHOOTING AT A ZOMBIE NOT COVERED BY A BUILDING !!!!!!! THAT MEANS IF THEY ARE UNDER THE GAS PUMP ROOF ON THE GROUND LEVEL THAT PLAYERS CANNOT HAVE THEIR SHOTS FROM THE ROOFTOP LAND ON THEM!! IT IS PHYISCALLY RETARDED! YOU WILL MAKE A SIMPLE AND BASIC PRINCPLE BASED OFF OF THIS THAT REDUCES COMPLEXITY AND MAKE THE LOGIC STRAIGHT FORWARD FOR THIS MECHANIC!
+> REPEAT BACK TO ME IN UR OWN UNDERSTANDING WHAT IM SAYING BEFORE FIXING THIS SHIT
+
+Adam repeated it back as 7 numbered points (msg cmsg_01LTpp6fzv8sfYUR5KoHADKtFJ3zpf3vHfocALjBc4h6pB); nothing built until the owner says it's right.
+
+## Answer (2026-11-17 20:10Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtVUXWjejVHXbm2zLXu7oUrP) to Adam's 7-point repeat-back (word for word)
+
+> t=true
+> f=false
+>
+> 1. t
+> 2. make it to where you cannot give justin a weapon actually and when he goes down he doesnt have a pistol and he sounds off all his annoying lines unrestricted like he does in cabin with the same frequency, because im tired of dealing with him, he spawns in cabin now by default the same, without a weapon and cannot get a weapon
+> 3. t
+> 4. t
+> 5. t with the down arrow in the shape outline with the lines of the arrow made of the same outlinne and it's color and an up arrow equivalent for zombies on the roof, so that way a zombies elevation is know, and the same happens to Justin or players. For now on, Justin's outline color is yellow and the player you are playing as has a darker blue outline that only the player playing see for themselves on their screen, and every other player is green to them and zombies are red and justin's outline is yellow
+> 6. yes and it cannot attack from under that duck as proven
+> 7. yes
+
+Split: Solomon = Justin unarmed for good + all lines + in Duck Cabin by default, zombies attack Justin, no cross-floor zombie hits, zombies climb to roof targets, one simple shot rule (#7). Noah = Laser Rifle AK-size, outlines (red under roofs, up/down arrows, Justin yellow, me dark blue only for me, others green).
+
+## Request (2026-11-17 20:37Z, edited 20:38Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtWaWNc4HwE7j7Lu6R7ZBxsg, furious, then to bed) (word for word)
+
+> JUSTIN IS LITERALLY BROKEN! YOU CAN USE A FUCKING CHAIN GUN AND HE WILL DODGE EVERY FUCKING BULLET! STOP MAKING HIM LITERALLY JUST IMPOSSIBLE! WHEN HE TRIES TO DODGE, IT ISNT SOME ANIMATION THAT IS DONE BY MATH, HE SIMPLLY TRIES MOVING OUT THE WAY LIKE A PLAYER DOES! also zombies dont chase justin forever they give up very quickly and the last 1/10th of zombies never chase justin. ZOmbies need to be twice as close to justin to want to chase him compared to a player
+>
+> the music fades out when the lobby count starts and the is gone by the last two seconds IF it is counting or delayed to couunt
+>
+> in the vote game mode and vote map section there is no music now
+>
+> JUSTIN CANNOT BE REVIVED WHEN DEAD NOR CAN ANY PLAYER WHEN DEAD SO THE FUCKING REVIVE BUTTON GOES AWAY AND YOU CAN WALK OVER DEAD BODIES RETARD! BECAUSE I CANT WALK OVER JUSTIN'S DEAD BODY WHICH IS RETARDED!
+>
+> BULLETS THAT DO NOT PASS THROUGH ZOMBIES WILL NO LONGER PASS THRU ZOMBIES, BECAUSE IN GAME THEY ARE STILL PASSING THROUGH ZOMBIES IN A GLITCHY WEIRD WAY. LIKE IF U SHOOT A PISTOL THE BULLET KIND IS SEEN GOING PAST THEM A BIT AND IT LOOKS WRONG AND IS A GLITCH! WHY ARE GUNS AND PROJECTILES DOING THAT !?!?!? FIX IT!!!!
+>
+> Justin isnt supposed to be hard for players to kill, and his character should use the cry effect already in the game for ten seconds after taking one damage before he sprints away.
+>
+> im going to bed fix it and fix it all im going to bed
+>
+> JUSTIN CRIES AND SPRINTS ! HE DOESNT STAND AROUND FOR FUCKIG TEN SECONDS! WHY WOULD YOU SAY THEN INSTEAD OF AND FOR THAT RETARD! TELL ME U SEE THIS FUCKING EDIT NOW
+
+(last paragraph added by the owner's edit at 20:39Z: Justin cries for 10 s WHILE sprinting away)
+
+Split: Solomon = Justin's dodge (just moves like a player), cry 10 s then sprint, zombies chase Justin only at half the range, give up fast, last 1/10th never; dead = no revive, button gone, walk over bodies. Noah = shots end where they hit. Miles Jr. = lobby countdown music fade, vote windows' music.
+
+## Request (2026-11-18 10:38Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt9UAySh1WkTz4SkjEjXcAdn, with 2 screenshots in /mnt/project-files/refs/nov18-1038/) (word for word; the message is cut off at its end)
+
+> i want spreadsheets and information for questions i asked first and other workers besides adam can work while i discuss and look at stats and adam can write them a plan after they answer me
+>
+> give me a spreadsheet of all the weapons roll percentage per tier or "bag" and a description of how it works, so it can be judged by me if it needs changed
+>
+> give me a table of how much points a player earns per round in 1 player, versus each player in 2, each in 3 player, and so on.
+>
+> give me a spreadsheet for prices of the things in the shop from the priest AND i have a new idea i propose where he only sells some items and even has a life of his own and can come back (we will work on this)
+>
+> give me a table of the zombies hit speed and hit damage per difficulty range within it's given range of rounds (and suggestions)
+>
+> give a spreadhsheet of frames on different computers for frames per second and i want suggestions of how to improve frames without changing anything as it appears to the players (such as audio, animations, and so on)
+>
+> we need to make sure zombies dont jitter or feel slow on the computer (like kinda laggy feeling) when mobs get large
+>
+> i want to know how the double barrel shotgun works because i might change it's stats
+>
+> make sure when weapons are picked up from the slots that they are appropriately sized in their pixel size, because when i first picked up the laser gun (this might happen to other things too) it was rendered as being almost barely any pixels yet the appropiate scale of object size to the duck, but whenever i switched off and back on then it was fine
+>
+> flamethrower's fire doesnt stay in the water in crit mode, enemies in the water of the road do not catch on fire and if were on fire are no longer on fire, and swimming in water has the same effect (flamethrower still works in the rain though)
+> I want stats for flamethrower too for me to judge
+>
+> where are the places that gasoline can come from ? like in the downpour game mode
+>
+> i believe tiers or bags of stuff that are rolled per chance are supposed to have the least likely in order come first prior to the more likely
+>
+> we are removing the fireball from everything in the game, including the zombie game
+>
+> new tommy gun is too small and needs fixed
+>
+> prob same for any new gun, it is too small, since the laser was too. the tommy gun is obviously supposed to be almost the size of the ak47
+>
+> let's make zombies spawn rate half as much for the first four seconds
+>
+> grenades and bow projectiles unseen, this needs to be fixed
+>
+> outlines do not show for dead ducks, such as justin
+>
+> justin's character doesnt have a revive phase anymore in dead duck arcade
+>
+> another dead duck with's it's head blown off and in a puddle of blood (like what spills out of Justin ) that is also yellow but wearing a military uniform with holes in his body can be found here
+>
+> every player duck that dies in any game mode has a puddle of blood start to spill out beneath their duck like justin's
+>
+> check if other projectiles are working for other guns since the bow and grenade was not
+>
+> give me a spreadsheet of
+
+Split: Adam = the spreadsheets/info first. Noah = invisible grenades/arrows + all projectiles, pickup pixel size, Tommy/new gun sizes, dead-duck outlines, blood under every dead duck, dead soldier duck prop. Solomon = flamethrower + water, no fireball anywhere, half spawn rate first 4 s, smooth big mobs, rarest-first bags. Asked the owner: Justin's revive phase (bug or rule?) and the cut-off last line.
+
+## Request (2026-11-18 12:19Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtVCFg6WPpdeGhRYs41BQqdp) (word for word; the owner's finished version of the 11:42Z draft, which they said to ignore)
+> im going to keep working but just implement these changes adam and work while i look at these spreadsheets, but ask me how the slots works with propositions that i say true or false (or yes and no) for, in order to see u have the right idea. the order of these paragraphs were made out of order if you couuld tell.
+>
+> the melee bag is actually apart of the rest of the guns in the game now and shares the same bag, with each melee having a equal chance as any other gun in the bag as getting chosen, so no (half and half) rule and no separate bag any longer.
+>
+> jerry can no longer in slots
+>
+> New slot system:
+> Bag for zombie game:
+>
+> defining terms: shuffle means that an item is removed from it's bag and does not reappear within it's bag until every other item has had a chance. For slots, every bag of a lower percent comes first in roll, if the percent chance doesnt happen, then it moves onto the next bag, so on and so forth
+>
+> every bag is shuffled within it's bag, based on the shuffle rule
+> every item or weapon within it's bag is also shuffled based on the shuffled rule
+>
+> every weapon, melee, or item has a corresponding color to it's slot now (kinda like it did before but it's different now), and the orb for the weapon or item drop has it's own look too (like it did before but dif now). The purples all glow. Any weapon made angelic now has a red slot color and orb.
+>
+> jerry cans should have an orange orb that glows when seen on the ground.
+>
+> every bag has the shuffle mechanism.
+>
+> justin is removed from every slot
+>
+> the weapons in mad god justin now uses the bag and shuffle system for the weapons it spawns, with these bags, (heavy (sniper removed for mad god justin's bags), assault rifle and submachine combined into one bag for mad god justin, shotgun, and special (laser is remoeved from special bag for mad god justin)
+>
+> the slot does not assume starting kit or the weapon u have, and you cannot get a slot for something you already have
+>
+> Items that can run out now simply stay in their slot without being removed
+>
+> the power box is already put together by default in cabin now AND the right slots that show what is in the power box can be removed and changed into something else. the cabin starts without power still until gasoline is added.
+>
+> the chair bag: is a 1% chance and the chair is golden
+>
+> There is a bag for special weapons (these have a glowing purple orb in their drop AND glowing purple in their slot they occupy. The special is a 5% chance it is had, and here are the special slots in the special bag that shuffle:
+>
+> * Chain Gun
+> * Flamethrower
+> * Laser Rifle
+>
+>
+> Here is the shuffled item bag (20% chance and shuffles):
+>
+> * medkit (green slot and orb)
+> * zebra cake (blue slot and orb)
+> * adrenaline shot
+> * safekeeping (purple slot and orb that glows)
+>
+>
+> Weapon bag shuffle (100% chance):
+> Every bag in this shuffle has it's own bag:
+>
+> * Melee bag shuffle: contains all melee already in the slots and every melee has green orb and slot color (besides the cast iron)
+> * weak bag shuffle: 
+>    * contains dagger
+>    * contains default knife (if you don't have it)
+>    * contains cast iron pan
+> * shotgun bag: contains,
+>    * shotgun (green)
+>    * double barrel shotgun (blue)
+> * pistol bag
+>    * revolver (green)
+>    * default pistol (if you dont have it)
+> * sub machine gun bag
+>    * tommy gun (blue)
+>    * UMP-45 (blue)
+>    * SMG (rename it to MP5 and give it the look of an MP5) (blue)
+> * assault rifle bag
+>    * AK-47 (blue)
+>    * Burst Rifle (rename it to the gun it's look is based off of) (blue)
+> * heavy bag
+>    * Sniper (give it the look of a Barret 50 caliber if it doesn't already and rename it after it in words better in choice or capitilization then my own) (it now will do max damage to the first zombie it passes through AND will do max damage to every zombie it passes through for a crit, still has a limit for crits on how many zombies it passes through) (purple)
+>    * Grenade Launcher (blue)
+>    * LMG (rename it to the gun it's look is based off of) (blue)
+>
+>
+> remove jet pack from the whole game
+>
+> long jump is removed from zombies bag and slots
+>
+> Jaime bomb is removed from all zombie modes
+> normal jaime is removed from all zombie modes
+> "only one (jerry can) can be out at a time"
+> If the jerry can isn't found within that round on the ground from where it spawns on the map or the zombie it kills, then it can still lay on the ground while other gasoline can be dropped by zombies in later rounds. The spinning for a jerry can is always 100% when it is found AND only three Jerry cans can be held on the left screen by all players per game, and a very small text below the items (not over them) in the left screen says they have the max amount of jerry cans. Buying gas from slot dosnt stop it from spawning that round. Gasoline is still a 1% chance of dropping in zombies.
+>
+>
+> the butler or priest (or the npc shop in general ) no longer sells gasoline
+> the gas station now fills up an empty jerry can every player shares on the left screen ONLY in downpour, and the jerry can becomes filled up by the gas pump. the empty jerry can is apart of the gas limit, and any jerry can that is grabbed now is a percent into the last jerry can. so we are doing addition of fractions / percentage, where 0% jerry can plus a 50% jerry can picked up isnt one empty one and one half full one, but now the empty one stores 50% of it's gas.
+> Now there are only 4 rounds for a 100% full jerry can, 3 rounds for 75%, and 2 rounds for 50%, and 1 round for 25%
+> when there is no jerry cans, the players have a 0% jerry can on the left, and when they have three full jerry cans, then empty is tranformed like the other ones, and the empty only follows the full one if the previous is full, and the jerry cans are ordered in a row of which has the most gasoline
+> the jerry cans have their own row apart from the items you pick up in cabin (fuse and etc)
+> the two rows are both on the left side of screen
+> the gas pump now give 25% gas to a jerry can for 150 points each
+> The jerry can needed to turn on the generator in cabin is the same as the others, just a given percentage of how many rounds it gives and any gasoline can be used in place of it to turn on the generator in cabin
+>
+> 1. idk
+> 2. he dies outright, justin does, and only in the zombie mode
+>
+> in mad god justin, justin gets more gored every 10 health points when he has 100 HP, and once he hits 10 HP, every bit of damage does even more gore, and when he has 0 HP in mad god justin, he dies (he starts crying when at 25 hp or lower but cry effect goes away for any dead player)
+> mad god justin bleeds a puddle of blood when dead
+> justin cannot make dialog when outright dead in zombies or mad god justin
+> in normal game modes now, Justin cannot be revived and he dies outright and spawns back with gore effects lost on the next turn (like agree or disagree, lawyering, story game ,etc)
+> there should be a thing where, below the play game option, is an offline play option, and that option is for app users only, and there, the button is greyed out until the conditions are met to where it can be played. In offline mode, there is no test option AND hangout, zombies, or mad god Justin can be played locally as the only game modes allowed, and any other game modes cannot be played.
+> for offline play, the player only has those game modes to chose from and their corresponding maps, AND there is no timer on the vote screen AND the vote screen is still there AND it is instantons. Only settings appropriate for allowed game modes should be visible. For hangout, the map vote is gone. Now it says "select" instead of "vote" for offline play. We can rename offline to "Single Player"
+> single player is meant to be hosted locally and NOT on the firebase servers AND not require internet to play BECAUSE the files are downloaded locally onto the system FROM the installed app.
+> the single player still has all the same rules for zombies and mad god justin and their game modes are not duplicated versions but the same version hosted on a local offline machine of the player. the game still updates the offline or singleplayer features automatically in a connection to the github for everything on the application and website when connection is made to it like usual.
+> single player is for players that have machines that can run the game but they dont want to spend data or internet connection to play, ESPECIALLY if it is the only barrier for them playing (such as my gf who is in a college with an area of extremely poor data connection)
+
+Split (Adam): Solomon = the slot bags + shuffle, jerry can rework, no gas at the Priest/Butler, pumps 25% for 150, power box built by default, no Jetpack/Long jump/Jaime/Jaime Bomb/Justin in zombie slots, sniper pierce, Justin dies outright in Dead Ducks Arcade, MGJ weapon bags. Noah = slot and orb colors, golden chair, gun looks and names (MP5, Barrett, burst rifle, LMG), the jerry can row, MGJ Justin's gore/cry/blood. Jackal = Justin dies outright in normal modes. Adam = Single Player. Adam asked the owner true/false questions on the slots first.
+
+## Answer (2026-11-18 12:32Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt2eYRekvrUy5FnpoT9VJ7u6) to Adam's 20 true/false slot questions (word for word)
+> 1. t
+> 2. t
+> 3. t
+> 4. t
+> 5. t
+> 6. the bow can be in the weak bag and the grenade is in none
+> 7. t
+> 8. t
+> 9. t
+> 10. they are a normal looking slot like it is in the default game, so no color, and these colors only apply to mad god justin or zombie game
+> 11. true
+> 12. true and it costs money to fill at the pump and shouldnt be called a "slot" or else it gets confusing
+> 13. true
+> 14. true, and the empty jerry can that is the third of the three if the other two are filled can become full too
+> 15. true
+> 16. true
+> 17. true
+> 18. "the 3 parts slots are freed for weapons and items," no, the slots are ALL gone on the power box AND it should be made to look normal for look purposes in the place where those slots are removed
+> 19. yes but remove the flame thrower from mad god justin as well, and the chain gun only has a 5% chance of spawning for it's bag that is rolled first
+> 20. true
+
+The questions (Adam, 12:21Z): 1 order Chair 1% > Special 5% > Item 20% > Weapon; 2 own bags per player, fresh each game; 3 Weapon bag = 7 bags taking turns, then the next gun in that bag's shuffle; 4 melee bag as often as the shotgun bag; 5 melee = fire axe, short sword, hammer; weak = dagger, knife, pan; 6 bow and grenade in no bag; 7 owned things skipped, keep their place; 8 used-up items/empty guns keep the slot and can't be spun again; 9 golden chair owned = Chair bag skipped; 10 uncolored ones keep today's colors; 11 found cans are 100%; 12 pump filling doesn't stop the round's can; 13 one can spawns at a time, unfound ones stay, zombies 1%; 14 gas pours into the fullest not-full can, limit counts the empty; 15 3 full = can stays on the ground; 16 pumps only Downpour; 17 cabin generator takes a whole can, 1 round per 25%; 18 power box built, 3 parts slots freed; 19 MGJ bags heavy (GL, LMG), rifles (Tommy, UMP, MP5, AK, AUG), shotgun (shotgun, double barrel), special (chain gun, flamethrower); 20 Sniper normal: first zombie max, crit: every zombie max up to the limit.
+
+## Request (2026-11-18 12:33Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtTvpMfei2HjndPJo13XK1Qx) (word for word)
+> single player can only be played if it isnt connecting to the data to do it, like for the in game files i mean, since it shouldnt require internet i mean
+
+Done (Adam): the button stays greyed until every file is on the device, and once the copy is whole, sw.js serves every game file from the device (only the page asks the network first, to see a new version).
+
+## Request (2026-11-18 12:39Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtCDGDPEfZ88HTZbry7W8j3C) (word for word)
+> rq, give me a chart of the zombies spawns and zombie spawns per player needed for online to try and make it to where players have an almost equal distribution of points per player each per round, and the amount of point per round SHOULD be based on the 1 player each, AND the way the zombies spawn per player and per round can be changed to be more then single player and not less WHILE not inventing new systems for zombie spawns and just changing inputs for the parameters i already set up for the zombie game myself. so changing amount of zombies per round to be more then what they already are for single player into every other game mode is good, changing parameters without asking me if you can bad, and spawn rates do not change. The goal is to make something more fair and balanced, since the points per player is saying something. 
+>
+> the amount of zombies for rounds 1-4 that spawn should be as much as rounds 5-8 if possible with the parameters set still the same. 
+>
+> furthermore, the slot now costs 950 points
+
+Done (Adam): slot BOX.price 950. Chart /mnt/project-files/sheets/zombie-spawns-per-player.xlsx; parameter changes wait for the owner's yes.
+
+## Request (2026-11-18 12:40Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt2TfgXR7VWtNc84t4yAGMFs) (word for word)
+> the parameter for max zombies per round (not the spawned at a time but the roof of how many can spawn per game) for more players can be changed accordingly for this point mechanic to work
+
+Done (Adam): l4ddrules PHASES one per round (bases 24 to round 8, 36 to 12, 72 to 20), Z_MOST 800, Z_LATE 800; every player earns what 1 player earns. Spawn rates unchanged.
+
+## Request (2026-11-18 13:46Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt2uGukypDipg2oYJSHfgCHm, 3 pictures in /mnt/project-files/refs/nov18-1346/: the alien with the Lakers jersey (25291791441265), the eagle (Charles), and the "9-12" row of Adam's Zombie hits sheet) (word for word)
+> priest or butler ALWAYS sells bow now, and for 250 points
+> He sells one given item/weapon from this given bags i will show, and never any ammo only in such way. for anytime he spawns in, he will have a guarantee(!) to be selling any one of these weapons AND a 50% chance to sell another gun/item that decreases in chance of selling another gun by 10% (+2.5 per additional player) chance each for each extra gun available (this is not shuffled but the bags themselves are):
+>
+> * Any of the bags from the slots and each having a given chance that cascades based on the slots, and what is sold is gone for that appearance from every player and cannot be bought again (limited supply), BUT there is a 25% chance that rolls a yes or no to ask IF he has another one of those given options being sold. 
+>    * every item that is white costs 300 points
+>    * every green item costs 500 points
+>    * every blue item costs 750 points
+>    * every purple item costs 1,500 points
+>    * every chair from Justin (still 1% chance of being sold) costs 3,000 points
+>
+>
+> the butler or priest can be killed AND his arrival is announced in a text where the "instant kill" or "full ammo" would display, and the butler runs up from the stairs of the balcony and breaks the barricade (the wooden barricade) IF it is in the way and runs to the place he usually stands, and he will sell those items that round BEFORE running away when the round ends. In downpour, he climbs over a fence and runs into the church as a priest to sell things.
+>
+> it is possible for the priest OR Justin's butler to spawn in EITHER map AND Justin's butler is no longer small. 
+>
+> The dialog of the seller is the same universally, saying one of these automatically when you walk up to them:
+>
+> * What can I get for you?
+> * Anything you would like?
+> * You are looking good today.
+> * Interested in buying anything?
+> * You like what I'm selling?
+> * You need anything?
+> * These are some good prices aren't they?
+> * Easy sell.
+> * You got a zombie problem?
+>
+>
+> the dialog is shuffled
+>
+> when they take damage from a player, they will say one of these first IF they aren't dead, if they take damage, they will run away and climb the fence in downpour to get away OR they will jump off the balcony to get away in cabin. these are the lines they will say once when they take damage from a player IF they arent dead:
+>
+> * Stop that!
+> * You want anything or not!?
+> * You aren't going to get anything if you keep this up.
+> * Stop!
+> * Try that again!
+> * Don't shoot!
+> * I am trying to help!
+> * What the hell!?
+>
+> * Please don't shoot!
+>
+>
+>
+>
+> the NPC will run away when the rest phase ends and zombies start to spawn in, and zombies might try and chase them like they are a player UNLESS they climb a fence OR jump off the balcony, then they give up. The zombies will not chase the corpse of one of these Merchants. The merchant cannot be revived. The merchant tries to run away the same as they do when running away from a player WHEN the zombies come back BUT they dont dialog the same as when a player damages them when doing so. 
+>
+> The merchant says this when the zombies spawn in at the beginning of the next round:
+>
+> * Gotta go!
+> * Nice doing business with you.
+> * I need to get out of here.
+> * It's not safe here anymore.
+> * I am packing my bags.
+> * I wish you luck!
+> * I am hitting the road.
+> * Have a fun time! 
+> * I am not staying. 
+> * I cannot deal with zombies.
+> * I hate zombies.
+> * The zombies are here!
+> * Run!
+> * No! Not them again!
+> * Get out while you still can!
+>
+>
+>
+> There are different NPCs with all the same voice lines, and they have a given name and look, and i want you to design them and show me pictures. Each NPC merchant dies forever during a game when they are shot and cannot come back, but another can fill their place, and different merchants arrive each time they come and go. 
+>
+> Here are some merchant ideas:
+>
+> * Brah: (the Motorcyclist)
+> * Hunter: (based on Hunter S Thompson from fear and loathing, has the same outfit and attire)
+> * Babatunde: (based on the male nigerian outfit, has the nigerian male outfit attire, will have yoruba lines that you will translate for me that are based in yoruba history and culture)
+> * Omowunmi: (based on the female nigerian outfit and has it's attire on, will have yoruba lines that translated for me in this chat that are based in yoruba history or culture)
+> * Dyson: (has the muscle shirt and the cheese on the head, sometimes is the rainbow dat boi, and it is a shuffle)
+> * 25291791441265: (is the alien with the laker's jersey in the screenshot)
+> * Charles: (is the second screenshot)
+> * Thomas: (is a wizard)
+> * Barry: (is wearing cardboard)
+> * Queen Elizabeth: (is wearing something royal and a crown)
+> * The Fool: (is wearing the Jester)
+> * Lucifer: (is wearing the full clown outfit and no devil horns pls, treat him like a normal character)
+> * Jack (is Jack in the box)
+> * Jill (is Jill in the box)
+> * Rick (is wearing police uniform
+> * Bob (is wearing the disco uniform with an afro and maybe some kind of face wear to match
+> * Veronica (is wearing a shirt and jeans, nothing else)
+> * Johnny (is wearing the doctor uniform, sometimes the police uniform, sometimes the firefighter uniform, it is random and will be different everytime they show up in a shuffle, they obv cannot have hair)
+> * Blocky Blockus (Is the block syle duck
+> * Pp (his name is Pp and he is the 2d style duck)
+> * Kyle ( is the pelican style)
+> * Gibby (is the raptor style)
+> * Jerome (is the white call duck with the birthday hat and sometimes the ribbon bow)
+> * Andy (is the mallard duck with a military helmet on
+>
+> You can give me other suggestions for merchants
+>
+> THe text for the merchant arriving is:
+> "The Merchant has Arrived"
+>
+> There is a 25% chance the merchant arrives every round AND one merchant is always there on round zero
+>
+> the angel machine costs 2500 now
+>
+> 9-12	75%	0.30 s	0.75 s	1 HP	35	1.8 s	Same as 5-8 but faster: fine; or swipe every 0.70 s for a small step up
+>
+> the screenshot of the row i pasted from the excel is the stat for every zombie AFTER round 12 now (but ignore the most at map at once, that still changes as the rounds go up)
+>
+> i never notice the mud on my screen from a mud zombie AND they arent covered in mud (the mud zombies) 
+> (mud zombie can be removed)
+>
+> the slug round in crit mode cannot pass through the next zombie after the first it kills UNLESS that is a crit too for another rolled chance
+>
+> there should be 150 rounds in the double barrel shotgun
+>
+> the ammo of the flame thrower is shown as a percetnage (100% is full and 0% is empty). make sure the zombies burn other zombies it touches relatively easier AND it takes 0.5 seconds AFTER a zombie is on fire for it's flame to spread to other zombies, and this repeats for every zombie on fire.
+>
+> make the screen shake like it does for the sniper for the double barrel shotgun
+>
+>
+> more instructions coming on optimizing frame where i answer to the spreasheet
+
+Split (Adam): Solomon = the merchant (rules, spawning, selling, fleeing, dying, lines) + zombie stats after round 12 + double barrel crit slug + fire spread. Jackal = Angel machine 2500, double barrel 150 rounds + sniper shake, flamethrower ammo as %, mud zombie removed. Noah = the merchants' looks (pictures to the owner, as asked) + suggestions. Adam = the Yoruba lines and their translations.
+
+## Request (2026-11-18 13:58Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt8Zmhy1a7zZQi5hEJG9tRJV, answering the sheet's Frame rate ideas) (word for word)
+> EXPLAIN ALL OF THESE FOR ME AND THEN TELL ME WAT THEY MEAN, WHAT THEY DO, HOW IT LOOKS, AND ETC! I NEED TO UNDEERSTAND, DO NOT ACT THESE INTO BEING YET !
+>
+> also, we should have special drops like instant kill, full ammo, and all of those an outline of their own color AND an arrow if a floor above or below WHEN it is on the ground AND those outline and arrow effects for that special drop in pparticular ends when they are picked up. and this is for when they drop under the foliage of a tree or elsewhere, so it is not missed, and gas gets an orange outline
+>
+> for drawing the zombies with one shared picture like you suggested, i would say yes, but the zombies r supposed to have different looks AND take damage that does gore effects to their body that should translate to their individual duck, and so before acting on what might be a good idea, how do we problem solve for that? or even how they shake, their heads explode, variations in appearance, etc
+> How much work even to do that and what is the realistic payoff?
+>
+> only update a zombie's outline, hp bar, and shadow when it changes sounds good
+>
+> skip drawing aything off screen ? yeah sure but remember to draw a little bit off the screen on the outside of players for things like screen shakes or sprinting to account for things that might be seen just outside the frame in ways we might not anticipate, so we can do that be let's say one or two duck lengths maybe
+>
+> yes to not drawing anything not on the screen IF it updates BECAUSE offline mode for example SHOULD have it stay loaded after once and same for online, am i wrong ? i dont understand why now.
+>
+> your screen doesnt have to draw whats on another player's screen, only yours
+>
+> send zombies positions less often yeah but only for when they are not on the given player's screen for their machine maybe, yk?
+>
+> miles jr determines that with caution and what he suggets is what me and him will talk about
+>
+> sure to the pause rain and lightning idea when (so and so), shouldnt the variations of rain be redrawn and be the same image being used btw or is it already so  ? idk
+>
+> sure to move path for zombies thingy i think for off the main thread
+
+Adam: explained every idea in chat, built none (owner: "DO NOT ACT THESE INTO BEING YET"); recommended 2, 3, 4, 6, 7 first and measuring fps before 1. Drop outlines (separate ask) given to Noah.
+
+## Request (2026-11-18 14:10Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtGn2228CrX45wK8nwBghwVb, in Noah's thread, about the merchants sheet; 1 picture: a grey armored soldier with a gold visor, /mnt/project-files/refs/nov18-1410/armored-soldier.png) (word for word)
+
+> make it to where wearing the cardboad box, the pumpkin head, the paper bag, the motorcyle helmet, the gas mask, and the armored helmet will HIDE the beak (like it makes it no beak not under the selection but makes the beak invisible WHEN those helemts are off)
+>
+> Johnny should be a yellow duck
+>
+> gibby is supposed to have the default color for the raport and so is kyle for the pelican, come tf on.
+>
+> Jerome has only the pink ribbon now and that is his only look
+>
+> You can add Walt
+>
+> Dale should be ranamed Carl and his shirt should be a plad shirt that covers his upper body
+>
+> do not add grace
+>
+> The armored space soldier can be given different colors to his green armor and made into the look of the screenshot i sent (his name will not be shown since his name is classified info)
+>
+> Hal will not be in the game
+>
+> Ozzy will be renamed to "Phil the Murderous", and he will hit back at players when he takes second damage with a knife (has a 50% chance of missing when he uses it and it does 1 damage only)
+
+Noah: the beak hides while one of those six face items is worn (the beak pick stays; knocked off, the beak shows again); the merchant changes in js/merchants.js; Phil's knife hit-back is for the rules (Solomon).
+
+## Request (2026-11-18 14:20Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtE17WbWJXP3qkTSWQHVbYca) (word for word)
+> 'First, drawing is not loading. Every file loads once and stays loaded. In Single Player, the files are also saved on the device. "Drawing" means painting the screen's pixels about 60 times a second, and that painting is the work these ideas cut. Skipping the drawing of a zombie off screen doesn't unload it or download anything again. The game still moves it, and it's painted the moment it comes into view.'
+> Oh, that is a big deal, ty
+>
+> 1. do that then but make the outline and all of it's features work, i want more frames (my laptop is strong but more performance matters for everyone not just me)
+> 2. yes
+> 3. yes
+> 4. yes
+> 5. yes
+> 6. okay to keeping the lines as is and yes 
+> 7. yes
+>
+>
+> 'The merchant still sells the upgrades (crit chance, speed, Quick Revive and the rest).'
+> No they do not, they only sell one per visit AND there is no long faster speed upgrade, max hp can only be upgraded twice, safe keeping is now only sold in the items bag amongst the weapons and items feature for the merchant, and no parts are sold by merchant anymore (fuse, etc)
+>
+> Merchant always has gas to sell now in cabin AND the gas costs as much as it does from the pump in gas station AND the gas never runs out from the merchant
+
+Split (Adam): Solomon = merchant fixes, then speed ideas 1 (one shared picture per zombie look, outlines and gore working) + 2 (outline/HP bar/shadow only on change), then 7 (path-finding in a worker). Noah = 3 (skip drawing off screen, 1-2 duck lengths margin) + 4 (zombie positions sent less often only when off that player's screen). Jackal = 6 (pause rain and lightning when hidden or under a full-screen menu). Miles Jr. = 5 (sound cap: proposal to the owner first).
+
+## Owner, Nov 18 15:18Z (3 screenshots: Duck Cabin round 0 on a phone sideways, the Ready button and the Jumps box marked; the Create a room page on a phone, the top bar's Agree or Disagree logo and music bar circled; Downpour's church on a phone, zombies inside shown only as outlines circled)
+"Make sure melee weapons have the same range in any direction
+
+Make the bow have unlimited ammo and it does 2-3 damage now (with quieter audio )
+
+The third image shows how the zombies cannot be seen while inside the church om downpour but their outline can, even tho nothing is hiding them, this should not be the case for similiar times
+
+Make the ammo switch thingy on the bottom of screen for mobile not flicker in and out like it does when firing or reloading, since it should sit still from those things, not moving with it
+
+WHY DID THE LMG BECOME SMALL?! MAKE SURE NO WEAPON IS NEVER MADE SMALL AGAIN! ASK ME THE SIZE IF U FUCKING HAVE TO! THE SIZE OF THE LMG SHOULD NOT HAVE CHANGED!
+Make the lmg shake the screen as much as the AK-47, not more than
+
+There is a small "r" button on mobile above the jump button that allows players to reload now and clicking it does a reload animation
+
+A player can click the screen and move around their right finger to aim
+
+The screenshot shows the jump cpunt not being in the middle alignment of the screen AND the ready button on mobile should be in the bottom middle of the screen WHEN it's in horizontal on mobile
+
+The agree or disagree logo should not be above the play game menu AND the music display button should be hidden when there isnt room for it on mobile 
+
+The board or map for the zombie game should be a little more zoomed out in perspective or camera for mobile players in vertical OR horizontal becuz it feels cramped.
+The hotbar should be on the player's fuck for now on in mobile and swiping on their duck shows the selection AND it fades away like it does on PC (it is still in the bottom middle of the screen)
+
+The pistol should do 2-3 damage
+
+Is there any weapon that still does 1 damage besides the laser gun?"
+
+Owner, Nov 18 15:19Z: "The pistol should be 1-3 damage actually and so does the bow"
+
+Decided: the LMG (every gun) was small because the Nov 18 10:38Z change moved each gun's length to l4ddguns.js w (--gw) but no css rule ever read --gw, so every gun in the hand fell back to a knife's size (the adrenaline shot lost its own size too). Adam restored them all to their sizes from before (the LMG 1.2 again). LMG shake 0.18 a shot (it fires every 100 ms, the AK-47 every 110 ms at 0.2), so held down it shakes as much as the AK-47. Pistol and bow: 1 to 3 damage (15:19Z replaces 2-3). "player's fuck" read as "player's duck".
+Split (Adam): Solomon = melee same range every direction, bow unlimited ammo, pistol + bow 1-3 damage, Dead Ducks Arcade camera a little zoomed out on phones (both ways). Miles Jr. = quieter bow. Noah = church zombies shown as outlines with nothing hiding them, hotbar over the player's duck on phones (swipe on the duck to pick, fades like PC), the Agree or Disagree logo off the Play menu's top bar + music bar hidden when there's no room on phones. Jackal = phone ammo/switch box not flickering when firing or reloading, small "R" reload button above the jump button, aim by dragging a finger on the screen, Jumps box centered, Ready button bottom middle on phones held sideways.
+
+Owner, Nov 18 15:23Z (after Adam's list of 1-damage weapons, the shotgun "1 per pellet, 5 pellets a shot"): "It should be 1-3 damage per pellet"
+Decided: the shotgun does 1 to 3 per pellet (Solomon, with the pistol and the bow).
+
+Owner, Nov 18 15:25Z: "The frying pan should do 2-6 damage
+The sword does 1-2 damage
+
+Every melee has slight knockback EVEN to players AND especially to zombies EVEN WHILE THEY ARE ALIVE
+
+Fireaxe has more knockback and the hammer has most knockback
+
+What are the other melee stats?"
+Decided: Solomon, in #476 (Dead Ducks Arcade): pan 2-6 (miss and crit kept), sword 1-2, every melee hit pushes living zombies back, and a slight no-damage shove on players; axe more, hammer most. Adam answered the melee stats.
+
+Owner, Nov 18 15:28Z: "The hammer is 3-5 damage
+
+The pan has 5 damage"
+Decided (Adam): Dead Ducks Arcade's hammer 3 to 5, the frying pan 5 every hit (replaces 15:25Z's 2-6; its 50% miss and 50% crit kept).
+
+Owner, Nov 18 15:32Z: "How ab this, the pan is 50% miss and 50% crit, so max damage WHEN it does hit 
+
+Pan shouldnt be in mad god justin"
+Decided: the pan stays as built at 15:28Z (50% miss, half its hits a headshot, otherwise 5, its most). Solomon takes the pan out of Mad God Justin.
+
+## Owner, Nov 18 15:35Z (voice to text; the owner: "I don't know what amount of this information is wrong")
+"The merchants should have a health bar like anyone else. It should show their sprint meter when they're moving like anyone else. And if it's the Phil, the murderous, when he uses his knife, it has a cooldown meter just like anyone else. And when Phil or any of the merchants, just any merchant, forget Phil, any merchant that gets damage gets gore effects. That's normal. They get all the gore effects that everyone else gets. And on top of that, they have a health bar that shows up when you hit them. And it looks like Justin's or any other player's health bar. But the health bar that shows up fades away eventually or whatever when they're not getting hit enough times, like a zombies. Oh, I don't know if zombies do that, so maybe it doesn't go away. Okay, forget that. When a merchant gets hit, their health bar shows. When Justin gets hit, his health bar shows in the zombie game. And even outside of the zombie game, really. And when a merchant dies, there's a chance you might get a crit on them, so their head explodes just like a zombie will. You know, if the merchant falls over and dies, they have a puddle of blood leaving their corpse, and their corpse stays there permanently. It doesn't go away. The sprint on the ducks, like all of the ducks that are NPCs, like Justin or the merchants, all of their sprinting and their movement speed is the same as the players for zombies. So if the zombie can only go so fast, not zombie, sorry. If a player can only go so fast and they can only sprint so fast within the zombie mode, then it is the same for the merchant. Okay? Because if not, it's kind of ridiculous. We can give the merchants 4 HP instead of 6. I like that. And, you know, or actually give the merchants 3 to 6 HP, where it could vary, right? So some of them might have more or less HP. Right? So yeah. It should say when the merchant arrives. I don't know if I've seen that yet or if the merchant hasn't spawned in for me yet. But let's make it to where the merchant comes in about... they come in at the rest phase, and it's a 50% chance that they do. It's not guaranteed. You know, I'm using voice to text, so I don't know what amount of this information is wrong or whatnot."
+Read as: merchants show an HP bar (players' look) once hit, staying up (not fading); sprint meter while moving; Phil's knife cooldown meter; all the gore players/zombies get, crit head explosion, a blood pool, the corpse stays for good. Justin's HP bar shows once hit, in Dead Ducks Arcade and other modes. Every NPC duck (Justin, merchants) walks and sprints at the players' Dead Ducks Arcade speeds. Merchants 3 to 6 HP (rolled each). "The Merchant has Arrived" shows; merchants come in the rest phase, 50% chance (replaces 25% each round, always round 0).
+Split (Adam): Solomon = HP 3-6, NPC speeds = players', rest phase 50%, arrival announcement check, crit head flag/corpse stays (rules). Noah = HP bar on hit (merchants + Justin, every mode), sprint meter, Phil cooldown meter, gore, head explosion, blood pool, corpse look.
+
+## Owner, Nov 18 16:43Z
+"* the revolver is 3 shots per second for 2-4 damage each shot
+* the mp5 does 1-2 damage AND has 25% more clips by default (round up)
+* tommy gun is 1-3 damage
+* UMP-45 is 2 damage for 7 shots per second and has 25 bullets per magazine 
+* the M249 should be 2 damage
+* barret 50 cal is 4-5 damage and it does 1 damage less per zombie it passes (how many bullets per mag and how many mags)
+* chain gun does 4-5 damage
+* the flame thrower does 1 damage for every 2 seconds for 8 seconds per enemy ONCE they are set on fire AND they can set on fire again as they could of before being set on fire
+
+
+all movement in every game mode, the sprint, the jump, the cooldown meter, the health meter, and everything movement related or UI related from zombies is in every game mode now (ask me ab it)"
+Decided: guns to Solomon (MP5 13 mags -> 17 = 340; UMP keeps 6 mags = 150; flamer re-light restarts the 8 s, spreading kept). Barrett answered: 5 a magazine, 49 in all. Every-mode movement/UI: questions to the owner first.
+
+Adam's 5 questions (16:46Z) on "zombie movement/UI in every mode": 1 HP instead of knock-down with the block meter, 2 sprint/stamina bar and walk speed, 3 Dead Ducks Arcade's jump and the phone R/jump buttons, 4 the white cooldown bar, 5 which modes.
+Owner, Nov 18 16:50Z: "1. yes, and every player in other game modes has 4 hp by default
+2. no to faster speed BUT they do get a 7 second stamina bar for when they do spring to limit it
+3. yes (r only shows up on mobile for anything IF something CAN be reloaded
+4. yes in the same way
+5. all of them"
+Split (Adam): Solomon = rules: 4 HP in every other mode, hits take HP by each weapon's damage, down at 0 HP; a 7 s sprint stamina in every mode at today's speeds; Dead Ducks Arcade's jump everywhere. Noah = the block HP meter, the thin blue stamina bar and the white cooldown bar in every mode. Jackal = the phone R button in every mode, only while something can be reloaded.
+
+Adam (16:59Z): 1 Mad God Justin's Player HP setting (default 6) to 4 too? 2 on-duck phone hotbar in every mode? 3 test and deploy as Version 89?
+Owner, Nov 18 20:58Z: "1. keep it as 6
+2. every 
+3. what is he testing?"
+Decided: Mad God Justin stays 6. Noah puts the on-duck phone hotbar in every mode with a hotbar. Test plan explained to the owner; waiting for the go.
+
+## Owner, Nov 19 01:00Z
+"are the gun sizes fixed yet?
+
+Justin spawned in without his head in a retry of the game after i died in the zommbie game so fix that (he later regenerated it)
+
+zombies should pick a part to jump onto the gas pump from and commit, not going left and right over and over until the player stands still because that is ripe for exploit"
+Decided: gun sizes are fixed in Version 89 (live 21:46Z Nov 18). Solomon: Justin's head comes back with him on a retry (a new game starts him whole), and a zombie climbing to the gas pump roof picks one spot and commits to it.
+
+## Owner, Nov 19 01:01Z: "big one" (attached: "Sandbox mode rules.docx")
+The whole spec, word for word, is in /mnt/project-files/sandbox/sandbox-mode-rules.txt (the .docx beside it). New mode "sandbox": cheat sheet c, build b (spawns, respawns, loot orbs, board zones), make NPC m, Numerat n (the owner's number language), hotbar h, game rules g, player settings p; saved custom game modes playable in vote/random/online. Also: "test every game mode to make it like zombies" (Mad God Justin HP stays).
+Decided: Adam's plan + usage plan + 18 questions in the doc https://claude.ai/artifact/QBUb17b36zxdBP1wAMg1j9 (stages 0-9, Stage 0 = zombie controls in every existing mode). Nothing built until the owner answers and says go.
+
+Adam re-posted the 18 questions in chat (01:14Z; owner on a phone). Owner's answers, Nov 19 01:34Z (voice to text), word for word:
+"1. It's on any map and if it's on a map like the Hangout version of Cabin, if it's on a map like the zombie version of Cabin, if it's on a map like Downpour, then players can walk around the entire thing and do everything they could normally do on that map. And on that map for Sandbox, if there was a preset, like Agree or Disagree, it does not work on that map. Like, they cannot build that mode on that map. And modes can only be set to a certain kind of map. All maps that are squared, simple, confined boards, like Agree or Disagree, Would You Rather, so on and so forth, that same shape and format or layout, they are all the same, right? Those are basically just one map, really. Like, yeah, there's different background pages, but it's just one map. Whereas the special maps they get their own dedicated map for their game mode. So if it's set to Downpour, then that game mode they made can only be on Downpour. And And all those files they saved in Numerat can be saved permanently across any version of Sandbox on any map, and they can be inputted into anything. And saving the files in the Numerat directory does not make them run. It's when you actually have a place to put them. Okay, so that would probably have to be a thing you can do in the game settings. In the game settings field where you click G, you probably can have a place to input those files, to import them, so they have a place to run if they aren't actually in the built objects themselves. And that's pretty important. That's my answer to number 1.
+
+2. Yes, to number 2. And if every player can change the game settings from the democracy of ducklings, then every player has access to everything the host has in Sandbox, and only if that's true. And if the host is switched in democracy of ducklings, then so it is the case that in that game mode, that the new host, not the old one, is the one who has the private access to all of that, and they decide who else gets it, if democracy of ducklings didn't already give it to everyone by de facto of the one mode I had already mentioned.
+
+3. Where is sandbox picked? It's under special.
+
+4. Yeah, default NPC behavior uses what's already works.
+
+5. We'll make it 800. That's like the invisible cap. And maybe it might say that in the cheat sheet if there's extra room for that, but it's so unimportant that I wouldn't worry about that.
+
+6. The uploaded image for any avatar or anything else is never compressed, not unless the player hits a checkbox when they've selected it or before they select it to make it compressed. Otherwise, images they upload do not compress. And by compress, what I mean is the whole 32-bit thing we have going on. I imagine that it doesn't have to be the exact pixel size of what it was when it was uploaded if it's already smaller, if you know what I mean.
+
+7. Random can pick custom modes only if it is voted on. So in the vote round for game modes, in the custom game modes, there will be an option that just says vote for random game modes to be allowed. And if it passes, then the vote will replay. Like, it resets and replays once it passes to where now they vote for game modes again, but now the custom game modes are an option. Okay, so they're an option in their own custom game section, just like anything else.
+
+8. both.
+
+9. Other players can save a copy, and any player's saved game mode that isn't a copy can show on the custom game modes. And that is something that below the custom game modes is just a little checkbox that only one of the players have to click for it to show the game modes that are custom that everyone in the lobby has, not just the host. So that can be selected during the vote game mode section, and people can then play a game mode that the host doesn't have, but they have, and everyone can see it and vote for it. The picture for a game mode, if there is one, can be selected by a player by uploading an image. And if they don't, then they can basically just have a colored background, a simple 2D shape in front of it. And they can also upload a custom duck they made. As a symbol in front of the 2D shape if they want to. Or they can use some like weapon that's already in the game, or some other NPCs that are already in the game to put in front of it, things like that.
+
+10. True 
+
+11. A
+
+Note, we need an operation for and we can all it: and
+
+12. ES for number 12, and we can also add things like XOR and other similar things beyond the simples
+
+13. It can be executed by a run button in the window, and there is a command in either normal terminal or just a normal terminal in our version of Bash that can then cancel the numerat file that's been executed. Like, it can stop it. And the terminal in numerat is just normal Bash terminal, by the way. It isn't anything that isn't that. But numerat mode exists in that terminal too, just so that you could do commands in it, like, let's say, setting a variable temporarily during the game. And that is also a process that can be killed, by the way, is setting a variable's name in Sandbox or doing other things like that in the numerat there. You know what, actually just remove numerat mode from terminal, because that saves a lot of issues from happening. Like, it stops a lot of issues from happening. So no numerat version where you type numerat in the terminal, none of that. We're not doing that. But what I will say is that we run a numerat file in one way by just executing it with a bash command in the terminal, or we can have it be something that you use the game settings, or you import into the spawn nodes or anything like that, like we've already mentioned before in other ways, like attaching it to a spawn, like you said, or a loot orb and things like that. Or a zone, you know.
+
+14. A
+
+15. all of these. And there should also be a survive, just a pure survive. Like that's all you do is you just survive and that's it. There's no actual winning. It's just like a record of surviving. So yeah, all of those for 15 and more.
+
+16. Yes, but it's not just that. It's that the prompt itself is something that, like, what it asks you to type into it. Like, the very thing it asks you can be edited by the players in Sandbox. And not only that, it could be an or. Where Kind of like where in Would You Rather, it's two boxes you type into. And, you know, it's two boxes between an or and Would You Rather. So, like, that feature, for example, can also be in this, right? So that's pretty important. So, yeah.
+
+17. Yeah
+
+18. Yes, and not only that, but like even like how NPCs react to damage. Like not just players, not just Justin, but any NPC that can take damage, and anyone else and everything. You know, even the game, the screen shaking, all of that. Yeah, like it's all going to be like that. Like this is the new feel and vibe of the game. I never wanted it to just be zombies that has that kind of feel and that look and that punchiness, that player feedback. You know, it's going to be for everything.
+
+I think we need to focus on making Sandbox just a thing you can fuck around in before we focus on making Sandbox this thing that saves game modes and creates game modes. And the reason I wanted to like make Numerac binary or something similar was to make a pure coding language, because maybe I want to use that outside of the game, but maybe that's not possible because I'm also really dumb when it comes to understanding that properly, because I'm new to coding still. But you can tell that I have a lot of coding thinking in my brain. I'm good at it because of how I'm trying to make a coding language, but yeah."
+Decided (Adam): playground first (stages 0-7: feel everywhere, shell, spawns, NPC maker, loot/hotbar, zones, Numerat); game rules g + saving/sharing custom modes (stages 8-9) after. Sandbox under Special. Any map: simple boards are one map type; special maps (Duck Cabin, Downpour ...) are walked in fully, as in their own modes. Live NPC cap 800. Uploads kept as they are unless "compress" (pixel look) is ticked. Numerat: plain JavaScript; no numerat mode in the terminal; files run by a Run button, by a bash command, attached to a spawn/orb/zone, or imported in g; a bash command stops a running file; words and, or, not, nand, xor. Stage 0 (Noah) and stage 1 (Solomon) start now.
+
+## Nov 19 01:41Z (owner, after Adam's testing reply)
+"Idk wat that means but have every worker question ur decision"
+Decided (Adam): every worker (Solomon the 2nd, Noah, Jackal, Miles Jr.) reviews Adam's Sandbox reading (README, plan doc, decisions under the 01:34Z answers, stage order, testing standard) against the owner's own file and answers, and sends Adam every point they think is wrong or missing. Adam fixes what is wrong and brings real disagreements to the owner in plain words.
+
+## Nov 19 01:43Z (owner)
+"Testing should be brief and resource efficient. Emphasis on brief. Testing with a compiler should ne enough right?"
+Decided (Adam): testing standard cut to a brief version (notes/testing-standard.md): automatic checks + a headless run with 0 errors, one line per owner sentence the change covers, edges only where numbers/states are involved, Chromium phone + computer by code (Firefox, sideways, online only when relevant), a one-pass regression script, 3-6 line report. Answer to the owner: no, syntax checks alone miss things like the knife-sized guns; a short run of the game is still needed.
+
+## Nov 19 01:57Z (owner, answers to Adam's 4 questions of 01:55Z: 1 upload size cap 2 MB?, 2 "full and empty hotbar" = every slot shows but holds nothing?, 3 spawn key only in build mode?, 4 online NPC cap lower, like 300?)
+"1. Yeah
+2. yes
+3. Key?
+4. Cap is based off of zombies caps for entities"
+Decided (Adam): uploads capped at 2 MB; build mode's hotbar shows every slot, all empty; NPC cap follows the zombie cap (Z_MOST 800 in js/l4ddrules.js), online too. Question 3 re-asked in plainer words.

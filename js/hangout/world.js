@@ -10,6 +10,7 @@
    higher ground only if it is that high at that moment; walking off an edge falls (off the deck, a long way). Other
    ducks glide to where the room says they are, and jump and fall from their own numbers (z: height, b: where the jump
    began). The activities (registry.js) add the context button, and whatever they draw. */
+import { baseMode, baseL4map } from "../sandboxrules.js";
 import * as L from "./layout.js";
 import { DRAW, GROUND, DECOR, groundColor } from "./shapes.js";
 import { svgDataURL, useHangArtCSS } from "./art.js";
@@ -26,6 +27,8 @@ import {
   gridPx,
   snap,
   setDuckSize,
+  setCamScale,
+  PAGE_DUCK,
   raster,
   rasterReady,
 } from "../pixel.js";
@@ -33,6 +36,8 @@ import { applyPalette } from "../pixelpalette.js";
 
 export const BOARD_HTML =
   '<div class="board hang-board"><canvas class="hang-ground" aria-hidden="true"></canvas><div class="hang-props"></div><div class="ducks"></div><div class="hang-shade" hidden></div><div class="fxl"></div></div>';
+/* a crown (Downpour's trees) is drawn over every duck and prop, under the dark and the rain: above the highest foot */
+const CROWN_Z = 5000;
 const SPEED = 380,
   SPRINT = 1.75; // world px a second
 const AIR_UP = 6; // in the air, ground this much above the feet still catches them
@@ -44,7 +49,8 @@ const dirOf = (dx, dy) => (dx > 0 ? "r" : dx < 0 ? "l" : dy > 0 ? "d" : "u");
    cfg() → the jump's { T, H }; button() → the context button changed (redraw it); clickUse() → a click on a thing near
    my duck uses it (the Click to interact setting) */
 export function mountWorld(board, api) {
-  L.useMode(((api.room().state || {}).options || {}).mode); // (Quacky Zombies' cabin, or Hangout's: layout.js)
+  const opt = (api.room().state || {}).options || {};
+  L.useMode(baseMode(opt), baseL4map(opt)); // (Quacky Zombies' cabin or its Downpour, or Hangout's, or Sandbox on one of them: layout.js)
   const canvas = board.querySelector(".hang-ground"),
     g = canvas.getContext("2d"),
     propsBox = board.querySelector(".hang-props"),
@@ -58,6 +64,7 @@ export function mountWorld(board, api) {
   let dead = false,
     last = 0,
     inside = false,
+    bldg = 0, // (the building I'm in: Downpour has two; the cabin is 1)
     flip = -1e9,
     shut = false,
     button = null,
@@ -76,30 +83,44 @@ export function mountWorld(board, api) {
       b: L.CABIN.y1 + 14,
     },
     SHADE_IN = 350,
+    /* Downpour (the second map): the hole is the building I'm in */
+    holeOf = (b) => {
+      if (L.layoutVariant() !== "l4gs") return;
+      const B = b === 2 ? L.GS.CHAPEL : L.GS.STATION;
+      Object.assign(HOLE, {
+        l: B.x0,
+        t: B.y0 - 12 - B.wall,
+        r: B.x1,
+        b: B.y1 + 14,
+      });
+      shade._sz = null; // (its size again)
+    },
     SHADE_OUT = 700;
   /* Quacky Zombies: the shade has a notch where the deck shows through a hole in the south wall (layout.js' PEEKS), cut
      out of it and its big shadow (in its own px, at the camera's scale) */
+  const peeks = () => L.PEEKS.filter((k) => !k.bldg || k.bldg === bldg); // (Downpour: the building I'm in's only)
   const peekClip = () => {
-    if (!L.PEEKS.length) return "";
+    if (!peeks().length) return "";
     const k = cam.sc,
       W0 = (HOLE.r - HOLE.l) * k,
       H0 = (HOLE.b - HOLE.t) * k,
       E = 4200,
       box = (x0, y0, x1, y1) =>
         `M${x0.toFixed(1)} ${y0.toFixed(1)}H${x1.toFixed(1)}V${y1.toFixed(1)}H${x0.toFixed(1)}Z`;
-    return `path(evenodd, "${box(-E, -E, W0 + E, H0 + E)}${L.PEEKS.map(
-      ({ out: [x0, y0, x1, y1] }) =>
+    return `path(evenodd, "${box(-E, -E, W0 + E, H0 + E)}${peeks()
+      .map(({ out: [x0, y0, x1, y1] }) =>
         box(
           (x0 - HOLE.l) * k,
           (y0 - HOLE.t) * k,
           (x1 - HOLE.l) * k,
           (y1 - HOLE.t) * k,
         ),
-    ).join("")}")`;
+      )
+      .join("")}")`;
   };
   const outOfHole = (l, t, r, b) =>
     (r < HOLE.l || l > HOLE.r || b < HOLE.t || t > HOLE.b) &&
-    !L.PEEKS.some(
+    !peeks().some(
       ({ out: [x0, y0, x1, y1] }) => r > x0 && l < x1 && b > y0 && t < y1,
     ); // (Quacky Zombies: the deck through a hole in the south wall shows too)
   const toScreen = (x, y, h = 0) => ({
@@ -134,8 +155,26 @@ export function mountWorld(board, api) {
         l + w > -NEAR &&
         t < cam.vh + NEAR &&
         t + h > -NEAR,
+      /* on my screen, or less than two ducks past its edge (the owner's, Nov 18 14:20Z: "draw a little bit off the
+         screen on the outside of players for things like screen shakes or sprinting ... one or two duck lengths
+         maybe"): what Dead Ducks Arcade draws; anything further out isn't drawn at all (l4dd.js) */
+      onView: (l, t, w, h) => {
+        const m = 2 * L.DUCK * cam.sc;
+        return l < cam.vw + m && l + w > -m && t < cam.vh + m && t + h > -m;
+      },
       propEl: (id) => els.get(id) || null,
+      coverAt: (l, r, t, b, zi) => coverAt(l, r, t, b, zi),
+      frameOf: (e, i) => frameOf(e, i),
       propEls: (id) => all.get(id) || [],
+      /* does something drawn over (l, t, r, b) on the screen, at depth key, hide a duck or a zombie behind it? (as a wall
+         turns see-through: Downpour's Angel machine, l4ddangelui.js) */
+      hides: (l, t, r, b, key) =>
+        boxes.some(
+          (d) =>
+            d.need === undefined &&
+            d.key < key &&
+            covered(d, l, r, t, b) > HIDDEN,
+        ),
       shines: (l) => shines(l, R().state),
       at: (id) => {
         const p = R().state.pos[id];
@@ -191,10 +230,10 @@ export function mountWorld(board, api) {
       o.x += (tx - o.x) * k;
       o.y += (ty - o.y) * k;
     }
-    const gnd = L.heightAt(o.x, o.y);
+    const gnd = L.floorH(o.x, o.y, Math.max(p.z ?? 0, o.z)); // (on a roof: the roof; never one it jumps up under)
     if (p.j && now < api.landsAt(p))
       o.z = Math.max(gnd, (p.b ?? gnd) + api.jumpZ(p, now) * L.DUCK); // a jump: the arc itself
-    else if ((p.z ?? gnd) > L.heightAt(tx, ty) + 2)
+    else if ((p.z ?? gnd) > L.floorH(tx, ty, p.z) + 2)
       o.z = Math.max(
         gnd,
         o.z + ((p.z ?? gnd) - o.z) * (1 - Math.exp(-dt / 0.07)),
@@ -528,7 +567,10 @@ export function mountWorld(board, api) {
     }
     e.style.width = b.w + "px";
     e.style.height = b.h + "px";
-    e.style.zIndex = it.layer === "floor" ? 2 : Math.round(it.key) + 10;
+    e.style.zIndex =
+      it.layer === "floor"
+        ? 2
+        : Math.round(it.key) + 10 + (it.layer === "crown" ? CROWN_Z : 0);
     if (it.style) e.style.cssText += it.style;
     const svg = typeof it.svg === "function" ? it.svg() : it.svg;
     if (it.img) {
@@ -537,6 +579,7 @@ export function mountWorld(board, api) {
       im.draggable = false;
       im.src = it.url ? svg : svgDataURL(svg);
       e._src = svg; // (the pixel look makes its pixels from it: still())
+      if (it.frames) e._frames = it.frames; // (a drawing that moves in steps, each its own picture: frameOf)
       e.append(im);
     } else e.innerHTML = svg;
     if (p) {
@@ -551,14 +594,22 @@ export function mountWorld(board, api) {
   }
   /* the pixel look: a still picture (a wall, the forest bands) as pixels at the size it shows now (pixel.js makes it
      once for each size; the drawing shows until it's ready) */
+  /* a drawing that moves in steps (shapes.js: frames, Downpour's bell): shows step i, its pixels made once each */
+  function frameOf(e, i) {
+    if (!e || !e._frames || e._fr === i) return;
+    e._fr = i;
+    e._src = e._frames(i);
+    if (!pixelOn() && e.firstChild) e.firstChild.src = svgDataURL(e._src); // (with the pixel look, still() makes it next frame)
+  }
   function still(e, it, sw, sh) {
     const g = gridPx(),
-      k = Math.round(sw / g) + "x" + Math.round(sh / g),
+      k = Math.round(sw / g) + "x" + Math.round(sh / g) + "/" + (e._fr ?? ""),
       im = e.firstChild;
     if (e._pxk === k || !im || im.tagName !== "IMG") return;
     e._pxk = k;
     im.classList.add("px");
-    const key = "hp" + items.indexOf(it),
+    const key =
+        "hp" + items.indexOf(it) + (e._fr !== undefined ? "f" + e._fr : ""),
       u = raster(key, e._src, sw, sh);
     if (u) im.src = u;
     else
@@ -566,16 +617,19 @@ export function mountWorld(board, api) {
         if (v && e._pxk === k) im.src = v;
       });
   }
-  /* every duck on my side of the walls: its box on the screen and its depth (a wall or a tree turns see-through only
-     while it hides one: a duck behind it with a good part of it covered) */
+  /* my duck: its box on the screen and its depth. The one rule for every mode (the owner's, Nov 17 17:41Z): a wall, a
+     roof, a tree's crown or anything else turns see-through only while it covers MY duck (I'm under that roof, in that
+     building, under that foliage or behind that wall). Never for anyone else, friend, Justin or zombie: they show only
+     as their outline (outlines.js). Up on a roof, my duck is in front of it (layout.js sortY), so no roof turns
+     see-through under me */
+  let boxes = []; // (this frame's: hides)
   function duckBoxes(s) {
     const size = L.DUCK * cam.sc,
-      out = [];
-    for (const id of s.seat) {
-      if (!s.pos[id] && !mine(id)) continue;
-      const a = at(id, s.pos[id]);
-      if (L.inCabin(a.x, a.y) !== inside) continue; // (not one seen through a hole: nothing turns see-through over it)
-      const g = L.heightAt(a.x, a.y),
+      out = [],
+      id = R().me;
+    if (s.pos[id] || mine(id)) {
+      const a = at(id, s.pos[id]),
+        g = L.heightAt(a.x, a.y),
         f = toScreen(a.x, a.y, g),
         lift = Math.max(0, a.z - g) * cam.sc;
       out.push({
@@ -584,26 +638,55 @@ export function mountWorld(board, api) {
         r: f.left + size * 0.4,
         t: f.top - lift - size * 0.9,
         b: f.top - lift,
+        up: !!L.deckAt(a.x, a.y, a.z), // (up on a roof: no wall or roof turns see-through, only a tree's crown over me)
       });
     }
-    /* and whatever else an activity says walks about (Quacky Zombies' zombies): [x, y] on the ground, as big as a duck */
-    for (const a of acts())
-      for (const [x, y] of a.hiders?.(ctx) || []) {
-        const f = toScreen(x, y, L.heightAt(x, y));
-        out.push({
-          key: L.sortY(x, y, 0),
-          l: f.left - size * 0.4,
-          r: f.left + size * 0.4,
-          t: f.top - size * 0.9,
-          b: f.top,
-        });
-      }
+    /* and what must never be hidden (Downpour's Angel machine: keep): a wall or a roof turns see-through while it
+       covers even a quarter of it (the owner's, Nov 17 05:46Z), only while I'm in the same building (outside the
+       chapel, its inside never shows: the owner's, Nov 17 17:41Z) */
+    for (const p of L.PROPS) {
+      if (!p.keep || !bldg || L.whereIn(p.x + p.w / 2, p.y + p.d) !== bldg)
+        continue;
+      const a = toScreen(p.box.l, p.box.t),
+        c = toScreen(p.box.l + p.box.w, p.box.t + p.box.h);
+      out.push({
+        key: p.key,
+        l: a.left,
+        r: c.left,
+        t: a.top,
+        b: c.top,
+        need: 0.25,
+      });
+    }
     return out;
   }
   const HIDDEN = 0.3; // this much of a duck's box covered: hidden
+  /* how much a duck's box (d) and a hit box on the screen (l, r, t, b) share, of the duck's box */
+  const covered = (d, l, r, t, b) =>
+    d.r > l && d.l < r && d.b > t && d.t < b
+      ? ((Math.min(d.r, r) - Math.max(d.l, l)) *
+          (Math.min(d.b, b) - Math.max(d.t, t))) /
+        ((d.r - d.l) * (d.b - d.t))
+      : 0;
+  /* the walls, roofs and crowns on the screen this frame, and where they cover (for the outlines: coverAt) */
+  const covers = [];
+  /* is a box on the screen (l, r, t, b), drawn at z-index zi, really covered by something drawn over it? A good part of
+     it (HIDDEN) under a wall, a roof or a crown whose own z-index is higher: what the screen shows, not inside against
+     outside (the owner's, Nov 17 19:11Z: "I CAN LITERALLY KNOW BY LOOKING AND SO CAN U THAT NOTHING HIDES THEM"). So a
+     zombie climbing in at a window, drawn over the walls and the dark (l4dd.js AT_BOARDS), is never hidden. One that is
+     see-through now (my duck is under it or behind it) hides nothing: under my own roof, whoever is under it with me
+     shows as they are. Holes and doors' see-through drawings never cover (drawProps leaves them out) */
+  const coverAt = (l, r, t, b, zi) => {
+    const d = { l, r, t, b };
+    for (const c of covers)
+      if (!c.thru && zi < c.z && covered(d, c.l, c.r, c.t, c.b) > HIDDEN)
+        return true;
+    return false;
+  };
   function drawProps(ducks) {
     const { sc, vw, vh } = cam,
       scs = sc.toFixed(4);
+    covers.length = 0;
     for (const it of items) {
       const b = it.box,
         sx = (b.l - cam.x) * sc + vw / 2,
@@ -632,23 +715,34 @@ export function mountWorld(board, api) {
         e._tr = tr;
         e.style.transform = tr;
       }
-      if (it.fade) {
+      if (it.fade || it.layer === "crown") {
         const h = it.hit || { l: b.l, t: b.t, r: b.l + b.w, b: b.t + b.h },
           hl = (h.l - cam.x) * sc + vw / 2,
           hr = (h.r - cam.x) * sc + vw / 2,
           ht = (h.t - cam.y) * sc + vh / 2,
           hb = (h.b - cam.y) * sc + vh / 2;
-        const thru = ducks.some(
-          (d) =>
-            d.key < it.key &&
-            (Math.min(d.r, hr) - Math.max(d.l, hl)) *
-              (Math.min(d.b, hb) - Math.max(d.t, ht)) >
-              HIDDEN * (d.r - d.l) * (d.b - d.t) &&
-            d.r > hl &&
-            d.l < hr &&
-            d.b > ht &&
-            d.t < hb,
-        );
+        /* a wall, a roof or a trunk: while it hides my duck behind it or under it. A crown (Downpour's trees) is a roof
+           over whoever is under it, in front of its trunk or behind: it turns see-through while it hides my duck */
+        const thru =
+          it.layer === "crown"
+            ? ducks.some((d) => covered(d, hl, hr, ht, hb) > (d.need ?? HIDDEN))
+            : ducks.some(
+                (d) =>
+                  !d.up &&
+                  d.key < it.key &&
+                  covered(d, hl, hr, ht, hb) > (d.need ?? HIDDEN),
+              );
+        /* what really covers: not a hole smashed through a wall (you see through it into the room, or out of it) nor a
+           door's see-through drawing from the other side of its wall (the owner's, Nov 17 19:11Z) */
+        if (!(it.p && it.p.kind === "hole") && !/door-ghost/.test(it.cls || ""))
+          covers.push({
+            l: hl,
+            r: hr,
+            t: ht,
+            b: hb,
+            z: +e.style.zIndex || 0, // (where it's really drawn: its own z-index, a door's 20001 too)
+            thru,
+          });
         if (e._thru !== thru) {
           e._thru = thru;
           e.classList.toggle("thru", thru);
@@ -666,7 +760,9 @@ export function mountWorld(board, api) {
       if (n && n.label && (!best || (n.d ?? 0) < (best.d ?? 0))) best = n;
     }
     button = best;
-    const sig = best ? best.label + (best.key || "") : "";
+    const sig = best
+      ? best.label + (best.key || "") + (best.faded ? "~" : "")
+      : "";
     if (sig !== btnSig) {
       btnSig = sig;
       api.button();
@@ -679,14 +775,15 @@ export function mountWorld(board, api) {
       s = r.state;
     if (me.j || me.vz != null) return 0;
     const ka = duckRoom((s.players[r.me] || {}).duck),
-      here = L.inCabin(x, y);
+      here = L.whereIn(x, y, me.z);
     let d = 0;
     for (const id of s.seat) {
       const p = s.pos[id];
       if (id === r.me || !p || (p.j && now < api.landsAt(p))) continue;
+      if (acts().some((a) => a.passable && a.passable(id, ctx))) continue; // (an activity's dead: walked over, Quacky Zombies)
       const ox = p.x * L.W,
         oy = p.y * L.H;
-      if (Math.abs((p.z ?? 0) - me.z) > 40 || L.inCabin(ox, oy) !== here)
+      if (Math.abs((p.z ?? 0) - me.z) > 40 || L.whereIn(ox, oy, p.z) !== here)
         continue;
       const kb = duckRoom((s.players[id] || {}).duck),
         dx = (x - ox) / (28 * (ka.x + kb.x)),
@@ -697,6 +794,10 @@ export function mountWorld(board, api) {
       if (a.crowd) d = Math.max(d, a.crowd(x, y, me, ctx)); // (an activity's own walkers: Quacky Zombies' zombies)
     return d;
   }
+  /* the floor under my duck at (x, y): the ground, or a roof it is on or over (Downpour: layout.js floorH). zTop: the
+     highest its feet were this step, so a fall onto a roof lands on it, even past it in one frame */
+  let zTop = 0;
+  const floor = (me, x, y) => L.floorH(x, y, Math.max(me.z, zTop)); // (a roof holds feet already at or over it: a jump under the canopy never lands on it)
   const endJump = (me) => {
     me.j = 0;
     me.lj = false;
@@ -705,7 +806,7 @@ export function mountWorld(board, api) {
   };
   /* after a step: up or down a step, landing on what it walked onto, or off an edge (it falls) */
   function ground(me, x, y, ev) {
-    const gnd = L.heightAt(x, y);
+    const gnd = floor(me, x, y);
     if (me.jf) {
       if (me.z < gnd) me.z = gnd; // (flying: onto anything higher, still flying)
       return;
@@ -734,6 +835,42 @@ export function mountWorld(board, api) {
     }
   }
 
+  /* the ladder up the gas station's back wall (Downpour, Part B: the owner's, Nov 17 12:28Z). At its foot, pushing into
+     the wall climbs it, at about a walk; at the top, my duck steps onto the roof. Let go of the stick and it holds on;
+     push away (or sideways off it) and it lets go and falls. True while my duck is on it (nothing else moves it) */
+  const CLIMB = 150; // px a second
+  function climb(me, x, y, ax, ay, dt, ev) {
+    if (me.j || me.jf || !L.atLadder(x, y)) return (me.lad = false);
+    const top = L.ladderTop();
+    if (!me.lad) {
+      if (!(ay > 0.5 && Math.abs(ax) < 0.7 && me.vz == null)) return false;
+      me.lad = true;
+    }
+    if (ay < -0.3 || Math.abs(ax) > 0.7) {
+      me.lad = false;
+      if (me.z > floor(me, x, y) + L.STEP) {
+        me.vz = 0;
+        me.top = me.z;
+      }
+      return false;
+    } // (let go: it falls, or walks off the bottom)
+    me.vz = null;
+    if (ay > 0.3) {
+      me.z = Math.min(top.h, me.z + CLIMB * dt);
+      ev.moved = true;
+      ev.climb = true;
+    }
+    if (me.z >= top.h - 0.5) {
+      me.lad = false;
+      me.z = me.b = top.h;
+      me.x = top.x / L.W;
+      me.y = top.y / L.H;
+      ev.force = true; // (onto the roof: the others see it at once)
+    }
+    return true;
+  }
+
+  const PHONE_OUT = 1.15;
   const world = {
     measure() {
       const r = board.getBoundingClientRect(),
@@ -742,14 +879,23 @@ export function mountWorld(board, api) {
       const across =
         vw >= 1100 ? 1300 : vw <= 500 ? 520 : 520 + ((vw - 500) / 600) * 780;
       cam.sc = Math.min(vw / across, vh / 380) || 1;
+      /* Dead Ducks Arcade on a phone, upright or on its side: 15% more of the map each way (the owner's, Nov 18 15:18Z:
+         "The board or map for the zombie game should be a little more zoomed out in perspective or camera for mobile
+         players in vertical OR horizontal becuz it feels cramped") */
+      if (
+        baseMode(R().state.options) === "l4dd" &&
+        document.documentElement.classList.contains("phone")
+      )
+        cam.sc /= PHONE_OUT;
       cam.vw = vw;
       cam.vh = vh;
       cam.low = low();
       cam.dpr = Math.min(2, devicePixelRatio || 1) * (cam.low ? 0.5 : 1); // (Low graphics: the ground at half its sharpness)
       if (pixelOn()) {
-        /* the pixel look: one of the ground canvas' pixels is one pixel of the grid (a 32nd of a duck, as the board's ducks:
-           the grid is set here first, so the ground is right from its first frame) */
-        setDuckSize(L.DUCK * cam.sc);
+        /* the pixel look: one of the ground canvas' pixels is one pixel of the grid (the pages' and every other map's, so
+           Duck Cabin's and Downpour's pixels are theirs too: set here first, so the ground is right from its first frame) */
+        setDuckSize(PAGE_DUCK); // (the pages' grid, as every other map: pixel.js)
+        setCamScale(cam.sc); // (the porch's string lights, made into pixels by a filter under this zoom: px-fc)
         const gp = gridPx();
         cam.dpr = 1 / gp;
         EDGE = Math.ceil(96 / gp) * gp;
@@ -805,7 +951,7 @@ export function mountWorld(board, api) {
     place(p, h) {
       const x = p.x * L.W,
         y = p.y * L.H;
-      return toScreen(x, y, h ?? L.heightAt(x, y));
+      return toScreen(x, y, h ?? L.floorH(x, y, p.z)); // (on a roof: on it)
     },
     /* a point on the board (px) → the spot on the ground seen there (the front-most one, where heights overlap) */
     unplace(px, py) {
@@ -822,15 +968,28 @@ export function mountWorld(board, api) {
     /* how far over its ground a duck is drawn (px), its z-index, whether it is on the other side of the walls, where it is drawn */
     lift(id, pos) {
       const a = at(id, pos);
-      return Math.max(0, a.z - L.heightAt(a.x, a.y)) * cam.sc;
+      return Math.max(0, a.z - L.floorH(a.x, a.y, a.z)) * cam.sc;
     },
     key(id, pos) {
-      const a = at(id, pos);
-      return Math.round(L.sortY(a.x, a.y, a.z)) + 10;
+      const a = at(id, pos),
+        h = !inside && L.roofHoleOver(a.x, a.y, a.z);
+      return h
+        ? Math.round(h.key) + 11
+        : Math.round(L.sortY(a.x, a.y, a.z)) + 10; // (seen from outside through a hole in a roof: over that roof, layout.js)
     },
     hidden(id, pos) {
       const a = at(id, pos);
-      return !L.seenFrom(a.x, a.y, inside);
+      return (
+        !L.seenFrom(a.x, a.y, inside, a.z) &&
+        !(!inside && L.roofHoleOver(a.x, a.y, a.z))
+      );
+    },
+    coverAt: (l, r, t, b, zi) => coverAt(l, r, t, b, zi), // (the outlines: outlines.js; zi, its z-index)
+    frameOf,
+    /* where a duck is drawn: { x, y, z } in world px, or null (the outlines: its floor) */
+    at(id) {
+      const p = R().state.pos[id];
+      return p || mine(id) ? at(id, p || {}) : null;
     },
     /* the way an activity turns a duck (seated: toward what it sits at), or 0 */
     face(id) {
@@ -854,9 +1013,14 @@ export function mountWorld(board, api) {
       if (!me || !cam.vw) return;
       if (cam.low !== low()) world.measure(); // (Graphics changed in Settings)
       ensure(me);
-      const was = inside;
-      inside = L.inCabin(me.x * L.W, me.y * L.H);
-      if (inside !== was) flip = now;
+      const was = bldg;
+      bldg = L.whereIn(me.x * L.W, me.y * L.H, me.z); // (up on a roof: outside)
+      inside = bldg > 0;
+      L.setHere(bldg);
+      if (bldg !== was) {
+        flip = now;
+        if (bldg) holeOf(bldg);
+      }
       shut = inside && now - flip > SHADE_IN;
       for (const id of s.seat)
         if (id !== r.me && s.pos[id]) glide(id, s.pos[id], dt, now);
@@ -881,7 +1045,8 @@ export function mountWorld(board, api) {
       clampCam();
       for (const a of acts()) a.step?.(dt, now, ctx);
       drawGround(now, s, tx, ty);
-      drawProps(duckBoxes(s));
+      boxes = duckBoxes(s);
+      drawProps(boxes);
       const show = inside || now - flip < SHADE_OUT;
       if (shade.hidden === show) {
         shade.hidden = !show;
@@ -962,6 +1127,8 @@ export function mountWorld(board, api) {
           return ev;
         } // (seated: at the seat's height, no falling)
       } else pushed = "";
+      zTop = me.z;
+      if (climb(me, x, y, ax, ay, dt, ev)) return ev; // (on the ladder: up it, or holding on)
       if (me.j !== me._j) {
         me._j = me.j;
         me._za = undefined;
@@ -973,8 +1140,12 @@ export function mountWorld(board, api) {
       if (me.jf) {
         // the jetpack: up while its jets are on, the height kept, or falling; never higher than JET.TOP over the ground
         const jet = api.jet?.() || {},
-          gnd = L.heightAt(x, y),
-          top = gnd + JET.TOP * L.DUCK;
+          gnd = floor(me, x, y),
+          over = L.deckOver(x, y, me.z),
+          top = Math.min(
+            gnd + JET.TOP * L.DUCK,
+            over ? over.h - L.DUCK * 0.9 : Infinity,
+          ); // (never up through a roof: through its holes only)
         if (jet.up)
           me.vz = Math.min(JET.RISE * L.DUCK, me.vz + JET.PUSH * L.DUCK * dt);
         else if (jet.hold) me.vz = 0;
@@ -993,7 +1164,7 @@ export function mountWorld(board, api) {
       } else if (me.j) {
         // a jump's arc, from where it began; it lands early on anything high enough, or falls on past its end
         const za = me.b + api.jumpZ(me, now) * L.DUCK,
-          gnd = L.heightAt(x, y);
+          gnd = floor(me, x, y);
         if (now >= api.landsAt(me)) {
           ev.land = me.dj ? 2 : 1;
           endJump(me);
@@ -1016,7 +1187,7 @@ export function mountWorld(board, api) {
         // falling
         me.vz -= G * dt;
         me.z += me.vz * dt;
-        const gnd = L.heightAt(x, y);
+        const gnd = floor(me, x, y);
         if (me.z <= gnd) {
           ev.thud = me.top - gnd;
           me.z = gnd;
@@ -1106,7 +1277,7 @@ export function mountWorld(board, api) {
     /* the context button, in the place of the Vote / End turn button (kept in its place, unseen, when nothing is near) */
     buttonHTML() {
       return button
-        ? `<div class="act-row"><button type="button" class="btn hang-btn" data-a="hang">${esc(button.label)} <kbd>${esc(button.key || "E")}</kbd></button></div>`
+        ? `<div class="act-row"><button type="button" class="btn hang-btn${button.faded ? " faded" : ""}" data-a="hang">${esc(button.label)} <kbd>${esc(button.key || "E")}</kbd></button></div>`
         : '<div class="act-row"><button type="button" class="btn hang-btn idle" tabindex="-1" aria-hidden="true" disabled>Sit <kbd>E</kbd></button></div>';
     },
     press() {

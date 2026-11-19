@@ -9,6 +9,7 @@ instruments (its license: LICENSES.md).
 |---|---|---|
 | countTick | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
 | countGo | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
+| voteTick | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
 | l4round | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
 | step | Kenney, Impact Sounds (footstep_wood) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
 | zstep | Kenney, Impact Sounds (footstep_carpet) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
@@ -18,6 +19,8 @@ instruments (its license: LICENSES.md).
 | ak | Still North Media, The Free Firearm Sound Library (AK-47 7.62) — https://opengameart.org/content/the-free-firearm-sound-library | CC0 1.0 |
 | lmg | Still North Media, The Free Firearm Sound Library (AR-15 5.56) — https://opengameart.org/content/the-free-firearm-sound-library | CC0 1.0 |
 | chaingun | Still North Media, The Free Firearm Sound Library (PPSh) — https://opengameart.org/content/the-free-firearm-sound-library | CC0 1.0 |
+| tommy | Still North Media, The Free Firearm Sound Library (M45 SMG and PPSh bursts, 1911 .45) — https://opengameart.org/content/the-free-firearm-sound-library | CC0 1.0 |
+| ump | Still North Media, The Free Firearm Sound Library (1911 .45, AK-47 burst) — https://opengameart.org/content/the-free-firearm-sound-library | CC0 1.0 |
 | sniper | Still North Media, The Free Firearm Sound Library (Tikka T3 .30-06) — https://opengameart.org/content/the-free-firearm-sound-library | CC0 1.0 |
 | shotgun | Still North Media, The Free Firearm Sound Library (Winchester Model 12) — https://opengameart.org/content/the-free-firearm-sound-library | CC0 1.0 |
 | pump | SpringySpringo, Gun Reload Sounds — https://opengameart.org/content/gun-reload-sounds | CC0 1.0 |
@@ -72,6 +75,8 @@ instruments (its license: LICENSES.md).
 | uiClose | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
 | nope | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
 | tick | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
+| holdFill | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
+| holdClick | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
 | done | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
 | bell | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
 | ping | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
@@ -120,3 +125,30 @@ instruments (its license: LICENSES.md).
 | axeHit | Kenney, RPG Audio (chop) and Impact Sounds (impactPunch_heavy) — https://kenney.nl/assets/rpg-audio | CC0 1.0 |
 | swordHit | Kenney, RPG Audio (knifeSlice2); lostchocolatelab, clang (freesound 1468, from Stendhal) — https://kenney.nl/assets/rpg-audio | CC0 1.0 |
 | panHit | alienistcog, clang (freesound 124711, from Stendhal); Kenney, RPG Audio (metalPot3) — https://freesound.org/people/alienistcog/sounds/124711/ | CC0 1.0 |
+| powerUp | CogFireStudios, electric motor start (freesound 619835); joe_anderson22, machinery (freesound 392983); Kenney, Impact Sounds (both via CDDA-Soundpacks) — https://freesound.org/s/619835/ | CC0 1.0 |
+| powerDown | GiocoSound, engine stop (freesound 401553, via CDDA-Soundpacks); Kenney, Impact Sounds — https://freesound.org/people/GiocoSound/sounds/401553/ | CC0 1.0 |
+| partGot | Kenney, RPG Audio and Impact Sounds — https://kenney.nl/assets/rpg-audio | CC0 1.0 |
+| partIn | Kenney, Impact Sounds and RPG Audio; LFA, Equipment Clicks III — https://opengameart.org/content/equipment-clicks-iii | CC0 1.0 |
+| gasPour | Owlish Media, tap water and drinks; qubodup, Liquid bottle drink set (bottle-open-01) — https://opengameart.org/content/202-more-sound-effects | CC0 1.0 |
+| angelWork | joe_anderson22, machinery (freesound 392983); Electricity Game Sound Pack (charge, snaploop) — https://opengameart.org/content/electricity-game-sound-pack | CC0 1.0 |
+| angelOrb | JaggedStone, Magic Spell SFX (magical_1); Electricity Game Sound Pack (teleport) — https://opengameart.org/content/magic-spell-sfx | CC0 1.0 |
+| trombone | GeneralUser GS SoundFont (S. Christian Collins), trombone | GeneralUser GS license |
+| fire | PagDev, Fireplace Sound Loop — https://opengameart.org/content/fireplace-sound-loop | CC0 1.0 |
+| fireLight | Nic3_one, fire attack (freesound 166555, from Stendhal) — https://freesound.org/people/Nic3_one/sounds/166555/ | CC0 1.0 |
+| boomSmall | TinyWorlds, Explosion (explosion); Kenney, Sci-fi Sounds (lowFrequency_explosion_000, explosionCrunch_000) — https://opengameart.org/content/sci-fi-sounds | CC0 1.0 |
+| laser | Kenney, Digital Audio (laser9, laser3) — https://kenney.nl/assets/digital-audio | CC0 1.0 |
+| laserHiss | bart, Steam Release Sounds — https://opengameart.org/content/steam-release-sounds | CC0 1.0 |
+| laserSteam | bart, Steam Release Sounds — https://opengameart.org/content/steam-release-sounds | CC0 1.0 |
+| stepGrass | Kenney, Impact Sounds (footstep_grass) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| stepHard | Kenney, Impact Sounds (footstep_concrete) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| stepMetal | Kenney, Impact Sounds (footstep_concrete, impactMetal_light) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| stepWater | dawidwmika (walk_water, CC0, via CDDA-Soundpacks); Kenney, Impact Sounds — https://freesound.org/s/372518/ | CC0 1.0 |
+| swim | rubberduck (CC0, via EternityForest/Free-SFX) — https://opengameart.org/users/rubberduck | CC0 1.0 |
+| climb | Breviceps (CC0, via CDDA-Soundpacks) — https://freesound.org/people/Breviceps/sounds/458963/ | CC0 1.0 |
+| thud | Kenney, Impact Sounds (impactSoft_heavy, impactPunch_heavy) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| gore | PaulMorek (CC0, via CDDA-Soundpacks) — https://freesound.org/people/PaulMorek/sounds/196725/ | CC0 1.0 |
+| miss | Kenney, Interface Sounds (minimize_005) and Digital Audio (highDown) — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
+| rain | Ali@k (CC0, via CDDA-Soundpacks) — https://freesound.org/people/Ali@k/sounds/128907/ | CC0 1.0 |
+| wind | guyburns (CC0, via CDDA-Soundpacks) — https://freesound.org/people/guyburns/sounds/473815/ | CC0 1.0 |
+| churchBell | Nox_Sound (CC0, via CDDA-Soundpacks) — https://freesound.org/people/Nox_Sound/sounds/563885/ | CC0 1.0 |
+| cleared | Duck Friends' own song What the duck? (assets/music) | CC0 1.0 |

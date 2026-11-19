@@ -22,19 +22,28 @@ import {
   priceOf,
   maxHp,
   SHOP,
-  BUTLER,
+  merchantOf,
+  upOffer,
+  selling,
   BOX,
   boxNow,
   ARMS,
-  gunPrice,
   isHelper,
+  laserHeat,
+  wildOpen,
+  wildCrying,
+  isWild,
+  jaimeBody,
+  JBODY,
+  endless,
+  wetSlow,
 } from "./l4ddrules.js";
 import { walkOf } from "./rules.js";
+import { WANDER } from "./hangout/justin.js";
 
 const SEE = 460; // world px: how far a computer looks for a zombie to shoot
 const TOO_CLOSE = 95;
 const STEP_MS = 200; // (the TEST room's heartbeat: how far it walks each time)
-const WISH = ["hp", "sp", "rl", "acc", "as"]; // what a computer buys first
 const AT = 90; // world px: near enough to the Butler or the fireplace
 const spinAt = new Map(); // computer → when it last spun the fireplace (one spin in a while, not every time it can)
 const readyAt = new Map(); // "computer round" → when it presses End turn (Ready in round 0): a few seconds into the wait
@@ -91,7 +100,13 @@ export function l4Bot(s, id, now, out) {
       });
   /* a teammate down: go to it and hold E (the hold goes on by itself until the revive is done) */
   const down = s.seat
-    .filter((t) => t !== id && ((h.l4p || {})[t] || {}).dn && s.pos[t])
+    .filter(
+      (t) =>
+        t !== id &&
+        ((h.l4p || {})[t] || {}).dn &&
+        !((h.l4p || {})[t] || {}).ex &&
+        s.pos[t],
+    ) // (down, not dead: the dead are never revived)
     .map((t) => ({ t, x: s.pos[t].x * W, y: s.pos[t].y * H }))
     .sort(
       (a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y),
@@ -157,7 +172,7 @@ export function l4Bot(s, id, now, out) {
      jump and the jetpack stay as they are) */
   const sp = sl[3];
   if (
-    ["jaime", "jaimebomb", "fireball", "zebra", "adrenaline"].includes(sp) &&
+    ["jaime", "jaimebomb", "zebra", "adrenaline"].includes(sp) &&
     m.am[sp] &&
     m.am[sp][0] > 0 &&
     bd < 400 &&
@@ -173,8 +188,10 @@ export function l4Bot(s, id, now, out) {
     });
     return;
   }
-  const loaded = [sl[1], sl[2]].filter(
-      (w) => w && m.am[w] && m.am[w][0] > 0 && m.rw !== w,
+  const loaded = [sl[1], sl[2]].filter((w) =>
+      w === "laser"
+        ? laserOk(s, id, now)
+        : endless(w) || (w && m.am[w] && m.am[w][0] > 0 && m.rw !== w),
     ),
     hp = ((h.l4p || {})[id] || {}).hp,
     w =
@@ -210,19 +227,22 @@ function shopping(s, id, now, x, y, far, m, send, out) {
   if (mine) {
     if (now < b.t + BOX.spin) return true; // (it waits by the fire while it spins)
     if (kindOf(b.w) === "ranged") {
-      const left = (w) => (m.am[w] ? m.am[w][0] + m.am[w][1] : 0);
+      const left = (w) =>
+        endless(w) ? Infinity : m.am[w] ? m.am[w][0] + m.am[w][1] : 0;
       hand = left(m.sl[1]) <= left(m.sl[2]) ? m.sl[1] : m.sl[2];
     } // (it gives up the emptier one)
     to = BOX;
     act = { t: "hang", k: "l4", do: "box", hand, id };
   } else {
     const up = upOf(s, id),
-      want = WISH.map((k) => SHOP.find((it) => it.id === k)).find(
+      want = SHOP.find(
         (it) =>
-          (up[it.id] || 0) < it.most && pts >= priceOf(it.id, up[it.id] || 0),
-      );
-    if (want) {
-      to = BUTLER;
+          it.id === upOffer(s, id) &&
+          (up[it.id] || 0) < it.most &&
+          pts >= priceOf(it.id, up[it.id] || 0),
+      ); // (only the one the merchant offers it this visit)
+    if (want && selling(s)) {
+      to = merchantOf(s); // (only while a merchant is here and selling)
       act = { t: "hang", k: "l4", do: "buy", what: want.id, id };
     } else if (!b && pts >= BOX.price && now - (spinAt.get(id) || 0) > 45000) {
       to = BOX;
@@ -249,8 +269,8 @@ function shopping(s, id, now, x, y, far, m, send, out) {
    knife only once every gun is empty and nothing can be bought. He keeps his distance: each heartbeat he tries 16 ways
    to step and takes the one that leaves him farthest from every zombie with the most open floor ahead (so never into a
    corner), sprinting (with a duck's own 7 seconds of breath) when one gets too close. He revives a downed duck when no
-   zombie is on it, ends the turn between rounds, buys ammo with his points (B), and shops like the others when the
-   room is clear. He walks exactly as fast as a duck would: by the time since his last step, at the Walking speed, the
+   zombie is on it, ends the turn between rounds, and shops like the others when the room is clear (no ammo to buy:
+   the merchants never sell it, the owner's, Nov 18 13:46Z). He walks exactly as fast as a duck would: by the time since his last step, at the Walking speed, the
    Butler's Speed and an adrenaline shot (a Speed Boost) */
 const KEEP = 240, // world px: the room he keeps from every zombie
   CLOSE = 150, // nearer than this he sprints away
@@ -264,6 +284,9 @@ const GUN_RANK = [
   "dbarrel",
   "ak",
   "burst",
+  "laser",
+  "tommy",
+  "ump",
   "smg",
   "sniper",
   "revolver",
@@ -274,20 +297,16 @@ const GUN_RANK = [
   "bow",
   "dagger",
 ];
-const leftIn = (m, w) => (m.am[w] ? m.am[w][0] + m.am[w][1] : 0);
+/* the Laser Rifle has no ammo: a computer fires it only while it's cool enough not to overheat it (its meter not full) */
+const laserOk = (s, id, now) => {
+  const q = laserHeat(s, id, now);
+  return !q.over && Math.round(q.h) < q.max;
+};
 
 function justinBot(s, id, now, out) {
   const p = s.pos[id],
     h = s.hang;
-  const wait = h.l4.wait;
-  if (wait && !wait.v[id]) {
-    const k = `${id} ${h.l4.r}`;
-    if (!readyAt.has(k)) readyAt.set(k, now + 1000 + Math.random() * 1500);
-    if (now >= readyAt.get(k)) {
-      readyAt.delete(k);
-      out.push({ t: "hang", k: "l4", do: "endturn", on: true, id });
-    }
-  }
+  // (Justin never presses End turn or Ready: only the players end a rest phase, the owner's, Nov 17 13:38Z)
   const x = p.x * W,
     y = p.y * H,
     dt = Math.min(400, Math.max(0, now - (lastAt.get(id) || now - STEP_MS)));
@@ -296,6 +315,7 @@ function justinBot(s, id, now, out) {
     walkPx =
       (fast ? WALK / (0.6 * 1.05) : WALK * (upOf(s, id).sp ? 1.1 : 1)) *
       walkOf(s) *
+      wetSlow(x, y) * // (Downpour's flood: as a player's duck is slowed)
       (dt / 1000),
     m = kitOf(s, id) || { sl: [], am: {}, u: {} },
     sl = m.sl,
@@ -313,13 +333,13 @@ function justinBot(s, id, now, out) {
     }
     return go ? walkPx * 1.75 : walkPx; // (world.js SPRINT)
   };
-  const send = (nx, ny, w, ax, ay) =>
+  const send = (nx, ny, w, ax, ay, j = 0) =>
     out.push({
       t: "move",
       id,
       x: +(nx / W).toFixed(5),
       y: +(ny / H).toFixed(5),
-      j: 0,
+      j,
       z: Math.round(heightAt(nx, ny)),
       b: Math.round(heightAt(nx, ny)),
       w,
@@ -331,12 +351,23 @@ function justinBot(s, id, now, out) {
       .map((z) => ({ z, d: Math.hypot(z.x - x, z.y - y) }))
       .sort((a, b) => a.d - b.d),
     d0 = near.length ? near[0].d : Infinity;
+  if (
+    isWild(s, id) &&
+    h.l4.wait &&
+    !wildCrying(s, id, now) &&
+    jaimeVisit(s, id, now, p, x, y, run, out)
+  )
+    return; // (a rest phase: he may stop by Jaime's body)
+  if (wildOpen(s, id)) return wildMove(s, id, now, p, x, y, near, run, out); // (Justin out there: never armed, the owner's, Nov 17 20:02Z)
   /* what he'd shoot: the nearest zombie he can see */
   const seen = near.find(
     (n) => n.d < SEE * 1.3 && clearShot(x, y, n.z.x, n.z.y, heightAt(x, y)),
   );
   /* his gun: the best one with something in it (not reloading); the chain gun when a zombie is close or they crowd */
-  const loaded = (w) => w && m.am[w] && m.am[w][0] > 0 && m.rw !== w;
+  const loaded = (w) =>
+    w === "laser"
+      ? laserOk(s, id, now)
+      : endless(w) || (w && m.am[w] && m.am[w][0] > 0 && m.rw !== w);
   const crowd = seen
     ? zs.filter((z) => Math.hypot(z.x - seen.z.x, z.y - seen.z.y) < 150).length
     : 0;
@@ -353,25 +384,15 @@ function justinBot(s, id, now, out) {
     guns.includes("chaingun") && (d0 < 300 || crowd >= 3 || !others.length)
       ? "chaingun"
       : others[0] || (guns.includes("shotgun") ? "shotgun" : "");
-  {
-    const buyable = [sl[1], sl[2]].find(
-      (w) =>
-        w &&
-        !leftIn(m, w) &&
-        gunPrice(s, id, w) &&
-        ptsOf(s, id) >= gunPrice(s, id, w),
-    );
-    if (buyable) {
-      out.push({ t: "hang", k: "l4", do: "ammo", what: buyable, id });
-      if (!gun) {
-        send(x, y, buyable, 1, 0);
-        return;
-      }
-    }
-  } // (an empty gun of the Butler's: B fills it, with his points)
   /* a downed teammate with no zombie on it (nor on him): go and hold E by it */
   const down = s.seat
-    .filter((t) => t !== id && ((h.l4p || {})[t] || {}).dn && s.pos[t])
+    .filter(
+      (t) =>
+        t !== id &&
+        ((h.l4p || {})[t] || {}).dn &&
+        !((h.l4p || {})[t] || {}).ex &&
+        s.pos[t],
+    ) // (down, not dead: the dead are never revived)
     .map((t) => ({ t, x: s.pos[t].x * W, y: s.pos[t].y * H }))
     .filter((t) => zs.every((z) => Math.hypot(z.x - t.x, z.y - t.y) > KEEP))
     .sort(
@@ -411,8 +432,7 @@ function justinBot(s, id, now, out) {
     return;
   }
   /* step: where every zombie is farthest and the floor ahead is open; staying put is one of the choices */
-  const want = d0 < CLOSE,
-    far = run(want);
+  const far = run(d0 < CLOSE);
   let [nx, ny] = [x, y];
   if (d0 < KEEP) [nx, ny] = away(x, y, far, near);
   /* the gun on the nearest he can see; with no gun at all, the knife on one at arm's length */
@@ -441,6 +461,133 @@ function justinBot(s, id, now, out) {
       ax: ax / W,
       ay: ay / H,
     });
+}
+/* Justin out there with no weapon (the owner's, Nov 17): he runs from the nearest zombies and from a shot that flies
+   close (sprinting only while one is close, with his meter: a duck's own), cries and sprints off when he's hurt, never
+   jumps to dodge, and otherwise strolls about as he does in Duck Cabin */
+const wander = new Map(); // Justin → { x, y, until }
+/* where Justin strolls to, his Duck Cabin way (hangout/justin.js WANDER, the owner's, Nov 17 19:11Z: "HE SHOULD BE CASUALLY
+   WALKING AROUND WHICH IS ALREADY IN HIS CHARACTER SHEET! STOP REWRITING CODE TERRIBLY FOR THINGS ALREADY FIGURED OUT!"):
+   a spot anywhere on the map, walked to; once he's there he stands about (rest: true) until WANDER seconds have gone by
+   since he set off, then the next spot */
+function wanderSpot(id, now, x, y) {
+  let w = wander.get(id);
+  if (w && now <= w.until)
+    return Math.hypot(w.x - x, w.y - y) < 90 ? { ...w, rest: true } : w;
+  w = null;
+  for (let i = 0; i < 24 && !w; i++) {
+    const tx = Math.random() * W,
+      ty = Math.random() * H;
+    if (playable(tx, ty) && standable(tx, ty, heightAt(tx, ty), STEP))
+      w = {
+        x: tx,
+        y: ty,
+        until:
+          now + (WANDER[0] + Math.random() * (WANDER[1] - WANDER[0])) * 1000,
+      };
+  }
+  if (w) wander.set(id, w);
+  return w;
+}
+const scare = new Map(); // Justin → until when he's running off from a shot
+/* shots flying close to Justin (the owner's, Nov 17 18:05Z: "justin takes a second before running away when an enemy starts
+   shooting in his direction without actually damaging him"): he runs from them only once they've kept coming for
+   HEARD.wait ms, and then from where the last one passed, for HEARD.keep ms after it. A burst ends after HEARD.gap ms
+   with none. Returns that spot as a threat (as wildMove's zombies), or null */
+const HEARD = { wait: 1000, keep: 2500, gap: 1500 },
+  SCARE_ARMED = 140, // world px: how close a shot scares him with a gun
+  SCARE_BARE = 260; // (and with none)
+const heard = new Map(); // Justin → { from: the burst's first shot, last, x, y }
+function shotScare(s, id, now, x, y, far) {
+  let h = heard.get(id);
+  for (const sh of s.shots || []) {
+    if (sh.by === id || sh.lx === undefined) continue;
+    const sx = sh.lx * W,
+      sy = sh.ly * H;
+    if (Math.hypot(sx - x, sy - y) >= far) continue;
+    if (!h || now - h.last > HEARD.gap) h = { from: now };
+    h = { ...h, last: now, x: sx, y: sy };
+  }
+  if (h) heard.set(id, h);
+  if (!h || now - h.from < HEARD.wait || now - h.last > HEARD.keep) return null;
+  return { z: { x: h.x, y: h.y }, d: Math.hypot(h.x - x, h.y - y) };
+}
+/* in a rest phase Justin may go to Jaime's body: he asks the rules for this phase's plan once (half the time two visits),
+   walks there, and the rules make him say a line each time he's there; true while it's walking him */
+function jaimeVisit(s, id, now, p, x, y, run, out) {
+  const B = jaimeBody(),
+    v = s.hang.l4jv,
+    r = s.hang.l4.wait.r;
+  if (!B) return false;
+  if (!v || v.r !== r) {
+    out.push({ t: "hang", k: "l4", do: "jplan", id });
+    return false;
+  }
+  if (v.left <= 0) return false;
+  const d = Math.hypot(B.x - x, B.y - y);
+  if (d < JBODY.near * 0.8) {
+    if (now - v.at >= JBODY.gap)
+      out.push({ t: "hang", k: "l4", do: "jbody", id });
+    return false; // (he has said his line: he wanders off again until the next visit)
+  }
+  if (now - v.at < JBODY.gap) return false;
+  const to = wayTo(x, y, B.x, B.y, now) || [B.x, B.y],
+    [nx, ny] = walk(x, y, to[0], to[1], run(false));
+  out.push({
+    t: "move",
+    id,
+    x: +(nx / W).toFixed(5),
+    y: +(ny / H).toFixed(5),
+    j: 0,
+    z: Math.round(heightAt(nx, ny)),
+    b: Math.round(heightAt(nx, ny)),
+    w: p.w || "",
+    ax: +((nx - x || 1) / W).toFixed(4),
+    ay: +((ny - y) / H).toFixed(4),
+  });
+  return true;
+}
+function wildMove(s, id, now, p, x, y, near, run, out, forced = false) {
+  /* only the zombies scare him, and a duck's shots that keep flying close (after a second: shotScare); never the ducks
+     themselves (the owner's, Nov 17 18:05Z: "justin should be running from zombies not every player") */
+  const threats = [...near],
+    shot = shotScare(s, id, now, x, y, forced ? SCARE_ARMED : SCARE_BARE),
+    cry = wildCrying(s, id, now) && s.hang.l4jcry; // (hurt: crying, he sprints off from where it came from, l4ddrules.js CRY)
+  if (shot) threats.push(shot);
+  if (cry)
+    threats.push({
+      z: { x: cry.x, y: cry.y },
+      d: Math.hypot(cry.x - x, cry.y - y),
+    });
+  threats.sort((a, b) => a.d - b.d);
+  const d0 = threats.length ? threats[0].d : Infinity,
+    scared = forced || !!cry || d0 < KEEP * 1.4;
+  const w = scared ? null : wanderSpot(id, now, x, y);
+  let [nx, ny] = [x, y];
+  /* he sprints only with a reason (the owner's, Nov 17 19:11Z: "WHY IS JUSTIN ALWAYS SPRINTING WITHOUT EVER STOPPING"): a
+     zombie close (KEEP) or the shots that scared him; one farther off and he walks away from it. His meter is a duck's
+     own (run: L4.SPRINT to empty, as long to fill, and none until he stops wanting it once it ran out) */
+  const far = run(forced || !!cry || (!!shot && shot.d === d0) || d0 < KEEP);
+  if (scared) [nx, ny] = away(x, y, far, threats);
+  else if (w && !w.rest) {
+    const to = wayTo(x, y, w.x, w.y, now) || [w.x, w.y];
+    [nx, ny] = walk(x, y, to[0], to[1], far);
+    if (Math.hypot(nx - x, ny - y) < far * 0.2) wander.delete(id); // (stuck: another spot next time)
+  }
+  /* no jumps: he gets out of the way only by moving, as a player does (the owner's, Nov 17 20:37Z: "WHEN HE TRIES TO DODGE,
+     IT ISNT SOME ANIMATION THAT IS DONE BY MATH, HE SIMPLLY TRIES MOVING OUT THE WAY LIKE A PLAYER DOES") */
+  out.push({
+    t: "move",
+    id,
+    x: +(nx / W).toFixed(5),
+    y: +(ny / H).toFixed(5),
+    j: 0,
+    z: Math.round(heightAt(nx, ny)),
+    b: Math.round(heightAt(nx, ny)),
+    w: "",
+    ax: +((nx - x || 1) / W).toFixed(4),
+    ay: +((ny - y) / H).toFixed(4),
+  });
 }
 function shoot(s, id, now, m, w, ax, ay, out) {
   if (now - ((m.u || {})[w] || 0) < l4Cool(s, id, w)) return;

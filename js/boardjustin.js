@@ -13,22 +13,23 @@
      duck that steps away in time is missed); every 70 to 140 seconds he shouts a line from GOD_LINES (a shuffled
      playlist, "Frick you I am GOD!" among them) and lightning or fire strikes a random duck from the sky a moment later,
      and it plays dead.
-   - Players can shoot him back: a bullet, a dagger or `kill @Justin` knocks him down with one of his death lines, and he
-     gets up by himself after 5 seconds. E on him is Duck Cabin's only.
-   s.justin = { x0, y0, x1, y1, t, v, k, key, next, say, shoot, list, down }: he walks from (x0, y0) to (x1, y1) from time t at
+   - Players can shoot him back: a bullet, a dagger or `kill @Justin` kills him outright with one of his death lines: he
+     lies there, silent, and is back whole on the next turn (the owner's, Nov 18). E on him is Duck Cabin's only.
+   s.justin = { x0, y0, x1, y1, t, v, k, key, next, say, shoot, list, down, w }: he walks from (x0, y0) to (x1, y1) from time t at
    v board widths a second (every screen moves him on its own); k is the spot he picked; key the stage he's in; down when
-   he was knocked down. In
+   he was knocked down; w his wounds (wounds.js codes, justinHit). In
    Hangout he stays Duck Cabin's own (js/hangout/justin.js).
    A zebra cake thrown (the Zebra cake special, s.zcake): he runs after it, wherever he is, and eats it once it has
    landed (j.eat), as Mad God Justin does; nothing else of his happens meanwhile.
    The board's Mad God Justin (the mgjBoard option, only with Justin on): he has BJ_HP HP (j.hp of j.max), and a duck
    that hurts him is his target for RAGE_MS (j.rage): he goes after it with Mad God Justin's attacks (the hammer, his
-   pistol, the controllers, the chair and the fireball; never the edge lightning). A duck he hits by accident doesn't
+   pistol, the controllers and the chair; never the edge lightning; no fireball, the owner's, Nov 18 10:38Z). A duck he hits by accident doesn't
    become his target for it, nor does a duck a mode keeps safe (The Date and the Suitor at the table). At 0 HP he goes
    down for the room's knocked-down time, then gets up with his HP full. */
 import { E_LINES, DEATH_LINES, GOD_LINES } from "./hangout/justin.js";
 import { holdDown, downFor, invuln, hurtFx } from "./hangout/death.js";
 import { JUSTIN } from "./hangout/npcart.js";
+import { hitCode, knockable, PCRIT } from "./wounds.js";
 import { isQuack, tileAt, tileCenter, stillIn } from "./quackrules.js";
 import {
   isMgj,
@@ -37,8 +38,6 @@ import {
   DMG,
   THROW_TELL,
   CHAIR_TELL,
-  FB_TELL,
-  FB_EVERY,
   cakeAt,
   CAKE_EAT_MS,
 } from "./mgjrules.js";
@@ -64,7 +63,6 @@ const SPEED = 0.2; // board widths a second (about a duck's walk)
 const LOOK = [2000, 3000],
   SAY = [15000, 30000],
   SHOOT = [45000, 90000],
-  DOWN = 5000,
   HAMMER = [40000, 80000],
   GOD = [70000, 140000],
   STRIKE = 1600;
@@ -95,13 +93,16 @@ export const justinShown = (s) =>
   s.options.mode !== "hang" &&
   s.options.mode !== "vdd" &&
   boardPhases(s).includes(s.phase);
-/* shot or killed: down where he stands, one of his death lines, up again by himself after DOWN */
+/* the turn he is in (a question, a round): not each stage of it */
+const turnKey = (s) => [s.round, s.qi, s.startedAt].join();
+/* shot or killed: down where he stands, one of his death lines, back on the next turn (the board's Mad God Justin: after the room's knocked-down time) */
 export function justinDown(s, now, log) {
   const j = s.justin;
   if (!justinShown(s) || j.down || isMgj(s)) return false; // (Mad God Justin: he takes damage instead)
   const at = justinAt(j, now);
   Object.assign(j, {
     down: now,
+    dkey: turnKey(s), // (the turn he went down in: he stays down till the next one, see justinTick)
     k: null,
     x0: r3(at.x),
     y0: r3(at.y),
@@ -130,13 +131,22 @@ export const boardMgj = (s) =>
 export function justinHit(s, by, now, log, w) {
   const j = s.justin;
   if (!justinShown(s) || j.down || isMgj(s)) return 0;
-  if (!boardMgj(s)) return justinDown(s, now, log) ? 2 : 0;
-  j.max = BJ_HP;
-  j.hp = Math.max(0, (j.hp ?? BJ_HP) - (DMG[w] || 1));
-  const at = justinAt(j, now);
+  const at = justinAt(j, now),
+    mgj = boardMgj(s);
+  if (mgj) {
+    j.max = BJ_HP;
+    j.hp = Math.max(0, (j.hp ?? BJ_HP) - (DMG[w] || 1));
+  }
+  const dies = !mgj || j.hp <= 0,
+    crit = dies && Math.random() < (PCRIT[w] || 0);
+  /* the hit feel of Dead Ducks Arcade on him too (the owner's, Nov 19 01:34Z: "not just players, not just Justin, but any
+     NPC that can take damage"): its hitmarker, the wound it leaves (game.js draws them, his blood and "−1 HP"), and on
+     the hit that kills him now and then a crit, his head blown off with a CRIT over it, as a duck's (rules.js wounded).
+     Gone when he's back up (justinTick: "spawns back with gore effects lost on the next turn") */
+  j.w = (j.w || "") + hitCode(j.w || "", w, crit, knockable(JUSTIN));
   s.fxN = (s.fxN || 0) + 1;
   s.fx = [
-    ...(s.fx || []).slice(-19),
+    ...(s.fx || []).slice(-18),
     {
       n: s.fxN,
       kind: "hitmark",
@@ -146,14 +156,25 @@ export function justinHit(s, by, now, log, w) {
       x: r3(at.x),
       y: r3(at.y),
     },
+    ...(crit
+      ? [
+          {
+            n: ++s.fxN,
+            kind: "pcrit",
+            who: [JUSTIN_ID],
+            t: now,
+            x: r3(at.x),
+            y: r3(at.y),
+          },
+        ]
+      : []),
   ];
-  if (j.hp <= 0) return justinDown(s, now, log) ? 2 : 1;
+  if (dies) return justinDown(s, now, log) ? 2 : mgj ? 1 : 0;
   if (s.players[by] && !vdSafe(s, by)) {
     if (!j.rage) j.rage = { fireAt: now + 500, hamAt: now + 800 };
     Object.assign(j.rage, { id: by, until: now + RAGE_MS });
     j.ctlAt ??= now + 2500;
     j.chairAt ??= now + 6000;
-    j.fbAt ??= now + 4000;
   } // (the latest duck to hurt him is the one he goes after, for 10 s from its last hit)
   return 1;
 }
@@ -184,7 +205,7 @@ function rageTick(s, now, at, fx, calm) {
     dx = p.x - at.x,
     dy = p.y - at.y,
     d = Math.hypot(dx, dy) || 1;
-  /* a throw held up (the tell), then the controllers every way, or the chair or the fireball at the duck */
+  /* a throw held up (the tell), then the controllers every way, or the chair at the duck */
   if (j.tell) {
     if (now < j.tell.at) return false;
     const k = j.tell.k;
@@ -241,18 +262,14 @@ function rageTick(s, now, at, fx, calm) {
     };
     return true;
   } // (further off: he sprints at it, then swings)
-  if (now >= j.fbAt || now >= j.chairAt || now >= j.ctlAt) {
-    const k =
-      now >= j.fbAt ? "fireball" : now >= j.chairAt ? "chair" : "controller";
+  if (now >= j.chairAt || now >= j.ctlAt) {
+    const k = now >= j.chairAt ? "chair" : "controller";
     stop();
     j.tell = {
       k,
-      at:
-        now +
-        (k === "chair" ? CHAIR_TELL : k === "fireball" ? FB_TELL : THROW_TELL),
+      at: now + (k === "chair" ? CHAIR_TELL : THROW_TELL),
     };
-    if (k === "fireball") j.fbAt = now + FB_EVERY;
-    else if (k === "chair") j.chairAt = now + rnd([15000, 22000]);
+    if (k === "chair") j.chairAt = now + rnd([15000, 22000]);
     else j.ctlAt = now + rnd([8000, 12000]);
     j.ctlAt = Math.max(j.ctlAt, now + 2500);
     j.chairAt = Math.max(j.chairAt, now + 2500);
@@ -472,7 +489,10 @@ export function justinTick(s, now, log) {
   }
   const j = s.justin;
   /* a new stage: he starts where the ducks start */
-  if (j.key !== key) {
+  if (j.key !== key && j.down && !boardMgj(s) && j.dkey === turnKey(s)) {
+    j.key = key; // (dead: he stays where he fell through the turn's stages)
+    ch = true;
+  } else if (j.key !== key) {
     delete j.swing;
     delete j.god;
     const x = startX(s),
@@ -492,8 +512,15 @@ export function justinTick(s, now, log) {
   }
   /* knocked down: he lies there a while, then gets up */
   if (j.down) {
-    if (now - j.down < (boardMgj(s) ? downFor(s) : DOWN)) return ch;
+    /* in the normal modes he dies outright (the owner's, Nov 18 12:19Z: "Justin cannot be revived and he dies outright and
+       spawns back with gore effects lost on the next turn", "justin cannot make dialog when outright dead"): he lies there,
+       says nothing, and is back, whole, on the next turn */
+    if (boardMgj(s)) {
+      if (now - j.down < downFor(s)) return ch;
+    } else if (j.dkey === turnKey(s)) return ch;
     delete j.down;
+    delete j.dkey;
+    delete j.w; // (whole again: his wounds are gone)
     if (j.max) j.hp = j.max; // (the board's Mad God Justin: up with his HP full)
     j.next = now + 1000;
     j.say = Math.max(j.say, now + 4000);

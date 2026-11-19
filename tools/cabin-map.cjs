@@ -1,13 +1,15 @@
 /* the Game Settings screen's picture of Duck Cabin (assets/maps/duck-cabin.jpg): the real map, all of it, from outside.
    Serve the folder (python3 -m http.server 8777), then: node tools/cabin-map.cjs. It starts a TEST Hangout, zooms the
    camera out to the whole world, hides the ducks and saves the board; Pillow (python3) shrinks it to a 1280 px JPEG.
-   Run it again whenever the cabin's map changes. */
+   It also makes the zombie map vote's picture (assets/maps/duck-cabin-zombies.jpg): the cabin closer in and a little
+   lighter. Run it again whenever the cabin's map changes. */
 const { chromium } = require("playwright");
 const { execFileSync } = require("child_process");
 const path = require("path");
 
-const URL = process.argv[2] || "http://localhost:8777/index.html",
+const URL = process.argv[2] || "http://localhost:8777/index.html?nosplash",
   OUT = path.join(__dirname, "..", "assets", "maps", "duck-cabin.jpg"),
+  ZOUT = path.join(__dirname, "..", "assets", "maps", "duck-cabin-zombies.jpg"),
   PNG = path.join(require("os").tmpdir(), "duck-cabin-full.png");
 
 (async () => {
@@ -41,7 +43,15 @@ const URL = process.argv[2] || "http://localhost:8777/index.html",
       computers: 0,
       options: { mode: "hang" },
     });
+    await import("./js/lobby.js");
+    await import("./js/game.js");
     router.go("lobby", room);
+    /* (no mode or map vote first: straight into Hangout) */
+    Object.assign(room.state.options, {
+      mode: "hang",
+      modePick: "",
+      mapPick: "",
+    });
     room.send({ t: "start" });
   });
   await page.waitForTimeout(8000);
@@ -63,5 +73,11 @@ const URL = process.argv[2] || "http://localhost:8777/index.html",
     PNG,
     OUT,
   ]);
-  console.log("saved", OUT);
+  execFileSync("python3", [
+    "-c",
+    "import sys\nfrom PIL import Image, ImageEnhance\nim = Image.open(sys.argv[1]).convert('RGB').crop((200, 250, 1120, 767)).resize((1280, 720), Image.LANCZOS)\nim = im.point(lambda v: round(255 * (v / 255) ** 0.72))\nim = ImageEnhance.Color(ImageEnhance.Contrast(im).enhance(1.08)).enhance(1.12)\nim.save(sys.argv[2], quality=82, optimize=True, progressive=True)",
+    OUT,
+    ZOUT,
+  ]);
+  console.log("saved", OUT, ZOUT);
 })();

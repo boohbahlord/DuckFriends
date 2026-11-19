@@ -15,6 +15,18 @@
    room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). Duncelation has its
    own rules in duncerules.js: one defender in the circle, everyone else walks to Dunce or Not a Dunce. Valentine's Duck
    Date has its own in vddrules.js: The Date at the dining table, a date with each Suitor, then a Suitor Turned Down. */
+import {
+  baseMode,
+  baseL4map,
+  isSb,
+  sbCan,
+  sbOnBoard,
+  sbPlayerSpot,
+} from "./sandboxrules.js";
+import { sbAct, sbTick, sbPlaceDuck, sbHpOf } from "./sbspawn.js";
+import { sbHotAct } from "./sbhot.js";
+import { sbLootAct, sbLootTick } from "./sbloot.js";
+import { onCabin } from "./sbcabin.js";
 import { stamp, took } from "./perf.js";
 import {
   boardSpeed,
@@ -88,7 +100,11 @@ import {
 } from "./quackrules.js";
 import {
   holdDown,
+  onGetUp,
   invuln,
+  shielded,
+  comeBack,
+  normalGame,
   hurtFx,
   downStill,
   standUps,
@@ -131,6 +147,7 @@ import {
   snapLine,
   jaimeCount,
   jaimeSays,
+  jaimeDead,
   anyOf as anyLine,
   JAIME_HURT,
   JUSTIN_AT_JAIME,
@@ -141,15 +158,15 @@ import { pwAdd, pwHit, pwTick, PCRIT, CRIT_DOWN, DEATH } from "./wounds.js";
 import {
   isMgj,
   mgjStart,
+  mgjZombieHit,
   mgjAdvance,
+  mgjCount,
   mgjStab,
   mgjHurt,
   mgjSoak,
   mgjGone,
   mgjUse,
   mgjShot,
-  mgjSafe,
-  mgjBurn,
   mgjHitAt,
   MGJ_SCALE,
   MGJ_HAMMER,
@@ -167,6 +184,8 @@ import {
   MGJ_GUNS,
   mgjHalf,
   mgjMag,
+  mgjOut,
+  MGJ_MELEE,
   ammoOf,
   mgjSpend,
   mgjLgren,
@@ -177,11 +196,13 @@ import {
   l4Reload,
   l4Shots,
   l4Holds,
-  kitOf,
   helperOut,
   ARMS,
+  laserHeat,
+  laserNext,
 } from "./l4ddrules.js";
 import { JET } from "./jetpack.js";
+import { hOk, hLock, sameFloorAhead, floorLock } from "./heights.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
   MAPS,
@@ -191,7 +212,7 @@ import {
   ZOOM_MAP,
   GREY_MAP,
 } from "./maps.js";
-import { MODES, modeOf, CABIN_MODES } from "./modes.js";
+import { modesFor, modeOf, CABIN_MODES, SOLO_MODES } from "./modes.js";
 import { dealRainbow, rainbowJoin } from "./looksrules.js";
 
 export const COLS = [
@@ -207,6 +228,8 @@ export const SHORT = ["−−−", "−−", "−", "0", "+", "++", "+++"];
 export const OPTIONS_DEFAULT = {
   order: "random", // random | rotate: the order of the round's questions
   share: 0.67, // how many players must vote to start the countdown: .5, .67, .75, 1 (half by default with the Discussion round on)
+  sbMap: "", // Sandbox's world: "" (the board, on the room's map) | "cabin" (Duck Cabin) | "zcabin" (Dead Ducks Arcade's cabin) | "downpour" (sandboxrules.js)
+  l4map: "cabin", // Quacky Zombies' map: "cabin" | "downpour", picked by everyone in its own map vote before each game (ZMAPS)
   answerTime: 0, // the default answer time in seconds: 0 (off), 30, 60, 90. I want no answer timer by default; a question's writer can still pick one
   catchUp: 15, // 0 (off), 15, 30, 45: the countdown once enough players have voted (everyone voting ends it at once)
   writeCatch: 30, // 0 (off), 15, 30, 45, 60: the same countdown while writing (questions, topics, contenders, secret words): I want the last writers to get 30 s by default
@@ -268,7 +291,8 @@ export const OPTIONS_DEFAULT = {
   voteColor: 0, // Vote colors: 1 = a duck takes the color of the tile it stands on (never with Rainbow Ducks, never in Mad God Justin)
   tagColor: 0, // … Change player tag color: 1 = the name tag takes the vote color too
   mgjHp: 6, // … Player HP: 0 (off), 1, 5, 6, 10, 15
-  l4r16: 0, // Quacky Zombies' Round 16 Start: 1 = after round 0's Ready it skips to round 16, everyone with 3,000 points
+  l4start: 1, // Quacky Zombies' Start on round: 1, 5, 9, 13 or 21 (round 0 goes on to it, everyone with bonus points: l4ddrules.js START_PTS)
+  wildJustin: 1, // Quacky Zombies: 1 = Justin is out in Duck Cabin too, unarmed, as on Downpour (the owner's, Nov 17; Downpour always has him). On by default: the owner's, Nov 17 20:02Z, "he spawns in cabin now by default the same, without a weapon and cannot get a weapon"
   vdTime: 60, // Valentine's Duck Date: seconds a date's timer runs once The Date starts it: 0 (off, no timer button), 60, 90, 120
   tvWrite: 210, // Trivia: seconds to write the questions: 120, 210, 300 or 0 (no limit)
   tvMulti: 1, // … Multiple answers: 1 = a question can have several right answers (never all); 0 = exactly one
@@ -374,13 +398,15 @@ const winner = (n, pool) => {
   return anyOf(top ? tied : pool);
 };
 /* the maps the map vote and Random choose from: every board map in each of its forms (Euclid's Squares still or
-   zooming, Shelter Sky & Null in colors or black and white). Duck Cabin comes with its own games. Every map's
-   variations sit at the bottom of the list, after all the maps (owner, Nov 16) */
+   zooming, Shelter Sky & Null in colors or black and white). Duck Cabin comes with its own games. Each map, then
+   right after it its variations, then the next map; the maps without variations first, and the more variations a map
+   has the later it comes (the owner's, Nov 17 19:22Z: "MAP FIRST, THEN ... IT'S VARITIONS FOLLOW AFTER ... the last
+   maps are the ones with the most variations") */
 const MAP_IDS = MAPS.map((m) => m[0]);
-export const VOTE_MAPS = [
-  ...MAP_IDS,
-  ...MAP_IDS.flatMap((id) => (MAP_FORMS[id] || []).filter((f) => f !== id)),
-];
+const formsOf = (id) => (MAP_FORMS[id] || []).filter((f) => f !== id);
+export const VOTE_MAPS = MAP_IDS.map((id, i) => [id, i])
+  .sort(([a, i], [b, j]) => formsOf(a).length - formsOf(b).length || i - j)
+  .flatMap(([id]) => [id, ...formsOf(id)]);
 /* Random's map, and the map vote's dice (owner, Nov 16): a bag of maps, each holding a bag of its variations, so the
    variations never crowd out the other maps. The map played least tonight comes first (never the one just played while
    another is left), then the variation of it played least. s.mapPlays = { m: { map: n }, f: { variation: n } } */
@@ -458,9 +484,9 @@ const fits = (s, id) => s.seat.length >= (MIN_PLAYERS[id] || 0);
    own time limit); each round is the next one in the bag, every game once before a new shuffle, or with True Random
    any game at all */
 export const randomPool = (s) => {
-  const all = MODES.map((m) => m.id).filter(
-      (id) => id !== "l4dd" && fits(s, id),
-    ),
+  const all = modesFor(s)
+      .map((m) => m.id)
+      .filter((id) => id !== "l4dd" && id !== "sandbox" && fits(s, id)), // (Sandbox never ends: never from Random)
     off = s.options.modesOff || [],
     on = all.filter((id) => !off.includes(id));
   return on.length ? on : all; // (every one turned off: Random and the vote still have games to pick from)
@@ -496,19 +522,43 @@ function setMode(s, mode) {
    shareOf), the clock drops to 6 s and runs at its normal speed (owner 2026-11-15: "only six seconds and NOT double
    speed"). The full times only run out when the majority never votes. The most votes win, and a tie is a random pick between the tied ones (no votes at all: any of them). Vote
    return brings both votes back after that many games (a round is a game; a whole Hangout or Quacky Zombies is one) */
-export const PICK_TIME = { mode: 65, map: 20 };
+export const PICK_TIME = { mode: 65, map: 20, zmap: 20 };
 const ALL_IN = 6000; // a vote's clock once the majority has voted: 6 s, at normal speed
 export const DICE = "dice";
 const NO_MAP_VOTE = [...CABIN_MODES, "mgj"];
 export const voteModes = (s) => {
-  const all = MODES.map((m) => m.id).filter((id) => fits(s, id)),
+  const all = modesFor(s)
+      .map((m) => m.id)
+      .filter((id) => fits(s, id)),
     off = s.options.modesOff || [],
     on = all.filter((id) => !off.includes(id));
   return on.length ? on : all; // (Modes in Random & Vote: the games turned off aren't on the vote either)
 };
-export const voteIds = (s, k) => (k === "mode" ? voteModes(s) : VOTE_MAPS);
-/* the time a vote shows */
-export const voteLeft = (s, now) => Math.max(0, s.ends - now);
+export const voteIds = (s, k) =>
+  k === "mode" ? voteModes(s) : k === "zmap" ? ZMAPS : VOTE_MAPS;
+/* Quacky Zombies' own maps: before each of its games everyone votes for one of them, the vote showing only these
+   (the owner's, Nov 17 00:17Z). Its "zmap" vote works as the map vote does, its time as long */
+export const ZMAPS = ["cabin", "downpour"];
+/* the time a vote shows. Its clock can run faster than real time (Next, below): vt.c { at, left, rate } is the time it
+   showed at "at" and how fast it has run since; s.ends stays the real moment it reaches 0 */
+export const voteLeft = (s, now) => {
+  const c = s.vt && s.vt.c;
+  return c
+    ? Math.max(0, c.left - (now - c.at) * c.rate)
+    : Math.max(0, s.ends - now);
+};
+function voteClock(s, now, left, rate) {
+  s.vt.c = { at: now, left, rate };
+  s.ends = now + left / rate;
+}
+/* Next (the owner's, Nov 17 13:30Z): once a player has voted, a red Next button speeds the clock up by 1/players for
+   each player who presses it (three players: 33% faster for one press; everyone: twice as fast) */
+export const voteRate = (s) => {
+  const vt = s.vt || {},
+    voters = s.seat.filter((id) => s.players[id]),
+    n = voters.filter((id) => (vt.next || {})[id]).length;
+  return 1 + n / Math.max(1, voters.length);
+};
 export const votesDue = (s) =>
   [
     s.options.modePick === "vote" && "mode",
@@ -524,8 +574,10 @@ function openVote(s, k, now) {
   s.phase = "countdown";
   s.at = now;
   s.vt = { k, votes: {} }; // (online, votes only comes back once someone votes)
-  s.ends = now + PICK_TIME[k] * 1000;
+  s.ends = now + (s.solo ? SOLO_WAIT : PICK_TIME[k] * 1000);
 }
+/* Single Player: the vote window is a Select window, with no clock: it waits for the pick, and the pick is instant */
+const SOLO_WAIT = 365 * 864e5;
 function closeVote(s) {
   const vt = s.vt,
     ids = voteIds(s, vt.k);
@@ -537,6 +589,11 @@ function closeVote(s) {
         ? anyOf(randomPool(s).length ? randomPool(s) : ids)
         : pickMap(s); // (the map's dice: the bags, as Random)
   if (vt.k === "mode") return setMode(s, won || "aod");
+  if (vt.k === "zmap") {
+    s.options.l4map = ZMAPS.includes(won) ? won : anyOf(ZMAPS); // (the dice: either one)
+    useMode(baseMode(s.options), baseL4map(s.options));
+    return;
+  }
   setMap(s, won);
   s.mapVoted = 1;
 }
@@ -554,15 +611,21 @@ function placeMap(s) {
   countMap(s, s.mapZoomed ? ZOOM_MAP[0] : s.mapGreyed ? GREY_MAP[0] : o.map); // (the host's own pick counts as played too)
 }
 /* Duck Cabin's games bring their own map: going in keeps the room's map (in its form) to come back to, and coming out
-   puts it back (the board if there was none) */
+   puts it back (the board if there was none). A room still on "zcabin" (Mad God Justin on Quacky Zombies' cabin, Nov 17,
+   scrapped by the owner the same day) gets its own map back the same way */
+const OLD_ZCABIN = "zcabin";
+function keepRoomMap(s) {
+  const o = s.options;
+  if (o.map !== "cabin" && o.map !== OLD_ZCABIN)
+    s.roomMap = [o.map, s.mapZoomed ? 1 : 0, s.mapGreyed ? 1 : 0];
+}
 function cabinMap(s) {
   const o = s.options;
   if (isHang(s)) {
-    if (o.map !== "cabin")
-      s.roomMap = [o.map, s.mapZoomed ? 1 : 0, s.mapGreyed ? 1 : 0];
+    keepRoomMap(s);
     o.map = "cabin";
     s.mapZoomed = s.mapGreyed = 0;
-  } else if (o.map === "cabin") {
+  } else if (o.map === "cabin" || o.map === OLD_ZCABIN) {
     [o.map, s.mapZoomed, s.mapGreyed] = s.roomMap || ["board", 0, 0];
     delete s.roomMap;
     if (!o.mapPick) {
@@ -570,6 +633,21 @@ function cabinMap(s) {
       s.mapGreyed = o.map === "collage" && o.mapGrey ? 1 : 0;
     }
   }
+}
+/* in Duck Cabin's games or Sandbox, playing (no rounds: the End Cabin or Leave Sandbox vote ends it) */
+const sbHere = (s) =>
+  (isHang(s) && s.phase === "hang") || (sbOnBoard(s) && s.phase === "sandbox");
+/* Sandbox on the board: where a duck comes in (anywhere; the spawn points are stage 2) */
+const sbSpot = () => ({
+  x: +(0.1 + 0.8 * Math.random()).toFixed(4),
+  y: +(0.15 + 0.7 * Math.random()).toFixed(4),
+});
+/* Sandbox: a map picked on the Map page. Duck Cabin's row (or a world row, sbMap) puts it on that world; any other map
+   (or a vote, or Random) puts it on the board */
+function sbMapPicked(s, o) {
+  if ("sbMap" in o) return;
+  if (o.map === "cabin") s.options.sbMap = s.options.sbMap || "cabin";
+  else if (o.map || o.mapPick) s.options.sbMap = "";
 }
 /* the countdown or a vote is over: the next vote, or the game */
 function nextVote(s, now) {
@@ -583,8 +661,16 @@ function nextVote(s, now) {
     return s;
   }
   delete s.voteQ;
+  if (zmapDue(s, now)) return s;
   placeMap(s);
   return beginGame(s, now);
+}
+/* Quacky Zombies: its map vote opens before each of its games (once: zmapAsked till the game begins) */
+function zmapDue(s, now) {
+  if (s.options.mode !== "l4dd" || s.zmapAsked) return false;
+  s.zmapAsked = 1;
+  openVote(s, "zmap", now);
+  return true;
 }
 /* the start: Democracy's locks, Random's first game, then the 5 s countdown (the votes come after it). Returns null
    when the room has too few players for the host's game (the lobby says how many it needs) */
@@ -639,6 +725,7 @@ function rotate(s, now) {
   s.options.mode = mode;
   writeTimerFor(s, was);
   cabinMap(s); // (into Duck Cabin, or out of it)
+  if (zmapDue(s, now)) return s; // (Quacky Zombies: its map vote first)
   return beginGame(s, now);
 }
 /* the countdown is over: the game begins (Random: again for every new game) */
@@ -655,6 +742,7 @@ function beginGame(s, now) {
   s.wqScore = { quack: 0, room: 0 };
   s.wqPickers = [];
   for (const id of s.seat) P[id].ready = false;
+  delete s.zmapAsked;
   if (isSc(s)) {
     s.sc = { stories: [] };
     return startStory(s, now, true);
@@ -663,9 +751,16 @@ function beginGame(s, now) {
     hangStart(s, now);
     return enter(s, "hang", now);
   }
+  if (sbOnBoard(s)) {
+    s.pos = {};
+    s.lock = {};
+    for (const id of s.seat) s.pos[id] = sbSpot();
+    return enter(s, "sandbox", now); // (Sandbox on the board: one phase that never ends, till Leave Sandbox)
+  }
   s.dn = null;
   if (isDn(s)) dnStart(s);
   s.mgj = null;
+  s.mz = null;
   s.mgjPast = [];
   if (isMgj(s)) return mgjStart(s, now);
   s.vd = null;
@@ -718,7 +813,7 @@ export const isSc = (s) => s.options.mode === "sc";
 export const isLaw = (s) => s.options.mode === "law";
 /* Duck Cabin's world: Hangout, and Quacky Zombies on the same map (its own rules: l4ddrules.js) */
 export const isHang = (s) =>
-  s.options.mode === "hang" || s.options.mode === "l4dd";
+  baseMode(s.options) === "hang" || baseMode(s.options) === "l4dd"; // (Sandbox on a world map runs as that world's mode: sandboxrules.js)
 /* a match in Bicker Brackets: seed A on the left, B on the right; Who is the Quack?: vote (left) or more clues; Lawyering:
    the offense (sword) on the left, the defense (shield) on the right, and between them a wider strip with the attorneys'
    circle; Duncelation: Dunce on the left, Not a Dunce on the right, and the same strip with the defender's circle */
@@ -765,23 +860,25 @@ export const startX = (s) => (twoSided(s) || isSc(s) ? 0.5 : colX(3)); // where 
 export const boardPhases = (s) =>
   isHang(s)
     ? ["hang"]
-    : isBb(s)
-      ? ["answer", "tie", "discuss", "bracket"]
-      : isSc(s)
-        ? SC_BOARD
-        : isQuack(s)
-          ? ["clue", "choice", "accuse", "reveal"]
-          : isLaw(s)
-            ? ["answer", "discuss", ...ATT_PHASES]
-            : isDn(s)
-              ? ["answer", "discuss", "dunced"]
-              : isMgj(s)
-                ? ["boss", "mgjend"]
-                : isVd(s)
-                  ? VD_PHASES
-                  : isTv(s)
-                    ? TV_BOARD
-                    : ["answer", "discuss", "results"];
+    : sbOnBoard(s)
+      ? ["sandbox"]
+      : isBb(s)
+        ? ["answer", "tie", "discuss", "bracket"]
+        : isSc(s)
+          ? SC_BOARD
+          : isQuack(s)
+            ? ["clue", "choice", "accuse", "reveal"]
+            : isLaw(s)
+              ? ["answer", "discuss", ...ATT_PHASES]
+              : isDn(s)
+                ? ["answer", "discuss", "dunced"]
+                : isMgj(s)
+                  ? ["boss", "mgjend"]
+                  : isVd(s)
+                    ? VD_PHASES
+                    : isTv(s)
+                      ? TV_BOARD
+                      : ["answer", "discuss", "results"];
 const humanIds = (s) => s.seat.filter((id) => !s.players[id].bot);
 /* who plays now: a player who joined in the middle of a turn they can't take part in walks around until the next one */
 export const playing = (s) =>
@@ -995,6 +1092,8 @@ const PRESS = [
   "bow",
   "sniper",
   "smg",
+  "tommy",
+  "ump",
   "ak",
   "revolver",
   "lmg",
@@ -1044,6 +1143,8 @@ export const coolFor = (sp, s) =>
 export const GUNS_NEW = [
   "sniper",
   "smg",
+  "tommy",
+  "ump",
   "ak",
   "revolver",
   "lmg",
@@ -1053,7 +1154,16 @@ export const GUNS_NEW = [
   "flamer",
   "burst",
 ];
-export const AUTO = ["smg", "ak", "lmg", "chaingun", "flamer"]; // (they fire while the button is down)
+export const AUTO = [
+  "smg",
+  "tommy",
+  "ump",
+  "ak",
+  "lmg",
+  "chaingun",
+  "flamer",
+  "laser",
+]; // (they fire while the button is down; the Laser Rifle only as a Mad God Justin pickup)
 /* the handgun holds MAG shots, about five a second; after the last it reloads for RELOAD ms by itself (R reloads sooner).
    The other guns' magazines are Quacky Zombies' (no ammo to run out of here: only the magazine and its reload); the chain
    gun and the grenade launcher have none there, so here the chain gun reloads after its 300, and the launcher after 3
@@ -1101,6 +1211,7 @@ export const WEAPONS = [
   "grenade",
   "bow",
   ...GUNS_NEW,
+  "laser", // (not a special: only Mad God Justin's pickup, mgjrules.js)
 ]; // aimed (with the mouse), and kept out with Shift and their key
 /* the hammer's knock-back: a duck it hits is shoved KB_FAR duck lengths away from the swing in KB_MS, with a little hop
    (KB_HOP duck sizes high), and lands playing dead; pos.kb = { t, x, y: where it was } lets every screen draw the shove */
@@ -1108,15 +1219,10 @@ export const KB_MS = 380,
   KB_FAR = 2.4,
   KB_HOP = 0.3,
   KB_LAND = 110; // (KB_LAND: ms until the swing gets there; the duck falls then)
-/* may this duck fly? (the jetpack on its back, with fuel left in Quacky Zombies; never in Mad God Justin) */
-function canFly(s, id, now) {
-  if (isMgj(s)) return false;
-  if (isL4dd(s)) {
-    const m = kitOf(s, id);
-    return !!(m && m.jp && ((m.am || {}).jetpack || [0])[0] > 0);
-  }
-  const u = ((s.aura || {})[id] || {}).jetpack;
-  return u !== undefined && (!u || u > now);
+/* may this duck fly? Never: the Jetpack is gone from the whole game (the owner's, Nov 18 12:19Z: "remove jet pack from
+   the whole game"), the special, its unlock and Dead Ducks Arcade's item alike */
+function canFly() {
+  return false;
 }
 const EFFECTS = [
   "zap",
@@ -1128,8 +1234,7 @@ const EFFECTS = [
   "ducklings",
   "disco",
   "invisible",
-  "jetpack",
-]; // the effects, shown around a duck (the Invisible duck and the Jetpack: only on or off, never for 5 seconds)
+]; // the effects, shown around a duck (the Invisible duck: only on or off, never for 5 seconds)
 /* thrown the way the mouse aims, but never kept out: the Chair special (the silly commands' switch covers it, as the
    weapons) and the Zebra cake */
 export const THROWS = ["chair", "zebra"];
@@ -1171,12 +1276,14 @@ export function newRoom({
   passkey = "",
   max = MAX_DEFAULT,
   options = {},
+  solo = false,
 }) {
   return {
     v: 1,
     id,
     name,
     test,
+    ...(solo ? { solo: 1 } : {}), // (Single Player: only its games, and its picks are instant: modesFor, "vote")
     open,
     passkey,
     max,
@@ -1407,6 +1514,7 @@ function advance(s, now, force = false) {
   if (isQuack(s) && QUACK_PHASES.includes(s.phase))
     return quackAdvance(s, now, force);
   if (isHang(s)) return s; // (no turns: the cabin stays open until the room goes back to the lobby)
+  if (sbOnBoard(s)) return s; // (Sandbox: no turns either, till Leave Sandbox)
   if (isMgj(s)) {
     const was = s.phase,
       next = mgjAdvance(s, now, force, logLine);
@@ -1527,6 +1635,10 @@ function seatNewcomer(s, id) {
     if (ph === "hang") hangJoin(s, id);
     return;
   } // Hangout: at the front door, at once
+  if (sbOnBoard(s)) {
+    if (ph === "sandbox") s.pos[id] = sbSpot();
+    return;
+  } // (Sandbox on the board: in at once, anywhere)
   if (isVd(s)) return vdJoin(s, id); // (Valentine's Duck Date: a Suitor from the next turn)
   if (s.options.lateJoin === "watch") {
     // (Players who join mid-game: Watch until the next round: they walk about and chat, and play from the next turn)
@@ -1593,7 +1705,7 @@ export function reduce(state, a, now = Date.now()) {
   return s;
 }
 function reduceStep(state, a, now) {
-  useMode(state.options && state.options.mode); // (Duck Cabin as the room's mode has it: hangout/layout.js)
+  useMode(baseMode(state.options), baseL4map(state.options)); // (Duck Cabin as the room's mode has it, or Dead Ducks Arcade's Downpour, or Sandbox on one of them: hangout/layout.js)
   const s = clone(state),
     P = s.players,
     me = P[a.id],
@@ -1633,6 +1745,7 @@ function reduceStep(state, a, now) {
       else if (!["lobby", "over", "countdown"].includes(s.phase))
         seatNewcomer(s, a.p.id);
       if (s.phase !== "lobby") rainbowJoin(s, a.p.id); // (Rainbow Ducks: a look for someone who joins mid-game)
+      if (isMgj(s)) mgjCount(s); // (Mad God Justin: a duck joining mid-fight adds its share of his HP)
       say(s, `${a.p.name} ${back ? "is back" : "joined"}.`);
       if (s.waiting && s.waiting.for === a.p.id) {
         delete s.waiting.for;
@@ -1694,6 +1807,7 @@ function reduceStep(state, a, now) {
     case "options": {
       const o = { ...a.options };
       delete o.dod; // (Democracy of Ducklings is set when the room is made, and stays)
+      if (s.solo && o.mode && !SOLO_MODES.includes(o.mode)) delete o.mode; // (Single Player: only its games)
       if (dodOn(s, "vote"))
         for (const k of ["mode", "modePick", "map", "mapPick", "voteBack"])
           delete o[k]; // (Ducks Vote Mode & Game: the votes stay as they are)
@@ -1761,12 +1875,17 @@ function reduceStep(state, a, now) {
            nobody */
         if (o.mode && !("modePick" in o)) s.options.modePick = "";
         if (o.map && !("mapPick" in o)) s.options.mapPick = "";
-        if (o.map === "cabin" && !o.mode && !isHang(s)) {
+        if (isSb(s)) sbMapPicked(s, o);
+        else if (o.map === "cabin" && !o.mode && !isHang(s)) {
           s.options.mode = "hang"; // Duck Cabin and its games are one: picking the map picks Hangout,
           s.options.modePick = "";
         } else if ((o.map || o.mapPick || o.modePick) && !o.mode && isHang(s))
           s.options.mode = "aod"; // and another map (or a vote, or Random) leaves Duck Cabin
-        if (isHang(s) && !s.options.modePick) {
+        if (isSb(s) && !sbOnBoard(s)) {
+          keepRoomMap(s);
+          s.options.map = "cabin"; // (Sandbox on a world: the room's map waits for it, as with Duck Cabin's games)
+          s.options.mapPick = "";
+        } else if (isHang(s) && !s.options.modePick) {
           s.options.map = "cabin"; // (the host's Hangout; one from Random or the vote keeps the map's settings)
           s.options.mapPick = "";
           delete s.roomMap;
@@ -1861,16 +1980,34 @@ function reduceStep(state, a, now) {
       if (votes[a.id] === a.v) delete votes[a.id];
       else votes[a.id] = a.v;
       vt.votes = votes; // (online, an empty list of votes doesn't come back)
+      if (s.solo && votes[a.id]) return nextVote(s, now); // (Single Player: picked, and on at once)
       const voters = s.seat.filter((id) => s.players[id]);
       if (
         !vt.fast &&
         voters.filter((id) => votes[id]).length >=
           Math.max(1, Math.ceil(voters.length * shareOf(s) - 1e-9))
       ) {
-        // (the majority is in: 6 s left, at normal speed)
+        // (the majority is in: 6 s left, at normal speed, or as fast as Next has made it)
         vt.fast = 1;
-        s.ends = now + Math.min(Math.max(0, s.ends - now), ALL_IN);
+        voteClock(s, now, Math.min(voteLeft(s, now), ALL_IN), voteRate(s));
       }
+      return s;
+    }
+    case "vnext": {
+      // Vote Mode & Map's Next: a player who has voted speeds the clock up (once each)
+      const vt = s.vt;
+      if (
+        !me ||
+        s.phase !== "countdown" ||
+        !vt ||
+        !s.seat.includes(a.id) ||
+        !(vt.votes || {})[a.id] ||
+        (vt.next || {})[a.id]
+      )
+        return state;
+      const left = voteLeft(s, now);
+      vt.next = { ...(vt.next || {}), [a.id]: 1 };
+      voteClock(s, now, left, voteRate(s));
       return s;
     }
     case "dod": {
@@ -2074,7 +2211,10 @@ function reduceStep(state, a, now) {
           : {}),
       }; // q: squashed against l/r/u/d; sp: sprinting; lj: a long jump; tb: a trampoline bounce's height; jf: flying with the jetpack (jt: its jets on, fly: high enough that a hit misses, fz: its height on the boards)
       quackMoved(s, a.id); // (Who is the Quack?: first onto the Quack's tile)
-      if (me.dead && (x !== was.x || y !== was.y)) delete me.dead;
+      if (me.dead && (x !== was.x || y !== was.y)) {
+        delete me.dead;
+        comeBack(s, a.id, now);
+      }
       attacks(s, now); // (walked into a swing, or swung into a duck)
       return s;
     }
@@ -2122,10 +2262,36 @@ function reduceStep(state, a, now) {
       s.reviewVotes[a.id] = true;
       if (reviewCount(s) >= needed(s)) s.review = true;
       return s;
+    case "sbOk": {
+      // Sandbox: whoever has the rights gives them to a player or takes them back (the owner's answer 2, Nov 19
+      // 01:34Z: the host "decide[s] who else gets it"). The host's own rights never go
+      const who = s.players[a.who];
+      if (!sbCan(s, a.id) || !who || who.bot || a.who === s.hostId)
+        return state;
+      const ok = { ...((s.sb || {}).ok || {}) };
+      if (a.on) ok[a.who] = true;
+      else delete ok[a.who];
+      s.sb = { ...(s.sb || {}), ok };
+      say(
+        s,
+        `${me ? me.name : "The host"} ${a.on ? "let" : "stopped"} ${who.name} ${a.on ? "change" : "changing"} Sandbox.`,
+      );
+      return s;
+    }
+    case "sb":
+      // Sandbox's spawns and respawns: place one, change a box, press one (sbspawn.js)
+      return sbAct(s, a, now) ? s : state;
+    case "sbh":
+      // Sandbox's hotbar: its slots, the default, the lock, a spawn button's look and press (sbhot.js)
+      return sbHotAct(s, a, now) ? s : state;
+    case "sbl":
+      // Sandbox's loot orbs: an orb's own picture (sbloot.js)
+      return sbLootAct(s, a) ? s : state;
     case "cabinEnd": {
       // Hangout's End Cabin and Quacky Zombies' Exit Cabin: a click votes, another takes it back; half the people
       // (never the computers) start a CABIN_END_MS timer, and the cabin game ends when it runs out
-      if (!isHang(s) || s.phase !== "hang" || !me || me.bot) return state;
+      // (and Sandbox's Leave Sandbox, on the board too)
+      if (!sbHere(s) || !me || me.bot) return state;
       const c = (s.cabinEnd = s.cabinEnd || { by: {}, at: 0 });
       c.by = c.by || {}; // (online, an empty list of votes doesn't come back)
       if (c.by[a.id]) delete c.by[a.id];
@@ -2134,8 +2300,8 @@ function reduceStep(state, a, now) {
       return s;
     }
     case "toLobby":
-      if (boss && isHang(s) && s.phase === "hang")
-        return backToLobby(s, `${me.name} took everyone back to the lobby.`); // (Hangout: the host ends it whenever)
+      if (boss && sbHere(s))
+        return backToLobby(s, `${me.name} took everyone back to the lobby.`); // (Hangout and Sandbox: the host ends it whenever)
       if (boss && s.phase === "over") {
         s.phase = "lobby";
         s.round = 0;
@@ -2207,16 +2373,18 @@ function reduceStep(state, a, now) {
       if (!me || !p || p.x < 0 || !boardPhases(s).includes(s.phase))
         return state;
       if (isL4dd(s)) return l4Use(s, a, now) ? s : state; // (Quacky Zombies: its own weapons, l4ddrules.js)
+      const downGun =
+        isMgj(s) && sp === "handgun" && !!me.dead && mgjOut(s, a.id); // (Mad God Justin: out of HP, the down pistol still fires: the owner's, Nov 17 11:07Z)
       if (
         isMgj(s)
-          ? s.phase !== "boss" || me.dead
+          ? s.phase !== "boss" || (me.dead && !downGun)
           : !PRESS.includes(sp) || !onKeys(me.duck, sp)
       )
-        return state; // (Mad God Justin: not while down)
+        return state; // (Mad God Justin: not while down, but the down pistol)
       if (isMgj(s) && ["revive", "jaime", "zebra"].includes(sp))
         return mgjTeamUse(s, a, now, logLine) ? s : state; // (Mad God Justin: a revive held or let go, a Jaime, the zebra cake)
       const mgjGun = isMgj(s) && MGJ_GUNS.includes(sp);
-      if (isMgj(s) && sp !== "knife" && sp !== "handgun" && !mgjGun)
+      if (isMgj(s) && sp !== MGJ_MELEE && sp !== "handgun" && !mgjGun)
         return mgjUse(s, a, now, logLine) ? s : state; // (Mad God Justin: the medkit picked up)
       if (mgjGun && (s.mgj.held[a.id] !== sp || !ammoOf(s, a.id))) return state; // (Mad God Justin: a gun picked up, until its shots are gone)
       if (
@@ -2238,6 +2406,7 @@ function reduceStep(state, a, now) {
       )
         return state; // (full auto: the shots can come a little bunched over the network, as in Quacky Zombies)
       if (sp === "zebra" && s.zcake) return state; // (one zebra cake in the room at a time)
+      if (sp === "laser" && laserHeat(s, a.id, now).over) return state; // (Mad God Justin's Laser Rifle overheated: it can't fire until it has cooled)
       if (sp === "jaimeguard") {
         if (!guardOut(s, a.id, now)) return state; // (my Guard is still out: the key keeps its Jaime)
         s.lastUse = { ...(s.lastUse || {}), [k]: now };
@@ -2248,7 +2417,7 @@ function reduceStep(state, a, now) {
         s.lastUse = { ...(s.lastUse || {}), [k]: now };
         return s;
       }
-      const mg = isMgj(s) ? mgjMag(sp) : magSize(sp); // (Mad God Justin's pistol never reloads: the owner's, Nov 16; a gun picked up has Quacky Zombies' magazine)
+      const mg = downGun ? magSize(sp) : isMgj(s) ? mgjMag(sp) : magSize(sp); // (Mad God Justin's pistol never reloads: the owner's, Nov 16; a gun picked up has Quacky Zombies' magazine; the down pistol does, its bullets never run out)
       const many =
         sp === "burst" && !isMgj(s)
           ? Math.min(ARMS.burst.burst, mg[0] - magOf(s, a.id, now, sp).n)
@@ -2285,7 +2454,21 @@ function reduceStep(state, a, now) {
         },
       ];
       if (aim && !hit && sp === "chaingun") chainShot(s, a.id, p, aim, now);
-      else if (aim && !hit && sp === "flamer") duckFlame(s, a.id, p, aim, now);
+      else if (aim && !hit && sp === "laser" && isMgj(s)) {
+        /* Mad God Justin's Laser Rifle (picked up): the chain gun's line, red, through everything on it, 1 damage; it
+           heats up as in Dead Ducks Arcade (l4ddrules.js laserNext), its heat in s.mgj.lz */
+        chainShot(s, a.id, p, aim, now, "laser");
+        const next = laserNext(s, a.id, now);
+        s.mgj.lz = { ...(s.mgj.lz || {}), [a.id]: next.lz };
+        if (next.hot) {
+          s.fxN = (s.fxN || 0) + 1;
+          s.fx = [
+            ...(s.fx || []).slice(-19),
+            { n: s.fxN, kind: "l4hot", by: a.id, who: [], t: now },
+          ];
+        }
+      } else if (aim && !hit && sp === "flamer")
+        duckFlame(s, a.id, p, aim, now);
       else if (aim && !hit) {
         const v =
             sp === "dagger"
@@ -2295,12 +2478,17 @@ function reduceStep(state, a, now) {
                 : GUNS_NEW.includes(sp)
                   ? gunSpeed(sp)
                   : SHOT_SPEED,
-          hang = isHang(s)
-            ? {
-                hz: Math.round(+p.z || 0),
-                hin: inCabin(p.x * HW, p.y * HH) ? 1 : 0,
-              }
-            : {}; // (Hangout: the height it flies at, and which side of the cabin's walls)
+          hang = {
+            ...(isHang(s)
+              ? {
+                  hz: Math.round(+p.z || 0),
+                  hin: inCabin(p.x * HW, p.y * HH) ? 1 : 0,
+                }
+              : {}), // (Hangout: the height it flies at, and which side of the cabin's walls)
+            ...(["grenade", "glauncher", "chair", "zebra"].includes(sp)
+              ? {}
+              : floorFirst(s, a.id, p, aim, now)), // (a duck on my floor in its line: it stays on my floor)
+          };
         const shot = (n, k, vx, vy, more) => ({
           n,
           by: a.id,
@@ -2387,11 +2575,20 @@ function reduceStep(state, a, now) {
       // R: the handgun reloads before its magazine is empty
       if (me && isL4dd(s)) return l4Reload(s, a, now) ? s : state;
       if (me && isMgj(s)) {
-        // Mad God Justin: the gun picked up, if it has a magazine
+        // Mad God Justin: the gun picked up, if it has a magazine (or the down pistol)
         const w = a.w,
-          mg = mgjMag(w),
+          mg =
+            w === "handgun" && me.dead && mgjOut(s, a.id)
+              ? magSize(w)
+              : mgjMag(w),
           m = mg && magOf(s, a.id, now, w);
-        if (!m || s.mgj.held[a.id] !== w || !m.n || m.r) return state;
+        if (
+          !m ||
+          (s.mgj.held[a.id] !== w && !(w === "handgun" && me.dead)) ||
+          !m.n ||
+          m.r
+        )
+          return state;
         s.mag = {
           ...(s.mag || {}),
           [magKey(a.id, w)]: { n: m.n, r: now + mg[1] },
@@ -2839,7 +3036,7 @@ function reduceStep(state, a, now) {
         s.vote = null;
         return s;
       }
-      if (isHang(s) && s.phase === "hang" && cabinTick(s, now)) return s;
+      if (sbHere(s) && cabinTick(s, now)) return s;
       if (
         isL4dd(s) &&
         s.phase === "hang" &&
@@ -2867,7 +3064,8 @@ function reduceStep(state, a, now) {
           cakeGone(s, now) |
           jaimeRun(s, now) |
           (isL4dd(s) ? 0 : groundFire(s, now)) | // (the flamethrower's burning ground)
-          pwTick(s, now), // (the ducks' wounds going away: wounds.js)
+          pwTick(s, now, normalGame(s)) | // (the ducks' wounds going away: wounds.js)
+          (isSb(s) ? +sbTick(s, now, SB_H) | +sbLootTick(s, now, SB_H) : 0), // (Sandbox: its spawns, respawns and the board's zombies; its loot orbs)
         up = standUps(s, now); // (a knocked-down duck stands up by itself when its time is up)
       const sig = () => [s.phase, s.qi, s.catchEnds, s.round, s.at].join(),
         was = sig();
@@ -3280,11 +3478,12 @@ export function dodges(s, p, now) {
     end = (p.dj > p.j ? p.dj : p.j) + T;
   return now - p.j > T * 0.2 && end - now > T * 0.2;
 }
-/* the normal game's HP (every mode but Mad God Justin): a duck has PHP HP before it plays dead, and has them all back
-   after PHP_BACK ms without a hit. s.php = { id: { n: HP lost, t: the last hit } }. True when the hit only took HP.
+/* the normal game's HP (every mode but Mad God Justin and Dead Ducks Arcade): a duck has PHP HP before it plays dead
+   (4: the owner's, Nov 18 16:50Z, "every player in other game modes has 4 hp by default"; it was 6), has them all back
+   after PHP_BACK ms without a hit, and gets up with them all. s.php = { id: { n: HP lost, t: the last hit } }. True when the hit only took HP.
    What a hit takes (owner 2026-11-03 17:15Z, not in Quacky Zombies): the hammer, the chair and a grenade 3, the knife 2,
    the rest 1 */
-export const PHP = 3,
+export const PHP = 4,
   PHP_BACK = 6000;
 export const phpLost = (s, id, now) => {
   const h = (s.php || {})[id];
@@ -3298,6 +3497,7 @@ export const HIT_DMG = {
   knife: 2,
   sniper: [2, 3],
   ak: 2,
+  ump: 2,
   burst: 2, // (the burst rifle: the AK-47's, the owner's, Nov 16 16:25Z)
   slug: PHP, // (the double barrel's slug: all of it)
   revolver: 2,
@@ -3309,15 +3509,43 @@ export const dmgOf = (s, k) => {
     ? d[0] + Math.floor(Math.random() * (d[1] - d[0] + 1))
     : d;
 };
-export function soaks(s, id, now, dmg = 1) {
+export function soaks(s, id, now, dmg = 1, by, raw = false) {
   if (isMgj(s)) return false;
+  if (normalGame(s) && (shielded(s, id, now) || (by && shielded(s, by, now))))
+    return true; // (spawn protection: nothing hurts a duck that just came back, and what it shoots hurts nobody)
   if (invuln(s)) return hurtFx(s, id, now); // (Invulnerability: the hit only flashes)
-  const n = phpLost(s, id, now) + dmg,
+  const max = sbHpOf(s, id) || PHP, // (Sandbox: a spawn's or a respawn's HP for it, sbspawn.js)
+    n = phpLost(s, id, now) + (dmg >= PHP && !raw ? max : dmg), // (a crit, the slug, the chain gun: all of it, whatever it has)
     rest = { ...s.php };
   delete rest[id];
-  s.php = n >= PHP ? rest : { ...rest, [id]: { n, t: now } };
-  return n < PHP;
+  s.php = n >= max ? rest : { ...rest, [id]: { n, t: now } };
+  return n < max;
 }
+/* what Sandbox's spawns borrow (sbspawn.js): the ducks up on the board, and a zombie's swipe on one (dmg: its spawn's
+   damage box) */
+const SB_H = {
+  ducks: (s) =>
+    playing(s).filter(
+      (id) => s.pos[id] && s.pos[id].x >= 0 && !(s.players[id] || {}).dead,
+    ),
+  claw(s, id, dmg, now) {
+    const P = s.players[id],
+      p = s.pos[id];
+    if (!P || P.dead || !p || dodges(s, p, now)) return;
+    if (!soaks(s, id, now, dmg, null, true)) {
+      P.dead = true;
+      holdDown(s, id, now);
+    } // (raw: a spawn's damage box is only that much, never "all of it")
+    if (pwOn(s)) pwHit(s, id, "claw", now, !!P.dead); // (its claw wounds, as a Dead Ducks Arcade zombie leaves them)
+  },
+};
+/* a duck on Sandbox's board or Duck Cabin that stands up again: at a respawn for players, if there is one (the zombie
+   maps bring theirs back their own way: l4ddrules.js) */
+onGetUp((s, id) => {
+  if (!sbOnBoard(s) && !onCabin(s)) return false;
+  sbPlaceDuck(s, id);
+  return false;
+});
 function playerKilled(s, by, id, w) {
   if (!s.players[by] || by === id) return;
   s.pkN = (s.pkN || 0) + 1;
@@ -3361,7 +3589,7 @@ export function shove(s, id, ux, uy, far, now, side, more = {}) {
    are in a duck's room, as for the bullets; in Hangout only on the same side of the cabin's walls and at about the same
    height. Justin can be hit too. Returns who was hit (JUSTIN_ID for Justin); done: who this swing already hit, never hit
    twice (Duck Cabin's own, Justin and the cats, go in it as "h:" and their id). */
-const REACH = {
+export const REACH = {
   knife: [2.3, 0.9],
   hammer: [3, 0.5],
   axe: [3, 0.5],
@@ -3376,7 +3604,7 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
   const p0 = from,
     hang = isHang(s),
     rx = hang ? 0.006 : 0.03,
-    ry = hang ? 0.012 : 0.08,
+    ry = hang ? (0.006 * HW) / HH : 0.08, // (in Hangout's world, a duck length the same in world px up and down as across, so a swing reaches as far every way: the owner's, Nov 18 15:18Z "Make sure melee weapons have the same range in any direction". It was 0.012, half as far again up and down)
     [far0, wide] = REACH[sp],
     far =
       far0 *
@@ -3416,14 +3644,14 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
     if (n) hits.push({ id, ...n });
   }
   if (sp === "knife") hits = hits.sort((a, b) => a.d - b.d).slice(0, 1);
-  if (sp !== "knife" || !hits.length) guardsHit(s, by, near, now); // (a Jaime Guard in reach: his 1 HP)
+  if (sp !== "knife" || !hits.length) guardsHit(s, by, near, now, sp); // (a Jaime Guard in reach: his 1 HP)
   for (const h of hits) {
     logHit(s, by, h.id, now);
     const crit = critRoll(s, sp);
     if (
       !(isMgj(s)
         ? mgjSoak(s, h.id, now)
-        : soaks(s, h.id, now, crit ? PHP : dmgOf(s, sp)))
+        : soaks(s, h.id, now, crit ? PHP : dmgOf(s, sp), by))
     ) {
       s.players[h.id].dead = true;
       holdDown(s, h.id, now);
@@ -3474,12 +3702,19 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
     if (got === 2) justinKilled(s, by, sp);
     stab = got > 0;
   }
+  if (
+    !hang &&
+    by !== JUSTIN_ID &&
+    (isMgj(s) || sbOnBoard(s)) &&
+    mgjZombieHit(s, (x, y) => !!near(x, y, 0, 0), sp, now, by)
+  )
+    stab = true; // (Mad God Justin's zombies in reach too)
   if (hang)
     for (const n of hangTargets(s, now, sp)) {
       if (done.includes("h:" + n.id)) continue;
       if (
         near(n.x / HW, n.y / HH, n.z, inCabin(n.x, n.y) ? 1 : 0) &&
-        hangHit(s, n.id, by, now)
+        hangHit(s, n.id, by, now, sp)
       ) {
         done.push("h:" + n.id);
         if (n.id === "justin") justinKilled(s, by, sp);
@@ -3598,7 +3833,7 @@ function blast(s, sh, x, y, now, o = {}) {
     } // (Mad God Justin: half my HP, rounded down, never down by it; no knock-back)
     if (!P.dead && !self) logHit(s, sh.by, id, now);
     const killed =
-      !P.dead && !soaks(s, id, now, o.max ? PHP : dmgOf(s, "grenade"));
+      !P.dead && !soaks(s, id, now, o.max ? PHP : dmgOf(s, "grenade"), sh.by);
     if (P.dead || killed) {
       if (!P.dead) playerKilled(s, sh.by, id, w); // (o.max: the Jaime Bomb's, all of its HP)
       P.dead = true;
@@ -3624,7 +3859,9 @@ function blast(s, sh, x, y, now, o = {}) {
     );
     hit.push(id);
   }
-  guardsHit(s, sh.by, near, now); // (a Jaime Guard in the blast: his 1 HP)
+  guardsHit(s, sh.by, near, now, w); // (a Jaime Guard in the blast: his 1 HP)
+  if ((isMgj(s) || sbOnBoard(s)) && sh.by !== JUSTIN_ID)
+    mgjZombieHit(s, (zx, zy) => !!near(zx, zy, 0, 0), "grenade", now, sh.by); // (Mad God Justin's zombies in it: all their HP, as a grenade's blast in Dead Ducks Arcade)
   if (!hang && sh.by !== JUSTIN_ID && justinShown(s)) {
     const j = justinAt(s.justin, now);
     if (j && near(j.x, j.y, 0, 0)) {
@@ -3641,7 +3878,7 @@ function blast(s, sh, x, y, now, o = {}) {
     for (const n of hangTargets(s, now, "grenade"))
       if (
         near(n.x / HW, n.y / HH, n.z, inCabin(n.x, n.y) ? 1 : 0) &&
-        hangHit(s, n.id, sh.by, now) &&
+        hangHit(s, n.id, sh.by, now, w) &&
         n.id === "justin"
       )
         justinKilled(s, sh.by, w);
@@ -3745,6 +3982,49 @@ function moveShots(s, now) {
    as every duck's bullets are (the grenade launcher's grenade keeps its own) */
 const gunSpeed = (w) =>
   (ARMS[w].speed / BOARD_PX) * (w === "glauncher" ? 1 : FASTER);
+/* a duck's height for a shot (heights.js): in Hangout and Quacky Zombies its feet's (world px); on the boards 0, or
+   flying, its jetpack's */
+const duckH = (s, p) =>
+  isHang(s) ? +p.z || 0 : p.jf ? (+p.fz || 0) * DUCK_PX : 0;
+const DUCK_PX = 64;
+/* Doom's same floor first, as in Dead Ducks Arcade (heights.js sameFloorAhead, the one rule for every mode): a duck (or,
+   in Hangout, Justin or the shadow duck) on my floor in the line of my shot keeps the shot on my floor: { lh }, else {}
+   (it goes to the first target at any height). Measured in duck lengths; in Hangout the cabin's walls stop the look */
+function floorFirst(s, id, p, aim, now) {
+  const hang = isHang(s),
+    [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08],
+    l = Math.hypot(aim[0] / rx, aim[1] / ry) || 1,
+    hz = duckH(s, p),
+    side = hang && !!inCabin(p.x * HW, p.y * HH),
+    t = s.seat
+      .filter((o) => o !== id && s.pos[o] && !(s.players[o] || {}).dead)
+      .map((o) => ({
+        x: s.pos[o].x / rx,
+        y: s.pos[o].y / ry,
+        z: duckH(s, s.pos[o]),
+      }));
+  if (hang)
+    for (const n of hangTargets(s, now, ""))
+      t.push({ x: n.x / HW / rx, y: n.y / HH / ry, z: n.z || 0 });
+  const mine = sameFloorAhead(
+    t,
+    p.x / rx,
+    p.y / ry,
+    hz,
+    aim[0] / rx / l,
+    aim[1] / ry / l,
+    hang ? 70 : 40,
+    [1, 1],
+    0.5,
+    hang ? (x, y) => !!inCabin(x * rx * HW, y * ry * HH) !== side : null,
+  );
+  return mine ? { lh: floorLock(hz) } : {};
+}
+/* can shot sh reach duck p at its height (and no roof between: Downpour)? */
+const shotReach = (s, sh, p) =>
+  isHang(s)
+    ? hOk(sh, duckH(s, p), p.x * HW, p.y * HH, sh.x0 * HW, sh.y0 * HH)
+    : hOk(sh, duckH(s, p));
 /* the first duck in the way of a shot from (sh.lx, sh.ly) to at, within a duck's room of the line: its id, how far
    along (0 … 1) and where, or null (not the shooter, a duck that's down or jumping over it, a ghost, the other side
    of the cabin's walls) */
@@ -3761,9 +4041,9 @@ function firstDuck(s, sh, at, now) {
     if (id === sh.by || !p || p.x < 0 || !P || P.dead || isGhost(s, id))
       continue;
     if (
-      sh.hin !== undefined &&
-      ((inCabin(p.x * HW, p.y * HH) ? 1 : 0) !== sh.hin ||
-        Math.abs((+p.z || 0) - sh.hz) > 48)
+      (sh.hin !== undefined &&
+        (inCabin(p.x * HW, p.y * HH) ? 1 : 0) !== sh.hin) ||
+      !shotReach(s, sh, p)
     )
       continue;
     if (dodges(s, p, now) || vdSafe(s, id)) continue;
@@ -3793,13 +4073,13 @@ function lgrenHits(s, sh, at, now) {
 /* the chain gun's shot: at once, along the aim to the first duck (all its HP) or on past the board's edge; anything
    else on that line is hit as a bullet hits it. Every screen draws its thin yellow line (the l4line fx) */
 const CHAIN_FAR = 1.6; // (board widths: on past the board's edge)
-function chainShot(s, by, p, aim, now) {
+function chainShot(s, by, p, aim, now, w = "chaingun") {
   const hang = isHang(s),
     l = Math.hypot(aim[0], aim[1]) || 1,
     sh = {
       n: s.fxN,
       by,
-      k: "chain",
+      k: w === "laser" ? "laser" : "chain", // (the Laser Rifle's beam: 1 damage, mgjrules.js shotDmg)
       x0: p.x,
       y0: p.y,
       lx: p.x,
@@ -3813,6 +4093,7 @@ function chainShot(s, by, p, aim, now) {
             hin: inCabin(p.x * HW, p.y * HH) ? 1 : 0,
           }
         : {}),
+      ...floorFirst(s, by, p, aim, now), // (a duck on my floor in its line: it stays on my floor)
     },
     far = hang ? CHAIN_FAR * 0.25 : CHAIN_FAR; // (Hangout's world is far bigger than a board)
   let at = {
@@ -3851,6 +4132,7 @@ function chainShot(s, by, p, aim, now) {
       by,
       who: [],
       t: now,
+      ...(w === "laser" ? { w, ...(d ? { hd: 1 } : {}) } : {}), // (hd: it stopped at a duck, which smokes: game.js)
       ...(hang ? {} : { b: 1 }),
       x0: +(p.x * k[0]).toFixed(4),
       y0: +(p.y * k[1]).toFixed(4),
@@ -3933,7 +4215,7 @@ function scorch(s, by, id, now) {
   for (const [k, u] of Object.entries(s.flamed || {})) if (u > now) left[k] = u;
   s.flamed = { ...left, [id]: now + FLAME.BURN };
   if (by !== id) logHit(s, by, id, now);
-  if (!soaks(s, id, now, 1)) {
+  if (!soaks(s, id, now, 1, by)) {
     P.dead = true;
     holdDown(s, id, now);
     playerKilled(s, by, id, "flamer");
@@ -3997,11 +4279,11 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
       if (id === sh.by || !p || p.x < 0 || !P || P.dead || isGhost(s, id))
         continue;
       if (
-        sh.hin !== undefined &&
-        ((inCabin(p.x * HW, p.y * HH) ? 1 : 0) !== sh.hin ||
-          Math.abs((+p.z || 0) - sh.hz) > 48)
+        (sh.hin !== undefined &&
+          (inCabin(p.x * HW, p.y * HH) ? 1 : 0) !== sh.hin) ||
+        !shotReach(s, sh, p)
       )
-        continue; // (the other side of the walls, or above or below it)
+        continue; // (the other side of the walls, or above or below it: heights.js)
       if (dodges(s, p, now)) continue; // jumped over it
       if (isMgj(s) && sh.by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
       if (vdSafe(s, id)) continue; // (Valentine's Duck Date: the two at the table)
@@ -4019,14 +4301,14 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
         od = Math.hypot(ox, oy);
       if (od < (sh.r || 1)) {
         if (sh.got && sh.got.includes(id)) continue; // (it already took HP from this duck)
+        hLock(sh, duckH(s, p)); // (the first it passes over sets its height)
         if (sh.fake) continue; // (Mad God Justin: his double's, or his own while the double is the real one: no harm)
-        const safe = isMgj(s) && mgjSafe(s, id, now);
         logHit(s, sh.by, id, now);
         const crit = critRoll(s, sh.k);
         if (
           isMgj(s)
             ? mgjSoak(s, id, now, sh.k === "chair" ? 2 : 1)
-            : soaks(s, id, now, crit ? PHP : dmgOf(s, sh.k))
+            : soaks(s, id, now, crit ? PHP : dmgOf(s, sh.k), sh.by)
         )
           sh.got = [...(sh.got || []), id];
         else {
@@ -4059,7 +4341,6 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
         } // (the HP: a hit it can take keeps the duck up)
         wounded(s, id, sh.k, now, crit); // (its wounds: wounds.js)
         if (sh.by === JUSTIN_ID) mgjHurt(s, id);
-        if (sh.k === "fireball" && !safe) mgjBurn(s, id, now); // (it sets the duck burning)
         if (sh.k === "chair") {
           const ul = Math.sqrt(len) || 1;
           if (od > 0.2)
@@ -4068,7 +4349,11 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
         } // (Mad God Justin's office chair, or the Chair special's: shoved back, as the hammer does, away from it)
       }
     }
-  if (isMgj(s) && mgjShot(s, sh, x0, y0, dx, dy, now, logLine)) return true; // (Mad God Justin: a duck's shot hit him, or his hit Good Justin or a Jaime)
+  if (
+    (isMgj(s) || sbOnBoard(s)) &&
+    mgjShot(s, sh, x0, y0, dx, dy, now, logLine)
+  )
+    return true; // (Mad God Justin: a duck's shot hit him, or his hit Good Justin or a Jaime)
   if (s.jm && at.z > -0.15 && at.z < 1.05 && !sh.fake) {
     const rx = isHang(s) ? 0.006 : 0.03,
       ry = isHang(s) ? 0.012 : 0.08,
@@ -4081,15 +4366,19 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
       (x, y, z, side) => {
         if (
           sh.hin !== undefined &&
-          (side !== sh.hin || Math.abs(z - sh.hz) > 48)
+          (side !== sh.hin ||
+            !hOk(sh, z, x * HW, y * HH, sh.x0 * HW, sh.y0 * HH))
         )
           return null;
         const px = (x - x0) / rx,
           py = (y - y0) / ry,
           k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
-        return Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1) || null;
+        const on = Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1);
+        if (on && sh.hin !== undefined) hLock(sh, z);
+        return on || null;
       },
       now,
+      sh.k,
     );
   } // (a Jaime Guard it passes: his 1 HP)
   if (
@@ -4120,7 +4409,10 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
   if (sh.hin !== undefined && at.z > -0.15 && at.z < 1.05)
     for (const n of hangTargets(s, now, sh.k)) {
       // (Hangout: Justin can be knocked down too, and a chair whooshes the shadow duck away)
-      if ((inCabin(n.x, n.y) ? 1 : 0) !== sh.hin || Math.abs(n.z - sh.hz) > 48)
+      if (
+        (inCabin(n.x, n.y) ? 1 : 0) !== sh.hin ||
+        !hOk(sh, n.z, n.x, n.y, sh.x0 * HW, sh.y0 * HH)
+      )
         continue;
       const ux = dx / 0.006,
         uy = dy / 0.012,
@@ -4128,11 +4420,9 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
         py = (n.y / HH - y0) / 0.012,
         len = ux * ux + uy * uy;
       const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
-      if (
-        Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1) &&
-        hangHit(s, n.id, sh.by, now) &&
-        n.id === "justin"
-      )
+      if (Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1)) hLock(sh, n.z);
+      else continue;
+      if (hangHit(s, n.id, sh.by, now, sh.k) && n.id === "justin")
         justinKilled(s, sh.by, sh.k);
     }
   return false;
@@ -4370,9 +4660,10 @@ function jaimeRun(s, now) {
       }
       ch = true;
       J.hp = (J.hp || 1) - 1;
+      fx({ kind: "hitmark", who: [], x: J.x, y: J.y });
       if (J.hp <= 0) {
         if (J.bomb) jaimeBlows(s, id, J, [dx / (d || 1), dy / (d || 1)], now);
-        else fx({ kind: "poof", x: J.x, y: J.y, who: [id] });
+        else fx(jaimeDead(J, id, k, now)); // (he falls, bleeding: jaimebomb.js)
         continue;
       } // (Justin's first answer to a Jaime coming for him: a controller or his chair, at once; a Jaime Bomb takes 3)
     }
@@ -4389,7 +4680,7 @@ function jaimeRun(s, now) {
       if (hit) {
         jaimeCount(s, { id: J.t });
         logHit(s, J.by, J.t, now);
-        if (!soaks(s, J.t, now)) {
+        if (!soaks(s, J.t, now, 1, J.by)) {
           P.dead = true;
           holdDown(s, J.t, now);
           playerKilled(s, J.by, J.t, "jaime");
@@ -4422,6 +4713,7 @@ const critRoll = (s, w) => pwOn(s) && Math.random() < (PCRIT[w] || 0);
 function wounded(s, id, w, now, crit) {
   const P = s.players[id];
   if (!pwOn(s) || !P) return;
+  if (normalGame(s) && shielded(s, id, now)) return; // (spawn protection: no wounds either)
   if (crit && P.dead) {
     pwAdd(s, id, ["x0"], now, true);
     holdDown(s, id, now, CRIT_DOWN);
@@ -4647,8 +4939,8 @@ function guardShoots(s, J, aim, now) {
   s.shots = [...(s.shots || []), ...out];
 }
 /* hits on the Jaime Guards: every Guard but `by`'s own that near(x, y, z, side) reaches (anything but null) loses his
-   1 HP and is gone in a poof, with an "ouch" line */
-function guardsHit(s, by, near, now) {
+   1 HP, with an "ouch" line, a hitmarker, and falls bleeding where he stood (w: the weapon; jaimebomb.js jaimeDead) */
+function guardsHit(s, by, near, now, w = "") {
   if (!s.jm || isMgj(s)) return [];
   const hang = isHang(s),
     got = Object.entries(s.jm)
@@ -4670,10 +4962,11 @@ function guardsHit(s, by, near, now) {
     const J = rest[id];
     delete rest[id];
     jaimeSays(s, id, anyLine(JAIME_HURT));
-    s.fxN = (s.fxN || 0) + 1;
+    s.fxN = (s.fxN || 0) + 2;
     s.fx = [
-      ...(s.fx || []).slice(-19),
-      { n: s.fxN, kind: "poof", x: J.x, y: J.y, who: [id], t: now },
+      ...(s.fx || []).slice(-18),
+      { n: s.fxN - 1, kind: "hitmark", by, who: [], x: J.x, y: J.y, t: now },
+      { n: s.fxN, ...jaimeDead(J, id, w, now) },
     ];
   }
   s.jm = Object.keys(rest).length ? rest : null;
@@ -4905,7 +5198,11 @@ function cabinTick(s, now) {
   const was = s.cabinEnd.at,
     changed = cabinCheck(s, now);
   if (s.cabinEnd.at && now >= s.cabinEnd.at) {
-    cabinOver(s, now);
+    cabinOver(
+      s,
+      now,
+      isSb(s) ? "The ducks voted to leave Sandbox." : undefined,
+    );
     return true;
   }
   return changed || was !== s.cabinEnd.at;
@@ -4914,6 +5211,7 @@ function cabinTick(s, now) {
 export function backToLobby(s, why) {
   helperOut(s); // (the fireplace's Justin stays with his game)
   delete s.waiting;
+  delete s.zmapAsked; // (Quacky Zombies' map vote comes again next time)
   const was = STAGE[s.phase];
   s.phase = "lobby";
   countTurn(s, was);
@@ -4942,6 +5240,7 @@ export function backToLobby(s, why) {
   s.dn = null;
   s.vd = null;
   s.mgj = null;
+  s.mz = null;
   s.mgjPast = [];
   s.wq = null;
   delete s.hidden;

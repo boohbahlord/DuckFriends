@@ -137,8 +137,33 @@ export function mountCornerMusicBar() {
   const bar = t.content.firstElementChild;
   corner.prepend(bar);
   const off = mountMusicBar(corner);
+  /* a corner held between two edges (a phone's Rooms: from past Back to the right edge, css) with too little room left
+     beside Full screen and Sign in for the speaker and a few letters of the song: the bar is hidden, never squeezed
+     under them (the owner's, Nov 18 15:18Z: "the music display button should be hidden when there isnt room for it on
+     mobile") */
+  const MIN = 6; // rem
+  const fit = () => {
+    const cs = getComputedStyle(corner);
+    let room = Infinity;
+    if (cs.left !== "auto") {
+      const gap = parseFloat(cs.columnGap) || 0;
+      room = corner.clientWidth;
+      for (const c of corner.children)
+        if (c !== bar && c.getClientRects().length)
+          room -= c.getBoundingClientRect().width + gap;
+    }
+    const rem =
+      parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    bar.classList.toggle("no-room", room < MIN * rem);
+  };
+  const ro = new ResizeObserver(fit);
+  ro.observe(corner);
+  for (const c of corner.children) if (c !== bar) ro.observe(c); // (Sign in becoming Friends, with its count)
+  fit();
   return () => {
+    ro.disconnect();
     off();
+    bar.classList.remove("no-room");
     bar.remove();
   };
 }

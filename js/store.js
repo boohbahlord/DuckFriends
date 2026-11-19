@@ -11,6 +11,9 @@ export const SETTINGS_DEFAULT = {
   font: "fredoka",
   textSize: 100,
   uiSize: 100,
+  mouseSize: 100, // (Mouse size, Pointer size, Crosshair size: the pointers, pixel.js)
+  pointerSize: 100,
+  crossSize: 100,
   dyslexic: false,
   colorblind: false,
   motion: !matchMedia("(prefers-reduced-motion: reduce)").matches,
@@ -18,11 +21,12 @@ export const SETTINGS_DEFAULT = {
   clickUse: false,
   multipleChoice: false,
   touch: "stick",
+  holdVote: "500", // ms a Vote button (and a phone's use button) is held before it acts; 0 = at once (the owner's, Nov 17)
   jumpsSci: false,
   jumpsHidden: false,
   chatSide: "left",
   chatFloat: true,
-  otherHp: true, // the other players' HP meters in Quacky Zombies and Mad God Justin (a computer)
+  otherHp: true, // the other players' HP meters, in every mode (a computer)
   shapes: "moving",
   sound: 100,
   sfx: 100,
@@ -83,10 +87,10 @@ export const STAT_MODES = [
   ["l4dd", "Dead Ducks Arcade"],
   ["l4r16", "Round 16 Start"], // (Quacky Zombies with the Round 16 Start setting: its own stats, the owner's)
 ];
-/* which stats a game counts toward: its mode's, or Round 16 Start's for Quacky Zombies with that setting on */
+/* which stats a game counts toward: its mode's, or Round 16 Start's for Quacky Zombies starting on round 13 or later */
 export const statMode = (s) => {
   const m = (s && s.options && s.options.mode) || "aod";
-  return m === "l4dd" && +s.options.l4r16 ? "l4r16" : m;
+  return m === "l4dd" && +s.options.l4start >= 13 ? "l4r16" : m;
 };
 export function cleanStats(o) {
   const out = {},
@@ -106,6 +110,7 @@ export function cleanStats(o) {
       titles: n(x.titles),
       argued: n(x.argued),
       gave: n(x.gave),
+      kills: n(x.kills), // (Dead Ducks Arcade: zombies killed)
     };
   }
   return out;

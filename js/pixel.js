@@ -8,6 +8,7 @@
    (index.html), and css/app.css keys on it. */
 import { svgDataURL } from "./hangout/art.js";
 import { applyPalette } from "./pixelpalette.js";
+import { hasRb, rbSprite, RB_N } from "./rainbowskin.js";
 
 const DUCK = 32, // (pixels to a duck's height: the owner's pick, on phones too)
   KEEP = 900; // (pictures kept made; the oldest go first)
@@ -17,10 +18,21 @@ export const pixelOn = () => on;
 
 /* ---------- the grid ---------- */
 const FILL = 0.7; // (a duck's drawing fills about 70% of its box, hat room included)
-let duckPx = 92 * FILL, // (a duck's drawn height on the board, in css px; the board tells me its ducks' box size)
+/* the board's duck box the pages and every other map are drawn for (css px): Duck Cabin and Downpour use its grid too,
+   though their ducks show smaller, so their pixels are the same size as every other map's (the owner's, Nov 17: "one
+   pixel size uniformly like the page backgrounds for other maps") */
+export const PAGE_DUCK = 92;
+let duckPx = PAGE_DUCK * FILL, // (a duck's drawn height on the board, in css px; the board tells me its ducks' box size)
   grid = 2;
+/* one pixel is a whole number of the screen's own pixels (owner, Nov 17: the playroom came out smooth in the app). On a
+   screen whose pixels aren't whole css px (Windows at 125% or 150%, most phones) a pixel of 2.012 css px fell between
+   them and the filter below blurred instead of making squares, so the grid is the nearest whole count of the screen's
+   pixels */
+const dpr = () => devicePixelRatio || 1;
+let dprAt = dpr();
 function setGrid() {
-  grid = Math.max(1, duckPx / DUCK);
+  dprAt = dpr();
+  grid = Math.max(1, Math.round(Math.max(1, duckPx / DUCK) * dprAt)) / dprAt;
   document.documentElement.style.setProperty("--px", grid.toFixed(3) + "px");
   filterGrid();
   dispatchEvent(new Event("pxgrid")); // (pictures made at the grid's size are made again: pxtext.js' emoji)
@@ -31,27 +43,63 @@ function setGrid() {
    of canvases, pictures and moving drawings, so I pixelate what they draw rather than each piece; the same grid as the
    ducks', so the pixels match. (The usual pixelate filter: a 1 × 1 dot tiled every square, kept where the picture is,
    then grown to fill its square.) */
-let filt = null;
+let filt = null,
+  filtMade = [], // (each filter's markup as last made)
+  camK = 1; // (the zoom Duck Cabin's props are shown at: setCamScale)
+/* one filter, in the screen's pixels: n of them to a square, k to a css px of its layer. A 1 × 1 dot (one screen pixel,
+   so one color) is kept in each square, then grown to fill it: an odd square grows round its middle; an even one grows
+   to one less, then is laid over itself a pixel right and a pixel down (a grown dot can only be an odd size) */
+function filterHTML(id, n, k) {
+  const u = (v) => (v / k).toFixed(4),
+    odd = n % 2,
+    at = odd ? (n - 1) / 2 : n / 2 - 1, // (the dot, from the square's corner)
+    r = at; // (grown by this much each way)
+  const grow = r ? `<feMorphology operator="dilate" radius="${u(r)}"/>` : "";
+  const even = odd
+    ? ""
+    : `<feOffset dx="${u(1)}" result="a"/><feBlend in="a" in2="b" mode="lighten" result="c"/><feOffset dy="${u(1)}"/><feBlend in2="c" mode="lighten"/>`;
+  return `<filter id="${id}" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB"><feFlood x="${u(at)}" y="${u(at)}" width="${u(1)}" height="${u(1)}" flood-color="#000"/><feComposite width="${u(n)}" height="${u(n)}"/><feTile result="dot"/><feComposite in="SourceGraphic" in2="dot" operator="in"/>${grow}${even ? '<feOffset result="b"/>' : ""}${even}</filter>`;
+}
 function filterGrid() {
   if (!on || !document.body) return;
   if (!filt) {
     filt = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     filt.setAttribute("aria-hidden", "true");
     filt.style.cssText = "position:absolute;width:0;height:0;overflow:hidden";
-    filt.innerHTML = `<filter id="px-f" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB"><feFlood x="0" y="0" width="1" height="1" flood-color="#000"/><feComposite width="2" height="2"/><feTile result="dot"/><feComposite in="SourceGraphic" in2="dot" operator="in"/><feMorphology operator="dilate" radius="1"/></filter>`;
     document.body.append(filt);
   }
-  const g = grid.toFixed(3),
-    [flood, comp, , , morph] = filt.querySelector("filter").children;
-  flood.setAttribute("x", (grid / 2).toFixed(3));
-  flood.setAttribute("y", (grid / 2).toFixed(3));
-  comp.setAttribute("width", g);
-  comp.setAttribute("height", g);
-  morph.setAttribute("radius", (grid / 2).toFixed(3));
+  const n = Math.round(grid * dprAt);
+  /* px-fc: for a layer that is itself shown zoomed (a Duck Cabin prop, scaled by the camera): the filter works before
+     the zoom, so its squares are made 1/zoom as big, and come out one grid square on the screen like everything else
+     (owner, Nov 16: one pixel size for every background) */
+  const want = [
+    filterHTML("px-f", n, dprAt),
+    filterHTML("px-fc", n, dprAt * camK),
+  ];
+  want.forEach((h, i) => {
+    if (filtMade[i] === h) return; // (made again only when it changed)
+    filtMade[i] = h;
+    const t = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    t.innerHTML = h;
+    if (filt.children[i]) filt.children[i].replaceWith(t.firstChild);
+    else filt.append(t.firstChild);
+  });
+}
+/* the zoom Duck Cabin shows its props at (world.js' camera) */
+export function setCamScale(k) {
+  if (!(k > 0) || Math.abs(k - camK) < 0.001) return;
+  camK = k;
+  filterGrid();
 }
 if (document.readyState === "loading")
   addEventListener("DOMContentLoaded", filterGrid);
 setGrid();
+/* the browser zoomed, or the window moved to another screen: its pixels changed size */
+addEventListener("resize", () => {
+  if (dpr() === dprAt) return;
+  setGrid();
+  setCursors(); // (the pointers too: drawn in the screen's pixels)
+});
 document.documentElement.classList.add("pixel");
 
 /* the board's duck size (its box, css px, as game.js' geo.size): every picture's pixel follows it */
@@ -150,7 +198,29 @@ export function pxSVG(svg, w, cls = "") {
   const head = svg.slice(0, svg.indexOf(">")),
     W = +(/\swidth="([\d.]+)"/.exec(head) || [])[1] || 1,
     H = +(/\sheight="([\d.]+)"/.exec(head) || [])[1] || W;
+  if (on && hasRb(svg)) return pxRainbow(svg, W, H, w, cls);
   return pxImg("s" + hash(svg), svg, w, (w * H) / W, cls);
+}
+/* a drawing wearing the rainbow skin (rainbowskin.js), w css px wide: every step of the rainbow's turn made into pixels
+   in one tall picture, one step shown at a time (css img.rbsp). Each step a whole number of pixels tall, so the steps
+   line up */
+function pxRainbow(svg, W, H, w, cls) {
+  const ch = Math.max(1, Math.round((w * H) / W / grid)),
+    fh = ch * grid,
+    sprite = rbSprite(svg, W, H),
+    [fk] = full("r" + hash(svg), w, fh * RB_N),
+    u = raster("r" + hash(svg), sprite, w, fh * RB_N);
+  return `<img class="px rbsp${cls ? " " + cls : ""}" data-pxk="${fk.replace(/"/g, "&quot;")}" src="${u || asURL(sprite)}" width="${Math.round(w)}" height="${fh.toFixed(2)}" style="aspect-ratio: ${W} / ${H}" alt="" draggable="false">`;
+}
+/* the same steps for a drawing already on the page (pxdom.js): its sprite's text, its key and its size */
+export function rainbowSteps(text, W, H, w, h) {
+  const ch = Math.max(1, Math.round(h / grid));
+  return {
+    sprite: rbSprite(text, W, H),
+    key: "r" + hash(text),
+    w,
+    h: ch * grid * RB_N,
+  };
 }
 
 /* ---------- pictures already on the page (<img>: the mode pictures, props, a player's own picture) ----------
@@ -231,56 +301,38 @@ kyk
 kywk
 kywwk
 kywwwk
-kywwwwkk
+kywwwwk
 kywwwwwk
 kywwwwwwk
 kywwwwwwwk
-kywwwwwwwwk
-kywwwwwwwwwk
-kywwwwwwwwwwk
-kywwwwwwwwwwwk
-kywwwwwwwwwwwwk
-kywwwwwwwwwkkkkk
-kwwwwwwwwwk
-kwwwwwkwwwk
-kwwwwk.kwwwk
-kwwwk...kwwk
-kwwk....kwwwk
-kwk......kwwk
-kk.......kwwwk
-..........kwwk
-..........kwwkk
-...........kk`,
+kywwwwkkkkk
+kywkwwk
+kwk.kwwk
+kk..kwwk
+k....kwwk
+.....kwwk
+......kk`,
   ],
   hand: [
-    6,
+    4,
     0,
-    `.....kkkk
-.....kywk
-....kywwwk
-....kywwwk
-....kywwwk
-....kywwwk
-....kywwwk
-....kywwwk
-....kywwwwkkk
-....kywwwwwwk
-....kywwwkwwwkkkk
-....kywwwkwwwkwwwkkk
-....kywwwkwwwkwwwkwwk
-...kwwwwwkwwwkwwwkwwk
-.kkwwwwwwkwwwkwwwkwwk
-kwwwwwwwwkwwwkwwwkwwk
-kwwwwwwwwwwwwwwwwwwwk
-kwwwwwwwwwwwwwwwwwwwk
-kwwwwwwwwwwwwwwwwwwwk
-.kkwwwwwwwwwwwwwwwwwk
-...kwwwwwwwwwwwwwwwwk
-...kwwwwwwwwwwwwwwwwk
-...kwwwwwwwwwwwwwwwwk
-...kwwwwwwwwwwwwwwwwk
-....kwwwwwwwwwwwwwwk
-.....kkkkkkkkkkkkkk`,
+    `....kk
+...kywk
+...kywk
+...kywk
+...kywkkk
+...kywkwkkk
+...kywkwkwkkk
+kk.kywkwkwkwk
+kwkkywwwwwwwk
+kwwkywwwwwwwk
+.kwwwwwwwwwwk
+.kwwwwwwwwwwk
+..kwwwwwwwwwk
+..kwwwwwwwwk
+...kwwwwwwwk
+...kwwwwwwk
+...kkkkkkkk`,
   ],
   cross: [
     7,
@@ -302,32 +354,21 @@ kkkkk.....kkkkk
 ......kkk`,
   ],
   text: [
-    5,
-    12,
-    `kkkk..kkkk
-kwwwkkwwwk
-kkkkwwkkkk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-kkkkwwkkkk
-kwwwkkwwwk
-kkkk..kkkk`,
+    3,
+    6,
+    `kkk.kkk
+kwwkwwk
+kkkwkkk
+..kwk
+..kwk
+..kwk
+..kwk
+..kwk
+..kwk
+..kwk
+kkkwkkk
+kwwkwwk
+kkk.kkk`,
   ],
 };
 const INK = { k: "#101016", w: "#f7f8f3", y: "#fcdb4e" };
@@ -347,24 +388,54 @@ function cursorURL(rows, s) {
   return c.toDataURL();
 }
 /* how many css px each of a pointer's pixels takes (owner, Nov 16: one css px was far too small, "bigger, but not
-   large", and the crosshair so small the game was unplayable; then twice as big was too big: the arrow, the hand and
-   the text pointer are drawn again half as big again as the first ones, one css px a pixel). Browsers drop a pointer
-   picture over 128 px, so a sharper copy (2x, 3x) is only offered while it fits */
+   large", and the crosshair so small the game was unplayable; then twice as big was too big; Nov 17: the mouse and the
+   pointer over a button still too large, the crosshair a good size, and all three sizes in Settings: the arrow, the hand
+   and the text pointer are drawn again about two thirds as big, the crosshair kept). The arrow and the text pointer
+   follow Mouse size, the hand Pointer size, the crosshair Crosshair size (100% each by default) */
 const CURSOR_ZOOM = { arrow: 1, hand: 1, text: 1, cross: 3 },
-  CURSOR_MAX = 128;
+  CURSOR_SIZE = {
+    arrow: "mouse",
+    text: "mouse",
+    hand: "pointer",
+    cross: "cross",
+  },
+  CURSOR_MAX = 128; // (browsers drop a pointer picture bigger than this)
+let cursorSizes = { mouse: 100, pointer: 100, cross: 100 },
+  cursorsAt = "";
+/* each pointer's picture is drawn in whole pixels of the screen (as many as its size needs, rounded up) and told how
+   many of them make a css px (image-set), so it shows at exactly its size: sharp wherever that is a whole number of the
+   screen's pixels (100% on most screens) */
 function setCursors() {
-  const sets = CSS.supports("cursor", "image-set(url(a.png) 1x) 0 0, auto"),
+  const d = dpr(),
+    key = [d, cursorSizes.mouse, cursorSizes.pointer, cursorSizes.cross].join();
+  if (key === cursorsAt) return;
+  cursorsAt = key;
+  const sets = CSS.supports("cursor", "image-set(url(a.png) 1.5x) 0 0, auto"),
     root = document.documentElement.style;
   for (const [name, [hx, hy, art]] of Object.entries(CURSORS)) {
     const rows = art.split("\n"),
-      z = CURSOR_ZOOM[name] || 2,
-      big = Math.max(rows.length, ...rows.map((r) => r.length)) * z,
-      dens = [1, 2, 3].filter((d) => d === 1 || big * d <= CURSOR_MAX),
-      img =
-        sets && dens.length > 1
-          ? `image-set(${dens.map((d) => `url(${cursorURL(rows, z * d)}) ${d}x`).join(", ")})`
-          : `url(${cursorURL(rows, z)})`;
-    root.setProperty(`--cur-${name}`, `${img} ${hx * z} ${hy * z}`);
+      big = Math.max(rows.length, ...rows.map((r) => r.length)),
+      z = (CURSOR_ZOOM[name] * cursorSizes[CURSOR_SIZE[name]]) / 100, // (one pointer pixel, in css px)
+      px = sets
+        ? Math.max(
+            1,
+            Math.min(Math.ceil(z * d - 0.01), Math.floor(CURSOR_MAX / big)),
+          )
+        : Math.max(1, Math.round(z)),
+      img = sets
+        ? `image-set(url(${cursorURL(rows, px)}) ${+(px / z).toFixed(4)}x)`
+        : `url(${cursorURL(rows, px)})`,
+      at = sets ? z : px;
+    root.setProperty(
+      `--cur-${name}`,
+      `${img} ${Math.round(hx * at)} ${Math.round(hy * at)}`,
+    );
   }
 }
 setCursors();
+/* Settings → Controls: Mouse size, Pointer size, Crosshair size (in %) */
+export function setCursorSizes(mouse, pointer, cross) {
+  const pc = (v) => Math.max(25, Math.min(400, +v || 100));
+  cursorSizes = { mouse: pc(mouse), pointer: pc(pointer), cross: pc(cross) };
+  setCursors();
+}
