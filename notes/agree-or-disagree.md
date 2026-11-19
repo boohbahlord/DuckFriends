@@ -6280,3 +6280,7 @@ Justin spawned in without his head in a retry of the game after i died in the zo
 
 zombies should pick a part to jump onto the gas pump from and commit, not going left and right over and over until the player stands still because that is ripe for exploit"
 Decided: gun sizes are fixed in Version 89 (live 21:46Z Nov 18). Solomon: Justin's head comes back with him on a retry (a new game starts him whole), and a zombie climbing to the gas pump roof picks one spot and commits to it.
+
+## Owner, Nov 19 01:01Z: "big one" (attached: "Sandbox mode rules.docx")
+The whole spec, word for word, is in /mnt/project-files/sandbox/sandbox-mode-rules.txt (the .docx beside it). New mode "sandbox": cheat sheet c, build b (spawns, respawns, loot orbs, board zones), make NPC m, Numerat n (the owner's number language), hotbar h, game rules g, player settings p; saved custom game modes playable in vote/random/online. Also: "test every game mode to make it like zombies" (Mad God Justin HP stays).
+Decided: Adam's plan + usage plan + 18 questions in the doc https://claude.ai/artifact/QBUb17b36zxdBP1wAMg1j9 (stages 0-9, Stage 0 = zombie controls in every existing mode). Nothing built until the owner answers and says go.
