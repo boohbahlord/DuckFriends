@@ -164,7 +164,7 @@ function dungeonHTML() {
     return `<i class="ec-glow${torch ? " big" : ""}" style="left:${(x / 3.2).toFixed(2)}%;top:${(y / 1.8).toFixed(2)}%;animation-delay:-${(i * 0.37).toFixed(2)}s"></i>
       <span class="ec-flame" style="left:${(left / 3.2).toFixed(2)}%;top:${(top / 1.8).toFixed(2)}%;width:${(w / 3.2).toFixed(2)}%;height:${(h / 1.8).toFixed(2)}%;--d:${(0.7 + i * 0.13).toFixed(2)}s">${flameSVG(torch ? TORCH : CANDLE, w, h)}</span>`;
   };
-  return `<div class="ec-stage"><img src="assets/maps/ethers-crossroads.png" alt="" draggable="false">${EC_FLAMES.map(flame).join("")}</div>`;
+  return `<div class="ec-stage"><img src="assets/px/maps/ethers-crossroads.webp" data-pxready data-pxok alt="" draggable="false">${EC_FLAMES.map(flame).join("")}</div>`;
 }
 
 /* Chalice of Tears' colors (the book's own, site.css @keyframes chalice): each color, then the dark between it and
@@ -578,7 +578,7 @@ export function nwkSVG(id) {
           .join("")
       : "";
   if (L.dungeon)
-    return `<image href="assets/maps/ethers-crossroads.png" width="480" height="270" preserveAspectRatio="xMidYMid slice" style="image-rendering:pixelated"/>
+    return `<image href="assets/px/maps/ethers-crossroads.webp" width="480" height="270" preserveAspectRatio="xMidYMid slice" style="image-rendering:pixelated"/>
 <circle cx="268" cy="70" r="34" fill="#ffb347" opacity=".22"/><g stroke="#000" stroke-width="1.4" fill="none">${lines}</g>`;
   return `<rect width="480" height="270" fill="${gr}"/>${glow}${lights}<g stroke="#000" stroke-width="1.4" fill="none">${lines}</g>`;
 }

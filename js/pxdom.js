@@ -43,7 +43,7 @@ function css() {
   const s = document.createElement("style");
   s.id = "pxdom-css";
   s.textContent =
-    "svg[data-px]>:not(image.pxi,g.pxt,svg.pxw){opacity:0!important}" +
+    "svg[data-px]>:not(image.pxi,g.pxt,svg.pxw),svg[data-pxwait]>:not(image.pxi,g.pxt,svg.pxw){opacity:0!important}" +
     "image.pxi{image-rendering:pixelated;pointer-events:none}";
   document.head.append(s);
 }
@@ -243,13 +243,22 @@ function plan(svg, root, size) {
    styles again for each */
 function make(jobs) {
   css();
-  const hid = jobs.map((j) => j.svg.hasAttribute("data-px"));
-  for (const j of jobs) j.svg.removeAttribute("data-px");
+  const hid = jobs.map((j) => [
+    j.svg.hasAttribute("data-px"),
+    j.svg.hasAttribute("data-pxwait"),
+  ]);
+  for (const j of jobs) {
+    j.svg.removeAttribute("data-px");
+    j.svg.removeAttribute("data-pxwait");
+  }
   for (const j of jobs) {
     j.text = snapshot(j.svg, j.vb);
     j.tx = words(j.svg);
   }
-  jobs.forEach((j, i) => hid[i] && j.svg.setAttribute("data-px", "")); // (a new drawing stays seen until its picture is there: show)
+  jobs.forEach((j, i) => {
+    if (hid[i][0]) j.svg.setAttribute("data-px", "");
+    if (hid[i][1]) j.svg.setAttribute("data-pxwait", "");
+  }); // (read as it looks, all in one go, so nothing is seen in between)
   for (const j of jobs) put(j);
 }
 function put({ svg, st, key, vb, w, h, text, tx }) {
@@ -267,13 +276,15 @@ function put({ svg, st, key, vb, w, h, text, tx }) {
   img.setAttribute("width", vb.width);
   img.setAttribute("height", vb.height);
   const show = (url) => {
-    if (!url || st.key !== key) return;
+    if (st.key !== key) return;
+    if (!url) return svg.removeAttribute("data-pxwait"); // (it couldn't be made: the drawing after all, rather than nothing)
     img.setAttribute("href", url);
     if (img.parentNode !== svg) svg.append(img);
     if (st.win) st.win.remove();
     svg.querySelectorAll(":scope > g.pxt").forEach((e) => e.remove());
     if (tx) svg.append(tx);
-    svg.setAttribute("data-px", ""); // (hidden only once its picture is there: never a gap)
+    svg.setAttribute("data-px", ""); // (its picture there: its own parts hidden)
+    svg.removeAttribute("data-pxwait");
   };
   const ext = inlined(text);
   if (ext) ext.then((t) => rasterReady(k, t, w, h)).then(show);
@@ -309,12 +320,14 @@ function rbShow(svg, st, key, text, vb, w, h) {
   im.setAttribute("height", vb.height * RB_N);
   im.style.setProperty("--rbh", vb.height + "px");
   const show = (url) => {
-    if (!url || st.key !== key) return;
+    if (st.key !== key) return;
+    if (!url) return svg.removeAttribute("data-pxwait");
     im.setAttribute("href", url);
     if (win.parentNode !== svg) svg.append(win);
     if (st.img) st.img.remove();
     svg.querySelectorAll(":scope > g.pxt").forEach((e) => e.remove());
     svg.setAttribute("data-px", "");
+    svg.removeAttribute("data-pxwait");
   };
   const u = raster(R.key, R.sprite, R.w, R.h);
   if (u) show(u);
@@ -357,6 +370,7 @@ function inlined(text) {
   );
 }
 function unPx(svg) {
+  svg.removeAttribute("data-pxwait");
   if (!svg.hasAttribute("data-px")) return;
   svg.removeAttribute("data-px");
   svg
@@ -404,10 +418,41 @@ export function pxWatch(root, { skip = "" } = {}) {
     queued = new Set();
     const sizes = list.map(sizeOf),
       jobs = list.map((svg, i) => plan(svg, root, sizes[i])).filter(Boolean);
+    list.forEach((svg, i) => {
+      if (!sizes[i] && svg.hasAttribute("data-pxwait"))
+        if (sized) sized.observe(svg);
+        else svg.removeAttribute("data-pxwait");
+    }); // (not on the screen yet: made once it shows, hidden till then)
     if (jobs.length) make(jobs);
   };
+  /* a new drawing is hidden from the start until its picture is there (the owner's, Nov 19 17:00Z: the original
+     pictures popped in before their pixels). Set as it comes in, before the screen is drawn */
+  const sized =
+    typeof ResizeObserver === "undefined"
+      ? null
+      : new ResizeObserver((es) =>
+          es.forEach((e) => {
+            if (!e.contentRect.width || !e.contentRect.height) return;
+            sized.unobserve(e.target);
+            want(e.target);
+          }),
+        );
   const want = (svg) => {
     if (!svg || (skip && svg.closest(skip))) return;
+    if (
+      !svg.hasAttribute("data-px") &&
+      !svg.hasAttribute("data-pxwait") &&
+      pixelOn() &&
+      !svg.closest("[data-nopx]") &&
+      !svg.ownerSVGElement &&
+      svg.viewBox &&
+      svg.viewBox.baseVal &&
+      svg.viewBox.baseVal.width &&
+      svg.viewBox.baseVal.height
+    ) {
+      css();
+      svg.setAttribute("data-pxwait", "");
+    }
     queued.add(svg);
     if (!raf)
       raf = requestAnimationFrame(() => {
@@ -466,6 +511,7 @@ export function pxWatch(root, { skip = "" } = {}) {
   if (pixelOn()) all();
   function stop() {
     mo.disconnect();
+    if (sized) sized.disconnect();
     removeEventListener("pixelchange", onSwitch);
     removeEventListener("resize", all);
     if (raf) cancelAnimationFrame(raf);

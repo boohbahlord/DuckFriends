@@ -1015,7 +1015,7 @@ function boardSketch(mode) {
    other map with the picked game's board on it */
 function mapPic(s, id, mode) {
   if (id === "cabin")
-    return `<img class="gs-cabin${mode === "l4dd" ? " dark" : ""}" src="assets/maps/duck-cabin.jpg" alt="Duck Cabin" draggable="false">`;
+    return `<img class="gs-cabin${mode === "l4dd" ? " dark" : ""}" src="assets/px/maps/duck-cabin.webp" data-pxready data-pxok alt="Duck Cabin" draggable="false">`;
   const f = mapForm(id),
     grey = f.grey || (id === "collage" && s.options.mapGrey) ? " grey" : "";
   return `<svg class="gs-map${grey}" viewBox="0 0 480 270" role="img" aria-label="${esc(mapName(id))}"><g class="gs-back">${artBackdrop(f.grey ? f.map : id)}</g>${CABIN_MODES.includes(mode) ? "" : boardSketch(mode)}</svg>`;
@@ -1027,7 +1027,7 @@ function gamePic(s, mode) {
   const shot =
     mode === "sandbox"
       ? "" // (Sandbox: its map alone, till it has a screenshot of its own)
-      : `<image href="assets/modes/${mode}.webp?v=2" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>`;
+      : `<image href="assets/px/modes/${mode}.webp" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>`;
   if (CABIN_MODES.includes(mode))
     return `<svg class="gs-map" viewBox="0 0 480 270" role="img" aria-label="${esc(modeOf(mode).name)}">${shot}</svg>`;
   const map =

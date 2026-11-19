@@ -185,12 +185,16 @@ export function rasterReady(key, src, w, h) {
       making.get(fk) || Promise.resolve(made.get(fk) || null));
 }
 
-/* an <img> for a picture, w × h css px: its pixel version once made (the drawing itself shows until then, and the img
-   changes by itself when it's ready). With the pixel look off, the plain drawing */
+/* what an <img> shows while its pixel version is made: nothing (the owner's, Nov 19 17:00Z: the original pictures popped
+   in before their pixels, "which tells me it's still using the old pictures"). One see-through pixel */
+export const BLANK =
+  "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+/* an <img> for a picture, w × h css px: its pixel version once made (nothing shows until then, and the img changes by
+   itself when it's ready). With the pixel look off, the plain drawing */
 export function pxImg(key, src, w, h, cls = "") {
   const [fk] = full(key, w, h),
     u = on ? raster(key, src, w, h) : null;
-  return `<img class="px${cls ? " " + cls : ""}" ${on ? `data-pxk="${fk.replace(/"/g, "&quot;")}" ` : ""}src="${u || asURL(src)}" width="${Math.round(w)}" height="${Math.round(h)}" alt="" draggable="false">`;
+  return `<img class="px${cls ? " " + cls : ""}" ${on ? `data-pxk="${fk.replace(/"/g, "&quot;")}" ` : ""}src="${u || (on ? BLANK : asURL(src))}" width="${Math.round(w)}" height="${Math.round(h)}" alt="" draggable="false">`;
 }
 
 /* a key for a drawing from its own text (FNV-1a), so the same drawing is made once however often it's asked for */
@@ -219,7 +223,7 @@ function pxRainbow(svg, W, H, w, cls) {
     sprite = rbSprite(svg, W, H),
     [fk] = full("r" + hash(svg), w, fh * RB_N),
     u = raster("r" + hash(svg), sprite, w, fh * RB_N);
-  return `<img class="px rbsp${cls ? " " + cls : ""}" data-pxk="${fk.replace(/"/g, "&quot;")}" src="${u || asURL(sprite)}" width="${Math.round(w)}" height="${fh.toFixed(2)}" style="aspect-ratio: ${W} / ${H}" alt="" draggable="false">`;
+  return `<img class="px rbsp${cls ? " " + cls : ""}" data-pxk="${fk.replace(/"/g, "&quot;")}" src="${u || BLANK}" width="${Math.round(w)}" height="${fh.toFixed(2)}" style="aspect-ratio: ${W} / ${H}" alt="" draggable="false">`;
 }
 /* the same steps for a drawing already on the page (pxdom.js): its sprite's text, its key and its size */
 export function rainbowSteps(text, W, H, w, h) {
@@ -234,18 +238,42 @@ export function rainbowSteps(text, W, H, w, h) {
 
 /* ---------- pictures already on the page (<img>: the mode pictures, props, a player's own picture) ----------
    Every <img> under root shows as pixels at the size it shows: its src becomes its pixel version (the first one kept
-   in data-pxsrc), made again when its size or its picture changes. Not the ones made by pxImg or by a mode's own code
-   (class "px": they do it themselves), nor what's under [data-nopx] (the maps, drawn on the grid by the filter) */
-const imgSeen = new WeakMap(); // img -> the key it was last made at
+   in data-pxsrc), made again when its size or its picture changes. Until then it's hidden (css/app.css, html.pixel
+   img:not([data-pxok])): its own picture never shows first (the owner's, Nov 19 17:00Z). Not the ones made by pxImg or
+   by a mode's own code (class "px": they do it themselves), nor what's under [data-nopx] or on a map (drawn on the grid
+   by the filter, or baked: pxbake.js), nor a picture made as pixels ahead of time (data-pxok in its markup) */
+const imgSeen = new WeakMap(), // img -> the key it was last made at
+  /* a picture not shown yet (no size): made as soon as it shows */
+  sized =
+    typeof ResizeObserver === "undefined"
+      ? null
+      : new ResizeObserver((es) =>
+          es.forEach((e) => {
+            if (!e.target.offsetWidth) return;
+            sized.unobserve(e.target);
+            pxImgEl(e.target);
+          }),
+        );
+const shown = (img) => {
+  if (!img.hasAttribute("data-pxok")) img.setAttribute("data-pxok", "");
+};
 function pxImgEl(img) {
   if (!on || img.classList.contains("px") || img.closest("[data-nopx]")) return;
   let src = img.getAttribute("src") || "";
-  if (!src || (src.startsWith("blob:") && !img.dataset.pxsrc)) return;
+  if (!src) return;
+  if (src.startsWith("blob:") && !img.dataset.pxsrc) return shown(img); // (someone else's picture, made by their code)
+  if (src.startsWith("data:image/gif")) return; // (a stand-in, nothing to make)
+  if (img.hasAttribute("data-pxready")) return shown(img); // (made as pixels ahead of time: tools/pixel-files.cjs)
   if (src.startsWith("blob:")) src = img.dataset.pxsrc;
   else img.dataset.pxsrc = src;
   let w = img.offsetWidth,
     h = img.offsetHeight;
-  if (!w || !h || !img.naturalWidth) return; // (not shown or not loaded yet: made when it is)
+  if (!img.naturalWidth) return; // (not loaded yet: made when it is)
+  if (!w || !h) {
+    if (sized) sized.observe(img);
+    else shown(img);
+    return;
+  } // (not shown yet: made once it shows)
   const fit = getComputedStyle(img).objectFit;
   if (fit === "cover" || fit === "contain") {
     const nw = img.naturalWidth,
@@ -259,7 +287,9 @@ function pxImgEl(img) {
   imgSeen.set(img, fk);
   img.style.imageRendering = "pixelated";
   rasterReady("i" + hash(src), src, w, h).then((u) => {
-    if (u && imgSeen.get(img) === fk) img.src = u;
+    if (imgSeen.get(img) !== fk) return;
+    if (u) img.src = u;
+    shown(img); // (and if it couldn't be made, its own picture after all, rather than nothing)
   });
 }
 export function pxImgWatch(root) {
@@ -271,7 +301,12 @@ export function pxImgWatch(root) {
         const t = r.target;
         if (t.tagName === "IMG") {
           const s = t.getAttribute("src") || "";
-          if (!s.startsWith("blob:")) delete t.dataset.pxsrc; // (a new picture)
+          if (!s.startsWith("blob:")) {
+            delete t.dataset.pxsrc; // (a new picture: hidden until its pixels are made)
+            imgSeen.delete(t);
+            if (!t.classList.contains("px") && !t.hasAttribute("data-pxready"))
+              t.removeAttribute("data-pxok");
+          }
           pxImgEl(t);
         }
       } else
