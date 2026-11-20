@@ -7505,8 +7505,7 @@ function paintNow(force) {
       putAt = p.tp;
       me.x = p.x;
       me.y = p.y;
-      me.z = undefined;
-      me.b = undefined;
+      me.z = me.b = p.z > 0 ? p.z : undefined; // (Sandbox: up on a floor where it came back; nothing under it, it falls)
       me.vz = null;
       me.j = 0;
       target = null;

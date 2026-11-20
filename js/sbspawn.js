@@ -64,6 +64,7 @@ import {
   STEP,
   standable,
   heightAt,
+  floorStep,
 } from "./hangout/layout.js";
 import { Z_MOST, l4Spawn, l4Live } from "./l4ddrules.js";
 import { WAVE, zLook } from "./mgjrules.js";
@@ -774,6 +775,7 @@ export function sbAct(s, a, now) {
             z = sbOnBoard(s) ? 0 : Math.round(heightAt(x * WW, y * WH));
           all[q] = { ...P, x, y, z };
         }
+      if (sbOnWorld(s)) all = floorsTo(all); // (one with an elevation keeps it)
     } else if (a.k === "turn") {
       const by = +a.deg;
       if (!Number.isFinite(by)) return false;
@@ -846,6 +848,7 @@ export function sbAct(s, a, now) {
         ? { ...pts, [a.p]: q }
         : spread({ ...pts, [a.p]: q }, a.p);
     let out = all;
+    if (f === "fl" && sbOnWorld(s)) out = floorsTo(out); // (a new elevation: it and its tabs sit at its height)
     if (SB_GEO_F.includes(f))
       for (const q of [a.p, ...kinOf(pts, a.p)]) out = geoTo(out, q); // (a new shape or size: their tabs too)
     s.sb = { ...s.sb, pts: out };
@@ -983,6 +986,23 @@ export function sbAct(s, a, now) {
 
 /* which boxes a point takes: a respawn its "who" and what it imported; a spawn its own, and its Players tab's (a +
    page for players only those) */
+/* plan Phase 4: a zone with an elevation sits at it, (elevation - 1) gas station roofs over the map's ground (world px);
+   on a block's own zone, so do its tabs that have none of their own */
+const hasFl = (p) => p.k === "zone" && !!p.f && !!p.f.fl;
+function floorsTo(pts) {
+  const out = { ...pts };
+  for (const [id, p] of Object.entries(pts)) {
+    if (!hasFl(p)) continue;
+    const n = Math.round(valueOf({ ok: boxText(p, "fl") }, SB_ZONE.fl)),
+      z =
+        (Math.min(6, Math.max(1, Number.isFinite(n) ? n : 1)) - 1) *
+        floorStep();
+    for (const [q, t] of Object.entries(out))
+      if ((q === id || (!p.grp && t.grp === id && !hasFl(t))) && t.z !== z)
+        out[q] = { ...t, z };
+  }
+  return out;
+}
 function canSet(p, f) {
   if (f === "call") return sbNeedsCall(p); // (a Spawn, Respawn or Loot tab's Caller)
   if (f === "inv") return p.k === "zone" || sbNeedsCall(p); // (Inverse: a zone's, or a tab that answers to one)

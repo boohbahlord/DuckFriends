@@ -82,6 +82,7 @@ import {
 import { orbFace, lootRing, lootPage, lootWire } from "./sblootview.js";
 import { drawNpcs, dropNpcs } from "./npcview.js";
 import { olAdd } from "./outlines.js";
+import { sbFloorsFrom, sbIsFloor } from "./sbfloors.js";
 import {
   lookCSS,
   lookNames,
@@ -345,6 +346,7 @@ function drawMarks(layer, pts, at, size, s) {
     const hid = hiddenNow(s, p),
       orbOut = p.k === "loot" && !!p.orb && p.orb.dn == null;
     if (p.k === "zone") lookOn(layer, have, want, id, pts, at, size, s); // (its look: everyone sees it, hidden or not)
+    if (sbIsFloor(p)) faceOn(layer, have, want, id, pts, at, size, s, seeZones);
     if (hid && !orbOut) continue; // (Hide: a loot point hides its ring and name, never its orb, the owner's "that appearance is hidden")
     if (zoneLike(p)) {
       if (!seeZones) continue;
@@ -432,6 +434,35 @@ function lookOn(layer, have, want, id, pts, at, size, s) {
     top: Math.min(cs[0].top, cs[1].top).toFixed(1) + "px",
     width: Math.abs(cs[1].left - cs[0].left).toFixed(1) + "px",
     height: Math.abs(cs[1].top - cs[0].top).toFixed(1) + "px",
+  });
+}
+/* plan Phase 4: a floor up high shows its front edge, a strip under its box as thick as a floor (layout.js SIGHT_SLAB),
+   in its look made darker, or while building in its color; so it reads as a slab at its height */
+const FACE = 16; // (world px)
+function faceOn(layer, have, want, id, pts, at, size, s, seeZones) {
+  const lead = sbZonesOn(pts, id)[0],
+    p = pts[id],
+    look = sbLook(lead && pts[lead] ? pts[lead] : p),
+    bg = lookCSS(look, s && s.sbpic, size / 90);
+  if (!bg && !seeZones) return;
+  const key = id + "~f",
+    n = markEl(layer, have, key, "sb-pt sb-face");
+  want.add(key);
+  const [x0, , x1, y1] = sbZoneBox(s, p, W, H),
+    z = p.z || 0,
+    a = at({ x: x0, y: y1, z }),
+    b = at({ x: x1, y: y1, z: Math.max(0, z - FACE) }),
+    css = bg || SB_COLORS[p.col] || "#fff",
+    st = `${css} ${a.left.toFixed(1)},${a.top.toFixed(1)} ${b.left.toFixed(1)},${b.top.toFixed(1)} ${look ? look.op : ""}`;
+  if (n._st === st) return;
+  n._st = st;
+  n.style.background = css;
+  Object.assign(n.style, {
+    opacity: String(bg ? 1 - look.op : 0.45),
+    left: Math.min(a.left, b.left).toFixed(1) + "px",
+    top: Math.min(a.top, b.top).toFixed(1) + "px",
+    width: Math.abs(b.left - a.left).toFixed(1) + "px",
+    height: Math.max(1, Math.abs(b.top - a.top)).toFixed(1) + "px",
   });
 }
 /* Dark outside (plan Phase 3): while my duck stands where a zone with it works, everything round that zone goes dark,
@@ -918,6 +949,7 @@ export function sbSettings(getR, id, tab = "") {
     <div data-fxrow="rate"${fx === "none" ? " hidden" : ""}>${row("rate", SB_ZONE.rate, typed("rate"), why("rate"))}</div>
     <div data-fxrow="zwho"${fx === "none" ? " hidden" : ""}>${actRow(R.state, p, "zwho", kinds)}</div>
     ${actRow(R.state, p, "wall", kinds)}
+    ${sbOnBoard(R.state) ? "" : `${row("fl", SB_ZONE.fl, typed("fl"), why("fl"))}${flagRow("gnd", SB_ZONE.gnd, typed("gnd"), why("gnd"))}`}
     ${olSect(R.state, p, kinds)}
     ${lookSect(R.state, p, row, typed, why)}
     ${brainRow(typed("brain"), why("brain"))}
@@ -1429,6 +1461,7 @@ activity({
     const s = ctx.state(),
       layer = ctx.world.board.querySelector(".ducks");
     if (!layer || !s) return;
+    sbFloorsFrom(s); // (its ground zones are floors under my duck: sbfloors.js)
     const size = 90 * ctx.world.sc;
     drawMarks(
       layer,

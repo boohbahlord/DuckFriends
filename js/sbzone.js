@@ -30,6 +30,7 @@ import { boxText, spawnsHere } from "./sbspawn.js";
 import { W, H, heightAt } from "./hangout/layout.js";
 import { l4Hurt, l4Heal, l4Zone } from "./l4ddrules.js";
 import { zbThink } from "./sbzonebrain.js";
+import { sbFloorsFrom } from "./sbfloors.js";
 
 const words = (t) =>
   String(t || "")
@@ -115,6 +116,7 @@ function entered(s, pts, H0) {
 }
 /* ---------- the host's heartbeat. H: rules.js SB_H (ducks, claw, heal). True when anything changed ---------- */
 export function sbZoneTick(s, now, H0) {
+  sbFloorsFrom(s); // (its ground zones are floors: sbfloors.js)
   if (!spawnsHere(s) || !s.sb) return false;
   const pts = (s.sb && s.sb.pts) || {},
     stepped = steps(s, pts, now) | entered(s, pts, H0) | zbThink(s, now),
