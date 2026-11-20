@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v144",
+    version: 144,
+    date: "Nov 20, 2026",
+    title: "Slopes",
+    news: [
+      "For Sandbox: a Ground zone can slope up from its elevation to another one, rising toward the side you pick. Walk up it at walking pace (a longer slope takes longer) and step off its top onto a floor; it's drawn tilted.",
+    ],
+  },
+  {
     id: "v143",
     version: 143,
     date: "Nov 20, 2026",

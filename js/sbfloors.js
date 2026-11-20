@@ -13,9 +13,19 @@ import {
   sbZoneBox,
   sbInBlock,
   sbActsAt,
+  sbLocal,
+  SB_ZONE,
+  SB_SLOPE_DIRS,
 } from "./sandboxrules.js";
+import { valueOf } from "./numerat.js";
 import { boxText } from "./sbspawn.js";
-import { W, H, setExtraDecks } from "./hangout/layout.js";
+import {
+  W,
+  H,
+  setExtraDecks,
+  floorStep,
+  SIGHT_UNIT,
+} from "./hangout/layout.js";
 
 const FRESH = 1500; // (ms)
 const NONE = [];
@@ -28,9 +38,42 @@ export function sbFloorsFrom(s) {
   cur = isSb(s) && sbOnWorld(s) ? s : null;
   seen = Date.now();
 }
-/* is zone p ground over the map's own: Ground on, over elevation 1 */
+/* a slope's ends (world px) and the side it rises toward: { lo, hi, dir }, or null when it's flat */
+export function sbSlope(p) {
+  if (!p || p.k !== "zone" || !p.f || !p.f.slto) return null;
+  const n = Math.round(valueOf({ ok: boxText(p, "slto") }, SB_ZONE.slto));
+  if (!Number.isFinite(n) || n < 1) return null;
+  const lo = p.z || 0,
+    hi = (Math.min(6, n) - 1) * floorStep(),
+    d = boxText(p, "sldir").trim();
+  return Math.abs(hi - lo) < 0.5
+    ? null
+    : { lo, hi, dir: SB_SLOPE_DIRS[d] ? d : "n" };
+}
+/* how far along slope sl (x, y: shares of the map) is, 0 at its low end to 1 at its high end */
+function along(s, p, sl, x, y) {
+  const [u, v] = sbLocal(s, p, x, y, W, H),
+    t =
+      sl.dir === "n"
+        ? 0.5 - v
+        : sl.dir === "s"
+          ? 0.5 + v
+          : sl.dir === "e"
+            ? 0.5 + u
+            : 0.5 - u;
+  return Math.min(1, Math.max(0, t));
+}
+/* slope sl's height at (x, y), in steps of 2.5% of the gas station roof (the sightline's smallest step) */
+export function sbSlopeH(s, p, sl, x, y) {
+  const U = floorStep() * SIGHT_UNIT;
+  return Math.round((sl.lo + (sl.hi - sl.lo) * along(s, p, sl, x, y)) / U) * U;
+}
+/* is zone p ground over the map's own: Ground on, over elevation 1 (or a slope up from it) */
 export const sbIsFloor = (p) =>
-  !!p && p.k === "zone" && boxText(p, "gnd") === "t" && (p.z || 0) > 0.5;
+  !!p &&
+  p.k === "zone" &&
+  boxText(p, "gnd") === "t" &&
+  ((p.z || 0) > 0.5 || !!sbSlope(p));
 
 function decks() {
   if (!cur || Date.now() - seen > FRESH) return NONE;
@@ -40,13 +83,20 @@ function decks() {
   const list = [];
   for (const [id, p] of Object.entries(pts)) {
     if (!sbIsFloor(p)) continue;
-    const [x0, y0, x1, y1] = sbZoneBox(cur, p, W, H);
+    const [x0, y0, x1, y1] = sbZoneBox(cur, p, W, H),
+      sl = sbSlope(p);
     list.push({
+      ...(sl
+        ? {
+            hAt: (x, y) => sbSlopeH(cur || {}, p, sl, x / W, y / H),
+            slope: sl,
+          }
+        : {}),
       x0: x0 * W,
       y0: y0 * H,
       x1: x1 * W,
       y1: y1 * H,
-      h: p.z,
+      h: sl ? Math.min(sl.lo, sl.hi) : p.z,
       kind: "zone",
       sb: id,
       holes: NONE,

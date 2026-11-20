@@ -159,6 +159,7 @@ const onDeck = (d, x, y) =>
   (d.inside
     ? d.inside(x, y)
     : !d.holes.some((o) => x >= o.x0 && x < o.x1 && y >= o.y0 && y < o.y1));
+export const onDeckAt = onDeck;
 /* more floors than the map's own: Sandbox's ground zones (Phase 4, sbfloors.js), each a deck with inside(x, y) for its
    shape and its working squares; none outside Sandbox */
 const NO_DECKS = [];
@@ -178,39 +179,56 @@ export function allDecks() {
 }
 /* a floor's height step: the gas station's roof (100%: the owner's, "100% being the roof of the gas station") */
 export const floorStep = () => GS.DECKS[0].h;
-/* the deck a duck's feet at height z are on or over (the highest at or under z), or null */
+/* a deck's height at (x, y): its own, or along a Sandbox slope (sbfloors.js hAt) */
+export const deckH = (d, x, y) => (d.hAt ? d.hAt(x, y) : d.h);
+/* the deck a duck's feet at height z are on or over (the highest at or under z), or null. A slope holds feet a step under
+   it too, so a duck walks up it */
 export function deckAt(x, y, z) {
   if (z === undefined || z === null) return null;
   const ds = allDecks();
   if (!ds.length) return null;
-  let best = null;
-  for (const d of ds)
-    if (d.h <= z + 0.5 && (!best || d.h > best.h) && onDeck(d, x, y)) best = d;
+  let best = null,
+    bh = 0;
+  for (const d of ds) {
+    const h = deckH(d, x, y);
+    if (h <= z + (d.hAt ? STEP : 0.5) && (!best || h > bh) && onDeck(d, x, y)) {
+      best = d;
+      bh = h;
+    }
+  }
   return best;
 }
 /* the deck over a duck's head at height z (the lowest over it), or null: a roof it is under */
 export function deckOver(x, y, z) {
   const ds = allDecks();
   if (!ds.length) return null;
-  let best = null;
-  for (const d of ds)
-    if (d.h > z + 0.5 && (!best || d.h < best.h) && onDeck(d, x, y)) best = d;
+  let best = null,
+    bh = 0;
+  for (const d of ds) {
+    const h = deckH(d, x, y);
+    if (h > z + (d.hAt ? STEP : 0.5) && (!best || h < bh) && onDeck(d, x, y)) {
+      best = d;
+      bh = h;
+    }
+  }
   return best;
 }
 /* the height of the floor under a duck's feet at height z: a deck it is on or over, or the ground (z left out: the
    ground) */
 export function floorH(x, y, z) {
   const g = heightAt(x, y),
-    d = z > g ? deckAt(x, y, z) : null;
-  return d && d.h > g ? d.h : g;
+    d = z >= g ? deckAt(x, y, z) : null,
+    h = d ? deckH(d, x, y) : g;
+  return h > g ? h : g;
 }
 /* the same, with what it is: { h, kind: "ground" | "roof" | "canopy", deck } (the outlines' and the footsteps' floor:
    outlines.js, ground.js) */
 export function floorAt(x, y, z) {
   const g = heightAt(x, y),
-    d = z > g ? deckAt(x, y, z) : null;
-  return d && d.h > g
-    ? { h: d.h, kind: d.kind, deck: d }
+    d = z >= g ? deckAt(x, y, z) : null,
+    h = d ? deckH(d, x, y) : g;
+  return d && h > g
+    ? { h, kind: d.kind, deck: d }
     : { h: g, kind: "ground", deck: null };
 }
 /* the one rule for a shot (heights.js) between two floors (the owner's, Nov 17 20:02Z: "PROJECTILES WILL NEVER SHOOT AT
