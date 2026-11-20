@@ -27,7 +27,7 @@ import {
 } from "./l4ddrules.js";
 import { heightAt, slabBetween, deckOver, PROPS } from "./hangout/layout.js";
 import { DECKS } from "./hangout/stationmap.js";
-import { woundCode, DEATH } from "./wounds.js";
+import { hpHurt } from "./hpmath.js";
 import { gunmanLook } from "./gunmen.js";
 import {
   sees as npcSees,
@@ -38,6 +38,7 @@ import {
   reloadMs,
   refill,
   shotMark,
+  woundsAfter,
 } from "./npcrules.js";
 import {
   friend,
@@ -978,16 +979,8 @@ function takes(s, o, by, w, t, now, H, how = "") {
   const dmg = typeof t === "number" ? t : t.dmg,
     head = typeof t === "object" && t.head,
     took = Math.min(o.hp, dmg),
-    hp = Math.max(0, Math.round((o.hp - dmg) * 10) / 10),
-    had = o.w || "";
-  o.w =
-    !hp && head
-      ? had.includes("x")
-        ? had
-        : had + "x0"
-      : !hp && how === "blast"
-        ? had + DEATH.filter((c) => !had.includes(c)).join("")
-        : had + woundCode(had, w);
+    hp = hpHurt(o.hp, dmg);
+  o.w = woundsAfter(o.w || "", w, !hp, head, how === "blast");
   o.hp = hp;
   if (!hp) {
     o.d = now;

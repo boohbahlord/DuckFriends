@@ -92,7 +92,6 @@ import { hOk, hLock, shotFeet, MID, SAME_FLOOR } from "./heights.js";
 import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
-  woundCode,
   hitCode,
   knockable,
   pwHit,
@@ -131,7 +130,12 @@ import {
 import { ANGEL, angelOf, angelAmmo, angelAct, angelLeft } from "./l4ddangel.js";
 import { fieldOf, askField } from "./flowfield.js";
 import { NPC_RUN } from "./npcshared.js";
-import { sees as npcSees, nearPairs, shotMark } from "./npcrules.js";
+import {
+  sees as npcSees,
+  nearPairs,
+  shotMark,
+  woundsAfter,
+} from "./npcrules.js";
 import { grHp, grCool } from "./sbgroups.js";
 import {
   isSurv,
@@ -3238,19 +3242,9 @@ function merchantHurt(s, by, n, now, w = "", how = "", from = "") {
      gets gore effects ... all the gore effects that everyone else gets"): a crit that kills him blows his head off
      ("there's a chance you might get a crit on them, so their head explodes just like a zombie will"), a blast tears
      him apart (as it does a duck), any other hit leaves its weapon's wound */
-  const wd =
-    !hp && how === "crit"
-      ? had.includes("x")
-        ? had
-        : had + "x0"
-      : !hp && how === "blast"
-        ? had + DEATH.filter((c) => !had.includes(c)).join("")
-        : had +
-          woundCode(
-            had,
-            w,
-            knockable(merchantLook(merchantById(m.id), m.roll)),
-          );
+  const wd = woundsAfter(had, w, !hp, how === "crit", how === "blast", () =>
+    knockable(merchantLook(merchantById(m.id), m.roll)),
+  );
   if (!hp) {
     s.hang.l4m = {
       ...m,
@@ -3933,7 +3927,7 @@ function strike(s, z, dmg, head, by, w = "") {
   const on = s.hang.l4on || {},
     all = head || !!on.kill, // (Instant Kill: every hit takes all its HP, 5 points for each)
     took = all ? z.hp : Math.min(z.hp, dmg);
-  z.hp = all ? 0 : Math.max(0, tenths(z.hp - dmg));
+  z.hp = all ? 0 : hpHurt(z.hp, dmg);
   addPts(s, by, (head ? PTS.HEAD : PTS.HIT * took) * (on.double ? 2 : 1));
   if (z.hp <= 0) {
     /* the zombies each duck killed this game (the overall stats' Zombies killed: l4dd.js record) */
