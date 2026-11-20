@@ -185,6 +185,7 @@ function hitAll(s, pts, id, p, now, H0) {
     const me = s.pos[id],
       name = String((s.players[id] || {}).name || "").toLowerCase();
     if (!me || !inside(s, id, p, box, me.x, me.y, me.z)) continue;
+    if (s.sb.bld && s.sb.bld[id]) continue; // (building: B is up, sbspawn.js "bld")
     if (
       !all &&
       !who.includes("players") &&

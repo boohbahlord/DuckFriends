@@ -23,6 +23,7 @@ import {
   SB_KEY_IN_BUILD,
   SB_POINTS,
   SB_RIGHTS,
+  SB_NOCOL,
 } from "./sandboxrules.js";
 import {
   buildRows,
@@ -52,7 +53,7 @@ import {
   openPreset,
   patternOf,
   pickColor,
-  pointAt,
+  pointsAt,
   sbCheat,
   sbClip,
   sbPresets,
@@ -320,12 +321,23 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
   const k = sbKeys();
   let shown = "";
   let hotPick = ""; // (the loot picked in the h window: then a key puts it there)
+  /* the host hears when my Build is up, so the zones' damage and Kill leave me alone meanwhile (sbspawn.js "bld") */
+  const building = (R) => {
+    if (!R || !isSb(R.state) || !R.state.sb) return;
+    const on = sbView.build;
+    if (!!(R.state.sb.bld || {})[R.me] !== on && sentBld !== on) {
+      sentBld = on;
+      R.send({ t: "sb", k: "bld", on });
+    } else if (!!(R.state.sb.bld || {})[R.me] === on) sentBld = null;
+  };
+  let sentBld = null;
   const mayBuild = (R) =>
     ["b", "m", "n", "g"].some((x) => sbMay(R.state, R.me, x)); // (cheat mode is theirs)
   const paint = () => {
     const R = getR();
     sbView.build =
       !!R && (k.open === "b" || !!carry) && sbMay(R.state, R.me, "b"); // (the zones show while I build, and while I put something down: sbspawnview.js)
+    building(R);
     if (!k.open || !R || !isSb(R.state)) {
       box.hidden = true;
       shown = "";
@@ -681,12 +693,31 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
       pt: sbClip.pt,
     });
   };
-  const menuAt = (cx, cy, pointOnly) => {
+  /* a block's name in the menu's pick list: "Zone 750762 (blue)" */
+  const KIND = {
+    zone: "Zone",
+    spawn: "Spawn",
+    respawn: "Respawn",
+    loot: "Loot",
+  };
+  const nameOf = (q) =>
+    `${KIND[q.k] || "Block"} ${boxText(q, "name") || ""}`.trim() +
+    ` (${q.col === SB_NOCOL ? "no color" : q.col})`;
+  /* pick: one of the blocks under the pointer, chosen from the list (else the newest, on top) */
+  const menuAt = (cx, cy, pointOnly, pick) => {
     const R = getR(),
       at = spotAt && spotAt(cx, cy);
     if (!at) return false;
-    const id = pointAt(R.state, at),
+    const under = pointsAt(R.state, at),
+      id = pick && under.includes(pick) ? pick : under[0] || null,
       p = id && R.state.sb.pts[id];
+    /* blocks on top of each other: the others under the pointer, each opening its own menu */
+    const others = under
+      .filter((q) => q !== id && R.state.sb.pts[q])
+      .map((q) => ({
+        label: "Pick: " + nameOf(R.state.sb.pts[q]),
+        act: () => menuAt(cx, cy, pointOnly, q),
+      }));
     if (!p && (pointOnly || !sbClip.pt)) return false; // (nothing to offer: the browser's own menu, or the game's)
     const many = drag.picked(id);
     if (many) {
@@ -752,6 +783,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
               act: () =>
                 getR().send({ t: "sb", k: "lock", p: id, on: !p.lock }),
             },
+            ...others,
           ]
         : [{ label: "Paste", act: () => paste(at) }],
     );

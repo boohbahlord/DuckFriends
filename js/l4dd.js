@@ -1086,9 +1086,13 @@ function seeHud(s, ctx) {
   } else if (roundShown !== L.r) {
     if (roundShown >= 0 && L.r > roundShown)
       record(s, L, L.r - roundShown === 1, ctx.me);
+    /* Sandbox: no rounds to count, and no big "Sandbox" over the map either (the bar at the top already says it: the
+       owner's row 199 test saw it over the map) */
+    hud.hidden = isSb(s);
+    ctx.world.board.classList.toggle("l4-nohud", isSb(s)); // (its points go up in its place)
     hud.innerHTML = isSb(s)
-      ? '<span class="l4-round-w">Sandbox</span>'
-      : `<span class="l4-round-w">Round</span> <b>${L.r}</b>`; // (Sandbox: no rounds to count)
+      ? ""
+      : `<span class="l4-round-w">Round</span> <b>${L.r}</b>`;
     hud.classList.remove("new");
     void hud.offsetWidth;
     if (roundShown >= 0) hud.classList.add("new"); // (a new round: it pulses)

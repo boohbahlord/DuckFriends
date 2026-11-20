@@ -7389,6 +7389,7 @@ function paintNow(force) {
   if (!S || !R) return;
   const s = R.state,
     key = [s.phase, s.round, s.qi].join("|");
+  if (scene) scene.look(s); // (a Sandbox game mode's look, maps.js: G can change it while it plays)
   if (force || key !== shown) {
     const was = shown;
     shown = key;
