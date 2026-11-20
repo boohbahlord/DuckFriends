@@ -7,6 +7,8 @@
    never draws the map's pictures itself. Change a map's drawing, then run:
      node tools/pixel-maps.cjs            (every map)
      node tools/pixel-maps.cjs board      (only that one)
+     node tools/pixel-maps.cjs pixel --colors   (only put its files in the era's limits, in place: Pixel's scene
+                                                shows its files now, so it can't be made again from its drawing)
    then python3 tools/stamp.py as for any other change. Needs Playwright's Chromium and Python's Pillow. Writes
    assets/px/mapw/<map>/ and js/pxm/<map>.js */
 const http = require("http");
@@ -287,8 +289,22 @@ async function recordMap(page, how, arg) {
   page.on("pageerror", (e) => console.log("page error:", e.message));
   await page.goto(`http://127.0.0.1:${srv.address().port}/`);
   await page.waitForTimeout(500);
+  if (process.argv[3] === "--colors") {
+    /* a map whose files can't be made again from its drawing (Pixel: its scene shows these files now) only put in the
+       era's limits, in place */
+    const dir = path.join(ROOT, "assets", "px", "mapw", only),
+      names = fs.readdirSync(dir).filter((n) => n.endsWith(".webp"));
+    for (const n of names)
+      execFileSync("python3", [
+        path.join(__dirname, "era.py"),
+        path.join(dir, n),
+        path.join(dir, n),
+      ]);
+    console.log(`${only}: ${names.length} files in the era's limits`);
+  }
   for (const [id, what, how, arg] of MAPS) {
     if (only && id !== only) continue;
+    if (process.argv[3] === "--colors") break;
     const { html, files } = await recordMap(page, how, arg),
       dir = path.join(ROOT, "assets", "px", "mapw", id);
     fs.rmSync(dir, { recursive: true, force: true });
@@ -298,12 +314,7 @@ async function recordMap(page, how, arg) {
       const tmp = path.join(dir, k + ".png"),
         out = path.join(dir, k + ".webp");
       fs.writeFileSync(tmp, Buffer.from(url.split(",")[1], "base64"));
-      execFileSync("python3", [
-        "-c",
-        "import sys\nfrom PIL import Image\nImage.open(sys.argv[1]).save(sys.argv[2], 'WEBP', lossless=True, method=6)",
-        tmp,
-        out,
-      ]); // (lossless: the pixels stay exactly as made)
+      execFileSync("python3", [path.join(__dirname, "era.py"), tmp, out]); // (in the era's limits, then lossless: notes/map-building-rules.md)
       fs.unlinkSync(tmp);
       bytes += fs.statSync(out).size;
     }

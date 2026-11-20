@@ -13,7 +13,7 @@ from PIL import Image
 MAX_COLORS = 256
 # where see-through turns half and whole (a little higher than the middle: a soft glow keeps its brightest part as a
 # half step and lets its faint edge go, as close to the drawing as three steps get)
-HALF_FROM, ALL_FROM = 96, 208
+HALF_FROM, ALL_FROM = 96, 176
 
 
 def five(v):
