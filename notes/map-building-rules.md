@@ -83,9 +83,16 @@ That's the limitations we're working with." Decided: limited colors, small files
   - The maps' worlds and pictures (`assets/px/mapw`, `assets/px/maps`): the era's texture limits, as on a PS1-era
     console: 15-bit color (32 steps a channel) and at most 256 colors in one file, its own palette like a texture's
     color table (`tools/era.py`; `tools/pixel-maps.cjs` runs it on every file it makes). The maps keep their look.
-  - See-through has three steps only, for both: none, half, all (0, 128, 255). A soft glow keeps its brightest part
-    as a half step and loses its faint edge. A half see-through pixel may come back a step or two off its color (the
-    browser keeps it times its see-through); the checker allows that.
+  - See-through has three steps only, for both: none, half, all (0, 128, 255). A half see-through pixel may come
+    back a step or two off its color (the browser keeps it times its see-through); the checker allows that.
+  - Glows (Adam, Nov 20 12:50Z: they must look like today): a map's soft light is its own file, added to what's under
+    it as the era did (the PS1's B+F: css `mix-blend-mode: plus-lighter`, canvas `"lighter"`), holding its light (color
+    times see-through) whole. `tools/era.py split`; which files in `tools/pixel-maps.cjs` GLOWS, with the color mostly
+    under each (the glow adds only the light above it, so it looks as the see-through drawing did). Only a picture
+    with nothing moving between it and the stage gets one (a moving group has nothing under it to add to).
+  - Dither, as the era did: a smooth blend (a sky's gradient, a glow) is dithered over its two 15-bit steps (a 4x4
+    order; a glow over 256 colors gets its colors picked from its own and spread Floyd-Steinberg) so it doesn't break
+    into bands. Flat colors and edges stay exact.
   - Files that hold numbers instead of colors are exempt and only weighed: the ducks' shade sheets
     (`assets/px/ducks`) and the card masks (`assets/px/cards/tint.webp`, `base.webp`); they become palette colors
     when drawn.
