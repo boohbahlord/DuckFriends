@@ -7441,3 +7441,14 @@ Adam: slimming step 6 (load on demand) must load everything a made Sandbox mode 
 downpour an a lot, like every time almost or every time
 
 Adam: the zombie skin change on death, on Downpour in Survival. Jackal #742: Survival's walker remodel (his own ask, "start to change their model") gave a new look the screen only drew at the next hit or death; now it shows at the remodel. V190.
+
+## Owner, Nov 20 20:31Z (Adam's thread)
+
+the game has a lot of pop ins the first time you load it. 
+
+like, even after the loading screen, the duck on the cloud and the click to play shit isnt finished loading
+
+pop in images or textures or anything are everywhere worse then before
+
+Adam: the loading screen must wait until every picture the first screen shows is in and decoded; same for each later
+screen and map (no pop-in after a loading screen). V191 (#748, front screen lazier) held until this is fixed.
