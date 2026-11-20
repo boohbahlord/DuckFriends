@@ -1,8 +1,9 @@
 /* ---------- the ducks' part sheets (the owner's, Nov 19 23:26Z: real pixels, made once ahead of time) ----------
    Every part of every duck (duck.js LAYERS) made into pixels at each size of duckparts.js SIZES, in the browser, with
    the game's own drawings (duck-parts-page.js). Writes
-     assets/px/ducks/ducks-<size>-<hash>.webp   the parts: black pixels and shade numbers (lossless WebP)
-     assets/px/ducks/ducks-<size>-<hash>.json   which part is where
+     assets/px/ducks/<size>/<chunk>-<hash>.webp  the parts: black pixels and shade numbers (lossless WebP), an outfit's
+                                                 clothes and a face item each in a file of their own, the rest in main
+     assets/px/ducks/<size>/index-<hash>.json   which part is where, in which file
      js/ducksheets.js                           the files of each size (duckparts.js reads it)
    Run it after changing any drawing of a duck (duck.js, styles.js, hats.js, faces.js, outfits.js, eyes.js, beaks.js),
    then python3 tools/stamp.py:  node tools/duck-parts.cjs   (env ONLY: sizes, comma separated, to try a few)
@@ -79,13 +80,12 @@ const named = (name, buf, ext) =>
       ? process.env.ONLY.split(",").map(Number)
       : SIZES,
     sheets = process.env.ONLY
-      ? JSON.parse(
-          /SHEETS = (\{.*\});/.exec(
-            fs.readFileSync(path.join(ROOT, "js", "ducksheets.js"), "utf8"),
-          )[1],
-        )
+      ? new Function(
+          fs
+            .readFileSync(path.join(ROOT, "js", "ducksheets.js"), "utf8")
+            .replace("export const SHEETS =", "return"),
+        )() // (formatted by prettier: read as the script it is)
       : {}, // (a few sizes: the rest stay)
-    keep = new Set(),
     todo = [...sizes];
   /* a few sizes at once (env JOBS, 3) */
   const job = async () => {
@@ -97,35 +97,41 @@ const named = (name, buf, ext) =>
           n,
         );
       await page.close();
-      const png = path.join(OUT, `tmp-${n}.png`),
-        tmp = path.join(OUT, `tmp-${n}.webp`);
-      fs.writeFileSync(png, Buffer.from(r.png, "base64"));
+      /* its own folder: emptied, then a file for each chunk and the index */
+      const dir = path.join(OUT, String(n));
+      fs.rmSync(dir, { recursive: true, force: true });
+      fs.mkdirSync(dir, { recursive: true });
+      const names = [],
+        pngs = r.files.map((f, i) => {
+          const png = path.join(dir, `tmp-${i}.png`);
+          fs.writeFileSync(png, Buffer.from(f.png, "base64"));
+          return png;
+        });
       execFileSync("python3", [
         "-c",
-        "import sys;from PIL import Image;Image.open(sys.argv[1]).save(sys.argv[2],'WEBP',lossless=True,exact=True,method=6)",
-        png,
-        tmp,
+        "import sys;from PIL import Image\nfor p in sys.argv[1:]: Image.open(p).save(p[:-4]+'.webp','WEBP',lossless=True,exact=True,method=6)",
+        ...pngs,
       ]);
-      fs.unlinkSync(png);
-      const pic = named(`ducks-${n}`, fs.readFileSync(tmp), "webp");
-      fs.renameSync(tmp, path.join(OUT, pic));
-      const json = JSON.stringify(r.index),
-        idx = named(`ducks-${n}`, Buffer.from(json), "json");
-      fs.writeFileSync(path.join(OUT, idx), json);
-      keep.add(pic).add(idx);
-      if (process.env.ONLY && sheets[n])
-        for (const f of [sheets[n].url, sheets[n].index])
-          if (!keep.has(path.basename(f)))
-            fs.rmSync(path.join(ROOT, f), { force: true });
-      sheets[n] = {
-        url: `assets/px/ducks/${pic}`,
-        index: `assets/px/ducks/${idx}`,
-      };
+      let bytes = 0;
+      r.files.forEach((f, i) => {
+        const tmp = pngs[i].replace(/\.png$/, ".webp"),
+          pic = named(f.name, fs.readFileSync(tmp), "webp");
+        fs.unlinkSync(pngs[i]);
+        fs.renameSync(tmp, path.join(dir, pic));
+        bytes += fs.statSync(path.join(dir, pic)).size;
+        names.push(pic);
+      });
+      const json = JSON.stringify({ f: names, p: r.index }),
+        idx = named("index", Buffer.from(json), "json");
+      fs.writeFileSync(path.join(dir, idx), json);
+      sheets[n] = { index: `assets/px/ducks/${n}/${idx}` };
       console.log(
         n,
         Object.keys(r.index).length,
         "parts,",
-        (fs.statSync(path.join(OUT, pic)).size / 1024).toFixed(0),
+        names.length,
+        "files,",
+        (bytes / 1024).toFixed(0),
         "kB +",
         (json.length / 1024).toFixed(0),
         "kB index",
@@ -138,7 +144,9 @@ const named = (name, buf, ext) =>
     Object.entries(sheets).sort((x, y) => x[0] - y[0]),
   );
   if (!process.env.ONLY)
-    for (const f of old) if (!keep.has(f)) fs.unlinkSync(path.join(OUT, f)); // (an older making's)
+    for (const f of old)
+      if (!sizes.includes(+f))
+        fs.rmSync(path.join(OUT, f), { recursive: true, force: true }); // (an older making's)
   fs.writeFileSync(
     path.join(ROOT, "js", "ducksheets.js"),
     `/* made by tools/duck-parts.cjs: don't change it by hand (duckparts.js) */\nexport const SHEETS = ${JSON.stringify(ordered)};\n`,
