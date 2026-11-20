@@ -12,10 +12,41 @@ import { DUCK_PIC_PX } from "./duck.js";
 
 const MOST = 8 * 1024 * 1024; // (a bigger file is refused before it's read)
 
+/* the part of the crop that shows: [x, y, w, h] shrunk to round what isn't see-through (looked at no bigger than 256
+   to a side), or the crop as it is when none of it shows */
+function shownOf(img, [x, y, w, h]) {
+  const k = Math.min(1, 256 / Math.max(w, h)),
+    cw = Math.max(1, Math.round(w * k)),
+    ch = Math.max(1, Math.round(h * k)),
+    c = document.createElement("canvas");
+  c.width = cw;
+  c.height = ch;
+  const g = c.getContext("2d", { willReadFrequently: true });
+  g.drawImage(img, x, y, w, h, 0, 0, cw, ch);
+  const a = g.getImageData(0, 0, cw, ch).data;
+  let x0 = cw,
+    y0 = ch,
+    x1 = -1,
+    y1 = -1;
+  for (let j = 0; j < ch; j++)
+    for (let i = 0; i < cw; i++)
+      if (a[(j * cw + i) * 4 + 3] > 24) {
+        if (i < x0) x0 = i;
+        if (i > x1) x1 = i;
+        if (j < y0) y0 = j;
+        if (j > y1) y1 = j;
+      }
+  if (x1 < 0) return [x, y, w, h];
+  return [x + x0 / k, y + y0 / k, (x1 + 1 - x0) / k, (y1 + 1 - y0) / k];
+}
 /* the crop of img, [x, y, w, h] in its own pixels, as a duck's picture: { d: a PNG data URL, cut: true when any of it
-   is see-through } */
-export function cropOf(img, [x, y, w, h], px = DUCK_PIC_PX) {
-  const k = Math.min(px / w, px / h),
+   is see-through }. Only the part that shows counts: the see-through round it is left out first, so what shows grows
+   to fill the duck's square whatever its shape (fitted by its own sides, standing on the bottom), and a tiny picture
+   still makes a whole duck (the owner's, Nov 20: "the image expands in size to the size of the ducks in a
+   mathematical formula based on it's empty unused space ... based on the aspect ratio of the crop") */
+export function cropOf(img, rect, px = DUCK_PIC_PX) {
+  const [x, y, w, h] = shownOf(img, rect),
+    k = Math.min(px / w, px / h),
     dw = Math.max(1, Math.round(w * k)),
     dh = Math.max(1, Math.round(h * k)),
     c = document.createElement("canvas");

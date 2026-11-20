@@ -468,7 +468,7 @@ export const SB_TABS = [
   ["zone", "Zone tab"],
 ];
 /* where a block is and how it's shaped: what its tabs copy from it */
-export const SB_GEO = ["x", "y", "z", "sh", "fill", "rot"];
+export const SB_GEO = ["x", "y", "z", "sh", "fill", "rot", "ns", "fh", "fv"];
 export const SB_GEO_F = ["sh", "fill", "zw", "zh"];
 /* ---------- Sandbox's board zones (stage 5) ----------
    The owner's Sandbox file, "Board Build": "A large sqaure amount of pixels CAN be used to overwrite the board with an
@@ -517,18 +517,19 @@ const listBox = (name, def) => ({
   len: 200, // (its text kept up to this long: sbspawn.js withField; a plain box keeps 80)
 });
 export const SB_ZONE = {
-  /* a thin rectangle is a wall (plan Phase 3): under one duck length it takes tenths, down to a fifth */
+  /* a thin rectangle is a wall (plan Phase 3), down to one hitbox tile (a quarter of a duck length): sizes go in
+     quarters, a typed 2.3 is 2.25 */
   zw: {
     name: "Width (duck lengths)",
     kind: "tenth",
-    min: 0.2,
+    min: 0.25,
     max: 40,
     def: "4",
   },
   zh: {
     name: "Height (duck lengths)",
     kind: "tenth",
-    min: 0.2,
+    min: 0.25,
     max: 40,
     def: "4",
   },
@@ -756,9 +757,13 @@ export const sbSfxZ = (p) => {
 };
 /* a duck length in a world's px, for a zone's size there (on the board: 0.03 of it across, 0.08 up and down) */
 export const SB_ZONE_PX = 48;
-/* a block's side as dragged or typed: whole duck lengths, tenths under one, a fifth at least, 40 at most */
+/* a block's side as dragged or typed, in whole hitbox tiles (the owner's, Nov 20 19:09Z: "Zones can have their size
+   adjusted like they did before and be different sizes and shapes. But how they do that is based on the smallest units
+   that build up their size. And those units are based on the tiles that check for hitbox"): a quarter of a duck length
+   each, one tile at least, 40 duck lengths at most */
+const QUARTER = 0.25; // (SB_TILE, below)
 export const sbFitSide = (v) =>
-  Math.max(0.2, Math.min(40, v < 1 ? Math.round(v * 10) / 10 : Math.round(v)));
+  Math.max(QUARTER, Math.min(40, Math.round(v / QUARTER) * QUARTER));
 /* ---------- every build block's shape (plan Phase 2: "Spawn, respawn, loot and zone become one thing you put down") ----------
    A block has a shape and a size (zw, zh: duck lengths; a zone starts at 4 by 4, the rest at 1 by 1) or fills the whole
    map. Square by default; the others by adding sides, stopping once it already looks round. It is made of the hitbox
@@ -784,7 +789,7 @@ export const sbFills = (p) => !!(p && p.fill);
 /* its size in duck lengths, [w, h] */
 export const sbSize = (p) => {
   const d = p && p.k === "zone" ? 4 : 1;
-  return [(p && p.zw) || d, (p && p.zh) || d];
+  return [sbFitSide(+(p && p.zw) || d), sbFitSide(+(p && p.zh) || d)]; // (in whole tiles, a size from before too)
 };
 /* does a block other than a zone cover more than its own spot (bigger than one duck, or the whole map) */
 export const sbSpread = (p) =>
@@ -1047,6 +1052,18 @@ export const sbOrd = (p) => {
   const o = ordTxt(p, "ord").trim();
   return SB_ORDERS[o] ? o : "rand";
 };
+/* Direction in the right-click menu (the owner's, Nov 20 18:46Z: "flip horizontally ... flip vertically, kind of like how
+   it is in Microsoft Paint"): [-1 or 1 across, -1 or 1 up and down] its shape is mirrored by, inside its box */
+export const sbFlips = (p) => [p && p.fh ? -1 : 1, p && p.fv ? -1 : 1];
+/* Overlay (the owner's, Nov 20 18:46Z): its overlay level, 1 to 10 ("for visual organization, where it automatically hides
+   the zones" of the other levels while building; nothing else), and its place in the drawing order, a number: higher is
+   drawn on top ("up and down is not an overlay group. It's simply changing the order in which zones sit on top of each
+   other"). Put down later is on top until Move up or Move down says otherwise */
+export const SB_OV_MOST = 10;
+export const sbOv = (p) =>
+  Math.min(SB_OV_MOST, Math.max(1, Math.round(+(p && p.ov) || 1)));
+export const sbOrder = (id, p) =>
+  p && Number.isFinite(p.zo) ? p.zo : +String(id).replace(/\D/g, "") || 0;
 /* ---------- the hitbox tiles (the owner's, Nov 20 18:46Z and 19:02Z) ----------
    "the zones are literally based off of the hitbox things on the ground ... they should snap to the hitbox things on
    the ground as their units"; "it's based on the hitbox tiles that detects where the ducks are before determining if
@@ -1058,7 +1075,7 @@ export const sbOrd = (p) => {
    thin. With Snap on (the default) its corner sits on the ground's tile lines, one every tile from the map's top left
    corner, and it turns a quarter at a time, so its tiles are the ground's tiles (sbSnapSpot). Its potential order's
    squares (Square size) are made of its tiles */
-export const SB_TILE = 0.25; // (duck lengths)
+export const SB_TILE = QUARTER; // (duck lengths)
 export const SB_TAKE = 0.6;
 const SAMPLES = 6, // (points across a tile each way, to tell how much of it the shape covers)
   MAX_TILES = 256, // (tiles along a side at most: a bigger block has bigger tiles)
@@ -1069,7 +1086,8 @@ export function sbTiles(p) {
   const [w, h] = sbSize(p),
     sh = sbShape(p),
     t = Math.max(SB_TILE, w / MAX_TILES, h / MAX_TILES),
-    key = `${sh} ${w} ${h} ${t}`;
+    [fu, fv] = sbFlips(p),
+    key = `${sh} ${w} ${h} ${t} ${fu} ${fv}`;
   let g = TILES.get(key);
   if (g) return g;
   if (TILES.size > 300) TILES.clear();
@@ -1089,7 +1107,7 @@ export function sbTiles(p) {
           if (
             x <= w &&
             y <= h &&
-            sbInShape(sh, (x / w) * 2 - 1, (y / h) * 2 - 1)
+            sbInShape(sh, fu * ((x / w) * 2 - 1), fv * ((y / h) * 2 - 1))
           )
             n++;
         }
@@ -1137,7 +1155,7 @@ export function sbGrid(s, p, W = 1, H = 1) {
     [w, h] = [1 / rx, 1 / ry];
   }
   const sq = Math.max(+ordTxt(p, "sq") || 1, w / MAX_SIDE, h / MAX_SIDE),
-    key = `${fill ? "fill" : sbShape(p)} ${w} ${h} ${sq}`;
+    key = `${fill ? "fill" : sbShape(p)} ${w} ${h} ${sq} ${sbFlips(p)}`;
   let g = GRIDS.get(key);
   if (g) return g;
   if (GRIDS.size > 300) GRIDS.clear();
@@ -1220,6 +1238,37 @@ export function sbSnapSpot(s, p, W = 1, H = 1) {
     x: +(p.x + way(cx, rx, x0, x1)).toFixed(6),
     y: +(p.y + way(cy, ry, y0, y1)).toFixed(6),
   };
+}
+/* do blocks p and q share a tile: each one's tile middles looked for in the other (only where their boxes meet) */
+export function sbOverlap(s, p, q, W = 1, H = 1) {
+  const A = sbZoneBox(s, p, W, H),
+    B = sbZoneBox(s, q, W, H),
+    e = 1e-6;
+  if (
+    A[2] <= B[0] + e ||
+    B[2] <= A[0] + e ||
+    A[3] <= B[1] + e ||
+    B[3] <= A[1] + e
+  )
+    return false;
+  const mids = (P, Q, [x0, y0, x1, y1]) => {
+    const t = sbTiles(P);
+    for (const c of t.set) {
+      const { x, y } = toMap(
+        s,
+        P,
+        null,
+        -t.w / 2 + ((c % t.nx) + 0.5) * t.tw,
+        -t.h / 2 + (Math.floor(c / t.nx) + 0.5) * t.th,
+        W,
+        H,
+      );
+      if (x < x0 || x > x1 || y < y0 || y > y1) continue;
+      if (sbInBlock(s, Q, x, y, W, H)) return true;
+    }
+    return false;
+  };
+  return mids(p, q, B) || mids(q, p, A);
 }
 /* a snapping block's turn: a quarter at a time (any turn from before goes to the nearest quarter first) */
 export const sbSnapTurn = (rot, by) =>
@@ -1602,7 +1651,8 @@ function actingSpot(s, p, W, H) {
 const RIMS = new Map();
 export function sbOutline(s, p, W = 1, H = 1, n = 48) {
   const sh = sbShape(p),
-    key = sh + n;
+    key = sh + n,
+    [fu, fv] = sbFlips(p);
   if (!RIMS.has(key)) {
     const rim = [];
     for (let i = 0; i < n; i++) {
@@ -1624,8 +1674,8 @@ export function sbOutline(s, p, W = 1, H = 1, n = 48) {
     [w, h] = sbSize(p),
     t = (sbRot(p) * Math.PI) / 180;
   return RIMS.get(key).map(([u, v]) => {
-    const X = (u * w) / 2,
-      Y = (v * h) / 2;
+    const X = (fu * u * w) / 2,
+      Y = (fv * v * h) / 2;
     return {
       x: p.x + (X * Math.cos(t) - Y * Math.sin(t)) * rx,
       y: p.y + (X * Math.sin(t) + Y * Math.cos(t)) * ry,

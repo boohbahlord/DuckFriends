@@ -185,14 +185,15 @@ function dpSetUp(s) {
   s.hang.pk = [];
   s.hang.power = 1;
 }
-/* the power on or off, for everyone: the lights, the TV, and every flashlight off (on) or back on (off) */
+/* the power on or off, for everyone: the lights, the TV, and every flashlight off (on) or back on (off). I want every
+   flashlight to turn back on by itself when the power goes out, on Cabin and on every map where it can (Downpour's
+   generator running dry too), even one switched off with 0 (owner, Nov 20 18:46Z) */
 function setPower(s, on, now, h) {
   s.hang.power = on ? 1 : 0;
   s.hang.pw = { ...s.hang.pw, on: on ? 1 : 0 };
-  if (!dpOn())
-    s.hang.l4f = on
-      ? Object.fromEntries(h.players(s).map((id) => [id, 1]))
-      : {}; // (Downpour: the flashlights stay as they are)
+  if (!on) s.hang.l4f = {};
+  else if (!dpOn())
+    s.hang.l4f = Object.fromEntries(h.players(s).map((id) => [id, 1])); // (Downpour: the power back on leaves them as they are)
   h.addFx(s, { kind: on ? "l4pwon" : "l4pwoff", by: "", who: [], t: now });
 }
 /* a round starts (newRound): the power counts it, maybe goes out; a jerry can may turn up in a part's spot */
