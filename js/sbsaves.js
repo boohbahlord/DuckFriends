@@ -18,7 +18,7 @@ import { isSb, SB_WORLD_NAMES } from "./sandboxrules.js";
 import { mapName, mapForm } from "./maps.js";
 import { sbSnapshot, newSaveId, SAVE_V } from "./sbsave.js";
 import { lobbyBtnHTML } from "./vote.js";
-import { music } from "./music.js";
+import { music, allowSongs, allowedSongs } from "./music.js";
 import { sfx } from "./sound.js";
 
 /* ---------- the store ---------- */
@@ -279,21 +279,22 @@ export function saveRows(R) {
       },
       { label: "Save as…", act: (r) => saveAs(r) },
     );
-  const off = new Set((s.music && s.music.off) || []),
-    all = music.tracks,
-    none = all.every((n) => off.has(n));
+  const all = music.tracks,
+    on = allowedSongs(s), // (Miles Jr.'s song list, music.js: only these play, and everyone hears the same)
+    none = !on.length;
   rows.push({
     label: none ? "Music: no music" : "Music: on",
     on: !none,
-    act: (r) =>
-      r.send(none ? { t: "songs", all: "on" } : { t: "songs", off: all }),
+    act: () => allowSongs(none ? undefined : []),
   });
-  for (const n of all)
+  for (const n of all) {
+    const is = on.includes(n);
     rows.push({
-      label: `${off.has(n) ? "Off" : "On"}: ${n}`,
-      on: !off.has(n),
-      act: (r) => r.send({ t: "songs", [off.has(n) ? "on" : "off"]: [n] }),
+      label: `${is ? "On" : "Off"}: ${n}`,
+      on: is,
+      act: () => allowSongs(is ? on.filter((x) => x !== n) : [...on, n]),
     });
+  }
   return rows;
 }
 /* a name typed in a small window: the name, or null */

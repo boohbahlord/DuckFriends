@@ -53,8 +53,38 @@ export function orbFace(s, id, p) {
     : orbHTML(w);
 }
 /* the mark of a loot point: a dashed ring in its color, under its orb */
-export const lootRing = (c) =>
-  `<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="40" fill="none" stroke="#fff" stroke-opacity="0.5" stroke-width="10" stroke-dasharray="14 10"/><circle cx="50" cy="50" r="40" fill="none" stroke="${c}" stroke-opacity="0.8" stroke-width="5" stroke-dasharray="14 10"/></svg>`;
+/* a loot spot's mark (plan Phase 2: "Orbs get their own spawn mark: an empty diamond with a small diamond in its
+   middle"), made as pixels from the start (the owner's, Nov 19 23:41Z: "You do the pixels first"): 16 by 16, a pixel at
+   (i, j) by its distance |dx| + |dy| from the middle; a white edge outside its color so it reads on any floor */
+const DIAMONDS = new Map();
+export function lootRing(c) {
+  let u = DIAMONDS.get(c);
+  if (!u) {
+    const n = 16,
+      cv = document.createElement("canvas");
+    cv.width = cv.height = n;
+    const g = cv.getContext("2d");
+    for (let j = 0; j < n; j++)
+      for (let i = 0; i < n; i++) {
+        const d = Math.abs(i - 7.5) + Math.abs(j - 7.5),
+          fill =
+            d > 6.5 && d <= 7.5
+              ? "rgba(255,255,255,0.6)"
+              : d > 5.5 && d <= 6.5
+                ? c
+                : d > 2 && d <= 3
+                  ? "rgba(255,255,255,0.6)"
+                  : d <= 2
+                    ? c
+                    : "";
+        if (!fill) continue;
+        g.fillStyle = fill;
+        g.fillRect(i, j, 1, 1);
+      }
+    DIAMONDS.set(c, (u = cv.toDataURL()));
+  }
+  return `<img class="px sb-pxmark" src="${u}" alt="" aria-hidden="true" draggable="false">`;
+}
 
 /* ---------- the settings window's part ----------
    h: sbSettings' own makers { row, flagRow, typed, why, colorRow } */
