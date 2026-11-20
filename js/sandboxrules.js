@@ -187,8 +187,20 @@ export const SB_KEYS_TAKEN = "cbmnhgpwasdeqrtvx";
 /* the spawn key works any time, the Build window up or not (the owner's answer, Nov 19 10:22Z: "no (not for sandbox
    mode anyway"); true would let it work only while the Build window is up */
 export const SB_KEY_IN_BUILD = false;
-/* the most spawns and respawns on a map */
-export const SB_POINTS = 60;
+/* the zone budget: the most blocks and tabs on a map, each tab counting as one (the owner's, Nov 19: "Let's say that
+   there's only 50 zones allowed per game ... zone budget 0 out of 50 ... Now it says 2 out of 50") */
+export const SB_POINTS = 50;
+/* a block's tabs (plan Phase 2c): what a + adds. A spawn's own Entity and Player pages, and on any block a tab of each
+   purpose, which works on the block's own spot, shape and size */
+export const SB_TABS = [
+  ["spawn", "Spawn tab"],
+  ["respawn", "Respawn tab"],
+  ["loot", "Loot tab"],
+  ["zone", "Zone tab"],
+];
+/* where a block is and how it's shaped: what its tabs copy from it */
+export const SB_GEO = ["x", "y", "z", "sh", "fill", "rot"];
+export const SB_GEO_F = ["sh", "fill", "zw", "zh"];
 /* ---------- Sandbox's board zones (stage 5) ----------
    The owner's Sandbox file, "Board Build": "A large sqaure amount of pixels CAN be used to overwrite the board with an
    effect (not an actual solid). It is transparent and assigned any color that the spawns or respawns has." A zone can be

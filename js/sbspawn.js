@@ -37,6 +37,9 @@ import {
   sbColOk,
   SB_KEYS_TAKEN,
   SB_POINTS,
+  SB_TABS,
+  SB_GEO,
+  SB_GEO_F,
   SB_LOOT,
   SB_ZONE,
   SB_SHAPE,
@@ -425,7 +428,7 @@ function press(s, id, now, done = new Set()) {
     for (const [q, P] of Object.entries(pointsOf(s)))
       if (
         P.k === "spawn" &&
-        !P.grp &&
+        (!P.grp || P.pg === "t") &&
         P.pg !== "pl" &&
         tg.includes(P.col) &&
         !done.has(q)
@@ -473,6 +476,24 @@ function withField(p, f, v) {
 }
 /* the point a preset or a copy (a.pt: { col, f: { box: text }, im, ap }) makes out of a new bare one: only what its kind
    has, each box read as if typed (the owner's, Nov 19 17:15Z: a preset before placing, copy and paste) */
+/* block id's tabs and pages take its spot, shape and size again (after a move, a turn, a resize or a new shape) */
+function geoTo(all, id) {
+  const P = all[id];
+  if (!P) return all;
+  const out = { ...all };
+  for (const [q, T] of Object.entries(all)) {
+    if (T.grp !== id) continue;
+    const t = { ...T, f: { ...T.f } };
+    for (const k of SB_GEO)
+      if (P[k] === undefined) delete t[k];
+      else t[k] = P[k];
+    for (const k of SB_GEO_F)
+      if (P.f && P.f[k]) t.f[k] = { ...P.f[k] };
+      else delete t.f[k];
+    out[q] = t;
+  }
+  return out;
+}
 function fromPattern(q, pt) {
   if (!pt || typeof pt !== "object") return q;
   if (
@@ -710,8 +731,8 @@ export function sbAct(s, a, now) {
       .filter((id) => pts[id] && !pts[id].grp)
       .slice(0, SB_POINTS);
     if (!ids.length) return false;
-    const all = { ...pts },
-      run = { ...((s.sb && s.sb.run) || {}) },
+    let all = { ...pts };
+    const run = { ...((s.sb && s.sb.run) || {}) },
       with_ = (id) => [
         id,
         ...Object.keys(pts).filter((q) => pts[q].grp === id),
@@ -740,10 +761,16 @@ export function sbAct(s, a, now) {
       const by = +a.deg;
       if (!Number.isFinite(by)) return false;
       for (const id of ids)
-        all[id] = {
-          ...pts[id],
-          rot: ((((pts[id].rot || 0) + by) % 360) + 360) % 360,
-        };
+        all = geoTo(
+          {
+            ...all,
+            [id]: {
+              ...pts[id],
+              rot: ((((pts[id].rot || 0) + by) % 360) + 360) % 360,
+            },
+          },
+          id,
+        );
     } else
       for (const id of ids)
         for (const q of with_(id)) {
@@ -786,13 +813,14 @@ export function sbAct(s, a, now) {
     }
     const b = boxOf(f);
     if (!b || !canSet(p, f)) return false;
-    const q = withField(p, f, a.v);
-    s.sb = {
-      ...s.sb,
-      pts: OWN_ONLY.includes(f)
+    const q = withField(p, f, a.v),
+      all = OWN_ONLY.includes(f)
         ? { ...pts, [a.p]: q }
-        : spread({ ...pts, [a.p]: q }, a.p),
-    };
+        : spread({ ...pts, [a.p]: q }, a.p);
+    let out = all;
+    if (SB_GEO_F.includes(f))
+      for (const q of [a.p, ...kinOf(pts, a.p)]) out = geoTo(out, q); // (a new shape or size: their tabs too)
+    s.sb = { ...s.sb, pts: out };
     return true;
   }
   if (a.k === "del") {
@@ -822,7 +850,10 @@ export function sbAct(s, a, now) {
     return true;
   }
   if (a.k === "page") {
-    if (p.k !== "spawn" || p.grp || !["ent", "pl"].includes(a.kind))
+    /* a spawn's Entity or Player page, or on any block a tab of a purpose (plan Phase 2c): a point of its own on the
+       block's spot, shape and size, its grp the block's */
+    const tab = SB_TABS.some(([k]) => k === a.kind);
+    if (p.grp || (!tab && (p.k !== "spawn" || !["ent", "pl"].includes(a.kind))))
       return false;
     if (Object.keys(pts).length >= SB_POINTS) return false;
     const n = ((s.sb && s.sb.n) || 0) + 1,
@@ -832,19 +863,22 @@ export function sbAct(s, a, now) {
     s.sb = {
       ...s.sb,
       n,
-      pts: {
-        ...pts,
-        ["p" + n]: {
-          k: "spawn",
-          x: p.x,
-          y: p.y,
-          z: p.z,
-          col,
-          grp: a.p,
-          pg: a.kind,
-          f: {},
+      pts: geoTo(
+        {
+          ...pts,
+          ["p" + n]: {
+            k: tab ? a.kind : "spawn",
+            x: p.x,
+            y: p.y,
+            z: p.z,
+            col,
+            grp: a.p,
+            pg: tab ? "t" : a.kind,
+            f: {},
+          },
         },
-      },
+        a.p,
+      ),
     };
     return true;
   }
@@ -882,7 +916,7 @@ export function sbAct(s, a, now) {
     if (x < 0 || x > 1 || y < 0 || y > 1) return false;
     let q = withField(withField(p, "zw", String(zw)), "zh", String(zh));
     q = { ...q, x: +x.toFixed(4), y: +y.toFixed(4) };
-    s.sb = { ...s.sb, pts: { ...pts, [a.p]: q } };
+    s.sb = { ...s.sb, pts: geoTo({ ...pts, [a.p]: q }, a.p) };
     return true;
   }
   /* its Purpose (plan Phase 2): one block, four purposes. It keeps its spot, shape, color and every box it has; a
@@ -900,10 +934,10 @@ export function sbAct(s, a, now) {
       run = { ...((s.sb && s.sb.run) || {}) };
     delete run[a.p];
     for (const [id, P] of Object.entries(pts))
-      if (P.grp === a.p) {
+      if (P.grp === a.p && P.pg !== "t") {
         delete rest[id];
         delete run[id];
-      }
+      } // (a spawn's Entity and Player pages; its tabs stay, each its own purpose)
     s.sb = { ...s.sb, pts: rest, run };
     return true;
   }
@@ -1058,7 +1092,7 @@ export function sbTick(s, now, H) {
   for (const [id, p] of Object.entries(pts))
     if (
       p.k === "spawn" &&
-      !p.grp &&
+      (!p.grp || p.pg === "t") &&
       p.pg !== "pl" &&
       !run[id] &&
       flag(p, "auto") &&

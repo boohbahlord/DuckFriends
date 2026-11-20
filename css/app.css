@@ -21611,6 +21611,11 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   outline-offset: 2px;
   filter: drop-shadow(0 0 4px #7df);
 }
+.sb-budget {
+  margin: 0;
+  font-weight: 700;
+  opacity: 0.85;
+}
 .sb-selbox {
   position: fixed;
   z-index: 6400;

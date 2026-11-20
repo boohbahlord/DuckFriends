@@ -15,6 +15,10 @@ export const SB_HELP = {
       "Hold the left mouse on it and drag. While you hold it, the arrow keys turn it. Double-click it for handles that change its size (Esc puts them away). Hold Shift and drag across an empty spot to select everything inside; drag one of them and they all move. Backspace lets go of a selection. Right-click it for Properties, Copy and Cut (Copy all and Cut all on a selection); on an empty spot, Paste.",
     ],
     [
+      "Tabs and the zone budget",
+      "In a block's window, + adds a tab: a spawn, respawn, loot or zone that works on the same block, so one block can do several things at once. Each tab counts toward the zone budget (shown in Build): 50 blocks and tabs at most.",
+    ],
+    [
       "Spawns and respawns",
       "A spawn makes things; a respawn is where players come back. Press E beside one to change it, then give it a key or put it on the hotbar in H.",
     ],
