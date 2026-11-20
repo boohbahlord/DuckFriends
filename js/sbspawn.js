@@ -1309,14 +1309,11 @@ export const sbHpOf = (s, id) => {
     g = s.sb.gm && s.sb.gm["p:" + id] ? grHp(s, id, hp || 4) : 0; // (its groups' Max HP over it, sbgroups.js; 4: the game's, rules.js PHP)
   return g && g !== (hp || 4) ? g : hp;
 };
-export const sbWalkOf = (s, id) =>
-  (isSb(s) &&
-    baseMode(s.options) !== "l4dd" &&
-    s.sb &&
-    s.sb.pl &&
-    s.sb.pl[id] &&
-    s.sb.pl[id].sp) ??
-  1; // (0: it can't walk)
+export function sbWalkOf(s, id) {
+  const pl =
+    isSb(s) && baseMode(s.options) !== "l4dd" && s.sb && s.sb.pl && s.sb.pl[id];
+  return pl && pl.sp != null ? pl.sp : 1; // (0: it can't walk. Anything else unset, on the zombie maps too: as usual)
+}
 
 /* where something of spawn sp comes back: a respawn whose "who" names its color or its name (one of them at random),
    or the spawn itself */
