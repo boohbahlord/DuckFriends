@@ -44,7 +44,7 @@ import { WAVE, zLook } from "./mgjrules.js";
 import { MAD } from "./sbbrain.js";
 import { fight, keepAt, reachTo } from "./sbarms.js";
 import { npcBody, DU_WORLD } from "./sbbody.js";
-import { sees as npcSees, nearPairs } from "./npcrules.js";
+import { sees as npcSees, nearPairs, grudge } from "./npcrules.js";
 
 export const onCabin = (s) => isSb(s) && baseMode(s.options) === "hang";
 /* the worlds these walk on: Duck Cabin and the zombie maps (there, every kind but a zombie: those are the map's own) */
@@ -350,7 +350,7 @@ function npcHit(s, i, by, now, w) {
               ...q,
               hp: Math.max(0, hp),
               w: wd,
-              mad: ["p:" + by, now + MAD], // (it goes after whoever hurt it: sbbrain.js)
+              mad: grudge("p:" + by, now, MAD), // (it goes after whoever hurt it: sbbrain.js)
               ...(hp <= 0 ? { d: now } : {}),
             }
           : q,
