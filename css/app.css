@@ -21027,18 +21027,19 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .brb-why {
   margin: 0.4rem 0 0;
 }
-/* No color (wave 2): the rainbow, and a ring that turns through it very slowly ("emphasis on slowly") */
+/* No color: white, its swatch a circle with a line through it (the owner's, Nov 20 02:37Z: "the circle with the line
+   through it. That would be used to indicate no color") */
 .sb-col-none {
-  background: conic-gradient(
-    #ff4d4d,
-    #ff8c2b,
-    #ffd23f,
-    #3fae2a,
-    #3f8cff,
-    #9b5de5,
-    #ff6fb5,
-    #ff4d4d
-  );
+  background:
+    linear-gradient(
+      135deg,
+      transparent calc(50% - 0.12rem),
+      #1c1c28 calc(50% - 0.12rem),
+      #1c1c28 calc(50% + 0.12rem),
+      transparent calc(50% + 0.12rem)
+    ),
+    #f4f6fb;
+  border-color: #1c1c28;
 }
 .sb-pickcols {
   justify-content: center;
@@ -21647,6 +21648,14 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   padding: 0 0.25rem;
   overflow-wrap: anywhere;
 }
+/* a code box never splits at a line's end: it moves whole to the next line (the owner's, Nov 20 02:32Z: the boxes'
+   borders were cut off at the edges) */
+.sbb-page code {
+  display: inline-block;
+  max-width: 100%;
+  line-height: 1.2;
+  vertical-align: baseline;
+}
 .sbb-page pre {
   padding: 0.5rem 0.7rem;
   overflow: auto;
@@ -21718,6 +21727,18 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   outline-offset: 2px;
   filter: drop-shadow(0 0 4px #7df);
 }
+.sb-cells {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+.sb-ordbox {
+  display: flex;
+  gap: 0.4rem;
+}
 .sb-budget {
   margin: 0;
   font-weight: 700;
@@ -21771,6 +21792,23 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 }
 .sb-sect-top {
   opacity: 1;
+}
+/* headings that fold, as in Word (ui.js foldHeads): the same arrow as a fold's, pointing down while open */
+.fold-head {
+  cursor: pointer;
+}
+.fold-head::before {
+  content: "\25B8";
+  display: inline-block;
+  width: 1em;
+  transform: rotate(90deg);
+  transition: transform 0.15s;
+}
+.fold-head.folded::before {
+  transform: none;
+}
+.fold-hid {
+  display: none !important;
 }
 .sb-purpose {
   font: inherit;

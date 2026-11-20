@@ -9,7 +9,7 @@ import { LANG } from "./langname.js";
 import { activity } from "./hangout/registry.js";
 import { W, H } from "./hangout/layout.js";
 import { npcPics } from "./sbnpcart.js";
-import { esc, openWindow, confirmBox, toast } from "./ui.js";
+import { esc, openWindow, confirmBox, toast, foldHeads } from "./ui.js";
 import { sbPresets, sbCheat, colSwatches, NOCOL_NOTE } from "./sbmenu.js";
 import { activeRoom } from "./net.js";
 import {
@@ -37,6 +37,13 @@ import {
   sbSize,
   sbRot,
   SB_TABS,
+  sbGrid,
+  sbStep,
+  sbActive,
+  sbUnit,
+  SB_ORDER,
+  SB_ORDERS,
+  SB_DIRS,
   SB_POINTS,
   sbInBlock,
 } from "./sandboxrules.js";
@@ -61,10 +68,14 @@ import {
   sendPic,
 } from "./sbmake.js";
 
-/* a color as CSS: No color is the rainbow's (the element under it has .sb-rb, which turns currentColor round the rainbow,
-   very slowly) */
-export const colCSS = (col) =>
-  col === SB_NOCOL ? "currentColor" : SB_COLORS[col] || "#fff";
+/* a color as CSS: No color is white (the owner's, Nov 20 02:37Z: "Its color is no color by default, which is white") */
+export const colCSS = (col) => SB_COLORS[col] || SB_COLORS.white;
+/* cheat mode on, and I may build: every zone shows, B or not (the owner's, Nov 20 02:37Z: "it is always visible in
+   cheat mode. It shouldn't be hidden to where you have to hit B build mode to see it") */
+function seeAll(s) {
+  const R = activeRoom();
+  return !!(sbCheat.on && R && s && sbMay(s, R.me, "b"));
+}
 /* "Hide (unless cheat mode)": a point I don't see now */
 function hiddenNow(s, p) {
   if (boxText(p, "hide") !== "t") return false;
@@ -89,6 +100,10 @@ function markSVG(p) {
 /* what my screen shows of Sandbox's build: zones only while my Build window is up (sandbox.js sets it) or a zone's
    window is open ("Sections colored from board build is invisible", the owner's Sandbox file) */
 export const sbView = { build: false, until: 0 };
+/* spawns and respawns have no symbol: each is drawn just as a zone is, seen only while I build (the owner's, Nov 20
+   02:32Z: "From now on, spawn or respawn doesn't have a symbol. It's just a zone, like it was for the zones") */
+export const zoneLike = (p) =>
+  p.k === "zone" || p.k === "spawn" || p.k === "respawn";
 export const sbSel = new Set(); // (the blocks a Shift drag picked: sbdrag.js; they light up)
 const building = () =>
   sbView.build ||
@@ -185,6 +200,7 @@ function zoneMark(n, p, at, s, bare = false) {
       ? "" // (a spawn's, respawn's or loot spot's area: its ring shows where it is)
       : `<span class="sb-zone-dot"></span><span class="sb-pt-name" style="color:var(--c)">${esc(boxText(p, "name"))}</span>`;
   }
+  cellsOn(n, s, p, cs);
   const st = cs
     .map((c) => `${c.left.toFixed(1)},${c.top.toFixed(1)}`)
     .join(" ");
@@ -202,12 +218,78 @@ function zoneMark(n, p, at, s, bare = false) {
       top: (cs[2].top - T).toFixed(1) + "px",
     });
 }
+/* a block's squares while building (plan Phase 3: "the squares a zone checks are shown while you build, big enough to
+   see"): each square's edge, and the ones acting now filled in its color. Drawn as pixels on a canvas over its box,
+   again only when its step, its squares or its size on the screen change. cs: its box's corners and middle (px) */
+function cellsOn(n, s, p, cs) {
+  const id = n.dataset.p.split("~")[0],
+    w = Math.round(Math.abs(cs[1].left - cs[0].left)),
+    h = Math.round(Math.abs(cs[1].top - cs[0].top)),
+    g = sbGrid(s, p, W, H),
+    k = sbStep(s, id),
+    on = sbActive(s, id, p, k, W, H),
+    sig = `${w}x${h} ${g.nx}x${g.ny} ${g.cells.length} ${sbRot(p)} ${p.col} ${on ? [...on].join(",") : "all"}`;
+  if (n._cells === sig && n.querySelector(".sb-cells")) return;
+  n._cells = sig;
+  let c = n.querySelector(".sb-cells");
+  if (!c) {
+    c = document.createElement("canvas");
+    c.className = "sb-cells px";
+    n.append(c);
+  }
+  if (!w || !h) return;
+  c.width = w;
+  c.height = h;
+  const x = c.getContext("2d"),
+    [x0, y0, x1, y1] = sbZoneBox(s, p, W, H),
+    [rx, ry] = sbUnit(s, W, H),
+    a = (sbRot(p) * Math.PI) / 180,
+    fill = sbFills(p),
+    /* a spot in the block's own grid (-0.5 to 0.5 across) on the canvas */
+    put = (u, v) => {
+      let X, Y;
+      if (fill) {
+        X = u + 0.5;
+        Y = v + 0.5;
+      } else {
+        const lx = u * g.w,
+          ly = v * g.h;
+        X = p.x + (lx * Math.cos(a) - ly * Math.sin(a)) * rx;
+        Y = p.y + (lx * Math.sin(a) + ly * Math.cos(a)) * ry;
+      }
+      return [((X - x0) / (x1 - x0)) * w, ((Y - y0) / (y1 - y0)) * h];
+    },
+    css = SB_COLORS[p.col] || "#fff";
+  x.clearRect(0, 0, w, h);
+  x.lineWidth = 1;
+  for (const cell of g.cells) {
+    const i = cell % g.nx,
+      j = Math.floor(cell / g.nx),
+      u0 = i / g.nx - 0.5,
+      v0 = j / g.ny - 0.5,
+      u1 = (i + 1) / g.nx - 0.5,
+      v1 = (j + 1) / g.ny - 0.5,
+      q = [put(u0, v0), put(u1, v0), put(u1, v1), put(u0, v1)];
+    x.beginPath();
+    q.forEach(([X, Y], m) => (m ? x.lineTo(X, Y) : x.moveTo(X, Y)));
+    x.closePath();
+    if (!on || on.has(cell)) {
+      x.globalAlpha = on ? 0.45 : 0.12;
+      x.fillStyle = css;
+      x.fill();
+    }
+    x.globalAlpha = 0.35;
+    x.strokeStyle = css;
+    x.stroke();
+  }
+  x.globalAlpha = 1;
+}
 /* the points on a layer: at(p) → { left, top } where its middle is (board px), size its width; s: the room's state (a
    loot point's orb and its picture) */
 function drawMarks(layer, pts, at, size, s) {
   const have = new Map(),
     want = new Set(),
-    seeZones = building();
+    seeZones = building() || seeAll(s); // (always in cheat mode, the owner's, Nov 20 02:37Z)
   for (const n of layer.querySelectorAll(".sb-pt")) have.set(n.dataset.p, n);
   for (const [id, p] of Object.entries(pts)) {
     if (p.grp) {
@@ -231,7 +313,7 @@ function drawMarks(layer, pts, at, size, s) {
     const hid = hiddenNow(s, p),
       orbOut = p.k === "loot" && !!p.orb && p.orb.dn == null;
     if (hid && !orbOut) continue; // (Hide: a loot point hides its ring and name, never its orb, the owner's "that appearance is hidden")
-    if (p.k === "zone") {
+    if (zoneLike(p)) {
       if (!seeZones) continue;
       want.add(id);
       zoneMark(markEl(layer, have, id, "sb-pt sb-zone"), p, at, s);
@@ -258,7 +340,6 @@ function drawMarks(layer, pts, at, size, s) {
       sig = `${p.k} ${p.col} ${boxText(p, "name")} ${away ? "" : face} ${hid}`;
     if (n._sig !== sig) {
       n._sig = sig;
-      n.classList.toggle("sb-rb", p.col === SB_NOCOL);
       n.innerHTML = `${hid ? "" : `<span class="sb-pt-name" style="color:${colCSS(p.col)}">${esc(boxText(p, "name"))}</span>${markSVG(p)}`}${orb && !away ? `<span class="sb-orb">${orbFace(s, id, p)}</span>` : ""}`;
     }
     placeAt(n, at(p), size);
@@ -369,16 +450,19 @@ const flagRow = (f, b, t, why) => {
 /* a header over one part of a spawn's window, numbered like Word's headings as the settings go deeper (plan Phase 2:
    3, 3.4, 3.4.1): SECT is [the section it's under, how many came before] while a block's window is made */
 let SECT = null;
+const FOLDED = new Set(); // (the headings I folded in a block's window: still folded when it's drawn again, ui.js foldHeads)
 const sect = (t) =>
   `<h3 class="sb-sect">${SECT ? `${SECT[0]}.${++SECT[1]} ` : ""}${t}</h3>`;
 /* a section of the block's front, with its fold arrow */
 const fold = (n, t, html) =>
   `<details class="sb-fold" open><summary class="sb-sect">${n}. ${t}</summary>${html}</details>`;
+/* what a zone is: just a zone, a spawn or a respawn (the owner's, Nov 20 02:37Z: "it will have you choose if it's just a
+   default zone, if it's a spawn, if it's a respawn"); loot is a tab now, and a loot spot of an older save keeps its own */
 const PURPOSES = [
+  ["zone", "Zone"],
   ["spawn", "Spawn"],
   ["respawn", "Respawn"],
   ["loot", "Loot"],
-  ["zone", "Zone"],
 ];
 export function sbSettings(getR, id, tab = "") {
   const R = getR(),
@@ -431,11 +515,7 @@ export function sbSettings(getR, id, tab = "") {
         "",
       )}<span class="sb-plus"><button type="button" class="sb-tab" data-plus aria-label="Add a page">+</button><span class="sb-plus-pick" hidden>${base.k === "spawn" ? `<button type="button" class="sb-tab" data-page="ent">Entity page</button><button type="button" class="sb-tab" data-page="pl">Player page</button>` : ""}${SB_TABS.map(([k, l]) => `<button type="button" class="sb-tab" data-page="${k}">${l}</button>`).join("")}</span></span></div>`,
     linked = (spawn || p.k === "respawn") && !p.grp;
-  let colorRow = `<div class="sb-row"><span>Color</span><span class="sb-cols">${colSwatches(
-      p.col,
-      "data-col",
-      linked,
-    )}</span></div>${
+  let colorRow = `<div class="sb-row"><span>Color</span><span class="sb-cols">${colSwatches(p.col, "data-col", true)}</span></div>${
       linked
         ? `${p.col === SB_NOCOL ? "" : `<p class="sb-tip">Every ${p.k} of this color has these settings.</p>`}${flagRow("hide", SB_FLAGS.hide, typed("hide"), why("hide"))}`
         : ""
@@ -468,6 +548,18 @@ export function sbSettings(getR, id, tab = "") {
     frontHTML = front
       ? fold(
           1,
+          "Type",
+          `<div class="sb-row"><span>This zone is</span><span class="sb-what">${PURPOSES.filter(
+            ([v]) => v !== "loot" || p.k === "loot",
+          )
+            .map(
+              ([v, n]) =>
+                `<label><input type="radio" name="sb-purpose" data-purpose value="${v}"${p.k === v ? " checked" : ""}> ${n}</label>`,
+            )
+            .join("")}</span></div>`,
+        ) +
+        fold(
+          2,
           "Shape",
           `<div class="sb-row"><span>${SB_SHAPE.sh.name}</span><span class="sb-what">${Object.entries(
             SB_SHAPES,
@@ -481,15 +573,7 @@ export function sbSettings(getR, id, tab = "") {
           ${row("zh", SB_ZONE.zh, p.f.zh ? typed("zh") : String(sbSize(p)[1]), why("zh"))}
           ${flagRow("fill", SB_SHAPE.fill, typed("fill"), why("fill"))}`,
         ) +
-        fold(2, "Color", colorRow) +
-        fold(
-          3,
-          "Purpose",
-          `<div class="sb-row"><span>Purpose</span><select class="sb-purpose" data-purpose aria-label="Purpose">${PURPOSES.map(
-            ([v, n]) =>
-              `<option value="${v}"${p.k === v ? " selected" : ""}>${n}</option>`,
-          ).join("")}</select></div>`,
-        )
+        fold(3, "Color", colorRow)
       : "";
   if (front) colorRow = ""; // (it's in the front now)
   SECT = front ? [4, 0] : null;
@@ -592,12 +676,36 @@ export function sbSettings(getR, id, tab = "") {
     ${pickRow("ent", SB_ZONE.ent.name, named("spawn", "spawn"), picked("ent"))}
     ${pickRow("lt", SB_ZONE.lt.name, named("loot", "loot"), picked("lt"))}`;
   };
-  const html = `<h2>${loot ? "Loot" : zone ? "Zone" : spawn ? "Spawn" : "Respawn"}</h2>${head}
-  <div class="sb-set">${frontHTML}${front ? `<h3 class="sb-sect sb-sect-top">4. ${PURPOSES.find(([v]) => v === p.k)[1]} settings</h3>` : ""}${loot ? lootPage(R.state, id, p, { row, flagRow, typed, why, colorRow }) : zone ? zonePage() : !spawn ? respawn() : players ? playersPage() : look ? lookPage(R.state, p) : entity()}</div>
+  /* its potential order, the last section of every tab (plan Phase 3): which of its squares act, and when */
+  const ordT = (f) => (p.f[f] ? p.f[f].t : SB_ORDER[f].def),
+    sel = (f, opts) =>
+      `<select class="sb-box" data-f="${f}" aria-label="${esc(SB_ORDER[f].name)}">${Object.entries(
+        opts,
+      )
+        .map(
+          ([v, n]) =>
+            `<option value="${v}"${v === ordT(f).trim() ? " selected" : ""}>${esc(n)}</option>`,
+        )
+        .join("")}</select>`,
+    orderSect = () =>
+      `${sect("Potential order")}<div class="sb-row" data-row="ord"><span>${esc(SB_ORDER.ord.name)}</span><span class="sb-ordbox">${sel("ord", SB_ORDERS)}${sel("dir", SB_DIRS)}</span><em class="sb-why"></em></div>
+    ${row("n", SB_ORDER.n, ordT("n"), "")}
+    ${row("sq", SB_ORDER.sq, ordT("sq"), "")}
+    ${row("st", SB_ORDER.st, ordT("st"), "")}`;
+  const html = `<h2>${loot && !p.grp ? "Loot" : "Zone"}</h2>${head}
+  <div class="sb-set">${frontHTML}${front ? `<h3 class="sb-sect sb-sect-top">4. ${PURPOSES.find(([v]) => v === p.k)[1]} settings</h3>` : ""}${loot ? lootPage(R.state, id, p, { row, flagRow, typed, why, colorRow }) : zone ? zonePage() : !spawn ? respawn() : players ? playersPage() : look ? lookPage(R.state, p) : entity()}${players || look ? "" : orderSect()}</div>
   <p class="acts">${spawn && !players && !look ? `<button type="button" class="btn" data-go>Spawn</button>` : ""}${!spawn && !loot && !zone ? `<button type="button" class="btn" data-imp>Import settings</button>` : ""}<button type="button" class="btn ghost" data-del>${p.grp ? (p.pg === "t" ? "Delete tab" : "Delete page") : "Delete"}</button></p>`;
   openWindow(html, {
-    cls: zone ? "sb-setwin sb-zonewin" : "sb-setwin",
+    cls: zoneLike(p) ? "sb-setwin sb-zonewin" : "sb-setwin",
     onOpen(w, close) {
+      const set = w.querySelector(".sb-set");
+      if (set)
+        foldHeads(
+          set,
+          "h3.sb-sect",
+          (h) => (h.classList.contains("sb-sect-top") ? 1 : 2),
+          FOLDED,
+        );
       const send = (a) => {
         const r = getR();
         if (r) r.send({ t: "sb", p: id, ...a });
@@ -947,12 +1055,9 @@ function importWin(getR, id, then) {
    19 12:59Z: "what it has is selected by mouse and then placed on your mouse for you to choose where to place it on the
    board with your mouse"). sbPlace.start: sandbox.js' */
 export const sbPlace = { start: null };
-const BUILD = [
-  ["spawn", "Spawn"],
-  ["respawn", "Respawn"],
-  ["loot", "Loot"],
-  ["zone", "Zone"],
-];
+/* B puts down zones only: a spawn, respawn or loot is what a zone does, picked in its window (the owner's, Nov 20 02:37Z:
+   "Zone is the only thing left of those original four") */
+const BUILD = [["zone", "Zone"]];
 export const buildRows = (R) =>
   spawnsHere(R.state)
     ? BUILD.map(([kind, label]) => ({
@@ -966,19 +1071,13 @@ export const buildRows = (R) =>
             : r.send({ t: "sb", k: "add", kind }),
       }))
     : [];
-/* what I'm putting down, drawn on my mouse: its mark in the color it will get (picked first for a spawn or a respawn; a
-   zone: its box, dashed) */
+/* what I'm putting down, drawn on my mouse: a zone's box, dashed, in the color it will get (a loot spot of an older
+   save: its mark) */
 export function ghostHTML(s, kind, picked) {
-  const used = Object.values(ptsOf(s)).map((p) => p.col),
-    col =
-      picked ||
-      Object.keys(SB_COLORS).find((c) => !used.includes(c)) ||
-      Object.keys(SB_COLORS)[0];
-  return kind === "zone"
-    ? `<span class="sb-ghost-zone" style="--c:${SB_COLORS[col]}"></span>`
-    : col === SB_NOCOL
-      ? `<span class="sb-rb">${markSVG({ k: kind, col })}</span>`
-      : markSVG({ k: kind, col });
+  const col = picked || SB_NOCOL; // (every new zone: no color, white)
+  return zoneLike({ k: kind })
+    ? `<span class="sb-ghost-zone" style="--c:${colCSS(col)}"></span>`
+    : markSVG({ k: kind, col });
 }
 
 /* the worlds (the zombie cabin, Downpour): the points drawn on the ground, and E beside one opens it */

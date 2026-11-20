@@ -344,6 +344,228 @@ export function sbInBlock(s, p, x, y, W = 1, H = 1) {
     j = Math.min(cy - 1, Math.floor((ly / h + 0.5) * cy));
   return sbCellIn(p, i, j);
 }
+/* ---------- what a block does over time (plan Phase 3): its squares and their potential order ----------
+   A block is a grid of squares (Square size, in duck lengths); its potential order says which squares act at each step
+   (one step every "Seconds between"): all at once, one after another in a direction, alternating like a checkerboard,
+   true random, or shuffle (never the same square twice until every one was used). Squares at once: how many act each
+   step (blank: every one). Nothing random is sent: every screen works the squares out from the step number alone, the
+   same way (sbActive), so the host only counts the steps (s.sb.zs) */
+export const SB_ORDERS = {
+  rand: "True random",
+  shuf: "Shuffle",
+  line: "One after another",
+  alt: "Alternating",
+  all: "All at once",
+};
+export const SB_DIRS = {
+  "": "No direction",
+  right: "\u2192",
+  left: "\u2190",
+  down: "\u2193",
+  up: "\u2191",
+  dr: "\u2198",
+  dl: "\u2199",
+  ur: "\u2197",
+  ul: "\u2196",
+};
+export const SB_ORDER = {
+  ord: {
+    name: "Potential order",
+    check: (t) => (SB_ORDERS[String(t).trim()] ? "" : "Pick an order"),
+    def: "rand",
+  },
+  dir: {
+    name: "Direction",
+    check: (t) =>
+      SB_DIRS[String(t).trim()] !== undefined ? "" : "Pick a direction",
+    def: "",
+  },
+  n: {
+    name: "Squares at once (blank: all)",
+    check: (t) =>
+      String(t).trim() === "" ||
+      (/^\d+$/.test(String(t).trim()) && +t >= 1 && +t <= 4096)
+        ? ""
+        : "Blank, or 1 to 4096",
+    def: "",
+  },
+  sq: {
+    name: "Square size (duck lengths)",
+    check: (t) =>
+      /^\d+(\.\d+)?$/.test(String(t).trim()) && +t >= 0.25 && +t <= 20
+        ? ""
+        : "0.25 to 20",
+    def: "1",
+  },
+  st: {
+    name: "Seconds per step",
+    check: (t) =>
+      /^\d+(\.\d+)?$/.test(String(t).trim()) && +t >= 0.1 && +t <= 600
+        ? ""
+        : "0.1 to 600",
+    def: "1",
+  },
+};
+const ordTxt = (p, f) => {
+  const k = p && p.f && p.f[f];
+  return k && k.ok != null && k.ok !== "" ? String(k.ok) : SB_ORDER[f].def;
+};
+export const sbOrd = (p) => {
+  const o = ordTxt(p, "ord").trim();
+  return SB_ORDERS[o] ? o : "rand";
+};
+const MAX_SIDE = 64; // (squares along a side at most: a big square size takes over past it)
+/* block p's squares: { nx, ny, w, h (duck lengths), cells: the squares inside its shape, as i + j * nx } */
+export function sbGrid(s, p, W = 1, H = 1) {
+  let [w, h] = sbSize(p);
+  if (sbFills(p)) {
+    const [rx, ry] = sbUnit(s, W, H);
+    [w, h] = [1 / rx, 1 / ry];
+  }
+  const sq = Math.max(+ordTxt(p, "sq") || 1, w / MAX_SIDE, h / MAX_SIDE),
+    nx = Math.max(1, Math.round(w / sq)),
+    ny = Math.max(1, Math.round(h / sq)),
+    cells = [];
+  for (let j = 0; j < ny; j++)
+    for (let i = 0; i < nx; i++)
+      if (
+        sbFills(p) ||
+        sbInShape(
+          sbShape(p),
+          ((i + 0.5) / nx) * 2 - 1,
+          ((j + 0.5) / ny) * 2 - 1,
+        )
+      )
+        cells.push(i + j * nx);
+  if (!cells.length) cells.push(Math.floor(nx / 2) + Math.floor(ny / 2) * nx);
+  return { nx, ny, w, h, cells };
+}
+/* a number from 0 to 1 that only ever depends on its inputs (the same on every screen) */
+const hash = (...v) => {
+  let x = 2166136261;
+  for (const n of v) {
+    x ^= n | 0;
+    x = Math.imul(x, 16777619);
+    x ^= x >>> 13;
+    x = Math.imul(x, 0x5bd1e995);
+    x ^= x >>> 15;
+  }
+  return (x >>> 0) / 4294967296;
+};
+const idNum = (id) =>
+  [...String(id)].reduce((a, c) => a * 31 + c.charCodeAt(0), 7);
+const KEEP = new Map();
+/* which of block id's squares act at step k: a Set of i + j * nx, or null when they all do */
+export function sbActive(s, id, p, k, W = 1, H = 1) {
+  const ord = sbOrd(p),
+    g = sbGrid(s, p, W, H),
+    N = g.cells.length,
+    want = ordTxt(p, "n").trim(),
+    n = want ? Math.min(N, Math.max(1, +want || 1)) : N;
+  if (ord === "all" || (n >= N && ord !== "alt")) return null;
+  const key = `${id} ${ord} ${ordTxt(p, "dir")} ${n} ${g.nx}x${g.ny} ${N} ${k}`;
+  if (KEEP.has(key)) return KEEP.get(key);
+  const seed = idNum(id);
+  let on;
+  if (ord === "alt") {
+    /* a checkerboard that flips every step ("Squares at once" left out: half of them) */
+    on = new Set(
+      g.cells.filter((c) => ((c % g.nx) + Math.floor(c / g.nx) + k) % 2 === 0),
+    );
+  } else if (ord === "rand") {
+    on = new Set(
+      g.cells
+        .map((c) => [hash(seed, k, c), c])
+        .sort((a, b) => a[0] - b[0])
+        .slice(0, n)
+        .map((x) => x[1]),
+    );
+  } else {
+    /* one after another, or shuffle: a walk through every square, n at a time; shuffle deals a new order each round */
+    let walk;
+    if (ord === "line") {
+      const d = ordTxt(p, "dir").trim(),
+        { nx, ny } = g,
+        at = (c) => {
+          const i = c % nx,
+            j = Math.floor(c / nx),
+            I = /left|l$/.test(d) ? nx - 1 - i : i,
+            J = /up|^u/.test(d) ? ny - 1 - j : j;
+          if (d === "up" || d === "down") return [J, I]; // (rows first: the line moves up or down)
+          if (d.length === 2) return [I + J, J]; // (a diagonal: corner to corner)
+          return [I, J]; // (right, left, or none: column by column)
+        };
+      walk = [...g.cells].sort((a, b) => {
+        const A = at(a),
+          B = at(b);
+        return A[0] - B[0] || A[1] - B[1];
+      });
+    } else {
+      const round = Math.floor((k * n) / N);
+      walk = g.cells
+        .map((c) => [hash(seed, round, c), c])
+        .sort((a, b) => a[0] - b[0])
+        .map((x) => x[1]);
+    }
+    const from = (k * n) % N;
+    on = new Set();
+    for (let i = 0; i < n; i++) on.add(walk[(from + i) % N]);
+  }
+  if (KEEP.size > 400) KEEP.clear();
+  KEEP.set(key, on);
+  return on;
+}
+/* the square of block p that (x, y) (shares of the map) is on, i + j * nx, or -1 off it */
+export function sbCellAt(s, p, x, y, W = 1, H = 1) {
+  const g = sbGrid(s, p, W, H);
+  let lx, ly;
+  if (sbFills(p)) {
+    lx = x - 0.5;
+    ly = y - 0.5;
+    lx *= g.w;
+    ly *= g.h;
+  } else {
+    const [rx, ry] = sbUnit(s, W, H),
+      a = (-sbRot(p) * Math.PI) / 180,
+      dx = (x - p.x) / rx,
+      dy = (y - p.y) / ry;
+    lx = dx * Math.cos(a) - dy * Math.sin(a);
+    ly = dx * Math.sin(a) + dy * Math.cos(a);
+  }
+  if (Math.abs(lx) > g.w / 2 || Math.abs(ly) > g.h / 2) return -1;
+  const i = Math.min(g.nx - 1, Math.floor((lx / g.w + 0.5) * g.nx)),
+    j = Math.min(g.ny - 1, Math.floor((ly / g.h + 0.5) * g.ny));
+  return i + j * g.nx;
+}
+/* the step block id is on now (the host counts them: sbzone.js) */
+export const sbStep = (s, id) => ((s && s.sb && s.sb.zs) || {})[id] || 0;
+/* is (x, y) on one of block p's squares that act now (its whole shape when they all do) */
+export function sbActsAt(s, id, p, x, y, W = 1, H = 1) {
+  const on = sbActive(s, id, p, sbStep(s, id), W, H);
+  return !on || on.has(sbCellAt(s, p, x, y, W, H));
+}
+/* a spot at random in one of block p's acting squares, in shares, or null when they all act */
+function actingSpot(s, p, W, H) {
+  const pts = (s && s.sb && s.sb.pts) || {},
+    id = Object.keys(pts).find((q) => pts[q] === p);
+  if (!id) return null;
+  const on = sbActive(s, id, p, sbStep(s, id), W, H);
+  if (!on || !on.size) return null;
+  const g = sbGrid(s, p, W, H),
+    list = [...on],
+    c = list[Math.floor(Math.random() * list.length)],
+    lx = ((c % g.nx) + Math.random()) / g.nx - 0.5,
+    ly = (Math.floor(c / g.nx) + Math.random()) / g.ny - 0.5;
+  if (sbFills(p)) return { x: lx + 0.5, y: ly + 0.5 };
+  const [rx, ry] = sbUnit(s, W, H),
+    a = (sbRot(p) * Math.PI) / 180,
+    X = lx * g.w,
+    Y = ly * g.h;
+  return {
+    x: p.x + (X * Math.cos(a) - Y * Math.sin(a)) * rx,
+    y: p.y + (X * Math.sin(a) + Y * Math.cos(a)) * ry,
+  };
+}
 /* a spot at random inside zone p, { x, y, z }: on the board within its edges; on a world one a duck can stand on (ok(x, y,
    z), in shares), or the zone's middle, where its builder stood */
 export function sbZoneSpot(s, p, W = 1, H = 1, ok = null) {
@@ -351,8 +573,9 @@ export function sbZoneSpot(s, p, W = 1, H = 1, ok = null) {
     board = sbOnBoard(s),
     z = p.z || 0;
   for (let i = 0; i < 24; i++) {
-    let x = x0 + Math.random() * (x1 - x0),
-      y = y0 + Math.random() * (y1 - y0);
+    const on = actingSpot(s, p, W, H); // (its potential order: only the squares that act now)
+    let x = on ? on.x : x0 + Math.random() * (x1 - x0),
+      y = on ? on.y : y0 + Math.random() * (y1 - y0);
     if (board) {
       x = Math.min(0.99, Math.max(0.01, x));
       y = Math.min(0.97, Math.max(0.03, y));
@@ -413,15 +636,10 @@ export function sbPlayerSpot(s, id, W = 1, H = 1, ok = null) {
 export const SB_LOOT = {
   loot: {
     name: "What it holds",
-    check: (t) =>
-      String(t)
-        .split(/[\s,]+/)
-        .filter(Boolean).length
-        ? String(t).length <= 300
-          ? ""
-          : "Too many"
-        : "Pick at least one",
-    def: "hotdog, maxammo",
+    check: (t) => (String(t).length <= 300 ? "" : "Too many"),
+    /* nothing at first: a new loot tab drops nothing until I pick what it holds (the owner's, Nov 20 02:37Z: "When you
+       click a loot tab, it does not spawn the loot in it automatically") */
+    def: "",
   },
   again: {
     name: "Seconds before it comes back",

@@ -1,11 +1,12 @@
 /* The Seriat bible in the game (the owner's, Nov 19 23:17Z: "a pixelated version of the Seriat bible that looks like the
    pages of a Word document, not separated into pages, in a window ... it pops up even above the Seriat window"). It
    shows notes/seriat-bible.md as it stands, as one long page; the site publishes that file as it is. */
-import { esc, openWindow } from "./ui.js";
+import { esc, openWindow, foldHeads } from "./ui.js";
 import { LANG } from "./langname.js";
 
 const URL_ = "notes/seriat-bible.md";
 let text = null;
+const folded = new Set(); // (the headings I folded: they stay folded the next time it opens)
 
 /* inline: `code`, **bold**; everything else is plain */
 const inline = (s) =>
@@ -91,7 +92,10 @@ export async function openSeriatBible() {
               .then((r) => (r.ok ? r.text() : Promise.reject()))
               .then((t) => (text = t))
         )
-          .then((t) => (page.innerHTML = bibleHTML(t)))
+          .then((t) => {
+            page.innerHTML = bibleHTML(t);
+            foldHeads(page, "h1, h2, h3", (h) => +h.tagName[1], folded);
+          })
           .catch(
             () =>
               (page.innerHTML =

@@ -7,8 +7,8 @@ import { LANG } from "./langname.js";
 export const SB_HELP = {
   b: [
     [
-      "Build blocks",
-      "Pick a thing in Build, then click or tap the map to put it down. Esc or right-click lets go. Hold Shift while you place and it keeps placing.",
+      "Build zones",
+      "Pick Zone in Build, then click or tap the map to put it down. Esc or right-click lets go. Hold Shift while you place and it keeps placing.",
     ],
     [
       "Moving what you placed",
@@ -19,12 +19,16 @@ export const SB_HELP = {
       "In a block's window, + adds a tab: a spawn, respawn, loot or zone that works on the same block, so one block can do several things at once. Each tab counts toward the zone budget (shown in Build): 50 blocks and tabs at most.",
     ],
     [
-      "Spawns and respawns",
-      "A spawn makes things; a respawn is where players come back. Press E beside one to change it, then give it a key or put it on the hotbar in H.",
+      "Potential order",
+      "At the end of each tab, Potential order cuts the block into squares and picks which of them work right now: true random, shuffle (every square once before any repeats), one after another (with a direction), alternating like a checkerboard, or all at once. Squares at once, Square size and Seconds per step set how many, how big and how fast. In Build the working squares are drawn filled.",
     ],
     [
-      "Loot and zones",
-      "Loot is an orb that gives what it holds to whoever walks over it. A zone is a box that does something to whoever stands in it. Both hide from players while cheat mode is off.",
+      "What a zone is",
+      "Open a zone (E beside it, or right-click and Properties) and pick at the top what it is: just a zone, a spawn (it makes things) or a respawn (players come back there). A spawn gets a key or a spot on the hotbar in H.",
+    ],
+    [
+      "Loot, colors and seeing zones",
+      "Add a Loot tab to a zone and pick what it holds: nothing comes until you do. A new zone has no color (white); pick a color and every zone of that color shares its settings. Zones show while cheat mode or Build is on, and stay hidden otherwise. Click a heading's arrow to fold it.",
     ],
   ],
   m: [

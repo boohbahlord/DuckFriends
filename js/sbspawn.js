@@ -40,6 +40,7 @@ import {
   SB_TABS,
   SB_GEO,
   SB_GEO_F,
+  SB_ORDER,
   SB_LOOT,
   SB_ZONE,
   SB_SHAPE,
@@ -136,6 +137,7 @@ export const boxOf = (f) =>
   SB_LOOT[f] || // (a loot orb's: stage 4b, sbloot.js)
   SB_ZONE[f] || // (a zone's: stage 5, sbzone.js)
   SB_SHAPE[f] || // (every block's shape: sandboxrules.js)
+  SB_ORDER[f] || // (every block's squares and their potential order: sandboxrules.js)
   null;
 /* is this text good for box f? "" or why not */
 export function boxWhy(f, t) {
@@ -496,11 +498,7 @@ function geoTo(all, id) {
 }
 function fromPattern(q, pt) {
   if (!pt || typeof pt !== "object") return q;
-  if (
-    SB_COLORS[pt.col] ||
-    (pt.col === SB_NOCOL && ["spawn", "respawn"].includes(q.k))
-  )
-    q = { ...q, col: pt.col };
+  if (SB_COLORS[pt.col] || pt.col === SB_NOCOL) q = { ...q, col: pt.col };
   if (q.k === "respawn" && Array.isArray(pt.im)) {
     const all = SB_IMPORT.flatMap(([, fs]) => fs);
     q = { ...q, im: all.filter((f) => pt.im.includes(f)) };
@@ -601,18 +599,11 @@ export function sbAct(s, a, now) {
           : null,
       z = at ? (sbOnBoard(s) ? 0 : heightAt(at.x * WW, at.y * WH)) : +me.z || 0;
     const n = ((s.sb && s.sb.n) || 0) + 1,
-      cols = Object.keys(SB_COLORS),
-      used = Object.values(pts).map((p) => p.col),
       pt = a.pt && typeof a.pt === "object" ? a.pt : null,
-      /* the color picked before placing ("when you select spawn, it asks you what color before you place it down"), a
-         pasted one's own, or the next free one */
-      nocol = ["spawn", "respawn"].includes(a.kind),
-      ok = (c) => !!SB_COLORS[c] || (nocol && c === SB_NOCOL),
-      col = ok(a.col)
-        ? a.col
-        : pt && ok(pt.col)
-          ? pt.col
-          : cols.find((c) => !used.includes(c)) || cols[(n - 1) % cols.length],
+      /* the color picked before placing, a pasted one's own, or no color (white): every new zone starts with no color
+         (the owner's, Nov 20 02:37Z: "Its color is no color by default, which is white") */
+      ok = (c) => !!SB_COLORS[c] || c === SB_NOCOL,
+      col = ok(a.col) ? a.col : pt && ok(pt.col) ? pt.col : SB_NOCOL,
       id = "p" + n;
     let all = {
       ...pts,
@@ -794,11 +785,7 @@ export function sbAct(s, a, now) {
   if (a.k === "set") {
     const f = String(a.f || "");
     if (f === "col") {
-      if (
-        !sbColOk(a.v) ||
-        (a.v === SB_NOCOL && !["spawn", "respawn"].includes(p.k))
-      )
-        return false;
+      if (!sbColOk(a.v)) return false;
       const kin = kinOf(pts, a.p, a.v);
       s.sb = {
         ...s.sb,
@@ -857,9 +844,7 @@ export function sbAct(s, a, now) {
       return false;
     if (Object.keys(pts).length >= SB_POINTS) return false;
     const n = ((s.sb && s.sb.n) || 0) + 1,
-      cols = Object.keys(SB_COLORS),
-      used = Object.values(pts).map((q) => q.col),
-      col = cols.find((c) => !used.includes(c)) || cols[(n - 1) % cols.length];
+      col = SB_NOCOL; // (no color, as every new zone: the owner's, Nov 20 02:37Z)
     s.sb = {
       ...s.sb,
       n,
@@ -928,8 +913,6 @@ export function sbAct(s, a, now) {
     if (to === p.k) return false;
     const q = { ...p, k: to };
     for (const f of ["orb", "gone", "im"]) delete q[f];
-    if (q.col === SB_NOCOL && !["spawn", "respawn"].includes(to))
-      q.col = Object.keys(SB_COLORS)[0]; // (no color: spawns and respawns only)
     const rest = { ...pts, [a.p]: q },
       run = { ...((s.sb && s.sb.run) || {}) };
     delete run[a.p];
@@ -949,6 +932,7 @@ export function sbAct(s, a, now) {
    page for players only those) */
 function canSet(p, f) {
   if (SB_SHAPE[f] || f === "zw" || f === "zh") return !p.grp; // (every block's shape and size; a page has its spawn's)
+  if (SB_ORDER[f]) return p.pg !== "pl"; // (every block's and tab's own potential order)
   if (p.k === "loot") return !!SB_LOOT[f] || f === "name" || f === "hide"; // (a loot orb's own boxes: sbloot.js)
   if (p.k === "zone")
     return !!SB_ZONE[f] || ["name", "pon", "pwho", "hide"].includes(f); // (a zone's own, and players spawning in it)
