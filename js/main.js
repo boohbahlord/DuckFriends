@@ -101,6 +101,25 @@ addEventListener("duck-profile", () => {
   setTimeout(checkUnlocks, 3500);
 });
 
+/* the browser's own drag (a ghost of the picture or text under the mouse) never starts anywhere in the game: mid-fight it
+   swallowed the key-ups, so the duck walked on by itself into the zombies (the owner's, Nov 20 21:41Z: "my mouse might
+   click on a zombie and drag its images ... make me lose control of my duck"). Nothing in the game uses the browser's
+   drag; typing boxes keep their own. Text can't be selected in a game either (css/app.css) */
+const typing = (t) =>
+  t && t.closest && t.closest("input, textarea, select, [contenteditable]");
+addEventListener(
+  "dragstart",
+  (e) => typing(e.target) || e.preventDefault(),
+  true,
+);
+addEventListener(
+  "selectstart",
+  (e) =>
+    document.body.dataset.screen === "game" &&
+    !typing(e.target) &&
+    e.preventDefault(),
+  true,
+);
 start("front");
 showSplash();
 fullOnFirstTap(); // (a phone: the first tap on the start screen goes full screen)
