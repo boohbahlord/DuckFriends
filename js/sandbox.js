@@ -423,7 +423,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
       box.setAttribute("aria-label", w.name);
       const body =
         k.open === "c"
-          ? `${mayBuild(R) ? `<p class="sb-cheatrow"><button type="button" class="btn small${sbCheat.on ? "" : " ghost"}" data-cheat aria-pressed="${sbCheat.on}">Cheat mode: ${sbCheat.on ? "on" : "off"}</button> <kbd>Shift</kbd>+<kbd>C</kbd></p>` : ""}<dl class="sb-keys">${SB_SHEET.map(([kk, t]) => `<dt><kbd>${kk}</kbd></dt><dd>${esc(t)}</dd>`).join("")}</dl>`
+          ? `<p class="sb-cheatrow">${mayBuild(R) ? `<button type="button" class="btn small${sbCheat.on ? "" : " ghost"}" data-cheat aria-pressed="${sbCheat.on}">Cheat mode: ${sbCheat.on ? "on" : "off"}</button> <kbd>Shift</kbd>+<kbd>C</kbd> ` : ""}<button type="button" class="btn small ghost" data-manual>Help manual</button></p><dl class="sb-keys">${SB_SHEET.map(([kk, t]) => `<dt><kbd>${kk}</kbd></dt><dd>${esc(t)}</dd>`).join("")}</dl>`
           : !can
             ? `<p class="sb-none">Only the host can change this.</p>`
             : opts.length
@@ -1052,6 +1052,12 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
   box.addEventListener("click", (e) => {
     if (e.target.closest("[data-cheat]")) {
       toggleCheat();
+      return;
+    }
+    if (e.target.closest("[data-manual]")) {
+      sbClose(k, false);
+      paint();
+      import("./sbhelp.js").then((m) => m.openSbHelp(""));
       return;
     }
     if (e.target.closest(".sb-x")) {
