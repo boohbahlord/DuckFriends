@@ -96,7 +96,7 @@ function outline(img, kind, key = img.currentSrc || img.src) {
   c.width = w + P * 2;
   c.height = h + P * 2;
   const g = c.getContext("2d"),
-    color = COLOR[kind.split("-")[0]],
+    color = COLOR[kind.split("-")[0]] || kind.split("-")[0], // (a Sandbox zone's own color: its kind is the color, "#rrggbb")
     glow = kind.endsWith("-glow");
   /* the shape grown by a pixel (by two for the glow), in the color */
   const grow = (r) => {
@@ -146,7 +146,8 @@ const HP = new Map(); // id → [its HP last seen, when it last went down]
 /* something to outline this frame: { id, img (its picture on the screen), x, y, w, h (where the picture is, css px on
    the board), flip (turned left), kind ("ally" | "me" | "justin" | "zombie", or a drop's: "drop_" + its kind,
    DROP_OL), hidden (something hides it), floor (its floor against mine: 1 above, -1 below, 0 the same), hp (to blink when it drops), down (lying down, out of HP: [its body's
-   bottom, its body's height], css px), mid (lying down: its body's middle, css px, where its arrow goes) } */
+   bottom, its body's height], css px), mid (lying down: its body's middle, css px, where its arrow goes) }. A kind that's
+   a color ("#rrggbb") is a Sandbox zone's Outlines row (sandboxrules.js sbOlColor) */
 /* a picture of my own to outline, for what shows as a drawing and not as a pixel image (the drops: their symbols, a
    jerry can's orb): the drawing (an SVG string) made into pixels at w × h css px (pixel.js raster), as an image; null
    while it's made */
@@ -237,10 +238,13 @@ export function olDraw(host, W, H, now = performance.now()) {
        but a floor away it has its line and its arrow all the same, so its floor shows (20:10Z) */
     const zombie = o.kind === "zombie",
       drop = o.kind.startsWith("drop_"), // (a drop on the ground: always its line and its glow, till it's picked up)
+      zone = o.kind[0] === "#", // (a Sandbox zone's Outlines: its color, always plain to see)
       away = o.floor || 0,
       shown = zombie ? o.hidden || !!away : true;
     if (!shown && !hit) continue;
-    let a = drop
+    let a = zone
+      ? 0.95
+      : drop
       ? o.hidden
         ? 0.95
         : 0.6
@@ -255,7 +259,8 @@ export function olDraw(host, W, H, now = performance.now()) {
           : 0.14; // (nothing hides it: very faint)
     if (hit) a = blink ? 1 : 0.15;
     const kind =
-        o.kind + (drop || (!zombie && (o.hidden || hit)) ? "-glow" : ""),
+        o.kind +
+        (drop || (!zombie && !zone && (o.hidden || hit)) ? "-glow" : ""),
       c = outline(o.img, kind);
     if (!c) continue;
     const sw = o.w / gp / o.img.naturalWidth, // (the picture's pixels against the grid's: about 1)

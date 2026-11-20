@@ -250,6 +250,8 @@ import {
   sbCellMids,
   sbWalls,
   sbWallGo,
+  sbHasOl,
+  sbOlColor,
 } from "./sandboxrules.js";
 import { mountCabinEnd } from "./hangout/cabinend.js";
 import { mountSandboxKeys } from "./sandbox.js";
@@ -1344,7 +1346,8 @@ function drawDucks(now = clockNow()) {
       return d && d.parentNode === layer ? d : null;
     };
   if (hang) world.frame(now); // (the camera first: ducks stand in the world)
-  const ol = isL4dd(s) || isMgj(s) || hang, // (the outlines, outlines.js: every zombie game, and Hangout's world too, the universal way to see who's hidden: the owner's, Nov 17 17:41Z)
+  const sbOl = sbHasOl(s), // (Sandbox: a zone with Outlines, sandboxrules.js)
+    ol = isL4dd(s) || isMgj(s) || hang || sbOl, // (the outlines, outlines.js: every zombie game, and Hangout's world too, the universal way to see who's hidden: the owner's, Nov 17 17:41Z)
     olAt = ol && hang ? world.at(R.me) : null,
     olMe = olAt ? olFloor(olAt.x, olAt.y, olAt.z) : null; // (my floor)
   trackWalk();
@@ -1868,7 +1871,21 @@ function drawDucks(now = clockNow()) {
     const olId = g ? id.slice(0, -BODY.length) : id, // (a Duck Cabin ghost's body is its player's, outlined as that player)
       olP = s.players[olId],
       olMine = olId === R.me,
-      olKind = !ol
+      olZone =
+        sbOl && olP && pos
+          ? sbOlColor(
+              s,
+              { duck: olP.name || "" },
+              pos.x,
+              pos.y,
+              +pos.z || 0,
+              hang ? HW : 1,
+              hang ? HH : 1,
+            )
+          : "", // (Sandbox: standing where a zone's Outlines take it, that row's color)
+      olKind = olZone
+        ? olZone
+        : !ol || sbOnBoard(s)
         ? ""
         : isMgj(s)
           ? id === GOOD_ID
@@ -3162,7 +3179,8 @@ function placeZombies(board, s, now) {
   if (!layer || !geo) return;
   sendDu(s);
   npcPics(s.sbpic); // (the room's uploaded pictures: a spawn's Appearance tab)
-  const want = new Set(zb.map((o) => String(o.i))),
+  const sbOl = sbOnBoard(s) && sbHasOl(s),
+    want = new Set(zb.map((o) => String(o.i))),
     fxl = $(".fxl", board),
     ng = !!+s.options.noGore,
     have = new Map(); // (found once a frame, not one search for each of up to 800)
@@ -3294,6 +3312,18 @@ function placeZombies(board, s, now) {
       ); // (its claw marks on the duck it swiped, as Dead Ducks Arcade's: l4dd.js clawMark)
     n._a = o.a;
     npcSay(n, o); // (Sandbox: what its Seriat file has it say, sbnumberat.js)
+    const oc = sbOl && !o.d && sbOlColor(s, { k: o.k, sp: o.sp }, o.x, o.y, 0);
+    if (oc)
+      olAdd({
+        id: "mz" + o.i,
+        img: n._img,
+        x: c.left - w / 2,
+        y: c.top - box.feet * k,
+        w,
+        h: box.h * k,
+        flip: face < 0,
+        kind: oc,
+      }); // (Sandbox: in a zone whose Outlines take it, that color)
     if (n._st === st) continue;
     n._st = st;
     /* moved by transform, not left and top: 800 gliding left and top made the page lay itself out again every frame
