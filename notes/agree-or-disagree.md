@@ -7591,3 +7591,18 @@ Adam: measured at 4x CPU: Customize click freezes 2.1 s, then 0.6/1.2/0.4/0.7 s,
 Maybe it's possible to make it to where the things that are loading, that it says what's being loaded, like the file in the like black loading screen where it shows your duck in the bar. It'll say like what's loading down there, like below the loading bar. And it might even have a percent of load like to the right of the green bar to say how much percent is loaded. So that way the player like has an idea of what's happening. Maybe we can like write lines on the loading screen to hold the player over. Like every loading screen has its own line of text. And the text is just like in the normal font, not the multicolored, but just a normal font. And what it says is something that Joseph can talk about with me. Either something about my interest or about my programming language, jokes, book quotes, history facts maybe, philosophy maybe, like crazy, just crazy phrases that we say, we put in there. I don't want Joseph to suggest what the lines actually are. I just want to learn how to approach it for the loading screen.
 
 Adam: Noah adds 'what is loading' in plain words plus a percent, and an empty slot for one random line per loading screen (js/loadlines.js, normal font); Joseph to discuss with the owner how to approach the lines, not the lines.
+
+## Owner, Nov 20 22:27Z (Adam's thread)
+
+Is the file for the customization to parallel not attached to the file in which the entities actually wear? Because like if there's a zombie in a game that's wearing a hat that you have in customization, that shouldn't be a separate thing we have to load. It should be one file. If the player's wearing that hat and you see them wearing the hat in the game, it shouldn't have to be loaded a second time in a different file of the same thing from customization. That would be bad. Look up the memory and optimization sources before we continue with a plan and tell Noah what to do. So they can hold on that idea until we get a better idea of that and the technical knowledge of which, of course, not just the game plan like a CEO would make.
+
+Adam: Noah's Customize job on hold. Measured: one module (duckparts.js) and one cache, but parts are stored at 8 pixel
+sizes and Customize loads mostly size 26 while a game loads 19/29/32, so the same hat loads twice at different sizes.
+Proposed: one base size per part scaled by whole numbers (one copy per resource, Gregory GEA), owner to pick.
+
+## Owner, Nov 20 22:29Z (Adam's thread)
+
+Is it possible that we can make an actual application that you can download on your computer or phone through my website and not what we have right now, so that it actually plays better while still having a file that uploads the GitHub deployment to the application automatically? Not saying we have to do it now, we just need to discuss that, because currently right now it's getting pretty bad. Make sure that your text output aren't crazy long if that costs too much tokens. I don't know how much tokens it costs. Maybe your text output's fine and it's not that big of a deal, but I'm just saying.
+
+Adam: possible (Electron/Tauri, Capacitor, auto-update from GitHub) but would not play better: same engine, the hangs
+are our main-thread work. Fix the code first; wrap later only for a store/Steam. Replies kept short.
