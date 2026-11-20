@@ -382,7 +382,16 @@ function take(s, q, w, by, now, H0) {
   else {
     const hb = (s.sb && s.sb.hb) || {},
       mine = ((hb.got || {})[by] || []).filter(([v]) => v !== w);
-    mine.push([w, keep > 0 ? now + keep * 1000 : 0]);
+    const m = modsOf(q, w),
+      x = {}; // (its own numbers: uses, wait, breaks, sbhot.js sbGot)
+    if (m.n) x.u = m.n;
+    if (m.cool) x.c = Math.round(m.cool);
+    if (m.brk) x.b = 1;
+    mine.push(
+      Object.keys(x).length
+        ? [w, keep > 0 ? now + keep * 1000 : 0, x]
+        : [w, keep > 0 ? now + keep * 1000 : 0],
+    );
     s.sb = {
       ...s.sb,
       hb: { ...hb, got: { ...(hb.got || {}), [by]: mine.slice(-10) } },

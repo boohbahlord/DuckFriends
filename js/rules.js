@@ -34,7 +34,7 @@ import { survSet } from "./survrules.js";
 import "./gunmenrules.js"; // (Survival's gunmen: their rules hook into l4ddrules.js)
 import { sbAct, sbTick, sbPlaceDuck, sbHpOf } from "./sbspawn.js";
 import { hpHeal, tenths } from "./hpmath.js";
-import { sbHotAct, sbSlots } from "./sbhot.js";
+import { sbHotAct, sbSlots, sbGot, sbSpend } from "./sbhot.js";
 import { sbLootAct, sbLootTick } from "./sbloot.js";
 import { nbPermAct, nbShareAct } from "./nbperms.js";
 import { sbZoneTick } from "./sbzone.js";
@@ -1257,7 +1257,9 @@ export const magOf = (s, id, now, w = "handgun") => {
 };
 export const coolEnds = (s, id, sp) =>
   Math.max(
-    ((s.lastUse || {})[`${id} ${sp}`] || 0) + coolFor(sp, s) / grCool(s, id), // (Sandbox: a group's Cooldown speed, sbgroups.js)
+    ((s.lastUse || {})[`${id} ${sp}`] || 0) +
+      ((isSb(s) && (sbGot(s, id, sp) || {}).c) || coolFor(sp, s)) /
+        grCool(s, id), // (Sandbox: a loot orb's own wait, sbhot.js; a group's Cooldown speed, sbgroups.js)
     magSize(sp) ? ((s.mag || {})[magKey(id, sp)] || {}).r || 0 : 0,
   ); // (a time on the room's clock)
 export const WEAPONS = [
@@ -2509,6 +2511,8 @@ function reduceStep(state, a, now) {
       )
         return state; // the silly-commands switch covers them
       if (isGhost(s, a.id)) return state; // (Duck Cabin: a ghost can't use anything)
+      const gotM = isSb(s) && sbGot(s, a.id, sp); // (Sandbox: taken from a loot orb with its own numbers, sbhot.js)
+      if (gotM && gotM.u === 0) return state; // (used up, still in its slot)
       if (sp === "sound") return state; // (Sound is off for now: specials.js off)
       const k = `${a.id} ${sp}`; // (each item waits on its own)
       if (
@@ -2545,6 +2549,7 @@ function reduceStep(state, a, now) {
       }
       s.lastUse = { ...(s.lastUse || {}), [k]: now };
       if (mgjGun) mgjSpend(s, a.id);
+      if (gotM) sbSpend(s, a.id, sp); // (one of its uses: sbhot.js)
       const face = a.face < 0 ? -1 : 1,
         aim =
           WEAPONS.includes(sp) || THROWS.includes(sp) ? aimOf(a, face) : null;

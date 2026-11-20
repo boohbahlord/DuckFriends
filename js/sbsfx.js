@@ -18,6 +18,7 @@ import { W, H } from "./hangout/layout.js";
 import { orbsOf } from "./sbloot.js";
 import { activeRoom } from "./net.js";
 
+let brkN = null; // (the last item break heard: s.sb.brk.n)
 let seen = null; // id → { orbs: its orbs lying (not the zombies' drops), mine: how many of them I took my own copy of, p }
 export function sbHear(s, world) {
   if (!isSb(s)) {
@@ -54,6 +55,10 @@ export function sbHear(s, world) {
   }
   if (seen && !first)
     for (const [id, was] of seen) if (!now.has(id)) play("sbCut", at(was.p));
+  /* a loot item used up that breaks (sbhot.js sbSpend): the melee's breaking sound */
+  const brk = (s.sb && s.sb.brk) || null;
+  if (brk && brkN != null && brk.n !== brkN) play("break");
+  brkN = brk ? brk.n : 0;
   seen = now;
 }
 /* cheat mode, switched on or off (sandbox.js): a short chime up, or down */

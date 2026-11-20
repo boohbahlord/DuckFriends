@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v156",
+    version: 156,
+    date: "Nov 20, 2026",
+    title: "Board loot with its own numbers",
+    news: [
+      "For Sandbox: on the board and in Duck Cabin, each item you tick in a Loot tab has its own numbers too. You can set how many uses you get, its cooldown, and whether it breaks when used up. Taken from that orb, the item keeps those numbers in your hotbar.",
+    ],
+  },
+  {
     id: "v155",
     version: 155,
     date: "Nov 20, 2026",
