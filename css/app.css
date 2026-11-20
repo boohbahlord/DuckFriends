@@ -21938,6 +21938,12 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .sb-sect-top {
   opacity: 1;
 }
+/* a part inside a part (4.2.1): smaller, set in a little, no line under it */
+.sb-sect-sub {
+  margin: 0.3rem 0 0 0.6rem;
+  font-size: 0.88em;
+  border-bottom: 0;
+}
 /* headings that fold, as in Word (ui.js foldHeads): the same arrow as a fold's, pointing down while open */
 .fold-head {
   cursor: pointer;
@@ -22053,12 +22059,23 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   border-radius: 0.2rem;
   background: #0006;
 }
-.sb-lkcol {
-  width: 3rem;
-  height: 2rem;
-  padding: 0;
-  border: 0;
-  background: none;
+/* a zone's Look color: the customize menu's ready colors and paintbrush (color.js), a little smaller */
+.sb-lkcolf {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: flex-end;
+}
+.sb-lkcolf .swatches {
+  justify-content: flex-end;
+  gap: 0.3rem;
+}
+.sb-lkcolf .sw {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+.sb-lkcolf .invent .hex {
+  width: 6rem;
 }
 /* a block's Type box: what it holds, or the zone a tab is tied to, one small line each */
 .sb-ties {

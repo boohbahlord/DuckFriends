@@ -9,6 +9,7 @@ import { LANG } from "./langname.js";
 import { activity } from "./hangout/registry.js";
 import { W, H, sortY } from "./hangout/layout.js";
 import { npcPics } from "./sbnpcart.js";
+import { colorField } from "./color.js";
 import { esc, openWindow, confirmBox, toast, foldHeads } from "./ui.js";
 import { sbPresets, sbCheat, colSwatches, NOCOL_NOTE } from "./sbmenu.js";
 import { activeRoom } from "./net.js";
@@ -701,7 +702,7 @@ function lookSect(s, p, row, typed, why) {
           `<label class="sb-lktex${v === tex ? " on" : ""}"><input type="radio" name="sb-lktex" data-lktex="${v}"${v === tex ? " checked" : ""}>${lookTile(v) ? `<span class="sb-lkprev" style="background-image:url('${lookTileURL(v)}')"></span>` : `<img data-lkprev="${v}" src="${esc(lookPreview(v))}" alt="">`}<span>${esc(n)}</span></label>`,
       )
       .join("")}</div>
-    <div class="sb-row" data-row="lkcol" data-lkrow="col"${lk === "col" ? "" : " hidden"}><span>${esc(SB_ZONE.lkcol.name)}</span><input type="color" class="sb-box sb-lkcol" data-f="lkcol" value="${esc(now("lkcol"))}" aria-label="${esc(SB_ZONE.lkcol.name)}"><em class="sb-why"></em></div>
+    <div class="sb-row" data-row="lkcol" data-lkrow="col"${lk === "col" ? "" : " hidden"}><span>${esc(SB_ZONE.lkcol.name)}</span><span class="sb-lkcolf" data-c="${esc(now("lkcol"))}"></span><input type="hidden" class="sb-box" data-f="lkcol" value="${esc(now("lkcol"))}"><em class="sb-why"></em></div>
     <div class="sb-row sb-up" data-lkrow="pic"${lk === "pic" ? "" : " hidden"}><span>${esc(SB_ZONE.lkpic.name)}</span><span class="sb-what"><label class="btn small"><input type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden data-lkup>Upload</label>${img ? `<img class="sb-up-pic" src="${img.d}" alt="The zone's picture">` : ""}<em class="small dim sb-lk-note">2 MB at most. Made into pixels.</em></span></div>
     <div data-lkrow="op"${lk === "none" ? " hidden" : ""}>${row("lkop", SB_ZONE.lkop, typed("lkop"), why("lkop"))}</div>`;
 }
@@ -745,17 +746,16 @@ function actRow(s, p, f, kinds) {
       .toLowerCase()
       .split(/[\s,]+/), // (never set: a zombie goes after the players, sbbrain.js)
     opts = whoOpts(s, kinds),
-    gs = groupOpts(s, activeRoom() && activeRoom().me); // (the groups, under the entities: sbgroupview.js)
-  if (gs.length) opts.push([null, "Groups"], ...gs);
-  return pickRow(
-    f,
-    SB_ACTS[f] || (SB_ZONE[f] || SB_LOOT[f]).name,
-    opts,
-    picked,
+    gs = groupOpts(s, activeRoom() && activeRoom().me); // (the groups: sbgroupview.js)
+  /* the groups in a dropdown of their own, under the entities' (the owner's: "For entity dropdown, we'll have another
+     dropdown list and option below entities. That's just groups ... It's within the same section"); both make one list */
+  return (
+    pickRow(f, SB_ACTS[f] || (SB_ZONE[f] || SB_LOOT[f]).name, opts, picked) +
+    (gs.length ? pickRow(f, "Groups", gs, picked, f + "-g") : "")
   );
 }
 /* a dropdown of checkboxes for box f: opts [value, name], the values picked (the first of each value only) */
-function pickRow(f, label, opts, picked) {
+function pickRow(f, label, opts, picked, rowId = f) {
   const one = opts.filter(
       (o, i, all) => o[0] == null || all.findIndex((x) => x[0] === o[0]) === i,
     ),
@@ -765,7 +765,7 @@ function pickRow(f, label, opts, picked) {
         : `<label><input type="checkbox" value="${esc(v)}" data-label="${esc(n)}"${picked.includes(v) ? " checked" : ""}> ${esc(n)}</label>`,
     ),
     on = one.filter(([v]) => picked.includes(v)).map(([, n]) => n);
-  return `<div class="sb-row" data-row="${f}"><span>${esc(label)}</span><details class="sb-acts" data-act="${f}"><summary>${esc(on.join(", ") || "Nothing")}</summary><span class="sb-what">${boxes.join("") || `<em class="sb-none">None placed yet</em>`}</span></details></div>`;
+  return `<div class="sb-row" data-row="${rowId}"><span>${esc(label)}</span><details class="sb-acts" data-act="${f}"><summary>${esc(on.join(", ") || "Nothing")}</summary><span class="sb-what">${boxes.join("") || `<em class="sb-none">None placed yet</em>`}</span></details></div>`;
 }
 /* ---------- the settings window ----------
    A spawn's window has tabs at the top (the owner's Sandbox file): Entities (what it spawns), Players (ducks spawning
@@ -782,10 +782,20 @@ const flagRow = (f, b, t, why) => {
 };
 /* a header over one part of a spawn's window, numbered like Word's headings as the settings go deeper (plan Phase 2:
    3, 3.4, 3.4.1): SECT is [the section it's under, how many came before] while a block's window is made */
-let SECT = null;
+let SECT = null,
+  SUB = 0;
 const FOLDED = new Set(); // (the headings I folded in a block's window: still folded when it's drawn again, ui.js foldHeads)
-const sect = (t) =>
-  `<h3 class="sb-sect">${SECT ? `${SECT[0]}.${++SECT[1]} ` : ""}${t}</h3>`;
+/* the number a part gets: 4.2 on a block's front (under its 4.), 2. on a tab's own page, and 4.2.1 for a part inside a
+   part (the owner's: "heading 3.4, 3.5 ... 3.6.1") */
+const num = () => (SECT[0] ? `${SECT[0]}.${SECT[1]}` : `${SECT[1]}`);
+const sect = (t) => {
+  if (!SECT) return `<h3 class="sb-sect">${t}</h3>`;
+  SECT[1]++;
+  SUB = 0;
+  return `<h3 class="sb-sect">${num()}${SECT[0] ? "" : "."} ${t}</h3>`;
+};
+const sub = (t, attr = "") =>
+  `<h4 class="sb-sect sb-sect-sub"${attr}>${SECT ? `${num()}.${++SUB} ` : ""}${t}</h4>`;
 /* a section of the block's front, with its fold arrow */
 const fold = (n, t, html) =>
   `<details class="sb-fold" open><summary class="sb-sect">${n}. ${t}</summary>${html}</details>`;
@@ -964,7 +974,7 @@ export function sbSettings(getR, id, tab = "") {
         fold(3, "Color", colorRow)
       : "";
   if (front) colorRow = ""; // (it's in the front now)
-  SECT = front ? [4, 0] : null;
+  SECT = front ? [4, 0] : [0, 0];
   /* the settings "Use these settings" switches: marked, and hidden while it's off (they don't count then) */
   const own = (html) =>
     SB_OWN.reduce(
@@ -995,7 +1005,7 @@ export function sbSettings(getR, id, tab = "") {
           `<label><input type="radio" name="sb-pick" data-pick="${v}"${pick === v ? " checked" : ""}> ${n}</label>`,
       )
       .join("")}</span></div>
-    <div class="sb-actrows" data-row="acts"${onlyZ(what) ? " hidden" : ""}>${Object.keys(
+    ${sub("Who they go after", ` data-row="actshead"${onlyZ(what) ? " hidden" : ""}`)}<div class="sb-actrows" data-row="acts"${onlyZ(what) ? " hidden" : ""}>${Object.keys(
       SB_ACTS,
     )
       .map((f) => actRow(R.state, p, f, kinds))
@@ -1062,7 +1072,12 @@ export function sbSettings(getR, id, tab = "") {
     <div data-fxrow="amt"${fx === "damage" || fx === "heal" ? "" : " hidden"}>${row("amt", SB_ZONE.amt, typed("amt"), why("amt"))}</div>
     <div data-fxrow="rate"${fx === "none" ? " hidden" : ""}>${row("rate", SB_ZONE.rate, typed("rate"), why("rate"))}</div>
     <div data-fxrow="zwho"${fx === "none" ? " hidden" : ""}>${actRow(R.state, p, "zwho", kinds)}</div>
-    ${actRow(R.state, p, "wall", kinds)}
+    ${(() => {
+      /* "Is wall" (the owner's: "you select is wall, and now players can't go through it. Like it's a true or false"):
+         true stops everything until "Who can't pass" says who; false stops nobody */
+      const on = !!boxText(p, "wall").trim();
+      return `<div class="sb-row" data-row="iswall"><span>Is wall</span><button type="button" class="sb-tog${on ? " on" : ""}" data-iswall aria-pressed="${on}">${on ? "true" : "false"}</button></div><div data-fxrow="wall"${on ? "" : " hidden"}>${actRow(R.state, p, "wall", kinds)}</div>`;
+    })()}
     ${
       sbOnBoard(R.state)
         ? ""
@@ -1141,14 +1156,30 @@ export function sbSettings(getR, id, tab = "") {
       if (set)
         foldHeads(
           set,
-          "h3.sb-sect",
-          (h) => (h.classList.contains("sb-sect-top") ? 1 : 2),
+          "h3.sb-sect, h4.sb-sect",
+          (h) =>
+            h.classList.contains("sb-sect-top")
+              ? 1
+              : h.classList.contains("sb-sect-sub")
+                ? 3
+                : 2,
           FOLDED,
         );
       const send = (a) => {
         const r = getR();
         if (r) r.send({ t: "sb", p: id, ...a });
       };
+      /* a zone's Look color: the ready colors and the paintbrush, as the customize menu has them (the owner's: "solid
+         colors ... like you do in the customization menu") */
+      for (const f of w.querySelectorAll(".sb-lkcolf")) {
+        const box = f.parentNode.querySelector('.sb-box[data-f="lkcol"]');
+        f.append(
+          colorField(f.dataset.c, (c) => {
+            box.value = c;
+            box.dispatchEvent(new Event("input", { bubbles: true }));
+          }),
+        );
+      }
       const timers = {};
       /* a Brain: its file (and the files it uses) go to the room first, from my Seriat folder (numeratwin.js, loaded
          when it's wanted: it brings the command line) */
@@ -1268,9 +1299,11 @@ export function sbSettings(getR, id, tab = "") {
         } // (a zone's: only the rows that matter to it)
         const act = t.closest("[data-act]");
         if (act) {
-          const on = [...act.querySelectorAll("input:checked")],
-            f = act.dataset.act;
-          act.querySelector("summary").textContent = summaryOf(on);
+          const f = act.dataset.act,
+            on = [...w.querySelectorAll(`[data-act="${f}"] input:checked`)]; // (the entities' dropdown and the groups' under it: one list)
+          act.querySelector("summary").textContent = summaryOf([
+            ...act.querySelectorAll("input:checked"),
+          ]);
           return send({
             k: "set",
             f,
@@ -1304,6 +1337,8 @@ export function sbSettings(getR, id, tab = "") {
         w.querySelector('[data-row="pick"]').hidden = on.length < 2; // (Random or Shuffle: only with more than one)
         const acts = w.querySelector('[data-row="acts"]');
         if (acts) acts.hidden = onlyZ(on.map((c) => c.dataset.what));
+        const ah = w.querySelector('[data-row="actshead"]');
+        if (ah && acts) ah.hidden = acts.hidden;
         sendKinds(
           getR(),
           on.map((c) => c.dataset.what),
@@ -1337,6 +1372,13 @@ export function sbSettings(getR, id, tab = "") {
             r.querySelector(".sb-olcol").value = SB_OL_DEF;
           } // (the last row: emptied)
           return olWrite(box);
+        }
+        if (e.target.closest("[data-iswall]")) {
+          const on = !e.target
+            .closest("[data-iswall]")
+            .classList.contains("on");
+          send({ k: "set", f: "wall", v: on ? "everything" : "" });
+          return setTimeout(() => w.isConnected && again(id, tab), 300);
         }
         const tog = e.target.closest("[data-tog]");
         if (tog) {

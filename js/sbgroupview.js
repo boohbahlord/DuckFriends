@@ -65,7 +65,7 @@ export function grShown(s, me, kinds) {
   });
 }
 /* a dropdown of checkboxes, as sbspawnview.js pickRow makes them (opts: [value, name], a [null, header] starts a part) */
-function drop(f, label, opts, picked, attr = "data-gact") {
+function drop(f, label, opts, picked, attr = "data-gact", rowId = f) {
   const seen = new Set(),
     on = [];
   const boxes = opts
@@ -79,7 +79,7 @@ function drop(f, label, opts, picked, attr = "data-gact") {
       (h, i, all) =>
         !h.startsWith("<em") || (all[i + 1] && !all[i + 1].startsWith("<em")),
     );
-  return `<div class="sb-row" data-row="${f}"><span>${esc(label)}</span><details class="sb-acts" ${attr}="${f}"><summary>${esc(on.join(", ") || "Nothing")}</summary><span class="sb-what">${boxes.join("") || `<em class="sb-none">None placed yet</em>`}</span></details></div>`;
+  return `<div class="sb-row" data-row="${rowId}"><span>${esc(label)}</span><details class="sb-acts" ${attr}="${f}"><summary>${esc(on.join(", ") || "Nothing")}</summary><span class="sb-what">${boxes.join("") || `<em class="sb-none">None placed yet</em>`}</span></details></div>`;
 }
 /* a block's "Joins groups" row (sbspawnview.js puts it on every page): its change goes as the block's box jg */
 export function jgRow(s, me, p) {
@@ -87,7 +87,7 @@ export function jgRow(s, me, p) {
   if (!opts.length) return "";
   return drop("jg", "Joins groups", opts, words(boxText(p, "jg")), "data-act");
 }
-/* who a group's lists can name: Players, Everything, the kinds, the spawns, the groups */
+/* who a group's lists can name: Players, Everything, the kinds, the spawns (the groups: their own dropdown under it) */
 function whoOpts(s, me) {
   return [
     ["players", "Players"],
@@ -96,9 +96,16 @@ function whoOpts(s, me) {
     ...Object.values(ptsOf(s))
       .filter((q) => q.k === "spawn")
       .map((q) => [q.col, `${boxText(q, "name")} spawn`]),
-    [null, "Groups"],
-    ...groupOpts(s, me),
   ];
+}
+/* a list of who: the entities' dropdown, and the groups' own under it (the owner's: "another dropdown list and option
+   below entities. That's just groups ... within the same section"); both make one list */
+function whoDrops(s, me, f, label, picked) {
+  const gs = groupOpts(s, me);
+  return (
+    drop(f, label, whoOpts(s, me), picked) +
+    (gs.length ? drop(f, "Groups", gs, picked, "data-gact", f + "-g") : "")
+  );
 }
 /* a block as a hint: "Purple zone", or "Zone, no color" */
 const blockSays = (q) =>
@@ -230,7 +237,7 @@ export function groupWin(getR, gid) {
       2,
       "Who joins",
       `${drop("c", "When", condOpts(s), words(g.c))}
-      ${drop("who", "Who can join", whoOpts(s, R.me), words(g.who || "everything"))}
+      ${whoDrops(s, R.me, "who", "Who can join", words(g.who || "everything"))}
       ${Object.entries(GR_YN)
         .map(
           ([f, l]) =>
@@ -252,7 +259,7 @@ export function groupWin(getR, gid) {
       "What joining does",
       `${Object.keys(GR_BOX).map(box).join("")}
       ${Object.entries(GR_LISTS)
-        .map(([f, l]) => drop(f, l, whoOpts(s, R.me), words(g[f])))
+        .map(([f, l]) => whoDrops(s, R.me, f, l, words(g[f])))
         .join("")}`,
     )}
     ${fold(4, "Rights", SB_RIGHTS.map(right).join(""))}
@@ -280,9 +287,14 @@ export function groupWin(getR, gid) {
       w.addEventListener("change", (e) => {
         const d = e.target.closest("[data-gact]");
         if (!d) return;
-        const on = [...d.querySelectorAll("input:checked")];
+        const mine = [...d.querySelectorAll("input:checked")],
+          on = [
+            ...w.querySelectorAll(
+              `[data-gact="${d.dataset.gact}"] input:checked`,
+            ),
+          ]; // (the entities' dropdown and the groups' under it: one list)
         d.querySelector("summary").textContent =
-          on.map((c) => c.dataset.label).join(", ") || "Nothing";
+          mine.map((c) => c.dataset.label).join(", ") || "Nothing";
         send({
           k: "set",
           f: d.dataset.gact,
