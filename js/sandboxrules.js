@@ -64,13 +64,30 @@ export const SB_RIGHTS = [
   ["h", "Hotbar"],
   ["g", "Game settings"],
 ];
-export const sbMay = (s, id, k) =>
-  sbCan(s, id) ||
-  (isSb(s) &&
-    !!id &&
-    !!s.players[id] &&
-    !s.players[id].bot &&
-    +s.options["sbOk" + String(k).toUpperCase()] === 1);
+export function sbMay(s, id, k) {
+  if (!isSb(s) || !id || !s.players[id] || s.players[id].bot) return false;
+  if (id === s.hostId) return true;
+  if (+s.options["sbOk" + String(k).toUpperCase()] === 1) return true;
+  if (
+    +s.options.sbAll === 1 ||
+    (+s.options.dod === 1 && ((s.dod || {}).on || {}).settings)
+  )
+    return true; // (game settings first: the owner's, "this is a priority over the loot and all group settings, all player settings")
+  const g = groupRight(s, id, k); // (then the groups: "group settings includes permissions")
+  return g == null ? sbCan(s, id) : g; // (then the player's own)
+}
+/* the right to window k that duck id's groups give (true) or take (false), the last of them that says; null when none
+   does (neutral: it steps aside). sbgroups.js keeps the groups */
+function groupRight(s, id, k) {
+  const sb = s.sb || {},
+    gr = sb.gr || {};
+  let r = null;
+  for (const g of (sb.gm || {})["p:" + id] || []) {
+    const v = gr[g] && gr[g].r && gr[g].r[k];
+    if (v === 1 || v === 0) r = v === 1;
+  }
+  return r;
+}
 /* a downed duck in Sandbox on Dead Ducks Arcade's maps: back up this long after it bled out (no rounds to wait for) */
 export const SB_BACK_MS = 3000;
 

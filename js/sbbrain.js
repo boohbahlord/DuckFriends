@@ -40,11 +40,12 @@ export function listsOf(p, o, box, set, def = null) {
   return L;
 }
 /* a thing on the map: { key ("p:" a duck's id, "n:" an NPC's number), duck (true for a player), k (an NPC's kind), tags
-   (its spawn's color and name), x, y } */
+   (its spawn's color and name), g (the groups it's in), x, y } */
 export const keyOf = (t) => t.key;
 export function matches(ws, t) {
   if (!ws.length) return false;
   if (ws.includes("everything")) return true;
+  if ((t.g || []).some((g) => ws.includes("g:" + g))) return true; // (a group it's in: sbgroups.js)
   if (t.duck) return ws.includes("players") || ws.includes("player");
   return ws.includes(t.k) || (t.tags || []).some((g) => ws.includes(g));
 }

@@ -13,7 +13,7 @@
      and a hole through it is cut out of the pixels.
    Nothing is drawn on the device. A duck the sheets can't make (a new drawing, Jack in a Box, Dat Boi, a picture, the
    rainbow skin, a zombie's skin: duck.js partsOK) is still made whole, as before. */
-import { duckSVG, LAYERS, DUCK_DEFAULT } from "./duck.js";
+import { duckSVG, LAYERS, DUCK_DEFAULT, BUILDS } from "./duck.js";
 import { styleById, styleColor } from "./styles.js";
 import { hatById } from "./hats.js";
 import { faceById } from "./faces.js";
@@ -79,8 +79,9 @@ export function partKey(layer, svg) {
   return layer + ":" + hashText(steadyText(svg));
 }
 
-/* ---------- the sheets, one per size ---------- */
-const sheets = new Map(); // size -> Promise<{ index, px: Uint8ClampedArray, W }>
+/* ---------- the sheets, one per size: an index, and its files (one per outfit, one per face item, the rest), each
+   fetched the first time a duck needs it ---------- */
+const sheets = new Map(); // size -> Promise<{ index: { f: [file], p: { key: entry } }, files: Map<c, Promise<{ px, W }>>, dir }>
 let made = null; // (ducksheets.js: what the files are called)
 function sheet(n) {
   if (!sheets.has(n))
@@ -90,29 +91,40 @@ function sheet(n) {
         .then(async ({ SHEETS }) => {
           const s = SHEETS[n];
           if (!s) return null;
-          const [img, index] = await Promise.all([
-            (async () => {
-              const i = new Image();
-              i.src = s.url;
-              await i.decode();
-              return i;
-            })(),
-            fetch(s.index).then((r) => r.json()),
-          ]);
-          const c = document.createElement("canvas");
-          c.width = img.naturalWidth;
-          c.height = img.naturalHeight;
-          const g = c.getContext("2d", { willReadFrequently: true });
-          g.drawImage(img, 0, 0);
           return {
-            index,
-            px: g.getImageData(0, 0, c.width, c.height).data,
-            W: c.width,
+            index: await fetch(s.index).then((r) => r.json()),
+            dir: s.index.slice(0, s.index.lastIndexOf("/") + 1),
+            files: new Map(),
           };
         })
         .catch(() => null),
     );
   return sheets.get(n);
+}
+/* one of its files, as pixels */
+function file(S, c) {
+  if (!S.files.has(c))
+    S.files.set(
+      c,
+      (async () => {
+        const img = new Image();
+        img.src = S.dir + S.index.f[c];
+        await img.decode();
+        const cv = document.createElement("canvas");
+        cv.width = img.naturalWidth;
+        cv.height = img.naturalHeight;
+        const g = cv.getContext("2d", { willReadFrequently: true });
+        g.drawImage(img, 0, 0);
+        return {
+          px: g.getImageData(0, 0, cv.width, cv.height).data,
+          W: cv.width,
+        };
+      })().catch(() => {
+        S.files.delete(c); // (asked again next time)
+        return null;
+      }),
+    );
+  return S.files.get(c);
 }
 const hex = (h) => {
   const n = parseInt(h.slice(1), 16);
@@ -120,10 +132,20 @@ const hex = (h) => {
 };
 
 /* ---------- a duck from its parts ----------
-   d: what duck.js wrote on the drawing (data-dk: { L, dead, shadow, gone }); cw × ch: the pixels it's wanted at (its box
-   and, when it wears a hat, the hat's room). A canvas in the game's colors, or null when the sheets can't make it */
+   d: what duck.js wrote on the drawing (data-dk: { L, dead, shadow, gone, sk (its skin's marks) }); cw × ch: the pixels
+   it's wanted at (its box and, when it wears a hat, the hat's room). A canvas in the game's colors, or null when the
+   sheets can't make it */
+/* its build, as the sheets have them (the five of Customize): a zombie's is anywhere between, and a pixel or so of width
+   is all that tells them apart */
+const nearBuild = (b) =>
+  BUILDS.reduce(
+    (m, [v]) => (Math.abs(v - (+b || 0)) < Math.abs(m - (+b || 0)) ? v : m),
+    0,
+  );
+const SKIN = { skinBody: "body", skinHead: "head", skinOut: "out" };
+const RIPPED = new Set(["cloth", "sleeve", "ofOver"]); // (what a rip tears: duck.js ripped())
 export async function duckFromParts(d, cw, ch) {
-  const L = { ...DUCK_DEFAULT, ...d.L },
+  const L = { ...DUCK_DEFAULT, ...d.L, build: nearBuild(d.L.build) },
     k = 1 + 0.1 * Math.max(-1, Math.min(1, +L.size || 0)), // (its Size within its box: duck.js)
     want = cw * k;
   if (want > SIZES[SIZES.length - 1] * 1.08) return null; // (a big duck in a menu: made whole, as before)
@@ -133,9 +155,48 @@ export async function duckFromParts(d, cw, ch) {
   if (!S) return null;
   const C = codedLook(L),
     vars = Object.fromEntries(duckVars(L).map(([p, v]) => [p, hex(v)])),
-    gone = d.gone || {},
+    flat = styleById(L.style).flat, // (a flat duck shows no holes, tears or headshot: duck.js)
+    gone = flat
+      ? (({ hat, face, eyes, beak }) => ({ hat, face, eyes, beak }))(
+          d.gone || {},
+        )
+      : d.gone || {},
+    sk = d.sk || {},
     H = Math.round((n * FRAME) / 120),
-    acc = new Float32Array(n * H * 4); // (premultiplied, 0 … 1)
+    acc = new Float32Array(n * H * 4), // (premultiplied, 0 … 1)
+    /* holes through it: cut out of every layer but its shadow and what sticks out of it (as duck.js' mask); its clothes
+       torn round a hit: cut out of them too, a dark frayed edge round each tear on the cloth */
+    s = n / 120,
+    circles = (list, grow = 0) => {
+      const m = new Uint8Array(n * H);
+      for (const [x, y, r] of list || []) {
+        const cx = x * s,
+          cy = (y + TOP) * s,
+          rr = (r + grow) * s;
+        for (
+          let j = Math.max(0, Math.floor(cy - rr));
+          j < Math.min(H, Math.ceil(cy + rr));
+          j++
+        )
+          for (
+            let i = Math.max(0, Math.floor(cx - rr));
+            i < Math.min(n, Math.ceil(cx + rr));
+            i++
+          )
+            if ((i + 0.5 - cx) ** 2 + (j + 0.5 - cy) ** 2 <= rr * rr)
+              m[j * n + i] = 1;
+      }
+      return m;
+    },
+    holes = gone.holes && gone.holes.length ? circles(gone.holes) : null,
+    rips =
+      L.outfit && gone.rips && gone.rips.length ? circles(gone.rips) : null,
+    torn = rips && holes ? rips.map((v, i) => v | holes[i]) : rips || holes,
+    clothA = rips ? new Float32Array(n * H) : null,
+    /* headless: its marks are the ones made with a head, cut to its body (where its fill is) */
+    bodyA = gone.head ? new Float32Array(n * H) : null;
+  /* every part it needs, back to front (none missing), then their files, then each over what's there */
+  const plan = [];
   for (const layer of LAYERS) {
     if (gone.eyes && (layer === "eyes" || layer === "eyesZap")) continue;
     if (gone.beak && layer === "beak") continue;
@@ -146,36 +207,61 @@ export async function duckFromParts(d, cw, ch) {
           ? gone.face
           : undefined;
     if (fade === 0) continue;
-    const svg = duckSVG(C, {
+    const o = {
       layer,
-      size: 0,
+      size: 0, // (no jersey names: duck.js marks)
       dead: !!d.dead,
       shadow: d.shadow !== false,
-    }); // (size 0: no jersey names, duck.js marks)
-    if (!svg) continue;
-    const e = S.index[partKey(layer, svg)];
-    if (!e) return null; // (a part the sheets don't have: the whole duck is made as before)
-    blit(acc, n, H, S, e, vars, fade === undefined ? 1 : fade);
+      ...(gone.head && !SKIN[layer] ? { gone: { head: true } } : {}), // (headless: a zombie's headshot. Its parts are their own)
+    };
+    /* its skin: a part for each mark */
+    const marks = SKIN[layer]
+      ? (sk[SKIN[layer]] || []).map((m) => ({
+          ...o,
+          skin: { [SKIN[layer]]: [m] },
+        }))
+      : [o];
+    for (const m of marks) {
+      const svg = duckSVG(C, m);
+      if (!svg) continue;
+      const e = S.index.p[partKey(layer, svg)];
+      if (!e) return null; // (a part the sheets don't have: the whole duck is made as before)
+      plan.push([layer, e, fade === undefined ? 1 : fade]);
+    }
   }
-  /* holes through it: cut out of the pixels */
-  for (const [x, y, r] of gone.holes || []) {
-    const s = n / 120,
-      cx = x * s,
-      cy = (y + TOP) * s,
-      rr = r * s;
-    for (
-      let j = Math.max(0, Math.floor(cy - rr));
-      j < Math.min(H, Math.ceil(cy + rr));
-      j++
-    )
-      for (
-        let i = Math.max(0, Math.floor(cx - rr));
-        i < Math.min(n, Math.ceil(cx + rr));
-        i++
-      )
-        if ((i + 0.5 - cx) ** 2 + (j + 0.5 - cy) ** 2 <= rr * rr)
-          acc.fill(0, (j * n + i) * 4, (j * n + i) * 4 + 4);
+  const got = new Map();
+  for (const c of new Set(plan.map(([, e]) => e[7]))) {
+    const f = await file(S, c);
+    if (!f) return null;
+    got.set(c, f);
   }
+  let bare = null; // (bodyA as a cut: where there's no body, or a hole)
+  plan.forEach(([layer, e, fade], i) => {
+    if (bodyA && !bare && SKIN[layer] && layer !== "skinOut")
+      bare = bodyA.map((a, q) => (a < 0.01 || (holes && holes[q]) ? 1 : 0));
+    const cut =
+      layer === "shadow" || layer === "skinOut"
+        ? null
+        : RIPPED.has(layer)
+          ? torn
+          : SKIN[layer] && bare
+            ? bare
+            : holes;
+    blit(
+      acc,
+      n,
+      H,
+      got.get(e[7]),
+      e,
+      vars,
+      fade,
+      cut,
+      layer === "cloth" ? clothA : layer === "fill" ? bodyA : null,
+    );
+    /* the frays, once its cloth is all there */
+    if (layer === "cloth" && clothA && (plan[i + 1] || [])[0] !== "cloth")
+      frays(acc, n, H, gone.rips, clothA, holes);
+  });
   /* into the box it's wanted in: the hat's room only when it has a hat; its Size from its feet (60, 108) */
   const top = ch > cw * 1.1 ? TOP : 0,
     ow = cw,
@@ -209,7 +295,7 @@ export async function duckFromParts(d, cw, ch) {
 
 /* one part over what's there: its pixels with every color black, plus each color times how much of it each pixel takes
    (e: [x, y, w, h, ox, oy, [color paths]]; the shade numbers lie to the right of the part, three colors to a tile) */
-function blit(acc, n, H, S, e, vars, fade) {
+function blit(acc, n, H, S, e, vars, fade, cut, keepA) {
   const [x0, y0, w, h, ox, oy, paths] = e,
     px = S.px,
     W = S.W,
@@ -220,9 +306,18 @@ function blit(acc, n, H, S, e, vars, fade) {
     for (let i = 0; i < w; i++) {
       const x = ox + i;
       if (x < 0 || x >= n) continue;
+      if (cut && cut[y * n + x]) {
+        if (keepA)
+          keepA[y * n + x] = Math.max(
+            keepA[y * n + x],
+            px[((y0 + j) * W + x0 + i) * 4 + 3] / 255,
+          );
+        continue;
+      }
       const s = ((y0 + j) * W + x0 + i) * 4,
         a = (px[s + 3] / 255) * fade;
       if (!a) continue;
+      if (keepA) keepA[y * n + x] = Math.max(keepA[y * n + x], a);
       let r = (px[s] / 255) * a,
         g = (px[s + 1] / 255) * a,
         b = (px[s + 2] / 255) * a;
@@ -242,5 +337,48 @@ function blit(acc, n, H, S, e, vars, fade) {
       acc[d + 2] = b + acc[d + 2] * k;
       acc[d + 3] = a + acc[d + 3] * k;
     }
+  }
+}
+
+/* the dark frayed edge round each tear in its cloth (duck.js frays: a dashed ring, #1c1c28 at .7, 2.6 wide, on the cloth
+   only): where the cloth was, round each rip, not over a hole through it */
+function frays(acc, n, H, rips, clothA, holes) {
+  const s = n / 120;
+  for (const [x, y, r] of rips) {
+    const cx = x * s,
+      cy = (y + TOP) * s,
+      R = (r + 0.6) * s,
+      half = 1.3 * s + 0.35, // (half its width, and never thinner than a pixel)
+      dashes = 3.6 * s >= 2; // (the dashes once they're bigger than a pixel; smaller, the ring at their average)
+    for (
+      let j = Math.max(0, Math.floor(cy - R - half));
+      j < Math.min(H, Math.ceil(cy + R + half));
+      j++
+    )
+      for (
+        let i = Math.max(0, Math.floor(cx - R - half));
+        i < Math.min(n, Math.ceil(cx + R + half));
+        i++
+      ) {
+        const q = j * n + i,
+          dx = i + 0.5 - cx,
+          dy = j + 0.5 - cy,
+          dist = Math.hypot(dx, dy);
+        if (Math.abs(dist - R) > half || !clothA[q] || (holes && holes[q]))
+          continue;
+        let a = 0.7 * clothA[q];
+        if (dashes) {
+          const arc =
+            (((Math.atan2(dy, dx) + 2 * Math.PI) % (2 * Math.PI)) * (r + 0.6)) %
+            3.6;
+          if (arc > 2.2) continue;
+        } else a *= 2.2 / 3.6;
+        const d = q * 4,
+          k = 1 - a;
+        acc[d] = (0x1c / 255) * a + acc[d] * k;
+        acc[d + 1] = (0x1c / 255) * a + acc[d + 1] * k;
+        acc[d + 2] = (0x28 / 255) * a + acc[d + 2] * k;
+        acc[d + 3] = a + acc[d + 3] * k;
+      }
   }
 }

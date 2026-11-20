@@ -83,6 +83,7 @@ import {
 } from "./sbspawn.js";
 import { orbFace, lootRing, lootPage, lootWire } from "./sblootview.js";
 import { drawNpcs, dropNpcs } from "./npcview.js";
+import { groupOpts, grShown, jgRow } from "./sbgroupview.js";
 import { olAdd } from "./outlines.js";
 import { sbFloorsFrom, sbIsFloor, sbSlope, sbSlopeH } from "./sbfloors.js";
 import {
@@ -681,17 +682,20 @@ function actRow(s, p, f, kinds) {
     )
       .toLowerCase()
       .split(/[\s,]+/), // (never set: a zombie goes after the players, sbbrain.js)
-    opts = whoOpts(s, kinds);
+    opts = whoOpts(s, kinds),
+    gs = groupOpts(s, activeRoom() && activeRoom().me); // (the groups, under the entities: sbgroupview.js)
+  if (gs.length) opts.push([null, "Groups"], ...gs);
   return pickRow(f, SB_ACTS[f] || SB_ZONE[f].name, opts, picked);
 }
 /* a dropdown of checkboxes for box f: opts [value, name], the values picked (the first of each value only) */
 function pickRow(f, label, opts, picked) {
   const one = opts.filter(
-      (o, i, all) => all.findIndex((x) => x[0] === o[0]) === i,
+      (o, i, all) => o[0] == null || all.findIndex((x) => x[0] === o[0]) === i,
     ),
-    boxes = one.map(
-      ([v, n]) =>
-        `<label><input type="checkbox" value="${esc(v)}" data-label="${esc(n)}"${picked.includes(v) ? " checked" : ""}> ${esc(n)}</label>`,
+    boxes = one.map(([v, n]) =>
+      v == null
+        ? `<em class="sb-ghead">${esc(n)}</em>` // (a part's header: the groups under the entities)
+        : `<label><input type="checkbox" value="${esc(v)}" data-label="${esc(n)}"${picked.includes(v) ? " checked" : ""}> ${esc(n)}</label>`,
     ),
     on = one.filter(([v]) => picked.includes(v)).map(([, n]) => n);
   return `<div class="sb-row" data-row="${f}"><span>${esc(label)}</span><details class="sb-acts" data-act="${f}"><summary>${esc(on.join(", ") || "Nothing")}</summary><span class="sb-what">${boxes.join("") || `<em class="sb-none">None placed yet</em>`}</span></details></div>`;
@@ -778,7 +782,7 @@ export function sbSettings(getR, id, tab = "") {
     players = p.pg === "pl" || (!p.grp && tab === "pl"),
     zmaps = baseMode(R.state.options) === "l4dd",
     what = boxText(p, "what").split(/[\s,]+/),
-    kinds = kindsFor(R.state),
+    kinds = grShown(R.state, R.me, kindsFor(R.state)), // (less the made NPCs I keep out of my lists: sbgroupview.js)
     onlyZ = (ks) => zmaps && !ks.some((k) => k && k !== "zombie"), // (the zombie maps' zombies walk their own way: l4ddrules.js)
     look = spawn && !players && tab === "ap", // (its Appearance tab: sbmake.js)
     pick = boxText(p, "pick"),
@@ -1037,7 +1041,7 @@ export function sbSettings(getR, id, tab = "") {
     ${row("st", SB_ORDER.st, ordT("st"), "")}
     <div class="sb-row" data-row="go"><span>${esc(SB_ORDER.go.name)}</span>${sel("go", SB_GOES)}<em class="sb-why"></em></div>`;
   const html = `<h2>${loot && !p.grp ? "Loot" : "Zone"}</h2>${head}
-  ${base.lock ? `<p class="sb-tip sb-lockd">Locked: right-click it and pick Unlock to change it.</p>` : ""}<div class="sb-set"${base.lock ? " inert" : ""}>${callHTML}${frontHTML}${front ? `<h3 class="sb-sect sb-sect-top">4. ${PURPOSES.find(([v]) => v === p.k)[1]} settings</h3>` : ""}${loot ? lootPage(R.state, id, p, { row, flagRow, typed, why, colorRow }) : zone ? zonePage() : !spawn ? respawn() : players ? playersPage() : look ? lookPage(R.state, p) : entity()}${players || look ? "" : orderSect()}</div>
+  ${base.lock ? `<p class="sb-tip sb-lockd">Locked: right-click it and pick Unlock to change it.</p>` : ""}<div class="sb-set"${base.lock ? " inert" : ""}>${callHTML}${frontHTML}${front ? `<h3 class="sb-sect sb-sect-top">4. ${PURPOSES.find(([v]) => v === p.k)[1]} settings</h3>` : ""}${loot ? lootPage(R.state, id, p, { row, flagRow, typed, why, colorRow }) : zone ? zonePage() : !spawn ? respawn() : players ? playersPage() : look ? lookPage(R.state, p) : entity()}${look ? "" : jgRow(R.state, R.me, p)}${players || look ? "" : orderSect()}</div>
   <p class="acts">${spawn && !players && !look ? `<button type="button" class="btn" data-go>Spawn</button>` : ""}${!spawn && !loot && !zone ? `<button type="button" class="btn" data-imp>Import settings</button>` : ""}${base.lock ? "" : `<button type="button" class="btn ghost" data-del>${p.grp ? (p.pg === "t" ? "Delete tab" : "Delete page") : "Delete"}</button>`}</p>`;
   openWindow(html, {
     cls: zoneLike(p) ? "sb-setwin sb-zonewin" : "sb-setwin",

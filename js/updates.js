@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v145",
+    version: 145,
+    date: "Nov 20, 2026",
+    title: "Groups, and NPCs up high",
+    news: [
+      "For Sandbox: Groups (in G). Name a group, pick what joins it (a spawn's color, a zone, a loot, a variable name, or a tab's Joins groups) and what joining does (Max HP, heal, regen, stamina, cooldowns, an outline, who its NPCs go after, and which windows its players get).",
+      "For Sandbox: NPCs stand on floors too. They spawn up on one (with no Ground under them they fall), walk off its edge and fall, climb a zone that lets them to reach you up high, and only claw you on their own floor.",
+      "Zombies and every duck's wounds are now made of real pixel parts too, so big zombie waves run smoother.",
+      "Pictures you upload for your duck or your card are now made into real pixels.",
+    ],
+  },
+  {
     id: "v144",
     version: 144,
     date: "Nov 20, 2026",

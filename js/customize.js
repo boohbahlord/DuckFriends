@@ -41,6 +41,7 @@ import {
   BUILDS,
   SIZES,
   pictureToSquare,
+  DUCK_PIC_PX,
   duckSVG,
   DUCK_SCALE,
   scaleOf,
@@ -80,6 +81,8 @@ import { SB_WHAT, SB_ACTS } from "./sandboxrules.js";
 /* ---------- making an NPC (Sandbox's m window, sbnpcs.js) ----------
    The same menu dresses one of my NPCs instead of my duck: NPC is the one open (null: my own duck). It has no card, no
    font and no specials, and two pages of its own at the bottom: its weapons and its behavior */
+/* a card's picture in real pixels, as a duck's (duck.js pictureToSquare): 64 to a side, its pixels drawn square */
+const CARD_PIC_PX = 64;
 let NPC = null;
 const duckNow = () => (NPC ? NPC.duck : profile.duck);
 /* a duck page's own "Randomize …" (the owner's file: "randomize hats" or "randomize styles") */
@@ -1678,7 +1681,10 @@ export function openCustomize(page = lastPage, opts = {}) {
           }
           if (up) {
             try {
-              const d = await pictureToSquare(e.target.files[0], 160);
+              const d = await pictureToSquare(
+                e.target.files[0],
+                up === "duck" ? DUCK_PIC_PX : CARD_PIC_PX,
+              );
               if (up === "duck") duckNow().image = d;
               else profile.card.image = d;
               changed();

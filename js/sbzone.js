@@ -29,6 +29,7 @@ import { valueOf } from "./numerat.js";
 import { boxText, spawnsHere } from "./sbspawn.js";
 import { W, H, heightAt } from "./hangout/layout.js";
 import { l4Hurt, l4Heal, l4Zone } from "./l4ddrules.js";
+import { grIn } from "./sbgroups.js";
 import { zbThink } from "./sbzonebrain.js";
 import { sbFloorsFrom } from "./sbfloors.js";
 
@@ -159,7 +160,12 @@ function hitAll(s, pts, id, p, now, H0) {
     const me = s.pos[id],
       name = String((s.players[id] || {}).name || "").toLowerCase();
     if (!me || !inside(s, id, p, box, me.x, me.y, me.z)) continue;
-    if (!all && !who.includes("players") && !(name && who.includes(name)))
+    if (
+      !all &&
+      !who.includes("players") &&
+      !(name && who.includes(name)) &&
+      !grIn(s, who, "p:" + id) // (a group it's in: sbgroups.js)
+    )
       continue;
     ch = true;
     if (zmaps) {
@@ -169,8 +175,9 @@ function hitAll(s, pts, id, p, now, H0) {
     else H0.claw(s, id, amt, now, "zone");
   }
   /* the NPCs: everything, their kind, or their spawn by its color or name */
-  const hits = (k, sp) => {
+  const hits = (k, sp, key) => {
     if (all || who.includes(k || "zombie")) return true;
+    if (key && grIn(s, who, key)) return true;
     const q = pts[sp];
     return (
       !!q &&
@@ -199,7 +206,7 @@ function hitAll(s, pts, id, p, now, H0) {
   };
   if (sbOnBoard(s) && s.mz && s.mz.sb)
     s.mz.zb = s.mz.zb.map((o) =>
-      !o.d && inside(s, id, p, box, o.x, o.y, 0) && hits(o.k, o.sp)
+      !o.d && inside(s, id, p, box, o.x, o.y, 0) && hits(o.k, o.sp, "n:" + o.i)
         ? npc(o)
         : o,
     );
@@ -208,7 +215,7 @@ function hitAll(s, pts, id, p, now, H0) {
       zb = z.zb.map((o) =>
         !o.d &&
         inside(s, id, p, box, o.x / W, o.y / H, heightAt(o.x, o.y)) &&
-        hits(o.k, o.sp)
+        hits(o.k, o.sp, "n:c" + o.i)
           ? npc(o)
           : o,
       );

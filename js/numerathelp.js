@@ -306,10 +306,12 @@ A spawn with no Brain plays as before.
   ((hp "2rage"))              "…" multiplies: twice the rage
 
 Stats, read and set (an NPC's, inside a when):
-  hp  speed  damage  hitbox (10 to 300, in %: how big it is
+  hp  speed  damage  regen  hitbox (10 to 300, in %: how big it is
                              to hit, and how far it reaches)
   ((hp 5))  ((hp hp-1))  ((hp 50%))   50% is half its most
   ((hitbox 150%)) or ((hitbox 150))   one and a half times its size
+  ((hp 100%))                         HP to full
+  ((regen 2))                         2 HP back each second (0 stops it)
 Another NPC's: z hp, where z is one (for z in team ...):
   for z in team ((z hp z hp+1))       each one gets 1 HP more
 Built-in: wave (the round), time (seconds), alive, dead, spawned.
