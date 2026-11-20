@@ -25,7 +25,6 @@
    text { id: answer }, sent { id: true }, grades { id: true | false }, stop { id: true } (the reveal's Stop timer), used (auto questions dealt), log (every played
    question: { round, by, auto, kind, text, right, wrong, none }) } */
 import { enter, say, playing, seatLate, toStats, shareOf } from "./rules.js";
-import { TV_BANK } from "./triviabank.js";
 
 export const isTv = (s) => s.options.mode === "trivia";
 export const TV_PHASES = ["tvwrite", "tvq", "tvw", "tvg", "tvr"];
@@ -54,7 +53,6 @@ export const TV_BOT_ANSWERS = [
   "Yes",
 ];
 
-const anyOf = (xs) => xs[Math.floor(Math.random() * xs.length)];
 const shuffle = (xs) => {
   for (let i = xs.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -107,23 +105,6 @@ function draftOf(raw) {
       .slice(0, 4)
       .map(Number)
       .filter(Number.isInteger),
-  };
-}
-/* an auto question, one not dealt yet this game (once they've all been dealt, any of them) */
-export function autoQ(s) {
-  const T = s.tv,
-    free = TV_BANK.map((_, i) => i).filter((i) => !T.used.includes(i)),
-    k = anyOf(free.length ? free : TV_BANK.map((_, i) => i));
-  if (!free.length) T.used = [];
-  T.used.push(k);
-  const [text, ans, ok = 0] = TV_BANK[k],
-    tf = ans[0] === "True" && ans[1] === "False",
-    order = tf ? ans.map((_, i) => i) : shuffle(ans.map((_, i) => i));
-  return {
-    text,
-    kind: "mc",
-    ans: order.map((i) => ans[i]),
-    ok: [order.indexOf(ok)],
   };
 }
 

@@ -13,13 +13,7 @@ import { cloudHTML } from "./brackets.js";
 import { rainbowHTML } from "./art.js";
 import { cardBackground } from "./card.js";
 import { fmtJumps } from "./format.js";
-import {
-  isDate,
-  turnedDown,
-  vdTileAt,
-  vdStats,
-  TOPIC_MAX,
-} from "./vddrules.js";
+import { isDate, turnedDown, vdStats, TOPIC_MAX } from "./vddrules.js";
 import { seenDuck, seenName } from "./looks.js";
 
 const GONE = {
@@ -141,8 +135,6 @@ export const vdBoardHTML = (
   me,
 ) => `<div class="board vd-board"><div class="cols vd-cols"><div class="col vd-field" data-c="0"></div></div>${tilesHTML(s)}
   <div class="ducks">${withTable(s) ? TABLE_HTML : ""}</div><div class="fxl"></div>${vdTopHTML(s, me)}</div>`;
-/* the tile under my duck (for the glow and the button) */
-export const myTile = (s, pos) => vdTileAt(s, pos);
 
 /* ---------- the stats: the awards, each player's box, then every date ---------- */
 const faceOf = (s, id, size) => {
