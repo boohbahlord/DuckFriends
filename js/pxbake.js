@@ -133,9 +133,8 @@ export async function bakeStill(
   mark.classList.add("px-own");
   return true;
 }
-/* the Night Show backdrop (art.js backdropHTML) on root (a map's scene, or the menus' #shapes): its pictures made into
-   pixels, its train and its drifting shapes in boxes of their own. Resolves true once root no longer needs the filter.
-   Called again whenever the backdrop is drawn again (a new size, a new grid) */
+/* the Night Show backdrop (tools/pixel-src/nightshow.js backdropHTML) on root: its pictures made into pixels, its train
+   and its drifting shapes in boxes of their own, for its pixel files (tools/pixel-maps.cjs). Resolves true once done */
 export async function bakeBackdrop(root, mark = root) {
   const G = grid(),
     rootBox = root.getBoundingClientRect();
@@ -716,3 +715,6 @@ export function bakeFill(el, paint) {
   if (!cv.isConnected) el.prepend(cv);
   el.classList.add("px-own");
 }
+
+/* for the map bake (tools/pixel-maps.cjs) only: how a part is pictured and painted, the same as here */
+export const forBake = { grid, pictureOf, paintBox, BOX };

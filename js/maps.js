@@ -19,9 +19,13 @@
    starry night sky, and it is not in the Map window. */
 import { duckSVG } from "./duck.js";
 import { pixelOn, gridPx } from "./pixel.js";
-import { bakeBackdrop, bakeStill, bakeSvg, unbake } from "./pxbake.js";
+import { bakeStill, bakeSvg, unbake } from "./pxbake.js";
 import { esc } from "./ui.js";
-import { backdropHTML, floorCanvas, carnivalSVG } from "./art.js";
+import { floorCanvas, carnivalSVG } from "./art.js";
+import BOARD from "./pxm/board.js";
+import PIXEL from "./pxm/pixel.js";
+import SKY from "./pxm/sky.js";
+import { mountWorld } from "./pxmap.js";
 import { collageScene } from "./collage.js";
 import { euclidScene } from "./euclid.js";
 import { vellumScene } from "./vellum.js";
@@ -140,7 +144,7 @@ export const useUmaps = (u) => {
 };
 export const umapOf = (id) => UMAPS[id] || null;
 
-/* ---------- Sky ---------- */
+/* ---------- Sky: its sun, moon, stars and clouds as pixel files (js/pxm/sky.js), laid out anew each round ---------- */
 const CLOUD =
   '<svg viewBox="0 0 200 90" aria-hidden="true"><g fill="#fff"><circle cx="52" cy="56" r="28"/><circle cx="92" cy="42" r="34"/><circle cx="140" cy="50" r="30"/><circle cx="170" cy="64" r="20"/><circle cx="28" cy="66" r="18"/><rect x="28" y="56" width="146" height="28" rx="14"/></g></svg>';
 const mixHex = (a, b, t) => {
@@ -157,8 +161,9 @@ const mixHex = (a, b, t) => {
   );
 };
 function skyScene(layer, s, cur) {
-  const sc = document.createElement("div");
-  sc.className = "scene sky";
+  const sc = worldScene(layer, SKY, "sky"),
+    st = sc.stage,
+    { W, H, G } = SKY;
   const rnd = (
     (k) => () =>
       (k = (k * 9301 + 49297) % 233280) / 233280
@@ -166,50 +171,56 @@ function skyScene(layer, s, cur) {
   const n = 7,
     ids = s.seat.filter((id) => s.players[id]),
     rider = ids.length ? ids[(s.round * 7 + s.qi * 3) % ids.length] : null;
+  const pic = (p, more = "") =>
+    `<img class="px-file" alt="" draggable="false" src="${p.src}" style="left:${p.x}px;top:${p.y}px;width:${p.w}px;height:${p.h}px${more}">`;
+  /* a cloud: its picture at its width (9% to 19% of the world's), as it was made into pixels */
   const clouds = Array.from({ length: n }, (_, i) => {
-    const w = 9 + rnd() * 10,
+    const w = Math.round(9 + rnd() * 10),
       top = 6 + rnd() * 74,
       dur = 70 + rnd() * 60,
       dl = -rnd() * dur,
-      op = 0.55 + rnd() * 0.35;
+      op = 0.55 + rnd() * 0.35,
+      p = SKY.clouds[w];
     const duck =
       i === 2 && rider
-        ? `<div class="sky-rider">${duckSVG(seenDuck(s.players[rider]), { size: 60, shadow: false, title: s.players[rider].name })}</div>`
+        ? `<div class="sky-rider" data-pxyes>${duckSVG(seenDuck(s.players[rider]), { size: 60, shadow: false, title: s.players[rider].name })}</div>`
         : "";
-    return `<div class="sky-cloud${duck ? " ridden" : ""}" style="width:${w.toFixed(1)}%;top:${top.toFixed(1)}%;opacity:${op.toFixed(2)};animation-duration:${dur.toFixed(0)}s;animation-delay:${dl.toFixed(1)}s">${duck}${CLOUD}</div>`;
+    return `<div class="sky-cloud${duck ? " ridden" : ""}" style="width:${w}%;height:${(((w / 100) * W * 90) / 200).toFixed(1)}px;top:${top.toFixed(1)}%;opacity:${op.toFixed(2)};animation-duration:${dur.toFixed(0)}s;animation-delay:${dl.toFixed(1)}s">${pic(p)}${duck}</div>`;
   }).join("");
-  sc.innerHTML = `<div class="sky-stars"></div><div class="sky-sun"></div><div class="sky-moon"></div>${clouds}`;
-  const stars = sc.querySelector(".sky-stars");
-  stars.innerHTML = Array.from(
+  /* each star on the grid: a pixel of the world for its left and its top */
+  const at = (f, size) => Math.round((f * size) / G) * G;
+  st.innerHTML = `<canvas class="sky-px" width="1" height="${H / G}" aria-hidden="true"></canvas><div class="sky-stars">${Array.from(
     { length: 40 },
     () =>
-      `<i style="left:${(rnd() * 100).toFixed(1)}%;top:${(rnd() * 70).toFixed(1)}%;animation-delay:-${(rnd() * 3).toFixed(1)}s"></i>`,
-  ).join("");
-  layer.append(sc);
-  const sun = sc.querySelector(".sky-sun"),
-    moon = sc.querySelector(".sky-moon");
-  let last = "";
-  /* the pixel look: the sky, the stars, the sun, the moon and the clouds painted each frame on one canvas of the grid's
-     pixels (pxbake.js; each made once into a picture by the browser), instead of the filter on the whole page every
-     frame; made again for a new size or a new grid */
-  let baked = "",
-    bt = 0;
-  const bake = () => {
-    const k = [layer.clientWidth, layer.clientHeight, gridPx()].join();
-    if (!pixelOn() || k === baked || !layer.clientWidth) return;
-    baked = k;
-    unbake(sc, layer);
-    sc.querySelectorAll(
-      ".sky-stars > i, .sky-sun, .sky-moon, .sky-cloud",
-    ).forEach((e) => e.classList.add("px-shot"));
-    bakeStill(sc, null, layer, { sel: ".px-shot", before: "first", bg: true });
+      pic(
+        {
+          ...SKY.star,
+          x: at(rnd(), W) + SKY.star.x,
+          y: at(rnd() * 0.7, H) + SKY.star.y,
+        },
+        `;animation-delay:-${(rnd() * 3).toFixed(1)}s`,
+      ),
+  ).join(
+    "",
+  )}</div><div class="sky-sun">${pic(SKY.sun)}</div><div class="sky-moon">${pic(SKY.moon)}</div>${clouds}`;
+  const sky = st.querySelector(".sky-px").getContext("2d"),
+    stars = st.querySelector(".sky-stars"),
+    sun = st.querySelector(".sky-sun"),
+    moon = st.querySelector(".sky-moon");
+  /* the sky's colors from top to bottom, a pixel for each row of the world's (as css's linear-gradient mixes them) */
+  const paint = (top, bot) => {
+    const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)),
+      A = p(top),
+      B = p(bot),
+      n = H / G;
+    for (let y = 0; y < n; y++) {
+      const t = (y + 0.5) / n;
+      sky.fillStyle = `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(",")})`;
+      sky.fillRect(0, y, 1, 1);
+    }
   };
-  const ro = new ResizeObserver(() => {
-    clearTimeout(bt);
-    bt = setTimeout(bake, baked ? 200 : 0);
-  });
-  ro.observe(layer);
-  addEventListener("pxgrid", bake);
+  let last = "",
+    lastSky = "";
   return {
     update(now) {
       const t = (now % 120000) / 120000,
@@ -221,8 +232,8 @@ function skyScene(layer, s, cur) {
       if (key === last) return;
       last = key;
       (day ? sun : moon).style.transform =
-        `translate(${x.toFixed(1)}cqw, ${y.toFixed(1)}cqh)`;
-      (day ? moon : sun).style.transform = "translate(0, -40cqh)";
+        `translate(${at(x / 100, W)}px, ${at(y / 100, H)}px)`;
+      (day ? moon : sun).style.transform = `translate(0, ${-0.4 * H}px)`;
       // the sky: blue by day, warm as the sun sets, deep blue at night (and lighter again as the moon sets)
       const top = day
         ? p < 0.6
@@ -238,219 +249,48 @@ function skyScene(layer, s, cur) {
         : p < 0.85
           ? "#26305e"
           : mixHex("#26305e", "#8cc6f0", (p - 0.85) / 0.15);
-      sc.style.background = `linear-gradient(${top}, ${bot})`;
+      if (top + bot !== lastSky) {
+        lastSky = top + bot;
+        paint(top, bot);
+      }
       const night = !day || p > 0.9;
       if (cur.cols) cur.cols.classList.toggle("night", night);
       stars.style.opacity = day ? 0 : p < 0.85 ? 1 : 1 - (p - 0.85) / 0.15;
     },
     destroy() {
-      clearTimeout(bt);
-      ro.disconnect();
-      removeEventListener("pxgrid", bake);
-      layer.classList.remove("px-own");
-      sc.remove();
+      sc.destroy();
       if (cur.cols) cur.cols.classList.remove("night");
     },
   };
 }
 
-/* ---------- Pixel ---------- */
-function pixelScene(layer) {
+/* ---------- Pixel: a sunset over islands in the sky and a forest, as pixel files (js/pxm/pixel.js) ---------- */
+const pixelScene = (layer) =>
+  worldScene(layer, PIXEL, "pixel", { fx: 0.64, fy: 0.5 }); // (a phone: the slice with the sun and the big islands)
+/* a map made of pixel files (js/pxmap.js) in a scene of its own: kind, the scene's class; focus, where a narrow screen
+   looks (mountWorld) */
+function worldScene(layer, world, kind, focus) {
   const sc = document.createElement("div");
-  sc.className = "scene pixel";
-  sc.innerHTML =
-    '<canvas class="pix-sky"></canvas><div class="pix-sun"></div><canvas class="pix-world"></canvas>';
+  sc.className = `scene ${kind}`;
   layer.append(sc);
-  const skyC = sc.querySelector(".pix-sky"),
-    worldC = sc.querySelector(".pix-world"),
-    sun = sc.querySelector(".pix-sun");
-  let drawn = "";
-  const draw = () => {
-    const W = layer.clientWidth,
-      H = layer.clientHeight;
-    if (!W || !H) return;
-    const key = W + "x" + H + "/" + gridPx();
-    if (key === drawn) return;
-    drawn = key;
-    unbake(sc, layer); // (the filter again until the new one is made into pixels)
-    const u = Math.max(3, Math.round(H / 110)),
-      cw = Math.ceil(W / u),
-      ch = Math.ceil(H / u),
-      hy = Math.round(ch * 0.5);
-    let seed = 12345;
-    const r = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    for (const c of [skyC, worldC]) {
-      c.width = cw;
-      c.height = ch;
-    }
-    /* the sky: bands of a sunset with a dithered edge between each */
-    const g = skyC.getContext("2d"),
-      bands = [
-        "#171a45",
-        "#24245f",
-        "#3a2f7a",
-        "#5b3586",
-        "#8a3f86",
-        "#bb4f78",
-        "#e2685e",
-        "#f58e48",
-        "#ffb44d",
-        "#ffd166",
-      ];
-    const bh = hy / bands.length;
-    for (let y = 0; y < hy + 2; y++)
-      for (let x = 0; x < cw; x++) {
-        const f = y / bh,
-          i = Math.min(bands.length - 1, Math.floor(f)),
-          frac = f - i;
-        g.fillStyle =
-          bands[frac > 0.75 && (x + y) % 2 && i < bands.length - 1 ? i + 1 : i];
-        g.fillRect(x, y, 1, 1);
-      }
-    /* the world: islands in the sky, the forest below the horizon */
-    const w = worldC.getContext("2d");
-    w.clearRect(0, 0, cw, ch);
-    const block = (x, y, b, col, edge) => {
-      w.fillStyle = col;
-      w.fillRect(x, y, b, b);
-      if (edge && b > 2) {
-        w.fillStyle = edge;
-        w.fillRect(x, y, b, 1);
-      }
-    };
-    const island = (cx, cy, b, wid, haze) => {
-      w.globalAlpha = haze;
-      const half = Math.floor(wid / 2),
-        x0 = cx - half * b;
-      if (r() < 0.6) {
-        // a tree
-        const tx = x0 + (1 + Math.floor(r() * (wid - 2))) * b;
-        for (let k = 1; k <= 3; k++) block(tx, cy - k * b, b, "#6b4a2a");
-        for (let lx = -1; lx <= 1; lx++)
-          for (let ly = 4; ly <= 6; ly++)
-            block(
-              tx + lx * b,
-              cy - ly * b,
-              b,
-              (lx + ly) % 2 ? "#3f8f2f" : "#4aa338",
-              "#5fbf45",
-            );
-        block(tx, cy - 7 * b, b, "#4aa338", "#5fbf45");
-      }
-      for (let i = 0; i < wid; i++)
-        block(x0 + i * b, cy, b, "#5fa83a", "#7fd14f");
-      for (let row = 1; row <= 2; row++)
-        for (let i = 0; i < wid; i++)
-          block(x0 + i * b, cy + row * b, b, r() < 0.2 ? "#7a4d2b" : "#8a5a33");
-      let lo = 0,
-        hi = wid;
-      for (let row = 3; hi - lo > 0; row++) {
-        lo += r() < 0.7 ? 1 : 2;
-        hi -= r() < 0.7 ? 1 : 2;
-        for (let i = lo; i < hi; i++)
-          block(
-            x0 + i * b,
-            cy + row * b,
-            b,
-            r() < 0.25 ? "#6a6a6a" : "#808080",
-          );
-      }
-      w.globalAlpha = 1;
-    };
-    const isles = [
-      [0.14, 0.14, 1, 7, 0.6],
-      [0.76, 0.1, 1, 6, 0.6],
-      [0.44, 0.2, 2, 8, 0.8],
-      [0.86, 0.3, 2, 7, 0.85],
-      [0.24, 0.33, 3, 9, 1],
-      [0.6, 0.36, 3, 8, 1],
-    ];
-    for (const [fx, fy, sz, wid, hz] of isles)
-      island(
-        Math.round(cw * fx),
-        Math.round(ch * fy),
-        Math.max(1, Math.round((sz * ch) / 110)),
-        wid,
-        hz,
-      );
-    /* the forest from above: tree tops getting bigger toward the bottom, hazy at the horizon */
-    for (let y = hy; y < ch; ) {
-      const depth = (y - hy) / (ch - hy),
-        b = Math.max(1, Math.round(1 + depth * 5));
-      for (let x = 0; x < cw; x += b) {
-        const c = ["#2a5e22", "#2f6b26", "#3b7f2c", "#4a9433", "#356f29"][
-          Math.floor(r() * 5)
-        ];
-        w.fillStyle = c;
-        w.fillRect(x, y, b, b);
-        if (b > 2 && r() < 0.3) {
-          w.fillStyle = "#5aa83e";
-          w.fillRect(x, y, b - 1, 1);
-        }
-      }
-      if (depth < 0.25) {
-        w.fillStyle = `rgba(122, 70, 140, ${(0.45 * (1 - depth / 0.25)).toFixed(2)})`;
-        w.fillRect(0, y, cw, b);
-      }
-      y += b;
-    }
-    sun.style.cssText = `left:${(cw * 0.68 * u).toFixed(0)}px;top:${(hy * u).toFixed(0)}px;width:${(u * 16).toFixed(0)}px;height:${(u * 16).toFixed(0)}px`;
-    /* the pixel look: the sky and the world made into pixels once, the sun (it breathes) painted each frame on a
-       canvas of the grid's pixels (pxbake.js), instead of the filter on the whole page every frame */
-    if (pixelOn())
-      bakeStill(
-        sc,
-        ":scope > canvas",
-        layer,
-        { sel: ":scope > .pix-sun" },
-        true,
-      );
-  };
-  const ro = new ResizeObserver(draw);
-  ro.observe(layer);
-  addEventListener("pxgrid", draw); // (the grid changed: made into pixels again on the new one)
-  draw();
+  const w = mountWorld(sc, world, focus);
+  layer.classList.add("px-own"); // (pixels already: the filter leaves it)
   return {
+    stage: w.stage,
     update() {},
     destroy() {
-      ro.disconnect();
-      removeEventListener("pxgrid", draw);
+      w.destroy();
       layer.classList.remove("px-own");
       sc.remove();
     },
   };
 }
 
-/* ---------- Night Show: the carnival at night, drawn to the page ---------- */
+/* ---------- Night Show: the carnival at night, as pixel files (js/pxm/board.js, tools/pixel-maps.cjs) ---------- */
 function nightScene(layer) {
-  const sc = document.createElement("div");
-  sc.className = "scene night";
-  layer.append(sc);
-  let drawn = "";
-  const draw = () => {
-    const k = [layer.clientWidth, layer.clientHeight, gridPx()].join();
-    if (k === drawn || !layer.clientWidth) return;
-    drawn = k;
-    layer.classList.remove("px-own"); // (the filter again until the new one is made into pixels)
-    sc.innerHTML = backdropHTML(layer.clientWidth, layer.clientHeight, true);
-    if (!pixelOn()) return floorCanvas(sc);
-    bakeBackdrop(sc, layer).then((ok) =>
-      floorCanvas(sc, ok && sc.isConnected ? gridPx() : 0),
-    ); // (its pictures made into pixels once: pxbake.js)
-  };
-  const ro = new ResizeObserver(draw);
-  ro.observe(layer);
-  addEventListener("pxgrid", draw); // (the grid changed: made into pixels again on the new one)
-  draw();
-  return {
-    update() {},
-    destroy() {
-      ro.disconnect();
-      removeEventListener("pxgrid", draw);
-      layer.classList.remove("px-own");
-      sc.remove();
-    },
-  };
+  const sc = worldScene(layer, BOARD, "night");
+  floorCanvas(sc.stage, BOARD.G); // (the floor's breathing rows, on one canvas: art.js)
+  return sc;
 }
 
 /* ---------- Duck Cabin: the night sky around Hangout's world (the world itself fills the board) ---------- */

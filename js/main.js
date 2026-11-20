@@ -1,8 +1,10 @@
 /* ---------- the start: settings on the page, the background, the jump counter, the first screen ---------- */
 import "./pointer.js"; // (first: a computer or a phone, before anything asks)
 import { applySettings, askConnection } from "./settings.js";
-import { backdropHTML, floorCanvas } from "./art.js";
-import { bakeBackdrop } from "./pxbake.js";
+import { floorCanvas } from "./art.js";
+import { mountWorld } from "./pxmap.js";
+import BOARD from "./pxm/board.js";
+import BOARD_LIGHT from "./pxm/board-light.js";
 import { profile, save } from "./store.js";
 import { $, toast } from "./ui.js";
 import { start, current } from "./router.js";
@@ -24,31 +26,22 @@ import { squarePixels, DUCK_PIC_PX, CARD_PIC_PX } from "./duck.js";
 
 applySettings();
 
-/* the carnival behind the page, redrawn to fit when the window or the theme changes */
-let lastBD = "";
+/* the carnival behind the page (Night Show's world, as pixel files: js/pxmap.js), the light one in the light theme */
+let lastBD = "",
+  shapes = null;
 const drawShapes = () => {
-  const k = [innerWidth, innerHeight, profile.settings.theme, gridPx()].join();
-  if (k === lastBD) return;
-  lastBD = k;
+  const dark = profile.settings.theme === "dark";
+  if (String(dark) === lastBD) return;
+  lastBD = String(dark);
   const sh = $("#shapes");
-  sh.classList.remove("px-own"); // (the filter again until the new one is made into pixels)
-  sh.innerHTML = backdropHTML(
-    innerWidth,
-    innerHeight,
-    profile.settings.theme === "dark",
-  );
-  if (!pixelOn()) return floorCanvas(sh);
-  bakeBackdrop(sh).then((ok) =>
-    floorCanvas(sh, ok && sh.isConnected ? gridPx() : 0),
-  ); // (its pictures made into pixels once: pxbake.js)
+  if (shapes) shapes.destroy();
+  sh.replaceChildren();
+  const world = dark ? BOARD : BOARD_LIGHT;
+  shapes = mountWorld(sh, world);
+  floorCanvas(shapes.stage, world.G); // (the floor's breathing rows, on one canvas: art.js)
+  sh.classList.add("px-own"); // (pixels already: the filter leaves it)
 };
 document.addEventListener("settings", drawShapes);
-addEventListener("pxgrid", drawShapes);
-let rsT = null;
-addEventListener("resize", () => {
-  clearTimeout(rsT);
-  rsT = setTimeout(drawShapes, 200);
-});
 drawShapes();
 
 /* the jump counter at the bottom middle; anything already earned and not yet announced says so a moment later. Anything
