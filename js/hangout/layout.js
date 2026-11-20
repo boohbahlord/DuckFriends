@@ -200,7 +200,39 @@ export function floorAt(x, y, z) {
 export function slabBetween(ax, ay, az, bx, by, bz) {
   if (variant !== "l4gs") return false;
   if (deckAt(ax, ay, az) === deckAt(bx, by, bz)) return false; // (one floor)
+  if (SIGHT.on) return !seeLine(ax, ay, az, bx, by, bz);
   return !!deckOver(ax, ay, az) || !!deckOver(bx, by, bz);
+}
+/* ---------- the sightline (the owner's drawing, Nov 20 02:07Z: "the further the duck goes back, the further a zombie
+   has to be from it's ledge to actually have a sightline on said zombie") ----------
+   One rule for every height: a straight line from my eyes to the target's head. Walked over the floor plan, wherever it
+   passes over a roof or floor (not over a hole in it) it has to stay above that floor, or the floor is between us. It
+   is the drawing's triangle: from a ledge h high, standing b back from its edge with my eyes e over my feet, the ground
+   is out of sight for h * b / e from the ledge (similar triangles). It works the same looking up at a roof, through a
+   hole, and across any number of floors. Heights in percent: the gas station's roof, 180 px, is 100%.
+   Off until the owner says go: ?sight in the address turns it on to try */
+export const SIGHT = {
+  on: /[?&]sight\b/.test(
+    (globalThis.location && globalThis.location.search) || "",
+  ),
+};
+export const EYE = DUCK * 0.8; // (my eyes over my feet: about 28% of the roof)
+export const HEAD = DUCK * 0.85; // (a target counts as seen once its head is)
+const SIGHT_SLAB = 16; // (how thick a roof or floor is)
+const SIGHT_STEP = 8; // (world px between looks along the line)
+export function seeLine(ax, ay, az, bx, by, bz) {
+  const ea = (+az || 0) + EYE,
+    eb = (+bz || 0) + HEAD,
+    n = Math.ceil(Math.hypot(bx - ax, by - ay) / SIGHT_STEP);
+  for (let i = 1; i < n; i++) {
+    const t = i / n,
+      x = ax + (bx - ax) * t,
+      y = ay + (by - ay) * t,
+      L = ea + (eb - ea) * t;
+    for (const d of GS.DECKS)
+      if (L <= d.h && L > d.h - SIGHT_SLAB && onDeck(d, x, y)) return false;
+  }
+  return true;
 }
 /* the ladders (stationmap.js): up the gas station's back wall (LADDER, side "n"), and leaning on the canopy over the
    pumps from its left (PUMP_LADDER, side "w"). ladderAt: the one whose foot (x, y) is at, outside, where a duck climbs
