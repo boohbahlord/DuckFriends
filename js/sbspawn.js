@@ -89,6 +89,7 @@ import { botDuck } from "./botduck.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { armUp, cleanArms, fight, keepAt, reachTo } from "./sbarms.js";
 import { nbThink, nbOrder, nbKeep } from "./sbnumberat.js";
+import { SONG, songChars } from "./sbaudio.js";
 import { grFrom, grLeave, grHp, grIds, grLists } from "./sbgroups.js";
 
 /* the boxes that aren't numbers: the name over it, its key, what spawns, and a respawn's "who" */
@@ -301,6 +302,7 @@ export const madeOf = (s, k) =>
     s.sb.cn &&
     s.sb.cn[k.slice(2)]) ||
   null;
+export const SB_SONG = { PARTS: 8, KEEP: 6 }; // (an imported song's parts, as a picture's; the most songs a room keeps)
 export const SB_PIC = {
   MOST: 2 * 1024 * 1024, // (the owner's, Nov 19 01:57Z: 2 MB at most)
   PART: 150000, // (letters a part: an online action is less than 200,000: database.rules.json)
@@ -708,7 +710,9 @@ export function sbAct(s, a, now) {
       ? !may("m")
       : a.k === "pic"
         ? !may("b") && !may("m")
-        : !may("b")
+        : a.k === "song" || a.k === "songrm"
+          ? !may("g") // (a song is G's Music: sbaudio.js)
+          : !may("b")
   )
     return false;
   /* my Build window is up (or I'm putting a block down): the zones' damage and Kill leave my duck alone, so a zone put
@@ -846,6 +850,46 @@ export function sbAct(s, a, now) {
         };
     }
     s.hidden = { ...hid, sbup: up };
+    return true;
+  }
+  /* a part of an imported song (G's Music, sbaudio.js): as a picture's, kept hidden until the last part is in; then
+     s.sbsong[h] = { n: its name, l: its seconds, d: its text } */
+  if (a.k === "song") {
+    const h = String(a.h || ""),
+      of = Math.floor(+a.of),
+      n = Math.floor(+a.n),
+      all = s.sbsong || {},
+      l = Math.min(SONG.MOST_S, Math.max(0, +a.l || 0));
+    if (!/^[a-z0-9]{1,24}$/.test(h) || all[h]) return false;
+    if (!(of >= 1 && of <= SB_SONG.PARTS && n >= 0 && n < of)) return false;
+    if (typeof a.d !== "string" || a.d.length > SB_PIC.PART) return false;
+    if (Object.keys(all).length >= SB_SONG.KEEP || !(l > 0)) return false;
+    const hid = s.hidden || {},
+      up = { ...(hid.sbsup || {}) },
+      parts = [...(up[h] || [])];
+    parts[n] = a.d;
+    up[h] = parts;
+    if (parts.filter((x) => typeof x === "string").length === of) {
+      const d = parts.join("");
+      delete up[h];
+      if (/^[A-Za-z0-9+/]+=*$/.test(d) && d.length <= songChars(l))
+        s.sbsong = {
+          ...all,
+          [h]: {
+            n: String(a.nm || "My song").slice(0, SONG.NAME) || "My song",
+            l,
+            d,
+          },
+        };
+    }
+    s.hidden = { ...hid, sbsup: up };
+    return true;
+  }
+  if (a.k === "songrm") {
+    const all = { ...(s.sbsong || {}) };
+    if (!all[a.h]) return false;
+    delete all[a.h];
+    s.sbsong = all;
     return true;
   }
   /* the Seriat files a Brain box names (and the files they use), sent by the player who set it: sbnumberat.js */

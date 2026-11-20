@@ -1,5 +1,6 @@
 /* ---------- the start: settings on the page, the background, the jump counter, the first screen ---------- */
 import "./pointer.js"; // (first: a computer or a phone, before anything asks)
+import "./upbar.js"; // (the green bar on every upload button)
 import { applySettings, askConnection } from "./settings.js";
 import { floorCanvas } from "./art.js";
 import { mountWorld } from "./pxmap.js";

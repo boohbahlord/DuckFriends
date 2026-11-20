@@ -101,7 +101,7 @@ export const SB_SHEET = [
   ],
   [
     "G",
-    "Game settings for this Sandbox: Save and Save as (the host's, kept on the host's device; it also saves itself every minute), and the Music: which songs play, or none. Groups: what joins them and what joining does.",
+    "Game settings for this Sandbox: Save and Save as (the host's, kept on the host's device; it also saves itself every minute), and the Music: which songs play, or none, and your own songs brought in. Groups: what joins them and what joining does.",
   ],
   [
     "P",

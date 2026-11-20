@@ -125,7 +125,8 @@ export function sbRekey(s, only) {
     );
     if (!to) continue;
     for (const k of Object.keys(s))
-      if (isPart(k) && k !== "sbpic") s[k] = swap(s[k], old, to.id); // (the pictures hold no players)
+      if (isPart(k) && k !== "sbpic" && k !== "sbsong")
+        s[k] = swap(s[k], old, to.id); // (the pictures and songs hold no players)
     delete who[old];
   }
 }

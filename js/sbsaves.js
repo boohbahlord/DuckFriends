@@ -25,7 +25,10 @@ import {
 import { mapName, mapForm } from "./maps.js";
 import { sbSnapshot, newSaveId, SAVE_V, oldPics } from "./sbsave.js";
 import { lobbyBtnHTML } from "./vote.js";
-import { music, allowSongs, allowedSongs } from "./music.js";
+import { music, allowSongs, allowedSongs, songsOf } from "./music.js";
+import { songFrom, songKey, SONG } from "./sbaudio.js";
+import { upBar } from "./upbar.js";
+import { SB_PIC, SB_SONG } from "./sbspawn.js";
 import { sfx } from "./sound.js";
 import {
   saveModeWin,
@@ -325,40 +328,89 @@ export function saveRows(R) {
     rows.push({ label: "Test game mode", act: (r) => startTest(r) }); // (as players would see it; Stop test at the top left)
   const on = allowedSongs(s); // (Miles Jr.'s song list, music.js: only these play, and everyone hears the same)
   rows.push({
-    label: `Music: ${on.length ? `${on.length} of ${music.tracks.length} songs` : "no music"}…`,
+    label: `Music: ${on.length ? `${on.length} of ${music.tracks.length + songsOf(s).size} songs` : "no music"}…`,
     win: true,
     act: (r) => musicWin(r),
   }); // (its own window: the owner's, Nov 20 04:44Z, "music settings among others in game settings are a window that pops up")
   return rows;
 }
-/* G's Music: every song with its tick, and all on or off at once; only the ticked ones play */
+/* G's Music: every song with its tick, and all on or off at once; only the ticked ones play. Import a song brings one of
+   the player's own (the owner's, Nov 20 18:46Z): made small on this device (sbaudio.js), with a green bar on the button
+   while it's made and sent; an imported one can be taken out again (×) */
 function musicWin(R) {
   if (document.querySelector(".sb-musicwin")) return;
   const draw = (w) => {
     const on = allowedSongs(R.state),
-      all = music.tracks;
+      mine = songsOf(R.state),
+      all = [...music.tracks, ...mine.keys()];
     w.querySelector(".sb-musiclist").innerHTML = all
-      .map(
-        (n) =>
-          `<label class="sb-song"><input type="checkbox" data-song="${esc(n)}"${on.includes(n) ? " checked" : ""}> ${esc(n)}</label>`,
-      )
+      .map((n) => {
+        const m = mine.get(n);
+        return `<div class="sb-song"><label><input type="checkbox" data-song="${esc(n)}"${on.includes(n) ? " checked" : ""}> ${esc(n)}</label>${m ? `<span class="small dim">${Math.floor(m.e.l / 60)}:${String(Math.round(m.e.l % 60)).padStart(2, "0")}</span><button type="button" class="btn ghost small sb-songx" data-songrm="${esc(m.key)}" aria-label="Take out ${esc(n)}">×</button>` : ""}</div>`;
+      })
       .join("");
     w.querySelector("[data-all]").textContent = on.length
       ? "Turn all off"
       : "Turn all on";
+    const full = mine.size >= SB_SONG.KEEP;
+    w.querySelector(".sb-songup").classList.toggle("off", full);
+    w.querySelector("[data-songup]").disabled = full;
   };
   return openWindow(
-    `<h2>Music</h2><p class="small dim">Only the ticked songs play, the same for everyone. The save keeps the list.</p><p class="acts"><button type="button" class="btn small" data-all></button></p><div class="sb-musiclist"></div>`,
+    `<h2>Music</h2><p class="small dim">Only the ticked songs play, the same for everyone. The save keeps the list.</p><p class="acts"><button type="button" class="btn small" data-all></button><label class="btn small ghost sb-songup">Import a song<input type="file" accept="audio/*,.mp3,.ogg,.wav,.m4a,.flac,.opus,.webm" hidden data-songup data-nobar></label></p><p class="small dim sb-songnote">3 minutes at most, made small (32 kbps, one channel). Only music you have the right to use.</p><div class="sb-musiclist"></div>`,
     {
       cls: "win-small sb-musicwin",
       onOpen(w) {
         draw(w);
-        w.addEventListener("change", (e) => {
+        w.addEventListener("change", async (e) => {
+          const up = e.target.closest("[data-songup]");
+          if (up) {
+            const f = up.files && up.files[0];
+            up.value = "";
+            if (!f) return;
+            const bar = upBar(up);
+            try {
+              const song = await songFrom(f, (p) => bar.set(p * 0.85));
+              const h = songKey(song.d),
+                parts = Math.ceil(song.d.length / SB_PIC.PART);
+              for (let i = 0; i < parts; i++) {
+                R.send({
+                  t: "sb",
+                  k: "song",
+                  h,
+                  n: i,
+                  of: parts,
+                  nm: song.n,
+                  l: song.l,
+                  d: song.d.slice(i * SB_PIC.PART, (i + 1) * SB_PIC.PART),
+                });
+                bar.set(0.85 + ((i + 1) / parts) * 0.15);
+                await new Promise((r) => setTimeout(r, 30));
+              }
+              bar.done();
+              toast(
+                song.l >= SONG.MOST_S - 0.5
+                  ? `${song.n}: in, cut to 3 minutes.`
+                  : `${song.n}: in.`,
+              );
+            } catch (err) {
+              bar.done();
+              toast(err.why || "That song couldn't be brought in.");
+            }
+            setTimeout(() => w.isConnected && draw(w), 300);
+            return;
+          }
           const c = e.target.closest("[data-song]");
           if (!c) return;
           const on = allowedSongs(R.state),
             n = c.dataset.song;
           allowSongs(c.checked ? [...on, n] : on.filter((x) => x !== n));
+          setTimeout(() => w.isConnected && draw(w), 150);
+        });
+        w.addEventListener("click", (e) => {
+          const x = e.target.closest("[data-songrm]");
+          if (!x) return;
+          R.send({ t: "sb", k: "songrm", h: x.dataset.songrm });
           setTimeout(() => w.isConnected && draw(w), 150);
         });
         w.querySelector("[data-all]").onclick = () => {
