@@ -109,10 +109,13 @@ if ("serviceWorker" in navigator && isSecureContext)
   navigator.serviceWorker
     .register("sw.js", { updateViaCache: "none" })
     .catch(() => {});
-loadingScreen({ duck: profile.duck, ready: pageReady }); // (the page's own loading screen, in index.html, goes when the first screen is drawn)
+const firstUp = pageReady();
+loadingScreen({ duck: profile.duck, ready: () => firstUp, max: 90000 }); // (the page's own loading screen, in index.html, goes when the first screen is drawn, its pictures in: never after a fixed time)
 document.getElementById("lite-link")?.remove(); // (the light install link on the page's loading screen: the game came, so it goes)
-/* the rest of the game (the rooms, the lobby, the game, every mode's rules), now that the first screen is up: later.js */
-rest();
+/* the rest of the game (the rooms, the lobby, the game, every mode's rules), once the first screen is up with its
+   pictures in: later.js. Before, it was asked for at once, and on a slow line its code took the line from the start
+   screen's pictures (the owner's, Nov 20 20:31Z). A press before then asks for it at once (router.js) */
+firstUp.then(rest);
 setTimeout(accountStart, 300);
 setTimeout(askConnection, 600); // once, on the first visit   // a device that signed in before connects after the first screen is up
 
