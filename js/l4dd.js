@@ -145,7 +145,7 @@ import { DROP_ICONS } from "./l4dddrops.js";
 import { popHP } from "./hpmeter.js";
 import { fxHitAt, fxEye, heavyOff, fxSparks, fxSteam } from "./fx.js";
 import { vibrate, hitPx, HIT, again } from "./fxmotion.js";
-import { pixelOn, gridPx, snap, raster, rasterReady } from "./pixel.js";
+import { pixelOn, gridPx, raster, rasterReady } from "./pixel.js";
 import { olAdd, olFloor, olRoofed, olPic, DROP_OL } from "./outlines.js";
 import { confirmBox } from "./ui.js";
 import { angelOf, ANGEL } from "./l4ddangel.js";
@@ -428,8 +428,6 @@ let butler = null,
   upSig = "",
   slotSig = "";
 
-/* the pixel look (pixel.js): a place on the screen on the grid, so things' pixels line up with the map's and the ducks' */
-const at = (v) => (pixelOn() ? snap(v).toFixed(2) : v.toFixed(1));
 /* a picture's short name (its text's hash), made once for each picture: the same text (every zombie that looks the
    same) is hashed once, not once for each of them */
 const UK = new Map();
@@ -816,8 +814,9 @@ function spinSquare(s, ctx) {
         [-1, 1],
       ]
         .map(([a, b]) => {
-          const p = Wd.toScreen(a < 0 ? x0 : x1, b < 0 ? y0 : y1, z);
-          return p.left.toFixed(1) + "," + p.top.toFixed(1);
+          const p = Wd.toScreen(a < 0 ? x0 : x1, b < 0 ? y0 : y1, z),
+            [x, y] = Wd.local(p.left, p.top); // (it's in the world's box: world.js)
+          return x.toFixed(1) + "," + y.toFixed(1);
         })
         .join(" ");
     sig += "|" + pts;
@@ -853,7 +852,7 @@ function seePool(s, ctx) {
     sig = `${p.left.toFixed(1)} ${p.top.toFixed(1)} ${(Wd.sc * grow).toFixed(3)}`;
   if (sig === poolSig) return;
   poolSig = sig;
-  poolEl.style.transform = `translate(${p.left.toFixed(1)}px, ${p.top.toFixed(1)}px) scale(${(Wd.sc * grow).toFixed(3)})`;
+  poolEl.style.transform = `${Wd.boxTr(p.left, p.top)} scale(${(Wd.sc * grow).toFixed(3)})`;
   poolEl.style.zIndex = a.z < 1 ? 3 : Math.round(sortY(a.x, a.y - 30, a.z)); // (on the floor under the ducks; on a roof, just under him)
 }
 /* Instant Kill, Double Points, Speed Boost and Sale: each one on, by name with the seconds it has left, in a row at the
@@ -1287,7 +1286,7 @@ function flareDraw(ctx, now) {
   if (flareEl.hidden) flareEl.hidden = false;
   const p = Wd.toScreen(FLARE.x, FLARE.y, STATION.wall + 4),
     left = (now - bellStrikes()[0]) / FLARE_MS; // (0 lit … 1 out)
-  flareEl.style.transform = `translate(${p.left.toFixed(1)}px, ${p.top.toFixed(1)}px)`;
+  flareEl.style.transform = Wd.boxTr(p.left, p.top);
   flareEl.style.setProperty("--k", Wd.sc.toFixed(3));
   flareEl.style.setProperty(
     "--f",
@@ -1741,7 +1740,7 @@ function drawMerchant(ctx, t) {
   if (butler.el.hidden !== hide) butler.el.hidden = hide;
   mHurt(s, m, dead, p, sc, hide);
   if (hide) return;
-  const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
+  const tr = Wd.boxTr(p.left, p.top);
   if (butler.tr !== tr || butler.dz !== dead) {
     butler.tr = tr;
     butler.dz = dead;
@@ -1863,7 +1862,7 @@ function drawCorpses(ctx) {
         !Wd.onView(p.left - 60, p.top - 140, 120, 160);
     if (o.el.hidden !== hide) o.el.hidden = hide;
     if (hide) continue;
-    const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
+    const tr = Wd.boxTr(p.left, p.top);
     if (o.tr !== tr) {
       o.tr = tr;
       o.el.style.transform = tr;
@@ -2017,7 +2016,7 @@ function drawEgg(ctx, now) {
     !on || !Wd.inside || !Wd.onView(p.left - 40, p.top - 90, 80, 110);
   if (egg.el.hidden !== hide) egg.el.hidden = hide;
   if (hide) return;
-  const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
+  const tr = Wd.boxTr(p.left, p.top);
   if (egg.tr !== tr) {
     egg.tr = tr;
     egg.el.style.transform = tr;
@@ -2096,7 +2095,7 @@ function drawBox(ctx) {
       !Wd.onView(p.left - 60, p.top - 80, 120, 140);
   if (boxEl.hidden !== hide) boxEl.hidden = hide;
   if (hide) return;
-  const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
+  const tr = Wd.boxTr(p.left, p.top);
   if (boxEl._tr !== tr) {
     boxEl._tr = tr;
     boxEl.style.transform = tr;
@@ -2655,7 +2654,7 @@ activity({
     cv = document.createElement("canvas");
     cv.className = "hang-dark l4-dark";
     cv.setAttribute("aria-hidden", "true");
-    ctx.world.board.querySelector(".hang-shade")?.after(cv);
+    ctx.world.board.querySelector(".hang-world")?.after(cv);
     g = cv.getContext("2d");
     hud = document.createElement("div");
     hud.className = "l4-hud";
@@ -2939,7 +2938,7 @@ activity({
         o.olOnly = olOnly;
         o.el.classList.toggle("ol-only", olOnly);
       }
-      const tr = `translate(${at(f.left)}px, ${at(f.top + dip * sc)}px)`;
+      const tr = Wd.boxTr(f.left, f.top + dip * sc);
       if (o.tr !== tr) {
         o.tr = tr;
         o.el.style.transform = tr;
@@ -3017,7 +3016,7 @@ activity({
           );
       if (b.el.hidden !== hide) b.el.hidden = hide;
       if (hide) continue;
-      const tr = `translate(${at(p.left + b.box.l * sc)}px, ${at(p.top + b.box.t * sc)}px) scale(${sc.toFixed(4)})`;
+      const tr = `${Wd.boxTr(p.left + b.box.l * sc, p.top + b.box.t * sc)} scale(${sc.toFixed(4)})`;
       const on = beat.has(o.id);
       if (b.tr !== tr || b.on !== on) {
         b.tr = tr;
@@ -3037,7 +3036,7 @@ activity({
       if (o.el.hidden !== hide) o.el.hidden = hide;
       if (onCam) dropOutline(Wd, o, p, sc, unseen, myFloor); // (out of sight too: then its line only)
       if (hide) continue;
-      const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
+      const tr = Wd.boxTr(p.left, p.top);
       if (o.tr !== tr) {
         o.tr = tr;
         o.el.style.transform = tr;

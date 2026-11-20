@@ -481,8 +481,16 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
       a = S.querySelector(".jumps-slot, .bbar");
     bible.hidden = !R || !isSb(R.state) || !!k.open || windowOpen() || !a;
     if (bible.hidden) return;
-    const top =
-      Math.round(a.getBoundingClientRect().top - bible.offsetHeight - 6) + "px";
+    /* on the zombie worlds the minimap sits there too: the button goes above it (UI never overlaps) */
+    const map = document.querySelector(".l4-map"),
+      mr = map && !map.hidden && map.getBoundingClientRect(),
+      over = mr && mr.height > 0 && mr.top < a.getBoundingClientRect().top,
+      top =
+        Math.round(
+          (over ? mr.top : a.getBoundingClientRect().top) -
+            bible.offsetHeight -
+            6,
+        ) + "px";
     if (bible.style.top !== top) {
       bible.style.top = top;
       bible.style.bottom = "auto";

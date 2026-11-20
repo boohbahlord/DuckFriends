@@ -74,12 +74,10 @@ activity({
           ? [...W.board.querySelectorAll(".hg-porch")]
           : W.propEls(t);
       for (const e of els)
-        for (const g of t === "porch"
-          ? [e]
-          : e.querySelectorAll(".hg-flicker")) {
-          if (dim) g.style.setProperty("opacity", DIP, "important");
-          else g.style.removeProperty("opacity");
-        }
+        if (t === "porch") {
+          if (dim) e.style.setProperty("opacity", DIP, "important");
+          else e.style.removeProperty("opacity");
+        } else e.classList.toggle("dim", dim); // (its lantern's glow dips: css .hp.dim, a look of its own in the pixel files, pxworld.js)
     }
   },
 });

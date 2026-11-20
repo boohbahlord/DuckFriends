@@ -514,6 +514,7 @@ const GS_DRAW = {
         img: true,
         part: "bell",
         frames: frame,
+        nframes: SA.BELL_ANGLES.length, // (each step made into pixels ahead of time: pxworld.js)
       }),
     ];
   },

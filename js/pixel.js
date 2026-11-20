@@ -134,7 +134,9 @@ const full = (key, w, h) => {
 const asURL = (src) =>
   src.trimStart().startsWith("<") ? svgDataURL(src) : src;
 
-async function make(fk, src, cw, ch) {
+/* a picture (an SVG string or an image's URL) made into cw × ch pixels in the game's colors: a canvas. The game makes
+   them ahead of time with it too (tools/pixel-world.cjs), so the files come out as the game would make them */
+export async function pxCanvas(src, cw, ch) {
   const img = new Image();
   img.decoding = "async";
   img.src = asURL(src);
@@ -147,6 +149,10 @@ async function make(fk, src, cw, ch) {
   x.imageSmoothingQuality = "high"; // (each pixel the average of what it covers, as in the samples)
   x.drawImage(img, 0, 0, cw, ch);
   x.putImageData(applyPalette(x.getImageData(0, 0, cw, ch)), 0, 0);
+  return c;
+}
+async function make(fk, src, cw, ch) {
+  const c = await pxCanvas(src, cw, ch);
   const blob = await new Promise((f) => c.toBlob(f));
   const url = URL.createObjectURL(blob);
   made.set(fk, url);
