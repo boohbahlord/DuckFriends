@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v167",
+    version: 167,
+    date: "Nov 20, 2026",
+    title: "Groups back in Build",
+    news: [
+      "For Sandbox: Groups are in Build (B) again, under Zone, as asked; My lists is in both Build and Game settings.",
+    ],
+  },
+  {
     id: "v166",
     version: 166,
     date: "Nov 20, 2026",

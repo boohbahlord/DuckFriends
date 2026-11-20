@@ -237,7 +237,10 @@ const BRAIN_ROW = {
 };
 const OPTIONS = {
   c: [],
-  b: (R) => [...buildRows(R), helpRow("b")], // (B lists only Zone: the owner's, Nov 20 02:37Z, "Zone is the only thing left")
+  /* B: Zone (the owner's, Nov 20 02:37Z: "Zone is the only thing left of those original four", spawn, respawn, loot and
+     zone), then Groups, which was never one of the four (Nov 19: "In the build mode, there's another option besides
+     zones ... called groups") */
+  b: (R) => [...buildRows(R), ...groupRows(R), helpRow("b")],
   m: (R) => {
     const rows = npcRows(R);
     return [
@@ -252,8 +255,7 @@ const OPTIONS = {
   n: [],
   h: (R) => [...hotRows(R, openPut), helpRow("h")],
   g: (R) => {
-    const gr = groupRows(R); // (Groups and My lists: sbgroupview.js; in G, as B lists only Zone)
-    return [...saveRows(R), ...(gr.length ? gr : [listsRow]), helpRow("g")]; // (Save, Save as, Make a map and Music: sbsaves.js)
+    return [...saveRows(R), listsRow, helpRow("g")]; // (Save, Save as, Make a map and Music: sbsaves.js; My lists: sbgroupview.js)
   },
   p: pRows,
 };
