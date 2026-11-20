@@ -9,6 +9,24 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v176",
+    version: 176,
+    date: "Nov 20, 2026",
+    title: "More old console colors",
+    news: [
+      "For every mode: Carnival Night, Starry Night, Shelter Sky & Null and The King's Festival are drawn within an old console's limits too.",
+    ],
+  },
+  {
+    id: "v175",
+    version: 175,
+    date: "Nov 20, 2026",
+    title: "Old console colors",
+    news: [
+      "For every mode: Night Show, Sky and Pixel use limited colors, like an old console.",
+    ],
+  },
+  {
     id: "v174",
     version: 174,
     date: "Nov 20, 2026",

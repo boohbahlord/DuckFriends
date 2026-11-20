@@ -201,13 +201,19 @@ function skyScene(layer, s, cur) {
         },
         `;animation-delay:-${(rnd() * 3).toFixed(1)}s`,
       ),
-  ).join(
-    "",
-  )}</div><div class="sky-sun">${pic(SKY.sun)}</div><div class="sky-moon">${pic(SKY.moon)}</div>${clouds}`;
+  ).join("")}</div>${[
+    ["sky-sun", SKY.sun],
+    ["sky-moon", SKY.moon],
+  ]
+    .map(
+      ([c, p]) =>
+        `<div class="${c}">${pic(p)}</div>${p.glow ? `<div class="${c}" style="mix-blend-mode:plus-lighter">${pic({ ...p, src: p.glow })}</div>` : ""}`,
+    )
+    .join("")}${clouds}`; // (a glow on its own, added to the sky under it as the era did: tools/era.py)
   const sky = st.querySelector(".sky-px").getContext("2d"),
     stars = st.querySelector(".sky-stars"),
-    sun = st.querySelector(".sky-sun"),
-    moon = st.querySelector(".sky-moon");
+    sun = st.querySelectorAll(".sky-sun"),
+    moon = st.querySelectorAll(".sky-moon");
   /* the sky's colors from top to bottom, a pixel for each row of the world's (as css's linear-gradient mixes them) */
   const paint = (top, bot) => {
     const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)),
@@ -232,9 +238,10 @@ function skyScene(layer, s, cur) {
       const key = Math.round(now / 200);
       if (key === last) return;
       last = key;
-      (day ? sun : moon).style.transform =
-        `translate(${at(x / 100, W)}px, ${at(y / 100, H)}px)`;
-      (day ? moon : sun).style.transform = `translate(0, ${-0.4 * H}px)`;
+      for (const e of day ? sun : moon)
+        e.style.transform = `translate(${at(x / 100, W)}px, ${at(y / 100, H)}px)`;
+      for (const e of day ? moon : sun)
+        e.style.transform = `translate(0, ${-0.4 * H}px)`;
       // the sky: blue by day, warm as the sun sets, deep blue at night (and lighter again as the moon sets)
       const top = day
         ? p < 0.6
@@ -552,8 +559,10 @@ function starsScene(layer) {
   cv.height = H;
   sc.stage.append(cv);
   const x = cv.getContext("2d"),
-    sky = new Image();
+    sky = new Image(),
+    glow = STARS.skyGlow && new Image();
   sky.src = STARS.sky;
+  if (glow) glow.src = STARS.skyGlow;
   /* the night behind, and the air thickening toward the bottom over it: a pixel for each row of the world's */
   const rows = (stops) => {
     const c = document.createElement("canvas");
@@ -634,6 +643,11 @@ function starsScene(layer) {
     x.setTransform(1, 0, 0, 1, ox, oy);
     x.rotate(a);
     x.drawImage(sky, -R, -R);
+    if (glow) {
+      x.globalCompositeOperation = "lighter"; // (its glow added to the night, as the era did: tools/era.py)
+      x.drawImage(glow, -R, -R);
+      x.globalCompositeOperation = "source-over";
+    }
     x.setTransform(1, 0, 0, 1, 0, 0);
     const ca = Math.cos(a),
       sa = Math.sin(a);

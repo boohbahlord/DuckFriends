@@ -4,6 +4,7 @@ export default {
   H: 768,
   G: 2,
   sky: "assets/px/mapw/stars/stars-sky.webp",
+  skyGlow: "assets/px/mapw/stars/stars-sky-glow.webp",
   R: 623,
   pole: [341.5, -134.4],
   base: 0.152,
