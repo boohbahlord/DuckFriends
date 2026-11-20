@@ -505,7 +505,29 @@ function nowPlaying() {
   };
 }
 
+/* ---------- which songs the room may play (Sandbox's Music setting; the owner, Nov 19 23:47Z: "a game setting to
+   determine what music ends up in the game, if any at all... select those tracks") ----------
+     allowSongs(list)   from a settings row: only the songs named in list play, shuffled as ever and the same for
+                        everyone (the rest go on the room's off list, s.music.off: rules.js "songs"); an empty list: no
+                        music; no list (null or undefined): every song. The host, sudo or cansettings only (rules.js).
+     allowedSongs(s)    the songs room state s may play now (the row's ticks) */
+export function allowSongs(list) {
+  const r = activeRoom();
+  if (!r) return false;
+  const on = Array.isArray(list)
+    ? names.filter((n) => list.includes(n))
+    : names;
+  r.send({ t: "songs", on, off: names.filter((n) => !on.includes(n)) });
+  return true;
+}
+export function allowedSongs(s) {
+  const off = new Set((s && s.music && s.music.off) || []);
+  return names.filter((n) => !off.has(n));
+}
+
 export const music = {
+  allowSongs,
+  allowedSongs,
   sync,
   hush,
   setMuffle,
