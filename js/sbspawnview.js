@@ -1350,7 +1350,15 @@ activity({
         ? {
             /* in a zone whose Outlines take it: that row's color (sandboxrules.js sbOlColor) */
             ol: (o, z, f, unseen, h, sc) => {
-              const c = sbOlColor(s, { k: o.k, sp: o.sp }, z.x / W, z.y / H, h, W, H);
+              const c = sbOlColor(
+                s,
+                { k: o.k, sp: o.sp },
+                z.x / W,
+                z.y / H,
+                h,
+                W,
+                H,
+              );
               if (c)
                 olAdd({
                   id: "sbz" + o.i,

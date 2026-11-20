@@ -245,18 +245,18 @@ export function olDraw(host, W, H, now = performance.now()) {
     let a = zone
       ? 0.95
       : drop
-      ? o.hidden
-        ? 0.95
-        : 0.6
-      : o.hidden
-        ? zombie
-          ? 0.85
-          : away > 0
-            ? 0.55 // (above me: fainter)
-            : 0.9
-        : zombie
-          ? 0.85
-          : 0.14; // (nothing hides it: very faint)
+        ? o.hidden
+          ? 0.95
+          : 0.6
+        : o.hidden
+          ? zombie
+            ? 0.85
+            : away > 0
+              ? 0.55 // (above me: fainter)
+              : 0.9
+          : zombie
+            ? 0.85
+            : 0.14; // (nothing hides it: very faint)
     if (hit) a = blink ? 1 : 0.15;
     const kind =
         o.kind +

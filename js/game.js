@@ -1886,24 +1886,24 @@ function drawDucks(now = clockNow()) {
       olKind = olZone
         ? olZone
         : !ol || sbOnBoard(s)
-        ? ""
-        : isMgj(s)
-          ? id === GOOD_ID
-            ? "justin"
-            : olP && id !== JUSTIN_ID
-              ? olMine
-                ? "me"
-                : "ally"
-              : ""
-          : olP
-            ? olP.helper || olP.wild
-              ? dead
-                ? "" // (dead, no outline round him: the owner's, Nov 19 19:27Z "when he dies, there's no outline around his character")
-                : "justin" // (Dead Ducks Arcade's Justins: the helper from the fireplace, and Downpour's, out there)
-              : olMine
-                ? "me"
-                : "ally"
-            : "";
+          ? ""
+          : isMgj(s)
+            ? id === GOOD_ID
+              ? "justin"
+              : olP && id !== JUSTIN_ID
+                ? olMine
+                  ? "me"
+                  : "ally"
+                : ""
+            : olP
+              ? olP.helper || olP.wild
+                ? dead
+                  ? "" // (dead, no outline round him: the owner's, Nov 19 19:27Z "when he dies, there's no outline around his character")
+                  : "justin" // (Dead Ducks Arcade's Justins: the helper from the fireplace, and Downpour's, out there)
+                : olMine
+                  ? "me"
+                  : "ally"
+              : "";
     /* a duck lying dead: where the middle of its body is on the board, as css lays it down (.gduck-body: rotate(-100deg)
        translateY(-12%) round the bottom middle of its body; DOWN_TURN). Its outline's arrow goes in it, what hides it is
        looked for there, and its pool of blood spreads under it (a duck lies a little to the side of where it stood: the
