@@ -367,7 +367,6 @@ import {
 import {
   isMgj,
   MGJ_ZAP,
-  MGJ_POD,
   mgjFrozen,
   mgjGone,
   mgjSpawning,
@@ -3074,18 +3073,13 @@ const POD_H = 0.8;
 const podUp = (s, now) =>
   isDn(s) && s.phase === "dunced"
     ? Math.max(0, Math.min(1, (now - s.at - DN_PODIUM) / 450))
-    : isMgj(s) && s.phase === "mgjend" && s.mgj && s.mgj.won
-      ? Math.max(0, Math.min(1, (now - s.at - 400) / 450))
-      : 0; // (Mad God Justin: his, as he loses)
-const podLift = (s, id, now) =>
-  isDefender(s, id) || (id === JUSTIN_ID && isMgj(s))
-    ? podUp(s, now) * POD_H
     : 0;
+const podLift = (s, id, now) => (isDefender(s, id) ? podUp(s, now) * POD_H : 0);
 function placePodium(board, now) {
   const pod = board.querySelector(".dn-podium");
   if (!pod || !geo) return;
   const s = R.state,
-    c = place(isMgj(s) ? MGJ_POD : { x: 0.5, y: 0.5 }, 0, 1),
+    c = place({ x: 0.5, y: 0.5 }, 0, 1),
     up = podUp(s, now),
     w = geo.size * 2,
     h = geo.size * (POD_H + 0.14);
@@ -5633,7 +5627,7 @@ async function announce(phase) {
 const PICK_NAMES = Object.fromEntries(
   PICK_WEAPONS.map((k) => [k, weaponName(k)]),
 ); // (as Quacky Zombies names them)
-/* Mad God Justin: "Defeat Justin!" as the fight starts; then he's defeated (and a LOSER), or time's up */
+/* Mad God Justin: "Defeat Justin!" as the fight starts; then he's defeated, or time's up */
 async function announceMgj(s, phase) {
   const job = ++sayJob;
   if (phase === "boss") {
@@ -5649,13 +5643,7 @@ async function announceMgj(s, phase) {
   }
   sfx.done();
   confettiRain(5000);
-  say("Justin is DEFEATED!");
-  await pause(3400);
-  if (job !== sayJob) return;
-  unsay();
-  await pause(650);
-  if (job !== sayJob) return;
-  say("LOSER!");
+  say("Justin defeated");
 }
 /* Duncelation: the cloud asks "Dunce or Not?" as a take starts; the verdict; the dunce */
 async function announceDunce(s, phase) {
