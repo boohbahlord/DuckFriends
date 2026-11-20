@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v153",
+    version: 153,
+    date: "Nov 20, 2026",
+    title: "Loot that keeps coming",
+    news: [
+      "For Sandbox: a Loot tab has a Spawning section. Pick when it starts (the game starting, a player stepping into its zone, or something spawning there). Auto spawn replaces Comes back. Continuous spawn lays one every few seconds. A spawn limit sets how many lie on the map at once, and a loot limit sets how many come in the whole game. Who can take it works like a wall's list, groups included. Every player gets their own gives each player their own copy.",
+      "For Sandbox: Game settings has a loot limit for the whole map.",
+    ],
+  },
+  {
     id: "v152",
     version: 152,
     date: "Nov 20, 2026",

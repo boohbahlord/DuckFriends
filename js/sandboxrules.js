@@ -136,6 +136,15 @@ export const SB_RULES = {
     own: true, // ("own": each weapon's own chance)
     file: true,
   },
+  /* plan, Loot 1: "Loot limit ... G has the same limit for the whole map": the most orbs every loot block together lays
+     in a whole game */
+  lootmax: {
+    name: "Loot limit on the whole map (0: none)",
+    kind: "int",
+    min: 0,
+    max: 1000,
+    def: "0",
+  },
   gore: { name: "gore", kind: "bool", def: "t", file: true },
   most: {
     name: "player limit",
@@ -1475,8 +1484,17 @@ export const SB_LOOT = {
        click a loot tab, it does not spawn the loot in it automatically") */
     def: "",
   },
+  /* plan, Loot 1 (the owner's, Nov 19 22:57Z: "There should be an auto spawn for loot instead of comes back. There can be
+     a continuous spawn. There can be a spawn limit ... There should be a limit on loot"): when it starts, then Auto spawn
+     (a new one its time after one is taken), Continuous spawn and Seconds between spawns, Spawn limit (SB_BOXES, SB_FLAGS:
+     the same boxes as a spawn's), the Loot limit, who can take it and whether every player gets their own */
+  lst: {
+    name: "Starts",
+    check: (t) => (SB_LOOT_STARTS[String(t).trim()] ? "" : "Pick when"),
+    def: "start",
+  },
   again: {
-    name: "Seconds before it comes back",
+    name: "Seconds before a new one comes",
     kind: "int",
     min: 1,
     max: 600,
@@ -1496,13 +1514,29 @@ export const SB_LOOT = {
     max: 100,
     def: "0",
   },
-  back: { name: "Comes back", kind: "bool", def: "t" },
+  back: { name: "Auto spawn", kind: "bool", def: "t" }, // (its key is still "back", so older saves keep theirs)
+  llim: {
+    name: "Loot limit (0: none)",
+    kind: "int",
+    min: 0,
+    max: 1000,
+    def: "0",
+  }, // (the most this block lays in a whole game; G has one for the whole map, SB_RULES lootmax)
+  ltake: listBox("Who can take it", "players"), // (Players, Everything, a kind, a spawn, a player's name, a group: sbWhoTakes)
+  lown: { name: "Every player gets their own", kind: "bool", def: "f" }, // (off: the first to reach it takes it)
   inf: { name: "Unlimited ammo", kind: "bool", def: "f" },
   look: {
     name: "Looks like",
     check: (t) => (String(t).length <= 24 ? "" : "24 letters at most"),
     def: "",
   },
+};
+/* when a loot block starts laying orbs (plan, Loot 1: "Starts: at the start of the game, or on an event ... a player
+   steps into the zone, an entity spawns"): its zone is the one its tab answers to, or its own shape */
+export const SB_LOOT_STARTS = {
+  start: "Game starts",
+  enter: "Player steps in",
+  spawn: "Something spawns",
 };
 /* the zombies' special drops an orb can hold (l4ddrules.js DROPS): on Dead Ducks Arcade's maps only, for now (on the
    others nothing would use them yet) */

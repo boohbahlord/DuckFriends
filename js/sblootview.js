@@ -3,7 +3,14 @@
    picture it was given), and the orb's part of its settings window (sbspawnview.js sbSettings): what it holds, "a
    dropdown menu with drop down arrows PER category of loot", its numbers, how it looks, and a picture of 2 MB at most */
 import { esc, toast } from "./ui.js";
-import { SB_LOOT, SB_DROPS, SB_GEAR, SB_FLAGS } from "./sandboxrules.js";
+import {
+  SB_LOOT,
+  SB_LOOT_STARTS,
+  SB_DROPS,
+  SB_GEAR,
+  SB_FLAGS,
+  SB_BOXES,
+} from "./sandboxrules.js";
 import { boxText } from "./sbspawn.js";
 import { lootOk } from "./sbloot.js";
 import { LOOT, lootOf } from "./sbhotview.js";
@@ -36,7 +43,7 @@ export function lootCats(s) {
 /* an orb's own picture (a data URL), or "" */
 const picOf = (s, id) => ((s.sbpic || {})[(s.sbImg || {})[id]] || {}).d || "";
 /* an orb's face: its picture, or what it looks like (its own thing, or the one in "Looks like") in an orb of its color */
-export function orbFace(s, id, p) {
+export function orbFace(s, id, p, o = p.orb) {
   const img = picOf(s, id);
   if (img)
     return `<span class="l4orb k-special sb-orb-img"><i><img src="${esc(img)}" alt=""></i></span>`;
@@ -45,7 +52,7 @@ export function orbFace(s, id, p) {
       look &&
       (specialById(look) || ARMS[look] || SB_DROPS[look] || SB_GEAR[look])
         ? look
-        : p.orb.w;
+        : o.w;
   if (w === "flashlight")
     return `<span class="l4orb k-grenade"><i>${ICONS.flashlight(true)}</i></span>`;
   return SB_DROPS[w]
@@ -87,7 +94,7 @@ export function lootRing(c) {
 }
 
 /* ---------- the settings window's part ----------
-   h: sbSettings' own makers { row, flagRow, typed, why, colorRow } */
+   h: sbSettings' own makers { row, flagRow, typed, why, colorRow, sect (a numbered heading), act (a who list) } */
 export function lootPage(s, id, p, h) {
   const picked = boxText(p, "loot")
       .toLowerCase()
@@ -111,13 +118,39 @@ export function lootPage(s, id, p, h) {
         )
         .join("")}</span></details></div>`;
     };
+  const tip = (t) => `<p class="sb-tip sb-rowtip">${esc(t)}</p>`,
+    flag = (f, b, t) =>
+      h.flagRow(f, b, h.typed(f), h.why(f)) + (t ? tip(t) : ""),
+    num = (f, b, t) => h.row(f, b, h.typed(f), h.why(f)) + (t ? tip(t) : ""),
+    when = boxText(p, "lst");
   return `${h.row("name", { name: "Variable name" }, h.typed("name"), h.why("name"))}
     ${h.colorRow}
     ${h.flagRow("hide", SB_FLAGS.hide, h.typed("hide"), h.why("hide"))}
+    ${h.sect("Spawning")}
+    <div class="sb-row" data-row="lst"><span>${esc(SB_LOOT.lst.name)}</span><select class="sb-sel" data-lst>${Object.entries(
+      SB_LOOT_STARTS,
+    )
+      .map(
+        ([v, n]) =>
+          `<option value="${v}"${when === v ? " selected" : ""}>${esc(n)}</option>`,
+      )
+      .join("")}</select></div>
+    ${tip("When the first one comes: at the start, when a player steps into its zone, or when something spawns there.")}
+    ${flag("back", SB_LOOT.back, "A new one comes after one is taken.")}
+    ${num("again", SB_LOOT.again)}
+    ${flag("cont", SB_FLAGS.cont, "A new one every few seconds, taken or not.")}
+    ${num("every", SB_BOXES.every)}
+    ${num("limit", { name: "Spawn limit (0: none)" }, "The most lying on the map at once.")}
+    ${num("llim", SB_LOOT.llim, "The most it lays in the whole game. G has one for the whole map.")}
+    ${h.act("ltake")}
+    ${flag("lown", SB_LOOT.lown, "Off: the first to reach it takes it.")}
+    ${h.sect("What it holds")}
     ${cats.map(drop).join("")}
     <p class="sb-none" data-row="loot">${picked.filter((w) => lootOk(s, w)).length > 1 ? "One of these at random each time." : picked.some((w) => lootOk(s, w)) ? "" : "Nothing comes until you pick something."}</p>
-    ${(drops ? ["again", "hurt"] : ["again", "keep", "hurt"]).map((f) => h.row(f, SB_LOOT[f], h.typed(f), h.why(f))).join("")}
-    ${(drops ? ["back", "inf"] : ["back"]).map((f) => h.flagRow(f, SB_LOOT[f], h.typed(f), h.why(f))).join("")}
+    ${h.sect("When it's taken")}
+    ${(drops ? ["hurt"] : ["keep", "hurt"]).map((f) => num(f, SB_LOOT[f])).join("")}
+    ${drops ? flag("inf", SB_LOOT.inf) : ""}
+    ${h.sect("How it looks")}
     <div class="sb-row"><span>Looks like</span><select class="sb-sel" data-lsel><option value="">Itself</option>${cats
       .map(
         ([n, ws]) =>
@@ -150,6 +183,8 @@ export function lootWire(w, id, send, getR) {
       send({ k: "set", f: "loot", v: all.join(", ") });
       return;
     }
+    if (t.matches("[data-lst]"))
+      return send({ k: "set", f: "lst", v: t.value });
     if (t.matches("[data-lsel]"))
       return send({ k: "set", f: "look", v: t.value });
     if (t.matches("[data-img]")) {

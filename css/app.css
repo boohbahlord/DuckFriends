@@ -20751,6 +20751,10 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .sb-row > span:first-child {
   min-width: 0;
 }
+/* a loot block's Starts: its picks are words, wider than a number box */
+.sb-row[data-row="lst"] {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
 .sb-actrows {
   display: contents; /* (the behavior lists, kept together only so the zombie maps can hide them) */
 }

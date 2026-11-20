@@ -71,6 +71,7 @@ import {
   sbOlRows,
   SB_OL_DEF,
   boardDuck,
+  SB_LOOT,
 } from "./sandboxrules.js";
 import {
   boxText,
@@ -83,6 +84,7 @@ import {
   SB_TEXT,
 } from "./sbspawn.js";
 import { orbFace, lootRing, lootPage, lootWire } from "./sblootview.js";
+import { orbsOf } from "./sbloot.js";
 import { drawNpcs, dropNpcs } from "./npcview.js";
 import { groupOpts, grShown, jgRow } from "./sbgroupview.js";
 import { olAdd } from "./outlines.js";
@@ -386,6 +388,23 @@ function cellsOn(n, s, p, cs) {
   }
   x.globalAlpha = 1;
 }
+/* the orbs of loot block p I see: never a zombie drop (it draws itself: l4dd.js), nor my own copy once I took it
+   (sbloot.js, "Every player gets their own") */
+function seen(p) {
+  const me = activeRoom() && activeRoom().me;
+  return orbsOf(p).filter((o) => o.dn == null && !(o.got || []).includes(me));
+}
+/* orb o of loot block id (point p) as its own mark, key k, where it lies (in a zone) or on its block */
+function orbMark(layer, have, want, k, id, p, o, at, size, s) {
+  const el = markEl(layer, have, k, "sb-pt"),
+    face = o.w + boxText(p, "look") + ((s && s.sbImg) || {})[id];
+  want.add(k);
+  if (el._sig !== face) {
+    el._sig = face;
+    el.innerHTML = `<span class="sb-orb">${orbFace(s, id, p, o)}</span>`;
+  }
+  placeAt(el, at(o.x != null ? { x: o.x, y: o.y, z: o.z || 0 } : p), size);
+}
 /* the points on a layer: at(p) → { left, top } where its middle is (board px), size its width; s: the room's state (a
    loot point's orb and its picture) */
 function drawMarks(layer, pts, at, size, s) {
@@ -395,25 +414,27 @@ function drawMarks(layer, pts, at, size, s) {
   for (const n of layer.querySelectorAll(".sb-pt")) have.set(n.dataset.p, n);
   for (const [id, p] of Object.entries(pts)) {
     if (p.grp) {
-      /* a spawn's + page or a block's tab: drawn as its block, but a Loot tab's orb shows where it lies */
-      if (p.pg === "t" && p.k === "loot" && p.orb && p.orb.dn == null) {
-        const o = markEl(layer, have, id, "sb-pt"),
-          face = p.orb.w + boxText(p, "look") + ((s && s.sbImg) || {})[id];
-        want.add(id);
-        if (o._sig !== face) {
-          o._sig = face;
-          o.innerHTML = `<span class="sb-orb">${orbFace(s, id, p)}</span>`;
-        }
-        placeAt(
-          o,
-          at(p.orb.x != null ? { x: p.orb.x, y: p.orb.y, z: p.orb.z || 0 } : p),
-          size,
+      /* a spawn's + page or a block's tab: drawn as its block, but a Loot tab's orbs show where they lie */
+      if (p.pg === "t" && p.k === "loot")
+        seen(p).forEach((o, i) =>
+          orbMark(
+            layer,
+            have,
+            want,
+            i ? `${id}~o${i}` : id,
+            id,
+            p,
+            o,
+            at,
+            size,
+            s,
+          ),
         );
-      }
       continue;
     }
     const hid = hiddenNow(s, p),
-      orbOut = p.k === "loot" && !!p.orb && p.orb.dn == null;
+      vis = p.k === "loot" ? seen(p) : [],
+      orbOut = vis.length > 0;
     if (p.k === "zone") lookOn(layer, have, want, id, pts, at, size, s); // (its look: everyone sees it, hidden or not)
     if (sbIsFloor(p)) faceOn(layer, have, want, id, pts, at, size, s, seeZones);
     if (hid && !orbOut) continue; // (Hide: a loot point hides its ring and name, never its orb, the owner's "that appearance is hidden")
@@ -443,27 +464,22 @@ function drawMarks(layer, pts, at, size, s) {
         true,
       );
     }
-    const orb = p.k === "loot" && p.orb && p.orb.dn == null, // (a zombie drop draws itself: l4dd.js)
-      face = orb
-        ? p.orb.w + boxText(p, "look") + ((s && s.sbImg) || {})[id]
-        : "",
-      away = orb && p.orb.x != null, // (its orb lies in a zone: drawn there, sbloot.js)
+    const orb = vis[0] || null,
+      face = orb ? orb.w + boxText(p, "look") + ((s && s.sbImg) || {})[id] : "",
+      away = !!orb && orb.x != null, // (its orb lies in a zone: drawn there, sbloot.js)
       n = markEl(layer, have, id, "sb-pt"),
       sig = `${p.k} ${p.col} ${boxText(p, "name")} ${away ? "" : face} ${hid}`;
     if (n._sig !== sig) {
       n._sig = sig;
-      n.innerHTML = `${hid ? "" : `<span class="sb-pt-name" style="color:${colCSS(p.col)}">${esc(boxText(p, "name"))}</span>${markSVG(p)}`}${orb && !away ? `<span class="sb-orb">${orbFace(s, id, p)}</span>` : ""}`;
+      n.innerHTML = `${hid ? "" : `<span class="sb-pt-name" style="color:${colCSS(p.col)}">${esc(boxText(p, "name"))}</span>${markSVG(p)}`}${orb && !away ? `<span class="sb-orb">${orbFace(s, id, p, orb)}</span>` : ""}`;
     }
     placeAt(n, at(p), size);
-    if (away) {
-      const o = markEl(layer, have, id + "~o", "sb-pt");
-      want.add(id + "~o");
-      if (o._sig !== face) {
-        o._sig = face;
-        o.innerHTML = `<span class="sb-orb">${orbFace(s, id, p)}</span>`;
-      }
-      placeAt(o, at({ x: p.orb.x, y: p.orb.y, z: p.orb.z || 0 }), size);
-    }
+    if (away) orbMark(layer, have, want, id + "~o", id, p, orb, at, size, s);
+    vis
+      .slice(1)
+      .forEach((o, i) =>
+        orbMark(layer, have, want, `${id}~o${i + 1}`, id, p, o, at, size, s),
+      ); // (more than one lying: plan Loot 1, Spawn limit)
   }
   for (const [id, n] of have) if (!want.has(id)) n.remove();
   if (sbSel.size || layer._sel)
@@ -711,8 +727,8 @@ function actRow(s, p, f, kinds) {
     what = boxText(p, "what").split(/[\s,]+/),
     made = what.length === 1 && madeOf(s, what[0]), // (one made NPC: its own lists, sbnpcs.js)
     picked = (
-      k || SB_ZONE[f]
-        ? boxText(p, f) // (a zone's "Who it hits": Players unless set)
+      k || SB_ZONE[f] || SB_LOOT[f]
+        ? boxText(p, f) // (a zone's "Who it hits", a loot's "Who can take it": Players unless set)
         : made
           ? made.beh[f] || ""
           : f === "target" && what.includes("zombie")
@@ -724,7 +740,12 @@ function actRow(s, p, f, kinds) {
     opts = whoOpts(s, kinds),
     gs = groupOpts(s, activeRoom() && activeRoom().me); // (the groups, under the entities: sbgroupview.js)
   if (gs.length) opts.push([null, "Groups"], ...gs);
-  return pickRow(f, SB_ACTS[f] || SB_ZONE[f].name, opts, picked);
+  return pickRow(
+    f,
+    SB_ACTS[f] || (SB_ZONE[f] || SB_LOOT[f]).name,
+    opts,
+    picked,
+  );
 }
 /* a dropdown of checkboxes for box f: opts [value, name], the values picked (the first of each value only) */
 function pickRow(f, label, opts, picked) {
@@ -1080,7 +1101,27 @@ export function sbSettings(getR, id, tab = "") {
     ${row("st", SB_ORDER.st, ordT("st"), "")}
     <div class="sb-row" data-row="go"><span>${esc(SB_ORDER.go.name)}</span>${sel("go", SB_GOES)}<em class="sb-why"></em></div>`;
   const html = `<h2>${loot && !p.grp ? "Loot" : "Zone"}</h2>${head}
-  ${base.lock ? `<p class="sb-tip sb-lockd">Locked: right-click it and pick Unlock to change it.</p>` : ""}<div class="sb-set"${base.lock ? " inert" : ""}>${callHTML}${frontHTML}${front ? `<h3 class="sb-sect sb-sect-top">4. ${PURPOSES.find(([v]) => v === p.k)[1]} settings</h3>` : ""}${loot ? lootPage(R.state, id, p, { row, flagRow, typed, why, colorRow }) : zone ? zonePage() : !spawn ? respawn() : players ? playersPage() : look ? lookPage(R.state, p) : entity()}${look ? "" : jgRow(R.state, R.me, p)}${players || look ? "" : orderSect()}</div>
+  ${base.lock ? `<p class="sb-tip sb-lockd">Locked: right-click it and pick Unlock to change it.</p>` : ""}<div class="sb-set"${base.lock ? " inert" : ""}>${callHTML}${frontHTML}${front ? `<h3 class="sb-sect sb-sect-top">4. ${PURPOSES.find(([v]) => v === p.k)[1]} settings</h3>` : ""}${
+    loot
+      ? lootPage(R.state, id, p, {
+          row,
+          flagRow,
+          typed,
+          why,
+          colorRow,
+          sect,
+          act: (f) => actRow(R.state, p, f, kinds),
+        })
+      : zone
+        ? zonePage()
+        : !spawn
+          ? respawn()
+          : players
+            ? playersPage()
+            : look
+              ? lookPage(R.state, p)
+              : entity()
+  }${look ? "" : jgRow(R.state, R.me, p)}${players || look ? "" : orderSect()}</div>
   <p class="acts">${spawn && !players && !look ? `<button type="button" class="btn" data-go>Spawn</button>` : ""}${!spawn && !loot && !zone ? `<button type="button" class="btn" data-imp>Import settings</button>` : ""}${base.lock ? "" : `<button type="button" class="btn ghost" data-del>${p.grp ? (p.pg === "t" ? "Delete tab" : "Delete page") : "Delete"}</button>`}</p>`;
   openWindow(html, {
     cls: zoneLike(p) ? "sb-setwin sb-zonewin" : "sb-setwin",
@@ -1219,7 +1260,7 @@ export function sbSettings(getR, id, tab = "") {
             f,
             v:
               on.map((c) => c.value).join(", ") ||
-              (f === "zwho" ? "nobody" : ""), // (a zone that hits nobody: its default is Players)
+              (f === "zwho" || f === "ltake" ? "nobody" : ""), // (a zone that hits nobody, a loot nobody takes: their default is Players)
           });
         }
         if (t.matches("[data-look]")) {

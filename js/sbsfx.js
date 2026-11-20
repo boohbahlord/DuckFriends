@@ -15,8 +15,10 @@ import { sbSteps } from "./l4ddsfx.js";
 import { isSb } from "./sandboxrules.js";
 import { activity } from "./hangout/registry.js";
 import { W, H } from "./hangout/layout.js";
+import { orbsOf } from "./sbloot.js";
+import { activeRoom } from "./net.js";
 
-let seen = null; // id → { orb: its orb or null, dn: a zombie drop's number }
+let seen = null; // id → { orbs: its orbs lying (not the zombies' drops), mine: how many of them I took my own copy of, p }
 export function sbHear(s, world) {
   if (!isSb(s)) {
     seen = null;
@@ -28,16 +30,27 @@ export function sbHear(s, world) {
     at = (p) => (world ? { x: p.x * W, y: p.y * H } : {}),
     orbAt = (p, o) =>
       at(o && Number.isFinite(o.x) && Number.isFinite(o.y) ? o : p); // (an orb in a zone lies there)
+  const me = activeRoom() && activeRoom().me;
   for (const [id, p] of Object.entries(pts)) {
     const was = seen && seen.get(id),
-      orb = p.orb || null;
-    now.set(id, { orb, p });
+      orbs = orbsOf(p).filter((o) => o.dn == null), // (a zombie's drop has its own: l4ddsfx.js dropIn)
+      mine = orbs.filter((o) => (o.got || []).includes(me)).length;
+    now.set(id, { orbs, mine, p });
     if (first) continue;
     if (!was) play("sbPlace", at(p));
-    else if (orb && !was.orb && orb.dn == null)
-      play("sbOrb", orbAt(p, orb)); // (a zombie's drop has its own: l4ddsfx.js dropIn)
-    else if (!orb && was.orb && was.orb.dn == null)
-      play("dropGot", orbAt(p, was.orb));
+    else if (orbs.length > was.orbs.length)
+      play("sbOrb", orbAt(p, orbs[orbs.length - 1]));
+    else if (orbs.length < was.orbs.length)
+      play(
+        "dropGot",
+        orbAt(
+          p,
+          was.orbs.find(
+            (o) => !orbs.some((n) => n.at === o.at && n.w === o.w),
+          ) || was.orbs[0],
+        ),
+      );
+    else if (mine > was.mine) play("dropGot", orbAt(p, orbs[0])); // (my own copy, the others' stays: sbloot.js)
   }
   if (seen && !first)
     for (const [id, was] of seen) if (!now.has(id)) play("sbCut", at(was.p));
