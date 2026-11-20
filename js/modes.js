@@ -234,6 +234,12 @@ ${[
 <ellipse cx="14" cy="14.4" rx="10.6" ry="8.6" fill="#3f7a34" stroke="#1c1c28" stroke-width="1.2"/><path d="M23.6 14.6l5 1.2-5 2.4z" fill="#b06a1e" stroke="#1c1c28" stroke-width=".9" stroke-linejoin="round"/>
 <path d="M16 9.6l3.6 3.6M19.6 9.6L16 13.2" stroke="#1c1c28" stroke-width="1.5" stroke-linecap="round"/><path d="M8.4 18.4c2.4 1.4 5.6 1.4 8 .2" stroke="#1c1c28" stroke-width="1.1" fill="none" stroke-linecap="round"/>
 <path d="M3 3.4l3.4 4.2M6.6 2.4l.4 4.6M1.6 7.4l4 1.4" stroke="#c0182b" stroke-width="1.3" stroke-linecap="round"/></svg>`;
+  if (m.id === "surv")
+    return `<svg viewBox="0 0 30 24" width="${size}" height="${size * 0.8}" role="img" aria-label="${esc(m.name)}">
+<path d="M5 9.5a4 4 0 0 1 2.4-7.2 5 5 0 0 1 9.4-.4 4.6 4.6 0 0 1 6.6 3.6A3.6 3.6 0 0 1 22.6 9.5Z" fill="#59606e" stroke="#1c1c28" stroke-width="1.1" stroke-linejoin="round"/>
+<path d="M7 12l-1.4 4M12 12l-1.4 4M17 12l-1.4 4M22 12l-1.4 4M26 12l-1.4 4" stroke="#2fa4ff" stroke-width="1.3" stroke-linecap="round"/>
+<ellipse cx="13" cy="18" rx="8" ry="5" fill="#3f7a34" stroke="#1c1c28" stroke-width="1.1"/><path d="M20.4 18l4.6 1-4.6 2z" fill="#b06a1e" stroke="#1c1c28" stroke-width=".8" stroke-linejoin="round"/>
+<path d="M14 15.6l2.6 2.6M16.6 15.6L14 18.2" stroke="#1c1c28" stroke-width="1.3" stroke-linecap="round"/></svg>`;
   if (m.id === "sandbox")
     return `<svg viewBox="0 0 30 24" width="${size}" height="${size * 0.8}" role="img" aria-label="${esc(m.name)}">
 <path d="M2 12H28V21.4C28 22.3 27.3 23 26.4 23H3.6C2.7 23 2 22.3 2 21.4Z" fill="#e8c27a" stroke="#1c1c28" stroke-width="1.2" stroke-linejoin="round"/><path d="M2 12C6 9.6 9.4 10.8 13 12C17 13.2 22 9.8 28 12" fill="#f4d998" stroke="#1c1c28" stroke-width="1.1" stroke-linejoin="round"/>

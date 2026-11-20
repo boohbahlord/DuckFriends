@@ -1296,6 +1296,11 @@ export function openGameSettings(R, start = null) {
       /* the maps aren't voted on here: Vote Mode & Map has its own window as the game starts; a map picked here is just
          played (Vote for map and Random go off) */
       const dis = !host() || dodOn(s, "vote");
+      if (o.mode === "surv")
+        return (
+          head("Map") +
+          `<div class="arm-body"><ul class="arm-list">${row('data-map="surv"', "Downpour", "", true, true)}</ul></div>`
+        ); // (Survival plays only Downpour: nothing else is offered, the owner's, Nov 20)
       return (
         head("Map") +
         `<div class="arm-body"><ul class="arm-list">${row('data-pick="map" data-v="random"', "Random", "", o.mapPick === "random", dis)}${
