@@ -296,8 +296,6 @@ function openKeys(k) {
       z: 0,
       b: 0,
       j: 0,
-      lj: false,
-      dj: 0,
       vz: null,
       _za: undefined,
     }); // (to my spot on the bench)

@@ -1,4 +1,10 @@
-/* ---------- cropping a picture for a duck (Customize: Your picture) ----------
+/* ---------- cropping a picture: every picture put into the game, before it's made into pixels ----------
+   The owner's, Nov 20 21:38Z: "Anything where you can add an image into anything in the game, you should be able to
+   crop it ... I should also be able to select where, like on my image that's going in my player card, does it crop
+   out at". One window for all of them (pickArea): a duck's picture (cropPicture, below), the player card, a made map's
+   picture, a share's picture, Sandbox's NPC, item and zone pictures (cropFile). A place that wants one shape (a card
+   is square, a map 16:9) gets a box of that shape; the rest any shape.
+   A duck's picture (Customize: Your picture):
    The owner's, Nov 20: "a custom image upload is made for an enemy target, right? In which cropped images can also be
    used for players' custom avatars". The picture opens in a window with a box over it: drag the box to move it, its
    corners to size it (any shape), and only what's in it is kept. It's made as pixels (DUCK_PIC_PX to a side, the way
@@ -83,8 +89,10 @@ export const growOf = (shown) =>
     ) * 100,
   ) / 100;
 
-/* the window: resolves { d, cut, z }, or null when it's closed without one */
-export function cropPicture(file) {
+/* the window: the picture with a box over it. Resolves make(img, [x, y, w, h]) for the part picked, or null when it's
+   closed without one. aspect: the box's width over its height, kept as it's sized (0: any shape). preview(img, rect):
+   how it comes out, a data URL shown under it */
+function pickArea(file, { aspect = 0, preview, make }) {
   if (!file || !/^image\//.test(file.type))
     return Promise.reject(new Error("That file is not a picture."));
   if (file.size > MOST)
@@ -101,15 +109,60 @@ export function cropPicture(file) {
       openWindow(
         `<h2>Crop your picture</h2>
         <div class="pc-stage"><img class="pc-img" src="${url}" alt="" draggable="false"><div class="pc-box">${["nw", "ne", "sw", "se"].map((c) => `<span class="pc-h pc-${c}" data-c="${c}"></span>`).join("")}</div></div>
-        <div class="pc-foot"><canvas class="pc-prev" width="${DUCK_PIC_PX}" height="${DUCK_PIC_PX}" aria-label="How it looks"></canvas>
-        <p class="acts"><button type="button" class="btn ghost small" data-v="all">Whole picture</button><button type="button" class="btn" data-v="ok">Use it</button></p></div>`,
-        { cls: "pc-win", onOpen: (w, close) => setUp(w, close, img) },
+        <div class="pc-foot"><canvas class="pc-prev" aria-label="How it looks"></canvas>
+        <p class="acts"><button type="button" class="btn ghost small" data-v="all">${aspect ? "Biggest" : "Whole picture"}</button><button type="button" class="btn" data-v="ok">Use it</button></p></div>`,
+        {
+          cls: "pc-win",
+          onOpen: (w, close) => setUp(w, close, img, { aspect, preview, make }),
+        },
       ),
     )
     .finally(() => URL.revokeObjectURL(url));
 }
 
-function setUp(w, close, img) {
+/* a duck's picture: resolves { d, cut, z } (cropOf), or null */
+export const cropPicture = (file) =>
+  pickArea(file, {
+    preview: (img, r) => cropOf(img, r).d,
+    make: cropOf,
+  });
+
+/* any other picture: the part picked, as a PNG file (its longest side most pixels at the most), for the place's own
+   pixel making (it reads a file as it did before); null when closed without one. aspect: as pickArea; px: [w, h] of
+   what it's made into, for the preview (the game's colors at that size), or side: its longest side */
+export function cropFile(file, { aspect = 0, px, side = 32, most = 512 } = {}) {
+  const partOf = (img, [x, y, w, h], W, H) => {
+    const c = document.createElement("canvas");
+    c.width = W;
+    c.height = H;
+    const g = c.getContext("2d", { willReadFrequently: true });
+    g.imageSmoothingQuality = "high";
+    g.drawImage(img, x, y, w, h, 0, 0, W, H);
+    return c;
+  };
+  const fit = (w, h, m) => {
+    const k = Math.min(1, m / Math.max(w, h));
+    return [Math.max(1, Math.round(w * k)), Math.max(1, Math.round(h * k))];
+  };
+  return pickArea(file, {
+    aspect,
+    preview(img, r) {
+      const [W, H] = px || fit(r[2], r[3], side),
+        c = partOf(img, r, W, H),
+        g = c.getContext("2d", { willReadFrequently: true });
+      g.putImageData(applyPalette(g.getImageData(0, 0, W, H)), 0, 0);
+      return c.toDataURL("image/png");
+    },
+    make: (img, r) =>
+      new Promise((ok) =>
+        partOf(img, r, ...fit(r[2], r[3], most)).toBlob((b) =>
+          ok(b ? new File([b], "picture.png", { type: "image/png" }) : null),
+        ),
+      ),
+  });
+}
+
+function setUp(w, close, img, { aspect, preview, make }) {
   const stage = w.querySelector(".pc-stage"),
     pic = w.querySelector(".pc-img"),
     box = w.querySelector(".pc-box"),
@@ -117,24 +170,37 @@ function setUp(w, close, img) {
     W = img.naturalWidth,
     H = img.naturalHeight,
     MIN = Math.max(2, Math.round(Math.min(W, H) / 40)); // (the smallest crop, in the picture's pixels)
-  let r = [0, 0, W, H]; // (the crop, in the picture's pixels)
+  /* the biggest box: the whole picture, or the biggest of its shape in the middle */
+  const biggest = () => {
+    if (!aspect) return [0, 0, W, H];
+    const bw = Math.min(W, H * aspect),
+      bh = bw / aspect;
+    return [(W - bw) / 2, (H - bh) / 2, bw, bh].map((v) => Math.round(v));
+  };
+  let r = biggest(); // (the crop, in the picture's pixels)
   const scale = () => pic.clientWidth / W || 1;
+  let shown = 0;
   const draw = () => {
     const k = scale();
     box.style.left = r[0] * k + "px";
     box.style.top = r[1] * k + "px";
     box.style.width = r[2] * k + "px";
     box.style.height = r[3] * k + "px";
-    const g = prev.getContext("2d");
-    g.clearRect(0, 0, prev.width, prev.height);
-    const out = new Image();
+    const n = ++shown,
+      out = new Image();
     out.onload = () => {
+      if (n !== shown) return; // (a newer one is on its way)
+      prev.width = out.naturalWidth;
+      prev.height = out.naturalHeight;
+      prev.style.width = `${(4.4 * Math.min(2, out.naturalWidth / out.naturalHeight)).toFixed(2)}rem`; // (its own shape, as high as ever)
+      const g = prev.getContext("2d");
       g.clearRect(0, 0, prev.width, prev.height);
       g.drawImage(out, 0, 0);
     };
-    out.src = cropOf(img, r).d;
+    out.src = preview(img, r);
   };
-  /* dragging: the box moves, a corner sizes it (the corner across from it stays put) */
+  /* dragging: the box moves, a corner sizes it (the corner across from it stays put; a box of one shape keeps it,
+     following the pointer's bigger move) */
   let drag = null;
   stage.addEventListener("pointerdown", (e) => {
     const h = e.target.closest(".pc-h");
@@ -148,7 +214,9 @@ function setUp(w, close, img) {
     const k = scale(),
       dx = (e.clientX - drag.x) / k,
       dy = (e.clientY - drag.y) / k,
-      [x, y, bw, bh] = drag.r;
+      [x, y, bw, bh] = drag.r,
+      west = drag.c.includes("w"),
+      north = drag.c.includes("n");
     if (!drag.c)
       r = [
         Math.max(0, Math.min(W - bw, x + dx)),
@@ -156,14 +224,26 @@ function setUp(w, close, img) {
         bw,
         bh,
       ];
-    else {
+    else if (aspect) {
+      const ax = west ? x + bw : x, // (the corner that stays)
+        ay = north ? y + bh : y,
+        room = Math.min(west ? ax : W - ax, (north ? ay : H - ay) * aspect),
+        least = Math.min(room, Math.max(MIN, MIN * aspect));
+      let nw = Math.max(
+        west ? bw - dx : bw + dx,
+        (north ? bh - dy : bh + dy) * aspect,
+      );
+      nw = Math.max(least, Math.min(room, nw));
+      const nh = nw / aspect;
+      r = [west ? ax - nw : ax, north ? ay - nh : ay, nw, nh];
+    } else {
       let x0 = x,
         y0 = y,
         x1 = x + bw,
         y1 = y + bh;
-      if (drag.c.includes("w")) x0 = Math.max(0, Math.min(x1 - MIN, x0 + dx));
+      if (west) x0 = Math.max(0, Math.min(x1 - MIN, x0 + dx));
       else x1 = Math.min(W, Math.max(x0 + MIN, x1 + dx));
-      if (drag.c.includes("n")) y0 = Math.max(0, Math.min(y1 - MIN, y0 + dy));
+      if (north) y0 = Math.max(0, Math.min(y1 - MIN, y0 + dy));
       else y1 = Math.min(H, Math.max(y0 + MIN, y1 + dy));
       r = [x0, y0, x1 - x0, y1 - y0];
     }
@@ -174,10 +254,11 @@ function setUp(w, close, img) {
   stage.addEventListener("pointerup", end);
   stage.addEventListener("pointercancel", end);
   w.querySelector('[data-v="all"]').onclick = () => {
-    r = [0, 0, W, H];
+    r = biggest();
     draw();
   };
-  w.querySelector('[data-v="ok"]').onclick = () => close(cropOf(img, r));
+  w.querySelector('[data-v="ok"]').onclick = async () =>
+    close(await make(img, r));
   if (pic.complete) requestAnimationFrame(draw);
   else pic.onload = draw;
   new ResizeObserver(draw).observe(pic); // (a phone turned: the box stays on the same part)

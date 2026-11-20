@@ -9,6 +9,7 @@
 import { svgDataURL } from "./svgurl.js";
 import { applyPalette } from "./pixelpalette.js";
 import { hasRb, rbSprite, RB_N } from "./rainbowskin.js";
+import { holdGame } from "./gameready.js";
 
 const DUCK = 32, // (pixels to a duck's height: the owner's pick, on phones too)
   KEEP = 900; // (pictures kept made; the oldest go first)
@@ -312,9 +313,11 @@ export function raster(key, src, w, h) {
   if (!making.has(fk))
     making.set(
       fk,
-      make(fk, src, cw, ch)
-        .catch(() => null)
-        .finally(() => making.delete(fk)),
+      holdGame(
+        make(fk, src, cw, ch)
+          .catch(() => null)
+          .finally(() => making.delete(fk)),
+      ), // (a game that's loading waits for it: gameready.js)
     );
   return null;
 }

@@ -25,7 +25,6 @@ import {
   keysOf,
   colorsOf,
   momentHTML,
-  puffHTML,
   confettiRain,
   pressFX,
   BULLET,
@@ -70,8 +69,7 @@ import { who } from "./who.js";
 import { NAV_HINTS, items } from "./keynav.js";
 import { unlocked, isLocked, lockHint } from "./unlocks.js";
 import { touchOnly } from "./pointer.js";
-import { ARROW, CHAIR, ZEBRA, JAIME, BOMB_SKIN } from "./mgjart.js";
-import { GUARD_W, guardWeapon } from "./jaimebomb.js";
+import { ARROW, CHAIR, ZEBRA } from "./mgjart.js";
 import { jetHTML } from "./jetpack.js";
 import { ROUNDS_ART, TRACE } from "./l4ddguns.js";
 import { GUNS_NEW, AUTO, WEAPONS } from "./rules.js";
@@ -80,7 +78,7 @@ import { botDuck, BOT_DUCKS, any } from "./botduck.js";
 import { weaponName } from "./l4ddrules.js";
 import { NPC_GUNS, NPC_MELEE } from "./sbarms.js";
 import { npcSave, npcDel, npcList, npcName } from "./sbnpcs.js";
-import { cropPicture } from "./picrop.js";
+import { cropPicture, cropFile } from "./picrop.js";
 import { SB_WHAT, SB_ACTS } from "./sandboxrules.js";
 
 /* ---------- making an NPC (Sandbox's m window, sbnpcs.js) ----------
@@ -200,16 +198,6 @@ const DATBOI_RANKS = [
   ["rose", "Rose gold"],
   ["rainbow", "Rainbow"],
 ];
-/* the Jaime Guard's weapon, picked as he goes on a key (only the weapons I have unlocked) */
-const guardPick = (D) =>
-  `<div class="sp-jg" role="group" aria-label="Jaime's weapon"><span class="small dim">Jaime's weapon</span>${GUARD_W.filter(
-    (w) => unlocked("special", w),
-  )
-    .map(
-      (w) =>
-        `<button type="button" class="sp-key${guardWeapon(D) === w ? " full" : ""}" data-a="jgw" data-v="${w}" aria-pressed="${guardWeapon(D) === w}" aria-label="${esc(specialById(w).name)}" data-tip="${esc(specialById(w).name)}"><i>${specialById(w).icon}</i></button>`,
-    )
-    .join("")}</div>`;
 const boxed = (id) => !!styleById(id).pages; // (Jack in a Box or Dat Boi)
 const styleLabel = (D) =>
   D.style === "jack" && D.jill ? "Jill in a Box" : styleById(D.style).name;
@@ -524,32 +512,6 @@ export function openCustomize(page = lastPage, opts = {}) {
             pic.append(fx);
             setTimeout(() => fx.remove(), 5000);
           }
-          if (sp.kind === "jump") {
-            // one hop (two for the double jump, with its cloud), not one on every redraw after
-            const cls = id === "double" ? "hop2" : "hop";
-            duckBox.classList.remove("hop", "hop2");
-            void duckBox.offsetWidth;
-            duckBox.classList.add(cls);
-            clearTimeout(duckBox._hop);
-            duckBox._hop = setTimeout(
-              () => duckBox.classList.remove(cls),
-              1500,
-            );
-            if (id === "double")
-              setTimeout(() => {
-                const pf = el(
-                  puffHTML(
-                    x,
-                    y - w.width * 0.42,
-                    w.width,
-                    colorsOf(duckNow(), "double")[0],
-                  ),
-                );
-                pic.append(pf);
-                sfx.puff();
-                setTimeout(() => pf.remove(), 1000);
-              }, 480);
-          }
           if (sp.kind === "item") {
             if (id === "confetti") {
               confettiRain(3500);
@@ -599,17 +561,6 @@ export function openCustomize(page = lastPage, opts = {}) {
                   `<div class="spe spe-cake" style="left:${(x + w.width * 0.3).toFixed(0)}px;top:${(y - w.width * 0.45).toFixed(0)}px;--s:${w.width.toFixed(0)}px"><b><i>${ZEBRA}</i></b></div>`,
                 ),
               );
-            /* Jaime: he pops out by the duck in a puff, knife out, and runs off to find someone (the Jaime Bomb: with his
-               dynamite on) */
-            if (id === "jaime" || id === "jaimebomb") {
-              const jx = x + w.width * 0.55;
-              els.push(
-                el(puffHTML(jx, y - w.width * 0.18, w.width * 0.6, "#ffc2d4")),
-                el(
-                  `<div class="spe spe-jaime" style="left:${jx.toFixed(0)}px;top:${y.toFixed(0)}px;--s:${w.width.toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - jx + w.width * 0.4)}px"><b>${duckSVG(JAIME.duck, { size: 80, shadow: false, ...(id === "jaimebomb" ? { skin: BOMB_SKIN } : {}) })}<i>${heldHTML("knife", JAIME.duck)}</i></b></div>`,
-                ),
-              );
-            }
             /* in the duck's hand, drawn as the game draws it (specials.js heldBoxHTML: the same picture at the same size) */
             const inHand = (cls) =>
               els.push(
@@ -699,10 +650,6 @@ export function openCustomize(page = lastPage, opts = {}) {
               bow: () => setTimeout(() => sfx.bow(), 380),
               chair: () => setTimeout(() => sfx.chair(), 600),
               zebra: sfx.cakeThrow,
-              jaime: () => {
-                sfx.puff();
-                setTimeout(() => sfx.jaime(), 250);
-              },
               shotgun: () => {
                 sfx.shotgun();
                 setTimeout(() => sfx.pump(), 520);
@@ -727,7 +674,7 @@ export function openCustomize(page = lastPage, opts = {}) {
         const head = (title) =>
           `<header class="arm-h">${lastPage ? '<button type="button" class="arm-back" data-a="back" aria-label="Back">‹</button>' : '<span class="arm-mark">◆</span>'}<h2>${esc(title)}</h2></header>`;
         const upload = (label, onPic) =>
-          `<label class="arm-tile arm-up" tabindex="0" data-up-for="${onPic}" data-tip="${onPic === "duck" ? "You crop it next; see-through parts stay see-through" : "A square picture works best"}">${'<span class="up-ico">⇪</span>'}<span>${esc(label)}</span><input type="file" accept="image/*" hidden data-up="${onPic}"></label>`;
+          `<label class="arm-tile arm-up" tabindex="0" data-up-for="${onPic}" data-tip="${onPic === "duck" ? "You crop it next; see-through parts stay see-through" : "You pick the square you want next"}">${'<span class="up-ico">⇪</span>'}<span>${esc(label)}</span><input type="file" accept="image/*" hidden data-up="${onPic}"></label>`;
 
         const show = (k, keep) => {
           const scroll = keep
@@ -1049,7 +996,7 @@ export function openCustomize(page = lastPage, opts = {}) {
                       : ""; // (the hammer's other look)
                   return `<div class="sp-tile${x.off ? " off" : ""}${unkeying ? (at >= 0 ? " sp-rm" : " sp-rm-no") : ""}"><button type="button" class="arm-tile${lk ? (open ? " unlockd" : " locked") : ""}" data-g="special" data-v="${x.id}"${x.off ? ' disabled aria-disabled="true"' : ""} aria-pressed="${at >= 0}" aria-expanded="${opened}" data-tip="${esc(tip)}"${lk && !open ? ' aria-label="' + esc(x.name + " (locked)") + '"' : ""}>${lk ? PAD(open) : ""}<span class="sp-icon">${x.icon}</span><span>${esc(x.name)}</span>${at >= 0 ? `<b class="sp-on">${KEYS[at]}</b>` : ""}</button>
               <button type="button" class="sp-prev" data-a="preview" data-v="${x.id}"${x.off ? " disabled" : ""} aria-label="Preview ${esc(x.name)}" data-tip="Show it on your duck">▶</button>${alt}</div>
-              ${opened && x.id === "jaimeguard" ? guardPick(D) : ""}${opened ? `<div class="sp-keys sp-pick" role="group" aria-label="Put ${esc(x.name)} on a key">${KEYS.map((n, i) => box(n, i, keys[i], `data-a="setkey" aria-pressed="${keys[i] === x.id}" aria-label="Key ${n}${keys[i] ? `: ${esc(specialById(keys[i]).name)}` : ""}"`)).join("")}</div>` : ""}`;
+              ${opened ? `<div class="sp-keys sp-pick" role="group" aria-label="Put ${esc(x.name)} on a key">${KEYS.map((n, i) => box(n, i, keys[i], `data-a="setkey" aria-pressed="${keys[i] === x.id}" aria-label="Key ${n}${keys[i] ? `: ${esc(specialById(keys[i]).name)}` : ""}"`)).join("")}</div>` : ""}`;
                 })
                 .join("");
             const used = keys.filter(Boolean).length,
@@ -1059,10 +1006,9 @@ export function openCustomize(page = lastPage, opts = {}) {
               `<div class="arm-body arm-specials">${strip}<h3>Your keys</h3><div class="sp-keys sp-mine">${KEYS.map((n, i) => box(n, i, keys[i], keys[i] ? `data-a="unkey" data-tip="Take ${esc(specialById(keys[i]).name)} off key ${n}" aria-label="Key ${n}: ${esc(specialById(keys[i]).name)}"` : `aria-label="Key ${n}: empty" disabled`)).join("")}</div>
             <p class="small dim sp-now">${open ? `${esc(open.name)}: ${esc(open.tip)} Pick its key.` : phone ? "Tap a special, then the key to put it on. In a game, hold still on the board to use them." : "Pick a special, then the key to put it on. In a game, press its key; Shift and the key keeps it on."}</p>
             <h3>Effects</h3><div class="arm-grid sp-grid">${tiles("effect")}</div>
-            <h3>Jumps</h3><div class="arm-grid sp-grid">${tiles("jump")}</div>
             <h3>Weapons</h3><div class="arm-grid sp-grid">${tiles("item", true)}</div>
             <h3>Items</h3><div class="arm-grid sp-grid">${tiles("item", false)}</div>
-            ${phone ? "" : '<p class="small dim"><kbd>Number</kbd> Pick a weapon (again: put it away) · <kbd>Shift</kbd>+<kbd>Number</kbd> Keep a jump on</p>'}${strip}</div>`;
+            ${phone ? "" : '<p class="small dim"><kbd>Number</kbd> Pick a weapon (again: put it away)</p>'}${strip}</div>`;
           } else if (k === "skin" && D.style === "datboi") {
             /* Dat Boi's Skin page is his ranks */
             const pic = (rank) =>
@@ -1538,11 +1484,6 @@ export function openCustomize(page = lastPage, opts = {}) {
               preview(a.dataset.v);
               return;
             }
-            if (a.dataset.a === "jgw") {
-              D.jg = a.dataset.v;
-              changed();
-              return;
-            } // (the Jaime Guard's weapon)
             if (a.dataset.a === "setkey" && !isOff(keyFor)) {
               const keys = keysOf(D),
                 i = +a.dataset.i,
@@ -1805,8 +1746,18 @@ export function openCustomize(page = lastPage, opts = {}) {
                 else delete D.cut;
                 if (got.z > 1) D.z = got.z;
                 else delete D.z;
-              } else
-                profile.card.image = await pictureToSquare(file, CARD_PIC_PX);
+              } else {
+                /* the card's picture: the part of it I want, picked in the crop window first (picrop.js), a square
+                   the size of the card's picture (the owner's, Nov 20 22:23Z: "it instantly snaps to the middle of
+                   the picture when I want it to show the top end") */
+                const sq = await cropFile(file, {
+                  aspect: 1,
+                  px: [CARD_PIC_PX, CARD_PIC_PX],
+                  most: 256,
+                });
+                if (!sq) return;
+                profile.card.image = await pictureToSquare(sq, CARD_PIC_PX);
+              }
               changed();
             } catch (err) {
               toast(err.message);

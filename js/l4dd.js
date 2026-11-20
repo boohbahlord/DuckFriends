@@ -9,6 +9,7 @@
    it (a ranged one only with a ranged weapon in hand to swap: else big words and a buzz say so). My duck walks at half
    speed (Speed: 10% faster) and has 7 seconds of sprint (a thin blue bar under my name). The rules are the host's
    (l4ddrules.js); the weapons bar is l4ddbar.js. */
+import { holdGame, offView } from "./gameready.js";
 import { isInvisible } from "./invisible.js";
 import { invOn } from "./sbgod.js";
 import { sprintLeft, sprintReset } from "./stamina.js";
@@ -114,6 +115,8 @@ import {
   selling,
   stockPrice,
   MERCH,
+  ZHATS,
+  ZOUTFITS,
 } from "./l4ddrules.js";
 import { hOk, hLock } from "./heights.js";
 import { ammoBar, stackBars, noReload } from "./meters.js";
@@ -458,10 +461,19 @@ function pxPic(o, img, w, h) {
   const key = "z" + uk,
     u = raster(key, o.url, w, h);
   if (u) img.src = u;
-  else
+  else {
+    /* nothing shown yet: the same zombie without its own wounds, made while the game loaded (warmZombies), until its own
+       picture is made, rather than nothing (a zombie of the usual size and build) */
+    const l = o.l;
+    if (l && !l[3] && !l[4] && !img.getAttribute("src")) {
+      const bu = zombieURL([0, 0, "", 0, 0, l[5], l[6], 0, 0], 0),
+        b = raster("z" + ukOf(bu), bu, w, h);
+      if (b) img.src = b;
+    }
     rasterReady(key, o.url, w, h).then((v) => {
       if (v && o.pxk === k) img.src = v;
     });
+  }
 }
 /* … and with the power on (l4ddpower.js), the electric ones too: the lamps, the stage, the sink, the balcony's windows
    and the porch's string lights (made again for the map: layout.js' LIGHTS are the room's map's) */
@@ -505,6 +517,28 @@ function zOutline(Wd, o, f, dip, sc, hidden, z, myFloor, zi = 0, kind = "") {
     floor: Math.sign(olFloor(o.x, o.y, z) - myFloor),
   });
   return hid;
+}
+/* every hat and every outfit a zombie can wear, at the sizes it comes in, made into pixels once while the game loads
+   (gameready.js holds the loading screen for them): the duck sheets' files they need are fetched then, never as the
+   first one walks in (the owner's, Nov 20 20:46Z: "pop-ins, things being unloaded"). Each zombie's own picture (its
+   wounds are its own) is still made from them, as soon as it comes, wherever it is (draw) */
+let warmAt = 0;
+function warmZombies(sc) {
+  if (!pixelOn() || !sc || warmAt === sc) return false;
+  warmAt = sc;
+  const looks = [
+    ...ZHATS.map((_, h) => [h, -1]),
+    ...ZOUTFITS.map((_, o) => [-1, o]),
+    [-1, -1],
+  ];
+  for (const size of [-1, 0, 1])
+    for (const [h, o] of looks) {
+      const l = [0, 0, "", size, 0, h, o, 0, 0],
+        url = zombieURL(l, 0),
+        box = zombieBox(l);
+      rasterReady("z" + ukOf(url), url, box.w * sc, box.h * sc);
+    }
+  return true;
 }
 function zombieEl(z) {
   const el = document.createElement("div"),
@@ -745,6 +779,43 @@ function seeZombies(s, ctx, now) {
       o.el.remove();
       Z.delete(i);
     }
+}
+/* every count of boards on every opening (0 to 5) made into pixels once while the game loads, so a board going up or
+   torn down shows its picture at once (pxdom.js finds it made), never a moment of nothing (the owner's, Nov 20 20:46Z:
+   "pop-ins"): each laid out unseen at the size it shows, then taken away once made */
+let boardsWarm = 0;
+function warmBoards(sc) {
+  if (!pixelOn() || !layer || !sc || boardsWarm === sc || !OPENINGS.length)
+    return;
+  boardsWarm = sc;
+  const els = [];
+  for (const o of OPENINGS)
+    for (let n = 0; n <= 5; n++) {
+      const el = document.createElement("div");
+      el.className = "l4-boards k-" + o.kind;
+      el.style.opacity = "0"; // (not visibility: pxdom.js copies that into the picture, opacity it leaves out)
+      el.style.transform = `translate(-99999px, 0) scale(${sc.toFixed(4)})`;
+      el.innerHTML = boardsSVG(o, n);
+      layer.append(el);
+      els.push(el);
+    }
+  holdGame(
+    new Promise((done) => {
+      const t0 = performance.now();
+      const look = () => {
+        const left = els.filter((el) => {
+          const svg = el.firstElementChild;
+          return svg && !svg.hasAttribute("data-px");
+        });
+        if (!left.length || performance.now() - t0 > 15000) {
+          els.forEach((el) => el.remove());
+          return done();
+        }
+        setTimeout(look, 100);
+      };
+      setTimeout(look, 300);
+    }),
+  );
 }
 /* the boards: one element for each opening, its picture redrawn when its count changes */
 function seeBoards(s) {
@@ -3035,6 +3106,8 @@ activity({
   draw(now, ctx) {
     if (!layer) return;
     syncMap(); // (the openings, the Butler's or the Priest's spot, for the map in play: on a player's screen too, which runs no rules)
+    warmZombies(ctx.world.sc); // (once: every hat and outfit as pixels, behind the loading screen)
+    warmBoards(ctx.world.sc); // (and every count of boards)
     const Wd = ctx.world,
       sc = Wd.sc,
       t = performance.now(),
@@ -3082,9 +3155,11 @@ activity({
           : "";
       if (onCam && unseen && o.st !== 3)
         zOutline(Wd, o, f, 0, sc, true, z, myFloor, 0, zc); // (on the other side of a wall: its red line)
+      if (o.st !== 3 || !hide) {
+        wounds(o, o.l, o.i); // (its wounds, and its picture made into pixels wherever it is: ready before it comes into sight)
+        pxPic(o, o.img, o.bw * sc, o.bh * sc);
+      }
       if (hide) continue;
-      wounds(o, o.l, o.i); // (come into sight: the wounds it got out of it)
-      pxPic(o, o.img, o.bw * sc, o.bh * sc);
       o.sx = f.left;
       o.sy = f.top;
       o.sk = sc; // (where it stands on the screen: its blood comes out of it there, seeZombies)
@@ -3192,8 +3267,9 @@ activity({
             b.box.w * sc,
             b.box.h * sc,
           );
-      if (b.el.hidden !== hide) b.el.hidden = hide;
-      if (hide) continue;
+      /* out of view: unseen but laid out where it is, so its pixels are made and kept (pxdom.js), never made the
+         moment it comes into view (the owner's, Nov 20 20:46Z: "pop-ins") */
+      offView(b.el, hide);
       const tr = `${Wd.boxTr(p.left + b.box.l * sc, p.top + b.box.t * sc)} scale(${sc.toFixed(4)})`;
       const on = beat.has(o.id);
       if (b.tr !== tr || b.on !== on) {

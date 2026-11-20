@@ -14,6 +14,7 @@ import { rule, activity } from "./registry.js";
 import { PROPS, W, H, heightAt, standable, STEP, BJ } from "./layout.js";
 import * as A from "./art.js";
 import { pxAt } from "../pxdom.js";
+import { offView } from "../gameready.js";
 
 const KINDS = ["couch", "log"],
   SEAT_KINDS = [...KINDS, "table", "stool"],
@@ -241,8 +242,6 @@ function put(ctx, x, y, z) {
     z,
     b: z,
     j: 0,
-    lj: false,
-    dj: 0,
     vz: null,
     _za: undefined,
   });
@@ -294,7 +293,7 @@ activity({
         const e = document.createElement("div");
         e.className = "hp hang-seat-part";
         e.innerHTML = html;
-        e.hidden = true;
+        offView(e, true);
         Object.assign(e.style, {
           width: p.w + "px",
           height: bh + "px",
@@ -325,9 +324,11 @@ activity({
           a.left + q.w * sc > -30 &&
           a.top < vh + 30 &&
           a.top + q.h * sc > -30;
-      if (q.e.hidden !== !vis) q.e.hidden = !vis;
-      if (!vis) continue;
-      const tr = `${Wd.boxTr(a.left, a.top)} scale(${scs})`;
+      /* out of view: unseen, at its size, so its pixels are made while the game loads (gameready.js offView) */
+      offView(q.e, !vis);
+      const tr = vis
+        ? `${Wd.boxTr(a.left, a.top)} scale(${scs})`
+        : `translate(-99999px, 0) scale(${scs})`;
       if (q.e._tr !== tr) {
         q.e._tr = tr;
         q.e.style.transform = tr;

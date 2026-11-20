@@ -9,6 +9,32 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v195",
+    version: 195,
+    date: "Nov 20, 2026",
+    title: "Loaded before you land",
+    news: [
+      "For the zombie modes: Downpour and Duck Cabin finish loading every picture behind the loading screen, so nothing pops in once you're dropped in.",
+      "Customize loads everything once when it opens, so there are no loading screens inside it, and the big duck never blinks.",
+      "Loading screens wait for every picture: maps, the lobby's map pictures and the music bar.",
+      "Every picture you upload opens the same crop window first, Sandbox's pictures, made maps and shares included.",
+      "Settings: the FPS counter is smaller and has its own switch, UI opacity sits next to UI scale, and the chat is always on the left.",
+      "The jump and Justin counters are hidden at first; the pause menu shows your jumps, Justins and kills.",
+      "Light mode is gone: the game is always dark.",
+      "The long, short and double jumps, slow gravity and Jaime are gone.",
+      "For the zombie modes: the handgun is now the M1911, with 9 rounds.",
+    ],
+  },
+  {
+    id: "v194",
+    version: 194,
+    date: "Nov 20, 2026",
+    title: "No more dragging",
+    news: [
+      "Holding the mouse down on a zombie or anything else no longer drags a ghost picture around, and your duck no longer walks off on its own after it.",
+    ],
+  },
+  {
     id: "v193",
     version: 193,
     date: "Nov 20, 2026",
