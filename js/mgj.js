@@ -1,7 +1,7 @@
 /* ---------- Mad God Justin: what the screen shows ----------
    The arena: an empty see-through field over the map. Over it, Justin on the cloud with his eyes glowing blue and
    flickering like lightning (the cloud says "Defeat Justin!"), and his HP bar beside it. The meteor falls from the top
-   right onto the middle of the board and knocks everyone down. A win: the LOSER podium (Duncelation's) rises under him.
+   right onto the middle of the board and knocks everyone down. A win: lightning strikes him where he stands.
    Also the stats: the awards (Most Damage, Killing Blow, Hit the Most, Most Jumps), each player's box, and every fight. */
 import { esc, el } from "./ui.js";
 import { hpText } from "./hpmath.js";
@@ -10,7 +10,6 @@ import { nameHTML } from "./name.js";
 import { cloudHTML } from "./brackets.js";
 import { fmtJumps } from "./format.js";
 import { FRIDGE } from "./art.js";
-import { DN_PODIUM } from "./dunce.js";
 import { JUSTIN_PLAYER } from "./boardjustin.js";
 import { mgjStats, GOOD_ID, GOOD_NAME, SKY_ID } from "./mgjrules.js";
 import { heldHTML, SHOTGUN } from "./specials.js";
@@ -65,11 +64,11 @@ export const mgjHPHTML = (s) => {
     hp = Math.max(0, m.hp);
   return `<span class="mgj-hp-name">Justin</span>${meterHTML(hp, m.max, "", "j")}<b class="mgj-hp-n">${hpText(hp)} / ${m.max} HP</b>`; // (the HP meter's blocks: hpmeter.js)
 };
-/* the board: the field, the podium (a win), the cloud and the HP bar */
+/* the board: the field, the cloud and the HP bar */
 export const mgjBoardHTML = (
   s,
 ) => `<div class="board mgj-board"><div class="cols mgj-cols"><div class="col mgj-field" data-c="0"></div></div>
-  <div class="ducks">${s.phase === "mgjend" && s.mgj && s.mgj.won ? DN_PODIUM : ""}</div><div class="fxl"></div>
+  <div class="ducks"></div><div class="fxl"></div>
   <div class="topover mgj-top">${cloudHTML(MAD_JUSTIN, "Mad God Justin")}<div class="question mgj-hp">${mgjHPHTML(s)}</div></div></div>`;
 
 /* ---------- the meteor ---------- */

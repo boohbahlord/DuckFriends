@@ -25,7 +25,7 @@ import { hpHeal, hpHurt, tenths } from "./hpmath.js";
    - The meteor, once a fight, when he's down to MET_AT HP: he shouts one of his GOD lines and fades away, a meteor
      lands and knocks every duck down for 5 seconds, he gets MET_HEAL HP back and his attacks get faster again, then he
      fades in again pumping his shotgun.
-   - HP 0: he stands on the LOSER podium and lightning strikes him, and he stays burnt while it shows. Every duck out of
+   - HP 0: he stays where he is and lightning strikes him, and he stays burnt while it shows. Every duck out of
      HP: he wins and says a winning line. Then the stats (Most Damage, Killing Blow, Hit the Most, the jumps) with Try again or Back to the
      lobby.
    - Every 15 seconds something fades in somewhere on the board (PICKS, with the owner's odds): a gun a duck picks up
@@ -99,9 +99,8 @@ export const XB_AT = 2 / 3, // (the Xbox once he's at or under this fraction of 
 export const FAST_SOON = 0.7,
   FAST_FLY = 1.25;
 export const MGJ_END = 9; // seconds of the podium (or his winning line), then the stats
-export const MGJ_ZAP = 1600; // ms into a win: lightning strikes him on the podium
+export const MGJ_ZAP = 1600; // ms into a win: lightning strikes him where he stands
 export const MGJ_DOWN = 5000; // ms a hit duck stays down
-export const MGJ_POD = { x: 0.5, y: 0.72 }; // where his podium stands (low enough for his bubble over him, under the cloud)
 /* (owner 2026-11-03 22:21Z) he's slightly bigger than a duck here, and his hammer bigger, everywhere he swings it */
 export const MGJ_SCALE = 1.2; // Justin and his double against a duck, in Mad God Justin
 export const MGJ_HAMMER = 1.35; // Justin's hammer against a duck's, on top of his size
@@ -614,13 +613,14 @@ function mgjEnd(s, now, won, log, allOut = false) {
   for (const id of Object.keys(m.jaimes || {})) delete s.pos[id];
   m.jaimes = {}; // (the Jaimes go: the fight is over)
   if (won) {
-    // onto the podium in the middle
+    // he stays where he is (no podium: the owner's, Nov 20 18:23Z), and the lightning strikes him there
+    const at = justinAt(j, now);
     Object.assign(j, {
       k: null,
-      x0: MGJ_POD.x,
-      y0: MGJ_POD.y,
-      x1: MGJ_POD.x,
-      y1: MGJ_POD.y,
+      x0: r3(at.x),
+      y0: r3(at.y),
+      x1: r3(at.x),
+      y1: r3(at.y),
       t: now,
       v: SPEED,
       w: "",
