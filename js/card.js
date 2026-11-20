@@ -115,7 +115,7 @@ export function patternLayers(kind, col, layout = "tiled", size = "m", base) {
 const SHEETS =
   typeof Image === "undefined"
     ? []
-    : [PXC.fixed, PXC.tint].map((src) => {
+    : [PXC.fixed, PXC.tint, PXC.base].map((src) => {
         const im = new Image();
         im.src = src;
         return im;
@@ -166,6 +166,7 @@ function motifPx(kind, col, want) {
     const [cr, cg, cb] = tx.getImageData(0, 0, 1, 1).data;
     tx.clearRect(0, 0, n, n);
     tx.drawImage(SHEETS[1], i * n, y, n, n, 0, 0, n, n);
+    x.drawImage(SHEETS[2], i * n, y, n, n, 0, 0, n, n); // (the hat with its color black)
     const v = tx.getImageData(0, 0, n, n).data,
       img = x.getImageData(0, 0, n, n),
       d = img.data;

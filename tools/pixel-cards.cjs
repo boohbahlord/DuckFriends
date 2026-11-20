@@ -4,8 +4,9 @@
    - fixed: what keeps its own colors (a ball, a face, confetti's red, blue and green), through the game's colors;
    - tint: what takes the player's pattern color (the dots, the stripes …), white, for the game to color, each pixel
      as see-through as it is uncovered.
-   A hat whose color the player picks is two layers too: the hat with that color black, and a grey layer saying how
-   much of the color each pixel takes (mix in js/pxcard.js), so its shades follow the color as the drawing's did.
+   A hat whose color the player picks is two layers too: the hat with that color black (base.webp), and a grey layer in
+   tint.webp saying how much of the color each pixel takes (mix in js/pxcard.js), so its shades follow the color as the
+   drawing's did. tint and base hold numbers, not colors (tools/pixel-budget.py only weighs them).
    Both go in one sheet each (a row for each size, a motif after another along it, each with a quarter of its size
    round it): assets/px/cards/fixed.webp and
    tint.webp, and where each one is in js/pxcard.js. The game lays a card's pattern out from them (js/card.js).
@@ -116,7 +117,7 @@ function serve() {
       };
       const W = P(Math.max(...SIZES)) * kinds.length,
         H = SIZES.reduce((a, s) => a + P(s), 0),
-        sheets = [0, 1].map(() => {
+        sheets = [0, 1, 2].map(() => {
           const c = document.createElement("canvas");
           c.width = W;
           c.height = H;
@@ -180,7 +181,9 @@ function serve() {
               }
             for (let p = 3; p < d.data.length; p += 4)
               if (d.data[p]) any = true;
-            sheets[L].getContext("2d").putImageData(d, i * n, rows[s]);
+            sheets[recolors(k) && L === 0 ? 2 : L] // (a hat's own layer, its color black, holds numbers to add the color to: in a sheet of its own, base)
+              .getContext("2d")
+              .putImageData(d, i * n, rows[s]);
           }
           has[L][i] = any;
         }
@@ -188,7 +191,7 @@ function serve() {
       return {
         kinds,
         rows,
-        fixed: kinds.map((_, i) => !!has[0][i]),
+        fixed: kinds.map((k, i) => !recolors(k) && !!has[0][i]),
         tint: kinds.map((_, i) => !!has[1][i]),
         mix: kinds.filter(recolors),
         files: sheets.map((c) => c.toDataURL("image/png")),
@@ -199,7 +202,7 @@ function serve() {
     [SIZES, TINT],
   );
   fs.mkdirSync(OUT, { recursive: true });
-  ["fixed", "tint"].forEach((n, L) => {
+  ["fixed", "tint", "base"].forEach((n, L) => {
     const tmp = path.join(OUT, n + ".png"),
       dst = path.join(OUT, n + ".webp");
     fs.writeFileSync(tmp, Buffer.from(out.files[L].split(",")[1], "base64"));
@@ -220,6 +223,7 @@ function serve() {
 export default ${JSON.stringify({
       fixed: "assets/px/cards/fixed.webp",
       tint: "assets/px/cards/tint.webp",
+      base: "assets/px/cards/base.webp",
       sizes: SIZES,
       rows: out.rows,
       kinds: out.kinds,
