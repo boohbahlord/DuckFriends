@@ -102,6 +102,19 @@ const glassOn = (p) =>
   (p.glass || [])
     .map(([a, b]) => [Math.max(a, p.x) - p.x, Math.min(b, p.x + p.w) - p.x])
     .filter(([a, b]) => b - a > 30);
+/* Downpour: an east-west wall's piece from outside whose west end is a building's south-west corner, where a hole smashed
+   through its west wall runs up to it (the restroom's): its corner broken too, under the roof's broken corner (the
+   owner's, Nov 19 22:41Z, "You can break a little bit of the corner") */
+const cornerHit = (p) =>
+  p.map &&
+  p.only === "out" &&
+  p.w > p.d &&
+  GS.WALK_HOLES.some(
+    (o) =>
+      o.axis === "y" &&
+      Math.abs(o.at - (p.x + 12)) < 2 &&
+      Math.abs(o.b - (p.y + 12)) < 2,
+  );
 function wallParts(p) {
   if (p.only === "out" && !p.map) return []; // (the south wall outside: part of the cabin's drawing)
   const z = p.z || 0,
@@ -124,6 +137,7 @@ function wallParts(p) {
                 t: p.d,
                 skin: skinOf(p),
                 glass: glassOn(p),
+                brokenW: cornerHit(p) ? Math.round(p.x + p.y) : 0,
               })
             : A.logWall({ w: p.w, wallH: p.h, t: p.d, windows }),
         p.x,
@@ -148,6 +162,16 @@ function wallParts(p) {
   const gap = L.OPENINGS.some(
     (d) => Math.abs(d.at - (p.x + p.w / 2)) < 2 && Math.abs(d.a - b) < 2,
   ); // (at an open doorway)
+  /* Downpour: its south end at a hole smashed through it (never a doorway): that end broken (stationart.js
+     gsWallYBroken) */
+  const smashed =
+    p.map &&
+    GS.WALK_HOLES.some(
+      (o) =>
+        o.axis === "y" &&
+        Math.abs(o.at - (p.x + p.w / 2)) < 2 &&
+        Math.abs(o.a - (p.y + p.d)) < 2,
+    ); // (each piece reaches T past its end: to the hole's edge)
   const into = (q) =>
     q.w > q.d &&
     (q.only || "in") === (p.only || "in") &&
@@ -194,6 +218,7 @@ function wallParts(p) {
                 skin: skinOf(p),
                 plain: gap || low,
                 open: o < 0,
+                broken: smashed ? Math.round(p.x + b) : 0,
               })
             : A.logWall({
                 axis: "y",
@@ -611,7 +636,13 @@ export const DRAW = {
     part(
       () =>
         p.map
-          ? SA.gsWallX({ w: p.w, wallH: p.h, t: p.d, skin: skinOf(p) })
+          ? SA.gsWallX({
+              w: p.w,
+              wallH: p.h,
+              t: p.d,
+              skin: skinOf(p),
+              brokenW: p.broken ? Math.round(p.x + p.y) : 0, // (its west end smashed: stationmap.js)
+            })
           : A.logWall({ w: p.w, wallH: p.h, t: p.d }),
       p.x,
       p.y - p.h,
@@ -621,18 +652,6 @@ export const DRAW = {
     ),
   ],
   doorway: () => [],
-  /* a smashed north-south wall seen from outside, over the roof's edge (stationmap.js) */
-  breach: (p) => [
-    part(
-      () => SA.wallBreach({ w: p.w, d: p.d, seed: Math.round(p.x + p.y) }),
-      p.x,
-      p.y,
-      p.w,
-      p.d,
-      p.key,
-      { only: "out", fade: p.fade },
-    ),
-  ],
   /* the rubble out of a smashed north-south wall, flat on the floor under everyone (stationmap.js) */
   rubble: (p) => [
     part(
@@ -708,6 +727,9 @@ export const DRAW = {
     const jag = (up) =>
       `<svg class="hg hg-wall" viewBox="0 0 24 20" width="${24 * big}" height="${20 * big}" overflow="visible" aria-hidden="true"><path d="${up ? `M0 20V12L4 6L8 11L12 4L16 9L20 5L24 11V20Z` : `M0 0V9L4 15L8 10L12 17L16 11L20 16L24 9V0Z`}" fill="${up ? sp[0] : sp[1]}" stroke="#1c1c28" stroke-width="2.4" stroke-linejoin="round"/><path d="${up ? "M3 14L7 9M14 10L18 8" : "M4 6L8 10M15 5L19 11"}" stroke="${sp[2]}" stroke-width="2" stroke-linecap="round"/></svg>`;
     const sx = p.x - 12 * (big - 1); // (centered on the wall's line)
+    /* Downpour's walk-through holes: the walls' own ends are broken (wallParts' smashed, the south wall's brokenW), no
+       splinters stuck on (the owner's, Nov 19 22:41Z: "They're not the same dimensions as the wall") */
+    if (p.map && !p.boarded) return [];
     return [
       part(
         () => jag(false),
@@ -892,7 +914,11 @@ export const DRAW = {
             d: b.h - p.bldg.wall,
             kind: p.bldg === GS.STATION ? "gs" : "ch",
             soldier: p.soldier && p.soldier.map((v) => v / GS.K), // (its own numbers are the plan's)
-            holes: p.holes && p.holes.map((h) => h.map((v) => v / GS.K)),
+            holes:
+              p.holes &&
+              p.holes.map((h) =>
+                h.map((v) => (typeof v === "number" ? v / GS.K : v)),
+              ), // (a corner's "sw" as it is)
           }), // (its walls' faces show under it: stationart.js)
         b.l,
         b.t,
