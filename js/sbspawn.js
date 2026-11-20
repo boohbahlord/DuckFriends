@@ -406,7 +406,8 @@ function makeOne(s, id, at) {
     kind.sz ||
     kind.im ||
     kind.dk ||
-    up !== STEP
+    up !== STEP ||
+    (+at.z || 0) > heightAt(at.x * WW, at.y * WH) + STEP // (up on a Sandbox floor, or high with nothing under it: plan Phase 4)
   ) {
     // (a zombie with a Brain walks as Sandbox's own do, so its file can steer it: sbnumberat.js; one with its own look or
     // Size too, which the map's own zombies don't have)
@@ -418,6 +419,7 @@ function makeOne(s, id, at) {
       run: flag(by("sprint"), "sprint"),
       up,
       look: kind,
+      z: +at.z || 0,
     });
     i = c ? "c" + c : 0; // (the zombie maps: Sandbox's own, walking as on Duck Cabin, beside the map's zombies)
   } else i = l4Spawn(s, at.x, at.y, { hp, speed: sv, sp: id, dm });
