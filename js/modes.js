@@ -134,6 +134,50 @@ export const CATS = [
   ["special", "Special"],
 ];
 
+/* ---------- a symbol drawn as pixels, one character to a pixel (the owner's, Nov 19 23:41Z: "pixels first") ----------
+   15 × 12 pixels, each 2 × 2 of a symbol's 30 × 24 box, so a pixel is the size of the game's own (a symbol shows about
+   32 px wide). Runs of one color are one rectangle. k: the outline, l: light grey, g: grey, d: dark grey, y: yellow, w: the lit
+   lens, b: the beam, f: its rays, .: nothing */
+const INK = {
+  k: ["#1c1c28", 1],
+  l: ["#c4cad4", 1],
+  g: ["#8a93a3", 1],
+  d: ["#5c6474", 1],
+  y: ["#ffd23f", 1],
+  w: ["#ffffff", 1],
+  b: ["#fff3a8", 1],
+  f: ["#ffd23f", 1],
+};
+function pixelSymbol(m, size, rows) {
+  let r = "";
+  rows.forEach((row, y) => {
+    for (let x = 0; x < row.length; ) {
+      const c = row[x];
+      let n = 1;
+      while (row[x + n] === c) n++;
+      if (INK[c])
+        r += `<rect x="${x * 2}" y="${y * 2}" width="${n * 2}" height="2" fill="${INK[c][0]}"${INK[c][1] < 1 ? ` opacity="${INK[c][1]}"` : ""}/>`;
+      x += n;
+    }
+  });
+  return `<svg viewBox="0 0 30 24" width="${size}" height="${size * 0.8}" role="img" aria-label="${esc(m.name)}" shape-rendering="crispEdges">${r}</svg>`;
+}
+/* Survival: a flashlight with a short beam (the owner's pick, Nov 20 04:05Z, "flashlight") */
+const FLASHLIGHT = [
+  "...............",
+  "........kw...f.",
+  "......kklw..f..",
+  "kkkkkkkglwb....",
+  "klllllkglwbb...",
+  "kgyyggkglwbbbff",
+  "kgggggkglwbbbff",
+  "kdddddkdgwbb...",
+  "kkkkkkkdgwb....",
+  "......kkdw..f..",
+  "........kw...f.",
+  "...............",
+];
+
 /* each mode's little symbol: Agree or Disagree's colored bars; Would You Rather's two tiles with OR between; Does Duck
    Relate?'s green tile with a check and red tile with a cross; Story Chain's three lines of writing, each underlined
    in a different card color; Lawyering's sword over a shield; Duncelation's dunce hat with a question mark; Mad God Justin's
@@ -234,13 +278,7 @@ ${[
 <ellipse cx="14" cy="14.4" rx="10.6" ry="8.6" fill="#3f7a34" stroke="#1c1c28" stroke-width="1.2"/><path d="M23.6 14.6l5 1.2-5 2.4z" fill="#b06a1e" stroke="#1c1c28" stroke-width=".9" stroke-linejoin="round"/>
 <path d="M16 9.6l3.6 3.6M19.6 9.6L16 13.2" stroke="#1c1c28" stroke-width="1.5" stroke-linecap="round"/><path d="M8.4 18.4c2.4 1.4 5.6 1.4 8 .2" stroke="#1c1c28" stroke-width="1.1" fill="none" stroke-linecap="round"/>
 <path d="M3 3.4l3.4 4.2M6.6 2.4l.4 4.6M1.6 7.4l4 1.4" stroke="#c0182b" stroke-width="1.3" stroke-linecap="round"/></svg>`;
-  if (m.id === "surv")
-    return `<svg viewBox="0 0 30 24" width="${size}" height="${size * 0.8}" role="img" aria-label="${esc(m.name)}">
-<path d="M3 4H26.4C27.3 4 28 4.7 28 5.6V10.4H14.6L13.4 11.2H9.4V4Z M3 4V10.4H9.4" fill="#8a93a3" stroke="#1c1c28" stroke-width="1.2" stroke-linejoin="round"/>
-<path d="M9.4 10.4H13.4L12.2 21.2C12.1 22.1 11.4 22.7 10.5 22.7H9.4C8.5 22.7 7.8 22 7.9 21.1Z" fill="#a85a26" stroke="#1c1c28" stroke-width="1.2" stroke-linejoin="round"/>
-<path d="M14.6 10.4C14.6 14 17.4 14 17.4 10.4" fill="none" stroke="#1c1c28" stroke-width="1.2" stroke-linecap="round"/>
-<rect x="5" y="6" width="3" height="2" rx=".6" fill="#ffd23f" stroke="#1c1c28" stroke-width=".8"/>
-<path d="M28.6 6.2L30 5.4" stroke="#ef3b3b" stroke-width="1.3" stroke-linecap="round"/></svg>`;
+  if (m.id === "surv") return pixelSymbol(m, size, FLASHLIGHT);
   if (m.id === "sandbox")
     return `<svg viewBox="0 0 30 24" width="${size}" height="${size * 0.8}" role="img" aria-label="${esc(m.name)}">
 <path d="M2 12H28V21.4C28 22.3 27.3 23 26.4 23H3.6C2.7 23 2 22.3 2 21.4Z" fill="#e8c27a" stroke="#1c1c28" stroke-width="1.2" stroke-linejoin="round"/><path d="M2 12C6 9.6 9.4 10.8 13 12C17 13.2 22 9.8 28 12" fill="#f4d998" stroke="#1c1c28" stroke-width="1.1" stroke-linejoin="round"/>
