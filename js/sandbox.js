@@ -33,7 +33,7 @@ import {
   sbSettings,
   sbView,
 } from "./sbspawnview.js";
-import { boxText } from "./sbspawn.js";
+import { boxText, sbWhyNot } from "./sbspawn.js";
 import { npcRows } from "./sbmake.js";
 import { sbCheatSound } from "./sbsfx.js";
 import { sbSlots } from "./sbhot.js";
@@ -294,6 +294,19 @@ export function sbClose(k, held) {
   return k;
 }
 
+/* what a press of the spawns ids (a Spawn key, a hotbar's spawn button) would make nothing for, said in a toast: at
+   its limit, or tied to no zone. Asked before the press is sent (a TEST room's press is done at once), and said only
+   when none of them would spawn and none sets off others with Trigger together. "" when it spawns */
+export function whyNot(s, ids) {
+  const pts = (s.sb && s.sb.pts) || {};
+  if (
+    !ids.length ||
+    ids.some((id) => !pts[id] || boxText(pts[id], "tg").trim())
+  )
+    return "";
+  const why = ids.map((id) => sbWhyNot(s, id));
+  return why.every(Boolean) ? why[0] : "";
+}
 /* getR: () => the room; onOpen: called when a window comes up (the game closes Tab's window); spotAt(clientX, clientY):
    the spot on the map under that point of the screen ({ x, y }: shares of it), or null (game.js); returns a function
    that takes the windows away */
@@ -964,7 +977,17 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
       ) {
         e.preventDefault();
         e.stopImmediatePropagation();
-        if (!e.repeat) R.send({ t: "sb", k: "key", key });
+        if (e.repeat) return;
+        const why = whyNot(
+          s,
+          Object.keys(s.sb.pts).filter(
+            (id) =>
+              s.sb.pts[id].k === "spawn" &&
+              boxText(s.sb.pts[id], "key").toLowerCase() === key,
+          ),
+        );
+        R.send({ t: "sb", k: "key", key });
+        if (why) toast(why); // (at its limit, or tied to no zone: it said nothing)
         return;
       }
     }

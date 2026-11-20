@@ -1448,3 +1448,18 @@ function boardTick(s, now, H) {
 }
 /* the same press from elsewhere (a hotbar's spawn button), the rights checked by its caller */
 export const sbPress = (s, id, now) => press(s, id, now);
+/* why a press of spawn id would make nothing, in a few words for a toast ("" when it would spawn): its tab tied to no
+   zone, or as many of its alive as its limit lets (a Spawn key at its limit did nothing and said nothing) */
+export function sbWhyNot(s, id) {
+  const p = pointsOf(s)[id];
+  if (!p || p.k !== "spawn" || p.pg === "pl" || !spawnsHere(s)) return "";
+  const n = boxText(p, "name").trim() || p.col + " spawn",
+    name = /^\d+$/.test(n) ? "Spawn " + n : n; // (a tab's own six digits, as on its tab)
+  if (!sbTabLive(pointsOf(s), id))
+    return `${name}: it shares no zone's variable name or color yet.`;
+  const have = aliveOf(s, id, new Set(liveNpcs(s).map((o) => o.i))),
+    limit = limitOf(p);
+  return have >= limit
+    ? `${name}: its limit is reached (${have} of ${limit} alive). Raise "Spawn limit" (0: none).`
+    : "";
+}
