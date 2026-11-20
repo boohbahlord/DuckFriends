@@ -21,6 +21,7 @@ import {
   baseL4map,
   isSb,
   sbCan,
+  sbMay,
   SB_RIGHTS,
   sbOnBoard,
   sbPlayerSpot,
@@ -34,6 +35,15 @@ import { sbHotAct, sbSlots } from "./sbhot.js";
 import { sbLootAct, sbLootTick } from "./sbloot.js";
 import { nbPermAct, nbShareAct } from "./nbperms.js";
 import { sbZoneTick } from "./sbzone.js";
+import {
+  sbAsk,
+  sbAskDue,
+  sbBegin,
+  sbEnd,
+  sbPick,
+  sbRekey,
+  sbRename,
+} from "./sbsave.js";
 import { onCabin } from "./sbcabin.js";
 import { stamp, took } from "./perf.js";
 import {
@@ -672,6 +682,14 @@ function sbMapPicked(s, o) {
 /* the countdown or a vote is over: the next vote, or the game */
 function nextVote(s, now) {
   if (s.vt) closeVote(s);
+  if (s.sbpk) {
+    delete s.sbpk; // (the host's pick skipped: a new Sandbox)
+    sbPick(s, {}, now);
+  }
+  if (sbAskDue(s)) {
+    sbAsk(s, now); // (Sandbox: the host picks a new Sandbox or a save first, sbsave.js)
+    return s;
+  }
   const q = s.voteQ || [];
   while (q.length) {
     const k = q.shift();
@@ -752,6 +770,7 @@ function rotate(s, now) {
 function beginGame(s, now) {
   const P = s.players;
   s.startedAt = now;
+  if (isSb(s)) sbBegin(s, now); // (a save's NPCs back, its session named: sbsave.js)
   s.round = 0;
   s.history = [];
   s.back = {};
@@ -1773,6 +1792,7 @@ function reduceStep(state, a, now) {
         seatNewcomer(s, a.p.id);
       if (s.phase !== "lobby") rainbowJoin(s, a.p.id); // (Rainbow Ducks: a look for someone who joins mid-game)
       if (isMgj(s)) mgjCount(s); // (Mad God Justin: a duck joining mid-fight adds its share of his HP)
+      if (isSb(s) && s.sbsv) sbRekey(s, a.p.id); // (Sandbox: a player in the save gets their own settings back, by name)
       say(s, `${a.p.name} ${back ? "is back" : "joined"}.`);
       if (s.waiting && s.waiting.for === a.p.id) {
         delete s.waiting.for;
@@ -1818,6 +1838,7 @@ function reduceStep(state, a, now) {
     }
     case "look":
       if (me) Object.assign(me, a.look);
+      if (me && a.look && a.look.name && isSb(s) && s.sbsv) sbRekey(s, a.id); // (Sandbox: a new name may be one the save knows)
       return s;
     case "ready":
       if (me && (s.phase === "lobby" || s.phase === "over"))
@@ -2079,6 +2100,8 @@ function reduceStep(state, a, now) {
         s.ends = 0;
         delete s.vt; // (the votes too)
         delete s.voteQ;
+        delete s.sbpk; // (Sandbox's pick too)
+        delete s.sbAsked;
         if (dodRoom(s)) me.ready = false; // (with every duck ready, Democracy of Ducklings would start it again at once)
       }
       return s;
@@ -3043,6 +3066,20 @@ function reduceStep(state, a, now) {
       } // the next tick starts the game
       return advance(s, now, true);
     }
+    case "sbPick":
+      // Sandbox's start: the host's pick, a new Sandbox or a save from its device (sbsave.js)
+      if (!host || s.phase !== "countdown" || !s.sbpk) return state;
+      delete s.sbpk;
+      if (!sbPick(s, a, now)) return state;
+      if (a.save) {
+        if (s.options.sbMap)
+          s.voteQ = (s.voteQ || []).filter((k) => k !== "map"); // (a world save brings its own map)
+        say(s, `${me.name} is loading a save: ${s.sbsv.name}`);
+      } else say(s, `${me.name} started a new Sandbox.`);
+      return nextVote(s, now);
+    case "sbsv":
+      // Sandbox: Save as, the session's new name (and id) on the host's device (sbsave.js)
+      return host && sbRename(s, a, now) ? s : state;
     case "music": {
       // (the host's own browser) the room's songs: the one now and the one after it, so everyone hears the same (music.js)
       if (!host) return state;
@@ -3059,7 +3096,7 @@ function reduceStep(state, a, now) {
     }
     case "songs": {
       // the host, sudo or cansettings: songs taken off the room's list (off) or put back (on); all: 'on' puts every song back
-      if (!may(s, a.id, "cansettings")) return state;
+      if (!may(s, a.id, "cansettings") && !sbMay(s, a.id, "g")) return state; // (Sandbox: G's Music row too)
       const off = new Set((s.music && s.music.off) || []),
         names = (v) =>
           (Array.isArray(v) ? v : [])
@@ -5453,6 +5490,7 @@ export function backToLobby(s, why) {
   helperOut(s); // (the fireplace's Justin stays with his game)
   delete s.waiting;
   delete s.zmapAsked; // (Quacky Zombies' map vote comes again next time)
+  sbEnd(s); // (Sandbox: a save's settings give way to the room's again)
   const was = STAGE[s.phase];
   s.phase = "lobby";
   countTurn(s, was);

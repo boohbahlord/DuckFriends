@@ -36,6 +36,8 @@ import {
   sbSpread,
   sbSize,
   sbRot,
+  SB_TABS,
+  SB_POINTS,
   sbInBlock,
 } from "./sandboxrules.js";
 import {
@@ -208,7 +210,24 @@ function drawMarks(layer, pts, at, size, s) {
     seeZones = building();
   for (const n of layer.querySelectorAll(".sb-pt")) have.set(n.dataset.p, n);
   for (const [id, p] of Object.entries(pts)) {
-    if (p.grp) continue; // (a spawn's + page: drawn as its spawn)
+    if (p.grp) {
+      /* a spawn's + page or a block's tab: drawn as its block, but a Loot tab's orb shows where it lies */
+      if (p.pg === "t" && p.k === "loot" && p.orb && p.orb.dn == null) {
+        const o = markEl(layer, have, id, "sb-pt"),
+          face = p.orb.w + boxText(p, "look") + ((s && s.sbImg) || {})[id];
+        want.add(id);
+        if (o._sig !== face) {
+          o._sig = face;
+          o.innerHTML = `<span class="sb-orb">${orbFace(s, id, p)}</span>`;
+        }
+        placeAt(
+          o,
+          at(p.orb.x != null ? { x: p.orb.x, y: p.orb.y, z: p.orb.z || 0 } : p),
+          size,
+        );
+      }
+      continue;
+    }
     const hid = hiddenNow(s, p),
       orbOut = p.k === "loot" && !!p.orb && p.orb.dn == null;
     if (hid && !orbOut) continue; // (Hide: a loot point hides its ring and name, never its orb, the owner's "that appearance is hidden")
@@ -380,25 +399,37 @@ export function sbSettings(getR, id, tab = "") {
     onlyZ = (ks) => zmaps && !ks.some((k) => k && k !== "zombie"), // (the zombie maps' zombies walk their own way: l4ddrules.js)
     look = spawn && !players && tab === "ap", // (its Appearance tab: sbmake.js)
     pick = boxText(p, "pick"),
+    base = pts[baseId],
+    purpose = (k) => (PURPOSES.find((x) => x[0] === k) || [k, k])[1],
     tabs = [
-      [baseId, "", "Entities"],
-      [baseId, "pl", "Players"],
-      [baseId, "ap", "Appearance"],
-      ...pages.map(([q, P]) => [q, "", boxText(P, "name")]),
+      ...(base.k === "spawn"
+        ? [
+            [baseId, "", "Entities"],
+            [baseId, "pl", "Players"],
+            [baseId, "ap", "Appearance"],
+          ]
+        : [[baseId, "", purpose(base.k)]]),
+      ...pages.map(([q, P]) => [
+        q,
+        "",
+        P.pg === "t"
+          ? P.f.name
+            ? P.f.name.t
+            : purpose(P.k)
+          : boxText(P, "name"),
+      ]),
     ],
     on = (t) =>
       t[0] === id &&
       (p.grp ? true : t[1] === (players ? "pl" : look ? "ap" : ""));
-  const head = spawn
-      ? `<div class="sb-tabs" role="tablist">${tabs
-          .map(
-            (t) =>
-              `<button type="button" class="sb-tab${on(t) ? " on" : ""}" role="tab" aria-selected="${on(t)}" data-tab="${t[0]}" data-tk="${t[1]}">${esc(t[2])}</button>`,
-          )
-          .join(
-            "",
-          )}<span class="sb-plus"><button type="button" class="sb-tab" data-plus aria-label="Add a page">+</button><span class="sb-plus-pick" hidden><button type="button" class="sb-tab" data-page="ent">Entity page</button><button type="button" class="sb-tab" data-page="pl">Player page</button></span></span></div>`
-      : "",
+  const head = `<div class="sb-tabs" role="tablist">${tabs
+      .map(
+        (t) =>
+          `<button type="button" class="sb-tab${on(t) ? " on" : ""}" role="tab" aria-selected="${on(t)}" data-tab="${t[0]}" data-tk="${t[1]}">${esc(t[2])}</button>`,
+      )
+      .join(
+        "",
+      )}<span class="sb-plus"><button type="button" class="sb-tab" data-plus aria-label="Add a page">+</button><span class="sb-plus-pick" hidden>${base.k === "spawn" ? `<button type="button" class="sb-tab" data-page="ent">Entity page</button><button type="button" class="sb-tab" data-page="pl">Player page</button>` : ""}${SB_TABS.map(([k, l]) => `<button type="button" class="sb-tab" data-page="${k}">${l}</button>`).join("")}</span></span></div>`,
     linked = (spawn || p.k === "respawn") && !p.grp;
   let colorRow = `<div class="sb-row"><span>Color</span><span class="sb-cols">${colSwatches(
       p.col,
@@ -563,7 +594,7 @@ export function sbSettings(getR, id, tab = "") {
   };
   const html = `<h2>${loot ? "Loot" : zone ? "Zone" : spawn ? "Spawn" : "Respawn"}</h2>${head}
   <div class="sb-set">${frontHTML}${front ? `<h3 class="sb-sect sb-sect-top">4. ${PURPOSES.find(([v]) => v === p.k)[1]} settings</h3>` : ""}${loot ? lootPage(R.state, id, p, { row, flagRow, typed, why, colorRow }) : zone ? zonePage() : !spawn ? respawn() : players ? playersPage() : look ? lookPage(R.state, p) : entity()}</div>
-  <p class="acts">${spawn && !players && !look ? `<button type="button" class="btn" data-go>Spawn</button>` : ""}${!spawn && !loot && !zone ? `<button type="button" class="btn" data-imp>Import settings</button>` : ""}<button type="button" class="btn ghost" data-del>${p.grp ? "Delete page" : "Delete"}</button></p>`;
+  <p class="acts">${spawn && !players && !look ? `<button type="button" class="btn" data-go>Spawn</button>` : ""}${!spawn && !loot && !zone ? `<button type="button" class="btn" data-imp>Import settings</button>` : ""}<button type="button" class="btn ghost" data-del>${p.grp ? (p.pg === "t" ? "Delete tab" : "Delete page") : "Delete"}</button></p>`;
   openWindow(html, {
     cls: zone ? "sb-setwin sb-zonewin" : "sb-setwin",
     onOpen(w, close) {
@@ -764,6 +795,10 @@ export function sbSettings(getR, id, tab = "") {
         if (pg) {
           const r = getR(),
             had = new Set(Object.keys(ptsOf(r.state)));
+          if (had.size >= SB_POINTS)
+            return toast(
+              `The zone budget is full (${SB_POINTS}). Delete a block or a tab first.`,
+            );
           r.send({ t: "sb", k: "page", p: baseId, kind: pg.dataset.page });
           setTimeout(() => {
             const made = Object.keys(ptsOf(getR().state)).find(

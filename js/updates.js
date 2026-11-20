@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v132",
+    version: 132,
+    date: "Nov 20, 2026",
+    title: "Tabs on every block",
+    news: [
+      "For Sandbox: + in a block's window adds a Spawn, Respawn, Loot or Zone tab, so one block can do several things at once. Each tab follows its block's spot, shape and size. Build shows the zone budget: 50 blocks and tabs at most.",
+      "For Sandbox: save a Sandbox exactly as it is and pick it up later. When Sandbox starts, the host picks New Sandbox or one of their saves; it also saves itself every minute.",
+      "For Sandbox: G has Save, Save as, and Music (no music, or pick which songs play).",
+      "On phones, the hotbar no longer slows the game down in a big horde.",
+    ],
+  },
+  {
     id: "v131",
     version: 131,
     date: "Nov 20, 2026",

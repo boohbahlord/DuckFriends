@@ -41,6 +41,7 @@ import { openFriends } from "./friends.js";
 import { NAV_HINTS } from "./keynav.js";
 import { musicBarHTML, mountMusicBar } from "./musicbar.js";
 import { paintVotes, closeVotes } from "./vote.js";
+import { paintSbPick, closeSbPick } from "./sbsaves.js";
 import { openSettings } from "./settings.js";
 
 let R = null,
@@ -157,7 +158,8 @@ function paint() {
     .join(" · ");
   const st = $(".lobby-status", S);
   paintVotes(R, openPause); // (Vote Mode & Map: its window over the whole screen, after the countdown)
-  if (s.phase === "countdown" && !s.vt) {
+  paintSbPick(R, openPause); // (Sandbox: the host picks a new Sandbox or a save, sbsaves.js)
+  if (s.phase === "countdown" && !s.vt && !s.sbpk) {
     const left = Math.max(0, Math.ceil((s.ends - now()) / 1000));
     setHTML(
       st,
@@ -342,7 +344,7 @@ function onState(s) {
     }); // (every way into a game: the countdown's end, a vote, a game already going on)
     return;
   } // the countdown's last tone, at zero
-  if (s.phase === "countdown" && !s.vt) {
+  if (s.phase === "countdown" && !s.vt && !s.sbpk) {
     const left = Math.max(0, Math.ceil((s.ends - now()) / 1000));
     if (!counting) {
       counting = true;
@@ -354,7 +356,12 @@ function onState(s) {
     }
   } else {
     // the countdown ran out into the votes (Vote Mode & Map): its last tone, if the vote came before I saw the zero
-    if (counting && lastCount > 0 && s.phase === "countdown" && s.vt)
+    if (
+      counting &&
+      lastCount > 0 &&
+      s.phase === "countdown" &&
+      (s.vt || s.sbpk)
+    )
       sfx.count(true);
     if (counting) brighten(); // (cancelled: the screen comes back)
     counting = false;
@@ -366,7 +373,7 @@ function onState(s) {
 /* Space: ready */
 function key(e) {
   if (!S || typing(e) || windowOpen()) return;
-  if (R && R.state.vt && e.key !== "Escape") return; // (Vote Mode & Map's window is up: only clicks vote, and Esc pauses)
+  if (R && (R.state.vt || R.state.sbpk) && e.key !== "Escape") return; // (Vote Mode & Map's window, or Sandbox's pick, is up: only clicks vote, and Esc pauses)
   if (e.code === "Space" && !e.repeat) {
     e.preventDefault();
     toggleReady();
@@ -472,6 +479,7 @@ register("lobby", {
     if (docks) docks.destroy();
     docks = null;
     closeVotes();
+    closeSbPick();
     if (counting) brighten(); // (left the room in the countdown)
     counting = false;
     clearInterval(S && S._tick);

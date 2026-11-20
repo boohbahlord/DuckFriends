@@ -36,6 +36,7 @@ import { boxText } from "./sbspawn.js";
 import { npcRows } from "./sbmake.js";
 import { sbCheatSound } from "./sbsfx.js";
 import { sbSlots } from "./sbhot.js";
+import { saveRows } from "./sbsaves.js";
 import {
   hotKeyPut,
   hotRows,
@@ -89,7 +90,7 @@ export const SB_SHEET = [
   ],
   [
     "G",
-    `Game settings for this Sandbox: where ${LANG} files are brought in to run.`,
+    "Game settings for this Sandbox: Save and Save as (the host's, kept on the host's device; it also saves itself every minute), and the Music: which songs play, or none.",
   ],
   [
     "P",
@@ -239,7 +240,7 @@ const OPTIONS = {
   },
   n: [],
   h: (R) => [...hotRows(R, openPut), helpRow("h")],
-  g: [helpRow("g")],
+  g: (R) => [...saveRows(R), helpRow("g")], // (Save, Save as and Music: sbsaves.js)
   p: pRows,
 };
 export const sbOptions = (k, R) => {
@@ -318,6 +319,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
       (can ? 1 : 0) +
       opts.map((o) => o.label).join("|") +
       (k.open === "c" ? sbCheat.on + "" + mayBuild(R) : "") +
+      (k.open === "b" ? Object.keys((R.state.sb || {}).pts || {}).length : "") +
       (hotWin
         ? hotPick +
           JSON.stringify((R.state.sb || {}).hb || {}) +
@@ -335,7 +337,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
           : !can
             ? `<p class="sb-none">Only the host can change this.</p>`
             : opts.length
-              ? `<div class="sb-opts${hotWin ? " sb-hotopts" : ""}">${opts.map((o, i) => `<button type="button" class="sb-opt${o.on ? " on" : ""}" data-i="${i}">${i < 9 ? `<kbd>${i + 1}</kbd>` : ""}${esc(o.label)}</button>`).join("")}</div>${hotWin ? hotWinHTML(R, hotPick) : ""}`
+              ? `${k.open === "b" ? `<p class="sb-budget">Zone budget ${Object.keys((R.state.sb || {}).pts || {}).length}/${SB_POINTS}</p>` : ""}<div class="sb-opts${hotWin ? " sb-hotopts" : ""}">${opts.map((o, i) => `<button type="button" class="sb-opt${o.on ? " on" : ""}" data-i="${i}">${i < 9 ? `<kbd>${i + 1}</kbd>` : ""}${esc(o.label)}</button>`).join("")}</div>${hotWin ? hotWinHTML(R, hotPick) : ""}`
               : `<p class="sb-none">Nothing here yet.</p>`;
       box.innerHTML = `<header><span class="sb-tip">Press <kbd>${k.open.toUpperCase()}</kbd> again to close</span><h2>${esc(w.name)}</h2><button type="button" class="sb-x" aria-label="Close">×</button></header>${body}`;
     }
@@ -624,7 +626,9 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
   const full = (R) => {
     if (Object.keys((R.state.sb && R.state.sb.pts) || {}).length < SB_POINTS)
       return false;
-    toast(`A map holds ${SB_POINTS} things at most. Delete one first.`);
+    toast(
+      `The zone budget is full (${SB_POINTS}). Delete a block or a tab first.`,
+    );
     return true;
   };
   const paste = (at) => {
@@ -636,7 +640,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
         to = sbClip.many.map((c) => ({ ...c, x: at.x + c.dx, y: at.y + c.dy }));
       if (to.length > room)
         return toast(
-          `A map holds ${SB_POINTS} things at most. Delete some first.`,
+          `The zone budget is full (${SB_POINTS}). Delete some first.`,
         );
       if (to.some((c) => c.x < 0 || c.x > 1 || c.y < 0 || c.y > 1))
         return toast("It doesn't fit there: one of them would be off the map.");
