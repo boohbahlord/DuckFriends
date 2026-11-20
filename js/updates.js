@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v130",
+    version: 130,
+    date: "Nov 20, 2026",
+    title: "Survival",
+    news: [
+      "Survival is here: no rounds, the zombies keep coming on Downpour, calm one moment and a horde the next.",
+      "For Survival: soldiers, criminals and the sniper wear their own looks (camo, gas masks, bandanas, a ghillie suit).",
+      "Duck Cabin and Downpour now ship as real pixels: much smoother walking, most of all on phones.",
+    ],
+  },
+  {
     id: "v129",
     version: 129,
     date: "Nov 19, 2026",
