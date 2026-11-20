@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v151",
+    version: 151,
+    date: "Nov 20, 2026",
+    title: "Recursive",
+    news: [
+      "For Sandbox: Seriat's Permissions has a Recursive switch for folders. Turn it on to give a whole folder, and everything in it, the same rights at once. chmod -R does the same in the terminal.",
+      "For Sandbox: the Seriat bible button no longer covers the window's title on phones.",
+    ],
+  },
+  {
     id: "v150",
     version: 150,
     date: "Nov 20, 2026",

@@ -247,6 +247,16 @@ function numKeep() {
   profile.numerat = next;
   save();
 }
+/* every folder and file inside folder p (not the game's read-only ones), folders first */
+function below(p) {
+  const pre = p + "/";
+  return [
+    ...[...fs.dirs].filter((d) => d.startsWith(pre) && !inRo(d)).sort(),
+    ...Object.keys(fs.files)
+      .filter((f) => f.startsWith(pre) && !inRo(f))
+      .sort(),
+  ];
+}
 /* a class's rights on a Seriat path, changed by chmod (only the bits it names): null outside Sandbox */
 function give(p, who, ch) {
   if (!Object.keys(ch).length) return false;
@@ -1991,8 +2001,16 @@ const CMDS = {
   /* the modes: u (mine: r, w, x), g (the file's group) and o (everyone). On a Seriat file or folder, g and o are also
      the rights the room's players get, this Sandbox only (nbperms.js); g+r and o+r still let a sent file be opened */
   chmod: (args) => {
-    const [mode, ...files] = args;
-    if (!mode || !files.length) fail(`✗ chmod: usage: ${MAN.chmod}`);
+    const deep = args[0] === "-R" || args[0] === "--recursive"; // (a whole folder at once: the owner's "recursive" switch, plan Phase 6)
+    if (deep) args = args.slice(1);
+    const [mode, ...named] = args;
+    if (!mode || !named.length) fail(`✗ chmod: usage: ${MAN.chmod}`);
+    const files = deep
+      ? named.flatMap((f) => {
+          const p = findPath(f);
+          return kind(p) === "dir" ? [f, ...below(p)] : [f];
+        })
+      : named;
     const ch = { u: {}, g: {}, o: {} },
       nm = mode.match(/^[0-7]?([0-7])([0-7])([0-7])$/);
     if (nm)
@@ -3218,6 +3236,23 @@ export const numerat = {
       rel,
       file: kind(path) === "file",
       own: (m.nr ? "" : "r") + (m.nw ? "" : "w") + (m.x ? "x" : ""),
+      /* a folder: the bits every file in it has (the Recursive switch's Me row) */
+      ownAll:
+        kind(path) === "dir"
+          ? "rwx"
+              .split("")
+              .filter((b) => {
+                const fl = below(path).filter((f) => kind(f) === "file");
+                return (
+                  fl.length &&
+                  fl.every((f) => {
+                    const q = fs.meta[f] || {};
+                    return b === "r" ? !q.nr : b === "w" ? !q.nw : !!q.x;
+                  })
+                );
+              })
+              .join("")
+          : "",
       sb,
       given: sb ? nbGiven(s, fs.meId, rel) : [],
       players: s
@@ -3238,22 +3273,25 @@ export const numerat = {
               : w,
     };
   },
-  /* my own bits on a file ("rw", "rx" …), kept on this device */
-  setOwn(ctx, path, bits) {
+  /* my own bits on a file ("rw", "rx" …), kept on this device; deep: on every file in a folder */
+  setOwn(ctx, path, bits, deep = false) {
     sync(ctx);
-    CMDS.chmod([`u=${bits}`, path]);
+    CMDS.chmod([...(deep ? ["-R"] : []), `u=${bits}`, path]);
   },
-  /* a player's (a group's, everyone's) rights on my file or folder, this Sandbox */
-  give(ctx, path, who, bits) {
+  /* a player's (a group's, everyone's) rights on my file or folder, this Sandbox; deep: on the folder and everything
+     in it */
+  give(ctx, path, who, bits, deep = false) {
     sync(ctx);
     const s = roomS();
     if (!s || !isSb(s) || !fs.room.send) return;
-    fs.room.send({
-      t: "nbp",
-      path: path === numRoot() ? "" : path.slice(numRoot().length + 1),
-      who,
-      bits,
-    });
+    const all = deep && kind(path) === "dir" ? [path, ...below(path)] : [path];
+    for (const p of all.slice(0, 300))
+      fs.room.send({
+        t: "nbp",
+        path: p === numRoot() ? "" : p.slice(numRoot().length + 1),
+        who,
+        bits,
+      });
   },
   write(ctx, path, text) {
     sync(ctx);
