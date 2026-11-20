@@ -7,6 +7,7 @@
    same body as a mallard, a call duck, a raptor, an eagle or a pelican, or builds it of blocks or flat shapes. */
 import { rbGrad, rbShade } from "./rainbowskin.js";
 import { hatLayers, HAT_TOP } from "./hats.js";
+import { applyPalette } from "./pixelpalette.js";
 import { datboiSVG, onHead } from "./datboi.js";
 import { faceLayer, hidesBeak } from "./faces.js";
 import { beakSVG } from "./beaks.js";
@@ -583,8 +584,12 @@ function partsOK(L, { skin, extra, gone }) {
   );
 }
 
-/* a square picture from the player's files, cut to its middle and made small enough to send to others */
-export function pictureToSquare(file, px = 128) {
+/* a square picture from the player's files, cut to its middle and made into real pixels (the owner's, Nov 19 23:26Z:
+   "It should be saved as real pixels"): px × px, every pixel the nearest of the game's colors (pixelpalette.js), a
+   PNG; the original is never kept. A duck's picture is 35 pixels, the size it shows on the board (its 92 units of a
+   duck's 120 at 32 pixels to a duck's height) */
+export const DUCK_PIC_PX = 35;
+export function pictureToSquare(file, px = DUCK_PIC_PX) {
   return new Promise((ok, bad) => {
     if (!file || !/^image\//.test(file.type)) {
       bad(new Error("That file is not a picture."));
@@ -596,7 +601,9 @@ export function pictureToSquare(file, px = 128) {
       const s = Math.min(img.width, img.height),
         c = document.createElement("canvas");
       c.width = c.height = px;
-      c.getContext("2d").drawImage(
+      const g = c.getContext("2d", { willReadFrequently: true });
+      g.imageSmoothingQuality = "high";
+      g.drawImage(
         img,
         (img.width - s) / 2,
         (img.height - s) / 2,
@@ -607,8 +614,9 @@ export function pictureToSquare(file, px = 128) {
         px,
         px,
       );
+      g.putImageData(applyPalette(g.getImageData(0, 0, px, px)), 0, 0);
       URL.revokeObjectURL(url);
-      ok(c.toDataURL("image/jpeg", 0.85));
+      ok(c.toDataURL("image/png"));
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);

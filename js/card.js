@@ -144,7 +144,7 @@ export function patternLayers(kind, col, layout = "tiled", size = "m") {
 }
 export function cardBackground(card = {}) {
   if (card.image)
-    return `background:url("${card.image}") center/cover, ${card.color || "#2fa4ff"}`;
+    return `background:url("${card.image}") center/cover, ${card.color || "#2fa4ff"};image-rendering:pixelated`; // (its real pixels, square: customize.js)
   const pat =
     card.pattern && card.pattern !== "none"
       ? patternLayers(
