@@ -43,7 +43,7 @@ function looks({ WOUNDS, hitsOf, ZOUTFITS }) {
   }
   for (const st of styles)
     for (const [b] of BUILDS)
-      for (const m of st.fixed || st.flat ? ["none"] : metals) {
+      for (const m of st.fixed || st.flat ? ["none"] : [...metals, "rainbow"]) {
         const L = { ...D, style: st.id, build: b, metal: m };
         for (const sh of [true, false]) out.push([L, { shadow: sh }]);
         if (m === "none" && !st.fixed && !st.flat)
@@ -52,14 +52,58 @@ function looks({ WOUNDS, hitsOf, ZOUTFITS }) {
       }
   const eyes = EYES.map((e) => e.id),
     beaks = BEAKS.map((b) => b.id);
+  /* Jack (or Jill) in a Box: his eyes on him; Dat Boi: each rank, and the hats and face items moved onto his head */
+  for (const e of eyes)
+    for (const jill of [false, true])
+      for (const dead of [false, true])
+        for (const sh of [true, false])
+          out.push([
+            { ...D, style: "jack", eyes: e, jill },
+            { dead, shadow: sh },
+          ]);
+  const DB = { ...D, style: "datboi" };
+  for (const rank of ["none", ...metals.filter((x) => x !== "none"), "rainbow"])
+    for (const dead of [false, true])
+      for (const sh of [true, false])
+        out.push([
+          { ...DB, rank },
+          { dead, shadow: sh },
+        ]);
   for (const h of [...HATS, ...NPC_HATS])
     for (const m of h.metal ? metals.filter((x) => x !== "none") : [undefined])
-      for (const e of h.id === "antennae" ? eyes : ["default"])
+      for (const k of h.ketchup ? [false, true] : [undefined])
         for (const dead of [false, true])
           out.push([
-            { ...D, eyes: e, hat: { id: h.id, ...(m ? { metal: m } : {}) } },
+            {
+              ...DB,
+              hat: {
+                id: h.id,
+                ...(m ? { metal: m } : {}),
+                ...(k ? { ketchup: k } : {}),
+              },
+            },
             { dead },
           ]);
+  for (const f of [...FACES, ...NPC_FACES])
+    for (const dead of [false, true])
+      out.push([{ ...DB, face: { id: f.id } }, { dead }]);
+  for (const h of [...HATS, ...NPC_HATS])
+    for (const m of h.metal ? metals.filter((x) => x !== "none") : [undefined])
+      for (const k of h.ketchup ? [false, true] : [undefined]) // (the hotdog's, with ketchup or without)
+        for (const e of h.id === "antennae" ? eyes : ["default"])
+          for (const dead of [false, true])
+            out.push([
+              {
+                ...D,
+                eyes: e,
+                hat: {
+                  id: h.id,
+                  ...(m ? { metal: m } : {}),
+                  ...(k ? { ketchup: k } : {}),
+                },
+              },
+              { dead },
+            ]);
   for (const f of [...FACES, ...NPC_FACES])
     for (const bk of beaks)
       for (const e of f.id === "clownpaint" ? eyes : ["default"])
@@ -115,6 +159,9 @@ const OWN = {
   ];
 const chunkOf = (layer, look, o) => {
   if (o.gone && o.gone.head) return "x";
+  if (look.style === "jack" || look.style === "datboi")
+    return "s-" + look.style; // (all of him)
+  if (look.metal === "rainbow" && BODY.includes(layer)) return "rb"; // (the rainbow skin's)
   if (/^skin/.test(layer)) return "skin";
   const k = OWN[layer];
   if (k === "o" && look.outfit) return "o-" + look.outfit.id;
@@ -160,6 +207,8 @@ function parts(L4) {
 }
 
 async function draw(svg, n, H) {
+  if (!/^<svg[^>]*\sxmlns=/.test(svg))
+    svg = svg.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"'); // (a cat's drawing goes in a page, so it has none)
   const u = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" })),
     i = new Image();
   i.src = u;
@@ -178,25 +227,33 @@ async function draw(svg, n, H) {
 /* one size: each part's black pixels and its colors' shade numbers, cropped, on shelves 2048 pixels across */
 async function sheet(list, n) {
   const H = Math.round((n * FRAME) / 120),
-    made = [];
+    made = [],
+    empty = [];
   for (const p of list) {
-    const z = await draw(p.svg, n, H),
+    /* a cat's box is its own: as big next to this size's duck box as it is next to a duck's (64 world px) */
+    const pw = p.cat ? Math.round((n * p.cat.w) / 64) : n,
+      ph = p.cat ? Math.round((n * p.cat.h) / 64) : H;
+    const z = await draw(p.svg, pw, ph),
       ws = [];
-    for (const [path, svg] of p.whites) ws.push([path, await draw(svg, n, H)]);
+    for (const [path, svg] of p.whites)
+      ws.push([path, await draw(svg, pw, ph)]);
     /* its box: where anything shows */
-    let x0 = n,
-      y0 = H,
+    let x0 = pw,
+      y0 = ph,
       x1 = -1,
       y1 = -1;
-    for (let j = 0; j < H; j++)
-      for (let i = 0; i < n; i++)
-        if (z[(j * n + i) * 4 + 3]) {
+    for (let j = 0; j < ph; j++)
+      for (let i = 0; i < pw; i++)
+        if (z[(j * pw + i) * 4 + 3]) {
           x0 = Math.min(x0, i);
           y0 = Math.min(y0, j);
           x1 = Math.max(x1, i);
           y1 = Math.max(y1, j);
         }
-    if (x1 < 0) continue; // (nothing at this size)
+    if (x1 < 0) {
+      empty.push(p.key); // (nothing at this size, or nothing at all: a robot's sleeve. Listed as nothing, so it's not missing)
+      continue;
+    }
     const w = x1 - x0 + 1,
       h = y1 - y0 + 1,
       used = [],
@@ -206,7 +263,7 @@ async function sheet(list, n) {
       let any = 0;
       for (let j = 0; j < h; j++)
         for (let i = 0; i < w; i++) {
-          const s = ((y0 + j) * n + x0 + i) * 4,
+          const s = ((y0 + j) * pw + x0 + i) * 4,
             a = z[s + 3] / 255,
             aw = wd[s + 3] / 255;
           let v = 0;
@@ -229,7 +286,7 @@ async function sheet(list, n) {
       d = id.data;
     for (let j = 0; j < h; j++)
       for (let i = 0; i < w; i++) {
-        const s = ((y0 + j) * n + x0 + i) * 4,
+        const s = ((y0 + j) * pw + x0 + i) * 4,
           t = (j * c.width + i) * 4;
         d[t] = z[s];
         d[t + 1] = z[s + 1];
@@ -246,7 +303,9 @@ async function sheet(list, n) {
       key: p.key,
       chunk: p.chunk,
       c,
-      e: [0, 0, w, h, x0, y0, used, 0],
+      e: p.cat
+        ? [0, 0, w, h, x0, y0, used, 0, pw, ph]
+        : [0, 0, w, h, x0, y0, used, 0],
     });
   }
   /* a file for each chunk, its parts on shelves: as wide as it needs, 2048 at most */
@@ -289,6 +348,7 @@ async function sheet(list, n) {
     }
     files.push({ name, png: out.toDataURL("image/png").split(",")[1] });
   });
+  for (const k of empty) index[k] = 0;
   return { files, index };
 }
 
@@ -299,6 +359,27 @@ export async function listParts() {
     ...(await import("/js/l4ddart.js")),
     ...(await import("/js/l4ddrules.js")),
   });
+  /* Duck Cabin's cats (hangout/npcart.js): each pose one part, as it is (their colors never change) */
+  const { CATS, catSVG, catBox } = await import("/js/hangout/npcart.js");
+  for (const name of Object.keys(CATS))
+    for (const [pose, step] of [
+      ["stand", 0],
+      ["walk", -1],
+      ["walk", 1],
+      ["sit", 0],
+      ["loaf", 0],
+      ["swipe", 0],
+    ]) {
+      const svg = catSVG(name, { pose, step });
+      list.push({
+        layer: "cat",
+        key: partKey("cat", svg),
+        svg,
+        whites: [],
+        chunk: "cats",
+        cat: catBox(name),
+      });
+    }
   window.__parts = list;
   return list.length;
 }

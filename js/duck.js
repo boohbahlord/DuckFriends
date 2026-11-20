@@ -5,7 +5,7 @@
    as a little 3D toy. Metals use banded reflections (a bright sky, a dark horizon, a lighter floor) and a shine that
    sweeps across them now and then. A hat (hats.js) adds headroom above the duck's box. A style (styles.js) dresses the
    same body as a mallard, a call duck, a raptor, an eagle or a pelican, or builds it of blocks or flat shapes. */
-import { rbGrad, rbShade } from "./rainbowskin.js";
+import { rbGrad, rbShade, rbFlat } from "./rainbowskin.js";
 import { hatLayers, HAT_TOP } from "./hats.js";
 import { applyPalette } from "./pixelpalette.js";
 import { datboiSVG, onHead } from "./datboi.js";
@@ -206,7 +206,18 @@ const marks = (OF, size) => {
    and may stick out of it (an arrow). gone: what a rubber duck has lost, { head, beak, holes: [[x, y, r]] } (a chunk
    torn out is a hole through it), and (the owner's, Nov 16) eyes (blown out), hat and face (knocked off: 0, or 0.5
    coming back on, half see-through), rips: [[x, y, r]] (its clothes torn where it was hit, the body seen through). Quacky Zombies' scars and wounds: l4ddart.js */
-export function duckSVG(
+/* one layer alone, in the frame every layer shares (room for a hat above): the part sheets, duckparts.js */
+const layerSVG = (s, defs = "") =>
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${-HAT_TOP} 120 ${120 + HAT_TOP}" width="120" height="${120 + HAT_TOP}">${defs}${s}</svg>`;
+export function duckSVG(look = DUCK_DEFAULT, o = {}) {
+  const was = rbFlat((look && look.rbFlat) || null); // (the part sheets' plain rainbow: rainbowskin.js)
+  try {
+    return drawDuck(look, o);
+  } finally {
+    rbFlat(was);
+  }
+}
+function drawDuck(
   look = DUCK_DEFAULT,
   {
     size = 64,
@@ -233,8 +244,16 @@ export function duckSVG(
     !gone || g === undefined ? svg : g ? `<g opacity="${g}">${svg}</g>` : "";
   if (L.style === "jack") {
     // Jack (or Jill) in a Box: not a duck; only the eyes and the colors draw on him, the rest stays stored
-    return `<svg class="duck jack" viewBox="0 0 120 120" width="${size}" height="${size}" role="img" aria-label="${esc(title || styleName(L))}">
-${shadow ? `<ellipse cx="64" cy="109" rx="38" ry="6.4" fill="#000" opacity=".22"/>` : ""}${jackSVG(L, styleById("jack"), id, eyesSVG(L, dead), dead)}${extra}</svg>`;
+    /* its layers (the part sheets: duckparts.js): its shadow, and him, his eyes on him */
+    const J = {
+      shadow: shadow
+        ? `<ellipse cx="64" cy="109" rx="38" ry="6.4" fill="#000" opacity=".22"/>`
+        : "",
+      fill: jackSVG(L, styleById("jack"), id, eyesSVG(L, dead), dead),
+    };
+    if (layer) return J[layer] ? layerSVG(J[layer]) : "";
+    return `<svg class="duck jack" viewBox="0 0 120 120" width="${size}" height="${size}" role="img" aria-label="${esc(title || styleName(L))}"${partsOK(L, { extra, gone }) ? ` data-dk="${esc(JSON.stringify({ L, dead, shadow }))}"` : ""}>
+${J.shadow}${J.fill}${extra}</svg>`;
   }
   if (L.style === "datboi") {
     // here come dat boi: the frog on his unicycle; hats and face items move onto his head (datboi.js), no beak, no outfit
@@ -242,9 +261,20 @@ ${shadow ? `<ellipse cx="64" cy="109" rx="38" ry="6.4" fill="#000" opacity=".22"
       face = faceLayer(L.face, { ...L, beak: "frog" }, dead),
       top = hat.front || face ? HAT_TOP : 0,
       k = 1 + 0.1 * clamp1(L.size);
-    return `<svg class="duck datboi${L.rank === "rainbow" ? " rainbow" : ""}${top ? " hatted" : ""}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${((size * (120 + top)) / 120).toFixed(1)}" role="img" aria-label="${esc(title || styleName(L))}">
+    /* its layers (the part sheets: duckparts.js) */
+    const DB = {
+      shadow: shadow
+        ? `<ellipse cx="55" cy="106.4" rx="26" ry="4.8" fill="#000" opacity=".22"/>`
+        : "",
+      hatBack: onHead(worn(hat.back, gone && gone.hat)),
+      fill: `<g class="dbr">${datboiSVG(L, id, dead)}</g>`,
+      face: onHead(worn(face, gone && gone.face)),
+      hatFront: onHead(worn(hat.front, gone && gone.hat)),
+    };
+    if (layer) return DB[layer] ? layerSVG(DB[layer]) : "";
+    return `<svg class="duck datboi${L.rank === "rainbow" ? " rainbow" : ""}${top ? " hatted" : ""}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${((size * (120 + top)) / 120).toFixed(1)}" role="img" aria-label="${esc(title || styleName(L))}"${partsOK(L, { extra, gone }) ? ` data-dk="${esc(JSON.stringify({ L, dead, shadow, gone }))}"` : ""}>
 ${k !== 1 ? `<g transform="translate(56 106) scale(${k.toFixed(3)}) translate(-56 -106)">` : ""}
-${shadow ? `<ellipse cx="55" cy="106.4" rx="26" ry="4.8" fill="#000" opacity=".22"/>` : ""}${onHead(worn(hat.back, gone && gone.hat))}<g class="dbr">${datboiSVG(L, id, dead)}</g>${onHead(worn(face, gone && gone.face))}${onHead(worn(hat.front, gone && gone.hat))}${k !== 1 ? "</g>" : ""}${extra}</svg>`;
+${DB.shadow}${DB.hatBack}${DB.fill}${DB.face}${DB.hatFront}${k !== 1 ? "</g>" : ""}${extra}</svg>`;
   }
   if (L.image) {
     // an uploaded square picture, standing like a card, with the same little shadow
@@ -310,10 +340,7 @@ ${dead ? '<path d="M24 20L96 92M96 20L24 92" stroke="#e01b1b" stroke-width="10" 
       eyesZap: zap && !(gone && gone.eyes) ? eyes : "",
       hatFront: worn(hat.front, gone && gone.hat),
     };
-    if (layer)
-      return F[layer]
-        ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${-HAT_TOP} 120 ${120 + HAT_TOP}" width="120" height="${120 + HAT_TOP}">${F[layer]}</svg>`
-        : "";
+    if (layer) return F[layer] ? layerSVG(F[layer]) : "";
     return `<svg class="duck flat${top ? " hatted" : ""}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${((size * (120 + top)) / 120).toFixed(1)}" role="img" aria-label="${esc(title || "Duck")}"${partsOK(L, { extra, gone }) ? ` data-dk="${esc(JSON.stringify({ L, dead, shadow, gone }))}"` : ""}>
 ${k !== 1 ? `<g transform="translate(60 108) scale(${k.toFixed(3)}) translate(-60 -108)">` : ""}
 ${F.shadow}
@@ -603,18 +630,12 @@ const CLIPPED = [
   "skinBody",
   "skinHead",
 ];
-/* whether a duck can be made from its parts: a rubber-like style or a flat one (Blocks, 2D shapes), nothing drawn round it that only it has (an extra).
-   What's torn off it (its head, hat, face, eyes, beak, holes through it, its clothes torn) the parts leave out. Its skin (a zombie's marks, the wounds hits leave) is made of parts too, a mark at a time. The rest is
-   still made whole */
-function partsOK(L, { extra, gone }) {
-  const st = styleById(L.style);
-  return (
-    L.style !== "jack" &&
-    L.style !== "datboi" &&
-    !L.image &&
-    L.metal !== "rainbow" &&
-    !extra
-  );
+/* whether a duck can be made from its parts: any style (the flat ones, Jack in a Box, Dat Boi, the rainbow skin too),
+   unless it's a picture or has something drawn round it that only it has (an extra). What's torn off it (its head, hat,
+   face, eyes, beak, holes through it, its clothes torn) the parts leave out; its skin (a zombie's marks, the wounds hits
+   leave) is made of parts too, a mark at a time */
+function partsOK(L, { extra }) {
+  return !L.image && !extra;
 }
 
 /* a square picture from the player's files, cut to its middle and made into real pixels (the owner's, Nov 19 23:26Z:
