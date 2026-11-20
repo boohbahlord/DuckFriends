@@ -108,4 +108,3 @@ export function gunmanLook(kind, n = 0, { camo: wear } = {}) {
     ...(face ? { face: { ...face } } : {}),
   };
 }
-export const GUNMAN_PARTS = { SOLDIER, CRIMINAL };

@@ -26,18 +26,6 @@ import {
 } from "./styles.js";
 import { outfitLayers } from "./outfits.js";
 
-export const DUCK_COLORS = [
-  ["Classic yellow", "#ffd23f"],
-  ["Tangerine", "#ff8c2b"],
-  ["Cherry", "#ef3b3b"],
-  ["Bubblegum", "#ff7eb6"],
-  ["Grape", "#9b5de5"],
-  ["Pool blue", "#2fa4ff"],
-  ["Teal", "#14c6b4"],
-  ["Lime", "#8ee03c"],
-  ["Snow", "#f4f4f0"],
-  ["Charcoal", "#3b3f4a"],
-];
 export const DUCK_PATTERNS = [
   ["none", "Plain"],
   ["dots", "Polka dots"],

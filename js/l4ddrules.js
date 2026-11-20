@@ -233,9 +233,6 @@ const PHASES = Array.from({ length: 20 }, (_, i) => [
 const Z_EACH = 72, // the most zombies a round for each player …
   Z_LATE = 800; // from round 21 on (was 144)
 export const Z_MOST = 800; // … and in all (was 400)
-/* Sandbox: the most NPCs alive at once on any map, online too. It follows the zombies' cap (the owner's, Nov 19 01:57Z),
-   so the two never drift apart */
-export const NPC_CAP = Z_MOST;
 function zombiesFor(r, p) {
   const cap = Math.min(Z_EACH * p, Z_MOST);
   let n = 0;
