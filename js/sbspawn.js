@@ -239,7 +239,7 @@ export function liveNpcs(s) {
   if (sbOnBoard(s))
     return ((s.mz && s.mz.zb) || [])
       .filter((o) => !o.d)
-      .map((o) => ({ i: o.i, x: o.x, y: o.y, sp: o.sp }));
+      .map((o) => ({ i: o.i, x: o.x, y: o.y, sp: o.sp, k: o.k }));
   if (onCabin(s)) return cabinLive(s);
   return baseMode(s.options) === "l4dd" ? [...l4Live(s), ...cabinLive(s)] : []; // (the zombie maps: theirs, and every other kind)
 }
@@ -1023,7 +1023,10 @@ function canSet(p, f) {
   if (f === "lead") return !p.grp; // (the zone a block leads with)
   if (SB_SHAPE[f] || f === "zw" || f === "zh") return !p.grp; // (every block's shape and size; a page has its spawn's)
   if (SB_ORDER[f]) return p.pg !== "pl"; // (every block's and tab's own potential order)
-  if (p.k === "loot") return !!SB_LOOT[f] || f === "name" || f === "hide"; // (a loot orb's own boxes: sbloot.js)
+  if (p.k === "loot")
+    return (
+      !!SB_LOOT[f] || ["name", "hide", "limit", "every", "cont"].includes(f) // (its spawning: a spawn's own boxes, plan Loot 1)
+    ); // (a loot orb's own boxes: sbloot.js)
   if (p.k === "zone")
     return (
       !!SB_ZONE[f] ||

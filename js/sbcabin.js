@@ -59,7 +59,7 @@ const zbOf = (s) => (s.hang && s.hang.sbz && s.hang.sbz.zb) || [];
 export const cabinLive = (s) =>
   zbOf(s)
     .filter((o) => !o.d)
-    .map((o) => ({ i: "c" + o.i, x: o.x / W, y: o.y / H, sp: o.sp })); // ("c": never the same as a zombie map's own)
+    .map((o) => ({ i: "c" + o.i, x: o.x / W, y: o.y / H, sp: o.sp, k: o.k })); // ("c": never the same as a zombie map's own; k: its kind)
 
 /* one zombie at (x, y), shares of the map: its number */
 export function cabinSpawn(s, x, y, o) {

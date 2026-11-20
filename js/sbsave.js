@@ -25,7 +25,7 @@ export const SAVE_V = 1; // (a save's version: a newer game still opens an older
 const MINE = ["sbsv", "sbpk", "sbAsked"]; // (this file's own parts: never in a save)
 export const isPart = (k) => /^(sb|nb)/.test(k) && !MINE.includes(k);
 const isOpt = (k) => /^sb/.test(k);
-const NOW_ONLY = ["live", "rq", "run", "au", "seen", "gm", "gj", "died"]; // (s.sb's parts that only mean something this moment; gm, gj: who is in which group now, sbgroups.js; died: the lives used, l4ddrules.js)
+const NOW_ONLY = ["live", "rq", "run", "au", "seen", "gm", "gj", "died", "lr"]; // (s.sb's parts that only mean something this moment; gm, gj: who is in which group now, sbgroups.js; died: the lives used, l4ddrules.js; lr: the loot blocks' timers and counts, sbloot.js)
 const copy = (v) => JSON.parse(JSON.stringify(v));
 
 /* the Sandbox in s as a save's data (plain JSON) */
