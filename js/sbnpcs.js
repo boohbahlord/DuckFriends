@@ -4,7 +4,8 @@
    that still reloads, and the zombie's swipe) and the NPC's default behavior lists, which its spawns take on unless they
    set their own. I can make as many as I like; they're kept on this device, as my duck is (store.js), under their own
    key. Each one: { id, name, duck (a look, as profile.duck), w: { p: [two primaries], m (melee), sw (the swipe) }, beh:
-   { target, ignore, avoid, protect } (the spawn boxes' words, sbbrain.js) } */
+   { target, ignore, avoid, protect } (the spawn boxes' words, sbbrain.js), set: { f: text } (its spawn-like settings, typed
+   in M: HP, Speed, Can jump, its Brain …, sandboxrules.js SB_MSET; empty: the defaults) } */
 import { botDuck } from "./botduck.js";
 
 const KEY = "df-npcs";
