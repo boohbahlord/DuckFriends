@@ -111,7 +111,7 @@ export const SB_RULES = {
   down: { name: "Down phase (others can revive you)", kind: "bool", def: "f" },
   crit: { name: "Crits (headshots)", kind: "bool", def: "t" },
   spec: { name: "Out of lives: watch the others", kind: "bool", def: "t" },
-  /* Solomon's real-build test of a zombie game (Nov 20): "Nothing ends the game when everyone is out of lives ... We need
+  /* a real-build test of a zombie game (Nov 20): "Nothing ends the game when everyone is out of lives ... We need
      a 'When everyone is out' row (game over / back to lobby / restart)". Keep playing is how it always was */
   out: {
     name: "When everyone is out of lives",
@@ -508,6 +508,20 @@ export const SB_ZONE = {
     def: "1",
   },
   gnd: { name: "Ground (stand and walk on it)", kind: "bool", def: "f" },
+  /* the owner's floor-is-lava idea: "you fall down, and the bottom elevation, the ground level, level 1, is set to do maybe
+     max damage. So you hit that ground, boom, you're dead": what landing on it from a fall does (blank: nothing; "max":
+     all of it). A fall: more than about one floor (SB_LAND_MIN) */
+  land: {
+    name: "Landing on it from a fall hurts (HP, or max)",
+    check: (t) => {
+      const v = String(t).trim().toLowerCase();
+      if (!v || v === "max") return "";
+      return /^\d+(\.\d)?$/.test(v) && +v > 0 && +v <= 1000
+        ? ""
+        : "Blank, max, or 0.1 to 1000";
+    },
+    def: "",
+  },
   /* plan Phase 4, climbing (the owner's: "another elevation type called climb ... touching the outside boundary of that
      will make it to where you can climb onto another elevation ... the same mechanism as the ladder", and "for elevation
      settings or wall settings or for ladders or for climbings ... a drop-down menu for selecting which entities or groups
@@ -545,6 +559,17 @@ export const SB_ZONE = {
     name: "Its working squares show",
     check: (t) => (SB_SFX[String(t).trim()] ? "" : "Pick one"),
     def: "none",
+  },
+  sfxz: {
+    name: "Shown",
+    check: (t) => (SB_SFX_Z[String(t).trim()] ? "" : "Pick one"),
+    def: "above",
+  },
+  sfxpic: {
+    name: "Its picture",
+    check: (t) =>
+      /^[a-z0-9]{0,24}$/.test(String(t).trim()) ? "" : "Upload one",
+    def: "",
   },
   /* its look (plan Phase 3: "Looks (zone purpose only): a texture from the maps (Cabin, Downpour, Euclid's Squares, the
      Kenoma looks; previews shown), a solid color with a hex picker, or an uploaded picture, always made into pixels (the
@@ -628,17 +653,48 @@ export function sbLook(p) {
   const op = Math.min(100, Math.max(0, Math.round(+v("lkop") || 0))) / 100;
   return { k, v: val, op };
 }
+/* the specials' effects a zone's squares can show (the owner's: "It could be effect from the specials, only an effect";
+   specials.js momentHTML draws them), and an uploaded picture ("an image can be uploaded as well ... compressed into
+   pixels ... takes up the size") */
+export const SB_SFX_SP = {
+  sp_zap: "Electricity",
+  sp_flames: "Flames",
+  sp_hearts: "Hearts",
+  sp_poison: "Poison cloud",
+  sp_notes: "Music notes",
+  sp_loserx: "Loser's X",
+  sp_disco: "Disco ball",
+};
 export const SB_SFX = {
   none: "Nothing",
   fire: "Ground fire",
   smoke: "Smoke",
   steam: "Steam",
   sparks: "Sparks",
+  ...SB_SFX_SP,
+  pic: "A picture",
 };
 export const sbSfx = (p) => {
   const k = p && p.f && p.f.sfx,
     v = String(k && k.ok ? k.ok : "none").trim();
   return SB_SFX[v] ? v : "none";
+};
+/* the owner's: "Effects can be chosen to either happen below all entities or above" (never over the map's own roofs) */
+/* a fall, world px down from its top (about a floor; game.js's bonk) */
+export const SB_LAND_MIN = 90;
+/* is there a zone here that hurts whoever lands on it from a fall (game.js: then my falls are sent) */
+export const sbLands = (s) =>
+  isSb(s) &&
+  Object.values((s.sb && s.sb.pts) || {}).some(
+    (p) => p.k === "zone" && p.f && p.f.land && p.f.land.ok,
+  );
+export const SB_SFX_Z = {
+  above: "Above everything",
+  below: "Below everything",
+};
+export const sbSfxZ = (p) => {
+  const k = p && p.f && p.f.sfxz;
+  return k && k.ok === "below" ? "below" : "above";
 };
 /* a duck length in a world's px, for a zone's size there (on the board: 0.03 of it across, 0.08 up and down) */
 export const SB_ZONE_PX = 48;
@@ -812,6 +868,13 @@ export const SB_ORDER = {
         : "0.1 to 600",
     def: "1",
   },
+  /* where its steps start (a real-build test of my floor-is-lava idea, "blinking floor tiles ... with
+     two alternating tabs": two Alternating tabs gave the same checkerboard). 1 on one of them: the other half */
+  off: {
+    name: "Starts at step (0: the first)",
+    check: (t) => (/^\d{1,3}$/.test(String(t).trim()) ? "" : "0 to 999"),
+    def: "0",
+  },
   /* how its steps go (the owner's, Nov 20 02:45Z): on their own, one every "Seconds per step", or only when something
      uses it ("the next part of the algorithm only plays when the next input is given, such as spawn says time to spawn
      another entity") */
@@ -969,6 +1032,7 @@ const idNum = (id) =>
 const KEEP = new Map();
 /* which of block id's squares act at step k: a Set of i + j * nx, or null when they all do */
 export function sbActive(s, id, p, k, W = 1, H = 1) {
+  k += +ordTxt(p, "off") || 0;
   const ord = sbOrd(p),
     g = sbGrid(s, p, W, H),
     N = g.cells.length,

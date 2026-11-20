@@ -40,7 +40,7 @@ import { hpHeal, tenths } from "./hpmath.js";
 import { sbHotAct, sbSlots, sbGot, sbSpend } from "./sbhot.js";
 import { sbLootAct, sbLootTick } from "./sbloot.js";
 import { nbPermAct, nbShareAct } from "./nbperms.js";
-import { sbZoneTick } from "./sbzone.js";
+import { sbZoneTick, sbLandAct } from "./sbzone.js";
 import { sbGroupTick, sbGroupAct, grCool } from "./sbgroups.js";
 import {
   sbAsk,
@@ -2369,6 +2369,7 @@ function reduceStep(state, a, now) {
     }
     case "sb":
       // Sandbox's spawns and respawns: place one, change a box, press one (sbspawn.js)
+      if (a.k === "land") return sbLandAct(s, a, now, SB_H) ? s : state; // (a fall onto a zone that hurts: sbzone.js)
       return sbAct(s, a, now) ? s : state;
     case "sbg":
       // Sandbox's God mode and invisibility: mine, or a player's if I have the rights (sbgod.js)
