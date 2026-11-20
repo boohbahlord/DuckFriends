@@ -9,6 +9,28 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v134",
+    version: 134,
+    date: "Nov 20, 2026",
+    title: "Everything is a zone",
+    news: [
+      "For Sandbox: Build puts down zones only. At the top of a zone's window, pick what it is: just a zone, a spawn or a respawn.",
+      "For Sandbox: zones always show while cheat mode is on, Build open or not, and you can drag them then.",
+      "For Sandbox: a new zone has no color, shown white; its color button is a circle with a line through it.",
+      "For Sandbox: a Loot tab drops nothing until you pick what it holds.",
+      "For Sandbox: Potential order, at the end of every tab: the zone is cut into squares, and only some of them work at a time (random, shuffle, one after another, alternating or all). In Build the working squares are filled in.",
+      "For Sandbox: headings in a zone's window and in the Seriat Bible fold with the arrow at their left.",
+      "For Sandbox: the Seriat Bible's code boxes no longer get cut at the end of a line.",
+      "For Survival: every duck starts with a knife (worn, 25% left) and the pistol.",
+      "For Survival: the first horde plays like rounds 5 to 8.",
+      "For Survival: no more light where the Angel machine stood, and no yellow squares.",
+      "For Survival: it wears the Nous Within Kenoma look now, and it has its own logo when you vote and in the lobby.",
+      "For Survival: only Downpour is offered, its only map.",
+      "For Dead Ducks Arcade on Duck Cabin: with the generator on, the cabin is lit as in Hangout; when it runs out, it goes dark again.",
+      "Weapons, items and icons now come ready-made as pixels, so games start faster.",
+    ],
+  },
+  {
     id: "v133",
     version: 133,
     date: "Nov 20, 2026",
