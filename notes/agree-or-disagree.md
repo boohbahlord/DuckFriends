@@ -7230,3 +7230,31 @@ Adam's reading (posted to the owner, building it unless corrected): every block 
 > survival symbol can be a pistol
 
 Adam: Jackal redraws the Survival mode symbol as a pistol (modes.js modeSymbol).
+
+## Owner, Nov 20 03:58Z (project chat, through Moses)
+> emergency
+>
+> the fucking game isnt wanting to play in survival
+>
+> i invited friends to play and it is hung up on survival
+>
+> When player dies, merchant always has unlimited defibs
+>
+> the game should not have you have to kill everything in a wave that doesnt chase you down, like if there is a sniper or walker, the game plays nonetheless or whatever is the case
+>
+> zombies shouldnt viibrate on roof of gas pump
+
+Adam: the hang's first cause was the first round stored as the pair [5, 8] (SV.FIRST) instead of a round, so every round lookup failed. Fixed and live in #636. Solomon: online check, defibs limited, waves end without killing snipers and walkers, no vibrating on the pump roof.
+
+## Owner, Nov 20 04:01Z (Adam's thread)
+> guns dont look like that but we can fix that later
+>
+> any other suggestions for new symbol for survival
+
+## Owner, Nov 20 04:03Z (Adam's thread)
+> have jospeh have more ideas
+
+## Owner, Nov 20 04:05Z (project chat, through Moses)
+> flashlight
+
+Adam: the Survival symbol becomes a flashlight with a short beam, drawn in pixels (Noah).
