@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v184",
+    version: 184,
+    date: "Nov 20, 2026",
+    title: "Shorter sprint, UI scale",
+    news: [
+      "For Mad God Justin: when he's beaten there's no loser podium any more, and his cloud just says Justin defeated.",
+      "For Survival: the gunmen's assault rifles reach as far as the LMG.",
+      "Sprint lasts half as long (3.5 seconds) and fills back up as fast. Once it runs out, you sprint again only when it's full.",
+      "UI scale in the pause menu: make everything bigger or smaller, from 50% to 200%.",
+    ],
+  },
+  {
     id: "v183",
     version: 183,
     date: "Nov 20, 2026",

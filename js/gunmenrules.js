@@ -123,8 +123,8 @@ const REACH = {
   shotgun: 3.5,
   dbuck: 3.5,
   revolver: 8,
-  ak: 9,
-  burst: 9,
+  ak: 11, // (assault rifles reach as far as the LMG; the sniper's SNIPE reaches farther still. The owner's, Nov 20 18:23Z:
+  burst: 11, // "Any assault rifle should be able to have the range of the LMG, and the sniper even more so")
   lmg: 11,
 };
 const reachOf = (w) => (REACH[w] || 7) * GM.DUCK;

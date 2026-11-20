@@ -170,7 +170,7 @@ export const L4 = {
   QUICK: 3000, // … with Quick Revive bought (the Butler's, 750: the owner's, Nov 17 11:19Z)
   BACK_HP: 2, // a revived duck comes up with 2 HP
   BLEED: 30000, // ms a downed duck waits for a revive, then it's a ghost for the rest of the round
-  SPRINT: 7000, // ms of sprint, and as long to fill up again
+  SPRINT: 3500, // ms of sprint, and as long to fill up again (the owner's, Nov 20 18:27Z: "the sprint should be shorter. We'll make it half as short")
   BREAK: 7000, // ms between rounds ("Round N" shows meanwhile)
   FIRST: 4000, // ms before the first round's zombies come
   BOARDS: 5,

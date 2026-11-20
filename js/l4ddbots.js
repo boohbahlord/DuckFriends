@@ -336,8 +336,8 @@ function justinBot(s, id, now, out) {
       br.left = Math.max(0, br.left - dt / L4.SPRINT);
       if (br.left <= 0) br.out = true;
     } else {
-      if (!want) br.out = false;
       br.left = Math.min(1, br.left + dt / L4.SPRINT);
+      if (br.left >= 1) br.out = false; // (like a player's: empty, it sprints again only once full, stamina.js)
     }
     return go ? walkPx * NPC_RUN : walkPx; // (the shared slow speed, npcshared.js: "if he does sprint, he sprints slower", the owner's, Nov 19 19:27Z. It was a duck's sprint, world.js SPRINT)
   };

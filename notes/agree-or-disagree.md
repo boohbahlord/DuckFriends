@@ -7381,3 +7381,10 @@ range, sniper more; sniper "can't shoot = can't see" under cover plus ~10 s memo
 crits only, everyone (Justin too) loses the head, enemies never crit players; Justin's death: no loser podium, short
 "Justin defeated" cloud; sprint slower and shorter everywhere (numbers proposed first); Cabin gas: prices first.
 Squad math and the waves/audio/notation questions go to Moses, who asks him. Seriat math as built (V181) is right.
+
+## Owner, Nov 20 18:27Z (project chat, through Moses)
+> Yes, and the merchant's arrival is based when he's actually standing still in the church ready to sell, not when he's just running into the map. Yeah, for the range, yeah. Sniper can shoot through the entire map if it doesn't hit a wall. So, it keeps going through the map. Until it hits the map borders or a wall or object or something. That's how the sniper works. Yes, for the headshots and crits. Yeah, for the Justin thing, yeah. On the Mad God Justin. Yeah, the sprint should be shorter. We'll make it half as short and see how that works out. And we'll make it to where sprint has to be all the way up before you can use it again. But it regens as fast as it was lost. And we'll see how that works.
+
+Adam: sprint 7 s -> 3.5 s (L4.SPRINT, players, computer ducks and merchants), fills as fast, once empty it sprints again
+only when full; speed unchanged (V184). Merchant arrival = standing still at his selling spot; sniper rounds fly until a
+wall, object or the map edge (Solomon).
