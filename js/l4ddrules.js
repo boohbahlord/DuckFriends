@@ -36,6 +36,7 @@
      l4b  { id: { o, at } }: who is boarding up which opening, since when (one more board each BOARD_MS)
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
+import { SPRINT as GAME_SPRINT } from "./gamedefaults.js";
 import { duckBig, scaleOf } from "./duck.js";
 import { hpHeal, hpHurt, tenths } from "./hpmath.js";
 import {
@@ -170,7 +171,7 @@ export const L4 = {
   QUICK: 3000, // … with Quick Revive bought (the Butler's, 750: the owner's, Nov 17 11:19Z)
   BACK_HP: 2, // a revived duck comes up with 2 HP
   BLEED: 30000, // ms a downed duck waits for a revive, then it's a ghost for the rest of the round
-  SPRINT: 3500, // ms of sprint, and as long to fill up again (the owner's, Nov 20 18:27Z: "the sprint should be shorter. We'll make it half as short")
+  SPRINT: GAME_SPRINT.ms, // ms of sprint (the whole game's, gamedefaults.js); it fills GAME_SPRINT.refill times as slowly
   BREAK: 7000, // ms between rounds ("Round N" shows meanwhile)
   FIRST: 4000, // ms before the first round's zombies come
   BOARDS: 5,
@@ -3548,7 +3549,7 @@ function merchantSprints(s, m, now, dt) {
     if (sp <= 0) tired = true;
     run = true;
   } else {
-    sp = Math.min(1, sp + (dt * 1000) / L4.SPRINT);
+    sp = Math.min(1, sp + (dt * 1000) / (L4.SPRINT * GAME_SPRINT.refill));
     if (sp >= 1) tired = false;
   }
   setMh(s, { sp, tired });
