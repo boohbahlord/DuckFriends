@@ -292,7 +292,12 @@ function make(s, name, text, now) {
                 : 100, // (hitbox: already a percent of its usual size, so ((hitbox 150%)) is ((hitbox 150)), never a share of 300)
     get: (w) => {
       const st = g.cur.s;
-      if (w === "wave") return (st.hang && st.hang.l4 && st.hang.l4.r) || 0;
+      if (w === "wave")
+        return (
+          (st.sb && st.sb.wv && st.sb.wv.n) ||
+          (st.hang && st.hang.l4 && st.hang.l4.r) ||
+          0
+        ); // (G's waves or rounds, sbspawn.js; else Dead Ducks Arcade's round)
       if (w === "time") return Math.round((g.cur.now - g.t0) / 100) / 10;
       if (w === "alive") return g.cur.list.length;
       if (w === "dead") return g.dead;

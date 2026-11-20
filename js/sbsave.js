@@ -42,7 +42,8 @@ const NOW_ONLY = [
   "died",
   "lr",
   "brk",
-]; // (s.sb's parts that only mean something this moment; gm, gj: who is in which group now, sbgroups.js; died: the lives used, l4ddrules.js; lr: the loot blocks' timers and counts, sbloot.js)
+  "wv",
+]; // (s.sb's parts that only mean something this moment; gm, gj: who is in which group now, sbgroups.js; died: the lives used, l4ddrules.js; lr: the loot blocks' timers and counts, sbloot.js; wv: the wave or round now, so a save starts again from the first, sbspawn.js wavesTick)
 const copy = (v) => JSON.parse(JSON.stringify(v));
 
 /* a save's (or a made game mode's) pictures from before every upload was made into pixels: made into them (sbmake.js pixelsOnly). True if

@@ -22546,3 +22546,24 @@ textarea.um-in {
   width: 100%;
   height: 100%;
 }
+
+/* Sandbox: G's waves or rounds (js/sandbox.js paintWave): which one, its time left or when the next comes, top middle */
+.game .sb-wave {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 0.6rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  padding: 0.25rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(10, 12, 24, 0.78);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+.game .sb-wave[hidden] {
+  display: none;
+}

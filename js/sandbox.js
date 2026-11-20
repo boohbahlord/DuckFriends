@@ -28,6 +28,7 @@ import {
   SB_OV_MOST,
   sbOv,
   sbSnaps,
+  sbRule,
 } from "./sandboxrules.js";
 import {
   buildRows,
@@ -38,7 +39,8 @@ import {
   sbSettings,
   sbView,
 } from "./sbspawnview.js";
-import { boxText, sbWhyNot } from "./sbspawn.js";
+import { boxText, sbWhyNot, sbWave } from "./sbspawn.js";
+import { now as clockNow } from "./clock.js";
 import { npcRows } from "./sbmake.js";
 import { sbCheatSound } from "./sbsfx.js";
 import { sbSlots } from "./sbhot.js";
@@ -620,7 +622,47 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
       chip.style.bottom = "auto";
     }
   };
+  /* G's waves or rounds (sbspawn.js wavesTick): which one now, how long a wave has left, or when the next comes */
+  const waveEl = document.createElement("div");
+  waveEl.className = "sb-wave";
+  waveEl.hidden = true;
+  waveEl.setAttribute("aria-live", "polite");
+  S.append(waveEl);
+  const paintWave = () => {
+    const R = getR(),
+      s = R && R.state,
+      w = s && isSb(s) && s.phase !== "lobby" ? sbWave(s) : null;
+    let t = "";
+    if (w) {
+      const word = w.k === "rounds" ? "Round" : "Wave",
+        most = sbRule(s, "wrn"),
+        of = most ? ` of ${most}` : "",
+        secs = (ms) => {
+          const v = Math.max(0, Math.ceil(ms / 1000));
+          return v >= 60
+            ? `${Math.floor(v / 60)}:${String(v % 60).padStart(2, "0")}`
+            : `${v}`;
+        };
+      if (w.on)
+        t =
+          `${word} ${w.n}${of}` +
+          (w.k === "waves"
+            ? ` · ${secs(w.at + sbRule(s, "wlen") * 1000 - clockNow())}`
+            : "");
+      else if (most && w.n >= most)
+        t = `All ${most} ${word.toLowerCase()}s done`;
+      else t = `${word} ${w.n + 1} in ${secs(w.nx - clockNow())}`;
+    }
+    if (waveEl.textContent !== t) waveEl.textContent = t;
+    waveEl.hidden = !t;
+    const bar = t && document.querySelector(".gbar"),
+      top = bar
+        ? Math.round(bar.getBoundingClientRect().bottom + 6) + "px"
+        : "";
+    if (waveEl.style.top !== top) waveEl.style.top = top; // (just under the top bar, never on it)
+  };
   const seating = setInterval(() => {
+    paintWave();
     seat();
     paintChip();
     seatBible();
@@ -1303,6 +1345,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
       closeMenu();
       chip.remove();
       bible.remove();
+      waveEl.remove();
       sbPlace.start = null;
       uncover();
       box.remove();

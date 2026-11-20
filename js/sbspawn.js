@@ -23,6 +23,7 @@ import {
   baseMode,
   isSb,
   sbMay,
+  sbRule,
   sbOnBoard,
   SB_BOXES,
   SB_FLAGS,
@@ -502,6 +503,69 @@ function taken(p, npcs) {
     ry = 0.08;
   return npcs.some((o) => Math.hypot((o.x - p.x) / rx, (o.y - p.y) / ry) < 0.8);
 }
+/* ---------- waves and rounds (G's Rules: wr, wrn, wlen, wrest) ----------
+   s.sb.wv = { k: waves | rounds, n: the one now (or the last), on: one is on, at: when this one (or the rest) began,
+   nx: when the next begins }. The first starts a few seconds in. A wave ends when its seconds are up; a round once
+   nothing its spawns brought is still up, coming back or still coming. Each spawn that comes in with them is pressed as
+   one starts (its limit and its continuous run as any press) */
+const WAVE_FIRST = 3000; // ms before the first
+export const sbWave = (s) => (s && s.sb && s.sb.wv) || null;
+/* may spawn p make something now? (always, unless it comes in with the waves or rounds and none is on) */
+function waveOn(s, p) {
+  if (!p || !flag(p, "wr")) return true;
+  const w = sbWave(s);
+  return !!w && w.on;
+}
+function wavesTick(s, now, pts) {
+  const k = sbRule(s, "wr"),
+    was = sbWave(s);
+  if (k === "off") {
+    if (!was) return false;
+    const sb = { ...s.sb };
+    delete sb.wv;
+    s.sb = sb;
+    return true;
+  }
+  if (!was || was.k !== k) {
+    s.sb = {
+      ...s.sb,
+      wv: { k, n: 0, on: false, at: now, nx: now + WAVE_FIRST },
+    };
+    return true;
+  }
+  const ours = Object.entries(pts).filter(
+    ([, p]) =>
+      p.k === "spawn" &&
+      flag(p, "wr") &&
+      p.pg !== "pl" &&
+      (!p.grp || p.pg === "t"),
+  );
+  if (!was.on) {
+    const most = sbRule(s, "wrn");
+    if ((most && was.n >= most) || now < was.nx) return false;
+    s.sb = { ...s.sb, wv: { k, n: was.n + 1, on: true, at: now } };
+    for (const [id] of ours) press(s, id, now);
+    return true;
+  }
+  let over;
+  if (k === "waves") over = now - was.at >= sbRule(s, "wlen") * 1000;
+  else {
+    const mine = new Set(ours.map(([id]) => id)),
+      run = (s.sb && s.sb.run) || {},
+      rq = (s.sb && s.sb.rq) || [];
+    over =
+      now - was.at > WAVE_FIRST &&
+      !liveNpcs(s).some((o) => mine.has(o.sp)) &&
+      !Object.keys(run).some((id) => mine.has(id)) &&
+      !rq.some((r) => mine.has(r[0]));
+  }
+  if (!over) return false;
+  s.sb = {
+    ...s.sb,
+    wv: { ...was, on: false, at: now, nx: now + sbRule(s, "wrest") * 1000 },
+  };
+  return true;
+}
 /* how many of a spawn's may be alive at once: 0 is no limit (the map's cap still holds) */
 function limitOf(p) {
   const n = num(p, "limit");
@@ -537,6 +601,7 @@ function pressOne(s, id, now) {
   const p = pointsOf(s)[id];
   if (!p || p.k !== "spawn" || p.pg === "pl" || !spawnsHere(s)) return false;
   if (!sbTabLive(pointsOf(s), id)) return false; // (a tab whose Caller names no zone does nothing)
+  if (!waveOn(s, p)) return false; // (it comes in with the waves or rounds: only while one is on)
   const npcs = liveNpcs(s),
     alive = new Set(npcs.map((o) => o.i)),
     limit = limitOf(p),
@@ -1403,6 +1468,7 @@ export function sbTick(s, now, H) {
     ch = true;
   }
   const pts = pointsOf(s);
+  ch = wavesTick(s, now, pts) || ch;
   let npcs = liveNpcs(s);
   const alive = new Set(npcs.map((o) => o.i));
   /* the dead: off their spawn's list, and back later if it says so */
@@ -1424,7 +1490,7 @@ export function sbTick(s, now, H) {
   if (rq.some((r) => r[1] <= now)) {
     const later = [];
     for (const r of rq) {
-      if (r[1] > now) later.push(r);
+      if (r[1] > now || !waveOn(s, pts[r[0]])) later.push(r);
       else {
         const at = backAt(s, r[0]);
         if (at && !makeOne(s, r[0], at)) later.push([r[0], now + 1000]); // (at the cap: once there's room)
@@ -1446,6 +1512,7 @@ export function sbTick(s, now, H) {
       !run[id] &&
       sbTabLive(pts, id) &&
       flag(p, "auto") &&
+      waveOn(s, p) &&
       aliveOf(s, id, new Set(npcs.map((o) => o.i))) < limitOf(p)
     ) {
       const was = (s.sb.au || {})[id];
@@ -1459,7 +1526,7 @@ export function sbTick(s, now, H) {
       ch = true;
       continue;
     }
-    if (now < at) continue;
+    if (now < at || !waveOn(s, p)) continue;
     const ids = new Set(npcs.map((o) => o.i)),
       limit = limitOf(p);
     if (aliveOf(s, id, ids) >= limit) {
