@@ -21,6 +21,7 @@ import { outfitById } from "./outfits.js";
 import { applyPalette } from "./pixelpalette.js";
 import { rbAt, RB_P, RB_TILT } from "./rainbowskin.js";
 import { hashText, steadyText } from "./pxdom.js";
+import { filesFor } from "./loading.js";
 
 /* the sizes the sheets are made at: a duck's box (120 duck units) in pixels */
 export const SIZES = [12, 14, 16, 19, 22, 26, 29, 32];
@@ -150,8 +151,8 @@ function sheet(n) {
   if (!sheets.has(n))
     sheets.set(
       n,
-      (made ||= import("./ducksheets.js"))
-        .then(async ({ SHEETS }) => {
+      filesFor(
+        (made ||= import("./ducksheets.js")).then(async ({ SHEETS }) => {
           const s = SHEETS[n];
           if (!s) return null;
           const dir = s.index.slice(0, s.index.lastIndexOf("/") + 1);
@@ -163,8 +164,8 @@ function sheet(n) {
             dir,
             files: new Map(),
           };
-        })
-        .catch(() => null),
+        }),
+      ).catch(() => null), // (the loading screen waits for it: loading.js)
     );
   return sheets.get(n);
 }
@@ -173,20 +174,22 @@ function file(S, c) {
   if (!S.files.has(c))
     S.files.set(
       c,
-      (async () => {
-        const img = new Image();
-        img.src = S.dir + S.index.f[c];
-        await img.decode();
-        const cv = document.createElement("canvas");
-        cv.width = img.naturalWidth;
-        cv.height = img.naturalHeight;
-        const g = cv.getContext("2d", { willReadFrequently: true });
-        g.drawImage(img, 0, 0);
-        return {
-          px: g.getImageData(0, 0, cv.width, cv.height).data,
-          W: cv.width,
-        };
-      })().catch(() => {
+      filesFor(
+        (async () => {
+          const img = new Image();
+          img.src = S.dir + S.index.f[c];
+          await img.decode();
+          const cv = document.createElement("canvas");
+          cv.width = img.naturalWidth;
+          cv.height = img.naturalHeight;
+          const g = cv.getContext("2d", { willReadFrequently: true });
+          g.drawImage(img, 0, 0);
+          return {
+            px: g.getImageData(0, 0, cv.width, cv.height).data,
+            W: cv.width,
+          };
+        })(),
+      ).catch(() => {
         S.files.delete(c); // (asked again next time)
         return null;
       }),

@@ -125,6 +125,15 @@ const sheetIn = (e) => {
   }
   return !u || came.has(u);
 };
+/* files a picture is drawn from out of sight (a world's ground on a canvas, a duck's parts), still on their way: a
+   loading screen up now waits for them too (a world popped in after Duck Cabin's loading screen) */
+const pending = new Set();
+export function filesFor(p) {
+  pending.add(p);
+  const off = () => pending.delete(p);
+  p.then(off, off);
+  return p;
+}
 /* how many, and how much of the screen they take (a share of it) */
 export function waiting(root = document.body) {
   const px = document.documentElement.classList.contains("pixel");
@@ -137,21 +146,27 @@ export function waiting(root = document.body) {
     ...(root.matches && root.matches(sel) ? [root] : []), // (root itself too: a drawing waited for)
     ...root.querySelectorAll(sel),
   ]) {
-    const mine = !e.closest(NOT_MINE);
+    /* the cheap tests first: this runs every frame while a part of the page waits (shownSoon), over every picture in it */
     if (e.tagName === "IMG") {
       if (
         e.complete && // (one still downloading counts)
-        !(mine && px && e.naturalWidth && !e.matches(".px, [data-pxok]")) // (and one whose pixels aren't made yet)
+        !(
+          px &&
+          e.naturalWidth &&
+          !e.matches(".px, [data-pxok]") &&
+          !e.closest(NOT_MINE)
+        ) // (and one whose pixels aren't made yet)
       )
         continue;
     } else if (e.tagName === "svg") {
-      if (!mine) continue;
+      if (e.closest(NOT_MINE)) continue;
     } else if (sheetIn(e) || e.closest(".veil")) continue;
     const r = e.getBoundingClientRect();
     if (!r.width || !r.height) continue;
     n++;
     area += r.width * r.height;
   }
+  if (root === document.body) n += pending.size;
   return { n, share: area / (innerWidth * innerHeight || 1) };
 }
 /* until every picture under root is in. One that never comes doesn't hold the game: nothing new for STUCK ms, or

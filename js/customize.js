@@ -31,11 +31,13 @@ import {
   BULLET,
   daggerHTML,
   heldHTML,
+  heldBoxHTML,
   GRENADE,
 } from "./specials.js";
 import { sfx, loadSounds } from "./sound.js";
 import {
   DUCK_PATTERNS,
+  DUCK_DEFAULT,
   DUCK_METALS,
   RAINBOW_SKIN,
   BUILDS,
@@ -72,7 +74,7 @@ import { ARROW, CHAIR, ZEBRA, JAIME, BOMB_SKIN } from "./mgjart.js";
 import { GUARD_W, guardWeapon } from "./jaimebomb.js";
 import { jetHTML } from "./jetpack.js";
 import { ROUNDS_ART, TRACE } from "./l4ddguns.js";
-import { GUNS_NEW, AUTO } from "./rules.js";
+import { GUNS_NEW, AUTO, WEAPONS } from "./rules.js";
 import { pxWords } from "./pxtext.js";
 import { botDuck, BOT_DUCKS, any } from "./botduck.js";
 import { weaponName } from "./l4ddrules.js";
@@ -339,11 +341,22 @@ const LOCK_KIND = {
   skin: "skin", // (the Rainbow skin: unlocks.js)
 };
 let peek = null; // { kind, id }: a locked item shown on the big duck, never worn
-/* a style's own look: its matching beak, eyes and colors on the duck (metals and pictures give way to its colors) */
+/* a style's own look: its matching beak, eyes and colors on the duck (metals and pictures give way to its colors). A
+   style with none of its own (the rubber duck) brings the duck's own back: the owner's, Nov 20 21:38Z, Pelican then
+   Rubber duck brings the rubber duck's eyes and beak back, and its yellow */
 function matchedLook(L, st) {
   const M = { ...L };
-  if (st.match) M.beak = st.match;
-  if (st.eyes) M.eyes = st.eyes;
+  M.beak = st.match || DUCK_DEFAULT.beak;
+  M.eyes = st.eyes || DUCK_DEFAULT.eyes;
+  if (!st.match) {
+    M.beakColor = DUCK_DEFAULT.beakColor;
+    M.beakColor2 = DUCK_DEFAULT.beakColor2;
+  }
+  if (st.id === "rubber") {
+    M.color = DUCK_DEFAULT.color;
+    M.metal = "none";
+    M.image = null;
+  }
   for (const [c, , v] of st.colors || []) M[c] = v;
   if (st.colors) {
     M.metal = "none";
@@ -597,6 +610,16 @@ export function openCustomize(page = lastPage, opts = {}) {
                 ),
               );
             }
+            /* in the duck's hand, drawn as the game draws it (specials.js heldBoxHTML: the same picture at the same size) */
+            const inHand = (cls) =>
+              els.push(
+                el(
+                  heldBoxHTML(id, duckNow(), w.width, {
+                    cls: " spe-wield" + cls,
+                    style: `;left:${x.toFixed(0)}px;top:${(y - w.width * 0.45).toFixed(0)}px`,
+                  }),
+                ),
+              );
             /* the knife and the hammer: one stab or one swing in the duck's hand; the shotgun: one kick; the bow: drawn
                back and let go */
             if (
@@ -608,19 +631,12 @@ export function openCustomize(page = lastPage, opts = {}) {
               id === "shotgun" ||
               id === "bow"
             )
-              els.push(
-                el(
-                  `<div class="held spe-wield" data-w="${id}" style="left:${x.toFixed(0)}px;top:${(y - w.width * 0.45).toFixed(0)}px;--s:${w.width.toFixed(0)}px"><i>${heldHTML(id, duckNow())}</i></div>`,
-                ),
-              );
-            /* Quacky Zombies' guns: in the duck's hand with a kick, and their bullets (three for the ones that fire while the
-               button is down) across the preview; the chain gun's yellow line, the launcher's grenade */
+              inHand("");
+            /* the handgun and Quacky Zombies' guns: in the duck's hand with a kick, and their bullets (three for the ones
+               that fire while the button is down) across the preview; the chain gun's yellow line, the launcher's grenade */
+            if (id === "handgun") inHand(" spe-gun");
             if (GUNS_NEW.includes(id)) {
-              els.push(
-                el(
-                  `<div class="held spe-wield spe-gun" data-w="${id}" style="left:${x.toFixed(0)}px;top:${(y - w.width * 0.45).toFixed(0)}px;--s:${w.width.toFixed(0)}px"><i>${heldHTML(id, duckNow())}</i></div>`,
-                ),
-              );
+              inHand(" spe-gun");
               const far = Math.round(
                   duckBox.getBoundingClientRect().right - b.left - x + 40,
                 ),
@@ -991,8 +1007,33 @@ export function openCustomize(page = lastPage, opts = {}) {
               phone = touchOnly(); // (only a touch screen: pointer.js)
             const box = (n, i, id, attrs) =>
               `<button type="button" class="sp-key${id ? " full" : ""}${isOff(id) ? " off" : ""}" data-i="${i}" ${attrs}><b>${n}</b>${id ? `<i>${looksOf(specialById(id), D).icon}</i>` : ""}</button>`;
-            const tiles = (kind) =>
-              SPECIALS.filter((x) => x.kind === kind && !x.only)
+            /* the picker shows fewer than the game has (the owner's, Nov 20 21:38Z): these stay in the game, and on a key
+               that has them, but can't be picked here */
+            const NOT_HERE = [
+              "notes",
+              "loserx",
+              "poison",
+              "zap",
+              "flames",
+              "invisible",
+              "disco",
+              "grenade",
+              "sniper",
+              "lmg",
+              "chaingun",
+              "flamer",
+              "burst",
+              "glauncher",
+              "chair",
+            ];
+            const tiles = (kind, weapon) =>
+              SPECIALS.filter(
+                (x) =>
+                  x.kind === kind &&
+                  !x.only &&
+                  !NOT_HERE.includes(x.id) &&
+                  (weapon === undefined || WEAPONS.includes(x.id) === weapon),
+              )
                 .map((sp) => {
                   const x = looksOf(sp, D),
                     at = keys.indexOf(x.id),
@@ -1019,8 +1060,9 @@ export function openCustomize(page = lastPage, opts = {}) {
             <p class="small dim sp-now">${open ? `${esc(open.name)}: ${esc(open.tip)} Pick its key.` : phone ? "Tap a special, then the key to put it on. In a game, hold still on the board to use them." : "Pick a special, then the key to put it on. In a game, press its key; Shift and the key keeps it on."}</p>
             <h3>Effects</h3><div class="arm-grid sp-grid">${tiles("effect")}</div>
             <h3>Jumps</h3><div class="arm-grid sp-grid">${tiles("jump")}</div>
-            <h3>Items</h3><div class="arm-grid sp-grid">${tiles("item")}</div>
-            <p class="small dim">Their colors are under Colors.</p>${phone ? "" : '<p class="small dim"><kbd>Number</kbd> Pick a weapon (again: put it away) · <kbd>Shift</kbd>+<kbd>Number</kbd> Keep a jump on</p>'}${strip}</div>`;
+            <h3>Weapons</h3><div class="arm-grid sp-grid">${tiles("item", true)}</div>
+            <h3>Items</h3><div class="arm-grid sp-grid">${tiles("item", false)}</div>
+            ${phone ? "" : '<p class="small dim"><kbd>Number</kbd> Pick a weapon (again: put it away) · <kbd>Shift</kbd>+<kbd>Number</kbd> Keep a jump on</p>'}${strip}</div>`;
           } else if (k === "skin" && D.style === "datboi") {
             /* Dat Boi's Skin page is his ranks */
             const pic = (rank) =>
@@ -1170,20 +1212,63 @@ export function openCustomize(page = lastPage, opts = {}) {
               /(<div class="arm-body[^"]*">)/,
               "$1" + randBtn(k),
             ); // (each page's own Randomize, at its top)
-          /* the page shown stays over the new one until the new one's pictures are in (data-nopx: left as it is), so no
-             tile is ever empty (the owner's, Nov 20 20:46Z) */
+          /* the same page again (a pick on it): every tile whose picture and words didn't change stays as it is, with
+             its pixels, so a pick only redraws what it changed (the owner's, Nov 20 21:38Z: a pick froze for a second).
+             A tile that changed keeps its old picture over it until its new one is in */
+          const TILE = ".arm-tile[data-g][data-v]",
+            same = keep && prev === k && !warming && menu.firstElementChild,
+            bare = (h) => h.replace(/\b(dk|ht|fc|ey|bk|jma)\d+/g, "$1"); // (the drawings' ids are new each time: duck.js uid)
           let old = menu.querySelector(":scope > .arm-old");
           if (old) old.remove();
-          else if (!warming && menu.firstElementChild) {
-            old = document.createElement("div");
-            old.className = "arm-old";
-            old.setAttribute("data-nopx", "");
-            old.inert = true; // (only a picture of the last page: nothing in it is reached)
-            const top = (menu.querySelector(".arm-body") || {}).scrollTop || 0;
-            old.append(...menu.childNodes);
-            old.dataset.top = top;
+          old = null;
+          if (same) {
+            const was = new Map();
+            for (const t of menu.querySelectorAll(TILE))
+              if (t._src !== undefined)
+                was.set(t.dataset.g + " " + t.dataset.v, t);
+            const fresh = document.createElement("div");
+            fresh.innerHTML = html;
+            const redrawn = [];
+            for (const t of fresh.querySelectorAll(TILE)) {
+              const o = was.get(t.dataset.g + " " + t.dataset.v);
+              t._src = bare(t.innerHTML);
+              if (!o) continue;
+              if (o._src !== t._src) {
+                redrawn.push([t, o]);
+                continue;
+              }
+              for (const at of [...o.attributes])
+                if (!t.hasAttribute(at.name)) o.removeAttribute(at.name);
+              for (const at of t.attributes)
+                if (o.getAttribute(at.name) !== at.value)
+                  o.setAttribute(at.name, at.value);
+              t.replaceWith(o);
+            }
+            menu.replaceChildren(...fresh.childNodes);
+            for (const [t, o] of redrawn) {
+              o.classList.add("arm-was");
+              o.setAttribute("data-nopx", "");
+              o.inert = true;
+              t.append(o);
+              shownSoon(t).then(() => o.remove());
+            }
+          } else {
+            /* another page: the page shown stays over the new one until the new one's pictures are in (data-nopx:
+               left as it is), so no tile is ever empty (the owner's, Nov 20 20:46Z) */
+            if (!warming && menu.firstElementChild) {
+              old = document.createElement("div");
+              old.className = "arm-old";
+              old.setAttribute("data-nopx", "");
+              old.inert = true; // (only a picture of the last page: nothing in it is reached)
+              const top =
+                (menu.querySelector(".arm-body") || {}).scrollTop || 0;
+              old.append(...menu.childNodes);
+              old.dataset.top = top;
+            }
+            menu.innerHTML = html;
+            for (const t of menu.querySelectorAll(TILE))
+              t._src = bare(t.innerHTML); // (what it was made from, before its pixels)
           }
-          menu.innerHTML = html;
           if (old) {
             menu.append(old);
             const ob = old.querySelector(".arm-body");
@@ -1405,29 +1490,6 @@ export function openCustomize(page = lastPage, opts = {}) {
             },
             "Plain fits light and dark.",
           ]);
-          /* the specials on your keys that take colors, under their own heading (the Long jump takes none) */
-          const sps = keysOf(D).filter((id) => id && specialById(id).colors);
-          if (sps.length) out.push(["", "Specials", "", null, "", false, true]); // (the heading, inside More colors)
-          for (const id of sps) {
-            const sp = specialById(id),
-              now = colorsOf(D, id);
-            sp.colors.forEach(([key, label], j) =>
-              out.push([
-                `sp-${id}-${key}`,
-                `${sp.name}: ${label}`,
-                now[j],
-                (c) => {
-                  D.spc = {
-                    ...(D.spc || {}),
-                    [id]: { ...((D.spc || {})[id] || {}), [key]: c },
-                  };
-                },
-                id === "double" ? "The cloud stays see-through." : "",
-                sp.colors.length > 1 && sp.name,
-                true,
-              ]),
-            );
-          }
           return out;
         }
         menu.addEventListener("click", (e) => {
