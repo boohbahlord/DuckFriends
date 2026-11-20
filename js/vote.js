@@ -10,7 +10,8 @@ import { fsBtnHTML } from "./corners.js";
 import { esc } from "./ui.js";
 import { rainbowHTML, gameSymbol, diceSVG } from "./art.js";
 import { modeOf, CATS, CABIN_MODES } from "./modes.js";
-import { mapName, mapForm, mountPreview } from "./maps.js";
+import { mapName, mapForm, mountPreview, umapOf } from "./maps.js";
+import { isUmap } from "./umaprules.js";
 import { isNwk } from "./nwk.js";
 import { duckSVG } from "./duck.js";
 import { seenDuck } from "./looks.js";
@@ -52,6 +53,8 @@ function modeRow(id) {
 function mapTile(id) {
   if (id === DICE)
     return `<button type="button" class="vt-map vt-dice" data-v="${DICE}"><span class="vt-pic"><span class="vt-die">${diceSVG(96)}</span></span><span class="vt-name">Random</span><span class="vt-n"></span><span class="vt-ducks"></span></button>`;
+  if (isUmap(id))
+    return `<button type="button" class="vt-map" data-v="${id}"><span class="vt-pic"><img class="vt-still vt-made" src="${(umapOf(id) || {}).d || ""}" alt="" draggable="false"></span><span class="vt-name">${esc(mapName(id))}</span><span class="vt-n"></span><span class="vt-ducks"></span></button>`; // (a map the host made: its own picture, umaps.js)
   const f = mapForm(id),
     [name, form] = mapName(id).split(/ \((.+)\)$/);
   if (isNwk(f.map))

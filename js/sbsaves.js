@@ -279,6 +279,16 @@ export function saveRows(R) {
       },
       { label: "Save as…", act: (r) => saveAs(r) },
     );
+  rows.push(
+    {
+      label: "Make a map…",
+      act: (r) => import("./umaps.js").then((m) => m.makeMap(r)),
+    },
+    {
+      label: "My maps…",
+      act: (r) => import("./umaps.js").then((m) => m.myMaps(r)),
+    },
+  ); // (a map from a picture, kept on this device: umaps.js; the owner's, Nov 19 22:59Z, "In Sandbox ... They click it and they can upload an image")
   const on = allowedSongs(s); // (Miles Jr.'s song list, music.js: only these play, and everyone hears the same)
   rows.push({
     label: `Music: ${on.length ? `${on.length} of ${music.tracks.length} songs` : "no music"}…`,
