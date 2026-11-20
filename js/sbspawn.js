@@ -74,7 +74,7 @@ import { Z_MOST, l4Spawn, l4Live } from "./l4ddrules.js";
 import { WAVE, zLook } from "./mgjrules.js";
 import { onCabin, sbzOn, cabinLive, cabinSpawn, cabinTick } from "./sbcabin.js";
 import { listsOf, decide, MAD } from "./sbbrain.js";
-import { grudge } from "./npcrules.js";
+import { grudge, stillShares } from "./npcrules.js";
 import { hpHurt } from "./hpmath.js";
 import { zbSpawned } from "./sbzonebrain.js";
 import { botDuck } from "./botduck.js";
@@ -205,15 +205,17 @@ const flag = (p, f) => num(p, f) === true;
 const NONE = { f: {} };
 export const kdOf = (s, k) => ((s.sb && s.sb.kd) || {})[k] || null;
 export const ownOn = (p) => !p || !p.f || flag(p, "sets");
+/* a box written (not left empty: empty is the default, the next one down decides; the owner's, Nov 20 17:25Z) */
+const written = (o, f) => !!o.f[f] && String(o.f[f].ok ?? "").trim() !== "";
 function fromFor(s, p, k, at = {}) {
   const kd = kdOf(s, k) || NONE,
     own = ownOn(p);
   return (f) =>
     (at.im || []).includes(f)
       ? at
-      : own && p.f[f]
+      : own && written(p, f)
         ? p
-        : kd.f[f]
+        : written(kd, f)
           ? kd
           : own
             ? p
@@ -375,7 +377,8 @@ function makeOne(s, id, at) {
   if (!k) return false;
   const by = fromFor(s, p, k, at), // (coming back at a respawn: what it imported, over its spawn's; then M's defaults)
     hp = Math.max(1, num(by("hp"), "hp") || 1),
-    sv = num(by("speed"), "speed") || 1, // (picked once and kept: "a number is selected and it sticks with it")
+    sv0 = num(by("speed"), "speed"),
+    sv = Number.isFinite(sv0) ? sv0 : 1, // (picked once and kept: "a number is selected and it sticks with it"; 0: it stays put)
     dm = boxText(by("damage"), "damage"),
     sz = (num(by("size"), "size") || 100) / 100, // (its Size: picture and hitbox, sbbody.js)
     /* how high it steps up where the map has heights: Can climb walls (on by default) is the way up a step, Can jump (off by
@@ -403,8 +406,12 @@ function makeOne(s, id, at) {
     s.mz.zb.push({
       i,
       // (a little scatter round a spawn, but never from a spot picked in a zone: it would end up outside the zone)
-      x: +(at.x + (at.inz ? 0 : (Math.random() - 0.5) * 0.02)).toFixed(4),
-      y: +(at.y + (at.inz ? 0 : (Math.random() - 0.5) * 0.03)).toFixed(4),
+      x: +(at.x + (at.inz || !sv ? 0 : (Math.random() - 0.5) * 0.02)).toFixed(
+        4,
+      ),
+      y: +(at.y + (at.inz || !sv ? 0 : (Math.random() - 0.5) * 0.03)).toFixed(
+        4,
+      ), // (Speed 0: right on its spot)
       hp,
       a: 0,
       l,
@@ -460,7 +467,10 @@ function limitOf(p) {
   const n = num(p, "limit");
   return n === 0 ? Infinity : Math.max(1, n || 1);
 }
-const gap = (p) => 1000 * Math.max(0.1, num(p, "every") || 4); // (decimal seconds between spawns)
+const gap = (p) => {
+  const v = num(p, "every");
+  return 1000 * Math.max(0, Number.isFinite(v) ? v : 4);
+}; // (decimal seconds between spawns; 0: no wait)
 /* a press of spawn id's key or Spawn button (or a hotbar's spawn button: sbPress), and the spawns of every color its
    Trigger together names with it; done: the ones pressed already this time */
 function press(s, id, now, done = new Set()) {
@@ -1116,12 +1126,16 @@ function statsAt(q) {
     const n = num(q, f);
     return Number.isFinite(n) ? n : 0;
   };
+  const sp = (f) => {
+    const n = num(q, f);
+    return Number.isFinite(n) ? n : null;
+  }; // (speed: 0 is real, they can't walk; blank: null, the game's own)
   if (q.k === "respawn")
     return {
       hp: (q.im || []).includes("hp") ? v("hp") : 0,
-      sp: (q.im || []).includes("speed") ? v("speed") : 0,
+      sp: (q.im || []).includes("speed") ? sp("speed") : null,
     };
-  return { hp: v("php"), sp: v("pspd") };
+  return { hp: v("php"), sp: sp("pspd") };
 }
 /* put duck id where it spawns now (a respawn for players, or a spawn whose Players tab is on for it), with what that
    gives it; nothing when there's none */
@@ -1140,10 +1154,10 @@ export function sbPlaceDuck(s, id, now = 0) {
   };
   const st = statsAt(q),
     pl = { ...((s.sb && s.sb.pl) || {}) };
-  if (st.hp || st.sp)
+  if (st.hp || st.sp != null)
     pl[id] = {
       ...(st.hp ? { hp: st.hp } : {}),
-      ...(st.sp ? { sp: st.sp } : {}),
+      ...(st.sp != null ? { sp: st.sp } : {}),
     };
   else delete pl[id];
   s.sb = { ...s.sb, pl };
@@ -1163,8 +1177,8 @@ export const sbWalkOf = (s, id) =>
     s.sb &&
     s.sb.pl &&
     s.sb.pl[id] &&
-    s.sb.pl[id].sp) ||
-  1;
+    s.sb.pl[id].sp) ??
+  1; // (0: it can't walk)
 
 /* where something of spawn sp comes back: a respawn whose "who" names its color or its name (one of them at random),
    or the spawn itself */
@@ -1365,7 +1379,7 @@ export function think(s, now, npcs, at, H, far, duckAt) {
 export function strike(s, now, me, foe, H, o, d = null, w = "claw") {
   const dmg = Math.max(
     0.1,
-    d != null ? d : valueOf({ ok: o.dm }, SB_BOXES.damage) || 1,
+    d != null ? d : (valueOf({ ok: o.dm }, SB_BOXES.damage) ?? 1),
   );
   if (foe.duck) return H.claw(s, foe.id, dmg, now, w);
   const q = foe.o;
@@ -1398,7 +1412,7 @@ function boardTick(s, now, H) {
       y0 = o.y,
       bd = far(me, to),
       claw = reachTo(WAVE.CLAW, o, to, s), // (its hitbox, and its foe's: sbarms.js)
-      sp = WAVE.SPEED * (o.sv || 1) * (o.run && bd > 4 ? 1.5 : 1); // (can sprint: half as fast again while far off)
+      sp = WAVE.SPEED * (o.sv ?? 1) * (o.run && bd > 4 ? 1.5 : 1); // (can sprint: half as fast again while far off)
     if (d.flee) {
       const go = Math.min(1, (sp * dt) / Math.max(bd, 1e-3));
       o.x = Math.min(0.99, Math.max(0.01, o.x - (to.x - o.x) * go));
@@ -1447,13 +1461,15 @@ function boardTick(s, now, H) {
             ey = (A.y - B.y) / RY,
             e = Math.hypot(ex, ey);
           if (e >= 0.9) continue;
+          const [wa, wb] = stillShares(A, B);
+          if (!wa && !wb) continue; // (both Speed 0: neither moves)
           const k = e > 1e-3 ? (0.9 - e) / 2 / e : 0.2,
             ux = e > 1e-3 ? ex * k : Math.random() - 0.5,
             uy = e > 1e-3 ? ey * k : Math.random() - 0.5;
-          A.x = Math.min(0.99, Math.max(0.01, A.x + ux * RX));
-          A.y = Math.min(0.97, Math.max(0.03, A.y + uy * RY));
-          B.x = Math.min(0.99, Math.max(0.01, B.x - ux * RX));
-          B.y = Math.min(0.97, Math.max(0.03, B.y - uy * RY));
+          A.x = Math.min(0.99, Math.max(0.01, A.x + ux * RX * wa));
+          A.y = Math.min(0.97, Math.max(0.03, A.y + uy * RY * wa));
+          B.x = Math.min(0.99, Math.max(0.01, B.x - ux * RX * wb));
+          B.y = Math.min(0.97, Math.max(0.03, B.y - uy * RY * wb));
           ch = true;
         }
   }

@@ -139,7 +139,7 @@ export function sbZoneTick(s, now, H0) {
       continue;
     }
     const every = num(p, "rate");
-    zt[id] = now + 1000 * Math.max(0.1, Number.isFinite(every) ? every : 1);
+    zt[id] = now + 1000 * Math.max(0, Number.isFinite(every) ? every : 1); // (0: every beat)
     ch = hitAll(s, pts, id, p, now, H0) || ch;
   }
   s.hidden = { ...hid, sbzt: zt };

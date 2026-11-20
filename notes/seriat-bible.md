@@ -127,7 +127,7 @@ is skipped (its own Check says where).
 ## 8. Limits per stat
 Owner 13:44Z: "Limits are set automatically if the player DOESNT define them themselves, and a help file says the limits
 and points to the help file on how to fix them". So: each stat has a preset limit (the game's normal ones, e.g. HP up
-to Mad God Justin's highest HP, speed 0.1 to 5, spawn limit 1 to 100); a player's own `\inc'lim=..'\` or
+to Mad God Justin's highest HP, speed 0 to 5, spawn limit 1 to 100; owner Nov 20 17:25Z: zero is a real value, speed 0 stays put and is never pushed aside, damage 0 hurts nobody); a player's own `\inc'lim=..'\` or
 `\rm'lim'\` replaces it. The help folder has a `limits` page listing every preset limit, which points to the page on
 changing them (line rules). A "past the limit" error names the stat and the limit and points to the same page.
 Built (V168): asterisks pick within the stat's box (HP 0.1 to 1000 in tenths). In NPC brains (`((hp 50))`,

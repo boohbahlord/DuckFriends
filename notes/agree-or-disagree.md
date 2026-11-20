@@ -7316,3 +7316,32 @@ Adam: the right-click menu gets Lock / Unlock; a locked block can't be moved, re
 then we make the ladder animation not suck. The walk up the ladder should be where ur duck is on the ladder as they move up it BEOFRE they are on the roof of the pump"
 
 Decided (Adam): 1 Noah: in #712, the circled corner's roof breaks as a ledge whose height shows as a solid 3D face (like the wall's), so the roof reads as thick as everything else. 2 Solomon: climbing the pump's ladder shows the duck on the ladder going up rung by rung before it stands on the pump roof.
+
+## Owner, Nov 20 17:25Z (Sandbox rules design)
+"determining what rules to make and how to make them should be based on reducing redundancy and allowing freedom simply for creation through the ui
+
+for like, example
+
+act should be a thing in algorithim 
+
+what it does it act a potential through algorithim 
+
+the act itself can be determined, so like
+
+damage (from a dropdown list)
+heal (from dropdown list)
+seriat (this is on the top of the list
+seriat shows a box, then another box appears below it, and it is a dropdown list. the dropdown list can be scrolled through and seriat box input can be added again or multiple options can be selected
+the seriat boxes that await input has a small input button on the right for importing files
+the boxes tend to not show multiple choice if it usually expects number input, but players can input what they want
+
+the seriat input for things should also be able to have a value of zero with it's own unique meaning, such as movement. Spawns or respawns dont move off their position anymore to make room, since their movement being zero means zero 
+
+in ai behaviors, things like ai should be able to have very similiar options to spawn IN their UI settings for M 
+
+every setting for spawn or respawn or zone or loot should have a default setting. zone probably can have some settings not be default. like true, false, default 
+default assumes default stats or values for a thing in spawn, loot, or respawn for example, such as ai or ammo 
+
+the values not typed into boxes for seriat assume default"
+
+Decided (Adam): plan in /mnt/project-files/adam/rules-design-plan.md; Solomon builds it in the order there.
