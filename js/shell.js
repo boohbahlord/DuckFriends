@@ -89,7 +89,7 @@ import {
   NBS_FILES,
   NBS_TEXT,
 } from "./nbperms.js";
-import { compileScript, brain } from "./numberatrun.js";
+import { compileScript, brain, paramsOf } from "./numberatrun.js";
 
 const tag = (n) => String(n || "").replace(/\s+/g, "");
 const fail = (msg, code = 1) => {
@@ -2853,6 +2853,7 @@ function startFile(path, ctx, sudo) {
   /* read it first: a file with mistakes doesn't start, and says where they are */
   const c = compileScript((t ? theirText(t) : fs.files[path]) || "", {
     file: (n) => useText(path, n),
+    params: t ? [] : paramsOf(fs.files),
   });
   if (c.errs.length)
     fail(

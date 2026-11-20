@@ -31,6 +31,8 @@ const MAPS = [
   ["board-light", "the menus' background in the light", "night", false],
   ["pixel", "Pixel", "scene", "pixel"],
   ["sky", "Sky's sun, moon, stars and clouds", "sky", null],
+  ["carnival", "Carnival Night", "carnival", null],
+  ["stars", "Starry Night", "stars", null],
 ];
 
 function serve() {
@@ -144,6 +146,53 @@ async function recordMap(page, how, arg) {
         }
         return { html: JSON.stringify(out), files };
       }
+      if (how === "stars") {
+        /* the turning sky, one picture in the world's pixels (the game turns it, its pixels kept whole), and where its
+           brightest stars are (the game draws them twinkling) */
+        const { starSky } = await import("/tools/pixel-src/stars.js");
+        const s = starSky(W, H, 2);
+        return {
+          html: JSON.stringify({
+            sky: "FILE:stars-sky",
+            R: s.R,
+            pole: s.pole.map((v) => +v.toFixed(2)),
+            base: +s.base.toFixed(4),
+            bright: s.bright,
+          }),
+          files: { "stars-sky": s.canvas.toDataURL("image/png") },
+        };
+      }
+      if (how === "carnival") {
+        /* one drawing: its wheel turns (12 spokes alike: a twelfth of a turn, 90 s round, as 60 frames), its cars and
+           rim lights are carried round hanging straight, its bulbs and stars twinkle, its flag waves */
+        const { carnivalSVG } = await import("/tools/pixel-src/carnival.js");
+        const { recordSvg } = await import("/tools/pixel-src/maprec.js");
+        const css = document.createElement("link");
+        css.rel = "stylesheet";
+        css.href = "/tools/pixel-src/carnival.css";
+        document.head.append(css);
+        await new Promise((ok) => (css.onload = ok));
+        root = document.createElement("div");
+        root.className = "scene carnival";
+        root.style.cssText = "position:absolute;inset:0";
+        box.append(root);
+        root.innerHTML = carnivalSVG(true);
+        const svg = root.firstElementChild;
+        svg.setAttribute("viewBox", "0 0 1600 900");
+        return recordSvg(
+          root,
+          svg,
+          ".cn-wheel, .cn-car, .cn-bulb, .cn-star, .cn-flag",
+          (el) =>
+            el.classList.contains("cn-wheel")
+              ? { k: "frames", P: 7500, N: 60 }
+              : el.classList.contains("cn-car")
+                ? { k: "hang", P: 90000, cx: 330, cy: 410 }
+                : el.classList.contains("cn-flag")
+                  ? { k: "frames", P: 3200, N: 24 }
+                  : { k: "fade", cls: "pxt" },
+        );
+      }
       if (how === "scene") {
         /* a map whose scene lays itself out once and is made into pixels by its own code (pxbake.js bakeStill) */
         await import("/js/rules.js"); // (first, as the game loads them: maps.js and rules.js need each other)
@@ -201,7 +250,7 @@ async function recordMap(page, how, arg) {
     fs.mkdirSync(path.join(ROOT, "js", "pxm"), { recursive: true });
     fs.writeFileSync(
       path.join(ROOT, "js", "pxm", id + ".js"),
-      `/* ${what}, as pixel files: written by tools/pixel-maps.cjs, never by hand */\nexport default ${JSON.stringify(how === "sky" ? { W, H, G: 2, ...JSON.parse(markup) } : { W, H, G: 2, html: markup })};\n`,
+      `/* ${what}, as pixel files: written by tools/pixel-maps.cjs, never by hand */\nexport default ${JSON.stringify(how === "sky" || how === "stars" ? { W, H, G: 2, ...JSON.parse(markup) } : { W, H, G: 2, html: markup })};\n`,
     );
     execFileSync("npx", [
       "-y",

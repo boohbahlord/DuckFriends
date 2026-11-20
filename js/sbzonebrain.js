@@ -6,7 +6,7 @@
    players stand in it). Any file reaches a zone by its variable name: ((zone 'Pit' size 2)), \if zone 'Pit' steps mod 3
    == 0\. In a file a zone is "zone:" and its block's id, so it never mixes with an NPC.
    The brains are the host's only, as the NPCs' are (sbnumberat.js); the files come with the box the same way. */
-import { compileScript, brain } from "./numberatrun.js";
+import { compileScript, brain, paramsOf } from "./numberatrun.js";
 import { nbFiles, nbLog } from "./sbnumberat.js";
 import {
   sbNameOf,
@@ -204,7 +204,15 @@ function make(s, name, text, now) {
     return g;
   }
   const nb = nbFiles(s),
-    c = compileScript(text, { file: (n) => fileOf(nb, n) });
+    c = compileScript(text, {
+      file: (n) => fileOf(nb, n),
+      // the host's own param files (never another player's "~Pat/…")
+      params: paramsOf(
+        Object.fromEntries(
+          Object.entries(nb || {}).filter(([n]) => !n.startsWith("~")),
+        ),
+      ),
+    });
   if (c.errs.length) {
     for (const e of c.errs.slice(0, 5))
       nbLog(s, `✗ ${name}, line ${e.line}: ${e.why}`, now);

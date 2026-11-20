@@ -2,7 +2,8 @@
    The lobby's and Game Settings' picture of a map, and the map vote's, is a pixel file (assets/px/pic, assets/px/vote).
    Each is made from the drawing here, drawn big and made into pixels the game's way. Nous Within Kenoma's are made from
    the map itself instead (the tool takes a still of it). Change a drawing, then run node tools/pixel-files.cjs */
-import { cloud, rnd, carnivalSVG } from "../../js/art.js";
+import { cloud, rnd } from "../../js/art.js";
+import { carnivalSVG } from "./carnival.js";
 import { backdropSVG } from "./nightshow.js";
 import { drawCollage } from "../../js/collage.js";
 import { euclidMiniURL } from "../../js/euclid.js";

@@ -351,7 +351,7 @@ export const SB_BOXES = {
     max: 600,
     def: "4",
   }, // ("default is four seconds"; "you can do a decimal point for time in between spawns")
-  hp: { name: "HP", kind: "int", min: 1, max: 1000, def: "3" }, // (a zombie's own: l4ddrules.js L4.HP)
+  hp: { name: "HP", kind: "tenth", min: 0.1, max: 1000, def: "3" }, // (a zombie's own: l4ddrules.js L4.HP; tenths: the owner's "I agree with the HP decimal system", any HP above 0 keeps it standing)
   damage: { name: "Damage", kind: "tenth", min: 0.1, max: 100, def: "1" }, // ("decimal form to the tenth place")
   speed: { name: "Speed", kind: "tenth", min: 0.1, max: 5, def: "1" }, // ("1 is default, 0 is not allowed ... 5 is the max")
   /* how big what it spawns is, picture and hitbox together, in percent of a duck (the owner's, Nov 19 15:47Z: "Percent is
@@ -403,7 +403,7 @@ export const SB_OWN = SB_IMPORT.flatMap(([, fs]) => fs).filter(
    its "who" names (players, or their names), with its HP and speed; blank is the game's own */
 export const SB_PLAYER = {
   pon: { name: "Players spawn here", kind: "bool", def: "f" },
-  php: { name: "Players' HP", kind: "int", min: 1, max: 100, blank: true },
+  php: { name: "Players' HP", kind: "tenth", min: 0.1, max: 100, blank: true }, // (tenths, as HP's)
   pspd: {
     name: "Players' speed",
     kind: "tenth",

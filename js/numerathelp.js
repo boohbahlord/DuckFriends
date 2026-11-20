@@ -210,10 +210,10 @@ don't define a limit yourself, the box uses the one below.
 
   Spawn limit                  1 to 100        (starts at 1)
   Seconds between spawns       1 to 600        (starts at 4)
-  HP                           1 to 1000       (starts at 3)
+  HP                           0.1 to 1000     (starts at 3)
   Damage                       0.1 to 100      (starts at 1)
   Speed                        0.1 to 5        (starts at 1)
-  Players' HP                  1 to 100
+  Players' HP                  0.1 to 100
   Players' speed               0.1 to 5
   Zone width and height        1 to 40 duck lengths (start at 4)
   Zone HP each time            0.1 to 100      (starts at 1)
@@ -231,6 +231,10 @@ its start (more in numbers/linerules.txt):
   \\inc'lim=***'\\ 2:900   at most 999
   \\rm'lim'\\ 2000         no limit on this line (1,000,000 at most)
   \\!inc'lim=25'\\         the whole file's top is 25
+
+The same limits hold in NPC brains: ((speed 50)) stops that line
+with "Past the limit: speed 5 at most". A param file (its first
+line \\\\param\\\\) can move a limit for every one of your files.
 `,
   "linerules.txt": `Line rules
 
@@ -306,12 +310,12 @@ A spawn with no Brain plays as before.
   ((hp "2rage"))              "…" multiplies: twice the rage
 
 Stats, read and set (an NPC's, inside a when):
-  hp  speed  damage  regen  hitbox (10 to 300, in %: how big it is
-                             to hit, and how far it reaches)
+  hp  speed  damage  regen hp  hitbox (10 to 300, in %: how big it
+                                 is to hit, and how far it reaches)
   ((hp 5))  ((hp hp-1))  ((hp 50%))   50% is half its most
   ((hitbox 150%)) or ((hitbox 150))   one and a half times its size
   ((hp 100%))                         HP to full
-  ((regen 2))                         2 HP back each second (0 stops it)
+  ((regen hp 2))                      2 HP back each second (0 stops it)
 Another NPC's: z hp, where z is one (for z in team ...):
   for z in team ((z hp z hp+1))       each one gets 1 HP more
 Built-in: wave (the round), time (seconds), alive, dead, spawned.

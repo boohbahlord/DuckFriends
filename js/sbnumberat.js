@@ -11,7 +11,7 @@
    - print and its mistakes go to the room's Seriat log (s.nbo, its own part too), which the Seriat window shows.
    An NPC whose spawn names no file thinks as before. The brains are the host's only: if the host changes, they start
    over. Everything here runs inside sbspawn.js think(), on the board and on the worlds the same. */
-import { compileScript, brain } from "./numberatrun.js";
+import { compileScript, brain, paramsOf } from "./numberatrun.js";
 import { valueOf } from "./numerat.js";
 import { SB_BOXES } from "./sandboxrules.js";
 import {
@@ -48,6 +48,14 @@ const usedBy = (nb, top, n) =>
   top.startsWith("~")
     ? fileOf(nb, top.slice(0, top.indexOf("/") + 1) + n)
     : fileOf(nb, n);
+/* the files of the brain "top"'s owner: param files only reach their own owner's files */
+const sameOwner = (nb, top) => {
+  const pre = top.startsWith("~") ? top.slice(0, top.indexOf("/") + 1) : "";
+  const out = {};
+  for (const [n, v] of Object.entries(nb || {}))
+    if (pre ? n.startsWith(pre) : !n.startsWith("~")) out[n] = v;
+  return out;
+};
 /* a line in the room's Seriat log */
 export function nbLog(s, text, now) {
   const was = s.nbo || [];
@@ -199,7 +207,10 @@ function make(s, name, text, now) {
     return g;
   }
   const nb = nbFiles(s),
-    c = compileScript(text, { file: (n) => usedBy(nb, name, n) });
+    c = compileScript(text, {
+      file: (n) => usedBy(nb, name, n),
+      params: paramsOf(sameOwner(nb, name)),
+    });
   if (c.errs.length) {
     for (const e of c.errs.slice(0, 5))
       nbLog(s, `✗ ${name}, line ${e.line}: ${e.why}`, now);
@@ -249,6 +260,22 @@ function make(s, name, text, now) {
       else o.hb = Math.min(HB.MOST, Math.max(HB.LEAST, v)) / 100; // (kept as a share: sbbody.js)
     },
     zone: (n) => zoneByName(g.cur.s, n),
+    /* a stat's limits [least, most] (help/limits.txt): past them a file stops and says why; the line's own lim
+       replaces the most. A zone's: its own checks (sbzonebrain.js) */
+    limit: (id, n) =>
+      isZoneId(id)
+        ? null
+        : n === "hp"
+          ? [0, SB_BOXES.hp.max]
+          : n === "regen"
+            ? [0, 100]
+            : n === "speed"
+              ? [SB_BOXES.speed.min, SB_BOXES.speed.max]
+              : n === "damage"
+                ? [SB_BOXES.damage.min, SB_BOXES.damage.max]
+                : n === "hitbox"
+                  ? [HB.LEAST, HB.MOST]
+                  : null,
     most: (id, n) =>
       isZoneId(id)
         ? zoneMost(n)

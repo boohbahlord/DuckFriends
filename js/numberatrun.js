@@ -660,9 +660,56 @@ const same = (x, y) =>
 /* ---------- compile a file ----------
    { n: lines read, errs: [{ line, why }], plan } (run a plan only when errs is empty). opts.file(name): another file's
    text for use (null when there's none) */
+/* param files (the bible, section 7: "A file whose first line is \\param\\ sets rules for every Seriat file.
+   \\param1\\, \\param2\\ ... set the order"): its first line, and the order it gives (\\param\\ first), or null */
+const PARAM = /^[ \t]*\\\\param(\d*)\\\\[ \t]*(?=\r?\n|$)/i;
+export const paramOrder = (text) => {
+  const m = PARAM.exec(String(text == null ? "" : text));
+  return m ? +(m[1] || 0) : null;
+};
+/* the param files among files (name -> text, or { t: text }), in their order: their texts */
+export function paramsOf(files) {
+  return Object.entries(files || {})
+    .map(([n, v]) => [n, typeof v === "string" ? v : v && v.t])
+    .filter(([, t]) => paramOrder(t) != null)
+    .sort(
+      (a, b) => paramOrder(a[1]) - paramOrder(b[1]) || (a[0] < b[0] ? -1 : 1),
+    )
+    .map(([, t]) => t);
+}
+/* every rule in those files, for every line of another file */
+function paramRules(texts) {
+  const out = [];
+  for (const t of texts || []) {
+    let toks;
+    try {
+      toks = lex(String(t).replace(PARAM, ""));
+    } catch (e) {
+      if (!(e instanceof NbError)) throw e;
+      continue; // (a param file with mistakes: its own Check says where)
+    }
+    let cur = [];
+    const flush = () => {
+      const real = cur.filter((x) => x.t !== "sp");
+      if (real.length)
+        try {
+          for (const r of lineRules(cur, real[0].line).rules)
+            out.push({ ...r, scope: "file" });
+        } catch (e) {
+          if (!(e instanceof NbError)) throw e;
+        }
+      cur = [];
+    };
+    for (const x of toks) x.t === "nl" ? flush() : cur.push(x);
+    flush();
+  }
+  return out;
+}
 export function compileScript(text, opts = {}) {
   const errs = [];
   const plan = { top: [], whens: [], everys: [], defs: new Map(), lines: 0 };
+  if (opts.params && !opts.pr) opts = { ...opts, pr: paramRules(opts.params) };
+  if (paramOrder(text) != null) text = String(text).replace(PARAM, ""); // (a param file itself: its rules only, for the others)
   read(String(text == null ? "" : text), plan, errs, opts, new Set(), "");
   errs.sort((a, b) => a.line - b.line);
   return { n: plan.lines, errs, plan }; // (the plan of the lines that read well, even when others didn't: Check plays them)
@@ -714,7 +761,10 @@ function read(text, plan, errs, opts, seen, from) {
       errs.push({ line, why: from + e.why });
     }
   }
-  const wide = parsed.flatMap((l) => l.rules.filter((r) => r.scope !== "line"));
+  const wide = [
+    ...(opts.pr || []),
+    ...parsed.flatMap((l) => l.rules.filter((r) => r.scope !== "line")),
+  ];
   let uses = false;
   plan.lines += lines.length;
   for (const l of parsed) {
@@ -887,9 +937,9 @@ export function brain(plan, host) {
     else globals.set(w, v);
   };
   /* a value, with its line's rules: played again (up to 1,000 times) while the rules take its result out */
-  const val = (env, fn, R) => {
+  const val = (env, fn, R, box = null) => {
     for (let k = 0; k < MOST_TRIES; k++) {
-      const ctx = newCtx(rand, R);
+      const ctx = newCtx(rand, R, box); // (box: a stat's limits, for an asterisk with no input)
       ctx.name = (w) => lookup(env, w);
       ctx.zone = zoneStat;
       /* z hp: another NPC's stat (z from for z in team, or a name let to one) */
@@ -976,15 +1026,17 @@ export function brain(plan, host) {
       })
       .join("");
   /* "…": asterisks, $ letters and named values worked out, as bash does with its variables */
-  const fill = (s, env) =>
+  const fill = (s, env, R) =>
     s.replace(/[$*]+|[A-Za-z_][A-Za-z0-9_]*/g, (m) => {
+      // caps (\!'ainc caps'\) reaches the $ letters inside say text too
+      const caps = !!(R && R.flag && R.flag("caps"));
       if (/^[$*]+$/.test(m))
         return [...m]
-          .map((c) =>
-            c === "*"
-              ? String(Math.floor(rand() * 10))
-              : "abcdefghijklmnopqrstuvwxyz"[Math.floor(rand() * 26)],
-          )
+          .map((c) => {
+            if (c === "*") return String(Math.floor(rand() * 10));
+            const l = "abcdefghijklmnopqrstuvwxyz"[Math.floor(rand() * 26)];
+            return caps && rand() < 0.5 ? l.toUpperCase() : l;
+          })
           .join("");
       const w = m.toLowerCase();
       for (let sc = env.scope; sc; sc = sc.parent)
@@ -1053,21 +1105,56 @@ export function brain(plan, host) {
         setVar(env, s.name, host.shared.get(s.name));
         return;
       case "set": {
-        const v = num(val(env, s.v, R), `${s.stat}'s value`);
+        const L0 =
+            host.limit && env.me != null && !s.pct
+              ? host.limit(env.me, s.stat)
+              : null,
+          v = num(
+            val(env, s.v, R, L0 && { min: L0[0], max: L0[1] }),
+            `${s.stat}'s value`,
+          );
         const ids = s.who
           ? whoIs(env, s.who)
           : env.me != null
             ? [env.me]
-            : no(
-                `Whose ${s.stat}? Use it inside a when, or ((all zombies ${s.stat} …))`,
-                HELP.names,
-              );
-        for (const id of ids)
-          host.set(
-            id,
-            s.stat,
-            tenth(s.pct ? (host.most(id, s.stat) * v) / 100 : v),
-          );
+            : NB_ZONE_STATS.includes(s.stat) && host.zones
+              ? host.zones() // (a zone's file, at its top: every zone that names it, as order, dir and step)
+              : no(
+                  `Whose ${s.stat}? Use it inside a when, or ((all zombies ${s.stat} …))`,
+                  HELP.names,
+                );
+        for (const id of ids) {
+          const x = tenth(s.pct ? (host.most(id, s.stat) * v) / 100 : v);
+          if (host.limit) {
+            /* the stat's own limit, or the line's (\inc'lim=25'\, \rm'lim'\ for none): past it, the file stops and
+               says why (the bible: "A value a stat can't take stops the file with an error that says why") */
+            const L = host.limit(id, s.stat);
+            if (L) {
+              let top = L[1];
+              if (R && R.lim) {
+                if (R.lim.off) top = Infinity;
+                else {
+                  const c = newCtx(rand, R);
+                  top = num(
+                    R.lim.fn.hi ? R.lim.fn.hi(c) : R.lim.fn(c),
+                    "A limit",
+                  );
+                }
+              }
+              if (x < L[0])
+                no(
+                  `${s.stat} ${L[0]} at least (it gave ${x})`,
+                  "help/limits.txt",
+                );
+              if (x > top)
+                no(
+                  `Past the limit: ${s.stat} ${top} at most${R && R.lim ? " (this line's limit)" : ""} (it gave ${x})`,
+                  "help/limits.txt",
+                );
+            }
+          }
+          host.set(id, s.stat, x);
+        }
         return;
       }
       case "zstep":
@@ -1105,7 +1192,18 @@ export function brain(plan, host) {
         return;
       }
       case "for": {
-        const list = s.over.k ? whoIs(env, s.over) : forList(env, s.over.v, R);
+        const named = s.over.k === "var" ? lookup(env, s.over.name) : null,
+          list =
+            typeof named === "number"
+              ? Array.from(
+                  {
+                    length: Math.max(0, Math.min(LOOPS + 1, Math.floor(named))),
+                  },
+                  (_, k) => k + 1,
+                ) // (a name for a number: 1 to it, as for n in 3)
+              : s.over.k
+                ? whoIs(env, s.over)
+                : forList(env, s.over.v, R);
         if (list.length > LOOPS)
           no(
             "This loop would run more than 1,000 rounds, so it stopped",

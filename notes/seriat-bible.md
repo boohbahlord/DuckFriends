@@ -86,7 +86,7 @@ HP, damage and speed take tenths.
   `\'ainc posbrahm'\` lets a `-*` give positives (named after Brahmagupta and Brahma).
 - `$` is a letter, as `*` is a digit (owner 13:32Z): `$` = one random letter a to z, `$$` two, `$$$` three. Waits
   for input like `*`. Named the same way: `'1$'`. Mixed: `say "zombie $$*"` might say "zombie qe7".
-  Lower case by default; `\'ainc caps'\` lets capitals in (owner 13:36Z: yes).
+  Lower case by default; `\'ainc caps'\` lets capitals in (owner 13:36Z: yes). Caps reaches `$` letters inside `say "..."` text too (V168).
 - Named asterisks, single quotes: `'1*'` is asterisk number 1, `'2***'` asterisk number 2 with three digits. The number
   in quotes names it and is never part of the value. Double quotes are math, never names. `'*1'` means the same as `'1*'`
   (owner 23:17Z, final: keep both forms).
@@ -119,6 +119,10 @@ must be a number.
 ## 7. Param files
 A file whose first line is `\\param\\` sets rules for every Seriat file. `\\param1\\`, `\\param2\\` ... set the
 order. Reachable from Game settings (g) and the Seriat window.
+Built (V168): a param file's rules count as `scope: file` rules for every other file of the same player (NPC brains,
+zone files, files run from the shell). They never reach another player's files (`~Pat/...` uses Pat's own param
+files). Lower numbers first; a file's own rules beat a param file's at the same strength. A param file with mistakes
+is skipped (its own Check says where).
 
 ## 8. Limits per stat
 Owner 13:44Z: "Limits are set automatically if the player DOESNT define them themselves, and a help file says the limits
@@ -126,6 +130,11 @@ and points to the help file on how to fix them". So: each stat has a preset limi
 to Mad God Justin's highest HP, speed 0.1 to 5, spawn limit 1 to 100); a player's own `\inc'lim=..'\` or
 `\rm'lim'\` replaces it. The help folder has a `limits` page listing every preset limit, which points to the page on
 changing them (line rules). A "past the limit" error names the stat and the limit and points to the same page.
+Built (V168): asterisks pick within the stat's box (HP 0.1 to 1000 in tenths). In NPC brains (`((hp 50))`,
+`((speed 3))`), a value past the stat's limit stops that line with "Past the limit: speed 5 at most (it gave 50). See
+help/limits.txt"; a line's own `\inc'lim=..'\` or `\rm'lim'\` (or a param file's) moves or lifts it. Zone files
+may set zone words (squares, size) at their top level, outside any `when`. `for i in n` over a name holding a number
+counts 1 to n.
 
 ## 9. Where code runs
 Files run from the Run button, a shell command, or attached/imported in g; a shell command can stop them. No separate
@@ -157,9 +166,10 @@ Every Seriat value works anywhere a number goes below: `wait 1:3`, `every [2,4]s
    owner 15:52Z: bigger to hit, longer reach; a percent here is of its usual size, not of its most; live V102). Another NPC's stat is `z hp` with `z` from a loop: `for z in team ((z hp z hp+1))` (live V99).
    **[open]** the full list of stats.
    Groups (Phase 5, owner Nov 19: "a way to say 100%", "It should just be called regen HP. Or regen stamina"):
-   `((hp 100%))` already fills HP to its most. New stat `regen`: HP back each second, up to its most
-   (`((regen 2))`, `\if regen > 0\`, 0 to 100, 0 stops it). Stamina is only the players' (an NPC has none), so
-   "regen stamina" is a group setting, not a stat (sbgroups.js). Reading taken: `regen` is one word, not `regen hp`.
+   `((hp 100%))` already fills HP to its most. New stat `regen hp`: HP back each second, up to its most
+   (0 to 100, 0 stops it). Stamina is only the players' (an NPC has none), so
+   "regen stamina" is a group setting, not a stat (sbgroups.js). V168: written `regen hp` as the owner named it
+   (`((regen hp 2))`, `\if regen hp > 0\`, `z regen hp`); `regen` alone still reads (files written before).
 2. **Actions**: `go nearest duck`, `attack`, `flee`, `wait 1.5`, `say "hi"` (quotes as in print).
 3. **Who**: `me`, `nearest duck`, `all zombies`, `team`: what an action or a stat applies to.
 4. **Chance in percent** (owner 13:32Z: "uses percentage with percent sign"; replaces the `~` weights):
