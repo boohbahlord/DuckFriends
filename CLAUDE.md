@@ -102,14 +102,18 @@ Check with code before pictures (console errors, overlaps, the right element sho
 - One merge window: ready PRs wait, then merge together after one shared test and one deploy.
 - A quick question ("is it live?") gets a quick look, not a full test.
 
-## One sheet per mechanic (the owner's core principle, Nov 20 21:47Z/21:48Z; why: /mnt/project-files/adam/code-health.md)
-- Zombies, players and computer players, hits and gore, guns and their drawings, NPC brains: each lives in ONE module. The
-  mode that defines it is the base (Dead Ducks Arcade for zombies, players, computer players and gore); other modes give
-  only their numbers through their mode profile ("this is the AI sheet; if this mode, then this"). Never a copy. A second
-  sheet needs a reason from real game-programming practice written at its top ("easier to copy" never is).
-- Search (`git grep` the behavior) before writing anything; extend what exists with a profile field.
-- No new scattered `?? n` defaults in game rules: numbers live in js/gamedefaults.js or the mode profile.
-- No checks of a mode's name outside the mode profiles: code asks the profile what the mode has.
+## One shared module per mechanic, modes as data (the owner's core principle, Nov 20 21:47Z/21:48Z/21:52Z; why: /mnt/project-files/adam/code-health.md)
+- NEVER a file per mode. Zombies, players and computer players, hits and gore, guns and their drawings, NPC brains: each
+  is ONE module that every mode runs. The mode that defines it is the base (Dead Ducks Arcade for zombies, players,
+  computer players and gore).
+- What differs between modes is data handed to that one module, never code: a "breed" entry (Type Object pattern,
+  Nystrom, Game Programming Patterns) such as `ZOMBIE_BREEDS.mgjWave = { speed, damage, swipeMs }`, or a callback the
+  shared code calls at a fixed hook (Template Method / Strategy, Gang of Four), the way the social modes plug into one
+  template. The shared code asks the breed; it never checks a mode's name.
+- A second module for one mechanic needs a reason from real game-programming practice written at its top ("easier to
+  copy" never is).
+- Search (`git grep` the behavior) before writing anything; extend what exists with a breed field or a hook.
+- No new scattered `?? n` defaults in game rules: numbers live in js/gamedefaults.js or the breed table.
 - One owner module per state key; only it writes that key.
 - Files stay under ~1,500 lines; split by mechanic.
 - Replacing something deletes the old path in the same PR.

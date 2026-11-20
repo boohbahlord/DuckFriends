@@ -7516,3 +7516,10 @@ on DDA's, 4 guns (one list, one drawing), 5 NPC brains. Technical report + repo 
 Now, if you have more than one sheet, you better have a good reason based in actual good programming principles that we see for game devs, okay? Final.
 
 Adam: added to the one-sheet rule (CLAUDE.md, code-health.md): a second sheet only with a stated game-programming reason.
+
+## Owner, Nov 20 21:52Z (Adam's thread)
+
+No, it's not one sheet per mode. We're not doing a zombie fucking file for every different game mode that includes them. We're not doing that. I'm screaming on the top of my lungs so incredibly loud. This is so fucking stupid. We're not fucking doing that. You better fucking rewrite shit. Whenever you say shit like that, and I tell you what I'm saying right now, you better go back to your fucking principles and fix them right now, because I'm so mad and I'm loud and I'm screaming, and you make normal people want to throw themselves off a wall. You're giving me psychosis with how stupid you are. Look at the principles of what, when we actually split up a file across different game modes. Like, so for example, for the like normal social or social competitive game modes, there is like a template file, right? That references the particular game mode settings in it in a callback to its file. So that way you can just input different files into that, if I'm getting my terminology right, and if I have the right understanding, into that, so it runs like that. Like, I feel like you're still not doing good enough at researching code health and how to do good code. And like, listening to me is important, but if you're not pushing back with actual good information based on what other programmers in technical language are saying, and even like not just like famous ones, but like shit you find in books, like actual curriculum, then what the fuck are we doing?
+
+Adam: rules rewritten in CLAUDE.md: never a file per mode; one shared module per mechanic, modes differ by data (Type
+Object "breeds") or hooks (Template Method/Strategy), the same shape as the social modes' template.
