@@ -11,6 +11,7 @@
    (l4ddrules.js); the weapons bar is l4ddbar.js. */
 import { holdGame, offView } from "./gameready.js";
 import { clawMark, warmClaw } from "./claw.js";
+import { JPOOL, poolHTML, warmPool } from "./bloodpool.js";
 import { isInvisible } from "./invisible.js";
 import { invOn } from "./sbgod.js";
 import { sprintLeft, sprintReset } from "./stamina.js";
@@ -59,12 +60,7 @@ import {
   PUMPS,
 } from "./hangout/stationmap.js";
 import { floatDuck, SINK, WADE_SINK, SLOW as SWIM } from "./hangout/water.js";
-import {
-  fenceLean,
-  BELL_ANGLES,
-  BELL_REST,
-  JUSTIN_POOL,
-} from "./hangout/stationart.js";
+import { fenceLean, BELL_ANGLES, BELL_REST } from "./hangout/stationart.js";
 import {
   L4,
   OPENINGS,
@@ -152,7 +148,7 @@ import { fxHitAt, fxEye, heavyOff, fxSparks, fxSteam } from "./fx.js";
 import { vibrate, hitPx, HIT, again } from "./fxmotion.js";
 import { pixelOn, gridPx, raster, rasterReady } from "./pixel.js";
 import { olAdd, olFloor, olRoofed, olPic, DROP_OL } from "./outlines.js";
-import { confirmBox } from "./ui.js";
+import { confirmBox, ducksOn, windowOpen } from "./ui.js";
 import { angelOf, ANGEL } from "./l4ddangel.js";
 import { angelic, jerrySVG } from "./powerart.js"; // (after l4ddart.js, as game.js imports it)
 import { hashText } from "./pxdom.js";
@@ -528,6 +524,7 @@ function warmZombies(sc) {
   if (!pixelOn() || !sc || warmAt === sc) return false;
   warmAt = sc;
   warmClaw(sc * 1.25); // (their claw marks too: claw)
+  warmPool(120); // (and the pool of blood under a duck that dies: bloodpool.js)
   const looks = [
     ...ZHATS.map((_, h) => [h, -1]),
     ...ZOUTFITS.map((_, o) => [-1, o]),
@@ -918,11 +915,8 @@ function spinSquare(s, ctx) {
   sqEl.style.setProperty("--k", Wd.sc.toFixed(3));
 }
 /* Justin out there, once he's dead (bled out, dead for good: nobody can revive him now): a pool of blood spreads out under him over
-   JPOOL.ms (the owner's, Nov 17 18:05Z: "on death a blood pool spreads"); none with Gore off. Its own few dark ellipses,
+   JPOOL.ms (bloodpool.js; the owner's, Nov 17 18:05Z: "on death a blood pool spreads"); none with Gore off. Its own few dark ellipses,
    as flat as the floor. Every other duck that dies has the same one (game.js .gduck-pool) */
-export const JPOOL = { ms: 6000 };
-// (its shapes: stationart.js JUSTIN_POOL, the trooper in the gas station lies in the same)
-export const POOL_SVG = `<svg viewBox="-60 -26 120 52" width="120" height="52">${JUSTIN_POOL}</svg>`;
 let poolEl = null,
   poolAt = 0,
   poolSig = "";
@@ -1934,7 +1928,7 @@ function drawMerchant(ctx, t) {
       butler.pool = document.createElement("span");
       butler.pool.className = "l4-jpool l4-mpool";
       butler.pool.setAttribute("aria-hidden", "true");
-      butler.pool.innerHTML = POOL_SVG;
+      butler.pool.innerHTML = poolHTML(120); // (css .l4-jpool: 120 px, scaled with the world)
       butler.el.prepend(butler.pool);
     }
   }
@@ -2080,7 +2074,7 @@ function drawCorpses(ctx) {
       o.pool = document.createElement("span");
       o.pool.className = "l4-jpool";
       o.pool.setAttribute("aria-hidden", "true");
-      o.pool.innerHTML = POOL_SVG;
+      o.pool.innerHTML = poolHTML(120); // (css .l4-jpool: 120 px, scaled with the world)
       o.el.prepend(o.pool);
       CORPSES.set(c.v, o);
     }
@@ -2382,9 +2376,10 @@ function safeLook(ctx) {
     now = clockNow(),
     p4 = s.hang.l4p || {},
     inv = s.hang.l4inv || {};
-  for (const d of ctx.world.board.querySelectorAll(".ducks .gduck[data-pid]")) {
-    const id = d.dataset.pid,
-      sk = !!(p4[id] && p4[id].skAt),
+  for (const d of ducksOn(ctx.world.board)) {
+    const id = d.dataset.pid;
+    if (!id) continue;
+    const sk = !!(p4[id] && p4[id].skAt),
       on = inv[id] > now;
     if (d.classList.contains("l4-skglow") !== sk)
       d.classList.toggle("l4-skglow", sk);
@@ -2680,7 +2675,7 @@ function closeShop() {
   removeEventListener("keydown", shopEsc, true);
 }
 function shopEsc(e) {
-  if (!shop || !shop.open || document.querySelector(".win-back, .ctx")) return;
+  if (!shop || !shop.open || windowOpen()) return;
   if (e.key === "Escape") {
     e.preventDefault();
     e.stopPropagation();
@@ -2949,7 +2944,7 @@ activity({
     poolEl = document.createElement("div");
     poolEl.className = "l4-jpool";
     poolEl.setAttribute("aria-hidden", "true");
-    poolEl.innerHTML = POOL_SVG;
+    poolEl.innerHTML = poolHTML(120); // (css .l4-jpool: 120 px, scaled with the world)
     poolEl.hidden = true;
     poolAt = 0;
     poolSig = "";
@@ -3207,7 +3202,7 @@ activity({
     /* Downpour: a duck in the deep flood swims, sunk to its waterline and bobbing, as in the Hangout pool; one in the
        shallow flood wades, its bottom fifth under it (water.js) */
     if (dp())
-      for (const d of Wd.board.querySelectorAll(".ducks .gduck")) {
+      for (const d of ducksOn(Wd.board)) {
         const id = d.dataset.pid,
           a = id && Wd.at(id),
           wet = !!a && a.z <= heightAt(a.x, a.y) + 4;
@@ -3314,7 +3309,12 @@ activity({
     }
     paint(now, ctx);
     /* my sprint: a thin blue bar under my name, while it isn't full (and under my HP meter: game.js asks sprintLeft()) */
-    const tag = Wd.board.querySelector(".gduck.mine .gduck-name");
+    const mine = ducksOn(Wd.board).find((d) => d.classList.contains("mine")),
+      tag =
+        mine &&
+        (mine.contains(mine._nameEl)
+          ? mine._nameEl
+          : (mine._nameEl = mine.querySelector(".gduck-name")));
     if (tag) {
       let sp = tag.querySelector(".l4-sprint");
       if (!sp) {

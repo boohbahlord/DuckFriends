@@ -12169,7 +12169,8 @@ html.moving .hp.hang-shimmer {
   display: block;
   pointer-events: none;
 }
-.hang-npc-held svg {
+.hang-npc-held svg,
+.hang-npc-held img {
   display: block;
   width: 100%;
   height: auto;
@@ -16050,7 +16051,8 @@ html.moving .l4-heat.hot::after {
   pointer-events: none;
   opacity: 0.92;
 }
-.l4-jpool svg {
+.l4-jpool svg,
+.l4-jpool img {
   display: block;
 }
 .l4-pts-pop {
@@ -20683,7 +20685,9 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   grid-template-columns: auto minmax(0, 1fr);
   align-items: start;
 }
-.sb-row:has(.sb-acts) > span:first-child {
+/* (the :has on the name itself, not on its row: a :has over a row with a plain span under it made the browser restyle
+   every span on the page each time anything a :has looks for changed, a few times a second in play) */
+.sb-row > span:first-child:has(+ .sb-acts) {
   padding-top: 0.3rem; /* (level with its dropdown's first line, open or shut) */
 }
 /* a spawn's tabs: Entities, Players, its + pages and the + (sbspawnview.js) */

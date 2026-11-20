@@ -3,6 +3,7 @@
    of dust goes up where it lands (in the water it splashes instead: water.js). Worked out on every screen from where
    the ducks are drawn, for everyone's duck. My own duck's slide whistle and thud are game.js's. */
 import { activity } from "./registry.js";
+import { ducksOn } from "../ui.js";
 import { heightAt } from "./layout.js";
 import { swimming } from "./water.js";
 import { pxAt } from "../pxdom.js";
@@ -80,7 +81,7 @@ activity({
   },
   draw(now, ctx) {
     const Wd = ctx.world;
-    for (const d of Wd.board.querySelectorAll(".ducks .gduck")) {
+    for (const d of ducksOn(Wd.board)) {
       const o = seen.get(d.dataset.pid),
         f = !!o && !!o.flail;
       if (d._flail !== f) {
