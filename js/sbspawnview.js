@@ -16,6 +16,8 @@ import {
   isSb,
   sbMay,
   sbOnBoard,
+  sbClimbAt,
+  SB_SLOPE_DIRS,
   SB_BOXES,
   SB_FLAGS,
   SB_ACTS,
@@ -83,7 +85,7 @@ import { orbFace, lootRing, lootPage, lootWire } from "./sblootview.js";
 import { drawNpcs, dropNpcs } from "./npcview.js";
 import { groupOpts, grShown, jgRow } from "./sbgroupview.js";
 import { olAdd } from "./outlines.js";
-import { sbFloorsFrom, sbIsFloor } from "./sbfloors.js";
+import { sbFloorsFrom, sbIsFloor, sbSlope, sbSlopeH } from "./sbfloors.js";
 import {
   lookCSS,
   lookNames,
@@ -208,19 +210,39 @@ function shapePic(s, p, css, solid = false) {
   SHAPE_PX.set(key, (u = cv.toDataURL()));
   return u;
 }
+/* a block's box on the screen at its height: { left, top, width, height, sk: degrees to skew it down to the right }. A
+   slope (sbfloors.js) is a tilted plane, so its box's top edge leans with it (skewY) and its sides stretch or shrink */
+function slabGeo(s, p, at) {
+  const [x0, y0, x1, y1] = sbZoneBox(s, p, W, H),
+    sl = sbIsFloor(p) && sbSlope(p),
+    z = (x, y) => (sl ? sbSlopeH(s, p, sl, x, y) : p.z || 0),
+    a = at({ x: x0, y: y0, z: z(x0, y0) }),
+    b = at({ x: x1, y: y0, z: z(x1, y0) }),
+    c = at({ x: x0, y: y1, z: z(x0, y1) }),
+    width = Math.max(1, b.left - a.left);
+  return {
+    left: a.left,
+    top: a.top,
+    width,
+    height: Math.max(1, c.top - a.top),
+    sk: sl ? (Math.atan2(b.top - a.top, width) * 180) / Math.PI : 0,
+    zEnd: (x) => z(x, y1), // (its height along its bottom edge)
+  };
+}
+const skewCSS = (g) => (g.sk ? `skewY(${g.sk.toFixed(2)}deg)` : "");
 /* a zone: its rectangle, see-through in its color, as the map draws it (its corners through at: the board and the
    worlds both draw it square to the screen), its name over it and a dot where its builder stood (E there opens it). A
    box of CSS, not a drawing: the pixel look (pxdom.js) would make a new picture of it each time the camera moves */
 function zoneMark(n, p, at, s, bare = false) {
   const [x0, y0, x1, y1] = sbZoneBox(s, p, W, H),
     z = p.z || 0,
-    cs = [
+    cs0 = [
       [x0, y0],
       [x1, y1],
       [p.x, p.y],
     ].map(([x, y]) => at({ x, y, z })),
-    L = Math.min(cs[0].left, cs[1].left),
-    T = Math.min(cs[0].top, cs[1].top),
+    L0 = Math.min(cs0[0].left, cs0[1].left),
+    T0 = Math.min(cs0[0].top, cs0[1].top),
     shaped = (sbShape(p) !== "sq" || sbRot(p) !== 0) && !sbFills(p), // (a square, not turned, is its CSS box; the rest pixels)
     sig = `${p.col} ${boxText(p, "name")} ${shaped ? `${sbShape(p)} ${sbSize(p)} ${sbRot(p)}` : ""} ${bare}`;
   if (n._sig !== sig) {
@@ -234,10 +256,23 @@ function zoneMark(n, p, at, s, bare = false) {
       ? "" // (a spawn's, respawn's or loot spot's area: its ring shows where it is)
       : `<span class="sb-zone-dot"></span><span class="sb-pt-name" style="color:var(--c)">${esc(boxText(p, "name"))}</span>`;
   }
+  const g = sbIsFloor(p) && sbSlope(p) ? slabGeo(s, p, at) : null; // (a slope: tilted with it)
+  let cs = cs0,
+    L = L0,
+    T = T0;
+  if (g) {
+    L = g.left;
+    T = g.top;
+    cs = [
+      { left: g.left, top: g.top },
+      { left: g.left + g.width, top: g.top + g.height },
+      at({ x: p.x, y: p.y, z: p.z || 0 }),
+    ];
+  }
   cellsOn(n, s, p, cs);
-  const st = cs
-    .map((c) => `${c.left.toFixed(1)},${c.top.toFixed(1)}`)
-    .join(" ");
+  const st =
+    cs.map((c) => `${c.left.toFixed(1)},${c.top.toFixed(1)}`).join(" ") +
+    (g ? ` ${g.sk.toFixed(2)}` : "");
   if (n._st === st) return;
   n._st = st;
   Object.assign(n.style, {
@@ -245,6 +280,8 @@ function zoneMark(n, p, at, s, bare = false) {
     top: T.toFixed(1) + "px",
     width: Math.abs(cs[1].left - cs[0].left).toFixed(1) + "px",
     height: Math.abs(cs[1].top - cs[0].top).toFixed(1) + "px",
+    transformOrigin: "0 0",
+    transform: g ? skewCSS(g) : "",
   });
   if (n.firstChild)
     Object.assign(n.firstChild.style, {
@@ -416,25 +453,22 @@ function lookOn(layer, have, want, id, pts, at, size, s) {
   const key = id + "~l",
     n = markEl(layer, have, key, "sb-pt sb-look");
   want.add(key);
-  const [x0, y0, x1, y1] = sbZoneBox(s, p, W, H),
-    z = p.z || 0,
-    cs = [
-      [x0, y0],
-      [x1, y1],
-    ].map(([x, y]) => at({ x, y, z })),
+  const g = slabGeo(s, p, at),
     shaped = (sbShape(p) !== "sq" || sbRot(p) !== 0) && !sbFills(p),
     mask = shaped ? `url("${shapePic(s, p, "#000", true)}")` : "",
-    st = `${bg} ${mask} ${look.op} ${cs.map((c) => `${c.left.toFixed(1)},${c.top.toFixed(1)}`).join(" ")}`;
+    st = `${bg} ${mask} ${look.op} ${g.left.toFixed(1)},${g.top.toFixed(1)},${g.width.toFixed(1)},${g.height.toFixed(1)},${g.sk.toFixed(2)}`;
   if (n._st === st) return;
   n._st = st;
   n.style.background = bg;
   n.style.setProperty("--mask", mask || "none");
   Object.assign(n.style, {
     opacity: String(1 - look.op),
-    left: Math.min(cs[0].left, cs[1].left).toFixed(1) + "px",
-    top: Math.min(cs[0].top, cs[1].top).toFixed(1) + "px",
-    width: Math.abs(cs[1].left - cs[0].left).toFixed(1) + "px",
-    height: Math.abs(cs[1].top - cs[0].top).toFixed(1) + "px",
+    left: g.left.toFixed(1) + "px",
+    top: g.top.toFixed(1) + "px",
+    width: g.width.toFixed(1) + "px",
+    height: g.height.toFixed(1) + "px",
+    transformOrigin: "0 0",
+    transform: skewCSS(g),
   });
 }
 /* plan Phase 4: a floor up high shows its front edge, a strip under its box as thick as a floor (layout.js SIGHT_SLAB),
@@ -450,20 +484,26 @@ function faceOn(layer, have, want, id, pts, at, size, s, seeZones) {
     n = markEl(layer, have, key, "sb-pt sb-face");
   want.add(key);
   const [x0, , x1, y1] = sbZoneBox(s, p, W, H),
-    z = p.z || 0,
-    a = at({ x: x0, y: y1, z }),
-    b = at({ x: x1, y: y1, z: Math.max(0, z - FACE) }),
+    g = slabGeo(s, p, at),
+    z0 = g.zEnd(x0),
+    a = at({ x: x0, y: y1, z: z0 }),
+    b = at({ x: x1, y: y1, z: g.zEnd(x1) }),
+    d = at({ x: x0, y: y1, z: Math.max(0, z0 - FACE) }),
     css = bg || SB_COLORS[p.col] || "#fff",
-    st = `${css} ${a.left.toFixed(1)},${a.top.toFixed(1)} ${b.left.toFixed(1)},${b.top.toFixed(1)} ${look ? look.op : ""}`;
+    st = `${css} ${a.left.toFixed(1)},${a.top.toFixed(1)} ${b.left.toFixed(1)},${b.top.toFixed(1)} ${d.top.toFixed(1)} ${look ? look.op : ""}`;
   if (n._st === st) return;
   n._st = st;
   n.style.background = css;
+  const w = Math.max(1, b.left - a.left),
+    sk = (Math.atan2(b.top - a.top, w) * 180) / Math.PI;
   Object.assign(n.style, {
     opacity: String(bg ? 1 - look.op : 0.45),
-    left: Math.min(a.left, b.left).toFixed(1) + "px",
-    top: Math.min(a.top, b.top).toFixed(1) + "px",
-    width: Math.abs(b.left - a.left).toFixed(1) + "px",
-    height: Math.max(1, Math.abs(b.top - a.top)).toFixed(1) + "px",
+    left: a.left.toFixed(1) + "px",
+    top: a.top.toFixed(1) + "px",
+    width: w.toFixed(1) + "px",
+    height: Math.max(1, d.top - a.top).toFixed(1) + "px",
+    transformOrigin: "0 0",
+    transform: Math.abs(sk) > 0.01 ? `skewY(${sk.toFixed(2)}deg)` : "",
   });
 }
 /* Dark outside (plan Phase 3): while my duck stands where a zone with it works, everything round that zone goes dark,
@@ -953,7 +993,20 @@ export function sbSettings(getR, id, tab = "") {
     <div data-fxrow="rate"${fx === "none" ? " hidden" : ""}>${row("rate", SB_ZONE.rate, typed("rate"), why("rate"))}</div>
     <div data-fxrow="zwho"${fx === "none" ? " hidden" : ""}>${actRow(R.state, p, "zwho", kinds)}</div>
     ${actRow(R.state, p, "wall", kinds)}
-    ${sbOnBoard(R.state) ? "" : `${row("fl", SB_ZONE.fl, typed("fl"), why("fl"))}${flagRow("gnd", SB_ZONE.gnd, typed("gnd"), why("gnd"))}`}
+    ${
+      sbOnBoard(R.state)
+        ? ""
+        : `${row("fl", SB_ZONE.fl, typed("fl"), why("fl"))}${flagRow("gnd", SB_ZONE.gnd, typed("gnd"), why("gnd"))}${row("slto", SB_ZONE.slto, typed("slto"), why("slto"))}<div class="sb-row" data-row="sldir"><span>${esc(SB_ZONE.sldir.name)}</span><select class="sb-box" data-f="sldir" aria-label="${esc(SB_ZONE.sldir.name)}">${Object.entries(
+            SB_SLOPE_DIRS,
+          )
+            .map(
+              ([v, n]) =>
+                `<option value="${v}"${v === (boxText(p, "sldir").trim() || "n") ? " selected" : ""}>${esc(n)}</option>`,
+            )
+            .join(
+              "",
+            )}</select><em class="sb-why"></em></div>${actRow(R.state, p, "clm", kinds)}`
+    }
     ${olSect(R.state, p, kinds)}
     ${lookSect(R.state, p, row, typed, why)}
     ${brainRow(typed("brain"), why("brain"))}
@@ -1454,6 +1507,21 @@ activity({
   only: "sandbox",
   /* my walk: a spawn's Players tab or a respawn may give me another speed (sbspawn.js sbWalkOf) */
   speed: (pos, ctx) => sbWalkOf(ctx.state(), ctx.me),
+  /* a zone I can climb here (plan Phase 4, sandboxrules.js sbClimbAt): { top, x, y } or null (world px in, shares out) */
+  climbAt(x, y, z) {
+    const R = activeRoom(),
+      s = R && R.state;
+    if (!s || !s.sb) return null;
+    return sbClimbAt(
+      s,
+      { duck: (s.players[R.me] || {}).name || "" },
+      x / W,
+      y / H,
+      z,
+      W,
+      H,
+    );
+  },
   /* a zone that's a wall to me (plan Phase 3) */
   blocked(x, y, z, ctx, fx, fy) {
     const s = ctx.state();

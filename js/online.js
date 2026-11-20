@@ -21,6 +21,7 @@ import { toast } from "./ui.js";
 import { ready, keyOk, seal, unseal, handouts } from "./secret.js";
 import { cardOf } from "./quackrules.js";
 import { wireOut, wireIn } from "./l4ddwire.js";
+import { useUmaps } from "./maps.js";
 
 export const CONFIG = {
   apiKey: "AIzaSyDh4Jx2TnY1PBlPiYnMczqzGhg-4dBFajY",
@@ -214,7 +215,7 @@ export async function joinOnlineRoom(entry, passkey = "") {
 }
 
 /* ---------- the state in the database: one JSON string per part ---------- */
-const EACH = ["players", "pos", "cards", "hang", "sbpic"]; // (Hangout: each activity's part of s.hang its own string, so a ball rolling never sends the chalk drawing again; Sandbox: each uploaded picture once, sbspawn.js)
+const EACH = ["players", "pos", "cards", "hang", "sbpic", "umap"]; // (Hangout: each activity's part of s.hang its own string, so a ball rolling never sends the chalk drawing again; Sandbox: each uploaded picture once, sbspawn.js; each made map once, umaprules.js)
 function encode(s) {
   const out = {};
   for (const [k, v] of Object.entries(s)) {
@@ -425,7 +426,9 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
   const quiet = (e) =>
     console.warn("DuckFriends online:", e && (e.code || e.message)); // a write turned down (the host role moved on)
   const emit = (a) => {
-    if (state) fns.forEach((f) => f(state, a));
+    if (!state) return;
+    useUmaps(state.umap); // (the maps the host made, for every map list and picture: maps.js)
+    fns.forEach((f) => f(state, a));
   };
   const fail = (e) => {
     if (!closed) toast(whyNot(e), 6000);

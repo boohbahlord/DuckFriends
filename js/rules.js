@@ -238,6 +238,7 @@ import {
   GREY_MAP,
 } from "./maps.js";
 import { modesFor, modeOf, CABIN_MODES, SOLO_MODES } from "./modes.js";
+import { umapAct, umapIds, umapTitle, isUmap } from "./umaprules.js";
 import { dealRainbow, rainbowJoin } from "./looksrules.js";
 
 export const COLS = [
@@ -509,7 +510,7 @@ function setMap(s, won) {
   s.options.map = f.map;
   s.mapZoomed = f.zoom ? 1 : 0;
   s.mapGreyed = f.grey ? 1 : 0;
-  say(s, `The map: ${mapName(won)}!`);
+  say(s, `The map: ${isUmap(won) ? umapTitle(s, won) : mapName(won)}!`);
 }
 const fits = (s, id) => s.seat.length >= (MIN_PLAYERS[id] || 0);
 /* Random: the games it plays (never Quacky Zombies, nor a game the room is too small for; Hangout comes up too, with its
@@ -570,7 +571,11 @@ export const voteModes = (s) => {
   return on.length ? on : all; // (Modes in Random & Vote: the games turned off aren't on the vote either)
 };
 export const voteIds = (s, k) =>
-  k === "mode" ? voteModes(s) : k === "zmap" ? ZMAPS : VOTE_MAPS;
+  k === "mode"
+    ? voteModes(s)
+    : k === "zmap"
+      ? ZMAPS
+      : [...VOTE_MAPS, ...umapIds(s)]; // (and the maps the host made and brought in: umaprules.js)
 /* Quacky Zombies' own maps: before each of its games everyone votes for one of them, the vote showing only these
    (the owner's, Nov 17 00:17Z). Its "zmap" vote works as the map vote does, its time as long */
 export const ZMAPS = ["cabin", "downpour"];
@@ -3085,6 +3090,9 @@ function reduceStep(state, a, now) {
         say(s, `${me.name} is loading a save: ${s.sbsv.name}`);
       } else say(s, `${me.name} started a new Sandbox.`);
       return nextVote(s, now);
+    case "umap":
+      // a map the host made, brought into the room or taken out (umaprules.js)
+      return umapAct(s, a) ? s : state;
     case "sbsv":
       // Sandbox: Save as, the session's new name (and id) on the host's device (sbsave.js)
       return host && sbRename(s, a, now) ? s : state;

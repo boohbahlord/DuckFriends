@@ -8,7 +8,9 @@ import { SB_WORLDS, SB_WORLD_NAMES, SB_RIGHTS } from "./sandboxrules.js";
 import { esc, openWindow, setHTML } from "./ui.js";
 import { artBackdrop } from "./art.js";
 import { modesFor, modeOf, CABIN_MODES, CATS } from "./modes.js";
-import { MAPS, MAP_VARIANTS, mapName, mapForm } from "./maps.js";
+import { MAPS, MAP_VARIANTS, mapName, mapForm, umapOf } from "./maps.js";
+import { isUmap, umapIds } from "./umaprules.js";
+import { bringMaps, myMaps } from "./umaps.js";
 import {
   OPTIONS_DEFAULT,
   isSudo,
@@ -1014,6 +1016,12 @@ function boardSketch(mode) {
 /* the map large: Duck Cabin as the real map (one picture of all of it; dark with the power cut in Left 4 Dead Ducks), any
    other map with the picked game's board on it */
 function mapPic(s, id, mode) {
+  if (isUmap(id)) {
+    const m = umapOf(id); // (a made map: its own picture, umaps.js)
+    return m
+      ? `<img class="gs-made" src="${m.d}" alt="${esc(m.t)}" draggable="false">`
+      : "";
+  }
   if (id === "cabin")
     return `<img class="gs-cabin${mode === "l4dd" ? " dark" : ""}" src="assets/px/maps/duck-cabin.webp" data-pxready data-pxok alt="Duck Cabin" draggable="false">`;
   const f = mapForm(id),
@@ -1333,9 +1341,21 @@ export function openGameSettings(R, start = null) {
             !o.mapPick && picked(o) === id,
             dis,
           ),
-        ).join(
-          "",
-        )}</ul>${showsCollage(s) ? `<h3 class="gs-sub">${esc(mapName("collage"))}</h3>${tiles(s, GREY)}` : ""}${showsZoom(s) ? `<h3 class="gs-sub">${esc(mapName("euclid"))}</h3>${tiles(s, ZOOM)}` : ""}</div>`
+        ).join("")}${
+          o.mode === "sandbox"
+            ? ""
+            : `${umapIds(s).length ? LINE : ""}${umapIds(s)
+                .map((id) =>
+                  row(
+                    `data-map="${id}"`,
+                    mapName(id),
+                    "",
+                    !o.mapPick && o.map === id,
+                    dis,
+                  ),
+                )
+                .join("")}` // (the maps the host made and brought in: umaps.js)
+        }${host() ? `${LINE}${row("data-umaps", "My maps…")}` : ""}</ul>${showsCollage(s) ? `<h3 class="gs-sub">${esc(mapName("collage"))}</h3>${tiles(s, GREY)}` : ""}${showsZoom(s) ? `<h3 class="gs-sub">${esc(mapName("euclid"))}</h3>${tiles(s, ZOOM)}` : ""}</div>`
       );
     }
     /* Game Options: Host Settings for every game, then Game mode Settings for the picked one (or each one a vote or
@@ -1442,8 +1462,10 @@ export function openGameSettings(R, start = null) {
         tip =
           p.id === "cabin"
             ? CABIN_TIP
-            : ([...MAPS, ...MAP_VARIANTS].find((m) => m[0] === p.id) ||
-                [])[2] || "";
+            : isUmap(p.id)
+              ? (umapOf(p.id) || {}).de || ""
+              : ([...MAPS, ...MAP_VARIANTS].find((m) => m[0] === p.id) ||
+                  [])[2] || "";
       return card(mapName(p.id), tip, mapPic(s, p.id, mode));
     }
     if (p.kind === "set") return card(p.title, p.text);
@@ -1491,12 +1513,14 @@ export function openGameSettings(R, start = null) {
   };
   const go = (p) => {
     page = p;
+    if (p === "map") bringMaps(R); // (the host's made maps into the room, so they're on the list: umaps.js)
     peek = null;
     peekSel = null;
     paint(false);
     const f = W.querySelector(".arm-menu .arm-back, .arm-menu .arm-row");
     if (f) f.focus();
   };
+  if (start === "map") bringMaps(R);
   /* the description of a setting (its name and what it does) */
   const describe = (k) => {
     const all = [
@@ -1656,6 +1680,10 @@ export function openGameSettings(R, start = null) {
           }
           if (r.dataset.sb) {
             if (boss) send({ sbMap: r.dataset.sb }); // (Sandbox on a world: rules.js sbMapPicked)
+            return;
+          }
+          if ("umaps" in r.dataset) {
+            myMaps(R); // (the maps on the host's device: make, change, play)
             return;
           }
           if (r.dataset.map === "cabin") return go("cabin"); // (Duck Cabin's own games, on a page of their own)

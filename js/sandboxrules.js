@@ -286,6 +286,27 @@ export const SB_ZONE = {
     def: "1",
   },
   gnd: { name: "Ground (stand and walk on it)", kind: "bool", def: "f" },
+  /* plan Phase 4, climbing (the owner's: "another elevation type called climb ... touching the outside boundary of that
+     will make it to where you can climb onto another elevation ... the same mechanism as the ladder", and "for elevation
+     settings or wall settings or for ladders or for climbings ... a drop-down menu for selecting which entities or groups
+     can"): who it takes climbs it, pushing into it, up to its elevation (sbClimbAt) */
+  clm: listBox("Who can climb it", ""),
+  /* plan Phase 4, slopes (the owner's: "The time to climb up into another elevation is based on a slope ... its length ...
+     determines how long it takes to walk up it ... you say, this goes from this elevation from which it's on, and you
+     input the number onto this one"): with Ground on, from its elevation at one end up to this one at the other, along
+     its length toward the side picked (as it's turned), in steps of 2.5% of the gas station roof (sbfloors.js) */
+  slto: {
+    name: "Slope up to elevation (0: flat)",
+    kind: "int",
+    min: 0,
+    max: 6,
+    def: "0",
+  },
+  sldir: {
+    name: "Slope rises toward",
+    check: (t) => (SB_SLOPE_DIRS[String(t).trim()] ? "" : "Pick one"),
+    def: "n",
+  },
   /* plan Phase 3: "Outlines: show outline for chosen entities, in a chosen color; a + duplicates the row for another
      color": rows "who, who=#rrggbb; …" (sbOlRows) */
   ol: {
@@ -329,6 +350,20 @@ export const SB_ZONE = {
   },
   lkop: { name: "See-through (%)", kind: "int", min: 0, max: 100, def: "0" },
 };
+export const SB_SLOPE_DIRS = { n: "Up", e: "Right", s: "Down", w: "Left" };
+/* where (x, y) (shares of the map) is across block p, turned back by its turn: [u, v], each -0.5 to 0.5 inside it (u
+   across its width, v down its height) */
+export function sbLocal(s, p, x, y, W = 1, H = 1) {
+  const [rx, ry] = sbUnit(s, W, H),
+    [w, h] = sbSize(p),
+    a = (-sbRot(p) * Math.PI) / 180,
+    dx = (x - p.x) / rx,
+    dy = (y - p.y) / ry;
+  return [
+    (dx * Math.cos(a) - dy * Math.sin(a)) / w,
+    (dx * Math.sin(a) + dy * Math.cos(a)) / h,
+  ];
+}
 export const SB_LOOKS = {
   none: "None",
   tex: "Texture",
@@ -873,6 +908,21 @@ export function sbWalls(s, w) {
       if (sbWhoTakes(s, listOf(p, "wall"), w)) out.push({ id, p });
     }
   return out;
+}
+/* plan Phase 4: the climb zone w (as sbWhoTakes) is at (x, y, shares of the map) with its feet at z (world px) under its
+   top: { top: its height, x, y: its middle } (the highest when several), or null */
+export function sbClimbAt(s, w, x, y, z, W = 1, H = 1) {
+  if (!isSb(s) || sbOnBoard(s)) return null;
+  let best = null;
+  for (const [id, p] of Object.entries((s.sb && s.sb.pts) || {})) {
+    if (p.k !== "zone" || !p.f || !p.f.clm || !p.f.clm.ok) continue;
+    const top = p.z || 0;
+    if (top < (+z || 0) - 0.5 || (best && best.top >= top)) continue; // (a climb whose top is under my feet: not mine)
+    if (!sbWhoTakes(s, listOf(p, "clm"), w)) continue;
+    if (!sbInWorking(s, id, p, x, y, W, H)) continue;
+    best = { top, x: p.x, y: p.y };
+  }
+  return best;
 }
 /* the walls to each NPC, worked out once a beat for each kind and spawn: wallsOf(o) */
 export function sbNpcWalls(s) {
