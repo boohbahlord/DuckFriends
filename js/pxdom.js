@@ -38,6 +38,13 @@ const NS = "http://www.w3.org/2000/svg",
 /* a position for a translate(), in css px: on the grid with the look on, so nothing drawn moves by less than one pixel */
 export const pxAt = (v) => (pixelOn() ? snap(v).toFixed(2) : v.toFixed(1));
 
+/* a drawing left alone: under [data-nopx] (a map: drawn as pixels already), unless something nearer it asks for its
+   pixels ([data-pxyes]: Sky's duck riding a cloud) */
+const noPx = (svg) => {
+  const n = svg.closest("[data-nopx], [data-pxyes]");
+  return !!n && n.hasAttribute("data-nopx");
+};
+
 /* the rules: a drawing shown as pixels hides its own parts (its picture is the only thing that shows) */
 function css() {
   if (document.getElementById("pxdom-css")) return;
@@ -213,7 +220,7 @@ function plan(svg, root, size) {
     unPx(svg);
     return null;
   }
-  if (svg.closest("[data-nopx]") || svg.ownerSVGElement) return null; // (inside another drawing: that one carries it)
+  if (noPx(svg) || svg.ownerSVGElement) return null; // (inside another drawing: that one carries it)
   const vb = svg.viewBox && svg.viewBox.baseVal;
   if (!vb || !vb.width || !vb.height) return null; // (no viewBox: nothing to fit a picture to)
   if (size === undefined) size = shownSize(svg, vb); // (or read already: pxWatch's flush)
@@ -492,7 +499,7 @@ export function pxWatch(root, { skip = "" } = {}) {
       !svg.hasAttribute("data-px") &&
       !svg.hasAttribute("data-pxwait") &&
       pixelOn() &&
-      !svg.closest("[data-nopx]") &&
+      !noPx(svg) &&
       !svg.ownerSVGElement &&
       svg.viewBox &&
       svg.viewBox.baseVal &&

@@ -17,7 +17,7 @@ import { isSb } from "./sandboxrules.js";
 const MY_FILES = "my-files"; // (brainbuild.js: where my brain files are kept)
 const ROWS = [
   ["u", "Use them in their spawns, zones and lists"],
-  ["m", "Change them (NPCs in M, groups in G)"],
+  ["m", "Change them (NPCs in M, groups in B)"],
   ["c", "Change my brain files' code"],
   ["f", "Change my saved NPCs on my device too"],
 ];

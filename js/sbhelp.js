@@ -76,7 +76,7 @@ export const SB_HELP = {
     ],
     [
       "My NPCs and groups",
-      "Choose who may use the NPCs and groups you made in their spawns, zones and lists (everyone, until you say no), who may change them (NPCs in M, groups in G), who may change your brain files' code, and who may change your saved NPCs on your device too (not advised). It lasts for this Sandbox only. My lists, at its foot, hides the others' NPCs and groups from your own lists.",
+      "Choose who may use the NPCs and groups you made in their spawns, zones and lists (everyone, until you say no), who may change them (NPCs in M, groups in B), who may change your brain files' code, and who may change your saved NPCs on your device too (not advised). It lasts for this Sandbox only. My lists, at its foot, hides the others' NPCs and groups from your own lists.",
     ],
     [
       "Each player",
@@ -112,7 +112,7 @@ export const SB_HELP = {
     ],
     [
       "Groups",
-      "Groups (in Game settings, G) are named sets of rules. A player or an NPC joins one when it spawns from a Spawn or Respawn tab you ticked (a red spawn and a blue respawn are different), steps into a zone, picks up a loot, or comes from a block of a variable name. Every tab also has its own Joins groups list.",
+      "Groups (in Build, B, under Zone) are named sets of rules. A player or an NPC joins one when it spawns from a Spawn or Respawn tab you ticked (a red spawn and a blue respawn are different), steps into a zone, picks up a loot, or comes from a block of a variable name. Every tab also has its own Joins groups list.",
     ],
     [
       "What a group does",
@@ -120,7 +120,7 @@ export const SB_HELP = {
     ],
     [
       "My lists",
-      "My lists (in Game settings, G) keeps made NPCs and groups out of your own lists. Nobody else's lists change.",
+      "My lists (in Build, B, and Game settings, G) keeps made NPCs and groups out of your own lists. Nobody else's lists change.",
     ],
   ],
 };

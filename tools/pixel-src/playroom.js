@@ -5,8 +5,8 @@
    the floor, casts a soft shadow on it and shows a faint reflection in it.
    playroom() draws the pieces: the still part, the bulbs (four sets that light in turn, so the light runs along the
    strings), the blocks' letters (four colors that take turns, one set of blocks after another) and the train (its body,
-   its wheels that turn and its puffs of smoke). art.js lays them out as pictures that only fade or move. */
-import { duckSVG, mix } from "./duck.js";
+   its wheels that turn and its puffs of smoke). nightshow.js lays them out as pictures that only fade or move (made into pixel files by tools/pixel-maps.cjs). */
+import { duckSVG, mix } from "../../js/duck.js";
 
 const rnd = (seed) => () =>
   (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;

@@ -4207,62 +4207,43 @@ details.more[open] > summary {
     0 0 0.6rem var(--c),
     0 0 0.2rem #fff;
 }
+/* Sky's pictures are pixel files (js/pxm/sky.js; drawn by tools/pixel-src/sky.css): the sun and the moon moved from
+   their middle, the stars twinkling, the clouds drifting across; the sky's colors a column of pixels (js/maps.js) */
 .sky-sun,
 .sky-moon {
   position: absolute;
   left: 0;
   top: 0;
-  width: 13cqh;
-  height: 13cqh;
-  margin: -6.5cqh 0 0 -6.5cqh;
-  border-radius: 50%;
+  width: 0;
+  height: 0;
   will-change: transform;
 }
-.sky-sun {
-  background: radial-gradient(circle at 40% 40%, #fffbe0, #ffd84a 55%, #ffb12b);
-  box-shadow:
-    0 0 3rem 1rem #ffd84a88,
-    0 0 8rem 3rem #ffb12b44;
-}
-.sky-moon {
-  background: radial-gradient(circle at 35% 35%, #ffffff, #dfe6f5 60%, #b9c3da);
-  box-shadow: 0 0 2.5rem 0.6rem #dfe9ff66;
-}
-.sky-moon::after {
-  content: "";
+.sky-sun > img,
+.sky-moon > img,
+.sky-stars > img,
+.sky-cloud > img {
   position: absolute;
-  width: 22%;
-  height: 22%;
-  left: 52%;
-  top: 30%;
-  border-radius: 50%;
-  background: #b9c3da88;
-  box-shadow: -2.2cqh 3.4cqh 0 -0.4cqh #b9c3da77;
+}
+.sky-px {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
 }
 .sky-stars {
   position: absolute;
   inset: 0;
   transition: opacity 1.5s;
 }
-.sky-stars i {
-  position: absolute;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 0 4px #fff;
+.sky-stars > img {
   animation: twinkle 2.4s ease-in-out infinite alternate;
 }
 .sky-cloud {
   position: absolute;
   left: -25%;
   animation: cloudx linear infinite;
-}
-.sky-cloud svg {
-  width: 100%;
-  height: auto;
-  display: block;
-  filter: drop-shadow(0 0.3rem 0.4rem #0002);
 }
 .sky-rider {
   position: absolute;
@@ -19348,6 +19329,45 @@ html.pixel .px-own .st-mets:not(:empty) {
 .px-gone {
   visibility: hidden !important;
 } /* (what moves, still moving out of sight: its pixels are on the canvas) */
+/* a map as pixel files (js/pxmap.js, tools/pixel-maps.cjs): the world at its own size, grown to cover the screen; what
+   moves is a strip of frames, one shown at a time, at its own timing (--pd, its cycle; --pdl, its delay) */
+.pxw-stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+.px-file {
+  image-rendering: pixelated;
+  user-select: none;
+}
+.pxw-stage img.px-file {
+  position: absolute;
+}
+.pxs {
+  position: absolute;
+  overflow: hidden;
+}
+.pxs > img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--n) * 100%);
+  height: 100%;
+  display: block;
+}
+html.moving .pxs > img {
+  animation: pxs var(--pd) steps(var(--n)) var(--pdl, 0s) infinite;
+}
+@keyframes pxs {
+  to {
+    transform: translateX(-100%);
+  }
+}
+html:not(.moving) .pxs-hide {
+  visibility: hidden;
+} /* (the train's smoke: none on a still page) */
 html.pixel .spx-flames {
   mix-blend-mode: screen;
 } /* (the filter makes the flames one picture: it's that picture that lights the duck now) */

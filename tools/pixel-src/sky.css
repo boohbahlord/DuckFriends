@@ -1,0 +1,70 @@
+/* ---------- Sky's sun, moon, stars and clouds as css draws them (tools/pixel-maps.cjs only: never loaded by the game,
+   which shows their pixel files, js/pxm/sky.js) ---------- */
+.sky-sun,
+.sky-moon {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 13cqh;
+  height: 13cqh;
+  margin: -6.5cqh 0 0 -6.5cqh;
+  border-radius: 50%;
+  will-change: transform;
+}
+.sky-sun {
+  background: radial-gradient(circle at 40% 40%, #fffbe0, #ffd84a 55%, #ffb12b);
+  box-shadow:
+    0 0 3rem 1rem #ffd84a88,
+    0 0 8rem 3rem #ffb12b44;
+}
+.sky-moon {
+  background: radial-gradient(circle at 35% 35%, #ffffff, #dfe6f5 60%, #b9c3da);
+  box-shadow: 0 0 2.5rem 0.6rem #dfe9ff66;
+}
+.sky-moon::after {
+  content: "";
+  position: absolute;
+  width: 22%;
+  height: 22%;
+  left: 52%;
+  top: 30%;
+  border-radius: 50%;
+  background: #b9c3da88;
+  box-shadow: -2.2cqh 3.4cqh 0 -0.4cqh #b9c3da77;
+}
+.sky-stars {
+  position: absolute;
+  inset: 0;
+  transition: opacity 1.5s;
+}
+.sky-stars i {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 4px #fff;
+  animation: twinkle 2.4s ease-in-out infinite alternate;
+}
+.sky-cloud {
+  position: absolute;
+  left: -25%;
+  animation: cloudx linear infinite;
+}
+.sky-cloud svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 0.3rem 0.4rem #0002);
+}
+.sky-rider {
+  position: absolute;
+  left: 30%;
+  bottom: 62%;
+  width: 40%;
+}
+.sky-rider svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
