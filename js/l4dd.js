@@ -25,6 +25,7 @@ import {
   bodyZ,
   roofHoleOver,
   heightAt,
+  slabBetween,
   W,
   H,
   LIGHTS,
@@ -615,7 +616,8 @@ function seeZombies(s, ctx, now) {
     gap += (beat - gap) * GLIDE.even;
     snapAt = now;
   }
-  const seen = new Set();
+  const seen = new Set(),
+    me = s.pos && s.pos[ctx.me];
   for (const z of zs) {
     seen.add(z.i);
     let o = Z.get(z.i);
@@ -649,6 +651,17 @@ function seeZombies(s, ctx, now) {
       if (dir) o.went = 1;
     }
     const shown = !o.el.hidden; // (one no camera here sees: only its numbers change, its look waits until it's seen)
+    /* one my shots can't reach from where I stand (the sightline, layout.js seeLine) is drawn darker (the owner's, Nov 20
+       02:14Z: "we can draw the zombies a little darker. If you can't hit them") */
+    const dark =
+      shown &&
+      z.st !== 3 &&
+      !!me &&
+      slabBetween(me.x * W, me.y * H, +me.z || 0, z.x, z.y, zombieZ(z));
+    if (o.dark !== dark) {
+      o.dark = dark;
+      o.el.classList.toggle("l4-unseen", dark);
+    }
     if (z.hp < o.hp && shown && o.st !== 3)
       vibrate(o.img, hitPx(o.hp - z.hp), z.st === 3); // (a zombie hit shakes once by the HP it lost, and once more as it dies: the owner's, Nov 17, 32)
     if (z.hp < o.hp && z.st !== 3 && shown) o.img.animate(HIT, 320); // (hit: a red blink, started over without the page measuring itself)
