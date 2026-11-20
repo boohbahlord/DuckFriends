@@ -2,7 +2,7 @@
    The rules are sbloot.js. Here: an orb as it lies on its point (Dead Ducks Arcade's orb, in its kind's color, or the
    picture it was given), and the orb's part of its settings window (sbspawnview.js sbSettings): what it holds, "a
    dropdown menu with drop down arrows PER category of loot", its numbers, how it looks, and a picture of 2 MB at most */
-import { esc, toast } from "./ui.js";
+import { esc, toast, openWindow } from "./ui.js";
 import {
   SB_LOOT,
   SB_LOOT_STARTS,
@@ -12,6 +12,8 @@ import {
   SB_FLAGS,
   SB_BOXES,
   SB_ITEM,
+  baseMode,
+  sbCan,
 } from "./sandboxrules.js";
 import { boxText } from "./sbspawn.js";
 import { lootOk, ammoOf } from "./sbloot.js";
@@ -23,7 +25,7 @@ import { specialById } from "./specials.js";
 import { picFrom, sendParts } from "./sbmake.js";
 import { coolFor } from "./rules.js";
 
-const nameOf = (w) =>
+export const nameOf = (w) =>
   (ammoOf(w) && `${nameOf(ammoOf(w))} ammo`) ||
   (SB_DROPS[w] && SB_DROPS[w][1]) ||
   SB_GEAR[w] ||
@@ -56,7 +58,7 @@ export function lootCats(s) {
 const picOf = (s, id) => ((s.sbpic || {})[(s.sbImg || {})[id]] || {}).d || "";
 /* an orb's face: its picture, or what it looks like (its own thing, or the one in "Looks like") in an orb of its color */
 /* item w's own picture (its hotbar key's, or the gun as it's drawn), with no orb around it */
-function pictureOf(w) {
+export function pictureOf(w) {
   if (w === "flashlight") return ICONS.flashlight(true);
   if (ammoOf(w)) return DROP_ICONS.ammo || "";
   if (SB_DROPS[w]) return DROP_ICONS[SB_DROPS[w][0]] || "";
@@ -218,7 +220,7 @@ const ARM_ROWS = {
   grenade: ["n"],
   special: ["n", "cd", "brk"],
 };
-function rowsFor(w, zm) {
+export function rowsFor(w, zm) {
   if (!zm) return ["n", "cd", "brk"]; // (the board and Duck Cabin: its uses, its wait, and whether it breaks when used up)
   if (ammoOf(w)) return ["n"];
   const A = ARMS[w];
@@ -230,7 +232,7 @@ function rowsFor(w, zm) {
     .map((k) => (k === "cd" && A.auto ? "sps" : k)); // (a gun that fires while held: shots per second)
 }
 /* what a blank box means for item w: its own number */
-function ownOf(w, k, zm) {
+export function ownOf(w, k, zm) {
   if (!zm)
     return k === "n"
       ? "no limit"
@@ -249,6 +251,23 @@ function ownOf(w, k, zm) {
 /* is true/false row k on for item w when nobody set it: Unlimited ammo for the laser and the bow, Reload on */
 const flagOwn = (w, k) =>
   k === "inf" ? !fullAmmo(w) : k === "rl" ? true : false;
+export const ownFlag = (w, k, zm) => (zm && flagOwn(w, k) ? "true" : "false");
+/* a switch with three states (plan Loot 5: "every switch has true, false and neutral"): neutral (blank) steps aside
+   for the next level down, here the item's own (own: what that is). Its box carries "", t or f; data-tri cycles it */
+export function triRow(f, name, v, own, attr = "") {
+  const lab = v === "t" ? "true" : v === "f" ? "false" : "neutral";
+  return `<div class="sb-row" data-row="${f}"><span>${esc(name)}</span><button type="button" class="sb-tog sb-tri${v === "t" ? " on" : v ? "" : " mid"}" data-tri="${f}" data-own="${esc(own)}" title="Neutral: ${esc(own)}"${attr}>${lab}</button><input type="hidden" class="sb-box" data-f="${f}" value="${esc(v)}"><em class="sb-why"></em></div>`;
+}
+/* the next state of a three-state switch: neutral, true, false, neutral … */
+export function triNext(btn) {
+  const box = btn.parentElement.querySelector("input"),
+    v = box.value === "" ? "t" : box.value === "t" ? "f" : "";
+  box.value = v;
+  btn.classList.toggle("on", v === "t");
+  btn.classList.toggle("mid", v === "");
+  btn.textContent = v === "t" ? "true" : v === "f" ? "false" : "neutral";
+  return v;
+}
 function itemRows(w, on, icon, p, h, zm) {
   const rows = rowsFor(w, zm);
   if (!rows.length) return "";
@@ -257,15 +276,8 @@ function itemRows(w, on, icon, p, h, zm) {
       b = SB_ITEM[k],
       t = h.typed(f),
       name = k === "n" && ammoOf(w) ? "Magazines you get" : b.name;
-    if (b.kind === "bool") {
-      const v = String(t).trim();
-      return h.flagRow(
-        f,
-        { name },
-        v ? v : zm && flagOwn(w, k) ? "t" : "f",
-        h.why(f),
-      );
-    }
+    if (b.kind === "bool")
+      return triRow(f, name, String(t).trim(), ownFlag(w, k, zm));
     const why = h.why(f);
     return `<label class="sb-row${why ? " bad" : ""}" data-row="${f}"><span>${esc(name)}</span><input class="sb-box" data-f="${f}" value="${esc(t)}" placeholder="${esc(ownOf(w, k, zm))}" maxlength="12" spellcheck="false" autocomplete="off"><em class="sb-why">${esc(why)}</em></label>`;
   });
@@ -336,6 +348,13 @@ export function lootWire(w, id, send, getR) {
     }
   });
   w.addEventListener("click", (e) => {
+    const tri = e.target.closest("[data-tri]");
+    if (tri) {
+      triNext(tri);
+      return tri.parentElement
+        .querySelector("input")
+        .dispatchEvent(new Event("input", { bubbles: true })); // (sent as a typed box is)
+    }
     if (!e.target.closest("[data-noimg]")) return;
     const r = getR();
     if (r) r.send({ t: "sbl", k: "img", p: id, v: "" });
@@ -355,4 +374,103 @@ function picShow(w, v) {
   const lab = box.querySelector("label");
   if (lab && lab.firstChild)
     lab.firstChild.textContent = v ? "Change" : "Upload";
+}
+
+/* ---------- G: Weapons and items (plan, Loot 5) ----------
+   "G: has the same rows for every weapon and item, and \"Breaks when empty\" can be set for all items or for one. Any
+   row set there rules every copy of that item in the game. For example, the AK-47 can fire faster or slower
+   everywhere." Its own window (the owner's, Nov 20 04:46Z: a G setting with many options opens its own window). Pick an
+   item; its rows are the loot's (blank: the next level down decides: groups, then loot, then the player's) */
+export function itemsWin(R) {
+  if (document.querySelector(".sb-itemswin")) return;
+  const s0 = R.state,
+    zm = baseMode(s0.options) === "l4dd",
+    cats = lootCats(s0).slice(0, -1), // (each kind's list, without All items)
+    all = cats.flatMap(([, ws]) => ws).filter((w) => rowsFor(w, zm).length);
+  let pick = all[0] || "";
+  const it = () => (R.state.sb && R.state.sb.it) || {},
+    may = () => sbCan(R.state, R.me),
+    rowsHTML = (w) =>
+      rowsFor(w, zm)
+        .map((k) => {
+          const f = `${w}_${k}`,
+            b = SB_ITEM[k],
+            v = it()[f] || "",
+            name = k === "n" && ammoOf(w) ? "Magazines you get" : b.name;
+          if (b.kind === "bool")
+            return triRow(
+              f,
+              name,
+              v,
+              ownFlag(w, k, zm),
+              may() ? "" : " disabled",
+            );
+          return `<label class="sb-row" data-row="${f}"><span>${esc(name)}</span><input class="sb-box" data-it="${f}" value="${esc(v)}" placeholder="${esc(ownOf(w, k, zm))}" maxlength="12" spellcheck="false" autocomplete="off"${may() ? "" : " disabled"}><em class="sb-why"></em></label>`;
+        })
+        .join(""),
+    draw = (w) => {
+      w.querySelector(".sb-itrows").innerHTML = pick
+        ? `<p class="sb-item-h"><i class="sb-lic">${pictureOf(pick)}</i>${esc(nameOf(pick))}</p>${rowsHTML(pick)}`
+        : "";
+      const a = w.querySelector('[data-row="all_brk"]');
+      if (a)
+        a.outerHTML = triRow(
+          "all_brk",
+          "Every item: breaks when empty",
+          it().all_brk || "",
+          "each item's own",
+          may() ? "" : " disabled",
+        );
+    };
+  return openWindow(
+    `<h2>Weapons and items</h2><p class="small dim">Set here, a row rules every copy of the item in this Sandbox, over its loot's. Blank or neutral: the loot (or the item's own) decides.</p><div class="sb-set">${triRow("all_brk", "Every item: breaks when empty", "", "each item's own")}<div class="sb-row"><span>Item</span><select class="sb-sel" data-itpick>${cats
+      .map(
+        ([n, ws]) =>
+          `<optgroup label="${esc(n)}">${ws
+            .filter((w) => all.includes(w))
+            .map(
+              (w) =>
+                `<option value="${w}"${w === pick ? " selected" : ""}>${esc(nameOf(w))}</option>`,
+            )
+            .join("")}</optgroup>`,
+      )
+      .join("")}</select></div><div class="sb-item sb-itrows"></div></div>`,
+    {
+      cls: "win-small sb-win sb-itemswin",
+      onOpen(w) {
+        draw(w);
+        const send = (f, v) => R.send({ t: "sbr", k: "it", f, v });
+        w.addEventListener("change", (e) => {
+          const t = e.target;
+          if (t.matches("[data-itpick]")) {
+            pick = t.value;
+            draw(w);
+          }
+        });
+        const timers = {};
+        w.addEventListener("input", (e) => {
+          const i = e.target.closest("input[data-it]");
+          if (!i) return;
+          const f = i.dataset.it,
+            b = SB_ITEM[f.split("_").pop()],
+            v = i.value.trim(),
+            bad =
+              v && b.check
+                ? b.check(v)
+                : v && !/^\d+(\.\d)?$/.test(v)
+                  ? "A number"
+                  : "";
+          i.closest(".sb-row").classList.toggle("bad", !!bad);
+          i.closest(".sb-row").querySelector(".sb-why").textContent = bad;
+          clearTimeout(timers[f]);
+          if (!bad) timers[f] = setTimeout(() => send(f, v), 300);
+        });
+        w.addEventListener("click", (e) => {
+          const tri = e.target.closest("[data-tri]");
+          if (!tri || tri.disabled) return;
+          send(tri.dataset.tri, triNext(tri));
+        });
+      },
+    },
+  );
 }

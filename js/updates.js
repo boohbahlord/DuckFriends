@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v158",
+    version: 158,
+    date: "Nov 20, 2026",
+    title: "Weapons and items for the whole game",
+    news: [
+      "For Sandbox: Game Settings has a Weapons and items window. A number set there rules every copy of that item, picked up or bought, over its loot's. Breaks when empty can be set for one item or for all of them.",
+      "For Sandbox: the item switches in a Loot tab now have three states: true, false and neutral. Neutral lets the item's own setting decide.",
+    ],
+  },
+  {
     id: "v157",
     version: 157,
     date: "Nov 20, 2026",
