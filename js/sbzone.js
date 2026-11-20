@@ -16,6 +16,12 @@ import {
   sbOnBoard,
   sbZoneBox,
   sbInBlock,
+  sbWorksAt,
+  sbInv,
+  sbOrd,
+  sbGo,
+  sbUsed,
+  SB_ORDER,
   SB_ZONE,
   SB_FX,
 } from "./sandboxrules.js";
@@ -23,6 +29,7 @@ import { valueOf } from "./numerat.js";
 import { boxText, spawnsHere } from "./sbspawn.js";
 import { W, H, heightAt } from "./hangout/layout.js";
 import { l4Hurt, l4Heal, l4Zone } from "./l4ddrules.js";
+import { zbThink } from "./sbzonebrain.js";
 
 const words = (t) =>
   String(t || "")
@@ -37,18 +44,80 @@ export const fxOf = (p) => {
 };
 const FLOOR = 40; // (world px: how far above or below a zone's floor still counts as in it)
 
-/* is (x, y) on floor z (shares of the map; z: world px) in zone p */
-function inside(s, p, box, x, y, z) {
-  const [x0, y0, x1, y1] = box;
-  if (x < x0 || x > x1 || y < y0 || y > y1) return false;
-  if (!sbInBlock(s, p, x, y, W, H)) return false; // (in its box, outside its shape)
-  return sbOnBoard(s) || Math.abs((+z || 0) - (p.z || 0)) < FLOOR;
+/* is (x, y) on floor z (shares of the map; z: world px) where zone id, p, works: in it on one of its squares that act now,
+   or outside it for an Inverse one (sandboxrules.js sbWorksAt) */
+function inside(s, id, p, box, x, y, z) {
+  return sbWorksAt(s, id, p, x, y, z, W, H);
+}
+/* every block's steps (plan Phase 3): one every "Seconds per step", counted in s.sb.zs (each screen works out the
+   squares from it, sandboxrules.js sbActive); the clocks are the host's own (s.hidden.sbst) */
+function steps(s, pts, now) {
+  const hid = s.hidden || {},
+    was = hid.sbst || {},
+    at = {},
+    zs = { ...((s.sb && s.sb.zs) || {}) };
+  let ch = false;
+  for (const [id, p] of Object.entries(pts)) {
+    if (sbOrd(p) === "all" || sbGo(p) !== "time") continue; // (by use or by a player stepping in: sbUsed)
+    if (was[id] && now < was[id]) {
+      at[id] = was[id];
+      continue;
+    }
+    const t = p.f && p.f.st && +p.f.st.ok,
+      every = Number.isFinite(t) && t >= 0.1 ? t : +SB_ORDER.st.def;
+    at[id] = now + every * 1000;
+    ch = true; // (a new clock: kept, as the host keeps a changed state only)
+    if (was[id]) {
+      zs[id] = (zs[id] || 0) + 1;
+      ch = true;
+    }
+  }
+  for (const id of Object.keys(zs))
+    if (!pts[id] || sbOrd(pts[id]) === "all") {
+      delete zs[id];
+      ch = true;
+    }
+  s.hidden = { ...hid, sbst: at };
+  if (JSON.stringify(zs) !== JSON.stringify((s.sb && s.sb.zs) || {}))
+    s.sb = { ...s.sb, zs };
+  return ch;
 }
 
+/* the zones that step each time a player steps in (plan Phase 3: "only on an event (... a player stepped in)"): who
+   stood in each last time, in s.hidden.sbin (the host's own); one step for each duck new in it. True when one stepped */
+function entered(s, pts, H0) {
+  const was = (s.hidden && s.hidden.sbin) || {},
+    now = {};
+  let ch = false;
+  for (const [id, p] of Object.entries(pts)) {
+    if (sbGo(p) !== "enter" || p.grp) continue;
+    const box = sbZoneBox(s, p, W, H),
+      [x0, y0, x1, y1] = box,
+      inn = H0.ducks(s).filter((d) => {
+        const me = s.pos[d];
+        if (me && sbInv(p))
+          return sbWorksAt(s, id, p, me.x, me.y, me.z, W, H, true); // (Inverse: stepping out of it)
+        if (!me || me.x < x0 || me.x > x1 || me.y < y0 || me.y > y1)
+          return false;
+        if (!sbInBlock(s, p, me.x, me.y, W, H)) return false;
+        return sbOnBoard(s) || Math.abs((+me.z || 0) - (p.z || 0)) < FLOOR;
+      });
+    now[id] = inn;
+    for (const d of inn)
+      if (!(was[id] || []).includes(d)) {
+        sbUsed(s, id, "enter");
+        ch = true;
+      }
+  }
+  if (JSON.stringify(now) !== JSON.stringify(was))
+    s.hidden = { ...(s.hidden || {}), sbin: now };
+  return ch;
+}
 /* ---------- the host's heartbeat. H: rules.js SB_H (ducks, claw, heal). True when anything changed ---------- */
 export function sbZoneTick(s, now, H0) {
   if (!spawnsHere(s) || !s.sb) return false;
   const pts = (s.sb && s.sb.pts) || {},
+    stepped = steps(s, pts, now) | entered(s, pts, H0) | zbThink(s, now),
     zones = Object.entries(pts).filter(
       ([, p]) => p.k === "zone" && fxOf(p) !== "none",
     ),
@@ -56,7 +125,7 @@ export function sbZoneTick(s, now, H0) {
     was = hid.sbzt || {};
   if (!zones.length) {
     if (Object.keys(was).length) s.hidden = { ...hid, sbzt: {} };
-    return false;
+    return stepped;
   }
   const zt = {};
   let ch = false;
@@ -67,14 +136,14 @@ export function sbZoneTick(s, now, H0) {
     }
     const every = num(p, "rate");
     zt[id] = now + 1000 * Math.max(0.1, Number.isFinite(every) ? every : 1);
-    ch = hitAll(s, pts, p, now, H0) || ch;
+    ch = hitAll(s, pts, id, p, now, H0) || ch;
   }
   s.hidden = { ...hid, sbzt: zt };
-  return ch;
+  return ch || stepped;
 }
 
 /* zone p does its thing to everyone it hits standing in it */
-function hitAll(s, pts, p, now, H0) {
+function hitAll(s, pts, id, p, now, H0) {
   const fx = fxOf(p),
     raw = num(p, "amt"),
     amt = fx === "kill" ? 1e4 : Number.isFinite(raw) ? raw : 1,
@@ -87,7 +156,7 @@ function hitAll(s, pts, p, now, H0) {
   for (const id of H0.ducks(s)) {
     const me = s.pos[id],
       name = String((s.players[id] || {}).name || "").toLowerCase();
-    if (!me || !inside(s, p, box, me.x, me.y, me.z)) continue;
+    if (!me || !inside(s, id, p, box, me.x, me.y, me.z)) continue;
     if (!all && !who.includes("players") && !(name && who.includes(name)))
       continue;
     ch = true;
@@ -110,7 +179,7 @@ function hitAll(s, pts, p, now, H0) {
     zmaps &&
     l4Zone(
       s,
-      (o) => inside(s, p, box, o.x, o.y, o.z) && hits("zombie", o.sp),
+      (o) => inside(s, id, p, box, o.x, o.y, o.z) && hits("zombie", o.sp),
       fx,
       amt,
       now,
@@ -128,13 +197,15 @@ function hitAll(s, pts, p, now, H0) {
   };
   if (sbOnBoard(s) && s.mz && s.mz.sb)
     s.mz.zb = s.mz.zb.map((o) =>
-      !o.d && inside(s, p, box, o.x, o.y, 0) && hits(o.k, o.sp) ? npc(o) : o,
+      !o.d && inside(s, id, p, box, o.x, o.y, 0) && hits(o.k, o.sp)
+        ? npc(o)
+        : o,
     );
   else if (s.hang && s.hang.sbz) {
     const z = s.hang.sbz,
       zb = z.zb.map((o) =>
         !o.d &&
-        inside(s, p, box, o.x / W, o.y / H, heightAt(o.x, o.y)) &&
+        inside(s, id, p, box, o.x / W, o.y / H, heightAt(o.x, o.y)) &&
         hits(o.k, o.sp)
           ? npc(o)
           : o,

@@ -22,10 +22,16 @@ export const SV = {
   REST: [20, 42], // whole seconds of rest ("a range of integers. It could be any whole number")
   BIG_REST: 15, // more seconds of rest after a big horde ("there is an additional 10 or 15 seconds ... We'll say 15")
   TAIL: [10, 15], // seconds of walkers turning up far away after a horde ("a little like 10 or 15 second phase")
+  /* a wave that stops dying out ends anyway (the owner's, Nov 20 03:58Z: "the game should not have you have to kill
+     everything in a wave that doesnt chase you down, like if there is a sniper or walker, the game plays nonetheless"):
+     once all of it has come and none of it has died for this long, what's left of a horde wanders off as walkers, and
+     a gunmen wave's last ones stay where they are */
+  STALL: 20000,
   TAIL_EVERY: 900, // ms between two of them
   SIZES: [24, 48], // a horde, each player ("it can only be 24 or 48 per player")
   LEVELS: [9, 13, 25], // its zombies' stats: as round 9's, 13's or 25's ("could be based off of round 9, maybe round 13 ... or after 25")
-  FIRST: 9, // the first horde's (the owner's pick, Nov 19 19:35Z)
+  FIRST: [5, 8], // the first horde's stats: a round from 5 to 8 (Nov 20 02:32Z: "the first round in survival should be a wave that behaves like it would in, let's say, round 5 through 8, to make it better on the players"; it was round 9's)
+  FIRST_SIZE: 24, // … and its size, each player: as many as rounds 5 to 8 bring (l4ddrules.js PHASE_BASE)
   WALK_K: 0.8, // a walker: the slowest zombie's speed, 20% slower ("maybe 20% slower")
   NEAR: 3, // duck lengths: a walker this close comes for you ("a few ducks away")
   LOSE: 9, // duck lengths: one that came for you and is this far again forgets you
@@ -40,7 +46,8 @@ export const SV = {
   IDLE: [1000, 4000], // ms a walker stands about at a spot before it wanders on
   BEAM: { far: 560, half: (27 * Math.PI) / 180 }, // a flashlight (as l4dd.js CONE draws it)
   ARROWS: 300, // a bought bow's arrows ("The bow has 300 arrows")
-  KIT: ["", "handgun", "", ""], // what a duck starts with ("players start out with only a pistol. No bow")
+  KIT: ["knife", "handgun", "", ""], // what a duck starts with ("players start out with only a pistol. No bow"; Nov 20 02:32Z: "players do spawn in with a knife. They have to")
+  KNIFE: 0.25, // … and that knife's wear left ("the knife they spawn in with is at 25% usage": its percent bar at 25%)
   GUNMEN: 0.25, // a peak's chance of gunmen instead of zombies ("maybe a 25% chance, that a group of ducks come in that have guns")
   CRIM: 0.75, // gunmen: criminals this likely, soldiers the rest ("like 75% chance") …
   STEP: 0.05, // … each pick making its own side this much less likely, till the other side comes up ("Every time that it's a criminal, it becomes 5% chance less likely")
@@ -96,6 +103,17 @@ export function survStart(s, now) {
     nx: now + SV.REST_EVERY,
   };
 }
+/* the horde's ones still up (the walkers aren't part of it) */
+const hordeLeft = (live) => live.filter((z) => !z.wk).length;
+/* has the wave stopped dying out? (all of it come, and the same number still up for SV.STALL); keeps its count in sv */
+function stalled(sv, n, now, all) {
+  if (sv.lc !== n || !all) {
+    sv.lc = n;
+    sv.lt = now;
+    return false;
+  }
+  return n > 0 && now - Math.max(sv.lt, sv.t || 0) >= SV.STALL; // (from its start at the earliest: a count kept from the last wave never counts)
+}
 /* every heartbeat (l4ddrules.js l4Tick, which keeps the round's own numbers in L and the zombies in zs, and adds the
    ones pushed into zs): the phases go on. n: the players. h: what only l4ddrules.js can do, { walker(): a new walker
    far from everyone (or null), speedAt(level): a zombie's speed at that level's stats, go(): the merchant leaves,
@@ -121,14 +139,16 @@ export function survTick(s, L, zs, now, n, h) {
       sv = { ...sv, ph: "peak", t: now, until: 0, k: sv.k + 1, big: 0, g, gs };
       h.go();
     } else if (now >= sv.until) {
-      /* the peak: the horde's size and its stats from their bags (the first one always round 9's), and every walker on
-         the map sprints with it */
-      let lvl = SV.FIRST,
+      /* the peak: the horde's size and its stats from their bags (the first one a round 5 to 8's, as big as theirs), and
+         every walker on the map sprints with it */
+      let lvl = wholeIn(SV.FIRST),
         lv = sv.lv,
-        size,
-        sz;
-      if (sv.k) [lvl, lv] = nextOf(lv, SV.LEVELS);
-      [size, sz] = nextOf(sv.sz, SV.SIZES);
+        size = SV.FIRST_SIZE,
+        sz = sv.sz;
+      if (sv.k) {
+        [lvl, lv] = nextOf(lv, SV.LEVELS);
+        [size, sz] = nextOf(sv.sz, SV.SIZES);
+      }
       for (const z of walkers) {
         for (const k of ["wk", "wt", "wd", "wn", "lt", "lw"]) delete z[k];
         z.l = [...z.l];
@@ -156,6 +176,27 @@ export function survTick(s, L, zs, now, n, h) {
       };
       h.go();
     }
+  } else if (
+    sv.ph === "peak" &&
+    stalled(
+      sv,
+      sv.g ? h.gunLeft() : hordeLeft(live),
+      now,
+      sv.g || L.made >= L.n,
+    )
+  ) {
+    /* it stopped dying out: the wave is over all the same (SV.STALL) */
+    if (!sv.g) for (const z of live) if (!z.wk) z.wk = 1;
+    sv = {
+      ...sv,
+      ph: "tail",
+      t: now,
+      until: now + wholeIn(SV.TAIL) * 1000,
+      nx: now,
+      lc: null,
+      lt: 0,
+    };
+    if (!sv.g) L.n = L.made;
   } else if (sv.ph === "peak" && sv.g) {
     if (now >= sv.nx) {
       sv.nx = now + SV.REST_EVERY;

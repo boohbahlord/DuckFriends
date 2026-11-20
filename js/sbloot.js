@@ -22,6 +22,10 @@ import {
   SB_DROPS,
   SB_GEAR,
   sbSpread,
+  sbCallZone,
+  sbInv,
+  sbTabLive,
+  sbUsed,
 } from "./sandboxrules.js";
 import { valueOf } from "./numerat.js";
 import { boxText, spawnsHere, zoneSpot, zonesFor } from "./sbspawn.js";
@@ -70,6 +74,12 @@ export function sbLootTick(s, now, H0) {
   for (const [id, p] of Object.entries(pts)) {
     if (p.k !== "loot") continue;
     let q = p;
+    if (!sbTabLive(pts, id)) {
+      // (a Loot tab whose Caller names no zone: nothing comes, and an orb lying there goes)
+      if (q.orb && q.orb.dn == null) pts[id] = { ...q, orb: null };
+      if (pts[id] !== p) ch = true;
+      continue;
+    }
     if (q.orb && q.orb.dn != null && !drops.some((d) => d.n === q.orb.dn))
       q = { ...q, orb: null, gone: now }; // (a zombie drop: taken, or faded away, as theirs do)
     if (q.orb && q.orb.dn == null) {
@@ -82,7 +92,7 @@ export function sbLootTick(s, now, H0) {
     if (!q.orb && due(q, now)) {
       const all = lootList(s, q),
         w = all[Math.floor(Math.random() * all.length)];
-      if (w) q = { ...q, orb: lay(s, q, w, now) };
+      if (w) q = { ...q, orb: lay(s, q, w, now, sbCallZone(pts, id)) };
     }
     if (q !== p) {
       pts[id] = q;
@@ -99,15 +109,18 @@ function due(q, now) {
     t = num(q, "again");
   return back && now - q.gone >= (Number.isFinite(t) ? t : 10) * 1000;
 }
-function lay(s, q, w, now) {
+function lay(s, q, w, now, zid = null) {
   const zs = zonesFor(s, "lt", q), // (a zone that names it: the orb lies in it, anywhere: sbzone.js)
-    at = zs.length
-      ? zoneSpot(s, zs[Math.floor(Math.random() * zs.length)])
-      : sbSpread(q)
-        ? zoneSpot(s, q) // (anywhere in its own shape, when it's bigger than its spot)
-        : null,
+    at = zid
+      ? zoneSpot(s, s.sb.pts[zid], sbInv(q)) // (a Loot tab: where the zone it answers to says; Inverse: outside it)
+      : zs.length
+        ? zoneSpot(s, zs[Math.floor(Math.random() * zs.length)])
+        : sbSpread(q)
+          ? zoneSpot(s, q) // (anywhere in its own shape, when it's bigger than its spot)
+          : null,
     p = at || q,
     where = at ? { x: at.x, y: at.y, z: at.z } : {};
+  if (zid) sbUsed(s, zid);
   if (!Object.hasOwn(SB_DROPS, w)) return { w, at: now, ...where };
   const n = now + Math.random(); // (its own number among the zombies' drops)
   s.hang.l4dr = [

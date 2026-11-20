@@ -40,11 +40,22 @@ import {
   SB_TABS,
   SB_GEO,
   SB_GEO_F,
+  SB_ORDER,
+  SB_CALL,
+  sbNeedsCall,
+  sbCallZone,
+  sbTabLive,
+  sbUsed,
   SB_LOOT,
   SB_ZONE,
   SB_SHAPE,
   sbSpread,
   sbZoneSpot,
+  sbNpcWalls,
+  sbInv,
+  sbFitSide,
+  sbWallGo,
+  sbWallStops,
 } from "./sandboxrules.js";
 import {
   W as WW,
@@ -57,6 +68,7 @@ import { Z_MOST, l4Spawn, l4Live } from "./l4ddrules.js";
 import { WAVE, zLook } from "./mgjrules.js";
 import { onCabin, sbzOn, cabinLive, cabinSpawn, cabinTick } from "./sbcabin.js";
 import { listsOf, decide, MAD } from "./sbbrain.js";
+import { zbSpawned } from "./sbzonebrain.js";
 import { botDuck } from "./botduck.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { armUp, cleanArms, fight, keepAt, reachTo } from "./sbarms.js";
@@ -136,6 +148,8 @@ export const boxOf = (f) =>
   SB_LOOT[f] || // (a loot orb's: stage 4b, sbloot.js)
   SB_ZONE[f] || // (a zone's: stage 5, sbzone.js)
   SB_SHAPE[f] || // (every block's shape: sandboxrules.js)
+  SB_ORDER[f] || // (every block's squares and their potential order: sandboxrules.js)
+  SB_CALL[f] || // (a tab's Caller, and a block's leading zone)
   null;
 /* is this text good for box f? "" or why not */
 export function boxWhy(f, t) {
@@ -306,8 +320,8 @@ function lookOf(ap) {
 }
 /* ---------- the zones (stage 5): where things spawn ----------
    a spot at random in zone q (on a world, one a duck can stand on) */
-export const zoneSpot = (s, q) =>
-  sbZoneSpot(s, q, WW, WH, (x, y, z) => standable(x * WW, y * WH, z));
+export const zoneSpot = (s, q, inv = false) =>
+  sbZoneSpot(s, q, WW, WH, (x, y, z) => standable(x * WW, y * WH, z), inv); // (inv: an Inverse tab's, outside it)
 /* the zones whose box f ("ent" or "lt") names point p, by its color or its name */
 export function zonesFor(s, f, p) {
   const tags = [p.col, boxText(p, "name").toLowerCase()];
@@ -317,11 +331,21 @@ export function zonesFor(s, f, p) {
 }
 /* where spawn id makes one: in a zone that names it (one of them at random), anywhere in its own shape when it's bigger
    than its spot, or on the spawn itself */
-function entSpot(s, p) {
+function entSpot(s, p, id) {
+  const zid = id && sbCallZone(pointsOf(s), id);
+  if (zid) return calledSpot(s, zid, true, sbInv(p));
   const zs = zonesFor(s, "ent", p);
   return zs.length
     ? { ...zoneSpot(s, zs[Math.floor(Math.random() * zs.length)]), inz: 1 }
     : areaSpot(s, p);
+}
+/* a tab's spot, from the zone it answers to (the owner's, Nov 20 02:45Z: "what location is determined by the zone
+   algorithm"): one of its acting squares, and one step on when it steps by use */
+export function calledSpot(s, zid, spawned = false, inv = false) {
+  const at = { ...zoneSpot(s, pointsOf(s)[zid], inv), inz: 1 };
+  sbUsed(s, zid);
+  if (spawned) zbSpawned(s, zid); // (its file's when spawn: sbzonebrain.js)
+  return at;
 }
 /* a spot at random in block p's own shape (a spawn, respawn or loot spot bigger than one duck), or p itself */
 export const areaSpot = (s, p) =>
@@ -441,6 +465,7 @@ function press(s, id, now, done = new Set()) {
 function pressOne(s, id, now) {
   const p = pointsOf(s)[id];
   if (!p || p.k !== "spawn" || p.pg === "pl" || !spawnsHere(s)) return false;
+  if (!sbTabLive(pointsOf(s), id)) return false; // (a tab whose Caller names no zone does nothing)
   const npcs = liveNpcs(s),
     alive = new Set(npcs.map((o) => o.i)),
     limit = limitOf(p),
@@ -452,7 +477,7 @@ function pressOne(s, id, now) {
     s.sb = { ...s.sb, run: { ...runs, [id]: now } };
     return true; // (the tick makes the first at once)
   }
-  return makeOne(s, id, entSpot(s, p));
+  return makeOne(s, id, entSpot(s, p, id));
 }
 
 /* point p with box f set to the text v (what typing in a box does; a pasted or preset point's boxes go through it too) */
@@ -496,11 +521,7 @@ function geoTo(all, id) {
 }
 function fromPattern(q, pt) {
   if (!pt || typeof pt !== "object") return q;
-  if (
-    SB_COLORS[pt.col] ||
-    (pt.col === SB_NOCOL && ["spawn", "respawn"].includes(q.k))
-  )
-    q = { ...q, col: pt.col };
+  if (SB_COLORS[pt.col] || pt.col === SB_NOCOL) q = { ...q, col: pt.col };
   if (q.k === "respawn" && Array.isArray(pt.im)) {
     const all = SB_IMPORT.flatMap(([, fs]) => fs);
     q = { ...q, im: all.filter((f) => pt.im.includes(f)) };
@@ -601,18 +622,11 @@ export function sbAct(s, a, now) {
           : null,
       z = at ? (sbOnBoard(s) ? 0 : heightAt(at.x * WW, at.y * WH)) : +me.z || 0;
     const n = ((s.sb && s.sb.n) || 0) + 1,
-      cols = Object.keys(SB_COLORS),
-      used = Object.values(pts).map((p) => p.col),
       pt = a.pt && typeof a.pt === "object" ? a.pt : null,
-      /* the color picked before placing ("when you select spawn, it asks you what color before you place it down"), a
-         pasted one's own, or the next free one */
-      nocol = ["spawn", "respawn"].includes(a.kind),
-      ok = (c) => !!SB_COLORS[c] || (nocol && c === SB_NOCOL),
-      col = ok(a.col)
-        ? a.col
-        : pt && ok(pt.col)
-          ? pt.col
-          : cols.find((c) => !used.includes(c)) || cols[(n - 1) % cols.length],
+      /* the color picked before placing, a pasted one's own, or no color (white): every new zone starts with no color
+         (the owner's, Nov 20 02:37Z: "Its color is no color by default, which is white") */
+      ok = (c) => !!SB_COLORS[c] || c === SB_NOCOL,
+      col = ok(a.col) ? a.col : pt && ok(pt.col) ? pt.col : SB_NOCOL,
       id = "p" + n;
     let all = {
       ...pts,
@@ -794,11 +808,7 @@ export function sbAct(s, a, now) {
   if (a.k === "set") {
     const f = String(a.f || "");
     if (f === "col") {
-      if (
-        !sbColOk(a.v) ||
-        (a.v === SB_NOCOL && !["spawn", "respawn"].includes(p.k))
-      )
-        return false;
+      if (!sbColOk(a.v)) return false;
       const kin = kinOf(pts, a.p, a.v);
       s.sb = {
         ...s.sb,
@@ -857,9 +867,7 @@ export function sbAct(s, a, now) {
       return false;
     if (Object.keys(pts).length >= SB_POINTS) return false;
     const n = ((s.sb && s.sb.n) || 0) + 1,
-      cols = Object.keys(SB_COLORS),
-      used = Object.values(pts).map((q) => q.col),
-      col = cols.find((c) => !used.includes(c)) || cols[(n - 1) % cols.length];
+      col = SB_NOCOL; // (no color, as every new zone: the owner's, Nov 20 02:37Z)
     s.sb = {
       ...s.sb,
       n,
@@ -907,12 +915,12 @@ export function sbAct(s, a, now) {
   /* its size from a resize handle: zw, zh (duck lengths, 1 to 40) and its new middle x, y */
   if (a.k === "size") {
     if (p.grp) return false;
-    const zw = Math.round(+a.zw),
-      zh = Math.round(+a.zh),
+    const zw = sbFitSide(+a.zw),
+      zh = sbFitSide(+a.zh),
       x = +a.x,
       y = +a.y;
     if (![zw, zh, x, y].every(Number.isFinite)) return false;
-    if (zw < 1 || zh < 1 || zw > 40 || zh > 40) return false;
+    if (zw !== +a.zw || zh !== +a.zh) return false; // (as dragged: sbFitSide)
     if (x < 0 || x > 1 || y < 0 || y > 1) return false;
     let q = withField(withField(p, "zw", String(zw)), "zh", String(zh));
     q = { ...q, x: +x.toFixed(4), y: +y.toFixed(4) };
@@ -928,8 +936,6 @@ export function sbAct(s, a, now) {
     if (to === p.k) return false;
     const q = { ...p, k: to };
     for (const f of ["orb", "gone", "im"]) delete q[f];
-    if (q.col === SB_NOCOL && !["spawn", "respawn"].includes(to))
-      q.col = Object.keys(SB_COLORS)[0]; // (no color: spawns and respawns only)
     const rest = { ...pts, [a.p]: q },
       run = { ...((s.sb && s.sb.run) || {}) };
     delete run[a.p];
@@ -948,10 +954,17 @@ export function sbAct(s, a, now) {
 /* which boxes a point takes: a respawn its "who" and what it imported; a spawn its own, and its Players tab's (a +
    page for players only those) */
 function canSet(p, f) {
+  if (f === "call") return sbNeedsCall(p); // (a Spawn, Respawn or Loot tab's Caller)
+  if (f === "inv") return p.k === "zone" || sbNeedsCall(p); // (Inverse: a zone's, or a tab that answers to one)
+  if (f === "lead") return !p.grp; // (the zone a block leads with)
   if (SB_SHAPE[f] || f === "zw" || f === "zh") return !p.grp; // (every block's shape and size; a page has its spawn's)
+  if (SB_ORDER[f]) return p.pg !== "pl"; // (every block's and tab's own potential order)
   if (p.k === "loot") return !!SB_LOOT[f] || f === "name" || f === "hide"; // (a loot orb's own boxes: sbloot.js)
   if (p.k === "zone")
-    return !!SB_ZONE[f] || ["name", "pon", "pwho", "hide"].includes(f); // (a zone's own, and players spawning in it)
+    return (
+      !!SB_ZONE[f] ||
+      ["name", "pon", "pwho", "hide", "brain", "dark"].includes(f)
+    ); // (a zone's own, players spawning in it, its Seriat file: sbzonebrain.js, and Dark outside)
   if (SB_LOOT[f] || SB_ZONE[f]) return false;
   if (p.k === "respawn")
     return ["who", "name", "hide"].includes(f) || (p.im || []).includes(f);
@@ -1025,14 +1038,16 @@ function backAt(s, sp) {
   const mine = [p.col, boxText(p, "name").toLowerCase()],
     rs = Object.entries(pts)
       .filter(
-        ([, q]) =>
+        ([id, q]) =>
           q.k === "respawn" &&
+          sbTabLive(pts, id) &&
           words(boxText(q, "who")).some((w) => mine.includes(w)),
       )
       .map(([id, q]) => ({ ...q, id }));
-  return rs.length
-    ? areaSpot(s, rs[Math.floor(Math.random() * rs.length)])
-    : entSpot(s, p); // (none: where it first spawns)
+  if (!rs.length) return entSpot(s, p, sp); // (none: where it first spawns)
+  const r = rs[Math.floor(Math.random() * rs.length)],
+    zid = sbCallZone(pts, r.id);
+  return zid ? calledSpot(s, zid, false, sbInv(r)) : areaSpot(s, r);
 }
 /* ---------- the host's heartbeat ----------
    H: what the rules lend it (rules.js): ducks(s) the ducks up on the board, claw(s, id, dmg, now) a zombie's swipe on a
@@ -1095,6 +1110,7 @@ export function sbTick(s, now, H) {
       (!p.grp || p.pg === "t") &&
       p.pg !== "pl" &&
       !run[id] &&
+      sbTabLive(pts, id) &&
       flag(p, "auto") &&
       aliveOf(s, id, new Set(npcs.map((o) => o.i))) < limitOf(p)
     ) {
@@ -1117,7 +1133,8 @@ export function sbTick(s, now, H) {
       ch = true;
       continue;
     }
-    const spot = entSpot(s, p);
+    if (!sbTabLive(pts, id)) continue; // (its Caller names no zone)
+    const spot = entSpot(s, p, id);
     if (spot === p && taken(p, npcs)) continue; // (in a zone: there's room)
     if (makeOne(s, id, spot)) {
       npcs = liveNpcs(s);
@@ -1227,13 +1244,15 @@ function boardTick(s, now, H) {
   const live = z.zb.filter((o) => !o.d),
     far = (a, b) => Math.hypot((a.x - b.x) / RX, (a.y - b.y) / RY);
   let ch = false;
-  const spot = (o) => ({ x: o.x, y: o.y });
+  const spot = (o) => ({ x: o.x, y: o.y }),
+    wallsOf = sbNpcWalls(s); // (the zones that are walls to each: plan Phase 3)
   const plans = think(s, now, live, spot, H, far, (id) => spot(s.pos[id]));
   if (plans.ch) ch = true;
   for (const { me, o, d } of plans) {
     const to = d.goal || d.flee;
     if (!to) continue;
     const x0 = o.x,
+      y0 = o.y,
       bd = far(me, to),
       claw = reachTo(WAVE.CLAW, o, to, s), // (its hitbox, and its foe's: sbarms.js)
       sp = WAVE.SPEED * (o.sv || 1) * (o.run && bd > 4 ? 1.5 : 1); // (can sprint: half as fast again while far off)
@@ -1249,6 +1268,8 @@ function boardTick(s, now, H) {
       o.y += (to.y - o.y) * go;
       ch = true;
     }
+    if (wallsOf(o).length)
+      [o.x, o.y] = sbWallGo(s, wallsOf(o), x0, y0, o.x, o.y, 0, 1, 1, o); // (round a wall, never through it)
     if (Math.abs(o.x - x0) > 1e-4) o.f = o.x > x0 ? 1 : -1; // (the way it goes: a made NPC's weapon points it, or at what it hits; and its picture faces it, so it's hit where it shows, sbbody.js)
     if (
       d.foe &&
@@ -1262,7 +1283,8 @@ function boardTick(s, now, H) {
   }
   /* never in each other: two too close are pushed apart, each only against a few in its own and the next cells (a
      crowd round a duck can have hundreds in a few cells) */
-  const grid = new Map(),
+  const was = live.map((o) => [o.x, o.y]),
+    grid = new Map(),
     key = (cx, cy) => cx * 4096 + cy,
     cell = (o) => [Math.floor(o.x / RX / CELL), Math.floor(o.y / RY / CELL)];
   for (const o of live) {
@@ -1292,6 +1314,10 @@ function boardTick(s, now, H) {
           ch = true;
         }
   }
+  live.forEach((o, i) => {
+    if (wallsOf(o).length && sbWallStops(s, wallsOf(o), ...was[i], o.x, o.y, 0))
+      [o.x, o.y] = was[i]; // (never pushed through a wall)
+  });
   for (const o of live) {
     o.x = Math.round(o.x * 1000) / 1000;
     o.y = Math.round(o.y * 1000) / 1000;

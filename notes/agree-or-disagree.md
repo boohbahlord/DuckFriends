@@ -7195,3 +7195,80 @@ Decision: sightline ON. Heights counted in steps of 2.5% of the gas station roof
 > We think 2.5% works. That's fine. You can do it another number. It's whatever works. And what unit it uses can change for elevation to what feels the most responsive or what's the most appropriate. Or maybe not even what's the most responsive, but just what works. Whatever is easier on the code, right? Makes the game run better.
 
 Decision: 2.5% stays; the unit may change per elevation to whatever runs best.
+
+## Owner, Nov 20 02:32Z (Adam's thread, 2 screenshots: the Seriat Bible page with code boxes cut at the line ends; a Spawn window showing the Shape picker)
+> Now for these images on the Syriac Bible, you can see in the first image that the little text boxes there and their borders are cut off at the edges. Let's make sure that doesn't happen. It's probably a simple fix. It just shouldn't have to be redrawn back on there. It just should be, you know, whatever came prior to it in the step retraced and fixed that way. The second screenshot shows that even when you select square or other things, that the spawn doesn't become a zone, right? From now on, spawn or respawn doesn't have a symbol. It's just a zone, like it was for the zones that were already in the game. So that might have already been fixed. It might even already be deployed, and I might be playing an earlier version, but just make sure about that. Also, on survival, players do spawn in with a knife. They have to, and the knife they spawn in with is at 25% usage. And then the first round in survival should be a wave that behaves like it would in, let's say, round 5 through 8, to make it better on the players, not first round, if it isn't already that. Then make sure that the light where the angel machine was on survival, like below it, isn't there anymore. Same with any other objects that aren't there anymore. Make sure any like little squares that show up on the map, like you would around the car for slots, doesn't show up anymore in survival. Also, when you click survival, there isn't a logo on the vote game mode screen. I don't know if there isn't a logo in the lobby settings either. That should be fixed. We also need to make sure that when you select the game mode for survival, that it shows only the map that it can play. Because currently, right now, there is a multitude of maps that aren't for survival. Like, you can choose other maps that aren't actually Downpour, and it still loads Downpour, so I assume it renders the image in the background behind the map itself, but there's no reason to do that. We can give the noose within Kenoma the full theme to survival and to Dead Ducks Arcade, and see how that looks. If we think another theme should be on Dead Ducks Arcade, we can say it, or we can say that the Dead Ducks Arcade theme can stay as is. I kind of lean towards leaving Dead Ducks Arcade UI alone. Also, when the generator is on in cabin, the cabin becomes brighter, like it was in Hangout. So brightness becomes fixed when the generator or power supply, whatever you call it, is on. And then when it goes back off again, brightness goes back down. That's how it should work on that one. Yeah.
+
+Adam: Seriat page boxes wrap whole (no split box) and the spawn mark check are Adam's (Sandbox). Survival list (knife at 25%, first wave like rounds 5 to 8, gone light under the old angel machine and other removed props, no slot squares, logo on the vote and lobby screens, Downpour only in its map list, the Nous Within Kenoma theme on Survival only, Dead Ducks Arcade UI left alone) goes to Solomon, who built Survival. Cabin generator brightness to Jackal.
+
+## Owner, Nov 20 02:37Z (Adam's thread)
+> So remember, when you click B to build, it will no longer show spawn, respawn, loot, any of that. Zone is the only thing left of those original four. And zone will have its shapes based off of what you can select within it. When you open the tab for the zone, that's where you access things like spawn settings and all of that that happen within the zone. When you open a zone and its properties, or you interact with it for its properties, it only can show, it will have you choose if it's just a default zone, if it's a spawn, if it's a respawn, it will just be like that. That's what it does. And it is always visible in cheat mode. It shouldn't be hidden to where you have to hit B build mode to see it, because that's not how this works. I've already said this. This was something that's supposed to be fixed a long time ago. It's a bug. And we're just picking and choosing which bugs to ignore now whenever I say them. Not now, but forever, pretty much. And it's annoying. That has to be fixed. Also, like, it's visible when you're in cheat mode regardless. You don't have to click B in build mode to see it. Its color is no color by default, which is white, which under the color category, it looks like a no color symbol, like maybe like an X or a cross sign. I don't know. There's something better. I don't know what you would use for that to indicate no color. I'm thinking of like the circle with the line through it. That would be used to indicate no color. And when you click it, it makes it white by default. We have to fix that. And loot does not spawn in it automatically. It does not. When you click a loot tab, it does not spawn the loot in it automatically. That's stupid. Make sure to implement my changes in order once the foundations of the zone is set up properly with all of the things I want for the basics of zone. I also wanted the headings to be collapsible with an arrow down to their left, like a drop-down arrow where you click it, boom, it collapses the information, just like it does in Microsoft Word. Don't know why we haven't done that yet either. Like, why are we going to include the headings and just skip that incredibly small step? I don't know. We just do things in whatever order we feel like, and we don't actually care about a logical, orderly process where things flow in a direction onto its end in the way it ought to. We just decide to do everything scattered like chickens with their head cut off. It's annoying.
+
+Adam, in this order (zone foundation first, then Phase 3 resumes): (1) B lists only Zone (and Help); (2) zones (spawns and respawns too) always show while cheat mode is on, B not needed; (3) a zone's window starts with its type: Zone, Spawn or Respawn; (4) its color starts as no color (white), shown in the color row as a circle with a line through it, white when picked; (5) a Loot tab does not drop loot into the zone by itself (read as: adding a Loot tab must not spawn loot on its own); (6) headings fold with a down arrow at their left, like Word (the Seriat Bible's and the zone window's).
+
+## Owner, Nov 20 02:39Z (Adam's thread)
+> One note is that the player settings for the P button is not for the actual in-game mode that is created when it is created. Rather, it is simply for the and is for the sandbox mode when you're editing. That's all the P for player settings is. So yeah, it doesn't actually affect the game mode. It just affects the sandbox mode that makes the game modes or the maps. I want the map creator in the game soon as well. If we can do that, if we can have someone do that whenever they're done with the important thing that they're doing.
+
+Adam: P (player settings) only ever applies while editing in Sandbox; a game mode or map saved from Sandbox never carries it. The map creator (Sandbox making maps) goes to the first Sandbox worker free: Solomon after the Survival fixes and Phase 5 groups.
+
+## Owner, Nov 20 02:40Z (Adam's thread)
+> Make sure that what else was Solomon going to do after the survival fixes, and what else he was doing? So, because I don't want to just move something right in front of it, depending on what he has to do after.
+
+Adam answered: Survival fixes (built, testing), then Phase 5 groups (built, testing left), nothing booked after.
+
+## Owner, Nov 20 02:45Z (Adam's thread)
+> Yeah, we can do map creator before sandbox groups then, because sandbox isn't even finished yet. Finishing sandbox is important though. It is very much unfinished because I can't even get to the stage of tweaking it or bug testing it, because just basic features that are needed in order to test the game as intended, like the most stupidly basic principles, are not put into place yet, like the zones that I talked about and how I want them to be, um, and how it subsumes the other build options. Yeah, so because like every build option is going to have a tab for zones regardless, because the zones tab tells how the other tabs behave. Um, And yes, there can be multiple zone tabs within a given zone, but the tab that is first in order determines um, how it appears. And whatever tab comes first for zone is something that you figure out by clicking that, maybe in one of the top options under the first header for the zone tab. We can make it to where the other tabs for um, give me a sec. The other tabs for um, the other things can be unsubsumed by that zone, um, by changing their caller to a different thing, which kind of makes them inactive, which will be an error that reads on the top. And the error will say make tab that shares caller or variable name. And in that way, that zone will then be able to function properly. Because until like a spawn tab, respawn tab, or loot tab is configured to match to its zone that it sits upon, it will not work. Um, So yeah, all the secondary zone tabs can share a place in the single zone, and those zone tabs um, can be by themselves. But a spawn tab within there will not work unless it's corresponded to one of the zones. So yeah, and how spawns work and what location is determined by the zone algorithm. And if the zone algorithm plays on its own within a given amount of time, where the algorithm runs off and does its own thing in its own pattern, or if it's done with um, just a pure action where the next part of the algorithm only plays when the next input is given, such as spawn says time to spawn another entity. So now algorithm says, okay, the next spot in the algorithm is allocated to that entity and is made actual. Like that's a good idea. And we need to have the seriat code um, be able to work for that algorithm in many different ways, and even be able to control the algorithm in creative ways potentially. That'd be nice.
+
+Adam's reading (posted to the owner, building it unless corrected): every block is a zone whose first tab is a Zone tab; + adds Spawn, Respawn, Loot or more Zone tabs; a Spawn, Respawn or Loot tab has a Caller (a Zone tab's variable name on the block) and is inactive until it matches one, showing "Make tab that shares caller or variable name" at its top; with several Zone tabs the first in order sets the look, the order picked at the top of the first Zone tab; the zone algorithm (potential order) places what a spawn makes, either on its own timer or one step per use (each spawn, respawn or drop); Seriat reads and drives it later. Picking Spawn or Respawn at the top of a Zone tab (02:37Z) adds that tab already tied to it. Map creator moves before Phase 5 groups (Solomon).
+
+## Owner, Nov 20 03:10Z (Adam's thread)
+> yes
+
+(Answering Adam's 03:06Z question: Seriat words for zones. A zone tab gets a Brain box; events `every [2,4]s step`, `when enter step 2`, `when spawn step`; actions `step`/`step n`, `squares 3:5`, `size 1.5`, `order shuffle`, `dir right`; names `steps`, `squares`, `size`, `inside`; another file reaches a zone by name: `((zone 'Pit' size 2))`, `\if zone 'Pit' steps mod 3 == 0\`. Approved: build it, and add it to the bible.)
+
+## Owner, Nov 20 03:10Z (Adam's thread)
+> survival symbol can be a pistol
+
+Adam: Jackal redraws the Survival mode symbol as a pistol (modes.js modeSymbol).
+
+## Owner, Nov 20 03:58Z (project chat, through Moses)
+> emergency
+>
+> the fucking game isnt wanting to play in survival
+>
+> i invited friends to play and it is hung up on survival
+>
+> When player dies, merchant always has unlimited defibs
+>
+> the game should not have you have to kill everything in a wave that doesnt chase you down, like if there is a sniper or walker, the game plays nonetheless or whatever is the case
+>
+> zombies shouldnt viibrate on roof of gas pump
+
+Adam: the hang's first cause was the first round stored as the pair [5, 8] (SV.FIRST) instead of a round, so every round lookup failed. Fixed and live in #636. Solomon: online check, defibs limited, waves end without killing snipers and walkers, no vibrating on the pump roof.
+
+## Owner, Nov 20 04:01Z (Adam's thread)
+> guns dont look like that but we can fix that later
+>
+> any other suggestions for new symbol for survival
+
+## Owner, Nov 20 04:03Z (Adam's thread)
+> have jospeh have more ideas
+
+## Owner, Nov 20 04:05Z (project chat, through Moses)
+> flashlight
+
+Adam: the Survival symbol becomes a flashlight with a short beam, drawn in pixels (Noah).
+
+## Owner, Nov 20 04:08Z (project chat, through Moses)
+> deploy when defib is working
+
+> and other fix
+
+> i need it
+
+Adam: the defib fix (Solomon) and the wave-end fix (Adam: a wave that stops dying out for 20 s ends anyway) deploy together the moment the defib works.
+
+## Owner, Nov 20 04:09Z (project chat, through Moses)
+> reduce all ammo by 0.5 damage and then show me it's damage stats (amount of zombies per wave in survival is multiplied by amount of players in a similiar formula
+
+Adam: in Survival every bullet, pellet, arrow, thrown dagger and beam a duck fires does 0.5 less (never under 0.5); melee, grenades and the merchant's gun stay. The owner gets a table of every gun's damage. Survival's hordes already multiply by the players (24 or 48 each), and the gunmen waves too, so nothing changed there.

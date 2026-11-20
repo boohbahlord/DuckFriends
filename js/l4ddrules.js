@@ -44,6 +44,7 @@ import {
   sbPlayerSpot,
   SB_BACK_MS,
   SB_BOXES,
+  sbZombieWall,
 } from "./sandboxrules.js";
 import { godOn, godHas } from "./sbgod.js";
 import { valueOf } from "./numerat.js";
@@ -135,6 +136,7 @@ import {
   survStart,
   survTick,
   survWatch,
+  wholeIn,
 } from "./survrules.js";
 
 /* what Sandbox lends these rules (sbcabin.js): npc(s, by, x, y, now, w, rx, ry, from, hit) puts a shot or a swing at
@@ -1433,7 +1435,8 @@ const KEEP = [
   "wn",
   "lt",
   "lw",
-]; // (sp, dm: a Sandbox spawn's zombie, its spawn and its damage: sbspawn.js)
+  "ws",
+]; // (ws: which way it goes round a Sandbox wall, sandboxrules.js sbWallGo; sp, dm: a Sandbox spawn's zombie, its spawn and its damage: sbspawn.js)
 /* the zombies as objects, from the state's three parts, and back (k in zp: hp · 16 + st, st up to 8, the jump) */
 function zombies(s) {
   const zp = s.hang.zp || [],
@@ -1536,7 +1539,16 @@ function freshKit(s) {
     sl = [...(survOn() ? SV.KIT : START)]; // (Survival: the pistol only)
   for (const w of sl) if (fullAmmo(w)) am[w] = fullAmmo(w);
   if (!isSb(s)) sl.push(""); // (the second item slot: not in Sandbox)
-  return { sl, am, rl: 0, rw: "", g: ARMS.grenade.start, u: {} };
+  const du = survOn() ? { knife: tenths(ARMS.knife.dur * SV.KNIFE) } : null; // (Survival: a worn knife, 25% left)
+  return {
+    sl,
+    am,
+    rl: 0,
+    rw: "",
+    g: ARMS.grenade.start,
+    u: {},
+    ...(du ? { du } : {}),
+  };
 }
 /* the damage a melee weapon in kit m can still deal (its full dur until it has been used): kit.du { weapon: left } */
 export const durLeft = (m, w) =>
@@ -1993,8 +2005,10 @@ function boltTick(s, zs, now, ids) {
 }
 /* a body the Nuke left: it lies there longer */
 const nuked = (s, z) => !!s.hang.l4nk && (s.hang.l4nk.ids || []).includes(z.i);
-/* Max Ammo: every weapon that refills is full again, the grenades too (3); the medkit and Jaime don't come back this
-   way (the medkit never refills, Jaime comes back each round) */
+/* Max Ammo: every weapon that refills is full again, the grenades too (3); the medkit, Survival's defibrillator and
+   Jaime don't come back this way (the medkit never refills, the defibrillator only comes from the merchant, Jaime comes
+   back each round). Before, a Max Ammo gave every used defibrillator back: "merchant always has unlimited defibs" (the
+   owner's, Nov 20 03:58Z) */
 function maxAmmo(s) {
   const am = { ...(s.hang.l4a || {}) };
   for (const id of Object.keys(am)) {
@@ -2003,6 +2017,7 @@ function maxAmmo(s) {
       if (
         fullAmmo(w) &&
         w !== "medkit" &&
+        w !== "defib" &&
         !ARMS[w].round &&
         !angelOf(s, id, w) // (an Angelic gun never refills, not even here: the owner's, Nov 16 22:21Z)
       )
@@ -2066,7 +2081,7 @@ function setUp(s, now) {
 /* Survival (survrules.js): no round 0 and no Ready, a rest at once, with the merchant and a few walkers about. No power
    ("The power for survival is off. There's no electricity. There is no angel machine"): no lights, no gas, no pump */
 function survSetUp(s, now) {
-  s.hang.l4 = { ...s.hang.l4, r: SV.FIRST, wait: null, n: 0, dq: [] };
+  s.hang.l4 = { ...s.hang.l4, r: wholeIn(SV.FIRST), wait: null, n: 0, dq: [] }; // (a round from 5 to 8: a number, never the pair, or every round lookup breaks)
   s.hang.pw = null;
   s.hang.pk = [];
   s.hang.power = 0;
@@ -3716,6 +3731,13 @@ export const pierceOf = (s, by, w) =>
    headshot (headOf) takes all its HP, as do the grenades' blasts and the double barrel; Angelic adds its
    1. The Laser Rifle never misses or crits (laser, below) */
 export const ALL_HP = 999;
+/* Survival: every bullet, pellet, arrow, thrown dagger and beam a duck fires does 0.5 less (the owner's, Nov 20 04:09Z,
+   "reduce all ammo by 0.5 damage"); never under 0.5. Melee, grenades and the merchant's own gun stay as they were */
+export const SV_GUN_LESS = 0.5;
+const svGun = (s, by, w, dmg) =>
+  survOn() && by && s.players[by] && ARMS[w] && ARMS[w].kind === "ranged"
+    ? Math.max(0.5, tenths(dmg - SV_GUN_LESS))
+    : dmg;
 export function zombieTakes(s, by, w) {
   const A = ARMS[w];
   if (!A) return { dmg: 1, head: false };
@@ -3724,7 +3746,10 @@ export function zombieTakes(s, by, w) {
   const head = !beam && Math.random() < headOf(s, by, w),
     all = head || A.dmg === "all" || w === "grenade" || w === "glauncher";
   return {
-    dmg: all ? ALL_HP : dmgOf(A) + (!beam && angelOf(s, by, w) ? ANGEL.DMG : 0),
+    dmg: all
+      ? ALL_HP
+      : svGun(s, by, w, dmgOf(A)) +
+        (!beam && angelOf(s, by, w) ? ANGEL.DMG : 0),
     head,
   };
 }
@@ -3733,6 +3758,7 @@ export function zombieTakes(s, by, w) {
 function strike(s, z, dmg, head, by, w = "") {
   if (z.st === 3) return false;
   if (w) wound(s, z, w, head);
+  dmg = svGun(s, by, w, dmg);
   if (w && w !== "laser" && angelOf(s, by, w)) dmg += ANGEL.DMG; // (Angelic: +1, l4ddangel.js; the Laser Rifle has its own, laser)
   const on = s.hang.l4on || {},
     all = head || !!on.kill, // (Instant Kill: every hit takes all its HP, 5 points for each)
@@ -5266,10 +5292,12 @@ function l4Tick(s, now) {
   }
   /* the zombies walk, tear boards down, climb in, swipe: at every duck standing, Justin out there too (the owner's,
      Nov 17 20:02Z: "zombies will attack justin now, because they literally arent"; he only doesn't keep the game going) */
+  ZW = sbZombieWall(s, W, H, true); // (Sandbox: its walls)
   moveZombies(s, zs, now, T, [
     ...up.filter((id) => !godOn(s, id)), // (God mode: the zombies ignore it)
     ...ids.filter((id) => isWild(s, id) && standing(s, id)),
   ]);
+  ZW = null;
   if (isSurv(s) && L4_HOOKS.gm)
     L4_HOOKS.gm.tick(s, zs, now, mine, gmHelp(s, now)); // (Survival's gunmen: gunmenrules.js)
   if (isSurv(s)) merchantShoots(s, zs, now); // (and an armed merchant fighting back)
@@ -5295,6 +5323,8 @@ function l4Tick(s, now) {
       gunmen: (kind) =>
         L4_HOOKS.gm && L4_HOOKS.gm.start(s, kind, now, gmHelp(s, now)),
       gunDone: () => !L4_HOOKS.gm || L4_HOOKS.gm.done(s),
+      gunLeft: () =>
+        L4_HOOKS.gm && L4_HOOKS.gm.left ? L4_HOOKS.gm.left(s) : 0,
       walker: () => survWalker(s, L2, mine),
       speedAt: (r) =>
         Math.round(WALK * Z_SLOW * rnd(roundOf(r)[1][0], roundOf(r)[1][1])),
@@ -6199,6 +6229,9 @@ function walkTo(z, tx, ty, far) {
    of standing pressed against it (the owner's, Nov 17 05:46Z: zombies got stuck on trees and didn't know to go round).
    Stopping only at ducks. Stood inside something (pushed or climbed in there), it walks out toward aim */
 const TURNS = [0, 0.52, -0.52, 1.05, -1.05, 1.57, -1.57];
+/* Sandbox's walls (sandboxrules.js sbZombieWall), while the zombies of a Sandbox walk */
+let ZW = null;
+export const setZWall = (f) => (ZW = f);
 function stepZombie(z, aim, far, pls) {
   const n = Math.max(1, Math.ceil(far / 8));
   for (let k = 0; k < n; k++) {
@@ -6214,6 +6247,7 @@ function stepZombie(z, aim, far, pls) {
     const ok = (x, y) => {
       if (stuckIn ? !playable(x, y) : !zOk(x, y, zz, z.up ?? STEP))
         return false; // (z.up: how high a Sandbox NPC steps, its Can jump and Can climb walls, sbspawn.js)
+      if (ZW && ZW.stops(z, x, y, zz)) return false; // (a zone that's a wall to it)
       for (const q of pls) {
         if (Math.abs((q.zz || 0) - zz) > 50) continue; // (a duck up on a roof over it: it walks under it)
         const now = room(z.x, z.y, ...q.xy),
@@ -6222,6 +6256,18 @@ function stepZombie(z, aim, far, pls) {
       }
       return true;
     };
+    if (ZW) {
+      const sx = z.x + ux * len,
+        sy = z.y + uy * len;
+      if (z.ws || ZW.stops(z, sx, sy, zz)) {
+        const [x, y] = ZW.go(z, sx, sy, zz, ok);
+        if ((x !== z.x || y !== z.y) && ok(x, y)) {
+          z.x = x;
+          z.y = y;
+          continue;
+        } // (round a Sandbox wall, one way till it's past: else the turns below)
+      }
+    }
     let moved = false;
     for (const t of TURNS) {
       const c = Math.cos(t),

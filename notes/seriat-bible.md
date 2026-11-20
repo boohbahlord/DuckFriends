@@ -190,6 +190,14 @@ Every Seriat value works anywhere a number goes below: `wait 1:3`, `every [2,4]s
     `time`, `alive`, `dead`, `spawned`. `hppct` is an NPC's own HP as a percent of its most (30 means under a third), read inside a `when`: `\if hppct < 30\` (owner Nov 19 21:59Z, "change that to a percentage"; a plain `hp < 30%` would be read as a chance).
     Files end in `.se` (the owner's, Nov 19 21:59Z); old `.num` files still open.
 
+17. **Zones** (owner Nov 20 03:10Z: yes): a zone's Brain box takes a file that runs for the zone and moves its squares
+    (its Potential order). Events: `every [2,4]s step`, `when enter step 2` (a player steps in), `when spawn step` (one
+    of its tabs made something in it). Words: `step` / `step n`, `squares 3:5` (squares at once), `size 1.5` (square
+    size, duck lengths), `order shuffle` (random, shuffle, line, alternating, all), `dir right` (right, left, up, down,
+    upright, upleft, downright, downleft, none); at a file's top they're for every zone that names it. Names inside a
+    when: `steps`, `squares`, `size`, `inside` (players standing in it). Any file reaches a zone by its variable name:
+    `((zone 'Pit' size 2))`, `\if zone 'Pit' steps mod 3 == 0\`. Live V136.
+
 ## 16. Worked examples (Adam, Nov 19 13:25Z, in the owner's style)
 1. Speed that sticks per NPC: `{1.0:1.*}='1*'\>>\||"['1*'][1,2]"`: picks 1.0 to 1.9 (asterisk 1), then times 1 or 2,
    so 1.0 to 3.8.

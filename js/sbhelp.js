@@ -7,8 +7,8 @@ import { LANG } from "./langname.js";
 export const SB_HELP = {
   b: [
     [
-      "Build blocks",
-      "Pick a thing in Build, then click or tap the map to put it down. Esc or right-click lets go. Hold Shift while you place and it keeps placing.",
+      "Build zones",
+      "Pick Zone in Build, then click or tap the map to put it down. Esc or right-click lets go. Hold Shift while you place and it keeps placing.",
     ],
     [
       "Moving what you placed",
@@ -19,12 +19,24 @@ export const SB_HELP = {
       "In a block's window, + adds a tab: a spawn, respawn, loot or zone that works on the same block, so one block can do several things at once. Each tab counts toward the zone budget (shown in Build): 50 blocks and tabs at most.",
     ],
     [
-      "Spawns and respawns",
-      "A spawn makes things; a respawn is where players come back. Press E beside one to change it, then give it a key or put it on the hotbar in H.",
+      "Callers",
+      "A Spawn, Respawn or Loot tab works only while its Caller is the variable name of a zone on its block (the block itself or one of its Zone tabs). Its spots come from that zone's squares. With more than one zone on a block, Leads with (under Type) picks the one that sets its look.",
     ],
     [
-      "Loot and zones",
-      "Loot is an orb that gives what it holds to whoever walks over it. A zone is a box that does something to whoever stands in it. Both hide from players while cheat mode is off.",
+      "Potential order",
+      "At the end of each tab, Potential order cuts the block into squares and picks which of them work right now: true random, shuffle (every square once before any repeats), one after another (with a direction), alternating like a checkerboard, or all at once. Squares at once, Square size and Seconds per step set how many, how big and how fast; Steps: On a timer, or One step each use (each spawn, respawn or drop). In Build the working squares are drawn filled.",
+    ],
+    [
+      "What a zone is",
+      "Open a zone (E beside it, or right-click and Properties) and pick at the top what it is: just a zone, a spawn (it makes things) or a respawn (players come back there). A spawn gets a key or a spot on the hotbar in H.",
+    ],
+    [
+      "Walls, Inverse and Dark outside",
+      "In a zone, tick who can't pass to make it a wall to them (a thin zone makes a thin wall); they walk round it. Inverse makes a zone, or a tab, work outside its zone instead (and outside every zone with its name or color). Dark outside darkens everything round the zone while you stand in it.",
+    ],
+    [
+      "Loot, colors and seeing zones",
+      "Add a Loot tab to a zone and pick what it holds: nothing comes until you do. A new zone has no color (white); pick a color and every zone of that color shares its settings. Zones show while cheat mode or Build is on, and stay hidden otherwise. Click a heading's arrow to fold it.",
     ],
   ],
   m: [
