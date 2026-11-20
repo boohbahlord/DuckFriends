@@ -1579,6 +1579,13 @@ function freshKit(s) {
 export const durLeft = (m, w) =>
   m && m.du && m.du[w] != null ? m.du[w] : (ARMS[w] || {}).dur || 0;
 export const kitOf = (s, id) => ((s && s.hang && s.hang.l4a) || {})[id] || null;
+/* Sandbox's loot (plan Loot 3, sbloot.js): what a loot orb set for weapon w in duck id's hands, kept in its kit as
+   lm = { w: { d: its damage, dp: its damage in % of its own, c: its wait between uses (ms), r: 0 (it can't reload),
+   b: 1 (it breaks when empty) } }; null when it came plain */
+export const lmOf = (s, id, w) => {
+  const k = kitOf(s, id);
+  return (k && k.lm && k.lm[w]) || null;
+};
 export const slotsOf = (s, id) => (kitOf(s, id) || {}).sl || START;
 /* is w one of this duck's weapons? (what it can hold out and use; the grenades are always there) */
 export const l4Holds = (s, id, w) =>
@@ -1594,14 +1601,15 @@ export const maxHp = (s, id) =>
    headshot chance (headOf, below) */
 export const l4Cool = (s, id, w) =>
   ARMS[w]
-    ? ((w === "laser" && angelOf(s, id, w)
-        ? ANGEL.LASER.cool // (the Angelic Laser Rifle: its own, a beam every 0.75 s)
-        : ARMS[w].cool *
-          (angelOf(s, id, w)
-            ? w === "handgun"
-              ? ANGEL.PISTOL.FIRE
-              : ANGEL.FAST
-            : 1)) * // (Angelic: 20% faster; the dual pistols twice as fast, l4ddangel.js)
+    ? (((lmOf(s, id, w) || {}).c ||
+        (w === "laser" && angelOf(s, id, w)
+          ? ANGEL.LASER.cool // (the Angelic Laser Rifle: its own, a beam every 0.75 s)
+          : ARMS[w].cool *
+            (angelOf(s, id, w)
+              ? w === "handgun"
+                ? ANGEL.PISTOL.FIRE
+                : ANGEL.FAST
+              : 1))) * // (Angelic: 20% faster; the dual pistols twice as fast, l4ddangel.js; a loot orb's own wait first)
         Math.pow(0.9, upOf(s, id).as || 0)) /
       grCool(s, id) // (Sandbox: a group's Cooldown speed, sbgroups.js)
     : 400;
@@ -2813,6 +2821,9 @@ function give(s, id, w, hand0) {
   const du = { ...(kit.du || {}) };
   delete du[old];
   delete du[w]; // (a melee weapon comes whole)
+  const lm = { ...(kit.lm || {}) };
+  delete lm[old];
+  delete lm[w]; // (it comes plain: a loot orb's numbers are set after, l4Loot)
   if (fullAmmo(w)) am[w] = fullAmmo(w);
   const sl = [...kit.sl];
   sl[k] = w;
@@ -2824,6 +2835,7 @@ function give(s, id, w, hand0) {
       am,
       ang,
       du,
+      lm,
       ...(kit.rw === old ? { rl: 0, rw: "" } : {}),
     },
   };
@@ -3533,6 +3545,7 @@ function startReload(s, id, m, w, now) {
   } // (the down pistol)
   const c = m.am[w];
   if (!magIn(m, w) || !c || m.rl) return false;
+  if (m.lm && m.lm[w] && m.lm[w].r === 0) return false; // (Sandbox's loot: Reload off, sbloot.js)
   if (c[0] >= magIn(m, w) || c[1] <= 0) return false;
   m.rt = reloadOf(s, id, w, c);
   m.rl = now + m.rt;
@@ -3740,8 +3753,27 @@ export function l4Use(s, a, now) {
       s.shots = [...(s.shots || []), ...out];
     }
   }
+  if (!down && m.lm && m.lm[what] && m.lm[what].b) emptyBreaks(s, id, m, what);
   s.hang.l4a = { ...s.hang.l4a, [id]: m };
   return true;
+}
+/* Sandbox's loot, Breaks when empty (plan Loot 3: "when its ammo or count reaches 0, the item breaks and leaves the
+   hotbar, its slot empty ... It looks and sounds the same as a melee weapon breaking"): kit m, weapon w just used */
+function emptyBreaks(s, id, m, w) {
+  const c = m.am[w],
+    i = (m.sl || []).indexOf(w);
+  if (i < 0 || !c || c[0] > 0 || c[1] > 0) return;
+  m.sl = [...m.sl];
+  m.sl[i] = "";
+  m.am = { ...m.am };
+  delete m.am[w];
+  m.lm = { ...m.lm };
+  delete m.lm[w];
+  if (m.rw === w) {
+    m.rl = 0;
+    m.rw = "";
+  }
+  s.hang.l4brk = { n: ((s.hang.l4brk || {}).n || 0) + 1, by: id }; // (everyone hears it break: l4ddsfx.js)
 }
 /* the zombies one of duck by's shots from weapon w goes through (0: it stops at the first): the sniper's 3; Angelic,
    the bow through one zombie and the sniper through two more (l4ddangel.js) */
@@ -3761,10 +3793,19 @@ export const ALL_HP = 999;
 /* Survival: every bullet, pellet, arrow, thrown dagger and beam a duck fires does 0.5 less (the owner's, Nov 20 04:09Z,
    "reduce all ammo by 0.5 damage"); never under 0.5. Melee, grenades and the merchant's own gun stay as they were */
 export const SV_GUN_LESS = 0.5;
-const svGun = (s, by, w, dmg) =>
-  survOn() && by && s.players[by] && ARMS[w] && ARMS[w].kind === "ranged"
+const svGun = (s, by, w, dmg0) => {
+  const lm = by && w && lmOf(s, by, w), // (Sandbox's loot: its own damage, or a share of its own, sbloot.js)
+    dmg = !lm
+      ? dmg0
+      : lm.d != null
+        ? lm.d
+        : lm.dp != null
+          ? Math.max(0.1, tenths((dmg0 * lm.dp) / 100))
+          : dmg0;
+  return survOn() && by && s.players[by] && ARMS[w] && ARMS[w].kind === "ranged"
     ? Math.max(0.5, tenths(dmg - SV_GUN_LESS))
     : dmg;
+};
 export function zombieTakes(s, by, w) {
   const A = ARMS[w];
   if (!A) return { dmg: 1, head: false };
@@ -4537,7 +4578,8 @@ function wildFire(s, by, now) {
 export function wearDown(s, by, w, dealt) {
   const kit = kitOf(s, by),
     i = kit ? kit.sl.indexOf(w) : -1;
-  if (i < 0 || !(dealt > 0) || isSb(s) || !ARMS[w] || !ARMS[w].dur) return;
+  if (i < 0 || !(dealt > 0) || !ARMS[w] || !ARMS[w].dur) return;
+  if (isSb(s) && !(kit.lm && kit.lm[w] && kit.lm[w].b)) return; // (Sandbox: only with its loot's Breaks when empty)
   if (ARMS[w].kind !== "melee" || angelOf(s, by, w)) return;
   const left = tenths(durLeft(kit, w) - dealt),
     du = { ...(kit.du || {}) },
@@ -6591,15 +6633,57 @@ export const l4Down = (s, id) => {
 /* ---------- Sandbox's loot orbs on these maps (sbloot.js) ----------
    a weapon taken from an orb goes into duck id's slots as one bought or spun does (give), full; inf: unlimited ammo (as
    much as never runs out in a sitting); and an orb's damage on the duck that takes it (as a claw does) */
-export function l4Loot(s, id, w, inf) {
-  if (!ARMS[w] || !give(s, id, w)) return false;
-  const kit = kitOf(s, id),
-    full = fullAmmo(w);
-  if (inf && kit && full)
+export function l4Loot(s, id, w, inf, mods = null) {
+  if (!ARMS[w]) return false;
+  if (w === "grenade") {
+    const k = kitOf(s, id);
+    if (!k) return false;
     s.hang.l4a = {
       ...s.hang.l4a,
-      [id]: { ...kit, am: { ...kit.am, [w]: [full[0], 9999] } },
-    };
+      [id]: {
+        ...k,
+        g: mods && mods.n ? Math.min(99, mods.n) : ARMS.grenade.most,
+      },
+    }; // (grenades: How many you get, or a full belt)
+    return true;
+  }
+  if (!give(s, id, w)) return false;
+  const kit = kitOf(s, id),
+    full = fullAmmo(w),
+    am = { ...kit.am },
+    M = mods || {};
+  if (inf === undefined) inf = M.inf;
+  const unl =
+    inf != null
+      ? inf || (w === "laser" && M.ammoP >= 100) // (the laser's 100% is unlimited: the owner's, Nov 19 22:55Z)
+      : !full; // (the laser and the bow: unlimited unless it's turned off)
+  if (unl) {
+    if (full) am[w] = [full[0], 9999];
+  } else {
+    /* Ammo: a number, or a share where 100% is Dead Ducks Arcade's own (the bow's 100% is 300); How many you get for
+       an item (a medkit, a zebra cake, a chair: its uses) */
+    const own = full ? full[0] + full[1] : w === "bow" ? 300 : 100,
+      n =
+        M.n && (!full || !ARMS[w].mag)
+          ? M.n
+          : M.ammo != null
+            ? M.ammo
+            : M.ammoP != null
+              ? Math.max(1, Math.round((own * M.ammoP) / 100))
+              : own,
+      mag = ARMS[w].mag;
+    am[w] = mag ? [Math.min(mag, n), Math.max(0, n - mag)] : [n, 0];
+  }
+  const lm = {};
+  if (M.dmg != null) lm.d = M.dmg;
+  if (M.dmgP != null) lm.dp = M.dmgP;
+  if (M.cool) lm.c = M.cool;
+  if (M.rl === false) lm.r = 0;
+  if (M.brk) lm.b = 1;
+  const lms = { ...(kit.lm || {}) };
+  if (Object.keys(lm).length) lms[w] = lm;
+  else delete lms[w];
+  s.hang.l4a = { ...s.hang.l4a, [id]: { ...kit, am, lm: lms } };
   return true;
 }
 /* Sandbox's loot (sbloot.js, plan Loot 2 "Ammo and magazines"): duck id gets one more magazine of gun w (a quarter of

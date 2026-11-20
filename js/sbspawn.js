@@ -48,6 +48,7 @@ import {
   sbTabLive,
   sbUsed,
   SB_LOOT,
+  sbItemBox,
   SB_ZONE,
   SB_SHAPE,
   sbSpread,
@@ -161,6 +162,7 @@ export const boxOf = (f) =>
   SB_SHAPE[f] || // (every block's shape: sandboxrules.js)
   SB_ORDER[f] || // (every block's squares and their potential order: sandboxrules.js)
   SB_CALL[f] || // (a tab's Caller, and a block's leading zone)
+  sbItemBox(f) || // (a loot item's own numbers: "i_ak_dmg", plan Loot 3)
   null;
 /* is this text good for box f? "" or why not */
 export function boxWhy(f, t) {
@@ -1025,7 +1027,9 @@ function canSet(p, f) {
   if (SB_ORDER[f]) return p.pg !== "pl"; // (every block's and tab's own potential order)
   if (p.k === "loot")
     return (
-      !!SB_LOOT[f] || ["name", "hide", "limit", "every", "cont"].includes(f) // (its spawning: a spawn's own boxes, plan Loot 1)
+      !!SB_LOOT[f] ||
+      ["name", "hide", "limit", "every", "cont"].includes(f) || // (its spawning: a spawn's own boxes, plan Loot 1)
+      !!sbItemBox(f) // (each item's numbers, plan Loot 3)
     ); // (a loot orb's own boxes: sbloot.js)
   if (p.k === "zone")
     return (

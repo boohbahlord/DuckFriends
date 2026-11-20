@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v155",
+    version: 155,
+    date: "Nov 20, 2026",
+    title: "Loot with its own numbers",
+    news: [
+      "For Sandbox: on Dead Ducks Arcade's maps, each item you tick in a Loot tab shows its own numbers under its list. You can set damage (a number or a percent), ammo (a number, or a percent where 100% is the usual amount), how many you get, unlimited ammo (on for the laser and the bow), reload on or off, cooldown or shots per second, and whether it breaks when it runs empty. Leave a box blank to keep the item's own number.",
+      "For Sandbox: an item that breaks when empty leaves your hotbar with the same sound as a melee weapon breaking.",
+    ],
+  },
+  {
     id: "v154",
     version: 154,
     date: "Nov 20, 2026",

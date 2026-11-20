@@ -29,6 +29,7 @@ import {
   sbRule,
   sbInBlock,
   sbWhoTakes,
+  sbPct,
 } from "./sandboxrules.js";
 import { valueOf } from "./numerat.js";
 import {
@@ -342,15 +343,42 @@ function takeBy(s, id, q, o, t, now, H0) {
     grFrom(s, "p:" + t, id, w); // (a group whose condition is this loot, or what it held: sbgroups.js)
   }
 }
+/* item w's own numbers in block q (plan Loot 3: its "i_w_row" boxes; blank: the item's own), as l4ddrules.js l4Loot
+   takes them: { dmg | dmgP, ammo | ammoP, n, inf, rl, brk (true, false, or null: its own), cool (ms) } */
+export function modsOf(q, w) {
+  const f = (k) => `i_${w}_${k}`,
+    t = (k) => String(boxText(q, f(k))).trim(),
+    tf = (k) => (t(k) ? !/^f/i.test(t(k)) : null),
+    nb = (k) => {
+      const v = t(k) ? num(q, f(k)) : NaN;
+      return Number.isFinite(v) && v > 0 ? v : null;
+    },
+    d = sbPct(t("dmg")),
+    a = sbPct(t("ammo")),
+    sps = nb("sps"),
+    cd = nb("cd");
+  return {
+    dmg: d && d.v != null ? d.v : null,
+    dmgP: d && d.p != null ? d.p : null,
+    ammo: a && a.v != null ? Math.round(a.v) : null,
+    ammoP: a && a.p != null ? a.p : null,
+    n: nb("n") && Math.round(nb("n")),
+    inf: tf("inf") ?? (num(q, "inf") === true ? true : null), // (the block's own Unlimited ammo: every gun in it)
+    rl: tf("rl"),
+    brk: tf("brk"),
+    cool: sps ? 1000 / sps : cd ? cd * 1000 : null,
+  };
+}
 /* duck by takes w from block q */
 function take(s, q, w, by, now, H0) {
   const keep = num(q, "keep"),
     hurt = num(q, "hurt");
   if (zmaps(s) && w === "flashlight")
     s.sb = { ...s.sb, fl: { ...(s.sb.fl || {}), [by]: 1 } }; // (a flashlight: kept for good)
-  else if (zmaps(s) && ammoOf(w))
-    l4Ammo(s, by, ammoOf(w)); // (a magazine more, for the gun I carry)
-  else if (zmaps(s)) l4Loot(s, by, w, num(q, "inf") === true);
+  else if (zmaps(s) && ammoOf(w)) {
+    const n = modsOf(q, w).n || 1; // (How many you get: magazines)
+    for (let i = 0; i < n; i++) l4Ammo(s, by, ammoOf(w)); // (a magazine more, for the gun I carry)
+  } else if (zmaps(s)) l4Loot(s, by, w, undefined, modsOf(q, w));
   else {
     const hb = (s.sb && s.sb.hb) || {},
       mine = ((hb.got || {})[by] || []).filter(([v]) => v !== w);

@@ -1527,7 +1527,7 @@ export const SB_LOOT = {
   }, // (the most this block lays in a whole game; G has one for the whole map, SB_RULES lootmax)
   ltake: listBox("Who can take it", "players"), // (Players, Everything, a kind, a spawn, a player's name, a group: sbWhoTakes)
   lown: { name: "Every player gets their own", kind: "bool", def: "f" }, // (off: the first to reach it takes it)
-  inf: { name: "Unlimited ammo", kind: "bool", def: "f" },
+  inf: { name: "Unlimited ammo (every gun)", kind: "bool", def: "f" },
   /* plan, Loot 2: "When several are ticked: the orb gives one of them at random, with equal chances, or gives all of them
      at once" */
   lall: { name: "All of them at once", kind: "bool", def: "f" },
@@ -1537,6 +1537,70 @@ export const SB_LOOT = {
     def: "",
   },
 };
+/* ---------- each picked item's numbers (plan, Loot 3) ----------
+   The owner's, Nov 19 22:33Z to 22:57Z: "below its particular drop-down list will the weapon then show its numbers",
+   damage "as a number or a percent", "how much amount of a thing is in given loot", ammo "by number ... You can type
+   percentages ... based off of Dead Ducks Arcade" (the bow's 100% is 300), "a button that you can click for unlimited
+   ammo, which is already selected for the laser", "reload enabled or disabled", "Cooldown ... like 0.1", "bullets per
+   second", and "can break when they run out of ammo". A loot block keeps them as boxes named "i_", the item, "_", the
+   row ("i_ak_dmg": never a dot, which an online room's keys can't hold); blank is the item's own */
+const pctBox = (name, max) => ({
+  name,
+  check: (t) => {
+    const v = String(t).trim();
+    if (!v) return "";
+    const m = /^(\d+(\.\d)?)%$/.exec(v);
+    if (m) return +m[1] > 0 && +m[1] <= 1000 ? "" : "1% to 1000%";
+    return /^\d+(\.\d)?$/.test(v) && +v > 0 && +v <= max
+      ? ""
+      : `A number up to ${max}, or a percent`;
+  },
+  def: "",
+  pct: true,
+});
+export const SB_ITEM = {
+  dmg: pctBox("Damage (number or %)", 1000),
+  n: {
+    name: "How many you get",
+    kind: "int",
+    min: 1,
+    max: 99,
+    def: "",
+    blank: true,
+  },
+  ammo: pctBox("Ammo (number, or % of its own)", 9999),
+  inf: { name: "Unlimited ammo", kind: "bool", def: "", blank: true },
+  rl: { name: "Reload", kind: "bool", def: "", blank: true },
+  cd: {
+    name: "Cooldown (s)",
+    kind: "tenth",
+    min: 0.1,
+    max: 60,
+    def: "",
+    blank: true,
+  },
+  sps: {
+    name: "Shots per second",
+    kind: "tenth",
+    min: 0.1,
+    max: 30,
+    def: "",
+    blank: true,
+  },
+  brk: { name: "Breaks when empty", kind: "bool", def: "", blank: true },
+};
+/* box f's settings when it is an item's row ("i_ak_dmg"), or null */
+export const sbItemBox = (f) => {
+  const m = /^i_([a-z0-9]{1,24})_([a-z]+)$/.exec(String(f));
+  return m && Object.hasOwn(SB_ITEM, m[2]) ? SB_ITEM[m[2]] : null;
+};
+/* a % box's value: { v } a number, { p } a percent, or null (blank or wrong) */
+export function sbPct(t) {
+  const v = String(t == null ? "" : t).trim(),
+    m = /^(\d+(\.\d)?)(%?)$/.exec(v);
+  if (!m) return null;
+  return m[3] ? { p: +m[1] } : { v: +m[1] };
+}
 /* when a loot block starts laying orbs (plan, Loot 1: "Starts: at the start of the game, or on an event ... a player
    steps into the zone, an entity spawns"): its zone is the one its tab answers to, or its own shape */
 export const SB_LOOT_STARTS = {
