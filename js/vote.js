@@ -79,7 +79,7 @@ function bodyHTML(s, k) {
 
 /* the vote's own top corners (owner, Nov 16): a vote to go back to the lobby on the left, the pause menu (☰) on the
    right next to the clock, so neither is lost under the window */
-const lobbyBtnHTML = (s, me) => {
+export const lobbyBtnHTML = (s, me) => {
   const v = s.vote && s.vote.kind === "lobby" ? s.vote : null;
   if (!v)
     return `<button type="button" class="btn ghost vt-lobby" data-lv="1">${s.solo ? "Back to the lobby" : "Vote: back to the lobby"}</button>`;

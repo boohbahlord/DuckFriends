@@ -7,8 +7,11 @@
      a zombie's drop (its dn), which already has its own sounds (l4ddsfx.js dropIn, l4dd.js dropGot): those are left be.
    On a world each comes from its spot and fades with distance; on the board it is heard by all alike.
    sbHear(s, world): world true on Duck Cabin, the zombie cabin and Downpour (their activity below), false on the board
-   (game.js). Cheat mode (sandbox.js) is my own switch, so its chime is played there (sbCheatSound). */
+   (game.js). Cheat mode (sandbox.js) is my own switch, so its chime is played there (sbCheatSound).
+   On a world, Sandbox's own NPCs (sbcabin.js) walk the zombies' step path every frame (l4ddsfx.js sbSteps); on the board
+   theirs are game.js' (mgjSteps). */
 import { play } from "./sound.js";
+import { sbSteps } from "./l4ddsfx.js";
 import { isSb } from "./sandboxrules.js";
 import { activity } from "./hangout/registry.js";
 import { W, H } from "./hangout/layout.js";
@@ -47,4 +50,5 @@ activity({
   id: "sbsfx",
   only: "sandbox",
   onState: (s) => sbHear(s, true),
+  step: (dt, now, ctx) => sbSteps(ctx),
 });

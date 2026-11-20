@@ -36,6 +36,7 @@ import { boxText } from "./sbspawn.js";
 import { npcRows } from "./sbmake.js";
 import { sbCheatSound } from "./sbsfx.js";
 import { sbSlots } from "./sbhot.js";
+import { saveRows } from "./sbsaves.js";
 import {
   hotKeyPut,
   hotRows,
@@ -55,6 +56,7 @@ import {
   sbPresets,
   showMenu,
 } from "./sbmenu.js";
+import { mountSbDrag } from "./sbdrag.js";
 
 /* each window: its key, its title, and whether it needs the host's rights */
 export const SB_WINS = {
@@ -88,7 +90,7 @@ export const SB_SHEET = [
   ],
   [
     "G",
-    `Game settings for this Sandbox: where ${LANG} files are brought in to run.`,
+    "Game settings for this Sandbox: Save and Save as (the host's, kept on the host's device; it also saves itself every minute), and the Music: which songs play, or none.",
   ],
   [
     "P",
@@ -105,7 +107,7 @@ export const SB_SHEET = [
   ],
   [
     "Right-click",
-    "On a thing you placed: Properties, Copy, Cut. On an empty spot: Paste. A long press does it on a phone. Shift+V pastes where the mouse is.",
+    "On a thing you placed: Properties, Copy, Cut (on a selection: Copy all, Cut all). On an empty spot: Paste. A long press does it on a phone. Shift+V pastes where the mouse is.",
   ],
   [
     "Presets",
@@ -238,7 +240,7 @@ const OPTIONS = {
   },
   n: [],
   h: (R) => [...hotRows(R, openPut), helpRow("h")],
-  g: [helpRow("g")],
+  g: (R) => [...saveRows(R), helpRow("g")], // (Save, Save as and Music: sbsaves.js)
   p: pRows,
 };
 export const sbOptions = (k, R) => {
@@ -284,7 +286,7 @@ export function sbClose(k, held) {
 /* getR: () => the room; onOpen: called when a window comes up (the game closes Tab's window); spotAt(clientX, clientY):
    the spot on the map under that point of the screen ({ x, y }: shares of it), or null (game.js); returns a function
    that takes the windows away */
-export function mountSandboxKeys(S, getR, onOpen, spotAt) {
+export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
   const box = document.createElement("div");
   box.className = "sb-win";
   box.hidden = true;
@@ -317,6 +319,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
       (can ? 1 : 0) +
       opts.map((o) => o.label).join("|") +
       (k.open === "c" ? sbCheat.on + "" + mayBuild(R) : "") +
+      (k.open === "b" ? Object.keys((R.state.sb || {}).pts || {}).length : "") +
       (hotWin
         ? hotPick +
           JSON.stringify((R.state.sb || {}).hb || {}) +
@@ -334,7 +337,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
           : !can
             ? `<p class="sb-none">Only the host can change this.</p>`
             : opts.length
-              ? `<div class="sb-opts${hotWin ? " sb-hotopts" : ""}">${opts.map((o, i) => `<button type="button" class="sb-opt${o.on ? " on" : ""}" data-i="${i}">${i < 9 ? `<kbd>${i + 1}</kbd>` : ""}${esc(o.label)}</button>`).join("")}</div>${hotWin ? hotWinHTML(R, hotPick) : ""}`
+              ? `${k.open === "b" ? `<p class="sb-budget">Zone budget ${Object.keys((R.state.sb || {}).pts || {}).length}/${SB_POINTS}</p>` : ""}<div class="sb-opts${hotWin ? " sb-hotopts" : ""}">${opts.map((o, i) => `<button type="button" class="sb-opt${o.on ? " on" : ""}" data-i="${i}">${i < 9 ? `<kbd>${i + 1}</kbd>` : ""}${esc(o.label)}</button>`).join("")}</div>${hotWin ? hotWinHTML(R, hotPick) : ""}`
               : `<p class="sb-none">Nothing here yet.</p>`;
       box.innerHTML = `<header><span class="sb-tip">Press <kbd>${k.open.toUpperCase()}</kbd> again to close</span><h2>${esc(w.name)}</h2><button type="button" class="sb-x" aria-label="Close">×</button></header>${body}`;
     }
@@ -623,12 +626,28 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   const full = (R) => {
     if (Object.keys((R.state.sb && R.state.sb.pts) || {}).length < SB_POINTS)
       return false;
-    toast(`A map holds ${SB_POINTS} things at most. Delete one first.`);
+    toast(
+      `The zone budget is full (${SB_POINTS}). Delete a block or a tab first.`,
+    );
     return true;
   };
   const paste = (at) => {
     const R = getR();
     if (!R || !sbClip.pt || !at || full(R)) return;
+    if (sbClip.many) {
+      /* a copied selection: each where it stood from their middle, and only if all of them fit on the map */
+      const room = SB_POINTS - Object.keys(R.state.sb.pts || {}).length,
+        to = sbClip.many.map((c) => ({ ...c, x: at.x + c.dx, y: at.y + c.dy }));
+      if (to.length > room)
+        return toast(
+          `The zone budget is full (${SB_POINTS}). Delete some first.`,
+        );
+      if (to.some((c) => c.x < 0 || c.x > 1 || c.y < 0 || c.y > 1))
+        return toast("It doesn't fit there: one of them would be off the map.");
+      for (const c of to)
+        R.send({ t: "sb", k: "add", kind: c.pt.k, x: c.x, y: c.y, pt: c.pt });
+      return;
+    }
     R.send({
       t: "sb",
       k: "add",
@@ -645,6 +664,35 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
     const id = pointAt(R.state, at),
       p = id && R.state.sb.pts[id];
     if (!p && (pointOnly || !sbClip.pt)) return false; // (nothing to offer: the browser's own menu, or the game's)
+    const many = drag.picked(id);
+    if (many) {
+      /* a selection: Cut all and Copy all; Properties waits for one ("you cannot go to properties if you have multiple
+         things selected at the same time") */
+      const pts = R.state.sb.pts,
+        mx = many.reduce((v, q) => v + pts[q].x, 0) / many.length,
+        my = many.reduce((v, q) => v + pts[q].y, 0) / many.length,
+        copy = () => {
+          sbClip.many = many.map((q) => ({
+            pt: patternOf(pts[q]),
+            dx: pts[q].x - mx,
+            dy: pts[q].y - my,
+          }));
+          sbClip.pt = sbClip.many[0].pt;
+        };
+      showMenu(S, cx, cy, [
+        { label: "Properties", off: true, act: () => {} },
+        { label: `Copy all (${many.length})`, act: copy },
+        {
+          label: `Cut all (${many.length})`,
+          act: () => {
+            copy();
+            drag.clear();
+            getR().send({ t: "sb", k: "cut", ps: many });
+          },
+        },
+      ]);
+      return true;
+    }
     showMenu(
       S,
       cx,
@@ -655,10 +703,17 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
               label: "Properties",
               act: () => sbSettings(getR, id),
             },
-            { label: "Copy", act: () => (sbClip.pt = patternOf(p)) },
+            {
+              label: "Copy",
+              act: () => {
+                sbClip.many = null;
+                sbClip.pt = patternOf(p);
+              },
+            },
             {
               label: "Cut",
               act: () => {
+                sbClip.many = null;
                 sbClip.pt = patternOf(p);
                 getR().send({ t: "sb", k: "del", p: id });
               },
@@ -688,6 +743,12 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   for (const t of ["mousedown", "mouseup", "pointerup", "click"])
     addEventListener(t, swallow, true);
   addEventListener("contextmenu", menu, true);
+  const drag = mountSbDrag(S, getR, {
+    may: () => rights() && sbCheat.on && !carry && !windowOpen(),
+    onMap,
+    spotAt: (cx, cy) => spotAt && spotAt(cx, cy),
+    screenAt: (o) => screenAt && screenAt(o),
+  });
   seat();
   const pick = (i) => {
     const R = getR(),
@@ -960,6 +1021,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
       for (const t of ["mousedown", "mouseup", "pointerup", "click"])
         removeEventListener(t, swallow, true);
       removeEventListener("contextmenu", menu, true);
+      drag.destroy();
       closeMenu();
       chip.remove();
       bible.remove();

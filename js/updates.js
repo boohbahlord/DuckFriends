@@ -9,6 +9,39 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v133",
+    version: 133,
+    date: "Nov 20, 2026",
+    title: "Sightlines",
+    news: [
+      "For Dead Ducks Arcade and Survival on Downpour: up on a roof you can only shoot what you can see. Step back from the edge and the ground near the wall hides; step up to the edge and you can shoot straight down. A hole in the roof works the same way, and so does shooting up at a roof from below.",
+      "For Dead Ducks Arcade and Survival: zombies you can't hit from where you stand are drawn darker.",
+    ],
+  },
+  {
+    id: "v132",
+    version: 132,
+    date: "Nov 20, 2026",
+    title: "Tabs on every block",
+    news: [
+      "For Sandbox: + in a block's window adds a Spawn, Respawn, Loot or Zone tab, so one block can do several things at once. Each tab follows its block's spot, shape and size. Build shows the zone budget: 50 blocks and tabs at most.",
+      "For Sandbox: save a Sandbox exactly as it is and pick it up later. When Sandbox starts, the host picks New Sandbox or one of their saves; it also saves itself every minute.",
+      "For Sandbox: G has Save, Save as, and Music (no music, or pick which songs play).",
+      "On phones, the hotbar no longer slows the game down in a big horde.",
+    ],
+  },
+  {
+    id: "v131",
+    version: 131,
+    date: "Nov 20, 2026",
+    title: "Move, turn and size blocks",
+    news: [
+      "For Sandbox: every block has a shape (square, triangle, pentagon, hexagon or circle), a width and height, Fill the map, and a Purpose you can switch (spawn, respawn, loot or zone). Its window is numbered: Shape, Color, Purpose, then its settings.",
+      "For Sandbox: hold the left mouse on a block to drag it, and the arrow keys turn it while you hold it. Double-click it for handles that change its size. Shift and a drag selects many, which move together; right-click them for Copy all and Cut all, and Backspace lets go.",
+      "For Sandbox: computer-controlled ducks and Justins now make quiet footsteps on Duck Cabin and the zombie maps, and only zombies groan.",
+    ],
+  },
+  {
     id: "v130",
     version: 130,
     date: "Nov 20, 2026",

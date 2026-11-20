@@ -15,6 +15,7 @@ import {
   baseMode,
   sbOnBoard,
   sbZoneBox,
+  sbInBlock,
   SB_ZONE,
   SB_FX,
 } from "./sandboxrules.js";
@@ -40,6 +41,7 @@ const FLOOR = 40; // (world px: how far above or below a zone's floor still coun
 function inside(s, p, box, x, y, z) {
   const [x0, y0, x1, y1] = box;
   if (x < x0 || x > x1 || y < y0 || y > y1) return false;
+  if (!sbInBlock(s, p, x, y, W, H)) return false; // (in its box, outside its shape)
   return sbOnBoard(s) || Math.abs((+z || 0) - (p.z || 0)) < FLOOR;
 }
 

@@ -12,7 +12,11 @@ export const SB_HELP = {
     ],
     [
       "Moving what you placed",
-      "Hold the left mouse on it and drag. Use the arrow keys to turn it. Right-click it for Properties, Copy and Cut; on an empty spot, Paste.",
+      "Hold the left mouse on it and drag. While you hold it, the arrow keys turn it. Double-click it for handles that change its size (Esc puts them away). Hold Shift and drag across an empty spot to select everything inside; drag one of them and they all move. Backspace lets go of a selection. Right-click it for Properties, Copy and Cut (Copy all and Cut all on a selection); on an empty spot, Paste.",
+    ],
+    [
+      "Tabs and the zone budget",
+      "In a block's window, + adds a tab: a spawn, respawn, loot or zone that works on the same block, so one block can do several things at once. Each tab counts toward the zone budget (shown in Build): 50 blocks and tabs at most.",
     ],
     [
       "Spawns and respawns",
@@ -67,8 +71,12 @@ export const SB_HELP = {
   ],
   g: [
     [
-      "Game settings",
-      `Settings for this Sandbox: where ${LANG} files are brought in to run.`,
+      "Saving",
+      "Save keeps this Sandbox exactly as it is on the host's device, under its name; Save as keeps it under a new name. It also saves itself every minute, when it ends and when the host's tab closes. Next time Sandbox starts, the host picks it from the list.",
+    ],
+    [
+      "Music",
+      "Music turns all the songs on or off. Each song below it can be turned on or off on its own; only the ones on play. The save keeps the list.",
     ],
   ],
 };

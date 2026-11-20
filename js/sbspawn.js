@@ -37,8 +37,13 @@ import {
   sbColOk,
   SB_KEYS_TAKEN,
   SB_POINTS,
+  SB_TABS,
+  SB_GEO,
+  SB_GEO_F,
   SB_LOOT,
   SB_ZONE,
+  SB_SHAPE,
+  sbSpread,
   sbZoneSpot,
 } from "./sandboxrules.js";
 import {
@@ -130,6 +135,7 @@ export const boxOf = (f) =>
   SB_TEXT[f] ||
   SB_LOOT[f] || // (a loot orb's: stage 4b, sbloot.js)
   SB_ZONE[f] || // (a zone's: stage 5, sbzone.js)
+  SB_SHAPE[f] || // (every block's shape: sandboxrules.js)
   null;
 /* is this text good for box f? "" or why not */
 export function boxWhy(f, t) {
@@ -309,13 +315,17 @@ export function zonesFor(s, f, p) {
     (q) => q.k === "zone" && words(boxText(q, f)).some((w) => tags.includes(w)),
   );
 }
-/* where spawn id makes one: in a zone that names it (one of them at random), or on the spawn itself */
+/* where spawn id makes one: in a zone that names it (one of them at random), anywhere in its own shape when it's bigger
+   than its spot, or on the spawn itself */
 function entSpot(s, p) {
   const zs = zonesFor(s, "ent", p);
   return zs.length
     ? { ...zoneSpot(s, zs[Math.floor(Math.random() * zs.length)]), inz: 1 }
-    : p;
+    : areaSpot(s, p);
 }
+/* a spot at random in block p's own shape (a spawn, respawn or loot spot bigger than one duck), or p itself */
+export const areaSpot = (s, p) =>
+  sbSpread(p) ? { ...p, ...zoneSpot(s, p), inz: 1 } : p;
 /* one NPC from spawn id at (x, y) (its spawn, a zone, or a respawn); false at the cap */
 function makeOne(s, id, at) {
   const p = pointsOf(s)[id];
@@ -418,7 +428,7 @@ function press(s, id, now, done = new Set()) {
     for (const [q, P] of Object.entries(pointsOf(s)))
       if (
         P.k === "spawn" &&
-        !P.grp &&
+        (!P.grp || P.pg === "t") &&
         P.pg !== "pl" &&
         tg.includes(P.col) &&
         !done.has(q)
@@ -456,11 +466,34 @@ function withField(p, f, v) {
         ? { t, ok: "" }
         : keep(was, t, b);
   const q = { ...p, f: { ...p.f, [f]: k } };
-  if (f === "zw" || f === "zh") q[f] = valueOf(k, b, () => 0.5); // (a zone's size, as a number: a range's middle)
+  if (f === "zw" || f === "zh") q[f] = valueOf(k, b, () => 0.5); // (a block's size, as a number: a range's middle)
+  if (f === "sh") q.sh = k.ok || "sq"; // (its shape: sandboxrules.js)
+  if (f === "fill") {
+    if (valueOf(k, b) === true) q.fill = 1;
+    else delete q.fill; // (Fill the map)
+  }
   return q;
 }
 /* the point a preset or a copy (a.pt: { col, f: { box: text }, im, ap }) makes out of a new bare one: only what its kind
    has, each box read as if typed (the owner's, Nov 19 17:15Z: a preset before placing, copy and paste) */
+/* block id's tabs and pages take its spot, shape and size again (after a move, a turn, a resize or a new shape) */
+function geoTo(all, id) {
+  const P = all[id];
+  if (!P) return all;
+  const out = { ...all };
+  for (const [q, T] of Object.entries(all)) {
+    if (T.grp !== id) continue;
+    const t = { ...T, f: { ...T.f } };
+    for (const k of SB_GEO)
+      if (P[k] === undefined) delete t[k];
+      else t[k] = P[k];
+    for (const k of SB_GEO_F)
+      if (P.f && P.f[k]) t.f[k] = { ...P.f[k] };
+      else delete t.f[k];
+    out[q] = t;
+  }
+  return out;
+}
 function fromPattern(q, pt) {
   if (!pt || typeof pt !== "object") return q;
   if (
@@ -479,6 +512,8 @@ function fromPattern(q, pt) {
     JSON.stringify(pt.ap).length < 4000
   )
     q = { ...q, ap: pt.ap };
+  if (Number.isFinite(pt.rot) && pt.rot)
+    q = { ...q, rot: ((pt.rot % 360) + 360) % 360 }; // (a copy keeps how it's turned)
   for (const [f, v] of Object.entries(pt.f || {}))
     if (typeof v === "string" && boxOf(f) && canSet(q, f))
       q = withField(q, f, v);
@@ -688,6 +723,63 @@ export function sbAct(s, a, now) {
     s.sb = { ...s.sb, kd: all };
     return true;
   }
+  /* ---------- moving, turning, resizing and cutting blocks (plan Phase 2) ----------
+     move: ps (one or many) by dx, dy (shares of the map), refused if any would leave the map; turn: ps by deg; cut: ps
+     all gone. A spawn's pages go with it */
+  if (["move", "turn", "cut"].includes(a.k)) {
+    const ids = [...new Set(Array.isArray(a.ps) ? a.ps.map(String) : [])]
+      .filter((id) => pts[id] && !pts[id].grp)
+      .slice(0, SB_POINTS);
+    if (!ids.length) return false;
+    let all = { ...pts };
+    const run = { ...((s.sb && s.sb.run) || {}) },
+      with_ = (id) => [
+        id,
+        ...Object.keys(pts).filter((q) => pts[q].grp === id),
+      ];
+    if (a.k === "move") {
+      const dx = +a.dx,
+        dy = +a.dy;
+      if (!Number.isFinite(dx) || !Number.isFinite(dy)) return false;
+      if (
+        ids.some((id) => {
+          const x = pts[id].x + dx,
+            y = pts[id].y + dy;
+          return x < 0 || x > 1 || y < 0 || y > 1;
+        })
+      )
+        return false; // ("refused if any would leave the map")
+      for (const id of ids)
+        for (const q of with_(id)) {
+          const P = pts[q],
+            x = +(P.x + dx).toFixed(4),
+            y = +(P.y + dy).toFixed(4),
+            z = sbOnBoard(s) ? 0 : Math.round(heightAt(x * WW, y * WH));
+          all[q] = { ...P, x, y, z };
+        }
+    } else if (a.k === "turn") {
+      const by = +a.deg;
+      if (!Number.isFinite(by)) return false;
+      for (const id of ids)
+        all = geoTo(
+          {
+            ...all,
+            [id]: {
+              ...pts[id],
+              rot: ((((pts[id].rot || 0) + by) % 360) + 360) % 360,
+            },
+          },
+          id,
+        );
+    } else
+      for (const id of ids)
+        for (const q of with_(id)) {
+          delete all[q];
+          delete run[q];
+        }
+    s.sb = { ...s.sb, pts: all, run };
+    return true;
+  }
   const p = pts[a.p];
   if (!p) {
     if (a.k !== "key") return false;
@@ -721,13 +813,14 @@ export function sbAct(s, a, now) {
     }
     const b = boxOf(f);
     if (!b || !canSet(p, f)) return false;
-    const q = withField(p, f, a.v);
-    s.sb = {
-      ...s.sb,
-      pts: OWN_ONLY.includes(f)
+    const q = withField(p, f, a.v),
+      all = OWN_ONLY.includes(f)
         ? { ...pts, [a.p]: q }
-        : spread({ ...pts, [a.p]: q }, a.p),
-    };
+        : spread({ ...pts, [a.p]: q }, a.p);
+    let out = all;
+    if (SB_GEO_F.includes(f))
+      for (const q of [a.p, ...kinOf(pts, a.p)]) out = geoTo(out, q); // (a new shape or size: their tabs too)
+    s.sb = { ...s.sb, pts: out };
     return true;
   }
   if (a.k === "del") {
@@ -757,7 +850,10 @@ export function sbAct(s, a, now) {
     return true;
   }
   if (a.k === "page") {
-    if (p.k !== "spawn" || p.grp || !["ent", "pl"].includes(a.kind))
+    /* a spawn's Entity or Player page, or on any block a tab of a purpose (plan Phase 2c): a point of its own on the
+       block's spot, shape and size, its grp the block's */
+    const tab = SB_TABS.some(([k]) => k === a.kind);
+    if (p.grp || (!tab && (p.k !== "spawn" || !["ent", "pl"].includes(a.kind))))
       return false;
     if (Object.keys(pts).length >= SB_POINTS) return false;
     const n = ((s.sb && s.sb.n) || 0) + 1,
@@ -767,19 +863,22 @@ export function sbAct(s, a, now) {
     s.sb = {
       ...s.sb,
       n,
-      pts: {
-        ...pts,
-        ["p" + n]: {
-          k: "spawn",
-          x: p.x,
-          y: p.y,
-          z: p.z,
-          col,
-          grp: a.p,
-          pg: a.kind,
-          f: {},
+      pts: geoTo(
+        {
+          ...pts,
+          ["p" + n]: {
+            k: tab ? a.kind : "spawn",
+            x: p.x,
+            y: p.y,
+            z: p.z,
+            col,
+            grp: a.p,
+            pg: tab ? "t" : a.kind,
+            f: {},
+          },
         },
-      },
+        a.p,
+      ),
     };
     return true;
   }
@@ -805,6 +904,43 @@ export function sbAct(s, a, now) {
     s.sb = { ...s.sb, pts: spread({ ...pts, [a.p]: q }, a.p) };
     return true;
   }
+  /* its size from a resize handle: zw, zh (duck lengths, 1 to 40) and its new middle x, y */
+  if (a.k === "size") {
+    if (p.grp) return false;
+    const zw = Math.round(+a.zw),
+      zh = Math.round(+a.zh),
+      x = +a.x,
+      y = +a.y;
+    if (![zw, zh, x, y].every(Number.isFinite)) return false;
+    if (zw < 1 || zh < 1 || zw > 40 || zh > 40) return false;
+    if (x < 0 || x > 1 || y < 0 || y > 1) return false;
+    let q = withField(withField(p, "zw", String(zw)), "zh", String(zh));
+    q = { ...q, x: +x.toFixed(4), y: +y.toFixed(4) };
+    s.sb = { ...s.sb, pts: geoTo({ ...pts, [a.p]: q }, a.p) };
+    return true;
+  }
+  /* its Purpose (plan Phase 2): one block, four purposes. It keeps its spot, shape, color and every box it has; a
+     spawn's pages go with the spawn, a loot spot's orb with the loot */
+  if (a.k === "kind") {
+    const to = String(a.v || "");
+    if (p.grp || !["spawn", "respawn", "loot", "zone"].includes(to))
+      return false;
+    if (to === p.k) return false;
+    const q = { ...p, k: to };
+    for (const f of ["orb", "gone", "im"]) delete q[f];
+    if (q.col === SB_NOCOL && !["spawn", "respawn"].includes(to))
+      q.col = Object.keys(SB_COLORS)[0]; // (no color: spawns and respawns only)
+    const rest = { ...pts, [a.p]: q },
+      run = { ...((s.sb && s.sb.run) || {}) };
+    delete run[a.p];
+    for (const [id, P] of Object.entries(pts))
+      if (P.grp === a.p && P.pg !== "t") {
+        delete rest[id];
+        delete run[id];
+      } // (a spawn's Entity and Player pages; its tabs stay, each its own purpose)
+    s.sb = { ...s.sb, pts: rest, run };
+    return true;
+  }
   if (a.k === "go") return press(s, a.p, now);
   return false;
 }
@@ -812,6 +948,7 @@ export function sbAct(s, a, now) {
 /* which boxes a point takes: a respawn its "who" and what it imported; a spawn its own, and its Players tab's (a +
    page for players only those) */
 function canSet(p, f) {
+  if (SB_SHAPE[f] || f === "zw" || f === "zh") return !p.grp; // (every block's shape and size; a page has its spawn's)
   if (p.k === "loot") return !!SB_LOOT[f] || f === "name" || f === "hide"; // (a loot orb's own boxes: sbloot.js)
   if (p.k === "zone")
     return !!SB_ZONE[f] || ["name", "pon", "pwho", "hide"].includes(f); // (a zone's own, and players spawning in it)
@@ -893,7 +1030,9 @@ function backAt(s, sp) {
           words(boxText(q, "who")).some((w) => mine.includes(w)),
       )
       .map(([id, q]) => ({ ...q, id }));
-  return rs.length ? rs[Math.floor(Math.random() * rs.length)] : entSpot(s, p); // (none: where it first spawns)
+  return rs.length
+    ? areaSpot(s, rs[Math.floor(Math.random() * rs.length)])
+    : entSpot(s, p); // (none: where it first spawns)
 }
 /* ---------- the host's heartbeat ----------
    H: what the rules lend it (rules.js): ducks(s) the ducks up on the board, claw(s, id, dmg, now) a zombie's swipe on a
@@ -953,7 +1092,7 @@ export function sbTick(s, now, H) {
   for (const [id, p] of Object.entries(pts))
     if (
       p.k === "spawn" &&
-      !p.grp &&
+      (!p.grp || p.pg === "t") &&
       p.pg !== "pl" &&
       !run[id] &&
       flag(p, "auto") &&

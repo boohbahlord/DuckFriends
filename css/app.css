@@ -18710,6 +18710,113 @@ html.still .l4-miss {
   }
 }
 
+/* ---------- Sandbox's start: New Sandbox or a save (js/sbsaves.js), in the vote window's frame ---------- */
+.sbp .vt-box {
+  max-width: 52rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.sbp-new,
+.sbp-open {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  column-gap: 0.9rem;
+  align-items: center;
+  text-align: left;
+  padding: 0.45rem 0.75rem;
+  border: 0.2rem solid var(--line);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--panel) 85%, transparent);
+  min-width: 0;
+}
+.sbp-new:hover,
+.sbp-new:focus-visible,
+.sbp-open:hover,
+.sbp-open:focus-visible {
+  background: var(--panel2);
+}
+.sbp-plus {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 9;
+  border-radius: 0.5rem;
+  background: var(--yellow);
+  color: #1c1c28;
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.sbp-pic {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  image-rendering: pixelated;
+}
+.sbp-t b {
+  display: block;
+  font-size: 1.15rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.sbp-t small {
+  display: block;
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+.sbp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.sbp-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+}
+.sbp-acts {
+  display: flex;
+  gap: 0.35rem;
+}
+.sbp-note,
+.sbp-wait {
+  margin: 0.4rem 0.2rem;
+  opacity: 0.8;
+}
+.sbp-wait {
+  text-align: center;
+  font-size: 1.2rem;
+  margin: 2rem 0;
+}
+.sbp-foot {
+  margin: 0.2rem 0 0;
+  display: flex;
+  justify-content: flex-end;
+}
+.sbp-in {
+  width: 100%;
+  font: inherit;
+  padding: 0.45rem 0.6rem;
+  border-radius: 0.5rem;
+  border: 0.15rem solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+}
+@media (max-width: 760px) {
+  .sbp-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sbp-acts {
+    justify-content: flex-end;
+  }
+  .sbp-new,
+  .sbp-open {
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+  }
+}
+
 /* ---------- Vote Mode & Game: the vote windows over the whole screen (js/vote.js) ---------- */
 .vt {
   position: fixed;
@@ -20600,7 +20707,8 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 }
 /* its settings window */
 .sb-setwin {
-  width: min(30rem, calc(100vw - 1.5rem));
+  /* bigger, less scrolling (plan Phase 2: "A bigger build and zone window, less cluttered and with less scrolling") */
+  width: min(40rem, calc(100vw - 1.5rem));
 }
 /* the owner's, Nov 19 21:59Z: the slide bar "moved a little bit more to the right so that it's out of the way", in the
    UI's colors, and no cut-off color dots or stray slide bar: the box reaches into the window's right edge (its
@@ -21585,4 +21693,91 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   gap: 0.6rem;
   margin-top: 0.6rem;
   color: #fff;
+}
+
+/* Sandbox's build blocks drawn as pixels (js/sbspawnview.js shapePic, js/sblootview.js lootRing): one picture pixel per
+   grid square, never smoothed */
+.sb-pt .sb-pxmark {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.sb-zone.sb-shaped {
+  border: 0;
+  background: var(--shape) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}
+.sb-area {
+  pointer-events: none;
+}
+/* Sandbox Phase 2: a selected block glows; the selection box; a block's eight handles (pixel squares) */
+.sb-pt.sb-sel {
+  outline: 2px dashed #fff;
+  outline-offset: 2px;
+  filter: drop-shadow(0 0 4px #7df);
+}
+.sb-budget {
+  margin: 0;
+  font-weight: 700;
+  opacity: 0.85;
+}
+.sb-selbox {
+  position: fixed;
+  z-index: 6400;
+  border: 2px dashed #7df;
+  background: #7df2;
+  pointer-events: none;
+}
+.sb-hdls {
+  position: fixed;
+  inset: 0;
+  z-index: 6400;
+  pointer-events: none;
+}
+.sb-hdl {
+  position: fixed;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  background: #fff;
+  border: 2px solid #123;
+  pointer-events: auto;
+}
+.sb-fold > summary {
+  cursor: pointer;
+  list-style: none;
+}
+.sb-fold > summary::-webkit-details-marker {
+  display: none;
+}
+.sb-fold > summary::before {
+  content: "\25B8";
+  display: inline-block;
+  width: 1em;
+  transition: transform 0.15s;
+}
+.sb-fold[open] > summary::before {
+  transform: rotate(90deg);
+}
+.sb-fold {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.sb-fold:not([open]) {
+  gap: 0;
+}
+.sb-sect-top {
+  opacity: 1;
+}
+.sb-purpose {
+  font: inherit;
+  padding: 0.2rem 0.4rem;
+}
+
+/* a zombie my shots can't reach from where I stand (the sightline): a little darker */
+.l4-unseen {
+  opacity: 0.55;
 }

@@ -187,8 +187,20 @@ export const SB_KEYS_TAKEN = "cbmnhgpwasdeqrtvx";
 /* the spawn key works any time, the Build window up or not (the owner's answer, Nov 19 10:22Z: "no (not for sandbox
    mode anyway"); true would let it work only while the Build window is up */
 export const SB_KEY_IN_BUILD = false;
-/* the most spawns and respawns on a map */
-export const SB_POINTS = 60;
+/* the zone budget: the most blocks and tabs on a map, each tab counting as one (the owner's, Nov 19: "Let's say that
+   there's only 50 zones allowed per game ... zone budget 0 out of 50 ... Now it says 2 out of 50") */
+export const SB_POINTS = 50;
+/* a block's tabs (plan Phase 2c): what a + adds. A spawn's own Entity and Player pages, and on any block a tab of each
+   purpose, which works on the block's own spot, shape and size */
+export const SB_TABS = [
+  ["spawn", "Spawn tab"],
+  ["respawn", "Respawn tab"],
+  ["loot", "Loot tab"],
+  ["zone", "Zone tab"],
+];
+/* where a block is and how it's shaped: what its tabs copy from it */
+export const SB_GEO = ["x", "y", "z", "sh", "fill", "rot"];
+export const SB_GEO_F = ["sh", "fill", "zw", "zh"];
 /* ---------- Sandbox's board zones (stage 5) ----------
    The owner's Sandbox file, "Board Build": "A large sqaure amount of pixels CAN be used to overwrite the board with an
    effect (not an actual solid). It is transparent and assigned any color that the spawns or respawns has." A zone can be
@@ -230,14 +242,107 @@ export const SB_ZONE = {
 };
 /* a duck length in a world's px, for a zone's size there (on the board: 0.03 of it across, 0.08 up and down) */
 export const SB_ZONE_PX = 48;
-/* zone p's rectangle, [x0, y0, x1, y1] in shares of the map (W, H: a world's size in px) */
+/* ---------- every build block's shape (plan Phase 2: "Spawn, respawn, loot and zone become one thing you put down") ----------
+   A block has a shape and a size (zw, zh: duck lengths; a zone starts at 4 by 4, the rest at 1 by 1) or fills the whole
+   map. Square by default; the others by adding sides, stopping once it already looks round. The shape is checked on a
+   grid of quarter-duck squares, the same squares it's drawn with, so what you see is exactly what it covers */
+export const SB_SHAPES = {
+  sq: "Square",
+  tri: "Triangle",
+  pent: "Pentagon",
+  hex: "Hexagon",
+  circle: "Circle",
+};
+const SIDES = { tri: 3, pent: 5, hex: 6 };
+export const SB_SHAPE = {
+  sh: {
+    name: "Shape",
+    check: (t) => (SB_SHAPES[String(t).trim()] ? "" : "Pick a shape"),
+    def: "sq",
+  },
+  fill: { name: "Fill the map", kind: "bool", def: "f" },
+};
+export const SB_CELLS = 4; // (grid squares to a duck length)
+export const sbShape = (p) => (p && SB_SHAPES[p.sh] ? p.sh : "sq");
+export const sbFills = (p) => !!(p && p.fill);
+/* its size in duck lengths, [w, h] */
+export const sbSize = (p) => {
+  const d = p && p.k === "zone" ? 4 : 1;
+  return [(p && p.zw) || d, (p && p.zh) || d];
+};
+/* does a block other than a zone cover more than its own spot (bigger than one duck, or the whole map) */
+export const sbSpread = (p) =>
+  !!p && (sbFills(p) || sbSize(p).some((v) => v > 1) || sbShape(p) !== "sq");
+/* is (u, v), from -1 to 1 across the block's box, inside its shape. A regular polygon of n sides, one corner at the
+   top, stretched to fill the box (its corners' own box, BOUNDS, maps onto -1..1): a point at angle a and distance r
+   from its middle is inside when r * cos(a' - pi / n) <= cos(pi / n), a' being a's place inside its own wedge of
+   2 pi / n */
+const BOUNDS = {};
+for (const [sh, n] of Object.entries(SIDES)) {
+  const c = [...Array(n)].map((_, k) => (2 * Math.PI * k) / n);
+  BOUNDS[sh] = [
+    Math.max(...c.map(Math.sin)), // (half its width)
+    Math.max(...c.map((a) => -Math.cos(a))), // (how far down its lowest corner or edge goes)
+  ];
+}
+export function sbInShape(sh, u, v) {
+  if (sh === "circle") return u * u + v * v <= 1;
+  const n = SIDES[sh];
+  if (!n) return Math.abs(u) <= 1 && Math.abs(v) <= 1;
+  const [hw, low] = BOUNDS[sh],
+    x = u * hw,
+    y = -1 + ((v + 1) / 2) * (1 + low), // (from its top corner, -1, down to its bottom, low)
+    w = (2 * Math.PI) / n,
+    a = Math.atan2(x, -y), // (0 straight up, at the top corner)
+    off = (((a % w) + w) % w) - w / 2;
+  return Math.hypot(x, y) * Math.cos(off) <= Math.cos(Math.PI / n) + 1e-9;
+}
+/* block p's grid: [columns, rows] of its quarter-duck squares */
+export const sbCells = (p) =>
+  sbSize(p).map((v) => Math.max(1, Math.round(v * SB_CELLS)));
+/* is grid square (i, j) of block p inside its shape (its middle is) */
+export function sbCellIn(p, i, j) {
+  const [cx, cy] = sbCells(p);
+  return sbInShape(
+    sbShape(p),
+    ((i + 0.5) / cx) * 2 - 1,
+    ((j + 0.5) / cy) * 2 - 1,
+  );
+}
+/* a duck length in shares of the map, [across, up and down] */
+export const sbUnit = (s, W, H) =>
+  sbOnBoard(s) ? [0.03, 0.08] : [SB_ZONE_PX / W, SB_ZONE_PX / H];
+/* how far block p is turned, in degrees (plan Phase 2: "while held, the arrow keys rotate") */
+export const sbRot = (p) => ((((p && p.rot) || 0) % 360) + 360) % 360;
+/* block p's box, [x0, y0, x1, y1] in shares of the map (W, H: a world's size in px): around it as it's turned; the
+   whole map when it fills it */
 export function sbZoneBox(s, p, W = 1, H = 1) {
-  const [rx, ry] = sbOnBoard(s)
-      ? [0.03, 0.08]
-      : [SB_ZONE_PX / W, SB_ZONE_PX / H],
-    hw = ((p.zw || 4) * rx) / 2,
-    hh = ((p.zh || 4) * ry) / 2;
+  if (sbFills(p)) return [0, 0, 1, 1];
+  const [rx, ry] = sbUnit(s, W, H),
+    [w, h] = sbSize(p),
+    a = (sbRot(p) * Math.PI) / 180,
+    c = Math.abs(Math.cos(a)),
+    n = Math.abs(Math.sin(a)),
+    hw = ((w * c + h * n) * rx) / 2,
+    hh = ((w * n + h * c) * ry) / 2;
   return [p.x - hw, p.y - hh, p.x + hw, p.y + hh];
+}
+/* is (x, y) (shares of the map) inside block p: turned back by its rotation into its own grid, on a square inside its
+   shape */
+export function sbInBlock(s, p, x, y, W = 1, H = 1) {
+  if (sbFills(p)) return x >= 0 && x <= 1 && y >= 0 && y <= 1;
+  const [rx, ry] = sbUnit(s, W, H),
+    [w, h] = sbSize(p),
+    a = (-sbRot(p) * Math.PI) / 180,
+    dx = (x - p.x) / rx,
+    dy = (y - p.y) / ry, // (duck lengths from its middle)
+    lx = dx * Math.cos(a) - dy * Math.sin(a),
+    ly = dx * Math.sin(a) + dy * Math.cos(a);
+  if (Math.abs(lx) > w / 2 || Math.abs(ly) > h / 2) return false;
+  const [cx, cy] = sbCells(p),
+    i = Math.min(cx - 1, Math.floor((lx / w + 0.5) * cx)),
+    j = Math.min(cy - 1, Math.floor((ly / h + 0.5) * cy));
+  return sbCellIn(p, i, j);
 }
 /* a spot at random inside zone p, { x, y, z }: on the board within its edges; on a world one a duck can stand on (ok(x, y,
    z), in shares), or the zone's middle, where its builder stood */
@@ -245,7 +350,7 @@ export function sbZoneSpot(s, p, W = 1, H = 1, ok = null) {
   const [x0, y0, x1, y1] = sbZoneBox(s, p, W, H),
     board = sbOnBoard(s),
     z = p.z || 0;
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 24; i++) {
     let x = x0 + Math.random() * (x1 - x0),
       y = y0 + Math.random() * (y1 - y0);
     if (board) {
@@ -261,6 +366,7 @@ export function sbZoneSpot(s, p, W = 1, H = 1, ok = null) {
       Math.floor(y1 * 1e4) / 1e4,
       Math.max(Math.ceil(y0 * 1e4) / 1e4, +y.toFixed(4)),
     );
+    if (!sbInBlock(s, p, x, y, W, H)) continue; // (in its box but outside its shape)
     if (!ok || ok(x, y, z)) return { x, y, z };
   }
   return { x: p.x, y: p.y, z };
@@ -292,7 +398,9 @@ export function sbPlayerSpot(s, id, W = 1, H = 1, ok = null) {
     )
     .map(([pid, q]) => ({ ...q, id: pid }));
   const q = rs.length ? rs[Math.floor(Math.random() * rs.length)] : null;
-  return q && q.k === "zone" ? { ...q, ...sbZoneSpot(s, q, W, H, ok) } : q;
+  return q && (q.k === "zone" || sbSpread(q))
+    ? { ...q, ...sbZoneSpot(s, q, W, H, ok) }
+    : q; // (a zone, or a block bigger than its spot: anywhere in its shape)
 }
 
 /* ---------- Sandbox's loot orbs (stage 4b) ----------
