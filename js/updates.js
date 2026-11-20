@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v197",
+    version: 197,
+    date: "Nov 20, 2026",
+    title: "One gun",
+    news: [
+      "For Customize: the handgun's preview shows one gun again.",
+      "For the zombie modes: claw marks, the Angel Machine and Justin's pool are made while loading, so nothing is made mid-game.",
+    ],
+  },
+  {
     id: "v196",
     version: 196,
     date: "Nov 20, 2026",
