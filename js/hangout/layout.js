@@ -205,32 +205,86 @@ export function slabBetween(ax, ay, az, bx, by, bz) {
 }
 /* ---------- the sightline (the owner's drawing, Nov 20 02:07Z: "the further the duck goes back, the further a zombie
    has to be from it's ledge to actually have a sightline on said zombie") ----------
-   One rule for every height: a straight line from my eyes to the target's head. Walked over the floor plan, wherever it
-   passes over a roof or floor (not over a hole in it) it has to stay above that floor, or the floor is between us. It
-   is the drawing's triangle: from a ledge h high, standing b back from its edge with my eyes e over my feet, the ground
-   is out of sight for h * b / e from the ledge (similar triangles). It works the same looking up at a roof, through a
-   hole, and across any number of floors. Heights in percent: the gas station's roof, 180 px, is 100%.
-   Off until the owner says go: ?sight in the address turns it on to try */
+   One rule for every height: a straight line from my eyes to the target's head ("Should a target count as seen once its
+   head is in sight? Yeah, of course"). Wherever that line, seen from above, passes over a roof or floor (not over a hole
+   in it) while it is at that floor's height, the floor is between us. It is the drawing's triangle: from a ledge h high,
+   standing b back from its edge with my eyes e over my feet, the ground is out of sight for h * b / e from the ledge
+   (similar triangles). It works the same looking up at a roof, through a hole, and across any number of floors.
+   Heights are counted in steps of 2.5% of the gas station's roof (100%), the owner's 02:14Z "integers of 2.5% ... as the
+   smallest unit", and nothing is stepped through bit by bit: the line's height is a straight line, so where it is
+   inside a floor's thickness is worked out once (a division), then cut by the floor's edges and its holes (boxes) */
 export const SIGHT = {
-  on: /[?&]sight\b/.test(
+  on: !/[?&]nosight\b/.test(
     (globalThis.location && globalThis.location.search) || "",
-  ),
+  ), // (on: the owner's go, Nov 20 02:14Z; ?nosight in the address to compare)
 };
-export const EYE = DUCK * 0.8; // (my eyes over my feet: about 28% of the roof)
+export const EYE = DUCK * 0.8; // (my eyes over my feet: about 28% of the roof at Downpour's size)
 export const HEAD = DUCK * 0.85; // (a target counts as seen once its head is)
+export const SIGHT_UNIT = 0.025; // (2.5% of the roof: the smallest height step)
 const SIGHT_SLAB = 16; // (how thick a roof or floor is)
-const SIGHT_STEP = 8; // (world px between looks along the line)
+/* where segment (ax, ay) + t (dx, dy), t from 0 to 1, is inside box b ({ x0, y0, x1, y1 }): [t0, t1], or null */
+function boxSpan(ax, ay, dx, dy, b) {
+  let t0 = 0,
+    t1 = 1;
+  for (const [p, q] of [
+    [-dx, ax - b.x0],
+    [dx, b.x1 - ax],
+    [-dy, ay - b.y0],
+    [dy, b.y1 - ay],
+  ]) {
+    if (p === 0) {
+      if (q < 0) return null;
+      continue;
+    }
+    const r = q / p;
+    if (p < 0) t0 = Math.max(t0, r);
+    else t1 = Math.min(t1, r);
+    if (t0 > t1) return null;
+  }
+  return [t0, t1];
+}
 export function seeLine(ax, ay, az, bx, by, bz) {
-  const ea = (+az || 0) + EYE,
-    eb = (+bz || 0) + HEAD,
-    n = Math.ceil(Math.hypot(bx - ax, by - ay) / SIGHT_STEP);
-  for (let i = 1; i < n; i++) {
-    const t = i / n,
-      x = ax + (bx - ax) * t,
-      y = ay + (by - ay) * t,
-      L = ea + (eb - ea) * t;
-    for (const d of GS.DECKS)
-      if (L <= d.h && L > d.h - SIGHT_SLAB && onDeck(d, x, y)) return false;
+  const roof = GS.DECKS[0].h,
+    U = roof * SIGHT_UNIT,
+    q = (v) => Math.round(v / U) * U,
+    ea = q((+az || 0) + EYE),
+    eb = q((+bz || 0) + HEAD),
+    dx = bx - ax,
+    dy = by - ay;
+  for (const d of GS.DECKS) {
+    /* when is the line inside this floor's thickness */
+    const lo = q(d.h - SIGHT_SLAB),
+      hi = q(d.h);
+    let t0, t1;
+    if (ea === eb) {
+      if (!(ea > lo && ea <= hi)) continue;
+      [t0, t1] = [0, 1];
+    } else {
+      const a = (lo - ea) / (eb - ea),
+        b = (hi - ea) / (eb - ea);
+      [t0, t1] = [Math.max(0, Math.min(a, b)), Math.min(1, Math.max(a, b))];
+      if (t0 >= t1) continue;
+    }
+    /* ... and over the floor itself */
+    const on = boxSpan(ax, ay, dx, dy, d);
+    if (!on) continue;
+    t0 = Math.max(t0, on[0]);
+    t1 = Math.min(t1, on[1]);
+    if (t1 - t0 < 1e-6) continue;
+    /* ... and not over one of its holes */
+    let left = [[t0, t1]];
+    for (const h of d.holes) {
+      const c = boxSpan(ax, ay, dx, dy, h);
+      if (!c) continue;
+      left = left.flatMap(([u, v]) =>
+        [
+          [u, Math.min(v, c[0])],
+          [Math.max(u, c[1]), v],
+        ].filter(([m, n]) => n - m > 1e-6),
+      );
+      if (!left.length) break;
+    }
+    if (left.length) return false;
   }
   return true;
 }
