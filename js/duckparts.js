@@ -153,6 +153,7 @@ const nearBuild = (b) =>
 const SKIN = { skinBody: "body", skinHead: "head", skinOut: "out" };
 const RIPPED = new Set(["cloth", "sleeve", "ofOver"]); // (what a rip tears: duck.js ripped())
 export async function duckFromParts(d, cw, ch, frames = 1) {
+  if (d.cat) return catFromParts(d, cw, ch);
   const L = { ...DUCK_DEFAULT, ...d.L, build: nearBuild(d.L.build) },
     k =
       L.style === "jack"
@@ -427,4 +428,52 @@ function rainbow(n, H, u) {
       out[q + 2] = c[2];
     }
   return out;
+}
+
+/* ---------- a cat (Duck Cabin's: hangout/npcart.js), ready-made at each size as one part, its pixels as they are ----------
+   The sheet whose duck box is nearest to the duck box it shows at; its feet (46, 74 of its 100 × 80 box) where they go */
+const CAT_PARTS = new Map(); // ([name, pose, step]) -> its part's name
+async function catFromParts(d, cw, ch) {
+  const { catSVG, catBox } = await import("./hangout/npcart.js"),
+    b = catBox(d.cat),
+    duckBox = (cw * 64) / b.w; // (the duck box this size of cat stands for)
+  if (duckBox > SIZES[SIZES.length - 1] * 1.08) return null;
+  let n = SIZES[0];
+  for (const s of SIZES)
+    if (Math.abs(s - duckBox) < Math.abs(n - duckBox)) n = s;
+  const S = await sheet(n);
+  if (!S) return null;
+  const k = [d.cat, d.pose, d.step].join();
+  if (!CAT_PARTS.has(k))
+    CAT_PARTS.set(
+      k,
+      partKey("cat", catSVG(d.cat, { pose: d.pose, step: d.step })),
+    );
+  const e = S.index.p[CAT_PARTS.get(k)],
+    f = e && (await file(S, e[7]));
+  if (!f) return null;
+  const [x0, y0, w, h, ox, oy, , , bw, bh] = e,
+    dx = Math.round(cw * 0.46 - bw * 0.46),
+    dy = Math.round(ch * (74 / 80) - bh * (74 / 80)),
+    img = new ImageData(cw, ch),
+    o = img.data;
+  for (let j = 0; j < h; j++) {
+    const y = oy + j + dy;
+    if (y < 0 || y >= ch) continue;
+    for (let i = 0; i < w; i++) {
+      const x = ox + i + dx;
+      if (x < 0 || x >= cw) continue;
+      const s = ((y0 + j) * f.W + x0 + i) * 4,
+        q = (y * cw + x) * 4;
+      o[q] = f.px[s];
+      o[q + 1] = f.px[s + 1];
+      o[q + 2] = f.px[s + 2];
+      o[q + 3] = f.px[s + 3];
+    }
+  }
+  const c = document.createElement("canvas");
+  c.width = cw;
+  c.height = ch;
+  c.getContext("2d").putImageData(applyPalette(img), 0, 0);
+  return c;
 }

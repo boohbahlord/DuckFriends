@@ -190,6 +190,8 @@ function parts(L4) {
 }
 
 async function draw(svg, n, H) {
+  if (!/^<svg[^>]*\sxmlns=/.test(svg))
+    svg = svg.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"'); // (a cat's drawing goes in a page, so it has none)
   const u = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" })),
     i = new Image();
   i.src = u;
@@ -210,17 +212,21 @@ async function sheet(list, n) {
   const H = Math.round((n * FRAME) / 120),
     made = [];
   for (const p of list) {
-    const z = await draw(p.svg, n, H),
+    /* a cat's box is its own: as big next to this size's duck box as it is next to a duck's (64 world px) */
+    const pw = p.cat ? Math.round((n * p.cat.w) / 64) : n,
+      ph = p.cat ? Math.round((n * p.cat.h) / 64) : H;
+    const z = await draw(p.svg, pw, ph),
       ws = [];
-    for (const [path, svg] of p.whites) ws.push([path, await draw(svg, n, H)]);
+    for (const [path, svg] of p.whites)
+      ws.push([path, await draw(svg, pw, ph)]);
     /* its box: where anything shows */
-    let x0 = n,
-      y0 = H,
+    let x0 = pw,
+      y0 = ph,
       x1 = -1,
       y1 = -1;
-    for (let j = 0; j < H; j++)
-      for (let i = 0; i < n; i++)
-        if (z[(j * n + i) * 4 + 3]) {
+    for (let j = 0; j < ph; j++)
+      for (let i = 0; i < pw; i++)
+        if (z[(j * pw + i) * 4 + 3]) {
           x0 = Math.min(x0, i);
           y0 = Math.min(y0, j);
           x1 = Math.max(x1, i);
@@ -236,7 +242,7 @@ async function sheet(list, n) {
       let any = 0;
       for (let j = 0; j < h; j++)
         for (let i = 0; i < w; i++) {
-          const s = ((y0 + j) * n + x0 + i) * 4,
+          const s = ((y0 + j) * pw + x0 + i) * 4,
             a = z[s + 3] / 255,
             aw = wd[s + 3] / 255;
           let v = 0;
@@ -259,7 +265,7 @@ async function sheet(list, n) {
       d = id.data;
     for (let j = 0; j < h; j++)
       for (let i = 0; i < w; i++) {
-        const s = ((y0 + j) * n + x0 + i) * 4,
+        const s = ((y0 + j) * pw + x0 + i) * 4,
           t = (j * c.width + i) * 4;
         d[t] = z[s];
         d[t + 1] = z[s + 1];
@@ -276,7 +282,9 @@ async function sheet(list, n) {
       key: p.key,
       chunk: p.chunk,
       c,
-      e: [0, 0, w, h, x0, y0, used, 0],
+      e: p.cat
+        ? [0, 0, w, h, x0, y0, used, 0, pw, ph]
+        : [0, 0, w, h, x0, y0, used, 0],
     });
   }
   /* a file for each chunk, its parts on shelves: as wide as it needs, 2048 at most */
@@ -329,6 +337,27 @@ export async function listParts() {
     ...(await import("/js/l4ddart.js")),
     ...(await import("/js/l4ddrules.js")),
   });
+  /* Duck Cabin's cats (hangout/npcart.js): each pose one part, as it is (their colors never change) */
+  const { CATS, catSVG, catBox } = await import("/js/hangout/npcart.js");
+  for (const name of Object.keys(CATS))
+    for (const [pose, step] of [
+      ["stand", 0],
+      ["walk", -1],
+      ["walk", 1],
+      ["sit", 0],
+      ["loaf", 0],
+      ["swipe", 0],
+    ]) {
+      const svg = catSVG(name, { pose, step });
+      list.push({
+        layer: "cat",
+        key: partKey("cat", svg),
+        svg,
+        whites: [],
+        chunk: "cats",
+        cat: catBox(name),
+      });
+    }
   window.__parts = list;
   return list.length;
 }
