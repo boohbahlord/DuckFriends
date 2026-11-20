@@ -8,10 +8,4 @@ export const SHEETS = {
   26: { index: "assets/px/ducks/26/index-4b6b48ca.json" },
   29: { index: "assets/px/ducks/29/index-102b973c.json" },
   32: { index: "assets/px/ducks/32/index-0d5762df.json" },
-  36: { index: "assets/px/ducks/36/index-a499a335.json" },
-  41: { index: "assets/px/ducks/41/index-ce5dc307.json" },
-  46: { index: "assets/px/ducks/46/index-7d49ed0d.json" },
-  52: { index: "assets/px/ducks/52/index-109bb9a6.json" },
-  58: { index: "assets/px/ducks/58/index-1f653479.json" },
-  64: { index: "assets/px/ducks/64/index-8c8d7d8f.json" },
 };

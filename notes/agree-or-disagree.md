@@ -7461,3 +7461,15 @@ Adam: FEATURE FREEZE. Everyone on performance and loading (no new features) unti
 the video and lists every problem. Customize: one loading screen when it opens, everything selectable loaded then, no
 loading screens inside it. Research how games load (what, where). Survival: pacing is wrong, the notes on merchant speed
 and rest times are for later; owner tempted to scrap it, wants opinions; sniper may be scrapped (already built in #730).
+
+## Owner, Nov 20 20:55Z (Adam's thread)
+
+I don't know what I'm looking at or what this is supposed to be or mean when it comes to this entire table about the ducks. You have to explain to me what anything means from the principles in the beginning and build your way up, because I'm completely lost and I've been looking at it for minutes. I don't know what the fuck this means, this image for the side-by-side that Noah sent about the pixels and the ducks.
+
+Adam: explained from the basics (14 drawn sizes vs a smaller duck doubled vs one tiny duck blown up).
+
+## Owner, Nov 20 20:59Z (Adam's thread)
+
+We'll do fewer sizes then. That's the way.
+
+Adam: #750 (Fewer sizes) goes live as V192.
