@@ -77,6 +77,8 @@ export const GM = {
   MOVE_MS: [6000, 10000], // ms he's away, moving to a new spot nobody sees
   PERCH_MS: [14000, 22000], // ms he keeps to one spot with nothing in his sights before he moves on
   CLOSE: 2.5, // duck lengths: a duck this near and he fights it off (UMP, knife)
+  SEEN: 12, // duck lengths: a duck this near with a clear line sees a soldier leave (it stays till it's gone from sight)
+  GONE: 2.5, // duck lengths: a soldier going back the way it came is gone this near the spot it came in by (row 112: at 40 px, the squad crowding round it, most never got there and stood about at the map's edge for good)
 };
 /* the criminals' guns, and how each fires: rounds a burst, ms from one burst to the next (their hidden cooldowns), and
    the magazine a gun with none gets */
@@ -174,6 +176,17 @@ const magOf = (w) => (FIRE[w] && FIRE[w].mag) || ARMS[w].mag || 6;
 const reloadOf = (w) =>
   ARMS[w].reload || (ARMS[w].shell ? ARMS[w].shell * magOf(w) : 1500);
 
+/* a spot round (x, y), up to rx and ry off, where it can stand (H.open), else (x, y) itself. Row 112 (the owner: "It
+   should not feel like an Easter egg hunt"): a group spread round a spot just inside a fence put some of them on the
+   far side of it, where they stood stuck for good, out of everyone's way, and the wave never ended */
+function standNear(x, y, rx, ry, H) {
+  for (let t = 0; t < 8; t++) {
+    const a = x + rnd(-rx, rx),
+      b = y + rnd(-ry, ry);
+    if (!H.open || H.open(a, b)) return [a, b];
+  }
+  return [x, y];
+}
 /* ---------- a wave ---------- */
 /* a gunmen peak begins (kind "c" criminals, "s" soldiers): the first of them come in from outside */
 function start(s, kind, now, H) {
@@ -199,9 +212,7 @@ function start(s, kind, now, H) {
     if (!at) break;
     const g = Math.min(front - made, 2 + Math.floor(Math.random() * 2));
     for (let k = 0; k < g; k++, made++)
-      gm.gb.push(
-        newGunman(s, kind, at[0] + rnd(-30, 30), at[1] + rnd(-20, 20), H),
-      );
+      gm.gb.push(newGunman(s, kind, ...standNear(at[0], at[1], 30, 20, H), H));
   }
   return true;
 }
@@ -314,8 +325,7 @@ function squads(s, n, H) {
       const o = newGunman(
         s,
         "s",
-        at[0] + rnd(-50, 50),
-        at[1] + rnd(-30, 30),
+        ...standNear(at[0], at[1], 50, 30, H),
         H,
         k === 0 ? "lmg" : k <= sup ? "sup" : "rifle",
       );
@@ -601,7 +611,13 @@ function soldier(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
   if (sq.out) {
     o.st = "out";
     go(sq.at[0], sq.at[1], 1.15);
-    if (Math.hypot(o.x - sq.at[0], o.y - sq.at[1]) < 40) o.gone = 1;
+    const by = Math.hypot(o.x - sq.at[0], o.y - sq.at[1]);
+    if (
+      by < 40 ||
+      (by < GM.GONE * GM.DUCK &&
+        !ducks.some((d) => !d.j && dist(d) < GM.SEEN * GM.DUCK && sees(d)))
+    )
+      o.gone = 1; // (near the spot they came in by, and nobody sees it go: the squad crowds round that spot, so not all of them can stand on it)
     if (t && sees(t) && dist(t) < reachOf("handgun")) {
       o.hw = "handgun";
       shoot(s, o, t, now, H);
