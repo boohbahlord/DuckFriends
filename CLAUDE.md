@@ -51,28 +51,8 @@ serves `main`, so merging to `main` is deploying).
   (`vdd`, rules in `js/vddrules.js`, screen and the dining table's art in `js/vdd.js`, preview `tools/vdd-art.html`), Hangout
   (`hang`, plan in `notes/plan-hangout.md`: no rounds, no stats, always on its own map, Duck Cabin, `cabin`).
 
-## Sound without pops (every sound made in code: songs, piano, sounds)
-A pop is the wave jumping. Every rule below stops one kind of jump; check each one for every new voice or sound.
-- Start every note from silence and end it at silence. Its gain node starts at 0 (`g.gain.value = 0`), then
-  `setValueAtTime(0, t)` and a ramp up. Fade-ins of at least 5 ms (low notes 10 to 16 ms, thumps 16 ms or more). Fades
-  out over at least 10 ms; with `setTargetAtTime(0, t, tau)`, stop the source no sooner than `t + 6 * tau`.
-- Schedule ahead. Never set a start, a stop or a gain change at `currentTime` or before it: set late, the fade-in is
-  skipped and the note clicks (in Chrome it can even start far too loud). Live notes: `currentTime + 0.02` or more
-  (Firefox's `currentTime` only moves between tasks). A note-off uses the same lead as its note-on.
-- Never jump a gain or a filter. No `.value =` and no `setValueAtTime` to a new level on something that is sounding.
-  To change a level that is moving, hold it first (`cancelAndHoldAtTime(t)`, or `cancelScheduledValues(t)` then
-  `setValueAtTime(param.value, t)`), then ramp. Exponential ramps can't reach 0: ramp to 0.0001, or use setTargetAtTime.
-- Noise at a note's start (hammers, chiffs, breath, sticks) is heard as crackling: ramp it in over 5 ms or more, keep it
-  quiet and dark (filtered), or leave it out.
-- Leave headroom. The sum of everything playing stays under 1: lower each voice, and end the chain with a soft ceiling
-  (see `chain()` in `js/hangout/pianokeys.js`). A `DynamicsCompressorNode` adds its own make-up gain, so it is not a
-  limiter on its own.
-- Recordings: a buffer that starts or ends away from 0, or a loop that doesn't meet itself, clicks. Fade the first and
-  last few ms.
-- Keep it light. Every oscillator costs work 44,100 times a second; too many at once and the sound stutters
-  (crackles). Cap the voices, stop sources once silent, and prefer a recorded buffer for many repeats.
-- Check it: render the sound offline and run `findClicks` from `tools/clickcheck.js` (0 clicks, 0 clipped). Render it
-  late too (an `OfflineAudioContext.suspend()`, then schedule a few ms in the past) to prove a late note stays quiet.
+## Sound
+Every sound made in code follows `.claude/rules/sound.md` (no pops: start and end at silence, schedule ahead, never jump a gain, headroom, check with `tools/clickcheck.js`). Read it before touching any sound.
 
 ## Before each commit that touches css/ or js/
 Run `python3 tools/stamp.py`. It stamps a version on every file in `index.html`, so browsers never mix old and new files.
@@ -135,6 +115,13 @@ A program that is changed grows more complex unless work is spent against it (Le
   mode's name, unused exports, copies of a mechanic. A rise needs a reason in the PR.
 - Keep an index of the shared modules here (mechanic, its file, its breeds and hooks) and write each decision the day
   it's made.
+
+## Reading, writing and talking for less (the owner's, Nov 20 22:09Z; sources in /mnt/project-files/adam/ and project memory)
+- Map, then narrow: `git grep -l` the behavior, then read 100 to 200 line windows; never read a file over 1,500 lines
+  whole, nor `notes/agree-or-disagree.md` (about 270k tokens: search it).
+- Briefs carry paths and line ranges, never pasted code; the owner's words and "done when" go first.
+- Tools and tests print only failures; edits are search-and-replace, never whole-file rewrites.
+- A rule with no exceptions becomes a check or a hook, not another line here.
 
 ## The owner's rules
 - Function first: fix what's broken in the game modes before adding new things.

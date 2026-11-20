@@ -7557,3 +7557,17 @@ How much does this new process cost to our usage? In what ways can we reduce usa
 Adam: added "The technical spec: rules a machine enforces" (fitness functions with a ratchet: jscpd, ESLint
 no-restricted-syntax and max-lines, tsc --checkJs on breeds, single-writer scan, unused exports, golden hashes,
 pixel diffs, tools/check + Actions gate) and "Cost and benefit" to https://claude.ai/artifact/XHhf6qru96HD9txnAxG2rD.
+
+## Owner, Nov 20 22:09Z (Adam's thread)
+
+I want to now have you deep dive into some curriculum and rubrics for AI to improve reading efficiency of large code base, to improve the efficiency of tokens, to improve efficiency in talking, to improve efficiency in all these things, to optimize it, and what rubrics people have set out that aren't long or that we can borrow from to your memory so that we can make you more efficient and better at everything you do. because tokens are of the essence of your ability. If you are limited in how much you can work, that is a problem. And we want to be able to find that golden ratio where we can have code that is written that's better, that's more minimal, that's more well maintained, in which not as many actions or tokens have to be spent in order to do it, and to then be able to get more done. Like, that's the goal, is to optimize. We need technical rubrics people make for AI, for code, that can do this while preserving our principles and our goals as a priority.
+
+Adam: token rubric R1-R11 (Anthropic context engineering, Claude Code best practices, Claude 5 context rules, Agentless,
+SWE-agent, aider repo map, Lost in the Middle) in the maintenance doc and project memory (duckfriends-efficiency);
+memory index trimmed 18.8 KB -> 8.4 KB; sound rules moved to .claude/rules/sound.md (loads only for sound files).
+
+## Owner, Nov 20 22:10Z (project chat, relayed by Moses)
+
+This is definitely good enough. I'm proud. We can push this. I like that. I like that. In terms of the restroom pictures that we accomplished, this is good. We'll use that for downpour. And anything that looks like you can walk through it, you can walk through it in terms of the whole. That's important.
+
+Adam: #712 ships next deploy after Noah proves every opening that looks walkable is walkable (and walls block).
