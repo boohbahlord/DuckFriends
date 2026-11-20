@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v179",
+    version: 179,
+    date: "Nov 20, 2026",
+    title: "Zero and default",
+    news: [
+      "For Sandbox: 0 is a real value. Speed 0 spawns stay exactly where they are and are never pushed aside, damage 0 hurts nobody, and 0 seconds between spawns means no wait.",
+      "For Sandbox: every switch in a Spawn, Respawn, Loot or Zone window can be true, false or default, and a box left empty uses the default (M's for that kind, or the game's own).",
+    ],
+  },
+  {
     id: "v178",
     version: 178,
     date: "Nov 20, 2026",
