@@ -257,6 +257,18 @@ export const SB_ZONE = {
   }, // ("they can heal or damage at different rates")
   zwho: listBox("Who it hits", "players"), // (Players, Everything, a kind, a spawn by its color or name, a player's name)
   wall: listBox("Who can't pass", ""), // (plan Phase 3, walls: the same list; nothing ticked, it stops nobody)
+  /* plan Phase 4, floors (the owner's: "a given zone is given an elevation of 2 ... The lowest ... is 1", "Maybe 6", and
+     "ground is the settings level, where you can stand on it and walk on it while it's of that height"): on a world a
+     zone sits at its elevation, one gas station roof over the next (elevation 1: the map's own ground); with Ground on,
+     its working squares are a floor (sbfloors.js) */
+  fl: {
+    name: "Elevation (1 is the ground)",
+    kind: "int",
+    min: 1,
+    max: 6,
+    def: "1",
+  },
+  gnd: { name: "Ground (stand and walk on it)", kind: "bool", def: "f" },
   /* plan Phase 3: "Outlines: show outline for chosen entities, in a chosen color; a + duplicates the row for another
      color": rows "who, who=#rrggbb; …" (sbOlRows) */
   ol: {

@@ -1007,6 +1007,7 @@ export function mountWorld(board, api) {
         ev.thud = Math.max(ev.thud || 0, me.top - gnd);
         me.z = gnd;
         me.vz = null;
+        me._ft = undefined;
       }
       return;
     }
@@ -1390,14 +1391,23 @@ export function mountWorld(board, api) {
           me._za = za;
         }
       } else if (me.vz != null) {
-        // falling
-        me.vz -= G * dt;
+        // falling (Sandbox's floors, plan Phase 4, the owner's: "when you jump off of, let's say 2 elevations, the fall
+        // time onto the bottom floor ... is 2 times of that from the jump from the gas station roof": a drop of D falls
+        // with its pull cut to roof / D, so it lasts D / roof times the roof's own fall)
+        if (me._ft !== me.top) {
+          me._ft = me.top;
+          const D = me.top - floor(me, x, y),
+            roof = L.floorStep();
+          me._fg = L.fallsByFloors() && D > roof ? roof / D : 1;
+        }
+        me.vz -= G * (me._fg || 1) * dt;
         me.z += me.vz * dt;
         const gnd = floor(me, x, y);
         if (me.z <= gnd) {
           ev.thud = me.top - gnd;
           me.z = gnd;
           me.vz = null;
+          me._ft = undefined;
         }
       }
       const n0 = Math.hypot(ax, ay);
