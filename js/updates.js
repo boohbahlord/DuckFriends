@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v150",
+    version: 150,
+    date: "Nov 20, 2026",
+    title: "Your own game modes",
+    news: [
+      "For Sandbox: G has Save game mode (a name and a description, kept on your device; the same name replaces the old one) and Test game mode, which plays it as players would see it. Stop test at the top left brings your build back.",
+      "Game Settings has Custom under Game mode: the host's own game modes, played with no tools and their own player limit.",
+    ],
+  },
+  {
     id: "v149",
     version: 149,
     date: "Nov 20, 2026",

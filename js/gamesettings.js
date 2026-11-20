@@ -7,7 +7,8 @@
 import { SB_WORLDS, SB_WORLD_NAMES, SB_RIGHTS } from "./sandboxrules.js";
 import { esc, openWindow, setHTML } from "./ui.js";
 import { artBackdrop } from "./art.js";
-import { modesFor, modeOf, CABIN_MODES, CATS } from "./modes.js";
+import { modesFor, modeOf, modeName, CABIN_MODES, CATS } from "./modes.js";
+import { modesNow, loadModes } from "./gmodes.js";
 import { MAPS, MAP_VARIANTS, mapName, mapForm, umapOf } from "./maps.js";
 import { isUmap, umapIds } from "./umaprules.js";
 import { bringMaps, myMaps } from "./umaps.js";
@@ -1106,7 +1107,7 @@ export function openGameSettings(R, start = null) {
         ? s.options.trueRandom
           ? "True Random"
           : "Random"
-        : modeOf(s.options.mode).name;
+        : modeName(s);
   const mapVal = (s) =>
     s.options.mapPick === "vote"
       ? "Vote Mode & Map"
@@ -1257,13 +1258,27 @@ export function openGameSettings(R, start = null) {
                     `data-mode="${m.id}"`,
                     m.name,
                     "",
-                    !o.modePick && o.mode === m.id,
+                    !o.modePick && o.mode === m.id && !o.gm,
                     dis,
                   ),
                 )
                 .join("")}</ul></details>`,
           )
-          .join("")}</div>`
+          .join("")}${
+          host() && modesNow().length
+            ? `<details class="arm-fold gs-fold gs-cat" data-fold="cat:custom"${openFolds.has("cat:custom") ? " open" : ""}><summary>Custom</summary><ul class="arm-list">${modesNow()
+                .map((m) =>
+                  row(
+                    `data-gm="${esc(m.id)}"`,
+                    m.name,
+                    "",
+                    !o.modePick && o.mode === "sandbox" && o.gm === m.id,
+                    dis,
+                  ),
+                )
+                .join("")}</ul></details>`
+            : ""
+        }</div>`
       );
     }
     if (page.startsWith("cat:")) {
@@ -1429,6 +1444,14 @@ export function openGameSettings(R, start = null) {
                     : { kind: "mode", id: o.modePick || o.mode };
     const card = (title, text, pic = "") =>
       `<div class="gs-pic${pic ? "" : " empty"}">${pic}</div><div class="gs-text"><h3>${esc(title)}</h3>${text ? `<p>${esc(text)}</p>` : ""}</div>`;
+    if (p.kind === "gm") {
+      const m = modesNow().find((x) => x.id === p.id) || {};
+      return card(
+        m.name || "Custom",
+        `${m.desc ? m.desc + " " : ""}Made in Sandbox. Up to ${m.most || 8} players.`,
+        gamePic(s, "sandbox"),
+      );
+    }
     if (p.kind === "mode") {
       if (p.id === "vote" || p.id === "random")
         return card(
@@ -1513,6 +1536,7 @@ export function openGameSettings(R, start = null) {
   };
   const go = (p) => {
     page = p;
+    if (p === "mode") loadModes(() => page === "mode" && paint(false)); // (the game modes made in Sandbox, on this device: gmodes.js)
     if (p === "map") bringMaps(R); // (the host's made maps into the room, so they're on the list: umaps.js)
     peek = null;
     peekSel = null;
@@ -1521,6 +1545,7 @@ export function openGameSettings(R, start = null) {
     if (f) f.focus();
   };
   if (start === "map") bringMaps(R);
+  loadModes(() => page === "mode" && paint(false)); // (Custom: the game modes made in Sandbox, gmodes.js)
   /* the description of a setting (its name and what it does) */
   const describe = (k) => {
     const all = [
@@ -1548,6 +1573,7 @@ export function openGameSettings(R, start = null) {
     const r = t.closest(".arm-row"),
       set = t.closest(".gs-set");
     if (r && r.dataset.mode) p = { kind: "mode", id: r.dataset.mode };
+    else if (r && r.dataset.gm) p = { kind: "gm", id: r.dataset.gm };
     else if (r && r.dataset.map) p = { kind: "map", id: r.dataset.map };
     else if (r && r.dataset.pick)
       p = {
@@ -1675,7 +1701,23 @@ export function openGameSettings(R, start = null) {
             return;
           }
           if (r.dataset.mode) {
-            if (boss) send({ mode: r.dataset.mode });
+            if (boss)
+              send({
+                mode: r.dataset.mode,
+                ...(o.gm ? { gm: "", gmName: "", gmMost: 0 } : {}),
+              }); // (a made game mode picked before gives way)
+            return;
+          }
+          if (r.dataset.gm) {
+            const m = modesNow().find((x) => x.id === r.dataset.gm);
+            if (boss && m)
+              send({
+                mode: "sandbox",
+                modePick: "",
+                gm: m.id,
+                gmName: m.name,
+                gmMost: m.most || 8,
+              }); // (a game mode made in Sandbox, on this device: gmodes.js; its own map comes with it)
             return;
           }
           if (r.dataset.sb) {

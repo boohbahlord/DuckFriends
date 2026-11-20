@@ -27,6 +27,7 @@ import { sbSnapshot, newSaveId, SAVE_V } from "./sbsave.js";
 import { lobbyBtnHTML } from "./vote.js";
 import { music, allowSongs, allowedSongs } from "./music.js";
 import { sfx } from "./sound.js";
+import { saveModeWin, startTest, autoPick } from "./gmodes.js";
 
 /* ---------- the store ---------- */
 const DB = "duckfriends-sandbox",
@@ -226,6 +227,7 @@ const playing = (s, r) =>
   isSb(s) &&
   !!s.sbsv &&
   s.hostId === r.me &&
+  !s.gmPlay && // (a made game mode played, or tested: the build isn't changed by playing it)
   !["lobby", "over", "countdown"].includes(s.phase);
 function flush() {
   const l = A.last;
@@ -297,6 +299,9 @@ export function saveRows(R) {
     },
   ); // (a map from a picture, kept on this device: umaps.js; the owner's, Nov 19 22:59Z, "In Sandbox ... They click it and they can upload an image")
   rows.push({ label: "Rules…", act: (r) => rulesWin(r) }); // (plan Phase 6: lives, the down phase, crits, watching when out)
+  rows.push({ label: "Save game mode…", act: (r) => saveModeWin(r) }); // (plan Phase 6: kept on this device, gmodes.js)
+  if (s.hostId === R.me && s.sbsv)
+    rows.push({ label: "Test game mode", act: (r) => startTest(r) }); // (as players would see it; Stop test at the top left)
   const on = allowedSongs(s); // (Miles Jr.'s song list, music.js: only these play, and everyone hears the same)
   rows.push({
     label: `Music: ${on.length ? `${on.length} of ${music.tracks.length} songs` : "no music"}…`,
@@ -607,6 +612,7 @@ async function importFile(input) {
 export function paintSbPick(R, pause) {
   const s = R.state;
   if (!(s.phase === "countdown" && s.sbpk)) return closeSbPick();
+  if (autoPick(R)) return closeSbPick(); // (a made game mode: the host's device hands it over, no pick: gmodes.js)
   if (!W || W.R !== R || W.key !== s.at + ":" + s.hostId + ":" + R.me)
     build(R, pause);
   const lv = lobbyBtnHTML(s, R.me);

@@ -119,6 +119,11 @@ export const MODES = [
   },
 ];
 export const modeOf = (id) => MODES.find((m) => m.id === id) || MODES[0];
+/* the room's game's name: a made game mode's own (Sandbox, gmodes.js), else its mode's */
+export const modeName = (s) =>
+  s.options.mode === "sandbox" && s.options.gm && s.options.gmName
+    ? String(s.options.gmName)
+    : modeOf(s.options.mode).name;
 /* Single Player (the owner's, Nov 18): the room on the device with no internet plays only these, and everything that
    lists the games (the votes, Random, Game Settings) lists only these there */
 export const SOLO_MODES = ["hang", "l4dd", "surv", "mgj", "sandbox"];

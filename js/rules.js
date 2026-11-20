@@ -692,6 +692,12 @@ function sbMapPicked(s, o) {
   if (o.map === "cabin") s.options.sbMap = s.options.sbMap || "cabin";
   else if (o.map || o.mapPick) s.options.sbMap = "";
 }
+/* the most players the room takes: its own most, or fewer for a made game mode (its settings file's player limit, the
+   owner's: "it's 2 players max for the actual game mode when it's made, not for the actual sandbox itself") */
+export const capOf = (s) =>
+  s.options.mode === "sandbox" && s.options.gm && +s.options.gmMost >= 2
+    ? Math.min(s.max, +s.options.gmMost)
+    : s.max;
 /* the countdown or a vote is over: the next vote, or the game */
 function nextVote(s, now) {
   if (s.vt) closeVote(s);
@@ -1782,7 +1788,7 @@ function reduceStep(state, a, now) {
         P[a.p.id] = { ...P[a.p.id], ...a.p };
         return s;
       }
-      if (s.seat.filter((id) => !P[id].helper).length >= s.max) return s; // (the fireplace's Justin takes nobody's seat)
+      if (s.seat.filter((id) => !P[id].helper).length >= capOf(s)) return s; // (the fireplace's Justin takes nobody's seat)
       if (
         (s.banned || {})[a.p.id] ||
         (a.p.acct && (s.banned || {})["acct:" + a.p.acct])
@@ -3091,14 +3097,34 @@ function reduceStep(state, a, now) {
       delete s.sbpk;
       if (!sbPick(s, a, now)) return state;
       if (a.save) {
-        if (s.options.sbMap)
-          s.voteQ = (s.voteQ || []).filter((k) => k !== "map"); // (a world save brings its own map)
+        if (s.options.sbMap || s.gmPlay)
+          s.voteQ = (s.voteQ || []).filter((k) => k !== "map"); // (a world save brings its own map; a made game mode, its own: gmodes.js)
         say(s, `${me.name} is loading a save: ${s.sbsv.name}`);
       } else say(s, `${me.name} started a new Sandbox.`);
       return nextVote(s, now);
     case "umap":
       // a map the host made, brought into the room or taken out (umaprules.js)
       return umapAct(s, a) ? s : state;
+    case "sbTest": {
+      /* G's Test game mode (gmodes.js): the host's device hands the build, and the Sandbox starts again from it as players
+         would see it, no tools (on: 1); Stop test starts it again from the build as it was (on: 0) */
+      if (!host || !isSb(s) || !["sandbox", "hang"].includes(s.phase))
+        return state;
+      if (!a.on && !s.gmTest) return state;
+      const banned = s.banned;
+      backToLobby(
+        s,
+        a.on
+          ? `${me.name} is testing the game mode.`
+          : `${me.name} stopped the test.`,
+      );
+      s.banned = banned;
+      s.sbAsked = 1;
+      if (!sbPick(s, { save: a.save, play: a.on ? 1 : 0, test: 1 }, now))
+        return state;
+      placeMap(s);
+      return beginGame(s, now);
+    }
     case "sbsv":
       // Sandbox: Save as, the session's new name (and id) on the host's device (sbsave.js)
       return host && sbRename(s, a, now) ? s : state;

@@ -47,8 +47,11 @@ export const sbOnBoard = (s) => isSb(s) && !sbWorld(s.options);
    everyone when Democracy of Ducklings lets everyone change the settings (the owner's answer 2, Nov 19 01:34Z); and
    whoever the host lets (p, later: s.sb.ok = { id: true }). A new host takes the old one's place at once, since this
    asks who the host is now */
+/* a made game mode being played (or tested: sbsave.js, gmodes.js): nobody changes the Sandbox, as players see it */
+export const sbPlaying = (s) => isSb(s) && !!s.gmPlay;
 export function sbCan(s, id) {
   if (!isSb(s) || !id || !s.players[id] || s.players[id].bot) return false;
+  if (s.gmPlay) return false; // (a made game mode: no tools)
   if (id === s.hostId) return true;
   if (+s.options.sbAll === 1) return true; // (Game Settings: "Everyone can change Sandbox")
   if (+s.options.dod === 1 && ((s.dod || {}).on || {}).settings) return true; // (rules.js dodOn(s, "settings"))
@@ -66,6 +69,7 @@ export const SB_RIGHTS = [
 ];
 export function sbMay(s, id, k) {
   if (!isSb(s) || !id || !s.players[id] || s.players[id].bot) return false;
+  if (s.gmPlay) return false; // (a made game mode: no tools)
   if (id === s.hostId) return true;
   if (+s.options["sbOk" + String(k).toUpperCase()] === 1) return true;
   if (
@@ -121,7 +125,8 @@ export const SB_RULES = {
   /* plan Phase 6: "anything the menus don't show lives in a read-only-by-default settings folder in Seriat" (the owner's,
      Nov 19 21:59Z: "Crit percent chance could be in a file that the players can change, among other settings", gore,
      and "you can change the limit for the amount of players within a game mode in the file ... 8 players max, which is
-     the normal ... or you can make it 4 players max"). Seriat's settings/limits (shell.js), never G's window */
+     the normal ... or you can make it 4 players max"; "it's 2 players max for the actual game mode when it's made, not
+     for the actual sandbox itself that makes the game mode"). Seriat's settings/limits (shell.js), never G's window */
   critp: {
     name: "crit chance",
     kind: "int",
@@ -175,7 +180,6 @@ export function sbRulesAct(s, a) {
   if (rules[a.k] === v) return false;
   rules[a.k] = v;
   s.sb = { ...s.sb, rules };
-  if (a.k === "most") s.max = Math.max(s.seat.length, sbRule(s, "most")); // (the room takes no more than that; those in it stay)
   return true;
 }
 /* gore off: the room's Gore setting, or Sandbox's settings file (gore = false) */
