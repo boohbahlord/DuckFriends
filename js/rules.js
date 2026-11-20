@@ -3749,6 +3749,17 @@ const SB_H = {
    maps bring theirs back their own way: l4ddrules.js) */
 onGetUp((s, id) => {
   if (!sbOnBoard(s) && !onCabin(s)) return false;
+  /* G's Rules, Lives (0: unlimited): each getting up spends one, and out of them the duck stays down for good, as on the
+     zombie maps (the owner's row 199 test, "fall and die", on Duck Cabin) */
+  const most = isSb(s) ? sbRule(s, "lives") : 0;
+  if (most && s.players[id]) {
+    const used = ((s.sb && s.sb.died) || {})[id] || 0;
+    s.sb = {
+      ...s.sb,
+      died: { ...((s.sb && s.sb.died) || {}), [id]: used + 1 },
+    };
+    if (used + 1 >= most) return true; // (out of lives: it stays down)
+  }
   sbPlaceDuck(s, id);
   return false;
 });

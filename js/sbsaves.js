@@ -391,7 +391,7 @@ function rulesWin(R) {
       .join("");
   };
   return openWindow(
-    `<h2>Rules</h2><p class="small dim">Lives, the down phase, crits, watching and everyone out are for the zombie maps (the arcade's cabin and Downpour); Board size for the plain boards; a game mode's look on every map. Saved with the Sandbox.</p><div class="sb-rules sb-set"></div>`,
+    `<h2>Rules</h2><p class="small dim">Lives count on every map (out of them, you stay down); the down phase, crits, watching and everyone out are for the zombie maps (the arcade's cabin and Downpour); Board size for the plain boards; a game mode's look on every map. Saved with the Sandbox.</p><div class="sb-rules sb-set"></div>`,
     {
       cls: "win-small sb-ruleswin",
       onOpen(w) {
