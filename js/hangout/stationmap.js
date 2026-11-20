@@ -163,7 +163,7 @@ export const HOOD = {
 export const PRIEST = { x: 2550, y: 5360 };
 export const ANGEL = { x: 2250, y: 5717 }; // (against the chapel's south wall: its front on the wall's inside face)
 export const START = { x: 2600, y: 1600 };
-/* the dead (the owner's, Nov 17 12:28Z; stationart.js corpse): Jaime cut up in the chapel's aisle (Justin stops by him:
+/* the dead (the owner's, Nov 17 12:28Z; stationart.js corpse): a dead duck in the chapel's aisle (Justin stops by him:
    l4ddrules.js), the soldier on the gas station's roof with his flare beside him (it burns at each round's start:
    l4dd.js), and which cars have their windows smashed in and the dead yellow duck on a hood */
 export const JAIME_BODY = { x: 2300, y: 4800 };
@@ -584,7 +584,7 @@ function planBuild(b) {
   put("priest", PRIEST.x - 30, PRIEST.y - 20, 60, 40, 90, {});
   put("corpse", JAIME_BODY.x - 70, JAIME_BODY.y - 35, 140, 70, 16, {
     z: 0,
-    who: "jaime",
+    who: "body",
   }); // (lying on the floor: nothing stops on him)
   put("corpse", TROOPER.x - 70, TROOPER.y - 35, 140, 70, 16, {
     z: 0,

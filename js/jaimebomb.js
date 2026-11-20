@@ -29,58 +29,11 @@ export const BOMB_LINES = [
 ];
 /* more of the owner's lines for Jaime, word for word (Nov 4): what he says now and then as he stabs Justin, and when
    Justin hits him */
-export const JAIME_MAD = [
-  "I'm tired of your shit Justin!",
-  "I'm not Mexican!",
-  "I hate you Justin!",
-  "Die Justin!",
-  "You're a piece of shit Justin!",
-  "I'm not your slave Justin!",
-  "Justin, I'm not your slave anymore!",
-  "Why are you like this Justin!",
-  "Justin no!",
-  "Justin, you piece of shit!",
-];
-export const JAIME_HURT = [
-  "I am tired of being hit with controllers!",
-  "I hate the chair! Not the chair!",
-  "Not the controller! Ouch!",
-  "Ouch Justin!",
-  "Stop hitting me Justin!",
-  "That hurts Justin!",
-];
+export const JAIME_MAD = []; // (every line mentioning Jaime left the game: the owner\'s, Nov 20 21:38Z)
+export const JAIME_HURT = []; // (every line mentioning Jaime left the game: the owner\'s, Nov 20 21:38Z)
 /* the owner's new lines for Justin against Jaime, word for word (Nov 4): when a Jaime hits him, and his answer to a
    Jaime Bomb */
-export const JUSTIN_AT_JAIME = [
-  "You deserve that flipping controller!",
-  "I should beat Jaime!!!",
-  "I'M GOING TO KILL YOU JAIME!!!!!!",
-  "Die Jaime!!!",
-  "JAIME!!!!!",
-  "JAIME STOP!!!!",
-  "KILL JAIME!!!!!!",
-  "Somone kill Jaime!",
-  "Jaime is a STUPID IDIOT!!!!",
-  "JAIME!!! I SAID STOP!!!",
-  "I WON'T FEED YOU JAIME!!!!",
-  "GO BACK TO MY CLOSET JAIME!!!!!!",
-  "JAIME I'M TRYING TO SOUND WHORE!!!",
-  "JAIME!!! YOU STUPID MEXICAN!!!!",
-  "I HATE YOU JAIME!!!!!",
-  "JAIIIIIMEE!!!!!!",
-  "You're a piece of SHIT Jaime!!!!",
-  "Someone?! Beat Jaime!!!",
-  "EVERYONE!!! BEAT JAIME!!!!",
-  "WE NEED TO BEAT THE POOP OUT OF JAIME!!!!!",
-  "JAIME! YOU STUPID MEXICAN!!!!",
-  "I HATE MEXICANS!!!!!",
-  "I AM GOING TO THROW A CHAIR AT JAIMEM, AGAIN!!!",
-  "JAIME!!! YOU ARE WHY I'M NOT PLAT!!!!",
-  "WHY DO WOMEN LIKE JAIME BUT NOT ME!?!?!?!",
-  "Jaime isn't a civil engineer!!!!",
-  "WHY DOES JAIME HAVE MORE GIRLFRIENDS THEN ME!!?!?!?!?!?!?",
-  "STOP EATING MY ZEBRA CAKES JAIME!!! YOU STUPID IDIOT!!!",
-];
+export const JUSTIN_AT_JAIME = []; // (every line mentioning Jaime left the game: the owner\'s, Nov 20 21:38Z)
 /* Justin's answers to a Jaime Bomb: his own lines that start "Shut up" or "I don't care", and his lines against Jaime */
 export const SNAP_LINES = [
   ...E_LINES.filter((l) => /^(shut up|i don't care)/i.test(l)),

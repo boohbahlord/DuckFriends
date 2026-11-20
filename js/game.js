@@ -7,7 +7,7 @@
    turn see-through when a duck walks under them.
 
    Your duck: WASD or the arrow keys walk (Shift sprints, with speed lines); Space jumps, slow and high, with a shadow left
-   on the ground (low gravity makes it slower and higher; a jump counts when the duck lands); Enter ends your turn. With
+   on the ground (a jump counts when the duck lands); Enter ends your turn. With
    "Mouse moves your duck" a click walks it there; with "Show multiple choice" seven buttons put it on a column. Ducks
    squash a little when they push against a wall or another duck. On a touch screen a see-through joystick appears under
    a held finger, or (Settings → Controls) a tap walks the duck there; see touch.js. On a phone held upright the board
@@ -176,7 +176,6 @@ import {
   hasKey,
   colorsOf,
   momentHTML,
-  puffHTML,
   confettiRain,
   pressFX,
   BULLET,
@@ -293,6 +292,7 @@ import {
 import { rainbowHTML } from "./art.js";
 import { statBoxHTML, ddrBoxHTML, openStats } from "./stats.js";
 import { profile, save, statMode } from "./store.js";
+import { fmtJumps } from "./format.js";
 import {
   openSettings,
   netLevel,
@@ -551,7 +551,7 @@ let R = null,
   docks = null;
 let shown = ""; // which phase view is up (phase|round|question)
 const keys = new Set();
-let me = null; // my duck here: { x, y, j (jump start), lj (a long jump), dj (when a double jump began), face }
+let me = null; // my duck here: { x, y, j (jump start), face }
 let target = null; // where a click or a tap asked my duck to walk: { x, y, sprint, mark }
 /* the chain gun's recoil (the owner's, Nov 16): while I fire it, my duck is pushed slowly back, away from the aim, at
    RECOIL.K of my walking speed; the keys add their own way to it, so walking into the aim holds against it (a vector
@@ -668,18 +668,12 @@ let cam = null; // the bracket's camera: the diagram's corner on the board (dx, 
 /* ---------- movement numbers (board widths or heights per second) ---------- */
 const SPEED = { x: 0.45, y: 1.0, px: 0.5, py: 0.85, sprint: SPRINT.speed }; // (sprint: the whole game's, gamedefaults.js)
 const MGJ_SLOW = 0.8;
-const JUMP = { normal: { T: 0.62, H: 1.35 }, low: { T: 1.2, H: 2 } }; // seconds in the air; apex in duck heights (low gravity: floatier, still quick)
-/* a duck's jump: a long jump floats longer and a little higher, a short jump is lower and quicker (60% of the height in
-   70% of the time: the owner's numbers); a double jump starts a second arc where the duck is, a little lower than the
-   first */
+const JUMP = { T: 0.62, H: 1.35 }; // seconds in the air; apex in duck heights (one jump for everyone: no long, short or double jump, no slow gravity, the owner's, Nov 20 21:38Z)
+/* a duck's jump: the one arc; Hangout's trampoline bounces higher (pos.tb) */
 const jumpCfg = (pos) => {
-  const b = JUMP[R && R.state.options.lowGravity ? "low" : "normal"];
-  if (pos && pos.tb > 0) return { T: b.T * Math.sqrt(pos.tb / b.H), H: pos.tb }; // Hangout's trampoline: a bounce tb duck heights high
-  return pos && pos.lj
-    ? { T: b.T * 1.4, H: b.H * 1.15 }
-    : pos && pos.sj
-      ? { T: b.T * 0.7, H: b.H * 0.6 }
-      : b;
+  if (pos && pos.tb > 0)
+    return { T: JUMP.T * Math.sqrt(pos.tb / JUMP.H), H: pos.tb }; // Hangout's trampoline: a bounce tb duck heights high
+  return JUMP;
 };
 const arc = (t0, now, T, H) => {
   const t = (now - t0) / 1000 / T;
@@ -689,12 +683,9 @@ const jumpZ = (pos, now) => {
   if (pos && pos.jf && pos.fz !== undefined) return pos.fz; // (the jetpack, on the boards: its height)
   if (!pos || !pos.j) return 0;
   const { T, H } = jumpCfg(pos);
-  if (!pos.dj || now < pos.dj) return arc(pos.j, now, T, H);
-  const z0 = arc(pos.j, pos.dj, T, H),
-    t = (now - pos.dj) / 1000 / T; // the second arc: from where it began down to the ground
-  return t >= 1 ? 0 : z0 * (1 - t) + 4 * H * 0.8 * t * (1 - t);
+  return arc(pos.j, now, T, H);
 };
-const landsAt = (pos) => (pos.dj || pos.j) + jumpCfg(pos).T * 1000;
+const landsAt = (pos) => pos.j + jumpCfg(pos).T * 1000;
 /* the jetpack: is it on a duck's back (Quacky Zombies: switched on from its slot; the other modes: the Jetpack
    special's key; never in Mad God Justin), and how much flight my own has left (ms) */
 function jetOn(s, id, now) {
@@ -1535,7 +1526,6 @@ function drawDucks(now = clockNow()) {
   if (!hang && onBoardPhase() && s.pos[R.me])
     tileKnock(s, posOf(R.me), performance.now());
   const boxes = [],
-    puffs = [],
     wearsX = new Set(),
     brood = [],
     arms = [];
@@ -2176,11 +2166,6 @@ function drawDucks(now = clockNow()) {
                     ? held && hasKey(p.duck, held) && held
                     : pos.w) || shown; // (Quacky Zombies: in hand while it's up) // (Mad God Justin: every duck's knife always out; his hammer swing over his gun)   // (Mad God Justin: every duck's knife always out)   // (a dagger thrown without keeping it out: only the one in the air)
     if (w) arms.push([id, w, pos, p.duck, mine]);
-    if (pos.dj && d._dj !== pos.dj) {
-      d._dj = pos.dj;
-      if (now - pos.dj < 700)
-        puffs.push([at.left, at.top - z, colorsOf(p.duck, "double")[0]]);
-    } // a double jump: a little cloud where it began
     const lx = losers.has(id) || wearsX.has(id);
     if (d._lx !== lx) {
       d._lx = lx;
@@ -2386,11 +2371,6 @@ function drawDucks(now = clockNow()) {
   /* the handgun's bullets and the thrown daggers, flying the way they were aimed */
   const fxl = $(".fxl", board),
     live = new Set();
-  for (const [x, y, c] of puffs) {
-    const pf = el(puffHTML(x, y, size, c));
-    fxl.append(pf);
-    setTimeout(() => pf.remove(), 1000);
-  }
   /* the pixel effects (fx.js): a shot new this frame flashes and smokes at its barrel (after the weapons are placed,
      below); one gone since last frame hit something there (its blood: fxHitAt) */
   const shotNow = new Set(),
@@ -4123,7 +4103,6 @@ function playFx(f) {
         ...NEW_GUN_SFX,
         zebra: sfx.cakeThrow,
         adrenaline: sfx.adrenaline,
-        longjump: sfx.boing,
       })[f.what]?.(heard(f.by));
       return;
     } // (Quacky Zombies: the weapon turns toward the aim; the shot flies from the room's state)
@@ -4971,9 +4950,6 @@ function sendMove(force) {
     me.x.toFixed(4),
     me.y.toFixed(4),
     me.j,
-    me.lj,
-    me.sj,
-    me.dj,
     q,
     sprinting && moving,
     w,
@@ -5004,9 +4980,6 @@ function sendMove(force) {
     x: me.x,
     y: me.y,
     j: me.j || 0,
-    ...(me.j && me.lj ? { lj: true } : {}),
-    ...(me.j && me.sj ? { sj: true } : {}),
-    ...(me.j && me.dj ? { dj: me.dj } : {}),
     ...(me.j && me.tb ? { tb: me.tb } : {}),
     ...(me.jf
       ? {
@@ -5094,13 +5067,10 @@ function step(dt, now) {
   const s = R.state;
   // a jump lands: it counts now
   if (me.j && now >= landsAt(me)) {
-    const n = me.dj ? 2 : 1;
     me.j = 0;
-    me.lj = me.sj = false;
-    me.dj = 0;
-    for (let i = 0; i < n; i++) countJump();
+    countJump();
     sendMove(true);
-  } // (a double jump is two)
+  }
   if (me.jf) {
     // the jetpack: up while Space is held, the height kept with Shift, else it comes down onto the board again
     const jk = jetKeys(),
@@ -5408,9 +5378,6 @@ function resetDuck() {
     const p = world.spawn();
     Object.assign(me, p, {
       j: 0,
-      lj: false,
-      sj: false,
-      dj: 0,
       b: p.z,
       vz: null,
     });
@@ -5452,51 +5419,22 @@ function resetDuck() {
   me.x = x;
   me.y = y;
   me.j = 0;
-  me.lj = me.sj = false;
-  me.dj = 0;
   target = null;
   R.send({ t: "move", x, y, j: 0, reset: true });
   return inCol === null
     ? "Duck reset: somewhere new."
     : "Duck reset: somewhere new in your column.";
 }
-/* how: 'long' (the Long jump's key), 'double' (the Double jump's key) or nothing (Space, a tap); kept-on jumps count too */
-function jump(how) {
+/* Space or a tap */
+function jump() {
   if (!me || !onBoardPhase()) return;
   const now = clockNow();
   if (world && isHang(R.state) && !world.canJump(me)) return; // (an activity took Space, or my duck is falling)
   if (hangStill(R.state, R.me, now) || downStill(R.state, R.me, now)) return;
   if (!me.j && !me.jf && jetOn(R.state, R.me, now) && fuelLeft() > 0)
     return takeOff(); // (the jetpack on: Space flies instead of jumping)
-  if (me.jf) return;
-  if (me.j) {
-    // in the air: the second jump, once a jump, if the Double jump is on a key
-    if (
-      me.dj ||
-      !(
-        how === "double" ||
-        (kept.has("double") && hasKey(playDuck(), "double"))
-      ) ||
-      jumpZ(me, now) <= 0
-    )
-      return;
-    me.dj = now;
-    sendMove(true);
-    sfx.puff();
-    return;
-  }
+  if (me.jf || me.j) return;
   me.j = now;
-  me.dj = 0;
-  me.lj =
-    how === "long" ||
-    (how !== "short" &&
-      kept.has("longjump") &&
-      hasKey(playDuck(), "longjump")) ||
-    (isL4dd(R.state) && how !== "short" && !!(kitOf(R.state, R.me) || {}).lj); // (Quacky Zombies: the Long jump from the fireplace, switched on)
-  me.sj =
-    !me.lj &&
-    (how === "short" ||
-      (kept.has("shortjump") && hasKey(playDuck(), "shortjump"))); // (the Short jump: lower and quicker)
   if (world && isHang(R.state)) world.started(me); // (the arc starts from the height it stands on)
   sfx.hop();
   sendMove(true);
@@ -6078,8 +6016,8 @@ function recordRound(s) {
 /* ---------- the specials on the number keys ---------- */
 const myDuck = () => ((R && R.state.players[R.me]) || {}).duck || profile.duck;
 /* the duck my keys play with: in Quacky Zombies its slots on 1 to 4 (melee, ranged, ranged, the special); in Mad God
-   Justin its own keys: 1 the knife, 2 the pistol (it never reloads: in place of the bow, the owner's, Nov 16), 3 Jaime,
-   4 the weapon picked up, 5 the zebra cake (my own keys stay as they are) */
+   Justin its own keys: 1 the knife, 2 the pistol (it never reloads: in place of the bow, the owner's, Nov 16),
+   3 the weapon picked up, 4 the zebra cake (my own keys stay as they are) */
 const playDuck = () =>
   R && isL4dd(R.state)
     ? {
@@ -6099,10 +6037,9 @@ const playDuck = () =>
           keys: [
             MGJ_MELEE,
             "handgun",
-            "jaime",
             specialById(myPick()) ? myPick() : null,
             "zebra",
-            ...Array(5).fill(null),
+            ...Array(6).fill(null),
           ],
         }
       : R && sbHotOn(R.state)
@@ -6301,10 +6238,7 @@ function useKey(i, keep, toggle = false) {
   }
   if (isMgj(R.state)) {
     const id = keysOf(playDuck())[i];
-    if (mgjToggles(id))
-      mgjOut2(id); // (kept out once picked: a click or V uses it)
-    else if (id === "jaime" && me && me.x >= 0)
-      R.send({ t: "use", what: "jaime", face: me.face || 1 });
+    if (mgjToggles(id)) mgjOut2(id); // (kept out once picked: a click or V uses it)
     if (bar) setTimeout(() => bar && bar.refresh(), 60);
     return;
   } // (Mad God Justin's own keys)
@@ -6324,21 +6258,7 @@ function useKey(i, keep, toggle = false) {
       keep: !!keep || id === "invisible" || id === "jetpack",
     });
   // (the Invisible duck and the Jetpack: the key turns it on and off)
-  else if (sp.kind === "jump") {
-    if (keep) {
-      if (kept.has(id)) kept.delete(id);
-      else {
-        kept.add(id);
-        if (id === "shortjump") {
-          kept.delete("longjump");
-          kept.delete("double");
-        } else kept.delete("shortjump");
-      } // (kept on, the Short jump turns the Long jump and the Double jump off, and either of them turns it off)
-    } else
-      jump(
-        id === "longjump" ? "long" : id === "shortjump" ? "short" : "double",
-      );
-  } else if (THROWS.includes(id)) {
+  else if (THROWS.includes(id)) {
     if (held && isSb(R.state)) {
       held = null; // (Sandbox: the key puts the weapon in hand away and throws; the owner's, Nov 19 16:38Z, "WHY THE FUCK CAN I NOT THROW THE CHAIR IN SANDBOX")
       sendMove(true);
@@ -6387,7 +6307,7 @@ function l4Pick(i, hint = false) {
   sendMove(true);
   if (bar) bar.refresh();
 }
-const L4_TOGGLES = ["longjump", "jetpack"];
+const L4_TOGGLES = ["jetpack"];
 /* the handgun or the dagger, toward the mouse */
 function fire(id) {
   if (!me || me.x < 0 || !R || !onBoardPhase()) return;
@@ -6408,12 +6328,6 @@ function coolOne(id, now, m) {
   {
     const sp = specialById(id);
     if (!sp || sp.kind !== "item") return null;
-    if (m && id === "jaime") {
-      const p = jaimePool(m, now);
-      return p.n >= JAIME_MAX
-        ? null
-        : [p.at + JAIME_MS, JAIME_MS, now, p.n ? "more" : ""];
-    } // (one pool for everyone: with one stored, the bar charges the next in its second color)
     if (m && id === "zebra") {
       const end = (m.zebraAt || 0) + CAKE_EVERY;
       return end > now || m.cake
@@ -6514,9 +6428,7 @@ const dots = (id) =>
   R && isMgj(R.state)
     ? MGJ_GUNS.includes(id) && id === myPick()
       ? `<span class="ammo ammo-n" aria-label="${ammoOf(R.state, R.me) >= INF_AMMO ? "no limit on" : ammoOf(R.state, R.me)} shots left">${ammoOf(R.state, R.me) >= INF_AMMO ? "∞" : ammoOf(R.state, R.me)}</span>`
-      : id === "jaime"
-        ? ammoHTML(jaimePool(R.state.mgj, clockNow()).n, JAIME_MAX)
-        : ""
+      : ""
     : id === "flamer"
       ? `<span class="ammo ammo-n" aria-label="Tank">${Math.ceil((ammo(id) / magSize(id)[0]) * 100)}%</span>`
       : magSize(id)
@@ -7431,9 +7343,6 @@ function paintNow(force) {
       me = fresh && {
         ...fresh,
         j: (me && me.j) || 0,
-        lj: !!(me && me.lj),
-        sj: !!(me && me.sj),
-        dj: (me && me.dj) || 0,
       }; // (Who is the Quack?: the host puts ducks on their tiles or the strip as a stage starts)
     scZone = null;
     target = null;
@@ -7941,7 +7850,8 @@ function openPause() {
     <button type="button" class="btn ghost" data-a="friends">Friends</button>
     ${R && isHang(R.state) && isSudo(R.state, R.me) ? '<button type="button" class="btn yellow" data-a="lobby">Everyone back to the lobby</button>' : ""}
     <button type="button" class="btn red" data-a="leave">Leave game</button></div>${uiScaleHTML()}
-    <p class="small dim" style="margin-top:.8rem">The game keeps going while this is open.</p>`,
+    <p class="small dim" style="margin-top:.8rem">The game keeps going while this is open.</p>
+    <p class="small pause-counts"><span>Jumps <b>${fmtJumps(profile.jumps)}</b></span><span>Justin kills <b>${fmtJumps(profile.justinKills)}</b></span><span>Kills <b>${fmtJumps(Object.values(profile.stats || {}).reduce((n, x) => n + ((x && x.kills) || 0), 0))}</b></span></p>`,
     {
       cls: "win-small",
       onOpen: (w, close) => {

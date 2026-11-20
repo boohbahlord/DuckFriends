@@ -180,10 +180,7 @@ export function l4Bot(s, id, now, out) {
   /* the special from the fireplace, now and then, with a zombie close (the medkit waits for low HP below; the long
      jump and the jetpack stay as they are) */
   const sp = [sl[3], sl[4]].find(
-    (w) =>
-      ["jaime", "jaimebomb", "zebra", "adrenaline"].includes(w) &&
-      m.am[w] &&
-      m.am[w][0] > 0,
+    (w) => ["zebra", "adrenaline"].includes(w) && m.am[w] && m.am[w][0] > 0,
   ); // (either item slot)
   if (sp && bd < 400 && now - (u[sp] || 0) > 6000) {
     out.push({
