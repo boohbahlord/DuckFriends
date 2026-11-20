@@ -56,12 +56,16 @@ export function patternOf(p) {
   };
 }
 
-/* the point under (x, y) (shares of the map), or null: a ring within reach, a zone inside its box; the nearest wins */
-export function pointAt(s, at) {
+/* every point under (x, y) (shares of the map), the one I mean first: a ring within reach (the nearest first), then the
+   zones I'm inside, the newest first. Blocks put on top of each other: the one put down last is on top, so a right-click
+   or a drag takes it, and the menu lists the ones under it (the owner's row 199 test: a zone put on another couldn't be
+   opened or grabbed) */
+const numOf = (id) => +String(id).replace(/\D/g, "") || 0;
+export function pointsAt(s, at) {
   const board = sbOnBoard(s),
-    U = boardDuck(s);
-  let best = null,
-    bd = Infinity;
+    U = boardDuck(s),
+    rings = [],
+    inside = [];
   for (const [id, p] of Object.entries((s.sb && s.sb.pts) || {})) {
     if (p.grp) continue; // (a spawn's + page: its spawn's)
     if (
@@ -72,24 +76,21 @@ export function pointAt(s, at) {
     ) {
       /* a zone, spawn or respawn (each just a zone now), or a block bigger than its spot: inside its shape (a ring
          right on it still wins) */
-      if (sbInBlock(s, p, at.x, at.y, W, H)) {
-        const d = 5; // (a ring on top of it wins)
-        if (d < bd) {
-          bd = d;
-          best = id;
-        }
-      }
+      if (sbInBlock(s, p, at.x, at.y, W, H)) inside.push(id);
       if (p.k === "zone") continue; // (a spawn, respawn or loot spot keeps its ring too)
     }
     const d = board
       ? Math.hypot((p.x - at.x) / U[0], (p.y - at.y) / U[1])
       : Math.hypot(((p.x - at.x) * W) / 48, ((p.y - at.y) * H) / 48);
-    if (d < Math.min(1.2, bd)) {
-      bd = d;
-      best = id;
-    }
+    if (d < 1.2) rings.push([d, id]);
   }
-  return best;
+  rings.sort((x, y) => x[0] - y[0]);
+  inside.sort((x, y) => numOf(y) - numOf(x));
+  return [...new Set([...rings.map((r) => r[1]), ...inside])];
+}
+/* the point under (x, y), or null: the first of pointsAt */
+export function pointAt(s, at) {
+  return pointsAt(s, at)[0] || null;
 }
 
 /* a small menu at the screen point (cx, cy): items [{ label, act, off }]; it goes at the next click, Esc or wheel */

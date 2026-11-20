@@ -633,6 +633,18 @@ export function sbAct(s, a, now) {
         : !may("b")
   )
     return false;
+  /* my Build window is up (or I'm putting a block down): the zones' damage and Kill leave my duck alone, so a zone put
+     on me or dragged over me while I build doesn't kill me (the owner's row 199 test) */
+  if (a.k === "bld") {
+    const was = (s.sb && s.sb.bld) || {},
+      on = !!a.on;
+    if (!!was[a.id] === on) return false;
+    const bld = { ...was };
+    if (on) bld[a.id] = 1;
+    else delete bld[a.id];
+    s.sb = { ...s.sb, bld };
+    return true;
+  }
   const pts = pointsOf(s);
   if (a.k === "add") {
     const me = s.pos[a.id];

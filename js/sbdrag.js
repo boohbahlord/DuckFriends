@@ -45,12 +45,16 @@ export function mountSbDrag(S, getR, { may, onMap, spotAt, screenAt }) {
     const id = pointAt(R.state, at),
       p = id && pts()[id];
     if (!p || (zoneLike(p) && !shown(id))) return null;
-    /* its area shows only while I build: otherwise only its ring is a handle, so a click near it still walks */
-    if (!sbView.build && sbSpread(p)) {
-      const m = midOf(id, p);
-      if (!m || Math.hypot(m.x - e.clientX, m.y - e.clientY) > 28) return null;
-    }
     return id;
+  };
+  /* outside Build, a press on a block away from its middle ring is soft: the click still goes to the game (it walks,
+     shoots or swings), and only once the mouse moves with the button down is the block dragged (the owner's row 199
+     test: outside Build only the middle ring dragged) */
+  const softAt = (id, e) => {
+    const p = pts()[id];
+    if (sbView.build || !p || !sbSpread(p)) return false;
+    const m = midOf(id, p);
+    return !m || Math.hypot(m.x - e.clientX, m.y - e.clientY) > 28;
   };
   let drag = null, // { ids, x0, y0 (the first's spot), at0, sent, moved }
     size = null, // { id, hx, hy, p0 }
@@ -211,7 +215,9 @@ export function mountSbDrag(S, getR, { may, onMap, spotAt, screenAt }) {
       cx: e.clientX,
       cy: e.clientY,
       moved: false,
+      soft: softAt(id, e),
     };
+    if (drag.soft) return; // (the game hears this press too)
     eatTill = Infinity;
     stop(e); // (no walking, no swing, no shot while I hold a block)
   };
@@ -220,7 +226,9 @@ export function mountSbDrag(S, getR, { may, onMap, spotAt, screenAt }) {
     if (drag) {
       if (Math.hypot(e.clientX - drag.cx, e.clientY - drag.cy) > 4)
         drag.moved = true;
-      if (drag.moved) dragTo(spotAt(e.clientX, e.clientY));
+      if (!drag.moved) {
+        if (drag.soft) return;
+      } else dragTo(spotAt(e.clientX, e.clientY));
     } else if (size) sizeTo(spotAt(e.clientX, e.clientY));
     else if (box)
       Object.assign(boxEl.style, {
@@ -234,6 +242,16 @@ export function mountSbDrag(S, getR, { may, onMap, spotAt, screenAt }) {
   };
   const up = (e) => {
     if (e.pointerType !== "mouse" || !(drag || size || box)) return;
+    if (drag && drag.soft) {
+      /* a soft press: a click stays the game's; a drag ends here, and its click is mine (no walking to where I let
+         go), while the game still hears the button come up (a gun held down stops) */
+      if (drag.moved) {
+        dragTo(spotAt(e.clientX, e.clientY), true);
+        eatTill = performance.now() + 300;
+      }
+      drag = null;
+      return;
+    }
     const at = spotAt(e.clientX, e.clientY);
     if (drag && drag.moved) dragTo(at, true);
     /* one click on a block, not dragged: it's grabbed, its handles out to resize it (the owner's, Nov 20 04:51Z:
@@ -268,12 +286,18 @@ export function mountSbDrag(S, getR, { may, onMap, spotAt, screenAt }) {
   };
   /* the mouse's own down, up and click while I hold something, or just after: never the game's */
   const eat = (e) => {
-    if (drag || size || box || performance.now() < eatTill) stop(e);
+    if (
+      (drag && !(drag.soft && !drag.moved)) ||
+      size ||
+      box ||
+      performance.now() < eatTill
+    )
+      stop(e);
   };
   const dbl = (e) => {
     if (!may() || !onMap(e)) return;
     const id = blockAt(spotAt(e.clientX, e.clientY), e);
-    if (!id || sbFills(pts()[id]) || pts()[id].lock) return;
+    if (!id || sbFills(pts()[id]) || pts()[id].lock || softAt(id, e)) return; // (outside Build: its ring, so quick shots inside a zone stay shots)
     handles(id);
     stop(e);
   };

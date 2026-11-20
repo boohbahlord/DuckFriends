@@ -16232,6 +16232,9 @@ html.moving .l4-heat.hot::after {
   -webkit-text-stroke: 0.07em #2a1e04;
   paint-order: stroke fill;
 }
+.l4-nohud .l4-pts {
+  top: 0.5rem; /* (Sandbox: no round title above them) */
+}
 .l4-pts > span {
   color: #f4e7b0;
 }
