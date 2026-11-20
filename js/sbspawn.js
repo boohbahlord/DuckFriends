@@ -58,6 +58,9 @@ import {
   sbNpcWalls,
   sbInv,
   sbFitSide,
+  sbSnaps,
+  sbSnapSpot,
+  sbSnapTurn,
   sbWallGo,
   sbWallStops,
   boardDuck,
@@ -563,6 +566,17 @@ function withField(p, f, v) {
 /* the point a preset or a copy (a.pt: { col, f: { box: text }, im, ap }) makes out of a new bare one: only what its kind
    has, each box read as if typed (the owner's, Nov 19 17:15Z: a preset before placing, copy and paste) */
 /* block id's tabs and pages take its spot, shape and size again (after a move, a turn, a resize or a new shape) */
+/* block id on the ground's lines when it snaps (sandboxrules.js sbSnapSpot: the owner's, Nov 20 18:46Z, "they should
+   snap to the hitbox things on the ground"), its tabs with it */
+function snapTo(s, all, id) {
+  const P = all[id];
+  if (!P || P.grp || !sbSnaps(P)) return all;
+  const { x, y } = sbSnapSpot(s, P, WW, WH);
+  if (x === P.x && y === P.y) return all;
+  const z = sbOnBoard(s) ? 0 : Math.round(heightAt(x * WW, y * WH)),
+    out = geoTo({ ...all, [id]: { ...P, x, y, z } }, id);
+  return sbOnWorld(s) ? floorsTo(out) : out; // (one with an elevation keeps it)
+}
 function geoTo(all, id) {
   const P = all[id];
   if (!P) return all;
@@ -736,6 +750,7 @@ export function sbAct(s, a, now) {
       all = set
         ? spread(all, id) // (a preset or a paste: its color takes it)
         : { ...all, [id]: likeIt(all[id], all[kin[0]]) }; // (a bare one: its color's settings)
+    all = snapTo(s, all, id);
     s.sb = { ...s.sb, n, pts: all };
     return true;
   }
@@ -884,20 +899,26 @@ export function sbAct(s, a, now) {
           all[q] = { ...P, x, y, z };
         }
       if (sbOnWorld(s)) all = floorsTo(all); // (one with an elevation keeps it)
+      for (const id of ids) all = snapTo(s, all, id);
     } else if (a.k === "turn") {
       const by = +a.deg;
       if (!Number.isFinite(by)) return false;
-      for (const id of ids)
+      for (const id of ids) {
+        const r = pts[id].rot || 0;
         all = geoTo(
           {
             ...all,
             [id]: {
               ...pts[id],
-              rot: ((((pts[id].rot || 0) + by) % 360) + 360) % 360,
+              rot: sbSnaps(pts[id])
+                ? sbSnapTurn(r, by) // (a quarter at a time, so its squares stay the ground's)
+                : (((r + by) % 360) + 360) % 360,
             },
           },
           id,
         );
+        all = snapTo(s, all, id);
+      }
     } else
       for (const id of ids)
         for (const q of with_(id)) {
@@ -1081,7 +1102,7 @@ export function sbAct(s, a, now) {
     if (x < 0 || x > 1 || y < 0 || y > 1) return false;
     let q = withField(withField(p, "zw", String(zw)), "zh", String(zh));
     q = { ...q, x: +x.toFixed(4), y: +y.toFixed(4) };
-    s.sb = { ...s.sb, pts: geoTo({ ...pts, [a.p]: q }, a.p) };
+    s.sb = { ...s.sb, pts: snapTo(s, geoTo({ ...pts, [a.p]: q }, a.p), a.p) };
     return true;
   }
   /* its Purpose (plan Phase 2): one block, four purposes. It keeps its spot, shape, color and every box it has; a

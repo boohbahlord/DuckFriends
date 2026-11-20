@@ -185,8 +185,9 @@ function placeAt(n, c, size) {
   });
 }
 /* a block's shape as pixels, made from the start as pixels (the owner's, Nov 19 23:41Z): one pixel per quarter-duck
-   square of the box around it, set where that square's middle is inside the block (sandboxrules.js sbInBlock, its turn
-   included), its inside see-through in its color and its edge squares stronger. Kept by shape, size, turn and color */
+   square of the box around it, set where that square's middle is inside the block (sandboxrules.js sbInBlock: on one of
+   its hitbox tiles, its turn included), its inside see-through in its color and its edge squares stronger. Kept by
+   shape, size, turn and color */
 const SHAPE_PX = new Map();
 function shapePic(s, p, css, solid = false) {
   const [x0, y0, x1, y1] = sbZoneBox(s, p, W, H),
@@ -431,8 +432,8 @@ function cellsOn(n, s, p, cs) {
         X = u + 0.5;
         Y = v + 0.5;
       } else {
-        const lx = u * g.w,
-          ly = v * g.h;
+        const lx = u * g.w + g.ox,
+          ly = v * g.h + g.oy;
         X = p.x + (lx * Math.cos(a) - ly * Math.sin(a)) * rx;
         Y = p.y + (lx * Math.sin(a) + ly * Math.cos(a)) * ry;
       }
