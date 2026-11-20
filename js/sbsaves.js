@@ -27,7 +27,13 @@ import { sbSnapshot, newSaveId, SAVE_V } from "./sbsave.js";
 import { lobbyBtnHTML } from "./vote.js";
 import { music, allowSongs, allowedSongs } from "./music.js";
 import { sfx } from "./sound.js";
-import { saveModeWin, startTest, autoPick } from "./gmodes.js";
+import {
+  saveModeWin,
+  startTest,
+  autoPick,
+  listModes,
+  readMode,
+} from "./gmodes.js";
 
 /* ---------- the store ---------- */
 const DB = "duckfriends-sandbox",
@@ -472,13 +478,20 @@ const whenOf = (t) =>
 function rowHTML(sv) {
   return `<div class="sbp-row" data-id="${esc(sv.id)}"><button type="button" class="sbp-open" data-open="${esc(sv.id)}"><img class="sbp-pic" src="${picOf(sv)}" alt="" draggable="false" data-pxok><span class="sbp-t"><b>${esc(sv.name || "Sandbox")}</b><small>${esc(placeOf(sv))} · saved ${esc(whenOf(sv.at))}</small></span></button><span class="sbp-acts"><button type="button" class="btn ghost small" data-ren="${esc(sv.id)}">Rename</button><button type="button" class="btn ghost small" data-exp="${esc(sv.id)}">Export</button><button type="button" class="btn ghost small" data-del="${esc(sv.id)}">Delete</button></span></div>`;
 }
-function listHTML(list) {
+/* one of my game modes, to keep building it (the owner's: "they can scroll through their previous sandbox sessions, their
+   game modes, and everything like that. And choosing the game modes or sandbox sessions determines what map it is") */
+function modeHTML(m) {
+  return `<div class="sbp-row" data-id="${esc(m.id)}"><button type="button" class="sbp-open" data-mode="${esc(m.id)}"><img class="sbp-pic" src="${picOf(m)}" alt="" draggable="false" data-pxok><span class="sbp-t"><b>${esc(m.name || "Game mode")}</b><small>${esc(placeOf(m))} · game mode${m.at ? ` · saved ${esc(whenOf(m.at))}` : ""}</small></span></button></div>`;
+}
+function listHTML(list, modes) {
   if (list === null) return `<p class="sbp-note">Looking for your saves…</p>`;
   if (list === false)
     return `<p class="sbp-note">This browser window can't keep saves (a private window, or saving turned off), so only a new Sandbox can start.</p>`;
-  return list.length
-    ? `<h3 class="vt-cat">Your saves</h3>${list.map(rowHTML).join("")}`
-    : `<p class="sbp-note">No saves yet. A Sandbox saves itself every minute, and in G you can save it whenever you like.</p>`;
+  return `${
+    list.length
+      ? `<h3 class="vt-cat">Your saves</h3>${list.map(rowHTML).join("")}`
+      : `<p class="sbp-note">No saves yet. A Sandbox saves itself every minute, and in G you can save it whenever you like.</p>`
+  }${modes && modes.length ? `<h3 class="vt-cat">Your game modes</h3>${modes.map(modeHTML).join("")}` : ""}`;
 }
 async function refresh() {
   if (!W) return;
@@ -487,8 +500,9 @@ async function refresh() {
   } catch (e) {
     W.list = false;
   }
+  const modes = W.list ? await listModes().catch(() => []) : [];
   if (!W) return;
-  W.el.querySelector(".sbp-list").innerHTML = listHTML(W.list);
+  W.el.querySelector(".sbp-list").innerHTML = listHTML(W.list, modes);
 }
 function hostHTML() {
   return `<button type="button" class="sbp-new" data-new><span class="sbp-plus">+</span><span class="sbp-t"><b>New Sandbox</b><small>Start from nothing</small></span></button><div class="sbp-list">${listHTML(null)}</div><p class="sbp-foot"><label class="btn ghost small">Import a save<input type="file" accept=".json,application/json" hidden data-imp></label></p>`;
@@ -502,7 +516,7 @@ function build(R, pause) {
   el.setAttribute("role", "dialog");
   el.className = "vt sbp";
   el.setAttribute("aria-label", "Sandbox");
-  el.innerHTML = `<header class="vt-head"><div class="vt-left"><span class="vt-lv">${lobbyBtnHTML(s, R.me)}</span></div><h2 class="vt-title">${rainbowHTML("Sandbox", { seed: 9 })}</h2><div class="vt-right">${fsBtnHTML()}<button type="button" class="btn ghost iconbtn vt-pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header><p class="vt-sub">${mine ? "A new Sandbox, or pick up one of your saves" : `${esc(host)} is choosing: a new Sandbox or a saved one`}</p><div class="vt-box">${mine ? hostHTML() : `<p class="sbp-wait">${esc(host)} is choosing…</p>`}</div>`;
+  el.innerHTML = `<header class="vt-head"><div class="vt-left"><span class="vt-lv">${lobbyBtnHTML(s, R.me)}</span></div><h2 class="vt-title">${rainbowHTML("Sandbox", { seed: 9 })}</h2><div class="vt-right">${fsBtnHTML()}<button type="button" class="btn ghost iconbtn vt-pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header><p class="vt-sub">${mine ? "A new Sandbox, or pick up one of your saves or game modes" : `${esc(host)} is choosing: a new Sandbox, a saved one or a game mode`}</p><div class="vt-box">${mine ? hostHTML() : `<p class="sbp-wait">${esc(host)} is choosing…</p>`}</div>`;
   document.body.append(el);
   W = {
     el,
@@ -529,6 +543,26 @@ async function click(e) {
   if (t.matches("[data-new]")) {
     sfx.tick();
     R.send({ t: "sbPick" });
+    return;
+  }
+  if (t.dataset.mode) {
+    /* a game mode, to keep building it: as a save of it (its own made map into the room first, as gmodes.js autoPick) */
+    W.busy = true;
+    sfx.tick();
+    const m = await readMode(t.dataset.mode).catch(() => null);
+    if (m && m.data && /^um[a-z0-9]{8}$/.test(m.data.map || ""))
+      await import("./umaps.js")
+        .then(async (U) => {
+          const um = (await U.listMaps()).find((x) => x.id === m.data.map);
+          if (um) U.bringMap(R, um);
+        })
+        .catch(() => {});
+    if (W) W.busy = false;
+    if (!m) return toast("That game mode couldn't be read on this device.");
+    R.send({
+      t: "sbPick",
+      save: { id: newSaveId(), name: m.name, made: Date.now(), data: m.data },
+    });
     return;
   }
   const open = t.dataset.open,

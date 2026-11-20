@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v165",
+    version: 165,
+    date: "Nov 20, 2026",
+    title: "Your game modes at the start",
+    news: [
+      "For Sandbox: the start picker lists your game modes too, below your saves, so you can keep building one (it brings its own map).",
+    ],
+  },
+  {
     id: "v164",
     version: 164,
     date: "Nov 20, 2026",
