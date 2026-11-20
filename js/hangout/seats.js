@@ -241,8 +241,6 @@ function put(ctx, x, y, z) {
     z,
     b: z,
     j: 0,
-    lj: false,
-    dj: 0,
     vz: null,
     _za: undefined,
   });

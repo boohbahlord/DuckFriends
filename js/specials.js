@@ -17,7 +17,7 @@ import { HANDGUN } from "./gamedefaults.js";
 import { el } from "./ui.js";
 import { gridPx } from "./pixel.js";
 import { fewer } from "./gfx.js";
-import { BOW, MEDKIT, ZEBRA, JAIME, BOMB_SKIN, CHAIR } from "./mgjart.js";
+import { BOW, MEDKIT, ZEBRA, CHAIR } from "./mgjart.js";
 import { GUNS } from "./l4ddguns.js";
 import { duckSVG, DUCK_DEFAULT } from "./duck.js";
 export { SHOT_SPEED } from "./rules.js";
@@ -495,7 +495,7 @@ export const SPECIALS = [
     tip: "Throw a zebra cake toward your mouse: Justin runs after it and eats it, and does nothing else meanwhile. Once every 30 seconds. (In Mad God Justin everyone shares one.)",
   },
   /* Quacky Zombies' own (never in Customize; Mad God Justin's is gone, the owner's, Nov 3): the medkit, here for its
-     picture. Then Jaime, everyone's once unlocked (the zebra cake is everyone's too, above) */
+     picture (the zebra cake is everyone's too, above) */
   {
     id: "medkit",
     name: "Medkit",
@@ -542,8 +542,6 @@ export const SPECIALS = [
     tip: "Confetti rains over everyone's screen. It also rains when your question comes up, when you win, and on the podium.",
   },
 ];
-/* the Jaime Guard's picture: Jaime with a blue shield by him (in the duck's 120 box) */
-const GUARD_BADGE = `<path d="M6 64L28 57L50 64V82C50 96 40 104 28 110C16 104 6 96 6 82Z" fill="#3b82f6" stroke="#1c1c28" stroke-width="3.4" stroke-linejoin="round"/><path d="M28 68V98M16 80H40" stroke="#eef3fa" stroke-width="5" stroke-linecap="round"/>`;
 export const specialById = (id) => SPECIALS.find((x) => x.id === id) || null;
 /* a special that's off for now (faded everywhere, can't be picked or used; a duck that has it keeps it on its key) */
 export const isOff = (id) => !!(specialById(id) || {}).off;
@@ -721,7 +719,7 @@ export function confettiRain(ms = 5000) {
   setTimeout(() => node.remove(), ms);
 }
 
-/* the double jump's little cloud, left in the air where the second jump began: x, y = the duck's feet in pixels */
+/* a little see-through cloud (the chalk's eraser): x, y = the duck's feet in pixels */
 export function puffHTML(x, y, size, color) {
   return `<div class="spe spe-puff" style="left:${x.toFixed(0)}px;top:${y.toFixed(0)}px;--s:${size.toFixed(0)}px;--k1:${color}"><svg viewBox="0 0 60 30"><g><circle cx="16" cy="18" r="10"/><circle cx="30" cy="13" r="12"/><circle cx="44" cy="18" r="10"/><rect x="14" y="16" width="32" height="12" rx="6"/></g></svg></div>`;
 }

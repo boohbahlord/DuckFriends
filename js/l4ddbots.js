@@ -34,8 +34,6 @@ import {
   wildOpen,
   wildCrying,
   isWild,
-  jaimeBody,
-  JBODY,
   endless,
   wetSlow,
   hasLeft,
@@ -357,13 +355,6 @@ function justinBot(s, id, now, out) {
       .map((z) => ({ z, d: Math.hypot(z.x - x, z.y - y) }))
       .sort((a, b) => a.d - b.d),
     d0 = near.length ? near[0].d : Infinity;
-  if (
-    isWild(s, id) &&
-    h.l4.wait &&
-    !wildCrying(s, id, now) &&
-    jaimeVisit(s, id, now, p, x, y, run, out)
-  )
-    return; // (a rest phase: he may stop by Jaime's body)
   if (wildOpen(s, id)) return wildMove(s, id, now, p, x, y, near, run, out); // (Justin out there: never armed, the owner's, Nov 17 20:02Z)
   /* what he'd shoot: the nearest zombie he can see */
   const seen = near.find(
@@ -495,41 +486,6 @@ function wanderSpot(id, now, x, y) {
   }
   if (w) wander.set(id, w);
   return w;
-}
-/* in a rest phase Justin may go to Jaime's body: he asks the rules for this phase's plan once (half the time two visits),
-   walks there, and the rules make him say a line each time he's there; true while it's walking him */
-function jaimeVisit(s, id, now, p, x, y, run, out) {
-  const B = jaimeBody(),
-    v = s.hang.l4jv,
-    r = s.hang.l4.wait.r;
-  if (!B) return false;
-  if (!v || v.r !== r) {
-    out.push({ t: "hang", k: "l4", do: "jplan", id });
-    return false;
-  }
-  if (v.left <= 0) return false;
-  const d = Math.hypot(B.x - x, B.y - y);
-  if (d < JBODY.near * 0.8) {
-    if (now - v.at >= JBODY.gap)
-      out.push({ t: "hang", k: "l4", do: "jbody", id });
-    return false; // (he has said his line: he wanders off again until the next visit)
-  }
-  if (now - v.at < JBODY.gap) return false;
-  const to = wayTo(x, y, B.x, B.y, now) || [B.x, B.y],
-    [nx, ny] = walk(x, y, to[0], to[1], run(false));
-  out.push({
-    t: "move",
-    id,
-    x: +(nx / W).toFixed(5),
-    y: +(ny / H).toFixed(5),
-    j: 0,
-    z: Math.round(heightAt(nx, ny)),
-    b: Math.round(heightAt(nx, ny)),
-    w: p.w || "",
-    ax: +((nx - x || 1) / W).toFixed(4),
-    ay: +((ny - y) / H).toFixed(4),
-  });
-  return true;
 }
 function wildMove(s, id, now, p, x, y, near, run, out, forced = false) {
   /* only the zombies scare him, and being hurt; never the ducks themselves (the owner's, Nov 17 18:05Z: "justin should be

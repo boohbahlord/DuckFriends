@@ -140,7 +140,7 @@ export const VOL = {
   throw: -11,
   cakeThrow: -11,
   bonk: -13,
-  // explosions: one boom for every explosive (the Jaime Bomb plays it louder: SFX.boomBig); the meteor and the nuke
+  // explosions: one boom for every explosive (SFX.boomBig for a wider one); the meteor and the nuke
   // are their own, longer and the loudest of all ("more catastrophic", the owner, Nov 16)
   boom: -10,
   boomSmall: -13, // (the Angelic pistol's blast: the boom made a little weaker, the owner, Nov 17)

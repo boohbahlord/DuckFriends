@@ -49,7 +49,7 @@ const CLICK_REACH = 260; // Click to interact: how far from my duck a click can 
 const cl = (v, a, b) => Math.max(a, Math.min(b, v));
 const dirOf = (dx, dy) => (dx > 0 ? "r" : dx < 0 ? "l" : dy > 0 ? "d" : "u");
 
-/* api: room() → the room; me() → my duck { x, y (0 … 1), j, lj, dj, z, b … }; eye() → the duck I watch instead
+/* api: room() → the room; me() → my duck { x, y (0 … 1), j, z, b … }; eye() → the duck I watch instead
    (spectating: as me() is, or null); jumpZ(pos, now) (duck heights); landsAt(pos);
    cfg() → the jump's { T, H }; button() → the context button changed (redraw it); clickUse() → a click on a thing near
    my duck uses it (the Click to interact setting) */
@@ -1055,8 +1055,6 @@ export function mountWorld(board, api) {
   let hasClimbs = false;
   const endJump = (me) => {
     me.j = 0;
-    me.lj = false;
-    me.dj = 0;
     me._za = undefined;
   };
   /* after a step: up or down a step, landing on what it walked onto, or off an edge (it falls) */
@@ -1068,7 +1066,7 @@ export function mountWorld(board, api) {
     }
     if (me.j) {
       if (me.z < gnd) {
-        ev.land = me.dj ? 2 : 1;
+        ev.land = 1;
         endJump(me);
         me.z = gnd;
       }
@@ -1527,7 +1525,7 @@ export function mountWorld(board, api) {
         const za = me.b + api.jumpZ(me, now) * L.DUCK,
           gnd = floor(me, x, y);
         if (now >= api.landsAt(me)) {
-          ev.land = me.dj ? 2 : 1;
+          ev.land = 1;
           endJump(me);
           me._j = 0;
           if (me.b - gnd > L.STEP) {
@@ -1536,7 +1534,7 @@ export function mountWorld(board, api) {
             me.top = me.z;
           } else me.z = gnd;
         } else if (za <= gnd && za < (me._za ?? Infinity)) {
-          ev.land = me.dj ? 2 : 1;
+          ev.land = 1;
           endJump(me);
           me._j = 0;
           me.z = gnd;
