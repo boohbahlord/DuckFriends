@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v161",
+    version: 161,
+    date: "Nov 20, 2026",
+    title: "Who may use your NPCs and groups",
+    news: [
+      "For Sandbox: Player settings (P) has My NPCs and groups. Pick who may use the NPCs and groups you made, who may change them, who may change your brain files' code, and who may change your saved NPCs too. It lasts for this Sandbox only.",
+      'For Sandbox: when someone may change your NPC, they find it in M as "Change <your name>\'s <NPC>".',
+    ],
+  },
+  {
     id: "v160",
     version: 160,
     date: "Nov 20, 2026",

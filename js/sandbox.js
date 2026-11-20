@@ -10,6 +10,7 @@
    with the later stages.
    A phone has no keys: a Tools button under Leave Sandbox lists the windows, a tap on one keeps it up, and its × puts it
    away (the owner's answer 7, Nov 19 10:22Z: "you can start working on i now"). */
+import { epWin, borrowRows } from "./sbepview.js";
 import { LANG } from "./langname.js";
 import { GOD_SW, godMay } from "./sbgod.js";
 import { coverChanges } from "./loading.js";
@@ -207,6 +208,11 @@ const pRows = (R) => {
       helpRow("p"),
     ];
   const rows = godMay(s, R.me) ? godRows(R) : [];
+  rows.push({
+    label: "My NPCs and groups…",
+    win: true,
+    act: (r) => epWin(() => r),
+  }); // (what the others may do with what I made, plan Phase 7: sbepview.js)
   if (rights) {
     const on = !!(s.sb && s.sb.gperm);
     rows.push({
@@ -236,6 +242,7 @@ const OPTIONS = {
       rows[0],
       ...kdRows(R),
       ...rows.slice(1),
+      ...borrowRows(R), // (the others' NPCs they let me change: sbepview.js)
       helpRow("m"),
     ]; // (Build a brain, New NPC, then the four kinds' defaults, then the made ones)
   },

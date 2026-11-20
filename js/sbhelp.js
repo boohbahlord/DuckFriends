@@ -75,6 +75,10 @@ export const SB_HELP = {
       "Open a window to every player, or give one player the rights. The host keeps them.",
     ],
     [
+      "My NPCs and groups",
+      "Choose who may use the NPCs and groups you made in their spawns, zones and lists (everyone, until you say no), who may change them (NPCs in M, groups in G), who may change your brain files' code, and who may change your saved NPCs on your device too (not advised). It lasts for this Sandbox only. My lists, at its foot, hides the others' NPCs and groups from your own lists.",
+    ],
+    [
       "Each player",
       "The last rows list every player in the room. Pick one to change their own God mode and Invisible, and nobody else's.",
     ],

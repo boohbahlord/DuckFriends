@@ -22364,3 +22364,19 @@ textarea.um-in {
     width: 6.4rem;
   }
 }
+/* Sandbox Phase 7 (js/sbepview.js): P's My NPCs and groups */
+.sb-epwarn {
+  color: var(--orange);
+  margin: -0.2rem 0 0.5rem;
+}
+.sb-epwin .sb-row {
+  grid-template-columns: minmax(0, 1fr) minmax(6rem, 9rem);
+}
+.sb-epwin .sb-acts {
+  justify-self: stretch;
+}
+@media (max-width: 30rem) {
+  .sb-epwin .sb-row {
+    grid-template-columns: minmax(0, 1fr) 6.5rem;
+  }
+}

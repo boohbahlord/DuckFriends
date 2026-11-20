@@ -4,6 +4,7 @@
    does, and the rights it gives or takes. Every block's page has a "Joins groups" list (sbspawnview.js), and every list of
    entities has the groups under the entities (my words: "Groups are added at the bottom of the list of entities"). B and G
    also have "My lists", where I keep made NPCs and groups out of my own lists. Rules: sbgroups.js */
+import { epMay } from "./sbep.js";
 import { esc, openWindow, toast } from "./ui.js";
 import { colSwatches } from "./sbmenu.js";
 import { isSb, sbMay, SB_COLORS, SB_RIGHTS, SB_WHAT } from "./sandboxrules.js";
@@ -40,13 +41,20 @@ const PURPOSE = {
 export function groupOpts(s, me) {
   const hid = grHidden(s, me);
   return Object.entries(grOf(s))
-    .filter(([id]) => !hid.includes("g:" + id))
+    .filter(
+      ([id, g]) => !hid.includes("g:" + id) && epMay(s, g.by, me, "u"), // (another's: only if they let me, P: sbep.js)
+    )
     .map(([id, g]) => ["g:" + id, g.n]);
 }
-/* the kinds a spawn can make, less the made NPCs I keep out of my lists */
+/* the kinds a spawn can make, less the made NPCs I keep out of my lists and those their owners keep to themselves */
 export function grShown(s, me, kinds) {
-  const hid = grHidden(s, me);
-  return kinds.filter(([k]) => !hid.includes(k));
+  const hid = grHidden(s, me),
+    cn = (s.sb && s.sb.cn) || {};
+  return kinds.filter(([k]) => {
+    if (hid.includes(k)) return false;
+    const n = String(k).startsWith("c:") && cn[k.slice(2)];
+    return !n || epMay(s, n.by, me, "u");
+  });
 }
 /* a dropdown of checkboxes, as sbspawnview.js pickRow makes them (opts: [value, name], a [null, header] starts a part) */
 function drop(f, label, opts, picked, attr = "data-gact") {
