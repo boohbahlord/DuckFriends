@@ -11,10 +11,18 @@
 import { rule } from "./hangout/registry.js";
 import { W, H, heightAt, slabBetween } from "./hangout/layout.js";
 import { isGhost } from "./hangout/death.js";
-import { baseMode, isSb } from "./sandboxrules.js";
+import {
+  baseMode,
+  isSb,
+  sbNpcWalls,
+  sbZombieWall,
+  sbWallGo,
+  sbWallStops,
+} from "./sandboxrules.js";
 import {
   chaseField,
   chaseStep,
+  setZWall,
   zWalk,
   Z_ROOM,
   zombieTakes,
@@ -105,6 +113,16 @@ export function cabinTick(s, now, H0) {
         fields.set(k, chaseField([[t.x, t.y]]));
       return fields.get(k) || null;
     };
+  const wallsOf = sbNpcWalls(s), // (the zones that are walls to each: plan Phase 3)
+    unwall = (o, x0, y0) => {
+      const ws = wallsOf(o);
+      if (!ws.length) return;
+      const z = heightAt(x0, y0),
+        [x, y] = sbWallGo(s, ws, x0 / W, y0 / H, o.x / W, o.y / H, z, W, H, o);
+      o.x = x * W;
+      o.y = y * H;
+    };
+  setZWall(sbZombieWall(s, W, H)); // (they turn round a wall as round anything in the way)
   const plans = H0.think(
     s,
     now,
@@ -125,7 +143,8 @@ export function cabinTick(s, now, H0) {
         (o.run && Math.hypot(o.x - to.x, o.y - to.y) > SPRINT.FAR
           ? SPRINT.K
           : 1),
-      x0 = o.x;
+      x0 = o.x,
+      y0 = o.y;
     if (d.flee) {
       const dx = o.x - to.x,
         dy = o.y - to.y,
@@ -142,6 +161,7 @@ export function cabinTick(s, now, H0) {
       (d.foe && o.wp && bd > claw && !sees(o, to))
     )
       chaseStep(o, fieldTo(to), [to.x, to.y], v * dt, pls); // (a gun keeps its distance, once nothing's in the way: sbarms.js)
+    unwall(o, x0, y0); // (round a wall, never through it)
     if (Math.abs(o.x - x0) > 0.5) o.f = o.x > x0 ? 1 : -1;
     if (
       d.foe &&
@@ -158,7 +178,30 @@ export function cabinTick(s, now, H0) {
     )
       o.f = to.x < o.x ? -1 : 1;
   }
+  setZWall(null);
+  const was = live.map((o) => [o.x, o.y]);
   apart(live, RX, RY);
+  live.forEach((o, i) => {
+    const ws = wallsOf(o),
+      [x0, y0] = was[i];
+    if (
+      ws.length &&
+      sbWallStops(
+        s,
+        ws,
+        x0 / W,
+        y0 / H,
+        o.x / W,
+        o.y / H,
+        heightAt(x0, y0),
+        W,
+        H,
+      )
+    ) {
+      o.x = x0;
+      o.y = y0;
+    } // (never pushed through a wall)
+  });
   for (const o of live) {
     o.x = Math.round(o.x);
     o.y = Math.round(o.y);

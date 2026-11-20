@@ -55,6 +55,10 @@ import {
   SB_DIRS,
   SB_POINTS,
   sbInBlock,
+  sbWalls,
+  sbWallStops,
+  sbWorksAt,
+  sbOutline,
 } from "./sandboxrules.js";
 import {
   boxText,
@@ -375,6 +379,48 @@ function drawMarks(layer, pts, at, size, s) {
     for (const n of layer.querySelectorAll(".sb-pt"))
       n.classList.toggle("sb-sel", sbSel.has(n.dataset.p.split("~")[0]));
   layer._sel = sbSel.size > 0;
+  darkOut(layer, pts, at, s);
+}
+/* Dark outside (plan Phase 3): while my duck stands where a zone with it works, everything round that zone goes dark,
+   as round the building I'm in on the zombie maps. One zone's at a time: the first */
+const DARK_FAR = 40000; // (px: the dark's outer edge, far past any screen)
+function darkOut(layer, pts, at, s) {
+  const R = activeRoom(),
+    me = R && s && s.pos && s.pos[R.me];
+  let hole = null;
+  if (me)
+    for (const [id, p] of Object.entries(pts))
+      if (
+        p.k === "zone" &&
+        !sbFills(p) &&
+        boxText(p, "dark") === "t" &&
+        sbWorksAt(s, id, p, me.x, me.y, me.z, W, H)
+      ) {
+        hole = sbOutline(s, p, W, H).map((q) => at({ ...q, z: p.z || 0 }));
+        break;
+      }
+  let el = layer.querySelector(":scope > .sb-dark");
+  if (!hole) {
+    if (el) el.classList.remove("on");
+    return;
+  }
+  if (!el) {
+    el = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    el.setAttribute("class", "sb-dark");
+    el.setAttribute("aria-hidden", "true");
+    el.innerHTML = `<path fill-rule="evenodd"/>`;
+    layer.append(el);
+  }
+  const F = DARK_FAR,
+    d =
+      `M${-F} ${-F}H${F}V${F}H${-F}Z` +
+      `M${hole.map((c) => `${c.left.toFixed(1)} ${c.top.toFixed(1)}`).join("L")}Z`;
+  if (el._d !== d) {
+    el._d = d;
+    el.firstChild.setAttribute("d", d);
+  }
+  if (!el.classList.contains("on"))
+    requestAnimationFrame(() => el.classList.add("on")); // (it fades in)
 }
 const ptsOf = (s) => (isSb(s) && s.sb && s.sb.pts) || {};
 /* the board: place(o) → { left, top } (game.js place), size: a duck's width */
@@ -574,7 +620,7 @@ export function sbSettings(getR, id, tab = "") {
     /* a Spawn, Respawn or Loot tab: its Caller, and the error at its top while it names no zone (the owner's, Nov 20
        02:45Z: "the error will say make tab that shares caller or variable name") */
     callHTML = sbNeedsCall(p)
-      ? `${sbTabLive(pts, id) ? "" : `<p class="sb-err" role="alert">${esc(SB_CALL_ERR)}</p>`}${row("call", SB_CALL.call, p.f.call ? p.f.call.t : sbNameOf(pts[p.grp]), why("call"))}`
+      ? `${sbTabLive(pts, id) ? "" : `<p class="sb-err" role="alert">${esc(SB_CALL_ERR)}</p>`}${row("call", SB_CALL.call, p.f.call ? p.f.call.t : sbNameOf(pts[p.grp]), why("call"))}${flagRow("inv", SB_FLAGS.inv, typed("inv"), why("inv"))}`
       : "",
     frontHTML = front
       ? fold(
@@ -692,7 +738,7 @@ export function sbSettings(getR, id, tab = "") {
           .toLowerCase()
           .split(/[\s,]+/);
     return `${row("name", { name: "Variable name" }, typed("name"), why("name"))}
-    ${colorRow}${flagRow("hide", SB_FLAGS.hide, typed("hide"), why("hide"))}
+    ${colorRow}${flagRow("hide", SB_FLAGS.hide, typed("hide"), why("hide"))}${flagRow("inv", SB_FLAGS.inv, typed("inv"), why("inv"))}${flagRow("dark", SB_FLAGS.dark, typed("dark"), why("dark"))}
     <div class="sb-row"><span>${esc(SB_ZONE.fx.name)}</span><span class="sb-what">${Object.entries(
       SB_FX,
     )
@@ -704,6 +750,7 @@ export function sbSettings(getR, id, tab = "") {
     <div data-fxrow="amt"${fx === "damage" || fx === "heal" ? "" : " hidden"}>${row("amt", SB_ZONE.amt, typed("amt"), why("amt"))}</div>
     <div data-fxrow="rate"${fx === "none" ? " hidden" : ""}>${row("rate", SB_ZONE.rate, typed("rate"), why("rate"))}</div>
     <div data-fxrow="zwho"${fx === "none" ? " hidden" : ""}>${actRow(R.state, p, "zwho", kinds)}</div>
+    ${actRow(R.state, p, "wall", kinds)}
     ${brainRow(typed("brain"), why("brain"))}
     <div class="sb-row" data-row="sfx"><span>${esc(SB_ZONE.sfx.name)}</span><select class="sb-box" data-f="sfx" aria-label="${esc(SB_ZONE.sfx.name)}">${Object.entries(
       SB_SFX,
@@ -1159,6 +1206,13 @@ activity({
   only: "sandbox",
   /* my walk: a spawn's Players tab or a respawn may give me another speed (sbspawn.js sbWalkOf) */
   speed: (pos, ctx) => sbWalkOf(ctx.state(), ctx.me),
+  /* a zone that's a wall to me (plan Phase 3) */
+  blocked(x, y, z, ctx, fx, fy) {
+    const s = ctx.state();
+    if (!s || !s.sb || fx == null) return false;
+    const walls = sbWalls(s, { duck: (s.players[ctx.me] || {}).name || "" });
+    return sbWallStops(s, walls, fx / W, fy / H, x / W, y / H, z, W, H);
+  },
   draw(now, ctx) {
     const s = ctx.state(),
       layer = ctx.world.board.querySelector(".ducks");
