@@ -267,3 +267,52 @@ export function onMenu(node, fn) {
 }
 /* a window is open over the page */
 export const windowOpen = () => !!document.querySelector(".win-back, .ctx");
+
+/* headings that fold, as in Word (the owner's, Nov 20 02:37Z: "the headings to be collapsible with an arrow down to their
+   left ... you click it, boom, it collapses the information"): every heading among root's own children that matches
+   sel gets an arrow at its left; a click folds what follows it, up to the next heading of its level or above (level(h):
+   1 the top). Folded headings are remembered by their text in kept, so a window drawn again keeps them folded. */
+export function foldHeads(root, sel, level, kept = new Set()) {
+  const heads = () => [...root.children].filter((n) => n.matches(sel));
+  const lay = () => {
+    const stack = [];
+    for (const n of root.children) {
+      const head = n.matches(sel);
+      if (head) {
+        const L = level(n);
+        while (stack.length && stack[stack.length - 1] >= L) stack.pop();
+      }
+      n.classList.toggle("fold-hid", stack.length > 0);
+      if (head && n.classList.contains("folded")) stack.push(level(n));
+    }
+  };
+  for (const h of heads()) {
+    h.classList.add("fold-head");
+    h.tabIndex = 0;
+    h.setAttribute("role", "button");
+    const folded = kept.has(h.textContent.trim());
+    h.classList.toggle("folded", folded);
+    h.setAttribute("aria-expanded", String(!folded));
+  }
+  const flip = (h) => {
+    const t = h.textContent.trim(),
+      folded = !h.classList.contains("folded");
+    h.classList.toggle("folded", folded);
+    h.setAttribute("aria-expanded", String(!folded));
+    if (folded) kept.add(t);
+    else kept.delete(t);
+    lay();
+  };
+  root.addEventListener("click", (e) => {
+    const h = e.target.closest(".fold-head");
+    if (h && h.parentElement === root) flip(h);
+  });
+  root.addEventListener("keydown", (e) => {
+    const h = e.target.closest(".fold-head");
+    if (!h || h.parentElement !== root || (e.key !== "Enter" && e.key !== " "))
+      return;
+    e.preventDefault();
+    flip(h);
+  });
+  lay();
+}

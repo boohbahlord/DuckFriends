@@ -5,7 +5,7 @@
    backspace undoes a selection. It doesn't delete it". Mouse only for now (a phone keeps its long press menu) */
 import { W, H } from "./hangout/layout.js";
 import { pointAt } from "./sbmenu.js";
-import { sbSel, sbView } from "./sbspawnview.js";
+import { sbSel, sbView, zoneLike } from "./sbspawnview.js";
 import { sbFills, sbRot, sbSize, sbSpread, sbUnit } from "./sandboxrules.js";
 
 const TURN = 15; // (degrees an arrow key turns what I hold)
@@ -29,13 +29,15 @@ export function mountSbDrag(S, getR, { may, onMap, spotAt, screenAt }) {
     const R = getR();
     return (R && R.state.sb && R.state.sb.pts) || {};
   };
-  /* what's under the mouse: a zone only while the zones show (Build open) */
+  /* a zone is grabbed only while it shows (Build open, or cheat mode: sbspawnview.js drawMarks) */
+  const shown = (id) => !!document.querySelector(`.sb-pt[data-p="${id}"]`);
+  /* what's under the mouse: a zone only while the zones show */
   const blockAt = (at, e) => {
     const R = getR();
     if (!R || !at) return null;
     const id = pointAt(R.state, at),
       p = id && pts()[id];
-    if (!p || (p.k === "zone" && !sbView.build)) return null;
+    if (!p || (zoneLike(p) && !shown(id))) return null;
     /* its area shows only while I build: otherwise only its ring is a handle, so a click near it still walks */
     if (!sbView.build && sbSpread(p)) {
       const m = midOf(id, p);
@@ -237,7 +239,7 @@ export function mountSbDrag(S, getR, { may, onMap, spotAt, screenAt }) {
       sbSel.clear();
       if (R)
         for (const [id, p] of Object.entries(pts())) {
-          if (p.grp || (p.k === "zone" && !sbView.build)) continue;
+          if (p.grp || (zoneLike(p) && !shown(id))) continue;
           const c = midOf(id, p);
           if (c && c.x >= L && c.x <= Rt && c.y >= T && c.y <= B) sbSel.add(id);
         }
