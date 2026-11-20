@@ -670,30 +670,38 @@ function partsOK(L, { extra }) {
    PNG; the original is never kept. A duck's picture is 35 pixels, the size it shows on the board (its 92 units of a
    duck's 120 at 32 pixels to a duck's height) */
 export const DUCK_PIC_PX = 35;
-/* a card's picture: 64 to a side, its pixels drawn square */
-export const CARD_PIC_PX = 64;
-/* a loaded picture cut to its middle square, px × px in the game's colors: a PNG data URL */
-export function squareOf(img, px) {
-  const s = Math.min(img.naturalWidth, img.naturalHeight),
+/* a card's picture: the card's own shape, a wide strip (the owner's, Nov 20 23:40Z: a 1 by 1 square "is not the aspect
+   ratio of the card, so I'm completely guessing what part it's going to select"). A card in the lobby is 4.2 to 6.6 times
+   as wide as it is tall (phone to computer); 5.5 is its middle, so what the crop window shows is what the card shows */
+export const CARD_PIC = [176, 32];
+/* a loaded picture cut to its middle at w:h, w × h in the game's colors: a PNG data URL */
+export function shapeOf(img, w, h = w) {
+  const iw = img.naturalWidth,
+    ih = img.naturalHeight,
+    k = Math.min(iw / w, ih / h),
     c = document.createElement("canvas");
-  c.width = c.height = px;
+  c.width = w;
+  c.height = h;
   const g = c.getContext("2d", { willReadFrequently: true });
   g.imageSmoothingQuality = "high";
   g.drawImage(
     img,
-    (img.naturalWidth - s) / 2,
-    (img.naturalHeight - s) / 2,
-    s,
-    s,
+    (iw - w * k) / 2,
+    (ih - h * k) / 2,
+    w * k,
+    h * k,
     0,
     0,
-    px,
-    px,
+    w,
+    h,
   );
-  g.putImageData(applyPalette(g.getImageData(0, 0, px, px)), 0, 0);
+  g.putImageData(applyPalette(g.getImageData(0, 0, w, h)), 0, 0);
   return c.toDataURL("image/png");
 }
-export function pictureToSquare(file, px = DUCK_PIC_PX) {
+/* a loaded picture cut to its middle square, px × px in the game's colors: a PNG data URL */
+export const squareOf = (img, px) => shapeOf(img, px, px);
+/* a picture from the player's files made into real pixels at w × h (a square when h is left out) */
+export function pictureTo(file, w = DUCK_PIC_PX, h = w) {
   return new Promise((ok, bad) => {
     if (!file || !/^image\//.test(file.type)) {
       bad(new Error("That file is not a picture."));
@@ -703,7 +711,7 @@ export function pictureToSquare(file, px = DUCK_PIC_PX) {
       url = URL.createObjectURL(file);
     img.onload = () => {
       URL.revokeObjectURL(url);
-      ok(squareOf(img, px));
+      ok(shapeOf(img, w, h));
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
@@ -712,9 +720,10 @@ export function pictureToSquare(file, px = DUCK_PIC_PX) {
     img.src = url;
   });
 }
-/* a picture saved before pictures were made into real pixels (a 128 px JPEG, Nov 19): its pixels at px, as a new upload
-   is made. One that already is (a PNG px × px) comes back as it is; one that can't be read, null */
-export async function squarePixels(d, px) {
+/* a picture saved before pictures were made into real pixels, or a card's square picture from before cards had their
+   own shape: its pixels at w × h, as a new upload is made. One that already is (a PNG w × h) comes back as it is; one
+   that can't be read, null */
+export async function pixelsAt(d, w, h = w) {
   if (typeof d !== "string" || !d.startsWith("data:image/")) return null;
   const img = new Image();
   img.src = d;
@@ -724,8 +733,8 @@ export async function squarePixels(d, px) {
     return null;
   }
   return d.startsWith("data:image/png") &&
-    img.naturalWidth === px &&
-    img.naturalHeight === px
+    img.naturalWidth === w &&
+    img.naturalHeight === h
     ? d
-    : squareOf(img, px);
+    : shapeOf(img, w, h);
 }

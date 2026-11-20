@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v198",
+    version: 198,
+    date: "Nov 20, 2026",
+    title: "Your card, your crop",
+    news: [
+      "For Customize: your card's picture is cropped in the card's own shape, a wide strip, and the preview shows it as the card will, so what you pick is exactly what your card shows. A picture you already had is kept from its middle.",
+    ],
+  },
+  {
     id: "v197",
     version: 197,
     date: "Nov 20, 2026",

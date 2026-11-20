@@ -23,7 +23,7 @@ import { rest, soon } from "./later.js";
 import { showSplash } from "./splash.js";
 import { fullOnFirstTap, fsBtnHTML } from "./corners.js";
 import { loadingScreen, pageReady } from "./loading.js";
-import { squarePixels, DUCK_PIC_PX, CARD_PIC_PX } from "./duck.js";
+import { pixelsAt, DUCK_PIC_PX, CARD_PIC } from "./duck.js";
 
 applySettings();
 
@@ -76,12 +76,12 @@ paintCorner();
    and only they are kept (the owner's, Nov 19 23:26Z: "we don't have the leftover image behind") */
 async function oldPictures() {
   let changed = false;
-  for (const [o, px] of [
-    [profile.duck, DUCK_PIC_PX],
-    [profile.card, CARD_PIC_PX],
+  for (const [o, wh] of [
+    [profile.duck, [DUCK_PIC_PX]],
+    [profile.card, CARD_PIC],
   ]) {
     if (!o || !o.image) continue;
-    const d = await squarePixels(o.image, px);
+    const d = await pixelsAt(o.image, ...wh);
     if (d !== o.image) {
       o.image = d;
       changed = true;
