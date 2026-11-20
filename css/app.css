@@ -21838,10 +21838,47 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 }
 .sbh-nav {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.6rem;
-  margin-top: 0.6rem;
+  margin-top: 0.8rem;
+}
+/* the manual's path (Help › Build › Snap): each step but the last goes back there */
+.sbh-path {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0 2rem 0.5rem 0;
+  font-size: 0.95rem;
+}
+.sbh-crumb {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0.1rem 0.15rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+/* a page of buttons: the parts, a part's topics, the Seriat folders and files */
+.sbh-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: 0.4rem;
+}
+.sbh-list .sbh-go {
+  text-align: left;
+  white-space: normal;
+}
+.sbh-file {
+  margin: 0;
+  max-height: 60vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 /* Sandbox's build blocks drawn as pixels (js/sbspawnview.js shapePic, js/sblootview.js lootRing): one picture pixel per

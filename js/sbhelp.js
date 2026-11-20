@@ -1,8 +1,14 @@
-/* ---------- Sandbox: the help window of every window (the owner's, Nov 19 21:59Z and 23:10Z) ----------
-   The last option of B, M, P, H and G opens a big window with pages you move through (the Seriat window has its own:
-   seriatbible.js), in the same pixel page as the Seriat bible. The words are short and say what to press or drag. */
+/* ---------- Sandbox: the help manual (the owner's, Nov 19 21:59Z and 23:10Z, and Nov 20 19:02Z) ----------
+   The last option of B, M, P, H and G opens the help manual at that window's part. "The help manual should not be one
+   long text. It should be like you click it and then there's buttons that take you to different parts of text. And the
+   help manual also includes ... the help files as they are for Seriat in the Seriat coder ... in their own path where
+   you click buttons and it takes you to given files or other categories": its first page is a button for each part and
+   one for the Seriat help files; a part lists its topics as buttons; the Seriat files go by folder, then file, each
+   shown exactly as it is in the Seriat window's help/ folder (numerathelp.js). A path at the top goes back to any page.
+   The words are short and say what to press or drag (the Seriat window has its own bible: seriatbible.js). */
 import { esc, openWindow } from "./ui.js";
 import { LANG } from "./langname.js";
+import { HELP, EXAMPLES } from "./numerathelp.js";
 
 export const SB_HELP = {
   b: [
@@ -12,7 +18,19 @@ export const SB_HELP = {
     ],
     [
       "Moving what you placed",
-      "Hold the left mouse on it and drag. While you hold it, the arrow keys turn it. Double-click it for handles that change its size (Esc puts them away). Hold Shift and drag across an empty spot to select everything inside; drag one of them and they all move. Backspace lets go of a selection. Right-click it for Properties, Copy and Cut (Copy all and Cut all on a selection); on an empty spot, Paste.",
+      "Hold the left mouse on it and drag. While you hold it, the arrow keys turn it. Double-click it for handles that change its size (Esc puts them away). Hold Shift and drag across an empty spot to select everything inside; drag one of them and they all move. Backspace lets go of a selection. Right-click it for Properties, Copy, Cut, Lock, Snap, Direction and Overlay (Copy all and Cut all on a selection); on an empty spot, Paste. On a phone, hold your finger still on it for half a second.",
+    ],
+    [
+      "Hitbox tiles and Snap",
+      "A zone is made of the small hitbox tiles on the ground (four to a duck length), the same tiles that tell where a duck stands. A tile is the zone's when its shape covers 0.6 of it or more, so a circle is a little blocky at its edge. Sizes go in whole tiles. Right-click, Snap: Snap to grid (on by default) keeps the zone on the ground's tiles and turns it a quarter at a time; turned off, it goes anywhere and turns freely, and the 0.6 rule still counts. Fixed zone: no other zone on its overlay level can be put on it, and it can't be put on one. It only changes building.",
+    ],
+    [
+      "Direction",
+      "Right-click, Direction: Flip horizontally or Flip vertically mirrors the zone's shape. Rotate shows a ring with a circular arrow in the zone's middle: drag the arrow round and the zone turns to face it. Press anywhere else to put it away.",
+    ],
+    [
+      "Overlay levels",
+      "Right-click, Overlay, Set overlay level puts a zone on a level from 1 to 10. While building you only see the level you're on: Shift+O then a number key (0 is level 10), or Tools, Overlay level on a phone. New zones go on the level you're on. Nothing changes in play. Move up and Move down are not an overlay level: they only change which zone is drawn on top of the other.",
     ],
     [
       "Tabs and the zone budget",
@@ -136,30 +154,113 @@ const TITLES = {
   g: "Game settings",
 };
 
+/* the parts of the manual, in order */
+const PARTS = ["b", "m", "p", "h", "g"];
+/* the Seriat help files by folder: help/'s own files first, then each folder's, then the examples */
+function folders() {
+  const out = new Map([["", []]]);
+  for (const path of Object.keys(HELP)) {
+    const i = path.lastIndexOf("/"),
+      d = i < 0 ? "" : path.slice(0, i);
+    if (!out.has(d)) out.set(d, []);
+    out.get(d).push(path);
+  }
+  out.set(
+    "examples",
+    Object.keys(EXAMPLES).map((n) => "examples/" + n),
+  );
+  return out;
+}
+const fileText = (path) =>
+  path.startsWith("examples/") ? EXAMPLES[path.slice(9)] : HELP[path];
+/* the help manual, at window key's part (none: its first page) */
 export function openSbHelp(key) {
-  const pages = SB_HELP[key] || [];
-  if (!pages.length || document.querySelector(".sbh-win")) return;
-  let i = 0;
+  if (document.querySelector(".sbh-win")) return;
+  /* where I am: a list of pages from the first, each { k: "home" | "part" | "topic" | "files" | "dir" | "file", … } */
+  const home = { k: "home", t: "Help" },
+    seriat = { k: "files", t: `${LANG} help files` },
+    partOf = (p) => ({ k: "part", p, t: TITLES[p] }),
+    stack = [home];
+  if (SB_HELP[key]) stack.push(partOf(key));
+  const btn = (i, label) =>
+    `<button type="button" class="btn small ghost sbh-go" data-go="${i}">${esc(label)}</button>`;
   return openWindow(
-    `<h2>${esc(TITLES[key] || "Help")}: help</h2><div class="sbh-page" tabindex="0"></div><div class="sbh-nav"><button type="button" class="btn small ghost" data-prev>Back</button><span class="sbh-n"></span><button type="button" class="btn small" data-next>Next</button></div>`,
+    `<nav class="sbh-path" aria-label="Where you are"></nav><div class="sbh-page" tabindex="0"></div>`,
     {
       cls: "sbh-win", // (the game's own window, never the Seriat bible's white page: the owner's, Nov 20 04:46Z)
       onOpen(w) {
         const page = w.querySelector(".sbh-page"),
-          prev = w.querySelector("[data-prev]"),
-          next = w.querySelector("[data-next]");
+          path = w.querySelector(".sbh-path");
+        let go = []; // (the pages this page's buttons lead to)
         const draw = () => {
-          const [t, b] = pages[i];
-          page.innerHTML = `<h2>${esc(t)}</h2><p>${esc(b)}</p>`;
-          w.querySelector(".sbh-n").textContent = `${i + 1} of ${pages.length}`;
-          prev.disabled = i === 0;
-          next.disabled = i === pages.length - 1;
+          const at = stack[stack.length - 1];
+          path.innerHTML = stack
+            .map((s, i) =>
+              i === stack.length - 1
+                ? `<b>${esc(s.t)}</b>`
+                : `<button type="button" class="sbh-crumb" data-back="${i}">${esc(s.t)}</button>`,
+            )
+            .join(`<span aria-hidden="true">›</span>`);
+          go = [];
+          const list = (pages) => {
+            go = pages;
+            return `<div class="sbh-list">${pages.map((q, i) => btn(i, q.t)).join("")}</div>`;
+          };
+          if (at.k === "home")
+            page.innerHTML = list([...PARTS.map(partOf), seriat]);
+          else if (at.k === "part")
+            page.innerHTML = list(
+              SB_HELP[at.p].map(([t], i) => ({ k: "topic", p: at.p, i, t })),
+            );
+          else if (at.k === "topic") {
+            const pages = SB_HELP[at.p],
+              [t, b] = pages[at.i],
+              near = [
+                at.i > 0 && ["Previous", at.i - 1],
+                at.i < pages.length - 1 && ["Next", at.i + 1],
+              ].filter(Boolean);
+            go = near.map(([, i]) => ({
+              k: "topic",
+              p: at.p,
+              i,
+              t: pages[i][0],
+              swap: true,
+            }));
+            page.innerHTML = `<h2>${esc(t)}</h2><p>${esc(b)}</p><div class="sbh-nav">${near.map(([l], i) => btn(i, `${l}: ${go[i].t}`)).join("")}</div>`;
+          } else if (at.k === "files")
+            page.innerHTML = list(
+              [...folders().keys()].map((d) => ({
+                k: "dir",
+                d,
+                t: d ? `help/${d}/` : "help/",
+              })),
+            );
+          else if (at.k === "dir")
+            page.innerHTML = list(
+              folders()
+                .get(at.d)
+                .map((f) => ({
+                  k: "file",
+                  f,
+                  t: f.slice(f.lastIndexOf("/") + 1),
+                })),
+            );
+          else if (at.k === "file")
+            page.innerHTML = `<pre class="sbh-file">${esc(fileText(at.f) || "")}</pre>`;
+          page.scrollTop = 0;
         };
-        prev.onclick = () => ((i = Math.max(0, i - 1)), draw());
-        next.onclick = () => ((i = Math.min(pages.length - 1, i + 1)), draw());
-        w.addEventListener("keydown", (e) => {
-          if (e.key === "ArrowLeft") prev.click();
-          if (e.key === "ArrowRight") next.click();
+        w.addEventListener("click", (e) => {
+          const b = e.target.closest("[data-go], [data-back]");
+          if (!b) return;
+          if (b.dataset.back != null) stack.length = +b.dataset.back + 1;
+          else {
+            const q = go[+b.dataset.go];
+            if (!q) return;
+            if (q.swap) stack[stack.length - 1] = q;
+            else stack.push(q);
+          }
+          draw();
+          page.focus();
         });
         draw();
       },
