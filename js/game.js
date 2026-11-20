@@ -244,7 +244,17 @@ import {
 import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
 import { JET, jetHTML, myFuel, burnFuel } from "./jetpack.js";
 import { mountL4Bar, l4Slider } from "./l4ddbar.js";
-import { isSb, sbOnBoard, sbMay } from "./sandboxrules.js";
+import {
+  isSb,
+  sbOnBoard,
+  sbMay,
+  sbSfx,
+  sbCellMids,
+  sbWalls,
+  sbWallGo,
+  sbHasOl,
+  sbOlColor,
+} from "./sandboxrules.js";
 import { mountCabinEnd } from "./hangout/cabinend.js";
 import { mountSandboxKeys } from "./sandbox.js";
 import { sbCheat } from "./sbmenu.js";
@@ -489,6 +499,8 @@ import {
   fxHitAt,
   fxImpact,
   fxSmolder,
+  fxSteam,
+  fxSparks,
   fxMelee,
   fxBurst,
   fxSpurt,
@@ -1336,7 +1348,8 @@ function drawDucks(now = clockNow()) {
       return d && d.parentNode === layer ? d : null;
     };
   if (hang) world.frame(now); // (the camera first: ducks stand in the world)
-  const ol = isL4dd(s) || isMgj(s) || hang, // (the outlines, outlines.js: every zombie game, and Hangout's world too, the universal way to see who's hidden: the owner's, Nov 17 17:41Z)
+  const sbOl = sbHasOl(s), // (Sandbox: a zone with Outlines, sandboxrules.js)
+    ol = isL4dd(s) || isMgj(s) || hang || sbOl, // (the outlines, outlines.js: every zombie game, and Hangout's world too, the universal way to see who's hidden: the owner's, Nov 17 17:41Z)
     olAt = ol && hang ? world.at(R.me) : null,
     olMe = olAt ? olFloor(olAt.x, olAt.y, olAt.z) : null; // (my floor)
   trackWalk();
@@ -1860,25 +1873,39 @@ function drawDucks(now = clockNow()) {
     const olId = g ? id.slice(0, -BODY.length) : id, // (a Duck Cabin ghost's body is its player's, outlined as that player)
       olP = s.players[olId],
       olMine = olId === R.me,
-      olKind = !ol
-        ? ""
-        : isMgj(s)
-          ? id === GOOD_ID
-            ? "justin"
-            : olP && id !== JUSTIN_ID
-              ? olMine
-                ? "me"
-                : "ally"
-              : ""
-          : olP
-            ? olP.helper || olP.wild
-              ? dead
-                ? "" // (dead, no outline round him: the owner's, Nov 19 19:27Z "when he dies, there's no outline around his character")
-                : "justin" // (Dead Ducks Arcade's Justins: the helper from the fireplace, and Downpour's, out there)
-              : olMine
-                ? "me"
-                : "ally"
-            : "";
+      olZone =
+        sbOl && olP && pos
+          ? sbOlColor(
+              s,
+              { duck: olP.name || "" },
+              pos.x,
+              pos.y,
+              +pos.z || 0,
+              hang ? HW : 1,
+              hang ? HH : 1,
+            )
+          : "", // (Sandbox: standing where a zone's Outlines take it, that row's color)
+      olKind = olZone
+        ? olZone
+        : !ol || sbOnBoard(s)
+          ? ""
+          : isMgj(s)
+            ? id === GOOD_ID
+              ? "justin"
+              : olP && id !== JUSTIN_ID
+                ? olMine
+                  ? "me"
+                  : "ally"
+                : ""
+            : olP
+              ? olP.helper || olP.wild
+                ? dead
+                  ? "" // (dead, no outline round him: the owner's, Nov 19 19:27Z "when he dies, there's no outline around his character")
+                  : "justin" // (Dead Ducks Arcade's Justins: the helper from the fireplace, and Downpour's, out there)
+                : olMine
+                  ? "me"
+                  : "ally"
+              : "";
     /* a duck lying dead: where the middle of its body is on the board, as css lays it down (.gduck-body: rotate(-100deg)
        translateY(-12%) round the bottom middle of its body; DOWN_TURN). Its outline's arrow goes in it, what hides it is
        looked for there, and its pool of blood spreads under it (a duck lies a little to the side of where it stood: the
@@ -3154,7 +3181,8 @@ function placeZombies(board, s, now) {
   if (!layer || !geo) return;
   sendDu(s);
   npcPics(s.sbpic); // (the room's uploaded pictures: a spawn's Appearance tab)
-  const want = new Set(zb.map((o) => String(o.i))),
+  const sbOl = sbOnBoard(s) && sbHasOl(s),
+    want = new Set(zb.map((o) => String(o.i))),
     fxl = $(".fxl", board),
     ng = !!+s.options.noGore,
     have = new Map(); // (found once a frame, not one search for each of up to 800)
@@ -3286,6 +3314,18 @@ function placeZombies(board, s, now) {
       ); // (its claw marks on the duck it swiped, as Dead Ducks Arcade's: l4dd.js clawMark)
     n._a = o.a;
     npcSay(n, o); // (Sandbox: what its Seriat file has it say, sbnumberat.js)
+    const oc = sbOl && !o.d && sbOlColor(s, { k: o.k, sp: o.sp }, o.x, o.y, 0);
+    if (oc)
+      olAdd({
+        id: "mz" + o.i,
+        img: n._img,
+        x: c.left - w / 2,
+        y: c.top - box.feet * k,
+        w,
+        h: box.h * k,
+        flip: face < 0,
+        kind: oc,
+      }); // (Sandbox: in a zone whose Outlines take it, that color)
     if (n._st === st) continue;
     n._st = st;
     /* moved by transform, not left and top: 800 gliding left and top made the page lay itself out again every frame
@@ -3690,6 +3730,38 @@ function against(hex) {
    start, its last puff, ux, uy, reach] }; s.gfire (s.hang.l4gf): [[x, y, until …]] (Dead Ducks Arcade's with its
    floor's height last: [x, y, until, by, h]) */
 const FLAME_CARRY = new Map();
+/* Sandbox: what a zone's working squares show (plan Phase 3, sandboxrules.js SB_SFX), on every screen: ground fire as
+   the flamethrower's burning ground (each square a patch), or now and then a puff of smoke, steam or sparks on a few
+   squares at random. spot(x, y, z) → its place on my screen, as the fire's */
+function sbZoneLooks(s, spot, ground, size, half) {
+  const pts = (s.sb && s.sb.pts) || {};
+  for (const [id, p] of Object.entries(pts)) {
+    const k = sbSfx(p);
+    if (k === "none") continue;
+    const mids = sbCellMids(s, id, p, HW, HH, half < 1 ? 60 : 120),
+      z = p.z || 0;
+    for (const m of mids) {
+      const a = spot(m.x, m.y, z);
+      if (k === "fire") {
+        ground.push([
+          a.left,
+          a.top,
+          size * 0.45,
+          false,
+          m.c * 7919 + idSeed(id),
+        ]);
+        if (Math.random() < 0.02 * half)
+          fxGroundFire(a.left, a.top, size * 0.4, 1);
+      } else if (Math.random() < 0.03 * half) {
+        if (k === "smoke") fxSmolder(a.left, a.top, size * 0.5, 1);
+        else if (k === "steam") fxSteam(a.left, a.top, 1);
+        else fxSparks(a.left, a.top, size * 0.3, 1);
+      }
+    }
+  }
+}
+const idSeed = (id) =>
+  [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7);
 let flamesAt = 0;
 function flames(s, now, hang, size, fxl, heldAll) {
   const dt = Math.min(0.05, flamesAt ? (now - flamesAt) / 1000 : 0),
@@ -3736,6 +3808,7 @@ function flames(s, now, hang, size, fxl, heldAll) {
     if (!(half < 1 && frameNo % 2) && Math.random() < 0.5)
       fxGroundFire(a.left, a.top, size * 0.4, 1); // (half: its embers every other frame)
   }
+  if (isSb(s)) sbZoneLooks(s, spot, ground, size, half);
   fxGround(ground);
 }
 /* my screen blinks in and out of crimson while it shakes (the flamethrower's fire on my duck, the owner's, Nov 16): a
@@ -5098,6 +5171,22 @@ function step(dt, now) {
     q = q || scr(0, Math.sign(ay));
     ny = Math.max(0, Math.min(1, ny));
   }
+  if (sbOnBoard(s)) {
+    const [wx, wy] = sbWallGo(
+      s,
+      sbWalls(s, { duck: (s.players[R.me] || {}).name || "" }),
+      me.x,
+      me.y,
+      nx,
+      ny,
+      0,
+    );
+    if (wx !== nx || wy !== ny) {
+      q = q || scr(Math.sign(ax), Math.sign(ay));
+      nx = wx;
+      ny = wy;
+    }
+  } // (Sandbox: a zone that's a wall to me, plan Phase 3)
   if (attorney() && isDn(s)) {
     const [rx, ry] = inRing(nx, ny);
     if (rx !== nx || ry !== ny) {
@@ -7427,8 +7516,7 @@ function paintNow(force) {
       putAt = p.tp;
       me.x = p.x;
       me.y = p.y;
-      me.z = undefined;
-      me.b = undefined;
+      me.z = me.b = p.z > 0 ? p.z : undefined; // (Sandbox: up on a floor where it came back; nothing under it, it falls)
       me.vz = null;
       me.j = 0;
       target = null;

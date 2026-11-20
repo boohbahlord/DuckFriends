@@ -25,6 +25,8 @@ import {
   MOST_TRIES,
   REPLAY,
   NB_STATS,
+  NB_ZONE_STATS,
+  NB_ALL_STATS,
 } from "./numberat.js";
 
 const LOOPS = 1000; // ("Every loop stops after 1,000 rounds with an error")
@@ -33,7 +35,34 @@ export { NB_STATS }; // (an NPC's stats: numberat.js reads "z hp" with them)
 export const NB_BUILT = ["wave", "time", "alive", "dead", "spawned"];
 /* hppct: its HP as a percent of its most (the owner's, Nov 19 21:59Z: examples use percentages, not 8 HP or 5 HP) */
 const NB_PCT = "hppct";
-const EVENTS = ["spawn", "hit", "dead", "touch", "near"];
+const EVENTS = ["spawn", "hit", "dead", "touch", "near", "enter"]; // (enter: a player steps into a zone, its file's)
+/* a zone's own words (the owner's yes, Nov 20 03:10Z): step [n], squares n, size n, order shuffle, dir right */
+const ZONE_HEADS = ["step", "squares", "size", "order", "dir"];
+export const NB_ORDERS = {
+  random: "rand",
+  rand: "rand",
+  absolute: "abs",
+  shuffle: "shuf",
+  shuf: "shuf",
+  shuffleonce: "shuf1",
+  rows: "shufrow",
+  columns: "shufcol",
+  line: "line",
+  alternating: "alt",
+  alt: "alt",
+  all: "all",
+};
+export const NB_DIRS = {
+  none: "",
+  right: "right",
+  left: "left",
+  up: "up",
+  down: "down",
+  upright: "ur",
+  upleft: "ul",
+  downright: "dr",
+  downleft: "dl",
+};
 const KINDS = {
   duck: "duck",
   ducks: "duck",
@@ -61,6 +90,7 @@ const HEADS = new Set([
   "give",
   "take",
   "else",
+  ...ZONE_HEADS,
 ]);
 export const NB_RUN_WORDS = [
   ...HEADS,
@@ -85,7 +115,10 @@ export const NB_RUN_WORDS = [
   "down",
   "min",
   "max",
-  ...NB_STATS,
+  ...NB_ALL_STATS,
+  "zone",
+  ...Object.keys(NB_ORDERS),
+  ...Object.keys(NB_DIRS),
   ...NB_BUILT,
   NB_PCT,
 ];
@@ -338,6 +371,30 @@ class Stmts {
           if (w === "take") this.file.known.add(name);
           return { k: w, name };
         }
+        case "step": {
+          this.p++;
+          const v =
+            this.sep() || this.word("else") || !this.peek()
+              ? null
+              : this.value({ what: "How many steps", stopWords: ["else"] });
+          return { k: "zstep", v };
+        }
+        case "squares":
+        case "size": {
+          this.p++;
+          const v = this.value({ what: `${w}'s value`, sum: true });
+          return { k: "set", who: null, stat: w, v, pct: false };
+        }
+        case "order":
+        case "dir": {
+          this.p++;
+          const q = this.peek(),
+            words = w === "order" ? NB_ORDERS : NB_DIRS;
+          if (!q || q.t !== "word" || words[q.v] == null)
+            no(`${w} what? ${Object.keys(words).join(", ")}`, HELP.run);
+          this.p++;
+          return { k: "zword", what: w, v: words[q.v] };
+        }
         case "else":
           no(`else comes after an \\if …\\ on the same line`, HELP.if);
       }
@@ -417,10 +474,10 @@ class Stmts {
     const t = this.peek();
     if (!t || t.t !== "word")
       no(`((hp 5)): a stat, then its value`, HELP.names);
-    if (!NB_STATS.includes(t.v)) who = this.who();
+    if (!NB_ALL_STATS.includes(t.v)) who = this.who();
     const st = this.peek();
-    if (!st || st.t !== "word" || !NB_STATS.includes(st.v))
-      no(`Which stat? ${NB_STATS.join(", ")}`, HELP.names);
+    if (!st || st.t !== "word" || !NB_ALL_STATS.includes(st.v))
+      no(`Which stat? ${NB_ALL_STATS.join(", ")}`, HELP.names);
     this.p++;
     const v = this.value({ what: `${st.v}'s value`, sum: true });
     let pct = false;
@@ -463,6 +520,13 @@ class Stmts {
   /* me, nearest duck, all zombies, team, or a for's name. maybe: give null when it isn't one */
   who(maybe) {
     const t = this.peek();
+    if (t && t.t === "word" && t.v === "zone") {
+      const q = this.peek(1);
+      if (q && q.t === "quote") {
+        this.p += 2;
+        return { k: "zone", name: q.v }; // (zone 'Pit': the zone of that variable name)
+      }
+    }
     if (t && t.t === "word") {
       if (t.v === "me" || t.v === "team") {
         this.p++;
@@ -700,7 +764,7 @@ function read(text, plan, errs, opts, seen, from) {
         !plan.defs.has(n.v) &&
         !NB_BUILT.includes(n.v) &&
         n.v !== NB_PCT &&
-        !NB_STATS.includes(n.v) &&
+        !NB_ALL_STATS.includes(n.v) &&
         !(opts.known && opts.known.has(n.v))
       )
         errs.push({
@@ -797,12 +861,21 @@ export function brain(plan, host) {
         no(`${w} is an NPC's: use it inside a when`, HELP.names);
       return (host.stat(env.me, "hp") * 100) / (host.most(env.me, "hp") || 1);
     }
-    if (NB_STATS.includes(w)) {
+    if (NB_ALL_STATS.includes(w)) {
       if (env.me == null)
-        no(`${w} is an NPC's: use it inside a when`, HELP.names);
+        no(
+          `${w} is ${NB_ZONE_STATS.includes(w) ? "a zone's" : "an NPC's"}: use it inside a when`,
+          HELP.names,
+        );
       return host.stat(env.me, w);
     }
     no(`"${w}" isn't a name I know (let it first)`, HELP.names);
+  };
+  /* zone 'Pit' steps: a zone's stat by its variable name (a game that has none: Sandbox's only) */
+  const zoneStat = (name, n) => {
+    const id = host.zone ? host.zone(name) : null;
+    if (id == null) no(`No zone named ${name}`, HELP.names);
+    return host.stat(id, n);
   };
   const setVar = (env, w, v) => {
     for (let s = env.scope; s; s = s.parent)
@@ -818,6 +891,7 @@ export function brain(plan, host) {
     for (let k = 0; k < MOST_TRIES; k++) {
       const ctx = newCtx(rand, R);
       ctx.name = (w) => lookup(env, w);
+      ctx.zone = zoneStat;
       /* z hp: another NPC's stat (z from for z in team, or a name let to one) */
       ctx.stat = (w, n) => {
         const id = lookup(env, w);
@@ -852,6 +926,7 @@ export function brain(plan, host) {
     if (fn.span) {
       const ctx = newCtx(rand, R);
       ctx.name = (w) => lookup(env, w);
+      ctx.zone = zoneStat;
       /* z hp: another NPC's stat (z from for z in team, or a name let to one) */
       ctx.stat = (w, n) => {
         const id = lookup(env, w);
@@ -875,6 +950,11 @@ export function brain(plan, host) {
   };
   const whoIs = (env, w) => {
     if (!w) return host.who({ k: "nearest", of: "duck" }, env.me);
+    if (w.k === "zone") {
+      const id = host.zone ? host.zone(w.name) : null;
+      if (id == null) no(`No zone named ${w.name}`, HELP.names);
+      return [id];
+    }
     if (w.k === "var") {
       const v = lookup(env, w.name);
       return Array.isArray(v) ? v : [v];
@@ -990,6 +1070,25 @@ export function brain(plan, host) {
           );
         return;
       }
+      case "zstep":
+      case "zword": {
+        /* a zone's file: for its zone, or at its top for every zone that names it */
+        const ids =
+          env.me != null ? [env.me] : host.zones ? host.zones() : null;
+        if (!ids || !host.zstep)
+          no(
+            `${s.k === "zstep" ? "step" : s.what} is a zone's: use it in a zone's file`,
+            HELP.run,
+          );
+        const n =
+          s.k === "zstep" && s.v
+            ? Math.round(num(val(env, s.v, R), "How many steps"))
+            : 1;
+        for (const id of ids)
+          if (s.k === "zword") host.zword(id, s.what, s.v);
+          else host.zstep(id, n);
+        return;
+      }
       case "if": {
         const ok = s.c(E(env, R));
         const b = ok ? s.then : s.other;
@@ -1068,6 +1167,7 @@ export function brain(plan, host) {
   const forList = (env, fn, R) => {
     const ctx = newCtx(rand, R);
     ctx.name = (w) => lookup(env, w);
+    ctx.zone = zoneStat;
     const each = (f, top) => {
       if (f.span) {
         const [lo, hi, t10] = f.span(ctx),
@@ -1125,12 +1225,12 @@ export function brain(plan, host) {
     task(plan.top, null, firstLine(plan.top));
   };
   /* an NPC this file runs: its every's start (each NPC keeps its own clock) and its when spawn plays */
-  B.add = (id) => {
+  B.add = (id, quiet = false) => {
     timers.set(
       id,
       plan.everys.map(() => host.now()),
     );
-    B.fire("spawn", id);
+    if (!quiet) B.fire("spawn", id); // (quiet: a zone, whose when spawn is its tabs' spawning)
   };
   B.remove = (id) => {
     timers.delete(id);
@@ -1192,6 +1292,7 @@ export function brain(plan, host) {
     zombie: plan.whens.some((w) => w.ev === "near" && w.of !== "duck"),
     touch: plan.whens.some((w) => w.ev === "touch"),
     every: plan.everys.length > 0,
+    enter: plan.whens.some((w) => w.ev === "enter"),
   };
   /* time moves on: the waits that are over wake, and the every's that are due play */
   B.tick = () => {

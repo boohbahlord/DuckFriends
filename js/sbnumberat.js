@@ -14,6 +14,13 @@
 import { compileScript, brain } from "./numberatrun.js";
 import { valueOf } from "./numerat.js";
 import { SB_BOXES } from "./sandboxrules.js";
+import {
+  zoneByName,
+  zoneStat,
+  zoneSet,
+  zoneMost,
+  isZoneId,
+} from "./sbzonebrain.js";
 
 /* a file's hitbox, in percent: 10% to 300% (was 0.1 to 3; the owner's, Nov 19 15:52Z) */
 const HB = { LEAST: 10, MOST: 300 };
@@ -209,6 +216,7 @@ function make(s, name, text, now) {
   const host = {
     now: () => g.cur.now / 1000,
     stat: (id, n) => {
+      if (isZoneId(id)) return zoneStat(g.cur.s, id, n); // (zone 'Pit' steps: sbzonebrain.js)
       const o = npc(id);
       if (!o) return 0;
       return n === "hp"
@@ -222,6 +230,10 @@ function make(s, name, text, now) {
               : Math.round((o.hb || 1) * 100); // (hitbox: in percent, the owner's, Nov 19 15:52Z)
     },
     set: (id, n, v) => {
+      if (isZoneId(id)) {
+        if (zoneSet(g.cur.s, id, n, v)) g.ch = true;
+        return;
+      }
       const o = npc(id);
       if (!o) return;
       g.ch = true;
@@ -236,16 +248,19 @@ function make(s, name, text, now) {
         o.dm = String(Math.min(SB_BOXES.damage.max, Math.max(0.1, v)));
       else o.hb = Math.min(HB.MOST, Math.max(HB.LEAST, v)) / 100; // (kept as a share: sbbody.js)
     },
+    zone: (n) => zoneByName(g.cur.s, n),
     most: (id, n) =>
-      n === "hp"
-        ? g.full.get(id) || SB_BOXES.hp.max
-        : n === "regen"
-          ? 100
-          : n === "speed"
-            ? SB_BOXES.speed.max
-            : n === "damage"
-              ? SB_BOXES.damage.max
-              : 100, // (hitbox: already a percent of its usual size, so ((hitbox 150%)) is ((hitbox 150)), never a share of 300)
+      isZoneId(id)
+        ? zoneMost(n)
+        : n === "hp"
+          ? g.full.get(id) || SB_BOXES.hp.max
+          : n === "regen"
+            ? 100
+            : n === "speed"
+              ? SB_BOXES.speed.max
+              : n === "damage"
+                ? SB_BOXES.damage.max
+                : 100, // (hitbox: already a percent of its usual size, so ((hitbox 150%)) is ((hitbox 150)), never a share of 300)
     get: (w) => {
       const st = g.cur.s;
       if (w === "wave") return (st.hang && st.hang.l4 && st.hang.l4.r) || 0;

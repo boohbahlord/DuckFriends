@@ -215,6 +215,11 @@ const FN1 = {
 };
 /* an NPC's stats, read and set by name (numberatrun.js): "z hp" is NPC z's HP */
 export const NB_STATS = ["hp", "speed", "damage", "hitbox", "regen"]; // (regen: HP back each second, the owner's "regen HP": sbgroups.js)
+/* a zone's, read and set the same way inside a zone's file, or from another file by its name: zone 'Pit' steps (the
+   owner's yes, Nov 20 03:10Z). steps: how many steps its squares took; squares: how many work at once; size: a square's
+   size in duck lengths; inside: how many players stand in it */
+export const NB_ZONE_STATS = ["steps", "squares", "size", "inside"];
+export const NB_ALL_STATS = [...NB_STATS, ...NB_ZONE_STATS];
 const RESERVED = new Set([
   "else",
   "in",
@@ -620,12 +625,31 @@ class Parser {
         return (ctx) => f(num(a(ctx)), num(b(ctx)));
       }
       if (RESERVED.has(t.v)) no(`"${t.v}" can't start a value`);
+      const zq = t.v === "zone" ? this.peek() : null;
+      if (zq && zq.t === "quote") {
+        this.i++;
+        const zs = this.peek();
+        if (!zs || zs.t !== "word" || !NB_ZONE_STATS.includes(zs.v))
+          no(
+            `zone '${zq.v}' what? ${NB_ZONE_STATS.join(", ")}`,
+            "help/brains/names.txt",
+          );
+        this.i++; // (zone 'Pit' steps: zone Pit's steps)
+        return (ctx) => {
+          if (!ctx.zone)
+            no(
+              `"zone '${zq.v}' ${zs.v}" is a zone's: it works in files`,
+              "help/brains/names.txt",
+            );
+          return ctx.zone(zq.v, zs.v);
+        };
+      }
       if (this.names) this.names.push({ v: t.v, line: t.line });
       const st = this.peek();
       if (
         st &&
         st.t === "word" &&
-        NB_STATS.includes(st.v) &&
+        NB_ALL_STATS.includes(st.v) &&
         !NB_STATS.includes(t.v)
       ) {
         this.i++; // (z hp: NPC z's HP)

@@ -12,7 +12,7 @@
 import { isInvisible } from "./invisible.js";
 import { invOn } from "./sbgod.js";
 import { sprintLeft, sprintReset } from "./stamina.js";
-import { isSb, sbNoLight } from "./sandboxrules.js";
+import { isSb, sbNoLight, sbHasOl, sbOlColor } from "./sandboxrules.js";
 import { activity } from "./hangout/registry.js";
 import { votesDue } from "./rules.js";
 import {
@@ -170,7 +170,8 @@ const RX = 56,
   RY = 25.6; // (a zombie's room on the floor, as the rules')
 const SPEED = 0.6 * 1.05; // my duck at 63% of Duck Cabin's walk: I wanted it 20% faster than the half it was, then 5% more (Nov 3; sprint goes from it)
 const DARK = 0.84; // how dark the dark is: still dark, but I wanted it a little lighter than 0.93
-const DARK_ON = 0.5; // … and with the power on: the lights are on, still night
+const DARK_ON = 0.5, // … and with the power on: the lights are on, still night outside
+  DARK_ON_IN = 0; // … and inside the cabin as bright as Hangout is with its power on (the owner's, Nov 20: it brightens when the generator is on)
 const CONE = { far: 560, half: (27 * Math.PI) / 180 }; // the flashlight: how far, and half its width
 const GLOW = 80; // world px: the faint light round every duck
 const LOW_DEAD = 2000; // ms a dead zombie shows on my screen with Low graphics or Data saving (the rules keep it L4.DEAD_MS)
@@ -483,7 +484,7 @@ function lits() {
    when a wall hides it, or null to ask whether a wall, a roof or a crown drawn over it covers it (zi: the z-index it's
    drawn at, so only what is really drawn over it counts: the owner's, Nov 17 19:11Z). Returns whether something hides
    it: then it shows only as its line, never its picture (the owner's, Nov 17 17:41Z) */
-function zOutline(Wd, o, f, dip, sc, hidden, z, myFloor, zi = 0) {
+function zOutline(Wd, o, f, dip, sc, hidden, z, myFloor, zi = 0, kind = "") {
   const w = o.bw * sc,
     h = o.bh * sc,
     y = f.top + (dip - o.feet) * sc,
@@ -498,7 +499,7 @@ function zOutline(Wd, o, f, dip, sc, hidden, z, myFloor, zi = 0) {
     w,
     h,
     flip: o.face < 0,
-    kind: "zombie",
+    kind: kind || "zombie", // (or a Sandbox zone's Outlines color)
     hidden: hid,
     floor: Math.sign(olFloor(o.x, o.y, z) - myFloor),
   });
@@ -625,6 +626,7 @@ function seeZombies(s, ctx, now) {
       o = zombieEl(z);
       Z.set(z.i, o);
     }
+    o.sp = z.sp; // (a Sandbox spawn's: its zone Outlines, sandboxrules.js sbOlColor)
     if (fresh && (z.x !== o.tx || z.y !== o.ty)) {
       o.fx = o.x;
       o.fy = o.y;
@@ -795,7 +797,7 @@ let sqEl = null,
 function spinSquare(s, ctx) {
   const L = s.hang.l4,
     Wd = ctx.world,
-    rest = !!(sqEl && L && !L.over && L.wait);
+    rest = !!(sqEl && L && !L.over && L.wait && !isSurv(s)); // (none in Survival: nothing there to buy or spin, the owner's, Nov 20 02:32Z)
   if (!sqEl) return;
   /* the car (or the fireplace), and on Downpour a square round each gas pump too: where something can be bought or
      done (the owner's, Nov 17 18:05Z: "the gas pumps now get a small sqaure around them in the rest phase as well") */
@@ -1383,7 +1385,7 @@ function paint(now, ctx) {
   {
     const br = 0.5 + 0.5 * Math.sin((performance.now() / 2600) * 2 * Math.PI);
     for (const [x, y, z, r] of [
-      [ANGEL.X, ANGEL.Y, ANGEL.Z + 70, 90],
+      ...(isSurv(s) ? [] : [[ANGEL.X, ANGEL.Y, ANGEL.Z + 70, 90]]), // (Survival has no Angel machine, so no light where it stood: the owner's, Nov 20 02:32Z)
       [PW.X, PW.Y, heightAt(PW.X, PW.Y) + 70, 80],
     ]) {
       if (!seenFrom(x, y, Wd.inside)) continue;
@@ -1489,7 +1491,7 @@ function paint(now, ctx) {
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.globalCompositeOperation = "source-over";
   g.clearRect(0, 0, w, h);
-  g.fillStyle = `rgba(3,4,10,${powerOn(s) ? DARK_ON : DARK})`;
+  g.fillStyle = `rgba(3,4,10,${powerOn(s) ? (Wd.inside ? DARK_ON_IN : DARK_ON) : DARK})`;
   g.fillRect(0, 0, w, h);
   g.globalCompositeOperation = "destination-out";
   const st = stamp();
@@ -2881,7 +2883,9 @@ activity({
       sc = Wd.sc,
       t = performance.now(),
       meAt = Wd.at(ctx.me),
-      myFloor = meAt ? olFloor(meAt.x, meAt.y, meAt.z) : 0; // (for the outlines: a zombie a floor away)
+      myFloor = meAt ? olFloor(meAt.x, meAt.y, meAt.z) : 0, // (for the outlines: a zombie a floor away)
+      st0 = ctx.state(),
+      sbOl = sbHasOl(st0); // (Sandbox: zones with Outlines)
     /* the zombies, gliding from where they were to where the host says, one heartbeat's time */
     for (const o of Z.values()) {
       const u = Math.min(1, (t - o.t0) / (o.g || gap));
@@ -2916,8 +2920,12 @@ activity({
           (o.diedAt !== undefined && t - o.diedAt > LOW_DEAD && low()); // (Low graphics or Data saving: a body is gone from my screen at 2 s, css/app.css html.low; the rules still keep it its 4 s)
       if (o.el.hidden !== hide) o.el.hidden = hide;
       o.z = z; // (its height as I draw it: shotStop)
+      const zc =
+        sbOl && o.st !== 3
+          ? sbOlColor(st0, { k: "zombie", sp: o.sp }, o.x / W, o.y / H, z, W, H)
+          : "";
       if (onCam && unseen && o.st !== 3)
-        zOutline(Wd, o, f, 0, sc, true, z, myFloor); // (on the other side of a wall: its red line)
+        zOutline(Wd, o, f, 0, sc, true, z, myFloor, 0, zc); // (on the other side of a wall: its red line)
       if (hide) continue;
       wounds(o, o.l, o.i); // (come into sight: the wounds it got out of it)
       pxPic(o, o.img, o.bw * sc, o.bh * sc);
@@ -2946,6 +2954,7 @@ activity({
           z,
           myFloor,
           zi,
+          zc,
         ); // (really behind a wall, under a roof: its line only)
       if (o.olOnly !== olOnly) {
         o.olOnly = olOnly;

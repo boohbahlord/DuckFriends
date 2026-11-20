@@ -115,7 +115,7 @@ export function lootPage(s, id, p, h) {
     ${h.colorRow}
     ${h.flagRow("hide", SB_FLAGS.hide, h.typed("hide"), h.why("hide"))}
     ${cats.map(drop).join("")}
-    <p class="sb-none" data-row="loot">${picked.filter((w) => lootOk(s, w)).length > 1 ? "One of these at random each time." : picked.some((w) => lootOk(s, w)) ? "" : "Pick at least one."}</p>
+    <p class="sb-none" data-row="loot">${picked.filter((w) => lootOk(s, w)).length > 1 ? "One of these at random each time." : picked.some((w) => lootOk(s, w)) ? "" : "Nothing comes until you pick something."}</p>
     ${(drops ? ["again", "hurt"] : ["again", "keep", "hurt"]).map((f) => h.row(f, SB_LOOT[f], h.typed(f), h.why(f))).join("")}
     ${(drops ? ["back", "inf"] : ["back"]).map((f) => h.flagRow(f, SB_LOOT[f], h.typed(f), h.why(f))).join("")}
     <div class="sb-row"><span>Looks like</span><select class="sb-sel" data-lsel><option value="">Itself</option>${cats
@@ -124,8 +124,8 @@ export function lootPage(s, id, p, h) {
           `<optgroup label="${esc(n)}">${ws.map((w) => `<option value="${w}"${look === w ? " selected" : ""}>${esc(nameOf(w))}</option>`).join("")}</optgroup>`,
       )
       .join("")}</select></div>
-    <div class="sb-row"><span>Picture</span><span class="sb-pic">${img ? `<img src="${esc(img)}" alt=""><button type="button" class="btn ghost small" data-noimg>Remove</button>` : ""}<label class="btn ghost small">${img ? "Change" : "Upload"}<input type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden data-img></label><label><input type="checkbox" data-lsquash> Compress (pixel look)</label></span></div>
-    <p class="small dim sb-up-note">2 MB at most. Kept as it is unless Compress is ticked.</p>`;
+    <div class="sb-row"><span>Picture</span><span class="sb-pic">${img ? `<img src="${esc(img)}" alt=""><button type="button" class="btn ghost small" data-noimg>Remove</button>` : ""}<label class="btn ghost small">${img ? "Change" : "Upload"}<input type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden data-img></label></span></div>
+    <p class="small dim sb-up-note">2 MB at most. Made into pixels.</p>`;
 }
 /* its listeners: send({ k, f, v }) sends Sandbox's "sb" action for this point; getR: () => the room */
 export function lootWire(w, id, send, getR) {
@@ -146,8 +146,8 @@ export function lootWire(w, id, send, getR) {
             ? "One of these at random each time."
             : all.length
               ? ""
-              : "Pick at least one.";
-      if (all.length) send({ k: "set", f: "loot", v: all.join(", ") });
+              : "Nothing comes until you pick something.";
+      send({ k: "set", f: "loot", v: all.join(", ") });
       return;
     }
     if (t.matches("[data-lsel]"))
@@ -156,10 +156,7 @@ export function lootWire(w, id, send, getR) {
       const f = t.files && t.files[0];
       if (!f) return;
       try {
-        const pic = await picFrom(
-            f,
-            !!w.querySelector("[data-lsquash]:checked"),
-          ), // (as a made NPC's: 2 MB, kept as it is unless Compress is ticked)
+        const pic = await picFrom(f), // (as a made NPC's: 2 MB, made into pixels)
           r = getR();
         if (!r) return;
         r.send({ t: "sbl", k: "img", p: id, v: sendParts(r, pic) });

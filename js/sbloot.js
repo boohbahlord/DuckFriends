@@ -11,8 +11,8 @@
    - A zone whose "Loot spawns here" names the orb's point (its color or its name) has the orb lie there instead, at a
      spot in it at random each time (stage 5, sbzone.js): p.orb.x, y, z.
    The orb is on its point: p.orb = { w, at, dn: a zombie drop's number }, p.gone = when it was last taken. An uploaded
-   picture for an orb is sent in parts as a made NPC's is (sbmake.js sendParts) and kept in s.sbpic, as it was uploaded
-   unless Compress was ticked (the owner's answer 6, Nov 19); s.sbImg = { loot point: its key there } */
+   picture for an orb is sent in parts as a made NPC's is (sbmake.js sendParts) and kept in s.sbpic, made into pixels (plan
+   Phase 3); s.sbImg = { loot point: its key there } */
 import {
   isSb,
   sbMay,
@@ -22,6 +22,10 @@ import {
   SB_DROPS,
   SB_GEAR,
   sbSpread,
+  sbCallZone,
+  sbInv,
+  sbTabLive,
+  sbUsed,
 } from "./sandboxrules.js";
 import { valueOf } from "./numerat.js";
 import { boxText, spawnsHere, zoneSpot, zonesFor } from "./sbspawn.js";
@@ -53,6 +57,8 @@ export function sbLootAct(s, a) {
   const p = ((s.sb && s.sb.pts) || {})[a.p],
     v = typeof a.v === "string" ? a.v : "";
   if (!p || p.k !== "loot") return false;
+  const pts = s.sb.pts;
+  if (p.lock || (p.grp && pts[p.grp] && pts[p.grp].lock)) return false; // (locked: sbspawn.js "lock")
   if (v && !(/^[a-z0-9]{1,24}$/.test(v) && (s.sbpic || {})[v])) return false;
   const img = { ...(s.sbImg || {}) };
   if (v) img[a.p] = v;
@@ -71,6 +77,12 @@ export function sbLootTick(s, now, H0) {
   for (const [id, p] of Object.entries(pts)) {
     if (p.k !== "loot") continue;
     let q = p;
+    if (!sbTabLive(pts, id)) {
+      // (a Loot tab whose Caller names no zone: nothing comes, and an orb lying there goes)
+      if (q.orb && q.orb.dn == null) pts[id] = { ...q, orb: null };
+      if (pts[id] !== p) ch = true;
+      continue;
+    }
     if (q.orb && q.orb.dn != null && !drops.some((d) => d.n === q.orb.dn))
       q = { ...q, orb: null, gone: now }; // (a zombie drop: taken, or faded away, as theirs do)
     if (q.orb && q.orb.dn == null) {
@@ -84,7 +96,7 @@ export function sbLootTick(s, now, H0) {
     if (!q.orb && due(q, now)) {
       const all = lootList(s, q),
         w = all[Math.floor(Math.random() * all.length)];
-      if (w) q = { ...q, orb: lay(s, q, w, now) };
+      if (w) q = { ...q, orb: lay(s, q, w, now, sbCallZone(pts, id)) };
     }
     if (q !== p) {
       pts[id] = q;
@@ -101,15 +113,18 @@ function due(q, now) {
     t = num(q, "again");
   return back && now - q.gone >= (Number.isFinite(t) ? t : 10) * 1000;
 }
-function lay(s, q, w, now) {
+function lay(s, q, w, now, zid = null) {
   const zs = zonesFor(s, "lt", q), // (a zone that names it: the orb lies in it, anywhere: sbzone.js)
-    at = zs.length
-      ? zoneSpot(s, zs[Math.floor(Math.random() * zs.length)])
-      : sbSpread(q)
-        ? zoneSpot(s, q) // (anywhere in its own shape, when it's bigger than its spot)
-        : null,
+    at = zid
+      ? zoneSpot(s, s.sb.pts[zid], sbInv(q)) // (a Loot tab: where the zone it answers to says; Inverse: outside it)
+      : zs.length
+        ? zoneSpot(s, zs[Math.floor(Math.random() * zs.length)])
+        : sbSpread(q)
+          ? zoneSpot(s, q) // (anywhere in its own shape, when it's bigger than its spot)
+          : null,
     p = at || q,
     where = at ? { x: at.x, y: at.y, z: at.z } : {};
+  if (zid) sbUsed(s, zid);
   if (!Object.hasOwn(SB_DROPS, w)) return { w, at: now, ...where };
   const n = now + Math.random(); // (its own number among the zombies' drops)
   s.hang.l4dr = [

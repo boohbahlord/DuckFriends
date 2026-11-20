@@ -75,7 +75,7 @@ export const SB_SHEET = [
   ["C", "This cheat sheet. Press it once to open it, again to close it."],
   [
     "B",
-    "Build: pick a spawn, respawn, loot or board zone, then click or tap the map to put it there (Esc or right-click lets go). Groups: what joins them and what joining does. Press it once to open it, again to close it.",
+    "Build: pick a spawn, respawn, loot or board zone, then click or tap the map to put it there (Esc or right-click lets go). Press it once to open it, again to close it.",
   ],
   [
     "M",
@@ -91,7 +91,7 @@ export const SB_SHEET = [
   ],
   [
     "G",
-    "Game settings for this Sandbox: Save and Save as (the host's, kept on the host's device; it also saves itself every minute), and the Music: which songs play, or none.",
+    "Game settings for this Sandbox: Save and Save as (the host's, kept on the host's device; it also saves itself every minute), and the Music: which songs play, or none. Groups: what joins them and what joining does.",
   ],
   [
     "P",
@@ -228,7 +228,7 @@ const BRAIN_ROW = {
 };
 const OPTIONS = {
   c: [],
-  b: (R) => [...buildRows(R), ...groupRows(R), helpRow("b")], // (the blocks, then Groups and My lists: sbgroupview.js)
+  b: (R) => [...buildRows(R), helpRow("b")], // (B lists only Zone: the owner's, Nov 20 02:37Z, "Zone is the only thing left")
   m: (R) => {
     const rows = npcRows(R);
     return [
@@ -241,7 +241,10 @@ const OPTIONS = {
   },
   n: [],
   h: (R) => [...hotRows(R, openPut), helpRow("h")],
-  g: (R) => [...saveRows(R), listsRow, helpRow("g")], // (Save, Save as and Music: sbsaves.js)
+  g: (R) => {
+    const gr = groupRows(R); // (Groups and My lists: sbgroupview.js; in G, as B lists only Zone)
+    return [...saveRows(R), ...(gr.length ? gr : [listsRow]), helpRow("g")]; // (Save, Save as, Make a map and Music: sbsaves.js)
+  },
   p: pRows,
 };
 export const sbOptions = (k, R) => {
@@ -711,13 +714,23 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
                 sbClip.pt = patternOf(p);
               },
             },
+            ...(p.lock
+              ? []
+              : [
+                  {
+                    label: "Cut",
+                    act: () => {
+                      sbClip.many = null;
+                      sbClip.pt = patternOf(p);
+                      getR().send({ t: "sb", k: "del", p: id });
+                    },
+                  },
+                ]),
+            /* Lock: it can't be moved, changed or cut, only copied (the owner's, Nov 20 04:51Z) */
             {
-              label: "Cut",
-              act: () => {
-                sbClip.many = null;
-                sbClip.pt = patternOf(p);
-                getR().send({ t: "sb", k: "del", p: id });
-              },
+              label: p.lock ? "Unlock" : "Lock",
+              act: () =>
+                getR().send({ t: "sb", k: "lock", p: id, on: !p.lock }),
             },
           ]
         : [{ label: "Paste", act: () => paste(at) }],

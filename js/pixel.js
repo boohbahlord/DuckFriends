@@ -151,8 +151,102 @@ export async function pxCanvas(src, cw, ch) {
   x.putImageData(applyPalette(x.getImageData(0, 0, cw, ch)), 0, 0);
   return c;
 }
+/* ---------- pictures made into pixels ahead of time (the owner's, Nov 19 23:26Z: "It should be saved as real pixels")
+   ----------
+   Every weapon, item and icon the game shows was made into pixels once, by tools/pixel-art.cjs, in the same way the
+   device made them (pxCanvas), and shipped as one picture of them all (assets/px/art) with the list of where each is
+   (pxa.js). A picture asked for here that's in the list is copied out of it as it is, pixel for pixel: nothing is drawn
+   or put through the palette on the device. Each drawing has the sizes it shows at in the game; another size takes the
+   nearest one (shown a little bigger or smaller). What isn't in the list (a drawing new since the files were made, a
+   duck: the ducks come next) is still made here as before */
+let baked = null; // Promise<{ index, atlas } | null>
+const bakedArt = () =>
+  (baked ||= import("./pxa.js")
+    .then(async (m) => {
+      if (window.__pxNoBaked) return null; // (tools/pixel-art.cjs, while it lists what the game makes)
+      const atlas = new Image();
+      atlas.src = m.ATLAS;
+      await atlas.decode();
+      return { index: m.INDEX, atlas };
+    })
+    .catch(() => null));
+let bakedNow = null; // (the files once loaded, for bakedPiece)
+bakedArt().then((B) => (bakedNow = B));
+/* of key's sizes in the files, the nearest to cw × ch: [w, h, x, y] in the files' picture */
+function nearest(B, key, cw, ch) {
+  const vs = B && B.index[key];
+  if (!vs) return null;
+  let v = vs[0];
+  for (const u of vs)
+    if (
+      Math.abs(u[0] - cw) + Math.abs(u[1] - ch) <
+      Math.abs(v[0] - cw) + Math.abs(v[1] - ch)
+    )
+      v = u;
+  return v;
+}
+/* a drawing shown w × h css px (pxdom.js), from the files as they are: { url, W, H, at: [w, h, x, y] } (the whole
+   picture and the piece of it to show), or null when it isn't in them or they haven't come yet */
+export function bakedPiece(key, w, h) {
+  const [, cw, ch] = full(key, w, h),
+    v = nearest(bakedNow, key, cw, ch);
+  return (
+    v && {
+      url: bakedNow.atlas.src,
+      W: bakedNow.atlas.naturalWidth,
+      H: bakedNow.atlas.naturalHeight,
+      at: v,
+    }
+  );
+}
+/* the made picture for key at cw × ch, cut out of the files: a canvas, or null when it isn't there */
+async function fromFiles(key, cw, ch) {
+  const B = await bakedArt(),
+    v = nearest(B, key, cw, ch);
+  if (!v) return null;
+  const c = document.createElement("canvas");
+  c.width = v[0];
+  c.height = v[1];
+  c.getContext("2d").drawImage(
+    B.atlas,
+    v[2],
+    v[3],
+    v[0],
+    v[1],
+    0,
+    0,
+    v[0],
+    v[1],
+  );
+  return c;
+}
+/* a duck, from its pixel parts (duckparts.js), when its drawing says what it is (duck.js data-dk) */
+const unq = (s) =>
+  s
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
+async function fromParts(src, cw, ch) {
+  const m =
+    typeof src === "string" && /\sdata-dk="([^"]*)"/.exec(src.slice(0, 4000));
+  if (!m || window.__pxNoParts) return null;
+  try {
+    const { duckFromParts } = await import("./duckparts.js");
+    return await duckFromParts(JSON.parse(unq(m[1])), cw, ch);
+  } catch {
+    return null;
+  }
+}
 async function make(fk, src, cw, ch) {
-  const c = await pxCanvas(src, cw, ch);
+  const key = fk.slice(0, fk.lastIndexOf("@"));
+  let c = await fromFiles(key, cw, ch);
+  if (!c) c = await fromParts(src, cw, ch);
+  if (!c) {
+    if (window.__pxHear) window.__pxHear(key, src, cw, ch); // (tools/pixel-art.cjs, listing what the game makes)
+    c = await pxCanvas(src, cw, ch);
+  }
   const blob = await new Promise((f) => c.toBlob(f));
   const url = URL.createObjectURL(blob);
   made.set(fk, url);
@@ -218,7 +312,13 @@ export function pxSVG(svg, w, cls = "") {
     W = +(/\swidth="([\d.]+)"/.exec(head) || [])[1] || 1,
     H = +(/\sheight="([\d.]+)"/.exec(head) || [])[1] || W;
   if (on && hasRb(svg)) return pxRainbow(svg, W, H, w, cls);
-  return pxImg("s" + hash(svg), svg, w, (w * H) / W, cls);
+  return pxImg(
+    (/\bduck\b/.test(cls) ? "c" : "s") + hash(svg),
+    svg,
+    w,
+    (w * H) / W,
+    cls,
+  );
 }
 /* a drawing wearing the rainbow skin (rainbowskin.js), w css px wide: every step of the rainbow's turn made into pixels
    in one tall picture, one step shown at a time (css img.rbsp). Each step a whole number of pixels tall, so the steps

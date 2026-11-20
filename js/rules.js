@@ -560,7 +560,7 @@ function setMode(s, mode) {
 export const PICK_TIME = { mode: 65, map: 20, zmap: 20 };
 const ALL_IN = 6000; // a vote's clock once the majority has voted: 6 s, at normal speed
 export const DICE = "dice";
-const NO_MAP_VOTE = [...CABIN_MODES, "mgj"];
+const NO_MAP_VOTE = [...CABIN_MODES, "mgj", "surv"]; // (Survival plays only Downpour: no map vote)
 export const voteModes = (s) => {
   const all = modesFor(s)
       .map((m) => m.id)

@@ -9,7 +9,7 @@ import { LANG } from "./langname.js";
 import { activity } from "./hangout/registry.js";
 import { W, H } from "./hangout/layout.js";
 import { npcPics } from "./sbnpcart.js";
-import { esc, openWindow, confirmBox, toast } from "./ui.js";
+import { esc, openWindow, confirmBox, toast, foldHeads } from "./ui.js";
 import { sbPresets, sbCheat, colSwatches, NOCOL_NOTE } from "./sbmenu.js";
 import { activeRoom } from "./net.js";
 import {
@@ -37,8 +37,37 @@ import {
   sbSize,
   sbRot,
   SB_TABS,
+  sbGrid,
+  sbStep,
+  sbActive,
+  sbUnit,
+  SB_ORDER,
+  SB_ORDERS,
+  SB_GOES,
+  SB_SFX,
+  sbSfx,
+  SB_LOOKS,
+  sbLook,
+  SB_CALL,
+  SB_CALL_ERR,
+  sbNeedsCall,
+  sbTabLive,
+  sbCallZone,
+  sbTie,
+  sbHeld,
+  sbZonesOn,
+  sbNameOf,
+  SB_DIRS,
   SB_POINTS,
   sbInBlock,
+  sbWalls,
+  sbWallStops,
+  sbWorksAt,
+  sbOutline,
+  sbHasOl,
+  sbOlColor,
+  sbOlRows,
+  SB_OL_DEF,
 } from "./sandboxrules.js";
 import {
   boxText,
@@ -53,6 +82,15 @@ import {
 import { orbFace, lootRing, lootPage, lootWire } from "./sblootview.js";
 import { drawNpcs, dropNpcs } from "./npcview.js";
 import { groupOpts, grShown, jgRow } from "./sbgroupview.js";
+import { olAdd } from "./outlines.js";
+import { sbFloorsFrom, sbIsFloor } from "./sbfloors.js";
+import {
+  lookCSS,
+  lookNames,
+  lookPreview,
+  lookTile,
+  lookTileURL,
+} from "./sblooks.js";
 import {
   kindsFor,
   sendKinds,
@@ -60,12 +98,18 @@ import {
   lookFor,
   picFrom,
   sendPic,
+  sendParts,
 } from "./sbmake.js";
+const LOOK_PX = 64; // (a zone's own picture: its longest side in pixels, twice a duck's height)
 
-/* a color as CSS: No color is the rainbow's (the element under it has .sb-rb, which turns currentColor round the rainbow,
-   very slowly) */
-export const colCSS = (col) =>
-  col === SB_NOCOL ? "currentColor" : SB_COLORS[col] || "#fff";
+/* a color as CSS: No color is white (the owner's, Nov 20 02:37Z: "Its color is no color by default, which is white") */
+export const colCSS = (col) => SB_COLORS[col] || SB_COLORS.white;
+/* cheat mode on, and I may build: every zone shows, B or not (the owner's, Nov 20 02:37Z: "it is always visible in
+   cheat mode. It shouldn't be hidden to where you have to hit B build mode to see it") */
+function seeAll(s) {
+  const R = activeRoom();
+  return !!(sbCheat.on && R && s && sbMay(s, R.me, "b"));
+}
 /* "Hide (unless cheat mode)": a point I don't see now */
 function hiddenNow(s, p) {
   if (boxText(p, "hide") !== "t") return false;
@@ -90,6 +134,10 @@ function markSVG(p) {
 /* what my screen shows of Sandbox's build: zones only while my Build window is up (sandbox.js sets it) or a zone's
    window is open ("Sections colored from board build is invisible", the owner's Sandbox file) */
 export const sbView = { build: false, until: 0 };
+/* spawns and respawns have no symbol: each is drawn just as a zone is, seen only while I build (the owner's, Nov 20
+   02:32Z: "From now on, spawn or respawn doesn't have a symbol. It's just a zone, like it was for the zones") */
+export const zoneLike = (p) =>
+  p.k === "zone" || p.k === "spawn" || p.k === "respawn";
 export const sbSel = new Set(); // (the blocks a Shift drag picked: sbdrag.js; they light up)
 const building = () =>
   sbView.build ||
@@ -123,12 +171,12 @@ function placeAt(n, c, size) {
    square of the box around it, set where that square's middle is inside the block (sandboxrules.js sbInBlock, its turn
    included), its inside see-through in its color and its edge squares stronger. Kept by shape, size, turn and color */
 const SHAPE_PX = new Map();
-function shapePic(s, p, css) {
+function shapePic(s, p, css, solid = false) {
   const [x0, y0, x1, y1] = sbZoneBox(s, p, W, H),
     [ux, uy] = sbOnBoard(s) ? [0.03, 0.08] : [48 / W, 48 / H],
     cx = Math.max(1, Math.round(((x1 - x0) / ux) * 4)),
     cy = Math.max(1, Math.round(((y1 - y0) / uy) * 4)),
-    key = `${sbShape(p)} ${sbSize(p)} ${sbRot(p)} ${cx} ${cy} ${css}`;
+    key = `${sbShape(p)} ${sbSize(p)} ${sbRot(p)} ${cx} ${cy} ${css} ${solid}`;
   let u = SHAPE_PX.get(key);
   if (u) return u;
   const cv = document.createElement("canvas");
@@ -153,7 +201,7 @@ function shapePic(s, p, css) {
       if (!inn(i, j)) continue;
       const edge =
         !inn(i - 1, j) || !inn(i + 1, j) || !inn(i, j - 1) || !inn(i, j + 1);
-      g.globalAlpha = edge ? 0.85 : 0.22;
+      g.globalAlpha = solid ? 1 : edge ? 0.85 : 0.22; // (solid: a look's mask, sblooks.js)
       g.fillStyle = css;
       g.fillRect(i, j, 1, 1);
     }
@@ -186,6 +234,7 @@ function zoneMark(n, p, at, s, bare = false) {
       ? "" // (a spawn's, respawn's or loot spot's area: its ring shows where it is)
       : `<span class="sb-zone-dot"></span><span class="sb-pt-name" style="color:var(--c)">${esc(boxText(p, "name"))}</span>`;
   }
+  cellsOn(n, s, p, cs);
   const st = cs
     .map((c) => `${c.left.toFixed(1)},${c.top.toFixed(1)}`)
     .join(" ");
@@ -203,12 +252,78 @@ function zoneMark(n, p, at, s, bare = false) {
       top: (cs[2].top - T).toFixed(1) + "px",
     });
 }
+/* a block's squares while building (plan Phase 3: "the squares a zone checks are shown while you build, big enough to
+   see"): each square's edge, and the ones acting now filled in its color. Drawn as pixels on a canvas over its box,
+   again only when its step, its squares or its size on the screen change. cs: its box's corners and middle (px) */
+function cellsOn(n, s, p, cs) {
+  const id = n.dataset.p.split("~")[0],
+    w = Math.round(Math.abs(cs[1].left - cs[0].left)),
+    h = Math.round(Math.abs(cs[1].top - cs[0].top)),
+    g = sbGrid(s, p, W, H),
+    k = sbStep(s, id),
+    on = sbActive(s, id, p, k, W, H),
+    sig = `${w}x${h} ${g.nx}x${g.ny} ${g.cells.length} ${sbRot(p)} ${p.col} ${on ? [...on].join(",") : "all"}`;
+  if (n._cells === sig && n.querySelector(".sb-cells")) return;
+  n._cells = sig;
+  let c = n.querySelector(".sb-cells");
+  if (!c) {
+    c = document.createElement("canvas");
+    c.className = "sb-cells px";
+    n.append(c);
+  }
+  if (!w || !h) return;
+  c.width = w;
+  c.height = h;
+  const x = c.getContext("2d"),
+    [x0, y0, x1, y1] = sbZoneBox(s, p, W, H),
+    [rx, ry] = sbUnit(s, W, H),
+    a = (sbRot(p) * Math.PI) / 180,
+    fill = sbFills(p),
+    /* a spot in the block's own grid (-0.5 to 0.5 across) on the canvas */
+    put = (u, v) => {
+      let X, Y;
+      if (fill) {
+        X = u + 0.5;
+        Y = v + 0.5;
+      } else {
+        const lx = u * g.w,
+          ly = v * g.h;
+        X = p.x + (lx * Math.cos(a) - ly * Math.sin(a)) * rx;
+        Y = p.y + (lx * Math.sin(a) + ly * Math.cos(a)) * ry;
+      }
+      return [((X - x0) / (x1 - x0)) * w, ((Y - y0) / (y1 - y0)) * h];
+    },
+    css = SB_COLORS[p.col] || "#fff";
+  x.clearRect(0, 0, w, h);
+  x.lineWidth = 1;
+  for (const cell of g.cells) {
+    const i = cell % g.nx,
+      j = Math.floor(cell / g.nx),
+      u0 = i / g.nx - 0.5,
+      v0 = j / g.ny - 0.5,
+      u1 = (i + 1) / g.nx - 0.5,
+      v1 = (j + 1) / g.ny - 0.5,
+      q = [put(u0, v0), put(u1, v0), put(u1, v1), put(u0, v1)];
+    x.beginPath();
+    q.forEach(([X, Y], m) => (m ? x.lineTo(X, Y) : x.moveTo(X, Y)));
+    x.closePath();
+    if (!on || on.has(cell)) {
+      x.globalAlpha = on ? 0.45 : 0.12;
+      x.fillStyle = css;
+      x.fill();
+    }
+    x.globalAlpha = 0.35;
+    x.strokeStyle = css;
+    x.stroke();
+  }
+  x.globalAlpha = 1;
+}
 /* the points on a layer: at(p) → { left, top } where its middle is (board px), size its width; s: the room's state (a
    loot point's orb and its picture) */
 function drawMarks(layer, pts, at, size, s) {
   const have = new Map(),
     want = new Set(),
-    seeZones = building();
+    seeZones = building() || seeAll(s); // (always in cheat mode, the owner's, Nov 20 02:37Z)
   for (const n of layer.querySelectorAll(".sb-pt")) have.set(n.dataset.p, n);
   for (const [id, p] of Object.entries(pts)) {
     if (p.grp) {
@@ -231,11 +346,21 @@ function drawMarks(layer, pts, at, size, s) {
     }
     const hid = hiddenNow(s, p),
       orbOut = p.k === "loot" && !!p.orb && p.orb.dn == null;
+    if (p.k === "zone") lookOn(layer, have, want, id, pts, at, size, s); // (its look: everyone sees it, hidden or not)
+    if (sbIsFloor(p)) faceOn(layer, have, want, id, pts, at, size, s, seeZones);
     if (hid && !orbOut) continue; // (Hide: a loot point hides its ring and name, never its orb, the owner's "that appearance is hidden")
-    if (p.k === "zone") {
+    if (zoneLike(p)) {
       if (!seeZones) continue;
       want.add(id);
-      zoneMark(markEl(layer, have, id, "sb-pt sb-zone"), p, at, s);
+      /* the zone it leads with sets how it looks: its color and its name (the owner's, Nov 20 02:45Z) */
+      const lead = sbZonesOn(pts, id)[0],
+        L = lead && lead !== id ? pts[lead] : null;
+      zoneMark(
+        markEl(layer, have, id, "sb-pt sb-zone"),
+        L ? { ...p, col: L.col, f: { ...p.f, name: L.f.name } } : p,
+        at,
+        s,
+      );
       continue;
     }
     want.add(id);
@@ -259,7 +384,6 @@ function drawMarks(layer, pts, at, size, s) {
       sig = `${p.k} ${p.col} ${boxText(p, "name")} ${away ? "" : face} ${hid}`;
     if (n._sig !== sig) {
       n._sig = sig;
-      n.classList.toggle("sb-rb", p.col === SB_NOCOL);
       n.innerHTML = `${hid ? "" : `<span class="sb-pt-name" style="color:${colCSS(p.col)}">${esc(boxText(p, "name"))}</span>${markSVG(p)}`}${orb && !away ? `<span class="sb-orb">${orbFace(s, id, p)}</span>` : ""}`;
     }
     placeAt(n, at(p), size);
@@ -275,9 +399,113 @@ function drawMarks(layer, pts, at, size, s) {
   }
   for (const [id, n] of have) if (!want.has(id)) n.remove();
   if (sbSel.size || layer._sel)
-    for (const n of layer.querySelectorAll(".sb-pt"))
+    for (const n of layer.querySelectorAll(".sb-pt:not(.sb-look)"))
       n.classList.toggle("sb-sel", sbSel.has(n.dataset.p.split("~")[0]));
   layer._sel = sbSel.size > 0;
+  darkOut(layer, pts, at, s);
+}
+/* a zone's look (plan Phase 3, Looks: sblooks.js), the lead zone's when it leads with another (the owner's, Nov 20
+   02:45Z: the first Zone tab sets the look), under everything standing on it. size: a duck's width on the screen, so a
+   texture keeps the size it has on its map */
+function lookOn(layer, have, want, id, pts, at, size, s) {
+  const lead = sbZonesOn(pts, id)[0],
+    p = pts[id],
+    look = sbLook(lead && pts[lead] ? pts[lead] : p),
+    bg = lookCSS(look, s && s.sbpic, size / 90);
+  if (!bg) return;
+  const key = id + "~l",
+    n = markEl(layer, have, key, "sb-pt sb-look");
+  want.add(key);
+  const [x0, y0, x1, y1] = sbZoneBox(s, p, W, H),
+    z = p.z || 0,
+    cs = [
+      [x0, y0],
+      [x1, y1],
+    ].map(([x, y]) => at({ x, y, z })),
+    shaped = (sbShape(p) !== "sq" || sbRot(p) !== 0) && !sbFills(p),
+    mask = shaped ? `url("${shapePic(s, p, "#000", true)}")` : "",
+    st = `${bg} ${mask} ${look.op} ${cs.map((c) => `${c.left.toFixed(1)},${c.top.toFixed(1)}`).join(" ")}`;
+  if (n._st === st) return;
+  n._st = st;
+  n.style.background = bg;
+  n.style.setProperty("--mask", mask || "none");
+  Object.assign(n.style, {
+    opacity: String(1 - look.op),
+    left: Math.min(cs[0].left, cs[1].left).toFixed(1) + "px",
+    top: Math.min(cs[0].top, cs[1].top).toFixed(1) + "px",
+    width: Math.abs(cs[1].left - cs[0].left).toFixed(1) + "px",
+    height: Math.abs(cs[1].top - cs[0].top).toFixed(1) + "px",
+  });
+}
+/* plan Phase 4: a floor up high shows its front edge, a strip under its box as thick as a floor (layout.js SIGHT_SLAB),
+   in its look made darker, or while building in its color; so it reads as a slab at its height */
+const FACE = 16; // (world px)
+function faceOn(layer, have, want, id, pts, at, size, s, seeZones) {
+  const lead = sbZonesOn(pts, id)[0],
+    p = pts[id],
+    look = sbLook(lead && pts[lead] ? pts[lead] : p),
+    bg = lookCSS(look, s && s.sbpic, size / 90);
+  if (!bg && !seeZones) return;
+  const key = id + "~f",
+    n = markEl(layer, have, key, "sb-pt sb-face");
+  want.add(key);
+  const [x0, , x1, y1] = sbZoneBox(s, p, W, H),
+    z = p.z || 0,
+    a = at({ x: x0, y: y1, z }),
+    b = at({ x: x1, y: y1, z: Math.max(0, z - FACE) }),
+    css = bg || SB_COLORS[p.col] || "#fff",
+    st = `${css} ${a.left.toFixed(1)},${a.top.toFixed(1)} ${b.left.toFixed(1)},${b.top.toFixed(1)} ${look ? look.op : ""}`;
+  if (n._st === st) return;
+  n._st = st;
+  n.style.background = css;
+  Object.assign(n.style, {
+    opacity: String(bg ? 1 - look.op : 0.45),
+    left: Math.min(a.left, b.left).toFixed(1) + "px",
+    top: Math.min(a.top, b.top).toFixed(1) + "px",
+    width: Math.abs(b.left - a.left).toFixed(1) + "px",
+    height: Math.max(1, Math.abs(b.top - a.top)).toFixed(1) + "px",
+  });
+}
+/* Dark outside (plan Phase 3): while my duck stands where a zone with it works, everything round that zone goes dark,
+   as round the building I'm in on the zombie maps. One zone's at a time: the first */
+const DARK_FAR = 40000; // (px: the dark's outer edge, far past any screen)
+function darkOut(layer, pts, at, s) {
+  const R = activeRoom(),
+    me = R && s && s.pos && s.pos[R.me];
+  let hole = null;
+  if (me)
+    for (const [id, p] of Object.entries(pts))
+      if (
+        p.k === "zone" &&
+        !sbFills(p) &&
+        boxText(p, "dark") === "t" &&
+        sbWorksAt(s, id, p, me.x, me.y, me.z, W, H)
+      ) {
+        hole = sbOutline(s, p, W, H).map((q) => at({ ...q, z: p.z || 0 }));
+        break;
+      }
+  let el = layer.querySelector(":scope > .sb-dark");
+  if (!hole) {
+    if (el) el.classList.remove("on");
+    return;
+  }
+  if (!el) {
+    el = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    el.setAttribute("class", "sb-dark");
+    el.setAttribute("aria-hidden", "true");
+    el.innerHTML = `<path fill-rule="evenodd"/>`;
+    layer.append(el);
+  }
+  const F = DARK_FAR,
+    d =
+      `M${-F} ${-F}H${F}V${F}H${-F}Z` +
+      `M${hole.map((c) => `${c.left.toFixed(1)} ${c.top.toFixed(1)}`).join("L")}Z`;
+  if (el._d !== d) {
+    el._d = d;
+    el.firstChild.setAttribute("d", d);
+  }
+  if (!el.classList.contains("on"))
+    requestAnimationFrame(() => el.classList.add("on")); // (it fades in)
 }
 const ptsOf = (s) => (isSb(s) && s.sb && s.sb.pts) || {};
 /* the board: place(o) → { left, top } (game.js place), size: a duck's width */
@@ -317,6 +545,88 @@ const brainRow = (t, why) =>
    named as it's named). Its summary says what's picked */
 const summaryOf = (on) =>
   on.map((c) => c.dataset.label).join(", ") || "Nothing";
+/* the choices of a behavior list: Players, Everything, each kind, each spawn (by its color, named as it's named) */
+const whoOpts = (s, kinds) => [
+  ["players", "Players"],
+  ["everything", "Everything"],
+  ...kinds,
+  ...Object.values(ptsOf(s))
+    .filter((q) => q.k === "spawn")
+    .map((q) => [q.col, `${boxText(q, "name")} spawn`]),
+];
+/* a zone's Outlines (plan Phase 3: "show outline for chosen entities, in a chosen color; a + duplicates the row for
+   another color"): a row each, who it takes and its color; the rows go into one hidden box (sandboxrules.js sbOlRows) */
+function olSect(s, p, kinds) {
+  const opts = whoOpts(s, kinds).filter(
+      (o, i, all) => all.findIndex((x) => x[0] === o[0]) === i,
+    ),
+    rows = sbOlRows(p),
+    one = (who, c) => {
+      const on = opts.filter(([v]) => who.includes(v)).map(([, n]) => n);
+      return `<div class="sb-olrow"><details class="sb-acts sb-olwho"><summary>${esc(on.join(", ") || "Nothing")}</summary><span class="sb-what">${opts
+        .map(
+          ([v, n]) =>
+            `<label><input type="checkbox" value="${esc(v)}" data-label="${esc(n)}"${who.includes(v) ? " checked" : ""}> ${esc(n)}</label>`,
+        )
+        .join(
+          "",
+        )}</span></details><input type="color" class="sb-olcol" value="${c}" aria-label="Outline color"><button type="button" class="btn small ghost sb-olx" data-olx aria-label="Remove this row">&minus;</button></div>`;
+    };
+  return `<div class="sb-row sb-olbox" data-row="ol"><span>${esc(SB_ZONE.ol.name)}</span><div class="sb-olrows">${(rows.length ? rows : [[[], SB_OL_DEF]]).map(([w, c]) => one(w, c)).join("")}<button type="button" class="btn small sb-olplus" data-olplus aria-label="Another row">+</button></div><input type="hidden" class="sb-box" data-f="ol" value="${esc(boxText(p, "ol"))}"><em class="sb-why"></em></div>`;
+}
+/* a zone's Look (plan Phase 3, Looks: sblooks.js): none, a texture from the maps (each with its picture), a solid
+   color or my own picture (always made into pixels), and how see-through it is */
+function lookSect(s, p, row, typed, why) {
+  const now = (f) => {
+      const k = p.f[f];
+      return String(k && k.ok ? k.ok : SB_ZONE[f].def).trim();
+    },
+    lk = SB_LOOKS[now("lk")] ? now("lk") : "none",
+    tex = now("lktex"),
+    pic = now("lkpic"),
+    img = pic && s.sbpic && s.sbpic[pic];
+  return `<div class="sb-row" data-row="lk"><span>${esc(SB_ZONE.lk.name)}</span><select class="sb-box" data-f="lk" aria-label="${esc(SB_ZONE.lk.name)}">${Object.entries(
+    SB_LOOKS,
+  )
+    .map(
+      ([v, n]) =>
+        `<option value="${v}"${v === lk ? " selected" : ""}>${esc(n)}</option>`,
+    )
+    .join("")}</select><em class="sb-why"></em></div>
+    <div class="sb-lktexs" data-lkrow="tex"${lk === "tex" ? "" : " hidden"}>${lookNames()
+      .map(
+        ([v, n]) =>
+          `<label class="sb-lktex${v === tex ? " on" : ""}"><input type="radio" name="sb-lktex" data-lktex="${v}"${v === tex ? " checked" : ""}>${lookTile(v) ? `<span class="sb-lkprev" style="background-image:url('${lookTileURL(v)}')"></span>` : `<img data-lkprev="${v}" src="${esc(lookPreview(v))}" alt="">`}<span>${esc(n)}</span></label>`,
+      )
+      .join("")}</div>
+    <div class="sb-row" data-row="lkcol" data-lkrow="col"${lk === "col" ? "" : " hidden"}><span>${esc(SB_ZONE.lkcol.name)}</span><input type="color" class="sb-box sb-lkcol" data-f="lkcol" value="${esc(now("lkcol"))}" aria-label="${esc(SB_ZONE.lkcol.name)}"><em class="sb-why"></em></div>
+    <div class="sb-row sb-up" data-lkrow="pic"${lk === "pic" ? "" : " hidden"}><span>${esc(SB_ZONE.lkpic.name)}</span><span class="sb-what"><label class="btn small"><input type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden data-lkup>Upload</label>${img ? `<img class="sb-up-pic" src="${img.d}" alt="The zone's picture">` : ""}<em class="small dim sb-lk-note">2 MB at most. Made into pixels.</em></span></div>
+    <div data-lkrow="op"${lk === "none" ? " hidden" : ""}>${row("lkop", SB_ZONE.lkop, typed("lkop"), why("lkop"))}</div>`;
+}
+/* the whole maps' pictures come once they're made: fill them in */
+function lookPrevs(w, n = 0) {
+  let left = 0;
+  for (const i of w.querySelectorAll("img[data-lkprev]"))
+    if (!i.getAttribute("src")) {
+      const u = lookPreview(i.dataset.lkprev);
+      if (u) i.src = u;
+      else left++;
+    }
+  if (left && n < 40 && w.isConnected)
+    setTimeout(() => lookPrevs(w, n + 1), 100);
+}
+/* its rows, read back into its hidden box (and sent, as typing in a box is) */
+function olWrite(box) {
+  const rows = [...box.querySelectorAll(".sb-olrow")].map((r) => {
+    const on = [...r.querySelectorAll("input[type=checkbox]:checked")];
+    r.querySelector("summary").textContent =
+      on.map((c) => c.dataset.label).join(", ") || "Nothing";
+    return `${on.map((c) => c.value).join(", ")}=${r.querySelector(".sb-olcol").value}`;
+  });
+  const h = box.querySelector('.sb-box[data-f="ol"]');
+  h.value = rows.join("; ");
+  h.dispatchEvent(new Event("input", { bubbles: true }));
+}
 function actRow(s, p, f, kinds) {
   const k = p.f[f],
     what = boxText(p, "what").split(/[\s,]+/),
@@ -332,14 +642,7 @@ function actRow(s, p, f, kinds) {
     )
       .toLowerCase()
       .split(/[\s,]+/), // (never set: a zombie goes after the players, sbbrain.js)
-    opts = [
-      ["players", "Players"],
-      ["everything", "Everything"],
-      ...kinds,
-      ...Object.values(ptsOf(s))
-        .filter((q) => q.k === "spawn")
-        .map((q) => [q.col, `${boxText(q, "name")} spawn`]),
-    ],
+    opts = whoOpts(s, kinds),
     gs = groupOpts(s, activeRoom() && activeRoom().me); // (the groups, under the entities: sbgroupview.js)
   if (gs.length) opts.push([null, "Groups"], ...gs);
   return pickRow(f, SB_ACTS[f] || SB_ZONE[f].name, opts, picked);
@@ -373,16 +676,56 @@ const flagRow = (f, b, t, why) => {
 /* a header over one part of a spawn's window, numbered like Word's headings as the settings go deeper (plan Phase 2:
    3, 3.4, 3.4.1): SECT is [the section it's under, how many came before] while a block's window is made */
 let SECT = null;
+const FOLDED = new Set(); // (the headings I folded in a block's window: still folded when it's drawn again, ui.js foldHeads)
 const sect = (t) =>
   `<h3 class="sb-sect">${SECT ? `${SECT[0]}.${++SECT[1]} ` : ""}${t}</h3>`;
 /* a section of the block's front, with its fold arrow */
 const fold = (n, t, html) =>
   `<details class="sb-fold" open><summary class="sb-sect">${n}. ${t}</summary>${html}</details>`;
+/* the Type box's words (the owner's, Nov 20 04:39Z: "description of type and how (simple) > list of types inside of
+   property > the names of variable names that match and/or matching color") */
+const TYPE_SAYS = {
+  zone: "A zone. The Spawn, Respawn and Loot tabs here that share its variable name or its color work inside it.",
+  spawn: "Spawns in the zone it shares its variable name or color with.",
+  respawn:
+    "Brings players back in the zone it shares its variable name or color with.",
+  loot: "Drops its loot in the zone it shares its variable name or color with.",
+};
+const colWord = (c) => c[0].toUpperCase() + c.slice(1);
+/* the ties, one line each: who (its type), then the variable name and the color they share */
+function tiesList(pts, held, who, q) {
+  return `<ul class="sb-ties">${held
+    .map(([id, t]) => {
+      const o = q || pts[id],
+        how = [
+          t.name ? `variable ${esc(sbNameOf(o))}` : "",
+          t.col ? `color ${esc(colWord(o.col))}` : "",
+        ]
+          .filter(Boolean)
+          .join(" and ");
+      return `<li>${esc(who(id))}: ${how}</li>`;
+    })
+    .join("")}</ul>`;
+}
+/* a zone's Type: what it is, and each tab it holds */
+function heldHTML(pts, zid) {
+  const held = sbHeld(pts, zid);
+  return `<p class="sb-tip">${esc(TYPE_SAYS.zone)}</p>${
+    held.length
+      ? tiesList(pts, held, (q) => {
+          const k = pts[q].k;
+          return (PURPOSES.find(([v]) => v === k) || [k, k])[1];
+        })
+      : `<p class="sb-ties">Nothing in it yet.</p>`
+  }`;
+}
+/* what a zone is: just a zone, a spawn or a respawn (the owner's, Nov 20 02:37Z: "it will have you choose if it's just a
+   default zone, if it's a spawn, if it's a respawn"); loot is a tab now, and a loot spot of an older save keeps its own */
 const PURPOSES = [
+  ["zone", "Zone"],
   ["spawn", "Spawn"],
   ["respawn", "Respawn"],
   ["loot", "Loot"],
-  ["zone", "Zone"],
 ];
 export function sbSettings(getR, id, tab = "") {
   const R = getR(),
@@ -417,9 +760,7 @@ export function sbSettings(getR, id, tab = "") {
         q,
         "",
         P.pg === "t"
-          ? P.f.name
-            ? P.f.name.t
-            : purpose(P.k)
+          ? `${purpose(P.k)}${P.f.name ? " " + P.f.name.t : ""}` // (its type and its variable name)
           : boxText(P, "name"),
       ]),
     ],
@@ -435,11 +776,7 @@ export function sbSettings(getR, id, tab = "") {
         "",
       )}<span class="sb-plus"><button type="button" class="sb-tab" data-plus aria-label="Add a page">+</button><span class="sb-plus-pick" hidden>${base.k === "spawn" ? `<button type="button" class="sb-tab" data-page="ent">Entity page</button><button type="button" class="sb-tab" data-page="pl">Player page</button>` : ""}${SB_TABS.map(([k, l]) => `<button type="button" class="sb-tab" data-page="${k}">${l}</button>`).join("")}</span></span></div>`,
     linked = (spawn || p.k === "respawn") && !p.grp;
-  let colorRow = `<div class="sb-row"><span>Color</span><span class="sb-cols">${colSwatches(
-      p.col,
-      "data-col",
-      linked,
-    )}</span></div>${
+  let colorRow = `<div class="sb-row"><span>Color</span><span class="sb-cols">${colSwatches(p.col, "data-col", true)}</span></div>${
       linked
         ? `${p.col === SB_NOCOL ? "" : `<p class="sb-tip">Every ${p.k} of this color has these settings.</p>`}${flagRow("hide", SB_FLAGS.hide, typed("hide"), why("hide"))}`
         : ""
@@ -469,9 +806,41 @@ export function sbSettings(getR, id, tab = "") {
      Shape (with its size), Color ..., Purpose"): on the block itself, not on a spawn's pages, Players or Appearance */
   const front = !p.grp && !players && !look,
     shapeNow = sbShape(p),
+    /* what the block is (the owner's, Nov 20 02:37Z): a zone (a block's own kind) shows Spawn or Respawn once it has
+       that tab; a block of an older kind shows its own */
+    typeNow =
+      p.k !== "zone"
+        ? p.k
+        : (pages.find(
+            ([, q]) => q.pg === "t" && /^(spawn|respawn)$/.test(q.k),
+          ) || [, { k: "zone" }])[1].k,
+    zonesHere = sbZonesOn(pts, id),
+    /* a Spawn, Respawn or Loot tab: its Caller, and the error at its top while it names no zone (the owner's, Nov 20
+       02:45Z: "the error will say make tab that shares caller or variable name") */
+    /* a Spawn, Respawn or Loot tab: what it is, and the zone it's tied to, or the error at its top while none is (the
+       owner's, Nov 20 04:39Z: tied "by color or variable or both, not by a selection"); a Zone tab: what it holds */
+    callHTML = sbNeedsCall(p)
+      ? `<p class="sb-tip">${esc(TYPE_SAYS[p.k])}</p>${sbTabLive(pts, id) ? tiesList(pts, [[sbCallZone(pts, id), sbTie(p, pts[sbCallZone(pts, id)])]], (z) => `In zone ${sbNameOf(pts[z])}`, p) : `<p class="sb-err" role="alert">${esc(SB_CALL_ERR)}</p>`}${flagRow("inv", SB_FLAGS.inv, typed("inv"), why("inv"))}`
+      : p.grp && p.k === "zone"
+        ? heldHTML(pts, id)
+        : "",
     frontHTML = front
       ? fold(
           1,
+          "Type",
+          `${p.k === "zone" ? heldHTML(pts, id) : ""}<div class="sb-row"><span>This zone is</span><span class="sb-what">${PURPOSES.filter(
+            ([v]) => v !== "loot" || p.k === "loot",
+          )
+            .map(
+              ([v, n]) =>
+                `<label><input type="radio" name="sb-purpose" data-purpose value="${v}"${typeNow === v ? " checked" : ""}> ${n}</label>`,
+            )
+            .join(
+              "",
+            )}</span></div>${zonesHere.length > 1 ? `<div class="sb-row" data-row="lead"><span>${esc(SB_CALL.lead.name)}</span><select class="sb-box" data-f="lead" aria-label="${esc(SB_CALL.lead.name)}">${zonesHere.map((z) => `<option value="${z === id ? "" : z}"${z === zonesHere[0] ? " selected" : ""}>${esc(sbNameOf(pts[z]))}${z === id ? " (this tab)" : ""}</option>`).join("")}</select><em class="sb-why"></em></div>` : ""}`,
+        ) +
+        fold(
+          2,
           "Shape",
           `<div class="sb-row"><span>${SB_SHAPE.sh.name}</span><span class="sb-what">${Object.entries(
             SB_SHAPES,
@@ -485,15 +854,7 @@ export function sbSettings(getR, id, tab = "") {
           ${row("zh", SB_ZONE.zh, p.f.zh ? typed("zh") : String(sbSize(p)[1]), why("zh"))}
           ${flagRow("fill", SB_SHAPE.fill, typed("fill"), why("fill"))}`,
         ) +
-        fold(2, "Color", colorRow) +
-        fold(
-          3,
-          "Purpose",
-          `<div class="sb-row"><span>Purpose</span><select class="sb-purpose" data-purpose aria-label="Purpose">${PURPOSES.map(
-            ([v, n]) =>
-              `<option value="${v}"${p.k === v ? " selected" : ""}>${n}</option>`,
-          ).join("")}</select></div>`,
-        )
+        fold(3, "Color", colorRow)
       : "";
   if (front) colorRow = ""; // (it's in the front now)
   SECT = front ? [4, 0] : null;
@@ -579,7 +940,7 @@ export function sbSettings(getR, id, tab = "") {
           .toLowerCase()
           .split(/[\s,]+/);
     return `${row("name", { name: "Variable name" }, typed("name"), why("name"))}
-    ${colorRow}${flagRow("hide", SB_FLAGS.hide, typed("hide"), why("hide"))}
+    ${colorRow}${flagRow("hide", SB_FLAGS.hide, typed("hide"), why("hide"))}${flagRow("inv", SB_FLAGS.inv, typed("inv"), why("inv"))}${flagRow("dark", SB_FLAGS.dark, typed("dark"), why("dark"))}
     <div class="sb-row"><span>${esc(SB_ZONE.fx.name)}</span><span class="sb-what">${Object.entries(
       SB_FX,
     )
@@ -591,17 +952,56 @@ export function sbSettings(getR, id, tab = "") {
     <div data-fxrow="amt"${fx === "damage" || fx === "heal" ? "" : " hidden"}>${row("amt", SB_ZONE.amt, typed("amt"), why("amt"))}</div>
     <div data-fxrow="rate"${fx === "none" ? " hidden" : ""}>${row("rate", SB_ZONE.rate, typed("rate"), why("rate"))}</div>
     <div data-fxrow="zwho"${fx === "none" ? " hidden" : ""}>${actRow(R.state, p, "zwho", kinds)}</div>
+    ${actRow(R.state, p, "wall", kinds)}
+    ${sbOnBoard(R.state) ? "" : `${row("fl", SB_ZONE.fl, typed("fl"), why("fl"))}${flagRow("gnd", SB_ZONE.gnd, typed("gnd"), why("gnd"))}`}
+    ${olSect(R.state, p, kinds)}
+    ${lookSect(R.state, p, row, typed, why)}
+    ${brainRow(typed("brain"), why("brain"))}
+    <div class="sb-row" data-row="sfx"><span>${esc(SB_ZONE.sfx.name)}</span><select class="sb-box" data-f="sfx" aria-label="${esc(SB_ZONE.sfx.name)}">${Object.entries(
+      SB_SFX,
+    )
+      .map(
+        ([v, n]) =>
+          `<option value="${v}"${v === sbSfx(p) ? " selected" : ""}>${esc(n)}</option>`,
+      )
+      .join("")}</select><em class="sb-why"></em></div>
     ${flagRow("pon", SB_PLAYER.pon, typed("pon"), why("pon"))}
     ${row("pwho", { name: "Who spawns here" }, typed("pwho"), why("pwho"))}
     ${pickRow("ent", SB_ZONE.ent.name, named("spawn", "spawn"), picked("ent"))}
     ${pickRow("lt", SB_ZONE.lt.name, named("loot", "loot"), picked("lt"))}`;
   };
-  const html = `<h2>${loot ? "Loot" : zone ? "Zone" : spawn ? "Spawn" : "Respawn"}</h2>${head}
-  <div class="sb-set">${frontHTML}${front ? `<h3 class="sb-sect sb-sect-top">4. ${PURPOSES.find(([v]) => v === p.k)[1]} settings</h3>` : ""}${loot ? lootPage(R.state, id, p, { row, flagRow, typed, why, colorRow }) : zone ? zonePage() : !spawn ? respawn() : players ? playersPage() : look ? lookPage(R.state, p) : entity()}${look ? "" : jgRow(R.state, R.me, p)}</div>
-  <p class="acts">${spawn && !players && !look ? `<button type="button" class="btn" data-go>Spawn</button>` : ""}${!spawn && !loot && !zone ? `<button type="button" class="btn" data-imp>Import settings</button>` : ""}<button type="button" class="btn ghost" data-del>${p.grp ? (p.pg === "t" ? "Delete tab" : "Delete page") : "Delete"}</button></p>`;
+  /* its potential order, the last section of every tab (plan Phase 3): which of its squares act, and when */
+  const ordT = (f) => (p.f[f] ? p.f[f].t : SB_ORDER[f].def),
+    sel = (f, opts) =>
+      `<select class="sb-box" data-f="${f}" aria-label="${esc(SB_ORDER[f].name)}">${Object.entries(
+        opts,
+      )
+        .map(
+          ([v, n]) =>
+            `<option value="${v}"${v === ordT(f).trim() ? " selected" : ""}>${esc(n)}</option>`,
+        )
+        .join("")}</select>`,
+    orderSect = () =>
+      `${sect("Potential order")}<div class="sb-row" data-row="ord"><span>${esc(SB_ORDER.ord.name)}</span><span class="sb-ordbox">${sel("ord", SB_ORDERS)}${sel("dir", SB_DIRS)}</span><em class="sb-why"></em></div>
+    ${row("n", SB_ORDER.n, ordT("n"), "")}
+    ${row("sq", SB_ORDER.sq, ordT("sq"), "")}
+    ${row("st", SB_ORDER.st, ordT("st"), "")}
+    <div class="sb-row" data-row="go"><span>${esc(SB_ORDER.go.name)}</span>${sel("go", SB_GOES)}<em class="sb-why"></em></div>`;
+  const html = `<h2>${loot && !p.grp ? "Loot" : "Zone"}</h2>${head}
+  ${base.lock ? `<p class="sb-tip sb-lockd">Locked: right-click it and pick Unlock to change it.</p>` : ""}<div class="sb-set"${base.lock ? " inert" : ""}>${callHTML}${frontHTML}${front ? `<h3 class="sb-sect sb-sect-top">4. ${PURPOSES.find(([v]) => v === p.k)[1]} settings</h3>` : ""}${loot ? lootPage(R.state, id, p, { row, flagRow, typed, why, colorRow }) : zone ? zonePage() : !spawn ? respawn() : players ? playersPage() : look ? lookPage(R.state, p) : entity()}${look ? "" : jgRow(R.state, R.me, p)}${players || look ? "" : orderSect()}</div>
+  <p class="acts">${spawn && !players && !look ? `<button type="button" class="btn" data-go>Spawn</button>` : ""}${!spawn && !loot && !zone ? `<button type="button" class="btn" data-imp>Import settings</button>` : ""}${base.lock ? "" : `<button type="button" class="btn ghost" data-del>${p.grp ? (p.pg === "t" ? "Delete tab" : "Delete page") : "Delete"}</button>`}</p>`;
   openWindow(html, {
-    cls: zone ? "sb-setwin sb-zonewin" : "sb-setwin",
+    cls: zoneLike(p) ? "sb-setwin sb-zonewin" : "sb-setwin",
     onOpen(w, close) {
+      lookPrevs(w); // (a zone's Look: the whole maps' pictures)
+      const set = w.querySelector(".sb-set");
+      if (set)
+        foldHeads(
+          set,
+          "h3.sb-sect",
+          (h) => (h.classList.contains("sb-sect-top") ? 1 : 2),
+          FOLDED,
+        );
       const send = (a) => {
         const r = getR();
         if (r) r.send({ t: "sb", p: id, ...a });
@@ -644,10 +1044,67 @@ export function sbSettings(getR, id, tab = "") {
       });
       w.addEventListener("change", (e) => {
         const t = e.target;
+        if (t.closest(".sb-olbox")) return olWrite(t.closest(".sb-olbox")); // (a zone's Outlines rows)
+        if (t.matches('[data-f="lk"]'))
+          for (const r of w.querySelectorAll("[data-lkrow]"))
+            r.hidden =
+              r.dataset.lkrow === "op"
+                ? t.value === "none"
+                : r.dataset.lkrow !== t.value; // (a zone's Look: only its own rows; the box itself is sent as typed)
+        if (t.matches("[data-lktex]")) {
+          w.querySelectorAll(".sb-lktex").forEach((l) =>
+            l.classList.toggle("on", l.contains(t)),
+          );
+          return send({ k: "set", f: "lktex", v: t.dataset.lktex });
+        }
+        if (t.matches("[data-lkup]")) {
+          const r = getR(),
+            note = w.querySelector(".sb-lk-note");
+          note.textContent = "Sending…";
+          return picFrom(t.files[0], LOOK_PX).then(
+            (pic) => {
+              send({ k: "set", f: "lkpic", v: sendParts(r, pic) });
+              setTimeout(() => again(id), 400);
+            },
+            (err) => {
+              note.textContent = err.message;
+            },
+          );
+        }
         if (t.matches("[data-sh]"))
           return send({ k: "set", f: "sh", v: t.dataset.sh });
         if (t.matches("[data-purpose]")) {
-          send({ k: "kind", v: t.value });
+          const v = t.value;
+          /* a zone stays a zone: Spawn or Respawn adds that tab, tied to it by its Caller, and opens it (the owner's, Nov
+             20 02:45Z: "every build option is going to have a tab for zones regardless") */
+          if (p.k === "zone" && (v === "spawn" || v === "respawn")) {
+            const r = getR(),
+              had = new Set(Object.keys(ptsOf(r.state))),
+              has = pages.find(([, q]) => q.pg === "t" && q.k === v);
+            if (has) return again(has[0]);
+            if (had.size >= SB_POINTS)
+              return toast(
+                `The zone budget is full (${SB_POINTS}). Delete a block or a tab first.`,
+              );
+            send({ k: "page", kind: v, tie: 1 }); // (tied to this zone by its variable name and color)
+            return setTimeout(() => {
+              const made = Object.keys(ptsOf(getR().state)).find(
+                (q) => !had.has(q),
+              );
+              if (w.isConnected) again(made || id);
+            }, 400);
+          }
+          if (p.k === "zone") {
+            const tabs = pages.filter(
+              ([, q]) => q.pg === "t" && /^(spawn|respawn)$/.test(q.k),
+            );
+            if (tabs.length)
+              toast(
+                "It's a zone with a Spawn or Respawn tab: delete that tab to make it just a zone.",
+              );
+            return setTimeout(() => w.isConnected && again(id), 50);
+          }
+          send({ k: "kind", v }); // (a block of an older kind: it becomes what's picked)
           return setTimeout(() => w.isConnected && again(id), 400); // (that purpose's own settings, once the room has it)
         }
         if (t.matches("[data-pick]"))
@@ -683,10 +1140,7 @@ export function sbSettings(getR, id, tab = "") {
           const r = getR(),
             note = w.querySelector(".sb-up-note");
           note.textContent = "Sending…";
-          return picFrom(
-            t.files[0],
-            w.querySelector("[data-squash]").checked,
-          ).then(
+          return picFrom(t.files[0]).then(
             (pic) => {
               sendPic(r, id, pic);
               setTimeout(() => again(id, "ap"), 400);
@@ -717,6 +1171,24 @@ export function sbSettings(getR, id, tab = "") {
         setTimeout(() => sbSettings(getR, to, tk), 0);
       };
       w.addEventListener("click", (e) => {
+        const olb = e.target.closest("[data-olplus], [data-olx]");
+        if (olb) {
+          const box = olb.closest(".sb-olbox"),
+            rows = box.querySelectorAll(".sb-olrow");
+          if (olb.matches("[data-olplus]")) {
+            const r = rows[rows.length - 1].cloneNode(true);
+            r.querySelector("details").open = false;
+            olb.before(r); // (a copy of the last row, for another color)
+          } else if (rows.length > 1) olb.closest(".sb-olrow").remove();
+          else {
+            const r = olb.closest(".sb-olrow");
+            r.querySelectorAll("input[type=checkbox]").forEach(
+              (c) => (c.checked = false),
+            );
+            r.querySelector(".sb-olcol").value = SB_OL_DEF;
+          } // (the last row: emptied)
+          return olWrite(box);
+        }
         const tog = e.target.closest("[data-tog]");
         if (tog) {
           const box = tog.closest(".sb-row").querySelector(".sb-box"),
@@ -951,12 +1423,9 @@ function importWin(getR, id, then) {
    19 12:59Z: "what it has is selected by mouse and then placed on your mouse for you to choose where to place it on the
    board with your mouse"). sbPlace.start: sandbox.js' */
 export const sbPlace = { start: null };
-const BUILD = [
-  ["spawn", "Spawn"],
-  ["respawn", "Respawn"],
-  ["loot", "Loot"],
-  ["zone", "Zone"],
-];
+/* B puts down zones only: a spawn, respawn or loot is what a zone does, picked in its window (the owner's, Nov 20 02:37Z:
+   "Zone is the only thing left of those original four") */
+const BUILD = [["zone", "Zone"]];
 export const buildRows = (R) =>
   spawnsHere(R.state)
     ? BUILD.map(([kind, label]) => ({
@@ -970,19 +1439,13 @@ export const buildRows = (R) =>
             : r.send({ t: "sb", k: "add", kind }),
       }))
     : [];
-/* what I'm putting down, drawn on my mouse: its mark in the color it will get (picked first for a spawn or a respawn; a
-   zone: its box, dashed) */
+/* what I'm putting down, drawn on my mouse: a zone's box, dashed, in the color it will get (a loot spot of an older
+   save: its mark) */
 export function ghostHTML(s, kind, picked) {
-  const used = Object.values(ptsOf(s)).map((p) => p.col),
-    col =
-      picked ||
-      Object.keys(SB_COLORS).find((c) => !used.includes(c)) ||
-      Object.keys(SB_COLORS)[0];
-  return kind === "zone"
-    ? `<span class="sb-ghost-zone" style="--c:${SB_COLORS[col]}"></span>`
-    : col === SB_NOCOL
-      ? `<span class="sb-rb">${markSVG({ k: kind, col })}</span>`
-      : markSVG({ k: kind, col });
+  const col = picked || SB_NOCOL; // (every new zone: no color, white)
+  return zoneLike({ k: kind })
+    ? `<span class="sb-ghost-zone" style="--c:${colCSS(col)}"></span>`
+    : markSVG({ k: kind, col });
 }
 
 /* the worlds (the zombie cabin, Downpour): the points drawn on the ground, and E beside one opens it */
@@ -991,10 +1454,18 @@ activity({
   only: "sandbox",
   /* my walk: a spawn's Players tab or a respawn may give me another speed (sbspawn.js sbWalkOf) */
   speed: (pos, ctx) => sbWalkOf(ctx.state(), ctx.me),
+  /* a zone that's a wall to me (plan Phase 3) */
+  blocked(x, y, z, ctx, fx, fy) {
+    const s = ctx.state();
+    if (!s || !s.sb || fx == null) return false;
+    const walls = sbWalls(s, { duck: (s.players[ctx.me] || {}).name || "" });
+    return sbWallStops(s, walls, fx / W, fy / H, x / W, y / H, z, W, H);
+  },
   draw(now, ctx) {
     const s = ctx.state(),
       layer = ctx.world.board.querySelector(".ducks");
     if (!layer || !s) return;
+    sbFloorsFrom(s); // (its ground zones are floors under my duck: sbfloors.js)
     const size = 90 * ctx.world.sc;
     drawMarks(
       layer,
@@ -1059,6 +1530,40 @@ activity({
       zb = (s && s.hang && s.hang.sbz && s.hang.sbz.zb) || [];
     if (!layer) return;
     npcPics(s.sbpic); // (the room's uploaded pictures: a spawn's Appearance tab)
-    drawNpcs(ctx, zb, ZB, layer, fxl);
+    drawNpcs(
+      ctx,
+      zb,
+      ZB,
+      layer,
+      fxl,
+      sbHasOl(s)
+        ? {
+            /* in a zone whose Outlines take it: that row's color (sandboxrules.js sbOlColor) */
+            ol: (o, z, f, unseen, h, sc) => {
+              const c = sbOlColor(
+                s,
+                { k: o.k, sp: o.sp },
+                z.x / W,
+                z.y / H,
+                h,
+                W,
+                H,
+              );
+              if (c)
+                olAdd({
+                  id: "sbz" + o.i,
+                  img: z.img,
+                  x: f.left - (z.box.w * sc) / 2,
+                  y: f.top - z.box.feet * sc,
+                  w: z.box.w * sc,
+                  h: z.box.h * sc,
+                  flip: (o.f || 1) < 0,
+                  kind: c,
+                });
+              return false;
+            },
+          }
+        : {},
+    );
   },
 });
