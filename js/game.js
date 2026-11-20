@@ -7461,6 +7461,7 @@ function paintNow(force) {
     celebrate(s);
     duel(s);
     scene.board($(".board", main));
+    scene.look(s); // (a Sandbox game mode's look, maps.js)
     if (was && s.phase !== was.split("|")[0] && s.phase !== "discuss")
       sfx.done();
     if (was && was.split("|")[0] === "answer" && s.phase === "discuss")

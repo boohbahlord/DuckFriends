@@ -500,6 +500,7 @@ async function refresh() {
   } catch (e) {
     W.list = false;
   }
+  if (!W) return;
   const modes = W.list ? await listModes().catch(() => []) : [];
   if (!W) return;
   W.el.querySelector(".sbp-list").innerHTML = listHTML(W.list, modes);
