@@ -12,7 +12,13 @@ import { npcPics } from "./sbnpcart.js";
 import { colorField } from "./color.js";
 import { momentHTML } from "./specials.js";
 import { esc, openWindow, confirmBox, toast, foldHeads } from "./ui.js";
-import { sbPresets, sbCheat, colSwatches, NOCOL_NOTE } from "./sbmenu.js";
+import {
+  sbPresets,
+  sbCheat,
+  sbLevel,
+  colSwatches,
+  NOCOL_NOTE,
+} from "./sbmenu.js";
 import { activeRoom } from "./net.js";
 import {
   isSb,
@@ -25,6 +31,7 @@ import {
   SB_ACTS,
   SB_IMPORT,
   SB_OWN,
+  SB_MSET,
   SB_WHAT,
   SB_PLAYER,
   SB_COLORS,
@@ -71,12 +78,18 @@ import {
   sbWallStops,
   sbWorksAt,
   sbOutline,
+  sbOv,
+  sbOrder,
+  sbFlips,
   sbHasOl,
   sbOlColor,
   sbOlRows,
   SB_OL_DEF,
   boardDuck,
   SB_LOOT,
+  SB_SA_ON,
+  sbSaRows,
+  sbSaText,
 } from "./sandboxrules.js";
 import {
   boxText,
@@ -86,12 +99,13 @@ import {
   sbWalkOf,
   madeOf,
   kdOf,
+  msetOf,
   ownOn,
   SB_TEXT,
 } from "./sbspawn.js";
 import { orbWrap, lootRing, lootPage, lootWire } from "./sblootview.js";
 import { orbsOf } from "./sbloot.js";
-import { valueOf } from "./numerat.js";
+import { valueOf, read as nbRead } from "./numerat.js";
 import { drawNpcs, dropNpcs } from "./npcview.js";
 import { groupOpts, grShown, jgRow } from "./sbgroupview.js";
 import { olAdd } from "./outlines.js";
@@ -180,15 +194,16 @@ function placeAt(n, c, size) {
   });
 }
 /* a block's shape as pixels, made from the start as pixels (the owner's, Nov 19 23:41Z): one pixel per quarter-duck
-   square of the box around it, set where that square's middle is inside the block (sandboxrules.js sbInBlock, its turn
-   included), its inside see-through in its color and its edge squares stronger. Kept by shape, size, turn and color */
+   square of the box around it, set where that square's middle is inside the block (sandboxrules.js sbInBlock: on one of
+   its hitbox tiles, its turn included), its inside see-through in its color and its edge squares stronger. Kept by
+   shape, size, turn and color */
 const SHAPE_PX = new Map();
 function shapePic(s, p, css, solid = false) {
   const [x0, y0, x1, y1] = sbZoneBox(s, p, W, H),
     [ux, uy] = sbOnBoard(s) ? boardDuck(s) : [48 / W, 48 / H],
     cx = Math.max(1, Math.round(((x1 - x0) / ux) * 4)),
     cy = Math.max(1, Math.round(((y1 - y0) / uy) * 4)),
-    key = `${sbShape(p)} ${sbSize(p)} ${sbRot(p)} ${cx} ${cy} ${css} ${solid}`;
+    key = `${sbShape(p)} ${sbSize(p)} ${sbRot(p)} ${sbFlips(p)} ${cx} ${cy} ${css} ${solid}`;
   let u = SHAPE_PX.get(key);
   if (u) return u;
   const cv = document.createElement("canvas");
@@ -347,7 +362,7 @@ function zoneMark(n, p, at, s, bare = false) {
     L0 = Math.min(cs0[0].left, cs0[1].left),
     T0 = Math.min(cs0[0].top, cs0[1].top),
     shaped = (sbShape(p) !== "sq" || sbRot(p) !== 0) && !sbFills(p), // (a square, not turned, is its CSS box; the rest pixels)
-    sig = `${p.col} ${boxText(p, "name")} ${shaped ? `${sbShape(p)} ${sbSize(p)} ${sbRot(p)}` : ""} ${bare}`;
+    sig = `${p.col} ${boxText(p, "name")} ${shaped ? `${sbShape(p)} ${sbSize(p)} ${sbRot(p)} ${sbFlips(p)}` : ""} ${bare}`;
   if (n._sig !== sig) {
     n._sig = sig;
     const css = SB_COLORS[p.col] || "#fff";
@@ -426,8 +441,8 @@ function cellsOn(n, s, p, cs) {
         X = u + 0.5;
         Y = v + 0.5;
       } else {
-        const lx = u * g.w,
-          ly = v * g.h;
+        const lx = u * g.w + g.ox,
+          ly = v * g.h + g.oy;
         X = p.x + (lx * Math.cos(a) - ly * Math.sin(a)) * rx;
         Y = p.y + (lx * Math.sin(a) + ly * Math.cos(a)) * ry;
       }
@@ -482,6 +497,18 @@ function orbMark(layer, have, want, k, id, p, o, at, size, s) {
   }
   placeAt(el, at(o.x != null ? { x: o.x, y: o.y, z: o.z || 0 } : p), size);
 }
+/* the zones' marks in their drawing order, the top one last (sandboxrules.js sbOrder: Move up and Move down); moved only
+   when the order changed */
+function drawOrder(layer, pts) {
+  const zs = [...layer.querySelectorAll(":scope > .sb-zone")],
+    key = (n) => {
+      const id = n.dataset.p.split("~")[0];
+      return sbOrder(id, pts[id]);
+    },
+    want = [...zs].sort((a, b) => key(a) - key(b));
+  if (want.every((n, i) => n === zs[i])) return;
+  for (const n of want) layer.append(n);
+}
 /* the points on a layer: at(p) → { left, top } where its middle is (board px), size its width; s: the room's state (a
    loot point's orb and its picture) */
 function drawMarks(layer, pts, at, size, s) {
@@ -510,7 +537,8 @@ function drawMarks(layer, pts, at, size, s) {
         );
       continue;
     }
-    const hid = hiddenNow(s, p),
+    const other = seeZones && sbOv(p) !== sbLevel.v, // (on another overlay level: only its orbs still show)
+      hid = hiddenNow(s, p) || other,
       vis = p.k === "loot" ? seen(p) : [],
       orbOut = vis.length > 0;
     if (p.k === "zone") lookOn(layer, have, want, id, pts, at, size, s); // (its look: everyone sees it, hidden or not)
@@ -519,7 +547,7 @@ function drawMarks(layer, pts, at, size, s) {
       faceOn(layer, have, want, id, pts, at, size, s, false); // (a block up high: its front side, when it has a look)
     if (hid && !orbOut) continue; // (Hide: a loot point hides its ring and name, never its orb, the owner's "that appearance is hidden")
     if (zoneLike(p)) {
-      if (!seeZones) continue;
+      if (!seeZones || other) continue;
       want.add(id);
       /* the zone it leads with sets how it looks: its color and its name (the owner's, Nov 20 02:45Z) */
       const lead = sbZonesOn(pts, id)[0],
@@ -562,6 +590,7 @@ function drawMarks(layer, pts, at, size, s) {
       ); // (more than one lying: plan Loot 1, Spawn limit)
   }
   for (const [id, n] of have) if (!want.has(id)) n.remove();
+  drawOrder(layer, pts);
   if (sbSel.size || layer._sel)
     for (const n of layer.querySelectorAll(".sb-pt:not(.sb-look)"))
       n.classList.toggle("sb-sel", sbSel.has(n.dataset.p.split("~")[0]));
@@ -772,7 +801,7 @@ export function sbNearPoint(s, me) {
   let best = null,
     bd = board ? 1.5 : 90;
   for (const [id, p] of Object.entries(ptsOf(s))) {
-    if (p.grp) continue;
+    if (p.grp || sbOv(p) !== sbLevel.v) continue;
     const d = board
       ? Math.hypot(
           (p.x - me.x) / boardDuck(s)[0],
@@ -932,6 +961,39 @@ function pickRow(f, label, opts, picked, rowId = f) {
    Players tab; getR: () => the room */
 const nameOf = (f) =>
   (SB_BOXES[f] || SB_FLAGS[f] || SB_PLAYER[f] || {}).name || SB_ACTS[f] || f;
+/* one Seriat box of a zone's Act (the owner's, Nov 20 17:25Z: "seriat shows a box, then another box appears below it, and it
+   is a dropdown list. the dropdown list can be scrolled through ... multiple options can be selected", and "the seriat
+   boxes that await input has a small input button on the right for importing files"): the box, its import button, a
+   remove button, and what it acts on (SB_SA_ON) as a dropdown of checkboxes under it */
+const saWhy = (v) => {
+  if (!String(v).trim()) return "";
+  const r = nbRead(v, SA_BOX);
+  return r.ok ? "" : r.why;
+};
+const SA_BOX = { kind: "tenth", min: -1000, max: 1000, def: "" };
+const saRow = (r) => {
+  const why = saWhy(r.v);
+  return `<div class="sb-sarow"><div class="sb-row${why ? " bad" : ""}"><span>Seriat</span><span class="sb-sabox"><input class="sb-saval" value="${esc(r.v)}" maxlength="120" spellcheck="false" autocomplete="off" placeholder="-1, 1:3 …" aria-label="Seriat"><button type="button" class="sb-saimp" data-saimp aria-label="Import a file" title="Import a file">&#8615;</button><button type="button" class="sb-sax" data-sax aria-label="Remove this box" title="Remove">&#215;</button></span><em class="sb-why">${esc(why)}</em></div><div class="sb-row"><span>Acts on</span><details class="sb-acts sb-saon"><summary>${esc(r.on.map((k) => SB_SA_ON[k]).join(", ") || "Nothing")}</summary><span class="sb-what">${Object.entries(
+    SB_SA_ON,
+  )
+    .map(
+      ([k, n]) =>
+        `<label><input type="checkbox" value="${k}" data-label="${esc(n)}"${r.on.includes(k) ? " checked" : ""}> ${esc(n)}</label>`,
+    )
+    .join(
+      "",
+    )}</span></details></div><div class="sb-brainlist sb-salist" hidden></div></div>`;
+};
+/* every Seriat box of the window, as the room keeps them (sandboxrules.js sbSaText) */
+const saRead = (w) =>
+  sbSaText(
+    [...w.querySelectorAll(".sb-sarow")].map((el) => ({
+      v: el.querySelector(".sb-saval").value,
+      on: [...el.querySelectorAll(".sb-saon input:checked")].map(
+        (c) => c.value,
+      ),
+    })),
+  );
 /* a true or false setting as a button on the right that reads true or false (the owner's, Nov 19 21:59Z: "make it a
    button ... when you click the button, it will say true or false"), or default (Nov 20 17:25Z: "true, false, default"):
    each press goes default, true, false, default. A hidden box under it carries the value as t, f or empty (the default:
@@ -1214,10 +1276,7 @@ export function sbSettings(getR, id, tab = "") {
       )}${(p.im || []).includes("ap") ? `<p class="sb-none">Appearance: the look its spawn had when it was imported.</p>` : ""}`;
   /* a zone's page: what it does and to whom, its size, and what spawns in it (sandboxrules.js SB_ZONE) */
   const zonePage = () => {
-    const fx = SB_FX[boxText(p, "fx").trim()]
-        ? boxText(p, "fx").trim()
-        : "none",
-      named = (k, end) =>
+    const named = (k, end) =>
         Object.values(pts)
           .filter((q) => q.k === k && !q.grp && q.pg !== "pl")
           .map((q) => [q.col, `${boxText(q, "name")} ${end}`]),
@@ -1227,17 +1286,6 @@ export function sbSettings(getR, id, tab = "") {
           .split(/[\s,]+/);
     return `${row("name", { name: "Variable name" }, typed("name"), why("name"))}
     ${colorRow}${flagRow("hide", SB_FLAGS.hide, typed("hide"), why("hide"))}${flagRow("inv", SB_FLAGS.inv, typed("inv"), why("inv"))}${flagRow("dark", SB_FLAGS.dark, typed("dark"), why("dark"))}
-    <div class="sb-row"><span>${esc(SB_ZONE.fx.name)}</span><span class="sb-what">${Object.entries(
-      SB_FX,
-    )
-      .map(
-        ([v, n]) =>
-          `<label><input type="radio" name="sb-fx" data-fx="${v}"${fx === v ? " checked" : ""}> ${n}</label>`,
-      )
-      .join("")}</span></div>
-    <div data-fxrow="amt"${fx === "damage" || fx === "heal" ? "" : " hidden"}>${row("amt", SB_ZONE.amt, typed("amt"), why("amt"))}</div>
-    <div data-fxrow="rate"${fx === "none" ? " hidden" : ""}>${row("rate", SB_ZONE.rate, typed("rate"), why("rate"))}</div>
-    <div data-fxrow="zwho"${fx === "none" ? " hidden" : ""}>${actRow(R.state, p, "zwho", kinds)}</div>
     ${(() => {
       /* "Is wall" (the owner's: "you select is wall, and now players can't go through it. Like it's a true or false"):
          true stops everything until "Who can't pass" says who; false stops nobody */
@@ -1296,8 +1344,30 @@ export function sbSettings(getR, id, tab = "") {
             `<option value="${v}"${v === ordT(f).trim() ? " selected" : ""}>${esc(n)}</option>`,
         )
         .join("")}</select>`,
+    /* a zone's Act, the first row of its potential order (sandboxrules.js SB_FX): a dropdown, and under it only the rows
+       that matter to what's picked: Seriat's boxes, HP each time, Seconds between, Who it hits */
+    fx = SB_FX[boxText(p, "fx").trim()] ? boxText(p, "fx").trim() : "none",
+    actSect = () =>
+      `<div class="sb-row" data-row="fx"><span>${esc(SB_ZONE.fx.name)}</span><select class="sb-box" data-f="fx" aria-label="${esc(SB_ZONE.fx.name)}">${Object.entries(
+        SB_FX,
+      )
+        .map(
+          ([v, n]) =>
+            `<option value="${v}"${v === fx ? " selected" : ""}>${esc(n)}</option>`,
+        )
+        .join("")}</select><em class="sb-why"></em></div>
+    <div data-fxrow="sa"${fx === "seriat" ? "" : " hidden"}><div class="sb-sarows">${sbSaRows(
+      p,
+    )
+      .map(saRow)
+      .join(
+        "",
+      )}</div><p class="acts sb-saadd"><button type="button" class="btn small" data-saadd aria-label="Another Seriat box">+</button></p></div>
+    <div data-fxrow="amt"${fx === "damage" || fx === "heal" ? "" : " hidden"}>${row("amt", SB_ZONE.amt, typed("amt"), why("amt"))}</div>
+    <div data-fxrow="rate"${fx === "none" ? " hidden" : ""}>${row("rate", SB_ZONE.rate, typed("rate"), why("rate"))}</div>
+    <div data-fxrow="zwho"${fx === "none" ? " hidden" : ""}>${actRow(R.state, p, "zwho", kinds)}</div>`,
     orderSect = () =>
-      `${sect("Potential order")}<div class="sb-row" data-row="ord"><span>${esc(SB_ORDER.ord.name)}</span><span class="sb-ordbox">${sel("ord", SB_ORDERS)}${sel("dir", SB_DIRS)}</span><em class="sb-why"></em></div>
+      `${sect("Potential order")}${zone ? actSect() : ""}<div class="sb-row" data-row="ord"><span>${esc(SB_ORDER.ord.name)}</span><span class="sb-ordbox">${sel("ord", SB_ORDERS)}${sel("dir", SB_DIRS)}</span><em class="sb-why"></em></div>
     ${row("n", SB_ORDER.n, ordT("n"), "")}
     ${row("sq", SB_ORDER.sq, ordT("sq"), "")}
     ${row("st", SB_ORDER.st, ordT("st"), "")}
@@ -1362,22 +1432,26 @@ export function sbSettings(getR, id, tab = "") {
       /* a Brain: its file (and the files it uses) go to the room first, from my Seriat folder (numeratwin.js, loaded
          when it's wanted: it brings the command line) */
       const sendBrain = (i) =>
-        import("./numeratwin.js").then((m) => {
-          const v = i.value.trim(),
-            files = m.brainFiles(v),
-            lab = i.closest(".sb-row");
-          lab.classList.toggle("bad", !files);
-          lab.querySelector(".sb-why").textContent = files
-            ? ""
-            : v.startsWith("~")
-              ? `No file by that name that its owner lets you run (x)`
-              : `No file by that name in your ${LANG} folder (n)`;
+        brainCheck(i).then((files) => {
           if (!files) return;
           send({ k: "nbf", files });
-          send({ k: "set", f: "brain", v });
+          send({ k: "set", f: "brain", v: i.value.trim() });
         });
       if (loot) lootWire(w, id, send, getR);
       w.addEventListener("input", (e) => {
+        const sv = e.target.closest(".sb-saval");
+        if (sv) {
+          const bad = saWhy(sv.value),
+            lab = sv.closest(".sb-row");
+          lab.classList.toggle("bad", !!bad);
+          lab.querySelector(".sb-why").textContent = bad;
+          clearTimeout(timers.sa);
+          timers.sa = setTimeout(
+            () => send({ k: "set", f: "sa", v: saRead(w) }),
+            250,
+          );
+          return;
+        } // (a zone's Seriat box: all of them go as one)
         const i = e.target.closest(".sb-box");
         if (!i) return;
         const f = i.dataset.f,
@@ -1397,6 +1471,24 @@ export function sbSettings(getR, id, tab = "") {
       w.addEventListener("change", (e) => {
         const t = e.target;
         if (t.closest(".sb-olbox")) return olWrite(t.closest(".sb-olbox")); // (a zone's Outlines rows)
+        if (t.closest(".sb-saon")) {
+          const d = t.closest(".sb-saon");
+          d.querySelector("summary").textContent = summaryOf([
+            ...d.querySelectorAll("input:checked"),
+          ]);
+          return send({ k: "set", f: "sa", v: saRead(w) });
+        } // (what a Seriat box acts on)
+        if (t.matches('[data-f="fx"]')) {
+          const v = t.value,
+            show = {
+              sa: v === "seriat",
+              amt: v === "damage" || v === "heal",
+              rate: v !== "none",
+              zwho: v !== "none",
+            };
+          for (const [r, on] of Object.entries(show))
+            w.querySelector(`[data-fxrow="${r}"]`).hidden = !on;
+        } // (a zone's Act: only the rows that matter to it; the box itself is sent as picked)
         if (t.matches('.sb-box[data-f="name"]') && !boxWhy("name", t.value)) {
           clearTimeout(timers.name);
           send({ k: "set", f: "name", v: t.value });
@@ -1474,14 +1566,6 @@ export function sbSettings(getR, id, tab = "") {
         }
         if (t.matches("[data-pick]"))
           return send({ k: "set", f: "pick", v: t.dataset.pick });
-        if (t.matches("[data-fx]")) {
-          const v = t.dataset.fx,
-            show = { amt: v === "damage" || v === "heal", rate: v !== "none" };
-          show.zwho = show.rate;
-          for (const [r, on] of Object.entries(show))
-            w.querySelector(`[data-fxrow="${r}"]`).hidden = !on;
-          return send({ k: "set", f: "fx", v });
-        } // (a zone's: only the rows that matter to it)
         const act = t.closest("[data-act]");
         if (act) {
           const f = act.dataset.act,
@@ -1565,71 +1649,57 @@ export function sbSettings(getR, id, tab = "") {
           send({ k: "set", f: "wall", v: on ? "everything" : "" });
           return setTimeout(() => w.isConnected && again(id, tab), 300);
         }
-        const tog = e.target.closest("[data-tog]");
-        if (tog) {
-          const box = tog.closest(".sb-row").querySelector(".sb-box"),
-            v = box.value === "" ? "t" : box.value === "t" ? "f" : ""; // (default, true, false, default …)
-          box.value = v;
-          tog.classList.toggle("on", v === "t");
-          tog.classList.toggle("mid", v === "");
-          tog.setAttribute(
-            "aria-pressed",
-            v === "t" ? "true" : v ? "false" : "mixed",
+        /* a zone's Seriat boxes (saRow): another one, one taken away, a file brought in */
+        const saSend = () => send({ k: "set", f: "sa", v: saRead(w) });
+        if (e.target.closest("[data-saadd]")) {
+          w.querySelector(".sb-sarows").insertAdjacentHTML(
+            "beforeend",
+            saRow({ v: "", on: [] }),
           );
-          tog.textContent = triWord(v);
+          return w.querySelector(".sb-sarow:last-child .sb-saval").focus();
+        }
+        if (e.target.closest("[data-sax]")) {
+          const rows = w.querySelectorAll(".sb-sarow"),
+            el = e.target.closest(".sb-sarow");
+          if (rows.length > 1) el.remove();
+          else el.outerHTML = saRow({ v: "", on: [] }); // (the last one: emptied, never gone)
+          return saSend();
+        }
+        const sf = e.target.closest("[data-safile]");
+        if (sf) {
+          const el = sf.closest(".sb-sarow"),
+            box = el.querySelector(".sb-saval");
+          box.value = sf.dataset.safile;
+          el.querySelector(".sb-salist").hidden = true;
           return box.dispatchEvent(new Event("input", { bubbles: true }));
         }
-        /* the Brain box's arrow: my-files/, and the builder for a new one */
-        const bl = e.target.closest(
-          "[data-brainlist], [data-brainfile], [data-brainnew]",
-        );
-        if (bl) {
-          const rowEl = bl.closest("[data-row=brain]"),
-            list = rowEl.querySelector(".sb-brainlist"),
-            input = rowEl.querySelector("[data-f=brain]"),
-            arrow = rowEl.querySelector("[data-brainlist]"),
-            pick = (v) => {
-              list.hidden = true;
-              arrow.setAttribute("aria-expanded", "false");
-              input.value = v;
-              input.dispatchEvent(new Event("input", { bubbles: true })); // (as if typed: it goes to the room)
-            };
-          if (bl.dataset.brainfile != null) return pick(bl.dataset.brainfile);
-          if (bl.hasAttribute("data-brainnew"))
-            return import("./brainbuild.js").then((m) =>
-              m.openBrainBuilder((path) => w.isConnected && pick(path)),
-            );
-          if (!list.hidden) {
-            list.hidden = true;
-            return arrow.setAttribute("aria-expanded", "false");
-          }
-          return Promise.all([
-            import("./brainbuild.js"),
-            import("./numerathelp.js"),
-          ]).then(async ([m, h]) => {
-            const files = await m.myFiles();
+        if (e.target.closest("[data-saimp]")) {
+          const list = e.target
+            .closest(".sb-sarow")
+            .querySelector(".sb-salist");
+          if (!list.hidden) return (list.hidden = true);
+          return import("./brainbuild.js").then(async (m) => {
+            /* a file's value: its first line that isn't blank or a # note (a value file holds one) */
+            const first = (t) =>
+                String(t || "")
+                  .split("\n")
+                  .map((l) => l.trim())
+                  .find((l) => l && !l.startsWith("#")) || "",
+              files = (await m.myFiles()).filter((f) => first(f.text));
             list.innerHTML =
               `<span class="sb-brainhead">My files</span>` +
               (files.length
                 ? files
                     .map(
                       (f) =>
-                        `<button type="button" class="sb-brainfile" data-brainfile="${esc(f.path)}">${esc(f.name)}</button>`,
+                        `<button type="button" class="sb-brainfile" data-safile="${esc(first(f.text).slice(0, 120))}">${esc(f.name)}</button>`,
                     )
                     .join("")
-                : `<em class="sb-none">Nothing in ${m.MY_FILES}/ yet</em>`) +
-              `<span class="sb-brainhead">Examples</span>` +
-              Object.keys(h.EXAMPLES)
-                .map(
-                  (n) =>
-                    `<button type="button" class="sb-brainfile" data-brainfile="help/examples/${esc(n)}">${esc(n)}</button>`,
-                )
-                .join("") +
-              `<button type="button" class="sb-brainfile sb-brainnew" data-brainnew>Build a brain…</button>`;
+                : `<em class="sb-none">Nothing in ${m.MY_FILES}/ yet</em>`);
             list.hidden = false;
-            arrow.setAttribute("aria-expanded", "true");
           });
         }
+        if (npcSetClick(e, w)) return; // (a switch, the Brain box's arrow: shared with M's windows)
         const c = e.target.closest("[data-col]");
         if (c) {
           w.querySelectorAll(".sb-col").forEach((b) =>
@@ -1683,6 +1753,156 @@ export function sbSettings(getR, id, tab = "") {
     },
   });
 }
+/* ---------- an NPC's settings, as a spawn sets them, for M ----------
+   The owner's, Nov 20 17:25Z: "in ai behaviors, things like ai should be able to have very similiar options to spawn IN
+   their UI settings for M". A kind's defaults (kindDefaults) and an NPC I made (customize.js, madeSet) show the same
+   rows a spawn's page does, drawn and wired here once: who they go after, their Brain, what they can do, their numbers
+   (sandboxrules.js SB_MSET) */
+/* a switch's click (default, true, false, default …) or the Brain box's arrow, in any of these windows: true when it
+   was one */
+function npcSetClick(e, w) {
+  const tog = e.target.closest("[data-tog]");
+  if (tog) {
+    const box = tog.closest(".sb-row").querySelector(".sb-box"),
+      v = box.value === "" ? "t" : box.value === "t" ? "f" : ""; // (default, true, false, default …)
+    box.value = v;
+    tog.classList.toggle("on", v === "t");
+    tog.classList.toggle("mid", v === "");
+    tog.setAttribute(
+      "aria-pressed",
+      v === "t" ? "true" : v ? "false" : "mixed",
+    );
+    tog.textContent = triWord(v);
+    box.dispatchEvent(new Event("input", { bubbles: true }));
+    return true;
+  }
+  /* the Brain box's arrow: my-files/, and the builder for a new one */
+  const bl = e.target.closest(
+    "[data-brainlist], [data-brainfile], [data-brainnew]",
+  );
+  if (bl) {
+    const rowEl = bl.closest("[data-row=brain]"),
+      list = rowEl.querySelector(".sb-brainlist"),
+      input = rowEl.querySelector("[data-f=brain]"),
+      arrow = rowEl.querySelector("[data-brainlist]"),
+      pick = (v) => {
+        list.hidden = true;
+        arrow.setAttribute("aria-expanded", "false");
+        input.value = v;
+        input.dispatchEvent(new Event("input", { bubbles: true })); // (as if typed: it goes to the room)
+      };
+    if (bl.dataset.brainfile != null) {
+      pick(bl.dataset.brainfile);
+      return true;
+    }
+    if (bl.hasAttribute("data-brainnew")) {
+      import("./brainbuild.js").then((m) =>
+        m.openBrainBuilder((path) => w.isConnected && pick(path)),
+      );
+      return true;
+    }
+    if (!list.hidden) {
+      list.hidden = true;
+      arrow.setAttribute("aria-expanded", "false");
+      return true;
+    }
+    Promise.all([import("./brainbuild.js"), import("./numerathelp.js")]).then(
+      async ([m, h]) => {
+        const files = await m.myFiles();
+        list.innerHTML =
+          `<span class="sb-brainhead">My files</span>` +
+          (files.length
+            ? files
+                .map(
+                  (f) =>
+                    `<button type="button" class="sb-brainfile" data-brainfile="${esc(f.path)}">${esc(f.name)}</button>`,
+                )
+                .join("")
+            : `<em class="sb-none">Nothing in ${m.MY_FILES}/ yet</em>`) +
+          `<span class="sb-brainhead">Examples</span>` +
+          Object.keys(h.EXAMPLES)
+            .map(
+              (n) =>
+                `<button type="button" class="sb-brainfile" data-brainfile="help/examples/${esc(n)}">${esc(n)}</button>`,
+            )
+            .join("") +
+          `<button type="button" class="sb-brainfile sb-brainnew" data-brainnew>Build a brain…</button>`;
+        list.hidden = false;
+        arrow.setAttribute("aria-expanded", "true");
+      },
+    );
+    return true;
+  }
+  return false;
+}
+/* a Brain box's file (and the files it uses), from my Seriat folder, or null (the row says why): numeratwin.js, loaded
+   when it's wanted (it brings the command line) */
+const brainCheck = (i) =>
+  import("./numeratwin.js").then((m) => {
+    const v = i.value.trim(),
+      files = v ? m.brainFiles(v) : {},
+      lab = i.closest(".sb-row");
+    lab.classList.toggle("bad", !files);
+    lab.querySelector(".sb-why").textContent = files
+      ? ""
+      : v.startsWith("~")
+        ? `No file by that name that its owner lets you run (x)`
+        : `No file by that name in your ${LANG} folder (n)`;
+    return files;
+  });
+/* the rows: p is the NPC as a spawn of it alone would be (its boxes in p.f), typed and why as a spawn's page has them;
+   acts: with its behavior lists (a made NPC has them in its own Behavior part) */
+function npcSetHTML(s, p, typed, why, kinds, acts = true) {
+  SECT = null; // (plain headings: these windows aren't numbered)
+  const one = (f) =>
+    SB_ACTS[f]
+      ? actRow(s, p, f, kinds)
+      : f === "brain"
+        ? brainRow(typed(f), why(f))
+        : SB_FLAGS[f]
+          ? flagRow(f, SB_FLAGS[f], typed(f), why(f))
+          : row(f, SB_BOXES[f], typed(f), why(f));
+  return `<div class="sb-set sb-npcset">${[
+    ["Who they go after", Object.keys(SB_ACTS), acts],
+    ["Brain", ["brain"], true],
+    ["True or false", SB_MSET.filter((f) => SB_FLAGS[f]), true],
+    ["Numbers", SB_MSET.filter((f) => SB_BOXES[f]), true],
+  ]
+    .filter(([, , on]) => on)
+    .map(([t, fs]) => sub(t) + fs.map(one).join(""))
+    .join("")}</div>`;
+}
+/* the rows' wiring: put(f, v, files) once a box settles (files: a Brain's, to send to the room first) */
+function npcSetWire(w, put) {
+  const timers = {};
+  w.addEventListener("input", (e) => {
+    const i = e.target.closest(".sb-npcset .sb-box");
+    if (!i) return;
+    const f = i.dataset.f;
+    clearTimeout(timers[f]);
+    if (f === "brain")
+      return (timers[f] = setTimeout(
+        () =>
+          brainCheck(i).then((files) => files && put(f, i.value.trim(), files)),
+        400,
+      ));
+    const bad = i.value.trim() ? boxWhy(f, i.value) : "",
+      lab = i.closest(".sb-row");
+    lab.classList.toggle("bad", !!bad);
+    lab.querySelector(".sb-why").textContent = bad;
+    timers[f] = setTimeout(() => put(f, i.value.trim()), 250); // (emptied: the default again)
+  });
+  w.addEventListener("change", (e) => {
+    const act = e.target.closest(".sb-npcset [data-act]");
+    if (!act) return;
+    const on = [...act.querySelectorAll("input:checked")];
+    act.querySelector("summary").textContent = summaryOf(on);
+    put(act.dataset.act, on.map((c) => c.value).join(", "));
+  });
+  w.addEventListener("click", (e) => {
+    if (e.target.closest(".sb-npcset")) npcSetClick(e, w);
+  });
+}
 /* ---------- M: a kind's defaults (sbspawn.js kdOf) ----------
    The four kinds that come with Sandbox, each with the settings a spawn can give it; what's written here is what every
    one of that kind starts with, wherever a spawn didn't write its own (or has "Use these settings" off). The rows in M */
@@ -1697,54 +1917,68 @@ export function kindDefaults(getR, kind) {
   if (!R || !SB_WHAT[kind] || !sbMay(R.state, R.me, "m")) return;
   const kd = kdOf(R.state, kind) || { f: {} },
     p = { k: "kd", col: "red", f: { ...kd.f, what: { t: kind, ok: kind } } }, // (as a spawn of it alone would be)
-    typed = (f) => typedOr(kd, f, p),
-    why = (f) => (kd.f[f] ? boxWhy(f, kd.f[f].t) : ""),
-    kinds = kindsFor(R.state),
     html = `<h2>${esc(SB_WHAT[kind])}: defaults</h2>
   <p class="small dim">Every ${esc(SB_WHAT[kind])} starts with these, unless its spawn sets its own.</p>
-  <div class="sb-set">${SB_OWN.map((f) =>
-    SB_ACTS[f]
-      ? actRow(R.state, p, f, kinds)
-      : SB_FLAGS[f]
-        ? flagRow(f, SB_FLAGS[f], typed(f), why(f))
-        : row(f, SB_BOXES[f], typed(f), why(f)),
-  ).join("")}</div>
+  ${npcSetHTML(
+    R.state,
+    p,
+    (f) => typedOr(kd, f, p),
+    (f) => (kd.f[f] ? boxWhy(f, kd.f[f].t) : ""),
+    kindsFor(R.state),
+  )}
   <p class="acts"><button type="button" class="btn ghost" data-kdreset>The game's own</button></p>`;
   openWindow(html, {
     cls: "sb-setwin",
     onOpen(w, close) {
       const send = (a) => {
         const r = getR();
-        if (r) r.send({ t: "sb", k: "kd", kind, ...a });
+        if (r) r.send({ t: "sb", ...a });
       };
-      const timers = {};
-      w.addEventListener("input", (e) => {
-        const i = e.target.closest(".sb-box");
-        if (!i) return;
-        const f = i.dataset.f,
-          bad = i.value.trim() ? boxWhy(f, i.value) : "",
-          lab = i.closest(".sb-row");
-        lab.classList.toggle("bad", !!bad);
-        lab.querySelector(".sb-why").textContent = bad;
-        clearTimeout(timers[f]);
-        timers[f] = setTimeout(() => send({ f, v: i.value.trim() }), 250); // (emptied: the game's own again)
-      });
-      w.addEventListener("change", (e) => {
-        const act = e.target.closest("[data-act]");
-        if (!act) return;
-        const on = [...act.querySelectorAll("input:checked")];
-        act.querySelector("summary").textContent = summaryOf(on);
-        send({ f: act.dataset.act, v: on.map((c) => c.value).join(", ") });
+      npcSetWire(w, (f, v, files) => {
+        if (files) send({ k: "nbf", files });
+        send({ k: "kd", kind, f, v });
       });
       w.addEventListener("click", (e) => {
         if (!e.target.closest("[data-kdreset]")) return;
-        send({ reset: true });
+        send({ k: "kd", kind, reset: true });
         close(null);
         setTimeout(() => kindDefaults(getR, kind), 300);
       });
     },
   });
 }
+/* an NPC I made (sbnpcs.js): the same rows in its Customize, under its behavior lists. n.set keeps what was typed
+   (f: text); save() keeps it (on my device, or back to the room for another player's) */
+export const madeSet = {
+  html(n) {
+    const R = activeRoom(),
+      fs = msetOf(n.set || {}),
+      p = {
+        k: "kd",
+        col: "red",
+        f: { ...fs, what: { t: "c:" + n.id, ok: "c:" + n.id } },
+      };
+    return npcSetHTML(
+      R ? R.state : {},
+      p,
+      (f) => typedOr({ f: fs }, f, p),
+      (f) => (fs[f] ? boxWhy(f, fs[f].t) : ""),
+      [],
+      false,
+    );
+  },
+  wire(w, n, save) {
+    npcSetWire(w, (f, v, files) => {
+      const R = activeRoom();
+      if (files && R) R.send({ t: "sb", k: "nbf", files });
+      const set = { ...(n.set || {}) };
+      if (v === "") delete set[f];
+      else set[f] = v;
+      n.set = set;
+      save();
+    });
+  },
+};
 /* a respawn's Import settings (the owner's Sandbox file): the spawn's settings by category, each a dropdown whose bold
    first row checks all of it; "Import" for the ones checked, or with none checked "Import all options" after an "Are you
    sure?". The button stays at the bottom while the list scrolls; options import in the spawn menu's order (sbspawn.js) */
@@ -1824,7 +2058,7 @@ export const buildRows = (R) =>
         act: (r) =>
           sbPlace.start
             ? sbPlace.start(kind, label)
-            : r.send({ t: "sb", k: "add", kind }),
+            : r.send({ t: "sb", k: "add", kind, ov: sbLevel.v }),
       }))
     : [];
 /* what I'm putting down, drawn on my mouse: a zone's box, dashed, in the color it will get (a loot spot of an older
@@ -1888,7 +2122,7 @@ activity({
     let best = null,
       bd = 90;
     for (const [id, p] of Object.entries(ptsOf(s))) {
-      if (p.grp) continue;
+      if (p.grp || sbOv(p) !== sbLevel.v) continue;
       const d = Math.hypot(p.x * W - pos.x, p.y * H - pos.y);
       if (d < bd) {
         bd = d;

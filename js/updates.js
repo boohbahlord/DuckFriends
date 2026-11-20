@@ -9,6 +9,110 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v190",
+    version: 190,
+    date: "Nov 20, 2026",
+    title: "Zombies keep their skin",
+    news: [
+      "For Survival: zombies no longer change their skin as they fall. A walker you leave alive changes its look the moment it joins the next horde.",
+      "For Sandbox: NPC brains can now say how to move with \\move\\{...}: arrows for directions, a target, a speed, and bends (bow, weave, dogleg) one after another. The Seriat bible explains it.",
+      "For Sandbox: G Music can import a song (up to 6, 3 minutes each); it plays for the whole room and is kept in saves, game modes and Shared. Every upload shows a green bar while it loads.",
+      'For Sandbox: G Rules can run waves or rounds (how many, how long, the rest between). A Spawn tab with "Comes in with waves or rounds" on comes in at each start, a counter shows under the top bar, and Help has a page on it.',
+      "The menus, Night Show and Carnival Night load hundreds fewer files.",
+    ],
+  },
+  {
+    id: "v189",
+    version: 189,
+    date: "Nov 20, 2026",
+    title: "Lighter ducks",
+    news: ["Ducks load a little lighter."],
+  },
+  {
+    id: "v188",
+    version: 188,
+    date: "Nov 20, 2026",
+    title: "Right-click a zone",
+    news: [
+      "For Sandbox: right-click a zone (hold it on a phone) for Snap, Fixed zone, Direction (flip and rotate) and Overlay. Overlay levels 1 to 10 hide the zones of other levels: Shift+O and a number key, or Overlay level under Tools on a phone.",
+      "For Sandbox: zones grow and shrink in whole hit tiles.",
+      "For Sandbox: the Help manual comes in parts with buttons, and it holds the Seriat help files as they're written.",
+      "Your picture fills your duck however small you crop it, flashlights come back on by themselves when the power goes out, and names under ducks are smaller so the HP bar shows.",
+    ],
+  },
+  {
+    id: "v187",
+    version: 187,
+    date: "Nov 20, 2026",
+    title: "Zones on the tiles",
+    news: [
+      "For Sandbox: zones are made of the ground's hit tiles. A tile is part of a zone when its shape covers 0.6 or more of it, and zones snap to the tile lines.",
+    ],
+  },
+  {
+    id: "v186",
+    version: 186,
+    date: "Nov 20, 2026",
+    title: "Gentler sprint, dearer gas",
+    news: [
+      "Sprint is 1.25 times your walk for 5 seconds, in every mode. The bar fills back up half again as slowly, and once it's empty you sprint again only when it's full.",
+      "For Dead Ducks Arcade: gas costs 300 for a quarter can, at Downpour's pumps and from Cabin's merchant.",
+      "Your picture now opens a crop box, and a picture with see-through parts becomes a cut-out duck that's hit only where it shows.",
+      "Your HP, its meters and your hotbar are bigger and side by side in the bottom right, on a computer and on a phone on its side.",
+    ],
+  },
+  {
+    id: "v185",
+    version: 185,
+    date: "Nov 20, 2026",
+    title: "The sniper watches",
+    news: [
+      "For Survival: the merchant waits until he's at his spot and stays at least 30 s, leaving only when zombies come for him.",
+      "For Survival: the sniper sees only what he can shoot, anywhere on the map, and watches where you hid for 10 s.",
+      "A headshot always takes the head, and gunmen never headshot players.",
+    ],
+  },
+  {
+    id: "v184",
+    version: 184,
+    date: "Nov 20, 2026",
+    title: "Shorter sprint, UI scale",
+    news: [
+      "For Mad God Justin: when he's beaten there's no loser podium any more, and his cloud just says Justin defeated.",
+      "For Survival: the gunmen's assault rifles reach as far as the LMG.",
+      "Sprint lasts half as long (3.5 seconds) and fills back up as fast. Once it runs out, you sprint again only when it's full.",
+      "UI scale in the pause menu: make everything bigger or smaller, from 50% to 200%.",
+    ],
+  },
+  {
+    id: "v183",
+    version: 183,
+    date: "Nov 20, 2026",
+    title: "M like a spawn",
+    news: [
+      "For Sandbox: in M, a kind's defaults and the NPCs you make now have a spawn's settings too: Brain, Can sprint, jump and climb, HP, Damage, Speed and Size.",
+    ],
+  },
+  {
+    id: "v182",
+    version: 182,
+    date: "Nov 20, 2026",
+    title: "Phones on their side",
+    news: [
+      "On a phone on its side, Duck Cabin and Downpour zoom out like they do upright: ducks are smaller and you see more of the map around you.",
+    ],
+  },
+  {
+    id: "v181",
+    version: 181,
+    date: "Nov 20, 2026",
+    title: "Act",
+    news: [
+      "For Sandbox: a zone's Act now sits in its potential order: Seriat, Damage, Heal, Kill or Nothing. Seriat boxes change HP, speed, damage, regen or hitbox of whoever the zone hits, + adds another box, and the small button beside a box fills it from one of your files.",
+      "For Sandbox: Damage, Heal and Kill in a potential order now hit the right squares.",
+    ],
+  },
+  {
     id: "v180",
     version: 180,
     date: "Nov 20, 2026",

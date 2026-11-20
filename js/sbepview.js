@@ -110,10 +110,19 @@ export function borrowRows(R) {
             duck: was.duck,
             w: was.w,
             beh: was.beh,
+            set: Object.fromEntries(
+              Object.entries(was.f || {}).map(([f, b]) => [f, b.t]),
+            ), // (its settings, as typed)
           }),
         );
-        import("./customize.js")
-          .then((m) => m.openCustomize(null, { npc: copy, borrowed: true }))
+        Promise.all([import("./customize.js"), import("./sbspawnview.js")])
+          .then(([m, v]) =>
+            m.openCustomize(null, {
+              npc: copy,
+              borrowed: true,
+              set: v.madeSet,
+            }),
+          )
           .then(() =>
             r.send({
               t: "sb",
@@ -142,6 +151,9 @@ export function epKeep(s) {
     mine.duck = JSON.parse(JSON.stringify(n.duck));
     mine.w = JSON.parse(JSON.stringify(n.w || {}));
     mine.beh = { ...mine.beh, ...(n.beh || {}) };
+    mine.set = Object.fromEntries(
+      Object.entries(n.f || {}).map(([f, b]) => [f, b.t]),
+    );
     npcSave();
     toast(
       `${(s.players[n.ed] || {}).name || "Someone"} changed ${n.name}: kept in your NPCs.`,

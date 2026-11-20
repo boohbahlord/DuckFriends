@@ -1,11 +1,12 @@
 /* ---------- my sprint's stamina, in every mode ----------
    Dead Ducks Arcade's sprint bar in every mode (the owner's, Nov 18 16:43Z + 16:50Z: "no to faster speed BUT they do
    get a 7 second stamina bar for when they do sprint to limit it"). The sprint stays as fast as before (game.js
-   SPEED.sprint, Hangout's SPRINT). Sprinting drains it in L4.SPRINT ms (7 s); not sprinting fills it again as slowly.
-   Once empty my duck walks until I let go of the sprint (Shift, the stick's edge, a fast swipe), then it can sprint on
-   what has filled back. Only my own duck's, on this device: game.js asks sprintStep every frame, and the HP meter's
+   SPEED.sprint, Hangout's SPRINT). Sprinting drains it in L4.SPRINT ms; not sprinting fills it SPRINT.refill times as
+   slowly (gamedefaults.js: 5 s and 7.5 s since Nov 20 18:46Z).
+   Once empty my duck walks until the bar is full again. Only my own duck's, on this device: game.js asks sprintStep every frame, and the HP meter's
    blue bar asks sprintLeft. */
 import { L4 } from "./l4ddrules.js";
+import { SPRINT } from "./gamedefaults.js";
 
 let left = 1,
   tired = false;
@@ -18,8 +19,10 @@ export function sprintStep(on, dt, fill = 1) {
     if (left <= 0) tired = true;
     return true;
   }
-  if (!on) tired = false; // (it can sprint again as soon as the sprint is let go)
-  left = Math.min(1, left + (dt * 1000 * fill) / L4.SPRINT);
+  left = Math.min(1, left + (dt * 1000 * fill) / (L4.SPRINT * SPRINT.refill));
+  /* once it ran out, it sprints again only when the bar is full (the owner's, Nov 20 18:27Z: "sprint has to be all the
+     way up before you can use it again. But it regens as fast as it was lost") */
+  if (left >= 1) tired = false;
   return false;
 }
 /* my sprint left (0 … 1) and whether I'm too tired to sprint, for the blue bar under my HP meter */

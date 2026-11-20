@@ -89,6 +89,42 @@ export function partKey(layer, svg) {
 
 /* ---------- the sheets, one per size: an index, and its files (one per outfit, one per face item, the rest), each
    fetched the first time a duck needs it ---------- */
+/* a size's index as numbers, and the parts' names it shares with every size (tools/duck-index.cjs: names cut short,
+   K of their hash), back into { f: [file], p: { "layer:hash": entry or 0 }, K } */
+const keyFiles = new Map(); // (fetched once, whatever size asks)
+async function unpack(ix, root) {
+  if (ix.p) return ix; // (the older form)
+  if (!keyFiles.has(ix.k))
+    keyFiles.set(
+      ix.k,
+      fetch(root + ix.k).then((r) => r.json()),
+    );
+  const ks = await keyFiles.get(ix.k),
+    p = {};
+  let at = 0;
+  for (const [l, hs] of Object.entries(ks.k)) {
+    const st = (ix.s && ix.s[l]) || 8;
+    for (const h of hs.split(" ")) {
+      const e = ix.e;
+      p[l + ":" + h] =
+        e[at + 6] < 0
+          ? 0
+          : [
+              ...e.slice(at, at + 6),
+              ix.c[e[at + 6]],
+              ...e.slice(at + 7, at + st),
+            ];
+      at += st;
+    }
+  }
+  return { f: ix.f, p, K: ks.K };
+}
+/* a part's entry: its key cut as short as the index keeps them */
+const entryOf = (S, key) => {
+  if (!key || !S.index.K) return key && S.index.p[key];
+  const i = key.indexOf(":");
+  return S.index.p[key.slice(0, i + 1 + S.index.K)];
+};
 const sheets = new Map(); // size -> Promise<{ index: { f: [file], p: { key: entry } }, files: Map<c, Promise<{ px, W }>>, dir }>
 let made = null; // (ducksheets.js: what the files are called)
 function sheet(n) {
@@ -99,9 +135,13 @@ function sheet(n) {
         .then(async ({ SHEETS }) => {
           const s = SHEETS[n];
           if (!s) return null;
+          const dir = s.index.slice(0, s.index.lastIndexOf("/") + 1);
           return {
-            index: await fetch(s.index).then((r) => r.json()),
-            dir: s.index.slice(0, s.index.lastIndexOf("/") + 1),
+            index: await unpack(
+              await fetch(s.index).then((r) => r.json()),
+              dir.replace(/[^/]+\/$/, ""),
+            ),
+            dir,
             files: new Map(),
           };
         })
@@ -235,7 +275,7 @@ export async function duckFromParts(d, cw, ch, frames = 1) {
     for (const m of marks) {
       const svg = duckSVG(C, m);
       if (!svg) continue;
-      const e = S.index.p[partKey(layer, svg)];
+      const e = entryOf(S, partKey(layer, svg));
       if (e === 0) continue; // (a part with nothing to show at this size)
       if (!e) return null; // (a part the sheets don't have: the whole duck is made as before)
       plan.push([layer, e, fade === undefined ? 1 : fade]);
@@ -450,7 +490,7 @@ async function catFromParts(d, cw, ch) {
       k,
       partKey("cat", catSVG(d.cat, { pose: d.pose, step: d.step })),
     );
-  const e = S.index.p[CAT_PARTS.get(k)],
+  const e = entryOf(S, CAT_PARTS.get(k)),
     f = e && (await file(S, e[7]));
   if (!f) return null;
   const [x0, y0, w, h, ox, oy, , , bw, bh] = e,

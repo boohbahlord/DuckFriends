@@ -23,13 +23,14 @@ import {
   baseMode,
   isSb,
   sbMay,
+  sbRule,
   sbOnBoard,
   SB_BOXES,
   SB_FLAGS,
   SB_WHAT,
   SB_ACTS,
   SB_IMPORT,
-  SB_OWN,
+  SB_MSET,
   SB_PLAYER,
   sbPlayerSpot,
   sbOnWorld,
@@ -58,6 +59,14 @@ import {
   sbNpcWalls,
   sbInv,
   sbFitSide,
+  sbSnaps,
+  sbSnapSpot,
+  sbSnapTurn,
+  sbOverlap,
+  sbOv,
+  SB_OV_MOST,
+  sbOrder,
+  sbFills,
   sbWallGo,
   sbWallStops,
   boardDuck,
@@ -81,6 +90,7 @@ import { botDuck } from "./botduck.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { armUp, cleanArms, fight, keepAt, reachTo } from "./sbarms.js";
 import { nbThink, nbOrder, nbKeep } from "./sbnumberat.js";
+import { SONG, songChars } from "./sbaudio.js";
 import { grFrom, grLeave, grHp, grIds, grLists } from "./sbgroups.js";
 
 /* the boxes that aren't numbers: the name over it, its key, what spawns, and a respawn's "who" */
@@ -203,8 +213,38 @@ const flag = (p, f) => num(p, f) === true;
    What a spawn makes reads each of SB_OWN from: a respawn that imported it; else the spawn, when its settings are on and
    it wrote that box; else the kind's defaults from M, when written; else the game's own (SB_BOXES' defaults) */
 const NONE = { f: {} };
-export const kdOf = (s, k) => ((s.sb && s.sb.kd) || {})[k] || null;
+export const kdOf = (s, k) =>
+  madeOf(s, k)
+    ? { f: madeOf(s, k).f || {} } // (a made NPC: the settings it came with, sbnpcs.js set)
+    : ((s.sb && s.sb.kd) || {})[k] || null;
 export const ownOn = (p) => !p || !p.f || flag(p, "sets");
+/* M's boxes for an NPC from what was typed in them (f: text), as a spawn keeps its own: a kind's defaults, a made NPC's
+   set (sbnpcs.js) */
+export function msetOf(texts, was = {}) {
+  const fs = {};
+  for (const f of SB_MSET) {
+    const b = boxOf(f),
+      t = String((texts || {})[f] ?? "").slice(0, SB_ACTS[f] ? 200 : 80);
+    if (
+      !b ||
+      (t === "" && !SB_ACTS[f]) ||
+      (SB_ACTS[f] && !(f in (texts || {})))
+    )
+      continue;
+    fs[f] = b.check
+      ? { t, ok: b.check(t) ? (was[f] && was[f].ok) || "" : t }
+      : keep(was[f], t, b);
+  }
+  return fs;
+}
+/* the Seriat file an NPC of kind k from spawn p runs: the spawn's Brain, else M's for its kind (a made NPC's own), else
+   none ("": it thinks by its lists) */
+export function brainFor(s, p, k) {
+  const own = p ? boxText(p, "brain").trim() : "";
+  if (own) return own;
+  const kd = kdOf(s, k || "zombie");
+  return kd && kd.f.brain ? String(kd.f.brain.ok || "").trim() : "";
+}
 /* a box written (not left empty: empty is the default, the next one down decides; the owner's, Nov 20 17:25Z) */
 const written = (o, f) => !!o.f[f] && String(o.f[f].ok ?? "").trim() !== "";
 function fromFor(s, p, k, at = {}) {
@@ -263,6 +303,7 @@ export const madeOf = (s, k) =>
     s.sb.cn &&
     s.sb.cn[k.slice(2)]) ||
   null;
+export const SB_SONG = { PARTS: 8, KEEP: 6 }; // (an imported song's parts, as a picture's; the most songs a room keeps)
 export const SB_PIC = {
   MOST: 2 * 1024 * 1024, // (the owner's, Nov 19 01:57Z: 2 MB at most)
   PART: 150000, // (letters a part: an online action is less than 200,000: database.rules.json)
@@ -424,7 +465,7 @@ function makeOne(s, id, at) {
   } else if (
     onCabin(s) ||
     k !== "zombie" ||
-    boxText(p, "brain").trim() ||
+    brainFor(s, p, k) ||
     kind.sz ||
     kind.im ||
     kind.dk ||
@@ -462,6 +503,69 @@ function taken(p, npcs) {
     ry = 0.08;
   return npcs.some((o) => Math.hypot((o.x - p.x) / rx, (o.y - p.y) / ry) < 0.8);
 }
+/* ---------- waves and rounds (G's Rules: wr, wrn, wlen, wrest) ----------
+   s.sb.wv = { k: waves | rounds, n: the one now (or the last), on: one is on, at: when this one (or the rest) began,
+   nx: when the next begins }. The first starts a few seconds in. A wave ends when its seconds are up; a round once
+   nothing its spawns brought is still up, coming back or still coming. Each spawn that comes in with them is pressed as
+   one starts (its limit and its continuous run as any press) */
+const WAVE_FIRST = 3000; // ms before the first
+export const sbWave = (s) => (s && s.sb && s.sb.wv) || null;
+/* may spawn p make something now? (always, unless it comes in with the waves or rounds and none is on) */
+function waveOn(s, p) {
+  if (!p || !flag(p, "wr")) return true;
+  const w = sbWave(s);
+  return !!w && w.on;
+}
+function wavesTick(s, now, pts) {
+  const k = sbRule(s, "wr"),
+    was = sbWave(s);
+  if (k === "off") {
+    if (!was) return false;
+    const sb = { ...s.sb };
+    delete sb.wv;
+    s.sb = sb;
+    return true;
+  }
+  if (!was || was.k !== k) {
+    s.sb = {
+      ...s.sb,
+      wv: { k, n: 0, on: false, at: now, nx: now + WAVE_FIRST },
+    };
+    return true;
+  }
+  const ours = Object.entries(pts).filter(
+    ([, p]) =>
+      p.k === "spawn" &&
+      flag(p, "wr") &&
+      p.pg !== "pl" &&
+      (!p.grp || p.pg === "t"),
+  );
+  if (!was.on) {
+    const most = sbRule(s, "wrn");
+    if ((most && was.n >= most) || now < was.nx) return false;
+    s.sb = { ...s.sb, wv: { k, n: was.n + 1, on: true, at: now } };
+    for (const [id] of ours) press(s, id, now);
+    return true;
+  }
+  let over;
+  if (k === "waves") over = now - was.at >= sbRule(s, "wlen") * 1000;
+  else {
+    const mine = new Set(ours.map(([id]) => id)),
+      run = (s.sb && s.sb.run) || {},
+      rq = (s.sb && s.sb.rq) || [];
+    over =
+      now - was.at > WAVE_FIRST &&
+      !liveNpcs(s).some((o) => mine.has(o.sp)) &&
+      !Object.keys(run).some((id) => mine.has(id)) &&
+      !rq.some((r) => mine.has(r[0]));
+  }
+  if (!over) return false;
+  s.sb = {
+    ...s.sb,
+    wv: { ...was, on: false, at: now, nx: now + sbRule(s, "wrest") * 1000 },
+  };
+  return true;
+}
 /* how many of a spawn's may be alive at once: 0 is no limit (the map's cap still holds) */
 function limitOf(p) {
   const n = num(p, "limit");
@@ -497,6 +601,7 @@ function pressOne(s, id, now) {
   const p = pointsOf(s)[id];
   if (!p || p.k !== "spawn" || p.pg === "pl" || !spawnsHere(s)) return false;
   if (!sbTabLive(pointsOf(s), id)) return false; // (a tab whose Caller names no zone does nothing)
+  if (!waveOn(s, p)) return false; // (it comes in with the waves or rounds: only while one is on)
   const npcs = liveNpcs(s),
     alive = new Set(npcs.map((o) => o.i)),
     limit = limitOf(p),
@@ -533,6 +638,33 @@ function withField(p, f, v) {
 /* the point a preset or a copy (a.pt: { col, f: { box: text }, im, ap }) makes out of a new bare one: only what its kind
    has, each box read as if typed (the owner's, Nov 19 17:15Z: a preset before placing, copy and paste) */
 /* block id's tabs and pages take its spot, shape and size again (after a move, a turn, a resize or a new shape) */
+/* block id on the ground's lines when it snaps (sandboxrules.js sbSnapSpot: the owner's, Nov 20 18:46Z, "they should
+   snap to the hitbox things on the ground"), its tabs with it */
+function snapTo(s, all, id) {
+  const P = all[id];
+  if (!P || P.grp || !sbSnaps(P)) return all;
+  const { x, y } = sbSnapSpot(s, P, WW, WH);
+  if (x === P.x && y === P.y) return all;
+  const z = sbOnBoard(s) ? 0 : Math.round(heightAt(x * WW, y * WH)),
+    out = geoTo({ ...all, [id]: { ...P, x, y, z } }, id);
+  return sbOnWorld(s) ? floorsTo(out) : out; // (one with an elevation keeps it)
+}
+/* Fixed zone (the owner's, Nov 20 18:46Z: "it will not collide or go on top of other zones. And other zones can't go on
+   top of it. That doesn't change how it works as a surface ... That just changes how you build with it"): does block id,
+   as it is in `all`, share a tile with another block on its overlay level while one of the two is fixed */
+function fixedHit(s, all, id) {
+  const P = all[id];
+  if (!P || P.grp || sbFills(P)) return false;
+  return Object.entries(all).some(
+    ([q, Q]) =>
+      q !== id &&
+      !Q.grp &&
+      !sbFills(Q) &&
+      (P.fx || Q.fx) &&
+      sbOv(P) === sbOv(Q) &&
+      sbOverlap(s, P, Q, WW, WH),
+  );
+}
 function geoTo(all, id) {
   const P = all[id];
   if (!P) return all;
@@ -566,6 +698,7 @@ function fromPattern(q, pt) {
     q = { ...q, ap: pt.ap };
   if (Number.isFinite(pt.rot) && pt.rot)
     q = { ...q, rot: ((pt.rot % 360) + 360) % 360 }; // (a copy keeps how it's turned)
+  for (const k of ["fh", "fv", "ns", "fx"]) if (pt[k]) q = { ...q, [k]: 1 }; // (and how it's flipped, its Snap and Fixed zone)
   for (const [f, v] of Object.entries(pt.f || {}))
     if (typeof v === "string" && boxOf(f) && canSet(q, f))
       q = withField(q, f, v);
@@ -642,7 +775,9 @@ export function sbAct(s, a, now) {
       ? !may("m")
       : a.k === "pic"
         ? !may("b") && !may("m")
-        : !may("b")
+        : a.k === "song" || a.k === "songrm"
+          ? !may("g") // (a song is G's Music: sbaudio.js)
+          : !may("b")
   )
     return false;
   /* my Build window is up (or I'm putting a block down): the zones' damage and Kill leave my duck alone, so a zone put
@@ -706,6 +841,10 @@ export function sbAct(s, a, now) {
       all = set
         ? spread(all, id) // (a preset or a paste: its color takes it)
         : { ...all, [id]: likeIt(all[id], all[kin[0]]) }; // (a bare one: its color's settings)
+    const ov = Math.round(+a.ov);
+    if (ov > 1 && ov <= SB_OV_MOST) all[id] = { ...all[id], ov }; // (put down on the overlay level I'm looking at)
+    all = snapTo(s, all, id);
+    if (fixedHit(s, all, id)) return false;
     s.sb = { ...s.sb, n, pts: all };
     return true;
   }
@@ -721,7 +860,13 @@ export function sbAct(s, a, now) {
     if (!epMay(s, owner, a.id, "m")) return false;
     const duck = cleanLook(s, n.duck);
     if (!duck) return false;
-    const beh = {};
+    const beh = {},
+      set = msetOf(
+        Object.fromEntries(
+          Object.entries(n.set || {}).filter(([f]) => !SB_ACTS[f]),
+        ), // (its behavior lists are beh)
+        (was && was.f) || {},
+      );
     for (const f of Object.keys(SB_ACTS))
       beh[f] = String((n.beh || {})[f] || "").slice(0, 200);
     s.sb = {
@@ -736,6 +881,7 @@ export function sbAct(s, a, now) {
           duck,
           w: cleanArms(n.w),
           beh,
+          ...(Object.keys(set).length ? { f: set } : {}), // (its settings from M, when it has any)
           by: owner,
           ...(owner !== a.id ? { ed: a.id, et: now } : {}), // (changed by someone the owner let: the owner's device may keep it, sbepview.js)
         },
@@ -771,10 +917,50 @@ export function sbAct(s, a, now) {
     s.hidden = { ...hid, sbup: up };
     return true;
   }
+  /* a part of an imported song (G's Music, sbaudio.js): as a picture's, kept hidden until the last part is in; then
+     s.sbsong[h] = { n: its name, l: its seconds, d: its text } */
+  if (a.k === "song") {
+    const h = String(a.h || ""),
+      of = Math.floor(+a.of),
+      n = Math.floor(+a.n),
+      all = s.sbsong || {},
+      l = Math.min(SONG.MOST_S, Math.max(0, +a.l || 0));
+    if (!/^[a-z0-9]{1,24}$/.test(h) || all[h]) return false;
+    if (!(of >= 1 && of <= SB_SONG.PARTS && n >= 0 && n < of)) return false;
+    if (typeof a.d !== "string" || a.d.length > SB_PIC.PART) return false;
+    if (Object.keys(all).length >= SB_SONG.KEEP || !(l > 0)) return false;
+    const hid = s.hidden || {},
+      up = { ...(hid.sbsup || {}) },
+      parts = [...(up[h] || [])];
+    parts[n] = a.d;
+    up[h] = parts;
+    if (parts.filter((x) => typeof x === "string").length === of) {
+      const d = parts.join("");
+      delete up[h];
+      if (/^[A-Za-z0-9+/]+=*$/.test(d) && d.length <= songChars(l))
+        s.sbsong = {
+          ...all,
+          [h]: {
+            n: String(a.nm || "My song").slice(0, SONG.NAME) || "My song",
+            l,
+            d,
+          },
+        };
+    }
+    s.hidden = { ...hid, sbsup: up };
+    return true;
+  }
+  if (a.k === "songrm") {
+    const all = { ...(s.sbsong || {}) };
+    if (!all[a.h]) return false;
+    delete all[a.h];
+    s.sbsong = all;
+    return true;
+  }
   /* the Seriat files a Brain box names (and the files they use), sent by the player who set it: sbnumberat.js */
   if (a.k === "nbf")
     return !!a.files && typeof a.files === "object" && nbKeep(s, a.files);
-  /* M's defaults for a kind: kind, f (one of SB_OWN), v (its text; "" for the game's own); reset: all of them back */
+  /* M's defaults for a kind: kind, f (one of SB_MSET), v (its text; "" for the game's own); reset: all of them back */
   if (a.k === "kd") {
     const kind = String(a.kind || ""),
       f = String(a.f || ""),
@@ -782,16 +968,13 @@ export function sbAct(s, a, now) {
     if (!SB_WHAT[kind]) return false;
     if (a.reset) delete all[kind];
     else {
-      const b = boxOf(f);
-      if (!b || !SB_OWN.includes(f)) return false;
-      const fs = { ...((all[kind] || NONE).f || {}) },
-        t = String(a.v == null ? "" : a.v).slice(0, SB_ACTS[f] ? 200 : 80);
-      if (t === "" && !SB_ACTS[f]) delete fs[f];
-      else
-        fs[f] = b.check
-          ? { t, ok: b.check(t) ? (fs[f] && fs[f].ok) || "" : t }
-          : keep(fs[f], t, b);
-      all[kind] = { f: fs };
+      if (!SB_MSET.includes(f)) return false;
+      const was = (all[kind] || NONE).f || {},
+        fs = { ...was };
+      delete fs[f];
+      all[kind] = {
+        f: { ...fs, ...msetOf({ [f]: a.v == null ? "" : String(a.v) }, was) },
+      };
     }
     s.sb = { ...s.sb, kd: all };
     return true;
@@ -833,37 +1016,53 @@ export function sbAct(s, a, now) {
       }
       if (lo <= hi) dx = Math.min(hi, Math.max(lo, dx));
       if (loY <= hiY) dy = Math.min(hiY, Math.max(loY, dy));
-      if (
-        ids.some((id) => {
-          const x = pts[id].x + dx,
-            y = pts[id].y + dy;
-          return x < 0 || x > 1 || y < 0 || y > 1;
-        })
-      )
-        return false; // (and never its middle)
-      for (const id of ids)
-        for (const q of with_(id)) {
-          const P = pts[q],
-            x = +(P.x + dx).toFixed(4),
-            y = +(P.y + dy).toFixed(4),
-            z = sbOnBoard(s) ? 0 : Math.round(heightAt(x * WW, y * WH));
-          all[q] = { ...P, x, y, z };
-        }
-      if (sbOnWorld(s)) all = floorsTo(all); // (one with an elevation keeps it)
+      /* the blocks moved by (u, v), or null when a middle would leave the map */
+      const moved = (u, v) => {
+        if (
+          ids.some((id) => {
+            const x = pts[id].x + u,
+              y = pts[id].y + v;
+            return x < 0 || x > 1 || y < 0 || y > 1;
+          })
+        )
+          return null; // (and never its middle)
+        let out = { ...pts };
+        for (const id of ids)
+          for (const q of with_(id)) {
+            const P = pts[q],
+              x = +(P.x + u).toFixed(4),
+              y = +(P.y + v).toFixed(4),
+              z = sbOnBoard(s) ? 0 : Math.round(heightAt(x * WW, y * WH));
+            out[q] = { ...P, x, y, z };
+          }
+        if (sbOnWorld(s)) out = floorsTo(out); // (one with an elevation keeps it)
+        for (const id of ids) out = snapTo(s, out, id);
+        return ids.some((id) => fixedHit(s, out, id)) ? null : out;
+      };
+      /* a fixed zone in the way: it slides along it (only across, or only up and down), else it stays */
+      const got = moved(dx, dy) || (dx && moved(dx, 0)) || (dy && moved(0, dy));
+      if (!got) return false;
+      all = got;
     } else if (a.k === "turn") {
-      const by = +a.deg;
-      if (!Number.isFinite(by)) return false;
-      for (const id of ids)
-        all = geoTo(
-          {
-            ...all,
-            [id]: {
-              ...pts[id],
-              rot: ((((pts[id].rot || 0) + by) % 360) + 360) % 360,
-            },
-          },
-          id,
-        );
+      /* by deg (the arrow keys), or to deg (Direction's Rotate handle) */
+      const by = +a.deg,
+        to = +a.to;
+      if (!Number.isFinite(by) && !Number.isFinite(to)) return false;
+      const turn = (P) => {
+        const r = P.rot || 0;
+        if (Number.isFinite(to))
+          return sbSnaps(P)
+            ? (((Math.round(to / 90) * 90) % 360) + 360) % 360
+            : ((Math.round(to) % 360) + 360) % 360;
+        return sbSnaps(P)
+          ? sbSnapTurn(r, by) // (a quarter at a time, so its tiles stay the ground's)
+          : (((r + by) % 360) + 360) % 360;
+      };
+      for (const id of ids) {
+        all = geoTo({ ...all, [id]: { ...pts[id], rot: turn(pts[id]) } }, id);
+        all = snapTo(s, all, id);
+      }
+      if (ids.some((id) => fixedHit(s, all, id))) return false;
     } else
       for (const id of ids)
         for (const q of with_(id)) {
@@ -896,7 +1095,7 @@ export function sbAct(s, a, now) {
   }
   if (
     (p.lock || (p.grp && pts[p.grp] && pts[p.grp].lock)) &&
-    ["set", "del", "page", "look", "size", "kind"].includes(a.k)
+    ["set", "del", "page", "look", "size", "kind", "zo"].includes(a.k)
   )
     return false;
   if (a.k === "set") {
@@ -1047,7 +1246,55 @@ export function sbAct(s, a, now) {
     if (x < 0 || x > 1 || y < 0 || y > 1) return false;
     let q = withField(withField(p, "zw", String(zw)), "zh", String(zh));
     q = { ...q, x: +x.toFixed(4), y: +y.toFixed(4) };
-    s.sb = { ...s.sb, pts: geoTo({ ...pts, [a.p]: q }, a.p) };
+    const all = snapTo(s, geoTo({ ...pts, [a.p]: q }, a.p), a.p);
+    if (fixedHit(s, all, a.p)) return false;
+    s.sb = { ...s.sb, pts: all };
+    return true;
+  }
+  /* the right-click menu's Snap, Direction and Overlay (the owner's, Nov 20 18:46Z): { k: "zo", p, w: what, v }.
+     w "snap": Snap to grid on or off (v); "fixed": Fixed zone on or off; "flip": v "h" or "v", mirrored that way;
+     "ov": its overlay level, v 1 to 10; "order": v 1 drawn one place higher, -1 one lower, past the next block on its
+     level that it overlaps (or the next one at all when none does) */
+  if (a.k === "zo") {
+    if (p.grp) return false;
+    let q = { ...p };
+    const on = (k) => {
+      if (a.v) q[k] = 1;
+      else delete q[k];
+    };
+    if (a.w === "snap") {
+      if (a.v) delete q.ns;
+      else q.ns = 1;
+    } else if (a.w === "fixed") on("fx");
+    else if (a.w === "flip") {
+      const k = a.v === "v" ? "fv" : a.v === "h" ? "fh" : "";
+      if (!k) return false;
+      if (q[k]) delete q[k];
+      else q[k] = 1;
+    } else if (a.w === "ov") {
+      const v = Math.round(+a.v);
+      if (!(v >= 1 && v <= SB_OV_MOST)) return false;
+      if (v === 1) delete q.ov;
+      else q.ov = v;
+    } else if (a.w === "order") {
+      const d = +a.v > 0 ? 1 : -1,
+        me = sbOrder(a.p, p),
+        rest = Object.entries(pts)
+          .filter(([id, b]) => id !== a.p && !b.grp && sbOv(b) === sbOv(p))
+          .map(([id, b]) => [sbOrder(id, b), b])
+          .filter(([k]) => (d > 0 ? k > me : k < me))
+          .sort((x, y) => d * (x[0] - y[0])),
+        hit = rest.findIndex(([, b]) => sbOverlap(s, p, b, WW, WH)),
+        at = hit >= 0 ? hit : 0;
+      if (!rest.length) return false;
+      const past = rest[at][0],
+        next = rest[at + 1] ? rest[at + 1][0] : past + d;
+      q.zo = (past + next) / 2;
+    } else return false;
+    let all = geoTo({ ...pts, [a.p]: q }, a.p);
+    if (a.w === "snap" || a.w === "flip") all = snapTo(s, all, a.p);
+    if (fixedHit(s, all, a.p)) return false;
+    s.sb = { ...s.sb, pts: all };
     return true;
   }
   /* its Purpose (plan Phase 2): one block, four purposes. It keeps its spot, shape, color and every box it has; a
@@ -1221,6 +1468,7 @@ export function sbTick(s, now, H) {
     ch = true;
   }
   const pts = pointsOf(s);
+  ch = wavesTick(s, now, pts) || ch;
   let npcs = liveNpcs(s);
   const alive = new Set(npcs.map((o) => o.i));
   /* the dead: off their spawn's list, and back later if it says so */
@@ -1242,7 +1490,7 @@ export function sbTick(s, now, H) {
   if (rq.some((r) => r[1] <= now)) {
     const later = [];
     for (const r of rq) {
-      if (r[1] > now) later.push(r);
+      if (r[1] > now || !waveOn(s, pts[r[0]])) later.push(r);
       else {
         const at = backAt(s, r[0]);
         if (at && !makeOne(s, r[0], at)) later.push([r[0], now + 1000]); // (at the cap: once there's room)
@@ -1264,6 +1512,7 @@ export function sbTick(s, now, H) {
       !run[id] &&
       sbTabLive(pts, id) &&
       flag(p, "auto") &&
+      waveOn(s, p) &&
       aliveOf(s, id, new Set(npcs.map((o) => o.i))) < limitOf(p)
     ) {
       const was = (s.sb.au || {})[id];
@@ -1277,7 +1526,7 @@ export function sbTick(s, now, H) {
       ch = true;
       continue;
     }
-    if (now < at) continue;
+    if (now < at || !waveOn(s, p)) continue;
     const ids = new Set(npcs.map((o) => o.i)),
       limit = limitOf(p);
     if (aliveOf(s, id, ids) >= limit) {
@@ -1357,13 +1606,15 @@ export function think(s, now, npcs, at, H, far, duckAt) {
     all = [...ducks, ...them],
     brains = new Map(),
     brainOf = (o) => {
-      if (!brains.has(o.sp))
-        brains.set(o.sp, pts[o.sp] ? boxText(pts[o.sp], "brain").trim() : "");
-      return brains.get(o.sp);
+      const key = o.sp + "|" + (o.k || "zombie");
+      if (!brains.has(key)) brains.set(key, brainFor(s, pts[o.sp], o.k)); // (its spawn's, else M's for its kind)
+      return brains.get(key);
     };
   const nbCh = nbThink(s, now, them, all, ducks, far, brainOf); // (the NPCs that run a Seriat file)
   const out = them.map((me) => {
-    const d = nbOrder(me, all) || decide(me, lists(me.o), all, ducks, far, now),
+    const d =
+        nbOrder(me, all, far, now) ||
+        decide(me, lists(me.o), all, ducks, far, now),
       fo = d.foe ? d.foe.key : undefined;
     if (me.o.fo !== fo) {
       if (fo) me.o.fo = fo;
@@ -1391,6 +1642,7 @@ export function strike(s, now, me, foe, H, o, d = null, w = "claw") {
 
 /* ---------- the board's zombies: as Mad God Justin's wave zombies walk (mgjrules.js wavesTick), at each one's speed and
    damage, and kept apart on a grid so 800 cost little ---------- */
+const MOVE_STOP = 0.1; // duck lengths: as near as a \move\'s spot is walked to
 const CELL = 1, // (duck lengths: the grid's cells)
   NEAR = 12; // (the most others each one is kept apart from in a beat)
 function boardTick(s, now, H) {
@@ -1412,17 +1664,25 @@ function boardTick(s, now, H) {
       y0 = o.y,
       bd = far(me, to),
       claw = reachTo(WAVE.CLAW, o, to, s), // (its hitbox, and its foe's: sbarms.js)
-      sp = WAVE.SPEED * (o.sv ?? 1) * (o.run && bd > 4 ? 1.5 : 1); // (can sprint: half as fast again while far off)
+      sp =
+        WAVE.SPEED *
+        (o.sv ?? 1) *
+        (o.run && bd > 4 ? 1.5 : 1) * // (can sprint: half as fast again while far off)
+        (to.sp ?? 1), // (a \move\'s @ speed)
+      stop = d.foe ? keepAt(o, claw) : to.pt ? MOVE_STOP : claw * 0.8; // (a gun keeps its distance: sbarms.js; a \move\'s spot: right on it)
     if (d.flee) {
       const go = Math.min(1, (sp * dt) / Math.max(bd, 1e-3));
       o.x = Math.min(0.99, Math.max(0.01, o.x - (to.x - o.x) * go));
       o.y = Math.min(0.97, Math.max(0.03, o.y - (to.y - o.y) * go));
       ch = true;
-    } else if (bd > (d.foe ? keepAt(o, claw) : claw * 0.8)) {
-      const stop = d.foe ? keepAt(o, claw) : claw * 0.8, // (a gun keeps its distance: sbarms.js)
-        go = Math.min(bd - stop, sp * dt) / bd;
+    } else if (bd > stop) {
+      const go = Math.min(bd - stop, sp * dt) / bd;
       o.x += (to.x - o.x) * go;
       o.y += (to.y - o.y) * go;
+      if (to.pt) {
+        o.x = Math.min(0.99, Math.max(0.01, o.x)); // (a \move\ never walks it off the board)
+        o.y = Math.min(0.97, Math.max(0.03, o.y));
+      }
       ch = true;
     }
     if (wallsOf(o).length)

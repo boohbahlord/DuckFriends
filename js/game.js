@@ -38,6 +38,7 @@ import {
 } from "./ui.js";
 import { activeRoom } from "./net.js";
 import { sprintStep } from "./stamina.js";
+import { SPRINT } from "./gamedefaults.js";
 import { grStam, grCool } from "./sbgroups.js";
 import { grLook } from "./sbgroupview.js";
 import {
@@ -292,7 +293,12 @@ import {
 import { rainbowHTML } from "./art.js";
 import { statBoxHTML, ddrBoxHTML, openStats } from "./stats.js";
 import { profile, save, statMode } from "./store.js";
-import { openSettings, netLevel } from "./settings.js";
+import {
+  openSettings,
+  netLevel,
+  uiScaleHTML,
+  uiScaleWire,
+} from "./settings.js";
 import { setHideUi, uiHidden } from "./hideui.js";
 import { musicBarHTML, mountMusicBar } from "./musicbar.js";
 import { openCustomize, shareLook } from "./customize.js";
@@ -367,7 +373,6 @@ import {
 import {
   isMgj,
   MGJ_ZAP,
-  MGJ_POD,
   mgjFrozen,
   mgjGone,
   mgjSpawning,
@@ -661,7 +666,7 @@ const turned = () =>
 let cam = null; // the bracket's camera: the diagram's corner on the board (dx, dy), the bracket's offset in it (ox, oy), its zoom and size
 
 /* ---------- movement numbers (board widths or heights per second) ---------- */
-const SPEED = { x: 0.45, y: 1.0, px: 0.5, py: 0.85, sprint: 1.75 };
+const SPEED = { x: 0.45, y: 1.0, px: 0.5, py: 0.85, sprint: SPRINT.speed }; // (sprint: the whole game's, gamedefaults.js)
 const MGJ_SLOW = 0.8;
 const JUMP = { normal: { T: 0.62, H: 1.35 }, low: { T: 1.2, H: 2 } }; // seconds in the air; apex in duck heights (low gravity: floatier, still quick)
 /* a duck's jump: a long jump floats longer and a little higher, a short jump is lower and quicker (60% of the height in
@@ -1322,7 +1327,7 @@ function drawMeters(s, board, layer, now) {
   if (!meter) return;
   const hv = R.me && hpFull(s, R.me, now);
   if (hv) {
-    const [sp, tired] = isMgj(s) ? [null, false] : sprintLeft(); // (every mode's 7 s sprint now, stamina.js; Mad God Justin has no sprint, so no sprint bar)
+    const [sp, tired] = isMgj(s) ? [null, false] : sprintLeft(); // (every mode's sprint (gamedefaults.js), stamina.js; Mad God Justin has no sprint, so no sprint bar)
     meter.set(
       hv[0],
       hv[1],
@@ -3074,18 +3079,13 @@ const POD_H = 0.8;
 const podUp = (s, now) =>
   isDn(s) && s.phase === "dunced"
     ? Math.max(0, Math.min(1, (now - s.at - DN_PODIUM) / 450))
-    : isMgj(s) && s.phase === "mgjend" && s.mgj && s.mgj.won
-      ? Math.max(0, Math.min(1, (now - s.at - 400) / 450))
-      : 0; // (Mad God Justin: his, as he loses)
-const podLift = (s, id, now) =>
-  isDefender(s, id) || (id === JUSTIN_ID && isMgj(s))
-    ? podUp(s, now) * POD_H
     : 0;
+const podLift = (s, id, now) => (isDefender(s, id) ? podUp(s, now) * POD_H : 0);
 function placePodium(board, now) {
   const pod = board.querySelector(".dn-podium");
   if (!pod || !geo) return;
   const s = R.state,
-    c = place(isMgj(s) ? MGJ_POD : { x: 0.5, y: 0.5 }, 0, 1),
+    c = place({ x: 0.5, y: 0.5 }, 0, 1),
     up = podUp(s, now),
     w = geo.size * 2,
     h = geo.size * (POD_H + 0.14);
@@ -5135,7 +5135,7 @@ function step(dt, now) {
     sprinting && !!(hx || vy || target),
     dt,
     grStam(s, R.me),
-  ); // (7 s of sprint, then a walk till it's let go: stamina.js, every mode; Sandbox: a group's Regen stamina)
+  ); // (sprint till the bar is empty, then a walk till it's full again: stamina.js, every mode; Sandbox: a group's Regen stamina)
   let ax, ay; // in board terms
   if (turned()) {
     ax = -vy;
@@ -5363,7 +5363,7 @@ function hangStep(dt, now) {
     }
   }
   if (!canWalk()) ax = ay = 0;
-  sprinting = sprintStep(sprinting && !!(ax || ay), dt, grStam(R.state, R.me)); // (7 s of sprint, then a walk till it's let go: stamina.js, every mode, Dead Ducks Arcade's too; Sandbox: a group's Regen stamina)
+  sprinting = sprintStep(sprinting && !!(ax || ay), dt, grStam(R.state, R.me)); // (sprint till the bar is empty, then a walk till it's full again: stamina.js, every mode, Dead Ducks Arcade's too; Sandbox: a group's Regen stamina)
   const kx = ax; // (which way I face: my keys, not the push)
   if (canWalk() && recoil && performance.now() < recoil.until) {
     const l = Math.hypot(recoil.dx, recoil.dy) || 1;
@@ -5633,7 +5633,7 @@ async function announce(phase) {
 const PICK_NAMES = Object.fromEntries(
   PICK_WEAPONS.map((k) => [k, weaponName(k)]),
 ); // (as Quacky Zombies names them)
-/* Mad God Justin: "Defeat Justin!" as the fight starts; then he's defeated (and a LOSER), or time's up */
+/* Mad God Justin: "Defeat Justin!" as the fight starts; then he's defeated, or time's up */
 async function announceMgj(s, phase) {
   const job = ++sayJob;
   if (phase === "boss") {
@@ -5649,13 +5649,7 @@ async function announceMgj(s, phase) {
   }
   sfx.done();
   confettiRain(5000);
-  say("Justin is DEFEATED!");
-  await pause(3400);
-  if (job !== sayJob) return;
-  unsay();
-  await pause(650);
-  if (job !== sayJob) return;
-  say("LOSER!");
+  say("Justin defeated");
 }
 /* Duncelation: the cloud asks "Dunce or Not?" as a take starts; the verdict; the dunce */
 async function announceDunce(s, phase) {
@@ -6443,7 +6437,7 @@ function coolOne(id, now, m) {
 }
 /* the white, the yellow and the blue bars under my duck in the modes besides Dead Ducks Arcade (which has its own,
    l4dd.js): what's in my hand, its cooldown or reload, its magazine, and my sprint while it isn't full (meters.js; the
-   7 s sprint every mode has now, stamina.js; the owner's, Nov 18 16:50Z. Mad God Justin has no sprint) */
+   sprint every mode has now, stamina.js; the owner's, Nov 18 16:50Z. Mad God Justin has no sprint) */
 function handBars(s) {
   const tag = S && S.querySelector(".gduck.mine .gduck-name");
   if (!tag || !R) return;
@@ -7940,12 +7934,13 @@ function openPause() {
     <button type="button" class="btn ghost" data-a="hideui" aria-pressed="${uiHidden()}">${uiHidden() ? "Show UI" : "Hide UI"}</button>
     <button type="button" class="btn ghost" data-a="friends">Friends</button>
     ${R && isHang(R.state) && isSudo(R.state, R.me) ? '<button type="button" class="btn yellow" data-a="lobby">Everyone back to the lobby</button>' : ""}
-    <button type="button" class="btn red" data-a="leave">Leave game</button></div>
+    <button type="button" class="btn red" data-a="leave">Leave game</button></div>${uiScaleHTML()}
     <p class="small dim" style="margin-top:.8rem">The game keeps going while this is open.</p>`,
     {
       cls: "win-small",
-      onOpen: (w, close) =>
-        (w.querySelector(".pause-list").onclick = (e) => {
+      onOpen: (w, close) => {
+        uiScaleWire(w);
+        w.querySelector(".pause-list").onclick = (e) => {
           const a = e.target.closest("[data-a]");
           if (!a) return;
           close();
@@ -7961,7 +7956,8 @@ function openPause() {
                 ? R.send({ t: "toLobby" }) // (Single Player: back to its own lobby, never the online rooms)
                 : leaveTo("rooms", "Leave the game in progress?"),
           })[a.dataset.a]();
-        }),
+        };
+      },
     },
   );
 }

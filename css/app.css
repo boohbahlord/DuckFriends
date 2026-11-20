@@ -718,6 +718,84 @@ html.noshapes #shapes svg > :not(rect:first-of-type):not(defs) {
 .win-small {
   width: min(25rem, 100%);
 }
+/* cropping a duck's picture (picrop.js): the picture, a box over it (what's outside it dimmed), its corners to size it;
+   under it, how it comes out as pixels on a see-through checker, and the buttons */
+.pc-stage {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0.6rem auto 0;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  background: repeating-conic-gradient(#3a3d4a 0 25%, #2a2c36 0 50%) 0 0 /
+    0.75rem 0.75rem;
+  border-radius: 0.4rem;
+}
+.pc-img {
+  display: block;
+  max-width: 100%;
+  max-height: 48dvh;
+  pointer-events: none;
+}
+.pc-box {
+  position: absolute;
+  outline: 0.15rem solid #fff;
+  outline-offset: -0.15rem; /* (inside it: at the picture's edge it isn't cut off) */
+  box-shadow: 0 0 0 100vmax #000a;
+  cursor: move;
+}
+.pc-h {
+  position: absolute;
+  width: 1.4rem;
+  height: 1.4rem;
+  background: #fff;
+  border: 0.15rem solid #1d1e29;
+  border-radius: 0.3rem;
+}
+.pc-nw,
+.pc-sw {
+  left: 0;
+}
+.pc-ne,
+.pc-se {
+  right: 0;
+}
+.pc-nw,
+.pc-ne {
+  top: 0;
+}
+.pc-sw,
+.pc-se {
+  bottom: 0;
+}
+.pc-nw,
+.pc-se {
+  cursor: nwse-resize;
+}
+.pc-ne,
+.pc-sw {
+  cursor: nesw-resize;
+}
+.pc-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: 0.8rem;
+}
+.pc-foot .acts {
+  margin: 0;
+}
+.pc-prev {
+  width: 4.4rem;
+  height: 4.4rem;
+  image-rendering: pixelated;
+  background: repeating-conic-gradient(#3a3d4a 0 25%, #2a2c36 0 50%) 0 0 /
+    0.55rem 0.55rem;
+  border-radius: 0.4rem;
+}
 .win-x {
   position: absolute;
   top: 0.7rem;
@@ -2071,6 +2149,13 @@ body:has(> .win-back) > .dod-news {
 .pcard.mine {
   cursor: pointer;
 }
+/* the ducks' pictures in the UI (a player's card, the who's-done chips, the loading veil) grow with the UI scale, as
+   everything else in it does (settings.js uiNow); the ducks on the maps don't */
+.pcard-duck > svg,
+.who-chip svg.duck,
+.veil-duck svg {
+  zoom: var(--ui, 1);
+}
 .pcard-duck {
   flex: none;
   display: grid;
@@ -3247,6 +3332,16 @@ html:not(.keyboard) .l4-board .gduck:not(.mine) .gduck-name > .rainbow {
     0 0 0.1rem #000,
     0 0.05rem 0.05rem #000;
 } /* (a dark edge on the letters, so a green or red name still reads on the bar) */
+/* a name inside the HP bar under a duck: smaller letters, in every font alike (each goes by its own --fk), and the bar
+   as tall as before, so my own bar under my duck is easy to see (the owner's, Nov 20 18:46Z) */
+:where(.gduck.php:not(.downed) .gduck-name) {
+  line-height: calc(0.76rem * var(--ts, 1) * 1.3);
+  min-width: calc(var(--sz, 2.6rem) * 0.9);
+  text-align: center;
+} /* (and as wide as the duck at least: the bar stays long however short the name) */
+:where(.gduck.php:not(.downed) .gduck-name) > :is(.pname, .rainbow) {
+  font-size: calc(0.66em * var(--fk, 1));
+}
 .gduck-hp i,
 .gduck-hp b {
   position: absolute;
@@ -3632,6 +3727,21 @@ html.mouse-move .board {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
+}
+/* the UI scale under the pause menu's buttons (settings.js uiScaleHTML) */
+.pause-list + .ui-scale {
+  margin-top: 1rem;
+}
+@media (min-width: 701px) {
+  .ui-scale .slide {
+    grid-template-columns: max-content 1fr 3.4rem;
+  }
+}
+.ui-scale .ui-note {
+  margin: 0.25rem 0 0;
+}
+.ui-scale .ui-note:empty {
+  display: none;
 }
 @media (max-width: 860px) {
   .results {
@@ -17637,6 +17747,78 @@ html.moving .hpm-ammo.rl {
     bottom: max(0.35rem, env(safe-area-inset-bottom));
   }
 }
+/* on a computer and on a phone on its side, never a phone standing up (the owner's, Nov 20 18:09Z: "healthbar ui and
+   it's meters below it that were on the bottom right of the screen will be bigger and fill up the space they are in
+   more, while the hotbar is bigger too and moves to the left of it"): my HP, with the meters under it, grows to fill
+   the bottom right corner, and the hotbar grows and sits at its left, both on the corner's bottom line. A computer
+   window too narrow for both in one row puts the hotbar back over the HP (wrap), so nothing overlaps */
+@media (any-pointer: fine) and (min-width: 761px) {
+  .hb-stack {
+    --n: 7; /* how many keys: Quacky Zombies' 7 */
+    --hp: 3.3; /* and how wide the HP is, in keys */
+    --room: calc(100vw - 12.5rem);
+    --hkb: clamp(
+      1.5rem,
+      min((var(--room) - var(--n) * 0.3rem) / (var(--n) + var(--hp)), 6.6vh),
+      3.4rem
+    );
+    flex-flow: row wrap;
+    justify-content: flex-end;
+    align-items: flex-end;
+    gap: 0.45rem clamp(0.5rem, 1.1vw, 1.1rem);
+  }
+  .hb-stack:has(> .hotbar.full),
+  .hb-stack:has(> .hotbar > .hk:nth-child(7 of :not(.empty))) {
+    --n: 10;
+  } /* (Sandbox's ten squares, empty ones too; the specials' keys, when there are more than six) */
+  .hb-stack:has(> .hotbar:not(.full)):not(
+      :has(> .hotbar > .hk:nth-child(7 of :not(.empty)))
+    ) {
+    --n: 6;
+  }
+  .hb-stack:has(.hpm-blocks > i:nth-child(5)) {
+    --hp: 4.3;
+  } /* (five HP or more: the bar is as long as it gets) */
+  .hb-stack > .hotbar,
+  .hb-stack > .l4bar {
+    --hk: var(--hkb);
+  }
+  .hb-stack > .hotbar {
+    flex-wrap: nowrap;
+  }
+  .hb-stack > .l4bar {
+    padding-bottom: calc(var(--hk) * 0.16);
+  } /* (room for the counts hanging under its keys) */
+  .hb-stack > .hpm-me,
+  html:not(.keyboard) .hb-stack > .hpm-me {
+    --h: clamp(0.8rem, calc(var(--hkb) * 0.5), 1.7rem);
+    --bw: calc(var(--h) * 1.35);
+  }
+  .hb-stack > .hpm-me .hpm-blocks {
+    width: min(calc(var(--nb, 3) * var(--bw)), calc(var(--h) * 6));
+  }
+}
+@media (any-pointer: fine) and (min-width: 861px) and (min-height: 521px) {
+  .game .bbar-r {
+    container-type: inline-size;
+  }
+  .hb-stack {
+    --room: calc(100cqw - 3rem);
+  }
+} /* (with the key hints beside it, the keys' size goes by the corner's own width, cqw; in a narrower or shorter window
+     the corner is as wide as what's in it, so they go by the window's) */
+html.phone-land .hb-stack {
+  flex-direction: row;
+  align-items: center;
+}
+html.phone-land .sp-phone {
+  --step: 2.5rem;
+  --slot: 2.1rem;
+}
+html.phone-land .hb-stack > .hpm-me {
+  --h: 0.86rem;
+  --bw: 1rem;
+}
 /* the other players' meters, small, each name over it, in the board's bottom right corner (Quacky Zombies and Mad God
    Justin on a computer). They're UI: over everything on the board, the dark outside and the shelves too, as the other
    bars of Dead Ducks Arcade (.l4-pts); a tiny bit bigger than they were, and see-through on my screen while any duck or
@@ -19041,14 +19223,17 @@ html.pixel #shapes:not(.px-own) {
   image-rendering: pixelated;
   user-select: none;
 }
-.pxw-stage img.px-file {
+.pxw-stage .px-file {
   position: absolute;
 }
+i.px-file {
+  display: block;
+} /* (a piece of a sheet, tools/pixel-sheets.cjs: its picture is its background) */
 .pxs {
   position: absolute;
   overflow: hidden;
 }
-.pxs > img {
+.pxs > .px-file {
   position: absolute;
   left: 0;
   top: 0;
@@ -19056,7 +19241,7 @@ html.pixel #shapes:not(.px-own) {
   height: calc(var(--r, 1) * 100%);
   display: block;
 }
-html.moving .pxs > img {
+html.moving .pxs > .px-file {
   animation:
     pxs calc(var(--pd) / var(--r, 1)) steps(var(--n)) var(--pdl, 0s) infinite,
     pxr var(--pd) steps(var(--r, 1)) var(--pdl, 0s) infinite;
@@ -20171,6 +20356,19 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   white-space: nowrap;
   cursor: pointer;
 }
+/* Tools' Overlay level: 1 to 9 and 0, five a row */
+.sb-tools-ov {
+  display: grid;
+  grid-template-columns: repeat(5, 2.2rem);
+  gap: 0.25rem;
+}
+.sb-tools-ov .sb-tools-opt {
+  text-align: center;
+  padding: 0.35rem 0;
+}
+.sb-tools-ov .sb-tools-opt.on {
+  border-color: var(--accent, #ffd23f);
+}
 @media not all and (any-pointer: fine) {
   html:not(.keyboard) .game .sb-tools:not([hidden]) {
     display: flex;
@@ -20570,6 +20768,10 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 }
 .sb-box::placeholder {
   opacity: 0.45;
+  /* "default (100)" fits a narrow number box on a phone: the game's letters, a little smaller, not the code font */
+  font-family: var(--font);
+  font-style: italic;
+  font-size: 0.85em;
 }
 /* a three-state switch on neutral (plan Loot 5): dim, the next level down decides */
 .sb-tog.sb-tri.mid {
@@ -20583,7 +20785,8 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .sb-actrows {
   display: contents; /* (the behavior lists, kept together only so the zombie maps can hide them) */
 }
-.sb-box {
+.sb-box,
+.sb-saval {
   width: 100%;
   font: inherit;
   font-family: "Cascadia Code", ui-monospace, monospace;
@@ -20593,7 +20796,8 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   background: var(--panel2);
   color: inherit;
 }
-.sb-row.bad .sb-box {
+.sb-row.bad .sb-box,
+.sb-row.bad .sb-saval {
   border-color: #ff4d4d;
   background: color-mix(in srgb, #ff4d4d 18%, var(--panel2));
 }
@@ -20820,6 +21024,47 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   font-family: inherit;
   font-weight: 700;
   border-top: 0.1rem solid var(--line);
+}
+/* a zone's Act on Seriat (js/sbspawnview.js saRow): each box with its import and remove buttons, what it acts on under it,
+   a line between one box and the next */
+.sb-sarows {
+  display: grid;
+  gap: 0.35rem;
+}
+.sb-sarow {
+  display: grid;
+  gap: 0.25rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 0.1rem dashed var(--line);
+}
+.sb-sarow > .sb-row:first-child {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.sb-sabox {
+  display: flex;
+  min-width: 0;
+}
+.sb-sabox .sb-saval {
+  min-width: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.sb-saimp,
+.sb-sax {
+  flex: none;
+  width: 1.9rem;
+  font: inherit;
+  color: var(--ink);
+  background: var(--card2, rgba(255, 255, 255, 0.08));
+  border: 0.1rem solid var(--line);
+  border-left: 0;
+  cursor: pointer;
+}
+.sb-sax {
+  border-radius: 0 0.4rem 0.4rem 0;
+}
+.sb-saadd {
+  margin: 0.3rem 0 0;
 }
 .sb-brainlist .sb-none {
   padding: 0.4rem 0.6rem;
@@ -21606,10 +21851,47 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 }
 .sbh-nav {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.6rem;
-  margin-top: 0.6rem;
+  margin-top: 0.8rem;
+}
+/* the manual's path (Help › Build › Snap): each step but the last goes back there */
+.sbh-path {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0 2rem 0.5rem 0;
+  font-size: 0.95rem;
+}
+.sbh-crumb {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0.1rem 0.15rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+/* a page of buttons: the parts, a part's topics, the Seriat folders and files */
+.sbh-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: 0.4rem;
+}
+.sbh-list .sbh-go {
+  text-align: left;
+  white-space: normal;
+}
+.sbh-file {
+  margin: 0;
+  max-height: 60vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 /* Sandbox's build blocks drawn as pixels (js/sbspawnview.js shapePic, js/sblootview.js lootRing): one picture pixel per
@@ -21908,6 +22190,50 @@ p.sb-ties {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  min-height: 1.9rem;
+}
+.sb-song > label {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-wrap: anywhere;
+}
+.sb-songx {
+  padding: 0 0.55rem;
+  line-height: 1.6;
+}
+.sb-songup.off {
+  opacity: 0.45;
+  pointer-events: none;
+}
+.sb-songnote {
+  margin-top: 0;
+}
+/* the green bar on an upload button (js/upbar.js): short, under the button's words, filling as it's read, made and sent */
+.up-bar {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 3px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.18);
+  overflow: hidden;
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+.up-bar > i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: #3ddc6a;
+  border-radius: 2px;
+  transition: width 0.15s linear;
+}
+.up-bar.up-gone {
+  opacity: 0;
 }
 /* Made maps (js/umaps.js): Make a map and My maps, and a made map's picture wherever a map's picture shows */
 .gs-pic > img.gs-made,
@@ -22181,4 +22507,63 @@ textarea.um-in {
   .sb-epwin .sb-row {
     grid-template-columns: minmax(0, 1fr) 6.5rem;
   }
+}
+/* Direction's Rotate (js/sbrotate.js): a ring in the middle of the block, its circular arrow on it where the block faces */
+.sb-rot {
+  position: fixed;
+  z-index: 6400;
+  width: 4.4rem;
+  height: 4.4rem;
+  margin: -2.2rem 0 0 -2.2rem;
+  border: 0.15rem dashed #fffc;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0.15rem #0006;
+  pointer-events: none;
+}
+.sb-rot-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2rem;
+  height: 2rem;
+  margin: -1rem 0 0 -1rem;
+  padding: 0.25rem;
+  border: 0.12rem solid #123;
+  border-radius: 50%;
+  background: #fff;
+  color: #123;
+  cursor: grab;
+  touch-action: none;
+  pointer-events: auto;
+  transform: rotate(var(--a, 0deg)) translateY(-2.2rem)
+    rotate(calc(-1 * var(--a, 0deg)));
+}
+.sb-rot-knob:active {
+  cursor: grabbing;
+}
+.sb-rot-knob svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Sandbox: G's waves or rounds (js/sandbox.js paintWave): which one, its time left or when the next comes, top middle */
+.game .sb-wave {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 0.6rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  padding: 0.25rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(10, 12, 24, 0.78);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+.game .sb-wave[hidden] {
+  display: none;
 }

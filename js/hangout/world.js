@@ -10,6 +10,7 @@
    higher ground only if it is that high at that moment; walking off an edge falls (off the deck, a long way). Other
    ducks glide to where the room says they are, and jump and fall from their own numbers (z: height, b: where the jump
    began). The activities (registry.js) add the context button, and whatever they draw. */
+import { SPRINT as GAME_SPRINT } from "../gamedefaults.js";
 import { baseMode, baseL4map } from "../sandboxrules.js";
 import * as L from "./layout.js";
 import { DRAW, GROUND, DECOR, groundColor } from "./shapes.js";
@@ -42,7 +43,7 @@ export const BOARD_HTML =
 /* a crown (Downpour's trees) is drawn over every duck and prop, under the dark and the rain: above the highest foot */
 const CROWN_Z = 5000;
 const SPEED = 380,
-  SPRINT = 1.75; // world px a second
+  SPRINT = GAME_SPRINT.speed; // times walking speed (the whole game's, gamedefaults.js)
 const AIR_UP = 6; // in the air, ground this much above the feet still catches them
 const CLICK_REACH = 260; // Click to interact: how far from my duck a click can use a thing
 const cl = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -1194,9 +1195,16 @@ export function mountWorld(board, api) {
       const r = board.getBoundingClientRect(),
         vw = board.clientWidth,
         vh = board.clientHeight;
-      const across =
-        vw >= 1100 ? 1300 : vw <= 500 ? 520 : 520 + ((vw - 500) / 600) * 780;
-      cam.sc = Math.min(vw / across, vh / 380) || 1;
+      const acrossOf = (w) =>
+        w >= 1100 ? 1300 : w <= 500 ? 520 : 520 + ((w - 500) / 600) * 780;
+      cam.sc = Math.min(vw / acrossOf(vw), vh / 380) || 1;
+      /* a phone on its side zooms out as far as it does upright: its short side sets the size, so ducks are as small as
+         upright and it sees more of the map across (the owner's, Nov 20 18:09Z: "The zoom out on ducks should apply to
+         horizontal mode on mobile as well") */
+      if (document.documentElement.classList.contains("phone-land")) {
+        const side = Math.min(innerWidth, innerHeight);
+        cam.sc = side / acrossOf(side) || 1;
+      }
       /* Dead Ducks Arcade on a phone, upright or on its side: 15% more of the map each way (the owner's, Nov 18 15:18Z:
          "The board or map for the zombie game should be a little more zoomed out in perspective or camera for mobile
          players in vertical OR horizontal becuz it feels cramped") */

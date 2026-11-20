@@ -241,7 +241,7 @@ export async function floorCanvas(root, g = 0) {
     imgs = [
       ...root.querySelectorAll(
         baked
-          ? ":scope > canvas.bd-dots.px-baked[data-y], :scope > img.bd-dots.px-file[data-y]"
+          ? ":scope > canvas.bd-dots.px-baked[data-y], :scope > .bd-dots.px-file[data-y]"
           : ":scope > img.bd-dots[data-y]",
       ),
     ];
@@ -304,14 +304,26 @@ export async function floorCanvas(root, g = 0) {
 }
 /* the rows made into pixels (pxbake.js): one canvas with a pixel for each grid square, shown sharp */
 async function floorPixels(root, cvs, rows, g) {
-  /* (a row's place on the grid and its size: a canvas made here, or a pixel file, js/pxmap.js) */
-  const file = (c) => c.tagName === "IMG";
-  await Promise.all(cvs.filter(file).map((c) => c.decode()));
+  /* (a row's place on the grid and its size: a canvas made here, a pixel file, js/pxmap.js, or its piece of a sheet,
+     data-sp: the sheet, and the piece's place and size on it, tools/pixel-sheets.cjs) */
+  const file = (c) => c.tagName !== "CANVAS",
+    sheets = {};
+  for (const c of cvs)
+    if (c.dataset.sp) {
+      const [url, ...xywh] = c.dataset.sp.split(" ");
+      c._sp = xywh.map(Number);
+      c._sheet = sheets[url] ||= new Image();
+      if (!c._sheet.src) c._sheet.src = url;
+    }
+  await Promise.all([
+    ...cvs.filter((c) => c.tagName === "IMG").map((c) => c.decode()),
+    ...Object.values(sheets).map((im) => im.decode()),
+  ]);
   for (const c of cvs)
     if (file(c)) {
       c._at = c.dataset.at.split(" ").map(Number);
-      c._w = c.naturalWidth;
-      c._h = c.naturalHeight;
+      c._w = c._sp ? c._sp[2] : c.naturalWidth;
+      c._h = c._sp ? c._sp[3] : c.naturalHeight;
     } else {
       c._w = c.width;
       c._h = c.height;
@@ -323,7 +335,9 @@ async function floorPixels(root, cvs, rows, g) {
   for (let k = 0; k < cvs.length; k++) {
     const c = cvs[k];
     out.push({
-      bm: await createImageBitmap(c),
+      bm: await (c._sp
+        ? createImageBitmap(c._sheet, ...c._sp)
+        : createImageBitmap(c)),
       x: c._at[0],
       y: c._at[1] - top,
       dl: rows[k].dl,
