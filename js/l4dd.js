@@ -359,7 +359,8 @@ let layer = null,
   holding = null,
   walkDir = [1, 0],
   lastXY = null,
-  drawn = "";
+  drawn = "",
+  coneSp = []; // (each flashlight's cone on its own small canvas, drawn again only when it moves: paint)
 /* the Butler, the fireplace's weapon, my points, the big words, his shop */
 /* my sprint left (0 … 1) and whether I'm too tired to sprint: now in every mode (stamina.js) */
 export { sprintLeft };
@@ -1533,13 +1534,21 @@ function paint(now, ctx) {
   }
   litNames(s, ctx, beams);
   const f = (v) => v.toFixed(1),
+    keys = cones.map(
+      (c) =>
+        `${w},${h},${low()},${Wd.inside},` +
+        f(c[0]) +
+        f(c[1]) +
+        c[2].map((p) => f(p[0]) + f(p[1])).join() +
+        litBy(c, Wd)
+          .map((p) => p.id)
+          .join("."), // (and what it lights: a prop shown or hidden draws it again)
+    ),
     key = [
       w,
       h,
       ...holes.map((o) => f(o[0]) + f(o[1]) + f(o[2]) + o[3].toFixed(2)),
-      ...cones.map(
-        (c) => f(c[0]) + f(c[1]) + c[2].map((p) => f(p[0]) + f(p[1])).join(),
-      ),
+      ...keys,
     ].join();
   if (key === drawn) return;
   drawn = key;
@@ -1560,62 +1569,135 @@ function paint(now, ctx) {
     g.drawImage(st, x - r, y - r, 2 * r, 2 * r);
   }
   g.globalAlpha = 1;
+  /* the cones, each cut out in one go. Their soft gradients cost the most of the dark, and on Duck Cabin a flickering lamp
+     or the Angel machine's glow redraws it many times a second while most cones stand still (the owner, row 3: "Downpour
+     seems to perform better than Cabin"), so each cone is drawn on its own small canvas only when it moves. Black drawn
+     over black there adds up the same as cutting each pass out in turn: the dark looks just as it did */
+  coneSp.length = Math.min(coneSp.length, cones.length);
+  for (let i = 0; i < cones.length; i++) {
+    const o = coneSprite(i, cones[i], keys[i], Wd, q, w, h);
+    if (o) g.drawImage(o.cv, o.x, o.y);
+  }
+  g.globalCompositeOperation = "source-over";
+}
+/* cone i of the dark (paint), black on a clear canvas just big enough for it and what it lights (shineProps: on into the
+   walls its rays stop at, raised up the tallest prop's height, so that much more all round): { cv, x, y } where it goes on
+   the dark, or null when none of it is on the screen */
+function coneSprite(i, c, key, Wd, q, w, h) {
+  const o = coneSp[i] || (coneSp[i] = { cv: null, key: "", x: 0, y: 0 });
+  if (o.key === key) return o.cv && o;
+  o.key = key;
+  const [ox, oy, pts, far] = c,
+    up = tallest() * Wd.sc * q;
+  let x0 = ox,
+    y0 = oy,
+    x1 = ox,
+    y1 = oy;
+  for (const [x, y] of pts) {
+    x0 = Math.min(x0, x);
+    y0 = Math.min(y0, y);
+    x1 = Math.max(x1, x);
+    y1 = Math.max(y1, y);
+  }
+  x0 = Math.max(0, Math.floor(x0 - up) - 1);
+  y0 = Math.max(0, Math.floor(y0 - up) - 1);
+  x1 = Math.min(w, Math.ceil(x1 + up) + 1);
+  y1 = Math.min(h, Math.ceil(y1 + up) + 1);
+  if (x1 <= x0 || y1 <= y0) {
+    o.cv = null;
+    return null;
+  }
+  const cv2 = o.cv || document.createElement("canvas");
+  o.cv = cv2;
+  o.x = x0;
+  o.y = y0;
+  if (cv2.width !== x1 - x0 || cv2.height !== y1 - y0) {
+    cv2.width = x1 - x0;
+    cv2.height = y1 - y0;
+  }
+  const c2 = cv2.getContext("2d");
+  c2.setTransform(1, 0, 0, 1, 0, 0);
+  c2.globalCompositeOperation = "source-over";
+  c2.globalAlpha = 1;
+  c2.clearRect(0, 0, cv2.width, cv2.height);
+  c2.setTransform(1, 0, 0, 1, -x0, -y0);
   /* a cone: three passes, each a little narrower, so its middle is as bright as the lights on and its edges soft. On Low
      graphics or Data saving: one pass, one plain shade, about as bright as the soft one on average */
   if (low()) {
-    g.fillStyle = "rgba(0,0,0,.55)";
-    for (const [ox, oy, pts] of cones) {
-      g.beginPath();
-      g.moveTo(ox, oy);
-      for (const p of pts) g.lineTo(p[0], p[1]);
-      g.closePath();
-      g.fill();
-    }
-    shineProps(Wd, cones, q);
-    g.globalCompositeOperation = "source-over";
-    return;
-  }
-  for (const [ox, oy, pts, far] of cones) {
-    const rg = g.createRadialGradient(ox, oy, 0, ox, oy, far);
+    c2.fillStyle = "rgba(0,0,0,.55)";
+    c2.beginPath();
+    c2.moveTo(ox, oy);
+    for (const p of pts) c2.lineTo(p[0], p[1]);
+    c2.closePath();
+    c2.fill();
+  } else {
+    const rg = c2.createRadialGradient(ox, oy, 0, ox, oy, far);
     rg.addColorStop(0, "rgba(0,0,0,.62)");
     rg.addColorStop(0.7, "rgba(0,0,0,.55)");
     rg.addColorStop(1, "rgba(0,0,0,0)");
-    g.fillStyle = rg;
+    c2.fillStyle = rg;
     const n = pts.length - 1;
     for (const cut of [0, 0.18, 0.34]) {
       const a = Math.round(n * cut),
         b = n - a;
-      g.beginPath();
-      g.moveTo(ox, oy);
-      for (let k = a; k <= b; k++) g.lineTo(pts[k][0], pts[k][1]);
-      g.closePath();
-      g.fill();
+      c2.beginPath();
+      c2.moveTo(ox, oy);
+      for (let k = a; k <= b; k++) c2.lineTo(pts[k][0], pts[k][1]);
+      c2.closePath();
+      c2.fill();
     }
   }
-  shineProps(Wd, cones, q);
-  g.globalCompositeOperation = "source-over";
+  shineProps(c2, Wd, [c], q);
+  return o;
+}
+/* the tallest prop a flashlight lights (litProps), in world px */
+let tallH = 0,
+  tallRev = -1;
+const tallest = () => {
+  if (tallRev !== layoutRev()) {
+    tallRev = layoutRev();
+    tallH = Math.max(0, ...litProps().map((p) => p.h));
+  }
+  return tallH;
+};
+/* the props cone c may light: shown now, under the box its rays reach (not from up on a roof: the roof's top is all it
+   lights) */
+function litBy(c, Wd) {
+  if (c[5]) return [];
+  const [ax, ay, ends] = c[4];
+  let x0 = ax,
+    y0 = ay,
+    x1 = ax,
+    y1 = ay;
+  for (const [x, y] of ends) {
+    x0 = Math.min(x0, x);
+    y0 = Math.min(y0, y);
+    x1 = Math.max(x1, x);
+    y1 = Math.max(y1, y);
+  }
+  return litProps().filter((p) => {
+    let l = p.x,
+      r = p.x + p.w;
+    if (p.kind === "fence") {
+      const t = fenceLean(p, W); // (its top leans out toward the map's edge: all of that lights)
+      if (t > 0) r += t;
+      else l += t;
+    }
+    if (l > x1 || r < x0 || p.y > y1 || p.y + p.d < y0) return false;
+    const el = Wd.propEl(p.id); // (only what's drawn now: not what's left out of this map, or hidden from in here)
+    return !!el && !el.hidden;
+  });
 }
 /* a flashlight lights what it points at, not just the floor (the owner, Nov 17): the part of each prop's footprint inside
    a cone (on into the wall a ray stops at), raised up the prop's height, so its front and its top show in the light as
-   bright as the floor there. paint() has the dark cutting (destination-out) */
-function shineProps(Wd, cones, q) {
+   bright as the floor there. Drawn black on its cone's own canvas (coneSprite), which paint() cuts out of the dark */
+function shineProps(g, Wd, cones, q) {
   const sc = Wd.sc * q,
     plain = low();
   for (const c of cones) {
-    if (c[5]) continue; // (from up on a roof: the roof's top is all it lights)
     const [ax, ay, ends] = c[4],
       poly = [[ax, ay], ...ends];
-    let x0 = ax,
-      y0 = ay,
-      x1 = ax,
-      y1 = ay;
-    for (const [x, y] of ends) {
-      x0 = Math.min(x0, x);
-      y0 = Math.min(y0, y);
-      x1 = Math.max(x1, x);
-      y1 = Math.max(y1, y);
-    }
-    for (const p of litProps()) {
+    for (const p of litBy(c, Wd)) {
       let l = p.x,
         r = p.x + p.w;
       if (p.kind === "fence") {
@@ -1623,9 +1705,6 @@ function shineProps(Wd, cones, q) {
         if (t > 0) r += t;
         else l += t;
       }
-      if (l > x1 || r < x0 || p.y > y1 || p.y + p.d < y0) continue;
-      const el = Wd.propEl(p.id); // (only what's drawn now: not what's left out of this map, or hidden from in here)
-      if (!el || el.hidden) continue;
       const part = clipBox(poly, l, p.y, r, p.y + p.d);
       if (!part) continue;
       /* as bright as the cone's floor that far out (its three passes: about 0.9 near, fading out from 0.7 of the way) */
