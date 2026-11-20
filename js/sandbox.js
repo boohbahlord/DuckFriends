@@ -710,13 +710,23 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
                 sbClip.pt = patternOf(p);
               },
             },
+            ...(p.lock
+              ? []
+              : [
+                  {
+                    label: "Cut",
+                    act: () => {
+                      sbClip.many = null;
+                      sbClip.pt = patternOf(p);
+                      getR().send({ t: "sb", k: "del", p: id });
+                    },
+                  },
+                ]),
+            /* Lock: it can't be moved, changed or cut, only copied (the owner's, Nov 20 04:51Z) */
             {
-              label: "Cut",
-              act: () => {
-                sbClip.many = null;
-                sbClip.pt = patternOf(p);
-                getR().send({ t: "sb", k: "del", p: id });
-              },
+              label: p.lock ? "Unlock" : "Lock",
+              act: () =>
+                getR().send({ t: "sb", k: "lock", p: id, on: !p.lock }),
             },
           ]
         : [{ label: "Paste", act: () => paste(at) }],

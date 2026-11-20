@@ -273,7 +273,74 @@ export const SB_ZONE = {
     check: (t) => (SB_SFX[String(t).trim()] ? "" : "Pick one"),
     def: "none",
   },
+  /* its look (plan Phase 3: "Looks (zone purpose only): a texture from the maps (Cabin, Downpour, Euclid's Squares, the
+     Kenoma looks; previews shown), a solid color with a hex picker, or an uploaded picture, always made into pixels (the
+     original is never kept). See-through by 1% steps"); everyone sees it, cheat mode or not (sblooks.js) */
+  lk: {
+    name: "Look",
+    check: (t) => (SB_LOOKS[String(t).trim()] ? "" : "Pick one"),
+    def: "none",
+  },
+  lktex: {
+    name: "Texture",
+    check: (t) => (SB_LOOK_TEX[String(t).trim()] ? "" : "Pick a texture"),
+    def: "cabin-wood",
+  },
+  lkcol: {
+    name: "Color",
+    check: (t) =>
+      /^#[0-9a-f]{6}$/i.test(String(t).trim()) ? "" : "A color like #3a7d44",
+    def: "#3a7d44",
+  },
+  lkpic: {
+    name: "Picture",
+    check: (t) =>
+      /^[a-z0-9]{0,24}$/.test(String(t).trim()) ? "" : "Upload one",
+    def: "",
+  },
+  lkop: { name: "See-through (%)", kind: "int", min: 0, max: 100, def: "0" },
 };
+export const SB_LOOKS = {
+  none: "None",
+  tex: "Texture",
+  col: "Solid color",
+  pic: "Picture",
+};
+/* the maps' textures (tools/bake-looks.py cuts the tiled ones from their ground) and the maps drawn whole */
+export const SB_LOOK_TEX = {
+  "cabin-wood": "Cabin floor",
+  "cabin-deck": "Cabin deck",
+  "cabin-checks": "Cabin kitchen",
+  "cabin-tiles": "Cabin bathroom",
+  "cabin-grass": "Cabin grass",
+  "downpour-grass": "Downpour grass",
+  "downpour-roof": "Downpour roof",
+  "downpour-concrete": "Downpour concrete",
+  "downpour-church": "Downpour church",
+  euclid: "Euclid's Squares",
+  nwk: "Nous Within Kenoma",
+  ec: "Ether's Crossroads",
+  nwkarch: "Architectured",
+  nwkten: "Ten",
+  nwkchalice: "Chalice",
+  nwkfool: "The Fool",
+};
+/* a zone's look: null with none, else { k: "tex" | "col" | "pic", v: the texture, the color or the picture's key, op:
+   how see-through, 0 to 1 } */
+export function sbLook(p) {
+  if (!p || p.k !== "zone" || !p.f) return null;
+  const v = (f) => {
+      const k = p.f[f],
+        t = String(k && k.ok ? k.ok : SB_ZONE[f].def).trim();
+      return SB_ZONE[f].check ? (SB_ZONE[f].check(t) ? SB_ZONE[f].def : t) : t;
+    },
+    k = v("lk");
+  if (k === "none") return null;
+  const val = v(k === "tex" ? "lktex" : k === "col" ? "lkcol" : "lkpic");
+  if (!val) return null;
+  const op = Math.min(100, Math.max(0, Math.round(+v("lkop") || 0))) / 100;
+  return { k, v: val, op };
+}
 export const SB_SFX = {
   none: "Nothing",
   fire: "Ground fire",
@@ -480,7 +547,7 @@ export const SB_CALL = {
      tab that is first in order determines how it appears"); blank: the block itself */
   lead: { name: "Leads with", check: () => "", def: "" },
 };
-export const SB_CALL_ERR = "Make tab that shares caller or variable name";
+export const SB_CALL_ERR = "Make tab that shares variable name or color";
 const CALLED = ["spawn", "respawn", "loot"];
 /* a block's or tab's variable name: its own, or its color's */
 export const sbNameOf = (q) => {
@@ -490,21 +557,46 @@ export const sbNameOf = (q) => {
     ? "No color"
     : q.col[0].toUpperCase() + q.col.slice(1);
 };
+/* a new block's or tab's variable name: six numbers at random, until it's typed out (the owner's, Nov 20 04:39Z: "the
+   tabs have six random numbers randomly assigned as numbers until it is typed out") */
+export const sbSix = () => String(100000 + Math.floor(Math.random() * 900000));
+/* the name it was given (typed, or its six numbers), or "" with none (an older one's; the Caller it had counts as one) */
+const ownName = (q) => {
+  const k = q && q.f && (q.f.name || q.f.call);
+  return k && k.ok ? String(k.ok).trim().toLowerCase() : "";
+};
 /* does tab q answer to a zone (a Spawn, Respawn or Loot tab) */
 export const sbNeedsCall = (q) =>
   !!q && !!q.grp && q.pg === "t" && CALLED.includes(q.k);
-/* the zone tab id answers to: the zones on its block whose name is its Caller, the first in the block's order; null when
-   none is (it does nothing then) or it answers to nobody */
+/* how tab q is tied to zone z: { name, col } (the owner's, Nov 20 04:39Z: "every tab for spawn is connected by color or
+   variable or both, not by a selection"; a color only when there is one) */
+export function sbTie(q, z) {
+  const n = ownName(q);
+  return {
+    name: !!n && n === ownName(z),
+    col: !!q && !!z && q.col !== SB_NOCOL && q.col === z.col,
+  };
+}
+/* the zone tab id answers to: the first zone on its block, in the block's order, that shares its variable name or its
+   color; null when none does (it does nothing then) or it answers to nobody */
 export function sbCallZone(pts, id) {
   const q = pts[id];
   if (!sbNeedsCall(q) || !pts[q.grp]) return null;
-  const k = q.f && q.f.call,
-    want = (k && k.ok ? k.ok : sbNameOf(pts[q.grp])).trim().toLowerCase();
   return (
-    sbZonesOn(pts, q.grp).find(
-      (z) => sbNameOf(pts[z]).toLowerCase() === want,
-    ) || null
+    sbZonesOn(pts, q.grp).find((z) => {
+      const t = sbTie(q, pts[z]);
+      return t.name || t.col;
+    }) || null
   );
+}
+/* the tabs zone zid holds: [tab id, { name, col }] for each Spawn, Respawn and Loot tab on its block that answers to it */
+export function sbHeld(pts, zid) {
+  const z = pts[zid];
+  if (!z) return [];
+  const b = z.grp || zid;
+  return Object.keys(pts)
+    .filter((q) => pts[q].grp === b && sbCallZone(pts, q) === zid)
+    .map((q) => [q, sbTie(pts[q], z)]);
 }
 /* is tab id working: not one that needs a Caller, or its Caller matches */
 export const sbTabLive = (pts, id) =>
