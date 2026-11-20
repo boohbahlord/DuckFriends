@@ -3106,7 +3106,8 @@ html.still .lord-say.out .w > span {
   pointer-events: none;
   opacity: 0.92;
 }
-.gduck-pool svg {
+.gduck-pool > svg,
+.gduck-pool > img {
   display: block;
   width: 100%;
   height: 100%;
@@ -12238,7 +12239,7 @@ html.moving .hp.hang-shimmer {
   height: 0;
   pointer-events: none;
 }
-.hang-npc-claw svg {
+.hang-npc-claw > img {
   position: absolute;
   left: calc(-20px * var(--k));
   top: calc(-20px * var(--k));

@@ -240,8 +240,8 @@ import {
   shotStop,
   POOL_SVG,
   JPOOL,
-  clawMark,
 } from "./l4dd.js";
+import { clawMark } from "./claw.js";
 import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
 import { JET, jetHTML, myFuel, burnFuel } from "./jetpack.js";
 import { mountL4Bar, l4Slider } from "./l4ddbar.js";
@@ -3341,7 +3341,7 @@ function placeZombies(board, s, now) {
         c.left + (o.f || face) * ds * 0.55,
         c.top - ds * 0.45,
         k * 1.25,
-      ); // (its claw marks on the duck it swiped, as Dead Ducks Arcade's: l4dd.js clawMark)
+      ); // (its claw marks on the duck it swiped, as Dead Ducks Arcade's: claw.js)
     n._a = o.a;
     npcSay(n, o); // (Sandbox: what its Seriat file has it say, sbnumberat.js)
     const oc = sbOl && !o.d && sbOlColor(s, { k: o.k, sp: o.sp }, o.x, o.y, 0);
