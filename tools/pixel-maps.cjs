@@ -32,6 +32,7 @@ const MAPS = [
   ["pixel", "Pixel", "scene", "pixel"],
   ["sky", "Sky's sun, moon, stars and clouds", "sky", null],
   ["carnival", "Carnival Night", "carnival", null],
+  ["stars", "Starry Night", "stars", null],
 ];
 
 function serve() {
@@ -145,6 +146,22 @@ async function recordMap(page, how, arg) {
         }
         return { html: JSON.stringify(out), files };
       }
+      if (how === "stars") {
+        /* the turning sky, one picture in the world's pixels (the game turns it, its pixels kept whole), and where its
+           brightest stars are (the game draws them twinkling) */
+        const { starSky } = await import("/tools/pixel-src/stars.js");
+        const s = starSky(W, H, 2);
+        return {
+          html: JSON.stringify({
+            sky: "FILE:stars-sky",
+            R: s.R,
+            pole: s.pole.map((v) => +v.toFixed(2)),
+            base: +s.base.toFixed(4),
+            bright: s.bright,
+          }),
+          files: { "stars-sky": s.canvas.toDataURL("image/png") },
+        };
+      }
       if (how === "carnival") {
         /* one drawing: its wheel turns (12 spokes alike: a twelfth of a turn, 90 s round, as 60 frames), its cars and
            rim lights are carried round hanging straight, its bulbs and stars twinkle, its flag waves */
@@ -233,7 +250,7 @@ async function recordMap(page, how, arg) {
     fs.mkdirSync(path.join(ROOT, "js", "pxm"), { recursive: true });
     fs.writeFileSync(
       path.join(ROOT, "js", "pxm", id + ".js"),
-      `/* ${what}, as pixel files: written by tools/pixel-maps.cjs, never by hand */\nexport default ${JSON.stringify(how === "sky" ? { W, H, G: 2, ...JSON.parse(markup) } : { W, H, G: 2, html: markup })};\n`,
+      `/* ${what}, as pixel files: written by tools/pixel-maps.cjs, never by hand */\nexport default ${JSON.stringify(how === "sky" || how === "stars" ? { W, H, G: 2, ...JSON.parse(markup) } : { W, H, G: 2, html: markup })};\n`,
     );
     execFileSync("npx", [
       "-y",
