@@ -2071,6 +2071,13 @@ body:has(> .win-back) > .dod-news {
 .pcard.mine {
   cursor: pointer;
 }
+/* the ducks' pictures in the UI (a player's card, the who's-done chips, the loading veil) grow with the UI scale, as
+   everything else in it does (settings.js uiNow); the ducks on the maps don't */
+.pcard-duck > svg,
+.who-chip svg.duck,
+.veil-duck svg {
+  zoom: var(--ui, 1);
+}
 .pcard-duck {
   flex: none;
   display: grid;
@@ -3632,6 +3639,21 @@ html.mouse-move .board {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
+}
+/* the UI scale under the pause menu's buttons (settings.js uiScaleHTML) */
+.pause-list + .ui-scale {
+  margin-top: 1rem;
+}
+@media (min-width: 701px) {
+  .ui-scale .slide {
+    grid-template-columns: max-content 1fr 3.4rem;
+  }
+}
+.ui-scale .ui-note {
+  margin: 0.25rem 0 0;
+}
+.ui-scale .ui-note:empty {
+  display: none;
 }
 @media (max-width: 860px) {
   .results {

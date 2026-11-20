@@ -292,7 +292,12 @@ import {
 import { rainbowHTML } from "./art.js";
 import { statBoxHTML, ddrBoxHTML, openStats } from "./stats.js";
 import { profile, save, statMode } from "./store.js";
-import { openSettings, netLevel } from "./settings.js";
+import {
+  openSettings,
+  netLevel,
+  uiScaleHTML,
+  uiScaleWire,
+} from "./settings.js";
 import { setHideUi, uiHidden } from "./hideui.js";
 import { musicBarHTML, mountMusicBar } from "./musicbar.js";
 import { openCustomize, shareLook } from "./customize.js";
@@ -7940,12 +7945,13 @@ function openPause() {
     <button type="button" class="btn ghost" data-a="hideui" aria-pressed="${uiHidden()}">${uiHidden() ? "Show UI" : "Hide UI"}</button>
     <button type="button" class="btn ghost" data-a="friends">Friends</button>
     ${R && isHang(R.state) && isSudo(R.state, R.me) ? '<button type="button" class="btn yellow" data-a="lobby">Everyone back to the lobby</button>' : ""}
-    <button type="button" class="btn red" data-a="leave">Leave game</button></div>
+    <button type="button" class="btn red" data-a="leave">Leave game</button></div>${uiScaleHTML()}
     <p class="small dim" style="margin-top:.8rem">The game keeps going while this is open.</p>`,
     {
       cls: "win-small",
-      onOpen: (w, close) =>
-        (w.querySelector(".pause-list").onclick = (e) => {
+      onOpen: (w, close) => {
+        uiScaleWire(w);
+        w.querySelector(".pause-list").onclick = (e) => {
           const a = e.target.closest("[data-a]");
           if (!a) return;
           close();
@@ -7961,7 +7967,8 @@ function openPause() {
                 ? R.send({ t: "toLobby" }) // (Single Player: back to its own lobby, never the online rooms)
                 : leaveTo("rooms", "Leave the game in progress?"),
           })[a.dataset.a]();
-        }),
+        };
+      },
     },
   );
 }
