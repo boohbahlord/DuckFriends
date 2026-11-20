@@ -253,7 +253,6 @@ export const BLEED_OF = {
   shotgun: "shot",
   knife: "blade",
   dagger: "blade",
-  jaime: "blade",
   hammer: "blunt",
   pan: "blunt",
   axe: "blade",

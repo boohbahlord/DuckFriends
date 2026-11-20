@@ -71,7 +71,6 @@ export const PROFILE_DEFAULT = {
   justinKills: 0,
   cabinKills: 0,
   shadowHits: 0,
-  jaimeStabs: 0,
   dunced: 0,
   mgjWins: 0,
   mgjLosses: 0,
@@ -206,7 +205,6 @@ function normalize(p) {
   out.justinKills = Math.max(0, Math.floor(+p.justinKills || 0));
   out.cabinKills = Math.max(0, Math.floor(+p.cabinKills || 0));
   out.shadowHits = Math.max(0, Math.floor(+p.shadowHits || 0));
-  out.jaimeStabs = Math.max(0, Math.floor(+p.jaimeStabs || 0));
   out.dunced = Math.max(0, Math.floor(+p.dunced || 0));
   out.mgjWins = Math.max(0, Math.floor(+p.mgjWins || 0));
   out.mgjLosses = Math.max(0, Math.floor(+p.mgjLosses || 0));
