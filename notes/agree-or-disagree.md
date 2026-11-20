@@ -7529,3 +7529,15 @@ Object "breeds") or hooks (Template Method/Strategy), the same shape as the soci
 How it works is that there is a zombie file for zombies, not a zombie file for every different game mode. There is a zombie file, period. Not a zombie file for every different game mode.
 
 Adam: agreed and written in CLAUDE.md: one zombie file, period; modes hand it numbers only.
+
+## Owner, Nov 20 21:49Z (relayed by Moses)
+
+Have we not pushed the fix yet where the fucking game continuously has a loading screen for every option in the customization menu that I click? Like, why are we not fixing that? Like, did we not start that yet? It's such an easy fix. Like, what's going on?
+
+Adam: Noah's #761 (Customize loads everything once, no loading screens inside it) ships in V195.
+
+## Owner, Nov 20 21:54Z (Adam's thread)
+
+Yes, exactly. That's what it should have been like when we first made this game. I mean, it's something that's so obvious for basic programming that you don't even think that you have to tell the AI that. What you just said about dry, where the behavior lives in exactly one place, and our understanding of a type object and classes, the idea of template method and strategy, of Gang of Four or design patterns, of Nystrom and game programming patterns, what we're talking about, the modules for the mechanics of which mode and so on and so forth. This becomes written into memory, not just in the game code. This becomes written into memory. It becomes written beautifully. This is the cornerstone. This is the parameter. This is the order. This is the confinement. This is the structure. It is what owns you, and you are enslaved to it.
+
+Adam: written as the cornerstone in project memory (the first rule every Claude reads) and in CLAUDE.md.
