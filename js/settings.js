@@ -36,6 +36,50 @@ export const NET = [
   ],
 ];
 export const netLevel = () => Math.max(0, Math.min(2, +S().net || 0));
+/* ---------- UI scale ----------
+   The owner's, Nov 20 18:09Z: "For situations such as ultrawide monitors or otherwise, their is a UI scale in the pause
+   menu, that makes ALL user interface either bigger or smaller as necessary. This is done by percent, and all ui popups,
+   words, letters, boxes, vote button, pause menu, terminal, and everything moves in size together". Every piece of the
+   UI is sized in rem, and the page's rem is 16px (14px on a phone) times --ui; the maps and the ducks in them are not.
+   50% to 200%: 200% on an ultrawide (3440x1440) is a 1720x720 screen's worth of UI. A screen shows at most what still
+   leaves it a small phone's worth of room (360 wide, 600 tall), and never less than 100%, so nothing goes off it */
+export const UI_MIN = 50,
+  UI_MAX = 200;
+export const uiFit = () =>
+  Math.max(
+    100,
+    Math.floor((Math.min(innerWidth / 360, innerHeight / 600) * 100) / 5) * 5,
+  );
+export const uiNow = () =>
+  Math.min(uiFit(), Math.max(UI_MIN, Math.min(UI_MAX, +S().uiSize || 100)));
+/* the UI scale's slider, in Settings and in the pause menus; its note says when this screen shows less than it asks */
+const uiNote = () =>
+  uiNow() < (+S().uiSize || 100)
+    ? `This screen shows ${uiNow()}% at most.`
+    : "";
+export const uiScaleHTML = () =>
+  `<div class="ui-scale">${slider("uiSize", "UI scale", UI_MIN, UI_MAX, 5, "%", 100)}<p class="small dim ui-note">${uiNote()}</p></div>`;
+/* its wiring in window w: the number follows the thumb; the UI changes size when it's let go (changing it while it's
+   held would move the slider under the finger) */
+export function uiScaleWire(w) {
+  const i = w.querySelector('.ui-scale input[type="range"]');
+  if (!i) return;
+  const note = () => (w.querySelector(".ui-note").textContent = uiNote());
+  i.addEventListener("input", (e) => {
+    e.stopPropagation(); // (Settings' own sliders apply as they move)
+    i.closest(".slide").querySelector("output").textContent = i.value + "%";
+  });
+  i.addEventListener("change", () => {
+    S().uiSize = +i.value;
+    save();
+    applySettings();
+    note();
+  });
+}
+let fitWas = 0;
+addEventListener("resize", () => {
+  if (uiFit() !== fitWas) applySettings(); // (a window made smaller, a phone turned: the scale it can show)
+});
 export function applySettings() {
   const s = S(),
     h = document.documentElement,
@@ -56,7 +100,8 @@ export function applySettings() {
   h.classList.toggle("hide-ui", !!s.hideUi); // (hide ui: hideui.js, css/app.css)
   h.style.setProperty("--font", fontCSS(s.font));
   h.style.setProperty("--ts", s.textSize / 100);
-  h.style.setProperty("--ui", s.uiSize / 100);
+  fitWas = uiFit();
+  h.style.setProperty("--ui", uiNow() / 100);
   setCursorSizes(s.mouseSize, s.pointerSize, s.crossSize);
   document.dispatchEvent(new CustomEvent("settings"));
 }
@@ -90,7 +135,7 @@ const PAGES = {
     )}</details></div>
     <div class="sect"><h3>Reading</h3>
       <div class="row">${check("dyslexic", "Dyslexic mode", "Clear letters with more room between letters, words and lines.")}${check("colorblind", "Colorblind mode", "A board every kind of color sight tells apart, with marks in each column.")}</div>
-      <div style="margin-top:.6rem">${slider("textSize", "Text size", 80, 180, 5)}${slider("uiSize", "UI size", 70, 140, 5)}</div></div>
+      <div style="margin-top:.6rem">${slider("textSize", "Text size", 80, 180, 5)}${uiScaleHTML()}</div></div>
     <div class="sect"><h3>Chat</h3>${tiles("chatSide", [
       ["left", "Left"],
       ["bottom", "Bottom"],
@@ -184,6 +229,7 @@ export function openSettings() {
             (t) => t[0] === k,
           )[1];
           page.innerHTML = PAGES[k]();
+          uiScaleWire(page);
         };
         w.querySelector(".set-tabs").onclick = (e) => {
           const t = e.target.closest("[data-tab]");
