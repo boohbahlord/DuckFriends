@@ -517,18 +517,19 @@ const listBox = (name, def) => ({
   len: 200, // (its text kept up to this long: sbspawn.js withField; a plain box keeps 80)
 });
 export const SB_ZONE = {
-  /* a thin rectangle is a wall (plan Phase 3): under one duck length it takes tenths, down to a fifth */
+  /* a thin rectangle is a wall (plan Phase 3), down to one hitbox tile (a quarter of a duck length): sizes go in
+     quarters, a typed 2.3 is 2.25 */
   zw: {
     name: "Width (duck lengths)",
     kind: "tenth",
-    min: 0.2,
+    min: 0.25,
     max: 40,
     def: "4",
   },
   zh: {
     name: "Height (duck lengths)",
     kind: "tenth",
-    min: 0.2,
+    min: 0.25,
     max: 40,
     def: "4",
   },
@@ -756,9 +757,13 @@ export const sbSfxZ = (p) => {
 };
 /* a duck length in a world's px, for a zone's size there (on the board: 0.03 of it across, 0.08 up and down) */
 export const SB_ZONE_PX = 48;
-/* a block's side as dragged or typed: whole duck lengths, tenths under one, a fifth at least, 40 at most */
+/* a block's side as dragged or typed, in whole hitbox tiles (the owner's, Nov 20 19:09Z: "Zones can have their size
+   adjusted like they did before and be different sizes and shapes. But how they do that is based on the smallest units
+   that build up their size. And those units are based on the tiles that check for hitbox"): a quarter of a duck length
+   each, one tile at least, 40 duck lengths at most */
+const QUARTER = 0.25; // (SB_TILE, below)
 export const sbFitSide = (v) =>
-  Math.max(0.2, Math.min(40, v < 1 ? Math.round(v * 10) / 10 : Math.round(v)));
+  Math.max(QUARTER, Math.min(40, Math.round(v / QUARTER) * QUARTER));
 /* ---------- every build block's shape (plan Phase 2: "Spawn, respawn, loot and zone become one thing you put down") ----------
    A block has a shape and a size (zw, zh: duck lengths; a zone starts at 4 by 4, the rest at 1 by 1) or fills the whole
    map. Square by default; the others by adding sides, stopping once it already looks round. It is made of the hitbox
@@ -784,7 +789,7 @@ export const sbFills = (p) => !!(p && p.fill);
 /* its size in duck lengths, [w, h] */
 export const sbSize = (p) => {
   const d = p && p.k === "zone" ? 4 : 1;
-  return [(p && p.zw) || d, (p && p.zh) || d];
+  return [sbFitSide(+(p && p.zw) || d), sbFitSide(+(p && p.zh) || d)]; // (in whole tiles, a size from before too)
 };
 /* does a block other than a zone cover more than its own spot (bigger than one duck, or the whole map) */
 export const sbSpread = (p) =>
@@ -1058,7 +1063,7 @@ export const sbOrd = (p) => {
    thin. With Snap on (the default) its corner sits on the ground's tile lines, one every tile from the map's top left
    corner, and it turns a quarter at a time, so its tiles are the ground's tiles (sbSnapSpot). Its potential order's
    squares (Square size) are made of its tiles */
-export const SB_TILE = 0.25; // (duck lengths)
+export const SB_TILE = QUARTER; // (duck lengths)
 export const SB_TAKE = 0.6;
 const SAMPLES = 6, // (points across a tile each way, to tell how much of it the shape covers)
   MAX_TILES = 256, // (tiles along a side at most: a bigger block has bigger tiles)
