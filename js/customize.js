@@ -42,6 +42,7 @@ import {
   SIZES,
   pictureToSquare,
   DUCK_PIC_PX,
+  CARD_PIC_PX,
   duckSVG,
   DUCK_SCALE,
   scaleOf,
@@ -81,8 +82,6 @@ import { SB_WHAT, SB_ACTS } from "./sandboxrules.js";
 /* ---------- making an NPC (Sandbox's m window, sbnpcs.js) ----------
    The same menu dresses one of my NPCs instead of my duck: NPC is the one open (null: my own duck). It has no card, no
    font and no specials, and two pages of its own at the bottom: its weapons and its behavior */
-/* a card's picture in real pixels, as a duck's (duck.js pictureToSquare): 64 to a side, its pixels drawn square */
-const CARD_PIC_PX = 64;
 let NPC = null;
 let BORROWED = false;
 const duckNow = () => (NPC ? NPC.duck : profile.duck);

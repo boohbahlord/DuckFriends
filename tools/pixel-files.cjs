@@ -53,18 +53,28 @@ const ITEMS = [
   ...TV.map((c) => [`tv/${c}.webp`, 156, 120, "avg"]),
 ];
 /* the map vote's pictures (the owner's, Nov 19 20:04Z: its pictures were made on the device, black for seconds on a
-   slow phone). Each is the map's own drawing in the game (art.js artBackdrop), drawn big in the page and made into
-   pixels the same way; the size is about the most the vote ever shows one at (a quarter of its 70rem box) */
+   slow phone). Each is the map's own drawing (tools/pixel-src/backdrops.js), drawn big in the page and made into
+   pixels the same way; the size is about the most the vote ever shows one at (a quarter of its 70rem box). Nous Within
+   Kenoma's are a still of the map itself instead (its static, its one-pixel strings and its lights are drawn as pixels
+   already: the still is taken at the grid's size, one of its pixels for each) */
 const VOTE = [160, 90];
+/* the lobby's and Game Settings' picture of each map (and Sandbox's whole-map looks), the same way: art.js artBackdrop
+   shows it, and no drawing of the map ships (the owner's, Nov 19 23:26Z: "we don't have the leftover image behind.
+   It's literally pixels"). The size: the lobby's picture at its widest (34rem) is 272 of the grid's squares across.
+   The list of them goes in js/pxpic.js */
+const PIC = [272, 153];
 
 /* a map's vote picture made into pixels in the page: a PNG's bytes, as base64. Its drawing's own pictures (a map's
    photo, the collage's drawing) are put inside it first, so it draws as one picture */
-async function madeTile(page, map, w, h) {
+async function madeTile(page, id, w, h) {
   return page.evaluate(
-    async ([map, w, h]) => {
-      const { artBackdrop } = await import("/js/art.js");
+    async ([id, w, h]) => {
+      const { backdropDrawing } = await import("/tools/pixel-src/backdrops.js");
       const { applyPalette } = await import("/js/pixelpalette.js");
-      let body = artBackdrop(map);
+      const { mapForm } = await import("/js/maps.js");
+      const f = id === "cabin" ? { map: "cabin" } : mapForm(id),
+        map = f.map;
+      let body = backdropDrawing(map);
       for (const [, href] of body.matchAll(/href="([^"]+)"/g)) {
         if (href.startsWith("data:")) continue;
         const b = await (await fetch("/" + href.replace(/^\//, ""))).blob();
@@ -95,24 +105,100 @@ async function madeTile(page, map, w, h) {
       const x = c.getContext("2d", { willReadFrequently: true });
       x.imageSmoothingEnabled = true;
       x.imageSmoothingQuality = "high"; // (as pixel.js make: each pixel the average of what it covers)
+      if (f.grey) x.filter = "grayscale(1)"; // (a black and white form: Shelter Sky & Null's)
       x.drawImage(img, 0, 0, w, h);
       x.putImageData(applyPalette(x.getImageData(0, 0, w, h)), 0, 0);
       return c.toDataURL("image/png").split(",")[1];
     },
-    [map, w, h],
+    [id, w, h],
   );
 }
-async function voteMaps(page) {
-  return page.evaluate(async () => {
-    const { VOTE_MAPS } = await import("/js/rules.js");
-    const { mapForm } = await import("/js/maps.js");
-    const { isNwk } = await import("/js/nwk.js");
-    return [
-      ...new Set(
-        VOTE_MAPS.map((id) => mapForm(id).map).filter((m) => !isNwk(m)),
-      ),
-    ]; // (Nous Within Kenoma's are the map itself, drawn still: vote.js stills)
-  });
+/* a still of a map itself (Nous Within Kenoma's), as the map vote showed it moving: the map in a box of w × h of the
+   grid's squares (2 css px each, at one screen pixel to a css px), a screenshot, then one of its pixels for each square
+   (the one the pixel filter keeps: pxbake.js grid) through the game's colors. A PNG's bytes, as base64 */
+async function madeStill(page, id, w, h) {
+  const G = 2;
+  await page.evaluate(
+    async ([id, w, h, G]) => {
+      if (!document.querySelector("link[data-app]")) {
+        const l = document.createElement("link");
+        l.rel = "stylesheet";
+        l.href = "/css/app.css";
+        l.dataset.app = "";
+        document.head.append(l);
+        await new Promise((ok) => (l.onload = ok));
+      }
+      document.body.style.margin = "0";
+      const box = document.createElement("div");
+      box.id = "still";
+      box.style.cssText = `position:relative;width:${w * G}px;height:${h * G}px;overflow:hidden;background:#000`;
+      document.body.replaceChildren(box);
+      const { mountPreview } = await import("/js/maps.js");
+      window.__still = mountPreview(box, id);
+      for (let i = 0; i < 30; i++) {
+        window.__still.update(performance.now());
+        await new Promise((ok) => requestAnimationFrame(ok));
+      }
+    },
+    [id, w, h, G],
+  );
+  await page.waitForTimeout(300);
+  const shot = await page.locator("#still").screenshot();
+  return page.evaluate(
+    async ([b64, w, h, G]) => {
+      const { applyPalette } = await import("/js/pixelpalette.js");
+      window.__still.destroy();
+      const img = new Image();
+      img.src = "data:image/png;base64," + b64;
+      await img.decode();
+      const a = document.createElement("canvas");
+      a.width = img.naturalWidth;
+      a.height = img.naturalHeight;
+      const ax = a.getContext("2d", { willReadFrequently: true });
+      ax.drawImage(img, 0, 0);
+      const src = ax.getImageData(0, 0, a.width, a.height).data,
+        out = new ImageData(w, h),
+        at = G / 2 - 1;
+      for (let j = 0; j < h; j++)
+        for (let i = 0; i < w; i++) {
+          const s = ((j * G + at) * a.width + i * G + at) * 4,
+            o = (j * w + i) * 4;
+          for (let k = 0; k < 4; k++) out.data[o + k] = src[s + k];
+          out.data[o + 3] = 255;
+        }
+      const c = document.createElement("canvas");
+      c.width = w;
+      c.height = h;
+      c.getContext("2d").putImageData(applyPalette(out), 0, 0);
+      return c.toDataURL("image/png").split(",")[1];
+    },
+    [shot.toString("base64"), w, h, G],
+  );
+}
+/* the maps' pictures: [file, w, h, how]. The vote's, one for each map (a form shows its map's: vote.js mapTile); the
+   lobby's, one for each map and form, and Duck Cabin. how: "tile" (from its drawing) or "still" (from the map) */
+async function mapPics(page) {
+  return page.evaluate(
+    async ([VOTE, PIC]) => {
+      const { VOTE_MAPS } = await import("/js/rules.js");
+      const { mapForm } = await import("/js/maps.js");
+      const { isNwk } = await import("/js/nwk.js");
+      const how = (m) => (isNwk(m) ? "still" : "tile");
+      return [
+        ...[...new Set(VOTE_MAPS.map((id) => mapForm(id).map))].map((m) => [
+          `vote/${m}.webp`,
+          ...VOTE,
+          how(m),
+        ]),
+        ...[...VOTE_MAPS, "cabin"].map((id) => [
+          `pic/${id}.webp`,
+          ...PIC,
+          how(id),
+        ]),
+      ];
+    },
+    [VOTE, PIC],
+  );
 }
 
 /* a little server for the browser: the game's own scripts, and the originals */
@@ -123,6 +209,9 @@ function serve() {
     ".png": "image/png",
     ".webp": "image/webp",
     ".html": "text/html",
+    ".css": "text/css",
+    ".svg": "image/svg+xml",
+    ".woff2": "font/woff2",
   };
   const srv = http.createServer((req, res) => {
     const u = decodeURIComponent(new URL(req.url, "http://x").pathname),
@@ -196,16 +285,15 @@ async function made(page, src, w, h, how) {
   await page.goto(`http://127.0.0.1:${srv.address().port}/`);
   let before = 0,
     after = 0;
-  const items = [
-    ...ITEMS,
-    ...(await voteMaps(page)).map((m) => [`vote/${m}.webp`, ...VOTE, "tile"]),
-  ];
+  const items = [...ITEMS, ...(await mapPics(page))];
   for (const [src, w, h, how] of items) {
     if (!src.startsWith(only)) continue;
     const png = Buffer.from(
         await (how === "tile"
-          ? madeTile(page, src.slice(5, -5), w, h)
-          : made(page, src, w, h, how)),
+          ? madeTile(page, path.basename(src, ".webp"), w, h)
+          : how === "still"
+            ? madeStill(page, path.basename(src, ".webp"), w, h)
+            : made(page, src, w, h, how)),
         "base64",
       ),
       out = path.join(OUT, src.replace(/\.\w+$/, ".webp")),
@@ -219,7 +307,9 @@ async function made(page, src, w, h, how) {
       out,
     ]); // (lossless: the pixels stay exactly as made)
     fs.unlinkSync(tmp);
-    const a = how === "tile" ? 0 : fs.statSync(path.join(SRC, src)).size, // (a vote picture has no original: the drawing)
+    const a = /tile|still/.test(how)
+        ? 0
+        : fs.statSync(path.join(SRC, src)).size, // (a map's picture has no original file: the drawing)
       z = fs.statSync(out).size;
     before += a;
     after += z;
@@ -230,6 +320,18 @@ async function made(page, src, w, h, how) {
   console.log(
     `all: ${Math.round(before / 1024)} KB -> ${Math.round(after / 1024)} KB`,
   );
+  /* the lobby's pictures there are (art.js picURL) */
+  if (!only || "pic/".startsWith(only) || only.startsWith("pic/")) {
+    const pics = fs
+      .readdirSync(path.join(OUT, "pic"))
+      .filter((f) => f.endsWith(".webp"))
+      .map((f) => f.slice(0, -5))
+      .sort();
+    fs.writeFileSync(
+      path.join(ROOT, "js", "pxpic.js"),
+      `/* the maps that have a picture file (assets/px/pic): written by tools/pixel-files.cjs, never by hand */\nexport const PX_PIC = ${JSON.stringify(pics)};\n`,
+    );
+  }
   await b.close();
   srv.close();
 })();

@@ -23,7 +23,7 @@ import {
   sbOnBoard,
 } from "./sandboxrules.js";
 import { mapName, mapForm } from "./maps.js";
-import { sbSnapshot, newSaveId, SAVE_V } from "./sbsave.js";
+import { sbSnapshot, newSaveId, SAVE_V, oldPics } from "./sbsave.js";
 import { lobbyBtnHTML } from "./vote.js";
 import { music, allowSongs, allowedSongs } from "./music.js";
 import { sfx } from "./sound.js";
@@ -141,11 +141,14 @@ export async function readSave(id) {
   ]);
   const r = good(a) ? a : good(b) ? b : null;
   if (!r) return null;
+  let data;
   try {
-    return { ...r, data: JSON.parse(r.data) };
+    data = JSON.parse(r.data);
   } catch (e) {
     return null;
   }
+  await oldPics(data); // (the next save keeps only the pixels)
+  return { ...r, data };
 }
 /* write rec whole, keeping the one it replaces; then read it back and check it (a bad write puts the old one back) */
 let chain = Promise.resolve();

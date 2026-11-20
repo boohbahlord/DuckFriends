@@ -9,7 +9,7 @@
    3: "Every uploaded picture is made into pixels, and the original is never kept", which replaced the Compress tick). */
 import { npcList, npcById, npcNew } from "./sbnpcs.js";
 import { profile } from "./store.js";
-import { duckSVG } from "./duck.js";
+import { duckSVG, squareOf, DUCK_PIC_PX } from "./duck.js";
 import { esc, toast } from "./ui.js";
 import { applyPalette } from "./pixelpalette.js";
 import { SB_WHAT } from "./sandboxrules.js";
@@ -135,21 +135,47 @@ export async function picFrom(file, most = 32) {
   if (!file || !/^image\/(png|jpeg|gif|webp)$/.test(file.type))
     throw new Error("That file is not a picture (PNG, JPEG, GIF or WebP).");
   if (file.size > SB_PIC.MOST) throw new Error("That picture is over 2 MB.");
-  let d = await readAs(file);
-  const img = await sizeOf(d),
-    a = img.naturalHeight / img.naturalWidth || 1;
-  {
-    const k = Math.min(1, most / Math.max(img.naturalWidth, img.naturalHeight)),
-      c = document.createElement("canvas");
-    c.width = Math.max(1, Math.round(img.naturalWidth * k));
-    c.height = Math.max(1, Math.round(img.naturalHeight * k));
-    const x = c.getContext("2d", { willReadFrequently: true });
-    x.imageSmoothingQuality = "high";
-    x.drawImage(img, 0, 0, c.width, c.height);
-    x.putImageData(applyPalette(x.getImageData(0, 0, c.width, c.height)), 0, 0);
-    d = c.toDataURL("image/png");
+  const img = await sizeOf(await readAs(file));
+  return {
+    d: pixelsOf(img, most),
+    a: img.naturalHeight / img.naturalWidth || 1,
+  };
+}
+/* a loaded picture, its longest side most pixels (never bigger than it is), through the game's colors: a PNG */
+function pixelsOf(img, most) {
+  const k = Math.min(1, most / Math.max(img.naturalWidth, img.naturalHeight)),
+    c = document.createElement("canvas");
+  c.width = Math.max(1, Math.round(img.naturalWidth * k));
+  c.height = Math.max(1, Math.round(img.naturalHeight * k));
+  const x = c.getContext("2d", { willReadFrequently: true });
+  x.imageSmoothingQuality = "high";
+  x.drawImage(img, 0, 0, c.width, c.height);
+  x.putImageData(applyPalette(x.getImageData(0, 0, c.width, c.height)), 0, 0);
+  return c.toDataURL("image/png");
+}
+/* a save's or a made game mode's pictures (s.sbpic: { key: { d, a } }) kept from before every upload was made into
+   pixels (an NPC's whole file, a duck's 128 px JPEG): made into pixels now, as an upload is (a square one is a duck's
+   picture: duck.js DUCK_PIC_PX; any other, picFrom's 32), so only the pixels are kept (the owner's, Nov 19 23:26Z: "we
+   don't have the leftover image behind"). One that already is (a PNG, 64 pixels or less) stays. Changes pics; true if
+   any changed */
+export async function pixelsOnly(pics) {
+  let changed = false;
+  for (const p of Object.values(pics && typeof pics === "object" ? pics : {})) {
+    if (!p || typeof p.d !== "string" || !p.d.startsWith("data:image/"))
+      continue;
+    let img;
+    try {
+      img = await sizeOf(p.d);
+    } catch (e) {
+      continue;
+    }
+    const w = img.naturalWidth,
+      h = img.naturalHeight;
+    if (p.d.startsWith("data:image/png") && Math.max(w, h) <= 64) continue;
+    p.d = w === h ? squareOf(img, DUCK_PIC_PX) : pixelsOf(img, 32);
+    changed = true;
   }
-  return { d, a };
+  return changed;
 }
 /* the picture to the room, part by part (an online action is less than 200,000 letters), then on spawn id */
 export function sendPic(R, id, pic) {

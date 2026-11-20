@@ -355,7 +355,7 @@ export function euclidScene(layer, s) {
   };
 }
 
-/* the small picture for the Map window and the lobby's picture: the real drawing, 16 : 9, made once */
+/* the real drawing, 16 : 9, made once: for the map's picture files only (tools/pixel-src/backdrops.js) */
 let mini = "";
 export function euclidMiniURL() {
   if (!mini) {
@@ -367,5 +367,3 @@ export function euclidMiniURL() {
   }
   return mini;
 }
-export const euclidMini = () =>
-  `<img src="${euclidMiniURL()}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">`;

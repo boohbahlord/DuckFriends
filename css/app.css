@@ -18987,12 +18987,6 @@ body:has(> .vt) .win-back {
 .vt-map.moving .vt-still {
   visibility: hidden;
 }
-/* Nous Within Kenoma's pictures are its map itself, drawn once (vote.js stills): the dungeon's flames and their glows
-   stand still with it */
-html.moving .vt-nwk .ecf,
-html.moving .vt-nwk .ec-glow {
-  animation: none;
-}
 .map-layer.map-peek {
   position: absolute;
   inset: 0;
