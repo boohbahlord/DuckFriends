@@ -29,12 +29,10 @@ import {
 
 const WHITE = "#ffffff";
 /* the looks to draw every part from: each part's own choices, the rest left as the plain duck */
-function looks() {
+function looks({ WOUNDS, hitsOf, ZOUTFITS }) {
   const out = [],
     D = { ...DUCK_DEFAULT },
-    styles = STYLES.filter(
-      (s) => !s.flat && s.id !== "jack" && s.id !== "datboi",
-    ),
+    styles = STYLES.filter((s) => s.id !== "jack" && s.id !== "datboi"),
     metals = DUCK_METALS.map(([m]) => m),
     outfits = [];
   for (const o of [...OUTFITS, ...NPC_OUTFITS]) {
@@ -45,10 +43,10 @@ function looks() {
   }
   for (const st of styles)
     for (const [b] of BUILDS)
-      for (const m of st.fixed ? ["none"] : metals) {
+      for (const m of st.fixed || st.flat ? ["none"] : metals) {
         const L = { ...D, style: st.id, build: b, metal: m };
         for (const sh of [true, false]) out.push([L, { shadow: sh }]);
-        if (m === "none" && !st.fixed)
+        if (m === "none" && !st.fixed && !st.flat)
           for (const [p] of DUCK_PATTERNS) out.push([{ ...L, pattern: p }, {}]);
         for (const o of outfits) out.push([{ ...L, outfit: o }, {}]);
       }
@@ -70,45 +68,92 @@ function looks() {
   for (const bk of beaks) out.push([{ ...D, beak: bk }, {}]);
   for (const e of eyes)
     for (const dead of [false, true]) out.push([{ ...D, eyes: e }, { dead }]);
+  /* the marks on a duck's skin (a zombie's scars and rot, the wounds hits leave: l4ddart.js), each on its own, on each
+     build (they're clipped to the body's shape) */
+  const marks = { body: new Set(), head: new Set(), out: new Set() };
+  for (const w of Object.values(WOUNDS)) marks[w.on].add(w.svg);
+  for (const kind of "bBscrakpefx")
+    for (let at = 0; at < 8; at++) {
+      const h = hitsOf(kind + at);
+      for (const m of h.inner) marks.head.add(m);
+      for (const m of h.out) marks.out.add(m);
+    }
+  /* headless (a zombie's headshot): a zombie's own look, bare or in its clothes, dead */
+  for (const [b] of BUILDS)
+    for (const o of [null, ...ZOUTFITS])
+      out.push([
+        { ...D, build: b, ...(o ? { outfit: { id: o } } : {}) },
+        { dead: true, gone: { head: true } },
+      ]);
+  for (const [b] of BUILDS)
+    for (const [part, set] of Object.entries(marks))
+      for (const m of set)
+        out.push([{ ...D, build: b }, { skin: { [part]: [m] } }]);
   return out;
 }
 
+/* which file of its size a part goes in, so a game fetches only what its ducks wear: an outfit's clothes, a face item,
+   a style's body, a pattern, each a file of their own; the marks on skin and the headless parts (the zombies') too; the
+   rest (shadows, beaks, eyes, hats, metals) one file */
+const OWN = {
+    ofBack: "o",
+    cloth: "o",
+    sleeve: "o",
+    ofOver: "o",
+    face: "f",
+    pattern: "p",
+  },
+  BODY = [
+    "fill",
+    "edge",
+    "shade",
+    "wingBare",
+    "spots",
+    "slBack",
+    "slUnder",
+    "slOver",
+  ];
+const chunkOf = (layer, look, o) => {
+  if (o.gone && o.gone.head) return "x";
+  if (/^skin/.test(layer)) return "skin";
+  const k = OWN[layer];
+  if (k === "o" && look.outfit) return "o-" + look.outfit.id;
+  if (k === "f" && look.face) return "f-" + look.face.id;
+  if (k === "p") return "p-" + look.pattern;
+  if (BODY.includes(layer)) return "s-" + look.style;
+  return "main";
+};
 /* every part, once: { layer, key, svg (all black), whites: [[path, svg with that color white]] } */
-function parts() {
+function parts(L4) {
   const seen = new Map();
-  for (const [look, o] of looks()) {
+  for (const [look, o] of looks(L4)) {
     const B = blackLook(look),
       C = codedLook(look),
       paths = duckVars(look).map(([p]) => p);
+    const opt = {
+      size: 0,
+      dead: !!o.dead,
+      shadow: o.shadow !== false,
+      skin: o.skin,
+      gone: o.gone,
+    };
     for (const layer of LAYERS) {
-      const svg = duckSVG(B, {
-        layer,
-        size: 0,
-        dead: !!o.dead,
-        shadow: o.shadow !== false,
-      });
+      const svg = duckSVG(B, { layer, ...opt });
       if (!svg) continue;
-      const key = partKey(
-        layer,
-        duckSVG(C, {
-          layer,
-          size: 0,
-          dead: !!o.dead,
-          shadow: o.shadow !== false,
-        }),
-      );
+      const key = partKey(layer, duckSVG(C, { layer, ...opt }));
       if (seen.has(key)) continue;
       const whites = [];
       for (const p of paths) {
-        const w = duckSVG(withColor(B, p, WHITE), {
-          layer,
-          size: 0,
-          dead: !!o.dead,
-          shadow: o.shadow !== false,
-        });
+        const w = duckSVG(withColor(B, p, WHITE), { layer, ...opt });
         if (w !== svg && w) whites.push([p, w]);
       }
-      seen.set(key, { layer, key, svg, whites });
+      seen.set(key, {
+        layer,
+        key,
+        svg,
+        whites,
+        chunk: chunkOf(layer, look, o),
+      });
     }
   }
   return [...seen.values()];
@@ -197,39 +242,63 @@ async function sheet(list, n) {
         }
       }
     g.putImageData(id, 0, 0);
-    made.push({ key: p.key, c, at: null, e: [0, 0, w, h, x0, y0, used] });
+    made.push({
+      key: p.key,
+      chunk: p.chunk,
+      c,
+      e: [0, 0, w, h, x0, y0, used, 0],
+    });
   }
-  /* shelves */
-  const W = 2048,
-    sorted = [...made].sort((a, b) => b.c.height - a.c.height);
-  let x = 0,
-    y = 0,
-    row = 0;
-  for (const it of sorted) {
-    if (x + it.c.width > W) {
-      x = 0;
-      y += row + 1;
+  /* a file for each chunk, its parts on shelves: as wide as it needs, 2048 at most */
+  const chunks = [...new Set(made.map((it) => it.chunk))].sort(),
+    index = {},
+    files = [];
+  chunks.forEach((name, ci) => {
+    const its = made.filter((it) => it.chunk === name),
+      area = its.reduce((s, it) => s + (it.c.width + 1) * (it.c.height + 1), 0),
+      W = Math.min(
+        2048,
+        Math.max(
+          ...its.map((it) => it.c.width),
+          Math.ceil(Math.sqrt(area) * 1.15),
+        ),
+      ),
+      sorted = [...its].sort((a, b) => b.c.height - a.c.height);
+    let x = 0,
+      y = 0,
       row = 0;
+    for (const it of sorted) {
+      if (x + it.c.width > W) {
+        x = 0;
+        y += row + 1;
+        row = 0;
+      }
+      it.e[0] = x;
+      it.e[1] = y;
+      it.e[7] = ci;
+      x += it.c.width + 1;
+      row = Math.max(row, it.c.height);
     }
-    it.e[0] = x;
-    it.e[1] = y;
-    x += it.c.width + 1;
-    row = Math.max(row, it.c.height);
-  }
-  const out = document.createElement("canvas");
-  out.width = W;
-  out.height = Math.max(1, y + row);
-  const g = out.getContext("2d");
-  const index = {};
-  for (const it of made) {
-    g.drawImage(it.c, it.e[0], it.e[1]);
-    index[it.key] = it.e;
-  }
-  return { png: out.toDataURL("image/png").split(",")[1], index };
+    const out = document.createElement("canvas");
+    out.width = W;
+    out.height = Math.max(1, y + row);
+    const g = out.getContext("2d");
+    for (const it of its) {
+      g.drawImage(it.c, it.e[0], it.e[1]);
+      index[it.key] = it.e;
+    }
+    files.push({ name, png: out.toDataURL("image/png").split(",")[1] });
+  });
+  return { files, index };
 }
 
 export async function listParts() {
-  const list = parts();
+  /* the zombies' marks (l4ddart.js): its modules need the game's own order, from rules.js, or they wait on each other */
+  await import("/js/rules.js");
+  const list = parts({
+    ...(await import("/js/l4ddart.js")),
+    ...(await import("/js/l4ddrules.js")),
+  });
   window.__parts = list;
   return list.length;
 }

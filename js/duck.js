@@ -219,7 +219,13 @@ export function duckSVG(
   } = {},
 ) {
   const L = { ...DUCK_DEFAULT, ...plainLook(look || {}) },
-    id = "dk" + ++uid;
+    id = "dk" + ++uid,
+    /* its skin, each part a list of marks (the part sheets make each mark on its own: duckparts.js) */
+    SK = skin && {
+      body: [].concat(skin.body || []).filter(Boolean),
+      head: [].concat(skin.head || []).filter(Boolean),
+      out: [].concat(skin.out || []).filter(Boolean),
+    };
   /* a hat or a face item knocked off (gone), or coming back on (half see-through): on every kind of duck, Dat Boi and
      the flat ones too (the owner saw a hat fly off and stay on at once) */
   const worn = (svg, g) =>
@@ -282,13 +288,38 @@ ${dead ? '<path d="M24 20L96 92M96 20L24 92" stroke="#e01b1b" stroke-width="10" 
         ? `<defs><clipPath id="${id}fc"><path d="${blocks ? blocksCloth() : GEO_BODY}"/></clipPath><mask id="${id}nh"><rect width="120" height="120" fill="#fff"/><circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="#000"/></mask></defs>
 <g${blocks ? "" : ` mask="url(#${id}nh)"`}><g${bt}><g clip-path="url(#${id}fc)">${OF.cloth}${blocks ? `<path d="${Array.from({ length: 20 }, (_, i) => `M0 ${i * 6}H120M${i * 6} 0V120`).join("")}" stroke="#00000038" stroke-width=".3"/>` : ""}</g></g></g>`
         : "";
-    return `<svg class="duck flat${top ? " hatted" : ""}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${((size * (120 + top)) / 120).toFixed(1)}" role="img" aria-label="${esc(title || "Duck")}">
+    /* its layers, back to front, named as a rubber duck's (the part sheets: duckparts.js) */
+    const F = {
+      shadow: shadow
+        ? `<ellipse cx="58" cy="109" rx="${(44 * (1 + 0.16 * fat)).toFixed(1)}" ry="7" fill="#000" opacity=".22"/>`
+        : "",
+      hatBack: worn(hat.back, gone && gone.hat),
+      ofBack: OF ? OF.back : "",
+      fill: `<g${bt}>${blocks ? blocksBody(L.color) : geoBody(L.color)}</g>`,
+      cloth,
+      wingBare:
+        OF && OF.bare
+          ? `<g${bt}>${blocks ? blocksBody(L.color, "w") : geoWing(L.color)}</g>`
+          : "",
+      sleeve: OF && OF.sleeve ? `<g${bt}>${OF.sleeve}</g>` : "",
+      ofOver: OF && OF.over ? `<g${bt}>${OF.over}</g>` : "",
+      beak,
+      eyes: zap || (gone && gone.eyes) ? "" : eyes,
+      face: worn(face, gone && gone.face),
+      eyesZap: zap && !(gone && gone.eyes) ? eyes : "",
+      hatFront: worn(hat.front, gone && gone.hat),
+    };
+    if (layer)
+      return F[layer]
+        ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${-HAT_TOP} 120 ${120 + HAT_TOP}" width="120" height="${120 + HAT_TOP}">${F[layer]}</svg>`
+        : "";
+    return `<svg class="duck flat${top ? " hatted" : ""}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${((size * (120 + top)) / 120).toFixed(1)}" role="img" aria-label="${esc(title || "Duck")}"${partsOK(L, { extra, gone }) ? ` data-dk="${esc(JSON.stringify({ L, dead, shadow, gone }))}"` : ""}>
 ${k !== 1 ? `<g transform="translate(60 108) scale(${k.toFixed(3)}) translate(-60 -108)">` : ""}
-${shadow ? `<ellipse cx="58" cy="109" rx="${(44 * (1 + 0.16 * fat)).toFixed(1)}" ry="7" fill="#000" opacity=".22"/>` : ""}
-${worn(hat.back, gone && gone.hat)}${OF ? OF.back : ""}<g${bt}>${blocks ? blocksBody(L.color) : geoBody(L.color)}</g>${cloth}
-${OF && OF.bare ? `<g${bt}>${blocks ? blocksBody(L.color, "w") : geoWing(L.color)}</g>` : ""}
-${OF && OF.sleeve ? `<g${bt}>${OF.sleeve}</g>` : ""}${OF && OF.over ? `<g${bt}>${OF.over}</g>` : ""}
-${beak}${zap || (gone && gone.eyes) ? "" : eyes}${worn(face, gone && gone.face)}${zap && !(gone && gone.eyes) ? eyes : ""}${worn(hat.front, gone && gone.hat)}${k !== 1 ? "</g>" : ""}${extra}</svg>`;
+${F.shadow}
+${F.hatBack}${F.ofBack}${F.fill}${F.cloth}
+${F.wingBare}
+${F.sleeve}${F.ofOver}
+${F.beak}${F.eyes}${F.face}${F.eyesZap}${F.hatFront}${k !== 1 ? "</g>" : ""}${extra}</svg>`;
   }
   const noHead = !!(gone && gone.head),
     holes =
@@ -454,7 +485,7 @@ ${noHead ? "" : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="url
       ? `<rect x="0" y="0" width="120" height="120" fill="url(#${id}p)" opacity=".92"/>`
       : "",
     slUnder: SL.under || "",
-    skinBody: skin && skin.body ? `<g${bt}>${skin.body}</g>` : "",
+    skinBody: SK && SK.body.length ? `<g${bt}>${SK.body.join("")}</g>` : "",
     cloth:
       OF && OF.cloth
         ? `<g mask="url(#${id}nh)">${rips ? `<g mask="url(#${id}r)">` : ""}<g${bt}>${OF.cloth}</g>${rips ? `</g><g mask="url(#${id}cm)">${frays}</g>` : ""}</g>`
@@ -463,7 +494,7 @@ ${noHead ? "" : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="url
   <ellipse cx="74" cy="63" rx="21" ry="5.5" fill="#000" opacity=".2" mask="url(#${id}nh)"/>`,
     wingBare: sleeved ? (OF.bare ? solid + bare : "") : bare,
     sleeve: sleeved ? ripped(`<g${bt}>${OF.sleeve}</g>`) : "",
-    skinHead: skin && skin.head ? skin.head : "",
+    skinHead: SK ? SK.head.join("") : "",
     metal: M
       ? `<rect x="0" y="0" width="120" height="120" fill="url(#${id}env)"/>
   <ellipse cx="64" cy="24" rx="13" ry="7" fill="url(#${id}spec)" transform="rotate(-25 64 24)"/><ellipse cx="34" cy="70" rx="17" ry="7" fill="url(#${id}spec)" transform="rotate(-14 34 70)"/>
@@ -489,7 +520,7 @@ ${
     face: noHead ? "" : worn(face, gone && gone.face),
     eyesZap: !noHead && zap && !(gone && gone.eyes) ? eyes : "",
     hatFront: noHead ? "" : worn(hat.front, gone && gone.hat),
-    skinOut: skin && skin.out ? skin.out : "",
+    skinOut: SK ? SK.out.join("") : "",
   };
   const inClip = (s) => (s ? `<g clip-path="url(#${id}c)">${s}</g>` : "");
   /* one layer alone, in the frame every layer shares (room for a hat above): duckparts.js */
@@ -499,7 +530,7 @@ ${
       ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${-HAT_TOP} 120 ${120 + HAT_TOP}" width="120" height="${120 + HAT_TOP}">${defsOf(s)}${s}</svg>`
       : "";
   }
-  return `<svg class="duck${M ? " metal" : ""}${top ? " hatted" : ""}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${((size * (120 + top)) / 120).toFixed(1)}" role="img" aria-label="${esc(title || "Rubber duck")}"${partsOK(L, { skin, extra, gone }) ? ` data-dk="${esc(JSON.stringify({ L, dead, shadow, gone }))}"` : ""}>
+  return `<svg class="duck${M ? " metal" : ""}${top ? " hatted" : ""}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${((size * (120 + top)) / 120).toFixed(1)}" role="img" aria-label="${esc(title || "Rubber duck")}"${partsOK(L, { extra, gone }) ? ` data-dk="${esc(JSON.stringify({ L, dead, shadow, gone, ...(SK ? { sk: SK } : {}) }))}"` : ""}>
 ${defs}
 ${k !== 1 ? `<g transform="translate(60 108) scale(${k.toFixed(3)}) translate(-60 -108)">` : ""}
 ${P.shadow}
@@ -542,11 +573,13 @@ export const LAYERS = [
   "fill",
   "pattern",
   "slUnder",
+  "skinBody",
   "metal",
   "cloth",
   "shade",
   "wingBare",
   "sleeve",
+  "skinHead",
   "edge",
   "spots",
   "slOver",
@@ -556,6 +589,7 @@ export const LAYERS = [
   "face",
   "eyesZap",
   "hatFront",
+  "skinOut",
 ];
 const CLIPPED = [
   "pattern",
@@ -565,21 +599,20 @@ const CLIPPED = [
   "shade",
   "wingBare",
   "sleeve",
+  "skinBody",
+  "skinHead",
 ];
-/* whether a duck can be made from its parts: a rubber-like style, nothing drawn on it or round it that only it has (a
-   zombie's skin, an extra), nothing torn off it but what the parts know how to leave out (its hat, face, eyes, beak,
-   holes through it). The rest is still made whole */
-function partsOK(L, { skin, extra, gone }) {
+/* whether a duck can be made from its parts: a rubber-like style or a flat one (Blocks, 2D shapes), nothing drawn round it that only it has (an extra).
+   What's torn off it (its head, hat, face, eyes, beak, holes through it, its clothes torn) the parts leave out. Its skin (a zombie's marks, the wounds hits leave) is made of parts too, a mark at a time. The rest is
+   still made whole */
+function partsOK(L, { extra, gone }) {
   const st = styleById(L.style);
   return (
-    !st.flat &&
     L.style !== "jack" &&
     L.style !== "datboi" &&
     !L.image &&
     L.metal !== "rainbow" &&
-    !skin &&
-    !extra &&
-    !(gone && (gone.head || (gone.rips && gone.rips.length)))
+    !extra
   );
 }
 

@@ -933,7 +933,7 @@ const ZHATS = [
   "wizard",
   "jester",
 ];
-const ZOUTFITS = [
+export const ZOUTFITS = [
   "shirt",
   "hoodie",
   "jeans",

@@ -229,8 +229,17 @@ const unq = (s) =>
     .replace(/&gt;/g, ">")
     .replace(/&amp;/g, "&");
 async function fromParts(src, cw, ch) {
-  const m =
-    typeof src === "string" && /\sdata-dk="([^"]*)"/.exec(src.slice(0, 4000));
+  let text = typeof src === "string" ? src : "";
+  if (text.startsWith("data:image/svg+xml")) {
+    // (a zombie's or an NPC's picture comes as its drawing's URL: svgurl.js)
+    try {
+      text = decodeURIComponent(text.slice(text.indexOf(",") + 1));
+    } catch {
+      return null;
+    }
+  }
+  /* in its first tag (esc() leaves no > in it) */
+  const m = /\sdata-dk="([^"]*)"/.exec(text.slice(0, text.indexOf(">") + 1));
   if (!m || window.__pxNoParts) return null;
   try {
     const { duckFromParts } = await import("./duckparts.js");

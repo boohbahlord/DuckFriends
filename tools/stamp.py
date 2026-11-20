@@ -103,6 +103,12 @@ for top in ["assets", "manifest.webmanifest"]:
                 continue
             full = os.path.join(d, f)
             rel = os.path.relpath(full, root).replace(os.sep, "/")
+            # the ducks' part files (tools/duck-parts.cjs): only what the plain duck needs at the usual size, so an
+            # installed phone stays small. A duck whose files aren't on the device is made whole, as before
+            if rel.startswith("assets/px/ducks/") and not re.match(
+                r"assets/px/ducks/32/(index|main|s-rubber)-", rel
+            ):
+                continue
             kept[rel] = hashlib.sha1(open(full, "rb").read()).hexdigest()[:10]
 listing = os.path.join(root, "offline.json")
 open(listing, "w", encoding="utf-8").write(

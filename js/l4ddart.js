@@ -391,16 +391,14 @@ export function woundsOf(n, clothed = false) {
   }
   return out.sort();
 }
-/* the marks as duckSVG's skin */
+/* the marks as duckSVG's skin: a list for each part, a mark to each (the ducks' part sheets make each one on its own) */
 export const woundSkin = (ids) => ({
   head: ids
     .filter((id) => WOUNDS[id].on === "head")
-    .map((id) => WOUNDS[id].svg)
-    .join(""),
+    .map((id) => WOUNDS[id].svg),
   body: ids
     .filter((id) => WOUNDS[id].on === "body")
-    .map((id) => WOUNDS[id].svg)
-    .join(""),
+    .map((id) => WOUNDS[id].svg),
 });
 
 /* ---------- the wounds a zombie gets from hits (owner 2026-11-04 04:01Z) ----------
@@ -509,7 +507,7 @@ const GORE = () => ({
   holes: CHUNK_AT,
 });
 const HIT_KINDS = "bBscrakpxgfehm";
-/* the hits as duckSVG's skin and gone: codes is s.hang.zw's string for one zombie */
+/* the hits as duckSVG's skin and gone: codes is s.hang.zw's string for one zombie. inner and out are lists of marks */
 export function hitsOf(codes = "") {
   const inner = [],
     out = [],
@@ -562,7 +560,7 @@ export function hitsOf(codes = "") {
   if (gone.head) out.push(HEADLESS);
   if (holes.length) gone.holes = holes;
   if (rips.length) gone.rips = rips;
-  return { inner: inner.join(""), out: out.join(""), gone };
+  return { inner, out, gone }; // (lists, a mark to each: duckSVG's skin takes them so)
 }
 export const HIT_CODES = { kinds: HIT_KINDS, spots: HIT_AT.length };
 
@@ -583,7 +581,7 @@ export function zombieURL(l, n = 0, hits = "") {
           size: 64,
           shadow: true,
           dead: true,
-          skin: { body: sk.body, head: sk.head + h.inner, out: h.out },
+          skin: { body: sk.body, head: [...sk.head, ...h.inner], out: h.out },
           gone: h.gone,
         }),
       ),
