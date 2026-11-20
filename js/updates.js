@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v143",
+    version: 143,
+    date: "Nov 20, 2026",
+    title: "Climbing",
+    news: [
+      "For Sandbox: tick who can climb a zone, and they climb it up to its elevation by walking into it, the way the ladder works. Put one on the edge of a floor to climb onto it.",
+    ],
+  },
+  {
     id: "v142",
     version: 142,
     date: "Nov 20, 2026",
