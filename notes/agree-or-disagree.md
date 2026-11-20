@@ -7367,8 +7367,8 @@ Adam: went through the checklist for every ask not yet live and sent him the ope
 >
 > There is a colorblind mode for letter or word contrast with their colors if there wasnt already.
 
-Adam: (1) phone on its side: the camera worlds (Cabin, Downpour) size by the phone's short side, so ducks look as small as
-upright (Adam). (2) PC and phone on its side: health bar and meters bigger, hotbar bigger and to their left (Noah, after
+Adam: (1) phone on its side: the camera worlds (Cabin, Downpour) zoom out so its short side sees as much as the phone
+upright sees across (V182, Adam). (2) PC and phone on its side: health bar and meters bigger, hotbar bigger and to their left (Noah, after
 row 102). (3) UI scale % in the pause menu scaling every piece of UI together (Solomon, after rules step 5). (4) Colorblind
 mode today only recolors the two-sided boards; it also gets colorblind-safe, high-contrast colored words and letters
 (Jackal, CSS and settings only, nothing in Sandbox).
