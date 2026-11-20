@@ -7,6 +7,8 @@
    never draws the map's pictures itself. Change a map's drawing, then run:
      node tools/pixel-maps.cjs            (every map)
      node tools/pixel-maps.cjs board      (only that one)
+     node tools/pixel-maps.cjs pixel --colors   (only put its files in the era's limits, in place: Pixel's scene
+                                                shows its files now, so it can't be made again from its drawing)
    then python3 tools/stamp.py as for any other change. Needs Playwright's Chromium and Python's Pillow. Writes
    assets/px/mapw/<map>/ and js/pxm/<map>.js */
 const http = require("http");
@@ -276,6 +278,56 @@ async function recordMap(page, how, arg) {
   );
 }
 
+/* the maps whose soft light is a glow, added to what's under it as the era did (tools/era.py split): which of their
+   files. Sky's clouds are see-through as a whole (their opacity), so nothing under them to add to: only its sun and moon */
+const GLOWS = {
+  board: () => 1,
+  "board-light": () => 1,
+  carnival: () => 1,
+  stars: () => 1,
+  sky: (k) => (k === "sky-sun" || k === "sky-moon") && 0.3, // (weaker: added to a bright sky, a full glow goes white)
+};
+/* each file that has a glow gets its glow drawn over it, added (plus-lighter): a picture's twin in the markup (moving
+   with it, the same classes), or a glow beside it in a map's own list (Sky's sun and moon, Starry Night's sky). Only a
+   picture with nothing between it and the world's stage but the strips' boxes (.pxs) gets one: one inside a moving
+   group (the train, a drifting bubble) would have nothing under it to add to. The glows used */
+function withGlows(html, glows) {
+  const used = new Set(),
+    stack = [];
+  html = html.replace(
+    /<(\/?)(div|img)\b([^>]*)>/g,
+    (tag, close, name, rest) => {
+      if (name === "div") {
+        if (close) stack.pop();
+        else stack.push(/class="pxs\b/.test(rest));
+        return tag;
+      }
+      const k = (rest.match(/src="FILE:([\w-]+)"/) || [])[1];
+      if (!k || !glows.includes(k) || !stack.every(Boolean)) return tag;
+      used.add(k);
+      const twin = tag
+        .replace(`FILE:${k}"`, `FILE:${k}-glow"`)
+        .replace(
+          /style="([^"]*)"/,
+          (_, st) =>
+            `style="${st.replace(/;?\s*$/, "")};mix-blend-mode:plus-lighter"`,
+        );
+      return (
+        tag +
+        (twin.includes("mix-blend-mode")
+          ? twin
+          : twin.replace("<img", '<img style="mix-blend-mode:plus-lighter"'))
+      );
+    },
+  );
+  for (const k of glows)
+    html = html.replace(new RegExp(`"(src|sky)":"FILE:${k}"`, "g"), (m, f) => {
+      used.add(k);
+      return `${m},"${f === "sky" ? "skyGlow" : "glow"}":"FILE:${k}-glow"`;
+    });
+  return [html, used];
+}
+
 (async () => {
   const only = process.argv[2] || "";
   const srv = await serve(),
@@ -287,8 +339,23 @@ async function recordMap(page, how, arg) {
   page.on("pageerror", (e) => console.log("page error:", e.message));
   await page.goto(`http://127.0.0.1:${srv.address().port}/`);
   await page.waitForTimeout(500);
+  if (process.argv[3] === "--colors") {
+    /* a map whose files can't be made again from its drawing (Pixel: its scene shows these files now) only put in the
+       era's limits, in place */
+    const dir = path.join(ROOT, "assets", "px", "mapw", only),
+      names = fs.readdirSync(dir).filter((n) => n.endsWith(".webp"));
+    for (const n of names)
+      execFileSync("python3", [
+        path.join(__dirname, "era.py"),
+        path.join(dir, n),
+        path.join(dir, n),
+      ]);
+    console.log(`${only}: ${names.length} files in the era's limits`);
+  }
   for (const [id, what, how, arg] of MAPS) {
     if (only && id !== only) continue;
+    if (process.argv[3] === "--colors") break;
+    const glows = [];
     const { html, files } = await recordMap(page, how, arg),
       dir = path.join(ROOT, "assets", "px", "mapw", id);
     fs.rmSync(dir, { recursive: true, force: true });
@@ -298,16 +365,38 @@ async function recordMap(page, how, arg) {
       const tmp = path.join(dir, k + ".png"),
         out = path.join(dir, k + ".webp");
       fs.writeFileSync(tmp, Buffer.from(url.split(",")[1], "base64"));
-      execFileSync("python3", [
-        "-c",
-        "import sys\nfrom PIL import Image\nImage.open(sys.argv[1]).save(sys.argv[2], 'WEBP', lossless=True, method=6)",
+      const lit = GLOWS[id] && GLOWS[id](k),
+        gl = path.join(dir, k + "-glow.webp");
+      const said = execFileSync("python3", [
+        path.join(__dirname, "era.py"),
         tmp,
         out,
-      ]); // (lossless: the pixels stay exactly as made)
-      fs.unlinkSync(tmp);
+        ...(lit ? [gl, String(lit)] : []),
+      ]).toString(); // (in the era's limits, then lossless: notes/map-building-rules.md)
       bytes += fs.statSync(out).size;
+      if (said.includes("glow")) {
+        glows.push(k);
+        bytes += fs.statSync(gl).size;
+      }
     }
-    const markup = html.replace(
+    const [glowed, used] = withGlows(html, glows);
+    for (const k of glows)
+      if (!used.has(k)) {
+        /* no place to add it: not kept, and its picture made again with its soft light in it */
+        const out = path.join(dir, k + ".webp"),
+          gl = path.join(dir, k + "-glow.webp");
+        bytes -= fs.statSync(out).size + fs.statSync(gl).size;
+        fs.unlinkSync(gl);
+        execFileSync("python3", [
+          path.join(__dirname, "era.py"),
+          path.join(dir, k + ".png"),
+          out,
+        ]);
+        bytes += fs.statSync(out).size;
+      }
+    for (const k of Object.keys(files))
+      fs.unlinkSync(path.join(dir, k + ".png"));
+    const markup = glowed.replace(
       /FILE:([\w-]+)/g,
       (_, k) => `assets/px/mapw/${id}/${k}.webp`,
     );
