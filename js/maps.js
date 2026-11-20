@@ -1221,14 +1221,19 @@ export function mountPreview(box, id) {
 export function mountMap(layer, s) {
   const map = s.options.map || "board",
     cur = { cols: null };
-  const base = variantBase(map); // (a variation wears its map's look too, then its own: map-is-nwk map-is-nwkten)
+  const base = variantBase(map), // (a variation wears its map's look too, then its own: map-is-nwk map-is-nwkten)
+    /* Survival wears Nous Within Kenoma's whole look over its own map (the owner's, Nov 20 02:32Z: "We can give the noose
+       within Kenoma the full theme to survival"); Dead Ducks Arcade keeps its own ("I kind of lean towards leaving Dead
+       Ducks Arcade UI alone") */
+    looks = [
+      "map-on",
+      "map-is-" + base,
+      "map-is-" + map,
+      ...(s.options.mode === "surv" ? ["map-is-nwk"] : []),
+    ];
   layer.className = `map-layer map-${base} map-${map}`;
   layer.dataset.nopx = ""; // (the pixel look: the grid filter does maps, pxdom.js leaves them)
-  document.documentElement.classList.add(
-    "map-on",
-    "map-is-" + base,
-    "map-is-" + map,
-  ); // (map-is-nwk: Nous Within Kenoma's book look; map-is-vellum: The King's Festival's)
+  document.documentElement.classList.add(...looks); // (map-is-nwk: Nous Within Kenoma's book look; map-is-vellum: The King's Festival's)
   const scene = sceneOf(map, layer, s, cur, true);
   // Carnival Night: the tiles' marquee bulbs follow the tiles' size
   const ro =
@@ -1265,11 +1270,7 @@ export function mountMap(layer, s) {
       if (ro) ro.disconnect();
       scene.destroy();
       layer.className = "map-layer";
-      document.documentElement.classList.remove(
-        "map-on",
-        "map-is-" + base,
-        "map-is-" + map,
-      );
+      document.documentElement.classList.remove(...looks);
     },
   };
 }

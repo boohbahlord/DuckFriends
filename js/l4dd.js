@@ -796,7 +796,7 @@ let sqEl = null,
 function spinSquare(s, ctx) {
   const L = s.hang.l4,
     Wd = ctx.world,
-    rest = !!(sqEl && L && !L.over && L.wait);
+    rest = !!(sqEl && L && !L.over && L.wait && !isSurv(s)); // (none in Survival: nothing there to buy or spin, the owner's, Nov 20 02:32Z)
   if (!sqEl) return;
   /* the car (or the fireplace), and on Downpour a square round each gas pump too: where something can be bought or
      done (the owner's, Nov 17 18:05Z: "the gas pumps now get a small sqaure around them in the rest phase as well") */
@@ -1384,7 +1384,7 @@ function paint(now, ctx) {
   {
     const br = 0.5 + 0.5 * Math.sin((performance.now() / 2600) * 2 * Math.PI);
     for (const [x, y, z, r] of [
-      [ANGEL.X, ANGEL.Y, ANGEL.Z + 70, 90],
+      ...(isSurv(s) ? [] : [[ANGEL.X, ANGEL.Y, ANGEL.Z + 70, 90]]), // (Survival has no Angel machine, so no light where it stood: the owner's, Nov 20 02:32Z)
       [PW.X, PW.Y, heightAt(PW.X, PW.Y) + 70, 80],
     ]) {
       if (!seenFrom(x, y, Wd.inside)) continue;
