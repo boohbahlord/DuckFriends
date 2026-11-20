@@ -1741,7 +1741,7 @@ const pathOf = (p, dy = 0) =>
    lip the roof's grey, the concrete under it darker going down, the ink round it. roofW × roofD: the roof's drawing
    (its sign's band, the roof's front, its bottom 70: that is already its face, so a ledge only hangs from its top);
    P: one of the world's pixels, in the roof's own numbers */
-const LEDGE = 68; // (as thick as its front, the sign's band)
+const LEDGE = 20; // (a thin slab: a few pixels deep, so a long edge never hangs down like a curtain: Joseph's critique, Nov 20 19:03Z)
 function ledgeOf(cut, roofW, roofD, seed, P) {
   const r = rnd(seed + 7),
     by = roofD - 70,
@@ -1766,8 +1766,10 @@ function ledgeOf(cut, roofW, roofD, seed, P) {
   const face = new Map(), // ("i,j": how many pixels down the face, from its top)
     deep = new Map(),
     K0 = Math.round(LEDGE / P);
+  let run = K0;
   for (let i = i0; i < i1; i++) {
-    const k0 = K0 - 1 + Math.round(r() * 2); // (its bottom ragged)
+    if (i === i0 || r() < 0.2) run = K0 - 1 + Math.round(r() * 2);
+    const k0 = run; // (its bottom broken in short runs, a crisp line, never a fringe)
     deep.set(i, k0);
     let last = -1e9;
     for (let j = j0; j < j1; j++) {
