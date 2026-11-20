@@ -352,7 +352,7 @@ function inGameColors(x, T, base) {
 }
 export function cardBackground(card = {}) {
   if (card.image)
-    return `background:url("${card.image}") center/cover, ${card.color || "#2fa4ff"};image-rendering:pixelated`; // (its real pixels, square: customize.js)
+    return `background:url("${card.image}") center/cover, ${card.color || "#2fa4ff"};image-rendering:pixelated`; // (its real pixels, in the card's own shape: duck.js CARD_PIC)
   const pat =
     card.pattern && card.pattern !== "none"
       ? patternLayers(
