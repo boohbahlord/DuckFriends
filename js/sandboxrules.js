@@ -761,8 +761,8 @@ export const sbFitSide = (v) =>
   Math.max(0.2, Math.min(40, v < 1 ? Math.round(v * 10) / 10 : Math.round(v)));
 /* ---------- every build block's shape (plan Phase 2: "Spawn, respawn, loot and zone become one thing you put down") ----------
    A block has a shape and a size (zw, zh: duck lengths; a zone starts at 4 by 4, the rest at 1 by 1) or fills the whole
-   map. Square by default; the others by adding sides, stopping once it already looks round. The shape is checked on a
-   grid of quarter-duck squares, the same squares it's drawn with, so what you see is exactly what it covers */
+   map. Square by default; the others by adding sides, stopping once it already looks round. It is made of the hitbox
+   tiles its shape covers 0.6 of (sbTiles), the same tiles it's drawn with, so what you see is exactly what it covers */
 export const SB_SHAPES = {
   sq: "Square",
   tri: "Triangle",
@@ -779,7 +779,6 @@ export const SB_SHAPE = {
   },
   fill: { name: "Fill the map", kind: "bool", def: "f" },
 };
-export const SB_CELLS = 4; // (grid squares to a duck length)
 export const sbShape = (p) => (p && SB_SHAPES[p.sh] ? p.sh : "sq");
 export const sbFills = (p) => !!(p && p.fill);
 /* its size in duck lengths, [w, h] */
@@ -814,52 +813,53 @@ export function sbInShape(sh, u, v) {
     off = (((a % w) + w) % w) - w / 2;
   return Math.hypot(x, y) * Math.cos(off) <= Math.cos(Math.PI / n) + 1e-9;
 }
-/* block p's grid: [columns, rows] of its quarter-duck squares */
-export const sbCells = (p) =>
-  sbSize(p).map((v) => Math.max(1, Math.round(v * SB_CELLS)));
-/* is grid square (i, j) of block p inside its shape (its middle is) */
-export function sbCellIn(p, i, j) {
-  const [cx, cy] = sbCells(p);
-  return sbInShape(
-    sbShape(p),
-    ((i + 0.5) / cx) * 2 - 1,
-    ((j + 0.5) / cy) * 2 - 1,
-  );
-}
 /* a duck length in shares of the map, [across, up and down] */
 export const sbUnit = (s, W, H) =>
   sbOnBoard(s) ? boardDuck(s) : [SB_ZONE_PX / W, SB_ZONE_PX / H];
 /* how far block p is turned, in degrees (plan Phase 2: "while held, the arrow keys rotate") */
 export const sbRot = (p) => ((((p && p.rot) || 0) % 360) + 360) % 360;
-/* block p's box, [x0, y0, x1, y1] in shares of the map (W, H: a world's size in px): around it as it's turned; the
-   whole map when it fills it */
-export function sbZoneBox(s, p, W = 1, H = 1) {
-  if (sbFills(p)) return [0, 0, 1, 1];
+/* a spot in duck lengths from block p's middle, before its turn, in shares of the map (one that fills the map: from
+   the map's middle) */
+function toMap(s, p, g, lx, ly, W, H) {
+  if (sbFills(p)) return { x: lx / g.w + 0.5, y: ly / g.h + 0.5 };
   const [rx, ry] = sbUnit(s, W, H),
-    [w, h] = sbSize(p),
-    a = (sbRot(p) * Math.PI) / 180,
-    c = Math.abs(Math.cos(a)),
-    n = Math.abs(Math.sin(a)),
-    hw = ((w * c + h * n) * rx) / 2,
-    hh = ((w * n + h * c) * ry) / 2;
-  return [p.x - hw, p.y - hh, p.x + hw, p.y + hh];
+    a = (sbRot(p) * Math.PI) / 180;
+  return {
+    x: p.x + (lx * Math.cos(a) - ly * Math.sin(a)) * rx,
+    y: p.y + (lx * Math.sin(a) + ly * Math.cos(a)) * ry,
+  };
 }
-/* is (x, y) (shares of the map) inside block p: turned back by its rotation into its own grid, on a square inside its
-   shape */
-export function sbInBlock(s, p, x, y, W = 1, H = 1) {
-  if (sbFills(p)) return x >= 0 && x <= 1 && y >= 0 && y <= 1;
+/* (x, y) in shares of the map, in duck lengths from block p's middle, turned back into its own grid */
+function toBlock(s, p, g, x, y, W, H) {
+  if (sbFills(p)) return [(x - 0.5) * g.w, (y - 0.5) * g.h];
   const [rx, ry] = sbUnit(s, W, H),
-    [w, h] = sbSize(p),
     a = (-sbRot(p) * Math.PI) / 180,
     dx = (x - p.x) / rx,
-    dy = (y - p.y) / ry, // (duck lengths from its middle)
-    lx = dx * Math.cos(a) - dy * Math.sin(a),
-    ly = dx * Math.sin(a) + dy * Math.cos(a);
-  if (Math.abs(lx) > w / 2 || Math.abs(ly) > h / 2) return false;
-  const [cx, cy] = sbCells(p),
-    i = Math.min(cx - 1, Math.floor((lx / w + 0.5) * cx)),
-    j = Math.min(cy - 1, Math.floor((ly / h + 0.5) * cy));
-  return sbCellIn(p, i, j);
+    dy = (y - p.y) / ry;
+  return [
+    dx * Math.cos(a) - dy * Math.sin(a),
+    dx * Math.sin(a) + dy * Math.cos(a),
+  ];
+}
+/* block p's box, [x0, y0, x1, y1] in shares of the map (W, H: a world's size in px): around its squares as it's turned;
+   the whole map when it fills it */
+export function sbZoneBox(s, p, W = 1, H = 1) {
+  if (sbFills(p)) return [0, 0, 1, 1];
+  const [a, b, c, d] = sbTiles(p).box,
+    q = [
+      [a, b],
+      [c, b],
+      [c, d],
+      [a, d],
+    ].map(([u, v]) => toMap(s, p, null, u, v, W, H)),
+    xs = q.map((o) => o.x),
+    ys = q.map((o) => o.y);
+  return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+}
+/* is (x, y) (shares of the map) inside block p: on one of its tiles (sbTiles: the ones its shape covers 0.6 of) */
+export function sbInBlock(s, p, x, y, W = 1, H = 1) {
+  if (sbFills(p)) return x >= 0 && x <= 1 && y >= 0 && y <= 1;
+  return onTile(p, ...toBlock(s, p, null, x, y, W, H));
 }
 /* ---------- what a block does over time (plan Phase 3): its squares and their potential order ----------
    A block is a grid of squares (Square size, in duck lengths); its potential order says which squares act at each step
@@ -1047,32 +1047,183 @@ export const sbOrd = (p) => {
   const o = ordTxt(p, "ord").trim();
   return SB_ORDERS[o] ? o : "rand";
 };
+/* ---------- the hitbox tiles (the owner's, Nov 20 18:46Z and 19:02Z) ----------
+   "the zones are literally based off of the hitbox things on the ground ... they should snap to the hitbox things on
+   the ground as their units"; "it's based on the hitbox tiles that detects where the ducks are before determining if
+   they take damage. The thing that we already use in the game": the small squares a block always checked a duck's spot
+   on (a quarter of a duck: 12 px on a world), one size for every block. A block is cut into these tiles from its top
+   left corner, and a tile is the block's when its shape covers 0.6 of it or more ("0.6 or more, then it will take up
+   that tile hitbox"): only those tiles are the block, so it's walked on, stops, hurts and is drawn only there, and a
+   tile sticking out past its edge by less than 0.4 is still all of it. A block thinner than a tile has one tile that
+   thin. With Snap on (the default) its corner sits on the ground's tile lines, one every tile from the map's top left
+   corner, and it turns a quarter at a time, so its tiles are the ground's tiles (sbSnapSpot). Its potential order's
+   squares (Square size) are made of its tiles */
+export const SB_TILE = 0.25; // (duck lengths)
+export const SB_TAKE = 0.6;
+const SAMPLES = 6, // (points across a tile each way, to tell how much of it the shape covers)
+  MAX_TILES = 256, // (tiles along a side at most: a bigger block has bigger tiles)
+  TILES = new Map();
+/* block p's tiles: { nx, ny, tw, th (a tile's size, duck lengths), w, h (its size), set: the tiles that are its, as
+   i + j * nx counted from its top left corner, box: [x0, y0, x1, y1] around them, duck lengths from its middle } */
+export function sbTiles(p) {
+  const [w, h] = sbSize(p),
+    sh = sbShape(p),
+    t = Math.max(SB_TILE, w / MAX_TILES, h / MAX_TILES),
+    key = `${sh} ${w} ${h} ${t}`;
+  let g = TILES.get(key);
+  if (g) return g;
+  if (TILES.size > 300) TILES.clear();
+  const axis = (v) => (v <= t + 1e-9 ? [1, v] : [Math.ceil(v / t - 1e-6), t]),
+    [nx, tw] = axis(w),
+    [ny, th] = axis(h),
+    set = new Set();
+  let best = 0,
+    most = -1;
+  for (let j = 0; j < ny; j++)
+    for (let i = 0; i < nx; i++) {
+      let n = 0;
+      for (let b = 0; b < SAMPLES; b++)
+        for (let a = 0; a < SAMPLES; a++) {
+          const x = (i + (a + 0.5) / SAMPLES) * tw,
+            y = (j + (b + 0.5) / SAMPLES) * th;
+          if (
+            x <= w &&
+            y <= h &&
+            sbInShape(sh, (x / w) * 2 - 1, (y / h) * 2 - 1)
+          )
+            n++;
+        }
+      if (n >= SB_TAKE * SAMPLES * SAMPLES - 1e-9) set.add(i + j * nx);
+      if (n > most) [most, best] = [n, i + j * nx];
+    }
+  if (!set.size) set.add(best); // (never nothing: the tile it covers most)
+  const is = [...set].map((c) => c % nx),
+    js = [...set].map((c) => Math.floor(c / nx));
+  g = {
+    nx,
+    ny,
+    tw,
+    th,
+    w,
+    h,
+    set,
+    box: [
+      -w / 2 + Math.min(...is) * tw,
+      -h / 2 + Math.min(...js) * th,
+      -w / 2 + (Math.max(...is) + 1) * tw,
+      -h / 2 + (Math.max(...js) + 1) * th,
+    ],
+  };
+  TILES.set(key, g);
+  return g;
+}
+/* is (lx, ly), duck lengths from block p's middle before its turn, on one of its tiles */
+const onTile = (p, lx, ly) => {
+  const g = sbTiles(p),
+    i = Math.floor((lx + g.w / 2) / g.tw),
+    j = Math.floor((ly + g.h / 2) / g.th);
+  return i >= 0 && j >= 0 && i < g.nx && j < g.ny && g.set.has(i + j * g.nx);
+};
 const MAX_SIDE = 64; // (squares along a side at most: a big square size takes over past it)
-/* block p's squares: { nx, ny, w, h (duck lengths), cells: the squares inside its shape, as i + j * nx } */
+const GRIDS = new Map();
+/* block p's potential order squares (Square size, duck lengths, from its top left corner): { nx, ny, w, h (the
+   squares' whole size), ox, oy (their middle from the block's middle, before its turn), sq, cells: the squares holding
+   one of its tiles, as i + j * nx, set: the same as a Set } */
 export function sbGrid(s, p, W = 1, H = 1) {
   let [w, h] = sbSize(p);
-  if (sbFills(p)) {
+  const fill = sbFills(p);
+  if (fill) {
     const [rx, ry] = sbUnit(s, W, H);
     [w, h] = [1 / rx, 1 / ry];
   }
   const sq = Math.max(+ordTxt(p, "sq") || 1, w / MAX_SIDE, h / MAX_SIDE),
-    nx = Math.max(1, Math.round(w / sq)),
-    ny = Math.max(1, Math.round(h / sq)),
-    cells = [];
-  for (let j = 0; j < ny; j++)
-    for (let i = 0; i < nx; i++)
-      if (
-        sbFills(p) ||
-        sbInShape(
-          sbShape(p),
-          ((i + 0.5) / nx) * 2 - 1,
-          ((j + 0.5) / ny) * 2 - 1,
-        )
-      )
-        cells.push(i + j * nx);
-  if (!cells.length) cells.push(Math.floor(nx / 2) + Math.floor(ny / 2) * nx);
-  return { nx, ny, w, h, cells };
+    key = `${fill ? "fill" : sbShape(p)} ${w} ${h} ${sq}`;
+  let g = GRIDS.get(key);
+  if (g) return g;
+  if (GRIDS.size > 300) GRIDS.clear();
+  const cells = [];
+  if (fill) {
+    /* the whole map: every square, stretched to fit it */
+    const nx = Math.max(1, Math.round(w / sq)),
+      ny = Math.max(1, Math.round(h / sq));
+    for (let c = 0; c < nx * ny; c++) cells.push(c);
+    g = { nx, ny, w, h, ox: 0, oy: 0, sq, cells };
+  } else {
+    const axis = (v) =>
+        v <= sq + 1e-9 ? [1, v] : [Math.ceil(v / sq - 1e-6), sq],
+      [nx, cw] = axis(w),
+      [ny, ch] = axis(h),
+      t = sbTiles(p),
+      has = new Set();
+    for (const c of t.set) {
+      const x = ((c % t.nx) + 0.5) * t.tw,
+        y = (Math.floor(c / t.nx) + 0.5) * t.th;
+      has.add(
+        Math.min(nx - 1, Math.floor(x / cw)) +
+          Math.min(ny - 1, Math.floor(y / ch)) * nx,
+      );
+    }
+    cells.push(...[...has].sort((a, b) => a - b));
+    g = {
+      nx,
+      ny,
+      w: nx * cw,
+      h: ny * ch,
+      ox: (nx * cw - w) / 2,
+      oy: (ny * ch - h) / 2,
+      sq,
+      cells,
+    };
+  }
+  g.set = new Set(cells);
+  GRIDS.set(key, g);
+  return g;
 }
+/* square c of grid g: its middle, in duck lengths from its block's middle, before the block's turn */
+export const sbCellMid = (g, c) => [
+  ((c % g.nx) + 0.5) * (g.w / g.nx) - g.w / 2 + g.ox,
+  (Math.floor(c / g.nx) + 0.5) * (g.h / g.ny) - g.h / 2 + g.oy,
+];
+/* does block p snap to the ground's tile lines: Snap on (the default; the right-click menu turns it off), and not one
+   that fills the map */
+export const sbSnaps = (p) => !!p && !p.ns && !sbFills(p);
+/* block p's spot { x, y } (shares of the map) with its tiles on the ground's: the corner its tiles start from (its top
+   left one, wherever its turn puts it) moved to the nearest tile line each way, or to the other one beside it when the
+   nearest would take it off the map */
+export function sbSnapSpot(s, p, W = 1, H = 1) {
+  if (!sbSnaps(p)) return { x: p.x, y: p.y };
+  const [rx, ry] = sbUnit(s, W, H),
+    [w, h] = sbSize(p),
+    t = sbTiles(p).tw,
+    a = (sbRot(p) * Math.PI) / 180,
+    lx = -w / 2,
+    ly = -h / 2,
+    cx = p.x / rx + lx * Math.cos(a) - ly * Math.sin(a),
+    cy = p.y / ry + lx * Math.sin(a) + ly * Math.cos(a),
+    [x0, y0, x1, y1] = sbZoneBox(s, p, W, H);
+  /* one way: the step to the nearest line, else to the other line beside it, kept on the map if it was */
+  const way = (c, u, lo, hi) => {
+    const r = Math.round(c / t) * t - c,
+      o = r > 0 ? r - t : r + t;
+    for (const d of [r, o]) {
+      const m = d * u;
+      if (
+        lo < -1e-4 ||
+        hi > 1 + 1e-4 ||
+        (lo + m >= -1e-4 && hi + m <= 1 + 1e-4)
+      )
+        return m;
+    }
+    return 0;
+  };
+  return {
+    x: +(p.x + way(cx, rx, x0, x1)).toFixed(6),
+    y: +(p.y + way(cy, ry, y0, y1)).toFixed(6),
+  };
+}
+/* a snapping block's turn: a quarter at a time (any turn from before goes to the nearest quarter first) */
+export const sbSnapTurn = (rot, by) =>
+  (((Math.round((rot + Math.sign(by) * 90) / 90) * 90) % 360) + 360) % 360;
 /* a number from 0 to 1 that only ever depends on its inputs (the same on every screen) */
 const hash = (...v) => {
   let x = 2166136261;
@@ -1109,18 +1260,10 @@ export function sbActive(s, id, p, k, W = 1, H = 1) {
       sh = g.h / g.ny,
       NX = Math.max(1, Math.ceil(1 / rx / sw)),
       NY = Math.max(1, Math.ceil(1 / ry / sh)),
-      odds = n / Math.max(N, NX * NY),
-      a = (sbRot(p) * Math.PI) / 180;
+      odds = n / Math.max(N, NX * NY);
     on = new Set(
       g.cells.filter((c) => {
-        const lx = ((c % g.nx) + 0.5) * sw - g.w / 2,
-          ly = (Math.floor(c / g.nx) + 0.5) * sh - g.h / 2,
-          x = sbFills(p)
-            ? 0.5 + lx / g.w
-            : p.x + (lx * Math.cos(a) - ly * Math.sin(a)) * rx,
-          y = sbFills(p)
-            ? 0.5 + ly / g.h
-            : p.y + (lx * Math.sin(a) + ly * Math.cos(a)) * ry,
+        const { x, y } = toMap(s, p, g, ...sbCellMid(g, c), W, H),
           I = Math.floor(x * NX),
           J = Math.floor(y * NY);
         return hash(seed, k, I, J) < odds;
@@ -1190,26 +1333,15 @@ export function sbActive(s, id, p, k, W = 1, H = 1) {
   KEEP.set(key, on);
   return on;
 }
-/* the square of block p that (x, y) (shares of the map) is on, i + j * nx, or -1 off it */
+/* the square of block p that (x, y) (shares of the map) is on, i + j * nx (inside its shape or not), or -1 off them */
 export function sbCellAt(s, p, x, y, W = 1, H = 1) {
-  const g = sbGrid(s, p, W, H);
-  let lx, ly;
-  if (sbFills(p)) {
-    lx = x - 0.5;
-    ly = y - 0.5;
-    lx *= g.w;
-    ly *= g.h;
-  } else {
-    const [rx, ry] = sbUnit(s, W, H),
-      a = (-sbRot(p) * Math.PI) / 180,
-      dx = (x - p.x) / rx,
-      dy = (y - p.y) / ry;
-    lx = dx * Math.cos(a) - dy * Math.sin(a);
-    ly = dx * Math.sin(a) + dy * Math.cos(a);
-  }
-  if (Math.abs(lx) > g.w / 2 || Math.abs(ly) > g.h / 2) return -1;
-  const i = Math.min(g.nx - 1, Math.floor((lx / g.w + 0.5) * g.nx)),
-    j = Math.min(g.ny - 1, Math.floor((ly / g.h + 0.5) * g.ny));
+  const g = sbGrid(s, p, W, H),
+    [lx, ly] = toBlock(s, p, g, x, y, W, H),
+    X = lx - g.ox,
+    Y = ly - g.oy;
+  if (Math.abs(X) > g.w / 2 || Math.abs(Y) > g.h / 2) return -1;
+  const i = Math.min(g.nx - 1, Math.floor((X / g.w + 0.5) * g.nx)),
+    j = Math.min(g.ny - 1, Math.floor((Y / g.h + 0.5) * g.ny));
   return i + j * g.nx;
 }
 /* the step block id is on now (the host counts them: sbzone.js) */
@@ -1437,23 +1569,10 @@ export function sbCellMids(s, id, p, W, H, most = 120) {
     on = sbActive(s, id, p, sbStep(s, id), W, H),
     list = on ? [...on] : g.cells,
     every = Math.max(1, Math.ceil(list.length / most)),
-    [rx, ry] = sbUnit(s, W, H),
-    a = (sbRot(p) * Math.PI) / 180,
     out = [];
   for (let i = 0; i < list.length; i += every) {
-    const c = list[i],
-      lx = ((c % g.nx) + 0.5) / g.nx - 0.5,
-      ly = (Math.floor(c / g.nx) + 0.5) / g.ny - 0.5;
-    if (sbFills(p)) out.push({ x: lx + 0.5, y: ly + 0.5, c });
-    else {
-      const X = lx * g.w,
-        Y = ly * g.h;
-      out.push({
-        x: p.x + (X * Math.cos(a) - Y * Math.sin(a)) * rx,
-        y: p.y + (X * Math.sin(a) + Y * Math.cos(a)) * ry,
-        c,
-      });
-    }
+    const c = list[i];
+    out.push({ ...toMap(s, p, g, ...sbCellMid(g, c), W, H), c });
   }
   return out;
 }
@@ -1467,17 +1586,16 @@ function actingSpot(s, p, W, H) {
   const g = sbGrid(s, p, W, H),
     list = [...on],
     c = list[Math.floor(Math.random() * list.length)],
-    lx = ((c % g.nx) + Math.random()) / g.nx - 0.5,
-    ly = (Math.floor(c / g.nx) + Math.random()) / g.ny - 0.5;
-  if (sbFills(p)) return { x: lx + 0.5, y: ly + 0.5 };
-  const [rx, ry] = sbUnit(s, W, H),
-    a = (sbRot(p) * Math.PI) / 180,
-    X = lx * g.w,
-    Y = ly * g.h;
-  return {
-    x: p.x + (X * Math.cos(a) - Y * Math.sin(a)) * rx,
-    y: p.y + (X * Math.sin(a) + Y * Math.cos(a)) * ry,
-  };
+    [mx, my] = sbCellMid(g, c);
+  return toMap(
+    s,
+    p,
+    g,
+    mx + (Math.random() - 0.5) * (g.w / g.nx),
+    my + (Math.random() - 0.5) * (g.h / g.ny),
+    W,
+    H,
+  );
 }
 /* block p's outline as points round its edge, in shares of the map ({ x, y }; W, H as sbZoneBox): its shape's edge,
    looked for along n rays from its middle, turned as it is */

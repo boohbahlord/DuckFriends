@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v187",
+    version: 187,
+    date: "Nov 20, 2026",
+    title: "Zones on the tiles",
+    news: [
+      "For Sandbox: zones are made of the ground's hit tiles. A tile is part of a zone when its shape covers 0.6 or more of it, and zones snap to the tile lines.",
+    ],
+  },
+  {
     id: "v186",
     version: 186,
     date: "Nov 20, 2026",
