@@ -60,6 +60,8 @@ import {
   showMenu,
 } from "./sbmenu.js";
 import { mountSbDrag } from "./sbdrag.js";
+import { sbOffZ } from "./sbout.js";
+import { nameHTML } from "./name.js";
 
 /* each window: its key, its title, and whether it needs the host's rights */
 export const SB_WINS = {
@@ -333,8 +335,40 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
   let sentBld = null;
   const mayBuild = (R) =>
     ["b", "m", "n", "g"].some((x) => sbMay(R.state, R.me, x)); // (cheat mode is theirs)
+  /* everyone out of lives off the zombie maps (G's Rules, sbout.js): the game over card, as l4dd.js draws it there */
+  const outEl = document.createElement("div");
+  outEl.className = "l4-over sb-over";
+  outEl.hidden = true;
+  outEl.addEventListener("click", (e) => {
+    const R = getR();
+    if (R && e.target.closest("[data-sbagain]"))
+      R.send({ t: "sbr", k: "again" });
+  });
+  let outSig = "";
+  const paintOut = (R) => {
+    const s = R && R.state,
+      o = s && sbOffZ(s) && s.phase !== "lobby" && s.sb && s.sb.over,
+      host = !!s && s.hostId === R.me,
+      sig = o ? JSON.stringify(o) + host : "";
+    /* over the map, in its middle: in the board (drawn again now and then, so put back when it's new) */
+    const bd = S.querySelector(".hang-board") || S.querySelector(".board");
+    if (bd && outEl.parentNode !== bd) bd.append(outEl);
+    if (sig === outSig) return;
+    outSig = sig;
+    outEl.hidden = !o;
+    if (!o) return (outEl.innerHTML = "");
+    const hostName = (s.players[s.hostId] || {}).name || "the host";
+    outEl.innerHTML = `<div class="l4-over-card"><h2>Everyone's out</h2>${
+      o.how === "lobby" || o.how === "again"
+        ? `<p class="small dim">${o.how === "lobby" ? "Back to the lobby in a moment." : "Starting over in a moment."}</p>`
+        : host
+          ? '<div class="l4-over-btns"><button type="button" class="btn yellow" data-sbagain>Play again</button><button type="button" class="btn" data-a="lobby">Back to the lobby</button></div>'
+          : `<p class="small dim">Waiting for ${nameHTML(hostName)} to play again or go back to the lobby.</p>`
+    }</div>`;
+  };
   const paint = () => {
     const R = getR();
+    paintOut(R);
     sbView.build =
       !!R && (k.open === "b" || !!carry) && sbMay(R.state, R.me, "b"); // (the zones show while I build, and while I put something down: sbspawnview.js)
     building(R);
@@ -1107,6 +1141,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
       tools.remove();
       ghost.remove();
       cancel.remove();
+      outEl.remove();
       sbView.build = false;
     },
   };

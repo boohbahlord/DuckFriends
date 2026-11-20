@@ -10,6 +10,7 @@
 import { isSurv } from "./survrules.js";
 import { isWild, isL4dd } from "./l4ddrules.js";
 import { isSb, sbRule } from "./sandboxrules.js";
+import { sbOffZ, sbOut } from "./sbout.js";
 import { cardHTML } from "./card.js";
 import { esc } from "./ui.js";
 
@@ -23,6 +24,21 @@ const ghostDda = (s, id) =>
 let watch = "";
 /* the ducks I may watch: the other players still in it (up or down), never a dead one, nor Justin out there */
 export function watchable(s, me) {
+  /* Duck Cabin and the plain boards in Sandbox: out of lives, the others still in it (sbout.js) */
+  if (sbOffZ(s))
+    return ["hang", "sandbox"].includes(s.phase) &&
+      sbRule(s, "spec") &&
+      !(s.sb && s.sb.over) &&
+      sbOut(s, me)
+      ? s.seat.filter(
+          (id) =>
+            id !== me &&
+            s.players[id] &&
+            s.pos[id] &&
+            s.pos[id].x >= 0 &&
+            !sbOut(s, id),
+        )
+      : [];
   const L = s && s.hang && s.hang.l4;
   if (
     !(isSurv(s) || (isSb(s) && sbRule(s, "spec"))) || // (Sandbox: out of lives, with its Rules' watching on)
