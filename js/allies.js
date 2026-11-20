@@ -34,7 +34,7 @@ export const FR = {
   TALK_R: 1.8, // duck lengths: walk up this near in a rest and one of them answers
   NEAR: 4, // duck lengths: in a fight they keep about this near the nearest duck
 };
-const BOOMS = ["grenade", "glauncher", "jaimebomb"]; // (explosives: kills by these are never counted)
+const BOOMS = ["grenade", "glauncher"]; // (explosives: kills by these are never counted)
 
 /* plain first names, no ranks: the owner's own pick (Nov 19 23:33Z: "when I hear Bob, that's real fucking shit", and
    women names that are the equivalent of those) */

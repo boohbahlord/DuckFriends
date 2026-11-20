@@ -13,7 +13,7 @@ import { showJumps } from "./jumps.js";
 import { checkUnlocks, takeOffLocked } from "./unlocks.js";
 import "./homeapp.js"; // (early: it keeps the browser's install offer for the front page's button)
 import "./front.js";
-import { pixelOn, pxImgWatch, gridPx } from "./pixel.js"; // (first: the pixel look's class goes on before anything draws)
+import { pixelOn, pxImgWatch, gridPx, allSheets } from "./pixel.js"; // (first: the pixel look's class goes on before anything draws)
 import { pxWatch } from "./pxdom.js";
 import { pxEmojiWatch } from "./pxtext.js";
 import "./music.js";
@@ -134,7 +134,17 @@ document.getElementById("lite-link")?.remove(); // (the light install link on th
 /* the rest of the game (the rooms, the lobby, the game, every mode's rules), once the first screen is up with its
    pictures in: later.js. Before, it was asked for at once, and on a slow line its code took the line from the start
    screen's pictures (the owner's, Nov 20 20:31Z). A press before then asks for it at once (router.js) */
-firstUp.then(rest);
+/* then the pictures the next screens show (the made pictures' other sheet, the cards' patterns), before they're
+   asked for: on a slow line they popped in after the next screen's loading screen (the owner's, Nov 20 20:31Z) */
+firstUp
+  .then(rest)
+  .then(() =>
+    Promise.all([
+      allSheets(),
+      import("./card.js").then((m) => m.cardSheets()), // (in with the rest already: lobby.js)
+    ]),
+  )
+  .catch(() => {});
 setTimeout(accountStart, 300);
 setTimeout(askConnection, 600); // once, on the first visit   // a device that signed in before connects after the first screen is up
 

@@ -8,7 +8,6 @@
 import { duckSVG, DUCK_DEFAULT } from "../duck.js";
 import { hitsOf } from "../l4ddart.js";
 import { zombieLook } from "../l4ddrules.js";
-import { JAIME } from "../mgjart.js";
 
 const O = "#1c1c28"; // the ducks' ink
 const n1 = (v) => Math.round(v * 10) / 10;
@@ -447,7 +446,7 @@ const CAR_COLORS = [
    A duck's body lying on its side: the game's own duck drawing (duck.js) with the game's own wounds (l4ddart.js
    hitsOf: a bullet hole is a hole through it, a cut bleeds, a lost beak leaves a bloody stump), in its blood.
      yellow: a plain yellow duck shot through the head, on a car's hood;
-     jaime: Jaime cut up on the chapel's floor, his head apart from the rest;
+     body: a dead duck on the chapel's floor, a different one each time the world loads (the owner's, Nov 20 21:38Z: Jaime left the game);
      soldier: a soldier duck on the gas station's roof, his beak gone, scratched all over, rotting;
      trooper: a yellow duck in his army uniform inside the gas station, his head blown off, shot through the body, in a
        pool of blood like the one that spills out of Justin (the owner's, Nov 18 10:38Z: "another dead duck with's it's
@@ -456,11 +455,25 @@ const CAR_COLORS = [
        wounds red (the owner's, Nov 19 10:22Z: "The last corpse in the gas station should be a dead zombie actually with
        it's head still there AND it's bullet wounds not looking yellow or golden because that isn't right"): the yellow
        was his own yellow showing where the holes tore his uniform; a zombie's skin is green. */
-const BLOOD = "#7d1424",
+const BODY_COLORS = [
+    "#ffd23f",
+    "#f4f1ea",
+    "#9bd3f2",
+    "#f2a0b8",
+    "#a8d672",
+    "#c9a7e8",
+  ], // (the chapel's dead duck: any of these)
+  BLOOD = "#7d1424",
   BLOOD_D = "#3d0910",
   CORPSES = {
     yellow: { look: {}, hits: "B3B6c0c5", turn: -96 },
-    jaime: { look: JAIME.duck, hits: "c0c2c4c5c7k1", turn: -84, cut: true },
+    body: {
+      look: {
+        color: BODY_COLORS[Math.floor(Math.random() * BODY_COLORS.length)],
+      },
+      hits: "c0c2c4c5c7k1",
+      turn: -84,
+    },
     soldier: {
       look: {
         color: "#a7a26a", // (a yellow duck gone grey-green)
@@ -537,7 +550,7 @@ export function corpse(kind, cx, cy, w = 100, flip = false, only = "") {
   return s;
 }
 /* one of them on its own, for the chapel's floor: w × d */
-export function corpseSVG({ w = 140, d = 70, kind = "jaime", only = "" } = {}) {
+export function corpseSVG({ w = 140, d = 70, kind = "body", only = "" } = {}) {
   return wrap(w, d, corpse(kind, w / 2, d * 0.55, w * 0.72, false, only));
 }
 

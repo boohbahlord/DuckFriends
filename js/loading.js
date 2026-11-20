@@ -81,13 +81,15 @@ export function loadingScreen({ duck, ping, ready, max = 5000 }) {
     if (--busy > 0) return; // (another screen is still waiting)
     const wait = Math.max(0, MIN - (performance.now() - t0));
     setTimeout(() => {
+      if (busy) return; // (another loading screen came in the meantime: it stays up for that one)
       bar.style.transition = "width 180ms ease-out";
       bar.style.width = "100%";
       setTimeout(() => {
+        if (busy) return;
         v.style.pointerEvents = "";
         fade(v, 260, 0); // the game comes back very quickly
         delete v.dataset.on;
-        setTimeout(() => v.classList.remove("loading"), 300);
+        setTimeout(() => busy || v.classList.remove("loading"), 300);
       }, 220);
     }, wait);
   });
@@ -96,26 +98,57 @@ export function loadingScreen({ duck, ping, ready, max = 5000 }) {
 /* ---------- pictures still on their way (the owner's, Nov 19 20:04Z: "The loading screen should be anywhere in which it
    hides this kind of pop-in") ----------
    A picture on the screen that isn't shown yet: one still downloading, or, with the pixel look, one waiting for its
-   pixels (pixel.js hides an <img> until then, pxdom.js a drawing: data-pxwait). Not a map's own pictures (the filter
-   and pxbake.js draw those where they are), nor what has no size (not on the screen) */
+   pixels (pixel.js hides an <img> until then, pxdom.js a drawing: data-pxwait). A map's own pictures (the filter and
+   pxbake.js draw those where they are) count only while they download: its <img>s, and its pieces on sheets (a
+   background in their style: tools/pixel-sheets.cjs). Nothing that has no size (not on the screen) */
 const NOT_MINE = ".map-layer, #shapes, [data-nopx], .hurt-edge, .veil";
+/* the files come in so far (every picture, sheet and script, as the browser says) */
+const came = new Set();
+let arrived = 0; // (the last moment any file came in)
+try {
+  performance.setResourceTimingBufferSize(4000);
+  new PerformanceObserver((l) => {
+    arrived = performance.now();
+    for (const e of l.getEntries()) came.add(e.name);
+  }).observe({ type: "resource", buffered: true });
+} catch {}
+const sheetOf = new WeakMap(); // element -> the file its style's background shows (or "")
+const sheetIn = (e) => {
+  let u = sheetOf.get(e);
+  if (u === undefined) {
+    const m = /url\(["']?([^"')]+)/.exec(e.getAttribute("style") || "");
+    u =
+      m && !/^(data|blob):/.test(m[1])
+        ? new URL(m[1], document.baseURI).href
+        : "";
+    sheetOf.set(e, u);
+  }
+  return !u || came.has(u);
+};
 /* how many, and how much of the screen they take (a share of it) */
 function waiting(root = document.body) {
   const px = document.documentElement.classList.contains("pixel");
   let n = 0,
     area = 0;
-  for (const e of root.querySelectorAll(
-    px ? "img[src], svg[data-pxwait]" : "img[src]",
-  )) {
-    if (e.closest(NOT_MINE)) continue;
+  const sel = px
+    ? 'img[src], svg[data-pxwait], [style*="url("]'
+    : 'img[src], [style*="url("]';
+  for (const e of [
+    ...(root.matches && root.matches(sel) ? [root] : []), // (root itself too: a drawing waited for)
+    ...root.querySelectorAll(sel),
+  ]) {
+    const mine = !e.closest(NOT_MINE);
+    if (e.tagName === "IMG") {
+      if (
+        e.complete && // (one still downloading counts)
+        !(mine && px && e.naturalWidth && !e.matches(".px, [data-pxok]")) // (and one whose pixels aren't made yet)
+      )
+        continue;
+    } else if (e.tagName === "svg") {
+      if (!mine) continue;
+    } else if (sheetIn(e) || e.closest(".veil")) continue;
     const r = e.getBoundingClientRect();
     if (!r.width || !r.height) continue;
-    if (
-      e.tagName === "IMG" &&
-      e.complete && // (one still downloading counts)
-      !(px && e.naturalWidth && !e.matches(".px, [data-pxok]")) // (and one whose pixels aren't made yet)
-    )
-      continue;
     n++;
     area += r.width * r.height;
   }
@@ -123,16 +156,9 @@ function waiting(root = document.body) {
 }
 /* until every picture under root is in. One that never comes doesn't hold the game: nothing new for STUCK ms, or
    maxMs in all, and it goes on */
-const STUCK = 8000;
-/* the last moment any file came in (a picture, a sheet, the code): on a slow line the pictures wait behind other files,
-   and that isn't stuck. The owner's, Nov 20 20:31Z: "even after the loading screen, the duck on the cloud and the click
-   to play shit isnt finished loading": the loading screen went while the pictures were still on their way */
-let arrived = 0;
-try {
-  new PerformanceObserver(() => (arrived = performance.now())).observe({
-    type: "resource",
-  });
-} catch {}
+const STUCK = 8000; /* (counted from the last file that came in, arrived above: on a slow line the pictures wait behind other
+   files, and that isn't stuck. The owner's, Nov 20 20:31Z: "even after the loading screen, the duck on the cloud and the
+   click to play shit isnt finished loading": the loading screen went while the pictures were still on their way) */
 export function picturesIn(root = document.body, maxMs = 90000) {
   return new Promise((done) => {
     const t0 = performance.now();
@@ -151,28 +177,48 @@ export function picturesIn(root = document.body, maxMs = 90000) {
     requestAnimationFrame(() => requestAnimationFrame(look)); // (once the new pictures have been seen: pixel.js, pxdom.js)
   });
 }
+/* a part of the page put in for another, shown only once its pictures are in (each frame looked at; given up after
+   maxMs), so nothing blinks out while it's redrawn (the owner's, Nov 20 20:46Z: Customize's big duck vanished while it
+   was redrawn). roots: what to look at */
+export function shownSoon(roots, maxMs = 3000) {
+  const list = [].concat(roots);
+  return new Promise((done) => {
+    const t0 = performance.now();
+    const look = () => {
+      if (
+        performance.now() - t0 > maxMs ||
+        list.every((r) => !r.isConnected || !waiting(r).n)
+      )
+        return done();
+      requestAnimationFrame(look);
+    };
+    requestAnimationFrame(look); // (once the new drawings have been seen: pxdom.js marks them as they come)
+  });
+}
 /* a screen or a window that has just come up (or changed): if its pictures aren't in, the loading screen until they
    are. Many pictures, or a big part of the screen, at once (Sandbox's map vote: they take a while); one picture only
    if it isn't in a moment later (what is made at once never brings it up). Pictures that matter: a small one alone (a
-   duck by a chat line, an icon) never does */
+   duck by a chat line, an icon) never does in a window. A new screen (whole: router.js) looks at the whole page, and
+   any picture at all counts (the owner's, Nov 20 20:31Z: "pop in images or textures or anything are everywhere") */
 const BIG = 0.01, // (of the screen)
   MANY = 4,
   HUGE = 0.3;
 const covering = new WeakSet();
-export function coverPictures(root) {
+export function coverPictures(root, { whole = false } = {}) {
   /* never in the middle of a game (the owner's, Nov 19 22:52Z: "in the game that's already playing, either it be the
      next turn or the next round or clicking an object, no loading is allowed"): only while a game loads */
   if (!root || covering.has(root) || document.body.dataset.screen === "game")
     return;
+  const where = whole ? document.body : root;
   const now = () => {
     if (!root.isConnected || covering.has(root)) return null;
-    const w = waiting(root);
-    return w.share >= BIG ? w : null;
+    const w = waiting(where);
+    return (whole ? w.n : w.share >= BIG) ? w : null;
   };
   const cover = () => {
     covering.add(root);
     const done = holdLoading({ maxMs: 90000 }); // (a slow line: picturesIn says when it's stuck)
-    picturesIn(root).then(() => {
+    picturesIn(where).then(() => {
       covering.delete(root);
       done();
     });

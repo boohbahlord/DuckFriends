@@ -2,8 +2,8 @@ import { ARM_COOL } from "./armspeed.js";
 import { hpHeal, hpHurt, tenths } from "./hpmath.js";
 /* ---------- the rules of Mad God Justin ----------
    A boss fight: every duck has the knife (1), the pistol (2: it never reloads, in place of the bow, the owner's,
-   Nov 16), Jaime (3, from a pool everyone shares), the weapon it picked
-   up (4) and the zebra cake (5, shared too); whatever it switches to stays out in its hand, but Jaime, and a picked-up
+   Nov 16), the weapon it picked
+   up (3) and the zebra cake (4, shared too); whatever it switches to stays out in its hand, and a picked-up
    weapon used up goes back to the one out before. Together they must bring Justin's HP to 0 (no time limit: the owner's,
    Nov 3; every win counts toward the lightning eyes). His HP is hpOf (below) when the fight starts, and one
    stab takes 1. Each duck has 6 HP (the lobby's Player HP); after any hit nothing can hurt it for a second (it
@@ -16,7 +16,7 @@ import { hpHeal, hpHurt, tenths } from "./hpmath.js";
    - His throws, each held up first (the tell): the controllers every way at once and the office chair. (No fireball any
      more: the owner's, Nov 18 10:38Z, "we are removing the fireball from everything in the game".)
    - The edge lightning, every 10 s by itself: the board's edges glow for 0.6 s, then a flash runs along them and hits
-     every duck and Jaime there (not him).
+     every duck there (not him).
    - When he touches the board's edge he flashes blue and jumps to a spot far from it, once every 15 s at most.
    - Once a minute, at a random moment, his double for 7 s: one of the two does no harm, and hits on that one count for
      nothing.
@@ -35,8 +35,7 @@ import { hpHeal, hpHurt, tenths } from "./hpmath.js";
    He's the Justin option's board Justin (boardjustin.js: s.justin, justinAt, his look, lines and bullets); this file is
    his brain here. s.mgj = { hp, max, n (the fight's number), dmg {id: stabs}, hits {id: times he knocked them down},
    kill, won, met (the meteor now: { at, fx, hit, back }), metDone, shotgun, over, and the rework's: burn and burnt {id: until}, edgeAt (the
-   next edge flash), edgeLast, dup (his double: { at, until, fake: 0 him, 1 the double }), jp (Jaime's pool:
-   { n, at }), jaimes {id: { by, n, stabAt }}, jStabs, rv {reviver: { id, at }}, cake, zebraAt }. */
+   next edge flash), edgeLast, dup (his double: { at, until, fake: 0 him, 1 the double }), rv {reviver: { id, at }}, cake, zebraAt }. */
 import {
   enter,
   lostRound,
@@ -58,20 +57,6 @@ import {
   FASTER,
   GRENADE_R,
 } from "./rules.js";
-import {
-  BOMB,
-  bombRoll,
-  bombIn,
-  flyTo,
-  snapLine,
-  jaimeCount,
-  jaimeSays,
-  jaimeDead,
-  anyOf,
-  JAIME_MAD,
-  JAIME_HURT,
-  JUSTIN_AT_JAIME,
-} from "./jaimebomb.js";
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
 import { ARMS, SLOT_ODDS, zombieTakes, pierceOf, ALL_HP } from "./l4ddrules.js";
 import { holdDown, onGetUp, invuln, hurtFx } from "./hangout/death.js";
@@ -218,7 +203,7 @@ export const THROW_TELL = 800, // ms the controllers are held up before they fly
 const BURN_MS = 3500,
   BURNT_MS = 7000,
   TOUCH = 1.1;
-/* the edge lightning: every EDGE_EVERY ms the edges glow for EDGE_WARN ms, then the flash hits every duck and Jaime
+/* the edge lightning: every EDGE_EVERY ms the edges glow for EDGE_WARN ms, then the flash hits every duck
    within EDGE of the board's edge (in board widths and heights). Less often, with a longer warning (the owner's, Nov 17
    11:07Z: "Make lightning less frequent", "more of a hint"; it was every 10 s, warned 0.6 s before) */
 export const EDGE_EVERY = 18000,
@@ -242,34 +227,12 @@ export const EAT_MS = 2000,
 /* the zebra cake: shared by everyone, one throw every CAKE_EVERY ms; it flies at CAKE_SPEED until the board's edge */
 export const CAKE_EVERY = 30000,
   CAKE_SPEED = 0.45;
-/* Jaime: the ducks share one pool, a new one every JAIME_MS up to JAIME_MAX stored; he sprints at Justin
-   (JAIME_RUN duck lengths a second) and stabs him once a second */
-export const JAIME_MS = 12000,
-  JAIME_MAX = 3,
-  JAIME_RUN = 9;
-export const JAIME_NAME = "Jaime";
-export const isJaime = (id) => /^jaime\d+$/.test(id);
-/* the owner's own lines for Justin, word for word: when a Jaime hits him, and when he gets a Jaime with a controller or
-   his chair */
-const JAIME_OUCH = [
-    "Screw you Jaime!!!",
-    "JAIME!!!!!!",
-    "YOU STUPID MEXICAN!!!!",
-    "I HATE YOU JAIME!!!!",
-  ],
-  JAIME_GOT = [
-    "HAHAHA!!! STUPID MEXICAN!!!",
-    "TAKE THAT JAIME!!!!",
-    "TAKE THAT MEXICAN!!!!",
-    "DIE JAIME!!!!!!!",
-    "I AM TRYING TO SOUND WHORE JAIME!!!!",
-  ];
 /* what the ducks hold here (rules.js' move: w), and the cooldowns of their own here: the knife and the pistol, as fast
    as in every mode */
 export const MGJ_MELEE = "sword"; // (the owner's, Nov 17: the ducks start with the short sword, not the knife)
 const MGJ_HOLD = [MGJ_MELEE, "handgun"];
 /* what a duck can have out in its hand here (rules.js' move: w): the knife, the bow, the zebra cake, or the weapon it
-   picked up (the owner's, Nov 3: whatever it switches to stays out, but Jaime) */
+   picked up (the owner's, Nov 3: whatever it switches to stays out) */
 export const mgjHolds = (s, id, w) =>
   MGJ_HOLD.includes(w) ||
   w === "zebra" ||
@@ -387,8 +350,6 @@ export const DMG = {
   chain: 1, // (the chain gun 1 a bullet here, not all his HP)
   laser: 1, // (the Laser Rifle's beam)
   lgren: 3, // (the grenade launcher's blast)
-  jaime: 1,
-  jaimebomb: 3, // (the Jaime Bomb takes only 3 off him: the owner's, jaimebomb.js)
   lightning: 2,
   fire: 2,
   meteor: 1,
@@ -465,10 +426,6 @@ export function mgjStart(s, now) {
     edgeAt: now + EDGE_EVERY,
     edgeLast: 0,
     dup: null,
-    jp: { n: 0, at: now },
-    jaimeN: 0,
-    jaimes: {},
-    jStabs: 0,
     rv: {},
     cake: null,
     zebraAt: 0,
@@ -610,8 +567,6 @@ function mgjEnd(s, now, won, log, allOut = false) {
   m.dup = null;
   m.cake = null;
   m.burn = {};
-  for (const id of Object.keys(m.jaimes || {})) delete s.pos[id];
-  m.jaimes = {}; // (the Jaimes go: the fight is over)
   if (won) {
     // he stays where he is (no podium: the owner's, Nov 20 18:23Z), and the lightning strikes him there
     const at = justinAt(j, now);
@@ -657,7 +612,6 @@ function mgjEnd(s, now, won, log, allOut = false) {
       hits: { ...m.hits },
       kill: m.kill,
       ids: playing(s),
-      jStabs: m.jStabs || 0,
     },
   ];
   say(
@@ -864,11 +818,10 @@ function brain(s, now, log) {
     j.say = now + rnd(15000, 30000);
     ch = true;
   }
-  /* the rework's: burning ducks, the edge lightning, the Jaimes, his double; then the zebra cake, his snack, his
+  /* the rework's: burning ducks, the edge lightning, his double; then the zebra cake, his snack, his
      teleport (each of those last three keeps him from attacking while it lasts) */
   if (burnTick(s, now)) ch = true;
   if (edgeTick(s, now, fx)) ch = true;
-  if (jaimeTick(s, now, log, fx)) ch = true;
   if (dupTick(s, now)) ch = true;
   if (m.cake) return cakeTick(s, now, at, fx) || ch;
   if (j.eat) {
@@ -964,9 +917,6 @@ function brain(s, now, log) {
       goodDown(s, now);
       hit.push(GOOD_ID);
     }
-    for (const jid of Object.keys(m.jaimes || {}))
-      if (s.pos[jid] && far(s.pos[jid], from) < 2.4)
-        jaimeDies(s, jid, now, log, fx, "hammer");
     fx({
       kind: "use",
       what: "hammer",
@@ -1541,7 +1491,7 @@ function pellets(s, by, at, a0, n0, now) {
   }
 }
 /* a shot this beat, from (x0, y0) to (x0 + dx, y0 + dy): a duck's shot that reaches Justin hits him (and is gone: true;
-   on his double it counts for nothing); his shots hit Good Justin and the Jaimes. Ducks never hit each other here */
+   on his double it counts for nothing); his shots hit Good Justin. Ducks never hit each other here */
 export function mgjShot(s, sh, x0, y0, dx, dy, now, log, z = 0.41) {
   const m = s.mgj,
     sb = sbOnBoard(s); // (Sandbox's board: only its spawns' zombies, in s.mz as his are: sbspawn.js)
@@ -1581,9 +1531,6 @@ export function mgjShot(s, sh, x0, y0, dx, dy, now, log, z = 0.41) {
   if (sh.by === JUSTIN_ID) {
     if (sh.fake) return false;
     if (goodUp(s, now) && near(s.pos[GOOD_ID])) goodDown(s, now);
-    for (const id of Object.keys(m.jaimes || {}))
-      if (s.pos[id] && near(s.pos[id]))
-        jaimeDies(s, id, now, log, fxOf(s, now), sh.k);
     return false;
   }
   if (shotThrown(s, sh, x0, y0, dx, dy, now)) return true;
@@ -1924,7 +1871,7 @@ function burnTick(s, now) {
   }
   return ch;
 }
-/* the edge lightning: when its time comes, every duck and Jaime on the edge is hit (the edges glowed for EDGE_WARN
+/* the edge lightning: when its time comes, every duck on the edge is hit (the edges glowed for EDGE_WARN
    before: game.js reads edgeAt) */
 function edgeTick(s, now, fx) {
   const m = s.mgj;
@@ -1940,11 +1887,6 @@ function edgeTick(s, now, fx) {
   for (const id of playing(s)) {
     const p = s.pos[id];
     if (p && p.x >= 0 && onEdge(p) && mgjKnock(s, id, now)) hit.push(id);
-  }
-  for (const id of Object.keys(m.jaimes || {})) {
-    const p = s.pos[id];
-    if (p && onEdge(p) && !dodges(s, p, now))
-      jaimeDies(s, id, now, () => {}, fx, "edge");
   }
   fx({ kind: "edge", who: hit });
   return true;
@@ -2089,169 +2031,7 @@ function cakeTick(s, now, at, fx) {
   return true;
 }
 
-/* ---------- Jaime ---------- */
-/* the shared pool: how many are stored, and when the one charging now began */
-export function jaimePool(m, now) {
-  const jp = (m && m.jp) || { n: 0, at: now },
-    k = Math.floor(Math.max(0, now - jp.at) / JAIME_MS),
-    n = jp.n + k;
-  return n >= JAIME_MAX
-    ? { n: JAIME_MAX, at: now }
-    : { n, at: jp.at + k * JAIME_MS };
-}
-function jaimeComes(s, by, now, fx) {
-  const m = s.mgj,
-    p = s.pos[by],
-    pool = jaimePool(m, now);
-  if (!p || pool.n < 1) return false;
-  m.jp = { n: pool.n - 1, at: pool.n === JAIME_MAX ? now : pool.at };
-  m.jaimeN = (m.jaimeN || 0) + 1;
-  const id = `jaime${m.jaimeN}`,
-    J = { by, n: m.jaimeN, stabAt: now + 600, safe: now + SOAK_MS };
-  if (bombRoll()) bombIn(s, id, J, now); // (1 in 20 with the bomb: jaimebomb.js)
-  m.jaimes = { ...m.jaimes, [id]: J }; // (a moment safe as he comes in: the duck that sent him is where Justin shoots)
-  s.pos[id] = { x: p.x, y: p.y, face: p.face || 1 };
-  fx({ kind: "jaime", who: [id], by });
-  jaimeCount(s, { by });
-  return true;
-}
-/* every beat: each Jaime sprints at the real Justin and stabs him once a second when close */
-function jaimeTick(s, now, log, fx) {
-  const m = s.mgj,
-    ids = Object.keys(m.jaimes || {});
-  const dt = Math.min(0.5, Math.max(0, (now - (m.jt || now)) / 1000));
-  m.jt = now;
-  if (!ids.length) return false;
-  const b = mgjBodies(s, now).find((x) => x.real);
-  if (!b) return false;
-  let ch = false;
-  for (const id of ids) {
-    const J = m.jaimes[id],
-      p = s.pos[id];
-    if (!p) continue;
-    const dx = (b.x - p.x) / RX,
-      dy = (b.y - p.y) / RY,
-      d = Math.hypot(dx, dy);
-    if (J.snapAt && now >= J.snapAt) {
-      delete J.snapAt;
-      log(s, { npc: JUSTIN_ID, name: "Justin", text: snapLine() });
-    } // (his Jaime Bomb line: Justin answers it)
-    if (J.bomb && d <= 2 && now >= J.stabAt) {
-      jaimeBlows(s, id, [dx, dy], now, log, fx);
-      ch = true;
-      continue;
-    } // (the Jaime Bomb got to him: it goes off)
-    if (d > 1.3) {
-      const step = Math.min(d - 1.2, JAIME_RUN * dt);
-      s.pos[id] = {
-        ...p,
-        x: r3(Math.max(0, Math.min(1, p.x + (dx / d) * step * RX))),
-        y: r3(Math.max(0, Math.min(1, p.y + (dy / d) * step * RY))),
-        face: dx < 0 ? -1 : 1,
-      };
-      ch = true;
-    }
-    if (d <= 2 && now >= J.stabAt) {
-      J.stabAt = now + 1000;
-      const aim = d > 1e-3 ? [dx / d, dy / d] : [1, 0],
-        hit = mgjStab(s, J.by, now, log, DMG.jaime);
-      fx({
-        kind: "use",
-        what: "knife",
-        by: id,
-        who: [id],
-        face: aim[0] < 0 ? -1 : 1,
-        ax: +aim[0].toFixed(3),
-        ay: +aim[1].toFixed(3),
-        ...(hit ? { hit: [JUSTIN_ID] } : {}),
-      });
-      if (hit) {
-        m.jStabs = (m.jStabs || 0) + 1;
-        s.jaimeStabs = (s.jaimeStabs || 0) + 1; // (every Jaime's stabs, toward the unlock: unlocks.js)
-        fx({ kind: "hitmark", x: b.x, y: b.y });
-        const j = s.justin;
-        if (now > (j.ouchJ || 0) && Math.random() < 0.4) {
-          j.ouchJ = now + 4000;
-          log(s, {
-            npc: JUSTIN_ID,
-            name: "Justin",
-            text: any([...JAIME_OUCH, ...JUSTIN_AT_JAIME]),
-          });
-        } else if (now > (m.madJ || 0) && Math.random() < 0.3) {
-          m.madJ = now + 5000;
-          jaimeSays(s, id, anyOf(JAIME_MAD));
-        } // (now and then a line from Justin, or from Jaime as he stabs: jaimebomb.js)
-      }
-      ch = true;
-    }
-  }
-  return ch;
-}
-/* a Jaime is hit (1 HP): a hitmarker, and he falls bleeding where he stood (jaimebomb.js jaimeDead). how: what got him
-   (a controller or the chair: a line from Justin). A Jaime Bomb has 3 HP, and when they're gone his bomb goes off */
-function jaimeDies(s, id, now, log, fx, how) {
-  const m = s.mgj,
-    p = s.pos[id];
-  if (!m.jaimes || !m.jaimes[id] || m.jaimes[id].safe > now) return;
-  const J = m.jaimes[id];
-  if (now > (m.hurtJ || 0) && Math.random() < 0.5) {
-    m.hurtJ = now + 3000;
-    jaimeSays(s, id, anyOf(JAIME_HURT));
-  } // (hit by Justin: an "ouch" line from him)
-  if (J.bomb) {
-    J.hp = (J.hp ?? BOMB.hp) - 1;
-    if (p) fx({ kind: "hitmark", x: p.x, y: p.y });
-    if (J.hp <= 0) jaimeBlows(s, id, [p ? p.face || 1 : 1, 0], now, log, fx);
-    else m.jaimes = { ...m.jaimes, [id]: { ...J, safe: now + 300 } }; // (a hit takes 1, not every beat of one blast)
-    return;
-  }
-  const rest = { ...m.jaimes };
-  delete rest[id];
-  m.jaimes = rest;
-  delete s.pos[id];
-  if (!p) return;
-  fx({ kind: "hitmark", x: p.x, y: p.y });
-  fx(jaimeDead(p, id, how, now));
-  if (how === "controller" || how === "chair") {
-    const j = s.justin;
-    if (now > (j.gotJ || 0) && Math.random() < 0.6) {
-      j.gotJ = now + 4000;
-      log(s, { npc: JUSTIN_ID, name: "Justin", text: any(JAIME_GOT) });
-    }
-  }
-}
-
-/* the Jaime Bomb goes off (aim: the way he was running): Mad God Justin takes BOMB.mgj if he's in the blast (half again
-   as wide as a grenade's; the ducks are on one side here, so it never hurts them), and Jaime's body flies off the
-   other way */
-function jaimeBlows(s, id, aim, now, log, fx) {
-  const m = s.mgj,
-    p = s.pos[id],
-    J = (m.jaimes || {})[id] || {};
-  const rest = { ...m.jaimes };
-  delete rest[id];
-  m.jaimes = rest;
-  delete s.pos[id];
-  if (J.snapAt) log(s, { npc: JUSTIN_ID, name: "Justin", text: snapLine() }); // (Justin still answers his line)
-  if (!p) return;
-  const b = mgjBodies(s, now).find((x) => x.real),
-    far = b && Math.hypot((b.x - p.x) / RX, (b.y - p.y) / RY);
-  const hit =
-    b && far <= GRENADE_R * BOMB.wide && mgjStab(s, J.by, now, log, BOMB.mgj);
-  fx({
-    kind: "boom",
-    by: id,
-    who: [],
-    x: p.x,
-    y: p.y,
-    hit: hit ? [JUSTIN_ID] : [],
-    wide: BOMB.wide,
-  });
-  const [x1, y1] = flyTo(p.x, p.y, aim[0], aim[1], RX, RY);
-  fx({ kind: "jbomb", who: [id], x: p.x, y: p.y, x1, y1 });
-}
-
-/* ---------- the ducks' own: reviving, Jaime, the zebra cake (a = the use action) ---------- */
+/* ---------- the ducks' own: reviving, the zebra cake (a = the use action) ---------- */
 /* the downed duck nearest to duck id, within reach of a revive (or null) */
 export function downNear(s, id) {
   const p = s.pos[id];
@@ -2324,8 +2104,6 @@ export function mgjTeamUse(s, a, now, log) {
     p = s.pos[a.id],
     fx = fxOf(s, now);
   if (!m || !p) return false;
-  if (a.what === "jaime") return jaimeComes(s, a.id, now, fx);
-  if (a.what === "jaimebomb") return false; // (his own keys here: Jaime, 1 in 20 of them with the bomb)
   if (a.what === "revive") {
     const rv = { ...(m.rv || {}) };
     if (!a.hold) {

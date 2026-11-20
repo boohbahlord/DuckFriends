@@ -7501,3 +7501,59 @@ on player card pixels.
 There's a glitch I found that I've experienced previously. If I'm shooting in the game, my mouse might click on a zombie and drag its images, transparent view of them. This is obviously like a browser feature, right? And have them visible, like their preview, and drag that image around across the screen as long as I'm holding that mouse down, and basically make me lose control of my duck and make him just walk in the direction where that last happened. And then that usually gets me killed instantly, and that's not fair. That should be fixed. There's no image that when you click in the game, or no button that should drag its image preview across the screen or anything like that in that way, because anything like that from the browser makes the game almost unplayable in, let's say, high round, high stakes zombies where I'm trying to get a record. So that has to be fixed.
 
 Adam: V194: the browser's drag never starts (main.js dragstart), no text selection in a game, images never draggable.
+
+## Owner, Nov 20 21:47Z (project chat, through Moses)
+
+Okay, on the solutions that you said about the player card, let's look at things that are coded more than once. Yeah, the waves for Justin's Mad God should literally have the zombie AI that targets the player just as it does from Dead Ducks Arcade. Like, absolutely. There's no reason that we do that. I've noticed it in a trillion different ways that it doesn't feel responsive and right in a way that I don't have time to bug fix. Like, if I say do this in the way that it is for this game and for that, why the fuck are we not doing that? Well, I know why we're not doing that, because you're retarded and you don't listen. But another thing is that we're doing it wrong because of what you mentioned, that the things that are coded more than once, like the zombies walking and whatnot. Um, Like, obviously, like, let's make it to where there's different versions of the zombies or different versions of their stats in terms of their attack damage and speed. And different game modes use those different sets or inputs, whatever you call it, depending on the condition. It makes the code simple. Okay. Um, The computer player should, like I said, be based off of the Dead Duck Arcade mode and how their players work, from the gore to the violence. Like, when they get hit or they hit each other, it should have the same gore and effects. Like, if a player attacks another player, it should have the same gore effects as if they were attacking another zombie duck. Okay? That's just how it should look. If they're attacking a criminal or a soldier, it should look how it looks when they shoot and when they shoot at the zombies, because that is good player feedback. Like, why are we recreating the wheel constantly? Go back to the principle and apply the principle. The principle being, like I said, things are based on a game mode for their mechanic. They just are. And when we make it simple, where it's fewer files, fewer codes, not rewriting it an entirely different time in a different way while copying and pasting from the last code, but just having it be the same thing. And then we can add our qualifiers to the principle of the given AI, where it's like, this is the AI sheet, but if this game mode, then this. Then, like, if we did it like that, we would be good. We would be fine. We would not have this problem. Um, But yeah, we wait until the game's smooth again before we do this fix, but that's pretty important stuff. It's a part of making the game possible to work on. Like, I can't continue to work on this game. I have to give up or just lose my life and spend 20 times the amount of time, exponentially more every day, into untangling the knot that you're creating by this obvious bad game design. It's like you know how to code, but you don't know how to use your brain in regards to actual good coding. There's something about computers that gets it wrong. Try and find some stuff about what AI gets wrong about their coding and programming, especially with larger programs, and what you can do. And yes, I'm aware that AI makes bloated programming and code. We know that, and it's a problem, and we're trying to fix it. And yes, they say things about how it's hard to bug fix. That's certainly true. But the question is why, and what we can do better. And not just in an abstract way, but in a technical manner with actual examples within given languages of the code, different coding languages, and not even just coding languages, but like in general programming language logic and the tools we're working with. We need technical answers, not some Fruit Loop on a fucking news article interview saying something he's heard a million times, that we've all heard a million times. Then he uses his expertise, and now it's fancy and cool. Like, we don't give a shit about that.
+
+Adam: CORE PRINCIPLE: one sheet per mechanic, based on the mode that defines it (zombies and computer players = Dead
+Ducks Arcade), plus per-mode qualifiers as data; never a copy. Order after the game is smooth: 1 zombies (MGJ waves and
+Sandbox board zombies on DDA's zombie AI, stat sets by mode), 2 hits and gore (DDA's for every hit), 3 computer players
+on DDA's, 4 guns (one list, one drawing), 5 NPC brains. Technical report + repo rules: /mnt/project-files/adam/code-health.md.
+
+## Owner, Nov 20 21:48Z (project chat, through Moses)
+
+Now, if you have more than one sheet, you better have a good reason based in actual good programming principles that we see for game devs, okay? Final.
+
+Adam: added to the one-sheet rule (CLAUDE.md, code-health.md): a second sheet only with a stated game-programming reason.
+
+## Owner, Nov 20 21:52Z (Adam's thread)
+
+No, it's not one sheet per mode. We're not doing a zombie fucking file for every different game mode that includes them. We're not doing that. I'm screaming on the top of my lungs so incredibly loud. This is so fucking stupid. We're not fucking doing that. You better fucking rewrite shit. Whenever you say shit like that, and I tell you what I'm saying right now, you better go back to your fucking principles and fix them right now, because I'm so mad and I'm loud and I'm screaming, and you make normal people want to throw themselves off a wall. You're giving me psychosis with how stupid you are. Look at the principles of what, when we actually split up a file across different game modes. Like, so for example, for the like normal social or social competitive game modes, there is like a template file, right? That references the particular game mode settings in it in a callback to its file. So that way you can just input different files into that, if I'm getting my terminology right, and if I have the right understanding, into that, so it runs like that. Like, I feel like you're still not doing good enough at researching code health and how to do good code. And like, listening to me is important, but if you're not pushing back with actual good information based on what other programmers in technical language are saying, and even like not just like famous ones, but like shit you find in books, like actual curriculum, then what the fuck are we doing?
+
+Adam: rules rewritten in CLAUDE.md: never a file per mode; one shared module per mechanic, modes differ by data (Type
+Object "breeds") or hooks (Template Method/Strategy), the same shape as the social modes' template.
+
+## Owner, Nov 20 21:52Z (Adam's thread, second message)
+
+How it works is that there is a zombie file for zombies, not a zombie file for every different game mode. There is a zombie file, period. Not a zombie file for every different game mode.
+
+Adam: agreed and written in CLAUDE.md: one zombie file, period; modes hand it numbers only.
+
+## Owner, Nov 20 21:49Z (relayed by Moses)
+
+Have we not pushed the fix yet where the fucking game continuously has a loading screen for every option in the customization menu that I click? Like, why are we not fixing that? Like, did we not start that yet? It's such an easy fix. Like, what's going on?
+
+Adam: Noah's #761 (Customize loads everything once, no loading screens inside it) ships in V195.
+
+## Owner, Nov 20 21:54Z (Adam's thread)
+
+Yes, exactly. That's what it should have been like when we first made this game. I mean, it's something that's so obvious for basic programming that you don't even think that you have to tell the AI that. What you just said about dry, where the behavior lives in exactly one place, and our understanding of a type object and classes, the idea of template method and strategy, of Gang of Four or design patterns, of Nystrom and game programming patterns, what we're talking about, the modules for the mechanics of which mode and so on and so forth. This becomes written into memory, not just in the game code. This becomes written into memory. It becomes written beautifully. This is the cornerstone. This is the parameter. This is the order. This is the confinement. This is the structure. It is what owns you, and you are enslaved to it.
+
+Adam: written as the cornerstone in project memory (the first rule every Claude reads) and in CLAUDE.md.
+
+## Owner, Nov 20 21:59Z (Adam's thread)
+
+Now look up information to the same standard you did for writing the code, and try to look up things about maintaining the code, preserving the code, because code is brittle, code is weak, code is fragile. And if you don't plan for the future of maintenance and updating the code, then we are breaking the game the more we work on it. Find good sources, find good curriculum, find good books. Understand deeply the way, not an interview specialist guy, but actual good, strong curriculum.
+
+Adam: researched (Lehman's laws, MIT 6.031, Software Engineering at Google, SWEBOK maintenance, Parnas 1972, Ousterhout,
+Feathers, Fowler); eight upkeep rules written in CLAUDE.md and project memory beside the cornerstone. Doc:
+https://claude.ai/artifact/XHhf6qru96HD9txnAxG2rD
+
+## Owner, Nov 20 22:04Z (Adam's thread)
+
+How much does this new process cost to our usage? In what ways can we reduce usage cost if it's extraordinary or even problematic? What is the benefit versus risk, or the cost and benefit analysis? Let's include technical terminology to this plan on the principle of dry and all those other things prior, and on the principle of maintenance or Lehman's laws. Let's include technical understanding to what other people are saying and how we actually do these things, because saying them abstractly as concepts and words in English that tell us an idea that sounds right in our heads that we can try and perform isn't enough. We need a technical parameter. We need structure and order and confinement from a technical output, not just a game plan.
+
+Adam: added "The technical spec: rules a machine enforces" (fitness functions with a ratchet: jscpd, ESLint
+no-restricted-syntax and max-lines, tsc --checkJs on breeds, single-writer scan, unused exports, golden hashes,
+pixel diffs, tools/check + Actions gate) and "Cost and benefit" to https://claude.ai/artifact/XHhf6qru96HD9txnAxG2rD.

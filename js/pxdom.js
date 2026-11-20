@@ -73,14 +73,13 @@ function shownSize(svg, vb) {
   return [vb.width * k, vb.height * k];
 }
 /* what turns as it flies or is held (a weapon in hand, a bullet, an arrow, a thrown dagger or grenade, the grenade's
-   pin, the zebra cake, the Jaime Bomb's Jaime flying off): its box on the screen is the box round it turned, so a long
+   pin, the zebra cake): its box on the screen is the box round it turned, so a long
    thin one pointing up or down measured as a sliver and was made with barely any pixels, and kept that way (the
    owner's, Nov 18 10:38Z: "when i first picked up the laser gun ... it was rendered as being almost barely any pixels",
    and "grenades and bow projectiles unseen"). Its size unturned instead: its own width and height, times how much the
    board is scaled. A dead duck's pool of blood too, which grows from small (game.js .gduck-pool): made at its full
    size, not at the size it starts from. Null for everything else */
-const TURNS =
-  ".held, .bullet, .thrown, .gpin, .mgj-cake, .jb-body, .gduck-pool";
+const TURNS = ".held, .bullet, .thrown, .gpin, .mgj-cake, .gduck-pool";
 function unturned(svg) {
   const host = svg.closest(TURNS);
   if (!host || !svg.clientWidth || !svg.clientHeight) return null;
