@@ -19,6 +19,7 @@ export const UPDATES = [
       "For Sandbox: right-click a block to Lock it: it can't be moved, changed or cut, only copied. One click on a block brings out its handles to resize it.",
       "For Sandbox: Music in G opens its own window, and the help windows are the game's own again.",
       "For Sandbox: uploaded pictures are always made into pixels.",
+      "For Survival: zombies no longer shake on the gas pump's roof.",
     ],
   },
   {
