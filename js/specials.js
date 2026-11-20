@@ -13,6 +13,7 @@
      weapons aim at the mouse, turning around the duck; Shift and the key keeps one out, and a left click uses it.
    On a phone, holding still on the board brings the specials around the finger (see hotbar.js). Effects and items take
    up to three colors (Primary, Secondary, Accent) under Customize → Colors. */
+import { HANDGUN } from "./gamedefaults.js";
 import { el } from "./ui.js";
 import { gridPx } from "./pixel.js";
 import { fewer } from "./gfx.js";
@@ -218,28 +219,6 @@ export const SPECIALS = [
     tip: "Its key turns your duck see-through, like the shadow duck; press it again to turn it back.",
   },
   {
-    id: "longjump",
-    name: "Long jump",
-    kind: "jump",
-    icon: "🦘",
-    tip: "Its key does a long jump: longer and a little higher. Shift and the key: every jump is long.",
-  },
-  {
-    id: "double",
-    name: "Double jump",
-    kind: "jump",
-    icon: "☁️",
-    tip: "In the air, its key jumps again off a little cloud, once a jump. Shift and the key: Space does it too.",
-    colors: [["a", P, "#ffffff"]],
-  },
-  {
-    id: "shortjump",
-    name: "Short jump",
-    kind: "jump",
-    icon: "🐇",
-    tip: "Its key does a short jump: lower and quicker. Shift and the key: every jump is short (the Long jump and the Double jump go off).",
-  },
-  {
     id: "coffee",
     name: "Coffee",
     kind: "item",
@@ -278,12 +257,12 @@ export const SPECIALS = [
   },
   {
     id: "handgun",
-    name: "M&P9 Shield", // (a real 9mm with the same seven-round magazine: the owner's, Nov 19, "the name of the real 9mm pistol whose magazine size matches ours")
+    name: HANDGUN.name, // (one gun everywhere: gamedefaults.js)
     kind: "item",
     get icon() {
       return PISTOL(["#2b2d35", "#5a3a22"]); // (the pistol in the hand, not the emoji: the owner's, Nov 19; looksOf paints it in my colors)
     },
-    tip: "Bullets fly toward your mouse; any duck one passes through plays dead. Seven shots, then it reloads (R reloads sooner). Shift and its key keeps it out: left click shoots. (Off when the host turns off the silly commands.)",
+    tip: "Bullets fly toward your mouse; any duck one passes through plays dead. Nine shots, then it reloads (R reloads sooner). Shift and its key keeps it out: left click shoots. (Off when the host turns off the silly commands.)",
     colors: [
       ["a", P, "#2b2d35"],
       ["b", S2, "#5a3a22"],
@@ -534,37 +513,6 @@ export const SPECIALS = [
       return GUNS.laser.icon;
     },
     tip: "A red beam once a second through everything in its line, as long as the button is down. Never runs out, but six in a row overheat it for 8 seconds.",
-  },
-  {
-    id: "jaime",
-    name: "Jaime",
-    kind: "item",
-    get icon() {
-      return duckSVG(JAIME.duck, { size: 40, shadow: false });
-    }, // (drawn when it's first shown: duck.js may not be ready while this file loads)
-    tip: "Jaime sprints at a duck with his knife: the one you hit in the last 15 seconds, or else the one who hit you, or else the nearest. Once every 12 seconds. (In Mad God Justin he goes for Justin, and everyone shares the same Jaimes: a new one every 12 seconds, up to 3. Off when the host turns off the silly commands.)",
-  },
-  {
-    id: "jaimebomb",
-    name: "Jaime Bomb",
-    kind: "item",
-    get icon() {
-      return duckSVG(JAIME.duck, { size: 40, shadow: false, skin: BOMB_SKIN });
-    },
-    tip: "Jaime, with dynamite strapped to his chest: he sprints at a duck as Jaime does and blows up when he gets there. The blast is half again as wide as a grenade's and takes all the HP of every duck in it. Once every 12 seconds. (Any Jaime has a 1 in 20 chance of being this one. Off when the host turns off the silly commands.)",
-  },
-  {
-    id: "jaimeguard",
-    name: "Jaime Guard",
-    kind: "item",
-    get icon() {
-      return duckSVG(JAIME.duck, {
-        size: 40,
-        shadow: false,
-        extra: GUARD_BADGE,
-      });
-    },
-    tip: "Jaime follows you around and protects you: whoever hits you, he goes after with the weapon you pick for him here, up close with the knife or the hammer, from farther off with the others. He has 1 HP, and one hit sends him off. One at a time, once every 12 seconds. (Off when the host turns off the silly commands.)",
   },
   {
     id: "sound",
@@ -933,7 +881,7 @@ export const looksOf = (sp, duck) =>
    the hotbar should resemble the pistol in the hand of the player, so it shouldnt be green"), never the emoji */
 export const pistolIcon = (duck) => PISTOL(colorsOf(duck, "handgun"));
 /* the handgun's magazine under its key: a dot for each of its seven shots, full until fired */
-export const ammoHTML = (left, n = 7) =>
+export const ammoHTML = (left, n = HANDGUN.mag) =>
   `<span class="ammo" aria-label="${left} of ${n} shots">${Array.from({ length: n }, (_, i) => `<i${i < left ? ' class="full"' : ""}></i>`).join("")}</span>`;
 export const daggerHTML = (duck) => DAGGER(colorsOf(duck, "dagger"));
 /* the handgun's bullet, in the shooter's Accent color */

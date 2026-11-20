@@ -19113,7 +19113,7 @@ body:has(> .vt) .win-back {
   margin: 0;
   padding: 0.35rem 0.5rem;
   font:
-    11px/1.35 ui-monospace,
+    8px/1.25 ui-monospace,
     Menlo,
     Consolas,
     monospace;
@@ -22567,4 +22567,29 @@ textarea.um-in {
 }
 .game .sb-wave[hidden] {
   display: none;
+}
+
+/* UI opacity (Settings, in percent): everything UI scale covers, the bars, the docks, the hotbar, the windows and the
+   vote buttons, but never the maps or the ducks on them (the owner's, Nov 20 21:38Z) */
+.gbar,
+.bbar,
+.dock-l,
+.dock-r,
+.dock-b,
+.l4-hud,
+.l4bar,
+.win-back > .win,
+.act-row {
+  opacity: var(--uio, 1);
+}
+html.nojustin .jumps-jk {
+  display: none;
+}
+/* the pause menu's own counts, near its bottom */
+.pause-counts {
+  margin-top: 0.8rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
 }

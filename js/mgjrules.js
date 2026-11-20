@@ -251,19 +251,8 @@ export const JAIME_NAME = "Jaime";
 export const isJaime = (id) => /^jaime\d+$/.test(id);
 /* the owner's own lines for Justin, word for word: when a Jaime hits him, and when he gets a Jaime with a controller or
    his chair */
-const JAIME_OUCH = [
-    "Screw you Jaime!!!",
-    "JAIME!!!!!!",
-    "YOU STUPID MEXICAN!!!!",
-    "I HATE YOU JAIME!!!!",
-  ],
-  JAIME_GOT = [
-    "HAHAHA!!! STUPID MEXICAN!!!",
-    "TAKE THAT JAIME!!!!",
-    "TAKE THAT MEXICAN!!!!",
-    "DIE JAIME!!!!!!!",
-    "I AM TRYING TO SOUND WHORE JAIME!!!!",
-  ];
+const JAIME_OUCH = [],
+  JAIME_GOT = []; // (every line mentioning Jaime left the game: the owner's, Nov 20 21:38Z)
 /* what the ducks hold here (rules.js' move: w), and the cooldowns of their own here: the knife and the pistol, as fast
    as in every mode */
 export const MGJ_MELEE = "sword"; // (the owner's, Nov 17: the ducks start with the short sword, not the knife)
@@ -2324,8 +2313,6 @@ export function mgjTeamUse(s, a, now, log) {
     p = s.pos[a.id],
     fx = fxOf(s, now);
   if (!m || !p) return false;
-  if (a.what === "jaime") return jaimeComes(s, a.id, now, fx);
-  if (a.what === "jaimebomb") return false; // (his own keys here: Jaime, 1 in 20 of them with the bomb)
   if (a.what === "revive") {
     const rv = { ...(m.rv || {}) };
     if (!a.hold) {

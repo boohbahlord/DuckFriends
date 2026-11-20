@@ -15,6 +15,7 @@
    room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). Duncelation has its
    own rules in duncerules.js: one defender in the circle, everyone else walks to Dunce or Not a Dunce. Valentine's Duck
    Date has its own in vddrules.js: The Date at the dining table, a date with each Suitor, then a Suitor Turned Down. */
+import { HANDGUN } from "./gamedefaults.js";
 import { epAct } from "./sbep.js";
 import { duckBig, picGrow, scaleOf } from "./duck.js";
 import {
@@ -273,7 +274,6 @@ export const OPTIONS_DEFAULT = {
   discuss: 0, // 1: the Discussion round after each vote comes back (Agree or Disagree, Would You Rather, Bicker Brackets, Lawyering)
   submitTime: 132, // 0 (off), 60, 90, 120, 132 (2:12): a time limit on writing questions; Bicker Brackets starts with none (0)
   botWait: 5, // TEST rooms: seconds before computers act
-  lowGravity: 0, // 1: jumps float, slower and higher
   fun: 1, // the silly commands (lightning, love, kill, hotdog): 1 on, 0 off
   ghosts: 0, // 1: Duck Cabin's ghosts (hangout/ghosts.js): a knocked-down duck's ghost walks about until Space
   sbTint: 0, // Sandbox on the board: 1 puts Mad God Justin's colored field over the map (off: the map shows plain)
@@ -1171,9 +1171,6 @@ const PRESS = [
   "burst",
   "chair",
   "zebra",
-  "jaime",
-  "jaimebomb",
-  "jaimeguard",
   "sound",
   "trombone",
   "confetti",
@@ -1193,9 +1190,6 @@ const COOLDOWN = {
   bow: ARM_COOL.bow,
   chair: 15000,
   zebra: 30000, // (as Mad God Justin's CAKE_EVERY)
-  jaime: 12000, // (as Mad God Justin's JAIME_MS, but each duck's own)
-  jaimebomb: 12000, // (the same as Jaime's: the owner's)
-  jaimeguard: 12000, // (as Jaime's; and one Guard of mine at a time)
 };
 export const coolFor = (sp, s) =>
   (s && isMgj(s) && mgjCool(sp)) ||
@@ -1236,7 +1230,7 @@ export const AUTO = [
    gun and the grenade launcher have none there, so here the chain gun reloads after its 300, and the launcher after 3
    (my guesses). s.mag = { id: { n: shots fired, r: when its reload ends (0: not reloading) } } for the handgun, and
    { "id gun": … } for the others */
-export const MAG = 7,
+export const MAG = HANDGUN.mag,
   RELOAD = ARM_RELOAD;
 const MAG_MORE = {
   chaingun: [300, 4000],
@@ -2245,7 +2239,6 @@ function reduceStep(state, a, now) {
           x = Math.max(lo, Math.min(hi, x));
         }
       }
-      const dj = j && +a.dj > j ? +a.dj : 0; // a double jump: when the second jump began
       const w = (
           isL4dd(s)
             ? l4Holds(s, a.id, a.w)
@@ -2268,9 +2261,6 @@ function reduceStep(state, a, now) {
           : {}), // (a cut-out picture: the way it faces, as the screens turn it, so it's hit where it shows: playerAt)
         q: /^[lrud]$/.test(a.q) ? a.q : "",
         sp: !!a.sp,
-        ...(j && a.lj ? { lj: true } : {}),
-        ...(j && a.sj && !a.lj ? { sj: true } : {}),
-        ...(dj ? { dj } : {}),
         ...(w ? { w, ax: +ax.toFixed(3), ay: +ay.toFixed(3) } : {}),
         ...(isHang(s)
           ? {
@@ -2512,18 +2502,14 @@ function reduceStep(state, a, now) {
             !(isSb(s) ? sbSlots(s, a.id).includes(sp) : onKeys(me.duck, sp))
       )
         return state; // (Mad God Justin: not while down, but the down pistol)
-      if (isMgj(s) && ["revive", "jaime", "zebra"].includes(sp))
-        return mgjTeamUse(s, a, now, logLine) ? s : state; // (Mad God Justin: a revive held or let go, a Jaime, the zebra cake)
+      if (isMgj(s) && ["revive", "zebra"].includes(sp))
+        return mgjTeamUse(s, a, now, logLine) ? s : state; // (Mad God Justin: a revive held or let go, the zebra cake)
       const mgjGun = isMgj(s) && MGJ_GUNS.includes(sp);
       if (isMgj(s) && sp !== MGJ_MELEE && sp !== "handgun" && !mgjGun)
         return mgjUse(s, a, now, logLine) ? s : state; // (Mad God Justin: the medkit picked up)
       if (mgjGun && (s.mgj.held[a.id] !== sp || !ammoOf(s, a.id))) return state; // (Mad God Justin: a gun picked up, until its shots are gone)
       if (
-        (WEAPONS.includes(sp) ||
-          sp === "chair" ||
-          sp === "jaime" ||
-          sp === "jaimebomb" ||
-          sp === "jaimeguard") &&
+        (WEAPONS.includes(sp) || sp === "chair") &&
         !s.options.fun &&
         !isMgj(s)
       )
@@ -2540,16 +2526,6 @@ function reduceStep(state, a, now) {
         return state; // (full auto: the shots can come a little bunched over the network, as in Quacky Zombies)
       if (sp === "zebra" && s.zcake) return state; // (one zebra cake in the room at a time)
       if (sp === "laser" && laserHeat(s, a.id, now).over) return state; // (Mad God Justin's Laser Rifle overheated: it can't fire until it has cooled)
-      if (sp === "jaimeguard") {
-        if (!guardOut(s, a.id, now)) return state; // (my Guard is still out: the key keeps its Jaime)
-        s.lastUse = { ...(s.lastUse || {}), [k]: now };
-        return s;
-      }
-      if (sp === "jaime" || sp === "jaimebomb") {
-        if (!jaimeOut(s, a.id, now, bombRoll(sp))) return state; // (nobody to go for: the key keeps its Jaime)
-        s.lastUse = { ...(s.lastUse || {}), [k]: now };
-        return s;
-      }
       const mg = downGun ? magSize(sp) : isMgj(s) ? mgjMag(sp) : magSize(sp); // (Mad God Justin's pistol never reloads: the owner's, Nov 16; a gun picked up has Quacky Zombies' magazine; the down pistol does, its bullets never run out)
       const many =
         sp === "burst" && !isMgj(s)
@@ -3524,7 +3500,6 @@ function forgame(s, a, now) {
         [
           "freeRoam",
           "fun",
-          "lowGravity",
           "justin",
           "mgjBoard",
           "ghosts",
@@ -3569,25 +3544,23 @@ function forgame(s, a, now) {
           ? `answer timer ${v ? "off" : "on"}`
           : k === "order"
             ? `question order ${v}`
-            : k === "lowGravity"
-              ? `gravity ${v ? "low" : "normal"}`
-              : k === "downMs"
-                ? `knocked down for ${v ? v / 1000 + " s" : "no time"}`
-                : k === "justin"
-                  ? `Justin ${v ? "on" : "off"}`
-                  : k === "mgjBoard"
-                    ? `Mad God Justin ${v ? "on" : "off"}`
-                    : k === "ghosts"
-                      ? `ghosts ${v ? "on" : "off"}`
-                      : k === "ghostBusy"
-                        ? `no ghosts while busy ${v ? "on" : "off"}`
-                        : k === "discuss"
-                          ? `discussion round ${v ? "on" : "off"}`
-                          : k === "unvoteStops"
-                            ? `unvoting ${v ? "stops" : "doesn't stop"} the countdown`
-                            : k === "freeRoam" || k === "fun"
-                              ? `${k === "fun" ? "silly commands" : "free roam"} ${v ? "on" : "off"}`
-                              : `${{ catchUp: "catch-up timer", writeCatch: "writing catch-up timer", answerTime: "answer timer", submitTime: "writing timer" }[k]} ${v ? v + " s" : "off"}`;
+            : k === "downMs"
+              ? `knocked down for ${v ? v / 1000 + " s" : "no time"}`
+              : k === "justin"
+                ? `Justin ${v ? "on" : "off"}`
+                : k === "mgjBoard"
+                  ? `Mad God Justin ${v ? "on" : "off"}`
+                  : k === "ghosts"
+                    ? `ghosts ${v ? "on" : "off"}`
+                    : k === "ghostBusy"
+                      ? `no ghosts while busy ${v ? "on" : "off"}`
+                      : k === "discuss"
+                        ? `discussion round ${v ? "on" : "off"}`
+                        : k === "unvoteStops"
+                          ? `unvoting ${v ? "stops" : "doesn't stop"} the countdown`
+                          : k === "freeRoam" || k === "fun"
+                            ? `${k === "fun" ? "silly commands" : "free roam"} ${v ? "on" : "off"}`
+                            : `${{ catchUp: "catch-up timer", writeCatch: "writing catch-up timer", answerTime: "answer timer", submitTime: "writing timer" }[k]} ${v ? v + " s" : "off"}`;
     sayFloat(
       s,
       `${me.name} changed the game: ${Object.entries(o)
@@ -3663,15 +3636,11 @@ function justinKilled(s, by, w) {
 /* a player knocked down by another player's weapon: the last few, each numbered, so every device counts its own player's
    kills once (unlocks.js: the shotgun opens at 144 kills, the grenade at 360, and Justin counts too) */
 /* a jump dodges attacks, but not in its first and its last fifth: I want a dodge timed, not a jump held as a shield.
-   The jump's length is game.js' (JUMP, jumpCfg): 0.62 s, low gravity 1.2 s, a long jump 1.4 times, a short jump 0.7
-   times; a double jump goes on for a second arc from when it began */
+   The jump's length is game.js' (JUMP, jumpCfg): 0.62 s */
 export function dodges(s, p, now) {
   if (!p || !p.j) return false;
-  const T =
-      p.tb > 0
-        ? 620 * Math.sqrt(p.tb / 1.35)
-        : (s.options.lowGravity ? 1200 : 620) * (p.lj ? 1.4 : p.sj ? 0.7 : 1),
-    end = (p.dj > p.j ? p.dj : p.j) + T;
+  const T = p.tb > 0 ? 620 * Math.sqrt(p.tb / 1.35) : 620,
+    end = p.j + T;
   return now - p.j > T * 0.2 && end - now > T * 0.2;
 }
 /* the normal game's HP (every mode but Mad God Justin and Dead Ducks Arcade): a duck has PHP HP before it plays dead
