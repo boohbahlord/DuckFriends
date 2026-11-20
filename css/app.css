@@ -20651,7 +20651,7 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 55%;
+  width: calc(55% * var(--sz, 1)); /* (a loot block's Size, plan Loot 4) */
   aspect-ratio: 1;
   transform: translate(-50%, -80%);
   animation: sb-orb-bob 1.6s ease-in-out infinite;
@@ -20663,6 +20663,43 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 }
 .sb-orb .l4orb i {
   font-size: 1rem;
+}
+/* a loot orb shown as in a hand, or as its hotbar key's picture (plan Loot 4) */
+.sb-orb:has(.sb-orb-bare, .sb-orb-key) {
+  container-type: inline-size;
+}
+.sb-orb-bare,
+.sb-orb-key {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  font-size: 1rem;
+}
+.sb-orb-bare {
+  filter: drop-shadow(0 0.12rem 0.1rem rgba(0, 0, 0, 0.55));
+}
+.sb-orb-key {
+  border: 0.12rem solid var(--line);
+  border-radius: 0.35rem;
+  background: var(--panel2);
+}
+.sb-orb-bare i,
+.sb-orb-key i {
+  display: grid;
+  place-items: center;
+  width: 85%;
+  height: 85%;
+  font-style: normal;
+  font-size: 60cqw; /* (an emoji item's pixel picture: as big as the orb's place, .sb-orb's width) */
+}
+.sb-orb-bare svg,
+.sb-orb-key svg,
+.sb-orb-bare img,
+.sb-orb-key img {
+  width: 100%;
+  height: 100%;
 }
 .sb-orb-img i,
 .sb-pic img {

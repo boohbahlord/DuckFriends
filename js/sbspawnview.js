@@ -83,7 +83,7 @@ import {
   ownOn,
   SB_TEXT,
 } from "./sbspawn.js";
-import { orbFace, lootRing, lootPage, lootWire } from "./sblootview.js";
+import { orbWrap, lootRing, lootPage, lootWire } from "./sblootview.js";
 import { orbsOf } from "./sbloot.js";
 import { drawNpcs, dropNpcs } from "./npcview.js";
 import { groupOpts, grShown, jgRow } from "./sbgroupview.js";
@@ -394,14 +394,21 @@ function seen(p) {
   const me = activeRoom() && activeRoom().me;
   return orbsOf(p).filter((o) => o.dn == null && !(o.got || []).includes(me));
 }
+/* what an orb's look depends on: when it changes, it's drawn again (plan Loot 4: how it's shown, its size, see-through) */
+const lookSig = (s, id, p, o) =>
+  [
+    o.w,
+    ...["look", "lshow", "lsize", "lop"].map((f) => boxText(p, f)),
+    ((s && s.sbImg) || {})[id],
+  ].join("|");
 /* orb o of loot block id (point p) as its own mark, key k, where it lies (in a zone) or on its block */
 function orbMark(layer, have, want, k, id, p, o, at, size, s) {
   const el = markEl(layer, have, k, "sb-pt"),
-    face = o.w + boxText(p, "look") + ((s && s.sbImg) || {})[id];
+    face = lookSig(s, id, p, o);
   want.add(k);
   if (el._sig !== face) {
     el._sig = face;
-    el.innerHTML = `<span class="sb-orb">${orbFace(s, id, p, o)}</span>`;
+    el.innerHTML = orbWrap(s, id, p, o);
   }
   placeAt(el, at(o.x != null ? { x: o.x, y: o.y, z: o.z || 0 } : p), size);
 }
@@ -465,13 +472,13 @@ function drawMarks(layer, pts, at, size, s) {
       );
     }
     const orb = vis[0] || null,
-      face = orb ? orb.w + boxText(p, "look") + ((s && s.sbImg) || {})[id] : "",
+      face = orb ? lookSig(s, id, p, orb) : "",
       away = !!orb && orb.x != null, // (its orb lies in a zone: drawn there, sbloot.js)
       n = markEl(layer, have, id, "sb-pt"),
       sig = `${p.k} ${p.col} ${boxText(p, "name")} ${away ? "" : face} ${hid}`;
     if (n._sig !== sig) {
       n._sig = sig;
-      n.innerHTML = `${hid ? "" : `<span class="sb-pt-name" style="color:${colCSS(p.col)}">${esc(boxText(p, "name"))}</span>${markSVG(p)}`}${orb && !away ? `<span class="sb-orb">${orbFace(s, id, p, orb)}</span>` : ""}`;
+      n.innerHTML = `${hid ? "" : `<span class="sb-pt-name" style="color:${colCSS(p.col)}">${esc(boxText(p, "name"))}</span>${markSVG(p)}`}${orb && !away ? orbWrap(s, id, p, orb) : ""}`;
     }
     placeAt(n, at(p), size);
     if (away) orbMark(layer, have, want, id + "~o", id, p, orb, at, size, s);
