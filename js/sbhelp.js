@@ -125,6 +125,10 @@ export const SB_HELP = {
       "Rules opens its own window, for the zombie maps: how many lives each player has (0 is unlimited), whether there's a down phase where others can revive you (off: you just die), crits on or off, and whether a player out of lives watches the others. On the plain boards it has Board size: 100% is the screen, and a bigger board scrolls with your duck, the ducks staying their size. The save keeps them. What no menu shows (crit chance, gore, player limit) is in Seriat's settings/limits file: read-only until you turn its write on.",
     ],
     [
+      "Waves and rounds",
+      "Rules has Waves or rounds. Waves work as in Survival: each lasts its seconds (A wave lasts). Rounds work as in Dead Ducks Arcade: each lasts until everything it brought is down. After each comes a rest (Rest between them), then the next; How many sets the last one (0 never ends). The top of the screen says which one it is, the time a wave has left, and when the next comes. What comes in is set in the zones, not here: in a Spawn tab, turn on Comes in with waves or rounds. That spawn is pressed once as each wave or round starts, and its own start (Auto spawn, Continuous spawn, its key) only works while one is on, never in the rest. It brings whatever it spawns, zombies or any NPC with its own Brain. A Brain file reads the number now as wave, so each one can be tougher: ((hp 3+wave)).",
+    ],
+    [
       "Game modes",
       "Save game mode (G) keeps this Sandbox as a game mode on your device, with a name and a description; the same name replaces the old one. Test game mode starts it as players would see it, with no tools; Stop test at the top left brings your build back. The host picks a saved game mode in Game Settings, under Custom.",
     ],
