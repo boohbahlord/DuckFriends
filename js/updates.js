@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v172",
+    version: 172,
+    date: "Nov 20, 2026",
+    title: "Build a house",
+    news: [
+      "For Sandbox: walls up high now stand down to the ground, a house goes see-through from inside, and the plain board has Elevation for roofs. Build's help shows how to make a house.",
+    ],
+  },
+  {
     id: "v171",
     version: 171,
     date: "Nov 20, 2026",
