@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v166",
+    version: 166,
+    date: "Nov 20, 2026",
+    title: "Merchants who fight back for real",
+    news: [
+      "For Survival: armed merchants never run out of rounds but do reload, and after a gunfight with soldiers they run to another part of the map and hide instead of leaving it.",
+      "For Survival: the LMG keeps firing your way even when you're behind cover, and the screen's corners grow darker the longer it keeps on at you.",
+      "Every map's picture in the lobby, Game Settings, the map vote and Sandbox's zone looks is now a ready-made pixel file, and pictures you uploaded before are redrawn into pixels, so no original picture is kept behind them.",
+    ],
+  },
+  {
     id: "v165",
     version: 165,
     date: "Nov 20, 2026",
