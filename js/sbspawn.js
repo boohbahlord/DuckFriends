@@ -745,7 +745,7 @@ export function sbAct(s, a, now) {
      all gone. A spawn's pages go with it */
   if (["move", "turn", "cut"].includes(a.k)) {
     const ids = [...new Set(Array.isArray(a.ps) ? a.ps.map(String) : [])]
-      .filter((id) => pts[id] && !pts[id].grp)
+      .filter((id) => pts[id] && !pts[id].grp && !pts[id].lock) // (a locked one stays: "lock" below)
       .slice(0, SB_POINTS);
     if (!ids.length) return false;
     let all = { ...pts };
@@ -808,6 +808,21 @@ export function sbAct(s, a, now) {
         any = press(s, id, now, done) || any;
     return any;
   }
+  /* Lock (the owner's, Nov 20 04:51Z: "right click allow a lock option where zone cannot be moved or edited or cut, but
+     can be copied"): a block's p.lock; nothing on it or its tabs changes while it's on, but it still goes off and copies */
+  if (a.k === "lock") {
+    if (p.grp) return false;
+    const q = { ...p };
+    if (a.on) q.lock = 1;
+    else delete q.lock;
+    s.sb = { ...s.sb, pts: { ...pts, [a.p]: q } };
+    return true;
+  }
+  if (
+    (p.lock || (p.grp && pts[p.grp] && pts[p.grp].lock)) &&
+    ["set", "del", "page", "look", "size", "kind"].includes(a.k)
+  )
+    return false;
   if (a.k === "set") {
     const f = String(a.f || "");
     if (f === "col") {

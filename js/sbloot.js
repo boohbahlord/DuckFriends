@@ -56,6 +56,8 @@ export function sbLootAct(s, a) {
   const p = ((s.sb && s.sb.pts) || {})[a.p],
     v = typeof a.v === "string" ? a.v : "";
   if (!p || p.k !== "loot") return false;
+  const pts = s.sb.pts;
+  if (p.lock || (p.grp && pts[p.grp] && pts[p.grp].lock)) return false; // (locked: sbspawn.js "lock")
   if (v && !(/^[a-z0-9]{1,24}$/.test(v) && (s.sbpic || {})[v])) return false;
   const img = { ...(s.sbImg || {}) };
   if (v) img[a.p] = v;

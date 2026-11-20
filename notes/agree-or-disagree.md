@@ -7292,3 +7292,10 @@ Adam: in Sandbox's G game settings, Music and the other settings with many optio
 > seriat should be different color background
 
 Adam: Sandbox's help windows use the game's own window now; the white pixel page stays the Seriat bible's alone.
+
+## Owner, Nov 20 04:51Z (project chat, through Moses)
+> right click allow a lock option where zone cannot be moved or edited or cut, but can be copied
+>
+> clicking a property once still grabs it and allows you to move it around OR resize it
+
+Adam: the right-click menu gets Lock / Unlock; a locked block can't be moved, resized, turned, edited, cut or deleted (its window opens read-only), but Copy still works. Read the second line as how an unlocked block should work: one click grabs it, so a single click now also brings out its resize handles (before, that took a double click); dragging moves it as before.

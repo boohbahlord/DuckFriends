@@ -104,7 +104,7 @@ export function mountSbDrag(S, getR, { may, onMap, spotAt, screenAt }) {
   const showHandles = () => {
     const R = getR(),
       p = R && handlesOf && pts()[handlesOf];
-    if (!p || sbFills(p) || !may()) {
+    if (!p || sbFills(p) || p.lock || !may()) {
       handlesOf = "";
       hdl.hidden = true;
       raf = 0;
@@ -197,6 +197,7 @@ export function mountSbDrag(S, getR, { may, onMap, spotAt, screenAt }) {
       return stop(e);
     }
     if (!id) return handles(""); // (an empty spot: my duck walks there as always)
+    if (pts()[id].lock) return handles(""); // (locked: it can't be moved or resized, sbspawn.js "lock"; the right-click menu still opens)
     if (!sbSel.has(id)) sbSel.clear();
     const ids = sbSel.size ? [id, ...[...sbSel].filter((q) => q !== id)] : [id],
       p = pts()[id];
@@ -235,6 +236,15 @@ export function mountSbDrag(S, getR, { may, onMap, spotAt, screenAt }) {
     if (e.pointerType !== "mouse" || !(drag || size || box)) return;
     const at = spotAt(e.clientX, e.clientY);
     if (drag && drag.moved) dragTo(at, true);
+    /* one click on a block, not dragged: it's grabbed, its handles out to resize it (the owner's, Nov 20 04:51Z:
+       "clicking a property once still grabs it and allows you to move it around OR resize it") */
+    if (
+      drag &&
+      !drag.moved &&
+      drag.ids.length === 1 &&
+      !sbFills(pts()[drag.ids[0]])
+    )
+      handles(drag.ids[0]);
     if (size) sizeTo(at, true);
     if (box) {
       /* everything whose middle is inside the box (zones only while they show) */
@@ -263,7 +273,7 @@ export function mountSbDrag(S, getR, { may, onMap, spotAt, screenAt }) {
   const dbl = (e) => {
     if (!may() || !onMap(e)) return;
     const id = blockAt(spotAt(e.clientX, e.clientY), e);
-    if (!id || sbFills(pts()[id])) return;
+    if (!id || sbFills(pts()[id]) || pts()[id].lock) return;
     handles(id);
     stop(e);
   };

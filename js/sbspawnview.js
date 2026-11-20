@@ -952,8 +952,8 @@ export function sbSettings(getR, id, tab = "") {
     ${row("st", SB_ORDER.st, ordT("st"), "")}
     <div class="sb-row" data-row="go"><span>${esc(SB_ORDER.go.name)}</span>${sel("go", SB_GOES)}<em class="sb-why"></em></div>`;
   const html = `<h2>${loot && !p.grp ? "Loot" : "Zone"}</h2>${head}
-  <div class="sb-set">${callHTML}${frontHTML}${front ? `<h3 class="sb-sect sb-sect-top">4. ${PURPOSES.find(([v]) => v === p.k)[1]} settings</h3>` : ""}${loot ? lootPage(R.state, id, p, { row, flagRow, typed, why, colorRow }) : zone ? zonePage() : !spawn ? respawn() : players ? playersPage() : look ? lookPage(R.state, p) : entity()}${players || look ? "" : orderSect()}</div>
-  <p class="acts">${spawn && !players && !look ? `<button type="button" class="btn" data-go>Spawn</button>` : ""}${!spawn && !loot && !zone ? `<button type="button" class="btn" data-imp>Import settings</button>` : ""}<button type="button" class="btn ghost" data-del>${p.grp ? (p.pg === "t" ? "Delete tab" : "Delete page") : "Delete"}</button></p>`;
+  ${base.lock ? `<p class="sb-tip sb-lockd">Locked: right-click it and pick Unlock to change it.</p>` : ""}<div class="sb-set"${base.lock ? " inert" : ""}>${callHTML}${frontHTML}${front ? `<h3 class="sb-sect sb-sect-top">4. ${PURPOSES.find(([v]) => v === p.k)[1]} settings</h3>` : ""}${loot ? lootPage(R.state, id, p, { row, flagRow, typed, why, colorRow }) : zone ? zonePage() : !spawn ? respawn() : players ? playersPage() : look ? lookPage(R.state, p) : entity()}${players || look ? "" : orderSect()}</div>
+  <p class="acts">${spawn && !players && !look ? `<button type="button" class="btn" data-go>Spawn</button>` : ""}${!spawn && !loot && !zone ? `<button type="button" class="btn" data-imp>Import settings</button>` : ""}${base.lock ? "" : `<button type="button" class="btn ghost" data-del>${p.grp ? (p.pg === "t" ? "Delete tab" : "Delete page") : "Delete"}</button>`}</p>`;
   openWindow(html, {
     cls: zoneLike(p) ? "sb-setwin sb-zonewin" : "sb-setwin",
     onOpen(w, close) {
