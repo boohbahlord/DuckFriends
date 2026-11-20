@@ -19,6 +19,7 @@ import {
   isSb,
   sbMay,
   sbCan,
+  sbPlaying,
   SB_KEYS_TAKEN,
   SB_KEY_IN_BUILD,
   SB_POINTS,
@@ -976,7 +977,18 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
   const letter = (e) => {
     const m = /^Key([A-Z])$/.exec(e.code);
     const l = m && m[1].toLowerCase();
-    return l && SB_WINS[l] ? l : "";
+    if (!l || !SB_WINS[l]) return "";
+    const R = getR();
+    /* a made game mode played: no tools (sandboxrules.js sbCan), so its keys open only what the phone's Tools list
+       shows (the cheat sheet, the hotbar, P with God mode) and are the game's own keys again */
+    if (
+      R &&
+      sbPlaying(R.state) &&
+      !SB_WINS[l].all &&
+      !(l === "p" && godMay(R.state, R.me))
+    )
+      return "";
+    return l;
   };
   const keydown = (e) => {
     if (e.key === "Tab" && k.open) {
