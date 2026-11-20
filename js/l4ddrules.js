@@ -46,6 +46,7 @@ import {
   sbRule,
   SB_BOXES,
   sbZombieWall,
+  sbItemMods,
 } from "./sandboxrules.js";
 import { godOn, godHas } from "./sbgod.js";
 import { valueOf } from "./numerat.js";
@@ -1583,8 +1584,23 @@ export const kitOf = (s, id) => ((s && s.hang && s.hang.l4a) || {})[id] || null;
    lm = { w: { d: its damage, dp: its damage in % of its own, c: its wait between uses (ms), r: 0 (it can't reload),
    b: 1 (it breaks when empty) } }; null when it came plain */
 export const lmOf = (s, id, w) => {
-  const k = kitOf(s, id);
-  return (k && k.lm && k.lm[w]) || null;
+  const k = kitOf(s, id),
+    own = (k && k.lm && k.lm[w]) || null;
+  if (!isSb(s) || !s.sb || !s.sb.it) return own;
+  /* G's rows for this item rule every copy, over what its loot set (plan Loot 5) */
+  const g = sbItemMods(s, w),
+    lm = { ...(own || {}) };
+  if (g.dmg != null) {
+    lm.d = g.dmg;
+    delete lm.dp;
+  } else if (g.dmgP != null) {
+    lm.dp = g.dmgP;
+    delete lm.d;
+  }
+  if (g.cool) lm.c = g.cool;
+  if (g.rl != null) lm.r = g.rl ? 1 : 0;
+  if (g.brk != null) lm.b = g.brk ? 1 : 0;
+  return Object.keys(lm).length ? lm : null;
 };
 export const slotsOf = (s, id) => (kitOf(s, id) || {}).sl || START;
 /* is w one of this duck's weapons? (what it can hold out and use; the grenades are always there) */
@@ -2825,6 +2841,11 @@ function give(s, id, w, hand0) {
   delete lm[old];
   delete lm[w]; // (it comes plain: a loot orb's numbers are set after, l4Loot)
   if (fullAmmo(w)) am[w] = fullAmmo(w);
+  if (isSb(s) && s.sb && s.sb.it) {
+    const g = sbItemMods(s, w); // (Sandbox: G's ammo for every copy of it, plan Loot 5)
+    if (g.ammo != null || g.ammoP != null || g.inf != null || g.n != null)
+      am[w] = ammoFor(w, g, g.inf) || am[w];
+  }
   const sl = [...kit.sl];
   sl[k] = w;
   s.hang.l4a = {
@@ -6633,6 +6654,29 @@ export const l4Down = (s, id) => {
 /* ---------- Sandbox's loot orbs on these maps (sbloot.js) ----------
    a weapon taken from an orb goes into duck id's slots as one bought or spun does (give), full; inf: unlimited ammo (as
    much as never runs out in a sitting); and an orb's damage on the duck that takes it (as a claw does) */
+/* the ammo weapon w comes with, set by loot or G (M: sbloot.js modsOf's form; inf: Unlimited ammo, or null for its own):
+   [in the magazine, spare], or null for none kept (unlimited, as the laser's and the bow's own) */
+function ammoFor(w, M, inf) {
+  const full = fullAmmo(w),
+    unl =
+      inf != null
+        ? inf || (w === "laser" && M.ammoP >= 100) // (the laser's 100% is unlimited: the owner's, Nov 19 22:55Z)
+        : !full; // (the laser and the bow: unlimited unless it's turned off)
+  if (unl) return full ? [full[0], 9999] : null;
+  /* Ammo: a number, or a share where 100% is Dead Ducks Arcade's own (the bow's 100% is 300); How many you get for an
+     item (a medkit, a zebra cake, a chair: its uses) */
+  const own = full ? full[0] + full[1] : w === "bow" ? 300 : 100,
+    n =
+      M.n && (!full || !ARMS[w].mag)
+        ? M.n
+        : M.ammo != null
+          ? M.ammo
+          : M.ammoP != null
+            ? Math.max(1, Math.round((own * M.ammoP) / 100))
+            : own,
+    mag = ARMS[w].mag;
+  return mag ? [Math.min(mag, n), Math.max(0, n - mag)] : [n, 0];
+}
 export function l4Loot(s, id, w, inf, mods = null) {
   if (!ARMS[w]) return false;
   if (w === "grenade") {
@@ -6653,27 +6697,9 @@ export function l4Loot(s, id, w, inf, mods = null) {
     am = { ...kit.am },
     M = mods || {};
   if (inf === undefined) inf = M.inf;
-  const unl =
-    inf != null
-      ? inf || (w === "laser" && M.ammoP >= 100) // (the laser's 100% is unlimited: the owner's, Nov 19 22:55Z)
-      : !full; // (the laser and the bow: unlimited unless it's turned off)
-  if (unl) {
-    if (full) am[w] = [full[0], 9999];
-  } else {
-    /* Ammo: a number, or a share where 100% is Dead Ducks Arcade's own (the bow's 100% is 300); How many you get for
-       an item (a medkit, a zebra cake, a chair: its uses) */
-    const own = full ? full[0] + full[1] : w === "bow" ? 300 : 100,
-      n =
-        M.n && (!full || !ARMS[w].mag)
-          ? M.n
-          : M.ammo != null
-            ? M.ammo
-            : M.ammoP != null
-              ? Math.max(1, Math.round((own * M.ammoP) / 100))
-              : own,
-      mag = ARMS[w].mag;
-    am[w] = mag ? [Math.min(mag, n), Math.max(0, n - mag)] : [n, 0];
-  }
+  const a = ammoFor(w, M, inf);
+  if (a) am[w] = a;
+  else delete am[w]; // (unlimited, as the laser's and the bow's own)
   const lm = {};
   if (M.dmg != null) lm.d = M.dmg;
   if (M.dmgP != null) lm.dp = M.dmgP;

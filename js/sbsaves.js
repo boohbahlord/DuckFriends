@@ -299,6 +299,10 @@ export function saveRows(R) {
     },
   ); // (a map from a picture, kept on this device: umaps.js; the owner's, Nov 19 22:59Z, "In Sandbox ... They click it and they can upload an image")
   rows.push({ label: "Rules…", act: (r) => rulesWin(r) }); // (plan Phase 6: lives, the down phase, crits, watching when out)
+  rows.push({
+    label: "Weapons and items…",
+    act: (r) => import("./sblootview.js").then((m) => m.itemsWin(r)),
+  }); // (plan Loot 5: every copy of an item, bought or picked up; it wins over a loot's own numbers)
   rows.push({ label: "Save game mode…", act: (r) => saveModeWin(r) }); // (plan Phase 6: kept on this device, gmodes.js)
   if (s.hostId === R.me && s.sbsv)
     rows.push({ label: "Test game mode", act: (r) => startTest(r) }); // (as players would see it; Stop test at the top left)

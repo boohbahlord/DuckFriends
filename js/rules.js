@@ -28,6 +28,7 @@ import {
   sbRulesAct,
   boardDuck,
   sbBoardK,
+  sbItemMods,
 } from "./sandboxrules.js";
 import { sbGodAct, godOn } from "./sbgod.js";
 import { survSet } from "./survrules.js";
@@ -1258,7 +1259,8 @@ export const magOf = (s, id, now, w = "handgun") => {
 export const coolEnds = (s, id, sp) =>
   Math.max(
     ((s.lastUse || {})[`${id} ${sp}`] || 0) +
-      ((isSb(s) && (sbGot(s, id, sp) || {}).c) || coolFor(sp, s)) /
+      ((isSb(s) && (sbItemMods(s, sp).cool || (sbGot(s, id, sp) || {}).c)) ||
+        coolFor(sp, s)) /
         grCool(s, id), // (Sandbox: a loot orb's own wait, sbhot.js; a group's Cooldown speed, sbgroups.js)
     magSize(sp) ? ((s.mag || {})[magKey(id, sp)] || {}).r || 0 : 0,
   ); // (a time on the room's clock)

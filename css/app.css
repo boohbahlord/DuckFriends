@@ -20813,6 +20813,11 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .sb-box::placeholder {
   opacity: 0.45;
 }
+/* a three-state switch on neutral (plan Loot 5): dim, the next level down decides */
+.sb-tog.sb-tri.mid {
+  opacity: 0.6;
+  font-style: italic;
+}
 /* a loot block's Starts: its picks are words, wider than a number box */
 .sb-row[data-row="lst"] {
   grid-template-columns: minmax(0, 1fr) auto;

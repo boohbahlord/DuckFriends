@@ -175,6 +175,7 @@ export function boardDuck(s) {
 const BOARD_DUCK = [0.03, 0.08];
 /* { t: "sbr", k, v }: whoever may change Sandbox sets rule k */
 export function sbRulesAct(s, a) {
+  if (a.k === "it") return itemRuleAct(s, a);
   const b = Object.hasOwn(SB_RULES, a.k) ? SB_RULES[a.k] : null;
   if (!isSb(s) || !b || !sbCan(s, a.id)) return false;
   let v = String(a.v ?? "").trim();
@@ -191,6 +192,67 @@ export function sbRulesAct(s, a) {
   s.sb = { ...s.sb, rules };
   return true;
 }
+/* ---------- G's rows for every weapon and item (plan, Loot 5) ----------
+   "G: has the same rows for every weapon and item, and \"Breaks when empty\" can be set for all items or for one. Any
+   row set there rules every copy of that item in the game." Which wins: G, then groups, then loot, then the player's;
+   a row left blank (or a switch on neutral) steps aside. Kept in s.sb.it = { "<item>_<row>": its text }, and
+   "all_brk" for every item; { t: "sbr", k: "it", f, v } sets one ("" clears it) */
+function itemRuleAct(s, a) {
+  const m = /^(all|[a-z0-9]{1,24})_([a-z]+)$/.exec(String(a.f || "")),
+    b = m && Object.hasOwn(SB_ITEM, m[2]) ? SB_ITEM[m[2]] : null;
+  if (!isSb(s) || !b || !sbCan(s, a.id)) return false;
+  if (m[1] === "all" && m[2] !== "brk") return false;
+  const v = String(a.v ?? "")
+    .trim()
+    .slice(0, 12);
+  if (v && !itemOk(b, v)) return false;
+  const it = { ...((s.sb && s.sb.it) || {}) };
+  if ((it[a.f] || "") === v) return false;
+  if (v) it[a.f] = v;
+  else delete it[a.f];
+  s.sb = { ...s.sb, it };
+  return true;
+}
+/* is v good for item row b (a plain number here, or a percent where it takes one; t or f for a switch) */
+function itemOk(b, v) {
+  if (b.kind === "bool") return /^[tf]$/.test(v);
+  if (b.pct) return !b.check(v);
+  if (!/^\d+(\.\d)?$/.test(v)) return false;
+  if (b.kind === "int" && !/^\d+$/.test(v)) return false;
+  return +v >= b.min && +v <= b.max;
+}
+/* G's text for item w's row k (its own, or every item's for Breaks when empty), or "" */
+export function sbItemG(s, w, k) {
+  const it = (s && s.sb && s.sb.it) || {};
+  return it[`${w}_${k}`] || (k === "brk" ? it.all_brk || "" : "");
+}
+/* item w's numbers as G sets them: the loot's form (sbloot.js modsOf), every row null where G leaves it */
+const NO_MODS = Object.freeze({});
+export function sbItemMods(s, w) {
+  if (!s || !s.sb || !s.sb.it) return NO_MODS; // (G sets nothing: the quick way, read every shot)
+  const t = (k) => sbItemG(s, w, k),
+    tf = (k) => (t(k) ? t(k) === "t" : null),
+    n = (k) => (t(k) && +t(k) > 0 ? +t(k) : null),
+    d = sbPct(t("dmg")),
+    a = sbPct(t("ammo"));
+  return {
+    dmg: d && d.v != null ? d.v : null,
+    dmgP: d && d.p != null ? d.p : null,
+    ammo: a && a.v != null ? Math.round(a.v) : null,
+    ammoP: a && a.p != null ? a.p : null,
+    n: n("n") && Math.round(n("n")),
+    inf: tf("inf"),
+    rl: tf("rl"),
+    brk: tf("brk"),
+    cool: n("sps") ? 1000 / n("sps") : n("cd") ? n("cd") * 1000 : null,
+  };
+}
+/* mods a over b: each row a sets wins (G over loot) */
+export const sbModsOver = (a, b) => {
+  const out = { ...b };
+  for (const [k, v] of Object.entries(a || {})) if (v != null) out[k] = v;
+  return out;
+};
 /* gore off: the room's Gore setting, or Sandbox's settings file (gore = false) */
 export const noGoreOf = (s) =>
   !!+s.options.noGore || (isSb(s) && !sbRule(s, "gore"));

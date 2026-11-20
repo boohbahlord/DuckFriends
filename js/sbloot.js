@@ -30,6 +30,8 @@ import {
   sbInBlock,
   sbWhoTakes,
   sbPct,
+  sbItemMods,
+  sbModsOver,
 } from "./sandboxrules.js";
 import { valueOf } from "./numerat.js";
 import {
@@ -369,6 +371,9 @@ export function modsOf(q, w) {
     cool: sps ? 1000 / sps : cd ? cd * 1000 : null,
   };
 }
+/* item w's numbers as they come from block q: G's rows over the loot's (plan Loot 5: "Order: game settings, then groups
+   ... then loot") */
+const modsIn = (s, q, w) => sbModsOver(sbItemMods(s, w), modsOf(q, w));
 /* duck by takes w from block q */
 function take(s, q, w, by, now, H0) {
   const keep = num(q, "keep"),
@@ -376,13 +381,13 @@ function take(s, q, w, by, now, H0) {
   if (zmaps(s) && w === "flashlight")
     s.sb = { ...s.sb, fl: { ...(s.sb.fl || {}), [by]: 1 } }; // (a flashlight: kept for good)
   else if (zmaps(s) && ammoOf(w)) {
-    const n = modsOf(q, w).n || 1; // (How many you get: magazines)
+    const n = modsIn(s, q, w).n || 1; // (How many you get: magazines)
     for (let i = 0; i < n; i++) l4Ammo(s, by, ammoOf(w)); // (a magazine more, for the gun I carry)
-  } else if (zmaps(s)) l4Loot(s, by, w, undefined, modsOf(q, w));
+  } else if (zmaps(s)) l4Loot(s, by, w, undefined, modsIn(s, q, w));
   else {
     const hb = (s.sb && s.sb.hb) || {},
       mine = ((hb.got || {})[by] || []).filter(([v]) => v !== w);
-    const m = modsOf(q, w),
+    const m = modsIn(s, q, w),
       x = {}; // (its own numbers: uses, wait, breaks, sbhot.js sbGot)
     if (m.n) x.u = m.n;
     if (m.cool) x.c = Math.round(m.cool);
