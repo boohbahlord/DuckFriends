@@ -19139,12 +19139,13 @@ html.moving .pxt {
 html.pixel .spx-flames {
   mix-blend-mode: screen;
 } /* (the filter makes the flames one picture: it's that picture that lights the duck now) */
-/* a card's pattern or picture (a player's card, the Card page's swatches) on the grid too: its background drawn again
-   under it, through the same filter, so the duck and the name over it stay as they are */
-html.pixel .pcard[style*="url("] {
+/* a card's hat pattern (a player's card, the Card page's swatches; every other pattern and a picture are pixel files
+   already: card.js) on the grid too: its background drawn again under it, through the same filter, so the duck and the
+   name over it stay as they are */
+html.pixel .pcard[style*="svg+xml"] {
   isolation: isolate;
 }
-html.pixel .pcard[style*="url("]::before {
+html.pixel .pcard[style*="svg+xml"]::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -19154,7 +19155,7 @@ html.pixel .pcard[style*="url("]::before {
   filter: url(#px-f);
   pointer-events: none;
 }
-html.pixel .pat-pic[style*="url("] {
+html.pixel .pat-pic[style*="svg+xml"] {
   filter: url(#px-f);
 }
 .gduck-body img.px {
