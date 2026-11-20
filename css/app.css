@@ -18683,6 +18683,113 @@ html.still .l4-miss {
   }
 }
 
+/* ---------- Sandbox's start: New Sandbox or a save (js/sbsaves.js), in the vote window's frame ---------- */
+.sbp .vt-box {
+  max-width: 52rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.sbp-new,
+.sbp-open {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  column-gap: 0.9rem;
+  align-items: center;
+  text-align: left;
+  padding: 0.45rem 0.75rem;
+  border: 0.2rem solid var(--line);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--panel) 85%, transparent);
+  min-width: 0;
+}
+.sbp-new:hover,
+.sbp-new:focus-visible,
+.sbp-open:hover,
+.sbp-open:focus-visible {
+  background: var(--panel2);
+}
+.sbp-plus {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 9;
+  border-radius: 0.5rem;
+  background: var(--yellow);
+  color: #1c1c28;
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.sbp-pic {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  image-rendering: pixelated;
+}
+.sbp-t b {
+  display: block;
+  font-size: 1.15rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.sbp-t small {
+  display: block;
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+.sbp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.sbp-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+}
+.sbp-acts {
+  display: flex;
+  gap: 0.35rem;
+}
+.sbp-note,
+.sbp-wait {
+  margin: 0.4rem 0.2rem;
+  opacity: 0.8;
+}
+.sbp-wait {
+  text-align: center;
+  font-size: 1.2rem;
+  margin: 2rem 0;
+}
+.sbp-foot {
+  margin: 0.2rem 0 0;
+  display: flex;
+  justify-content: flex-end;
+}
+.sbp-in {
+  width: 100%;
+  font: inherit;
+  padding: 0.45rem 0.6rem;
+  border-radius: 0.5rem;
+  border: 0.15rem solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+}
+@media (max-width: 760px) {
+  .sbp-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sbp-acts {
+    justify-content: flex-end;
+  }
+  .sbp-new,
+  .sbp-open {
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+  }
+}
+
 /* ---------- Vote Mode & Game: the vote windows over the whole screen (js/vote.js) ---------- */
 .vt {
   position: fixed;

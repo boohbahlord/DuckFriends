@@ -34,6 +34,7 @@ import { boxText } from "./sbspawn.js";
 import { npcRows } from "./sbmake.js";
 import { sbCheatSound } from "./sbsfx.js";
 import { sbSlots } from "./sbhot.js";
+import { saveRows } from "./sbsaves.js";
 import {
   hotKeyPut,
   hotRows,
@@ -86,7 +87,7 @@ export const SB_SHEET = [
   ],
   [
     "G",
-    `Game settings for this Sandbox: where ${LANG} files are brought in to run.`,
+    "Game settings for this Sandbox: Save and Save as (the host's, kept on the host's device; it also saves itself every minute), and the Music: which songs play, or none.",
   ],
   ["P", "Player settings: who else may change Sandbox."],
   [
@@ -175,7 +176,7 @@ const OPTIONS = {
   },
   n: [],
   h: (R) => hotRows(R, openPut),
-  g: [],
+  g: saveRows, // (Save, Save as and Music: sbsaves.js)
   p: rightsRows,
 };
 export const sbOptions = (k, R) => {
