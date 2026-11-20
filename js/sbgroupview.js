@@ -216,7 +216,7 @@ export function groupWin(getR, gid) {
     right = ([k, name]) => {
       const v = g.r && (g.r[k] === 1 || g.r[k] === 0) ? g.r[k] : null;
       return `<div class="sb-row" data-row="r${k}"><span>${esc(name)}</span><span class="sb-what">${[
-        [null, "Neutral"],
+        [null, "Default"], // ("true, false, default": the owner's, Nov 20 17:25Z; it was Neutral)
         [1, "On"],
         [0, "Off"],
       ]

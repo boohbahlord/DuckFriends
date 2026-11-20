@@ -81,6 +81,7 @@ import {
 import {
   boxText,
   boxWhy,
+  boxOf,
   spawnsHere,
   sbWalkOf,
   madeOf,
@@ -788,7 +789,15 @@ export function sbNearPoint(s, me) {
 
 /* ---------- its settings window ---------- */
 const row = (f, b, t, why) =>
-  `<label class="sb-row${why ? " bad" : ""}" data-row="${f}"><span>${esc(b.name)}</span><input class="sb-box" data-f="${f}" value="${esc(t)}" maxlength="${f === "key" ? 1 : 80}" spellcheck="false" autocomplete="off"><em class="sb-why">${esc(why)}</em></label>`;
+  `<label class="sb-row${why ? " bad" : ""}" data-row="${f}"><span>${esc(b.name)}</span><input class="sb-box" data-f="${f}" value="${esc(t)}" maxlength="${f === "key" ? 1 : 80}" spellcheck="false" autocomplete="off"${dfltBox(b) ? ` placeholder="default${b.def != null && b.def !== "" ? ` (${esc(b.def)})` : ""}"` : ""}><em class="sb-why">${esc(why)}</em></label>`;
+/* a setting that left empty is its default (the owner's, Nov 20 17:25Z: "every setting for spawn or respawn or zone or loot
+   should have a default setting ... like true, false, default", and "the values not typed into boxes for seriat assume
+   default"): a number box or a true or false one. Unset, it shows empty (a switch: default), never the default's own
+   value as if typed */
+const dfltBox = (b) =>
+  !!b && !b.check && ["int", "tenth", "bool"].includes(b.kind);
+export const typedOr = (o, f, p = o) =>
+  o.f[f] ? o.f[f].t : dfltBox(boxOf(f)) ? "" : boxText(p, f);
 /* the Brain box, with an arrow beside it that lists my-files/ (the owner's: "they can click an arrow beside the text
    box ... a selection that they can scroll through of their files within that directory"): brainbuild.js */
 const brainRow = (t, why) =>
@@ -924,10 +933,18 @@ function pickRow(f, label, opts, picked, rowId = f) {
 const nameOf = (f) =>
   (SB_BOXES[f] || SB_FLAGS[f] || SB_PLAYER[f] || {}).name || SB_ACTS[f] || f;
 /* a true or false setting as a button on the right that reads true or false (the owner's, Nov 19 21:59Z: "make it a
-   button ... when you click the button, it will say true or false"); a hidden box under it carries the value as t or f */
+   button ... when you click the button, it will say true or false"), or default (Nov 20 17:25Z: "true, false, default"):
+   each press goes default, true, false, default. A hidden box under it carries the value as t, f or empty (the default:
+   M's for that kind where it sets one, else the game's own, which its title says) */
+const triOf = (t) => {
+  const v = String(t).trim().toLowerCase();
+  return !v ? "" : /^f/.test(v) ? "f" : "t";
+};
+const triWord = (v) => (v === "t" ? "true" : v === "f" ? "false" : "default");
 const flagRow = (f, b, t, why) => {
-  const on = !/^f/i.test(String(t).trim()) && String(t).trim() !== "";
-  return `<div class="sb-row${why ? " bad" : ""}" data-row="${f}"><span>${esc(b.name)}</span><button type="button" class="sb-tog${on ? " on" : ""}" data-tog="${f}" aria-pressed="${on}">${on ? "true" : "false"}</button><input type="hidden" class="sb-box" data-f="${f}" value="${on ? "t" : "f"}"><em class="sb-why">${esc(why)}</em></div>`;
+  const v = triOf(t),
+    d = triWord(triOf(b.def));
+  return `<div class="sb-row${why ? " bad" : ""}" data-row="${f}"><span>${esc(b.name)}</span><button type="button" class="sb-tog sb-tri${v === "t" ? " on" : v ? "" : " mid"}" data-tog="${f}" aria-pressed="${v === "t" ? "true" : v ? "false" : "mixed"}" title="Default: ${d}">${triWord(v)}</button><input type="hidden" class="sb-box" data-f="${f}" value="${v}"><em class="sb-why">${esc(why)}</em></div>`;
 };
 /* a header over one part of a spawn's window, numbered like Word's headings as the settings go deeper (plan Phase 2:
    3, 3.4, 3.4.1): SECT is [the section it's under, how many came before] while a block's window is made */
@@ -998,7 +1015,7 @@ export function sbSettings(getR, id, tab = "") {
     pts = R && ptsOf(R.state),
     p = pts && pts[id];
   if (!p || !sbMay(R.state, R.me, "b")) return;
-  const typed = (f) => (p.f[f] ? p.f[f].t : boxText(p, f)),
+  const typed = (f) => typedOr(p, f),
     why = (f) => (p.f[f] ? boxWhy(f, p.f[f].t) : ""),
     spawn = p.k === "spawn",
     loot = p.k === "loot", // (a loot orb's spot: sblootview.js)
@@ -1551,11 +1568,15 @@ export function sbSettings(getR, id, tab = "") {
         const tog = e.target.closest("[data-tog]");
         if (tog) {
           const box = tog.closest(".sb-row").querySelector(".sb-box"),
-            on = !/^t/i.test(box.value);
-          box.value = on ? "t" : "f";
-          tog.classList.toggle("on", on);
-          tog.setAttribute("aria-pressed", on);
-          tog.textContent = on ? "true" : "false";
+            v = box.value === "" ? "t" : box.value === "t" ? "f" : ""; // (default, true, false, default …)
+          box.value = v;
+          tog.classList.toggle("on", v === "t");
+          tog.classList.toggle("mid", v === "");
+          tog.setAttribute(
+            "aria-pressed",
+            v === "t" ? "true" : v ? "false" : "mixed",
+          );
+          tog.textContent = triWord(v);
           return box.dispatchEvent(new Event("input", { bubbles: true }));
         }
         /* the Brain box's arrow: my-files/, and the builder for a new one */
@@ -1676,7 +1697,7 @@ export function kindDefaults(getR, kind) {
   if (!R || !SB_WHAT[kind] || !sbMay(R.state, R.me, "m")) return;
   const kd = kdOf(R.state, kind) || { f: {} },
     p = { k: "kd", col: "red", f: { ...kd.f, what: { t: kind, ok: kind } } }, // (as a spawn of it alone would be)
-    typed = (f) => (kd.f[f] ? kd.f[f].t : boxText(p, f)),
+    typed = (f) => typedOr(kd, f, p),
     why = (f) => (kd.f[f] ? boxWhy(f, kd.f[f].t) : ""),
     kinds = kindsFor(R.state),
     html = `<h2>${esc(SB_WHAT[kind])}: defaults</h2>

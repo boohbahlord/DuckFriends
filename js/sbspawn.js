@@ -205,15 +205,17 @@ const flag = (p, f) => num(p, f) === true;
 const NONE = { f: {} };
 export const kdOf = (s, k) => ((s.sb && s.sb.kd) || {})[k] || null;
 export const ownOn = (p) => !p || !p.f || flag(p, "sets");
+/* a box written (not left empty: empty is the default, the next one down decides; the owner's, Nov 20 17:25Z) */
+const written = (o, f) => !!o.f[f] && String(o.f[f].ok ?? "").trim() !== "";
 function fromFor(s, p, k, at = {}) {
   const kd = kdOf(s, k) || NONE,
     own = ownOn(p);
   return (f) =>
     (at.im || []).includes(f)
       ? at
-      : own && p.f[f]
+      : own && written(p, f)
         ? p
-        : kd.f[f]
+        : written(kd, f)
           ? kd
           : own
             ? p
