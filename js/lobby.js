@@ -4,6 +4,7 @@
    them saying what the row under the pointer does. Right: the party, one player card per row; click your own to rename it; right-click any card for its
    options. Bottom left: the keys (the arrow keys move around the lobby, Enter picks, Shift+Enter right-clicks). The X at
    the top right leaves the room. */
+import { gameHeld } from "./gameready.js";
 import { fsBtnHTML } from "./corners.js";
 import { register, go, leaveTo } from "./router.js";
 import {
@@ -33,7 +34,13 @@ import { profile, cleanName } from "./store.js";
 import { openCustomize, setName } from "./customize.js";
 import { openStats } from "./stats.js";
 import { sfx } from "./sound.js";
-import { darken, brighten, loadingScreen, pageReady } from "./loading.js";
+import {
+  darken,
+  brighten,
+  loadingScreen,
+  pageReady,
+  shownSoon,
+} from "./loading.js";
 import { mountDocks, DOCK_HTML, BAR_HTML } from "./dock.js";
 import { MAPS, mapName } from "./maps.js";
 import { acct, onAccount, requestFriend, canAdd } from "./account.js";
@@ -309,22 +316,28 @@ function paintArt(s) {
     art.innerHTML = pic;
     return;
   }
-  /* the next picture over the last one, fading in; then the last one goes */
+  /* the next picture over the last one, fading in once its pixels are in (never an empty map popping in: the owner's,
+     Nov 20 20:31Z); then the last one goes */
+  art.querySelectorAll("svg.art-wait").forEach((x) => x.remove());
   art
     .querySelectorAll("svg.art-in")
     .forEach((x) => x.classList.remove("art-in"));
   while (art.children.length > 1) art.firstElementChild.remove();
   art.insertAdjacentHTML("beforeend", pic);
   const next = art.lastElementChild;
-  next.classList.add("art-in");
-  next.addEventListener(
-    "animationend",
-    () => {
-      next.classList.remove("art-in");
-      while (art.firstElementChild !== next) art.firstElementChild.remove();
-    },
-    { once: true },
-  );
+  next.classList.add("art-wait");
+  shownSoon(next, CYCLE_MS).then(() => {
+    if (!next.isConnected) return;
+    next.classList.replace("art-wait", "art-in");
+    next.addEventListener(
+      "animationend",
+      () => {
+        next.classList.remove("art-in");
+        while (art.firstElementChild !== next) art.firstElementChild.remove();
+      },
+      { once: true },
+    );
+  });
 }
 /* the map vote's round (the start's first part): its maps in place of the menu, each with its picture and its votes */
 function onState(s) {
@@ -339,8 +352,8 @@ function onState(s) {
     loadingScreen({
       duck: profile.duck,
       ping: () => (room.ping ? room.ping() : 0),
-      ready: pageReady,
-      max: 15000, // (its pictures in first, on a slow phone too: loading.js pageReady)
+      ready: () => gameHeld().then(pageReady), // (the map's pieces and every picture it shows first: gameready.js)
+      max: 90000, // (its pictures in first, on a slow phone or a slow line too: loading.js pageReady says when it is stuck)
     }); // (every way into a game: the countdown's end, a vote, a game already going on)
     return;
   } // the countdown's last tone, at zero

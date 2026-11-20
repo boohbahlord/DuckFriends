@@ -9,6 +9,7 @@
 import { svgDataURL } from "./svgurl.js";
 import { applyPalette } from "./pixelpalette.js";
 import { hasRb, rbSprite, RB_N } from "./rainbowskin.js";
+import { holdGame } from "./gameready.js";
 
 const DUCK = 32, // (pixels to a duck's height: the owner's pick, on phones too)
   KEEP = 900; // (pictures kept made; the oldest go first)
@@ -193,10 +194,13 @@ const sheetFor = (key) => {
   const vs = INDEX && INDEX[key];
   return vs ? sheet(vs[0][4] || 0) : null;
 };
+/* every sheet, asked for: once the rest of the game is in (main.js), and on any screen past the front one, so they're
+   here before a screen's pictures want them */
+export const allSheets = () =>
+  index.then(() => Promise.all(ATLAS.map((_, n) => sheet(n).p)));
 if (typeof document !== "undefined")
   document.addEventListener("screen", () => {
-    if (document.body.dataset.screen !== "front")
-      index.then(() => ATLAS.forEach((_, n) => sheet(n))); // (on their way before a game's pictures want them)
+    if (document.body.dataset.screen !== "front") allSheets();
   });
 /* while key's picture may be in the files and they aren't here yet: a Promise for when they are (or turn out not to
    be), else null */
@@ -309,9 +313,11 @@ export function raster(key, src, w, h) {
   if (!making.has(fk))
     making.set(
       fk,
-      make(fk, src, cw, ch)
-        .catch(() => null)
-        .finally(() => making.delete(fk)),
+      holdGame(
+        make(fk, src, cw, ch)
+          .catch(() => null)
+          .finally(() => making.delete(fk)),
+      ), // (a game that's loading waits for it: gameready.js)
     );
   return null;
 }

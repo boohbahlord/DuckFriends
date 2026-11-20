@@ -80,7 +80,6 @@ const WOUND_OF = {
   pellet: "shot",
   knife: "blade",
   dagger: "blade",
-  jaime: "blade",
   hammer: "blunt",
   pan: "blunt",
   axe: "blade",
@@ -196,8 +195,7 @@ export const goreFree = (codes = "") =>
 /* ---------- the ducks' wounds (in Quacky Zombies too: a zombie's claw, the owner's, Nov 4 08:05Z) ----------
    Each wound goes away by itself 6 to 12 seconds (a roll for each) after its duck is up again: the clock stops while it
    plays dead. A crit (PCRIT: a weapon's chance, as Quacky Zombies' headshots) takes all its HP, blows its head off
-   (x0) and keeps it down CRIT_DOWN ms; a grenade or a Jaime Bomb that kills it leaves it as the Jaime Bomb leaves
-   Jaime: torn apart, headless and burnt (DEATH). s.pw = { id: { m: [[code, ms left]], at: when its clock started
+   (x0) and keeps it down CRIT_DOWN ms; a grenade that kills it leaves it torn apart, headless and burnt (DEATH). s.pw = { id: { m: [[code, ms left]], at: when its clock started
    (0: stopped, it's down) } } */
 export const PCRIT = {
   handgun: 0.05,

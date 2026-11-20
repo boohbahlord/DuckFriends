@@ -1511,9 +1511,12 @@ export function sbSettings(getR, id, tab = "") {
           const r = getR(),
             f = t.dataset.lkup || "lkpic", // (the Look's picture, or the effect's)
             note = t.closest(".sb-row").querySelector(".sb-lk-note");
-          note.textContent = "Sending…";
-          return picFrom(t.files[0], LOOK_PX).then(
+          const file = t.files[0];
+          t.value = ""; // (the same file can be picked again)
+          return picFrom(file, LOOK_PX).then(
             (pic) => {
+              if (!pic) return; // (closed without cropping)
+              note.textContent = "Sending…";
               send({ k: "set", f, v: sendParts(r, pic) });
               setTimeout(() => again(id), 400);
             },
@@ -1590,9 +1593,12 @@ export function sbSettings(getR, id, tab = "") {
         if (t.matches("[data-up]")) {
           const r = getR(),
             note = w.querySelector(".sb-up-note");
-          note.textContent = "Sending…";
-          return picFrom(t.files[0]).then(
+          const file = t.files[0];
+          t.value = ""; // (the same file can be picked again)
+          return picFrom(file).then(
             (pic) => {
+              if (!pic) return; // (closed without cropping)
+              note.textContent = "Sending…";
               sendPic(r, id, pic);
               setTimeout(() => again(id, "ap"), 400);
             },

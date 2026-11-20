@@ -255,16 +255,6 @@ const HOST = [
     d: "Any game mode can come next, including the one just played. Off: every game mode is played once before the order is reshuffled.",
   },
   {
-    k: "lowGravity",
-    n: "Jumps",
-    c: [
-      [0, "Normal"],
-      [1, "Low gravity"],
-    ],
-    cat: "more",
-    d: "Low gravity: jumps go higher and fall more slowly.",
-  },
-  {
     k: "walk",
     n: "Walking speed",
     c: [

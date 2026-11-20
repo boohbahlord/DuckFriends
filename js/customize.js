@@ -25,7 +25,6 @@ import {
   keysOf,
   colorsOf,
   momentHTML,
-  puffHTML,
   confettiRain,
   pressFX,
   BULLET,
@@ -52,7 +51,9 @@ import {
   CARD_SIZES,
   cardHTML,
   cardBackground,
+  cardSheets,
 } from "./card.js";
+import { picturesIn, holdLoading, shownSoon } from "./loading.js";
 import { HATS, HAT_GROUPS, hatById } from "./hats.js";
 import { FACES, FACE_GROUPS, faceById } from "./faces.js";
 import { EYES, EYE_GROUPS, eyeById } from "./eyes.js";
@@ -66,8 +67,7 @@ import { who } from "./who.js";
 import { NAV_HINTS, items } from "./keynav.js";
 import { unlocked, isLocked, lockHint } from "./unlocks.js";
 import { touchOnly } from "./pointer.js";
-import { ARROW, CHAIR, ZEBRA, JAIME, BOMB_SKIN } from "./mgjart.js";
-import { GUARD_W, guardWeapon } from "./jaimebomb.js";
+import { ARROW, CHAIR, ZEBRA } from "./mgjart.js";
 import { jetHTML } from "./jetpack.js";
 import { ROUNDS_ART, TRACE } from "./l4ddguns.js";
 import { GUNS_NEW, AUTO } from "./rules.js";
@@ -196,16 +196,6 @@ const DATBOI_RANKS = [
   ["rose", "Rose gold"],
   ["rainbow", "Rainbow"],
 ];
-/* the Jaime Guard's weapon, picked as he goes on a key (only the weapons I have unlocked) */
-const guardPick = (D) =>
-  `<div class="sp-jg" role="group" aria-label="Jaime's weapon"><span class="small dim">Jaime's weapon</span>${GUARD_W.filter(
-    (w) => unlocked("special", w),
-  )
-    .map(
-      (w) =>
-        `<button type="button" class="sp-key${guardWeapon(D) === w ? " full" : ""}" data-a="jgw" data-v="${w}" aria-pressed="${guardWeapon(D) === w}" aria-label="${esc(specialById(w).name)}" data-tip="${esc(specialById(w).name)}"><i>${specialById(w).icon}</i></button>`,
-    )
-    .join("")}</div>`;
 const boxed = (id) => !!styleById(id).pages; // (Jack in a Box or Dat Boi)
 const styleLabel = (D) =>
   D.style === "jack" && D.jill ? "Jill in a Box" : styleById(D.style).name;
@@ -390,9 +380,9 @@ let lastPage = null,
   unkeying = false; // the Specials page's Remove from hotbar is on: a special tapped comes off its key
 const openFolds = new Set();
 
+let warming = false; // (Customize drawing its pages out of sight as it opens: warmUp)
 /* opts.npc: one of my NPCs (sbnpcs.js) to dress instead of my duck (Sandbox's m window); the promise ends when it shuts */
 export function openCustomize(page = lastPage, opts = {}) {
-  loadSounds("game"); // (the specials' previews: each gun's own sound)
   if (page === "duck") page = null; // (the old tab name)
   NPC = opts.npc || null;
   BORROWED = !!opts.borrowed; // (another player's NPC, changed in the room only: no Delete, sbepview.js)
@@ -402,6 +392,7 @@ export function openCustomize(page = lastPage, opts = {}) {
     `<div class="armory${NPC ? " arm-npc" : ""}"><div class="arm-menu"></div><div class="arm-stage" data-nonav><div class="arm-duck"></div><div class="arm-card"${NPC ? " hidden" : ""}></div><p class="hints arm-keys">${NAV_HINTS}</p></div></div>`,
     {
       cls: "win-armory win-full",
+      cover: false, // (one loading screen as it opens, for every picture of every page: warmUp below)
       onOpen(w, close) {
         openFolds.clear();
         keyFor = null;
@@ -443,7 +434,26 @@ export function openCustomize(page = lastPage, opts = {}) {
                           ? peek.id
                           : { id: peek.id },
                     }; // (the eyes and Dat Boi's rank are kept as their id alone)
-          duckBox.innerHTML = `<span class="arm-pic">${duckSVG(look, { size: 220, title: NPC ? NPC.name : profile.name })}${sp && sp.kind === "effect" ? `<span class="sp-fx">${momentHTML(sp.id, duckNow())}</span>` : ""}</span>`; // (effects sit on the duck, not on the whole panel)
+          const pic = el(
+            `<span class="arm-pic">${duckSVG(look, { size: 220, title: NPC ? NPC.name : profile.name })}${sp && sp.kind === "effect" ? `<span class="sp-fx">${momentHTML(sp.id, duckNow())}</span>` : ""}</span>`,
+          ); // (effects sit on the duck, not on the whole panel)
+          /* the new duck is drawn under the one shown, and takes its place once its pixels are in: it never blinks out
+             (the owner's, Nov 20 20:46Z) */
+          duckBox
+            .querySelectorAll(":scope > .arm-next")
+            .forEach((e) => e.remove());
+          if (!duckBox.querySelector(":scope > .arm-pic")) duckBox.append(pic);
+          else {
+            pic.classList.add("arm-next");
+            duckBox.append(pic);
+            shownSoon(pic).then(() => {
+              if (!pic.isConnected) return; // (a newer one came)
+              duckBox
+                .querySelectorAll(":scope > .arm-pic:not(.arm-next)")
+                .forEach((e) => e.remove());
+              pic.classList.remove("arm-next");
+            });
+          }
           if (!NPC) cardBox.innerHTML = cardHTML(me(), { size: 52 });
         };
         const colorSpecial = () =>
@@ -488,32 +498,6 @@ export function openCustomize(page = lastPage, opts = {}) {
             );
             pic.append(fx);
             setTimeout(() => fx.remove(), 5000);
-          }
-          if (sp.kind === "jump") {
-            // one hop (two for the double jump, with its cloud), not one on every redraw after
-            const cls = id === "double" ? "hop2" : "hop";
-            duckBox.classList.remove("hop", "hop2");
-            void duckBox.offsetWidth;
-            duckBox.classList.add(cls);
-            clearTimeout(duckBox._hop);
-            duckBox._hop = setTimeout(
-              () => duckBox.classList.remove(cls),
-              1500,
-            );
-            if (id === "double")
-              setTimeout(() => {
-                const pf = el(
-                  puffHTML(
-                    x,
-                    y - w.width * 0.42,
-                    w.width,
-                    colorsOf(duckNow(), "double")[0],
-                  ),
-                );
-                pic.append(pf);
-                sfx.puff();
-                setTimeout(() => pf.remove(), 1000);
-              }, 480);
           }
           if (sp.kind === "item") {
             if (id === "confetti") {
@@ -564,17 +548,6 @@ export function openCustomize(page = lastPage, opts = {}) {
                   `<div class="spe spe-cake" style="left:${(x + w.width * 0.3).toFixed(0)}px;top:${(y - w.width * 0.45).toFixed(0)}px;--s:${w.width.toFixed(0)}px"><b><i>${ZEBRA}</i></b></div>`,
                 ),
               );
-            /* Jaime: he pops out by the duck in a puff, knife out, and runs off to find someone (the Jaime Bomb: with his
-               dynamite on) */
-            if (id === "jaime" || id === "jaimebomb") {
-              const jx = x + w.width * 0.55;
-              els.push(
-                el(puffHTML(jx, y - w.width * 0.18, w.width * 0.6, "#ffc2d4")),
-                el(
-                  `<div class="spe spe-jaime" style="left:${jx.toFixed(0)}px;top:${y.toFixed(0)}px;--s:${w.width.toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - jx + w.width * 0.4)}px"><b>${duckSVG(JAIME.duck, { size: 80, shadow: false, ...(id === "jaimebomb" ? { skin: BOMB_SKIN } : {}) })}<i>${heldHTML("knife", JAIME.duck)}</i></b></div>`,
-                ),
-              );
-            }
             /* the knife and the hammer: one stab or one swing in the duck's hand; the shotgun: one kick; the bow: drawn
                back and let go */
             if (
@@ -661,10 +634,6 @@ export function openCustomize(page = lastPage, opts = {}) {
               bow: () => setTimeout(() => sfx.bow(), 380),
               chair: () => setTimeout(() => sfx.chair(), 600),
               zebra: sfx.cakeThrow,
-              jaime: () => {
-                sfx.puff();
-                setTimeout(() => sfx.jaime(), 250);
-              },
               shotgun: () => {
                 sfx.shotgun();
                 setTimeout(() => sfx.pump(), 520);
@@ -986,7 +955,7 @@ export function openCustomize(page = lastPage, opts = {}) {
                       : ""; // (the hammer's other look)
                   return `<div class="sp-tile${x.off ? " off" : ""}${unkeying ? (at >= 0 ? " sp-rm" : " sp-rm-no") : ""}"><button type="button" class="arm-tile${lk ? (open ? " unlockd" : " locked") : ""}" data-g="special" data-v="${x.id}"${x.off ? ' disabled aria-disabled="true"' : ""} aria-pressed="${at >= 0}" aria-expanded="${opened}" data-tip="${esc(tip)}"${lk && !open ? ' aria-label="' + esc(x.name + " (locked)") + '"' : ""}>${lk ? PAD(open) : ""}<span class="sp-icon">${x.icon}</span><span>${esc(x.name)}</span>${at >= 0 ? `<b class="sp-on">${KEYS[at]}</b>` : ""}</button>
               <button type="button" class="sp-prev" data-a="preview" data-v="${x.id}"${x.off ? " disabled" : ""} aria-label="Preview ${esc(x.name)}" data-tip="Show it on your duck">▶</button>${alt}</div>
-              ${opened && x.id === "jaimeguard" ? guardPick(D) : ""}${opened ? `<div class="sp-keys sp-pick" role="group" aria-label="Put ${esc(x.name)} on a key">${KEYS.map((n, i) => box(n, i, keys[i], `data-a="setkey" aria-pressed="${keys[i] === x.id}" aria-label="Key ${n}${keys[i] ? `: ${esc(specialById(keys[i]).name)}` : ""}"`)).join("")}</div>` : ""}`;
+              ${opened ? `<div class="sp-keys sp-pick" role="group" aria-label="Put ${esc(x.name)} on a key">${KEYS.map((n, i) => box(n, i, keys[i], `data-a="setkey" aria-pressed="${keys[i] === x.id}" aria-label="Key ${n}${keys[i] ? `: ${esc(specialById(keys[i]).name)}` : ""}"`)).join("")}</div>` : ""}`;
                 })
                 .join("");
             const used = keys.filter(Boolean).length,
@@ -996,9 +965,8 @@ export function openCustomize(page = lastPage, opts = {}) {
               `<div class="arm-body arm-specials">${strip}<h3>Your keys</h3><div class="sp-keys sp-mine">${KEYS.map((n, i) => box(n, i, keys[i], keys[i] ? `data-a="unkey" data-tip="Take ${esc(specialById(keys[i]).name)} off key ${n}" aria-label="Key ${n}: ${esc(specialById(keys[i]).name)}"` : `aria-label="Key ${n}: empty" disabled`)).join("")}</div>
             <p class="small dim sp-now">${open ? `${esc(open.name)}: ${esc(open.tip)} Pick its key.` : phone ? "Tap a special, then the key to put it on. In a game, hold still on the board to use them." : "Pick a special, then the key to put it on. In a game, press its key; Shift and the key keeps it on."}</p>
             <h3>Effects</h3><div class="arm-grid sp-grid">${tiles("effect")}</div>
-            <h3>Jumps</h3><div class="arm-grid sp-grid">${tiles("jump")}</div>
             <h3>Items</h3><div class="arm-grid sp-grid">${tiles("item")}</div>
-            <p class="small dim">Their colors are under Colors.</p>${phone ? "" : '<p class="small dim"><kbd>Number</kbd> Pick a weapon (again: put it away) · <kbd>Shift</kbd>+<kbd>Number</kbd> Keep a jump on</p>'}${strip}</div>`;
+            <p class="small dim">Their colors are under Colors.</p>${phone ? "" : '<p class="small dim"><kbd>Number</kbd> Pick a weapon (again: put it away)</p>'}${strip}</div>`;
           } else if (k === "skin" && D.style === "datboi") {
             /* Dat Boi's Skin page is his ranks */
             const pic = (rank) =>
@@ -1148,7 +1116,29 @@ export function openCustomize(page = lastPage, opts = {}) {
               /(<div class="arm-body[^"]*">)/,
               "$1" + randBtn(k),
             ); // (each page's own Randomize, at its top)
+          /* the page shown stays over the new one until the new one's pictures are in (data-nopx: left as it is), so no
+             tile is ever empty (the owner's, Nov 20 20:46Z) */
+          let old = menu.querySelector(":scope > .arm-old");
+          if (old) old.remove();
+          else if (!warming && menu.firstElementChild) {
+            old = document.createElement("div");
+            old.className = "arm-old";
+            old.setAttribute("data-nopx", "");
+            old.inert = true; // (only a picture of the last page: nothing in it is reached)
+            const top = (menu.querySelector(".arm-body") || {}).scrollTop || 0;
+            old.append(...menu.childNodes);
+            old.dataset.top = top;
+          }
           menu.innerHTML = html;
+          if (old) {
+            menu.append(old);
+            const ob = old.querySelector(".arm-body");
+            if (ob) ob.scrollTop = +old.dataset.top || 0;
+            const fresh = [...menu.children].filter((e) => e !== old);
+            shownSoon(fresh).then(() => {
+              if (fresh.every((e) => e.isConnected)) old.remove();
+            });
+          }
           if (peek)
             menu
               .querySelector(".arm-tile.peek")
@@ -1378,7 +1368,7 @@ export function openCustomize(page = lastPage, opts = {}) {
                     [id]: { ...((D.spc || {})[id] || {}), [key]: c },
                   };
                 },
-                id === "double" ? "The cloud stays see-through." : "",
+                "",
                 sp.colors.length > 1 && sp.name,
                 true,
               ]),
@@ -1432,11 +1422,6 @@ export function openCustomize(page = lastPage, opts = {}) {
               preview(a.dataset.v);
               return;
             }
-            if (a.dataset.a === "jgw") {
-              D.jg = a.dataset.v;
-              changed();
-              return;
-            } // (the Jaime Guard's weapon)
             if (a.dataset.a === "setkey" && !isOff(keyFor)) {
               const keys = keysOf(D),
                 i = +a.dataset.i,
@@ -1709,6 +1694,55 @@ export function openCustomize(page = lastPage, opts = {}) {
         });
         stage();
         show(page);
+        warmUp();
+        /* the owner's, Nov 20 20:46Z: "The customized menu shouldn't even have loading screens. Like maybe you load the
+           whole customization menu and that has a loading screen. And it loads everything you can select in it before
+           it opens rather than just certain menus". Every page is drawn once, out of sight, before the window shows
+           (a loading screen if that takes more than a moment): every tile's picture and the patterns' sheets are then
+           in, and a page comes up whole */
+        async function warmUp() {
+          /* (in a game no loading screen ever comes (the owner's, Nov 19 22:52Z): there it shows at once, its pages
+             drawn behind it) */
+          const back = w.closest(".win-back") || w,
+            inGame = document.body.dataset.screen === "game";
+          if (!inGame) back.classList.add("arm-warming");
+          let hold = null;
+          const slow = inGame
+            ? 0
+            : setTimeout(() => (hold = holdLoading({ maxMs: 90000 })), 150);
+          const start = lastPage,
+            folds = new Set(openFolds);
+          let all = "";
+          warming = true;
+          try {
+            for (const r of rows())
+              if (r) {
+                show(r[0]);
+                all += menu.innerHTML;
+              }
+          } catch {}
+          openFolds.clear();
+          folds.forEach((f) => openFolds.add(f));
+          show(start);
+          warming = false;
+          const box = document.createElement("div");
+          box.className = "arm-menu arm-warm";
+          box.inert = true;
+          box.style.width = menu.getBoundingClientRect().width + "px";
+          box.innerHTML = all.replace(/<details\b/g, "<details open"); // (what folds away too)
+          w.querySelector(".armory").append(box);
+          await Promise.all([
+            cardSheets(),
+            picturesIn(box),
+            picturesIn(duckBox),
+            picturesIn(menu),
+          ]);
+          box.remove();
+          loadSounds("game"); // (the specials' previews: each gun's own sound; after the pictures, so they don't share the line)
+          clearTimeout(slow);
+          back.classList.remove("arm-warming");
+          if (hold) hold();
+        }
       },
     },
   ).then((v) => {

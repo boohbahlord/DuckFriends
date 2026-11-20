@@ -15,6 +15,7 @@
    room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). Duncelation has its
    own rules in duncerules.js: one defender in the circle, everyone else walks to Dunce or Not a Dunce. Valentine's Duck
    Date has its own in vddrules.js: The Date at the dining table, a date with each Suitor, then a Suitor Turned Down. */
+import { HANDGUN } from "./gamedefaults.js";
 import { epAct } from "./sbep.js";
 import { duckBig, picGrow, scaleOf } from "./duck.js";
 import {
@@ -165,21 +166,6 @@ import {
   justinAt,
   JUSTIN_ID,
 } from "./boardjustin.js";
-import {
-  BOMB,
-  bombRoll,
-  bombIn,
-  flyTo,
-  snapLine,
-  jaimeCount,
-  jaimeSays,
-  jaimeDead,
-  anyOf as anyLine,
-  JAIME_HURT,
-  JUSTIN_AT_JAIME,
-  guardWeapon,
-} from "./jaimebomb.js";
-import { justinSnaps, justinUpAt } from "./hangout/justin.js";
 import { pwAdd, pwHit, pwTick, PCRIT, CRIT_DOWN, DEATH } from "./wounds.js";
 import {
   isMgj,
@@ -273,7 +259,6 @@ export const OPTIONS_DEFAULT = {
   discuss: 0, // 1: the Discussion round after each vote comes back (Agree or Disagree, Would You Rather, Bicker Brackets, Lawyering)
   submitTime: 132, // 0 (off), 60, 90, 120, 132 (2:12): a time limit on writing questions; Bicker Brackets starts with none (0)
   botWait: 5, // TEST rooms: seconds before computers act
-  lowGravity: 0, // 1: jumps float, slower and higher
   fun: 1, // the silly commands (lightning, love, kill, hotdog): 1 on, 0 off
   ghosts: 0, // 1: Duck Cabin's ghosts (hangout/ghosts.js): a knocked-down duck's ghost walks about until Space
   sbTint: 0, // Sandbox on the board: 1 puts Mad God Justin's colored field over the map (off: the map shows plain)
@@ -1171,9 +1156,6 @@ const PRESS = [
   "burst",
   "chair",
   "zebra",
-  "jaime",
-  "jaimebomb",
-  "jaimeguard",
   "sound",
   "trombone",
   "confetti",
@@ -1193,9 +1175,6 @@ const COOLDOWN = {
   bow: ARM_COOL.bow,
   chair: 15000,
   zebra: 30000, // (as Mad God Justin's CAKE_EVERY)
-  jaime: 12000, // (as Mad God Justin's JAIME_MS, but each duck's own)
-  jaimebomb: 12000, // (the same as Jaime's: the owner's)
-  jaimeguard: 12000, // (as Jaime's; and one Guard of mine at a time)
 };
 export const coolFor = (sp, s) =>
   (s && isMgj(s) && mgjCool(sp)) ||
@@ -1236,7 +1215,7 @@ export const AUTO = [
    gun and the grenade launcher have none there, so here the chain gun reloads after its 300, and the launcher after 3
    (my guesses). s.mag = { id: { n: shots fired, r: when its reload ends (0: not reloading) } } for the handgun, and
    { "id gun": … } for the others */
-export const MAG = 7,
+export const MAG = HANDGUN.mag,
   RELOAD = ARM_RELOAD;
 const MAG_MORE = {
   chaingun: [300, 4000],
@@ -2245,7 +2224,6 @@ function reduceStep(state, a, now) {
           x = Math.max(lo, Math.min(hi, x));
         }
       }
-      const dj = j && +a.dj > j ? +a.dj : 0; // a double jump: when the second jump began
       const w = (
           isL4dd(s)
             ? l4Holds(s, a.id, a.w)
@@ -2268,9 +2246,6 @@ function reduceStep(state, a, now) {
           : {}), // (a cut-out picture: the way it faces, as the screens turn it, so it's hit where it shows: playerAt)
         q: /^[lrud]$/.test(a.q) ? a.q : "",
         sp: !!a.sp,
-        ...(j && a.lj ? { lj: true } : {}),
-        ...(j && a.sj && !a.lj ? { sj: true } : {}),
-        ...(dj ? { dj } : {}),
         ...(w ? { w, ax: +ax.toFixed(3), ay: +ay.toFixed(3) } : {}),
         ...(isHang(s)
           ? {
@@ -2294,7 +2269,7 @@ function reduceStep(state, a, now) {
         now - was.kb.t < (was.kb.l ?? KB_LAND) + (was.kb.ms || KB_MS)
           ? { kb: was.kb }
           : {}),
-      }; // q: squashed against l/r/u/d; sp: sprinting; lj: a long jump; tb: a trampoline bounce's height; jf: flying with the jetpack (jt: its jets on, fly: high enough that a hit misses, fz: its height on the boards)
+      }; // q: squashed against l/r/u/d; sp: sprinting; tb: a trampoline bounce's height; jf: flying with the jetpack (jt: its jets on, fly: high enough that a hit misses, fz: its height on the boards)
       quackMoved(s, a.id); // (Who is the Quack?: first onto the Quack's tile)
       if (me.dead && (x !== was.x || y !== was.y)) {
         delete me.dead;
@@ -2512,18 +2487,14 @@ function reduceStep(state, a, now) {
             !(isSb(s) ? sbSlots(s, a.id).includes(sp) : onKeys(me.duck, sp))
       )
         return state; // (Mad God Justin: not while down, but the down pistol)
-      if (isMgj(s) && ["revive", "jaime", "zebra"].includes(sp))
-        return mgjTeamUse(s, a, now, logLine) ? s : state; // (Mad God Justin: a revive held or let go, a Jaime, the zebra cake)
+      if (isMgj(s) && ["revive", "zebra"].includes(sp))
+        return mgjTeamUse(s, a, now, logLine) ? s : state; // (Mad God Justin: a revive held or let go, the zebra cake)
       const mgjGun = isMgj(s) && MGJ_GUNS.includes(sp);
       if (isMgj(s) && sp !== MGJ_MELEE && sp !== "handgun" && !mgjGun)
         return mgjUse(s, a, now, logLine) ? s : state; // (Mad God Justin: the medkit picked up)
       if (mgjGun && (s.mgj.held[a.id] !== sp || !ammoOf(s, a.id))) return state; // (Mad God Justin: a gun picked up, until its shots are gone)
       if (
-        (WEAPONS.includes(sp) ||
-          sp === "chair" ||
-          sp === "jaime" ||
-          sp === "jaimebomb" ||
-          sp === "jaimeguard") &&
+        (WEAPONS.includes(sp) || sp === "chair") &&
         !s.options.fun &&
         !isMgj(s)
       )
@@ -2540,16 +2511,6 @@ function reduceStep(state, a, now) {
         return state; // (full auto: the shots can come a little bunched over the network, as in Quacky Zombies)
       if (sp === "zebra" && s.zcake) return state; // (one zebra cake in the room at a time)
       if (sp === "laser" && laserHeat(s, a.id, now).over) return state; // (Mad God Justin's Laser Rifle overheated: it can't fire until it has cooled)
-      if (sp === "jaimeguard") {
-        if (!guardOut(s, a.id, now)) return state; // (my Guard is still out: the key keeps its Jaime)
-        s.lastUse = { ...(s.lastUse || {}), [k]: now };
-        return s;
-      }
-      if (sp === "jaime" || sp === "jaimebomb") {
-        if (!jaimeOut(s, a.id, now, bombRoll(sp))) return state; // (nobody to go for: the key keeps its Jaime)
-        s.lastUse = { ...(s.lastUse || {}), [k]: now };
-        return s;
-      }
       const mg = downGun ? magSize(sp) : isMgj(s) ? mgjMag(sp) : magSize(sp); // (Mad God Justin's pistol never reloads: the owner's, Nov 16; a gun picked up has Quacky Zombies' magazine; the down pistol does, its bullets never run out)
       const many =
         sp === "burst" && !isMgj(s)
@@ -3252,7 +3213,6 @@ function reduceStep(state, a, now) {
           vdTick(s, now) |
           attacks(s, now) | // (the knife and the hammer, still swinging)
           cakeGone(s, now) |
-          jaimeRun(s, now) |
           (isL4dd(s) ? 0 : groundFire(s, now)) | // (the flamethrower's burning ground)
           pwTick(s, now, normalGame(s)) | // (the ducks' wounds going away: wounds.js)
           (isSb(s)
@@ -3524,7 +3484,6 @@ function forgame(s, a, now) {
         [
           "freeRoam",
           "fun",
-          "lowGravity",
           "justin",
           "mgjBoard",
           "ghosts",
@@ -3569,25 +3528,23 @@ function forgame(s, a, now) {
           ? `answer timer ${v ? "off" : "on"}`
           : k === "order"
             ? `question order ${v}`
-            : k === "lowGravity"
-              ? `gravity ${v ? "low" : "normal"}`
-              : k === "downMs"
-                ? `knocked down for ${v ? v / 1000 + " s" : "no time"}`
-                : k === "justin"
-                  ? `Justin ${v ? "on" : "off"}`
-                  : k === "mgjBoard"
-                    ? `Mad God Justin ${v ? "on" : "off"}`
-                    : k === "ghosts"
-                      ? `ghosts ${v ? "on" : "off"}`
-                      : k === "ghostBusy"
-                        ? `no ghosts while busy ${v ? "on" : "off"}`
-                        : k === "discuss"
-                          ? `discussion round ${v ? "on" : "off"}`
-                          : k === "unvoteStops"
-                            ? `unvoting ${v ? "stops" : "doesn't stop"} the countdown`
-                            : k === "freeRoam" || k === "fun"
-                              ? `${k === "fun" ? "silly commands" : "free roam"} ${v ? "on" : "off"}`
-                              : `${{ catchUp: "catch-up timer", writeCatch: "writing catch-up timer", answerTime: "answer timer", submitTime: "writing timer" }[k]} ${v ? v + " s" : "off"}`;
+            : k === "downMs"
+              ? `knocked down for ${v ? v / 1000 + " s" : "no time"}`
+              : k === "justin"
+                ? `Justin ${v ? "on" : "off"}`
+                : k === "mgjBoard"
+                  ? `Mad God Justin ${v ? "on" : "off"}`
+                  : k === "ghosts"
+                    ? `ghosts ${v ? "on" : "off"}`
+                    : k === "ghostBusy"
+                      ? `no ghosts while busy ${v ? "on" : "off"}`
+                      : k === "discuss"
+                        ? `discussion round ${v ? "on" : "off"}`
+                        : k === "unvoteStops"
+                          ? `unvoting ${v ? "stops" : "doesn't stop"} the countdown`
+                          : k === "freeRoam" || k === "fun"
+                            ? `${k === "fun" ? "silly commands" : "free roam"} ${v ? "on" : "off"}`
+                            : `${{ catchUp: "catch-up timer", writeCatch: "writing catch-up timer", answerTime: "answer timer", submitTime: "writing timer" }[k]} ${v ? v + " s" : "off"}`;
     sayFloat(
       s,
       `${me.name} changed the game: ${Object.entries(o)
@@ -3663,15 +3620,11 @@ function justinKilled(s, by, w) {
 /* a player knocked down by another player's weapon: the last few, each numbered, so every device counts its own player's
    kills once (unlocks.js: the shotgun opens at 144 kills, the grenade at 360, and Justin counts too) */
 /* a jump dodges attacks, but not in its first and its last fifth: I want a dodge timed, not a jump held as a shield.
-   The jump's length is game.js' (JUMP, jumpCfg): 0.62 s, low gravity 1.2 s, a long jump 1.4 times, a short jump 0.7
-   times; a double jump goes on for a second arc from when it began */
+   The jump's length is game.js' (JUMP, jumpCfg): 0.62 s */
 export function dodges(s, p, now) {
   if (!p || !p.j) return false;
-  const T =
-      p.tb > 0
-        ? 620 * Math.sqrt(p.tb / 1.35)
-        : (s.options.lowGravity ? 1200 : 620) * (p.lj ? 1.4 : p.sj ? 0.7 : 1),
-    end = (p.dj > p.j ? p.dj : p.j) + T;
+  const T = p.tb > 0 ? 620 * Math.sqrt(p.tb / 1.35) : 620,
+    end = p.j + T;
   return now - p.j > T * 0.2 && end - now > T * 0.2;
 }
 /* the normal game's HP (every mode but Mad God Justin and Dead Ducks Arcade): a duck has PHP HP before it plays dead
@@ -3910,9 +3863,7 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
     if (n) hits.push({ id, ...n });
   }
   if (sp === "knife") hits = hits.sort((a, b) => a.d - b.d).slice(0, 1);
-  if (sp !== "knife" || !hits.length) guardsHit(s, by, near, now, sp); // (a Jaime Guard in reach: his 1 HP)
   for (const h of hits) {
-    logHit(s, by, h.id, now);
     const crit = critRoll(s, sp);
     if (
       !(isMgj(s)
@@ -4023,7 +3974,7 @@ export function strike(s, by, sp, aim, now, from = s.pos[by]) {
       hit: [...hit],
       ...(from !== s.pos[by]
         ? { at: { x: from.x, y: from.y, z: from.z } }
-        : {}), // (a Jaime Guard's swing: from where he stood)
+        : {}), // (Justin's swing: from where he stood)
     },
   ];
   return hit;
@@ -4131,22 +4082,15 @@ function blast(s, sh, x, y, now, o = {}) {
       if (mgjHalf(s, id, now)) hit.push(id);
       continue;
     } // (Mad God Justin: half my HP, rounded down, never down by it; no knock-back)
-    if (!P.dead && !self) logHit(s, sh.by, id, now);
-    const killed =
-      !P.dead && !soaks(s, id, now, o.max ? PHP : dmgOf(s, "grenade"), sh.by);
+    const killed = !P.dead && !soaks(s, id, now, dmgOf(s, "grenade"), sh.by);
     if (P.dead || killed) {
-      if (!P.dead) playerKilled(s, sh.by, id, w); // (o.max: the Jaime Bomb's, all of its HP)
+      if (!P.dead) playerKilled(s, sh.by, id, w);
       P.dead = true;
       holdDown(s, id, now);
     } // (the normal game's HP: one hit's worth, and it still flies)
-    if (killed && pwOn(s)) pwAdd(s, id, DEATH, now, true); // (killed by it: torn apart, headless and burnt, as the Jaime Bomb's Jaime)
-    const a = n.d > 0.05 || o.dir ? null : Math.random() * Math.PI * 2,
-      [tx, ty] =
-        killed && o.dir
-          ? o.dir
-          : n.d > 0.05
-            ? [n.dx / n.d, n.dy / n.d]
-            : [0, 0]; // (the Jaime Bomb's: thrown the way his body flies)
+    if (killed && pwOn(s)) pwAdd(s, id, DEATH, now, true); // (killed by it: torn apart, headless and burnt)
+    const a = n.d > 0.05 ? null : Math.random() * Math.PI * 2,
+      [tx, ty] = n.d > 0.05 ? [n.dx / n.d, n.dy / n.d] : [0, 0];
     shove(
       s,
       id,
@@ -4159,7 +4103,6 @@ function blast(s, sh, x, y, now, o = {}) {
     );
     hit.push(id);
   }
-  guardsHit(s, sh.by, near, now, w); // (a Jaime Guard in the blast: his 1 HP)
   if ((isMgj(s) || sbOnBoard(s)) && sh.by !== JUSTIN_ID)
     mgjZombieHit(
       s,
@@ -4530,7 +4473,7 @@ function duckFlame(s, by, p, aim, now) {
 }
 /* everything that isn't a duck, in the flamethrower's fire or on its burning ground (the owner's, Nov 19 16:21Z:
    "everyone should be able to be on fire not just zombies, from the flamethrower or otherwise"): Sandbox's NPCs on the
-   board, Justin (the board's, Mad God Justin's and the cabin's), his double, a Jaime Guard, the cabin's cats and made
+   board, Justin (the board's, Mad God Justin's and the cabin's), his double, the cabin's cats and made
    NPCs. Each takes 1 HP as it's lit, burns THING_BURN ms and isn't lit again while it burns, as a duck is in Dead Ducks
    Arcade (BURN.P). near(x, y, z, side, big): is that spot, in shares of the map, in the fire. True when something
    was lit */
@@ -4612,7 +4555,6 @@ function scorch(s, by, id, now) {
   const left = {};
   for (const [k, u] of Object.entries(s.flamed || {})) if (u > now) left[k] = u;
   s.flamed = { ...left, [id]: now + FLAME.BURN };
-  if (by !== id) logHit(s, by, id, now);
   if (!soaks(s, id, now, 1, by)) {
     P.dead = true;
     holdDown(s, id, now);
@@ -4678,7 +4620,7 @@ function groundFire(s, now) {
       ch = true;
   return ch;
 }
-/* what a shot hit this beat, between (x0, y0) and at: the ducks, Mad God Justin, a Jaime Guard, Justin, Duck Cabin's
+/* what a shot hit this beat, between (x0, y0) and at: the ducks, Mad God Justin, Justin, Duck Cabin's
    Justin and cats; true when it's gone (Mad God Justin's own) */
 function shotHits(s, sh, at, x0, y0, dx, dy, now) {
   if (at.z > -0.15)
@@ -4717,7 +4659,6 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
         if (sh.got && sh.got.includes(id)) continue; // (it already took HP from this duck)
         hLock(sh, duckH(s, p)); // (the first it passes over sets its height)
         if (sh.fake) continue; // (Mad God Justin: his double's, or his own while the double is the real one: no harm)
-        logHit(s, sh.by, id, now);
         const crit = critRoll(s, sh.k);
         if (
           isMgj(s)
@@ -4767,33 +4708,7 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
     (isMgj(s) || sbOnBoard(s)) &&
     mgjShot(s, sh, x0, y0, dx, dy, now, logLine, at.z)
   )
-    return true; // (Mad God Justin: a duck's shot hit him, or his hit Good Justin or a Jaime)
-  if (s.jm && at.z > -0.15 && at.z < 1.05 && !sh.fake) {
-    const [rx, ry] = isHang(s) ? [0.006, 0.012] : boardDuck(s),
-      ux = dx / rx,
-      uy = dy / ry,
-      len = ux * ux + uy * uy;
-    guardsHit(
-      s,
-      sh.by,
-      (x, y, z, side) => {
-        if (
-          sh.hin !== undefined &&
-          (side !== sh.hin ||
-            !hOk(sh, z, x * HW, y * HH, sh.x0 * HW, sh.y0 * HH))
-        )
-          return null;
-        const px = (x - x0) / rx,
-          py = (y - y0) / ry,
-          k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
-        const on = Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1);
-        if (on && sh.hin !== undefined) hLock(sh, z);
-        return on || null;
-      },
-      now,
-      sh.k,
-    );
-  } // (a Jaime Guard it passes: his 1 HP)
+    return true; // (Mad God Justin: a duck's shot hit him, or his hit Good Justin)
   if (
     sh.hin === undefined &&
     sh.by !== JUSTIN_ID &&
@@ -4907,223 +4822,6 @@ function cakeGone(s, now) {
   return false;
 }
 
-/* ---------- the Jaime special (Mad God Justin's Jaime, for every mode with the specials' hotbar) ----------
-   Released, Jaime goes for one player: the one I hit in the last JAIME_FEUD ms, or else the one who hit me in that time,
-   or else the nearest (the owner's). He sprints at them as he does at Mad God Justin (JAIME_RUN), stops a little
-   apart (so the two don't stand in each other) and stabs once a second
-   (a hit as any other: the HP, and a jump dodges it), and once they're down, gone, or after JAIME_LIFE, he's gone in a
-   poof. In Hangout he keeps to his side of the cabin's walls and goes up only what a duck walks up.
-   s.jm = { [id]: { n, by, t (who he's after), x, y, z, face, at, stabAt, mt } }: his own place, not in s.pos (he isn't
-   a player, so he never counts in a vote). s.hitLog = the latest hits between players, [{ by, id, t }] */
-const JAIME_FEUD = 15000,
-  JAIME_LIFE = 12000,
-  JAIME_RUN = 9; // (duck lengths a second, as Mad God Justin's)
-function logHit(s, by, id, now) {
-  if (isMgj(s) || !s.players[by] || !s.players[id] || by === id) return;
-  s.hitLog = [
-    ...(s.hitLog || []).filter((h) => now - h.t < JAIME_FEUD).slice(-15),
-    { by, id, t: now },
-  ];
-}
-/* who a Jaime sent by `by` goes for (or null) */
-function jaimeTarget(s, by, now) {
-  const hang = isHang(s),
-    p0 = s.pos[by],
-    side = (p) => (hang && inCabin(p.x * HW, p.y * HH) ? 1 : 0);
-  const ok = (id) => {
-    const P = s.players[id],
-      p = s.pos[id];
-    return (
-      id !== by &&
-      !!P &&
-      !P.dead &&
-      !!p &&
-      p.x >= 0 &&
-      !isGhost(s, id) &&
-      !vdSafe(s, id)
-    );
-  };
-  const feud = (s.hitLog || []).filter((h) => now - h.t < JAIME_FEUD).reverse();
-  const mine = feud.find((h) => h.by === by && ok(h.id));
-  if (mine) return mine.id; // (the one I hit)
-  const theirs = feud.find((h) => h.id === by && ok(h.by));
-  if (theirs) return theirs.by; // (the one who hit me)
-  const [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s);
-  return (
-    s.seat
-      .filter((id) => ok(id) && side(s.pos[id]) === side(p0))
-      .map((id) => [
-        id,
-        Math.hypot((s.pos[id].x - p0.x) / rx, (s.pos[id].y - p0.y) / ry),
-      ])
-      .sort((a, b) => a[1] - b[1])[0]?.[0] || null
-  ); // (the nearest, on my side of the walls)
-}
-/* Justin, for a Jaime to go after (the owner's, Nov 4: outside Mad God Justin, now and then, JAIME_AT_JUSTIN): the
-   board's, or Duck Cabin's in Hangout, while he's up. { x, y, z } in board units, or null */
-const JAIME_AT_JUSTIN = 0.25,
-  JUSTIN_REACH = 3.2, // (duck lengths: this close, Justin throws at the Jaime coming for him)
-  JUSTIN_THROW = 800; // (ms between his throws)
-function justinHere(s, now) {
-  if (isMgj(s)) return null;
-  if (isHang(s)) {
-    const at = justinUpAt(s, now);
-    return at ? { x: at.x / HW, y: at.y / HH, z: at.z || 0 } : null;
-  }
-  return justinShown(s) && !s.justin.down ? justinAt(s.justin, now) : null;
-}
-/* a Jaime comes in beside the duck that sent him: false when there's nobody for him to go for */
-function jaimeOut(s, by, now, bomb) {
-  const p = s.pos[by],
-    J0 = p && justinHere(s, now),
-    p0 = p && jaimeTarget(s, by, now),
-    t = J0 && (!p0 || Math.random() < JAIME_AT_JUSTIN) ? JUSTIN_ID : p0;
-  if (!t) return false;
-  s.jmN = (s.jmN || 0) + 1;
-  const id = `jaime${s.jmN}`,
-    J = {
-      n: s.jmN,
-      by,
-      t,
-      x: p.x,
-      y: p.y,
-      ...(isHang(s) ? { z: +p.z || 0 } : {}),
-      face: p.face || 1,
-      at: now,
-      stabAt: now + 600,
-      mt: now,
-    };
-  if (bomb) bombIn(s, id, J, now); // (the Jaime Bomb: jaimebomb.js)
-  s.jm = { ...(s.jm || {}), [id]: J };
-  jaimeCount(s, { by });
-  s.fxN = (s.fxN || 0) + 1;
-  s.fx = [
-    ...(s.fx || []).slice(-19),
-    { n: s.fxN, kind: "jaime", by, who: [id], t: now },
-  ];
-  return true;
-}
-/* every beat: each Jaime runs at his target and stabs; true when anything changed */
-function jaimeRun(s, now) {
-  if (!s.jm) return false;
-  const fx = (o) => {
-    s.fxN = (s.fxN || 0) + 1;
-    s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, t: now, ...o }];
-  };
-  if (isL4dd(s)) return false; // (Quacky Zombies' Jaime goes for the zombies: l4ddrules.js runs him)
-  if (!boardPhases(s).includes(s.phase) || isMgj(s)) {
-    s.jm = null;
-    return true;
-  }
-  const hang = isHang(s),
-    [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
-    next = {};
-  let ch = false;
-  for (const [id, J0] of Object.entries(s.jm)) {
-    if (J0.guard) {
-      const J = guardStep(s, id, { ...J0 }, now, fx);
-      if (J) next[id] = J;
-      ch = true;
-      continue;
-    } // (the Jaime Guard: his own way, below)
-    const J = { ...J0 },
-      atJ = J.t === JUSTIN_ID,
-      P = atJ ? {} : s.players[J.t],
-      q = atJ ? justinHere(s, now) : s.pos[J.t];
-    if (
-      !P ||
-      P.dead ||
-      !q ||
-      q.x < 0 ||
-      isGhost(s, J.t) ||
-      !s.players[J.by] ||
-      now - J.at > JAIME_LIFE
-    ) {
-      if (J.bomb) jaimeBlows(s, id, J, [J.face, 0], now);
-      else fx({ kind: "poof", x: J.x, y: J.y, who: [id] });
-      ch = true;
-      continue;
-    } // (his target is down or gone, or his time is up: gone in a poof, or the bomb goes off where he is)
-    if (J.snapAt && now >= J.snapAt) {
-      delete J.snapAt;
-      jaimeSnap(s, J, now);
-      ch = true;
-    } // (the Jaime Bomb's line: Justin answers it)
-    const dt = Math.min(0.5, Math.max(0, (now - J.mt) / 1000)),
-      dx = (q.x - J.x) / rx,
-      dy = (q.y - J.y) / ry,
-      d = Math.hypot(dx, dy);
-    J.mt = now;
-    if (d > 1.8) {
-      jaimeStep(s, J, dx, dy, Math.min(d - 1.7, JAIME_RUN * dt));
-      ch = true;
-    }
-    if (atJ && d <= JUSTIN_REACH && now >= (J.thrownAt || 0)) {
-      J.thrownAt = now + JUSTIN_THROW;
-      const k = Math.random() < 0.5 ? "chair" : "controller";
-      fx({
-        kind: "jthrow",
-        k,
-        x0: q.x,
-        y0: q.y,
-        x1: J.x,
-        y1: J.y,
-        ...(hang ? { hz: q.z || 0 } : {}),
-      });
-      jaimeSays(s, id, anyLine(JAIME_HURT));
-      if (now >= (s.jaimeLineAt || 0)) {
-        s.jaimeLineAt = now + 3000;
-        const text = anyLine(JUSTIN_AT_JAIME);
-        if (hang) justinSnaps(s, q.x * HW, q.y * HH, text, now);
-        else logLine(s, { npc: JUSTIN_ID, name: "Justin", text });
-      }
-      ch = true;
-      J.hp = (J.hp || 1) - 1;
-      fx({ kind: "hitmark", who: [], x: J.x, y: J.y });
-      if (J.hp <= 0) {
-        if (J.bomb) jaimeBlows(s, id, J, [dx / (d || 1), dy / (d || 1)], now);
-        else fx(jaimeDead(J, id, k, now)); // (he falls, bleeding: jaimebomb.js)
-        continue;
-      } // (Justin's first answer to a Jaime coming for him: a controller or his chair, at once; a Jaime Bomb takes 3)
-    }
-    if (d <= 2.2 && now >= J.stabAt) {
-      J.stabAt = now + 1000;
-      const aim = d > 1e-3 ? [dx / d, dy / d] : [J.face, 0],
-        high = hang && Math.abs((+q.z || 0) - (J.z || 0)) > 48,
-        hit = !high && !dodges(s, q, now) && !vdSafe(s, J.t);
-      if (J.bomb && !high) {
-        jaimeBlows(s, id, J, aim, now);
-        ch = true;
-        continue;
-      } // (the Jaime Bomb: he got there, and it goes off)
-      if (hit) {
-        jaimeCount(s, { id: J.t });
-        logHit(s, J.by, J.t, now);
-        if (!soaks(s, J.t, now, 1, J.by)) {
-          P.dead = true;
-          holdDown(s, J.t, now);
-          playerKilled(s, J.by, J.t, "jaime");
-        }
-        wounded(s, J.t, "jaime", now, false); // (his knife's cuts: wounds.js)
-      }
-      fx({
-        kind: "use",
-        what: "knife",
-        by: id,
-        who: [id],
-        face: aim[0] < 0 ? -1 : 1,
-        ax: +(aim[0] * rx).toFixed(4),
-        ay: +(aim[1] * ry).toFixed(4),
-        ...(hit ? { hit: [J.t] } : {}),
-      });
-      ch = true;
-    }
-    next[id] = J;
-  }
-  for (const k of Object.keys(next)) if (!(s.jm || {})[k]) delete next[k]; // (a Guard a blast got meanwhile)
-  s.jm = Object.keys(next).length ? next : null;
-  return ch;
-}
 /* ---------- the ducks' wounds and crits outside Quacky Zombies and Mad God Justin (wounds.js) ---------- */
 const pwOn = (s) => !isMgj(s) && !isL4dd(s);
 const critRoll = (s, w) => pwOn(s) && Math.random() < (PCRIT[w] || 0);
@@ -5152,294 +4850,6 @@ function wounded(s, id, w, now, crit) {
     ];
   } else pwHit(s, id, w, now, !!P.dead);
 }
-/* a Jaime takes a step of `step` duck lengths along (dx, dy) (in duck lengths); in Hangout he keeps to his side of the
-   cabin's walls (a wall in the way: along it, or he waits) and goes up only what a duck walks up */
-function jaimeStep(s, J, dx, dy, step) {
-  const hang = isHang(s),
-    [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
-    d = Math.hypot(dx, dy) || 1,
-    to = (ux, uy) => ({
-      x: Math.max(0, Math.min(1, J.x + ux * step * rx)),
-      y: Math.max(0, Math.min(1, J.y + uy * step * ry)),
-    });
-  let at = to(dx / d, dy / d);
-  if (hang) {
-    const side = inCabin(J.x * HW, J.y * HH) ? 1 : 0,
-      fits = (c) =>
-        standable(c.x * HW, c.y * HH, J.z || 0, undefined, [
-          J.x * HW,
-          J.y * HH,
-        ]) && (inCabin(c.x * HW, c.y * HH) ? 1 : 0) === side;
-    at = [at, to(Math.sign(dx), 0), to(0, Math.sign(dy))].find(fits);
-    if (at) at.z = heightAt(at.x * HW, at.y * HH);
-  }
-  if (at) {
-    J.x = +at.x.toFixed(4);
-    J.y = +at.y.toFixed(4);
-    if (at.z !== undefined) J.z = Math.round(at.z);
-  }
-  J.face = dx < 0 ? -1 : 1;
-}
-
-/* ---------- the Jaime Guard (the owner's, Nov 4) ----------
-   Unlocked by reaching round 30 in Quacky Zombies (unlocks.js). Summoned, a Jaime with 1 HP follows me around and
-   protects me: whoever hit me in the last JAIME_FEUD ms, he goes after with the weapon I picked for him in Customize
-   (duck.jg, jaimebomb.js GUARD_W): up close with the knife or the hammer, from GUARD_FAR duck lengths with the others. Any hit
-   takes his 1 HP (guardsHit); he never votes. One of mine at a time; the turn's end takes him, as any Jaime. In s.jm
-   with guard: 1, w (his weapon), and t (who he's after, or me) */
-const GUARD_FAR = { handgun: 5, dagger: 4, bow: 6, shotgun: 3, grenade: 6 },
-  GUARD_EVERY = 700; // (ms at least between his attacks, whatever his weapon's cooldown)
-function guardOut(s, by, now) {
-  const p = s.pos[by],
-    me = s.players[by];
-  if (!p || !me) return false;
-  if (Object.values(s.jm || {}).some((J) => J.guard && J.by === by))
-    return false;
-  s.jmN = (s.jmN || 0) + 1;
-  const id = `jaime${s.jmN}`;
-  s.jm = {
-    ...(s.jm || {}),
-    [id]: {
-      n: s.jmN,
-      by,
-      t: by,
-      guard: 1,
-      w: guardWeapon(me.duck),
-      x: p.x,
-      y: p.y,
-      ...(isHang(s) ? { z: +p.z || 0 } : {}),
-      face: p.face || 1,
-      at: now,
-      stabAt: now + 600,
-      mt: now,
-    },
-  };
-  s.fxN = (s.fxN || 0) + 1;
-  s.fx = [
-    ...(s.fx || []).slice(-19),
-    { n: s.fxN, kind: "jaime", by, who: [id], t: now },
-  ];
-  jaimeCount(s, { by });
-  return true;
-}
-/* who my Guard goes after: the newest one who hit me lately and is still up, on his side of the walls (or null) */
-function guardFoe(s, J, now) {
-  const hang = isHang(s),
-    side = (x, y) => (hang && inCabin(x * HW, y * HH) ? 1 : 0);
-  return (
-    (s.hitLog || [])
-      .filter((h) => now - h.t < JAIME_FEUD && h.id === J.by && h.by !== J.by)
-      .reverse()
-      .map((h) => h.by)
-      .find((id) => {
-        const P = s.players[id],
-          q = s.pos[id];
-        return (
-          P &&
-          !P.dead &&
-          q &&
-          q.x >= 0 &&
-          !isGhost(s, id) &&
-          !vdSafe(s, id) &&
-          side(q.x, q.y) === side(J.x, J.y)
-        );
-      }) || null
-  );
-}
-/* every beat: my Guard follows me, or goes after who hit me and uses his weapon on them; null once he's gone */
-function guardStep(s, id, J, now, fx) {
-  const hang = isHang(s),
-    [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
-    O = s.players[J.by],
-    op = s.pos[J.by];
-  if (!O || !op || op.x < 0 || isGhost(s, J.by)) {
-    fx({ kind: "poof", x: J.x, y: J.y, who: [id] });
-    return null;
-  } // (I left, or I'm a ghost: he's gone)
-  const dt = Math.min(0.5, Math.max(0, (now - J.mt) / 1000)),
-    foe = guardFoe(s, J, now),
-    q = foe ? s.pos[foe] : op,
-    dx = (q.x - J.x) / rx,
-    dy = (q.y - J.y) / ry,
-    d = Math.hypot(dx, dy),
-    far = foe ? GUARD_FAR[J.w] || 1.7 : 1.6; // (beside me, or as near as his weapon needs)
-  J.mt = now;
-  J.t = foe || J.by;
-  if (d > far + 0.1) jaimeStep(s, J, dx, dy, Math.min(d - far, JAIME_RUN * dt));
-  else if (foe) J.face = dx < 0 ? -1 : 1;
-  if (!foe || now < J.stabAt || d > far + 0.6) return J;
-  J.stabAt = now + Math.max(GUARD_EVERY, coolFor(J.w, s));
-  const aim = [(dx / (d || 1)) * rx, (dy / (d || 1)) * ry],
-    from = { x: J.x, y: J.y, ...(hang ? { z: J.z || 0 } : {}) },
-    hit =
-      J.w === "knife" || J.w === "hammer"
-        ? strike(s, J.by, J.w, aim, now, from)
-        : null; // (his swing counts as mine: the hits, the HP and the kills)
-  fx({
-    kind: "use",
-    what: J.w,
-    by: id,
-    who: [id],
-    face: J.face,
-    ax: +aim[0].toFixed(4),
-    ay: +aim[1].toFixed(4),
-    ...(hit && hit.length ? { hit } : {}),
-  });
-  if (!hit) guardShoots(s, J, aim, now);
-  return J;
-}
-/* my Guard's ranged weapon, from where he stands, toward aim (board units): as mine would fire it */
-function guardShoots(s, J, aim, now) {
-  const hang = isHang(s),
-    [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
-    dx = aim[0] / rx,
-    dy = aim[1] / ry,
-    dl = Math.hypot(dx, dy) || 1;
-  s.fxN = (s.fxN || 0) + 1;
-  const shot = (n, k, vx, vy, more) => ({
-    n,
-    by: J.by,
-    k,
-    x0: J.x,
-    y0: J.y,
-    vx: +vx.toFixed(4),
-    vy: +vy.toFixed(4),
-    t: now,
-    lx: J.x,
-    ly: J.y,
-    ...(hang
-      ? {
-          hz: Math.round(J.z || 0),
-          hin: inCabin(J.x * HW, J.y * HH) ? 1 : 0,
-        }
-      : {}),
-    ...more,
-  });
-  const out = [];
-  if (J.w === "shotgun") {
-    const a0 = Math.atan2(dy, dx);
-    for (let i = 0; i < PELLETS; i++) {
-      const an = a0 + SPREAD * ((i / (PELLETS - 1)) * 2 - 1),
-        bx = Math.cos(an) * rx,
-        by = Math.sin(an) * ry,
-        bl = Math.hypot(bx, by);
-      out.push(
-        shot(
-          s.fxN * 10 + i,
-          "pellet",
-          (bx / bl) * PELLET_V,
-          (by / bl) * PELLET_V,
-          {
-            life: DUCK_PELLET_LIFE,
-          },
-        ),
-      );
-    }
-  } else if (J.w === "grenade") {
-    const k = Math.min(GRENADE_FAR, dl) / (GRENADE_MS / 1000) / dl;
-    out.push(shot(s.fxN, "grenade", dx * k * rx, dy * k * ry));
-  } else {
-    const v =
-      J.w === "dagger"
-        ? DAGGER_SPEED
-        : J.w === "bow"
-          ? ARROW_SPEED
-          : SHOT_SPEED;
-    const al = Math.hypot(aim[0], aim[1]) || 1;
-    out.push(
-      shot(
-        s.fxN,
-        J.w === "bow" ? "arrow" : J.w,
-        (aim[0] / al) * v,
-        (aim[1] / al) * v,
-      ),
-    );
-  }
-  s.shots = [...(s.shots || []), ...out];
-}
-/* hits on the Jaime Guards: every Guard but `by`'s own that near(x, y, z, side) reaches (anything but null) loses his
-   1 HP, with an "ouch" line, a hitmarker, and falls bleeding where he stood (w: the weapon; jaimebomb.js jaimeDead) */
-function guardsHit(s, by, near, now, w = "") {
-  if (!s.jm || isMgj(s)) return [];
-  const hang = isHang(s),
-    got = Object.entries(s.jm)
-      .filter(
-        ([, J]) =>
-          J.guard &&
-          J.by !== by &&
-          near(
-            J.x,
-            J.y,
-            +J.z || 0,
-            hang && inCabin(J.x * HW, J.y * HH) ? 1 : 0,
-          ),
-      )
-      .map(([id]) => id);
-  if (!got.length) return got;
-  const rest = { ...s.jm };
-  for (const id of got) {
-    const J = rest[id];
-    delete rest[id];
-    jaimeSays(s, id, anyLine(JAIME_HURT));
-    s.fxN = (s.fxN || 0) + 2;
-    s.fx = [
-      ...(s.fx || []).slice(-18),
-      { n: s.fxN - 1, kind: "hitmark", by, who: [], x: J.x, y: J.y, t: now },
-      { n: s.fxN, ...jaimeDead(J, id, w, now) },
-    ];
-  }
-  s.jm = Object.keys(rest).length ? rest : null;
-  return got;
-}
-/* the Jaime Bomb goes off where Jaime stands (aim: the way he was running): the blast, BOMB.wide times a grenade's,
-   takes all the HP of every duck in it, and his body flies off the other way */
-function jaimeBlows(s, id, J, aim, now) {
-  if (J.snapAt) jaimeSnap(s, J, now); // (Justin still answers his line)
-  const hang = isHang(s),
-    [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
-    hin = hang && inCabin(J.x * HW, J.y * HH) ? 1 : 0,
-    hit = blast(
-      s,
-      { by: J.by, ...(hang ? { hin, hz: J.z || 0 } : {}) },
-      J.x,
-      J.y,
-      now,
-      {
-        wide: BOMB.wide,
-        max: true,
-        w: "jaimebomb",
-        dir: [
-          -aim[0] / (Math.hypot(...aim) || 1),
-          -aim[1] / (Math.hypot(...aim) || 1),
-        ],
-      },
-    );
-  for (const t of hit) if (s.players[t]) jaimeCount(s, { id: t });
-  const [x1, y1] = flyTo(J.x, J.y, aim[0], aim[1], rx, ry);
-  s.fxN = (s.fxN || 0) + 1;
-  s.fx = [
-    ...(s.fx || []).slice(-19),
-    {
-      n: s.fxN,
-      kind: "jbomb",
-      who: [id],
-      t: now,
-      x: J.x,
-      y: J.y,
-      x1,
-      y1,
-      ...(hang ? { hz: J.z || 0 } : {}),
-    },
-  ];
-}
-/* a Justin who sees a Jaime Bomb come in snaps back (the board's Justin, or Duck Cabin's in Hangout) */
-function jaimeSnap(s, J, now) {
-  const text = snapLine();
-  if (isHang(s)) justinSnaps(s, J.x * HW, J.y * HH, text, now);
-  else if (justinShown(s) && !s.justin.down)
-    logLine(s, { npc: JUSTIN_ID, name: "Justin", text });
-}
-
 /* a vote passes once enough say yes, and fails once it can't pass any more */
 function settleVote(s, now) {
   const v = s.vote;

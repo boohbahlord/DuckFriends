@@ -35,9 +35,8 @@ export const nameOf = (w) =>
 /* the categories an orb can pick from here: the Customize groups on the board and Duck Cabin; the weapons and the
    zombies' drops on Dead Ducks Arcade's maps */
 /* never in a loot list on the zombie maps: Survival's defibrillator (nobody dies for good in Sandbox), Safe Keeping (never
-   used by hand), and what the owner took out of the zombie modes ("normal jaime is removed from all zombie modes",
-   "long jump is removed", "remove jet pack from the whole game") */
-const NOT_LOOT = new Set(["defib", "safekeep", "jaime", "longjump", "jetpack"]);
+   used by hand), and the jet pack ("remove jet pack from the whole game") */
+const NOT_LOOT = new Set(["defib", "safekeep", "jetpack"]);
 export function lootCats(s) {
   const drops = Object.keys(SB_DROPS).filter((w) => lootOk(s, w)),
     cats = drops.length
@@ -340,11 +339,12 @@ export function lootWire(w, id, send, getR) {
       return send({ k: "set", f: "look", v: t.value });
     if (t.matches("[data-img]")) {
       const f = t.files && t.files[0];
+      t.value = ""; // (the same file can be picked again)
       if (!f) return;
       try {
-        const pic = await picFrom(f), // (as a made NPC's: 2 MB, made into pixels)
+        const pic = await picFrom(f), // (as a made NPC's: 2 MB, cropped, made into pixels)
           r = getR();
-        if (!r) return;
+        if (!r || !pic) return;
         r.send({ t: "sbl", k: "img", p: id, v: sendParts(r, pic) });
         picShow(w, pic.d);
       } catch (err) {

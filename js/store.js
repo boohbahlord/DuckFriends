@@ -5,6 +5,14 @@
 import { DUCK_DEFAULT } from "./duck.js";
 
 const KEY = "jmg-profile-1";
+const GONE_KEYS = new Set([
+  "longjump",
+  "double",
+  "shortjump",
+  "jaime",
+  "jaimebomb",
+  "jaimeguard",
+]);
 export const SETTINGS_DEFAULT = {
   v: 2,
   theme: "dark",
@@ -23,8 +31,10 @@ export const SETTINGS_DEFAULT = {
   touch: "stick",
   holdVote: "500", // ms a Vote button (and a phone's use button) is held before it acts; 0 = at once (the owner's, Nov 17)
   jumpsSci: false,
-  jumpsHidden: false,
-  chatSide: "left",
+  jumpsHidden: true, // hide the jump counter and the Justin counter: both on by default (the owner's, Nov 20 21:38Z)
+  justinHidden: true,
+  uiOpacity: 100, // UI opacity in percent, over everything UI scale covers
+  fpsShow: false, // the frame-rate readout (perf.js), small
   chatFloat: true,
   otherHp: true, // the other players' HP meters, in every mode (a computer)
   hideUi: false, // hide ui: the bars' dark bands and the words at the bottom hidden, mine alone (hideui.js)
@@ -61,7 +71,6 @@ export const PROFILE_DEFAULT = {
   justinKills: 0,
   cabinKills: 0,
   shadowHits: 0,
-  jaimeStabs: 0,
   dunced: 0,
   mgjWins: 0,
   mgjLosses: 0,
@@ -165,6 +174,13 @@ function normalize(p) {
     delete out.settings.clicksHidden;
     delete out.clicks;
   }
+  out.settings.theme = "dark"; // dark only (the owner's, Nov 20 21:38Z)
+  delete out.settings.chatSide; // the chat is always on the left
+  if (!out.settings.hideDef) {
+    out.settings.hideDef = 1; // the counters now start hidden: one time, for profiles saved before that
+    out.settings.jumpsHidden = true;
+    out.settings.justinHidden = true;
+  }
   out.duck = { ...DUCK_DEFAULT, ...(p.duck || {}) };
   delete out.duck.muscle; // (muscles were tried and taken out)
   if (!Array.isArray(out.duck.keys)) {
@@ -172,8 +188,10 @@ function normalize(p) {
     if (out.duck.special) out.duck.keys[0] = out.duck.special;
   } // the one special became key 1
   out.duck.keys = Array.from({ length: 10 }, (_, i) =>
-    typeof out.duck.keys[i] === "string" ? out.duck.keys[i] : null,
-  );
+    typeof out.duck.keys[i] === "string" && !GONE_KEYS.has(out.duck.keys[i])
+      ? out.duck.keys[i]
+      : null,
+  ); // (the jump specials and Jaime left the game: their keys are empty now, the owner's, Nov 20 21:38Z)
   out.duck.special = null;
   if (!out.duck.spc || typeof out.duck.spc !== "object") out.duck.spc = {};
   if (out.duck.hat && out.duck.hat.id === "robot") {
@@ -187,7 +205,6 @@ function normalize(p) {
   out.justinKills = Math.max(0, Math.floor(+p.justinKills || 0));
   out.cabinKills = Math.max(0, Math.floor(+p.cabinKills || 0));
   out.shadowHits = Math.max(0, Math.floor(+p.shadowHits || 0));
-  out.jaimeStabs = Math.max(0, Math.floor(+p.jaimeStabs || 0));
   out.dunced = Math.max(0, Math.floor(+p.dunced || 0));
   out.mgjWins = Math.max(0, Math.floor(+p.mgjWins || 0));
   out.mgjLosses = Math.max(0, Math.floor(+p.mgjLosses || 0));

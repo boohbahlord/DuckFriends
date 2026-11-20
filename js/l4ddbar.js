@@ -134,8 +134,7 @@ export function mountL4Bar(S, api) {
               : w
                 ? weaponIcon(w, duckOf(s, me))
                 : "";
-      const on =
-        (w === "jetpack" && m && m.jp) || (w === "longjump" && m && m.lj); // (switched on: a green ring)
+      const on = w === "jetpack" && m && m.jp; // (switched on: a green ring)
       const tint = w && w !== "fl" ? tintOf(w, angelOf(s, me, w)) : ""; // (its own color: l4ddrules.js tintOf)
       const into = does === String(to); // (what I'm about to take goes here)
       return `<button type="button" class="l4s k-${kind}${tint ? " " + tint : ""}${w && w === held ? " sel" : ""}${empty ? " empty" : ""}${on ? " on" : ""}${into ? " l4s-to" : ""}" data-l4w="${does}" aria-label="${name}${n ? ", " + n : ""}"${out || (!w && does !== "fl") ? " disabled" : ""}>${w ? reloadMeter(s, me, w, m) : ""}${into ? toGlow(toW) : ""}<i>${icon}</i><kbd>${key}</kbd>${n ? `<small>${n}</small>` : ""}</button>`;
@@ -237,12 +236,7 @@ export function l4Slider(api) {
       const w = api.held();
       if (w) on.add(w);
       if (!lightOff(k)) on.add("fl");
-      if (
-        k.m &&
-        ((k.m.lj && k.sl[3] === "longjump") ||
-          (k.m.jp && k.sl[3] === "jetpack"))
-      )
-        on.add(k.sl[3]); // (switched on beside the weapon in hand)
+      if (k.m && k.m.jp && k.sl[3] === "jetpack") on.add(k.sl[3]); // (switched on beside the weapon in hand)
       return on;
     },
     use(i, keep) {
@@ -256,12 +250,7 @@ export function l4Slider(api) {
     select(i) {
       const k = kit();
       if (k && downArmed(k.s, k.me)) return; // (down: nothing else to pick)
-      if (
-        isItem(i) &&
-        k &&
-        ["longjump", "jetpack"].includes(k.sl[slotOfPick(i)])
-      )
-        return; // (sliding to them changes nothing: a tap or the switch turns them on or off)
+      if (isItem(i) && k && k.sl[slotOfPick(i)] === "jetpack") return; // (sliding to them changes nothing: a tap or the switch turns them on or off)
       if (i < 3 || (i >= 3 && api.slot() !== i)) api.pick(i); // (the one in the middle is the one picked, grenades too)
     },
     current: () => api.held() || null,
