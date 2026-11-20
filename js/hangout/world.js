@@ -36,7 +36,7 @@ import {
 } from "../pixel.js";
 import { applyPalette } from "../pixelpalette.js";
 import { ART, artKey, worldArt, lookOf } from "./pxworld.js";
-import { holdGame } from "../gameready.js";
+import { holdGame, offView } from "../gameready.js";
 import { hashText, steadyText } from "../pxdom.js";
 
 export const BOARD_HTML =
@@ -774,7 +774,7 @@ export function mountWorld(board, api) {
            now; hidden as usual once they're made (drawProps) */
         e._warm = true;
         e.hidden = false;
-        e.style.opacity = "0"; // (not visibility: pxdom.js copies that into the picture, opacity it leaves out)
+        offView(e, true); // (not visibility: pxdom.js copies that into the picture, opacity it leaves out)
         e.style.transform = `translate(-99999px, 0) scale(${sc.toFixed(4)})`;
         warm.push(e);
       }
@@ -985,11 +985,7 @@ export function mountWorld(board, api) {
       let e = it.el;
       if (e && e._warm && (vis || warmDone(e))) {
         e._warm = false;
-        e.style.transition = "none"; // (shown at once, not faded in: css .hp)
-        e.style.opacity = "";
-        requestAnimationFrame(() =>
-          requestAnimationFrame(() => (e.style.transition = "")),
-        );
+        offView(e, false); // (shown at once, not faded in: css .hp)
         e._tr = "";
         if (!vis) e.hidden = true;
       } // (its pixels made while unseen: premake)
