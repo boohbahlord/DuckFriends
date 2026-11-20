@@ -242,7 +242,7 @@ import {
 import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
 import { JET, jetHTML, myFuel, burnFuel } from "./jetpack.js";
 import { mountL4Bar, l4Slider } from "./l4ddbar.js";
-import { isSb, sbOnBoard, sbMay } from "./sandboxrules.js";
+import { isSb, sbOnBoard, sbMay, sbSfx, sbCellMids } from "./sandboxrules.js";
 import { mountCabinEnd } from "./hangout/cabinend.js";
 import { mountSandboxKeys } from "./sandbox.js";
 import { sbCheat } from "./sbmenu.js";
@@ -487,6 +487,8 @@ import {
   fxHitAt,
   fxImpact,
   fxSmolder,
+  fxSteam,
+  fxSparks,
   fxMelee,
   fxBurst,
   fxSpurt,
@@ -3688,6 +3690,38 @@ function against(hex) {
    start, its last puff, ux, uy, reach] }; s.gfire (s.hang.l4gf): [[x, y, until …]] (Dead Ducks Arcade's with its
    floor's height last: [x, y, until, by, h]) */
 const FLAME_CARRY = new Map();
+/* Sandbox: what a zone's working squares show (plan Phase 3, sandboxrules.js SB_SFX), on every screen: ground fire as
+   the flamethrower's burning ground (each square a patch), or now and then a puff of smoke, steam or sparks on a few
+   squares at random. spot(x, y, z) → its place on my screen, as the fire's */
+function sbZoneLooks(s, spot, ground, size, half) {
+  const pts = (s.sb && s.sb.pts) || {};
+  for (const [id, p] of Object.entries(pts)) {
+    const k = sbSfx(p);
+    if (k === "none") continue;
+    const mids = sbCellMids(s, id, p, HW, HH, half < 1 ? 60 : 120),
+      z = p.z || 0;
+    for (const m of mids) {
+      const a = spot(m.x, m.y, z);
+      if (k === "fire") {
+        ground.push([
+          a.left,
+          a.top,
+          size * 0.45,
+          false,
+          m.c * 7919 + idSeed(id),
+        ]);
+        if (Math.random() < 0.02 * half)
+          fxGroundFire(a.left, a.top, size * 0.4, 1);
+      } else if (Math.random() < 0.03 * half) {
+        if (k === "smoke") fxSmolder(a.left, a.top, size * 0.5, 1);
+        else if (k === "steam") fxSteam(a.left, a.top, 1);
+        else fxSparks(a.left, a.top, size * 0.3, 1);
+      }
+    }
+  }
+}
+const idSeed = (id) =>
+  [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7);
 let flamesAt = 0;
 function flames(s, now, hang, size, fxl, heldAll) {
   const dt = Math.min(0.05, flamesAt ? (now - flamesAt) / 1000 : 0),
@@ -3734,6 +3768,7 @@ function flames(s, now, hang, size, fxl, heldAll) {
     if (!(half < 1 && frameNo % 2) && Math.random() < 0.5)
       fxGroundFire(a.left, a.top, size * 0.4, 1); // (half: its embers every other frame)
   }
+  if (isSb(s)) sbZoneLooks(s, spot, ground, size, half);
   fxGround(ground);
 }
 /* my screen blinks in and out of crimson while it shakes (the flamethrower's fire on my duck, the owner's, Nov 16): a

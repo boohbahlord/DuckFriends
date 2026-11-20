@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v136",
+    version: 136,
+    date: "Nov 20, 2026",
+    title: "Zones that think",
+    news: [
+      "For Sandbox: a zone's Brain box takes a Seriat file. every [2,4]s step, when enter step 2 and when spawn step move its squares; squares, size, order and dir change them as you play; steps, squares, size and inside can be read. Any file reaches a zone by its name: ((zone 'Pit' size 2)). The zones help page in the Seriat window has it all.",
+      "For Sandbox: a zone can step each time a player steps in.",
+      "For Sandbox: a zone's working squares can show ground fire, smoke, steam or sparks, for everyone.",
+      "For Survival: its symbol is a pistol now.",
+    ],
+  },
+  {
     id: "v135",
     version: 135,
     date: "Nov 20, 2026",
