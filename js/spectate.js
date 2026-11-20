@@ -8,13 +8,18 @@
    nobody is left standing or down to watch. game.js puts the camera on that duck (world.js eye) and the card in the
    bottom bar's middle, where the Vote button goes (bottom bar, never over a window). */
 import { isSurv } from "./survrules.js";
-import { isWild } from "./l4ddrules.js";
+import { isWild, isL4dd } from "./l4ddrules.js";
 import { isSb, sbRule } from "./sandboxrules.js";
 import { cardHTML } from "./card.js";
 import { esc } from "./ui.js";
 
 const P4 = (s, id) => ((s.hang && s.hang.l4p) || {})[id] || null;
 const dead = (s, id) => !!(P4(s, id) || {}).ex; // (dead for good: l4ddrules.js, Survival's and Justin's)
+/* Dead Ducks Arcade, the owner's, Nov 19 21:59Z: "Make it to where when you die, that you can spectate players in survival
+   and Dead Ducks Arcade". There a duck that bleeds out is a ghost until the next round and still walks, so my ghost is the
+   first card (my own camera) and the arrows go on to the others and back */
+const ghostDda = (s, id) =>
+  isL4dd(s) && !isSurv(s) && !isSb(s) && !!(P4(s, id) || {}).gh;
 let watch = "";
 /* the ducks I may watch: the other players still in it (up or down), never a dead one, nor Justin out there */
 export function watchable(s, me) {
@@ -26,20 +31,26 @@ export function watchable(s, me) {
     L.over ||
     !dead(s, me)
   )
-    return [];
-  return s.seat.filter(
+    return ghostDda(s, me) && s.phase === "hang" && L && !L.over
+      ? [me, ...others(s, me)]
+      : [];
+  return others(s, me);
+}
+const others = (s, me) =>
+  s.seat.filter(
     (id) =>
       id !== me &&
       s.players[id] &&
       s.pos[id] &&
       P4(s, id) &&
       !dead(s, id) &&
+      !(P4(s, id) || {}).gh &&
       !isWild(s, id),
   );
-}
 /* the duck I watch now, or "" (not spectating): the one I picked while it's still there, else the first I may */
 export function watching(s, me) {
   const ids = watchable(s, me);
+  if (ids.length < 2 && ids[0] === me) return (watch = ""); // (a ghost with nobody else to watch)
   if (!ids.length) return (watch = "");
   if (!ids.includes(watch)) watch = ids[0];
   return watch;
@@ -63,7 +74,7 @@ export function watchHTML(s, me) {
       more
         ? `<button type="button" class="btn small ghost spec-go" data-a="spec" data-d="${d}" aria-label="${t}" data-tip="${t}">${d < 0 ? "◀" : "▶"}</button>`
         : "";
-  return `<div class="act-row spec" role="status" aria-label="Watching ${esc(p.name)}">${arrow(-1, "The one before")}${cardHTML(
+  return `<div class="act-row spec" role="status" aria-label="${id === me ? "Your ghost" : "Watching " + esc(p.name)}">${arrow(-1, "The one before")}${cardHTML(
     { ...p, id },
     { size: 34, extra: down ? '<span class="spec-down">Down</span>' : "" },
   )}${arrow(1, "The next one")}</div>`;

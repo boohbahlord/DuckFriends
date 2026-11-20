@@ -20,6 +20,7 @@ import {
   SB_RULES,
   sbRule,
   sbCan,
+  sbOnBoard,
 } from "./sandboxrules.js";
 import { mapName, mapForm } from "./maps.js";
 import { sbSnapshot, newSaveId, SAVE_V } from "./sbsave.js";
@@ -349,6 +350,7 @@ function rulesWin(R) {
     const s = R.state,
       may = sbCan(s, R.me);
     w.querySelector(".sb-rules").innerHTML = Object.entries(SB_RULES)
+      .filter(([, b]) => !b.board || sbOnBoard(s)) // (Board size: the plain boards only)
       .map(([k, b]) => {
         const v = sbRule(s, k);
         return b.kind === "bool"
@@ -358,7 +360,7 @@ function rulesWin(R) {
       .join("");
   };
   return openWindow(
-    `<h2>Rules</h2><p class="small dim">For the zombie maps (the arcade's cabin and Downpour). Saved with the Sandbox.</p><div class="sb-rules sb-set"></div>`,
+    `<h2>Rules</h2><p class="small dim">Lives, the down phase, crits and watching are for the zombie maps (the arcade's cabin and Downpour); Board size for the plain boards. Saved with the Sandbox.</p><div class="sb-rules sb-set"></div>`,
     {
       cls: "win-small sb-ruleswin",
       onOpen(w) {

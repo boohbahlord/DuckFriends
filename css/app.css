@@ -13833,6 +13833,10 @@ html.moving .mgj-field {
 .sb-board:not(.sb-tint) .mgj-field::before {
   display: none;
 }
+/* Sandbox's Board size over 100%: what's off the screen's board stays hidden as the camera slides (game.js boardCam) */
+.game.sb-big .sb-board {
+  overflow: hidden;
+}
 .mgj-field::before {
   content: "";
   position: absolute;
@@ -22122,6 +22126,7 @@ textarea.um-in {
     width: 6.4rem;
     height: 3.6rem;
   }
+}
 /* Sandbox Phase 4, floors (js/sbfloors.js): a floor up high, its front edge under it, darker */
 .sb-face {
   z-index: 3;

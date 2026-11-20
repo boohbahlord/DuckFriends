@@ -26,6 +26,8 @@ import {
   sbOnBoard,
   sbPlayerSpot,
   sbRulesAct,
+  boardDuck,
+  sbBoardK,
 } from "./sandboxrules.js";
 import { sbGodAct, godOn } from "./sbgod.js";
 import { survSet } from "./survrules.js";
@@ -2574,13 +2576,13 @@ function reduceStep(state, a, now) {
         duckFlame(s, a.id, p, aim, now);
       else if (aim && !hit) {
         const v =
-            sp === "dagger"
+            (sp === "dagger"
               ? DAGGER_SPEED
               : sp === "bow"
                 ? ARROW_SPEED
                 : GUNS_NEW.includes(sp)
                   ? gunSpeed(sp)
-                  : SHOT_SPEED,
+                  : SHOT_SPEED) / sbBoardK(s), // (Sandbox's bigger board: the same speed in ducks)
           hang = {
             ...(isHang(s)
               ? {
@@ -2606,7 +2608,7 @@ function reduceStep(state, a, now) {
           ...hang,
           ...more,
         });
-        const [rx, ry] = isHang(s) ? [0.006, 0.012] : [0.03, 0.08],
+        const [rx, ry] = isHang(s) ? [0.006, 0.012] : boardDuck(s),
           dx = aim[0] / rx,
           dy = aim[1] / ry,
           dl = Math.hypot(dx, dy) || 1; // (the aim in duck lengths: the shotgun's cone and the grenade's throw are measured in them)
@@ -2626,8 +2628,8 @@ function reduceStep(state, a, now) {
               shot(
                 s.fxN * 10 + i,
                 "pellet",
-                (bx / bl) * PELLET_V,
-                (by / bl) * PELLET_V,
+                (bx / bl) * (PELLET_V / sbBoardK(s)),
+                (by / bl) * (PELLET_V / sbBoardK(s)),
                 { life: DUCK_PELLET_LIFE },
               ),
             );
@@ -3706,7 +3708,7 @@ function playerKilled(s, by, id, w) {
 export function shove(s, id, ux, uy, far, now, side, more = {}) {
   const p = s.pos[id],
     hang = isHang(s),
-    [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08],
+    [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
     vx = ux * far * rx,
     vy = uy * far * ry,
     n = Math.ceil(far * 3);
@@ -3751,8 +3753,8 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
   // (from: where the swing starts; Justin on the boards isn't in s.pos)
   const p0 = from,
     hang = isHang(s),
-    rx = hang ? 0.006 : 0.03,
-    ry = hang ? (0.006 * HW) / HH : 0.08, // (in Hangout's world, a duck length the same in world px up and down as across, so a swing reaches as far every way: the owner's, Nov 18 15:18Z "Make sure melee weapons have the same range in any direction". It was 0.012, half as far again up and down)
+    rx = hang ? 0.006 : boardDuck(s)[0],
+    ry = hang ? (0.006 * HW) / HH : boardDuck(s)[1], // (in Hangout's world, a duck length the same in world px up and down as across, so a swing reaches as far every way: the owner's, Nov 18 15:18Z "Make sure melee weapons have the same range in any direction". It was 0.012, half as far again up and down)
     [far0, wide] = REACH[sp],
     far =
       far0 *
@@ -3985,7 +3987,7 @@ export const shotAt = (sh, t) => ({
 function blast(s, sh, x, y, now, o = {}) {
   const hang = isHang(s),
     w = o.w || "grenade",
-    [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08],
+    [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
     side = sh.hin || 0,
     hit = [];
   const near = (px, py, pz, inSide, big = 1) => {
@@ -4189,7 +4191,7 @@ const DUCK_PX = 64;
    (it goes to the first target at any height). Measured in duck lengths; in Hangout the cabin's walls stop the look */
 function floorFirst(s, id, p, aim, now) {
   const hang = isHang(s),
-    [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08],
+    [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
     l = Math.hypot(aim[0] / rx, aim[1] / ry) || 1,
     hz = duckH(s, p),
     side = hang && !!inCabin(p.x * HW, p.y * HH),
@@ -4227,7 +4229,7 @@ const shotReach = (s, sh, p) =>
    of the cabin's walls) */
 function firstDuck(s, sh, at, now) {
   const hang = isHang(s),
-    [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08],
+    [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
     ux = (at.x - sh.lx) / rx,
     uy = (at.y - sh.ly) / ry,
     len = ux * ux + uy * uy;
@@ -4312,7 +4314,7 @@ function chainShot(s, by, p, aim, now, w = "chaingun") {
   }
   const d = firstDuck(s, sh, at, now);
   if (d) {
-    const [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08];
+    const [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s);
     at = {
       x: d.x + ((aim[0] / l) * rx) / 2,
       y: d.y + ((aim[1] / l) * ry) / 2,
@@ -4346,7 +4348,7 @@ function chainShot(s, by, p, aim, now, w = "chaingun") {
    every screen draws the stream from it (game.js); s.gfire = [[x, y, until, by, side, height]] the burning patches */
 function duckFlame(s, by, p, aim, now) {
   const hang = isHang(s),
-    [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08],
+    [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
     al = Math.hypot(aim[0] / rx, aim[1] / ry) || 1,
     ux = aim[0] / rx / al,
     uy = aim[1] / ry / al,
@@ -4524,7 +4526,7 @@ function groundFire(s, now) {
   if (!gf || !gf.length) return ch;
   const left = gf.filter((g) => g[2] > now),
     hang = isHang(s),
-    [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08];
+    [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s);
   if (left.length !== gf.length) {
     s.gfire = left.length ? left : null;
     ch = true;
@@ -4583,8 +4585,7 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
       if (isMgj(s) && sh.by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
       if (vdSafe(s, id)) continue; // (Valentine's Duck Date: the two at the table)
       /* the nearest the shot came to the duck this beat, measured in a duck's room (.03 across, .08 deep; Hangout's world is far bigger than a board) */
-      const rx = isHang(s) ? 0.006 : 0.03,
-        ry = isHang(s) ? 0.012 : 0.08;
+      const [rx, ry] = isHang(s) ? [0.006, 0.012] : boardDuck(s);
       const ux = dx / rx,
         uy = dy / ry,
         px = (p.x - x0) / rx,
@@ -4651,8 +4652,7 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
   )
     return true; // (Mad God Justin: a duck's shot hit him, or his hit Good Justin or a Jaime)
   if (s.jm && at.z > -0.15 && at.z < 1.05 && !sh.fake) {
-    const rx = isHang(s) ? 0.006 : 0.03,
-      ry = isHang(s) ? 0.012 : 0.08,
+    const [rx, ry] = isHang(s) ? [0.006, 0.012] : boardDuck(s),
       ux = dx / rx,
       uy = dy / ry,
       len = ux * ux + uy * uy;
@@ -4689,10 +4689,11 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
   ) {
     // (the Justin option: he can be shot back, once by each shot)
     const n = justinAt(s.justin, now),
-      ux = dx / 0.03,
-      uy = dy / 0.08,
-      px = (n.x - x0) / 0.03,
-      py = (n.y - y0) / 0.08,
+      [jx, jy] = boardDuck(s),
+      ux = dx / jx,
+      uy = dy / jy,
+      px = (n.x - x0) / jx,
+      py = (n.y - y0) / jy,
       len = ux * ux + uy * uy;
     const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
     const got =
@@ -4830,7 +4831,7 @@ function jaimeTarget(s, by, now) {
   if (mine) return mine.id; // (the one I hit)
   const theirs = feud.find((h) => h.id === by && ok(h.by));
   if (theirs) return theirs.by; // (the one who hit me)
-  const [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08];
+  const [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s);
   return (
     s.seat
       .filter((id) => ok(id) && side(s.pos[id]) === side(p0))
@@ -4898,7 +4899,7 @@ function jaimeRun(s, now) {
     return true;
   }
   const hang = isHang(s),
-    [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08],
+    [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
     next = {};
   let ch = false;
   for (const [id, J0] of Object.entries(s.jm)) {
@@ -5038,7 +5039,7 @@ function wounded(s, id, w, now, crit) {
    cabin's walls (a wall in the way: along it, or he waits) and goes up only what a duck walks up */
 function jaimeStep(s, J, dx, dy, step) {
   const hang = isHang(s),
-    [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08],
+    [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
     d = Math.hypot(dx, dy) || 1,
     to = (ux, uy) => ({
       x: Math.max(0, Math.min(1, J.x + ux * step * rx)),
@@ -5131,7 +5132,7 @@ function guardFoe(s, J, now) {
 /* every beat: my Guard follows me, or goes after who hit me and uses his weapon on them; null once he's gone */
 function guardStep(s, id, J, now, fx) {
   const hang = isHang(s),
-    [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08],
+    [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
     O = s.players[J.by],
     op = s.pos[J.by];
   if (!O || !op || op.x < 0 || isGhost(s, J.by)) {
@@ -5173,7 +5174,7 @@ function guardStep(s, id, J, now, fx) {
 /* my Guard's ranged weapon, from where he stands, toward aim (board units): as mine would fire it */
 function guardShoots(s, J, aim, now) {
   const hang = isHang(s),
-    [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08],
+    [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
     dx = aim[0] / rx,
     dy = aim[1] / ry,
     dl = Math.hypot(dx, dy) || 1;
@@ -5278,7 +5279,7 @@ function guardsHit(s, by, near, now, w = "") {
 function jaimeBlows(s, id, J, aim, now) {
   if (J.snapAt) jaimeSnap(s, J, now); // (Justin still answers his line)
   const hang = isHang(s),
-    [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08],
+    [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
     hin = hang && inCabin(J.x * HW, J.y * HH) ? 1 : 0,
     hit = blast(
       s,

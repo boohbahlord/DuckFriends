@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v148",
+    version: 148,
+    date: "Nov 20, 2026",
+    title: "Bigger boards",
+    news: [
+      "For Sandbox: Rules in G has Board size on the plain boards. Over 100%, the board is bigger than your screen and the camera follows your duck.",
+      "For Dead Ducks Arcade: once you bleed out, arrows by your card let you watch the other players until the next round.",
+    ],
+  },
+  {
     id: "v147",
     version: 147,
     date: "Nov 20, 2026",

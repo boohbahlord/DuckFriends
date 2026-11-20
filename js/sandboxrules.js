@@ -107,6 +107,17 @@ export const SB_RULES = {
   down: { name: "Down phase (others can revive you)", kind: "bool", def: "f" },
   crit: { name: "Crits (headshots)", kind: "bool", def: "t" },
   spec: { name: "Out of lives: watch the others", kind: "bool", def: "t" },
+  /* the owner's, Nov 19 21:59Z: "There should be a board size limit that changes the size of the map ... we'll do
+     percentage instead, right? 100% is the minimum. But ... if the map is bigger, the camera follows the duck as they
+     move around like it does in Downpour or Cabin". The plain boards only (the worlds have their own size) */
+  size: {
+    name: "Board size % (100 is the smallest)",
+    kind: "int",
+    min: 100,
+    max: 400,
+    def: "100",
+    board: true,
+  },
 };
 /* rule k now: a whole number (lives) or true / false */
 export function sbRule(s, k) {
@@ -116,6 +127,15 @@ export function sbRule(s, k) {
   const n = Math.round(+t);
   return Number.isFinite(n) ? Math.min(b.max, Math.max(b.min, n)) : +b.def;
 }
+/* how many times bigger Sandbox's plain board is than the screen's (Board size %), 1 everywhere else */
+export const sbBoardK = (s) =>
+  sbOnBoard(s) ? Math.max(1, sbRule(s, "size") / 100) : 1;
+/* a duck's length on the board, in shares of it: 0.03 across, 0.08 up and down (on a bigger board, k times less) */
+export function boardDuck(s) {
+  const k = sbBoardK(s);
+  return k === 1 ? BOARD_DUCK : [0.03 / k, 0.08 / k];
+}
+const BOARD_DUCK = [0.03, 0.08];
 /* { t: "sbr", k, v }: whoever may change Sandbox sets rule k */
 export function sbRulesAct(s, a) {
   const b = SB_RULES[a.k];
@@ -534,7 +554,7 @@ export function sbCellIn(p, i, j) {
 }
 /* a duck length in shares of the map, [across, up and down] */
 export const sbUnit = (s, W, H) =>
-  sbOnBoard(s) ? [0.03, 0.08] : [SB_ZONE_PX / W, SB_ZONE_PX / H];
+  sbOnBoard(s) ? boardDuck(s) : [SB_ZONE_PX / W, SB_ZONE_PX / H];
 /* how far block p is turned, in degrees (plan Phase 2: "while held, the arrow keys rotate") */
 export const sbRot = (p) => ((((p && p.rot) || 0) % 360) + 360) % 360;
 /* block p's box, [x0, y0, x1, y1] in shares of the map (W, H: a world's size in px): around it as it's turned; the

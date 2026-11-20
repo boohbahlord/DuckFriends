@@ -17,6 +17,7 @@ import {
   isSb,
   sbMay,
   sbOnBoard,
+  boardDuck,
   baseMode,
   SB_LOOT,
   SB_DROPS,
@@ -143,12 +144,13 @@ function lay(s, q, w, now, zid = null) {
    on its floor), or null */
 function takerOf(s, q0, H0) {
   const board = sbOnBoard(s),
+    U = boardDuck(s),
     q = q0.orb && q0.orb.x != null ? q0.orb : q0; // (an orb lying in a zone)
   for (const id of H0.ducks(s)) {
     const me = s.pos[id];
     if (!me) continue;
     const d = board
-      ? Math.hypot((q.x - me.x) / 0.03, (q.y - me.y) / 0.08)
+      ? Math.hypot((q.x - me.x) / U[0], (q.y - me.y) / U[1])
       : Math.abs((+me.z || 0) - (q.z || 0)) < 40
         ? Math.hypot((q.x - me.x) * W, (q.y - me.y) * H) / DROP.REACH
         : 9;
