@@ -22613,3 +22613,18 @@ textarea.um-in {
 .game .sb-wave[hidden] {
   display: none;
 }
+
+/* no browser drag ghost or text selection in a game (the owner's, Nov 20 21:41Z; main.js stops the drag itself) */
+img,
+svg image {
+  -webkit-user-drag: none;
+}
+.screen.game,
+.screen.game * {
+  -webkit-user-select: none;
+  user-select: none;
+}
+.screen.game :is(input, textarea, select, [contenteditable]) {
+  -webkit-user-select: text;
+  user-select: text;
+}
