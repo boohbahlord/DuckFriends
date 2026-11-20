@@ -15,6 +15,7 @@
    room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). Duncelation has its
    own rules in duncerules.js: one defender in the circle, everyone else walks to Dunce or Not a Dunce. Valentine's Duck
    Date has its own in vddrules.js: The Date at the dining table, a date with each Suitor, then a Suitor Turned Down. */
+import { epAct } from "./sbep.js";
 import { duckBig, scaleOf } from "./duck.js";
 import {
   baseMode,
@@ -2377,6 +2378,9 @@ function reduceStep(state, a, now) {
     case "sbh":
       // Sandbox's hotbar: its slots, the default, the lock, a spawn button's look and press (sbhot.js)
       return sbHotAct(s, a, now) ? s : state;
+    case "sbep":
+      // Sandbox: what others may do with my made NPCs and groups, for this Sandbox (P, sbep.js)
+      return epAct(s, a) ? s : state;
     case "nbn":
     case "nbp":
       // Seriat: my folder's names and the rights I give other players, for this Sandbox (nbperms.js)

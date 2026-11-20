@@ -17,6 +17,7 @@
    (l4ddrules.js l4Spawn), already inside; on Duck Cabin they are Sandbox's own (sbcabin.js), walking as those do. Every
    other kind (a Blank NPC, Justin, a Test NPC, a made NPC) is Sandbox's own on every world, the zombie maps too, where
    their guns and swings hit them (l4ddrules.js L4_HOOKS). */
+import { epMay } from "./sbep.js";
 import { keep, read, valueOf } from "./numerat.js";
 import {
   baseMode,
@@ -681,6 +682,9 @@ export function sbAct(s, a, now) {
       cn = (s.sb && s.sb.cn) || {};
     if (!/^[a-z0-9]{1,24}$/.test(id)) return false;
     if (!cn[id] && Object.keys(cn).length >= 50) return false;
+    const was = cn[id],
+      owner = (was && was.by) || a.id; // (whoever brought it in first: P's rights over it are theirs, sbep.js)
+    if (!epMay(s, owner, a.id, "m")) return false;
     const duck = cleanLook(s, n.duck);
     if (!duck) return false;
     const beh = {};
@@ -698,6 +702,8 @@ export function sbAct(s, a, now) {
           duck,
           w: cleanArms(n.w),
           beh,
+          by: owner,
+          ...(owner !== a.id ? { ed: a.id, et: now } : {}), // (changed by someone the owner let: the owner's device may keep it, sbepview.js)
         },
       },
     };

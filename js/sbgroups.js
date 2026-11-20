@@ -16,6 +16,7 @@
    s.sb.gr = { id: group }, s.sb.gm = { "p:" a duck's id or "n:" an NPC's: [group ids] } (only this moment's: a save
    leaves it out), s.sb.gj = [[who, group id]]: joins waiting for the heartbeat (it has the clock and the HP rules). A
    duck leaves its groups when it spawns again (sbspawn.js sbPlaceDuck); an NPC when it dies. */
+import { epMay } from "./sbep.js";
 import {
   isSb,
   sbMay,
@@ -411,12 +412,13 @@ export function sbGroupAct(s, a) {
     const n = ((s.sb && s.sb.gn) || 0) + 1,
       name = String(a.v || "").trim() || `Group ${n}`;
     if (grWhy("n", name)) return false;
-    gr["g" + n] = { n: name, who: "everything" };
+    gr["g" + n] = { n: name, who: "everything", by: a.id }; // (its maker: P's rights over it are theirs, sbep.js)
     s.sb = { ...s.sb, gr, gn: n };
     return true;
   }
   const g = gr[a.g];
   if (!g) return false;
+  if (!epMay(s, g.by, a.id, "m")) return false; // (another player's group: only if they let me change it)
   if (a.k === "del") {
     delete gr[a.g];
     s.sb = { ...s.sb, gr };

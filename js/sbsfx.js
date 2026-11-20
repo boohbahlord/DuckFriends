@@ -17,6 +17,7 @@ import { activity } from "./hangout/registry.js";
 import { W, H } from "./hangout/layout.js";
 import { orbsOf } from "./sbloot.js";
 import { activeRoom } from "./net.js";
+import { epKeep } from "./sbepview.js";
 
 let brkN = null; // (the last item break heard: s.sb.brk.n)
 let seen = null; // id → { orbs: its orbs lying (not the zombies' drops), mine: how many of them I took my own copy of, p }
@@ -25,6 +26,7 @@ export function sbHear(s, world) {
     seen = null;
     return;
   }
+  epKeep(s); // (an NPC of mine someone I let changed: kept on my device too, sbepview.js)
   const pts = (s.sb && s.sb.pts) || {};
   const first = !seen,
     now = new Map(),

@@ -84,6 +84,7 @@ import { SB_WHAT, SB_ACTS } from "./sandboxrules.js";
 /* a card's picture in real pixels, as a duck's (duck.js pictureToSquare): 64 to a side, its pixels drawn square */
 const CARD_PIC_PX = 64;
 let NPC = null;
+let BORROWED = false;
 const duckNow = () => (NPC ? NPC.duck : profile.duck);
 /* a duck page's own "Randomize …" (the owner's file: "randomize hats" or "randomize styles") */
 const RAND_OF = {
@@ -394,6 +395,7 @@ export function openCustomize(page = lastPage, opts = {}) {
   loadSounds("game"); // (the specials' previews: each gun's own sound)
   if (page === "duck") page = null; // (the old tab name)
   NPC = opts.npc || null;
+  BORROWED = !!opts.borrowed; // (another player's NPC, changed in the room only: no Delete, sbepview.js)
   if (NPC && !ROWS_NPC.some((r) => r && r[0] === page)) page = null;
   return openWindow(
     `<div class="armory${NPC ? " arm-npc" : ""}"><div class="arm-menu"></div><div class="arm-stage" data-nonav><div class="arm-duck"></div><div class="arm-card"${NPC ? " hidden" : ""}></div><p class="hints arm-keys">${NAV_HINTS}</p></div></div>`,
@@ -714,7 +716,7 @@ export function openCustomize(page = lastPage, opts = {}) {
                 )
                 .join(
                   "",
-                )}</ul>${NPC ? '<p class="arm-rand"><button type="button" class="btn ghost small" data-a="npcdel">Delete this NPC</button></p>' : ""}</div>`;
+                )}</ul>${NPC && !BORROWED ? '<p class="arm-rand"><button type="button" class="btn ghost small" data-a="npcdel">Delete this NPC</button></p>' : ""}</div>`;
           } else if (k === "name" && NPC) {
             html =
               head("Name") +
