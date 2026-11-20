@@ -16,7 +16,7 @@ import { now } from "./clock.js";
 import { infoUnder, openGameSettings } from "./gamesettings.js";
 
 /* what each rule does, as the preview says it */
-export const DOD_TEXT = {
+const DOD_TEXT = {
   ready:
     "The host can't start the game and readies like everyone else. The game starts once 2 of 3 of the ducks are ready.",
   vote: "Vote Mode & Map stays on: the ducks always vote on the game mode and the map, and nobody can change it, the host neither.",
@@ -30,7 +30,7 @@ const HOW =
   "A vote passes with 2 of 3 ducks and lasts 60 s. While a vote is up, the host can't start the game, only ready. A rule that is on goes off again only by another vote: no host can undo it, a new host neither. The host turns a rule on, or hands the host over, directly.";
 
 /* a rule's vote, if one is up: its votes, the votes it needs and the seconds it has left */
-export function dodVote(s, k) {
+function dodVote(s, k) {
   const x = ((s.dod || {}).votes || {})[k];
   if (!x) return null;
   return {

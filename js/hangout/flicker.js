@@ -27,7 +27,7 @@ const slotOf = (now) => {
     n: 2 + Math.floor(hash(i + 0.3) * 3),
   };
 };
-export function stutter(target, now) {
+function stutter(target, now) {
   if (!target || still()) return 1;
   const s = slotOf(now);
   if (s.target !== target) return 1;

@@ -339,7 +339,7 @@ const level = () =>
 /* each mode's own loudness, in dB over everything else (the Settings sliders stay as they are). I want Survival a
    little louder than the rest, about as loud as the whole game was before Nov 19, but its annoying guns as quiet as
    they are now (KEEP). Keyed by the mode's id (s.options.mode); music.js reads .music */
-export const MODE_DB = { surv: { sfx: 3, music: 4 } };
+const MODE_DB = { surv: { sfx: 3, music: 4 } };
 const KEEP = new Set(["burst", "tommy", "ump"]); // (the guns the owner found loud and harsh, Nov 19)
 /* the mode being played: only on the game screen (the lobby and the menus keep the usual loudness) */
 export function modeDb() {
@@ -358,7 +358,7 @@ const modeK = (name) => {
    that has passed since then (at most a quarter of a second) */
 let seenCt = -1,
   seenP = 0;
-export function soon(a = ac, lead = LEAD) {
+function soon(a = ac, lead = LEAD) {
   const p = performance.now(),
     ct = a.currentTime;
   if (ct === seenCt && a.state === "running")

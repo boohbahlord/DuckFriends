@@ -11,7 +11,7 @@ const S = () => profile.settings;
 const MAX = 200;
 /* the speaker: a yellow box and cone; its waves say how loud (none at 0, one below the default, two at it, three above),
    and a red cross when muted */
-export function speakerSVG(v, muted) {
+function speakerSVG(v, muted) {
   const n = muted || v <= 0 ? 0 : v < 100 ? 1 : v === 100 ? 2 : 3;
   const waves = [3.6, 6.6, 9.6]
     .slice(0, n)

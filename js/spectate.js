@@ -23,7 +23,7 @@ const ghostDda = (s, id) =>
   isL4dd(s) && !isSurv(s) && !isSb(s) && !!(P4(s, id) || {}).gh;
 let watch = "";
 /* the ducks I may watch: the other players still in it (up or down), never a dead one, nor Justin out there */
-export function watchable(s, me) {
+function watchable(s, me) {
   /* Duck Cabin and the plain boards in Sandbox: out of lives, the others still in it (sbout.js) */
   if (sbOffZ(s))
     return ["hang", "sandbox"].includes(s.phase) &&

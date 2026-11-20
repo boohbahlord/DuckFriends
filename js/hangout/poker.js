@@ -55,7 +55,7 @@ import { handouts } from "../secret.js";
 import { jPoker } from "./justin.js";
 import { play as sound } from "./sounds.js";
 
-export const JOIN = 12000,
+const JOIN = 12000,
   SHOW = 6000,
   OVER = 10000;
 const HAND_K = 0.78,
@@ -82,7 +82,7 @@ const val = (c) => (c % 13 === 0 ? 14 : (c % 13) + 1); // (an ace is high, and l
 const plural = (n) =>
   ({ 11: "Jacks", 12: "Queens", 13: "Kings", 14: "Aces" })[n] || n + "s";
 /* the best 5 of these cards: { r: [the kind, then what breaks a tie], name, five } */
-export function bestHand(cards) {
+function bestHand(cards) {
   const list = cards.filter((c) => c >= 0);
   let best = null;
   const pick = (from, k, out = [], at = 0) => {
@@ -98,7 +98,7 @@ export function bestHand(cards) {
   else if (list.length) best = rate(list);
   return best;
 }
-export const cmp = (a, b) => {
+const cmp = (a, b) => {
   for (let i = 0; i < Math.max(a.length, b.length); i++)
     if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) - (b[i] || 0);
   return 0;
@@ -141,7 +141,7 @@ function rate(five) {
 }
 
 /* ---------- the rules (the host) ---------- */
-export const fresh = () => ({
+const fresh = () => ({
   st: "off",
   t: 0,
   by: "",
@@ -183,7 +183,7 @@ const SETS = {
   time: [20, 40],
   limit: [0, 10, 25],
 };
-export const BUYIN = 3;
+const BUYIN = 3;
 /* can one still buy in: during the first 3 hands (up to the third one's Play or Sit out) */
 const buyIn = (pk) =>
   pk.n < BUYIN - 1 ||
@@ -199,7 +199,7 @@ const ready = (s, pk) =>
     ...(pk.set.butler ? ["butler"] : []),
     ...(pk.k.justin !== undefined ? ["justin"] : []),
   ].filter((id) => (pk.chips[id] ?? 0) > 0);
-export const blindNow = (pk) =>
+const blindNow = (pk) =>
   pk.set.blinds * (pk.set.up ? 2 ** Math.floor(pk.n / 10) : 1); // (the small blind; the big one is twice it)
 /* the host's deck and everyone's two cards for the hand it's dealing */
 let mem = { id: "", deck: [], holes: {} };
@@ -215,7 +215,7 @@ function shuffled() {
 const computer = (id) => id === "butler" || id === "justin";
 /* poker picked in the table's vote (blackjack.js): the setup; everyone buys in with the same 100 (justin: the vote
    invited him) */
-export function start(s, seated, now, justin = false) {
+function start(s, seated, now, justin = false) {
   const pk = fresh(),
     person = seated.find((q) => s.players[q.id] && !s.players[q.id].bot);
   Object.assign(pk, { st: "setup", t: now, by: (person || seated[0]).id }); // (a person sets it up, not a computer)
@@ -474,7 +474,7 @@ function strength(cards, board) {
     (h.r[1] || 0) / 200
   );
 }
-export function brainMove(pk, id, cards, rand = Math.random) {
+function brainMove(pk, id, cards, rand = Math.random) {
   const p = pk.p[id],
     owe = Math.max(0, pk.high - p.bet),
     have = pk.chips[id] ?? 0,
@@ -505,7 +505,7 @@ export function brainMove(pk, id, cards, rand = Math.random) {
   return { do: "fold" };
 }
 /* a TEST room's computer (bots.js) at the poker table */
-export function pkBot(s, id, now) {
+function pkBot(s, id, now) {
   const pk = (s.hang || {}).pk;
   if (!pk) return [];
   const think = 900 + (hash(id + pk.st + pk.id + pk.turn + pk.round) % 1600),
@@ -531,7 +531,7 @@ function holesOf(pk, id) {
   const c = R.secretCard(R.state);
   return c && c.pk === pk.id ? c.c : [];
 }
-export const myCards = (pk, me) => pk.show[me] || holesOf(pk, me);
+const myCards = (pk, me) => pk.show[me] || holesOf(pk, me);
 handouts.add((s) => {
   const pk = s.hang && s.hang.pk;
   return pk && pk.id && mem.id === pk.id && ["deal", "bet"].includes(pk.st)
@@ -937,7 +937,7 @@ function timer(pk, now) {
 /* the table: the shared cards in a row (the ones still to come as faint outlines), the pot under them; each one's two
    cards in front of their stool (smaller, face down but mine), what they last did under them, their chips by the
    stool; the dealer's D. At the showdown the hands still in turn over and the winning 5 light up. */
-export function pokerSVG(s, now, me) {
+function pokerSVG(s, now, me) {
   const pk = s.hang.pk,
     ox = TOP.l,
     oy = TOP.t + BJ.h,

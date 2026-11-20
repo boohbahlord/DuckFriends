@@ -20,7 +20,7 @@ export const BOMB = {
   fire: 0.02, // (Quacky Zombies' fireplace: 1 spin in 50)
 };
 /* the owner's lines, word for word */
-export const BOMB_LINES = [
+const BOMB_LINES = [
   "I go nuclear Justin",
   "Fuck you Justin",
   "For you Justin",
@@ -82,7 +82,7 @@ export const JUSTIN_AT_JAIME = [
   "STOP EATING MY ZEBRA CAKES JAIME!!! YOU STUPID IDIOT!!!",
 ];
 /* Justin's answers to a Jaime Bomb: his own lines that start "Shut up" or "I don't care", and his lines against Jaime */
-export const SNAP_LINES = [
+const SNAP_LINES = [
   ...E_LINES.filter((l) => /^(shut up|i don't care)/i.test(l)),
   ...JUSTIN_AT_JAIME,
 ];

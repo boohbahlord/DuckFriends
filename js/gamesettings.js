@@ -810,7 +810,7 @@ const GREY = {
   ],
   d: "Black and white: the map is shown in black, white and greys.",
 };
-export const showsCollage = (s) =>
+const showsCollage = (s) =>
   !CABIN_MODES.includes(s.options.mode) &&
   !s.options.mapPick &&
   s.options.map === "collage";

@@ -14,7 +14,7 @@ const MAX_SECS = 180, // (3 minutes)
   HUSH = 0.08, // s of silence before the fade-in and after the fade-out (more than a packet)
   PEAK = 0.9;
 
-export async function importAudio(file) {
+async function importAudio(file) {
   if (!window.AudioEncoder || !window.OfflineAudioContext) return null;
   const cfg = {
     codec: "opus",

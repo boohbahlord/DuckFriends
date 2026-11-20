@@ -35,7 +35,7 @@ const inFont = (p, html) =>
   fontHTML(p && p.nameStyle && p.nameStyle.font, html); // (a player's font, scaled to match)
 
 /* ---------- the cloud (shared with the Round Lord) ---------- */
-export const CLOUD_SVG = `<svg class="cloud-svg" viewBox="0 0 200 84" aria-hidden="true">
+const CLOUD_SVG = `<svg class="cloud-svg" viewBox="0 0 200 84" aria-hidden="true">
       <g fill="#dcebf8"><circle cx="50" cy="52" r="28"/><circle cx="92" cy="40" r="34"/><circle cx="140" cy="48" r="30"/><circle cx="170" cy="62" r="20"/><circle cx="26" cy="64" r="18"/><rect x="26" y="52" width="148" height="30" rx="15"/></g>
       <g fill="#fff"><circle cx="50" cy="48" r="26"/><circle cx="92" cy="36" r="32"/><circle cx="140" cy="44" r="28"/><circle cx="170" cy="58" r="18"/><circle cx="26" cy="60" r="16"/><rect x="28" y="50" width="144" height="26" rx="13"/></g>
       <ellipse cx="84" cy="24" rx="16" ry="6" fill="#fff" opacity=".9"/></svg>`;
@@ -70,7 +70,7 @@ export function cardFor(p, body, o = {}) {
     <div class="seed-box" style="${bg}"><span class="seed-txt">${p ? inFont(p, body) : body}</span><span class="seed-by">${p ? nameHTML(p.name, seenName(p)) : "A secret writer"}</span></div>
     ${o.out ? '<svg class="seed-x" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 7L33 33M33 7L7 33"/></svg>' : ""}${o.extra || ""}</div>`;
 }
-export function seedCardHTML(s, b, i, o = {}) {
+function seedCardHTML(s, b, i, o = {}) {
   const seed = b.seeds[i];
   if (!seed) return "";
   return cardFor(

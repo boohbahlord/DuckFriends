@@ -25,7 +25,7 @@ export function netHTML(p, online) {
 
 /* may I start this vote now? (the reason if not) */
 const TWO = "With only two players there are no kick votes.";
-export function whyNotVote(s, me, kind) {
+function whyNotVote(s, me, kind) {
   if (kind === "kick" && s.seat.filter((id) => !s.players[id].bot).length <= 2)
     return TWO;
   if (s.vote) return "A vote is already running.";
@@ -45,7 +45,7 @@ export function whyNotVote(s, me, kind) {
     return "You already started a vote for a new game this turn.";
   return "";
 }
-export async function startKick(R, id) {
+async function startKick(R, id) {
   const s = R.state,
     p = s.players[id];
   if (!p) return;
@@ -63,9 +63,9 @@ export async function startKick(R, id) {
     R.send({ t: "voteStart", kind: "kick", target: id });
 }
 /* the host (or sudo) removes a player at once, no vote */
-export const canKick = (s, me, id) =>
+const canKick = (s, me, id) =>
   may(s, me, "cankick") && id !== me && id !== s.hostId && !!s.players[id];
-export async function hostKick(R, id) {
+async function hostKick(R, id) {
   const p = R.state.players[id];
   if (!p || !canKick(R.state, R.me, id)) return;
   if (
@@ -107,7 +107,7 @@ export function lobbyVote(R, kind = "lobby") {
 }
 
 /* the vote box at the top of the game */
-export function voteHTML(s, me) {
+function voteHTML(s, me) {
   const v = s.vote;
   if (!v) return "";
   const { voters, need } = voteNeeds(s, v),

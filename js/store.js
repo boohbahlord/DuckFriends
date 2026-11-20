@@ -41,7 +41,7 @@ export const SETTINGS_DEFAULT = {
   fpsCapOn: true, // the frame cap: at most fpsCap frames a second (off: as many as the screen shows)
   fpsCap: 120,
 };
-export const PROFILE_DEFAULT = {
+const PROFILE_DEFAULT = {
   name: "Player 1",
   duck: { ...DUCK_DEFAULT },
   card: {

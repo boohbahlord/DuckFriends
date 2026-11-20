@@ -7,10 +7,10 @@
 import { baseMode } from "../sandboxrules.js";
 
 export const DEAD_STILL = 6000; // ms: the Duck Cabin's default
-export const DOWN_GAMES = 1000; // ms: the boards' default (owner 2026-11-03 17:15Z: half a second longer than 0.5 s)
+const DOWN_GAMES = 1000; // ms: the boards' default (owner 2026-11-03 17:15Z: half a second longer than 0.5 s)
 export const DOWN_OK = [0, 500, 1000, 2000, 3000, 5000, 6000]; // (6 s only in Duck Cabin)
 const cabin = (s) => baseMode(s.options) === "hang"; // (Sandbox on Duck Cabin too)
-export const DOWN_NORMAL = 3000; // ms: the normal games' default (owner, Nov 16: their death lasts three seconds)
+const DOWN_NORMAL = 3000; // ms: the normal games' default (owner, Nov 16: their death lasts three seconds)
 export const downFor = (s) => {
   if (s.options.mode === "mgj") return 5000; // (Mad God Justin: always 5 s)
   const v = s.options.downMs;

@@ -18,7 +18,7 @@ const MAX_STEPS = 500,
   MAX_LOOP = 50,
   MAX_DEPTH = 10;
 
-export class BashError extends Error {
+class BashError extends Error {
   constructor(msg, code = 1, fatal = false) {
     super(msg);
     this.code = code;
@@ -121,7 +121,7 @@ function closeParen(src, k) {
   }
   fail("✗ unexpected end of line: a ( isn't closed");
 }
-export function lex(src) {
+function lex(src) {
   const toks = [];
   let i = 0,
     parts = null,
@@ -324,7 +324,7 @@ const isAssign = (t) =>
   t.parts[0].t === "lit" &&
   !t.parts[0].q &&
   /^[A-Za-z_]\w*=/.test(t.parts[0].v);
-export function parse(toks, src) {
+function parse(toks, src) {
   let p = 0;
   const isOp = (v) => toks[p] && toks[p].k === "op" && toks[p].v === v;
   const kw = (v) => plain(toks[p]) === v;

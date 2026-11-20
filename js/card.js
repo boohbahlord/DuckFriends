@@ -84,7 +84,7 @@ export const CARD_SIZES = [
 ];
 
 /* one pattern's motif in a 32 × 32 box */
-export function motif(kind, col) {
+function motif(kind, col) {
   if (String(kind).startsWith("hat:"))
     return hatTile(kind.slice(4), col === "#ffffff" ? "" : col);
   if (String(kind).startsWith("face:")) return faceTile(kind.slice(5));
@@ -104,7 +104,7 @@ export function motif(kind, col) {
 }
 /* a pattern laid out on a card: CSS background layers (without the card's color). Its motifs are pixel files
    (tools/pixel-cards.cjs), laid out on a canvas of the grid's pixels (pixelLayers) */
-export function patternLayers(kind, col, layout = "tiled", size = "m", base) {
+function patternLayers(kind, col, layout = "tiled", size = "m", base) {
   return pixelLayers(kind, col, layout, size, base);
 }
 /* ---------- the patterns in pixels ----------

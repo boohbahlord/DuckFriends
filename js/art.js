@@ -22,7 +22,7 @@ export const rnd = (seed) => () =>
   (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296; // the same "random" every time
 
 /* the symbol */
-export function symbolSVG(size = 32, title = "Agree or Disagree") {
+function symbolSVG(size = 32, title = "Agree or Disagree") {
   return `<svg viewBox="0 0 30 24" width="${size}" height="${size * 0.8}" role="img" aria-label="${esc(title)}">
 <rect x="1" y="1" width="8" height="22" rx="1.6" fill="#ED1C24" fill-opacity=".78" stroke="#a5121a" stroke-width="1"/>
 <rect x="11" y="1" width="8" height="22" rx="1.6" fill="#FFF200" fill-opacity=".78" stroke="#b8ae00" stroke-width="1"/>

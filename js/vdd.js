@@ -76,7 +76,7 @@ export const CHAIR_SVG = `<svg viewBox="0 0 80 132" aria-hidden="true">
 <path d="M15 36.6C12.6 33.6 9 35 9 38C9 40.8 12.2 42.8 15 45.4C17.8 42.8 21 40.8 21 38C21 35 17.4 33.6 15 36.6Z" fill="#ff3d6e" ${O} stroke-width="1.5"/>
 <rect x="4" y="84" width="72" height="12" rx="5" fill="#e3245a" ${O} stroke-width="2.6"/><path d="M8 87H72" stroke="#fff" stroke-width="2" opacity=".3" stroke-linecap="round"/></svg>`;
 /* the table and its two chairs, in the ducks' layer (game.js places them and keeps them in depth with the ducks) */
-export const TABLE_HTML = `<div class="vd-chair" data-k="0" aria-hidden="true">${CHAIR_SVG}</div><div class="vd-chair r" data-k="1" aria-hidden="true">${CHAIR_SVG}</div><div class="vd-table" aria-hidden="true">${TABLE_SVG}</div>`;
+const TABLE_HTML = `<div class="vd-chair" data-k="0" aria-hidden="true">${CHAIR_SVG}</div><div class="vd-chair r" data-k="1" aria-hidden="true">${CHAIR_SVG}</div><div class="vd-table" aria-hidden="true">${TABLE_SVG}</div>`;
 /* where the table and the two at it are drawn, in duck sizes from the table's feet: its width, and how far out the seats
    are */
 export const TABLE_W = 2.5,

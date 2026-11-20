@@ -14,7 +14,7 @@ let puffs = [],
   layer = null;
 const still = () => document.documentElement.classList.contains("still");
 /* a puff of dust at (x, y) on ground at height z; k: how hard it landed (0 … 1.4) */
-export function dust(x, y, z, k = 1) {
+function dust(x, y, z, k = 1) {
   if (!layer || still()) return;
   const el = document.createElement("div");
   el.className = "hang-dust";

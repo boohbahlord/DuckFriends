@@ -134,7 +134,7 @@ function stepsTo(ball, n, memo) {
   return b;
 }
 /* where the ball is at the room's time `now`: exact at a step (the host), or part way to the next (smooth, on screens) */
-export function ballAt(ball, now, smooth = false) {
+function ballAt(ball, now, smooth = false) {
   const ms = Math.max(0, now - (ball.t || 0)),
     n = Math.floor(ms / STEP),
     b = { ...stepsTo(ball, n, memos[smooth ? "screen" : "host"]) };

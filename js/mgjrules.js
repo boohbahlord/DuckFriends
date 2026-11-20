@@ -91,14 +91,14 @@ import {
 export const isMgj = (s) => s.options.mode === "mgj";
 /* no time limit (the owner, Nov 3): the fight goes on until he's at 0 HP or every duck is out of HP. What his HP sets off:
    the Xbox once he's down to XB_AT of his HP, the meteor once he's down to MET_AT of it (it gives MET_HEAL back) */
-export const XB_AT = 2 / 3, // (the Xbox once he's at or under this fraction of his HP: the owner's, Nov 17)
+const XB_AT = 2 / 3, // (the Xbox once he's at or under this fraction of his HP: the owner's, Nov 17)
   MET_AT = 1 / 3, // (the meteor once he's at or under this fraction)
   MET_HEAL = 20;
 /* each time his attacks get faster (the Xbox, then the meteor: j.fast counts them), they come FAST_SOON times as soon
    and the controllers and the chair fly FAST_FLY times as fast; his bullets keep their speed */
-export const FAST_SOON = 0.7,
+const FAST_SOON = 0.7,
   FAST_FLY = 1.25;
-export const MGJ_END = 9; // seconds of the podium (or his winning line), then the stats
+const MGJ_END = 9; // seconds of the podium (or his winning line), then the stats
 export const MGJ_ZAP = 1600; // ms into a win: lightning strikes him where he stands
 export const MGJ_DOWN = 5000; // ms a hit duck stays down
 /* (owner 2026-11-03 22:21Z) he's slightly bigger than a duck here, and his hammer bigger, everywhere he swings it */
@@ -107,16 +107,16 @@ export const MGJ_HAMMER = 1.35; // Justin's hammer against a duck's, on top of h
 /* his HP (the owner's, Nov 16: he must be really hard): four times his old HP for one duck (40), then half that old HP
    again for every duck in the fight. BASE: his old HP for one duck; X: how many times it he starts with; PER: how much
    of it each duck adds */
-export const MGJ_HP = { BASE: 40, X: 4, PER: 0.5 };
-export const hpOf = (n) =>
+const MGJ_HP = { BASE: 40, X: 4, PER: 0.5 };
+const hpOf = (n) =>
   Math.round(MGJ_HP.BASE * MGJ_HP.X + MGJ_HP.BASE * MGJ_HP.PER * n);
 /* Player HP (in the lobby's Additional settings): on by default at 6; off, or 1, 5, 6, 10 or 15. A hit from Justin
    takes 1 HP and the duck stays up; the hit that takes its last HP knocks it down, and it stays down until a revive or
    the fight's end (won or lost); when every duck is out, Justin wins. After any hit nothing can hurt the duck for
    SOAK_MS (it flickers, game.js). s.mgj.lost = { id: HP lost }, s.mgj.out = { id: when its HP ran out }, s.mgj.safe =
    { id: until when nothing hurts it } */
-export const MGJ_PHP = [1, 5, 6, 10, 15];
-export const SOAK_MS = 1000;
+const MGJ_PHP = [1, 5, 6, 10, 15];
+const SOAK_MS = 1000;
 export const mgjSafe = (s, id, now) =>
   (((s.mgj || {}).safe || {})[id] || 0) > now;
 export const mgjPHp = (s) =>
@@ -169,7 +169,7 @@ onGetUp((s, id) => {
 });
 /* the meteor, in ms from its start: he's faded out by FADE; the meteor shows from FALL and lands at LAND; he's back at
    BACK and the timer runs again at RESUME */
-export const MET = {
+const MET = {
   FADE: 1000,
   FALL: 1400,
   LAND: 2900,
@@ -187,7 +187,7 @@ export const PUMP = 1750,
 /* his charge (the owner's, Nov 3): every DASH_EVERY ms or so (sooner with his faster attacks) he crouches for DASH_TELL
    (the tell, a red shake), then sprints at DASH_V board widths a second to where the duck stood when the tell ended;
    a duck in his way flies DASH_FAR times the hammer's distance, with no damage. Walking off his line or jumping dodges it */
-export const DASH_EVERY = 10000,
+const DASH_EVERY = 10000,
   DASH_TELL = 600,
   DASH_V = 0.55,
   DASH_FAR = 1.6, // (times the hammer's KB_FAR: rules.js isn't loaded yet when this file is, so it's multiplied where it's used)
@@ -215,7 +215,7 @@ export const THROW_TELL = 800, // ms the controllers are held up before they fly
 /* a burning duck (the rework, the owner's, Nov 3) burns for BURN_MS and looks burnt for BURNT_MS, and while it burns it
    lights every duck it touches (TOUCH duck lengths). His fireball, that set it burning, is gone (the owner's, Nov 18
    10:38Z: "we are removing the fireball from everything in the game") */
-export const BURN_MS = 3500,
+const BURN_MS = 3500,
   BURNT_MS = 7000,
   TOUCH = 1.1;
 /* the edge lightning: every EDGE_EVERY ms the edges glow for EDGE_WARN ms, then the flash hits every duck and Jaime
@@ -224,13 +224,13 @@ export const BURN_MS = 3500,
 export const EDGE_EVERY = 18000,
   EDGE_WARN = 1200,
   EDGE = { x: 0.05, y: 0.1 };
-export const onEdge = (p) =>
+const onEdge = (p) =>
   p.x < EDGE.x || p.x > 1 - EDGE.x || p.y < EDGE.y || p.y > 1 - EDGE.y;
 /* his teleport: when he's at the edge (WALL) he jumps to a spot far from it, once every TP_EVERY ms at most */
 const WALL = { x: 0.065, y: 0.09 },
   TP_EVERY = 15000;
 /* his double: after every teleport, for DUP_MS */
-export const DUP_MS = 7000;
+const DUP_MS = 7000;
 /* now and then he eats: for EAT_MS, once every 30 to 45 s; the zebra cake he eats for CAKE_EAT_MS. Each time he
    finishes eating he gets 1 HP back (owner 2026-11-03 23:17Z), never past his most */
 const ateHp = (m) => {
@@ -267,7 +267,7 @@ const JAIME_OUCH = [
 /* what the ducks hold here (rules.js' move: w), and the cooldowns of their own here: the knife and the pistol, as fast
    as in every mode */
 export const MGJ_MELEE = "sword"; // (the owner's, Nov 17: the ducks start with the short sword, not the knife)
-export const MGJ_HOLD = [MGJ_MELEE, "handgun"];
+const MGJ_HOLD = [MGJ_MELEE, "handgun"];
 /* what a duck can have out in its hand here (rules.js' move: w): the knife, the bow, the zebra cake, or the weapon it
    picked up (the owner's, Nov 3: whatever it switches to stays out, but Jaime) */
 export const mgjHolds = (s, id, w) =>
@@ -327,7 +327,7 @@ export const MGJ_GUNS = [
 export const PICK_WEAPONS = [...MGJ_GUNS, "medkit"];
 /* the shots a gun picked up comes with (the owner's, Nov 17): only its one magazine, the shotgun never runs out, the LMG 30 */
 export const INF_AMMO = 9999; // (the shotgun picked up never runs out: the owner's, Nov 17; a number, as the state is JSON)
-export const pickAmmo = (k) =>
+const pickAmmo = (k) =>
   k === "shotgun" || k === "laser"
     ? INF_AMMO // (the Laser Rifle never runs out anywhere: it only overheats)
     : k === "lmg" || k === "chaingun"
@@ -368,7 +368,7 @@ function dropHeld(m, id) {
   }
 }
 /* how many uses a picked-up weapon gives (none of the guns: they count shots instead) */
-export const PICK_USES = {};
+const PICK_USES = {};
 export const usesOf = (s, id) =>
   (s.mgj && (s.mgj.held || {})[id] && (s.mgj.uses || {})[id]) || 0;
 /* how much each hit takes off him (we decided: a picked-up weapon hits harder than the knife; each pellet 1) */
@@ -1274,8 +1274,8 @@ function brain(s, now, log) {
    AUG) and shotguns (the shotgun, the double barrel), each giving the next one of its own. Every bag shuffles: each of
    its things once before any comes again (s.hidden.mgjb, the host's only) */
 const SKY = PICKS;
-export const MGJ_CHAIN = 0.05;
-export const MGJ_BAGS = {
+const MGJ_CHAIN = 0.05;
+const MGJ_BAGS = {
   heavy: ["glauncher", "lmg"],
   rifle: ["tommy", "ump", "smg", "ak", "burst"],
   shotgun: ["shotgun", "dbarrel"],
@@ -1716,7 +1716,7 @@ export function mgjLgren(s, sh, x0, y0, at, now) {
 }
 
 /* ---------- Good Justin God ---------- */
-export const goodUp = (s, now) => {
+const goodUp = (s, now) => {
   const g = s.mgj && s.mgj.gj;
   return !!g && !g.down && now >= g.in && !!s.pos[GOOD_ID];
 };
@@ -1871,7 +1871,7 @@ export function throwIt(s, k, at, q, now, fx) {
 /* ---------- the rework (the owner's, Nov 3) ---------- */
 /* a hit on a duck from anything of his (a burning duck, the edge lightning): its HP, or down. True when
    it hurt (not while nothing can hurt it, nor in the air) */
-export function mgjKnock(s, id, now) {
+function mgjKnock(s, id, now) {
   if (id === GOOD_ID) {
     goodDown(s, now);
     return true;
@@ -1888,7 +1888,7 @@ export function mgjKnock(s, id, now) {
   return true;
 }
 /* the duck catches fire: it burns for BURN_MS and looks burnt for BURNT_MS */
-export function mgjBurn(s, id, now) {
+function mgjBurn(s, id, now) {
   const m = s.mgj;
   if (!m || !s.players[id]) return;
   m.burn = { ...m.burn, [id]: now + BURN_MS };
@@ -1989,7 +1989,7 @@ function dupTick(s, now) {
   return false;
 }
 /* where he can be hit: himself, and his double while it's out (real: hits on it count) */
-export function mgjBodies(s, now) {
+function mgjBodies(s, now) {
   const m = s.mgj,
     n = s.justin && justinAt(s.justin, now);
   if (!m || !n || mgjGone(s, now) || m.met) return [];
@@ -2435,7 +2435,7 @@ const waveGap = (n) =>
     (a, b) => a + b,
     0,
   );
-export const waveOn = (s) => !!(s.mz && s.mz.on);
+const waveOn = (s) => !!(s.mz && s.mz.on);
 const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 /* a zombie's look, as Dead Ducks Arcade's (l4ddrules.js newZombie): 1 in 4 another size or build, 1 in 5 dressed */
 export function zLook() {
@@ -2573,7 +2573,7 @@ const SHOT_ARM = {
   slug: "dbarrel",
   lgren: "glauncher",
 };
-export const armOf = (k) => SHOT_ARM[k] || k;
+const armOf = (k) => SHOT_ARM[k] || k;
 /* duck by's hit on the zombies with weapon w: near(x, y) says which are in reach. Each takes what a Dead Ducks Arcade
    zombie takes from w (l4ddrules.js zombieTakes: its damage, its headshots and its misses; the owner's, Nov 17 16:23Z),
    with "CRIT" or "missed" over it as there. sh: a shot, from (sh.x0, sh.y0); it hits the nearest first, each zombie once

@@ -23,7 +23,7 @@ import { rbAt, RB_P, RB_TILT } from "./rainbowskin.js";
 import { hashText, steadyText } from "./pxdom.js";
 
 /* the sizes the sheets are made at: a duck's box (120 duck units) in pixels */
-export const SIZES = [12, 14, 16, 19, 22, 26, 29, 32];
+const SIZES = [12, 14, 16, 19, 22, 26, 29, 32];
 /* a duck bigger than the sheets is one of them grown two to a pixel, as old consoles grew a sprite (slimming step 1: the
    owner's, Nov 20 19:11Z); bigger than that (a menu's big duck): made whole, as before */
 const GROWN = 2,
@@ -43,13 +43,13 @@ function sizeFor(want) {
     if (Math.abs(s * g - want) < Math.abs(n * g - want)) n = s;
   return [n, g];
 }
-export const FRAME = 152; // (duck units: the box and a hat's room over it, HAT_TOP)
+const FRAME = 152; // (duck units: the box and a hat's room over it, HAT_TOP)
 const TOP = FRAME - 120;
-export const BLACK = "#000000";
+const BLACK = "#000000";
 
 /* ---------- the colors a duck's parts take: [path, its color now] ----------
    path: a field of the look ("color"), or of its hat, face item or outfit ("hat.c1") */
-export function duckVars(look) {
+function duckVars(look) {
   const L = { ...DUCK_DEFAULT, ...look },
     st = styleById(L.style),
     out = [];
@@ -78,7 +78,7 @@ export function duckVars(look) {
   return out.filter(([, v]) => /^#[0-9a-f]{6}$/i.test(v || ""));
 }
 /* the look with one of its colors set (path as duckVars) */
-export function withColor(L, path, v) {
+function withColor(L, path, v) {
   const [a, b] = path.split(".");
   if (!b) return { ...L, [a]: v };
   return { ...L, [a]: { ...(L[a] || {}), [b]: v } };
@@ -95,14 +95,14 @@ export const blackLook = (L) =>
 const codeOf = (path) =>
   "#" +
   ((parseInt(hashText(path), 36) % 0xfffff0) + 8).toString(16).padStart(6, "0");
-export const codedLook = (L) =>
+const codedLook = (L) =>
   duckVars(L).reduce((o, [p]) => withColor(o, p, codeOf(p)), {
     ...DUCK_DEFAULT,
     ...L,
   });
 
 /* a layer's name in the sheets: its drawing from codedLook (its ids renamed in order), hashed */
-export function partKey(layer, svg) {
+function partKey(layer, svg) {
   return layer + ":" + hashText(steadyText(svg));
 }
 

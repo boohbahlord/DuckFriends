@@ -1204,7 +1204,7 @@ function aimOf(s, id, ctx) {
 let CTX = null, // (the screen's camera and state, as paint() last had them)
   BEAMS = []; // (every flashlight on now: [x, y, its angle] on the floor)
 /* is (x, y) on the floor in a flashlight's beam (and no wall between)? */
-export function inBeam(x, y) {
+function inBeam(x, y) {
   for (const [bx, by, t] of BEAMS) {
     const dx = x - bx,
       dy = y - by,

@@ -25,7 +25,7 @@ import {
   CABIN,
 } from "./layout.js";
 
-export const CELL = 40;
+const CELL = 40;
 const GW = Math.ceil(W / CELL),
   GH = Math.ceil(H / CELL);
 let grid = null; // per cell: 0 blocked, 1 open; heights beside it
@@ -37,7 +37,7 @@ const cellOf = (x, y) => [
 ];
 const mid = (i, j) => [i * CELL + CELL / 2, j * CELL + CELL / 2];
 /* the walking grid (built the first time it's asked for) */
-export function walkGrid() {
+function walkGrid() {
   if (grid) return grid;
   grid = new Uint8Array(GW * GH);
   hts = new Float32Array(GW * GH);
@@ -251,7 +251,7 @@ export function walkAt(w, now) {
 /* when a walk ends (the room's time) */
 export const walkEnd = (w) => w.t + (len(w.p) / w.v) * 1000;
 /* a walk from where a character is now to (x, y); null if there's no way (o: { dry }) */
-export function walkTo(from, x, y, v, now, o = {}) {
+function walkTo(from, x, y, v, now, o = {}) {
   const p = findPath(from.x, from.y, x, y, o);
   if (!p) return null;
   return { p, t: now, v };
@@ -438,7 +438,7 @@ function ctxFor(s, now, rand, D, recs) {
 const settle = (recs, id, me, c) => {
   recs[id] = c.said[id] ? { ...me, say: c.said[id] } : me;
 };
-export function npcInit(now = 0, rand = Math.random) {
+function npcInit(now = 0, rand = Math.random) {
   const recs = {};
   for (const [id, b] of BRAINS) recs[id] = b.init(now, rand);
   return recs;

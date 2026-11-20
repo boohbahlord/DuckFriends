@@ -100,7 +100,7 @@ export function loadingScreen({ duck, ping, ready, max = 5000 }) {
    and pxbake.js draw those where they are), nor what has no size (not on the screen) */
 const NOT_MINE = ".map-layer, #shapes, [data-nopx], .hurt-edge, .veil";
 /* how many, and how much of the screen they take (a share of it) */
-export function waiting(root = document.body) {
+function waiting(root = document.body) {
   const px = document.documentElement.classList.contains("pixel");
   let n = 0,
     area = 0;

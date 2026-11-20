@@ -151,7 +151,7 @@ const MANY = {
   biteTail: ["body", "tail", "Bite (tail)", place(BITE, 22, 64, 30, 1.2)],
   holeTail: ["body", "tail", "Torn hole (tail)", place(HOLE, 22, 63, 20, 1.3)],
 };
-export const WOUNDS = {
+const WOUNDS = {
   // the head
   scar: {
     on: "head",
@@ -372,7 +372,7 @@ for (const [id, [on, spot, name, svg]] of Object.entries(MANY))
 const WOUND_IDS = Object.keys(WOUNDS);
 /* a zombie's marks, the same on every screen: from its number, 1 to 3 marks, never two on one spot; a zombie in clothes
    gets only the head's (the body's would be hidden) */
-export function woundsOf(n, clothed = false) {
+function woundsOf(n, clothed = false) {
   let x = (Math.imul((n | 0) + 1, 2654435761) ^ 0x5bd1e995) >>> 0;
   const rnd = () => {
     x = (Math.imul(x ^ (x >>> 15), 2246822507) + 0x9e3779b9) >>> 0;
@@ -392,7 +392,7 @@ export function woundsOf(n, clothed = false) {
   return out.sort();
 }
 /* the marks as duckSVG's skin: a list for each part, a mark to each (the ducks' part sheets make each one on its own) */
-export const woundSkin = (ids) => ({
+const woundSkin = (ids) => ({
   head: ids
     .filter((id) => WOUNDS[id].on === "head")
     .map((id) => WOUNDS[id].svg),

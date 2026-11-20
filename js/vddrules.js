@@ -72,7 +72,7 @@ const shuffle = (xs) => {
 const anyOf = (xs) => xs[Math.floor(Math.random() * xs.length)];
 
 /* ---------- who is who ---------- */
-export const dateOf = (s) => (s.vd && s.vd.date) || null;
+const dateOf = (s) => (s.vd && s.vd.date) || null;
 export const isDate = (s, id) => !!id && dateOf(s) === id;
 /* turned down this game (an account keeps it through a rejoin) */
 export function turnedDown(s, id) {
@@ -83,7 +83,7 @@ export function turnedDown(s, id) {
   );
 }
 /* the Suitors still in: here, playing and not turned down */
-export const suitors = (s) =>
+const suitors = (s) =>
   playing(s).filter(
     (id) => s.players[id] && !isDate(s, id) && !turnedDown(s, id),
   );
@@ -142,7 +142,7 @@ function seatAll(s) {
 /* the tiles of the pick: one for each Suitor in a grid as square as it gets (so they're not too narrow on a phone held
    upright), over the top of the board, with room around and under them where a duck stands on no tile. The last row is
    centered */
-export const VD_FREE_Y = 0.95; // where The Date starts the pick: under every tile
+const VD_FREE_Y = 0.95; // where The Date starts the pick: under every tile
 export function vdTileRects(n) {
   const C = Math.max(1, Math.ceil(Math.sqrt(n))),
     R = Math.max(1, Math.ceil(n / C)),

@@ -201,7 +201,7 @@ export function checkUnlocks() {
 }
 /* a Justin kill with a weapon special, seen on your own device; or a Mad God Justin win I was in the fight for. Noah's
    brown Justin-costume duck (Rainbow Ducks) never counts: it's a player, so knocking it down is a player kill */
-export function countJustinKill() {
+function countJustinKill() {
   profile.justinKills = (profile.justinKills || 0) + 1;
   save();
   checkUnlocks();

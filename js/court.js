@@ -145,7 +145,7 @@ export function counselHTML(s, me, who) {
 }
 
 /* ---------- the round's cases (the stats screen) ---------- */
-export function lawCasesHTML(s, round = null) {
+function lawCasesHTML(s, round = null) {
   const cases = s.history.filter(
     (h) => h.law && (round === null || h.round === round),
   );
