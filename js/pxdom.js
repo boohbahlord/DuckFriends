@@ -16,6 +16,7 @@ import {
   rainbowSteps,
   afterPaint,
   bakedPiece,
+  bakedWait,
 } from "./pixel.js";
 import { hasRb, RB_N } from "./rainbowskin.js";
 
@@ -274,11 +275,17 @@ function make(jobs) {
   }); // (read as it looks, all in one go, so nothing is seen in between)
   for (const j of jobs) put(j);
 }
-function put({ svg, st, key, vb, w, h, text, tx }) {
+function put(job) {
+  const { svg, st, key, vb, w, h, text, tx } = job;
   const k = (svg.matches(".duck, .cat") ? "c" : "d") + hash(text); // (c: a character, made from its parts: the ducks' sheets)
   if (hasRb(text)) return rbShow(svg, st, key, text, vb, w, h);
   const piece = bakedPiece(k, w, h);
   if (piece) return fileShow(svg, st, piece, vb, tx);
+  const files = bakedWait(k); // (in the files, and they're on their way: shown from them once they're here)
+  if (files)
+    return void files.then(() => {
+      if (st.key === key) put(job);
+    });
   let img = st.img;
   if (!img || img.parentNode !== svg) {
     img = document.createElementNS(NS, "image");

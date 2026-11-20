@@ -112,16 +112,18 @@ export function patternLayers(kind, col, layout = "tiled", size = "m", base) {
    a size is the nearest size made, the player's color put on its tint layer; a layout is drawn on a canvas of the
    grid's pixels, each pixel then whole and in the game's colors (inGameColors), and shown as a pixel picture. Before the sheets are in,
    a card is its color only, marked (--cpat) to get its pattern when they come */
-const SHEETS =
-  typeof Image === "undefined"
-    ? []
-    : [PXC.fixed, PXC.tint, PXC.base].map((src) => {
-        const im = new Image();
-        im.src = src;
-        return im;
-      });
-let sheetsIn = false;
-if (SHEETS.length)
+const canSheets = typeof Image !== "undefined";
+let SHEETS = [],
+  sheetsIn = false;
+/* (asked for once a screen past the front one comes up, or a pattern is wanted: the front screen shows none, so it
+   doesn't load them. Slimming step 6: the owner's, Nov 20 19:11Z) */
+function wantSheets() {
+  if (SHEETS.length || !canSheets) return;
+  SHEETS = [PXC.fixed, PXC.tint, PXC.base].map((src) => {
+    const im = new Image();
+    im.src = src;
+    return im;
+  });
   Promise.all(SHEETS.map((im) => im.decode()))
     .then(() => {
       sheetsIn = true;
@@ -136,6 +138,11 @@ if (SHEETS.length)
       });
     })
     .catch(() => {});
+}
+if (canSheets)
+  document.addEventListener("screen", () => {
+    if (document.body.dataset.screen !== "front") wantSheets();
+  });
 const motifs = new Map();
 function motifPx(kind, col, want) {
   const i = PXC.kinds.indexOf(kind);
@@ -199,7 +206,10 @@ function pixelLayers(
   base = "#2fa4ff",
 ) {
   if (!motif(kind, col)) return "";
-  if (!sheetsIn) return "";
+  if (!sheetsIn) {
+    wantSheets();
+    return "";
+  }
   const k = (CARD_SIZES.find((z) => z[0] === size) || CARD_SIZES[1])[2],
     big = /^(hat|face):/.test(kind),
     g = gridPx() || 2,
@@ -349,11 +359,7 @@ export function cardBackground(card = {}) {
         )
       : "";
   const waits =
-    !pat &&
-    card.pattern &&
-    card.pattern !== "none" &&
-    !sheetsIn &&
-    SHEETS.length; // (its pixels not in yet: it gets them when they come)
+    !pat && card.pattern && card.pattern !== "none" && !sheetsIn && canSheets; // (its pixels not in yet: it gets them when they come)
   return `background:${pat ? `${pat}, ` : ""}${card.color || "#2fa4ff"};image-rendering:pixelated${waits ? `;--cpat:"${[card.pattern, card.patternColor || "#ffffff", card.layout || "tiled", card.size || "m", card.color || "#2fa4ff"].join("|")}"` : ""}`;
 }
 
