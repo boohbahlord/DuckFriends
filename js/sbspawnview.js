@@ -44,6 +44,8 @@ import {
   SB_ORDER,
   SB_ORDERS,
   SB_GOES,
+  SB_SFX,
+  sbSfx,
   SB_CALL,
   SB_CALL_ERR,
   sbNeedsCall,
@@ -702,6 +704,15 @@ export function sbSettings(getR, id, tab = "") {
     <div data-fxrow="amt"${fx === "damage" || fx === "heal" ? "" : " hidden"}>${row("amt", SB_ZONE.amt, typed("amt"), why("amt"))}</div>
     <div data-fxrow="rate"${fx === "none" ? " hidden" : ""}>${row("rate", SB_ZONE.rate, typed("rate"), why("rate"))}</div>
     <div data-fxrow="zwho"${fx === "none" ? " hidden" : ""}>${actRow(R.state, p, "zwho", kinds)}</div>
+    ${brainRow(typed("brain"), why("brain"))}
+    <div class="sb-row" data-row="sfx"><span>${esc(SB_ZONE.sfx.name)}</span><select class="sb-box" data-f="sfx" aria-label="${esc(SB_ZONE.sfx.name)}">${Object.entries(
+      SB_SFX,
+    )
+      .map(
+        ([v, n]) =>
+          `<option value="${v}"${v === sbSfx(p) ? " selected" : ""}>${esc(n)}</option>`,
+      )
+      .join("")}</select><em class="sb-why"></em></div>
     ${flagRow("pon", SB_PLAYER.pon, typed("pon"), why("pon"))}
     ${row("pwho", { name: "Who spawns here" }, typed("pwho"), why("pwho"))}
     ${pickRow("ent", SB_ZONE.ent.name, named("spawn", "spawn"), picked("ent"))}

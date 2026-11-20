@@ -19,6 +19,7 @@ import {
   sbActsAt,
   sbOrd,
   sbGo,
+  sbUsed,
   SB_ORDER,
   SB_ZONE,
   SB_FX,
@@ -27,6 +28,7 @@ import { valueOf } from "./numerat.js";
 import { boxText, spawnsHere } from "./sbspawn.js";
 import { W, H, heightAt } from "./hangout/layout.js";
 import { l4Hurt, l4Heal, l4Zone } from "./l4ddrules.js";
+import { zbThink } from "./sbzonebrain.js";
 
 const words = (t) =>
   String(t || "")
@@ -58,7 +60,7 @@ function steps(s, pts, now) {
     zs = { ...((s.sb && s.sb.zs) || {}) };
   let ch = false;
   for (const [id, p] of Object.entries(pts)) {
-    if (sbOrd(p) === "all" || sbGo(p) === "use") continue; // (by use: stepped where it's used, sandboxrules.js sbUsed)
+    if (sbOrd(p) === "all" || sbGo(p) !== "time") continue; // (by use or by a player stepping in: sbUsed)
     if (was[id] && now < was[id]) {
       at[id] = was[id];
       continue;
@@ -83,11 +85,39 @@ function steps(s, pts, now) {
   return ch;
 }
 
+/* the zones that step each time a player steps in (plan Phase 3: "only on an event (... a player stepped in)"): who
+   stood in each last time, in s.hidden.sbin (the host's own); one step for each duck new in it. True when one stepped */
+function entered(s, pts, H0) {
+  const was = (s.hidden && s.hidden.sbin) || {},
+    now = {};
+  let ch = false;
+  for (const [id, p] of Object.entries(pts)) {
+    if (sbGo(p) !== "enter" || p.grp) continue;
+    const box = sbZoneBox(s, p, W, H),
+      [x0, y0, x1, y1] = box,
+      inn = H0.ducks(s).filter((d) => {
+        const me = s.pos[d];
+        if (!me || me.x < x0 || me.x > x1 || me.y < y0 || me.y > y1)
+          return false;
+        if (!sbInBlock(s, p, me.x, me.y, W, H)) return false;
+        return sbOnBoard(s) || Math.abs((+me.z || 0) - (p.z || 0)) < FLOOR;
+      });
+    now[id] = inn;
+    for (const d of inn)
+      if (!(was[id] || []).includes(d)) {
+        sbUsed(s, id, "enter");
+        ch = true;
+      }
+  }
+  if (JSON.stringify(now) !== JSON.stringify(was))
+    s.hidden = { ...(s.hidden || {}), sbin: now };
+  return ch;
+}
 /* ---------- the host's heartbeat. H: rules.js SB_H (ducks, claw, heal). True when anything changed ---------- */
 export function sbZoneTick(s, now, H0) {
   if (!spawnsHere(s) || !s.sb) return false;
   const pts = (s.sb && s.sb.pts) || {},
-    stepped = steps(s, pts, now),
+    stepped = steps(s, pts, now) | entered(s, pts, H0) | zbThink(s, now),
     zones = Object.entries(pts).filter(
       ([, p]) => p.k === "zone" && fxOf(p) !== "none",
     ),

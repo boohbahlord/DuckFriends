@@ -22,7 +22,14 @@ const HELP_IN = {
   ],
   order: ["order.txt", "repeats.txt", "brackets.txt"],
   math: ["math.txt", "asterisks.txt", "asteriskrules.txt"],
-  brains: ["names.txt", "who.txt", "tests.txt", "loops.txt", "print.txt"],
+  brains: [
+    "names.txt",
+    "who.txt",
+    "tests.txt",
+    "loops.txt",
+    "print.txt",
+    "zones.txt",
+  ],
 };
 /* a help file's path from the language's folder, by its name: helpAt("limits.txt") = "help/limits.txt",
    helpAt("math.txt") = "help/math/math.txt" (the mistakes point to it) */
@@ -71,7 +78,7 @@ Folders (click one to go in):
   order/         2>4 in order, | and repeats, brackets
   math/          + - / ^, asterisks (*, $ letters), asterisk rules
   brains/        names and stats, who (me, nearest duck), tests (if),
-                 loops, print and say
+                 loops, print and say, zones
   examples/      ready brain files (a chaser, a coward, a healer, a
                  talker, waves, a pair that share a value): copy one
                  with cp and write its name in a spawn's Brain box
@@ -350,6 +357,32 @@ Between backslashes, < and > compare (outside, they're arrows):
 Every loop stops after 1,000 rounds with an error, and so does
 anything that runs a long time without a wait, so a mistake can't
 freeze the game.
+`,
+  "zones.txt": `zones
+A zone's Brain box takes a file too. It runs for the zone and moves
+its squares (its Potential order).
+
+When:
+  every [2,4]s step       one step on, every 2 or 4 seconds
+  when enter step 2       a player steps in: two steps on
+  when spawn step         one of its tabs made something in it
+
+Words:
+  step  /  step 3         its squares move on 1 (or 3) steps
+  squares 3:5             how many squares work at once
+  size 1.5                a square's size, in duck lengths
+  order shuffle           random, shuffle, line, alternating, all
+  dir right               right, left, up, down, upright, upleft,
+                          downright, downleft, none
+At the top of the file (outside a when) they're for every zone
+that names the file.
+
+Names (inside a when): steps, squares, size, inside (how many
+players stand in it).
+
+Any file reaches a zone by its variable name:
+  ((zone 'Pit' size 2))
+  \\if zone 'Pit' steps mod 3 == 0\\ print "third step"
 `,
   "print.txt": `print and say
 

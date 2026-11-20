@@ -239,6 +239,25 @@ export const SB_ZONE = {
   zwho: listBox("Who it hits", "players"), // (Players, Everything, a kind, a spawn by its color or name, a player's name)
   ent: listBox("Entities spawn here", ""), // (spawns, by their color or name: what they make comes in the zone)
   lt: listBox("Loot spawns here", ""), // (loot spots, by their color or name: their orbs lie in the zone)
+  /* what its working squares show (plan Phase 3: "show an effect: one of the game's existing effects (the
+     flamethrower's ground fire, and so on)"); everyone sees it, cheat mode or not */
+  sfx: {
+    name: "Its working squares show",
+    check: (t) => (SB_SFX[String(t).trim()] ? "" : "Pick one"),
+    def: "none",
+  },
+};
+export const SB_SFX = {
+  none: "Nothing",
+  fire: "Ground fire",
+  smoke: "Smoke",
+  steam: "Steam",
+  sparks: "Sparks",
+};
+export const sbSfx = (p) => {
+  const k = p && p.f && p.f.sfx,
+    v = String(k && k.ok ? k.ok : "none").trim();
+  return SB_SFX[v] ? v : "none";
 };
 /* a duck length in a world's px, for a zone's size there (on the board: 0.03 of it across, 0.08 up and down) */
 export const SB_ZONE_PX = 48;
@@ -417,6 +436,7 @@ export const SB_ORDER = {
 export const SB_GOES = {
   time: "On a timer",
   use: "One step each use",
+  enter: "One step each time a player steps in",
 };
 /* a tab's Caller (the owner's, Nov 20 02:45Z): a Spawn, Respawn or Loot tab works only while its Caller is the variable
    name of a zone on its block (the block itself, or one of its Zone tabs); blank: the block's own name */
@@ -475,9 +495,9 @@ export function sbZonesOn(pts, b) {
     : all;
 }
 /* zone zid used once (a spawn made, a duck back, an orb dropped): one step on when it steps by use */
-export function sbUsed(s, zid) {
+export function sbUsed(s, zid, by = "use") {
   const p = ((s.sb && s.sb.pts) || {})[zid];
-  if (!p || sbGo(p) !== "use") return;
+  if (!p || sbGo(p) !== by) return;
   const zs = (s.sb && s.sb.zs) || {};
   s.sb = { ...s.sb, zs: { ...zs, [zid]: (zs[zid] || 0) + 1 } };
 }
@@ -485,7 +505,10 @@ const ordTxt = (p, f) => {
   const k = p && p.f && p.f[f];
   return k && k.ok != null && k.ok !== "" ? String(k.ok) : SB_ORDER[f].def;
 };
-export const sbGo = (p) => (ordTxt(p, "go").trim() === "use" ? "use" : "time");
+export const sbGo = (p) => {
+  const g = ordTxt(p, "go").trim();
+  return SB_GOES[g] ? g : "time";
+};
 export const sbOrd = (p) => {
   const o = ordTxt(p, "ord").trim();
   return SB_ORDERS[o] ? o : "rand";
@@ -619,6 +642,33 @@ export const sbStep = (s, id) => ((s && s.sb && s.sb.zs) || {})[id] || 0;
 export function sbActsAt(s, id, p, x, y, W = 1, H = 1) {
   const on = sbActive(s, id, p, sbStep(s, id), W, H);
   return !on || on.has(sbCellAt(s, p, x, y, W, H));
+}
+/* the middles of block id's working squares (all of them when they all act), in shares, at most `most` of them spread
+   evenly: where its effect shows (game.js) */
+export function sbCellMids(s, id, p, W, H, most = 120) {
+  const g = sbGrid(s, p, W, H),
+    on = sbActive(s, id, p, sbStep(s, id), W, H),
+    list = on ? [...on] : g.cells,
+    every = Math.max(1, Math.ceil(list.length / most)),
+    [rx, ry] = sbUnit(s, W, H),
+    a = (sbRot(p) * Math.PI) / 180,
+    out = [];
+  for (let i = 0; i < list.length; i += every) {
+    const c = list[i],
+      lx = ((c % g.nx) + 0.5) / g.nx - 0.5,
+      ly = (Math.floor(c / g.nx) + 0.5) / g.ny - 0.5;
+    if (sbFills(p)) out.push({ x: lx + 0.5, y: ly + 0.5, c });
+    else {
+      const X = lx * g.w,
+        Y = ly * g.h;
+      out.push({
+        x: p.x + (X * Math.cos(a) - Y * Math.sin(a)) * rx,
+        y: p.y + (X * Math.sin(a) + Y * Math.cos(a)) * ry,
+        c,
+      });
+    }
+  }
+  return out;
 }
 /* a spot at random in one of block p's acting squares, in shares, or null when they all act */
 function actingSpot(s, p, W, H) {
