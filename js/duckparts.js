@@ -8,7 +8,7 @@
      with every color black, and for each color how much of it each pixel takes. Here they're mixed with the player's
      colors (a palette swap), then the whole duck goes through the game's palette as before;
    - the duck's own Size picks the sheet nearest to the size it shows at, so its pixels stay the size of everyone
-     else's;
+     else's; a duck bigger than the biggest sheet is a sheet's duck grown two to a pixel;
    - what's knocked off it (a hat, a face item, its eyes or beak) is left out, a hat coming back on is half see-through,
      and a hole through it is cut out of the pixels.
    Nothing is drawn on the device. A duck the sheets can't make (a new drawing, Jack in a Box, Dat Boi, a picture, the
@@ -23,7 +23,26 @@ import { rbAt, RB_P, RB_TILT } from "./rainbowskin.js";
 import { hashText, steadyText } from "./pxdom.js";
 
 /* the sizes the sheets are made at: a duck's box (120 duck units) in pixels */
-export const SIZES = [12, 14, 16, 19, 22, 26, 29, 32, 36, 41, 46, 52, 58, 64]; // (bigger: a menu's big duck, made whole)
+export const SIZES = [12, 14, 16, 19, 22, 26, 29, 32];
+/* a duck bigger than the sheets is one of them grown two to a pixel, as old consoles grew a sprite (slimming step 1: the
+   owner's, Nov 20 19:11Z); bigger than that (a menu's big duck): made whole, as before */
+const GROWN = 2,
+  BIGGEST = SIZES[SIZES.length - 1] * GROWN;
+/* the biggest a duck is made from the sheets: grown ones only in a game. In a menu (Customize's tiles and preview, the
+   lobby, the cards) a duck bigger than the sheets is made whole at its own size, as before: the owner's, Nov 20 21:17Z,
+   "You cannot see the fucking previews anymore" (Style's tiles were small ducks grown two to a pixel) */
+const most = () =>
+  (document.body.dataset.screen === "game"
+    ? BIGGEST
+    : SIZES[SIZES.length - 1]) * 1.08;
+/* the sheet for a duck want pixels across, and how many times it's grown (only past the biggest sheet) */
+function sizeFor(want) {
+  const g = want > SIZES[SIZES.length - 1] * 1.08 ? GROWN : 1; // (grown only past the biggest sheet: a small duck is never a smaller one doubled)
+  let n = SIZES[0];
+  for (const s of SIZES)
+    if (Math.abs(s * g - want) < Math.abs(n * g - want)) n = s;
+  return [n, g];
+}
 export const FRAME = 152; // (duck units: the box and a hat's room over it, HAT_TOP)
 const TOP = FRAME - 120;
 export const BLACK = "#000000";
@@ -200,10 +219,9 @@ export async function duckFromParts(d, cw, ch, frames = 1) {
         ? 1
         : 1 + 0.1 * Math.max(-1, Math.min(1, +L.size || 0)), // (its Size within its box: duck.js; Jack has none)
     want = cw * k;
-  if (want > SIZES[SIZES.length - 1] * 1.08) return null; // (a big duck in a menu: made whole, as before)
-  let n = SIZES[0];
-  for (const s of SIZES) if (Math.abs(s - want) < Math.abs(n - want)) n = s;
-  const S = await sheet(n);
+  if (want > most()) return null; // (a big duck, or any duck past the sheets in a menu: made whole, as before)
+  const [n, z] = sizeFor(want),
+    S = await sheet(n);
   if (!S) return null;
   const C = codedLook(L),
     vars = Object.fromEntries(duckVars(L).map(([p, v]) => [p, hex(v)])),
@@ -292,8 +310,10 @@ export async function duckFromParts(d, cw, ch, frames = 1) {
   const top = ch > cw * 1.1 ? TOP : 0,
     ow = cw,
     oh = ch,
-    dx = Math.round(60 * (ow / 120) - 60 * (n / 120)),
-    dy = Math.round((108 + top) * (oh / (120 + top)) - (108 + TOP) * (n / 120)),
+    dx = Math.round(60 * (ow / 120) - 60 * ((n * z) / 120)),
+    dy = Math.round(
+      (108 + top) * (oh / (120 + top)) - (108 + TOP) * ((n * z) / 120),
+    ),
     img = new ImageData(ow, oh * frames),
     o = img.data,
     rbOn = "rbFlat" in vars;
@@ -330,13 +350,13 @@ export async function duckFromParts(d, cw, ch, frames = 1) {
       if (layer === "cloth" && clothA && (plan[i + 1] || [])[0] !== "cloth")
         frays(acc, n, H, gone.rips, clothA, holes);
     });
-    for (let j = 0; j < H; j++) {
+    for (let j = 0; j < H * z; j++) {
       const y = j + dy;
       if (y < 0 || y >= oh) continue;
-      for (let i = 0; i < n; i++) {
+      for (let i = 0; i < n * z; i++) {
         const x = i + dx;
         if (x < 0 || x >= ow) continue;
-        const a = (j * n + i) * 4,
+        const a = (((j / z) | 0) * n + ((i / z) | 0)) * 4, // (grown: each of its pixels z × z)
           al = acc[a + 3];
         if (al <= 0) continue;
         const b = ((f * oh + y) * ow + x) * 4;
@@ -478,11 +498,9 @@ async function catFromParts(d, cw, ch) {
   const { catSVG, catBox } = await import("./hangout/npcart.js"),
     b = catBox(d.cat),
     duckBox = (cw * 64) / b.w; // (the duck box this size of cat stands for)
-  if (duckBox > SIZES[SIZES.length - 1] * 1.08) return null;
-  let n = SIZES[0];
-  for (const s of SIZES)
-    if (Math.abs(s - duckBox) < Math.abs(n - duckBox)) n = s;
-  const S = await sheet(n);
+  if (duckBox > most()) return null;
+  const [n, z] = sizeFor(duckBox),
+    S = await sheet(n);
   if (!S) return null;
   const k = [d.cat, d.pose, d.step].join();
   if (!CAT_PARTS.has(k))
@@ -494,17 +512,17 @@ async function catFromParts(d, cw, ch) {
     f = e && (await file(S, e[7]));
   if (!f) return null;
   const [x0, y0, w, h, ox, oy, , , bw, bh] = e,
-    dx = Math.round(cw * 0.46 - bw * 0.46),
-    dy = Math.round(ch * (74 / 80) - bh * (74 / 80)),
+    dx = Math.round(cw * 0.46 - bw * z * 0.46),
+    dy = Math.round(ch * (74 / 80) - bh * z * (74 / 80)),
     img = new ImageData(cw, ch),
     o = img.data;
-  for (let j = 0; j < h; j++) {
-    const y = oy + j + dy;
+  for (let j = 0; j < h * z; j++) {
+    const y = oy * z + j + dy;
     if (y < 0 || y >= ch) continue;
-    for (let i = 0; i < w; i++) {
-      const x = ox + i + dx;
+    for (let i = 0; i < w * z; i++) {
+      const x = ox * z + i + dx;
       if (x < 0 || x >= cw) continue;
-      const s = ((y0 + j) * f.W + x0 + i) * 4,
+      const s = ((y0 + ((j / z) | 0)) * f.W + x0 + ((i / z) | 0)) * 4, // (grown: each of its pixels z × z)
         q = (y * cw + x) * 4;
       o[q] = f.px[s];
       o[q + 1] = f.px[s + 1];

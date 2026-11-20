@@ -602,7 +602,7 @@ const jaimeHp = (s, id) => {
 };
 let padHold = false, // a phone's jump button held down (the jetpack flies)
   held = null,
-  l4Slot = 0, // Quacky Zombies: the pick in hand (0 melee, 1 and 2 ranged, 3 the item, 4 the grenades, 5 the second item: keys 1 to 6, l4ddrules.js slotOfPick), and the weapon's before an item
+  l4Slot = 0, // Quacky Zombies: the pick in hand (0 melee, 1 and 2 ranged, 3 the item, 4 the second item, 5 the grenades: keys 1 to 6, l4ddrules.js slotOfPick), and the weapon's before an item
   l4Last = 0,
   mgjHold = "handgun", // Mad God Justin: what's out in my hand (the short sword, the pistol, the weapon picked up, the zebra cake)
   mgjBack = "handgun", // (and what goes back in hand once a picked-up weapon is used up, or the zebra cake thrown)
@@ -6088,8 +6088,8 @@ const playDuck = () =>
           ...slotsOf(R.state, R.me)
             .slice(0, 4)
             .map((w) => w || null),
-          null, // (5: the grenades)
-          slotsOf(R.state, R.me)[4] || null, // (6: the second item)
+          slotsOf(R.state, R.me)[4] || null, // (5: the second item)
+          null, // (6: the grenades)
           ...Array(4).fill(null),
         ],
       }
@@ -6165,13 +6165,13 @@ function heldNow() {
   if (R && isL4dd(R.state)) {
     const sl = slotsOf(R.state, R.me);
     const kit = kitOf(R.state, R.me);
-    if (l4Slot === 4 && !(kit && kit.g > 0)) l4Slot = sl[l4Last] ? l4Last : 0; // (the last grenade thrown: the weapon before it comes back)
-    if (l4Slot !== 4 && !sl[slotOfPick(l4Slot)])
+    if (l4Slot === 5 && !(kit && kit.g > 0)) l4Slot = sl[l4Last] ? l4Last : 0; // (the last grenade thrown: the weapon before it comes back)
+    if (l4Slot !== 5 && !sl[slotOfPick(l4Slot)])
       l4Slot = sl[l4Last] ? l4Last : 0;
     if (kit && kit.jp && sl[3] === "jetpack") return ""; // (the jetpack on: nothing else is used beside it)
     if (downArmed(R.state, R.me)) return "handgun"; // (down: the down pistol)
     if (l4Hp(R.state, R.me) <= 0) return "";
-    return l4Slot === 4 ? "grenade" : sl[slotOfPick(l4Slot)] || "";
+    return l4Slot === 5 ? "grenade" : sl[slotOfPick(l4Slot)] || "";
   }
   return held && hasKey(playDuck(), held) ? held : "";
 }
@@ -6348,20 +6348,20 @@ function useKey(i, keep, toggle = false) {
     R.send({ t: "use", what: id, face: turned() ? 1 : me.face || 1 }); // (an item: Shift and its key use it the same way)
   if (bar) setTimeout(() => bar && bar.refresh(), 60);
 }
-/* Quacky Zombies: keys 1 to 4 pick a slot, 5 the grenades and 6 the second item (Dead Ducks Arcade and Survival). A
-   melee or ranged weapon stays in hand once picked; an item (4, 6) switches on and off: on, it's in hand instead of the
+/* Quacky Zombies: keys 1 to 4 pick a slot, 5 the second item and 6 the grenades (Dead Ducks Arcade and Survival). A
+   melee or ranged weapon stays in hand once picked; an item (4, 5) switches on and off: on, it's in hand instead of the
    weapon, and off (or used up) that weapon is back. The Long jump and the jetpack only switch themselves on and off,
    and the weapon stays in hand (the owner's, Nov 3) */
 function l4Pick(i, hint = false) {
   const sl = slotsOf(R.state, R.me),
     kit = kitOf(R.state, R.me);
-  if (i === 4) {
-    /* the grenades are a number key now (5), and picked like a weapon: the key again puts them away (the owner's, Nov 16) */
-    if (l4Slot === 4) l4Slot = l4Last;
+  if (i === 5) {
+    /* the grenades are a number key now (6), and picked like a weapon: the key again puts them away (the owner's, Nov 16) */
+    if (l4Slot === 5) l4Slot = l4Last;
     else if (kit && kit.g > 0) {
       if (kit.jp && sl[3] === "jetpack") fire("jetpack"); // (the jetpack goes off)
       if (l4Slot < 3) l4Last = l4Slot;
-      l4Slot = 4;
+      l4Slot = 5;
     } else return;
     sendMove(true);
     if (bar) bar.refresh();
@@ -6686,16 +6686,16 @@ function wheelPick(dir) {
   if (!R || !onBoardPhase()) return false;
   const s = R.state;
   if (isL4dd(s)) {
-    /* the next slot that has something: an empty one between is skipped, and the grenades (key 5) are in the row when I
+    /* the next slot that has something: an empty one between is skipped, and the grenades (key 6) are in the row when I
        have some (the owner's, Nov 17 17:41Z: "bow at key number 3, nothing at 4, but a grenade at five, then the scroll
        wheel will skip the empty one and go straight to the grenade"); Safe Keeping is never picked by hand */
     const sl = slotsOf(s, R.me),
       kit = kitOf(s, R.me),
       has = (i) =>
-        i === 4
+        i === 5
           ? !!(kit && kit.g > 0)
           : !!sl[slotOfPick(i)] && sl[slotOfPick(i)] !== "safekeep",
-      n = sl.length > 4 ? 6 : 5; // (the second item, key 6, after the grenades)
+      n = 6; // (the second item, key 5, then the grenades, key 6: an empty one is skipped)
     let i = l4Slot;
     for (let k = 0; k < n; k++) {
       i = (i + dir + n) % n;
@@ -8424,7 +8424,7 @@ const KEEP_HINT =
   '<i class="hints-br"></i><kbd>Number</kbd> Pick a weapon <kbd>Click</kbd> Use it <kbd>Shift</kbd>+<kbd>Number</kbd> Keep a jump on';
 const L4_HINTS =
   "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Click</kbd> Attack <kbd>R</kbd> Reload" +
-  '<i class="hints-br"></i><kbd>E</kbd> Use <kbd>5</kbd> Grenade'; // (E with it, so no key is split from its word; the grenades are the 5 key now, Nov 16; no B any more: the merchants never sell ammo, the owner's, Nov 18 13:46Z)
+  '<i class="hints-br"></i><kbd>E</kbd> Use <kbd>6</kbd> Grenade'; // (E with it, so no key is split from its word; the grenades are the 6 key now, Nov 20, after the second item on 5; no B any more: the merchants never sell ammo, the owner's, Nov 18 13:46Z)
 /* where a click attacks: on a computer anywhere on the game's screen but a button, a field, a card, a panel or a window
    (the board is the whole screen now, the owner's, Nov 4 07:43Z); on a touch screen only on the board */
 const NOT_AIM =
@@ -8670,7 +8670,7 @@ register("game", {
           slot: () => l4Slot,
           pick: l4Pick,
           fire,
-          grenade: () => l4Pick(4),
+          grenade: () => l4Pick(5),
           flash: () => R.send({ t: "hang", k: "l4", do: "fl" }),
           to: l4To, // (the weapon I'm about to take: its slot lights up)
         },
