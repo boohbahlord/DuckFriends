@@ -19,6 +19,7 @@ import { hatById } from "./hats.js";
 import { faceById } from "./faces.js";
 import { outfitById } from "./outfits.js";
 import { applyPalette } from "./pixelpalette.js";
+import { rbAt, RB_P, RB_TILT } from "./rainbowskin.js";
 import { hashText, steadyText } from "./pxdom.js";
 
 /* the sizes the sheets are made at: a duck's box (120 duck units) in pixels */
@@ -39,6 +40,13 @@ export function duckVars(look) {
     for (const [k] of st.colors || [])
       if (k !== "color") out.push([k, styleColor(L, st, k)]);
   }
+  /* the rainbow skin: one plain color in the sheets, the rainbow itself laid over on the device (rainbowskin.js) */
+  if (
+    st.id === "datboi"
+      ? L.rank === "rainbow"
+      : !st.fixed && L.metal === "rainbow"
+  )
+    out.push(["rbFlat", "#ff2b2b"]);
   out.push(["patternColor", L.patternColor || "#ffffff"]);
   out.push(["beakColor", L.beakColor], ["beakColor2", L.beakColor2]);
   const own = (part, def, o) => {
@@ -144,9 +152,13 @@ const nearBuild = (b) =>
   );
 const SKIN = { skinBody: "body", skinHead: "head", skinOut: "out" };
 const RIPPED = new Set(["cloth", "sleeve", "ofOver"]); // (what a rip tears: duck.js ripped())
-export async function duckFromParts(d, cw, ch) {
+export async function duckFromParts(d, cw, ch, frames = 1) {
+  if (d.cat) return catFromParts(d, cw, ch);
   const L = { ...DUCK_DEFAULT, ...d.L, build: nearBuild(d.L.build) },
-    k = 1 + 0.1 * Math.max(-1, Math.min(1, +L.size || 0)), // (its Size within its box: duck.js)
+    k =
+      L.style === "jack"
+        ? 1
+        : 1 + 0.1 * Math.max(-1, Math.min(1, +L.size || 0)), // (its Size within its box: duck.js; Jack has none)
     want = cw * k;
   if (want > SIZES[SIZES.length - 1] * 1.08) return null; // (a big duck in a menu: made whole, as before)
   let n = SIZES[0];
@@ -163,7 +175,6 @@ export async function duckFromParts(d, cw, ch) {
       : d.gone || {},
     sk = d.sk || {},
     H = Math.round((n * FRAME) / 120),
-    acc = new Float32Array(n * H * 4), // (premultiplied, 0 … 1)
     /* holes through it: cut out of every layer but its shadow and what sticks out of it (as duck.js' mask); its clothes
        torn round a hit: cut out of them too, a dark frayed edge round each tear on the cloth */
     s = n / 120,
@@ -225,6 +236,7 @@ export async function duckFromParts(d, cw, ch) {
       const svg = duckSVG(C, m);
       if (!svg) continue;
       const e = S.index.p[partKey(layer, svg)];
+      if (e === 0) continue; // (a part with nothing to show at this size)
       if (!e) return null; // (a part the sheets don't have: the whole duck is made as before)
       plan.push([layer, e, fade === undefined ? 1 : fade]);
     }
@@ -235,71 +247,81 @@ export async function duckFromParts(d, cw, ch) {
     if (!f) return null;
     got.set(c, f);
   }
-  let bare = null; // (bodyA as a cut: where there's no body, or a hole)
-  plan.forEach(([layer, e, fade], i) => {
-    if (bodyA && !bare && SKIN[layer] && layer !== "skinOut")
-      bare = bodyA.map((a, q) => (a < 0.01 || (holes && holes[q]) ? 1 : 0));
-    const cut =
-      layer === "shadow" || layer === "skinOut"
-        ? null
-        : RIPPED.has(layer)
-          ? torn
-          : SKIN[layer] && bare
-            ? bare
-            : holes;
-    blit(
-      acc,
-      n,
-      H,
-      got.get(e[7]),
-      e,
-      vars,
-      fade,
-      cut,
-      layer === "cloth" ? clothA : layer === "fill" ? bodyA : null,
-    );
-    /* the frays, once its cloth is all there */
-    if (layer === "cloth" && clothA && (plan[i + 1] || [])[0] !== "cloth")
-      frays(acc, n, H, gone.rips, clothA, holes);
-  });
-  /* into the box it's wanted in: the hat's room only when it has a hat; its Size from its feet (60, 108) */
+  /* into the box it's wanted in: the hat's room only when it has a hat; its Size from its feet (60, 108). A rainbow skin
+     comes as every step of its turn, one under the other (pixel.js pxRainbow), the rainbow moved on at each */
   const top = ch > cw * 1.1 ? TOP : 0,
     ow = cw,
     oh = ch,
     dx = Math.round(60 * (ow / 120) - 60 * (n / 120)),
     dy = Math.round((108 + top) * (oh / (120 + top)) - (108 + TOP) * (n / 120)),
-    img = new ImageData(ow, oh),
-    o = img.data;
-  for (let j = 0; j < H; j++) {
-    const y = j + dy;
-    if (y < 0 || y >= oh) continue;
-    for (let i = 0; i < n; i++) {
-      const x = i + dx;
-      if (x < 0 || x >= ow) continue;
-      const a = (j * n + i) * 4,
-        al = acc[a + 3];
-      if (al <= 0) continue;
-      const b = (y * ow + x) * 4;
-      o[b] = (acc[a] / al) * 255;
-      o[b + 1] = (acc[a + 1] / al) * 255;
-      o[b + 2] = (acc[a + 2] / al) * 255;
-      o[b + 3] = al * 255;
+    img = new ImageData(ow, oh * frames),
+    o = img.data,
+    rbOn = "rbFlat" in vars;
+  for (let f = 0; f < frames; f++) {
+    const acc = new Float32Array(n * H * 4), // (premultiplied, 0 … 1)
+      rb = rbOn ? rainbow(n, H, f / frames) : null;
+    if (clothA) clothA.fill(0);
+    if (bodyA) bodyA.fill(0);
+    let bare = null; // (bodyA as a cut: where there's no body, or a hole)
+    plan.forEach(([layer, e, fade], i) => {
+      if (bodyA && !bare && SKIN[layer] && layer !== "skinOut")
+        bare = bodyA.map((a, q) => (a < 0.01 || (holes && holes[q]) ? 1 : 0));
+      const cut =
+        layer === "shadow" || layer === "skinOut"
+          ? null
+          : RIPPED.has(layer)
+            ? torn
+            : SKIN[layer] && bare
+              ? bare
+              : holes;
+      blit(
+        acc,
+        n,
+        H,
+        got.get(e[7]),
+        e,
+        vars,
+        fade,
+        cut,
+        layer === "cloth" ? clothA : layer === "fill" ? bodyA : null,
+        rb,
+      );
+      /* the frays, once its cloth is all there */
+      if (layer === "cloth" && clothA && (plan[i + 1] || [])[0] !== "cloth")
+        frays(acc, n, H, gone.rips, clothA, holes);
+    });
+    for (let j = 0; j < H; j++) {
+      const y = j + dy;
+      if (y < 0 || y >= oh) continue;
+      for (let i = 0; i < n; i++) {
+        const x = i + dx;
+        if (x < 0 || x >= ow) continue;
+        const a = (j * n + i) * 4,
+          al = acc[a + 3];
+        if (al <= 0) continue;
+        const b = ((f * oh + y) * ow + x) * 4;
+        o[b] = (acc[a] / al) * 255;
+        o[b + 1] = (acc[a + 1] / al) * 255;
+        o[b + 2] = (acc[a + 2] / al) * 255;
+        o[b + 3] = al * 255;
+      }
     }
   }
   const c = document.createElement("canvas");
   c.width = ow;
-  c.height = oh;
+  c.height = oh * frames;
   c.getContext("2d").putImageData(applyPalette(img), 0, 0);
   return c;
 }
 
 /* one part over what's there: its pixels with every color black, plus each color times how much of it each pixel takes
    (e: [x, y, w, h, ox, oy, [color paths]]; the shade numbers lie to the right of the part, three colors to a tile) */
-function blit(acc, n, H, S, e, vars, fade, cut, keepA) {
+function blit(acc, n, H, S, e, vars, fade, cut, keepA, rb) {
   const [x0, y0, w, h, ox, oy, paths] = e,
     px = S.px,
     W = S.W,
-    cs = paths.map((p) => vars[p] || [0, 0, 0]);
+    cs = paths.map((p) => vars[p] || [0, 0, 0]),
+    rv = rb ? paths.indexOf("rbFlat") : -1; // (the rainbow: its color at each pixel)
   for (let j = 0; j < h; j++) {
     const y = oy + j;
     if (y < 0 || y >= H) continue;
@@ -325,10 +347,14 @@ function blit(acc, n, H, S, e, vars, fade, cut, keepA) {
         const t =
             ((y0 + j) * W + x0 + (1 + ((v / 3) | 0)) * (w + 1) + i) * 4 +
             (v % 3),
-          q = (px[t] / 255) * fade;
-        r += q * (cs[v][0] / 255);
-        g += q * (cs[v][1] / 255);
-        b += q * (cs[v][2] / 255);
+          q = (px[t] / 255) * fade,
+          cv =
+            v === rv
+              ? rb.subarray((y * n + x) * 3, (y * n + x) * 3 + 3)
+              : cs[v];
+        r += q * (cv[0] / 255);
+        g += q * (cv[1] / 255);
+        b += q * (cv[2] / 255);
       }
       const d = (y * n + x) * 4,
         k = 1 - a;
@@ -381,4 +407,74 @@ function frays(acc, n, H, rips, clothA, holes) {
         acc[d + 3] = a + acc[d + 3] * k;
       }
   }
+}
+
+/* the rainbow skin's colors at each pixel of a size's frame, at step u of its turn (0 … 1): its bands slanted and
+   moved on as rainbowskin.js' gradient is (rbFrame), in the 120 box */
+function rainbow(n, H, u) {
+  const out = new Float32Array(n * H * 3),
+    s = n / 120,
+    a = (RB_TILT * Math.PI) / 180,
+    ca = Math.cos(a),
+    sa = Math.sin(a),
+    at = -RB_P * u;
+  for (let j = 0; j < H; j++)
+    for (let i = 0; i < n; i++) {
+      const x = (i + 0.5) / s,
+        y = (j + 0.5) / s - TOP,
+        c = rbAt((x * ca + y * sa - at) / RB_P),
+        q = (j * n + i) * 3;
+      out[q] = c[0];
+      out[q + 1] = c[1];
+      out[q + 2] = c[2];
+    }
+  return out;
+}
+
+/* ---------- a cat (Duck Cabin's: hangout/npcart.js), ready-made at each size as one part, its pixels as they are ----------
+   The sheet whose duck box is nearest to the duck box it shows at; its feet (46, 74 of its 100 × 80 box) where they go */
+const CAT_PARTS = new Map(); // ([name, pose, step]) -> its part's name
+async function catFromParts(d, cw, ch) {
+  const { catSVG, catBox } = await import("./hangout/npcart.js"),
+    b = catBox(d.cat),
+    duckBox = (cw * 64) / b.w; // (the duck box this size of cat stands for)
+  if (duckBox > SIZES[SIZES.length - 1] * 1.08) return null;
+  let n = SIZES[0];
+  for (const s of SIZES)
+    if (Math.abs(s - duckBox) < Math.abs(n - duckBox)) n = s;
+  const S = await sheet(n);
+  if (!S) return null;
+  const k = [d.cat, d.pose, d.step].join();
+  if (!CAT_PARTS.has(k))
+    CAT_PARTS.set(
+      k,
+      partKey("cat", catSVG(d.cat, { pose: d.pose, step: d.step })),
+    );
+  const e = S.index.p[CAT_PARTS.get(k)],
+    f = e && (await file(S, e[7]));
+  if (!f) return null;
+  const [x0, y0, w, h, ox, oy, , , bw, bh] = e,
+    dx = Math.round(cw * 0.46 - bw * 0.46),
+    dy = Math.round(ch * (74 / 80) - bh * (74 / 80)),
+    img = new ImageData(cw, ch),
+    o = img.data;
+  for (let j = 0; j < h; j++) {
+    const y = oy + j + dy;
+    if (y < 0 || y >= ch) continue;
+    for (let i = 0; i < w; i++) {
+      const x = ox + i + dx;
+      if (x < 0 || x >= cw) continue;
+      const s = ((y0 + j) * f.W + x0 + i) * 4,
+        q = (y * cw + x) * 4;
+      o[q] = f.px[s];
+      o[q + 1] = f.px[s + 1];
+      o[q + 2] = f.px[s + 2];
+      o[q + 3] = f.px[s + 3];
+    }
+  }
+  const c = document.createElement("canvas");
+  c.width = cw;
+  c.height = ch;
+  c.getContext("2d").putImageData(applyPalette(img), 0, 0);
+  return c;
 }

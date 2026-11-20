@@ -5,7 +5,8 @@
    flip it with scaleX(-1). Preview: tools/npc-art.html.
    catSVG(name, { pose, step, size }) → one cat. pose: 'stand' | 'walk' (step -1 … 1 swings the legs) | 'sit' | 'loaf' |
    'swipe'. The box is 100 × 80 units, the feet on y 74, scaled so the cat stands CATS[name].tall world px high (times
-   size). Justin and the shadow duck are ducks: their looks go to duckSVG (js/duck.js). */
+   size). Justin and the shadow duck are ducks: their looks go to duckSVG (js/duck.js). A cat says which it is (data-dk),
+   so its pixels come ready-made from the ducks' part sheets (duckparts.js). */
 import { duckSVG } from "../duck.js";
 
 const O = "#1c1c28"; // the ducks' ink
@@ -138,6 +139,11 @@ const POSES = {
 POSES.walk = POSES.stand;
 POSES.swipe = POSES.stand;
 
+/* a cat's box in world px at size 1 (a duck's box is 64): the part sheets make it at each of their sizes */
+export const catBox = (name) => {
+  const C = CATS[name] || CATS.oreo;
+  return { w: (100 * C.tall) / 63, h: (80 * C.tall) / 63 };
+};
 export function catSVG(name, { pose = "stand", step = 0, size = 1 } = {}) {
   const C = CATS[name] || CATS.oreo,
     P = POSES[pose] || POSES.stand,
@@ -213,7 +219,7 @@ export function catSVG(name, { pose = "stand", step = 0, size = 1 } = {}) {
       : "";
   const W = (100 * size * C.tall) / 63,
     H = (80 * size * C.tall) / 63;
-  return `<svg class="cat cat-${name}" viewBox="0 0 100 80" width="${n1(W)}" height="${n1(H)}" overflow="visible" role="img" aria-label="${C.name}">
+  return `<svg class="cat cat-${name}" viewBox="0 0 100 80" width="${n1(W)}" height="${n1(H)}" overflow="visible" role="img" aria-label="${C.name}" data-dk="${JSON.stringify({ cat: name, pose, step }).replace(/"/g, "&quot;")}">
 <defs>${shade(id + "s", 0.35, 0.55)}<clipPath id="${id}b"><path d="${P.body}"${bodyT}/>${P.haunch ? `<path d="${P.haunch}"/>` : ""}</clipPath><clipPath id="${id}h"><path d="${headShape}"/></clipPath></defs>
 <ellipse cx="${pose === "sit" ? 46 : 46}" cy="74.5" rx="${n1(30 * len)}" ry="4.5" fill="#000" opacity=".24"/>
 ${tail}${fars.join("")}

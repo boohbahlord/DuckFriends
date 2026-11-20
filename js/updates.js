@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v152",
+    version: 152,
+    date: "Nov 20, 2026",
+    title: "Ready-made ducks",
+    news: [
+      "Cats, Jack in a Box, Dat Boi and the rainbow skin now come as ready-made pixels like every other duck, so nothing is drawn while you play.",
+    ],
+  },
+  {
     id: "v151",
     version: 151,
     date: "Nov 20, 2026",
