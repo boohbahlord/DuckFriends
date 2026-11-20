@@ -21953,8 +21953,20 @@ p.sb-ties {
   background-repeat: repeat;
   image-rendering: pixelated;
 }
-.sb-row[data-row="lk"] select {
-  min-width: 8rem;
+/* a row whose box is a dropdown: room for its words (they were cut to "Notl" and "On a") */
+.sb-row:has(> select.sb-box) {
+  grid-template-columns: minmax(0, 1fr) minmax(7rem, 10rem);
+}
+.sb-row:has(> select.sb-box) > select.sb-box {
+  max-width: none;
+}
+.sb-row[data-row="ord"] {
+  grid-template-columns: minmax(0, 1fr) minmax(7rem, 13rem);
+}
+.sb-ordbox select.sb-box {
+  flex: 1;
+  min-width: 0;
+  max-width: none;
 }
 /* Sandbox's G, Music (js/sbsaves.js musicWin): one song a line, ticked ones play */
 .sb-musiclist {
