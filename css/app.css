@@ -1798,12 +1798,18 @@ p.bad {
   position: relative;
 }
 /* with Vote Maps or Random, the next map's picture fades in over the last one (lobby.js) */
+.lobby-art > svg.art-wait,
 .lobby-art > svg.art-in {
   position: absolute;
   top: 0;
   left: 0;
+}
+.lobby-art > svg.art-in {
   animation: art-in 1.6s ease-in-out both;
 }
+.lobby-art > svg.art-wait {
+  opacity: 0;
+} /* (its pixels not in yet) */
 @keyframes art-in {
   from {
     opacity: 0;
@@ -5313,6 +5319,44 @@ html.moving .pix-sun {
   height: auto;
   display: block;
 }
+/* a new big duck under the one shown, until its pixels are in (customize.js stage) */
+.arm-duck > .arm-pic {
+  grid-area: 1 / 1;
+}
+.arm-pic.arm-next {
+  opacity: 0;
+  pointer-events: none;
+}
+/* the page shown, kept over the new one until its pictures are in (customize.js show) */
+.arm-menu {
+  position: relative;
+}
+.arm-old {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel2);
+  pointer-events: none;
+}
+/* every page, drawn out of sight as Customize opens (customize.js warmUp) */
+.arm-warm {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: auto;
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+.arm-warm .arm-body {
+  flex: none;
+  overflow: visible;
+}
+.win-back.arm-warming {
+  opacity: 0 !important;
+}
 .arm-card {
   width: min(24rem, 100%);
 }
@@ -5793,7 +5837,8 @@ html.hide-ui.keyboard .game .ui-cs {
 } /* (no bar behind it now: a dark edge so it reads on any map) */
 @media (max-width: 760px) {
   .set-arm .arm-h,
-  .armory .arm-menu > .arm-h {
+  .armory .arm-menu > .arm-h,
+  .armory .arm-old > .arm-h {
     padding-right: 3rem;
   }
 } /* room for the window's X */

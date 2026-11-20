@@ -52,7 +52,9 @@ import {
   CARD_SIZES,
   cardHTML,
   cardBackground,
+  cardSheets,
 } from "./card.js";
+import { picturesIn, holdLoading, shownSoon } from "./loading.js";
 import { HATS, HAT_GROUPS, hatById } from "./hats.js";
 import { FACES, FACE_GROUPS, faceById } from "./faces.js";
 import { EYES, EYE_GROUPS, eyeById } from "./eyes.js";
@@ -390,9 +392,9 @@ let lastPage = null,
   unkeying = false; // the Specials page's Remove from hotbar is on: a special tapped comes off its key
 const openFolds = new Set();
 
+let warming = false; // (Customize drawing its pages out of sight as it opens: warmUp)
 /* opts.npc: one of my NPCs (sbnpcs.js) to dress instead of my duck (Sandbox's m window); the promise ends when it shuts */
 export function openCustomize(page = lastPage, opts = {}) {
-  loadSounds("game"); // (the specials' previews: each gun's own sound)
   if (page === "duck") page = null; // (the old tab name)
   NPC = opts.npc || null;
   BORROWED = !!opts.borrowed; // (another player's NPC, changed in the room only: no Delete, sbepview.js)
@@ -402,6 +404,7 @@ export function openCustomize(page = lastPage, opts = {}) {
     `<div class="armory${NPC ? " arm-npc" : ""}"><div class="arm-menu"></div><div class="arm-stage" data-nonav><div class="arm-duck"></div><div class="arm-card"${NPC ? " hidden" : ""}></div><p class="hints arm-keys">${NAV_HINTS}</p></div></div>`,
     {
       cls: "win-armory win-full",
+      cover: false, // (one loading screen as it opens, for every picture of every page: warmUp below)
       onOpen(w, close) {
         openFolds.clear();
         keyFor = null;
@@ -443,7 +446,26 @@ export function openCustomize(page = lastPage, opts = {}) {
                           ? peek.id
                           : { id: peek.id },
                     }; // (the eyes and Dat Boi's rank are kept as their id alone)
-          duckBox.innerHTML = `<span class="arm-pic">${duckSVG(look, { size: 220, title: NPC ? NPC.name : profile.name })}${sp && sp.kind === "effect" ? `<span class="sp-fx">${momentHTML(sp.id, duckNow())}</span>` : ""}</span>`; // (effects sit on the duck, not on the whole panel)
+          const pic = el(
+            `<span class="arm-pic">${duckSVG(look, { size: 220, title: NPC ? NPC.name : profile.name })}${sp && sp.kind === "effect" ? `<span class="sp-fx">${momentHTML(sp.id, duckNow())}</span>` : ""}</span>`,
+          ); // (effects sit on the duck, not on the whole panel)
+          /* the new duck is drawn under the one shown, and takes its place once its pixels are in: it never blinks out
+             (the owner's, Nov 20 20:46Z) */
+          duckBox
+            .querySelectorAll(":scope > .arm-next")
+            .forEach((e) => e.remove());
+          if (!duckBox.querySelector(":scope > .arm-pic")) duckBox.append(pic);
+          else {
+            pic.classList.add("arm-next");
+            duckBox.append(pic);
+            shownSoon(pic).then(() => {
+              if (!pic.isConnected) return; // (a newer one came)
+              duckBox
+                .querySelectorAll(":scope > .arm-pic:not(.arm-next)")
+                .forEach((e) => e.remove());
+              pic.classList.remove("arm-next");
+            });
+          }
           if (!NPC) cardBox.innerHTML = cardHTML(me(), { size: 52 });
         };
         const colorSpecial = () =>
@@ -1148,7 +1170,29 @@ export function openCustomize(page = lastPage, opts = {}) {
               /(<div class="arm-body[^"]*">)/,
               "$1" + randBtn(k),
             ); // (each page's own Randomize, at its top)
+          /* the page shown stays over the new one until the new one's pictures are in (data-nopx: left as it is), so no
+             tile is ever empty (the owner's, Nov 20 20:46Z) */
+          let old = menu.querySelector(":scope > .arm-old");
+          if (old) old.remove();
+          else if (!warming && menu.firstElementChild) {
+            old = document.createElement("div");
+            old.className = "arm-old";
+            old.setAttribute("data-nopx", "");
+            old.inert = true; // (only a picture of the last page: nothing in it is reached)
+            const top = (menu.querySelector(".arm-body") || {}).scrollTop || 0;
+            old.append(...menu.childNodes);
+            old.dataset.top = top;
+          }
           menu.innerHTML = html;
+          if (old) {
+            menu.append(old);
+            const ob = old.querySelector(".arm-body");
+            if (ob) ob.scrollTop = +old.dataset.top || 0;
+            const fresh = [...menu.children].filter((e) => e !== old);
+            shownSoon(fresh).then(() => {
+              if (fresh.every((e) => e.isConnected)) old.remove();
+            });
+          }
           if (peek)
             menu
               .querySelector(".arm-tile.peek")
@@ -1709,6 +1753,55 @@ export function openCustomize(page = lastPage, opts = {}) {
         });
         stage();
         show(page);
+        warmUp();
+        /* the owner's, Nov 20 20:46Z: "The customized menu shouldn't even have loading screens. Like maybe you load the
+           whole customization menu and that has a loading screen. And it loads everything you can select in it before
+           it opens rather than just certain menus". Every page is drawn once, out of sight, before the window shows
+           (a loading screen if that takes more than a moment): every tile's picture and the patterns' sheets are then
+           in, and a page comes up whole */
+        async function warmUp() {
+          /* (in a game no loading screen ever comes (the owner's, Nov 19 22:52Z): there it shows at once, its pages
+             drawn behind it) */
+          const back = w.closest(".win-back") || w,
+            inGame = document.body.dataset.screen === "game";
+          if (!inGame) back.classList.add("arm-warming");
+          let hold = null;
+          const slow = inGame
+            ? 0
+            : setTimeout(() => (hold = holdLoading({ maxMs: 90000 })), 150);
+          const start = lastPage,
+            folds = new Set(openFolds);
+          let all = "";
+          warming = true;
+          try {
+            for (const r of rows())
+              if (r) {
+                show(r[0]);
+                all += menu.innerHTML;
+              }
+          } catch {}
+          openFolds.clear();
+          folds.forEach((f) => openFolds.add(f));
+          show(start);
+          warming = false;
+          const box = document.createElement("div");
+          box.className = "arm-menu arm-warm";
+          box.inert = true;
+          box.style.width = menu.getBoundingClientRect().width + "px";
+          box.innerHTML = all.replace(/<details\b/g, "<details open"); // (what folds away too)
+          w.querySelector(".armory").append(box);
+          await Promise.all([
+            cardSheets(),
+            picturesIn(box),
+            picturesIn(duckBox),
+            picturesIn(menu),
+          ]);
+          box.remove();
+          loadSounds("game"); // (the specials' previews: each gun's own sound; after the pictures, so they don't share the line)
+          clearTimeout(slow);
+          back.classList.remove("arm-warming");
+          if (hold) hold();
+        }
       },
     },
   ).then((v) => {

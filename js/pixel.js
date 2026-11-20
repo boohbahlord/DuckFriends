@@ -193,10 +193,13 @@ const sheetFor = (key) => {
   const vs = INDEX && INDEX[key];
   return vs ? sheet(vs[0][4] || 0) : null;
 };
+/* every sheet, asked for: once the rest of the game is in (main.js), and on any screen past the front one, so they're
+   here before a screen's pictures want them */
+export const allSheets = () =>
+  index.then(() => Promise.all(ATLAS.map((_, n) => sheet(n).p)));
 if (typeof document !== "undefined")
   document.addEventListener("screen", () => {
-    if (document.body.dataset.screen !== "front")
-      index.then(() => ATLAS.forEach((_, n) => sheet(n))); // (on their way before a game's pictures want them)
+    if (document.body.dataset.screen !== "front") allSheets();
   });
 /* while key's picture may be in the files and they aren't here yet: a Promise for when they are (or turn out not to
    be), else null */
