@@ -236,6 +236,7 @@ export async function duckFromParts(d, cw, ch, frames = 1) {
       const svg = duckSVG(C, m);
       if (!svg) continue;
       const e = S.index.p[partKey(layer, svg)];
+      if (e === 0) continue; // (a part with nothing to show at this size)
       if (!e) return null; // (a part the sheets don't have: the whole duck is made as before)
       plan.push([layer, e, fade === undefined ? 1 : fade]);
     }

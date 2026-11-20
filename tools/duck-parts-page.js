@@ -71,22 +71,39 @@ function looks({ WOUNDS, hitsOf, ZOUTFITS }) {
         ]);
   for (const h of [...HATS, ...NPC_HATS])
     for (const m of h.metal ? metals.filter((x) => x !== "none") : [undefined])
-      for (const dead of [false, true])
-        out.push([
-          { ...DB, hat: { id: h.id, ...(m ? { metal: m } : {}) } },
-          { dead },
-        ]);
+      for (const k of h.ketchup ? [false, true] : [undefined])
+        for (const dead of [false, true])
+          out.push([
+            {
+              ...DB,
+              hat: {
+                id: h.id,
+                ...(m ? { metal: m } : {}),
+                ...(k ? { ketchup: k } : {}),
+              },
+            },
+            { dead },
+          ]);
   for (const f of [...FACES, ...NPC_FACES])
     for (const dead of [false, true])
       out.push([{ ...DB, face: { id: f.id } }, { dead }]);
   for (const h of [...HATS, ...NPC_HATS])
     for (const m of h.metal ? metals.filter((x) => x !== "none") : [undefined])
-      for (const e of h.id === "antennae" ? eyes : ["default"])
-        for (const dead of [false, true])
-          out.push([
-            { ...D, eyes: e, hat: { id: h.id, ...(m ? { metal: m } : {}) } },
-            { dead },
-          ]);
+      for (const k of h.ketchup ? [false, true] : [undefined]) // (the hotdog's, with ketchup or without)
+        for (const e of h.id === "antennae" ? eyes : ["default"])
+          for (const dead of [false, true])
+            out.push([
+              {
+                ...D,
+                eyes: e,
+                hat: {
+                  id: h.id,
+                  ...(m ? { metal: m } : {}),
+                  ...(k ? { ketchup: k } : {}),
+                },
+              },
+              { dead },
+            ]);
   for (const f of [...FACES, ...NPC_FACES])
     for (const bk of beaks)
       for (const e of f.id === "clownpaint" ? eyes : ["default"])
@@ -210,7 +227,8 @@ async function draw(svg, n, H) {
 /* one size: each part's black pixels and its colors' shade numbers, cropped, on shelves 2048 pixels across */
 async function sheet(list, n) {
   const H = Math.round((n * FRAME) / 120),
-    made = [];
+    made = [],
+    empty = [];
   for (const p of list) {
     /* a cat's box is its own: as big next to this size's duck box as it is next to a duck's (64 world px) */
     const pw = p.cat ? Math.round((n * p.cat.w) / 64) : n,
@@ -232,7 +250,10 @@ async function sheet(list, n) {
           x1 = Math.max(x1, i);
           y1 = Math.max(y1, j);
         }
-    if (x1 < 0) continue; // (nothing at this size)
+    if (x1 < 0) {
+      empty.push(p.key); // (nothing at this size, or nothing at all: a robot's sleeve. Listed as nothing, so it's not missing)
+      continue;
+    }
     const w = x1 - x0 + 1,
       h = y1 - y0 + 1,
       used = [],
@@ -327,6 +348,7 @@ async function sheet(list, n) {
     }
     files.push({ name, png: out.toDataURL("image/png").split(",")[1] });
   });
+  for (const k of empty) index[k] = 0;
   return { files, index };
 }
 
