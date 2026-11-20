@@ -28,6 +28,7 @@ import { valueOf } from "./numerat.js";
 import { boxText, spawnsHere } from "./sbspawn.js";
 import { W, H, heightAt } from "./hangout/layout.js";
 import { l4Hurt, l4Heal, l4Zone } from "./l4ddrules.js";
+import { zbThink } from "./sbzonebrain.js";
 
 const words = (t) =>
   String(t || "")
@@ -116,7 +117,7 @@ function entered(s, pts, H0) {
 export function sbZoneTick(s, now, H0) {
   if (!spawnsHere(s) || !s.sb) return false;
   const pts = (s.sb && s.sb.pts) || {},
-    stepped = steps(s, pts, now) | entered(s, pts, H0),
+    stepped = steps(s, pts, now) | entered(s, pts, H0) | zbThink(s, now),
     zones = Object.entries(pts).filter(
       ([, p]) => p.k === "zone" && fxOf(p) !== "none",
     ),

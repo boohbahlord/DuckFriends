@@ -63,6 +63,7 @@ import { Z_MOST, l4Spawn, l4Live } from "./l4ddrules.js";
 import { WAVE, zLook } from "./mgjrules.js";
 import { onCabin, sbzOn, cabinLive, cabinSpawn, cabinTick } from "./sbcabin.js";
 import { listsOf, decide, MAD } from "./sbbrain.js";
+import { zbSpawned } from "./sbzonebrain.js";
 import { botDuck } from "./botduck.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { armUp, cleanArms, fight, keepAt, reachTo } from "./sbarms.js";
@@ -327,7 +328,7 @@ export function zonesFor(s, f, p) {
    than its spot, or on the spawn itself */
 function entSpot(s, p, id) {
   const zid = id && sbCallZone(pointsOf(s), id);
-  if (zid) return calledSpot(s, zid);
+  if (zid) return calledSpot(s, zid, true);
   const zs = zonesFor(s, "ent", p);
   return zs.length
     ? { ...zoneSpot(s, zs[Math.floor(Math.random() * zs.length)]), inz: 1 }
@@ -335,9 +336,10 @@ function entSpot(s, p, id) {
 }
 /* a tab's spot, from the zone it answers to (the owner's, Nov 20 02:45Z: "what location is determined by the zone
    algorithm"): one of its acting squares, and one step on when it steps by use */
-export function calledSpot(s, zid) {
+export function calledSpot(s, zid, spawned = false) {
   const at = { ...zoneSpot(s, pointsOf(s)[zid]), inz: 1 };
   sbUsed(s, zid);
+  if (spawned) zbSpawned(s, zid); // (its file's when spawn: sbzonebrain.js)
   return at;
 }
 /* a spot at random in block p's own shape (a spawn, respawn or loot spot bigger than one duck), or p itself */
@@ -953,7 +955,7 @@ function canSet(p, f) {
   if (SB_ORDER[f]) return p.pg !== "pl"; // (every block's and tab's own potential order)
   if (p.k === "loot") return !!SB_LOOT[f] || f === "name" || f === "hide"; // (a loot orb's own boxes: sbloot.js)
   if (p.k === "zone")
-    return !!SB_ZONE[f] || ["name", "pon", "pwho", "hide"].includes(f); // (a zone's own, and players spawning in it)
+    return !!SB_ZONE[f] || ["name", "pon", "pwho", "hide", "brain"].includes(f); // (a zone's own, players spawning in it, and its Seriat file: sbzonebrain.js)
   if (SB_LOOT[f] || SB_ZONE[f]) return false;
   if (p.k === "respawn")
     return ["who", "name", "hide"].includes(f) || (p.im || []).includes(f);
