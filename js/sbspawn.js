@@ -44,6 +44,7 @@ import {
   SB_CALL,
   sbNeedsCall,
   sbCallZone,
+  sbSix,
   sbTabLive,
   sbUsed,
   SB_LOOT,
@@ -63,6 +64,7 @@ import {
   STEP,
   standable,
   heightAt,
+  floorStep,
 } from "./hangout/layout.js";
 import { Z_MOST, l4Spawn, l4Live } from "./l4ddrules.js";
 import { WAVE, zLook } from "./mgjrules.js";
@@ -628,20 +630,22 @@ export function sbAct(s, a, now) {
       ok = (c) => !!SB_COLORS[c] || c === SB_NOCOL,
       col = ok(a.col) ? a.col : pt && ok(pt.col) ? pt.col : SB_NOCOL,
       id = "p" + n;
-    let all = {
-      ...pts,
-      [id]: fromPattern(
-        {
-          k: a.kind,
-          x: +(at ? at.x : +me.x).toFixed(4),
-          y: +(at ? at.y : +me.y).toFixed(4),
-          z: Math.round(z),
-          col,
-          f: {},
-        },
-        pt && { ...pt, col },
-      ),
-    };
+    const made = fromPattern(
+      {
+        k: a.kind,
+        x: +(at ? at.x : +me.x).toFixed(4),
+        y: +(at ? at.y : +me.y).toFixed(4),
+        z: Math.round(z),
+        col,
+        f: {},
+      },
+      pt && { ...pt, col },
+    );
+    if (!made.f.name) {
+      const v = sbSix(); // (six numbers until it's typed out: the owner's, Nov 20 04:39Z)
+      made.f = { ...made.f, name: { t: v, ok: v } };
+    }
+    let all = { ...pts, [id]: made };
     const kin = kinOf(all, id),
       set =
         pt &&
@@ -742,7 +746,7 @@ export function sbAct(s, a, now) {
      all gone. A spawn's pages go with it */
   if (["move", "turn", "cut"].includes(a.k)) {
     const ids = [...new Set(Array.isArray(a.ps) ? a.ps.map(String) : [])]
-      .filter((id) => pts[id] && !pts[id].grp)
+      .filter((id) => pts[id] && !pts[id].grp && !pts[id].lock) // (a locked one stays: "lock" below)
       .slice(0, SB_POINTS);
     if (!ids.length) return false;
     let all = { ...pts };
@@ -771,6 +775,7 @@ export function sbAct(s, a, now) {
             z = sbOnBoard(s) ? 0 : Math.round(heightAt(x * WW, y * WH));
           all[q] = { ...P, x, y, z };
         }
+      if (sbOnWorld(s)) all = floorsTo(all); // (one with an elevation keeps it)
     } else if (a.k === "turn") {
       const by = +a.deg;
       if (!Number.isFinite(by)) return false;
@@ -805,6 +810,21 @@ export function sbAct(s, a, now) {
         any = press(s, id, now, done) || any;
     return any;
   }
+  /* Lock (the owner's, Nov 20 04:51Z: "right click allow a lock option where zone cannot be moved or edited or cut, but
+     can be copied"): a block's p.lock; nothing on it or its tabs changes while it's on, but it still goes off and copies */
+  if (a.k === "lock") {
+    if (p.grp) return false;
+    const q = { ...p };
+    if (a.on) q.lock = 1;
+    else delete q.lock;
+    s.sb = { ...s.sb, pts: { ...pts, [a.p]: q } };
+    return true;
+  }
+  if (
+    (p.lock || (p.grp && pts[p.grp] && pts[p.grp].lock)) &&
+    ["set", "del", "page", "look", "size", "kind"].includes(a.k)
+  )
+    return false;
   if (a.k === "set") {
     const f = String(a.f || "");
     if (f === "col") {
@@ -828,6 +848,7 @@ export function sbAct(s, a, now) {
         ? { ...pts, [a.p]: q }
         : spread({ ...pts, [a.p]: q }, a.p);
     let out = all;
+    if (f === "fl" && sbOnWorld(s)) out = floorsTo(out); // (a new elevation: it and its tabs sit at its height)
     if (SB_GEO_F.includes(f))
       for (const q of [a.p, ...kinOf(pts, a.p)]) out = geoTo(out, q); // (a new shape or size: their tabs too)
     s.sb = { ...s.sb, pts: out };
@@ -866,14 +887,26 @@ export function sbAct(s, a, now) {
     if (p.grp || (!tab && (p.k !== "spawn" || !["ent", "pl"].includes(a.kind))))
       return false;
     if (Object.keys(pts).length >= SB_POINTS) return false;
-    const n = ((s.sb && s.sb.n) || 0) + 1,
-      col = SB_NOCOL; // (no color, as every new zone: the owner's, Nov 20 02:37Z)
+    const n = ((s.sb && s.sb.n) || 0) + 1;
+    /* no color, as every new zone (the owner's, Nov 20 02:37Z), and six numbers for its variable name; one made from the
+       zone's own Type (tie) takes the zone's name and color, so it's tied to it from the start (the owner's, Nov 20
+       04:39Z: "connected by color or variable or both") */
+    let base = p,
+      v = sbSix(),
+      col = SB_NOCOL;
+    if (a.tie && tab) {
+      const had = base.f && base.f.name && base.f.name.ok;
+      if (had) v = String(had);
+      else base = { ...base, f: { ...base.f, name: { t: v, ok: v } } };
+      col = base.col;
+    }
     s.sb = {
       ...s.sb,
       n,
       pts: geoTo(
         {
           ...pts,
+          [a.p]: base,
           ["p" + n]: {
             k: tab ? a.kind : "spawn",
             x: p.x,
@@ -882,7 +915,7 @@ export function sbAct(s, a, now) {
             col,
             grp: a.p,
             pg: tab ? "t" : a.kind,
-            f: {},
+            f: tab ? { name: { t: v, ok: v } } : {},
           },
         },
         a.p,
@@ -953,6 +986,23 @@ export function sbAct(s, a, now) {
 
 /* which boxes a point takes: a respawn its "who" and what it imported; a spawn its own, and its Players tab's (a +
    page for players only those) */
+/* plan Phase 4: a zone with an elevation sits at it, (elevation - 1) gas station roofs over the map's ground (world px);
+   on a block's own zone, so do its tabs that have none of their own */
+const hasFl = (p) => p.k === "zone" && !!p.f && !!p.f.fl;
+function floorsTo(pts) {
+  const out = { ...pts };
+  for (const [id, p] of Object.entries(pts)) {
+    if (!hasFl(p)) continue;
+    const n = Math.round(valueOf({ ok: boxText(p, "fl") }, SB_ZONE.fl)),
+      z =
+        (Math.min(6, Math.max(1, Number.isFinite(n) ? n : 1)) - 1) *
+        floorStep();
+    for (const [q, t] of Object.entries(out))
+      if ((q === id || (!p.grp && t.grp === id && !hasFl(t))) && t.z !== z)
+        out[q] = { ...t, z };
+  }
+  return out;
+}
 function canSet(p, f) {
   if (f === "call") return sbNeedsCall(p); // (a Spawn, Respawn or Loot tab's Caller)
   if (f === "inv") return p.k === "zone" || sbNeedsCall(p); // (Inverse: a zone's, or a tab that answers to one)

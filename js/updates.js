@@ -9,6 +9,69 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v144",
+    version: 144,
+    date: "Nov 20, 2026",
+    title: "Slopes",
+    news: [
+      "For Sandbox: a Ground zone can slope up from its elevation to another one, rising toward the side you pick. Walk up it at walking pace (a longer slope takes longer) and step off its top onto a floor; it's drawn tilted.",
+    ],
+  },
+  {
+    id: "v143",
+    version: 143,
+    date: "Nov 20, 2026",
+    title: "Climbing",
+    news: [
+      "For Sandbox: tick who can climb a zone, and they climb it up to its elevation by walking into it, the way the ladder works. Put one on the edge of a floor to climb onto it.",
+      "For Sandbox: Make a map. Upload a picture and give it a title, a description and a look (the game's own or a Nous Within Kenoma one). Then play it in any board game: pick it on the Map page or in the map vote.",
+    ],
+  },
+  {
+    id: "v142",
+    version: 142,
+    date: "Nov 20, 2026",
+    title: "Floors you stand on",
+    news: [
+      "For Sandbox: a zone has an Elevation (1 to 6, one gas station roof each) and a Ground switch. Ground on, up high, it's a floor: you stand on it, walk off it and fall, and if its squares go away under you, you fall too. A fall of two floors takes twice as long as one. Shots see it as they see Downpour's roofs.",
+      "For Dead Ducks Arcade and Survival: zombies crowding round you no longer shake.",
+    ],
+  },
+  {
+    id: "v141",
+    version: 141,
+    date: "Nov 20, 2026",
+    title: "More ways to pick squares",
+    news: [
+      "For Sandbox: Potential order has Absolute (random over the whole map; only the picks that land in the zone work) and four shuffles: a new order each round, the same order each round, by rows and by columns. Seriat's order takes absolute, shuffleonce, rows and columns too.",
+      "For Sandbox: dropdowns in a zone's window are wide enough to read on a phone.",
+    ],
+  },
+  {
+    id: "v140",
+    version: 140,
+    date: "Nov 20, 2026",
+    title: "Looks and locks",
+    news: [
+      "For Sandbox: a zone can have a look: a texture from the maps (Cabin, Downpour, Euclid's Squares, the Kenoma looks), a solid color or your own picture, made into pixels. Make it see-through from 0 to 100%.",
+      "For Sandbox: a Spawn, Respawn or Loot tab works in the zone that shares its variable name or color. New tabs get six numbers as a name until you type one, and a zone's Type box lists what it holds.",
+      "For Sandbox: right-click a block to Lock it: it can't be moved, changed or cut, only copied. One click on a block brings out its handles to resize it.",
+      "For Sandbox: Music in G opens its own window, and the help windows are the game's own again.",
+      "For Sandbox: uploaded pictures are always made into pixels.",
+      "For Survival: zombies no longer shake on the gas pump's roof.",
+    ],
+  },
+  {
+    id: "v139",
+    version: 139,
+    date: "Nov 20, 2026",
+    title: "Outlines and pixel ducks",
+    news: [
+      "For Sandbox: a zone's Outlines give whoever is inside it an outline in the color you pick, seen through walls. Add rows for others in other colors.",
+      "Ducks are now made from real pixel parts, ready before the game starts, so games start smoother.",
+    ],
+  },
+  {
     id: "v138",
     version: 138,
     date: "Nov 20, 2026",

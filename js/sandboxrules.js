@@ -257,6 +257,46 @@ export const SB_ZONE = {
   }, // ("they can heal or damage at different rates")
   zwho: listBox("Who it hits", "players"), // (Players, Everything, a kind, a spawn by its color or name, a player's name)
   wall: listBox("Who can't pass", ""), // (plan Phase 3, walls: the same list; nothing ticked, it stops nobody)
+  /* plan Phase 4, floors (the owner's: "a given zone is given an elevation of 2 ... The lowest ... is 1", "Maybe 6", and
+     "ground is the settings level, where you can stand on it and walk on it while it's of that height"): on a world a
+     zone sits at its elevation, one gas station roof over the next (elevation 1: the map's own ground); with Ground on,
+     its working squares are a floor (sbfloors.js) */
+  fl: {
+    name: "Elevation (1 is the ground)",
+    kind: "int",
+    min: 1,
+    max: 6,
+    def: "1",
+  },
+  gnd: { name: "Ground (stand and walk on it)", kind: "bool", def: "f" },
+  /* plan Phase 4, climbing (the owner's: "another elevation type called climb ... touching the outside boundary of that
+     will make it to where you can climb onto another elevation ... the same mechanism as the ladder", and "for elevation
+     settings or wall settings or for ladders or for climbings ... a drop-down menu for selecting which entities or groups
+     can"): who it takes climbs it, pushing into it, up to its elevation (sbClimbAt) */
+  clm: listBox("Who can climb it", ""),
+  /* plan Phase 4, slopes (the owner's: "The time to climb up into another elevation is based on a slope ... its length ...
+     determines how long it takes to walk up it ... you say, this goes from this elevation from which it's on, and you
+     input the number onto this one"): with Ground on, from its elevation at one end up to this one at the other, along
+     its length toward the side picked (as it's turned), in steps of 2.5% of the gas station roof (sbfloors.js) */
+  slto: {
+    name: "Slope up to elevation (0: flat)",
+    kind: "int",
+    min: 0,
+    max: 6,
+    def: "0",
+  },
+  sldir: {
+    name: "Slope rises toward",
+    check: (t) => (SB_SLOPE_DIRS[String(t).trim()] ? "" : "Pick one"),
+    def: "n",
+  },
+  /* plan Phase 3: "Outlines: show outline for chosen entities, in a chosen color; a + duplicates the row for another
+     color": rows "who, who=#rrggbb; …" (sbOlRows) */
+  ol: {
+    name: "Outlines",
+    check: (t) => (String(t).length <= 600 ? "" : "Too many rows"),
+    def: "",
+  },
   ent: listBox("Entities spawn here", ""), // (spawns, by their color or name: what they make comes in the zone)
   lt: listBox("Loot spawns here", ""), // (loot spots, by their color or name: their orbs lie in the zone)
   /* what its working squares show (plan Phase 3: "show an effect: one of the game's existing effects (the
@@ -266,7 +306,88 @@ export const SB_ZONE = {
     check: (t) => (SB_SFX[String(t).trim()] ? "" : "Pick one"),
     def: "none",
   },
+  /* its look (plan Phase 3: "Looks (zone purpose only): a texture from the maps (Cabin, Downpour, Euclid's Squares, the
+     Kenoma looks; previews shown), a solid color with a hex picker, or an uploaded picture, always made into pixels (the
+     original is never kept). See-through by 1% steps"); everyone sees it, cheat mode or not (sblooks.js) */
+  lk: {
+    name: "Look",
+    check: (t) => (SB_LOOKS[String(t).trim()] ? "" : "Pick one"),
+    def: "none",
+  },
+  lktex: {
+    name: "Texture",
+    check: (t) => (SB_LOOK_TEX[String(t).trim()] ? "" : "Pick a texture"),
+    def: "cabin-wood",
+  },
+  lkcol: {
+    name: "Color",
+    check: (t) =>
+      /^#[0-9a-f]{6}$/i.test(String(t).trim()) ? "" : "A color like #3a7d44",
+    def: "#3a7d44",
+  },
+  lkpic: {
+    name: "Picture",
+    check: (t) =>
+      /^[a-z0-9]{0,24}$/.test(String(t).trim()) ? "" : "Upload one",
+    def: "",
+  },
+  lkop: { name: "See-through (%)", kind: "int", min: 0, max: 100, def: "0" },
 };
+export const SB_SLOPE_DIRS = { n: "Up", e: "Right", s: "Down", w: "Left" };
+/* where (x, y) (shares of the map) is across block p, turned back by its turn: [u, v], each -0.5 to 0.5 inside it (u
+   across its width, v down its height) */
+export function sbLocal(s, p, x, y, W = 1, H = 1) {
+  const [rx, ry] = sbUnit(s, W, H),
+    [w, h] = sbSize(p),
+    a = (-sbRot(p) * Math.PI) / 180,
+    dx = (x - p.x) / rx,
+    dy = (y - p.y) / ry;
+  return [
+    (dx * Math.cos(a) - dy * Math.sin(a)) / w,
+    (dx * Math.sin(a) + dy * Math.cos(a)) / h,
+  ];
+}
+export const SB_LOOKS = {
+  none: "None",
+  tex: "Texture",
+  col: "Solid color",
+  pic: "Picture",
+};
+/* the maps' textures (tools/bake-looks.py cuts the tiled ones from their ground) and the maps drawn whole */
+export const SB_LOOK_TEX = {
+  "cabin-wood": "Cabin floor",
+  "cabin-deck": "Cabin deck",
+  "cabin-checks": "Cabin kitchen",
+  "cabin-tiles": "Cabin bathroom",
+  "cabin-grass": "Cabin grass",
+  "downpour-grass": "Downpour grass",
+  "downpour-roof": "Downpour roof",
+  "downpour-concrete": "Downpour concrete",
+  "downpour-church": "Downpour church",
+  euclid: "Euclid's Squares",
+  nwk: "Nous Within Kenoma",
+  ec: "Ether's Crossroads",
+  nwkarch: "Architectured",
+  nwkten: "Ten",
+  nwkchalice: "Chalice",
+  nwkfool: "The Fool",
+};
+/* a zone's look: null with none, else { k: "tex" | "col" | "pic", v: the texture, the color or the picture's key, op:
+   how see-through, 0 to 1 } */
+export function sbLook(p) {
+  if (!p || p.k !== "zone" || !p.f) return null;
+  const v = (f) => {
+      const k = p.f[f],
+        t = String(k && k.ok ? k.ok : SB_ZONE[f].def).trim();
+      return SB_ZONE[f].check ? (SB_ZONE[f].check(t) ? SB_ZONE[f].def : t) : t;
+    },
+    k = v("lk");
+  if (k === "none") return null;
+  const val = v(k === "tex" ? "lktex" : k === "col" ? "lkcol" : "lkpic");
+  if (!val) return null;
+  const op = Math.min(100, Math.max(0, Math.round(+v("lkop") || 0))) / 100;
+  return { k, v: val, op };
+}
 export const SB_SFX = {
   none: "Nothing",
   fire: "Ground fire",
@@ -394,11 +515,15 @@ export function sbInBlock(s, p, x, y, W = 1, H = 1) {
    same way (sbActive), so the host only counts the steps (s.sb.zs) */
 export const SB_ORDERS = {
   rand: "True random",
-  shuf: "Shuffle",
+  abs: "Absolute (random over the whole map)",
+  shuf: "Shuffle (new order each round)",
+  shuf1: "Shuffle once (same order each round)",
+  shufrow: "Shuffle rows",
+  shufcol: "Shuffle columns",
   line: "One after another",
   alt: "Alternating",
   all: "All at once",
-};
+}; // (Absolute and the shuffles: plan Phase 3, "Absolute: a pattern that is true random across the whole board, not only inside the zone. Several kinds of shuffle, not just one")
 export const SB_DIRS = {
   "": "No direction",
   right: "\u2192",
@@ -473,7 +598,7 @@ export const SB_CALL = {
      tab that is first in order determines how it appears"); blank: the block itself */
   lead: { name: "Leads with", check: () => "", def: "" },
 };
-export const SB_CALL_ERR = "Make tab that shares caller or variable name";
+export const SB_CALL_ERR = "Make tab that shares variable name or color";
 const CALLED = ["spawn", "respawn", "loot"];
 /* a block's or tab's variable name: its own, or its color's */
 export const sbNameOf = (q) => {
@@ -483,21 +608,46 @@ export const sbNameOf = (q) => {
     ? "No color"
     : q.col[0].toUpperCase() + q.col.slice(1);
 };
+/* a new block's or tab's variable name: six numbers at random, until it's typed out (the owner's, Nov 20 04:39Z: "the
+   tabs have six random numbers randomly assigned as numbers until it is typed out") */
+export const sbSix = () => String(100000 + Math.floor(Math.random() * 900000));
+/* the name it was given (typed, or its six numbers), or "" with none (an older one's; the Caller it had counts as one) */
+const ownName = (q) => {
+  const k = q && q.f && (q.f.name || q.f.call);
+  return k && k.ok ? String(k.ok).trim().toLowerCase() : "";
+};
 /* does tab q answer to a zone (a Spawn, Respawn or Loot tab) */
 export const sbNeedsCall = (q) =>
   !!q && !!q.grp && q.pg === "t" && CALLED.includes(q.k);
-/* the zone tab id answers to: the zones on its block whose name is its Caller, the first in the block's order; null when
-   none is (it does nothing then) or it answers to nobody */
+/* how tab q is tied to zone z: { name, col } (the owner's, Nov 20 04:39Z: "every tab for spawn is connected by color or
+   variable or both, not by a selection"; a color only when there is one) */
+export function sbTie(q, z) {
+  const n = ownName(q);
+  return {
+    name: !!n && n === ownName(z),
+    col: !!q && !!z && q.col !== SB_NOCOL && q.col === z.col,
+  };
+}
+/* the zone tab id answers to: the first zone on its block, in the block's order, that shares its variable name or its
+   color; null when none does (it does nothing then) or it answers to nobody */
 export function sbCallZone(pts, id) {
   const q = pts[id];
   if (!sbNeedsCall(q) || !pts[q.grp]) return null;
-  const k = q.f && q.f.call,
-    want = (k && k.ok ? k.ok : sbNameOf(pts[q.grp])).trim().toLowerCase();
   return (
-    sbZonesOn(pts, q.grp).find(
-      (z) => sbNameOf(pts[z]).toLowerCase() === want,
-    ) || null
+    sbZonesOn(pts, q.grp).find((z) => {
+      const t = sbTie(q, pts[z]);
+      return t.name || t.col;
+    }) || null
   );
+}
+/* the tabs zone zid holds: [tab id, { name, col }] for each Spawn, Respawn and Loot tab on its block that answers to it */
+export function sbHeld(pts, zid) {
+  const z = pts[zid];
+  if (!z) return [];
+  const b = z.grp || zid;
+  return Object.keys(pts)
+    .filter((q) => pts[q].grp === b && sbCallZone(pts, q) === zid)
+    .map((q) => [q, sbTie(pts[q], z)]);
 }
 /* is tab id working: not one that needs a Caller, or its Caller matches */
 export const sbTabLive = (pts, id) =>
@@ -584,12 +734,37 @@ export function sbActive(s, id, p, k, W = 1, H = 1) {
     N = g.cells.length,
     want = ordTxt(p, "n").trim(),
     n = want ? Math.min(N, Math.max(1, +want || 1)) : N;
-  if (ord === "all" || (n >= N && ord !== "alt")) return null;
+  if (ord === "all" || (n >= N && ord !== "alt" && ord !== "abs")) return null;
   const key = `${id} ${ord} ${ordTxt(p, "dir")} ${n} ${g.nx}x${g.ny} ${N} ${k}`;
   if (KEEP.has(key)) return KEEP.get(key);
   const seed = idNum(id);
   let on;
-  if (ord === "alt") {
+  if (ord === "abs") {
+    /* Absolute: the whole map is cut into squares of its size, and at each step each of them acts by chance, n of
+       them on average for as many squares as the block has; the block acts on those of its squares that land on one */
+    const [rx, ry] = sbUnit(s, W, H),
+      sw = g.w / g.nx,
+      sh = g.h / g.ny,
+      NX = Math.max(1, Math.ceil(1 / rx / sw)),
+      NY = Math.max(1, Math.ceil(1 / ry / sh)),
+      odds = n / Math.max(N, NX * NY),
+      a = (sbRot(p) * Math.PI) / 180;
+    on = new Set(
+      g.cells.filter((c) => {
+        const lx = ((c % g.nx) + 0.5) * sw - g.w / 2,
+          ly = (Math.floor(c / g.nx) + 0.5) * sh - g.h / 2,
+          x = sbFills(p)
+            ? 0.5 + lx / g.w
+            : p.x + (lx * Math.cos(a) - ly * Math.sin(a)) * rx,
+          y = sbFills(p)
+            ? 0.5 + ly / g.h
+            : p.y + (lx * Math.sin(a) + ly * Math.cos(a)) * ry,
+          I = Math.floor(x * NX),
+          J = Math.floor(y * NY);
+        return hash(seed, k, I, J) < odds;
+      }),
+    );
+  } else if (ord === "alt") {
     /* a checkerboard that flips every step ("Squares at once" left out: half of them) */
     on = new Set(
       g.cells.filter((c) => ((c % g.nx) + Math.floor(c / g.nx) + k) % 2 === 0),
@@ -623,11 +798,27 @@ export function sbActive(s, id, p, k, W = 1, H = 1) {
         return A[0] - B[0] || A[1] - B[1];
       });
     } else {
-      const round = Math.floor((k * n) / N);
+      /* the shuffles: a new deal each round, one deal kept, or whole rows or columns dealt in a new order each round
+         (each row left to right, each column top to bottom) */
+      const round = ord === "shuf1" ? 0 : Math.floor((k * n) / N),
+        line = (c) =>
+          ord === "shufrow"
+            ? Math.floor(c / g.nx)
+            : ord === "shufcol"
+              ? c % g.nx
+              : -1;
       walk = g.cells
-        .map((c) => [hash(seed, round, c), c])
-        .sort((a, b) => a[0] - b[0])
-        .map((x) => x[1]);
+        .map((c) => [
+          line(c) < 0 ? hash(seed, round, c) : hash(seed, round, line(c), -1),
+          ord === "shufrow"
+            ? c % g.nx
+            : ord === "shufcol"
+              ? Math.floor(c / g.nx)
+              : 0,
+          c,
+        ])
+        .sort((a, b) => a[0] - b[0] || a[1] - b[1])
+        .map((x) => x[2]);
     }
     const from = (k * n) % N;
     on = new Set();
@@ -700,6 +891,21 @@ export function sbWalls(s, w) {
       if (sbWhoTakes(s, listOf(p, "wall"), w)) out.push({ id, p });
     }
   return out;
+}
+/* plan Phase 4: the climb zone w (as sbWhoTakes) is at (x, y, shares of the map) with its feet at z (world px) under its
+   top: { top: its height, x, y: its middle } (the highest when several), or null */
+export function sbClimbAt(s, w, x, y, z, W = 1, H = 1) {
+  if (!isSb(s) || sbOnBoard(s)) return null;
+  let best = null;
+  for (const [id, p] of Object.entries((s.sb && s.sb.pts) || {})) {
+    if (p.k !== "zone" || !p.f || !p.f.clm || !p.f.clm.ok) continue;
+    const top = p.z || 0;
+    if (top < (+z || 0) - 0.5 || (best && best.top >= top)) continue; // (a climb whose top is under my feet: not mine)
+    if (!sbWhoTakes(s, listOf(p, "clm"), w)) continue;
+    if (!sbInWorking(s, id, p, x, y, W, H)) continue;
+    best = { top, x: p.x, y: p.y };
+  }
+  return best;
 }
 /* the walls to each NPC, worked out once a beat for each kind and spawn: wallsOf(o) */
 export function sbNpcWalls(s) {
@@ -943,6 +1149,48 @@ export function sbOutline(s, p, W = 1, H = 1, n = 48) {
     };
   });
 }
+/* ---------- Outlines (plan Phase 3) ----------
+   A zone's Outlines rows: whoever a row takes, standing where the zone works, shows an outline in that row's color (the
+   first row that takes it, of the first zone it stands in) */
+export const SB_OL_DEF = "#ffd23f";
+export function sbOlRows(p) {
+  const t = String((p && p.f && p.f.ol && p.f.ol.ok) || "");
+  return t
+    .split(";")
+    .map((r) => {
+      const [who, c] = r.split("=");
+      return [
+        String(who || "")
+          .toLowerCase()
+          .split(/[\s,]+/)
+          .filter(Boolean),
+        /^#[0-9a-f]{6}$/i.test(String(c || "").trim())
+          ? String(c).trim().toLowerCase()
+          : SB_OL_DEF,
+      ];
+    })
+    .filter(([who]) => who.length);
+}
+let OLS = { s: null, zl: [] }; // (the zones with outlines, worked out once for each state)
+/* the outline color of w (as sbWhoTakes) at (x, y), height z (shares; world px), or "" */
+export function sbOlColor(s, w, x, y, z, W = 1, H = 1) {
+  if (!isSb(s) || !s.sb) return "";
+  if (OLS.s !== s.sb) {
+    OLS = { s: s.sb, zl: [] };
+    for (const [id, p] of Object.entries(s.sb.pts || {}))
+      if (p.k === "zone" && p.f && p.f.ol && p.f.ol.ok) {
+        const rows = sbOlRows(p);
+        if (rows.length) OLS.zl.push({ id, p, rows });
+      }
+  }
+  for (const { id, p, rows } of OLS.zl) {
+    if (!sbWorksAt(s, id, p, x, y, z, W, H)) continue;
+    for (const [who, c] of rows) if (sbWhoTakes(s, who, w)) return c;
+  }
+  return "";
+}
+export const sbHasOl = (s) =>
+  isSb(s) && !!s.sb && (sbOlColor(s, {}, -9, -9, 0), OLS.zl.length > 0);
 /* ---------- Inverse (plan Phase 3) ----------
    A zone or a tab whose Inverse is on works outside its zone: outside every zone with the same variable name or the
    same color, too (a zone with no color goes only with the ones sharing its name). On a world, still on its floor */

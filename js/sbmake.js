@@ -5,8 +5,8 @@
    the players custom made NPCs are found down here)" in a spawn's list of what it spawns.
    A spawn's Appearance tab (the file's line 56): what those it spawns look like, "either a duck already made can be
    selected (one made by the character), one from the NPC selections, and another based on an image upload from the
-   device". An upload is 2 MB at most and kept as it is, unless the player ticks Compress, which makes it into the game's
-   pixel look (the owner's answer 6 and Nov 19 01:57Z). */
+   device". An upload is 2 MB at most and always made into the game's pixel look; the original is never kept (plan Phase
+   3: "Every uploaded picture is made into pixels, and the original is never kept", which replaced the Compress tick). */
 import { npcList, npcById, npcNew } from "./sbnpcs.js";
 import { profile } from "./store.js";
 import { duckSVG } from "./duck.js";
@@ -102,8 +102,8 @@ export function lookPage(s, p) {
         `<label class="arm-tile sb-ap${v === cur ? " on" : ""}"><input type="radio" name="sb-ap" data-look="${esc(v)}"${v === cur ? " checked" : ""}><span class="sb-ap-pic">${svg}</span><span>${esc(n)}</span></label>`,
     )
     .join("")}</div>
-  <div class="sb-row sb-up"><span>A picture</span><span class="sb-what"><label class="btn small"><input type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden data-up>Upload</label><label><input type="checkbox" data-squash> Compress (pixel look)</label>${img ? `<img class="sb-up-pic" src="${img.d}" alt="The picture they wear">` : ""}</span></div>
-  <p class="small dim sb-up-note">2 MB at most. Kept as it is unless Compress is ticked.</p>`;
+  <div class="sb-row sb-up"><span>A picture</span><span class="sb-what"><label class="btn small"><input type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden data-up>Upload</label>${img ? `<img class="sb-up-pic" src="${img.d}" alt="The picture they wear">` : ""}</span></div>
+  <p class="small dim sb-up-note">2 MB at most. Made into pixels.</p>`;
 }
 /* the look picked: what goes to the room */
 export function lookFor(v) {
@@ -115,8 +115,8 @@ export function lookFor(v) {
   }
   return SB_WHAT[v] ? { k: v } : null;
 }
-/* a file made ready to send: as it is (a data URL of its own bytes), or made into the pixel look (its longest side 32
-   pixels, as a duck is tall, through the game's palette, pixelpalette.js); and its height over its width */
+/* a file made ready to send: made into the pixel look (its longest side `most` pixels, 32 as a duck is tall, through the
+   game's palette, pixelpalette.js), never kept as it was; and its height over its width */
 function readAs(file) {
   return new Promise((ok, bad) => {
     const r = new FileReader();
@@ -131,15 +131,15 @@ async function sizeOf(url) {
   await img.decode();
   return img;
 }
-export async function picFrom(file, squash) {
+export async function picFrom(file, most = 32) {
   if (!file || !/^image\/(png|jpeg|gif|webp)$/.test(file.type))
     throw new Error("That file is not a picture (PNG, JPEG, GIF or WebP).");
   if (file.size > SB_PIC.MOST) throw new Error("That picture is over 2 MB.");
   let d = await readAs(file);
   const img = await sizeOf(d),
     a = img.naturalHeight / img.naturalWidth || 1;
-  if (squash) {
-    const k = Math.min(1, 32 / Math.max(img.naturalWidth, img.naturalHeight)),
+  {
+    const k = Math.min(1, most / Math.max(img.naturalWidth, img.naturalHeight)),
       c = document.createElement("canvas");
     c.width = Math.max(1, Math.round(img.naturalWidth * k));
     c.height = Math.max(1, Math.round(img.naturalHeight * k));

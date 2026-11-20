@@ -279,23 +279,60 @@ export function saveRows(R) {
       },
       { label: "Save as…", act: (r) => saveAs(r) },
     );
-  const all = music.tracks,
-    on = allowedSongs(s), // (Miles Jr.'s song list, music.js: only these play, and everyone hears the same)
-    none = !on.length;
+  rows.push(
+    {
+      label: "Make a map…",
+      act: (r) => import("./umaps.js").then((m) => m.makeMap(r)),
+    },
+    {
+      label: "My maps…",
+      act: (r) => import("./umaps.js").then((m) => m.myMaps(r)),
+    },
+  ); // (a map from a picture, kept on this device: umaps.js; the owner's, Nov 19 22:59Z, "In Sandbox ... They click it and they can upload an image")
+  const on = allowedSongs(s); // (Miles Jr.'s song list, music.js: only these play, and everyone hears the same)
   rows.push({
-    label: none ? "Music: no music" : "Music: on",
-    on: !none,
-    act: () => allowSongs(none ? undefined : []),
-  });
-  for (const n of all) {
-    const is = on.includes(n);
-    rows.push({
-      label: `${is ? "On" : "Off"}: ${n}`,
-      on: is,
-      act: () => allowSongs(is ? on.filter((x) => x !== n) : [...on, n]),
-    });
-  }
+    label: `Music: ${on.length ? `${on.length} of ${music.tracks.length} songs` : "no music"}…`,
+    act: (r) => musicWin(r),
+  }); // (its own window: the owner's, Nov 20 04:44Z, "music settings among others in game settings are a window that pops up")
   return rows;
+}
+/* G's Music: every song with its tick, and all on or off at once; only the ticked ones play */
+function musicWin(R) {
+  if (document.querySelector(".sb-musicwin")) return;
+  const draw = (w) => {
+    const on = allowedSongs(R.state),
+      all = music.tracks;
+    w.querySelector(".sb-musiclist").innerHTML = all
+      .map(
+        (n) =>
+          `<label class="sb-song"><input type="checkbox" data-song="${esc(n)}"${on.includes(n) ? " checked" : ""}> ${esc(n)}</label>`,
+      )
+      .join("");
+    w.querySelector("[data-all]").textContent = on.length
+      ? "Turn all off"
+      : "Turn all on";
+  };
+  return openWindow(
+    `<h2>Music</h2><p class="small dim">Only the ticked songs play, the same for everyone. The save keeps the list.</p><p class="acts"><button type="button" class="btn small" data-all></button></p><div class="sb-musiclist"></div>`,
+    {
+      cls: "win-small sb-musicwin",
+      onOpen(w) {
+        draw(w);
+        w.addEventListener("change", (e) => {
+          const c = e.target.closest("[data-song]");
+          if (!c) return;
+          const on = allowedSongs(R.state),
+            n = c.dataset.song;
+          allowSongs(c.checked ? [...on, n] : on.filter((x) => x !== n));
+          setTimeout(() => w.isConnected && draw(w), 150);
+        });
+        w.querySelector("[data-all]").onclick = () => {
+          allowSongs(allowedSongs(R.state).length ? [] : undefined);
+          setTimeout(() => w.isConnected && draw(w), 150);
+        };
+      },
+    },
+  );
 }
 /* a name typed in a small window: the name, or null */
 function askName(title, was, yes) {

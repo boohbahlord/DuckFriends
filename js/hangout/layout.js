@@ -156,37 +156,79 @@ const onDeck = (d, x, y) =>
   x < d.x1 &&
   y >= d.y0 &&
   y < d.y1 &&
-  !d.holes.some((o) => x >= o.x0 && x < o.x1 && y >= o.y0 && y < o.y1);
-/* the deck a duck's feet at height z are on or over (the highest at or under z), or null */
+  (d.inside
+    ? d.inside(x, y)
+    : !d.holes.some((o) => x >= o.x0 && x < o.x1 && y >= o.y0 && y < o.y1));
+export const onDeckAt = onDeck;
+/* more floors than the map's own: Sandbox's ground zones (Phase 4, sbfloors.js), each a deck with inside(x, y) for its
+   shape and its working squares; none outside Sandbox */
+const NO_DECKS = [];
+let extraDecks = () => NO_DECKS;
+let floorsRule = () => false;
+export function setExtraDecks(fn, rule = null) {
+  extraDecks = fn || (() => NO_DECKS);
+  floorsRule = rule || (() => false);
+}
+/* do falls go by floors here (Sandbox on a world: plan Phase 4, world.js) */
+export const fallsByFloors = () => floorsRule();
+/* every floor over the ground here: Downpour's roofs and canopy, and Sandbox's */
+export function allDecks() {
+  const e = extraDecks();
+  if (variant !== "l4gs") return e;
+  return e.length ? [...GS.DECKS, ...e] : GS.DECKS;
+}
+/* a floor's height step: the gas station's roof (100%: the owner's, "100% being the roof of the gas station") */
+export const floorStep = () => GS.DECKS[0].h;
+/* a deck's height at (x, y): its own, or along a Sandbox slope (sbfloors.js hAt) */
+export const deckH = (d, x, y) => (d.hAt ? d.hAt(x, y) : d.h);
+/* the deck a duck's feet at height z are on or over (the highest at or under z), or null. A slope holds feet a step under
+   it too, so a duck walks up it */
 export function deckAt(x, y, z) {
-  if (variant !== "l4gs" || z === undefined || z === null) return null;
-  let best = null;
-  for (const d of GS.DECKS)
-    if (d.h <= z + 0.5 && (!best || d.h > best.h) && onDeck(d, x, y)) best = d;
+  if (z === undefined || z === null) return null;
+  const ds = allDecks();
+  if (!ds.length) return null;
+  let best = null,
+    bh = 0;
+  for (const d of ds) {
+    const h = deckH(d, x, y);
+    if (h <= z + (d.hAt ? STEP : 0.5) && (!best || h > bh) && onDeck(d, x, y)) {
+      best = d;
+      bh = h;
+    }
+  }
   return best;
 }
 /* the deck over a duck's head at height z (the lowest over it), or null: a roof it is under */
 export function deckOver(x, y, z) {
-  if (variant !== "l4gs") return null;
-  let best = null;
-  for (const d of GS.DECKS)
-    if (d.h > z + 0.5 && (!best || d.h < best.h) && onDeck(d, x, y)) best = d;
+  const ds = allDecks();
+  if (!ds.length) return null;
+  let best = null,
+    bh = 0;
+  for (const d of ds) {
+    const h = deckH(d, x, y);
+    if (h > z + (d.hAt ? STEP : 0.5) && (!best || h < bh) && onDeck(d, x, y)) {
+      best = d;
+      bh = h;
+    }
+  }
   return best;
 }
 /* the height of the floor under a duck's feet at height z: a deck it is on or over, or the ground (z left out: the
    ground) */
 export function floorH(x, y, z) {
   const g = heightAt(x, y),
-    d = z > g ? deckAt(x, y, z) : null;
-  return d && d.h > g ? d.h : g;
+    d = z >= g ? deckAt(x, y, z) : null,
+    h = d ? deckH(d, x, y) : g;
+  return h > g ? h : g;
 }
 /* the same, with what it is: { h, kind: "ground" | "roof" | "canopy", deck } (the outlines' and the footsteps' floor:
    outlines.js, ground.js) */
 export function floorAt(x, y, z) {
   const g = heightAt(x, y),
-    d = z > g ? deckAt(x, y, z) : null;
-  return d && d.h > g
-    ? { h: d.h, kind: d.kind, deck: d }
+    d = z >= g ? deckAt(x, y, z) : null,
+    h = d ? deckH(d, x, y) : g;
+  return d && h > g
+    ? { h, kind: d.kind, deck: d }
     : { h: g, kind: "ground", deck: null };
 }
 /* the one rule for a shot (heights.js) between two floors (the owner's, Nov 17 20:02Z: "PROJECTILES WILL NEVER SHOOT AT
@@ -198,7 +240,7 @@ export function floorAt(x, y, z) {
    it (off every roof, or right under a hole). So from a roof nothing inside a building or under the pump roof is hit,
    and nothing on a roof is hit from inside or under it. True: something is between */
 export function slabBetween(ax, ay, az, bx, by, bz) {
-  if (variant !== "l4gs") return false;
+  if (variant !== "l4gs" && !extraDecks().length) return false;
   if (deckAt(ax, ay, az) === deckAt(bx, by, bz)) return false; // (one floor)
   if (SIGHT.on) return !seeLine(ax, ay, az, bx, by, bz);
   return !!deckOver(ax, ay, az) || !!deckOver(bx, by, bz);
@@ -251,7 +293,7 @@ export function seeLine(ax, ay, az, bx, by, bz) {
     eb = q((+bz || 0) + HEAD),
     dx = bx - ax,
     dy = by - ay;
-  for (const d of GS.DECKS) {
+  for (const d of allDecks()) {
     /* when is the line inside this floor's thickness */
     const lo = q(d.h - SIGHT_SLAB),
       hi = q(d.h);
@@ -284,9 +326,22 @@ export function seeLine(ax, ay, az, bx, by, bz) {
       );
       if (!left.length) break;
     }
-    if (left.length) return false;
+    if (left.length && (!d.inside || spanOn(d, ax, ay, dx, dy, left)))
+      return false;
   }
   return true;
+}
+/* a Sandbox floor (its shape, its working squares: d.inside) under any part of the line's spans, looked at every few px */
+function spanOn(d, ax, ay, dx, dy, spans) {
+  const len = Math.hypot(dx, dy) || 1;
+  for (const [u, v] of spans) {
+    const n = Math.max(1, Math.ceil(((v - u) * len) / 6));
+    for (let i = 0; i <= n; i++) {
+      const t = u + ((v - u) * i) / n;
+      if (d.inside(ax + dx * t, ay + dy * t)) return true;
+    }
+  }
+  return false;
 }
 /* the ladders (stationmap.js): up the gas station's back wall (LADDER, side "n"), and leaning on the canopy over the
    pumps from its left (PUMP_LADDER, side "w"). ladderAt: the one whose foot (x, y) is at, outside, where a duck climbs

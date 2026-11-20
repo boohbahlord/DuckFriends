@@ -904,7 +904,12 @@ const SHOT_LIFE = 2000;
    same, whatever its size. Its claw reaches a little past touching */
 const RX = 56,
   RY = 25.6,
-  CLAW = 1.35;
+  CLAW = 1.35,
+  /* a zombie waiting behind another that's at a duck (it never walks into it: stepZombie, roofStep) claws from where it
+     stands, this much farther (duck lengths), so a crowd hits a duck as hard as when they squeezed in on top of each
+     other: one that's at the duck counts if it's within CLAW + near of it */
+  QUEUE = { reach: 1, near: 0.4 },
+  ROOF_BACK = 1.25; // (on a roof: one pushed back by the others (separate) goes for its duck again only past this, still in reach, so it doesn't shake there)
 /* a new zombie's HP (the owner's, Nov 16 21:47Z: 3, then a 50% roll for 4; if that fails, a 50% roll for 5): 5 a
    quarter of the time, 3 a quarter, 4 half. Rolled the rarer first (the owner's, Nov 18 10:38Z), the same odds */
 const hp0 = () => {
@@ -1135,6 +1140,8 @@ const DP_OPENINGS = [
 export const OPENINGS = [...CABIN_OPENINGS];
 /* is the room on Downpour? (layout.js' useMode has turned to it: the rules call it for every action) */
 export const dp = () => layoutVariant() === "l4gs";
+/* the map's own roofs only (Sandbox's floors, sbfloors.js, aren't climbed to yet) */
+const mapDeck = (d) => (d && !d.sb ? d : null);
 /* Downpour's flood slows anyone on foot just as it slows a player's duck (l4dd.js speed): wading the shallow road 30%
    slower, swimming the deep end as slowly as in the pool. The merchants and Justin out there too, so nobody walks
    faster than a player can (the owner's, Nov 18 15:35Z: "all of their sprinting and their movement speed is the same
@@ -5577,7 +5584,7 @@ function moveZombies(s, zs, now, T, up) {
       const p = s.pos[id],
         xy = at(p),
         zz = +p.z || 0,
-        dk = dp() ? deckAt(xy[0], xy[1], zz) : null, // (Downpour: up on a roof, or the canopy)
+        dk = dp() ? mapDeck(deckAt(xy[0], xy[1], zz)) : null, // (Downpour: up on a roof, or the canopy; Sandbox's floors are Phase 4's zombies, later)
         way = dk && dk.kind === "canopy" ? stationDeck() : dk; // (the canopy: by way of the gas station's roof, then a jump)
       return {
         id,
@@ -5638,6 +5645,7 @@ function moveZombies(s, zs, now, T, up) {
   let cake = cakeDown(s, now);
   for (const k of Object.keys(eating))
     if (k !== "fx" && eating[k] <= now) delete eating[k];
+  ZC = crowdOf(zs); // (no walking into one another: stepZombie)
   for (const z of zs) {
     if (z.st === 3) continue;
     const o = openingById(z.l[2]),
@@ -5821,14 +5829,15 @@ function moveZombies(s, zs, now, T, up) {
         }
         continue;
       }
-      if (best > 1) {
+      if (best > ROOF_BACK) {
         const k = 1 - 1 / best; // (up to it, not into it)
-        walkTo(
+        roofStep(
           z,
           z.x + (target.xy[0] - z.x) * k,
           z.y + (target.xy[1] - z.y) * k,
           v * dt,
-        );
+          zs,
+        ); // (and never into another one up there)
         const o2 = edgeOf(z.x, z.y, e.d);
         if (o2.o > -6) {
           z.x += o2.nx * (o2.o + 6) * -1;
@@ -5933,9 +5942,10 @@ function moveZombies(s, zs, now, T, up) {
     } else delete z.jc;
     /* the claw: at a duck long enough, then again every so often (it keeps walking meanwhile); only one on its own
        floor (zFloor), never one up on a roof over it or down below it, nor one up the ladder */
-    const d = room(z.x, z.y, ...target.xy);
+    const d = room(z.x, z.y, ...target.xy),
+      queued = !!z.bl && room(z.bl.x, z.bl.y, ...target.xy) < CLAW + QUEUE.near; // (its way blocked by one at this duck)
     if (
-      d < CLAW + (duckBig(s, target.id) - 1) / 2 && // (a duck bigger than 100% is reached sooner: duck.js)
+      d < CLAW + (duckBig(s, target.id) - 1) / 2 + (queued ? QUEUE.reach : 0) && // (a duck bigger than 100% is reached sooner: duck.js)
       zFloor(z) === target.dk &&
       Math.abs(target.zz - zombieZ(z)) < 50
     ) {
@@ -5970,6 +5980,7 @@ function moveZombies(s, zs, now, T, up) {
   s.hang.l4p = p4;
   s.hang.brd = brd;
   s.hidden = { ...s.hidden, l4ze: eating };
+  ZC = null;
   separate(zs);
 }
 /* Survival: a walker wandering, slowly, from one spot near it to the next, standing about at each a while (z.wd: where
@@ -6091,7 +6102,20 @@ function flankSpot(z, q) {
    or till that duck leaves the canopy (the owner's, Nov 19 01:00Z: "zombies should pick a part to jump onto the gas
    pump from and commit, not going left and right over and over until the player stands still because that is ripe
    for exploit") */
-const JUMP = { speed: 300, arc: 40, fail: 0.05, in: 30 };
+const JUMP = {
+  speed: 300,
+  arc: 40,
+  fail: 0.05,
+  in: 30,
+  wide: 4,
+  gap: 40,
+  near: 16,
+};
+/* each zombie's own spot along the edge (JUMP.wide spots each side of the duck, JUMP.gap apart, by its number), and it
+   jumps once it's within JUMP.near of it: all of them at one spot pushed each other off it (separate) and walked
+   back, over and over, so they shook at the roof's edge (the owner's, Nov 20 03:58Z: "zombies shouldnt viibrate on
+   roof of gas pump") */
+const jumpLane = (z) => ((z.i % (2 * JUMP.wide + 1)) - JUMP.wide) * JUMP.gap;
 function jumpOn(z, pls, far) {
   const C = canopyDeck(),
     S = stationDeck();
@@ -6107,7 +6131,7 @@ function jumpOn(z, pls, far) {
     z.jp = [
       Math.round(
         Math.min(
-          Math.max(q.xy[0], Math.max(C.x0, S.x0) + JUMP.in),
+          Math.max(q.xy[0] + jumpLane(z), Math.max(C.x0, S.x0) + JUMP.in),
           Math.min(C.x1, S.x1) - JUMP.in,
         ),
       ),
@@ -6115,7 +6139,12 @@ function jumpOn(z, pls, far) {
     ]; // (its spot, picked once: kept while its duck stays on the canopy)
   const x = z.jp[0],
     y = S.y1 - 10;
-  if (!walkTo(z, x, y, far)) return true;
+  if (Math.hypot(x - z.x, y - z.y) > far + JUMP.near) {
+    walkTo(z, x, y, far);
+    return true;
+  }
+  z.x = x;
+  z.y = y;
   delete z.jp;
   const fell = Math.random() < JUMP.fail,
     y1 = fell ? (S.y1 + C.y0) / 2 : C.y0 + JUMP.in;
@@ -6224,6 +6253,47 @@ function walkTo(z, tx, ty, far) {
   z.y += (dy / d) * far;
   return false;
 }
+/* on a roof, going for its duck: toward (tx, ty), but never into another zombie on that roof, as a duck never walks
+   into one (world.js crowd); blocked, it slides round it or waits. Before, the ones behind walked into the ones in
+   front every heartbeat and were pushed back out (separate), so the whole crowd round a duck standing on the canopy
+   shook (the owner's, Nov 20 03:58Z: "zombies shouldnt viibrate on roof of gas pump") */
+const ROOF_TURNS = [0, 0.52, 1.05];
+function roofStep(z, tx, ty, far, zs) {
+  const dx = tx - z.x,
+    dy = ty - z.y,
+    d = Math.hypot(dx, dy);
+  if (d < 1) return;
+  const len = Math.min(d, far),
+    near = zs.filter(
+      (o) =>
+        o !== z &&
+        o.st === 7 &&
+        o.k === z.k &&
+        Math.abs(o.x - z.x) < RX * 2 + len &&
+        Math.abs(o.y - z.y) < RY * 2 + len,
+    ),
+    free = (x, y) => {
+      const o = near.find((o) => {
+        const now = room(z.x, z.y, o.x, o.y),
+          then = room(x, y, o.x, o.y);
+        return then < 1 && then < now;
+      });
+      if (o) z.bl = o; // (the one in its way, this heartbeat: QUEUE)
+      return !o;
+    };
+  const side = z.i % 2 ? 1 : -1; // (always round the same side, its own: trying both, it went left, then right, then left)
+  for (const t of ROOF_TURNS) {
+    const c = Math.cos(t * side),
+      sn = Math.sin(t * side),
+      x = z.x + ((dx * c - dy * sn) / d) * len,
+      y = z.y + ((dx * sn + dy * c) / d) * len;
+    if (free(x, y)) {
+      z.x = x;
+      z.y = y;
+      return;
+    }
+  }
+}
 /* inside: a few small steps toward aim. Something in the way (a trunk, a car, a pew, a wall's end): it slides along it,
    or turns a little more each try (30, 60, then 90 degrees, either way) until a step is free, so it walks round instead
    of standing pressed against it (the owner's, Nov 17 05:46Z: zombies got stuck on trees and didn't know to go round).
@@ -6232,8 +6302,47 @@ const TURNS = [0, 0.52, -0.52, 1.05, -1.05, 1.57, -1.57];
 /* Sandbox's walls (sandboxrules.js sbZombieWall), while the zombies of a Sandbox walk */
 let ZW = null;
 export const setZWall = (f) => (ZW = f);
+/* the zombies walking this heartbeat (moveZombies), so one never walks into another on its floor, as a duck never
+   walks into one (world.js crowd): before, the ones behind walked into the ones in front every heartbeat and were
+   pushed back out (separate), so a crowd round a duck standing still shook (the owner's, Nov 20 03:58Z, "zombies
+   shouldnt viibrate on roof of gas pump", and the same crowd on the ground). { cells: zombies by CROWD_CELL square,
+   h: each one's height } */
+const CROWD_CELL = 96;
+let ZC = null;
+function crowdOf(zs) {
+  const cells = new Map(),
+    h = new Map();
+  for (const z of zs) {
+    if (z.st === 3) continue;
+    h.set(z, dp() ? zombieZ(z) : 0);
+    const k = cellOf(z.x, z.y);
+    if (!cells.has(k)) cells.set(k, []);
+    cells.get(k).push(z);
+  }
+  return { cells, h };
+}
+const cellOf = (x, y) =>
+  Math.floor(x / CROWD_CELL) * 100000 + Math.floor(y / CROWD_CELL);
+/* would zombie z stepping to (x, y) walk into another on its floor? That one, or null (only closer to one it's already
+   touching or about to: stepping away is always free) */
+function intoCrowd(z, x, y) {
+  const hz = ZC.h.get(z),
+    i0 = Math.floor(x / CROWD_CELL),
+    j0 = Math.floor(y / CROWD_CELL);
+  for (let di = -1; di <= 1; di++)
+    for (let dj = -1; dj <= 1; dj++)
+      for (const o of ZC.cells.get((i0 + di) * 100000 + j0 + dj) || []) {
+        if (o === z || o.st === 3) continue;
+        if (Math.abs(ZC.h.get(o) - hz) >= SAME_FLOOR) continue;
+        const then = room(x, y, o.x, o.y);
+        if (then < 1 && then < room(z.x, z.y, o.x, o.y)) return o;
+      }
+  return null;
+}
 function stepZombie(z, aim, far, pls) {
-  const n = Math.max(1, Math.ceil(far / 8));
+  const n = Math.max(1, Math.ceil(far / 8)),
+    crowd = !!ZC && ZC.h.has(z),
+    side = z.i % 2 ? -1 : 1; // (when it has to turn, its own side first: one way, then the other, and it swung about)
   for (let k = 0; k < n; k++) {
     const dx = aim[0] - z.x,
       dy = aim[1] - z.y,
@@ -6254,7 +6363,9 @@ function stepZombie(z, aim, far, pls) {
           then = room(x, y, ...q.xy);
         if (then < 1 && then < now) return false;
       }
-      return true;
+      const o = crowd && intoCrowd(z, x, y);
+      if (o) z.bl = o; // (the one in its way, this heartbeat: QUEUE)
+      return !o;
     };
     if (ZW) {
       const sx = z.x + ux * len,
@@ -6270,8 +6381,8 @@ function stepZombie(z, aim, far, pls) {
     }
     let moved = false;
     for (const t of TURNS) {
-      const c = Math.cos(t),
-        s = Math.sin(t),
+      const c = Math.cos(t * side),
+        s = Math.sin(t * side),
         sx = (ux * c - uy * s) * len,
         sy = (ux * s + uy * c) * len;
       if (ok(z.x + sx, z.y + sy)) {
@@ -6306,9 +6417,13 @@ function walkable(x0, y0, x1, y1) {
       return false;
   return true;
 }
-/* zombies never stand in each other: two too close are pushed apart (each half), where it's open */
+/* zombies never stand in each other: two too close are pushed apart (each half), where it's open. Only two on the same
+   floor (SAME_FLOOR): one up on a roof and one under it, or one on the canopy and one on the ground by the pumps, pushed
+   each other every heartbeat and walked back, so they shook in place ("zombies shouldnt viibrate on roof of gas pump",
+   the owner's, Nov 20 03:58Z) */
 function separate(zs) {
   const live = zs.filter((z) => z.st !== 3),
+    hz = new Map(dp() ? live.map((z) => [z, zombieZ(z)]) : []),
     grid = new Map(),
     key = (x, y) => Math.floor(x / 64) * 10000 + Math.floor(y / 64);
   for (const z of live) {
@@ -6324,6 +6439,8 @@ function separate(zs) {
         for (let dj = -1; dj <= 1; dj++)
           for (const b of grid.get((i0 + di) * 10000 + j0 + dj) || []) {
             if (b.i <= a.i) continue;
+            if (hz.size && Math.abs(hz.get(a) - hz.get(b)) >= SAME_FLOOR)
+              continue; // (a floor apart: never in each other's way)
             let ex = (a.x - b.x) / RX,
               ey = (a.y - b.y) / RY,
               e = Math.hypot(ex, ey);

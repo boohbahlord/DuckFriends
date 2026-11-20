@@ -12,7 +12,7 @@
 import { isInvisible } from "./invisible.js";
 import { invOn } from "./sbgod.js";
 import { sprintLeft, sprintReset } from "./stamina.js";
-import { isSb, sbNoLight } from "./sandboxrules.js";
+import { isSb, sbNoLight, sbHasOl, sbOlColor } from "./sandboxrules.js";
 import { activity } from "./hangout/registry.js";
 import { votesDue } from "./rules.js";
 import {
@@ -484,7 +484,7 @@ function lits() {
    when a wall hides it, or null to ask whether a wall, a roof or a crown drawn over it covers it (zi: the z-index it's
    drawn at, so only what is really drawn over it counts: the owner's, Nov 17 19:11Z). Returns whether something hides
    it: then it shows only as its line, never its picture (the owner's, Nov 17 17:41Z) */
-function zOutline(Wd, o, f, dip, sc, hidden, z, myFloor, zi = 0) {
+function zOutline(Wd, o, f, dip, sc, hidden, z, myFloor, zi = 0, kind = "") {
   const w = o.bw * sc,
     h = o.bh * sc,
     y = f.top + (dip - o.feet) * sc,
@@ -499,7 +499,7 @@ function zOutline(Wd, o, f, dip, sc, hidden, z, myFloor, zi = 0) {
     w,
     h,
     flip: o.face < 0,
-    kind: "zombie",
+    kind: kind || "zombie", // (or a Sandbox zone's Outlines color)
     hidden: hid,
     floor: Math.sign(olFloor(o.x, o.y, z) - myFloor),
   });
@@ -626,6 +626,7 @@ function seeZombies(s, ctx, now) {
       o = zombieEl(z);
       Z.set(z.i, o);
     }
+    o.sp = z.sp; // (a Sandbox spawn's: its zone Outlines, sandboxrules.js sbOlColor)
     if (fresh && (z.x !== o.tx || z.y !== o.ty)) {
       o.fx = o.x;
       o.fy = o.y;
@@ -2882,7 +2883,9 @@ activity({
       sc = Wd.sc,
       t = performance.now(),
       meAt = Wd.at(ctx.me),
-      myFloor = meAt ? olFloor(meAt.x, meAt.y, meAt.z) : 0; // (for the outlines: a zombie a floor away)
+      myFloor = meAt ? olFloor(meAt.x, meAt.y, meAt.z) : 0, // (for the outlines: a zombie a floor away)
+      st0 = ctx.state(),
+      sbOl = sbHasOl(st0); // (Sandbox: zones with Outlines)
     /* the zombies, gliding from where they were to where the host says, one heartbeat's time */
     for (const o of Z.values()) {
       const u = Math.min(1, (t - o.t0) / (o.g || gap));
@@ -2917,8 +2920,12 @@ activity({
           (o.diedAt !== undefined && t - o.diedAt > LOW_DEAD && low()); // (Low graphics or Data saving: a body is gone from my screen at 2 s, css/app.css html.low; the rules still keep it its 4 s)
       if (o.el.hidden !== hide) o.el.hidden = hide;
       o.z = z; // (its height as I draw it: shotStop)
+      const zc =
+        sbOl && o.st !== 3
+          ? sbOlColor(st0, { k: "zombie", sp: o.sp }, o.x / W, o.y / H, z, W, H)
+          : "";
       if (onCam && unseen && o.st !== 3)
-        zOutline(Wd, o, f, 0, sc, true, z, myFloor); // (on the other side of a wall: its red line)
+        zOutline(Wd, o, f, 0, sc, true, z, myFloor, 0, zc); // (on the other side of a wall: its red line)
       if (hide) continue;
       wounds(o, o.l, o.i); // (come into sight: the wounds it got out of it)
       pxPic(o, o.img, o.bw * sc, o.bh * sc);
@@ -2947,6 +2954,7 @@ activity({
           z,
           myFloor,
           zi,
+          zc,
         ); // (really behind a wall, under a roof: its line only)
       if (o.olOnly !== olOnly) {
         o.olOnly = olOnly;

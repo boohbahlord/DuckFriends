@@ -1,5 +1,5 @@
 {
-"v": "202611200421",
+"v": "202611200559",
 "files": {
 "assets/app/apple-touch-icon.png": "cda48ff597",
 "assets/app/icon-192.png": "8e062adfdc",
@@ -88,6 +88,15 @@
 "assets/px/ducks/ducks-58-de4ad196.json": "de4ad19635",
 "assets/px/ducks/ducks-64-3a2c9c67.json": "3a2c9c67bd",
 "assets/px/ducks/ducks-64-c79eb40a.webp": "c79eb40afc",
+"assets/px/looks/cabin-checks.webp": "38a4555956",
+"assets/px/looks/cabin-deck.webp": "a8ec9b9b36",
+"assets/px/looks/cabin-grass.webp": "5f29ce253a",
+"assets/px/looks/cabin-tiles.webp": "b8cd80a2aa",
+"assets/px/looks/cabin-wood.webp": "17fee89fa0",
+"assets/px/looks/downpour-church.webp": "3db4a55462",
+"assets/px/looks/downpour-concrete.webp": "2de19067c2",
+"assets/px/looks/downpour-grass.webp": "77d8eac66d",
+"assets/px/looks/downpour-roof.webp": "0b1c4cbb90",
 "assets/px/maps/downpour.webp": "320fc8a079",
 "assets/px/maps/duck-cabin-zombies.webp": "7e00eab11f",
 "assets/px/maps/duck-cabin.webp": "6f2f5be2af",

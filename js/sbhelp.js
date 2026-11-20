@@ -19,12 +19,12 @@ export const SB_HELP = {
       "In a block's window, + adds a tab: a spawn, respawn, loot or zone that works on the same block, so one block can do several things at once. Each tab counts toward the zone budget (shown in Build): 50 blocks and tabs at most.",
     ],
     [
-      "Callers",
-      "A Spawn, Respawn or Loot tab works only while its Caller is the variable name of a zone on its block (the block itself or one of its Zone tabs). Its spots come from that zone's squares. With more than one zone on a block, Leads with (under Type) picks the one that sets its look.",
+      "Tabs and their zone",
+      "A Spawn, Respawn or Loot tab works in the zone on its block (the block itself or one of its Zone tabs) that shares its variable name, its color, or both. Every new tab gets six numbers as its variable name until you type one; a tab made from a zone's Type takes that zone's name and color. A zone's Type box lists what it holds. With more than one zone on a block, Leads with (under Type) picks the one that sets its look.",
     ],
     [
       "Potential order",
-      "At the end of each tab, Potential order cuts the block into squares and picks which of them work right now: true random, shuffle (every square once before any repeats), one after another (with a direction), alternating like a checkerboard, or all at once. Squares at once, Square size and Seconds per step set how many, how big and how fast; Steps: On a timer, or One step each use (each spawn, respawn or drop). In Build the working squares are drawn filled.",
+      "At the end of each tab, Potential order cuts the block into squares and picks which of them work right now: true random, absolute (random over the whole map: only the picks that land in the block work), four shuffles (every square once before any repeats, in a new order each round, the same order each round, by rows or by columns), one after another (with a direction), alternating like a checkerboard, or all at once. Squares at once, Square size and Seconds per step set how many, how big and how fast; Steps: On a timer, or One step each use (each spawn, respawn or drop). In Build the working squares are drawn filled.",
     ],
     [
       "What a zone is",
@@ -33,6 +33,14 @@ export const SB_HELP = {
     [
       "Walls, Inverse and Dark outside",
       "In a zone, tick who can't pass to make it a wall to them (a thin zone makes a thin wall); they walk round it. Inverse makes a zone, or a tab, work outside its zone instead (and outside every zone with its name or color). Dark outside darkens everything round the zone while you stand in it.",
+    ],
+    [
+      "Elevation and Ground",
+      "On Duck Cabin and Downpour a zone has an Elevation: 1 is the ground, each one more is a gas station roof higher, up to 6. Turn Ground on and it's a floor up there: you stand on it, walk off its edge and fall, and you fall when its squares stop working under you. Falling two floors takes twice as long as one. Tick who can climb a zone and they climb it up to its elevation by walking into it, as up a ladder; let go of the stick and they hold on, walk away and they fall. Give a Ground zone a Slope up to another elevation and pick the side it rises toward: it's a ramp from its own elevation up to that one, walked at walking pace, so a longer slope takes longer.",
+    ],
+    [
+      "Outlines",
+      "In a zone's Outlines, pick who and a color: whoever it is gets that outline while inside the zone, seen through walls. + adds another row for others in another color.",
     ],
     [
       "Loot, colors and seeing zones",
@@ -88,7 +96,7 @@ export const SB_HELP = {
     ],
     [
       "Music",
-      "Music turns all the songs on or off. Each song below it can be turned on or off on its own; only the ones on play. The save keeps the list.",
+      "Music opens its own window: tick the songs that play, or turn them all on or off at once. Only the ticked ones play, the same for everyone. The save keeps the list.",
     ],
   ],
 };
@@ -105,9 +113,9 @@ export function openSbHelp(key) {
   if (!pages.length || document.querySelector(".sbh-win")) return;
   let i = 0;
   return openWindow(
-    `<h2>${esc(TITLES[key] || "Help")}: help</h2><div class="sbb-page sbh-page" tabindex="0"></div><div class="sbh-nav"><button type="button" class="btn small ghost" data-prev>Back</button><span class="sbh-n"></span><button type="button" class="btn small" data-next>Next</button></div>`,
+    `<h2>${esc(TITLES[key] || "Help")}: help</h2><div class="sbh-page" tabindex="0"></div><div class="sbh-nav"><button type="button" class="btn small ghost" data-prev>Back</button><span class="sbh-n"></span><button type="button" class="btn small" data-next>Next</button></div>`,
     {
-      cls: "sbb-win sbh-win",
+      cls: "sbh-win", // (the game's own window, never the Seriat bible's white page: the owner's, Nov 20 04:46Z)
       onOpen(w) {
         const page = w.querySelector(".sbh-page"),
           prev = w.querySelector("[data-prev]"),

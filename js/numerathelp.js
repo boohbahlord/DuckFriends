@@ -371,7 +371,8 @@ Words:
   step  /  step 3         its squares move on 1 (or 3) steps
   squares 3:5             how many squares work at once
   size 1.5                a square's size, in duck lengths
-  order shuffle           random, shuffle, line, alternating, all
+  order shuffle           random, absolute, shuffle, shuffleonce,
+                          rows, columns, line, alternating, all
   dir right               right, left, up, down, upright, upleft,
                           downright, downleft, none
 At the top of the file (outside a when) they're for every zone
