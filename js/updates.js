@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v154",
+    version: 154,
+    date: "Nov 20, 2026",
+    title: "What loot holds",
+    news: [
+      "For Sandbox: a Loot tab's What it holds has an All items list with everything in one place, ticked together with each kind's own list.",
+      "For Sandbox: on Dead Ducks Arcade's maps, loot can hold ammo for a gun (Ammo and magazines). Taking it gives one more magazine for that gun if you carry it.",
+      "For Sandbox: All of them at once makes an orb give everything it holds, not just one at random.",
+      "For Sandbox: a Loot tab's first orb now comes as soon as you pick what it holds.",
+    ],
+  },
+  {
     id: "v153",
     version: 153,
     date: "Nov 20, 2026",

@@ -376,6 +376,7 @@ const listBox = (name, def) => ({
   name,
   check: (t) => (String(t).length <= 200 ? "" : "200 letters at most"),
   def,
+  len: 200, // (its text kept up to this long: sbspawn.js withField; a plain box keeps 80)
 });
 export const SB_ZONE = {
   /* a thin rectangle is a wall (plan Phase 3): under one duck length it takes tenths, down to a fifth */
@@ -448,6 +449,7 @@ export const SB_ZONE = {
     name: "Outlines",
     check: (t) => (String(t).length <= 600 ? "" : "Too many rows"),
     def: "",
+    len: 600,
   },
   ent: listBox("Entities spawn here", ""), // (spawns, by their color or name: what they make comes in the zone)
   lt: listBox("Loot spawns here", ""), // (loot spots, by their color or name: their orbs lie in the zone)
@@ -1479,7 +1481,8 @@ export function sbPlayerSpot(s, id, W = 1, H = 1, ok = null) {
 export const SB_LOOT = {
   loot: {
     name: "What it holds",
-    check: (t) => (String(t).length <= 300 ? "" : "Too many"),
+    check: (t) => (String(t).length <= 1500 ? "" : "Too many"),
+    len: 1500, // (every item ticked in All items fits)
     /* nothing at first: a new loot tab drops nothing until I pick what it holds (the owner's, Nov 20 02:37Z: "When you
        click a loot tab, it does not spawn the loot in it automatically") */
     def: "",
@@ -1525,6 +1528,9 @@ export const SB_LOOT = {
   ltake: listBox("Who can take it", "players"), // (Players, Everything, a kind, a spawn, a player's name, a group: sbWhoTakes)
   lown: { name: "Every player gets their own", kind: "bool", def: "f" }, // (off: the first to reach it takes it)
   inf: { name: "Unlimited ammo", kind: "bool", def: "f" },
+  /* plan, Loot 2: "When several are ticked: the orb gives one of them at random, with equal chances, or gives all of them
+     at once" */
+  lall: { name: "All of them at once", kind: "bool", def: "f" },
   look: {
     name: "Looks like",
     check: (t) => (String(t).length <= 24 ? "" : "24 letters at most"),
