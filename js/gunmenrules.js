@@ -31,6 +31,7 @@ import { hpHurt } from "./hpmath.js";
 import { gunmanLook } from "./gunmen.js";
 import {
   sees as npcSees,
+  nearPairs,
   nearest,
   grudge,
   grudgeOf,
@@ -410,7 +411,10 @@ function tick(s, zs, now, ids, H) {
     else crim(s, o, zs, foes, pls, fieldTo, now, dt, H);
   }
   gm.gb = gm.gb.filter((o) => !o.gone); // (soldiers who got away)
-  apart(gm.gb.filter((o) => !o.d && o.k !== "sn"));
+  apart(
+    gm.gb.filter((o) => !o.d && o.k !== "sn"),
+    H,
+  );
   /* the back line: one takes a fallen one's place, a moment later */
   const front = GM.FRONT * Math.max(1, ids.length),
     up = gm.gb.filter((o) => !o.d && o.k === "c").length;
@@ -952,24 +956,28 @@ export function shoot(s, o, t, now, H, only = null, blind = false) {
   return true;
 }
 
-/* never in each other */
-function apart(live) {
-  for (let a = 0; a < live.length; a++)
-    for (let b = a + 1; b < live.length; b++) {
-      const A = live[a],
-        B = live[b],
-        dx = A.x - B.x,
-        dy = A.y - B.y,
-        e = Math.hypot(dx / 40, dy / 22);
-      if (e >= 1) continue;
-      const k = e > 1e-3 ? (1 - e) / 2 / e : 0.3,
-        ux = e > 1e-3 ? dx * k : 4,
-        uy = e > 1e-3 ? dy * k : 2;
-      A.x += ux;
-      A.y += uy;
-      B.x -= ux;
-      B.y -= uy;
-    }
+/* never in each other: two too close are pushed apart (each half), but only where it's open, by the zombies' own check
+   at their floor (as l4ddrules' nudge), so a crowd never pushes one through a wall */
+function apart(live, H) {
+  nearPairs(live, 40, 22, (A, B) => {
+    const dx = A.x - B.x,
+      dy = A.y - B.y,
+      e = Math.hypot(dx / 40, dy / 22);
+    if (e >= 1) return;
+    const k = e > 1e-3 ? (1 - e) / 2 / e : 0.3,
+      ux = e > 1e-3 ? dx * k : 4,
+      uy = e > 1e-3 ? dy * k : 2;
+    push(A, ux, uy, H);
+    push(B, -ux, -uy, H);
+  });
+}
+function push(o, dx, dy, H) {
+  const x = o.x + dx,
+    y = o.y + dy;
+  if (H.stands(x, y, heightAt(o.x, o.y))) {
+    o.x = x;
+    o.y = y;
+  }
 }
 
 /* ---------- what hits them ---------- */

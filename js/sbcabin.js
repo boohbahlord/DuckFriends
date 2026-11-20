@@ -40,6 +40,7 @@ import {
   L4_HOOKS,
 } from "./l4ddrules.js";
 import { hitCode } from "./wounds.js";
+import { hpHurt } from "./hpmath.js";
 import { WAVE, zLook } from "./mgjrules.js";
 import { MAD } from "./sbbrain.js";
 import { fight, keepAt, reachTo } from "./sbarms.js";
@@ -338,7 +339,7 @@ function npcHit(s, i, by, now, w) {
   if (!o) return false;
   const t = zombieTakes(s, by, w);
   if (!t) return false; // (a miss)
-  const hp = t.dmg >= ALL_HP ? 0 : o.hp - t.dmg,
+  const hp = t.dmg >= ALL_HP ? 0 : hpHurt(o.hp, t.dmg), // (in tenths, as every HP: hpmath.js)
     wd = (o.w || "") + hitCode(o.w || "", w, t.head);
   s.hang = {
     ...s.hang,
@@ -348,7 +349,7 @@ function npcHit(s, i, by, now, w) {
         q === o
           ? {
               ...q,
-              hp: Math.max(0, hp),
+              hp,
               w: wd,
               mad: grudge("p:" + by, now, MAD), // (it goes after whoever hurt it: sbbrain.js)
               ...(hp <= 0 ? { d: now } : {}),

@@ -5636,6 +5636,7 @@ function gmHelp(s, now) {
     wh: H,
     hp: () => Math.max(1, hp0()),
     open: (x, y) => openNear(x, y) >= 0 && zOk(x, y, heightAt(x, y)),
+    stands: (x, y, z) => zOk(x, y, z), // (where a zombie at height z may stand: apart's walls)
     hurt(id, dmg, w) {
       const p4 = { ...(s.hang.l4p || {}) },
         down = hurtDuck(s, p4, id, now, w, dmg);
