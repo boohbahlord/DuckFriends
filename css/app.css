@@ -20583,7 +20583,8 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .sb-actrows {
   display: contents; /* (the behavior lists, kept together only so the zombie maps can hide them) */
 }
-.sb-box {
+.sb-box,
+.sb-saval {
   width: 100%;
   font: inherit;
   font-family: "Cascadia Code", ui-monospace, monospace;
@@ -20593,7 +20594,8 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   background: var(--panel2);
   color: inherit;
 }
-.sb-row.bad .sb-box {
+.sb-row.bad .sb-box,
+.sb-row.bad .sb-saval {
   border-color: #ff4d4d;
   background: color-mix(in srgb, #ff4d4d 18%, var(--panel2));
 }
@@ -20820,6 +20822,47 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   font-family: inherit;
   font-weight: 700;
   border-top: 0.1rem solid var(--line);
+}
+/* a zone's Act on Seriat (js/sbspawnview.js saRow): each box with its import and remove buttons, what it acts on under it,
+   a line between one box and the next */
+.sb-sarows {
+  display: grid;
+  gap: 0.35rem;
+}
+.sb-sarow {
+  display: grid;
+  gap: 0.25rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 0.1rem dashed var(--line);
+}
+.sb-sarow > .sb-row:first-child {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.sb-sabox {
+  display: flex;
+  min-width: 0;
+}
+.sb-sabox .sb-saval {
+  min-width: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.sb-saimp,
+.sb-sax {
+  flex: none;
+  width: 1.9rem;
+  font: inherit;
+  color: var(--ink);
+  background: var(--card2, rgba(255, 255, 255, 0.08));
+  border: 0.1rem solid var(--line);
+  border-left: 0;
+  cursor: pointer;
+}
+.sb-sax {
+  border-radius: 0 0.4rem 0.4rem 0;
+}
+.sb-saadd {
+  margin: 0.3rem 0 0;
 }
 .sb-brainlist .sb-none {
   padding: 0.4rem 0.6rem;

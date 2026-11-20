@@ -1,6 +1,6 @@
 /* ---------- Sandbox: board zones (stage 5), the rules ----------
    The owner's Sandbox file, "Board Build" (sandboxrules.js SB_ZONE has the words): a zone is a rectangle of the map, in a
-   spawn's colors, that is "not an actual solid". What it does ("Nothing", "Damage", "Heal" or "Kill") happens to whoever
+   spawn's colors, that is "not an actual solid". Its Act ("Seriat", "Damage", "Heal", "Kill" or "Nothing", in its potential order) happens to whoever
    it hits that stands in it, once every "Seconds between" (a Seriat range there: a new pick each time, so the rate can
    change). "Who it hits" takes what a spawn's behavior lists take: Players, Everything, a kind, a spawn by its color or
    name, and a player's name.
@@ -25,6 +25,7 @@ import {
   SB_ZONE,
   SB_FX,
   SB_LAND_MIN,
+  sbSaRows,
 } from "./sandboxrules.js";
 import { valueOf } from "./numerat.js";
 import { boxText, spawnsHere } from "./sbspawn.js";
@@ -170,37 +171,63 @@ export function sbLandAct(s, a, now, H0) {
   else H0.claw(s, id, most, now, "zone");
   return true;
 }
-/* zone p does its thing to everyone it hits standing in it */
+/* a Seriat box's value: any number (less than 0 takes away), tenths */
+const SA_BOX = { kind: "tenth", min: -1000, max: 1000, def: "" };
+/* zone p does its thing to everyone it hits standing in it: its Act, or each of its Seriat boxes on what it picked */
 function hitAll(s, pts, id, p, now, H0) {
-  const fx = fxOf(p),
-    raw = num(p, "amt"),
-    amt = fx === "kill" ? 1e4 : Number.isFinite(raw) ? raw : 1,
-    who = words(boxText(p, "zwho")),
-    all = who.includes("everything"),
-    zmaps = baseMode(s.options) === "l4dd",
-    box = sbZoneBox(s, p, W, H);
-  let ch = false;
-  /* the ducks */
-  for (const id of H0.ducks(s)) {
-    const me = s.pos[id],
-      name = String((s.players[id] || {}).name || "").toLowerCase();
-    if (!me || !inside(s, id, p, box, me.x, me.y, me.z)) continue;
-    if (s.sb.bld && s.sb.bld[id]) continue; // (building: B is up, sbspawn.js "bld")
-    if (
-      !all &&
-      !who.includes("players") &&
-      !(name && who.includes(name)) &&
-      !grIn(s, who, "p:" + id) // (a group it's in: sbgroups.js)
-    )
-      continue;
-    ch = true;
-    if (zmaps) {
-      if (fx === "heal") l4Heal(s, id, amt);
-      else l4Hurt(s, id, amt, now, "zone");
-    } else if (fx === "heal") H0.heal(s, id, amt, now);
-    else H0.claw(s, id, amt, now, "zone");
+  const fx = fxOf(p);
+  if (fx !== "seriat") {
+    const raw = num(p, "amt");
+    return hitWith(
+      s,
+      pts,
+      id,
+      p,
+      now,
+      H0,
+      fx,
+      fx === "kill" ? 1e4 : Number.isFinite(raw) ? raw : 1,
+    );
   }
-  /* the NPCs: everything, their kind, or their spawn by its color or name */
+  let ch = false;
+  for (const r of sbSaRows(p)) {
+    if (!r.v.trim() || !r.on.length) continue;
+    const v = valueOf({ ok: r.v }, SA_BOX);
+    if (!Number.isFinite(v)) continue;
+    for (const on of r.on)
+      if (on !== "hp") ch = setWith(s, pts, id, p, H0, on, v) || ch;
+      else if (v)
+        ch =
+          hitWith(
+            s,
+            pts,
+            id,
+            p,
+            now,
+            H0,
+            v > 0 ? "heal" : "damage",
+            Math.abs(v),
+          ) || ch;
+  }
+  return ch;
+}
+/* who zone p takes: the ducks standing in it, and a test for an NPC (its kind, its spawn, its key for groups) */
+function scope(s, pts, id, p, H0) {
+  const who = words(boxText(p, "zwho")),
+    all = who.includes("everything"),
+    box = sbZoneBox(s, p, W, H);
+  const ducks = H0.ducks(s).filter((d) => {
+    const me = s.pos[d],
+      name = String((s.players[d] || {}).name || "").toLowerCase();
+    if (!me || !inside(s, id, p, box, me.x, me.y, me.z)) return false;
+    if (s.sb.bld && s.sb.bld[d]) return false; // (building: B is up)
+    return (
+      all ||
+      who.includes("players") ||
+      (!!name && who.includes(name)) ||
+      grIn(s, who, "p:" + d)
+    );
+  });
   const hits = (k, sp, key) => {
     if (all || who.includes(k || "zombie")) return true;
     if (key && grIn(s, who, key)) return true;
@@ -210,6 +237,76 @@ function hitAll(s, pts, id, p, now, H0) {
       (who.includes(q.col) || who.includes(boxText(q, "name").toLowerCase()))
     );
   };
+  return { ducks, hits, box };
+}
+/* a Seriat box's value on something other than HP: what it hits becomes it (NPCs as Seriat's ((speed 2)) sets them,
+   sbnumberat.js; a duck's Speed: its walk, as a spawn's Players' speed gives it) */
+const SET_LIM = {
+  speed: [0, 5],
+  damage: [0, 100],
+  regen: [0, 100],
+  hitbox: [10, 300],
+};
+function setWith(s, pts, id, p, H0, on, v0) {
+  const [lo, hi] = SET_LIM[on],
+    v = Math.min(hi, Math.max(lo, Math.round(v0 * 10) / 10)),
+    { ducks, hits, box } = scope(s, pts, id, p, H0);
+  let ch = false;
+  if (on === "speed" && ducks.length && !(baseMode(s.options) === "l4dd")) {
+    const pl = { ...((s.sb && s.sb.pl) || {}) };
+    for (const d of ducks)
+      if ((pl[d] || {}).sp !== v) {
+        pl[d] = { ...(pl[d] || {}), sp: v };
+        ch = true;
+      }
+    if (ch) s.sb = { ...s.sb, pl };
+  }
+  const put = (o) => {
+    const q = { ...o };
+    if (on === "speed") q.sv = v;
+    else if (on === "damage") q.dm = String(v);
+    else if (on === "regen") q.rg = v;
+    else q.hb = v / 100;
+    if (q.sv === o.sv && q.dm === o.dm && q.rg === o.rg && q.hb === o.hb)
+      return o;
+    ch = true;
+    return q;
+  };
+  if (sbOnBoard(s) && s.mz && s.mz.sb)
+    s.mz.zb = s.mz.zb.map((o) =>
+      !o.d && inside(s, id, p, box, o.x, o.y, 0) && hits(o.k, o.sp, "n:" + o.i)
+        ? put(o)
+        : o,
+    );
+  else if (s.hang && s.hang.sbz) {
+    const z = s.hang.sbz,
+      zb = z.zb.map((o) =>
+        !o.d &&
+        inside(s, id, p, box, o.x / W, o.y / H, heightAt(o.x, o.y)) &&
+        hits(o.k, o.sp, "n:c" + o.i)
+          ? put(o)
+          : o,
+      );
+    if (zb.some((o, i) => o !== z.zb[i]))
+      s.hang = { ...s.hang, sbz: { ...z, zb } };
+  }
+  return ch;
+}
+/* zone p's Damage, Heal or Kill, amt each, on everyone it hits standing in it */
+function hitWith(s, pts, id, p, now, H0, fx, amt) {
+  const zmaps = baseMode(s.options) === "l4dd",
+    { ducks, hits, box } = scope(s, pts, id, p, H0); // (each duck tested in this zone's own squares: the zone's id, never the duck's)
+  let ch = false;
+  /* the ducks */
+  for (const d of ducks) {
+    ch = true;
+    if (zmaps) {
+      if (fx === "heal") l4Heal(s, d, amt);
+      else l4Hurt(s, d, amt, now, "zone");
+    } else if (fx === "heal") H0.heal(s, d, amt, now);
+    else H0.claw(s, d, amt, now, "zone");
+  }
+  /* the NPCs: everything, their kind, or their spawn by its color or name */
   if (
     zmaps &&
     l4Zone(
