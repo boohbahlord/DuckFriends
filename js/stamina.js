@@ -10,15 +10,16 @@ import { L4 } from "./l4ddrules.js";
 let left = 1,
   tired = false;
 
-/* one frame: on, I want to sprint and am walking; true when my duck sprints this frame */
-export function sprintStep(on, dt) {
+/* one frame: on, I want to sprint and am walking; true when my duck sprints this frame. fill: how many times as fast it
+   fills again (Sandbox: a group's Regen stamina, sbgroups.js grStam) */
+export function sprintStep(on, dt, fill = 1) {
   if (on && !tired && left > 0) {
     left = Math.max(0, left - (dt * 1000) / L4.SPRINT);
     if (left <= 0) tired = true;
     return true;
   }
   if (!on) tired = false; // (it can sprint again as soon as the sprint is let go)
-  left = Math.min(1, left + (dt * 1000) / L4.SPRINT);
+  left = Math.min(1, left + (dt * 1000 * fill) / L4.SPRINT);
   return false;
 }
 /* my sprint left (0 … 1) and whether I'm too tired to sprint, for the blue bar under my HP meter */

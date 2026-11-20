@@ -214,7 +214,7 @@ const FN1 = {
   down: (v) => Math.floor(v + 1e-9),
 };
 /* an NPC's stats, read and set by name (numberatrun.js): "z hp" is NPC z's HP */
-export const NB_STATS = ["hp", "speed", "damage", "hitbox"];
+export const NB_STATS = ["hp", "speed", "damage", "hitbox", "regen"]; // (regen: HP back each second, the owner's "regen HP": sbgroups.js)
 /* a zone's, read and set the same way inside a zone's file, or from another file by its name: zone 'Pit' steps (the
    owner's yes, Nov 20 03:10Z). steps: how many steps its squares took; squares: how many work at once; size: a square's
    size in duck lengths; inside: how many players stand in it */

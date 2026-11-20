@@ -129,6 +129,7 @@ import {
 import { ANGEL, angelOf, angelAmmo, angelAct, angelLeft } from "./l4ddangel.js";
 import { fieldOf, askField } from "./flowfield.js";
 import { NPC_RUN } from "./npcshared.js";
+import { grHp, grCool } from "./sbgroups.js";
 import {
   isSurv,
   survOn,
@@ -1505,6 +1506,22 @@ function store(s, zs, keepStatic) {
   s.hidden = { ...(s.hidden || {}), l4z: mine };
 }
 export const zombiesOf = zombies;
+/* Sandbox's groups (sbgroups.js): the map's own zombies up now, as copies ({ i, x, y (world px), hp, l, sp, … }), and
+   their HP and most HP (l[0]) set again: ch = Map(i → { hp, l }) */
+export const l4Zups = (s) =>
+  s.hang && s.hang.zp ? zombies(s).filter((z) => z.st !== 3) : [];
+export function l4SetHp(s, ch) {
+  if (!ch.size || !s.hang || !s.hang.zp) return;
+  const zs = zombies(s);
+  for (const z of zs) {
+    const q = ch.get(z.i);
+    if (!q) continue;
+    z.hp = q.hp;
+    z.l = q.l;
+  }
+  s.hang = { ...s.hang };
+  store(s, zs, false);
+}
 
 /* ---------- a duck's slots, points and upgrades ---------- */
 /* a weapon's ammo, full: [in the magazine, the rest], or [all of it, 0] without a magazine; none for melee */
@@ -1571,12 +1588,12 @@ export const l4Holds = (s, id, w) =>
 export const ptsOf = (s, id) => ((s && s.hang && s.hang.l4pt) || {})[id] ?? 0;
 export const upOf = (s, id) => ((s && s.hang && s.hang.l4u) || {})[id] || {};
 export const maxHp = (s, id) =>
-  isWild(s, id) ? wildMax(s) : L4.HP + (upOf(s, id).hp || 0);
+  isWild(s, id) ? wildMax(s) : grHp(s, id, L4.HP + (upOf(s, id).hp || 0)); // (Sandbox: a group's Max HP over it, sbgroups.js)
 /* a weapon's wait between uses (each Attack speed: 10% shorter), a reload's time (Faster reload: 30% shorter), the
    headshot chance (headOf, below) */
 export const l4Cool = (s, id, w) =>
   ARMS[w]
-    ? (w === "laser" && angelOf(s, id, w)
+    ? ((w === "laser" && angelOf(s, id, w)
         ? ANGEL.LASER.cool // (the Angelic Laser Rifle: its own, a beam every 0.75 s)
         : ARMS[w].cool *
           (angelOf(s, id, w)
@@ -1584,7 +1601,8 @@ export const l4Cool = (s, id, w) =>
               ? ANGEL.PISTOL.FIRE
               : ANGEL.FAST
             : 1)) * // (Angelic: 20% faster; the dual pistols twice as fast, l4ddangel.js)
-      Math.pow(0.9, upOf(s, id).as || 0)
+        Math.pow(0.9, upOf(s, id).as || 0)) /
+      grCool(s, id) // (Sandbox: a group's Cooldown speed, sbgroups.js)
     : 400;
 /* ---------- the Laser Rifle's heat ----------
    Kept in the kit as lz { h: its heat in beams at t, t: the last beam, o: overheated until (0: not) }. After a beam

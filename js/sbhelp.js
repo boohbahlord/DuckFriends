@@ -98,6 +98,18 @@ export const SB_HELP = {
       "Music",
       "Music opens its own window: tick the songs that play, or turn them all on or off at once. Only the ticked ones play, the same for everyone. The save keeps the list.",
     ],
+    [
+      "Groups",
+      "Groups (in Game settings, G) are named sets of rules. A player or an NPC joins one when it spawns from a Spawn or Respawn tab you ticked (a red spawn and a blue respawn are different), steps into a zone, picks up a loot, or comes from a block of a variable name. Every tab also has its own Joins groups list.",
+    ],
+    [
+      "What a group does",
+      "Max HP: +30 adds 30, 30 makes it 30. Heal on joining: an amount, or 100% for full. Regen HP each second, stamina and cooldowns faster, an outline color, who its NPCs go after or leave alone, and windows it opens or closes for its players (Neutral leaves them as they are). Game settings come first, then groups. A player leaves its groups when it spawns again; an NPC when it dies. Every list names the groups under the entities.",
+    ],
+    [
+      "My lists",
+      "My lists (in Game settings, G) keeps made NPCs and groups out of your own lists. Nobody else's lists change.",
+    ],
   ],
 };
 const TITLES = {
