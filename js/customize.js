@@ -41,8 +41,8 @@ import {
   RAINBOW_SKIN,
   BUILDS,
   SIZES,
-  pictureToSquare,
-  CARD_PIC_PX,
+  pictureTo,
+  CARD_PIC,
   duckSVG,
   DUCK_SCALE,
   scaleOf,
@@ -1747,16 +1747,16 @@ export function openCustomize(page = lastPage, opts = {}) {
                 if (got.z > 1) D.z = got.z;
                 else delete D.z;
               } else {
-                /* the card's picture: the part of it I want, picked in the crop window first (picrop.js), a square
-                   the size of the card's picture (the owner's, Nov 20 22:23Z: "it instantly snaps to the middle of
-                   the picture when I want it to show the top end") */
-                const sq = await cropFile(file, {
-                  aspect: 1,
-                  px: [CARD_PIC_PX, CARD_PIC_PX],
-                  most: 256,
+                /* the card's picture: the part of it I want, picked in the crop window first (picrop.js), its box
+                   locked to the card's own shape, so what I pick is what the card shows (the owner's, Nov 20 22:23Z
+                   and 23:40Z) */
+                const part = await cropFile(file, {
+                  aspect: CARD_PIC[0] / CARD_PIC[1],
+                  px: CARD_PIC,
+                  most: 704,
                 });
-                if (!sq) return;
-                profile.card.image = await pictureToSquare(sq, CARD_PIC_PX);
+                if (!part) return;
+                profile.card.image = await pictureTo(part, ...CARD_PIC);
               }
               changed();
             } catch (err) {
