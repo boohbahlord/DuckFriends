@@ -117,7 +117,7 @@ const cornerHit = (p) =>
       Math.abs(o.b - (p.y + 12)) < 2,
   );
 /* the heap of blocks at the foot of Downpour's smashed corner (world px): its floor w × d, and how high it may reach */
-const HEAP = { w: 180, d: 64, up: 44 };
+const HEAP = { w: 180, d: 64, up: 34 };
 function wallParts(p) {
   if (p.only === "out" && !p.map) return []; // (the south wall outside: part of the cabin's drawing)
   const z = p.z || 0,

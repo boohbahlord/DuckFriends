@@ -177,16 +177,22 @@ export function gsWallX({
           y1 = Math.min(u.b, q.a),
           x1 = Math.min(over[i].x, ...over.slice(k, i + 1).map((v) => v.x));
         if (y1 <= y0) break;
-        if (x1 > q.x) tops.push([q.x, y0, x1 - q.x, y1 - y0]);
+        if (x1 > q.x) tops.push([q.x, y0, x1 - q.x, y1 - y0, q.j, y1 === q.a]);
       }
     });
     boxes.push(...tops);
     defs += F`<clipPath id="${id}b">${boxes.map(([x, y, bw, bh]) => R(x, y, bw, bh, "#000")).join("")}</clipPath>`;
+    /* each broken top: the blocks' insides, light (Joseph's critique, Nov 20: dark, "they read as stairs painted on the
+       face"), the joints between them across it, and its front edge, the top of the face under it, lit */
+    const rowsTop = (j) => rows.find((v) => v.j === j).a;
     let steps = "";
-    for (const [x, y, bw, bh] of tops)
-      steps +=
-        R(x, y, bw, bh, S.top) +
-        F`<path d="M${x + 2} ${n1(y + bh * 0.4)}H${x + bw}" stroke="${S.topHi}" stroke-width="2" opacity=".5"/>`;
+    for (const [x, y, bw, bh, j, front] of tops) {
+      steps += R(x, y, bw, bh, S.end);
+      if (front) steps += R(x, y + bh - 3, bw, 3, "#d0cfa2");
+      if (y === rowsTop(j) - t) steps += R(x, y, bw, 2, S.top); // (its far edge)
+      for (let jx = joint(j, x + 4); jx < x + bw - 2; jx += 64)
+        steps += R(jx - 1, y, 2, bh - (front ? 3 : 0), S.top);
+    }
     /* a few soft cracks along joints near the break, a shade under the face (never black) */
     let cracks = "";
     for (let i = 0; i < rows.length; i++)
@@ -196,7 +202,7 @@ export function gsWallX({
         cracks += F`<path d="M${x0} ${n1(q.a + 1)}l${n1(-2 + r() * 4)} ${n1((q.b - q.a) / 2)}l${n1(2 + r() * 3)} ${n1((q.b - q.a) / 2 - 1)}" fill="none" stroke="#9eb3a1" stroke-width="1.6"/>`;
       }
     /* the ink round what stands, a pixel at a time (one to 2 world px), along the broken end only (the rest of the wall
-       has its own); and along each broken top's front edge, where it meets the face under it */
+       has its own) */
     const P = 2,
       inBox = (x, y) =>
         boxes.some(
@@ -217,7 +223,6 @@ export function gsWallX({
         )
           ink += R(x, y, P, P, O);
       }
-    for (const [x, y, bw, bh] of tops) ink += R(x, y + bh - P, bw, P, O);
     s = F`<g clip-path="url(#${id}b)">${s}${steps}${cracks}</g>` + ink;
   }
   return wrap(w, h, s, defs, "hg-wall");
@@ -1722,9 +1727,10 @@ function roofHole(x, y, w, d, seed, corner = "") {
   s +=
     F`<clipPath id="${id}"><path d="${pathOf(cut)}"/></clipPath>` +
     F`<g clip-path="url(#${id})"><path d="${pathOf(cut)}${pathOf(cut, SLAB)}" fill="#414d59" fill-rule="evenodd"/><path d="${pathOf(cut, SLAB * 0.45)}" fill="none" stroke="#353636" stroke-width="2"/></g>` +
-    F`<path d="${pathOf(cut)}" fill="none" ${ln(3)}/>`;
-  /* rebar: rusty rods sticking out over the hole from its edge, a few bent down */
-  for (let i = 0; i < (corner ? 7 : 5); i++) {
+    F`<path d="${pathOf(cut)}" fill="none" stroke="#353636" stroke-width="2.4" stroke-linejoin="round"/>`; // (soft, as its cracks: Joseph's critique, Nov 20)
+  /* rebar: rusty rods sticking out over the hole from its edge, a few bent down; none over the restroom's corner, where
+     it broke with the brick wall under it (Joseph's critique, Nov 20: "Brick walls have no rebar") */
+  for (let i = 0; i < (corner ? 0 : 5); i++) {
     const [x0, y0] = cut[1 + Math.floor(r() * (cut.length - 3))],
       tx = corner ? x : cx,
       ty = corner ? y + d : cy,

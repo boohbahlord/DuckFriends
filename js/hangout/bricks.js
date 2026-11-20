@@ -18,11 +18,13 @@ const INK = "#1d1e29",
   SIDE = "#9eb3a1", // (a face toward the south-west, and a chip or a crack: a shade under the top)
   DARK = "#849097", // (a face toward the south-east)
   SHADOW = "#111026"; // (half see-through)
-/* a whole block of the wall (its face 64 × 12 world px: stationart.js SKINS.gs), a half, a chunk: [long, wide, high] */
+/* a brick: [long, wide, high], always a brick's shape, about 2 long to 1 wide to 0.6 high (Joseph's critique, Nov 20:
+   "Most rubble pieces read as cubes or chunks, not bricks"), so lying flat its long side shows, and standing up its end
+   shows small. A whole one, near a block of the wall (its face 64 × 12 world px: stationart.js SKINS.gs), and smaller */
 const SIZES = {
-  whole: [28, 9, 6],
-  half: [14, 9, 6],
-  chunk: [8, 6, 5],
+  whole: [26, 13, 8],
+  half: [20, 10, 6],
+  chunk: [14, 7, 5],
 };
 const rnd = (seed) => () =>
   (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296; // (the same "random" every time)
@@ -30,11 +32,7 @@ const rnd = (seed) => () =>
 /* a brick: its middle (x, y), its turn a, which way it lies (bed: on its broad side; edge: on its long narrow side;
    end: standing up), its size; its footprint's corners and its height */
 function brick(x, y, a, size, lie, r) {
-  let [L, W, H] = SIZES[size];
-  if (size === "chunk") {
-    L += Math.round(r() * 4);
-    W += Math.round(r() * 2);
-  }
+  const [L, W, H] = SIZES[size];
   const [fl, fw, fh] =
     lie === "edge" ? [L, H, W] : lie === "end" ? [W, H, L] : [L, W, H];
   const ux = Math.cos(a),
@@ -215,20 +213,32 @@ function draw(w, h, bricks, crumbs, up, r) {
           out[q] = INK;
       }
     }
-  /* each one's small shadow on the floor (the ducks' and props': a little down and to the east), the crumbs */
+  /* each one's shadow on the floor, the way the ducks' falls (css .gduck-shadow): right under it, a little wider than it
+     and a little to the south, so it sits on the ground */
   const shade = new Array(W * H).fill(false);
-  for (let py = 0; py < H; py++)
-    for (let px = 0; px < W; px++)
-      if (out[py * W + px] && who[py * W + px] >= 0)
-        for (const [dx, dy] of [
-          [1, 2],
-          [2, 2],
-          [2, 1],
-        ]) {
-          const qx = px + dx,
-            qy = py + dy;
-          if (qx < W && qy < H && !out[qy * W + qx]) shade[qy * W + qx] = true;
-        }
+  for (const b of bricks) {
+    if (b.z > 0) continue; // (one lying on others: its shadow falls on them, under it)
+    const cx = b.foot.reduce((t, v) => t + v[0], 0) / 4,
+      cy = b.foot.reduce((t, v) => t + v[1], 0) / 4,
+      grown = b.foot.map(([x, y]) => {
+        const d = Math.hypot(x - cx, y - cy) || 1;
+        return [x + ((x - cx) / d) * 2.2, y + ((y - cy) / d) * 2.2 + 1.5];
+      }),
+      xs = grown.map((v) => v[0]),
+      ys = grown.map((v) => v[1] + up);
+    for (
+      let py = Math.max(0, Math.floor(Math.min(...ys)));
+      py < Math.min(H, Math.ceil(Math.max(...ys)));
+      py++
+    )
+      for (
+        let px = Math.max(0, Math.floor(Math.min(...xs)));
+        px < Math.min(W, Math.ceil(Math.max(...xs)));
+        px++
+      )
+        if (!out[py * W + px] && inside(grown, px + 0.5, py + 0.5 - up))
+          shade[py * W + px] = true;
+  }
   for (const [x, y, c] of crumbs) {
     const px = Math.floor(x),
       py = Math.floor(y + up);
@@ -245,7 +255,7 @@ function draw(w, h, bricks, crumbs, up, r) {
       while (px + n < W && (out[k + n] || (shade[k + n] ? SHADOW : null)) === c)
         n++;
       if (c)
-        s += `<rect x="${px * ART}" y="${(py - up) * ART}" width="${n * ART}" height="${ART}" fill="${c}"${c === SHADOW && !out[k] ? ' fill-opacity=".5"' : ""}/>`;
+        s += `<rect x="${px * ART}" y="${(py - up) * ART}" width="${n * ART}" height="${ART}" fill="${c}"${c === SHADOW && !out[k] ? ' fill-opacity=".6"' : ""}/>`;
       px += n;
     }
   return s;
@@ -311,52 +321,51 @@ const sizeOf = (r) => {
 const crumbsOf = (r, n, at) =>
   Array.from({ length: n }, () => [...at(), r() < 0.6 ? SIDE : DARK]);
 
-/* the rubble out of a smashed north-south wall: w × d world px on the floor, the wall's line down its middle. Thick by
-   the line and at the wall's broken end (the box's north edge: a few bricks dropped on each other there), thinning out
-   both ways, a few strays farther out; never one on top of another out on the floor */
+/* the rubble out of a smashed north-south wall: w × d world px on the floor, the wall's line down its middle. On the
+   ground in front of the hole, west of the wall's line (outside, where it was knocked out to: Joseph's critique, Nov 20,
+   "The heap belongs on the ground in front of the hole, west of the strip, and it should spread out and get lower moving
+   away, not stand up in a line"): thick by the line, thinning out going west, a few strays farther. None inside: seen
+   through the roof's broken corner, they read as lying on the wall. Never one on top of another out on the floor */
 export function floorBricks({ w, d, seed = 1 }) {
   const r = rnd(seed),
     pw = Math.round(w / ART),
     ph = Math.round(d / ART),
     mid = pw / 2,
-    up = 4;
-  const n = Math.round((pw * ph) / 640),
-    spread = (k) =>
-      mid +
-      (r() + r() + r() - 1.5) *
-        pw *
-        (k < n * 0.6 ? 0.22 : k < n * 0.85 ? 0.42 : 0.66), // (most near the line, then looser, a few strays)
+    up = 6,
+    clear = 9; // (the wall's line, half its width and a little: nothing lies on it)
+  const n = Math.round((pw * ph) / 1300),
+    away = () => Math.abs(r() + r() - 1), // (0 by the line most often, up to 1)
     floor = lay(
       pw,
       ph,
       n,
-      (k) => ({
-        x: spread(k),
-        y: 10 + r() * (ph - 16),
+      () => ({
+        x: mid - clear - 6 - away() * (mid - clear - 14),
+        y: 10 + r() * (ph - 18),
         size: sizeOf(r),
-        lie: r() < 0.68 ? "bed" : "edge",
+        lie: r() < 0.85 ? "bed" : "edge",
         gap: 3 + r() * 7,
       }),
       r,
     );
-  /* the heap at the broken end (north), where they fell first: dropped onto each other, any which way */
+  /* a low heap by the wall's line, in the middle of the way through, where most of them fell: dropped onto each other */
   const heap = lay(
     pw,
     ph,
-    4,
+    5,
     () => ({
-      x: mid + (r() - 0.5) * 20,
-      y: 26 + r() * 10,
+      x: mid - clear - 10 - r() * 18,
+      y: ph * (0.3 + r() * 0.4),
       size: sizeOf(r),
-      lie: r() < 0.6 ? "bed" : "edge",
+      lie: "bed",
       gap: 0,
     }),
     r,
-    { stack: true, high: 7 },
+    { stack: true, high: 6 },
   ).filter((b) => !floor.some((o) => near(o.foot, b.foot, 1)) || b.z > 0);
   const all = [...floor, ...heap],
     crumbs = crumbsOf(r, Math.round(n * 1.6), () => [
-      mid + (r() + r() - 1) * pw * 0.4,
+      mid - clear - away() * pw * 0.4,
       4 + r() * (ph - 8),
     ]);
   return `<svg class="hg" viewBox="0 0 ${w} ${d}" width="${w}" height="${d}" overflow="visible" aria-hidden="true">${draw(pw, ph, all, crumbs, up, r)}</svg>`;
@@ -364,8 +373,9 @@ export function floorBricks({ w, d, seed = 1 }) {
 
 /* the heap at the foot of a wall's broken end, seen from the south (the gas station's south-west corner): w × d world px
    of floor in front of the wall, the wall's broken end at its west (left) edge. Bricks dropped any which way, onto each
-   other: high by the wall's end, lower and looser going east and south, a few strays. up: how far above the box's top
-   the heap may reach (world px) */
+   other: high by the wall's end, lower and looser going east and south, a few strays. All of them on the ground south of
+   the wall's foot (Joseph's critique, Nov 20: drawn over the wall's face, they "look like they float"), and low. up: how
+   far above the box's top the heap may reach (world px) */
 export function heapBricks({ w, d, seed = 1, up = 40 }) {
   const r = rnd(seed),
     pw = Math.round(w / ART),
@@ -374,7 +384,7 @@ export function heapBricks({ w, d, seed = 1, up = 40 }) {
     st = { hm: new Float32Array(pw * ph), bricks: [] },
     at = (spread) => ({
       x: 4 + Math.abs(r() + r() - 1) * pw * spread,
-      y: 5 + r() * ph * Math.min(0.8, spread + 0.1),
+      y: 9 + r() * (ph - 14) * Math.min(0.85, spread + 0.15),
     });
   /* the floor under the break first, then a layer dropped onto those, then a last few on top: most of them lying flat */
   const heap = [
@@ -385,7 +395,7 @@ export function heapBricks({ w, d, seed = 1, up = 40 }) {
       () => ({
         ...at(0.7),
         size: r() < 0.55 ? "whole" : r() < 0.85 ? "half" : "chunk",
-        lie: r() < 0.8 ? "bed" : "edge",
+        lie: r() < 0.9 ? "bed" : "edge",
         gap: 0.6,
       }),
       r,
@@ -398,10 +408,10 @@ export function heapBricks({ w, d, seed = 1, up = 40 }) {
       () => ({
         ...at(0.45),
         size: r() < 0.5 ? "whole" : r() < 0.8 ? "half" : "chunk",
-        lie: r() < 0.75 ? "bed" : "edge",
+        lie: "bed",
       }),
       r,
-      { st, stack: true, low: 1, high: 9 },
+      { st, stack: true, low: 1, high: 8 },
     ),
     ...lay(
       pw,
@@ -413,7 +423,7 @@ export function heapBricks({ w, d, seed = 1, up = 40 }) {
         lie: "bed",
       }),
       r,
-      { st, stack: true, low: 5, high: 14 },
+      { st, stack: true, low: 5, high: 11 },
     ),
   ];
   const strays = lay(
