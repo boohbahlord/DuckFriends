@@ -36,6 +36,7 @@ import { sbGodAct, godOn } from "./sbgod.js";
 import { survSet } from "./survrules.js";
 import "./gunmenrules.js"; // (Survival's gunmen: their rules hook into l4ddrules.js)
 import { sbAct, sbTick, sbPlaceDuck, sbHpOf } from "./sbspawn.js";
+import { sbOut, sbOutTick, sbAgainAct } from "./sbout.js";
 import { hpHeal, tenths } from "./hpmath.js";
 import { sbHotAct, sbSlots, sbGot, sbSpend } from "./sbhot.js";
 import { sbLootAct, sbLootTick } from "./sbloot.js";
@@ -2187,6 +2188,7 @@ function reduceStep(state, a, now) {
         return state; // (Quacky Zombies: the host just put it at a start spot; a move sent before that got there is old)
       if (isHang(s) && hangStill(s, a.id, now)) return state; // Hangout: shot by Justin, it can't move for a while
       if (downStill(s, a.id, now)) return state; // the boards: knocked down, it can't move for the host's time (1 s unless set)
+      if (sbOut(s, a.id)) return state; // (Sandbox: out of lives, it stays down: sbout.js)
       if (seated(s, a.id)) return state; // (Valentine's Duck Date: the two at the table stay in their seats)
       let x = Math.max(0, Math.min(1, +a.x || 0)),
         y = Math.max(0, Math.min(1, +a.y || 0));
@@ -2376,6 +2378,7 @@ function reduceStep(state, a, now) {
       return sbGodAct(s, a) ? s : state;
     case "sbr":
       // Sandbox's Rules in G: lives, down phase, crits, watching when out (sandboxrules.js)
+      if (a.k === "again") return sbAgainAct(s, a) ? s : state; // (everyone out, off the zombie maps: the host's Play again, sbout.js)
       return sbRulesAct(s, a) ? s : state;
     case "sbh":
       // Sandbox's hotbar: its slots, the default, the lock, a spawn button's look and press (sbhot.js)
@@ -3225,6 +3228,9 @@ function reduceStep(state, a, now) {
         l4Again(s, now);
         return s;
       } // (Sandbox's Rules: everyone out of lives, then the lobby or a new start)
+      const sbEnd = sbOutTick(s, now); // (the same off the zombie maps: sbout.js)
+      if (sbEnd === "lobby") return backToLobby(s, "Everyone's out.");
+      if (sbEnd) return s;
       if (
         s.phase === "hang" &&
         s.options.mode === "hang" &&
