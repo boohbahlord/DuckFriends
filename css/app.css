@@ -718,7 +718,7 @@ html.noshapes #shapes svg > :not(rect:first-of-type):not(defs) {
 .win-small {
   width: min(25rem, 100%);
 }
-/* cropping a duck's picture (picrop.js): the picture, a box over it (what's outside it dimmed), its corners to size it;
+/* cropping a picture (picrop.js: every upload): the picture, a box over it (what's outside it dimmed), its corners to size it;
    under it, how it comes out as pixels on a see-through checker, and the buttons */
 .pc-stage {
   position: relative;

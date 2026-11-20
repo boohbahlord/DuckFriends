@@ -12,6 +12,7 @@ import { profile } from "./store.js";
 import { duckSVG, squareOf, DUCK_PIC_PX } from "./duck.js";
 import { esc, toast } from "./ui.js";
 import { applyPalette } from "./pixelpalette.js";
+import { cropFile } from "./picrop.js";
 import { SB_WHAT } from "./sandboxrules.js";
 import { zombieURL } from "./l4ddart.js";
 import { zLook } from "./mgjrules.js";
@@ -135,6 +136,8 @@ export async function picFrom(file, most = 32) {
   if (!file || !/^image\/(png|jpeg|gif|webp)$/.test(file.type))
     throw new Error("That file is not a picture (PNG, JPEG, GIF or WebP).");
   if (file.size > SB_PIC.MOST) throw new Error("That picture is over 2 MB.");
+  file = await cropFile(file, { side: most }); // (cropped first, as every picture: picrop.js)
+  if (!file) return null; // (closed without one)
   const img = await sizeOf(await readAs(file));
   return {
     d: pixelsOf(img, most),
