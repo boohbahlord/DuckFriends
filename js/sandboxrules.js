@@ -2050,7 +2050,7 @@ export const SB_DROPS = {
   doublepoints: ["double", "Double Points"],
   speedboost: ["speed", "Speed Boost"],
   sale: ["sale", "Sale"],
-}; // (an orb's word for each, never a special's id: the Double jump is "double"; then the zombies' own name for it)
+}; // (an orb's word for each; then the zombies' own name for it)
 /* gear an orb can hold on Dead Ducks Arcade's maps: the flashlight. In Sandbox a duck there has none until it takes one
    (the owner's, Nov 19: every zombie mechanic "besides flashlight, but flashlight can be added as loot"); it keeps it
    for good, in s.sb.fl */

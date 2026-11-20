@@ -273,7 +273,7 @@ const GAME = [
   },
   {
     name: "Settings",
-    short: "forgame: timers, turn-end, order, gravity …",
+    short: "forgame: timers, turn-end, order …",
     title: "HelpGame-Settings · changing the game while it runs",
     dumb: "forgame = settings, but in the middle of the game, typed.",
     what: [
@@ -290,7 +290,6 @@ const GAME = [
       ["sudo forgame turn-end everyone | half | 2/3 | 3/4", "when a turn ends"],
       ["sudo forgame order random | rotate", "the order of the questions"],
       ["sudo forgame freeroam on | off", "ducks walk anywhere"],
-      ["sudo forgame gravity low | normal", "floaty ducks"],
       ["sudo forgame silly on | off", "the silly commands"],
       ["sudo forgame justin on | off", "Justin walks the board"],
     ],
@@ -299,7 +298,7 @@ const GAME = [
       ["sudo forgame timer on answer 60", "a minute to answer"],
       ["sudo forgame timer off writing", "no hurry to write"],
       ["sudo forgame turn-end 2/3", "turns end when two thirds are done"],
-      ["sudo forgame gravity low && sudo forgame freeroam on", "two at once"],
+      ["sudo forgame silly off && sudo forgame freeroam on", "two at once"],
       ["sudo forgame silly off", "no more lightning"],
     ],
     see: ["HelpGame-How", "HelpGame-Perms"],
@@ -1172,7 +1171,7 @@ const PAGES = [
     short: "steer the game with sudo (has its own pages)",
     desc: "What only DuckFriends has: changing the game while it runs, skipping, kicking, mutes for everyone, the lobby's map and mode, stats and sending to the chat. HelpGame has its own pages: HelpGame-How, HelpGame-Help, HelpGame-Settings, HelpGame-Lobby, HelpGame-Players, HelpGame-Send, HelpGame-Stats and HelpGame-Perms.",
     title: "HelpGame · steering the game from here",
-    dumb: "With sudo you are the game's remote control. Skip, kick, change timers, change gravity. Use your powers for fun.",
+    dumb: "With sudo you are the game's remote control. Skip, kick, change timers, change the rules. Use your powers for fun.",
     what: [
       "The command line can change the game itself. The host and sudo (and groups given perms like canskip) can change settings in the middle of a game, skip a stage, kick a player, and mute someone for everyone.",
       "In the lobby, sudo picks the map and the game type and starts the game. Anyone can read the settings, the stats, and who is doing what.",
@@ -1200,7 +1199,7 @@ const PAGES = [
     ],
     ex: [
       ["forgame show", "how the game is set up right now"],
-      ["sudo forgame gravity low", "every duck floats"],
+      ["sudo forgame freeroam on", "ducks walk anywhere"],
       [
         "sudo forgame turn-end half",
         "a turn ends when half the players are done",

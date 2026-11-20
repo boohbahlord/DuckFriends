@@ -23,7 +23,6 @@ import {
   missOf,
   endless,
 } from "./l4ddrules.js";
-import { BOMB } from "./jaimebomb.js";
 import { survOn } from "./survrules.js";
 import { orbHTML, UP_ICONS } from "./l4ddart.js";
 import { DROP_ICONS } from "./l4dddrops.js";
@@ -67,17 +66,13 @@ const SAY = {
   zebra:
     "Thrown. Every zombie goes for it and bites it until it's gone. Justin's favorite.",
   adrenaline: "You walk at the game's usual speed for 20 seconds.",
-  longjump: "Each use turns long jumps on or off.",
-  jaime:
-    "Jaime runs at the nearest zombie and stabs it until one gets him. Back each round.",
-  jaimebomb: "As Jaime, but he carries a bomb that goes off where he is.",
   jetpack:
     "Each use turns it on or off. While it's on, Space flies. A Max Ammo fills it.",
   chair:
     "Justin's office chair, thrown the way you aim, as often as you like; it shoves what it hits.",
   grenade: "Thrown with G. Kills every zombie in its blast.",
   kill: "Every hit kills, for 45 seconds.",
-  ammo: "Fills everyone's ammo and grenades (not the medkit or Jaime).",
+  ammo: "Fills everyone's ammo and grenades (not the medkit).",
   nuke: "Kills every zombie on the map, and everyone gets the points.",
   speed: "Everyone walks faster for a minute.",
   double: "Double points for 45 seconds.",
@@ -125,12 +120,10 @@ function stats(w) {
   }
   if (A.kind === "special") {
     if (w === "jetpack") out.push(["Flight", secs(A.all)]);
-    else if (A.round) out.push(["Uses", `${A.all} a round`]);
-    else if (A.all && w !== "longjump") out.push(["Uses", A.all]);
+    else if (A.all) out.push(["Uses", A.all]);
     if (A.ms) out.push(["Lasts", secs(A.ms)]);
     if (A.dmg) out.push(["Damage", A.dmg]);
   }
-  if (w === "jaimebomb") out.push(["Blast", `${num(BOMB.wide)}x a grenade's`]);
   /* a merchant: the bow always, anything in the bags maybe (the owner's, Nov 18 13:46Z) */
   if (w === "bow") out.push(["Every merchant sells it", merchantPrice(w)]);
   else if (w === "defib")
@@ -164,7 +157,7 @@ const weaponRow = (w) => row(orbHTML(w), weaponName(w), SAY[w] || "", stats(w));
 
 /* the whole tab: a heading and a list for each category */
 export function catalogHTML() {
-  const all = [...POOL, ...(survOn() ? ["defib"] : []), "grenade"], // (Survival: the defibrillator) // (no Jaime Bomb in the zombie modes any more: the owner's, Nov 18 12:19Z)
+  const all = [...POOL, ...(survOn() ? ["defib"] : []), "grenade"], // (Survival: the defibrillator)
     of = (k) => all.filter((w) => kindOf(w) === k);
   const cats = [
     ["Melee", of("melee").map(weaponRow)],

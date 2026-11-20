@@ -37,7 +37,7 @@ function show(name, arg) {
   /* its pictures in before it shows, behind the loading screen (the owner's, Nov 19 20:04Z). Only as it comes up: what
      changes on it afterwards (a zombie, a drop, the lobby's pictures taking turns, even under a window) never brings
      the loading screen up in the middle of things; windows cover their own pages (ui.js openWindow) */
-  coverPictures(node);
+  coverPictures(node, { whole: true }); // (and the rest of the page: the corners, the music bar)
   root.firstElementChild.dataset.screen = name;
   document.body.dataset.screen = name;
   scrollTo(0, 0);

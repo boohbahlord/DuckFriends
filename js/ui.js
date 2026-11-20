@@ -50,7 +50,7 @@ export function el(html) {
 }
 
 /* a window over the page; resolves with what it was closed with (the X and Esc close it with null) */
-export function openWindow(html, { cls = "", onOpen } = {}) {
+export function openWindow(html, { cls = "", onOpen, cover = true } = {}) {
   return new Promise((done) => {
     const back =
       el(`<div class="win-back" role="presentation"><div class="win ${cls}" role="dialog" aria-modal="true">
@@ -82,7 +82,9 @@ export function openWindow(html, { cls = "", onOpen } = {}) {
     win.querySelector(".win-x").onclick = () => close(null);
     addEventListener("keydown", key, true);
     document.body.appendChild(back);
-    const uncover = coverChanges(win); // (its pages' pictures in behind the loading screen: loading.js)
+    /* (its pages' pictures in behind the loading screen: loading.js; a window that loads its pictures itself says
+       cover: false, as Customize) */
+    const uncover = cover ? coverChanges(win) : () => {};
     sfx.uiOpen();
     win.close = close;
     if (onOpen) onOpen(win, close);

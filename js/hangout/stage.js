@@ -12,6 +12,7 @@ import { activity } from "./registry.js";
 import { PROPS, STAGE, sortY } from "./layout.js";
 import * as A from "./art.js";
 import { pxAt } from "../pxdom.js";
+import { offView } from "../gameready.js";
 
 const OWN = ["stage", "stagestairs", "mic"];
 for (const p of PROPS) if (OWN.includes(p.kind)) p.layer = "none"; // (drawn here, in strips)
@@ -95,7 +96,7 @@ activity({
         zIndex: p.key + 10,
       });
       e.innerHTML = p.html;
-      e.hidden = true;
+      offView(e, true);
       box.append(e);
       return { ...p, e };
     });
@@ -119,9 +120,11 @@ activity({
           a.left + p.w * sc > -30 &&
           a.top < vh + 30 &&
           a.top + p.h * sc > -30;
-      if (p.e.hidden !== !vis) p.e.hidden = !vis;
-      if (!vis) continue;
-      const tr = `${W.boxTr(a.left, a.top)} scale(${scs})`;
+      /* out of view: unseen, at its size, so its pixels are made while the game loads (gameready.js offView) */
+      offView(p.e, !vis);
+      const tr = vis
+        ? `${W.boxTr(a.left, a.top)} scale(${scs})`
+        : `translate(-99999px, 0) scale(${scs})`;
       if (p.e._tr !== tr) {
         p.e._tr = tr;
         p.e.style.transform = tr;

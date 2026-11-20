@@ -10,6 +10,7 @@
    A map: { id, t: title, de: description, ui: its look (UMAP_UIS), d: the picture, at: when it was last saved } */
 import { esc, openWindow, confirmBox, toast } from "./ui.js";
 import { applyPalette } from "./pixelpalette.js";
+import { cropFile } from "./picrop.js";
 import { UMAP, UMAP_UIS, isUmap } from "./umaprules.js";
 import { MAPS } from "./maps.js";
 import { NWK_VARIANTS } from "./nwk.js";
@@ -179,9 +180,20 @@ export function makeMap(R, was = null) {
           if (!file) return;
           if (!PIC_TYPES.test(file.type))
             return toast("That file is not a picture.");
+          let part;
+          try {
+            part = await cropFile(file, {
+              aspect: UMAP.W / UMAP.H,
+              px: [UMAP.W / 4, UMAP.H / 4],
+              most: UMAP.W * 2,
+            }); // (cropped first, as every picture: picrop.js)
+          } catch (e) {
+            return toast(e.message);
+          }
+          if (!part) return;
           box.innerHTML = '<span class="dim">Making it into pixels…</span>';
           try {
-            d = await mapPixels(await readAs(file)); // (only the pixels are kept: the file goes)
+            d = await mapPixels(await readAs(part)); // (only the pixels are kept: the file goes)
             box.innerHTML = `<img src="${d}" alt="The map's picture">`;
             w.querySelector("[data-upl]").textContent = "Another picture";
           } catch (e) {

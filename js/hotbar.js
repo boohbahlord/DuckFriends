@@ -19,11 +19,10 @@ import {
 
 const LIFE = 5000; // how long a key just pressed glows (and the ring of specials stays on a phone)
 const HOLD = 450;
-/* an item's wait: a bar that drains from full to nothing (c = [ends, how long, now, "more"]); "more": the item can be
-   used already, and the bar (in its second color) charges one more (Mad God Justin's Jaimes) */
+/* an item's wait: a bar that drains from full to nothing (c = [ends, how long, now]) */
 const drain = (c) =>
   c
-    ? `<s class="cooldown${c[3] ? " more" : ""}" style="--full:${c[1]}ms;--el:${Math.max(0, c[1] - (c[0] - c[2])).toFixed(0)}ms"></s>`
+    ? `<s class="cooldown" style="--full:${c[1]}ms;--el:${Math.max(0, c[1] - (c[0] - c[2])).toFixed(0)}ms"></s>`
     : ""; // on a phone: holding a special this long keeps it on
 
 /* api: keys() → the ten ids (or null), kept() → the set of ids kept on, use(i, keep), cool() → for each key, null or

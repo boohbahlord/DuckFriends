@@ -73,8 +73,6 @@ activity({
     me.tb = was ? Math.min(TOP, was + MORE) : FIRST;
     me.j = now;
     me._j = now;
-    me.lj = false;
-    me.dj = 0;
     me.b = me.z;
     me.vz = null;
     me._za = undefined;

@@ -138,7 +138,7 @@ export function vibrate(el, px, twice = false) {
   if (twice) el.animate(one, { duration: 260, delay: 340, easing: "linear" });
 }
 /* a hit's red blink (as the l4z-hit keyframes were), for el.animate(HIT, 320): Dead Ducks Arcade's zombies, and every
-   other thing that can be hurt in every mode (Mad God Justin's wave zombies, the Jaimes; the owner's, Nov 19 01:34Z:
+   other thing that can be hurt in every mode (Mad God Justin's wave zombies; the owner's, Nov 19 01:34Z:
    "any NPC that can take damage ... it's going to be for everything") */
 export const HIT = [
   { filter: "none", easing: "ease-out" },
