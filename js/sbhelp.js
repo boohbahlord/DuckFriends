@@ -36,7 +36,11 @@ export const SB_HELP = {
     ],
     [
       "Elevation and Ground",
-      "On Duck Cabin and Downpour a zone has an Elevation: 1 is the ground, each one more is a gas station roof higher, up to 6. Turn Ground on and it's a floor up there: you stand on it, walk off its edge and fall, and you fall when its squares stop working under you. Falling two floors takes twice as long as one. Tick who can climb a zone and they climb it up to its elevation by walking into it, as up a ladder; let go of the stick and they hold on, walk away and they fall. Give a Ground zone a Slope up to another elevation and pick the side it rises toward: it's a ramp from its own elevation up to that one, walked at walking pace, so a longer slope takes longer. A zone up high is drawn over what's behind and under it, and goes see-through while your duck is back there.",
+      "On Duck Cabin and Downpour a zone has an Elevation: 1 is the ground, each one more is a gas station roof higher, up to 6. Turn Ground on and it's a floor up there: you stand on it, walk off its edge and fall, and you fall when its squares stop working under you. Falling two floors takes twice as long as one. Tick who can climb a zone and they climb it up to its elevation by walking into it, as up a ladder; let go of the stick and they hold on, walk away and they fall. Give a Ground zone a Slope up to another elevation and pick the side it rises toward: it's a ramp from its own elevation up to that one, walked at walking pace, so a longer slope takes longer. A zone up high is drawn over what's behind and under it, and goes see-through while your duck is back there. One that isn't Ground is a block: give it a look and its front side shows all the way down to the ground, like a wall. On the plain board an Elevation of 2 or more puts the zone's look over everyone.",
+    ],
+    [
+      "A house",
+      "A floor: a zone with a Look. Walls: thin zones with a Look at Elevation 3, and an invisible wall under each (Is wall, no Look); leave a gap in the front one for a door. A roof: a zone over all of it with a Look at Elevation 3 (turn Ground on to walk on it). From outside the walls and roof cover who's inside; step in and the whole house goes see-through. On the plain board: Is wall zones with a Look, and a roof at Elevation 2.",
     ],
     [
       "Outlines",
