@@ -1194,9 +1194,16 @@ export function mountWorld(board, api) {
       const r = board.getBoundingClientRect(),
         vw = board.clientWidth,
         vh = board.clientHeight;
-      const across =
-        vw >= 1100 ? 1300 : vw <= 500 ? 520 : 520 + ((vw - 500) / 600) * 780;
-      cam.sc = Math.min(vw / across, vh / 380) || 1;
+      const acrossOf = (w) =>
+        w >= 1100 ? 1300 : w <= 500 ? 520 : 520 + ((w - 500) / 600) * 780;
+      cam.sc = Math.min(vw / acrossOf(vw), vh / 380) || 1;
+      /* a phone on its side zooms out as far as it does upright: its short side sets the size, so ducks are as small as
+         upright and it sees more of the map across (the owner's, Nov 20 18:09Z: "The zoom out on ducks should apply to
+         horizontal mode on mobile as well") */
+      if (document.documentElement.classList.contains("phone-land")) {
+        const side = Math.min(innerWidth, innerHeight);
+        cam.sc = side / acrossOf(side) || 1;
+      }
       /* Dead Ducks Arcade on a phone, upright or on its side: 15% more of the map each way (the owner's, Nov 18 15:18Z:
          "The board or map for the zombie game should be a little more zoomed out in perspective or camera for mobile
          players in vertical OR horizontal becuz it feels cramped") */
