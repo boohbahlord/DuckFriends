@@ -7495,3 +7495,9 @@ opacity (same scope as UI scale), chat always left (setting gone), hide jump/Jus
 shows jumps/Justin kills, light mode gone. Customize: match style resets eyes/beak/all, loads once, no special colors,
 gun previews share the game's gun drawing. Crop on every image upload. Adam: duplicate-code list for the owner; opinion
 on player card pixels.
+
+## Owner, Nov 20 21:41Z (project chat, through Moses, with a screenshot of Downpour)
+
+There's a glitch I found that I've experienced previously. If I'm shooting in the game, my mouse might click on a zombie and drag its images, transparent view of them. This is obviously like a browser feature, right? And have them visible, like their preview, and drag that image around across the screen as long as I'm holding that mouse down, and basically make me lose control of my duck and make him just walk in the direction where that last happened. And then that usually gets me killed instantly, and that's not fair. That should be fixed. There's no image that when you click in the game, or no button that should drag its image preview across the screen or anything like that in that way, because anything like that from the browser makes the game almost unplayable in, let's say, high round, high stakes zombies where I'm trying to get a record. So that has to be fixed.
+
+Adam: V194: the browser's drag never starts (main.js dragstart), no text selection in a game, images never draggable.
