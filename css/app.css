@@ -6534,24 +6534,15 @@ html.moving .gduck.l4-jolt .gduck-body > * {
     opacity: 0;
   }
 }
-.spx-flames i {
+.spx-fl {
   position: absolute;
-  bottom: 50%;
-  width: 17%;
-  height: 42%;
-  border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
-  background: radial-gradient(
-    ellipse at 50% 70%,
-    var(--k3, #fff2b0) 0,
-    var(--k2, #ffb347) 35%,
-    var(--k1, #ff5a1a) 65%,
-    transparent 75%
-  );
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
   mix-blend-mode: screen;
-  animation: flick 0.34s ease-in-out infinite alternate;
-  animation-delay: calc(var(--i) * 0.09s);
-  left: calc(24% + var(--i) * 9%);
-}
+} /* (the flames special: pixels of the grid's size, drawn by code, specials.js flamesDraw) */
 .spx-float i {
   position: absolute;
   bottom: 38%;
@@ -16842,36 +16833,12 @@ body:has(.l4-shopping, .win-back) :is(.l4-sr, .l4-srv, .l4-srb) {
   height: 0;
   pointer-events: none;
 }
-.l4-flare::before {
-  content: "";
+.l4-flare-px {
   position: absolute;
-  left: calc(-80px * var(--k, 1));
-  top: calc(-80px * var(--k, 1));
-  width: calc(160px * var(--k, 1));
-  height: calc(160px * var(--k, 1));
-  border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    rgb(255 236 220 / 0.95) 0 5%,
-    rgb(255 52 36 / 0.75) 13%,
-    rgb(210 10 10 / 0.28) 38%,
-    transparent 68%
-  );
+  image-rendering: pixelated;
   opacity: var(--f, 1);
   mix-blend-mode: screen;
-  animation: flareflick 0.12s steps(2) infinite alternate;
-}
-html.pixel .l4-flare::before {
-  filter: url(#px-f);
-}
-@keyframes flareflick {
-  from {
-    transform: scale(0.9);
-  }
-  to {
-    transform: scale(1.05);
-  }
-}
+} /* (its glow: pixels of the grid's size, drawn by l4dd.js flarePic, flickering there) */
 .l4-drop {
   position: absolute;
   left: 0;
@@ -17789,18 +17756,8 @@ html.moving .hpm-ammo.rl {
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
-  background:
-    radial-gradient(circle at 0 0, var(--hc), transparent var(--hr)),
-    radial-gradient(circle at 100% 0, var(--hc), transparent var(--hr)),
-    radial-gradient(circle at 0 100%, var(--hc), transparent var(--hr)),
-    radial-gradient(circle at 100% 100%, var(--hc), transparent var(--hr));
-}
-html.pixel .hurt-edge:not(.px-own) {
-  filter: url(#px-f);
-}
-.hurt-edge.px-own {
-  background: none;
-} /* (its corners drawn once as pixels instead: pxbake.js bakeFill) */
+} /* (its corners: four circles of --hc fading out by --hr, drawn by code as pixels of the grid's size, pxbake.js
+     bakeFill with hpmeter.js hurtPaint) */
 .hurt-edge.on {
   visibility: visible;
   animation: hurtedge 0.7s ease-out;
@@ -19099,8 +19056,7 @@ html.pixel
   opacity: 0 !important;
 }
 html.pixel .map-layer:not(.px-own),
-html.pixel #shapes:not(.px-own),
-html.pixel .spx-flames {
+html.pixel #shapes:not(.px-own) {
   filter: url(#px-f);
 } /* (every map, moving as before, drawn on the grid: pixel.js' filter) */
 /* a map's pictures made into pixels once (pxbake.js): shown sharp, one pixel to a grid square (what moves is drawn on
@@ -19176,9 +19132,6 @@ html.moving .pxh-in {
 html.moving .pxt {
   animation: twinkle 2.6s ease-in-out infinite alternate;
 }
-html.pixel .spx-flames {
-  mix-blend-mode: screen;
-} /* (the filter makes the flames one picture: it's that picture that lights the duck now) */
 /* a card's pattern or picture (a player's card, the Card page's swatches) on the grid too: its background drawn again
    under it, through the same filter, so the duck and the name over it stay as they are */
 html.pixel .pcard[style*="url("] {

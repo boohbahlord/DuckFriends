@@ -1295,6 +1295,46 @@ const flareOn = (now) => {
   const t = bellStrikes();
   return !!t && now >= t[0] && now < t[0] + FLARE_MS;
 };
+/* the flare's red glow, n pixels across, drawn pixel by pixel: white hot in the middle, red, then a dark red fading
+   out (as css's radial-gradient drew it, to its farthest corner); made once for each size */
+const FLICK = [0.9, 0.975, 1.05, 0.975],
+  FLARE_INK = [
+    [0, 255, 236, 220, 0.95],
+    [0.05, 255, 236, 220, 0.95],
+    [0.13, 255, 52, 36, 0.75],
+    [0.38, 210, 10, 10, 0.28],
+    [0.68, 210, 10, 10, 0],
+  ],
+  flarePics = new Map();
+function flarePic(n) {
+  if (flarePics.has(n)) return flarePics.get(n);
+  const c = document.createElement("canvas");
+  c.width = c.height = n;
+  c.className = "l4-flare-px";
+  const x = c.getContext("2d"),
+    img = x.createImageData(n, n),
+    d = img.data,
+    h = n / 2;
+  for (let j = 0; j < n; j++)
+    for (let i = 0; i < n; i++) {
+      const f = Math.hypot(i + 0.5 - h, j + 0.5 - h) / (h * Math.SQRT2);
+      let k = 1;
+      while (k < FLARE_INK.length - 1 && f > FLARE_INK[k][0]) k++;
+      const A = FLARE_INK[k - 1],
+        B = FLARE_INK[k],
+        t = Math.min(1, Math.max(0, (f - A[0]) / (B[0] - A[0] || 1))),
+        a = A[4] + (B[4] - A[4]) * t,
+        o = (j * n + i) * 4;
+      if (a <= 0) continue;
+      for (let q = 1; q < 4; q++)
+        d[o + q - 1] = (A[q] * A[4] + (B[q] * B[4] - A[q] * A[4]) * t) / a; // (mixed as css mixes them: by how much is there)
+      d[o + 3] = a * 255;
+    }
+  x.putImageData(img, 0, 0);
+  if (flarePics.size > 40) flarePics.clear();
+  flarePics.set(n, c);
+  return c;
+}
 function flareDraw(ctx, now) {
   const Wd = ctx.world,
     on = dp() && !Wd.inside && flareOn(now);
@@ -1312,7 +1352,17 @@ function flareDraw(ctx, now) {
   const p = Wd.toScreen(FLARE.x, FLARE.y, STATION.wall + 4),
     left = (now - bellStrikes()[0]) / FLARE_MS; // (0 lit … 1 out)
   flareEl.style.transform = Wd.boxTr(p.left, p.top);
-  flareEl.style.setProperty("--k", Wd.sc.toFixed(3));
+  /* its glow, flickering a little bigger and smaller each 60 ms, as pixels of the grid's size */
+  const g = gridPx() || 2,
+    n = Math.max(
+      2,
+      Math.round((160 * Wd.sc * FLICK[Math.floor(now / 60) % 4]) / g),
+    ),
+    pic = flarePic(n);
+  if (flareEl.firstChild !== pic) {
+    flareEl.replaceChildren(pic);
+    pic.style.cssText = `left:${(-n * g) / 2}px;top:${(-n * g) / 2}px;width:${n * g}px;height:${n * g}px`;
+  }
   flareEl.style.setProperty(
     "--f",
     (left > 0.85 ? (1 - left) / 0.15 : 1).toFixed(2),
