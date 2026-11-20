@@ -7571,3 +7571,11 @@ memory index trimmed 18.8 KB -> 8.4 KB; sound rules moved to .claude/rules/sound
 This is definitely good enough. I'm proud. We can push this. I like that. I like that. In terms of the restroom pictures that we accomplished, this is good. We'll use that for downpour. And anything that looks like you can walk through it, you can walk through it in terms of the whole. That's important.
 
 Adam: #712 ships next deploy after Noah proves every opening that looks walkable is walkable (and walls block).
+
+## Owner, Nov 20 22:14Z (Adam's thread)
+
+Now, I want to know, how much % of code do you think we would save compared to the estimate you gave me earlier? Because you said it could be 1.5 to 2 times more tokens per session with the principles previously. But now with this, how much more compared to what you were testing against versus your results showed? Like, is it going to save 50% more, maybe 30% more, 90% more? Because that's important.
+
+Adam: measured my own thread (reads ~1.6M tokens at ~370 per call, 311 screenshots ~470k, my writing ~1.6M output);
+estimate 15-30% saved per session, 5-20% net of upkeep now, growing as big files split; corrected that I had said
++1,200 tokens per session start and +10-20% per PR, not 1.5-2x.
