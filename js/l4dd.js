@@ -2567,13 +2567,18 @@ function peek(tag, s, me) {
     });
   track.classList.add("sliding"); // (at the old slot at once, then it scrolls)
   lay(from < 0 ? to : from);
-  void track.offsetWidth;
-  track.classList.remove("sliding");
-  lay(to);
   el.classList.remove("go");
-  void el.offsetWidth;
-  el.classList.add("go");
+  /* the scroll and the fade start on the next frame, once this one has shown the old slot (before, the page was made
+     to lay itself out on the spot to start them: up to 30 ms on a slow computer, at every switch) */
+  const tok = ++peekTok;
+  requestAnimationFrame(() => {
+    if (tok !== peekTok) return; // (switched again since)
+    track.classList.remove("sliding");
+    lay(to);
+    el.classList.add("go");
+  });
 }
+let peekTok = 0;
 function say(text) {
   if (!sayEl) return;
   sayEl.textContent = text;

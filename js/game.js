@@ -181,6 +181,8 @@ import {
   pressFX,
   BULLET,
   heldHTML,
+  heldPicHTML,
+  warmHeld,
   heldBoxHTML,
   daggerHTML,
   DUCKLING,
@@ -1366,6 +1368,23 @@ function drawMeters(s, board, layer, now) {
     box.classList.toggle("see", see);
   }
 }
+/* the guns a hand can hold in a world (Duck Cabin, Downpour), as pixels while it loads (specials.js warmHeld): the
+   pistol in each duck's own colors and in the plain ones (a computer squad member's), and every gun picked up, the same
+   for everyone; once for each size and set of ducks */
+const handsWarm = new Set();
+function warmHands(s, size) {
+  const k = size + "|" + s.seat.join();
+  if (handsWarm.has(k)) return;
+  handsWarm.add(k);
+  const guns = Object.keys(GUNS).filter(
+    (w) => typeof GUNS[w].held === "string",
+  );
+  for (const id of [null, ...s.seat]) {
+    const duck = id && s.players[id] ? s.players[id].duck : null;
+    warmHeld("handgun", duck, size);
+    if (!id) for (const w of guns) warmHeld(w, null, size);
+  }
+}
 function drawDucks(now = clockNow()) {
   frameNo++;
   const board = S && $(".board", S);
@@ -2453,6 +2472,7 @@ function drawDucks(now = clockNow()) {
       shotDone(b);
     } // (landed, gone, or off the screen: kept for the next shot that looks the same)
   /* the handgun or the dagger in hand, turned toward where it aims: my mouse, or the aim the others sent */
+  if (hang) warmHands(s, size);
   const handed = new Set(),
     heldEls = fxl._held || (fxl._held = new Map()),
     lowLayer = hang && ducksLayer(board);
@@ -2494,7 +2514,9 @@ function drawDucks(now = clockNow()) {
           ? laserArt(lz)
           : w === "chair" && isL4dd(s)
             ? GOLD_CHAIR // (Quacky Zombies' chair, the fireplace's 1 in 100: golden)
-            : heldHTML(w, duck),
+            : holy
+              ? heldHTML(w, duck) // (Angelic: its glow is drawn into the drawing, angelic())
+              : heldPicHTML(w, duck, hs),
         pic = dual ? angelic(dualPistolHTML(duck)) : holy ? angelic(art) : art;
       /* every gun as long in the hand as its l4ddguns.js w (--gw, css .held i): one number for each, so no new gun is
          left at a knife's size. The Laser Rifle getting hot: the whole gun glows (laserfx.js laserGlow) */

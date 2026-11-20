@@ -15,7 +15,8 @@
    up to three colors (Primary, Secondary, Accent) under Customize → Colors. */
 import { HANDGUN } from "./gamedefaults.js";
 import { el } from "./ui.js";
-import { gridPx } from "./pixel.js";
+import { gridPx, pxSVG, rasterReady, pixelOn } from "./pixel.js";
+import { hashText } from "./pxdom.js";
 import { fewer } from "./gfx.js";
 import { BOW, MEDKIT, ZEBRA, CHAIR } from "./mgjart.js";
 import { GUNS } from "./l4ddguns.js";
@@ -839,6 +840,33 @@ export function heldBoxHTML(
   { cls = "", attrs = "", style = "", art } = {},
 ) {
   return `<div class="held${cls}" data-w="${w}"${attrs} style="--s:${Math.round(size)}px${GUNS[w] ? `;--gw:${GUNS[w].w}` : ""}${style}"><i>${art ?? heldHTML(w, duck)}</i></div>`;
+}
+/* a weapon in a hand as one picture made into pixels (pixel.js pxSVG), its duck `size` css px (heldBoxHTML's --s): the
+   same weapon, colors and size are one picture, made once, and warmHeld makes it while the game loads. As a drawing on
+   the page pxdom.js made it the moment it was first held, mid-game (the owner's, Nov 20 20:46Z: "pop-ins") */
+const HELD_W = 0.34; // (css .held i: a weapon's width in ducks, when its gun has no width of its own)
+const heldW = (w, size) => Math.round(size) * (GUNS[w] ? GUNS[w].w : HELD_W);
+function sizedSVG(svg) {
+  const head = svg.slice(0, svg.indexOf(">")),
+    vb = /viewBox="[-\d.]+ [-\d.]+ ([\d.]+) ([\d.]+)"/.exec(head);
+  if (/\swidth=/.test(head) || !vb) return svg;
+  return svg.replace(
+    "<svg ",
+    `<svg${/\sxmlns=/.test(head) ? "" : ' xmlns="http://www.w3.org/2000/svg"'} width="${vb[1]}" height="${vb[2]}" `,
+  ); // (a size of its own: pxSVG takes its shape from it, and Firefox won't draw an SVG with none)
+}
+export const heldPicHTML = (w, duck, size) =>
+  pixelOn()
+    ? pxSVG(sizedSVG(heldHTML(w, duck)), heldW(w, size))
+    : heldHTML(w, duck);
+export function warmHeld(w, duck, size) {
+  if (!pixelOn()) return;
+  const svg = sizedSVG(heldHTML(w, duck)),
+    head = svg.slice(0, svg.indexOf(">")),
+    W = +(/\swidth="([\d.]+)"/.exec(head) || [])[1] || 1,
+    H = +(/\sheight="([\d.]+)"/.exec(head) || [])[1] || W,
+    pw = heldW(w, size);
+  rasterReady("s" + hashText(svg), svg, pw, (pw * H) / W); // (pxSVG's key)
 }
 /* a weapon in a duck's hand, pointing right (the game turns it toward where it aims); the hammer is a wrench on a duck
    that picked the wrench (its ⚙ under Customize → Specials: duck.wrench) */

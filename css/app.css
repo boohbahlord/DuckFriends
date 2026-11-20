@@ -7085,6 +7085,7 @@ html.still .spx-disco .disco-spot {
 }
 .thrown svg,
 .held svg,
+.held i > img,
 .duckling svg {
   width: 100%;
   height: auto;
