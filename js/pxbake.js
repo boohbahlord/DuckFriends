@@ -544,13 +544,16 @@ async function svgPic(markup, w, h) {
   await im.decode();
   return im;
 }
-export async function bakeSvg(root, svg, mark, anim) {
+/* the drawing's order as items: runs of still shapes made into pixels ({ pic: a trimmed canvas on the grid }) and the
+   moving parts ({ part, pic at the screen's sharpness, at: [x, y, k] where it lies in the drawing's units, cs }); null
+   if a picture couldn't be made */
+async function svgItems(root, svg, anim) {
   const G = grid(),
-    { d, n, at, g } = G,
+    { d } = G,
     rb = root.getBoundingClientRect(),
     sb = svg.getBoundingClientRect(),
     vbox = svg.getAttribute("viewBox");
-  if (!sb.width || !sb.height || !vbox) return false;
+  if (!sb.width || !sb.height || !vbox) return null;
   const parts = new Set(svg.querySelectorAll(anim)),
     defs = [...svg.querySelectorAll("defs")].map((e) => e.outerHTML).join(""),
     all = [...svg.querySelectorAll("*")];
@@ -627,9 +630,17 @@ export async function bakeSvg(root, svg, mark, anim) {
       }
     }
   } catch {
-    return false;
+    return null;
   }
-  if (!svg.isConnected || items.some((it) => !it.pic)) return false;
+  if (!svg.isConnected || items.some((it) => !it.pic)) return null;
+  return items;
+}
+export async function bakeSvg(root, svg, mark, anim) {
+  const G = grid(),
+    { d, n, at, g } = G,
+    rb = root.getBoundingClientRect();
+  const items = await svgItems(root, svg, anim);
+  if (!items) return false;
   const canvas = () => {
     const c = document.createElement("canvas");
     c.className = "bd-layer px-baked px-movers";
@@ -717,4 +728,4 @@ export function bakeFill(el, paint) {
 }
 
 /* for the map bake (tools/pixel-maps.cjs) only: how a part is pictured and painted, the same as here */
-export const forBake = { grid, pictureOf, paintBox, BOX };
+export const forBake = { grid, pictureOf, paintBox, BOX, svgItems };

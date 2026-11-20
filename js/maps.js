@@ -19,10 +19,12 @@
    starry night sky, and it is not in the Map window. */
 import { duckSVG } from "./duck.js";
 import { pixelOn, gridPx } from "./pixel.js";
-import { bakeStill, bakeSvg, unbake } from "./pxbake.js";
+import { bakeStill, unbake } from "./pxbake.js";
 import { esc } from "./ui.js";
-import { floorCanvas, carnivalSVG } from "./art.js";
+import { floorCanvas } from "./art.js";
 import BOARD from "./pxm/board.js";
+import CARNIVAL from "./pxm/carnival.js";
+import STARS from "./pxm/stars.js";
 import PIXEL from "./pxm/pixel.js";
 import SKY from "./pxm/sky.js";
 import { mountWorld } from "./pxmap.js";
@@ -484,422 +486,208 @@ function rabbitScene(layer) {
   };
 }
 
-/* ---------- Starry Night ----------
+/* ---------- Starry Night, in the world's pixels (js/pxm/stars.js, tools/pixel-maps.cjs) ----------
    A deep night sky that turns slowly around a pole above the page, so the stars roll across it in long arcs (a turn
-   every five minutes, left to right). The sky is drawn once onto a canvas as big as the circle that ever crosses the
-   page: the Milky Way (value noise in a gently bowed band, a warm core split by dark dust lanes, a few pink glows) and
-   tens of thousands of stars in the colors of real stars, crowding into the band's bright clouds. The brightest stars
-   sit over it as their own elements, crisp and twinkling, and now and then a shooting star crosses (a shower of them
-   when the votes are in). Still backgrounds hold the sky in place; Data saving draws a smaller sky with fewer stars. */
-const ST_INK = [
-    "#a9bcff",
-    "#c8d6ff",
-    "#f4f6ff",
-    "#fff4e6",
-    "#ffe2bd",
-    "#ffc98a",
-    "#ffa978",
-  ],
-  ST_W = [0.12, 0.18, 0.3, 0.18, 0.1, 0.08, 0.04];
-const stInk = (r) => {
-  let i = 0;
-  for (let a = ST_W[0]; r > a && i < ST_W.length - 1; ) a += ST_W[++i];
-  return i;
-};
-const stHash = (i, j) => {
-  let h = (i * 374761393 + j * 668265263) | 0;
-  h = Math.imul(h ^ (h >>> 13), 1274126177);
-  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
-};
-const stNoise = (x, y) => {
-  const i = Math.floor(x),
-    j = Math.floor(y),
-    fx = x - i,
-    fy = y - j,
-    ux = fx * fx * (3 - 2 * fx),
-    uy = fy * fy * (3 - 2 * fy);
-  const a = stHash(i, j),
-    b = stHash(i + 1, j),
-    c = stHash(i, j + 1),
-    d = stHash(i + 1, j + 1);
-  return a + (b - a) * ux + (c - a) * uy + (a - b - c + d) * ux * uy;
-};
-const stFbm = (x, y, o = 5) => {
-  let s = 0,
-    a = 0.5,
-    n = 0;
-  for (let k = 0; k < o; k++) {
-    s += a * stNoise(x, y);
-    n += a;
-    x = x * 2.03 + 17.1;
-    y = y * 2.03 + 9.7;
-    a *= 0.5;
-  }
-  return s / n;
-};
-const sstep = (a, b, x) => {
-  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
-  return t * t * (3 - 2 * t);
-};
-const ST_BA = 0.5,
-  ST_BD = 0.48,
-  ST_BOW = 0.12,
-  ST_UC = 0.2; // the band: its angle, its distance from the pole, its bow, where its core is
-const stCore = (u) => Math.exp(-(((u - ST_UC) / 0.28) ** 2)),
-  stWidth = (u) => 0.085 * (1 + 1.1 * stCore(u));
+   every five minutes, left to right): the sky is one pixel file (the Milky Way and tens of thousands of stars, made
+   once by tools/pixel-src/stars.js), drawn turned on a canvas of the world's pixels, each of its pixels whole. Over it
+   the brightest stars twinkle, drawn pixel by pixel, and now and then a shooting star crosses (a shower of them when the
+   votes are in). Still backgrounds hold the sky in place. */
 function starsScene(layer) {
-  const sc = document.createElement("div");
-  sc.className = "scene stars";
-  sc.innerHTML =
-    '<div class="st-dome"><div class="st-spin"><div class="st-bright"></div></div></div><div class="st-haze"></div>';
-  layer.append(sc);
-  const dome = sc.querySelector(".st-dome"),
-    spin = sc.querySelector(".st-spin"),
-    bright = sc.querySelector(".st-bright"),
-    html = document.documentElement;
-  const ca = Math.cos(ST_BA),
-    sa = Math.sin(ST_BA),
-    cvv = ST_BD + ST_BOW * ST_UC * ST_UC,
-    coreX = ST_UC * ca - cvv * sa,
-    coreY = ST_UC * sa + cvv * ca;
-  let drawn = "",
-    timer = 0,
-    rtimer = 0,
-    nextMet = 0,
-    job = null;
-  /* the sky is drawn a slice at a time (a few milliseconds each), so the game never stutters; it fades in when done */
-  function* build(W, H) {
-    const lite = html.classList.contains("low"),
-      px = W * 0.5,
-      py = -0.35 * H,
-      R = Math.ceil(Math.hypot(px, H - py)) + 4,
-      S = 2 * R,
-      r0 = -py / R;
-    const k = Math.min(
-        devicePixelRatio || 1,
-        (lite ? 1536 : Math.min(W, H) < 600 ? 2304 : 3072) / S,
-      ),
-      C = Math.round(S * k);
-    const base =
-      Math.atan2(0.45 * H - py, (W < H ? 0.62 : 0.38) * W - px) -
-      Math.atan2(coreY, coreX); // the core starts left of the middle and rolls right
-    /* the Milky Way, small, then stretched over the sky (it is soft anyway) */
-    const N = lite ? 256 : Math.min(640, Math.round(C / 4.5)),
-      dens = new Float32Array(N * N),
-      neb = document.createElement("canvas");
-    neb.width = neb.height = N;
-    const ng = neb.getContext("2d"),
-      img = ng.createImageData(N, N),
-      d = img.data;
-    for (let j = 0; j < N; j++) {
-      if ((j & 7) === 7) yield;
-      for (let i = 0; i < N; i++) {
-        const x = ((i + 0.5) / N) * 2 - 1,
-          y = ((j + 0.5) / N) * 2 - 1,
-          rr = x * x + y * y;
-        if (rr > 1.02 || rr < r0 * r0 * 0.6) continue;
-        const u = x * ca + y * sa,
-          v = -x * sa + y * ca - ST_BD - ST_BOW * u * u,
-          core = stCore(u),
-          w = stWidth(u);
-        const band = Math.exp(-((v / w) ** 2)),
-          halo = Math.exp(-((v / (w * 3)) ** 2));
-        if (halo < 0.02) continue;
-        const n = stFbm(x * 4 + 3, y * 4 + 1),
-          n2 = stFbm(x * 12 + 5, y * 12 + 3, 4),
-          cl = sstep(0.35, 0.8, n) * (0.45 + 0.9 * n2); // clouds, clumpy
-        const patch = sstep(0.42, 0.8, stFbm(x * 5 + 11, y * 5 + 7, 4)),
-          blot = sstep(0.56, 0.8, stFbm(x * 9 + 4, y * 9 + 6, 4)); // the dust: a rift down the middle, and blots
-        const lane =
-          Math.exp(
-            -(
-              ((v + 0.025 * Math.sin(u * 8) + 0.03 * (n - 0.5)) / (w * 0.32)) **
-              2
-            ),
-          ) *
-          (0.4 + 0.6 * core);
-        const dark = Math.min(
-          0.82,
-          lane * (0.35 + 0.6 * patch) + band * 0.4 * blot * (0.3 + core),
-        );
-        const pink =
-            sstep(0.68, 0.86, stFbm(x * 15 + 2, y * 15 + 9, 3)) *
-            band *
-            cl *
-            0.5,
-          lav = sstep(0.5, 0.72, stFbm(x * 2 + 8, y * 2 + 4, 3)) * 0.35;
-        const a =
-          1 -
-          Math.exp(
-            -1.4 *
-              ((band * (0.18 + 1.35 * cl) + halo * 0.1 * n) *
-                (1 - dark) *
-                (0.6 + 0.8 * core) +
-                pink * 0.2),
-          ); // bright, never flat
-        const t = Math.min(
-            1,
-            Math.max(0, core * band * 1.3 + 0.2 * (n2 - 0.5)),
-          ),
-          o = (j * N + i) * 4;
-        let R1 = 170 + 85 * t,
-          G1 = 186 + 40 * t,
-          B1 = 240 - 55 * t;
-        R1 += (190 - R1) * lav * (1 - t);
-        G1 += (165 - G1) * lav * (1 - t);
-        B1 += (245 - B1) * lav * (1 - t);
-        d[o] = R1 + (255 - R1) * pink;
-        d[o + 1] = G1 + (90 - G1) * pink;
-        d[o + 2] = B1 + (140 - B1) * pink;
-        d[o + 3] = a * 225;
-        dens[j * N + i] = band * (cl + 0.15) * (1 - dark); // where the band's crowds of stars are
+  const sc = worldScene(layer, STARS, "stars", { fx: 0.4, fy: 0.5 }), // (a phone: the slice where the Milky Way's core starts)
+    W = STARS.W / STARS.G,
+    H = STARS.H / STARS.G,
+    html = document.documentElement,
+    cv = document.createElement("canvas");
+  cv.className = "st-px";
+  cv.width = W;
+  cv.height = H;
+  sc.stage.append(cv);
+  const x = cv.getContext("2d"),
+    sky = new Image();
+  sky.src = STARS.sky;
+  /* the night behind, and the air thickening toward the bottom over it: a pixel for each row of the world's */
+  const rows = (stops) => {
+    const c = document.createElement("canvas");
+    c.width = 1;
+    c.height = H;
+    const g = c.getContext("2d"),
+      gr = g.createLinearGradient(0, 0, 0, H);
+    stops.forEach(([at, col]) => gr.addColorStop(at, col));
+    g.fillStyle = gr;
+    g.fillRect(0, 0, 1, H);
+    return c;
+  };
+  const back = rows([
+      [0, "#020309"],
+      [0.42, "#050a1d"],
+      [0.78, "#0a1534"],
+      [1, "#13224b"],
+    ]),
+    haze = rows([
+      [0.55, "#1b2c5c00"],
+      [0.82, "#1b2c5c2e"],
+      [1, "#2a3f7550"],
+    ]);
+  /* a bright star n pixels across, as its pixels: a white heart, its color round it, fading out (the biggest with
+     spikes, a pixel thick); made once for each size and color */
+  const sprites = new Map(),
+    sprite = (n, c, sp) => {
+      const k = n + c + sp;
+      if (sprites.has(k)) return sprites.get(k);
+      const L = sp ? n * 3 : n,
+        s = document.createElement("canvas");
+      s.width = s.height = L;
+      const g = s.getContext("2d"),
+        o = (L - n) / 2,
+        h = n / 2;
+      if (sp) {
+        const m = Math.floor(L / 2);
+        g.fillStyle = c;
+        for (let i = 0; i < L; i++) {
+          g.globalAlpha = 0.35 * (1 - Math.abs(i + 0.5 - L / 2) / (L / 2)); // (fading to its ends)
+          g.fillRect(i, m, 1, 1);
+          if (i !== m) g.fillRect(m, i, 1, 1);
+        }
+        g.globalAlpha = 1;
       }
-    }
-    ng.putImageData(img, 0, 0);
-    const cv = document.createElement("canvas");
-    cv.className = "st-sky";
-    cv.width = cv.height = C;
-    const g = cv.getContext("2d");
-    g.imageSmoothingQuality = "high";
-    g.drawImage(neb, 0, 0, C, C);
-    yield;
-    /* the stars: a few everywhere, many more in the band's clouds (and none in its dust) */
-    let seed = 20261025;
-    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    const gauss = () =>
-      Math.sqrt(-2 * Math.log(rnd() + 1e-9)) * Math.cos(6.2832 * rnd());
-    const stars = [],
-      tries = (S * S) / (lite ? 900 : 330);
-    const inSky = (x, y) => {
-      const rr = x * x + y * y;
-      return rr < 1 && rr > r0 * r0 * 0.8;
-    };
-    const inBand = () => {
-      const u = rnd() * 2.4 - 1.2,
-        v = ST_BD + ST_BOW * u * u + gauss() * stWidth(u) * 0.8,
-        x = u * ca - v * sa,
-        y = u * sa + v * ca;
-      const ix = Math.floor(((x + 1) / 2) * N),
-        iy = Math.floor(((y + 1) / 2) * N);
-      return ix >= 0 &&
-        iy >= 0 &&
-        ix < N &&
-        iy < N &&
-        rnd() < dens[iy * N + ix] * 1.2
-        ? [x, y]
-        : null;
-    };
-    for (let i = 0; i < tries; i++) {
-      const x = rnd() * 2 - 1,
-        y = rnd() * 2 - 1;
-      if (inSky(x, y)) stars.push([x, y, rnd() ** 4.5, stInk(rnd())]);
-    }
-    for (let i = 0; i < tries * 4; i++) {
-      const p = inBand();
-      if (p && inSky(...p)) stars.push([...p, rnd() ** 6, stInk(rnd())]);
-    }
-    stars.sort((a, b) => a[3] - b[3]);
-    const sprites = ST_INK.map((c) => {
-      const s = document.createElement("canvas");
-      s.width = s.height = 32;
-      const x = s.getContext("2d"),
-        gr = x.createRadialGradient(16, 16, 0, 16, 16, 16);
-      gr.addColorStop(0, "#fff");
-      gr.addColorStop(0.12, c);
-      gr.addColorStop(0.3, c + "73");
-      gr.addColorStop(0.6, c + "1a");
-      gr.addColorStop(1, c + "00");
-      x.fillStyle = gr;
-      x.fillRect(0, 0, 32, 32);
+      for (let j = 0; j < n; j++)
+        for (let i = 0; i < n; i++) {
+          const f = Math.hypot(i + 0.5 - h, j + 0.5 - h) / h;
+          if (f > 0.7) continue;
+          g.fillStyle = f < 0.17 || n < 2 ? "#fff" : c;
+          g.globalAlpha = f < 0.32 ? 1 : f < 0.5 ? 0.45 : 0.15;
+          g.fillRect(o + i, o + j, 1, 1);
+        }
+      sprites.set(k, s);
       return s;
-    });
-    for (let i = 0; i < stars.length; i++) {
-      if ((i & 4095) === 4095) yield;
-      const [x, y, m, ci] = stars[i],
-        X = ((x + 1) / 2) * C,
-        Y = ((y + 1) / 2) * C;
-      if (m < 0.6) {
-        const s = (0.8 + 1.6 * m) * k;
-        g.globalAlpha = 0.35 + 1.1 * m;
-        g.fillStyle = ST_INK[ci];
-        g.fillRect(X - s / 2, Y - s / 2, s, s);
-      } else {
-        const s = (3 + 8 * m) * k;
-        g.globalAlpha = 0.55 + 0.45 * m;
-        g.drawImage(sprites[ci], X - s / 2, Y - s / 2, s, s);
-      }
-    }
-    g.globalAlpha = 1;
-    /* the brightest stars, crisp and twinkling; the biggest with spikes */
-    const list = [];
-    for (let i = 0, n = lite ? 40 : 130; list.length < n && i < n * 20; i++) {
-      const p = rnd() < 0.35 ? inBand() : [rnd() * 2 - 1, rnd() * 2 - 1];
-      if (!p || !inSky(...p)) continue;
-      const sz = 5 + 10 * rnd() ** 2.2;
-      list.push(
-        `<i class="st-b${sz > 11 ? " sp" : ""}" style="left:${((p[0] + 1) * R).toFixed(0)}px;top:${((p[1] + 1) * R).toFixed(0)}px;--s:${sz.toFixed(1)}px;--c:${ST_INK[stInk(rnd())]};--d:${(1.8 + rnd() * 2.7).toFixed(2)}s;--dl:-${(rnd() * 4).toFixed(2)}s"></i>`,
+    };
+  const [ox, oy] = STARS.pole,
+    R = STARS.R;
+  /* a twinkle: from all there to half there and a little smaller and back, eased (as css's ease-in-out) */
+  const twinkle = (t, d, dl) => {
+    let u = ((t - dl) / d) % 2;
+    if (u > 1) u = 2 - u;
+    return ease(0.42, 0, 0.58, 1, u);
+  };
+  /* the shooting stars: [left, top, angle, how far, how long (world pixels), time, delay, start] */
+  const mets = [],
+    t0 = performance.now(); // (the sky starts where it was made to: its turn counts from now)
+  let last = -1e9,
+    nextMet = 0;
+  const draw = (now) => {
+    const moving = html.classList.contains("moving"),
+      t = moving ? (now - t0) / 1000 : 0,
+      a = STARS.base - (moving ? (t / 300) * 2 * Math.PI : 0);
+    x.imageSmoothingEnabled = false;
+    x.globalAlpha = 1;
+    x.setTransform(1, 0, 0, 1, 0, 0);
+    x.drawImage(back, 0, 0, W, H);
+    x.setTransform(1, 0, 0, 1, ox, oy);
+    x.rotate(a);
+    x.drawImage(sky, -R, -R);
+    x.setTransform(1, 0, 0, 1, 0, 0);
+    const ca = Math.cos(a),
+      sa = Math.sin(a);
+    for (const [bx, by, size, c, d, dl] of STARS.bright) {
+      const u = bx - R,
+        v = by - R,
+        X = ox + u * ca - v * sa,
+        Y = oy + u * sa + v * ca;
+      if (X < -12 || Y < -12 || X > W + 12 || Y > H + 12) continue;
+      const tw = moving ? twinkle(t, d, dl) : 0,
+        n = Math.max(1, Math.round(size * (1 - 0.2 * tw))),
+        im = sprite(n, c, size > 5.5);
+      x.globalAlpha = 1 - 0.5 * tw;
+      x.drawImage(
+        im,
+        Math.round(X - im.width / 2),
+        Math.round(Y - im.height / 2),
       );
     }
-    /* swap in the new sky over the old one */
-    dome.style.cssText = `left:${px}px;top:${py.toFixed(0)}px;width:${S}px;height:${S}px;margin:${-R}px 0 0 ${-R}px;transform:rotate(${((base * 180) / Math.PI).toFixed(1)}deg)`;
-    bright.innerHTML = list.join("");
-    const old = spin.querySelector(".st-sky");
-    spin.prepend(cv);
-    if (old) {
-      old.remove();
-      if (old.src) URL.revokeObjectURL(old.src);
-    }
-    /* then the finished sky as a picture in its place, the same pixels: as a canvas, the browser handed its whole
-       (huge) sky over again every frame, and Starry Night ran at half the speed of the other maps */
-    cv.toBlob((b) => {
-      if (!b || !cv.isConnected) return;
-      const im = new Image();
-      im.className = "st-sky";
-      im.alt = "";
-      im.draggable = false;
-      im.src = URL.createObjectURL(b);
-      im.decode()
-        .then(() => (cv.isConnected ? cv.replaceWith(im) : Promise.reject()))
-        .then(bake)
-        .catch(() => URL.revokeObjectURL(im.src));
-    });
-    sc.classList.add("ready");
-  }
-  /* the pixel look: the sky, its turning stars, its twinkling bright ones and the haze drawn each frame on one canvas of
-     the grid's pixels (pxbake.js; the bright ones each made once into a picture by the browser), instead of the filter
-     on the whole page every frame; made again with each new sky (a new size) or a new grid */
-  const bake = () => {
-    unbake(sc, layer);
-    if (!pixelOn() || !sc.querySelector(".st-spin > img.st-sky")) return;
-    sc.querySelectorAll(".st-b, .st-haze").forEach((e) =>
-      e.classList.add("px-shot"),
-    );
-    bakeStill(sc, null, layer, {
-      sel: ".st-spin > .st-sky, .st-bright > .st-b, :scope > .st-haze",
-      before: "first",
-      bg: true,
-      every: 64, // (15 a second: a slow turn and slow twinkles)
-    });
-  };
-  const pump = () => {
-    if (!job) return;
-    const t = performance.now();
-    while (performance.now() - t < 8)
-      if (job.next().done) {
-        job = null;
-        return;
+    for (let i = mets.length - 1; i >= 0; i--) {
+      const m = mets[i],
+        p = (now - m.at) / 1000 - m.dl;
+      if (p >= m.t) {
+        mets.splice(i, 1);
+        continue;
       }
-    timer = setTimeout(pump, 0);
+      if (p < 0) continue;
+      const f = p / m.t,
+        e = ease(0.3, 0.1, 0.7, 1, f),
+        len = m.len * (0.3 + 0.7 * e),
+        hx = m.x + Math.cos(m.a) * m.go * e,
+        hy = m.y + Math.sin(m.a) * m.go * e;
+      const o = f < 0.12 ? f / 0.12 : f > 0.75 ? (1 - f) / 0.25 : 1;
+      for (let k = 0; k < len; k++) {
+        const q = k / len; // (from the head back: white, then pale blue, then gone)
+        x.fillStyle = q < 0.4 ? "#fff" : "#bcd0ff";
+        x.globalAlpha = o * (q < 0.4 ? 1 - q : 0.6 * (1 - (q - 0.4) / 0.6));
+        x.fillRect(
+          Math.round(hx - Math.cos(m.a) * k),
+          Math.round(hy - Math.sin(m.a) * k),
+          1,
+          1,
+        );
+      }
+      x.globalAlpha = o;
+      x.fillStyle = "#fff";
+      x.fillRect(Math.round(hx) - 1, Math.round(hy), 3, 1);
+      x.fillRect(Math.round(hx), Math.round(hy) - 1, 1, 3); // (its head)
+    }
+    x.globalAlpha = 1;
+    x.drawImage(haze, 0, 0, W, H);
   };
-  const draw = () => {
-    const W = layer.clientWidth,
-      H = layer.clientHeight;
-    if (!W || !H) return;
-    const key = W + "x" + H;
-    if (key === drawn) return;
-    drawn = key;
-    clearTimeout(timer);
-    job = build(W, H);
-    pump();
-  };
-  const ro = new ResizeObserver(() => {
-    clearTimeout(rtimer);
-    rtimer = setTimeout(draw, drawn ? 200 : 0);
-  });
-  ro.observe(layer);
-  addEventListener("pxgrid", bake);
-  draw();
-  /* the shooting stars, together in a box the page's size (the pixel look puts that box on the grid: css/app.css) */
-  const mets = document.createElement("div");
-  mets.className = "st-mets";
-  sc.append(mets);
-  /* a shooting star, somewhere in the upper sky, heading down to one side */
+  /* a shooting star, somewhere in the upper sky the screen sees, heading down to one side */
   const meteor = (delay = 0) => {
-    const W = layer.clientWidth,
-      H = layer.clientHeight,
+    const r = sc.stage.getBoundingClientRect(),
+      b = layer.getBoundingClientRect(),
+      k = r.width / W || 1,
+      vx = Math.max(0, (b.left - r.left) / k),
+      vy = Math.max(0, (b.top - r.top) / k),
+      vw = Math.min(W - vx, b.width / k),
+      vh = Math.min(H - vy, b.height / k),
       right = Math.random() < 0.5,
-      a = 14 + Math.random() * 26,
-      t = 0.7 + Math.random() * 0.6;
-    const m = document.createElement("div");
-    m.className = "st-met";
-    m.innerHTML = "<i></i>";
-    m.style.cssText = `left:${((right ? 0.05 : 0.45) + Math.random() * 0.5) * W}px;top:${(0.04 + Math.random() * 0.45) * H}px;--a:${(right ? a : 180 - a).toFixed(0)}deg;--go:${(260 + Math.random() * 380).toFixed(0)}px;--len:${(120 + Math.random() * 140).toFixed(0)}px;--t:${t.toFixed(2)}s;--dl:${delay.toFixed(2)}s`;
-    mets.append(m);
-    setTimeout(() => m.remove(), (t + delay) * 1000 + 200);
+      a = 14 + Math.random() * 26;
+    mets.push({
+      x: vx + ((right ? 0.05 : 0.45) + Math.random() * 0.5) * vw,
+      y: vy + (0.04 + Math.random() * 0.45) * vh,
+      a: ((right ? a : 180 - a) * Math.PI) / 180,
+      go: (260 + Math.random() * 380) / k,
+      len: (120 + Math.random() * 140) / k,
+      t: 0.7 + Math.random() * 0.6,
+      dl: delay,
+      at: performance.now(),
+    });
   };
+  const ready = () => {
+    sc.stage.classList.add("ready");
+    draw(performance.now());
+  };
+  sky.decode().then(ready, ready);
   return {
     update(now) {
-      if (!html.classList.contains("moving")) return;
-      if (now > nextMet) {
-        if (nextMet) meteor();
-        nextMet = now + 6000 + Math.random() * 12000;
-      }
+      if (!sky.complete) return;
+      if (html.classList.contains("moving")) {
+        if (now > nextMet) {
+          if (nextMet) meteor();
+          nextMet = now + 6000 + Math.random() * 12000;
+        }
+        if (now - last < (mets.length ? 0 : 64)) return; // (15 a second: a slow turn and slow twinkles; a shooting star at full speed)
+      } else if (last >= 0) return; // (still: drawn once)
+      last = now;
+      draw(performance.now());
     },
     shower() {
       if (html.classList.contains("moving"))
         for (let i = 0; i < 6; i++) meteor(i * 0.28 + Math.random() * 0.2);
     },
-    destroy() {
-      job = null;
-      clearTimeout(timer);
-      clearTimeout(rtimer);
-      ro.disconnect();
-      removeEventListener("pxgrid", bake);
-      layer.classList.remove("px-own");
-      sc.remove();
-    },
+    destroy: sc.destroy,
   };
 }
 
-/* ---------- Carnival Night ---------- */
-function carnivalScene(layer) {
-  const sc = document.createElement("div");
-  sc.className = "scene carnival";
-  sc.innerHTML = carnivalSVG(true);
-  layer.append(sc);
-  // a tall screen (a phone) sees a slice of the picture: the slice around the Ferris wheel
-  const svg = sc.firstElementChild,
-    fit = () => {
-      const a = layer.clientWidth / (layer.clientHeight || 1),
-        w = 900 * a;
-      svg.setAttribute(
-        "viewBox",
-        a < 1.2
-          ? `${Math.max(0, Math.min(1600 - w, 330 - w / 2)).toFixed(0)} 0 ${w.toFixed(0)} 900`
-          : "0 0 1600 900",
-      );
-    };
-  /* the pixel look: the still drawing made into pixels once, its turning wheel, waving flag and twinkling lights drawn
-     each frame on one canvas of the grid's pixels (pxbake.js), instead of the filter on the whole page every frame;
-     made again for a new size or a new grid */
-  let baked = "",
-    bt = 0;
-  const bake = () => {
-    const k = [layer.clientWidth, layer.clientHeight, gridPx()].join();
-    if (!pixelOn() || k === baked || !layer.clientWidth) return;
-    baked = k;
-    unbake(sc, layer);
-    bakeSvg(sc, svg, layer, ".cn-wheel, .cn-car, .cn-bulb, .cn-star, .cn-flag");
-  };
-  const ro = new ResizeObserver(() => {
-    fit();
-    clearTimeout(bt);
-    bt = setTimeout(bake, baked ? 200 : 0);
-  });
-  ro.observe(layer);
-  addEventListener("pxgrid", bake);
-  fit();
-  return {
-    update() {},
-    destroy() {
-      clearTimeout(bt);
-      ro.disconnect();
-      removeEventListener("pxgrid", bake);
-      layer.classList.remove("px-own");
-      sc.remove();
-    },
-  };
-}
+/* ---------- Carnival Night, as pixel files (js/pxm/carnival.js, tools/pixel-maps.cjs) ---------- */
+const carnivalScene = (layer) =>
+  worldScene(layer, CARNIVAL, "carnival", { fx: 330 / 1600, fy: 0.5 }); // (a phone: the slice round the Ferris wheel)
 /* marquee bulbs around a tile's edges: three sets that light in turn, so they seem to chase around it */
 function marquee(col) {
   const old = col.querySelector(":scope > .marquee"),
@@ -945,22 +733,95 @@ function marquee(col) {
   if (old) old.replaceWith(svg);
   else col.prepend(svg);
 }
-/* fireworks over the scene (behind the see-through board): a few rockets that burst in the given colors */
+/* fireworks over the scene (behind the see-through board): a few rockets that burst in the given colors, drawn in the
+   world's own pixels on a canvas of its size (so they are as big as every pixel of the map), where the screen sees it */
 function fireworks(sc, colors) {
-  const html = document.documentElement;
-  if (!sc || html.classList.contains("still") || html.classList.contains("low"))
+  const html = document.documentElement,
+    st = sc && sc.querySelector(".pxw-stage");
+  if (!st || html.classList.contains("still") || html.classList.contains("low"))
     return;
-  const box = document.createElement("div");
-  box.className = "cn-fw";
-  box.innerHTML = Array.from({ length: 5 }, (_, i) => {
-    const x = 12 + Math.random() * 76,
-      y = 12 + Math.random() * 30,
-      c = colors[i % colors.length],
-      d = (i * 0.35 + Math.random() * 0.2).toFixed(2);
-    return `<div class="fw" style="left:${x.toFixed(1)}%;top:${y.toFixed(1)}%;--c:${c};--d:${d}s;--rise:${(70 - y).toFixed(0)}cqh"><i class="fw-rocket"></i>${Array.from({ length: 16 }, (_, k) => `<i class="fw-spark" style="--a:${k * 22.5}deg"></i>`).join("")}</div>`;
-  }).join("");
-  sc.append(box);
-  setTimeout(() => box.remove(), 4200);
+  const c = document.createElement("canvas"),
+    W = (c.width = CARNIVAL.W / CARNIVAL.G),
+    H = (c.height = CARNIVAL.H / CARNIVAL.G);
+  c.className = "cn-fw";
+  st.append(c);
+  /* what the screen sees of the world, in its pixels */
+  const r = st.getBoundingClientRect(),
+    b = sc.getBoundingClientRect(),
+    k = r.width / W,
+    vx = Math.max(0, (b.left - r.left) / k),
+    vy = Math.max(0, (b.top - r.top) / k),
+    vw = Math.min(W - vx, b.width / k),
+    vh = Math.min(H - vy, b.height / k);
+  const shots = Array.from({ length: 5 }, (_, i) => {
+    const y = 12 + Math.random() * 30;
+    return {
+      x: vx + ((12 + Math.random() * 76) * vw) / 100,
+      y: vy + (y * vh) / 100,
+      rise: ((70 - y) * vh) / 100,
+      c: colors[i % colors.length],
+      d: i * 0.35 + Math.random() * 0.2,
+    };
+  });
+  const x = c.getContext("2d"),
+    t0 = performance.now(),
+    rp = (v) => Math.round(v),
+    fade = (p, at, to) =>
+      p < at ? 1 + (to - 1) * (p / at) : to * (1 - (p - at) / (1 - at));
+  const frame = (now) => {
+    const t = (now - t0) / 1000;
+    x.clearRect(0, 0, W, H);
+    for (const f of shots) {
+      const tr = (t - f.d) / 0.7; // (the rocket going up: 0.7 s, slowing)
+      if (tr >= 0 && tr < 1) {
+        const e = ease(0, 0, 0.58, 1, tr),
+          px = rp(f.x) - 1,
+          py = rp(f.y + f.rise * (1 - e));
+        x.globalAlpha = fade(tr, 0.9, 1);
+        x.fillStyle = f.c;
+        x.fillRect(px, py, 2, 7);
+        x.fillStyle = "#fff";
+        x.fillRect(px, py, 2, 2); // (its white tip)
+      }
+      const tb = (t - f.d - 0.7) / 1.5; // (the burst: 1.5 s, flying out fast, then hanging and falling a little)
+      if (tb < 0 || tb >= 1) continue;
+      const e = ease(0.15, 0.7, 0.3, 1, tb),
+        o = fade(tb, 0.7, 0.9);
+      for (let s = 0; s < 16; s++) {
+        const a = (s * Math.PI) / 8,
+          dx = 0.14 * vh * e,
+          dy = 0.03 * vh * e,
+          sx = rp(f.x + dx * Math.cos(a) - dy * Math.sin(a)),
+          sy = rp(f.y + dx * Math.sin(a) + dy * Math.cos(a));
+        x.fillStyle = f.c;
+        x.globalAlpha = o * 0.35;
+        x.fillRect(sx - 2, sy - 1, 5, 3);
+        x.fillRect(sx - 1, sy - 2, 3, 5); // (its glow)
+        x.globalAlpha = o;
+        x.fillRect(sx - 1, sy, 3, 1);
+        x.fillRect(sx, sy - 1, 1, 3);
+        x.fillStyle = "#fff";
+        x.fillRect(sx, sy, 1, 1);
+      }
+    }
+    x.globalAlpha = 1;
+    if (t < 4.2 && c.isConnected) requestAnimationFrame(frame);
+    else c.remove();
+  };
+  requestAnimationFrame(frame);
+}
+/* a CSS cubic-bezier(x1, y1, x2, y2) at p (0 to 1): how far along, as the CSS fireworks moved */
+function ease(x1, y1, x2, y2, p) {
+  const at = (a, b, u) =>
+    3 * a * u * (1 - u) ** 2 + 3 * b * u * u * (1 - u) + u ** 3;
+  let lo = 0,
+    hi = 1;
+  for (let i = 0; i < 20; i++) {
+    const m = (lo + hi) / 2;
+    if (at(x1, x2, m) < p) lo = m;
+    else hi = m;
+  }
+  return at(y1, y2, (lo + hi) / 2);
 }
 
 /* puts a map's world over the whole page (the page's own background rests meanwhile); returns { update(now), board(el),
