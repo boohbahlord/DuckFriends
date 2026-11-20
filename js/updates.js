@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v157",
+    version: 157,
+    date: "Nov 20, 2026",
+    title: "Loot looks, and smoother maps",
+    news: [
+      "For Sandbox: a Loot tab's How it looks section can show the item as an orb, as it looks in your hand, or as its hotbar picture. You can also set its size and how see-through it is.",
+      "For Dead Ducks Arcade: the dark around a building you're in is much lighter work for your computer, so Downpour and Duck Cabin run smoother, the most on laptops and in Firefox.",
+    ],
+  },
+  {
     id: "v156",
     version: 156,
     date: "Nov 20, 2026",

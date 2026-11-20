@@ -6,6 +6,7 @@ import { esc, toast } from "./ui.js";
 import {
   SB_LOOT,
   SB_LOOT_STARTS,
+  SB_LOOT_SHOWS,
   SB_DROPS,
   SB_GEAR,
   SB_FLAGS,
@@ -54,6 +55,20 @@ export function lootCats(s) {
 /* an orb's own picture (a data URL), or "" */
 const picOf = (s, id) => ((s.sbpic || {})[(s.sbImg || {})[id]] || {}).d || "";
 /* an orb's face: its picture, or what it looks like (its own thing, or the one in "Looks like") in an orb of its color */
+/* item w's own picture (its hotbar key's, or the gun as it's drawn), with no orb around it */
+function pictureOf(w) {
+  if (w === "flashlight") return ICONS.flashlight(true);
+  if (ammoOf(w)) return DROP_ICONS.ammo || "";
+  if (SB_DROPS[w]) return DROP_ICONS[SB_DROPS[w][0]] || "";
+  const sp = specialById(w);
+  return weaponIcon(w) || (sp && sp.icon) || "";
+}
+/* orb o of loot block id (point p) as it lies, whole: its face, its Size and how see-through (plan Loot 4) */
+export function orbWrap(s, id, p, o) {
+  const sz = Math.max(25, Math.min(400, +boxText(p, "lsize") || 100)) / 100,
+    op = Math.max(0, Math.min(95, +boxText(p, "lop") || 0));
+  return `<span class="sb-orb" style="--sz:${sz};opacity:${(1 - op / 100).toFixed(2)}">${orbFace(s, id, p, o)}</span>`;
+}
 export function orbFace(s, id, p, o = p.orb) {
   const img = picOf(s, id);
   if (img)
@@ -68,6 +83,11 @@ export function orbFace(s, id, p, o = p.orb) {
         ammoOf(look))
         ? look
         : o.w;
+  const show = boxText(p, "lshow");
+  if (show === "hand")
+    return `<span class="sb-orb-bare"><i>${pictureOf(w)}</i></span>`; // (as it's drawn in a hand: no orb)
+  if (show === "hotbar")
+    return `<span class="sb-orb-key"><i>${pictureOf(w)}</i></span>`; // (its hotbar key's picture)
   if (w === "flashlight")
     return `<span class="l4orb k-grenade"><i>${ICONS.flashlight(true)}</i></span>`;
   if (ammoOf(w))
@@ -120,14 +140,7 @@ export function lootPage(s, id, p, h) {
     img = picOf(s, id),
     cats = lootCats(s),
     drops = cats.some(([, ws]) => ws.some((w) => SB_DROPS[w])), // (Dead Ducks Arcade's maps: unlimited ammo too, where guns keep ammo; a weapon there stays, as one bought does)
-    icon = (w) =>
-      w === "flashlight"
-        ? ICONS.flashlight(true)
-        : SB_DROPS[w]
-          ? DROP_ICONS[SB_DROPS[w][0]] || ""
-          : ammoOf(w)
-            ? DROP_ICONS.ammo || ""
-            : weaponIcon(w) || "",
+    icon = pictureOf,
     drop = ([n, ws], i, all) => {
       const on = ws.filter((w) => picked.includes(w));
       return `<div class="sb-row"><span>${esc(n)}</span><details class="sb-acts" data-lcat><summary>${esc(on.map(nameOf).join(", ") || "Nothing")}</summary><span class="sb-what sb-lootpick">${ws
@@ -177,6 +190,16 @@ export function lootPage(s, id, p, h) {
     ${(drops ? ["hurt"] : ["keep", "hurt"]).map((f) => num(f, SB_LOOT[f])).join("")}
     ${drops ? flag("inf", SB_LOOT.inf) : ""}
     ${h.sect("How it looks")}
+    <div class="sb-row" data-row="lshow"><span>${esc(SB_LOOT.lshow.name)}</span><select class="sb-sel" data-lshow>${Object.entries(
+      SB_LOOT_SHOWS,
+    )
+      .map(
+        ([v, n]) =>
+          `<option value="${v}"${boxText(p, "lshow") === v ? " selected" : ""}>${esc(n)}</option>`,
+      )
+      .join("")}</select></div>
+    ${num("lsize", SB_LOOT.lsize)}
+    ${num("lop", SB_LOOT.lop, "0 is solid.")}
     <div class="sb-row"><span>Looks like</span><select class="sb-sel" data-lsel><option value="">Itself</option>${cats
       .slice(0, -1)
       .map(
@@ -292,6 +315,8 @@ export function lootWire(w, id, send, getR) {
       send({ k: "set", f: "loot", v: all.join(", ") });
       return;
     }
+    if (t.matches("[data-lshow]"))
+      return send({ k: "set", f: "lshow", v: t.value });
     if (t.matches("[data-lst]"))
       return send({ k: "set", f: "lst", v: t.value });
     if (t.matches("[data-lsel]"))

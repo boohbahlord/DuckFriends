@@ -1531,6 +1531,15 @@ export const SB_LOOT = {
   /* plan, Loot 2: "When several are ticked: the orb gives one of them at random, with equal chances, or gives all of them
      at once" */
   lall: { name: "All of them at once", kind: "bool", def: "f" },
+  /* plan, Loot 4: "The item lying on the ground can look like the orb in its kind's color (the default), like it looks in
+     your hand, or like its hotbar picture ... It has a size, and it can be see-through in 1% steps" */
+  lshow: {
+    name: "Shown as",
+    check: (t) => (SB_LOOT_SHOWS[String(t).trim()] ? "" : "Pick one"),
+    def: "orb",
+  },
+  lsize: { name: "Size (%)", kind: "int", min: 25, max: 400, def: "100" },
+  lop: { name: "See-through (%)", kind: "int", min: 0, max: 95, def: "0" },
   look: {
     name: "Looks like",
     check: (t) => (String(t).length <= 24 ? "" : "24 letters at most"),
@@ -1601,6 +1610,12 @@ export function sbPct(t) {
   if (!m) return null;
   return m[3] ? { p: +m[1] } : { v: +m[1] };
 }
+/* how a loot orb shows on the ground (plan, Loot 4) */
+export const SB_LOOT_SHOWS = {
+  orb: "An orb",
+  hand: "As in your hand",
+  hotbar: "Its hotbar picture",
+};
 /* when a loot block starts laying orbs (plan, Loot 1: "Starts: at the start of the game, or on an event ... a player
    steps into the zone, an entity spawns"): its zone is the one its tab answers to, or its own shape */
 export const SB_LOOT_STARTS = {
