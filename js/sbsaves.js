@@ -14,7 +14,13 @@ import { rainbowHTML } from "./art.js";
 import { fsBtnHTML } from "./corners.js";
 import { lobbyVote } from "./players.js";
 import { activeRoom } from "./net.js";
-import { isSb, SB_WORLD_NAMES } from "./sandboxrules.js";
+import {
+  isSb,
+  SB_WORLD_NAMES,
+  SB_RULES,
+  sbRule,
+  sbCan,
+} from "./sandboxrules.js";
 import { mapName, mapForm } from "./maps.js";
 import { sbSnapshot, newSaveId, SAVE_V } from "./sbsave.js";
 import { lobbyBtnHTML } from "./vote.js";
@@ -289,6 +295,7 @@ export function saveRows(R) {
       act: (r) => import("./umaps.js").then((m) => m.myMaps(r)),
     },
   ); // (a map from a picture, kept on this device: umaps.js; the owner's, Nov 19 22:59Z, "In Sandbox ... They click it and they can upload an image")
+  rows.push({ label: "Rules…", act: (r) => rulesWin(r) }); // (plan Phase 6: lives, the down phase, crits, watching when out)
   const on = allowedSongs(s); // (Miles Jr.'s song list, music.js: only these play, and everyone hears the same)
   rows.push({
     label: `Music: ${on.length ? `${on.length} of ${music.tracks.length} songs` : "no music"}…`,
@@ -330,6 +337,49 @@ function musicWin(R) {
           allowSongs(allowedSongs(R.state).length ? [] : undefined);
           setTimeout(() => w.isConnected && draw(w), 150);
         };
+      },
+    },
+  );
+}
+/* G's Rules (plan Phase 6, sandboxrules.js SB_RULES): lives, the down phase, crits, watching the others when out; only
+   whoever may change Sandbox changes them, everyone sees them. On the zombie maps' worlds */
+function rulesWin(R) {
+  if (document.querySelector(".sb-ruleswin")) return;
+  const draw = (w) => {
+    const s = R.state,
+      may = sbCan(s, R.me);
+    w.querySelector(".sb-rules").innerHTML = Object.entries(SB_RULES)
+      .map(([k, b]) => {
+        const v = sbRule(s, k);
+        return b.kind === "bool"
+          ? `<div class="sb-row" data-row="${k}"><span>${esc(b.name)}</span><button type="button" class="sb-tog${v ? " on" : ""}" data-rule="${k}" aria-pressed="${v}"${may ? "" : " disabled"}>${v ? "true" : "false"}</button></div>`
+          : `<div class="sb-row" data-row="${k}"><span>${esc(b.name)}</span><input class="sb-box" type="number" min="${b.min}" max="${b.max}" step="1" value="${v}" data-rule="${k}" aria-label="${esc(b.name)}"${may ? "" : " disabled"}></div>`;
+      })
+      .join("");
+  };
+  return openWindow(
+    `<h2>Rules</h2><p class="small dim">For the zombie maps (the arcade's cabin and Downpour). Saved with the Sandbox.</p><div class="sb-rules sb-set"></div>`,
+    {
+      cls: "win-small sb-ruleswin",
+      onOpen(w) {
+        draw(w);
+        const later = () => setTimeout(() => w.isConnected && draw(w), 150);
+        w.addEventListener("click", (e) => {
+          const b = e.target.closest("button[data-rule]");
+          if (!b) return;
+          R.send({
+            t: "sbr",
+            k: b.dataset.rule,
+            v: b.classList.contains("on") ? "f" : "t",
+          });
+          later();
+        });
+        w.addEventListener("change", (e) => {
+          const i = e.target.closest("input[data-rule]");
+          if (!i) return;
+          R.send({ t: "sbr", k: i.dataset.rule, v: i.value });
+          later();
+        });
       },
     },
   );

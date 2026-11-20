@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v147",
+    version: 147,
+    date: "Nov 20, 2026",
+    title: "Rules",
+    news: [
+      "For Sandbox: G has Rules for the zombie maps. Set lives (unlimited unless you set them), the down phase (off by default: you just die), crits, and watching the others once you're out of lives.",
+    ],
+  },
+  {
     id: "v146",
     version: 146,
     date: "Nov 20, 2026",

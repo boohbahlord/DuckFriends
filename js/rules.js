@@ -25,6 +25,7 @@ import {
   SB_RIGHTS,
   sbOnBoard,
   sbPlayerSpot,
+  sbRulesAct,
 } from "./sandboxrules.js";
 import { sbGodAct, godOn } from "./sbgod.js";
 import { survSet } from "./survrules.js";
@@ -2357,6 +2358,9 @@ function reduceStep(state, a, now) {
     case "sbg":
       // Sandbox's God mode and invisibility: mine, or a player's if I have the rights (sbgod.js)
       return sbGodAct(s, a) ? s : state;
+    case "sbr":
+      // Sandbox's Rules in G: lives, down phase, crits, watching when out (sandboxrules.js)
+      return sbRulesAct(s, a) ? s : state;
     case "sbh":
       // Sandbox's hotbar: its slots, the default, the lock, a spawn button's look and press (sbhot.js)
       return sbHotAct(s, a, now) ? s : state;
