@@ -1464,6 +1464,7 @@ export function openCustomize(page = lastPage, opts = {}) {
             if (a.dataset.a === "nopic") {
               D.image = null;
               delete D.cut;
+              delete D.z;
               changed();
               return;
             }
@@ -1696,6 +1697,8 @@ export function openCustomize(page = lastPage, opts = {}) {
                 D.image = got.d;
                 if (got.cut) D.cut = 1;
                 else delete D.cut;
+                if (got.z > 1) D.z = got.z;
+                else delete D.z;
               } else
                 profile.card.image = await pictureToSquare(file, CARD_PIC_PX);
               changed();

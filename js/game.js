@@ -268,7 +268,7 @@ import { sbHotOn, sbLook, sbHotSig } from "./sbhotview.js";
 import { sbSlots, spawnOf } from "./sbhot.js";
 import { sbBoardMarks, sbSettings, sbRoofed } from "./sbspawnview.js";
 import { sbHear } from "./sbsfx.js";
-import { duckSVG, duckRoom, scaleOf } from "./duck.js";
+import { duckSVG, duckRoom, picFrame, scaleOf } from "./duck.js";
 import {
   shownDuck,
   shownNameStyle,
@@ -1660,12 +1660,18 @@ function drawDucks(now = clockNow()) {
         dead,
         ...(p.bomb ? { skin: BOMB_SKIN } : {}),
         ...(wc ? woundLook(noGoreOf(s) ? goreFree(wc) : wc) : {}), // (Gore off: only a hat knocked off shows)
+        grow: true,
       });
+      const F = picFrame(look); // (a thin or sparse cut-out picture, drawn bigger: its box is wider than the duck's)
       d._bodyEl.innerHTML =
         (jet ? jetHTML(look) : "") +
-        (pixelOn() ? pxSVG(pic, size, "duck") : pic) + // (the pixel look: the same drawing, made into pixels once)
+        (pixelOn() ? pxSVG(pic, F ? (size * F.w) / 120 : size, "duck") : pic) + // (the pixel look: the same drawing, made into pixels once)
         '<span class="sp-fx gduck-aura"></span>';
       d._pic = d._bodyEl.querySelector("svg.duck, img.px");
+      if (F && d._pic) {
+        d._pic.style.width = `${((F.w / 120) * 100).toFixed(2)}%`;
+        d._pic.style.marginLeft = `${((F.x / 120) * 100).toFixed(2)}%`;
+      } // (as wide as its box, the duck's square still in the middle)
       if (look && look.eyes === "tears" && !pixelOn()) {
         // his tears stay bright over the burnt duck: a copy on top shows only the tears (css: .mgj-cry)
         const cry = d.querySelector(".gduck-body svg").cloneNode(true);
