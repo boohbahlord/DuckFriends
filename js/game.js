@@ -1074,7 +1074,10 @@ function boardCam() {
   const g = geo,
     big = bigGeo();
   geo = big;
-  const o = me && me.x >= 0 ? place(me) : { left: big.W / 2, top: big.H / 2 };
+  const w = watching(s, R.me),
+    who = (w && w !== R.me && s.pos[w]) || me; // (out of lives: the duck I watch, spectate.js)
+  const o =
+    who && who.x >= 0 ? place(who) : { left: big.W / 2, top: big.H / 2 };
   geo = g;
   const cl = (v, lo) => Math.max(lo, Math.min(0, v));
   g.ox = cl(g.W / 2 - o.left, g.W - big.W);
@@ -6820,7 +6823,8 @@ function actHTML(s) {
   if (isQuack(s) && QUACK_PHASES.includes(s.phase)) return quackActHTML(s);
   if (isVd(s) && VD_PHASES.includes(s.phase)) return vdActHTML(s);
   if (isTv(s) && TV_BOARD.includes(s.phase)) return tvActHTML(s, R.me, me);
-  if (isHang(s) && watching(s, R.me)) return watchHTML(s, R.me); // (Survival, my duck dead: the card of the one I watch: spectate.js)
+  if ((isHang(s) || sbOnBoard(s)) && watching(s, R.me))
+    return watchHTML(s, R.me); // (Survival, my duck dead: the card of the one I watch: spectate.js)
   if (isHang(s)) return world ? world.buttonHTML() : ""; // Hangout: the nearest activity's button (Light off …)
   if (late())
     return `<span class="progress">You joined mid-turn: walk around and chat. You play from the next ${isBb(s) ? "match" : isLaw(s) ? "case" : isDn(s) ? "take" : "question"}. · ${d}/${n} done</span>`;

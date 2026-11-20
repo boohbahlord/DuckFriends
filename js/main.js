@@ -20,6 +20,7 @@ import { rest, soon } from "./later.js";
 import { showSplash } from "./splash.js";
 import { fullOnFirstTap, fsBtnHTML } from "./corners.js";
 import { loadingScreen, pageReady } from "./loading.js";
+import { squarePixels, DUCK_PIC_PX, CARD_PIC_PX } from "./duck.js";
 
 applySettings();
 
@@ -77,8 +78,27 @@ corner.onclick = () =>
     : signIn();
 onAccount(paintCorner);
 paintCorner();
+/* a duck's or a card's picture saved before pictures were made into real pixels (a 128 px JPEG): made into them now,
+   and only they are kept (the owner's, Nov 19 23:26Z: "we don't have the leftover image behind") */
+async function oldPictures() {
+  let changed = false;
+  for (const [o, px] of [
+    [profile.duck, DUCK_PIC_PX],
+    [profile.card, CARD_PIC_PX],
+  ]) {
+    if (!o || !o.image) continue;
+    const d = await squarePixels(o.image, px);
+    if (d !== o.image) {
+      o.image = d;
+      changed = true;
+    }
+  }
+  if (changed) save();
+}
+oldPictures();
 /* the account's profile came in: show it */
 addEventListener("duck-profile", () => {
+  oldPictures();
   if (takeOffLocked().length) save();
   applySettings();
   showJumps();

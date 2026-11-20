@@ -15,7 +15,9 @@ const ZB = new Map(),
   SEEN = [], // [x, y] of each one alive on the screen now
   LASERS = []; // this frame's laser sights: [x0, y0, x1, y1] on the screen (game.js hands them to fx.js)
 let supEl = null,
-  shookAt = 0;
+  shookAt = 0,
+  supLv = 0, // (how dark the corners are: 0 to 1, growing while the LMG keeps on at me)
+  supT = 0;
 const BURNS = 2200; // ms a flame's bite shows it burning (gunmenrules.js GM.BURN_MS, and a little)
 activity({
   id: "gunmen",
@@ -113,6 +115,14 @@ activity({
     }
     if (supEl && supEl.classList.contains("on") !== sup)
       supEl.classList.toggle("on", sup);
+    /* the owner's, Nov 19 19:27Z: "makes the corners of your screen grow more and more black": darker the longer it
+       goes on (full in about 6 s), lighter again once it stops */
+    const dt = Math.min(250, Math.max(0, now - (supT || now)));
+    supT = now;
+    supLv = sup
+      ? Math.min(1, supLv + dt / 6000)
+      : Math.max(0, supLv - dt / 2000);
+    if (supEl) supEl.style.setProperty("--sup", supLv.toFixed(2));
     if (sup && now - shookAt > 120) {
       shookAt = now;
       shake(0.22);

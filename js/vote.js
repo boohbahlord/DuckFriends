@@ -12,7 +12,6 @@ import { rainbowHTML, gameSymbol, diceSVG } from "./art.js";
 import { modeOf, CATS, CABIN_MODES } from "./modes.js";
 import { mapName, mapForm, mountPreview, umapOf } from "./maps.js";
 import { isUmap } from "./umaprules.js";
-import { isNwk } from "./nwk.js";
 import { duckSVG } from "./duck.js";
 import { seenDuck } from "./looks.js";
 import { voteIds, voteLeft, DICE, voteNeeds } from "./rules.js";
@@ -48,8 +47,8 @@ function modeRow(id) {
     cabin = CABIN_MODES.includes(id);
   return `<button type="button" class="vt-mode${dice ? " vt-dice" : ""}" data-v="${id}"><span class="sym">${dice ? diceSVG(50) : gameSymbol(id, 50)}</span><span class="t">${esc(dice ? "Random" : modeOf(id).name)}${cabin ? "<small>Duck Cabin</small>" : ""}</span><span class="n"></span><span class="who"></span></button>`;
 }
-/* a map's picture: its drawing (art.js artBackdrop) made into pixels ahead of time (tools/pixel-files.cjs), so nothing
-   is made on the device and the vote shows at once (the owner's, Nov 19 20:04Z: black pictures on a slow phone) */
+/* a map's picture: its drawing (tools/pixel-src/backdrops.js; Nous Within Kenoma's, a still of the map itself) made into
+   pixels ahead of time (tools/pixel-files.cjs), so nothing is made on the device and the vote shows at once (the owner's, Nov 19 20:04Z: black pictures on a slow phone) */
 function mapTile(id) {
   if (id === DICE)
     return `<button type="button" class="vt-map vt-dice" data-v="${DICE}"><span class="vt-pic"><span class="vt-die">${diceSVG(96)}</span></span><span class="vt-name">Random</span><span class="vt-n"></span><span class="vt-ducks"></span></button>`;
@@ -57,8 +56,6 @@ function mapTile(id) {
     return `<button type="button" class="vt-map" data-v="${id}"><span class="vt-pic"><img class="vt-still vt-made" src="${(umapOf(id) || {}).d || ""}" alt="" draggable="false"></span><span class="vt-name">${esc(mapName(id))}</span><span class="vt-n"></span><span class="vt-ducks"></span></button>`; // (a map the host made: its own picture, umaps.js)
   const f = mapForm(id),
     [name, form] = mapName(id).split(/ \((.+)\)$/);
-  if (isNwk(f.map))
-    return `<button type="button" class="vt-map" data-v="${id}"><span class="vt-pic" data-still="${id}"></span><span class="vt-name">${esc(name)}${form ? ` <i>(${esc(form)})</i>` : ""}</span><span class="vt-n"></span><span class="vt-ducks"></span></button>`; // (its picture: a still of the map itself, stills())
   return `<button type="button" class="vt-map" data-v="${id}"><span class="vt-pic"><img class="vt-still${f.grey ? " grey" : ""}" src="assets/px/vote/${f.map}.webp" data-pxready data-pxok alt="" draggable="false"></span><span class="vt-name">${esc(name)}${form ? ` <i>(${esc(form)})</i>` : ""}</span><span class="vt-n"></span><span class="vt-ducks"></span></button>`;
 }
 function zmapTile(id) {
@@ -114,9 +111,7 @@ function build(R, pause) {
     left: null, // the second the clock shows
     tick: setInterval(clock, 50),
     lv: "",
-    stills: [],
   };
-  stills();
   coverPictures(el); // (the maps' pictures in before it shows, behind the loading screen: the owner's, Nov 19 20:04Z)
   const pick = (e) => e.target.closest && e.target.closest("[data-v]");
   el.addEventListener("click", (e) => {
@@ -166,25 +161,6 @@ function build(R, pause) {
         hover(b.dataset.v);
     });
   }
-}
-
-/* Nous Within Kenoma's pictures (owner, Nov 17: "the nous within kenoma maps dont represent the maps well at all"): a
-   drawing of them can't be its static, its one-pixel strings, its scan lines and its lights at the grid's own size, so
-   each is the map itself, the same scene as the one that moves under the pointer, drawn once and then left still. A
-   new size (the window turned or resized) draws it again at that size */
-function stills() {
-  for (const pic of W.el.querySelectorAll("[data-still]")) {
-    const p = mountPreview(pic, pic.dataset.still);
-    pic.lastElementChild.classList.add("vt-still", "vt-nwk");
-    W.stills.push(p);
-  }
-  const draw = () => {
-    if (W) for (const p of W.stills) p.update(now());
-  };
-  draw();
-  requestAnimationFrame(draw); // (and once it's laid out, in case it wasn't yet)
-  W.redraw = draw;
-  addEventListener("resize", draw);
 }
 
 /* the maps that move: the one under the pointer or a finger, and the one you voted for (the dice has no map) */
@@ -297,8 +273,6 @@ export function closeVotes() {
   clearTimeout(W.hold);
   cancelAnimationFrame(W.raf);
   for (const p of W.live.values()) p.destroy();
-  for (const p of W.stills) p.destroy();
-  removeEventListener("resize", W.redraw);
   W.el.remove();
   W = null;
 }

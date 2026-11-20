@@ -1,0 +1,22 @@
+/* the maps that have a picture file (assets/px/pic): written by tools/pixel-files.cjs, never by hand */
+export const PX_PIC = [
+  "board",
+  "cabin",
+  "carnival",
+  "collage",
+  "collagebw",
+  "ec",
+  "euclid",
+  "euclidzoom",
+  "nwk",
+  "nwkarch",
+  "nwkchalice",
+  "nwkfool",
+  "nwkten",
+  "pixel",
+  "rabbit",
+  "sky",
+  "stars",
+  "tiles",
+  "vellum",
+];

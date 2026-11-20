@@ -45,6 +45,14 @@ const NOW_ONLY = [
 ]; // (s.sb's parts that only mean something this moment; gm, gj: who is in which group now, sbgroups.js; died: the lives used, l4ddrules.js; lr: the loot blocks' timers and counts, sbloot.js)
 const copy = (v) => JSON.parse(JSON.stringify(v));
 
+/* a save's (or a made game mode's) pictures from before every upload was made into pixels: made into them (sbmake.js pixelsOnly). True if
+   any changed */
+export async function oldPics(data) {
+  const pics = data && data.parts && data.parts.sbpic;
+  if (!pics) return false;
+  const { pixelsOnly } = await import("./sbmake.js");
+  return pixelsOnly(pics).catch(() => false);
+}
 /* the Sandbox in s as a save's data (plain JSON) */
 export function sbSnapshot(s) {
   const parts = {};

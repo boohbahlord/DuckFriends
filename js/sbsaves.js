@@ -23,7 +23,7 @@ import {
   sbOnBoard,
 } from "./sandboxrules.js";
 import { mapName, mapForm } from "./maps.js";
-import { sbSnapshot, newSaveId, SAVE_V } from "./sbsave.js";
+import { sbSnapshot, newSaveId, SAVE_V, oldPics } from "./sbsave.js";
 import { lobbyBtnHTML } from "./vote.js";
 import { music, allowSongs, allowedSongs } from "./music.js";
 import { sfx } from "./sound.js";
@@ -141,11 +141,14 @@ export async function readSave(id) {
   ]);
   const r = good(a) ? a : good(b) ? b : null;
   if (!r) return null;
+  let data;
   try {
-    return { ...r, data: JSON.parse(r.data) };
+    data = JSON.parse(r.data);
   } catch (e) {
     return null;
   }
+  await oldPics(data); // (the next save keeps only the pixels)
+  return { ...r, data };
 }
 /* write rec whole, keeping the one it replaces; then read it back and check it (a bad write puts the old one back) */
 let chain = Promise.resolve();
@@ -391,7 +394,7 @@ function rulesWin(R) {
       .join("");
   };
   return openWindow(
-    `<h2>Rules</h2><p class="small dim">Lives, the down phase, crits, watching and everyone out are for the zombie maps (the arcade's cabin and Downpour); Board size for the plain boards; a game mode's look on every map. Saved with the Sandbox.</p><div class="sb-rules sb-set"></div>`,
+    `<h2>Rules</h2><p class="small dim">Lives, watching and everyone out count on every map; the down phase and crits are for the zombie maps (the arcade's cabin and Downpour); Board size for the plain boards; a game mode's look on every map. Saved with the Sandbox.</p><div class="sb-rules sb-set"></div>`,
     {
       cls: "win-small sb-ruleswin",
       onOpen(w) {
