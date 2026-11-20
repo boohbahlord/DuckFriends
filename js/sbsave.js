@@ -25,7 +25,7 @@ export const SAVE_V = 1; // (a save's version: a newer game still opens an older
 const MINE = ["sbsv", "sbpk", "sbAsked"]; // (this file's own parts: never in a save)
 export const isPart = (k) => /^(sb|nb)/.test(k) && !MINE.includes(k);
 const isOpt = (k) => /^sb/.test(k);
-const NOW_ONLY = ["live", "rq", "run", "au", "seen", "gm", "gj"]; // (s.sb's parts that only mean something this moment; gm, gj: who is in which group now, sbgroups.js)
+const NOW_ONLY = ["live", "rq", "run", "au", "seen", "gm", "gj", "died", "lr"]; // (s.sb's parts that only mean something this moment; gm, gj: who is in which group now, sbgroups.js; died: the lives used, l4ddrules.js; lr: the loot blocks' timers and counts, sbloot.js)
 const copy = (v) => JSON.parse(JSON.stringify(v));
 
 /* the Sandbox in s as a save's data (plain JSON) */
@@ -125,6 +125,16 @@ export function sbPick(s, a, now) {
     Object.entries(s.options).filter(([k]) => isOpt(k)),
   );
   const sv = a.save;
+  /* a made game mode (gmodes.js): played as players see it, nobody changing it (sandboxrules.js sbPlaying); test: the
+     host trying it from G, Stop test brings the build back */
+  if (a.play) {
+    s.gmPlay = 1;
+    if (a.test) s.gmTest = 1;
+    else delete s.gmTest;
+  } else {
+    delete s.gmPlay;
+    delete s.gmTest;
+  }
   if (!sv) {
     clear(s);
     s.sbsv = { id: newSaveId(), name: "", made: now, who: {} };
@@ -144,6 +154,8 @@ export function sbPick(s, a, now) {
   for (const [k, v] of Object.entries(d.options || {}))
     if (isOpt(k)) s.options[k] = v;
   s.options.sbMap = SB_WORLDS[d.world] ? d.world : ""; // (a world save brings its world; a board save, the board)
+  if (a.play && !SB_WORLDS[d.world] && typeof d.map === "string" && d.map)
+    s.options.map = d.map; // (a made game mode on the board: its own map, no map vote)
   if (d.music && Array.isArray(d.music.off))
     s.music = {
       a: null,
@@ -200,6 +212,8 @@ export function defaultName(s, now) {
 export function sbEnd(s) {
   delete s.sbpk;
   delete s.sbAsked;
+  delete s.gmPlay; // (a made game mode, or its test, is over)
+  delete s.gmTest;
   const sv = s.sbsv;
   if (!sv || !sv.room) return;
   for (const k of Object.keys(s.options))

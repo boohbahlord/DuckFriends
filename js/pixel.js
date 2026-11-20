@@ -238,12 +238,14 @@ async function fromParts(src, cw, ch) {
       return null;
     }
   }
-  /* in its first tag (esc() leaves no > in it) */
-  const m = /\sdata-dk="([^"]*)"/.exec(text.slice(0, text.indexOf(">") + 1));
-  if (!m || window.__pxNoParts) return null;
+  /* in its first tag (esc() leaves no > in it); a rainbow skin's every step (rbSprite), in its first step's */
+  const steps = hasRb(text) && !/^<svg[^>]*\sdata-dk=/.test(text) ? RB_N : 1,
+    at = steps > 1 ? text.indexOf("<svg", 1) : 0,
+    m = /\sdata-dk="([^"]*)"/.exec(text.slice(at, text.indexOf(">", at) + 1));
+  if (!m || window.__pxNoParts || ch % steps) return null;
   try {
     const { duckFromParts } = await import("./duckparts.js");
-    return await duckFromParts(JSON.parse(unq(m[1])), cw, ch);
+    return await duckFromParts(JSON.parse(unq(m[1])), cw, ch / steps, steps);
   } catch {
     return null;
   }

@@ -68,7 +68,14 @@ import { uiCommand } from "./hideui.js";
 import { SERIAT_THEMES, seriatTheme, setSeriatTheme } from "./seriattheme.js";
 import { music } from "./music.js";
 import { npcsHere, npcTag, npcByTag, npcById } from "./npcs.js";
-import { isSb, sbMay, sbWorld, SB_WORLD_NAMES } from "./sandboxrules.js";
+import {
+  isSb,
+  sbMay,
+  sbWorld,
+  SB_WORLD_NAMES,
+  sbSettingsText,
+  sbSettingsRead,
+} from "./sandboxrules.js";
 import { HELP, EXAMPLES } from "./numerathelp.js";
 import { LANG, LANG_DIR } from "./langname.js";
 import {
@@ -139,6 +146,41 @@ const NO_HELP = (path) =>
   inEx(path)
     ? `✗ ${path}: Permission denied (the example files are read-only: copy one with cp, then change the copy).`
     : `✗ ${path}: Permission denied (the help files are read-only: they can't be changed, copied or deleted).`;
+/* settings/limits (plan Phase 6, sandboxrules.js sbSettingsText): in Sandbox, the room's settings that no menu shows, as
+   "name = value" lines. Never kept on the device (it's the room's); its write starts off each game (read-only by
+   default); written, its lines go to the room (whoever may change Sandbox: sbRulesAct), and it shows the room's again */
+const setRoot = () => numRoot() + "/settings";
+const inSet = (path) => path === setRoot() || path.startsWith(setRoot() + "/");
+let setMade = ""; // (the text I last put in it from the room)
+function setSync() {
+  const s = roomS(),
+    f = setRoot() + "/limits";
+  if (!fs.home) return;
+  if (!s || !isSb(s)) {
+    if (fs.dirs.has(setRoot())) {
+      delete fs.files[f];
+      delete fs.meta[f];
+      fs.dirs.delete(setRoot());
+    }
+    return;
+  }
+  fs.dirs.add(setRoot());
+  const now = sbSettingsText(s),
+    cur = fs.files[f];
+  if (cur === undefined) {
+    fs.files[f] = setMade = now;
+    fs.meta[f] = { nw: true, t: 0 };
+    return;
+  }
+  if (cur !== setMade) {
+    if (fs.room && fs.room.send)
+      for (const [k, v] of sbSettingsRead(cur))
+        fs.room.send({ t: "sbr", k, v });
+    setMade = cur; // (the room's answer shows next time: the same text if it took it)
+    return;
+  }
+  if (now !== setMade) fs.files[f] = setMade = now;
+}
 function numLoad() {
   const N = profile.numerat || {},
     root = numRoot();
@@ -174,6 +216,7 @@ function numLoad() {
   fs.meta[exRoot()] = { ro: true, t: 0 };
 }
 function numKeep() {
+  setSync();
   const root = numRoot(),
     rel = (p) => p.slice(root.length + 1),
     f = {},
@@ -181,7 +224,7 @@ function numKeep() {
     nr = [],
     nw = [];
   for (const [p, t] of Object.entries(fs.files))
-    if (inNum(p) && !inRo(p)) {
+    if (inNum(p) && !inRo(p) && !inSet(p)) {
       f[rel(p)] = t;
       const m = fs.meta[p] || {};
       if (m.x) x.push(rel(p));
@@ -191,7 +234,7 @@ function numKeep() {
   const next = {
     f,
     d: [...fs.dirs]
-      .filter((d) => inNum(d) && !inRo(d))
+      .filter((d) => inNum(d) && !inRo(d) && !inSet(d))
       .map(rel)
       .sort(),
     x,
@@ -203,6 +246,16 @@ function numKeep() {
   if (JSON.stringify(next) === JSON.stringify(profile.numerat || {})) return;
   profile.numerat = next;
   save();
+}
+/* every folder and file inside folder p (not the game's read-only ones), folders first */
+function below(p) {
+  const pre = p + "/";
+  return [
+    ...[...fs.dirs].filter((d) => d.startsWith(pre) && !inRo(d)).sort(),
+    ...Object.keys(fs.files)
+      .filter((f) => f.startsWith(pre) && !inRo(f))
+      .sort(),
+  ];
 }
 /* a class's rights on a Seriat path, changed by chmod (only the bits it names): null outside Sandbox */
 function give(p, who, ch) {
@@ -361,6 +414,7 @@ function sync(ctx) {
     numLoad();
   }
   fs.people = s ? s.seat.map((id) => tag(s.players[id].name)) : [me];
+  setSync();
 }
 const norm = (p) => {
   const out = [];
@@ -1947,8 +2001,16 @@ const CMDS = {
   /* the modes: u (mine: r, w, x), g (the file's group) and o (everyone). On a Seriat file or folder, g and o are also
      the rights the room's players get, this Sandbox only (nbperms.js); g+r and o+r still let a sent file be opened */
   chmod: (args) => {
-    const [mode, ...files] = args;
-    if (!mode || !files.length) fail(`✗ chmod: usage: ${MAN.chmod}`);
+    const deep = args[0] === "-R" || args[0] === "--recursive"; // (a whole folder at once: the owner's "recursive" switch, plan Phase 6)
+    if (deep) args = args.slice(1);
+    const [mode, ...named] = args;
+    if (!mode || !named.length) fail(`✗ chmod: usage: ${MAN.chmod}`);
+    const files = deep
+      ? named.flatMap((f) => {
+          const p = findPath(f);
+          return kind(p) === "dir" ? [f, ...below(p)] : [f];
+        })
+      : named;
     const ch = { u: {}, g: {}, o: {} },
       nm = mode.match(/^[0-7]?([0-7])([0-7])([0-7])$/);
     if (nm)
@@ -3174,6 +3236,23 @@ export const numerat = {
       rel,
       file: kind(path) === "file",
       own: (m.nr ? "" : "r") + (m.nw ? "" : "w") + (m.x ? "x" : ""),
+      /* a folder: the bits every file in it has (the Recursive switch's Me row) */
+      ownAll:
+        kind(path) === "dir"
+          ? "rwx"
+              .split("")
+              .filter((b) => {
+                const fl = below(path).filter((f) => kind(f) === "file");
+                return (
+                  fl.length &&
+                  fl.every((f) => {
+                    const q = fs.meta[f] || {};
+                    return b === "r" ? !q.nr : b === "w" ? !q.nw : !!q.x;
+                  })
+                );
+              })
+              .join("")
+          : "",
       sb,
       given: sb ? nbGiven(s, fs.meId, rel) : [],
       players: s
@@ -3194,22 +3273,25 @@ export const numerat = {
               : w,
     };
   },
-  /* my own bits on a file ("rw", "rx" …), kept on this device */
-  setOwn(ctx, path, bits) {
+  /* my own bits on a file ("rw", "rx" …), kept on this device; deep: on every file in a folder */
+  setOwn(ctx, path, bits, deep = false) {
     sync(ctx);
-    CMDS.chmod([`u=${bits}`, path]);
+    CMDS.chmod([...(deep ? ["-R"] : []), `u=${bits}`, path]);
   },
-  /* a player's (a group's, everyone's) rights on my file or folder, this Sandbox */
-  give(ctx, path, who, bits) {
+  /* a player's (a group's, everyone's) rights on my file or folder, this Sandbox; deep: on the folder and everything
+     in it */
+  give(ctx, path, who, bits, deep = false) {
     sync(ctx);
     const s = roomS();
     if (!s || !isSb(s) || !fs.room.send) return;
-    fs.room.send({
-      t: "nbp",
-      path: path === numRoot() ? "" : path.slice(numRoot().length + 1),
-      who,
-      bits,
-    });
+    const all = deep && kind(path) === "dir" ? [path, ...below(path)] : [path];
+    for (const p of all.slice(0, 300))
+      fs.room.send({
+        t: "nbp",
+        path: p === numRoot() ? "" : p.slice(numRoot().length + 1),
+        who,
+        bits,
+      });
   },
   write(ctx, path, text) {
     sync(ctx);

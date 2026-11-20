@@ -1,7 +1,7 @@
 /* ---------- Sandbox: loot orbs (stage 4b), the rules ----------
    The owner's Sandbox file, "Loot Spawns" (sandboxrules.js SB_LOOT has the words): an orb lies on its loot point, holding
    one of the things picked for it (more than one picked: one of them at random each time). The first comes at once; a
-   duck that walks over it takes it, and if "Comes back" is on, the next comes "Seconds before it comes back" later.
+   duck that walks over it takes it, and with "Auto spawn" on (once "Comes back"), the next comes "Seconds before a new one comes" later.
    - On the board and Duck Cabin, what's taken goes on the duck's hotbar (sbhot.js sbSlots: s.sb.hb.got), for good or
      for "Seconds you keep it".
    - On Dead Ducks Arcade's maps a weapon goes into the duck's slots, as one bought does (l4ddrules.js l4Loot), and a
@@ -10,7 +10,7 @@
    - "Damage to whoever takes it" hurts the duck that takes it (a claw's hurt).
    - A zone whose "Loot spawns here" names the orb's point (its color or its name) has the orb lie there instead, at a
      spot in it at random each time (stage 5, sbzone.js): p.orb.x, y, z.
-   The orb is on its point: p.orb = { w, at, dn: a zombie drop's number }, p.gone = when it was last taken. An uploaded
+   The orb is on its point: p.orb = { w, at, dn: a zombie drop's number }, and p.orbs the others (below). An uploaded
    picture for an orb is sent in parts as a made NPC's is (sbmake.js sendParts) and kept in s.sbpic, made into pixels (plan
    Phase 3); s.sbImg = { loot point: its key there } */
 import {
@@ -19,7 +19,6 @@ import {
   sbOnBoard,
   boardDuck,
   baseMode,
-  SB_LOOT,
   SB_DROPS,
   SB_GEAR,
   sbSpread,
@@ -27,26 +26,46 @@ import {
   sbInv,
   sbTabLive,
   sbUsed,
+  sbRule,
+  sbInBlock,
+  sbWhoTakes,
+  sbPct,
 } from "./sandboxrules.js";
 import { valueOf } from "./numerat.js";
-import { boxText, spawnsHere, zoneSpot, zonesFor } from "./sbspawn.js";
+import {
+  boxOf,
+  boxText,
+  spawnsHere,
+  zoneSpot,
+  zonesFor,
+  liveNpcs,
+} from "./sbspawn.js";
 import { W, H } from "./hangout/layout.js";
-import { ARMS, DROP, l4Loot, l4Hurt } from "./l4ddrules.js";
-import { grFrom } from "./sbgroups.js";
+import { ARMS, DROP, l4Loot, l4Hurt, l4Ammo, fullAmmo } from "./l4ddrules.js";
+import { grFrom, grIn } from "./sbgroups.js";
 
 const words = (t) =>
   String(t || "")
     .toLowerCase()
     .split(/[\s,]+/)
     .filter(Boolean);
-const num = (p, f) => valueOf({ ok: boxText(p, f) }, SB_LOOT[f]);
+const num = (p, f) => valueOf({ ok: boxText(p, f) }, boxOf(f)); // (its own boxes, and the spawn's it borrows: limit, every, cont)
 const zmaps = (s) => baseMode(s.options) === "l4dd";
+/* a gun's ammo as loot (plan Loot 2, "Ammo and magazines"): its word is the gun's and "ammo" ("akammo"); the gun, or
+   null. Only the guns that keep ammo (never the specials, never Max Ammo, a zombie drop) */
+export const ammoOf = (w) => {
+  const g = /^[a-z0-9]+ammo$/.test(w) ? w.slice(0, -4) : "";
+  return g && Object.hasOwn(ARMS, g) && ARMS[g].kind === "ranged" && fullAmmo(g)
+    ? g
+    : null;
+};
 /* can w be in an orb on this map */
 export const lootOk = (s, w) =>
   zmaps(s)
     ? Object.hasOwn(SB_DROPS, w) ||
       Object.hasOwn(ARMS, w) ||
-      Object.hasOwn(SB_GEAR, w)
+      Object.hasOwn(SB_GEAR, w) ||
+      !!ammoOf(w)
     : !Object.hasOwn(SB_DROPS, w) && /^[a-z0-9]+$/.test(w);
 /* what orb p may hold here */
 export const lootList = (s, p) =>
@@ -69,51 +88,212 @@ export function sbLootAct(s, a) {
 }
 
 /* ---------- the host's heartbeat: orbs come, are taken, come back; what was kept for a time wears off ----------
+   Plan, Loot 1 (Spawning): a block starts (Starts: when the game starts, when a player steps into its zone, when
+   something spawns in its zone) with one orb at once; then Auto spawn lays a new one "Seconds before a new one comes"
+   after each one taken, and Continuous spawn one every "Seconds between spawns", taken or not, while fewer than its Spawn
+   limit lie on the map (0: none). Its Loot limit (and G's for the whole map) counts every orb it lays in the game. Who
+   can take it is a list as a wall's (sbWhoTakes, groups too); with "Every player gets their own", each of them takes
+   their own copy (orb.got: who has it; it's hidden on their screen), and it goes once all of them have.
+   The orbs: p.orb (the first, as before) and p.orbs (the others). Their timers and counts are s.sb.lr = { block: { on,
+   c: the next continuous one, rb: [when the auto spawn's come], n: how many it laid, f: its first still to come } }, this game's only (sbsave.js).
    H0: what the rules lend (rules.js SB_H): ducks(s), claw(s, id, dmg, now). True when anything changed */
+export const orbsOf = (p) => [p.orb, ...((p && p.orbs) || [])].filter(Boolean);
+function withOrbs(q, list) {
+  const r = { ...q, orb: list[0] || null };
+  if (list.length > 1) r.orbs = list.slice(1);
+  else delete r.orbs;
+  delete r.gone; // (the old one-orb clock: s.sb.lr now)
+  return r;
+}
+/* the most of block q's orbs lying at once (0: none, still never past 100) */
+function spawnMost(q) {
+  const n = num(q, "limit");
+  return n === 0 ? 100 : Math.max(1, Number.isFinite(n) ? n : 1);
+}
+const gap = (q) => 1000 * Math.max(0.1, num(q, "every") || 4); // (Seconds between spawns, as a spawn's)
+/* has block id (point q) started laying orbs: when the game starts, or the event its Starts names, in its zone (the one
+   its tab answers to, or its own shape) */
+function startsNow(s, pts, id, q, H0) {
+  const when = boxText(q, "lst").trim();
+  if (when !== "enter" && when !== "spawn") return true;
+  const zid = sbCallZone(pts, id),
+    z = zid ? pts[zid] : q;
+  if (when === "enter")
+    return H0.ducks(s).some((d) => {
+      const me = s.pos[d];
+      return !!me && sbInBlock(s, z, me.x, me.y, W, H);
+    });
+  /* something spawned: a Spawn tab that answers to the same zone (or of the same block) made one */
+  const live = (s.sb && s.sb.live) || {};
+  return Object.entries(pts).some(
+    ([sid, P]) =>
+      P.k === "spawn" &&
+      (live[sid] || []).length > 0 &&
+      (zid
+        ? sbCallZone(pts, sid) === zid
+        : sid === q.grp || (!!q.grp && P.grp === q.grp)),
+  );
+}
 export function sbLootTick(s, now, H0) {
   if (!spawnsHere(s) || !s.sb) return false;
   const pts = { ...(s.sb.pts || {}) },
-    drops = (s.hang && s.hang.l4dr) || [];
-  let ch = false;
+    drops = (s.hang && s.hang.l4dr) || [],
+    lr0 = s.sb.lr || {},
+    lr = { ...lr0 },
+    most = sbRule(s, "lootmax");
+  let ch = false,
+    laid = Object.values(lr).reduce((a, r) => a + (r.n || 0), 0);
   for (const [id, p] of Object.entries(pts)) {
     if (p.k !== "loot") continue;
-    let q = p;
+    const q = p;
     if (!sbTabLive(pts, id)) {
-      // (a Loot tab whose Caller names no zone: nothing comes, and an orb lying there goes)
-      if (q.orb && q.orb.dn == null) pts[id] = { ...q, orb: null };
-      if (pts[id] !== p) ch = true;
+      // (a Loot tab whose Caller names no zone: nothing comes, and the orbs lying there go)
+      const all = orbsOf(q),
+        keep = all.filter((o) => o.dn != null);
+      if (keep.length !== all.length || q.gone != null) {
+        pts[id] = withOrbs(q, keep);
+        ch = true;
+      }
       continue;
     }
-    if (q.orb && q.orb.dn != null && !drops.some((d) => d.n === q.orb.dn))
-      q = { ...q, orb: null, gone: now }; // (a zombie drop: taken, or faded away, as theirs do)
-    if (q.orb && q.orb.dn == null) {
-      const by = takerOf(s, q, H0);
-      if (by) {
-        take(s, q, by, now, H0);
-        grFrom(s, "p:" + by, id, q.orb.w); // (a group whose condition is this loot, or what it held: sbgroups.js)
-        q = { ...q, orb: null, gone: now };
+    let r = lr[id] ? { ...lr[id], rb: [...(lr[id].rb || [])] } : null,
+      list = orbsOf(q);
+    const was = list.length,
+      t = num(q, "again"),
+      again = 1000 * (Number.isFinite(t) ? t : 10),
+      auto = num(q, "back") === true,
+      gone = () => {
+        if (r && auto) r.rb.push(now + again);
+      };
+    /* a zombie drop: taken, or faded away, as theirs do */
+    list = list.filter((o) => {
+      if (o.dn == null || drops.some((d) => d.n === o.dn)) return true;
+      gone();
+      return false;
+    });
+    /* taken: by the first that may take it, or by each player once (their own) */
+    const own = num(q, "lown") === true,
+      who = words(boxText(q, "ltake"));
+    let moved = list.length !== was;
+    list = list.flatMap((o) => {
+      if (o.dn != null) return [o];
+      const by = takersOf(s, q, o, who, H0).filter(
+        (b) => !(o.got || []).includes(b),
+      );
+      if (!by.length) return [o];
+      moved = true;
+      if (!own) {
+        takeBy(s, id, q, o, by[0], now, H0);
+        gone();
+        return [];
+      }
+      const got = [...(o.got || [])];
+      for (const b of by) {
+        takeBy(s, id, q, o, b, now, H0);
+        got.push(b);
+      }
+      const all = H0.ducks(s).filter((d) => mayTake(s, who, d));
+      if (all.length && all.every((d) => got.includes(d))) {
+        gone();
+        return [];
+      }
+      return [{ ...o, got }];
+    });
+    /* starting, and laying new ones */
+    const lay1 = () => {
+      const o = layOne(s, pts, id, q, now);
+      if (!o) return false;
+      list.push(o);
+      r.n++;
+      laid++;
+      moved = true;
+      return true;
+    };
+    if (!r && startsNow(s, pts, id, q, H0))
+      r = { on: 1, n: 0, rb: [], c: now + gap(q), f: 1 }; // (f: its first is still to come, once something is picked)
+    if (r) {
+      const due = r.rb.filter((x) => x <= now);
+      if (due.length) r.rb = r.rb.filter((x) => x > now);
+      let want = due.length;
+      if (r.f) {
+        if (list.length >= spawnMost(q) || !lootMay(q, r, most, laid))
+          delete r.f; // (one lying already, as from a save: that's its first)
+        else if (lay1()) delete r.f;
+      }
+      if (num(q, "cont") === true && now >= r.c) {
+        r.c = now + gap(q);
+        want++;
+      }
+      for (
+        ;
+        want > 0 && list.length < spawnMost(q) && lootMay(q, r, most, laid);
+        want--
+      )
+        if (!lay1()) break;
+      if (JSON.stringify(r) !== JSON.stringify(lr0[id])) {
+        lr[id] = r;
+        ch = true;
       }
     }
-    if (!q.orb && due(q, now)) {
-      const all = lootList(s, q),
-        w = all[Math.floor(Math.random() * all.length)];
-      if (w) q = { ...q, orb: lay(s, q, w, now, sbCallZone(pts, id)) };
-    }
-    if (q !== p) {
-      pts[id] = q;
+    if (moved || q.gone != null) {
+      pts[id] = withOrbs(q, list);
       ch = true;
     }
   }
-  if (ch) s.sb = { ...s.sb, pts };
+  for (const id of Object.keys(lr))
+    if (!pts[id] || pts[id].k !== "loot") {
+      delete lr[id];
+      ch = true;
+    }
+  if (ch) s.sb = { ...s.sb, pts, lr };
   return wearOff(s, now) || tidy(s) || ch;
 }
-/* a new orb: the first at once; after one is taken, only with "Comes back", its time later */
-function due(q, now) {
-  if (q.gone == null) return true;
-  const back = num(q, "back") === true,
-    t = num(q, "again");
-  return back && now - q.gone >= (Number.isFinite(t) ? t : 10) * 1000;
+/* may block q lay one more: its own Loot limit, and G's for the whole map (0: none) */
+function lootMay(q, r, most, laid) {
+  const n = num(q, "llim");
+  if (n > 0 && r.n >= n) return false;
+  return !(most > 0 && laid >= most);
 }
+/* one new orb from block id, or null (nothing picked): one of what it holds at random, or all of them at once (the
+   zombies' drops among them fall beside it, as theirs do) */
+function layOne(s, pts, id, q, now) {
+  const all = [...new Set(lootList(s, q))];
+  if (!all.length) return null;
+  if (num(q, "lall") !== true || all.length < 2)
+    return lay(
+      s,
+      q,
+      all[Math.floor(Math.random() * all.length)],
+      now,
+      sbCallZone(pts, id),
+    );
+  const rest = all.filter((w) => !Object.hasOwn(SB_DROPS, w)),
+    drops = all.filter((w) => Object.hasOwn(SB_DROPS, w)),
+    o = lay(s, q, rest[0] || drops.shift(), now, sbCallZone(pts, id));
+  if (rest.length > 1) o.ws = rest;
+  const at = o.x != null ? o : q;
+  for (const w of drops) dropAt(s, w, at, now);
+  return o;
+}
+/* zombie drop w lying at p (shares of the map), as the zombies' own: its number */
+function dropAt(s, w, p, now) {
+  const n = now + Math.random(); // (its own number among the zombies' drops)
+  s.hang.l4dr = [
+    ...((s.hang && s.hang.l4dr) || []),
+    {
+      n,
+      k: SB_DROPS[w][0],
+      x: Math.round(p.x * W),
+      y: Math.round(p.y * H),
+      until: now + DROP.LIFE,
+    },
+  ];
+  return n;
+}
+/* may duck d take what list `who` names (Players, a player's name, a group: sbWhoTakes, sbgroups.js) */
+const mayTake = (s, who, d) =>
+  sbWhoTakes(s, who, { duck: (s.players[d] || {}).name || "" }) ||
+  grIn(s, who, "p:" + d);
 function lay(s, q, w, now, zid = null) {
   const zs = zonesFor(s, "lt", q), // (a zone that names it: the orb lies in it, anywhere: sbzone.js)
     at = zid
@@ -127,45 +307,78 @@ function lay(s, q, w, now, zid = null) {
     where = at ? { x: at.x, y: at.y, z: at.z } : {};
   if (zid) sbUsed(s, zid);
   if (!Object.hasOwn(SB_DROPS, w)) return { w, at: now, ...where };
-  const n = now + Math.random(); // (its own number among the zombies' drops)
-  s.hang.l4dr = [
-    ...((s.hang && s.hang.l4dr) || []),
-    {
-      n,
-      k: SB_DROPS[w][0],
-      x: Math.round(p.x * W),
-      y: Math.round(p.y * H),
-      until: now + DROP.LIFE,
-    },
-  ];
-  return { w, at: now, dn: n, ...where };
+  return { w, at: now, dn: dropAt(s, w, p, now), ...where };
 }
-/* the duck that walks over orb q (on the board within a duck's length, on a world within the zombies' drops' reach,
-   on its floor), or null */
-function takerOf(s, q0, H0) {
+/* who walks over orb o of block q0 now and may take it: the ducks (on the board within a duck's length, on a world
+   within the zombies' drops' reach, on its floor), else the NPCs its list names ("n:" and their number) */
+function takersOf(s, q0, o, who, H0) {
   const board = sbOnBoard(s),
     U = boardDuck(s),
-    q = q0.orb && q0.orb.x != null ? q0.orb : q0; // (an orb lying in a zone)
+    q = o.x != null ? o : q0, // (an orb lying in a zone)
+    near = (x, y, z) =>
+      (board
+        ? Math.hypot((q.x - x) / U[0], (q.y - y) / U[1])
+        : z === null || Math.abs((+z || 0) - (q.z || 0)) < 40
+          ? Math.hypot((q.x - x) * W, (q.y - y) * H) / DROP.REACH
+          : 9) < 1,
+    out = [];
   for (const id of H0.ducks(s)) {
     const me = s.pos[id];
-    if (!me) continue;
-    const d = board
-      ? Math.hypot((q.x - me.x) / U[0], (q.y - me.y) / U[1])
-      : Math.abs((+me.z || 0) - (q.z || 0)) < 40
-        ? Math.hypot((q.x - me.x) * W, (q.y - me.y) * H) / DROP.REACH
-        : 9;
-    if (d < 1) return id;
+    if (me && near(me.x, me.y, me.z) && mayTake(s, who, id)) out.push(id);
   }
-  return null;
+  if (out.length || !who.some((w) => w !== "players")) return out;
+  for (const n of liveNpcs(s))
+    if (
+      near(n.x, n.y, null) &&
+      (sbWhoTakes(s, who, { k: n.k, sp: n.sp }) || grIn(s, who, "n:" + n.i))
+    )
+      out.push("n:" + n.i);
+  return out;
 }
-/* duck by takes orb q */
-function take(s, q, by, now, H0) {
-  const w = q.orb.w,
-    keep = num(q, "keep"),
+/* t takes orb o of block id: a duck gets what it holds; an NPC only takes it away */
+function takeBy(s, id, q, o, t, now, H0) {
+  if (String(t).startsWith("n:")) return;
+  for (const w of o.ws || [o.w]) {
+    take(s, q, w, t, now, H0);
+    grFrom(s, "p:" + t, id, w); // (a group whose condition is this loot, or what it held: sbgroups.js)
+  }
+}
+/* item w's own numbers in block q (plan Loot 3: its "i_w_row" boxes; blank: the item's own), as l4ddrules.js l4Loot
+   takes them: { dmg | dmgP, ammo | ammoP, n, inf, rl, brk (true, false, or null: its own), cool (ms) } */
+export function modsOf(q, w) {
+  const f = (k) => `i_${w}_${k}`,
+    t = (k) => String(boxText(q, f(k))).trim(),
+    tf = (k) => (t(k) ? !/^f/i.test(t(k)) : null),
+    nb = (k) => {
+      const v = t(k) ? num(q, f(k)) : NaN;
+      return Number.isFinite(v) && v > 0 ? v : null;
+    },
+    d = sbPct(t("dmg")),
+    a = sbPct(t("ammo")),
+    sps = nb("sps"),
+    cd = nb("cd");
+  return {
+    dmg: d && d.v != null ? d.v : null,
+    dmgP: d && d.p != null ? d.p : null,
+    ammo: a && a.v != null ? Math.round(a.v) : null,
+    ammoP: a && a.p != null ? a.p : null,
+    n: nb("n") && Math.round(nb("n")),
+    inf: tf("inf") ?? (num(q, "inf") === true ? true : null), // (the block's own Unlimited ammo: every gun in it)
+    rl: tf("rl"),
+    brk: tf("brk"),
+    cool: sps ? 1000 / sps : cd ? cd * 1000 : null,
+  };
+}
+/* duck by takes w from block q */
+function take(s, q, w, by, now, H0) {
+  const keep = num(q, "keep"),
     hurt = num(q, "hurt");
   if (zmaps(s) && w === "flashlight")
     s.sb = { ...s.sb, fl: { ...(s.sb.fl || {}), [by]: 1 } }; // (a flashlight: kept for good)
-  else if (zmaps(s)) l4Loot(s, by, w, num(q, "inf") === true);
+  else if (zmaps(s) && ammoOf(w)) {
+    const n = modsOf(q, w).n || 1; // (How many you get: magazines)
+    for (let i = 0; i < n; i++) l4Ammo(s, by, ammoOf(w)); // (a magazine more, for the gun I carry)
+  } else if (zmaps(s)) l4Loot(s, by, w, undefined, modsOf(q, w));
   else {
     const hb = (s.sb && s.sb.hb) || {},
       mine = ((hb.got || {})[by] || []).filter(([v]) => v !== w);

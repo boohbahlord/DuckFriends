@@ -47,8 +47,11 @@ export const sbOnBoard = (s) => isSb(s) && !sbWorld(s.options);
    everyone when Democracy of Ducklings lets everyone change the settings (the owner's answer 2, Nov 19 01:34Z); and
    whoever the host lets (p, later: s.sb.ok = { id: true }). A new host takes the old one's place at once, since this
    asks who the host is now */
+/* a made game mode being played (or tested: sbsave.js, gmodes.js): nobody changes the Sandbox, as players see it */
+export const sbPlaying = (s) => isSb(s) && !!s.gmPlay;
 export function sbCan(s, id) {
   if (!isSb(s) || !id || !s.players[id] || s.players[id].bot) return false;
+  if (s.gmPlay) return false; // (a made game mode: no tools)
   if (id === s.hostId) return true;
   if (+s.options.sbAll === 1) return true; // (Game Settings: "Everyone can change Sandbox")
   if (+s.options.dod === 1 && ((s.dod || {}).on || {}).settings) return true; // (rules.js dodOn(s, "settings"))
@@ -66,6 +69,7 @@ export const SB_RIGHTS = [
 ];
 export function sbMay(s, id, k) {
   if (!isSb(s) || !id || !s.players[id] || s.players[id].bot) return false;
+  if (s.gmPlay) return false; // (a made game mode: no tools)
   if (id === s.hostId) return true;
   if (+s.options["sbOk" + String(k).toUpperCase()] === 1) return true;
   if (
@@ -118,12 +122,45 @@ export const SB_RULES = {
     def: "100",
     board: true,
   },
+  /* plan Phase 6: "anything the menus don't show lives in a read-only-by-default settings folder in Seriat" (the owner's,
+     Nov 19 21:59Z: "Crit percent chance could be in a file that the players can change, among other settings", gore,
+     and "you can change the limit for the amount of players within a game mode in the file ... 8 players max, which is
+     the normal ... or you can make it 4 players max"; "it's 2 players max for the actual game mode when it's made, not
+     for the actual sandbox itself that makes the game mode"). Seriat's settings/limits (shell.js), never G's window */
+  critp: {
+    name: "crit chance",
+    kind: "int",
+    min: 0,
+    max: 100,
+    def: "own",
+    own: true, // ("own": each weapon's own chance)
+    file: true,
+  },
+  /* plan, Loot 1: "Loot limit ... G has the same limit for the whole map": the most orbs every loot block together lays
+     in a whole game */
+  lootmax: {
+    name: "Loot limit on the whole map (0: none)",
+    kind: "int",
+    min: 0,
+    max: 1000,
+    def: "0",
+  },
+  gore: { name: "gore", kind: "bool", def: "t", file: true },
+  most: {
+    name: "player limit",
+    kind: "int",
+    min: 2,
+    max: 8,
+    def: "8",
+    file: true,
+  },
 };
 /* rule k now: a whole number (lives) or true / false */
 export function sbRule(s, k) {
   const b = SB_RULES[k],
     t = String(((s && s.sb && s.sb.rules) || {})[k] ?? b.def).trim();
   if (b.kind === "bool") return !/^f/i.test(t);
+  if (b.own && /^own$/i.test(t)) return -1; // (each weapon's own)
   const n = Math.round(+t);
   return Number.isFinite(n) ? Math.min(b.max, Math.max(b.min, n)) : +b.def;
 }
@@ -138,10 +175,11 @@ export function boardDuck(s) {
 const BOARD_DUCK = [0.03, 0.08];
 /* { t: "sbr", k, v }: whoever may change Sandbox sets rule k */
 export function sbRulesAct(s, a) {
-  const b = SB_RULES[a.k];
+  const b = Object.hasOwn(SB_RULES, a.k) ? SB_RULES[a.k] : null;
   if (!isSb(s) || !b || !sbCan(s, a.id)) return false;
   let v = String(a.v ?? "").trim();
   if (b.kind === "bool") v = /^f/i.test(v) || v === "" ? "f" : "t";
+  else if (b.own && /^own$/i.test(v)) v = "own";
   else {
     const n = Math.round(+v);
     if (!Number.isFinite(n) || n < b.min || n > b.max) return false;
@@ -152,6 +190,40 @@ export function sbRulesAct(s, a) {
   rules[a.k] = v;
   s.sb = { ...s.sb, rules };
   return true;
+}
+/* gore off: the room's Gore setting, or Sandbox's settings file (gore = false) */
+export const noGoreOf = (s) =>
+  !!+s.options.noGore || (isSb(s) && !sbRule(s, "gore"));
+/* Seriat's settings/limits: the file rules as "name = value" lines */
+export function sbSettingsText(s) {
+  return (
+    "# Sandbox settings that no menu shows. Read-only: turn on write (Permissions, or chmod u+w limits) to change one.\n" +
+    "# crit chance: 0 to 100 (%), or own (each weapon's own). gore: true or false. player limit: 2 to 8.\n" +
+    Object.entries(SB_RULES)
+      .filter(([, b]) => b.file)
+      .map(
+        ([k, b]) =>
+          `${b.name} = ${String(((s && s.sb && s.sb.rules) || {})[k] ?? b.def)
+            .replace(/^t$/, "true")
+            .replace(/^f$/, "false")}`,
+      )
+      .join("\n") +
+    "\n"
+  );
+}
+/* the file read back: [[k, value]] for each "name = value" line naming a file rule (the rest is left alone) */
+export function sbSettingsRead(text) {
+  const by = Object.fromEntries(
+      Object.entries(SB_RULES)
+        .filter(([, b]) => b.file)
+        .map(([k, b]) => [b.name, k]),
+    ),
+    out = [];
+  for (const line of String(text).split("\n")) {
+    const m = /^\s*([a-z ]+?)\s*=\s*(\S+)\s*$/i.exec(line.replace(/#.*/, ""));
+    if (m && by[m[1].toLowerCase()]) out.push([by[m[1].toLowerCase()], m[2]]);
+  }
+  return out;
 }
 
 /* ---------- Sandbox's spawns and respawns: the settings (stage 2) ----------
@@ -304,6 +376,7 @@ const listBox = (name, def) => ({
   name,
   check: (t) => (String(t).length <= 200 ? "" : "200 letters at most"),
   def,
+  len: 200, // (its text kept up to this long: sbspawn.js withField; a plain box keeps 80)
 });
 export const SB_ZONE = {
   /* a thin rectangle is a wall (plan Phase 3): under one duck length it takes tenths, down to a fifth */
@@ -376,6 +449,7 @@ export const SB_ZONE = {
     name: "Outlines",
     check: (t) => (String(t).length <= 600 ? "" : "Too many rows"),
     def: "",
+    len: 600,
   },
   ent: listBox("Entities spawn here", ""), // (spawns, by their color or name: what they make comes in the zone)
   lt: listBox("Loot spawns here", ""), // (loot spots, by their color or name: their orbs lie in the zone)
@@ -1407,13 +1481,23 @@ export function sbPlayerSpot(s, id, W = 1, H = 1, ok = null) {
 export const SB_LOOT = {
   loot: {
     name: "What it holds",
-    check: (t) => (String(t).length <= 300 ? "" : "Too many"),
+    check: (t) => (String(t).length <= 1500 ? "" : "Too many"),
+    len: 1500, // (every item ticked in All items fits)
     /* nothing at first: a new loot tab drops nothing until I pick what it holds (the owner's, Nov 20 02:37Z: "When you
        click a loot tab, it does not spawn the loot in it automatically") */
     def: "",
   },
+  /* plan, Loot 1 (the owner's, Nov 19 22:57Z: "There should be an auto spawn for loot instead of comes back. There can be
+     a continuous spawn. There can be a spawn limit ... There should be a limit on loot"): when it starts, then Auto spawn
+     (a new one its time after one is taken), Continuous spawn and Seconds between spawns, Spawn limit (SB_BOXES, SB_FLAGS:
+     the same boxes as a spawn's), the Loot limit, who can take it and whether every player gets their own */
+  lst: {
+    name: "Starts",
+    check: (t) => (SB_LOOT_STARTS[String(t).trim()] ? "" : "Pick when"),
+    def: "start",
+  },
   again: {
-    name: "Seconds before it comes back",
+    name: "Seconds before a new one comes",
     kind: "int",
     min: 1,
     max: 600,
@@ -1433,13 +1517,96 @@ export const SB_LOOT = {
     max: 100,
     def: "0",
   },
-  back: { name: "Comes back", kind: "bool", def: "t" },
-  inf: { name: "Unlimited ammo", kind: "bool", def: "f" },
+  back: { name: "Auto spawn", kind: "bool", def: "t" }, // (its key is still "back", so older saves keep theirs)
+  llim: {
+    name: "Loot limit (0: none)",
+    kind: "int",
+    min: 0,
+    max: 1000,
+    def: "0",
+  }, // (the most this block lays in a whole game; G has one for the whole map, SB_RULES lootmax)
+  ltake: listBox("Who can take it", "players"), // (Players, Everything, a kind, a spawn, a player's name, a group: sbWhoTakes)
+  lown: { name: "Every player gets their own", kind: "bool", def: "f" }, // (off: the first to reach it takes it)
+  inf: { name: "Unlimited ammo (every gun)", kind: "bool", def: "f" },
+  /* plan, Loot 2: "When several are ticked: the orb gives one of them at random, with equal chances, or gives all of them
+     at once" */
+  lall: { name: "All of them at once", kind: "bool", def: "f" },
   look: {
     name: "Looks like",
     check: (t) => (String(t).length <= 24 ? "" : "24 letters at most"),
     def: "",
   },
+};
+/* ---------- each picked item's numbers (plan, Loot 3) ----------
+   The owner's, Nov 19 22:33Z to 22:57Z: "below its particular drop-down list will the weapon then show its numbers",
+   damage "as a number or a percent", "how much amount of a thing is in given loot", ammo "by number ... You can type
+   percentages ... based off of Dead Ducks Arcade" (the bow's 100% is 300), "a button that you can click for unlimited
+   ammo, which is already selected for the laser", "reload enabled or disabled", "Cooldown ... like 0.1", "bullets per
+   second", and "can break when they run out of ammo". A loot block keeps them as boxes named "i_", the item, "_", the
+   row ("i_ak_dmg": never a dot, which an online room's keys can't hold); blank is the item's own */
+const pctBox = (name, max) => ({
+  name,
+  check: (t) => {
+    const v = String(t).trim();
+    if (!v) return "";
+    const m = /^(\d+(\.\d)?)%$/.exec(v);
+    if (m) return +m[1] > 0 && +m[1] <= 1000 ? "" : "1% to 1000%";
+    return /^\d+(\.\d)?$/.test(v) && +v > 0 && +v <= max
+      ? ""
+      : `A number up to ${max}, or a percent`;
+  },
+  def: "",
+  pct: true,
+});
+export const SB_ITEM = {
+  dmg: pctBox("Damage (number or %)", 1000),
+  n: {
+    name: "How many you get",
+    kind: "int",
+    min: 1,
+    max: 99,
+    def: "",
+    blank: true,
+  },
+  ammo: pctBox("Ammo (number, or % of its own)", 9999),
+  inf: { name: "Unlimited ammo", kind: "bool", def: "", blank: true },
+  rl: { name: "Reload", kind: "bool", def: "", blank: true },
+  cd: {
+    name: "Cooldown (s)",
+    kind: "tenth",
+    min: 0.1,
+    max: 60,
+    def: "",
+    blank: true,
+  },
+  sps: {
+    name: "Shots per second",
+    kind: "tenth",
+    min: 0.1,
+    max: 30,
+    def: "",
+    blank: true,
+  },
+  brk: { name: "Breaks when empty", kind: "bool", def: "", blank: true },
+};
+/* box f's settings when it is an item's row ("i_ak_dmg"), or null */
+export const sbItemBox = (f) => {
+  const m = /^i_([a-z0-9]{1,24})_([a-z]+)$/.exec(String(f));
+  return m && Object.hasOwn(SB_ITEM, m[2]) ? SB_ITEM[m[2]] : null;
+};
+/* a % box's value: { v } a number, { p } a percent, or null (blank or wrong) */
+export function sbPct(t) {
+  const v = String(t == null ? "" : t).trim(),
+    m = /^(\d+(\.\d)?)(%?)$/.exec(v);
+  if (!m) return null;
+  return m[3] ? { p: +m[1] } : { v: +m[1] };
+}
+/* when a loot block starts laying orbs (plan, Loot 1: "Starts: at the start of the game, or on an event ... a player
+   steps into the zone, an entity spawns"): its zone is the one its tab answers to, or its own shape */
+export const SB_LOOT_STARTS = {
+  start: "Game starts",
+  enter: "Player steps in",
+  spawn: "Something spawns",
 };
 /* the zombies' special drops an orb can hold (l4ddrules.js DROPS): on Dead Ducks Arcade's maps only, for now (on the
    others nothing would use them yet) */

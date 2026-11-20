@@ -39,8 +39,35 @@ const COLORS = [
 ];
 
 /* the rainbow as a gradient, gid its id; k: lighter (0 … 1) or darker (-1 … 0) for the light, the shade and the edge */
+/* the ducks' part sheets (duckparts.js) make a rainbow skin's pixels with one plain color in its place, then lay the
+   rainbow over them on the device, a step at a time: rbFlat(color) while a drawing is made, null after */
+let FLAT = null;
+export function rbFlat(c) {
+  const was = FLAT;
+  FLAT = c;
+  return was;
+}
+/* the rainbow's color at u along it (0 … 1, round and round) */
+export function rbAt(u) {
+  const f = (((u % 1) + 1) % 1) * COLORS.length,
+    i = Math.floor(f),
+    a = hexRGB(COLORS[i % COLORS.length]),
+    b = hexRGB(COLORS[(i + 1) % COLORS.length]),
+    w = f - i;
+  return [
+    a[0] + (b[0] - a[0]) * w,
+    a[1] + (b[1] - a[1]) * w,
+    a[2] + (b[2] - a[2]) * w,
+  ];
+}
+const hexRGB = (h) => {
+  const n = parseInt(h.slice(1), 16);
+  return [n >> 16, (n >> 8) & 255, n & 255];
+};
+export const RB_P = P,
+  RB_TILT = TILT;
 export function rbGrad(gid, k = 0) {
-  const cs = COLORS.map((c) =>
+  const cs = (FLAT ? COLORS.map(() => FLAT) : COLORS).map((c) =>
       k > 0 ? mix(c, 255, k) : k < 0 ? mix(c, 0, -k) : c,
     ),
     stops = [...cs, cs[0]]

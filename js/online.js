@@ -299,6 +299,7 @@ const REMOTE = new Set([
   "sbh",
   "sbl",
   "sbgr", // (Sandbox's groups: the rules check the rights, sbgroups.js)
+  "sbr", // (Sandbox's Rules in G and its settings file: the rules check the rights, sandboxrules.js sbRulesAct)
   "songs",
   "hang",
   "dnEnd",

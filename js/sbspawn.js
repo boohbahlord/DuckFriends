@@ -48,6 +48,7 @@ import {
   sbTabLive,
   sbUsed,
   SB_LOOT,
+  sbItemBox,
   SB_ZONE,
   SB_SHAPE,
   sbSpread,
@@ -161,6 +162,7 @@ export const boxOf = (f) =>
   SB_SHAPE[f] || // (every block's shape: sandboxrules.js)
   SB_ORDER[f] || // (every block's squares and their potential order: sandboxrules.js)
   SB_CALL[f] || // (a tab's Caller, and a block's leading zone)
+  sbItemBox(f) || // (a loot item's own numbers: "i_ak_dmg", plan Loot 3)
   null;
 /* is this text good for box f? "" or why not */
 export function boxWhy(f, t) {
@@ -239,7 +241,7 @@ export function liveNpcs(s) {
   if (sbOnBoard(s))
     return ((s.mz && s.mz.zb) || [])
       .filter((o) => !o.d)
-      .map((o) => ({ i: o.i, x: o.x, y: o.y, sp: o.sp }));
+      .map((o) => ({ i: o.i, x: o.x, y: o.y, sp: o.sp, k: o.k }));
   if (onCabin(s)) return cabinLive(s);
   return baseMode(s.options) === "l4dd" ? [...l4Live(s), ...cabinLive(s)] : []; // (the zombie maps: theirs, and every other kind)
 }
@@ -499,7 +501,7 @@ function pressOne(s, id, now) {
 function withField(p, f, v) {
   const b = boxOf(f),
     was = p.f[f],
-    t = String(v == null ? "" : v).slice(0, SB_ACTS[f] ? 200 : 80),
+    t = String(v == null ? "" : v).slice(0, SB_ACTS[f] ? 200 : b.len || 80), // (len: a list's longer text, sandboxrules.js)
     k = b.check
       ? { t, ok: b.check(t) ? (was && was.ok) || "" : t }
       : b.blank && !t.trim()
@@ -1023,7 +1025,12 @@ function canSet(p, f) {
   if (f === "lead") return !p.grp; // (the zone a block leads with)
   if (SB_SHAPE[f] || f === "zw" || f === "zh") return !p.grp; // (every block's shape and size; a page has its spawn's)
   if (SB_ORDER[f]) return p.pg !== "pl"; // (every block's and tab's own potential order)
-  if (p.k === "loot") return !!SB_LOOT[f] || f === "name" || f === "hide"; // (a loot orb's own boxes: sbloot.js)
+  if (p.k === "loot")
+    return (
+      !!SB_LOOT[f] ||
+      ["name", "hide", "limit", "every", "cont"].includes(f) || // (its spawning: a spawn's own boxes, plan Loot 1)
+      !!sbItemBox(f) // (each item's numbers, plan Loot 3)
+    ); // (a loot orb's own boxes: sbloot.js)
   if (p.k === "zone")
     return (
       !!SB_ZONE[f] ||

@@ -44,7 +44,7 @@ export const SB_HELP = {
     ],
     [
       "Loot, colors and seeing zones",
-      "Add a Loot tab to a zone and pick what it holds: nothing comes until you do. A new zone has no color (white); pick a color and every zone of that color shares its settings. Zones show while cheat mode or Build is on, and stay hidden otherwise. Click a heading's arrow to fold it.",
+      "Add a Loot tab to a zone and pick what it holds: nothing comes until you do. Under Spawning: when it starts, Auto spawn (a new one after one is taken), Continuous spawn, how many lie at once, how many in the whole game (G has a limit for the whole map too), who can take it, and whether every player gets their own. What it holds has a list per kind and one with All items; tick several for one at random each time, or turn on All of them at once. On the zombie maps each ticked item shows its own numbers under its list; a blank box keeps its own. A new zone has no color (white); pick a color and every zone of that color shares its settings. Zones show while cheat mode or Build is on, and stay hidden otherwise. Click a heading's arrow to fold it.",
     ],
   ],
   m: [
@@ -96,7 +96,11 @@ export const SB_HELP = {
     ],
     [
       "Rules",
-      "Rules opens its own window, for the zombie maps: how many lives each player has (0 is unlimited), whether there's a down phase where others can revive you (off: you just die), crits on or off, and whether a player out of lives watches the others. On the plain boards it has Board size: 100% is the screen, and a bigger board scrolls with your duck, the ducks staying their size. The save keeps them.",
+      "Rules opens its own window, for the zombie maps: how many lives each player has (0 is unlimited), whether there's a down phase where others can revive you (off: you just die), crits on or off, and whether a player out of lives watches the others. On the plain boards it has Board size: 100% is the screen, and a bigger board scrolls with your duck, the ducks staying their size. The save keeps them. What no menu shows (crit chance, gore, player limit) is in Seriat's settings/limits file: read-only until you turn its write on.",
+    ],
+    [
+      "Game modes",
+      "Save game mode (G) keeps this Sandbox as a game mode on your device, with a name and a description; the same name replaces the old one. Test game mode starts it as players would see it, with no tools; Stop test at the top left brings your build back. The host picks a saved game mode in Game Settings, under Custom.",
     ],
     [
       "Music",

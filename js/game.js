@@ -249,6 +249,7 @@ import {
   sbOnBoard,
   boardDuck,
   sbBoardK,
+  noGoreOf,
   sbMay,
   sbSfx,
   sbCellMids,
@@ -1623,7 +1624,7 @@ function drawDucks(now = clockNow()) {
         jet,
         !!p.bomb,
         wc,
-        !!+s.options.noGore,
+        noGoreOf(s),
       ]); // a new look shows at once, mid-game too (Duncelation: a dunce's hat; the jetpack on its back)
     if (dead && d._dead === false && !g && !wq) {
       sfx.hit();
@@ -1646,7 +1647,7 @@ function drawDucks(now = clockNow()) {
         title: p.name,
         dead,
         ...(p.bomb ? { skin: BOMB_SKIN } : {}),
-        ...(wc ? woundLook(s.options.noGore ? goreFree(wc) : wc) : {}), // (Gore off: only a hat knocked off shows)
+        ...(wc ? woundLook(noGoreOf(s) ? goreFree(wc) : wc) : {}), // (Gore off: only a hat knocked off shows)
       });
       d._bodyEl.innerHTML =
         (jet ? jetHTML(look) : "") +
@@ -2043,8 +2044,7 @@ function drawDucks(now = clockNow()) {
        owner's, Nov 18 10:38Z: "every player duck that dies in any game mode has a puddle of blood start to spill out
        beneath their duck like justin's"). The same pool (l4dd.js POOL_SVG), growing over JPOOL.ms from when it fell,
        gone when it's up again; none with Gore off. Downpour's Justin keeps his own (l4dd.js seePool) */
-    const pooled =
-      dead && !+s.options.noGore && !(isL4dd(s) && isWild(s, olId));
+    const pooled = dead && !noGoreOf(s) && !(isL4dd(s) && isWild(s, olId));
     if (!pooled) {
       if (d._pool) {
         d._pool.remove();
@@ -2943,7 +2943,7 @@ const TIPS = {
 /* the pixel effects: their canvas over the board, where the world is (the camera), this frame (fx.js) */
 function drawFx(board, fxl, hang, size, s, now) {
   const pt = performance.now();
-  fxLimits(s.options.noGore, s.options.noFx);
+  fxLimits(noGoreOf(s) ? 1 : 0, s.options.noFx);
   fxMount(hang ? board : fxl, geo.W, geo.H, size); // (Hangout and Dead Ducks Arcade: under the dark, css/app.css)
   if (hang) {
     const o = world.place({ x: 0, y: 0 }, 0);
@@ -3250,7 +3250,7 @@ function placeZombies(board, s, now) {
   const sbOl = sbOnBoard(s) && sbHasOl(s),
     want = new Set(zb.map((o) => String(o.i))),
     fxl = $(".fxl", board),
-    ng = !!+s.options.noGore,
+    ng = noGoreOf(s),
     have = new Map(); // (found once a frame, not one search for each of up to 800)
   /* claw marks: a few at a time (Sandbox can have 800 clawing at once, and each mark is a drawing made into pixels) */
   let marks = fxl
@@ -4766,7 +4766,7 @@ function jaimeFell(f, place, size) {
   const a = geo.hang
       ? world.place({ x: f.x, y: f.y }, f.hz || 0)
       : place({ x: f.x, y: f.y }, 0, 1),
-    gore = !+R.state.options.noGore,
+    gore = !noGoreOf(R.state),
     wc = gore ? f.w || "" : goreFree(f.w || ""),
     n = el(
       `<div class="jd-body" style="left:${a.left.toFixed(1)}px;top:${a.top.toFixed(1)}px;--sz:${size.toFixed(0)}px;--f:${f.face < 0 ? -1 : 1}" aria-hidden="true">${gore ? `<span class="gduck-pool">${POOL_SVG}</span>` : ""}<b>${duckSVG(JAIME.duck, { size: 64, shadow: false, dead: true, ...(wc ? woundLook(wc) : {}) })}</b></div>`,

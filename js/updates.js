@@ -9,6 +9,77 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v155",
+    version: 155,
+    date: "Nov 20, 2026",
+    title: "Loot with its own numbers",
+    news: [
+      "For Sandbox: on Dead Ducks Arcade's maps, each item you tick in a Loot tab shows its own numbers under its list. You can set damage (a number or a percent), ammo (a number, or a percent where 100% is the usual amount), how many you get, unlimited ammo (on for the laser and the bow), reload on or off, cooldown or shots per second, and whether it breaks when it runs empty. Leave a box blank to keep the item's own number.",
+      "For Sandbox: an item that breaks when empty leaves your hotbar with the same sound as a melee weapon breaking.",
+    ],
+  },
+  {
+    id: "v154",
+    version: 154,
+    date: "Nov 20, 2026",
+    title: "What loot holds",
+    news: [
+      "For Sandbox: a Loot tab's What it holds has an All items list with everything in one place, ticked together with each kind's own list.",
+      "For Sandbox: on Dead Ducks Arcade's maps, loot can hold ammo for a gun (Ammo and magazines). Taking it gives one more magazine for that gun if you carry it.",
+      "For Sandbox: All of them at once makes an orb give everything it holds, not just one at random.",
+      "For Sandbox: a Loot tab's first orb now comes as soon as you pick what it holds.",
+    ],
+  },
+  {
+    id: "v153",
+    version: 153,
+    date: "Nov 20, 2026",
+    title: "Loot that keeps coming",
+    news: [
+      "For Sandbox: a Loot tab has a Spawning section. Pick when it starts (the game starting, a player stepping into its zone, or something spawning there). Auto spawn replaces Comes back. Continuous spawn lays one every few seconds. A spawn limit sets how many lie on the map at once, and a loot limit sets how many come in the whole game. Who can take it works like a wall's list, groups included. Every player gets their own gives each player their own copy.",
+      "For Sandbox: Game settings has a loot limit for the whole map.",
+    ],
+  },
+  {
+    id: "v152",
+    version: 152,
+    date: "Nov 20, 2026",
+    title: "Ready-made ducks",
+    news: [
+      "Cats, Jack in a Box, Dat Boi and the rainbow skin now come as ready-made pixels like every other duck, so nothing is drawn while you play.",
+    ],
+  },
+  {
+    id: "v151",
+    version: 151,
+    date: "Nov 20, 2026",
+    title: "Recursive",
+    news: [
+      "For Sandbox: Seriat's Permissions has a Recursive switch for folders. Turn it on to give a whole folder, and everything in it, the same rights at once. chmod -R does the same in the terminal.",
+      "For Sandbox: the Seriat bible button no longer covers the window's title on phones.",
+    ],
+  },
+  {
+    id: "v150",
+    version: 150,
+    date: "Nov 20, 2026",
+    title: "Your own game modes",
+    news: [
+      "For Sandbox: G has Save game mode (a name and a description, kept on your device; the same name replaces the old one) and Test game mode, which plays it as players would see it. Stop test at the top left brings your build back.",
+      "Game Settings has Custom under Game mode: the host's own game modes, played with no tools and their own player limit.",
+    ],
+  },
+  {
+    id: "v149",
+    version: 149,
+    date: "Nov 20, 2026",
+    title: "Settings file",
+    news: [
+      "For Sandbox: Seriat has a settings folder. Its limits file holds what no menu shows: crit chance, gore and the player limit. It is read-only until you turn its write on.",
+      "For Sandbox: players you give the rights to can now change the Rules in G in online games too.",
+    ],
+  },
+  {
     id: "v148",
     version: 148,
     date: "Nov 20, 2026",
