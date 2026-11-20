@@ -140,14 +140,13 @@ const SAT = 1.25; // (a little more color first: flat pixel colors read duller t
 const RGB = PALETTE.map((h) =>
   [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)),
 );
-/* the nearest color for each 5-bit-per-channel color, found the first time it's needed (32,768 at most) */
-const NEAR = new Int16Array(32768).fill(-1);
+/* the palette color for each color met, found the first time it's met. (It was kept for each 5-bit-per-channel color, the
+   first color met in it deciding for all the others: a duck's colors then hung on what had been drawn before it) */
+const NEAR = new Map();
 
 function nearest(r, g, b) {
-  const k = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
-  let i = NEAR[k];
-  if (i >= 0) return i;
-  let best = Infinity;
+  let best = Infinity,
+    i = 0;
   for (let j = 0; j < RGB.length; j++) {
     const [pr, pg, pb] = RGB[j],
       dr = pr - r,
@@ -159,7 +158,6 @@ function nearest(r, g, b) {
       i = j;
     }
   }
-  NEAR[k] = i;
   return i;
 }
 
@@ -177,9 +175,15 @@ export function applyPalette(img) {
     const r = d[p],
       g = d[p + 1],
       b = d[p + 2],
-      l = 0.299 * r + 0.587 * g + 0.114 * b,
-      c = (v) => Math.max(0, Math.min(255, l + (v - l) * SAT)),
-      [nr, ng, nb] = RGB[nearest(c(r), c(g), c(b))];
+      key = (r << 16) | (g << 8) | b;
+    let i = NEAR.get(key);
+    if (i === undefined) {
+      const l = 0.299 * r + 0.587 * g + 0.114 * b,
+        c = (v) => Math.max(0, Math.min(255, l + (v - l) * SAT));
+      if (NEAR.size > 1 << 18) NEAR.clear(); // (a photo's many colors: kept small)
+      NEAR.set(key, (i = nearest(c(r), c(g), c(b))));
+    }
+    const [nr, ng, nb] = RGB[i];
     d[p] = nr;
     d[p + 1] = ng;
     d[p + 2] = nb;

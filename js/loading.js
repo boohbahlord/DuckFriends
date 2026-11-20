@@ -123,8 +123,17 @@ export function waiting(root = document.body) {
 }
 /* until every picture under root is in. One that never comes doesn't hold the game: nothing new for STUCK ms, or
    maxMs in all, and it goes on */
-const STUCK = 5000;
-export function picturesIn(root = document.body, maxMs = 30000) {
+const STUCK = 8000;
+/* the last moment any file came in (a picture, a sheet, the code): on a slow line the pictures wait behind other files,
+   and that isn't stuck. The owner's, Nov 20 20:31Z: "even after the loading screen, the duck on the cloud and the click
+   to play shit isnt finished loading": the loading screen went while the pictures were still on their way */
+let arrived = 0;
+try {
+  new PerformanceObserver(() => (arrived = performance.now())).observe({
+    type: "resource",
+  });
+} catch {}
+export function picturesIn(root = document.body, maxMs = 90000) {
   return new Promise((done) => {
     const t0 = performance.now();
     let least = Infinity,
@@ -136,7 +145,7 @@ export function picturesIn(root = document.body, maxMs = 30000) {
       if (n < least) {
         least = n;
         since = t;
-      } else if (t - since > STUCK) return done();
+      } else if (t - Math.max(since, arrived) > STUCK) return done();
       setTimeout(look, 100);
     };
     requestAnimationFrame(() => requestAnimationFrame(look)); // (once the new pictures have been seen: pixel.js, pxdom.js)
@@ -162,7 +171,7 @@ export function coverPictures(root) {
   };
   const cover = () => {
     covering.add(root);
-    const done = holdLoading({ maxMs: 30000 });
+    const done = holdLoading({ maxMs: 90000 }); // (a slow line: picturesIn says when it's stuck)
     picturesIn(root).then(() => {
       covering.delete(root);
       done();

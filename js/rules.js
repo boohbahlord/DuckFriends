@@ -16,7 +16,7 @@
    own rules in duncerules.js: one defender in the circle, everyone else walks to Dunce or Not a Dunce. Valentine's Duck
    Date has its own in vddrules.js: The Date at the dining table, a date with each Suitor, then a Suitor Turned Down. */
 import { epAct } from "./sbep.js";
-import { duckBig, scaleOf } from "./duck.js";
+import { duckBig, picGrow, scaleOf } from "./duck.js";
 import {
   baseMode,
   baseL4map,
@@ -3794,7 +3794,13 @@ function playerAt(s, id, x, y, rx, ry, up = 0.4) {
   const p = s.pos[id],
     pic = cutPic(s.players[id]);
   if (!pic) return p;
-  return picBody(p, pic, duckBig(s, id), duOfRoom(rx, ry)).at(x, y, up);
+  return picBody(
+    p,
+    pic,
+    duckBig(s, id),
+    duOfRoom(rx, ry),
+    picGrow(s.players[id].duck),
+  ).at(x, y, up);
 }
 /* does a shot from (x0, y0) along (dx, dy), at height up, meet what shows of player id's cut-out picture (true for
    any other duck: the reach test says) */
@@ -3802,13 +3808,13 @@ function shotMeets(s, id, x0, y0, dx, dy, rx, ry, up) {
   const pic = cutPic(s.players[id]);
   return (
     !pic ||
-    picBody(s.pos[id], pic, duckBig(s, id), duOfRoom(rx, ry)).line(
-      x0,
-      y0,
-      x0 + dx,
-      y0 + dy,
-      up,
-    ) >= 0
+    picBody(
+      s.pos[id],
+      pic,
+      duckBig(s, id),
+      duOfRoom(rx, ry),
+      picGrow(s.players[id].duck),
+    ).line(x0, y0, x0 + dx, y0 + dy, up) >= 0
   );
 }
 export function shove(s, id, ux, uy, far, now, side, more = {}) {
