@@ -16,7 +16,7 @@ import {
   npcShot,
 } from "./sbnpcart.js";
 import { goreFree } from "./wounds.js";
-import { clawMark } from "./l4dd.js";
+import { clawMark } from "./claw.js";
 import { FLAME } from "./mgjart.js";
 import { now as clockNow } from "./clock.js";
 

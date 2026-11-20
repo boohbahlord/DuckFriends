@@ -9,6 +9,8 @@ import { fxSparks } from "./fx.js";
 import { nameHTML } from "./name.js";
 import { now as clockNow } from "./clock.js";
 import { angelMachineSVG, angelOrbHTML } from "./powerart.js"; // (Noah's drawings)
+import { pixelOn, rasterReady } from "./pixel.js";
+import { hashText } from "./pxdom.js";
 import { ANGEL, angelNow, angelDone, angelOf, canAngel } from "./l4ddangel.js";
 import { powerOn } from "./l4ddpower.js";
 import { WEAPONS, weaponName, ptsOf, slotsOf, dp } from "./l4ddrules.js";
@@ -65,9 +67,27 @@ export function angelSee(s) {
     heard.t = m.t;
   }
 }
+/* the machine's two pictures (idle, working), drawn once: its drawing's ids are new each time it's drawn, so drawn anew
+   at each start it was a new picture to make into pixels, made mid-game (the owner's, Nov 20 20:46Z: "pop-ins") */
+const AM_SRC = {};
+const amSrc = (working) =>
+  AM_SRC[working] ||
+  (AM_SRC[working] = svgDataURL(angelMachineSVG({ working })));
+/* both made into pixels at the size they show, while the game loads (pixel.js holds the loading screen for them, as
+   it makes any <img>'s: "i" and its text's hash, at 130 × 150 times the board's scale, css .l4-am img) */
+let warmAt = 0;
+function warmMachine(sc) {
+  if (warmAt === sc || !pixelOn()) return;
+  warmAt = sc;
+  for (const w of [false, true]) {
+    const src = amSrc(w);
+    rasterReady("i" + hashText(src), src, 130 * sc, 150 * sc);
+  }
+}
 /* every frame: the machine, its glow, its sparks, the orb */
 export function angelDraw(ctx) {
   if (!mc) return;
+  warmMachine(ctx.world.sc);
   const Wd = ctx.world,
     sc = Wd.sc,
     s = ctx.state(),
@@ -89,7 +109,7 @@ export function angelDraw(ctx) {
   const sig = String(working);
   if (sig !== mc.sig) {
     mc.sig = sig;
-    mc.img.src = svgDataURL(angelMachineSVG({ working }));
+    mc.img.src = amSrc(working);
     const m = `url("${mc.img.src}")`;
     mc.fizz.style.maskImage = mc.fizz.style.webkitMaskImage = m; // (the static only on the machine itself)
     mc.el.classList.toggle("working", working);
