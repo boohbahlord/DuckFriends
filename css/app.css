@@ -20620,6 +20620,10 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 }
 .sb-box::placeholder {
   opacity: 0.45;
+  /* "default (100)" fits a narrow number box on a phone: the game's letters, a little smaller, not the code font */
+  font-family: var(--font);
+  font-style: italic;
+  font-size: 0.85em;
 }
 /* a three-state switch on neutral (plan Loot 5): dim, the next level down decides */
 .sb-tog.sb-tri.mid {

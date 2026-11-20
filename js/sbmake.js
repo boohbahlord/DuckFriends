@@ -25,7 +25,7 @@ export function shareNpc(R, n) {
   R.send({
     t: "sb",
     k: "npc",
-    n: { id: n.id, name: n.name, duck: n.duck, w: n.w, beh: n.beh },
+    n: { id: n.id, name: n.name, duck: n.duck, w: n.w, beh: n.beh, set: n.set },
   });
 }
 /* the m window's options: a new NPC, then each of mine to change. Each opens Customize for it; when it shuts, the room
@@ -33,8 +33,8 @@ export function shareNpc(R, n) {
 export const npcRows = (R) => {
   const open = (r, n) => {
     if (!n) return toast("That's as many NPCs as can be kept.");
-    import("./customize.js") // (loaded when it's wanted: the rules load this file too, through the screens' activities)
-      .then((m) => m.openCustomize(null, { npc: n }))
+    Promise.all([import("./customize.js"), import("./sbspawnview.js")]) // (loaded when they're wanted: the rules load this file too, through the screens' activities)
+      .then(([m, v]) => m.openCustomize(null, { npc: n, set: v.madeSet }))
       .then(() => {
         const s = r.state,
           still = npcById(n.id);
