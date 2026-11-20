@@ -39,6 +39,8 @@ import {
   SB_POINTS,
   SB_LOOT,
   SB_ZONE,
+  SB_SHAPE,
+  sbSpread,
   sbZoneSpot,
 } from "./sandboxrules.js";
 import {
@@ -130,6 +132,7 @@ export const boxOf = (f) =>
   SB_TEXT[f] ||
   SB_LOOT[f] || // (a loot orb's: stage 4b, sbloot.js)
   SB_ZONE[f] || // (a zone's: stage 5, sbzone.js)
+  SB_SHAPE[f] || // (every block's shape: sandboxrules.js)
   null;
 /* is this text good for box f? "" or why not */
 export function boxWhy(f, t) {
@@ -309,13 +312,17 @@ export function zonesFor(s, f, p) {
     (q) => q.k === "zone" && words(boxText(q, f)).some((w) => tags.includes(w)),
   );
 }
-/* where spawn id makes one: in a zone that names it (one of them at random), or on the spawn itself */
+/* where spawn id makes one: in a zone that names it (one of them at random), anywhere in its own shape when it's bigger
+   than its spot, or on the spawn itself */
 function entSpot(s, p) {
   const zs = zonesFor(s, "ent", p);
   return zs.length
     ? { ...zoneSpot(s, zs[Math.floor(Math.random() * zs.length)]), inz: 1 }
-    : p;
+    : areaSpot(s, p);
 }
+/* a spot at random in block p's own shape (a spawn, respawn or loot spot bigger than one duck), or p itself */
+export const areaSpot = (s, p) =>
+  sbSpread(p) ? { ...p, ...zoneSpot(s, p), inz: 1 } : p;
 /* one NPC from spawn id at (x, y) (its spawn, a zone, or a respawn); false at the cap */
 function makeOne(s, id, at) {
   const p = pointsOf(s)[id];
@@ -456,7 +463,12 @@ function withField(p, f, v) {
         ? { t, ok: "" }
         : keep(was, t, b);
   const q = { ...p, f: { ...p.f, [f]: k } };
-  if (f === "zw" || f === "zh") q[f] = valueOf(k, b, () => 0.5); // (a zone's size, as a number: a range's middle)
+  if (f === "zw" || f === "zh") q[f] = valueOf(k, b, () => 0.5); // (a block's size, as a number: a range's middle)
+  if (f === "sh") q.sh = k.ok || "sq"; // (its shape: sandboxrules.js)
+  if (f === "fill") {
+    if (valueOf(k, b) === true) q.fill = 1;
+    else delete q.fill; // (Fill the map)
+  }
   return q;
 }
 /* the point a preset or a copy (a.pt: { col, f: { box: text }, im, ap }) makes out of a new bare one: only what its kind
@@ -805,6 +817,28 @@ export function sbAct(s, a, now) {
     s.sb = { ...s.sb, pts: spread({ ...pts, [a.p]: q }, a.p) };
     return true;
   }
+  /* its Purpose (plan Phase 2): one block, four purposes. It keeps its spot, shape, color and every box it has; a
+     spawn's pages go with the spawn, a loot spot's orb with the loot */
+  if (a.k === "kind") {
+    const to = String(a.v || "");
+    if (p.grp || !["spawn", "respawn", "loot", "zone"].includes(to))
+      return false;
+    if (to === p.k) return false;
+    const q = { ...p, k: to };
+    for (const f of ["orb", "gone", "im"]) delete q[f];
+    if (q.col === SB_NOCOL && !["spawn", "respawn"].includes(to))
+      q.col = Object.keys(SB_COLORS)[0]; // (no color: spawns and respawns only)
+    const rest = { ...pts, [a.p]: q },
+      run = { ...((s.sb && s.sb.run) || {}) };
+    delete run[a.p];
+    for (const [id, P] of Object.entries(pts))
+      if (P.grp === a.p) {
+        delete rest[id];
+        delete run[id];
+      }
+    s.sb = { ...s.sb, pts: rest, run };
+    return true;
+  }
   if (a.k === "go") return press(s, a.p, now);
   return false;
 }
@@ -812,6 +846,7 @@ export function sbAct(s, a, now) {
 /* which boxes a point takes: a respawn its "who" and what it imported; a spawn its own, and its Players tab's (a +
    page for players only those) */
 function canSet(p, f) {
+  if (SB_SHAPE[f] || f === "zw" || f === "zh") return !p.grp; // (every block's shape and size; a page has its spawn's)
   if (p.k === "loot") return !!SB_LOOT[f] || f === "name" || f === "hide"; // (a loot orb's own boxes: sbloot.js)
   if (p.k === "zone")
     return !!SB_ZONE[f] || ["name", "pon", "pwho", "hide"].includes(f); // (a zone's own, and players spawning in it)
@@ -893,7 +928,9 @@ function backAt(s, sp) {
           words(boxText(q, "who")).some((w) => mine.includes(w)),
       )
       .map(([id, q]) => ({ ...q, id }));
-  return rs.length ? rs[Math.floor(Math.random() * rs.length)] : entSpot(s, p); // (none: where it first spawns)
+  return rs.length
+    ? areaSpot(s, rs[Math.floor(Math.random() * rs.length)])
+    : entSpot(s, p); // (none: where it first spawns)
 }
 /* ---------- the host's heartbeat ----------
    H: what the rules lend it (rules.js): ducks(s) the ducks up on the board, claw(s, id, dmg, now) a zombie's swipe on a

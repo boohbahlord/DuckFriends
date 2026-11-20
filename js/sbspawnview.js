@@ -29,6 +29,14 @@ import {
   SB_FX,
   sbZoneBox,
   baseMode,
+  SB_SHAPE,
+  SB_SHAPES,
+  sbShape,
+  sbFills,
+  sbSpread,
+  sbCells,
+  sbCellIn,
+  sbSize,
 } from "./sandboxrules.js";
 import {
   boxText,
@@ -107,10 +115,36 @@ function placeAt(n, c, size) {
     zIndex: Math.round(c.top - 5),
   });
 }
+/* a block's shape as pixels, made from the start as pixels (the owner's, Nov 19 23:41Z): one pixel per grid square the
+   block checks (sandboxrules.js sbCellIn), its inside see-through in its color and its edge squares stronger. Kept by
+   shape, size and color */
+const SHAPE_PX = new Map();
+function shapePic(p, css) {
+  const [cx, cy] = sbCells(p),
+    key = `${sbShape(p)} ${cx} ${cy} ${css}`;
+  let u = SHAPE_PX.get(key);
+  if (u) return u;
+  const cv = document.createElement("canvas");
+  cv.width = cx;
+  cv.height = cy;
+  const g = cv.getContext("2d"),
+    inn = (i, j) => i >= 0 && j >= 0 && i < cx && j < cy && sbCellIn(p, i, j);
+  for (let j = 0; j < cy; j++)
+    for (let i = 0; i < cx; i++) {
+      if (!inn(i, j)) continue;
+      const edge =
+        !inn(i - 1, j) || !inn(i + 1, j) || !inn(i, j - 1) || !inn(i, j + 1);
+      g.globalAlpha = edge ? 0.85 : 0.22;
+      g.fillStyle = css;
+      g.fillRect(i, j, 1, 1);
+    }
+  SHAPE_PX.set(key, (u = cv.toDataURL()));
+  return u;
+}
 /* a zone: its rectangle, see-through in its color, as the map draws it (its corners through at: the board and the
    worlds both draw it square to the screen), its name over it and a dot where its builder stood (E there opens it). A
    box of CSS, not a drawing: the pixel look (pxdom.js) would make a new picture of it each time the camera moves */
-function zoneMark(n, p, at, s) {
+function zoneMark(n, p, at, s, bare = false) {
   const [x0, y0, x1, y1] = sbZoneBox(s, p, W, H),
     z = p.z || 0,
     cs = [
@@ -120,11 +154,18 @@ function zoneMark(n, p, at, s) {
     ].map(([x, y]) => at({ x, y, z })),
     L = Math.min(cs[0].left, cs[1].left),
     T = Math.min(cs[0].top, cs[1].top),
-    sig = `${p.col} ${boxText(p, "name")}`;
+    shaped = sbShape(p) !== "sq" && !sbFills(p), // (a square is its CSS box; any other shape its pixels)
+    sig = `${p.col} ${boxText(p, "name")} ${shaped ? sbShape(p) + sbCells(p) : ""} ${bare}`;
   if (n._sig !== sig) {
     n._sig = sig;
-    n.style.setProperty("--c", SB_COLORS[p.col] || "#fff");
-    n.innerHTML = `<span class="sb-zone-dot"></span><span class="sb-pt-name" style="color:var(--c)">${esc(boxText(p, "name"))}</span>`;
+    const css = SB_COLORS[p.col] || "#fff";
+    n.style.setProperty("--c", css);
+    n.classList.toggle("sb-shaped", shaped);
+    if (shaped) n.style.setProperty("--shape", `url("${shapePic(p, css)}")`);
+    else n.style.removeProperty("--shape");
+    n.innerHTML = bare
+      ? "" // (a spawn's, respawn's or loot spot's area: its ring shows where it is)
+      : `<span class="sb-zone-dot"></span><span class="sb-pt-name" style="color:var(--c)">${esc(boxText(p, "name"))}</span>`;
   }
   const st = cs
     .map((c) => `${c.left.toFixed(1)},${c.top.toFixed(1)}`)
@@ -137,10 +178,11 @@ function zoneMark(n, p, at, s) {
     width: Math.abs(cs[1].left - cs[0].left).toFixed(1) + "px",
     height: Math.abs(cs[1].top - cs[0].top).toFixed(1) + "px",
   });
-  Object.assign(n.firstChild.style, {
-    left: (cs[2].left - L).toFixed(1) + "px",
-    top: (cs[2].top - T).toFixed(1) + "px",
-  });
+  if (n.firstChild)
+    Object.assign(n.firstChild.style, {
+      left: (cs[2].left - L).toFixed(1) + "px",
+      top: (cs[2].top - T).toFixed(1) + "px",
+    });
 }
 /* the points on a layer: at(p) → { left, top } where its middle is (board px), size its width; s: the room's state (a
    loot point's orb and its picture) */
@@ -161,6 +203,17 @@ function drawMarks(layer, pts, at, size, s) {
       continue;
     }
     want.add(id);
+    /* a spawn, respawn or loot spot bigger than its spot: its area too, while building, as a zone's */
+    if (seeZones && sbSpread(p) && !hid) {
+      want.add(id + "~a");
+      zoneMark(
+        markEl(layer, have, id + "~a", "sb-pt sb-zone sb-area"),
+        p,
+        at,
+        s,
+        true,
+      );
+    }
     const orb = p.k === "loot" && p.orb && p.orb.dn == null, // (a zombie drop draws itself: l4dd.js)
       face = orb
         ? p.orb.w + boxText(p, "look") + ((s && s.sbImg) || {})[id]
@@ -274,8 +327,20 @@ const flagRow = (f, b, t, why) => {
   const on = !/^f/i.test(String(t).trim()) && String(t).trim() !== "";
   return `<div class="sb-row${why ? " bad" : ""}" data-row="${f}"><span>${esc(b.name)}</span><button type="button" class="sb-tog${on ? " on" : ""}" data-tog="${f}" aria-pressed="${on}">${on ? "true" : "false"}</button><input type="hidden" class="sb-box" data-f="${f}" value="${on ? "t" : "f"}"><em class="sb-why">${esc(why)}</em></div>`;
 };
-/* a header over one part of a spawn's window */
-const sect = (t) => `<h3 class="sb-sect">${t}</h3>`;
+/* a header over one part of a spawn's window, numbered like Word's headings as the settings go deeper (plan Phase 2:
+   3, 3.4, 3.4.1): SECT is [the section it's under, how many came before] while a block's window is made */
+let SECT = null;
+const sect = (t) =>
+  `<h3 class="sb-sect">${SECT ? `${SECT[0]}.${++SECT[1]} ` : ""}${t}</h3>`;
+/* a section of the block's front, with its fold arrow */
+const fold = (n, t, html) =>
+  `<details class="sb-fold" open><summary class="sb-sect">${n}. ${t}</summary>${html}</details>`;
+const PURPOSES = [
+  ["spawn", "Spawn"],
+  ["respawn", "Respawn"],
+  ["loot", "Loot"],
+  ["zone", "Zone"],
+];
 export function sbSettings(getR, id, tab = "") {
   const R = getR(),
     pts = R && ptsOf(R.state),
@@ -314,8 +379,8 @@ export function sbSettings(getR, id, tab = "") {
             "",
           )}<span class="sb-plus"><button type="button" class="sb-tab" data-plus aria-label="Add a page">+</button><span class="sb-plus-pick" hidden><button type="button" class="sb-tab" data-page="ent">Entity page</button><button type="button" class="sb-tab" data-page="pl">Player page</button></span></span></div>`
       : "",
-    linked = (spawn || p.k === "respawn") && !p.grp,
-    colorRow = `<div class="sb-row"><span>Color</span><span class="sb-cols">${colSwatches(
+    linked = (spawn || p.k === "respawn") && !p.grp;
+  let colorRow = `<div class="sb-row"><span>Color</span><span class="sb-cols">${colSwatches(
       p.col,
       "data-col",
       linked,
@@ -345,6 +410,38 @@ export function sbSettings(getR, id, tab = "") {
           .split(/[\s,]+/),
       );
     };
+  /* the block's front (plan Phase 2: "Front of each tab, in this order, each a section with a header and a fold arrow:
+     Shape (with its size), Color ..., Purpose"): on the block itself, not on a spawn's pages, Players or Appearance */
+  const front = !p.grp && !players && !look,
+    shapeNow = sbShape(p),
+    frontHTML = front
+      ? fold(
+          1,
+          "Shape",
+          `<div class="sb-row"><span>${SB_SHAPE.sh.name}</span><span class="sb-what">${Object.entries(
+            SB_SHAPES,
+          )
+            .map(
+              ([v, n]) =>
+                `<label><input type="radio" name="sb-sh" data-sh="${v}"${shapeNow === v ? " checked" : ""}> ${n}</label>`,
+            )
+            .join("")}</span></div>
+          ${row("zw", SB_ZONE.zw, p.f.zw ? typed("zw") : String(sbSize(p)[0]), why("zw"))}
+          ${row("zh", SB_ZONE.zh, p.f.zh ? typed("zh") : String(sbSize(p)[1]), why("zh"))}
+          ${flagRow("fill", SB_SHAPE.fill, typed("fill"), why("fill"))}`,
+        ) +
+        fold(2, "Color", colorRow) +
+        fold(
+          3,
+          "Purpose",
+          `<div class="sb-row"><span>Purpose</span><select class="sb-purpose" data-purpose aria-label="Purpose">${PURPOSES.map(
+            ([v, n]) =>
+              `<option value="${v}"${p.k === v ? " selected" : ""}>${n}</option>`,
+          ).join("")}</select></div>`,
+        )
+      : "";
+  if (front) colorRow = ""; // (it's in the front now)
+  SECT = front ? [4, 0] : null;
   /* the settings "Use these settings" switches: marked, and hidden while it's off (they don't count then) */
   const own = (html) =>
     SB_OWN.reduce(
@@ -439,15 +536,13 @@ export function sbSettings(getR, id, tab = "") {
     <div data-fxrow="amt"${fx === "damage" || fx === "heal" ? "" : " hidden"}>${row("amt", SB_ZONE.amt, typed("amt"), why("amt"))}</div>
     <div data-fxrow="rate"${fx === "none" ? " hidden" : ""}>${row("rate", SB_ZONE.rate, typed("rate"), why("rate"))}</div>
     <div data-fxrow="zwho"${fx === "none" ? " hidden" : ""}>${actRow(R.state, p, "zwho", kinds)}</div>
-    ${row("zw", SB_ZONE.zw, typed("zw"), why("zw"))}
-    ${row("zh", SB_ZONE.zh, typed("zh"), why("zh"))}
     ${flagRow("pon", SB_PLAYER.pon, typed("pon"), why("pon"))}
     ${row("pwho", { name: "Who spawns here" }, typed("pwho"), why("pwho"))}
     ${pickRow("ent", SB_ZONE.ent.name, named("spawn", "spawn"), picked("ent"))}
     ${pickRow("lt", SB_ZONE.lt.name, named("loot", "loot"), picked("lt"))}`;
   };
   const html = `<h2>${loot ? "Loot" : zone ? "Zone" : spawn ? "Spawn" : "Respawn"}</h2>${head}
-  <div class="sb-set">${loot ? lootPage(R.state, id, p, { row, flagRow, typed, why, colorRow }) : zone ? zonePage() : !spawn ? respawn() : players ? playersPage() : look ? lookPage(R.state, p) : entity()}</div>
+  <div class="sb-set">${frontHTML}${front ? `<h3 class="sb-sect sb-sect-top">4. ${PURPOSES.find(([v]) => v === p.k)[1]} settings</h3>` : ""}${loot ? lootPage(R.state, id, p, { row, flagRow, typed, why, colorRow }) : zone ? zonePage() : !spawn ? respawn() : players ? playersPage() : look ? lookPage(R.state, p) : entity()}</div>
   <p class="acts">${spawn && !players && !look ? `<button type="button" class="btn" data-go>Spawn</button>` : ""}${!spawn && !loot && !zone ? `<button type="button" class="btn" data-imp>Import settings</button>` : ""}<button type="button" class="btn ghost" data-del>${p.grp ? "Delete page" : "Delete"}</button></p>`;
   openWindow(html, {
     cls: zone ? "sb-setwin sb-zonewin" : "sb-setwin",
@@ -494,6 +589,12 @@ export function sbSettings(getR, id, tab = "") {
       });
       w.addEventListener("change", (e) => {
         const t = e.target;
+        if (t.matches("[data-sh]"))
+          return send({ k: "set", f: "sh", v: t.dataset.sh });
+        if (t.matches("[data-purpose]")) {
+          send({ k: "kind", v: t.value });
+          return setTimeout(() => w.isConnected && again(id), 400); // (that purpose's own settings, once the room has it)
+        }
         if (t.matches("[data-pick]"))
           return send({ k: "set", f: "pick", v: t.dataset.pick });
         if (t.matches("[data-fx]")) {
