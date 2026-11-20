@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v171",
+    version: 171,
+    date: "Nov 20, 2026",
+    title: "Real pixel cards",
+    news: [
+      "For every mode: card patterns are now drawn as real pixels.",
+      "For every mode: hat card patterns are real pixels too.",
+    ],
+  },
+  {
     id: "v170",
     version: 170,
     date: "Nov 20, 2026",
