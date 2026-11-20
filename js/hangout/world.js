@@ -989,9 +989,17 @@ export function mountWorld(board, api) {
     }
     return best;
   };
+  /* the slope my duck walks on (Sandbox, plan Phase 4): it holds it while it's on it, however steep, so it walks up it */
+  const slopeOf = (me) => {
+    const d = me._sl;
+    if (!d) return null;
+    return L.allDecks().find((q) => q.sb === d.sb && q.hAt) || null;
+  };
   const floor = (me, x, y) => {
-    const z = Math.max(me.z, zTop),
-      f = L.floorH(x, y, z); // (a roof holds feet already at or over it: a jump under the canopy never lands on it)
+    const z = Math.max(me.z, zTop) + (me._sl ? L.STEP : 0); // (off a slope's top: onto a floor up to a step higher)
+    let f = L.floorH(x, y, z); // (a roof holds feet already at or over it: a jump under the canopy never lands on it)
+    const sl = me._sl && slopeOf(me);
+    if (sl && L.onDeckAt(sl, x, y)) f = Math.max(f, L.deckH(sl, x, y));
     if (!hasClimbs) return f;
     const c = climbAt(x, y, z);
     return c && c.top > f && z >= c.top - 0.5 ? c.top : f;
@@ -1511,6 +1519,11 @@ export function mountWorld(board, api) {
         }
       }
       ground(me, x, y, ev);
+      {
+        const d =
+          me.vz == null && !me.j && !me.jf ? L.deckAt(x, y, me.z) : null;
+        me._sl = d && d.hAt ? d : null; // (on a slope: it holds my duck next frame too)
+      }
       me.x = x / L.W;
       me.y = y / L.H;
       for (const a of acts()) a.after?.(me, ev, now, ctx); // (the trampoline: the next bounce)
