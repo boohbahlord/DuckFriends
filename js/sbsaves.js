@@ -350,7 +350,7 @@ function rulesWin(R) {
     const s = R.state,
       may = sbCan(s, R.me);
     w.querySelector(".sb-rules").innerHTML = Object.entries(SB_RULES)
-      .filter(([, b]) => !b.board || sbOnBoard(s)) // (Board size: the plain boards only)
+      .filter(([, b]) => !b.file && (!b.board || sbOnBoard(s))) // (Board size: the plain boards only; the settings file's: Seriat's settings/limits)
       .map(([k, b]) => {
         const v = sbRule(s, k);
         return b.kind === "bool"

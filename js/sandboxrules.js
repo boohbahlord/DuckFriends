@@ -118,12 +118,35 @@ export const SB_RULES = {
     def: "100",
     board: true,
   },
+  /* plan Phase 6: "anything the menus don't show lives in a read-only-by-default settings folder in Seriat" (the owner's,
+     Nov 19 21:59Z: "Crit percent chance could be in a file that the players can change, among other settings", gore,
+     and "you can change the limit for the amount of players within a game mode in the file ... 8 players max, which is
+     the normal ... or you can make it 4 players max"). Seriat's settings/limits (shell.js), never G's window */
+  critp: {
+    name: "crit chance",
+    kind: "int",
+    min: 0,
+    max: 100,
+    def: "own",
+    own: true, // ("own": each weapon's own chance)
+    file: true,
+  },
+  gore: { name: "gore", kind: "bool", def: "t", file: true },
+  most: {
+    name: "player limit",
+    kind: "int",
+    min: 2,
+    max: 8,
+    def: "8",
+    file: true,
+  },
 };
 /* rule k now: a whole number (lives) or true / false */
 export function sbRule(s, k) {
   const b = SB_RULES[k],
     t = String(((s && s.sb && s.sb.rules) || {})[k] ?? b.def).trim();
   if (b.kind === "bool") return !/^f/i.test(t);
+  if (b.own && /^own$/i.test(t)) return -1; // (each weapon's own)
   const n = Math.round(+t);
   return Number.isFinite(n) ? Math.min(b.max, Math.max(b.min, n)) : +b.def;
 }
@@ -138,10 +161,11 @@ export function boardDuck(s) {
 const BOARD_DUCK = [0.03, 0.08];
 /* { t: "sbr", k, v }: whoever may change Sandbox sets rule k */
 export function sbRulesAct(s, a) {
-  const b = SB_RULES[a.k];
+  const b = Object.hasOwn(SB_RULES, a.k) ? SB_RULES[a.k] : null;
   if (!isSb(s) || !b || !sbCan(s, a.id)) return false;
   let v = String(a.v ?? "").trim();
   if (b.kind === "bool") v = /^f/i.test(v) || v === "" ? "f" : "t";
+  else if (b.own && /^own$/i.test(v)) v = "own";
   else {
     const n = Math.round(+v);
     if (!Number.isFinite(n) || n < b.min || n > b.max) return false;
@@ -151,7 +175,42 @@ export function sbRulesAct(s, a) {
   if (rules[a.k] === v) return false;
   rules[a.k] = v;
   s.sb = { ...s.sb, rules };
+  if (a.k === "most") s.max = Math.max(s.seat.length, sbRule(s, "most")); // (the room takes no more than that; those in it stay)
   return true;
+}
+/* gore off: the room's Gore setting, or Sandbox's settings file (gore = false) */
+export const noGoreOf = (s) =>
+  !!+s.options.noGore || (isSb(s) && !sbRule(s, "gore"));
+/* Seriat's settings/limits: the file rules as "name = value" lines */
+export function sbSettingsText(s) {
+  return (
+    "# Sandbox settings that no menu shows. Read-only: turn on write (Permissions, or chmod u+w limits) to change one.\n" +
+    "# crit chance: 0 to 100 (%), or own (each weapon's own). gore: true or false. player limit: 2 to 8.\n" +
+    Object.entries(SB_RULES)
+      .filter(([, b]) => b.file)
+      .map(
+        ([k, b]) =>
+          `${b.name} = ${String(((s && s.sb && s.sb.rules) || {})[k] ?? b.def)
+            .replace(/^t$/, "true")
+            .replace(/^f$/, "false")}`,
+      )
+      .join("\n") +
+    "\n"
+  );
+}
+/* the file read back: [[k, value]] for each "name = value" line naming a file rule (the rest is left alone) */
+export function sbSettingsRead(text) {
+  const by = Object.fromEntries(
+      Object.entries(SB_RULES)
+        .filter(([, b]) => b.file)
+        .map(([k, b]) => [b.name, k]),
+    ),
+    out = [];
+  for (const line of String(text).split("\n")) {
+    const m = /^\s*([a-z ]+?)\s*=\s*(\S+)\s*$/i.exec(line.replace(/#.*/, ""));
+    if (m && by[m[1].toLowerCase()]) out.push([by[m[1].toLowerCase()], m[2]]);
+  }
+  return out;
 }
 
 /* ---------- Sandbox's spawns and respawns: the settings (stage 2) ----------
