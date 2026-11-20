@@ -317,6 +317,56 @@ html.cb .bb-side.bb-b::after {
   right: 0.7rem;
 } /* (B in its far corner, away from the cloud in the middle) */
 
+/* colorblind mode, the letters and words too (the owner's, Nov 20 18:09Z: "There is a colorblind mode for letter or word
+   contrast with their colors if there wasnt already."): the multicolored letters take seven colors that every kind of
+   color sight tells apart (the blue-orange-yellow set, lightened for the dark page), no red beside a green, and the
+   shared red and green (good and bad words, buttons) become orange and blue. Off: nothing here applies */
+html.cb {
+  --red: #f2763a;
+  --green: #2d8fd9;
+  --pink: #e58fbf;
+  --purple: #56b4e9;
+}
+html.cb .rainbow span:nth-child(7n + 1) {
+  color: #f2763a !important;
+}
+html.cb .rainbow span:nth-child(7n + 2) {
+  color: #e69f00 !important;
+}
+html.cb .rainbow span:nth-child(7n + 3) {
+  color: #f0e442 !important;
+}
+html.cb .rainbow span:nth-child(7n + 4) {
+  color: #00b386 !important;
+}
+html.cb .rainbow span:nth-child(7n + 5) {
+  color: #56b4e9 !important;
+}
+html.cb .rainbow span:nth-child(7n + 6) {
+  color: #f2f2f2 !important;
+}
+html.cb .rainbow span:nth-child(7n) {
+  color: #e58fbf !important;
+}
+html.cb .sb-block {
+  --c: #0072b2 !important; /* (dark on the block's tan, so they read) */
+}
+html.cb .sb-block:nth-child(2n) {
+  --c: #8a3a00 !important;
+}
+html.cb .sb-block:nth-child(3n) {
+  --c: #1c1c28 !important;
+}
+html.cb .up-h.fix {
+  color: #e69f00;
+}
+html.cb .wq-score .q {
+  color: #f2763a;
+}
+html.cb .wq-score .r {
+  color: #56b4e9;
+}
+
 /* ---------- the page ---------- */
 * {
   box-sizing: border-box;
