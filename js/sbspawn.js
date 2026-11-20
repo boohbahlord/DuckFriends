@@ -74,6 +74,8 @@ import { Z_MOST, l4Spawn, l4Live } from "./l4ddrules.js";
 import { WAVE, zLook } from "./mgjrules.js";
 import { onCabin, sbzOn, cabinLive, cabinSpawn, cabinTick } from "./sbcabin.js";
 import { listsOf, decide, MAD } from "./sbbrain.js";
+import { grudge } from "./npcrules.js";
+import { hpHurt } from "./hpmath.js";
 import { zbSpawned } from "./sbzonebrain.js";
 import { botDuck } from "./botduck.js";
 import { JUSTIN } from "./hangout/npcart.js";
@@ -1366,8 +1368,8 @@ export function strike(s, now, me, foe, H, o, d = null, w = "claw") {
   if (foe.duck) return H.claw(s, foe.id, dmg, now, w);
   const q = foe.o;
   if (!q || q.d) return;
-  q.hp = Math.max(0, Math.round((q.hp - dmg) * 10) / 10);
-  q.mad = [me.key, now + MAD];
+  q.hp = hpHurt(q.hp, dmg);
+  q.mad = grudge(me.key, now, MAD);
   if (q.hp <= 0) q.d = now;
 }
 

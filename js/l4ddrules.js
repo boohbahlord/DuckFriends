@@ -92,7 +92,6 @@ import { hOk, hLock, shotFeet, MID, SAME_FLOOR } from "./heights.js";
 import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
-  woundCode,
   hitCode,
   knockable,
   pwHit,
@@ -131,6 +130,12 @@ import {
 import { ANGEL, angelOf, angelAmmo, angelAct, angelLeft } from "./l4ddangel.js";
 import { fieldOf, askField } from "./flowfield.js";
 import { NPC_RUN } from "./npcshared.js";
+import {
+  sees as npcSees,
+  nearPairs,
+  shotMark,
+  woundsAfter,
+} from "./npcrules.js";
 import { grHp, grCool } from "./sbgroups.js";
 import {
   isSurv,
@@ -3237,19 +3242,9 @@ function merchantHurt(s, by, n, now, w = "", how = "", from = "") {
      gets gore effects ... all the gore effects that everyone else gets"): a crit that kills him blows his head off
      ("there's a chance you might get a crit on them, so their head explodes just like a zombie will"), a blast tears
      him apart (as it does a duck), any other hit leaves its weapon's wound */
-  const wd =
-    !hp && how === "crit"
-      ? had.includes("x")
-        ? had
-        : had + "x0"
-      : !hp && how === "blast"
-        ? had + DEATH.filter((c) => !had.includes(c)).join("")
-        : had +
-          woundCode(
-            had,
-            w,
-            knockable(merchantLook(merchantById(m.id), m.roll)),
-          );
+  const wd = woundsAfter(had, w, !hp, how === "crit", how === "blast", () =>
+    knockable(merchantLook(merchantById(m.id), m.roll)),
+  );
   if (!hp) {
     s.hang.l4m = {
       ...m,
@@ -3388,10 +3383,7 @@ function merchantShoots(s, zs, now) {
     return;
   }
   const f = t.x < m.x ? -1 : 1;
-  if (
-    now < (mh(s).gx || 0) ||
-    !clearShot(m.x, m.y, t.x, t.y, heightAt(m.x, m.y))
-  ) {
+  if (now < (mh(s).gx || 0) || !npcSees(m, t, undefined, 0)) {
     if (m.f !== f) s.hang.l4m = { ...m, f };
     return;
   }
@@ -3423,11 +3415,7 @@ function merchantShoots(s, zs, now) {
   s.hang.l4m = {
     ...m,
     f,
-    sh: [
-      now,
-      Math.round(t.x + Math.cos(a) * off),
-      Math.round(t.y + Math.sin(a) * off * 0.5),
-    ],
+    sh: shotMark(now, t, a, off),
   };
   if (!dmg) return;
   if (t.z) {
@@ -3939,7 +3927,7 @@ function strike(s, z, dmg, head, by, w = "") {
   const on = s.hang.l4on || {},
     all = head || !!on.kill, // (Instant Kill: every hit takes all its HP, 5 points for each)
     took = all ? z.hp : Math.min(z.hp, dmg);
-  z.hp = all ? 0 : Math.max(0, tenths(z.hp - dmg));
+  z.hp = all ? 0 : hpHurt(z.hp, dmg);
   addPts(s, by, (head ? PTS.HEAD : PTS.HIT * took) * (on.double ? 2 : 1));
   if (z.hp <= 0) {
     /* the zombies each duck killed this game (the overall stats' Zombies killed: l4dd.js record) */
@@ -5648,6 +5636,7 @@ function gmHelp(s, now) {
     wh: H,
     hp: () => Math.max(1, hp0()),
     open: (x, y) => openNear(x, y) >= 0 && zOk(x, y, heightAt(x, y)),
+    stands: (x, y, z) => zOk(x, y, z), // (where a zombie at height z may stand: apart's walls)
     hurt(id, dmg, w) {
       const p4 = { ...(s.hang.l4p || {}) },
         down = hurtDuck(s, p4, id, now, w, dmg);
@@ -6671,40 +6660,30 @@ function walkable(x0, y0, x1, y1) {
    the owner's, Nov 20 03:58Z) */
 function separate(zs) {
   const live = zs.filter((z) => z.st !== 3),
-    hz = new Map(dp() ? live.map((z) => [z, zombieZ(z)]) : []),
-    grid = new Map(),
-    key = (x, y) => Math.floor(x / 64) * 10000 + Math.floor(y / 64);
-  for (const z of live) {
-    const k = key(z.x, z.y);
-    if (!grid.has(k)) grid.set(k, []);
-    grid.get(k).push(z);
-  }
-  for (let pass = 0; pass < 2; pass++)
-    for (const a of live) {
-      const i0 = Math.floor(a.x / 64),
-        j0 = Math.floor(a.y / 64);
-      for (let di = -1; di <= 1; di++)
-        for (let dj = -1; dj <= 1; dj++)
-          for (const b of grid.get((i0 + di) * 10000 + j0 + dj) || []) {
-            if (b.i <= a.i) continue;
-            if (hz.size && Math.abs(hz.get(a) - hz.get(b)) >= SAME_FLOOR)
-              continue; // (a floor apart: never in each other's way)
-            let ex = (a.x - b.x) / RX,
-              ey = (a.y - b.y) / RY,
-              e = Math.hypot(ex, ey);
-            if (e >= 1) continue;
-            if (e < 1e-3) {
-              ex = Math.random() - 0.5;
-              ey = Math.random() - 0.5;
-              e = Math.hypot(ex, ey);
-            }
-            const push = (1 - e) / 2,
-              ux = (ex / e) * push * RX,
-              uy = (ey / e) * push * RY;
-            nudge(a, ux, uy);
-            nudge(b, -ux, -uy);
-          }
-    }
+    hz = new Map(dp() ? live.map((z) => [z, zombieZ(z)]) : []);
+  nearPairs(
+    live,
+    64,
+    64,
+    (a, b) => {
+      if (hz.size && Math.abs(hz.get(a) - hz.get(b)) >= SAME_FLOOR) return; // (a floor apart: never in each other's way)
+      let ex = (a.x - b.x) / RX,
+        ey = (a.y - b.y) / RY,
+        e = Math.hypot(ex, ey);
+      if (e >= 1) return;
+      if (e < 1e-3) {
+        ex = Math.random() - 0.5;
+        ey = Math.random() - 0.5;
+        e = Math.hypot(ex, ey);
+      }
+      const push = (1 - e) / 2,
+        ux = (ex / e) * push * RX,
+        uy = (ey / e) * push * RY;
+      nudge(a, ux, uy);
+      nudge(b, -ux, -uy);
+    },
+    2,
+  );
 }
 function nudge(z, dx, dy) {
   const x = z.x + dx,

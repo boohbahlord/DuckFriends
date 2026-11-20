@@ -37,14 +37,15 @@ import {
   Z_ROOM,
   zombieTakes,
   ALL_HP,
-  clearShot,
   L4_HOOKS,
 } from "./l4ddrules.js";
 import { hitCode } from "./wounds.js";
+import { hpHurt } from "./hpmath.js";
 import { WAVE, zLook } from "./mgjrules.js";
 import { MAD } from "./sbbrain.js";
 import { fight, keepAt, reachTo } from "./sbarms.js";
 import { npcBody, DU_WORLD } from "./sbbody.js";
+import { sees as npcSees, nearPairs, grudge } from "./npcrules.js";
 
 export const onCabin = (s) => isSb(s) && baseMode(s.options) === "hang";
 /* the worlds these walk on: Duck Cabin and the zombie maps (there, every kind but a zombie: those are the map's own) */
@@ -278,38 +279,29 @@ export function cabinTick(s, now, H0) {
   return true;
 }
 /* a made NPC's shot from o to t goes through no wall */
-const sees = (o, t) => clearShot(o.x, o.y, t.x, t.y, npcZ(o));
+const sees = (o, t) => npcSees(o, t, npcZ(o), 0);
 /* never in each other: two too close are pushed apart, each only against a few in its own and the next cells */
 function apart(live, RX, RY) {
-  const grid = new Map(),
-    key = (cx, cy) => cx * 4096 + cy,
-    cell = (o) => [Math.floor(o.x / RX), Math.floor(o.y / RY)];
-  for (const o of live) {
-    const k = key(...cell(o));
-    if (!grid.has(k)) grid.set(k, []);
-    grid.get(k).push(o);
-  }
-  for (const A of live) {
-    const [cx, cy] = cell(A);
-    let seen = 0;
-    for (let gx = cx - 1; gx <= cx + 1 && seen < NEAR; gx++)
-      for (let gy = cy - 1; gy <= cy + 1 && seen < NEAR; gy++)
-        for (const B of grid.get(key(gx, gy)) || []) {
-          if (B.i <= A.i) continue;
-          if (++seen > NEAR) break;
-          const ex = (A.x - B.x) / RX,
-            ey = (A.y - B.y) / RY,
-            e = Math.hypot(ex, ey);
-          if (e >= 0.9) continue;
-          const k = e > 1e-3 ? (0.9 - e) / 2 / e : 0.2,
-            ux = e > 1e-3 ? ex * k : Math.random() - 0.5,
-            uy = e > 1e-3 ? ey * k : Math.random() - 0.5;
-          A.x += ux * RX;
-          A.y += uy * RY;
-          B.x -= ux * RX;
-          B.y -= uy * RY;
-        }
-  }
+  nearPairs(
+    live,
+    RX,
+    RY,
+    (A, B) => {
+      const ex = (A.x - B.x) / RX,
+        ey = (A.y - B.y) / RY,
+        e = Math.hypot(ex, ey);
+      if (e >= 0.9) return;
+      const k = e > 1e-3 ? (0.9 - e) / 2 / e : 0.2,
+        ux = e > 1e-3 ? ex * k : Math.random() - 0.5,
+        uy = e > 1e-3 ? ey * k : Math.random() - 0.5;
+      A.x += ux * RX;
+      A.y += uy * RY;
+      B.x -= ux * RX;
+      B.y -= uy * RY;
+    },
+    1,
+    NEAR,
+  );
 }
 
 /* ---------- what hits them: the same as hits Justin ---------- */
@@ -347,7 +339,7 @@ function npcHit(s, i, by, now, w) {
   if (!o) return false;
   const t = zombieTakes(s, by, w);
   if (!t) return false; // (a miss)
-  const hp = t.dmg >= ALL_HP ? 0 : o.hp - t.dmg,
+  const hp = t.dmg >= ALL_HP ? 0 : hpHurt(o.hp, t.dmg), // (in tenths, as every HP: hpmath.js)
     wd = (o.w || "") + hitCode(o.w || "", w, t.head);
   s.hang = {
     ...s.hang,
@@ -357,9 +349,9 @@ function npcHit(s, i, by, now, w) {
         q === o
           ? {
               ...q,
-              hp: Math.max(0, hp),
+              hp,
               w: wd,
-              mad: ["p:" + by, now + MAD], // (it goes after whoever hurt it: sbbrain.js)
+              mad: grudge("p:" + by, now, MAD), // (it goes after whoever hurt it: sbbrain.js)
               ...(hp <= 0 ? { d: now } : {}),
             }
           : q,

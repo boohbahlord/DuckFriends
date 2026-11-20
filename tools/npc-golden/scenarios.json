@@ -1,0 +1,308 @@
+[
+  {
+    "name": "qz-downpour",
+    "options": {
+      "mode": "l4dd",
+      "l4map": "downpour"
+    },
+    "computers": 3,
+    "beats": 1500
+  },
+  {
+    "name": "qz-cabin",
+    "options": {
+      "mode": "l4dd",
+      "l4map": "cabin",
+      "wildJustin": 0
+    },
+    "computers": 3,
+    "beats": 1500,
+    "hang": {
+      "l4box": {
+        "$me": {
+          "w": "justin",
+          "t": "$now-6000",
+          "by": "$me"
+        }
+      }
+    }
+  },
+  {
+    "name": "surv-criminals",
+    "options": {
+      "mode": "surv",
+      "l4map": "downpour"
+    },
+    "computers": 3,
+    "beats": 1500,
+    "peakNow": 1,
+    "sv": {
+      "GUNMEN": 1,
+      "CRIM": 1,
+      "STEP": 0
+    }
+  },
+  {
+    "name": "surv-soldiers",
+    "options": {
+      "mode": "surv",
+      "l4map": "downpour"
+    },
+    "computers": 3,
+    "beats": 1500,
+    "peakNow": 1,
+    "sv": {
+      "GUNMEN": 1,
+      "CRIM": 0,
+      "STEP": 0
+    },
+    "gm": {
+      "SNIPER": 1
+    }
+  },
+  {
+    "name": "surv-friends",
+    "options": {
+      "mode": "surv",
+      "l4map": "downpour"
+    },
+    "computers": 3,
+    "beats": 2400,
+    "sv": {
+      "GUNMEN": 1,
+      "CRIM": 0,
+      "STEP": 0
+    },
+    "fr": {
+      "CHANCE": 1
+    },
+    "restNow": 1
+  },
+  {
+    "name": "sb-cabin",
+    "options": {
+      "mode": "sandbox",
+      "sbMap": "cabin"
+    },
+    "pre": [
+      {
+        "t": "sbPick"
+      }
+    ],
+    "computers": 2,
+    "beats": 900,
+    "setup": [
+      {
+        "t": "sb",
+        "k": "npc",
+        "n": {
+          "id": "gunner",
+          "name": "Gunner",
+          "duck": "$duck",
+          "w": {
+            "p": ["ak", "handgun"],
+            "m": "knife"
+          },
+          "beh": {
+            "target": "players"
+          }
+        }
+      },
+      {
+        "t": "sb",
+        "k": "add",
+        "kind": "spawn",
+        "x": "$mx",
+        "y": "$my"
+      },
+      {
+        "t": "sb",
+        "p": "p1",
+        "k": "set",
+        "f": "what",
+        "v": "c:gunner zombie"
+      },
+      {
+        "t": "sb",
+        "p": "p1",
+        "k": "set",
+        "f": "limit",
+        "v": "6"
+      },
+      {
+        "t": "sb",
+        "p": "p1",
+        "k": "set",
+        "f": "cont",
+        "v": "t"
+      },
+      {
+        "t": "sb",
+        "p": "p1",
+        "k": "set",
+        "f": "every",
+        "v": "1"
+      },
+      {
+        "t": "sb",
+        "p": "p1",
+        "k": "go"
+      }
+    ]
+  },
+  {
+    "name": "sb-downpour",
+    "options": {
+      "mode": "sandbox",
+      "sbMap": "downpour"
+    },
+    "pre": [
+      {
+        "t": "sbPick"
+      }
+    ],
+    "computers": 2,
+    "beats": 900,
+    "setup": [
+      {
+        "t": "sb",
+        "k": "npc",
+        "n": {
+          "id": "gunner",
+          "name": "Gunner",
+          "duck": "$duck",
+          "w": {
+            "p": ["ak", "handgun"],
+            "m": "knife"
+          },
+          "beh": {
+            "target": "players"
+          }
+        }
+      },
+      {
+        "t": "sb",
+        "k": "add",
+        "kind": "spawn",
+        "x": "$mx",
+        "y": "$my"
+      },
+      {
+        "t": "sb",
+        "p": "p1",
+        "k": "set",
+        "f": "what",
+        "v": "c:gunner zombie"
+      },
+      {
+        "t": "sb",
+        "p": "p1",
+        "k": "set",
+        "f": "limit",
+        "v": "6"
+      },
+      {
+        "t": "sb",
+        "p": "p1",
+        "k": "set",
+        "f": "cont",
+        "v": "t"
+      },
+      {
+        "t": "sb",
+        "p": "p1",
+        "k": "set",
+        "f": "every",
+        "v": "1"
+      },
+      {
+        "t": "sb",
+        "p": "p1",
+        "k": "go"
+      }
+    ]
+  },
+  {
+    "name": "sb-board",
+    "options": {
+      "mode": "sandbox",
+      "sbMap": "",
+      "map": "night"
+    },
+    "pre": [
+      {
+        "t": "sbPick"
+      }
+    ],
+    "computers": 2,
+    "beats": 900,
+    "setup": [
+      {
+        "t": "sb",
+        "k": "npc",
+        "n": {
+          "id": "gunner",
+          "name": "Gunner",
+          "duck": "$duck",
+          "w": {
+            "p": ["ak", "handgun"],
+            "m": "knife"
+          },
+          "beh": {
+            "target": "players"
+          }
+        }
+      },
+      {
+        "t": "sb",
+        "k": "add",
+        "kind": "spawn",
+        "x": "$mx",
+        "y": "$my"
+      },
+      {
+        "t": "sb",
+        "p": "p1",
+        "k": "set",
+        "f": "what",
+        "v": "c:gunner zombie"
+      },
+      {
+        "t": "sb",
+        "p": "p1",
+        "k": "set",
+        "f": "limit",
+        "v": "6"
+      },
+      {
+        "t": "sb",
+        "p": "p1",
+        "k": "set",
+        "f": "cont",
+        "v": "t"
+      },
+      {
+        "t": "sb",
+        "p": "p1",
+        "k": "set",
+        "f": "every",
+        "v": "1"
+      },
+      {
+        "t": "sb",
+        "p": "p1",
+        "k": "go"
+      }
+    ],
+    "phase": "sandbox"
+  },
+  {
+    "name": "mgj",
+    "options": {
+      "mode": "mgj"
+    },
+    "computers": 3,
+    "beats": 400,
+    "phase": "boss"
+  }
+]

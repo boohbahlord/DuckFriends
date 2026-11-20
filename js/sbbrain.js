@@ -9,6 +9,8 @@
    A zombie whose spawn never set its Target goes after the players; the others go after nothing.
    decide() is the same on the board and on the worlds: the map's tick (sbspawn.js, sbcabin.js) gives it the things on
    the map and how far apart two of them are, in duck lengths, and walks and claws as it says. */
+import { nearest, grudgeOf } from "./npcrules.js";
+
 export const MAD = 10000; // ms it goes after whatever hurt it
 export const FLEE = 4; // duck lengths: an avoided one this near, it runs
 export const GUARD = { NEAR: 1.5, WATCH: 4 }; // (it keeps this near its charge; a threat this near its charge, it goes for)
@@ -53,21 +55,13 @@ export function matches(ws, t) {
    players among them; far(a, b): duck lengths between two */
 export function decide(me, L, all, ducks, far, now) {
   const pool = L.np ? all : ducks,
-    near = (ok) => {
-      let best = null,
-        bd = Infinity;
-      for (const t of pool) {
-        if (t.key === me.key || !ok(t)) continue;
-        const d = far(me, t);
-        if (d < bd) {
-          bd = d;
-          best = t;
-        }
-      }
-      return best;
-    };
-  const mad =
-    me.mad && me.mad[1] > now ? all.find((t) => t.key === me.mad[0]) : null;
+    near = (ok) =>
+      nearest(
+        pool,
+        (t) => far(me, t),
+        (t) => t.key !== me.key && ok(t),
+      );
+  const mad = grudgeOf(me, now, all, (t) => t.key);
   if (mad) return { goal: mad, foe: mad };
   if (L.A.length) {
     const scary = near((t) => matches(L.A, t) && far(me, t) < FLEE);
