@@ -19223,14 +19223,17 @@ html.pixel #shapes:not(.px-own) {
   image-rendering: pixelated;
   user-select: none;
 }
-.pxw-stage img.px-file {
+.pxw-stage .px-file {
   position: absolute;
 }
+i.px-file {
+  display: block;
+} /* (a piece of a sheet, tools/pixel-sheets.cjs: its picture is its background) */
 .pxs {
   position: absolute;
   overflow: hidden;
 }
-.pxs > img {
+.pxs > .px-file {
   position: absolute;
   left: 0;
   top: 0;
@@ -19238,7 +19241,7 @@ html.pixel #shapes:not(.px-own) {
   height: calc(var(--r, 1) * 100%);
   display: block;
 }
-html.moving .pxs > img {
+html.moving .pxs > .px-file {
   animation:
     pxs calc(var(--pd) / var(--r, 1)) steps(var(--n)) var(--pdl, 0s) infinite,
     pxr var(--pd) steps(var(--r, 1)) var(--pdl, 0s) infinite;
