@@ -15,6 +15,8 @@ import {
   sbInBlock,
   sbSpread,
   sbFills,
+  sbOv,
+  sbOrder,
 } from "./sandboxrules.js";
 import { kindsFor } from "./sbmake.js";
 
@@ -23,6 +25,9 @@ export const sbPresets = {}; // (kind: the pattern Build puts down for it)
 /* cheat mode: on at the start (nothing changes until it's turned off, Shift+C), off: the Sandbox windows (B, M, N, G, P),
    Build's menus and Properties wait for it */
 export const sbCheat = { on: true };
+/* the overlay level I'm building on (the owner's, Nov 20 18:46Z: Shift+O then a number key, 0 for 10; a phone's Tools list
+   has Overlay level at the bottom): only its blocks show and can be picked while building; new ones go on it */
+export const sbLevel = { v: 1 };
 
 /* the color buttons: the eight, and No color after them where it may be (attr: data-col …; on: the one picked) */
 export function colSwatches(on, attr, nocol) {
@@ -53,21 +58,25 @@ export function patternOf(p) {
     ...(p.im ? { im: [...p.im] } : {}),
     ...(p.ap ? { ap: JSON.parse(JSON.stringify(p.ap)) } : {}),
     ...(p.rot ? { rot: p.rot } : {}),
+    ...Object.fromEntries(
+      ["fh", "fv", "ns", "fx"].filter((k) => p[k]).map((k) => [k, 1]),
+    ), // (Direction's flips, Snap and Fixed zone)
   };
 }
 
 /* every point under (x, y) (shares of the map), the one I mean first: a ring within reach (the nearest first), then the
-   zones I'm inside, the newest first. Blocks put on top of each other: the one put down last is on top, so a right-click
+   zones I'm inside, the one drawn on top first. Blocks put on top of each other: the one put down last is on top, so a right-click
    or a drag takes it, and the menu lists the ones under it (the owner's row 199 test: a zone put on another couldn't be
    opened or grabbed) */
-const numOf = (id) => +String(id).replace(/\D/g, "") || 0;
 export function pointsAt(s, at) {
   const board = sbOnBoard(s),
     U = boardDuck(s),
     rings = [],
-    inside = [];
+    inside = [],
+    pts = (s.sb && s.sb.pts) || {};
   for (const [id, p] of Object.entries((s.sb && s.sb.pts) || {})) {
     if (p.grp) continue; // (a spawn's + page: its spawn's)
+    if (sbOv(p) !== sbLevel.v) continue; // (another overlay level: hidden)
     if (
       p.k === "zone" ||
       p.k === "spawn" ||
@@ -85,7 +94,7 @@ export function pointsAt(s, at) {
     if (d < 1.2) rings.push([d, id]);
   }
   rings.sort((x, y) => x[0] - y[0]);
-  inside.sort((x, y) => numOf(y) - numOf(x));
+  inside.sort((x, y) => sbOrder(y, pts[y]) - sbOrder(x, pts[x])); // (drawn on top first: Move up and Move down)
   return [...new Set([...rings.map((r) => r[1]), ...inside])];
 }
 /* the point under (x, y), or null: the first of pointsAt */
