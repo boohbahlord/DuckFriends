@@ -38,6 +38,7 @@ import {
 } from "./ui.js";
 import { activeRoom } from "./net.js";
 import { sprintStep } from "./stamina.js";
+import { SPRINT } from "./gamedefaults.js";
 import { grStam, grCool } from "./sbgroups.js";
 import { grLook } from "./sbgroupview.js";
 import {
@@ -665,7 +666,7 @@ const turned = () =>
 let cam = null; // the bracket's camera: the diagram's corner on the board (dx, dy), the bracket's offset in it (ox, oy), its zoom and size
 
 /* ---------- movement numbers (board widths or heights per second) ---------- */
-const SPEED = { x: 0.45, y: 1.0, px: 0.5, py: 0.85, sprint: 1.75 };
+const SPEED = { x: 0.45, y: 1.0, px: 0.5, py: 0.85, sprint: SPRINT.speed }; // (sprint: the whole game's, gamedefaults.js)
 const MGJ_SLOW = 0.8;
 const JUMP = { normal: { T: 0.62, H: 1.35 }, low: { T: 1.2, H: 2 } }; // seconds in the air; apex in duck heights (low gravity: floatier, still quick)
 /* a duck's jump: a long jump floats longer and a little higher, a short jump is lower and quicker (60% of the height in
@@ -1326,7 +1327,7 @@ function drawMeters(s, board, layer, now) {
   if (!meter) return;
   const hv = R.me && hpFull(s, R.me, now);
   if (hv) {
-    const [sp, tired] = isMgj(s) ? [null, false] : sprintLeft(); // (every mode's 3.5 s sprint now, stamina.js; Mad God Justin has no sprint, so no sprint bar)
+    const [sp, tired] = isMgj(s) ? [null, false] : sprintLeft(); // (every mode's sprint (gamedefaults.js), stamina.js; Mad God Justin has no sprint, so no sprint bar)
     meter.set(
       hv[0],
       hv[1],
@@ -5134,7 +5135,7 @@ function step(dt, now) {
     sprinting && !!(hx || vy || target),
     dt,
     grStam(s, R.me),
-  ); // (3.5 s of sprint, then a walk till it's full again: stamina.js, every mode; Sandbox: a group's Regen stamina)
+  ); // (sprint till the bar is empty, then a walk till it's full again: stamina.js, every mode; Sandbox: a group's Regen stamina)
   let ax, ay; // in board terms
   if (turned()) {
     ax = -vy;
@@ -5362,7 +5363,7 @@ function hangStep(dt, now) {
     }
   }
   if (!canWalk()) ax = ay = 0;
-  sprinting = sprintStep(sprinting && !!(ax || ay), dt, grStam(R.state, R.me)); // (3.5 s of sprint, then a walk till it's full again: stamina.js, every mode, Dead Ducks Arcade's too; Sandbox: a group's Regen stamina)
+  sprinting = sprintStep(sprinting && !!(ax || ay), dt, grStam(R.state, R.me)); // (sprint till the bar is empty, then a walk till it's full again: stamina.js, every mode, Dead Ducks Arcade's too; Sandbox: a group's Regen stamina)
   const kx = ax; // (which way I face: my keys, not the push)
   if (canWalk() && recoil && performance.now() < recoil.until) {
     const l = Math.hypot(recoil.dx, recoil.dy) || 1;
@@ -6436,7 +6437,7 @@ function coolOne(id, now, m) {
 }
 /* the white, the yellow and the blue bars under my duck in the modes besides Dead Ducks Arcade (which has its own,
    l4dd.js): what's in my hand, its cooldown or reload, its magazine, and my sprint while it isn't full (meters.js; the
-   3.5 s sprint every mode has now, stamina.js; the owner's, Nov 18 16:50Z. Mad God Justin has no sprint) */
+   sprint every mode has now, stamina.js; the owner's, Nov 18 16:50Z. Mad God Justin has no sprint) */
 function handBars(s) {
   const tag = S && S.querySelector(".gduck.mine .gduck-name");
   if (!tag || !R) return;

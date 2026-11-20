@@ -9,6 +9,46 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v189",
+    version: 189,
+    date: "Nov 20, 2026",
+    title: "Lighter ducks",
+    news: ["Ducks load a little lighter."],
+  },
+  {
+    id: "v188",
+    version: 188,
+    date: "Nov 20, 2026",
+    title: "Right-click a zone",
+    news: [
+      "For Sandbox: right-click a zone (hold it on a phone) for Snap, Fixed zone, Direction (flip and rotate) and Overlay. Overlay levels 1 to 10 hide the zones of other levels: Shift+O and a number key, or Overlay level under Tools on a phone.",
+      "For Sandbox: zones grow and shrink in whole hit tiles.",
+      "For Sandbox: the Help manual comes in parts with buttons, and it holds the Seriat help files as they're written.",
+      "Your picture fills your duck however small you crop it, flashlights come back on by themselves when the power goes out, and names under ducks are smaller so the HP bar shows.",
+    ],
+  },
+  {
+    id: "v187",
+    version: 187,
+    date: "Nov 20, 2026",
+    title: "Zones on the tiles",
+    news: [
+      "For Sandbox: zones are made of the ground's hit tiles. A tile is part of a zone when its shape covers 0.6 or more of it, and zones snap to the tile lines.",
+    ],
+  },
+  {
+    id: "v186",
+    version: 186,
+    date: "Nov 20, 2026",
+    title: "Gentler sprint, dearer gas",
+    news: [
+      "Sprint is 1.25 times your walk for 5 seconds, in every mode. The bar fills back up half again as slowly, and once it's empty you sprint again only when it's full.",
+      "For Dead Ducks Arcade: gas costs 300 for a quarter can, at Downpour's pumps and from Cabin's merchant.",
+      "Your picture now opens a crop box, and a picture with see-through parts becomes a cut-out duck that's hit only where it shows.",
+      "Your HP, its meters and your hotbar are bigger and side by side in the bottom right, on a computer and on a phone on its side.",
+    ],
+  },
+  {
     id: "v185",
     version: 185,
     date: "Nov 20, 2026",

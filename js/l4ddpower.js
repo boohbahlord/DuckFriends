@@ -49,7 +49,7 @@ export const PW = {
   get E() {
     return dpOn() ? [GS.POWER_SPOT.x, GS.POWER_SPOT.y + 80] : [2300, 2300];
   },
-  PUMP: 150, // Downpour: a quarter can (25%) of gas at a pump (the owner's, Nov 18 12:19Z: "the gas pump now give 25% gas to a jerry can for 150 points each")
+  PUMP: 300, // a quarter can (25%) of gas: at a pump on Downpour, and from Cabin's merchant, the same (was 150, the owner's, Nov 18 12:19Z; Nov 20 18:46Z: "For gas, on number 6, raise it to 300")
   REACH: 130, // world px from there
   DP_GAS: 8, // Downpour: the rounds of gas the generator holds as the game starts
   CAN_ZOMBIE: 0.0075, // jerry cans: from a zombie that dies (the owner's, Nov 18 12:19Z: "Gasoline is still a 1% chance of dropping in zombies"; then 75% of that, Nov 19 19:27Z: "multiplying it by 3/4"; Duck Cabin and Downpour share it),
@@ -185,14 +185,15 @@ function dpSetUp(s) {
   s.hang.pk = [];
   s.hang.power = 1;
 }
-/* the power on or off, for everyone: the lights, the TV, and every flashlight off (on) or back on (off) */
+/* the power on or off, for everyone: the lights, the TV, and every flashlight off (on) or back on (off). I want every
+   flashlight to turn back on by itself when the power goes out, on Cabin and on every map where it can (Downpour's
+   generator running dry too), even one switched off with 0 (owner, Nov 20 18:46Z) */
 function setPower(s, on, now, h) {
   s.hang.power = on ? 1 : 0;
   s.hang.pw = { ...s.hang.pw, on: on ? 1 : 0 };
-  if (!dpOn())
-    s.hang.l4f = on
-      ? Object.fromEntries(h.players(s).map((id) => [id, 1]))
-      : {}; // (Downpour: the flashlights stay as they are)
+  if (!on) s.hang.l4f = {};
+  else if (!dpOn())
+    s.hang.l4f = Object.fromEntries(h.players(s).map((id) => [id, 1])); // (Downpour: the power back on leaves them as they are)
   h.addFx(s, { kind: on ? "l4pwon" : "l4pwoff", by: "", who: [], t: now });
 }
 /* a round starts (newRound): the power counts it, maybe goes out; a jerry can may turn up in a part's spot */

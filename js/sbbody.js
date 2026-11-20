@@ -51,27 +51,27 @@ function make(k, url, mw, mh) {
     .catch(() => SHAPES.delete(k)); // (tried again at the next hit)
 }
 
+/* a body: its box w × h in duck widths, feet down from its top, the way it faces (f), its shape sh ({ k, url() }) made
+   mw × mh squares (null: not made yet) */
+function bodyFrom(sh, w, h, feet, f, mw, mh) {
+  const m = SHAPES.get(sh.k);
+  if (m === undefined) make(sh.k, sh.url(), Math.max(1, mw), Math.max(1, mh));
+  return { w, h, feet, f: f < 0 ? -1 : 1, m: m || null };
+}
 /* o's body now: its box in duck widths round its feet, the way it faces, its shape (null: not made yet) */
 export function bodyOf(s, o) {
   if (s && s.sbpic) npcPics(s.sbpic);
   const box = npcBox(o),
-    k = ((o.sz || 1) * (o.hb || 1)) / 64,
-    sh = npcShape(o);
-  let m = SHAPES.get(sh.k);
-  if (m === undefined)
-    make(
-      sh.k,
-      sh.url(),
-      Math.max(1, Math.round((box.w / 64) * SQ)),
-      Math.max(1, Math.round((box.h / 64) * SQ)),
-    );
-  return {
-    w: box.w * k,
-    h: box.h * k,
-    feet: box.feet * k,
-    f: o.f < 0 ? -1 : 1,
-    m: m || null,
-  };
+    k = ((o.sz || 1) * (o.hb || 1)) / 64;
+  return bodyFrom(
+    npcShape(o),
+    box.w * k,
+    box.h * k,
+    box.feet * k,
+    o.f,
+    Math.round((box.w / 64) * SQ),
+    Math.round((box.h / 64) * SQ),
+  );
 }
 /* the square of its box under (u, v), as [i, j], or null when (u, v) is off its box */
 function cell(B, u, v) {
@@ -174,7 +174,46 @@ const fromBody = (o, u, v, du) => ({
    picture that only shows up high is hit up high */
 export function npcBody(s, o, du) {
   let B = null;
-  const body = () => B || (B = bodyOf(s, o)); // (worked out once it's asked: most aren't)
+  return target(o, () => B || (B = bodyOf(s, o)), du); // (worked out once it's asked: most aren't)
+}
+/* a player whose own picture is a cut-out (a cropped picture, or one erased before it was uploaded: Customize, duck.js
+   cut): hit only where it shows, as an NPC's picture is (the owner's, Nov 20: "a custom image upload is made for an
+   enemy target, right? In which cropped images can also be used for players' custom avatars"). p: where it stands, and
+   the way it faces (p.f: rules.js move); url: its picture; big: its size (duck.js duckBig). Its picture is drawn in the
+   duck's square as duck.js draws it: 92 of the duck's 120 across, its top 10 down, its feet at 110 */
+const PIC = { w: 92 / 120, h: 92 / 120, feet: 100 / 120 };
+const KEYS = new Map();
+export function picBody(p, url, big, du) {
+  let k = KEYS.get(url);
+  if (!k) {
+    let h = 0;
+    for (let i = 0; i < url.length; i++) h = (h * 31 + url.charCodeAt(i)) | 0;
+    k = "p" + (h >>> 0).toString(36) + url.length;
+    if (KEYS.size > 200) KEYS.clear();
+    KEYS.set(url, k);
+  }
+  let B = null;
+  return target(
+    p,
+    () =>
+      B ||
+      (B = bodyFrom(
+        { k, url: () => url },
+        PIC.w * big,
+        PIC.h * big,
+        PIC.feet * big,
+        p.f,
+        Math.round(PIC.w * SQ),
+        Math.round(PIC.h * SQ),
+      )),
+    du,
+  );
+}
+/* a duck width in the rules' own units, from their duck's room [rx, ry] (rules.js: a hit's reach, 1 of it), as the
+   board's DU_BOARD is to its [0.03, 0.08] */
+export const duOfRoom = (rx, ry) => [rx * (0.077 / 0.03), 0, 0, ry * 2.5];
+/* something to hit at o (its feet), body() its body */
+function target(o, body, du) {
   return {
     at(x, y, up = 0) {
       const [u, v] = toBody(o, x, y, du),
