@@ -4,14 +4,16 @@
    around and around like a spiral, until nothing is left. Near the three points, a square is cut a tiny bit off center
    into two rectangles, and each of those gets the same rule again, so the squares keep shrinking into those points.
    Bright reds, oranges, yellows, blues, purples, greens, white, grey and brown, each square edged by a thin dark line.
-   The whole page is one rectangle, so every screen gets its own tiling by the same rule; the colors come from where
-   each square sits, so the same screen always shows the same picture. Drawn once on a canvas whenever the page
-   changes size.
+   The world (a computer's 1366 × 768 page) is one rectangle; the colors come from where each square sits, so everyone
+   sees the same picture. Drawn once by code straight in the world's pixels (two px to a pixel), each square's line one
+   pixel; a narrower screen (a phone) sees the slice round the points (js/pxmap.js).
    With the endless zoom (the Zoom entry of Vote Maps and Random, or the map's Zoom setting), the camera keeps going
    into the first point, forever: the tiny squares grow, and new ones keep showing up inside them (zoomer below). */
 
-import { pixelOn, gridPx } from "./pixel.js";
-import { bakeStill } from "./pxbake.js";
+import { mountWorld } from "./pxmap.js";
+
+/* the world: its size in px, two px to each of its pixels */
+const WORLD = { W: 1366, H: 768, G: 2 };
 
 /* the three points the squares shrink into, as parts of the page's width and height (as in the owner's picture) */
 const POINTS = [
@@ -116,20 +118,28 @@ const colorAt = (x, y, s) => {
   return BAG[h % BAG.length];
 };
 
-/* draws the tiling of a W by H page onto a canvas k times as big (k: the screen's pixels for each px) */
+/* a square inside its line, on whole pixels (k: pixels for each px): its line is the pixel along its left and its top,
+   the next squares' lines are its right and its bottom; false if it's all line */
+function cell(g, x, y, s, k) {
+  const a = Math.round(x * k),
+    b = Math.round(y * k),
+    w = Math.round((x + s) * k) - a - 1,
+    h = Math.round((y + s) * k) - b - 1;
+  if (w < 1 || h < 1) return false;
+  g.fillRect(a + 1, b + 1, w, h);
+  return true;
+}
+
+/* draws the tiling of a W by H page onto a canvas k times as big (k: its pixels for each px) */
 function paint(cv, W, H, k) {
   const g = cv.getContext("2d"),
     all = euclidSquares(W, H);
-  g.setTransform(k, 0, 0, k, 0, 0);
+  g.setTransform(1, 0, 0, 1, 0, 0);
   g.fillStyle = LINE;
-  g.fillRect(0, 0, W, H);
-  /* each square inside its line: the line is 1 px (half on each side), so a square shows only what's inside it */
-  const lw = Math.max(1 / k, 1);
+  g.fillRect(0, 0, cv.width, cv.height);
   for (const [x, y, s] of all) {
-    const inner = s - lw;
-    if (inner <= 0.25) continue; // (a square that small is all line)
     g.fillStyle = colorAt(x, y, s);
-    g.fillRect(x + lw / 2, y + lw / 2, inner, inner);
+    cell(g, x, y, s, k);
   }
   return all.length;
 }
@@ -239,12 +249,11 @@ function zoomer(W, H) {
   rule(-fx, -fy, W, H, 0, roots);
   return {
     draw(g, Zs, k) {
-      const v = view(Zs),
-        lw = Math.max(1 / k, 1);
-      g.setTransform(k, 0, 0, k, 0, 0);
+      const v = view(Zs);
+      g.setTransform(1, 0, 0, 1, 0, 0);
       g.globalAlpha = 1;
       g.fillStyle = LINE;
-      g.fillRect(0, 0, W, H);
+      g.fillRect(0, 0, W * k, H * k);
       const visit = (q) => {
         if (!seen(q, v)) return;
         if (cut(q, Zs)) {
@@ -252,13 +261,14 @@ function zoomer(W, H) {
           return;
         }
         const [x, y, s, d] = q,
-          inner = s * Zs - lw;
-        if (inner <= 0.25) return;
-        g.globalAlpha = inner < 1.5 ? inner / 1.5 : 1; // (the smallest fade in as they grow)
+          inner = s * Zs * k - 1;
+        if (inner < 1) return;
+        g.globalAlpha = inner < 3 ? inner / 3 : 1; // (the smallest fade in as they grow)
         g.fillStyle = color(x, y, s, d);
-        g.fillRect(fx + x * Zs + lw / 2, fy + y * Zs + lw / 2, inner, inner);
+        cell(g, fx + x * Zs, fy + y * Zs, s * Zs, k);
       };
       for (const q of roots) visit(q);
+      g.globalAlpha = 1;
     },
     closer(m, Zs) {
       const f = 2 ** m,
@@ -277,62 +287,36 @@ function zoomer(W, H) {
   };
 }
 
-/* the map: its canvas over the whole page, drawn again when the page changes size; with the zoom (s.mapZoomed, set by
-   rules.js when the game starts), drawn again every frame, closer and closer (still, with "Less motion", it stays the
-   still map; with "Low graphics", fewer frames and fewer px) */
+/* the map: a canvas of the world's pixels; with the zoom (s.mapZoomed, set by rules.js when the game starts), drawn
+   again every frame, closer and closer (still, with "Less motion", it stays the still map; with "Low graphics", fewer
+   frames) */
 export function euclidScene(layer, s) {
   const sc = document.createElement("div"),
     html = document.documentElement,
-    zooms = !!(s && s.mapZoomed);
+    zooms = !!(s && s.mapZoomed),
+    { W, H, G } = WORLD,
+    k = 1 / G;
   sc.className = "scene euclid" + (zooms ? " zoom" : "");
   layer.append(sc);
-  let drawn = "",
-    timer = 0,
-    cv = null,
-    z = null,
-    W = 0,
-    H = 0,
-    k = 1,
-    L = 0, // (how many times twice as close we are)
+  const w = mountWorld(sc, WORLD, {
+      fx: zooms ? POINTS[0][0] : 0.64,
+      fy: zooms ? POINTS[0][1] : 0.5,
+    }), // (a phone: the slice round the points, or round the one the zoom goes into)
+    cv = document.createElement("canvas");
+  layer.classList.add("px-own"); // (pixels already: the filter leaves it)
+  cv.className = "eu-px";
+  cv.width = W * k;
+  cv.height = H * k;
+  w.stage.append(cv);
+  paint(cv, W, H, k);
+  const z = zooms ? zoomer(W, H) : null;
+  let L = 0, // (how many times twice as close we are)
     E = 0, // (the units' power of 2 so far)
     last = 0,
     shown = 0;
-  const draw = () => {
-    W = layer.clientWidth;
-    H = layer.clientHeight;
-    if (!W || !H) return;
-    const lite = html.classList.contains("low");
-    k = Math.min(lite ? 1 : 2, devicePixelRatio || 1);
-    const key = W + "x" + H + "@" + k + "/" + gridPx();
-    if (key === drawn) return;
-    drawn = key;
-    const pic = document.createElement("canvas");
-    pic.width = Math.round(W * k);
-    pic.height = Math.round(H * k);
-    pic.className = "eu-pic";
-    paint(pic, W, H, k);
-    const old = sc.querySelector("canvas.eu-pic");
-    sc.prepend(pic);
-    if (old) old.remove();
-    cv = pic;
-    z = zooms ? zoomer(W, H) : null; // (a new page size starts the zoom over, from the still map)
-    L = 0;
-    E = 0;
-    /* the pixel look: the still map made into pixels once (pxbake.js), instead of the filter every frame; the zoom
-       draws itself every frame, so it stays under the filter */
-    layer.classList.remove("px-own");
-    if (pixelOn() && !zooms) bakeStill(sc, ":scope > canvas.eu-pic", layer);
-  };
-  const ro = new ResizeObserver(() => {
-    clearTimeout(timer);
-    timer = setTimeout(draw, drawn ? 200 : 0);
-  });
-  ro.observe(layer);
-  addEventListener("pxgrid", draw); // (the grid changed: made into pixels again on the new one)
-  draw();
   return {
     update() {
-      if (!z || !cv || html.classList.contains("still")) return;
+      if (!z || html.classList.contains("still")) return;
       const t = performance.now(),
         lite = html.classList.contains("low");
       if (t - shown < (lite ? 66 : 33)) return; // (30 frames a second, 15 with Low graphics)
@@ -346,9 +330,7 @@ export function euclidScene(layer, s) {
       z.draw(cv.getContext("2d"), 2 ** (L - E), k);
     },
     destroy() {
-      clearTimeout(timer);
-      ro.disconnect();
-      removeEventListener("pxgrid", draw);
+      w.destroy();
       layer.classList.remove("px-own");
       sc.remove();
     },
