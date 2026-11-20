@@ -1,0 +1,27 @@
+{
+  "modeCompares": 172,
+  "nullishNumbers": 81,
+  "unusedExports": 160,
+  "unusedFiles": 0,
+  "clones": 67,
+  "bigFiles": {
+    "js/chat.js": 1601,
+    "js/customize.js": 1718,
+    "js/game.js": 9073,
+    "js/gamesettings.js": 1761,
+    "js/hangout/art.js": 3051,
+    "js/hangout/shapes.js": 1662,
+    "js/hangout/stationart.js": 1721,
+    "js/hangout/world.js": 1730,
+    "js/l4dd.js": 3363,
+    "js/l4ddrules.js": 6939,
+    "js/mgjrules.js": 2621,
+    "js/numberatrun.js": 1675,
+    "js/rules.js": 6917,
+    "js/sandboxrules.js": 2059,
+    "js/sbspawn.js": 1762,
+    "js/sbspawnview.js": 2206,
+    "js/shell.js": 3554,
+    "js/updates.js": 2761
+  }
+}
