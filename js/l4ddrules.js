@@ -2929,6 +2929,7 @@ export const MERCH = {
   SPRINT: NPC_RUN, // (getting away: the shared slow speed, npcshared.js; "Merchants should be less fast when they try to escape" (the owner's, Nov 19 19:27Z). His meter still runs as long as a duck's (L4.SPRINT), and as long to fill …
   CHASED: 450, // … used running away when a zombie is this near (world px) or a player just hurt him (HURT_MS)
   HURT_MS: 3000,
+  CHASE_NEAR: 8, // (duck lengths: Survival, a zombie coming for him this close and he leaves his spot; my guess)
   STAB: 70, // (world px: Phil's knife reaches a duck this near …
   STAB_MS: 600, // … and stabs this often (my guesses) …
   FOE_FAR: 900, // … and lets a duck this far off be, and runs)
@@ -5542,7 +5543,13 @@ function l4Tick(s, now) {
         l[6] = other(l[6], ZOUTFITS.length);
         z.l = l;
       },
-      go: () => merchantGo(s, now),
+      merchantComing: () => {
+        const m = merchantOf(s);
+        return (
+          !!m &&
+          (m.st === "in" || (m.st === "jump" && !!(m.stock || []).length))
+        ); // (on his way in: over the fence; one leaving has no stock)
+      },
       rest: () => {
         merchantCome(s, now, true);
         if (L4_HOOKS.gm) L4_HOOKS.gm.rest(s, now, gmHelp(s, now)); // (the friendly squad, now and then: allies.js)
@@ -5842,7 +5849,14 @@ function moveZombies(s, zs, now, T, up) {
      13:46Z: "zombies might try and chase them like they are a player UNLESS they climb a fence OR jump off the
      balcony, then they give up"); never his body */
   const mm = merchantOf(s);
-  if (mm && (mm.st === "out" || mm.st === "fight" || mm.st === "flee") && !mm.c)
+  if (
+    mm &&
+    (mm.st === "out" ||
+      mm.st === "fight" ||
+      mm.st === "flee" ||
+      (mm.st === "here" && isSurv(s))) && // (Survival: he stays at his spot through a wave until zombies come for him, the owner's, Nov 20 18:23Z)
+    !mm.c
+  )
     pls.push({
       id: "@m",
       p: null,
@@ -5883,6 +5897,7 @@ function moveZombies(s, zs, now, T, up) {
   for (const k of Object.keys(eating))
     if (k !== "fx" && eating[k] <= now) delete eating[k];
   ZC = crowdOf(zs); // (no walking into one another: stepZombie)
+  let chasedM = false;
   for (const z of zs) {
     if (z.st === 3) continue;
     const o = openingById(z.l[2]),
@@ -6124,6 +6139,12 @@ function moveZombies(s, zs, now, T, up) {
           }
         }
         if (!target) continue;
+        if (
+          target.m &&
+          !z.wk &&
+          room(z.x, z.y, ...target.xy) < MERCH.CHASE_NEAR
+        )
+          chasedM = true; // (a zombie of the wave coming for the merchant, and close: he goes, below)
         goal = target.goal;
         let way = target.way;
         if (
@@ -6213,6 +6234,10 @@ function moveZombies(s, zs, now, T, up) {
       }
     } else z.n = 0;
   }
+  /* Survival: the merchant runs only once the zombies actually come for him (the owner's, Nov 20 18:23Z: "the merchant
+     doesn't run away on survival until the zombies actually start chasing them. So that way it's like feels less
+     scripted and more natural") */
+  if (chasedM && (merchantOf(s) || {}).st === "here") merchantGo(s, now);
   fireTick(s, zs, now, T, p4);
   s.hang.l4p = p4;
   s.hang.brd = brd;
