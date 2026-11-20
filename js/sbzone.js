@@ -18,6 +18,7 @@ import {
   sbInBlock,
   sbActsAt,
   sbOrd,
+  sbGo,
   SB_ORDER,
   SB_ZONE,
   SB_FX,
@@ -57,7 +58,7 @@ function steps(s, pts, now) {
     zs = { ...((s.sb && s.sb.zs) || {}) };
   let ch = false;
   for (const [id, p] of Object.entries(pts)) {
-    if (sbOrd(p) === "all") continue;
+    if (sbOrd(p) === "all" || sbGo(p) === "use") continue; // (by use: stepped where it's used, sandboxrules.js sbUsed)
     if (was[id] && now < was[id]) {
       at[id] = was[id];
       continue;
