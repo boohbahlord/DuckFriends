@@ -51,7 +51,7 @@ import {
   CARD_LAYOUTS,
   CARD_SIZES,
   cardHTML,
-  patternLayers,
+  cardBackground,
 } from "./card.js";
 import { HATS, HAT_GROUPS, hatById } from "./hats.js";
 import { FACES, FACE_GROUPS, faceById } from "./faces.js";
@@ -1065,7 +1065,7 @@ export function openCustomize(page = lastPage, opts = {}) {
             <p class="small dim">The name's color is under Colors.</p></div>`;
           } else if (k === "card") {
             const pat = (v, layout = C.layout, size = C.size) =>
-              `<span class="pat-pic" style="${esc(`background:${v !== "none" ? patternLayers(v, C.patternColor || "#ffffff", layout, size, C.color) + ", " : ""}${C.color};image-rendering:pixelated`)}"></span>`;
+              `<span class="pat-pic" style="${esc(cardBackground({ pattern: v, patternColor: C.patternColor, layout, size, color: C.color }))}"></span>`; // (cardBackground: its pattern comes when the sheets do, card.js)
             const cur = C.image ? "" : C.pattern,
               kind = (k) =>
                 CARD_PATTERNS.filter(([v]) =>
@@ -1464,6 +1464,7 @@ export function openCustomize(page = lastPage, opts = {}) {
             if (a.dataset.a === "nopic") {
               D.image = null;
               delete D.cut;
+              delete D.z;
               changed();
               return;
             }
@@ -1696,6 +1697,8 @@ export function openCustomize(page = lastPage, opts = {}) {
                 D.image = got.d;
                 if (got.cut) D.cut = 1;
                 else delete D.cut;
+                if (got.z > 1) D.z = got.z;
+                else delete D.z;
               } else
                 profile.card.image = await pictureToSquare(file, CARD_PIC_PX);
               changed();

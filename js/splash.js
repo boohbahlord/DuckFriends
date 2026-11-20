@@ -62,7 +62,7 @@ export function showSplash() {
   /* the owner's, Nov 19 22:45Z: "make it to where it keeps loading until that duck is on the cloud". The start screen
      shows only once its pictures are in (the duck and the cloud with the pixel look); till then the page's loading
      screen stays, and a tap does nothing */
-  picturesIn(s, 10000).then(() => {
+  picturesIn(s).then(() => {
     if (gone) return;
     s.classList.remove("wait");
     for (const k of ["pointerdown", "keydown"]) addEventListener(k, go, true);

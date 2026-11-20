@@ -159,22 +159,55 @@ export async function pxCanvas(src, cw, ch) {
    or put through the palette on the device. Each drawing has the sizes it shows at in the game; another size takes the
    nearest one (shown a little bigger or smaller). What isn't in the list (a drawing new since the files were made, a
    duck: the ducks come next) is still made here as before */
-let baked = null; // Promise<{ index, atlas } | null>
-const bakedArt = () =>
-  (baked ||= import("./pxa.js")
-    .then(async (m) => {
-      if (window.__pxNoBaked) return null; // (tools/pixel-art.cjs, while it lists what the game makes)
-      const atlas = new Image();
-      atlas.src = m.ATLAS;
-      await atlas.decode();
-      return { index: m.INDEX, atlas };
-    })
-    .catch(() => null));
-let bakedNow = null; // (the files once loaded, for bakedPiece)
-bakedArt().then((B) => (bakedNow = B));
-/* of key's sizes in the files, the nearest to cw × ch: [w, h, x, y] in the files' picture */
-function nearest(B, key, cw, ch) {
-  const vs = B && B.index[key];
+/* The files are two pictures (slimming step 6: the owner's, Nov 20 19:11Z, nothing at the front screen it doesn't
+   show): what the front screen and its splash show (a piece listed with a 1 after its place), and all the rest, each
+   loaded the first time a picture in it is shown, both once a screen past the front one comes up
+   (tools/pixel-art-front.cjs) */
+let INDEX = null,
+  ATLAS = [],
+  indexIn = false;
+const index = import("./pxa.js")
+  .then((m) => {
+    INDEX = m.INDEX;
+    ATLAS = [].concat(m.ATLAS);
+  })
+  .catch(() => null)
+  .finally(() => (indexIn = true));
+const sheets = []; // { p: Promise, im: Image | null, in: loaded or failed }
+function sheet(n) {
+  if (sheets[n]) return sheets[n];
+  const s = (sheets[n] = { im: null, in: false });
+  s.p = (async () => {
+    if (window.__pxNoBaked || !ATLAS[n]) return; // (tools/pixel-art.cjs, while it lists what the game makes)
+    const im = new Image();
+    im.src = ATLAS[n];
+    await im.decode();
+    s.im = im;
+  })()
+    .catch(() => {})
+    .finally(() => (s.in = true));
+  return s;
+}
+/* the picture key's pieces are in (asking for it the first time), or null when it isn't in the files */
+const sheetFor = (key) => {
+  const vs = INDEX && INDEX[key];
+  return vs ? sheet(vs[0][4] || 0) : null;
+};
+if (typeof document !== "undefined")
+  document.addEventListener("screen", () => {
+    if (document.body.dataset.screen !== "front")
+      index.then(() => ATLAS.forEach((_, n) => sheet(n))); // (on their way before a game's pictures want them)
+  });
+/* while key's picture may be in the files and they aren't here yet: a Promise for when they are (or turn out not to
+   be), else null */
+export function bakedWait(key) {
+  if (!indexIn) return index.then(() => (sheetFor(key) || {}).p);
+  const s = sheetFor(key);
+  return s && !s.in ? s.p : null;
+}
+/* of key's sizes in the files, the nearest to cw × ch: [w, h, x, y(, its picture)] */
+function nearest(key, cw, ch) {
+  const vs = INDEX && INDEX[key];
   if (!vs) return null;
   let v = vs[0];
   for (const u of vs)
@@ -188,36 +221,31 @@ function nearest(B, key, cw, ch) {
 /* a drawing shown w × h css px (pxdom.js), from the files as they are: { url, W, H, at: [w, h, x, y] } (the whole
    picture and the piece of it to show), or null when it isn't in them or they haven't come yet */
 export function bakedPiece(key, w, h) {
+  if (window.__pxAsk) window.__pxAsk(key); // (tools/pixel-art-front.cjs, listing what the front screen shows)
   const [, cw, ch] = full(key, w, h),
-    v = nearest(bakedNow, key, cw, ch);
+    v = nearest(key, cw, ch),
+    im = v && sheets[v[4] || 0] && sheets[v[4] || 0].im;
   return (
-    v && {
-      url: bakedNow.atlas.src,
-      W: bakedNow.atlas.naturalWidth,
-      H: bakedNow.atlas.naturalHeight,
+    im && {
+      url: im.src,
+      W: im.naturalWidth,
+      H: im.naturalHeight,
       at: v,
     }
   );
 }
 /* the made picture for key at cw × ch, cut out of the files: a canvas, or null when it isn't there */
 async function fromFiles(key, cw, ch) {
-  const B = await bakedArt(),
-    v = nearest(B, key, cw, ch);
-  if (!v) return null;
+  await index;
+  const s = sheetFor(key);
+  if (!s) return null;
+  await s.p;
+  const v = nearest(key, cw, ch);
+  if (!s.im || !v) return null;
   const c = document.createElement("canvas");
   c.width = v[0];
   c.height = v[1];
-  c.getContext("2d").drawImage(
-    B.atlas,
-    v[2],
-    v[3],
-    v[0],
-    v[1],
-    0,
-    0,
-    v[0],
-    v[1],
-  );
+  c.getContext("2d").drawImage(s.im, v[2], v[3], v[0], v[1], 0, 0, v[0], v[1]);
   return c;
 }
 /* a duck, from its pixel parts (duckparts.js), when its drawing says what it is (duck.js data-dk) */

@@ -9,6 +9,28 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v192",
+    version: 192,
+    date: "Nov 20, 2026",
+    title: "Lighter ducks",
+    news: [
+      "Ducks download about a third as much: small ducks look exactly the same, big ducks are a smaller one doubled.",
+    ],
+  },
+  {
+    id: "v191",
+    version: 191,
+    date: "Nov 20, 2026",
+    title: "No pop-in at the start",
+    news: [
+      "The start screen waits until your duck and its cloud are in: no more pictures popping in after the loading screen.",
+      "The front screen loads half as much.",
+      "A cropped picture duck grows to a duck's size, so a small crop is never a smaller target.",
+      "Ducks keep the same colors every time they're drawn.",
+      "For Sandbox: your duck walks again on Downpour.",
+    ],
+  },
+  {
     id: "v190",
     version: 190,
     date: "Nov 20, 2026",
