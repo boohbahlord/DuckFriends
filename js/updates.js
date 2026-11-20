@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v139",
+    version: 139,
+    date: "Nov 20, 2026",
+    title: "Outlines and pixel ducks",
+    news: [
+      "For Sandbox: a zone's Outlines give whoever is inside it an outline in the color you pick, seen through walls. Add rows for others in other colors.",
+      "Ducks are now made from real pixel parts, ready before the game starts, so games start smoother.",
+    ],
+  },
+  {
     id: "v138",
     version: 138,
     date: "Nov 20, 2026",
