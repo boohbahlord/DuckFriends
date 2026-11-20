@@ -85,7 +85,7 @@ import {
 } from "./triviarules.js";
 import { TV_BANK } from "./triviabank.js";
 
-export const BOT_QUESTIONS = [
+const BOT_QUESTIONS = [
   "Pineapple belongs on pizza.",
   "A hot dog is a sandwich.",
   "Cereal is a soup.",
@@ -118,7 +118,7 @@ export const BOT_QUESTIONS = [
   "Robots will be our friends.",
 ];
 
-export const BOT_WYR = [
+const BOT_WYR = [
   ["fight one horse-sized duck", "a hundred duck-sized horses"],
   ["only eat pizza", "never eat pizza again"],
   ["be able to fly", "be invisible"],

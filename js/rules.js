@@ -410,7 +410,7 @@ function flatOptions(s) {
 }
 
 /* a vote's count: the votes of the players in the game (Vote Mode & Map, below) */
-export const tally = (s, votes) => {
+const tally = (s, votes) => {
   const n = {};
   for (const id of s.seat) {
     const v = (votes || {})[id];
@@ -439,7 +439,7 @@ export const VOTE_MAPS = MAP_IDS.map((id, i) => [id, i])
    another is left), then the variation of it played least. s.mapPlays = { m: { map: n }, f: { variation: n } } */
 const baseOf = (id) =>
   MAP_IDS.find((b) => (MAP_FORMS[b] || [b]).includes(id)) || id;
-export function pickMap(s) {
+function pickMap(s) {
   const P = (s.mapPlays = s.mapPlays || { m: {}, f: {} }),
     least = (ids, n, last) => {
       const pool = ids.length > 1 ? ids.filter((id) => id !== last) : ids,
@@ -451,7 +451,7 @@ export function pickMap(s) {
   return forms.length > 1 ? least(forms, P.f, P.lastF) : base;
 }
 /* a map played: counted for the bags above */
-export function countMap(s, id) {
+function countMap(s, id) {
   const P = (s.mapPlays = s.mapPlays || { m: {}, f: {} }),
     base = baseOf(id);
   P.m[base] = (P.m[base] || 0) + 1;
@@ -552,11 +552,11 @@ function setMode(s, mode) {
    shareOf), the clock drops to 6 s and runs at its normal speed (owner 2026-11-15: "only six seconds and NOT double
    speed"). The full times only run out when the majority never votes. The most votes win, and a tie is a random pick between the tied ones (no votes at all: any of them). Vote
    return brings both votes back after that many games (a round is a game; a whole Hangout or Quacky Zombies is one) */
-export const PICK_TIME = { mode: 65, map: 20, zmap: 20 };
+const PICK_TIME = { mode: 65, map: 20, zmap: 20 };
 const ALL_IN = 6000; // a vote's clock once the majority has voted: 6 s, at normal speed
 export const DICE = "dice";
 const NO_MAP_VOTE = [...CABIN_MODES, "mgj", "surv"]; // (Survival plays only Downpour: no map vote)
-export const voteModes = (s) => {
+const voteModes = (s) => {
   const all = modesFor(s)
       .map((m) => m.id)
       .filter((id) => fits(s, id)),
@@ -572,7 +572,7 @@ export const voteIds = (s, k) =>
       : [...VOTE_MAPS, ...umapIds(s)]; // (and the maps the host made and brought in: umaprules.js)
 /* Quacky Zombies' own maps: before each of its games everyone votes for one of them, the vote showing only these
    (the owner's, Nov 17 00:17Z). Its "zmap" vote works as the map vote does, its time as long */
-export const ZMAPS = ["cabin", "downpour"];
+const ZMAPS = ["cabin", "downpour"];
 /* the time a vote shows. Its clock can run faster than real time (Next, below): vt.c { at, left, rate } is the time it
    showed at "at" and how fast it has run since; s.ends stays the real moment it reaches 0 */
 export const voteLeft = (s, now) => {
@@ -587,7 +587,7 @@ function voteClock(s, now, left, rate) {
 }
 /* Next (the owner's, Nov 17 13:30Z): once a player has voted, a red Next button speeds the clock up by 1/players for
    each player who presses it (three players: 33% faster for one press; everyone: twice as fast) */
-export const voteRate = (s) => {
+const voteRate = (s) => {
   const vt = s.vt || {},
     voters = s.seat.filter((id) => s.players[id]),
     n = voters.filter((id) => (vt.next || {})[id]).length;
@@ -685,7 +685,7 @@ function sbMapPicked(s, o) {
 }
 /* the most players the room takes: its own most, or fewer for a made game mode (its settings file's player limit, the
    owner's: "it's 2 players max for the actual game mode when it's made, not for the actual sandbox itself") */
-export const capOf = (s) =>
+const capOf = (s) =>
   s.options.mode === "sandbox" && s.options.gm && +s.options.gmMost >= 2
     ? Math.min(s.max, +s.options.gmMost)
     : s.max;
@@ -824,12 +824,12 @@ function beginGame(s, now) {
 }
 /* the lobby's Walking speed: how much faster or slower than normal every duck walks. The zombies of Quacky Zombies and
    the computers there go by it too, so the zombies stay as fast next to the ducks as the owner set them */
-export const WALKS = { slow: 0.6, normal: 1, fast: 1.5 };
+const WALKS = { slow: 0.6, normal: 1, fast: 1.5 };
 export const walkOf = (s) => WALKS[s && s.options && s.options.walk] || 1;
-export const COUNTDOWN = 5;
+const COUNTDOWN = 5;
 /* Single Player's start counts only 2, 1, 0 (the owner's, Nov 19 23:10Z: "it starts at second number 2, goes to 1, and
    then 0 in single player") */
-export const SOLO_COUNTDOWN = 2;
+const SOLO_COUNTDOWN = 2;
 export const VOTE_GRACE = 5; // seconds at the start of a question before anyone can lock a vote (a stray Enter can't)
 
 /* every action works on a copy of the state, so a rule that fails halfway leaves the room as it was. The state is plain
@@ -850,10 +850,10 @@ function clone(o) {
   for (const k in o) r[k] = clone(o[k]);
   return r;
 }
-export const colOf = (x) => Math.max(0, Math.min(6, Math.floor(x * 7)));
-export const colX = (c) => (c + 0.5) / 7;
+const colOf = (x) => Math.max(0, Math.min(6, Math.floor(x * 7)));
+const colX = (c) => (c + 0.5) / 7;
 /* the edges of a column, a little inside, for ducks kept in their column */
-export const colBounds = (c) => [c / 7 + 0.035, (c + 1) / 7 - 0.035];
+const colBounds = (c) => [c / 7 + 0.035, (c + 1) / 7 - 0.035];
 /* the board by game mode: Agree or Disagree has its seven columns; Would You Rather two tiles, A on the left and B on the
    right, with an OR strip between them where a duck has no answer (-1) */
 export const isWyr = (s) => s.options.mode === "wyr";
@@ -941,7 +941,7 @@ export const seatLate = (s) => {
 /* the fewest players a game needs. I want a game that drops below it to wait for players ("Waiting for players to
    continue", with 2/3 and the like) instead of ending: the timers stop where they were, ducks still walk, and the game
    goes on once enough are back */
-export const MIN_PLAYERS = { quack: 3, law: 3, dunce: 3, vdd: 3, trivia: 2 };
+const MIN_PLAYERS = { quack: 3, law: 3, dunce: 3, vdd: 3, trivia: 2 };
 export const minOf = (s) => MIN_PLAYERS[s.options.mode] || 0;
 const running = (s) => !["lobby", "over", "countdown"].includes(s.phase);
 const WAIT_BLOCK = [
@@ -954,7 +954,7 @@ const WAIT_BLOCK = [
   "dnEnd",
   "vdTimer",
 ];
-export const tooFew = (s) => running(s) && s.seat.length < minOf(s);
+const tooFew = (s) => running(s) && s.seat.length < minOf(s);
 /* resume: 'phase' (go on where it stopped), 'quackRound' (a new secret word), 'case' (this case again) or 'take' (this
    take again) */
 export function waitFor(
@@ -1071,8 +1071,8 @@ export const needed = (s) =>
 /* the End round button (the host's setting, off by default): in the social games where ducks vote, the votes don't end the
    turn, the button does, and anyone playing can press it once the needed share has voted. A vote taken back below the
    share hides it again. The answer timer, when there is one, still ends the turn */
-export const END_BTN_MODES = ["aod", "wyr", "ddr", "sc"];
-export const endBtnOn = (s) =>
+const END_BTN_MODES = ["aod", "wyr", "ddr", "sc"];
+const endBtnOn = (s) =>
   !!s.options.endBtn &&
   END_BTN_MODES.includes(s.options.mode) &&
   (isSc(s) ? ["lvote", "wvote"].includes(s.phase) : s.phase === "answer");
@@ -1085,7 +1085,7 @@ export const canEndRound = (s) => endBtnOn(s) && endDone(s) >= needed(s);
 /* the turn a back-to-lobby (or skip) vote belongs to; Hangout has no turns, so a couple of minutes instead */
 export const voteKey = (s, now) =>
   isHang(s) ? "hang" + Math.floor(now / 120000) : turnKey(s);
-export const turnKey = (s) =>
+const turnKey = (s) =>
   s.phase === "submit" || s.phase === "tvwrite"
     ? `w${s.round}`
     : ["answer", "discuss"].includes(s.phase)
@@ -1093,7 +1093,7 @@ export const turnKey = (s) =>
       : s.phase === "write" && s.sc
         ? `write${s.round}.${s.sc.turn}`
         : `${s.phase}${s.round}.${s.qi}`;
-export const VOTE_TIME = 30; // seconds a kick or back-to-lobby vote stays open
+const VOTE_TIME = 30; // seconds a kick or back-to-lobby vote stays open
 /* every duck's arrows, bullets and thrown daggers fly this much faster than they first did, in every mode (the owner,
    Nov 3: "slightly faster"); Mad God Justin's own bullets keep their speed (mgjrules.js JUSTIN_SHOT) */
 export const FASTER = 1.15;
@@ -1123,7 +1123,7 @@ export const daggerZ = (t) => DAGGER_Z + DAGGER_UP * t - (DAGGER_G * t * t) / 2;
 export const GRENADE_MS = 900,
   GRENADE_FAR = 8,
   GRENADE_R = 2.25;
-export const grenadeZ = (t) => {
+const grenadeZ = (t) => {
   const u = Math.min(1, t / (GRENADE_MS / 1000));
   return 0.45 * (1 - u) + 4.4 * u * (1 - u);
 }; // (t in seconds)
@@ -1224,7 +1224,7 @@ const MAG_MORE = {
   flamer: [FLAME.TANK, FLAME.RELOAD],
 }; // (the chain gun 300 rounds: the owner's, Nov 16; the double barrel's two shells and the flamethrower's tank, Nov 16 16:25Z)
 /* how long a reload takes with n shots gone: the double barrel a second for each shell it loads, the rest their own */
-export const reloadFor = (w, n) =>
+const reloadFor = (w, n) =>
   w === "dbarrel"
     ? ARMS.dbarrel.shell * Math.max(1, Math.min(2, n))
     : (magSize(w) || [0, RELOAD])[1];
@@ -1533,7 +1533,7 @@ function startResults(s, now) {
 }
 
 /* the countdown once the needed share has voted; with "Unvoting stops the countdown" on, falling below the share stops it */
-export const WRITE_PHASES = ["submit", "topic", "seeds", "words", "tvwrite"];
+const WRITE_PHASES = ["submit", "topic", "seeds", "words", "tvwrite"];
 export const catchLen = (s) =>
   +(WRITE_PHASES.includes(s.phase)
     ? (s.options.writeCatch ?? 30)
@@ -3638,7 +3638,7 @@ export const phpLost = (s, id, now) => {
   const h = (s.php || {})[id];
   return h && now - h.t < PHP_BACK ? h.n : 0;
 };
-export const HIT_DMG = {
+const HIT_DMG = {
   hammer: 3,
   axe: [1, 4], // (the fire axe 1 to 4, the short sword and the pan 1: the owner's, Nov 16)
   chair: 3,
@@ -3652,13 +3652,13 @@ export const HIT_DMG = {
   revolver: 2,
   chain: PHP,
 }; // (Quacky Zombies' guns take what they take there: the sniper 2 or 3, the AK-47 and the revolver 2, the chain gun all)
-export const dmgOf = (s, k) => {
+const dmgOf = (s, k) => {
   const d = isL4dd(s) ? 1 : HIT_DMG[k] || 1;
   return Array.isArray(d)
     ? d[0] + Math.floor(Math.random() * (d[1] - d[0] + 1))
     : d;
 };
-export function soaks(s, id, now, dmg = 1, by, raw = false) {
+function soaks(s, id, now, dmg = 1, by, raw = false) {
   if (isMgj(s)) return false;
   if (normalGame(s) && (shielded(s, id, now) || (by && shielded(s, by, now))))
     return true; // (spawn protection: nothing hurts a duck that just came back, and what it shoots hurts nobody)
@@ -3812,9 +3812,9 @@ export const REACH = {
   pan: [2.3, 0.5],
 }; // how far (duck lengths), and how wide (the cosine of the half angle): the fire axe swings as far as the hammer, the short sword and the pan not as far out
 /* the melees, swung or stabbed up close (the fire axe, the short sword and the pan: the owner's, Nov 16) */
-export const MELEE = ["knife", "hammer", "axe", "sword", "pan"];
+const MELEE = ["knife", "hammer", "axe", "sword", "pan"];
 const PAN_MISS = 0.5; // (the pan misses half its swings; half its hits are critical, wounds.js PCRIT)
-export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
+function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
   // (from: where the swing starts; Justin on the boards isn't in s.pos)
   const p0 = from,
     hang = isHang(s),
@@ -4982,9 +4982,9 @@ function skipRound(s, now) {
   return startResults(s, now);
 }
 /* the people in the cabin who voted to end it, and how many it takes: half of them, rounded up */
-export const CABIN_END_MS = 10000;
+const CABIN_END_MS = 10000;
 /* Single Player's Exit Cabin counts 5 s (the owner's, Nov 19 23:10Z: "only 5 seconds") */
-export const SOLO_CABIN_END_MS = 5000;
+const SOLO_CABIN_END_MS = 5000;
 export const cabinVotes = (s) =>
   humanIds(s).filter((id) => ((s.cabinEnd || {}).by || {})[id]).length;
 export const cabinNeeded = (s) =>
@@ -5003,7 +5003,7 @@ function cabinCheck(s, now) {
 /* a cabin game ends (the vote won, or a Hangout's time limit ran out): the whole stay is one game. With Vote Mode & Map
    on, Vote return counts it (the votes come back when it's time, or the same game starts over); with Random the next
    game begins; otherwise the room goes back to the lobby, as when the host ends it */
-export function cabinOver(s, now, why = "The ducks voted to leave the cabin.") {
+function cabinOver(s, now, why = "The ducks voted to leave the cabin.") {
   delete s.cabinEnd;
   const due = votesDue(s);
   if (!due.length && !rolling(s)) return backToLobby(s, why); // (the host's own pick: back to the lobby)
@@ -5013,9 +5013,9 @@ export function cabinOver(s, now, why = "The ducks voted to leave the cabin.") {
   return due.length ? voteAgain(s, now, due) : rotate(s, now);
 }
 /* Quacky Zombies from the vote or Random: once everyone's down, the score shows a moment, then the room moves on */
-export const L4_OVER_MS = 8000;
+const L4_OVER_MS = 8000;
 /* Sandbox: everyone's out, the card shows this long before the lobby or the new start */
-export const SB_OUT_MS = 5000;
+const SB_OUT_MS = 5000;
 /* Hangout's time limit (Game Settings, hangTime): only when Random or the vote picked it, never when the host did; in
    seconds, 0 for none */
 const HANG_TIMES = [0, 5, 10, 15, 20, 30];
@@ -5096,7 +5096,7 @@ export function backToLobby(s, why) {
    each duck walks onto the seed it backs and votes, then the room talks it over (the winner goes on the cloud; a tie is
    a coin flip) → after each bracket round, the bracket again → the final (both seeds silver), the champion (gold), the
    bracket one last time → the podium for ten seconds → the stats, until the room moves on to the next tournament. */
-export const PODIUM = 10; // seconds
+const PODIUM = 10; // seconds
 export const BB_TOPICS = [
   "Best snack",
   "Worst habit",
@@ -5479,7 +5479,7 @@ export function bbStats(list) {
    The board is a column of zones, one under the other: the story's lines (and the line being typed), the word boxes, or
    the three choices. A duck's y covers the zones evenly (zone k is k/n to (k + 1)/n), so it stands on the same line on
    every screen however the lines wrap. */
-export const SC_PHASES = ["words", "write", "lvote", "wvote", "results"];
+const SC_PHASES = ["words", "write", "lvote", "wvote", "results"];
 export const SC_BOARD = ["write", "lvote", "wvote", "results"];
 export const SC_VOTES = ["lvote", "wvote", "results"];
 export const LINE_MAX = 160,
@@ -5695,7 +5695,7 @@ function endTurn(s, now) {
   return enter(s, "lvote", now);
 }
 /* is there voting on this paragraph's lines and words (the lobby's Voting option)? */
-export const scVoting = (s) =>
+const scVoting = (s) =>
   s.options.scVote === "auto" || s.options.scVote == null
     ? playing(s).length >= 4
     : !!+s.options.scVote;

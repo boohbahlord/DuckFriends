@@ -134,7 +134,7 @@ function step(b) {
     b.g = b.t; // over the line, between the posts
 }
 /* the ball at time `until`, in whole steps from b (t: the last step's time) */
-export function sim(b, until) {
+function sim(b, until) {
   const o = { ...b };
   for (
     let k = Math.min(MAX_STEPS, Math.floor((until - o.t) / DT));

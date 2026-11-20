@@ -197,7 +197,7 @@ const mix = (a, b, f) =>
     )
     .join("");
 /* the Chalice's colors t seconds in: [ground, letters, accent], easing from one to the next as the book's page does */
-export function chaliceAt(t) {
+function chaliceAt(t) {
   const n = CHALICE.length,
     u = (((t / CHALICE_S) % 1) + 1) % 1,
     i = Math.floor(u * n),

@@ -64,7 +64,7 @@ function allow(k, ms, most, now, who) {
 }
 /* Downpour's church bell (sound.js "churchBell"), rung as each round starts: its four strikes, s after it starts
    (Noah's bell swings on these: bellStrikes()) */
-export const BELL = [0.01, 2.12, 4.24, 6.35];
+const BELL = [0.01, 2.12, 4.24, 6.35];
 let bellAt = 0; // performance.now() when the bell last started
 export const bellStrikes = () =>
   bellAt ? BELL.map((t) => bellAt + t * 1000) : null;

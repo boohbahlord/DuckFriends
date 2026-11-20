@@ -60,7 +60,7 @@ export const FACES = [
 ];
 /* the NPCs' own face items (Dead Ducks Arcade's criminals: the owner's, Nov 19 19:27Z). Never a player's: only FACES is
    listed anywhere; faceById finds these as well */
-export const NPC_FACES = [
+const NPC_FACES = [
   { id: "bandana", name: "Bandana", colors: [["c1", "Cloth", "#b3202a"]] },
 ];
 export const faceById = (id) =>

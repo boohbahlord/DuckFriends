@@ -130,7 +130,7 @@ export function fxLasers(list) {
 /* far off my screen: more than two ducks past its edge (the owner's, Nov 18 14:20Z: "draw a little bit off the screen
    on the outside of players for things like screen shakes or sprinting ... one or two duck lengths maybe"). Nothing is
    made there: each screen draws only its own view, and what the room does goes on all the same */
-export function fxOff(x, y) {
+function fxOff(x, y) {
   if (!cv) return true;
   const m = unit * 2,
     gp = gridPx();
@@ -235,7 +235,7 @@ const BLEED = {
     big: 0.15,
   },
 };
-export const BLEED_OF = {
+const BLEED_OF = {
   handgun: "small",
   smg: "small",
   tommy: "small",

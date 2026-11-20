@@ -126,7 +126,7 @@ const sheetIn = (e) => {
   return !u || came.has(u);
 };
 /* how many, and how much of the screen they take (a share of it) */
-export function waiting(root = document.body) {
+function waiting(root = document.body) {
   const px = document.documentElement.classList.contains("pixel");
   let n = 0,
     area = 0;

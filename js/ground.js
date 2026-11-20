@@ -15,7 +15,7 @@ import * as L from "./hangout/layout.js";
 const GS = L.GS;
 /* a map's own floors, when it has them: fn(x, y, z) → one of the grounds above, or null to let me guess */
 let floorAt = null;
-export const setFloor = (fn) => (floorAt = fn || null);
+const setFloor = (fn) => (floorAt = fn || null);
 
 const HIGH = 60; // this far over the ground under it, a duck is up on something (a roof, a car)
 export function groundAt(x, y, z = 0) {

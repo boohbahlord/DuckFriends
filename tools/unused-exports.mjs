@@ -43,9 +43,32 @@ for (const f of jsFiles) {
   const s = strip(readFileSync(f, "utf8"));
   const names = new Set();
   for (const m of s.matchAll(
-    /^export\s+(?:async\s+)?(?:const|let|var|function\*?|class)\s+([A-Za-z_$][\w$]*)/gm,
+    /^export\s+(?:async\s+)?(?:function\*?|class)\s+([A-Za-z_$][\w$]*)/gm,
   ))
     names.add(m[1]);
+  // export const a = 1, b = 2;  (one statement exports every name in it)
+  for (const m of s.matchAll(/^export\s+(?:const|let|var)\s+(?!\{)/gm)) {
+    let i = m.index + m[0].length,
+      depth = 0,
+      start = i;
+    const take = (end) => {
+      const id = s.slice(start, end).match(/^\s*([A-Za-z_$][\w$]*)/);
+      if (id) names.add(id[1]);
+    };
+    for (; i < s.length; i++) {
+      const c = s[i];
+      if ("([{".includes(c)) depth++;
+      else if (")]}".includes(c)) depth--;
+      else if (c === "`" || c === '"' || c === "'") {
+        const q = c;
+        for (i++; i < s.length && s[i] !== q; i++) if (s[i] === "\\") i++;
+      } else if (depth === 0 && c === ",") {
+        take(i);
+        start = i + 1;
+      } else if (depth === 0 && c === ";") break;
+    }
+    take(i);
+  }
   for (const m of s.matchAll(/^export\s+(?:const|let|var)\s+\{([^}]*)\}/gm))
     for (const n of m[1].split(",")) {
       const x = n.split(":").pop().split("=")[0].trim();

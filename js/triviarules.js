@@ -30,10 +30,10 @@ import { TV_BANK } from "./triviabank.js";
 export const isTv = (s) => s.options.mode === "trivia";
 export const TV_PHASES = ["tvwrite", "tvq", "tvw", "tvg", "tvr"];
 export const TV_BOARD = ["tvq", "tvw", "tvg", "tvr"]; // (the writing is a screen of its own)
-export const TV_ANSWER = 120; // seconds to type a written answer
-export const TV_GRADE = 60; // seconds a row, with the Grading timer on
-export const TV_REVEAL = 10; // seconds of the reveal after each question
-export const TV_RESUME = 5; // … left once every Stop timer is let go
+const TV_ANSWER = 120; // seconds to type a written answer
+const TV_GRADE = 60; // seconds a row, with the Grading timer on
+const TV_REVEAL = 10; // seconds of the reveal after each question
+const TV_RESUME = 5; // … left once every Stop timer is let go
 export const Q_MAX = 200; // the most characters a question can have
 export const A_MAX = 100; // … an answer box
 export const W_MAX = 140; // … a written answer
@@ -78,7 +78,7 @@ export const hideWriter = (s) => !!+s.options.tvHide;
 
 /* a question as its writer sent it, checked: null when it isn't valid. With multiple choice off every question is
    written; with written answers off none is */
-export function cleanQ(s, raw) {
+function cleanQ(s, raw) {
   if (!raw || typeof raw !== "object") return null;
   const text = line(raw.text, Q_MAX);
   if (!text) return null;

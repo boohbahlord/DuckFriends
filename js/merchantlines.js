@@ -4,7 +4,7 @@
    hurt by a player and still alive (HURT, once, then he runs), and leaving as the zombies come back (LEAVE). Babatunde
    and Omowunmi mix Yoruba lines into theirs (OWN: Adam's, Nov 18, kept with their tone marks exactly as written).
    The rules shuffle each list as a bag: every line once before any comes again (l4ddrules.js merchantSays) */
-export const GREET = [
+const GREET = [
   "What can I get for you?",
   "Anything you would like?",
   "You are looking good today.",
@@ -15,7 +15,7 @@ export const GREET = [
   "Easy sell.",
   "You got a zombie problem?",
 ];
-export const HURT = [
+const HURT = [
   "Stop that!",
   "You want anything or not!?",
   "You aren't going to get anything if you keep this up.",
@@ -26,7 +26,7 @@ export const HURT = [
   "What the hell!?",
   "Please don't shoot!",
 ];
-export const LEAVE = [
+const LEAVE = [
   "Gotta go!",
   "Nice doing business with you.",
   "I need to get out of here.",

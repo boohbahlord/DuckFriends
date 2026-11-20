@@ -208,7 +208,7 @@ const sizeOf = (svg) => {
   const vb = svg.viewBox && svg.viewBox.baseVal;
   return vb && vb.width && vb.height ? shownSize(svg, vb) : null;
 };
-export function pxSvgEl(svg, root = document.body, size) {
+function pxSvgEl(svg, root = document.body, size) {
   const job = plan(svg, root, size);
   if (job) make([job]);
 }
@@ -590,7 +590,7 @@ const rootSvg = (n) => {
 };
 
 /* every drawing under root made again at its size now (after the board changed size, or a drawing came into view) */
-export function pxRefresh(root) {
+function pxRefresh(root) {
   if (!pixelOn()) return;
   root
     .querySelectorAll("svg")

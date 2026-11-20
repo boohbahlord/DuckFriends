@@ -83,7 +83,7 @@ function headHTML(s, me) {
   return `<div class="topover sc-top">${cloudHTML(STORY_DUCK, "Story Chain")}<p class="question sc-what sc-glow">${HINTS[s.phase] || ""}</p></div>`;
 }
 /* one row a zone, in the zones' order (rules.js), so a duck's y lands on the same row on every screen */
-export function rowsHTML(s, me) {
+function rowsHTML(s, me) {
   const zones = scZones(s),
     story = scStory(s),
     last = story.paras.length - 1,

@@ -242,7 +242,7 @@ export const JUSTIN = {
   outfit: { id: "jeans" },
 };
 /* the shadow duck: all black, only its eyes catch a little light */
-export const SHADOW = { color: "#0c0c12" };
+const SHADOW = { color: "#0c0c12" };
 /* Justin's Butler: a pale grey-white duck in a suit and bow tie, with a monocle (he deals at the blackjack table) */
 export const BUTLER = {
   color: "#e4e2dc",

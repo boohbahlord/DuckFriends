@@ -186,7 +186,7 @@ export const L4 = {
    a computer), else when its player presses the revive key (E) while down. First GLOW ms of a light blue glow, then up
    with INV ms of nothing hurting it; spent. The fireplace has it with the items, and a merchant may sell it (its color's
    price, purple: MERCH) */
-export const SAFE = {
+const SAFE = {
   GLOW: 1200,
   INV: 6000,
 };
@@ -196,7 +196,7 @@ export const hasLeft = (s, id, w) =>
   slotsOf(s, id).includes(w) &&
   (((kitOf(s, id) || {}).am || {})[w] || [0])[0] > 0;
 const hasSafe = (s, id) => hasLeft(s, id, "safekeep");
-export const invulnOf = (s, id, now) =>
+const invulnOf = (s, id, now) =>
   ((s && s.hang && s.hang.l4inv) || {})[id] > now;
 export const WALK = 380 * 0.6 * 1.05; // world px a second: ducks at 63% of Duck Cabin's walk (world.js SPEED, l4dd.js SPEED: 5% faster than 60%, the owner's, Nov 3), at the Normal Walking speed; every zombie's speed is a share of it
 const Z_SLOW = 0.8 / 1.05; // (and the zombies 20% slower than they were, whatever the ducks' speed did)
@@ -210,7 +210,7 @@ const ROUNDS = [
   [20, [0.75, 0.75], 300, 750, 45],
   [Infinity, [0.75, 0.75], 300, 750, 50],
 ]; // (after round 12, every zombie keeps round 9-12's speed and swipes; only the most at once still grows: the owner's, Nov 18 13:46Z, "the stat for every zombie AFTER round 12 now (but ignore the most at map at once, that still changes as the rounds go up)")
-export const roundOf = (r) => ROUNDS.find((x) => r <= x[0]);
+const roundOf = (r) => ROUNDS.find((x) => r <= x[0]);
 /* the zombies in round r with p players (the owner's, Nov 16 22:11Z and 22:16Z; the sheet: charts/zombies-per-round.xlsx).
    Each phase of rounds has its base [first round, last round, base]; every player past the first adds a share of it
    that grows through the phase, the round's place in it over the phase's length (1/4, 2/4 …), rounded down. Never
@@ -236,7 +236,7 @@ export const Z_MOST = 800; // … and in all (was 400)
 /* Sandbox: the most NPCs alive at once on any map, online too. It follows the zombies' cap (the owner's, Nov 19 01:57Z),
    so the two never drift apart */
 export const NPC_CAP = Z_MOST;
-export function zombiesFor(r, p) {
+function zombiesFor(r, p) {
   const cap = Math.min(Z_EACH * p, Z_MOST);
   let n = 0;
   for (let k = 1; k <= Math.min(r, 20); k++) {
@@ -263,12 +263,12 @@ const SKIP = 0.25,
 /* what anything thrown or used up waits before it can be used again (the grenades, the medkit, the zebra cake, the
    adrenaline shot, the chair): 0.75 s (the owner's, Nov 16). Not the jetpack (switched on
    and off) */
-export const ITEM_COOL = 750;
+const ITEM_COOL = 750;
 /* a melee weapon breaks (the owner's, Nov 19 22:41Z): its bar is 100% of the damage it can deal, HP actually taken off
    (not overkill), 450 for each, the cast iron pan only 50 ("cast irons is only 50 damage"). At 0% it is gone for good
    and its slot is empty; it is never refilled. An Angelic melee weapon never breaks. One number for each weapon: ARMS'
    dur */
-export const MELEE_DUR = 450;
+const MELEE_DUR = 450;
 export const ARMS = {
   knife: {
     kind: "melee",
@@ -583,10 +583,10 @@ export const inHand = (w, s, id) => {
 /* the slots, in order (keys 1 to 4; the grenades are 5): blue, red, red, purple, and the grenades white. Dead Ducks
    Arcade and Survival have a second item slot after the grenades, key 6 (the owner's, Nov 19 22:25Z: "In Dead Ducks
    Arcade and in Survival, there is now 2 item slots"): the kit's fifth (freshKit); Sandbox keeps one */
-export const START = ["knife", "handgun", "bow", ""];
+const START = ["knife", "handgun", "bow", ""];
 export const SLOT_KINDS = ["melee", "ranged", "ranged", "special", "special"];
 /* the item slots in a kit's slots (3, and 4 when there are two) */
-export const ITEM_SLOTS = [3, 4];
+const ITEM_SLOTS = [3, 4];
 /* a pick (game.js l4Pick: 0 to 3 the slots, 4 the second item, 5 the grenades, as keys 1 to 6: the owner's, Nov 20 21:17Z,
    "The secondary item slot is number 5. The grenade is number 6") and its slot, -1 for the grenades */
 export const slotOfPick = (i) => (i < 5 ? i : -1);
@@ -641,7 +641,7 @@ export const WEAPON_BAGS = {
 };
 /* the bags inside a bag: when the shotguns' bag gives "dbl", the double barrels' own bag gives one of its two, in its own
    shuffled turns (the owner's, Nov 19 19:27Z) */
-export const INNER_BAGS = { dbl: ["dbarrel", "dbuck"] };
+const INNER_BAGS = { dbl: ["dbarrel", "dbuck"] };
 /* everything a bag can give, the inner bags' things in place of the inner bags */
 /* Survival's bags: no Laser Rifle, chain gun or cast iron pan; the sniper is a special; twice the items ("They also have
    twice as many options for items") */
@@ -713,7 +713,7 @@ const TIER_PRICES = {
    comes"), back to 25% once one came (my reading). Held while I go up to a dead player, it brings them back; they stack
    ("It's kind of like ammo"). It costs 950 rounded up to a color's price, and has that color ("Whatever it rounds up to
    in cost. Of whatever tier it rounds up to. And that will determine its color"): purple, 1,500 */
-export const DEFIB = { FIRST: 0.25, UP: 0.15, ASK: 950 };
+const DEFIB = { FIRST: 0.25, UP: 0.15, ASK: 950 };
 const tierFor = (p) =>
   Object.keys(TIER_PRICES).find((k) => TIER_PRICES[k] >= p) || "gold";
 const TINTS = {
@@ -767,7 +767,7 @@ const BULLETS = new Set([
   "dbarrel",
   "burst",
 ]);
-export const PTS = {
+const PTS = {
   START: 50,
   HIT: 5,
   HEAD: 25,
@@ -817,7 +817,7 @@ export const SHOP = [
 const SHOP_MORE = 1.2;
 /* a number of points as a whole number of fives: dir 1 rounds up, -1 down, 0 to the nearest (5 points is the smallest
    unit of money, for everything: the owner's, Nov 17 19:11Z) */
-export const fives = (n, dir = 0) =>
+const fives = (n, dir = 0) =>
   5 *
   (dir > 0
     ? Math.ceil(n / 5)
@@ -1393,8 +1393,8 @@ const rnd = (a, b) => a + Math.random() * (b - a);
 const rint = (a, b) => Math.floor(rnd(a, b + 1));
 const players = (s) => s.seat.filter((id) => s.players[id] && s.pos[id]);
 const P4 = (s, id) => ((s.hang && s.hang.l4p) || {})[id] || null;
-export const isDown = (s, id) => !!(P4(s, id) && P4(s, id).dn);
-export const isGhost4 = (s, id) => !!(P4(s, id) && P4(s, id).gh);
+const isDown = (s, id) => !!(P4(s, id) && P4(s, id).dn);
+const isGhost4 = (s, id) => !!(P4(s, id) && P4(s, id).gh);
 export const standing = (s, id) => {
   const p = P4(s, id);
   return !!p && !p.dn && !p.gh;
@@ -1626,7 +1626,7 @@ export const l4Cool = (s, id, w) =>
    it holds its heat for one wait between beams, then loses one beam's worth each wait; overheated, it cools from past
    its limit back to nothing in ARMS.laser.over. laserHeat → { h (0 … max + 1), max, over (ms left overheated, 0: not) },
    which every screen reads for the gun's glow, the meter under my duck and the steam */
-export const laserMax = (s, id) =>
+const laserMax = (s, id) =>
   angelOf(s, id, "laser") ? ANGEL.LASER.heat : ARMS.laser.heat;
 export function laserHeat(s, id, now) {
   const m = kitOf(s, id),
@@ -1673,8 +1673,8 @@ export const reloadOf = (s, id, w, c) =>
    the time, a fast weapon's 5%. The cast iron pan keeps its own: half its swings miss, half its hits crit. The chain
    gun crits too (the fast 2.5%). The grenades, the grenade launcher and the flamethrower never crit, and the thrown
    grenade and the flamethrower never miss (the owner's, Nov 16 22:21Z); the grenade launcher's shell can */
-export const CRIT = { SLOW: 0.05, FAST: 0.025, UP: 0.025 };
-export const MISS = { SLOW: 0.025, FAST: 0.05 };
+const CRIT = { SLOW: 0.05, FAST: 0.025, UP: 0.025 };
+const MISS = { SLOW: 0.025, FAST: 0.05 };
 const NO_CRIT = ["grenade", "glauncher", "flamer"];
 const fastArm = (w) =>
   !!(ARMS[w] && !ARMS[w].slow && (ARMS[w].auto || ARMS[w].burst)); // (the Tommy gun and the UMP-45 fire on and hit as the slow ones: 5% crits, 2.5% misses)
@@ -1948,7 +1948,7 @@ function takeDrop(s, k, by, zs, now, ids) {
 /* the Nuke on every screen (owner 2026-11-16, l4dd.js nukeScreen): grey static sweeps out over the screen in a second,
    then every zombie dies at once, burnt and blown apart, while the static covers them, so only the aftermath is ever
    drawn. Their bodies lie there 15 s (the others' 4 s) */
-export const NUKE = { SWEEP: 1000, DEAD: 15000 };
+const NUKE = { SWEEP: 1000, DEAD: 15000 };
 function nukeTick(s, zs, now, ids) {
   const N = s.hang.l4nk;
   if (!N || N.ids || now < N.at) return;
@@ -1976,7 +1976,7 @@ function nukeTick(s, zs, now, ids) {
    a round or a rest when they're all away (the owner's, Nov 19 10:22Z: "the corpse in the gas station disapears but
    the puddle of blood stays IF the body isnt on a players screen ... The check for this should be every 30 secods maybe
    or something slow"). s.hang.l4.tg: gone. The host's clock for the next look: s.hidden.l4tg */
-export const TROOP = { ROUND: 12, EVERY: 30000, SEE_X: 1100, SEE_Y: 800 };
+const TROOP = { ROUND: 12, EVERY: 30000, SEE_X: 1100, SEE_Y: 800 };
 function troopTick(s, now, ids) {
   const L = s.hang.l4,
     hid = s.hidden || {};
@@ -2002,7 +2002,7 @@ function troopTick(s, now, ids) {
    zombie out in the open that a duck has on screen. It dies burnt (no points: nobody killed it), and each strike has a
    1% chance of another one right after. Waits while there's no such zombie. s.hang.l4lt { next: when it strikes (0:
    no more this round), hit: [x, y, when] the last strike, for every screen's bolt and flash (l4ddrain.js) } */
-export const BOLT = {
+const BOLT = {
   P: 0.01,
   AGAIN: 0.01,
   FROM: 5000,
@@ -2172,8 +2172,8 @@ function giveBonus(s, sr) {
   }
   s.hang.l4 = { ...L, bonus: want };
 }
-export const GO_MS = 3000; // ms of "Round N" after the vote, before its zombies come
-export const SR_VOTE_MS = 30000; // ms a "Start at round N" vote stays up
+const GO_MS = 3000; // ms of "Round N" after the vote, before its zombies come
+const SR_VOTE_MS = 30000; // ms a "Start at round N" vote stays up
 /* the starting-round vote: who may start one (not after a No, only in round 0, none up), and what it needs */
 export const srOpen = (s) => {
   const L = s.hang && s.hang.l4;
@@ -2643,11 +2643,11 @@ const wildMax = (s) => (s && s.hang && s.hang.l4jhp) || WILD.hp;
    quickly and the last 1/10th of zombies never chase justin. ZOmbies need to be twice as close to justin to want to
    chase him compared to a player"): to a zombie he counts as far times as far as he is; one that has chased him give ms
    lets him be for off ms; the last tenth (last) of a round's zombies never go for him */
-export const JCHASE = { far: 2, give: 5000, off: 20000, last: 0.1 };
+const JCHASE = { far: 2, give: 5000, off: 20000, last: 0.1 };
 /* hurt, he cries (the tears eyes, as Mad God Justin's when he loses) for CRY.ms while he sprints away from where it came
    from (the owner's, Nov 17 20:37Z: "his character should use the cry effect already in the game for ten seconds after
    taking one damage", "JUSTIN CRIES AND SPRINTS ! HE DOESNT STAND AROUND"): s.hang.l4jcry { t, x, y } */
-export const CRY = { ms: 10000 };
+const CRY = { ms: 10000 };
 export const wildCrying = (s, id, now) => {
   const c = isWild(s, id) && s.hang && s.hang.l4jcry;
   return !!c && now < c.t + CRY.ms && !isDown(s, id);
@@ -3834,7 +3834,7 @@ export const pierceOf = (s, by, w) =>
 export const ALL_HP = 999;
 /* Survival: every bullet, pellet, arrow, thrown dagger and beam a duck fires does 0.5 less (the owner's, Nov 20 04:09Z,
    "reduce all ammo by 0.5 damage"); never under 0.5. Melee, grenades and the merchant's own gun stay as they were */
-export const SV_GUN_LESS = 0.5;
+const SV_GUN_LESS = 0.5;
 const svGun = (s, by, w, dmg0) => {
   const lm = by && w && lmOf(s, by, w), // (Sandbox's loot: its own damage, or a share of its own, sbloot.js)
     dmg = !lm
@@ -4494,7 +4494,7 @@ function wildFire(s, by, now) {
 }
 /* a melee weapon wears down by the HP it took off (the owner's, Nov 19 22:41Z): at 0 it is gone, its slot empty, for
    good. Angelic ones never wear; not in Sandbox */
-export function wearDown(s, by, w, dealt) {
+function wearDown(s, by, w, dealt) {
   const kit = kitOf(s, by),
     i = kit ? kit.sl.indexOf(w) : -1;
   if (i < 0 || !(dealt > 0) || !ARMS[w] || !ARMS[w].dur) return;
@@ -6152,7 +6152,7 @@ const stationDeck = () =>
   GS.DECKS.find((d) => d.kind === "roof" && d.bldg === 1);
 const canopyDeck = () => GS.DECKS.find((d) => d.kind === "canopy");
 /* how high a zombie climbing a wall (st 6) is at (x, y): up from the foot (CL.out out) to the top at the edge */
-export const climbZ = (x, y, only = null) => {
+const climbZ = (x, y, only = null) => {
   const e = edgeOf(x, y, only);
   return e.d.h * Math.min(1, Math.max(0, (CL.out - e.o) / CL.out));
 };

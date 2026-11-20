@@ -8,7 +8,7 @@ import { spawnAt, deckSpawnAt, heightAt, W, H } from "./layout.js";
 import "./activities.js";
 
 /* s.hang when the cabin opens: each activity's fields (the ones the room's mode runs) */
-export function newHang(s) {
+function newHang(s) {
   const h = {};
   for (const [, r] of rulesOf(s)) if (r.init) Object.assign(h, r.init(s));
   return h;

@@ -115,7 +115,7 @@ export const MAP_VARIANTS = [
   ...NWK_VARIANTS,
 ];
 /* the map a variation belongs to (a map that isn't one: itself) */
-export const variantBase = (id) =>
+const variantBase = (id) =>
   (MAP_VARIANTS.find((v) => v[0] === id) || [id, "", "", id])[3];
 /* a map's forms: the map vote shows each one as a map of its own, next to its map; Random picks one at random */
 export const MAP_FORMS = Object.fromEntries(

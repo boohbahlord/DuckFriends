@@ -50,7 +50,7 @@ function shownOf(img, [x, y, w, h]) {
    to fill the duck's square whatever its shape (fitted by its own sides, standing on the bottom), and a tiny picture
    still makes a whole duck (the owner's, Nov 20: "the image expands in size to the size of the ducks in a
    mathematical formula based on it's empty unused space ... based on the aspect ratio of the crop") */
-export function cropOf(img, rect, px = DUCK_PIC_PX) {
+function cropOf(img, rect, px = DUCK_PIC_PX) {
   const [x, y, w, h] = shownOf(img, rect),
     k = Math.min(px / w, px / h),
     dw = Math.max(1, Math.round(w * k)),
@@ -79,9 +79,9 @@ export function cropOf(img, rect, px = DUCK_PIC_PX) {
    aspect ratio of the crop"). shown: the share of its square it fills, fitted by its long side; a duck fills
    PIC_FILL of the same square, so a thin or a sparse picture grows until it fills as much: its sides by the square
    root of the two. Never past PIC_GROW_MOST, so a line a pixel wide doesn't cover the screen */
-export const PIC_FILL = 0.57; // (the slimmest duck, Skinny build: a Normal one fills 0.66)
-export const PIC_GROW_MOST = 2.5;
-export const growOf = (shown) =>
+const PIC_FILL = 0.57; // (the slimmest duck, Skinny build: a Normal one fills 0.66)
+const PIC_GROW_MOST = 2.5;
+const growOf = (shown) =>
   Math.round(
     Math.min(
       PIC_GROW_MOST,

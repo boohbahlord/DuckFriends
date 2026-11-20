@@ -145,9 +145,8 @@ I HATE YOU!!! DIIIE!!!!!!!!
 Did you say I am NOT BASED!?!?!?!
 MWAHAHAHAHAHA!!!!!!
 DIE!!! DIE!!!!! DIE!!!!!!!!!!`.split("\n");
-export const DRANK = "I drank too much, but I swear it isn't a problem.";
-export const POOL_LINE =
-  "Why would I go to the pool?! IT'S JUST WATER! I don't care!";
+const DRANK = "I drank too much, but I swear it isn't a problem.";
+const POOL_LINE = "Why would I go to the pool?! IT'S JUST WATER! I don't care!";
 /* poker (poker.js): my new lines for his winning and losing, word for word, and his old ones that fit them (mostly the
    new ones); busted, he says one of his own insults or rage lines */
 export const WIN_LINES = `YES!
@@ -170,7 +169,7 @@ I'm not even trying.
 I always win.
 HAHA! IDIOT!
 Just quit the game at this point, YOU'RE SO BAD!`.split("\n");
-export const LOSE_LINES = `HOW DID I LOSE!?!
+const LOSE_LINES = `HOW DID I LOSE!?!
 NOOOOO!!!!!!
 WHAT THE FLIIIIIP!!!!!
 I CAN'T BELIEVE THIS STUPID GAME!!!
@@ -206,7 +205,7 @@ const pick = (...ls) =>
       throw new Error("not his line: " + l);
     return l;
   });
-export const OLD_WIN = pick(
+const OLD_WIN = pick(
   "Shut up, you stupid IDIOT!",
   "GOD, you're so STUPID!",
   "YOU'RE SO STUPID!",
@@ -222,7 +221,7 @@ export const OLD_WIN = pick(
   "Why am I so funny?",
   "I am so unbelievably BASED!",
 );
-export const OLD_LOSE = pick(
+const OLD_LOSE = pick(
   "I'M TURNING OFF MY XBOX!",
   "NOOOOOOOO!",
   "NOOOOO!!!",
@@ -241,7 +240,7 @@ export const OLD_LOSE = pick(
   "I am turning off my Xbox...",
   "This is so STUPID!",
 );
-export const BUST_LINES = pick(
+const BUST_LINES = pick(
   "SHUT UP!",
   "Shut up, you stupid IDIOT!",
   "GOD, you're so STUPID!",

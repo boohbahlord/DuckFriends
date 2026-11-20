@@ -120,7 +120,7 @@ export const HATS = [
 ];
 /* the NPCs' own hats (Dead Ducks Arcade's soldiers and criminals, Survival's sniper: the owner's, Nov 19 19:27Z). Never a
    player's: only HATS is listed anywhere; hatById finds these as well */
-export const NPC_HATS = [
+const NPC_HATS = [
   {
     id: "combat",
     name: "Combat helmet",

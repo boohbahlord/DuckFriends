@@ -10,7 +10,7 @@ import { DUCK, slabBetween } from "./hangout/layout.js";
 
 export const MID = DUCK / 2;
 /* how high shot sh flies now (world px) */
-export const shotH = (sh) => sh.lh ?? (sh.hz || 0) + MID;
+const shotH = (sh) => sh.lh ?? (sh.hz || 0) + MID;
 /* can shot sh hit a target whose feet are at tz, at (tx, ty), world px? (its shooter at (sx, sy), world px; leave
    them out where there are no roofs) */
 export function hOk(sh, tz, tx, ty, sx, sy) {

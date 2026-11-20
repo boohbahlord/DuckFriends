@@ -783,7 +783,7 @@ const strands = (x0, y0, x1, y1, step, len, seed = 1) => {
     }
   return s;
 };
-export const NPC_OUTFITS = [
+const NPC_OUTFITS = [
   {
     /* modern combat fatigues: camouflage (woodland, desert or urban), a plate carrier with magazine pouches, a web belt,
        its collar in its own color (the owner's "different collar colors") */

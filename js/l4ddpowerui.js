@@ -27,8 +27,8 @@ export { PART_ICONS };
 /* the gas meter (the owner, Nov 16 23:29Z): twelve boxes like the HP bar's, one for each round of a full can's fuel, in
    the yellow of electricity and a little see-through. One function for every place that has a power box (the cabin's
    now, Downpour's too): gasMeter(rounds) gives the meter's HTML for that many rounds left (0 to 12, more is a full one) */
-export const GAS_BOXES = 12;
-export function gasMeter(rounds) {
+const GAS_BOXES = 12;
+function gasMeter(rounds) {
   const n = Math.max(0, Math.min(GAS_BOXES, Math.round(+rounds || 0)));
   return `<span class="l4-gas" role="img" aria-label="Gas: ${n} of ${GAS_BOXES} rounds">${Array.from({ length: GAS_BOXES }, (_, i) => `<i${i < n ? ' class="on"' : ""}></i>`).join("")}</span>`;
 }

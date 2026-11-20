@@ -11,7 +11,7 @@ export const addOpeners = (fn) => {
   openers.push(fn);
 };
 /* is anyone at this doorway? */
-export function doorOpen(s, d) {
+function doorOpen(s, d) {
   const pts = [];
   for (const id of s.seat || []) {
     const p = s.pos[id];

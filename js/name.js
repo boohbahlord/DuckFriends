@@ -112,7 +112,7 @@ const look = (css) => {
     m(SAMPLE).width
   );
 };
-export function fontScale(id) {
+function fontScale(id) {
   const f = FONTS.find((x) => x.id === id) || FONTS[0];
   if (f === FONTS[0]) return 1;
   if (typeof document === "undefined" || !document.fonts) return f.k || 1;
