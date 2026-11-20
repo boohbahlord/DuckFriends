@@ -283,8 +283,10 @@ async function recordMap(page, how, arg) {
 const GLOWS = {
   board: () => 1,
   "board-light": () => 1,
-  carnival: () => 1,
-  stars: () => 1,
+  carnival: () => "1 176 64 #211042", // (over the middle of its purple sky; its wheel's spokes, nearly whole, stay whole: as
+  // a glow they would add over its hub and legs too)
+  stars: () => "1 255 0 #060c20", // (all its soft light: the Milky Way is light, its core and its faintest stars too; over
+  // the night's middle color, js/maps.js starsScene's back, that turns under it)
   sky: (k) => (k === "sky-sun" || k === "sky-moon") && 0.3, // (weaker: added to a bright sky, a full glow goes white)
 };
 /* each file that has a glow gets its glow drawn over it, added (plus-lighter): a picture's twin in the markup (moving
@@ -371,7 +373,7 @@ function withGlows(html, glows) {
         path.join(__dirname, "era.py"),
         tmp,
         out,
-        ...(lit ? [gl, String(lit)] : []),
+        ...(lit ? [gl, ...String(lit).split(" ")] : []),
       ]).toString(); // (in the era's limits, then lossless: notes/map-building-rules.md)
       bytes += fs.statSync(out).size;
       if (said.includes("glow")) {
@@ -395,7 +397,7 @@ function withGlows(html, glows) {
         bytes += fs.statSync(out).size;
       }
     for (const k of Object.keys(files))
-      fs.unlinkSync(path.join(dir, k + ".png"));
+      if (!process.env.KEEP_PNG) fs.unlinkSync(path.join(dir, k + ".png"));
     const markup = glowed.replace(
       /FILE:([\w-]+)/g,
       (_, k) => `assets/px/mapw/${id}/${k}.webp`,
