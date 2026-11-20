@@ -12,7 +12,13 @@ import { npcPics } from "./sbnpcart.js";
 import { colorField } from "./color.js";
 import { momentHTML } from "./specials.js";
 import { esc, openWindow, confirmBox, toast, foldHeads } from "./ui.js";
-import { sbPresets, sbCheat, colSwatches, NOCOL_NOTE } from "./sbmenu.js";
+import {
+  sbPresets,
+  sbCheat,
+  sbLevel,
+  colSwatches,
+  NOCOL_NOTE,
+} from "./sbmenu.js";
 import { activeRoom } from "./net.js";
 import {
   isSb,
@@ -72,6 +78,9 @@ import {
   sbWallStops,
   sbWorksAt,
   sbOutline,
+  sbOv,
+  sbOrder,
+  sbFlips,
   sbHasOl,
   sbOlColor,
   sbOlRows,
@@ -185,15 +194,16 @@ function placeAt(n, c, size) {
   });
 }
 /* a block's shape as pixels, made from the start as pixels (the owner's, Nov 19 23:41Z): one pixel per quarter-duck
-   square of the box around it, set where that square's middle is inside the block (sandboxrules.js sbInBlock, its turn
-   included), its inside see-through in its color and its edge squares stronger. Kept by shape, size, turn and color */
+   square of the box around it, set where that square's middle is inside the block (sandboxrules.js sbInBlock: on one of
+   its hitbox tiles, its turn included), its inside see-through in its color and its edge squares stronger. Kept by
+   shape, size, turn and color */
 const SHAPE_PX = new Map();
 function shapePic(s, p, css, solid = false) {
   const [x0, y0, x1, y1] = sbZoneBox(s, p, W, H),
     [ux, uy] = sbOnBoard(s) ? boardDuck(s) : [48 / W, 48 / H],
     cx = Math.max(1, Math.round(((x1 - x0) / ux) * 4)),
     cy = Math.max(1, Math.round(((y1 - y0) / uy) * 4)),
-    key = `${sbShape(p)} ${sbSize(p)} ${sbRot(p)} ${cx} ${cy} ${css} ${solid}`;
+    key = `${sbShape(p)} ${sbSize(p)} ${sbRot(p)} ${sbFlips(p)} ${cx} ${cy} ${css} ${solid}`;
   let u = SHAPE_PX.get(key);
   if (u) return u;
   const cv = document.createElement("canvas");
@@ -352,7 +362,7 @@ function zoneMark(n, p, at, s, bare = false) {
     L0 = Math.min(cs0[0].left, cs0[1].left),
     T0 = Math.min(cs0[0].top, cs0[1].top),
     shaped = (sbShape(p) !== "sq" || sbRot(p) !== 0) && !sbFills(p), // (a square, not turned, is its CSS box; the rest pixels)
-    sig = `${p.col} ${boxText(p, "name")} ${shaped ? `${sbShape(p)} ${sbSize(p)} ${sbRot(p)}` : ""} ${bare}`;
+    sig = `${p.col} ${boxText(p, "name")} ${shaped ? `${sbShape(p)} ${sbSize(p)} ${sbRot(p)} ${sbFlips(p)}` : ""} ${bare}`;
   if (n._sig !== sig) {
     n._sig = sig;
     const css = SB_COLORS[p.col] || "#fff";
@@ -431,8 +441,8 @@ function cellsOn(n, s, p, cs) {
         X = u + 0.5;
         Y = v + 0.5;
       } else {
-        const lx = u * g.w,
-          ly = v * g.h;
+        const lx = u * g.w + g.ox,
+          ly = v * g.h + g.oy;
         X = p.x + (lx * Math.cos(a) - ly * Math.sin(a)) * rx;
         Y = p.y + (lx * Math.sin(a) + ly * Math.cos(a)) * ry;
       }
@@ -487,6 +497,18 @@ function orbMark(layer, have, want, k, id, p, o, at, size, s) {
   }
   placeAt(el, at(o.x != null ? { x: o.x, y: o.y, z: o.z || 0 } : p), size);
 }
+/* the zones' marks in their drawing order, the top one last (sandboxrules.js sbOrder: Move up and Move down); moved only
+   when the order changed */
+function drawOrder(layer, pts) {
+  const zs = [...layer.querySelectorAll(":scope > .sb-zone")],
+    key = (n) => {
+      const id = n.dataset.p.split("~")[0];
+      return sbOrder(id, pts[id]);
+    },
+    want = [...zs].sort((a, b) => key(a) - key(b));
+  if (want.every((n, i) => n === zs[i])) return;
+  for (const n of want) layer.append(n);
+}
 /* the points on a layer: at(p) → { left, top } where its middle is (board px), size its width; s: the room's state (a
    loot point's orb and its picture) */
 function drawMarks(layer, pts, at, size, s) {
@@ -515,7 +537,8 @@ function drawMarks(layer, pts, at, size, s) {
         );
       continue;
     }
-    const hid = hiddenNow(s, p),
+    const other = seeZones && sbOv(p) !== sbLevel.v, // (on another overlay level: only its orbs still show)
+      hid = hiddenNow(s, p) || other,
       vis = p.k === "loot" ? seen(p) : [],
       orbOut = vis.length > 0;
     if (p.k === "zone") lookOn(layer, have, want, id, pts, at, size, s); // (its look: everyone sees it, hidden or not)
@@ -524,7 +547,7 @@ function drawMarks(layer, pts, at, size, s) {
       faceOn(layer, have, want, id, pts, at, size, s, false); // (a block up high: its front side, when it has a look)
     if (hid && !orbOut) continue; // (Hide: a loot point hides its ring and name, never its orb, the owner's "that appearance is hidden")
     if (zoneLike(p)) {
-      if (!seeZones) continue;
+      if (!seeZones || other) continue;
       want.add(id);
       /* the zone it leads with sets how it looks: its color and its name (the owner's, Nov 20 02:45Z) */
       const lead = sbZonesOn(pts, id)[0],
@@ -567,6 +590,7 @@ function drawMarks(layer, pts, at, size, s) {
       ); // (more than one lying: plan Loot 1, Spawn limit)
   }
   for (const [id, n] of have) if (!want.has(id)) n.remove();
+  drawOrder(layer, pts);
   if (sbSel.size || layer._sel)
     for (const n of layer.querySelectorAll(".sb-pt:not(.sb-look)"))
       n.classList.toggle("sb-sel", sbSel.has(n.dataset.p.split("~")[0]));
@@ -777,7 +801,7 @@ export function sbNearPoint(s, me) {
   let best = null,
     bd = board ? 1.5 : 90;
   for (const [id, p] of Object.entries(ptsOf(s))) {
-    if (p.grp) continue;
+    if (p.grp || sbOv(p) !== sbLevel.v) continue;
     const d = board
       ? Math.hypot(
           (p.x - me.x) / boardDuck(s)[0],
@@ -2034,7 +2058,7 @@ export const buildRows = (R) =>
         act: (r) =>
           sbPlace.start
             ? sbPlace.start(kind, label)
-            : r.send({ t: "sb", k: "add", kind }),
+            : r.send({ t: "sb", k: "add", kind, ov: sbLevel.v }),
       }))
     : [];
 /* what I'm putting down, drawn on my mouse: a zone's box, dashed, in the color it will get (a loot spot of an older
@@ -2098,7 +2122,7 @@ activity({
     let best = null,
       bd = 90;
     for (const [id, p] of Object.entries(ptsOf(s))) {
-      if (p.grp) continue;
+      if (p.grp || sbOv(p) !== sbLevel.v) continue;
       const d = Math.hypot(p.x * W - pos.x, p.y * H - pos.y);
       if (d < bd) {
         bd = d;

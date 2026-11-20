@@ -58,6 +58,14 @@ import {
   sbNpcWalls,
   sbInv,
   sbFitSide,
+  sbSnaps,
+  sbSnapSpot,
+  sbSnapTurn,
+  sbOverlap,
+  sbOv,
+  SB_OV_MOST,
+  sbOrder,
+  sbFills,
   sbWallGo,
   sbWallStops,
   boardDuck,
@@ -563,6 +571,33 @@ function withField(p, f, v) {
 /* the point a preset or a copy (a.pt: { col, f: { box: text }, im, ap }) makes out of a new bare one: only what its kind
    has, each box read as if typed (the owner's, Nov 19 17:15Z: a preset before placing, copy and paste) */
 /* block id's tabs and pages take its spot, shape and size again (after a move, a turn, a resize or a new shape) */
+/* block id on the ground's lines when it snaps (sandboxrules.js sbSnapSpot: the owner's, Nov 20 18:46Z, "they should
+   snap to the hitbox things on the ground"), its tabs with it */
+function snapTo(s, all, id) {
+  const P = all[id];
+  if (!P || P.grp || !sbSnaps(P)) return all;
+  const { x, y } = sbSnapSpot(s, P, WW, WH);
+  if (x === P.x && y === P.y) return all;
+  const z = sbOnBoard(s) ? 0 : Math.round(heightAt(x * WW, y * WH)),
+    out = geoTo({ ...all, [id]: { ...P, x, y, z } }, id);
+  return sbOnWorld(s) ? floorsTo(out) : out; // (one with an elevation keeps it)
+}
+/* Fixed zone (the owner's, Nov 20 18:46Z: "it will not collide or go on top of other zones. And other zones can't go on
+   top of it. That doesn't change how it works as a surface ... That just changes how you build with it"): does block id,
+   as it is in `all`, share a tile with another block on its overlay level while one of the two is fixed */
+function fixedHit(s, all, id) {
+  const P = all[id];
+  if (!P || P.grp || sbFills(P)) return false;
+  return Object.entries(all).some(
+    ([q, Q]) =>
+      q !== id &&
+      !Q.grp &&
+      !sbFills(Q) &&
+      (P.fx || Q.fx) &&
+      sbOv(P) === sbOv(Q) &&
+      sbOverlap(s, P, Q, WW, WH),
+  );
+}
 function geoTo(all, id) {
   const P = all[id];
   if (!P) return all;
@@ -596,6 +631,7 @@ function fromPattern(q, pt) {
     q = { ...q, ap: pt.ap };
   if (Number.isFinite(pt.rot) && pt.rot)
     q = { ...q, rot: ((pt.rot % 360) + 360) % 360 }; // (a copy keeps how it's turned)
+  for (const k of ["fh", "fv", "ns", "fx"]) if (pt[k]) q = { ...q, [k]: 1 }; // (and how it's flipped, its Snap and Fixed zone)
   for (const [f, v] of Object.entries(pt.f || {}))
     if (typeof v === "string" && boxOf(f) && canSet(q, f))
       q = withField(q, f, v);
@@ -736,6 +772,10 @@ export function sbAct(s, a, now) {
       all = set
         ? spread(all, id) // (a preset or a paste: its color takes it)
         : { ...all, [id]: likeIt(all[id], all[kin[0]]) }; // (a bare one: its color's settings)
+    const ov = Math.round(+a.ov);
+    if (ov > 1 && ov <= SB_OV_MOST) all[id] = { ...all[id], ov }; // (put down on the overlay level I'm looking at)
+    all = snapTo(s, all, id);
+    if (fixedHit(s, all, id)) return false;
     s.sb = { ...s.sb, n, pts: all };
     return true;
   }
@@ -867,37 +907,53 @@ export function sbAct(s, a, now) {
       }
       if (lo <= hi) dx = Math.min(hi, Math.max(lo, dx));
       if (loY <= hiY) dy = Math.min(hiY, Math.max(loY, dy));
-      if (
-        ids.some((id) => {
-          const x = pts[id].x + dx,
-            y = pts[id].y + dy;
-          return x < 0 || x > 1 || y < 0 || y > 1;
-        })
-      )
-        return false; // (and never its middle)
-      for (const id of ids)
-        for (const q of with_(id)) {
-          const P = pts[q],
-            x = +(P.x + dx).toFixed(4),
-            y = +(P.y + dy).toFixed(4),
-            z = sbOnBoard(s) ? 0 : Math.round(heightAt(x * WW, y * WH));
-          all[q] = { ...P, x, y, z };
-        }
-      if (sbOnWorld(s)) all = floorsTo(all); // (one with an elevation keeps it)
+      /* the blocks moved by (u, v), or null when a middle would leave the map */
+      const moved = (u, v) => {
+        if (
+          ids.some((id) => {
+            const x = pts[id].x + u,
+              y = pts[id].y + v;
+            return x < 0 || x > 1 || y < 0 || y > 1;
+          })
+        )
+          return null; // (and never its middle)
+        let out = { ...pts };
+        for (const id of ids)
+          for (const q of with_(id)) {
+            const P = pts[q],
+              x = +(P.x + u).toFixed(4),
+              y = +(P.y + v).toFixed(4),
+              z = sbOnBoard(s) ? 0 : Math.round(heightAt(x * WW, y * WH));
+            out[q] = { ...P, x, y, z };
+          }
+        if (sbOnWorld(s)) out = floorsTo(out); // (one with an elevation keeps it)
+        for (const id of ids) out = snapTo(s, out, id);
+        return ids.some((id) => fixedHit(s, out, id)) ? null : out;
+      };
+      /* a fixed zone in the way: it slides along it (only across, or only up and down), else it stays */
+      const got = moved(dx, dy) || (dx && moved(dx, 0)) || (dy && moved(0, dy));
+      if (!got) return false;
+      all = got;
     } else if (a.k === "turn") {
-      const by = +a.deg;
-      if (!Number.isFinite(by)) return false;
-      for (const id of ids)
-        all = geoTo(
-          {
-            ...all,
-            [id]: {
-              ...pts[id],
-              rot: ((((pts[id].rot || 0) + by) % 360) + 360) % 360,
-            },
-          },
-          id,
-        );
+      /* by deg (the arrow keys), or to deg (Direction's Rotate handle) */
+      const by = +a.deg,
+        to = +a.to;
+      if (!Number.isFinite(by) && !Number.isFinite(to)) return false;
+      const turn = (P) => {
+        const r = P.rot || 0;
+        if (Number.isFinite(to))
+          return sbSnaps(P)
+            ? (((Math.round(to / 90) * 90) % 360) + 360) % 360
+            : ((Math.round(to) % 360) + 360) % 360;
+        return sbSnaps(P)
+          ? sbSnapTurn(r, by) // (a quarter at a time, so its tiles stay the ground's)
+          : (((r + by) % 360) + 360) % 360;
+      };
+      for (const id of ids) {
+        all = geoTo({ ...all, [id]: { ...pts[id], rot: turn(pts[id]) } }, id);
+        all = snapTo(s, all, id);
+      }
+      if (ids.some((id) => fixedHit(s, all, id))) return false;
     } else
       for (const id of ids)
         for (const q of with_(id)) {
@@ -930,7 +986,7 @@ export function sbAct(s, a, now) {
   }
   if (
     (p.lock || (p.grp && pts[p.grp] && pts[p.grp].lock)) &&
-    ["set", "del", "page", "look", "size", "kind"].includes(a.k)
+    ["set", "del", "page", "look", "size", "kind", "zo"].includes(a.k)
   )
     return false;
   if (a.k === "set") {
@@ -1081,7 +1137,55 @@ export function sbAct(s, a, now) {
     if (x < 0 || x > 1 || y < 0 || y > 1) return false;
     let q = withField(withField(p, "zw", String(zw)), "zh", String(zh));
     q = { ...q, x: +x.toFixed(4), y: +y.toFixed(4) };
-    s.sb = { ...s.sb, pts: geoTo({ ...pts, [a.p]: q }, a.p) };
+    const all = snapTo(s, geoTo({ ...pts, [a.p]: q }, a.p), a.p);
+    if (fixedHit(s, all, a.p)) return false;
+    s.sb = { ...s.sb, pts: all };
+    return true;
+  }
+  /* the right-click menu's Snap, Direction and Overlay (the owner's, Nov 20 18:46Z): { k: "zo", p, w: what, v }.
+     w "snap": Snap to grid on or off (v); "fixed": Fixed zone on or off; "flip": v "h" or "v", mirrored that way;
+     "ov": its overlay level, v 1 to 10; "order": v 1 drawn one place higher, -1 one lower, past the next block on its
+     level that it overlaps (or the next one at all when none does) */
+  if (a.k === "zo") {
+    if (p.grp) return false;
+    let q = { ...p };
+    const on = (k) => {
+      if (a.v) q[k] = 1;
+      else delete q[k];
+    };
+    if (a.w === "snap") {
+      if (a.v) delete q.ns;
+      else q.ns = 1;
+    } else if (a.w === "fixed") on("fx");
+    else if (a.w === "flip") {
+      const k = a.v === "v" ? "fv" : a.v === "h" ? "fh" : "";
+      if (!k) return false;
+      if (q[k]) delete q[k];
+      else q[k] = 1;
+    } else if (a.w === "ov") {
+      const v = Math.round(+a.v);
+      if (!(v >= 1 && v <= SB_OV_MOST)) return false;
+      if (v === 1) delete q.ov;
+      else q.ov = v;
+    } else if (a.w === "order") {
+      const d = +a.v > 0 ? 1 : -1,
+        me = sbOrder(a.p, p),
+        rest = Object.entries(pts)
+          .filter(([id, b]) => id !== a.p && !b.grp && sbOv(b) === sbOv(p))
+          .map(([id, b]) => [sbOrder(id, b), b])
+          .filter(([k]) => (d > 0 ? k > me : k < me))
+          .sort((x, y) => d * (x[0] - y[0])),
+        hit = rest.findIndex(([, b]) => sbOverlap(s, p, b, WW, WH)),
+        at = hit >= 0 ? hit : 0;
+      if (!rest.length) return false;
+      const past = rest[at][0],
+        next = rest[at + 1] ? rest[at + 1][0] : past + d;
+      q.zo = (past + next) / 2;
+    } else return false;
+    let all = geoTo({ ...pts, [a.p]: q }, a.p);
+    if (a.w === "snap" || a.w === "flip") all = snapTo(s, all, a.p);
+    if (fixedHit(s, all, a.p)) return false;
+    s.sb = { ...s.sb, pts: all };
     return true;
   }
   /* its Purpose (plan Phase 2): one block, four purposes. It keeps its spot, shape, color and every box it has; a
