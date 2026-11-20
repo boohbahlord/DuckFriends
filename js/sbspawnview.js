@@ -70,6 +70,7 @@ import {
   sbOlColor,
   sbOlRows,
   SB_OL_DEF,
+  boardDuck,
 } from "./sandboxrules.js";
 import {
   boxText,
@@ -175,7 +176,7 @@ function placeAt(n, c, size) {
 const SHAPE_PX = new Map();
 function shapePic(s, p, css, solid = false) {
   const [x0, y0, x1, y1] = sbZoneBox(s, p, W, H),
-    [ux, uy] = sbOnBoard(s) ? [0.03, 0.08] : [48 / W, 48 / H],
+    [ux, uy] = sbOnBoard(s) ? boardDuck(s) : [48 / W, 48 / H],
     cx = Math.max(1, Math.round(((x1 - x0) / ux) * 4)),
     cy = Math.max(1, Math.round(((y1 - y0) / uy) * 4)),
     key = `${sbShape(p)} ${sbSize(p)} ${sbRot(p)} ${cx} ${cy} ${css} ${solid}`;
@@ -599,7 +600,10 @@ export function sbNearPoint(s, me) {
   for (const [id, p] of Object.entries(ptsOf(s))) {
     if (p.grp) continue;
     const d = board
-      ? Math.hypot((p.x - me.x) / 0.03, (p.y - me.y) / 0.08)
+      ? Math.hypot(
+          (p.x - me.x) / boardDuck(s)[0],
+          (p.y - me.y) / boardDuck(s)[1],
+        )
       : Math.hypot((p.x - me.x) * W, (p.y - me.y) * H);
     if (d < bd) {
       bd = d;

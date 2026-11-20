@@ -13833,6 +13833,10 @@ html.moving .mgj-field {
 .sb-board:not(.sb-tint) .mgj-field::before {
   display: none;
 }
+/* Sandbox's Board size over 100%: what's off the screen's board stays hidden as the camera slides (game.js boardCam) */
+.game.sb-big .sb-board {
+  overflow: hidden;
+}
 .mgj-field::before {
   content: "";
   position: absolute;
