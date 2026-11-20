@@ -102,6 +102,19 @@ Check with code before pictures (console errors, overlaps, the right element sho
 - One merge window: ready PRs wait, then merge together after one shared test and one deploy.
 - A quick question ("is it live?") gets a quick look, not a full test.
 
+## One sheet per mechanic (the owner's core principle, Nov 20 21:47Z/21:48Z; why: /mnt/project-files/adam/code-health.md)
+- Zombies, players and computer players, hits and gore, guns and their drawings, NPC brains: each lives in ONE module. The
+  mode that defines it is the base (Dead Ducks Arcade for zombies, players, computer players and gore); other modes give
+  only their numbers through their mode profile ("this is the AI sheet; if this mode, then this"). Never a copy. A second
+  sheet needs a reason from real game-programming practice written at its top ("easier to copy" never is).
+- Search (`git grep` the behavior) before writing anything; extend what exists with a profile field.
+- No new scattered `?? n` defaults in game rules: numbers live in js/gamedefaults.js or the mode profile.
+- No checks of a mode's name outside the mode profiles: code asks the profile what the mode has.
+- One owner module per state key; only it writes that key.
+- Files stay under ~1,500 lines; split by mechanic.
+- Replacing something deletes the old path in the same PR.
+- A change to a shared mechanic is tested in every mode and screen that uses it, menus included.
+
 ## The owner's rules
 - Function first: fix what's broken in the game modes before adding new things.
 - Show a plan and wait for a go before big changes. Ask before any brand-new idea (a new mode, map, mechanic or
