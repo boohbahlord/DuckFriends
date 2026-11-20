@@ -33,6 +33,7 @@ import { euclidScene, euclidMini } from "./euclid.js";
 import { vellumScene, vellumMini } from "./vellum.js";
 import { NWK_VARIANTS, isNwk, nwkScene, nwkSVG } from "./nwk.js";
 import { seenDuck, seenName } from "./looks.js";
+import { isUmap } from "./umaprules.js";
 
 export const MAPS = [
   [
@@ -133,10 +134,21 @@ export const mapForm = (id) =>
 export const mapName = (id) =>
   id === "cabin"
     ? "Duck Cabin"
-    : ([...MAPS, ...MAP_VARIANTS].find((m) => m[0] === id) || MAPS[0])[1];
+    : isUmap(id)
+      ? (UMAPS[id] || {}).t || "A made map"
+      : ([...MAPS, ...MAP_VARIANTS].find((m) => m[0] === id) || MAPS[0])[1];
+/* the maps the host made and brought into the room (s.umap: umaprules.js), as the room last said; net.js and online.js
+   keep it up to date, so a map's name and picture are there wherever a map is shown */
+let UMAPS = {};
+export const useUmaps = (u) => {
+  UMAPS = u || {};
+};
+export const umapOf = (id) => UMAPS[id] || null;
 
 /* a small picture of each map for the Map window (the world only, no columns) */
 export function mapMini(id) {
+  if (isUmap(id))
+    return `<div class="mini-map mm-made">${UMAPS[id] ? `<img src="${UMAPS[id].d}" alt="" draggable="false">` : ""}</div>`;
   if (id === "sky")
     return `<div class="mini-map mm-sky"><i class="mm-sun"></i><i class="mm-cloud" style="left:8%;top:18%"></i><i class="mm-cloud" style="left:58%;top:52%"></i></div>`;
   if (isNwk(id))
@@ -1167,6 +1179,7 @@ export const SCENES = {
 
 /* a map's scene in its layer (page: the game's own map, not a preview) */
 function sceneOf(map, layer, s, cur, page = false) {
+  if (isUmap(map)) return madeScene(layer, map);
   return isNwk(map)
     ? nwkScene(layer, map, page)
     : map === "sky"
@@ -1191,6 +1204,74 @@ function sceneOf(map, layer, s, cur, page = false) {
                         ? cabinScene(layer)
                         : nightScene(layer);
 }
+/* ---------- a made map (umaps.js, umaprules.js): its picture, filling the screen ----------
+   The picture is already pixels (UMAP.W × UMAP.H, in the pixel look's colors); it's drawn on a canvas one pixel to a
+   grid square of the pixel look (pixel.js gridPx), as the book's map is, cut to fill the screen and never smoothed, so its
+   pixels are the same size as every other map's (the owner's, Nov 19 22:59Z: "compressed to the same pixel quality as
+   all of the other maps") */
+function madeScene(layer, id) {
+  const sc = document.createElement("div"),
+    cv = document.createElement("canvas"),
+    img = new Image();
+  sc.className = "scene";
+  cv.className = "made-px";
+  cv.setAttribute("aria-hidden", "true");
+  sc.append(cv);
+  layer.append(sc);
+  layer.classList.add("px-own"); // (drawn as pixels already: the map filter leaves it)
+  let src = "",
+    w = 0,
+    h = 0;
+  const draw = () => {
+    const m = UMAPS[id],
+      g = gridPx() || 2,
+      W = Math.max(1, Math.ceil(layer.clientWidth / g)),
+      H = Math.max(1, Math.ceil(layer.clientHeight / g));
+    if (m && m.d !== src) {
+      src = m.d;
+      img.src = src;
+      img
+        .decode()
+        .then(() => ((w = 0), draw()))
+        .catch(() => {});
+      return;
+    }
+    if (!img.naturalWidth || (W === w && H === h)) return;
+    [w, h] = [W, H];
+    cv.width = W;
+    cv.height = H;
+    cv.style.width = (W * g).toFixed(1) + "px";
+    cv.style.height = (H * g).toFixed(1) + "px";
+    const x = cv.getContext("2d"),
+      k = Math.max(W / img.naturalWidth, H / img.naturalHeight); // (cut to fill: the middle of the picture)
+    x.imageSmoothingEnabled = false;
+    x.drawImage(
+      img,
+      (W - img.naturalWidth * k) / 2,
+      (H - img.naturalHeight * k) / 2,
+      img.naturalWidth * k,
+      img.naturalHeight * k,
+    );
+  };
+  draw();
+  return {
+    update: () => draw(),
+    destroy() {
+      sc.remove();
+      layer.classList.remove("px-own");
+    },
+  };
+}
+/* the look a made map wears: the book's (map-is-nwk, and its form's own) or the game's own */
+const madeLooks = (id) => {
+  const ui = (UMAPS[id] || {}).ui || "";
+  return [
+    "map-is-made",
+    ...(ui ? ["map-is-nwk"] : []),
+    ...(ui && ui !== "nwk" ? ["map-is-" + ui] : []),
+  ];
+};
+
 /* a map moving in a small box of its own (the map vote's tiles, under the pointer or a finger, and the one you voted
    for): the same scene as in the game, without the page's own map look; a form plays as itself (zoom, black and white) */
 export function mountPreview(box, id) {
@@ -1227,8 +1308,7 @@ export function mountMap(layer, s) {
        Ducks Arcade UI alone") */
     looks = [
       "map-on",
-      "map-is-" + base,
-      "map-is-" + map,
+      ...(isUmap(map) ? madeLooks(map) : ["map-is-" + base, "map-is-" + map]),
       ...(s.options.mode === "surv" ? ["map-is-nwk"] : []),
     ];
   layer.className = `map-layer map-${base} map-${map}`;

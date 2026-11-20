@@ -9978,12 +9978,21 @@ html.moving .ec-glow {
     transform: translate(-50%, -50%) scale(1.03);
   }
 }
-.nwk-px {
+.nwk-px,
+.made-px {
   position: absolute;
   left: 0;
   top: 0;
   image-rendering: pixelated;
   pointer-events: none;
+}
+/* a made map's small picture (umaps.js): its own pixels, cut to fill */
+.mm-made img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+  display: block;
 }
 .mm-rabbit {
   background: url(../assets/px/maps/rabbit-hole.webp) center / cover;
@@ -21982,6 +21991,99 @@ p.sb-ties {
   align-items: center;
   gap: 0.5rem;
 }
+/* Made maps (js/umaps.js): Make a map and My maps, and a made map's picture wherever a map's picture shows */
+.gs-pic > img.gs-made,
+.vt-still.vt-made,
+.mm-made img,
+.um-pic img {
+  image-rendering: pixelated;
+}
+.um-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.um-pic {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 9;
+  max-width: 100%;
+  border: 0.14rem solid var(--line);
+  border-radius: 0.6rem;
+  overflow: hidden;
+  background: #111;
+}
+.um-pic img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.um-row {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.6rem;
+}
+.um-in {
+  width: 100%;
+  min-width: 0;
+}
+textarea.um-in {
+  resize: vertical;
+}
+.um-form .acts,
+.um-list-win .acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+}
+.um-list-win {
+  width: min(36rem, 100%);
+}
+.um-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0 0.3rem 0 0;
+  max-height: min(30rem, 60dvh);
+  overflow: auto;
+}
+.um-item {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+}
+.um-item .mini-map {
+  flex: none;
+  width: 8.8rem;
+  height: 4.95rem;
+}
+.um-say {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.um-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.3rem;
+}
+@media (max-width: 30rem) {
+  .um-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.25rem;
+  }
+  .um-item .mini-map {
+    width: 6.4rem;
+    height: 3.6rem;
+  }
 /* Sandbox Phase 4, floors (js/sbfloors.js): a floor up high, its front edge under it, darker */
 .sb-face {
   z-index: 3;
