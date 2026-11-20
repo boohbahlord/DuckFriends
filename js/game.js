@@ -1474,6 +1474,8 @@ function drawDucks(now = clockNow()) {
   const ghosts = (hang && s.hang && s.hang.ghost) || {},
     bodyOf = (id) => id.endsWith(BODY) && ghosts[id.slice(0, -BODY.length)]; // Duck Cabin's ghosts (hangout/ghosts.js): each one's body lies where it fell
   const posOf = (id) =>
+    hang && !bodyOf(id) ? world.ladderPos(posOf0(id)) : posOf0(id); // (partway up a ladder: drawn on it, world.js)
+  const posOf0 = (id) =>
     bodyOf(id)
       ? { ...bodyOf(id), j: 0 }
       : shoved(

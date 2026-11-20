@@ -1095,23 +1095,47 @@ export function mountWorld(board, api) {
      push away (or sideways off it) and it lets go and falls. True while my duck is on it (nothing else moves it) */
   const CLIMB = 150; // px a second
   function climb(me, x, y, ax0, ay0, dt, ev) {
+    const turn = (A) => (A.side === "w" ? [-ay0, ax0] : [ax0, ay0]); // (the canopy's, from its left: pushing east climbs it)
+    const d =
+      !me.lad && !me.j && !me.jf && me.vz == null && L.ladderDown(x, y, me.z);
+    if (d) {
+      const [ax, ay] = turn(d.A);
+      if (ay < -0.5 && Math.abs(ax) < 0.7) {
+        me.x = d.x / L.W;
+        me.y = d.y / L.H;
+        x = d.x;
+        y = d.y;
+        me.lad = true;
+        ev.force = true;
+      }
+    } // (on the roof at its top, turning back to it: onto the ladder, to climb down it, drawn on it: layout.js onLadder)
     const A = !me.j && !me.jf && L.ladderAt(x, y);
     if (!A) return (me.lad = false);
     const top = L.ladderTop(A),
-      [ax, ay] = A.side === "w" ? [-ay0, ax0] : [ax0, ay0]; // (the canopy's, from its left: pushing east climbs it)
+      [ax, ay] = turn(A);
     if (!me.lad) {
       if (!(ay > 0.5 && Math.abs(ax) < 0.7 && me.vz == null)) return false;
       me.lad = true;
     }
-    if (ay < -0.3 || Math.abs(ax) > 0.7) {
+    if (Math.abs(ax) > 0.7) {
       me.lad = false;
       if (me.z > floor(me, x, y) + L.STEP) {
         me.vz = 0;
         me.top = me.z;
       }
       return false;
-    } // (let go: it falls, or walks off the bottom)
+    } // (let go sideways: it falls)
     me.vz = null;
+    if (ay < -0.3) {
+      const g = floor(me, x, y);
+      me.z = Math.max(g, me.z - CLIMB * dt);
+      ev.moved = true;
+      ev.climb = true;
+      if (me.z > g + 0.5) return true;
+      me.lad = false;
+      me.z = me.b = g;
+      return false;
+    } // (pulling away: down it, at the ladder's pace, and at its foot walking off)
     if (ay > 0.3) {
       me.z = Math.min(top.h, me.z + CLIMB * dt);
       ev.moved = true;
@@ -1252,7 +1276,13 @@ export function mountWorld(board, api) {
     place(p, h) {
       const x = p.x * L.W,
         y = p.y * L.H;
-      return toScreen(x, y, h ?? L.floorH(x, y, p.z)); // (on a roof: on it)
+      return toScreen(x, y, h ?? p.lh ?? L.floorH(x, y, p.z)); // (on a roof: on it; lh: a duck on a ladder, over its feet's ground: ladderPos)
+    },
+    /* a duck's spot as it is drawn: partway up a ladder, on the ladder itself (layout.js onLadder), over the ground its
+       feet stand on (lh); anywhere else as it is */
+    ladderPos(p) {
+      const o = p && L.onLadder(p.x * L.W, p.y * L.H, +p.z || 0);
+      return o ? { ...p, x: p.x + o.dx / L.W, lh: o.g } : p;
     },
     /* a point on the board (px) → the spot on the ground seen there (the front-most one, where heights overlap) */
     unplace(px, py) {
@@ -1273,7 +1303,13 @@ export function mountWorld(board, api) {
     },
     key(id, pos) {
       const a = at(id, pos),
-        h = !inside && L.roofHoleOver(a.x, a.y, a.z);
+        h = !inside && L.roofHoleOver(a.x, a.y, a.z),
+        lad = L.onLadder(a.x, a.y, a.z);
+      if (lad && lad.key != null)
+        return Math.max(
+          Math.round(lad.key) + 11,
+          Math.round(L.sortY(a.x, a.y, a.z)) + 10,
+        ); // (up a ladder: in front of it, on it)
       return h
         ? Math.round(h.key) + 11
         : Math.round(L.sortY(a.x, a.y, a.z)) + 10; // (seen from outside through a hole in a roof: over that roof, layout.js)

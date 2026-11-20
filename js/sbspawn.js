@@ -1125,7 +1125,7 @@ function statsAt(q) {
 }
 /* put duck id where it spawns now (a respawn for players, or a spawn whose Players tab is on for it), with what that
    gives it; nothing when there's none */
-export function sbPlaceDuck(s, id) {
+export function sbPlaceDuck(s, id, now = 0) {
   const q = sbPlayerSpot(s, id, WW, WH, (x, y, z) =>
     standable(x * WW, y * WH, z),
   );
@@ -1136,6 +1136,7 @@ export function sbPlaceDuck(s, id) {
     x: q.x,
     y: q.y,
     ...(sbOnWorld(s) ? { z: q.z || 0 } : {}),
+    ...(now ? { tp: now } : {}), // (put there: my own screen takes the host's word for it, game.js)
   };
   const st = statsAt(q),
     pl = { ...((s.sb && s.sb.pl) || {}) };
@@ -1191,8 +1192,8 @@ function backAt(s, sp) {
 export function sbTick(s, now, H) {
   if (!spawnsHere(s) || !s.sb) return false;
   let ch = false;
-  /* a duck that joins: where it spawns (a spawn's Players tab, or a respawn for players), if there's one. The ducks here
-     when Sandbox began only get noted */
+  /* a duck that joins, or every duck as the Sandbox begins: where it spawns (a spawn's Players tab, or a respawn for
+     players), if there's one */
   const ids = s.seat.filter((id) => s.pos[id]),
     seen = s.sb.seen;
   if (
@@ -1200,7 +1201,8 @@ export function sbTick(s, now, H) {
     ids.length !== seen.length ||
     ids.some((id) => !seen.includes(id))
   ) {
-    if (seen) for (const id of ids) if (!seen.includes(id)) sbPlaceDuck(s, id);
+    for (const id of ids)
+      if (!seen || !seen.includes(id)) sbPlaceDuck(s, id, now); // (at the start too: a made game mode's players start at its players' spawn, "they start, join and come back from being down here")
     s.sb = { ...s.sb, seen: ids };
     ch = true;
   }

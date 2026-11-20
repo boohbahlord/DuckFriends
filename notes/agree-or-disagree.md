@@ -7309,3 +7309,10 @@ Adam: the right-click menu gets Lock / Unlock; a locked block can't be moved, re
   "then", Seriat values and repeats as usual, `#` explains. `to <goal>` sets a destination; the pointers then bend the path
   that way by that much and it still arrives; parts in order share the trip (`- >2`: straight, then bend). Bend kinds
   offered: 1 bow (recommended), 2 weave, 3 dogleg (or all three as `>2`, `>~2`, `>|2`). Waiting on his pick; not built.
+
+## Owner, Nov 20 16:57Z (on Noah's restroom redo #712, with a picture circling the gas station's SW corner where the roof meets the broken wall: /mnt/project-files/noah/restroom/owner-circle-1657Z.png)
+"have this circled corner have it's roof broken as a ledge with it's hieght showing in it's solid since it is also 3d, so that way it is consistent
+
+then we make the ladder animation not suck. The walk up the ladder should be where ur duck is on the ladder as they move up it BEOFRE they are on the roof of the pump"
+
+Decided (Adam): 1 Noah: in #712, the circled corner's roof breaks as a ledge whose height shows as a solid 3D face (like the wall's), so the roof reads as thick as everything else. 2 Solomon: climbing the pump's ladder shows the duck on the ladder going up rung by rung before it stands on the pump roof.
