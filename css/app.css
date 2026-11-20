@@ -3382,6 +3382,16 @@ html:not(.keyboard) .l4-board .gduck:not(.mine) .gduck-name > .rainbow {
     0 0 0.1rem #000,
     0 0.05rem 0.05rem #000;
 } /* (a dark edge on the letters, so a green or red name still reads on the bar) */
+/* a name inside the HP bar under a duck: smaller letters, in every font alike (each goes by its own --fk), and the bar
+   as tall as before, so my own bar under my duck is easy to see (the owner's, Nov 20 18:46Z) */
+:where(.gduck.php:not(.downed) .gduck-name) {
+  line-height: calc(0.76rem * var(--ts, 1) * 1.3);
+  min-width: calc(var(--sz, 2.6rem) * 0.9);
+  text-align: center;
+} /* (and as wide as the duck at least: the bar stays long however short the name) */
+:where(.gduck.php:not(.downed) .gduck-name) > :is(.pname, .rainbow) {
+  font-size: calc(0.66em * var(--fk, 1));
+}
 .gduck-hp i,
 .gduck-hp b {
   position: absolute;
@@ -20393,6 +20403,19 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   white-space: nowrap;
   cursor: pointer;
 }
+/* Tools' Overlay level: 1 to 9 and 0, five a row */
+.sb-tools-ov {
+  display: grid;
+  grid-template-columns: repeat(5, 2.2rem);
+  gap: 0.25rem;
+}
+.sb-tools-ov .sb-tools-opt {
+  text-align: center;
+  padding: 0.35rem 0;
+}
+.sb-tools-ov .sb-tools-opt.on {
+  border-color: var(--accent, #ffd23f);
+}
 @media not all and (any-pointer: fine) {
   html:not(.keyboard) .game .sb-tools:not([hidden]) {
     display: flex;
@@ -21875,10 +21898,47 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 }
 .sbh-nav {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.6rem;
-  margin-top: 0.6rem;
+  margin-top: 0.8rem;
+}
+/* the manual's path (Help › Build › Snap): each step but the last goes back there */
+.sbh-path {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0 2rem 0.5rem 0;
+  font-size: 0.95rem;
+}
+.sbh-crumb {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0.1rem 0.15rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+/* a page of buttons: the parts, a part's topics, the Seriat folders and files */
+.sbh-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: 0.4rem;
+}
+.sbh-list .sbh-go {
+  text-align: left;
+  white-space: normal;
+}
+.sbh-file {
+  margin: 0;
+  max-height: 60vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 /* Sandbox's build blocks drawn as pixels (js/sbspawnview.js shapePic, js/sblootview.js lootRing): one picture pixel per
@@ -22450,4 +22510,42 @@ textarea.um-in {
   .sb-epwin .sb-row {
     grid-template-columns: minmax(0, 1fr) 6.5rem;
   }
+}
+/* Direction's Rotate (js/sbrotate.js): a ring in the middle of the block, its circular arrow on it where the block faces */
+.sb-rot {
+  position: fixed;
+  z-index: 6400;
+  width: 4.4rem;
+  height: 4.4rem;
+  margin: -2.2rem 0 0 -2.2rem;
+  border: 0.15rem dashed #fffc;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0.15rem #0006;
+  pointer-events: none;
+}
+.sb-rot-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2rem;
+  height: 2rem;
+  margin: -1rem 0 0 -1rem;
+  padding: 0.25rem;
+  border: 0.12rem solid #123;
+  border-radius: 50%;
+  background: #fff;
+  color: #123;
+  cursor: grab;
+  touch-action: none;
+  pointer-events: auto;
+  transform: rotate(var(--a, 0deg)) translateY(-2.2rem)
+    rotate(calc(-1 * var(--a, 0deg)));
+}
+.sb-rot-knob:active {
+  cursor: grabbing;
+}
+.sb-rot-knob svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }

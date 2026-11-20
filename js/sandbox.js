@@ -25,6 +25,9 @@ import {
   SB_POINTS,
   SB_RIGHTS,
   SB_NOCOL,
+  SB_OV_MOST,
+  sbOv,
+  sbSnaps,
 } from "./sandboxrules.js";
 import {
   buildRows,
@@ -57,10 +60,12 @@ import {
   pointsAt,
   sbCheat,
   sbClip,
+  sbLevel,
   sbPresets,
   showMenu,
 } from "./sbmenu.js";
 import { mountSbDrag } from "./sbdrag.js";
+import { mountRotate } from "./sbrotate.js";
 import { sbOffZ } from "./sbout.js";
 import { nameHTML } from "./name.js";
 
@@ -113,7 +118,19 @@ export const SB_SHEET = [
   ],
   [
     "Right-click",
-    "On a thing you placed: Properties, Copy, Cut (on a selection: Copy all, Cut all). On an empty spot: Paste. A long press does it on a phone. Shift+V pastes where the mouse is.",
+    "On a thing you placed: Properties, Copy, Cut, Lock, Snap, Direction and Overlay (on a selection: Copy all, Cut all). On an empty spot: Paste. On a phone, hold your finger still on it for half a second. Shift+V pastes where the mouse is.",
+  ],
+  [
+    "Snap",
+    "Zones are made of the small hitbox tiles on the ground: a tile is the zone's when its shape covers 0.6 of it or more. Snap to grid (on by default) keeps a zone on the ground's tiles and turns it a quarter at a time; with it off the zone goes anywhere, and the 0.6 rule still counts. Fixed zone: it can't be put on another zone on its overlay level, and none can be put on it. Only building changes.",
+  ],
+  [
+    "Direction",
+    "Flip horizontally, Flip vertically, or Rotate: a ring with a circular arrow shows in the zone's middle. Drag the arrow round to turn it.",
+  ],
+  [
+    "Overlay",
+    "Set overlay level puts a zone on a level from 1 to 10. While building you see only the level you're on: Shift+O then a number key (0 is 10), or Overlay level at the bottom of Tools on a phone. Move up and Move down are not an overlay level: they only change which zone is drawn on top of which.",
   ],
   [
     "Presets",
@@ -406,7 +423,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
       box.setAttribute("aria-label", w.name);
       const body =
         k.open === "c"
-          ? `${mayBuild(R) ? `<p class="sb-cheatrow"><button type="button" class="btn small${sbCheat.on ? "" : " ghost"}" data-cheat aria-pressed="${sbCheat.on}">Cheat mode: ${sbCheat.on ? "on" : "off"}</button> <kbd>Shift</kbd>+<kbd>C</kbd></p>` : ""}<dl class="sb-keys">${SB_SHEET.map(([kk, t]) => `<dt><kbd>${kk}</kbd></dt><dd>${esc(t)}</dd>`).join("")}</dl>`
+          ? `<p class="sb-cheatrow">${mayBuild(R) ? `<button type="button" class="btn small${sbCheat.on ? "" : " ghost"}" data-cheat aria-pressed="${sbCheat.on}">Cheat mode: ${sbCheat.on ? "on" : "off"}</button> <kbd>Shift</kbd>+<kbd>C</kbd> ` : ""}<button type="button" class="btn small ghost" data-manual>Help manual</button></p><dl class="sb-keys">${SB_SHEET.map(([kk, t]) => `<dt><kbd>${kk}</kbd></dt><dd>${esc(t)}</dd>`).join("")}</dl>`
           : !can
             ? `<p class="sb-none">Only the host can change this.</p>`
             : opts.length
@@ -500,18 +517,33 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
     tList.hidden = !on;
     tBtn.setAttribute("aria-expanded", on ? "true" : "false");
     if (!on || !R) return;
-    tList.innerHTML = Object.entries(SB_WINS)
-      .filter(
-        ([key, w]) =>
-          w.all ||
-          sbMay(R.state, R.me, key) ||
-          (key === "p" && godMay(R.state, R.me)),
-      )
+    tList.innerHTML =
+      Object.entries(SB_WINS)
+        .filter(
+          ([key, w]) =>
+            w.all ||
+            sbMay(R.state, R.me, key) ||
+            (key === "p" && godMay(R.state, R.me)),
+        )
+        .map(
+          ([key, w]) =>
+            `<button type="button" class="sb-tools-opt" data-k="${key}">${esc(w.name)}</button>`,
+        )
+        .join("") +
+      (rights() && sbCheat.on
+        ? `<button type="button" class="sb-tools-opt" data-ovs>Overlay level (${sbLevel.v})</button>`
+        : "");
+  };
+  /* Tools' Overlay level: 1 to 9, then 0 (level 10), in the list's place */
+  const levelList = () => {
+    tList.innerHTML = `<div class="sb-tools-ov">${[
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+    ]
       .map(
-        ([key, w]) =>
-          `<button type="button" class="sb-tools-opt" data-k="${key}">${esc(w.name)}</button>`,
+        (v) =>
+          `<button type="button" class="sb-tools-opt${v === sbLevel.v ? " on" : ""}" data-ov="${v}" aria-label="Overlay level ${v}">${v % 10}</button>`,
       )
-      .join("");
+      .join("")}</div>`;
   };
   const openWin = (key) => {
     showList(false);
@@ -531,6 +563,11 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
   };
   tools.addEventListener("click", (e) => {
     const o = e.target.closest(".sb-tools-opt");
+    if (o && o.dataset.ovs != null) return levelList();
+    if (o && o.dataset.ov) {
+      showList(false);
+      return setLevel(+o.dataset.ov);
+    }
     if (o) return openWin(o.dataset.k);
     if (e.target.closest(".sb-tools-btn")) showList(tList.hidden);
   });
@@ -668,6 +705,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
         kind: carry.kind,
         x: at.x,
         y: at.y,
+        ov: sbLevel.v,
         ...(carry.col ? { col: carry.col } : {}),
         ...(sbPresets[carry.kind] ? { pt: sbPresets[carry.kind] } : {}),
       });
@@ -718,7 +756,15 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
       if (to.some((c) => c.x < 0 || c.x > 1 || c.y < 0 || c.y > 1))
         return toast("It doesn't fit there: one of them would be off the map.");
       for (const c of to)
-        R.send({ t: "sb", k: "add", kind: c.pt.k, x: c.x, y: c.y, pt: c.pt });
+        R.send({
+          t: "sb",
+          k: "add",
+          kind: c.pt.k,
+          x: c.x,
+          y: c.y,
+          pt: c.pt,
+          ov: sbLevel.v,
+        });
       return;
     }
     R.send({
@@ -728,6 +774,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
       x: at.x,
       y: at.y,
       pt: sbClip.pt,
+      ov: sbLevel.v,
     });
   };
   /* a block's name in the menu's pick list: "Zone 750762 (blue)" */
@@ -740,6 +787,73 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
   const nameOf = (q) =>
     `${KIND[q.k] || "Block"} ${boxText(q, "name") || ""}`.trim() +
     ` (${q.col === SB_NOCOL ? "no color" : q.col})`;
+  /* the right-click menu's Snap, Direction and Overlay (the owner's, Nov 20 18:46Z), each opening its own list in the
+     menu's place, "kind of like how it has in Microsoft Paint". Nothing on a locked one changes */
+  const zo = (id, w, v) => getR().send({ t: "sb", k: "zo", p: id, w, v });
+  const sub = (cx, cy, items) => () =>
+    showMenu(S, cx, cy, [
+      ...items,
+      { label: "Back", act: () => menuAt(cx, cy, false) },
+    ]);
+  const zoneItems = (id, p, cx, cy) => {
+    const off = !!p.lock;
+    return [
+      {
+        label: "Snap ›",
+        off,
+        act: sub(cx, cy, [
+          {
+            label: `Snap to grid: ${sbSnaps(p) ? "on" : "off"}`,
+            act: () => zo(id, "snap", !sbSnaps(p)),
+          },
+          {
+            label: `Fixed zone: ${p.fx ? "on" : "off"}`,
+            act: () => {
+              zo(id, "fixed", !p.fx);
+              if (!p.fx)
+                setTimeout(() => {
+                  const q = getR().state.sb.pts[id];
+                  if (q && !q.fx)
+                    toast(
+                      "It can't be fixed while it's on another zone. Move it off first.",
+                    );
+                }, 400);
+            },
+          },
+        ]),
+      },
+      {
+        label: "Direction ›",
+        off,
+        act: sub(cx, cy, [
+          { label: "Flip horizontally", act: () => zo(id, "flip", "h") },
+          { label: "Flip vertically", act: () => zo(id, "flip", "v") },
+          { label: "Rotate", act: () => rot.show(id) },
+        ]),
+      },
+      {
+        label: "Overlay ›",
+        off,
+        act: sub(cx, cy, [
+          {
+            label: `Set overlay level (${sbOv(p)}) ›`,
+            act: () =>
+              showMenu(
+                S,
+                cx,
+                cy,
+                [...Array(SB_OV_MOST)].map((_, i) => ({
+                  label: `Overlay level ${i + 1}${sbOv(p) === i + 1 ? " ✓" : ""}`,
+                  act: () => zo(id, "ov", i + 1),
+                })),
+              ),
+          },
+          { label: "Move up", act: () => zo(id, "order", 1) },
+          { label: "Move down", act: () => zo(id, "order", -1) },
+        ]),
+      },
+    ];
+  };
   /* pick: one of the blocks under the pointer, chosen from the list (else the newest, on top) */
   const menuAt = (cx, cy, pointOnly, pick) => {
     const R = getR(),
@@ -820,6 +934,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
               act: () =>
                 getR().send({ t: "sb", k: "lock", p: id, on: !p.lock }),
             },
+            ...zoneItems(id, p, cx, cy),
             ...others,
           ]
         : [{ label: "Paste", act: () => paste(at) }],
@@ -852,6 +967,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
     spotAt: (cx, cy) => spotAt && spotAt(cx, cy),
     screenAt: (o) => screenAt && screenAt(o),
   });
+  const rot = mountRotate(S, getR, () => rights() && sbCheat.on);
   seat();
   const pick = (i) => {
     const R = getR(),
@@ -938,6 +1054,12 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
       toggleCheat();
       return;
     }
+    if (e.target.closest("[data-manual]")) {
+      sbClose(k, false);
+      paint();
+      import("./sbhelp.js").then((m) => m.openSbHelp(""));
+      return;
+    }
     if (e.target.closest(".sb-x")) {
       sbClose(k, false);
       paint();
@@ -990,6 +1112,16 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
       return "";
     return l;
   };
+  /* the overlay level I build on (sbmenu.js sbLevel): Shift+O, then a number key within OV_WAIT ms */
+  const OV_WAIT = 2500;
+  let ovWait = 0;
+  const setLevel = (v) => {
+    sbLevel.v = Math.min(SB_OV_MOST, Math.max(1, v));
+    closeMenu();
+    rot.hide();
+    drag.clear();
+    toast(`Overlay level ${sbLevel.v}`);
+  };
   const keydown = (e) => {
     if (e.key === "Tab" && k.open) {
       sbClose(k, false); // (Tab's window takes the place)
@@ -1014,6 +1146,27 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
       e.preventDefault();
       e.stopImmediatePropagation();
       if (!e.repeat) toggleCheat();
+      return;
+    }
+    /* Shift+O, then a number key: that overlay level (0 is 10) */
+    if (e.shiftKey && e.code === "KeyO" && rights() && sbCheat.on) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if (!e.repeat) {
+        ovWait = performance.now() + OV_WAIT;
+        toast(
+          `Overlay level ${sbLevel.v}: press 1 to 9, or 0 for 10.`,
+          OV_WAIT,
+        );
+      }
+      return;
+    }
+    const ovd = /^(?:Digit|Numpad)([0-9])$/.exec(e.code);
+    if (ovd && performance.now() < ovWait) {
+      e.preventDefault();
+      e.stopImmediatePropagation(); // (no weapon switches)
+      ovWait = 0;
+      setLevel(+ovd[1] || 10);
       return;
     }
     if (e.shiftKey && e.code === "KeyV" && !e.repeat) {
@@ -1146,6 +1299,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
         removeEventListener(t, swallow, true);
       removeEventListener("contextmenu", menu, true);
       drag.destroy();
+      rot.destroy();
       closeMenu();
       chip.remove();
       bible.remove();
