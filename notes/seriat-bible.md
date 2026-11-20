@@ -193,7 +193,7 @@ Every Seriat value works anywhere a number goes below: `wait 1:3`, `every [2,4]s
 17. **Zones** (owner Nov 20 03:10Z: yes): a zone's Brain box takes a file that runs for the zone and moves its squares
     (its Potential order). Events: `every [2,4]s step`, `when enter step 2` (a player steps in), `when spawn step` (one
     of its tabs made something in it). Words: `step` / `step n`, `squares 3:5` (squares at once), `size 1.5` (square
-    size, duck lengths), `order shuffle` (random, shuffle, line, alternating, all), `dir right` (right, left, up, down,
+    size, duck lengths), `order shuffle` (random, absolute, shuffle, shuffleonce, rows, columns, line, alternating, all; absolute and the extra shuffles from V141), `dir right` (right, left, up, down,
     upright, upleft, downright, downleft, none); at a file's top they're for every zone that names it. Names inside a
     when: `steps`, `squares`, `size`, `inside` (players standing in it). Any file reaches a zone by its variable name:
     `((zone 'Pit' size 2))`, `\if zone 'Pit' steps mod 3 == 0\`. Live V136.

@@ -9,6 +9,52 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v141",
+    version: 141,
+    date: "Nov 20, 2026",
+    title: "More ways to pick squares",
+    news: [
+      "For Sandbox: Potential order has Absolute (random over the whole map; only the picks that land in the zone work) and four shuffles: a new order each round, the same order each round, by rows and by columns. Seriat's order takes absolute, shuffleonce, rows and columns too.",
+      "For Sandbox: dropdowns in a zone's window are wide enough to read on a phone.",
+    ],
+  },
+  {
+    id: "v140",
+    version: 140,
+    date: "Nov 20, 2026",
+    title: "Looks and locks",
+    news: [
+      "For Sandbox: a zone can have a look: a texture from the maps (Cabin, Downpour, Euclid's Squares, the Kenoma looks), a solid color or your own picture, made into pixels. Make it see-through from 0 to 100%.",
+      "For Sandbox: a Spawn, Respawn or Loot tab works in the zone that shares its variable name or color. New tabs get six numbers as a name until you type one, and a zone's Type box lists what it holds.",
+      "For Sandbox: right-click a block to Lock it: it can't be moved, changed or cut, only copied. One click on a block brings out its handles to resize it.",
+      "For Sandbox: Music in G opens its own window, and the help windows are the game's own again.",
+      "For Sandbox: uploaded pictures are always made into pixels.",
+      "For Survival: zombies no longer shake on the gas pump's roof.",
+    ],
+  },
+  {
+    id: "v139",
+    version: 139,
+    date: "Nov 20, 2026",
+    title: "Outlines and pixel ducks",
+    news: [
+      "For Sandbox: a zone's Outlines give whoever is inside it an outline in the color you pick, seen through walls. Add rows for others in other colors.",
+      "Ducks are now made from real pixel parts, ready before the game starts, so games start smoother.",
+    ],
+  },
+  {
+    id: "v138",
+    version: 138,
+    date: "Nov 20, 2026",
+    title: "Survival, fixed up",
+    news: [
+      "For Survival: games with friends start again (they got stuck on the first wave).",
+      "For Survival: a Max Ammo no longer gives back used defibrillators; only the merchant sells them.",
+      "For Survival: a wave that stops dying out for 20 seconds ends anyway, so a sniper or walkers that never come for you don't hold it open.",
+      "For Survival: every bullet, pellet and arrow does half a point less.",
+    ],
+  },
+  {
     id: "v137",
     version: 137,
     date: "Nov 20, 2026",

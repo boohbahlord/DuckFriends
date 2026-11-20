@@ -1094,12 +1094,22 @@ function hurt(s, i, dmg, w, now, H) {
 const near = (s) =>
   alive(s).filter((o) => !o.hid && !(o.k === "sn" && o.pk === "tree"));
 
+/* how many of the wave are still up (the back line counts as one): Survival ends a wave that stops dying out
+   (survrules.js SV.STALL) */
+const left = (s) => {
+  const gm = gmOf(s);
+  return gm
+    ? alive(s).filter((o) => o.k === "c" || o.k === "s").length +
+        (gm.bk ? 1 : 0)
+    : 0;
+};
 /* what l4ddrules.js asks (every call brings H: what it lends, gmHelp) */
 L4_HOOKS.gm = {
   hurt,
   start,
   tick,
   done,
+  left,
   shot,
   blast,
   fire,

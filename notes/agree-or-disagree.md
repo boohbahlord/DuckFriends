@@ -7230,3 +7230,72 @@ Adam's reading (posted to the owner, building it unless corrected): every block 
 > survival symbol can be a pistol
 
 Adam: Jackal redraws the Survival mode symbol as a pistol (modes.js modeSymbol).
+
+## Owner, Nov 20 03:58Z (project chat, through Moses)
+> emergency
+>
+> the fucking game isnt wanting to play in survival
+>
+> i invited friends to play and it is hung up on survival
+>
+> When player dies, merchant always has unlimited defibs
+>
+> the game should not have you have to kill everything in a wave that doesnt chase you down, like if there is a sniper or walker, the game plays nonetheless or whatever is the case
+>
+> zombies shouldnt viibrate on roof of gas pump
+
+Adam: the hang's first cause was the first round stored as the pair [5, 8] (SV.FIRST) instead of a round, so every round lookup failed. Fixed and live in #636. Solomon: online check, defibs limited, waves end without killing snipers and walkers, no vibrating on the pump roof.
+
+## Owner, Nov 20 04:01Z (Adam's thread)
+> guns dont look like that but we can fix that later
+>
+> any other suggestions for new symbol for survival
+
+## Owner, Nov 20 04:03Z (Adam's thread)
+> have jospeh have more ideas
+
+## Owner, Nov 20 04:05Z (project chat, through Moses)
+> flashlight
+
+Adam: the Survival symbol becomes a flashlight with a short beam, drawn in pixels (Noah).
+
+## Owner, Nov 20 04:08Z (project chat, through Moses)
+> deploy when defib is working
+
+> and other fix
+
+> i need it
+
+Adam: the defib fix (Solomon) and the wave-end fix (Adam: a wave that stops dying out for 20 s ends anyway) deploy together the moment the defib works.
+
+## Owner, Nov 20 04:09Z (project chat, through Moses)
+> reduce all ammo by 0.5 damage and then show me it's damage stats (amount of zombies per wave in survival is multiplied by amount of players in a similiar formula
+
+Adam: in Survival every bullet, pellet, arrow, thrown dagger and beam a duck fires does 0.5 less (never under 0.5); melee, grenades and the merchant's gun stay. The owner gets a table of every gun's damage. Survival's hordes already multiply by the players (24 or 48 each), and the gunmen waves too, so nothing changed there.
+
+## Owner, Nov 20 04:39Z (Adam's thread, with a screenshot of the zone window's "1. Type" row: This zone is Zone / Spawn / Respawn)
+> this should be a thing... we can have a short description at the top here, and it can be displayed it's state in the zone by what are connected to it
+>
+> every tab for spawn is connected by color or variable or both, not by a selection, the first tab is zone only, and it's ties is said in this box. the tabs have six random numbers randomly assigned as numbers until it is typed out, and the ties to their zone is said in a small font list below the description, by declaring their type AND variable OR color (if there is a color)
+>
+> the zones are a tab like the others, but the zones contain the others IF they are assigned IN these windows for it's properties BY variable and/or color
+>
+> description of type and how (simple) > list of types inside of property > the names of variable names that match and/or matching color
+
+## Owner, Nov 20 04:44Z (project chat, through Moses)
+> music settings among others in game settings are a window that pops up or dialog box for that setting
+
+Adam: in Sandbox's G game settings, Music and the other settings with many options open in their own small window when picked, instead of rows inline.
+
+## Owner, Nov 20 04:46Z (project chat, through Moses; screenshot of "Game settings: help" on a white page)
+> why tf is this white?
+> seriat should be different color background
+
+Adam: Sandbox's help windows use the game's own window now; the white pixel page stays the Seriat bible's alone.
+
+## Owner, Nov 20 04:51Z (project chat, through Moses)
+> right click allow a lock option where zone cannot be moved or edited or cut, but can be copied
+>
+> clicking a property once still grabs it and allows you to move it around OR resize it
+
+Adam: the right-click menu gets Lock / Unlock; a locked block can't be moved, resized, turned, edited, cut or deleted (its window opens read-only), but Copy still works. Read the second line as how an unlocked block should work: one click grabs it, so a single click now also brings out its resize handles (before, that took a double click); dragging moves it as before.

@@ -41,8 +41,12 @@ const ZONE_HEADS = ["step", "squares", "size", "order", "dir"];
 export const NB_ORDERS = {
   random: "rand",
   rand: "rand",
+  absolute: "abs",
   shuffle: "shuf",
   shuf: "shuf",
+  shuffleonce: "shuf1",
+  rows: "shufrow",
+  columns: "shufcol",
   line: "line",
   alternating: "alt",
   alt: "alt",

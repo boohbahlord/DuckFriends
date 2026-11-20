@@ -21685,15 +21685,22 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
     font-size: 1.05rem;
   }
 }
-/* the help pages of Sandbox's windows (js/sbhelp.js): the bible's pixel page, a few lines at a time */
-.sbh-win {
+/* the help pages of Sandbox's windows (js/sbhelp.js): a few lines at a time, in the game's own window (the owner's, Nov
+   20 04:46Z: "why tf is this white?"; the white page is the Seriat bible's alone) */
+.win.sbh-win {
   width: min(34rem, 100%);
 }
 .sbh-page {
-  min-height: 12rem;
+  min-height: 10rem;
+}
+.sbh-page h2 {
+  margin: 0.4rem 0 0.5rem;
+  font-size: 1.25rem;
 }
 .sbh-page p {
-  font-size: 1.3rem;
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.45;
 }
 .sbh-nav {
   display: flex;
@@ -21701,7 +21708,6 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   justify-content: space-between;
   gap: 0.6rem;
   margin-top: 0.6rem;
-  color: #fff;
 }
 
 /* Sandbox's build blocks drawn as pixels (js/sbspawnview.js shapePic, js/sblootview.js lootRing): one picture pixel per
@@ -21851,4 +21857,128 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 }
 .sb-dark path {
   fill: rgba(3, 4, 10, 0.86);
+}
+/* a zone's Outlines rows (sbspawnview.js olSect): who it takes, its color, − ; + under them */
+.sb-olrows {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+  min-width: 0;
+}
+.sb-olrow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+}
+.sb-olrow .sb-acts {
+  min-width: 0;
+}
+.sb-olcol {
+  width: 2rem;
+  height: 1.6rem;
+  padding: 0;
+  border: 1px solid #fff4;
+  border-radius: 0.3rem;
+  background: none;
+  cursor: pointer;
+  flex: none;
+}
+/* Sandbox Phase 3, Looks (js/sblooks.js): a zone's look on the ground, under whatever stands on it, cut to its shape */
+.sb-look {
+  z-index: 3;
+  image-rendering: pixelated;
+  -webkit-mask: var(--mask) center / 100% 100% no-repeat;
+  mask: var(--mask) center / 100% 100% no-repeat;
+}
+/* the zone window's textures, each with its picture */
+.sb-lktexs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+  gap: 0.4rem;
+  margin: 0.2rem 0 0.5rem;
+}
+.sb-lktex {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.3rem;
+  border: 2px solid transparent;
+  border-radius: 0.4rem;
+  background: #0003;
+  font-size: 0.8rem;
+  text-align: center;
+  cursor: pointer;
+}
+.sb-lktex.on {
+  border-color: var(--accent, #ffd23f);
+}
+.sb-lktex input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.sb-lktex img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  image-rendering: pixelated;
+  border-radius: 0.2rem;
+  background: #0006;
+}
+.sb-lkcol {
+  width: 3rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+/* a block's Type box: what it holds, or the zone a tab is tied to, one small line each */
+.sb-ties {
+  margin: 0.1rem 0 0.5rem;
+  padding-left: 1.1rem;
+  font-size: 0.78rem;
+  opacity: 0.85;
+}
+p.sb-ties {
+  padding-left: 0;
+}
+.sb-lkprev {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 0.2rem;
+  background-repeat: repeat;
+  image-rendering: pixelated;
+}
+/* a row whose box is a dropdown: room for its words (they were cut to "Notl" and "On a") */
+.sb-row:has(> select.sb-box) {
+  grid-template-columns: minmax(0, 1fr) minmax(7rem, 10rem);
+}
+.sb-row:has(> select.sb-box) > select.sb-box {
+  max-width: none;
+}
+.sb-row[data-row="ord"] {
+  grid-template-columns: minmax(0, 1fr) minmax(7rem, 13rem);
+}
+.sb-ordbox select.sb-box {
+  flex: 1;
+  min-width: 0;
+  max-width: none;
+}
+/* Sandbox's G, Music (js/sbsaves.js musicWin): one song a line, ticked ones play */
+.sb-musiclist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  max-height: min(24rem, 55dvh);
+  overflow: auto;
+  padding-right: 0.3rem;
+}
+.sb-song {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }

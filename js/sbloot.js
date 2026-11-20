@@ -11,8 +11,8 @@
    - A zone whose "Loot spawns here" names the orb's point (its color or its name) has the orb lie there instead, at a
      spot in it at random each time (stage 5, sbzone.js): p.orb.x, y, z.
    The orb is on its point: p.orb = { w, at, dn: a zombie drop's number }, p.gone = when it was last taken. An uploaded
-   picture for an orb is sent in parts as a made NPC's is (sbmake.js sendParts) and kept in s.sbpic, as it was uploaded
-   unless Compress was ticked (the owner's answer 6, Nov 19); s.sbImg = { loot point: its key there } */
+   picture for an orb is sent in parts as a made NPC's is (sbmake.js sendParts) and kept in s.sbpic, made into pixels (plan
+   Phase 3); s.sbImg = { loot point: its key there } */
 import {
   isSb,
   sbMay,
@@ -56,6 +56,8 @@ export function sbLootAct(s, a) {
   const p = ((s.sb && s.sb.pts) || {})[a.p],
     v = typeof a.v === "string" ? a.v : "";
   if (!p || p.k !== "loot") return false;
+  const pts = s.sb.pts;
+  if (p.lock || (p.grp && pts[p.grp] && pts[p.grp].lock)) return false; // (locked: sbspawn.js "lock")
   if (v && !(/^[a-z0-9]{1,24}$/.test(v) && (s.sbpic || {})[v])) return false;
   const img = { ...(s.sbImg || {}) };
   if (v) img[a.p] = v;
