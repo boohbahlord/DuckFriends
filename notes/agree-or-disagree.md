@@ -7356,3 +7356,19 @@ blue-violet color (cream text, gold headings, dark code boxes), never white. V18
 > check for commands not done yet
 
 Adam: went through the checklist for every ask not yet live and sent him the open list with who has each.
+
+## Owner, Nov 20 18:09Z (project chat, through Moses)
+> The zoom out on ducks should apply to horizontal mode on mobile as well
+>
+> On the game now, except for vertical mode on mobile:
+> pc AND horizontal orientation on mobile: healthbar ui and it's meters below it that were on the bottom right of the screen will be bigger and fill up the space they are in more, while the hotbar is bigger too and moves to the left of it. This uses deadspace, makes it easier to see, and thus gives player better feedback more easily because of it.
+>
+> For situations such as ultrawide monitors or otherwise, their is a UI scale in the pause menu, that makes ALL user interface either bigger or smaller as necessary. This is done by percent, and all ui popups, words, letters, boxes, vote button, pause menu, terminal, and everything moves in size together. My friend plays an ultrawide monitor so i want to make it more accessible.
+>
+> There is a colorblind mode for letter or word contrast with their colors if there wasnt already.
+
+Adam: (1) phone on its side: the camera worlds (Cabin, Downpour) zoom out so its short side sees as much as the phone
+upright sees across (V182, Adam). (2) PC and phone on its side: health bar and meters bigger, hotbar bigger and to their left (Noah, after
+row 102). (3) UI scale % in the pause menu scaling every piece of UI together (Solomon, after rules step 5). (4) Colorblind
+mode today only recolors the two-sided boards; it also gets colorblind-safe, high-contrast colored words and letters
+(Jackal, CSS and settings only, nothing in Sandbox).
