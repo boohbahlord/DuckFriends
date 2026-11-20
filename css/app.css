@@ -17737,6 +17737,78 @@ html.moving .hpm-ammo.rl {
     bottom: max(0.35rem, env(safe-area-inset-bottom));
   }
 }
+/* on a computer and on a phone on its side, never a phone standing up (the owner's, Nov 20 18:09Z: "healthbar ui and
+   it's meters below it that were on the bottom right of the screen will be bigger and fill up the space they are in
+   more, while the hotbar is bigger too and moves to the left of it"): my HP, with the meters under it, grows to fill
+   the bottom right corner, and the hotbar grows and sits at its left, both on the corner's bottom line. A computer
+   window too narrow for both in one row puts the hotbar back over the HP (wrap), so nothing overlaps */
+@media (any-pointer: fine) and (min-width: 761px) {
+  .hb-stack {
+    --n: 7; /* how many keys: Quacky Zombies' 7 */
+    --hp: 3.3; /* and how wide the HP is, in keys */
+    --room: calc(100vw - 12.5rem);
+    --hkb: clamp(
+      1.5rem,
+      min((var(--room) - var(--n) * 0.3rem) / (var(--n) + var(--hp)), 6.6vh),
+      3.4rem
+    );
+    flex-flow: row wrap;
+    justify-content: flex-end;
+    align-items: flex-end;
+    gap: 0.45rem clamp(0.5rem, 1.1vw, 1.1rem);
+  }
+  .hb-stack:has(> .hotbar.full),
+  .hb-stack:has(> .hotbar > .hk:nth-child(7 of :not(.empty))) {
+    --n: 10;
+  } /* (Sandbox's ten squares, empty ones too; the specials' keys, when there are more than six) */
+  .hb-stack:has(> .hotbar:not(.full)):not(
+      :has(> .hotbar > .hk:nth-child(7 of :not(.empty)))
+    ) {
+    --n: 6;
+  }
+  .hb-stack:has(.hpm-blocks > i:nth-child(5)) {
+    --hp: 4.3;
+  } /* (five HP or more: the bar is as long as it gets) */
+  .hb-stack > .hotbar,
+  .hb-stack > .l4bar {
+    --hk: var(--hkb);
+  }
+  .hb-stack > .hotbar {
+    flex-wrap: nowrap;
+  }
+  .hb-stack > .l4bar {
+    padding-bottom: calc(var(--hk) * 0.16);
+  } /* (room for the counts hanging under its keys) */
+  .hb-stack > .hpm-me,
+  html:not(.keyboard) .hb-stack > .hpm-me {
+    --h: clamp(0.8rem, calc(var(--hkb) * 0.5), 1.7rem);
+    --bw: calc(var(--h) * 1.35);
+  }
+  .hb-stack > .hpm-me .hpm-blocks {
+    width: min(calc(var(--nb, 3) * var(--bw)), calc(var(--h) * 6));
+  }
+}
+@media (any-pointer: fine) and (min-width: 861px) and (min-height: 521px) {
+  .game .bbar-r {
+    container-type: inline-size;
+  }
+  .hb-stack {
+    --room: calc(100cqw - 3rem);
+  }
+} /* (with the key hints beside it, the keys' size goes by the corner's own width, cqw; in a narrower or shorter window
+     the corner is as wide as what's in it, so they go by the window's) */
+html.phone-land .hb-stack {
+  flex-direction: row;
+  align-items: center;
+}
+html.phone-land .sp-phone {
+  --step: 2.5rem;
+  --slot: 2.1rem;
+}
+html.phone-land .hb-stack > .hpm-me {
+  --h: 0.86rem;
+  --bw: 1rem;
+}
 /* the other players' meters, small, each name over it, in the board's bottom right corner (Quacky Zombies and Mad God
    Justin on a computer). They're UI: over everything on the board, the dark outside and the shelves too, as the other
    bars of Dead Ducks Arcade (.l4-pts); a tiny bit bigger than they were, and see-through on my screen while any duck or
