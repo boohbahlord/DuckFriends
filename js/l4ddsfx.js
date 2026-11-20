@@ -8,6 +8,7 @@
 
      l4Hear(s, ctx)        on every new state: the boards, the spin, a sale, a new round, where the zombies are going
      l4Steps(dt, ctx)      every frame: the footsteps and the groans
+     mgjSteps(s), sbSteps(ctx)   every frame: the wave zombies' and Sandbox's NPCs' (below)
 
    Each fades with its distance from my duck (sound.js), and the voices are capped (here a few footsteps and groans at
    once at most). */
@@ -38,7 +39,29 @@ const STRIDE = 44, // world px a duck walks for each footstep
   CLIMBS = 2, // rattles at once at most (the nearest climbers)
   GM_SHOTS = 3, // Survival's gunmen: shots heard each time the state comes in, at most
   GM_K = 0.8, // … each as loud as this much of a duck's
-  GM_GUN = { dbuck: "dbarrel" }; // (a gunman's gun whose sound has another name)
+  GM_GUN = { dbuck: "dbarrel" }, // (a gunman's gun whose sound has another name)
+  NEAR_MOST = 40; // only the nearest this many walkers count for their steps and groans (Sandbox can have 800: grouping them all would cost too much each frame)
+/* the budgets every walker shares, whichever path asks (who: "l4" the map's zombies, "mz" the wave zombies, "sb"
+   Sandbox's own): Z_PER_S steps a second, GROANS groans in 1.2 s; while another path is asking too, one takes at most two thirds
+   of it, so a crowd of one kind never silences the other (Sandbox's ducks beside a zombie map's mob) */
+const crowd = { steps: [], groans: [], asked: {} };
+function allow(k, ms, most, now, who) {
+  const a = crowd[k],
+    asked = (crowd.asked[k] = crowd.asked[k] || {});
+  asked[who] = now;
+  while (a.length && now - a[0].t >= ms) a.shift();
+  const shared = Object.keys(asked).some(
+    (o) => o !== who && now - asked[o] < ms,
+  ); // (another path wanted one lately)
+  if (
+    a.length >= most ||
+    (shared &&
+      a.filter((e) => e.who === who).length >= Math.round((most * 2) / 3))
+  )
+    return false;
+  a.push({ t: now, who });
+  return true;
+}
 /* Downpour's church bell (sound.js "churchBell"), rung as each round starts: its four strikes, s after it starts
    (Noah's bell swings on these: bellStrikes()) */
 export const BELL = [0.01, 2.12, 4.24, 6.35];
@@ -55,7 +78,6 @@ function fresh() {
     ducks: new Map(),
     z: new Map(),
     zAt: 0,
-    groans: [],
     fx: -1,
     drops: null,
     flash: null,
@@ -282,7 +304,8 @@ export function l4Steps(dt, ctx) {
     .filter((o) => o.st !== 3)
     .map((o) => ({ o, d: Math.hypot(o.x - me.x, o.y - me.y) }))
     .filter((e) => e.d < HEAR)
-    .sort((p, q) => p.d - q.d);
+    .sort((p, q) => p.d - q.d)
+    .slice(0, NEAR_MOST);
   const lead = [];
   for (const e of live) {
     const g = lead.find(
@@ -310,9 +333,7 @@ export function l4Steps(dt, ctx) {
       every = g === "deep" ? Z_STRIDE * STROKE : Z_STRIDE;
     if (o.acc >= every) {
       o.acc %= every;
-      st.zsteps = (st.zsteps || []).filter((t) => now - t < 1000);
-      if (steps++ < Z_STEPS && st.zsteps.length < Z_PER_S) {
-        st.zsteps.push(now);
+      if (steps++ < Z_STEPS && allow("steps", 1000, Z_PER_S, now, "l4")) {
         const n = Math.min(1, 0.7 + 0.08 * l.n);
         if (g === "wood")
           play("zstep", { x: o.x, y: o.y, z, k: n, yield: true });
@@ -329,13 +350,11 @@ export function l4Steps(dt, ctx) {
       }
     }
   }
-  st.groans = st.groans.filter((t) => now - t < 1200);
   for (const l of lead) {
     const o = l.o;
     if (now < o.next) continue;
     o.next = now + rnd(GROAN[0], GROAN[1]) / Math.min(2, Math.sqrt(l.n)); // (a group groans a little more often than one alone, never as often as all of them would)
-    if (st.groans.length >= GROANS) continue;
-    st.groans.push(now);
+    if (!allow("groans", 1200, GROANS, now, "l4")) continue;
     play("l4groan", {
       x: o.x,
       y: o.y,
@@ -345,79 +364,149 @@ export function l4Steps(dt, ctx) {
   }
 }
 
-/* ---------- Mad God Justin's zombie waves ----------
-   His wave zombies (mgjrules.js s.mz) shuffle and groan as Quacky Zombies' do (Adam, Nov 19, for the owner's "this is
-   the new feel and vibe of the game"). They walk the board, where every sound is heard by all (no distances): so the
-   same caps as above, a close group as one, and quieter than in Quacky Zombies. game.js calls this every frame. */
+/* ---------- every other walker: the wave zombies on the board, Sandbox's own on a world ----------
+   Mad God Justin's wave zombies (mgjrules.js s.mz) shuffle and groan as Quacky Zombies' do (Adam, Nov 19, for the owner's
+   "this is the new feel and vibe of the game"). Sandbox's spawns walk the same path (the owner's spawn list: "Blank NPC /
+   zombie / Justin / NPCs from Test Mode / Custom NPCs"): on the board in s.mz.zb, on Duck Cabin and the zombie maps in
+   s.hang.sbz.zb (sbcabin.js). A zombie shuffles and groans; every other kind steps as a duck does, quieter, and never
+   groans. Only the nearest NEAR_MOST count, a close group of one kind as one, inside the same budgets as the map's
+   zombies (crowd). On the board every sound is heard by all (no distances; game.js calls mgjSteps every frame); on a
+   world each fades with its distance from my duck (sbsfx.js calls sbSteps every frame). */
 const MZ = {
   STRIDE: 0.7, // duck lengths a wave zombie walks for each footstep
   GROUP: 2, // duck lengths: wave zombies this close together are one group
   JUMP: 2, // duck lengths: a move longer than this in one frame is a new spot (a spawn), not a walk
   K: 0.55, // a wave zombie's step, of a duck's
   GROAN_K: 0.7,
-  MOST: 60, // (heard at most: Sandbox can have 800 on the board, and the grouping below would cost too much for them all)
 };
-let mz = null; // { z: Map(i → { x, y, acc, next }), steps: [], groans: [] }
+const DUCK_K = 0.55; // a Sandbox duck's step (a Blank NPC, Justin, a Test NPC, a made one), of mine
+
+/* list's walkers ({ i, x, y, d (dead), k (its kind; none: a zombie) }), kept in pool (i → { x, y, acc, next, z }); o: len
+   (a distance), stride, group, jump (in len's units), me (where I stand, or null: all alike), hear, who (its share of
+   crowd), step(w, n), groan(w) */
+function walk(pool, list, now, o) {
+  const seen = new Set(),
+    near = [];
+  for (const b of list) {
+    if (b.d) continue; // (dead: no steps, no groans)
+    seen.add(b.i);
+    const w = pool.get(b.i);
+    if (!w) {
+      pool.set(b.i, {
+        x: b.x,
+        y: b.y,
+        acc: 0,
+        next: now + rnd(0, GROAN[1]),
+        z: !b.k,
+      });
+      continue;
+    }
+    const d = o.len(b.x - w.x, b.y - w.y);
+    w.x = b.x;
+    w.y = b.y;
+    if (d < o.jump) w.acc += d;
+    const far = o.me ? o.len(b.x - o.me.x, b.y - o.me.y) : 0;
+    if (far < o.hear) near.push({ w, far });
+  }
+  for (const i of pool.keys()) if (!seen.has(i)) pool.delete(i);
+  if (o.me) near.sort((p, q) => p.far - q.far);
+  const lead = [];
+  for (const { w } of near.slice(0, NEAR_MOST)) {
+    const g = lead.find(
+      (l) => l.w.z === w.z && o.len(l.w.x - w.x, l.w.y - w.y) < o.group,
+    );
+    if (g) {
+      g.n++;
+      g.acc = Math.max(g.acc, w.acc);
+      w.acc %= o.stride; // (the group's leader steps for it)
+    } else lead.push({ w, n: 1, acc: w.acc });
+  }
+  let steps = 0;
+  for (const l of lead) {
+    if (l.acc < o.stride) continue;
+    l.w.acc %= o.stride;
+    if (steps++ >= Z_STEPS || !allow("steps", 1000, Z_PER_S, now, o.who))
+      continue;
+    o.step(l.w, Math.min(1, 0.7 + 0.08 * l.n));
+  }
+  for (const l of lead) {
+    if (!l.w.z || now < l.w.next) continue;
+    l.w.next = now + rnd(GROAN[0], GROAN[1]) / Math.min(2, Math.sqrt(l.n)); // (a group groans a little more often than one alone)
+    if (allow("groans", 1200, GROANS, now, o.who)) o.groan(l.w);
+  }
+}
+
+let mz = null; // the board's walkers (walk's pool)
 export function mgjSteps(s) {
   const zb =
     (s && (s.phase === "boss" || s.phase === "sandbox") && s.mz && s.mz.zb) ||
-    null; // (and Sandbox's board: its spawns' zombies)
+    null; // (and Sandbox's board: its spawns)
   if (!zb || !zb.length) {
     mz = null; // (no waves: start fresh next time)
     return;
   }
   if (!mz) {
-    mz = { z: new Map(), steps: [], groans: [] };
+    mz = new Map();
     loadSounds("l4dd"); // (zstep and l4groan: fetched once, as the first wave comes)
   }
-  const now = performance.now(),
-    len = (dx, dy) => Math.hypot(dx / DUCK_LEN.x, dy / DUCK_LEN.y),
-    seen = new Set(),
-    lead = [];
-  let heard = 0;
-  for (const o of zb) {
-    if (o.d) continue; // (dead: no steps, no groans)
-    if (++heard > MZ.MOST) break;
-    seen.add(o.i);
-    let z = mz.z.get(o.i);
-    if (!z) {
-      mz.z.set(
-        o.i,
-        (z = { x: o.x, y: o.y, acc: 0, next: now + rnd(0, GROAN[1]) }),
-      );
-      continue;
-    }
-    const d = len(o.x - z.x, o.y - z.y);
-    z.x = o.x;
-    z.y = o.y;
-    if (d < MZ.JUMP) z.acc += d;
-    const g = lead.find((l) => len(l.z.x - z.x, l.z.y - z.y) < MZ.GROUP);
-    if (g) {
-      g.n++;
-      g.acc = Math.max(g.acc, z.acc);
-      z.acc %= MZ.STRIDE; // (the group's leader steps for it)
-    } else lead.push({ z, n: 1, acc: z.acc });
+  walk(mz, zb, performance.now(), {
+    len: (dx, dy) => Math.hypot(dx / DUCK_LEN.x, dy / DUCK_LEN.y),
+    stride: MZ.STRIDE,
+    group: MZ.GROUP,
+    jump: MZ.JUMP,
+    me: null,
+    hear: Infinity,
+    who: "mz",
+    step: (w, n) =>
+      w.z
+        ? play("zstep", {
+            k: MZ.K * n,
+            rate: rnd(0.92, 1.08),
+            yield: true, // (a duck's step is never cut for a zombie's)
+          })
+        : play("step", { k: DUCK_K * n, rate: rnd(0.92, 1.08), yield: true }),
+    groan: () =>
+      play("l4groan", { rate: rnd(0.88, 1.12), k: MZ.GROAN_K, yield: true }),
+  });
+}
+
+let sbw = null; // Sandbox's own on a world (walk's pool)
+export function sbSteps(ctx) {
+  const s = ctx.state(),
+    zb = s && s.hang && s.hang.sbz && s.hang.sbz.zb,
+    me = zb && zb.length && ctx.world.at(ctx.me);
+  if (!me) {
+    sbw = null;
+    return;
   }
-  for (const i of mz.z.keys()) if (!seen.has(i)) mz.z.delete(i);
-  mz.steps = mz.steps.filter((t) => now - t < 1000);
-  let steps = 0;
-  for (const l of lead) {
-    if (l.acc < MZ.STRIDE) continue;
-    l.z.acc %= MZ.STRIDE;
-    if (steps++ >= Z_STEPS || mz.steps.length >= Z_PER_S) continue;
-    mz.steps.push(now);
-    play("zstep", {
-      k: MZ.K * Math.min(1, 0.7 + 0.08 * l.n),
-      rate: rnd(0.92, 1.08),
-      yield: true, // (a duck's step is never cut for a zombie's)
-    });
+  if (!sbw) {
+    sbw = new Map();
+    loadSounds("l4dd");
   }
-  mz.groans = mz.groans.filter((t) => now - t < 1200);
-  for (const l of lead) {
-    if (now < l.z.next) continue;
-    l.z.next = now + rnd(GROAN[0], GROAN[1]) / Math.min(2, Math.sqrt(l.n));
-    if (mz.groans.length >= GROANS) continue;
-    mz.groans.push(now);
-    play("l4groan", { rate: rnd(0.88, 1.12), k: MZ.GROAN_K, yield: true });
-  }
+  walk(sbw, zb, performance.now(), {
+    len: Math.hypot,
+    stride: Z_STRIDE,
+    group: GROUP,
+    jump: 60, // (60: a jump to a spawn)
+    me,
+    hear: HEAR,
+    who: "sb",
+    step(w, n) {
+      const z = heightAt(w.x, w.y),
+        g = groundAt(w.x, w.y, z);
+      if (w.z && g === "wood")
+        play("zstep", { x: w.x, y: w.y, z, k: n, yield: true });
+      else
+        play(stepOf(g), {
+          x: w.x,
+          y: w.y,
+          z,
+          k: n * (w.z ? Z_K : DUCK_K),
+          rate: w.z ? rnd(0.8, 0.88) : rnd(0.94, 1.06),
+          yield: true,
+        });
+    },
+    groan: (w) =>
+      play("l4groan", { x: w.x, y: w.y, rate: rnd(0.88, 1.12), k: 0.9 }),
+  });
 }

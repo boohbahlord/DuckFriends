@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v131",
+    version: 131,
+    date: "Nov 20, 2026",
+    title: "Move, turn and size blocks",
+    news: [
+      "For Sandbox: every block has a shape (square, triangle, pentagon, hexagon or circle), a width and height, Fill the map, and a Purpose you can switch (spawn, respawn, loot or zone). Its window is numbered: Shape, Color, Purpose, then its settings.",
+      "For Sandbox: hold the left mouse on a block to drag it, and the arrow keys turn it while you hold it. Double-click it for handles that change its size. Shift and a drag selects many, which move together; right-click them for Copy all and Cut all, and Backspace lets go.",
+      "For Sandbox: computer-controlled ducks and Justins now make quiet footsteps on Duck Cabin and the zombie maps, and only zombies groan.",
+    ],
+  },
+  {
     id: "v130",
     version: 130,
     date: "Nov 20, 2026",
