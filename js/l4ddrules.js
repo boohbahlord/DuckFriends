@@ -5639,6 +5639,7 @@ function moveZombies(s, zs, now, T, up) {
   let cake = cakeDown(s, now);
   for (const k of Object.keys(eating))
     if (k !== "fx" && eating[k] <= now) delete eating[k];
+  ZC = crowdOf(zs); // (no walking into one another: stepZombie)
   for (const z of zs) {
     if (z.st === 3) continue;
     const o = openingById(z.l[2]),
@@ -5972,6 +5973,7 @@ function moveZombies(s, zs, now, T, up) {
   s.hang.l4p = p4;
   s.hang.brd = brd;
   s.hidden = { ...s.hidden, l4ze: eating };
+  ZC = null;
   separate(zs);
 }
 /* Survival: a walker wandering, slowly, from one spot near it to the next, standing about at each a while (z.wd: where
@@ -6290,8 +6292,47 @@ const TURNS = [0, 0.52, -0.52, 1.05, -1.05, 1.57, -1.57];
 /* Sandbox's walls (sandboxrules.js sbZombieWall), while the zombies of a Sandbox walk */
 let ZW = null;
 export const setZWall = (f) => (ZW = f);
+/* the zombies walking this heartbeat (moveZombies), so one never walks into another on its floor, as a duck never
+   walks into one (world.js crowd): before, the ones behind walked into the ones in front every heartbeat and were
+   pushed back out (separate), so a crowd round a duck standing still shook (the owner's, Nov 20 03:58Z, "zombies
+   shouldnt viibrate on roof of gas pump", and the same crowd on the ground). { cells: zombies by CROWD_CELL square,
+   h: each one's height } */
+const CROWD_CELL = 96;
+let ZC = null;
+function crowdOf(zs) {
+  const cells = new Map(),
+    h = new Map();
+  for (const z of zs) {
+    if (z.st === 3) continue;
+    h.set(z, dp() ? zombieZ(z) : 0);
+    const k = cellOf(z.x, z.y);
+    if (!cells.has(k)) cells.set(k, []);
+    cells.get(k).push(z);
+  }
+  return { cells, h };
+}
+const cellOf = (x, y) =>
+  Math.floor(x / CROWD_CELL) * 100000 + Math.floor(y / CROWD_CELL);
+/* would zombie z stepping to (x, y) walk into another on its floor? (only closer to one it's already touching or
+   about to: stepping away is always free) */
+function intoCrowd(z, x, y) {
+  const hz = ZC.h.get(z),
+    i0 = Math.floor(x / CROWD_CELL),
+    j0 = Math.floor(y / CROWD_CELL);
+  for (let di = -1; di <= 1; di++)
+    for (let dj = -1; dj <= 1; dj++)
+      for (const o of ZC.cells.get((i0 + di) * 100000 + j0 + dj) || []) {
+        if (o === z || o.st === 3) continue;
+        if (Math.abs(ZC.h.get(o) - hz) >= SAME_FLOOR) continue;
+        const then = room(x, y, o.x, o.y);
+        if (then < 1 && then < room(z.x, z.y, o.x, o.y)) return true;
+      }
+  return false;
+}
 function stepZombie(z, aim, far, pls) {
-  const n = Math.max(1, Math.ceil(far / 8));
+  const n = Math.max(1, Math.ceil(far / 8)),
+    crowd = !!ZC && ZC.h.has(z),
+    side = z.i % 2 ? -1 : 1; // (when it has to turn, its own side first: one way, then the other, and it swung about)
   for (let k = 0; k < n; k++) {
     const dx = aim[0] - z.x,
       dy = aim[1] - z.y,
@@ -6312,7 +6353,7 @@ function stepZombie(z, aim, far, pls) {
           then = room(x, y, ...q.xy);
         if (then < 1 && then < now) return false;
       }
-      return true;
+      return !crowd || !intoCrowd(z, x, y);
     };
     if (ZW) {
       const sx = z.x + ux * len,
@@ -6328,8 +6369,8 @@ function stepZombie(z, aim, far, pls) {
     }
     let moved = false;
     for (const t of TURNS) {
-      const c = Math.cos(t),
-        s = Math.sin(t),
+      const c = Math.cos(t * side),
+        s = Math.sin(t * side),
         sx = (ux * c - uy * s) * len,
         sy = (ux * s + uy * c) * len;
       if (ok(z.x + sx, z.y + sy)) {
