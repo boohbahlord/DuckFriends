@@ -276,6 +276,15 @@ ${J.shadow}${J.fill}${extra}</svg>`;
 ${k !== 1 ? `<g transform="translate(56 106) scale(${k.toFixed(3)}) translate(-56 -106)">` : ""}
 ${DB.shadow}${DB.hatBack}${DB.fill}${DB.face}${DB.hatFront}${k !== 1 ? "</g>" : ""}${extra}</svg>`;
   }
+  if (L.image && L.cut) {
+    /* a cut-out picture (cropped in Customize, or erased before it was uploaded: the owner's, Nov 20, "cropped images
+       can also be used for players' custom avatars"): only what's left of it, standing on the same little shadow, no
+       card round it; its pixels square (it is made as pixels). It's hit only where it shows (sbbody.js picBody) */
+    return `<svg class="duck cutout" viewBox="0 0 120 120" width="${size}" height="${size}" role="img" aria-label="${esc(title || "Avatar")}">
+${shadow ? `<ellipse cx="60" cy="110" rx="30" ry="6" fill="#000" opacity=".22"/>` : ""}
+<image href="${esc(L.image)}" x="14" y="10" width="92" height="92" preserveAspectRatio="xMidYMax meet" style="image-rendering:pixelated"/>
+${dead ? '<path d="M30 30L90 90M90 30L30 90" stroke="#e01b1b" stroke-width="10" stroke-linecap="round" opacity=".9"/>' : ""}${extra}</svg>`;
+  }
   if (L.image) {
     // an uploaded square picture, standing like a card, with the same little shadow
     return `<svg class="duck" viewBox="0 0 120 120" width="${size}" height="${size}" role="img" aria-label="${esc(title || "Avatar")}">

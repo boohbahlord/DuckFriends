@@ -10,6 +10,7 @@
    higher ground only if it is that high at that moment; walking off an edge falls (off the deck, a long way). Other
    ducks glide to where the room says they are, and jump and fall from their own numbers (z: height, b: where the jump
    began). The activities (registry.js) add the context button, and whatever they draw. */
+import { SPRINT as GAME_SPRINT } from "../gamedefaults.js";
 import { baseMode, baseL4map } from "../sandboxrules.js";
 import * as L from "./layout.js";
 import { DRAW, GROUND, DECOR, groundColor } from "./shapes.js";
@@ -42,7 +43,7 @@ export const BOARD_HTML =
 /* a crown (Downpour's trees) is drawn over every duck and prop, under the dark and the rain: above the highest foot */
 const CROWN_Z = 5000;
 const SPEED = 380,
-  SPRINT = 1.75; // world px a second
+  SPRINT = GAME_SPRINT.speed; // times walking speed (the whole game's, gamedefaults.js)
 const AIR_UP = 6; // in the air, ground this much above the feet still catches them
 const CLICK_REACH = 260; // Click to interact: how far from my duck a click can use a thing
 const cl = (v, a, b) => Math.max(a, Math.min(b, v));
