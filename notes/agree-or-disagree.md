@@ -7523,3 +7523,9 @@ No, it's not one sheet per mode. We're not doing a zombie fucking file for every
 
 Adam: rules rewritten in CLAUDE.md: never a file per mode; one shared module per mechanic, modes differ by data (Type
 Object "breeds") or hooks (Template Method/Strategy), the same shape as the social modes' template.
+
+## Owner, Nov 20 21:52Z (Adam's thread, second message)
+
+How it works is that there is a zombie file for zombies, not a zombie file for every different game mode. There is a zombie file, period. Not a zombie file for every different game mode.
+
+Adam: agreed and written in CLAUDE.md: one zombie file, period; modes hand it numbers only.
