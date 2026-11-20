@@ -23,6 +23,7 @@ import {
   baseMode,
   isSb,
   sbMay,
+  sbRule,
   sbOnBoard,
   SB_BOXES,
   SB_FLAGS,
@@ -89,6 +90,7 @@ import { botDuck } from "./botduck.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { armUp, cleanArms, fight, keepAt, reachTo } from "./sbarms.js";
 import { nbThink, nbOrder, nbKeep } from "./sbnumberat.js";
+import { SONG, songChars } from "./sbaudio.js";
 import { grFrom, grLeave, grHp, grIds, grLists } from "./sbgroups.js";
 
 /* the boxes that aren't numbers: the name over it, its key, what spawns, and a respawn's "who" */
@@ -301,6 +303,7 @@ export const madeOf = (s, k) =>
     s.sb.cn &&
     s.sb.cn[k.slice(2)]) ||
   null;
+export const SB_SONG = { PARTS: 8, KEEP: 6 }; // (an imported song's parts, as a picture's; the most songs a room keeps)
 export const SB_PIC = {
   MOST: 2 * 1024 * 1024, // (the owner's, Nov 19 01:57Z: 2 MB at most)
   PART: 150000, // (letters a part: an online action is less than 200,000: database.rules.json)
@@ -500,6 +503,69 @@ function taken(p, npcs) {
     ry = 0.08;
   return npcs.some((o) => Math.hypot((o.x - p.x) / rx, (o.y - p.y) / ry) < 0.8);
 }
+/* ---------- waves and rounds (G's Rules: wr, wrn, wlen, wrest) ----------
+   s.sb.wv = { k: waves | rounds, n: the one now (or the last), on: one is on, at: when this one (or the rest) began,
+   nx: when the next begins }. The first starts a few seconds in. A wave ends when its seconds are up; a round once
+   nothing its spawns brought is still up, coming back or still coming. Each spawn that comes in with them is pressed as
+   one starts (its limit and its continuous run as any press) */
+const WAVE_FIRST = 3000; // ms before the first
+export const sbWave = (s) => (s && s.sb && s.sb.wv) || null;
+/* may spawn p make something now? (always, unless it comes in with the waves or rounds and none is on) */
+function waveOn(s, p) {
+  if (!p || !flag(p, "wr")) return true;
+  const w = sbWave(s);
+  return !!w && w.on;
+}
+function wavesTick(s, now, pts) {
+  const k = sbRule(s, "wr"),
+    was = sbWave(s);
+  if (k === "off") {
+    if (!was) return false;
+    const sb = { ...s.sb };
+    delete sb.wv;
+    s.sb = sb;
+    return true;
+  }
+  if (!was || was.k !== k) {
+    s.sb = {
+      ...s.sb,
+      wv: { k, n: 0, on: false, at: now, nx: now + WAVE_FIRST },
+    };
+    return true;
+  }
+  const ours = Object.entries(pts).filter(
+    ([, p]) =>
+      p.k === "spawn" &&
+      flag(p, "wr") &&
+      p.pg !== "pl" &&
+      (!p.grp || p.pg === "t"),
+  );
+  if (!was.on) {
+    const most = sbRule(s, "wrn");
+    if ((most && was.n >= most) || now < was.nx) return false;
+    s.sb = { ...s.sb, wv: { k, n: was.n + 1, on: true, at: now } };
+    for (const [id] of ours) press(s, id, now);
+    return true;
+  }
+  let over;
+  if (k === "waves") over = now - was.at >= sbRule(s, "wlen") * 1000;
+  else {
+    const mine = new Set(ours.map(([id]) => id)),
+      run = (s.sb && s.sb.run) || {},
+      rq = (s.sb && s.sb.rq) || [];
+    over =
+      now - was.at > WAVE_FIRST &&
+      !liveNpcs(s).some((o) => mine.has(o.sp)) &&
+      !Object.keys(run).some((id) => mine.has(id)) &&
+      !rq.some((r) => mine.has(r[0]));
+  }
+  if (!over) return false;
+  s.sb = {
+    ...s.sb,
+    wv: { ...was, on: false, at: now, nx: now + sbRule(s, "wrest") * 1000 },
+  };
+  return true;
+}
 /* how many of a spawn's may be alive at once: 0 is no limit (the map's cap still holds) */
 function limitOf(p) {
   const n = num(p, "limit");
@@ -535,6 +601,7 @@ function pressOne(s, id, now) {
   const p = pointsOf(s)[id];
   if (!p || p.k !== "spawn" || p.pg === "pl" || !spawnsHere(s)) return false;
   if (!sbTabLive(pointsOf(s), id)) return false; // (a tab whose Caller names no zone does nothing)
+  if (!waveOn(s, p)) return false; // (it comes in with the waves or rounds: only while one is on)
   const npcs = liveNpcs(s),
     alive = new Set(npcs.map((o) => o.i)),
     limit = limitOf(p),
@@ -708,7 +775,9 @@ export function sbAct(s, a, now) {
       ? !may("m")
       : a.k === "pic"
         ? !may("b") && !may("m")
-        : !may("b")
+        : a.k === "song" || a.k === "songrm"
+          ? !may("g") // (a song is G's Music: sbaudio.js)
+          : !may("b")
   )
     return false;
   /* my Build window is up (or I'm putting a block down): the zones' damage and Kill leave my duck alone, so a zone put
@@ -846,6 +915,46 @@ export function sbAct(s, a, now) {
         };
     }
     s.hidden = { ...hid, sbup: up };
+    return true;
+  }
+  /* a part of an imported song (G's Music, sbaudio.js): as a picture's, kept hidden until the last part is in; then
+     s.sbsong[h] = { n: its name, l: its seconds, d: its text } */
+  if (a.k === "song") {
+    const h = String(a.h || ""),
+      of = Math.floor(+a.of),
+      n = Math.floor(+a.n),
+      all = s.sbsong || {},
+      l = Math.min(SONG.MOST_S, Math.max(0, +a.l || 0));
+    if (!/^[a-z0-9]{1,24}$/.test(h) || all[h]) return false;
+    if (!(of >= 1 && of <= SB_SONG.PARTS && n >= 0 && n < of)) return false;
+    if (typeof a.d !== "string" || a.d.length > SB_PIC.PART) return false;
+    if (Object.keys(all).length >= SB_SONG.KEEP || !(l > 0)) return false;
+    const hid = s.hidden || {},
+      up = { ...(hid.sbsup || {}) },
+      parts = [...(up[h] || [])];
+    parts[n] = a.d;
+    up[h] = parts;
+    if (parts.filter((x) => typeof x === "string").length === of) {
+      const d = parts.join("");
+      delete up[h];
+      if (/^[A-Za-z0-9+/]+=*$/.test(d) && d.length <= songChars(l))
+        s.sbsong = {
+          ...all,
+          [h]: {
+            n: String(a.nm || "My song").slice(0, SONG.NAME) || "My song",
+            l,
+            d,
+          },
+        };
+    }
+    s.hidden = { ...hid, sbsup: up };
+    return true;
+  }
+  if (a.k === "songrm") {
+    const all = { ...(s.sbsong || {}) };
+    if (!all[a.h]) return false;
+    delete all[a.h];
+    s.sbsong = all;
     return true;
   }
   /* the Seriat files a Brain box names (and the files they use), sent by the player who set it: sbnumberat.js */
@@ -1356,6 +1465,7 @@ export function sbTick(s, now, H) {
     ch = true;
   }
   const pts = pointsOf(s);
+  ch = wavesTick(s, now, pts) || ch;
   let npcs = liveNpcs(s);
   const alive = new Set(npcs.map((o) => o.i));
   /* the dead: off their spawn's list, and back later if it says so */
@@ -1377,7 +1487,7 @@ export function sbTick(s, now, H) {
   if (rq.some((r) => r[1] <= now)) {
     const later = [];
     for (const r of rq) {
-      if (r[1] > now) later.push(r);
+      if (r[1] > now || !waveOn(s, pts[r[0]])) later.push(r);
       else {
         const at = backAt(s, r[0]);
         if (at && !makeOne(s, r[0], at)) later.push([r[0], now + 1000]); // (at the cap: once there's room)
@@ -1399,6 +1509,7 @@ export function sbTick(s, now, H) {
       !run[id] &&
       sbTabLive(pts, id) &&
       flag(p, "auto") &&
+      waveOn(s, p) &&
       aliveOf(s, id, new Set(npcs.map((o) => o.i))) < limitOf(p)
     ) {
       const was = (s.sb.au || {})[id];
@@ -1412,7 +1523,7 @@ export function sbTick(s, now, H) {
       ch = true;
       continue;
     }
-    if (now < at) continue;
+    if (now < at || !waveOn(s, p)) continue;
     const ids = new Set(npcs.map((o) => o.i)),
       limit = limitOf(p);
     if (aliveOf(s, id, ids) >= limit) {
@@ -1498,7 +1609,9 @@ export function think(s, now, npcs, at, H, far, duckAt) {
     };
   const nbCh = nbThink(s, now, them, all, ducks, far, brainOf); // (the NPCs that run a Seriat file)
   const out = them.map((me) => {
-    const d = nbOrder(me, all) || decide(me, lists(me.o), all, ducks, far, now),
+    const d =
+        nbOrder(me, all, far, now) ||
+        decide(me, lists(me.o), all, ducks, far, now),
       fo = d.foe ? d.foe.key : undefined;
     if (me.o.fo !== fo) {
       if (fo) me.o.fo = fo;
@@ -1526,6 +1639,7 @@ export function strike(s, now, me, foe, H, o, d = null, w = "claw") {
 
 /* ---------- the board's zombies: as Mad God Justin's wave zombies walk (mgjrules.js wavesTick), at each one's speed and
    damage, and kept apart on a grid so 800 cost little ---------- */
+const MOVE_STOP = 0.1; // duck lengths: as near as a \move\'s spot is walked to
 const CELL = 1, // (duck lengths: the grid's cells)
   NEAR = 12; // (the most others each one is kept apart from in a beat)
 function boardTick(s, now, H) {
@@ -1547,17 +1661,25 @@ function boardTick(s, now, H) {
       y0 = o.y,
       bd = far(me, to),
       claw = reachTo(WAVE.CLAW, o, to, s), // (its hitbox, and its foe's: sbarms.js)
-      sp = WAVE.SPEED * (o.sv ?? 1) * (o.run && bd > 4 ? 1.5 : 1); // (can sprint: half as fast again while far off)
+      sp =
+        WAVE.SPEED *
+        (o.sv ?? 1) *
+        (o.run && bd > 4 ? 1.5 : 1) * // (can sprint: half as fast again while far off)
+        (to.sp ?? 1), // (a \move\'s @ speed)
+      stop = d.foe ? keepAt(o, claw) : to.pt ? MOVE_STOP : claw * 0.8; // (a gun keeps its distance: sbarms.js; a \move\'s spot: right on it)
     if (d.flee) {
       const go = Math.min(1, (sp * dt) / Math.max(bd, 1e-3));
       o.x = Math.min(0.99, Math.max(0.01, o.x - (to.x - o.x) * go));
       o.y = Math.min(0.97, Math.max(0.03, o.y - (to.y - o.y) * go));
       ch = true;
-    } else if (bd > (d.foe ? keepAt(o, claw) : claw * 0.8)) {
-      const stop = d.foe ? keepAt(o, claw) : claw * 0.8, // (a gun keeps its distance: sbarms.js)
-        go = Math.min(bd - stop, sp * dt) / bd;
+    } else if (bd > stop) {
+      const go = Math.min(bd - stop, sp * dt) / bd;
       o.x += (to.x - o.x) * go;
       o.y += (to.y - o.y) * go;
+      if (to.pt) {
+        o.x = Math.min(0.99, Math.max(0.01, o.x)); // (a \move\ never walks it off the board)
+        o.y = Math.min(0.97, Math.max(0.03, o.y));
+      }
       ch = true;
     }
     if (wallsOf(o).length)

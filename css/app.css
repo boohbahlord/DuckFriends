@@ -19223,14 +19223,17 @@ html.pixel #shapes:not(.px-own) {
   image-rendering: pixelated;
   user-select: none;
 }
-.pxw-stage img.px-file {
+.pxw-stage .px-file {
   position: absolute;
 }
+i.px-file {
+  display: block;
+} /* (a piece of a sheet, tools/pixel-sheets.cjs: its picture is its background) */
 .pxs {
   position: absolute;
   overflow: hidden;
 }
-.pxs > img {
+.pxs > .px-file {
   position: absolute;
   left: 0;
   top: 0;
@@ -19238,7 +19241,7 @@ html.pixel #shapes:not(.px-own) {
   height: calc(var(--r, 1) * 100%);
   display: block;
 }
-html.moving .pxs > img {
+html.moving .pxs > .px-file {
   animation:
     pxs calc(var(--pd) / var(--r, 1)) steps(var(--n)) var(--pdl, 0s) infinite,
     pxr var(--pd) steps(var(--r, 1)) var(--pdl, 0s) infinite;
@@ -22187,6 +22190,50 @@ p.sb-ties {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  min-height: 1.9rem;
+}
+.sb-song > label {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-wrap: anywhere;
+}
+.sb-songx {
+  padding: 0 0.55rem;
+  line-height: 1.6;
+}
+.sb-songup.off {
+  opacity: 0.45;
+  pointer-events: none;
+}
+.sb-songnote {
+  margin-top: 0;
+}
+/* the green bar on an upload button (js/upbar.js): short, under the button's words, filling as it's read, made and sent */
+.up-bar {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 3px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.18);
+  overflow: hidden;
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+.up-bar > i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: #3ddc6a;
+  border-radius: 2px;
+  transition: width 0.15s linear;
+}
+.up-bar.up-gone {
+  opacity: 0;
 }
 /* Made maps (js/umaps.js): Make a map and My maps, and a made map's picture wherever a map's picture shows */
 .gs-pic > img.gs-made,
@@ -22498,4 +22545,25 @@ textarea.um-in {
   display: block;
   width: 100%;
   height: 100%;
+}
+
+/* Sandbox: G's waves or rounds (js/sandbox.js paintWave): which one, its time left or when the next comes, top middle */
+.game .sb-wave {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 0.6rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  padding: 0.25rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(10, 12, 24, 0.78);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+.game .sb-wave[hidden] {
+  display: none;
 }

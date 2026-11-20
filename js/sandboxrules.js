@@ -124,6 +124,42 @@ export const SB_RULES = {
     ],
     def: "keep",
   },
+  /* the owner's, Nov 20 18:46Z: "waves or rounds in sandbox ... Waves are based off of survival, rounds are based off of
+     Dead Ducks Arcade ... the zones themselves, when a certain like setting or format is selected, that a new section
+     shows up to actually connect them to certain event causes in the game settings file for waves or rounds", and 19:02Z:
+     zones keep their own start conditions; "comes in with waves or rounds" only says when (sbspawn.js wavesTick). A wave
+     lasts its seconds; a round lasts until everything its spawns brought is down. Then a rest, then the next */
+  wr: {
+    name: "Waves or rounds",
+    kind: "pick",
+    opts: [
+      ["off", "None"],
+      ["waves", "Waves (as Survival: a wave lasts its time)"],
+      ["rounds", "Rounds (as Dead Ducks Arcade: until all are down)"],
+    ],
+    def: "off",
+  },
+  wrn: {
+    name: "How many (0: no end)",
+    kind: "int",
+    min: 0,
+    max: 999,
+    def: "0",
+  },
+  wlen: {
+    name: "A wave lasts (seconds)",
+    kind: "int",
+    min: 5,
+    max: 900,
+    def: "60",
+  },
+  wrest: {
+    name: "Rest between them (seconds)",
+    kind: "int",
+    min: 0,
+    max: 600,
+    def: "20",
+  },
   /* the owner's, Nov 19 21:59Z: "There should be a board size limit that changes the size of the map ... we'll do
      percentage instead, right? 100% is the minimum. But ... if the map is bigger, the camera follows the duck as they
      move around like it does in Downpour or Cabin". The plain boards only (the worlds have their own size) */
@@ -374,6 +410,9 @@ export const SB_FLAGS = {
   /* "Auto spawn means it spawns regardless. Like it will just always keep spawning unless it's turned off ... below
      continuous spawn": no key or button needed, one each "time between spawns" while fewer than its limit are alive */
   auto: { name: "Auto spawn", kind: "bool", def: "f" },
+  /* the owner's, Nov 20 18:46Z and 19:02Z: a spawn that comes in with G's waves or rounds: pressed once as each one starts,
+     and its own start (auto, continuous, its key) only works while one is on (sbspawn.js wavesTick) */
+  wr: { name: "Comes in with waves or rounds (G)", kind: "bool", def: "f" },
   /* "under the colors to hide spawn, and it only hides spawn when cheat mode isn't on": its ring shows only to whoever
      has cheat mode on (sbmenu.js sbCheat); it still works */
   hide: { name: "Hide (unless cheat mode)", kind: "bool", def: "t" },

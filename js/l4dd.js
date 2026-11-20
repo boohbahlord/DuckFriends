@@ -582,6 +582,22 @@ export function clawMark(fx, left, top, k) {
     fx._claws--;
   }, 1100);
 }
+/* a zombie that got a new look (Survival's remodel: another hat, outfit and tilt, l4ddrules.js) shows it at once: its box
+   and its picture are made again. Before, only a change of its wounds made its picture again, so it kept the old skin
+   till its next hit and then popped into the new one, most often as it died (the owner's, Nov 20 19:02Z: "when zombies
+   die ... they change skins"). Returns whether the look changed */
+function relook(o, l) {
+  if (!o.l || [3, 4, 5, 6, 7, 8].every((k) => o.l[k] === l[k])) return false;
+  const box = zombieBox(l);
+  o.bw = box.w;
+  o.bh = box.h;
+  o.feet = box.feet;
+  o.body.style.height = box.h.toFixed(1) + "px";
+  o.body.style.top = (-box.feet).toFixed(1) + "px";
+  o.body.style.transformOrigin = `${box.w / 2}px ${box.feet.toFixed(1)}px`;
+  o.hits = null; // (wounds() makes the picture again, with the wounds it has)
+  return true;
+}
 /* its picture with the wounds it has now, made only when they changed and it's on a screen */
 function wounds(o, l, i) {
   const want = o.ng ? goreFree(o.want) : o.want; // (Gore off: none of them shows. o.ng, the setting as seeZombies last saw it: draw() asks too, and before, it left the setting out, so with Gore off a zombie on the screen got its gore back every frame and lost it again every update, a new picture each time)
@@ -708,6 +724,7 @@ function seeZombies(s, ctx, now) {
       o.el.classList.toggle("onfire", lit);
     } // (set on fire: one big flame over it, as a duck's)
     o.want = (s.hang.zw || {})[z.i] || "";
+    relook(o, z.l); // (a new look, Survival's remodel: its picture and box are made again at once, not at its next wound)
     o.l = z.l;
     o.ng = !!s.options.noGore;
     if (shown) wounds(o, z.l, z.i); // (the wounds its hits left: holes, cuts, bruises, an arrow, a chunk gone, its head blown off; l4ddart.js)
