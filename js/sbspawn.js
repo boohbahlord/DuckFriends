@@ -61,6 +61,7 @@ import { botDuck } from "./botduck.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { armUp, cleanArms, fight, keepAt, reachTo } from "./sbarms.js";
 import { nbThink, nbOrder, nbKeep } from "./sbnumberat.js";
+import { grFrom, grLeave, grHp, grIds, grLists } from "./sbgroups.js";
 
 /* the boxes that aren't numbers: the name over it, its key, what spawns, and a respawn's "who" */
 export const SB_TEXT = {
@@ -109,6 +110,13 @@ export const SB_TEXT = {
   tg: {
     name: "Trigger together",
     check: (t) => (words(t).every((w) => sbColOk(w)) ? "" : "Colors only"),
+  },
+  /* the groups whatever spawns here, steps in it or takes its loot joins (sbgroups.js; the owner's, Nov 19 23:50Z: "it
+     should be able to have a group setting as anything in the zones will have") */
+  jg: {
+    name: "Joins groups",
+    check: (t) =>
+      words(t).every((w) => /^g[0-9]{1,4}$/.test(w)) ? "" : "Groups only",
   },
   pick: {
     name: "Pick",
@@ -399,6 +407,8 @@ function makeOne(s, id, at) {
   const live = { ...((s.sb && s.sb.live) || {}) };
   live[id] = [...(live[id] || []), i];
   s.sb = { ...s.sb, live };
+  const r = at.id && pointsOf(s)[at.id];
+  grFrom(s, "n:" + i, r && r.k === "respawn" ? at.id : id); // (its groups: from its spawn, or the respawn it came back at)
   return true;
 }
 /* how many of spawn id's are alive */
@@ -948,6 +958,7 @@ export function sbAct(s, a, now) {
 /* which boxes a point takes: a respawn its "who" and what it imported; a spawn its own, and its Players tab's (a +
    page for players only those) */
 function canSet(p, f) {
+  if (f === "jg") return true; // (every block, tab and page: its groups)
   if (SB_SHAPE[f] || f === "zw" || f === "zh") return !p.grp; // (every block's shape and size; a page has its spawn's)
   if (p.k === "loot") return !!SB_LOOT[f] || f === "name" || f === "hide"; // (a loot orb's own boxes: sbloot.js)
   if (p.k === "zone")
@@ -980,6 +991,7 @@ export function sbPlaceDuck(s, id) {
   const q = sbPlayerSpot(s, id, WW, WH, (x, y, z) =>
     standable(x * WW, y * WH, z),
   );
+  grLeave(s, "p:" + id); // (spawning again: out of its groups, then into the ones this block gives)
   if (!q || !s.pos[id]) return false;
   s.pos[id] = {
     ...s.pos[id],
@@ -996,17 +1008,16 @@ export function sbPlaceDuck(s, id) {
     };
   else delete pl[id];
   s.sb = { ...s.sb, pl };
+  if (q.id) grFrom(s, "p:" + id, q.id);
   return true;
 }
 /* a duck's HP in Sandbox (0: the game's own) and its walk (1 as usual); the zombie maps keep their own HP */
-export const sbHpOf = (s, id) =>
-  (isSb(s) &&
-    baseMode(s.options) !== "l4dd" &&
-    s.sb &&
-    s.sb.pl &&
-    s.sb.pl[id] &&
-    s.sb.pl[id].hp) ||
-  0;
+export const sbHpOf = (s, id) => {
+  if (!isSb(s) || baseMode(s.options) === "l4dd" || !s.sb) return 0;
+  const hp = (s.sb.pl && s.sb.pl[id] && s.sb.pl[id].hp) || 0,
+    g = s.sb.gm && s.sb.gm["p:" + id] ? grHp(s, id, hp || 4) : 0; // (its groups' Max HP over it, sbgroups.js; 4: the game's, rules.js PHP)
+  return g && g !== (hp || 4) ? g : hp;
+};
 export const sbWalkOf = (s, id) =>
   (isSb(s) &&
     baseMode(s.options) !== "l4dd" &&
@@ -1159,7 +1170,11 @@ export function think(s, now, npcs, at, H, far, duckAt) {
             (madeOf(s, o.k) || {}).beh || kdLists(s, o.k || "zombie"), // (a made NPC: its own lists, where the spawn set none; a kind: M's)
           ),
         );
-      return memo.get(k);
+      const L = memo.get(k),
+        G = grLists(s, "n:" + o.i); // (its groups' Target and Ignore lists too: sbgroups.js)
+      return G
+        ? { ...L, T: [...L.T, ...G.T], I: [...L.I, ...G.I], np: true }
+        : L;
     },
     tags = new Map();
   for (const [id, p] of Object.entries(pts))
@@ -1168,12 +1183,14 @@ export function think(s, now, npcs, at, H, far, duckAt) {
       key: "p:" + id,
       duck: true,
       id,
+      g: grIds(s, "p:" + id), // (its groups: sbbrain.js matches)
       ...duckAt(id),
     })),
     them = npcs.map((o) => ({
       key: "n:" + o.i,
       k: o.k || "zombie",
       tags: tags.get(o.sp) || [],
+      g: grIds(s, "n:" + o.i),
       mad: o.mad,
       fo: o.fo,
       o,

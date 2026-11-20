@@ -38,6 +38,8 @@ import {
 } from "./ui.js";
 import { activeRoom } from "./net.js";
 import { sprintStep } from "./stamina.js";
+import { grStam, grCool } from "./sbgroups.js";
+import { grLook } from "./sbgroupview.js";
 import {
   COLS,
   SHORT,
@@ -4915,6 +4917,7 @@ function loop(t) {
   t0 = stamp();
   shiftSides(R.state, now);
   drawDucks(now);
+  grLook(S, R.state); // (Sandbox: the groups' outlines, sbgroupview.js)
   took("ducks", t0);
 }
 function step(dt, now) {
@@ -4965,7 +4968,11 @@ function step(dt, now) {
     stick.sprint ||
     !!(target && target.sprint);
   if (isMgj(s)) sprinting = false; // (no sprint in Mad God Justin: Shift, the stick's edge and a double tap all walk. The owner's, Nov 17 19:11Z: "the sprint should be removed from mad god justin")
-  sprinting = sprintStep(sprinting && !!(hx || vy || target), dt); // (7 s of sprint, then a walk till it's let go: stamina.js, every mode)
+  sprinting = sprintStep(
+    sprinting && !!(hx || vy || target),
+    dt,
+    grStam(s, R.me),
+  ); // (7 s of sprint, then a walk till it's let go: stamina.js, every mode; Sandbox: a group's Regen stamina)
   let ax, ay; // in board terms
   if (turned()) {
     ax = -vy;
@@ -5177,7 +5184,7 @@ function hangStep(dt, now) {
     }
   }
   if (!canWalk()) ax = ay = 0;
-  sprinting = sprintStep(sprinting && !!(ax || ay), dt); // (7 s of sprint, then a walk till it's let go: stamina.js, every mode, Dead Ducks Arcade's too)
+  sprinting = sprintStep(sprinting && !!(ax || ay), dt, grStam(R.state, R.me)); // (7 s of sprint, then a walk till it's let go: stamina.js, every mode, Dead Ducks Arcade's too; Sandbox: a group's Regen stamina)
   const kx = ax; // (which way I face: my keys, not the push)
   if (canWalk() && recoil && performance.now() < recoil.until) {
     const l = Math.hypot(recoil.dx, recoil.dy) || 1;
@@ -6058,7 +6065,7 @@ function padAttack() {
   } // (out of HP: the down pistol, without taking it out for after)
   if (isMgj(R.state) && mgjToggles(id) && mgjHold !== id) mgjOut2(id);
   fire(id);
-  return coolFor(id, R.state);
+  return coolFor(id, R.state) / grCool(R.state, R.me); // (Sandbox: a group's Cooldown speed)
 }
 /* key i (0 is key 1 … 9 is key 0): an effect for 5 seconds (keep: on until kept off), a jump, or an item */
 /* a number key toggles a weapon (the owner's, Nov 16): the key picks it and puts it in hand, the same key again puts it
@@ -6233,11 +6240,15 @@ function coolOne(id, now, m) {
           ? null
           : (() => {
               const end = coolEnds(R.state, R.me, id);
-              return end > now + 250 ? [end, coolFor(id, R.state), now] : null;
+              return end > now + 250
+                ? [end, coolFor(id, R.state) / grCool(R.state, R.me), now]
+                : null;
             })();
     } // (between quick shots no bar: only the reload, and the sniper's bolt or the launcher's wait)
     const end = coolEnds(R.state, R.me, id);
-    return end > now ? [end, coolFor(id, R.state), now] : null;
+    return end > now
+      ? [end, coolFor(id, R.state) / grCool(R.state, R.me), now]
+      : null;
   }
 }
 /* the white, the yellow and the blue bars under my duck in the modes besides Dead Ducks Arcade (which has its own,
@@ -8291,7 +8302,7 @@ function autoPress(e) {
   holdTrigger(() => {
     if (!R || !repeats(held) || !onBoardPhase()) return 0;
     fire(held);
-    return Math.max(60, coolFor(held, R.state));
+    return Math.max(60, coolFor(held, R.state) / grCool(R.state, R.me)); // (Sandbox: a group's Cooldown speed)
   });
 }
 /* Quacky Zombies: the left mouse button down on the board uses the weapon in hand, and again as soon as it can while

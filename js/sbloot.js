@@ -27,6 +27,7 @@ import { valueOf } from "./numerat.js";
 import { boxText, spawnsHere, zoneSpot, zonesFor } from "./sbspawn.js";
 import { W, H } from "./hangout/layout.js";
 import { ARMS, DROP, l4Loot, l4Hurt } from "./l4ddrules.js";
+import { grFrom } from "./sbgroups.js";
 
 const words = (t) =>
   String(t || "")
@@ -76,6 +77,7 @@ export function sbLootTick(s, now, H0) {
       const by = takerOf(s, q, H0);
       if (by) {
         take(s, q, by, now, H0);
+        grFrom(s, "p:" + by, id, q.orb.w); // (a group whose condition is this loot, or what it held: sbgroups.js)
         q = { ...q, orb: null, gone: now };
       }
     }

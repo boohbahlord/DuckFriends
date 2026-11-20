@@ -37,6 +37,7 @@ import { npcRows } from "./sbmake.js";
 import { sbCheatSound } from "./sbsfx.js";
 import { sbSlots } from "./sbhot.js";
 import { saveRows } from "./sbsaves.js";
+import { groupRows, listsRow } from "./sbgroupview.js";
 import {
   hotKeyPut,
   hotRows,
@@ -74,7 +75,7 @@ export const SB_SHEET = [
   ["C", "This cheat sheet. Press it once to open it, again to close it."],
   [
     "B",
-    "Build: pick a spawn, respawn, loot or board zone, then click or tap the map to put it there (Esc or right-click lets go). Press it once to open it, again to close it.",
+    "Build: pick a spawn, respawn, loot or board zone, then click or tap the map to put it there (Esc or right-click lets go). Groups: what joins them and what joining does. Press it once to open it, again to close it.",
   ],
   [
     "M",
@@ -227,7 +228,7 @@ const BRAIN_ROW = {
 };
 const OPTIONS = {
   c: [],
-  b: (R) => [...buildRows(R), helpRow("b")],
+  b: (R) => [...buildRows(R), ...groupRows(R), helpRow("b")], // (the blocks, then Groups and My lists: sbgroupview.js)
   m: (R) => {
     const rows = npcRows(R);
     return [
@@ -240,7 +241,7 @@ const OPTIONS = {
   },
   n: [],
   h: (R) => [...hotRows(R, openPut), helpRow("h")],
-  g: (R) => [...saveRows(R), helpRow("g")], // (Save, Save as and Music: sbsaves.js)
+  g: (R) => [...saveRows(R), listsRow, helpRow("g")], // (Save, Save as and Music: sbsaves.js)
   p: pRows,
 };
 export const sbOptions = (k, R) => {

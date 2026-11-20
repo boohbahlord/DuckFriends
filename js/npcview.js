@@ -27,6 +27,7 @@ function zbEl(o, layer) {
     b = npcBox(o),
     box = { w: b.w * k, h: b.h * k, feet: b.feet * k };
   el.className = "l4z";
+  el.dataset.sbi = o.i; // (Sandbox: which one it is, for a group's outline, sbgroupview.js)
   el.innerHTML = `<div class="l4z-body"><img alt="" draggable="false"></div><span class="l4z-hp"><b></b><i></i></span>${npcName(o)}`;
   const body = el.firstChild;
   Object.assign(body.style, {

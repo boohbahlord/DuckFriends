@@ -26,6 +26,18 @@ export const SB_HELP = {
       "Loot and zones",
       "Loot is an orb that gives what it holds to whoever walks over it. A zone is a box that does something to whoever stands in it. Both hide from players while cheat mode is off.",
     ],
+    [
+      "Groups",
+      "Groups (in Build) are named sets of rules. A player or an NPC joins one when it spawns at a block you ticked (a red spawn and a blue respawn are different), steps into a zone, picks up a loot, or comes from a block of a variable name. Every block also has its own Joins groups list.",
+    ],
+    [
+      "What a group does",
+      "Max HP: +30 adds 30, 30 makes it 30. Heal on joining: an amount, or 100% for full. Regen HP each second, stamina and cooldowns faster, an outline color, who its NPCs go after or leave alone, and windows it opens or closes for its players (Neutral leaves them as they are). Game settings come first, then groups. A player leaves its groups when it spawns again; an NPC when it dies. Every list names the groups under the entities.",
+    ],
+    [
+      "My lists",
+      "My lists (in Build and Game settings) keeps made NPCs and groups out of your own lists. Nobody else's lists change.",
+    ],
   ],
   m: [
     [

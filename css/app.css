@@ -20866,6 +20866,44 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .sb-acts[open] .sb-what {
   margin-top: 0.35rem;
 }
+/* a list's part header: the groups under the entities (sbgroupview.js) */
+.sb-ghead {
+  flex-basis: 100%;
+  text-align: right;
+  font-style: normal;
+  font-size: 0.8em;
+  font-weight: 700;
+  opacity: 0.7;
+  margin-top: 0.2rem;
+}
+/* Sandbox's groups: the list in B, and a member's outline in its group's color (sbgroupview.js grLook) */
+.sb-glist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.sb-gbtn {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  justify-content: flex-start;
+}
+.sb-gdot {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 50%;
+  background: var(--c);
+  flex: none;
+}
+.sb-mylist {
+  justify-content: flex-start;
+}
+.gduck.sb-gol .gduck-body,
+.mgj-z.sb-gol img,
+.l4z.sb-gol .l4z-body {
+  filter: drop-shadow(1px 0 0 var(--gol)) drop-shadow(-1px 0 0 var(--gol))
+    drop-shadow(0 1px 0 var(--gol)) drop-shadow(0 -1px 0 var(--gol));
+}
 .sb-col {
   width: 1.5rem;
   height: 1.5rem;

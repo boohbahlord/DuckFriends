@@ -156,6 +156,10 @@ Every Seriat value works anywhere a number goes below: `wait 1:3`, `every [2,4]s
    read and set by name, its hitbox too: `((hitbox 150%))` (= `((hitbox 150))`), `\if hitbox > 200\` (in percent, 10% to 300%,
    owner 15:52Z: bigger to hit, longer reach; a percent here is of its usual size, not of its most; live V102). Another NPC's stat is `z hp` with `z` from a loop: `for z in team ((z hp z hp+1))` (live V99).
    **[open]** the full list of stats.
+   Groups (Phase 5, owner Nov 19: "a way to say 100%", "It should just be called regen HP. Or regen stamina"):
+   `((hp 100%))` already fills HP to its most. New stat `regen`: HP back each second, up to its most
+   (`((regen 2))`, `\if regen > 0\`, 0 to 100, 0 stops it). Stamina is only the players' (an NPC has none), so
+   "regen stamina" is a group setting, not a stat (sbgroups.js). Reading taken: `regen` is one word, not `regen hp`.
 2. **Actions**: `go nearest duck`, `attack`, `flee`, `wait 1.5`, `say "hi"` (quotes as in print).
 3. **Who**: `me`, `nearest duck`, `all zombies`, `team`: what an action or a stat applies to.
 4. **Chance in percent** (owner 13:32Z: "uses percentage with percent sign"; replaces the `~` weights):

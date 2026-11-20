@@ -35,6 +35,7 @@ import { sbHotAct, sbSlots } from "./sbhot.js";
 import { sbLootAct, sbLootTick } from "./sbloot.js";
 import { nbPermAct, nbShareAct } from "./nbperms.js";
 import { sbZoneTick } from "./sbzone.js";
+import { sbGroupTick, sbGroupAct, grCool } from "./sbgroups.js";
 import {
   sbAsk,
   sbAskDue,
@@ -220,6 +221,10 @@ import {
   ARMS,
   laserHeat,
   laserNext,
+  l4Heal,
+  maxHp,
+  l4Zups,
+  l4SetHp,
 } from "./l4ddrules.js";
 import { JET } from "./jetpack.js";
 import { hOk, hLock, sameFloorAhead, floorLock } from "./heights.js";
@@ -1238,7 +1243,7 @@ export const magOf = (s, id, now, w = "handgun") => {
 };
 export const coolEnds = (s, id, sp) =>
   Math.max(
-    ((s.lastUse || {})[`${id} ${sp}`] || 0) + coolFor(sp, s),
+    ((s.lastUse || {})[`${id} ${sp}`] || 0) + coolFor(sp, s) / grCool(s, id), // (Sandbox: a group's Cooldown speed, sbgroups.js)
     magSize(sp) ? ((s.mag || {})[magKey(id, sp)] || {}).r || 0 : 0,
   ); // (a time on the room's clock)
 export const WEAPONS = [
@@ -2361,6 +2366,9 @@ function reduceStep(state, a, now) {
     case "sbl":
       // Sandbox's loot orbs: an orb's own picture (sbloot.js)
       return sbLootAct(s, a) ? s : state;
+    case "sbgr":
+      // Sandbox's groups (sbgroups.js)
+      return sbGroupAct(s, a) ? s : state;
     case "cabinEnd": {
       // Hangout's End Cabin and Quacky Zombies' Exit Cabin: a click votes, another takes it back; half the people
       // (never the computers) start a CABIN_END_MS timer, and the cabin game ends when it runs out
@@ -3168,8 +3176,9 @@ function reduceStep(state, a, now) {
           (isSb(s)
             ? +sbTick(s, now, SB_H) |
               +sbLootTick(s, now, SB_H) |
-              +sbZoneTick(s, now, SB_H)
-            : 0), // (Sandbox: its spawns, respawns and the board's zombies; its loot orbs; its zones)
+              +sbZoneTick(s, now, SB_H) |
+              +sbGroupTick(s, now, SB_H)
+            : 0), // (Sandbox: its spawns, respawns and the board's zombies; its loot orbs; its zones; its groups)
         up = standUps(s, now); // (a knocked-down duck stands up by itself when its time is up)
       const sig = () => [s.phase, s.qi, s.catchEnds, s.round, s.at].join(),
         was = sig();
@@ -3650,6 +3659,10 @@ const SB_H = {
     } // (raw: a spawn's damage box is only that much, never "all of it")
     if (pwOn(s)) pwHit(s, id, w, now, !!P.dead); // (its claw wounds, as a Dead Ducks Arcade zombie leaves them; a made NPC's weapon, that weapon's)
   },
+  l4heal: l4Heal, // (the zombie maps' heal and most HP, and their own zombies: a group's, sbgroups.js)
+  l4max: maxHp,
+  l4up: l4Zups,
+  l4set: l4SetHp,
   /* a zone's heal (sbzone.js): amt of what duck id lost comes back */
   heal(s, id, amt, now) {
     const h = (s.php || {})[id];

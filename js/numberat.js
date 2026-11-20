@@ -214,7 +214,7 @@ const FN1 = {
   down: (v) => Math.floor(v + 1e-9),
 };
 /* an NPC's stats, read and set by name (numberatrun.js): "z hp" is NPC z's HP */
-export const NB_STATS = ["hp", "speed", "damage", "hitbox"];
+export const NB_STATS = ["hp", "speed", "damage", "hitbox", "regen"]; // (regen: HP back each second, the owner's "regen HP": sbgroups.js)
 const RESERVED = new Set([
   "else",
   "in",
