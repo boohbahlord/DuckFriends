@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v185",
+    version: 185,
+    date: "Nov 20, 2026",
+    title: "The sniper watches",
+    news: [
+      "For Survival: the merchant waits until he's at his spot and stays at least 30 s, leaving only when zombies come for him.",
+      "For Survival: the sniper sees only what he can shoot, anywhere on the map, and watches where you hid for 10 s.",
+      "A headshot always takes the head, and gunmen never headshot players.",
+    ],
+  },
+  {
     id: "v184",
     version: 184,
     date: "Nov 20, 2026",
