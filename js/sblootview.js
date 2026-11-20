@@ -260,17 +260,17 @@ export const ownFlag = (w, k, zm) => (zm && flagOwn(w, k) ? "true" : "false");
 /* a switch with three states (plan Loot 5: "every switch has true, false and neutral"): neutral (blank) steps aside
    for the next level down, here the item's own (own: what that is). Its box carries "", t or f; data-tri cycles it */
 export function triRow(f, name, v, own, attr = "") {
-  const lab = v === "t" ? "true" : v === "f" ? "false" : "neutral";
-  return `<div class="sb-row" data-row="${f}"><span>${esc(name)}</span><button type="button" class="sb-tog sb-tri${v === "t" ? " on" : v ? "" : " mid"}" data-tri="${f}" data-own="${esc(own)}" title="Neutral: ${esc(own)}"${attr}>${lab}</button><input type="hidden" class="sb-box" data-f="${f}" value="${esc(v)}"><em class="sb-why"></em></div>`;
+  const lab = v === "t" ? "true" : v === "f" ? "false" : "default"; // ("true, false, default": the owner's, Nov 20 17:25Z; it was "neutral")
+  return `<div class="sb-row" data-row="${f}"><span>${esc(name)}</span><button type="button" class="sb-tog sb-tri${v === "t" ? " on" : v ? "" : " mid"}" data-tri="${f}" data-own="${esc(own)}" title="Default: ${esc(own)}"${attr}>${lab}</button><input type="hidden" class="sb-box" data-f="${f}" value="${esc(v)}"><em class="sb-why"></em></div>`;
 }
-/* the next state of a three-state switch: neutral, true, false, neutral … */
+/* the next state of a three-state switch: default, true, false, default … */
 export function triNext(btn) {
   const box = btn.parentElement.querySelector("input"),
     v = box.value === "" ? "t" : box.value === "t" ? "f" : "";
   box.value = v;
   btn.classList.toggle("on", v === "t");
   btn.classList.toggle("mid", v === "");
-  btn.textContent = v === "t" ? "true" : v === "f" ? "false" : "neutral";
+  btn.textContent = v === "t" ? "true" : v === "f" ? "false" : "default";
   return v;
 }
 function itemRows(w, on, icon, p, h, zm) {
@@ -428,7 +428,7 @@ export function itemsWin(R) {
         );
     };
   return openWindow(
-    `<h2>Weapons and items</h2><p class="small dim">Set here, a row rules every copy of the item in this Sandbox, over its loot's. Blank or neutral: the loot (or the item's own) decides.</p><div class="sb-set">${triRow("all_brk", "Every item: breaks when empty", "", "each item's own")}<div class="sb-row"><span>Item</span><select class="sb-sel" data-itpick>${cats
+    `<h2>Weapons and items</h2><p class="small dim">Set here, a row rules every copy of the item in this Sandbox, over its loot's. Blank or default: the loot (or the item's own) decides.</p><div class="sb-set">${triRow("all_brk", "Every item: breaks when empty", "", "each item's own")}<div class="sb-row"><span>Item</span><select class="sb-sel" data-itpick>${cats
       .map(
         ([n, ws]) =>
           `<optgroup label="${esc(n)}">${ws

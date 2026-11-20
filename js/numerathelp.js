@@ -208,17 +208,17 @@ Give every choice a percent, or none.
 Every box has limits. They are set for you automatically: if you
 don't define a limit yourself, the box uses the one below.
 
-  Spawn limit                  1 to 100        (starts at 1)
-  Seconds between spawns       1 to 600        (starts at 4)
+  Spawn limit                  0 to 100        (starts at 1; 0: no limit)
+  Seconds between spawns       0 to 600        (starts at 4; 0: no wait)
   HP                           0.1 to 1000     (starts at 3)
-  Damage                       0.1 to 100      (starts at 1)
-  Speed                        0.1 to 5        (starts at 1)
+  Damage                       0 to 100        (starts at 1; 0: hurts nobody)
+  Speed                        0 to 5          (starts at 1; 0: stays put)
   Players' HP                  0.1 to 100
-  Players' speed               0.1 to 5
+  Players' speed               0 to 5          (0: they can't walk)
   Zone width and height        1 to 40 duck lengths (start at 4)
   Zone HP each time            0.1 to 100      (starts at 1)
-  Zone seconds between         0.1 to 60       (starts at 1)
-  Seconds before it comes back 1 to 600        (starts at 10)
+  Zone seconds between         0 to 60         (starts at 1; 0: every beat)
+  Seconds before it comes back 0 to 600        (starts at 10; 0: at once)
   Seconds you keep it          0 to 600        (0 is for good)
   Damage to whoever takes it   0 to 100        (starts at 0)
 
