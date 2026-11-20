@@ -19092,19 +19092,10 @@ html.moving .pxh-in {
 html.moving .pxt {
   animation: twinkle 2.6s ease-in-out infinite alternate;
 }
-<<<<<<< HEAD
-/* a card's pattern or picture (a player's card, the Card page's swatches) on the grid too: its background drawn again
-   under it, through the same filter, so the duck and the name over it stay as they are */
-html.pixel .pcard[style*="url("] {
-=======
-html.pixel .spx-flames {
-  mix-blend-mode: screen;
-} /* (the filter makes the flames one picture: it's that picture that lights the duck now) */
 /* a card's hat pattern (a player's card, the Card page's swatches; every other pattern and a picture are pixel files
    already: card.js) on the grid too: its background drawn again under it, through the same filter, so the duck and the
    name over it stay as they are */
 html.pixel .pcard[style*="svg+xml"] {
->>>>>>> eef1381f282c62ac93d8cc2f7ff7ffcb43606822
   isolation: isolate;
 }
 html.pixel .pcard[style*="svg+xml"]::before {
