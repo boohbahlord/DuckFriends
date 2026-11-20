@@ -14,6 +14,7 @@
    On a phone, holding still on the board brings the specials around the finger (see hotbar.js). Effects and items take
    up to three colors (Primary, Secondary, Accent) under Customize → Colors. */
 import { el } from "./ui.js";
+import { gridPx } from "./pixel.js";
 import { fewer } from "./gfx.js";
 import { BOW, MEDKIT, ZEBRA, JAIME, BOMB_SKIN, CHAIR } from "./mgjart.js";
 import { GUNS } from "./l4ddguns.js";
@@ -617,6 +618,107 @@ export function colorsOf(duck, id) {
 }
 const vars = (c) => c.map((v, i) => `--k${i + 1}:${v}`).join(";");
 
+/* ---------- the flames special, drawn by code in pixels of the grid's size ----------
+   Four tongues of fire over the duck's head, side by side, each flickering taller and shorter (0.34 s, one after
+   another): white-hot (Accent) at their foot, then Secondary, then Primary, fading out at their edge. Every canvas of
+   them on the page is drawn again 30 times a second while one is there (Animations off: once). */
+const FL_DEF = ["#ff5a1a", "#ffb347", "#fff2b0"];
+const hexRGB = (c) => {
+  const x = document.createElement("canvas").getContext("2d");
+  x.fillStyle = c;
+  const v = x.fillStyle; // (#rrggbb, or rgba() for a see-through one)
+  return v.startsWith("#")
+    ? [1, 3, 5].map((i) => parseInt(v.slice(i, i + 2), 16))
+    : v
+        .match(/[\d.]+/g)
+        .slice(0, 3)
+        .map(Number);
+};
+let flTimer = 0;
+function flamesGo() {
+  if (!flTimer) flTimer = requestAnimationFrame(flamesTick);
+}
+let flLast = 0;
+function flamesTick(now) {
+  flTimer = 0;
+  const all = document.querySelectorAll("canvas.spx-fl");
+  if (!all.length) return;
+  const moving = document.documentElement.classList.contains("moving");
+  if (now - flLast >= 33 || !moving) {
+    flLast = now;
+    all.forEach((c) => flamesDraw(c, moving ? now / 1000 : 0));
+  }
+  if (moving) flTimer = requestAnimationFrame(flamesTick);
+  else setTimeout(flamesGo, 500); // (still: looked at now and then, for a new one)
+}
+const flEase = (p) => (p < 0.5 ? 2 * p * p : 1 - 2 * (1 - p) ** 2); // (near enough css's ease-in-out)
+function flamesDraw(c, t) {
+  const g = gridPx() || 2,
+    box = c.parentNode,
+    W = Math.max(1, Math.round(box.clientWidth / g)),
+    H = Math.max(1, Math.round(box.clientHeight / g));
+  if (c.width !== W || c.height !== H) {
+    c.width = W;
+    c.height = H;
+  }
+  if (!c._ink) {
+    const cs = getComputedStyle(box);
+    c._ink = [1, 2, 3].map((k) =>
+      hexRGB(cs.getPropertyValue("--k" + k).trim() || FL_DEF[k - 1]),
+    );
+  }
+  const [k1, k2, k3] = c._ink,
+    x = c.getContext("2d"),
+    img = x.createImageData(W, H),
+    d = img.data;
+  for (let i = 0; i < 4; i++) {
+    /* its box (css: left 24% + 9% each, 17% wide, 42% tall, its foot at the middle) and its flicker */
+    let u = ((((t - i * 0.09) / 0.34) % 2) + 2) % 2;
+    if (u > 1) u = 2 - u;
+    const e = flEase(u),
+      sy = 0.85 + 0.27 * e,
+      ty = 0.04 - 0.1 * e,
+      fw = 0.17 * W,
+      fh0 = 0.42 * H,
+      fh = fh0 * sy,
+      cy = 0.5 * H - fh0 / 2 + ty * fh0, // (its middle: scaled round it, then moved)
+      x0 = (0.24 + 0.09 * i) * W,
+      y0 = cy - fh / 2;
+    for (let py = Math.max(0, Math.floor(y0)); py < Math.min(H, y0 + fh); py++)
+      for (
+        let px = Math.max(0, Math.floor(x0));
+        px < Math.min(W, x0 + fw);
+        px++
+      ) {
+        const a = (px + 0.5 - x0) / fw,
+          b = (py + 0.5 - y0) / fh; // (0 … 1 across it and down it)
+        /* its rounded outline (border-radius 50% 50% 45% 45% / 60% 60% 40% 40%) */
+        const rx = b < 0.5 ? 0.5 : 0.45,
+          ry = b < 0.5 ? 0.6 : 0.4,
+          ex = a < rx ? rx - a : a > 1 - rx ? a - (1 - rx) : 0,
+          ey = b < ry ? ry - b : b > 1 - ry ? b - (1 - ry) : 0;
+        if (ex && ey && (ex / rx) ** 2 + (ey / ry) ** 2 > 1) continue;
+        /* its colors, from 50% 70% outward (ellipse to the farthest corner) */
+        const f = Math.hypot((a - 0.5) / 0.5, (b - 0.7) / 0.7) / Math.SQRT2;
+        if (f >= 0.75) continue;
+        const [A, B, q, al] =
+          f < 0.35
+            ? [k3, k2, f / 0.35, 1]
+            : f < 0.65
+              ? [k2, k1, (f - 0.35) / 0.3, 1]
+              : [k1, k1, 0, 1 - (f - 0.65) / 0.1];
+        const o = (py * W + px) * 4,
+          na = al * 255;
+        if (na <= d[o + 3]) continue; // (where two meet, the brighter one)
+        d[o] = A[0] + (B[0] - A[0]) * q;
+        d[o + 1] = A[1] + (B[1] - A[1]) * q;
+        d[o + 2] = A[2] + (B[2] - A[2]) * q;
+        d[o + 3] = na;
+      }
+  }
+  x.putImageData(img, 0, 0);
+}
+
 /* an effect around a duck's head (sits over the duck picture; the head is up and to the right) */
 export function momentHTML(id, duck) {
   const n = (k, f) => Array.from({ length: k }, (_, i) => f(i)).join(""),
@@ -625,7 +727,8 @@ export function momentHTML(id, duck) {
     case "zap":
       return `<span class="spx spx-zap" ${st}>${n(3, (i) => `<svg viewBox="0 0 40 60" style="--i:${i}"><path d="M22 0L8 30h12L12 60l22-36H20L30 0Z"/></svg>`)}</span>`;
     case "flames":
-      return `<span class="spx spx-flames" ${st}>${n(4, (i) => `<i style="--i:${i}"></i>`)}</span>`;
+      flamesGo();
+      return `<span class="spx spx-flames" ${st}><canvas class="spx-fl" aria-hidden="true"></canvas></span>`; // (drawn by code as pixels: flamesDraw)
     case "hearts":
       return `<span class="spx spx-float" ${st}>${n(5, (i) => `<i style="--i:${i}">♥</i>`)}</span>`;
     case "poison":

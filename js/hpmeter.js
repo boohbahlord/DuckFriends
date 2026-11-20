@@ -9,7 +9,6 @@ import { esc } from "./ui.js";
 import { mirrorBars } from "./meters.js";
 import { hurtSway } from "./fxmotion.js";
 import { bakeFill } from "./pxbake.js";
-import { pixelOn } from "./pixel.js";
 import { hpText, tenths } from "./hpmath.js";
 
 /* a meter shows one block for each HP; with more HP than this, each block holds a few, so the blocks stay blocks */
@@ -69,7 +68,7 @@ const WHITE_MS = 500, // a hit's blocks: fully white in this long
   BACK_MS = 1000, // an HP back: from white to full red in this long
   BLINK_MS = 120; // one blink (on and off) while a hit's blocks whiten; faster with each hit more
 
-/* the hurt corners as css/app.css draws them (.hurt-edge: four circles of --hc fading out by --hr), for pxbake.js */
+/* the hurt corners (.hurt-edge: four circles of --hc fading out by --hr, css/app.css), drawn as pixels by pxbake.js */
 export function hurtPaint(x, w, h, el) {
   x.fillStyle = getComputedStyle(el).getPropertyValue("--hc");
   const c = x.fillStyle, // (read back as rgba(r, g, b, a) or #rrggbb)
@@ -114,7 +113,7 @@ export function mountMeter() {
   let bakedAt = -1e9;
   const blink = () => {
     const now = performance.now();
-    if (pixelOn() && now - bakedAt > 1000) {
+    if (now - bakedAt > 1000) {
       bakedAt = now;
       bakeFill(edge, hurtPaint);
     } // (its corners as pixels, made once: no filter on the whole board. Looked at once a second at most: it measures the board, and a crowd of zombies hit me many times a second)
