@@ -3728,6 +3728,13 @@ export const pierceOf = (s, by, w) =>
    headshot (headOf) takes all its HP, as do the grenades' blasts and the double barrel; Angelic adds its
    1. The Laser Rifle never misses or crits (laser, below) */
 export const ALL_HP = 999;
+/* Survival: every bullet, pellet, arrow, thrown dagger and beam a duck fires does 0.5 less (the owner's, Nov 20 04:09Z,
+   "reduce all ammo by 0.5 damage"); never under 0.5. Melee, grenades and the merchant's own gun stay as they were */
+export const SV_GUN_LESS = 0.5;
+const svGun = (s, by, w, dmg) =>
+  survOn() && by && s.players[by] && ARMS[w] && ARMS[w].kind === "ranged"
+    ? Math.max(0.5, tenths(dmg - SV_GUN_LESS))
+    : dmg;
 export function zombieTakes(s, by, w) {
   const A = ARMS[w];
   if (!A) return { dmg: 1, head: false };
@@ -3736,7 +3743,10 @@ export function zombieTakes(s, by, w) {
   const head = !beam && Math.random() < headOf(s, by, w),
     all = head || A.dmg === "all" || w === "grenade" || w === "glauncher";
   return {
-    dmg: all ? ALL_HP : dmgOf(A) + (!beam && angelOf(s, by, w) ? ANGEL.DMG : 0),
+    dmg: all
+      ? ALL_HP
+      : svGun(s, by, w, dmgOf(A)) +
+        (!beam && angelOf(s, by, w) ? ANGEL.DMG : 0),
     head,
   };
 }
@@ -3745,6 +3755,7 @@ export function zombieTakes(s, by, w) {
 function strike(s, z, dmg, head, by, w = "") {
   if (z.st === 3) return false;
   if (w) wound(s, z, w, head);
+  dmg = svGun(s, by, w, dmg);
   if (w && w !== "laser" && angelOf(s, by, w)) dmg += ANGEL.DMG; // (Angelic: +1, l4ddangel.js; the Laser Rifle has its own, laser)
   const on = s.hang.l4on || {},
     all = head || !!on.kill, // (Instant Kill: every hit takes all its HP, 5 points for each)

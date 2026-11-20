@@ -7258,3 +7258,17 @@ Adam: the hang's first cause was the first round stored as the pair [5, 8] (SV.F
 > flashlight
 
 Adam: the Survival symbol becomes a flashlight with a short beam, drawn in pixels (Noah).
+
+## Owner, Nov 20 04:08Z (project chat, through Moses)
+> deploy when defib is working
+
+> and other fix
+
+> i need it
+
+Adam: the defib fix (Solomon) and the wave-end fix (Adam: a wave that stops dying out for 20 s ends anyway) deploy together the moment the defib works.
+
+## Owner, Nov 20 04:09Z (project chat, through Moses)
+> reduce all ammo by 0.5 damage and then show me it's damage stats (amount of zombies per wave in survival is multiplied by amount of players in a similiar formula
+
+Adam: in Survival every bullet, pellet, arrow, thrown dagger and beam a duck fires does 0.5 less (never under 0.5); melee, grenades and the merchant's gun stay. The owner gets a table of every gun's damage. Survival's hordes already multiply by the players (24 or 48 each), and the gunmen waves too, so nothing changed there.
