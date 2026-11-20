@@ -131,6 +131,7 @@ import {
 import { ANGEL, angelOf, angelAmmo, angelAct, angelLeft } from "./l4ddangel.js";
 import { fieldOf, askField } from "./flowfield.js";
 import { NPC_RUN } from "./npcshared.js";
+import { sees as npcSees } from "./npcrules.js";
 import { grHp, grCool } from "./sbgroups.js";
 import {
   isSurv,
@@ -3388,10 +3389,7 @@ function merchantShoots(s, zs, now) {
     return;
   }
   const f = t.x < m.x ? -1 : 1;
-  if (
-    now < (mh(s).gx || 0) ||
-    !clearShot(m.x, m.y, t.x, t.y, heightAt(m.x, m.y))
-  ) {
+  if (now < (mh(s).gx || 0) || !npcSees(m, t, undefined, 0)) {
     if (m.f !== f) s.hang.l4m = { ...m, f };
     return;
   }

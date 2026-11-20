@@ -29,6 +29,7 @@ import { heightAt, slabBetween, deckOver, PROPS } from "./hangout/layout.js";
 import { DECKS } from "./hangout/stationmap.js";
 import { woundCode, DEATH } from "./wounds.js";
 import { gunmanLook } from "./gunmen.js";
+import { sees as npcSees } from "./npcrules.js";
 import {
   friend,
   friendsTick,
@@ -423,9 +424,7 @@ function tick(s, zs, now, ids, H) {
 
 /* one criminal's beat */
 function crim(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
-  const sees = (t) =>
-      clearShot(o.x, o.y, t.x, t.y, heightAt(o.x, o.y)) &&
-      Math.abs(heightAt(o.x, o.y) - (t.z || 0)) < 60,
+  const sees = (t) => npcSees(o, t),
     dist = (t) => Math.hypot(t.x - o.x, t.y - o.y),
     go = (x, y, k = 1) => {
       const x0 = o.x;
@@ -563,9 +562,7 @@ function soldier(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
   const gm = gmOf(s),
     sq = (gm.sq || {})[o.sq] || { n: 1, at: [o.x, o.y] },
     mates = gm.gb.filter((q) => !q.d && q.k === "s" && q.sq === o.sq),
-    sees = (t) =>
-      clearShot(o.x, o.y, t.x, t.y, heightAt(o.x, o.y)) &&
-      Math.abs(heightAt(o.x, o.y) - (t.z || 0)) < 60,
+    sees = (t) => npcSees(o, t),
     dist = (t) => Math.hypot(t.x - o.x, t.y - o.y),
     go = (x, y, k = 1) => {
       const x0 = o.x;
@@ -731,7 +728,7 @@ function sniper(s, o, zs, ducks, now, H) {
     dist = (t) => Math.hypot(t.x - o.x, t.y - o.y),
     sees = (t) =>
       !o.hid &&
-      clearShot(o.x, o.y, t.x, t.y, Math.max(h, t.z || 0)) &&
+      npcSees(o, t, Math.max(h, t.z || 0), 0) &&
       roofOver(t.x, t.y, t.z || 0) === roofOver(o.x, o.y, h),
     move = () => {
       o.hid = 1;

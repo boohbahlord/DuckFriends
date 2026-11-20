@@ -23,9 +23,9 @@ import {
   stab,
   suppress,
 } from "./gunmenrules.js";
-import { clearShot, chaseStep } from "./l4ddrules.js";
-import { heightAt } from "./hangout/layout.js";
+import { chaseStep } from "./l4ddrules.js";
 import { CHAPEL, CHAPEL_DOOR } from "./hangout/stationmap.js";
+import { sees as npcSees } from "./npcrules.js";
 
 export const FR = {
   CHANCE: 0.04, // each rest's chance, while none of them is alive
@@ -277,9 +277,7 @@ export function friendsTick(s, gm, ducks, now, H) {
 export function friend(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
   const gm = gmOf(s),
     sv = s.hang.sv || {},
-    sees = (t) =>
-      clearShot(o.x, o.y, t.x, t.y, heightAt(o.x, o.y)) &&
-      Math.abs(heightAt(o.x, o.y) - (t.z || 0)) < 60,
+    sees = (t) => npcSees(o, t),
     dist = (t) => Math.hypot(t.x - o.x, t.y - o.y),
     go = (x, y) => {
       const x0 = o.x;

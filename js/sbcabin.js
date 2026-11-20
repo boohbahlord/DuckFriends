@@ -37,7 +37,6 @@ import {
   Z_ROOM,
   zombieTakes,
   ALL_HP,
-  clearShot,
   L4_HOOKS,
 } from "./l4ddrules.js";
 import { hitCode } from "./wounds.js";
@@ -45,6 +44,7 @@ import { WAVE, zLook } from "./mgjrules.js";
 import { MAD } from "./sbbrain.js";
 import { fight, keepAt, reachTo } from "./sbarms.js";
 import { npcBody, DU_WORLD } from "./sbbody.js";
+import { sees as npcSees } from "./npcrules.js";
 
 export const onCabin = (s) => isSb(s) && baseMode(s.options) === "hang";
 /* the worlds these walk on: Duck Cabin and the zombie maps (there, every kind but a zombie: those are the map's own) */
@@ -278,7 +278,7 @@ export function cabinTick(s, now, H0) {
   return true;
 }
 /* a made NPC's shot from o to t goes through no wall */
-const sees = (o, t) => clearShot(o.x, o.y, t.x, t.y, npcZ(o));
+const sees = (o, t) => npcSees(o, t, npcZ(o), 0);
 /* never in each other: two too close are pushed apart, each only against a few in its own and the next cells */
 function apart(live, RX, RY) {
   const grid = new Map(),
