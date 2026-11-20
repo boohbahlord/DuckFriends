@@ -36,6 +36,7 @@ import {
 } from "../pixel.js";
 import { applyPalette } from "../pixelpalette.js";
 import { ART, artKey, worldArt, lookOf } from "./pxworld.js";
+import { holdGame } from "../gameready.js";
 import { hashText, steadyText } from "../pxdom.js";
 
 export const BOARD_HTML =
@@ -742,11 +743,62 @@ export function mountWorld(board, api) {
      until they're here (a moment), so nothing is ever made into pixels on the device in their place */
   let art = null,
     artWait = true;
-  worldArt(L.layoutVariant()).then((a) => {
-    art = a;
-    artWait = false;
-    gv.need = true;
-  });
+  holdGame(
+    worldArt(L.layoutVariant()).then((a) => {
+      art = a;
+      artWait = false;
+      gv.need = true;
+    }),
+  ); // (the loading screen waits for them: gameready.js)
+  /* every piece of the map made at once behind the loading screen (hidden until it comes near the view), its picture
+     decoded and, with the pixel look, made into pixels at the size it shows: nothing is made, decoded or fetched the
+     first time it comes into view (the owner's, Nov 20 20:46Z: "pop-ins, things being unloaded") */
+  let premade = false;
+  function premake() {
+    premade = true;
+    const sc = cam.sc;
+    const warm = [];
+    for (const it of items) {
+      let e = it.el;
+      if (!e) {
+        e = make(it);
+        e.hidden = true; // (drawProps shows what's in view, next)
+      }
+      if (e._art) continue;
+      const im = e.firstChild;
+      if (it.img && im && im.tagName === "IMG") {
+        if (pixelOn()) still(e, it, it.box.w * sc, it.box.h * sc);
+        else if (im.decode) holdGame(im.decode().catch(() => {}));
+      } else if (pixelOn() && im && im.tagName === "svg" && e.hidden) {
+        /* a drawing (the gas station's roof, the cars): laid out at its size but unseen, so pxdom.js makes its pixels
+           now; hidden as usual once they're made (drawProps) */
+        e._warm = true;
+        e.hidden = false;
+        e.style.opacity = "0"; // (not visibility: pxdom.js copies that into the picture, opacity it leaves out)
+        e.style.transform = `translate(-99999px, 0) scale(${sc.toFixed(4)})`;
+        warm.push(e);
+      }
+    }
+    if (warm.length)
+      holdGame(
+        new Promise((done) => {
+          const t0 = performance.now();
+          const look = () => {
+            const left = warm.filter((e) => e._warm && !warmDone(e));
+            if (!left.length || performance.now() - t0 > 20000) return done();
+            setTimeout(look, 100);
+          };
+          setTimeout(look, 300);
+        }),
+      );
+  }
+  /* a drawing laid out unseen for its pixels has them (or never will: given a moment, pxdom.js marks it first) */
+  const warmDone = (e) => {
+    const svg = e.firstElementChild;
+    return (
+      !svg || (!svg.hasAttribute("data-pxwait") && svg.hasAttribute("data-px"))
+    );
+  };
   /* a drawing that something changes as it shows (the power box's ring, a lamppost's stutter: power.js, flicker.js) stays a
      drawing the device makes into pixels (pxdom.js) */
   const LIVE = /pb-ring/;
@@ -916,6 +968,7 @@ export function mountWorld(board, api) {
       scs = sc.toFixed(4);
     covers.length = 0;
     if (artWait) return; // (the pixel files on their way: pxworld.js)
+    if (!premade && cam.vw) premake();
     for (const it of items) {
       const b = it.box,
         sx = (b.l - cam.x) * sc + vw / 2,
@@ -930,8 +983,18 @@ export function mountWorld(board, api) {
         sy + sh > -NEAR &&
         !(shut && outOfHole(b.l, b.t, b.l + b.w, b.t + b.h));
       let e = it.el;
+      if (e && e._warm && (vis || warmDone(e))) {
+        e._warm = false;
+        e.style.transition = "none"; // (shown at once, not faded in: css .hp)
+        e.style.opacity = "";
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => (e.style.transition = "")),
+        );
+        e._tr = "";
+        if (!vis) e.hidden = true;
+      } // (its pixels made while unseen: premake)
       if (!vis) {
-        if (e && !e.hidden) e.hidden = true;
+        if (e && !e.hidden && !e._warm) e.hidden = true;
         continue;
       }
       if (!e) e = make(it);

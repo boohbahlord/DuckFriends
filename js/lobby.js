@@ -4,6 +4,7 @@
    them saying what the row under the pointer does. Right: the party, one player card per row; click your own to rename it; right-click any card for its
    options. Bottom left: the keys (the arrow keys move around the lobby, Enter picks, Shift+Enter right-clicks). The X at
    the top right leaves the room. */
+import { gameHeld } from "./gameready.js";
 import { fsBtnHTML } from "./corners.js";
 import { register, go, leaveTo } from "./router.js";
 import {
@@ -339,8 +340,8 @@ function onState(s) {
     loadingScreen({
       duck: profile.duck,
       ping: () => (room.ping ? room.ping() : 0),
-      ready: pageReady,
-      max: 15000, // (its pictures in first, on a slow phone too: loading.js pageReady)
+      ready: () => gameHeld().then(pageReady), // (the map's pieces and every picture it shows first: gameready.js)
+      max: 60000, // (its pictures in first, on a slow phone and a slow line too: loading.js pageReady)
     }); // (every way into a game: the countdown's end, a vote, a game already going on)
     return;
   } // the countdown's last tone, at zero
