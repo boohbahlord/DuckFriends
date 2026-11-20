@@ -43,6 +43,13 @@ import {
   sbUnit,
   SB_ORDER,
   SB_ORDERS,
+  SB_GOES,
+  SB_CALL,
+  SB_CALL_ERR,
+  sbNeedsCall,
+  sbTabLive,
+  sbZonesOn,
+  sbNameOf,
   SB_DIRS,
   SB_POINTS,
   sbInBlock,
@@ -316,7 +323,15 @@ function drawMarks(layer, pts, at, size, s) {
     if (zoneLike(p)) {
       if (!seeZones) continue;
       want.add(id);
-      zoneMark(markEl(layer, have, id, "sb-pt sb-zone"), p, at, s);
+      /* the zone it leads with sets how it looks: its color and its name (the owner's, Nov 20 02:45Z) */
+      const lead = sbZonesOn(pts, id)[0],
+        L = lead && lead !== id ? pts[lead] : null;
+      zoneMark(
+        markEl(layer, have, id, "sb-pt sb-zone"),
+        L ? { ...p, col: L.col, f: { ...p.f, name: L.f.name } } : p,
+        at,
+        s,
+      );
       continue;
     }
     want.add(id);
@@ -545,6 +560,20 @@ export function sbSettings(getR, id, tab = "") {
      Shape (with its size), Color ..., Purpose"): on the block itself, not on a spawn's pages, Players or Appearance */
   const front = !p.grp && !players && !look,
     shapeNow = sbShape(p),
+    /* what the block is (the owner's, Nov 20 02:37Z): a zone (a block's own kind) shows Spawn or Respawn once it has
+       that tab; a block of an older kind shows its own */
+    typeNow =
+      p.k !== "zone"
+        ? p.k
+        : (pages.find(
+            ([, q]) => q.pg === "t" && /^(spawn|respawn)$/.test(q.k),
+          ) || [, { k: "zone" }])[1].k,
+    zonesHere = sbZonesOn(pts, id),
+    /* a Spawn, Respawn or Loot tab: its Caller, and the error at its top while it names no zone (the owner's, Nov 20
+       02:45Z: "the error will say make tab that shares caller or variable name") */
+    callHTML = sbNeedsCall(p)
+      ? `${sbTabLive(pts, id) ? "" : `<p class="sb-err" role="alert">${esc(SB_CALL_ERR)}</p>`}${row("call", SB_CALL.call, p.f.call ? p.f.call.t : sbNameOf(pts[p.grp]), why("call"))}`
+      : "",
     frontHTML = front
       ? fold(
           1,
@@ -554,9 +583,11 @@ export function sbSettings(getR, id, tab = "") {
           )
             .map(
               ([v, n]) =>
-                `<label><input type="radio" name="sb-purpose" data-purpose value="${v}"${p.k === v ? " checked" : ""}> ${n}</label>`,
+                `<label><input type="radio" name="sb-purpose" data-purpose value="${v}"${typeNow === v ? " checked" : ""}> ${n}</label>`,
             )
-            .join("")}</span></div>`,
+            .join(
+              "",
+            )}</span></div>${zonesHere.length > 1 ? `<div class="sb-row" data-row="lead"><span>${esc(SB_CALL.lead.name)}</span><select class="sb-box" data-f="lead" aria-label="${esc(SB_CALL.lead.name)}">${zonesHere.map((z) => `<option value="${z === id ? "" : z}"${z === zonesHere[0] ? " selected" : ""}>${esc(sbNameOf(pts[z]))}${z === id ? " (this tab)" : ""}</option>`).join("")}</select><em class="sb-why"></em></div>` : ""}`,
         ) +
         fold(
           2,
@@ -691,9 +722,10 @@ export function sbSettings(getR, id, tab = "") {
       `${sect("Potential order")}<div class="sb-row" data-row="ord"><span>${esc(SB_ORDER.ord.name)}</span><span class="sb-ordbox">${sel("ord", SB_ORDERS)}${sel("dir", SB_DIRS)}</span><em class="sb-why"></em></div>
     ${row("n", SB_ORDER.n, ordT("n"), "")}
     ${row("sq", SB_ORDER.sq, ordT("sq"), "")}
-    ${row("st", SB_ORDER.st, ordT("st"), "")}`;
+    ${row("st", SB_ORDER.st, ordT("st"), "")}
+    <div class="sb-row" data-row="go"><span>${esc(SB_ORDER.go.name)}</span>${sel("go", SB_GOES)}<em class="sb-why"></em></div>`;
   const html = `<h2>${loot && !p.grp ? "Loot" : "Zone"}</h2>${head}
-  <div class="sb-set">${frontHTML}${front ? `<h3 class="sb-sect sb-sect-top">4. ${PURPOSES.find(([v]) => v === p.k)[1]} settings</h3>` : ""}${loot ? lootPage(R.state, id, p, { row, flagRow, typed, why, colorRow }) : zone ? zonePage() : !spawn ? respawn() : players ? playersPage() : look ? lookPage(R.state, p) : entity()}${players || look ? "" : orderSect()}</div>
+  <div class="sb-set">${callHTML}${frontHTML}${front ? `<h3 class="sb-sect sb-sect-top">4. ${PURPOSES.find(([v]) => v === p.k)[1]} settings</h3>` : ""}${loot ? lootPage(R.state, id, p, { row, flagRow, typed, why, colorRow }) : zone ? zonePage() : !spawn ? respawn() : players ? playersPage() : look ? lookPage(R.state, p) : entity()}${players || look ? "" : orderSect()}</div>
   <p class="acts">${spawn && !players && !look ? `<button type="button" class="btn" data-go>Spawn</button>` : ""}${!spawn && !loot && !zone ? `<button type="button" class="btn" data-imp>Import settings</button>` : ""}<button type="button" class="btn ghost" data-del>${p.grp ? (p.pg === "t" ? "Delete tab" : "Delete page") : "Delete"}</button></p>`;
   openWindow(html, {
     cls: zoneLike(p) ? "sb-setwin sb-zonewin" : "sb-setwin",
@@ -751,7 +783,37 @@ export function sbSettings(getR, id, tab = "") {
         if (t.matches("[data-sh]"))
           return send({ k: "set", f: "sh", v: t.dataset.sh });
         if (t.matches("[data-purpose]")) {
-          send({ k: "kind", v: t.value });
+          const v = t.value;
+          /* a zone stays a zone: Spawn or Respawn adds that tab, tied to it by its Caller, and opens it (the owner's, Nov
+             20 02:45Z: "every build option is going to have a tab for zones regardless") */
+          if (p.k === "zone" && (v === "spawn" || v === "respawn")) {
+            const r = getR(),
+              had = new Set(Object.keys(ptsOf(r.state))),
+              has = pages.find(([, q]) => q.pg === "t" && q.k === v);
+            if (has) return again(has[0]);
+            if (had.size >= SB_POINTS)
+              return toast(
+                `The zone budget is full (${SB_POINTS}). Delete a block or a tab first.`,
+              );
+            send({ k: "page", kind: v });
+            return setTimeout(() => {
+              const made = Object.keys(ptsOf(getR().state)).find(
+                (q) => !had.has(q),
+              );
+              if (w.isConnected) again(made || id);
+            }, 400);
+          }
+          if (p.k === "zone") {
+            const tabs = pages.filter(
+              ([, q]) => q.pg === "t" && /^(spawn|respawn)$/.test(q.k),
+            );
+            if (tabs.length)
+              toast(
+                "It's a zone with a Spawn or Respawn tab: delete that tab to make it just a zone.",
+              );
+            return setTimeout(() => w.isConnected && again(id), 50);
+          }
+          send({ k: "kind", v }); // (a block of an older kind: it becomes what's picked)
           return setTimeout(() => w.isConnected && again(id), 400); // (that purpose's own settings, once the room has it)
         }
         if (t.matches("[data-pick]"))
