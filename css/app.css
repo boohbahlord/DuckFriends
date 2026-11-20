@@ -718,6 +718,84 @@ html.noshapes #shapes svg > :not(rect:first-of-type):not(defs) {
 .win-small {
   width: min(25rem, 100%);
 }
+/* cropping a duck's picture (picrop.js): the picture, a box over it (what's outside it dimmed), its corners to size it;
+   under it, how it comes out as pixels on a see-through checker, and the buttons */
+.pc-stage {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0.6rem auto 0;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  background: repeating-conic-gradient(#3a3d4a 0 25%, #2a2c36 0 50%) 0 0 /
+    0.75rem 0.75rem;
+  border-radius: 0.4rem;
+}
+.pc-img {
+  display: block;
+  max-width: 100%;
+  max-height: 48dvh;
+  pointer-events: none;
+}
+.pc-box {
+  position: absolute;
+  outline: 0.15rem solid #fff;
+  outline-offset: -0.15rem; /* (inside it: at the picture's edge it isn't cut off) */
+  box-shadow: 0 0 0 100vmax #000a;
+  cursor: move;
+}
+.pc-h {
+  position: absolute;
+  width: 1.4rem;
+  height: 1.4rem;
+  background: #fff;
+  border: 0.15rem solid #1d1e29;
+  border-radius: 0.3rem;
+}
+.pc-nw,
+.pc-sw {
+  left: 0;
+}
+.pc-ne,
+.pc-se {
+  right: 0;
+}
+.pc-nw,
+.pc-ne {
+  top: 0;
+}
+.pc-sw,
+.pc-se {
+  bottom: 0;
+}
+.pc-nw,
+.pc-se {
+  cursor: nwse-resize;
+}
+.pc-ne,
+.pc-sw {
+  cursor: nesw-resize;
+}
+.pc-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: 0.8rem;
+}
+.pc-foot .acts {
+  margin: 0;
+}
+.pc-prev {
+  width: 4.4rem;
+  height: 4.4rem;
+  image-rendering: pixelated;
+  background: repeating-conic-gradient(#3a3d4a 0 25%, #2a2c36 0 50%) 0 0 /
+    0.55rem 0.55rem;
+  border-radius: 0.4rem;
+}
 .win-x {
   position: absolute;
   top: 0.7rem;
