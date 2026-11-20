@@ -170,7 +170,8 @@ const RX = 56,
   RY = 25.6; // (a zombie's room on the floor, as the rules')
 const SPEED = 0.6 * 1.05; // my duck at 63% of Duck Cabin's walk: I wanted it 20% faster than the half it was, then 5% more (Nov 3; sprint goes from it)
 const DARK = 0.84; // how dark the dark is: still dark, but I wanted it a little lighter than 0.93
-const DARK_ON = 0.5; // … and with the power on: the lights are on, still night
+const DARK_ON = 0.5, // … and with the power on: the lights are on, still night outside
+  DARK_ON_IN = 0; // … and inside the cabin as bright as Hangout is with its power on (the owner's, Nov 20: it brightens when the generator is on)
 const CONE = { far: 560, half: (27 * Math.PI) / 180 }; // the flashlight: how far, and half its width
 const GLOW = 80; // world px: the faint light round every duck
 const LOW_DEAD = 2000; // ms a dead zombie shows on my screen with Low graphics or Data saving (the rules keep it L4.DEAD_MS)
@@ -1489,7 +1490,7 @@ function paint(now, ctx) {
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.globalCompositeOperation = "source-over";
   g.clearRect(0, 0, w, h);
-  g.fillStyle = `rgba(3,4,10,${powerOn(s) ? DARK_ON : DARK})`;
+  g.fillStyle = `rgba(3,4,10,${powerOn(s) ? (Wd.inside ? DARK_ON_IN : DARK_ON) : DARK})`;
   g.fillRect(0, 0, w, h);
   g.globalCompositeOperation = "destination-out";
   const st = stamp();
