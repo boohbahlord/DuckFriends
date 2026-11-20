@@ -269,7 +269,8 @@ if (typeof window !== "undefined" && typeof indexedDB !== "undefined") {
   setTimeout(takeRescue, 3000); // (a save the last visit left in localStorage)
 }
 
-/* ---------- G: Save, Save as and Music ---------- */
+/* ---------- G: Save, Save as and Music ----------
+   win: a row that opens a window of its own puts G away first, so one press of G brings it back after (it took two) */
 export function saveRows(R) {
   const s = R.state,
     rows = [];
@@ -286,29 +287,37 @@ export function saveRows(R) {
           );
         },
       },
-      { label: "Save as…", act: (r) => saveAs(r) },
+      { label: "Save as…", win: true, act: (r) => saveAs(r) },
     );
   rows.push(
     {
       label: "Make a map…",
+      win: true,
       act: (r) => import("./umaps.js").then((m) => m.makeMap(r)),
     },
     {
       label: "My maps…",
+      win: true,
       act: (r) => import("./umaps.js").then((m) => m.myMaps(r)),
     },
   ); // (a map from a picture, kept on this device: umaps.js; the owner's, Nov 19 22:59Z, "In Sandbox ... They click it and they can upload an image")
-  rows.push({ label: "Rules…", act: (r) => rulesWin(r) }); // (plan Phase 6: lives, the down phase, crits, watching when out)
+  rows.push({ label: "Rules…", win: true, act: (r) => rulesWin(r) }); // (plan Phase 6: lives, the down phase, crits, watching when out)
   rows.push({
     label: "Weapons and items…",
+    win: true,
     act: (r) => import("./sblootview.js").then((m) => m.itemsWin(r)),
   }); // (plan Loot 5: every copy of an item, bought or picked up; it wins over a loot's own numbers)
-  rows.push({ label: "Save game mode…", act: (r) => saveModeWin(r) }); // (plan Phase 6: kept on this device, gmodes.js)
+  rows.push({
+    label: "Save game mode…",
+    win: true,
+    act: (r) => saveModeWin(r),
+  }); // (plan Phase 6: kept on this device, gmodes.js)
   if (s.hostId === R.me && s.sbsv)
     rows.push({ label: "Test game mode", act: (r) => startTest(r) }); // (as players would see it; Stop test at the top left)
   const on = allowedSongs(s); // (Miles Jr.'s song list, music.js: only these play, and everyone hears the same)
   rows.push({
     label: `Music: ${on.length ? `${on.length} of ${music.tracks.length} songs` : "no music"}…`,
+    win: true,
     act: (r) => musicWin(r),
   }); // (its own window: the owner's, Nov 20 04:44Z, "music settings among others in game settings are a window that pops up")
   return rows;
