@@ -10,11 +10,12 @@ import {
   SB_GEAR,
   SB_FLAGS,
   SB_BOXES,
+  SB_ITEM,
 } from "./sandboxrules.js";
 import { boxText } from "./sbspawn.js";
 import { lootOk, ammoOf } from "./sbloot.js";
 import { LOOT, lootOf } from "./sbhotview.js";
-import { ARMS } from "./l4ddrules.js";
+import { ARMS, fullAmmo } from "./l4ddrules.js";
 import { orbHTML, weaponIcon, ICONS } from "./l4ddart.js";
 import { DROP_ICONS } from "./l4dddrops.js";
 import { specialById } from "./specials.js";
@@ -126,14 +127,18 @@ export function lootPage(s, id, p, h) {
           : ammoOf(w)
             ? DROP_ICONS.ammo || ""
             : weaponIcon(w) || "",
-    drop = ([n, ws]) => {
+    drop = ([n, ws], i, all) => {
       const on = ws.filter((w) => picked.includes(w));
       return `<div class="sb-row"><span>${esc(n)}</span><details class="sb-acts" data-lcat><summary>${esc(on.map(nameOf).join(", ") || "Nothing")}</summary><span class="sb-what sb-lootpick">${ws
         .map(
           (w) =>
             `<label><input type="checkbox" value="${w}" data-label="${esc(nameOf(w))}"${picked.includes(w) ? " checked" : ""}><i class="sb-lic">${icon(w)}</i>${esc(nameOf(w))}</label>`,
         )
-        .join("")}</span></details></div>`;
+        .join("")}</span></details></div>${
+        i < all.length - 1 // (each item's numbers under its own kind's list, never twice under All items: plan Loot 3)
+          ? ws.map((w) => itemRows(w, picked.includes(w), icon, p, h)).join("")
+          : ""
+      }`;
     };
   const tip = (t) => `<p class="sb-tip sb-rowtip">${esc(t)}</p>`,
     flag = (f, b, t) =>
@@ -179,6 +184,60 @@ export function lootPage(s, id, p, h) {
     <div class="sb-row"><span>Picture</span><span class="sb-pic">${img ? `<img src="${esc(img)}" alt=""><button type="button" class="btn ghost small" data-noimg>Remove</button>` : ""}<label class="btn ghost small">${img ? "Change" : "Upload"}<input type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden data-img></label></span></div>
     <p class="small dim sb-up-note">2 MB at most. Made into pixels.</p>`;
 }
+/* ---------- each picked item's numbers (plan Loot 3: "These rows sit under the item's own dropdown") ----------
+   Only the rows that mean something for it; a blank box is the item's own (shown greyed in it) */
+const ARM_ROWS = {
+  melee: ["dmg", "cd", "brk"],
+  ranged: ["dmg", "ammo", "inf", "rl", "cd", "brk"],
+  grenade: ["n"],
+  special: ["n", "cd", "brk"],
+};
+function rowsFor(w) {
+  if (ammoOf(w)) return ["n"];
+  const A = ARMS[w];
+  if (!A) return []; // (a zombie drop, the flashlight; the board's items: not yet)
+  return (ARM_ROWS[A.kind] || [])
+    .filter((k) => k !== "dmg" || (A.dmg != null && A.dmg !== "all"))
+    .filter((k) => k !== "rl" || A.mag)
+    .filter((k) => (k !== "n" && k !== "brk") || A.kind !== "special" || A.all)
+    .map((k) => (k === "cd" && A.auto ? "sps" : k)); // (a gun that fires while held: shots per second)
+}
+/* what a blank box means for item w: its own number */
+function ownOf(w, k) {
+  const A = ARMS[w] || {};
+  if (k === "dmg")
+    return Array.isArray(A.dmg) ? `${A.dmg[0]} to ${A.dmg[1]}` : String(A.dmg);
+  if (k === "ammo") return "100%";
+  if (k === "n") return ammoOf(w) ? "1" : String(A.all || ARMS.grenade.most);
+  if (k === "cd") return String(+((A.cool || 0) / 1000).toFixed(2));
+  if (k === "sps") return String(+(1000 / (A.cool || 1000)).toFixed(1));
+  return "";
+}
+/* is true/false row k on for item w when nobody set it: Unlimited ammo for the laser and the bow, Reload on */
+const flagOwn = (w, k) =>
+  k === "inf" ? !fullAmmo(w) : k === "rl" ? true : false;
+function itemRows(w, on, icon, p, h) {
+  const rows = rowsFor(w);
+  if (!rows.length) return "";
+  const out = rows.map((k) => {
+    const f = `i_${w}_${k}`,
+      b = SB_ITEM[k],
+      t = h.typed(f),
+      name = k === "n" && ammoOf(w) ? "Magazines you get" : b.name;
+    if (b.kind === "bool") {
+      const v = String(t).trim();
+      return h.flagRow(
+        f,
+        { name },
+        v ? v : flagOwn(w, k) ? "t" : "f",
+        h.why(f),
+      );
+    }
+    const why = h.why(f);
+    return `<label class="sb-row${why ? " bad" : ""}" data-row="${f}"><span>${esc(name)}</span><input class="sb-box" data-f="${f}" value="${esc(t)}" placeholder="${esc(ownOf(w, k))}" maxlength="12" spellcheck="false" autocomplete="off"><em class="sb-why">${esc(why)}</em></label>`;
+  });
+  return `<div class="sb-item" data-item="${w}"${on ? "" : " hidden"}><p class="sb-item-h"><i class="sb-lic">${icon(w)}</i>${esc(nameOf(w))}</p>${out.join("")}</div>`;
+}
 /* the line under the lists: how many are ticked, and what that does */
 const noteOf = (n, all) =>
   n > 1
@@ -194,6 +253,9 @@ export function lootWire(w, id, send, getR) {
     const t = e.target;
     const cat = t.closest("[data-lcat]");
     if (cat) {
+      /* its numbers show while it's ticked */
+      for (const b of w.querySelectorAll(`.sb-item[data-item="${t.value}"]`))
+        b.hidden = !t.checked;
       /* the same thing in another list (All items, or its own kind's) ticks with it */
       for (const c of w.querySelectorAll(
         `.sb-lootpick input[value="${t.value}"]`,

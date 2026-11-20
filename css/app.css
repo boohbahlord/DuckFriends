@@ -20751,6 +20751,28 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .sb-row > span:first-child {
   min-width: 0;
 }
+/* a picked loot item's own numbers, under its kind's list (plan Loot 3) */
+.sb-item {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.1rem 0 0.35rem 0.4rem;
+  padding-left: 0.6rem;
+  border-left: 0.15rem solid var(--line);
+}
+.sb-item[hidden] {
+  display: none;
+}
+.sb-item-h {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.2rem 0 0;
+  font-weight: 700;
+  font-size: 0.9em;
+}
+.sb-box::placeholder {
+  opacity: 0.45;
+}
 /* a loot block's Starts: its picks are words, wider than a number box */
 .sb-row[data-row="lst"] {
   grid-template-columns: minmax(0, 1fr) auto;
