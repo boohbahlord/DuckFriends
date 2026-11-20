@@ -371,7 +371,9 @@ function tick(s, zs, now, ids, H) {
         .filter((o) => o.k === "f" && !o.d)
         .map((o) => ({ id: "@f" + o.i, x: o.x, y: o.y, z: 0, fr: o })),
       /* the merchant too, when nothing else is near (as Justin out there): armed, he shoots back (l4ddrules.js) */
-      ...(m && ["in", "here", "out", "shoot", "hide"].includes(m.st) && !m.c
+      ...(m &&
+      ["in", "here", "out", "shoot", "hide", "flee"].includes(m.st) &&
+      !m.c
         ? [{ id: "@m", x: m.x, y: m.y, z: 0, j: true, mc: 1 }]
         : []),
     ];

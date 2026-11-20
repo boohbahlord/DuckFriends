@@ -2940,7 +2940,17 @@ export const MERCH = {
     chaingun: [500, 800],
   }, // (ms between his shots: my guesses)
   FIGHT_MS: 8000, // (ms he fights back before he runs or hides)
+  /* the owner's, Nov 19 19:27Z: "Merchants have unlimited ammo, even if they have to reload": his gun's own magazine
+     and reload (the chain gun has none of its own: a belt of 100, my guess) */
+  MAG: { chaingun: 100 },
+  RELOAD: { chaingun: 2500 },
+  /* the owner's, same message: "merchants that get in a gunfight with the soldiers will not try to run out of the map.
+     They will try to protect their life and run away to another part of the map": a spot this far at least from every
+     gunman, out of their sight if he can */
+  FLEE_FAR: 700,
 };
+const merchMag = (g) => MERCH.MAG[g] || ARMS[g].mag || 6;
+const merchReload = (g) => MERCH.RELOAD[g] || ARMS[g].reload || 1500;
 export const merchantOf = (s) => (s && s.hang && s.hang.l4m) || null;
 /* is he standing at his spot, selling? */
 export const selling = (s) => (merchantOf(s) || {}).st === "here";
@@ -3134,6 +3144,8 @@ function merchantCome(s, now, sure = false) {
     p: 0,
     t: now,
     tk: now,
+    mg: -1, // (Survival: his gun's rounds left, -1 a full magazine; mrl: when his reload ends)
+    mrl: 0,
   });
   s.hang.l4m = {
     v: vn,
@@ -3165,7 +3177,8 @@ function merchantCome(s, now, sure = false) {
 /* the zombies are coming: a leaving line, and he runs */
 function merchantGo(s, now) {
   const m = merchantOf(s);
-  if (!m || !["in", "here", "fight", "shoot", "hide"].includes(m.st)) return;
+  if (!m || !["in", "here", "fight", "shoot", "hide", "flee"].includes(m.st))
+    return;
   merchantSays(s, "leave", now);
   merchantRun(s, now);
 }
@@ -3173,6 +3186,46 @@ function merchantRun(s, now) {
   const m = merchantOf(s);
   setMh(s, { route: wayOut(m.x, m.y), p: 0, t: now });
   s.hang.l4m = { ...merchantOf(s), st: "out", stock: [] };
+}
+/* Survival, after a gunfight with the soldiers: off to another part of the map (never out of it), then he hides there.
+   A walkable spot far from every gunman left standing, out of their sight when one is; none: he hides where he is */
+function merchantFlee(s, now) {
+  const m = merchantOf(s),
+    gs = ((s.hang.gm && s.hang.gm.gb) || []).filter((q) => !q.d);
+  cells();
+  const from = flowFrom([openNear(m.x, m.y)]); // (only spots he can walk to)
+  let best = null;
+  for (let k = 0; k < 80; k++) {
+    const c = Math.floor(Math.random() * GW * GH);
+    if (!walk[c] || !(from[c] < Infinity)) continue;
+    const [x, y] = mid(c);
+    if (
+      dp() &&
+      (x < GS.RIM.x0 + 80 ||
+        x > GS.RIM.x1 - 80 ||
+        y < GS.RIM.y0 + 80 ||
+        y > GS.RIM.y1 - 80)
+    )
+      continue; // (inside the fence)
+    const near = gs.length
+      ? Math.min(...gs.map((q) => Math.hypot(q.x - x, q.y - y)))
+      : Math.hypot(m.x - x, m.y - y);
+    if (near < MERCH.FLEE_FAR) continue;
+    const seen = gs.some((q) => clearShot(q.x, q.y, x, y, heightAt(x, y))),
+      score = near - (seen ? 2000 : 0) - Math.hypot(m.x - x, m.y - y) * 0.2;
+    if (!best || score > best[2]) best = [Math.round(x), Math.round(y), score];
+  }
+  if (!best) {
+    s.hang.l4m = { ...m, st: "hide", foe: "" };
+    return;
+  }
+  setMh(s, {
+    route: [{ to: [best[0], best[1]], how: "flow" }],
+    p: 0,
+    t: now,
+    hurtAt: now, // (he runs for it: his sprint, merchantSprints)
+  });
+  s.hang.l4m = { ...m, st: "flee", foe: "" };
 }
 /* he's hurt: by player `by` (a line, once a visit, then he runs) or by a zombie (null); n HP. True when it killed him */
 function merchantHurt(s, by, n, now, w = "", how = "", from = "") {
@@ -3238,6 +3291,7 @@ function merchantHurt(s, by, n, now, w = "", how = "", from = "") {
       ...merchantOf(s),
       st: "shoot",
       foe: by || from || "",
+      ...((by ? "" : from || "")[0] === "g" ? { gf: 1 } : {}), // (in a gunfight with the soldiers: merchantFlee after it)
       fu: now + MERCH.FIGHT_MS,
       stock: [],
     };
@@ -3327,7 +3381,9 @@ function merchantShoots(s, zs, now) {
     if (z) t = { z, x: z.x, y: z.y };
   }
   if (!t || dist(t) > MERCH.FOE_FAR || now > m.fu) {
-    if (Math.random() < 0.5) merchantRun(s, now);
+    const soldiers = foe[0] === "g" || m.gf;
+    if (Math.random() < 0.5)
+      soldiers ? merchantFlee(s, now) : merchantRun(s, now);
     else s.hang.l4m = { ...m, st: "hide", foe: "" };
     return;
   }
@@ -3339,12 +3395,27 @@ function merchantShoots(s, zs, now) {
     if (m.f !== f) s.hang.l4m = { ...m, f };
     return;
   }
-  setMh(s, { gx: now + rnd(...MERCH.GUN_GAP[m.gun]) });
+  /* his magazine: empty, he reloads first (unlimited rounds, every reload taken) */
+  const h = mh(s),
+    full = merchMag(m.gun),
+    left = h.mg < 0 || h.mg == null ? full : h.mg;
+  if (h.mrl && now < h.mrl) {
+    if (m.f !== f) s.hang.l4m = { ...m, f };
+    return;
+  }
+  const rounds = h.mrl ? full : left,
+    burst = m.gun === "chaingun" ? Math.min(5, rounds) : 1,
+    after = rounds - burst;
+  setMh(s, {
+    gx: now + rnd(...MERCH.GUN_GAP[m.gun]),
+    mg: after,
+    mrl: after <= 0 ? now + merchReload(m.gun) : 0,
+  });
   const A = ARMS[m.gun],
     len = dist(t) / 64,
     chance = t.z ? 0.85 : Math.max(0.06, 0.25 - 0.03 * len); // (as the gunmen aim, gunmenrules.js AIM)
   let dmg = 0;
-  for (let k = 0; k < (m.gun === "chaingun" ? 5 : 1); k++)
+  for (let k = 0; k < burst; k++)
     if (Math.random() < chance)
       dmg += Array.isArray(A.dmg) ? rint(A.dmg[0], A.dmg[1]) : +A.dmg || 1;
   const a = Math.random() * 2 * Math.PI,
@@ -3427,7 +3498,9 @@ function merchantTick(s, now) {
         y: Math.round(BUTLER.y),
       };
       addFx(s, { kind: "l4drop", k: "merchant", who: [], t: now }); // ("The Merchant has Arrived", l4dd.js l4Got: as he gets to his spot. When he set off it was often at the game's very start, round zero, before anyone's screen was up to show it, and the owner never saw it)
-    } else s.hang.l4m = null;
+    } else if (m0.st === "flee")
+      s.hang.l4m = { ...m0, st: "hide" }; // (got away to another part of the map: he hides there)
+    else s.hang.l4m = null;
     return;
   }
   const m = { x: m0.x, y: m0.y },
@@ -3476,7 +3549,7 @@ function merchantSprints(s, m, now, dt) {
     tired = !!h.tired,
     run = false;
   const must =
-    m.st === "out" &&
+    (m.st === "out" || m.st === "flee") &&
     (now - (h.hurtAt || 0) < MERCH.HURT_MS ||
       zombies(s).some(
         (z) => z.st !== 3 && Math.hypot(z.x - m.x, z.y - m.y) < MERCH.CHASED,
@@ -5739,7 +5812,7 @@ function moveZombies(s, zs, now, T, up) {
      13:46Z: "zombies might try and chase them like they are a player UNLESS they climb a fence OR jump off the
      balcony, then they give up"); never his body */
   const mm = merchantOf(s);
-  if (mm && (mm.st === "out" || mm.st === "fight") && !mm.c)
+  if (mm && (mm.st === "out" || mm.st === "fight" || mm.st === "flee") && !mm.c)
     pls.push({
       id: "@m",
       p: null,
