@@ -38,6 +38,13 @@ export const SV = {
   LIT: [4000, 6000], // ms in a flashlight's middle before a walker comes ("after 4 or 6 seconds, not in an exact time")
   LIT_FAR: 0.6, // of the beam's reach: its close part ("not like the very far edge of the flashlight")
   LIT_HALF: 0.5, // of the beam's half width: its middle
+  /* the merchant (the owner's, Nov 20 18:23Z: "the merchant should be able to stay for like 30 seconds between rounds.
+     Like the rest phase doesn't start until the merchant has actually showed up", and 18:27Z: "the merchant's arrival
+     is based when he's actually standing still in the church ready to sell, not when he's just running into the map"):
+     a rest's clock starts once he stands at his spot, and runs this long at least. He stays through the wave until the
+     zombies come for him (l4ddrules.js chasedM) */
+  STAY: 30000,
+  WAIT_MOST: 120000, // (ms: a rest never waits longer than this for him)
   START: [4, 2], // walkers about when the game starts: 4, and 2 more for each player
   REST_MOST: [4, 3], // walkers about in a rest at most: 4, and 3 more for each player
   REST_EVERY: 4000, // ms between two walkers wandering in during a rest
@@ -95,7 +102,8 @@ export function survStart(s, now) {
   s.hang.sv = {
     ph: "rest",
     t: now,
-    until: now + wholeIn(SV.REST) * 1000,
+    until: now + SV.WAIT_MOST, // (set again once the merchant is at his spot: wm)
+    wm: wholeIn(SV.REST) * 1000,
     k: 0,
     big: 0,
     sz: [],
@@ -117,13 +125,20 @@ function stalled(sv, n, now, all) {
 /* every heartbeat (l4ddrules.js l4Tick, which keeps the round's own numbers in L and the zombies in zs, and adds the
    ones pushed into zs): the phases go on. n: the players. h: what only l4ddrules.js can do, { walker(): a new walker
    far from everyone (or null), speedAt(level): a zombie's speed at that level's stats, remodel(z): a new look for a
-   walker that turns, go(): the merchant leaves,
+   walker that turns, merchantComing(): a merchant is on his way to his spot,
    rest(): a rest begins (the merchant comes, the ghosts are back), gunmen(side): a wave of gunmen comes in instead of a
    horde ("c" criminals, "s" soldiers: gunmenrules.js), gunDone(): true once that wave is over } */
 export function survTick(s, L, zs, now, n, h) {
   let sv = { ...s.hang.sv };
   const live = zs.filter((z) => z.st !== 3),
     walkers = live.filter((z) => z.wk);
+  if (sv.ph === "rest" && sv.wm) {
+    /* waiting for the merchant to stand at his spot (or none is coming): then the rest's clock starts */
+    if (!h.merchantComing() || now - sv.t >= SV.WAIT_MOST) {
+      sv.until = now + Math.max(sv.wm, SV.STAY);
+      delete sv.wm;
+    }
+  }
   if (sv.ph === "rest") {
     if (now >= sv.nx) {
       sv.nx = now + SV.REST_EVERY;
@@ -132,13 +147,14 @@ export function survTick(s, L, zs, now, n, h) {
         if (z) zs.push(z);
       }
     }
-    if (now >= sv.until && sv.k && Math.random() < SV.GUNMEN) {
+    if (sv.wm) {
+      /* (still waiting for him: no wave yet) */
+    } else if (now >= sv.until && sv.k && Math.random() < SV.GUNMEN) {
       /* the peak is gunmen (never the first): the walkers don't sprint, and more keep wandering in (gunmenrules.js) */
       const [g, gs] = gunSide(sv.gs);
       h.gunmen(g);
       Object.assign(L, { t0: now, n: 0, made: 0, owe: 0, acc: 0, sec: -1 });
       sv = { ...sv, ph: "peak", t: now, until: 0, k: sv.k + 1, big: 0, g, gs };
-      h.go();
     } else if (now >= sv.until) {
       /* the peak: the horde's size and its stats from their bags (the first one a round 5 to 8's, as big as theirs), and
          every walker on the map sprints with it */
@@ -176,7 +192,6 @@ export function survTick(s, L, zs, now, n, h) {
         sz,
         lv,
       };
-      h.go();
     }
   } else if (
     sv.ph === "peak" &&
@@ -238,7 +253,8 @@ export function survTick(s, L, zs, now, n, h) {
         ...sv,
         ph: "rest",
         t: now,
-        until: now + (wholeIn(SV.REST) + (sv.big ? SV.BIG_REST : 0)) * 1000,
+        until: now + SV.WAIT_MOST, // (set again once he's at his spot: wm)
+        wm: (wholeIn(SV.REST) + (sv.big ? SV.BIG_REST : 0)) * 1000,
         nx: now + SV.REST_EVERY,
       };
       h.rest();

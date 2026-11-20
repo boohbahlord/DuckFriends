@@ -21,11 +21,12 @@
 import {
   L4_HOOKS,
   ARMS,
+  critOf,
   clearShot,
   chaseField,
   chaseStep,
 } from "./l4ddrules.js";
-import { heightAt, slabBetween, deckOver, PROPS } from "./hangout/layout.js";
+import { heightAt, slabBetween, PROPS } from "./hangout/layout.js";
 import { DECKS } from "./hangout/stationmap.js";
 import { hpHurt } from "./hpmath.js";
 import { gunmanLook } from "./gunmen.js";
@@ -85,6 +86,10 @@ export const GM = {
   SNIPER: 0.2, // a soldier wave's chance of a lone sniper (none while one lives)
   SNIPE: [6, 26], // duck lengths: how near and how far off he takes his shot from
   LOCK_MS: [1500, 2500], // ms his laser sits on a duck before the shot
+  /* ms he keeps watching the spot where a duck went out of his sight (the owner's, Nov 20 18:23Z: "he might know that
+     they're behind a surface when they walk behind it for 10 seconds if he last saw them there ... unless new
+     information of a new player's location comes in") */
+  MEMORY_MS: 10000,
   SNIPE_HIT: 0.85, // that shot's chance to hit
   MOVE_MS: [6000, 10000], // ms he's away, moving to a new spot nobody sees
   PERCH_MS: [14000, 22000], // ms he keeps to one spot with nothing in his sights before he moves on
@@ -723,20 +728,32 @@ function soldier(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
 /* the sniper's beat (the owner's, Nov 19 19:47Z): no flashlight; his long laser sits on a duck 1.5 to 2.5 s, following
    one that moves slowly, then the shot; one shot a wave. A duck sprinting breaks it, and he moves to a new spot nobody
    sees (away a while: nobody sees him go). A duck too near: his UMP, or his knife. Under a tree's crown zombies never
-   find him; a zombie that claws him anyway (on the roof) is shot */
-const roofOver = (x, y, z) => {
-  const d = deckOver(x, y, z);
-  return d && d.kind === "roof" ? d : null; // (a building's roof hides who's under it; the pumps' canopy doesn't)
-};
+   find him; a zombie that claws him anyway (on the roof) is shot.
+   What he sees is what he can shoot (the owner's, Nov 20 18:23Z: "if he can't shoot them, then de facto, he can't see
+   them"): the one rule every shot keeps, nothing solid between (walls on the way, and layout.js slabBetween's
+   sightline across roofs and floors, so from far enough he sees under the pumps' canopy and from closer he doesn't). He
+   has no range (18:27Z: "Sniper can shoot through the entire map if it doesn't hit a wall"), only a nearest: closer
+   than GM.SNIPE[0] it's his UMP. A duck that goes out of his sight: he watches the spot it was last seen at for
+   GM.MEMORY_MS (o.mem), and takes it again if it shows there, or another one that shows anywhere */
 function sniper(s, o, zs, ducks, now, H) {
   const gm = gmOf(s),
     h = o.z || heightAt(o.x, o.y),
     dist = (t) => Math.hypot(t.x - o.x, t.y - o.y),
+    nearestFirst = (a, b) => (a.j ? 1 : 0) - (b.j ? 1 : 0) || dist(a) - dist(b), // (the ducks before Justin)
     sees = (t) =>
       !o.hid &&
       npcSees(o, t, Math.max(h, t.z || 0), 0) &&
-      roofOver(t.x, t.y, t.z || 0) === roofOver(o.x, o.y, h),
+      !slabBetween(o.x, o.y, h, t.x, t.y, t.z || heightAt(t.x, t.y)),
+    /* a duck he may take aim at: in sight, not sprinting, not too near (his UMP's) */
+    mark = (d) => !d.sp && dist(d) > GM.SNIPE[0] * GM.DUCK && sees(d),
+    lockOn = (t) => {
+      delete o.mem;
+      o.st = "aim";
+      o.tg = "p:" + t.id;
+      o.u = now + rnd(...GM.LOCK_MS);
+    },
     move = () => {
+      delete o.mem;
       o.hid = 1;
       o.st = "move";
       o.ld = 0;
@@ -778,10 +795,29 @@ function sniper(s, o, zs, ducks, now, H) {
     return;
   }
   if (o.st === "close") move(); // (it got away from him, or he from it: he moves on)
+  if (o.st === "watch") {
+    /* watching where a duck went out of sight: it shows again (anywhere he can see it), or another one does; else, once
+       his memory of it runs out, he moves on */
+    const was = ducks.find((d) => "p:" + d.id === o.tg),
+      t = was && mark(was) ? was : ducks.filter(mark).sort(nearestFirst)[0];
+    if (t) lockOn(t);
+    else if (!o.mem || now >= o.mem.u) move();
+    return;
+  }
   if (o.st === "aim") {
     const t = ducks.find((d) => "p:" + d.id === o.tg);
-    if (!t || t.sp || !sees(t) || dist(t) > GM.SNIPE[1] * GM.DUCK) {
-      move(); // (it sprinted off, or went out of his sight: he moves to safety)
+    if (!t || t.sp) {
+      move(); // (it sprinted off, or went down: he moves to safety)
+      return;
+    }
+    if (!sees(t)) {
+      /* out of his sight: his laser stays on the spot he last saw it at (o.ad, o.ld as they were) */
+      o.st = "watch";
+      o.mem = { u: now + GM.MEMORY_MS };
+      const other = ducks
+        .filter((d) => d !== t && mark(d))
+        .sort(nearestFirst)[0];
+      if (other) lockOn(other); // (another one in sight: news of where they are)
       return;
     }
     o.ad = Math.round((Math.atan2(t.y - o.y, t.x - o.x) * 180) / Math.PI);
@@ -808,19 +844,9 @@ function sniper(s, o, zs, ducks, now, H) {
   o.ld = 0;
   if (!o.u) o.u = now + rnd(...GM.PERCH_MS);
   if (o.wv !== gm.wv && gm.k) {
-    const t = ducks
-      .filter(
-        (d) =>
-          !d.sp &&
-          dist(d) > GM.SNIPE[0] * GM.DUCK &&
-          dist(d) < GM.SNIPE[1] * GM.DUCK &&
-          sees(d),
-      )
-      .sort((a, b) => (a.j ? 1 : 0) - (b.j ? 1 : 0) || dist(a) - dist(b))[0];
+    const t = ducks.filter(mark).sort(nearestFirst)[0];
     if (t) {
-      o.st = "aim";
-      o.tg = "p:" + t.id;
-      o.u = now + rnd(...GM.LOCK_MS);
+      lockOn(t);
       return;
     }
   }
@@ -839,16 +865,24 @@ const zombieOf = (t) => (t.z && typeof t.z === "object" ? t.z : null);
 /* one of them lands dmg on t with weapon w: a zombie, one of the others (the friendly squad, or the gunmen the squad
    shoots at), or a duck. Half on a duck and on each other ("half damage"), and the friendly squad's half on zombies too
    ("fight with you at half damage") */
+/* a headshot (the owner's, Nov 20 18:23Z, principles kept from now on: "headshots are based on critical hits only"; "Justin
+   and NPCs and anyone else do lose their head on any headshot, no matter what"; "gunmen can get critical on other
+   people, but they can't get it on a player ... No enemy can get a headshot critical hit on a player if they had
+   guns"): one of theirs crits as a duck's does with that weapon (l4ddrules.js critOf), on anyone but a player, and the
+   crit takes the head, as a zombie's does */
 export function hitOn(s, o, t, dmg, w, now, H) {
-  const half = Math.round(dmg * GM.DMG * 10) / 10;
-  if (zombieOf(t)) H.hitZ(t.z, o.k === "f" ? half : dmg, w);
+  const half = Math.round(dmg * GM.DMG * 10) / 10,
+    player = !zombieOf(t) && !t.fr && !t.mc && !H.wild(t.id),
+    head = !player && Math.random() < critOf(w);
+  if (zombieOf(t)) H.hitZ(t.z, o.k === "f" ? half : dmg, w, head);
   else if (t.fr) {
     if (!s) return;
     const q = gmOf(s).gb.find((g) => g.i === t.fr.i);
-    if (q && !q.d) takes(s, q, null, w, half, now, H);
+    if (q && !q.d)
+      takes(s, q, null, w, head ? { dmg: q.hp, head } : half, now, H);
   } else if (t.mc) {
-    if (o.k !== "f") H.mhurt(o.i, half, w);
-  } else H.hurt(t.id, half, w);
+    if (o.k !== "f") H.mhurt(o.i, half, w, head);
+  } else H.hurt(t.id, half, w, head); // (head: only ever Justin, never a player)
 }
 /* an LMG burst at t: every duck its rounds fly near is suppressed a moment (its screen shakes and darkens) */
 export function suppress(s, o, t, ducks, now) {
