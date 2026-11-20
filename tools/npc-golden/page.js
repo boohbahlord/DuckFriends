@@ -113,6 +113,7 @@ window.__golden = async (sc) => {
         k: Math.max(1, s.hang.sv.k || 0),
       },
     };
+    delete s.hang.sv.wm; // (not waiting for the merchant: survrules.js)
   }
   const out = { all: [], parts: [] },
     per = {}, // (beats in each phase)

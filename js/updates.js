@@ -9,6 +9,38 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v185",
+    version: 185,
+    date: "Nov 20, 2026",
+    title: "The sniper watches",
+    news: [
+      "For Survival: the merchant waits until he's at his spot and stays at least 30 s, leaving only when zombies come for him.",
+      "For Survival: the sniper sees only what he can shoot, anywhere on the map, and watches where you hid for 10 s.",
+      "A headshot always takes the head, and gunmen never headshot players.",
+    ],
+  },
+  {
+    id: "v184",
+    version: 184,
+    date: "Nov 20, 2026",
+    title: "Shorter sprint, UI scale",
+    news: [
+      "For Mad God Justin: when he's beaten there's no loser podium any more, and his cloud just says Justin defeated.",
+      "For Survival: the gunmen's assault rifles reach as far as the LMG.",
+      "Sprint lasts half as long (3.5 seconds) and fills back up as fast. Once it runs out, you sprint again only when it's full.",
+      "UI scale in the pause menu: make everything bigger or smaller, from 50% to 200%.",
+    ],
+  },
+  {
+    id: "v183",
+    version: 183,
+    date: "Nov 20, 2026",
+    title: "M like a spawn",
+    news: [
+      "For Sandbox: in M, a kind's defaults and the NPCs you make now have a spawn's settings too: Brain, Can sprint, jump and climb, HP, Damage, Speed and Size.",
+    ],
+  },
+  {
     id: "v182",
     version: 182,
     date: "Nov 20, 2026",

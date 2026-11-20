@@ -25,6 +25,7 @@ import {
   SB_ACTS,
   SB_IMPORT,
   SB_OWN,
+  SB_MSET,
   SB_WHAT,
   SB_PLAYER,
   SB_COLORS,
@@ -89,6 +90,7 @@ import {
   sbWalkOf,
   madeOf,
   kdOf,
+  msetOf,
   ownOn,
   SB_TEXT,
 } from "./sbspawn.js";
@@ -1406,19 +1408,10 @@ export function sbSettings(getR, id, tab = "") {
       /* a Brain: its file (and the files it uses) go to the room first, from my Seriat folder (numeratwin.js, loaded
          when it's wanted: it brings the command line) */
       const sendBrain = (i) =>
-        import("./numeratwin.js").then((m) => {
-          const v = i.value.trim(),
-            files = m.brainFiles(v),
-            lab = i.closest(".sb-row");
-          lab.classList.toggle("bad", !files);
-          lab.querySelector(".sb-why").textContent = files
-            ? ""
-            : v.startsWith("~")
-              ? `No file by that name that its owner lets you run (x)`
-              : `No file by that name in your ${LANG} folder (n)`;
+        brainCheck(i).then((files) => {
           if (!files) return;
           send({ k: "nbf", files });
-          send({ k: "set", f: "brain", v });
+          send({ k: "set", f: "brain", v: i.value.trim() });
         });
       if (loot) lootWire(w, id, send, getR);
       w.addEventListener("input", (e) => {
@@ -1682,71 +1675,7 @@ export function sbSettings(getR, id, tab = "") {
             list.hidden = false;
           });
         }
-        const tog = e.target.closest("[data-tog]");
-        if (tog) {
-          const box = tog.closest(".sb-row").querySelector(".sb-box"),
-            v = box.value === "" ? "t" : box.value === "t" ? "f" : ""; // (default, true, false, default …)
-          box.value = v;
-          tog.classList.toggle("on", v === "t");
-          tog.classList.toggle("mid", v === "");
-          tog.setAttribute(
-            "aria-pressed",
-            v === "t" ? "true" : v ? "false" : "mixed",
-          );
-          tog.textContent = triWord(v);
-          return box.dispatchEvent(new Event("input", { bubbles: true }));
-        }
-        /* the Brain box's arrow: my-files/, and the builder for a new one */
-        const bl = e.target.closest(
-          "[data-brainlist], [data-brainfile], [data-brainnew]",
-        );
-        if (bl) {
-          const rowEl = bl.closest("[data-row=brain]"),
-            list = rowEl.querySelector(".sb-brainlist"),
-            input = rowEl.querySelector("[data-f=brain]"),
-            arrow = rowEl.querySelector("[data-brainlist]"),
-            pick = (v) => {
-              list.hidden = true;
-              arrow.setAttribute("aria-expanded", "false");
-              input.value = v;
-              input.dispatchEvent(new Event("input", { bubbles: true })); // (as if typed: it goes to the room)
-            };
-          if (bl.dataset.brainfile != null) return pick(bl.dataset.brainfile);
-          if (bl.hasAttribute("data-brainnew"))
-            return import("./brainbuild.js").then((m) =>
-              m.openBrainBuilder((path) => w.isConnected && pick(path)),
-            );
-          if (!list.hidden) {
-            list.hidden = true;
-            return arrow.setAttribute("aria-expanded", "false");
-          }
-          return Promise.all([
-            import("./brainbuild.js"),
-            import("./numerathelp.js"),
-          ]).then(async ([m, h]) => {
-            const files = await m.myFiles();
-            list.innerHTML =
-              `<span class="sb-brainhead">My files</span>` +
-              (files.length
-                ? files
-                    .map(
-                      (f) =>
-                        `<button type="button" class="sb-brainfile" data-brainfile="${esc(f.path)}">${esc(f.name)}</button>`,
-                    )
-                    .join("")
-                : `<em class="sb-none">Nothing in ${m.MY_FILES}/ yet</em>`) +
-              `<span class="sb-brainhead">Examples</span>` +
-              Object.keys(h.EXAMPLES)
-                .map(
-                  (n) =>
-                    `<button type="button" class="sb-brainfile" data-brainfile="help/examples/${esc(n)}">${esc(n)}</button>`,
-                )
-                .join("") +
-              `<button type="button" class="sb-brainfile sb-brainnew" data-brainnew>Build a brain…</button>`;
-            list.hidden = false;
-            arrow.setAttribute("aria-expanded", "true");
-          });
-        }
+        if (npcSetClick(e, w)) return; // (a switch, the Brain box's arrow: shared with M's windows)
         const c = e.target.closest("[data-col]");
         if (c) {
           w.querySelectorAll(".sb-col").forEach((b) =>
@@ -1800,6 +1729,156 @@ export function sbSettings(getR, id, tab = "") {
     },
   });
 }
+/* ---------- an NPC's settings, as a spawn sets them, for M ----------
+   The owner's, Nov 20 17:25Z: "in ai behaviors, things like ai should be able to have very similiar options to spawn IN
+   their UI settings for M". A kind's defaults (kindDefaults) and an NPC I made (customize.js, madeSet) show the same
+   rows a spawn's page does, drawn and wired here once: who they go after, their Brain, what they can do, their numbers
+   (sandboxrules.js SB_MSET) */
+/* a switch's click (default, true, false, default …) or the Brain box's arrow, in any of these windows: true when it
+   was one */
+function npcSetClick(e, w) {
+  const tog = e.target.closest("[data-tog]");
+  if (tog) {
+    const box = tog.closest(".sb-row").querySelector(".sb-box"),
+      v = box.value === "" ? "t" : box.value === "t" ? "f" : ""; // (default, true, false, default …)
+    box.value = v;
+    tog.classList.toggle("on", v === "t");
+    tog.classList.toggle("mid", v === "");
+    tog.setAttribute(
+      "aria-pressed",
+      v === "t" ? "true" : v ? "false" : "mixed",
+    );
+    tog.textContent = triWord(v);
+    box.dispatchEvent(new Event("input", { bubbles: true }));
+    return true;
+  }
+  /* the Brain box's arrow: my-files/, and the builder for a new one */
+  const bl = e.target.closest(
+    "[data-brainlist], [data-brainfile], [data-brainnew]",
+  );
+  if (bl) {
+    const rowEl = bl.closest("[data-row=brain]"),
+      list = rowEl.querySelector(".sb-brainlist"),
+      input = rowEl.querySelector("[data-f=brain]"),
+      arrow = rowEl.querySelector("[data-brainlist]"),
+      pick = (v) => {
+        list.hidden = true;
+        arrow.setAttribute("aria-expanded", "false");
+        input.value = v;
+        input.dispatchEvent(new Event("input", { bubbles: true })); // (as if typed: it goes to the room)
+      };
+    if (bl.dataset.brainfile != null) {
+      pick(bl.dataset.brainfile);
+      return true;
+    }
+    if (bl.hasAttribute("data-brainnew")) {
+      import("./brainbuild.js").then((m) =>
+        m.openBrainBuilder((path) => w.isConnected && pick(path)),
+      );
+      return true;
+    }
+    if (!list.hidden) {
+      list.hidden = true;
+      arrow.setAttribute("aria-expanded", "false");
+      return true;
+    }
+    Promise.all([import("./brainbuild.js"), import("./numerathelp.js")]).then(
+      async ([m, h]) => {
+        const files = await m.myFiles();
+        list.innerHTML =
+          `<span class="sb-brainhead">My files</span>` +
+          (files.length
+            ? files
+                .map(
+                  (f) =>
+                    `<button type="button" class="sb-brainfile" data-brainfile="${esc(f.path)}">${esc(f.name)}</button>`,
+                )
+                .join("")
+            : `<em class="sb-none">Nothing in ${m.MY_FILES}/ yet</em>`) +
+          `<span class="sb-brainhead">Examples</span>` +
+          Object.keys(h.EXAMPLES)
+            .map(
+              (n) =>
+                `<button type="button" class="sb-brainfile" data-brainfile="help/examples/${esc(n)}">${esc(n)}</button>`,
+            )
+            .join("") +
+          `<button type="button" class="sb-brainfile sb-brainnew" data-brainnew>Build a brain…</button>`;
+        list.hidden = false;
+        arrow.setAttribute("aria-expanded", "true");
+      },
+    );
+    return true;
+  }
+  return false;
+}
+/* a Brain box's file (and the files it uses), from my Seriat folder, or null (the row says why): numeratwin.js, loaded
+   when it's wanted (it brings the command line) */
+const brainCheck = (i) =>
+  import("./numeratwin.js").then((m) => {
+    const v = i.value.trim(),
+      files = v ? m.brainFiles(v) : {},
+      lab = i.closest(".sb-row");
+    lab.classList.toggle("bad", !files);
+    lab.querySelector(".sb-why").textContent = files
+      ? ""
+      : v.startsWith("~")
+        ? `No file by that name that its owner lets you run (x)`
+        : `No file by that name in your ${LANG} folder (n)`;
+    return files;
+  });
+/* the rows: p is the NPC as a spawn of it alone would be (its boxes in p.f), typed and why as a spawn's page has them;
+   acts: with its behavior lists (a made NPC has them in its own Behavior part) */
+function npcSetHTML(s, p, typed, why, kinds, acts = true) {
+  SECT = null; // (plain headings: these windows aren't numbered)
+  const one = (f) =>
+    SB_ACTS[f]
+      ? actRow(s, p, f, kinds)
+      : f === "brain"
+        ? brainRow(typed(f), why(f))
+        : SB_FLAGS[f]
+          ? flagRow(f, SB_FLAGS[f], typed(f), why(f))
+          : row(f, SB_BOXES[f], typed(f), why(f));
+  return `<div class="sb-set sb-npcset">${[
+    ["Who they go after", Object.keys(SB_ACTS), acts],
+    ["Brain", ["brain"], true],
+    ["True or false", SB_MSET.filter((f) => SB_FLAGS[f]), true],
+    ["Numbers", SB_MSET.filter((f) => SB_BOXES[f]), true],
+  ]
+    .filter(([, , on]) => on)
+    .map(([t, fs]) => sub(t) + fs.map(one).join(""))
+    .join("")}</div>`;
+}
+/* the rows' wiring: put(f, v, files) once a box settles (files: a Brain's, to send to the room first) */
+function npcSetWire(w, put) {
+  const timers = {};
+  w.addEventListener("input", (e) => {
+    const i = e.target.closest(".sb-npcset .sb-box");
+    if (!i) return;
+    const f = i.dataset.f;
+    clearTimeout(timers[f]);
+    if (f === "brain")
+      return (timers[f] = setTimeout(
+        () =>
+          brainCheck(i).then((files) => files && put(f, i.value.trim(), files)),
+        400,
+      ));
+    const bad = i.value.trim() ? boxWhy(f, i.value) : "",
+      lab = i.closest(".sb-row");
+    lab.classList.toggle("bad", !!bad);
+    lab.querySelector(".sb-why").textContent = bad;
+    timers[f] = setTimeout(() => put(f, i.value.trim()), 250); // (emptied: the default again)
+  });
+  w.addEventListener("change", (e) => {
+    const act = e.target.closest(".sb-npcset [data-act]");
+    if (!act) return;
+    const on = [...act.querySelectorAll("input:checked")];
+    act.querySelector("summary").textContent = summaryOf(on);
+    put(act.dataset.act, on.map((c) => c.value).join(", "));
+  });
+  w.addEventListener("click", (e) => {
+    if (e.target.closest(".sb-npcset")) npcSetClick(e, w);
+  });
+}
 /* ---------- M: a kind's defaults (sbspawn.js kdOf) ----------
    The four kinds that come with Sandbox, each with the settings a spawn can give it; what's written here is what every
    one of that kind starts with, wherever a spawn didn't write its own (or has "Use these settings" off). The rows in M */
@@ -1814,54 +1893,68 @@ export function kindDefaults(getR, kind) {
   if (!R || !SB_WHAT[kind] || !sbMay(R.state, R.me, "m")) return;
   const kd = kdOf(R.state, kind) || { f: {} },
     p = { k: "kd", col: "red", f: { ...kd.f, what: { t: kind, ok: kind } } }, // (as a spawn of it alone would be)
-    typed = (f) => typedOr(kd, f, p),
-    why = (f) => (kd.f[f] ? boxWhy(f, kd.f[f].t) : ""),
-    kinds = kindsFor(R.state),
     html = `<h2>${esc(SB_WHAT[kind])}: defaults</h2>
   <p class="small dim">Every ${esc(SB_WHAT[kind])} starts with these, unless its spawn sets its own.</p>
-  <div class="sb-set">${SB_OWN.map((f) =>
-    SB_ACTS[f]
-      ? actRow(R.state, p, f, kinds)
-      : SB_FLAGS[f]
-        ? flagRow(f, SB_FLAGS[f], typed(f), why(f))
-        : row(f, SB_BOXES[f], typed(f), why(f)),
-  ).join("")}</div>
+  ${npcSetHTML(
+    R.state,
+    p,
+    (f) => typedOr(kd, f, p),
+    (f) => (kd.f[f] ? boxWhy(f, kd.f[f].t) : ""),
+    kindsFor(R.state),
+  )}
   <p class="acts"><button type="button" class="btn ghost" data-kdreset>The game's own</button></p>`;
   openWindow(html, {
     cls: "sb-setwin",
     onOpen(w, close) {
       const send = (a) => {
         const r = getR();
-        if (r) r.send({ t: "sb", k: "kd", kind, ...a });
+        if (r) r.send({ t: "sb", ...a });
       };
-      const timers = {};
-      w.addEventListener("input", (e) => {
-        const i = e.target.closest(".sb-box");
-        if (!i) return;
-        const f = i.dataset.f,
-          bad = i.value.trim() ? boxWhy(f, i.value) : "",
-          lab = i.closest(".sb-row");
-        lab.classList.toggle("bad", !!bad);
-        lab.querySelector(".sb-why").textContent = bad;
-        clearTimeout(timers[f]);
-        timers[f] = setTimeout(() => send({ f, v: i.value.trim() }), 250); // (emptied: the game's own again)
-      });
-      w.addEventListener("change", (e) => {
-        const act = e.target.closest("[data-act]");
-        if (!act) return;
-        const on = [...act.querySelectorAll("input:checked")];
-        act.querySelector("summary").textContent = summaryOf(on);
-        send({ f: act.dataset.act, v: on.map((c) => c.value).join(", ") });
+      npcSetWire(w, (f, v, files) => {
+        if (files) send({ k: "nbf", files });
+        send({ k: "kd", kind, f, v });
       });
       w.addEventListener("click", (e) => {
         if (!e.target.closest("[data-kdreset]")) return;
-        send({ reset: true });
+        send({ k: "kd", kind, reset: true });
         close(null);
         setTimeout(() => kindDefaults(getR, kind), 300);
       });
     },
   });
 }
+/* an NPC I made (sbnpcs.js): the same rows in its Customize, under its behavior lists. n.set keeps what was typed
+   (f: text); save() keeps it (on my device, or back to the room for another player's) */
+export const madeSet = {
+  html(n) {
+    const R = activeRoom(),
+      fs = msetOf(n.set || {}),
+      p = {
+        k: "kd",
+        col: "red",
+        f: { ...fs, what: { t: "c:" + n.id, ok: "c:" + n.id } },
+      };
+    return npcSetHTML(
+      R ? R.state : {},
+      p,
+      (f) => typedOr({ f: fs }, f, p),
+      (f) => (fs[f] ? boxWhy(f, fs[f].t) : ""),
+      [],
+      false,
+    );
+  },
+  wire(w, n, save) {
+    npcSetWire(w, (f, v, files) => {
+      const R = activeRoom();
+      if (files && R) R.send({ t: "sb", k: "nbf", files });
+      const set = { ...(n.set || {}) };
+      if (v === "") delete set[f];
+      else set[f] = v;
+      n.set = set;
+      save();
+    });
+  },
+};
 /* a respawn's Import settings (the owner's Sandbox file): the spawn's settings by category, each a dropdown whose bold
    first row checks all of it; "Import" for the ones checked, or with none checked "Import all options" after an "Are you
    sure?". The button stays at the bottom while the list scrolls; options import in the spawn menu's order (sbspawn.js) */

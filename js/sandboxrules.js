@@ -403,6 +403,10 @@ export const SB_IMPORT = [
 export const SB_OWN = SB_IMPORT.flatMap(([, fs]) => fs).filter(
   (f) => f !== "ap",
 );
+/* what M sets for an NPC, a kind's defaults or one I made (the owner's, Nov 20 17:25Z: "in ai behaviors, things like ai
+   should be able to have very similiar options to spawn IN their UI settings for M"): a spawn's own settings, and its
+   Brain */
+export const SB_MSET = [...SB_OWN, "brain"];
 /* a spawn's Players tab: ducks spawn here (they start, join and come back from being down here) when it's on, the ones
    its "who" names (players, or their names), with its HP and speed; blank is the game's own */
 export const SB_PLAYER = {

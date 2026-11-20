@@ -84,6 +84,7 @@ import { SB_WHAT, SB_ACTS } from "./sandboxrules.js";
    font and no specials, and two pages of its own at the bottom: its weapons and its behavior */
 let NPC = null;
 let BORROWED = false;
+let MADE_SET = null; // (the spawn's settings for a made NPC: sbspawnview.js madeSet, brought in by Sandbox's m window)
 const duckNow = () => (NPC ? NPC.duck : profile.duck);
 /* a duck page's own "Randomize …" (the owner's file: "randomize hats" or "randomize styles") */
 const RAND_OF = {
@@ -395,6 +396,7 @@ export function openCustomize(page = lastPage, opts = {}) {
   if (page === "duck") page = null; // (the old tab name)
   NPC = opts.npc || null;
   BORROWED = !!opts.borrowed; // (another player's NPC, changed in the room only: no Delete, sbepview.js)
+  MADE_SET = (NPC && opts.set) || null;
   if (NPC && !ROWS_NPC.some((r) => r && r[0] === page)) page = null;
   return openWindow(
     `<div class="armory${NPC ? " arm-npc" : ""}"><div class="arm-menu"></div><div class="arm-stage" data-nonav><div class="arm-duck"></div><div class="arm-card"${NPC ? " hidden" : ""}></div><p class="hints arm-keys">${NAV_HINTS}</p></div></div>`,
@@ -408,6 +410,7 @@ export function openCustomize(page = lastPage, opts = {}) {
         const menu = w.querySelector(".arm-menu"),
           duckBox = w.querySelector(".arm-duck"),
           cardBox = w.querySelector(".arm-card");
+        if (MADE_SET) MADE_SET.wire(menu, NPC, () => BORROWED || npcSave()); // (another player's goes back to the room when it shuts)
         const me = () => ({
           id: "me",
           name: profile.name,
@@ -762,7 +765,7 @@ export function openCustomize(page = lastPage, opts = {}) {
                     .join("")}</span></details></div>`;
                 })
                 .join("")}
-            <p class="small dim">Its spawns use these unless they set their own. It fights back at whatever hurts it.</p></div>`;
+            <p class="small dim">Its spawns use these unless they set their own. It fights back at whatever hurts it.</p>${MADE_SET ? MADE_SET.html(NPC) : ""}</div>`;
           } else if (k === "hat") {
             const pic = (id) =>
               duckSVG(
