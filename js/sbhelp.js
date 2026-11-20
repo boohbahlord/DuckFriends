@@ -12,7 +12,7 @@ export const SB_HELP = {
     ],
     [
       "Moving what you placed",
-      "Hold the left mouse on it and drag. Use the arrow keys to turn it. Right-click it for Properties, Copy and Cut; on an empty spot, Paste.",
+      "Hold the left mouse on it and drag. While you hold it, the arrow keys turn it. Double-click it for handles that change its size (Esc puts them away). Hold Shift and drag across an empty spot to select everything inside; drag one of them and they all move. Backspace lets go of a selection. Right-click it for Properties, Copy and Cut (Copy all and Cut all on a selection); on an empty spot, Paste.",
     ],
     [
       "Spawns and respawns",

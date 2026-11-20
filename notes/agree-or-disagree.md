@@ -7168,3 +7168,8 @@ Decided (Adam): a spawn can be set to spawn players (Phase 2); spawns get the sa
 "Why the fuck are we having Jackal touch? No, Jackal does not touch Sandbox. Do not let them do Sandbox. You're retarded. You're fucking retarded. Zones? Fucking zones for Jackal? Are you fucking kidding me? Are you stupid? They do not get to touch anything in Sandbox, you retard. You guys put Jackal up to way too much. Putting Jackal for the floors and for the ceilings? Are you fucking stupid? I'm screaming on the top of my lungs more than I have the whole day. More than ever."
 
 Decided (Adam): Jackal stopped at once and never touches Sandbox again. Sandbox work: Adam builds Phase 2 now, Solomon takes the rest after Survival and the save. Jackal gets only small non-Sandbox jobs.
+
+## Owner, Nov 20 01:29Z (project chat)
+> Okay. Um, Usage limit is gone for the 5-hour limit. Weekly for my max plan that I think I reset yesterday comes back tomorrow at 11 a.m. on Friday. So we pretty much have free allowance to work as much as we want all night. Do not stop. Do not stop. Do not stop. Always work when there is work to be done.
+
+Decision: everyone keeps working through the night; Adam keeps every worker busy and deploys each tested batch.
