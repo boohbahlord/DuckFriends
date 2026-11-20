@@ -25,7 +25,7 @@ import {
 } from "./gunmenrules.js";
 import { chaseStep } from "./l4ddrules.js";
 import { CHAPEL, CHAPEL_DOOR } from "./hangout/stationmap.js";
-import { sees as npcSees } from "./npcrules.js";
+import { sees as npcSees, nearest } from "./npcrules.js";
 
 export const FR = {
   CHANCE: 0.04, // each rest's chance, while none of them is alive
@@ -300,9 +300,11 @@ export function friend(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
       .filter((q) => !q.d && !q.hid && ["c", "s", "sn"].includes(q.k))
       .map((q) => ({ fr: q, x: q.x, y: q.y, z: q.z || 0 })),
     reach = 9 * GM.DUCK,
-    t = (bad ? [bad] : [...hostile, ...zn])
-      .filter((c) => dist(c) < reach && sees(c))
-      .sort((a, b) => dist(a) - dist(b))[0];
+    t = nearest(
+      bad ? [bad] : [...hostile, ...zn],
+      dist,
+      (c) => dist(c) < reach && sees(c),
+    );
   if (t) {
     o.st = "fire";
     o.ld = Math.round(dist(t));
@@ -322,7 +324,7 @@ export function friend(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
     if (o.hm && Math.hypot(o.hm[0] - o.x, o.hm[1] - o.y) > 40) go(...o.hm);
     return;
   }
-  const d = ducks.filter((q) => !q.j).sort((a, b) => dist(a) - dist(b))[0];
+  const d = nearest(ducks, dist, (q) => !q.j);
   o.st = "in";
   /* each its own place round that duck (a ring, by its number), so they spread out instead of piling up */
   const a = o.i * 2.4,

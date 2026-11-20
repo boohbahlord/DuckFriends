@@ -4,7 +4,9 @@
    each brain calls it with its own numbers. Only sharing: each one does exactly what it did before (tools/npc-golden
    proves it, beat for beat). npcshared.js keeps what the screen reads too (no imports there); this file is the rules'.
    - sees: does an NPC see something (a clear shot, on its own floor).
-   - nearPairs: the NPCs close enough to touch, pair by pair, to keep them apart. */
+   - nearPairs: the NPCs close enough to touch, pair by pair, to keep them apart.
+   - nearest: the one to go after (the nearest, by each brain's own measure).
+   - grudge, grudgeOf: whoever hurt an NPC, it goes after for a while, whatever else it would pick. */
 import { clearShot } from "./l4ddrules.js";
 import { heightAt } from "./hangout/layout.js";
 
@@ -44,3 +46,28 @@ export function nearPairs(live, cw, ch, fn, passes = 1, most = Infinity) {
           }
     }
 }
+
+/* the one in pool that far(t) puts nearest, among those ok(t) lets (the first of them on a tie), or null: the gunmen's
+   and the friendly squad's target and the zombie they shoot first, Sandbox's NPCs' (sbbrain.js decide) */
+export function nearest(pool, far, ok = null) {
+  let best = null,
+    bd = Infinity;
+  for (const t of pool) {
+    if (ok && !ok(t)) continue;
+    const d = far(t);
+    if (d < bd) {
+      bd = d;
+      best = t;
+    }
+  }
+  return best;
+}
+
+/* a grudge: the NPC goes after who (an id or a key, as its brain names its targets) till now + ms, whatever else it
+   would pick. The gunmen's last 8 s (GM.MAD), Sandbox's NPCs' 10 s (sbbrain.js MAD) */
+export const grudge = (who, now, ms) => [who, now + ms];
+/* the one NPC o holds a grudge against now, out of all (idOf: its name as the grudge has it), or null */
+export const grudgeOf = (o, now, all, idOf = (t) => t.id) =>
+  o.mad && o.mad[1] > now
+    ? all.find((t) => idOf(t) === o.mad[0]) || null
+    : null;
