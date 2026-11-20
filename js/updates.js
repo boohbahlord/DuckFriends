@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v180",
+    version: 180,
+    date: "Nov 20, 2026",
+    title: "The Seriat bible in color",
+    news: [
+      "For Sandbox: the Seriat bible's page is no longer white. It has its own dark blue color, with gold headings and its code in dark boxes.",
+    ],
+  },
+  {
     id: "v179",
     version: 179,
     date: "Nov 20, 2026",

@@ -7345,3 +7345,14 @@ default assumes default stats or values for a thing in spawn, loot, or respawn f
 the values not typed into boxes for seriat assume default"
 
 Decided (Adam): plan in /mnt/project-files/adam/rules-design-plan.md; Solomon builds it in the order there.
+
+## Owner, Nov 20 17:58Z (project chat, through Moses; about his 04:46Z screenshot)
+> fix the appearance of the seriat bible like i said
+
+Adam: the 04:46Z "seriat should be different color background" meant the Seriat bible too: its page is now its own dark
+blue-violet color (cream text, gold headings, dark code boxes), never white. V180.
+
+## Owner, Nov 20 17:59Z (project chat, through Moses)
+> check for commands not done yet
+
+Adam: went through the checklist for every ask not yet live and sent him the open list with who has each.
