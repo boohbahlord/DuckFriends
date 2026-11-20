@@ -18,7 +18,7 @@ import {
 import { boxText } from "./sbspawn.js";
 import { lootOk, ammoOf } from "./sbloot.js";
 import { LOOT, lootOf } from "./sbhotview.js";
-import { ARMS, fullAmmo } from "./l4ddrules.js";
+import { ARMS, fullAmmo, weaponName } from "./l4ddrules.js";
 import { orbHTML, weaponIcon, ICONS } from "./l4ddart.js";
 import { DROP_ICONS } from "./l4dddrops.js";
 import { specialById } from "./specials.js";
@@ -30,16 +30,21 @@ export const nameOf = (w) =>
   (SB_DROPS[w] && SB_DROPS[w][1]) ||
   SB_GEAR[w] ||
   (specialById(w) || {}).name ||
+  (weaponName(w) !== w && weaponName(w)) || // (the zombie maps' own names: "Buckshot double barrel", not "Dbuck")
   w[0].toUpperCase() + w.slice(1);
 /* the categories an orb can pick from here: the Customize groups on the board and Duck Cabin; the weapons and the
    zombies' drops on Dead Ducks Arcade's maps */
+/* never in a loot list on the zombie maps: Survival's defibrillator (nobody dies for good in Sandbox), Safe Keeping (never
+   used by hand), and what the owner took out of the zombie modes ("normal jaime is removed from all zombie modes",
+   "long jump is removed", "remove jet pack from the whole game") */
+const NOT_LOOT = new Set(["defib", "safekeep", "jaime", "longjump", "jetpack"]);
 export function lootCats(s) {
   const drops = Object.keys(SB_DROPS).filter((w) => lootOk(s, w)),
     cats = drops.length
       ? [
           [
             "Weapons",
-            Object.keys(ARMS).filter((w) => w !== "defib" && lootOk(s, w)), // (Survival's alone: nobody dies for good in Sandbox)
+            Object.keys(ARMS).filter((w) => !NOT_LOOT.has(w) && lootOk(s, w)),
           ],
           [
             "Ammo and magazines",

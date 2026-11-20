@@ -1111,7 +1111,7 @@ function seeHud(s, ctx) {
   const end = L.over ? JSON.stringify(L.over) + (s.hostId === ctx.me) : "";
   if (end === overShown) return;
   overShown = end;
-  if (L.over && !s.test) {
+  if (L.over && !s.test && !isSb(s)) {
     const st = profile.stats[statMode(s)];
     if (st) {
       recordKills(s, st, `${s.id}:${s.startedAt}:${L.g || 0}`, ctx.me);
@@ -1130,14 +1130,20 @@ function seeHud(s, ctx) {
   const host = s.hostId === ctx.me,
     hostName = (s.players[s.hostId] || {}).name || "the host";
   /* from the vote or Random, the room moves on by itself after a moment (rules.js L4_OVER_MS) */
-  const moving = votesDue(s).length || s.options.modePick === "random";
+  const sbHow = isSb(s) && L.over.sb, // (Sandbox's Rules: everyone out of lives, rules.js SB_OUT_MS)
+    moving =
+      sbHow === "lobby" ||
+      sbHow === "again" ||
+      (!sbHow && (votesDue(s).length || s.options.modePick === "random"));
   const kz = ((s.hang && s.hang.l4kz) || {})[ctx.me] || 0,
-    said = isSurv(s)
-      ? `You lasted <b>${clockOf(survTime(s, L.over.at) / 1000)}</b> and killed <b>${kz}</b> ${kz === 1 ? "zombie" : "zombies"}.`
-      : `You made it to <b>Round ${L.over.r}</b>.`;
-  over.innerHTML = `<div class="l4-over-card"><h2>Everyone's down</h2><p>${said}</p>${
+    said = sbHow
+      ? `You killed <b>${kz}</b> ${kz === 1 ? "zombie" : "zombies"}.`
+      : isSurv(s)
+        ? `You lasted <b>${clockOf(survTime(s, L.over.at) / 1000)}</b> and killed <b>${kz}</b> ${kz === 1 ? "zombie" : "zombies"}.`
+        : `You made it to <b>Round ${L.over.r}</b>.`;
+  over.innerHTML = `<div class="l4-over-card"><h2>${sbHow ? "Everyone's out" : "Everyone's down"}</h2><p>${said}</p>${
     moving
-      ? `<p class="small dim">${votesDue(s).length ? "On to the vote in a moment." : "On to the next game in a moment."}</p>`
+      ? `<p class="small dim">${sbHow === "lobby" ? "Back to the lobby in a moment." : sbHow === "again" ? "Starting over in a moment." : votesDue(s).length ? "On to the vote in a moment." : "On to the next game in a moment."}</p>`
       : host
         ? '<div class="l4-over-btns"><button type="button" class="btn yellow" data-l4="again">Play again</button><button type="button" class="btn" data-a="lobby">Back to the lobby</button></div>'
         : `<p class="small dim">Waiting for ${nameHTML(hostName)} to play again or go back to the lobby.</p>`

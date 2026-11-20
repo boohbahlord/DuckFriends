@@ -9,6 +9,19 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v162",
+    version: 162,
+    date: "Nov 20, 2026",
+    title: "Kings of the hill, and game over",
+    news: [
+      'For Sandbox: a group can be set to "Leaves when it steps out" and "Only one member at a time", for a real King of the hill.',
+      'For Sandbox: Rules (in G) has "When everyone is out of lives": keep playing, game over, back to the lobby, or start over.',
+      "For Sandbox: a Spawn, Respawn or Loot tab added with + in a zone's window belongs to that zone, the item lists show the items' real names, and a group's When list names the zone of each variable name.",
+      "For Sandbox: tabs and zones of the same color share their settings, as spawns already did (each keeps its own name, shape and size), and a block can no longer be dragged partly off the map.",
+      "For Sandbox: a zone's Spawn tab can go on the hotbar as a spawn button; G comes back with one press after Rules, Music and its other windows; a Spawn key at its limit says why; Tab moves to the next box in Sandbox windows.",
+    ],
+  },
+  {
     id: "v161",
     version: 161,
     date: "Nov 20, 2026",

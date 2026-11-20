@@ -54,6 +54,7 @@ import {
   SB_SHAPE,
   sbSpread,
   sbZoneSpot,
+  sbZoneBox,
   sbNpcWalls,
   sbInv,
   sbFitSide,
@@ -561,21 +562,30 @@ function fromPattern(q, pt) {
 
 /* ---------- a color's settings (wave 2, the owner's, Nov 19: "let's make it to where each spawn carries the properties
    of all of its given colors"): every spawn of a color has the same settings, and so does every respawn of a color;
-   each keeps its own name and spot. No color, a spawn's + page, a loot orb and a zone stand alone ---------- */
-const OWN_ONLY = ["name"];
+   each keeps its own name and spot. And every tab and zone too, in its own category (the owner's: "Same color in the
+   same category shares settings (white doesn't); four categories: spawn, respawn, loot, zone"); a tab or a zone keeps
+   its own shape, size and height as well, as its block has them. No color and a loot orb stand alone; a spawn's Player
+   page shares only with Player pages ---------- */
+const OWN_ONLY = ["name"],
+  OWN_TAB = [...OWN_ONLY, ...SB_GEO_F, "fl"],
+  SHARED_K = ["spawn", "respawn", "loot", "zone"],
+  pgOf = (p) => (p.pg === "pl" || p.pg === "ent" ? p.pg : "");
 /* the other points that share point id's settings */
 function kinOf(pts, id, col = pts[id] && pts[id].col) {
   const p = pts[id];
-  if (!p || !["spawn", "respawn"].includes(p.k) || p.grp || col === SB_NOCOL)
-    return [];
+  if (!p || !SHARED_K.includes(p.k) || col === SB_NOCOL) return [];
   return Object.keys(pts).filter(
-    (q) => q !== id && pts[q].k === p.k && pts[q].col === col && !pts[q].grp,
+    (q) =>
+      q !== id &&
+      pts[q].k === p.k &&
+      pts[q].col === col &&
+      pgOf(pts[q]) === pgOf(p),
   );
 }
-/* point q with p's settings (all but its own name) */
+/* point q with p's settings (all but its own name; a tab's or a zone's own shape, size and height too) */
 function likeIt(q, p) {
   const f = { ...p.f };
-  for (const k of OWN_ONLY) {
+  for (const k of q.grp || p.grp || q.k === "zone" ? OWN_TAB : OWN_ONLY) {
     if (q.f[k]) f[k] = q.f[k];
     else delete f[k];
   }
@@ -777,9 +787,28 @@ export function sbAct(s, a, now) {
         ...Object.keys(pts).filter((q) => pts[q].grp === id),
       ];
     if (a.k === "move") {
-      const dx = +a.dx,
+      let dx = +a.dx,
         dy = +a.dy;
       if (!Number.isFinite(dx) || !Number.isFinite(dy)) return false;
+      /* "It cannot be placed down if one of the shapes is outside of the map": the step stops where the first edge meets
+         the map's edge (any edge, not only its middle); one already hanging off, from before, may still move */
+      let lo = -Infinity,
+        hi = Infinity,
+        loY = -Infinity,
+        hiY = Infinity;
+      for (const id of ids) {
+        const [x0, y0, x1, y1] = sbZoneBox(s, pts[id], WW, WH);
+        if (x0 >= -1e-4 && x1 <= 1 + 1e-4) {
+          lo = Math.max(lo, -x0);
+          hi = Math.min(hi, 1 - x1);
+        }
+        if (y0 >= -1e-4 && y1 <= 1 + 1e-4) {
+          loY = Math.max(loY, -y0);
+          hiY = Math.min(hiY, 1 - y1);
+        }
+      }
+      if (lo <= hi) dx = Math.min(hi, Math.max(lo, dx));
+      if (loY <= hiY) dy = Math.min(hiY, Math.max(loY, dy));
       if (
         ids.some((id) => {
           const x = pts[id].x + dx,
@@ -787,7 +816,7 @@ export function sbAct(s, a, now) {
           return x < 0 || x > 1 || y < 0 || y > 1;
         })
       )
-        return false; // ("refused if any would leave the map")
+        return false; // (and never its middle)
       for (const id of ids)
         for (const q of with_(id)) {
           const P = pts[q],
@@ -942,6 +971,14 @@ export function sbAct(s, a, now) {
         a.p,
       ),
     };
+    const id = "p" + n,
+      all = s.sb.pts,
+      kin = all[id] ? kinOf(all, id) : [];
+    if (kin.length)
+      s.sb = {
+        ...s.sb,
+        pts: geoTo({ ...all, [id]: likeIt(all[id], all[kin[0]]) }, a.p),
+      }; // (a tab of a color: that color's settings, from the first)
     return true;
   }
   /* the spawn's Appearance tab: what those it spawns look like (null: their own look) */

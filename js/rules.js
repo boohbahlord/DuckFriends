@@ -231,6 +231,7 @@ import {
   maxHp,
   l4Zups,
   l4SetHp,
+  l4Again,
 } from "./l4ddrules.js";
 import { JET } from "./jetpack.js";
 import { hOk, hLock, sameFloorAhead, floorLock } from "./heights.js";
@@ -3207,6 +3208,22 @@ function reduceStep(state, a, now) {
         now - s.hang.l4.over.at >= L4_OVER_MS
       )
         return cabinOver(s, now, "Everyone's down.");
+      const sbOut =
+        isL4dd(s) &&
+        s.phase === "hang" &&
+        s.hang &&
+        s.hang.l4 &&
+        s.hang.l4.over;
+      if (
+        sbOut &&
+        isSb(s) &&
+        (sbOut.sb === "lobby" || sbOut.sb === "again") &&
+        now - sbOut.at >= SB_OUT_MS
+      ) {
+        if (sbOut.sb === "lobby") return backToLobby(s, "Everyone's out.");
+        l4Again(s, now);
+        return s;
+      } // (Sandbox's Rules: everyone out of lives, then the lobby or a new start)
       if (
         s.phase === "hang" &&
         s.options.mode === "hang" &&
@@ -5525,6 +5542,8 @@ export function cabinOver(s, now, why = "The ducks voted to leave the cabin.") {
 }
 /* Quacky Zombies from the vote or Random: once everyone's down, the score shows a moment, then the room moves on */
 export const L4_OVER_MS = 8000;
+/* Sandbox: everyone's out, the card shows this long before the lobby or the new start */
+export const SB_OUT_MS = 5000;
 /* Hangout's time limit (Game Settings, hangTime): only when Random or the vote picked it, never when the host did; in
    seconds, 0 for none */
 const HANG_TIMES = [0, 5, 10, 15, 20, 30];

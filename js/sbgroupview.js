@@ -7,7 +7,14 @@
 import { epMay } from "./sbep.js";
 import { esc, openWindow, toast } from "./ui.js";
 import { colSwatches } from "./sbmenu.js";
-import { isSb, sbMay, SB_COLORS, SB_RIGHTS, SB_WHAT } from "./sandboxrules.js";
+import {
+  isSb,
+  sbMay,
+  SB_COLORS,
+  SB_NOCOL,
+  SB_RIGHTS,
+  SB_WHAT,
+} from "./sandboxrules.js";
 import { boxText } from "./sbspawn.js";
 import { kindsFor } from "./sbmake.js";
 import { lootList } from "./sbloot.js";
@@ -15,6 +22,7 @@ import {
   GR_BOX,
   GR_LISTS,
   GR_MOST,
+  GR_YN,
   grOf,
   grWhy,
   grHidden,
@@ -92,10 +100,15 @@ function whoOpts(s, me) {
     ...groupOpts(s, me),
   ];
 }
-/* a group's conditions: each block by its color and purpose, each variable name, each loot by what it holds */
+/* a block as a hint: "Purple zone", or "Zone, no color" */
+const blockSays = (q) =>
+  q.col === SB_NOCOL ? `${cap(q.k)}, no color` : `${cap(q.col)} ${q.k}`;
+/* a group's conditions: each block by its color and purpose (not a colorless one: every new zone is colorless, so it would
+   be all of them), each variable name with the block it's on, each loot by what it holds */
 function condOpts(s) {
-  const pts = Object.values(ptsOf(s)).filter((q) => PURPOSE[q.k]),
-    named = pts.filter((q) => q.f && q.f.name && q.f.name.ok),
+  const all = Object.values(ptsOf(s)).filter((q) => PURPOSE[q.k]),
+    pts = all.filter((q) => q.col !== SB_NOCOL),
+    named = all.filter((q) => q.f && q.f.name && q.f.name.ok),
     loot = [
       ...new Set(
         pts.filter((q) => q.k === "loot").flatMap((q) => lootList(s, q)),
@@ -103,9 +116,12 @@ function condOpts(s) {
     ];
   return [
     [null, "Spawned at, or stepped in"],
-    ...pts.map((q) => [`${q.k}:${q.col}`, `${cap(q.col)} ${q.k}`]),
+    ...pts.map((q) => [`${q.k}:${q.col}`, blockSays(q)]),
     [null, "Variable name"],
-    ...named.map((q) => [`name:${nameWord(q)}`, `"${boxText(q, "name")}"`]),
+    ...named.map((q) => [
+      `name:${nameWord(q)}`,
+      `"${boxText(q, "name")}" (${blockSays(q)})`,
+    ]),
     [null, "Picked up"],
     ...pts
       .filter((q) => q.k === "loot")
@@ -215,6 +231,20 @@ export function groupWin(getR, gid) {
       "Who joins",
       `${drop("c", "When", condOpts(s), words(g.c))}
       ${drop("who", "Who can join", whoOpts(s, R.me), words(g.who || "everything"))}
+      ${Object.entries(GR_YN)
+        .map(
+          ([f, l]) =>
+            `<div class="sb-row" data-row="${f}"><span>${esc(l)}</span><span class="sb-what">${[
+              ["", "No"],
+              ["1", "Yes"],
+            ]
+              .map(
+                ([v, n]) =>
+                  `<button type="button" class="sb-tab${(g[f] || "") === v ? " on" : ""}" data-gyn="${f}" data-v="${v}" aria-pressed="${(g[f] || "") === v}">${n}</button>`,
+              )
+              .join("")}</span></div>`,
+        )
+        .join("")}
       <p class="sb-tip">A block's own "Joins groups" adds to these.</p>`,
     )}
     ${fold(
@@ -268,6 +298,14 @@ export function groupWin(getR, gid) {
             b.classList.toggle("on", b === c),
           );
           return send({ k: "set", f: "ol", v: c.dataset.gol });
+        }
+        const yn = e.target.closest("[data-gyn]");
+        if (yn) {
+          yn.parentNode.querySelectorAll("[data-gyn]").forEach((b) => {
+            b.classList.toggle("on", b === yn);
+            b.setAttribute("aria-pressed", b === yn);
+          });
+          return send({ k: "set", f: yn.dataset.gyn, v: yn.dataset.v });
         }
         const r = e.target.closest("[data-gr]");
         if (r) {

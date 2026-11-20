@@ -362,6 +362,13 @@ function rulesWin(R) {
       .filter(([, b]) => !b.file && (!b.board || sbOnBoard(s))) // (Board size: the plain boards only; the settings file's: Seriat's settings/limits)
       .map(([k, b]) => {
         const v = sbRule(s, k);
+        if (b.kind === "pick")
+          return `<div class="sb-row" data-row="${k}"><span>${esc(b.name)}</span><span class="sb-what">${b.opts
+            .map(
+              ([o, n]) =>
+                `<button type="button" class="sb-tab${v === o ? " on" : ""}" data-rulepick="${k}" data-v="${o}" aria-pressed="${v === o}"${may ? "" : " disabled"}>${esc(n)}</button>`,
+            )
+            .join("")}</span></div>`;
         return b.kind === "bool"
           ? `<div class="sb-row" data-row="${k}"><span>${esc(b.name)}</span><button type="button" class="sb-tog${v ? " on" : ""}" data-rule="${k}" aria-pressed="${v}"${may ? "" : " disabled"}>${v ? "true" : "false"}</button></div>`
           : `<div class="sb-row" data-row="${k}"><span>${esc(b.name)}</span><input class="sb-box" type="number" min="${b.min}" max="${b.max}" step="1" value="${v}" data-rule="${k}" aria-label="${esc(b.name)}"${may ? "" : " disabled"}></div>`;
@@ -369,13 +376,18 @@ function rulesWin(R) {
       .join("");
   };
   return openWindow(
-    `<h2>Rules</h2><p class="small dim">Lives, the down phase, crits and watching are for the zombie maps (the arcade's cabin and Downpour); Board size for the plain boards. Saved with the Sandbox.</p><div class="sb-rules sb-set"></div>`,
+    `<h2>Rules</h2><p class="small dim">Lives, the down phase, crits, watching and everyone out are for the zombie maps (the arcade's cabin and Downpour); Board size for the plain boards. Saved with the Sandbox.</p><div class="sb-rules sb-set"></div>`,
     {
       cls: "win-small sb-ruleswin",
       onOpen(w) {
         draw(w);
         const later = () => setTimeout(() => w.isConnected && draw(w), 150);
         w.addEventListener("click", (e) => {
+          const pk = e.target.closest("button[data-rulepick]");
+          if (pk) {
+            R.send({ t: "sbr", k: pk.dataset.rulepick, v: pk.dataset.v });
+            return later();
+          }
           const b = e.target.closest("button[data-rule]");
           if (!b) return;
           R.send({

@@ -884,10 +884,10 @@ export function sbSettings(getR, id, tab = "") {
       )}<span class="sb-plus"><button type="button" class="sb-tab" data-plus aria-label="Add a page">+</button><span class="sb-plus-pick" hidden>${base.k === "spawn" ? `<button type="button" class="sb-tab" data-page="ent">Entity page</button><button type="button" class="sb-tab" data-page="pl">Player page</button>` : ""}${SB_TABS.map(([k, l]) => `<button type="button" class="sb-tab" data-page="${k}">${l}</button>`).join("")}</span></span></div>`,
     linked = (spawn || p.k === "respawn") && !p.grp;
   let colorRow = `<div class="sb-row"><span>Color</span><span class="sb-cols">${colSwatches(p.col, "data-col", true)}</span></div>${
-      linked
-        ? `${p.col === SB_NOCOL ? "" : `<p class="sb-tip">Every ${p.k} of this color has these settings.</p>`}${flagRow("hide", SB_FLAGS.hide, typed("hide"), why("hide"))}`
+      ["spawn", "respawn", "loot", "zone"].includes(p.k) && p.col !== SB_NOCOL
+        ? `<p class="sb-tip">Every ${p.pg === "pl" ? "Player page" : p.k} of this color has these settings.</p>`
         : ""
-    }`,
+    }${linked ? flagRow("hide", SB_FLAGS.hide, typed("hide"), why("hide")) : ""}`,
     /* a spawn's Trigger together: the colors whose spawns go off with it (sbspawn.js press) */
     tgRow = () => {
       const used = [
@@ -1005,7 +1005,10 @@ export function sbSettings(getR, id, tab = "") {
     ${sect("True or false")}
     ${flagRow("sets", SB_FLAGS.sets, typed("sets"), why("sets"))}
     ${Object.entries(SB_FLAGS)
-      .filter(([f]) => f !== "sets" && f !== "hide")
+      .filter(
+        ([f]) =>
+          f !== "sets" && f !== "hide" && !(f === "inv" && sbNeedsCall(p)),
+      ) // (a tab's Inverse sits at its top, by its zone: once is enough)
       .map(([f, b]) => flagRow(f, b, typed(f), why(f)))
       .join("")}
     ${sect("Numbers")}
@@ -1185,6 +1188,12 @@ export function sbSettings(getR, id, tab = "") {
       w.addEventListener("change", (e) => {
         const t = e.target;
         if (t.closest(".sb-olbox")) return olWrite(t.closest(".sb-olbox")); // (a zone's Outlines rows)
+        if (t.matches('.sb-box[data-f="name"]') && !boxWhy("name", t.value)) {
+          clearTimeout(timers.name);
+          send({ k: "set", f: "name", v: t.value });
+          setTimeout(() => w.isConnected && again(id, tab), 400); // (a new name: the tabs it's tied to, and its error, show anew)
+          return;
+        }
         if (t.matches('[data-f="lk"]'))
           for (const r of w.querySelectorAll("[data-lkrow]"))
             r.hidden =
@@ -1415,7 +1424,15 @@ export function sbSettings(getR, id, tab = "") {
             return toast(
               `The zone budget is full (${SB_POINTS}). Delete a block or a tab first.`,
             );
-          r.send({ t: "sb", k: "page", p: baseId, kind: pg.dataset.page });
+          const kind = pg.dataset.page;
+          // (a Spawn, Respawn or Loot tab made from a zone's own window is tied to that zone, like the Type radio)
+          r.send({
+            t: "sb",
+            k: "page",
+            p: baseId,
+            kind,
+            ...(SB_TABS.some(([k]) => k === kind) ? { tie: 1 } : {}),
+          });
           setTimeout(() => {
             const made = Object.keys(ptsOf(getR().state)).find(
               (q) => !had.has(q),
