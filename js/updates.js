@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v190",
+    version: 190,
+    date: "Nov 20, 2026",
+    title: "Zombies keep their skin",
+    news: [
+      "For Survival: zombies no longer change their skin as they fall. A walker you leave alive changes its look the moment it joins the next horde.",
+    ],
+  },
+  {
     id: "v189",
     version: 189,
     date: "Nov 20, 2026",
