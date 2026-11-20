@@ -499,7 +499,7 @@ function pressOne(s, id, now) {
 function withField(p, f, v) {
   const b = boxOf(f),
     was = p.f[f],
-    t = String(v == null ? "" : v).slice(0, SB_ACTS[f] ? 200 : 80),
+    t = String(v == null ? "" : v).slice(0, SB_ACTS[f] ? 200 : b.len || 80), // (len: a list's longer text, sandboxrules.js)
     k = b.check
       ? { t, ok: b.check(t) ? (was && was.ok) || "" : t }
       : b.blank && !t.trim()

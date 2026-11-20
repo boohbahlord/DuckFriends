@@ -6602,6 +6602,21 @@ export function l4Loot(s, id, w, inf) {
     };
   return true;
 }
+/* Sandbox's loot (sbloot.js, plan Loot 2 "Ammo and magazines"): duck id gets one more magazine of gun w (a quarter of
+   its full amount for a gun without one), never past its full amount; false when it doesn't carry w */
+export function l4Ammo(s, id, w) {
+  const kit = kitOf(s, id),
+    full = ARMS[w] && fullFor(s, id, w);
+  if (!kit || !full || !(kit.sl || []).includes(w)) return false;
+  const [m, r] = (kit.am || {})[w] || [0, 0],
+    add = ARMS[w].mag || Math.max(1, Math.ceil((full[0] + full[1]) / 4)),
+    am =
+      full[1] > 0
+        ? [m, Math.min(full[1], r + add)]
+        : [Math.min(full[0], m + add), r];
+  s.hang.l4a = { ...s.hang.l4a, [id]: { ...kit, am: { ...kit.am, [w]: am } } };
+  return true;
+}
 export function l4Hurt(s, id, dmg, now, w = "claw") {
   const p4 = { ...(s.hang.l4p || {}) };
   hurtDuck(s, p4, id, now, w, dmg);

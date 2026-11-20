@@ -12,7 +12,7 @@ import {
   SB_BOXES,
 } from "./sandboxrules.js";
 import { boxText } from "./sbspawn.js";
-import { lootOk } from "./sbloot.js";
+import { lootOk, ammoOf } from "./sbloot.js";
 import { LOOT, lootOf } from "./sbhotview.js";
 import { ARMS } from "./l4ddrules.js";
 import { orbHTML, weaponIcon, ICONS } from "./l4ddart.js";
@@ -21,6 +21,7 @@ import { specialById } from "./specials.js";
 import { picFrom, sendParts } from "./sbmake.js";
 
 const nameOf = (w) =>
+  (ammoOf(w) && `${nameOf(ammoOf(w))} ammo`) ||
   (SB_DROPS[w] && SB_DROPS[w][1]) ||
   SB_GEAR[w] ||
   (specialById(w) || {}).name ||
@@ -28,17 +29,25 @@ const nameOf = (w) =>
 /* the categories an orb can pick from here: the Customize groups on the board and Duck Cabin; the weapons and the
    zombies' drops on Dead Ducks Arcade's maps */
 export function lootCats(s) {
-  const drops = Object.keys(SB_DROPS).filter((w) => lootOk(s, w));
-  if (drops.length)
-    return [
-      [
-        "Weapons",
-        Object.keys(ARMS).filter((w) => w !== "defib" && lootOk(s, w)), // (Survival's alone: nobody dies for good in Sandbox)
-      ],
-      ["Zombie drops", drops],
-      ["Gear", Object.keys(SB_GEAR).filter((w) => lootOk(s, w))],
-    ];
-  return LOOT.map(([k, n]) => [n, lootOf(k).map((x) => x.id)]);
+  const drops = Object.keys(SB_DROPS).filter((w) => lootOk(s, w)),
+    cats = drops.length
+      ? [
+          [
+            "Weapons",
+            Object.keys(ARMS).filter((w) => w !== "defib" && lootOk(s, w)), // (Survival's alone: nobody dies for good in Sandbox)
+          ],
+          [
+            "Ammo and magazines",
+            Object.keys(ARMS)
+              .map((w) => w + "ammo")
+              .filter((w) => lootOk(s, w)),
+          ],
+          ["Zombie drops", drops],
+          ["Gear", Object.keys(SB_GEAR).filter((w) => lootOk(s, w))],
+        ]
+      : LOOT.map(([k, n]) => [n, lootOf(k).map((x) => x.id)]);
+  /* plan, Loot 2: "plus one \"All items\" list": every list's together, ticked as they are in theirs */
+  return [...cats, ["All items", [...new Set(cats.flatMap(([, ws]) => ws))]]];
 }
 /* an orb's own picture (a data URL), or "" */
 const picOf = (s, id) => ((s.sbpic || {})[(s.sbImg || {})[id]] || {}).d || "";
@@ -50,11 +59,17 @@ export function orbFace(s, id, p, o = p.orb) {
   const look = boxText(p, "look"),
     w =
       look &&
-      (specialById(look) || ARMS[look] || SB_DROPS[look] || SB_GEAR[look])
+      (specialById(look) ||
+        ARMS[look] ||
+        SB_DROPS[look] ||
+        SB_GEAR[look] ||
+        ammoOf(look))
         ? look
         : o.w;
   if (w === "flashlight")
     return `<span class="l4orb k-grenade"><i>${ICONS.flashlight(true)}</i></span>`;
+  if (ammoOf(w))
+    return `<span class="l4orb k-ranged"><i>${DROP_ICONS.ammo || ""}</i></span>`; // (a gun's ammo: the ammo box, in the guns' color)
   return SB_DROPS[w]
     ? `<span class="l4orb k-grenade"><i>${DROP_ICONS[SB_DROPS[w][0]] || ""}</i></span>`
     : orbHTML(w);
@@ -108,7 +123,9 @@ export function lootPage(s, id, p, h) {
         ? ICONS.flashlight(true)
         : SB_DROPS[w]
           ? DROP_ICONS[SB_DROPS[w][0]] || ""
-          : weaponIcon(w) || "",
+          : ammoOf(w)
+            ? DROP_ICONS.ammo || ""
+            : weaponIcon(w) || "",
     drop = ([n, ws]) => {
       const on = ws.filter((w) => picked.includes(w));
       return `<div class="sb-row"><span>${esc(n)}</span><details class="sb-acts" data-lcat><summary>${esc(on.map(nameOf).join(", ") || "Nothing")}</summary><span class="sb-what sb-lootpick">${ws
@@ -146,12 +163,14 @@ export function lootPage(s, id, p, h) {
     ${flag("lown", SB_LOOT.lown, "Off: the first to reach it takes it.")}
     ${h.sect("What it holds")}
     ${cats.map(drop).join("")}
-    <p class="sb-none" data-row="loot">${picked.filter((w) => lootOk(s, w)).length > 1 ? "One of these at random each time." : picked.some((w) => lootOk(s, w)) ? "" : "Nothing comes until you pick something."}</p>
+    <p class="sb-none" data-row="loot">${noteOf(picked.filter((w) => lootOk(s, w)).length, boxText(p, "lall"))}</p>
+    ${flag("lall", SB_LOOT.lall, "Off: one of them at random each time, all as likely.")}
     ${h.sect("When it's taken")}
     ${(drops ? ["hurt"] : ["keep", "hurt"]).map((f) => num(f, SB_LOOT[f])).join("")}
     ${drops ? flag("inf", SB_LOOT.inf) : ""}
     ${h.sect("How it looks")}
     <div class="sb-row"><span>Looks like</span><select class="sb-sel" data-lsel><option value="">Itself</option>${cats
+      .slice(0, -1)
       .map(
         ([n, ws]) =>
           `<optgroup label="${esc(n)}">${ws.map((w) => `<option value="${w}"${look === w ? " selected" : ""}>${esc(nameOf(w))}</option>`).join("")}</optgroup>`,
@@ -160,26 +179,44 @@ export function lootPage(s, id, p, h) {
     <div class="sb-row"><span>Picture</span><span class="sb-pic">${img ? `<img src="${esc(img)}" alt=""><button type="button" class="btn ghost small" data-noimg>Remove</button>` : ""}<label class="btn ghost small">${img ? "Change" : "Upload"}<input type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden data-img></label></span></div>
     <p class="small dim sb-up-note">2 MB at most. Made into pixels.</p>`;
 }
+/* the line under the lists: how many are ticked, and what that does */
+const noteOf = (n, all) =>
+  n > 1
+    ? /^t/i.test(String(all).trim())
+      ? "All of these at once each time."
+      : "One of these at random each time."
+    : n
+      ? ""
+      : "Nothing comes until you pick something.";
 /* its listeners: send({ k, f, v }) sends Sandbox's "sb" action for this point; getR: () => the room */
 export function lootWire(w, id, send, getR) {
   w.addEventListener("change", async (e) => {
     const t = e.target;
     const cat = t.closest("[data-lcat]");
     if (cat) {
-      const on = [...cat.querySelectorAll("input:checked")];
-      cat.querySelector("summary").textContent =
-        on.map((c) => c.dataset.label).join(", ") || "Nothing";
-      const all = [...w.querySelectorAll(".sb-lootpick input:checked")].map(
-        (c) => c.value,
-      );
+      /* the same thing in another list (All items, or its own kind's) ticks with it */
+      for (const c of w.querySelectorAll(
+        `.sb-lootpick input[value="${t.value}"]`,
+      ))
+        c.checked = t.checked;
+      for (const d of w.querySelectorAll("[data-lcat]"))
+        d.querySelector("summary").textContent =
+          [...d.querySelectorAll("input:checked")]
+            .map((c) => c.dataset.label)
+            .join(", ") || "Nothing";
+      const all = [
+        ...new Set(
+          [...w.querySelectorAll(".sb-lootpick input:checked")].map(
+            (c) => c.value,
+          ),
+        ),
+      ];
       const note = w.querySelector('[data-row="loot"]');
       if (note)
-        note.textContent =
-          all.length > 1
-            ? "One of these at random each time."
-            : all.length
-              ? ""
-              : "Nothing comes until you pick something.";
+        note.textContent = noteOf(
+          all.length,
+          w.querySelector('[data-f="lall"]')?.value || "f",
+        );
       send({ k: "set", f: "loot", v: all.join(", ") });
       return;
     }
