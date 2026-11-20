@@ -21,17 +21,11 @@ import { duckSVG } from "./duck.js";
 import { pixelOn, gridPx } from "./pixel.js";
 import { bakeBackdrop, bakeStill, bakeSvg, unbake } from "./pxbake.js";
 import { esc } from "./ui.js";
-import {
-  backdropSVG,
-  backdropHTML,
-  floorCanvas,
-  carnivalSVG,
-  artBackdrop,
-} from "./art.js";
-import { collageScene, collageMini } from "./collage.js";
-import { euclidScene, euclidMini } from "./euclid.js";
-import { vellumScene, vellumMini } from "./vellum.js";
-import { NWK_VARIANTS, isNwk, nwkScene, nwkSVG } from "./nwk.js";
+import { backdropHTML, floorCanvas, carnivalSVG } from "./art.js";
+import { collageScene } from "./collage.js";
+import { euclidScene } from "./euclid.js";
+import { vellumScene } from "./vellum.js";
+import { NWK_VARIANTS, isNwk, nwkScene } from "./nwk.js";
 import { seenDuck, seenName } from "./looks.js";
 import { isUmap, UMAP_UIS } from "./umaprules.js";
 import { seriatThemeOn } from "./seriattheme.js";
@@ -145,31 +139,6 @@ export const useUmaps = (u) => {
   UMAPS = u || {};
 };
 export const umapOf = (id) => UMAPS[id] || null;
-
-/* a small picture of each map for the Map window (the world only, no columns) */
-export function mapMini(id) {
-  if (isUmap(id))
-    return `<div class="mini-map mm-made">${UMAPS[id] ? `<img src="${UMAPS[id].d}" alt="" draggable="false">` : ""}</div>`;
-  if (id === "sky")
-    return `<div class="mini-map mm-sky"><i class="mm-sun"></i><i class="mm-cloud" style="left:8%;top:18%"></i><i class="mm-cloud" style="left:58%;top:52%"></i></div>`;
-  if (isNwk(id))
-    return `<div class="mini-map"><svg viewBox="0 0 480 270" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" aria-hidden="true">${nwkSVG(id)}</svg></div>`;
-  if (id === "carnival")
-    return `<div class="mini-map mm-carnival">${carnivalSVG()}</div>`;
-  if (id === "rabbit") return '<div class="mini-map mm-rabbit"></div>';
-  if (id === "collage" || id === GREY_MAP[0])
-    return `<div class="mini-map${id === "collage" ? "" : " grey"}">${collageMini()}</div>`;
-  if (id === "euclid" || id === ZOOM_MAP[0])
-    return `<div class="mini-map">${euclidMini()}</div>`;
-  if (id === "vellum") return vellumMini();
-  if (id === "tiles") return '<div class="mini-map mm-tiles"></div>';
-  if (id === "stars") return '<div class="mini-map mm-stars"></div>';
-  if (id === "cabin")
-    return `<div class="mini-map"><svg viewBox="0 0 480 270" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" aria-hidden="true">${artBackdrop("cabin")}</svg></div>`;
-  if (id === "pixel")
-    return `<div class="mini-map mm-pixel"><i class="mm-psun"></i><i class="mm-isle" style="left:14%;top:22%"></i><i class="mm-isle" style="left:62%;top:38%;transform:scale(.7)"></i><i class="mm-ground"></i></div>`;
-  return `<div class="mini-map mm-night">${backdropSVG(192, 106, true)}</div>`;
-}
 
 /* ---------- Sky ---------- */
 const CLOUD =

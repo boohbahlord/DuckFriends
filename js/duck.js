@@ -643,6 +643,29 @@ function partsOK(L, { extra }) {
    PNG; the original is never kept. A duck's picture is 35 pixels, the size it shows on the board (its 92 units of a
    duck's 120 at 32 pixels to a duck's height) */
 export const DUCK_PIC_PX = 35;
+/* a card's picture: 64 to a side, its pixels drawn square */
+export const CARD_PIC_PX = 64;
+/* a loaded picture cut to its middle square, px × px in the game's colors: a PNG data URL */
+export function squareOf(img, px) {
+  const s = Math.min(img.naturalWidth, img.naturalHeight),
+    c = document.createElement("canvas");
+  c.width = c.height = px;
+  const g = c.getContext("2d", { willReadFrequently: true });
+  g.imageSmoothingQuality = "high";
+  g.drawImage(
+    img,
+    (img.naturalWidth - s) / 2,
+    (img.naturalHeight - s) / 2,
+    s,
+    s,
+    0,
+    0,
+    px,
+    px,
+  );
+  g.putImageData(applyPalette(g.getImageData(0, 0, px, px)), 0, 0);
+  return c.toDataURL("image/png");
+}
 export function pictureToSquare(file, px = DUCK_PIC_PX) {
   return new Promise((ok, bad) => {
     if (!file || !/^image\//.test(file.type)) {
@@ -652,25 +675,8 @@ export function pictureToSquare(file, px = DUCK_PIC_PX) {
     const img = new Image(),
       url = URL.createObjectURL(file);
     img.onload = () => {
-      const s = Math.min(img.width, img.height),
-        c = document.createElement("canvas");
-      c.width = c.height = px;
-      const g = c.getContext("2d", { willReadFrequently: true });
-      g.imageSmoothingQuality = "high";
-      g.drawImage(
-        img,
-        (img.width - s) / 2,
-        (img.height - s) / 2,
-        s,
-        s,
-        0,
-        0,
-        px,
-        px,
-      );
-      g.putImageData(applyPalette(g.getImageData(0, 0, px, px)), 0, 0);
       URL.revokeObjectURL(url);
-      ok(c.toDataURL("image/png"));
+      ok(squareOf(img, px));
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
@@ -678,4 +684,21 @@ export function pictureToSquare(file, px = DUCK_PIC_PX) {
     };
     img.src = url;
   });
+}
+/* a picture saved before pictures were made into real pixels (a 128 px JPEG, Nov 19): its pixels at px, as a new upload
+   is made. One that already is (a PNG px × px) comes back as it is; one that can't be read, null */
+export async function squarePixels(d, px) {
+  if (typeof d !== "string" || !d.startsWith("data:image/")) return null;
+  const img = new Image();
+  img.src = d;
+  try {
+    await img.decode();
+  } catch (e) {
+    return null;
+  }
+  return d.startsWith("data:image/png") &&
+    img.naturalWidth === px &&
+    img.naturalHeight === px
+    ? d
+    : squareOf(img, px);
 }

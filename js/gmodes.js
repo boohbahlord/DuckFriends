@@ -12,7 +12,7 @@
      Stop test (top left, where Leave Sandbox is) starts it again from the build as it was. */
 import { esc, openWindow, toast } from "./ui.js";
 import { isSb, sbRule } from "./sandboxrules.js";
-import { sbSnapshot, newSaveId } from "./sbsave.js";
+import { sbSnapshot, newSaveId, oldPics } from "./sbsave.js";
 
 /* ---------- the store: { id, name, desc, at, made, world, map, most, data (the snapshot's text) } ---------- */
 const DB = "duckfriends-modes";
@@ -76,11 +76,15 @@ export async function readMode(id) {
   const d = await db(),
     r = await req(d.transaction("modes").objectStore("modes").get(id));
   if (!r) return null;
+  let data;
   try {
-    return { ...r, data: JSON.parse(r.data) };
+    data = JSON.parse(r.data);
   } catch (e) {
     return null;
   }
+  if (await oldPics(data))
+    await putMode({ ...r, data: JSON.stringify(data) }).catch(() => {}); // (only the pixels kept from now on)
+  return { ...r, data };
 }
 async function putMode(rec) {
   const d = await db(),

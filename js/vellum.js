@@ -19,10 +19,7 @@ export function vellumScene(layer) {
   };
 }
 
-/* the small picture for the Map window */
-export const vellumMini = () => '<div class="mini-map mm-vellum"></div>';
-
-/* the page in the Game Settings and lobby pictures and the map vote (16 : 9) */
+/* the page, 16 : 9: for the map's picture files only (tools/pixel-src/backdrops.js) */
 export const vellumBackdrop = () =>
   `<defs><radialGradient id="vledge" cx=".5" cy=".48" r=".75"><stop offset=".55" stop-color="#462a12" stop-opacity="0"/><stop offset="1" stop-color="#462a12" stop-opacity=".22"/></radialGradient></defs>
 <rect width="480" height="270" fill="#ba966c"/><image href="${VELLUM}" width="480" height="270" preserveAspectRatio="xMidYMid slice"/><rect width="480" height="270" fill="url(#vledge)"/>`;

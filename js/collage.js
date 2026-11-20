@@ -198,7 +198,7 @@ function feather(part, W, H, f, shape) {
   part.g.restore();
 }
 
-function* drawCollage(cv, W, H, grey) {
+export function* drawCollage(cv, W, H, grey) {
   const R = rng(SEED),
     g = cv.getContext("2d"),
     u = Math.min(W, H),
@@ -714,17 +714,4 @@ export function collageScene(layer, s) {
       sc.remove();
     },
   };
-}
-
-/* the small picture for the Map window (a row's slice too): the real drawing, small, made once */
-let mini = "";
-export function collageMini() {
-  if (!mini) {
-    const cv = document.createElement("canvas");
-    cv.width = 480;
-    cv.height = 270;
-    for (const _ of drawCollage(cv, 480, 270, false));
-    mini = cv.toDataURL("image/jpeg", 0.85);
-  }
-  return `<img src="${mini}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">`;
 }
