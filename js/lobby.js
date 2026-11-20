@@ -42,7 +42,7 @@ import { NAV_HINTS } from "./keynav.js";
 import { musicBarHTML, mountMusicBar } from "./musicbar.js";
 import { paintVotes, closeVotes } from "./vote.js";
 import { paintSbPick, closeSbPick } from "./sbsaves.js";
-import { openSettings } from "./settings.js";
+import { openSettings, uiScaleHTML, uiScaleWire } from "./settings.js";
 
 let R = null,
   off = null,
@@ -401,11 +401,12 @@ function openPause() {
     <button type="button" class="btn ghost" data-a="custom">Customize</button>
     <button type="button" class="btn ghost" data-a="settings">Settings</button>
     <button type="button" class="btn ghost" data-a="friends">Friends</button>
-    <button type="button" class="btn red" data-a="leave">Leave room</button></div>`,
+    <button type="button" class="btn red" data-a="leave">Leave room</button></div>${uiScaleHTML()}`,
     {
       cls: "win-small",
-      onOpen: (w, close) =>
-        (w.querySelector(".pause-list").onclick = (e) => {
+      onOpen: (w, close) => {
+        uiScaleWire(w);
+        w.querySelector(".pause-list").onclick = (e) => {
           const a = e.target.closest("[data-a]");
           if (!a) return;
           close();
@@ -416,7 +417,8 @@ function openPause() {
             friends: () => openFriends(),
             leave: () => leaveTo(R && R.state.solo ? "front" : "rooms"), // (Single Player: the front page)
           })[a.dataset.a]();
-        }),
+        };
+      },
     },
   );
 }
