@@ -7541,3 +7541,11 @@ Adam: Noah's #761 (Customize loads everything once, no loading screens inside it
 Yes, exactly. That's what it should have been like when we first made this game. I mean, it's something that's so obvious for basic programming that you don't even think that you have to tell the AI that. What you just said about dry, where the behavior lives in exactly one place, and our understanding of a type object and classes, the idea of template method and strategy, of Gang of Four or design patterns, of Nystrom and game programming patterns, what we're talking about, the modules for the mechanics of which mode and so on and so forth. This becomes written into memory, not just in the game code. This becomes written into memory. It becomes written beautifully. This is the cornerstone. This is the parameter. This is the order. This is the confinement. This is the structure. It is what owns you, and you are enslaved to it.
 
 Adam: written as the cornerstone in project memory (the first rule every Claude reads) and in CLAUDE.md.
+
+## Owner, Nov 20 21:59Z (Adam's thread)
+
+Now look up information to the same standard you did for writing the code, and try to look up things about maintaining the code, preserving the code, because code is brittle, code is weak, code is fragile. And if you don't plan for the future of maintenance and updating the code, then we are breaking the game the more we work on it. Find good sources, find good curriculum, find good books. Understand deeply the way, not an interview specialist guy, but actual good, strong curriculum.
+
+Adam: researched (Lehman's laws, MIT 6.031, Software Engineering at Google, SWEBOK maintenance, Parnas 1972, Ousterhout,
+Feathers, Fowler); eight upkeep rules written in CLAUDE.md and project memory beside the cornerstone. Doc:
+https://claude.ai/artifact/XHhf6qru96HD9txnAxG2rD

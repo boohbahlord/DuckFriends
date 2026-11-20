@@ -119,6 +119,23 @@ Check with code before pictures (console errors, overlaps, the right element sho
 - Replacing something deletes the old path in the same PR.
 - A change to a shared mechanic is tested in every mode and screen that uses it, menus included.
 
+## Keeping the code from breaking as we work on it (the owner's, Nov 20 21:59Z; sources: Lehman, MIT 6.031, Software Engineering at Google, SWEBOK, Parnas, Ousterhout, Feathers, Fowler)
+A program that is changed grows more complex unless work is spent against it (Lehman). So, on every change:
+- Pin before you touch: record what a shared mechanic does today in every mode (a characterization test or golden run)
+  before changing it; the change must leave that the same unless the change is the point (Feathers).
+- One check command before every deploy, across every mode, map and menu, phone and computer; red means no deploy
+  (regression testing, SWEBOK).
+- Restructure or add, never both in one PR (Fowler). Small steps, tested after each.
+- Leave it cleaner: every PR removes at least one copy, mode-name check or scattered default from the code it touched
+  (Ousterhout: strategic, not tactical).
+- Hide each decision in one module and keep what other files read of it small: whatever they read, they come to
+  depend on (Parnas, Hyrum's law).
+- Replace means delete; run `node tools/unused-exports.mjs` after each batch.
+- Measure the decay at each deploy and keep it going down: the biggest file's lines, `?? n` defaults, checks of a
+  mode's name, unused exports, copies of a mechanic. A rise needs a reason in the PR.
+- Keep an index of the shared modules here (mechanic, its file, its breeds and hooks) and write each decision the day
+  it's made.
+
 ## The owner's rules
 - Function first: fix what's broken in the game modes before adding new things.
 - Show a plan and wait for a go before big changes. Ask before any brand-new idea (a new mode, map, mechanic or
