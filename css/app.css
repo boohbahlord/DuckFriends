@@ -21814,3 +21814,8 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   font: inherit;
   padding: 0.2rem 0.4rem;
 }
+
+/* a zombie my shots can't reach from where I stand (the sightline): a little darker */
+.l4-unseen {
+  opacity: 0.55;
+}
