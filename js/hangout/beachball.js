@@ -345,7 +345,7 @@ activity({
       el.hidden = sh.hidden = hide;
     }
     if (hide) return;
-    el.style.transform = `translate(${pxAt(f.left - (BW / 2) * sc)}px, ${pxAt(f.top - (BH - 3) * sc)}px) scale(${sc.toFixed(4)})`;
+    el.style.transform = `${Wd.boxTr(f.left - (BW / 2) * sc, f.top - (BH - 3) * sc)} scale(${sc.toFixed(4)})`;
     el.style.zIndex = Math.round(shown.y) + 10;
     el.style.clipPath = floating
       ? `inset(0 0 ${(3 + bob).toFixed(1)}px 0)`
@@ -359,7 +359,7 @@ activity({
     const hgt = Math.max(0, shown.z - sfc),
       k = 1 / (1 + hgt / 140),
       g = Wd.toScreen(shown.x, shown.y, sfc);
-    sh.style.transform = `translate(${pxAt(g.left)}px, ${pxAt(g.top)}px) scale(${(sc * k).toFixed(4)})`;
+    sh.style.transform = `${Wd.boxTr(g.left, g.top)} scale(${(sc * k).toFixed(4)})`;
     sh.style.opacity = floating ? 0 : (k * (wet ? 0.5 : 0.9)).toFixed(2);
   },
 });

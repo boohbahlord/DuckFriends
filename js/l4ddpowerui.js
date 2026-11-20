@@ -182,7 +182,7 @@ export function pwDraw(ctx) {
       box.gas.innerHTML = gasMeter(left); // (the meter under the box: a block for each round left)
       box.el.classList.toggle("on", on);
     }
-    const tr = `translate(${p.left.toFixed(1)}px, ${p.top.toFixed(1)}px)`;
+    const tr = Wd.boxTr(p.left, p.top); // (in the world's box: world.js)
     if (box.tr !== tr) {
       box.tr = tr;
       box.el.style.transform = tr;

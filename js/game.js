@@ -18,6 +18,8 @@
    camera and works out how it stands and falls; this file only hands it the keys, the stick and the taps, and puts its
    one context button where the Vote button goes. */
 import { isInvisible } from "./invisible.js";
+import { invOn } from "./sbgod.js";
+import { syncHidden } from "./sbgodview.js";
 import { fsBtnHTML } from "./corners.js";
 import { register, go, leaveTo } from "./router.js";
 import {
@@ -1785,9 +1787,10 @@ function drawDucks(now = clockNow()) {
     const fx = turned() ? 1 : d._face,
       mq = fx < 0 ? { l: "r", r: "l" }[q] || q : q,
       [org, sx, sy] = SQ[mq] || ["50% 100%", 1, 1];
-    const tr = pixelOn()
-        ? `translate(${snap(at.left).toFixed(2)}px, ${snap(at.top).toFixed(2)}px)` // (the pixel look: on the grid, so its pixels line up with the map's)
-        : `translate(${at.left.toFixed(1)}px, ${at.top.toFixed(1)}px)`,
+    const [tx, ty] = hang
+        ? world.local(at.left, at.top) // (Hangout's camera: in the world's box, which the camera slides, world.js)
+        : [snap(at.left), snap(at.top)], // (the pixel look: on the grid, so its pixels line up with the map's)
+      tr = `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px)`,
       lift = `translateY(${(-z).toFixed(1)}px)`;
     const deadPose =
       dead && !(p.duck && (p.duck.image || p.duck.style === "jack")); // (Jack in a Box flops over in his own drawing)
@@ -2008,6 +2011,7 @@ function drawDucks(now = clockNow()) {
         else if (k === "invisible") see = true;
         else auras.push(k);
       }
+    if (id === R.me && invOn(s, id)) see = true; // (Sandbox's Invisible switch: I see myself see-through, nobody else sees me: sbgodview.js)
     if (d._see !== see) {
       d._see = see;
       d.classList.toggle("see", see);
@@ -2501,7 +2505,7 @@ function drawDucks(now = clockNow()) {
       hx = c.left + sx + jx,
       hy = c.top + sy + jy,
       reach = (w === "hammer" ? hs : ds) * out - kb;
-    const tr = `translate(${hx.toFixed(1)}px, ${hy.toFixed(1)}px) rotate(${rot.toFixed(3)}rad) translateX(${reach.toFixed(1)}px) scaleY(${left ? -1 : 1})`;
+    const turnTr = `rotate(${rot.toFixed(3)}rad) translateX(${reach.toFixed(1)}px) scaleY(${left ? -1 : 1})`;
     /* where its end is on the board: a shot's flash and smoke come out of there (fx.js), and the laser sight */
     const gl = ds * ((GUNS[w] && GUNS[w].w) || 0.5);
     h._end = [
@@ -2525,10 +2529,6 @@ function drawDucks(now = clockNow()) {
         };
       h._ends = [at(DUAL.near), at(DUAL.far)];
     } else h._ends = null;
-    if (h._tr !== tr) {
-      h._tr = tr;
-      h.style.transform = tr;
-    }
     if (TIPS[w]) {
       // where its barrel ends on the board, so its lines come out of there and nowhere else (the l4line fx)
       const [tip, box] = TIPS[w],
@@ -2568,6 +2568,13 @@ function drawDucks(now = clockNow()) {
       gone = !!(hang && dk && (dk._hid || dk._olOnly));
     if (h.parentNode !== home) home.append(h);
     if (h.style.zIndex !== zi) h.style.zIndex = zi;
+    /* in the world's box with its duck, it's put where the box shows that place (world.js shift) */
+    const [bx, by] = low ? world.shift() : [0, 0],
+      tr = `translate(${(hx - bx).toFixed(1)}px, ${(hy - by).toFixed(1)}px) ${turnTr}`;
+    if (h._tr !== tr) {
+      h._tr = tr;
+      h.style.transform = tr;
+    }
     if (h._gone !== gone) {
       h._gone = gone; // (its barrel's glow and the Laser Rifle's steam go with it: barrelheat.js, laserfx.js)
       h.style.visibility = gone ? "hidden" : "";
@@ -3402,9 +3409,10 @@ function placeCake(board, s, now) {
     bowl = geo.hang && c.toilet && now >= c.stop, // (Quacky Zombies: in the toilet's bowl, over the toilet)
     at = bowl ? world.place(p, c.toilet) : place(p, 0, 1),
     w = geo.size * (bowl ? 0.5 : 0.7);
+  const [cl, ct] = geo.hang ? world.local(at.left, at.top) : [at.left, at.top]; // (Hangout: the ducks' layer is in the world's box, world.js)
   Object.assign(n.style, {
-    left: at.left.toFixed(1) + "px",
-    top: (at.top - w * 0.3).toFixed(1) + "px",
+    left: cl.toFixed(1) + "px",
+    top: (ct - w * 0.3).toFixed(1) + "px",
     width: w.toFixed(1) + "px",
     zIndex: bowl
       ? world.key("", { x: p.x, y: p.y + 0.012 }) + 1
@@ -4899,6 +4907,7 @@ function loop(t) {
   let t0 = stamp();
   if (!geo) measure();
   if (me && onBoardPhase()) step(dt, now);
+  syncHidden(R.state, R.me); // (invisible players: nobody else sees them)
   took("my duck", t0);
   t0 = stamp();
   if (scene) scene.update(now);

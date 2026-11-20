@@ -28,7 +28,6 @@ import { play, loop, setListener } from "./sounds.js";
 import "./cats.js";
 import "./justin.js";
 import "./shadowduck.js";
-import { pxAt } from "../pxdom.js";
 import { hitCode, knockable, PCRIT, goreFree } from "../wounds.js";
 import { hitsOf } from "../l4ddart.js";
 import { JUSTIN_POOL } from "./stationart.js";
@@ -545,7 +544,7 @@ activity({
         o.shownOp = o.op;
         o.el.style.opacity = o.op.toFixed(3);
       }
-      o.el.style.transform = `translate(${pxAt(f.left)}px, ${pxAt(f.top)}px)`;
+      o.el.style.transform = Wd.boxTr(f.left, f.top);
       if (o.pool && o.sz !== sc) {
         o.sz = sc;
         o.el.style.setProperty("--sz", (DUCK * sc).toFixed(1) + "px");

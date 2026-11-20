@@ -110,7 +110,7 @@ export function angelDraw(ctx) {
     mc.thru = thru;
     mc.el.classList.toggle("thru", thru);
   }
-  const tr = `translate(${p.left.toFixed(1)}px, ${p.top.toFixed(1)}px)`;
+  const tr = Wd.boxTr(p.left, p.top);
   if (mc.tr !== tr) {
     mc.tr = tr;
     mc.el.style.transform = tr;

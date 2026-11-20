@@ -97,7 +97,7 @@ activity({
       }
       const at = Wd.toScreen(p.x, p.y, p.z),
         e = 1 - (1 - u) ** 3;
-      p.el.style.transform = `translate(${pxAt(at.left)}px, ${pxAt(at.top)}px) scale(${(Wd.sc * (0.75 + 0.35 * p.k)).toFixed(4)})`;
+      p.el.style.transform = `${Wd.boxTr(at.left, at.top)} scale(${(Wd.sc * (0.75 + 0.35 * p.k)).toFixed(4)})`;
       p.el.style.opacity = (1 - u * u).toFixed(2);
       p.bits.forEach((b, i) => {
         const c = p.cs[i],

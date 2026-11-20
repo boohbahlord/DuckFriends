@@ -121,7 +121,7 @@ activity({
           a.top + p.h * sc > -30;
       if (p.e.hidden !== !vis) p.e.hidden = !vis;
       if (!vis) continue;
-      const tr = `translate(${pxAt(a.left)}px, ${pxAt(a.top)}px) scale(${scs})`;
+      const tr = `${W.boxTr(a.left, a.top)} scale(${scs})`;
       if (p.e._tr !== tr) {
         p.e._tr = tr;
         p.e.style.transform = tr;

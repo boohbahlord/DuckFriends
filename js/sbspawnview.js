@@ -839,7 +839,11 @@ activity({
     drawMarks(
       layer,
       spawnsHere(s) ? ptsOf(s) : {},
-      (p) => ctx.world.toScreen(p.x * W, p.y * H, p.z || 0),
+      (p) => {
+        const f = ctx.world.toScreen(p.x * W, p.y * H, p.z || 0),
+          [left, top] = ctx.world.local(f.left, f.top); // (the ducks' layer is in the world's box: world.js)
+        return { left, top };
+      },
       size,
       s,
     );

@@ -34,9 +34,11 @@ import {
   rasterReady,
 } from "../pixel.js";
 import { applyPalette } from "../pixelpalette.js";
+import { ART, artKey, worldArt, lookOf } from "./pxworld.js";
+import { hashText, steadyText } from "../pxdom.js";
 
 export const BOARD_HTML =
-  '<div class="board hang-board"><canvas class="hang-ground" aria-hidden="true"></canvas><div class="hang-props"></div><div class="ducks"></div><div class="hang-shade" hidden></div><div class="fxl"></div></div>';
+  '<div class="board hang-board"><canvas class="hang-ground" aria-hidden="true"></canvas><div class="hang-world"><div class="hang-props"></div><div class="ducks"></div><div class="hang-shade" hidden></div></div><div class="fxl"></div></div>';
 /* a crown (Downpour's trees) is drawn over every duck and prop, under the dark and the rain: above the highest foot */
 const CROWN_Z = 5000;
 const SPEED = 380,
@@ -57,8 +59,43 @@ export function mountWorld(board, api) {
   const canvas = board.querySelector(".hang-ground"),
     g = canvas.getContext("2d"),
     propsBox = board.querySelector(".hang-props"),
-    shade = board.querySelector(".hang-shade");
+    shade = board.querySelector(".hang-shade"),
+    worldEl = board.querySelector(".hang-world");
   const cam = { x: 0, y: 0, sc: 1, vw: 0, vh: 0, dpr: 1, set: false };
+  /* ---------- one camera for the whole world (the owner's go, Nov 19 21:25Z) ----------
+     Everything that stands in the world (the props, the ducks, the zombies, the shade) is in one box, .hang-world, and
+     the camera only slides that box. Walking used to move every one of them on the screen each frame, about 150 of
+     them, each its own style change and paint; now each keeps its place in the box, which changes only when it moves
+     itself, and the box is one transform. Places on the screen (toScreen, place: what everything measures and aims
+     with) are as before; what's put in the box goes through local(), which takes off where the box is now.
+     at: where the box's corner is on the screen now (the camera's, to the fraction); its transform is on the grid */
+  const box = { x: 0, y: 0, sx: 0, sy: 0, tr: "" }; // (sx, sy: where it's drawn, on the screen's own pixels)
+  /* a place on the screen (css px) → where it goes in the world's box, on the art's pixels (pxworld.js ART world px,
+     each a whole number of screen pixels: measure): the same for the same place in the world, wherever the camera is.
+     The world's corner is the box's, so the ground's pixels and every prop's fall on the same squares */
+  const artPx = () => ART * cam.sc,
+    onArt = (v) => Math.round(v / artPx()) * artPx();
+  const local = (left, top) => [onArt(left - box.sx), onArt(top - box.sy)];
+  /* where the box is drawn now (css px, on the grid): taken off a place on the screen, it's where the box shows that
+     place, to the fraction (what isn't put on the grid: a weapon in hand) */
+  const shift = () => [box.sx, box.sy];
+  /* the translate() that puts something drawn in the box at a place on the screen (css px) */
+  const boxTr = (left, top) => {
+    const [x, y] = local(left, top);
+    return `translate(${x.toFixed(2)}px, ${y.toFixed(2)}px)`;
+  };
+  function slideBox() {
+    box.x = cam.vw / 2 - cam.x * cam.sc;
+    box.y = cam.vh / 2 - cam.y * cam.sc;
+    const d = devicePixelRatio || 1;
+    box.sx = Math.round(box.x * d) / d;
+    box.sy = Math.round(box.y * d) / d;
+    const tr = `translate(${box.sx.toFixed(2)}px, ${box.sy.toFixed(2)}px)`;
+    if (box.tr !== tr) {
+      box.tr = tr;
+      worldEl.style.transform = tr;
+    }
+  }
   /* the pixel look: the props and whatever the activities draw, as pixels (pxdom.js; nothing happens with it off) */
   const els = new Map(); // prop id → its element (the front or only part; made the first time it comes into view)
   const all = new Map(); // prop id → all its parts' elements
@@ -139,6 +176,9 @@ export function mountWorld(board, api) {
     duck: () => api.me(),
     world: {
       toScreen,
+      local,
+      shift,
+      boxTr,
       heightAt: L.heightAt,
       get sc() {
         return cam.sc;
@@ -366,7 +406,99 @@ export function mountWorld(board, api) {
       x1 > cam.x - hw && x0 < cam.x + hw && y1 > cam.y - hh && y0 < cam.y + hh
     );
   };
+  /* ---------- the ground from the pixel files (pxworld.js): one canvas of the art's own pixels, in the world's box ----------
+     The ground's picture is copied onto it pixel for pixel (nothing scaled, nothing made), a little more than the view
+     round it, then the warm pools of light over it. It's drawn again only when the view nears its edge or a light
+     changes; in between it moves with the box, as the props do */
+  const artCv = document.createElement("canvas");
+  artCv.className = "hang-art-ground";
+  artCv.setAttribute("aria-hidden", "true");
+  worldEl.prepend(artCv);
+  const ag = artCv.getContext("2d"),
+    av = { r: [0, 0, 0, 0], sig: "", k: 0 };
+  function drawArtGround(now, s) {
+    const { sc, vw, vh } = cam,
+      M = 200, // (world px past the view: made before it shows)
+      vx0 = cam.x - vw / 2 / sc,
+      vx1 = cam.x + vw / 2 / sc,
+      vy0 = cam.y - vh / 2 / sc,
+      vy1 = cam.y + vh / 2 / sc,
+      [r0, s0, r1, s1] = av.r;
+    if (canvas.hidden !== true) canvas.hidden = true;
+    const pools = [],
+      ln = lightNow(now);
+    for (const l of L.LIGHTS) {
+      if (l.only && (l.only === "in") !== inside) continue;
+      if (l.prop && gone.has(l.prop)) continue;
+      if (!shines(l, s)) continue;
+      const x = l.x,
+        y = l.y - L.heightAt(l.x, l.y) - (l.z || 0),
+        r = l.r;
+      if (x + r > r0 && x - r < r1 && y + r > s0 && y - r < s1)
+        pools.push([x, y, r, l.c, l.k * stutterOf(l, ln)]);
+    }
+    const sig = pools.map((p) => p[2].toFixed(1) + p[4].toFixed(3)).join();
+    const inside0 = vx0 > r0 && vx1 < r1 && vy0 > s0 && vy1 < s1;
+    if (inside0 && sig === av.sig && av.k === sc && !gv.need) return;
+    gv.need = false;
+    /* where it's drawn from: the view and M round it, on the art's pixels */
+    const X0 = Math.floor((vx0 - M) / ART),
+      Y0 = Math.floor((vy0 - M) / ART),
+      cw = Math.ceil((vx1 - vx0 + 2 * M) / ART) + 1,
+      ch = Math.ceil((vy1 - vy0 + 2 * M) / ART) + 1;
+    if (!inside0 || av.k !== sc) {
+      av.r = [X0 * ART, Y0 * ART, (X0 + cw) * ART, (Y0 + ch) * ART];
+      av.k = sc;
+      /* pools that only now came onto it */
+      pools.length = 0;
+      for (const l of L.LIGHTS) {
+        if (l.only && (l.only === "in") !== inside) continue;
+        if (l.prop && gone.has(l.prop)) continue;
+        if (!shines(l, s)) continue;
+        const x = l.x,
+          y = l.y - L.heightAt(l.x, l.y) - (l.z || 0),
+          r = l.r;
+        if (
+          x + r > av.r[0] &&
+          x - r < av.r[2] &&
+          y + r > av.r[1] &&
+          y - r < av.r[3]
+        )
+          pools.push([x, y, r, l.c, l.k * stutterOf(l, ln)]);
+      }
+    }
+    av.sig = pools.map((p) => p[2].toFixed(1) + p[4].toFixed(3)).join();
+    const [ax, ay] = [av.r[0] / ART, av.r[1] / ART],
+      w = Math.round((av.r[2] - av.r[0]) / ART),
+      h = Math.round((av.r[3] - av.r[1]) / ART);
+    if (artCv.width !== w || artCv.height !== h) {
+      artCv.width = w;
+      artCv.height = h;
+    }
+    const A = ART * sc;
+    artCv.style.width = w * A + "px";
+    artCv.style.height = h * A + "px";
+    artCv.style.transform = `translate(${ax * A}px, ${ay * A}px)`;
+    ag.setTransform(1, 0, 0, 1, 0, 0);
+    ag.globalCompositeOperation = "source-over";
+    ag.imageSmoothingEnabled = false;
+    ag.fillStyle = groundColor((av.r[1] + av.r[3]) / 2);
+    ag.fillRect(0, 0, w, h);
+    ag.drawImage(art.img, ax - art.x / ART, ay - art.y / ART, w, h, 0, 0, w, h); // (pixel for pixel)
+    ag.setTransform(1 / ART, 0, 0, 1 / ART, -ax, -ay);
+    ag.globalCompositeOperation = "lighter";
+    for (const [x, y, r, c, k] of pools) {
+      const rg = ag.createRadialGradient(x, y, 0, x, y, r);
+      rg.addColorStop(0, hexA(c, k));
+      rg.addColorStop(1, hexA(c, 0));
+      ag.fillStyle = rg;
+      ag.fillRect(x - r, y - r, 2 * r, 2 * r);
+    }
+    ag.globalCompositeOperation = "source-over";
+  }
   function drawGround(now, s, gx, gy) {
+    if (artWait) return; // (the pixel files on their way)
+    if (art) return drawArtGround(now, s);
     // (gx, gy: where the camera is heading, my duck: its tiles come first)
     const { sc, vw, vh, dpr } = cam;
     fno++;
@@ -558,6 +690,38 @@ export function mountWorld(board, api) {
     if (nearBox(b.l, b.t, b.l + b.w, b.t + b.h)) items.push({ ...d, p: null });
   }
   const NEAR = 160; // (px past the view's edge: made and shown a little before it comes into view)
+  /* real pixels (pxworld.js): this world's ground and props as pixel files, made ahead of time. Nothing of the world shows
+     until they're here (a moment), so nothing is ever made into pixels on the device in their place */
+  let art = null,
+    artWait = true;
+  worldArt(L.layoutVariant()).then((a) => {
+    art = a;
+    artWait = false;
+    gv.need = true;
+  });
+  /* a drawing that something changes as it shows (the power box's ring, a lamppost's stutter: power.js, flicker.js) stays a
+     drawing the device makes into pixels (pxdom.js) */
+  const LIVE = /pb-ring/;
+  const artOf = (svg, b) =>
+    (art &&
+      !LIVE.test(svg) &&
+      art.index[artKey(svg, b, hashText, steadyText)]) ||
+    null;
+  /* a prop shown from the files: the piece of the props' picture for the look it has now */
+  function showArt(e) {
+    const a = lookOf(e._art, e.classList, board.classList.contains("blackout"));
+    if (e._look === a) return;
+    e._look = a;
+    e.style.backgroundPosition = `${-a[0] * ART}px ${-a[1] * ART}px`;
+  }
+  function artEl(e, ent) {
+    e._art = ent;
+    e.classList.add("hp-art");
+    e.setAttribute("data-nopx", "");
+    e.style.backgroundImage = `url("${art.atlasURL}")`;
+    e.style.backgroundSize = `${art.atlas.naturalWidth * ART}px ${art.atlas.naturalHeight * ART}px`;
+    showArt(e);
+  }
   function make(it) {
     const e = document.createElement("div"),
       p = it.p,
@@ -575,8 +739,13 @@ export function mountWorld(board, api) {
         ? 2
         : Math.round(it.key) + 10 + (it.layer === "crown" ? CROWN_Z : 0);
     if (it.style) e.style.cssText += it.style;
-    const svg = typeof it.svg === "function" ? it.svg() : it.svg;
-    if (it.img) {
+    const svg = typeof it.svg === "function" ? it.svg() : it.svg,
+      ent = artOf(svg, b);
+    e._box = b;
+    if (ent) {
+      artEl(e, ent);
+      if (it.frames) e._frames = it.frames; // (the bell's swing: each step from the files too, frameOf)
+    } else if (it.img) {
       const im = new Image();
       im.alt = "";
       im.draggable = false;
@@ -601,6 +770,14 @@ export function mountWorld(board, api) {
   function frameOf(e, i) {
     if (!e || !e._frames || e._fr === i) return;
     e._fr = i;
+    if (e._art) {
+      const ent = artOf(e._frames(i), e._box);
+      if (ent) {
+        e._art = ent;
+        showArt(e);
+      }
+      return;
+    }
     e._src = e._frames(i);
     if (!pixelOn() && e.firstChild) e.firstChild.src = svgDataURL(e._src); // (with the pixel look, still() makes it next frame)
   }
@@ -690,6 +867,7 @@ export function mountWorld(board, api) {
     const { sc, vw, vh } = cam,
       scs = sc.toFixed(4);
     covers.length = 0;
+    if (artWait) return; // (the pixel files on their way: pxworld.js)
     for (const it of items) {
       const b = it.box,
         sx = (b.l - cam.x) * sc + vw / 2,
@@ -710,10 +888,10 @@ export function mountWorld(board, api) {
       }
       if (!e) e = make(it);
       if (e.hidden) e.hidden = false;
-      if (it.img && pixelOn()) still(e, it, sw, sh);
-      const tr = pixelOn()
-        ? `translate(${snap(sx).toFixed(2)}px, ${snap(sy).toFixed(2)}px) scale(${scs})` // (the pixel look: on the grid, as the ducks)
-        : `translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px) scale(${scs})`;
+      if (e._art) showArt(e);
+      else if (it.img && pixelOn()) still(e, it, sw, sh);
+      const [lx, ly] = local(sx, sy),
+        tr = `translate(${lx.toFixed(2)}px, ${ly.toFixed(2)}px) scale(${scs})`; // (in the world's box, on the grid as the ducks)
       if (e._tr !== tr) {
         e._tr = tr;
         e.style.transform = tr;
@@ -894,6 +1072,12 @@ export function mountWorld(board, api) {
         document.documentElement.classList.contains("phone")
       )
         cam.sc /= PHONE_OUT;
+      /* real pixels (pxworld.js): one of the art's pixels is ART world px, and a whole number of the screen's own pixels,
+         so every one of them is square and the same size (the zoom moves by less than one screen pixel a pixel for it) */
+      {
+        const d = devicePixelRatio || 1;
+        cam.sc = Math.max(1, Math.round(ART * cam.sc * d)) / (ART * d);
+      }
       cam.vw = vw;
       cam.vh = vh;
       cam.low = low();
@@ -953,6 +1137,8 @@ export function mountWorld(board, api) {
         hang: true,
       };
     },
+    local, // (a place on the screen → in the world's box: what's drawn in it, .hang-props and .ducks)
+    shift,
     /* a spot (x, y: 0 … 1) on the board, in px: its ground, at the height of whatever is there (or at height h) */
     place(p, h) {
       const x = p.x * L.W,
@@ -1061,6 +1247,7 @@ export function mountWorld(board, api) {
         cam.y += (ty - cam.y) * k;
       }
       clampCam();
+      slideBox();
       for (const a of acts()) a.step?.(dt, now, ctx);
       drawGround(now, s, tx, ty);
       boxes = duckBoxes(s);
@@ -1075,7 +1262,8 @@ export function mountWorld(board, api) {
         const a = toScreen(HOLE.l, HOLE.t),
           b = toScreen(HOLE.r, HOLE.b),
           sz = (b.left - a.left).toFixed(1) + "px",
-          tr = `translate(${a.left.toFixed(1)}px, ${a.top.toFixed(1)}px)`;
+          [lx, ly] = local(a.left, a.top),
+          tr = `translate(${lx.toFixed(2)}px, ${ly.toFixed(2)}px)`; // (in the world's box: it stays put as I walk)
         if (shade._sz !== sz) {
           shade._sz = sz;
           shade.style.width = sz;
