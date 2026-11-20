@@ -16,6 +16,8 @@ export const UPDATES = [
     news: [
       "Sprint is 1.25 times your walk for 5 seconds, in every mode. The bar fills back up half again as slowly, and once it's empty you sprint again only when it's full.",
       "For Dead Ducks Arcade: gas costs 300 for a quarter can, at Downpour's pumps and from Cabin's merchant.",
+      "Your picture now opens a crop box, and a picture with see-through parts becomes a cut-out duck that's hit only where it shows.",
+      "Your HP, its meters and your hotbar are bigger and side by side in the bottom right, on a computer and on a phone on its side.",
     ],
   },
   {
