@@ -925,7 +925,7 @@ const hp0 = () => {
   const r = Math.random();
   return (r < 0.25 ? 5 : r < 0.5 ? 3 : 4) - 0.5; // (half an HP less: the owner's, Nov 19 19:27Z, "decrease that by half a health point")
 };
-const ZHATS = [
+export const ZHATS = [
   "cap",
   "cowboy",
   "bucket",
