@@ -10,6 +10,7 @@ import { activity } from "./hangout/registry.js";
 import { W, H, sortY } from "./hangout/layout.js";
 import { npcPics } from "./sbnpcart.js";
 import { colorField } from "./color.js";
+import { momentHTML } from "./specials.js";
 import { esc, openWindow, confirmBox, toast, foldHeads } from "./ui.js";
 import { sbPresets, sbCheat, colSwatches, NOCOL_NOTE } from "./sbmenu.js";
 import { activeRoom } from "./net.js";
@@ -49,6 +50,9 @@ import {
   SB_GOES,
   SB_SFX,
   sbSfx,
+  SB_SFX_Z,
+  sbSfxZ,
+  sbCellMids,
   SB_LOOKS,
   sbLook,
   SB_CALL,
@@ -421,6 +425,7 @@ function drawMarks(layer, pts, at, size, s) {
     seeZones = building() || seeAll(s); // (always in cheat mode, the owner's, Nov 20 02:37Z)
   for (const n of layer.querySelectorAll(".sb-pt")) have.set(n.dataset.p, n);
   for (const [id, p] of Object.entries(pts)) {
+    if (p.k === "zone") sfxOn(layer, have, want, id, p, at, size, s); // (its squares' special or picture: everyone sees it)
     if (p.grp) {
       /* a spawn's + page or a block's tab: drawn as its block, but a Loot tab's orbs show where they lie */
       if (p.pg === "t" && p.k === "loot")
@@ -529,6 +534,76 @@ function lookOn(layer, have, want, id, pts, at, size, s) {
     transform: skewCSS(g),
   });
 }
+/* a zone's effect from the specials, on a few of its working squares, or its picture over it (the owner's: "It could be
+   effect from the specials, only an effect", "an image can be uploaded as well ... takes up the size"); below every
+   entity or above them, never over the map's own roofs (the owner's: "Effects can be chosen to either happen below all
+   entities or above"). The ground fire, smoke, steam and sparks are pixels: game.js sbZoneLooks */
+/* (the pixel ones are drawn over the world on the effects' canvas, so only these can go below) */
+const domSfx = (k) => k === "pic" || k.startsWith("sp_");
+const SFX_MOST = 6, // (squares that show a special at once)
+  SFX_TOP = { hang: "4999", board: "99990" }; // (under world.js CROWN_Z: the roofs stay over it)
+function sfxOn(layer, have, want, id, p, at, size, s) {
+  const k = sbSfx(p);
+  if (!domSfx(k)) return;
+  const below = sbSfxZ(p) === "below",
+    hang = !!layer.closest(".hang-board"),
+    g = slabGeo(s, p, at),
+    u = upHigh(s, p, g),
+    zi = below
+      ? u.zi || "4" // (over its zone's look, 3, under every duck and NPC)
+      : SFX_TOP[hang ? "hang" : "board"];
+  if (k === "pic") {
+    const bg = lookCSS({ k: "pic", v: boxText(p, "sfxpic") }, s && s.sbpic, 1);
+    if (!bg) return;
+    const key = id + "~x",
+      n = markEl(layer, have, key, "sb-pt sb-sfxpic");
+    want.add(key);
+    const shaped = (sbShape(p) !== "sq" || sbRot(p) !== 0) && !sbFills(p),
+      mask = shaped ? `url("${shapePic(s, p, "#000", true)}")` : "",
+      st = `${bg} ${mask} ${g.left.toFixed(1)},${g.top.toFixed(1)},${g.width.toFixed(1)},${g.height.toFixed(1)},${g.sk.toFixed(2)} ${zi}`;
+    if (n._st === st) return;
+    n._st = st;
+    n.style.background = bg;
+    n.style.setProperty("--mask", mask || "none");
+    Object.assign(n.style, {
+      zIndex: zi,
+      left: g.left.toFixed(1) + "px",
+      top: g.top.toFixed(1) + "px",
+      width: g.width.toFixed(1) + "px",
+      height: g.height.toFixed(1) + "px",
+      transformOrigin: "0 0",
+      transform: skewCSS(g),
+    });
+    return;
+  }
+  const mids = sbCellMids(s, id, p, W, H, 400);
+  if (!mids.length) return;
+  const every = Math.max(1, Math.floor(mids.length / SFX_MOST)),
+    z = p.z || 0;
+  for (let i = 0; i < SFX_MOST && i * every < mids.length; i++) {
+    const m = mids[(i * every + (idHash(id) % every)) % mids.length],
+      key = `${id}~x${i}`,
+      n = markEl(layer, have, key, "sb-pt sb-sfx");
+    want.add(key);
+    if (n._k !== k) {
+      n._k = k;
+      n.innerHTML = momentHTML(k.slice(3), null);
+    }
+    const c = at({ x: m.x, y: m.y, z }),
+      st = `${c.left.toFixed(1)},${c.top.toFixed(1)},${size.toFixed(1)},${zi}`;
+    if (n._st === st) continue;
+    n._st = st;
+    Object.assign(n.style, {
+      left: (c.left - size / 2).toFixed(1) + "px",
+      top: (c.top - size).toFixed(1) + "px",
+      width: size.toFixed(1) + "px",
+      height: size.toFixed(1) + "px",
+      zIndex: zi,
+    });
+  }
+}
+const idHash = (id) =>
+  [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
 /* plan Phase 4: a floor up high shows its front edge, a strip under its box as thick as a floor (layout.js SIGHT_SLAB),
    in its look made darker, or while building in its color; so it reads as a slab at its height */
 const FACE = 16; // (world px)
@@ -1102,7 +1177,18 @@ export function sbSettings(getR, id, tab = "") {
         ([v, n]) =>
           `<option value="${v}"${v === sbSfx(p) ? " selected" : ""}>${esc(n)}</option>`,
       )
-      .join("")}</select><em class="sb-why"></em></div>
+      .join("")}</select><em class="sb-why"></em></div>${(() => {
+      const pk = boxText(p, "sfxpic"),
+        img = pk && R.state.sbpic && R.state.sbpic[pk];
+      return `<div class="sb-row sb-up" data-sfxrow="pic"${sbSfx(p) === "pic" ? "" : " hidden"}><span>${esc(SB_ZONE.sfxpic.name)}</span><span class="sb-what"><label class="btn small"><input type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden data-lkup="sfxpic">Upload</label>${img ? `<img class="sb-up-pic" src="${img.d}" alt="The effect's picture">` : ""}<em class="small dim sb-lk-note">2 MB at most. Made into pixels.</em></span></div><div class="sb-row" data-row="sfxz" data-sfxrow="z"${domSfx(sbSfx(p)) ? "" : " hidden"}><span>${esc(SB_ZONE.sfxz.name)}</span><span class="sb-what">${Object.entries(
+        SB_SFX_Z,
+      )
+        .map(
+          ([v, n]) =>
+            `<label><input type="radio" name="sb-sfxz" data-sfxz="${v}"${sbSfxZ(p) === v ? " checked" : ""}> ${n}</label>`,
+        )
+        .join("")}</span></div>`;
+    })()}
     ${flagRow("pon", SB_PLAYER.pon, typed("pon"), why("pon"))}
     ${row("pwho", { name: "Who spawns here" }, typed("pwho"), why("pwho"))}
     ${pickRow("ent", SB_ZONE.ent.name, named("spawn", "spawn"), picked("ent"))}
@@ -1124,6 +1210,7 @@ export function sbSettings(getR, id, tab = "") {
     ${row("n", SB_ORDER.n, ordT("n"), "")}
     ${row("sq", SB_ORDER.sq, ordT("sq"), "")}
     ${row("st", SB_ORDER.st, ordT("st"), "")}
+    ${row("off", SB_ORDER.off, ordT("off"), "")}
     <div class="sb-row" data-row="go"><span>${esc(SB_ORDER.go.name)}</span>${sel("go", SB_GOES)}<em class="sb-why"></em></div>`;
   const html = `<h2>${loot && !p.grp ? "Loot" : "Zone"}</h2>${head}
   ${base.lock ? `<p class="sb-tip sb-lockd">Locked: right-click it and pick Unlock to change it.</p>` : ""}<div class="sb-set"${base.lock ? " inert" : ""}>${callHTML}${frontHTML}${front ? `<h3 class="sb-sect sb-sect-top">4. ${PURPOSES.find(([v]) => v === p.k)[1]} settings</h3>` : ""}${
@@ -1239,11 +1326,12 @@ export function sbSettings(getR, id, tab = "") {
         }
         if (t.matches("[data-lkup]")) {
           const r = getR(),
-            note = w.querySelector(".sb-lk-note");
+            f = t.dataset.lkup || "lkpic", // (the Look's picture, or the effect's)
+            note = t.closest(".sb-row").querySelector(".sb-lk-note");
           note.textContent = "Sending…";
           return picFrom(t.files[0], LOOK_PX).then(
             (pic) => {
-              send({ k: "set", f: "lkpic", v: sendParts(r, pic) });
+              send({ k: "set", f, v: sendParts(r, pic) });
               setTimeout(() => again(id), 400);
             },
             (err) => {
@@ -1251,6 +1339,12 @@ export function sbSettings(getR, id, tab = "") {
             },
           );
         }
+        if (t.matches("[data-sfxz]"))
+          return send({ k: "set", f: "sfxz", v: t.dataset.sfxz });
+        if (t.matches('[data-f="sfx"]')) {
+          w.querySelector('[data-sfxrow="pic"]').hidden = t.value !== "pic";
+          w.querySelector('[data-sfxrow="z"]').hidden = !domSfx(t.value);
+        } // (the box itself is sent as typed)
         if (t.matches("[data-sh]"))
           return send({ k: "set", f: "sh", v: t.dataset.sh });
         if (t.matches("[data-purpose]")) {

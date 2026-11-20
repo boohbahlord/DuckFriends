@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v164",
+    version: 164,
+    date: "Nov 20, 2026",
+    title: "Hearts, notes and pictures on zones",
+    news: [
+      "For Sandbox: a zone's squares can show a special's effect (hearts, music notes, poison cloud, electricity, flames, Loser's X, disco ball) or a picture you upload, above everything or below it.",
+      "For Sandbox: \"Starts at step\" in a zone's potential order, so two Alternating tabs can take turns, and a new Zone tab stands on its block's floor.",
+    ],
+  },
+  {
     id: "v163",
     version: 163,
     date: "Nov 20, 2026",

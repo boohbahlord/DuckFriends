@@ -3803,7 +3803,7 @@ function sbZoneLooks(s, spot, ground, size, half) {
   const pts = (s.sb && s.sb.pts) || {};
   for (const [id, p] of Object.entries(pts)) {
     const k = sbSfx(p);
-    if (k === "none") continue;
+    if (!["fire", "smoke", "steam", "sparks"].includes(k)) continue; // (a special's or a picture: sbspawnview.js sfxOn)
     const mids = sbCellMids(s, id, p, HW, HH, half < 1 ? 60 : 120),
       z = p.z || 0;
     for (const m of mids) {

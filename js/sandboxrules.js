@@ -546,6 +546,17 @@ export const SB_ZONE = {
     check: (t) => (SB_SFX[String(t).trim()] ? "" : "Pick one"),
     def: "none",
   },
+  sfxz: {
+    name: "Shown",
+    check: (t) => (SB_SFX_Z[String(t).trim()] ? "" : "Pick one"),
+    def: "above",
+  },
+  sfxpic: {
+    name: "Its picture",
+    check: (t) =>
+      /^[a-z0-9]{0,24}$/.test(String(t).trim()) ? "" : "Upload one",
+    def: "",
+  },
   /* its look (plan Phase 3: "Looks (zone purpose only): a texture from the maps (Cabin, Downpour, Euclid's Squares, the
      Kenoma looks; previews shown), a solid color with a hex picker, or an uploaded picture, always made into pixels (the
      original is never kept). See-through by 1% steps"); everyone sees it, cheat mode or not (sblooks.js) */
@@ -628,17 +639,40 @@ export function sbLook(p) {
   const op = Math.min(100, Math.max(0, Math.round(+v("lkop") || 0))) / 100;
   return { k, v: val, op };
 }
+/* the specials' effects a zone's squares can show (the owner's: "It could be effect from the specials, only an effect";
+   specials.js momentHTML draws them), and an uploaded picture ("an image can be uploaded as well ... compressed into
+   pixels ... takes up the size") */
+export const SB_SFX_SP = {
+  sp_zap: "Electricity",
+  sp_flames: "Flames",
+  sp_hearts: "Hearts",
+  sp_poison: "Poison cloud",
+  sp_notes: "Music notes",
+  sp_loserx: "Loser's X",
+  sp_disco: "Disco ball",
+};
 export const SB_SFX = {
   none: "Nothing",
   fire: "Ground fire",
   smoke: "Smoke",
   steam: "Steam",
   sparks: "Sparks",
+  ...SB_SFX_SP,
+  pic: "A picture",
 };
 export const sbSfx = (p) => {
   const k = p && p.f && p.f.sfx,
     v = String(k && k.ok ? k.ok : "none").trim();
   return SB_SFX[v] ? v : "none";
+};
+/* the owner's: "Effects can be chosen to either happen below all entities or above" (never over the map's own roofs) */
+export const SB_SFX_Z = {
+  above: "Above everything",
+  below: "Below everything",
+};
+export const sbSfxZ = (p) => {
+  const k = p && p.f && p.f.sfxz;
+  return k && k.ok === "below" ? "below" : "above";
 };
 /* a duck length in a world's px, for a zone's size there (on the board: 0.03 of it across, 0.08 up and down) */
 export const SB_ZONE_PX = 48;
@@ -812,6 +846,13 @@ export const SB_ORDER = {
         : "0.1 to 600",
     def: "1",
   },
+  /* where its steps start (Solomon's real-build test of the owner's floor-is-lava idea, "blinking floor tiles ... with
+     two alternating tabs": two Alternating tabs gave the same checkerboard). 1 on one of them: the other half */
+  off: {
+    name: "Starts at step (0: the first)",
+    check: (t) => (/^\d{1,3}$/.test(String(t).trim()) ? "" : "0 to 999"),
+    def: "0",
+  },
   /* how its steps go (the owner's, Nov 20 02:45Z): on their own, one every "Seconds per step", or only when something
      uses it ("the next part of the algorithm only plays when the next input is given, such as spawn says time to spawn
      another entity") */
@@ -969,6 +1010,7 @@ const idNum = (id) =>
 const KEEP = new Map();
 /* which of block id's squares act at step k: a Set of i + j * nx, or null when they all do */
 export function sbActive(s, id, p, k, W = 1, H = 1) {
+  k += +ordTxt(p, "off") || 0;
   const ord = sbOrd(p),
     g = sbGrid(s, p, W, H),
     N = g.cells.length,
