@@ -16,6 +16,7 @@ import {
   isSb,
   sbMay,
   sbOnBoard,
+  sbClimbAt,
   SB_BOXES,
   SB_FLAGS,
   SB_ACTS,
@@ -949,7 +950,7 @@ export function sbSettings(getR, id, tab = "") {
     <div data-fxrow="rate"${fx === "none" ? " hidden" : ""}>${row("rate", SB_ZONE.rate, typed("rate"), why("rate"))}</div>
     <div data-fxrow="zwho"${fx === "none" ? " hidden" : ""}>${actRow(R.state, p, "zwho", kinds)}</div>
     ${actRow(R.state, p, "wall", kinds)}
-    ${sbOnBoard(R.state) ? "" : `${row("fl", SB_ZONE.fl, typed("fl"), why("fl"))}${flagRow("gnd", SB_ZONE.gnd, typed("gnd"), why("gnd"))}`}
+    ${sbOnBoard(R.state) ? "" : `${row("fl", SB_ZONE.fl, typed("fl"), why("fl"))}${flagRow("gnd", SB_ZONE.gnd, typed("gnd"), why("gnd"))}${actRow(R.state, p, "clm", kinds)}`}
     ${olSect(R.state, p, kinds)}
     ${lookSect(R.state, p, row, typed, why)}
     ${brainRow(typed("brain"), why("brain"))}
@@ -1450,6 +1451,21 @@ activity({
   only: "sandbox",
   /* my walk: a spawn's Players tab or a respawn may give me another speed (sbspawn.js sbWalkOf) */
   speed: (pos, ctx) => sbWalkOf(ctx.state(), ctx.me),
+  /* a zone I can climb here (plan Phase 4, sandboxrules.js sbClimbAt): { top, x, y } or null (world px in, shares out) */
+  climbAt(x, y, z) {
+    const R = activeRoom(),
+      s = R && R.state;
+    if (!s || !s.sb) return null;
+    return sbClimbAt(
+      s,
+      { duck: (s.players[R.me] || {}).name || "" },
+      x / W,
+      y / H,
+      z,
+      W,
+      H,
+    );
+  },
   /* a zone that's a wall to me (plan Phase 3) */
   blocked(x, y, z, ctx, fx, fy) {
     const s = ctx.state();

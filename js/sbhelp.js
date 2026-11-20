@@ -36,7 +36,7 @@ export const SB_HELP = {
     ],
     [
       "Elevation and Ground",
-      "On Duck Cabin and Downpour a zone has an Elevation: 1 is the ground, each one more is a gas station roof higher, up to 6. Turn Ground on and it's a floor up there: you stand on it, walk off its edge and fall, and you fall when its squares stop working under you. Falling two floors takes twice as long as one.",
+      "On Duck Cabin and Downpour a zone has an Elevation: 1 is the ground, each one more is a gas station roof higher, up to 6. Turn Ground on and it's a floor up there: you stand on it, walk off its edge and fall, and you fall when its squares stop working under you. Falling two floors takes twice as long as one. Tick who can climb a zone and they climb it up to its elevation by walking into it, as up a ladder; let go of the stick and they hold on, walk away and they fall.",
     ],
     [
       "Outlines",

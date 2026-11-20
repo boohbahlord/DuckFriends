@@ -10,6 +10,7 @@ import { now } from "./clock.js";
 import { who } from "./who.js";
 import { publicKey } from "./secret.js";
 import { watchKills } from "./unlocks.js";
+import { useUmaps } from "./maps.js";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 export const myPlayer = (id) => ({
@@ -72,6 +73,7 @@ export function createLocalRoom({
       const next = safeReduce(state, a, now());
       if (next === state) return;
       state = next;
+      useUmaps(state.umap); // (the maps the host made, for every map list and picture: maps.js)
       fns.forEach((f) => f(state, a));
     },
     on(f) {

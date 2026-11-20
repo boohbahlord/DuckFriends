@@ -269,6 +269,11 @@ export const SB_ZONE = {
     def: "1",
   },
   gnd: { name: "Ground (stand and walk on it)", kind: "bool", def: "f" },
+  /* plan Phase 4, climbing (the owner's: "another elevation type called climb ... touching the outside boundary of that
+     will make it to where you can climb onto another elevation ... the same mechanism as the ladder", and "for elevation
+     settings or wall settings or for ladders or for climbings ... a drop-down menu for selecting which entities or groups
+     can"): who it takes climbs it, pushing into it, up to its elevation (sbClimbAt) */
+  clm: listBox("Who can climb it", ""),
   /* plan Phase 3: "Outlines: show outline for chosen entities, in a chosen color; a + duplicates the row for another
      color": rows "who, who=#rrggbb; …" (sbOlRows) */
   ol: {
@@ -856,6 +861,21 @@ export function sbWalls(s, w) {
       if (sbWhoTakes(s, listOf(p, "wall"), w)) out.push({ id, p });
     }
   return out;
+}
+/* plan Phase 4: the climb zone w (as sbWhoTakes) is at (x, y, shares of the map) with its feet at z (world px) under its
+   top: { top: its height, x, y: its middle } (the highest when several), or null */
+export function sbClimbAt(s, w, x, y, z, W = 1, H = 1) {
+  if (!isSb(s) || sbOnBoard(s)) return null;
+  let best = null;
+  for (const [id, p] of Object.entries((s.sb && s.sb.pts) || {})) {
+    if (p.k !== "zone" || !p.f || !p.f.clm || !p.f.clm.ok) continue;
+    const top = p.z || 0;
+    if (top < (+z || 0) - 0.5 || (best && best.top >= top)) continue; // (a climb whose top is under my feet: not mine)
+    if (!sbWhoTakes(s, listOf(p, "clm"), w)) continue;
+    if (!sbInWorking(s, id, p, x, y, W, H)) continue;
+    best = { top, x: p.x, y: p.y };
+  }
+  return best;
 }
 /* the walls to each NPC, worked out once a beat for each kind and spawn: wallsOf(o) */
 export function sbNpcWalls(s) {

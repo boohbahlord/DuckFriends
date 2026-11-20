@@ -980,7 +980,23 @@ export function mountWorld(board, api) {
   /* the floor under my duck at (x, y): the ground, or a roof it is on or over (Downpour: layout.js floorH). zTop: the
      highest its feet were this step, so a fall onto a roof lands on it, even past it in one frame */
   let zTop = 0;
-  const floor = (me, x, y) => L.floorH(x, y, Math.max(me.z, zTop)); // (a roof holds feet already at or over it: a jump under the canopy never lands on it)
+  /* a climb (Sandbox, plan Phase 4) holds my duck at its top while it's in it there, so it can step off onto a floor */
+  const climbAt = (x, y, z) => {
+    let best = null;
+    for (const a of acts()) {
+      const c = a.climbAt?.(x, y, z);
+      if (c && (!best || c.top > best.top)) best = c;
+    }
+    return best;
+  };
+  const floor = (me, x, y) => {
+    const z = Math.max(me.z, zTop),
+      f = L.floorH(x, y, z); // (a roof holds feet already at or over it: a jump under the canopy never lands on it)
+    if (!hasClimbs) return f;
+    const c = climbAt(x, y, z);
+    return c && c.top > f && z >= c.top - 0.5 ? c.top : f;
+  };
+  let hasClimbs = false;
   const endJump = (me) => {
     me.j = 0;
     me.lj = false;
@@ -1052,6 +1068,43 @@ export function mountWorld(board, api) {
       me.x = top.x / L.W;
       me.y = top.y / L.H;
       ev.force = true; // (onto the roof: the others see it at once)
+    }
+    return true;
+  }
+
+  /* a Sandbox climb (plan Phase 4, the owner's: "touching the outside boundary of that will make it to where you can climb
+     onto another elevation ... the same mechanism as the ladder"): in it, pushing in toward its middle climbs at the
+     ladder's pace up to its top; let go and it holds on; push away and it lets go and falls. True while my duck is on it */
+  function zClimb(me, x, y, ax, ay, dt, ev) {
+    if (me.j || me.jf || !hasClimbs) return (me.zc = false);
+    const c = climbAt(x, y, me.z);
+    if (!c || me.z >= c.top - 0.5) return (me.zc = false);
+    const mx = c.x * L.W - x,
+      my = c.y * L.H - y,
+      n = Math.hypot(mx, my) || 1,
+      into = (ax * mx + ay * my) / n; // (how hard I push toward its middle)
+    if (!me.zc) {
+      if (!(into > 0.5 && me.vz == null)) return false;
+      me.zc = true;
+    }
+    if (into < -0.3) {
+      me.zc = false;
+      if (me.z > floor(me, x, y) + L.STEP) {
+        me.vz = 0;
+        me.top = me.z;
+      }
+      return false;
+    } // (let go: it falls, or walks off the bottom)
+    me.vz = null;
+    if (into > 0.3) {
+      me.z = Math.min(c.top, me.z + CLIMB * dt);
+      ev.moved = true;
+      ev.climb = true;
+    }
+    if (me.z >= c.top - 0.5) {
+      me.z = me.b = c.top;
+      me.zc = false;
+      ev.force = true; // (at its top: the others see it at once)
     }
     return true;
   }
@@ -1336,6 +1389,8 @@ export function mountWorld(board, api) {
       } else pushed = "";
       zTop = me.z;
       if (climb(me, x, y, ax, ay, dt, ev)) return ev; // (on the ladder: up it, or holding on)
+      hasClimbs = acts().some((a) => a.climbAt);
+      if (zClimb(me, x, y, ax, ay, dt, ev)) return ev; // (a Sandbox climb: up it, or holding on)
       if (me.j !== me._j) {
         me._j = me.j;
         me._za = undefined;
