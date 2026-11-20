@@ -67,6 +67,9 @@ export const GM = {
   RIFLE_FIRE: [2200, 3600], // … and ms it stops and shoots
   SUPPRESS_MS: 1400, // ms my screen shakes and darkens after an LMG burst flies by me
   SUPPRESS_R: 120, // world px: how near its rounds fly to suppress a duck
+  /* the owner's, Nov 19 19:27Z: "he will shoot at you in your direction continuously, even when you're behind cover":
+     the LMG keeps firing at where its duck hides this long after it last saw it (into the cover: no hits) */
+  BLIND_MS: 15000,
   SNIPER: 0.2, // a soldier wave's chance of a lone sniper (none while one lives)
   SNIPE: [6, 26], // duck lengths: how near and how far off he takes his shot from
   LOCK_MS: [1500, 2500], // ms his laser sits on a duck before the shot
@@ -642,8 +645,11 @@ function soldier(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
     lmgOn =
       !!lmg && lmg !== o && lmg.st === "fire" && !(lmg.rl && lmg.rl[0] > now);
   if (o.ro === "lmg") {
-    /* the LMG: somewhere it sees its duck from well off, then long bursts; whoever its rounds fly by is suppressed */
-    if (!see || d > reach * 0.9) {
+    /* the LMG: somewhere it sees its duck from well off, then long bursts; whoever its rounds fly by is suppressed. Its
+       duck gone behind cover, it keeps firing at it a while (blind: into the cover) */
+    const blind =
+      !see && !!o.seen && now - o.seen < GM.BLIND_MS && d <= reach * 0.9;
+    if ((!see && !blind) || d > reach * 0.9) {
       const g = see || !o.ls ? [t.x, t.y] : o.ls;
       go(g[0], g[1]);
       o.st = "in";
@@ -653,7 +659,7 @@ function soldier(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
     if (d < 5 * GM.DUCK) away(t, 160);
     o.st = "fire";
     o.ld = Math.round(d);
-    if (shoot(s, o, t, now, H)) suppress(s, o, t, ducks, now);
+    if (shoot(s, o, t, now, H, null, blind)) suppress(s, o, t, ducks, now);
     return;
   }
   if (o.ro === "sup") {
@@ -876,7 +882,7 @@ function reload(o, now) {
 }
 
 /* ---------- shooting: t is a duck { id, x, y, sp } or a zombie { z, x, y } ---------- */
-export function shoot(s, o, t, now, H, only = null) {
+export function shoot(s, o, t, now, H, only = null, blind = false) {
   o.ad = Math.round((Math.atan2(t.y - o.y, t.x - o.x) * 180) / Math.PI);
   o.f = t.x < o.x ? -1 : 1;
   /* its guns: a reload that's done fills it; the one in its hands, or the other while that one reloads */
@@ -928,7 +934,7 @@ export function shoot(s, o, t, now, H, only = null) {
             ? AIM.lmg
             : Math.max(AIM.min, AIM.near - AIM.drop * len) *
               (t.sp ? AIM.sprint : 1);
-      if (Math.random() >= chance) continue;
+      if (blind || Math.random() >= chance) continue; // (blind: into the cover in front of it)
       hit = true;
       dmg += Array.isArray(A.dmg)
         ? A.dmg[0] + Math.floor(Math.random() * (A.dmg[1] - A.dmg[0] + 1))

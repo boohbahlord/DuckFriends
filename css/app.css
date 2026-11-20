@@ -14489,12 +14489,18 @@ html.moving .eye-zap {
   inset: 0;
   z-index: 8990;
   pointer-events: none;
-  background: radial-gradient(ellipse at center, #0000 42%, #000000d9 100%);
+  --sup: 0; /* (how long the LMG has kept on at me: 0 to 1, gunmenview.js) */
+  background: radial-gradient(
+    ellipse at center,
+    #0000 calc(55% - 30% * var(--sup)),
+    #000000d9 calc(100% - 15% * var(--sup)),
+    #000 100%
+  );
   opacity: 0;
   transition: opacity 0.35s;
 }
 .gm-sup.on {
-  opacity: 1;
+  opacity: calc(0.55 + 0.45 * var(--sup));
   transition: opacity 0.12s;
 }
 html.crimson body::after {
