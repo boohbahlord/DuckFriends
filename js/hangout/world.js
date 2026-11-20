@@ -136,27 +136,74 @@ export function mountWorld(board, api) {
       shade._sz = null; // (its size again)
     },
     SHADE_OUT = 700;
-  /* Quacky Zombies: the shade has a notch where the deck shows through a hole in the south wall (layout.js' PEEKS), cut
-     out of it and its big shadow (in its own px, at the camera's scale) */
+  /* Quacky Zombies: the shade has a notch where the deck shows through a hole in the south wall (layout.js' PEEKS). The
+     shade is plain black rectangles all round the building (SPREAD px out), leaving the building and its notches open
+     (in its own px, at the camera's scale). It used to be one big box-shadow cut by a clip-path; on a graphics card that
+     clip-path made the whole 11000 px layer a mask every frame (Downpour standing: 15-20 fps against 35-44 without it) */
   const peeks = () => L.PEEKS.filter((k) => !k.bldg || k.bldg === bldg); // (Downpour: the building I'm in's only)
-  const peekClip = () => {
-    if (!peeks().length) return "";
+  const SPREAD = 4000;
+  const shadeRects = () => {
     const k = cam.sc,
       W0 = (HOLE.r - HOLE.l) * k,
       H0 = (HOLE.b - HOLE.t) * k,
-      E = 4200,
-      box = (x0, y0, x1, y1) =>
-        `M${x0.toFixed(1)} ${y0.toFixed(1)}H${x1.toFixed(1)}V${y1.toFixed(1)}H${x0.toFixed(1)}Z`;
-    return `path(evenodd, "${box(-E, -E, W0 + E, H0 + E)}${peeks()
-      .map(({ out: [x0, y0, x1, y1] }) =>
-        box(
+      open = [
+        [0, 0, W0, H0],
+        ...peeks().map(({ out: [x0, y0, x1, y1] }) => [
           (x0 - HOLE.l) * k,
           (y0 - HOLE.t) * k,
           (x1 - HOLE.l) * k,
           (y1 - HOLE.t) * k,
-        ),
+        ]),
+      ],
+      xs = [
+        ...new Set([
+          -SPREAD,
+          W0 + SPREAD,
+          ...open.flatMap((o) => [o[0], o[2]]),
+        ]),
+      ].sort((a, b) => a - b),
+      ys = [
+        ...new Set([
+          -SPREAD,
+          H0 + SPREAD,
+          ...open.flatMap((o) => [o[1], o[3]]),
+        ]),
+      ].sort((a, b) => a - b),
+      isOpen = (x, y) =>
+        open.some((o) => x > o[0] && x < o[2] && y > o[1] && y < o[3]),
+      out = [];
+    /* each band between two y edges: its black runs between x edges, joined; a run the same as the one above it grows
+       down instead of starting a new box */
+    let above = [];
+    for (let j = 0; j + 1 < ys.length; j++) {
+      const y0 = ys[j],
+        y1 = ys[j + 1],
+        my = (y0 + y1) / 2,
+        runs = [];
+      for (let i = 0; i + 1 < xs.length; i++) {
+        if (isOpen((xs[i] + xs[i + 1]) / 2, my)) continue;
+        const last = runs[runs.length - 1];
+        if (last && last[1] === xs[i]) last[1] = xs[i + 1];
+        else runs.push([xs[i], xs[i + 1]]);
+      }
+      const now = runs.map(([x0, x1]) => {
+        const up = above.find((r) => r.x0 === x0 && r.x1 === x1);
+        if (up) {
+          up.y1 = y1;
+          return up;
+        }
+        const r = { x0, x1, y0, y1 };
+        out.push(r);
+        return r;
+      });
+      above = now;
+    }
+    return out
+      .map(
+        (r) =>
+          `<i style="left:${r.x0.toFixed(1)}px;top:${r.y0.toFixed(1)}px;width:${(r.x1 - r.x0).toFixed(1)}px;height:${(r.y1 - r.y0).toFixed(1)}px"></i>`,
       )
-      .join("")}")`;
+      .join("");
   };
   const outOfHole = (l, t, r, b) =>
     (r < HOLE.l || l > HOLE.r || b < HOLE.t || t > HOLE.b) &&
@@ -1330,7 +1377,7 @@ export function mountWorld(board, api) {
           shade._sz = sz;
           shade.style.width = sz;
           shade.style.height = (b.top - a.top).toFixed(1) + "px";
-          shade.style.clipPath = peekClip(); // (only when its size changes, as its shadow)
+          shade.innerHTML = shadeRects(); // (only when its size changes: the black round it, its notches open)
         }
         if (shade._tr !== tr) {
           shade._tr = tr;
