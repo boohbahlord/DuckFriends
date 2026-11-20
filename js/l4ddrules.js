@@ -2315,6 +2315,20 @@ function srCheck(s) {
     s.options.l4start = sv.n; // (its stats and the setting follow)
   } else if (ids.length - no < need) s.hang.l4 = { ...L, sv: null };
 }
+/* the zombie game starts over (Play again, or Sandbox's "Start over" when everyone's out: rules.js); in Sandbox every
+   life comes back, and every duck stands at a start spot of the Sandbox's */
+export function l4Again(s, now) {
+  setUp(s, now);
+  if (!isSb(s)) return;
+  s.sb = { ...s.sb, died: {} };
+  for (const id of players(s)) {
+    const q = sbPlayerSpot(s, id, W, H, (x, y, z) =>
+      standable(x * W, y * H, z),
+    );
+    if (q && s.pos[id])
+      s.pos[id] = { ...s.pos[id], x: q.x, y: q.y, z: q.z || 0 };
+  }
+}
 function l4Act(s, a, now) {
   const id = a.id,
     L = s.hang.l4,
@@ -2322,7 +2336,7 @@ function l4Act(s, a, now) {
   if (!L || !me) return false;
   if (a.do === "again") {
     if (!L.over || s.hostId !== id) return false;
-    setUp(s, now);
+    l4Again(s, now);
     return true;
   }
   if (a.do === "fl") {
@@ -5359,6 +5373,20 @@ function l4Tick(s, now) {
     s.hang.l4 = { ...s.hang.l4, over: { at: now, r: L.r } };
     s.hang.l4b = {};
     return true;
+  }
+  /* Sandbox: everyone out of lives (G's Rules, Lives and "When everyone is out of lives"): the game over card, or after it
+     the lobby or a new start (rules.js), or nothing, as it always was */
+  if (isSb(s) && mine.length && sbRule(s, "out") !== "keep") {
+    const most = sbRule(s, "lives"),
+      died = (s.sb && s.sb.died) || {};
+    if (most && mine.every((id) => (died[id] || 0) >= most)) {
+      s.hang.l4 = {
+        ...s.hang.l4,
+        over: { at: now, r: L.r, sb: sbRule(s, "out") },
+      };
+      s.hang.l4b = {};
+      return true;
+    }
   }
   merchantTick(s, now); // (the merchant walks in or out, and greets)
   troopTick(s, now, ids); // (the rests between rounds too)

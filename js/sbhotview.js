@@ -49,8 +49,11 @@ export function spawnIcon(s, p) {
 }
 const ptOf = (s, p) => ((s.sb && s.sb.pts) || {})[p];
 const spawnName = (s, p) => {
-  const q = ptOf(s, p);
-  return (q && boxText(q, "name")) || (q ? q.col + " spawn" : "Spawn");
+  const q = ptOf(s, p),
+    n = q ? boxText(q, "name") : "";
+  if (!q) return "Spawn";
+  if (!n) return q.col + " spawn";
+  return /^\d+$/.test(n) ? "Spawn " + n : n; // (a tab's own six digits read as "Spawn 415850", as on its tab)
 };
 /* a slot's look for the hotbar (hotbar.js look): a spawn button's, or null to leave it to the specials */
 export function sbLook(s, id) {
@@ -119,8 +122,10 @@ export function hotWinHTML(R, picked) {
     duck = (s.players[R.me] || {}).duck,
     btn = (id, sp, tip) =>
       `<button type="button" class="sb-lt" data-v="${esc(id)}" aria-pressed="${picked === id}" data-tip="${esc(tip || "")}"><i>${sp.icon}</i><span>${esc(sp.name)}</span></button>`,
+    /* every spawn a button can press: an older lone spawn, or a zone's Spawn tab (since zones only, every spawn is a
+       tab: sbspawn.js press); never a spawn's Players page */
     spawns = Object.entries((s.sb && s.sb.pts) || {}).filter(
-      ([, q]) => q.k === "spawn" && !q.grp,
+      ([, q]) => q.k === "spawn" && (!q.grp || q.pg === "t") && q.pg !== "pl",
     ),
     it = picked && slotLook(s, picked, duck);
   const list = `<div class="sb-lootlist" tabindex="0" aria-label="Loot">${LOOT.map(

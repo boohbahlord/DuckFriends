@@ -259,7 +259,7 @@ import {
   sbOlColor,
 } from "./sandboxrules.js";
 import { mountCabinEnd } from "./hangout/cabinend.js";
-import { mountSandboxKeys } from "./sandbox.js";
+import { mountSandboxKeys, whyNot } from "./sandbox.js";
 import { sbCheat } from "./sbmenu.js";
 import { sbHotOn, sbLook, sbHotSig } from "./sbhotview.js";
 import { sbSlots, spawnOf } from "./sbhot.js";
@@ -6252,7 +6252,9 @@ function useKey(i, keep, toggle = false) {
     const v = sbSlots(R.state, R.me)[i];
     if (spawnOf(v)) {
       if (bar) bar.show(i);
+      const why = whyNot(R.state, [spawnOf(v)]); // (why it won't: at its limit, or its tab tied to no zone)
       R.send({ t: "sbh", k: "go", v }); // (a spawn button: it spawns)
+      if (why) toast(why);
       return;
     }
   }
@@ -8018,6 +8020,10 @@ function keydown(e) {
     return;
   }
   if (e.key === "Tab") {
+    /* Sandbox's windows: in a box, Tab goes to the next box, as on any form (a number typed and Tabbed away from was
+       never kept) */
+    if (typing(e) && R && isSb(R.state) && e.target.closest(".win, .sb-win"))
+      return;
     e.preventDefault();
     if (!windowOpen() && !typing(e)) pm.keydown(e);
     return;

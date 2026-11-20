@@ -269,7 +269,8 @@ if (typeof window !== "undefined" && typeof indexedDB !== "undefined") {
   setTimeout(takeRescue, 3000); // (a save the last visit left in localStorage)
 }
 
-/* ---------- G: Save, Save as and Music ---------- */
+/* ---------- G: Save, Save as and Music ----------
+   win: a row that opens a window of its own puts G away first, so one press of G brings it back after (it took two) */
 export function saveRows(R) {
   const s = R.state,
     rows = [];
@@ -286,29 +287,37 @@ export function saveRows(R) {
           );
         },
       },
-      { label: "Save as…", act: (r) => saveAs(r) },
+      { label: "Save as…", win: true, act: (r) => saveAs(r) },
     );
   rows.push(
     {
       label: "Make a map…",
+      win: true,
       act: (r) => import("./umaps.js").then((m) => m.makeMap(r)),
     },
     {
       label: "My maps…",
+      win: true,
       act: (r) => import("./umaps.js").then((m) => m.myMaps(r)),
     },
   ); // (a map from a picture, kept on this device: umaps.js; the owner's, Nov 19 22:59Z, "In Sandbox ... They click it and they can upload an image")
-  rows.push({ label: "Rules…", act: (r) => rulesWin(r) }); // (plan Phase 6: lives, the down phase, crits, watching when out)
+  rows.push({ label: "Rules…", win: true, act: (r) => rulesWin(r) }); // (plan Phase 6: lives, the down phase, crits, watching when out)
   rows.push({
     label: "Weapons and items…",
+    win: true,
     act: (r) => import("./sblootview.js").then((m) => m.itemsWin(r)),
   }); // (plan Loot 5: every copy of an item, bought or picked up; it wins over a loot's own numbers)
-  rows.push({ label: "Save game mode…", act: (r) => saveModeWin(r) }); // (plan Phase 6: kept on this device, gmodes.js)
+  rows.push({
+    label: "Save game mode…",
+    win: true,
+    act: (r) => saveModeWin(r),
+  }); // (plan Phase 6: kept on this device, gmodes.js)
   if (s.hostId === R.me && s.sbsv)
     rows.push({ label: "Test game mode", act: (r) => startTest(r) }); // (as players would see it; Stop test at the top left)
   const on = allowedSongs(s); // (Miles Jr.'s song list, music.js: only these play, and everyone hears the same)
   rows.push({
     label: `Music: ${on.length ? `${on.length} of ${music.tracks.length} songs` : "no music"}…`,
+    win: true,
     act: (r) => musicWin(r),
   }); // (its own window: the owner's, Nov 20 04:44Z, "music settings among others in game settings are a window that pops up")
   return rows;
@@ -362,6 +371,13 @@ function rulesWin(R) {
       .filter(([, b]) => !b.file && (!b.board || sbOnBoard(s))) // (Board size: the plain boards only; the settings file's: Seriat's settings/limits)
       .map(([k, b]) => {
         const v = sbRule(s, k);
+        if (b.kind === "pick")
+          return `<div class="sb-row" data-row="${k}"><span>${esc(b.name)}</span><span class="sb-what">${b.opts
+            .map(
+              ([o, n]) =>
+                `<button type="button" class="sb-tab${v === o ? " on" : ""}" data-rulepick="${k}" data-v="${o}" aria-pressed="${v === o}"${may ? "" : " disabled"}>${esc(n)}</button>`,
+            )
+            .join("")}</span></div>`;
         return b.kind === "bool"
           ? `<div class="sb-row" data-row="${k}"><span>${esc(b.name)}</span><button type="button" class="sb-tog${v ? " on" : ""}" data-rule="${k}" aria-pressed="${v}"${may ? "" : " disabled"}>${v ? "true" : "false"}</button></div>`
           : `<div class="sb-row" data-row="${k}"><span>${esc(b.name)}</span><input class="sb-box" type="number" min="${b.min}" max="${b.max}" step="1" value="${v}" data-rule="${k}" aria-label="${esc(b.name)}"${may ? "" : " disabled"}></div>`;
@@ -369,13 +385,18 @@ function rulesWin(R) {
       .join("");
   };
   return openWindow(
-    `<h2>Rules</h2><p class="small dim">Lives, the down phase, crits and watching are for the zombie maps (the arcade's cabin and Downpour); Board size for the plain boards. Saved with the Sandbox.</p><div class="sb-rules sb-set"></div>`,
+    `<h2>Rules</h2><p class="small dim">Lives, the down phase, crits, watching and everyone out are for the zombie maps (the arcade's cabin and Downpour); Board size for the plain boards. Saved with the Sandbox.</p><div class="sb-rules sb-set"></div>`,
     {
       cls: "win-small sb-ruleswin",
       onOpen(w) {
         draw(w);
         const later = () => setTimeout(() => w.isConnected && draw(w), 150);
         w.addEventListener("click", (e) => {
+          const pk = e.target.closest("button[data-rulepick]");
+          if (pk) {
+            R.send({ t: "sbr", k: pk.dataset.rulepick, v: pk.dataset.v });
+            return later();
+          }
           const b = e.target.closest("button[data-rule]");
           if (!b) return;
           R.send({

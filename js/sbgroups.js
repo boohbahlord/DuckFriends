@@ -85,6 +85,12 @@ export const GR_LISTS = {
   target: "Its NPCs target",
   ignore: "Its NPCs ignore",
 };
+/* yes-or-no settings ("" no, "1" yes): Solomon's real-build test (Nov 20) of a King of the hill: "You stay King after you
+   walk out" and "it can't be a true king" */
+export const GR_YN = {
+  lv: "Leaves when it steps out",
+  one: "Only one member at a time",
+};
 /* is t good for setting f? "" or why not */
 export function grWhy(f, t) {
   const b = GR_BOX[f];
@@ -99,6 +105,7 @@ export function grWhy(f, t) {
       ? ""
       : "1 to 20 letters";
   if (f === "ol") return !t || SB_COLORS[t] ? "" : "A color";
+  if (GR_YN[f]) return !t || t === "1" ? "" : "Yes or no";
   if (f === "c" || f === "who" || GR_LISTS[f])
     return String(t).length <= 400 ? "" : "400 letters at most";
   return "No such setting";
@@ -252,6 +259,7 @@ function join(s, k, gid, now, H0, npcs, ch) {
   if (duck ? !s.players[id] || !s.pos[id] : !hit) return false;
   const o = hit && (ch.get(hit[1]) || hit[1]);
   if (!mayJoin(s, g, k, o)) return false;
+  if (g.one && Object.values(gm).some((gs) => gs.includes(gid))) return false; // (one at a time: the next waits for a way in)
   s.sb = { ...s.sb, gm: { ...gm, [k]: [...(gm[k] || []), gid] } };
   const heal = String(g.heal || "").trim(),
     pct = /%$/.test(heal) ? +heal.slice(0, -1) : 0;
@@ -329,13 +337,35 @@ export function sbGroupTick(s, now, H0) {
             : [k, { x: o.x / W, y: o.y / H, z: o.z || heightAt(o.x, o.y) }],
         ),
       ];
+    const inside = []; // ([thing, group]) in the zones, this moment
     for (const [, p, gs] of zs)
       for (const [k, at] of things) {
         if (!at || !inZone(s, p, at.x, at.y, zmaps || !sbOnBoard(s) ? at.z : 0))
           continue;
-        for (const g of gs)
-          changed = join(s, k, g, now, H0, npcs(), ch) || changed;
+        for (const g of gs) inside.push([k, g]);
       }
+    /* "Leaves when it steps out": out of it once it stands in none of its zones (first, so one who walks out of a
+       one-member group lets the next in at once) */
+    const lv = new Set(
+      zs.flatMap(([, , gs]) => gs).filter((g) => gr[g] && gr[g].lv),
+    );
+    if (lv.size) {
+      const gm = s.sb.gm || {},
+        held = new Set(inside.map(([k, g]) => k + " " + g)),
+        next = {};
+      let out = false;
+      for (const [k, gs] of Object.entries(gm)) {
+        const ok = gs.filter((g) => !lv.has(g) || held.has(k + " " + g));
+        if (ok.length !== gs.length) out = true;
+        if (ok.length) next[k] = ok;
+      }
+      if (out) {
+        s.sb = { ...s.sb, gm: next };
+        changed = true;
+      }
+    }
+    for (const [k, g] of inside)
+      changed = join(s, k, g, now, H0, npcs(), ch) || changed;
   }
   /* once a second: the gone out of their groups, and regen (a group's, and a Seriat file's ((regen n)) on an NPC) */
   const hid = s.hidden || {};

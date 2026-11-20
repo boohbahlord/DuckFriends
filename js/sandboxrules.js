@@ -111,6 +111,19 @@ export const SB_RULES = {
   down: { name: "Down phase (others can revive you)", kind: "bool", def: "f" },
   crit: { name: "Crits (headshots)", kind: "bool", def: "t" },
   spec: { name: "Out of lives: watch the others", kind: "bool", def: "t" },
+  /* Solomon's real-build test of a zombie game (Nov 20): "Nothing ends the game when everyone is out of lives ... We need
+     a 'When everyone is out' row (game over / back to lobby / restart)". Keep playing is how it always was */
+  out: {
+    name: "When everyone is out of lives",
+    kind: "pick",
+    opts: [
+      ["keep", "Keep playing"],
+      ["over", "Game over"],
+      ["lobby", "Back to the lobby"],
+      ["again", "Start over"],
+    ],
+    def: "keep",
+  },
   /* the owner's, Nov 19 21:59Z: "There should be a board size limit that changes the size of the map ... we'll do
      percentage instead, right? 100% is the minimum. But ... if the map is bigger, the camera follows the duck as they
      move around like it does in Downpour or Cabin". The plain boards only (the worlds have their own size) */
@@ -168,6 +181,7 @@ export function sbRule(s, k) {
   const b = SB_RULES[k],
     t = String(((s && s.sb && s.sb.rules) || {})[k] ?? b.def).trim();
   if (b.kind === "bool") return !/^f/i.test(t);
+  if (b.kind === "pick") return b.opts.some(([v]) => v === t) ? t : b.def;
   if (b.own && /^own$/i.test(t)) return -1; // (each weapon's own)
   const n = Math.round(+t);
   return Number.isFinite(n) ? Math.min(b.max, Math.max(b.min, n)) : +b.def;
@@ -188,7 +202,9 @@ export function sbRulesAct(s, a) {
   if (!isSb(s) || !b || !sbCan(s, a.id)) return false;
   let v = String(a.v ?? "").trim();
   if (b.kind === "bool") v = /^f/i.test(v) || v === "" ? "f" : "t";
-  else if (b.own && /^own$/i.test(v)) v = "own";
+  else if (b.kind === "pick") {
+    if (!b.opts.some(([o]) => o === v)) return false;
+  } else if (b.own && /^own$/i.test(v)) v = "own";
   else {
     const n = Math.round(+v);
     if (!Number.isFinite(n) || n < b.min || n > b.max) return false;
