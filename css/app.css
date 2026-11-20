@@ -22592,6 +22592,7 @@ html.nojustin .jumps-jk {
   gap: 1rem;
   justify-content: center;
   flex-wrap: wrap;
+}
 /* no browser drag ghost or text selection in a game (the owner's, Nov 20 21:41Z; main.js stops the drag itself) */
 img,
 svg image {
