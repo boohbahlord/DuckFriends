@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v196",
+    version: 196,
+    date: "Nov 20, 2026",
+    title: "Open where it looks open",
+    news: [
+      "For the zombie modes: on Downpour, the restroom's smashed wall and corner are rubble bricks now, and anything that looks open is walkable: you walk out through the broken corner, and up on the roof you fall through a hole exactly where it's drawn.",
+      "For the zombie modes: Downpour's loading screen is much shorter, and nothing still loads once you're dropped in.",
+    ],
+  },
+  {
     id: "v195",
     version: 195,
     date: "Nov 20, 2026",
