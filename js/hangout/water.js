@@ -19,7 +19,6 @@ import {
   inPool,
 } from "./layout.js";
 import { sfx } from "../sound.js";
-import { pxAt } from "../pxdom.js";
 import { pixelOn, gridPx } from "../pixel.js";
 
 export const WATER = POOL.h; // the water's surface: a duck floats with its feet there
@@ -187,15 +186,15 @@ export function splash(x, y, k = 0.6) {
     foam: el.querySelector(".hs-foam"),
   });
 }
-function drawSplash(p, toScreen, sc) {
+function drawSplash(p, W, sc) {
   const age = T - p.t,
     u = age / p.life;
   if (u >= 1 || age < 0) {
     p.el.remove();
     return false;
   }
-  const at = toScreen(p.x, p.y, WATER);
-  p.el.style.transform = `translate(${pxAt(at.left)}px, ${pxAt(at.top)}px) scale(${sc.toFixed(4)})`;
+  const at = W.toScreen(p.x, p.y, WATER);
+  p.el.style.transform = `${W.boxTr(at.left, at.top)} scale(${sc.toFixed(4)})`;
   const s = age / 1000,
     G = 1300,
     f = (n) => n.toFixed(1);
@@ -343,7 +342,7 @@ activity({
       sc = W.sc,
       board = W.board;
     for (let i = splashes.length - 1; i >= 0; i--)
-      if (!drawSplash(splashes[i], W.toScreen, sc)) splashes.splice(i, 1);
+      if (!drawSplash(splashes[i], W, sc)) splashes.splice(i, 1);
     /* the ducks: in the water, sunk to the waterline and bobbing */
     for (const d of board.querySelectorAll(".ducks .gduck")) {
       const o = seen.get(d.dataset.pid);
@@ -373,6 +372,14 @@ activity({
         ![...seen.values()].some((d) => d.sw));
     if (water.hidden !== off) water.hidden = off; // (nothing to draw: hidden, so it costs nothing)
     if (off) return;
+    /* the canvas is the screen's size, in the world's box (world.js), so it's held back where the box goes: it stays on
+       the screen and draws in screen px as before */
+    const [sx, sy] = W.shift(),
+      wt = `translate(${-sx}px, ${-sy}px)`;
+    if (water._tr !== wt) {
+      water._tr = wt;
+      water.style.transform = wt;
+    }
     if (
       water.width !== Math.round(vw * dpr) ||
       water.height !== Math.round(vh * dpr)

@@ -304,6 +304,7 @@ const REMOTE = new Set([
   "tv",
   "goOn",
   "sb", // (Sandbox's spawns: the rules check the rights, sbspawn.js sbAct)
+  "sbg", // (Sandbox's God mode and invisibility: mine, or a player's with the rights, sbgod.js)
   "sbOk", // (Sandbox's rights given or taken: only by one who has them, rules.js)
   "nbn", // (the names in my Seriat folder, nbperms.js)
   "nbp", // (a right I give on my own Seriat files, nbperms.js)

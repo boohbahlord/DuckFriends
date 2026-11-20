@@ -19,7 +19,7 @@
 import { esc } from "./ui.js";
 
 /* Survival shows in the lists once it's all built (true then) */
-export const SURV_READY = false;
+export const SURV_READY = true;
 export const MODES = [
   {
     id: "aod",
