@@ -51,6 +51,31 @@ export function sbSlots(s, id) {
   }
   return out;
 }
+/* ---------- what a loot orb set for an item taken on the board or Duck Cabin (plan Loot 3, sbloot.js) ----------
+   got's third part: { u: uses left, c: its own wait between uses (ms), b: 1 (it breaks when used up) } */
+export function sbGot(s, id, w) {
+  const e = ((hbOf(s).got || {})[id] || []).find(([v]) => v === w);
+  return (e && e[2]) || null;
+}
+/* one use of it: at none left it breaks and leaves the hotbar (Breaks when empty: the melee's sound, sbsfx.js s.sb.brk),
+   or stays there empty */
+export function sbSpend(s, id, w) {
+  const hb = hbOf(s),
+    got = (hb.got || {})[id] || [],
+    i = got.findIndex(([v]) => v === w),
+    m = i >= 0 && got[i][2];
+  if (!m || !(m.u > 0)) return;
+  const left = m.u - 1,
+    next = [...got];
+  if (left <= 0 && m.b) {
+    next.splice(i, 1);
+    s.sb = {
+      ...s.sb,
+      brk: { n: ((s.sb && s.sb.brk) || {}).n + 1 || 1, by: id },
+    };
+  } else next[i] = [got[i][0], got[i][1], { ...m, u: left }];
+  s.sb = { ...s.sb, hb: { ...hb, got: { ...(hb.got || {}), [id]: next } } };
+}
 /* a spawn button's look: [shape, color, head]; by default a shape and a color picked from its id, so each stays the same */
 export function sbIcon(s, p) {
   const ic = (hbOf(s).ic || {})[p];

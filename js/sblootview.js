@@ -20,6 +20,7 @@ import { orbHTML, weaponIcon, ICONS } from "./l4ddart.js";
 import { DROP_ICONS } from "./l4dddrops.js";
 import { specialById } from "./specials.js";
 import { picFrom, sendParts } from "./sbmake.js";
+import { coolFor } from "./rules.js";
 
 const nameOf = (w) =>
   (ammoOf(w) && `${nameOf(ammoOf(w))} ammo`) ||
@@ -136,7 +137,9 @@ export function lootPage(s, id, p, h) {
         )
         .join("")}</span></details></div>${
         i < all.length - 1 // (each item's numbers under its own kind's list, never twice under All items: plan Loot 3)
-          ? ws.map((w) => itemRows(w, picked.includes(w), icon, p, h)).join("")
+          ? ws
+              .map((w) => itemRows(w, picked.includes(w), icon, p, h, drops))
+              .join("")
           : ""
       }`;
     };
@@ -192,10 +195,11 @@ const ARM_ROWS = {
   grenade: ["n"],
   special: ["n", "cd", "brk"],
 };
-function rowsFor(w) {
+function rowsFor(w, zm) {
+  if (!zm) return ["n", "cd", "brk"]; // (the board and Duck Cabin: its uses, its wait, and whether it breaks when used up)
   if (ammoOf(w)) return ["n"];
   const A = ARMS[w];
-  if (!A) return []; // (a zombie drop, the flashlight; the board's items: not yet)
+  if (!A) return []; // (a zombie drop, the flashlight)
   return (ARM_ROWS[A.kind] || [])
     .filter((k) => k !== "dmg" || (A.dmg != null && A.dmg !== "all"))
     .filter((k) => k !== "rl" || A.mag)
@@ -203,7 +207,13 @@ function rowsFor(w) {
     .map((k) => (k === "cd" && A.auto ? "sps" : k)); // (a gun that fires while held: shots per second)
 }
 /* what a blank box means for item w: its own number */
-function ownOf(w, k) {
+function ownOf(w, k, zm) {
+  if (!zm)
+    return k === "n"
+      ? "no limit"
+      : k === "cd"
+        ? String(+(coolFor(w) / 1000).toFixed(2))
+        : "";
   const A = ARMS[w] || {};
   if (k === "dmg")
     return Array.isArray(A.dmg) ? `${A.dmg[0]} to ${A.dmg[1]}` : String(A.dmg);
@@ -216,8 +226,8 @@ function ownOf(w, k) {
 /* is true/false row k on for item w when nobody set it: Unlimited ammo for the laser and the bow, Reload on */
 const flagOwn = (w, k) =>
   k === "inf" ? !fullAmmo(w) : k === "rl" ? true : false;
-function itemRows(w, on, icon, p, h) {
-  const rows = rowsFor(w);
+function itemRows(w, on, icon, p, h, zm) {
+  const rows = rowsFor(w, zm);
   if (!rows.length) return "";
   const out = rows.map((k) => {
     const f = `i_${w}_${k}`,
@@ -229,12 +239,12 @@ function itemRows(w, on, icon, p, h) {
       return h.flagRow(
         f,
         { name },
-        v ? v : flagOwn(w, k) ? "t" : "f",
+        v ? v : zm && flagOwn(w, k) ? "t" : "f",
         h.why(f),
       );
     }
     const why = h.why(f);
-    return `<label class="sb-row${why ? " bad" : ""}" data-row="${f}"><span>${esc(name)}</span><input class="sb-box" data-f="${f}" value="${esc(t)}" placeholder="${esc(ownOf(w, k))}" maxlength="12" spellcheck="false" autocomplete="off"><em class="sb-why">${esc(why)}</em></label>`;
+    return `<label class="sb-row${why ? " bad" : ""}" data-row="${f}"><span>${esc(name)}</span><input class="sb-box" data-f="${f}" value="${esc(t)}" placeholder="${esc(ownOf(w, k, zm))}" maxlength="12" spellcheck="false" autocomplete="off"><em class="sb-why">${esc(why)}</em></label>`;
   });
   return `<div class="sb-item" data-item="${w}"${on ? "" : " hidden"}><p class="sb-item-h"><i class="sb-lic">${icon(w)}</i>${esc(nameOf(w))}</p>${out.join("")}</div>`;
 }
