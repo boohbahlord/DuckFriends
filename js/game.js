@@ -1321,7 +1321,7 @@ function drawMeters(s, board, layer, now) {
   if (!meter) return;
   const hv = R.me && hpFull(s, R.me, now);
   if (hv) {
-    const [sp, tired] = isMgj(s) ? [null, false] : sprintLeft(); // (every mode's 7 s sprint now, stamina.js; Mad God Justin has no sprint, so no sprint bar)
+    const [sp, tired] = isMgj(s) ? [null, false] : sprintLeft(); // (every mode's 3.5 s sprint now, stamina.js; Mad God Justin has no sprint, so no sprint bar)
     meter.set(
       hv[0],
       hv[1],
@@ -5129,7 +5129,7 @@ function step(dt, now) {
     sprinting && !!(hx || vy || target),
     dt,
     grStam(s, R.me),
-  ); // (7 s of sprint, then a walk till it's let go: stamina.js, every mode; Sandbox: a group's Regen stamina)
+  ); // (3.5 s of sprint, then a walk till it's full again: stamina.js, every mode; Sandbox: a group's Regen stamina)
   let ax, ay; // in board terms
   if (turned()) {
     ax = -vy;
@@ -5357,7 +5357,7 @@ function hangStep(dt, now) {
     }
   }
   if (!canWalk()) ax = ay = 0;
-  sprinting = sprintStep(sprinting && !!(ax || ay), dt, grStam(R.state, R.me)); // (7 s of sprint, then a walk till it's let go: stamina.js, every mode, Dead Ducks Arcade's too; Sandbox: a group's Regen stamina)
+  sprinting = sprintStep(sprinting && !!(ax || ay), dt, grStam(R.state, R.me)); // (3.5 s of sprint, then a walk till it's full again: stamina.js, every mode, Dead Ducks Arcade's too; Sandbox: a group's Regen stamina)
   const kx = ax; // (which way I face: my keys, not the push)
   if (canWalk() && recoil && performance.now() < recoil.until) {
     const l = Math.hypot(recoil.dx, recoil.dy) || 1;
@@ -6431,7 +6431,7 @@ function coolOne(id, now, m) {
 }
 /* the white, the yellow and the blue bars under my duck in the modes besides Dead Ducks Arcade (which has its own,
    l4dd.js): what's in my hand, its cooldown or reload, its magazine, and my sprint while it isn't full (meters.js; the
-   7 s sprint every mode has now, stamina.js; the owner's, Nov 18 16:50Z. Mad God Justin has no sprint) */
+   3.5 s sprint every mode has now, stamina.js; the owner's, Nov 18 16:50Z. Mad God Justin has no sprint) */
 function handBars(s) {
   const tag = S && S.querySelector(".gduck.mine .gduck-name");
   if (!tag || !R) return;

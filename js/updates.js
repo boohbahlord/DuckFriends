@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v184",
+    version: 184,
+    date: "Nov 20, 2026",
+    title: "Justin defeated",
+    news: [
+      "For Mad God Justin: when he's beaten there's no loser podium any more, and his cloud just says Justin defeated.",
+      "For Survival: the gunmen's assault rifles reach as far as the LMG.",
+    ],
+  },
+  {
     id: "v183",
     version: 183,
     date: "Nov 20, 2026",
