@@ -11,3 +11,6 @@ export const SPRINT = {
   ms: 5000, // ms of sprint from a full bar
   refill: 1.5, // the bar fills this many times as slowly as it drains (5 s of sprint: 7.5 s to fill)
 };
+
+/* zombies (Nov 20 21:17Z: "zombies should have a slightly slower attack speed by, let's say, 0.2 seconds") */
+export const ZOMBIE_SWIPE_SLOWER = 200; // ms added to the wait between one swipe and the next, every zombie
