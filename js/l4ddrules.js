@@ -5309,6 +5309,8 @@ function l4Tick(s, now) {
       gunmen: (kind) =>
         L4_HOOKS.gm && L4_HOOKS.gm.start(s, kind, now, gmHelp(s, now)),
       gunDone: () => !L4_HOOKS.gm || L4_HOOKS.gm.done(s),
+      gunLeft: () =>
+        L4_HOOKS.gm && L4_HOOKS.gm.left ? L4_HOOKS.gm.left(s) : 0,
       walker: () => survWalker(s, L2, mine),
       speedAt: (r) =>
         Math.round(WALK * Z_SLOW * rnd(roundOf(r)[1][0], roundOf(r)[1][1])),
