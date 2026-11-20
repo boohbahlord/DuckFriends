@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v133",
+    version: 133,
+    date: "Nov 20, 2026",
+    title: "Sightlines",
+    news: [
+      "For Dead Ducks Arcade and Survival on Downpour: up on a roof you can only shoot what you can see. Step back from the edge and the ground near the wall hides; step up to the edge and you can shoot straight down. A hole in the roof works the same way, and so does shooting up at a roof from below.",
+      "For Dead Ducks Arcade and Survival: zombies you can't hit from where you stand are drawn darker.",
+    ],
+  },
+  {
     id: "v132",
     version: 132,
     date: "Nov 20, 2026",
