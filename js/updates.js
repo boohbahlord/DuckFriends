@@ -16,6 +16,7 @@ export const UPDATES = [
     news: [
       "For Survival: armed merchants never run out of rounds but do reload, and after a gunfight with soldiers they run to another part of the map and hide instead of leaving it.",
       "For Survival: the LMG keeps firing your way even when you're behind cover, and the screen's corners grow darker the longer it keeps on at you.",
+      "For Survival: soldiers and criminals also come in along the road, from an end nobody can see.",
       "For Survival: walkers left over from the quiet phase change their look as they turn into chasers.",
       "For Sandbox: Lives, watching the others when you're out, and 'When everyone is out of lives' in G Rules now work on Duck Cabin and the plain boards too.",
       "Every map's picture in the lobby, Game Settings, the map vote and Sandbox's zone looks is now a ready-made pixel file, and pictures you uploaded before are redrawn into pixels, so no original picture is kept behind them.",

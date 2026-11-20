@@ -5677,9 +5677,16 @@ function gmHelp(s, now) {
     edge() {
       syncMap();
       const pts = players(s)
-          .filter((id) => standing(s, id))
-          .map((id) => at(s.pos[id])),
-        pick = pts.length ? fenceSpot(pts) : null;
+        .filter((id) => standing(s, id))
+        .map((id) => at(s.pos[id]));
+      if (!pts.length) return null;
+      /* the owner's, Nov 19 19:27Z: "they're climbing the fence or they're coming through the roads": a group in
+         three comes along the road, from one of its ends nobody sees */
+      if (dp() && Math.random() < GM_ROAD) {
+        const road = roadEnd(pts);
+        if (road) return road;
+      }
+      const pick = fenceSpot(pts);
       return pick ? pick.land : null;
     }, // (a spot just inside a fence that nobody sees: where they come in, "they show up from the outside")
     mhurt: (i, dmg, w) => merchantHurt(s, null, dmg, now, w, "", "g" + i), // (one of them shot the merchant)
@@ -5687,6 +5694,28 @@ function gmHelp(s, now) {
     speed: WALK * walkOf(s) * NPC_RUN, // (the shared slow speed, npcshared.js)
     T,
   };
+}
+const GM_ROAD = 1 / 3; // (my guess: a third of the groups come along the road)
+/* Downpour: one of the road's two ends (just inside the map's edge, on the road) that no duck sees and that leads to the
+   ducks (pts: where they stand), or null */
+function roadEnd(pts) {
+  const dist = flowFrom(pts.map((q) => openNear(...q))),
+    ends = [GS.RIM.x0 + 60, GS.RIM.x1 - 60]
+      .map((x) => [x, GS.ROAD.mid + rnd(-120, 120)])
+      .filter(
+        ([x, y]) =>
+          !pts.some(
+            ([a, b]) =>
+              Math.abs(x - a) < VIEW.x + 60 && Math.abs(y - b) < VIEW.y + 140,
+          ),
+      )
+      .filter(([x, y]) => {
+        const c = openNear(x, y);
+        return c >= 0 && dist[c] < Infinity && zOk(x, y, heightAt(x, y));
+      });
+  if (!ends.length) return null;
+  const e = ends[Math.floor(Math.random() * ends.length)];
+  return [Math.round(e[0]), Math.round(e[1])];
 }
 /* Downpour: a spot behind a fence that no duck sees, one of the nearest to the ducks (pts: where they stand), where one
    coming over lands somewhere that leads to them: { q (its opening), at (outside, by the fence), land (inside) }, or
