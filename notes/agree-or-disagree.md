@@ -7549,3 +7549,11 @@ Now look up information to the same standard you did for writing the code, and t
 Adam: researched (Lehman's laws, MIT 6.031, Software Engineering at Google, SWEBOK maintenance, Parnas 1972, Ousterhout,
 Feathers, Fowler); eight upkeep rules written in CLAUDE.md and project memory beside the cornerstone. Doc:
 https://claude.ai/artifact/XHhf6qru96HD9txnAxG2rD
+
+## Owner, Nov 20 22:04Z (Adam's thread)
+
+How much does this new process cost to our usage? In what ways can we reduce usage cost if it's extraordinary or even problematic? What is the benefit versus risk, or the cost and benefit analysis? Let's include technical terminology to this plan on the principle of dry and all those other things prior, and on the principle of maintenance or Lehman's laws. Let's include technical understanding to what other people are saying and how we actually do these things, because saying them abstractly as concepts and words in English that tell us an idea that sounds right in our heads that we can try and perform isn't enough. We need a technical parameter. We need structure and order and confinement from a technical output, not just a game plan.
+
+Adam: added "The technical spec: rules a machine enforces" (fitness functions with a ratchet: jscpd, ESLint
+no-restricted-syntax and max-lines, tsc --checkJs on breeds, single-writer scan, unused exports, golden hashes,
+pixel diffs, tools/check + Actions gate) and "Cost and benefit" to https://claude.ai/artifact/XHhf6qru96HD9txnAxG2rD.
