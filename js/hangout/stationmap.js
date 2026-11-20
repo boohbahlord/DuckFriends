@@ -92,6 +92,13 @@ export const WALK_HOLES = [
      transparent"); rubble spills out both sides, and from inside the outside shows through it (layout.js PEEKS) */
   { id: "gs-rest-w", axis: "y", at: STATION.x0, a: 1250, b: 1750 },
 ];
+/* the stretch of a walk-through hole in a north-south wall a duck really gets through, [from, to] along it: its feet
+   (layout.js FOOT, 16 world px) clear of the wall's broken end north of it and of the wall south of it (the gas station's
+   south wall, T thick, where the restroom's runs up to its corner). T: the walls' half thickness (the plan's) */
+const walkSpan = (o, T) => [
+  o.a + 16 / K,
+  o.b - 16 / K - (o.b === STATION.y1 ? T : 0),
+];
 /* the boarded holes: where zombies tear the boards down and climb in (ducks never get through one). out: the side the
    outside is on (n, s, e, w) */
 export const BOARDED = [
@@ -134,9 +141,183 @@ export const LADDER = { at: 550, x0: 1160, x1: 1240, side: "n" };
    as well"): climbed from outside, pushing east (side "w"), y0 … y1 along the canopy's edge at x `at` */
 export const PUMP_LADDER = { at: 1400, y0: 2185, y1: 2265, side: "w" };
 const PUMP_LEAN = 67; // (its feet this far out from the canopy's edge: layout.js LADDER_LEAN, 40 on the map, before K)
+/* the same "random" every time (the drawings' ragged edges: stationart.js, and the roof's holes below) */
+export const rnd = (seed) => () =>
+  (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
+/* the broken wall's courses (stationart.js gsWallX brokenW), top first: { j: its row in the pattern, a, b: its top and bottom on the
+   screen, x: its west end }. r: the wall's own random numbers (it goes on using them) */
+export const joint = (j, x) => {
+  const o = j % 2 ? 48 : 16;
+  return o + Math.max(0, Math.ceil((x - o) / 64)) * 64;
+}; // (the first joint of row j at or east of x: a course 12 high, the face's pattern 64 × 24, joints at 16 and 48)
+export function brokenRows(r, w, h, t) {
+  const C = 12;
+  /* the courses down the face, top first: each one's rows on the screen, its row in the pattern and its west end */
+  const rows = [];
+  for (let y = t; y < h - 2; ) {
+    const j = Math.floor((y + 1) / C),
+      b = Math.min(h, (j + 1) * C - 1);
+    rows.push({ j, a: y, b });
+    y = b;
+  }
+  /* going up from the floor, each course ends at one of its own joints, and the next one's joints sit half a block
+     over, so it ends half a block east of the one under it, or a block and a half, now and then two and a half, and
+     sometimes half a block west, standing out over the gap under it (never two in a row): the toothing of a broken
+     block wall, its stairs uneven, never a ruler's line */
+  const n = rows.length,
+    bottom = rows[n - 1];
+  for (let tries = 0; tries < 40; tries++) {
+    bottom.x = joint(bottom.j, 4 + r() * 30);
+    let out = false,
+      big = 0;
+    for (let i = n - 2; i >= 0; i--) {
+      const u = r();
+      let step = u < 0.18 && !out ? -32 : u < 0.62 ? 32 : u < 0.9 ? 96 : 160;
+      if (rows[i + 1].x + step < 0) step = 32;
+      out = step < 0;
+      if (step > 32) big++;
+      rows[i].x = Math.min(w - 40, rows[i + 1].x + step);
+    }
+    const climb = rows[0].x - bottom.x;
+    if (climb >= 150 && climb <= 280 && big >= 2) break; // (it climbs, unevenly, never to a ruler)
+  }
+  return rows;
+}
+/* where the broken wall stands full height again, from its west end: its top's west end (the roof over it is broken
+   back to there: roofHole) */
+export const brokenTop = (brokenW, w, wallH, t) =>
+  brokenRows(rnd(brokenW), w, t + wallH, t)[0].x;
+/* Downpour: an east-west wall's piece from outside whose west end is a building's south-west corner, where a hole smashed
+   through its west wall runs up to it (the restroom's): its corner broken too, under the roof's broken corner (the
+   owner's, Nov 19 22:41Z, "You can break a little bit of the corner"). p: a prop, in the world (layout.js PROPS) */
+export const brokenCorner = (p) =>
+  p.map &&
+  p.only === "out" &&
+  p.w > p.d &&
+  WALK_HOLES.some(
+    (o) =>
+      o.axis === "y" &&
+      Math.abs(o.at - (p.x + 12)) < 2 &&
+      Math.abs(o.b - (p.y + 12)) < 2,
+  );
+/* where that broken piece's foot starts (world x): its lowest course's west end, as stationart.js draws it. West of it
+   nothing stands, so a duck walks out through the corner there (the owner's, Nov 20 22:10Z: "anything that looks like
+   you can walk through it, you can walk through it") */
+export const brokenFoot = (p) => {
+  const rows = brokenRows(rnd(Math.round(p.x + p.y)), p.w, p.d + p.h, p.d);
+  return p.x + rows[rows.length - 1].x;
+};
+/* the roof's broken corner reaches east to where that wall stands whole again (world x, from left: the roof drawing's
+   west edge) */
+export function roofCap(props, left) {
+  const q = props.find((p) => p.kind === "wall" && brokenCorner(p));
+  return q ? q.x + brokenTop(Math.round(q.x + q.y), q.w, q.h, q.d) - left : 0;
+}
+/* each roof hole's edge in the world, as stationart.js draws it on the roof (shapes.js gsroof: the roof's drawing in
+   the plan's numbers, starting 30 out from the walls; the holes numbered by their place in ROOF_HOLES). layout.js calls
+   it once the props are in */
+export function roofHolesIn(props) {
+  const ox = STATION.x0 - 30 * K,
+    oy = STATION.y0 - 30 * K;
+  ROOF_HOLES.forEach((o, i) => {
+    o.pts = roofHoleShape(
+      (o.x0 - ox) / K,
+      (o.y0 - oy) / K,
+      (o.x1 - o.x0) / K,
+      (o.y1 - o.y0) / K,
+      holeSeed(i),
+      o.corner || "",
+      o.corner ? roofCap(props, ox) / K : 0,
+    ).map(([u, v]) => [u * K + ox, v * K + oy]);
+    const xs = o.pts.map((q) => q[0]),
+      ys = o.pts.map((q) => q[1]);
+    o.bb = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]; // (the corner's reaches past its box, to where the wall stands whole)
+  });
+}
+/* a hole broken through the gas station's roof: its ragged edge as points, in its box x, y, w × d on the roof's drawing
+   (seed: its own). stationart.js cuts the roof with it, and a duck up there falls through exactly that (DECKS below):
+   anything that looks like you can walk through it, you can walk through (the owner's, Nov 20 22:10Z) */
+export function roofHoleShape(x, y, w, d, seed, corner, cap = 0) {
+  const r = rnd(seed);
+  if (corner === "sw") {
+    /* from the roof's west edge at the top of the box east a little, then down its east side in uneven steps, each
+       one farther east (a ledge broken off a bit at a time, the way the wall under it broke: the owner's, Nov 20 16:57Z,
+       "have this circled corner have it's roof broken as a ledge with it's hieght showing in it's solid since it is
+       also 3d, so that way it is consistent"; each step's edge looks south, so the slab's thickness shows under it:
+       roofHole). Then on east in smaller steps down to the sign's band (its top 70 over the roof's front) where the
+       wall under it stands full height again (cap: stationart.js brokenTop), and down through the band there, torn, to
+       the roof's south edge: no roof and no band left over the wall's broken stairs, held up by nothing (the owner's,
+       Nov 20 18:51Z: "the ceiling or roof can't just hang on its own like that ... that red edge should be destroyed
+       and made to look like the other side"). Every edge broken */
+    const by = y + d - 70,
+      end = cap || x + w * 0.84;
+    const pts = [[x - 4, y + r() * 8]];
+    let ex = x + w * (0.1 + r() * 0.06);
+    pts.push([ex, y + 6 + r() * 6]);
+    const top = y + d * 0.1,
+      low = by - 70,
+      n = 4;
+    for (let i = 1; i <= n; i++) {
+      const yi = top + ((low - top) * (i - 0.3 * r())) / n,
+        nx = ex + (w * 0.8 * (0.6 + r() * 0.8)) / n;
+      ex += 3 + r() * 5;
+      pts.push([ex, yi - 2 - r() * 4]); // (down its east side, a little east as it goes)
+      pts.push([nx, yi + (r() - 0.5) * 5]); // (and a step east)
+      ex = Math.min(nx, end - 60);
+    }
+    /* the bite on east to the band's top over where the wall stands whole: shorter steps, a little lower each */
+    const m = 4,
+      y0 = low;
+    for (let i = 1; i <= m; i++) {
+      const yi = y0 + ((by - y0) * i) / m - (i < m ? 6 + r() * 14 : 0),
+        nx =
+          i === m ? end : ex + ((end - ex) / (m - i + 1)) * (0.6 + r() * 0.6),
+        mx = ex + (nx - ex) * (0.3 + r() * 0.4);
+      pts.push([ex + 2 + r() * 4, yi - 4 - r() * 8]);
+      pts.push([mx, yi - 6 - r() * 10]); // (a tooth on each step: torn, never a ruler's line)
+      pts.push([mx + 4 + r() * 6, yi + (r() - 0.5) * 6]);
+      pts.push([nx, yi + (r() - 0.5) * 4]);
+      ex = nx;
+    }
+    /* down through the band, torn: never a square end */
+    for (const [dx, dv] of [
+      [7, 12],
+      [-5, 24],
+      [9, 36],
+      [-2, 48],
+      [6, 58],
+      [-3, 72],
+    ])
+      pts.push([end + dx + (r() - 0.5) * 4, by + dv]);
+    pts.push([x - 4, y + d + 4]);
+    return pts;
+  }
+  const cx = x + w / 2,
+    cy = y + d / 2;
+  return Array.from({ length: 16 }, (_, i) => {
+    const a = (i / 16) * Math.PI * 2,
+      f = 0.86 * (1 - 0.22 * r());
+    return [cx + Math.cos(a) * (w / 2) * f, cy + Math.sin(a) * (d / 2) * f];
+  });
+}
+export const holeSeed = (i) => 7 + i * 13; // (each roof hole's own ragged edge, by its place in ROOF_HOLES)
 export const ROOF_HOLES = [
   { id: "hole-se", x0: 2900, y0: 1165, x1: 3460, y1: 1720 },
   { id: "hole-rest", x0: 1250, y0: 1350, x1: 1450, y1: 1550 },
+  /* the roof's south-west corner broken off over the restroom's smashed west wall, as far along it as the way through
+     it (the owner's, Nov 19 22:41Z: "break a little bit of the corner of the roof as well, and make that like entire
+     breaking of that part of that roof on that side of that wall like transparent ... Where it's just a big hole in the
+     side ... that you can see into the bathroom"; 22:42Z: "the size of the space that you can actually enter and leave
+     through"). corner: drawn as a bite out of the corner (stationart.js roofHole), open to the roof's west and south
+     edges */
+  {
+    id: "hole-rest-w",
+    x0: STATION.x0 - 30,
+    y0: 1277,
+    x1: 1240,
+    y1: STATION.y1 + 30,
+    corner: "sw",
+  },
 ];
 /* the gas station's two doorways onto the aisles, in the storeroom's and the restroom's east wall (x = at), from y = a
    to b: open gaps, drawn open (layout.js puts them in OPENINGS, so the wall south of each starts at its foot instead of
@@ -303,6 +484,12 @@ function planBuild(b) {
         put("stub", x0 - T, B.y1 - T, x1 - x0 + 2 * T, 2 * T, 14, {
           only: "in",
           z: 0,
+          /* its west end smashed where a hole in the west wall runs up to the corner (the restroom's) */
+          broken:
+            cur === B.x0 &&
+            WALK_HOLES.some(
+              (o) => o.axis === "y" && o.at === B.x0 && o.b === B.y1,
+            ),
         });
       cur = c;
     }
@@ -374,18 +561,14 @@ function planBuild(b) {
         key: o.b + T,
       });
       /* a walk-through hole in a north-south wall: the wall's rubble on the floor both sides, so it's found from
-         inside and from outside (the roof hides the wall itself from outside) */
+         inside and from outside, exactly as long as the way through it (walkSpan: the owner's, Nov 19 22:42Z). From
+         outside the roof's corner is broken off over it (ROOF_HOLES), so it's seen through that (no breach drawn over
+         the roof's edge any more: the owner's, Nov 19 22:41Z, "remove that") */
       if (!o.out) {
-        put("rubble", o.at - 180, o.a, 360, o.b - o.a, 0, {
+        const [ya, yb] = walkSpan(o, T);
+        put("rubble", o.at - 180, ya, 360, yb - ya, 0, {
           z: 0,
           hole: o,
-        });
-        put("breach", o.at - 70, o.a + 40, 140, o.b - o.a - 80, 0, {
-          z: 0,
-          hole: o,
-          only: "out",
-          fade: true,
-          key: S.y1 + 3 * T, // (over the roof's edge)
         });
       }
     }
@@ -558,6 +741,7 @@ function planBuild(b) {
               o.y0 - (B.y0 - 30),
               o.x1 - o.x0,
               o.y1 - o.y0,
+              ...(o.corner ? [o.corner] : []),
             ])
           : null, // (the same, the holes broken through it)
       key: B.y1 + 2 * T, // (in front of the south wall's top: the roof's edge (the sign's red band) covers it, no grey slab over the red: the owner's, Nov 17 05:46Z)

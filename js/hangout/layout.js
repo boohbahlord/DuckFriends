@@ -158,7 +158,15 @@ const onDeck = (d, x, y) =>
   y < d.y1 &&
   (d.inside
     ? d.inside(x, y)
-    : !d.holes.some((o) => x >= o.x0 && x < o.x1 && y >= o.y0 && y < o.y1));
+    : !d.holes.some((o) =>
+        o.pts
+          ? x >= o.bb[0] &&
+            x < o.bb[2] &&
+            y >= o.bb[1] &&
+            y < o.bb[3] &&
+            GS.inPoly(x, y, o.pts)
+          : x >= o.x0 && x < o.x1 && y >= o.y0 && y < o.y1,
+      )); // (a hole is its ragged edge as drawn, not its box: stationmap.js roofHoleShape)
 export const onDeckAt = onDeck;
 /* more floors than the map's own: Sandbox's ground zones (Phase 4, sbfloors.js), each a deck with inside(x, y) for its
    shape and its working squares; none outside Sandbox */
@@ -1130,6 +1138,12 @@ for (
 
 /* Dead Ducks Arcade's second map: the gas station, the road and the chapel (stationmap.js) */
 GS.build({ add, wallX, wallY, T });
+/* what a duck sees is what it walks (the owner's, Nov 20 22:10Z: "anything that looks like you can walk through it, you
+   can walk through it"): the restroom's smashed corner stops a duck only where its wall's foot is drawn, and up on the
+   roof a duck falls through each hole's ragged edge as drawn (stationmap.js brokenFoot, roofHolesIn) */
+for (const p of ALL)
+  if (p.block && GS.brokenCorner(p)) p.block[0] = GS.brokenFoot(p);
+GS.roofHolesIn(ALL); // (the map's props wait in ALL till useMode turns to it)
 
 /* ---------- walking: solids (in a grid of 200 px cells, so a step looks at a few) ---------- */
 export const SOLIDS = [];
