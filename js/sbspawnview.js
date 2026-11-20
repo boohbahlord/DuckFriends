@@ -90,6 +90,7 @@ import {
 } from "./sbspawn.js";
 import { orbWrap, lootRing, lootPage, lootWire } from "./sblootview.js";
 import { orbsOf } from "./sbloot.js";
+import { valueOf } from "./numerat.js";
 import { drawNpcs, dropNpcs } from "./npcview.js";
 import { groupOpts, grShown, jgRow } from "./sbgroupview.js";
 import { olAdd } from "./outlines.js";
@@ -235,6 +236,7 @@ function slabGeo(s, p, at) {
     height: Math.max(1, c.top - a.top),
     sk: sl ? (Math.atan2(b.top - a.top, width) * 180) / Math.PI : 0,
     zEnd: (x) => z(x, y1), // (its height along its bottom edge)
+    ground: at({ x: x0, y: y1, z: 0 }).top, // (its front edge down on the ground: a block's face reaches it)
     me: (h) => {
       const R = activeRoom(),
         q = R && s.pos && s.pos[R.me];
@@ -249,7 +251,63 @@ const skewCSS = (g) => (g.sk ? `skewY(${g.sk.toFixed(2)}deg)` : "");
    (what stands on it is in front of it: layout.js sortY), and goes see-through while my duck is behind or under it.
    { zi: its z-index ("" when it lies on the ground), thru: my duck is hidden by it } */
 const THRU = 0.3; // (how much of it shows while my duck is behind it)
+/* row 161, a house from the menus (the owner's: "the walls facing the camera, let's say, because of their given height
+   and how they're made, become transparent when a player is behind them because they're set to elevation 2"): a zone up
+   high that isn't Ground is a block, its front side down to the ground, so walls up high read as walls and a house's
+   front wall and roof hide who's inside it. A Ground zone stays a floor up there (its thin edge only) */
+const upBlock = (p) => p.k === "zone" && (p.z || 0) > 0.5 && !sbIsFloor(p);
+/* the plain board is flat: there an elevation over 1 puts the zone's look over every duck (a roof, row 161), and it goes
+   see-through while my duck is under it */
+const BOARD_UP = "99980"; // (under SFX_TOP.board: an effect shown above everything stays above it)
+const boardUp = (p) =>
+  p.k === "zone" &&
+  Math.round(valueOf({ ok: boxText(p, "fl") }, SB_ZONE.fl)) > 1;
+/* my duck is inside a house: it stands under a zone up high (a roof) that overlaps zone p, so p goes see-through as a
+   whole, as Downpour's buildings do from inside (their walls and roof together), not only the part in front of my duck */
+function inHouse(s, p, me) {
+  const board = sbOnBoard(s),
+    z = +me.z || 0,
+    b = sbZoneBox(s, p, W, H);
+  for (const q of Object.values(ptsOf(s))) {
+    if (q.grp || q.k !== "zone" || sbFills(q)) continue;
+    if (board ? !boardUp(q) : (q.z || 0) <= z + 0.5) continue;
+    const c = sbZoneBox(s, q, W, H);
+    if (me.x < c[0] || me.x > c[2] || me.y < c[1] || me.y > c[3]) continue;
+    if (c[0] <= b[2] && b[0] <= c[2] && c[1] <= b[3] && b[1] <= c[3])
+      return true;
+  }
+  return false;
+}
+/* the plain board (row 161): duck id at pos stands under a roof (a zone at elevation 2 or more) that my duck isn't
+   under, so the roof hides it whole (game.js drawDucks); on the board a duck's head would show past the roof's edge */
+export function sbRoofed(s, id, pos) {
+  const R = activeRoom();
+  if (!sbOnBoard(s) || !R || id === R.me || !pos) return false;
+  const me = s.pos && s.pos[R.me];
+  for (const q of Object.values(ptsOf(s))) {
+    if (q.grp || q.k !== "zone" || sbFills(q) || !boardUp(q)) continue;
+    const c = sbZoneBox(s, q, W, H),
+      at = (o) => o.x >= c[0] && o.x <= c[2] && o.y >= c[1] && o.y <= c[3];
+    if (at(pos) && !(me && at(me))) return true;
+  }
+  return false;
+}
 function upHigh(s, p, g) {
+  if (sbOnBoard(s)) {
+    if (!boardUp(p)) return { zi: "", thru: false };
+    const q = g.me(0),
+      R = activeRoom(),
+      me = R && s.pos && s.pos[R.me];
+    return {
+      zi: BOARD_UP,
+      thru:
+        (q.left >= g.left &&
+          q.left <= g.left + g.width &&
+          q.top >= g.top &&
+          q.top <= g.top + g.height) ||
+        (!!me && inHouse(s, p, me)),
+    };
+  }
   if (!((p.z || 0) > 0.5 || sbIsFloor(p))) return { zi: "", thru: false };
   const front = sbZoneBox(s, p, W, H)[3] * H,
     zi = String(Math.round(front) + 10),
@@ -260,13 +318,19 @@ function upHigh(s, p, g) {
   if (sortY(me.x * W, me.y * H, z) >= front) return { zi, thru: false };
   const lean = Math.tan((g.sk * Math.PI) / 180) * g.width,
     y0 = g.top + Math.min(0, lean),
-    y1 = g.top + g.height + Math.max(0, lean),
+    y1 = Math.max(
+      g.top + g.height + Math.max(0, lean),
+      upBlock(p) ? g.ground : -Infinity,
+    ), // (a block: behind its front side too)
     in_ = (q) =>
       q.left >= g.left &&
       q.left <= g.left + g.width &&
       q.top >= y0 &&
       q.top <= y1;
-  return { zi, thru: in_(g.me(z)) || in_(g.me(z + 40)) };
+  return {
+    zi,
+    thru: in_(g.me(z)) || in_(g.me(z + 40)) || inHouse(s, p, me),
+  };
 }
 /* a zone: its rectangle, see-through in its color, as the map draws it (its corners through at: the board and the
    worlds both draw it square to the screen), its name over it and a dot where its builder stood (E there opens it). A
@@ -450,6 +514,8 @@ function drawMarks(layer, pts, at, size, s) {
       orbOut = vis.length > 0;
     if (p.k === "zone") lookOn(layer, have, want, id, pts, at, size, s); // (its look: everyone sees it, hidden or not)
     if (sbIsFloor(p)) faceOn(layer, have, want, id, pts, at, size, s, seeZones);
+    else if (upBlock(p) && !sbOnBoard(s))
+      faceOn(layer, have, want, id, pts, at, size, s, false); // (a block up high: its front side, when it has a look)
     if (hid && !orbOut) continue; // (Hide: a loot point hides its ring and name, never its orb, the owner's "that appearance is hidden")
     if (zoneLike(p)) {
       if (!seeZones) continue;
@@ -629,7 +695,7 @@ function faceOn(layer, have, want, id, pts, at, size, s, seeZones) {
     z0 = g.zEnd(x0),
     a = at({ x: x0, y: y1, z: z0 }),
     b = at({ x: x1, y: y1, z: g.zEnd(x1) }),
-    d = at({ x: x0, y: y1, z: Math.max(0, z0 - FACE) }),
+    d = at({ x: x0, y: y1, z: upBlock(p) ? 0 : Math.max(0, z0 - FACE) }),
     css = bg || SB_COLORS[p.col] || "#fff",
     u = upHigh(s, p, g),
     st = `${css} ${a.left.toFixed(1)},${a.top.toFixed(1)} ${b.left.toFixed(1)},${b.top.toFixed(1)} ${d.top.toFixed(1)} ${look ? look.op : ""} ${u.zi} ${u.thru}`;
@@ -1163,7 +1229,7 @@ export function sbSettings(getR, id, tab = "") {
     })()}
     ${
       sbOnBoard(R.state)
-        ? ""
+        ? row("fl", SB_ZONE.fl, typed("fl"), why("fl")) // (the flat board: only how high it is, over the ducks from 2: a roof, row 161)
         : `${row("fl", SB_ZONE.fl, typed("fl"), why("fl"))}${flagRow("gnd", SB_ZONE.gnd, typed("gnd"), why("gnd"))}${row("land", SB_ZONE.land, typed("land"), why("land"))}${row("slto", SB_ZONE.slto, typed("slto"), why("slto"))}<div class="sb-row" data-row="sldir"><span>${esc(SB_ZONE.sldir.name)}</span><select class="sb-box" data-f="sldir" aria-label="${esc(SB_ZONE.sldir.name)}">${Object.entries(
             SB_SLOPE_DIRS,
           )

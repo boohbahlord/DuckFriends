@@ -265,7 +265,7 @@ import { mountSandboxKeys, whyNot } from "./sandbox.js";
 import { sbCheat } from "./sbmenu.js";
 import { sbHotOn, sbLook, sbHotSig } from "./sbhotview.js";
 import { sbSlots, spawnOf } from "./sbhot.js";
-import { sbBoardMarks, sbSettings } from "./sbspawnview.js";
+import { sbBoardMarks, sbSettings, sbRoofed } from "./sbspawnview.js";
 import { sbHear } from "./sbsfx.js";
 import { duckSVG, duckRoom, scaleOf } from "./duck.js";
 import {
@@ -1890,6 +1890,14 @@ function drawDucks(now = clockNow()) {
       d.style.transform = tr;
       if (!hang) d.style.zIndex = deadPose ? 1 : Math.round(at.top); // (lying dead: under every duck standing, the owner's, Nov 19 10:22Z)
     }
+    if (!hang && isSb(s)) {
+      // (Sandbox's plain board: under a roof I'm not under, a duck is hidden by it, head and all: row 161, a house)
+      const rf = sbRoofed(s, id, pos);
+      if (d._rf !== rf) {
+        d._rf = rf;
+        d.classList.toggle("hang-hid", rf);
+      }
+    }
     if (hang) {
       // Hangout: in front of what it stands in front of; unseen through the cabin's walls; lying dead, under every duck
       const zi = deadPose ? world.bodyKey(id, pos) : world.key(id, pos),
@@ -3279,6 +3287,14 @@ function placeZombies(board, s, now) {
       n._pic = "";
       n._shot = o.sh ? o.sh[0] : 0; // (only shots from now on are drawn)
       layer.append(n);
+    }
+    if (sbOnBoard(s)) {
+      // (the plain board: under a roof I'm not under, an NPC is hidden whole, as a duck is: row 161, a house)
+      const rf = sbRoofed(s, "npc:" + o.i, o);
+      if (n._rf !== rf) {
+        n._rf = rf;
+        n.classList.toggle("hang-hid", rf);
+      }
     }
     const c = place(o, 0, 1),
       box = npcBox(o),
