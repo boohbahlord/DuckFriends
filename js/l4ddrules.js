@@ -1536,7 +1536,16 @@ function freshKit(s) {
     sl = [...(survOn() ? SV.KIT : START)]; // (Survival: the pistol only)
   for (const w of sl) if (fullAmmo(w)) am[w] = fullAmmo(w);
   if (!isSb(s)) sl.push(""); // (the second item slot: not in Sandbox)
-  return { sl, am, rl: 0, rw: "", g: ARMS.grenade.start, u: {} };
+  const du = survOn() ? { knife: tenths(ARMS.knife.dur * SV.KNIFE) } : null; // (Survival: a worn knife, 25% left)
+  return {
+    sl,
+    am,
+    rl: 0,
+    rw: "",
+    g: ARMS.grenade.start,
+    u: {},
+    ...(du ? { du } : {}),
+  };
 }
 /* the damage a melee weapon in kit m can still deal (its full dur until it has been used): kit.du { weapon: left } */
 export const durLeft = (m, w) =>

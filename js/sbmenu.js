@@ -39,7 +39,7 @@ export function colSwatches(on, attr, nocol) {
 }
 /* "maybe there's a note by that when you select it that pops up temporarily" */
 export const NOCOL_NOTE =
-  "No color: its ring slowly turns through the rainbow, and it keeps settings of its own (no other spawn shares them).";
+  "No color: it shows white, and it keeps settings of its own (no other zone shares them).";
 /* the pattern of point p */
 export function patternOf(p) {
   const f = {};
@@ -62,8 +62,14 @@ export function pointAt(s, at) {
     bd = Infinity;
   for (const [id, p] of Object.entries((s.sb && s.sb.pts) || {})) {
     if (p.grp) continue; // (a spawn's + page: its spawn's)
-    if (p.k === "zone" || (sbSpread(p) && !sbFills(p))) {
-      /* a zone, or a block bigger than its spot: inside its shape (a ring right on it still wins) */
+    if (
+      p.k === "zone" ||
+      p.k === "spawn" ||
+      p.k === "respawn" ||
+      (sbSpread(p) && !sbFills(p))
+    ) {
+      /* a zone, spawn or respawn (each just a zone now), or a block bigger than its spot: inside its shape (a ring
+         right on it still wins) */
       if (sbInBlock(s, p, at.x, at.y, W, H)) {
         const d = 5; // (a ring on top of it wins)
         if (d < bd) {

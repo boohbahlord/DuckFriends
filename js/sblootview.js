@@ -115,7 +115,7 @@ export function lootPage(s, id, p, h) {
     ${h.colorRow}
     ${h.flagRow("hide", SB_FLAGS.hide, h.typed("hide"), h.why("hide"))}
     ${cats.map(drop).join("")}
-    <p class="sb-none" data-row="loot">${picked.filter((w) => lootOk(s, w)).length > 1 ? "One of these at random each time." : picked.some((w) => lootOk(s, w)) ? "" : "Pick at least one."}</p>
+    <p class="sb-none" data-row="loot">${picked.filter((w) => lootOk(s, w)).length > 1 ? "One of these at random each time." : picked.some((w) => lootOk(s, w)) ? "" : "Nothing comes until you pick something."}</p>
     ${(drops ? ["again", "hurt"] : ["again", "keep", "hurt"]).map((f) => h.row(f, SB_LOOT[f], h.typed(f), h.why(f))).join("")}
     ${(drops ? ["back", "inf"] : ["back"]).map((f) => h.flagRow(f, SB_LOOT[f], h.typed(f), h.why(f))).join("")}
     <div class="sb-row"><span>Looks like</span><select class="sb-sel" data-lsel><option value="">Itself</option>${cats
@@ -146,8 +146,8 @@ export function lootWire(w, id, send, getR) {
             ? "One of these at random each time."
             : all.length
               ? ""
-              : "Pick at least one.";
-      if (all.length) send({ k: "set", f: "loot", v: all.join(", ") });
+              : "Nothing comes until you pick something.";
+      send({ k: "set", f: "loot", v: all.join(", ") });
       return;
     }
     if (t.matches("[data-lsel]"))
