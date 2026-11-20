@@ -14,7 +14,8 @@ export const UPDATES = [
     date: "Nov 20, 2026",
     title: "Hearts, notes and pictures on zones",
     news: [
-      "For Sandbox: a zone's squares can show a special's effect (hearts, music notes, poison cloud, electricity, flames, Loser's X, disco ball) or a picture you upload, above everything or below it.",
+      "For Sandbox: a zone's squares can show a special (hearts, music notes, poison cloud, electricity, flames, Loser's X, disco ball), or a picture you upload on each working square, above everything or below it.",
+      'For Sandbox: a zone can hurt whoever lands on it from a fall ("Landing on it from a fall hurts": an amount of HP, or max).',
       "For Sandbox: \"Starts at step\" in a zone's potential order, so two Alternating tabs can take turns, and a new Zone tab stands on its block's floor.",
     ],
   },
