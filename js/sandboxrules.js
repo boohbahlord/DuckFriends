@@ -111,7 +111,7 @@ export const SB_RULES = {
   down: { name: "Down phase (others can revive you)", kind: "bool", def: "f" },
   crit: { name: "Crits (headshots)", kind: "bool", def: "t" },
   spec: { name: "Out of lives: watch the others", kind: "bool", def: "t" },
-  /* Solomon's real-build test of a zombie game (Nov 20): "Nothing ends the game when everyone is out of lives ... We need
+  /* a real-build test of a zombie game (Nov 20): "Nothing ends the game when everyone is out of lives ... We need
      a 'When everyone is out' row (game over / back to lobby / restart)". Keep playing is how it always was */
   out: {
     name: "When everyone is out of lives",
@@ -508,6 +508,20 @@ export const SB_ZONE = {
     def: "1",
   },
   gnd: { name: "Ground (stand and walk on it)", kind: "bool", def: "f" },
+  /* the owner's floor-is-lava idea: "you fall down, and the bottom elevation, the ground level, level 1, is set to do maybe
+     max damage. So you hit that ground, boom, you're dead": what landing on it from a fall does (blank: nothing; "max":
+     all of it). A fall: more than about one floor (SB_LAND_MIN) */
+  land: {
+    name: "Landing on it from a fall hurts (HP, or max)",
+    check: (t) => {
+      const v = String(t).trim().toLowerCase();
+      if (!v || v === "max") return "";
+      return /^\d+(\.\d)?$/.test(v) && +v > 0 && +v <= 1000
+        ? ""
+        : "Blank, max, or 0.1 to 1000";
+    },
+    def: "",
+  },
   /* plan Phase 4, climbing (the owner's: "another elevation type called climb ... touching the outside boundary of that
      will make it to where you can climb onto another elevation ... the same mechanism as the ladder", and "for elevation
      settings or wall settings or for ladders or for climbings ... a drop-down menu for selecting which entities or groups
@@ -666,6 +680,14 @@ export const sbSfx = (p) => {
   return SB_SFX[v] ? v : "none";
 };
 /* the owner's: "Effects can be chosen to either happen below all entities or above" (never over the map's own roofs) */
+/* a fall, world px down from its top (about a floor; game.js's bonk) */
+export const SB_LAND_MIN = 90;
+/* is there a zone here that hurts whoever lands on it from a fall (game.js: then my falls are sent) */
+export const sbLands = (s) =>
+  isSb(s) &&
+  Object.values((s.sb && s.sb.pts) || {}).some(
+    (p) => p.k === "zone" && p.f && p.f.land && p.f.land.ok,
+  );
 export const SB_SFX_Z = {
   above: "Above everything",
   below: "Below everything",
@@ -846,7 +868,7 @@ export const SB_ORDER = {
         : "0.1 to 600",
     def: "1",
   },
-  /* where its steps start (Solomon's real-build test of the owner's floor-is-lava idea, "blinking floor tiles ... with
+  /* where its steps start (a real-build test of my floor-is-lava idea, "blinking floor tiles ... with
      two alternating tabs": two Alternating tabs gave the same checkerboard). 1 on one of them: the other half */
   off: {
     name: "Starts at step (0: the first)",

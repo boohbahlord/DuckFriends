@@ -24,6 +24,7 @@ import {
   SB_ORDER,
   SB_ZONE,
   SB_FX,
+  SB_LAND_MIN,
 } from "./sandboxrules.js";
 import { valueOf } from "./numerat.js";
 import { boxText, spawnsHere } from "./sbspawn.js";
@@ -145,6 +146,30 @@ export function sbZoneTick(s, now, H0) {
   return ch || stepped;
 }
 
+/* { t: "sb", k: "land", h, x, y, z }: my duck landed from a fall h world px high (game.js: its own screen works the fall
+   out), at (x, y, z), near where the room has it. Each zone it landed in on a working square hurts as its "Landing on it
+   from a fall hurts" says (the owner's floor-is-lava idea: "you hit that ground, boom, you're dead"); the most of them */
+export function sbLandAct(s, a, now, H0) {
+  if (!spawnsHere(s) || !s.sb || sbOnBoard(s)) return false;
+  const id = a.id,
+    me = s.pos[id];
+  if (!me || !H0.ducks(s).includes(id) || !(+a.h >= SB_LAND_MIN)) return false;
+  const near = (v, w, d) => Number.isFinite(+v) && Math.abs(+v - w) <= d,
+    x = near(a.x, me.x, 0.05) ? +a.x : me.x,
+    y = near(a.y, me.y, 0.05) ? +a.y : me.y,
+    z = near(a.z, +me.z || 0, 60) ? +a.z : +me.z || 0;
+  let most = 0;
+  for (const [pid, p] of Object.entries(s.sb.pts || {})) {
+    if (p.k !== "zone") continue;
+    const t = boxText(p, "land").trim().toLowerCase();
+    if (!t || !inside(s, pid, p, null, x, y, z)) continue;
+    most = Math.max(most, t === "max" ? 1e4 : +t || 0);
+  }
+  if (!most) return false;
+  if (baseMode(s.options) === "l4dd") l4Hurt(s, id, most, now, "zone");
+  else H0.claw(s, id, most, now, "zone");
+  return true;
+}
 /* zone p does its thing to everyone it hits standing in it */
 function hitAll(s, pts, id, p, now, H0) {
   const fx = fxOf(p),

@@ -534,13 +534,14 @@ function lookOn(layer, have, want, id, pts, at, size, s) {
     transform: skewCSS(g),
   });
 }
-/* a zone's effect from the specials, on a few of its working squares, or its picture over it (the owner's: "It could be
-   effect from the specials, only an effect", "an image can be uploaded as well ... takes up the size"); below every
+/* a zone's effect from the specials, on a few of its working squares, or its picture on each of them (the owner's: "It
+   could be effect from the specials, only an effect", "an image can be uploaded as well ... takes up the size"); below every
    entity or above them, never over the map's own roofs (the owner's: "Effects can be chosen to either happen below all
    entities or above"). The ground fire, smoke, steam and sparks are pixels: game.js sbZoneLooks */
 /* (the pixel ones are drawn over the world on the effects' canvas, so only these can go below) */
 const domSfx = (k) => k === "pic" || k.startsWith("sp_");
-const SFX_MOST = 6, // (squares that show a special at once)
+const PIC_MOST = 200, // (squares that show its picture at once)
+  SFX_MOST = 6, // (squares that show a special at once)
   SFX_TOP = { hang: "4999", board: "99990" }; // (under world.js CROWN_Z: the roofs stay over it)
 function sfxOn(layer, have, want, id, p, at, size, s) {
   const k = sbSfx(p);
@@ -553,26 +554,33 @@ function sfxOn(layer, have, want, id, p, at, size, s) {
       ? u.zi || "4" // (over its zone's look, 3, under every duck and NPC)
       : SFX_TOP[hang ? "hang" : "board"];
   if (k === "pic") {
+    /* the owner's: "Every part of the algorithm's tile has an image uploaded of, let's say, a square ... And the square
+       goes in different parts of the screen based on the algorithm": the picture on each square that acts now */
     const bg = lookCSS({ k: "pic", v: boxText(p, "sfxpic") }, s && s.sbpic, 1);
     if (!bg) return;
-    const key = id + "~x",
-      n = markEl(layer, have, key, "sb-pt sb-sfxpic");
-    want.add(key);
-    const shaped = (sbShape(p) !== "sq" || sbRot(p) !== 0) && !sbFills(p),
-      mask = shaped ? `url("${shapePic(s, p, "#000", true)}")` : "",
-      st = `${bg} ${mask} ${g.left.toFixed(1)},${g.top.toFixed(1)},${g.width.toFixed(1)},${g.height.toFixed(1)},${g.sk.toFixed(2)} ${zi}`;
-    if (n._st === st) return;
-    n._st = st;
-    n.style.background = bg;
-    n.style.setProperty("--mask", mask || "none");
-    Object.assign(n.style, {
-      zIndex: zi,
-      left: g.left.toFixed(1) + "px",
-      top: g.top.toFixed(1) + "px",
-      width: g.width.toFixed(1) + "px",
-      height: g.height.toFixed(1) + "px",
-      transformOrigin: "0 0",
-      transform: skewCSS(g),
+    const mids = sbCellMids(s, id, p, W, H, PIC_MOST),
+      gr = sbGrid(s, p, W, H),
+      [rx, ry] = sbUnit(s, W, H),
+      cw = (gr.w / gr.nx) * rx,
+      ch = (gr.h / gr.ny) * ry,
+      z = p.z || 0;
+    mids.forEach((m, i) => {
+      const key = `${id}~x${i}`,
+        n = markEl(layer, have, key, "sb-pt sb-sfxpic");
+      want.add(key);
+      const a = at({ x: m.x - cw / 2, y: m.y - ch / 2, z }),
+        b = at({ x: m.x + cw / 2, y: m.y + ch / 2, z }),
+        st = `${bg} ${a.left.toFixed(1)},${a.top.toFixed(1)},${b.left.toFixed(1)},${b.top.toFixed(1)} ${zi}`;
+      if (n._st === st) return;
+      n._st = st;
+      n.style.background = bg;
+      Object.assign(n.style, {
+        zIndex: zi,
+        left: a.left.toFixed(1) + "px",
+        top: a.top.toFixed(1) + "px",
+        width: Math.max(1, b.left - a.left).toFixed(1) + "px",
+        height: Math.max(1, b.top - a.top).toFixed(1) + "px",
+      });
     });
     return;
   }
@@ -1156,7 +1164,7 @@ export function sbSettings(getR, id, tab = "") {
     ${
       sbOnBoard(R.state)
         ? ""
-        : `${row("fl", SB_ZONE.fl, typed("fl"), why("fl"))}${flagRow("gnd", SB_ZONE.gnd, typed("gnd"), why("gnd"))}${row("slto", SB_ZONE.slto, typed("slto"), why("slto"))}<div class="sb-row" data-row="sldir"><span>${esc(SB_ZONE.sldir.name)}</span><select class="sb-box" data-f="sldir" aria-label="${esc(SB_ZONE.sldir.name)}">${Object.entries(
+        : `${row("fl", SB_ZONE.fl, typed("fl"), why("fl"))}${flagRow("gnd", SB_ZONE.gnd, typed("gnd"), why("gnd"))}${row("land", SB_ZONE.land, typed("land"), why("land"))}${row("slto", SB_ZONE.slto, typed("slto"), why("slto"))}<div class="sb-row" data-row="sldir"><span>${esc(SB_ZONE.sldir.name)}</span><select class="sb-box" data-f="sldir" aria-label="${esc(SB_ZONE.sldir.name)}">${Object.entries(
             SB_SLOPE_DIRS,
           )
             .map(

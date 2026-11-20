@@ -252,6 +252,8 @@ import {
   noGoreOf,
   sbMay,
   sbSfx,
+  sbLands,
+  SB_LAND_MIN,
   sbCellMids,
   sbWalls,
   sbWallGo,
@@ -5358,6 +5360,15 @@ function hangStep(dt, now) {
   if (isL4dd(R.state)) me.aim = myAim(); // (Quacky Zombies: my flashlight shines where I aim)
   if (ev.whee) sfx.fall(); // off the deck: a slide whistle
   if (ev.thud > 90) sfx.bonk(); // and the landing
+  if (ev.thud >= SB_LAND_MIN && sbLands(R.state))
+    R.send({
+      t: "sb",
+      k: "land",
+      h: Math.round(ev.thud),
+      x: +me.x.toFixed(4),
+      y: +me.y.toFixed(4),
+      z: Math.round(me.z || 0),
+    }); // (Sandbox: a zone that hurts whoever lands on it from a fall, sbzone.js)
   sendMove(!!(ev.land || ev.thud || ev.force));
 }
 /* reset duck: somewhere random on the board, or inside your column once you have voted (never inside another duck) */

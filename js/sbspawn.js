@@ -970,7 +970,7 @@ export function sbAct(s, a, now) {
                   name: { t: v, ok: v },
                   ...(a.kind === "zone" && base.f && base.f.fl
                     ? { fl: { ...base.f.fl } }
-                    : {}), // (a Zone tab stands on its block's floor, Solomon's real-build test)
+                    : {}), // (a Zone tab stands on its block's floor, as a real-build test needed)
                 }
               : {},
           },
