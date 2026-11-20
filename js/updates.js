@@ -15,6 +15,7 @@ export const UPDATES = [
     title: "Zombies keep their skin",
     news: [
       "For Survival: zombies no longer change their skin as they fall. A walker you leave alive changes its look the moment it joins the next horde.",
+      "For Sandbox: NPC brains can now say how to move with \\move\\{...}: arrows for directions, a target, a speed, and bends (bow, weave, dogleg) one after another. The Seriat bible explains it.",
     ],
   },
   {
