@@ -170,7 +170,7 @@ Every Seriat value works anywhere a number goes below: `wait 1:3`, `every [2,4]s
    (0 to 100, 0 stops it). Stamina is only the players' (an NPC has none), so
    "regen stamina" is a group setting, not a stat (sbgroups.js). V168: written `regen hp` as the owner named it
    (`((regen hp 2))`, `\if regen hp > 0\`, `z regen hp`); `regen` alone still reads (files written before).
-2. **Actions**: `go nearest duck`, `attack`, `flee`, `wait 1.5`, `say "hi"` (quotes as in print).
+2. **Actions**: `go nearest duck`, `attack`, `flee`, `wait 1.5`, `say "hi"` (quotes as in print). Moves: `\move\{ ... }` (section 18).
 3. **Who**: `me`, `nearest duck`, `all zombies`, `team`: what an action or a stat applies to.
 4. **Chance in percent** (owner 13:32Z: "uses percentage with percent sign"; replaces the `~` weights):
    `[attack 75%, flee 25%]` attacks 3 times in 4. Percents take any Seriat value: `[attack 60:80%, flee 20%]`.
@@ -248,3 +248,35 @@ saved field `fx`). Seriat shows boxes, each a value (any Seriat value, tenths, -
 loses it); the others become the value and stay so (NPCs; a duck's Speed is its walk). "+" adds a box; the import
 button fills a box with the first value line of one of the player's files. Saved as one box `sa`: a line per box,
 value, tab, the picked names.
+
+## 18. Moves: `\move\{ ... }` (owner, Nov 20 07:41Z idea, 18:46Z rules; built by Solomon)
+Owner (07:41Z): "a movement code for the brain ... One notation begins the movement, the other notation closes the
+movement ... The numbers can indicate things like speed. The pointers can indicate directions ... when there is
+destination ... that movement has a pattern it obeys ... Either left or right on the way to said end goal."
+Owner (18:46Z): "there is no up or down arrows on normal keyboards ... Up = /\ Down = \/ ... a setting or variable that
+changes if the direction bends in a smooth bow, a weave, a shot, or a sharp dog leg, or even like all three ... I do the
+arrow into one given movement, let's say dog leg, and it has to play that 3 times before it does the next within its
+movement pattern."
+Built (help file `help/brains/move.txt`, example `help/examples/weaver.se`):
+1. **The block**: `\move\{ ... }` inside an NPC's `when`/`every`; `\move\` with no `{` takes the rest of its line. Parts
+   inside go with `;` or a new line between. `#` notes work inside.
+2. **Arrows**: `>` right, `<` left, `/\` up, `\/` down. Arrows together make one slanted leg (`>/\2` = 2 right and 2 up);
+   `>>` is two right. A number after them is duck lengths (1 when none); any Seriat value works, in `( )` when it has
+   more than one piece: `>(1+1)`, `>rage`, `>2:4`. Legs go in order: `>3 \/2 <3 /\2` walks a box and comes home.
+3. **`to <who>`** (`to nearest duck`, `to me`, a for's name, `to zone 'Pit'`): the way there is cut into one part per leg,
+   and each leg pushes its part that far to that side (`/\3` = 3 duck lengths above the straight way); it still arrives.
+   `-` is a part with no push (`-2`: two). With no legs it walks straight there.
+4. **`@n`**: the move at n times the NPC's speed (`@1.5`).
+5. **Bends** (`bend ...`, a part of the move, or a line of its own for every move after it: at a file's top for all its
+   NPCs, inside a `when` for that NPC): `shot` (or `straight`, number 1), `bow` (2), `weave` (3), `dogleg` (4), `mix`
+   (bow, weave, dogleg in turn). Sequenced with `x` or `times`: `bend dogleg x3, weave` = 3 doglegs, then a weave, then
+   again, one bend per leg. A name or value works for the kind (`let style = 2`, `bend style`) and the count.
+   Shapes, with no `to`: shot straight; bow curves out to the right of its way by a quarter of the leg; weave goes out
+   and back across (an S, a sixth); dogleg one sharp corner (an L). With `to`: shot goes straight to the pushed spot and
+   on; bow curves through it; weave goes out that way and back across the other; dogleg steps out first, then cuts
+   across. Default bend: shot.
+6. **Running**: the move comes before the NPC's `go`/`attack`/`flee`, which goes on when the move ends; a new move takes
+   over one still going. A spot it gets no nearer to for 1.2 s (a wall, Speed 0) is skipped. The board never lets it
+   walk off the edge. Not in boxes (a value line), only in brains.
+**[open]** whether the owner wants the arrows relative to the NPC's way (left/right of travel) instead of the screen;
+built as the screen (`/\` is always up).

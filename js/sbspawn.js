@@ -1501,7 +1501,9 @@ export function think(s, now, npcs, at, H, far, duckAt) {
     };
   const nbCh = nbThink(s, now, them, all, ducks, far, brainOf); // (the NPCs that run a Seriat file)
   const out = them.map((me) => {
-    const d = nbOrder(me, all) || decide(me, lists(me.o), all, ducks, far, now),
+    const d =
+        nbOrder(me, all, far, now) ||
+        decide(me, lists(me.o), all, ducks, far, now),
       fo = d.foe ? d.foe.key : undefined;
     if (me.o.fo !== fo) {
       if (fo) me.o.fo = fo;
@@ -1529,6 +1531,7 @@ export function strike(s, now, me, foe, H, o, d = null, w = "claw") {
 
 /* ---------- the board's zombies: as Mad God Justin's wave zombies walk (mgjrules.js wavesTick), at each one's speed and
    damage, and kept apart on a grid so 800 cost little ---------- */
+const MOVE_STOP = 0.1; // duck lengths: as near as a \move\'s spot is walked to
 const CELL = 1, // (duck lengths: the grid's cells)
   NEAR = 12; // (the most others each one is kept apart from in a beat)
 function boardTick(s, now, H) {
@@ -1550,17 +1553,25 @@ function boardTick(s, now, H) {
       y0 = o.y,
       bd = far(me, to),
       claw = reachTo(WAVE.CLAW, o, to, s), // (its hitbox, and its foe's: sbarms.js)
-      sp = WAVE.SPEED * (o.sv ?? 1) * (o.run && bd > 4 ? 1.5 : 1); // (can sprint: half as fast again while far off)
+      sp =
+        WAVE.SPEED *
+        (o.sv ?? 1) *
+        (o.run && bd > 4 ? 1.5 : 1) * // (can sprint: half as fast again while far off)
+        (to.sp ?? 1), // (a \move\'s @ speed)
+      stop = d.foe ? keepAt(o, claw) : to.pt ? MOVE_STOP : claw * 0.8; // (a gun keeps its distance: sbarms.js; a \move\'s spot: right on it)
     if (d.flee) {
       const go = Math.min(1, (sp * dt) / Math.max(bd, 1e-3));
       o.x = Math.min(0.99, Math.max(0.01, o.x - (to.x - o.x) * go));
       o.y = Math.min(0.97, Math.max(0.03, o.y - (to.y - o.y) * go));
       ch = true;
-    } else if (bd > (d.foe ? keepAt(o, claw) : claw * 0.8)) {
-      const stop = d.foe ? keepAt(o, claw) : claw * 0.8, // (a gun keeps its distance: sbarms.js)
-        go = Math.min(bd - stop, sp * dt) / bd;
+    } else if (bd > stop) {
+      const go = Math.min(bd - stop, sp * dt) / bd;
       o.x += (to.x - o.x) * go;
       o.y += (to.y - o.y) * go;
+      if (to.pt) {
+        o.x = Math.min(0.99, Math.max(0.01, o.x)); // (a \move\ never walks it off the board)
+        o.y = Math.min(0.97, Math.max(0.03, o.y));
+      }
       ch = true;
     }
     if (wallsOf(o).length)
