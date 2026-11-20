@@ -3288,6 +3288,14 @@ function placeZombies(board, s, now) {
       n._shot = o.sh ? o.sh[0] : 0; // (only shots from now on are drawn)
       layer.append(n);
     }
+    if (sbOnBoard(s)) {
+      // (the plain board: under a roof I'm not under, an NPC is hidden whole, as a duck is: row 161, a house)
+      const rf = sbRoofed(s, "npc:" + o.i, o);
+      if (n._rf !== rf) {
+        n._rf = rf;
+        n.classList.toggle("hang-hid", rf);
+      }
+    }
     const c = place(o, 0, 1),
       box = npcBox(o),
       ds = geo.size * (o.sz || 1), // (its size: a duck's, at its spawn's Size, sbspawn.js)
