@@ -215,6 +215,7 @@ export function duckSVG(
     extra = "",
     skin = null,
     gone = null,
+    layer = null, // (one layer alone: duckparts.js)
   } = {},
 ) {
   const L = { ...DUCK_DEFAULT, ...plainLook(look || {}) },
@@ -387,71 +388,199 @@ ${beak}${zap || (gone && gone.eyes) ? "" : eyes}${worn(face, gone && gone.face)}
       ? `<filter id="${id}blk"><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0"/></filter>
 <mask id="${id}nc" maskUnits="userSpaceOnUse" x="-20" y="-40" width="160" height="180"><rect x="-20" y="-40" width="160" height="180" fill="#fff"/><g filter="url(#${id}blk)"><g${bt}>${OF.cloth}</g></g><circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="#fff"/>${OF.sleeve === null || OF.bare ? `<path d="${WING}" fill="#fff"${bt}/>` : ""}</mask>`
       : "";
-  return `<svg class="duck${M ? " metal" : ""}${top ? " hatted" : ""}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${((size * (120 + top)) / 120).toFixed(1)}" role="img" aria-label="${esc(title || "Rubber duck")}">
-<defs>
-${fill(id + "b", ".36", ".28", TB)}${fill(id + "h", ".34", ".28", TH)}
-<linearGradient id="${id}ao" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="${M ? ".25" : ".28"}"/></linearGradient>
-${pat}${offCloth}
-<clipPath id="${id}c"><path d="${BODY}"${bt}/>${noHead ? "" : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}"/>`}</clipPath>
-<mask id="${id}nh"><rect width="120" height="120" fill="#fff"/>${noHead ? "" : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="#000"/>`}</mask>
-${holes ? `<mask id="${id}g" maskUnits="userSpaceOnUse" x="-20" y="-40" width="160" height="180"><rect x="-20" y="-40" width="160" height="180" fill="#fff"/>${holes}</mask>` : ""}
-${rips && OF ? `<mask id="${id}r" maskUnits="userSpaceOnUse" x="-20" y="-40" width="160" height="180"><rect x="-20" y="-40" width="160" height="180" fill="#fff"/>${rips}</mask>` : ""}${rips && OF && OF.cloth ? `<filter id="${id}wh"><feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"/></filter><mask id="${id}cm" maskUnits="userSpaceOnUse" x="-20" y="-40" width="160" height="180"><g filter="url(#${id}wh)"><g${bt}>${OF.cloth}</g></g></mask>` : ""}
-${M ? metalGlints(id) : ""}${RB ? rbGrad(id + "rb") + rbGrad(id + "rl", 0.5) + rbGrad(id + "rd", -0.32) + rbGrad(id + "re", -0.45) : ""}
-</defs>
-${k !== 1 ? `<g transform="translate(60 108) scale(${k.toFixed(3)}) translate(-60 -108)">` : ""}
-${shadow ? `<ellipse cx="58" cy="109" rx="${(44 * (1 + 0.16 * fat)).toFixed(1)}" ry="7" fill="#000" opacity=".22"/>` : ""}
-${holes ? `<g mask="url(#${id}g)">` : ""}
-${noHead ? "" : worn(hat.back, gone && gone.hat)}${SL.back || ""}${OF ? OF.back : ""}
-<path d="${BODY}" fill="url(#${id}b)"${bt}/>
-${noHead ? "" : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="url(#${id}h)"/>`}${RB ? `<path d="${BODY}" fill="url(#${id}bs)"${bt}/>${noHead ? "" : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="url(#${id}hs)"/>`}` : ""}
-<g clip-path="url(#${id}c)">
-  ${pat ? `<rect x="0" y="0" width="120" height="120" fill="url(#${id}p)" opacity=".92"/>` : ""}
-  ${SL.under || ""}
-  ${skin && skin.body ? `<g${bt}>${skin.body}</g>` : ""}
-  ${OF && OF.cloth ? `<g mask="url(#${id}nh)">${rips ? `<g mask="url(#${id}r)">` : ""}<g${bt}>${OF.cloth}</g>${rips ? `</g><g mask="url(#${id}cm)">${frays}</g>` : ""}</g>` : ""}
-  <path d="${BODY}" fill="url(#${id}ao)"${bt}/>
-  <ellipse cx="74" cy="63" rx="21" ry="5.5" fill="#000" opacity=".2" mask="url(#${id}nh)"/>
-  ${wing}
-  ${skin && skin.head ? skin.head : ""}
-  ${
-    M
-      ? `<g${offCloth ? ` mask="url(#${id}nc)"` : ""}><rect x="0" y="0" width="120" height="120" fill="url(#${id}env)"/>
+  /* the drawing's defs, each on its own (a layer alone takes only the ones it uses: its text then changes only with
+     what it shows, duckparts.js) */
+  const DEFS = [
+    fill(id + "b", ".36", ".28", TB),
+    fill(id + "h", ".34", ".28", TH),
+    `<linearGradient id="${id}ao" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="${M ? ".25" : ".28"}"/></linearGradient>`,
+    pat,
+    layer ? "" : offCloth,
+    `<clipPath id="${id}c"><path d="${BODY}"${bt}/>${noHead ? "" : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}"/>`}</clipPath>`,
+    `<mask id="${id}nh"><rect width="120" height="120" fill="#fff"/>${noHead ? "" : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="#000"/>`}</mask>`,
+    holes
+      ? `<mask id="${id}g" maskUnits="userSpaceOnUse" x="-20" y="-40" width="160" height="180"><rect x="-20" y="-40" width="160" height="180" fill="#fff"/>${holes}</mask>`
+      : "",
+    rips && OF
+      ? `<mask id="${id}r" maskUnits="userSpaceOnUse" x="-20" y="-40" width="160" height="180"><rect x="-20" y="-40" width="160" height="180" fill="#fff"/>${rips}</mask>`
+      : "",
+    rips && OF && OF.cloth
+      ? `<filter id="${id}wh"><feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"/></filter><mask id="${id}cm" maskUnits="userSpaceOnUse" x="-20" y="-40" width="160" height="180"><g filter="url(#${id}wh)"><g${bt}>${OF.cloth}</g></g></mask>`
+      : "",
+    M ? metalGlints(id) : "",
+    RB
+      ? rbGrad(id + "rb") +
+        rbGrad(id + "rl", 0.5) +
+        rbGrad(id + "rd", -0.32) +
+        rbGrad(id + "re", -0.45)
+      : "",
+  ].filter(Boolean);
+  const defs = `<defs>\n${DEFS.join("\n")}\n</defs>`;
+  /* the defs a layer uses: those its drawing points to, and those they point to */
+  const defsOf = (s) => {
+    const used = [];
+    let text = s,
+      more = true;
+    while (more) {
+      more = false;
+      for (const d of DEFS)
+        if (
+          !used.includes(d) &&
+          [...d.matchAll(/\sid="([^"]+)"/g)].some((m) =>
+            text.includes("#" + m[1]),
+          )
+        ) {
+          used.push(d);
+          text += d;
+          more = true;
+        }
+    }
+    return used.length
+      ? `<defs>${DEFS.filter((d) => used.includes(d)).join("")}</defs>`
+      : "";
+  };
+  /* the duck's layers, back to front (the ducks' part sheets make each one into pixels on its own: duckparts.js) */
+  const sleeved = OF && OF.sleeve !== null;
+  const P = {
+    shadow: shadow
+      ? `<ellipse cx="58" cy="109" rx="${(44 * (1 + 0.16 * fat)).toFixed(1)}" ry="7" fill="#000" opacity=".22"/>`
+      : "",
+    hatBack: noHead ? "" : worn(hat.back, gone && gone.hat),
+    slBack: SL.back || "",
+    ofBack: OF ? OF.back : "",
+    fill: `<path d="${BODY}" fill="url(#${id}b)"${bt}/>
+${noHead ? "" : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="url(#${id}h)"/>`}${RB ? `<path d="${BODY}" fill="url(#${id}bs)"${bt}/>${noHead ? "" : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="url(#${id}hs)"/>`}` : ""}`,
+    pattern: pat
+      ? `<rect x="0" y="0" width="120" height="120" fill="url(#${id}p)" opacity=".92"/>`
+      : "",
+    slUnder: SL.under || "",
+    skinBody: skin && skin.body ? `<g${bt}>${skin.body}</g>` : "",
+    cloth:
+      OF && OF.cloth
+        ? `<g mask="url(#${id}nh)">${rips ? `<g mask="url(#${id}r)">` : ""}<g${bt}>${OF.cloth}</g>${rips ? `</g><g mask="url(#${id}cm)">${frays}</g>` : ""}</g>`
+        : "",
+    shade: `<path d="${BODY}" fill="url(#${id}ao)"${bt}/>
+  <ellipse cx="74" cy="63" rx="21" ry="5.5" fill="#000" opacity=".2" mask="url(#${id}nh)"/>`,
+    wingBare: sleeved ? (OF.bare ? solid + bare : "") : bare,
+    sleeve: sleeved ? ripped(`<g${bt}>${OF.sleeve}</g>`) : "",
+    skinHead: skin && skin.head ? skin.head : "",
+    metal: M
+      ? `<rect x="0" y="0" width="120" height="120" fill="url(#${id}env)"/>
   <ellipse cx="64" cy="24" rx="13" ry="7" fill="url(#${id}spec)" transform="rotate(-25 64 24)"/><ellipse cx="34" cy="70" rx="17" ry="7" fill="url(#${id}spec)" transform="rotate(-14 34 70)"/>
   <path d="M22 88C34 101 56 104 78 100" stroke="${M[0]}" stroke-width="2.4" fill="none" opacity=".85" stroke-linecap="round"/>
-  <g class="shine"><rect x="-60" y="-10" width="34" height="140" fill="url(#${id}s)" transform="rotate(18 60 60)"/></g></g>`
-      : ""
-  }
-</g>
-<path d="${BODY}" fill="none" stroke="${OF && OF.cloth ? "#1c1c28a8" : edge}" stroke-width="2.2" stroke-linejoin="round" mask="url(#${id}nh)"${bt}/>
+  <g class="shine"><rect x="-60" y="-10" width="34" height="140" fill="url(#${id}s)" transform="rotate(18 60 60)"/></g>`
+      : "",
+    edge: `<path d="${BODY}" fill="none" stroke="${OF && OF.cloth ? "#1c1c28a8" : edge}" stroke-width="2.2" stroke-linejoin="round" mask="url(#${id}nh)"${bt}/>
 ${
   noHead
     ? ""
     : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="none" stroke="${TH.edge}" stroke-width="2.2"/>
 <ellipse cx="68" cy="28" rx="8" ry="4.6" fill="#fff" opacity="${M ? ".9" : ".6"}" transform="rotate(-25 68 28)"/>
 <circle cx="88" cy="47" r="2.2" fill="#fff" opacity="${M ? ".6" : ".3"}"/>`
-}
-${
-  spots
-    ? `<g${bt}><ellipse cx="38" cy="73" rx="11" ry="5" fill="#fff" opacity="${M ? ".75" : ".38"}" transform="rotate(-14 38 73)"/>
+}`,
+    spots: spots
+      ? `<g${bt}><ellipse cx="38" cy="73" rx="11" ry="5" fill="#fff" opacity="${M ? ".75" : ".38"}" transform="rotate(-14 38 73)"/>
 <ellipse cx="17" cy="56" rx="2.6" ry="5" fill="#fff" opacity="${M ? ".6" : ".3"}" transform="rotate(-30 17 56)"/></g>`
-    : ""
-}
-${SL.over || ""}
-${OF && OF.over ? ripped(`<g${bt}>${OF.over}</g>`) : ""}
-${
-  noHead
-    ? ""
-    : `${beak}
-${zap || (gone && gone.eyes) ? "" : eyes}
-${worn(face, gone && gone.face)}
-${zap && !(gone && gone.eyes) ? eyes : ""}
-${worn(hat.front, gone && gone.hat)}`
-}
+      : "",
+    slOver: SL.over || "",
+    ofOver: OF && OF.over ? ripped(`<g${bt}>${OF.over}</g>`) : "",
+    beak: noHead ? "" : beak,
+    eyes: noHead || zap || (gone && gone.eyes) ? "" : eyes,
+    face: noHead ? "" : worn(face, gone && gone.face),
+    eyesZap: !noHead && zap && !(gone && gone.eyes) ? eyes : "",
+    hatFront: noHead ? "" : worn(hat.front, gone && gone.hat),
+    skinOut: skin && skin.out ? skin.out : "",
+  };
+  const inClip = (s) => (s ? `<g clip-path="url(#${id}c)">${s}</g>` : "");
+  /* one layer alone, in the frame every layer shares (room for a hat above): duckparts.js */
+  if (layer) {
+    const s = CLIPPED.includes(layer) ? inClip(P[layer]) : P[layer];
+    return s
+      ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${-HAT_TOP} 120 ${120 + HAT_TOP}" width="120" height="${120 + HAT_TOP}">${defsOf(s)}${s}</svg>`
+      : "";
+  }
+  return `<svg class="duck${M ? " metal" : ""}${top ? " hatted" : ""}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${((size * (120 + top)) / 120).toFixed(1)}" role="img" aria-label="${esc(title || "Rubber duck")}"${partsOK(L, { skin, extra, gone }) ? ` data-dk="${esc(JSON.stringify({ L, dead, shadow, gone }))}"` : ""}>
+${defs}
+${k !== 1 ? `<g transform="translate(60 108) scale(${k.toFixed(3)}) translate(-60 -108)">` : ""}
+${P.shadow}
+${holes ? `<g mask="url(#${id}g)">` : ""}
+${P.hatBack}${P.slBack}${P.ofBack}
+${P.fill}
+<g clip-path="url(#${id}c)">
+  ${P.pattern}
+  ${P.slUnder}
+  ${P.skinBody}
+  ${P.cloth}
+  ${P.shade}
+  ${P.wingBare}${P.sleeve}
+  ${P.skinHead}
+  ${M ? `<g${offCloth ? ` mask="url(#${id}nc)"` : ""}>${P.metal}</g>` : ""}
+</g>
+${P.edge}
+${P.spots}
+${P.slOver}
+${P.ofOver}
+${P.beak}
+${P.eyes}
+${P.face}
+${P.eyesZap}
+${P.hatFront}
 ${holes ? "</g>" : ""}
-${skin && skin.out ? skin.out : ""}
+${P.skinOut}
 ${k !== 1 ? "</g>" : ""}
 ${extra}
 </svg>`;
+}
+
+/* the layers a duck is made of, back to front, as the part sheets keep them (duckparts.js). metal goes under the clothes
+   there (the whole duck masks it off them instead) */
+export const LAYERS = [
+  "shadow",
+  "hatBack",
+  "slBack",
+  "ofBack",
+  "fill",
+  "pattern",
+  "slUnder",
+  "metal",
+  "cloth",
+  "shade",
+  "wingBare",
+  "sleeve",
+  "edge",
+  "spots",
+  "slOver",
+  "ofOver",
+  "beak",
+  "eyes",
+  "face",
+  "eyesZap",
+  "hatFront",
+];
+const CLIPPED = [
+  "pattern",
+  "slUnder",
+  "metal",
+  "cloth",
+  "shade",
+  "wingBare",
+  "sleeve",
+];
+/* whether a duck can be made from its parts: a rubber-like style, nothing drawn on it or round it that only it has (a
+   zombie's skin, an extra), nothing torn off it but what the parts know how to leave out (its hat, face, eyes, beak,
+   holes through it). The rest is still made whole */
+function partsOK(L, { skin, extra, gone }) {
+  const st = styleById(L.style);
+  return (
+    !st.flat &&
+    L.style !== "jack" &&
+    L.style !== "datboi" &&
+    !L.image &&
+    L.metal !== "rainbow" &&
+    !skin &&
+    !extra &&
+    !(gone && (gone.head || (gone.rips && gone.rips.length)))
+  );
 }
 
 /* a square picture from the player's files, cut to its middle and made small enough to send to others */

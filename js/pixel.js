@@ -220,9 +220,29 @@ async function fromFiles(key, cw, ch) {
   );
   return c;
 }
+/* a duck, from its pixel parts (duckparts.js), when its drawing says what it is (duck.js data-dk) */
+const unq = (s) =>
+  s
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
+async function fromParts(src, cw, ch) {
+  const m =
+    typeof src === "string" && /\sdata-dk="([^"]*)"/.exec(src.slice(0, 4000));
+  if (!m || window.__pxNoParts) return null;
+  try {
+    const { duckFromParts } = await import("./duckparts.js");
+    return await duckFromParts(JSON.parse(unq(m[1])), cw, ch);
+  } catch {
+    return null;
+  }
+}
 async function make(fk, src, cw, ch) {
   const key = fk.slice(0, fk.lastIndexOf("@"));
   let c = await fromFiles(key, cw, ch);
+  if (!c) c = await fromParts(src, cw, ch);
   if (!c) {
     if (window.__pxHear) window.__pxHear(key, src, cw, ch); // (tools/pixel-art.cjs, listing what the game makes)
     c = await pxCanvas(src, cw, ch);
