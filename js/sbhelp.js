@@ -44,7 +44,7 @@ export const SB_HELP = {
     ],
     [
       "Loot, colors and seeing zones",
-      "Add a Loot tab to a zone and pick what it holds: nothing comes until you do. Under Spawning: when it starts, Auto spawn (a new one after one is taken), Continuous spawn, how many lie at once, how many in the whole game (G has a limit for the whole map too), who can take it, and whether every player gets their own. What it holds has a list per kind and one with All items; tick several for one at random each time, or turn on All of them at once. On the zombie maps each ticked item shows its own numbers under its list; a blank box keeps its own. A new zone has no color (white); pick a color and every zone of that color shares its settings. Zones show while cheat mode or Build is on, and stay hidden otherwise. Click a heading's arrow to fold it.",
+      "Add a Loot tab to a zone and pick what it holds: nothing comes until you do. Under Spawning: when it starts, Auto spawn (a new one after one is taken), Continuous spawn, how many lie at once, how many in the whole game (G has a limit for the whole map too), who can take it, and whether every player gets their own. What it holds has a list per kind and one with All items; tick several for one at random each time, or turn on All of them at once. On the zombie maps each ticked item shows its own numbers under its list; a blank box keeps its own. How it looks: an orb, as in your hand, or its hotbar picture, with a size and how see-through it is. A new zone has no color (white); pick a color and every zone of that color shares its settings. Zones show while cheat mode or Build is on, and stay hidden otherwise. Click a heading's arrow to fold it.",
     ],
   ],
   m: [
