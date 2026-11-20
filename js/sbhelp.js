@@ -99,6 +99,10 @@ export const SB_HELP = {
       "Rules opens its own window, for the zombie maps: how many lives each player has (0 is unlimited), whether there's a down phase where others can revive you (off: you just die), crits on or off, and whether a player out of lives watches the others. On the plain boards it has Board size: 100% is the screen, and a bigger board scrolls with your duck, the ducks staying their size. The save keeps them. What no menu shows (crit chance, gore, player limit) is in Seriat's settings/limits file: read-only until you turn its write on.",
     ],
     [
+      "Game modes",
+      "Save game mode (G) keeps this Sandbox as a game mode on your device, with a name and a description; the same name replaces the old one. Test game mode starts it as players would see it, with no tools; Stop test at the top left brings your build back. The host picks a saved game mode in Game Settings, under Custom.",
+    ],
+    [
       "Music",
       "Music opens its own window: tick the songs that play, or turn them all on or off at once. Only the ticked ones play, the same for everyone. The save keeps the list.",
     ],
