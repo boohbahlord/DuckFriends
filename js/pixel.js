@@ -583,8 +583,11 @@ function cursorURL(rows, s) {
    large", and the crosshair so small the game was unplayable; then twice as big was too big; Nov 17: the mouse and the
    pointer over a button still too large, the crosshair a good size, and all three sizes in Settings: the arrow, the hand
    and the text pointer are drawn again about two thirds as big, the crosshair kept). The arrow and the text pointer
-   follow Mouse size, the hand Pointer size, the crosshair Crosshair size (100% each by default) */
-const CURSOR_ZOOM = { arrow: 1, hand: 1, text: 1, cross: 3 },
+   follow Mouse size, the hand Pointer size, the crosshair Crosshair size (100% each by default). Nov 20 21:17Z: the
+   mouse had become smaller than a browser's own; I want it "default size like it is on a normal browser, but just a
+   small fraction bit larger": the arrow and the hand about 22 css px tall (a browser's arrow is about 20), the crosshair
+   kept */
+const CURSOR_ZOOM = { arrow: 1.3, hand: 1.3, text: 1.3, cross: 3 },
   CURSOR_SIZE = {
     arrow: "mouse",
     text: "mouse",

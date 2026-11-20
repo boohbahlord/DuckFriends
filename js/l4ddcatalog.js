@@ -74,7 +74,7 @@ const SAY = {
   jetpack:
     "Each use turns it on or off. While it's on, Space flies. A Max Ammo fills it.",
   chair:
-    "Justin's office chair, thrown the way you aim. A Max Ammo gives the throws back.",
+    "Justin's office chair, thrown the way you aim, as often as you like; it shoves what it hits.",
   grenade: "Thrown with G. Kills every zombie in its blast.",
   kill: "Every hit kills, for 45 seconds.",
   ammo: "Fills everyone's ammo and grenades (not the medkit or Jaime).",

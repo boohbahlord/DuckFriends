@@ -9,6 +9,38 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v194",
+    version: 194,
+    date: "Nov 20, 2026",
+    title: "No more dragging",
+    news: [
+      "Holding the mouse down on a zombie or anything else no longer drags a ghost picture around, and your duck no longer walks off on its own after it.",
+    ],
+  },
+  {
+    id: "v193",
+    version: 193,
+    date: "Nov 20, 2026",
+    title: "Clear previews",
+    news: [
+      "Customize's previews are drawn at full size again: every style looks like itself.",
+      "The top and bottom bars over a map are much more see-through.",
+      "The mouse pointer is a little bigger than your browser's own again. The crosshair stays the same.",
+      "For the zombie modes: key 5 is your second item and 6 the grenade.",
+      "For the zombie modes: the chair throws as often as you like, shoves what it hits and does 3 to 5 damage to a zombie.",
+      "For the zombie modes: the hammer does 1 more damage, and zombies swipe a little slower.",
+    ],
+  },
+  {
+    id: "v192",
+    version: 192,
+    date: "Nov 20, 2026",
+    title: "Lighter ducks",
+    news: [
+      "Ducks download about a third as much: small ducks look exactly the same, big ducks are a smaller one doubled.",
+    ],
+  },
+  {
     id: "v191",
     version: 191,
     date: "Nov 20, 2026",

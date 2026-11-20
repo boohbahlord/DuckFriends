@@ -5757,10 +5757,11 @@ html.lite *::after {
     Roboto,
     sans-serif !important;
 }
-/* a map behind the game: the top and bottom bars get a soft backing so they read over any sky */
+/* a map behind the game: the top and bottom bars get a soft backing so they read over any sky (the owner's, Nov 20
+   21:17Z: keep them, "Just make them a lot more transparent": 62% to 22%) */
 html.map-on .game .gbar,
 html.map-on .game .bbar {
-  background: color-mix(in srgb, var(--bg) 62%, transparent);
+  background: color-mix(in srgb, var(--bg) 22%, transparent);
 }
 /* ---------- hide ui (the owner's, Nov 19 12:59Z: "this hides everything but the top right buttons … the text chat
    ("abc"), the leave sandbox or leave other button, the vote button, and hot bar. It hides the black outline above and
@@ -22566,4 +22567,19 @@ textarea.um-in {
 }
 .game .sb-wave[hidden] {
   display: none;
+}
+
+/* no browser drag ghost or text selection in a game (the owner's, Nov 20 21:41Z; main.js stops the drag itself) */
+img,
+svg image {
+  -webkit-user-drag: none;
+}
+.screen.game,
+.screen.game * {
+  -webkit-user-select: none;
+  user-select: none;
+}
+.screen.game :is(input, textarea, select, [contenteditable]) {
+  -webkit-user-select: text;
+  user-select: text;
 }
