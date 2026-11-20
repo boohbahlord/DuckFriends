@@ -31,6 +31,10 @@ export const SB_HELP = {
       "Open a zone (E beside it, or right-click and Properties) and pick at the top what it is: just a zone, a spawn (it makes things) or a respawn (players come back there). A spawn gets a key or a spot on the hotbar in H.",
     ],
     [
+      "Walls, Inverse and Dark outside",
+      "In a zone, tick who can't pass to make it a wall to them (a thin zone makes a thin wall); they walk round it. Inverse makes a zone, or a tab, work outside its zone instead (and outside every zone with its name or color). Dark outside darkens everything round the zone while you stand in it.",
+    ],
+    [
       "Loot, colors and seeing zones",
       "Add a Loot tab to a zone and pick what it holds: nothing comes until you do. A new zone has no color (white); pick a color and every zone of that color shares its settings. Zones show while cheat mode or Build is on, and stay hidden otherwise. Click a heading's arrow to fold it.",
     ],

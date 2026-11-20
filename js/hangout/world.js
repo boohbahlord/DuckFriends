@@ -1424,7 +1424,7 @@ export function mountWorld(board, api) {
           const ok = (tx, ty) => {
             if (!L.standable(tx, ty, me.z, up, [x, y])) return false;
             for (const a of acts())
-              if (a.blocked && a.blocked(tx, ty, me.z, ctx)) return false; // (a mode's own edges: Quacky Zombies' boarded doors)
+              if (a.blocked && a.blocked(tx, ty, me.z, ctx, x, y)) return false; // (a mode's own edges: Quacky Zombies' boarded doors)
             const c = crowd(tx, ty, me, now);
             return !(c > 0 && c > here - 1e-6);
           };

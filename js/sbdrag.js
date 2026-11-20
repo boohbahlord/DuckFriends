@@ -6,7 +6,14 @@
 import { W, H } from "./hangout/layout.js";
 import { pointAt } from "./sbmenu.js";
 import { sbSel, sbView, zoneLike } from "./sbspawnview.js";
-import { sbFills, sbRot, sbSize, sbSpread, sbUnit } from "./sandboxrules.js";
+import {
+  sbFills,
+  sbFitSide,
+  sbRot,
+  sbSize,
+  sbSpread,
+  sbUnit,
+} from "./sandboxrules.js";
 
 const TURN = 15; // (degrees an arrow key turns what I hold)
 const EVERY = 50; // (ms between the moves I send while dragging)
@@ -145,7 +152,7 @@ export function mountSbDrag(S, getR, { may, onMap, spotAt, screenAt }) {
       dy = (at.y - p0.y) / ry,
       lx = dx * Math.cos(-a) - dy * Math.sin(-a),
       ly = dx * Math.sin(-a) + dy * Math.cos(-a),
-      fit = (v) => Math.max(1, Math.min(40, Math.round(v))),
+      fit = sbFitSide, // (thin as a wall: sandboxrules.js)
       w = hx ? fit(hx * lx + w0 / 2) : w0,
       h = hy ? fit(hy * ly + h0 / 2) : h0,
       cx = (hx * (w - w0)) / 2,

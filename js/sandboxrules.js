@@ -122,6 +122,12 @@ export const SB_FLAGS = {
   sprint: { name: "Can sprint", kind: "bool", def: "f" },
   jump: { name: "Can jump", kind: "bool", def: "f" },
   climb: { name: "Can climb walls", kind: "bool", def: "t" },
+  /* plan Phase 3: "Inverse: a switch makes a tab act outside the zone instead of inside (or outside every zone with the
+     same name or color)" */
+  inv: { name: "Inverse (works outside its zone)", kind: "bool", def: "f" },
+  /* plan Phase 3: "Dark outside: a switch darkens everything outside the zone while you are in it, like inside the gas
+     station" */
+  dark: { name: "Dark outside", kind: "bool", def: "f" },
 };
 /* a respawn's "Import settings" (the owner's Sandbox file): the spawn's settings it can take on, by category, in the
    spawn menu's order ("Options import in the order of the menu they come from"). What comes back there (an NPC, or a
@@ -220,8 +226,21 @@ const listBox = (name, def) => ({
   def,
 });
 export const SB_ZONE = {
-  zw: { name: "Width (duck lengths)", kind: "int", min: 1, max: 40, def: "4" },
-  zh: { name: "Height (duck lengths)", kind: "int", min: 1, max: 40, def: "4" },
+  /* a thin rectangle is a wall (plan Phase 3): under one duck length it takes tenths, down to a fifth */
+  zw: {
+    name: "Width (duck lengths)",
+    kind: "tenth",
+    min: 0.2,
+    max: 40,
+    def: "4",
+  },
+  zh: {
+    name: "Height (duck lengths)",
+    kind: "tenth",
+    min: 0.2,
+    max: 40,
+    def: "4",
+  },
   fx: {
     name: "What it does",
     check: (t) =>
@@ -237,6 +256,7 @@ export const SB_ZONE = {
     def: "1",
   }, // ("they can heal or damage at different rates")
   zwho: listBox("Who it hits", "players"), // (Players, Everything, a kind, a spawn by its color or name, a player's name)
+  wall: listBox("Who can't pass", ""), // (plan Phase 3, walls: the same list; nothing ticked, it stops nobody)
   ent: listBox("Entities spawn here", ""), // (spawns, by their color or name: what they make comes in the zone)
   lt: listBox("Loot spawns here", ""), // (loot spots, by their color or name: their orbs lie in the zone)
   /* what its working squares show (plan Phase 3: "show an effect: one of the game's existing effects (the
@@ -261,6 +281,9 @@ export const sbSfx = (p) => {
 };
 /* a duck length in a world's px, for a zone's size there (on the board: 0.03 of it across, 0.08 up and down) */
 export const SB_ZONE_PX = 48;
+/* a block's side as dragged or typed: whole duck lengths, tenths under one, a fifth at least, 40 at most */
+export const sbFitSide = (v) =>
+  Math.max(0.2, Math.min(40, v < 1 ? Math.round(v * 10) / 10 : Math.round(v)));
 /* ---------- every build block's shape (plan Phase 2: "Spawn, respawn, loot and zone become one thing you put down") ----------
    A block has a shape and a size (zw, zh: duck lengths; a zone starts at 4 by 4, the rest at 1 by 1) or fills the whole
    map. Square by default; the others by adding sides, stopping once it already looks round. The shape is checked on a
@@ -643,6 +666,199 @@ export function sbActsAt(s, id, p, x, y, W = 1, H = 1) {
   const on = sbActive(s, id, p, sbStep(s, id), W, H);
   return !on || on.has(sbCellAt(s, p, x, y, W, H));
 }
+/* ---------- walls (plan Phase 3: "Walls: a switch: \"who can't pass\", a dropdown where you tick several entity kinds
+   and groups. A thin rectangle is a wall.") ----------
+   A zone's "Who can't pass" list stops whoever it takes on its working squares (all of them unless its potential
+   order says otherwise). What already stands in one when it comes (placed on it, or a square that just started
+   working) may walk out of it; nothing walks in. On a world a wall stands on its own floor, as tall as two floors. */
+const WALL_LOW = 40,
+  WALL_HIGH = 200; // (world px below and above its floor that it still stops)
+const listOf = (p, f) =>
+  String((p.f && p.f[f] && p.f[f].ok) || "")
+    .toLowerCase()
+    .split(/[\s,]+/)
+    .filter(Boolean);
+/* does list `who` (a behavior list's words) take w: { duck: its name } or an NPC { k: its kind, sp: its spawn } */
+export function sbWhoTakes(s, who, w) {
+  if (who.includes("everything")) return true;
+  if (w.duck != null)
+    return (
+      who.includes("players") ||
+      (!!w.duck && who.includes(String(w.duck).trim().toLowerCase()))
+    );
+  if (who.includes(w.k || "zombie")) return true;
+  const q = ((s.sb && s.sb.pts) || {})[w.sp];
+  return (
+    !!q && (who.includes(q.col) || who.includes(sbNameOf(q).toLowerCase()))
+  );
+}
+/* the zones that are walls to w, once for a whole beat: [{ id, p }] */
+export function sbWalls(s, w) {
+  const out = [];
+  for (const [id, p] of Object.entries((s && s.sb && s.sb.pts) || {}))
+    if (p.k === "zone" && p.f && p.f.wall && p.f.wall.ok) {
+      if (sbWhoTakes(s, listOf(p, "wall"), w)) out.push({ id, p });
+    }
+  return out;
+}
+/* the walls to each NPC, worked out once a beat for each kind and spawn: wallsOf(o) */
+export function sbNpcWalls(s) {
+  const seen = new Map();
+  return (o) => {
+    const k = (o.k || "zombie") + "|" + o.sp;
+    if (!seen.has(k)) seen.set(k, sbWalls(s, { k: o.k, sp: o.sp }));
+    return seen.get(k);
+  };
+}
+/* the zombie maps' and Duck Cabin's walkers (l4ddrules.js stepZombie): stops(z, x, y, zz) tests a small step (they turn
+   round a wall as round anything in the way) and go(z, x, y, zz) takes it round the wall, as sbWallGo; null when no
+   zone is a wall. W, H: the world's size; l4: the zombie maps' own zombies (their k is the roof they're up) */
+export function sbZombieWall(s, W, H, l4 = false) {
+  if (!isSb(s) || sbOnBoard(s)) return null;
+  if (
+    !Object.values((s.sb && s.sb.pts) || {}).some(
+      (p) => p.f && p.f.wall && p.f.wall.ok,
+    )
+  )
+    return null;
+  const npcWalls = sbNpcWalls(s),
+    wallsOf = (z) => npcWalls(l4 ? { k: "zombie", sp: z.sp } : z);
+  return {
+    stops: (z, x, y, zz) => {
+      const ws = wallsOf(z);
+      return (
+        ws.length > 0 &&
+        sbWallStops(s, ws, z.x / W, z.y / H, x / W, y / H, zz, W, H)
+      );
+    },
+    go: (z, x, y, zz, ok) => {
+      const ws = wallsOf(z);
+      if (!ws.length) return [x, y];
+      const [u, v] = sbWallGo(
+        s,
+        ws,
+        z.x / W,
+        z.y / H,
+        x / W,
+        y / H,
+        zz,
+        W,
+        H,
+        z,
+        ok && ((a, b) => ok(a * W, b * H)),
+      );
+      return [u * W, v * H];
+    },
+  };
+}
+/* the walls (of list `walls`) that (x, y) at height z stands in (shares; z: world px) */
+function wallsAt(s, walls, x, y, z, W, H) {
+  const out = [];
+  for (const { id, p } of walls) {
+    if (!sbOnBoard(s)) {
+      const dz = (+z || 0) - (p.z || 0);
+      if (dz <= -WALL_LOW || dz >= WALL_HIGH) continue;
+    }
+    if (sbWorksAt(s, id, p, x, y, z, W, H, sbInv(p), false)) out.push(id);
+  }
+  return out;
+}
+/* is (x, y) in block p on one of its squares working now (an inverse one: outside every zone it goes with) */
+export function sbInWorking(s, id, p, x, y, W = 1, H = 1) {
+  return sbInBlock(s, p, x, y, W, H) && sbActsAt(s, id, p, x, y, W, H);
+}
+/* does a wall stop a step from (x0, y0) to (x1, y1): any spot along it in a wall that (x0, y0) isn't in. The step is
+   looked at every tenth of a duck length, so a thin wall stops a long step too */
+export function sbWallStops(s, walls, x0, y0, x1, y1, z, W = 1, H = 1) {
+  if (!walls.length) return false;
+  const [rx, ry] = sbUnit(s, W, H),
+    n = Math.min(
+      12,
+      Math.max(1, Math.ceil(Math.hypot((x1 - x0) / rx, (y1 - y0) / ry) / 0.1)),
+    ),
+    was = wallsAt(s, walls, x0, y0, z, W, H);
+  for (let i = 1; i <= n; i++) {
+    const at = wallsAt(
+      s,
+      walls,
+      x0 + ((x1 - x0) * i) / n,
+      y0 + ((y1 - y0) * i) / n,
+      z,
+      W,
+      H,
+    );
+    if (at.some((id) => !was.includes(id))) return true;
+  }
+  return false;
+}
+/* where something walking from (x0, y0) toward (x1, y1) ends up, the walls let it: the whole step, or along one way
+   only (it slides along the wall). An NPC o (given) goes round it instead (also(x, y): false where something else
+   stops it): along the wall, the same way (o.ws, 1 or -1)
+   till its way is free, the other way at a corner */
+export function sbWallGo(
+  s,
+  walls,
+  x0,
+  y0,
+  x1,
+  y1,
+  z,
+  W = 1,
+  H = 1,
+  o = null,
+  also = null,
+) {
+  if (!walls.length) return [x1, y1];
+  const free = (x, y) =>
+      (x !== x0 || y !== y0) &&
+      !sbWallStops(s, walls, x0, y0, x, y, z, W, H) &&
+      (!also || also(x, y)), // (also: what else may stop it, the map's own solids)
+    dx = x1 - x0,
+    dy = y1 - y0,
+    [rx, ry] = sbUnit(s, W, H),
+    ux = dx / rx,
+    uy = dy / ry,
+    l = Math.hypot(ux, uy); // (the step in duck lengths)
+  if (free(x1, y1)) {
+    if (o && o.ws && l && free(x0 + (ux / l) * rx, y0 + (uy / l) * ry))
+      delete o.ws; // (round it: a duck length ahead is clear)
+    return [x1, y1];
+  }
+  if (o) {
+    if (!l) return [x0, y0];
+    if (!o.ws && dx && dy)
+      for (const t of [
+        [x0 + Math.sign(dx) * l * rx, y0],
+        [x0, y0 + Math.sign(dy) * l * ry],
+      ])
+        if (free(...t)) {
+          o.ws =
+            t[0] === x0 ? Math.sign(dy * ux) || 1 : -Math.sign(dx * uy) || 1;
+          return t; // (slid along one way, the whole step: its speed kept, and that way kept)
+        }
+    for (let k = 0; k < 2; k++) {
+      const side = o.ws || (o.i % 2 ? 1 : -1),
+        px = -uy * side,
+        py = ux * side, // (a right angle to its way)
+        tries = [
+          [x0 + px * rx, y0 + py * ry],
+          Math.abs(py) >= Math.abs(px)
+            ? [x0, y0 + Math.sign(py) * l * ry]
+            : [x0 + Math.sign(px) * l * rx, y0], // (straight along the wall, when the right angle leans into it)
+        ];
+      o.ws = side;
+      for (const t of tries) if (free(...t)) return t;
+      o.ws = -side; // (a corner: the other way)
+    }
+    return [x0, y0];
+  }
+  for (const [x, y] of [
+    [x1, y0],
+    [x0, y1],
+  ])
+    if (free(x, y)) return [x, y];
+  return [x0, y0];
+}
 /* the middles of block id's working squares (all of them when they all act), in shares, at most `most` of them spread
    evenly: where its effect shows (game.js) */
 export function sbCellMids(s, id, p, W, H, most = 120) {
@@ -692,9 +908,102 @@ function actingSpot(s, p, W, H) {
     y: p.y + (X * Math.sin(a) + Y * Math.cos(a)) * ry,
   };
 }
+/* block p's outline as points round its edge, in shares of the map ({ x, y }; W, H as sbZoneBox): its shape's edge,
+   looked for along n rays from its middle, turned as it is */
+const RIMS = new Map();
+export function sbOutline(s, p, W = 1, H = 1, n = 48) {
+  const sh = sbShape(p),
+    key = sh + n;
+  if (!RIMS.has(key)) {
+    const rim = [];
+    for (let i = 0; i < n; i++) {
+      const a = (2 * Math.PI * i) / n,
+        c = Math.cos(a),
+        d = Math.sin(a);
+      let lo = 0,
+        hi = Math.SQRT2;
+      for (let k = 0; k < 14; k++) {
+        const m = (lo + hi) / 2;
+        if (sbInShape(sh, m * c, m * d)) lo = m;
+        else hi = m;
+      }
+      rim.push([lo * c, lo * d]); // (-1 … 1 across its box)
+    }
+    RIMS.set(key, rim);
+  }
+  const [rx, ry] = sbUnit(s, W, H),
+    [w, h] = sbSize(p),
+    t = (sbRot(p) * Math.PI) / 180;
+  return RIMS.get(key).map(([u, v]) => {
+    const X = (u * w) / 2,
+      Y = (v * h) / 2;
+    return {
+      x: p.x + (X * Math.cos(t) - Y * Math.sin(t)) * rx,
+      y: p.y + (X * Math.sin(t) + Y * Math.cos(t)) * ry,
+    };
+  });
+}
+/* ---------- Inverse (plan Phase 3) ----------
+   A zone or a tab whose Inverse is on works outside its zone: outside every zone with the same variable name or the
+   same color, too (a zone with no color goes only with the ones sharing its name). On a world, still on its floor */
+export const sbInv = (p) => {
+  const k = p && p.f && p.f.inv;
+  return !!k && /^t/i.test(String(k.ok || "").trim());
+};
+const named = (q) => !!(q.f && q.f.name && q.f.name.ok);
+/* zone p and the zones that go with it */
+export function sbZoneKin(s, p) {
+  const out = [p],
+    nm = named(p) && sbNameOf(p).toLowerCase();
+  for (const q of Object.values((s.sb && s.sb.pts) || {}))
+    if (
+      q !== p &&
+      q.k === "zone" &&
+      ((nm && named(q) && sbNameOf(q).toLowerCase() === nm) ||
+        (p.col && p.col !== SB_NOCOL && q.col === p.col))
+    )
+      out.push(q);
+  return out;
+}
+const onFloor = (s, p, z) =>
+  sbOnBoard(s) || Math.abs((+z || 0) - (p.z || 0)) < 40;
+/* is (x, y) at height z (shares; world px) where zone id, p, works: inside it on a working square, or for an Inverse
+   one (inv) outside it and the zones that go with it, on its floor */
+export function sbWorksAt(
+  s,
+  id,
+  p,
+  x,
+  y,
+  z,
+  W = 1,
+  H = 1,
+  inv = sbInv(p),
+  floor = true,
+) {
+  if (floor && !onFloor(s, p, z)) return false; // (floor false: the caller has its own, a wall's)
+  if (inv) return !sbZoneKin(s, p).some((q) => sbInBlock(s, q, x, y, W, H));
+  const [x0, y0, x1, y1] = sbZoneBox(s, p, W, H);
+  if (x < x0 || x > x1 || y < y0 || y > y1) return false;
+  return sbInWorking(s, id, p, x, y, W, H);
+}
+/* a spot at random outside zone p and its kin (an Inverse tab's), anywhere on the map a duck can stand */
+function outSpot(s, p, W, H, ok) {
+  const board = sbOnBoard(s),
+    kin = sbZoneKin(s, p),
+    z = p.z || 0;
+  for (let i = 0; i < 60; i++) {
+    const x = +(board ? 0.01 + Math.random() * 0.98 : Math.random()).toFixed(4),
+      y = +(board ? 0.03 + Math.random() * 0.94 : Math.random()).toFixed(4);
+    if (kin.some((q) => sbInBlock(s, q, x, y, W, H))) continue;
+    if (!ok || ok(x, y, z)) return { x, y, z };
+  }
+  return { x: p.x, y: p.y, z };
+}
 /* a spot at random inside zone p, { x, y, z }: on the board within its edges; on a world one a duck can stand on (ok(x, y,
-   z), in shares), or the zone's middle, where its builder stood */
-export function sbZoneSpot(s, p, W = 1, H = 1, ok = null) {
+   z), in shares), or the zone's middle, where its builder stood. inv (an Inverse tab): anywhere outside it */
+export function sbZoneSpot(s, p, W = 1, H = 1, ok = null, inv = false) {
+  if (inv) return outSpot(s, p, W, H, ok);
   const [x0, y0, x1, y1] = sbZoneBox(s, p, W, H),
     board = sbOnBoard(s),
     z = p.z || 0;
@@ -751,7 +1060,7 @@ export function sbPlayerSpot(s, id, W = 1, H = 1, ok = null) {
   const q = rs.length ? rs[Math.floor(Math.random() * rs.length)] : null,
     zid = q && sbCallZone(pts, q.id);
   if (zid) {
-    const at = sbZoneSpot(s, pts[zid], W, H, ok); // (where its zone's algorithm says)
+    const at = sbZoneSpot(s, pts[zid], W, H, ok, sbInv(q)); // (where its zone's algorithm says; Inverse: outside it)
     sbUsed(s, zid);
     return { ...q, ...at };
   }

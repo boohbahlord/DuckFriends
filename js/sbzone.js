@@ -16,7 +16,8 @@ import {
   sbOnBoard,
   sbZoneBox,
   sbInBlock,
-  sbActsAt,
+  sbWorksAt,
+  sbInv,
   sbOrd,
   sbGo,
   sbUsed,
@@ -43,13 +44,10 @@ export const fxOf = (p) => {
 };
 const FLOOR = 40; // (world px: how far above or below a zone's floor still counts as in it)
 
-/* is (x, y) on floor z (shares of the map; z: world px) in zone id, p, on one of its squares that act now */
+/* is (x, y) on floor z (shares of the map; z: world px) where zone id, p, works: in it on one of its squares that act now,
+   or outside it for an Inverse one (sandboxrules.js sbWorksAt) */
 function inside(s, id, p, box, x, y, z) {
-  const [x0, y0, x1, y1] = box;
-  if (x < x0 || x > x1 || y < y0 || y > y1) return false;
-  if (!sbInBlock(s, p, x, y, W, H)) return false; // (in its box, outside its shape)
-  if (!sbOnBoard(s) && Math.abs((+z || 0) - (p.z || 0)) >= FLOOR) return false;
-  return sbActsAt(s, id, p, x, y, W, H); // (its potential order, plan Phase 3)
+  return sbWorksAt(s, id, p, x, y, z, W, H);
 }
 /* every block's steps (plan Phase 3): one every "Seconds per step", counted in s.sb.zs (each screen works out the
    squares from it, sandboxrules.js sbActive); the clocks are the host's own (s.hidden.sbst) */
@@ -97,6 +95,8 @@ function entered(s, pts, H0) {
       [x0, y0, x1, y1] = box,
       inn = H0.ducks(s).filter((d) => {
         const me = s.pos[d];
+        if (me && sbInv(p))
+          return sbWorksAt(s, id, p, me.x, me.y, me.z, W, H, true); // (Inverse: stepping out of it)
         if (!me || me.x < x0 || me.x > x1 || me.y < y0 || me.y > y1)
           return false;
         if (!sbInBlock(s, p, me.x, me.y, W, H)) return false;

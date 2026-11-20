@@ -15,6 +15,8 @@ import {
   sbZoneBox,
   sbInBlock,
   sbOnBoard,
+  sbInv,
+  sbWorksAt,
   SB_ORDER,
 } from "./sandboxrules.js";
 import { W, H } from "./hangout/layout.js";
@@ -55,6 +57,8 @@ function ducksIn(s, p) {
     board = sbOnBoard(s);
   return Object.keys(s.players || {}).filter((d) => {
     const me = s.pos && s.pos[d];
+    if (me && sbInv(p))
+      return sbWorksAt(s, "", p, me.x, me.y, me.z, W, H, true); // (Inverse: outside it)
     if (!me || me.x < x0 || me.x > x1 || me.y < y0 || me.y > y1) return false;
     if (!sbInBlock(s, p, me.x, me.y, W, H)) return false;
     return board || Math.abs((+me.z || 0) - (p.z || 0)) < FLOOR;

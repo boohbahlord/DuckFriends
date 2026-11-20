@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v137",
+    version: 137,
+    date: "Nov 20, 2026",
+    title: "Walls, inside out, and the dark",
+    news: [
+      "For Sandbox: a zone can be a wall. Tick who can't pass (players, everything, a kind or a spawn) and they stop at it; NPCs and zombies walk round it. A zone can be as thin as a fifth of a duck now, so a thin one is a wall.",
+      "For Sandbox: Inverse makes a zone, or a Spawn, Respawn or Loot tab, work outside its zone instead: it hurts, heals, walls off or spawns everywhere but there (and outside every zone with its name or color).",
+      "For Sandbox: Dark outside darkens everything round a zone while you stand in it, like inside the gas station.",
+    ],
+  },
+  {
     id: "v136",
     version: 136,
     date: "Nov 20, 2026",

@@ -23,6 +23,7 @@ import {
   SB_GEAR,
   sbSpread,
   sbCallZone,
+  sbInv,
   sbTabLive,
   sbUsed,
 } from "./sandboxrules.js";
@@ -111,7 +112,7 @@ function due(q, now) {
 function lay(s, q, w, now, zid = null) {
   const zs = zonesFor(s, "lt", q), // (a zone that names it: the orb lies in it, anywhere: sbzone.js)
     at = zid
-      ? zoneSpot(s, s.sb.pts[zid]) // (a Loot tab: where the zone it answers to says)
+      ? zoneSpot(s, s.sb.pts[zid], sbInv(q)) // (a Loot tab: where the zone it answers to says; Inverse: outside it)
       : zs.length
         ? zoneSpot(s, zs[Math.floor(Math.random() * zs.length)])
         : sbSpread(q)

@@ -242,7 +242,15 @@ import {
 import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
 import { JET, jetHTML, myFuel, burnFuel } from "./jetpack.js";
 import { mountL4Bar, l4Slider } from "./l4ddbar.js";
-import { isSb, sbOnBoard, sbMay, sbSfx, sbCellMids } from "./sandboxrules.js";
+import {
+  isSb,
+  sbOnBoard,
+  sbMay,
+  sbSfx,
+  sbCellMids,
+  sbWalls,
+  sbWallGo,
+} from "./sandboxrules.js";
 import { mountCabinEnd } from "./hangout/cabinend.js";
 import { mountSandboxKeys } from "./sandbox.js";
 import { sbCheat } from "./sbmenu.js";
@@ -5126,6 +5134,22 @@ function step(dt, now) {
     q = q || scr(0, Math.sign(ay));
     ny = Math.max(0, Math.min(1, ny));
   }
+  if (sbOnBoard(s)) {
+    const [wx, wy] = sbWallGo(
+      s,
+      sbWalls(s, { duck: (s.players[R.me] || {}).name || "" }),
+      me.x,
+      me.y,
+      nx,
+      ny,
+      0,
+    );
+    if (wx !== nx || wy !== ny) {
+      q = q || scr(Math.sign(ax), Math.sign(ay));
+      nx = wx;
+      ny = wy;
+    }
+  } // (Sandbox: a zone that's a wall to me, plan Phase 3)
   if (attorney() && isDn(s)) {
     const [rx, ry] = inRing(nx, ny);
     if (rx !== nx || ry !== ny) {

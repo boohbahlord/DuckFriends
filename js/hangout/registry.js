@@ -36,7 +36,7 @@
      face(id, ctx)               → which way a duck looks (1 right, -1 left), or 0 (seated: toward what it sits at)
      propClass(prop, s)          → a class for a prop's element ('off' for a lamp switched off)
      light(prop, s, l)           → false turns a light off (l: one of layout.js' LIGHTS; prop: its prop, if it has one)
-     blocked(x, y, z, ctx)       → true where my duck may not step (world px): a mode's own edges
+     blocked(x, y, z, ctx, fx, fy) → true where my duck may not step from (fx, fy) (world px): a mode's own edges
      crowd(x, y, me, ctx)        → how far my duck at (x, y) would be into walkers of the activity's own, 0 (clear) … 1
      sprint(on, dt, ctx)         → false stops my duck sprinting this step (on: Shift held while walking)
      spawn(ctx)                  → { x, y } in world px where reset duck puts my duck, or null

@@ -44,6 +44,7 @@ import {
   sbPlayerSpot,
   SB_BACK_MS,
   SB_BOXES,
+  sbZombieWall,
 } from "./sandboxrules.js";
 import { godOn, godHas } from "./sbgod.js";
 import { valueOf } from "./numerat.js";
@@ -1433,7 +1434,8 @@ const KEEP = [
   "wn",
   "lt",
   "lw",
-]; // (sp, dm: a Sandbox spawn's zombie, its spawn and its damage: sbspawn.js)
+  "ws",
+]; // (ws: which way it goes round a Sandbox wall, sandboxrules.js sbWallGo; sp, dm: a Sandbox spawn's zombie, its spawn and its damage: sbspawn.js)
 /* the zombies as objects, from the state's three parts, and back (k in zp: hp · 16 + st, st up to 8, the jump) */
 function zombies(s) {
   const zp = s.hang.zp || [],
@@ -5275,10 +5277,12 @@ function l4Tick(s, now) {
   }
   /* the zombies walk, tear boards down, climb in, swipe: at every duck standing, Justin out there too (the owner's,
      Nov 17 20:02Z: "zombies will attack justin now, because they literally arent"; he only doesn't keep the game going) */
+  ZW = sbZombieWall(s, W, H, true); // (Sandbox: its walls)
   moveZombies(s, zs, now, T, [
     ...up.filter((id) => !godOn(s, id)), // (God mode: the zombies ignore it)
     ...ids.filter((id) => isWild(s, id) && standing(s, id)),
   ]);
+  ZW = null;
   if (isSurv(s) && L4_HOOKS.gm)
     L4_HOOKS.gm.tick(s, zs, now, mine, gmHelp(s, now)); // (Survival's gunmen: gunmenrules.js)
   if (isSurv(s)) merchantShoots(s, zs, now); // (and an armed merchant fighting back)
@@ -6208,6 +6212,9 @@ function walkTo(z, tx, ty, far) {
    of standing pressed against it (the owner's, Nov 17 05:46Z: zombies got stuck on trees and didn't know to go round).
    Stopping only at ducks. Stood inside something (pushed or climbed in there), it walks out toward aim */
 const TURNS = [0, 0.52, -0.52, 1.05, -1.05, 1.57, -1.57];
+/* Sandbox's walls (sandboxrules.js sbZombieWall), while the zombies of a Sandbox walk */
+let ZW = null;
+export const setZWall = (f) => (ZW = f);
 function stepZombie(z, aim, far, pls) {
   const n = Math.max(1, Math.ceil(far / 8));
   for (let k = 0; k < n; k++) {
@@ -6223,6 +6230,7 @@ function stepZombie(z, aim, far, pls) {
     const ok = (x, y) => {
       if (stuckIn ? !playable(x, y) : !zOk(x, y, zz, z.up ?? STEP))
         return false; // (z.up: how high a Sandbox NPC steps, its Can jump and Can climb walls, sbspawn.js)
+      if (ZW && ZW.stops(z, x, y, zz)) return false; // (a zone that's a wall to it)
       for (const q of pls) {
         if (Math.abs((q.zz || 0) - zz) > 50) continue; // (a duck up on a roof over it: it walks under it)
         const now = room(z.x, z.y, ...q.xy),
@@ -6231,6 +6239,18 @@ function stepZombie(z, aim, far, pls) {
       }
       return true;
     };
+    if (ZW) {
+      const sx = z.x + ux * len,
+        sy = z.y + uy * len;
+      if (z.ws || ZW.stops(z, sx, sy, zz)) {
+        const [x, y] = ZW.go(z, sx, sy, zz, ok);
+        if ((x !== z.x || y !== z.y) && ok(x, y)) {
+          z.x = x;
+          z.y = y;
+          continue;
+        } // (round a Sandbox wall, one way till it's past: else the turns below)
+      }
+    }
     let moved = false;
     for (const t of TURNS) {
       const c = Math.cos(t),

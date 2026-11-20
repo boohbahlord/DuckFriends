@@ -51,6 +51,11 @@ import {
   SB_SHAPE,
   sbSpread,
   sbZoneSpot,
+  sbNpcWalls,
+  sbInv,
+  sbFitSide,
+  sbWallGo,
+  sbWallStops,
 } from "./sandboxrules.js";
 import {
   W as WW,
@@ -315,8 +320,8 @@ function lookOf(ap) {
 }
 /* ---------- the zones (stage 5): where things spawn ----------
    a spot at random in zone q (on a world, one a duck can stand on) */
-export const zoneSpot = (s, q) =>
-  sbZoneSpot(s, q, WW, WH, (x, y, z) => standable(x * WW, y * WH, z));
+export const zoneSpot = (s, q, inv = false) =>
+  sbZoneSpot(s, q, WW, WH, (x, y, z) => standable(x * WW, y * WH, z), inv); // (inv: an Inverse tab's, outside it)
 /* the zones whose box f ("ent" or "lt") names point p, by its color or its name */
 export function zonesFor(s, f, p) {
   const tags = [p.col, boxText(p, "name").toLowerCase()];
@@ -328,7 +333,7 @@ export function zonesFor(s, f, p) {
    than its spot, or on the spawn itself */
 function entSpot(s, p, id) {
   const zid = id && sbCallZone(pointsOf(s), id);
-  if (zid) return calledSpot(s, zid, true);
+  if (zid) return calledSpot(s, zid, true, sbInv(p));
   const zs = zonesFor(s, "ent", p);
   return zs.length
     ? { ...zoneSpot(s, zs[Math.floor(Math.random() * zs.length)]), inz: 1 }
@@ -336,8 +341,8 @@ function entSpot(s, p, id) {
 }
 /* a tab's spot, from the zone it answers to (the owner's, Nov 20 02:45Z: "what location is determined by the zone
    algorithm"): one of its acting squares, and one step on when it steps by use */
-export function calledSpot(s, zid, spawned = false) {
-  const at = { ...zoneSpot(s, pointsOf(s)[zid]), inz: 1 };
+export function calledSpot(s, zid, spawned = false, inv = false) {
+  const at = { ...zoneSpot(s, pointsOf(s)[zid], inv), inz: 1 };
   sbUsed(s, zid);
   if (spawned) zbSpawned(s, zid); // (its file's when spawn: sbzonebrain.js)
   return at;
@@ -910,12 +915,12 @@ export function sbAct(s, a, now) {
   /* its size from a resize handle: zw, zh (duck lengths, 1 to 40) and its new middle x, y */
   if (a.k === "size") {
     if (p.grp) return false;
-    const zw = Math.round(+a.zw),
-      zh = Math.round(+a.zh),
+    const zw = sbFitSide(+a.zw),
+      zh = sbFitSide(+a.zh),
       x = +a.x,
       y = +a.y;
     if (![zw, zh, x, y].every(Number.isFinite)) return false;
-    if (zw < 1 || zh < 1 || zw > 40 || zh > 40) return false;
+    if (zw !== +a.zw || zh !== +a.zh) return false; // (as dragged: sbFitSide)
     if (x < 0 || x > 1 || y < 0 || y > 1) return false;
     let q = withField(withField(p, "zw", String(zw)), "zh", String(zh));
     q = { ...q, x: +x.toFixed(4), y: +y.toFixed(4) };
@@ -950,12 +955,16 @@ export function sbAct(s, a, now) {
    page for players only those) */
 function canSet(p, f) {
   if (f === "call") return sbNeedsCall(p); // (a Spawn, Respawn or Loot tab's Caller)
+  if (f === "inv") return p.k === "zone" || sbNeedsCall(p); // (Inverse: a zone's, or a tab that answers to one)
   if (f === "lead") return !p.grp; // (the zone a block leads with)
   if (SB_SHAPE[f] || f === "zw" || f === "zh") return !p.grp; // (every block's shape and size; a page has its spawn's)
   if (SB_ORDER[f]) return p.pg !== "pl"; // (every block's and tab's own potential order)
   if (p.k === "loot") return !!SB_LOOT[f] || f === "name" || f === "hide"; // (a loot orb's own boxes: sbloot.js)
   if (p.k === "zone")
-    return !!SB_ZONE[f] || ["name", "pon", "pwho", "hide", "brain"].includes(f); // (a zone's own, players spawning in it, and its Seriat file: sbzonebrain.js)
+    return (
+      !!SB_ZONE[f] ||
+      ["name", "pon", "pwho", "hide", "brain", "dark"].includes(f)
+    ); // (a zone's own, players spawning in it, its Seriat file: sbzonebrain.js, and Dark outside)
   if (SB_LOOT[f] || SB_ZONE[f]) return false;
   if (p.k === "respawn")
     return ["who", "name", "hide"].includes(f) || (p.im || []).includes(f);
@@ -1038,7 +1047,7 @@ function backAt(s, sp) {
   if (!rs.length) return entSpot(s, p, sp); // (none: where it first spawns)
   const r = rs[Math.floor(Math.random() * rs.length)],
     zid = sbCallZone(pts, r.id);
-  return zid ? calledSpot(s, zid) : areaSpot(s, r);
+  return zid ? calledSpot(s, zid, false, sbInv(r)) : areaSpot(s, r);
 }
 /* ---------- the host's heartbeat ----------
    H: what the rules lend it (rules.js): ducks(s) the ducks up on the board, claw(s, id, dmg, now) a zombie's swipe on a
@@ -1235,13 +1244,15 @@ function boardTick(s, now, H) {
   const live = z.zb.filter((o) => !o.d),
     far = (a, b) => Math.hypot((a.x - b.x) / RX, (a.y - b.y) / RY);
   let ch = false;
-  const spot = (o) => ({ x: o.x, y: o.y });
+  const spot = (o) => ({ x: o.x, y: o.y }),
+    wallsOf = sbNpcWalls(s); // (the zones that are walls to each: plan Phase 3)
   const plans = think(s, now, live, spot, H, far, (id) => spot(s.pos[id]));
   if (plans.ch) ch = true;
   for (const { me, o, d } of plans) {
     const to = d.goal || d.flee;
     if (!to) continue;
     const x0 = o.x,
+      y0 = o.y,
       bd = far(me, to),
       claw = reachTo(WAVE.CLAW, o, to, s), // (its hitbox, and its foe's: sbarms.js)
       sp = WAVE.SPEED * (o.sv || 1) * (o.run && bd > 4 ? 1.5 : 1); // (can sprint: half as fast again while far off)
@@ -1257,6 +1268,8 @@ function boardTick(s, now, H) {
       o.y += (to.y - o.y) * go;
       ch = true;
     }
+    if (wallsOf(o).length)
+      [o.x, o.y] = sbWallGo(s, wallsOf(o), x0, y0, o.x, o.y, 0, 1, 1, o); // (round a wall, never through it)
     if (Math.abs(o.x - x0) > 1e-4) o.f = o.x > x0 ? 1 : -1; // (the way it goes: a made NPC's weapon points it, or at what it hits; and its picture faces it, so it's hit where it shows, sbbody.js)
     if (
       d.foe &&
@@ -1270,7 +1283,8 @@ function boardTick(s, now, H) {
   }
   /* never in each other: two too close are pushed apart, each only against a few in its own and the next cells (a
      crowd round a duck can have hundreds in a few cells) */
-  const grid = new Map(),
+  const was = live.map((o) => [o.x, o.y]),
+    grid = new Map(),
     key = (cx, cy) => cx * 4096 + cy,
     cell = (o) => [Math.floor(o.x / RX / CELL), Math.floor(o.y / RY / CELL)];
   for (const o of live) {
@@ -1300,6 +1314,10 @@ function boardTick(s, now, H) {
           ch = true;
         }
   }
+  live.forEach((o, i) => {
+    if (wallsOf(o).length && sbWallStops(s, wallsOf(o), ...was[i], o.x, o.y, 0))
+      [o.x, o.y] = was[i]; // (never pushed through a wall)
+  });
   for (const o of live) {
     o.x = Math.round(o.x * 1000) / 1000;
     o.y = Math.round(o.y * 1000) / 1000;

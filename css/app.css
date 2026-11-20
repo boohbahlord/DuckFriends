@@ -21833,3 +21833,22 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .l4-unseen {
   opacity: 0.55;
 }
+/* Sandbox: Dark outside, round the zone my duck is in (sbspawnview.js darkOut) */
+.sb-dark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 2147483000;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+.sb-dark.on {
+  opacity: 1;
+}
+.sb-dark path {
+  fill: rgba(3, 4, 10, 0.86);
+}
