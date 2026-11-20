@@ -7,10 +7,17 @@
    one (sbspawn.js fromPattern), reading each box as if it were typed. Kept on this device only. */
 import { esc, openWindow, toast } from "./ui.js";
 import { W, H } from "./hangout/layout.js";
-import { SB_COLORS, SB_NOCOL, sbOnBoard, sbZoneBox } from "./sandboxrules.js";
+import {
+  SB_COLORS,
+  SB_NOCOL,
+  sbOnBoard,
+  sbInBlock,
+  sbSpread,
+  sbFills,
+} from "./sandboxrules.js";
 import { kindsFor } from "./sbmake.js";
 
-export const sbClip = { pt: null }; // (what Copy or Cut kept)
+export const sbClip = { pt: null, many: null }; // (what Copy or Cut kept; many: a selection's, each with its step from their middle)
 export const sbPresets = {}; // (kind: the pattern Build puts down for it)
 /* cheat mode: on at the start (nothing changes until it's turned off, Shift+C), off: the Sandbox windows (B, M, N, G, P),
    Build's menus and Properties wait for it */
@@ -44,6 +51,7 @@ export function patternOf(p) {
     f,
     ...(p.im ? { im: [...p.im] } : {}),
     ...(p.ap ? { ap: JSON.parse(JSON.stringify(p.ap)) } : {}),
+    ...(p.rot ? { rot: p.rot } : {}),
   };
 }
 
@@ -54,16 +62,16 @@ export function pointAt(s, at) {
     bd = Infinity;
   for (const [id, p] of Object.entries((s.sb && s.sb.pts) || {})) {
     if (p.grp) continue; // (a spawn's + page: its spawn's)
-    if (p.k === "zone") {
-      const [x0, y0, x1, y1] = sbZoneBox(s, p, W, H);
-      if (at.x >= x0 && at.x <= x1 && at.y >= y0 && at.y <= y1) {
+    if (p.k === "zone" || (sbSpread(p) && !sbFills(p))) {
+      /* a zone, or a block bigger than its spot: inside its shape (a ring right on it still wins) */
+      if (sbInBlock(s, p, at.x, at.y, W, H)) {
         const d = 5; // (a ring on top of it wins)
         if (d < bd) {
           bd = d;
           best = id;
         }
       }
-      continue;
+      if (p.k === "zone") continue; // (a spawn, respawn or loot spot keeps its ring too)
     }
     const d = board
       ? Math.hypot((p.x - at.x) / 0.03, (p.y - at.y) / 0.08)

@@ -8433,6 +8433,15 @@ register("game", {
             const r = board.getBoundingClientRect();
             return unplace(cx - r.left, cy - r.top);
           },
+          (o) => {
+            // (the other way: where a spot on the map is on the screen, for a block's handles and the selection box)
+            if (!geo) measure();
+            const board = S && origin($(".board", S));
+            if (!board || !geo) return null;
+            const r = board.getBoundingClientRect(),
+              c = place(o, 0, 1);
+            return { x: r.left + c.left, y: r.top + c.top };
+          },
         )
       : null;
     placed = placeKey(R.state);
