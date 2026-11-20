@@ -5,6 +5,7 @@
    into one picture:
      assets/px/art/art-<hash>.webp   the pixels (lossless WebP)
      js/pxa.js                       which picture is where, by its key (pixel.js reads it)
+   then split in two: the front screen's, and the rest (tools/pixel-art-front.cjs)
    The ducks and the cats aren't in it (keys starting with c: they'll be made from their parts), nor a player's own
    pictures, nor the rainbow skin's turning steps.
    Serve nothing first: it serves the folder itself. Run it after changing any drawing, then python3 tools/stamp.py:
@@ -16,6 +17,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { execFileSync } = require("child_process");
 const { chromium } = require("playwright");
+const { splitFront } = require("./pixel-art-front.cjs");
 
 const ROOT = path.join(__dirname, ".."),
   OUT = path.join(ROOT, "assets", "px", "art");
@@ -289,6 +291,7 @@ function webp(b64) {
     (fs.statSync(path.join(OUT, file)).size / 1024).toFixed(0),
     "kB",
   );
+  await splitFront(b, base); // (the front screen's pictures in a file of their own: tools/pixel-art-front.cjs)
   await b.close();
   srv.close();
 })();
