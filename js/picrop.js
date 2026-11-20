@@ -192,7 +192,10 @@ function setUp(w, close, img, { aspect, preview, make }) {
       if (n !== shown) return; // (a newer one is on its way)
       prev.width = out.naturalWidth;
       prev.height = out.naturalHeight;
-      prev.style.width = `${(4.4 * Math.min(2, out.naturalWidth / out.naturalHeight)).toFixed(2)}rem`; // (its own shape, as high as ever)
+      const r = out.naturalWidth / out.naturalHeight,
+        pw = r > 2 ? 11 : 4.4 * r; // (its own shape: as high as ever, or a wide strip like a card's 11rem across)
+      prev.style.width = `${pw.toFixed(2)}rem`;
+      prev.style.height = `${(pw / r).toFixed(2)}rem`;
       const g = prev.getContext("2d");
       g.clearRect(0, 0, prev.width, prev.height);
       g.drawImage(out, 0, 0);
