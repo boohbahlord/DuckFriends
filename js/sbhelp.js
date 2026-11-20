@@ -130,7 +130,7 @@ export const SB_HELP = {
     ],
     [
       "Music",
-      "Music opens its own window: tick the songs that play, or turn them all on or off at once. Only the ticked ones play, the same for everyone. The save keeps the list.",
+      "Music opens its own window: tick the songs that play, or turn them all on or off at once. Only the ticked ones play, the same for everyone. The save keeps the list. Import a song brings in one of yours (up to 6): it is cut to 3 minutes and made small (32 kbps, one channel), a green bar on the button shows it going in, and it plays for everyone like the game's songs. × takes it out. A save, a game mode and a shared game mode keep it.",
     ],
     [
       "Groups",

@@ -22187,6 +22187,50 @@ p.sb-ties {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  min-height: 1.9rem;
+}
+.sb-song > label {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-wrap: anywhere;
+}
+.sb-songx {
+  padding: 0 0.55rem;
+  line-height: 1.6;
+}
+.sb-songup.off {
+  opacity: 0.45;
+  pointer-events: none;
+}
+.sb-songnote {
+  margin-top: 0;
+}
+/* the green bar on an upload button (js/upbar.js): short, under the button's words, filling as it's read, made and sent */
+.up-bar {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 3px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.18);
+  overflow: hidden;
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+.up-bar > i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: #3ddc6a;
+  border-radius: 2px;
+  transition: width 0.15s linear;
+}
+.up-bar.up-gone {
+  opacity: 0;
 }
 /* Made maps (js/umaps.js): Make a map and My maps, and a made map's picture wherever a map's picture shows */
 .gs-pic > img.gs-made,
