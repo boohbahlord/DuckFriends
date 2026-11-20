@@ -21496,8 +21496,10 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   flex: 1;
   min-height: 0;
   padding: 1.2rem 1.6rem 2rem;
-  background: #fbf8ee;
-  color: #1c1c28;
+  /* the bible's page has its own color, never white (the owner's, Nov 20 04:46Z and 17:58Z: "seriat should be different
+     color background") */
+  background: #262a42;
+  color: #ece6d2;
   border: 4px solid #1c1c28;
   image-rendering: pixelated;
   font-family: "Jersey 15", monospace;
@@ -21513,17 +21515,17 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .sbb-page h3 {
   margin: 1.4rem 0 0.4rem;
   line-height: 1.1;
-  color: #1c1c28;
+  color: #ffd166;
   text-shadow: none;
 }
 .sbb-page h1 {
   font-size: 2.2rem;
   margin-top: 0;
-  border-bottom: 4px solid #1c1c28;
+  border-bottom: 4px solid #7d86b8;
 }
 .sbb-page h2 {
   font-size: 1.7rem;
-  border-bottom: 2px solid #1c1c28;
+  border-bottom: 2px solid #7d86b8;
 }
 .sbb-page h3 {
   font-size: 1.35rem;
@@ -21542,8 +21544,9 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .sbb-page pre {
   font-family: "Cascadia Code", Consolas, monospace;
   font-size: 0.78em;
-  background: #e8e2cf;
-  border: 2px solid #1c1c28;
+  color: #9ee6c4;
+  background: #171a2c;
+  border: 2px solid #4b5280;
   padding: 0 0.25rem;
   overflow-wrap: anywhere;
 }
@@ -21570,13 +21573,13 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 }
 .sbb-page th,
 .sbb-page td {
-  border: 2px solid #1c1c28;
+  border: 2px solid #4b5280;
   padding: 0.25rem 0.5rem;
   text-align: left;
   vertical-align: top;
 }
 .sbb-page th {
-  background: #e8e2cf;
+  background: #333858;
 }
 @media (max-width: 600px) {
   .sbb-page {
@@ -21585,7 +21588,7 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   }
 }
 /* the help pages of Sandbox's windows (js/sbhelp.js): a few lines at a time, in the game's own window (the owner's, Nov
-   20 04:46Z: "why tf is this white?"; the white page is the Seriat bible's alone) */
+   20 04:46Z: "why tf is this white?"); the Seriat bible has its own colored page */
 .win.sbh-win {
   width: min(34rem, 100%);
 }
