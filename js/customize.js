@@ -1062,7 +1062,7 @@ export function openCustomize(page = lastPage, opts = {}) {
             <p class="small dim">The name's color is under Colors.</p></div>`;
           } else if (k === "card") {
             const pat = (v, layout = C.layout, size = C.size) =>
-              `<span class="pat-pic" style="${esc(`background:${v !== "none" ? patternLayers(v, C.patternColor || "#ffffff", layout, size) + ", " : ""}${C.color}`)}"></span>`;
+              `<span class="pat-pic" style="${esc(`background:${v !== "none" ? patternLayers(v, C.patternColor || "#ffffff", layout, size, C.color) + ", " : ""}${C.color};image-rendering:pixelated`)}"></span>`;
             const cur = C.image ? "" : C.pattern,
               kind = (k) =>
                 CARD_PATTERNS.filter(([v]) =>

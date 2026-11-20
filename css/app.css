@@ -19092,24 +19092,6 @@ html.moving .pxh-in {
 html.moving .pxt {
   animation: twinkle 2.6s ease-in-out infinite alternate;
 }
-/* a card's pattern or picture (a player's card, the Card page's swatches) on the grid too: its background drawn again
-   under it, through the same filter, so the duck and the name over it stay as they are */
-html.pixel .pcard[style*="url("] {
-  isolation: isolate;
-}
-html.pixel .pcard[style*="url("]::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  background: inherit;
-  filter: url(#px-f);
-  pointer-events: none;
-}
-html.pixel .pat-pic[style*="url("] {
-  filter: url(#px-f);
-}
 .gduck-body img.px {
   display: block;
   width: 100%;

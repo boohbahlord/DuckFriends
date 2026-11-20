@@ -3,11 +3,14 @@
    Its background is a color, a fun pattern over a color (any hat or face item can be a pattern too) laid out the way the
    player picks (tiled, staggered, diagonal, scattered, one big, a band, a border; small to large), or a picture. */
 import { duckSVG } from "./duck.js";
-import { HATS, hatTile } from "./hats.js";
+import { HATS, hatTile, hatById } from "./hats.js";
 import { FACES, faceTile } from "./faces.js";
 import { nameHTML } from "./name.js";
 import { esc } from "./ui.js";
 import { seenDuck, seenName } from "./looks.js";
+import { gridPx } from "./pixel.js";
+import { applyPalette, PALETTE } from "./pixelpalette.js";
+import PXC from "./pxcard.js";
 
 /* sport balls, drawn in their own colors in a 32 × 32 box */
 const BALLS = {
@@ -81,7 +84,7 @@ export const CARD_SIZES = [
 ];
 
 /* one pattern's motif in a 32 × 32 box */
-function motif(kind, col) {
+export function motif(kind, col) {
   if (String(kind).startsWith("hat:"))
     return hatTile(kind.slice(4), col === "#ffffff" ? "" : col);
   if (String(kind).startsWith("face:")) return faceTile(kind.slice(5));
@@ -99,48 +102,237 @@ function motif(kind, col) {
     }[kind] || ""
   );
 }
-const svgURL = (w, h, inner) =>
-  `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${inner}</svg>`)}")`;
-const at = (m, x, y, r = 0, k = 1) =>
-  `<g transform="translate(${x} ${y}) rotate(${r}) scale(${k}) translate(-16 -16)">${m}</g>`;
-/* a pattern laid out on a card: CSS background layers (without the card's color) */
-export function patternLayers(kind, col, layout = "tiled", size = "m") {
-  const m = motif(kind, col);
-  if (!m) return "";
-  const k = (CARD_SIZES.find((z) => z[0] === size) || CARD_SIZES[1])[2],
-    big = /^(hat|face):/.test(kind);
-  const px = (n) => `${Math.round(n * k)}px`;
-  switch (layout) {
-    case "staggered":
-      return `${svgURL(64, 64, at(m, 16, 16) + at(m, 48, 48))} 0 0/${px(big ? 76 : 56)} ${px(big ? 76 : 56)}`;
-    case "diagonal":
-      return `${svgURL(64, 64, at(m, 32, 32, -35) + at(m, 0, 0, -35) + at(m, 64, 0, -35) + at(m, 0, 64, -35) + at(m, 64, 64, -35))} 0 0/${px(60)} ${px(60)}`;
-    case "scattered":
-      return `${svgURL(
-        128,
-        128,
-        [
-          [20, 22, -20, 0.9],
-          [78, 14, 25, 0.7],
-          [108, 60, -10, 1.1],
-          [50, 70, 40, 0.8],
-          [16, 100, 15, 1],
-          [88, 108, -35, 0.75],
-        ]
-          .map(([x, y, r, s]) => at(m, x, y, r, s))
-          .join(""),
-      )} 0 0/${px(120)} ${px(120)}`;
-    case "big":
-      return `${svgURL(32, 32, m)} 88% 50%/auto ${Math.round(110 * k)}% no-repeat`;
-    case "band":
-      return `${svgURL(32, 32, m)} 0 50%/${px(26)} ${px(26)} repeat-x`;
-    case "border":
-      return `${svgURL(32, 32, m)} 0 0/${px(18)} ${px(18)} repeat-x, ${svgURL(32, 32, m)} 0 100%/${px(18)} ${px(18)} repeat-x`;
-    default:
-      return big
-        ? `${svgURL(56, 56, `<g transform="translate(-2 -2) scale(.95)">${m}</g><g transform="translate(26 26) scale(.95)">${m}</g>`)} 0 0/${px(56)} ${px(56)}`
-        : `${svgURL(32, 32, m)} 0 0/${px(32)} ${px(32)}`;
+/* a pattern laid out on a card: CSS background layers (without the card's color). Its motifs are pixel files
+   (tools/pixel-cards.cjs), laid out on a canvas of the grid's pixels (pixelLayers) */
+export function patternLayers(kind, col, layout = "tiled", size = "m", base) {
+  return pixelLayers(kind, col, layout, size, base);
+}
+/* ---------- the patterns in pixels ----------
+   The two sheets of motifs (js/pxcard.js: what keeps its colors, and what takes the player's), loaded once; a motif at
+   a size is the nearest size made, the player's color put on its tint layer; a layout is drawn on a canvas of the
+   grid's pixels, each pixel then whole and in the game's colors (inGameColors), and shown as a pixel picture. Before the sheets are in,
+   a card is its color only, marked (--cpat) to get its pattern when they come */
+const SHEETS =
+  typeof Image === "undefined"
+    ? []
+    : [PXC.fixed, PXC.tint].map((src) => {
+        const im = new Image();
+        im.src = src;
+        return im;
+      });
+let sheetsIn = false;
+if (SHEETS.length)
+  Promise.all(SHEETS.map((im) => im.decode()))
+    .then(() => {
+      sheetsIn = true;
+      document.querySelectorAll('[style*="--cpat"]').forEach((el) => {
+        const [kind, col, layout, size, color] = el.style
+          .getPropertyValue("--cpat")
+          .replace(/^\s*"|"\s*$/g, "")
+          .split("|");
+        const pat = pixelLayers(kind, col, layout, size, color);
+        if (pat) el.style.background = `${pat}, ${color}`;
+        el.style.removeProperty("--cpat");
+      });
+    })
+    .catch(() => {});
+const motifs = new Map();
+function motifPx(kind, col, want) {
+  const i = PXC.kinds.indexOf(kind);
+  if (i < 0) return null;
+  const s = PXC.sizes.reduce((a, b) =>
+      Math.abs(b - want) < Math.abs(a - want) ? b : a,
+    ),
+    key = kind + "|" + col + "|" + s;
+  if (motifs.has(key)) return motifs.get(key);
+  const pad = Math.round(s / 4),
+    n = s + 2 * pad, // (each made with a quarter of its size round it: tools/pixel-cards.cjs)
+    c = document.createElement("canvas");
+  c.width = c.height = n;
+  c.pad = pad;
+  const x = c.getContext("2d", { willReadFrequently: true }),
+    y = PXC.rows[s];
+  if (PXC.hasFixed[i]) x.drawImage(SHEETS[0], i * n, y, n, n, 0, 0, n, n);
+  if (PXC.hasTint[i] && PXC.mix.includes(kind)) {
+    /* a hat in the player's color: the hat with its color black, and each pixel's grey says how much of the color it
+       takes (white: the hat's own color, as on the duck) */
+    const def = hatById(kind.slice(4)),
+      own = ((def && def.colors) || []).find(([k]) => k === "c1"),
+      t = document.createElement("canvas");
+    t.width = t.height = n;
+    const tx = t.getContext("2d", { willReadFrequently: true });
+    tx.fillStyle = col === "#ffffff" && own ? own[2] : col;
+    tx.fillRect(0, 0, 1, 1);
+    const [cr, cg, cb] = tx.getImageData(0, 0, 1, 1).data;
+    tx.clearRect(0, 0, n, n);
+    tx.drawImage(SHEETS[1], i * n, y, n, n, 0, 0, n, n);
+    const v = tx.getImageData(0, 0, n, n).data,
+      img = x.getImageData(0, 0, n, n),
+      d = img.data;
+    for (let p = 0; p < d.length; p += 4) {
+      const m = v[p] / 255;
+      d[p] += m * cr;
+      d[p + 1] += m * cg;
+      d[p + 2] += m * cb;
+    }
+    x.putImageData(img, 0, 0);
+  } else if (PXC.hasTint[i]) {
+    const t = document.createElement("canvas");
+    t.width = t.height = n;
+    const tx = t.getContext("2d");
+    tx.drawImage(SHEETS[1], i * n, y, n, n, 0, 0, n, n);
+    tx.globalCompositeOperation = "source-in";
+    tx.fillStyle = col;
+    tx.fillRect(0, 0, n, n); // (the player's color, where the white is)
+    x.drawImage(t, 0, 0);
   }
+  motifs.set(key, c);
+  return c;
+}
+const tiles = new Map();
+function pixelLayers(
+  kind,
+  col,
+  layout = "tiled",
+  size = "m",
+  base = "#2fa4ff",
+) {
+  if (!motif(kind, col)) return "";
+  if (!sheetsIn) return "";
+  const k = (CARD_SIZES.find((z) => z[0] === size) || CARD_SIZES[1])[2],
+    big = /^(hat|face):/.test(kind),
+    g = gridPx() || 2,
+    key = [kind, col, layout, size, g, base].join("|");
+  if (tiles.has(key)) return tiles.get(key);
+  /* the tile: its size in css px, its units across, and its motifs [x, y, turn, scale] in its units */
+  const [css, units, list] =
+    layout === "staggered"
+      ? [
+          (big ? 76 : 56) * k,
+          64,
+          [
+            [16, 16],
+            [48, 48],
+          ],
+        ]
+      : layout === "diagonal"
+        ? [
+            60 * k,
+            64,
+            [
+              [32, 32],
+              [0, 0],
+              [64, 0],
+              [0, 64],
+              [64, 64],
+            ].map(([a, b]) => [a, b, -35]),
+          ]
+        : layout === "scattered"
+          ? [
+              120 * k,
+              128,
+              [
+                [20, 22, -20, 0.9],
+                [78, 14, 25, 0.7],
+                [108, 60, -10, 1.1],
+                [50, 70, 40, 0.8],
+                [16, 100, 15, 1],
+                [88, 108, -35, 0.75],
+              ],
+            ]
+          : layout === "big"
+            ? [96, 32, [[16, 16]]]
+            : layout === "band"
+              ? [26 * k, 32, [[16, 16]]]
+              : layout === "border"
+                ? [18 * k, 32, [[16, 16]]]
+                : big
+                  ? [
+                      56 * k,
+                      56,
+                      [
+                        [13.2, 13.2, 0, 0.95],
+                        [41.2, 41.2, 0, 0.95],
+                      ],
+                    ]
+                  : [32 * k, 32, [[16, 16]]];
+  const T = Math.max(2, Math.round(css / g)),
+    u = T / units,
+    c = document.createElement("canvas");
+  c.width = c.height = T;
+  const x = c.getContext("2d");
+  x.imageSmoothingEnabled = false;
+  /* a layout that turns its motifs shows what they draw past their box (as the drawing's did); the others cut it */
+  const whole = ["staggered", "diagonal", "scattered"].includes(layout);
+  for (const [mx, my, r = 0, sc = 1] of list) {
+    const m = motifPx(kind, col, 32 * sc * u);
+    if (!m) continue;
+    const p = m.pad,
+      s = m.width - 2 * p;
+    x.setTransform(
+      1,
+      0,
+      0,
+      1,
+      Math.round(mx * u - s / 2),
+      Math.round(my * u - s / 2),
+    );
+    if (r) {
+      x.translate(s / 2, s / 2);
+      x.rotate((r * Math.PI) / 180);
+      x.translate(-s / 2, -s / 2); // (turned round its middle, smoothly: inGameColors makes each pixel whole again)
+    }
+    x.imageSmoothingEnabled = !!r;
+    if (whole) x.drawImage(m, -p, -p);
+    else x.drawImage(m, p, p, s, s, 0, 0, s, s);
+    x.setTransform(1, 0, 0, 1, 0, 0);
+  }
+  inGameColors(x, T, base);
+  const url = `url("${c.toDataURL("image/png")}")`,
+    w = T * g + "px";
+  const out =
+    layout === "big"
+      ? `${url} 88% 50%/auto ${Math.round(110 * k)}% no-repeat`
+      : layout === "band"
+        ? `${url} 0 50%/${w} ${w} repeat-x`
+        : layout === "border"
+          ? `${url} 0 0/${w} ${w} repeat-x, ${url} 0 100%/${w} ${w} repeat-x`
+          : `${url} 0 0/${w} ${w}`;
+  tiles.set(key, out);
+  return out;
+}
+/* every pixel the motifs touched, whole and in the game's colors: one they barely touch stays see-through (the card's
+   own color shows there, as the player picked it), one they cover more than half of is theirs, and one they cover less
+   is the mix of theirs and the card's (as the drawing's edges were) */
+const IN_PALETTE = new Set(PALETTE.map((h) => parseInt(h.slice(1, 7), 16)));
+function inGameColors(x, T, base) {
+  const u = document.createElement("canvas").getContext("2d");
+  u.fillStyle = base;
+  u.fillRect(0, 0, 1, 1);
+  const [r0, g0, b0] = u.getImageData(0, 0, 1, 1).data,
+    all = x.getImageData(0, 0, T, T),
+    d = all.data,
+    o = u.getImageData(0, 0, 1, 1),
+    q = o.data;
+  for (let p = 0; p < d.length; p += 4) {
+    const a = d[p + 3];
+    if (a < 64) {
+      d[p + 3] = 0;
+      continue;
+    }
+    const m = a > 128 ? 1 : a / 255;
+    if (m === 1 && IN_PALETTE.has((d[p] << 16) | (d[p + 1] << 8) | d[p + 2])) {
+      d[p + 3] = 255; // (one of the game's colors already: a ball's, a face's)
+      continue;
+    }
+    q[0] = r0 + (d[p] - r0) * m;
+    q[1] = g0 + (d[p + 1] - g0) * m;
+    q[2] = b0 + (d[p + 2] - b0) * m;
+    q[3] = 255;
+    applyPalette(o);
+    d.set(q, p);
+  }
+  x.putImageData(all, 0, 0);
 }
 export function cardBackground(card = {}) {
   if (card.image)
@@ -152,9 +344,16 @@ export function cardBackground(card = {}) {
           card.patternColor || "#ffffff",
           card.layout,
           card.size,
+          card.color || "#2fa4ff",
         )
       : "";
-  return `background:${pat ? `${pat}, ` : ""}${card.color || "#2fa4ff"}`;
+  const waits =
+    !pat &&
+    card.pattern &&
+    card.pattern !== "none" &&
+    !sheetsIn &&
+    SHEETS.length; // (its pixels not in yet: it gets them when they come)
+  return `background:${pat ? `${pat}, ` : ""}${card.color || "#2fa4ff"};image-rendering:pixelated${waits ? `;--cpat:"${[card.pattern, card.patternColor || "#ffffff", card.layout || "tiled", card.size || "m", card.color || "#2fa4ff"].join("|")}"` : ""}`;
 }
 
 /* p = a player; o = { host, me, ready, size, net, extra } (net: the connection, shown small beside the tags) */
