@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v142",
+    version: 142,
+    date: "Nov 20, 2026",
+    title: "Floors you stand on",
+    news: [
+      "For Sandbox: a zone has an Elevation (1 to 6, one gas station roof each) and a Ground switch. Ground on, up high, it's a floor: you stand on it, walk off it and fall, and if its squares go away under you, you fall too. A fall of two floors takes twice as long as one. Shots see it as they see Downpour's roofs.",
+      "For Dead Ducks Arcade and Survival: zombies crowding round you no longer shake.",
+    ],
+  },
+  {
     id: "v141",
     version: 141,
     date: "Nov 20, 2026",

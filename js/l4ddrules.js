@@ -1136,6 +1136,8 @@ const DP_OPENINGS = [
 export const OPENINGS = [...CABIN_OPENINGS];
 /* is the room on Downpour? (layout.js' useMode has turned to it: the rules call it for every action) */
 export const dp = () => layoutVariant() === "l4gs";
+/* the map's own roofs only (Sandbox's floors, sbfloors.js, aren't climbed to yet) */
+const mapDeck = (d) => (d && !d.sb ? d : null);
 /* Downpour's flood slows anyone on foot just as it slows a player's duck (l4dd.js speed): wading the shallow road 30%
    slower, swimming the deep end as slowly as in the pool. The merchants and Justin out there too, so nobody walks
    faster than a player can (the owner's, Nov 18 15:35Z: "all of their sprinting and their movement speed is the same
@@ -5578,7 +5580,7 @@ function moveZombies(s, zs, now, T, up) {
       const p = s.pos[id],
         xy = at(p),
         zz = +p.z || 0,
-        dk = dp() ? deckAt(xy[0], xy[1], zz) : null, // (Downpour: up on a roof, or the canopy)
+        dk = dp() ? mapDeck(deckAt(xy[0], xy[1], zz)) : null, // (Downpour: up on a roof, or the canopy; Sandbox's floors are Phase 4's zombies, later)
         way = dk && dk.kind === "canopy" ? stationDeck() : dk; // (the canopy: by way of the gas station's roof, then a jump)
       return {
         id,

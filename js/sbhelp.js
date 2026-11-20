@@ -35,6 +35,10 @@ export const SB_HELP = {
       "In a zone, tick who can't pass to make it a wall to them (a thin zone makes a thin wall); they walk round it. Inverse makes a zone, or a tab, work outside its zone instead (and outside every zone with its name or color). Dark outside darkens everything round the zone while you stand in it.",
     ],
     [
+      "Elevation and Ground",
+      "On Duck Cabin and Downpour a zone has an Elevation: 1 is the ground, each one more is a gas station roof higher, up to 6. Turn Ground on and it's a floor up there: you stand on it, walk off its edge and fall, and you fall when its squares stop working under you. Falling two floors takes twice as long as one.",
+    ],
+    [
       "Outlines",
       "In a zone's Outlines, pick who and a color: whoever it is gets that outline while inside the zone, seen through walls. + adds another row for others in another color.",
     ],

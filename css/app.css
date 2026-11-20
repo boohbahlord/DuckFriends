@@ -21982,3 +21982,9 @@ p.sb-ties {
   align-items: center;
   gap: 0.5rem;
 }
+/* Sandbox Phase 4, floors (js/sbfloors.js): a floor up high, its front edge under it, darker */
+.sb-face {
+  z-index: 3;
+  image-rendering: pixelated;
+  filter: brightness(0.5);
+}
