@@ -20863,6 +20863,17 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .sb-row:has(.sb-what) {
   grid-template-columns: auto minmax(0, 1fr);
 }
+/* G Rules' picks: the name above, its choices below, whole words (sbsaves.js rulesWin) */
+.sb-row.sb-pickrow {
+  grid-template-columns: minmax(0, 1fr);
+}
+.sb-pickrow .sb-what {
+  grid-column: 1;
+  justify-content: flex-start;
+}
+.sb-pickrow .sb-tab {
+  max-width: none;
+}
 .sb-row:has(.sb-acts) {
   grid-template-columns: auto minmax(0, 1fr);
   align-items: start;

@@ -378,7 +378,7 @@ function rulesWin(R) {
       .map(([k, b]) => {
         const v = sbRule(s, k);
         if (b.kind === "pick")
-          return `<div class="sb-row" data-row="${k}"><span>${esc(b.name)}</span><span class="sb-what">${b.opts
+          return `<div class="sb-row sb-pickrow" data-row="${k}"><span>${esc(b.name)}</span><span class="sb-what">${b.opts
             .map(
               ([o, n]) =>
                 `<button type="button" class="sb-tab${v === o ? " on" : ""}" data-rulepick="${k}" data-v="${o}" aria-pressed="${v === o}"${may ? "" : " disabled"}>${esc(n)}</button>`,
@@ -391,7 +391,7 @@ function rulesWin(R) {
       .join("");
   };
   return openWindow(
-    `<h2>Rules</h2><p class="small dim">Lives, the down phase, crits, watching and everyone out are for the zombie maps (the arcade's cabin and Downpour); Board size for the plain boards. Saved with the Sandbox.</p><div class="sb-rules sb-set"></div>`,
+    `<h2>Rules</h2><p class="small dim">Lives, the down phase, crits, watching and everyone out are for the zombie maps (the arcade's cabin and Downpour); Board size for the plain boards; a game mode's look on every map. Saved with the Sandbox.</p><div class="sb-rules sb-set"></div>`,
     {
       cls: "win-small sb-ruleswin",
       onOpen(w) {
