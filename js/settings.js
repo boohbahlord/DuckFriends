@@ -134,8 +134,13 @@ const PAGES = {
       "tiles-font",
     )}</details></div>
     <div class="sect"><h3>Reading</h3>
+<<<<<<< HEAD
+      <div class="row">${check("dyslexic", "Dyslexic mode", "Clear letters with more room between letters, words and lines.")}${check("colorblind", "Colorblind mode", "A board every kind of color sight tells apart, with marks in each column, and letters and words in colors that stand out.")}</div>
+      <div style="margin-top:.6rem">${slider("textSize", "Text size", 80, 180, 5)}${slider("uiSize", "UI size", 70, 140, 5)}</div></div>
+=======
       <div class="row">${check("dyslexic", "Dyslexic mode", "Clear letters with more room between letters, words and lines.")}${check("colorblind", "Colorblind mode", "A board every kind of color sight tells apart, with marks in each column.")}</div>
       <div style="margin-top:.6rem">${slider("textSize", "Text size", 80, 180, 5)}${uiScaleHTML()}</div></div>
+>>>>>>> origin/main
     <div class="sect"><h3>Chat</h3>${tiles("chatSide", [
       ["left", "Left"],
       ["bottom", "Bottom"],
