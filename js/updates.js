@@ -15,6 +15,7 @@ export const UPDATES = [
     title: "Groups back in Build",
     news: [
       "For Sandbox: Groups are in Build (B) again, under Zone, as asked; My lists is in both Build and Game settings.",
+      "Night Show, Sky and Pixel (and the menus' background) are now ready-made pixel files, drawn once ahead of time, so no picture is ever converted on your device; on a phone you see the middle of the map.",
     ],
   },
   {
