@@ -29,6 +29,7 @@ const HELP_IN = {
     "loops.txt",
     "print.txt",
     "zones.txt",
+    "move.txt",
   ],
 };
 /* a help file's path from the language's folder, by its name: helpAt("limits.txt") = "help/limits.txt",
@@ -78,10 +79,11 @@ Folders (click one to go in):
   order/         2>4 in order, | and repeats, brackets
   math/          + - / ^, asterisks (*, $ letters), asterisk rules
   brains/        names and stats, who (me, nearest duck), tests (if),
-                 loops, print and say, zones
+                 loops, print and say, zones, moves (\\move\\)
   examples/      ready brain files (a chaser, a coward, a healer, a
-                 talker, waves, a pair that share a value): copy one
-                 with cp and write its name in a spawn's Brain box
+                 talker, waves, a pair that share a value, a weaver):
+                 copy one with cp and write its name in a spawn's
+                 Brain box
 
 Notes: # starts a note, the rest of the line is skipped.
 Spaces and line breaks don't change anything: [2, 4] = [2,4].
@@ -341,6 +343,42 @@ Blocks:
   ((all zombies speed 2))
   for z in all zombies { ((z speed ~1.2)) }
 `,
+  "move.txt": `Moves
+
+A move walks an NPC along a path you draw with arrows:
+  >  right     <  left     /\\  up     \\/  down
+Two together slant: >/\\ is up and right. A number after them is
+how many duck lengths (1 when there is none):
+  when spawn \\move\\{ >3 \\/2 <3 /\\2 }     a box, then home
+  \\move\\ >/\\2 <(1+1)        no { }: the rest of the line
+
+Parts go with ; or a new line between, inside the { }:
+  to nearest duck    go there; the arrows now push the way
+                     there to that side, and it still arrives
+  -                  a straight part of the way (-2: two)
+  @1.5               this move at 1.5 times its speed
+  bend dogleg x3, weave    how each leg bends, in turn
+
+Bends:
+  shot (or straight)   a straight line          number 1
+  bow                  a smooth curve           number 2
+  weave                out and back across, S   number 3
+  dogleg               one sharp corner, L      number 4
+  mix                  bow, weave, dogleg in turn
+  dogleg x3, weave     3 doglegs, then a weave, then again
+  dogleg 3 times       the same as dogleg x3
+  bend style           a name holding 1 to 4 (let style = 2)
+A bend line on its own sets it for every move after it:
+at a file's top for every NPC, inside a when for that one.
+
+  when spawn {
+    \\move\\{ to nearest duck; bend bow; /\\3 }
+    attack nearest duck
+  }
+The move comes first; when it's done, its go, attack or flee
+goes on. A new move takes over one still going. A spot it can't
+get nearer to (a wall) is skipped after a moment.
+`,
   "tests.txt": `Tests
 
 Between backslashes, < and > compare (outside, they're arrows):
@@ -477,6 +515,15 @@ export const HELP = Object.fromEntries(
 /* ---------- help/examples/ (the owner's Nov 19 15:18Z via Adam): ready brain files, read-only like help/ ----------
    Players copy one (cp) and write its name in a spawn's Brain box. Each was run through compileScript with 0 errors. */
 export const EXAMPLES = {
+  "weaver.se": `# A weaver: it comes at the nearest duck along a path, never in a straight line.
+# Two doglegs, then a weave, over and over (see help/brains/move.txt).
+bend dogleg x2, weave
+when spawn {
+  \\move\\{ to nearest duck; >2 /\\2 <2 \\/2 }
+  attack nearest duck
+}
+every 6s \\move\\{ to nearest duck; /\\1 \\/1 }
+`,
   "chaser.se": `# A chaser: runs at the nearest duck, and bites when it is close.
 # Copy it, then write its name in a spawn's Brain box.
 when spawn { ((speed 1.2:1.6)); go nearest duck }

@@ -10,12 +10,13 @@
      node tools/pixel-maps.cjs pixel --colors   (only put its files in the era's limits, in place: Pixel's scene
                                                 shows its files now, so it can't be made again from its drawing)
    then python3 tools/stamp.py as for any other change. Needs Playwright's Chromium and Python's Pillow. Writes
-   assets/px/mapw/<map>/ and js/pxm/<map>.js */
+   assets/px/mapw/<map>/ and js/pxm/<map>.js, its small files on sheets (tools/pixel-sheets.cjs) */
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const { execFileSync } = require("child_process");
 const { chromium } = require("playwright");
+const { sheetMarkup } = require("./pixel-sheets.cjs");
 
 const ROOT = path.join(__dirname, ".."),
   W = 1366,
@@ -398,14 +399,16 @@ function withGlows(html, glows) {
       }
     for (const k of Object.keys(files))
       if (!process.env.KEEP_PNG) fs.unlinkSync(path.join(dir, k + ".png"));
-    const markup = glowed.replace(
-      /FILE:([\w-]+)/g,
-      (_, k) => `assets/px/mapw/${id}/${k}.webp`,
-    );
+    const json = ["sky", "stars", "collage", "vellum"].includes(how),
+      withFiles = glowed.replace(
+        /FILE:([\w-]+)/g,
+        (_, k) => `assets/px/mapw/${id}/${k}.webp`,
+      ),
+      markup = json ? withFiles : sheetMarkup(id, withFiles, 2); // (its small files on sheets: tools/pixel-sheets.cjs)
     fs.mkdirSync(path.join(ROOT, "js", "pxm"), { recursive: true });
     fs.writeFileSync(
       path.join(ROOT, "js", "pxm", id + ".js"),
-      `/* ${what}, as pixel files: written by tools/pixel-maps.cjs, never by hand */\nexport default ${JSON.stringify(["sky", "stars", "collage", "vellum"].includes(how) ? { W, H, G: 2, ...JSON.parse(markup) } : { W, H, G: 2, html: markup })};\n`,
+      `/* ${what}, as pixel files: written by tools/pixel-maps.cjs, never by hand */\nexport default ${JSON.stringify(json ? { W, H, G: 2, ...JSON.parse(markup) } : { W, H, G: 2, html: markup })};\n`,
     );
     execFileSync("npx", [
       "-y",
