@@ -194,13 +194,20 @@ export function autoPick(R) {
   autoKey = key;
   readMode(s.options.gm)
     .catch(() => null)
-    .then((m) => {
+    .then(async (m) => {
       if (!m) {
         toast(
           "That game mode isn't on this device any more: a new Sandbox starts.",
         );
         return R.send({ t: "sbPick" });
       }
+      if (m.data && /^um[a-z0-9]{8}$/.test(m.data.map || ""))
+        await import("./umaps.js")
+          .then(async (U) => {
+            const um = (await U.listMaps()).find((x) => x.id === m.data.map);
+            if (um) U.bringMap(R, um); // (its own made map into the room first, a shared one too: shared.js)
+          })
+          .catch(() => {});
       R.send({
         t: "sbPick",
         play: 1,

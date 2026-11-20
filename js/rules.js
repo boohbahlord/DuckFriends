@@ -29,6 +29,7 @@ import {
   boardDuck,
   sbBoardK,
   sbItemMods,
+  sbRule,
 } from "./sandboxrules.js";
 import { sbGodAct, godOn } from "./sbgod.js";
 import { survSet } from "./survrules.js";
@@ -3104,7 +3105,7 @@ function reduceStep(state, a, now) {
       delete s.sbpk;
       if (!sbPick(s, a, now)) return state;
       if (a.save) {
-        if (s.options.sbMap || s.gmPlay)
+        if (s.options.sbMap || (s.gmPlay && !sbRule(s, "pickmap")))
           s.voteQ = (s.voteQ || []).filter((k) => k !== "map"); // (a world save brings its own map; a made game mode, its own: gmodes.js)
         say(s, `${me.name} is loading a save: ${s.sbsv.name}`);
       } else say(s, `${me.name} started a new Sandbox.`);

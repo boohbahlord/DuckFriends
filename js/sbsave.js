@@ -19,7 +19,13 @@
      hands them ({ t: "sbPick" }) and name the session (s.sbsv), so that device knows where to save it again.
    s.sbsv = { id, name, made, who (names not back yet), room (the room's own Sandbox settings, back after a save) };
    s.sbpk: the host is picking (a phase of the start, like a vote); s.sbAsked: picked for this game. */
-import { isSb, sbWorld, SB_WORLDS, SB_WORLD_NAMES } from "./sandboxrules.js";
+import {
+  isSb,
+  sbWorld,
+  sbRule,
+  SB_WORLDS,
+  SB_WORLD_NAMES,
+} from "./sandboxrules.js";
 
 export const SAVE_V = 1; // (a save's version: a newer game still opens an older save)
 const MINE = ["sbsv", "sbpk", "sbAsked"]; // (this file's own parts: never in a save)
@@ -165,8 +171,14 @@ export function sbPick(s, a, now) {
   for (const [k, v] of Object.entries(d.options || {}))
     if (isOpt(k)) s.options[k] = v;
   s.options.sbMap = SB_WORLDS[d.world] ? d.world : ""; // (a world save brings its world; a board save, the board)
-  if (a.play && !SB_WORLDS[d.world] && typeof d.map === "string" && d.map)
-    s.options.map = d.map; // (a made game mode on the board: its own map, no map vote)
+  if (
+    a.play &&
+    !SB_WORLDS[d.world] &&
+    typeof d.map === "string" &&
+    d.map &&
+    !sbRule(s, "pickmap")
+  )
+    s.options.map = d.map; // (a made game mode on the board: its own map, no map vote, unless G lets players pick it)
   if (d.music && Array.isArray(d.music.off))
     s.music = {
       a: null,
