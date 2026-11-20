@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v138",
+    version: 138,
+    date: "Nov 20, 2026",
+    title: "Survival, fixed up",
+    news: [
+      "For Survival: games with friends start again (they got stuck on the first wave).",
+      "For Survival: a Max Ammo no longer gives back used defibrillators; only the merchant sells them.",
+      "For Survival: a wave that stops dying out for 20 seconds ends anyway, so a sniper or walkers that never come for you don't hold it open.",
+      "For Survival: every bullet, pellet and arrow does half a point less.",
+    ],
+  },
+  {
     id: "v137",
     version: 137,
     date: "Nov 20, 2026",
