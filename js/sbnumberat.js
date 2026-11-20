@@ -221,11 +221,13 @@ function make(s, name, text, now) {
       if (!o) return 0;
       return n === "hp"
         ? o.hp
-        : n === "speed"
-          ? o.sv || 1
-          : n === "damage"
-            ? valueOf({ ok: o.dm }, SB_BOXES.damage) || 1
-            : Math.round((o.hb || 1) * 100); // (hitbox: in percent, the owner's, Nov 19 15:52Z)
+        : n === "regen"
+          ? +o.rg || 0
+          : n === "speed"
+            ? o.sv || 1
+            : n === "damage"
+              ? valueOf({ ok: o.dm }, SB_BOXES.damage) || 1
+              : Math.round((o.hb || 1) * 100); // (hitbox: in percent, the owner's, Nov 19 15:52Z)
     },
     set: (id, n, v) => {
       if (isZoneId(id)) {
@@ -238,7 +240,9 @@ function make(s, name, text, now) {
       if (n === "hp") {
         o.hp = Math.min(CAP, Math.max(0, v));
         if (o.hp <= 0 && !o.d) o.d = g.cur.now;
-      } else if (n === "speed")
+      } else if (n === "regen")
+        o.rg = Math.min(100, Math.max(0, Math.round(v * 10) / 10)); // (HP back each second, up to its most: sbgroups.js)
+      else if (n === "speed")
         o.sv = Math.min(SB_BOXES.speed.max, Math.max(SB_BOXES.speed.min, v)); // (as the Speed box: never 0)
       else if (n === "damage")
         o.dm = String(Math.min(SB_BOXES.damage.max, Math.max(0.1, v)));
@@ -250,11 +254,13 @@ function make(s, name, text, now) {
         ? zoneMost(n)
         : n === "hp"
           ? g.full.get(id) || SB_BOXES.hp.max
-          : n === "speed"
-            ? SB_BOXES.speed.max
-            : n === "damage"
-              ? SB_BOXES.damage.max
-              : 100, // (hitbox: already a percent of its usual size, so ((hitbox 150%)) is ((hitbox 150)), never a share of 300)
+          : n === "regen"
+            ? 100
+            : n === "speed"
+              ? SB_BOXES.speed.max
+              : n === "damage"
+                ? SB_BOXES.damage.max
+                : 100, // (hitbox: already a percent of its usual size, so ((hitbox 150%)) is ((hitbox 150)), never a share of 300)
     get: (w) => {
       const st = g.cur.s;
       if (w === "wave") return (st.hang && st.hang.l4 && st.hang.l4.r) || 0;

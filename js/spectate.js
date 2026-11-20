@@ -9,6 +9,7 @@
    bottom bar's middle, where the Vote button goes (bottom bar, never over a window). */
 import { isSurv } from "./survrules.js";
 import { isWild } from "./l4ddrules.js";
+import { isSb, sbRule } from "./sandboxrules.js";
 import { cardHTML } from "./card.js";
 import { esc } from "./ui.js";
 
@@ -18,7 +19,13 @@ let watch = "";
 /* the ducks I may watch: the other players still in it (up or down), never a dead one, nor Justin out there */
 export function watchable(s, me) {
   const L = s && s.hang && s.hang.l4;
-  if (!isSurv(s) || s.phase !== "hang" || !L || L.over || !dead(s, me))
+  if (
+    !(isSurv(s) || (isSb(s) && sbRule(s, "spec"))) || // (Sandbox: out of lives, with its Rules' watching on)
+    s.phase !== "hang" ||
+    !L ||
+    L.over ||
+    !dead(s, me)
+  )
     return [];
   return s.seat.filter(
     (id) =>

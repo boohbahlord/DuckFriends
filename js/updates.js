@@ -9,6 +9,36 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v147",
+    version: 147,
+    date: "Nov 20, 2026",
+    title: "Rules",
+    news: [
+      "For Sandbox: G has Rules for the zombie maps. Set lives (unlimited unless you set them), the down phase (off by default: you just die), crits, and watching the others once you're out of lives.",
+    ],
+  },
+  {
+    id: "v146",
+    version: 146,
+    date: "Nov 20, 2026",
+    title: "See-through floors",
+    news: [
+      "For Sandbox: a zone up high is drawn over whatever is behind or under it, the way Downpour's roofs are, and goes see-through while your duck is back there. Whoever stands on top of it shows in front of it.",
+    ],
+  },
+  {
+    id: "v145",
+    version: 145,
+    date: "Nov 20, 2026",
+    title: "Groups, and NPCs up high",
+    news: [
+      "For Sandbox: Groups (in G). Name a group, pick what joins it (a spawn's color, a zone, a loot, a variable name, or a tab's Joins groups) and what joining does (Max HP, heal, regen, stamina, cooldowns, an outline, who its NPCs go after, and which windows its players get).",
+      "For Sandbox: NPCs stand on floors too. They spawn up on one (with no Ground under them they fall), walk off its edge and fall, climb a zone that lets them to reach you up high, and only claw you on their own floor.",
+      "Zombies and every duck's wounds are now made of real pixel parts too, so big zombie waves run smoother.",
+      "Pictures you upload for your duck or your card are now made into real pixels.",
+    ],
+  },
+  {
     id: "v144",
     version: 144,
     date: "Nov 20, 2026",

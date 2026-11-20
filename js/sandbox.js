@@ -37,6 +37,7 @@ import { npcRows } from "./sbmake.js";
 import { sbCheatSound } from "./sbsfx.js";
 import { sbSlots } from "./sbhot.js";
 import { saveRows } from "./sbsaves.js";
+import { groupRows, listsRow } from "./sbgroupview.js";
 import {
   hotKeyPut,
   hotRows,
@@ -90,7 +91,7 @@ export const SB_SHEET = [
   ],
   [
     "G",
-    "Game settings for this Sandbox: Save and Save as (the host's, kept on the host's device; it also saves itself every minute), and the Music: which songs play, or none.",
+    "Game settings for this Sandbox: Save and Save as (the host's, kept on the host's device; it also saves itself every minute), and the Music: which songs play, or none. Groups: what joins them and what joining does.",
   ],
   [
     "P",
@@ -227,7 +228,7 @@ const BRAIN_ROW = {
 };
 const OPTIONS = {
   c: [],
-  b: (R) => [...buildRows(R), helpRow("b")],
+  b: (R) => [...buildRows(R), helpRow("b")], // (B lists only Zone: the owner's, Nov 20 02:37Z, "Zone is the only thing left")
   m: (R) => {
     const rows = npcRows(R);
     return [
@@ -240,7 +241,10 @@ const OPTIONS = {
   },
   n: [],
   h: (R) => [...hotRows(R, openPut), helpRow("h")],
-  g: (R) => [...saveRows(R), helpRow("g")], // (Save, Save as and Music: sbsaves.js)
+  g: (R) => {
+    const gr = groupRows(R); // (Groups and My lists: sbgroupview.js; in G, as B lists only Zone)
+    return [...saveRows(R), ...(gr.length ? gr : [listsRow]), helpRow("g")]; // (Save, Save as, Make a map and Music: sbsaves.js)
+  },
   p: pRows,
 };
 export const sbOptions = (k, R) => {

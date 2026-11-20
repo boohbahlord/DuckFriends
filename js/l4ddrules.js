@@ -43,6 +43,7 @@ import {
   isSb,
   sbPlayerSpot,
   SB_BACK_MS,
+  sbRule,
   SB_BOXES,
   sbZombieWall,
 } from "./sandboxrules.js";
@@ -129,6 +130,7 @@ import {
 import { ANGEL, angelOf, angelAmmo, angelAct, angelLeft } from "./l4ddangel.js";
 import { fieldOf, askField } from "./flowfield.js";
 import { NPC_RUN } from "./npcshared.js";
+import { grHp, grCool } from "./sbgroups.js";
 import {
   isSurv,
   survOn,
@@ -1505,6 +1507,22 @@ function store(s, zs, keepStatic) {
   s.hidden = { ...(s.hidden || {}), l4z: mine };
 }
 export const zombiesOf = zombies;
+/* Sandbox's groups (sbgroups.js): the map's own zombies up now, as copies ({ i, x, y (world px), hp, l, sp, … }), and
+   their HP and most HP (l[0]) set again: ch = Map(i → { hp, l }) */
+export const l4Zups = (s) =>
+  s.hang && s.hang.zp ? zombies(s).filter((z) => z.st !== 3) : [];
+export function l4SetHp(s, ch) {
+  if (!ch.size || !s.hang || !s.hang.zp) return;
+  const zs = zombies(s);
+  for (const z of zs) {
+    const q = ch.get(z.i);
+    if (!q) continue;
+    z.hp = q.hp;
+    z.l = q.l;
+  }
+  s.hang = { ...s.hang };
+  store(s, zs, false);
+}
 
 /* ---------- a duck's slots, points and upgrades ---------- */
 /* a weapon's ammo, full: [in the magazine, the rest], or [all of it, 0] without a magazine; none for melee */
@@ -1571,12 +1589,12 @@ export const l4Holds = (s, id, w) =>
 export const ptsOf = (s, id) => ((s && s.hang && s.hang.l4pt) || {})[id] ?? 0;
 export const upOf = (s, id) => ((s && s.hang && s.hang.l4u) || {})[id] || {};
 export const maxHp = (s, id) =>
-  isWild(s, id) ? wildMax(s) : L4.HP + (upOf(s, id).hp || 0);
+  isWild(s, id) ? wildMax(s) : grHp(s, id, L4.HP + (upOf(s, id).hp || 0)); // (Sandbox: a group's Max HP over it, sbgroups.js)
 /* a weapon's wait between uses (each Attack speed: 10% shorter), a reload's time (Faster reload: 30% shorter), the
    headshot chance (headOf, below) */
 export const l4Cool = (s, id, w) =>
   ARMS[w]
-    ? (w === "laser" && angelOf(s, id, w)
+    ? ((w === "laser" && angelOf(s, id, w)
         ? ANGEL.LASER.cool // (the Angelic Laser Rifle: its own, a beam every 0.75 s)
         : ARMS[w].cool *
           (angelOf(s, id, w)
@@ -1584,7 +1602,8 @@ export const l4Cool = (s, id, w) =>
               ? ANGEL.PISTOL.FIRE
               : ANGEL.FAST
             : 1)) * // (Angelic: 20% faster; the dual pistols twice as fast, l4ddangel.js)
-      Math.pow(0.9, upOf(s, id).as || 0)
+        Math.pow(0.9, upOf(s, id).as || 0)) /
+      grCool(s, id) // (Sandbox: a group's Cooldown speed, sbgroups.js)
     : 400;
 /* ---------- the Laser Rifle's heat ----------
    Kept in the kit as lz { h: its heat in beams at t, t: the last beam, o: overheated until (0: not) }. After a beam
@@ -1662,7 +1681,7 @@ export const missOf = (w) =>
       : MISS.SLOW;
 const headOf = (s, id, w) => {
   const own = critOf(w);
-  if (!own) return 0;
+  if (!own || (isSb(s) && !sbRule(s, "crit"))) return 0; // (Sandbox's Rules: crits off)
   const holy = w !== "pan" && angelOf(s, id, w) ? 2 : 1; // (the pan has its own: not doubled)
   return own * holy + CRIT.UP * (upOf(s, id).acc || 0);
 };
@@ -4367,7 +4386,13 @@ function hurtDuck(s, p4, id, now, w = "", dmg = 1) {
     s.hang.still = { ...(s.hang.still || {}), [id]: now + 1e13 };
     return true;
   }
-  p4[id] = { hp: 0, at: now, dn: now + L4.BLEED };
+  /* Sandbox's Rules (G): with no down phase it just dies, the bleeding out done at once (the owner's: "is there a down
+     phase where they can be revived? Disabled by default. So they just die") */
+  p4[id] = {
+    hp: 0,
+    at: now,
+    dn: isSb(s) && !sbRule(s, "down") ? now : now + L4.BLEED,
+  };
   downGun(s, id, true);
   if (hasSafe(s, id)) {
     /* Safe Keeping: it gets the duck up, or keeps its stuff if it dies; up at once when nobody else is standing (or a computer), else on E */
@@ -5177,6 +5202,23 @@ function l4Tick(s, now) {
       continue;
     }
     if (p.gh && isSb(s) && now - (p.at || 0) >= SB_BACK_MS) {
+      /* Sandbox's Rules: each coming back spends a life; out of them, it's dead for good and watches the others
+         (spectate.js), as in Survival */
+      const most = sbRule(s, "lives"),
+        used = ((s.sb && s.sb.died) || {})[id] || 0;
+      s.sb = {
+        ...s.sb,
+        died: { ...((s.sb && s.sb.died) || {}), [id]: used + 1 },
+      };
+      if (most && used + 1 >= most) {
+        p4[id] = { hp: 0, at: now, dn: now + 1e13, ex: 1 };
+        if (s.players[id]) s.players[id].dead = true;
+        const g = { ...(s.hang.ghost || {}) };
+        delete g[id];
+        s.hang.ghost = g;
+        s.hang.still = { ...(s.hang.still || {}), [id]: now + 1e13 };
+        continue;
+      }
       s.hang.l4p = p4;
       bringBack(s, id, now, ids.indexOf(id), false);
       p4[id] = s.hang.l4p[id];

@@ -27,6 +27,7 @@ function zbEl(o, layer) {
     b = npcBox(o),
     box = { w: b.w * k, h: b.h * k, feet: b.feet * k };
   el.className = "l4z";
+  el.dataset.sbi = o.i; // (Sandbox: which one it is, for a group's outline, sbgroupview.js)
   el.innerHTML = `<div class="l4z-body"><img alt="" draggable="false"></div><span class="l4z-hp"><b></b><i></i></span>${npcName(o)}`;
   const body = el.firstChild;
   Object.assign(body.style, {
@@ -79,18 +80,21 @@ export function drawNpcs(ctx, list, ZB, layer, fxl, opt = {}) {
       z = null;
     }
     if (!z) ZB.set(o.i, (z = zbEl(o, layer)));
-    if (o.x !== z.tx || o.y !== z.ty) {
+    if (o.x !== z.tx || o.y !== z.ty || (o.z || 0) !== z.tzz) {
       z.fx = z.x;
       z.fy = z.y;
+      z.fz = z.zz;
       z.tx = o.x;
       z.ty = o.y;
+      z.tzz = o.z || 0;
       z.t0 = t;
     }
     const u = Math.min(1, (t - z.t0) / GLIDE);
     z.x = z.fx + (z.tx - z.fx) * u;
     z.y = z.fy + (z.ty - z.fy) * u;
+    z.zz = z.fz != null ? z.fz + (z.tzz - z.fz) * u : z.tzz; // (its height glides too: up a climb, down a fall)
     const zs = sc * (o.sz || 1), // (its spawn's Size, sbspawn.js: z.box is already that big)
-      h = o.z || heightAt(z.x, z.y), // (o.z: up on a roof, Survival's sniper)
+      h = z.zz || heightAt(z.x, z.y), // (o.z: up on a roof, Survival's sniper, a Sandbox floor)
       f = Wd.toScreen(z.x, z.y, h),
       unseen = !seenFrom(z.x, z.y, Wd.inside, h),
       onCam = Wd.onView(

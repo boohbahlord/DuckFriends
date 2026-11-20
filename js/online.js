@@ -298,6 +298,7 @@ const REMOTE = new Set([
   "cabinEnd",
   "sbh",
   "sbl",
+  "sbgr", // (Sandbox's groups: the rules check the rights, sbgroups.js)
   "songs",
   "hang",
   "dnEnd",

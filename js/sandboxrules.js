@@ -64,15 +64,75 @@ export const SB_RIGHTS = [
   ["h", "Hotbar"],
   ["g", "Game settings"],
 ];
-export const sbMay = (s, id, k) =>
-  sbCan(s, id) ||
-  (isSb(s) &&
-    !!id &&
-    !!s.players[id] &&
-    !s.players[id].bot &&
-    +s.options["sbOk" + String(k).toUpperCase()] === 1);
+export function sbMay(s, id, k) {
+  if (!isSb(s) || !id || !s.players[id] || s.players[id].bot) return false;
+  if (id === s.hostId) return true;
+  if (+s.options["sbOk" + String(k).toUpperCase()] === 1) return true;
+  if (
+    +s.options.sbAll === 1 ||
+    (+s.options.dod === 1 && ((s.dod || {}).on || {}).settings)
+  )
+    return true; // (game settings first: the owner's, "this is a priority over the loot and all group settings, all player settings")
+  const g = groupRight(s, id, k); // (then the groups: "group settings includes permissions")
+  return g == null ? sbCan(s, id) : g; // (then the player's own)
+}
+/* the right to window k that duck id's groups give (true) or take (false), the last of them that says; null when none
+   does (neutral: it steps aside). sbgroups.js keeps the groups */
+function groupRight(s, id, k) {
+  const sb = s.sb || {},
+    gr = sb.gr || {};
+  let r = null;
+  for (const g of (sb.gm || {})["p:" + id] || []) {
+    const v = gr[g] && gr[g].r && gr[g].r[k];
+    if (v === 1 || v === 0) r = v === 1;
+  }
+  return r;
+}
 /* a downed duck in Sandbox on Dead Ducks Arcade's maps: back up this long after it bled out (no rounds to wait for) */
 export const SB_BACK_MS = 3000;
+/* ---------- G's Rules (plan Phase 6) ----------
+   The owner's: "Make it to where when you die, that you can spectate players in survival and Dead Ducks Arcade. Or even as
+   a setting that you can put into game settings. If you, let's say, changed a rule in game settings of how many lives a
+   player has ... Default setting is unlimited. You have a game setting, like, is there a down phase where they can be
+   revived? Disabled by default. So they just die ... Crit can be an option that can be disabled or enabled." Kept in
+   s.sb.rules ({ k: its text }), saved with the Sandbox; on the zombie maps' worlds (l4ddrules.js, spectate.js) */
+export const SB_RULES = {
+  lives: {
+    name: "Lives (0: unlimited)",
+    kind: "int",
+    min: 0,
+    max: 99,
+    def: "0",
+  },
+  down: { name: "Down phase (others can revive you)", kind: "bool", def: "f" },
+  crit: { name: "Crits (headshots)", kind: "bool", def: "t" },
+  spec: { name: "Out of lives: watch the others", kind: "bool", def: "t" },
+};
+/* rule k now: a whole number (lives) or true / false */
+export function sbRule(s, k) {
+  const b = SB_RULES[k],
+    t = String(((s && s.sb && s.sb.rules) || {})[k] ?? b.def).trim();
+  if (b.kind === "bool") return !/^f/i.test(t);
+  const n = Math.round(+t);
+  return Number.isFinite(n) ? Math.min(b.max, Math.max(b.min, n)) : +b.def;
+}
+/* { t: "sbr", k, v }: whoever may change Sandbox sets rule k */
+export function sbRulesAct(s, a) {
+  const b = SB_RULES[a.k];
+  if (!isSb(s) || !b || !sbCan(s, a.id)) return false;
+  let v = String(a.v ?? "").trim();
+  if (b.kind === "bool") v = /^f/i.test(v) || v === "" ? "f" : "t";
+  else {
+    const n = Math.round(+v);
+    if (!Number.isFinite(n) || n < b.min || n > b.max) return false;
+    v = String(n);
+  }
+  const rules = { ...((s.sb && s.sb.rules) || {}) };
+  if (rules[a.k] === v) return false;
+  rules[a.k] = v;
+  s.sb = { ...s.sb, rules };
+  return true;
+}
 
 /* ---------- Sandbox's spawns and respawns: the settings (stage 2) ----------
    ONE list of settings that a spawn, a respawn, a made NPC and a zone (SB_ZONE, below) all read. Each box keeps the text as

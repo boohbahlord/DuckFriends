@@ -7,7 +7,7 @@
    of Sandbox's own (registry.js only: "sandbox"). */
 import { LANG } from "./langname.js";
 import { activity } from "./hangout/registry.js";
-import { W, H } from "./hangout/layout.js";
+import { W, H, sortY } from "./hangout/layout.js";
 import { npcPics } from "./sbnpcart.js";
 import { esc, openWindow, confirmBox, toast, foldHeads } from "./ui.js";
 import { sbPresets, sbCheat, colSwatches, NOCOL_NOTE } from "./sbmenu.js";
@@ -83,6 +83,7 @@ import {
 } from "./sbspawn.js";
 import { orbFace, lootRing, lootPage, lootWire } from "./sblootview.js";
 import { drawNpcs, dropNpcs } from "./npcview.js";
+import { groupOpts, grShown, jgRow } from "./sbgroupview.js";
 import { olAdd } from "./outlines.js";
 import { sbFloorsFrom, sbIsFloor, sbSlope, sbSlopeH } from "./sbfloors.js";
 import {
@@ -226,9 +227,39 @@ function slabGeo(s, p, at) {
     height: Math.max(1, c.top - a.top),
     sk: sl ? (Math.atan2(b.top - a.top, width) * 180) / Math.PI : 0,
     zEnd: (x) => z(x, y1), // (its height along its bottom edge)
+    me: (h) => {
+      const R = activeRoom(),
+        q = R && s.pos && s.pos[R.me];
+      return q ? at({ x: q.x, y: q.y, z: h }) : { left: -1e9, top: -1e9 };
+    }, // (my duck on the screen, at height h)
   };
 }
 const skewCSS = (g) => (g.sk ? `skewY(${g.sk.toFixed(2)}deg)` : "");
+/* plan Phase 4 (the owner's: "the walls facing the camera ... become transparent when a player is behind them because
+   they're set to elevation 2", "Those rectangles become transparent when you're underneath them"): a zone up high (an
+   elevation over 1, or a floor or slope) is drawn in front of whatever is behind its front edge, as Downpour's roofs are
+   (what stands on it is in front of it: layout.js sortY), and goes see-through while my duck is behind or under it.
+   { zi: its z-index ("" when it lies on the ground), thru: my duck is hidden by it } */
+const THRU = 0.3; // (how much of it shows while my duck is behind it)
+function upHigh(s, p, g) {
+  if (!((p.z || 0) > 0.5 || sbIsFloor(p))) return { zi: "", thru: false };
+  const front = sbZoneBox(s, p, W, H)[3] * H,
+    zi = String(Math.round(front) + 10),
+    R = activeRoom(),
+    me = R && s.pos && s.pos[R.me];
+  if (!me || !g.me) return { zi, thru: false };
+  const z = +me.z || 0;
+  if (sortY(me.x * W, me.y * H, z) >= front) return { zi, thru: false };
+  const lean = Math.tan((g.sk * Math.PI) / 180) * g.width,
+    y0 = g.top + Math.min(0, lean),
+    y1 = g.top + g.height + Math.max(0, lean),
+    in_ = (q) =>
+      q.left >= g.left &&
+      q.left <= g.left + g.width &&
+      q.top >= y0 &&
+      q.top <= y1;
+  return { zi, thru: in_(g.me(z)) || in_(g.me(z + 40)) };
+}
 /* a zone: its rectangle, see-through in its color, as the map draws it (its corners through at: the board and the
    worlds both draw it square to the screen), its name over it and a dot where its builder stood (E there opens it). A
    box of CSS, not a drawing: the pixel look (pxdom.js) would make a new picture of it each time the camera moves */
@@ -455,13 +486,16 @@ function lookOn(layer, have, want, id, pts, at, size, s) {
   const g = slabGeo(s, p, at),
     shaped = (sbShape(p) !== "sq" || sbRot(p) !== 0) && !sbFills(p),
     mask = shaped ? `url("${shapePic(s, p, "#000", true)}")` : "",
-    st = `${bg} ${mask} ${look.op} ${g.left.toFixed(1)},${g.top.toFixed(1)},${g.width.toFixed(1)},${g.height.toFixed(1)},${g.sk.toFixed(2)}`;
+    u = upHigh(s, p, g),
+    st = `${bg} ${mask} ${look.op} ${g.left.toFixed(1)},${g.top.toFixed(1)},${g.width.toFixed(1)},${g.height.toFixed(1)},${g.sk.toFixed(2)} ${u.zi} ${u.thru}`;
   if (n._st === st) return;
   n._st = st;
   n.style.background = bg;
   n.style.setProperty("--mask", mask || "none");
+  n.classList.toggle("sb-thru", u.thru);
   Object.assign(n.style, {
-    opacity: String(1 - look.op),
+    zIndex: u.zi,
+    opacity: String((1 - look.op) * (u.thru ? THRU : 1)),
     left: g.left.toFixed(1) + "px",
     top: g.top.toFixed(1) + "px",
     width: g.width.toFixed(1) + "px",
@@ -489,14 +523,16 @@ function faceOn(layer, have, want, id, pts, at, size, s, seeZones) {
     b = at({ x: x1, y: y1, z: g.zEnd(x1) }),
     d = at({ x: x0, y: y1, z: Math.max(0, z0 - FACE) }),
     css = bg || SB_COLORS[p.col] || "#fff",
-    st = `${css} ${a.left.toFixed(1)},${a.top.toFixed(1)} ${b.left.toFixed(1)},${b.top.toFixed(1)} ${d.top.toFixed(1)} ${look ? look.op : ""}`;
+    u = upHigh(s, p, g),
+    st = `${css} ${a.left.toFixed(1)},${a.top.toFixed(1)} ${b.left.toFixed(1)},${b.top.toFixed(1)} ${d.top.toFixed(1)} ${look ? look.op : ""} ${u.zi} ${u.thru}`;
   if (n._st === st) return;
   n._st = st;
   n.style.background = css;
   const w = Math.max(1, b.left - a.left),
     sk = (Math.atan2(b.top - a.top, w) * 180) / Math.PI;
   Object.assign(n.style, {
-    opacity: String(bg ? 1 - look.op : 0.45),
+    zIndex: u.zi,
+    opacity: String((bg ? 1 - look.op : 0.45) * (u.thru ? THRU : 1)),
     left: a.left.toFixed(1) + "px",
     top: a.top.toFixed(1) + "px",
     width: w.toFixed(1) + "px",
@@ -681,17 +717,20 @@ function actRow(s, p, f, kinds) {
     )
       .toLowerCase()
       .split(/[\s,]+/), // (never set: a zombie goes after the players, sbbrain.js)
-    opts = whoOpts(s, kinds);
+    opts = whoOpts(s, kinds),
+    gs = groupOpts(s, activeRoom() && activeRoom().me); // (the groups, under the entities: sbgroupview.js)
+  if (gs.length) opts.push([null, "Groups"], ...gs);
   return pickRow(f, SB_ACTS[f] || SB_ZONE[f].name, opts, picked);
 }
 /* a dropdown of checkboxes for box f: opts [value, name], the values picked (the first of each value only) */
 function pickRow(f, label, opts, picked) {
   const one = opts.filter(
-      (o, i, all) => all.findIndex((x) => x[0] === o[0]) === i,
+      (o, i, all) => o[0] == null || all.findIndex((x) => x[0] === o[0]) === i,
     ),
-    boxes = one.map(
-      ([v, n]) =>
-        `<label><input type="checkbox" value="${esc(v)}" data-label="${esc(n)}"${picked.includes(v) ? " checked" : ""}> ${esc(n)}</label>`,
+    boxes = one.map(([v, n]) =>
+      v == null
+        ? `<em class="sb-ghead">${esc(n)}</em>` // (a part's header: the groups under the entities)
+        : `<label><input type="checkbox" value="${esc(v)}" data-label="${esc(n)}"${picked.includes(v) ? " checked" : ""}> ${esc(n)}</label>`,
     ),
     on = one.filter(([v]) => picked.includes(v)).map(([, n]) => n);
   return `<div class="sb-row" data-row="${f}"><span>${esc(label)}</span><details class="sb-acts" data-act="${f}"><summary>${esc(on.join(", ") || "Nothing")}</summary><span class="sb-what">${boxes.join("") || `<em class="sb-none">None placed yet</em>`}</span></details></div>`;
@@ -778,7 +817,7 @@ export function sbSettings(getR, id, tab = "") {
     players = p.pg === "pl" || (!p.grp && tab === "pl"),
     zmaps = baseMode(R.state.options) === "l4dd",
     what = boxText(p, "what").split(/[\s,]+/),
-    kinds = kindsFor(R.state),
+    kinds = grShown(R.state, R.me, kindsFor(R.state)), // (less the made NPCs I keep out of my lists: sbgroupview.js)
     onlyZ = (ks) => zmaps && !ks.some((k) => k && k !== "zombie"), // (the zombie maps' zombies walk their own way: l4ddrules.js)
     look = spawn && !players && tab === "ap", // (its Appearance tab: sbmake.js)
     pick = boxText(p, "pick"),
@@ -1037,7 +1076,7 @@ export function sbSettings(getR, id, tab = "") {
     ${row("st", SB_ORDER.st, ordT("st"), "")}
     <div class="sb-row" data-row="go"><span>${esc(SB_ORDER.go.name)}</span>${sel("go", SB_GOES)}<em class="sb-why"></em></div>`;
   const html = `<h2>${loot && !p.grp ? "Loot" : "Zone"}</h2>${head}
-  ${base.lock ? `<p class="sb-tip sb-lockd">Locked: right-click it and pick Unlock to change it.</p>` : ""}<div class="sb-set"${base.lock ? " inert" : ""}>${callHTML}${frontHTML}${front ? `<h3 class="sb-sect sb-sect-top">4. ${PURPOSES.find(([v]) => v === p.k)[1]} settings</h3>` : ""}${loot ? lootPage(R.state, id, p, { row, flagRow, typed, why, colorRow }) : zone ? zonePage() : !spawn ? respawn() : players ? playersPage() : look ? lookPage(R.state, p) : entity()}${players || look ? "" : orderSect()}</div>
+  ${base.lock ? `<p class="sb-tip sb-lockd">Locked: right-click it and pick Unlock to change it.</p>` : ""}<div class="sb-set"${base.lock ? " inert" : ""}>${callHTML}${frontHTML}${front ? `<h3 class="sb-sect sb-sect-top">4. ${PURPOSES.find(([v]) => v === p.k)[1]} settings</h3>` : ""}${loot ? lootPage(R.state, id, p, { row, flagRow, typed, why, colorRow }) : zone ? zonePage() : !spawn ? respawn() : players ? playersPage() : look ? lookPage(R.state, p) : entity()}${look ? "" : jgRow(R.state, R.me, p)}${players || look ? "" : orderSect()}</div>
   <p class="acts">${spawn && !players && !look ? `<button type="button" class="btn" data-go>Spawn</button>` : ""}${!spawn && !loot && !zone ? `<button type="button" class="btn" data-imp>Import settings</button>` : ""}${base.lock ? "" : `<button type="button" class="btn ghost" data-del>${p.grp ? (p.pg === "t" ? "Delete tab" : "Delete page") : "Delete"}</button>`}</p>`;
   openWindow(html, {
     cls: zoneLike(p) ? "sb-setwin sb-zonewin" : "sb-setwin",

@@ -9,7 +9,16 @@
    Dead Ducks Arcade zombie takes (zombieTakes). On the zombie maps every kind but a zombie is one of these too, and
    the guns and swings there hit them (L4_HOOKS, l4ddrules.js wildHurt). */
 import { rule } from "./hangout/registry.js";
-import { W, H, heightAt, slabBetween } from "./hangout/layout.js";
+import {
+  W,
+  H,
+  STEP,
+  heightAt,
+  floorH,
+  floorStep,
+  fallsByFloors,
+  slabBetween,
+} from "./hangout/layout.js";
 import { isGhost } from "./hangout/death.js";
 import {
   baseMode,
@@ -18,6 +27,7 @@ import {
   sbZombieWall,
   sbWallGo,
   sbWallStops,
+  sbClimbAt,
 } from "./sandboxrules.js";
 import {
   chaseField,
@@ -77,12 +87,60 @@ export function cabinSpawn(s, x, y, o) {
           dm: o.dm,
           ...(o.run ? { run: 1 } : {}),
           ...(o.up != null ? { up: o.up } : {}),
+          ...(o.z > heightAt(x * W, y * H) + 0.5 ? { z: Math.round(o.z) } : {}), // (up on a floor, or in the air: it falls, plan Phase 4)
           ...(o.look || {}), // (its kind, look, name and weapons: sbspawn.js makeOne)
         },
       ],
     },
   };
   return i;
+}
+
+/* ---------- heights (plan Phase 4, Sandbox's floors: sbfloors.js) ----------
+   One stands on the floor under its feet (the ground, a roof, a Sandbox floor or slope), steps up or down a step, walks
+   off an edge and falls (a fall of D lasting D / roof times the roof's own, as a duck's: world.js), and climbs a zone
+   that lets it while what it's after is higher. o.z: its feet, when it isn't on the ground; o.vz, o.top: falling */
+const FALL_T = 0.35, // (s: a fall from the gas station roof, as a duck's)
+  CLIMB = 150; // (px a second, as a duck's)
+export const npcZ = (o) => (o.z != null ? o.z : heightAt(o.x, o.y));
+function heights(s, o, to, dt, x0, y0) {
+  const z0 = npcZ(o),
+    roof = floorStep();
+  /* a climb: up it while its foe is higher, holding still */
+  const c = sbClimbAt(
+    s,
+    { k: o.k || "zombie", sp: o.sp },
+    x0 / W,
+    y0 / H,
+    z0,
+    W,
+    H,
+  );
+  if (o.vz == null && c && z0 < c.top - 0.5 && to && (to.z || 0) > z0 + STEP) {
+    o.x = x0;
+    o.y = y0;
+    o.z = Math.min(c.top, z0 + CLIMB * dt);
+    return;
+  }
+  const g = floorH(o.x, o.y, z0 + STEP),
+    hold = c && z0 >= c.top - 0.5 ? c.top : -Infinity, // (at a climb's top, still in it: holding on)
+    f = Math.max(g, hold);
+  if (o.vz != null) {
+    o.vz -= ((2 * roof) / (FALL_T * FALL_T)) * (o.fg || 1) * dt;
+    o.z = z0 + o.vz * dt;
+    if (o.z <= f) {
+      o.z = f;
+      delete o.vz;
+      delete o.fg;
+    }
+  } else if (f < z0 - STEP) {
+    const D = z0 - floorH(o.x, o.y, z0);
+    o.vz = 0;
+    o.z = z0;
+    if (fallsByFloors() && D > roof) o.fg = roof / D;
+  } else o.z = f;
+  if (o.vz == null && Math.abs(o.z - heightAt(o.x, o.y)) < 0.5) delete o.z;
+  else o.z = Math.round(o.z * 10) / 10;
 }
 
 /* ---------- the host's heartbeat ----------
@@ -94,12 +152,17 @@ export function cabinTick(s, now, H0) {
     zb = z.zb.map((o) => ({ ...o })),
     live = zb.filter((o) => !o.d),
     Hs = { ...H0, ducks: (s) => H0.ducks(s).filter((id) => !isGhost(s, id)) },
-    duckAt = (id) => ({ x: s.pos[id].x * W, y: s.pos[id].y * H }),
+    duckAt = (id) => ({
+      x: s.pos[id].x * W,
+      y: s.pos[id].y * H,
+      z: +s.pos[id].z || 0,
+    }),
     pls = Hs.ducks(s).map((id) => {
       const q = duckAt(id);
       return { xy: [q.x, q.y], zz: +s.pos[id].z || heightAt(q.x, q.y) };
     }); // (the ducks it never walks into)
-  const { RX, RY, CLAW } = Z_ROOM,
+  const sbfl = fallsByFloors(), // (Sandbox on a world: floors, slopes and climbs)
+    { RX, RY, CLAW } = Z_ROOM,
     far = (a, b) => Math.hypot((a.x - b.x) / RX, (a.y - b.y) / RY);
   /* the ways: one field to every duck (most go after the ducks), and a few more a beat to whatever else they're after
      (the others walk straight, turning round what's in the way, until there's one for them) */
@@ -117,7 +180,7 @@ export function cabinTick(s, now, H0) {
     unwall = (o, x0, y0) => {
       const ws = wallsOf(o);
       if (!ws.length) return;
-      const z = heightAt(x0, y0),
+      const z = npcZ(o),
         [x, y] = sbWallGo(s, ws, x0 / W, y0 / H, o.x / W, o.y / H, z, W, H, o);
       o.x = x * W;
       o.y = y * H;
@@ -132,9 +195,11 @@ export function cabinTick(s, now, H0) {
     far,
     duckAt,
   );
+  const moved = new Set();
   for (const { me, o, d } of plans) {
     const to = d.goal || d.flee;
     if (!to) continue;
+    moved.add(o);
     const bd = far(me, to),
       claw = reachTo(CLAW, o, to, s), // (its hitbox, and its foe's: sbarms.js)
       v =
@@ -162,9 +227,11 @@ export function cabinTick(s, now, H0) {
     )
       chaseStep(o, fieldTo(to), [to.x, to.y], v * dt, pls); // (a gun keeps its distance, once nothing's in the way: sbarms.js)
     unwall(o, x0, y0); // (round a wall, never through it)
+    if (sbfl) heights(s, o, d.flee ? null : to, dt, x0, y0); // (Sandbox's floors: plan Phase 4)
     if (Math.abs(o.x - x0) > 0.5) o.f = o.x > x0 ? 1 : -1;
     if (
       d.foe &&
+      (!sbfl || Math.abs(npcZ(o) - (to.z ?? npcZ(o))) < 48) && // (on its floor: never a claw through one)
       fight(
         o,
         to,
@@ -179,6 +246,10 @@ export function cabinTick(s, now, H0) {
       o.f = to.x < o.x ? -1 : 1;
   }
   setZWall(null);
+  if (sbfl)
+    for (const o of live)
+      if (!moved.has(o) && (o.z != null || o.vz != null))
+        heights(s, o, null, dt, o.x, o.y); // (standing still: it still falls, and it rides a floor that goes)
   const was = live.map((o) => [o.x, o.y]);
   apart(live, RX, RY);
   live.forEach((o, i) => {
@@ -186,17 +257,7 @@ export function cabinTick(s, now, H0) {
       [x0, y0] = was[i];
     if (
       ws.length &&
-      sbWallStops(
-        s,
-        ws,
-        x0 / W,
-        y0 / H,
-        o.x / W,
-        o.y / H,
-        heightAt(x0, y0),
-        W,
-        H,
-      )
+      sbWallStops(s, ws, x0 / W, y0 / H, o.x / W, o.y / H, npcZ(o), W, H)
     ) {
       o.x = x0;
       o.y = y0;
@@ -217,7 +278,7 @@ export function cabinTick(s, now, H0) {
   return true;
 }
 /* a made NPC's shot from o to t goes through no wall */
-const sees = (o, t) => clearShot(o.x, o.y, t.x, t.y, heightAt(o.x, o.y));
+const sees = (o, t) => clearShot(o.x, o.y, t.x, t.y, npcZ(o));
 /* never in each other: two too close are pushed apart, each only against a few in its own and the next cells */
 function apart(live, RX, RY) {
   const grid = new Map(),
@@ -263,7 +324,7 @@ rule("sbz", {
           id: "sbz" + o.i,
           x: o.x,
           y: o.y,
-          z: heightAt(o.x, o.y),
+          z: npcZ(o),
           at(fx, fy, up = 0) {
             const q = b.at(fx * W, fy * H, up);
             return q && { x: q.x / W, y: q.y / H };
@@ -316,7 +377,7 @@ L4_HOOKS.npc = (s, by, x, y, now, w, rx, ry, from, hit) => {
     if (o.d || (hit && hit.includes("c" + o.i))) return false;
     const q = npcBody(s, o, DU_WORLD).at(x, y, HIT_UP); // (its nearest part that shows, from the height a shot flies: sbbody.js)
     if (!q || Math.hypot((q.x - x) / rx, (q.y - y) / ry) >= 1) return false;
-    const h = heightAt(o.x, o.y);
+    const h = npcZ(o);
     return (
       !from ||
       (Math.abs(from[2] - h) <= 48 && !slabBetween(...from, o.x, o.y, h))

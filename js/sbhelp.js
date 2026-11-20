@@ -36,7 +36,7 @@ export const SB_HELP = {
     ],
     [
       "Elevation and Ground",
-      "On Duck Cabin and Downpour a zone has an Elevation: 1 is the ground, each one more is a gas station roof higher, up to 6. Turn Ground on and it's a floor up there: you stand on it, walk off its edge and fall, and you fall when its squares stop working under you. Falling two floors takes twice as long as one. Tick who can climb a zone and they climb it up to its elevation by walking into it, as up a ladder; let go of the stick and they hold on, walk away and they fall. Give a Ground zone a Slope up to another elevation and pick the side it rises toward: it's a ramp from its own elevation up to that one, walked at walking pace, so a longer slope takes longer.",
+      "On Duck Cabin and Downpour a zone has an Elevation: 1 is the ground, each one more is a gas station roof higher, up to 6. Turn Ground on and it's a floor up there: you stand on it, walk off its edge and fall, and you fall when its squares stop working under you. Falling two floors takes twice as long as one. Tick who can climb a zone and they climb it up to its elevation by walking into it, as up a ladder; let go of the stick and they hold on, walk away and they fall. Give a Ground zone a Slope up to another elevation and pick the side it rises toward: it's a ramp from its own elevation up to that one, walked at walking pace, so a longer slope takes longer. A zone up high is drawn over what's behind and under it, and goes see-through while your duck is back there.",
     ],
     [
       "Outlines",
@@ -95,8 +95,24 @@ export const SB_HELP = {
       "Save keeps this Sandbox exactly as it is on the host's device, under its name; Save as keeps it under a new name. It also saves itself every minute, when it ends and when the host's tab closes. Next time Sandbox starts, the host picks it from the list.",
     ],
     [
+      "Rules",
+      "Rules opens its own window, for the zombie maps: how many lives each player has (0 is unlimited), whether there's a down phase where others can revive you (off: you just die), crits on or off, and whether a player out of lives watches the others. The save keeps them.",
+    ],
+    [
       "Music",
       "Music opens its own window: tick the songs that play, or turn them all on or off at once. Only the ticked ones play, the same for everyone. The save keeps the list.",
+    ],
+    [
+      "Groups",
+      "Groups (in Game settings, G) are named sets of rules. A player or an NPC joins one when it spawns from a Spawn or Respawn tab you ticked (a red spawn and a blue respawn are different), steps into a zone, picks up a loot, or comes from a block of a variable name. Every tab also has its own Joins groups list.",
+    ],
+    [
+      "What a group does",
+      "Max HP: +30 adds 30, 30 makes it 30. Heal on joining: an amount, or 100% for full. Regen HP each second, stamina and cooldowns faster, an outline color, who its NPCs go after or leave alone, and windows it opens or closes for its players (Neutral leaves them as they are). Game settings come first, then groups. A player leaves its groups when it spawns again; an NPC when it dies. Every list names the groups under the entities.",
+    ],
+    [
+      "My lists",
+      "My lists (in Game settings, G) keeps made NPCs and groups out of your own lists. Nobody else's lists change.",
     ],
   ],
 };
