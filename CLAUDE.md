@@ -60,7 +60,7 @@ Format first, the owner's way: `npx prettier@3.6.2 --write <changed js/css/html/
 (never Prettier 3.3.3: it drops numbers from arrays inside template literals).
 
 ## Testing
-Serve the folder (`python3 -m http.server`) and drive it with Playwright. A TEST room can be started from the page:
+Before every deploy: `node tools/check/run.mjs` (serves the repo itself, runs every check and `tools/health`, prints only failures; name tests to run a few). Serve the folder (`python3 -m http.server`) and drive it with Playwright. A TEST room can be started from the page:
 `(await import('./js/net.js')).createLocalRoom({ name: 'T', test: true, computers: 3 })`, then `router.go('lobby', room)`
 and `room.send({ t: 'start' })`. Check every map and both phone (portrait) and computer sizes.
 Online rooms with several players: `tools/online-test` (see its README) plays them against local Firebase emulators.

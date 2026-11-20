@@ -7,6 +7,7 @@
    he eats, a glass when he drinks, the zebra cake (the Zebra cake special) when he's caught it; bullets and daggers knock him down (rules.js asks targets and hit), and so does
    kill @Justin. The shadow duck (shadowduck.js) fades in and out (its record's o) with a whoosh, and whooshes away when
    it gets Justin (it fades). */
+import { clawMark } from "../claw.js";
 import { rule, activity } from "./registry.js";
 import { npcTick, npcAct, npcHit, npcAt, BRAINS } from "./npc.js";
 import { inCabin, sortY, W, H } from "./layout.js";
@@ -31,6 +32,8 @@ import "./shadowduck.js";
 import { hitCode, knockable, PCRIT, goreFree } from "../wounds.js";
 import { hitsOf } from "../l4ddart.js";
 import { JUSTIN_POOL } from "./stationart.js";
+import { pxSVG, rasterReady, pixelOn } from "../pixel.js";
+import { hashText } from "../pxdom.js";
 import { popHP } from "../hpmeter.js";
 import { fxHitAt } from "../fx.js";
 import { vibrate, hitPx, HIT } from "../fxmotion.js";
@@ -236,16 +239,26 @@ function svgFor(id, pose, step, wc = "") {
   if (b.svg) return b.svg(pose); // (a character that draws itself: the Butler)
   return shadowSVG({ size: DUCK });
 }
-/* a claw swipe over whoever got it, or a heart from a purr */
+/* Justin's pool of blood: one picture made into pixels at the size it shows (css .gduck-pool: 1.875 × 0.8125 ducks),
+   made while the game loads (warmPool), so his fall never makes it mid-game. As a drawing pxdom.js made it the moment
+   he fell (the owner's, Nov 20 20:46Z: "pop-ins") */
+const POOL = `<svg viewBox="-60 -26 120 52" xmlns="http://www.w3.org/2000/svg" width="120" height="52">${JUSTIN_POOL}</svg>`;
+const poolW = (sc) => DUCK * sc * 1.875; // (its height from its own: 0.8125 ducks)
+const poolHTML = (sc) => pxSVG(POOL, poolW(sc));
+let poolAt = 0;
+function warmPool(sc) {
+  if (poolAt === sc || !pixelOn()) return;
+  poolAt = sc;
+  rasterReady("s" + hashText(POOL), POOL, poolW(sc), (poolW(sc) * 52) / 120); // (pxSVG's key)
+}
+/* a claw swipe over whoever got it (claw.js, as every claw), or a heart from a purr */
 function burst(kind, x, y, ctx) {
   if (!fxl) return;
-  const f = ctx.world.toScreen(x, y, 40),
-    el = document.createElement("div");
-  el.className = kind === "purr" ? "hang-npc-heart" : "hang-npc-claw";
-  el.innerHTML =
-    kind === "purr"
-      ? "♥"
-      : '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M10 6C16 16 18 26 14 36M19 4C25 14 27 24 23 34M28 6C34 16 36 26 32 36" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/></svg>';
+  const f = ctx.world.toScreen(x, y, 40);
+  if (kind !== "purr") return clawMark(fxl, f.left, f.top, ctx.world.sc);
+  const el = document.createElement("div");
+  el.className = "hang-npc-heart";
+  el.innerHTML = "♥";
   el.style.left = f.left.toFixed(1) + "px";
   el.style.top = f.top.toFixed(1) + "px";
   el.style.setProperty("--k", ctx.world.sc.toFixed(3));
@@ -403,7 +416,7 @@ activity({
           o.pool = document.createElement("span");
           o.pool.className = "gduck-pool hang-npc-pool";
           o.pool.setAttribute("aria-hidden", "true");
-          o.pool.innerHTML = `<svg viewBox="-60 -26 120 52" width="120" height="52">${JUSTIN_POOL}</svg>`;
+          o.pool.innerHTML = poolHTML(ctx.world.sc);
           o.el.prepend(o.pool);
         } else {
           o.pool.remove();
@@ -545,6 +558,7 @@ activity({
         o.el.style.opacity = o.op.toFixed(3);
       }
       o.el.style.transform = Wd.boxTr(f.left, f.top);
+      if (o.duck) warmPool(sc);
       if (o.pool && o.sz !== sc) {
         o.sz = sc;
         o.el.style.setProperty("--sz", (DUCK * sc).toFixed(1) + "px");
