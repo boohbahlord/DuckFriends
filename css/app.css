@@ -11755,7 +11755,8 @@ html.moving .hp .flick {
 .hang-board .gduck {
   transition: none;
 }
-.gduck.hang-hid {
+.gduck.hang-hid,
+.mgj-z.hang-hid {
   visibility: hidden;
 }
 /* something hides it from me (a wall, a roof, a crown): only its outline shows, never its picture (the owner's, Nov 17

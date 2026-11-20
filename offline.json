@@ -1,5 +1,5 @@
 {
-"v": "202611201253",
+"v": "202611201254",
 "files": {
 "assets/app/apple-touch-icon.png": "cda48ff597",
 "assets/app/icon-192.png": "8e062adfdc",
@@ -60,7 +60,8 @@
 "assets/music/waddle-before-you-paddle.mp3": "aaf28757a6",
 "assets/music/what-the-duck.mp3": "ddc2961a32",
 "assets/px/art/art-8f337e04.webp": "8f337e04f5",
-"assets/px/cards/fixed.webp": "28782631aa",
+"assets/px/cards/base.webp": "e6bf46268f",
+"assets/px/cards/fixed.webp": "bbe9916c78",
 "assets/px/cards/tint.webp": "a8520388a0",
 "assets/px/ducks/32/index-68b9567d.json": "68b9567d3f",
 "assets/px/ducks/32/main-f72afed3.webp": "f72afed388",

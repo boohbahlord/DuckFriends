@@ -9,6 +9,25 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v173",
+    version: 173,
+    date: "Nov 20, 2026",
+    title: "Walls up high",
+    news: [
+      "For Sandbox: a wall up high that isn't Ground now stops ducks on the ground too, so one zone makes one wall of a house.",
+      "For Sandbox: on the plain board, NPCs under a roof you're not under are hidden, as ducks are.",
+    ],
+  },
+  {
+    id: "v172",
+    version: 172,
+    date: "Nov 20, 2026",
+    title: "Build a house",
+    news: [
+      "For Sandbox: walls up high now stand down to the ground, a house goes see-through from inside, and the plain board has Elevation for roofs. Build's help shows how to make a house.",
+    ],
+  },
+  {
     id: "v171",
     version: 171,
     date: "Nov 20, 2026",
