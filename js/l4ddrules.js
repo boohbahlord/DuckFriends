@@ -36,7 +36,11 @@
      l4b  { id: { o, at } }: who is boarding up which opening, since when (one more board each BOARD_MS)
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
-import { SPRINT as GAME_SPRINT } from "./gamedefaults.js";
+import {
+  SPRINT as GAME_SPRINT,
+  ZOMBIE_SWIPE_SLOWER,
+  HANDGUN,
+} from "./gamedefaults.js";
 import { duckBig, scaleOf } from "./duck.js";
 import { hpHeal, hpHurt, tenths } from "./hpmath.js";
 import {
@@ -101,16 +105,12 @@ import {
   PCRIT,
   DEATH,
 } from "./wounds.js";
-import {
-  BOMB,
-  bombRoll,
-  bombIn,
-  flyTo,
-  snapLine,
-  logIn,
-  jaimeCount,
-  JUSTIN_AT_JAIME,
-} from "./jaimebomb.js";
+/* a line in the chat (as rules.js' logLine) */
+function logIn(s, line) {
+  if (!s.log) return;
+  s.logN = (s.logN || 0) + 1;
+  s.log = [...s.log.slice(-199), { n: s.logN, t: Date.now(), ...line }];
+}
 import {
   GOD_LINES,
   E_LINES,
@@ -261,8 +261,8 @@ const SKIP = 0.25,
    once; grenades kill every zombie in their blast. Nothing hurts another duck. The ones I haven't given numbers for
    are guesses (Adam's plan, question 2) */
 /* what anything thrown or used up waits before it can be used again (the grenades, the medkit, the zebra cake, the
-   adrenaline shot, the chair): 0.75 s (the owner's, Nov 16). Not the jetpack or the Long jump (switched on
-   and off), nor Jaime (his own, longer) */
+   adrenaline shot, the chair): 0.75 s (the owner's, Nov 16). Not the jetpack (switched on
+   and off) */
 export const ITEM_COOL = 750;
 /* a melee weapon breaks (the owner's, Nov 19 22:41Z): its bar is 100% of the damage it can deal, HP actually taken off
    (not overkill), 450 for each, the cast iron pan only 50 ("cast irons is only 50 damage"). At 0% it is gone for good
@@ -283,7 +283,7 @@ export const ARMS = {
     kind: "melee",
     dur: MELEE_DUR,
     cool: ARM_COOL.hammer,
-    dmg: [3, 5], // (3 to 5: the owner's, Nov 18 15:28Z)
+    dmg: [4, 6], // (3 to 5, then 1 more because it is so slow: the owner's, Nov 18 15:28Z and Nov 20 21:17Z)
     swing: ARM_SWING.hammer,
     at: 66,
     r: 50,
@@ -325,7 +325,7 @@ export const ARMS = {
     cool: ARM_COOL.handgun,
     dmg: [1, 3], // (1 to 3: the owner's, Nov 18 15:19Z)
     speed: ARM_SPEED.handgun,
-    mag: 12, // (50% more, its magazines are so small: the owner's, Nov 19 19:27Z)
+    mag: HANDGUN.mag, // (the one M1911, 9 rounds: gamedefaults.js)
     all: (72 + 5 * 8) * 1.5,
     reload: ARM_RELOAD,
   },
@@ -530,20 +530,16 @@ export const ARMS = {
   },
   /* the new specials: the zebra cake (thrown; every zombie goes for it and bites it until it's gone), the
      adrenaline shot (my duck walks at the game's usual speed for
-     20 s), the long jump (each use turns it on or off: on, every jump is long), Jaime (3 a round: he goes for the
-     nearest zombie and stabs it, 1 a stab, until one gets him) */
+     20 s) */
   zebra: { kind: "special", cool: ITEM_COOL, all: 1, speed: 650, far: 520 },
   adrenaline: { kind: "special", cool: ITEM_COOL, all: 1, ms: 20000 },
-  longjump: { kind: "special", cool: 300 },
-  jaime: { kind: "special", cool: 1500, all: 3, round: true },
-  jaimebomb: { kind: "special", cool: 1500, all: 3, round: true }, // (as Jaime: 1 spin in 50 at the fireplace, BOMB.fire)
   /* the jetpack (Stage 4): each use switches it on or off, as the long jump; on, Space flies (jetpack.js), and its
      10 s of flight (all, in ms) burn only while its jets are on in the air; a Max Ammo fills it */
   jetpack: { kind: "special", cool: 300, all: JET.FUEL },
-  /* Justin's office chair (the owner's, Nov 3): thrown the way I aim, 3 HP to the zombie it hits; 3 throws, a Max Ammo
-     gives them back */
+  /* Justin's office chair (the owner's, Nov 3): thrown the way I aim, 3 to 5 HP to the zombie it hits and it shoves it
+     back like the hammer; no ammo unless a Sandbox sets one */
   safekeep: { kind: "special", cool: 300, all: 1 }, // (Safe Keeping: never used by hand, SAFE below)
-  chair: { kind: "special", cool: ITEM_COOL, all: 3, dmg: 3, speed: 600 },
+  chair: { kind: "special", cool: ITEM_COOL, dmg: [3, 5], speed: 600 }, // (no ammo, thrown as often as you like; 3 to 5 whole: the owner's, Nov 20 21:17Z)
 };
 /* a hit's damage: the weapon's, or a roll between its two (the sniper's 2 to 3) */
 /* the grenade's and the grenade launcher's blast, half as wide (the owner's, Nov 19 19:27Z: "half the blast radius") */
@@ -578,16 +574,9 @@ export function swims(s, id) {
   const p = s && s.pos && s.pos[id];
   return !!p && dp() && !p.fly && GS.inDeep(p.x * W, p.y * H);
 }
-/* what a duck holds out (the long jump and Jaime are nothing in the hand, and a special used up isn't there) */
+/* what a duck holds out (a special used up isn't there) */
 export const inHand = (w, s, id) => {
-  if (
-    !w ||
-    w === "longjump" ||
-    w === "jaime" ||
-    w === "jaimebomb" ||
-    w === "jetpack"
-  )
-    return ""; // (the jetpack is on the back: game.js)
+  if (!w || w === "longjump" || w === "jetpack") return ""; // (the jetpack is on the back: game.js)
   const c = s && kindOf(w) === "special" && ((kitOf(s, id) || {}).am || {})[w];
   return c && c[0] <= 0 ? "" : w;
 };
@@ -598,10 +587,10 @@ export const START = ["knife", "handgun", "bow", ""];
 export const SLOT_KINDS = ["melee", "ranged", "ranged", "special", "special"];
 /* the item slots in a kit's slots (3, and 4 when there are two) */
 export const ITEM_SLOTS = [3, 4];
-/* a pick (game.js l4Pick: 0 to 3 the slots, 4 the grenades, 5 the second item, as keys 1 to 6) and its slot, -1 for the
-   grenades */
-export const slotOfPick = (i) => (i < 4 ? i : i === 5 ? 4 : -1);
-export const pickOfSlot = (k) => (k < 4 ? k : 5);
+/* a pick (game.js l4Pick: 0 to 3 the slots, 4 the second item, 5 the grenades, as keys 1 to 6: the owner's, Nov 20 21:17Z,
+   "The secondary item slot is number 5. The grenade is number 6") and its slot, -1 for the grenades */
+export const slotOfPick = (i) => (i < 5 ? i : -1);
+export const pickOfSlot = (k) => (k < 5 ? k : -1);
 /* every weapon there is (the Items page lists them all: l4ddcatalog.js) */
 export const WEAPONS = [
   "knife",
@@ -628,7 +617,7 @@ export const WEAPONS = [
   "flamer",
   "laser",
 ];
-export const ITEMS = ["medkit", "zebra", "adrenaline", "safekeep", "chair"]; // (no Long jump, Jaime or Jetpack any more: the owner's, Nov 18 12:19Z, "long jump is removed from zombies bag and slots", "normal jaime is removed from all zombie modes", "remove jet pack from the whole game")
+export const ITEMS = ["medkit", "zebra", "adrenaline", "safekeep", "chair"]; // (no Jetpack any more: the owner's, Nov 18 12:19Z, "long jump is removed from zombies bag and slots", "normal jaime is removed from all zombie modes", "remove jet pack from the whole game")
 /* the fireplace's bags (the owner's, Nov 18 12:19Z, and the answers to Adam's questions at 12:32Z). Rolled the rarest
    first, each only if the one before it failed: the Chair bag 1% (the golden chair), the Special bag 5%, the Item bag
    20%, else the Weapon bag. The Weapon bag holds seven bags that take turns; each bag then gives the next one of its
@@ -678,7 +667,7 @@ const NAMES = {
   axe: "Fire axe",
   sword: "Short sword",
   pan: "Cast iron pan",
-  handgun: "M&P9 Compact", // (a real 9mm with a twelve-round magazine, as ours is here: the owner's, Nov 19)
+  handgun: HANDGUN.name,
   bow: "Bow",
   dagger: "Dagger",
   shotgun: "Shotgun",
@@ -702,9 +691,6 @@ const NAMES = {
   laser: "Laser Rifle",
   zebra: "Zebra cake",
   adrenaline: "Adrenaline shot",
-  longjump: "Long jump",
-  jaime: "Jaime",
-  jaimebomb: "Jaime Bomb",
   jetpack: "Jetpack",
   chair: "Chair",
 };
@@ -925,7 +911,7 @@ const hp0 = () => {
   const r = Math.random();
   return (r < 0.25 ? 5 : r < 0.5 ? 3 : 4) - 0.5; // (half an HP less: the owner's, Nov 19 19:27Z, "decrease that by half a health point")
 };
-const ZHATS = [
+export const ZHATS = [
   "cap",
   "cowboy",
   "bucket",
@@ -1417,8 +1403,8 @@ export const standing = (s, id) => {
 export function dodging(s, p, now) {
   if (p && p.fly) return true; // (the jetpack, high in the air)
   if (!p || !p.j) return false;
-  const T = (s.options.lowGravity ? 1200 : 620) * (p.lj ? 1.4 : 1),
-    u = (now - (p.dj || p.j)) / T;
+  const T = 620,
+    u = (now - p.j) / T;
   return u > 0.2 && u < 0.8;
 }
 const at = (p) => [p.x * W, p.y * H];
@@ -1726,15 +1712,6 @@ function addPts(s, id, n) {
 /* ---------- a game, a round ---------- */
 const countFor = (s, r) => zombiesFor(r, Math.max(1, players(s).length));
 function newRound(s, r, now, wait) {
-  const am = s.hang.l4a || {};
-  for (const id of Object.keys(am))
-    for (const w of am[id].sl || [])
-      if (ARMS[w] && ARMS[w].round)
-        s.hang.l4a = {
-          ...s.hang.l4a,
-          [id]: { ...s.hang.l4a[id], am: { ...am[id].am, [w]: fullAmmo(w) } },
-        }; // (Jaime: 3 again each round)
-  s.jm = null; // (and every Jaime out is gone)
   s.hang.l4 = {
     ...s.hang.l4,
     r,
@@ -2062,9 +2039,8 @@ function boltTick(s, zs, now, ids) {
 }
 /* a body the Nuke left: it lies there longer */
 const nuked = (s, z) => !!s.hang.l4nk && (s.hang.l4nk.ids || []).includes(z.i);
-/* Max Ammo: every weapon that refills is full again, the grenades too (3); the medkit, Survival's defibrillator and
-   Jaime don't come back this way (the medkit never refills, the defibrillator only comes from the merchant, Jaime comes
-   back each round). Before, a Max Ammo gave every used defibrillator back: "merchant always has unlimited defibs" (the
+/* Max Ammo: every weapon that refills is full again, the grenades too (3); the medkit and Survival's defibrillator
+   don't come back this way (the medkit never refills, the defibrillator only comes from the merchant). Before, a Max Ammo gave every used defibrillator back: "merchant always has unlimited defibs" (the
    owner's, Nov 20 03:58Z) */
 function maxAmmo(s) {
   const am = { ...(s.hang.l4a || {}) };
@@ -2075,7 +2051,6 @@ function maxAmmo(s) {
         fullAmmo(w) &&
         w !== "medkit" &&
         w !== "defib" &&
-        !ARMS[w].round &&
         !angelOf(s, id, w) // (an Angelic gun never refills, not even here: the owner's, Nov 16 22:21Z)
       )
         m.am[w] = fullFor(s, id, w);
@@ -2445,8 +2420,6 @@ function l4Act(s, a, now) {
     s.hang.l4b = b;
     return true;
   }
-  if (a.do === "jplan" || a.do === "jbody")
-    return justinBody(s, a.do, id, now, mx, my);
   if (a.do === "buy")
     return buy(s, id, String(a.what || ""), mx, my, a.hand, now);
   if (isSurv(s) && ["box", "power", "pump", "angel"].includes(a.do))
@@ -2472,27 +2445,6 @@ function defibUse(s, id, t, me, now) {
     [id]: { ...kit, am: { ...kit.am, defib: [c[0] - 1, 0] } },
   };
   addFx(s, { kind: "l4defib", by: id, who: [t], t: now }); // (its shock: l4ddsfx.js)
-  return true;
-}
-/* Justin out there, in a rest phase, at Jaime's body: his plan for the phase (jplan) and a line each visit (jbody). (No duck
-   can give him a weapon any more: the owner's, Nov 17 20:02Z, "make it to where you cannot give justin a weapon
-   actually and when he goes down he doesnt have a pistol") */
-function justinBody(s, what, id, now, mx, my) {
-  const L = s.hang.l4,
-    B = jaimeBody();
-  if (!isWild(s, id) || id !== WILD.id || !B || !L || !L.wait || L.over)
-    return false;
-  if ((P4(s, id) || {}).dn) return false; // (dead: no lines, the owner's, Nov 18 12:19Z)
-  let v = s.hang.l4jv;
-  if (!v || v.r !== L.wait.r) {
-    v = { r: L.wait.r, left: Math.random() < 0.5 ? 2 : 0, at: 0 }; // (this rest phase: half the time twice, else not at all)
-    s.hang.l4jv = v;
-  }
-  if (what === "jplan") return true;
-  if (v.left <= 0 || now - v.at < JBODY.gap) return false;
-  if (Math.hypot(mx - B.x, my - B.y) > JBODY.near) return false;
-  s.hang.l4jv = { ...v, left: v.left - 1, at: now };
-  justinSays(s, "jaime");
   return true;
 }
 /* what a merchant sold, said in the chat by the buyer's tag (the owner's, Nov 19 19:27Z: "what the merchant sells to a
@@ -2594,7 +2546,6 @@ function fireplace(s, id, a, now, mx, my) {
   }
   if (b.by !== id || now < b.t + BOX.spin || b.w === HELPER.w) return false; // (Justin isn't taken: he climbs out)
   if (!give(s, id, b.w, a.hand)) return false;
-  if (b.w === "jaimebomb") jaimeCount(s, { got: id }); // (unlocks.js)
   dropBox(s, id);
   addFx(s, { kind: "l4take", by: id, who: [], w: b.w, t: now });
   return true;
@@ -2701,10 +2652,10 @@ export const wildCrying = (s, id, now) => {
   const c = isWild(s, id) && s.hang && s.hang.l4jcry;
   return !!c && now < c.t + CRY.ms && !isDown(s, id);
 };
-/* what Justin says besides his everyday lines: at Jaime's body and at a Jaime sent in, his lines against Jaime; hurt by a
+/* what Justin says besides his everyday lines: hurt by a
    player, an aggressive line; going down, a death line. Each list is a shuffled bag, every line once before any comes again (s.hang.l4jl { key: [line
    numbers left] }) */
-const LINES = { jaime: JUSTIN_AT_JAIME, death: DEATH_LINES, angry: GOD_LINES };
+const LINES = { death: DEATH_LINES, angry: GOD_LINES };
 /* hurt by a player, an aggressive line (his GOD_LINES, a bag of them), every single time (the owner's, Nov 19 19:27Z:
    "He should dialogue every time you damage him in an aggressive way"); a new line takes the place of the one over him
    (one bubble for each duck, game.js bubbles), so they never stack */
@@ -2750,10 +2701,6 @@ function justinSays(s, key) {
   s.hang.l4jl = bags;
   logIn(s, { from: HELPER.id, to: null, text: list[n] });
 }
-/* Jaime's body (Noah's, on the chapel floor: GS.JAIME_BODY { x, y }); in a rest phase Justin goes to it half the time, and
-   at most twice, and says a line each time. s.hang.l4jv = { r (the round), left (visits), at (the last one) } */
-export const jaimeBody = () => GS.JAIME_BODY || null;
-export const JBODY = { near: 110, gap: 8000 };
 export function isWild(s, id) {
   return !!(s && s.players && s.players[id] && s.players[id].wild);
 }
@@ -3785,9 +3732,6 @@ export function l4Use(s, a, now) {
     if (!spare) m.am.medkit = [0, 0]; // (used up: it stays in its slot, empty, the owner's, Nov 18 12:19Z)
   } else if (what === "adrenaline")
     s.hang.l4ad = { ...(s.hang.l4ad || {}), [id]: now + A.ms };
-  else if (what === "longjump") m.lj = !m.lj;
-  else if (what === "jaime" || what === "jaimebomb")
-    jaimeIn(s, id, p, now, bombRoll(what));
   else if (what === "zebra") cakeOut(s, id, p, dx, dy, now);
   else if (what === "chaingun") trace(s, id, px, py, dx, dy, hz, now);
   else if (what === "laser") laser(s, id, m, px, py, dx, dy, hz, now);
@@ -4148,129 +4092,6 @@ function cakeDown(s, now) {
   if (!c || c.eat || c.toilet || now < c.stop) return null; // (the one in the toilet: Justin's)
   const t = (c.stop - c.t) / 1000;
   return [(c.x0 + c.vx * t) * W, (c.y0 + c.vy * t) * H];
-}
-/* Jaime (the owner's: 3 a round, 1 a stab, as in Mad God Justin): he comes in beside me, sprints at the nearest zombie
-   that's in, stabs it once a second, then the next. The zombies leave him be; after JAIME_LIFE (as the Jaime special's)
-   he's gone in a poof, and the round's end takes him too. s.jm as the Jaime special's (game.js draws him) */
-const JAIME_SPEED = 330, // world px a second (9 duck lengths, as Mad God Justin's)
-  JAIME_LIFE = 12000;
-function jaimeIn(s, by, p, now, bomb) {
-  s.jmN = (s.jmN || 0) + 1;
-  const id = `jaime${s.jmN}`,
-    J = {
-      n: s.jmN,
-      by,
-      zi: -1,
-      x: p.x,
-      y: p.y,
-      z: Math.round(+p.z || 0),
-      face: p.face || 1,
-      at: now,
-      stabAt: now + 600,
-      mt: now,
-    };
-  if (bomb)
-    bombIn(s, id, J, now); // (the Jaime Bomb: jaimebomb.js)
-  else if (justinUp(s)) justinSays(s, "jaime"); // (Justin sees a Jaime come in: one of his lines against Jaime)
-  s.jm = { ...(s.jm || {}), [id]: J };
-  addFx(s, { kind: "jaime", by, who: [id], t: now });
-  jaimeCount(s, { by });
-}
-/* the Jaime Bomb goes off where he stands (ux, uy: the way he was running): every zombie in BOMB.wide times a
-   grenade's blast dies, torn apart as a grenade does it, and his body flies off the other way */
-function jaimeBlows(s, id, J, o, ux, uy, zs, T, now) {
-  if (J.snapAt) jaimeSnap(s); // (Justin still answers his line)
-  boom(
-    s,
-    { by: J.by, hz: J.z || 0 },
-    o.x,
-    o.y,
-    zs,
-    T,
-    now,
-    BOMB.wide,
-    J.z || 0,
-  ); // (where he stands, on his own floor)
-  const [x1, y1] = flyTo(o.x / W, o.y / H, ux / RX, uy / RY, RX / W, RY / H);
-  addFx(s, {
-    kind: "jbomb",
-    who: [id],
-    t: now,
-    x: +(o.x / W).toFixed(5),
-    y: +(o.y / H).toFixed(5),
-    x1,
-    y1,
-    hz: J.z || 0,
-  });
-}
-/* the fireplace's Justin, if he's here and up, snaps back at a Jaime Bomb's line, as a player would in the chat */
-function jaimeSnap(s) {
-  const P = s.players[HELPER.id];
-  if (!P || P.dead) return;
-  logIn(s, { from: HELPER.id, to: null, text: snapLine() });
-}
-function jaimesRun(s, zs, now, T) {
-  if (!s.jm) return;
-  const next = {};
-  for (const [id, J0] of Object.entries(s.jm)) {
-    const J = { ...J0 },
-      dt = Math.min(0.35, Math.max(0, (now - J.mt) / 1000));
-    J.mt = now;
-    const o = { x: J.x * W, y: J.y * H },
-      live = zs.filter((z) => z.st === 2);
-    const gone = () =>
-      addFx(s, { kind: "poof", x: J.x, y: J.y, who: [id], t: now });
-    if (!s.players[J.by] || now - J.at > JAIME_LIFE) {
-      if (J.bomb) jaimeBlows(s, id, J, o, J.face, 0, zs, T, now);
-      else gone();
-      continue;
-    } // (his time is up: gone in a poof, or the bomb goes off where he is)
-    if (J.snapAt && now >= J.snapAt) {
-      delete J.snapAt;
-      jaimeSnap(s);
-    }
-    let z = live.find((q) => q.i === J.zi);
-    if (!z) {
-      z = live
-        .map((q) => [q, Math.hypot(q.x - o.x, q.y - o.y)])
-        .sort((a, b) => a[1] - b[1])[0]?.[0];
-      J.zi = z ? z.i : -1;
-    }
-    if (z) {
-      const d = room(o.x, o.y, z.x, z.y);
-      if (d > 1.3) {
-        const aim = d < 3 ? [z.x, z.y] : wayTo(o.x, o.y, z.x, z.y, now);
-        if (aim) stepZombie(o, aim, JAIME_SPEED * dt, []);
-      }
-      J.face = z.x < o.x ? -1 : 1;
-      if (room(o.x, o.y, z.x, z.y) <= 1.6 && now >= J.stabAt) {
-        J.stabAt = now + 1000;
-        const ux = z.x - o.x,
-          uy = z.y - o.y,
-          l = Math.hypot(ux, uy) || 1;
-        if (J.bomb) {
-          jaimeBlows(s, id, J, o, ux, uy, zs, T, now);
-          continue;
-        } // (the Jaime Bomb got to a zombie: it goes off)
-        if (strike(s, z, 1, false, J.by, "knife")) die(z, T); // (his knife's wounds)
-        addFx(s, {
-          kind: "use",
-          what: "knife",
-          by: id,
-          who: [id],
-          face: J.face,
-          t: now,
-          ax: +(ux / l / W).toFixed(5),
-          ay: +(uy / l / H).toFixed(5),
-        });
-      }
-    }
-    J.x = +(o.x / W).toFixed(5);
-    J.y = +(o.y / H).toFixed(5);
-    J.z = Math.round(heightAt(o.x, o.y));
-    next[id] = J;
-  }
-  s.jm = Object.keys(next).length ? next : null;
 }
 /* fire, every heartbeat (BURN): burning zombies take 1 every 3 s, the ducks' fires go out, and anyone burning lights
    a duck it touches. s.hang.l4fire = { z: { zombie: [until, next hurt, by, from when its fire spreads] }, p: { id:
@@ -5083,6 +4904,8 @@ export function l4Shots(s, now) {
           strike(s, z, dmgOf(A), headshot(s, sh.by, w, z, now), sh.by, w)
         )
           die(z, T);
+        else if (w === "chair" && z.st === 2)
+          knockZ(z, sh.vx * W, sh.vy * H, KNOCK.hammer); // (the chair shoves like the hammer: the owner's, Nov 20 21:17Z)
         hitAny = true;
         gone = true;
       }
@@ -5149,7 +4972,7 @@ function burnAt(s, by, x, y, now, z0 = 0) {
 }
 /* a grenade (thrown or launched) goes off at (bx, by): every zombie in its blast dies, and the duck that threw it, in
    it, loses half its HP; true when it got any zombie */
-/* a blast (a grenade, the grenade launcher's, a Jaime Bomb, the Angelic pistol's crit) at (bx, by), its feet at bz (left
+/* a blast (a grenade, the grenade launcher's, the Angelic pistol's crit) at (bx, by), its feet at bz (left
    out: the floor there at its shooter's height, sh.hz). It reaches only what the shots' one rule lets it: nothing solid
    between (layout.js slabBetween; the owner's, Nov 17 20:02Z, "IT IS PHYISCALLY RETARDED"), so one on a roof never gets
    anything inside or under it, and one inside never gets anything up on it */
@@ -5174,8 +4997,7 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
       gore.push([Math.round(z.x), Math.round(z.y)]);
       any = true;
     }
-  /* Justin out there with no weapon, in its blast: all his HP, torn apart, headless and burnt (wounds.js DEATH), as the
-     Jaime Bomb leaves Jaime; no jump dodges it (the owner's, Nov 17 20:37Z) */
+  /* Justin out there with no weapon, in its blast: all his HP, torn apart, headless and burnt (wounds.js DEATH); no jump dodges it (the owner's, Nov 17 20:37Z) */
   const jp = s.pos[WILD.id],
     jq = P4(s, WILD.id);
   if (jp && jq && !jq.dn && !jq.gh && wildOpen(s, WILD.id)) {
@@ -5216,7 +5038,7 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
       "blast",
     );
   /* the one who threw or launched it, in its blast: half its HP, rounded down, and never down by it (the owner's, Nov
-     16; the Jaime Bomb's has no sh.k: Jaime's, not mine) */
+     16) */
   const mine = sh.k && s.pos[sh.by],
     q = mine && (s.hang.l4p || {})[sh.by];
   if (q && !q.dn && !q.gh && !invuln(s) && !invulnOf(s, sh.by, now)) {
@@ -5251,11 +5073,7 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
 function l4Tick(s, now) {
   const L = s.hang.l4;
   if (!L) return false;
-  if (L.over) {
-    if (!s.jm) return false;
-    s.jm = null;
-    return true;
-  }
+  if (L.over) return false;
   meleeHits(s, now); // (first: the zombies below are read after it)
   const T = now - (isSb(s) && L.t0 == null ? 0 : L.t0), // (Sandbox: no round started, its zombies still claw)
     zs = zombies(s);
@@ -5505,7 +5323,6 @@ function l4Tick(s, now) {
   if (isSurv(s) && L4_HOOKS.gm)
     L4_HOOKS.gm.tick(s, zs, now, mine, gmHelp(s, now)); // (Survival's gunmen: gunmenrules.js)
   if (isSurv(s)) merchantShoots(s, zs, now); // (and an armed merchant fighting back)
-  jaimesRun(s, zs, now, T);
   nukeTick(s, zs, now, ids);
   boltTick(s, zs, now, ids);
   dropTick(s, L2, zs, now, T, ids);
@@ -6224,7 +6041,7 @@ function moveZombies(s, zs, now, T, up) {
       Math.abs(target.zz - zombieZ(z)) < 50
     ) {
       if (!z.n) z.n = T || 1;
-      if (T - z.n >= R[2] && T - z.a >= R[3]) {
+      if (T - z.n >= R[2] && T - z.a >= R[3] + ZOMBIE_SWIPE_SLOWER) {
         z.a = T;
         z.dir = Math.round(
           Math.atan2(target.xy[1] - z.y, target.xy[0] - z.x) * 100,

@@ -27,7 +27,7 @@ export function mountDocks(S, hints = "") {
       })
     : null;
   const place = () => {
-    const side = profile.settings.chatSide;
+    const side = "left"; // the chat is always on the left (the owner's, Nov 20 21:38Z)
     put($(".bbar-l", S), [
       notes.btn,
       ...(side === "right" || side === "hidden" ? [] : [chat.btn]),

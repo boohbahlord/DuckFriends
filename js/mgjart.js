@@ -2,7 +2,7 @@
    Each is an SVG string drawn facing right, sized by the css width it's given; the rules and the board live in
    mgjrules.js and mgj.js. The same ink and the same small white shines as the other items (specials.js, mgj.js), so they
    sit with them. Sizes, in a duck's size: the bow 0.9, the arrow 0.8, the flame covers the duck, the
-   teleport flash 1.6 tall, Jaime 0.75 */
+   teleport flash 1.6 tall */
 import { DUCK_DEFAULT } from "./duck.js";
 
 const INK = "#1c1c28";
@@ -37,34 +37,6 @@ export const FLAME = `<svg viewBox="0 0 100 120" aria-hidden="true">
 <g class="fl-in"><path d="M50 111C34 111 28 100 31 90C33 82 40 78 42 71C46 79 48 82 51 84C53 75 57 68 62 63C67 73 70 83 68 95C66 106 60 111 50 111Z" fill="#ffd23f"/>
 <path d="M50 108C42 108 38 102 40 96C41.6 91 45 88 46.4 84C49 89 51 91 53 92C54 87 56 84 59 81C61.6 87 62.4 93 61 99C59.6 105 56 108 50 108Z" fill="#fff6c4"/></g>
 <path d="M26 74Q24 60 30 50M70 38Q76 46 76 56" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".28"/></svg>`;
-
-/* Jaime: a skinny, small, light pink duck in a sombrero (drawn by duckSVG; his knife comes from the knife special) */
-export const JAIME = {
-  name: "Jaime",
-  duck: {
-    ...DUCK_DEFAULT,
-    color: "#ffc2d4",
-    beakColor: "#ff9a1f",
-    beakColor2: "#c45f00",
-    hat: { id: "sombrero" },
-    build: -1,
-    size: -1,
-  },
-};
-/* the Jaime Bomb's dynamite (jaimebomb.js), as a duck's skin (duck.js, in the 120 box): a black strap round his body
-   under the wing, three red sticks on his chest with a strap over them, a little black timer with a red light and green
-   numbers, and a fuse up from the middle stick */
-const STICK_X = [80, 86.5, 93];
-export const BOMB_SKIN = {
-  body: `<path d="M12 74C40 81 76 81 101 73V80C76 88 40 88 13 81Z" fill="#22222a" opacity=".92"/>`,
-  out: `<g stroke="#4a0a0a" stroke-width="1.4">${STICK_X.map((x) => `<rect x="${x}" y="64" width="6.2" height="27" rx="2.6" fill="#d8312b"/>`).join("")}</g>
-${STICK_X.map((x) => `<rect x="${x + 1.3}" y="66.5" width="1.5" height="22" rx=".75" fill="#ff9a88" opacity=".75"/>`).join("")}
-<rect x="77.5" y="75.5" width="25" height="5" rx="1.6" fill="#24242c" stroke="#0b0b10" stroke-width="1"/>
-<rect x="83.2" y="68.6" width="12.6" height="8" rx="1.5" fill="#15151b" stroke="#000" stroke-width="1"/>
-<circle cx="86.4" cy="72.6" r="1.5" fill="#ff2a2a"/><rect x="88.6" y="71.1" width="5" height="3" rx=".6" fill="#46e06a" opacity=".9"/>
-<path d="M89.6 64C89.6 59 95 58.5 96.5 54.5" stroke="#e9d9ad" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-<circle cx="96.7" cy="54" r="1.6" fill="#ffb02e"/>`,
-};
 
 /* his poof when he's killed: a burst of round cloud puffs with a few little ones flying off */
 export const POOF = `<svg viewBox="0 0 100 70" aria-hidden="true">

@@ -8,7 +8,13 @@
 import { duckSVG, DUCK_DEFAULT } from "../duck.js";
 import { hitsOf } from "../l4ddart.js";
 import { zombieLook } from "../l4ddrules.js";
-import { JAIME } from "../mgjart.js";
+import {
+  rnd,
+  holeSeed,
+  brokenRows,
+  joint,
+  roofHoleShape as holeShape,
+} from "./stationmap.js";
 
 const O = "#1c1c28"; // the ducks' ink
 const n1 = (v) => Math.round(v * 10) / 10;
@@ -28,8 +34,6 @@ const ln = (w = 2.4, c = O) =>
   `stroke="${c}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`;
 let N = 0;
 const uid = () => "dp" + (++N).toString(36);
-const rnd = (seed) => () =>
-  (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296; // (the same "random" every time)
 const wrap = (w, h, body, defs = "", cls = "") =>
   F`<svg class="hg${cls ? " " + cls : ""}" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" overflow="visible" aria-hidden="true">${defs ? "<defs>" + defs + "</defs>" : ""}${body}</svg>`;
 const R = (x, y, w, h, fill, more = "") =>
@@ -90,49 +94,6 @@ function shopGlass(id, a, b, y, h) {
 }
 const glassGrad = (id) =>
   F`<linearGradient id="${id}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f2757"/><stop offset=".55" stop-color="#171d3a"/><stop offset="1" stop-color="#162c1f"/></linearGradient>`;
-/* the broken wall's courses (gsWallX brokenW), top first: { j: its row in the pattern, a, b: its top and bottom on the
-   screen, x: its west end }. r: the wall's own random numbers (it goes on using them) */
-const joint = (j, x) => {
-  const o = j % 2 ? 48 : 16;
-  return o + Math.max(0, Math.ceil((x - o) / 64)) * 64;
-}; // (the first joint of row j at or east of x: a course 12 high, the face's pattern 64 × 24, joints at 16 and 48)
-function brokenRows(r, w, h, t) {
-  const C = 12;
-  /* the courses down the face, top first: each one's rows on the screen, its row in the pattern and its west end */
-  const rows = [];
-  for (let y = t; y < h - 2; ) {
-    const j = Math.floor((y + 1) / C),
-      b = Math.min(h, (j + 1) * C - 1);
-    rows.push({ j, a: y, b });
-    y = b;
-  }
-  /* going up from the floor, each course ends at one of its own joints, and the next one's joints sit half a block
-     over, so it ends half a block east of the one under it, or a block and a half, now and then two and a half, and
-     sometimes half a block west, standing out over the gap under it (never two in a row): the toothing of a broken
-     block wall, its stairs uneven, never a ruler's line */
-  const n = rows.length,
-    bottom = rows[n - 1];
-  for (let tries = 0; tries < 40; tries++) {
-    bottom.x = joint(bottom.j, 4 + r() * 30);
-    let out = false,
-      big = 0;
-    for (let i = n - 2; i >= 0; i--) {
-      const u = r();
-      let step = u < 0.18 && !out ? -32 : u < 0.62 ? 32 : u < 0.9 ? 96 : 160;
-      if (rows[i + 1].x + step < 0) step = 32;
-      out = step < 0;
-      if (step > 32) big++;
-      rows[i].x = Math.min(w - 40, rows[i + 1].x + step);
-    }
-    const climb = rows[0].x - bottom.x;
-    if (climb >= 150 && climb <= 280 && big >= 2) break; // (it climbs, unevenly, never to a ruler)
-  }
-  return rows;
-}
-/* where the broken wall stands full height again, from its west end: its top's west end (the roof over it is broken
-   back to there: roofHole) */
-export const brokenTop = (brokenW, w, wallH, t) =>
-  brokenRows(rnd(brokenW), w, t + wallH, t)[0].x;
 /* an east-west wall: its cut top (t deep) and its face (wallH tall), w long; glass: [a, b] spans of shop windows (x
    from its west end). seamless: laid over the ends of the pieces either side (a hole's piece) */
 export function gsWallX({
@@ -582,7 +543,7 @@ const CAR_COLORS = [
    A duck's body lying on its side: the game's own duck drawing (duck.js) with the game's own wounds (l4ddart.js
    hitsOf: a bullet hole is a hole through it, a cut bleeds, a lost beak leaves a bloody stump), in its blood.
      yellow: a plain yellow duck shot through the head, on a car's hood;
-     jaime: Jaime cut up on the chapel's floor, his head apart from the rest;
+     body: a dead duck on the chapel's floor, a different one each time the world loads (the owner's, Nov 20 21:38Z: Jaime left the game);
      soldier: a soldier duck on the gas station's roof, his beak gone, scratched all over, rotting;
      trooper: a yellow duck in his army uniform inside the gas station, his head blown off, shot through the body, in a
        pool of blood like the one that spills out of Justin (the owner's, Nov 18 10:38Z: "another dead duck with's it's
@@ -591,11 +552,25 @@ const CAR_COLORS = [
        wounds red (the owner's, Nov 19 10:22Z: "The last corpse in the gas station should be a dead zombie actually with
        it's head still there AND it's bullet wounds not looking yellow or golden because that isn't right"): the yellow
        was his own yellow showing where the holes tore his uniform; a zombie's skin is green. */
-const BLOOD = "#7d1424",
+const BODY_COLORS = [
+    "#ffd23f",
+    "#f4f1ea",
+    "#9bd3f2",
+    "#f2a0b8",
+    "#a8d672",
+    "#c9a7e8",
+  ], // (the chapel's dead duck: any of these)
+  BLOOD = "#7d1424",
   BLOOD_D = "#3d0910",
   CORPSES = {
     yellow: { look: {}, hits: "B3B6c0c5", turn: -96 },
-    jaime: { look: JAIME.duck, hits: "c0c2c4c5c7k1", turn: -84, cut: true },
+    body: {
+      look: {
+        color: BODY_COLORS[Math.floor(Math.random() * BODY_COLORS.length)],
+      },
+      hits: "c0c2c4c5c7k1",
+      turn: -84,
+    },
     soldier: {
       look: {
         color: "#a7a26a", // (a yellow duck gone grey-green)
@@ -672,7 +647,7 @@ export function corpse(kind, cx, cy, w = 100, flip = false, only = "") {
   return s;
 }
 /* one of them on its own, for the chapel's floor: w × d */
-export function corpseSVG({ w = 140, d = 70, kind = "jaime", only = "" } = {}) {
+export function corpseSVG({ w = 140, d = 70, kind = "body", only = "" } = {}) {
   return wrap(w, d, corpse(kind, w / 2, d * 0.55, w * 0.72, false, only));
 }
 
@@ -1664,75 +1639,13 @@ export function fallenSVG({ w, h, x0, y0, x1, y1, half = 55, z = 30 }) {
    running north-south, the west slope catching more light than the east, a cross on the ridge over the entrance */
 /* a hole broken through the gas station's flat roof, in its box x, y, w × d (the owner's, Nov 17 12:28Z). Since the
    owner's Nov 19 22:41Z it is open, not a black mouth: "make those transparent ... where you can see into the first floor
-   of the ground level". holeShape: its ragged edge, as a path; roofHole: what's drawn round it, over the roof (the roof
+   of the ground level". holeShape: its ragged edge, as a path (stationmap.js roofHoleShape: a duck falls through
+   exactly that); roofHole: what's drawn round it, over the roof (the roof
    itself is cut there: roofSVG's mask), so through it shows what's under the roof, the floor and what stands on it.
    corner "sw": a bite out of the roof's south-west corner instead (over the restroom's smashed west wall: the
    owner's, Nov 19 22:41Z, "break a little bit of the corner of the roof ... and make that ... transparent"), open to
    the roof's west and south edges */
 const SLAB = 16; // (the roof's thickness, as seen down its broken edge)
-function holeShape(x, y, w, d, seed, corner, cap = 0) {
-  const r = rnd(seed);
-  if (corner === "sw") {
-    /* from the roof's west edge at the top of the box east a little, then down its east side in uneven steps, each
-       one farther east (a ledge broken off a bit at a time, the way the wall under it broke: the owner's, Nov 20 16:57Z,
-       "have this circled corner have it's roof broken as a ledge with it's hieght showing in it's solid since it is
-       also 3d, so that way it is consistent"; each step's edge looks south, so the slab's thickness shows under it:
-       roofHole). Then on east in smaller steps down to the sign's band (its top 70 over the roof's front) where the
-       wall under it stands full height again (cap: stationart.js brokenTop), and down through the band there, torn, to
-       the roof's south edge: no roof and no band left over the wall's broken stairs, held up by nothing (the owner's,
-       Nov 20 18:51Z: "the ceiling or roof can't just hang on its own like that ... that red edge should be destroyed
-       and made to look like the other side"). Every edge broken */
-    const by = y + d - 70,
-      end = cap || x + w * 0.84;
-    const pts = [[x - 4, y + r() * 8]];
-    let ex = x + w * (0.1 + r() * 0.06);
-    pts.push([ex, y + 6 + r() * 6]);
-    const top = y + d * 0.1,
-      low = by - 70,
-      n = 4;
-    for (let i = 1; i <= n; i++) {
-      const yi = top + ((low - top) * (i - 0.3 * r())) / n,
-        nx = ex + (w * 0.8 * (0.6 + r() * 0.8)) / n;
-      ex += 3 + r() * 5;
-      pts.push([ex, yi - 2 - r() * 4]); // (down its east side, a little east as it goes)
-      pts.push([nx, yi + (r() - 0.5) * 5]); // (and a step east)
-      ex = Math.min(nx, end - 60);
-    }
-    /* the bite on east to the band's top over where the wall stands whole: shorter steps, a little lower each */
-    const m = 4,
-      y0 = low;
-    for (let i = 1; i <= m; i++) {
-      const yi = y0 + ((by - y0) * i) / m - (i < m ? 6 + r() * 14 : 0),
-        nx =
-          i === m ? end : ex + ((end - ex) / (m - i + 1)) * (0.6 + r() * 0.6),
-        mx = ex + (nx - ex) * (0.3 + r() * 0.4);
-      pts.push([ex + 2 + r() * 4, yi - 4 - r() * 8]);
-      pts.push([mx, yi - 6 - r() * 10]); // (a tooth on each step: torn, never a ruler's line)
-      pts.push([mx + 4 + r() * 6, yi + (r() - 0.5) * 6]);
-      pts.push([nx, yi + (r() - 0.5) * 4]);
-      ex = nx;
-    }
-    /* down through the band, torn: never a square end */
-    for (const [dx, dv] of [
-      [7, 12],
-      [-5, 24],
-      [9, 36],
-      [-2, 48],
-      [6, 58],
-      [-3, 72],
-    ])
-      pts.push([end + dx + (r() - 0.5) * 4, by + dv]);
-    pts.push([x - 4, y + d + 4]);
-    return pts;
-  }
-  const cx = x + w / 2,
-    cy = y + d / 2;
-  return Array.from({ length: 16 }, (_, i) => {
-    const a = (i / 16) * Math.PI * 2,
-      f = 0.86 * (1 - 0.22 * r());
-    return [cx + Math.cos(a) * (w / 2) * f, cy + Math.sin(a) * (d / 2) * f];
-  });
-}
 const pathOf = (p, dy = 0) =>
   "M" + p.map(([u, v]) => n1(u) + " " + n1(v + dy)).join("L") + "Z";
 /* the roof's broken edge as a ledge, made as pixels (P world px each): under every edge of the cut that looks south,
@@ -2022,7 +1935,7 @@ export function roofSVG({
       hy,
       hw,
       hd,
-      7 + i * 13,
+      holeSeed(i),
       corner || "",
       cap || 0,
     ]);

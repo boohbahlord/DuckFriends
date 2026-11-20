@@ -104,19 +104,6 @@ const glassOn = (p) =>
   (p.glass || [])
     .map(([a, b]) => [Math.max(a, p.x) - p.x, Math.min(b, p.x + p.w) - p.x])
     .filter(([a, b]) => b - a > 30);
-/* Downpour: an east-west wall's piece from outside whose west end is a building's south-west corner, where a hole smashed
-   through its west wall runs up to it (the restroom's): its corner broken too, under the roof's broken corner (the
-   owner's, Nov 19 22:41Z, "You can break a little bit of the corner") */
-const cornerHit = (p) =>
-  p.map &&
-  p.only === "out" &&
-  p.w > p.d &&
-  GS.WALK_HOLES.some(
-    (o) =>
-      o.axis === "y" &&
-      Math.abs(o.at - (p.x + 12)) < 2 &&
-      Math.abs(o.b - (p.y + 12)) < 2,
-  );
 /* the heap of blocks at the foot of Downpour's smashed corner (world px): its floor w × d, and how high it may reach */
 const HEAP = { w: 180, d: 64, up: 34 };
 function wallParts(p) {
@@ -141,7 +128,7 @@ function wallParts(p) {
                 t: p.d,
                 skin: skinOf(p),
                 glass: glassOn(p),
-                brokenW: cornerHit(p) ? Math.round(p.x + p.y) : 0,
+                brokenW: GS.brokenCorner(p) ? Math.round(p.x + p.y) : 0,
               })
             : A.logWall({ w: p.w, wallH: p.h, t: p.d, windows }),
         p.x,
@@ -154,7 +141,7 @@ function wallParts(p) {
       /* its smashed west end's blocks, in a heap at its foot outside (the owner's, Nov 19 23:41Z: "the bricks laying on
          top of one another on the parts where it's broken. It's laying in any which way in a stack on the right side
          of that corner") */
-      ...(p.map && cornerHit(p)
+      ...(p.map && GS.brokenCorner(p)
         ? [
             part(
               () =>
@@ -656,13 +643,9 @@ const GS_DRAW = {
     ];
   },
 };
-/* the gas station's broken south wall (its piece at the restroom's corner, cornerHit): where it stands full height
-   again, from the roof's west edge (b: the roof's box), so the roof's broken corner reaches that far (stationart.js
-   holeShape) */
-const capOf = (b) => {
-  const q = L.PROPS.find((p) => p.kind === "wall" && cornerHit(p));
-  return q ? q.x + SA.brokenTop(Math.round(q.x + q.y), q.w, q.h, q.d) - b.l : 0;
-};
+/* where the gas station's broken south wall stands full height again, from the roof's west edge (b: the roof's box), so
+   the roof's broken corner reaches that far (stationmap.js roofCap) */
+const capOf = (b) => GS.roofCap(L.PROPS, b.l);
 export const DRAW = {
   ...GS_DRAW,
   wall: wallParts,

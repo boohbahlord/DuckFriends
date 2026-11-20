@@ -1,7 +1,7 @@
 /* ---------- Quacky Zombies' weapons bar ----------
    Five slots, each in its own color (the owner's): the melee weapon (1, blue), two ranged weapons (2 and 3, red: the
    magazine and the rest, or how many are left), the special (4, purple; empty until the fireplace gives one) and the
-   grenades (5, white: how many). Then the flashlight (0). The one in hand glows. On a computer the bar sits in the
+   grenades (6, white: how many). Then the flashlight (0). The one in hand glows. On a computer the bar sits in the
    bottom bar's right corner (where the specials' keys go), my HP under it as green blocks; a click on a slot picks it.
    On a phone the slots are the specials' slider in the bottom middle, as in every mode (hotbar.js, l4Slider below), the
    purple switch right of it, and the aim-and-attack stick with the jump button above it (phonepad.js); my HP shows on
@@ -102,7 +102,7 @@ export function mountL4Bar(S, api) {
     if (next === sig) return;
     sig = next;
     /* one slot: [key, the weapon (or "" when empty), its kind, what a press does]; down, only the down pistol (the
-       owner's, Nov 17 11:07Z). The second item slot (Dead Ducks Arcade, Survival) comes after the grenades, key 6 */
+       owner's, Nov 17 11:07Z). The second item slot (Dead Ducks Arcade, Survival) is key 5, the grenades key 6 */
     const one = (w, i) => [
         String(pickOfSlot(i) + 1),
         w,
@@ -113,8 +113,8 @@ export function mountL4Bar(S, api) {
         ? [["", "handgun", "ranged", "dg"]]
         : [
             ...sl.slice(0, 4).map(one),
-            ["5", "grenade", "grenade", "grenade"],
             ...sl.slice(4, 5).map((w) => one(w, 4)),
+            ["6", "grenade", "grenade", "grenade"],
             ...(dark ? [] : [["0", "fl", "light", "fl"]]),
           ];
     if (down) {
@@ -134,8 +134,7 @@ export function mountL4Bar(S, api) {
               : w
                 ? weaponIcon(w, duckOf(s, me))
                 : "";
-      const on =
-        (w === "jetpack" && m && m.jp) || (w === "longjump" && m && m.lj); // (switched on: a green ring)
+      const on = w === "jetpack" && m && m.jp; // (switched on: a green ring)
       const tint = w && w !== "fl" ? tintOf(w, angelOf(s, me, w)) : ""; // (its own color: l4ddrules.js tintOf)
       const into = does === String(to); // (what I'm about to take goes here)
       return `<button type="button" class="l4s k-${kind}${tint ? " " + tint : ""}${w && w === held ? " sel" : ""}${empty ? " empty" : ""}${on ? " on" : ""}${into ? " l4s-to" : ""}" data-l4w="${does}" aria-label="${name}${n ? ", " + n : ""}"${out || (!w && does !== "fl") ? " disabled" : ""}>${w ? reloadMeter(s, me, w, m) : ""}${into ? toGlow(toW) : ""}<i>${icon}</i><kbd>${key}</kbd>${n ? `<small>${n}</small>` : ""}</button>`;
@@ -182,20 +181,20 @@ export function l4Slider(api) {
       : null;
   };
   const lightOff = (k) => !!(k.s.hang.l4f || {})[k.me] || sbNoLight(k.s, k.me);
-  /* the key index of a slot: its pick (0 to 3 the slots, 4 the grenades, 5 the second item), 6 the flashlight */
+  /* the key index of a slot: its pick (0 to 3 the slots, 4 the second item, 5 the grenades), 6 the flashlight */
   const keys = () => {
     const k = kit();
     if (!k) return [];
     if (downArmed(k.s, k.me)) return ["handgun"]; // (down: only the down pistol)
     return [
       ...k.sl.slice(0, 4).map((w) => w || null),
+      k.sl[4] || null, // (the second item: key 5, empty till there is one)
       "grenade",
-      ...k.sl.slice(4, 5).map((w) => w || null),
     ];
   };
   const kindAt = (i) =>
-    i === 4 ? "grenade" : i === 6 ? "light" : SLOT_KINDS[slotOfPick(i)];
-  const isItem = (i) => i === 3 || i === 5;
+    i === 5 ? "grenade" : i === 6 ? "light" : SLOT_KINDS[slotOfPick(i)];
+  const isItem = (i) => i === 3 || i === 4;
   const look = (id) => {
     const k = id && kit();
     if (!k) return null;
@@ -211,7 +210,7 @@ export function l4Slider(api) {
           }
         : null; // (down: the down pistol, never Angelic; a plain slot, as the pistol's always is)
     const i =
-      id === "grenade" ? 4 : id === "fl" ? 6 : pickOfSlot(k.sl.indexOf(id));
+      id === "grenade" ? 5 : id === "fl" ? 6 : pickOfSlot(k.sl.indexOf(id));
     if (i < 0) return null;
     return {
       id,
@@ -237,12 +236,7 @@ export function l4Slider(api) {
       const w = api.held();
       if (w) on.add(w);
       if (!lightOff(k)) on.add("fl");
-      if (
-        k.m &&
-        ((k.m.lj && k.sl[3] === "longjump") ||
-          (k.m.jp && k.sl[3] === "jetpack"))
-      )
-        on.add(k.sl[3]); // (switched on beside the weapon in hand)
+      if (k.m && k.m.jp && k.sl[3] === "jetpack") on.add(k.sl[3]); // (switched on beside the weapon in hand)
       return on;
     },
     use(i, keep) {
@@ -251,17 +245,12 @@ export function l4Slider(api) {
       if (i === 6) api.flash();
       else if (isItem(i) && keep) api.pick(i);
       else if (isItem(i)) api.fire(k.sl[slotOfPick(i)]);
-      else if (i === 4 && !keep) api.fire("grenade"); // (a tap on the grenades picked: one is thrown)
+      else if (i === 5 && !keep) api.fire("grenade"); // (a tap on the grenades picked: one is thrown)
     },
     select(i) {
       const k = kit();
       if (k && downArmed(k.s, k.me)) return; // (down: nothing else to pick)
-      if (
-        isItem(i) &&
-        k &&
-        ["longjump", "jetpack"].includes(k.sl[slotOfPick(i)])
-      )
-        return; // (sliding to them changes nothing: a tap or the switch turns them on or off)
+      if (isItem(i) && k && k.sl[slotOfPick(i)] === "jetpack") return; // (sliding to them changes nothing: a tap or the switch turns them on or off)
       if (i < 3 || (i >= 3 && api.slot() !== i)) api.pick(i); // (the one in the middle is the one picked, grenades too)
     },
     current: () => api.held() || null,

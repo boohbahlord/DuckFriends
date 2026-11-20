@@ -8,6 +8,7 @@ import { openWindow, esc, $$ } from "./ui.js";
 import { FONTS, fontCSS } from "./name.js";
 import { openReport, reportLinkHTML } from "./report.js";
 import { setCursorSizes } from "./pixel.js";
+import { setPerf } from "./perf.js";
 
 const S = () => profile.settings;
 const TABS = [
@@ -76,7 +77,8 @@ export function uiScaleWire(w) {
     note();
   });
 }
-let fitWas = 0;
+let fitWas = 0,
+  fpsWas = !!S().fpsShow;
 addEventListener("resize", () => {
   if (uiFit() !== fitWas) applySettings(); // (a window made smaller, a phone turned: the scale it can show)
 });
@@ -89,19 +91,25 @@ export function applySettings() {
   h.classList.toggle("lite", net > 0);
   h.classList.toggle("low", low);
   h.classList.toggle("poor", net > 1);
-  h.classList.toggle("dark", s.theme === "dark");
+  h.classList.add("dark"); // dark only (the owner's, Nov 20 21:38Z)
   h.classList.toggle("dys", !!s.dyslexic);
   h.classList.toggle("cb", !!s.colorblind);
   h.classList.toggle("still", still);
   h.classList.toggle("moving", !still && s.shapes === "moving");
   h.classList.toggle("noshapes", s.shapes === "off");
   h.classList.toggle("nojumps", !!s.jumpsHidden);
+  h.classList.toggle("nojustin", !!s.justinHidden);
   h.classList.toggle("mouse-move", !!s.mouseMove);
   h.classList.toggle("hide-ui", !!s.hideUi); // (hide ui: hideui.js, css/app.css)
   h.style.setProperty("--font", fontCSS(s.font));
   h.style.setProperty("--ts", s.textSize / 100);
   fitWas = uiFit();
   h.style.setProperty("--ui", uiNow() / 100);
+  h.style.setProperty(
+    "--uio",
+    Math.max(20, Math.min(100, +s.uiOpacity || 100)) / 100,
+  );
+  if (fpsWas !== !!s.fpsShow) setPerf((fpsWas = !!s.fpsShow)); // (only when the setting changes, so the command line's fps on still works)
   setCursorSizes(s.mouseSize, s.pointerSize, s.crossSize);
   document.dispatchEvent(new CustomEvent("settings"));
 }
@@ -124,10 +132,6 @@ const slider = (key, label, min, max, step, unit = "%", mark) => {
 
 const PAGES = {
   general: () => `
-    <div class="sect"><h3>Look</h3>${tiles("theme", [
-      ["light", "Light"],
-      ["dark", "Dark"],
-    ])}</div>
     <div class="sect"><details class="arm-fold set-fold"><summary>Font <span class="fold-pick">${esc((FONTS.find((f) => f.id === S().font) || FONTS[0]).name)}</span></summary>${tiles(
       "font",
       FONTS.map((f) => [f.id, f.name, `font-family:${f.css}`]),
@@ -135,15 +139,10 @@ const PAGES = {
     )}</details></div>
     <div class="sect"><h3>Reading</h3>
       <div class="row">${check("dyslexic", "Dyslexic mode", "Clear letters with more room between letters, words and lines.")}${check("colorblind", "Colorblind mode", "A board every kind of color sight tells apart, with marks in each column.")}</div>
-      <div style="margin-top:.6rem">${slider("textSize", "Text size", 80, 180, 5)}${uiScaleHTML()}</div></div>
-    <div class="sect"><h3>Chat</h3>${tiles("chatSide", [
-      ["left", "Left"],
-      ["bottom", "Bottom"],
-      ["right", "Right"],
-      ["hidden", "Hidden"],
-    ])}
-      <div class="row" style="margin-top:.5rem">${check("chatFloat", "Floating messages", "The newest message, and rule changes and silly commands from others, float by the chat button for a moment while the chat is closed.")}</div></div>
-    <div class="sect"><h3>Jumps</h3><div class="row">${check("jumpsSci", "Scientific notation", "12,345 shows as 1.23 × 10⁴.")}${check("jumpsHidden", "Hide the jump counter")}</div></div>
+      <div style="margin-top:.6rem">${slider("textSize", "Text size", 80, 180, 5)}${uiScaleHTML()}${slider("uiOpacity", "UI opacity", 20, 100, 5, "%", 100)}</div></div>
+    <div class="sect"><h3>Chat</h3>
+      <div class="row">${check("chatFloat", "Floating messages", "The newest message, and rule changes and silly commands from others, float by the chat button for a moment while the chat is closed.")}</div></div>
+    <div class="sect"><h3>Jumps</h3><div class="row">${check("jumpsSci", "Scientific notation", "12,345 shows as 1.23 × 10⁴.")}${check("jumpsHidden", "Hide the jump counter")}${check("justinHidden", "Hide the Justin counter")}</div></div>
     <div class="sect"><h3>Screen</h3><div class="row">${check("hideUi", "Hide UI", "In a game: no dark bars above and below, no words at the bottom. The top right buttons, the chat, the Leave and vote buttons and the hotbar stay. hide ui in the command line or \\hide ui in the chat does the same.")}</div></div>
     <div class="sect"><h3>HP</h3><div class="row">${check("otherHp", "Other players' HP", "Every game mode, on a computer: everyone else's HP, small, in the board's bottom right corner.")}</div></div>`,
   controls: () => `
@@ -202,7 +201,7 @@ const PAGES = {
       ["still", "Still"],
       ["off", "Off"],
     ])}</div>
-    <div class="sect"><h3>Frame rate</h3><div class="row">${check("fpsCapOn", "Frame cap", "The most frames a second the game draws. Off: as many as your screen shows.")}<label class="fps-cap">Frames a second <input type="number" data-k="fpsCap" min="30" max="1000" step="1" inputmode="numeric" value="${+S().fpsCap || 120}"></label></div></div>
+    <div class="sect"><h3>Frame rate</h3><div class="row">${check("fpsShow", "Show frames a second", "A small readout of the frames a second, top left.")}${check("fpsCapOn", "Frame cap", "The most frames a second the game draws. Off: as many as your screen shows.")}<label class="fps-cap">Frames a second <input type="number" data-k="fpsCap" min="30" max="1000" step="1" inputmode="numeric" value="${+S().fpsCap || 120}"></label></div></div>
     <div class="sect"><h3>Movement</h3><div class="row">${check("motion", "Animations", "Ducks bob, windows pop, shapes drift. Off keeps everything still.")}</div></div>`,
   audio: () =>
     `<div class="sect"><h3>Volume</h3>${slider("sound", "Volume", 0, 100, 5)}${slider("sfx", "Sound effects", 0, 100, 5)}${slider("music", "Music", 0, 200, 5, "%", 100)}</div>`,

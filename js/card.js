@@ -117,14 +117,16 @@ let SHEETS = [],
   sheetsIn = false;
 /* (asked for once a screen past the front one comes up, or a pattern is wanted: the front screen shows none, so it
    doesn't load them. Slimming step 6: the owner's, Nov 20 19:11Z) */
+let sheetsP = null;
 function wantSheets() {
-  if (SHEETS.length || !canSheets) return;
+  if (!canSheets) return Promise.resolve();
+  if (sheetsP) return sheetsP;
   SHEETS = [PXC.fixed, PXC.tint, PXC.base].map((src) => {
     const im = new Image();
     im.src = src;
     return im;
   });
-  Promise.all(SHEETS.map((im) => im.decode()))
+  sheetsP = Promise.all(SHEETS.map((im) => im.decode()))
     .then(() => {
       sheetsIn = true;
       document.querySelectorAll('[style*="--cpat"]').forEach((el) => {
@@ -138,7 +140,10 @@ function wantSheets() {
       });
     })
     .catch(() => {});
+  return sheetsP;
 }
+/* the patterns' sheets, waited for (Customize loads every picture it can show before it opens: customize.js) */
+export const cardSheets = () => wantSheets();
 if (canSheets)
   document.addEventListener("screen", () => {
     if (document.body.dataset.screen !== "front") wantSheets();
