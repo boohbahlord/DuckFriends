@@ -15,17 +15,15 @@ const walk = (dir) =>
         ? [join(dir, e.name)]
         : [],
   );
-// the map should be about 2,000 tokens (7,200 bytes). Where the full one is bigger, each step down trims the words and
-// the names, then leaves out the small files, until it fits
-const BUDGET = 7200;
+// the map lists every file and should be about 4,000 tokens (14,000 bytes). Where it is bigger, the jobs get shorter,
+// never fewer files
+const BUDGET = 14000;
 const STEPS = [
-  { words: 12, names: 8, min: 0 },
-  { words: 8, names: 3, min: 0 },
-  { words: 7, names: 2, min: 60 },
-  { words: 6, names: 1, min: 100 },
-  { words: 6, names: 0, min: 150 },
-  { words: 5, names: 0, min: 250 },
-  { words: 4, names: 0, min: 400 },
+  { words: 8, names: 0, min: 0 },
+  { words: 6, names: 0, min: 0 },
+  { words: 5, names: 0, min: 0 },
+  { words: 4, names: 0, min: 0 },
+  { words: 3, names: 0, min: 0 },
 ];
 
 // the job: the title between the dashes of the first comment, else its first sentence, cut to WORDS words
