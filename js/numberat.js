@@ -102,6 +102,27 @@ function lex(text) {
       i = end + 1;
       continue;
     }
+    /* \move\{ … }: a movement, its inside read as it is (/\ up and \/ down are its arrows, the owner's, Nov 20 18:46Z);
+       \move\ with no { takes the rest of its line */
+    const mv = c === "\\" && /^\\[ \t]*move[ \t]*\\[ \t]*/i.exec(src.slice(i));
+    if (mv) {
+      let j = i + mv[0].length,
+        end;
+      if (src[j] === "{") {
+        end = src.indexOf("}", j + 1);
+        if (end < 0)
+          no("A \\move\\{ is never closed with }", "help/brains/move.txt");
+        push("move", src.slice(j + 1, end));
+        end++;
+      } else {
+        end = src.indexOf("\n", j);
+        if (end < 0) end = src.length;
+        push("move", src.slice(j, end));
+      }
+      line += (src.slice(i, end).match(/\n/g) || []).length;
+      i = end;
+      continue;
+    }
     if (c === "\\") {
       const end = src.indexOf("\\", i + 1);
       if (end < 0) no("A \\ is never closed");
