@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v168",
+    version: 168,
+    date: "Nov 20, 2026",
+    title: "Regen HP",
+    news: [
+      'For Sandbox: in Seriat, HP coming back each second is written "regen hp" (((regen hp 2))); "regen" alone still works.',
+    ],
+  },
+  {
     id: "v167",
     version: 167,
     date: "Nov 20, 2026",
