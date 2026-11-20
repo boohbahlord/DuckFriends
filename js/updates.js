@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v170",
+    version: 170,
+    date: "Nov 20, 2026",
+    title: "Real pixel flames",
+    news: [
+      "For every mode: the flames special, the hurt corners and Downpour's flare are now real pixels.",
+      "For Quacky Zombies: Duck Cabin's dark now draws each flashlight only when it moves, so Cabin runs smoother.",
+    ],
+  },
+  {
     id: "v169",
     version: 169,
     date: "Nov 20, 2026",
