@@ -19,8 +19,12 @@ export const SB_HELP = {
       "In a block's window, + adds a tab: a spawn, respawn, loot or zone that works on the same block, so one block can do several things at once. Each tab counts toward the zone budget (shown in Build): 50 blocks and tabs at most.",
     ],
     [
+      "Callers",
+      "A Spawn, Respawn or Loot tab works only while its Caller is the variable name of a zone on its block (the block itself or one of its Zone tabs). Its spots come from that zone's squares. With more than one zone on a block, Leads with (under Type) picks the one that sets its look.",
+    ],
+    [
       "Potential order",
-      "At the end of each tab, Potential order cuts the block into squares and picks which of them work right now: true random, shuffle (every square once before any repeats), one after another (with a direction), alternating like a checkerboard, or all at once. Squares at once, Square size and Seconds per step set how many, how big and how fast. In Build the working squares are drawn filled.",
+      "At the end of each tab, Potential order cuts the block into squares and picks which of them work right now: true random, shuffle (every square once before any repeats), one after another (with a direction), alternating like a checkerboard, or all at once. Squares at once, Square size and Seconds per step set how many, how big and how fast; Steps: On a timer, or One step each use (each spawn, respawn or drop). In Build the working squares are drawn filled.",
     ],
     [
       "What a zone is",

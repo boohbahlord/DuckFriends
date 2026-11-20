@@ -405,11 +405,87 @@ export const SB_ORDER = {
         : "0.1 to 600",
     def: "1",
   },
+  /* how its steps go (the owner's, Nov 20 02:45Z): on their own, one every "Seconds per step", or only when something
+     uses it ("the next part of the algorithm only plays when the next input is given, such as spawn says time to spawn
+     another entity") */
+  go: {
+    name: "Steps",
+    check: (t) => (SB_GOES[String(t).trim()] ? "" : "Pick how it steps"),
+    def: "time",
+  },
 };
+export const SB_GOES = {
+  time: "On a timer",
+  use: "One step each use",
+};
+/* a tab's Caller (the owner's, Nov 20 02:45Z): a Spawn, Respawn or Loot tab works only while its Caller is the variable
+   name of a zone on its block (the block itself, or one of its Zone tabs); blank: the block's own name */
+export const SB_CALL = {
+  call: {
+    name: "Caller (a zone's variable name)",
+    check: (t) => (String(t).length <= 40 ? "" : "Too long"),
+    def: "",
+  },
+  /* the zone a block leads with: the first in its order, the one that sets how it looks (the owner's, Nov 20 02:45Z: "the
+     tab that is first in order determines how it appears"); blank: the block itself */
+  lead: { name: "Leads with", check: () => "", def: "" },
+};
+export const SB_CALL_ERR = "Make tab that shares caller or variable name";
+const CALLED = ["spawn", "respawn", "loot"];
+/* a block's or tab's variable name: its own, or its color's */
+export const sbNameOf = (q) => {
+  const k = q && q.f && q.f.name;
+  if (k && k.ok) return String(k.ok).trim();
+  return !q || q.col === SB_NOCOL
+    ? "No color"
+    : q.col[0].toUpperCase() + q.col.slice(1);
+};
+/* does tab q answer to a zone (a Spawn, Respawn or Loot tab) */
+export const sbNeedsCall = (q) =>
+  !!q && !!q.grp && q.pg === "t" && CALLED.includes(q.k);
+/* the zone tab id answers to: the zones on its block whose name is its Caller, the first in the block's order; null when
+   none is (it does nothing then) or it answers to nobody */
+export function sbCallZone(pts, id) {
+  const q = pts[id];
+  if (!sbNeedsCall(q) || !pts[q.grp]) return null;
+  const k = q.f && q.f.call,
+    want = (k && k.ok ? k.ok : sbNameOf(pts[q.grp])).trim().toLowerCase();
+  return (
+    sbZonesOn(pts, q.grp).find(
+      (z) => sbNameOf(pts[z]).toLowerCase() === want,
+    ) || null
+  );
+}
+/* is tab id working: not one that needs a Caller, or its Caller matches */
+export const sbTabLive = (pts, id) =>
+  !sbNeedsCall(pts[id]) || !!sbCallZone(pts, id);
+/* block b's zones in their order: the one it leads with first (its "lead"), then the block itself, then its Zone tabs */
+export function sbZonesOn(pts, b) {
+  const base = pts[b];
+  if (!base) return [];
+  const all = [
+      b,
+      ...Object.keys(pts).filter(
+        (z) => pts[z].grp === b && pts[z].pg === "t" && pts[z].k === "zone",
+      ),
+    ],
+    lead = base.f && base.f.lead && base.f.lead.ok;
+  return lead && all.includes(lead) && lead !== b
+    ? [lead, ...all.filter((z) => z !== lead)]
+    : all;
+}
+/* zone zid used once (a spawn made, a duck back, an orb dropped): one step on when it steps by use */
+export function sbUsed(s, zid) {
+  const p = ((s.sb && s.sb.pts) || {})[zid];
+  if (!p || sbGo(p) !== "use") return;
+  const zs = (s.sb && s.sb.zs) || {};
+  s.sb = { ...s.sb, zs: { ...zs, [zid]: (zs[zid] || 0) + 1 } };
+}
 const ordTxt = (p, f) => {
   const k = p && p.f && p.f[f];
   return k && k.ok != null && k.ok !== "" ? String(k.ok) : SB_ORDER[f].def;
 };
+export const sbGo = (p) => (ordTxt(p, "go").trim() === "use" ? "use" : "time");
 export const sbOrd = (p) => {
   const o = ordTxt(p, "ord").trim();
   return SB_ORDERS[o] ? o : "rand";
@@ -612,15 +688,23 @@ export function sbPlayerSpot(s, id, W = 1, H = 1, ok = null) {
       t.split(/[\s,]+/).includes("players") ||
       (!!name && names(t).includes(name));
   const rs = Object.entries(pts)
-    .filter(([, q]) =>
-      q.k === "respawn"
-        ? forMe(said(q, "who", q.col))
-        : (q.k === "spawn" || q.k === "zone") &&
-          ["t", "true"].includes(said(q, "pon", "f")) &&
-          forMe(said(q, "pwho", "players")),
+    .filter(([pid, q]) =>
+      !sbTabLive(pts, pid)
+        ? false // (a tab whose Caller names no zone)
+        : q.k === "respawn"
+          ? forMe(said(q, "who", q.col))
+          : (q.k === "spawn" || q.k === "zone") &&
+            ["t", "true"].includes(said(q, "pon", "f")) &&
+            forMe(said(q, "pwho", "players")),
     )
     .map(([pid, q]) => ({ ...q, id: pid }));
-  const q = rs.length ? rs[Math.floor(Math.random() * rs.length)] : null;
+  const q = rs.length ? rs[Math.floor(Math.random() * rs.length)] : null,
+    zid = q && sbCallZone(pts, q.id);
+  if (zid) {
+    const at = sbZoneSpot(s, pts[zid], W, H, ok); // (where its zone's algorithm says)
+    sbUsed(s, zid);
+    return { ...q, ...at };
+  }
   return q && (q.k === "zone" || sbSpread(q))
     ? { ...q, ...sbZoneSpot(s, q, W, H, ok) }
     : q; // (a zone, or a block bigger than its spot: anywhere in its shape)
