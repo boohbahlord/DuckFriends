@@ -22026,6 +22026,14 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   -webkit-mask: var(--mask) center / 100% 100% no-repeat;
   mask: var(--mask) center / 100% 100% no-repeat;
 }
+/* a zone's effect (js/sbspawnview.js sfxOn): its picture on each of its squares that act now, or a special's effect on a
+   few of its squares, a duck's size; their z-index says above or below everything */
+.sb-sfxpic {
+  image-rendering: pixelated;
+}
+.sb-sfx {
+  overflow: visible;
+}
 /* the zone window's textures, each with its picture */
 .sb-lktexs {
   display: grid;

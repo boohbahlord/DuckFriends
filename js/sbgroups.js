@@ -85,7 +85,7 @@ export const GR_LISTS = {
   target: "Its NPCs target",
   ignore: "Its NPCs ignore",
 };
-/* yes-or-no settings ("" no, "1" yes): Solomon's real-build test (Nov 20) of a King of the hill: "You stay King after you
+/* yes-or-no settings ("" no, "1" yes): a real-build test (Nov 20) of a King of the hill: "You stay King after you
    walk out" and "it can't be a true king" */
 export const GR_YN = {
   lv: "Leaves when it steps out",

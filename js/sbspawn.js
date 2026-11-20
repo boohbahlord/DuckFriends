@@ -977,12 +977,20 @@ export function sbAct(s, a, now) {
             col,
             grp: a.p,
             pg: tab ? "t" : a.kind,
-            f: tab ? { name: { t: v, ok: v } } : {},
+            f: tab
+              ? {
+                  name: { t: v, ok: v },
+                  ...(a.kind === "zone" && base.f && base.f.fl
+                    ? { fl: { ...base.f.fl } }
+                    : {}), // (a Zone tab stands on its block's floor, as a real-build test needed)
+                }
+              : {},
           },
         },
         a.p,
       ),
     };
+    if (sbOnWorld(s)) s.sb = { ...s.sb, pts: floorsTo(s.sb.pts) }; // (at its block's height)
     const id = "p" + n,
       all = s.sb.pts,
       kin = all[id] ? kinOf(all, id) : [];
