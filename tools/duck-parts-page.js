@@ -43,7 +43,7 @@ function looks({ WOUNDS, hitsOf, ZOUTFITS }) {
   }
   for (const st of styles)
     for (const [b] of BUILDS)
-      for (const m of st.fixed || st.flat ? ["none"] : metals) {
+      for (const m of st.fixed || st.flat ? ["none"] : [...metals, "rainbow"]) {
         const L = { ...D, style: st.id, build: b, metal: m };
         for (const sh of [true, false]) out.push([L, { shadow: sh }]);
         if (m === "none" && !st.fixed && !st.flat)
@@ -52,6 +52,33 @@ function looks({ WOUNDS, hitsOf, ZOUTFITS }) {
       }
   const eyes = EYES.map((e) => e.id),
     beaks = BEAKS.map((b) => b.id);
+  /* Jack (or Jill) in a Box: his eyes on him; Dat Boi: each rank, and the hats and face items moved onto his head */
+  for (const e of eyes)
+    for (const jill of [false, true])
+      for (const dead of [false, true])
+        for (const sh of [true, false])
+          out.push([
+            { ...D, style: "jack", eyes: e, jill },
+            { dead, shadow: sh },
+          ]);
+  const DB = { ...D, style: "datboi" };
+  for (const rank of ["none", ...metals.filter((x) => x !== "none"), "rainbow"])
+    for (const dead of [false, true])
+      for (const sh of [true, false])
+        out.push([
+          { ...DB, rank },
+          { dead, shadow: sh },
+        ]);
+  for (const h of [...HATS, ...NPC_HATS])
+    for (const m of h.metal ? metals.filter((x) => x !== "none") : [undefined])
+      for (const dead of [false, true])
+        out.push([
+          { ...DB, hat: { id: h.id, ...(m ? { metal: m } : {}) } },
+          { dead },
+        ]);
+  for (const f of [...FACES, ...NPC_FACES])
+    for (const dead of [false, true])
+      out.push([{ ...DB, face: { id: f.id } }, { dead }]);
   for (const h of [...HATS, ...NPC_HATS])
     for (const m of h.metal ? metals.filter((x) => x !== "none") : [undefined])
       for (const e of h.id === "antennae" ? eyes : ["default"])
@@ -115,6 +142,9 @@ const OWN = {
   ];
 const chunkOf = (layer, look, o) => {
   if (o.gone && o.gone.head) return "x";
+  if (look.style === "jack" || look.style === "datboi")
+    return "s-" + look.style; // (all of him)
+  if (look.metal === "rainbow" && BODY.includes(layer)) return "rb"; // (the rainbow skin's)
   if (/^skin/.test(layer)) return "skin";
   const k = OWN[layer];
   if (k === "o" && look.outfit) return "o-" + look.outfit.id;
