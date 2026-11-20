@@ -7253,8 +7253,8 @@ html.still .spx-disco .disco-spot {
   width: calc(var(--s) * 0.86);
 }
 .held[data-w="sword"] i {
-  width: calc(var(--s) * 0.62);
-}
+  width: calc(var(--s) * 0.8);
+} /* (the short sword redrawn longer than the knife, the owner's, Nov 19 19:47Z) */
 .held[data-w="pan"] i {
   width: calc(var(--s) * 0.66);
 }
@@ -12133,6 +12133,32 @@ html.sprint-blur .hang-board::after {
 .gact .act-row:has(.hang-btn) {
   order: -1;
 } /* (a Vote button, if one ever shows with it, stays under it) */
+/* Survival, my duck dead: the card of the duck I watch, where the Vote button goes (js/spectate.js), small as a button */
+.act-row.spec {
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+}
+.act-row.spec .pcard {
+  min-height: 0;
+  padding: 0.15rem 0.7rem 0.15rem 0.3rem;
+  gap: 0.4rem;
+  box-shadow: none;
+  max-width: 14rem;
+}
+.act-row.spec .pcard-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.spec-down {
+  margin-left: 0.3rem;
+  color: var(--red);
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+.spec-go {
+  min-width: 2.2rem;
+}
 .gmain[data-phase="hang"] {
   touch-action: none;
 }
@@ -14441,6 +14467,20 @@ html.moving .eye-zap {
 }
 /* the flamethrower's fire on my duck (game.js crimson): my screen blinks in and out of crimson; with the heavy effects
    off, a steady faint red */
+/* Survival: an LMG's rounds flying by me darken my screen's corners a moment (gunmenview.js) */
+.gm-sup {
+  position: fixed;
+  inset: 0;
+  z-index: 8990;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, #0000 42%, #000000d9 100%);
+  opacity: 0;
+  transition: opacity 0.35s;
+}
+.gm-sup.on {
+  opacity: 1;
+  transition: opacity 0.12s;
+}
 html.crimson body::after {
   content: "";
   position: fixed;
@@ -14839,7 +14879,8 @@ html.moving .board.quake {
   margin: 0.3rem 0 0.5rem;
 }
 .mgj-z img.sb-held,
-.l4z-body img.sb-held {
+.l4z-body img.sb-held,
+.hang-npc-body img.sb-held {
   position: absolute;
   height: auto;
   animation: none;
@@ -14853,7 +14894,8 @@ html.moving .board.quake {
   width: calc(var(--k, 1) * 64px * var(--gw, 0.34));
   transform: translate(-50%, -50%) scaleX(var(--face, 1));
 }
-.l4z-body img.sb-held {
+.l4z-body img.sb-held,
+.hang-npc-body img.sb-held {
   left: 92%;
   top: calc(var(--feet) - 28.8px * var(--zk, 1));
   width: calc(64px * var(--gw, 0.34) * var(--zk, 1));
@@ -16434,6 +16476,11 @@ body:has(.l4-shopping, .win-back) :is(.l4-sr, .l4-srv, .l4-srb) {
 .l4-up-t small {
   color: var(--dim);
   font-size: calc(0.8rem * var(--ts));
+}
+/* how many of it the merchant has, after its name */
+.l4-up-n {
+  color: var(--dim);
+  font-size: 0.85em;
 }
 .l4-up-lv {
   display: flex;
@@ -21352,4 +21399,190 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   padding: 0.2rem 0.4rem 0;
   font-size: 0.8em;
   opacity: 0.7;
+}
+/* Seriat's Theme box, in the window's top right beside the X (the owner's, Nov 19 21:59Z; seriattheme.js) */
+.nm-win {
+  position: relative;
+}
+.nm-theme {
+  position: absolute;
+  top: 0.55rem;
+  right: 3.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85em;
+}
+.nm-themesel {
+  font: inherit;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.4rem;
+  border: 0.12rem solid var(--line);
+  background: var(--panel2);
+  color: inherit;
+}
+@media (max-width: 600px) {
+  .nm-themelab {
+    display: none;
+  }
+}
+
+/* the Seriat bible (js/seriatbible.js): one long page like a Word document, in pixels (the owner's, Nov 19 23:17Z) */
+.game .sb-bible {
+  position: fixed;
+  left: 10px;
+  bottom: 96px;
+  z-index: 31;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.sb-bible[hidden] {
+  display: none;
+}
+.nm-win {
+  position: relative;
+}
+.nm-bible {
+  position: absolute;
+  top: 0.55rem;
+  right: 17rem;
+}
+@media (max-width: 600px) {
+  .nm-bible {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+  }
+}
+.win.sbb-win {
+  width: min(52rem, 100%);
+  max-height: calc(100dvh - 2rem);
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+  border-radius: 0;
+  border: 4px solid #1c1c28;
+  box-shadow:
+    4px 4px 0 #1c1c28,
+    -4px 0 0 #1c1c28,
+    0 -4px 0 #1c1c28;
+  background: #6f7a8c;
+  padding: 0.6rem;
+}
+.win-back:has(> .sbb-win) {
+  z-index: 70;
+}
+.sbb-win h2 {
+  margin: 0 3rem 0.5rem 0.2rem;
+  color: #fff;
+  font-family: "Jersey 15", monospace;
+  font-size: 1.5rem;
+  text-shadow: 2px 2px 0 #1c1c28;
+}
+.sbb-win .win-x {
+  border-radius: 0;
+}
+.sbb-page {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+  padding: 1.2rem 1.6rem 2rem;
+  background: #fbf8ee;
+  color: #1c1c28;
+  border: 4px solid #1c1c28;
+  image-rendering: pixelated;
+  font-family: "Jersey 15", monospace;
+  font-size: 1.2rem;
+  line-height: 1.35;
+  font-size-adjust: 0.52;
+}
+.sbb-page * {
+  font-family: inherit;
+}
+.sbb-page h1,
+.sbb-page h2,
+.sbb-page h3 {
+  margin: 1.4rem 0 0.4rem;
+  line-height: 1.1;
+  color: #1c1c28;
+  text-shadow: none;
+}
+.sbb-page h1 {
+  font-size: 2.2rem;
+  margin-top: 0;
+  border-bottom: 4px solid #1c1c28;
+}
+.sbb-page h2 {
+  font-size: 1.7rem;
+  border-bottom: 2px solid #1c1c28;
+}
+.sbb-page h3 {
+  font-size: 1.35rem;
+}
+.sbb-page p,
+.sbb-page ul {
+  margin: 0.5rem 0;
+}
+.sbb-page ul {
+  padding-left: 1.4rem;
+}
+.sbb-page li {
+  margin: 0.25rem 0;
+}
+.sbb-page code,
+.sbb-page pre {
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 0.78em;
+  background: #e8e2cf;
+  border: 2px solid #1c1c28;
+  padding: 0 0.25rem;
+  overflow-wrap: anywhere;
+}
+.sbb-page pre {
+  padding: 0.5rem 0.7rem;
+  overflow: auto;
+  white-space: pre;
+}
+.sbb-tab {
+  overflow-x: auto;
+  margin: 0.6rem 0;
+}
+.sbb-page table {
+  border-collapse: collapse;
+  min-width: 100%;
+}
+.sbb-page th,
+.sbb-page td {
+  border: 2px solid #1c1c28;
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+.sbb-page th {
+  background: #e8e2cf;
+}
+@media (max-width: 600px) {
+  .sbb-page {
+    padding: 0.8rem 0.9rem 1.5rem;
+    font-size: 1.05rem;
+  }
+}
+/* the help pages of Sandbox's windows (js/sbhelp.js): the bible's pixel page, a few lines at a time */
+.sbh-win {
+  width: min(34rem, 100%);
+}
+.sbh-page {
+  min-height: 12rem;
+}
+.sbh-page p {
+  font-size: 1.3rem;
+}
+.sbh-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+  color: #fff;
 }

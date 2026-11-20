@@ -11,11 +11,13 @@
    A phone has no keys: a Tools button under Leave Sandbox lists the windows, a tap on one keeps it up, and its × puts it
    away (the owner's answer 7, Nov 19 10:22Z: "you can start working on i now"). */
 import { LANG } from "./langname.js";
+import { GOD_SW, godMay } from "./sbgod.js";
 import { coverChanges } from "./loading.js";
 import { esc, toast, typing, windowOpen } from "./ui.js";
 import {
   isSb,
   sbMay,
+  sbCan,
   SB_KEYS_TAKEN,
   SB_KEY_IN_BUILD,
   SB_POINTS,
@@ -88,7 +90,10 @@ export const SB_SHEET = [
     "G",
     `Game settings for this Sandbox: where ${LANG} files are brought in to run.`,
   ],
-  ["P", "Player settings: who else may change Sandbox."],
+  [
+    "P",
+    "Player settings: God mode and Invisible for yourself, whether other players may use them, who else may change Sandbox, and each player on their own.",
+  ],
   [
     "1-9",
     "While a window is up, pick its options by number or with the mouse. Weapons don't switch then.",
@@ -154,6 +159,63 @@ const rightsRows = (R) => {
     });
   return [...wins, ...who];
 };
+/* God mode and Invisible, for me or for player who (the last row of P): God mode first (key 1), Invisible second, then the
+   switches under God mode while it is on (sbgod.js) */
+const godRows = (R, who) => {
+  const g = ((R.state.sb || {}).gd || {})[who || R.me] || {},
+    send = (k, on) => R.send({ t: "sbg", k, on, ...(who ? { who } : {}) }),
+    sw = (k, label) => ({
+      label: `${label}: ${g[k] ? "on" : "off"}`,
+      on: !!g[k],
+      act: () => send(k, !g[k]),
+    });
+  return [
+    sw("god", "God mode"),
+    sw("inv", "Invisible"),
+    ...(g.god ? GOD_SW.map(([k, n]) => sw(k, n)) : []),
+  ];
+};
+let pWho = ""; // (the player whose settings the last row of P is showing)
+/* the last option of every window: a big help window with pages (sbhelp.js) */
+const helpRow = (key) => ({
+  label: "Help",
+  win: true,
+  act: () => import("./sbhelp.js").then((m) => m.openSbHelp(key)),
+});
+const pRows = (R) => {
+  const s = R.state,
+    rights = sbCan(s, R.me);
+  if (pWho && (!rights || (pWho !== "*" && !s.players[pWho]))) pWho = "";
+  if (pWho === "*")
+    return [
+      { label: "Back", act: () => (pWho = "") },
+      ...Object.values(s.players)
+        .filter((p) => !p.bot)
+        .map((p) => ({ label: p.name, act: () => (pWho = p.id) })),
+      helpRow("p"),
+    ];
+  if (pWho)
+    return [
+      {
+        label: `Back to all players (${(s.players[pWho] || {}).name})`,
+        act: () => (pWho = "*"),
+      },
+      ...godRows(R, pWho),
+      helpRow("p"),
+    ];
+  const rows = godMay(s, R.me) ? godRows(R) : [];
+  if (rights) {
+    const on = !!(s.sb && s.sb.gperm);
+    rows.push({
+      label: `Players may use God mode and Invisible: ${on ? "on" : "off"}`,
+      on,
+      act: (r) => r.send({ t: "sbg", perm: true, on: !on }),
+    });
+    rows.push(...rightsRows(R));
+    rows.push({ label: "Each player", act: () => (pWho = "*") });
+  }
+  return [...rows, helpRow("p")];
+};
 /* the options in a window (the later stages fill the rest): [{ label, act }], or a function of the room that makes them */
 /* M's first row: the Brain builder, a window of its own (loaded when it's wanted: it brings the command line) */
 const BRAIN_ROW = {
@@ -163,7 +225,7 @@ const BRAIN_ROW = {
 };
 const OPTIONS = {
   c: [],
-  b: buildRows,
+  b: (R) => [...buildRows(R), helpRow("b")],
   m: (R) => {
     const rows = npcRows(R);
     return [
@@ -171,12 +233,13 @@ const OPTIONS = {
       rows[0],
       ...kdRows(R),
       ...rows.slice(1),
+      helpRow("m"),
     ]; // (Build a brain, New NPC, then the four kinds' defaults, then the made ones)
   },
   n: [],
-  h: (R) => hotRows(R, openPut),
-  g: [],
-  p: rightsRows,
+  h: (R) => [...hotRows(R, openPut), helpRow("h")],
+  g: [helpRow("g")],
+  p: pRows,
 };
 export const sbOptions = (k, R) => {
   const o = OPTIONS[k] || [];
@@ -243,7 +306,10 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
       return;
     }
     const w = SB_WINS[k.open],
-      can = w.all || sbMay(R.state, R.me, k.open), // (the rights, or Game Settings giving everyone this window)
+      can =
+        w.all ||
+        sbMay(R.state, R.me, k.open) ||
+        (k.open === "p" && godMay(R.state, R.me)), // (the rights, or Game Settings giving everyone this window)
       opts = can ? sbOptions(k.open, R) : [];
     const hotWin = k.open === "h" && can && sbHotOn(R.state);
     const sig =
@@ -279,6 +345,15 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   tools.className = "sb-tools";
   tools.innerHTML = `<button type="button" class="btn ghost sb-tools-btn" aria-expanded="false">Tools</button><div class="sb-tools-list" hidden></div>`;
   S.append(tools);
+  /* the Seriat bible's own button, bottom left, where the cheat mode note used to sit (the owner's, Nov 19 23:17Z) */
+  const bible = document.createElement("button");
+  bible.type = "button";
+  bible.className = "btn ghost sb-bible";
+  bible.hidden = true;
+  bible.textContent = `${LANG} bible`;
+  bible.onclick = () =>
+    import("./seriatbible.js").then((m) => m.openSeriatBible());
+  S.append(bible);
   /* the note, bottom left, as Sandbox comes up: which key is the cheat sheet and, for whoever may build, cheat mode;
      then it fades away. Cheat mode's own switch is in the cheat sheet (the owner's, Nov 19 21:59Z: "cheat mode on or
      off in the bottom left, we move that somewhere else ... It should be in the cheat sheet ... all in one text that
@@ -350,7 +425,12 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
     tBtn.setAttribute("aria-expanded", on ? "true" : "false");
     if (!on || !R) return;
     tList.innerHTML = Object.entries(SB_WINS)
-      .filter(([key, w]) => w.all || sbMay(R.state, R.me, key))
+      .filter(
+        ([key, w]) =>
+          w.all ||
+          sbMay(R.state, R.me, key) ||
+          (key === "p" && godMay(R.state, R.me)),
+      )
       .map(
         ([key, w]) =>
           `<button type="button" class="sb-tools-opt" data-k="${key}">${esc(w.name)}</button>`,
@@ -396,9 +476,21 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   };
   /* the cheat note rides just above whatever is lowest at the bottom left (the Jumps count on a phone, the bar on a
      computer), so it never sits on the Notes button */
+  const seatBible = () => {
+    const R = getR(),
+      a = S.querySelector(".jumps-slot, .bbar");
+    bible.hidden = !R || !isSb(R.state) || !!k.open || windowOpen() || !a;
+    if (bible.hidden) return;
+    const top =
+      Math.round(a.getBoundingClientRect().top - bible.offsetHeight - 6) + "px";
+    if (bible.style.top !== top) {
+      bible.style.top = top;
+      bible.style.bottom = "auto";
+    }
+  };
   const seatChip = () => {
     if (chip.hidden) return;
-    const a = S.querySelector(".jumps-slot, .bbar");
+    const a = bible.hidden ? S.querySelector(".jumps-slot, .bbar") : bible;
     if (!a) return;
     const r = a.getBoundingClientRect(),
       top = Math.round(r.top - chip.offsetHeight - 6) + "px";
@@ -410,6 +502,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   const seating = setInterval(() => {
     seat();
     paintChip();
+    seatBible();
     seatChip();
   }, 250);
   /* ---------- putting down what Build picked: it rides on my mouse until a click on the map puts it there (a phone:
@@ -591,7 +684,15 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
   const pick = (i) => {
     const R = getR(),
       o = R && sbOptions(k.open, R)[i];
-    if (!o || !R || !(SB_WINS[k.open].all || sbMay(R.state, R.me, k.open)))
+    if (
+      !o ||
+      !R ||
+      !(
+        SB_WINS[k.open].all ||
+        sbMay(R.state, R.me, k.open) ||
+        (k.open === "p" && godMay(R.state, R.me))
+      )
+    )
       return;
     if (o.win) {
       sbClose(k, false); // (a popup of its own takes the place)
@@ -853,6 +954,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt) {
       removeEventListener("contextmenu", menu, true);
       closeMenu();
       chip.remove();
+      bible.remove();
       sbPlace.start = null;
       uncover();
       box.remove();

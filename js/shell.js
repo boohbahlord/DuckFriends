@@ -65,6 +65,7 @@ import { tvStats } from "./triviarules.js";
 import { setPerf, perfOn } from "./perf.js";
 import { secret } from "./unlocks.js";
 import { uiCommand } from "./hideui.js";
+import { SERIAT_THEMES, seriatTheme, setSeriatTheme } from "./seriattheme.js";
 import { music } from "./music.js";
 import { npcsHere, npcTag, npcByTag, npcById } from "./npcs.js";
 import { isSb, sbMay, sbWorld, SB_WORLD_NAMES } from "./sandboxrules.js";
@@ -1604,6 +1605,20 @@ const CMDS = {
   },
   /* hide ui: the bars, the words at the bottom and the song bar go, mine alone (again, or show ui: back; hideui.js) */
   hide: (args) => uiCommand("hide", args[0]),
+  /* theme <name>: the look of Seriat and the command line (the book's variations, seriattheme.js) */
+  theme: (args) => {
+    if (!args[0])
+      return [
+        `theme: ${SERIAT_THEMES.find((t) => t[0] === seriatTheme())[2]} (${seriatTheme()})`,
+        `theme <name>, one of: ${SERIAT_THEMES.map((t) => t[0]).join(", ")}`,
+      ].join("\n");
+    const t = setSeriatTheme(args[0]);
+    if (!t)
+      fail(
+        `✗ theme: ${args[0]}: no such theme (${SERIAT_THEMES.map((x) => x[0]).join(", ")})`,
+      );
+    return `Theme: ${t[2]}.`;
+  },
   show: (args) => uiCommand("show", args[0]),
   clear: () => null,
   exit: (a, i, x) => {
@@ -3305,6 +3320,7 @@ const FILE_CMDS = [
   "send",
 ];
 const WORDS = {
+  theme: SERIAT_THEMES.map((t) => t[0]),
   help: ["all", ...HELP_NAMES.map((n) => n.slice(4).toLowerCase())],
   forgame: [
     "show",

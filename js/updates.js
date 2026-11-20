@@ -9,6 +9,47 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v129",
+    version: 129,
+    date: "Nov 19, 2026",
+    title: "God mode",
+    news: [
+      "For Sandbox: Player settings (P) has God mode (enemies ignore you and you never die, with unlimited ammo, unlimited items and no reloading under it), Invisible, a permission row for other players and an Each player page. Every window (B, M, P, H, G) ends with a Help window.",
+    ],
+  },
+  {
+    id: "v128",
+    version: 128,
+    date: "Nov 19, 2026",
+    title: "Walk through while invisible",
+    news: [
+      "An invisible duck walks through other ducks, NPCs and zombies, and they walk through it. Turning visible again never leaves you stuck inside anything.",
+    ],
+  },
+  {
+    id: "v127",
+    version: 127,
+    date: "Nov 19, 2026",
+    title: "The Seriat bible",
+    news: [
+      "For Sandbox: the Seriat bible opens in its own window, one long page, from the button at the bottom left or the one beside Theme in the Seriat window.",
+    ],
+  },
+  {
+    id: "v126",
+    version: 126,
+    date: "Nov 19, 2026",
+    title: "Two item slots",
+    news: [
+      "For Dead Ducks Arcade: two item slots; the second is key 6, after the grenades.",
+      "For Dead Ducks Arcade: a merchant may have 2 or 3 of anything he sells, and he never runs out of upgrades.",
+      "For Dead Ducks Arcade: merchants have as much HP as a zombie.",
+      "For Sandbox: Seriat and the command line always wear the Nous Within Kenoma look. Pick a variation with the Theme box in Seriat's top right or the theme command (theme chalice).",
+      "For Sandbox: Seriat accepts '*1' as a name for asterisk 1 (same as '1*'), and a line rule's strength can be a Seriat value.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v125",
     version: 125,
     date: "Nov 19, 2026",

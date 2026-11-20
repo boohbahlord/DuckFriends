@@ -724,7 +724,21 @@ export const ICONS = {
 
 const GOLD_CHAIR_ICON = GOLD_CHAIR.replace("<svg ", '<svg class="sp-chair" ');
 /* a weapon's picture: the specials' bar's (the knife, the pistol, the bow …), and the new guns' own (l4ddguns.js) */
+/* Survival's defibrillator: a red case with a green heartbeat on its screen and a yellow bolt, its two paddles on
+   curly cords in front */
+const DEFIB_ICON = `<svg viewBox="0 0 48 40" aria-hidden="true">
+<path d="M14 27Q11 31 13 33M34 27Q37 31 35 33" fill="none" stroke="${INK}" stroke-width="3.2" stroke-linecap="round"/>
+<path d="M14 27Q11 31 13 33M34 27Q37 31 35 33" fill="none" stroke="#4a4e5c" stroke-width="1.6" stroke-linecap="round"/>
+<rect x="8" y="3" width="32" height="25" rx="5" fill="#e8424d" stroke="${INK}" stroke-width="2"/>
+<path d="M8.6 22H39.4V23Q39.4 27.4 35 27.4H13Q8.6 27.4 8.6 23Z" fill="#b92f3b"/>
+<rect x="12.5" y="7" width="23" height="11" rx="2" fill="#16261e" stroke="${INK}" stroke-width="1.3"/>
+<path d="M14.4 12.6H19.4L21 9.4L23.4 16L25.6 11L27 12.6H33.6" fill="none" stroke="#5bf08a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M25.4 19.4L22 23.6H24.6L22.8 26.6L26.8 22.2H24.2Z" fill="#ffd23f" stroke="${INK}" stroke-width=".9" stroke-linejoin="round"/>
+<path d="M12 6.4Q12 5.4 13.4 5.4" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity=".6"/>
+<g stroke="${INK}" stroke-width="1.6"><rect x="3" y="31" width="15" height="7" rx="3" fill="#d6dbe5"/><rect x="30" y="31" width="15" height="7" rx="3" fill="#d6dbe5"/><rect x="7.5" y="28.6" width="6" height="3.4" rx="1.2" fill="#4a4e5c"/><rect x="34.5" y="28.6" width="6" height="3.4" rx="1.2" fill="#4a4e5c"/></g>
+<path d="M5 35.4H16M32 35.4H43" stroke="#9aa1b0" stroke-width="1.2" stroke-linecap="round"/></svg>`;
 export const weaponIcon = (w, duck) =>
+  (w === "defib" && DEFIB_ICON) ||
   (w === "handgun" && pistolIcon(duck)) ||
   (w === "chair" && GOLD_CHAIR_ICON) || // (here the chair is golden: the owner's, Nov 18 12:19Z) // (the pistol: as the one in my duck's hand, in my colors; the owner's, Nov 17)
   (GUNS[w] && GUNS[w].icon) ||

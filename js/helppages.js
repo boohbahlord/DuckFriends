@@ -141,6 +141,7 @@ export const KINDS = {
     "songs",
     "hide",
     "show",
+    "theme",
     "forgame",
     "roundstats",
     "gamestats",

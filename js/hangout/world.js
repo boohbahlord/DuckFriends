@@ -19,6 +19,7 @@ import { actsOf } from "./registry.js";
 import "./activities.js";
 import { duckRoom } from "../duck.js";
 import { esc } from "../ui.js";
+import { isInvisible } from "../invisible.js";
 import { low } from "../gfx.js";
 import { walkOf } from "../rules.js";
 import { survSet } from "../survrules.js";
@@ -47,7 +48,8 @@ const CLICK_REACH = 260; // Click to interact: how far from my duck a click can 
 const cl = (v, a, b) => Math.max(a, Math.min(b, v));
 const dirOf = (dx, dy) => (dx > 0 ? "r" : dx < 0 ? "l" : dy > 0 ? "d" : "u");
 
-/* api: room() → the room; me() → my duck { x, y (0 … 1), j, lj, dj, z, b … }; jumpZ(pos, now) (duck heights); landsAt(pos);
+/* api: room() → the room; me() → my duck { x, y (0 … 1), j, lj, dj, z, b … }; eye() → the duck I watch instead
+   (spectating: as me() is, or null); jumpZ(pos, now) (duck heights); landsAt(pos);
    cfg() → the jump's { T, H }; button() → the context button changed (redraw it); clickUse() → a click on a thing near
    my duck uses it (the Click to interact setting) */
 export function mountWorld(board, api) {
@@ -953,12 +955,14 @@ export function mountWorld(board, api) {
     const r = R(),
       s = r.state;
     if (me.j || me.vz != null) return 0;
+    if (isInvisible(s, r.me, now)) return 0; // (invisible: through everyone, and they through me)
     const ka = duckRoom((s.players[r.me] || {}).duck),
       here = L.whereIn(x, y, me.z);
     let d = 0;
     for (const id of s.seat) {
       const p = s.pos[id];
       if (id === r.me || !p || (p.j && now < api.landsAt(p))) continue;
+      if (isInvisible(s, id, now)) continue;
       if (acts().some((a) => a.passable && a.passable(id, ctx))) continue; // (an activity's dead: walked over, Quacky Zombies)
       const ox = p.x * L.W,
         oy = p.y * L.H;
@@ -1209,7 +1213,7 @@ export function mountWorld(board, api) {
       last = now;
       const r = R(),
         s = r.state,
-        me = api.me();
+        me = api.eye?.() || api.me(); // (or the duck I watch, spectating: its view as it sees it, the camera on it, its building's shade)
       if (!me || !cam.vw) return;
       if (cam.low !== low()) world.measure(); // (Graphics changed in Settings)
       ensure(me);

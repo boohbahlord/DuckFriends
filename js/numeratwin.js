@@ -23,6 +23,13 @@ import { numerat, shellRun, shellSuggest, shellHistory } from "./shell.js";
 import { check, WORDS } from "./numerat.js";
 import { shellCtx } from "./chat.js";
 import { activeRoom } from "./net.js";
+import {
+  SERIAT_THEMES,
+  seriatTheme,
+  setSeriatTheme,
+  useSeriatTheme,
+  freeSeriatTheme,
+} from "./seriattheme.js";
 import { isSb, sbMay } from "./sandboxrules.js";
 import { NB_TEXT } from "./sbnumberat.js";
 import { boxText } from "./sbspawn.js";
@@ -61,11 +68,19 @@ function resendBrains() {
 const NAME_OK = /^[\w.-]{1,40}$/;
 let wrapOn = false; // (Wrap: off unless turned on; kept while the page is open)
 
+/* the bible's button, top right: its window opens above this one (js/seriatbible.js) */
+const $b = (w) =>
+  w
+    .querySelector("[data-bible]")
+    .addEventListener("click", () =>
+      import("./seriatbible.js").then((m) => m.openSeriatBible()),
+    );
+
 export function openNumerat() {
   const ctx = shellCtx(),
     root = numerat.root(ctx),
     st = { file: "", dir: root, q: "", out: [], busy: false };
-  const html = `<h2>${esc(LANG)}</h2>
+  const html = `<h2>${esc(LANG)}</h2><button type="button" class="btn small ghost nm-bible" data-bible>${esc(LANG)} bible</button>
   <div class="nm">
     <aside class="nm-side">
       <div class="nm-nav"><button type="button" class="btn small ghost nm-arrow" data-back aria-label="Back" title="Back">&larr;</button><button type="button" class="btn small ghost nm-arrow" data-fwd aria-label="Forward" title="Forward">&rarr;</button><form class="nm-go"><input class="nm-in nm-addr" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Path or search" placeholder="Path or search"></form></div>
@@ -79,9 +94,18 @@ export function openNumerat() {
       <div class="nm-term" aria-label="Terminal"><div class="nm-out" aria-live="polite"></div><ul class="nm-sugg" role="listbox" hidden></ul><form class="nm-line"><span class="nm-ps">$</span><input class="nm-in" spellcheck="false" autocomplete="off" aria-label="Command"></form></div>
     </section>
   </div>`;
-  return openWindow(html, {
+  useSeriatTheme("window"); // (the book's look while it is up)
+  const picker = `<label class="nm-theme"><span class="nm-themelab">Theme</span><select class="nm-themesel" aria-label="Theme">${SERIAT_THEMES.map(
+    ([n, , label]) =>
+      `<option value="${n}"${n === seriatTheme() ? " selected" : ""}>${esc(label)}</option>`,
+  ).join("")}</select></label>`;
+  const shown = openWindow(picker + html, {
     cls: "nm-win",
     onOpen(w) {
+      $b(w);
+      w.querySelector(".nm-themesel").addEventListener("change", (e) =>
+        setSeriatTheme(e.target.value),
+      );
       const $ = (q) => w.querySelector(q),
         code = $(".nm-code"),
         ed = $(".nm-ed"),
@@ -615,4 +639,6 @@ export function openNumerat() {
       paint();
     },
   });
+  shown.then(() => freeSeriatTheme("window"));
+  return shown;
 }

@@ -24,7 +24,10 @@ export function lootCats(s) {
   const drops = Object.keys(SB_DROPS).filter((w) => lootOk(s, w));
   if (drops.length)
     return [
-      ["Weapons", Object.keys(ARMS).filter((w) => lootOk(s, w))],
+      [
+        "Weapons",
+        Object.keys(ARMS).filter((w) => w !== "defib" && lootOk(s, w)), // (Survival's alone: nobody dies for good in Sandbox)
+      ],
       ["Zombie drops", drops],
       ["Gear", Object.keys(SB_GEAR).filter((w) => lootOk(s, w))],
     ];

@@ -88,8 +88,8 @@ HP, damage and speed take tenths.
   for input like `*`. Named the same way: `'1$'`. Mixed: `say "zombie $$*"` might say "zombie qe7".
   Lower case by default; `\'ainc caps'\` lets capitals in (owner 13:36Z: yes).
 - Named asterisks, single quotes: `'1*'` is asterisk number 1, `'2***'` asterisk number 2 with three digits. The number
-  in quotes names it and is never part of the value. Double quotes are math, never names. (Keep `'1*'`; `'*1'`
-  **[open]**, Adam suggested dropping it.)
+  in quotes names it and is never part of the value. Double quotes are math, never names. `'*1'` means the same as `'1*'`
+  (owner 23:17Z, final: keep both forms).
 - `=` binds: `[2,3,5]=*+*` picks 2, 3 or 5, calls it `*`, result `*+*` (3 gives 6).
 - The owner's example: `{\>1,2>\[2,[3>5],5]}='1*'\>>\||{[2,4]='2*'}\>>\||'1*'+'2*'='3*'`. The first group plays once
   or twice and gives 2, 3, 5 or 5 (`'1*'`); then 2 or 4 (`'2*'`); their sum is `'3*'`, the spawn's HP.
@@ -112,7 +112,9 @@ HP, damage and speed take tenths.
 | `\'ainc mormax'\`, `mormini`, `negbrahm`, `posbrahm` | section 5 |
 
 **[open]** The quotes still move around between forms (`\'inc0'\` vs `\inc'lim=25'\`); Adam suggested one shape.
-**[open]** `\lin["**"=!]'inc1'\` (math on `!`) has no clear meaning yet.
+Math on `!` (owner 23:17Z, final): a rule's strength can be a Seriat value in brackets, `\lin["**"=!]'inc1'\` (strength
+10 to 99; a trailing `=!` is optional). The value is worked out once, with a fixed seed, into a whole number >= 0; it
+must be a number.
 
 ## 7. Param files
 A file whose first line is `\\param\\` sets rules for every Seriat file. `\\param1\\`, `\\param2\\` ... set the
@@ -143,7 +145,7 @@ Each file is turned once into a small plan when saved, so a spawn only follows a
 WebAssembly only if measuring with 800 NPCs shows it's needed.
 
 ## 13. Still open
-1. `'*1'`: keep or drop? 2. One shape for line rules? 3. Math on `!`? 4. Limits (section 8). 5. The owner's long
+1. One shape for line rules? 2. Limits (section 8). 3. The owner's long
 example `\>[*+0:*]=*>\[2,4]\>>\||[5,7,9],[3,5]\>*-[1,2]>\||10`, Adam's reading: a count from 0 to a random digit,
 cycling `[2,4]` that many times, then `[5,7,9]` or `[3,5]` a digit minus 1 or 2 times, 10 times.
 
