@@ -49,6 +49,22 @@ export function browserOf(ua = navigator.userAgent) {
 const reporter = () =>
   acct.uid && NAME_OK.test(profile.name || "") ? profile.name : "Guest";
 
+/* a report into the database (one a minute): this window's, and the Shared page's Report (shared.js) */
+export async function sendReport(text) {
+  const { D, db, uid } = await connect(); // (the same guest sign-in as online rooms)
+  const key = D.push(D.ref(db, "reports")).key;
+  await D.update(D.ref(db), {
+    [`reports/${key}`]: {
+      at: D.serverTimestamp(),
+      uid,
+      name: reporter(),
+      device: deviceOf(),
+      browser: browserOf(),
+      text: String(text).slice(0, REPORT_MAX),
+    },
+    [`reportsLast/${uid}`]: D.serverTimestamp(),
+  });
+}
 export function openReport() {
   return openWindow(
     `<h2 class="up-title">${rainbowHTML("Report Bug or Suggest Ideas")}</h2>
@@ -74,19 +90,7 @@ export function openReport() {
           send.disabled = true;
           send.textContent = "Sending…";
           try {
-            const { D, db, uid } = await connect(); // (the same guest sign-in as online rooms)
-            const key = D.push(D.ref(db, "reports")).key;
-            await D.update(D.ref(db), {
-              [`reports/${key}`]: {
-                at: D.serverTimestamp(),
-                uid,
-                name: reporter(),
-                device: deviceOf(),
-                browser: browserOf(),
-                text,
-              },
-              [`reportsLast/${uid}`]: D.serverTimestamp(),
-            });
+            await sendReport(text);
             close(true);
             toast("Thanks! Your report is in.");
           } catch (err) {

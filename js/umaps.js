@@ -241,15 +241,16 @@ async function importMap(file) {
   } catch (e) {
     throw new Error("That file is not a map.");
   }
-  if (
-    !o ||
-    o.kind !== KIND ||
-    typeof o.d !== "string" ||
-    !/^data:image\//.test(o.d)
-  )
-    throw new Error("That file is not a map.");
+  if (!o || o.kind !== KIND) throw new Error("That file is not a map.");
+  return mapFromObj(o);
+}
+/* a map from outside this device (a file, or the Shared page: shared.js), kept here: its picture made into pixels again,
+   so nothing but a picture ever comes in. keep: the id it had where it was made (a shared game mode's own map) */
+export async function mapFromObj(o, keep = "") {
+  if (!o || typeof o.d !== "string" || !/^data:image\//.test(o.d))
+    throw new Error("That is not a map.");
   const m = {
-    id: newId(),
+    id: isUmap(keep) ? keep : newId(),
     t:
       String(o.t || "A made map")
         .replace(/\s+/g, " ")
@@ -266,7 +267,8 @@ async function importMap(file) {
   await putMap(m);
   return m;
 }
-/* My maps: the maps on this device, each with Play (the host, between games), Change, Export and Delete; New map and
+/* My maps: the maps on this device, each with Play (the host, between games), Change, Share (online: shared.js), Export
+   and Delete; New map and
    Import at the top */
 export function myMaps(R) {
   if (document.querySelector(".um-list-win")) return;
@@ -278,7 +280,7 @@ export function myMaps(R) {
       ? all
           .map(
             (m) =>
-              `<li class="um-item" data-id="${m.id}"><div class="mini-map mm-made"><img src="${m.d}" alt="" draggable="false"></div><div class="um-say"><b>${esc(m.t)}</b>${m.de ? `<small class="dim">${esc(m.de)}</small>` : ""}<small class="dim">${esc(LOOK_NAMES[m.ui] || "")}</small><span class="um-acts">${can ? `<button type="button" class="btn small${cur === m.id ? " purple" : " yellow"}" data-play>${cur === m.id ? "Playing" : "Play it"}</button>` : ""}<button type="button" class="btn small ghost" data-edit>Change</button><button type="button" class="btn small ghost" data-out>Export</button><button type="button" class="btn small ghost" data-del>Delete</button></span></div></li>`,
+              `<li class="um-item" data-id="${m.id}"><div class="mini-map mm-made"><img src="${m.d}" alt="" draggable="false"></div><div class="um-say"><b>${esc(m.t)}</b>${m.de ? `<small class="dim">${esc(m.de)}</small>` : ""}<small class="dim">${esc(LOOK_NAMES[m.ui] || "")}</small><span class="um-acts">${can ? `<button type="button" class="btn small${cur === m.id ? " purple" : " yellow"}" data-play>${cur === m.id ? "Playing" : "Play it"}</button>` : ""}<button type="button" class="btn small ghost" data-edit>Change</button><button type="button" class="btn small ghost" data-share>Share</button><button type="button" class="btn small ghost" data-out>Export</button><button type="button" class="btn small ghost" data-del>Delete</button></span></div></li>`,
           )
           .join("")
       : '<li class="dim um-none">No maps made yet.</li>';
@@ -319,7 +321,9 @@ export function myMaps(R) {
             bringMap(R, m);
             R.send({ t: "options", options: { map: m.id, mapPick: "" } });
             setTimeout(() => w.isConnected && draw(w), 200);
-          } else if (b.hasAttribute("data-edit")) {
+          } else if (b.hasAttribute("data-share"))
+            import("./shared.js").then((x) => x.shareWin("map", m));
+          else if (b.hasAttribute("data-edit")) {
             if (await makeMap(R, m)) draw(w);
           } else if (b.hasAttribute("data-out"))
             download(
@@ -335,12 +339,12 @@ export function myMaps(R) {
             );
           else if (b.hasAttribute("data-del")) {
             if (
-              (await confirmBox(
+              !(await confirmBox(
                 `Delete ${m.t}?`,
                 "It's gone from this device.",
                 "Delete",
                 "Keep it",
-              )) !== "yes"
+              ))
             )
               return;
             await delMap(m.id);

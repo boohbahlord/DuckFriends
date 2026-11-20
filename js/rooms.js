@@ -18,6 +18,7 @@ import { holdLoading } from "./loading.js";
 
 const last = { computers: 3, max: MAX_DEFAULT, test: false, dod: true };
 let unwatch = null,
+  shOff = null,
   busy = false,
   mbarOff = null;
 const PHASE = {
@@ -30,6 +31,8 @@ register("rooms", {
   leave() {
     if (unwatch) unwatch();
     unwatch = null;
+    if (shOff) shOff();
+    shOff = null;
     if (mbarOff) mbarOff();
     mbarOff = null;
   },
@@ -37,6 +40,8 @@ register("rooms", {
     const s = el(`<section class="screen rooms">
       <header class="bar"><button type="button" class="btn ghost" data-a="back">‹ Back</button>
         <h1 class="bar-title"><span class="bar-word">Rooms</span></h1></header>
+      <nav class="rooms-tabs" role="tablist" aria-label="Rooms or Shared"><button type="button" class="rooms-tab on" role="tab" aria-selected="true" data-tab="rooms">Rooms</button><button type="button" class="rooms-tab" role="tab" aria-selected="false" data-tab="shared">Shared</button></nav>
+      <div class="shared-box" hidden></div>
       <div class="rooms-grid">
         <form class="panel create" autocomplete="off">
           <div class="art-wrap">${gameArtSVG({ width: 480, duck: profile.duck })}</div>
@@ -76,6 +81,26 @@ register("rooms", {
       msg.classList.toggle("bad", bad);
     };
     s.querySelector('[data-a="back"]').onclick = () => backTo("front");
+    /* the tabs at the top (the owner's, Nov 19 23:10Z: "you click the tab at the top, like you would in a window, and it
+       takes you to the shared page ... big enough to where they aren't missed"): Shared is shared.js */
+    const grid = s.querySelector(".rooms-grid"),
+      shBox = s.querySelector(".shared-box");
+    s.querySelector(".rooms-tabs").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-tab]");
+      if (!b) return;
+      const sh = b.dataset.tab === "shared";
+      s.querySelectorAll("[data-tab]").forEach((x) => {
+        x.classList.toggle("on", x === b);
+        x.setAttribute("aria-selected", x === b);
+      });
+      grid.hidden = sh;
+      shBox.hidden = !sh;
+      if (sh && !shOff)
+        import("./shared.js").then((m) => {
+          if (!shBox.isConnected || shOff) return;
+          shOff = m.mountShared(shBox);
+        });
+    });
     if (mbarOff) mbarOff();
     mbarOff = mountCornerMusicBar();
     s.querySelectorAll("[data-open]").forEach(
