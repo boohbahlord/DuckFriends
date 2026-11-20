@@ -33,7 +33,8 @@ import { euclidScene, euclidMini } from "./euclid.js";
 import { vellumScene, vellumMini } from "./vellum.js";
 import { NWK_VARIANTS, isNwk, nwkScene, nwkSVG } from "./nwk.js";
 import { seenDuck, seenName } from "./looks.js";
-import { isUmap } from "./umaprules.js";
+import { isUmap, UMAP_UIS } from "./umaprules.js";
+import { seriatThemeOn } from "./seriattheme.js";
 
 export const MAPS = [
   [
@@ -1314,6 +1315,29 @@ export function mountMap(layer, s) {
   layer.className = `map-layer map-${base} map-${map}`;
   layer.dataset.nopx = ""; // (the pixel look: the grid filter does maps, pxdom.js leaves them)
   document.documentElement.classList.add(...looks); // (map-is-nwk: Nous Within Kenoma's book look; map-is-vellum: The King's Festival's)
+  /* a Sandbox game mode's own look over any map (SB_RULES look): changed in G while it plays, so set again on each paint */
+  let extra = [];
+  const setLook = (s) => {
+    if (seriatThemeOn()) return; // (Seriat's window wears its own look, then gives the page's back: the next paint)
+    const h = document.documentElement,
+      v = s.options.mode === "sandbox" && s.sb && s.sb.rules && s.sb.rules.look,
+      want =
+        v && v !== "own" && UMAP_UIS.includes(v)
+          ? ["map-is-nwk", ...(v !== "nwk" ? ["map-is-" + v] : [])]
+          : [];
+    if (
+      want.join() === extra.join() &&
+      want.every((c) => h.classList.contains(c))
+    )
+      return;
+    h.classList.remove(...extra);
+    if (want.length) {
+      h.classList.remove(...looks.filter((c) => c !== "map-on")); // (the game mode's look wins over the map's)
+      h.classList.add(...want);
+    } else h.classList.add(...looks);
+    extra = want;
+  };
+  setLook(s);
   const scene = sceneOf(map, layer, s, cur, true);
   // Carnival Night: the tiles' marquee bulbs follow the tiles' size
   const ro =
@@ -1322,6 +1346,7 @@ export function mountMap(layer, s) {
       : null;
   return {
     update: (now) => scene.update(now),
+    look: setLook,
     board(board) {
       if (!board) {
         cur.cols = null;
@@ -1350,7 +1375,7 @@ export function mountMap(layer, s) {
       if (ro) ro.disconnect();
       scene.destroy();
       layer.className = "map-layer";
-      document.documentElement.classList.remove(...looks);
+      document.documentElement.classList.remove(...looks, ...extra);
     },
   };
 }

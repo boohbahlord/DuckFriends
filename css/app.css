@@ -18549,6 +18549,16 @@ html.still .l4-miss {
     text-align: left;
   } /* (on a narrow phone a long name like Exit Downpour takes two lines, so it never reaches the round in the middle) */
 }
+/* Nous Within Kenoma's top bar is taller (it starts below the glass's rim): the button moves down with it, never under
+   the bar's edge (the owner's clipped-pieces sweep, Nov 20) */
+html.map-is-nwk .game .btn.cabin-end {
+  top: calc(52px + var(--nk-bez) + 4px);
+}
+@media (max-width: 700px) {
+  html.map-is-nwk .game .btn.cabin-end {
+    top: 82px;
+  }
+}
 /* Quacky Zombies' Change starting round (js/hangout/cabinend.js): under Exit Cabin; the vote's words at the top middle,
    Yes and No at the bottom middle */
 .game .l4-sr {
@@ -18560,6 +18570,11 @@ html.still .l4-miss {
   flex-direction: column;
   align-items: flex-start;
   gap: 0.25rem;
+}
+@media (min-width: 701px) {
+  html.map-is-nwk .game .l4-sr {
+    top: calc(88px + var(--nk-bez) + 4px);
+  } /* (under the button, which moved down with Kenoma's top bar) */
 }
 .game .l4-sr[hidden],
 .game .l4-srv[hidden],
@@ -20073,6 +20088,11 @@ html.map-is-nwk::before {
 html.map-is-nwk .gbar {
   padding-top: calc(4.8px + var(--nk-bez) + 4px);
 }
+/* on a touch screen the bar's thinner padding (html:not(.keyboard) .game .gbar) won over it, and the buttons' tops sat
+   under the glass's rim again: the owner's "little bottom pieces are clipped" sweep, Nov 20 */
+html.map-is-nwk:not(.keyboard) .game .gbar {
+  padding-top: calc(0.2rem + var(--nk-bez) + 2px);
+}
 /* the scanlines, with the faintest flicker */
 html.map-is-nwk::after {
   content: "";
@@ -20269,7 +20289,7 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   transform: translateX(-50%);
   z-index: 6500;
   width: min(34rem, calc(100% - 1.5rem));
-  max-height: calc(100dvh - 9rem);
+  max-height: calc(100dvh - 9.5rem); /* (its foot clear of the hotbar's top) */
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -20281,11 +20301,23 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   border-radius: 1rem;
   box-shadow: 0 0.6rem 1.6rem #0008;
 }
+/* the cheat sheet: wider, in the same room between the bars as the other windows (taller, it lay over the song bar at
+   the top and the keys and hotbar at the bottom: the owner's clipped-pieces sweep, Nov 20) */
 .sb-win.sb-sheet {
-  top: 2.4rem;
   width: min(52rem, calc(100% - 1.5rem));
-  max-height: calc(100dvh - 5rem);
   background: color-mix(in srgb, var(--panel) 70%, transparent);
+}
+/* a phone held upright: the windows start under Leave Sandbox (the top bar, its song row and that button stay in
+   sight, never under a window) and end above the cheat note and the bottom bar */
+@media (max-width: 700px) {
+  .game .sb-win {
+    top: 122px;
+    max-height: calc(100dvh - 262px);
+  }
+  html.map-is-nwk .game .sb-win {
+    top: 130px;
+    max-height: calc(100dvh - 270px);
+  }
 }
 .sb-win[hidden] {
   display: none;
@@ -20862,6 +20894,17 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .sb-row:has(.sb-cols),
 .sb-row:has(.sb-what) {
   grid-template-columns: auto minmax(0, 1fr);
+}
+/* G Rules' picks: the name above, its choices below, whole words (sbsaves.js rulesWin) */
+.sb-row.sb-pickrow {
+  grid-template-columns: minmax(0, 1fr);
+}
+.sb-pickrow .sb-what {
+  grid-column: 1;
+  justify-content: flex-start;
+}
+.sb-pickrow .sb-tab {
+  max-width: none;
 }
 .sb-row:has(.sb-acts) {
   grid-template-columns: auto minmax(0, 1fr);
@@ -21555,6 +21598,11 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   font-size: 0.78rem;
   line-height: 1.2;
   cursor: pointer;
+}
+/* while the cheat sheet itself is up, its note waits (the wide sheet reached over it on a computer: the owner's
+   clipped-pieces sweep, Nov 20) */
+.game:has(.sb-win.sb-sheet:not([hidden])) .sb-cheat {
+  visibility: hidden;
 }
 @keyframes sb-note-out {
   to {

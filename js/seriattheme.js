@@ -23,6 +23,7 @@ export const seriatTheme = () =>
   (byName(profile.settings.seriatTheme) || SERIAT_THEMES[0])[0];
 
 const users = new Set();
+export const seriatThemeOn = () => users.size > 0; // (maps.js leaves the page's look alone meanwhile)
 let saved = null; // (the look the page had before: its map-on and map-is-… classes)
 const looks = () =>
   [...document.documentElement.classList].filter(

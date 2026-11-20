@@ -166,6 +166,23 @@ export const SB_RULES = {
     max: 1000,
     def: "0",
   },
+  /* the owner's, Nov 19 (A14): "whenever it comes to making a map locked to a game mode ... the background image with
+     the game mode and the template used and everything has to be set to Noose within Konoma full variant". The look
+     the whole game wears over whatever map it's on, as Survival wears the book's (maps.js mountMap) */
+  look: {
+    name: "Game mode: its look",
+    kind: "pick",
+    opts: [
+      ["own", "The map's own"],
+      ["nwk", "Nous Within Kenoma"],
+      ["ec", "Ether's Crossroads"],
+      ["nwkarch", "Architectured"],
+      ["nwkten", "Ten"],
+      ["nwkchalice", "Chalice"],
+      ["nwkfool", "The Fool"],
+    ],
+    def: "own",
+  },
   gore: { name: "gore", kind: "bool", def: "t", file: true },
   most: {
     name: "player limit",

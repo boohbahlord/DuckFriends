@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v165",
+    version: 165,
+    date: "Nov 20, 2026",
+    title: "Your game modes at the start",
+    news: [
+      "For Sandbox: the start picker lists your game modes too, below your saves, so you can keep building one (it brings its own map).",
+      "For Sandbox: when zones overlap, right-click picks the top one and lists the ones under it; drag a zone from anywhere on it; your own zones don't hurt you while Build is open; no big Sandbox title over zombie maps.",
+      "For Sandbox: G's Rules can give a game mode its own look on any map (Nous Within Kenoma, Ether's Crossroads, Architectured, Ten, Chalice or The Fool), and the Rules' choices show their whole words.",
+      "Nothing is cut off at the screen's edges in Nous Within Kenoma any more, and Sandbox's windows no longer cover the top or bottom bar on phones or computers.",
+    ],
+  },
+  {
     id: "v164",
     version: 164,
     date: "Nov 20, 2026",
