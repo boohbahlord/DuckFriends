@@ -36,7 +36,11 @@
      l4b  { id: { o, at } }: who is boarding up which opening, since when (one more board each BOARD_MS)
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
-import { SPRINT as GAME_SPRINT, ZOMBIE_SWIPE_SLOWER } from "./gamedefaults.js";
+import {
+  SPRINT as GAME_SPRINT,
+  ZOMBIE_SWIPE_SLOWER,
+  HANDGUN,
+} from "./gamedefaults.js";
 import { duckBig, scaleOf } from "./duck.js";
 import { hpHeal, hpHurt, tenths } from "./hpmath.js";
 import {
@@ -325,7 +329,7 @@ export const ARMS = {
     cool: ARM_COOL.handgun,
     dmg: [1, 3], // (1 to 3: the owner's, Nov 18 15:19Z)
     speed: ARM_SPEED.handgun,
-    mag: 12, // (50% more, its magazines are so small: the owner's, Nov 19 19:27Z)
+    mag: HANDGUN.mag, // (the one M1911, 9 rounds: gamedefaults.js)
     all: (72 + 5 * 8) * 1.5,
     reload: ARM_RELOAD,
   },
@@ -534,9 +538,6 @@ export const ARMS = {
      nearest zombie and stabs it, 1 a stab, until one gets him) */
   zebra: { kind: "special", cool: ITEM_COOL, all: 1, speed: 650, far: 520 },
   adrenaline: { kind: "special", cool: ITEM_COOL, all: 1, ms: 20000 },
-  longjump: { kind: "special", cool: 300 },
-  jaime: { kind: "special", cool: 1500, all: 3, round: true },
-  jaimebomb: { kind: "special", cool: 1500, all: 3, round: true }, // (as Jaime: 1 spin in 50 at the fireplace, BOMB.fire)
   /* the jetpack (Stage 4): each use switches it on or off, as the long jump; on, Space flies (jetpack.js), and its
      10 s of flight (all, in ms) burn only while its jets are on in the air; a Max Ammo fills it */
   jetpack: { kind: "special", cool: 300, all: JET.FUEL },
@@ -678,7 +679,7 @@ const NAMES = {
   axe: "Fire axe",
   sword: "Short sword",
   pan: "Cast iron pan",
-  handgun: "M&P9 Compact", // (a real 9mm with a twelve-round magazine, as ours is here: the owner's, Nov 19)
+  handgun: HANDGUN.name,
   bow: "Bow",
   dagger: "Dagger",
   shotgun: "Shotgun",
@@ -702,9 +703,6 @@ const NAMES = {
   laser: "Laser Rifle",
   zebra: "Zebra cake",
   adrenaline: "Adrenaline shot",
-  longjump: "Long jump",
-  jaime: "Jaime",
-  jaimebomb: "Jaime Bomb",
   jetpack: "Jetpack",
   chair: "Chair",
 };
@@ -1417,8 +1415,8 @@ export const standing = (s, id) => {
 export function dodging(s, p, now) {
   if (p && p.fly) return true; // (the jetpack, high in the air)
   if (!p || !p.j) return false;
-  const T = (s.options.lowGravity ? 1200 : 620) * (p.lj ? 1.4 : 1),
-    u = (now - (p.dj || p.j)) / T;
+  const T = 620,
+    u = (now - p.j) / T;
   return u > 0.2 && u < 0.8;
 }
 const at = (p) => [p.x * W, p.y * H];
@@ -2752,7 +2750,7 @@ function justinSays(s, key) {
 }
 /* Jaime's body (Noah's, on the chapel floor: GS.JAIME_BODY { x, y }); in a rest phase Justin goes to it half the time, and
    at most twice, and says a line each time. s.hang.l4jv = { r (the round), left (visits), at (the last one) } */
-export const jaimeBody = () => GS.JAIME_BODY || null;
+export const jaimeBody = () => null; // (the body is just a dead duck now: Jaime left the game, the owner's, Nov 20 21:38Z)
 export const JBODY = { near: 110, gap: 8000 };
 export function isWild(s, id) {
   return !!(s && s.players && s.players[id] && s.players[id].wild);
@@ -3785,9 +3783,6 @@ export function l4Use(s, a, now) {
     if (!spare) m.am.medkit = [0, 0]; // (used up: it stays in its slot, empty, the owner's, Nov 18 12:19Z)
   } else if (what === "adrenaline")
     s.hang.l4ad = { ...(s.hang.l4ad || {}), [id]: now + A.ms };
-  else if (what === "longjump") m.lj = !m.lj;
-  else if (what === "jaime" || what === "jaimebomb")
-    jaimeIn(s, id, p, now, bombRoll(what));
   else if (what === "zebra") cakeOut(s, id, p, dx, dy, now);
   else if (what === "chaingun") trace(s, id, px, py, dx, dy, hz, now);
   else if (what === "laser") laser(s, id, m, px, py, dx, dy, hz, now);

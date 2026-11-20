@@ -1186,7 +1186,7 @@ function forgameShow(s) {
     `${modeOf(o.mode).name} on ${mapName(o.map)}${s.phase === "lobby" ? " (in the lobby)" : o.mode === "hang" ? ", hanging out" : `, round ${s.round + 1}`}`,
     `  timers:    writing ${t(o.submitTime)} · answer ${o.answerOff ? "off" : t(o.answerTime)} · catch-up ${t(o.catchUp)}`,
     `  turn-end:  ${sh}`,
-    `  order ${o.order} · freeroam ${o.freeRoam ? "on" : "off"}${o.mode === "hang" ? "" : ` · discussion ${o.discuss ? "on" : "off"} · unvote-stops ${o.unvoteStops ? "on" : "off"}`} · gravity ${o.lowGravity ? "low" : "normal"} · silly ${o.fun ? "on" : "off"}${o.mode === "hang" ? ` · ghosts ${o.ghosts ? "on" : "off"}` : ` · justin ${o.justin ? "on" : "off"}`}`,
+    `  order ${o.order} · freeroam ${o.freeRoam ? "on" : "off"}${o.mode === "hang" ? "" : ` · discussion ${o.discuss ? "on" : "off"} · unvote-stops ${o.unvoteStops ? "on" : "off"}`} · silly ${o.fun ? "on" : "off"}${o.mode === "hang" ? ` · ghosts ${o.ghosts ? "on" : "off"}` : ` · justin ${o.justin ? "on" : "off"}`}`,
     `  mutes for everyone: ${mutes.join("; ") || "none"}`,
   ].join("\n");
 }
@@ -1271,12 +1271,6 @@ function forgame(x, args) {
       fail("✗ Not in this game: Justin can't be called in here.");
     set({ justin: on ? 1 : 0 });
     return `Justin ${on ? "on: he walks the board" : "off"}.`;
-  }
-  if (a0 === "gravity") {
-    const v = (args[1] || "").toLowerCase();
-    if (!["low", "normal"].includes(v)) fail("✗ forgame gravity low | normal");
-    set({ lowGravity: v === "low" ? 1 : 0 });
-    return `Gravity: ${v}.`;
   }
   const mi = args.findIndex((a) => /^\\mute$/i.test(a));
   if (mi < 0) fail(`✗ ${MAN.forgame}`);
@@ -3414,7 +3408,6 @@ const WORDS = {
     "freeroam",
     "discussion",
     "unvote-stops",
-    "gravity",
     "silly",
     "justin",
     "ghosts",
