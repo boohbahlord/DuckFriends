@@ -81,7 +81,7 @@ function readCode(t, box) {
   const c = compile(t);
   if (!c.ok) return { ok: false, why: c.why };
   for (let k = 0; k < 40; k++) {
-    const r = c.prog.run();
+    const r = c.prog.run(Math.random, box);
     const why = r.why || fits(r.v, box, r.lim).why;
     if (why) return { ok: false, why };
   }
@@ -122,7 +122,7 @@ export function pick(v, box = {}, r = Math.random) {
   if (v && v.code != null) {
     const p = progFor(v.code, box.kind || "int");
     if (!p.ok) return NaN;
-    const r1 = p.prog.run(r),
+    const r1 = p.prog.run(r, box),
       f = r1.why ? r1 : fits(r1.v, box, r1.lim);
     return f.why ? NaN : f.v; // (a spawn this time can't take it: valueOf() gives the box's own value)
   }

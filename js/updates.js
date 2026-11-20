@@ -12,9 +12,14 @@ export const UPDATES = [
     id: "v168",
     version: 168,
     date: "Nov 20, 2026",
-    title: "Regen HP",
+    title: "Seriat limits and param files",
     news: [
       'For Sandbox: in Seriat, HP coming back each second is written "regen hp" (((regen hp 2))); "regen" alone still works.',
+      "For Sandbox: HP boxes take tenths (0.1 HP and up), and asterisks always land inside a box's limits.",
+      'For Sandbox: NPC brains keep to the limits too: ((speed 50)) says "Past the limit" and points to help/limits.txt; a line\'s own lim moves it.',
+      "For Sandbox: param files (first line \\\\param\\\\) now set rules for every one of your Seriat files.",
+      "For Sandbox: zone files can set squares and size at the top, for loops count up to a number you named, and caps reaches $ letters in say text.",
+      "For every mode: Carnival Night and Starry Night are now drawn in real pixels, the same size as every other map's, fireworks and shooting stars included.",
     ],
   },
   {

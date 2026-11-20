@@ -777,6 +777,16 @@ function star(t, neg) {
     if (ctx.b.has("*" + n) && neg)
       return kept(ctx, fit(ctx.b.get("*" + n), n, F(ctx), true), key);
     return draw(ctx, key, () => {
+      const lim = inBox(
+        ctx,
+        neg && !ctx.R.flag("posbrahm", key)
+          ? -top
+          : neg || ctx.R.flag("negbrahm", key)
+            ? -top
+            : 0,
+        neg && !ctx.R.flag("posbrahm", key) ? 0 : top,
+      );
+      if (lim != null) return lim;
       const d = rnd(ctx, top + 1);
       if (neg) return ctx.R.flag("posbrahm", key) && ctx.r() < 0.5 ? d : -d;
       return ctx.R.flag("negbrahm", key) && ctx.r() < 0.5 ? -d : d; // (negbrahm: below zero too)
@@ -814,6 +824,8 @@ function named(t) {
     if (ctx.b.has(t.key))
       return kept(ctx, fit(ctx.b.get(t.key), t.n, F(ctx), false), t.key);
     return draw(ctx, t.key, () => {
+      const lim = inBox(ctx, ctx.R.flag("negbrahm", t.key) ? -top : 0, top);
+      if (lim != null) return lim;
       const d = rnd(ctx, top + 1);
       return ctx.R.flag("negbrahm", t.key) && ctx.r() < 0.5 ? -d : d;
     });
@@ -1078,8 +1090,18 @@ export function compile(text) {
 }
 const REPLAY = Symbol("replay");
 const MOST_TRIES = 1000; // ("stop after 1,000 tries; then the NPC doesn't spawn and an error says why")
-function newCtx(r, R) {
-  return { r, b: new Map(), R, fresh: new Set() };
+function newCtx(r, R, box = null) {
+  return { r, b: new Map(), R, fresh: new Set(), box };
+}
+/* an asterisk with no input, inside a box: a random value within its digits and the stat's limit (the bible, section
+   5: "With none, it is a random value within its digits and the stat's limit"), lo … hi its digits'; null when the
+   box gives no limits or none fits */
+function inBox(ctx, lo, hi) {
+  const b = ctx.box;
+  if (!b || (b.min == null && b.max == null)) return null;
+  const a = Math.max(lo, b.min != null ? Math.ceil(b.min) : lo),
+    z = Math.min(hi, b.max != null ? Math.floor(b.max) : hi);
+  return a <= z ? a + rnd(ctx, z - a + 1) : null;
 }
 function build(toks, rules) {
   const R = judge(rules),
@@ -1139,7 +1161,7 @@ function build(toks, rules) {
     Object.assign(st, a);
     prog.states.forEach((x, k) => Object.assign(x, b[k]));
   };
-  prog.run = (r = Math.random) => {
+  prog.run = (r = Math.random, box = null) => {
     try {
       const was = R.any ? save() : null;
       let v = NOTHING,
@@ -1150,7 +1172,7 @@ function build(toks, rules) {
             `The line rules took out every value it gave, ${MOST_TRIES} times in a row (it can't spawn)`,
             RULES,
           );
-        ctx = newCtx(r, R);
+        ctx = newCtx(r, R, box);
         try {
           v = once(ctx);
         } catch (e) {

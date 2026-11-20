@@ -210,10 +210,10 @@ don't define a limit yourself, the box uses the one below.
 
   Spawn limit                  1 to 100        (starts at 1)
   Seconds between spawns       1 to 600        (starts at 4)
-  HP                           1 to 1000       (starts at 3)
+  HP                           0.1 to 1000     (starts at 3)
   Damage                       0.1 to 100      (starts at 1)
   Speed                        0.1 to 5        (starts at 1)
-  Players' HP                  1 to 100
+  Players' HP                  0.1 to 100
   Players' speed               0.1 to 5
   Zone width and height        1 to 40 duck lengths (start at 4)
   Zone HP each time            0.1 to 100      (starts at 1)
@@ -231,6 +231,10 @@ its start (more in numbers/linerules.txt):
   \\inc'lim=***'\\ 2:900   at most 999
   \\rm'lim'\\ 2000         no limit on this line (1,000,000 at most)
   \\!inc'lim=25'\\         the whole file's top is 25
+
+The same limits hold in NPC brains: ((speed 50)) stops that line
+with "Past the limit: speed 5 at most". A param file (its first
+line \\\\param\\\\) can move a limit for every one of your files.
 `,
   "linerules.txt": `Line rules
 
