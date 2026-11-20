@@ -116,7 +116,8 @@ function stalled(sv, n, now, all) {
 }
 /* every heartbeat (l4ddrules.js l4Tick, which keeps the round's own numbers in L and the zombies in zs, and adds the
    ones pushed into zs): the phases go on. n: the players. h: what only l4ddrules.js can do, { walker(): a new walker
-   far from everyone (or null), speedAt(level): a zombie's speed at that level's stats, go(): the merchant leaves,
+   far from everyone (or null), speedAt(level): a zombie's speed at that level's stats, remodel(z): a new look for a
+   walker that turns, go(): the merchant leaves,
    rest(): a rest begins (the merchant comes, the ghosts are back), gunmen(side): a wave of gunmen comes in instead of a
    horde ("c" criminals, "s" soldiers: gunmenrules.js), gunDone(): true once that wave is over } */
 export function survTick(s, L, zs, now, n, h) {
@@ -151,6 +152,7 @@ export function survTick(s, L, zs, now, n, h) {
       }
       for (const z of walkers) {
         for (const k of ["wk", "wt", "wd", "wn", "lt", "lw"]) delete z[k];
+        if (h.remodel) h.remodel(z); // (a new look: "start to change their model")
         z.l = [...z.l];
         z.l[1] = h.speedAt(lvl);
       }

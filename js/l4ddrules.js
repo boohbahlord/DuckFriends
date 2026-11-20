@@ -5542,6 +5542,18 @@ function l4Tick(s, now) {
       walker: () => survWalker(s, L2, mine),
       speedAt: (r) =>
         Math.round(WALK * Z_SLOW * rnd(roundOf(r)[1][0], roundOf(r)[1][1])),
+      /* a walker left from the tail turns into one of the next peak's: a new look (another hat, outfit and size), so
+         you see it change (the owner's: "start to change their model and start chasing you") */
+      remodel: (z) => {
+        const l = [...z.l],
+          other = (was, n) =>
+            n < 2 ? 0 : (Math.max(0, was) + rint(1, n - 1)) % n;
+        l[3] = +rnd(-1, 1).toFixed(2);
+        l[4] = 0;
+        l[5] = other(l[5], ZHATS.length);
+        l[6] = other(l[6], ZOUTFITS.length);
+        z.l = l;
+      },
       go: () => merchantGo(s, now),
       rest: () => {
         merchantCome(s, now, true);
