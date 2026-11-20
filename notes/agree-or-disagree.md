@@ -7272,3 +7272,17 @@ Adam: the defib fix (Solomon) and the wave-end fix (Adam: a wave that stops dyin
 > reduce all ammo by 0.5 damage and then show me it's damage stats (amount of zombies per wave in survival is multiplied by amount of players in a similiar formula
 
 Adam: in Survival every bullet, pellet, arrow, thrown dagger and beam a duck fires does 0.5 less (never under 0.5); melee, grenades and the merchant's gun stay. The owner gets a table of every gun's damage. Survival's hordes already multiply by the players (24 or 48 each), and the gunmen waves too, so nothing changed there.
+
+## Owner, Nov 20 04:39Z (Adam's thread, with a screenshot of the zone window's "1. Type" row: This zone is Zone / Spawn / Respawn)
+> this should be a thing... we can have a short description at the top here, and it can be displayed it's state in the zone by what are connected to it
+>
+> every tab for spawn is connected by color or variable or both, not by a selection, the first tab is zone only, and it's ties is said in this box. the tabs have six random numbers randomly assigned as numbers until it is typed out, and the ties to their zone is said in a small font list below the description, by declaring their type AND variable OR color (if there is a color)
+>
+> the zones are a tab like the others, but the zones contain the others IF they are assigned IN these windows for it's properties BY variable and/or color
+>
+> description of type and how (simple) > list of types inside of property > the names of variable names that match and/or matching color
+
+## Owner, Nov 20 04:44Z (project chat, through Moses)
+> music settings among others in game settings are a window that pops up or dialog box for that setting
+
+Adam: in Sandbox's G game settings, Music and the other settings with many options open in their own small window when picked, instead of rows inline.

@@ -19,8 +19,8 @@ export const SB_HELP = {
       "In a block's window, + adds a tab: a spawn, respawn, loot or zone that works on the same block, so one block can do several things at once. Each tab counts toward the zone budget (shown in Build): 50 blocks and tabs at most.",
     ],
     [
-      "Callers",
-      "A Spawn, Respawn or Loot tab works only while its Caller is the variable name of a zone on its block (the block itself or one of its Zone tabs). Its spots come from that zone's squares. With more than one zone on a block, Leads with (under Type) picks the one that sets its look.",
+      "Tabs and their zone",
+      "A Spawn, Respawn or Loot tab works in the zone on its block (the block itself or one of its Zone tabs) that shares its variable name, its color, or both. Every new tab gets six numbers as its variable name until you type one; a tab made from a zone's Type takes that zone's name and color. A zone's Type box lists what it holds. With more than one zone on a block, Leads with (under Type) picks the one that sets its look.",
     ],
     [
       "Potential order",

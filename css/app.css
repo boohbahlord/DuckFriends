@@ -21879,3 +21879,74 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   cursor: pointer;
   flex: none;
 }
+/* Sandbox Phase 3, Looks (js/sblooks.js): a zone's look on the ground, under whatever stands on it, cut to its shape */
+.sb-look {
+  z-index: 3;
+  image-rendering: pixelated;
+  -webkit-mask: var(--mask) center / 100% 100% no-repeat;
+  mask: var(--mask) center / 100% 100% no-repeat;
+}
+/* the zone window's textures, each with its picture */
+.sb-lktexs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+  gap: 0.4rem;
+  margin: 0.2rem 0 0.5rem;
+}
+.sb-lktex {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.3rem;
+  border: 2px solid transparent;
+  border-radius: 0.4rem;
+  background: #0003;
+  font-size: 0.8rem;
+  text-align: center;
+  cursor: pointer;
+}
+.sb-lktex.on {
+  border-color: var(--accent, #ffd23f);
+}
+.sb-lktex input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.sb-lktex img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  image-rendering: pixelated;
+  border-radius: 0.2rem;
+  background: #0006;
+}
+.sb-lkcol {
+  width: 3rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+/* a block's Type box: what it holds, or the zone a tab is tied to, one small line each */
+.sb-ties {
+  margin: 0.1rem 0 0.5rem;
+  padding-left: 1.1rem;
+  font-size: 0.78rem;
+  opacity: 0.85;
+}
+p.sb-ties {
+  padding-left: 0;
+}
+.sb-lkprev {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 0.2rem;
+  background-repeat: repeat;
+  image-rendering: pixelated;
+}
+.sb-row[data-row="lk"] select {
+  min-width: 8rem;
+}

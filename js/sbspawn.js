@@ -44,6 +44,7 @@ import {
   SB_CALL,
   sbNeedsCall,
   sbCallZone,
+  sbSix,
   sbTabLive,
   sbUsed,
   SB_LOOT,
@@ -628,20 +629,22 @@ export function sbAct(s, a, now) {
       ok = (c) => !!SB_COLORS[c] || c === SB_NOCOL,
       col = ok(a.col) ? a.col : pt && ok(pt.col) ? pt.col : SB_NOCOL,
       id = "p" + n;
-    let all = {
-      ...pts,
-      [id]: fromPattern(
-        {
-          k: a.kind,
-          x: +(at ? at.x : +me.x).toFixed(4),
-          y: +(at ? at.y : +me.y).toFixed(4),
-          z: Math.round(z),
-          col,
-          f: {},
-        },
-        pt && { ...pt, col },
-      ),
-    };
+    const made = fromPattern(
+      {
+        k: a.kind,
+        x: +(at ? at.x : +me.x).toFixed(4),
+        y: +(at ? at.y : +me.y).toFixed(4),
+        z: Math.round(z),
+        col,
+        f: {},
+      },
+      pt && { ...pt, col },
+    );
+    if (!made.f.name) {
+      const v = sbSix(); // (six numbers until it's typed out: the owner's, Nov 20 04:39Z)
+      made.f = { ...made.f, name: { t: v, ok: v } };
+    }
+    let all = { ...pts, [id]: made };
     const kin = kinOf(all, id),
       set =
         pt &&
@@ -866,14 +869,26 @@ export function sbAct(s, a, now) {
     if (p.grp || (!tab && (p.k !== "spawn" || !["ent", "pl"].includes(a.kind))))
       return false;
     if (Object.keys(pts).length >= SB_POINTS) return false;
-    const n = ((s.sb && s.sb.n) || 0) + 1,
-      col = SB_NOCOL; // (no color, as every new zone: the owner's, Nov 20 02:37Z)
+    const n = ((s.sb && s.sb.n) || 0) + 1;
+    /* no color, as every new zone (the owner's, Nov 20 02:37Z), and six numbers for its variable name; one made from the
+       zone's own Type (tie) takes the zone's name and color, so it's tied to it from the start (the owner's, Nov 20
+       04:39Z: "connected by color or variable or both") */
+    let base = p,
+      v = sbSix(),
+      col = SB_NOCOL;
+    if (a.tie && tab) {
+      const had = base.f && base.f.name && base.f.name.ok;
+      if (had) v = String(had);
+      else base = { ...base, f: { ...base.f, name: { t: v, ok: v } } };
+      col = base.col;
+    }
     s.sb = {
       ...s.sb,
       n,
       pts: geoTo(
         {
           ...pts,
+          [a.p]: base,
           ["p" + n]: {
             k: tab ? a.kind : "spawn",
             x: p.x,
@@ -882,7 +897,7 @@ export function sbAct(s, a, now) {
             col,
             grp: a.p,
             pg: tab ? "t" : a.kind,
-            f: {},
+            f: tab ? { name: { t: v, ok: v } } : {},
           },
         },
         a.p,
