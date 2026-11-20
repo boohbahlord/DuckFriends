@@ -5,6 +5,7 @@ export default {
   G: 2,
   sun: {
     src: "assets/px/mapw/sky/sky-sun.webp",
+    glow: "assets/px/mapw/sky/sky-sun-glow.webp",
     x: -354,
     y: -354,
     w: 708,
@@ -12,6 +13,7 @@ export default {
   },
   moon: {
     src: "assets/px/mapw/sky/sky-moon.webp",
+    glow: "assets/px/mapw/sky/sky-moon-glow.webp",
     x: -164,
     y: -164,
     w: 328,
