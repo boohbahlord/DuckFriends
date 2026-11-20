@@ -163,6 +163,7 @@ function wallParts(p) {
                   d: HEAP.d,
                   up: HEAP.up,
                   seed: Math.round(p.x + p.y) + 7,
+                  roof: true,
                 }),
               p.x - 10,
               p.y + p.d - HEAP.up,
@@ -655,6 +656,13 @@ const GS_DRAW = {
     ];
   },
 };
+/* the gas station's broken south wall (its piece at the restroom's corner, cornerHit): where it stands full height
+   again, from the roof's west edge (b: the roof's box), so the roof's broken corner reaches that far (stationart.js
+   holeShape) */
+const capOf = (b) => {
+  const q = L.PROPS.find((p) => p.kind === "wall" && cornerHit(p));
+  return q ? q.x + SA.brokenTop(Math.round(q.x + q.y), q.w, q.h, q.d) - b.l : 0;
+};
 export const DRAW = {
   ...GS_DRAW,
   wall: wallParts,
@@ -943,8 +951,10 @@ export const DRAW = {
             holes:
               p.holes &&
               p.holes.map((h) =>
-                h.map((v) => (typeof v === "number" ? v / GS.K : v)),
-              ), // (a corner's "sw" as it is)
+                [...h, ...(h[4] ? [capOf(b)] : [])].map((v) =>
+                  typeof v === "number" ? v / GS.K : v,
+                ),
+              ), // (a corner's "sw" as it is, and where the wall under it stands whole again: capOf)
           }), // (its walls' faces show under it: stationart.js)
         b.l,
         b.t,

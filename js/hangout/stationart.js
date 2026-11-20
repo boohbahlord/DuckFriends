@@ -90,6 +90,49 @@ function shopGlass(id, a, b, y, h) {
 }
 const glassGrad = (id) =>
   F`<linearGradient id="${id}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f2757"/><stop offset=".55" stop-color="#171d3a"/><stop offset="1" stop-color="#162c1f"/></linearGradient>`;
+/* the broken wall's courses (gsWallX brokenW), top first: { j: its row in the pattern, a, b: its top and bottom on the
+   screen, x: its west end }. r: the wall's own random numbers (it goes on using them) */
+const joint = (j, x) => {
+  const o = j % 2 ? 48 : 16;
+  return o + Math.max(0, Math.ceil((x - o) / 64)) * 64;
+}; // (the first joint of row j at or east of x: a course 12 high, the face's pattern 64 × 24, joints at 16 and 48)
+function brokenRows(r, w, h, t) {
+  const C = 12;
+  /* the courses down the face, top first: each one's rows on the screen, its row in the pattern and its west end */
+  const rows = [];
+  for (let y = t; y < h - 2; ) {
+    const j = Math.floor((y + 1) / C),
+      b = Math.min(h, (j + 1) * C - 1);
+    rows.push({ j, a: y, b });
+    y = b;
+  }
+  /* going up from the floor, each course ends at one of its own joints, and the next one's joints sit half a block
+     over, so it ends half a block east of the one under it, or a block and a half, now and then two and a half, and
+     sometimes half a block west, standing out over the gap under it (never two in a row): the toothing of a broken
+     block wall, its stairs uneven, never a ruler's line */
+  const n = rows.length,
+    bottom = rows[n - 1];
+  for (let tries = 0; tries < 40; tries++) {
+    bottom.x = joint(bottom.j, 4 + r() * 30);
+    let out = false,
+      big = 0;
+    for (let i = n - 2; i >= 0; i--) {
+      const u = r();
+      let step = u < 0.18 && !out ? -32 : u < 0.62 ? 32 : u < 0.9 ? 96 : 160;
+      if (rows[i + 1].x + step < 0) step = 32;
+      out = step < 0;
+      if (step > 32) big++;
+      rows[i].x = Math.min(w - 40, rows[i + 1].x + step);
+    }
+    const climb = rows[0].x - bottom.x;
+    if (climb >= 150 && climb <= 280 && big >= 2) break; // (it climbs, unevenly, never to a ruler)
+  }
+  return rows;
+}
+/* where the broken wall stands full height again, from its west end: its top's west end (the roof over it is broken
+   back to there: roofHole) */
+export const brokenTop = (brokenW, w, wallH, t) =>
+  brokenRows(rnd(brokenW), w, t + wallH, t)[0].x;
 /* an east-west wall: its cut top (t deep) and its face (wallH tall), w long; glass: [a, b] spans of shop windows (x
    from its west end). seamless: laid over the ends of the pieces either side (a hole's piece) */
 export function gsWallX({
@@ -129,40 +172,7 @@ export function gsWallX({
      the wall's top does. The blocks that came off lie in a heap at its foot (shapes.js, bricks.js heapBricks) */
   if (brokenW) {
     const r = rnd(brokenW),
-      C = 12, // (a course: the face's rows, its pattern 64 × 24, joints at 16 and 48)
-      joint = (j, x) => {
-        const o = j % 2 ? 48 : 16;
-        return o + Math.max(0, Math.ceil((x - o) / 64)) * 64;
-      }; // (the first joint of row j at or east of x)
-    /* the courses down the face, top first: each one's rows on the screen, its row in the pattern and its west end */
-    const rows = [];
-    for (let y = t; y < h - 2; ) {
-      const j = Math.floor((y + 1) / C),
-        b = Math.min(h, (j + 1) * C - 1);
-      rows.push({ j, a: y, b });
-      y = b;
-    }
-    /* going up from the floor, each course ends at one of its own joints, and the next one's joints sit half a block
-       over, so it ends half a block east of the one under it, or a block and a half, now and then two and a half, and
-       sometimes half a block west, standing out over the gap under it (never two in a row): the toothing of a broken
-       block wall, its stairs uneven, never a ruler's line */
-    const n = rows.length,
-      bottom = rows[n - 1];
-    for (let tries = 0; tries < 40; tries++) {
-      bottom.x = joint(bottom.j, 4 + r() * 30);
-      let out = false,
-        big = 0;
-      for (let i = n - 2; i >= 0; i--) {
-        const u = r();
-        let step = u < 0.18 && !out ? -32 : u < 0.62 ? 32 : u < 0.9 ? 96 : 160;
-        if (rows[i + 1].x + step < 0) step = 32;
-        out = step < 0;
-        if (step > 32) big++;
-        rows[i].x = Math.min(w - 40, rows[i + 1].x + step);
-      }
-      const climb = rows[0].x - bottom.x;
-      if (climb >= 150 && climb <= 280 && big >= 2) break; // (it climbs, unevenly, never to a ruler)
-    }
+      rows = brokenRows(r, w, h, t);
     /* what stands, as boxes: the top, each course's face, and where a course reaches farther west than the one over
        it, its broken top (the wall's cut grey, the wall's thickness deep) behind the faces over it */
     const cap = { x: rows[0].x, a: 0, b: t },
@@ -1660,37 +1670,58 @@ export function fallenSVG({ w, h, x0, y0, x1, y1, half = 55, z = 30 }) {
    owner's, Nov 19 22:41Z, "break a little bit of the corner of the roof ... and make that ... transparent"), open to
    the roof's west and south edges */
 const SLAB = 16; // (the roof's thickness, as seen down its broken edge)
-function holeShape(x, y, w, d, seed, corner) {
+function holeShape(x, y, w, d, seed, corner, cap = 0) {
   const r = rnd(seed);
   if (corner === "sw") {
     /* from the roof's west edge at the top of the box east a little, then down its east side in uneven steps, each
        one farther east (a ledge broken off a bit at a time, the way the wall under it broke: the owner's, Nov 20 16:57Z,
        "have this circled corner have it's roof broken as a ledge with it's hieght showing in it's solid since it is
        also 3d, so that way it is consistent"; each step's edge looks south, so the slab's thickness shows under it:
-       roofHole), then down through the sign's band at the roof's front (its bottom 70) in a zigzag, to the roof's
-       south edge: every edge broken */
+       roofHole). Then on east in smaller steps down to the sign's band (its top 70 over the roof's front) where the
+       wall under it stands full height again (cap: stationart.js brokenTop), and down through the band there, torn, to
+       the roof's south edge: no roof and no band left over the wall's broken stairs, held up by nothing (the owner's,
+       Nov 20 18:51Z: "the ceiling or roof can't just hang on its own like that ... that red edge should be destroyed
+       and made to look like the other side"). Every edge broken */
+    const by = y + d - 70,
+      end = cap || x + w * 0.84;
     const pts = [[x - 4, y + r() * 8]];
     let ex = x + w * (0.1 + r() * 0.06);
     pts.push([ex, y + 6 + r() * 6]);
     const top = y + d * 0.1,
-      end = y + d - 80,
-      n = 5;
+      low = by - 70,
+      n = 4;
     for (let i = 1; i <= n; i++) {
-      const yi = top + ((end - top) * (i - 0.3 * r())) / n,
-        nx = i === n ? x + w * 0.96 : ex + (w * 0.8 * (0.6 + r() * 0.8)) / n;
+      const yi = top + ((low - top) * (i - 0.3 * r())) / n,
+        nx = ex + (w * 0.8 * (0.6 + r() * 0.8)) / n;
       ex += 3 + r() * 5;
       pts.push([ex, yi - 2 - r() * 4]); // (down its east side, a little east as it goes)
       pts.push([nx, yi + (r() - 0.5) * 5]); // (and a step east)
-      ex = Math.min(nx, x + w * 0.96);
+      ex = Math.min(nx, end - 60);
     }
-    for (const [k, v] of [
-      [0.84, 58],
-      [0.9, 42],
-      [0.8, 26],
-      [0.87, 12],
-      [0.79, -4],
+    /* the bite on east to the band's top over where the wall stands whole: shorter steps, a little lower each */
+    const m = 4,
+      y0 = low;
+    for (let i = 1; i <= m; i++) {
+      const yi = y0 + ((by - y0) * i) / m - (i < m ? 6 + r() * 14 : 0),
+        nx =
+          i === m ? end : ex + ((end - ex) / (m - i + 1)) * (0.6 + r() * 0.6),
+        mx = ex + (nx - ex) * (0.3 + r() * 0.4);
+      pts.push([ex + 2 + r() * 4, yi - 4 - r() * 8]);
+      pts.push([mx, yi - 6 - r() * 10]); // (a tooth on each step: torn, never a ruler's line)
+      pts.push([mx + 4 + r() * 6, yi + (r() - 0.5) * 6]);
+      pts.push([nx, yi + (r() - 0.5) * 4]);
+      ex = nx;
+    }
+    /* down through the band, torn: never a square end */
+    for (const [dx, dv] of [
+      [7, 12],
+      [-5, 24],
+      [9, 36],
+      [-2, 48],
+      [6, 58],
+      [-3, 72],
     ])
-      pts.push([x + w * k - r() * 6, y + d - v]);
+      pts.push([end + dx + (r() - 0.5) * 4, by + dv]);
     pts.push([x - 4, y + d + 4]);
     return pts;
   }
@@ -1768,9 +1799,20 @@ function ledgeOf(cut, roofW, roofD, seed, P) {
   }
   return s;
 }
-function roofHole(x, y, w, d, seed, corner = "", roofW = 0, roofD = 0, px = 2) {
+function roofHole(
+  x,
+  y,
+  w,
+  d,
+  seed,
+  corner = "",
+  cap = 0,
+  roofW = 0,
+  roofD = 0,
+  px = 2,
+) {
   const r = rnd(seed + 101),
-    cut = holeShape(x, y, w, d, seed, corner),
+    cut = holeShape(x, y, w, d, seed, corner, cap),
     id = uid(),
     cx = x + w / 2,
     cy = y + d / 2;
@@ -1778,10 +1820,10 @@ function roofHole(x, y, w, d, seed, corner = "", roofW = 0, roofD = 0, px = 2) {
      corner) */
   const ring = corner
     ? cut.map(([u, v], i) =>
-        i === 0 || i >= cut.length - 2
+        i === 0 || i >= cut.length - 2 || v > roofD - 74
           ? [u, v]
           : [u + 10 + r() * 8, v - 6 - r() * 6],
-      )
+      ) // (none over the band: it's the roof's front, not its top)
     : cut.map(([u, v]) => [
         cx + (u - cx) * (1.16 + r() * 0.06),
         cy + (v - cy) * (1.16 + r() * 0.06),
@@ -1797,6 +1839,20 @@ function roofHole(x, y, w, d, seed, corner = "", roofW = 0, roofD = 0, px = 2) {
       : F`<clipPath id="${id}"><path d="${pathOf(cut)}"/></clipPath>` +
         F`<g clip-path="url(#${id})"><path d="${pathOf(cut)}${pathOf(cut, SLAB)}" fill="#414d59" fill-rule="evenodd"/><path d="${pathOf(cut, SLAB * 0.45)}" fill="none" stroke="#353636" stroke-width="2"/></g>`) +
     F`<path d="${pathOf(cut)}" fill="none" stroke="#353636" stroke-width="2.4" stroke-linejoin="round"/>`; // (soft, as its cracks: Joseph's critique, Nov 20)
+  /* the band's torn end (the corner's): a strip of it bent down over the gap, and faint cracks running back along it
+     from the tear, a shade under its red */
+  if (corner) {
+    const bx = cut[cut.length - 8][0],
+      by = roofD - 70;
+    s +=
+      F`<path d="M${n1(bx + 2)} ${by + 38}L${n1(bx - 20)} ${by + 50}L${n1(bx - 24)} ${by + 64}L${n1(bx - 14)} ${by + 66}L${n1(bx - 8)} ${by + 56}L${n1(bx + 4)} ${by + 52}Z" fill="#c7282a" ${ln(2)}/>` +
+      F`<path d="M${n1(bx - 20)} ${by + 50}L${n1(bx - 24)} ${by + 64}L${n1(bx - 14)} ${by + 66}" fill="none" stroke="#820a17" stroke-width="3"/>`;
+    for (const [dy, l] of [
+      [10, 34],
+      [46, 26],
+    ])
+      s += F`<path d="M${n1(bx + 8)} ${by + dy}l${n1(l * 0.5)} ${n1(2 + r() * 3)}l${n1(l * 0.5)} ${n1(-2 - r() * 3)}" fill="none" stroke="#99163b" stroke-width="2"/>`;
+  }
   /* rebar: rusty rods sticking out over the hole from its edge, a few bent down; none over the restroom's corner, where
      it broke with the brick wall under it (Joseph's critique, Nov 20: "Brick walls have no rebar") */
   for (let i = 0; i < (corner ? 0 : 5); i++) {
@@ -1959,13 +2015,14 @@ export function roofSVG({
       F`<path d="M${cx} ${by + 2}C${cx - 22} ${by + 30} ${cx - 20} ${by + 66} ${cx} ${by + 66}C${cx + 20} ${by + 66} ${cx + 22} ${by + 30} ${cx} ${by + 2}Z" fill="#c7282a" ${ln(2)}/>`;
     /* the holes broken through it ([x, y, w, d, corner] on the roof: stationmap.js ROOF_HOLES, a duck falls through
        them): the roof cut away there (a mask), so what's under it shows, then each one's broken edge over it */
-    const hs = (holes || []).map(([hx, hy, hw, hd, corner], i) => [
+    const hs = (holes || []).map(([hx, hy, hw, hd, corner, cap], i) => [
       hx,
       hy,
       hw,
       hd,
       7 + i * 13,
       corner || "",
+      cap || 0,
     ]);
     if (hs.length)
       s =

@@ -25,6 +25,15 @@ const SIZES = {
   whole: [26, 13, 8],
   half: [20, 10, 6],
   chunk: [14, 7, 5],
+  fascia: [26, 8, 3], // (pieces of the roof that came down with the wall: a length of the sign's red band,
+  strip: [40, 5, 2], // a long strip of it, bent, lying across the bricks,
+  slab: [12, 9, 5], // and a chunk of the roof's grey slab)
+};
+/* each one's top, its face toward the south-west and its face toward the south-east, in the game's colours */
+const MATS = {
+  brick: [TOP, SIDE, DARK],
+  red: ["#c7282a", "#99163b", "#820a17"],
+  slab: ["#849097", "#565d77", "#414d59"],
 };
 const rnd = (seed) => () =>
   (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296; // (the same "random" every time)
@@ -48,7 +57,13 @@ function brick(x, y, a, size, lie, r) {
       x + (ux * fl * i) / 2 + (vx * fw * j) / 2,
       y + (uy * fl * i) / 2 + (vy * fw * j) / 2,
     ]);
-  return { x, y, a, size, foot, h: fh, z: 0 };
+  const mat =
+    size === "fascia" || size === "strip"
+      ? "red"
+      : size === "slab"
+        ? "slab"
+        : "brick";
+  return { x, y, a, size, foot, h: fh, z: 0, mat };
 }
 
 /* is (px, py) inside a convex polygon (either way round) */
@@ -155,12 +170,13 @@ function draw(w, h, bricks, crumbs, up, r) {
           if (d <= depth[k]) continue;
           depth[k] = d;
           who[k] = id;
+          const M = MATS[b.mat];
           col[k] =
             f.top != null
-              ? TOP
+              ? M[0]
               : f.n[0] > 0.45
-                ? DARK
-                : SIDE; /* (lit from the west: a face turned east is darker) */
+                ? M[2]
+                : M[1]; /* (lit from the west: a face turned east is darker) */
         }
     }
   });
@@ -171,9 +187,9 @@ function draw(w, h, bricks, crumbs, up, r) {
       for (let py = 0; py < H; py++)
         for (let px = 0; px < W; px++) {
           const k = py * W + px;
-          if (who[k] !== id || col[k] !== TOP) continue;
+          if (who[k] !== id || col[k] !== MATS[b.mat][0]) continue;
           if (Math.hypot(px + 0.5 - cx, py + 0.5 + b.z + b.h - up - cy) < 2.6)
-            col[k] = SIDE;
+            col[k] = MATS[b.mat][1];
         }
     }
     if (b.crack) {
@@ -189,7 +205,7 @@ function draw(w, h, bricks, crumbs, up, r) {
           py = Math.floor(sy + my * s * 0.9),
           k = py * W + px;
         if (px >= 0 && py >= 0 && px < W && py < H && who[k] === id)
-          if (col[k] === TOP) col[k] = SIDE;
+          if (col[k] === MATS[b.mat][0]) col[k] = MATS[b.mat][1];
       }
     }
   });
@@ -307,7 +323,8 @@ function lay(
       b.z = z;
       for (const k of cells) hm[k] = z + b.h;
       if (r() < 0.35) b.chip = Math.floor(r() * 4);
-      if (b.size !== "chunk" && r() < 0.3) b.crack = [Math.floor(r() * 4), r()];
+      if (b.mat === "brick" && b.size !== "chunk" && r() < 0.3)
+        b.crack = [Math.floor(r() * 4), r()];
       bricks.push(b);
       mine.push(b);
       break;
@@ -376,7 +393,7 @@ export function floorBricks({ w, d, seed = 1 }) {
    other: high by the wall's end, lower and looser going east and south, a few strays. All of them on the ground south of
    the wall's foot (Joseph's critique, Nov 20: drawn over the wall's face, they "look like they float"), and low. up: how
    far above the box's top the heap may reach (world px) */
-export function heapBricks({ w, d, seed = 1, up = 40 }) {
+export function heapBricks({ w, d, seed = 1, up = 40, roof = false }) {
   const r = rnd(seed),
     pw = Math.round(w / ART),
     ph = Math.round(d / ART),
@@ -426,6 +443,30 @@ export function heapBricks({ w, d, seed = 1, up = 40 }) {
       { st, stack: true, low: 5, high: 11 },
     ),
   ];
+  /* roof: the roof over the wall's end came down too (the owner's, Nov 20 18:51Z): a few lengths of its red band and
+     chunks of its grey slab among the bricks, and a long red strip of the band lying across them */
+  if (roof)
+    heap.push(
+      ...lay(
+        pw,
+        ph,
+        3,
+        (i) => ({
+          ...at(0.85),
+          size: i < 1 ? "fascia" : "slab",
+          lie: "bed",
+        }),
+        r,
+        { st, stack: true, high: 16, tries: 400 },
+      ),
+      ...lay(pw, ph, 1, () => ({ ...at(0.35), size: "strip", lie: "bed" }), r, {
+        st,
+        stack: true,
+        low: 2,
+        high: 14,
+        tries: 300,
+      }),
+    );
   const strays = lay(
     pw,
     ph,
