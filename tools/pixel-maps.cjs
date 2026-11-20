@@ -31,6 +31,7 @@ const MAPS = [
   ["board-light", "the menus' background in the light", "night", false],
   ["pixel", "Pixel", "scene", "pixel"],
   ["sky", "Sky's sun, moon, stars and clouds", "sky", null],
+  ["carnival", "Carnival Night", "carnival", null],
 ];
 
 function serve() {
@@ -143,6 +144,37 @@ async function recordMap(page, how, arg) {
           out.clouds[w] = await one(c, "cloud" + w);
         }
         return { html: JSON.stringify(out), files };
+      }
+      if (how === "carnival") {
+        /* one drawing: its wheel turns (12 spokes alike: a twelfth of a turn, 90 s round, as 60 frames), its cars and
+           rim lights are carried round hanging straight, its bulbs and stars twinkle, its flag waves */
+        const { carnivalSVG } = await import("/tools/pixel-src/carnival.js");
+        const { recordSvg } = await import("/tools/pixel-src/maprec.js");
+        const css = document.createElement("link");
+        css.rel = "stylesheet";
+        css.href = "/tools/pixel-src/carnival.css";
+        document.head.append(css);
+        await new Promise((ok) => (css.onload = ok));
+        root = document.createElement("div");
+        root.className = "scene carnival";
+        root.style.cssText = "position:absolute;inset:0";
+        box.append(root);
+        root.innerHTML = carnivalSVG(true);
+        const svg = root.firstElementChild;
+        svg.setAttribute("viewBox", "0 0 1600 900");
+        return recordSvg(
+          root,
+          svg,
+          ".cn-wheel, .cn-car, .cn-bulb, .cn-star, .cn-flag",
+          (el) =>
+            el.classList.contains("cn-wheel")
+              ? { k: "frames", P: 7500, N: 60 }
+              : el.classList.contains("cn-car")
+                ? { k: "hang", P: 90000, cx: 330, cy: 410 }
+                : el.classList.contains("cn-flag")
+                  ? { k: "frames", P: 3200, N: 24 }
+                  : { k: "fade", cls: "pxt" },
+        );
       }
       if (how === "scene") {
         /* a map whose scene lays itself out once and is made into pixels by its own code (pxbake.js bakeStill) */

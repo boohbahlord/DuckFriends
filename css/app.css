@@ -4632,51 +4632,23 @@ html.moving .cl-sq {
 .map-vellum .law-mid {
   background: color-mix(in srgb, #120904 var(--board-a), transparent);
 }
-/* Carnival Night: the world, marquee tiles, fireworks */
+/* Carnival Night: the world (pixel files), marquee tiles, fireworks (drawn in the world's pixels: js/maps.js) */
 .scene.carnival {
   background: #0d0722;
 }
-.scene.carnival > svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-.cn-wheel {
-  transform-box: view-box;
-  transform-origin: 330px 410px;
-}
-.cn-car {
-  transform-box: view-box;
-  transform-origin: 0 0;
-}
-html.moving .cn-wheel {
-  animation: cnspin 90s linear infinite;
-}
-html.moving .cn-car {
-  animation: cnspin 90s linear infinite reverse;
-} /* the cars hang straight while the wheel turns */
 @keyframes cnspin {
   to {
     transform: rotate(360deg);
   }
 }
-html.moving .cn-bulb,
-html.moving .cn-star {
-  animation: twinkle 2.6s ease-in-out infinite alternate;
-}
-.cn-flag {
-  transform-box: fill-box;
-  transform-origin: 0 50%;
-}
-html.moving .cn-flag {
-  animation: cnflag 1.6s ease-in-out infinite alternate;
-}
-@keyframes cnflag {
-  to {
-    transform: scaleX(0.8) skewY(-6deg);
-  }
+.cn-fw {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  pointer-events: none;
 }
 .map-carnival .col {
   border-right-color: #ffffff30;
@@ -4730,75 +4702,6 @@ html:not(.moving) .mq {
   33.3% {
     opacity: 0.3;
   }
-}
-.cn-fw {
-  position: absolute;
-  inset: 0;
-  container-type: size;
-  pointer-events: none;
-}
-.fw {
-  position: absolute;
-  width: 0;
-  height: 0;
-}
-.fw-rocket {
-  position: absolute;
-  left: -2px;
-  top: 0;
-  width: 4px;
-  height: 14px;
-  border-radius: 2px;
-  background: linear-gradient(#fff, var(--c));
-  opacity: 0;
-  animation: fwrise 0.7s ease-out var(--d) both;
-}
-@keyframes fwrise {
-  0% {
-    opacity: 1;
-    transform: translateY(var(--rise));
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(0);
-  }
-}
-.fw-spark {
-  position: absolute;
-  left: -3px;
-  top: -3px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--c);
-  box-shadow:
-    0 0 6px var(--c),
-    0 0 2px #fff;
-  opacity: 0;
-  animation: fwburst 1.5s cubic-bezier(0.15, 0.7, 0.3, 1) calc(var(--d) + 0.7s)
-    both;
-}
-@keyframes fwburst {
-  0% {
-    opacity: 1;
-    transform: rotate(var(--a)) translateX(0);
-  }
-  70% {
-    opacity: 0.9;
-  }
-  100% {
-    opacity: 0;
-    transform: rotate(var(--a)) translateX(14cqh) translateY(3cqh);
-  }
-}
-.mm-carnival svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
 }
 .scene.pixel canvas {
   position: absolute;
@@ -19315,11 +19218,10 @@ html.pixel .spx-flames {
 .px-baked {
   image-rendering: pixelated;
 }
-html.pixel .px-own .cn-fw,
 html.pixel .px-own .st-mets:not(:empty) {
   filter: url(#px-f);
-} /* (Carnival Night's fireworks and Starry Night's shooting stars, now and then over its pixels: on the grid by the
-     filter, in a box the scene's own size) */
+} /* (Starry Night's shooting stars, now and then over its pixels: on the grid by the filter, in a box the scene's own
+     size) */
 .px-gone {
   visibility: hidden !important;
 } /* (what moves, still moving out of sight: its pixels are on the canvas) */
@@ -19348,20 +19250,46 @@ html.pixel .px-own .st-mets:not(:empty) {
   left: 0;
   top: 0;
   width: calc(var(--n) * 100%);
-  height: 100%;
+  height: calc(var(--r, 1) * 100%);
   display: block;
 }
 html.moving .pxs > img {
-  animation: pxs var(--pd) steps(var(--n)) var(--pdl, 0s) infinite;
-}
+  animation:
+    pxs calc(var(--pd) / var(--r, 1)) steps(var(--n)) var(--pdl, 0s) infinite,
+    pxr var(--pd) steps(var(--r, 1)) var(--pdl, 0s) infinite;
+} /* (along a row, then down to the next: a long strip is kept in rows, tools/pixel-src/maprec.js) */
 @keyframes pxs {
   to {
     transform: translateX(-100%);
   }
 }
+@keyframes pxr {
+  to {
+    translate: 0 -100%;
+  }
+}
 html:not(.moving) .pxs-hide {
   visibility: hidden;
 } /* (the train's smoke: none on a still page) */
+/* carried round a wheel, hanging straight (Carnival Night's cars and rim lights): turned one way round the wheel's
+   middle, then back the other way round its own place, so its pixels never turn */
+.pxh,
+.pxh-in {
+  position: absolute;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+}
+html.moving .pxh {
+  animation: cnspin var(--hp) linear infinite;
+}
+html.moving .pxh-in {
+  animation: cnspin var(--hp) linear infinite reverse;
+}
+/* twinkling (Carnival Night's bulbs and stars), each at its own delay */
+html.moving .pxt {
+  animation: twinkle 2.6s ease-in-out infinite alternate;
+}
 html.pixel .spx-flames {
   mix-blend-mode: screen;
 } /* (the filter makes the flames one picture: it's that picture that lights the duck now) */

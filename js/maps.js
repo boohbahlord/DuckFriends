@@ -19,10 +19,11 @@
    starry night sky, and it is not in the Map window. */
 import { duckSVG } from "./duck.js";
 import { pixelOn, gridPx } from "./pixel.js";
-import { bakeStill, bakeSvg, unbake } from "./pxbake.js";
+import { bakeStill, unbake } from "./pxbake.js";
 import { esc } from "./ui.js";
-import { floorCanvas, carnivalSVG } from "./art.js";
+import { floorCanvas } from "./art.js";
 import BOARD from "./pxm/board.js";
+import CARNIVAL from "./pxm/carnival.js";
 import PIXEL from "./pxm/pixel.js";
 import SKY from "./pxm/sky.js";
 import { mountWorld } from "./pxmap.js";
@@ -851,55 +852,9 @@ function starsScene(layer) {
   };
 }
 
-/* ---------- Carnival Night ---------- */
-function carnivalScene(layer) {
-  const sc = document.createElement("div");
-  sc.className = "scene carnival";
-  sc.innerHTML = carnivalSVG(true);
-  layer.append(sc);
-  // a tall screen (a phone) sees a slice of the picture: the slice around the Ferris wheel
-  const svg = sc.firstElementChild,
-    fit = () => {
-      const a = layer.clientWidth / (layer.clientHeight || 1),
-        w = 900 * a;
-      svg.setAttribute(
-        "viewBox",
-        a < 1.2
-          ? `${Math.max(0, Math.min(1600 - w, 330 - w / 2)).toFixed(0)} 0 ${w.toFixed(0)} 900`
-          : "0 0 1600 900",
-      );
-    };
-  /* the pixel look: the still drawing made into pixels once, its turning wheel, waving flag and twinkling lights drawn
-     each frame on one canvas of the grid's pixels (pxbake.js), instead of the filter on the whole page every frame;
-     made again for a new size or a new grid */
-  let baked = "",
-    bt = 0;
-  const bake = () => {
-    const k = [layer.clientWidth, layer.clientHeight, gridPx()].join();
-    if (!pixelOn() || k === baked || !layer.clientWidth) return;
-    baked = k;
-    unbake(sc, layer);
-    bakeSvg(sc, svg, layer, ".cn-wheel, .cn-car, .cn-bulb, .cn-star, .cn-flag");
-  };
-  const ro = new ResizeObserver(() => {
-    fit();
-    clearTimeout(bt);
-    bt = setTimeout(bake, baked ? 200 : 0);
-  });
-  ro.observe(layer);
-  addEventListener("pxgrid", bake);
-  fit();
-  return {
-    update() {},
-    destroy() {
-      clearTimeout(bt);
-      ro.disconnect();
-      removeEventListener("pxgrid", bake);
-      layer.classList.remove("px-own");
-      sc.remove();
-    },
-  };
-}
+/* ---------- Carnival Night, as pixel files (js/pxm/carnival.js, tools/pixel-maps.cjs) ---------- */
+const carnivalScene = (layer) =>
+  worldScene(layer, CARNIVAL, "carnival", { fx: 330 / 1600, fy: 0.5 }); // (a phone: the slice round the Ferris wheel)
 /* marquee bulbs around a tile's edges: three sets that light in turn, so they seem to chase around it */
 function marquee(col) {
   const old = col.querySelector(":scope > .marquee"),
@@ -945,22 +900,95 @@ function marquee(col) {
   if (old) old.replaceWith(svg);
   else col.prepend(svg);
 }
-/* fireworks over the scene (behind the see-through board): a few rockets that burst in the given colors */
+/* fireworks over the scene (behind the see-through board): a few rockets that burst in the given colors, drawn in the
+   world's own pixels on a canvas of its size (so they are as big as every pixel of the map), where the screen sees it */
 function fireworks(sc, colors) {
-  const html = document.documentElement;
-  if (!sc || html.classList.contains("still") || html.classList.contains("low"))
+  const html = document.documentElement,
+    st = sc && sc.querySelector(".pxw-stage");
+  if (!st || html.classList.contains("still") || html.classList.contains("low"))
     return;
-  const box = document.createElement("div");
-  box.className = "cn-fw";
-  box.innerHTML = Array.from({ length: 5 }, (_, i) => {
-    const x = 12 + Math.random() * 76,
-      y = 12 + Math.random() * 30,
-      c = colors[i % colors.length],
-      d = (i * 0.35 + Math.random() * 0.2).toFixed(2);
-    return `<div class="fw" style="left:${x.toFixed(1)}%;top:${y.toFixed(1)}%;--c:${c};--d:${d}s;--rise:${(70 - y).toFixed(0)}cqh"><i class="fw-rocket"></i>${Array.from({ length: 16 }, (_, k) => `<i class="fw-spark" style="--a:${k * 22.5}deg"></i>`).join("")}</div>`;
-  }).join("");
-  sc.append(box);
-  setTimeout(() => box.remove(), 4200);
+  const c = document.createElement("canvas"),
+    W = (c.width = CARNIVAL.W / CARNIVAL.G),
+    H = (c.height = CARNIVAL.H / CARNIVAL.G);
+  c.className = "cn-fw";
+  st.append(c);
+  /* what the screen sees of the world, in its pixels */
+  const r = st.getBoundingClientRect(),
+    b = sc.getBoundingClientRect(),
+    k = r.width / W,
+    vx = Math.max(0, (b.left - r.left) / k),
+    vy = Math.max(0, (b.top - r.top) / k),
+    vw = Math.min(W - vx, b.width / k),
+    vh = Math.min(H - vy, b.height / k);
+  const shots = Array.from({ length: 5 }, (_, i) => {
+    const y = 12 + Math.random() * 30;
+    return {
+      x: vx + ((12 + Math.random() * 76) * vw) / 100,
+      y: vy + (y * vh) / 100,
+      rise: ((70 - y) * vh) / 100,
+      c: colors[i % colors.length],
+      d: i * 0.35 + Math.random() * 0.2,
+    };
+  });
+  const x = c.getContext("2d"),
+    t0 = performance.now(),
+    rp = (v) => Math.round(v),
+    fade = (p, at, to) =>
+      p < at ? 1 + (to - 1) * (p / at) : to * (1 - (p - at) / (1 - at));
+  const frame = (now) => {
+    const t = (now - t0) / 1000;
+    x.clearRect(0, 0, W, H);
+    for (const f of shots) {
+      const tr = (t - f.d) / 0.7; // (the rocket going up: 0.7 s, slowing)
+      if (tr >= 0 && tr < 1) {
+        const e = ease(0, 0, 0.58, 1, tr),
+          px = rp(f.x) - 1,
+          py = rp(f.y + f.rise * (1 - e));
+        x.globalAlpha = fade(tr, 0.9, 1);
+        x.fillStyle = f.c;
+        x.fillRect(px, py, 2, 7);
+        x.fillStyle = "#fff";
+        x.fillRect(px, py, 2, 2); // (its white tip)
+      }
+      const tb = (t - f.d - 0.7) / 1.5; // (the burst: 1.5 s, flying out fast, then hanging and falling a little)
+      if (tb < 0 || tb >= 1) continue;
+      const e = ease(0.15, 0.7, 0.3, 1, tb),
+        o = fade(tb, 0.7, 0.9);
+      for (let s = 0; s < 16; s++) {
+        const a = (s * Math.PI) / 8,
+          dx = 0.14 * vh * e,
+          dy = 0.03 * vh * e,
+          sx = rp(f.x + dx * Math.cos(a) - dy * Math.sin(a)),
+          sy = rp(f.y + dx * Math.sin(a) + dy * Math.cos(a));
+        x.fillStyle = f.c;
+        x.globalAlpha = o * 0.35;
+        x.fillRect(sx - 2, sy - 1, 5, 3);
+        x.fillRect(sx - 1, sy - 2, 3, 5); // (its glow)
+        x.globalAlpha = o;
+        x.fillRect(sx - 1, sy, 3, 1);
+        x.fillRect(sx, sy - 1, 1, 3);
+        x.fillStyle = "#fff";
+        x.fillRect(sx, sy, 1, 1);
+      }
+    }
+    x.globalAlpha = 1;
+    if (t < 4.2 && c.isConnected) requestAnimationFrame(frame);
+    else c.remove();
+  };
+  requestAnimationFrame(frame);
+}
+/* a CSS cubic-bezier(x1, y1, x2, y2) at p (0 to 1): how far along, as the CSS fireworks moved */
+function ease(x1, y1, x2, y2, p) {
+  const at = (a, b, u) =>
+    3 * a * u * (1 - u) ** 2 + 3 * b * u * u * (1 - u) + u ** 3;
+  let lo = 0,
+    hi = 1;
+  for (let i = 0; i < 20; i++) {
+    const m = (lo + hi) / 2;
+    if (at(x1, x2, m) < p) lo = m;
+    else hi = m;
+  }
+  return at(y1, y2, (lo + hi) / 2);
 }
 
 /* puts a map's world over the whole page (the page's own background rests meanwhile); returns { update(now), board(el),
