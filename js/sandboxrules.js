@@ -468,11 +468,15 @@ export function sbInBlock(s, p, x, y, W = 1, H = 1) {
    same way (sbActive), so the host only counts the steps (s.sb.zs) */
 export const SB_ORDERS = {
   rand: "True random",
-  shuf: "Shuffle",
+  abs: "Absolute (random over the whole map)",
+  shuf: "Shuffle (new order each round)",
+  shuf1: "Shuffle once (same order each round)",
+  shufrow: "Shuffle rows",
+  shufcol: "Shuffle columns",
   line: "One after another",
   alt: "Alternating",
   all: "All at once",
-};
+}; // (Absolute and the shuffles: plan Phase 3, "Absolute: a pattern that is true random across the whole board, not only inside the zone. Several kinds of shuffle, not just one")
 export const SB_DIRS = {
   "": "No direction",
   right: "\u2192",
@@ -683,12 +687,37 @@ export function sbActive(s, id, p, k, W = 1, H = 1) {
     N = g.cells.length,
     want = ordTxt(p, "n").trim(),
     n = want ? Math.min(N, Math.max(1, +want || 1)) : N;
-  if (ord === "all" || (n >= N && ord !== "alt")) return null;
+  if (ord === "all" || (n >= N && ord !== "alt" && ord !== "abs")) return null;
   const key = `${id} ${ord} ${ordTxt(p, "dir")} ${n} ${g.nx}x${g.ny} ${N} ${k}`;
   if (KEEP.has(key)) return KEEP.get(key);
   const seed = idNum(id);
   let on;
-  if (ord === "alt") {
+  if (ord === "abs") {
+    /* Absolute: the whole map is cut into squares of its size, and at each step each of them acts by chance, n of
+       them on average for as many squares as the block has; the block acts on those of its squares that land on one */
+    const [rx, ry] = sbUnit(s, W, H),
+      sw = g.w / g.nx,
+      sh = g.h / g.ny,
+      NX = Math.max(1, Math.ceil(1 / rx / sw)),
+      NY = Math.max(1, Math.ceil(1 / ry / sh)),
+      odds = n / Math.max(N, NX * NY),
+      a = (sbRot(p) * Math.PI) / 180;
+    on = new Set(
+      g.cells.filter((c) => {
+        const lx = ((c % g.nx) + 0.5) * sw - g.w / 2,
+          ly = (Math.floor(c / g.nx) + 0.5) * sh - g.h / 2,
+          x = sbFills(p)
+            ? 0.5 + lx / g.w
+            : p.x + (lx * Math.cos(a) - ly * Math.sin(a)) * rx,
+          y = sbFills(p)
+            ? 0.5 + ly / g.h
+            : p.y + (lx * Math.sin(a) + ly * Math.cos(a)) * ry,
+          I = Math.floor(x * NX),
+          J = Math.floor(y * NY);
+        return hash(seed, k, I, J) < odds;
+      }),
+    );
+  } else if (ord === "alt") {
     /* a checkerboard that flips every step ("Squares at once" left out: half of them) */
     on = new Set(
       g.cells.filter((c) => ((c % g.nx) + Math.floor(c / g.nx) + k) % 2 === 0),
@@ -722,11 +751,27 @@ export function sbActive(s, id, p, k, W = 1, H = 1) {
         return A[0] - B[0] || A[1] - B[1];
       });
     } else {
-      const round = Math.floor((k * n) / N);
+      /* the shuffles: a new deal each round, one deal kept, or whole rows or columns dealt in a new order each round
+         (each row left to right, each column top to bottom) */
+      const round = ord === "shuf1" ? 0 : Math.floor((k * n) / N),
+        line = (c) =>
+          ord === "shufrow"
+            ? Math.floor(c / g.nx)
+            : ord === "shufcol"
+              ? c % g.nx
+              : -1;
       walk = g.cells
-        .map((c) => [hash(seed, round, c), c])
-        .sort((a, b) => a[0] - b[0])
-        .map((x) => x[1]);
+        .map((c) => [
+          line(c) < 0 ? hash(seed, round, c) : hash(seed, round, line(c), -1),
+          ord === "shufrow"
+            ? c % g.nx
+            : ord === "shufcol"
+              ? Math.floor(c / g.nx)
+              : 0,
+          c,
+        ])
+        .sort((a, b) => a[0] - b[0] || a[1] - b[1])
+        .map((x) => x[2]);
     }
     const from = (k * n) % N;
     on = new Set();

@@ -24,7 +24,7 @@ export const SB_HELP = {
     ],
     [
       "Potential order",
-      "At the end of each tab, Potential order cuts the block into squares and picks which of them work right now: true random, shuffle (every square once before any repeats), one after another (with a direction), alternating like a checkerboard, or all at once. Squares at once, Square size and Seconds per step set how many, how big and how fast; Steps: On a timer, or One step each use (each spawn, respawn or drop). In Build the working squares are drawn filled.",
+      "At the end of each tab, Potential order cuts the block into squares and picks which of them work right now: true random, absolute (random over the whole map: only the picks that land in the block work), four shuffles (every square once before any repeats, in a new order each round, the same order each round, by rows or by columns), one after another (with a direction), alternating like a checkerboard, or all at once. Squares at once, Square size and Seconds per step set how many, how big and how fast; Steps: On a timer, or One step each use (each spawn, respawn or drop). In Build the working squares are drawn filled.",
     ],
     [
       "What a zone is",
