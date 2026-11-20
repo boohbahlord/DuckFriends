@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v175",
+    version: 175,
+    date: "Nov 20, 2026",
+    title: "Old console colors",
+    news: [
+      "For every mode: Night Show, Sky and Pixel use limited colors, like an old console.",
+    ],
+  },
+  {
     id: "v174",
     version: 174,
     date: "Nov 20, 2026",
