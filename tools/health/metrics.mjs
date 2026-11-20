@@ -93,7 +93,10 @@ export function rises(now, base) {
     "clones",
   ])
     if (now[k] > base[k]) out.push(`${k}: ${base[k]} -> ${now[k]}`);
+  // js/updates.js is the Updates pages' text: it grows by one page every deploy, by design
+  const GROWS = new Set(["js/updates.js"]);
   for (const [f, n] of Object.entries(now.bigFiles)) {
+    if (GROWS.has(f)) continue;
     const was = base.bigFiles[f];
     if (was === undefined) out.push(`new file over 1500 lines: ${f} (${n})`);
     else if (n > was) out.push(`${f} grew: ${was} -> ${n} lines`);

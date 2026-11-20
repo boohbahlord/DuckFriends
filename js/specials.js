@@ -802,15 +802,6 @@ export function pressFX(id, x, y, size, face, duck) {
         ),
       );
   }
-  if (id === "handgun")
-    out.push(
-      at(
-        "spe-gun spe-pistol",
-        PISTOL(c),
-        x + face * size * 0.45,
-        y - size * 0.38,
-      ),
-    );
   if (id === "sound")
     for (let i = 0; i < 3; i++)
       out.push(
