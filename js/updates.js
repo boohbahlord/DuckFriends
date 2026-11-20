@@ -9,6 +9,19 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v190",
+    version: 190,
+    date: "Nov 20, 2026",
+    title: "Zombies keep their skin",
+    news: [
+      "For Survival: zombies no longer change their skin as they fall. A walker you leave alive changes its look the moment it joins the next horde.",
+      "For Sandbox: NPC brains can now say how to move with \\move\\{...}: arrows for directions, a target, a speed, and bends (bow, weave, dogleg) one after another. The Seriat bible explains it.",
+      "For Sandbox: G Music can import a song (up to 6, 3 minutes each); it plays for the whole room and is kept in saves, game modes and Shared. Every upload shows a green bar while it loads.",
+      'For Sandbox: G Rules can run waves or rounds (how many, how long, the rest between). A Spawn tab with "Comes in with waves or rounds" on comes in at each start, a counter shows under the top bar, and Help has a page on it.',
+      "The menus, Night Show and Carnival Night load hundreds fewer files.",
+    ],
+  },
+  {
     id: "v189",
     version: 189,
     date: "Nov 20, 2026",

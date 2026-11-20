@@ -90,8 +90,21 @@ const HEADS = new Set([
   "give",
   "take",
   "else",
+  "bend",
   ...ZONE_HEADS,
 ]);
+/* a move's bends (the owner's, Nov 20 18:46Z: "a smooth bow, a weave, a shot, or a sharp dog leg, or even like all
+   three"); mix is the three in turn. As a number: 1 shot, 2 bow, 3 weave, 4 dogleg */
+const BENDS = {
+  shot: "shot",
+  straight: "shot",
+  bow: "bow",
+  weave: "weave",
+  dogleg: "dogleg",
+  mix: "mix",
+};
+const BEND_N = [null, "shot", "bow", "weave", "dogleg"];
+const MOVE_LEGS = 40; // (legs in one move)
 export const NB_RUN_WORDS = [
   ...HEADS,
   ...EVENTS,
@@ -121,6 +134,8 @@ export const NB_RUN_WORDS = [
   ...Object.keys(NB_DIRS),
   ...NB_BUILT,
   NB_PCT,
+  ...Object.keys(BENDS),
+  "times",
 ];
 const STOP = Symbol("stop");
 const HELP = {
@@ -130,6 +145,7 @@ const HELP = {
   loop: "help/brains/loops.txt",
   text: "help/brains/print.txt",
   names: "help/brains/names.txt",
+  move: "help/brains/move.txt",
 };
 
 /* ---------- reading a line of statements ----------
@@ -228,6 +244,7 @@ class Stmts {
         k > this.p
       )
         break;
+      if (opts.stop && depth === 0 && k > this.p && opts.stop(t)) break;
     }
     const vp = this.vp;
     vp.i = this.map[this.p];
@@ -255,6 +272,10 @@ class Stmts {
     if (t.t === "op" && t.v === "(" && this.op("(", 1)) return this.setStmt();
     if (t.t === "op" && t.v === "[" && this.isPick()) return this.pickStmt();
     if (t.t === "op" && t.v === "{") return { k: "block", body: this.block() };
+    if (t.t === "move") {
+      this.p++;
+      return this.moveStmt(t.v);
+    }
     if (t.t === "word") {
       const w = t.v;
       switch (w) {
@@ -398,6 +419,9 @@ class Stmts {
         }
         case "else":
           no(`else comes after an \\if …\\ on the same line`, HELP.if);
+        case "bend":
+          this.p++;
+          return { k: "bend", list: this.bendList() };
       }
       if (this.file.defs.has(w) || this.file.calls(w)) {
         this.p++;
@@ -408,6 +432,126 @@ class Stmts {
       }
     }
     return { k: "value", v: this.value() };
+  }
+  /* a Stmts of its own over a piece of text (a move's parts): its pieces read as any line's */
+  sub(text) {
+    return new Stmts(lex(text), this.R, this.line, this.file);
+  }
+  /* dogleg x3, weave: the bends a move's legs take in turn (dogleg 3 times works too; a let name or a number 1 to 4
+     for the kind) */
+  bendList() {
+    const list = [],
+      times = (t) => t.t === "word" && (t.v === "times" || /^x\d*$/.test(t.v));
+    for (;;) {
+      const t = this.peek();
+      if (!t || this.sep())
+        no(`bend what? ${Object.keys(BENDS).join(", ")}`, HELP.move);
+      const b = { kind: null, v: null, n: null };
+      if (t.t === "word" && BENDS[t.v]) {
+        b.kind = BENDS[t.v];
+        this.p++;
+      } else b.v = this.value({ what: "A bend", comma: true, stop: times });
+      const x = this.peek();
+      if (x && x.t === "word" && /^x\d+$/.test(x.v)) {
+        b.n = +x.v.slice(1);
+        this.p++;
+      } else if (x && x.t === "word" && x.v === "x") {
+        this.p++;
+        b.n = this.value({ what: "How many times", comma: true });
+      } else if (x && !this.sep() && !this.op(",")) {
+        b.n = this.value({ what: "How many times", comma: true, stop: times });
+        if (!this.word("times"))
+          no(`bend dogleg 3 times (or dogleg x3)`, HELP.move);
+        this.p++;
+      }
+      list.push(b);
+      if (!this.op(",")) return list;
+      this.p++;
+    }
+  }
+  /* \move\{ to nearest duck; bend bow; >2 /\1 }: parts with ; or line breaks between. The legs: > right, < left, /\ up,
+     \/ down (the owner's, Nov 20 18:46Z), together a slant (>/\2), a number after them how many duck lengths (1 when
+     none), - a straight part. to <who>: the legs bend the way there instead, and it still arrives. @n: its speed times
+     n. bend …: the bends its legs take in turn */
+  moveStmt(text) {
+    const s = { k: "move", legs: [], to: null, sp: null, bend: null };
+    for (let part of String(text)
+      .replace(/#[^\n]*/g, "")
+      .split(/[;\n]/)) {
+      part = part.trim();
+      if (!part) continue;
+      if (/^bend\b/i.test(part)) {
+        const q = this.sub(part.replace(/^bend/i, ""));
+        q.skipSeps();
+        s.bend = q.bendList();
+        if (q.peek()) no(`"${q.peek().v}" doesn't belong in a bend`, HELP.move);
+        continue;
+      }
+      const to = /(^|\s)to\s+(.+)$/i.exec(part);
+      if (to) {
+        const q = this.sub(to[2]);
+        q.skipSeps();
+        s.to = q.who();
+        q.skipSeps();
+        if (q.peek()) no(`"${q.peek().v}" doesn't belong after to`, HELP.move);
+        part = part.slice(0, to.index);
+      }
+      part = part.replace(/@\s*(\([^)]*\)|[^\s<>/\\-]+)/g, (m, v) => {
+        s.sp = this.amount(v, "A move's speed");
+        return " ";
+      });
+      this.legs(part, s.legs);
+    }
+    if (!s.legs.length && !s.to)
+      no(`A move needs legs (>2 /\\1) or a to`, HELP.move);
+    if (s.legs.length > MOVE_LEGS)
+      no(`A move has ${MOVE_LEGS} legs at most`, HELP.move);
+    return s;
+  }
+  amount(text, what) {
+    const q = this.sub(text);
+    q.skipSeps();
+    const v = q.value({ what });
+    if (q.peek()) no(`"${q.peek().v}" doesn't belong in ${what}`, HELP.move);
+    return v;
+  }
+  /* >2 /\1 >\/3 -: the legs, in order */
+  legs(text, out) {
+    let i = 0;
+    while (i < text.length) {
+      const sp = /^\s+/.exec(text.slice(i));
+      if (sp) {
+        i += sp[0].length;
+        continue;
+      }
+      const rest = text.slice(i),
+        a = /^(?:>|<|\/\\|\\\/)+|^-/.exec(rest);
+      if (!a)
+        no(
+          `"${rest.split(/\s/)[0]}" isn't part of a move: > right, < left, /\\ up, \\/ down`,
+          HELP.move,
+        );
+      i += a[0].length;
+      let amt = "";
+      if (text[i] === "(") {
+        let d = 0,
+          j = i;
+        for (; j < text.length; j++) {
+          if (text[j] === "(") d++;
+          if (text[j] === ")" && --d === 0) break;
+        }
+        if (d) no("A ( is never closed", HELP.move);
+        amt = text.slice(i, j + 1);
+      } else amt = (/^[^\s<>/\\-]*/.exec(text.slice(i)) || [""])[0];
+      i += amt.length;
+      const n = (re) => (a[0].match(re) || []).length;
+      out.push({
+        dx: n(/>/g) - n(/</g),
+        dy: n(/\\\//g) - n(/\/\\/g), // (down is +, as on the screen)
+        st: a[0] === "-",
+        v: amt ? this.amount(amt, "A leg's length") : null,
+      });
+    }
   }
   /* a block { … }, its statements one per line or with ; between */
   block(why) {
@@ -856,6 +1000,7 @@ function valueLine(toks, file) {
       !file.calls(a.v) &&
       !(b && b.t === "op" && b.v === "=")
     );
+  if (a.t === "move") return false;
   if (a.t === "bs") return !/^\s*if\b/.test(a.v);
   if (a.t === "op" && a.v === "(" && b && b.t === "op" && b.v === "(")
     return false;
@@ -910,7 +1055,8 @@ function useFile(name, plan, errs, opts, seen, line, from) {
    host: {
      now(): seconds, stat(id, name), set(id, name, v), most(id, name): a stat's most (for percents),
      get(name): wave, time, alive, dead, spawned, who(spec, me): [ids] (spec { k: me|nearest|all|team, of }),
-     act(me, what, id): go, attack or flee, say(me, text), print(text, me), file(name), shared: a Map for give/take,
+     act(me, what, id): go, attack or flee, move(me, { legs: [{ dx, dy }] in duck lengths, bends, to: id or null, sp }),
+     say(me, text), print(text, me), file(name), shared: a Map for give/take,
      error(line, why)
    }
    brain(plan, host): { start(), add(id), remove(id), fire(ev, id, arg), tick(), stop(), tasks } */
@@ -1020,6 +1166,35 @@ export function brain(plan, host) {
     if (fn.opts) return fn.opts.some((o) => isIn(x, o, env, R));
     return same(x, val(env, fn, R));
   };
+  /* a bend list worked out: the kinds in the order the legs take them (dogleg x3, weave: dogleg, dogleg, dogleg,
+     weave, then again) */
+  let bend0 = null;
+  const bendBy = new Map(); // (each NPC's own, from a bend line of its file)
+  const bendsOf = (env, list, R) => {
+    const o = [];
+    for (const b of list) {
+      let k = b.kind;
+      if (!k) {
+        const n = Math.round(num(val(env, b.v, R), "A bend"));
+        k = BEND_N[n];
+        if (!k)
+          no(
+            `A bend's number is 1 (shot), 2 (bow), 3 (weave) or 4 (dogleg), not ${n}`,
+            HELP.move,
+          );
+      }
+      const n =
+        b.n == null
+          ? 1
+          : typeof b.n === "number"
+            ? b.n
+            : Math.round(num(val(env, b.n, R), "How many times"));
+      if (!(n >= 0 && n <= 100)) no(`A bend plays 0 to 100 times`, HELP.move);
+      for (let i = 0; i < n && o.length < 400; i++)
+        o.push(...(k === "mix" ? ["bow", "weave", "dogleg"] : [k]));
+    }
+    return o.length ? o : ["shot"];
+  };
   const whoIs = (env, w) => {
     if (!w) return host.who({ k: "nearest", of: "duck" }, env.me);
     if (w.k === "zone") {
@@ -1097,6 +1272,44 @@ export function brain(plan, host) {
           no(`${s.act} is for an NPC: use it inside a when`, HELP.run);
         const to = whoIs(env, s.who);
         if (to.length) host.act(env.me, s.act, to[0]);
+        return;
+      }
+      case "bend": {
+        const b = bendsOf(env, s.list, R);
+        if (env.me == null) bend0 = b;
+        else bendBy.set(env.me, b);
+        return;
+      }
+      case "move": {
+        if (env.me == null)
+          no(`\\move\\ is for an NPC: use it inside a when`, HELP.move);
+        if (!host.move) return;
+        const legs = s.legs.map((l) => {
+          const n = l.v ? num(val(env, l.v, R), "A leg's length") : 1;
+          return l.st
+            ? { dx: 0, dy: 0, n: Math.round(n) } // (- or -2: that many straight parts)
+            : { dx: l.dx * n, dy: l.dy * n, n: 1 };
+        });
+        let to = null;
+        if (s.to) {
+          to = whoIs(env, s.to)[0];
+          if (to == null) return; // (nothing there to go to)
+        }
+        host.move(env.me, {
+          legs: legs
+            .flatMap((l) =>
+              Array.from({ length: Math.min(l.n, MOVE_LEGS) }, () => ({
+                dx: l.dx,
+                dy: l.dy,
+              })),
+            )
+            .slice(0, MOVE_LEGS),
+          bends: s.bend
+            ? bendsOf(env, s.bend, R)
+            : bendBy.get(env.me) || bend0 || ["shot"],
+          to,
+          sp: s.sp ? Math.max(0, num(val(env, s.sp, R), "A move's speed")) : 1,
+        });
         return;
       }
       case "wait": {
@@ -1357,6 +1570,7 @@ export function brain(plan, host) {
   };
   B.remove = (id) => {
     timers.delete(id);
+    bendBy.delete(id);
     near.delete(id);
     for (const t of [...tasks]) if (t.me === id) drop(t);
   };

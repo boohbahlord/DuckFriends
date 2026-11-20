@@ -7411,3 +7411,33 @@ Adam: slimming plan shown before any big change (Noah); Cabin smoothness looked 
 zombie skin swap on death = bug, fixed with damage drawn as pixel changes on the same skin (Jackal); zone tiles = the
 game's hit-check tiles, not duck lengths; map/mode rules as propositions to him; waves/rounds gate only; Help manual with
 buttons to sections plus the Seriat help files (Solomon).
+
+## Owner, Nov 20 18:50Z (Adam's thread)
+
+Yes u can put cropped avatars live. And the image expands in size to the size of the ducks in a mathematical formula based on it's empty unused space if the png had clear no background thingy, and it is made to balance the game so they can make their avatar rly small based on the aspect ratio of the crop.
+
+Adam: #722 cropped avatars went live in V186 (Noah); the size-from-crop formula is Noah's follow-up.
+
+## Owner, Nov 20 18:52Z (project chat, through Moses)
+
+What about 2.25% each wave?
+
+Adam: simulated (hordes 75-120 s): 2.25% start + 2.25% each wave = 51% by 20 min, 78% by 30, 97% by 45, first squad ~19 min. Sent; his pick waits.
+
+## Owner, Nov 20 19:09Z (project chat, through Moses)
+
+Zones can have their size adjusted like they did before and be different sizes and shapes. But how they do that is based on the smallest units that build up their size. And those units are based on the tiles that check for hitbox. If something is over it, that's how that works. Yeah, for number one, like, we're not drawing, like, lines that then get converted to 32-bit. We're rather drawing the pixels in 32-bit. Like, we're literally making the pixels 32-bit. Like, that's how it works for number one. Let me look at number two. I think I have the right idea. I think we're on the same page, right? Yeah, I'll look at number two. I don't know what number two means, but it's probably right if it helps things. Let me look at number three. Number three sounds pretty good. Let me look at number four. Number four sounds pretty good for duck data. Let me look at number five. Number five, sure. I imagine that, like, it's the size of the files is what makes it slower to run, right? So, like, making it smaller file format helps, right? I don't know if there's any risk to doing that. Sure to number six, but be careful to make sure we're not leaving out things that we think are needed but are, like, obvious, like UI shit that's needed, you know. We'll do all of these. What are we gonna do right now before we start this?
+
+Adam: GO on Noah's 6 slimming steps (baseline first, order 4, 5, 3, 2, 6, 1; step 6 keeps obvious UI; step 1 side-by-side for him first). Zones resize in hit-check tiles (V187).
+
+## Owner, Nov 20 19:10Z (project chat, through Moses)
+
+Just make sure that the sandbox is done right, because if a player puts certain things into the sandbox, the game should know when that game mode loads that they made that it uses those things. So yeah.
+
+Adam: slimming step 6 (load on demand) must load everything a made Sandbox mode uses, read from its save.
+
+## Owner, Nov 20 19:23Z (project chat, through Moses)
+
+downpour an a lot, like every time almost or every time
+
+Adam: the zombie skin change on death, on Downpour in Survival. Jackal #742: Survival's walker remodel (his own ask, "start to change their model") gave a new look the screen only drew at the next hit or death; now it shows at the remodel. V190.
