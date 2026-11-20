@@ -553,14 +553,11 @@ export function keysOf(duck) {
   return KEYS.map((_, i) => (specialById(k[i]) ? k[i] : null));
 }
 export const hasKey = (duck, id) => keysOf(duck).includes(id);
-/* a special's colors on a duck: [Primary, Secondary, Accent], each the duck's own or the special's */
-const HEX = /^#[0-9a-f]{3,8}$/i;
+/* a special's colors: [Primary, Secondary, Accent], the special's own. Specials aren't colored any more (the owner's,
+   Nov 20 21:38Z): a duck's old colors for them (duck.spc) are left as they are and no longer shown */
 export function colorsOf(duck, id) {
-  const sp = specialById(id),
-    mine = ((duck || {}).spc || {})[id] || {};
-  return ((sp && sp.colors) || []).map(([k, , def]) =>
-    HEX.test(mine[k]) ? mine[k] : def,
-  );
+  const sp = specialById(id);
+  return ((sp && sp.colors) || []).map(([, , def]) => def);
 }
 const vars = (c) => c.map((v, i) => `--k${i + 1}:${v}`).join(";");
 
@@ -840,6 +837,17 @@ export function pressFX(id, x, y, size, face, duck) {
       );
   }
   return out;
+}
+/* a weapon in a duck's hand as the game shows it (game.js) and Customize's preview does (customize.js), one code for
+   both (the owner's, Nov 20 21:38Z: some previews were small or wrong): size, the duck's size in css px; a gun as long
+   as its l4ddguns.js w (--gw, css .held i). cls, attrs and style go on the box; art in place of its own picture */
+export function heldBoxHTML(
+  w,
+  duck,
+  size,
+  { cls = "", attrs = "", style = "", art } = {},
+) {
+  return `<div class="held${cls}" data-w="${w}"${attrs} style="--s:${Math.round(size)}px${GUNS[w] ? `;--gw:${GUNS[w].w}` : ""}${style}"><i>${art ?? heldHTML(w, duck)}</i></div>`;
 }
 /* a weapon in a duck's hand, pointing right (the game turns it toward where it aims); the hammer is a wrench on a duck
    that picked the wrench (its ⚙ under Customize → Specials: duck.wrench) */
