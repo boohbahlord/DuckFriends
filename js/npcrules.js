@@ -6,8 +6,9 @@
    - sees: does an NPC see something (a clear shot, on its own floor).
    - nearPairs: the NPCs close enough to touch, pair by pair, to keep them apart.
    - nearest: the one to go after (the nearest, by each brain's own measure).
-   - grudge, grudgeOf: whoever hurt an NPC, it goes after for a while, whatever else it would pick. */
-import { clearShot } from "./l4ddrules.js";
+   - grudge, grudgeOf: whoever hurt an NPC, it goes after for a while, whatever else it would pick.
+   - roll, reloadMs, refill, shotMark: an NPC's guns (a hit's damage, a reload, the magazines, where a shot went). */
+import { clearShot, ARMS } from "./l4ddrules.js";
 import { heightAt } from "./hangout/layout.js";
 
 /* does NPC o (world px: x, y) see t (x, y, z)? Nothing in the way at height z (its own floor unless given), and, with
@@ -71,3 +72,32 @@ export const grudgeOf = (o, now, all, idOf = (t) => t.id) =>
   o.mad && o.mad[1] > now
     ? all.find((t) => idOf(t) === o.mad[0]) || null
     : null;
+
+/* one roll of a weapon's damage: a number, or a whole number from the first to the second ("all": what a duck has, 4) */
+export const roll = (d) =>
+  d === "all"
+    ? 4
+    : Array.isArray(d)
+      ? d[0] + Math.floor(Math.random() * (d[1] - d[0] + 1))
+      : +d || 1;
+/* how long gun w takes to reload a magazine of mag rounds: its own reload time, else its shells one by one, else 1.5 s */
+export const reloadMs = (w, mag = ARMS[w].mag) =>
+  ARMS[w].reload || (ARMS[w].shell ? ARMS[w].shell * mag : 1500);
+/* the reloads that are done fill their magazines: guns (its guns, by slot), mg (rounds in each), rl (when each one's
+   reload is done, 0: none), full(g): a full magazine of g; ok(g, i): may this one fill (Sandbox's: a gun with a magazine,
+   and empty) */
+export function refill(guns, mg, rl, now, full, ok = null) {
+  guns.forEach((g, i) => {
+    if (rl[i] && rl[i] <= now && (!ok || ok(g, i))) {
+      mg[i] = full(g);
+      rl[i] = 0;
+    }
+  });
+}
+/* where a shot at t went, as the screen draws it ([when, x, y]): off px from it (0: a hit) at angle a, half as far up and
+   down (the floor seen from above) */
+export const shotMark = (now, t, a, off) => [
+  now,
+  Math.round(t.x + Math.cos(a) * off),
+  Math.round(t.y + Math.sin(a) * off * 0.5),
+];

@@ -8,6 +8,7 @@
    holds now) and sh (its last shot: [when, x, y of where it went], for the screen's tracer) */
 import { duckBig } from "./duck.js";
 import { ARMS, WEAPONS } from "./l4ddrules.js";
+import { roll, reloadMs, refill } from "./npcrules.js";
 
 /* what it can hold: its guns and the bow (not the thrown dagger), and the melee weapons */
 export const NPC_GUNS = WEAPONS.filter(
@@ -62,16 +63,7 @@ export const keepAt = (o, claw) => {
     ? Math.max(claw * 0.9, Math.min(...g.map(reachOf)) * 0.7)
     : claw * 0.9;
 };
-/* one roll of a weapon's damage: a number, or a whole number from the first to the second ("all": what a duck has, 4) */
-const roll = (d) =>
-  d === "all"
-    ? 4
-    : Array.isArray(d)
-      ? d[0] + Math.floor(Math.random() * (d[1] - d[0] + 1))
-      : +d || 1;
 const BEAT = 250; // ms: the most time a beat's shots are counted over (the host's heartbeat is 200)
-const reloadMs = (w) =>
-  ARMS[w].reload || (ARMS[w].shell ? ARMS[w].shell * ARMS[w].mag : 1500);
 
 /* one beat of NPC o fighting what it's after (to, its spot; bd duck lengths off). claw: how near a swing reaches; clawMs:
    the swipe's wait. hit(dmg, w) lands a blow (dmg null: the spawn's own damage box, the swipe); sees(to), where there
@@ -100,12 +92,14 @@ export function fight(o, to, bd, claw, now, clawMs, hit, sees = null) {
   /* its guns: reloads that are done fill the magazine; it shoots the one in hand, or the other while that reloads */
   const mg = [...(o.mg || [0, 0])],
     rl = [...(o.rl || [0, 0])];
-  W.p.forEach((g, i) => {
-    if (g && ARMS[g].mag && mg[i] <= 0 && rl[i] && rl[i] <= now) {
-      mg[i] = ARMS[g].mag;
-      rl[i] = 0;
-    }
-  });
+  refill(
+    W.p,
+    mg,
+    rl,
+    now,
+    (g) => ARMS[g].mag,
+    (g, i) => g && ARMS[g].mag && mg[i] <= 0,
+  );
   const ready = (i) =>
       W.p[i] && (!ARMS[W.p[i]].mag || mg[i] > 0) && bd <= reachOf(W.p[i]),
     i = [0, 1]

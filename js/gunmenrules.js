@@ -29,7 +29,16 @@ import { heightAt, slabBetween, deckOver, PROPS } from "./hangout/layout.js";
 import { DECKS } from "./hangout/stationmap.js";
 import { woundCode, DEATH } from "./wounds.js";
 import { gunmanLook } from "./gunmen.js";
-import { sees as npcSees, nearest, grudge, grudgeOf } from "./npcrules.js";
+import {
+  sees as npcSees,
+  nearest,
+  grudge,
+  grudgeOf,
+  roll,
+  reloadMs,
+  refill,
+  shotMark,
+} from "./npcrules.js";
 import {
   friend,
   friendsTick,
@@ -175,8 +184,7 @@ export function newGunman(s, k, x, y, H, ro = "") {
   };
 }
 const magOf = (w) => (FIRE[w] && FIRE[w].mag) || ARMS[w].mag || 6;
-const reloadOf = (w) =>
-  ARMS[w].reload || (ARMS[w].shell ? ARMS[w].shell * magOf(w) : 1500);
+const reloadOf = (w) => reloadMs(w, magOf(w));
 
 /* a spot round (x, y), up to rx and ry off, where it can stand (H.open), else (x, y) itself. Row 112 (the owner: "It
    should not feel like an Easter egg hunt"): a group spread round a spot just inside a fence put some of them on the
@@ -785,11 +793,7 @@ function sniper(s, o, zs, ducks, now, H) {
         : +A.dmg || 4,
       a = Math.random() * 2 * Math.PI,
       off = hit ? 0 : 30 + Math.random() * 40;
-    o.sh = [
-      now,
-      Math.round(t.x + Math.cos(a) * off),
-      Math.round(t.y + Math.sin(a) * off * 0.5),
-    ];
+    o.sh = shotMark(now, t, a, off);
     if (hit) H.hurt(t.id, Math.round(dmg * GM.DMG * 10) / 10, "sniper");
     move();
     return;
@@ -892,12 +896,7 @@ export function shoot(s, o, t, now, H, only = null, blind = false) {
   o.ad = Math.round((Math.atan2(t.y - o.y, t.x - o.x) * 180) / Math.PI);
   o.f = t.x < o.x ? -1 : 1;
   /* its guns: a reload that's done fills it; the one in its hands, or the other while that one reloads */
-  o.wp.p.forEach((g, i) => {
-    if (o.rl[i] && o.rl[i] <= now) {
-      o.mg[i] = magOf(g);
-      o.rl[i] = 0;
-    }
-  });
+  refill(o.wp.p, o.mg, o.rl, now, magOf);
   const d = Math.hypot(t.x - o.x, t.y - o.y),
     i = o.wp.p.findIndex(
       (g, k) =>
@@ -942,18 +941,12 @@ export function shoot(s, o, t, now, H, only = null, blind = false) {
               (t.sp ? AIM.sprint : 1);
       if (blind || Math.random() >= chance) continue; // (blind: into the cover in front of it)
       hit = true;
-      dmg += Array.isArray(A.dmg)
-        ? A.dmg[0] + Math.floor(Math.random() * (A.dmg[1] - A.dmg[0] + 1))
-        : +A.dmg || 1;
+      dmg += roll(A.dmg);
     }
   /* where it went: at its target, or by it (a miss) */
   const off = hit ? 0 : 30 + Math.random() * 40,
     a = Math.random() * 2 * Math.PI;
-  o.sh = [
-    now,
-    Math.round(t.x + Math.cos(a) * off),
-    Math.round(t.y + Math.sin(a) * off * 0.5),
-  ];
+  o.sh = shotMark(now, t, a, off);
   if (hit) hitOn(s, o, t, dmg, g, now, H);
   return true;
 }

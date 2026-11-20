@@ -131,7 +131,7 @@ import {
 import { ANGEL, angelOf, angelAmmo, angelAct, angelLeft } from "./l4ddangel.js";
 import { fieldOf, askField } from "./flowfield.js";
 import { NPC_RUN } from "./npcshared.js";
-import { sees as npcSees, nearPairs } from "./npcrules.js";
+import { sees as npcSees, nearPairs, shotMark } from "./npcrules.js";
 import { grHp, grCool } from "./sbgroups.js";
 import {
   isSurv,
@@ -3421,11 +3421,7 @@ function merchantShoots(s, zs, now) {
   s.hang.l4m = {
     ...m,
     f,
-    sh: [
-      now,
-      Math.round(t.x + Math.cos(a) * off),
-      Math.round(t.y + Math.sin(a) * off * 0.5),
-    ],
+    sh: shotMark(now, t, a, off),
   };
   if (!dmg) return;
   if (t.z) {
