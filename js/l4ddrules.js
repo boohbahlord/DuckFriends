@@ -131,7 +131,7 @@ import {
 import { ANGEL, angelOf, angelAmmo, angelAct, angelLeft } from "./l4ddangel.js";
 import { fieldOf, askField } from "./flowfield.js";
 import { NPC_RUN } from "./npcshared.js";
-import { sees as npcSees } from "./npcrules.js";
+import { sees as npcSees, nearPairs } from "./npcrules.js";
 import { grHp, grCool } from "./sbgroups.js";
 import {
   isSurv,
@@ -6669,40 +6669,30 @@ function walkable(x0, y0, x1, y1) {
    the owner's, Nov 20 03:58Z) */
 function separate(zs) {
   const live = zs.filter((z) => z.st !== 3),
-    hz = new Map(dp() ? live.map((z) => [z, zombieZ(z)]) : []),
-    grid = new Map(),
-    key = (x, y) => Math.floor(x / 64) * 10000 + Math.floor(y / 64);
-  for (const z of live) {
-    const k = key(z.x, z.y);
-    if (!grid.has(k)) grid.set(k, []);
-    grid.get(k).push(z);
-  }
-  for (let pass = 0; pass < 2; pass++)
-    for (const a of live) {
-      const i0 = Math.floor(a.x / 64),
-        j0 = Math.floor(a.y / 64);
-      for (let di = -1; di <= 1; di++)
-        for (let dj = -1; dj <= 1; dj++)
-          for (const b of grid.get((i0 + di) * 10000 + j0 + dj) || []) {
-            if (b.i <= a.i) continue;
-            if (hz.size && Math.abs(hz.get(a) - hz.get(b)) >= SAME_FLOOR)
-              continue; // (a floor apart: never in each other's way)
-            let ex = (a.x - b.x) / RX,
-              ey = (a.y - b.y) / RY,
-              e = Math.hypot(ex, ey);
-            if (e >= 1) continue;
-            if (e < 1e-3) {
-              ex = Math.random() - 0.5;
-              ey = Math.random() - 0.5;
-              e = Math.hypot(ex, ey);
-            }
-            const push = (1 - e) / 2,
-              ux = (ex / e) * push * RX,
-              uy = (ey / e) * push * RY;
-            nudge(a, ux, uy);
-            nudge(b, -ux, -uy);
-          }
-    }
+    hz = new Map(dp() ? live.map((z) => [z, zombieZ(z)]) : []);
+  nearPairs(
+    live,
+    64,
+    64,
+    (a, b) => {
+      if (hz.size && Math.abs(hz.get(a) - hz.get(b)) >= SAME_FLOOR) return; // (a floor apart: never in each other's way)
+      let ex = (a.x - b.x) / RX,
+        ey = (a.y - b.y) / RY,
+        e = Math.hypot(ex, ey);
+      if (e >= 1) return;
+      if (e < 1e-3) {
+        ex = Math.random() - 0.5;
+        ey = Math.random() - 0.5;
+        e = Math.hypot(ex, ey);
+      }
+      const push = (1 - e) / 2,
+        ux = (ex / e) * push * RX,
+        uy = (ey / e) * push * RY;
+      nudge(a, ux, uy);
+      nudge(b, -ux, -uy);
+    },
+    2,
+  );
 }
 function nudge(z, dx, dy) {
   const x = z.x + dx,
