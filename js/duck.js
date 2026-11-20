@@ -119,7 +119,7 @@ export const scaleOf = (look) =>
     Math.max(DUCK_SCALE.MIN, +(look && look.scale) || 100),
   ) / 100;
 /* … and its hitbox: "the hitbox stays the same for smaller ones but becomes bigger for bigger ducks" */
-export const hitScaleOf = (look) => Math.max(1, scaleOf(look));
+const hitScaleOf = (look) => Math.max(1, scaleOf(look));
 /* how much bigger a cut-out picture is drawn and hit than a duck's square (picrop.js growOf): 1 to 2.5 */
 export const picGrow = (L) =>
   L && L.cut && +L.z > 1 ? Math.min(2.5, +L.z) : 1;

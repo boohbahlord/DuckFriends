@@ -5,6 +5,7 @@
    in the game's colors, and shipped that way: assets/px/world. The game only shows them; nothing is made on the device.
    A prop's looks (a lamp off, a door open, a fire out, the blackout) are pictures of their own. What isn't in the files
    (a drawing that changed since they were made, words on a sign) is still made on the device as before (pxdom.js). */
+import { filesFor } from "../loading.js";
 
 export const ART = 2; // world px to a pixel
 /* the classes that give a prop another look (lamp.js, doors.js, power.js, l4dd.js propClass; a lamppost's stutter, flicker.js; the board's blackout) */
@@ -39,31 +40,33 @@ export function worldArt(variant) {
   if (!loaded.has(variant))
     loaded.set(
       variant,
-      (DATA[variant] ? DATA[variant]() : Promise.resolve(null))
-        .then(async (m) => {
-          if (!m) return null;
-          const img = (u) => {
-            const i = new Image();
-            i.src = u;
-            return i.decode().then(() => i);
-          };
-          const [atlas, ...parts] = await Promise.all(
-            [m.ATLAS, ...m.GROUND.parts].map(img),
-          );
-          const ground = document.createElement("canvas");
-          ground.width = parts[0].width;
-          ground.height = parts.reduce((t, p) => t + p.height, 0);
-          const g = ground.getContext("2d");
-          parts.reduce((y, p) => (g.drawImage(p, 0, y), y + p.height), 0);
-          return {
-            ...m.GROUND,
-            img: ground,
-            atlas,
-            atlasURL: m.ATLAS,
-            index: m.INDEX,
-          };
-        })
-        .catch(() => null),
+      filesFor(
+        (DATA[variant] ? DATA[variant]() : Promise.resolve(null))
+          .then(async (m) => {
+            if (!m) return null;
+            const img = (u) => {
+              const i = new Image();
+              i.src = u;
+              return i.decode().then(() => i);
+            };
+            const [atlas, ...parts] = await Promise.all(
+              [m.ATLAS, ...m.GROUND.parts].map(img),
+            );
+            const ground = document.createElement("canvas");
+            ground.width = parts[0].width;
+            ground.height = parts.reduce((t, p) => t + p.height, 0);
+            const g = ground.getContext("2d");
+            parts.reduce((y, p) => (g.drawImage(p, 0, y), y + p.height), 0);
+            return {
+              ...m.GROUND,
+              img: ground,
+              atlas,
+              atlasURL: m.ATLAS,
+              index: m.INDEX,
+            };
+          })
+          .catch(() => null),
+      ), // (the loading screen waits for them: loading.js)
     );
   return loaded.get(variant);
 }

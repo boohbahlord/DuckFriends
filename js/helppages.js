@@ -5,7 +5,7 @@
 import { esc } from "./ui.js";
 
 /* the kinds of command, each with its own color (css: .k-<kind>) */
-export const KINDS = {
+const KINDS = {
   help: ["help", "man", "apropos"],
   bash: [
     "echo",
@@ -1370,7 +1370,7 @@ export function helpIndex() {
 }
 
 /* ---------- colors: a line of the command line, as HTML ---------- */
-export const kindOf = (w) => {
+const kindOf = (w) => {
   if (!w) return "";
   if (isHelpName(w)) return "help";
   return KIND[w] || KIND[w.toLowerCase()] || "";
@@ -1379,7 +1379,7 @@ const span = (k, t) => `<span class="k-${k}">${esc(t)}</span>`;
 const TOK =
   /(\s+)|('[^']*'?|"(?:\\.|[^"\\])*"?)|(<[a-z][\w|-]*>)|(\$\(\(|\$\(|\)\)|&&|\|\||2>&1|2>>|2>|&>|>>|<<<|[|;&<>()])|(\$\{[^}]*\}?|\$[\w?#@*!$]+)|(\\?@[\p{L}\p{N}_-]+)|(#.*)|([^\s'"|;&<>()$]+|\$)/uy;
 /* a command, colored: each command word by its kind, then flags, operators, variables, quotes and @names */
-export function paintCode(src) {
+function paintCode(src) {
   let out = "",
     cmd = true,
     after = ""; // cmd: the next word is a command; after: the command before (send waits for its @names)

@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v196",
+    version: 196,
+    date: "Nov 20, 2026",
+    title: "Open where it looks open",
+    news: [
+      "For the zombie modes: on Downpour, the restroom's smashed wall and corner are rubble bricks now, and anything that looks open is walkable: you walk out through the broken corner, and up on the roof you fall through a hole exactly where it's drawn.",
+      "For the zombie modes: Downpour's loading screen is much shorter, and nothing still loads once you're dropped in.",
+      "For Customize: Match each style's look brings that style's own eyes and beak, the specials list is shorter with Weapons and Items apart, gun previews look like they do in the game, and your card picture can be cropped to the part you want.",
+    ],
+  },
+  {
     id: "v195",
     version: 195,
     date: "Nov 20, 2026",

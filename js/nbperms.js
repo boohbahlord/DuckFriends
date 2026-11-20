@@ -13,8 +13,8 @@
 import { groupsOf, may } from "./rules.js";
 import { isSb } from "./sandboxrules.js";
 
-export const NB_NAMES = 300; // (names one folder shows the room)
-export const NB_GRANTS = 200; // (rights one player gives, in all)
+const NB_NAMES = 300; // (names one folder shows the room)
+const NB_GRANTS = 200; // (rights one player gives, in all)
 const PATH_OK = (p) =>
   typeof p === "string" &&
   p.length <= 200 &&

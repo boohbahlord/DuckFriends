@@ -180,6 +180,7 @@ import {
   pressFX,
   BULLET,
   heldHTML,
+  heldBoxHTML,
   daggerHTML,
   DUCKLING,
   looksOf,
@@ -2496,7 +2497,12 @@ function drawDucks(now = clockNow()) {
          left at a knife's size. The Laser Rifle getting hot: the whole gun glows (laserfx.js laserGlow) */
       const [gc, gs] = lz ? laserGlow(lz) : ["", ""];
       h = el(
-        `<div class="held${holy ? " angelic" : ""}${dual ? " dual" : ""}${gc}" data-pid="${esc(id)}" data-w="${w}" style="--s:${hs.toFixed(0)}px${GUNS[w] ? `;--gw:${GUNS[w].w}` : ""}${gs}"><i>${pic}</i></div>`,
+        heldBoxHTML(w, duck, hs, {
+          cls: `${holy ? " angelic" : ""}${dual ? " dual" : ""}${gc}`,
+          attrs: ` data-pid="${esc(id)}"`,
+          style: gs,
+          art: pic,
+        }),
       );
       h._k = hk;
       h._hs = hs;

@@ -5336,6 +5336,14 @@ html.moving .pix-sun {
   background: var(--panel2);
   pointer-events: none;
 }
+/* a tile that changed: its old picture over it until its new one is in (customize.js show) */
+.arm-tile > .arm-was {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  margin: 0;
+  pointer-events: none;
+}
 /* every page, drawn out of sight as Customize opens (customize.js warmUp) */
 .arm-warm {
   position: absolute;

@@ -26,10 +26,10 @@ export const DN_COLORS = ["var(--c2)", "var(--c6)"];
 /* a dunce's look: the dunce hat over whatever hat it wore (its own duck keeps it) */
 export const dunceDuck = (d) => ({ ...(d || {}), hat: { id: "dunce" } });
 
-export const DUNCE_MARK = `<svg viewBox="0 0 80 100" aria-hidden="true"><path d="M8 88L40 6L72 88Z" fill="#fbfbf6" stroke="#1c1c28" stroke-width="3" stroke-linejoin="round"/>
+const DUNCE_MARK = `<svg viewBox="0 0 80 100" aria-hidden="true"><path d="M8 88L40 6L72 88Z" fill="#fbfbf6" stroke="#1c1c28" stroke-width="3" stroke-linejoin="round"/>
 <path d="M40 6L72 88L56 88Z" fill="#000" opacity=".09"/><text x="39" y="76" text-anchor="middle" font-family="Georgia, Gelasio, serif" font-weight="700" font-size="30" fill="#1c1c28">D</text>
 <path d="M8 88C26 95 54 95 72 88" stroke="#1c1c28" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`;
-export const CAP_MARK = `<svg viewBox="0 0 100 80" aria-hidden="true"><path d="M26 34V54C26 62 74 62 74 54V34Z" fill="#2b2f45" stroke="#1c1c28" stroke-width="3" stroke-linejoin="round"/>
+const CAP_MARK = `<svg viewBox="0 0 100 80" aria-hidden="true"><path d="M26 34V54C26 62 74 62 74 54V34Z" fill="#2b2f45" stroke="#1c1c28" stroke-width="3" stroke-linejoin="round"/>
 <path d="M50 10L94 28L50 46L6 28Z" fill="#3b3f5c" stroke="#1c1c28" stroke-width="3" stroke-linejoin="round"/><path d="M50 13L88 28L50 43Z" fill="#fff" opacity=".07"/>
 <path d="M50 28L80 36V58" fill="none" stroke="#ffd23f" stroke-width="3" stroke-linecap="round"/><circle cx="50" cy="28" r="3.6" fill="#ffd23f" stroke="#1c1c28" stroke-width="1.6"/>
 <path d="M76 57L80 70L84 57Z" fill="#ffd23f" stroke="#1c1c28" stroke-width="1.6" stroke-linejoin="round"/></svg>`;

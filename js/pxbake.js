@@ -107,13 +107,7 @@ export function unbake(root, mark = root) {
    (moving: { sel, before, bg, every }) drawn each frame as pixels (movers; bg: root's own background, a color or a top
    to bottom gradient, painted under them, Sky's; every: ms between frames, 32); mark (root, or the map's layer) is marked px-own. Resolves true once they are. Call it again after each new
    drawing (a new size, a new grid): the drawing goes under the filter until then (take px-own off first) */
-export async function bakeStill(
-  root,
-  sel,
-  mark = root,
-  moving = null,
-  keep = false,
-) {
+async function bakeStill(root, sel, mark = root, moving = null, keep = false) {
   const G = grid(),
     rootBox = root.getBoundingClientRect();
   if (!rootBox.width || !rootBox.height) return false;

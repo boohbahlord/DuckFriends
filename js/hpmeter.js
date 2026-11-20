@@ -17,7 +17,7 @@ const MOST_BLOCKS = 40;
 let uid = 0;
 /* the badge: a bronze coin with a dark edge, a darker middle, and the heart in it (its own ids each time, so one
    removed never takes another's colors away; a picture drawn again and again passes its own fixed one) */
-export function badgeSVG(key) {
+function badgeSVG(key) {
   const a = "hpb" + (key || ++uid),
     b = a + "h";
   return `<svg class="hpm-badge" viewBox="0 0 32 32" aria-hidden="true"><defs>
@@ -69,7 +69,7 @@ const WHITE_MS = 500, // a hit's blocks: fully white in this long
   BLINK_MS = 120; // one blink (on and off) while a hit's blocks whiten; faster with each hit more
 
 /* the hurt corners (.hurt-edge: four circles of --hc fading out by --hr, css/app.css), drawn as pixels by pxbake.js */
-export function hurtPaint(x, w, h, el) {
+function hurtPaint(x, w, h, el) {
   x.fillStyle = getComputedStyle(el).getPropertyValue("--hc");
   const c = x.fillStyle, // (read back as rgba(r, g, b, a) or #rrggbb)
     clear = c.startsWith("#") ? c + "00" : c.replace(/,\s*[\d.]+\)$/, ", 0)"), // (the same color, see-through: a fade to it stays red)

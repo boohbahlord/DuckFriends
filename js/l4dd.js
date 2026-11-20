@@ -783,11 +783,19 @@ function seeZombies(s, ctx, now) {
 /* every count of boards on every opening (0 to 5) made into pixels once while the game loads, so a board going up or
    torn down shows its picture at once (pxdom.js finds it made), never a moment of nothing (the owner's, Nov 20 20:46Z:
    "pop-ins"): each laid out unseen at the size it shows, then taken away once made */
-let boardsWarm = 0;
+let boardsWarm = 0,
+  warmIn = null; // (the layer they were made in: a game's world is made again as it starts, and its boards with it)
 function warmBoards(sc) {
-  if (!pixelOn() || !layer || !sc || boardsWarm === sc || !OPENINGS.length)
+  if (
+    !pixelOn() ||
+    !layer ||
+    !sc ||
+    (boardsWarm === sc && warmIn === layer) ||
+    !OPENINGS.length
+  )
     return;
   boardsWarm = sc;
+  warmIn = layer;
   const els = [];
   for (const o of OPENINGS)
     for (let n = 0; n <= 5; n++) {
@@ -805,7 +813,7 @@ function warmBoards(sc) {
       const look = () => {
         const left = els.filter((el) => {
           const svg = el.firstElementChild;
-          return svg && !svg.hasAttribute("data-px");
+          return el.isConnected && svg && !svg.hasAttribute("data-px"); // (one whose world went needs nothing)
         });
         if (!left.length || performance.now() - t0 > 15000) {
           els.forEach((el) => el.remove());
@@ -1275,7 +1283,7 @@ function aimOf(s, id, ctx) {
 let CTX = null, // (the screen's camera and state, as paint() last had them)
   BEAMS = []; // (every flashlight on now: [x, y, its angle] on the floor)
 /* is (x, y) on the floor in a flashlight's beam (and no wall between)? */
-export function inBeam(x, y) {
+function inBeam(x, y) {
   for (const [bx, by, t] of BEAMS) {
     const dx = x - bx,
       dy = y - by,

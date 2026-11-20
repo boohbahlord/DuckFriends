@@ -19,7 +19,7 @@ const TABS = [
 ];
 
 /* puts the settings on the page */
-export const NET = [
+const NET = [
   [
     "0",
     "Default",
@@ -44,14 +44,14 @@ export const netLevel = () => Math.max(0, Math.min(2, +S().net || 0));
    UI is sized in rem, and the page's rem is 16px (14px on a phone) times --ui; the maps and the ducks in them are not.
    50% to 200%: 200% on an ultrawide (3440x1440) is a 1720x720 screen's worth of UI. A screen shows at most what still
    leaves it a small phone's worth of room (360 wide, 600 tall), and never less than 100%, so nothing goes off it */
-export const UI_MIN = 50,
+const UI_MIN = 50,
   UI_MAX = 200;
-export const uiFit = () =>
+const uiFit = () =>
   Math.max(
     100,
     Math.floor((Math.min(innerWidth / 360, innerHeight / 600) * 100) / 5) * 5,
   );
-export const uiNow = () =>
+const uiNow = () =>
   Math.min(uiFit(), Math.max(UI_MIN, Math.min(UI_MAX, +S().uiSize || 100)));
 /* the UI scale's slider, in Settings and in the pause menus; its note says when this screen shows less than it asks */
 const uiNote = () =>

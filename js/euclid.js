@@ -50,7 +50,7 @@ const BAG = COLORS.flatMap(([c, n]) => Array(n).fill(c));
 const LINE = "#16161c";
 
 /* every square of the tiling of a W by H page: [x, y, side] */
-export function euclidSquares(W, H) {
+function euclidSquares(W, H) {
   const pts = POINTS.map(([px, py]) => [px * W, py * H]),
     out = [];
   /* how far the nearest point is from the square (0 inside it) */

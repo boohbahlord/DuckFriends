@@ -87,7 +87,7 @@ const anyOf = (xs) => xs[Math.floor(Math.random() * xs.length)];
 
 /* the turn now: s.dn.cur = { def, votes (their side: 0 Dunce, 1 Not a Dunce), first (their first vote), w (the verdict:
    0 a dunce, 1 not), end ([Dunce, Not a Dunce]) } */
-export const defenderOf = (s) => (s.dn && s.dn.cur && s.dn.cur.def) || null;
+const defenderOf = (s) => (s.dn && s.dn.cur && s.dn.cur.def) || null;
 export const isDefender = (s, id) => !!id && defenderOf(s) === id;
 /* who votes: everyone playing but the defender */
 export const voters = (s) =>

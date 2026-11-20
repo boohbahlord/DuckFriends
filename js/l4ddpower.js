@@ -59,10 +59,10 @@ export const PW = {
   TAKE: 75, // world px: how near a duck walks to take what lies on the floor
   TAKE_SPOT: 110, // … and what lies on the sink, the counter or the couch (from the floor in front)
 };
-export const GAS_MAX = PW.FULL * PW.CANS;
+const GAS_MAX = PW.FULL * PW.CANS;
 /* a found jerry can's gas, in quarter cans: always a full one (the owner's, Nov 18 12:32Z, through Adam: a found can is
    always 100%) */
-export const canRounds = () => PW.FULL;
+const canRounds = () => PW.FULL;
 /* a can's gas in percent: 100, 75, 50, 25, 0 */
 export const canPct = (r) => Math.round((r / PW.FULL) * 100);
 export const partName = (k) => NAMES[k] || k;

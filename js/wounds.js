@@ -120,7 +120,7 @@ export const knockable = (d) => {
     beak: shown && style !== "datboi",
   };
 };
-export const KNOCKED = 10000; // (ms a knocked-off hat or face item stays off: the owner's "in like 10 seconds")
+const KNOCKED = 10000; // (ms a knocked-off hat or face item stays off: the owner's "in like 10 seconds")
 const BACK = 1500; // (its last ms of those it shows half see-through, coming back on)
 /* a new wound for a hit by weapon w on something that has `had` (or "": none this time, or it has enough: 6); can:
    what it wears that could be knocked off (knockable) */
@@ -272,7 +272,7 @@ export function pwTick(s, now, keep = false) {
   return ch;
 }
 /* a duck killed by an explosion (the nuke): one of the looks made beforehand, on at once (it's down) */
-export function pwExploded(s, id, seed, now) {
+function pwExploded(s, id, seed, now) {
   const codes = explodedLook(seed).match(/../g);
   pwAdd(s, id, codes, now, true);
 }

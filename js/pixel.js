@@ -137,7 +137,7 @@ const asURL = (src) =>
 
 /* a picture (an SVG string or an image's URL) made into cw × ch pixels in the game's colors: a canvas. The game makes
    them ahead of time with it too (tools/pixel-world.cjs), so the files come out as the game would make them */
-export async function pxCanvas(src, cw, ch) {
+async function pxCanvas(src, cw, ch) {
   const img = new Image();
   img.decoding = "async";
   img.src = asURL(src);
@@ -332,11 +332,11 @@ export function rasterReady(key, src, w, h) {
 
 /* what an <img> shows while its pixel version is made: nothing (the owner's, Nov 19 17:00Z: the original pictures popped
    in before their pixels, "which tells me it's still using the old pictures"). One see-through pixel */
-export const BLANK =
+const BLANK =
   "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 /* an <img> for a picture, w × h css px: its pixel version once made (nothing shows until then, and the img changes by
    itself when it's ready). With the pixel look off, the plain drawing */
-export function pxImg(key, src, w, h, cls = "") {
+function pxImg(key, src, w, h, cls = "") {
   const [fk] = full(key, w, h),
     u = on ? raster(key, src, w, h) : null;
   return `<img class="px${cls ? " " + cls : ""}" ${on ? `data-pxk="${fk.replace(/"/g, "&quot;")}" ` : ""}src="${u || (on ? BLANK : asURL(src))}" width="${Math.round(w)}" height="${Math.round(h)}" alt="" draggable="false">`;

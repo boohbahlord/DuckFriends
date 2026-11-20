@@ -234,7 +234,7 @@ function subHTML(s, me) {
   }
   return "";
 }
-export function tvTopHTML(s, me) {
+function tvTopHTML(s, me) {
   const q = tvQ(s);
   if (!q) return "";
   return `<div class="topover tv-top">${cloudHTML(writerOnCloud(s), "Wrote it")}<div class="question tv-qbox"><span class="tv-qtext">${esc(q.text)}</span><span class="small tv-sub">${subHTML(s, me)}</span></div></div>`;

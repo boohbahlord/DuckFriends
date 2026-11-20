@@ -38,7 +38,7 @@ const BOLT = `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M23 2L8 23H18
 const FLAME = `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 38C11 38 6 31 7.6 23.6C9 17 14 14.6 14.6 7.6C19.6 10.6 21 15 20.4 19C23 17.6 24.4 14.6 24.2 11C30.6 15.6 34 21.6 32.4 28.4C31 34.4 26 38 20 38Z" fill="#ff7a1a" stroke="#1c1c28" stroke-width="2" stroke-linejoin="round"/><path d="M20 36C15.6 36 13 32.6 14 28.6C14.8 25.4 17.6 24 18 20.6C21.6 23 25.6 26.4 25.2 30.6C24.8 33.8 22.6 36 20 36Z" fill="#ffd23f"/></svg>`;
 const HALO = `<svg viewBox="0 0 40 40" aria-hidden="true"><ellipse cx="20" cy="20" rx="15" ry="6" fill="none" stroke="#fff3b0" stroke-width="8" opacity=".4"/><ellipse cx="20" cy="20" rx="14" ry="5" fill="none" stroke="#ffd84a" stroke-width="3.6"/><ellipse cx="20" cy="20" rx="14" ry="5" fill="none" stroke="#fffbe0" stroke-width="1.2"/></svg>`;
 const PLUS = `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M15 3H25V15H37V25H25V37H15V25H3V15H15Z" fill="#58d36b" stroke="#1c1c28" stroke-width="2.4" stroke-linejoin="round"/><path d="M17 6H23V17H34" fill="none" stroke="#fff" stroke-width="1.6" opacity=".6" stroke-linecap="round"/></svg>`;
-export const pickArt = (k) =>
+const pickArt = (k) =>
   k === "plus"
     ? PLUS
     : k === "lightning"
@@ -108,7 +108,7 @@ export const DESK = `<svg viewBox="0 0 160 124" aria-hidden="true"><defs>
 <rect x="106" y="50" width="41" height="16" rx="1.6" fill="#1f2026" stroke="#1c1c28" stroke-width="1.6"/><path d="M108 52.6H130" stroke="#fff" stroke-width="1" opacity=".18" stroke-linecap="round"/><path d="M132 51V65" stroke="#16171c" stroke-width="1"/>
 <path d="M147 50L151 43V59L147 66Z" fill="#141519" stroke="#1c1c28" stroke-width="1.6" stroke-linejoin="round"/>
 <g class="xb-led"><circle cx="140" cy="58" r="5" fill="#dff4ff" fill-opacity=".3"/><circle cx="140" cy="58" r="2.4" fill="#fff"/></g><circle class="xb-dark" cx="140" cy="58" r="2.4" fill="#3a3c46"/></svg>`;
-export const METEOR = `<svg viewBox="0 0 160 160" aria-hidden="true"><defs>
+const METEOR = `<svg viewBox="0 0 160 160" aria-hidden="true"><defs>
 <linearGradient id="mt-tail" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd23f" stop-opacity="0"/><stop offset=".45" stop-color="#ff8c2b" stop-opacity=".75"/><stop offset="1" stop-color="#fff3b0"/></linearGradient>
 <radialGradient id="mt-glow" cx=".5" cy=".5" r=".5"><stop offset=".55" stop-color="#ff8c2b" stop-opacity=".7"/><stop offset="1" stop-color="#ff5a1f" stop-opacity="0"/></radialGradient>
 <radialGradient id="mt-rock" cx=".38" cy=".34" r=".75"><stop offset="0" stop-color="#8a6a58"/><stop offset=".6" stop-color="#4e3a32"/><stop offset="1" stop-color="#2a1d1a"/></radialGradient></defs>

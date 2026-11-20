@@ -47,7 +47,7 @@
 import { baseMode, baseL4map, isSb } from "../sandboxrules.js";
 import { isSurv } from "../survrules.js";
 export const RULES = new Map(); // k → its rules
-export const ACTS = new Map(); // id → its screen part
+const ACTS = new Map(); // id → its screen part
 export const rule = (k, r) => {
   RULES.set(k, r);
 };

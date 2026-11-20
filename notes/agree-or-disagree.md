@@ -7557,3 +7557,52 @@ How much does this new process cost to our usage? In what ways can we reduce usa
 Adam: added "The technical spec: rules a machine enforces" (fitness functions with a ratchet: jscpd, ESLint
 no-restricted-syntax and max-lines, tsc --checkJs on breeds, single-writer scan, unused exports, golden hashes,
 pixel diffs, tools/check + Actions gate) and "Cost and benefit" to https://claude.ai/artifact/XHhf6qru96HD9txnAxG2rD.
+
+## Owner, Nov 20 22:09Z (Adam's thread)
+
+I want to now have you deep dive into some curriculum and rubrics for AI to improve reading efficiency of large code base, to improve the efficiency of tokens, to improve efficiency in talking, to improve efficiency in all these things, to optimize it, and what rubrics people have set out that aren't long or that we can borrow from to your memory so that we can make you more efficient and better at everything you do. because tokens are of the essence of your ability. If you are limited in how much you can work, that is a problem. And we want to be able to find that golden ratio where we can have code that is written that's better, that's more minimal, that's more well maintained, in which not as many actions or tokens have to be spent in order to do it, and to then be able to get more done. Like, that's the goal, is to optimize. We need technical rubrics people make for AI, for code, that can do this while preserving our principles and our goals as a priority.
+
+Adam: token rubric R1-R11 (Anthropic context engineering, Claude Code best practices, Claude 5 context rules, Agentless,
+SWE-agent, aider repo map, Lost in the Middle) in the maintenance doc and project memory (duckfriends-efficiency);
+memory index trimmed 18.8 KB -> 8.4 KB; sound rules moved to .claude/rules/sound.md (loads only for sound files).
+
+## Owner, Nov 20 22:10Z (project chat, relayed by Moses)
+
+This is definitely good enough. I'm proud. We can push this. I like that. I like that. In terms of the restroom pictures that we accomplished, this is good. We'll use that for downpour. And anything that looks like you can walk through it, you can walk through it in terms of the whole. That's important.
+
+Adam: #712 ships next deploy after Noah proves every opening that looks walkable is walkable (and walls block).
+
+## Owner, Nov 20 22:14Z (Adam's thread)
+
+Now, I want to know, how much % of code do you think we would save compared to the estimate you gave me earlier? Because you said it could be 1.5 to 2 times more tokens per session with the principles previously. But now with this, how much more compared to what you were testing against versus your results showed? Like, is it going to save 50% more, maybe 30% more, 90% more? Because that's important.
+
+Adam: measured my own thread (reads ~1.6M tokens at ~370 per call, 311 screenshots ~470k, my writing ~1.6M output);
+estimate 15-30% saved per session, 5-20% net of upkeep now, growing as big files split; corrected that I had said
++1,200 tokens per session start and +10-20% per PR, not 1.5-2x.
+
+## Owner, Nov 20 22:23Z (project chat, relayed by Moses)
+
+I want it to where if I select a picture in Duck Friends, that for my player card, now if I select it, it will show like a little square preview to show which part it wants to cut out, in the same way the UI looks exactly for when you're cropping something. And this is where you would also choose to crop it as well. And there, I can click and drag the aspect ratio of what it wants to preview and input for my player card picture. So that way I can choose, like I have an image I want to use, for example, but when I use it, it instantly snaps to the middle of the picture when I want it to show the top end of the picture. That's not very good, is it? Another thing I noticed, when I click customize, the game hangs up and waits for a while before it loads without a loading screen. And then when it does load the customization menu, it does show the loading screen eventually. And then when I would click like hat, the game hangs up again before like loading it. And then once it loads, it's pretty responsive. But still, maybe there's somewhere we can add a loading screen on the UI that doesn't block other UI, like maybe the top of the screen, like the very, very, very, very top of Duck Friends. A green line will pass through the top when I'm loading customization. So it shows me how much it has actually finished loading. Like if I click hats, it's not going to hang up because it's going to be showing there's loading progress happening for it to load the hats. And then obviously once it loads the hats, it doesn't have to do as much work anymore because it's already loaded, right? So that's a pretty big deal. Is there a way we can make it to where everything's just kind of already loaded because I'm playing the local version of the game? Like that's what confuses me, is I'm playing the application that I installed, and it still has all these hangups and loading issues, which I guess is what it is, but I don't know. I need to know more about memory. Maybe we can get some really good sources on memory management and game optimization, which Adam can do, and we can consider writing them to memory. I'll talk to him about it, depending on how much it might help us with our game with things like this. Adam can tell me what he thinks about my loading idea, or if it's a bad idea. In my mind, where the screen goes black and it shows the loading, that should be for like maps, or like loading game modes, or loading the vote game mode or vote map shit. It shouldn't be like what shows up when you click customization. I think my idea of like the green bar going across the top should be for customization. I think that makes more sense. There was something someone wanted me to put into the Firebase. I can do that. Just send it here, Moses. The information to me. Maybe it's possible that we only have the specific item that you click or preview load very quickly in duck runs. But maybe that's a bad idea, because didn't we do that before and it was really bad? I need help because I'm not entirely sure what we should do for the approach. Maybe what we got right now is as best as it can get. We just need a loading screen for player feedback and to do all the loading stuff I said. I want to discuss things with Adam. Moses, you send that one thing to me.
+
+Adam: measured at 4x CPU: Customize click freezes 2.1 s, then 0.6/1.2/0.4/0.7 s, black screen only at 4.5 s; Hat ~0.7 s. Cause is drawing pictures on the main thread. Noah: top green line (upbar.js) for Customize, black screen only for maps/modes/votes, time-sliced building (<=8 ms chunks), background warm-up after the title, player card through picrop cropFile with a draggable box. Firebase rules copied to /mnt/project-files/adam/database.rules.json for Moses.
+
+## Owner, Nov 20 22:25Z (Adam's thread)
+
+Maybe it's possible to make it to where the things that are loading, that it says what's being loaded, like the file in the like black loading screen where it shows your duck in the bar. It'll say like what's loading down there, like below the loading bar. And it might even have a percent of load like to the right of the green bar to say how much percent is loaded. So that way the player like has an idea of what's happening. Maybe we can like write lines on the loading screen to hold the player over. Like every loading screen has its own line of text. And the text is just like in the normal font, not the multicolored, but just a normal font. And what it says is something that Joseph can talk about with me. Either something about my interest or about my programming language, jokes, book quotes, history facts maybe, philosophy maybe, like crazy, just crazy phrases that we say, we put in there. I don't want Joseph to suggest what the lines actually are. I just want to learn how to approach it for the loading screen.
+
+Adam: Noah adds 'what is loading' in plain words plus a percent, and an empty slot for one random line per loading screen (js/loadlines.js, normal font); Joseph to discuss with the owner how to approach the lines, not the lines.
+
+## Owner, Nov 20 22:27Z (Adam's thread)
+
+Is the file for the customization to parallel not attached to the file in which the entities actually wear? Because like if there's a zombie in a game that's wearing a hat that you have in customization, that shouldn't be a separate thing we have to load. It should be one file. If the player's wearing that hat and you see them wearing the hat in the game, it shouldn't have to be loaded a second time in a different file of the same thing from customization. That would be bad. Look up the memory and optimization sources before we continue with a plan and tell Noah what to do. So they can hold on that idea until we get a better idea of that and the technical knowledge of which, of course, not just the game plan like a CEO would make.
+
+Adam: Noah's Customize job on hold. Measured: one module (duckparts.js) and one cache, but parts are stored at 8 pixel
+sizes and Customize loads mostly size 26 while a game loads 19/29/32, so the same hat loads twice at different sizes.
+Proposed: one base size per part scaled by whole numbers (one copy per resource, Gregory GEA), owner to pick.
+
+## Owner, Nov 20 22:29Z (Adam's thread)
+
+Is it possible that we can make an actual application that you can download on your computer or phone through my website and not what we have right now, so that it actually plays better while still having a file that uploads the GitHub deployment to the application automatically? Not saying we have to do it now, we just need to discuss that, because currently right now it's getting pretty bad. Make sure that your text output aren't crazy long if that costs too much tokens. I don't know how much tokens it costs. Maybe your text output's fine and it's not that big of a deal, but I'm just saying.
+
+Adam: possible (Electron/Tauri, Capacitor, auto-update from GitHub) but would not play better: same engine, the hangs
+are our main-thread work. Fix the code first; wrap later only for a store/Steam. Replies kept short.

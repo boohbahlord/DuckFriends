@@ -63,7 +63,7 @@ const pts = (c) => {
   return r === 0 ? 1 : r >= 9 ? 10 : r + 1;
 };
 /* a hand's best total (an ace counts 11 when that doesn't bust it: soft) */
-export function total(cards) {
+function total(cards) {
   let t = 0,
     ace = false;
   for (const c of cards || [])
@@ -74,7 +74,7 @@ export function total(cards) {
   return ace && t <= 11 ? { t: t + 10, soft: true } : { t, soft: false };
 }
 const natural = (cards) => cards.length === 2 && total(cards).t === 21;
-export const RANKS = [
+const RANKS = [
     "A",
     "2",
     "3",
@@ -90,7 +90,7 @@ export const RANKS = [
     "K",
   ],
   SUITS = ["♠", "♥", "♦", "♣"];
-export const red = (c) => {
+const red = (c) => {
   const u = Math.floor(c / 13);
   return u === 1 || u === 2;
 };
@@ -149,7 +149,7 @@ export function atTable(s) {
   }
   return out.sort((a, b) => a.k - b.k);
 }
-export const dealEnd = (b) => b.dt + GAP * (2 * b.order.length + 2);
+const dealEnd = (b) => b.dt + GAP * (2 * b.order.length + 2);
 
 /* the next hand: the vote first when someone sits down at an empty table or a group forms (blackjack for chips, just
    for fun, or poker); the bets in a chips game; else straight to the deal */
@@ -242,7 +242,7 @@ function nextTurn(b, now, from) {
   Object.assign(b, { st: "dealer", t: now, turn: -1 }); // (the host turns the hole card over on its next heartbeat)
 }
 /* players against each other: the pot to the best hand (a blackjack counts 22: it beats any other 21) */
-export const pot = (b) => Object.values(b.bets).reduce((m, n) => m + n, 0);
+const pot = (b) => Object.values(b.bets).reduce((m, n) => m + n, 0);
 function settlePot(b) {
   const score = (id) => {
     const h = b.hands[id];
@@ -1030,7 +1030,7 @@ function timer(b, now) {
 /* the cards and bets on the table itself (everyone sees them, seated or not): one drawing over its top */
 /* how far out from the middle things lie, in table radii: each one's hand (its total under it), their chips, a bet not
    in a pot; the Butler's hand, toward him */
-export const HAND = 0.5,
+const HAND = 0.5,
   BANK = 0.87,
   BET_AT = 0.24,
   DEAL = 0.5,

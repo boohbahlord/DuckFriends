@@ -43,7 +43,7 @@ const oneLine = (v, n) =>
     .trim();
 
 /* the built-in words, by category (for "Need an idea?", the computers, and rooms set to the built-in list) */
-export const WORDS = {
+const WORDS = {
   Food: [
     "Pancake",
     "Pizza",

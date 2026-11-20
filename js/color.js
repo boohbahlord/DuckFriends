@@ -3,7 +3,7 @@
    picker beside it) and a circled "i" that explains hex on hover or click. */
 import { el, esc } from "./ui.js";
 
-export const SWATCHES = [
+const SWATCHES = [
   "#1c1c28",
   "#ffffff",
   "#ef3b3b",
@@ -18,7 +18,7 @@ export const SWATCHES = [
   "#9aa0aa",
 ];
 /* the Colors screen's grid, after Halo: Reach's: each row one color, dark to light */
-export const SHADES = [
+const SHADES = [
   ["#1c1c28", "#6b7078", "#ffffff"],
   ["#5a3a22", "#8b5a2b", "#c8996a"],
   ["#3f4a1f", "#6b7a2e", "#a8b860"],
@@ -34,7 +34,7 @@ export const SHADES = [
 ];
 const HEX_INFO =
   "A hex color is # and six characters, each 0–9 or A–F: two for red, two for green, two for blue. 00 is none, FF is the most. #FF0000 is red, #00FF00 green, #FFFFFF white, #000000 black.";
-export const HEX_OK = /^#[0-9a-f]{6}$/i;
+const HEX_OK = /^#[0-9a-f]{6}$/i;
 export const normHex = (s) => {
   s = String(s || "").trim();
   if (!s.startsWith("#")) s = "#" + s;

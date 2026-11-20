@@ -8,14 +8,14 @@ import { mix, metalBands, METAL } from "./duck.js";
 import { rbGrad, rbShade } from "./rainbowskin.js";
 
 /* where a duck's head (76, 40, r 23) lands on his head: the center, how much smaller, the tilt */
-export const HEAD_AT = { x: 63.9, y: 16.4, k: 0.75, tilt: -14 };
+const HEAD_AT = { x: 63.9, y: 16.4, k: 0.75, tilt: -14 };
 export const onHead = (svg) =>
   svg
     ? `<g transform="translate(${HEAD_AT.x} ${HEAD_AT.y}) rotate(${HEAD_AT.tilt}) scale(${HEAD_AT.k}) translate(-76 -40)">${svg}</g>`
     : "";
 
-export const FROG = "#3fbf2f";
-export const CYCLE = "#ff7a1a";
+const FROG = "#3fbf2f";
+const CYCLE = "#ff7a1a";
 
 /* one of his parts, as a tube: an edge line under a fill line (a limb, the fork) */
 const tube = (d, w, fill, edge) =>
