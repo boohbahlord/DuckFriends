@@ -2,7 +2,8 @@
 I want the game to work as if it ran on an old fixed-palette console: few colors, small files, nothing converted at run
 time. This lists every pixel file in assets/px with
   - its colors that are not in the game's colors (js/pixelpalette.js PALETTE) or its see-through that is not one of
-    the three steps (none, half, all), for the files that hold colors;
+    the three steps (none, half, all), for the files that hold colors; the maps' worlds and pictures (mapw, maps)
+    hold to the era's texture limits instead (tools/era.py: 15-bit color, at most 256 colors a file);
   - files over their size budget, each folder's total against its budget, and the whole total.
 Files that hold numbers instead of colors (the ducks' shade sheets, the card masks) are only weighed.
   python3 tools/pixel-budget.py            the report
@@ -16,6 +17,9 @@ import sys
 from fnmatch import fnmatch
 
 from PIL import Image
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from era import MAX_COLORS, is_five  # noqa: E402
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 PX = os.path.join(ROOT, "assets", "px")
@@ -35,6 +39,8 @@ TOTAL_MAX = 16 * 1024 * KB
 
 # files that hold numbers, not colors: weighed only
 DATA = ["ducks/*", "cards/tint.webp", "cards/base.webp"]
+# the maps' worlds and pictures: the era's texture limits (tools/era.py) instead of the game's colors
+ERA = ["mapw/*", "maps/*"]
 ALPHA_STEPS = {0, 128, 255}
 
 
@@ -55,19 +61,33 @@ def near(r, g, b, pal):
     )
 
 
-def colors_off(path, pal):
-    """(pixels off the palette, pixels with see-through off the steps, pixels shown)"""
+def fits_era(r, g, b, a):
+    if is_five(r) and is_five(g) and is_five(b):
+        return True
+    return a < 255 and all(
+        any(is_five(c + d) for d in range(-2, 3) if 0 <= c + d <= 255)
+        for c in (r, g, b)
+    )
+
+
+def colors_off(path, pal, era):
+    """(pixels off the colors, pixels with see-through off the steps, pixels shown, colors used)"""
     im = Image.open(path).convert("RGBA")
-    off = alpha = shown = 0
+    off = alpha = shown = used = 0
     for n, (r, g, b, a) in im.getcolors(im.width * im.height):
         if a == 0:
             continue
         shown += n
+        used += 1
         if a not in ALPHA_STEPS:
             alpha += n
-        if (r, g, b) not in pal and not (a < 255 and near(r, g, b, pal)):
+        if (
+            not fits_era(r, g, b, a)
+            if era
+            else (r, g, b) not in pal and not (a < 255 and near(r, g, b, pal))
+        ):
             off += n
-    return off, alpha, shown
+    return off, alpha, shown, used
 
 
 def main():
@@ -82,8 +102,10 @@ def main():
     files.sort()
     bad = 0
     folders = {}
-    print(f"palette: {len(pal)} colors; see-through steps {sorted(ALPHA_STEPS)}")
-    print("\noff the game's colors (files that hold colors; --list names each file):")
+    print(
+        f"palette: {len(pal)} colors; maps: 15-bit color, at most {MAX_COLORS} a file; see-through steps {sorted(ALPHA_STEPS)}"
+    )
+    print("\noff the colors (files that hold colors; --list names each file):")
     groups = {}
     for rel, p in files:
         size = os.path.getsize(p)
@@ -91,7 +113,10 @@ def main():
         folders[top] = folders.get(top, 0) + size
         if any(fnmatch(rel, g) for g in DATA):
             continue
-        off, alpha, shown = colors_off(p, pal)
+        era = any(fnmatch(rel, g) for g in ERA)
+        off, alpha, shown, used = colors_off(p, pal, era)
+        if era and used > MAX_COLORS:
+            off = max(off, 1)
         g = groups.setdefault(os.path.dirname(rel), [0, 0, 0, 0, 0])
         g[0] += 1
         g[2] += off
@@ -102,7 +127,7 @@ def main():
             g[1] += 1
             if "--list" in sys.argv:
                 print(
-                    f"  {rel}: {off} of {shown} pixels off the colors, {alpha} off the see-through steps"
+                    f"  {rel}: {off} of {shown} pixels off the colors, {alpha} off the see-through steps, {used} colors"
                 )
     for d, (n, nbad, off, alpha, shown) in sorted(groups.items()):
         if nbad:

@@ -77,17 +77,24 @@ the map done.
 The owner, Nov 19 23:26Z: "imagine we're making a game on a 32-bit only graphics system in whatever era long ago.
 That's the limitations we're working with." Decided: limited colors, small files, nothing converted at run time.
 `python3 tools/pixel-budget.py` checks the files against these (`--list` names each file, `--strict` exits 1).
-- Colors: the 128 colors of `js/pixelpalette.js` (PALETTE), one set for the whole game. See-through has three steps
-  only: none, half, all (0, 128, 255). Every file in `assets/px` that holds colors uses only those (a half see-through
-  pixel may come back a step or two off its color: the browser keeps it times its see-through). Files that hold
-  numbers instead of colors are exempt and only weighed: the ducks' shade sheets (`assets/px/ducks`) and the card
-  masks (`assets/px/cards/tint.webp`, `base.webp`); they become palette colors when drawn.
+- Colors, two kinds (Adam's pick, Nov 20 12:40Z, "B"):
+  - Ducks, props, cards, mode and vote pictures, TV stills, items: the 128 colors of `js/pixelpalette.js` (PALETTE),
+    one set for the whole game.
+  - The maps' worlds and pictures (`assets/px/mapw`, `assets/px/maps`): the era's texture limits, as on a PS1-era
+    console: 15-bit color (32 steps a channel) and at most 256 colors in one file, its own palette like a texture's
+    color table (`tools/era.py`; `tools/pixel-maps.cjs` runs it on every file it makes). The maps keep their look.
+  - See-through has three steps only, for both: none, half, all (0, 128, 255). A soft glow keeps its brightest part
+    as a half step and loses its faint edge. A half see-through pixel may come back a step or two off its color (the
+    browser keeps it times its see-through); the checker allows that.
+  - Files that hold numbers instead of colors are exempt and only weighed: the ducks' shade sheets
+    (`assets/px/ducks`) and the card masks (`assets/px/cards/tint.webp`, `base.webp`); they become palette colors
+    when drawn.
 - The grid: one world pixel is 2 css px at the usual size (`pixel.js` grid). A map's world is 683 × 384 pixels (a
   1366 × 768 page). Ducks are made at `duckparts.js` SIZES (12 to 64 px). Map pictures 272 × 153, vote pictures
   160 × 90, mode pictures 480 × 270. Card patterns are 4 to 48 px motifs laid out at the grid.
 - Size budgets: one file at most 384 KB; `assets/px` in all at most 16 MB; by folder: ducks 10 MB, mapw 3 MB,
   world 1.5 MB, cards 384 KB, each other folder 256 KB. Files are lossless WebP.
-- Made at run time, and only these: what code draws pixel by pixel at the grid in palette colors (Starry Night's
+- Made at run time, and only these: what code draws pixel by pixel at the grid in limited colors (Starry Night's
   twinkles, the flames special, Tiles, the card pattern layouts, a recolored hat or card mask); and players' uploads,
   each made into pixels the moment it comes in and only the pixels kept (a duck's picture 35 × 35, a card's 64 × 64,
   a Sandbox picture 32 px, through `applyPalette`). Never a drawing (SVG, CSS) or a big picture turned into pixels
