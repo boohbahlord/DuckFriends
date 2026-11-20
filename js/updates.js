@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v195",
+    version: 195,
+    date: "Nov 20, 2026",
+    title: "Loaded before you land",
+    news: [
+      "For the zombie modes: Downpour and Duck Cabin finish loading every picture behind the loading screen, so nothing pops in once you're dropped in.",
+    ],
+  },
+  {
     id: "v194",
     version: 194,
     date: "Nov 20, 2026",
