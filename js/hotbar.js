@@ -207,14 +207,33 @@ export function mountHotbar(S, api) {
     slideSig = "",
     listSig = "",
     lastWant = null;
-  const STEP = () =>
-    parseFloat(getComputedStyle(slide).getPropertyValue("--step")) *
-      parseFloat(getComputedStyle(document.documentElement).fontSize) || 36;
+  /* the screen's size, kept here: reading innerWidth or innerHeight makes the browser lay the page out first, and
+     lay() ran every frame in a swarm, when the page is never settled (the owner's phone measure, Nov 20: 645 ms of
+     8 s at 4x). It changes only on a resize; a slot's step likewise */
+  let vw = innerWidth,
+    vh = innerHeight,
+    stepAt = "",
+    stepPx = 0;
+  addEventListener("resize", () => {
+    vw = innerWidth;
+    vh = innerHeight;
+  });
+  const STEP = () => {
+    const k = `${vw}x${vh}`;
+    if (k === stepAt && stepPx) return stepPx;
+    const v =
+      parseFloat(getComputedStyle(slide).getPropertyValue("--step")) *
+      parseFloat(getComputedStyle(document.documentElement).fontSize);
+    if (!v) return 36; // (not on the page yet: not kept)
+    stepAt = k;
+    return (stepPx = v);
+  };
   const curI = () => list.findIndex(([id]) => id === cur);
   /* each slot along the row: the one in the middle bigger, the two beside it smaller, the rest out of sight */
   let laid = ""; // what the last lay() placed: the same slots at the same spot on the same screen need no new layout
+  let built = 0; // (counts the times the row's slots were made new: a patched slot keeps its place)
   const lay = () => {
-    const key = `${slideSig}|${pos}|${innerWidth}x${innerHeight}`;
+    const key = `${built}|${pos}|${vw}x${vh}`;
     if (key === laid) return; // (it ran on every paint and asked the browser for a fresh style each time: slow)
     laid = key;
     const step = STEP();
@@ -333,6 +352,7 @@ export function mountHotbar(S, api) {
         });
       else {
         listSig = ids;
+        built++;
         track.innerHTML = html.join("");
         [...track.children].forEach((b, j) => (b._h = html[j]));
       }
