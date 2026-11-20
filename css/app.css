@@ -21605,6 +21605,34 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .sb-area {
   pointer-events: none;
 }
+/* Sandbox Phase 2: a selected block glows; the selection box; a block's eight handles (pixel squares) */
+.sb-pt.sb-sel {
+  outline: 2px dashed #fff;
+  outline-offset: 2px;
+  filter: drop-shadow(0 0 4px #7df);
+}
+.sb-selbox {
+  position: fixed;
+  z-index: 6400;
+  border: 2px dashed #7df;
+  background: #7df2;
+  pointer-events: none;
+}
+.sb-hdls {
+  position: fixed;
+  inset: 0;
+  z-index: 6400;
+  pointer-events: none;
+}
+.sb-hdl {
+  position: fixed;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  background: #fff;
+  border: 2px solid #123;
+  pointer-events: auto;
+}
 .sb-fold > summary {
   cursor: pointer;
   list-style: none;

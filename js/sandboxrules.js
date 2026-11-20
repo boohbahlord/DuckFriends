@@ -298,7 +298,7 @@ export function sbCellIn(p, i, j) {
   );
 }
 /* a duck length in shares of the map, [across, up and down] */
-const unit = (s, W, H) =>
+export const sbUnit = (s, W, H) =>
   sbOnBoard(s) ? [0.03, 0.08] : [SB_ZONE_PX / W, SB_ZONE_PX / H];
 /* how far block p is turned, in degrees (plan Phase 2: "while held, the arrow keys rotate") */
 export const sbRot = (p) => ((((p && p.rot) || 0) % 360) + 360) % 360;
@@ -306,7 +306,7 @@ export const sbRot = (p) => ((((p && p.rot) || 0) % 360) + 360) % 360;
    whole map when it fills it */
 export function sbZoneBox(s, p, W = 1, H = 1) {
   if (sbFills(p)) return [0, 0, 1, 1];
-  const [rx, ry] = unit(s, W, H),
+  const [rx, ry] = sbUnit(s, W, H),
     [w, h] = sbSize(p),
     a = (sbRot(p) * Math.PI) / 180,
     c = Math.abs(Math.cos(a)),
@@ -319,7 +319,7 @@ export function sbZoneBox(s, p, W = 1, H = 1) {
    shape */
 export function sbInBlock(s, p, x, y, W = 1, H = 1) {
   if (sbFills(p)) return x >= 0 && x <= 1 && y >= 0 && y <= 1;
-  const [rx, ry] = unit(s, W, H),
+  const [rx, ry] = sbUnit(s, W, H),
     [w, h] = sbSize(p),
     a = (-sbRot(p) * Math.PI) / 180,
     dx = (x - p.x) / rx,

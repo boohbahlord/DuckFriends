@@ -87,6 +87,7 @@ function markSVG(p) {
 /* what my screen shows of Sandbox's build: zones only while my Build window is up (sandbox.js sets it) or a zone's
    window is open ("Sections colored from board build is invisible", the owner's Sandbox file) */
 export const sbView = { build: false, until: 0 };
+export const sbSel = new Set(); // (the blocks a Shift drag picked: sbdrag.js; they light up)
 const building = () =>
   sbView.build ||
   sbView.until > performance.now() ||
@@ -176,8 +177,7 @@ function zoneMark(n, p, at, s, bare = false) {
     const css = SB_COLORS[p.col] || "#fff";
     n.style.setProperty("--c", css);
     n.classList.toggle("sb-shaped", shaped);
-    if (shaped)
-      n.style.setProperty("--shape", `url("${shapePic(s, p, css)}")`);
+    if (shaped) n.style.setProperty("--shape", `url("${shapePic(s, p, css)}")`);
     else n.style.removeProperty("--shape");
     n.innerHTML = bare
       ? "" // (a spawn's, respawn's or loot spot's area: its ring shows where it is)
@@ -254,6 +254,10 @@ function drawMarks(layer, pts, at, size, s) {
     }
   }
   for (const [id, n] of have) if (!want.has(id)) n.remove();
+  if (sbSel.size || layer._sel)
+    for (const n of layer.querySelectorAll(".sb-pt"))
+      n.classList.toggle("sb-sel", sbSel.has(n.dataset.p.split("~")[0]));
+  layer._sel = sbSel.size > 0;
 }
 const ptsOf = (s) => (isSb(s) && s.sb && s.sb.pts) || {};
 /* the board: place(o) → { left, top } (game.js place), size: a duck's width */

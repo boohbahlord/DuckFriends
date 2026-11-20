@@ -491,6 +491,8 @@ function fromPattern(q, pt) {
     JSON.stringify(pt.ap).length < 4000
   )
     q = { ...q, ap: pt.ap };
+  if (Number.isFinite(pt.rot) && pt.rot)
+    q = { ...q, rot: ((pt.rot % 360) + 360) % 360 }; // (a copy keeps how it's turned)
   for (const [f, v] of Object.entries(pt.f || {}))
     if (typeof v === "string" && boxOf(f) && canSet(q, f))
       q = withField(q, f, v);

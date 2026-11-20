@@ -17,7 +17,7 @@ import {
 } from "./sandboxrules.js";
 import { kindsFor } from "./sbmake.js";
 
-export const sbClip = { pt: null }; // (what Copy or Cut kept)
+export const sbClip = { pt: null, many: null }; // (what Copy or Cut kept; many: a selection's, each with its step from their middle)
 export const sbPresets = {}; // (kind: the pattern Build puts down for it)
 /* cheat mode: on at the start (nothing changes until it's turned off, Shift+C), off: the Sandbox windows (B, M, N, G, P),
    Build's menus and Properties wait for it */
@@ -51,6 +51,7 @@ export function patternOf(p) {
     f,
     ...(p.im ? { im: [...p.im] } : {}),
     ...(p.ap ? { ap: JSON.parse(JSON.stringify(p.ap)) } : {}),
+    ...(p.rot ? { rot: p.rot } : {}),
   };
 }
 
