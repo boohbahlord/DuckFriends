@@ -112,7 +112,10 @@ function spawnMost(q) {
   const n = num(q, "limit");
   return n === 0 ? 100 : Math.max(1, Number.isFinite(n) ? n : 1);
 }
-const gap = (q) => 1000 * Math.max(0.1, num(q, "every") || 4); // (Seconds between spawns, as a spawn's)
+const gap = (q) => {
+  const v = num(q, "every");
+  return 1000 * Math.max(0, Number.isFinite(v) ? v : 4);
+}; // (Seconds between spawns, as a spawn's; 0: no wait)
 /* has block id (point q) started laying orbs: when the game starts, or the event its Starts names, in its zone (the one
    its tab answers to, or its own shape) */
 function startsNow(s, pts, id, q, H0) {

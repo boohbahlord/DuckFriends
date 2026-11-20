@@ -347,13 +347,17 @@ export const SB_BOXES = {
   every: {
     name: "Seconds between spawns",
     kind: "tenth",
-    min: 0.1,
+    min: 0, // (0: no wait, one each beat up to its limit; zero is real, the owner's, Nov 20 17:25Z)
     max: 600,
     def: "4",
   }, // ("default is four seconds"; "you can do a decimal point for time in between spawns")
   hp: { name: "HP", kind: "tenth", min: 0.1, max: 1000, def: "3" }, // (a zombie's own: l4ddrules.js L4.HP; tenths: the owner's "I agree with the HP decimal system", any HP above 0 keeps it standing)
-  damage: { name: "Damage", kind: "tenth", min: 0.1, max: 100, def: "1" }, // ("decimal form to the tenth place")
-  speed: { name: "Speed", kind: "tenth", min: 0.1, max: 5, def: "1" }, // ("1 is default, 0 is not allowed ... 5 is the max")
+  damage: { name: "Damage", kind: "tenth", min: 0, max: 100, def: "1" }, // ("decimal form to the tenth place"; 0: it hurts nobody)
+  /* "1 is default ... 5 is the max"; 0 was not allowed until the owner's Nov 20 17:25Z: "the seriat input for things should
+     also be able to have a value of zero with it's own unique meaning, such as movement. Spawns or respawns dont move off
+     their position anymore to make room, since their movement being zero means zero": 0 never walks and is never pushed
+     aside (sbspawn.js, sbcabin.js, l4ddrules.js separate) */
+  speed: { name: "Speed", kind: "tenth", min: 0, max: 5, def: "1" },
   /* how big what it spawns is, picture and hitbox together, in percent of a duck (the owner's, Nov 19 15:47Z: "Percent is
      obviously the best way to scale size"): 10% the smallest, the biggest as tall as Mad God Justin */
   size: {
@@ -407,7 +411,7 @@ export const SB_PLAYER = {
   pspd: {
     name: "Players' speed",
     kind: "tenth",
-    min: 0.1,
+    min: 0, // (0: they can't walk; blank: the game's own)
     max: 5,
     blank: true,
   },
@@ -507,7 +511,7 @@ export const SB_ZONE = {
   rate: {
     name: "Seconds between",
     kind: "tenth",
-    min: 0.1,
+    min: 0, // (0: every beat)
     max: 60,
     def: "1",
   }, // ("they can heal or damage at different rates")
@@ -1669,7 +1673,7 @@ export const SB_LOOT = {
   again: {
     name: "Seconds before a new one comes",
     kind: "int",
-    min: 1,
+    min: 0, // (0: at once)
     max: 600,
     def: "10",
   },
