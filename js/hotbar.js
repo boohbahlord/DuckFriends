@@ -214,10 +214,11 @@ export function mountHotbar(S, api) {
     vh = innerHeight,
     stepAt = "",
     stepPx = 0;
-  addEventListener("resize", () => {
+  const resized = () => {
     vw = innerWidth;
     vh = innerHeight;
-  });
+  };
+  addEventListener("resize", resized);
   const STEP = () => {
     const k = `${vw}x${vh}`;
     if (k === stepAt && stepPx) return stepPx;
@@ -474,6 +475,7 @@ export function mountHotbar(S, api) {
       bar.remove();
       slide.remove();
       removeEventListener("pointerup", lifted);
+      removeEventListener("resize", resized);
     },
   };
 }
