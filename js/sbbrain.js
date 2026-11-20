@@ -5,7 +5,7 @@
    - Ignore: what it leaves alone, "and it defends itself if attacked after taking one damage (neutrality)": whatever
      hurts it, it goes after for a while (MAD), whatever the lists say.
    - Avoid: what it runs from, once one comes near.
-   - Protect: what it guards, "like the code for Jaime guard": it keeps by it and goes after whatever comes for it.
+   - Protect: what it guards: it keeps by it and goes after whatever comes for it.
    A zombie whose spawn never set its Target goes after the players; the others go after nothing.
    decide() is the same on the board and on the worlds: the map's tick (sbspawn.js, sbcabin.js) gives it the things on
    the map and how far apart two of them are, in duck lengths, and walks and claws as it says. */

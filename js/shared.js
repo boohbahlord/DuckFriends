@@ -15,6 +15,7 @@ import { esc, openWindow, toast, confirmBox } from "./ui.js";
 import { profile } from "./store.js";
 import { acct, acctLink, signIn, onAccount } from "./account.js";
 import { applyPalette } from "./pixelpalette.js";
+import { cropFile } from "./picrop.js";
 import { isUmap } from "./umaprules.js";
 
 export const SHARE = {
@@ -141,7 +142,13 @@ export async function shareWin(kind, what) {
             file.value = "";
             if (!fl) return;
             try {
-              pic = await smallPic(await fileText(fl)); // (only the pixel copy is kept)
+              const part = await cropFile(fl, {
+                aspect: SHARE.PIC_W / SHARE.PIC_H,
+                px: [SHARE.PIC_W, SHARE.PIC_H],
+                most: SHARE.PIC_W * 4,
+              }); // (cropped first, as every picture: picrop.js)
+              if (!part) return;
+              pic = await smallPic(await fileText(part)); // (only the pixel copy is kept)
               const box = w.querySelector("[data-pic]");
               box.classList.remove("empty");
               box.innerHTML = `<img src="${pic}" alt="">`;
