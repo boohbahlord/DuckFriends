@@ -1182,7 +1182,8 @@ export function sbActsAt(s, id, p, x, y, W = 1, H = 1) {
    and groups. A thin rectangle is a wall.") ----------
    A zone's "Who can't pass" list stops whoever it takes on its working squares (all of them unless its potential
    order says otherwise). What already stands in one when it comes (placed on it, or a square that just started
-   working) may walk out of it; nothing walks in. On a world a wall stands on its own floor, as tall as two floors. */
+   working) may walk out of it; nothing walks in. On a world a wall stands on its own floor, as tall as two floors; a
+   wall up high that isn't Ground is a block and reaches down to the ground (row 161: one zone per wall of a house). */
 const WALL_LOW = 40,
   WALL_HIGH = 200; // (world px below and above its floor that it still stops)
 const listOf = (p, f) =>
@@ -1284,7 +1285,9 @@ function wallsAt(s, walls, x, y, z, W, H) {
   for (const { id, p } of walls) {
     if (!sbOnBoard(s)) {
       const dz = (+z || 0) - (p.z || 0);
-      if (dz <= -WALL_LOW || dz >= WALL_HIGH) continue;
+      // a wall up high that isn't Ground is a block down to the ground (as it's drawn, row 161): it stops the ground too
+      const block = (p.z || 0) > 0.5 && !(p.f && p.f.gnd && p.f.gnd.ok === "t");
+      if ((!block && dz <= -WALL_LOW) || dz >= WALL_HIGH) continue;
     }
     if (sbWorksAt(s, id, p, x, y, z, W, H, sbInv(p), false)) out.push(id);
   }
