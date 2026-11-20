@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v135",
+    version: 135,
+    date: "Nov 20, 2026",
+    title: "Callers",
+    news: [
+      "For Sandbox: picking Spawn or Respawn at the top of a zone adds that tab to it, and the zone stays a zone.",
+      "For Sandbox: a Spawn, Respawn or Loot tab has a Caller: the variable name of a zone on its block. It only works while its Caller names one; until then it says so at its top.",
+      "For Sandbox: what a tab makes appears where its zone's Potential order says. Steps can go on a timer, or one step each time something spawns, comes back or drops.",
+      "For Sandbox: a block with more than one zone picks which one leads (under Type); the leader sets its color and name.",
+    ],
+  },
+  {
     id: "v134",
     version: 134,
     date: "Nov 20, 2026",
