@@ -1,12 +1,12 @@
 /* made by tools/pixel-world.cjs: don't change it by hand (pxworld.js) */
 export const GROUND = {
-  parts: ["assets/px/world/downpour-ground-a00f9df1.webp"],
+  parts: ["assets/px/world/downpour-ground-1b80f042.webp"],
   x: -1024,
   y: -1024,
   w: 2304,
   h: 2816,
 };
-export const ATLAS = "assets/px/world/downpour-props-42c418d9.webp";
+export const ATLAS = "assets/px/world/downpour-props-b5b3251e.webp";
 export const INDEX = {
   "1ej1aazrm@66x66": { "": [1473, 2994, 66, 66] },
   "njlwc7rm@447x66": { "": [1540, 2994, 447, 66] },
