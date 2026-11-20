@@ -76,7 +76,7 @@ export const MAN = {
   stat: "stat file: a file's size, permissions, group and when it changed.",
   file: "file name: what something is: a folder, text, an empty file or a command.",
   chmod:
-    "chmod [ugoa][+-=][rwx] or 755 file: u is you, g the file's group (chgrp), o everyone. u-w makes a file read-only, even for you; u-r hides its words from you; +x (or 755) lets a Seriat file run as ./file in Sandbox. g+r and o+r let a sent file be opened (only sudo can, otherwise). On your files and folders in home/<you> (your Seriat folder), g and o are also what the room's players may do with them, in Sandbox, until a new Sandbox starts. perma-notes stay private.",
+    "chmod [-R] [ugoa][+-=][rwx] or 755 file: -R (recursive) changes a folder and everything in it at once. u is you, g the file's group (chgrp), o everyone. u-w makes a file read-only, even for you; u-r hides its words from you; +x (or 755) lets a Seriat file run as ./file in Sandbox. g+r and o+r let a sent file be opened (only sudo can, otherwise). On your files and folders in home/<you> (your Seriat folder), g and o are also what the room's players may do with them, in Sandbox, until a new Sandbox starts. perma-notes stay private.",
   chown:
     "chown :group file: sets the file's group (as chgrp). A file can't be given to another player (it stays on its maker's device): give them rights with setfacl.",
   setfacl:

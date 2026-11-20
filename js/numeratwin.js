@@ -458,7 +458,9 @@ export function openNumerat() {
          Read, Write and Run (a file's), and what a player picked in the list (or a group, or everyone) may do, until a
          new Sandbox starts */
       const permEl = $(".nm-perm");
-      let permWho = "";
+      let permWho = "",
+        permDeep = false, // (Recursive: off by default, for the folder it was turned on for)
+        permDeepAt = "";
       const permAt = () => st.file || st.dir;
       const box = (k, on, attr, off = false) =>
         `<label><input type="checkbox" ${attr}="${k}"${on ? " checked" : ""}${off ? " disabled" : ""}> ${{ r: "Read", w: "Write", x: "Run" }[k]}</label>`;
@@ -474,11 +476,16 @@ export function openNumerat() {
           ["@o", "Everyone"],
         ];
         if (!whos.some(([w]) => w === permWho)) permWho = (whos[0] || [""])[0];
+        if (permDeepAt !== permAt()) permDeep = false;
+        const deep = !P.file && permDeep;
         const has = (P.given.find(([w]) => w === permWho) || [, ""])[1] || "";
         permEl.innerHTML =
           `<div class="nm-perm-row"><b>${esc(P.rel ? P.rel.split("/").pop() : "home/" + rel(root).split("/")[1])}</b></div>` +
           (P.file
-            ? `<div class="nm-perm-row"><span class="nm-perm-who">Me</span>${["r", "w", "x"].map((k) => box(k, P.own.includes(k), "data-own")).join("")}</div>`
+            ? ""
+            : `<div class="nm-perm-row"><label class="nm-perm-deep" data-tip="On: what you tick below goes to this folder and to every folder and file in it, all at once. Off: this folder only."><input type="checkbox" data-deep${deep ? " checked" : ""}> Recursive</label></div>`) +
+          (P.file || deep
+            ? `<div class="nm-perm-row"><span class="nm-perm-who">Me</span>${["r", "w", "x"].map((k) => box(k, (P.file ? P.own : P.ownAll).includes(k), "data-own")).join("")}</div>`
             : "") +
           `<div class="nm-perm-row"><select class="nm-in nm-perm-sel" aria-label="Player"${P.sb ? "" : " disabled"}>${whos.map(([w, n]) => `<option value="${esc(w)}"${w === permWho ? " selected" : ""}>${esc(n)}</option>`).join("")}</select>${["r", "w", "x"].map((k) => box(k, has.includes(k), "data-give", !P.sb)).join("")}</div>` +
           `<div class="nm-perm-row nm-perm-list">${
@@ -499,6 +506,12 @@ export function openNumerat() {
           permWho = e.target.value;
           return permPaint();
         }
+        if (e.target.matches("[data-deep]")) {
+          permDeep = e.target.checked;
+          permDeepAt = permAt();
+          return permPaint();
+        }
+        const deep = !P.file && permDeep;
         const pick = (attr) =>
           [...permEl.querySelectorAll(`[${attr}]`)]
             .filter((c) => c.checked)
@@ -506,9 +519,9 @@ export function openNumerat() {
             .join("");
         try {
           if (e.target.hasAttribute("data-own"))
-            numerat.setOwn(ctx, permAt(), pick("data-own"));
+            numerat.setOwn(ctx, permAt(), pick("data-own"), deep);
           else if (e.target.hasAttribute("data-give"))
-            numerat.give(ctx, permAt(), permWho, pick("data-give"));
+            numerat.give(ctx, permAt(), permWho, pick("data-give"), deep);
         } catch (err) {
           say([err.message]);
         }

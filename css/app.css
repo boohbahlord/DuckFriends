@@ -21610,7 +21610,10 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   right: 17rem;
 }
 @media (max-width: 600px) {
+  /* (on a phone the title, the Theme box and × leave no room beside them: it goes under the title instead of over it) */
   .nm-bible {
+    position: static;
+    margin: 0 0 0.4rem;
     font-size: 0.75rem;
     padding: 0.2rem 0.5rem;
   }
