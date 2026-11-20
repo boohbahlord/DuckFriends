@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v160",
+    version: 160,
+    date: "Nov 20, 2026",
+    title: "Game modes and their maps",
+    news: [
+      "For Sandbox: a game mode made on one of your own maps brings that map with it when it's played, a downloaded one too.",
+      'For Sandbox: Rules (in G) has "Game mode: players pick the map" for game modes made on a board. Turned on, the room\'s map pick or vote decides the map instead of the one it was made on.',
+    ],
+  },
+  {
     id: "v159",
     version: 159,
     date: "Nov 20, 2026",

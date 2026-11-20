@@ -122,6 +122,14 @@ export const SB_RULES = {
     def: "100",
     board: true,
   },
+  /* plan Phase 7, the owner's: "set in the game settings if their game mode can allow for map selection". The boards
+     only: a game mode made on Downpour or a cabin is always played there */
+  pickmap: {
+    name: "Game mode: players pick the map",
+    kind: "bool",
+    def: "f",
+    board: true,
+  },
   /* plan Phase 6: "anything the menus don't show lives in a read-only-by-default settings folder in Seriat" (the owner's,
      Nov 19 21:59Z: "Crit percent chance could be in a file that the players can change, among other settings", gore,
      and "you can change the limit for the amount of players within a game mode in the file ... 8 players max, which is
