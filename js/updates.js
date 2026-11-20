@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v149",
+    version: 149,
+    date: "Nov 20, 2026",
+    title: "Settings file",
+    news: [
+      "For Sandbox: Seriat has a settings folder. Its limits file holds what no menu shows: crit chance, gore and the player limit. It is read-only until you turn its write on.",
+      "For Sandbox: players you give the rights to can now change the Rules in G in online games too.",
+    ],
+  },
+  {
     id: "v148",
     version: 148,
     date: "Nov 20, 2026",

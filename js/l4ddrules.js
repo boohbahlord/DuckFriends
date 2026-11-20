@@ -1682,6 +1682,7 @@ export const missOf = (w) =>
 const headOf = (s, id, w) => {
   const own = critOf(w);
   if (!own || (isSb(s) && !sbRule(s, "crit"))) return 0; // (Sandbox's Rules: crits off)
+  if (isSb(s) && sbRule(s, "critp") >= 0) return sbRule(s, "critp") / 100; // (Sandbox's settings file: one crit chance for every weapon that crits, just as set)
   const holy = w !== "pan" && angelOf(s, id, w) ? 2 : 1; // (the pan has its own: not doubled)
   return own * holy + CRIT.UP * (upOf(s, id).acc || 0);
 };

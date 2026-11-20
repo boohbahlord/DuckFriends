@@ -68,7 +68,14 @@ import { uiCommand } from "./hideui.js";
 import { SERIAT_THEMES, seriatTheme, setSeriatTheme } from "./seriattheme.js";
 import { music } from "./music.js";
 import { npcsHere, npcTag, npcByTag, npcById } from "./npcs.js";
-import { isSb, sbMay, sbWorld, SB_WORLD_NAMES } from "./sandboxrules.js";
+import {
+  isSb,
+  sbMay,
+  sbWorld,
+  SB_WORLD_NAMES,
+  sbSettingsText,
+  sbSettingsRead,
+} from "./sandboxrules.js";
 import { HELP, EXAMPLES } from "./numerathelp.js";
 import { LANG, LANG_DIR } from "./langname.js";
 import {
@@ -139,6 +146,41 @@ const NO_HELP = (path) =>
   inEx(path)
     ? `✗ ${path}: Permission denied (the example files are read-only: copy one with cp, then change the copy).`
     : `✗ ${path}: Permission denied (the help files are read-only: they can't be changed, copied or deleted).`;
+/* settings/limits (plan Phase 6, sandboxrules.js sbSettingsText): in Sandbox, the room's settings that no menu shows, as
+   "name = value" lines. Never kept on the device (it's the room's); its write starts off each game (read-only by
+   default); written, its lines go to the room (whoever may change Sandbox: sbRulesAct), and it shows the room's again */
+const setRoot = () => numRoot() + "/settings";
+const inSet = (path) => path === setRoot() || path.startsWith(setRoot() + "/");
+let setMade = ""; // (the text I last put in it from the room)
+function setSync() {
+  const s = roomS(),
+    f = setRoot() + "/limits";
+  if (!fs.home) return;
+  if (!s || !isSb(s)) {
+    if (fs.dirs.has(setRoot())) {
+      delete fs.files[f];
+      delete fs.meta[f];
+      fs.dirs.delete(setRoot());
+    }
+    return;
+  }
+  fs.dirs.add(setRoot());
+  const now = sbSettingsText(s),
+    cur = fs.files[f];
+  if (cur === undefined) {
+    fs.files[f] = setMade = now;
+    fs.meta[f] = { nw: true, t: 0 };
+    return;
+  }
+  if (cur !== setMade) {
+    if (fs.room && fs.room.send)
+      for (const [k, v] of sbSettingsRead(cur))
+        fs.room.send({ t: "sbr", k, v });
+    setMade = cur; // (the room's answer shows next time: the same text if it took it)
+    return;
+  }
+  if (now !== setMade) fs.files[f] = setMade = now;
+}
 function numLoad() {
   const N = profile.numerat || {},
     root = numRoot();
@@ -174,6 +216,7 @@ function numLoad() {
   fs.meta[exRoot()] = { ro: true, t: 0 };
 }
 function numKeep() {
+  setSync();
   const root = numRoot(),
     rel = (p) => p.slice(root.length + 1),
     f = {},
@@ -181,7 +224,7 @@ function numKeep() {
     nr = [],
     nw = [];
   for (const [p, t] of Object.entries(fs.files))
-    if (inNum(p) && !inRo(p)) {
+    if (inNum(p) && !inRo(p) && !inSet(p)) {
       f[rel(p)] = t;
       const m = fs.meta[p] || {};
       if (m.x) x.push(rel(p));
@@ -191,7 +234,7 @@ function numKeep() {
   const next = {
     f,
     d: [...fs.dirs]
-      .filter((d) => inNum(d) && !inRo(d))
+      .filter((d) => inNum(d) && !inRo(d) && !inSet(d))
       .map(rel)
       .sort(),
     x,
@@ -361,6 +404,7 @@ function sync(ctx) {
     numLoad();
   }
   fs.people = s ? s.seat.map((id) => tag(s.players[id].name)) : [me];
+  setSync();
 }
 const norm = (p) => {
   const out = [];
