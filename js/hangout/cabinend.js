@@ -22,7 +22,9 @@ export function mountCabinEnd(S, getR) {
   b.className = "btn ghost cabin-end";
   b.onclick = () => {
     const R = getR();
-    if (R) R.send({ t: "cabinEnd" });
+    if (R && R.state.gmTest)
+      import("../gmodes.js").then((m) => m.stopTest(R)); // (Sandbox's Test game mode: the host's Stop test)
+    else if (R) R.send({ t: "cabinEnd" });
   };
   S.append(b);
   /* Quacky Zombies' round 0 (the owner's, Nov 16): "Change starting round" under the button, with "Starting round set to
@@ -112,8 +114,11 @@ export function mountCabinEnd(S, getR) {
         !(R.state.players[R.me] || {}).bot, // (and Sandbox's Leave Sandbox, on the board too)
       c = s.cabinEnd || {},
       left = c.at ? Math.max(0, Math.ceil((c.at - Date.now()) / 1000)) : 0,
-      txt = `${isSb(s) ? "Leave Sandbox" : isL4dd(s) ? (baseL4map(s.options) === "downpour" ? "Exit Downpour" : "Exit Cabin") : "End Cabin"} ${cabinVotes(s)}/${cabinNeeded(s)}${c.at ? ` · ${left}s` : ""}`;
-    b.hidden = !on;
+      test = isSb(s) && !!s.gmTest,
+      txt = test
+        ? "Stop test"
+        : `${isSb(s) ? (s.gmPlay ? `Leave ${s.options.gmName || "the game"}` : "Leave Sandbox") : isL4dd(s) ? (baseL4map(s.options) === "downpour" ? "Exit Downpour" : "Exit Cabin") : "End Cabin"} ${cabinVotes(s)}/${cabinNeeded(s)}${c.at ? ` · ${left}s` : ""}`;
+    b.hidden = !on || (test && s.hostId !== R.me); // (Stop test: the host's own; the others wait)
     b.classList.toggle("on", !!(c.by || {})[R.me]);
     b.classList.toggle("ticking", !!c.at);
     b.setAttribute("aria-pressed", (c.by || {})[R.me] ? "true" : "false");

@@ -47,8 +47,11 @@ export const sbOnBoard = (s) => isSb(s) && !sbWorld(s.options);
    everyone when Democracy of Ducklings lets everyone change the settings (the owner's answer 2, Nov 19 01:34Z); and
    whoever the host lets (p, later: s.sb.ok = { id: true }). A new host takes the old one's place at once, since this
    asks who the host is now */
+/* a made game mode being played (or tested: sbsave.js, gmodes.js): nobody changes the Sandbox, as players see it */
+export const sbPlaying = (s) => isSb(s) && !!s.gmPlay;
 export function sbCan(s, id) {
   if (!isSb(s) || !id || !s.players[id] || s.players[id].bot) return false;
+  if (s.gmPlay) return false; // (a made game mode: no tools)
   if (id === s.hostId) return true;
   if (+s.options.sbAll === 1) return true; // (Game Settings: "Everyone can change Sandbox")
   if (+s.options.dod === 1 && ((s.dod || {}).on || {}).settings) return true; // (rules.js dodOn(s, "settings"))
@@ -66,6 +69,7 @@ export const SB_RIGHTS = [
 ];
 export function sbMay(s, id, k) {
   if (!isSb(s) || !id || !s.players[id] || s.players[id].bot) return false;
+  if (s.gmPlay) return false; // (a made game mode: no tools)
   if (id === s.hostId) return true;
   if (+s.options["sbOk" + String(k).toUpperCase()] === 1) return true;
   if (
@@ -107,21 +111,66 @@ export const SB_RULES = {
   down: { name: "Down phase (others can revive you)", kind: "bool", def: "f" },
   crit: { name: "Crits (headshots)", kind: "bool", def: "t" },
   spec: { name: "Out of lives: watch the others", kind: "bool", def: "t" },
+  /* the owner's, Nov 19 21:59Z: "There should be a board size limit that changes the size of the map ... we'll do
+     percentage instead, right? 100% is the minimum. But ... if the map is bigger, the camera follows the duck as they
+     move around like it does in Downpour or Cabin". The plain boards only (the worlds have their own size) */
+  size: {
+    name: "Board size % (100 is the smallest)",
+    kind: "int",
+    min: 100,
+    max: 400,
+    def: "100",
+    board: true,
+  },
+  /* plan Phase 6: "anything the menus don't show lives in a read-only-by-default settings folder in Seriat" (the owner's,
+     Nov 19 21:59Z: "Crit percent chance could be in a file that the players can change, among other settings", gore,
+     and "you can change the limit for the amount of players within a game mode in the file ... 8 players max, which is
+     the normal ... or you can make it 4 players max"; "it's 2 players max for the actual game mode when it's made, not
+     for the actual sandbox itself that makes the game mode"). Seriat's settings/limits (shell.js), never G's window */
+  critp: {
+    name: "crit chance",
+    kind: "int",
+    min: 0,
+    max: 100,
+    def: "own",
+    own: true, // ("own": each weapon's own chance)
+    file: true,
+  },
+  gore: { name: "gore", kind: "bool", def: "t", file: true },
+  most: {
+    name: "player limit",
+    kind: "int",
+    min: 2,
+    max: 8,
+    def: "8",
+    file: true,
+  },
 };
 /* rule k now: a whole number (lives) or true / false */
 export function sbRule(s, k) {
   const b = SB_RULES[k],
     t = String(((s && s.sb && s.sb.rules) || {})[k] ?? b.def).trim();
   if (b.kind === "bool") return !/^f/i.test(t);
+  if (b.own && /^own$/i.test(t)) return -1; // (each weapon's own)
   const n = Math.round(+t);
   return Number.isFinite(n) ? Math.min(b.max, Math.max(b.min, n)) : +b.def;
 }
+/* how many times bigger Sandbox's plain board is than the screen's (Board size %), 1 everywhere else */
+export const sbBoardK = (s) =>
+  sbOnBoard(s) ? Math.max(1, sbRule(s, "size") / 100) : 1;
+/* a duck's length on the board, in shares of it: 0.03 across, 0.08 up and down (on a bigger board, k times less) */
+export function boardDuck(s) {
+  const k = sbBoardK(s);
+  return k === 1 ? BOARD_DUCK : [0.03 / k, 0.08 / k];
+}
+const BOARD_DUCK = [0.03, 0.08];
 /* { t: "sbr", k, v }: whoever may change Sandbox sets rule k */
 export function sbRulesAct(s, a) {
-  const b = SB_RULES[a.k];
+  const b = Object.hasOwn(SB_RULES, a.k) ? SB_RULES[a.k] : null;
   if (!isSb(s) || !b || !sbCan(s, a.id)) return false;
   let v = String(a.v ?? "").trim();
   if (b.kind === "bool") v = /^f/i.test(v) || v === "" ? "f" : "t";
+  else if (b.own && /^own$/i.test(v)) v = "own";
   else {
     const n = Math.round(+v);
     if (!Number.isFinite(n) || n < b.min || n > b.max) return false;
@@ -132,6 +181,40 @@ export function sbRulesAct(s, a) {
   rules[a.k] = v;
   s.sb = { ...s.sb, rules };
   return true;
+}
+/* gore off: the room's Gore setting, or Sandbox's settings file (gore = false) */
+export const noGoreOf = (s) =>
+  !!+s.options.noGore || (isSb(s) && !sbRule(s, "gore"));
+/* Seriat's settings/limits: the file rules as "name = value" lines */
+export function sbSettingsText(s) {
+  return (
+    "# Sandbox settings that no menu shows. Read-only: turn on write (Permissions, or chmod u+w limits) to change one.\n" +
+    "# crit chance: 0 to 100 (%), or own (each weapon's own). gore: true or false. player limit: 2 to 8.\n" +
+    Object.entries(SB_RULES)
+      .filter(([, b]) => b.file)
+      .map(
+        ([k, b]) =>
+          `${b.name} = ${String(((s && s.sb && s.sb.rules) || {})[k] ?? b.def)
+            .replace(/^t$/, "true")
+            .replace(/^f$/, "false")}`,
+      )
+      .join("\n") +
+    "\n"
+  );
+}
+/* the file read back: [[k, value]] for each "name = value" line naming a file rule (the rest is left alone) */
+export function sbSettingsRead(text) {
+  const by = Object.fromEntries(
+      Object.entries(SB_RULES)
+        .filter(([, b]) => b.file)
+        .map(([k, b]) => [b.name, k]),
+    ),
+    out = [];
+  for (const line of String(text).split("\n")) {
+    const m = /^\s*([a-z ]+?)\s*=\s*(\S+)\s*$/i.exec(line.replace(/#.*/, ""));
+    if (m && by[m[1].toLowerCase()]) out.push([by[m[1].toLowerCase()], m[2]]);
+  }
+  return out;
 }
 
 /* ---------- Sandbox's spawns and respawns: the settings (stage 2) ----------
@@ -534,7 +617,7 @@ export function sbCellIn(p, i, j) {
 }
 /* a duck length in shares of the map, [across, up and down] */
 export const sbUnit = (s, W, H) =>
-  sbOnBoard(s) ? [0.03, 0.08] : [SB_ZONE_PX / W, SB_ZONE_PX / H];
+  sbOnBoard(s) ? boardDuck(s) : [SB_ZONE_PX / W, SB_ZONE_PX / H];
 /* how far block p is turned, in degrees (plan Phase 2: "while held, the arrow keys rotate") */
 export const sbRot = (p) => ((((p && p.rot) || 0) % 360) + 360) % 360;
 /* block p's box, [x0, y0, x1, y1] in shares of the map (W, H: a world's size in px): around it as it's turned; the

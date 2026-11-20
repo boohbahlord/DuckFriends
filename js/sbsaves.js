@@ -20,12 +20,14 @@ import {
   SB_RULES,
   sbRule,
   sbCan,
+  sbOnBoard,
 } from "./sandboxrules.js";
 import { mapName, mapForm } from "./maps.js";
 import { sbSnapshot, newSaveId, SAVE_V } from "./sbsave.js";
 import { lobbyBtnHTML } from "./vote.js";
 import { music, allowSongs, allowedSongs } from "./music.js";
 import { sfx } from "./sound.js";
+import { saveModeWin, startTest, autoPick } from "./gmodes.js";
 
 /* ---------- the store ---------- */
 const DB = "duckfriends-sandbox",
@@ -225,6 +227,7 @@ const playing = (s, r) =>
   isSb(s) &&
   !!s.sbsv &&
   s.hostId === r.me &&
+  !s.gmPlay && // (a made game mode played, or tested: the build isn't changed by playing it)
   !["lobby", "over", "countdown"].includes(s.phase);
 function flush() {
   const l = A.last;
@@ -296,6 +299,9 @@ export function saveRows(R) {
     },
   ); // (a map from a picture, kept on this device: umaps.js; the owner's, Nov 19 22:59Z, "In Sandbox ... They click it and they can upload an image")
   rows.push({ label: "Rules…", act: (r) => rulesWin(r) }); // (plan Phase 6: lives, the down phase, crits, watching when out)
+  rows.push({ label: "Save game mode…", act: (r) => saveModeWin(r) }); // (plan Phase 6: kept on this device, gmodes.js)
+  if (s.hostId === R.me && s.sbsv)
+    rows.push({ label: "Test game mode", act: (r) => startTest(r) }); // (as players would see it; Stop test at the top left)
   const on = allowedSongs(s); // (Miles Jr.'s song list, music.js: only these play, and everyone hears the same)
   rows.push({
     label: `Music: ${on.length ? `${on.length} of ${music.tracks.length} songs` : "no music"}…`,
@@ -349,6 +355,7 @@ function rulesWin(R) {
     const s = R.state,
       may = sbCan(s, R.me);
     w.querySelector(".sb-rules").innerHTML = Object.entries(SB_RULES)
+      .filter(([, b]) => !b.file && (!b.board || sbOnBoard(s))) // (Board size: the plain boards only; the settings file's: Seriat's settings/limits)
       .map(([k, b]) => {
         const v = sbRule(s, k);
         return b.kind === "bool"
@@ -358,7 +365,7 @@ function rulesWin(R) {
       .join("");
   };
   return openWindow(
-    `<h2>Rules</h2><p class="small dim">For the zombie maps (the arcade's cabin and Downpour). Saved with the Sandbox.</p><div class="sb-rules sb-set"></div>`,
+    `<h2>Rules</h2><p class="small dim">Lives, the down phase, crits and watching are for the zombie maps (the arcade's cabin and Downpour); Board size for the plain boards. Saved with the Sandbox.</p><div class="sb-rules sb-set"></div>`,
     {
       cls: "win-small sb-ruleswin",
       onOpen(w) {
@@ -605,6 +612,7 @@ async function importFile(input) {
 export function paintSbPick(R, pause) {
   const s = R.state;
   if (!(s.phase === "countdown" && s.sbpk)) return closeSbPick();
+  if (autoPick(R)) return closeSbPick(); // (a made game mode: the host's device hands it over, no pick: gmodes.js)
   if (!W || W.R !== R || W.key !== s.at + ":" + s.hostId + ":" + R.me)
     build(R, pause);
   const lv = lobbyBtnHTML(s, R.me);

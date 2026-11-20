@@ -247,6 +247,9 @@ import { mountL4Bar, l4Slider } from "./l4ddbar.js";
 import {
   isSb,
   sbOnBoard,
+  boardDuck,
+  sbBoardK,
+  noGoreOf,
   sbMay,
   sbSfx,
   sbCellMids,
@@ -1041,7 +1044,62 @@ function panRows(pos, now) {
 }
 const TAG_ROOM = 24; // px under a duck's feet: its name tag
 /* where a duck stands: x along the answers (0 strongly disagree … 1 strongly agree), y across */
+/* Sandbox's Board size (G's Rules, sandboxrules.js sbBoardK): the plain board k times as big as the screen's, and the
+   camera following my duck over it, as on Downpour (the owner's, Nov 19 21:59Z: "if the map is bigger, the camera follows
+   the duck as they move around"). geo.big is the whole board measured as if it were on the screen; geo.ox, geo.oy how
+   far it's slid; the map behind and the field slide and grow with it */
+function bigGeo() {
+  const g = geo;
+  return g.big || (g.big = { ...g, k: 1, W: g.W * g.k, H: g.H * g.k });
+}
+function boardCam() {
+  if (!geo || geo.hang || geo.sc || geo.tl || geo.qp) return;
+  const s = R.state,
+    k = sbOnBoard(s) && s.phase === "sandbox" ? sbBoardK(s) : 1,
+    cols = S && $(".board .cols", S),
+    layer = S && $(".map-layer", S);
+  if (k !== (geo.k || 1)) {
+    geo.k = k;
+    geo.big = null;
+    geo.ox = geo.oy = 0;
+    S.classList.toggle("sb-big", k > 1);
+  }
+  if (k === 1) {
+    if (cols && cols.style.transform) cols.style.transform = "";
+    if (layer && layer.style.transform) layer.style.transform = "";
+    return;
+  }
+  const g = geo,
+    big = bigGeo();
+  geo = big;
+  const o = me && me.x >= 0 ? place(me) : { left: big.W / 2, top: big.H / 2 };
+  geo = g;
+  const cl = (v, lo) => Math.max(lo, Math.min(0, v));
+  g.ox = cl(g.W / 2 - o.left, g.W - big.W);
+  g.oy = cl(g.top0 + g.H / 2 - o.top, g.H - big.H);
+  const tr = `translate(${g.ox.toFixed(1)}px, ${g.oy.toFixed(1)}px) scale(${k.toFixed(3)})`;
+  if (cols && cols._tr !== tr) {
+    cols._tr = tr;
+    cols.style.transformOrigin = "0 0";
+    cols.style.transform = tr;
+  }
+  if (layer && layer._tr !== tr) {
+    layer._tr = tr;
+    layer.style.transformOrigin = `${g.left.toFixed(1)}px ${(g.top + g.top0).toFixed(1)}px`;
+    layer.style.transform = tr;
+  }
+}
 function place(p, i, n, free = false) {
+  if (geo && geo.k > 1 && !geo.hang) {
+    const g = geo;
+    geo = bigGeo();
+    try {
+      const o = place(p, i, n, free);
+      return { left: o.left + (g.ox || 0), top: o.top + (g.oy || 0) };
+    } finally {
+      geo = g;
+    }
+  } // (Sandbox's bigger board: on it, slid by the camera)
   if (geo && geo.hang) return world.place(p); // Hangout: through the camera
   if (geo && geo.sc) {
     // Story Chain: y runs down the rows, each row the same share of it
@@ -1090,6 +1148,15 @@ function place(p, i, n, free = false) {
 }
 function unplace(px, py) {
   // the inverse, for clicks
+  if (geo.k > 1 && !geo.hang) {
+    const g = geo;
+    geo = bigGeo();
+    try {
+      return unplace(px - (g.ox || 0), py - (g.oy || 0));
+    } finally {
+      geo = g;
+    }
+  } // (Sandbox's bigger board)
   if (geo.hang) return world.unplace(px, py);
   const { W, H, size, labelH, qp } = geo,
     cl = (v) => Math.max(0, Math.min(1, v));
@@ -1557,7 +1624,7 @@ function drawDucks(now = clockNow()) {
         jet,
         !!p.bomb,
         wc,
-        !!+s.options.noGore,
+        noGoreOf(s),
       ]); // a new look shows at once, mid-game too (Duncelation: a dunce's hat; the jetpack on its back)
     if (dead && d._dead === false && !g && !wq) {
       sfx.hit();
@@ -1580,7 +1647,7 @@ function drawDucks(now = clockNow()) {
         title: p.name,
         dead,
         ...(p.bomb ? { skin: BOMB_SKIN } : {}),
-        ...(wc ? woundLook(s.options.noGore ? goreFree(wc) : wc) : {}), // (Gore off: only a hat knocked off shows)
+        ...(wc ? woundLook(noGoreOf(s) ? goreFree(wc) : wc) : {}), // (Gore off: only a hat knocked off shows)
       });
       d._bodyEl.innerHTML =
         (jet ? jetHTML(look) : "") +
@@ -1977,8 +2044,7 @@ function drawDucks(now = clockNow()) {
        owner's, Nov 18 10:38Z: "every player duck that dies in any game mode has a puddle of blood start to spill out
        beneath their duck like justin's"). The same pool (l4dd.js POOL_SVG), growing over JPOOL.ms from when it fell,
        gone when it's up again; none with Gore off. Downpour's Justin keeps his own (l4dd.js seePool) */
-    const pooled =
-      dead && !+s.options.noGore && !(isL4dd(s) && isWild(s, olId));
+    const pooled = dead && !noGoreOf(s) && !(isL4dd(s) && isWild(s, olId));
     if (!pooled) {
       if (d._pool) {
         d._pool.remove();
@@ -2877,7 +2943,7 @@ const TIPS = {
 /* the pixel effects: their canvas over the board, where the world is (the camera), this frame (fx.js) */
 function drawFx(board, fxl, hang, size, s, now) {
   const pt = performance.now();
-  fxLimits(s.options.noGore, s.options.noFx);
+  fxLimits(noGoreOf(s) ? 1 : 0, s.options.noFx);
   fxMount(hang ? board : fxl, geo.W, geo.H, size); // (Hangout and Dead Ducks Arcade: under the dark, css/app.css)
   if (hang) {
     const o = world.place({ x: 0, y: 0 }, 0);
@@ -3184,7 +3250,7 @@ function placeZombies(board, s, now) {
   const sbOl = sbOnBoard(s) && sbHasOl(s),
     want = new Set(zb.map((o) => String(o.i))),
     fxl = $(".fxl", board),
-    ng = !!+s.options.noGore,
+    ng = noGoreOf(s),
     have = new Map(); // (found once a frame, not one search for each of up to 800)
   /* claw marks: a few at a time (Sandbox can have 800 clawing at once, and each mark is a drawing made into pixels) */
   let marks = fxl
@@ -3766,7 +3832,7 @@ let flamesAt = 0;
 function flames(s, now, hang, size, fxl, heldAll) {
   const dt = Math.min(0.05, flamesAt ? (now - flamesAt) / 1000 : 0),
     l4 = isL4dd(s),
-    [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08],
+    [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
     half = l4 && low() ? 0.5 : 1; // (Dead Ducks Arcade on Low graphics or Data saving: half the stream's pixels and half the burning ground's, on my screen only; the fire itself is the rules' and stays the same)
   flamesAt = now;
   const spot = (x, y, z) =>
@@ -4700,7 +4766,7 @@ function jaimeFell(f, place, size) {
   const a = geo.hang
       ? world.place({ x: f.x, y: f.y }, f.hz || 0)
       : place({ x: f.x, y: f.y }, 0, 1),
-    gore = !+R.state.options.noGore,
+    gore = !noGoreOf(R.state),
     wc = gore ? f.w || "" : goreFree(f.w || ""),
     n = el(
       `<div class="jd-body" style="left:${a.left.toFixed(1)}px;top:${a.top.toFixed(1)}px;--sz:${size.toFixed(0)}px;--f:${f.face < 0 ? -1 : 1}" aria-hidden="true">${gore ? `<span class="gduck-pool">${POOL_SVG}</span>` : ""}<b>${duckSVG(JAIME.duck, { size: 64, shadow: false, dead: true, ...(wc ? woundLook(wc) : {}) })}</b></div>`,
@@ -4989,6 +5055,7 @@ function loop(t) {
   took("scene", t0);
   t0 = stamp();
   shiftSides(R.state, now);
+  boardCam();
   drawDucks(now);
   grLook(S, R.state); // (Sandbox: the groups' outlines, sbgroupview.js)
   took("ducks", t0);
@@ -5100,7 +5167,7 @@ function step(dt, now) {
   let onTree =
     cam && s.phase === "bracket"
       ? [geo.W / (cam.W * cam.z), geo.H / (cam.H * cam.z)]
-      : [1, 1]; // (on the bracket: the same speed on the screen)
+      : [1 / sbBoardK(s), 1 / sbBoardK(s)]; // (on the bracket: the same speed on the screen; on Sandbox's bigger board, the same speed in ducks)
   if (geo && geo.sc && geo.rows.length) {
     const k = geo.rows.length,
       row =
@@ -6705,7 +6772,10 @@ function sbGo(s) {
     bd = 1.6;
   for (const [id, p] of Object.entries((s.sb && s.sb.pts) || {})) {
     if (p.grp) continue;
-    const d = Math.hypot((p.x - me.x) / 0.03, (p.y - me.y) / 0.08);
+    const d = Math.hypot(
+      (p.x - me.x) / boardDuck(s)[0],
+      (p.y - me.y) / boardDuck(s)[1],
+    );
     if (d < bd) {
       bd = d;
       best = { id, label: SB_LABELS[p.k] || "Respawn settings" };
@@ -7360,7 +7430,9 @@ function paintNow(force) {
         me: () => me,
         eye: () => {
           const id = R && watching(R.state, R.me);
-          return id && world ? world.shown(id, R.state.pos[id]) : null;
+          return id && id !== R.me && world
+            ? world.shown(id, R.state.pos[id])
+            : null;
         }, // (Survival, my duck dead: the camera on the duck I watch, as it sees it: spectate.js)
         jumpZ,
         landsAt,
@@ -7956,7 +8028,8 @@ function keydown(e) {
   if (
     (e.code === "ArrowLeft" || e.code === "ArrowRight") &&
     R &&
-    watching(R.state, R.me)
+    watching(R.state, R.me) &&
+    watching(R.state, R.me) !== R.me // (a Dead Ducks Arcade ghost on its own card: the arrows still walk it)
   ) {
     e.preventDefault();
     spec(e.code === "ArrowLeft" ? -1 : 1);

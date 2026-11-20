@@ -57,6 +57,7 @@ import {
   sbFitSide,
   sbWallGo,
   sbWallStops,
+  boardDuck,
 } from "./sandboxrules.js";
 import {
   W as WW,
@@ -1302,11 +1303,10 @@ export function strike(s, now, me, foe, H, o, d = null, w = "claw") {
 
 /* ---------- the board's zombies: as Mad God Justin's wave zombies walk (mgjrules.js wavesTick), at each one's speed and
    damage, and kept apart on a grid so 800 cost little ---------- */
-const RX = 0.03,
-  RY = 0.08,
-  CELL = 1, // (duck lengths: the grid's cells)
+const CELL = 1, // (duck lengths: the grid's cells)
   NEAR = 12; // (the most others each one is kept apart from in a beat)
 function boardTick(s, now, H) {
+  const [RX, RY] = boardDuck(s); // (a duck's length: less of a bigger board, Board size in G)
   const z = s.mz,
     dt = Math.min(0.4, Math.max(0, (now - (z.t || now)) / 1000));
   z.t = now;

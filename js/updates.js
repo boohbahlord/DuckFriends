@@ -9,6 +9,46 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v151",
+    version: 151,
+    date: "Nov 20, 2026",
+    title: "Recursive",
+    news: [
+      "For Sandbox: Seriat's Permissions has a Recursive switch for folders. Turn it on to give a whole folder, and everything in it, the same rights at once. chmod -R does the same in the terminal.",
+      "For Sandbox: the Seriat bible button no longer covers the window's title on phones.",
+    ],
+  },
+  {
+    id: "v150",
+    version: 150,
+    date: "Nov 20, 2026",
+    title: "Your own game modes",
+    news: [
+      "For Sandbox: G has Save game mode (a name and a description, kept on your device; the same name replaces the old one) and Test game mode, which plays it as players would see it. Stop test at the top left brings your build back.",
+      "Game Settings has Custom under Game mode: the host's own game modes, played with no tools and their own player limit.",
+    ],
+  },
+  {
+    id: "v149",
+    version: 149,
+    date: "Nov 20, 2026",
+    title: "Settings file",
+    news: [
+      "For Sandbox: Seriat has a settings folder. Its limits file holds what no menu shows: crit chance, gore and the player limit. It is read-only until you turn its write on.",
+      "For Sandbox: players you give the rights to can now change the Rules in G in online games too.",
+    ],
+  },
+  {
+    id: "v148",
+    version: 148,
+    date: "Nov 20, 2026",
+    title: "Bigger boards",
+    news: [
+      "For Sandbox: Rules in G has Board size on the plain boards. Over 100%, the board is bigger than your screen and the camera follows your duck.",
+      "For Dead Ducks Arcade: once you bleed out, arrows by your card let you watch the other players until the next round.",
+    ],
+  },
+  {
     id: "v147",
     version: 147,
     date: "Nov 20, 2026",

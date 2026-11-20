@@ -11,6 +11,7 @@ import {
   SB_COLORS,
   SB_NOCOL,
   sbOnBoard,
+  boardDuck,
   sbInBlock,
   sbSpread,
   sbFills,
@@ -57,7 +58,8 @@ export function patternOf(p) {
 
 /* the point under (x, y) (shares of the map), or null: a ring within reach, a zone inside its box; the nearest wins */
 export function pointAt(s, at) {
-  const board = sbOnBoard(s);
+  const board = sbOnBoard(s),
+    U = boardDuck(s);
   let best = null,
     bd = Infinity;
   for (const [id, p] of Object.entries((s.sb && s.sb.pts) || {})) {
@@ -80,7 +82,7 @@ export function pointAt(s, at) {
       if (p.k === "zone") continue; // (a spawn, respawn or loot spot keeps its ring too)
     }
     const d = board
-      ? Math.hypot((p.x - at.x) / 0.03, (p.y - at.y) / 0.08)
+      ? Math.hypot((p.x - at.x) / U[0], (p.y - at.y) / U[1])
       : Math.hypot(((p.x - at.x) * W) / 48, ((p.y - at.y) * H) / 48);
     if (d < Math.min(1.2, bd)) {
       bd = d;

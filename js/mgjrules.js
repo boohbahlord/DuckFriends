@@ -75,7 +75,7 @@ import {
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
 import { ARMS, SLOT_ODDS, zombieTakes, pierceOf, ALL_HP } from "./l4ddrules.js";
 import { holdDown, onGetUp, invuln, hurtFx } from "./hangout/death.js";
-import { sbOnBoard } from "./sandboxrules.js";
+import { sbOnBoard, boardDuck } from "./sandboxrules.js";
 import { hitCode } from "./wounds.js";
 import { MAD } from "./sbbrain.js";
 import { npcBody, duOf } from "./sbbody.js";
@@ -1545,12 +1545,13 @@ export function mgjShot(s, sh, x0, y0, dx, dy, now, log, z = 0.41) {
   const m = s.mgj,
     sb = sbOnBoard(s); // (Sandbox's board: only its spawns' zombies, in s.mz as his are: sbspawn.js)
   if (!sb && (!m || s.phase !== "boss")) return false;
+  const [rx, ry] = sb ? boardDuck(s) : [RX, RY]; // (Sandbox's bigger board: a duck is less of it)
   const near = (q, r = 1, body = null) => {
     if (body) return body.line(x0, y0, x0 + dx, y0 + dy, z) >= 0; // (Sandbox's NPCs: where the shot, at its height z, meets what shows of it, sbbody.js)
-    const ux = dx / RX,
-      uy = dy / RY,
-      px = (q.x - x0) / RX,
-      py = (q.y - y0) / RY,
+    const ux = dx / rx,
+      uy = dy / ry,
+      px = (q.x - x0) / rx,
+      py = (q.y - y0) / ry,
       len = ux * ux + uy * uy;
     const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
     return Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1) * r;
@@ -1607,13 +1608,14 @@ export function mgjStop(s, sh, r, x0, y0, x1, y1, now) {
     sh.fake
   )
     return null;
-  const ux = (x1 - x0) / RX,
-    uy = (y1 - y0) / RY,
+  const [rx, ry] = sbOnBoard(s) ? boardDuck(s) : [RX, RY],
+    ux = (x1 - x0) / rx,
+    uy = (y1 - y0) / ry,
     len = ux * ux + uy * uy,
     /* how far along (0 … 1) it comes nearest to q, if that's within room of it (in a duck's length); else -1 */
     along = (q, room) => {
-      const px = (q.x - x0) / RX,
-        py = (q.y - y0) / RY,
+      const px = (q.x - x0) / rx,
+        py = (q.y - y0) / ry,
         k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
       return Math.hypot(px - k * ux, py - k * uy) < room ? k : -1;
     },
