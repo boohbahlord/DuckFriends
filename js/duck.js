@@ -120,6 +120,18 @@ export const scaleOf = (look) =>
   ) / 100;
 /* … and its hitbox: "the hitbox stays the same for smaller ones but becomes bigger for bigger ducks" */
 export const hitScaleOf = (look) => Math.max(1, scaleOf(look));
+/* how much bigger a cut-out picture is drawn and hit than a duck's square (picrop.js growOf): 1 to 2.5 */
+export const picGrow = (L) =>
+  L && L.cut && +L.z > 1 ? Math.min(2.5, +L.z) : 1;
+/* … its box in the duck's 120 units, grown round it (its bottom kept at 102, its middle at 60): { x, y, w, h, z } (x 0 or less, as far left as it reaches; y up
+   to its top; w and h at least 120), or null when it isn't grown */
+export function picFrame(L) {
+  const z = picGrow(L);
+  if (z <= 1) return null;
+  const x = Math.min(0, Math.floor(60 - 46 * z)),
+    y = Math.min(0, Math.floor(102 - 92 * z));
+  return { x, y, w: 120 - 2 * x, h: 120 - y, z };
+}
 /* player id's, in room state s (the rules' hits: rules.js, mgjrules.js, l4ddrules.js, sbarms.js) */
 export const duckBig = (s, id) =>
   hitScaleOf(((s && s.players && s.players[id]) || {}).duck);
@@ -228,6 +240,7 @@ function drawDuck(
     skin = null,
     gone = null,
     layer = null, // (one layer alone: duckparts.js)
+    grow = false, // (a cut-out picture as big a target as a duck: on the board and the maps, game.js)
   } = {},
 ) {
   const L = { ...DUCK_DEFAULT, ...plainLook(look || {}) },
@@ -279,10 +292,15 @@ ${DB.shadow}${DB.hatBack}${DB.fill}${DB.face}${DB.hatFront}${k !== 1 ? "</g>" : 
   if (L.image && L.cut) {
     /* a cut-out picture (cropped in Customize, or erased before it was uploaded: the owner's, Nov 20, "cropped images
        can also be used for players' custom avatars"): only what's left of it, standing on the same little shadow, no
-       card round it; its pixels square (it is made as pixels). It's hit only where it shows (sbbody.js picBody) */
-    return `<svg class="duck cutout" viewBox="0 0 120 120" width="${size}" height="${size}" role="img" aria-label="${esc(title || "Avatar")}">
+       card round it; its pixels square (it is made as pixels). It's hit only where it shows (sbbody.js picBody). On the
+       board and the maps (grow) a thin or sparse one is drawn bigger, standing where it stood, by picGrow, so it's as big a target
+       as a duck: its box grows round it (picFrame); everywhere else (menus, chips) it keeps the duck's square */
+    const F = grow ? picFrame(L) : null,
+      z = F ? F.z : 1,
+      vb = F ? `${F.x} ${F.y} ${F.w} ${F.h}` : "0 0 120 120";
+    return `<svg class="duck cutout" viewBox="${vb}" width="${F ? +((size * F.w) / 120).toFixed(1) : size}" height="${F ? +((size * F.h) / 120).toFixed(1) : size}" role="img" aria-label="${esc(title || "Avatar")}">
 ${shadow ? `<ellipse cx="60" cy="110" rx="30" ry="6" fill="#000" opacity=".22"/>` : ""}
-<image href="${esc(L.image)}" x="14" y="10" width="92" height="92" preserveAspectRatio="xMidYMax meet" style="image-rendering:pixelated"/>
+<image href="${esc(L.image)}" x="${+(60 - 46 * z).toFixed(1)}" y="${+(102 - 92 * z).toFixed(1)}" width="${+(92 * z).toFixed(1)}" height="${+(92 * z).toFixed(1)}" preserveAspectRatio="xMidYMax meet" style="image-rendering:pixelated"/>
 ${dead ? '<path d="M30 30L90 90M90 30L30 90" stroke="#e01b1b" stroke-width="10" stroke-linecap="round" opacity=".9"/>' : ""}${extra}</svg>`;
   }
   if (L.image) {

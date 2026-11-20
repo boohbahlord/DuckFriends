@@ -56,16 +56,34 @@ export function cropOf(img, rect, px = DUCK_PIC_PX) {
   g.drawImage(img, x, y, w, h, Math.round((px - dw) / 2), px - dh, dw, dh); // (standing on the bottom, in the middle)
   const data = applyPalette(g.getImageData(0, 0, px, px));
   g.putImageData(data, 0, 0);
-  let cut = false;
-  for (let i = 3; i < data.data.length; i += 4)
-    if (data.data[i] < 255) {
-      cut = true;
-      break;
-    }
-  return { d: c.toDataURL("image/png"), cut };
+  let cut = false,
+    on = 0;
+  for (let i = 3; i < data.data.length; i += 4) {
+    if (data.data[i] < 255) cut = true;
+    if (data.data[i] > 100) on++; // (what's hit: sbbody.js counts a square from there)
+  }
+  return {
+    d: c.toDataURL("image/png"),
+    cut,
+    z: cut ? growOf(on / (px * px)) : 1,
+  };
 }
+/* how much bigger a cut-out is drawn than a duck's square (z, 1 or more), so it's never a smaller target than a duck
+   (the owner's, Nov 20 18:50Z: "it is made to balance the game so they can make their avatar rly small based on the
+   aspect ratio of the crop"). shown: the share of its square it fills, fitted by its long side; a duck fills
+   PIC_FILL of the same square, so a thin or a sparse picture grows until it fills as much: its sides by the square
+   root of the two. Never past PIC_GROW_MOST, so a line a pixel wide doesn't cover the screen */
+export const PIC_FILL = 0.57; // (the slimmest duck, Skinny build: a Normal one fills 0.66)
+export const PIC_GROW_MOST = 2.5;
+export const growOf = (shown) =>
+  Math.round(
+    Math.min(
+      PIC_GROW_MOST,
+      Math.max(1, Math.sqrt(PIC_FILL / Math.max(shown, 0.01))),
+    ) * 100,
+  ) / 100;
 
-/* the window: resolves { d, cut }, or null when it's closed without one */
+/* the window: resolves { d, cut, z }, or null when it's closed without one */
 export function cropPicture(file) {
   if (!file || !/^image\//.test(file.type))
     return Promise.reject(new Error("That file is not a picture."));
