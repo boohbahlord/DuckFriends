@@ -3332,6 +3332,16 @@ html:not(.keyboard) .l4-board .gduck:not(.mine) .gduck-name > .rainbow {
     0 0 0.1rem #000,
     0 0.05rem 0.05rem #000;
 } /* (a dark edge on the letters, so a green or red name still reads on the bar) */
+/* a name inside the HP bar under a duck: smaller letters, in every font alike (each goes by its own --fk), and the bar
+   as tall as before, so my own bar under my duck is easy to see (the owner's, Nov 20 18:46Z) */
+:where(.gduck.php:not(.downed) .gduck-name) {
+  line-height: calc(0.76rem * var(--ts, 1) * 1.3);
+  min-width: calc(var(--sz, 2.6rem) * 0.9);
+  text-align: center;
+} /* (and as wide as the duck at least: the bar stays long however short the name) */
+:where(.gduck.php:not(.downed) .gduck-name) > :is(.pname, .rainbow) {
+  font-size: calc(0.66em * var(--fk, 1));
+}
 .gduck-hp i,
 .gduck-hp b {
   position: absolute;
