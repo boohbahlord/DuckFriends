@@ -27,8 +27,20 @@ import {
 } from "./l4ddrules.js";
 import { heightAt, slabBetween, deckOver, PROPS } from "./hangout/layout.js";
 import { DECKS } from "./hangout/stationmap.js";
-import { woundCode, DEATH } from "./wounds.js";
+import { hpHurt } from "./hpmath.js";
 import { gunmanLook } from "./gunmen.js";
+import {
+  sees as npcSees,
+  nearPairs,
+  nearest,
+  grudge,
+  grudgeOf,
+  roll,
+  reloadMs,
+  refill,
+  shotMark,
+  woundsAfter,
+} from "./npcrules.js";
 import {
   friend,
   friendsTick,
@@ -78,6 +90,7 @@ export const GM = {
   PERCH_MS: [14000, 22000], // ms he keeps to one spot with nothing in his sights before he moves on
   CLOSE: 2.5, // duck lengths: a duck this near and he fights it off (UMP, knife)
   SEEN: 12, // duck lengths: a duck this near with a clear line sees a soldier leave (it stays till it's gone from sight)
+  MAD: 8000, // ms: one that hurt it, it goes after this long (npcrules.js grudge)
   GONE: 2.5, // duck lengths: a soldier going back the way it came is gone this near the spot it came in by (row 112: at 40 px, the squad crowding round it, most never got there and stood about at the map's edge for good)
 };
 /* the criminals' guns, and how each fires: rounds a burst, ms from one burst to the next (their hidden cooldowns), and
@@ -173,8 +186,7 @@ export function newGunman(s, k, x, y, H, ro = "") {
   };
 }
 const magOf = (w) => (FIRE[w] && FIRE[w].mag) || ARMS[w].mag || 6;
-const reloadOf = (w) =>
-  ARMS[w].reload || (ARMS[w].shell ? ARMS[w].shell * magOf(w) : 1500);
+const reloadOf = (w) => reloadMs(w, magOf(w));
 
 /* a spot round (x, y), up to rx and ry off, where it can stand (H.open), else (x, y) itself. Row 112 (the owner: "It
    should not feel like an Easter egg hunt"): a group spread round a spot just inside a fence put some of them on the
@@ -399,7 +411,10 @@ function tick(s, zs, now, ids, H) {
     else crim(s, o, zs, foes, pls, fieldTo, now, dt, H);
   }
   gm.gb = gm.gb.filter((o) => !o.gone); // (soldiers who got away)
-  apart(gm.gb.filter((o) => !o.d && o.k !== "sn"));
+  apart(
+    gm.gb.filter((o) => !o.d && o.k !== "sn"),
+    H,
+  );
   /* the back line: one takes a fallen one's place, a moment later */
   const front = GM.FRONT * Math.max(1, ids.length),
     up = gm.gb.filter((o) => !o.d && o.k === "c").length;
@@ -423,9 +438,7 @@ function tick(s, zs, now, ids, H) {
 
 /* one criminal's beat */
 function crim(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
-  const sees = (t) =>
-      clearShot(o.x, o.y, t.x, t.y, heightAt(o.x, o.y)) &&
-      Math.abs(heightAt(o.x, o.y) - (t.z || 0)) < 60,
+  const sees = (t) => npcSees(o, t),
     dist = (t) => Math.hypot(t.x - o.x, t.y - o.y),
     go = (x, y, k = 1) => {
       const x0 = o.x;
@@ -433,27 +446,20 @@ function crim(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
       if (Math.abs(o.x - x0) > 0.5) o.f = o.x > x0 ? 1 : -1;
     };
   /* a zombie too near (or one that just clawed it) is shot first */
-  const zt = zs
-    .filter(
-      (z) =>
-        z.st !== 3 &&
-        (Math.hypot(z.x - o.x, z.y - o.y) < GM.DEFEND || z.i === o.zc),
-    )
-    .sort(
-      (a, b) =>
-        Math.hypot(a.x - o.x, a.y - o.y) - Math.hypot(b.x - o.x, b.y - o.y),
-    )[0];
+  const zt = nearest(
+    zs,
+    (z) => Math.hypot(z.x - o.x, z.y - o.y),
+    (z) =>
+      z.st !== 3 &&
+      (Math.hypot(z.x - o.x, z.y - o.y) < GM.DEFEND || z.i === o.zc),
+  );
   if (zt) {
     shoot(s, o, { z: zt, x: zt.x, y: zt.y }, now, H);
     return;
   }
   /* its duck: whoever hurt it a moment ago, else the nearest one (Justin out there only when there's nobody else) */
-  const mad = o.mad && o.mad[1] > now && ducks.find((d) => d.id === o.mad[0]);
   const t =
-    mad ||
-    ducks
-      .slice()
-      .sort((a, b) => dist(a) * (a.j ? 3 : 1) - dist(b) * (b.j ? 3 : 1))[0];
+    grudgeOf(o, now, ducks) || nearest(ducks, (d) => dist(d) * (d.j ? 3 : 1));
   if (!t) {
     o.st = o.st === "fire" ? "look" : o.st;
     return;
@@ -483,7 +489,7 @@ function crim(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
         q.st = "fire";
         q.cn = 1;
         q.lo = 1;
-        q.mad = [t.id, now + 8000];
+        q.mad = grudge(t.id, now, GM.MAD);
       }
   switch (o.st) {
     case "run": {
@@ -563,9 +569,7 @@ function soldier(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
   const gm = gmOf(s),
     sq = (gm.sq || {})[o.sq] || { n: 1, at: [o.x, o.y] },
     mates = gm.gb.filter((q) => !q.d && q.k === "s" && q.sq === o.sq),
-    sees = (t) =>
-      clearShot(o.x, o.y, t.x, t.y, heightAt(o.x, o.y)) &&
-      Math.abs(heightAt(o.x, o.y) - (t.z || 0)) < 60,
+    sees = (t) => npcSees(o, t),
     dist = (t) => Math.hypot(t.x - o.x, t.y - o.y),
     go = (x, y, k = 1) => {
       const x0 = o.x;
@@ -590,10 +594,12 @@ function soldier(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
   if (!zt) o.zc = 0;
   /* half the squad down: back the way they came, and gone */
   if (!sq.out && mates.length * 2 <= sq.n) sq.out = 1;
-  const near = ducks
-      .filter((d) => !d.j && dist(d) < GM.FLANK * GM.DUCK)
-      .sort((a, b) => dist(a) - dist(b))[0],
-    mad = o.mad && o.mad[1] > now && ducks.find((d) => d.id === o.mad[0]),
+  const near = nearest(
+      ducks,
+      dist,
+      (d) => !d.j && dist(d) < GM.FLANK * GM.DUCK,
+    ),
+    mad = grudgeOf(o, now, ducks),
     lead = mates.reduce(
       (c, q) => [c[0] + q.x / mates.length, c[1] + q.y / mates.length],
       [0, 0],
@@ -601,13 +607,10 @@ function soldier(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
     t =
       near ||
       mad ||
-      ducks
-        .slice()
-        .sort(
-          (a, b) =>
-            Math.hypot(a.x - lead[0], a.y - lead[1]) * (a.j ? 3 : 1) -
-            Math.hypot(b.x - lead[0], b.y - lead[1]) * (b.j ? 3 : 1),
-        )[0];
+      nearest(
+        ducks,
+        (d) => Math.hypot(d.x - lead[0], d.y - lead[1]) * (d.j ? 3 : 1),
+      );
   if (sq.out) {
     o.st = "out";
     go(sq.at[0], sq.at[1], 1.15);
@@ -731,7 +734,7 @@ function sniper(s, o, zs, ducks, now, H) {
     dist = (t) => Math.hypot(t.x - o.x, t.y - o.y),
     sees = (t) =>
       !o.hid &&
-      clearShot(o.x, o.y, t.x, t.y, Math.max(h, t.z || 0)) &&
+      npcSees(o, t, Math.max(h, t.z || 0), 0) &&
       roofOver(t.x, t.y, t.z || 0) === roofOver(o.x, o.y, h),
     move = () => {
       o.hid = 1;
@@ -795,11 +798,7 @@ function sniper(s, o, zs, ducks, now, H) {
         : +A.dmg || 4,
       a = Math.random() * 2 * Math.PI,
       off = hit ? 0 : 30 + Math.random() * 40;
-    o.sh = [
-      now,
-      Math.round(t.x + Math.cos(a) * off),
-      Math.round(t.y + Math.sin(a) * off * 0.5),
-    ];
+    o.sh = shotMark(now, t, a, off);
     if (hit) H.hurt(t.id, Math.round(dmg * GM.DMG * 10) / 10, "sniper");
     move();
     return;
@@ -902,12 +901,7 @@ export function shoot(s, o, t, now, H, only = null, blind = false) {
   o.ad = Math.round((Math.atan2(t.y - o.y, t.x - o.x) * 180) / Math.PI);
   o.f = t.x < o.x ? -1 : 1;
   /* its guns: a reload that's done fills it; the one in its hands, or the other while that one reloads */
-  o.wp.p.forEach((g, i) => {
-    if (o.rl[i] && o.rl[i] <= now) {
-      o.mg[i] = magOf(g);
-      o.rl[i] = 0;
-    }
-  });
+  refill(o.wp.p, o.mg, o.rl, now, magOf);
   const d = Math.hypot(t.x - o.x, t.y - o.y),
     i = o.wp.p.findIndex(
       (g, k) =>
@@ -952,40 +946,38 @@ export function shoot(s, o, t, now, H, only = null, blind = false) {
               (t.sp ? AIM.sprint : 1);
       if (blind || Math.random() >= chance) continue; // (blind: into the cover in front of it)
       hit = true;
-      dmg += Array.isArray(A.dmg)
-        ? A.dmg[0] + Math.floor(Math.random() * (A.dmg[1] - A.dmg[0] + 1))
-        : +A.dmg || 1;
+      dmg += roll(A.dmg);
     }
   /* where it went: at its target, or by it (a miss) */
   const off = hit ? 0 : 30 + Math.random() * 40,
     a = Math.random() * 2 * Math.PI;
-  o.sh = [
-    now,
-    Math.round(t.x + Math.cos(a) * off),
-    Math.round(t.y + Math.sin(a) * off * 0.5),
-  ];
+  o.sh = shotMark(now, t, a, off);
   if (hit) hitOn(s, o, t, dmg, g, now, H);
   return true;
 }
 
-/* never in each other */
-function apart(live) {
-  for (let a = 0; a < live.length; a++)
-    for (let b = a + 1; b < live.length; b++) {
-      const A = live[a],
-        B = live[b],
-        dx = A.x - B.x,
-        dy = A.y - B.y,
-        e = Math.hypot(dx / 40, dy / 22);
-      if (e >= 1) continue;
-      const k = e > 1e-3 ? (1 - e) / 2 / e : 0.3,
-        ux = e > 1e-3 ? dx * k : 4,
-        uy = e > 1e-3 ? dy * k : 2;
-      A.x += ux;
-      A.y += uy;
-      B.x -= ux;
-      B.y -= uy;
-    }
+/* never in each other: two too close are pushed apart (each half), but only where it's open, by the zombies' own check
+   at their floor (as l4ddrules' nudge), so a crowd never pushes one through a wall */
+function apart(live, H) {
+  nearPairs(live, 40, 22, (A, B) => {
+    const dx = A.x - B.x,
+      dy = A.y - B.y,
+      e = Math.hypot(dx / 40, dy / 22);
+    if (e >= 1) return;
+    const k = e > 1e-3 ? (1 - e) / 2 / e : 0.3,
+      ux = e > 1e-3 ? dx * k : 4,
+      uy = e > 1e-3 ? dy * k : 2;
+    push(A, ux, uy, H);
+    push(B, -ux, -uy, H);
+  });
+}
+function push(o, dx, dy, H) {
+  const x = o.x + dx,
+    y = o.y + dy;
+  if (H.stands(x, y, heightAt(o.x, o.y))) {
+    o.x = x;
+    o.y = y;
+  }
 }
 
 /* ---------- what hits them ---------- */
@@ -995,16 +987,8 @@ function takes(s, o, by, w, t, now, H, how = "") {
   const dmg = typeof t === "number" ? t : t.dmg,
     head = typeof t === "object" && t.head,
     took = Math.min(o.hp, dmg),
-    hp = Math.max(0, Math.round((o.hp - dmg) * 10) / 10),
-    had = o.w || "";
-  o.w =
-    !hp && head
-      ? had.includes("x")
-        ? had
-        : had + "x0"
-      : !hp && how === "blast"
-        ? had + DEATH.filter((c) => !had.includes(c)).join("")
-        : had + woundCode(had, w);
+    hp = hpHurt(o.hp, dmg);
+  o.w = woundsAfter(o.w || "", w, !hp, head, how === "blast");
   o.hp = hp;
   if (!hp) {
     o.d = now;
@@ -1013,7 +997,7 @@ function takes(s, o, by, w, t, now, H, how = "") {
   if (o.k === "f") return friendHurt(s, o, by, w, now, how); // (the friendly squad: no points, no drops; friendly fire)
   if (by && s.players[by]) {
     H.pts(by, (head ? 25 : 5 * took) * GM.PTS); // (5 times a zombie's: the owner's, "I agree with the point system for killing soldiers or criminals")
-    o.mad = [by, now + 8000];
+    o.mad = grudge(by, now, GM.MAD);
   }
   if (!hp && Math.random() < GM.DROP) H.drop(o.x, o.y);
 }
@@ -1110,7 +1094,7 @@ function hurt(s, i, dmg, w, now, H) {
     if (o.i !== i || o.d) return o;
     const q = { ...o };
     takes(s, q, null, w, dmg, now, H);
-    if (!q.d) q.mad = ["@m", now + 8000]; // (the merchant shot it: it goes for him as for a player, "Their likelihood to target them depends on if they're attacked by the merchant. Then they will treat them like a player")
+    if (!q.d) q.mad = grudge("@m", now, GM.MAD); // (the merchant shot it: it goes for him as for a player, "Their likelihood to target them depends on if they're attacked by the merchant. Then they will treat them like a player")
     return q;
   });
 }

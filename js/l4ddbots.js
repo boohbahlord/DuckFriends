@@ -43,6 +43,7 @@ import { isSurv } from "./survrules.js";
 import { walkOf } from "./rules.js";
 import { WANDER } from "./hangout/justin.js";
 import { NPC_RUN } from "./npcshared.js";
+import { sees as npcSees } from "./npcrules.js";
 
 const SEE = 460; // world px: how far a computer looks for a zombie to shoot
 const TOO_CLOSE = 95;
@@ -368,7 +369,7 @@ function justinBot(s, id, now, out) {
   if (wildOpen(s, id)) return wildMove(s, id, now, p, x, y, near, run, out); // (Justin out there: never armed, the owner's, Nov 17 20:02Z)
   /* what he'd shoot: the nearest zombie he can see */
   const seen = near.find(
-    (n) => n.d < SEE * 1.3 && clearShot(x, y, n.z.x, n.z.y, heightAt(x, y)),
+    (n) => n.d < SEE * 1.3 && npcSees({ x, y }, n.z, undefined, 0),
   );
   /* his gun: the best one with something in it (not reloading); the chain gun when a zombie is close or they crowd */
   const loaded = (w) =>

@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v177",
+    version: 177,
+    date: "Nov 20, 2026",
+    title: "Gunmen stay out of walls",
+    news: [
+      "For Survival: gunmen no longer get pushed through walls when they crowd together.",
+      "For Sandbox: NPCs' HP now goes in tenths, like everyone else's.",
+    ],
+  },
+  {
     id: "v176",
     version: 176,
     date: "Nov 20, 2026",
