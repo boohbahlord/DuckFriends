@@ -27,6 +27,7 @@ import { downpourGround, dpGroundColor } from "./dpground.js";
 import * as GS from "./stationmap.js";
 import * as SA from "./stationart.js";
 import { floorBricks, heapBricks } from "./bricks.js";
+import { ART } from "./pxworld.js";
 
 const C = L.CABIN,
   T = 12,
@@ -938,6 +939,7 @@ export const DRAW = {
             d: b.h - p.bldg.wall,
             kind: p.bldg === GS.STATION ? "gs" : "ch",
             soldier: p.soldier && p.soldier.map((v) => v / GS.K), // (its own numbers are the plan's)
+            px: ART / GS.K,
             holes:
               p.holes &&
               p.holes.map((h) =>

@@ -1663,22 +1663,25 @@ const SLAB = 16; // (the roof's thickness, as seen down its broken edge)
 function holeShape(x, y, w, d, seed, corner) {
   const r = rnd(seed);
   if (corner === "sw") {
-    /* from the roof's west edge at the top of the box, east and round and down its east side, then down through the
-       sign's band at the roof's front (its bottom 70) in a zigzag, to the roof's south edge: every edge broken */
+    /* from the roof's west edge at the top of the box east a little, then down its east side in uneven steps, each
+       one farther east (a ledge broken off a bit at a time, the way the wall under it broke: the owner's, Nov 20 16:57Z,
+       "have this circled corner have it's roof broken as a ledge with it's hieght showing in it's solid since it is
+       also 3d, so that way it is consistent"; each step's edge looks south, so the slab's thickness shows under it:
+       roofHole), then down through the sign's band at the roof's front (its bottom 70) in a zigzag, to the roof's
+       south edge: every edge broken */
     const pts = [[x - 4, y + r() * 8]];
-    for (let i = 1; i <= 5; i++) {
-      const u = i / 5;
-      pts.push([
-        x + w * (0.15 + 0.85 * Math.sin((u * Math.PI) / 2)) - r() * 14,
-        y + d * 0.4 * u * u + (r() - 0.5) * 14,
-      ]);
-    }
-    for (let i = 1; i <= 4; i++) {
-      const u = i / 4;
-      pts.push([
-        x + w * (1 - 0.1 * u) - r() * 16,
-        y + d * 0.4 + (d - 80 - d * 0.4) * u + (r() - 0.5) * 10,
-      ]);
+    let ex = x + w * (0.1 + r() * 0.06);
+    pts.push([ex, y + 6 + r() * 6]);
+    const top = y + d * 0.1,
+      end = y + d - 80,
+      n = 5;
+    for (let i = 1; i <= n; i++) {
+      const yi = top + ((end - top) * (i - 0.3 * r())) / n,
+        nx = i === n ? x + w * 0.96 : ex + (w * 0.8 * (0.6 + r() * 0.8)) / n;
+      ex += 3 + r() * 5;
+      pts.push([ex, yi - 2 - r() * 4]); // (down its east side, a little east as it goes)
+      pts.push([nx, yi + (r() - 0.5) * 5]); // (and a step east)
+      ex = Math.min(nx, x + w * 0.96);
     }
     for (const [k, v] of [
       [0.84, 58],
@@ -1701,7 +1704,71 @@ function holeShape(x, y, w, d, seed, corner) {
 }
 const pathOf = (p, dy = 0) =>
   "M" + p.map(([u, v]) => n1(u) + " " + n1(v + dy)).join("L") + "Z";
-function roofHole(x, y, w, d, seed, corner = "") {
+/* the roof's broken edge as a ledge, made as pixels (P world px each): under every edge of the cut that looks south,
+   the slab's own thickness (its broken face, LEDGE deep, its bottom ragged), solid, the way the broken wall's courses
+   show theirs (the owner's, Nov 20 16:57Z: "with it's hieght showing in it's solid since it is also 3d"). Its top
+   lip the roof's grey, the concrete under it darker going down, the ink round it. roofW × roofD: the roof's drawing
+   (its sign's band, the roof's front, its bottom 70: that is already its face, so a ledge only hangs from its top);
+   P: one of the world's pixels, in the roof's own numbers */
+const LEDGE = 68; // (as thick as its front, the sign's band)
+function ledgeOf(cut, roofW, roofD, seed, P) {
+  const r = rnd(seed + 7),
+    by = roofD - 70,
+    xs = cut.map((v) => v[0]),
+    ys = cut.map((v) => v[1]),
+    i0 = Math.max(1, Math.floor(Math.min(...xs) / P)),
+    i1 = Math.min(Math.floor(roofW / P) - 1, Math.ceil(Math.max(...xs) / P)),
+    j0 = Math.max(1, Math.floor(Math.min(...ys) / P) - 1),
+    j1 = Math.min(Math.floor(roofD / P), Math.ceil(Math.max(...ys) / P));
+  const inCut = (i, j) => {
+    const px = (i + 0.5) * P,
+      py = (j + 0.5) * P;
+    let c = false;
+    for (let a = 0, b = cut.length - 1; a < cut.length; b = a++) {
+      const [ax, ay] = cut[a],
+        [bx, bz] = cut[b];
+      if (ay > py !== bz > py && px < ((bx - ax) * (py - ay)) / (bz - ay) + ax)
+        c = !c;
+    }
+    return c;
+  };
+  const face = new Map(), // ("i,j": how many pixels down the face, from its top)
+    deep = new Map(),
+    K0 = Math.round(LEDGE / P);
+  for (let i = i0; i < i1; i++) {
+    const k0 = K0 - 1 + Math.round(r() * 2); // (its bottom ragged)
+    deep.set(i, k0);
+    let last = -1e9;
+    for (let j = j0; j < j1; j++) {
+      if (!inCut(i, j)) {
+        last = (j + 1) * P <= by ? j : -1e9; // (the roof's top: a ledge hangs from it; the band is a face already)
+        continue;
+      }
+      const k = j - last;
+      if (k <= k0) face.set(i + "," + j, k);
+    }
+  }
+  let s = "";
+  const q = (v) => Math.round(v * 1000) / 1000;
+  for (const [key, k] of face) {
+    const [i, j] = key.split(",").map(Number),
+      k0 = deep.get(i),
+      side = [-1, 1].some(
+        (di) => !face.has(i + di + "," + j) && inCut(i + di, j),
+      ),
+      c =
+        k >= k0 || side
+          ? O
+          : k <= 1
+            ? "#849097"
+            : k < k0 * 0.5
+              ? "#414d59"
+              : "#353636"; // (darker than the floor it hangs over, so it stands out solid)
+    s += R(q(i * P), q(j * P), q(P), q(P), c);
+  }
+  return s;
+}
+function roofHole(x, y, w, d, seed, corner = "", roofW = 0, roofD = 0, px = 2) {
   const r = rnd(seed + 101),
     cut = holeShape(x, y, w, d, seed, corner),
     id = uid(),
@@ -1723,10 +1790,12 @@ function roofHole(x, y, w, d, seed, corner = "") {
     F`<path d="${pathOf(ring)}${pathOf(cut)}" fill="#565d77" fill-rule="evenodd"/>` +
     F`<path d="${pathOf(ring)}" fill="none" stroke="#414d59" stroke-width="2" stroke-dasharray="9 7"/>`;
   /* the slab's broken edge, seen down the far (north) side of the hole: its thickness, then nothing (what's under the
-     roof shows) */
+     roof shows); the corner's, a ledge, solid (ledgeOf) */
   s +=
-    F`<clipPath id="${id}"><path d="${pathOf(cut)}"/></clipPath>` +
-    F`<g clip-path="url(#${id})"><path d="${pathOf(cut)}${pathOf(cut, SLAB)}" fill="#414d59" fill-rule="evenodd"/><path d="${pathOf(cut, SLAB * 0.45)}" fill="none" stroke="#353636" stroke-width="2"/></g>` +
+    (corner
+      ? ledgeOf(cut, roofW, roofD, seed, px)
+      : F`<clipPath id="${id}"><path d="${pathOf(cut)}"/></clipPath>` +
+        F`<g clip-path="url(#${id})"><path d="${pathOf(cut)}${pathOf(cut, SLAB)}" fill="#414d59" fill-rule="evenodd"/><path d="${pathOf(cut, SLAB * 0.45)}" fill="none" stroke="#353636" stroke-width="2"/></g>`) +
     F`<path d="${pathOf(cut)}" fill="none" stroke="#353636" stroke-width="2.4" stroke-linejoin="round"/>`; // (soft, as its cracks: Joseph's critique, Nov 20)
   /* rebar: rusty rods sticking out over the hole from its edge, a few bent down; none over the restroom's corner, where
      it broke with the brick wall under it (Joseph's critique, Nov 20: "Brick walls have no rebar") */
@@ -1841,7 +1910,14 @@ export function leanLadderSVG({
     F`<path d="M${foot + lean * 0.3} ${fy0 - z * 0.3 - 2}l${lean * 0.06} ${-z * 0.06}M${foot + lean * 0.7} ${fy0 - z * 0.7 - 2}l${lean * 0.04} ${-z * 0.04}" stroke="#9a5a2c" stroke-width="3" stroke-linecap="round" opacity="0.8"/>`;
   return wrap(w, d + h, s);
 }
-export function roofSVG({ w, d, kind = "gs", soldier = null, holes = null }) {
+export function roofSVG({
+  w,
+  d,
+  kind = "gs",
+  soldier = null,
+  holes = null,
+  px = 2, // (one of the world's pixels, in its own numbers)
+}) {
   const id = uid();
   if (kind === "gs") {
     let s =
@@ -1895,7 +1971,7 @@ export function roofSVG({ w, d, kind = "gs", soldier = null, holes = null }) {
       s =
         F`<mask id="${id}m" maskUnits="userSpaceOnUse" x="-20" y="-20" width="${w + 40}" height="${d + 40}"><rect x="-20" y="-20" width="${w + 40}" height="${d + 40}" fill="#fff"/>${hs.map((h) => F`<path d="${pathOf(holeShape(...h))}" fill="#000"/>`).join("")}</mask>` +
         F`<g mask="url(#${id}m)">${s}</g>`;
-    for (const h of hs) s += roofHole(...h);
+    for (const h of hs) s += roofHole(...h, w, d, px);
     /* the dead soldier up here, [x, y] on the roof, and his flare beside him (it burns at each round's start:
        l4dd.js flare) */
     if (soldier) {

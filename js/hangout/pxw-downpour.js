@@ -6,7 +6,7 @@ export const GROUND = {
   w: 2304,
   h: 2816,
 };
-export const ATLAS = "assets/px/world/downpour-props-c6802238.webp";
+export const ATLAS = "assets/px/world/downpour-props-42c418d9.webp";
 export const INDEX = {
   "1ej1aazrm@66x66": { "": [1473, 2994, 66, 66] },
   "njlwc7rm@447x66": { "": [1540, 2994, 447, 66] },
@@ -149,7 +149,7 @@ export const INDEX = {
   "gs1rokt0@432x84": { "": [908, 2994, 432, 84] },
   "uar9s8sy@432x16": { "": [772, 3285, 432, 16] },
   "11cpvrw1cp@36x71": { "": [1423, 2994, 36, 71] },
-  "luqy3zpsf@738x378": { "": [752, 0, 738, 378] },
+  "10vyd391xom@738x378": { "": [752, 0, 738, 378] },
   "1s5rka311h@438x648": { "": [0, 0, 438, 648] },
   "fyw51iig@12x171": { "": [541, 649, 12, 171] },
   "1r769bqji@12x150": { "": [567, 1145, 12, 150] },
