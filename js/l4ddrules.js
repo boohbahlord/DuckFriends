@@ -36,7 +36,7 @@
      l4b  { id: { o, at } }: who is boarding up which opening, since when (one more board each BOARD_MS)
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
-import { SPRINT as GAME_SPRINT } from "./gamedefaults.js";
+import { SPRINT as GAME_SPRINT, ZOMBIE_SWIPE_SLOWER } from "./gamedefaults.js";
 import { duckBig, scaleOf } from "./duck.js";
 import { hpHeal, hpHurt, tenths } from "./hpmath.js";
 import {
@@ -283,7 +283,7 @@ export const ARMS = {
     kind: "melee",
     dur: MELEE_DUR,
     cool: ARM_COOL.hammer,
-    dmg: [3, 5], // (3 to 5: the owner's, Nov 18 15:28Z)
+    dmg: [4, 6], // (3 to 5, then 1 more because it is so slow: the owner's, Nov 18 15:28Z and Nov 20 21:17Z)
     swing: ARM_SWING.hammer,
     at: 66,
     r: 50,
@@ -540,10 +540,10 @@ export const ARMS = {
   /* the jetpack (Stage 4): each use switches it on or off, as the long jump; on, Space flies (jetpack.js), and its
      10 s of flight (all, in ms) burn only while its jets are on in the air; a Max Ammo fills it */
   jetpack: { kind: "special", cool: 300, all: JET.FUEL },
-  /* Justin's office chair (the owner's, Nov 3): thrown the way I aim, 3 HP to the zombie it hits; 3 throws, a Max Ammo
-     gives them back */
+  /* Justin's office chair (the owner's, Nov 3): thrown the way I aim, 3 to 5 HP to the zombie it hits and it shoves it
+     back like the hammer; no ammo unless a Sandbox sets one */
   safekeep: { kind: "special", cool: 300, all: 1 }, // (Safe Keeping: never used by hand, SAFE below)
-  chair: { kind: "special", cool: ITEM_COOL, all: 3, dmg: 3, speed: 600 },
+  chair: { kind: "special", cool: ITEM_COOL, dmg: [3, 5], speed: 600 }, // (no ammo, thrown as often as you like; 3 to 5 whole: the owner's, Nov 20 21:17Z)
 };
 /* a hit's damage: the weapon's, or a roll between its two (the sniper's 2 to 3) */
 /* the grenade's and the grenade launcher's blast, half as wide (the owner's, Nov 19 19:27Z: "half the blast radius") */
@@ -598,10 +598,10 @@ export const START = ["knife", "handgun", "bow", ""];
 export const SLOT_KINDS = ["melee", "ranged", "ranged", "special", "special"];
 /* the item slots in a kit's slots (3, and 4 when there are two) */
 export const ITEM_SLOTS = [3, 4];
-/* a pick (game.js l4Pick: 0 to 3 the slots, 4 the grenades, 5 the second item, as keys 1 to 6) and its slot, -1 for the
-   grenades */
-export const slotOfPick = (i) => (i < 4 ? i : i === 5 ? 4 : -1);
-export const pickOfSlot = (k) => (k < 4 ? k : 5);
+/* a pick (game.js l4Pick: 0 to 3 the slots, 4 the second item, 5 the grenades, as keys 1 to 6: the owner's, Nov 20 21:17Z,
+   "The secondary item slot is number 5. The grenade is number 6") and its slot, -1 for the grenades */
+export const slotOfPick = (i) => (i < 5 ? i : -1);
+export const pickOfSlot = (k) => (k < 5 ? k : -1);
 /* every weapon there is (the Items page lists them all: l4ddcatalog.js) */
 export const WEAPONS = [
   "knife",
@@ -5083,6 +5083,8 @@ export function l4Shots(s, now) {
           strike(s, z, dmgOf(A), headshot(s, sh.by, w, z, now), sh.by, w)
         )
           die(z, T);
+        else if (w === "chair" && z.st === 2)
+          knockZ(z, sh.vx * W, sh.vy * H, KNOCK.hammer); // (the chair shoves like the hammer: the owner's, Nov 20 21:17Z)
         hitAny = true;
         gone = true;
       }
@@ -6224,7 +6226,7 @@ function moveZombies(s, zs, now, T, up) {
       Math.abs(target.zz - zombieZ(z)) < 50
     ) {
       if (!z.n) z.n = T || 1;
-      if (T - z.n >= R[2] && T - z.a >= R[3]) {
+      if (T - z.n >= R[2] && T - z.a >= R[3] + ZOMBIE_SWIPE_SLOWER) {
         z.a = T;
         z.dir = Math.round(
           Math.atan2(target.xy[1] - z.y, target.xy[0] - z.x) * 100,

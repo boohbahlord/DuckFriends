@@ -2490,8 +2490,8 @@ function peek(tag, s, me) {
     x ? [x, `k-${SLOT_KINDS[i]} ${tintOf(x, angelOf(s, me, x))}`.trim()] : null; // (each in its own color: l4ddrules.js tintOf)
   const list = [
     ...m.sl.slice(0, 4).map(one),
+    ...m.sl.slice(4, 5).map((x) => one(x, 4)), // (the second item, key 5, then the grenades, key 6, as on the bar)
     m.g > 0 ? ["grenade", "k-grenade"] : null,
-    ...m.sl.slice(4, 5).map((x) => one(x, 4)), // (the second item, after the grenades as on the bar)
   ].filter(Boolean);
   const to = Math.max(
       0,
