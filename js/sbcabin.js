@@ -208,7 +208,8 @@ export function cabinTick(s, now, H0) {
         (o.sv ?? 1) *
         (o.run && Math.hypot(o.x - to.x, o.y - to.y) > SPRINT.FAR
           ? SPRINT.K
-          : 1),
+          : 1) *
+        (to.sp ?? 1), // (a \move\'s @ speed)
       x0 = o.x,
       y0 = o.y;
     if (d.flee) {
@@ -223,10 +224,10 @@ export function cabinTick(s, now, H0) {
         pls,
       );
     } else if (
-      bd > (d.foe ? keepAt(o, claw) : claw * 0.9) ||
+      bd > (d.foe ? keepAt(o, claw) : to.pt ? 0.1 : claw * 0.9) ||
       (d.foe && o.wp && bd > claw && !sees(o, to))
     )
-      chaseStep(o, fieldTo(to), [to.x, to.y], v * dt, pls); // (a gun keeps its distance, once nothing's in the way: sbarms.js)
+      chaseStep(o, to.pt ? null : fieldTo(to), [to.x, to.y], v * dt, pls); // (a \move\'s spot: straight at it, round what's in the way) // (a gun keeps its distance, once nothing's in the way: sbarms.js)
     unwall(o, x0, y0); // (round a wall, never through it)
     if (sbfl) heights(s, o, d.flee ? null : to, dt, x0, y0); // (Sandbox's floors: plan Phase 4)
     if (Math.abs(o.x - x0) > 0.5) o.f = o.x > x0 ? 1 : -1;

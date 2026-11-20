@@ -22,6 +22,7 @@ export function sbOut(s, id) {
 export function sbAgain(s, now = Date.now()) {
   s.sb = { ...s.sb, died: {} };
   delete s.sb.over;
+  delete s.sb.wv; // (the waves or rounds start again from the first: sbspawn.js)
   const up = { ...(s.up || {}) };
   for (const id of s.seat) {
     const P = s.players[id];

@@ -292,7 +292,12 @@ function make(s, name, text, now) {
                 : 100, // (hitbox: already a percent of its usual size, so ((hitbox 150%)) is ((hitbox 150)), never a share of 300)
     get: (w) => {
       const st = g.cur.s;
-      if (w === "wave") return (st.hang && st.hang.l4 && st.hang.l4.r) || 0;
+      if (w === "wave")
+        return (
+          (st.sb && st.sb.wv && st.sb.wv.n) ||
+          (st.hang && st.hang.l4 && st.hang.l4.r) ||
+          0
+        ); // (G's waves or rounds, sbspawn.js; else Dead Ducks Arcade's round)
       if (w === "time") return Math.round((g.cur.now - g.t0) / 100) / 10;
       if (w === "alive") return g.cur.list.length;
       if (w === "dead") return g.dead;
@@ -327,6 +332,13 @@ function make(s, name, text, now) {
       o.nbo = { a, k: id };
       g.ch = true;
     },
+    /* \move\{ … }: its legs, worked out step by step as it walks (nbOrder) */
+    move: (me, m) => {
+      const o = npc(me);
+      if (!o) return;
+      o.nbm = { L: m.legs, b: m.bends, to: m.to, sp: m.sp, i: 0, q: null };
+      g.ch = true;
+    },
     say: (me, t) => {
       const o = npc(me);
       if (!o) return;
@@ -353,10 +365,16 @@ function make(s, name, text, now) {
   return g;
 }
 /* what NPC me's file told it to do, as decide() gives it: { goal, foe, flee }; null when it has no order (or what it was
-   after is gone) */
-export function nbOrder(me, all) {
-  const o = me.o,
-    n = o.nbo;
+   after is gone). A \move\ comes first while it lasts; then its go, attack or flee again. far: duck lengths between
+   two spots, now: ms */
+export function nbOrder(me, all, far, now) {
+  const o = me.o;
+  if (o.nbm && far) {
+    const pt = moveStep(me, o.nbm, all, far, now);
+    if (pt) return { goal: pt };
+    delete o.nbm;
+  }
+  const n = o.nbo;
   if (!n) return null;
   const t = all.find((x) => x.key === n.k);
   if (!t || t.key === me.key) {
@@ -368,4 +386,91 @@ export function nbOrder(me, all) {
     : n.a === "attack"
       ? { goal: t, foe: t }
       : { goal: t };
+}
+
+/* ---------- \move\ (the owner's, Nov 20 07:41Z and 18:46Z) ----------
+   Each leg is walked as a few spots, the bend saying how they lie:
+   - with no to, a leg is a walk from where it stands (>2: two duck lengths right): a shot goes straight, a bow curves
+     out to the right of its way by a quarter of its length, a weave goes out and back across (an S, a sixth), a dogleg
+     turns one sharp corner (an L);
+   - with to, the way there is cut into as many parts as there are legs, and each leg pushes its part that far that
+     way (>2: two duck lengths right of the straight way) while it still arrives: a shot goes straight to that spot and
+     on, a bow curves through it, a weave goes out that way and back across the other, a dogleg steps out first, then
+     cuts across. A - is a part with no push.
+   The bends go in turn, one a leg, and over again. A spot it can't reach is given up after a while, so a wall never
+   holds it for good */
+const MOVE_NEAR = 0.4; // duck lengths: there
+const MOVE_MS = 1200; // a spot it gets no nearer to for this long is given up (a wall, a crowd, Speed 0)
+export function movePart(A, B, ox, oy, kind, toward) {
+  const at = (t, k) => ({
+    x: A.x + (B.x - A.x) * t + ox * k,
+    y: A.y + (B.y - A.y) * t + oy * k,
+  });
+  const curve = (n, f) =>
+    Array.from({ length: n }, (_, i) => at((i + 1) / n, f((i + 1) / n)));
+  const pushed = ox || oy;
+  if (kind === "bow") return curve(4, (t) => Math.sin(Math.PI * t));
+  if (kind === "weave") return curve(8, (t) => Math.sin(2 * Math.PI * t));
+  if (kind === "dogleg")
+    return toward ? [{ x: A.x + ox, y: A.y + oy }, B] : [at(0.5, 1), B];
+  return pushed && toward ? [at(0.5, 1), B] : [B];
+}
+function moveStep(me, m, all, far, now) {
+  const ux = 1 / (far({ x: 0, y: 0 }, { x: 1, y: 0 }) || 1),
+    uy = 1 / (far({ x: 0, y: 0 }, { x: 0, y: 1 }) || 1); // (a duck length in the map's units)
+  const t = m.to ? all.find((x) => x.key === m.to) : null;
+  if (m.to && !t) return null; // (what it went to is gone)
+  const L = m.L || [],
+    bends = m.b || []; // (an empty list may come back missing from online)
+  for (let k = 0; k < 4; k++) {
+    if (!m.q || !m.q.length) {
+      if (m.i >= L.length) {
+        if (!m.to || far(me, t) < MOVE_NEAR) return null;
+        m.q = [{ x: t.x, y: t.y }]; // (no legs left: straight on to it)
+        m.n = (m.n || 0) + 1;
+        continue;
+      }
+      const leg = L[m.i],
+        kind = bends[m.i % bends.length] || "shot",
+        A = { x: me.x, y: me.y };
+      let B, ox, oy;
+      if (t) {
+        const left = L.length - m.i;
+        B = { x: A.x + (t.x - A.x) / left, y: A.y + (t.y - A.y) / left };
+        ox = leg.dx * ux;
+        oy = leg.dy * uy;
+      } else {
+        B = { x: A.x + leg.dx * ux, y: A.y + leg.dy * uy };
+        const len = Math.hypot(leg.dx, leg.dy),
+          f =
+            kind === "dogleg"
+              ? 0.5
+              : kind === "bow"
+                ? 0.25
+                : kind === "weave"
+                  ? 1 / 6
+                  : 0;
+        // (the right of its way, as on the screen: going right, that's down)
+        ox = len ? (-leg.dy / len) * len * f * ux : 0;
+        oy = len ? (leg.dx / len) * len * f * uy : 0;
+      }
+      m.q = movePart(A, B, ox, oy, kind, !!t);
+      m.i++;
+      m.n = (m.n || 0) + 1;
+    }
+    const P = m.q[0],
+      d = far(me, P);
+    if (m.ts !== m.n || d < m.d - 0.05) {
+      m.ts = m.n; // (a new spot, or nearer to it: its time starts again; counted, as the state may be copied)
+      m.t = now;
+      m.d = d;
+    }
+    if (d < MOVE_NEAR || now - m.t > MOVE_MS) {
+      m.q.shift();
+      m.n = (m.n || 0) + 1;
+      continue;
+    }
+    return { key: "~mv", pt: true, x: P.x, y: P.y, sp: m.sp };
+  }
+  return { key: "~mv", pt: true, x: me.x, y: me.y, sp: m.sp };
 }

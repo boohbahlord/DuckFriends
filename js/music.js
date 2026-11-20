@@ -20,6 +20,7 @@ import { now as clockNow } from "./clock.js";
 import { ceiling, sfxContext, modeDb } from "./sound.js";
 import { netLevel } from "./settings.js";
 import { baseMode } from "./sandboxrules.js";
+import { songUrl } from "./sbaudio.js";
 
 /* every song: its name, its file and its length (s, the files' own) */
 const SONGS = [
@@ -36,11 +37,30 @@ const SONGS = [
   ["Bubble Bath in the Sky", "bubble-bath-in-the-sky", 79.44],
 ];
 const names = SONGS.map((s) => s[0]),
-  idx = (n) => names.indexOf(n),
-  durOf = (i) => SONGS[i][2];
+  idx = (n) => names.indexOf(n);
+/* a Sandbox room's own songs, imported in G's Music (s.sbsong, sbaudio.js): each by its name, as the game's own are; a
+   name the game already has gets a number */
+let EX = new Map();
+export function songsOf(s) {
+  const m = new Map();
+  for (const [key, e] of Object.entries((s && s.sbsong) || {})) {
+    if (!e || typeof e.d !== "string" || !(e.l > 0)) continue;
+    let n = String(e.n || "My song"),
+      k = 2;
+    while (idx(n) >= 0 || m.has(n)) n = `${e.n} (${k++})`;
+    m.set(n, { key, e });
+  }
+  return m;
+}
+const known = (n) => idx(n) >= 0 || EX.has(n),
+  durN = (n) =>
+    idx(n) >= 0 ? SONGS[idx(n)][2] : EX.has(n) ? EX.get(n).e.l : 0,
+  allNames = () => [...names, ...EX.keys()];
 const VERSION = (import.meta.url.match(/[?&]v=(\w+)/) || [])[1] || "dev";
 const fileOf = (n) =>
-  `assets/music/${netLevel() > 0 ? "lo/" : ""}${SONGS[idx(n)][1]}.mp3?v=${VERSION}`;
+  EX.has(n)
+    ? songUrl(EX.get(n).key, EX.get(n).e)
+    : `assets/music/${netLevel() > 0 ? "lo/" : ""}${SONGS[idx(n)][1]}.mp3?v=${VERSION}`;
 
 /* the happier songs, for the menus */
 const HAPPY = [
@@ -87,19 +107,19 @@ function pick(avoid, off) {
   const h = heard(),
     now = Date.now(),
     age = (n) => (h[n] ? Math.max(1, (now - h[n]) / 60000) : 1e7);
-  const pool = names.map((n, i) => i).filter((i) => !off.has(names[i]));
-  if (!pool.length) return -1;
-  let best = -1,
+  const pool = allNames().filter((n) => !off.has(n));
+  if (!pool.length) return null;
+  let best = null,
     bk = -1;
-  for (const i of pool) {
-    if (pool.length > 1 && i === avoid) continue;
-    const k = Math.pow(Math.random(), 1 / Math.log(2 + age(names[i])));
+  for (const n of pool) {
+    if (pool.length > 1 && n === avoid) continue;
+    const k = Math.pow(Math.random(), 1 / Math.log(2 + age(n)));
     if (k > bk) {
       bk = k;
-      best = i;
+      best = n;
     }
   }
-  h[names[best]] = now;
+  h[best] = now;
   try {
     localStorage.setItem(HKEY, JSON.stringify(h));
   } catch (e) {}
@@ -112,16 +132,16 @@ function pick(avoid, off) {
    picks a new b. Every device plays whichever song should be sounding, from where it should be by now. A song turned off
    stops at once and the next one comes in 3 seconds. A room whose host has no song list plays this device's own picks */
 const GAP = 20;
-const end = (e) => e.at + durOf(idx(e.n)) * 1000;
+const end = (e) => e.at + durN(e.n) * 1000;
 function plan(S, t, menu, skip) {
   const off = new Set(menu ? SAD : (S && S.off) || []),
-    ok = (n) => idx(n) >= 0 && !off.has(n),
+    ok = (n) => known(n) && !off.has(n),
     gap = menu ? 0 : GAP;
   for (const n of skip || []) off.add(n);
   let a = (S && S.a) || null,
     b = (S && S.b) || null;
   const was = JSON.stringify([a, b]);
-  if (a && idx(a.n) < 0) a = null;
+  if (a && !known(a.n)) a = null;
   if (a && !ok(a.n) && !(skip || []).includes(a.n) && t < end(a)) {
     a = null;
     if (b) b = { ...b, at: Math.min(b.at, t + 3000) };
@@ -132,14 +152,14 @@ function plan(S, t, menu, skip) {
     b = null;
   }
   if (!a) {
-    const i = pick(-1, off);
-    if (i >= 0) a = { n: names[i], at: t + 1500, seed: 0 };
+    const n = pick(null, off);
+    if (n) a = { n, at: t + 1500, seed: 0 };
   }
   if (a && !b) {
-    const i = pick(idx(a.n), off);
-    if (i >= 0)
+    const n = pick(a.n, off);
+    if (n)
       b = {
-        n: names[i],
+        n,
         at: Math.round(Math.max(end(a), t) + gap * 1000),
         seed: 0,
       };
@@ -203,6 +223,7 @@ function list() {
 /* every second: the host keeps the room's list going (whether or not it plays music itself), and this device follows */
 function conduct() {
   const t = clockNow();
+  EX = inMenu() ? new Map() : songsOf(roomState()); // (a room's own songs: only in that room)
   if (inMenu()) {
     const m = plan(MENU, t, true, SCARY_SONGS);
     if (m) MENU = { ...m, off: [] };
@@ -290,7 +311,7 @@ let playing = false;
 /* the song that should be sounding now: the first on the list that hasn't ended (it may not have begun) */
 function wantOf(S, t) {
   for (const e of [S && S.a, S && S.b])
-    if (e && idx(e.n) >= 0 && t < end(e)) return e;
+    if (e && known(e.n) && t < end(e)) return e;
   return null;
 }
 /* where a song should be by now (s), counting the time the sound takes to reach the speakers */
@@ -520,13 +541,14 @@ const picked = (s) => !!(s && s.music && (s.music.off || []).includes(PICKED));
 export function allowSongs(list) {
   const r = activeRoom();
   if (!r) return false;
-  const on = Array.isArray(list) ? names.filter((n) => list.includes(n)) : null;
+  const every = [...names, ...songsOf(r.state).keys()],
+    on = Array.isArray(list) ? every.filter((n) => list.includes(n)) : null;
   r.send(
     on
       ? {
           t: "songs",
           all: "on",
-          off: [...names.filter((n) => !on.includes(n)), PICKED],
+          off: [...every.filter((n) => !on.includes(n)), PICKED],
         }
       : { t: "songs", all: "on" },
   ); // (all "on" first clears the old list: rules.js)
@@ -534,7 +556,7 @@ export function allowSongs(list) {
 }
 export function allowedSongs(s) {
   const off = new Set((s && s.music && s.music.off) || []);
-  return names.filter((n) => !off.has(n));
+  return [...names, ...songsOf(s).keys()].filter((n) => !off.has(n));
 }
 
 export const music = {
@@ -550,7 +572,7 @@ export const music = {
   },
   renderSong: async () => null,
   nowPlaying,
-  length: (n) => (idx(n) < 0 ? 0 : durOf(idx(n))),
+  length: (n) => durN(n),
   get playing() {
     return playing;
   },
