@@ -329,7 +329,7 @@ async function made(page, src, w, h, how) {
       .sort();
     fs.writeFileSync(
       path.join(ROOT, "js", "pxpic.js"),
-      `/* the maps that have a picture file (assets/px/pic): written by tools/pixel-files.cjs, never by hand */\nexport const PX_PIC = ${JSON.stringify(pics)};\n`,
+      `/* the maps that have a picture file (assets/px/pic): written by tools/pixel-files.cjs, never by hand */\nexport const PX_PIC = [\n${pics.map((p) => `  "${p}",\n`).join("")}];\n`, // (as prettier writes it)
     );
   }
   await b.close();
