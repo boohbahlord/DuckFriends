@@ -4,6 +4,8 @@
    - fixed: what keeps its own colors (a ball, a face, confetti's red, blue and green), through the game's colors;
    - tint: what takes the player's pattern color (the dots, the stripes …), white, for the game to color, each pixel
      as see-through as it is uncovered.
+   A hat whose color the player picks is two layers too: the hat with that color black, and a grey layer saying how
+   much of the color each pixel takes (mix in js/pxcard.js), so its shades follow the color as the drawing's did.
    Both go in one sheet each (a row for each size, a motif after another along it, each with a quarter of its size
    round it): assets/px/cards/fixed.webp and
    tint.webp, and where each one is in js/pxcard.js. The game lays a card's pattern out from them (js/card.js).
@@ -74,11 +76,21 @@ function serve() {
       await import("/js/rules.js"); // (first: the modules' circle starts there)
       const { motif, CARD_PATTERNS } = await import("/js/card.js");
       const { applyPalette } = await import("/js/pixelpalette.js");
-      const kinds = CARD_PATTERNS.map(([k]) => k).filter(
-        (k) => k !== "none" && !k.startsWith("hat:"),
-      );
+      const { hatTile, hatById } = await import("/js/hats.js");
+      const kinds = CARD_PATTERNS.map(([k]) => k).filter((k) => k !== "none"),
+        hat = (k) => k.startsWith("hat:"),
+        recolors = (k) =>
+          hat(k) &&
+          (hatById(k.slice(4)).colors || []).some(([c]) => c === "c1");
       /* a motif's two layers as svg: what keeps its colors, and what takes the player's (white) */
       const layers = (k) => {
+        /* a hat whose color the player picks: drawn with that color black and with it white; how far apart the two are
+           is how much of the color each pixel takes (its shades too) */
+        if (recolors(k))
+          return [
+            hatTile(k.slice(4), "#000000"),
+            hatTile(k.slice(4), "#ffffff"),
+          ];
         if (!TINT.includes(k)) return [motif(k, "#ffffff"), ""];
         const fixed = motif(k, "none"),
           tint = motif(k, "#ffffff").replace(
@@ -127,10 +139,41 @@ function serve() {
             const n = P(s),
               im = await pic(two[L], n);
             c.width = c.height = n;
-            const x = c.getContext("2d");
+            const x = c.getContext("2d", { willReadFrequently: true });
             x.drawImage(im, 0, 0, n, n);
             const d = x.getImageData(0, 0, n, n);
-            if (L === 0) applyPalette(d);
+            if (recolors(k)) {
+              if (L === 1) {
+                /* the mix layer: grey, each pixel how much of the hat's color it takes (white: all of it) */
+                x.clearRect(0, 0, n, n);
+                x.drawImage(await pic(two[0], n), 0, 0, n, n);
+                const b = x.getImageData(0, 0, n, n).data;
+                for (let p = 0; p < d.data.length; p += 4) {
+                  const v = b[p + 3]
+                    ? Math.round(
+                        Math.max(
+                          0,
+                          Math.min(
+                            255,
+                            (d.data[p] -
+                              b[p] +
+                              d.data[p + 1] -
+                              b[p + 1] +
+                              d.data[p + 2] -
+                              b[p + 2]) /
+                              3,
+                          ),
+                        ),
+                      )
+                    : 0;
+                  d.data[p] = d.data[p + 1] = d.data[p + 2] = v;
+                  d.data[p + 3] = b[p + 3] ? 255 : 0;
+                  if (v) any = true;
+                }
+                sheets[L].getContext("2d").putImageData(d, i * n, rows[s]);
+                continue;
+              } // (its other layer: the hat with that color black, as it is; the game adds the color and makes it the game's colors)
+            } else if (L === 0) applyPalette(d);
             else
               for (let p = 0; p < d.data.length; p += 4) {
                 d.data[p] = d.data[p + 1] = d.data[p + 2] = 255; // (how much of each pixel it covers stays: the game mixes it with the card's color and puts that in the game's colors, js/card.js)
@@ -147,6 +190,7 @@ function serve() {
         rows,
         fixed: kinds.map((_, i) => !!has[0][i]),
         tint: kinds.map((_, i) => !!has[1][i]),
+        mix: kinds.filter(recolors),
         files: sheets.map((c) => c.toDataURL("image/png")),
         W,
         H,
@@ -181,6 +225,7 @@ export default ${JSON.stringify({
       kinds: out.kinds,
       hasFixed: out.fixed,
       hasTint: out.tint,
+      mix: out.mix,
     })};\n`,
   );
   execFileSync("npx", ["-y", "prettier@3.6.2", "--write", js]);

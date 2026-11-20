@@ -19092,25 +19092,6 @@ html.moving .pxh-in {
 html.moving .pxt {
   animation: twinkle 2.6s ease-in-out infinite alternate;
 }
-/* a card's hat pattern (a player's card, the Card page's swatches; every other pattern and a picture are pixel files
-   already: card.js) on the grid too: its background drawn again under it, through the same filter, so the duck and the
-   name over it stay as they are */
-html.pixel .pcard[style*="svg+xml"] {
-  isolation: isolate;
-}
-html.pixel .pcard[style*="svg+xml"]::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  background: inherit;
-  filter: url(#px-f);
-  pointer-events: none;
-}
-html.pixel .pat-pic[style*="svg+xml"] {
-  filter: url(#px-f);
-}
 .gduck-body img.px {
   display: block;
   width: 100%;
