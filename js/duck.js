@@ -675,7 +675,7 @@ export const DUCK_PIC_PX = 35;
    as wide as it is tall (phone to computer); 5.5 is its middle, so what the crop window shows is what the card shows */
 export const CARD_PIC = [176, 32];
 /* a loaded picture cut to its middle at w:h, w × h in the game's colors: a PNG data URL */
-export function shapeOf(img, w, h = w) {
+function shapeOf(img, w, h = w) {
   const iw = img.naturalWidth,
     ih = img.naturalHeight,
     k = Math.min(iw / w, ih / h),
