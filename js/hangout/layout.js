@@ -1306,9 +1306,10 @@ const BAND = 40,
   BACK = STAGE.cy - STAGE.ry,
   LOW = STAGE.cy + STAGE.ry + BAND;
 export function sortY(x, y, z) {
-  if (variant === "l4gs") {
+  if (variant === "l4gs" || extraDecks().length) {
     const d = deckAt(x, y, z);
-    return d ? d.key + 1 + ((y - d.y0) / (d.y1 - d.y0)) * 7 : y; // (on a roof: in front of it, the same way as on a bed)
+    if (d) return d.key + 1 + ((y - d.y0) / (d.y1 - d.y0)) * 7; // (on a roof, or a Sandbox floor: in front of it, the same way as on a bed)
+    if (variant === "l4gs") return y;
   }
   const pl = PLATS.length && platAt(x, y);
   if (pl && z >= pl.top - 1)

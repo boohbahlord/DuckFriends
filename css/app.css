@@ -22128,3 +22128,8 @@ textarea.um-in {
   image-rendering: pixelated;
   filter: brightness(0.5);
 }
+/* Sandbox Phase 4: a zone up high goes see-through while my duck is behind or under it, softly */
+.sb-look,
+.sb-face {
+  transition: opacity 0.2s;
+}

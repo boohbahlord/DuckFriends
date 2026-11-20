@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v146",
+    version: 146,
+    date: "Nov 20, 2026",
+    title: "See-through floors",
+    news: [
+      "For Sandbox: a zone up high is drawn over whatever is behind or under it, the way Downpour's roofs are, and goes see-through while your duck is back there. Whoever stands on top of it shows in front of it.",
+    ],
+  },
+  {
     id: "v145",
     version: 145,
     date: "Nov 20, 2026",

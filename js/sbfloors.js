@@ -98,6 +98,7 @@ function decks() {
       y1: y1 * H,
       h: sl ? Math.min(sl.lo, sl.hi) : p.z,
       kind: "zone",
+      key: y1 * H, // (drawn in front of what's behind its front edge: what stands on it is in front of it, layout.js sortY)
       sb: id,
       holes: NONE,
       /* on its shape, on a square working now (read from the state as it is at that moment: its steps move on) */
