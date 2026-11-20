@@ -215,7 +215,7 @@ function conduct() {
       LOC = null;
       noListAt = 0;
     } else {
-      const skip = scaryMap(s) ? [] : SCARY_SONGS;
+      const skip = scaryMap(s) || picked(s) ? [] : SCARY_SONGS; // (a song ticked on purpose plays on any map)
       if (s.hostId === r.me) {
         const m = plan(s.music, t, false, skip);
         if (m) r.send({ t: "music", a: m.a, b: m.b });
@@ -510,14 +510,24 @@ function nowPlaying() {
      allowSongs(list)   from a settings row: only the songs named in list play, shuffled as ever and the same for
                         everyone (the rest go on the room's off list, s.music.off: rules.js "songs"); an empty list: no
                         music; no list (null or undefined): every song. The host, sudo or cansettings only (rules.js).
+                        A list is a choice: a song ticked in it plays on every map, What the duck? on a happy one too
+                        (Adam, Nov 20); with no list, What the duck? keeps to the scarier maps (SCARY_SONGS).
      allowedSongs(s)    the songs room state s may play now (the row's ticks) */
+const PICKED = "(picked)"; // (on the off list: the songs were picked from a list; no song has this name)
+const picked = (s) => !!(s && s.music && (s.music.off || []).includes(PICKED));
 export function allowSongs(list) {
   const r = activeRoom();
   if (!r) return false;
-  const on = Array.isArray(list)
-    ? names.filter((n) => list.includes(n))
-    : names;
-  r.send({ t: "songs", on, off: names.filter((n) => !on.includes(n)) });
+  const on = Array.isArray(list) ? names.filter((n) => list.includes(n)) : null;
+  r.send(
+    on
+      ? {
+          t: "songs",
+          all: "on",
+          off: [...names.filter((n) => !on.includes(n)), PICKED],
+        }
+      : { t: "songs", all: "on" },
+  ); // (all "on" first clears the old list: rules.js)
   return true;
 }
 export function allowedSongs(s) {
