@@ -59,6 +59,10 @@ import {
   sbWallStops,
   sbWorksAt,
   sbOutline,
+  sbHasOl,
+  sbOlColor,
+  sbOlRows,
+  SB_OL_DEF,
 } from "./sandboxrules.js";
 import {
   boxText,
@@ -72,6 +76,7 @@ import {
 } from "./sbspawn.js";
 import { orbFace, lootRing, lootPage, lootWire } from "./sblootview.js";
 import { drawNpcs, dropNpcs } from "./npcview.js";
+import { olAdd } from "./outlines.js";
 import {
   kindsFor,
   sendKinds,
@@ -460,6 +465,47 @@ const brainRow = (t, why) =>
    named as it's named). Its summary says what's picked */
 const summaryOf = (on) =>
   on.map((c) => c.dataset.label).join(", ") || "Nothing";
+/* the choices of a behavior list: Players, Everything, each kind, each spawn (by its color, named as it's named) */
+const whoOpts = (s, kinds) => [
+  ["players", "Players"],
+  ["everything", "Everything"],
+  ...kinds,
+  ...Object.values(ptsOf(s))
+    .filter((q) => q.k === "spawn")
+    .map((q) => [q.col, `${boxText(q, "name")} spawn`]),
+];
+/* a zone's Outlines (plan Phase 3: "show outline for chosen entities, in a chosen color; a + duplicates the row for
+   another color"): a row each, who it takes and its color; the rows go into one hidden box (sandboxrules.js sbOlRows) */
+function olSect(s, p, kinds) {
+  const opts = whoOpts(s, kinds).filter(
+      (o, i, all) => all.findIndex((x) => x[0] === o[0]) === i,
+    ),
+    rows = sbOlRows(p),
+    one = (who, c) => {
+      const on = opts.filter(([v]) => who.includes(v)).map(([, n]) => n);
+      return `<div class="sb-olrow"><details class="sb-acts sb-olwho"><summary>${esc(on.join(", ") || "Nothing")}</summary><span class="sb-what">${opts
+        .map(
+          ([v, n]) =>
+            `<label><input type="checkbox" value="${esc(v)}" data-label="${esc(n)}"${who.includes(v) ? " checked" : ""}> ${esc(n)}</label>`,
+        )
+        .join(
+          "",
+        )}</span></details><input type="color" class="sb-olcol" value="${c}" aria-label="Outline color"><button type="button" class="btn small ghost sb-olx" data-olx aria-label="Remove this row">&minus;</button></div>`;
+    };
+  return `<div class="sb-row sb-olbox" data-row="ol"><span>${esc(SB_ZONE.ol.name)}</span><div class="sb-olrows">${(rows.length ? rows : [[[], SB_OL_DEF]]).map(([w, c]) => one(w, c)).join("")}<button type="button" class="btn small sb-olplus" data-olplus aria-label="Another row">+</button></div><input type="hidden" class="sb-box" data-f="ol" value="${esc(boxText(p, "ol"))}"><em class="sb-why"></em></div>`;
+}
+/* its rows, read back into its hidden box (and sent, as typing in a box is) */
+function olWrite(box) {
+  const rows = [...box.querySelectorAll(".sb-olrow")].map((r) => {
+    const on = [...r.querySelectorAll("input[type=checkbox]:checked")];
+    r.querySelector("summary").textContent =
+      on.map((c) => c.dataset.label).join(", ") || "Nothing";
+    return `${on.map((c) => c.value).join(", ")}=${r.querySelector(".sb-olcol").value}`;
+  });
+  const h = box.querySelector('.sb-box[data-f="ol"]');
+  h.value = rows.join("; ");
+  h.dispatchEvent(new Event("input", { bubbles: true }));
+}
 function actRow(s, p, f, kinds) {
   const k = p.f[f],
     what = boxText(p, "what").split(/[\s,]+/),
@@ -475,14 +521,7 @@ function actRow(s, p, f, kinds) {
     )
       .toLowerCase()
       .split(/[\s,]+/), // (never set: a zombie goes after the players, sbbrain.js)
-    opts = [
-      ["players", "Players"],
-      ["everything", "Everything"],
-      ...kinds,
-      ...Object.values(ptsOf(s))
-        .filter((q) => q.k === "spawn")
-        .map((q) => [q.col, `${boxText(q, "name")} spawn`]),
-    ];
+    opts = whoOpts(s, kinds);
   return pickRow(f, SB_ACTS[f] || SB_ZONE[f].name, opts, picked);
 }
 /* a dropdown of checkboxes for box f: opts [value, name], the values picked (the first of each value only) */
@@ -751,6 +790,7 @@ export function sbSettings(getR, id, tab = "") {
     <div data-fxrow="rate"${fx === "none" ? " hidden" : ""}>${row("rate", SB_ZONE.rate, typed("rate"), why("rate"))}</div>
     <div data-fxrow="zwho"${fx === "none" ? " hidden" : ""}>${actRow(R.state, p, "zwho", kinds)}</div>
     ${actRow(R.state, p, "wall", kinds)}
+    ${olSect(R.state, p, kinds)}
     ${brainRow(typed("brain"), why("brain"))}
     <div class="sb-row" data-row="sfx"><span>${esc(SB_ZONE.sfx.name)}</span><select class="sb-box" data-f="sfx" aria-label="${esc(SB_ZONE.sfx.name)}">${Object.entries(
       SB_SFX,
@@ -838,6 +878,7 @@ export function sbSettings(getR, id, tab = "") {
       });
       w.addEventListener("change", (e) => {
         const t = e.target;
+        if (t.closest(".sb-olbox")) return olWrite(t.closest(".sb-olbox")); // (a zone's Outlines rows)
         if (t.matches("[data-sh]"))
           return send({ k: "set", f: "sh", v: t.dataset.sh });
         if (t.matches("[data-purpose]")) {
@@ -941,6 +982,24 @@ export function sbSettings(getR, id, tab = "") {
         setTimeout(() => sbSettings(getR, to, tk), 0);
       };
       w.addEventListener("click", (e) => {
+        const olb = e.target.closest("[data-olplus], [data-olx]");
+        if (olb) {
+          const box = olb.closest(".sb-olbox"),
+            rows = box.querySelectorAll(".sb-olrow");
+          if (olb.matches("[data-olplus]")) {
+            const r = rows[rows.length - 1].cloneNode(true);
+            r.querySelector("details").open = false;
+            olb.before(r); // (a copy of the last row, for another color)
+          } else if (rows.length > 1) olb.closest(".sb-olrow").remove();
+          else {
+            const r = olb.closest(".sb-olrow");
+            r.querySelectorAll("input[type=checkbox]").forEach(
+              (c) => (c.checked = false),
+            );
+            r.querySelector(".sb-olcol").value = SB_OL_DEF;
+          } // (the last row: emptied)
+          return olWrite(box);
+        }
         const tog = e.target.closest("[data-tog]");
         if (tog) {
           const box = tog.closest(".sb-row").querySelector(".sb-box"),
@@ -1281,6 +1340,40 @@ activity({
       zb = (s && s.hang && s.hang.sbz && s.hang.sbz.zb) || [];
     if (!layer) return;
     npcPics(s.sbpic); // (the room's uploaded pictures: a spawn's Appearance tab)
-    drawNpcs(ctx, zb, ZB, layer, fxl);
+    drawNpcs(
+      ctx,
+      zb,
+      ZB,
+      layer,
+      fxl,
+      sbHasOl(s)
+        ? {
+            /* in a zone whose Outlines take it: that row's color (sandboxrules.js sbOlColor) */
+            ol: (o, z, f, unseen, h, sc) => {
+              const c = sbOlColor(
+                s,
+                { k: o.k, sp: o.sp },
+                z.x / W,
+                z.y / H,
+                h,
+                W,
+                H,
+              );
+              if (c)
+                olAdd({
+                  id: "sbz" + o.i,
+                  img: z.img,
+                  x: f.left - (z.box.w * sc) / 2,
+                  y: f.top - z.box.feet * sc,
+                  w: z.box.w * sc,
+                  h: z.box.h * sc,
+                  flip: (o.f || 1) < 0,
+                  kind: c,
+                });
+              return false;
+            },
+          }
+        : {},
+    );
   },
 });

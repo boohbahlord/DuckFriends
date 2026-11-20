@@ -35,6 +35,10 @@ export const SB_HELP = {
       "In a zone, tick who can't pass to make it a wall to them (a thin zone makes a thin wall); they walk round it. Inverse makes a zone, or a tab, work outside its zone instead (and outside every zone with its name or color). Dark outside darkens everything round the zone while you stand in it.",
     ],
     [
+      "Outlines",
+      "In a zone's Outlines, pick who and a color: whoever it is gets that outline while inside the zone, seen through walls. + adds another row for others in another color.",
+    ],
+    [
       "Loot, colors and seeing zones",
       "Add a Loot tab to a zone and pick what it holds: nothing comes until you do. A new zone has no color (white); pick a color and every zone of that color shares its settings. Zones show while cheat mode or Build is on, and stay hidden otherwise. Click a heading's arrow to fold it.",
     ],

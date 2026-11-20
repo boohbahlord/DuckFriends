@@ -21852,3 +21852,30 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .sb-dark path {
   fill: rgba(3, 4, 10, 0.86);
 }
+/* a zone's Outlines rows (sbspawnview.js olSect): who it takes, its color, − ; + under them */
+.sb-olrows {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+  min-width: 0;
+}
+.sb-olrow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+}
+.sb-olrow .sb-acts {
+  min-width: 0;
+}
+.sb-olcol {
+  width: 2rem;
+  height: 1.6rem;
+  padding: 0;
+  border: 1px solid #fff4;
+  border-radius: 0.3rem;
+  background: none;
+  cursor: pointer;
+  flex: none;
+}

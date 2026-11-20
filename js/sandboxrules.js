@@ -257,6 +257,13 @@ export const SB_ZONE = {
   }, // ("they can heal or damage at different rates")
   zwho: listBox("Who it hits", "players"), // (Players, Everything, a kind, a spawn by its color or name, a player's name)
   wall: listBox("Who can't pass", ""), // (plan Phase 3, walls: the same list; nothing ticked, it stops nobody)
+  /* plan Phase 3: "Outlines: show outline for chosen entities, in a chosen color; a + duplicates the row for another
+     color": rows "who, who=#rrggbb; …" (sbOlRows) */
+  ol: {
+    name: "Outlines",
+    check: (t) => (String(t).length <= 600 ? "" : "Too many rows"),
+    def: "",
+  },
   ent: listBox("Entities spawn here", ""), // (spawns, by their color or name: what they make comes in the zone)
   lt: listBox("Loot spawns here", ""), // (loot spots, by their color or name: their orbs lie in the zone)
   /* what its working squares show (plan Phase 3: "show an effect: one of the game's existing effects (the
@@ -943,6 +950,48 @@ export function sbOutline(s, p, W = 1, H = 1, n = 48) {
     };
   });
 }
+/* ---------- Outlines (plan Phase 3) ----------
+   A zone's Outlines rows: whoever a row takes, standing where the zone works, shows an outline in that row's color (the
+   first row that takes it, of the first zone it stands in) */
+export const SB_OL_DEF = "#ffd23f";
+export function sbOlRows(p) {
+  const t = String((p && p.f && p.f.ol && p.f.ol.ok) || "");
+  return t
+    .split(";")
+    .map((r) => {
+      const [who, c] = r.split("=");
+      return [
+        String(who || "")
+          .toLowerCase()
+          .split(/[\s,]+/)
+          .filter(Boolean),
+        /^#[0-9a-f]{6}$/i.test(String(c || "").trim())
+          ? String(c).trim().toLowerCase()
+          : SB_OL_DEF,
+      ];
+    })
+    .filter(([who]) => who.length);
+}
+let OLS = { s: null, zl: [] }; // (the zones with outlines, worked out once for each state)
+/* the outline color of w (as sbWhoTakes) at (x, y), height z (shares; world px), or "" */
+export function sbOlColor(s, w, x, y, z, W = 1, H = 1) {
+  if (!isSb(s) || !s.sb) return "";
+  if (OLS.s !== s.sb) {
+    OLS = { s: s.sb, zl: [] };
+    for (const [id, p] of Object.entries(s.sb.pts || {}))
+      if (p.k === "zone" && p.f && p.f.ol && p.f.ol.ok) {
+        const rows = sbOlRows(p);
+        if (rows.length) OLS.zl.push({ id, p, rows });
+      }
+  }
+  for (const { id, p, rows } of OLS.zl) {
+    if (!sbWorksAt(s, id, p, x, y, z, W, H)) continue;
+    for (const [who, c] of rows) if (sbWhoTakes(s, who, w)) return c;
+  }
+  return "";
+}
+export const sbHasOl = (s) =>
+  isSb(s) && !!s.sb && (sbOlColor(s, {}, -9, -9, 0), OLS.zl.length > 0);
 /* ---------- Inverse (plan Phase 3) ----------
    A zone or a tab whose Inverse is on works outside its zone: outside every zone with the same variable name or the
    same color, too (a zone with no color goes only with the ones sharing its name). On a world, still on its floor */
