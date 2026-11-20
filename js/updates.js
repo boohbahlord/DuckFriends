@@ -9,6 +9,25 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v182",
+    version: 182,
+    date: "Nov 20, 2026",
+    title: "Phones on their side",
+    news: [
+      "On a phone on its side, Duck Cabin and Downpour zoom out like they do upright: ducks are smaller and you see more of the map around you.",
+    ],
+  },
+  {
+    id: "v181",
+    version: 181,
+    date: "Nov 20, 2026",
+    title: "Act",
+    news: [
+      "For Sandbox: a zone's Act now sits in its potential order: Seriat, Damage, Heal, Kill or Nothing. Seriat boxes change HP, speed, damage, regen or hitbox of whoever the zone hits, + adds another box, and the small button beside a box fills it from one of your files.",
+      "For Sandbox: Damage, Heal and Kill in a potential order now hit the right squares.",
+    ],
+  },
+  {
     id: "v180",
     version: 180,
     date: "Nov 20, 2026",
