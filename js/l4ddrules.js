@@ -136,6 +136,7 @@ import {
   survStart,
   survTick,
   survWatch,
+  wholeIn,
 } from "./survrules.js";
 
 /* what Sandbox lends these rules (sbcabin.js): npc(s, by, x, y, now, w, rx, ry, from, hit) puts a shot or a swing at
@@ -2077,7 +2078,7 @@ function setUp(s, now) {
 /* Survival (survrules.js): no round 0 and no Ready, a rest at once, with the merchant and a few walkers about. No power
    ("The power for survival is off. There's no electricity. There is no angel machine"): no lights, no gas, no pump */
 function survSetUp(s, now) {
-  s.hang.l4 = { ...s.hang.l4, r: SV.FIRST, wait: null, n: 0, dq: [] };
+  s.hang.l4 = { ...s.hang.l4, r: wholeIn(SV.FIRST), wait: null, n: 0, dq: [] }; // (a round from 5 to 8: a number, never the pair, or every round lookup breaks)
   s.hang.pw = null;
   s.hang.pk = [];
   s.hang.power = 0;
