@@ -235,9 +235,9 @@ function make(s, name, text, now) {
         : n === "regen"
           ? +o.rg || 0
           : n === "speed"
-            ? o.sv || 1
+            ? (o.sv ?? 1)
             : n === "damage"
-              ? valueOf({ ok: o.dm }, SB_BOXES.damage) || 1
+              ? (valueOf({ ok: o.dm }, SB_BOXES.damage) ?? 1)
               : Math.round((o.hb || 1) * 100); // (hitbox: in percent, the owner's, Nov 19 15:52Z)
     },
     set: (id, n, v) => {
@@ -254,9 +254,11 @@ function make(s, name, text, now) {
       } else if (n === "regen")
         o.rg = Math.min(100, Math.max(0, Math.round(v * 10) / 10)); // (HP back each second, up to its most: sbgroups.js)
       else if (n === "speed")
-        o.sv = Math.min(SB_BOXES.speed.max, Math.max(SB_BOXES.speed.min, v)); // (as the Speed box: never 0)
+        o.sv = Math.min(SB_BOXES.speed.max, Math.max(SB_BOXES.speed.min, v)); // (as the Speed box: 0 stays put)
       else if (n === "damage")
-        o.dm = String(Math.min(SB_BOXES.damage.max, Math.max(0.1, v)));
+        o.dm = String(
+          Math.min(SB_BOXES.damage.max, Math.max(SB_BOXES.damage.min, v)),
+        );
       else o.hb = Math.min(HB.MOST, Math.max(HB.LEAST, v)) / 100; // (kept as a share: sbbody.js)
     },
     zone: (n) => zoneByName(g.cur.s, n),

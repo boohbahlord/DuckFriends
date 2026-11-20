@@ -5779,7 +5779,7 @@ function zombieAt(L, wx, wy, o = {}) {
     max = Math.max(1, o.hp ? Math.round(o.hp) : hp0()),
     v =
       o.v ||
-      Math.round(WALK * Z_SLOW * ((R[1][0] + R[1][1]) / 2) * (o.speed || 1));
+      Math.round(WALK * Z_SLOW * ((R[1][0] + R[1][1]) / 2) * (o.speed ?? 1)); // (a Sandbox spawn's Speed 0: it stays put)
   L.next = i + 1;
   return {
     i,
@@ -6206,7 +6206,7 @@ function moveZombies(s, zs, now, T, up) {
             target.id,
             now,
             "claw",
-            z.dm ? valueOf({ ok: z.dm }, SB_BOXES.damage) || 1 : clawDmg(), // (the owner's, Nov 19 19:27Z: "zombies could do anywhere from 0.6 to 1 damage")
+            z.dm ? (valueOf({ ok: z.dm }, SB_BOXES.damage) ?? 1) : clawDmg(), // (the owner's, Nov 19 19:27Z: "zombies could do anywhere from 0.6 to 1 damage")
           )
         )
           pls.splice(pls.indexOf(target), 1);
@@ -6676,15 +6676,19 @@ function separate(zs) {
         ey = Math.random() - 0.5;
         e = Math.hypot(ex, ey);
       }
+      const sa = still(a),
+        sb = still(b);
+      if (sa && sb) return;
       const push = (1 - e) / 2,
         ux = (ex / e) * push * RX,
         uy = (ey / e) * push * RY;
-      nudge(a, ux, uy);
-      nudge(b, -ux, -uy);
+      if (!sa) nudge(a, sb ? 2 * ux : ux, sb ? 2 * uy : uy);
+      if (!sb) nudge(b, sa ? -2 * ux : -ux, sa ? -2 * uy : -uy); // (a Sandbox spawn with Speed 0 is never pushed aside: the other takes it all)
     },
     2,
   );
 }
+const still = (z) => !!z.sp && z.l[1] === 0; // (a Sandbox spawn's Speed 0, zombieAt)
 function nudge(z, dx, dy) {
   const x = z.x + dx,
     y = z.y + dy;

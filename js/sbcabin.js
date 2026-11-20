@@ -45,7 +45,7 @@ import { WAVE, zLook } from "./mgjrules.js";
 import { MAD } from "./sbbrain.js";
 import { fight, keepAt, reachTo } from "./sbarms.js";
 import { npcBody, DU_WORLD } from "./sbbody.js";
-import { sees as npcSees, nearPairs, grudge } from "./npcrules.js";
+import { sees as npcSees, nearPairs, grudge, stillShares } from "./npcrules.js";
 
 export const onCabin = (s) => isSb(s) && baseMode(s.options) === "hang";
 /* the worlds these walk on: Duck Cabin and the zombie maps (there, every kind but a zombie: those are the map's own) */
@@ -205,7 +205,7 @@ export function cabinTick(s, now, H0) {
       claw = reachTo(CLAW, o, to, s), // (its hitbox, and its foe's: sbarms.js)
       v =
         zWalk() *
-        (o.sv || 1) *
+        (o.sv ?? 1) *
         (o.run && Math.hypot(o.x - to.x, o.y - to.y) > SPRINT.FAR
           ? SPRINT.K
           : 1),
@@ -291,13 +291,15 @@ function apart(live, RX, RY) {
         ey = (A.y - B.y) / RY,
         e = Math.hypot(ex, ey);
       if (e >= 0.9) return;
+      const [wa, wb] = stillShares(A, B); // (Speed 0: never pushed aside, npcrules.js)
+      if (!wa && !wb) return;
       const k = e > 1e-3 ? (0.9 - e) / 2 / e : 0.2,
         ux = e > 1e-3 ? ex * k : Math.random() - 0.5,
         uy = e > 1e-3 ? ey * k : Math.random() - 0.5;
-      A.x += ux * RX;
-      A.y += uy * RY;
-      B.x -= ux * RX;
-      B.y -= uy * RY;
+      A.x += ux * RX * wa;
+      A.y += uy * RY * wa;
+      B.x -= ux * RX * wb;
+      B.y -= uy * RY * wb;
     },
     1,
     NEAR,
