@@ -115,6 +115,63 @@
         ".write": "auth != null && auth.uid === $uid && (!data.exists() || data.val() < now - 60000)",
         ".validate": "newData.val() === now"
       }
+    },
+    "shared": {
+      ".read": "auth != null",
+      ".indexOn": ["at"],
+      "$id": {
+        ".write": "auth != null && auth.provider !== 'anonymous' && ((!data.exists() && newData.child('uid').val() === auth.uid && newData.parent().parent().child('sharedLast/' + auth.uid).val() === now && newData.parent().parent().child('sharedData/' + $id).exists()) || (data.exists() && !newData.exists() && data.child('uid').val() === auth.uid))",
+        ".validate": "newData.hasChildren(['uid', 'kind', 'cat', 'name', 'by', 'at', 'size'])",
+        "uid": {
+          ".validate": "newData.val() === auth.uid"
+        },
+        "kind": {
+          ".validate": "newData.isString() && newData.val().matches(/^(map|mode)$/)"
+        },
+        "cat": {
+          ".validate": "newData.isString() && ((newData.parent().child('kind').val() === 'map' && newData.val() === 'maps') || (newData.parent().child('kind').val() === 'mode' && newData.val().matches(/^(social|special)$/)))"
+        },
+        "name": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 40"
+        },
+        "desc": {
+          ".validate": "newData.isString() && newData.val().length <= 300"
+        },
+        "by": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 20 && !newData.val().contains('@')"
+        },
+        "at": {
+          ".validate": "newData.val() === now"
+        },
+        "size": {
+          ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 3000000"
+        },
+        "most": {
+          ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 16"
+        },
+        "world": {
+          ".validate": "newData.isString() && newData.val().length <= 40"
+        },
+        "pic": {
+          ".validate": "newData.isString() && newData.val().length <= 60000 && newData.val().beginsWith('data:image/png;base64,')"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "sharedData": {
+      "$id": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.provider !== 'anonymous' && ((!data.exists() && newData.parent().parent().child('shared/' + $id + '/uid').val() === auth.uid) || (data.exists() && !newData.exists() && root.child('shared/' + $id + '/uid').val() === auth.uid))",
+        ".validate": "newData.isString() && newData.val().length <= 3000000"
+      }
+    },
+    "sharedLast": {
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid && (!data.exists() || data.val() < now - 30000)",
+        ".validate": "newData.val() === now"
+      }
     }
   }
 }

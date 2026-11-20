@@ -95,6 +95,8 @@ export function accountStart() {
   if (hint) app().catch(() => {});
 }
 
+/* the account's connection ({ U, D, auth, db, ref, root }): the Shared page's uploads go through it (shared.js) */
+export const acctLink = () => app();
 export async function signIn() {
   try {
     const { U, auth } = await app();

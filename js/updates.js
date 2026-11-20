@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v159",
+    version: 159,
+    date: "Nov 20, 2026",
+    title: "Shared game modes and maps",
+    news: [
+      "For Sandbox: the Rooms list has a Shared tab at the top. It lists the game modes and maps players shared: Social, Special and Maps. Download keeps a copy on your device: a game mode goes to Game Settings under Custom, a map to My maps.",
+      "For Sandbox: Share one of mine (on the Shared tab) and Share (in My maps) put your game modes and maps online, with a name, a description and a picture. Sharing needs signing in, so only you can delete what you shared. Report tells us about anything wrong.",
+      "For Sandbox: deleting a map in My maps works again.",
+    ],
+  },
+  {
     id: "v158",
     version: 158,
     date: "Nov 20, 2026",

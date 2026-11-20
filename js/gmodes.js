@@ -209,3 +209,27 @@ export function autoPick(R) {
     });
   return true;
 }
+
+/* ---------- a game mode from the Shared page (shared.js), kept on this device ---------- */
+/* its name stays, with a number after it when a game mode here already has that name (a download never replaces one) */
+export async function addMode(m) {
+  const names = new Set((await listModes()).map((x) => x.name.toLowerCase()));
+  let name = m.name,
+    n = 2;
+  while (names.has(name.toLowerCase()))
+    name = `${m.name.slice(0, 35)} (${n++})`;
+  const now = Date.now();
+  await putMode({
+    id: newSaveId(),
+    name,
+    desc: m.desc,
+    at: now,
+    made: now,
+    world: m.world,
+    map: m.map,
+    most: m.most,
+    data: JSON.stringify(m.data),
+  });
+  await listModes();
+  return name;
+}
