@@ -52,7 +52,7 @@ HP, damage and speed take tenths.
 - No arrow: true random.
 - `2>4`: the listed values in order, 2 then 4 (not every number between). `2<4`: the other way.
 - An arrow first fixes the start: `>2>4>5` always starts at 2 (2, 4, 5, 2 ...). `2>4>5` starts at a random one and
-  goes on in order.
+  goes on in order. Built reading (not settled by the owner): `<2<4<5` always starts at 5 and goes 5, 4, 2, 5 ...
 - `|`: everything before it finishes before what comes after it plays.
 - Repeats, the count between backslashed arrows, then `||`: `\>2>\||` (ascending, 2 times), `\<2<\||` (descending),
   `\>n>\`, `\>*>\` (count from input), `\>>\||` (repeat in order).
@@ -180,7 +180,7 @@ Every Seriat value works anywhere a number goes below: `wait 1:3`, `every [2,4]s
    Over 100% (owner 13:38Z: yes; no `%%`): A pick over 100% in
    all is read as shares: `[attack 150%, flee 50%]` = 3 to 1. A chance alone over 100% means "more than once":
    `150%` = once for sure, plus a 50% chance of a second time (`250%` = twice, plus 50% of a third). Kept to `[ ]`: a chance pick is still one
-   pick; `( )` works a thing out and `{ }` waits.
+   pick; `( )` works a thing out and `{ }` waits. Any action takes a percent in a pick, say too: `[say "y" 30%, say "n" 20%]` (V169).
 5. **Named values**: `let rage = 2:4`, then `rage` anywhere a number goes. Every Seriat principle applies to them
    (owner: "allow the seriat principles to apply to variables"): `let rage = \>1>\[2,4]`, `rage^2`, `"2rage"`.
    **[open]** owner answered "sure???"; explained again in chat.
