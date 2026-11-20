@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v163",
+    version: 163,
+    date: "Nov 20, 2026",
+    title: "Walls, colors and groups in their own list",
+    news: [
+      'For Sandbox: a zone has "Is wall": true stops everything until "Who can\'t pass" says who.',
+      "For Sandbox: a zone's Look color has the ready colors and the paintbrush, as in Customize.",
+      "For Sandbox: every list of who (targets, ignores, who can join) has the groups in a dropdown of their own under it.",
+      "For Sandbox: a tab's own page has numbered parts too (1., 1.1 …), as the front does.",
+    ],
+  },
+  {
     id: "v162",
     version: 162,
     date: "Nov 20, 2026",
