@@ -28,17 +28,20 @@ export const SIZES = [12, 14, 16, 19, 22, 26, 29, 32];
    owner's, Nov 20 19:11Z); bigger than that (a menu's big duck): made whole, as before */
 const GROWN = 2,
   BIGGEST = SIZES[SIZES.length - 1] * GROWN;
-/* the sheet for a duck want pixels across, and how many times it's grown: whichever comes nearest (not grown, on a tie) */
+/* the biggest a duck is made from the sheets: grown ones only in a game. In a menu (Customize's tiles and preview, the
+   lobby, the cards) a duck bigger than the sheets is made whole at its own size, as before: the owner's, Nov 20 21:17Z,
+   "You cannot see the fucking previews anymore" (Style's tiles were small ducks grown two to a pixel) */
+const most = () =>
+  (document.body.dataset.screen === "game"
+    ? BIGGEST
+    : SIZES[SIZES.length - 1]) * 1.08;
+/* the sheet for a duck want pixels across, and how many times it's grown (only past the biggest sheet) */
 function sizeFor(want) {
-  let n = SIZES[0],
-    z = 1;
-  for (const g of [1, GROWN])
-    for (const s of SIZES)
-      if (Math.abs(s * g - want) < Math.abs(n * z - want)) {
-        n = s;
-        z = g;
-      }
-  return [n, z];
+  const g = want > SIZES[SIZES.length - 1] * 1.08 ? GROWN : 1; // (grown only past the biggest sheet: a small duck is never a smaller one doubled)
+  let n = SIZES[0];
+  for (const s of SIZES)
+    if (Math.abs(s * g - want) < Math.abs(n * g - want)) n = s;
+  return [n, g];
 }
 export const FRAME = 152; // (duck units: the box and a hat's room over it, HAT_TOP)
 const TOP = FRAME - 120;
@@ -216,7 +219,7 @@ export async function duckFromParts(d, cw, ch, frames = 1) {
         ? 1
         : 1 + 0.1 * Math.max(-1, Math.min(1, +L.size || 0)), // (its Size within its box: duck.js; Jack has none)
     want = cw * k;
-  if (want > BIGGEST * 1.08) return null; // (a big duck in a menu: made whole, as before)
+  if (want > most()) return null; // (a big duck, or any duck past the sheets in a menu: made whole, as before)
   const [n, z] = sizeFor(want),
     S = await sheet(n);
   if (!S) return null;
@@ -495,7 +498,7 @@ async function catFromParts(d, cw, ch) {
   const { catSVG, catBox } = await import("./hangout/npcart.js"),
     b = catBox(d.cat),
     duckBox = (cw * 64) / b.w; // (the duck box this size of cat stands for)
-  if (duckBox > BIGGEST * 1.08) return null;
+  if (duckBox > most()) return null;
   const [n, z] = sizeFor(duckBox),
     S = await sheet(n);
   if (!S) return null;
