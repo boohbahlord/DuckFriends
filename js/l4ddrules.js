@@ -5644,15 +5644,21 @@ function gmHelp(s, now) {
     hp: () => Math.max(1, hp0()),
     open: (x, y) => openNear(x, y) >= 0 && zOk(x, y, heightAt(x, y)),
     stands: (x, y, z) => zOk(x, y, z), // (where a zombie at height z may stand: apart's walls)
-    hurt(id, dmg, w) {
+    hurt(id, dmg, w, head = false) {
+      if (head && isWild(s, id)) {
+        const q = P4(s, id),
+          up = q && !q.dn && !q.gh;
+        wildDown(s, "", now, w, true, ["x0"]); // (a gunman's headshot on Justin: all his HP and his head, as a duck's crit)
+        return up && !!P4(s, id).dn;
+      }
       const p4 = { ...(s.hang.l4p || {}) },
         down = hurtDuck(s, p4, id, now, w, dmg);
       s.hang.l4p = p4;
       return down;
-    }, // (a duck, Justin out there too: true when it went down)
-    hitZ(z, dmg, w) {
-      if (strike(s, z, dmg, false, null, w)) die(z, T);
-    }, // (a zombie: nobody's points)
+    }, // (a duck, Justin out there too: true when it went down. A player never takes a headshot from them: gunmenrules.js hitOn)
+    hitZ(z, dmg, w, head = false) {
+      if (strike(s, z, dmg, head, null, w)) die(z, T);
+    }, // (a zombie: nobody's points; a headshot takes all its HP and its head)
     pts: (id, n) => addPts(s, id, n),
     takes: (by, w) => zombieTakes(s, by, w),
     up: (id) => standing(s, id),
@@ -5685,7 +5691,16 @@ function gmHelp(s, now) {
       const pick = fenceSpot(pts);
       return pick ? pick.land : null;
     }, // (a spot just inside a fence that nobody sees: where they come in, "they show up from the outside")
-    mhurt: (i, dmg, w) => merchantHurt(s, null, dmg, now, w, "", "g" + i), // (one of them shot the merchant)
+    mhurt: (i, dmg, w, head = false) =>
+      merchantHurt(
+        s,
+        null,
+        head ? (merchantOf(s) || {}).hp || dmg : dmg,
+        now,
+        w,
+        head ? "crit" : "",
+        "g" + i,
+      ), // (one of them shot the merchant; a headshot: all his HP and his head)
     notice: (k) => addFx(s, { kind: "l4drop", k, who: [], t: now }), // (a notice for everyone, as "The Merchant has Arrived": l4dd.js l4Got)
     speed: WALK * walkOf(s) * NPC_RUN, // (the shared slow speed, npcshared.js)
     T,

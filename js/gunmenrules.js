@@ -21,6 +21,7 @@
 import {
   L4_HOOKS,
   ARMS,
+  critOf,
   clearShot,
   chaseField,
   chaseStep,
@@ -864,16 +865,24 @@ const zombieOf = (t) => (t.z && typeof t.z === "object" ? t.z : null);
 /* one of them lands dmg on t with weapon w: a zombie, one of the others (the friendly squad, or the gunmen the squad
    shoots at), or a duck. Half on a duck and on each other ("half damage"), and the friendly squad's half on zombies too
    ("fight with you at half damage") */
+/* a headshot (the owner's, Nov 20 18:23Z, principles kept from now on: "headshots are based on critical hits only"; "Justin
+   and NPCs and anyone else do lose their head on any headshot, no matter what"; "gunmen can get critical on other
+   people, but they can't get it on a player ... No enemy can get a headshot critical hit on a player if they had
+   guns"): one of theirs crits as a duck's does with that weapon (l4ddrules.js critOf), on anyone but a player, and the
+   crit takes the head, as a zombie's does */
 export function hitOn(s, o, t, dmg, w, now, H) {
-  const half = Math.round(dmg * GM.DMG * 10) / 10;
-  if (zombieOf(t)) H.hitZ(t.z, o.k === "f" ? half : dmg, w);
+  const half = Math.round(dmg * GM.DMG * 10) / 10,
+    player = !zombieOf(t) && !t.fr && !t.mc && !H.wild(t.id),
+    head = !player && Math.random() < critOf(w);
+  if (zombieOf(t)) H.hitZ(t.z, o.k === "f" ? half : dmg, w, head);
   else if (t.fr) {
     if (!s) return;
     const q = gmOf(s).gb.find((g) => g.i === t.fr.i);
-    if (q && !q.d) takes(s, q, null, w, half, now, H);
+    if (q && !q.d)
+      takes(s, q, null, w, head ? { dmg: q.hp, head } : half, now, H);
   } else if (t.mc) {
-    if (o.k !== "f") H.mhurt(o.i, half, w);
-  } else H.hurt(t.id, half, w);
+    if (o.k !== "f") H.mhurt(o.i, half, w, head);
+  } else H.hurt(t.id, half, w, head); // (head: only ever Justin, never a player)
 }
 /* an LMG burst at t: every duck its rounds fly near is suppressed a moment (its screen shakes and darkens) */
 export function suppress(s, o, t, ducks, now) {
