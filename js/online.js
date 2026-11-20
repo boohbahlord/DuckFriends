@@ -215,7 +215,7 @@ export async function joinOnlineRoom(entry, passkey = "") {
 }
 
 /* ---------- the state in the database: one JSON string per part ---------- */
-const EACH = ["players", "pos", "cards", "hang", "sbpic", "umap"]; // (Hangout: each activity's part of s.hang its own string, so a ball rolling never sends the chalk drawing again; Sandbox: each uploaded picture once, sbspawn.js; each made map once, umaprules.js)
+const EACH = ["players", "pos", "cards", "hang", "sbpic", "sbsong", "umap"]; // (Sandbox: each imported song once too, sbaudio.js; Hangout: each activity's part of s.hang its own string, so a ball rolling never sends the chalk drawing again; Sandbox: each uploaded picture once, sbspawn.js; each made map once, umaprules.js)
 function encode(s) {
   const out = {};
   for (const [k, v] of Object.entries(s)) {

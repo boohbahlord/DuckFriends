@@ -3,7 +3,8 @@
    the game's own drawings (duck-parts-page.js). Writes
      assets/px/ducks/<size>/<chunk>-<hash>.webp  the parts: black pixels and shade numbers (lossless WebP), an outfit's
                                                  clothes and a face item each in a file of their own, the rest in main
-     assets/px/ducks/<size>/index-<hash>.json   which part is where, in which file
+     assets/px/ducks/<size>/index-<hash>.json   which part is where, in which file (as numbers: duck-index.cjs)
+     assets/px/ducks/keys-<hash>.json           the parts' names, which every size shares
      js/ducksheets.js                           the files of each size (duckparts.js reads it)
    Run it after changing any drawing of a duck (duck.js, styles.js, hats.js, faces.js, outfits.js, eyes.js, beaks.js),
    then python3 tools/stamp.py:  node tools/duck-parts.cjs   (env ONLY: sizes, comma separated, to try a few)
@@ -14,6 +15,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { execFileSync } = require("child_process");
 const { chromium } = require("playwright");
+const { writeIndex, sweepKeys } = require("./duck-index.cjs");
 
 const ROOT = path.join(__dirname, ".."),
   OUT = path.join(ROOT, "assets", "px", "ducks");
@@ -121,9 +123,7 @@ const named = (name, buf, ext) =>
         bytes += fs.statSync(path.join(dir, pic)).size;
         names.push(pic);
       });
-      const json = JSON.stringify({ f: names, p: r.index }),
-        idx = named("index", Buffer.from(json), "json");
-      fs.writeFileSync(path.join(dir, idx), json);
+      const [idx, jsonBytes] = writeIndex(dir, names, r.index); // (small: tools/duck-index.cjs)
       sheets[n] = { index: `assets/px/ducks/${n}/${idx}` };
       console.log(
         n,
@@ -133,7 +133,7 @@ const named = (name, buf, ext) =>
         "files,",
         (bytes / 1024).toFixed(0),
         "kB +",
-        (json.length / 1024).toFixed(0),
+        (jsonBytes / 1024).toFixed(0),
         "kB index",
         `${((Date.now() - t) / 1000).toFixed(0)} s`,
       );
@@ -145,8 +145,9 @@ const named = (name, buf, ext) =>
   );
   if (!process.env.ONLY)
     for (const f of old)
-      if (!sizes.includes(+f))
+      if (/^\d+$/.test(f) && !sizes.includes(+f))
         fs.rmSync(path.join(OUT, f), { recursive: true, force: true }); // (an older making's)
+  sweepKeys();
   fs.writeFileSync(
     path.join(ROOT, "js", "ducksheets.js"),
     `/* made by tools/duck-parts.cjs: don't change it by hand (duckparts.js) */\nexport const SHEETS = ${JSON.stringify(ordered)};\n`,
