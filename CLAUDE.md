@@ -123,6 +123,12 @@ A program that is changed grows more complex unless work is spent against it (Le
 - Tools and tests print only failures; edits are search-and-replace, never whole-file rewrites.
 - A rule with no exceptions becomes a check or a hook, not another line here.
 
+## Smooth frames and loading (the owner's, Nov 20 22:23Z; rubric P1-P8 in project memory "duckfriends-performance")
+- No main-thread task over 50 ms: slice and yield (`scheduler.yield`, else `setTimeout 0`); in play stay under 8 ms.
+- Make each picture once and reuse it; redraw only what changed. Load everything before play, never during.
+- No new objects every frame in hot loops (pools); heavy picture making belongs in a Web Worker (OffscreenCanvas).
+- Black loading screen only for maps, modes and votes; menus use the thin green top line (upbar.js).
+
 ## The owner's rules
 - Function first: fix what's broken in the game modes before adding new things.
 - Show a plan and wait for a go before big changes. Ask before any brand-new idea (a new mode, map, mechanic or
