@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v169",
+    version: 169,
+    date: "Nov 20, 2026",
+    title: "Every board map in real pixels",
+    news: [
+      'For Sandbox: in Seriat, say takes a percent in a pick of actions: [say "boo" 30%, say "hi" 20%].',
+      "For Sandbox: a name you let in a brain file works in a plain number line of that file too.",
+      "For every mode: Shelter Sky & Null, Euclid's Squares, The King's Festival and Tiles are now drawn in real pixels too, so every board map is.",
+    ],
+  },
+  {
     id: "v168",
     version: 168,
     date: "Nov 20, 2026",

@@ -33,6 +33,8 @@ const MAPS = [
   ["sky", "Sky's sun, moon, stars and clouds", "sky", null],
   ["carnival", "Carnival Night", "carnival", null],
   ["stars", "Starry Night", "stars", null],
+  ["collage", "Shelter Sky & Null", "collage", null],
+  ["vellum", "The King's Festival", "vellum", null],
 ];
 
 function serve() {
@@ -146,6 +148,68 @@ async function recordMap(page, how, arg) {
         }
         return { html: JSON.stringify(out), files };
       }
+      if (how === "vellum") {
+        /* the vellum photograph (already pixels) covering the world, its edges a little darker, as css drew it */
+        const im = new Image();
+        im.src = "/assets/px/maps/vellum.webp";
+        await im.decode();
+        const c = document.createElement("canvas");
+        c.width = W / 2;
+        c.height = H / 2;
+        const x = c.getContext("2d"),
+          k = Math.max(c.width / im.width, c.height / im.height);
+        x.fillStyle = "#ba966c";
+        x.fillRect(0, 0, c.width, c.height);
+        x.imageSmoothingQuality = "high";
+        x.drawImage(
+          im,
+          (c.width - im.width * k) / 2,
+          (c.height - im.height * k) / 2,
+          im.width * k,
+          im.height * k,
+        );
+        const rx = c.width * 0.75,
+          ry = c.height * 0.7; // (css: radial-gradient(ellipse 75% 70% at 50% 48%, transparent 55%, #462a1238 100%))
+        x.translate(c.width / 2, c.height * 0.48);
+        x.scale(1, ry / rx);
+        const gr = x.createRadialGradient(0, 0, 0, 0, 0, rx);
+        gr.addColorStop(0.55, "rgba(70, 42, 18, 0)");
+        gr.addColorStop(1, "rgba(70, 42, 18, 0.22)");
+        x.fillStyle = gr;
+        x.fillRect(-c.width, -c.height * 4, c.width * 2, c.height * 8);
+        return {
+          html: JSON.stringify({ pic: "FILE:vellum" }),
+          files: { vellum: c.toDataURL("image/png") },
+        };
+      }
+      if (how === "collage") {
+        /* the picture as its code draws it on a computer's page, then in the world's pixels: in color and in greys */
+        const { drawCollage } = await import("/tools/pixel-src/collage.js");
+        const files = {};
+        for (const [k, grey] of [
+          ["collage", false],
+          ["collage-grey", true],
+        ]) {
+          const big = document.createElement("canvas");
+          big.width = W;
+          big.height = H;
+          for (const _ of drawCollage(big, W, H, grey));
+          const c = document.createElement("canvas");
+          c.width = W / 2;
+          c.height = H / 2;
+          const x = c.getContext("2d");
+          x.imageSmoothingEnabled = false; // (one pixel kept of each two by two, as the pixel look kept them)
+          x.drawImage(big, 0, 0, c.width, c.height);
+          files[k] = c.toDataURL("image/png");
+        }
+        return {
+          html: JSON.stringify({
+            pic: "FILE:collage",
+            grey: "FILE:collage-grey",
+          }),
+          files,
+        };
+      }
       if (how === "stars") {
         /* the turning sky, one picture in the world's pixels (the game turns it, its pixels kept whole), and where its
            brightest stars are (the game draws them twinkling) */
@@ -250,7 +314,7 @@ async function recordMap(page, how, arg) {
     fs.mkdirSync(path.join(ROOT, "js", "pxm"), { recursive: true });
     fs.writeFileSync(
       path.join(ROOT, "js", "pxm", id + ".js"),
-      `/* ${what}, as pixel files: written by tools/pixel-maps.cjs, never by hand */\nexport default ${JSON.stringify(how === "sky" || how === "stars" ? { W, H, G: 2, ...JSON.parse(markup) } : { W, H, G: 2, html: markup })};\n`,
+      `/* ${what}, as pixel files: written by tools/pixel-maps.cjs, never by hand */\nexport default ${JSON.stringify(["sky", "stars", "collage", "vellum"].includes(how) ? { W, H, G: 2, ...JSON.parse(markup) } : { W, H, G: 2, html: markup })};\n`,
     );
     execFileSync("npx", [
       "-y",

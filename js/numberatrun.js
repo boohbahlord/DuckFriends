@@ -214,6 +214,7 @@ class Stmts {
         break; // (when near duck 3 { …: the block)
       if (opts.head && depth === 0 && t.t === "bs" && /^\s*if\b/.test(t.v))
         break;
+      if (opts.comma && depth === 0 && t.t === "op" && t.v === ",") break; // (a pick's next choice)
       if (t.t === "op" && "([{".includes(t.v)) depth++;
       if (t.t === "op" && ")]}".includes(t.v)) {
         if (depth === 0) break; // (the block's own })
@@ -502,7 +503,13 @@ class Stmts {
     this.p++;
     const items = [];
     for (;;) {
-      const s = this.stmt();
+      this.picking = (this.picking || 0) + 1;
+      let s;
+      try {
+        s = this.stmt();
+      } finally {
+        this.picking--;
+      }
       const w = this.value({ what: "A percent", sum: true });
       this.want(
         "%",
@@ -555,10 +562,25 @@ class Stmts {
       if (t.t === "str") {
         this.p++;
         parts.push({ s: t.v, raw: t.q === "'" });
-      } else
-        parts.push({
-          v: this.value({ what: "A value to say", stopWords: ["else"] }),
-        });
+      } else {
+        const p0 = this.p,
+          v = this.value({
+            what: "A value to say",
+            stopWords: ["else"],
+            comma: !!this.picking,
+          });
+        // in a pick ([say "y" 30%]), the value just before % is the choice's percent, not words to say
+        const end = () => this.op("]") || this.op(",");
+        if (
+          this.picking &&
+          parts.length &&
+          (this.op("%") || (this.op("%", -1) && end()))
+        ) {
+          this.p = p0;
+          break;
+        }
+        parts.push({ v });
+      }
     }
     if (!parts.length) no(`Say what? say "hi"`, HELP.text);
     return parts;
@@ -1060,7 +1082,10 @@ export function brain(plan, host) {
         val(env, s.v, R);
         return;
       case "line": {
-        const r = s.prog.run(rand);
+        const r = s.prog.run(rand, null, {
+          name: (w) => lookup(env, w),
+          zone: zoneStat,
+        });
         if (r.why) no(r.why);
         return;
       }

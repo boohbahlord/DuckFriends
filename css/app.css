@@ -4374,17 +4374,10 @@ html.moving .scene.rabbit.rh-plain {
 .map-stars .law-mid {
   background: color-mix(in srgb, #070b1f var(--board-a), transparent);
 }
-/* Shelter Sky & Null (collage.js): its picture, the squares that fade and jump, the colored static and scan lines over
-   them; tiles as see-through as on Starry Night, names on pills */
+/* Shelter Sky & Null (collage.js): its picture (a pixel file) and the squares that fade and jump over it, in the
+   world's pixels; tiles as see-through as on Starry Night, names on pills */
 .scene.collage {
   background: #000;
-}
-.scene.collage > canvas.cl-pic {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
 }
 .cl-live {
   position: absolute;
@@ -4394,9 +4387,9 @@ html.moving .scene.rabbit.rh-plain {
   position: absolute;
   aspect-ratio: 1;
   background: var(--c);
-  box-shadow: inset 0 0 0 1px #ffffff26;
+  box-shadow: inset 0 0 0 2px #ffffff26;
   opacity: var(--a);
-}
+} /* (its edge one pixel of the world's) */
 html.moving .cl-sq {
   opacity: 0;
   animation: cl-pop var(--t) ease-in-out infinite;
@@ -4414,12 +4407,6 @@ html.moving .cl-sq {
   100% {
     opacity: 0;
   }
-}
-.cl-static {
-  opacity: 0.8;
-}
-.cl-scan {
-  opacity: 0.32;
 }
 .scene.collage.grey .cl-live {
   filter: grayscale(1);
@@ -4450,13 +4437,14 @@ html.moving .cl-sq {
 .scene.euclid {
   background: #16161c;
 }
-.scene.euclid > canvas.eu-pic {
+.eu-px {
   position: absolute;
-  inset: 0;
+  left: 0;
+  top: 0;
   width: 100%;
   height: 100%;
-  display: block;
-}
+  image-rendering: pixelated;
+} /* (drawn by code in the world's pixels: euclid.js) */
 .map-euclid {
   --board-a: 42%;
 }
@@ -4481,24 +4469,8 @@ html.moving .cl-sq {
 /* The King's Festival (vellum.js): only the vellum, its edges a little darker, as on the book's page; tiles as
    see-through as on every map, names on dark plates */
 .scene.vellum {
-  background: #ba966c url(../assets/px/maps/vellum.webp) center / cover
-    no-repeat;
-}
-.mini-map.mm-vellum {
-  background: #ba966c url(../assets/px/maps/vellum.webp) center / cover;
-  image-rendering: pixelated; /* (already pixels: tools/pixel-files.cjs) */
-}
-.vl-edge,
-.mm-vellum::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    ellipse 75% 70% at 50% 48%,
-    transparent 55%,
-    rgba(70, 42, 18, 0.22) 100%
-  );
-}
+  background: #ba966c;
+} /* (its page: a pixel file, vellum.js) */
 .map-vellum .col {
   border-right-color: #2b1d1440;
   box-shadow: inset 0 0 0 0.06rem #2b1d1455;
@@ -4659,16 +4631,18 @@ html.moving .pix-sun {
     0.7rem -0.4rem 0 -0.1rem #fff,
     -0.5rem -0.25rem 0 -0.2rem #fff;
 }
-/* Tiles: a pure black and white checkerboard, 8 squares across on a computer and 5 on a phone */
+/* Tiles: a pure black and white checkerboard (drawn by code in the world's pixels: js/maps.js tilesScene) */
 .scene.tiles {
-  --n: 8;
-  background: conic-gradient(#000 25%, #fff 0 50%, #000 0 75%, #fff 0) 0 0 /
-    calc(200cqw / var(--n)) calc(200cqw / var(--n));
+  background: #000;
 }
-@media (max-width: 700px) {
-  .scene.tiles {
-    --n: 5;
-  }
+/* a map drawn by code straight in the world's pixels (Tiles, Duck Cabin's sky: js/maps.js codeScene) */
+.code-px {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
 }
 .mm-tiles {
   background: conic-gradient(#000 25%, #fff 0 50%, #000 0 75%, #fff 0) 0 0 /
@@ -11934,22 +11908,8 @@ html.sprint-blur .hang-board::after {
   touch-action: none;
 }
 .scene.cabin {
-  background:
-    radial-gradient(1.5px 1.5px at 12% 18%, #fff9 50%, transparent 51%),
-    radial-gradient(1px 1px at 34% 8%, #fff8 50%, transparent 51%),
-    radial-gradient(1.5px 1.5px at 58% 22%, #fffa 50%, transparent 51%),
-    radial-gradient(1px 1px at 76% 12%, #fff8 50%, transparent 51%),
-    radial-gradient(1.5px 1.5px at 90% 30%, #fff9 50%, transparent 51%),
-    radial-gradient(1px 1px at 22% 40%, #fff6 50%, transparent 51%),
-    radial-gradient(1px 1px at 66% 44%, #fff6 50%, transparent 51%),
-    radial-gradient(
-      60px 60px at 86% 10%,
-      #fff4cf 40%,
-      #fff4cf22 55%,
-      transparent 70%
-    ),
-    linear-gradient(#0b1030, #1d2a55 70%, #14301f);
-}
+  background: #0b1030;
+} /* (its sky: drawn by code in the world's pixels, js/maps.js cabinScene) */
 
 /* ---------- Hangout: Duck Cabin's art in the world (hangout/shapes.js) ----------
    Each part is its own layer (the camera only moves it); its drawing fills its box; a lamp switched off loses its glow;

@@ -1161,7 +1161,7 @@ function build(toks, rules) {
     Object.assign(st, a);
     prog.states.forEach((x, k) => Object.assign(x, b[k]));
   };
-  prog.run = (r = Math.random, box = null) => {
+  prog.run = (r = Math.random, box = null, more = null) => {
     try {
       const was = R.any ? save() : null;
       let v = NOTHING,
@@ -1173,6 +1173,7 @@ function build(toks, rules) {
             RULES,
           );
         ctx = newCtx(r, R, box);
+        if (more) Object.assign(ctx, more); // (a brain file's names: let rage = 3, then rage+1 on its own line)
         try {
           v = once(ctx);
         } catch (e) {

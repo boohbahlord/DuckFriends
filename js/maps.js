@@ -19,7 +19,6 @@
    starry night sky, and it is not in the Map window. */
 import { duckSVG } from "./duck.js";
 import { pixelOn, gridPx } from "./pixel.js";
-import { bakeStill, unbake } from "./pxbake.js";
 import { esc } from "./ui.js";
 import { floorCanvas } from "./art.js";
 import BOARD from "./pxm/board.js";
@@ -295,44 +294,94 @@ function nightScene(layer) {
   return sc;
 }
 
-/* ---------- Duck Cabin: the night sky around Hangout's world (the world itself fills the board) ---------- */
-function cabinScene(layer) {
-  const sc = document.createElement("div");
-  sc.className = "scene cabin";
-  layer.append(sc);
-  const done = cssBaked(layer, sc);
-  return {
-    update() {},
-    destroy() {
-      done();
-      sc.remove();
-    },
-  };
-}
-/* the pixel look for a scene drawn only by its css (Duck Cabin's night sky, Tiles' checkerboard): made into pixels once
-   (pxbake.js), not by the filter every frame; again for a new size or a new grid. Returns its undoing */
-function cssBaked(layer, sc) {
-  let baked = "",
-    bt = 0;
-  const bake = () => {
-    const k = [layer.clientWidth, layer.clientHeight, gridPx()].join();
-    if (!pixelOn() || k === baked || !layer.clientWidth) return;
-    baked = k;
-    unbake(layer);
-    sc.classList.add("px-shot");
-    bakeStill(layer, null, layer, { sel: ":scope > .scene" });
-  };
-  const ro = new ResizeObserver(() => {
-    clearTimeout(bt);
-    bt = setTimeout(bake, baked ? 200 : 0);
+/* ---------- Duck Cabin: the night sky around Hangout's world (the world itself fills the board), drawn by code in the
+   world's pixels: blue going down to a green dark, a few stars and the moon in the top right ---------- */
+const CABIN_STARS = [
+  [0.12, 0.18, 0.6],
+  [0.34, 0.08, 0.53],
+  [0.58, 0.22, 0.67],
+  [0.76, 0.12, 0.53],
+  [0.9, 0.3, 0.6],
+  [0.22, 0.4, 0.4],
+  [0.66, 0.44, 0.4],
+]; // (where, as parts of the world, and how bright)
+const cabinScene = (layer) =>
+  codeScene(layer, "cabin", (x, W, H) => {
+    const gr = x.createLinearGradient(0, 0, 0, H);
+    gr.addColorStop(0, "#0b1030");
+    gr.addColorStop(0.7, "#1d2a55");
+    gr.addColorStop(1, "#14301f");
+    x.fillStyle = gr;
+    x.fillRect(0, 0, W, H); // (one color for each row of pixels)
+    x.fillStyle = "#fff";
+    for (const [sx, sy, a] of CABIN_STARS) {
+      x.globalAlpha = a;
+      x.fillRect(Math.round(sx * W), Math.round(sy * H), 1, 1);
+    }
+    /* the moon: a pale disc, its glow fading out (css drew it 60 px round, at 86% 10%) */
+    const mx = 0.86 * W,
+      my = 0.1 * H,
+      r = 30,
+      glow = 0x22 / 255;
+    x.fillStyle = "#fff4cf";
+    for (let j = Math.floor(my - r); j <= my + r; j++)
+      for (let i = Math.floor(mx - r); i <= mx + r; i++) {
+        const f = Math.hypot(i + 0.5 - mx, j + 0.5 - my) / r,
+          a =
+            f < 0.4
+              ? 1
+              : f < 0.55
+                ? 1 - ((f - 0.4) / 0.15) * (1 - glow)
+                : f < 0.7
+                  ? glow * (1 - (f - 0.55) / 0.15)
+                  : 0;
+        if (!a) continue;
+        x.globalAlpha = a;
+        x.fillRect(i, j, 1, 1);
+      }
+    x.globalAlpha = 1;
   });
+/* a map drawn only by code, straight in the world's pixels (Duck Cabin's night sky, Tiles' checkerboard): a canvas of
+   the world's pixels in a scene of its own, painted again when the screen's size changes; paint(x, W, H, seen) gets
+   its context, its size in pixels and what the screen sees of it ([left, top, width, height], in its pixels) */
+function codeScene(layer, kind, paint, focus) {
+  const world = { W: 1366, H: 768, G: 2 },
+    sc = worldScene(layer, world, kind, focus),
+    cv = document.createElement("canvas"),
+    W = (cv.width = world.W / world.G),
+    H = (cv.height = world.H / world.G);
+  cv.className = "code-px";
+  sc.stage.append(cv);
+  const x = cv.getContext("2d");
+  let at = "";
+  const draw = () => {
+    const r = sc.stage.getBoundingClientRect(),
+      b = layer.getBoundingClientRect();
+    if (!r.width || !b.width) return;
+    const k = r.width / W,
+      seen = [
+        Math.max(0, (b.left - r.left) / k),
+        Math.max(0, (b.top - r.top) / k),
+        Math.min(W, b.width / k),
+        Math.min(H, b.height / k),
+      ],
+      key = seen.map(Math.round).join() + "/" + layer.clientWidth;
+    if (key === at) return;
+    at = key;
+    x.setTransform(1, 0, 0, 1, 0, 0);
+    x.globalAlpha = 1;
+    x.clearRect(0, 0, W, H);
+    paint(x, W, H, seen);
+  };
+  const ro = new ResizeObserver(() => requestAnimationFrame(draw));
   ro.observe(layer);
-  addEventListener("pxgrid", bake);
-  return () => {
-    clearTimeout(bt);
-    ro.disconnect();
-    removeEventListener("pxgrid", bake);
-    unbake(layer);
+  draw();
+  return {
+    ...sc,
+    destroy() {
+      ro.disconnect();
+      sc.destroy();
+    },
   };
 }
 
@@ -827,20 +876,21 @@ function ease(x1, y1, x2, y2, p) {
 /* puts a map's world over the whole page (the page's own background rests meanwhile); returns { update(now), board(el),
    destroy() }: board() hands it the board, whose columns turn see-through for the map */
 /* the maps' scenes on their own, for a small screen (Duck Cabin's TV): scene(layer) → { update(now), destroy() } */
-/* Tiles: nothing but a pure black and white checkerboard (the squares are drawn by css/app.css) */
-function tilesScene(layer) {
-  const sc = document.createElement("div");
-  sc.className = "scene tiles";
-  layer.append(sc);
-  const done = cssBaked(layer, sc);
-  return {
-    update() {},
-    destroy() {
-      done();
-      sc.remove();
-    },
-  };
-}
+/* Tiles: nothing but a pure black and white checkerboard, 8 squares across what the screen sees (5 on a phone), each
+   a whole number of the world's pixels, white in the top left corner */
+const tilesScene = (layer) =>
+  codeScene(layer, "tiles", (x, W, H, [l, t, w]) => {
+    const n = layer.clientWidth <= 700 ? 5 : 8,
+      q = Math.max(1, Math.round(w / n)),
+      i0 = Math.round(l),
+      j0 = Math.round(t);
+    x.fillStyle = "#000";
+    x.fillRect(0, 0, W, H);
+    x.fillStyle = "#fff";
+    for (let j = 0; j0 + j * q < H; j++)
+      for (let i = 0; i0 + i * q < W; i++)
+        if (!((i + j) & 1)) x.fillRect(i0 + i * q, j0 + j * q, q, q);
+  });
 export const SCENES = {
   board: nightScene,
   rabbit: rabbitScene,
