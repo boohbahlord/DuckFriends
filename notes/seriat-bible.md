@@ -237,3 +237,14 @@ Every Seriat value works anywhere a number goes below: `wait 1:3`, `every [2,4]s
    ```
    Rage is 1 to 11. HP is twice the rage. When hit, it attacks 3 times in 4 and flees the rest. Near a duck, under
    5 HP it runs, otherwise it chases. Every 2 or 4 seconds it says "brains". Other files can take its rage.
+
+## 17. Seriat boxes in a zone's Act (owner, Nov 20 17:25Z; built by Solomon)
+Owner: "act should be a thing in algorithim ... seriat (this is on the top of the list / seriat shows a box, then another
+box appears below it, and it is a dropdown list ... seriat box input can be added again or multiple options can be
+selected / the seriat boxes that await input has a small input button on the right for importing files".
+Built: a zone's potential order starts with Act (Seriat, Damage, Heal, Kill, Nothing; it replaced "What it does", same
+saved field `fx`). Seriat shows boxes, each a value (any Seriat value, tenths, -1000 to 1000) with "Acts on" under it
+(HP, Speed, Damage, Regen HP each second, Hitbox %). Each step, for who the zone hits: HP gains the value (below 0:
+loses it); the others become the value and stay so (NPCs; a duck's Speed is its walk). "+" adds a box; the import
+button fills a box with the first value line of one of the player's files. Saved as one box `sa`: a line per box,
+value, tab, the picked names.

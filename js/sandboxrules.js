@@ -473,12 +473,39 @@ export const SB_GEO_F = ["sh", "fill", "zw", "zh"];
    spawn's do, its colors as theirs. "Sections colored from board build is invisible": a zone is seen only while the
    Build window is up (sbspawnview.js). A zone is a point as a spawn is ({ k: "zone", …, zw, zh: its size in duck
    lengths } in s.sb.pts), with these boxes */
+/* a zone's Act, in its potential order (the owner's, Nov 20 17:25Z: "act should be a thing in algorithim ... damage (from a
+   dropdown list) heal (from dropdown list) seriat (this is on the top of the list"): what each of its steps does to who
+   it hits. Seriat: its Seriat boxes (SB_ZONE.sa) */
 export const SB_FX = {
-  none: "Nothing",
+  seriat: "Seriat",
   damage: "Damage",
   heal: "Heal",
   kill: "Kill",
+  none: "Nothing",
 };
+/* what a zone's Seriat box acts on, each picked under it ("another box appears below it, and it is a dropdown list ...
+   multiple options can be selected"): HP gains the value (less than 0: loses it); the rest become it, and stay so after
+   (an NPC's; a duck's Speed too: its walk) */
+export const SB_SA_ON = {
+  hp: "HP",
+  speed: "Speed",
+  damage: "Damage",
+  regen: "Regen HP each second",
+  hitbox: "Hitbox (%)",
+};
+/* a zone's Seriat boxes, kept in one box (sa): a line each, its value, a tab, then what it acts on (comma separated) */
+export const sbSaRows = (p) =>
+  String((p && p.f && p.f.sa && p.f.sa.ok) || "")
+    .split("\n")
+    .map((l) => {
+      const [v = "", on = ""] = l.split("\t");
+      return { v, on: on.split(",").filter((k) => SB_SA_ON[k]) };
+    })
+    .filter((r, i, all) => r.v.trim() || r.on.length || all.length === 1);
+export const sbSaText = (rows) =>
+  rows
+    .map((r) => `${String(r.v).replace(/[\t\n]/g, " ")}\t${r.on.join(",")}`)
+    .join("\n");
 const listBox = (name, def) => ({
   name,
   check: (t) => (String(t).length <= 200 ? "" : "200 letters at most"),
@@ -502,10 +529,16 @@ export const SB_ZONE = {
     def: "4",
   },
   fx: {
-    name: "What it does",
+    name: "Act",
     check: (t) =>
-      SB_FX[String(t).trim()] ? "" : "Nothing, damage, heal or kill",
+      SB_FX[String(t).trim()] ? "" : "Seriat, damage, heal, kill or nothing",
     def: "none",
+  },
+  sa: {
+    name: "Seriat",
+    check: (t) => (String(t).length <= 800 ? "" : "800 letters at most"),
+    def: "",
+    len: 800,
   },
   amt: { name: "HP each time", kind: "tenth", min: 0.1, max: 100, def: "1" },
   rate: {
