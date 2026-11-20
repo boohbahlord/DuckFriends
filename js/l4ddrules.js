@@ -2005,8 +2005,10 @@ function boltTick(s, zs, now, ids) {
 }
 /* a body the Nuke left: it lies there longer */
 const nuked = (s, z) => !!s.hang.l4nk && (s.hang.l4nk.ids || []).includes(z.i);
-/* Max Ammo: every weapon that refills is full again, the grenades too (3); the medkit and Jaime don't come back this
-   way (the medkit never refills, Jaime comes back each round) */
+/* Max Ammo: every weapon that refills is full again, the grenades too (3); the medkit, Survival's defibrillator and
+   Jaime don't come back this way (the medkit never refills, the defibrillator only comes from the merchant, Jaime comes
+   back each round). Before, a Max Ammo gave every used defibrillator back: "merchant always has unlimited defibs" (the
+   owner's, Nov 20 03:58Z) */
 function maxAmmo(s) {
   const am = { ...(s.hang.l4a || {}) };
   for (const id of Object.keys(am)) {
@@ -2015,6 +2017,7 @@ function maxAmmo(s) {
       if (
         fullAmmo(w) &&
         w !== "medkit" &&
+        w !== "defib" &&
         !ARMS[w].round &&
         !angelOf(s, id, w) // (an Angelic gun never refills, not even here: the owner's, Nov 16 22:21Z)
       )
