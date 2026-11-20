@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v183",
+    version: 183,
+    date: "Nov 20, 2026",
+    title: "M like a spawn",
+    news: [
+      "For Sandbox: in M, a kind's defaults and the NPCs you make now have a spawn's settings too: Brain, Can sprint, jump and climb, HP, Damage, Speed and Size.",
+    ],
+  },
+  {
     id: "v182",
     version: 182,
     date: "Nov 20, 2026",
