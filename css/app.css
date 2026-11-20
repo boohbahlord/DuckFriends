@@ -20600,7 +20600,8 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 }
 /* its settings window */
 .sb-setwin {
-  width: min(30rem, calc(100vw - 1.5rem));
+  /* bigger, less scrolling (plan Phase 2: "A bigger build and zone window, less cluttered and with less scrolling") */
+  width: min(40rem, calc(100vw - 1.5rem));
 }
 /* the owner's, Nov 19 21:59Z: the slide bar "moved a little bit more to the right so that it's out of the way", in the
    UI's colors, and no cut-off color dots or stray slide bar: the box reaches into the window's right edge (its
@@ -21585,4 +21586,81 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   gap: 0.6rem;
   margin-top: 0.6rem;
   color: #fff;
+}
+
+/* Sandbox's build blocks drawn as pixels (js/sbspawnview.js shapePic, js/sblootview.js lootRing): one picture pixel per
+   grid square, never smoothed */
+.sb-pt .sb-pxmark {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.sb-zone.sb-shaped {
+  border: 0;
+  background: var(--shape) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}
+.sb-area {
+  pointer-events: none;
+}
+/* Sandbox Phase 2: a selected block glows; the selection box; a block's eight handles (pixel squares) */
+.sb-pt.sb-sel {
+  outline: 2px dashed #fff;
+  outline-offset: 2px;
+  filter: drop-shadow(0 0 4px #7df);
+}
+.sb-selbox {
+  position: fixed;
+  z-index: 6400;
+  border: 2px dashed #7df;
+  background: #7df2;
+  pointer-events: none;
+}
+.sb-hdls {
+  position: fixed;
+  inset: 0;
+  z-index: 6400;
+  pointer-events: none;
+}
+.sb-hdl {
+  position: fixed;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  background: #fff;
+  border: 2px solid #123;
+  pointer-events: auto;
+}
+.sb-fold > summary {
+  cursor: pointer;
+  list-style: none;
+}
+.sb-fold > summary::-webkit-details-marker {
+  display: none;
+}
+.sb-fold > summary::before {
+  content: "\25B8";
+  display: inline-block;
+  width: 1em;
+  transition: transform 0.15s;
+}
+.sb-fold[open] > summary::before {
+  transform: rotate(90deg);
+}
+.sb-fold {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.sb-fold:not([open]) {
+  gap: 0;
+}
+.sb-sect-top {
+  opacity: 1;
+}
+.sb-purpose {
+  font: inherit;
+  padding: 0.2rem 0.4rem;
 }

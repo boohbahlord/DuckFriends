@@ -21,6 +21,7 @@ import {
   SB_LOOT,
   SB_DROPS,
   SB_GEAR,
+  sbSpread,
 } from "./sandboxrules.js";
 import { valueOf } from "./numerat.js";
 import { boxText, spawnsHere, zoneSpot, zonesFor } from "./sbspawn.js";
@@ -102,7 +103,9 @@ function lay(s, q, w, now) {
   const zs = zonesFor(s, "lt", q), // (a zone that names it: the orb lies in it, anywhere: sbzone.js)
     at = zs.length
       ? zoneSpot(s, zs[Math.floor(Math.random() * zs.length)])
-      : null,
+      : sbSpread(q)
+        ? zoneSpot(s, q) // (anywhere in its own shape, when it's bigger than its spot)
+        : null,
     p = at || q,
     where = at ? { x: at.x, y: at.y, z: at.z } : {};
   if (!Object.hasOwn(SB_DROPS, w)) return { w, at: now, ...where };
