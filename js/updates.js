@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v188",
+    version: 188,
+    date: "Nov 20, 2026",
+    title: "Right-click a zone",
+    news: [
+      "For Sandbox: right-click a zone (hold it on a phone) for Snap, Fixed zone, Direction (flip and rotate) and Overlay. Overlay levels 1 to 10 hide the zones of other levels: Shift+O and a number key, or Overlay level under Tools on a phone.",
+      "For Sandbox: zones grow and shrink in whole hit tiles.",
+    ],
+  },
+  {
     id: "v187",
     version: 187,
     date: "Nov 20, 2026",

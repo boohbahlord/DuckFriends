@@ -20343,6 +20343,19 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   white-space: nowrap;
   cursor: pointer;
 }
+/* Tools' Overlay level: 1 to 9 and 0, five a row */
+.sb-tools-ov {
+  display: grid;
+  grid-template-columns: repeat(5, 2.2rem);
+  gap: 0.25rem;
+}
+.sb-tools-ov .sb-tools-opt {
+  text-align: center;
+  padding: 0.35rem 0;
+}
+.sb-tools-ov .sb-tools-opt.on {
+  border-color: var(--accent, #ffd23f);
+}
 @media not all and (any-pointer: fine) {
   html:not(.keyboard) .game .sb-tools:not([hidden]) {
     display: flex;
@@ -22400,4 +22413,42 @@ textarea.um-in {
   .sb-epwin .sb-row {
     grid-template-columns: minmax(0, 1fr) 6.5rem;
   }
+}
+/* Direction's Rotate (js/sbrotate.js): a ring in the middle of the block, its circular arrow on it where the block faces */
+.sb-rot {
+  position: fixed;
+  z-index: 6400;
+  width: 4.4rem;
+  height: 4.4rem;
+  margin: -2.2rem 0 0 -2.2rem;
+  border: 0.15rem dashed #fffc;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0.15rem #0006;
+  pointer-events: none;
+}
+.sb-rot-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2rem;
+  height: 2rem;
+  margin: -1rem 0 0 -1rem;
+  padding: 0.25rem;
+  border: 0.12rem solid #123;
+  border-radius: 50%;
+  background: #fff;
+  color: #123;
+  cursor: grab;
+  touch-action: none;
+  pointer-events: auto;
+  transform: rotate(var(--a, 0deg)) translateY(-2.2rem)
+    rotate(calc(-1 * var(--a, 0deg)));
+}
+.sb-rot-knob:active {
+  cursor: grabbing;
+}
+.sb-rot-knob svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
