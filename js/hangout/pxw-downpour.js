@@ -1,6 +1,6 @@
 /* made by tools/pixel-world.cjs: don't change it by hand (pxworld.js) */
 export const GROUND = {
-  url: "assets/px/world/downpour-ground-79e45a25.webp",
+  parts: ["assets/px/world/downpour-ground-79e45a25.webp"],
   x: -1024,
   y: -1024,
   w: 2304,

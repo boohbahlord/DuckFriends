@@ -27,7 +27,8 @@ export const artKey = (svg, box, hash, steady) =>
   "x" +
   Math.max(1, Math.round(box.h / ART));
 
-/* one world's files (made by tools/pixel-world.cjs): { ground: { url, x, y, w, h }, atlas: url, index } */
+/* one world's files (made by tools/pixel-world.cjs): { ground: { parts, x, y, w, h }, atlas: url, index }; the ground
+   in bands across (each file within its budget), put back together here pixel for pixel */
 const DATA = {
   "": () => import("./pxw-cabin.js"),
   l4: () => import("./pxw-cabin-l4.js"),
@@ -46,10 +47,14 @@ export function worldArt(variant) {
             i.src = u;
             return i.decode().then(() => i);
           };
-          const [ground, atlas] = await Promise.all([
-            img(m.GROUND.url),
-            img(m.ATLAS),
-          ]);
+          const [atlas, ...parts] = await Promise.all(
+            [m.ATLAS, ...m.GROUND.parts].map(img),
+          );
+          const ground = document.createElement("canvas");
+          ground.width = parts[0].width;
+          ground.height = parts.reduce((t, p) => t + p.height, 0);
+          const g = ground.getContext("2d");
+          parts.reduce((y, p) => (g.drawImage(p, 0, y), y + p.height), 0);
           return {
             ...m.GROUND,
             img: ground,

@@ -27,7 +27,17 @@ CUTS = {
 
 
 def ground(name):
-    return Image.open(next(WORLD.glob(name + "-*.webp"))).convert("RGBA")
+    """a world's ground picture, its bands (tools/pixel-world.cjs) put back together"""
+    parts = [
+        Image.open(p).convert("RGBA")
+        for p in sorted(WORLD.glob(name + "*-*.webp"), key=lambda p: p.name)
+    ]
+    im = Image.new("RGBA", (parts[0].width, sum(p.height for p in parts)))
+    y = 0
+    for p in parts:
+        im.paste(p, (0, y))
+        y += p.height
+    return im
 
 
 def period(a, axis, lo=16, hi=None):

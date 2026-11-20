@@ -1,6 +1,9 @@
 /* made by tools/pixel-world.cjs: don't change it by hand (pxworld.js) */
 export const GROUND = {
-  url: "assets/px/world/cabin-ground-a70ed201.webp",
+  parts: [
+    "assets/px/world/cabin-ground1-9e74dfb7.webp",
+    "assets/px/world/cabin-ground2-de1f59f8.webp",
+  ],
   x: -512,
   y: -1024,
   w: 3584,

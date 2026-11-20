@@ -78,6 +78,42 @@ function webp(name, b64) {
   return `assets/px/world/${file}`;
 }
 
+/* the ground in bands across, as few as keep each file within one file's budget (384 KB: tools/pixel-budget.py); pxworld.js
+   puts them back together pixel for pixel. [urls] */
+function groundBands(name, b64) {
+  const png = path.join(OUT, name + ".png");
+  fs.writeFileSync(png, Buffer.from(b64, "base64"));
+  const parts = execFileSync("python3", [
+    "-c",
+    `import sys, os
+from PIL import Image
+im = Image.open(sys.argv[1])
+for n in range(1, 9):
+    h = -(-im.height // n)
+    outs = [sys.argv[1][:-4] + f"{i}.webp" for i in range(n)]
+    for i, o in enumerate(outs):
+        im.crop((0, i * h, im.width, min(im.height, (i + 1) * h))).save(o, "WEBP", lossless=True, method=6)
+    if all(os.path.getsize(o) <= 384 * 1024 for o in outs):
+        break
+print(" ".join(outs))`,
+    png,
+  ])
+    .toString()
+    .trim()
+    .split(" ");
+  fs.unlinkSync(png);
+  return parts.map((tmp, i) => {
+    const h = crypto
+        .createHash("sha1")
+        .update(fs.readFileSync(tmp))
+        .digest("hex")
+        .slice(0, 8),
+      file = `${name}${parts.length > 1 ? i + 1 : ""}-${h}.webp`;
+    fs.renameSync(tmp, path.join(OUT, file));
+    return `assets/px/world/${file}`;
+  });
+}
+
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
   const old = fs.readdirSync(OUT);
@@ -95,12 +131,12 @@ function webp(name, b64) {
         import("/tools/pixel-world-page.js").then((m) => m.bake(mode, map)),
       [mode, map],
     );
-    const ground = webp(map + "-ground", r.ground.png),
+    const parts = groundBands(map + "-ground", r.ground.png),
       atlas = webp(name + "-props", r.atlas);
-    made.add(path.basename(ground)).add(path.basename(atlas));
+    for (const u of [...parts, atlas]) made.add(path.basename(u));
     const js =
       `/* made by tools/pixel-world.cjs: don't change it by hand (pxworld.js) */\n` +
-      `export const GROUND = ${JSON.stringify({ url: ground, x: r.ground.x, y: r.ground.y, w: r.ground.w, h: r.ground.h })};\n` +
+      `export const GROUND = ${JSON.stringify({ parts, x: r.ground.x, y: r.ground.y, w: r.ground.w, h: r.ground.h })};\n` +
       `export const ATLAS = ${JSON.stringify(atlas)};\n` +
       `export const INDEX = ${JSON.stringify(r.index)};\n`;
     fs.writeFileSync(path.join(ROOT, "js", "hangout", `pxw-${name}.js`), js);
