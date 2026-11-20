@@ -5,9 +5,8 @@
 import { cloud, rnd } from "../../js/art.js";
 import { carnivalSVG } from "./carnival.js";
 import { backdropSVG } from "./nightshow.js";
-import { drawCollage } from "../../js/collage.js";
+import { drawCollage } from "./collage.js";
 import { euclidMiniURL } from "../../js/euclid.js";
-import { vellumBackdrop } from "../../js/vellum.js";
 
 /* Shelter Sky & Null's real drawing, as a PNG */
 function collageURL() {
@@ -96,4 +95,10 @@ ${cloud(90, 70, 0.5, "#ffffffdd", "#ffffff77")}${cloud(330, 150, 0.55, "#ffffffc
     "<svg ",
     '<svg width="480" height="270" ',
   ); // Night Show
+}
+
+/* The King's Festival's page, 16 : 9: the vellum photograph (already pixels), its edges a little darker */
+function vellumBackdrop() {
+  return `<defs><radialGradient id="vledge" cx=".5" cy=".48" r=".75"><stop offset=".55" stop-color="#462a12" stop-opacity="0"/><stop offset="1" stop-color="#462a12" stop-opacity=".22"/></radialGradient></defs>
+<rect width="480" height="270" fill="#ba966c"/><image href="/assets/px/maps/vellum.webp" width="480" height="270" preserveAspectRatio="xMidYMid slice"/><rect width="480" height="270" fill="url(#vledge)"/>`;
 }

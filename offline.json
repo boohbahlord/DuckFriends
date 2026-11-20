@@ -1,5 +1,5 @@
 {
-"v": "202611201133",
+"v": "202611201139",
 "files": {
 "assets/app/apple-touch-icon.png": "cda48ff597",
 "assets/app/icon-192.png": "8e062adfdc",
@@ -460,6 +460,8 @@
 "assets/px/mapw/carnival/faf4ce05979d.webp": "afa8d24424",
 "assets/px/mapw/carnival/fc76da0c6293.webp": "9bd3f1b6bb",
 "assets/px/mapw/carnival/fe25baafaa20.webp": "15ae2e54c2",
+"assets/px/mapw/collage/collage-grey.webp": "ce06cda524",
+"assets/px/mapw/collage/collage.webp": "e1455e8067",
 "assets/px/mapw/pixel/6b89fa0e70b4.webp": "644329bdf7",
 "assets/px/mapw/pixel/e26e84851c4e.webp": "916df5d500",
 "assets/px/mapw/pixel/f05b7743251a.webp": "29fe661f52",
@@ -478,6 +480,7 @@
 "assets/px/mapw/sky/sky-star.webp": "3793327b9e",
 "assets/px/mapw/sky/sky-sun.webp": "9c92c75c18",
 "assets/px/mapw/stars/stars-sky.webp": "d5c52e2621",
+"assets/px/mapw/vellum/vellum.webp": "65f32ca794",
 "assets/px/modes/aod.webp": "bf3d1550ae",
 "assets/px/modes/bb.webp": "4f27c9cd4d",
 "assets/px/modes/ddr.webp": "e8b5bccb7a",
