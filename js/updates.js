@@ -18,6 +18,7 @@ export const UPDATES = [
       "The front screen loads half as much.",
       "A cropped picture duck grows to a duck's size, so a small crop is never a smaller target.",
       "Ducks keep the same colors every time they're drawn.",
+      "For Sandbox: your duck walks again on Downpour.",
     ],
   },
   {
