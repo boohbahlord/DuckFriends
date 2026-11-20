@@ -29,7 +29,7 @@ import {
   SB_WHAT,
   SB_ACTS,
   SB_IMPORT,
-  SB_OWN,
+  SB_MSET,
   SB_PLAYER,
   sbPlayerSpot,
   sbOnWorld,
@@ -203,8 +203,38 @@ const flag = (p, f) => num(p, f) === true;
    What a spawn makes reads each of SB_OWN from: a respawn that imported it; else the spawn, when its settings are on and
    it wrote that box; else the kind's defaults from M, when written; else the game's own (SB_BOXES' defaults) */
 const NONE = { f: {} };
-export const kdOf = (s, k) => ((s.sb && s.sb.kd) || {})[k] || null;
+export const kdOf = (s, k) =>
+  madeOf(s, k)
+    ? { f: madeOf(s, k).f || {} } // (a made NPC: the settings it came with, sbnpcs.js set)
+    : ((s.sb && s.sb.kd) || {})[k] || null;
 export const ownOn = (p) => !p || !p.f || flag(p, "sets");
+/* M's boxes for an NPC from what was typed in them (f: text), as a spawn keeps its own: a kind's defaults, a made NPC's
+   set (sbnpcs.js) */
+export function msetOf(texts, was = {}) {
+  const fs = {};
+  for (const f of SB_MSET) {
+    const b = boxOf(f),
+      t = String((texts || {})[f] ?? "").slice(0, SB_ACTS[f] ? 200 : 80);
+    if (
+      !b ||
+      (t === "" && !SB_ACTS[f]) ||
+      (SB_ACTS[f] && !(f in (texts || {})))
+    )
+      continue;
+    fs[f] = b.check
+      ? { t, ok: b.check(t) ? (was[f] && was[f].ok) || "" : t }
+      : keep(was[f], t, b);
+  }
+  return fs;
+}
+/* the Seriat file an NPC of kind k from spawn p runs: the spawn's Brain, else M's for its kind (a made NPC's own), else
+   none ("": it thinks by its lists) */
+export function brainFor(s, p, k) {
+  const own = p ? boxText(p, "brain").trim() : "";
+  if (own) return own;
+  const kd = kdOf(s, k || "zombie");
+  return kd && kd.f.brain ? String(kd.f.brain.ok || "").trim() : "";
+}
 /* a box written (not left empty: empty is the default, the next one down decides; the owner's, Nov 20 17:25Z) */
 const written = (o, f) => !!o.f[f] && String(o.f[f].ok ?? "").trim() !== "";
 function fromFor(s, p, k, at = {}) {
@@ -424,7 +454,7 @@ function makeOne(s, id, at) {
   } else if (
     onCabin(s) ||
     k !== "zombie" ||
-    boxText(p, "brain").trim() ||
+    brainFor(s, p, k) ||
     kind.sz ||
     kind.im ||
     kind.dk ||
@@ -721,7 +751,13 @@ export function sbAct(s, a, now) {
     if (!epMay(s, owner, a.id, "m")) return false;
     const duck = cleanLook(s, n.duck);
     if (!duck) return false;
-    const beh = {};
+    const beh = {},
+      set = msetOf(
+        Object.fromEntries(
+          Object.entries(n.set || {}).filter(([f]) => !SB_ACTS[f]),
+        ), // (its behavior lists are beh)
+        (was && was.f) || {},
+      );
     for (const f of Object.keys(SB_ACTS))
       beh[f] = String((n.beh || {})[f] || "").slice(0, 200);
     s.sb = {
@@ -736,6 +772,7 @@ export function sbAct(s, a, now) {
           duck,
           w: cleanArms(n.w),
           beh,
+          ...(Object.keys(set).length ? { f: set } : {}), // (its settings from M, when it has any)
           by: owner,
           ...(owner !== a.id ? { ed: a.id, et: now } : {}), // (changed by someone the owner let: the owner's device may keep it, sbepview.js)
         },
@@ -774,7 +811,7 @@ export function sbAct(s, a, now) {
   /* the Seriat files a Brain box names (and the files they use), sent by the player who set it: sbnumberat.js */
   if (a.k === "nbf")
     return !!a.files && typeof a.files === "object" && nbKeep(s, a.files);
-  /* M's defaults for a kind: kind, f (one of SB_OWN), v (its text; "" for the game's own); reset: all of them back */
+  /* M's defaults for a kind: kind, f (one of SB_MSET), v (its text; "" for the game's own); reset: all of them back */
   if (a.k === "kd") {
     const kind = String(a.kind || ""),
       f = String(a.f || ""),
@@ -782,16 +819,13 @@ export function sbAct(s, a, now) {
     if (!SB_WHAT[kind]) return false;
     if (a.reset) delete all[kind];
     else {
-      const b = boxOf(f);
-      if (!b || !SB_OWN.includes(f)) return false;
-      const fs = { ...((all[kind] || NONE).f || {}) },
-        t = String(a.v == null ? "" : a.v).slice(0, SB_ACTS[f] ? 200 : 80);
-      if (t === "" && !SB_ACTS[f]) delete fs[f];
-      else
-        fs[f] = b.check
-          ? { t, ok: b.check(t) ? (fs[f] && fs[f].ok) || "" : t }
-          : keep(fs[f], t, b);
-      all[kind] = { f: fs };
+      if (!SB_MSET.includes(f)) return false;
+      const was = (all[kind] || NONE).f || {},
+        fs = { ...was };
+      delete fs[f];
+      all[kind] = {
+        f: { ...fs, ...msetOf({ [f]: a.v == null ? "" : String(a.v) }, was) },
+      };
     }
     s.sb = { ...s.sb, kd: all };
     return true;
@@ -1357,9 +1391,9 @@ export function think(s, now, npcs, at, H, far, duckAt) {
     all = [...ducks, ...them],
     brains = new Map(),
     brainOf = (o) => {
-      if (!brains.has(o.sp))
-        brains.set(o.sp, pts[o.sp] ? boxText(pts[o.sp], "brain").trim() : "");
-      return brains.get(o.sp);
+      const key = o.sp + "|" + (o.k || "zombie");
+      if (!brains.has(key)) brains.set(key, brainFor(s, pts[o.sp], o.k)); // (its spawn's, else M's for its kind)
+      return brains.get(key);
     };
   const nbCh = nbThink(s, now, them, all, ducks, far, brainOf); // (the NPCs that run a Seriat file)
   const out = them.map((me) => {
