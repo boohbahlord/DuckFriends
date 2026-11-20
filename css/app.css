@@ -21685,15 +21685,22 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
     font-size: 1.05rem;
   }
 }
-/* the help pages of Sandbox's windows (js/sbhelp.js): the bible's pixel page, a few lines at a time */
-.sbh-win {
+/* the help pages of Sandbox's windows (js/sbhelp.js): a few lines at a time, in the game's own window (the owner's, Nov
+   20 04:46Z: "why tf is this white?"; the white page is the Seriat bible's alone) */
+.win.sbh-win {
   width: min(34rem, 100%);
 }
 .sbh-page {
-  min-height: 12rem;
+  min-height: 10rem;
+}
+.sbh-page h2 {
+  margin: 0.4rem 0 0.5rem;
+  font-size: 1.25rem;
 }
 .sbh-page p {
-  font-size: 1.3rem;
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.45;
 }
 .sbh-nav {
   display: flex;
@@ -21701,7 +21708,6 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   justify-content: space-between;
   gap: 0.6rem;
   margin-top: 0.6rem;
-  color: #fff;
 }
 
 /* Sandbox's build blocks drawn as pixels (js/sbspawnview.js shapePic, js/sblootview.js lootRing): one picture pixel per
@@ -21949,4 +21955,18 @@ p.sb-ties {
 }
 .sb-row[data-row="lk"] select {
   min-width: 8rem;
+}
+/* Sandbox's G, Music (js/sbsaves.js musicWin): one song a line, ticked ones play */
+.sb-musiclist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  max-height: min(24rem, 55dvh);
+  overflow: auto;
+  padding-right: 0.3rem;
+}
+.sb-song {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }

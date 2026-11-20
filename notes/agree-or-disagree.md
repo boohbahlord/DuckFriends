@@ -7286,3 +7286,9 @@ Adam: in Survival every bullet, pellet, arrow, thrown dagger and beam a duck fir
 > music settings among others in game settings are a window that pops up or dialog box for that setting
 
 Adam: in Sandbox's G game settings, Music and the other settings with many options open in their own small window when picked, instead of rows inline.
+
+## Owner, Nov 20 04:46Z (project chat, through Moses; screenshot of "Game settings: help" on a white page)
+> why tf is this white?
+> seriat should be different color background
+
+Adam: Sandbox's help windows use the game's own window now; the white pixel page stays the Seriat bible's alone.

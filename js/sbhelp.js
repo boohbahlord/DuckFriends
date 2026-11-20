@@ -92,7 +92,7 @@ export const SB_HELP = {
     ],
     [
       "Music",
-      "Music turns all the songs on or off. Each song below it can be turned on or off on its own; only the ones on play. The save keeps the list.",
+      "Music opens its own window: tick the songs that play, or turn them all on or off at once. Only the ticked ones play, the same for everyone. The save keeps the list.",
     ],
   ],
 };
@@ -109,9 +109,9 @@ export function openSbHelp(key) {
   if (!pages.length || document.querySelector(".sbh-win")) return;
   let i = 0;
   return openWindow(
-    `<h2>${esc(TITLES[key] || "Help")}: help</h2><div class="sbb-page sbh-page" tabindex="0"></div><div class="sbh-nav"><button type="button" class="btn small ghost" data-prev>Back</button><span class="sbh-n"></span><button type="button" class="btn small" data-next>Next</button></div>`,
+    `<h2>${esc(TITLES[key] || "Help")}: help</h2><div class="sbh-page" tabindex="0"></div><div class="sbh-nav"><button type="button" class="btn small ghost" data-prev>Back</button><span class="sbh-n"></span><button type="button" class="btn small" data-next>Next</button></div>`,
     {
-      cls: "sbb-win sbh-win",
+      cls: "sbh-win", // (the game's own window, never the Seriat bible's white page: the owner's, Nov 20 04:46Z)
       onOpen(w) {
         const page = w.querySelector(".sbh-page"),
           prev = w.querySelector("[data-prev]"),
