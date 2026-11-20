@@ -43,6 +43,7 @@ import {
   isSb,
   sbPlayerSpot,
   SB_BACK_MS,
+  sbRule,
   SB_BOXES,
   sbZombieWall,
 } from "./sandboxrules.js";
@@ -1680,7 +1681,7 @@ export const missOf = (w) =>
       : MISS.SLOW;
 const headOf = (s, id, w) => {
   const own = critOf(w);
-  if (!own) return 0;
+  if (!own || (isSb(s) && !sbRule(s, "crit"))) return 0; // (Sandbox's Rules: crits off)
   const holy = w !== "pan" && angelOf(s, id, w) ? 2 : 1; // (the pan has its own: not doubled)
   return own * holy + CRIT.UP * (upOf(s, id).acc || 0);
 };
@@ -4385,7 +4386,13 @@ function hurtDuck(s, p4, id, now, w = "", dmg = 1) {
     s.hang.still = { ...(s.hang.still || {}), [id]: now + 1e13 };
     return true;
   }
-  p4[id] = { hp: 0, at: now, dn: now + L4.BLEED };
+  /* Sandbox's Rules (G): with no down phase it just dies, the bleeding out done at once (the owner's: "is there a down
+     phase where they can be revived? Disabled by default. So they just die") */
+  p4[id] = {
+    hp: 0,
+    at: now,
+    dn: isSb(s) && !sbRule(s, "down") ? now : now + L4.BLEED,
+  };
   downGun(s, id, true);
   if (hasSafe(s, id)) {
     /* Safe Keeping: it gets the duck up, or keeps its stuff if it dies; up at once when nobody else is standing (or a computer), else on E */
@@ -5195,6 +5202,23 @@ function l4Tick(s, now) {
       continue;
     }
     if (p.gh && isSb(s) && now - (p.at || 0) >= SB_BACK_MS) {
+      /* Sandbox's Rules: each coming back spends a life; out of them, it's dead for good and watches the others
+         (spectate.js), as in Survival */
+      const most = sbRule(s, "lives"),
+        used = ((s.sb && s.sb.died) || {})[id] || 0;
+      s.sb = {
+        ...s.sb,
+        died: { ...((s.sb && s.sb.died) || {}), [id]: used + 1 },
+      };
+      if (most && used + 1 >= most) {
+        p4[id] = { hp: 0, at: now, dn: now + 1e13, ex: 1 };
+        if (s.players[id]) s.players[id].dead = true;
+        const g = { ...(s.hang.ghost || {}) };
+        delete g[id];
+        s.hang.ghost = g;
+        s.hang.still = { ...(s.hang.still || {}), [id]: now + 1e13 };
+        continue;
+      }
       s.hang.l4p = p4;
       bringBack(s, id, now, ids.indexOf(id), false);
       p4[id] = s.hang.l4p[id];
