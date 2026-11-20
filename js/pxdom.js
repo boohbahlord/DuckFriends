@@ -15,6 +15,7 @@ import {
   rasterReady,
   rainbowSteps,
   afterPaint,
+  bakedPiece,
 } from "./pixel.js";
 import { hasRb, RB_N } from "./rainbowskin.js";
 
@@ -267,8 +268,10 @@ function make(jobs) {
   for (const j of jobs) put(j);
 }
 function put({ svg, st, key, vb, w, h, text, tx }) {
-  const k = "d" + hash(text);
+  const k = (svg.matches(".duck, .cat") ? "c" : "d") + hash(text); // (c: a character, made from its parts: the ducks' sheets)
   if (hasRb(text)) return rbShow(svg, st, key, text, vb, w, h);
+  const piece = bakedPiece(k, w, h);
+  if (piece) return fileShow(svg, st, piece, vb, tx);
   let img = st.img;
   if (!img || img.parentNode !== svg) {
     img = document.createElementNS(NS, "image");
@@ -300,11 +303,52 @@ function put({ svg, st, key, vb, w, h, text, tx }) {
   }
 }
 
+/* a drawing made into pixels ahead of time (pixel.js bakedPiece): its piece of the files' picture, shown as it is
+   through a window the drawing's size (svg.pxw). Nothing is made on the device */
+function fileShow(svg, st, { url, W, H, at }, vb, tx) {
+  let win = st.win;
+  if (!win || win.dataset.f !== "1") {
+    if (win) win.remove();
+    win = document.createElementNS(NS, "svg");
+    win.setAttribute("class", "pxw");
+    win.setAttribute("overflow", "hidden");
+    win.setAttribute("preserveAspectRatio", "none");
+    win.dataset.f = "1";
+    const im = document.createElementNS(NS, "image");
+    im.setAttribute("class", "pxi");
+    im.setAttribute("preserveAspectRatio", "none");
+    win.append(im);
+    st.win = win;
+  }
+  win.setAttribute("x", vb.x);
+  win.setAttribute("y", vb.y);
+  win.setAttribute("width", vb.width);
+  win.setAttribute("height", vb.height);
+  win.setAttribute("viewBox", `${at[2]} ${at[3]} ${at[0]} ${at[1]}`);
+  /* (in its own words too: the page's rules for a drawing's svg, its size or "overflow: visible", reach this one inside
+     it, and the whole picture of every drawing showed round the speaker) */
+  win.style.cssText = `overflow:hidden;filter:none;transform:none;x:${vb.x}px;y:${vb.y}px;width:${vb.width}px;height:${vb.height}px`;
+  const im = win.firstChild;
+  im.setAttribute("width", W);
+  im.setAttribute("height", H);
+  if (im.getAttribute("href") !== url) im.setAttribute("href", url);
+  if (win.parentNode !== svg) svg.append(win);
+  if (st.img) st.img.remove();
+  svg.querySelectorAll(":scope > g.pxt").forEach((e) => e.remove());
+  if (tx) svg.append(tx);
+  svg.setAttribute("data-px", "");
+  svg.removeAttribute("data-pxwait");
+}
+
 /* a drawing wearing the rainbow skin (rainbowskin.js): every step of the rainbow's turn in one tall picture, seen
    through a window the drawing's size (svg.pxw), stepped through by css (image.rbsp) */
 function rbShow(svg, st, key, text, vb, w, h) {
   const R = rainbowSteps(text, vb.width, vb.height, w, h);
   let win = st.win;
+  if (win && win.dataset.f) {
+    win.remove(); // (the window of a picture from the files: not this one's)
+    win = null;
+  }
   if (!win) {
     win = document.createElementNS(NS, "svg");
     win.setAttribute("class", "pxw");
