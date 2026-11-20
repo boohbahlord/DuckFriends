@@ -297,25 +297,39 @@ export function sbCellIn(p, i, j) {
     ((j + 0.5) / cy) * 2 - 1,
   );
 }
-/* block p's box, [x0, y0, x1, y1] in shares of the map (W, H: a world's size in px); the whole map when it fills it */
+/* a duck length in shares of the map, [across, up and down] */
+const unit = (s, W, H) =>
+  sbOnBoard(s) ? [0.03, 0.08] : [SB_ZONE_PX / W, SB_ZONE_PX / H];
+/* how far block p is turned, in degrees (plan Phase 2: "while held, the arrow keys rotate") */
+export const sbRot = (p) => ((((p && p.rot) || 0) % 360) + 360) % 360;
+/* block p's box, [x0, y0, x1, y1] in shares of the map (W, H: a world's size in px): around it as it's turned; the
+   whole map when it fills it */
 export function sbZoneBox(s, p, W = 1, H = 1) {
   if (sbFills(p)) return [0, 0, 1, 1];
-  const [rx, ry] = sbOnBoard(s)
-      ? [0.03, 0.08]
-      : [SB_ZONE_PX / W, SB_ZONE_PX / H],
+  const [rx, ry] = unit(s, W, H),
     [w, h] = sbSize(p),
-    hw = (w * rx) / 2,
-    hh = (h * ry) / 2;
+    a = (sbRot(p) * Math.PI) / 180,
+    c = Math.abs(Math.cos(a)),
+    n = Math.abs(Math.sin(a)),
+    hw = ((w * c + h * n) * rx) / 2,
+    hh = ((w * n + h * c) * ry) / 2;
   return [p.x - hw, p.y - hh, p.x + hw, p.y + hh];
 }
-/* is (x, y) (shares of the map) inside block p: in its box, on a grid square inside its shape */
+/* is (x, y) (shares of the map) inside block p: turned back by its rotation into its own grid, on a square inside its
+   shape */
 export function sbInBlock(s, p, x, y, W = 1, H = 1) {
-  const [x0, y0, x1, y1] = sbZoneBox(s, p, W, H);
-  if (x < x0 || x > x1 || y < y0 || y > y1) return false;
-  if (sbFills(p)) return true;
+  if (sbFills(p)) return x >= 0 && x <= 1 && y >= 0 && y <= 1;
+  const [rx, ry] = unit(s, W, H),
+    [w, h] = sbSize(p),
+    a = (-sbRot(p) * Math.PI) / 180,
+    dx = (x - p.x) / rx,
+    dy = (y - p.y) / ry, // (duck lengths from its middle)
+    lx = dx * Math.cos(a) - dy * Math.sin(a),
+    ly = dx * Math.sin(a) + dy * Math.cos(a);
+  if (Math.abs(lx) > w / 2 || Math.abs(ly) > h / 2) return false;
   const [cx, cy] = sbCells(p),
-    i = Math.min(cx - 1, Math.floor(((x - x0) / (x1 - x0 || 1)) * cx)),
-    j = Math.min(cy - 1, Math.floor(((y - y0) / (y1 - y0 || 1)) * cy));
+    i = Math.min(cx - 1, Math.floor((lx / w + 0.5) * cx)),
+    j = Math.min(cy - 1, Math.floor((ly / h + 0.5) * cy));
   return sbCellIn(p, i, j);
 }
 /* a spot at random inside zone p, { x, y, z }: on the board within its edges; on a world one a duck can stand on (ok(x, y,

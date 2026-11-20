@@ -700,6 +700,57 @@ export function sbAct(s, a, now) {
     s.sb = { ...s.sb, kd: all };
     return true;
   }
+  /* ---------- moving, turning, resizing and cutting blocks (plan Phase 2) ----------
+     move: ps (one or many) by dx, dy (shares of the map), refused if any would leave the map; turn: ps by deg; cut: ps
+     all gone. A spawn's pages go with it */
+  if (["move", "turn", "cut"].includes(a.k)) {
+    const ids = [...new Set(Array.isArray(a.ps) ? a.ps.map(String) : [])]
+      .filter((id) => pts[id] && !pts[id].grp)
+      .slice(0, SB_POINTS);
+    if (!ids.length) return false;
+    const all = { ...pts },
+      run = { ...((s.sb && s.sb.run) || {}) },
+      with_ = (id) => [
+        id,
+        ...Object.keys(pts).filter((q) => pts[q].grp === id),
+      ];
+    if (a.k === "move") {
+      const dx = +a.dx,
+        dy = +a.dy;
+      if (!Number.isFinite(dx) || !Number.isFinite(dy)) return false;
+      if (
+        ids.some((id) => {
+          const x = pts[id].x + dx,
+            y = pts[id].y + dy;
+          return x < 0 || x > 1 || y < 0 || y > 1;
+        })
+      )
+        return false; // ("refused if any would leave the map")
+      for (const id of ids)
+        for (const q of with_(id)) {
+          const P = pts[q],
+            x = +(P.x + dx).toFixed(4),
+            y = +(P.y + dy).toFixed(4),
+            z = sbOnBoard(s) ? 0 : Math.round(heightAt(x * WW, y * WH));
+          all[q] = { ...P, x, y, z };
+        }
+    } else if (a.k === "turn") {
+      const by = +a.deg;
+      if (!Number.isFinite(by)) return false;
+      for (const id of ids)
+        all[id] = {
+          ...pts[id],
+          rot: ((((pts[id].rot || 0) + by) % 360) + 360) % 360,
+        };
+    } else
+      for (const id of ids)
+        for (const q of with_(id)) {
+          delete all[q];
+          delete run[q];
+        }
+    s.sb = { ...s.sb, pts: all, run };
+    return true;
+  }
   const p = pts[a.p];
   if (!p) {
     if (a.k !== "key") return false;
@@ -815,6 +866,21 @@ export function sbAct(s, a, now) {
       q = { ...p, ...(ap ? { ap } : {}) };
     if (!ap) delete q.ap;
     s.sb = { ...s.sb, pts: spread({ ...pts, [a.p]: q }, a.p) };
+    return true;
+  }
+  /* its size from a resize handle: zw, zh (duck lengths, 1 to 40) and its new middle x, y */
+  if (a.k === "size") {
+    if (p.grp) return false;
+    const zw = Math.round(+a.zw),
+      zh = Math.round(+a.zh),
+      x = +a.x,
+      y = +a.y;
+    if (![zw, zh, x, y].every(Number.isFinite)) return false;
+    if (zw < 1 || zh < 1 || zw > 40 || zh > 40) return false;
+    if (x < 0 || x > 1 || y < 0 || y > 1) return false;
+    let q = withField(withField(p, "zw", String(zw)), "zh", String(zh));
+    q = { ...q, x: +x.toFixed(4), y: +y.toFixed(4) };
+    s.sb = { ...s.sb, pts: { ...pts, [a.p]: q } };
     return true;
   }
   /* its Purpose (plan Phase 2): one block, four purposes. It keeps its spot, shape, color and every box it has; a

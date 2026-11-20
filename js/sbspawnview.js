@@ -34,9 +34,9 @@ import {
   sbShape,
   sbFills,
   sbSpread,
-  sbCells,
-  sbCellIn,
   sbSize,
+  sbRot,
+  sbInBlock,
 } from "./sandboxrules.js";
 import {
   boxText,
@@ -115,20 +115,35 @@ function placeAt(n, c, size) {
     zIndex: Math.round(c.top - 5),
   });
 }
-/* a block's shape as pixels, made from the start as pixels (the owner's, Nov 19 23:41Z): one pixel per grid square the
-   block checks (sandboxrules.js sbCellIn), its inside see-through in its color and its edge squares stronger. Kept by
-   shape, size and color */
+/* a block's shape as pixels, made from the start as pixels (the owner's, Nov 19 23:41Z): one pixel per quarter-duck
+   square of the box around it, set where that square's middle is inside the block (sandboxrules.js sbInBlock, its turn
+   included), its inside see-through in its color and its edge squares stronger. Kept by shape, size, turn and color */
 const SHAPE_PX = new Map();
-function shapePic(p, css) {
-  const [cx, cy] = sbCells(p),
-    key = `${sbShape(p)} ${cx} ${cy} ${css}`;
+function shapePic(s, p, css) {
+  const [x0, y0, x1, y1] = sbZoneBox(s, p, W, H),
+    [ux, uy] = sbOnBoard(s) ? [0.03, 0.08] : [48 / W, 48 / H],
+    cx = Math.max(1, Math.round(((x1 - x0) / ux) * 4)),
+    cy = Math.max(1, Math.round(((y1 - y0) / uy) * 4)),
+    key = `${sbShape(p)} ${sbSize(p)} ${sbRot(p)} ${cx} ${cy} ${css}`;
   let u = SHAPE_PX.get(key);
   if (u) return u;
   const cv = document.createElement("canvas");
   cv.width = cx;
   cv.height = cy;
   const g = cv.getContext("2d"),
-    inn = (i, j) => i >= 0 && j >= 0 && i < cx && j < cy && sbCellIn(p, i, j);
+    inn = (i, j) =>
+      i >= 0 &&
+      j >= 0 &&
+      i < cx &&
+      j < cy &&
+      sbInBlock(
+        s,
+        p,
+        x0 + ((i + 0.5) / cx) * (x1 - x0),
+        y0 + ((j + 0.5) / cy) * (y1 - y0),
+        W,
+        H,
+      );
   for (let j = 0; j < cy; j++)
     for (let i = 0; i < cx; i++) {
       if (!inn(i, j)) continue;
@@ -154,14 +169,15 @@ function zoneMark(n, p, at, s, bare = false) {
     ].map(([x, y]) => at({ x, y, z })),
     L = Math.min(cs[0].left, cs[1].left),
     T = Math.min(cs[0].top, cs[1].top),
-    shaped = sbShape(p) !== "sq" && !sbFills(p), // (a square is its CSS box; any other shape its pixels)
-    sig = `${p.col} ${boxText(p, "name")} ${shaped ? sbShape(p) + sbCells(p) : ""} ${bare}`;
+    shaped = (sbShape(p) !== "sq" || sbRot(p) !== 0) && !sbFills(p), // (a square, not turned, is its CSS box; the rest pixels)
+    sig = `${p.col} ${boxText(p, "name")} ${shaped ? `${sbShape(p)} ${sbSize(p)} ${sbRot(p)}` : ""} ${bare}`;
   if (n._sig !== sig) {
     n._sig = sig;
     const css = SB_COLORS[p.col] || "#fff";
     n.style.setProperty("--c", css);
     n.classList.toggle("sb-shaped", shaped);
-    if (shaped) n.style.setProperty("--shape", `url("${shapePic(p, css)}")`);
+    if (shaped)
+      n.style.setProperty("--shape", `url("${shapePic(s, p, css)}")`);
     else n.style.removeProperty("--shape");
     n.innerHTML = bare
       ? "" // (a spawn's, respawn's or loot spot's area: its ring shows where it is)
