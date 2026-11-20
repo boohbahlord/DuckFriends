@@ -99,6 +99,7 @@ export function gsWallX({
   skin = "gs",
   glass = [],
   seamless = false,
+  brokenW = 0,
 }) {
   const S = SKINS[skin],
     id = uid(),
@@ -119,6 +120,106 @@ export function gsWallX({
     F`<path d="M${seamless ? 0 : 3} ${t * 0.35}H${seamless ? w : w - 3}" stroke="${S.topHi}" stroke-width="3" opacity=".7"/><path d="M${seamless ? 0 : 3} ${t - 4}H${seamless ? w : w - 3}" stroke="${S.topLo}" stroke-width="2"/>`;
   if (seamless)
     s += F`<path d="M0 0H${w}M0 ${t}H${w}" fill="none" ${ln(2.6)}/>`;
+  /* brokenW (a seed): its west end smashed (the gas station's south wall at the restroom's corner, where the hole in the
+     west wall runs up to it: the owner's, Nov 19 22:41Z). Since his 23:41Z ("why is there just like a cookie cutter on
+     the wall at that corner? I mean, it's bricks"): it breaks the way a block wall does, along its mortar, a whole
+     block at a time. Each course (a row of blocks, 12 high: SKINS.gs) ends at one of its own joints, and going up each
+     ends a half block, a whole one or more farther east than the one under it, so the end climbs in stairs; where a
+     course stands out past the one over it, its broken top shows (the wall's cut grey, the wall's thickness deep), as
+     the wall's top does. The blocks that came off lie in a heap at its foot (shapes.js, bricks.js heapBricks) */
+  if (brokenW) {
+    const r = rnd(brokenW),
+      C = 12, // (a course: the face's rows, its pattern 64 × 24, joints at 16 and 48)
+      joint = (j, x) => {
+        const o = j % 2 ? 48 : 16;
+        return o + Math.max(0, Math.ceil((x - o) / 64)) * 64;
+      }; // (the first joint of row j at or east of x)
+    /* the courses down the face, top first: each one's rows on the screen, its row in the pattern and its west end */
+    const rows = [];
+    for (let y = t; y < h - 2; ) {
+      const j = Math.floor((y + 1) / C),
+        b = Math.min(h, (j + 1) * C - 1);
+      rows.push({ j, a: y, b });
+      y = b;
+    }
+    /* going up from the floor, each course ends at one of its own joints, and the next one's joints sit half a block
+       over, so it ends half a block east of the one under it, or a block and a half, now and then two and a half, and
+       sometimes half a block west, standing out over the gap under it (never two in a row): the toothing of a broken
+       block wall, its stairs uneven, never a ruler's line */
+    const n = rows.length,
+      bottom = rows[n - 1];
+    for (let tries = 0; tries < 40; tries++) {
+      bottom.x = joint(bottom.j, 4 + r() * 30);
+      let out = false,
+        big = 0;
+      for (let i = n - 2; i >= 0; i--) {
+        const u = r();
+        let step = u < 0.18 && !out ? -32 : u < 0.62 ? 32 : u < 0.9 ? 96 : 160;
+        if (rows[i + 1].x + step < 0) step = 32;
+        out = step < 0;
+        if (step > 32) big++;
+        rows[i].x = Math.min(w - 40, rows[i + 1].x + step);
+      }
+      const climb = rows[0].x - bottom.x;
+      if (climb >= 150 && climb <= 280 && big >= 2) break; // (it climbs, unevenly, never to a ruler)
+    }
+    /* what stands, as boxes: the top, each course's face, and where a course reaches farther west than the one over
+       it, its broken top (the wall's cut grey, the wall's thickness deep) behind the faces over it */
+    const cap = { x: rows[0].x, a: 0, b: t },
+      over = [cap, ...rows],
+      boxes = [[cap.x, 0, w - cap.x, t]],
+      tops = [];
+    rows.forEach((q, i) => {
+      boxes.push([q.x, q.a, w - q.x, q.b - q.a]);
+      for (let k = i; k >= 0; k--) {
+        const u = over[k], // (the course over it, then the one over that)
+          y0 = Math.max(u.a, q.a - t),
+          y1 = Math.min(u.b, q.a),
+          x1 = Math.min(over[i].x, ...over.slice(k, i + 1).map((v) => v.x));
+        if (y1 <= y0) break;
+        if (x1 > q.x) tops.push([q.x, y0, x1 - q.x, y1 - y0]);
+      }
+    });
+    boxes.push(...tops);
+    defs += F`<clipPath id="${id}b">${boxes.map(([x, y, bw, bh]) => R(x, y, bw, bh, "#000")).join("")}</clipPath>`;
+    let steps = "";
+    for (const [x, y, bw, bh] of tops)
+      steps +=
+        R(x, y, bw, bh, S.top) +
+        F`<path d="M${x + 2} ${n1(y + bh * 0.4)}H${x + bw}" stroke="${S.topHi}" stroke-width="2" opacity=".5"/>`;
+    /* a few soft cracks along joints near the break, a shade under the face (never black) */
+    let cracks = "";
+    for (let i = 0; i < rows.length; i++)
+      if (r() < 0.45) {
+        const q = rows[i],
+          x0 = joint(q.j, q.x + 30);
+        cracks += F`<path d="M${x0} ${n1(q.a + 1)}l${n1(-2 + r() * 4)} ${n1((q.b - q.a) / 2)}l${n1(2 + r() * 3)} ${n1((q.b - q.a) / 2 - 1)}" fill="none" stroke="#9eb3a1" stroke-width="1.6"/>`;
+      }
+    /* the ink round what stands, a pixel at a time (one to 2 world px), along the broken end only (the rest of the wall
+       has its own); and along each broken top's front edge, where it meets the face under it */
+    const P = 2,
+      inBox = (x, y) =>
+        boxes.some(
+          ([bx, by, bw, bh]) =>
+            x >= bx && x < bx + bw && y >= by && y < by + bh,
+        ),
+      reach = Math.max(...rows.map((q) => q.x)) + 6;
+    let ink = "";
+    for (let y = 0; y < h; y += P)
+      for (let x = 0; x < Math.min(w, reach); x += P) {
+        if (!inBox(x + 1, y + 1)) continue;
+        if (
+          [
+            [-P, 0],
+            [0, -P],
+            [0, P],
+          ].some(([dx, dy]) => !inBox(x + 1 + dx, y + 1 + dy) && y + dy < h)
+        )
+          ink += R(x, y, P, P, O);
+      }
+    for (const [x, y, bw, bh] of tops) ink += R(x, y + bh - P, bw, P, O);
+    s = F`<g clip-path="url(#${id}b)">${s}${steps}${cracks}</g>` + ink;
+  }
   return wrap(w, h, s, defs, "hg-wall");
 }
 /* a north-south wall's piece, w across, h tall on the screen: its cut top, and (unless plain) its south end's face
@@ -130,10 +231,12 @@ export function gsWallY({
   skin = "gs",
   plain = false,
   open = false,
+  broken = 0,
 }) {
   const S = SKINS[skin],
     len = h - wallH,
     e = plain ? h : len;
+  if (broken) return gsWallYBroken(w, h, wallH, S, open, broken);
   let s = open
     ? R(0, 0, w, e, S.top) +
       F`<path d="M0 0V${e}H${w}V0" fill="none" ${ln(2.6)}/>`
@@ -144,6 +247,62 @@ export function gsWallY({
       R(0, len, w, wallH, S.end, ln(2.6)) +
       F`<path d="M${w / 2} ${len + 3}V${h - 3}" stroke="${S.topLo}" stroke-width="2" opacity=".6"/>` +
       dirt(0, h, w, wallH);
+  return wrap(w, h, s, "", "hg-wall");
+}
+/* a north-south wall's piece whose south end is smashed (a hole in the wall: the owner's, Nov 19 22:41Z, "They don't
+   resemble the wall at all. They're not the same dimensions as the wall ... no depth ... no vanishing point"). The wall
+   itself, broken: its own width (its thickness) and height, nothing past them. Going south, it breaks down in steps,
+   each lower than the last, the way a smashed wall stands: its top at full height ends ragged, then a stump 3/5 as
+   high, then one under a third, at the floor. Each step is drawn as the world draws the wall: its top (the wall's grey)
+   up the screen by its height, and under it its broken face (the wall's bricks and mortar), down to the next step */
+function gsWallYBroken(w, h, wallH, S, open, seed) {
+  const r = rnd(seed),
+    A = wallH * 0.6,
+    B = wallH * 0.28,
+    l1 = 30,
+    l2 = 14,
+    jag = (y) => {
+      const k = 4;
+      let p = "";
+      for (let i = k; i >= 0; i--)
+        p += `L${n1((w * i) / k)} ${n1(y + (i % 2 ? 3 : -2) * (0.6 + r() * 0.6))}`;
+      return p;
+    }, // (a broken edge across the wall, east to west)
+    brick = (y0, y1) => {
+      let m = "";
+      for (let y = y0 + 6; y < y1 - 2; y += 8) m += `M1 ${n1(y)}H${w - 1}`;
+      for (let y = y0 + 2, i = 0; y < y1 - 6; y += 8, i++)
+        m += `M${n1(w * (i % 2 ? 0.3 : 0.7))} ${n1(y + 1)}v6`;
+      return (
+        R(0, y0, w, y1 - y0, "#d0cfa2") +
+        (m ? F`<path d="${m}" stroke="#9eb3a1" stroke-width="2"/>` : "")
+      );
+    };
+  /* the screen's rows: each step's top, then its face (h is the floor at the end) */
+  const t1 = h - l1 - wallH,
+    f1 = h - l1 - A,
+    t2 = h - l2 - A,
+    f2 = h - l2 - B,
+    t3 = h - B;
+  /* each broken face first, then the top over it, so the top's ragged edge shows over its face */
+  const side = (y0, y1, last) =>
+    F`<path d="M0 ${n1(y0)}V${n1(y1)}${last ? `H${w}` : `M${w} ${n1(y1)}`}V${n1(y0)}" fill="none" ${ln(2.6)}/>`;
+  let s =
+    brick(t1 - 4, f1) +
+    side(t1, f1) +
+    F`<path d="M0 0H${w}V${n1(t1)}${jag(t1)}Z" fill="${S.top}" ${ln(2.6)}/>` + // (the wall at full height)
+    F`<path d="M${w * 0.4} ${open ? 0 : 3}V${n1(t1 - 4)}" stroke="${S.topHi}" stroke-width="3" opacity=".7"/>`;
+  s +=
+    brick(t2 - 4, f2) +
+    side(t2, f2) +
+    F`<path d="M0 ${n1(f1)}H${w}V${n1(t2)}${jag(t2)}Z" fill="${S.top}" ${ln(2.6)}/>`; // (the first stump)
+  s +=
+    brick(t3 - 4, h) +
+    side(t3, h, true) +
+    F`<path d="M0 ${n1(f2)}H${w}V${n1(t3)}${jag(t3)}Z" fill="${S.top}" ${ln(2.6)}/>`; // (the last one, low at the floor)
+  /* a rusty rod out of each break */
+  for (const y of [t1, t2])
+    s += F`<path d="M${n1(w * (0.3 + r() * 0.4))} ${n1(y + 2)}l${n1((r() - 0.5) * 10)} 9" stroke="#9a5a2c" stroke-width="2.4" stroke-linecap="round"/>`;
   return wrap(w, h, s, "", "hg-wall");
 }
 /* a north-south wall's top alone (the run's pieces that don't end it): d tall, o: how far up past its own top it starts
@@ -157,45 +316,6 @@ export const SPLINTER = {
   gs: ["#c9c3b2", "#b2ab98", "#7d796e"],
   ch: ["#d9d4c6", "#c2bcad", "#8a8476"],
 };
-
-/* the rubble out of a smashed north-south wall, w × d flat on the floor, the wall's line down its middle: broken chunks
-   of the wall (its own colours), dust, a few rusty rods, thick at the line and thinning out both sides (the owner's,
-   Nov 19 19:58Z: "I want to be able to see the destruction of that wall") */
-export function wallRubble({ w, d, seed = 1, skin = "gs" }) {
-  const r = rnd(seed),
-    c = SPLINTER[skin] || SPLINTER.gs,
-    mid = w / 2;
-  let s = "";
-  /* dust: a pale smear along the line */
-  s += F`<ellipse cx="${mid}" cy="${d / 2}" rx="${w * 0.42}" ry="${d * 0.5}" fill="${c[2]}" opacity=".28"/>`;
-  /* chunks: most of them by the line, fewer and smaller further out */
-  const n = Math.round(d / 7);
-  for (let i = 0; i < n; i++) {
-    const spread = r() < 0.5 ? 0.2 : 0.46,
-      bx = mid + (r() * 2 - 1) * w * spread,
-      by = 8 + r() * (d - 16),
-      z = (9 + r() * 12) * (1 - (0.6 * Math.abs(bx - mid)) / w),
-      a = r() * Math.PI;
-    const pts = Array.from({ length: 5 }, (_, k) => {
-      const t = a + (k / 5) * Math.PI * 2,
-        f = 0.6 + r() * 0.5;
-      return [bx + Math.cos(t) * z * 1.3 * f, by + Math.sin(t) * z * f];
-    });
-    s += F`<path d="M${pts.map(([x, y]) => n1(x) + " " + n1(y)).join("L")}Z" fill="${c[r() < 0.5 ? 0 : 1]}" ${ln(1.6)}/>`;
-  }
-  /* rods bent out of the broken wall */
-  for (let i = 0; i < 3; i++) {
-    const y0 = d * (0.2 + r() * 0.6),
-      x1 = mid + (r() * 2 - 1) * w * 0.3,
-      y1 = y0 + (r() - 0.5) * 30;
-    s += F`<path d="M${mid} ${y0}L${x1} ${y1}" stroke="${O}" stroke-width="5" stroke-linecap="round"/><path d="M${mid} ${y0}L${x1} ${y1}" stroke="#9a5a2c" stroke-width="2.4" stroke-linecap="round"/>`;
-  }
-  return wrap(w, d, s);
-}
-/* the same smashed hole seen from outside, where the roof's edge hides the wall: a ragged dark breach across the roof's
-   edge and the ground at its foot, broken concrete round it and rods sticking out (roofHole's look, in its box) */
-export const wallBreach = ({ w, d, seed = 1 }) =>
-  wrap(w, d, roofHole(0, 0, w, d, seed));
 
 /* ---------- the gas station's insides ---------- */
 /* a store shelf (a gondola) w long, d deep, h tall: three shelves of cans, boxes and bottles, picked over; empty: nothing
@@ -1527,48 +1647,108 @@ export function fallenSVG({ w, h, x0, y0, x1, y1, half = 55, z = 30 }) {
    w × d: the roof's top, over the walls and 30 past them all round. The gas station's: flat, tar and gravel inside a
    parapet, two air-conditioning units and vents, the sign's red band along its front. The chapel's: pitched, its ridge
    running north-south, the west slope catching more light than the east, a cross on the ridge over the entrance */
-/* a hole broken through the gas station's flat roof, in its box x, y, w × d: a ragged dark mouth down into the building,
-   its edge of broken concrete, rusty rebar bent in over it and rubble round it (the owner's, Nov 17 12:28Z) */
-function roofHole(x, y, w, d, seed) {
-  const r = rnd(seed),
-    cx = x + w / 2,
-    cy = y + d / 2,
-    pts = (k, j) =>
-      Array.from({ length: 16 }, (_, i) => {
-        const a = (i / 16) * Math.PI * 2,
-          f = k * (1 - j * r());
-        return [cx + Math.cos(a) * (w / 2) * f, cy + Math.sin(a) * (d / 2) * f];
-      }),
-    path = (p) => "M" + p.map(([u, v]) => n1(u) + " " + n1(v)).join("L") + "Z";
-  let s =
-    F`<path d="${path(pts(1, 0.18))}" fill="#565d77" ${ln(2.4)}/>` + // (the cracked concrete round it)
-    F`<path d="${path(pts(0.86, 0.22))}" fill="#0b0c11" ${ln(3)}/>` + // (the dark below)
-    F`<path d="${path(pts(0.6, 0.3))}" fill="#05060a"/>`;
-  /* rebar: rusty rods sticking in over the hole from its edge, a few bent down */
-  for (let i = 0; i < 5; i++) {
-    const a = r() * Math.PI * 2,
-      x0 = cx + Math.cos(a) * w * 0.47,
-      y0 = cy + Math.sin(a) * d * 0.47,
-      k = 0.3 + r() * 0.25,
-      x1 = x0 + (cx - x0) * k,
-      y1 = y0 + (cy - y0) * k + 6 + r() * 10;
-    s += F`<path d="M${x0} ${y0}L${x1} ${y1}" stroke="${O}" stroke-width="6" stroke-linecap="round"/><path d="M${x0} ${y0}L${x1} ${y1}" stroke="#9a5a2c" stroke-width="3" stroke-linecap="round"/>`;
+/* a hole broken through the gas station's flat roof, in its box x, y, w × d (the owner's, Nov 17 12:28Z). Since the
+   owner's Nov 19 22:41Z it is open, not a black mouth: "make those transparent ... where you can see into the first floor
+   of the ground level". holeShape: its ragged edge, as a path; roofHole: what's drawn round it, over the roof (the roof
+   itself is cut there: roofSVG's mask), so through it shows what's under the roof, the floor and what stands on it.
+   corner "sw": a bite out of the roof's south-west corner instead (over the restroom's smashed west wall: the
+   owner's, Nov 19 22:41Z, "break a little bit of the corner of the roof ... and make that ... transparent"), open to
+   the roof's west and south edges */
+const SLAB = 16; // (the roof's thickness, as seen down its broken edge)
+function holeShape(x, y, w, d, seed, corner) {
+  const r = rnd(seed);
+  if (corner === "sw") {
+    /* from the roof's west edge at the top of the box, east and round and down its east side, then down through the
+       sign's band at the roof's front (its bottom 70) in a zigzag, to the roof's south edge: every edge broken */
+    const pts = [[x - 4, y + r() * 8]];
+    for (let i = 1; i <= 5; i++) {
+      const u = i / 5;
+      pts.push([
+        x + w * (0.15 + 0.85 * Math.sin((u * Math.PI) / 2)) - r() * 14,
+        y + d * 0.4 * u * u + (r() - 0.5) * 14,
+      ]);
+    }
+    for (let i = 1; i <= 4; i++) {
+      const u = i / 4;
+      pts.push([
+        x + w * (1 - 0.1 * u) - r() * 16,
+        y + d * 0.4 + (d - 80 - d * 0.4) * u + (r() - 0.5) * 10,
+      ]);
+    }
+    for (const [k, v] of [
+      [0.84, 58],
+      [0.9, 42],
+      [0.8, 26],
+      [0.87, 12],
+      [0.79, -4],
+    ])
+      pts.push([x + w * k - r() * 6, y + d - v]);
+    pts.push([x - 4, y + d + 4]);
+    return pts;
   }
-  /* cracks running out over the roof, and rubble */
+  const cx = x + w / 2,
+    cy = y + d / 2;
+  return Array.from({ length: 16 }, (_, i) => {
+    const a = (i / 16) * Math.PI * 2,
+      f = 0.86 * (1 - 0.22 * r());
+    return [cx + Math.cos(a) * (w / 2) * f, cy + Math.sin(a) * (d / 2) * f];
+  });
+}
+const pathOf = (p, dy = 0) =>
+  "M" + p.map(([u, v]) => n1(u) + " " + n1(v + dy)).join("L") + "Z";
+function roofHole(x, y, w, d, seed, corner = "") {
+  const r = rnd(seed + 101),
+    cut = holeShape(x, y, w, d, seed, corner),
+    id = uid(),
+    cx = x + w / 2,
+    cy = y + d / 2;
+  /* the cracked concrete round it: a ring of broken slab, wider than the cut (a round hole), along the bite's edge (the
+     corner) */
+  const ring = corner
+    ? cut.map(([u, v], i) =>
+        i === 0 || i >= cut.length - 2
+          ? [u, v]
+          : [u + 10 + r() * 8, v - 6 - r() * 6],
+      )
+    : cut.map(([u, v]) => [
+        cx + (u - cx) * (1.16 + r() * 0.06),
+        cy + (v - cy) * (1.16 + r() * 0.06),
+      ]);
+  let s =
+    F`<path d="${pathOf(ring)}${pathOf(cut)}" fill="#565d77" fill-rule="evenodd"/>` +
+    F`<path d="${pathOf(ring)}" fill="none" stroke="#414d59" stroke-width="2" stroke-dasharray="9 7"/>`;
+  /* the slab's broken edge, seen down the far (north) side of the hole: its thickness, then nothing (what's under the
+     roof shows) */
+  s +=
+    F`<clipPath id="${id}"><path d="${pathOf(cut)}"/></clipPath>` +
+    F`<g clip-path="url(#${id})"><path d="${pathOf(cut)}${pathOf(cut, SLAB)}" fill="#414d59" fill-rule="evenodd"/><path d="${pathOf(cut, SLAB * 0.45)}" fill="none" stroke="#353636" stroke-width="2"/></g>` +
+    F`<path d="${pathOf(cut)}" fill="none" ${ln(3)}/>`;
+  /* rebar: rusty rods sticking out over the hole from its edge, a few bent down */
+  for (let i = 0; i < (corner ? 7 : 5); i++) {
+    const [x0, y0] = cut[1 + Math.floor(r() * (cut.length - 3))],
+      tx = corner ? x : cx,
+      ty = corner ? y + d : cy,
+      k = 0.12 + r() * 0.16,
+      x1 = x0 + (tx - x0) * k,
+      y1 = y0 + (ty - y0) * k + 6 + r() * 10;
+    s += F`<path d="M${n1(x0)} ${n1(y0)}L${n1(x1)} ${n1(y1)}" stroke="${O}" stroke-width="6" stroke-linecap="round"/><path d="M${n1(x0)} ${n1(y0)}L${n1(x1)} ${n1(y1)}" stroke="#9a5a2c" stroke-width="3" stroke-linecap="round"/>`;
+  }
+  /* cracks running out over the roof from its edge (soft: a shade under the roof, never black: the owner's, Nov 19
+     23:41Z, "Soft, faint cracks, not harsh, black contrast cracks"), and chunks of the slab lying on it */
   for (let i = 0; i < 6; i++) {
-    const a = r() * Math.PI * 2,
-      x0 = cx + Math.cos(a) * w * 0.5,
-      y0 = cy + Math.sin(a) * d * 0.5,
+    const [x0, y0] = ring[1 + Math.floor(r() * (ring.length - 3))],
+      a = Math.atan2(y0 - (corner ? y + d : cy), x0 - (corner ? x : cx)),
       l = 20 + r() * 40;
-    s += F`<path d="M${x0} ${y0}l${Math.cos(a) * l} ${Math.sin(a) * l + (r() - 0.5) * 14}l${Math.cos(a + 0.6) * l * 0.5} ${Math.sin(a + 0.6) * l * 0.5}" fill="none" stroke="#1d1e29" stroke-width="2.4" stroke-linecap="round"/>`;
+    s += F`<path d="M${n1(x0)} ${n1(y0)}l${n1(Math.cos(a) * l)} ${n1(Math.sin(a) * l + (r() - 0.5) * 14)}l${n1(Math.cos(a + 0.6) * l * 0.5)} ${n1(Math.sin(a + 0.6) * l * 0.5)}" fill="none" stroke="#414d59" stroke-width="2" stroke-linecap="round"/>`;
   }
   for (let i = 0; i < 9; i++) {
-    const a = r() * Math.PI * 2,
-      f = 0.55 + r() * 0.35,
-      bx = cx + Math.cos(a) * w * f,
-      by = cy + Math.sin(a) * d * f,
-      z = 6 + r() * 10;
-    s += F`<path d="M${bx - z} ${by}L${bx - z * 0.3} ${by - z * 0.8}L${bx + z} ${by - z * 0.3}L${bx + z * 0.6} ${by + z * 0.5}Z" fill="${r() < 0.5 ? "#849097" : "#565d77"}" ${ln(1.6)}/>`;
+    const [u, v] = ring[1 + Math.floor(r() * (ring.length - 3))],
+      a = Math.atan2(v - (corner ? y + d : cy), u - (corner ? x : cx)),
+      f = 8 + r() * 26,
+      bx = u + Math.cos(a) * f,
+      by = v + Math.sin(a) * f,
+      z = 6 + r() * 8;
+    s += F`<path d="M${n1(bx - z)} ${n1(by)}L${n1(bx - z * 0.3)} ${n1(by - z * 0.8)}L${n1(bx + z)} ${n1(by - z * 0.3)}L${n1(bx + z * 0.6)} ${n1(by + z * 0.5)}Z" fill="${r() < 0.5 ? "#849097" : "#565d77"}" ${ln(1.6)}/><path d="M${n1(bx - z)} ${n1(by)}L${n1(bx + z * 0.6)} ${n1(by + z * 0.5)}L${n1(bx + z * 0.6)} ${n1(by + z * 0.5 + 4)}L${n1(bx - z)} ${n1(by + 4)}Z" fill="#353636" ${ln(1.6)}/>`;
   }
   return s;
 }
@@ -1695,9 +1875,21 @@ export function roofSVG({ w, d, kind = "gs", soldier = null, holes = null }) {
     s +=
       R(cx - 90, by - 10, 180, 88, "#f7f8f3", ln(3)) +
       F`<path d="M${cx} ${by + 2}C${cx - 22} ${by + 30} ${cx - 20} ${by + 66} ${cx} ${by + 66}C${cx + 20} ${by + 66} ${cx + 22} ${by + 30} ${cx} ${by + 2}Z" fill="#c7282a" ${ln(2)}/>`;
-    /* the holes broken through it ([x, y, w, d] on the roof: stationmap.js ROOF_HOLES, a duck falls through them) */
-    for (const [i, h] of (holes || []).entries())
-      s += roofHole(...h, 7 + i * 13);
+    /* the holes broken through it ([x, y, w, d, corner] on the roof: stationmap.js ROOF_HOLES, a duck falls through
+       them): the roof cut away there (a mask), so what's under it shows, then each one's broken edge over it */
+    const hs = (holes || []).map(([hx, hy, hw, hd, corner], i) => [
+      hx,
+      hy,
+      hw,
+      hd,
+      7 + i * 13,
+      corner || "",
+    ]);
+    if (hs.length)
+      s =
+        F`<mask id="${id}m" maskUnits="userSpaceOnUse" x="-20" y="-20" width="${w + 40}" height="${d + 40}"><rect x="-20" y="-20" width="${w + 40}" height="${d + 40}" fill="#fff"/>${hs.map((h) => F`<path d="${pathOf(holeShape(...h))}" fill="#000"/>`).join("")}</mask>` +
+        F`<g mask="url(#${id}m)">${s}</g>`;
+    for (const h of hs) s += roofHole(...h);
     /* the dead soldier up here, [x, y] on the roof, and his flare beside him (it burns at each round's start:
        l4dd.js flare) */
     if (soldier) {
