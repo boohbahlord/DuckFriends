@@ -120,7 +120,6 @@ function stats(w) {
   }
   if (A.kind === "special") {
     if (w === "jetpack") out.push(["Flight", secs(A.all)]);
-    else if (A.round) out.push(["Uses", `${A.all} a round`]);
     else if (A.all) out.push(["Uses", A.all]);
     if (A.ms) out.push(["Lasts", secs(A.ms)]);
     if (A.dmg) out.push(["Damage", A.dmg]);
@@ -158,7 +157,7 @@ const weaponRow = (w) => row(orbHTML(w), weaponName(w), SAY[w] || "", stats(w));
 
 /* the whole tab: a heading and a list for each category */
 export function catalogHTML() {
-  const all = [...POOL, ...(survOn() ? ["defib"] : []), "grenade"], // (Survival: the defibrillator) // (no Jaime Bomb in the zombie modes any more: the owner's, Nov 18 12:19Z)
+  const all = [...POOL, ...(survOn() ? ["defib"] : []), "grenade"], // (Survival: the defibrillator)
     of = (k) => all.filter((w) => kindOf(w) === k);
   const cats = [
     ["Melee", of("melee").map(weaponRow)],

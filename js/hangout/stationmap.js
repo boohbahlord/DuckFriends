@@ -166,7 +166,7 @@ export const START = { x: 2600, y: 1600 };
 /* the dead (the owner's, Nov 17 12:28Z; stationart.js corpse): a dead duck in the chapel's aisle (Justin stops by him:
    l4ddrules.js), the soldier on the gas station's roof with his flare beside him (it burns at each round's start:
    l4dd.js), and which cars have their windows smashed in and the dead yellow duck on a hood */
-export const JAIME_BODY = { x: 2300, y: 4800 };
+export const BODY_AT = { x: 2300, y: 4800 };
 export const SOLDIER = { x: 1580, y: 780 };
 /* the trooper's middle (stationart.js CORPSES.trooper): inside the gas station, south of the counter's long arm and west
    of the east wall, where the owner circled it (Nov 18 10:38Z) */
@@ -582,7 +582,7 @@ function planBuild(b) {
   }); // (solid, as big as its drawing's base: nobody walks through it or into it, the owner's, Nov 17 11:07Z; see-through
   // like the walls while it hides a duck or a zombie behind it, Nov 17 12:29Z)
   put("priest", PRIEST.x - 30, PRIEST.y - 20, 60, 40, 90, {});
-  put("corpse", JAIME_BODY.x - 70, JAIME_BODY.y - 35, 140, 70, 16, {
+  put("corpse", BODY_AT.x - 70, BODY_AT.y - 35, 140, 70, 16, {
     z: 0,
     who: "body",
   }); // (lying on the floor: nothing stops on him)
@@ -858,7 +858,7 @@ for (const o of [
 ])
   scaled(o);
 for (const o of [PRIEST, ANGEL, START, CARS, PUMPS, CANOPY, FALLEN]) scaled(o);
-for (const o of [JAIME_BODY, SOLDIER, FLARE, TROOPER]) scaled(o);
+for (const o of [BODY_AT, SOLDIER, FLARE, TROOPER]) scaled(o);
 for (const o of [PART_SPOTS, PUMP_E, LINE_SPOTS]) scaled(o);
 GS_W *= K;
 GS_H *= K;

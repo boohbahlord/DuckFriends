@@ -3132,11 +3132,7 @@ svg.duck.jack.bob .jk,
 .arm-duck.hop svg.jack .jk {
   animation: jkbob 0.42s ease-out;
 }
-.arm-duck.hop2 svg.jack .jk {
-  animation:
-    jkbob 0.42s ease-out,
-    jkbob 0.42s ease-out 0.55s;
-} /* (the double jump: once more as the second jump starts) */
+/* (the double jump: once more as the second jump starts) */
 @keyframes jkbob {
   0% {
     transform: none;
@@ -6478,9 +6474,7 @@ html.moving .gduck.l4-jolt .gduck-body > * {
 .arm-duck {
   position: relative;
 }
-.arm-duck.hop .arm-pic > svg.duck {
-  animation: sphop 1.1s ease-out;
-}
+
 .spe-shot {
   width: 32px;
   animation: spshot 2.2s linear forwards;
@@ -6539,17 +6533,7 @@ html.moving .gduck.l4-jolt .gduck-body > * {
     transform: translate(calc(-50% + var(--dx, 300px)), -50%);
   }
 }
-@keyframes sphop {
-  0% {
-    transform: none;
-  }
-  45% {
-    transform: translateY(-38%);
-  }
-  100% {
-    transform: none;
-  }
-}
+
 .tipbox {
   position: fixed;
   z-index: 95;
@@ -7251,7 +7235,7 @@ html.still .spx-disco .disco-spot {
   width: calc(var(--s) * 0.22);
   animation-duration: 0.8s;
 }
-/* Customize's previews of the bow, the chair, the zebra cake and Jaime (the art is Mad God Justin's, mgjart.js) */
+/* Customize's previews of the bow, the chair, the zebra cake (the art is Mad God Justin's, mgjart.js) */
 .spe-wield[data-w="bow"] {
   animation: wdraw 1.3s ease-out forwards;
 }
@@ -7377,58 +7361,9 @@ html.still .spx-disco .disco-spot {
     transform: translateY(calc(var(--s) * 0.4));
   }
 } /* (up out of the hand, down onto the ground in front, where it stays) */
-.spe-jaime {
-  transform: translate(-50%, -100%);
-  animation: jaimerun 2.3s linear forwards;
-}
-.spe-jaime b {
-  position: relative;
-  display: block;
-  width: calc(var(--s) * 0.42);
-  animation: jaimebob 0.18s ease-in-out 0.45s infinite alternate;
-}
-.spe-jaime b > svg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-.spe-jaime i {
-  position: absolute;
-  left: 78%;
-  top: 52%;
-  width: 46%;
-  transform: translate(-50%, -50%) rotate(-6deg);
-}
-.spe-jaime i svg {
-  display: block;
-  width: 100%;
-}
-@keyframes jaimerun {
-  0% {
-    transform: translate(-50%, -100%) scale(0.5);
-    opacity: 0;
-  }
-  10% {
-    transform: translate(-50%, -100%) scale(1);
-    opacity: 1;
-  }
-  20% {
-    transform: translate(-50%, -100%);
-    animation-timing-function: ease-in;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    transform: translate(calc(-50% + var(--dx, 300px)), -100%);
-    opacity: 0;
-  }
-} /* (he pops out, then runs off) */
-@keyframes jaimebob {
-  to {
-    transform: translateY(-8%) rotate(4deg);
-  }
-}
+
+/* (he pops out, then runs off) */
+
 /* the Jetpack on the big duck: worn on its back (the pack's own place, without the board's foot offset), it flies up on
    its flames, keeps the height a moment, and comes down */
 .arm-pic .gduck-jet {
@@ -7551,15 +7486,8 @@ html.still .thrown i {
 html.still .gpin {
   display: none;
 }
-/* items: the double jump's little cloud (see-through, left in the air) and the trombone, its mouthpiece at the beak */
-.spe-puff {
-  opacity: 0;
-  animation: sppuff 0.9s ease-out forwards;
-}
-.spe-puff svg {
-  width: calc(var(--s) * 0.7);
-  fill: var(--k1, #fff);
-}
+/* items: the trombone, its mouthpiece at the beak */
+
 @keyframes sppuff {
   0% {
     opacity: 0.55;
@@ -7572,6 +7500,14 @@ html.still .gpin {
     opacity: 0;
     transform: translate(-50%, -10%) scale(1.25);
   }
+}
+.spe-puff {
+  opacity: 0;
+  animation: sppuff 0.9s ease-out forwards;
+}
+.spe-puff svg {
+  width: calc(var(--s) * 0.7);
+  fill: var(--k1, #fff);
 }
 .spe-bone {
   transform: translate(0, -50%) scaleX(var(--f));
@@ -8364,26 +8300,7 @@ html.still .spe-bone .bone-slide {
   border: 0.12rem solid var(--blue);
   background: color-mix(in srgb, var(--blue) 10%, var(--panel));
 }
-.arm-duck.hop2 .arm-pic > svg.duck {
-  animation: sphop2 1.3s ease-out;
-}
-@keyframes sphop2 {
-  0% {
-    transform: none;
-  }
-  35% {
-    transform: translateY(-30%);
-  }
-  42% {
-    transform: translateY(-27%);
-  }
-  72% {
-    transform: translateY(-50%);
-  }
-  100% {
-    transform: none;
-  }
-}
+
 .ctargets .arm-sub {
   flex-basis: 100%;
   margin: 0.55rem 0 0.05rem;
@@ -13999,7 +13916,7 @@ html.moving .mgj-field {
     transform: translateY(-12%) rotate(-8deg);
   }
 }
-/* a Jaime gone in a cloud */
+/* Good Justin God gone in a cloud */
 .mgj-poof {
   position: absolute;
   pointer-events: none;
@@ -14058,20 +13975,7 @@ html.moving .mgj-field {
     transform: translate(-50%, -70%) scale(1.2);
   }
 }
-/* the Jaimes' shared key: one or more stored, the bar charges the next one in pink (it fills, not drains) */
-.cooldown.more {
-  background: #ff9ec2;
-  box-shadow: 0 0 0.25rem #ff9ec2b0;
-  animation-name: cfill;
-}
-@keyframes cfill {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
+
 /* his HP, beside the cloud */
 .question.mgj-hp {
   display: flex;
@@ -15261,14 +15165,12 @@ html.moving .eye-tears .tdrop.t2 {
 } /* (lying down solid for 1.25 s, then slowly fading, gone in 4 s: L4.DEAD_MS; owner, Nov 16) */
 html.low .l4z.dead,
 html.low .l4z.dead.nuked,
-html.low .mgj-z.dead,
-html.low .jd-body {
+html.low .mgj-z.dead {
   animation: none;
 } /* (Low graphics or Data saving: no fade (Low stops every animation, so the fade would end at once and the body never
      show); it lies there solid and l4dd.js LOW_DEAD takes it off my screen at 2 s, the Nuke's too) */
 html.still:not(.low) .l4z.dead,
-html.still:not(.low) .mgj-z.dead,
-html.still:not(.low) .jd-body {
+html.still:not(.low) .mgj-z.dead {
   animation-duration: 4s !important;
 }
 html.still:not(.low) .l4z.dead.nuked {
@@ -18521,102 +18423,9 @@ html.map-is-nwk .game .btn.cabin-end {
     top: calc(var(--ui-top, 38px) + 188px);
   }
 }
-/* the Jaime Bomb's Jaime after it went off (game.js jaimeBody): his body flies over a little arc (--dx, --dy, --h),
-   turning over until it lies on its side (--r), and fades a few seconds after it lands */
-/* a Jaime killed by a hit (game.js jaimeFell): he falls over where he stood as Mad God Justin's wave zombies do
-   (.mgj-z.dead), a pool of blood spreading under him as under a duck that died (.gduck-pool, over JPOOL.ms), then he
-   fades as their bodies do (l4z-die: 4 s) */
-.jd-body {
-  position: absolute;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-  z-index: 3;
-  animation: l4z-die 4s linear forwards;
-}
-.jd-body > b {
-  position: absolute;
-  left: calc(var(--sz) * -0.5);
-  bottom: 0;
-  width: var(--sz);
-  display: block;
-  transform-origin: 50% 88%;
-  scale: var(--f) 1;
-  animation: jd-fall 0.3s ease-in forwards;
-}
-.jd-body svg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-.jd-body .gduck-pool {
-  translate: calc(var(--sz) * -0.35 * var(--f)) 0;
-  animation: jd-pool 6s ease-out forwards;
-}
 /* Duck Cabin's Justin knocked down by a hit (hangout/characters.js): the same pool, spreading under him */
 .hang-npc-pool {
-  animation: jd-pool 6s ease-out forwards;
-}
-@keyframes jd-fall {
-  to {
-    rotate: calc(-100deg * var(--f));
-  }
-}
-@keyframes jd-pool {
-  from {
-    scale: 0.15;
-  }
-  to {
-    scale: 1;
-  }
-}
-.jb-body {
-  position: absolute;
-  width: var(--w);
-  translate: -50% -100%;
-  pointer-events: none;
-  z-index: 3;
-  animation:
-    jb-fly 0.75s cubic-bezier(0.25, 0.6, 0.45, 1) forwards,
-    jb-gone 1s ease-in 5.5s forwards;
-}
-.jb-body > b {
-  display: block;
-  transform-origin: 50% 78%;
-  scale: var(--f) 1;
-  animation: jb-turn 0.75s ease-out forwards;
-}
-.jb-body svg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-@keyframes jb-fly {
-  0% {
-    transform: translate(0, 0);
-  }
-  45% {
-    transform: translate(
-      calc(var(--dx) * 0.45),
-      calc(var(--dy) * 0.45 - var(--h))
-    );
-  }
-  100% {
-    transform: translate(var(--dx), var(--dy));
-  }
-}
-@keyframes jb-turn {
-  from {
-    rotate: 0deg;
-  }
-  to {
-    rotate: var(--r);
-  }
-}
-@keyframes jb-gone {
-  to {
-    opacity: 0;
-  }
+  animation: npc-pool 6s ease-out forwards;
 }
 
 /* ---------- Sandbox's start: New Sandbox or a save (js/sbsaves.js), in the vote window's frame ---------- */
@@ -19080,24 +18889,7 @@ body:has(> .vt) .win-back {
     grid-column: 1;
   }
 }
-/* the Jaime Guard's weapon, picked over his key boxes in Customize (customize.js guardPick) */
-.sp-jg {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.4rem;
-  border-radius: 0.6rem;
-  border: 0.12rem solid var(--blue);
-  background: color-mix(in srgb, var(--blue) 10%, var(--panel));
-}
-.sp-jg > span {
-  flex: 1 0 100%;
-}
-.sp-jg .sp-key {
-  width: 2.6rem;
-}
+
 /* a crit on a duck outside Quacky Zombies (game.js pcrit): the same CRIT, smaller */
 .l4-crit.small {
   font-size: clamp(1.2rem, 2.6vw, 1.8rem);
@@ -19435,7 +19227,6 @@ html.pixel
     .seed-txt,
     .seed-writing,
     .slide-def,
-    .sp-jg,
     .sp-key,
     .sp-on,
     .sp-pick,
@@ -22592,4 +22383,12 @@ html.nojustin .jumps-jk {
   gap: 1rem;
   justify-content: center;
   flex-wrap: wrap;
+}
+@keyframes npc-pool {
+  from {
+    scale: 0.15;
+  }
+  to {
+    scale: 1;
+  }
 }
