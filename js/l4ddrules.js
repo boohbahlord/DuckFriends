@@ -905,6 +905,10 @@ const SHOT_LIFE = 2000;
 const RX = 56,
   RY = 25.6,
   CLAW = 1.35,
+  /* a zombie waiting behind another that's at a duck (it never walks into it: stepZombie, roofStep) claws from where it
+     stands, this much farther (duck lengths), so a crowd hits a duck as hard as when they squeezed in on top of each
+     other: one that's at the duck counts if it's within CLAW + near of it */
+  QUEUE = { reach: 1, near: 0.4 },
   ROOF_BACK = 1.25; // (on a roof: one pushed back by the others (separate) goes for its duck again only past this, still in reach, so it doesn't shake there)
 /* a new zombie's HP (the owner's, Nov 16 21:47Z: 3, then a 50% roll for 4; if that fails, a 50% roll for 5): 5 a
    quarter of the time, 3 a quarter, 4 half. Rolled the rarer first (the owner's, Nov 18 10:38Z), the same odds */
@@ -5936,9 +5940,10 @@ function moveZombies(s, zs, now, T, up) {
     } else delete z.jc;
     /* the claw: at a duck long enough, then again every so often (it keeps walking meanwhile); only one on its own
        floor (zFloor), never one up on a roof over it or down below it, nor one up the ladder */
-    const d = room(z.x, z.y, ...target.xy);
+    const d = room(z.x, z.y, ...target.xy),
+      queued = !!z.bl && room(z.bl.x, z.bl.y, ...target.xy) < CLAW + QUEUE.near; // (its way blocked by one at this duck)
     if (
-      d < CLAW + (duckBig(s, target.id) - 1) / 2 && // (a duck bigger than 100% is reached sooner: duck.js)
+      d < CLAW + (duckBig(s, target.id) - 1) / 2 + (queued ? QUEUE.reach : 0) && // (a duck bigger than 100% is reached sooner: duck.js)
       zFloor(z) === target.dk &&
       Math.abs(target.zz - zombieZ(z)) < 50
     ) {
@@ -6265,12 +6270,15 @@ function roofStep(z, tx, ty, far, zs) {
         Math.abs(o.x - z.x) < RX * 2 + len &&
         Math.abs(o.y - z.y) < RY * 2 + len,
     ),
-    free = (x, y) =>
-      near.every((o) => {
+    free = (x, y) => {
+      const o = near.find((o) => {
         const now = room(z.x, z.y, o.x, o.y),
           then = room(x, y, o.x, o.y);
-        return then >= 1 || then >= now;
+        return then < 1 && then < now;
       });
+      if (o) z.bl = o; // (the one in its way, this heartbeat: QUEUE)
+      return !o;
+    };
   const side = z.i % 2 ? 1 : -1; // (always round the same side, its own: trying both, it went left, then right, then left)
   for (const t of ROOF_TURNS) {
     const c = Math.cos(t * side),
@@ -6313,8 +6321,8 @@ function crowdOf(zs) {
 }
 const cellOf = (x, y) =>
   Math.floor(x / CROWD_CELL) * 100000 + Math.floor(y / CROWD_CELL);
-/* would zombie z stepping to (x, y) walk into another on its floor? (only closer to one it's already touching or
-   about to: stepping away is always free) */
+/* would zombie z stepping to (x, y) walk into another on its floor? That one, or null (only closer to one it's already
+   touching or about to: stepping away is always free) */
 function intoCrowd(z, x, y) {
   const hz = ZC.h.get(z),
     i0 = Math.floor(x / CROWD_CELL),
@@ -6325,9 +6333,9 @@ function intoCrowd(z, x, y) {
         if (o === z || o.st === 3) continue;
         if (Math.abs(ZC.h.get(o) - hz) >= SAME_FLOOR) continue;
         const then = room(x, y, o.x, o.y);
-        if (then < 1 && then < room(z.x, z.y, o.x, o.y)) return true;
+        if (then < 1 && then < room(z.x, z.y, o.x, o.y)) return o;
       }
-  return false;
+  return null;
 }
 function stepZombie(z, aim, far, pls) {
   const n = Math.max(1, Math.ceil(far / 8)),
@@ -6353,7 +6361,9 @@ function stepZombie(z, aim, far, pls) {
           then = room(x, y, ...q.xy);
         if (then < 1 && then < now) return false;
       }
-      return !crowd || !intoCrowd(z, x, y);
+      const o = crowd && intoCrowd(z, x, y);
+      if (o) z.bl = o; // (the one in its way, this heartbeat: QUEUE)
+      return !o;
     };
     if (ZW) {
       const sx = z.x + ux * len,

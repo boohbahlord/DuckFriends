@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v141",
+    version: 141,
+    date: "Nov 20, 2026",
+    title: "More ways to pick squares",
+    news: [
+      "For Sandbox: Potential order has Absolute (random over the whole map; only the picks that land in the zone work) and four shuffles: a new order each round, the same order each round, by rows and by columns. Seriat's order takes absolute, shuffleonce, rows and columns too.",
+      "For Sandbox: dropdowns in a zone's window are wide enough to read on a phone.",
+    ],
+  },
+  {
     id: "v140",
     version: 140,
     date: "Nov 20, 2026",
