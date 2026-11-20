@@ -293,9 +293,18 @@ function dropAt(s, w, p, now) {
   return n;
 }
 /* may duck d take what list `who` names (Players, a player's name, a group: sbWhoTakes, sbgroups.js) */
-const mayTake = (s, who, d) =>
-  sbWhoTakes(s, who, { duck: (s.players[d] || {}).name || "" }) ||
-  grIn(s, who, "p:" + d);
+const mayTake = (s, who, d) => {
+  const P = s.players[d] || {};
+  /* Justin walks the zombie maps as a duck, but he isn't a player: "Players" leaves him out (a made zombie game's AK went
+     to him); Everything or his name still lets him */
+  if (P.helper)
+    return sbWhoTakes(
+      s,
+      who.filter((w) => w !== "players"),
+      { duck: P.name || "" },
+    );
+  return sbWhoTakes(s, who, { duck: P.name || "" }) || grIn(s, who, "p:" + d);
+};
 function lay(s, q, w, now, zid = null) {
   const zs = zonesFor(s, "lt", q), // (a zone that names it: the orb lies in it, anywhere: sbzone.js)
     at = zid

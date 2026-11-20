@@ -2331,7 +2331,7 @@ export function l4Again(s, now) {
       standable(x * W, y * H, z),
     );
     if (q && s.pos[id])
-      s.pos[id] = { ...s.pos[id], x: q.x, y: q.y, z: q.z || 0 };
+      s.pos[id] = { ...s.pos[id], x: q.x, y: q.y, z: q.z || 0, tp: now }; // (tp: my own screen takes the host's word for it, game.js)
   }
 }
 function l4Act(s, a, now) {

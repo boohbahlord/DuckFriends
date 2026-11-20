@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v178",
+    version: 178,
+    date: "Nov 20, 2026",
+    title: "Climbing ladders",
+    news: [
+      "For Quacky Zombies and Sandbox on Downpour: climbing a ladder, your duck is on the ladder as it goes up and steps onto the roof only at the top, and you can climb back down the ladder instead of dropping off the roof.",
+      "For Sandbox: made game modes start everyone at the players' spawn zone, the building windows stay shut while a made mode is played, and Justin no longer takes loot meant for players.",
+    ],
+  },
+  {
     id: "v177",
     version: 177,
     date: "Nov 20, 2026",

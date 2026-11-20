@@ -2180,12 +2180,12 @@ function reduceStep(state, a, now) {
         j = +a.j || 0;
       if (holdStill(s, a.id, now)) return state; // Who is the Quack?: the last duck plays dead for a moment
       if (
-        isL4dd(s) &&
+        (isL4dd(s) || isSb(s)) &&
         was.tp &&
         now - was.tp < 1500 &&
         Math.hypot((+a.x || 0) - was.x, (+a.y || 0) - was.y) > 0.03
       )
-        return state; // (Quacky Zombies: the host just put it at a start spot; a move sent before that got there is old)
+        return state; // (Quacky Zombies and Sandbox: the host just put it at a start spot; a move sent before that got there is old)
       if (isHang(s) && hangStill(s, a.id, now)) return state; // Hangout: shot by Justin, it can't move for a while
       if (downStill(s, a.id, now)) return state; // the boards: knocked down, it can't move for the host's time (1 s unless set)
       if (sbOut(s, a.id)) return state; // (Sandbox: out of lives, it stays down: sbout.js)
@@ -2378,7 +2378,7 @@ function reduceStep(state, a, now) {
       return sbGodAct(s, a) ? s : state;
     case "sbr":
       // Sandbox's Rules in G: lives, down phase, crits, watching when out (sandboxrules.js)
-      if (a.k === "again") return sbAgainAct(s, a) ? s : state; // (everyone out, off the zombie maps: the host's Play again, sbout.js)
+      if (a.k === "again") return sbAgainAct(s, a, now) ? s : state; // (everyone out, off the zombie maps: the host's Play again, sbout.js)
       return sbRulesAct(s, a) ? s : state;
     case "sbh":
       // Sandbox's hotbar: its slots, the default, the lock, a spawn button's look and press (sbhot.js)
@@ -3753,7 +3753,7 @@ const SB_H = {
 };
 /* a duck on Sandbox's board or Duck Cabin that stands up again: at a respawn for players, if there is one (the zombie
    maps bring theirs back their own way: l4ddrules.js) */
-onGetUp((s, id) => {
+onGetUp((s, id, now) => {
   if (!sbOnBoard(s) && !onCabin(s)) return false;
   /* G's Rules, Lives (0: unlimited): each getting up spends one, and out of them the duck stays down for good, as on the
      zombie maps (the owner's row 199 test, "fall and die", on Duck Cabin) */
@@ -3766,7 +3766,7 @@ onGetUp((s, id) => {
     };
     if (used + 1 >= most) return true; // (out of lives: it stays down)
   }
-  sbPlaceDuck(s, id);
+  sbPlaceDuck(s, id, now);
   return false;
 });
 function playerKilled(s, by, id, w) {

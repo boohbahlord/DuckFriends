@@ -19,7 +19,7 @@ export function sbOut(s, id) {
   );
 }
 /* everyone back up, no lives spent, each at a respawn (or where it was) */
-export function sbAgain(s) {
+export function sbAgain(s, now = Date.now()) {
   s.sb = { ...s.sb, died: {} };
   delete s.sb.over;
   const up = { ...(s.up || {}) };
@@ -28,7 +28,7 @@ export function sbAgain(s) {
     if (!P) continue;
     delete P.dead;
     delete up[id];
-    sbPlaceDuck(s, id);
+    sbPlaceDuck(s, id, now);
   }
   s.up = up;
 }
@@ -41,7 +41,7 @@ export function sbOutTick(s, now) {
     if (now - o.at < OUT_MS) return false;
     if (o.how === "lobby") return "lobby";
     if (o.how === "again") {
-      sbAgain(s);
+      sbAgain(s, now);
       return true;
     }
     return false;
@@ -54,8 +54,8 @@ export function sbOutTick(s, now) {
   return true;
 }
 /* the host's Play again on the game over card */
-export function sbAgainAct(s, a) {
+export function sbAgainAct(s, a, now) {
   if (!sbOffZ(s) || !(s.sb && s.sb.over) || s.hostId !== a.id) return false;
-  sbAgain(s);
+  sbAgain(s, now);
   return true;
 }

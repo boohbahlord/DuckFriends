@@ -371,10 +371,54 @@ export function ladderAt(x, y) {
   return null;
 }
 export const atLadder = (x, y) => !!ladderAt(x, y);
+/* a duck partway up a ladder, at height z with its feet at (x, y): drawn on the ladder itself, in front of it, and on the
+   canopy's (it leans) moving from its feet toward the canopy's edge as it climbs; on the roof only once it is at the top
+   (the owner's, Nov 20 16:57Z: "The walk up the ladder should be where ur duck is on the ladder as they move up it
+   BEOFRE they are on the roof of the pump"). Only how it is drawn: where it stands (and climbs) is the ladder's foot, as
+   before (world.js climb). { dx: east of its feet, g: the ground under its feet, key: in front of the ladder } or null */
+export function onLadder(x, y, z) {
+  const A = ladderAt(x, y);
+  if (!A) return null;
+  const g = heightAt(x, y),
+    top = ladderTop(A);
+  if (!(z > g + 0.5) || z >= top.h - 0.5) return null;
+  const t = Math.min(1, (z - g) / (top.h - g)),
+    parts = PROPS.filter(
+      (p) =>
+        /ladder/.test(p.id) &&
+        Math.abs(p.x + p.w / 2 - x) < 150 &&
+        Math.abs(p.y + p.d / 2 - y) < 150,
+    ), // (this ladder's own drawings: its rails, its hoops)
+    key = parts.length
+      ? Math.max(...parts.map((p) => Math.max(p.key, p.hoopKey || 0)))
+      : null;
+  return {
+    dx: A.side === "w" ? t * Math.max(0, A.at - 6 - x) : 0,
+    g,
+    key,
+  };
+}
 export const ladderTop = (A = GS.LADDER) =>
   A.side === "w"
     ? { x: A.at + FOOT + 4, y: (A.y0 + A.y1) / 2, h: GS.CANOPY.z }
     : { x: (A.x0 + A.x1) / 2, y: A.at + T + FOOT + 4, h: GS.STATION.wall };
+
+/* a duck on the roof at a ladder's top, as it turns back to it: the ladder it climbs down, and the spot at its foot it
+   climbs down to (where a climb up starts: ladderAt finds it there). The owner's, Nov 20 16:57Z, the ladder "where ur
+   duck is on the ladder as they move up it", and down it the same way. { A, x, y } or null */
+export function ladderDown(x, y, z) {
+  if (variant !== "l4gs") return null;
+  for (const A of [GS.LADDER, GS.PUMP_LADDER]) {
+    const top = ladderTop(A);
+    if (Math.abs(z - top.h) > 1) continue;
+    if (A.side === "w") {
+      if (y >= A.y0 && y <= A.y1 && x >= A.at && x <= top.x + 12)
+        return { A, x: A.at - LADDER_LEAN, y };
+    } else if (x >= A.x0 && x <= A.x1 && y >= A.at && y <= top.y + 12)
+      return { A, x, y: A.at - T - FOOT };
+  }
+  return null;
+}
 
 /* ---------- the props: everything that stands in the world ----------
    { id, kind, x, y, w, d, h, z } is a box: its footprint (x, y the north-west corner, w across, d deep) on ground at
