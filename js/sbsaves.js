@@ -1,0 +1,533 @@
+/* ---------- Sandbox's saves: kept on the host's device, the window that picks one, and the saving itself ----------
+   The owner's, Nov 19 23:46Z (sbsave.js has his words and what a save holds). This is the screen's half:
+   - The saves live on the host's device, in the browser's IndexedDB (no size cap, works offline). Each is written whole
+     or not at all (one transaction), the one it replaces is kept beside it, and it's read back and checked after each
+     write; a save that doesn't check out opens from the copy kept before it. Export and Import move one between devices
+     as a file.
+   - When a Sandbox game starts, the host's window lists New Sandbox and every save, newest first (rename, export,
+     delete); everyone else sees "<host> is choosing: a new Sandbox or a saved one".
+   - It saves by itself every minute while the Sandbox is played, the moment it ends (back to the lobby, the room closed),
+     and when the tab is hidden or closed, so a crash or a closed tab never loses more than a minute. Only the host's
+     device saves; Save and Save as are in G. */
+import { esc, openWindow, confirmBox, toast } from "./ui.js";
+import { rainbowHTML } from "./art.js";
+import { fsBtnHTML } from "./corners.js";
+import { lobbyVote } from "./players.js";
+import { activeRoom } from "./net.js";
+import { isSb, SB_WORLD_NAMES } from "./sandboxrules.js";
+import { mapName, mapForm } from "./maps.js";
+import { sbSnapshot, newSaveId, SAVE_V } from "./sbsave.js";
+import { lobbyBtnHTML } from "./vote.js";
+import { music, allowSongs, allowedSongs } from "./music.js";
+import { sfx } from "./sound.js";
+
+/* ---------- the store ---------- */
+const DB = "duckfriends-sandbox",
+  KIND = "duckfriends-sandbox-save";
+let dbP = null;
+function db() {
+  if (!dbP)
+    dbP = new Promise((ok, no) => {
+      const q = indexedDB.open(DB, 1);
+      q.onupgradeneeded = () => {
+        const d = q.result;
+        if (!d.objectStoreNames.contains("saves"))
+          d.createObjectStore("saves", { keyPath: "id" });
+        if (!d.objectStoreNames.contains("prev"))
+          d.createObjectStore("prev", { keyPath: "id" }); // (each save's copy before its last write)
+      };
+      q.onsuccess = () => ok(q.result);
+      q.onerror = () => no(q.error);
+      q.onblocked = () => no(new Error("blocked"));
+    }).catch((e) => {
+      dbP = null;
+      throw e;
+    });
+  return dbP;
+}
+const done = (t) =>
+  new Promise((ok, no) => {
+    t.oncomplete = () => ok();
+    t.onerror = () => no(t.error);
+    t.onabort = () => no(t.error || new Error("aborted"));
+  });
+const req = (r) =>
+  new Promise((ok, no) => {
+    r.onsuccess = () => ok(r.result);
+    r.onerror = () => no(r.error);
+  });
+/* a save's check: FNV-1a over its text, and its length */
+function sumOf(t) {
+  let h = 2166136261;
+  for (let i = 0; i < t.length; i++) {
+    h ^= t.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0).toString(36) + "." + t.length.toString(36);
+}
+const good = (r) =>
+  !!r && typeof r.data === "string" && r.sum === sumOf(r.data);
+
+/* the tab closing: the browser may stop before IndexedDB has written, so the save also goes in localStorage at once (it
+   holds about 5 MB: most Sandboxes, pictures and all), and goes into the store the next time this page opens */
+const RESCUE = "duckfriends-sandbox-rescue";
+function rescue(rec) {
+  try {
+    localStorage.setItem(RESCUE, JSON.stringify(rec));
+  } catch (e) {
+    /* too big: the last minute's save stands */
+  }
+}
+let rescued = null;
+function takeRescue() {
+  if (!rescued)
+    rescued = (async () => {
+      let rec = null;
+      try {
+        rec = JSON.parse(localStorage.getItem(RESCUE) || "null");
+      } catch (e) {
+        /* nothing to take */
+      }
+      if (!good(rec)) return localStorage.removeItem(RESCUE);
+      const d = await db(),
+        was = await req(
+          d.transaction("saves").objectStore("saves").get(rec.id),
+        );
+      if (!good(was) || was.at < rec.at) await put(rec);
+      localStorage.removeItem(RESCUE);
+    })().catch(() => {});
+  return rescued;
+}
+
+/* every save, newest first: { id, name, at, made, world, map } (no data) */
+export async function listSaves() {
+  await takeRescue();
+  const d = await db(),
+    t = d.transaction("saves");
+  const all = await req(t.objectStore("saves").getAll());
+  return all
+    .map(({ id, name, at, made, world, map }) => ({
+      id,
+      name,
+      at,
+      made,
+      world,
+      map,
+    }))
+    .sort((a, b) => b.at - a.at);
+}
+/* one save, whole, its data read: the last good copy when the newest doesn't check out */
+export async function readSave(id) {
+  await takeRescue();
+  const d = await db(),
+    t = d.transaction(["saves", "prev"]);
+  const [a, b] = await Promise.all([
+    req(t.objectStore("saves").get(id)),
+    req(t.objectStore("prev").get(id)),
+  ]);
+  const r = good(a) ? a : good(b) ? b : null;
+  if (!r) return null;
+  try {
+    return { ...r, data: JSON.parse(r.data) };
+  } catch (e) {
+    return null;
+  }
+}
+/* write rec whole, keeping the one it replaces; then read it back and check it (a bad write puts the old one back) */
+let chain = Promise.resolve();
+function put(rec) {
+  const job = chain.then(async () => {
+    const d = await db(),
+      t = d.transaction(["saves", "prev"], "readwrite"),
+      S = t.objectStore("saves"),
+      P = t.objectStore("prev");
+    const was = await req(S.get(rec.id));
+    if (good(was)) P.put(was);
+    S.put(rec);
+    await done(t);
+    const back = await req(
+      d.transaction("saves").objectStore("saves").get(rec.id),
+    );
+    if (good(back) && back.sum === rec.sum) return true;
+    if (good(was)) {
+      const t2 = d.transaction("saves", "readwrite");
+      t2.objectStore("saves").put(was);
+      await done(t2);
+    }
+    return false;
+  });
+  chain = job.catch(() => false);
+  return job;
+}
+async function patch(id, fn) {
+  const d = await db(),
+    t = d.transaction(["saves", "prev"], "readwrite");
+  for (const k of ["saves", "prev"]) {
+    const st = t.objectStore(k),
+      r = await req(st.get(id));
+    if (r) st.put(fn(r));
+  }
+  await done(t);
+}
+async function drop(id) {
+  const d = await db(),
+    t = d.transaction(["saves", "prev"], "readwrite");
+  t.objectStore("saves").delete(id);
+  t.objectStore("prev").delete(id);
+  await done(t);
+}
+
+/* ---------- saving ---------- */
+const lastText = {}; // (save id: the text last written, so an unchanged Sandbox isn't written again)
+/* save room state s under its session (s.sbsv): true when written (or nothing had changed) */
+function recOf(s) {
+  const sv = s && s.sbsv;
+  if (!sv || !sv.id || !isSb(s)) return null;
+  const data = sbSnapshot(s),
+    text = JSON.stringify(data);
+  return {
+    id: sv.id,
+    name: sv.name || "Sandbox",
+    made: sv.made || Date.now(),
+    at: Date.now(),
+    v: SAVE_V,
+    world: data.world,
+    map: data.map,
+    sum: sumOf(text),
+    data: text,
+  };
+}
+export async function saveState(s) {
+  const rec = recOf(s);
+  if (!rec) return false;
+  if (lastText[rec.id] === rec.data) return true;
+  try {
+    const ok = await put(rec);
+    if (ok) lastText[rec.id] = rec.data;
+    return ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+/* by itself: every minute while the host plays a Sandbox, once it ends, and when the tab goes away */
+const EVERY = 60000;
+const A = { room: null, off: null, last: null, at: 0 };
+const playing = (s, r) =>
+  !!s &&
+  !!r &&
+  isSb(s) &&
+  !!s.sbsv &&
+  s.hostId === r.me &&
+  !["lobby", "over", "countdown"].includes(s.phase);
+function flush() {
+  const l = A.last;
+  A.last = null;
+  if (l) saveState(l);
+}
+function seen(s) {
+  if (playing(s, A.room)) {
+    if (!A.last) A.at = Date.now(); // (the first minute counts from the start)
+    A.last = s;
+  } else if (A.last) flush(); // (it ended: its last moment, before the lobby)
+}
+function watch() {
+  const r = activeRoom();
+  if (r !== A.room) {
+    flush(); // (the room closed or changed: its last moment)
+    if (A.off) A.off();
+    A.room = r;
+    A.off = r ? r.on((s) => seen(s)) : null;
+    if (r) seen(r.state);
+  }
+  if (A.last && Date.now() - A.at >= EVERY) {
+    A.at = Date.now();
+    saveState(A.last);
+  }
+}
+if (typeof window !== "undefined" && typeof indexedDB !== "undefined") {
+  setInterval(watch, 1000);
+  const away = () => {
+    if (!A.last) return;
+    const rec = recOf(A.last);
+    if (rec && lastText[rec.id] !== rec.data) rescue(rec); // (written at once, in case the tab is gone before the store)
+    saveState(A.last); // (A.last stays: the game may go on)
+  };
+  addEventListener("pagehide", away);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") away();
+  });
+  setTimeout(takeRescue, 3000); // (a save the last visit left in localStorage)
+}
+
+/* ---------- G: Save, Save as and Music ---------- */
+export function saveRows(R) {
+  const s = R.state,
+    rows = [];
+  if (s.hostId === R.me && s.sbsv)
+    rows.push(
+      {
+        label: `Save: ${s.sbsv.name || "Sandbox"}`,
+        act: async (r) => {
+          const ok = await saveState(r.state);
+          toast(
+            ok
+              ? `Saved: ${r.state.sbsv.name}`
+              : "It couldn't be saved on this device.",
+          );
+        },
+      },
+      { label: "Save as…", act: (r) => saveAs(r) },
+    );
+  const all = music.tracks,
+    on = allowedSongs(s), // (Miles Jr.'s song list, music.js: only these play, and everyone hears the same)
+    none = !on.length;
+  rows.push({
+    label: none ? "Music: no music" : "Music: on",
+    on: !none,
+    act: () => allowSongs(none ? undefined : []),
+  });
+  for (const n of all) {
+    const is = on.includes(n);
+    rows.push({
+      label: `${is ? "On" : "Off"}: ${n}`,
+      on: is,
+      act: () => allowSongs(is ? on.filter((x) => x !== n) : [...on, n]),
+    });
+  }
+  return rows;
+}
+/* a name typed in a small window: the name, or null */
+function askName(title, was, yes) {
+  return openWindow(
+    `<h2>${esc(title)}</h2><form class="sbp-form"><input class="sbp-in" maxlength="60" value="${esc(was)}" aria-label="Name" autofocus><p class="acts"><button type="submit" class="btn">${esc(yes)}</button><button type="button" class="btn ghost" data-no>Cancel</button></p></form>`,
+    {
+      cls: "win-small",
+      onOpen: (w, close) => {
+        const f = w.querySelector("form"),
+          i = w.querySelector("input");
+        i.select();
+        w.querySelector("[data-no]").onclick = () => close(null);
+        f.onsubmit = (e) => {
+          e.preventDefault();
+          const v = i.value.replace(/\s+/g, " ").trim();
+          if (v) close(v.slice(0, 60));
+        };
+      },
+    },
+  );
+}
+async function saveAs(R) {
+  const name = await askName(
+    "Save as",
+    (R.state.sbsv && R.state.sbsv.name) || "",
+    "Save",
+  );
+  if (!name) return;
+  R.send({ t: "sbsv", name, sid: newSaveId() });
+  const ok = await saveState(R.state);
+  toast(ok ? `Saved: ${name}` : "It couldn't be saved on this device.");
+}
+
+/* ---------- the pick at the start ---------- */
+let W = null; // the window while it's up: { el, R, key, list }
+const picOf = (sv) => {
+  if (sv.world === "downpour") return "assets/px/maps/downpour.webp";
+  if (sv.world === "zcabin") return "assets/px/maps/duck-cabin-zombies.webp";
+  if (sv.world === "cabin") return "assets/px/maps/duck-cabin.webp";
+  const m = mapForm(sv.map || "board").map;
+  return `assets/px/vote/${["board", "carnival", "collage", "euclid", "pixel", "rabbit", "sky", "stars", "tiles", "vellum"].includes(m) ? m : "board"}.webp`;
+};
+const placeOf = (sv) =>
+  sv.world
+    ? SB_WORLD_NAMES[sv.world] || "A world"
+    : `The board${sv.map && sv.map !== "board" ? ` (last on ${mapName(sv.map)})` : ""}`;
+const whenOf = (t) =>
+  new Date(t).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+function rowHTML(sv) {
+  return `<div class="sbp-row" data-id="${esc(sv.id)}"><button type="button" class="sbp-open" data-open="${esc(sv.id)}"><img class="sbp-pic" src="${picOf(sv)}" alt="" draggable="false" data-pxok><span class="sbp-t"><b>${esc(sv.name || "Sandbox")}</b><small>${esc(placeOf(sv))} · saved ${esc(whenOf(sv.at))}</small></span></button><span class="sbp-acts"><button type="button" class="btn ghost small" data-ren="${esc(sv.id)}">Rename</button><button type="button" class="btn ghost small" data-exp="${esc(sv.id)}">Export</button><button type="button" class="btn ghost small" data-del="${esc(sv.id)}">Delete</button></span></div>`;
+}
+function listHTML(list) {
+  if (list === null) return `<p class="sbp-note">Looking for your saves…</p>`;
+  if (list === false)
+    return `<p class="sbp-note">This browser window can't keep saves (a private window, or saving turned off), so only a new Sandbox can start.</p>`;
+  return list.length
+    ? `<h3 class="vt-cat">Your saves</h3>${list.map(rowHTML).join("")}`
+    : `<p class="sbp-note">No saves yet. A Sandbox saves itself every minute, and in G you can save it whenever you like.</p>`;
+}
+async function refresh() {
+  if (!W) return;
+  try {
+    W.list = await listSaves();
+  } catch (e) {
+    W.list = false;
+  }
+  if (!W) return;
+  W.el.querySelector(".sbp-list").innerHTML = listHTML(W.list);
+}
+function hostHTML() {
+  return `<button type="button" class="sbp-new" data-new><span class="sbp-plus">+</span><span class="sbp-t"><b>New Sandbox</b><small>Start from nothing</small></span></button><div class="sbp-list">${listHTML(null)}</div><p class="sbp-foot"><label class="btn ghost small">Import a save<input type="file" accept=".json,application/json" hidden data-imp></label></p>`;
+}
+function build(R, pause) {
+  closeSbPick();
+  const s = R.state,
+    mine = s.hostId === R.me,
+    host = (s.players[s.hostId] || {}).name || "The host";
+  const el = document.createElement("div");
+  el.setAttribute("role", "dialog");
+  el.className = "vt sbp";
+  el.setAttribute("aria-label", "Sandbox");
+  el.innerHTML = `<header class="vt-head"><div class="vt-left"><span class="vt-lv">${lobbyBtnHTML(s, R.me)}</span></div><h2 class="vt-title">${rainbowHTML("Sandbox", { seed: 9 })}</h2><div class="vt-right">${fsBtnHTML()}<button type="button" class="btn ghost iconbtn vt-pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header><p class="vt-sub">${mine ? "A new Sandbox, or pick up one of your saves" : `${esc(host)} is choosing: a new Sandbox or a saved one`}</p><div class="vt-box">${mine ? hostHTML() : `<p class="sbp-wait">${esc(host)} is choosing…</p>`}</div>`;
+  document.body.append(el);
+  W = {
+    el,
+    R,
+    key: s.at + ":" + s.hostId + ":" + R.me,
+    list: null,
+    lv: "",
+    busy: false,
+    pause,
+  };
+  if (mine) refresh();
+  el.addEventListener("click", (e) => click(e));
+  el.addEventListener("change", (e) => {
+    if (e.target.matches("[data-imp]")) importFile(e.target);
+  });
+}
+async function click(e) {
+  const t = e.target.closest("button, [data-lv]");
+  if (!t || !W) return;
+  const R = W.R;
+  if (t.closest(".vt-pause")) return W.pause && W.pause();
+  if (t.closest("[data-lv]")) return lobbyVote(R);
+  if (W.busy) return;
+  if (t.matches("[data-new]")) {
+    sfx.tick();
+    R.send({ t: "sbPick" });
+    return;
+  }
+  const open = t.dataset.open,
+    ren = t.dataset.ren,
+    exp = t.dataset.exp,
+    del = t.dataset.del;
+  if (open) {
+    W.busy = true;
+    sfx.tick();
+    const sv = await readSave(open).catch(() => null);
+    if (W) W.busy = false;
+    if (!sv)
+      return toast(
+        "That save couldn't be read on this device. Your other saves are fine.",
+      );
+    R.send({
+      t: "sbPick",
+      save: { id: sv.id, name: sv.name, made: sv.made, v: sv.v, data: sv.data },
+    });
+    return;
+  }
+  if (ren) {
+    const was = (W.list || []).find((x) => x.id === ren);
+    const name = await askName("Rename", (was && was.name) || "", "Rename");
+    if (!name) return;
+    await patch(ren, (r) => ({ ...r, name })).catch(() => null);
+    return refresh();
+  }
+  if (exp) {
+    const sv = await readSave(exp).catch(() => null);
+    if (!sv) return toast("That save couldn't be read on this device.");
+    const file = JSON.stringify({
+      kind: KIND,
+      v: sv.v,
+      id: sv.id,
+      name: sv.name,
+      made: sv.made,
+      at: sv.at,
+      world: sv.world,
+      map: sv.map,
+      data: sv.data,
+    });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(
+      new Blob([file], { type: "application/json" }),
+    );
+    a.download = `${(sv.name || "Sandbox").replace(/[^\w ,.-]+/g, "").trim() || "Sandbox"}.json`;
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    return;
+  }
+  if (del) {
+    const was = (W.list || []).find((x) => x.id === del);
+    const yes = await confirmBox(
+      `Delete ${(was && was.name) || "this save"}?`,
+      "It can't be brought back.",
+      "Delete",
+      "Keep it",
+    );
+    if (!yes) return;
+    await drop(del).catch(() => null);
+    return refresh();
+  }
+}
+/* Import: a save file from another device goes in the list (as a copy when this device has one by its id) */
+async function importFile(input) {
+  const f = input.files && input.files[0];
+  input.value = "";
+  if (!f) return;
+  let o = null;
+  try {
+    o = JSON.parse(await f.text());
+  } catch (e) {
+    /* not a save */
+  }
+  if (!o || o.kind !== KIND || !o.data || typeof o.data !== "object")
+    return toast("That file isn't a Duck Friends Sandbox save.");
+  const text = JSON.stringify(o.data);
+  let id =
+    typeof o.id === "string" && /^[a-z0-9]{6,40}$/.test(o.id)
+      ? o.id
+      : newSaveId();
+  try {
+    if ((await listSaves()).some((x) => x.id === id)) id = newSaveId();
+    const ok = await put({
+      id,
+      name: String(o.name || "Sandbox").slice(0, 60),
+      made: +o.made || Date.now(),
+      at: Date.now(),
+      v: +o.v || 1,
+      world: o.data.world || "",
+      map: o.data.map || "",
+      sum: sumOf(text),
+      data: text,
+    });
+    toast(ok ? `Imported: ${o.name || "Sandbox"}` : "It couldn't be imported.");
+  } catch (e) {
+    toast("This browser window can't keep saves.");
+  }
+  refresh();
+}
+
+/* the window as the state has it: up while the host picks (lobby.js paints it with the votes) */
+export function paintSbPick(R, pause) {
+  const s = R.state;
+  if (!(s.phase === "countdown" && s.sbpk)) return closeSbPick();
+  if (!W || W.R !== R || W.key !== s.at + ":" + s.hostId + ":" + R.me)
+    build(R, pause);
+  const lv = lobbyBtnHTML(s, R.me);
+  if (lv !== W.lv) {
+    W.lv = lv;
+    W.el.querySelector(".vt-lv").innerHTML = lv;
+  }
+}
+export function closeSbPick() {
+  if (!W) return;
+  W.el.remove();
+  W = null;
+}

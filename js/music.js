@@ -168,11 +168,13 @@ const noMusic = () => {
 const COUNT_GONE = 2000; // ms before the countdown's end the music is gone by
 const counting = () => {
   const s = roomState();
-  return !inMenu() && !!s && s.phase === "countdown" && !s.vt ? s : null;
+  return !inMenu() && !!s && s.phase === "countdown" && !s.vt && !s.sbpk
+    ? s
+    : null;
 };
 const voting = () => {
   const s = roomState();
-  return !inMenu() && !!s && s.phase === "countdown" && !!s.vt;
+  return !inMenu() && !!s && s.phase === "countdown" && (!!s.vt || !!s.sbpk); // (Sandbox's pick, sbsaves.js, is quiet as a vote)
 };
 /* in the countdown: the music's level glides down in a straight line, to 0 by COUNT_GONE before its end (again each
    second, on the same line; a countdown cancelled brings it back: sync) */

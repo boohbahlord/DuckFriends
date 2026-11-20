@@ -71,8 +71,12 @@ export const SB_HELP = {
   ],
   g: [
     [
-      "Game settings",
-      `Settings for this Sandbox: where ${LANG} files are brought in to run.`,
+      "Saving",
+      "Save keeps this Sandbox exactly as it is on the host's device, under its name; Save as keeps it under a new name. It also saves itself every minute, when it ends and when the host's tab closes. Next time Sandbox starts, the host picks it from the list.",
+    ],
+    [
+      "Music",
+      "Music turns all the songs on or off. Each song below it can be turned on or off on its own; only the ones on play. The save keeps the list.",
     ],
   ],
 };
