@@ -1186,6 +1186,7 @@ function makeSolids() {
         top: p.plat && variant === "l4" ? Infinity : p.top, // (Quacky Zombies: nothing to jump up onto)
         roof: p.roof || 0, // (Downpour: under a roof, it stops a duck's feet up to the roof's height, a shot up to its top)
         zx: !!p.zx, // (zombies climb over it: the fallen tree)
+        pass: !!p.pass, // (it stops shots only: walking over it is a floor's, a car's glass, vehicles.js)
       });
   for (const b of SOLIDS)
     for (
@@ -1372,7 +1373,7 @@ export function standable(x, y, z, up = STEP, from = null, zombie = false) {
   } else if (x < EDGE || x > W - EDGE || y < EDGE || y > H - EDGE) return false;
   if (heightAt(x, y) > z + up + 1e-6) return false; // (a deck never stops a duck: it walks under it, or onto it from one as high)
   return !solidsAt(x, y, z).some(
-    (b) => !(from && hits(b, from[0], from[1])) && !(zombie && b.zx),
+    (b) => !(from && hits(b, from[0], from[1])) && !(zombie && b.zx) && !b.pass,
   );
 }
 /* the second map's boarded holes: a duck never gets through one (zombies do, once the boards are down: l4ddrules.js) */
