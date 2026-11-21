@@ -5,12 +5,13 @@
    s.hang.book = [{ n: name, s: name style, t: text }]. Esc, the × button, the context button ("Close") or walking away
    closes it. Typing in it never moves the duck or sets off a special (game.js leaves keys typed in a box alone). */
 import { rule, activity } from "./registry.js";
-import { PROPS, W, H } from "./layout.js";
+import { PROPS } from "./layout.js";
 import { nameHTML } from "../name.js";
 import { rainbowHTML } from "../art.js";
 import { esc } from "../ui.js";
 import { denied } from "../roomrules.js";
 import { touchOnly } from "../pointer.js";
+import { toPx } from "../units.js";
 
 const BOOK = PROPS.find((p) => p.kind === "book");
 const FOOT = [BOOK.x + BOOK.w / 2, BOOK.y + BOOK.d];
@@ -33,8 +34,7 @@ rule("book", {
     const me = s.pos[a.id],
       P = s.players[a.id];
     if (!me || !P) return false;
-    if (far(me.x * W, me.y * H) > AWAY + 60 || denied(s, a.id, "nochat"))
-      return false; // (from beside it; not while muted)
+    if (far(...toPx(me)) > AWAY + 60 || denied(s, a.id, "nochat")) return false; // (from beside it; not while muted)
     const t = cleanText(a.text);
     if (!t) return false;
     const st = P.nameStyle || {},
@@ -165,6 +165,6 @@ activity({
   step(dt, now, ctx) {
     if (!v || !v.open) return;
     const me = ctx.duck();
-    if (!me || !ctx.world.inside || far(me.x * W, me.y * H) > AWAY) close(); // walked off: it closes
+    if (!me || !ctx.world.inside || far(...toPx(me)) > AWAY) close(); // walked off: it closes
   },
 });

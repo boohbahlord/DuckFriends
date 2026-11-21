@@ -14,7 +14,7 @@ bash.js 1360 the command line's language: a small
 bbrules.js 380 the rules of Bicker Brackets
 beaks.js 138 beaks
 bloodpool.js 50 a pool of blood: the one
-boardfire.js 1214 the board's weapons: hits, shots, blasts,
+boardfire.js 1212 the board's weapons: hits, shots, blasts,
 boardjustin.js 699 Justin on the boards
 botduck.js 90 a computer's duck: a random look,
 botlines.js 188 What the computers write and say
@@ -100,7 +100,7 @@ l4ddsfx.js 512 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the zombies
 langname.js 5 the name of Sandbox's number language,
 laserart.js 95 the laser gun, drawn
-laserfx.js 134 the Laser Rifle on the screen
+laserfx.js 135 the Laser Rifle on the screen
 later.js 66 the rest of the game, once
 lawrules.js 360 the rules of Lawyering
 loading.js 403 the start: a slow fade to
@@ -189,7 +189,7 @@ sbmake.js 203 Sandbox: making NPCs and dressing spawns
 sbmenu.js 264 Sandbox: presets, copy and paste, the
 sbnpcart.js 162 Sandbox: a spawned NPC's picture, whatever
 sbnpcs.js 73 Sandbox: the NPCs I make
-sbnumberat.js 476 Sandbox: NPCs that run a Seriat
+sbnumberat.js 477 Sandbox: NPCs that run a Seriat
 sbout.js 62 Sandbox off the zombie maps: out
 sbrotate.js 102 Sandbox, Direction's Rotate in the right-click
 sbsave.js 292 Sandbox: saving a Sandbox as it
@@ -236,6 +236,7 @@ triviarules.js 458 the rules of Trivia
 ui.js 380 small helpers every screen uses
 umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping
+units.js 10 the game's units, in one place
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an upload
 updates.js 3169 Updates
@@ -261,7 +262,7 @@ book.js 170 the guestbook: a book on a
 bricks.js 482 loose bricks, drawn as pixels
 cabinend.js 135 End Cabin / Exit Cabin
 cats.js 662 Duck Cabin's cats: Annabelle, Bubbles, Oreo
-chalk.js 631 the chalk floor: draw on it
+chalk.js 627 the chalk floor: draw on it
 characters.js 592 Duck Cabin's characters on the map:
 death.js 101 how long a knocked-down duck can't
 doors.js 32 the doors: they swing open while
@@ -275,12 +276,12 @@ lamp.js 71 the lamps: the example activity
 layout.js 1517 Duck Cabin: the world of Hangout
 npc.js 495 Duck Cabin's characters: how they get
 npcart.js 283 Duck Cabin's characters: the drawings
-piano.js 530 the piano in the cabin ,
+piano.js 531 the piano in the cabin ,
 pianokeys.js 665 Hangout: the piano's keyboard mode
 plank.js 90 the plank from the red car's
 poker.js 1185 poker at the blackjack table
 pool.js 9 down the hill: the water and
-power.js 500 the power box, the blackout, the
+power.js 501 the power box, the blackout, the
 pxw-cabin-l4.js 418 made by tools/pixel-world.cjs:
 pxw-cabin.js 433 made by tools/pixel-world.cjs:
 pxw-downpour.js 344 made by tools/pixel-world.cjs:
@@ -288,7 +289,7 @@ pxworld.js 87 Duck Cabin's and Downpour's art as
 registry.js 111 Hangout's two registries: what each activity
 rubberducks.js 183 the little rubber ducks in the
 rules.js 87 Hangout's rules: s.hang and the {
-seats.js 439 the couches, the campfire's logs, the
+seats.js 440 the couches, the campfire's logs, the
 shadowduck.js 254 the shadow duck
 shapes.js 1704 Duck Cabin's props, drawn: art.js's drawings
 soccer.js 508 soccer: one ball on the field,

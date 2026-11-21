@@ -15,6 +15,7 @@ import { PROPS, W, H, heightAt, standable, STEP, BJ } from "./layout.js";
 import * as A from "./art.js";
 
 import { offView } from "../gameready.js";
+import { toPx } from "../units.js";
 
 const KINDS = ["couch", "log"],
   SEAT_KINDS = [...KINDS, "table", "stool"],
@@ -191,7 +192,7 @@ rule("sit", {
     }
     const q = BY.get(String(a.seat));
     if (!q || q === was || !free(s, q, a.id)) return false;
-    if (was ? was.p !== q.p : away(q.p, me.x * W, me.y * H) > REACH * 2.5)
+    if (was ? was.p !== q.p : away(q.p, ...toPx(me)) > REACH * 2.5)
       return false; // (a hop stays on its couch; a sit only from beside it)
     if (was) delete seats[was.id];
     seats[q.id] = [a.id, now];

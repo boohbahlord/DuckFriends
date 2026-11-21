@@ -12,10 +12,11 @@ import { laserHeat, dp } from "./l4ddrules.js";
 import { LASER, hotColor } from "./laserart.js";
 import { fxSteam, fxGroundFire } from "./fx.js";
 import { sfx } from "./sound.js";
-import { W, H, inCabin } from "./hangout/layout.js";
+import { inCabin } from "./hangout/layout.js";
 import { CANOPY } from "./hangout/stationmap.js";
 import { now as clockNow } from "./clock.js";
 import { heldOn } from "./barrelheat.js";
+import { toPx } from "./units.js";
 
 /* the look of duck id's Laser Rifle now: { lvl: its heat 0 … 1 in steps of one beam, over: overheated }, and its key
    (the gun's picture is made again only when it changes) */
@@ -62,7 +63,7 @@ export function laserFrame(s, held, fxl, size, heard) {
       f = q.h / q.max, // (0 … 1, past 1 while overheated)
       over = q.over > 0,
       p = s.pos[id],
-      rain = !!p && wet(p.x * W, p.y * H);
+      rain = !!p && wet(...toPx(p));
     seen.add(id);
     const o = STEAM.get(id) || { carry: 0, fire: 0 };
     STEAM.set(id, o);

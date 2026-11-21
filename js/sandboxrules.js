@@ -7,6 +7,7 @@
    zombies and no end (s.options.sbMap picks one of those; empty: the board).
    This file has no imports, so every part of the game (the rules, the world's layout, the screen) can ask it. */
 import { LANG } from "./langname.js";
+import { TILE } from "./units.js";
 
 /* the worlds Sandbox can be on: the mode whose world it is, and that mode's map */
 export const SB_WORLDS = {
@@ -555,11 +556,10 @@ const listBox = (name, def) => ({
   def,
   len: 200, // (its text kept up to this long: sbspawn.js withField; a plain box keeps 80)
 });
-export const SB_TILE = 0.25; // (duck lengths: a hitbox tile, sbTiles below)
 const sideBox = (name) => ({
   name,
   kind: "int",
-  per: SB_TILE,
+  per: TILE,
   min: 1,
   max: 160,
   def: "16",
@@ -798,7 +798,7 @@ export const SB_ZONE_PX = 48;
    that build up their size. And those units are based on the tiles that check for hitbox"): a quarter of a duck length
    each, one tile at least, 40 duck lengths at most */
 export const sbFitSide = (v) =>
-  Math.max(SB_TILE, Math.min(40, Math.round(v / SB_TILE) * SB_TILE));
+  Math.max(TILE, Math.min(40, Math.round(v / TILE) * TILE));
 /* ---------- every build block's shape (plan Phase 2: "Spawn, respawn, loot and zone become one thing you put down") ----------
    A block has a shape and a size (zw, zh: duck lengths; a zone starts at 4 by 4, the rest at 1 by 1) or fills the whole
    map. Square by default; the others by adding sides, stopping once it already looks round. It is made of the hitbox
@@ -1107,7 +1107,7 @@ export const sbOrder = (id, p) =>
    tile sticking out past its edge by less than 0.4 is still all of it. A block thinner than a tile has one tile that
    thin. With Snap on (the default) its corner sits on the ground's tile lines, one every tile from the map's top left
    corner, and it turns a quarter at a time, so its tiles are the ground's tiles (sbSnapSpot). Its potential order's
-   squares (Square size) are made of its tiles (SB_TILE, above) */
+   squares (Square size) are made of its tiles (TILE, above) */
 export const SB_TAKE = 0.6;
 const SAMPLES = 6, // (points across a tile each way, to tell how much of it the shape covers)
   MAX_TILES = 256, // (tiles along a side at most: a bigger block has bigger tiles)
@@ -1117,7 +1117,7 @@ const SAMPLES = 6, // (points across a tile each way, to tell how much of it the
 export function sbTiles(p) {
   const [w, h] = sbSize(p),
     sh = sbShape(p),
-    t = Math.max(SB_TILE, w / MAX_TILES, h / MAX_TILES),
+    t = Math.max(TILE, w / MAX_TILES, h / MAX_TILES),
     [fu, fv] = sbFlips(p),
     key = `${sh} ${w} ${h} ${t} ${fu} ${fv}`;
   let g = TILES.get(key);
@@ -1187,7 +1187,7 @@ export function sbGrid(s, p, W = 1, H = 1) {
     [w, h] = [1 / rx, 1 / ry];
   }
   const sq = Math.max(
-      (+ordTxt(p, "sq") || 4) * SB_TILE, // (typed in tiles)
+      (+ordTxt(p, "sq") || 4) * TILE, // (typed in tiles)
       w / MAX_SIDE,
       h / MAX_SIDE,
     ),
