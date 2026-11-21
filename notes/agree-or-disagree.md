@@ -7625,3 +7625,11 @@ before/after numbers promised when his PR lands.
 ## Owner, 2026-11-21 00:31Z (via Moses): test commands in the terminal
 "If you need to make codes in the terminal to make testing easier and more usage efficient, you can. Just have it to where that disables stats within a game when those certain things are turned on for something in the special games."
 Decision: workers may add terminal (shell) test commands (jump to a round, give a weapon). Any game where one is used has stats off for that whole game. Passed to Solomon for his stutter tests.
+
+## Owner, 2026-11-21 00:40Z (via Moses): Customize loads far too long
+"I don't remember if we decided on a solution for loading things and customization, but with the new loading bar that came out and everything, if you look at the page, it'll be like a very, very long time just watching that loading screen and seeing how long it takes till it loads. As a player, that kind of ruins my experience because I could play a AAA game with God knows how much shit in it, and it'll load 20 times, 100 times, or 1,000 times faster than a game about ducks that's 32-bit. I mean, come on."
+Decision: measure what takes the time, then cut total load time to near-instant (Adam).
+
+## Owner, 2026-11-21 00:43Z (via Moses): every color on apparel is editable
+"Small note, the lines on the adjuster's outfit, like the yellow lines, those shouldn't be fixed. I should be able to edit those colors like the rest of the outfit. I like to wear the adjuster's outfit, you know? And if there's colors on an item, I should be able to change it. Simple. And what I'm referring to by item is any kind of apparel, like a hat, an outfit, stuff like that."
+Decision: rule for all apparel: if an item has a color, the player can change it. Sweep every hat and outfit for fixed colors (Noah, after the Customize load job).

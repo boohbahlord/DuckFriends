@@ -21,3 +21,11 @@ export function sliceClock(budget = 8) {
     },
   };
 }
+
+/* a moment the page has nothing else to do (or a second at most): work that can wait goes then */
+export const idle = () =>
+  new Promise((ok) =>
+    globalThis.requestIdleCallback
+      ? requestIdleCallback(() => ok(), { timeout: 1000 })
+      : setTimeout(ok, 50),
+  );

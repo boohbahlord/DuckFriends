@@ -5352,6 +5352,17 @@ html.moving .pix-sun {
 .arm-menu svg[data-pxwait] > :not(image.pxi, g.pxt, svg.pxw) {
   display: none !important;
 }
+/* Customize's first page drawn out of sight at the title, as the window draws it (customize.js warmCustomize) */
+.arm-ghost {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+}
 /* every page, drawn out of sight as Customize opens (customize.js warmUp) */
 .arm-warm {
   position: absolute;
@@ -22134,41 +22145,6 @@ p.sb-ties {
   transition: width 0.15s linear;
 }
 .up-bar.up-gone {
-  opacity: 0;
-}
-/* the green line at the very top while Customize loads (upbar.js topBar), its percent under where it starts (the
-   top right corner holds Sign in) */
-.top-bar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  z-index: 2147483000;
-  pointer-events: none;
-  transition: opacity 0.4s;
-}
-.top-bar > i {
-  display: block;
-  height: 100%;
-  width: 0;
-  background: #3ddc6a;
-  box-shadow: 0 0 6px rgba(61, 220, 106, 0.7);
-  transition: width 0.2s linear;
-}
-.top-bar > b {
-  position: absolute;
-  top: 5px;
-  left: 6px;
-  padding: 1px 5px;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.55);
-  color: #3ddc6a;
-  font-size: 0.72rem;
-  font-weight: 600;
-  line-height: 1.2;
-}
-.top-bar.up-gone {
   opacity: 0;
 }
 /* Made maps (js/umaps.js): Make a map and My maps, and a made map's picture wherever a map's picture shows */
