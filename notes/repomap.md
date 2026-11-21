@@ -212,7 +212,7 @@ umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
 unlocks.js 359 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 2818 Updates
+updates.js 2827 Updates
 vdd.js 198 Valentine's Duck Date: what the screen shows
 vddrules.js 521 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
