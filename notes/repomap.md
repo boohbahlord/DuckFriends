@@ -22,7 +22,7 @@ card.js 424 the player card
 chat.js 1596 text chat and the command line
 cheatflag.js 16 a game with test commands used
 cheats.js 146 test commands: cheat round N, cheat
-claw.js 36 a claw's marks: three white slashes
+claw.js 46 a claw's marks: three white slashes
 clock.js 5 one clock for the room
 collage.js 101 Shelter Sky & Null
 color.js 165 choosing a color
@@ -122,7 +122,7 @@ notes.js 101 Notes : question ideas, written any
 npcrules.js 119 what every NPC's brain shares
 npcs.js 49 the characters you can mute: Justin,
 npcshared.js 29 what every NPC shares, whatever mode
-npcview.js 206 an NPC on a world ,
+npcview.js 207 an NPC on a world ,
 numberat.js 1323 Seriat: the language
 numberatrun.js 1675 Seriat: files that do things
 numerat.js 181 Seriat: the number reader
