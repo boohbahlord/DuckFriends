@@ -48,8 +48,8 @@ format.js 15 numbers as the settings ask
 friends.js 236 friends
 front.js 109 the front page
 fx.js 1200 the effects, drawn as pixels
-fxmotion.js 214 how a held weapon and the screen move
-game.js 8814 the game screen
+fxmotion.js 229 how a held weapon and the screen move
+game.js 8812 the game screen
 gamedefaults.js 43 the game's own numbers, for every mode
 gameready.js 47 
 gamesettings.js 1755 Game Settings: the whole screen, like Customize
