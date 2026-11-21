@@ -7612,3 +7612,16 @@ are our main-thread work. Fix the code first; wrap later only for a store/Steam.
 Tell me why we haven't deployed some of these changes that we've been desperately needing for the things like the loading screen, or even why the fuck that we made an update to where there's a crop picture for the player card that isn't the crop, the aspect ratio isn't in the fucking shape of the player card in which it uploads to. Does someone not know what's wrong with that? Like, if I go to the player card and want to upload a picture from my gallery into my player card with a custom image, it shows me a 1 by 1 square. That's not the fucking aspect ratio of the card, so I'm completely guessing what part it's going to select in a process that is just completely betraying the user experience like rape. You guys are pieces of shit. I hate all of you.
 
 Adam: my miss (I passed a square crop for a card that is a 4.2:1 to 6.6:1 strip). V198: card pictures cropped and stored in the card's own shape (176x32, 5.5:1, duck.js CARD_PIC), preview shows the strip; old card pictures re-made from their middle.
+
+## Owner, Nov 21 00:07Z (Adam's thread)
+
+With all these fixes we're doing, how much improvement do you think we could see on the performance of the game for things, not just in frames, but like in terms of stuttering and all of that and things like that? Make it run smoother, make it feel smoother, because it's not just frames.
+
+Adam: smoothness = frame pacing (frame-time spikes, 1% lows), not average fps. Measured so far: Customize 2.1 s freeze ->
+under ~0.15 s steps (Noah, in progress), Downpour load 21 -> 7 s with nothing after the drop, mid-game picture making
+removed. Solomon measuring frames over 16 ms in a minute of play (target: none over 50 ms, half as many over 16 ms);
+before/after numbers promised when his PR lands.
+
+## Owner, 2026-11-21 00:31Z (via Moses): test commands in the terminal
+"If you need to make codes in the terminal to make testing easier and more usage efficient, you can. Just have it to where that disables stats within a game when those certain things are turned on for something in the special games."
+Decision: workers may add terminal (shell) test commands (jump to a round, give a weapon). Any game where one is used has stats off for that whole game. Passed to Solomon for his stutter tests.

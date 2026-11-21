@@ -10,6 +10,7 @@ import { svgDataURL } from "./svgurl.js";
 import { applyPalette } from "./pixelpalette.js";
 import { hasRb, rbSprite, RB_N } from "./rainbowskin.js";
 import { holdGame } from "./gameready.js";
+import { yieldNow } from "./slices.js";
 
 const DUCK = 32, // (pixels to a duck's height: the owner's pick, on phones too)
   KEEP = 900; // (pictures kept made; the oldest go first)
@@ -283,6 +284,7 @@ async function fromParts(src, cw, ch) {
   }
 }
 async function make(fk, src, cw, ch) {
+  await yieldNow(); // (each picture its own task: many made at once, as a page of tiles comes in, held the page: slices.js)
   const key = fk.slice(0, fk.lastIndexOf("@"));
   let c = await fromFiles(key, cw, ch);
   if (!c) c = await fromParts(src, cw, ch);

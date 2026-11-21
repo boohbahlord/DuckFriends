@@ -2,7 +2,7 @@
 files after an update (GitHub Pages lets browsers keep files for 10 minutes). Run it before each commit that changes
 css/ or js/:  python3 tools/stamp.py  (the version is the date and time, UTC)."""
 
-import hashlib, json, os, re, time
+import hashlib, json, os, re, subprocess, time
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 v = time.strftime("%Y%m%d%H%M", time.gmtime())
@@ -126,3 +126,16 @@ print(
     len(kept),
     "files for Single Player",
 )
+
+# I want notes/repomap.md to never go stale, so it is made again on every stamp (tools/repomap.mjs)
+try:
+    print(
+        subprocess.run(
+            ["node", os.path.join(root, "tools", "repomap.mjs")],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+    )
+except (OSError, subprocess.CalledProcessError) as e:
+    print("repomap skipped:", e)

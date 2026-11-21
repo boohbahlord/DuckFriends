@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v199",
+    version: 199,
+    date: "Nov 20, 2026",
+    title: "No more freezing",
+    news: [
+      "For Customize: it opens and changes pages without freezing, with a green line at the top showing how much has loaded.",
+      "The loading screen says what is loading and how much is in.",
+    ],
+  },
+  {
     id: "v198",
     version: 198,
     date: "Nov 20, 2026",

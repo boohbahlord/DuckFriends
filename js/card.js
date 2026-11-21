@@ -11,6 +11,7 @@ import { seenDuck, seenName } from "./looks.js";
 import { gridPx } from "./pixel.js";
 import { applyPalette, PALETTE } from "./pixelpalette.js";
 import PXC from "./pxcard.js";
+import { sliceClock } from "./slices.js";
 
 /* sport balls, drawn in their own colors in a 32 × 32 box */
 const BALLS = {
@@ -126,8 +127,21 @@ function wantSheets() {
     im.src = src;
     return im;
   });
-  sheetsP = Promise.all(SHEETS.map((im) => im.decode()))
-    .then(() => {
+  /* (kept as bitmaps, unpacked once off the page's turn: drawn from the pictures, each draw unpacked the whole sheet
+     again, a tenth of a second at a time) */
+  sheetsP = Promise.all(
+    SHEETS.map((im) =>
+      im
+        .decode()
+        .then(() =>
+          typeof createImageBitmap === "function"
+            ? createImageBitmap(im).catch(() => im)
+            : im,
+        ),
+    ),
+  )
+    .then((bm) => {
+      SHEETS = bm;
       sheetsIn = true;
       document.querySelectorAll('[style*="--cpat"]').forEach((el) => {
         const [kind, col, layout, size, color] = el.style
@@ -349,6 +363,32 @@ function inGameColors(x, T, base) {
     d.set(q, p);
   }
   x.putImageData(all, 0, 0);
+}
+/* every pattern drawn once ahead (each one is kept), a few at a time, so Customize's card page that shows them all is
+   quick to draw; then each layout of the card's own pattern. step(share done) after each slice (Customize's green line) */
+export async function warmPatterns(C, step) {
+  await cardSheets();
+  const clock = sliceClock(),
+    list = [
+      ...CARD_PATTERNS.map(([v]) => [v, C.layout]),
+      ...(C.pattern && C.pattern !== "none"
+        ? CARD_LAYOUTS.map(([v]) => [C.pattern, v])
+        : []),
+    ];
+  for (let i = 0; i < list.length; i++) {
+    const [pattern, layout] = list[i];
+    cardBackground({
+      pattern,
+      patternColor: C.patternColor,
+      layout,
+      size: C.size,
+      color: C.color,
+    });
+    if (clock.over()) {
+      step((i + 1) / list.length);
+      await clock.next();
+    }
+  }
 }
 export function cardBackground(card = {}) {
   if (card.image)

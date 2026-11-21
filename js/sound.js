@@ -388,7 +388,6 @@ function start() {
   return ac;
 }
 export const sfxContext = () => start();
-export const sfxOut = () => (start() ? out : null);
 for (const k of ["pointerdown", "keydown", "touchend"])
   addEventListener(k, start, { capture: true });
 document.addEventListener("visibilitychange", () => {
@@ -935,6 +934,4 @@ const SFX = {
 for (const n of Object.keys(VOL)) if (!SFX[n]) SFX[n] = named(n);
 export const sfx = new Proxy(SFX, { get: (o, k) => o[k] || quiet });
 
-/* the start screen's dive: not yet (the next batches) */
-export const diveVoice = quiet;
 export const dive = quiet;
