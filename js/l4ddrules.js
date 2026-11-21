@@ -873,6 +873,8 @@ export const players = (s) => s.seat.filter((id) => s.players[id] && s.pos[id]);
 const P4 = (s, id) => ((s.hang && s.hang.l4p) || {})[id] || null;
 const isDown = (s, id) => !!(P4(s, id) && P4(s, id).dn);
 const isGhost4 = (s, id) => !!(P4(s, id) && P4(s, id).gh);
+/* a ghost that comes back at the next round (Survival's stays one, ex: only a defibrillator brings it back) */
+const returns = (s, id) => isGhost4(s, id) && !P4(s, id).ex;
 export const standing = (s, id) => {
   const p = P4(s, id);
   return !!p && !p.dn && !p.gh;
@@ -1748,7 +1750,8 @@ function l4Act(s, a, now) {
       p4 = s.hang.l4p || {},
       tp = p4[t],
       pos = s.pos[t];
-    if (!tp || !tp.dn || !pos || t === id) return false;
+    const body = !!tp && !!tp.gh && !!tp.ex && !!(s.hang.ghost || {})[t]; // (Survival's ghost: its body lies where it fell)
+    if (!tp || (!tp.dn && !body) || !pos || t === id) return false;
     if (!a.hold) {
       if (!tp.rv || tp.rv.by !== id) return false;
       s.hang.l4p = {
@@ -1757,7 +1760,7 @@ function l4Act(s, a, now) {
       }; // (a revive pauses the bleeding-out: it goes on from where it was, the owner's, Nov 17 11:07Z)
       return true;
     }
-    const [tx, ty] = at(pos);
+    const [tx, ty] = at(body ? s.hang.ghost[t] : pos);
     if (Math.hypot(tx - mx, ty - my) > L4.REACH * 1.6) return false;
     if (tp.ex) return defibUse(s, id, t, me, now); // (dead for good: only Survival's defibrillator brings a player back)
     if (tp.rv && tp.rv.by !== id && s.pos[tp.rv.by]) return false; // (someone else is at it)
@@ -1809,6 +1812,22 @@ function defibUse(s, id, t, me, now) {
   if (!isSurv(s) || isWild(s, t) || isHelper(s, t) || !s.players[t])
     return false;
   if (me.w !== "defib" || !hasLeft(s, id, "defib")) return false;
+  const g = (s.hang.ghost || {})[t];
+  if (g && s.pos[t]) {
+    /* a ghost: it gets up where its body lies, and the ghost is gone */
+    s.pos[t] = {
+      ...s.pos[t],
+      x: g.x,
+      y: g.y,
+      z: g.z || 0,
+      j: 0,
+      b: 0,
+      tp: now,
+    };
+    const gs = { ...s.hang.ghost };
+    delete gs[t];
+    s.hang.ghost = gs;
+  }
   getUp(s, t, now, false);
   const kit = kitOf(s, id),
     c = kit.am.defib;
@@ -4500,28 +4519,16 @@ function l4Tick(s, now) {
         const still = { ...(s.hang.still || {}) };
         delete still[id];
         s.hang.still = still;
-      } else if (
-        !rv &&
-        !p.skAt &&
-        now >= p.dn &&
-        (isWild(s, id) || isSurv(s))
-      ) {
+      } else if (!rv && !p.skAt && now >= p.dn && isWild(s, id)) {
         p = { hp: 0, at: now, dn: now + 1e13, ex: 1 }; // (Justin in Downpour bled out: dead for good, his body stays)
         s.hang.still = { ...(s.hang.still || {}), [id]: now + 1e13 };
-        /* Survival: a duck that bleeds out is dead, as Justin: no ghost, no coming back at a rest (the owner's, Nov 19
-           22:25Z: "in survival, when players die, they do not come back"), only a defibrillator brings it back
-           (defib); it watches the others meanwhile (l4dd.js spectate) */
-        if (isSurv(s) && !isWild(s, id)) {
-          if (s.players[id]) s.players[id].dead = true;
-          s.hang.l4u = { ...(s.hang.l4u || {}), [id]: {} }; // (its upgrades go, as a ghost's)
-          downGun(s, id, false);
-          const b = { ...(s.hang.l4b || {}) };
-          delete b[id];
-          s.hang.l4b = b;
-        }
       } else if (!rv && !p.skAt && now >= p.dn) {
         const safe = !!p.sk || hasSafe(s, id);
-        p = { hp: 0, at: now, gh: 1 }; // (bled out: a ghost until the next round)
+        /* bled out: a ghost until the next round; in Survival (ex) it stays one, no coming back at a rest (the owner's, Nov 19
+           22:25Z: "in survival, when players die, they do not come back"), only a defibrillator brings it back (defibUse), at its
+           body (the owner's, Nov 21 15:39Z: "remove spectators mode from survival and just use the mechanic we already do
+           where the duck becomes a ghost and they can walk around") */
+        p = { hp: 0, at: now, gh: 1, ...(isSurv(s) ? { ex: 1 } : {}) };
         /* the duck died: its upgrades go, unless it holds Safe Keeping, which then keeps them (and is spent: the
            owner's, Nov 19 19:27Z, "you can either revive yourself, or if you die, you come back with your stuff") */
         if (safe) {
@@ -4762,7 +4769,7 @@ function l4Tick(s, now) {
         merchantCome(s, now, true);
         if (L4_HOOKS.gm) L4_HOOKS.gm.rest(s, now, gmHelp(s, now)); // (the friendly squad, now and then: allies.js)
         ids.forEach((id, k) => {
-          if (isGhost4(s, id)) bringBack(s, id, now, k, false);
+          if (returns(s, id)) bringBack(s, id, now, k, false);
         });
       },
     });
@@ -4776,7 +4783,7 @@ function l4Tick(s, now) {
     store(s, bodies, false);
     merchantCome(s, now); // (the rest before the next round: half the time)
     ids.forEach((id, k) => {
-      if (isGhost4(s, id)) bringBack(s, id, now, k, false);
+      if (returns(s, id)) bringBack(s, id, now, k, false);
     });
     return true;
   }

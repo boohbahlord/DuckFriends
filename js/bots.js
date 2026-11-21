@@ -995,16 +995,20 @@ const nadeOk = (b, crowd, m, d, now) =>
    only one with no zombie within KEEP of it */
 function downMate(s, id, x, y, defib, zs) {
   const l4p = s.hang.l4p || {},
-    dead = (t) => !!(l4p[t] || {}).ex;
+    dead = (t) => !!(l4p[t] || {}).ex,
+    body = (t) => !!(l4p[t] || {}).gh && dead(t) && !!(s.hang.ghost || {})[t];
   return s.seat
     .filter(
       (t) =>
         t !== id &&
-        (l4p[t] || {}).dn &&
+        ((l4p[t] || {}).dn || body(t)) &&
         (!dead(t) || (defib && !isWild(s, t) && !isHelper(s, t))) &&
         s.pos[t],
     )
-    .map((t) => ({ t, x: s.pos[t].x * W, y: s.pos[t].y * H, dead: dead(t) }))
+    .map((t) => {
+      const q = body(t) ? s.hang.ghost[t] : s.pos[t]; // (Survival's ghost: its body, where it fell)
+      return { t, x: q.x * W, y: q.y * H, dead: dead(t) };
+    })
     .filter(
       (t) => !zs || zs.every((z) => Math.hypot(z.x - t.x, z.y - t.y) > KEEP),
     )

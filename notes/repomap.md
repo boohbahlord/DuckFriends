@@ -15,7 +15,7 @@ bloodpool.js 50 a pool of blood: the one under every
 boardjustin.js 735 Justin on the boards
 botduck.js 90 a computer's duck: a random look, never anything
 botlines.js 188 What the computers write and say in the
-bots.js 1426 computers
+bots.js 1430 computers
 brackets.js 467 Bicker Brackets: what the screen shows
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
@@ -78,7 +78,7 @@ jetart.js 39 the jetpack's pictures
 jetpack.js 33 the jetpack
 jumps.js 48 the jump counter
 keynav.js 204 menus by keyboard
-l4dd.js 3337 Quacky Zombies on every screen
+l4dd.js 3340 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine on every screen
 l4ddart.js 623 Quacky Zombies' pictures
@@ -90,7 +90,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box on every screen
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 5006 the rules of Quacky Zombies
+l4ddrules.js 5013 the rules of Quacky Zombies
 l4ddsfx.js 513 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the zombies far from
 langname.js 5 the name of Sandbox's number language, in one
@@ -208,7 +208,7 @@ shellstats.js 244 the stats and forgame commands' helpers (a pure
 slices.js 31 long work cut into slices
 sound.js 935 the game's sounds: real recordings, played from small
 specials.js 858 Specials
-spectate.js 98 Survival: watching the others once my duck is
+spectate.js 98 Sandbox: watching the others once my duck is
 splash.js 71 the start screen: your duck on a cloud,
 sprintblur.js 54 the sprint's blurred border of my screen (css/app.css
 stamina.js 41 my sprint's stamina, in every mode
