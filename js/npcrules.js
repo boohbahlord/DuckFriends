@@ -10,7 +10,8 @@
    - roll, reloadMs, refill, shotMark: an NPC's guns (a hit's damage, a reload, the magazines, where a shot went).
    - woundsAfter: the wounds a hit leaves (a headshot that kills, a blast that kills, any other hit). An NPC's HP after a
      hit is hpmath.js hpHurt, as a duck's. */
-import { clearShot, ARMS } from "./l4ddrules.js";
+import { ARMS } from "./l4ddrules.js";
+import { clearShot } from "./zombies.js";
 import { heightAt } from "./hangout/layout.js";
 import { woundCode, DEATH } from "./wounds.js";
 

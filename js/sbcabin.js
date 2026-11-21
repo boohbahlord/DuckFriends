@@ -29,16 +29,8 @@ import {
   sbWallStops,
   sbClimbAt,
 } from "./sandboxrules.js";
-import {
-  chaseField,
-  chaseStep,
-  setZWall,
-  zWalk,
-  Z_ROOM,
-  zombieTakes,
-  ALL_HP,
-  L4_HOOKS,
-} from "./l4ddrules.js";
+import { Z_ROOM, zombieTakes, ALL_HP, L4_HOOKS } from "./l4ddrules.js";
+import { chaseField, chaseStep, setZWall, zWalk } from "./zombies.js";
 import { hitCode } from "./wounds.js";
 import { hpHurt } from "./hpmath.js";
 import { WAVE, zLook } from "./mgjrules.js";
