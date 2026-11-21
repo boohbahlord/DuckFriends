@@ -25,7 +25,6 @@ import {
   selling,
   BOX,
   boxNow,
-  ARMS,
   isHelper,
   laserHeat,
   wildOpen,

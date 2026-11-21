@@ -9,7 +9,6 @@ import { POOL } from "./layout.js";
 import { WATER, SOUTH, swimming, ripple } from "./water.js";
 import { ballShown } from "./beachball.js";
 import { rubberDuck } from "./art.js";
-import { pxAt } from "../pxdom.js";
 
 const RW = 32,
   RH = 30; // a little duck's box (world px); its waterline at RH − 5

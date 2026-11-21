@@ -4,7 +4,7 @@
    newcomer arrives) outside the front door. */
 import { rulesOf } from "./registry.js";
 import { isGhost } from "./death.js";
-import { spawnAt, deckSpawnAt, heightAt, W, H } from "./layout.js";
+import { deckSpawnAt, heightAt, W, H } from "./layout.js";
 import "./activities.js";
 
 /* s.hang when the cabin opens: each activity's fields (the ones the room's mode runs) */

@@ -8,7 +8,6 @@ import { activity } from "./registry.js";
 import { TRAMP, W, H, onTramp, terrainAt } from "./layout.js";
 import { trampoline } from "./art.js";
 import { sfx } from "../sound.js";
-import { pxAt } from "../pxdom.js";
 
 const MAT = terrainAt(TRAMP.cy) + TRAMP.h; // the mat's height
 const FIRST = 1.6,
