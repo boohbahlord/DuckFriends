@@ -80,6 +80,7 @@ export const ARMS = {
     swing: ARM_SWING.knife,
     at: 58,
     r: 34,
+    knock: 16, // (how far a hit pushes a living zombie back, world px: weaponuse.js knockOf)
   }, // (four a second, as in every mode)
   hammer: {
     kind: "melee",
@@ -89,6 +90,7 @@ export const ARMS = {
     swing: ARM_SWING.hammer,
     at: 66,
     r: 50,
+    knock: 40, // (the most)
   },
   /* the owner's new melees (Nov 16): the fire axe 1 to 4, as wide as the hammer and 25% faster; the short sword 50%
      faster than the knife, not as far out; the cast iron pan as far out as the sword and as slow as the axe, missing
@@ -101,6 +103,7 @@ export const ARMS = {
     swing: ARM_SWING.axe,
     at: 66,
     r: 50,
+    knock: 28,
   },
   sword: {
     kind: "melee",
@@ -110,6 +113,7 @@ export const ARMS = {
     swing: ARM_SWING.sword,
     at: 54,
     r: 40,
+    knock: 16,
   },
   pan: {
     kind: "melee",
@@ -121,6 +125,7 @@ export const ARMS = {
     swing: ARM_SWING.pan,
     at: 54,
     r: 40,
+    knock: 16,
   },
   handgun: {
     kind: "ranged",

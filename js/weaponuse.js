@@ -3,7 +3,8 @@
    questions here; where their numbers differ, each side's way is breed data (GATE_BREEDS), never an if on the mode.
    8f-2, what comes out: the shot's kind, the shotgun's cone and a burst's rounds, the same for the board, the maps and
    Mad God Justin (each side still builds its own shot from these: its units differ).
-   8f-3, flight: the shots in the air, one loop (flyShots). */
+   8f-3, flight: the shots in the air, one loop (flyShots).
+   8f-4, melee: a swing's life, the pan's miss and the knock-back as data (ARMS knock). */
 import { ARMS } from "./guns.js";
 
 /* full auto: the shots can come a little bunched over the network, so they may come this share of the wait early */
@@ -84,3 +85,20 @@ const arc = (sh, age, F) => {
   sh.ly = at.y / h;
   return true;
 };
+/* 8f-4, melee: a swing hurts for its swing's ms (ARMS swing), each thing it reaches once, one live swing a swinger;
+   the pan misses half of them (ARMS miss), rolled once at the press. Each side keeps its own record (the board's s.atk
+   names the weapon sp, the maps' s.hang.l4k w) and its own targets */
+const swingMs = (k) => (ARMS[k.w || k.sp] || ARMS.knife).swing;
+export const swinging = (k, now) => now - k.t <= swingMs(k);
+export const swingOn = (list, rec, now) => [
+  ...(list || []).filter((k) => now - k.t < swingMs(k) && k.by !== rec.by),
+  rec,
+];
+export const swingMisses = (w) => {
+  const m = (ARMS[w] || {}).miss;
+  return !!m && Math.random() < m;
+};
+/* how far a melee hit pushes a living zombie back, in world px (a duck is 64; ARMS knock), and how much of that another
+   duck in the swing is shoved */
+export const knockOf = (w) => (ARMS[w] || ARMS.knife).knock || ARMS.knife.knock;
+export const KNOCK_DUCK = 0.5;
