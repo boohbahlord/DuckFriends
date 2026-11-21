@@ -18,7 +18,7 @@ import {
 } from "./l4ddrules.js";
 import { isSb } from "./sandboxrules.js";
 import { whyNot } from "./sandbox.js";
-import { sbHotOn } from "./sbhotview.js";
+import { sbHotOn, mountHotWin } from "./sbhotview.js";
 import { sbSlots, spawnOf } from "./sbhot.js";
 
 /* One machine for every mode: what's out in my hand (hand.in) and what comes back once it's put away or used up
@@ -143,6 +143,7 @@ export const handIn = () => (mine(), hand.in);
 /* a new screen: the board and Quacky Zombies start over (Mad God Justin's hand goes by its fight) */
 export function handReset() {
   hand.lastKey = -1;
+  if (win) win.close();
   if (!(ROWS[hand.of] || {}).byFight) hand.of = "";
 }
 /* the bars and R ask the hand: a gun's magazine in my mode, the gun R reloads, can it now, is it out of ammo */
@@ -242,7 +243,7 @@ export function useKey(i, keep, toggle = false) {
   /* an empty slot puts the weapon away (the owner's, Nov 19 21:59Z: no Shift to put it away; "you just switch to an empty
      hotbar using the number key") */
   if (!keysOf(C.playDuck())[i]) {
-    mine();
+    if (mine() === ROWS.board && C.bar && C.bar.flash) C.bar.flash(); // ("Press H" over the bar: P5)
     hand.in = isMgj(C.R.state) ? "none" : null;
     C.sendMove(true);
     return;
@@ -278,6 +279,27 @@ export function useKey(i, keep, toggle = false) {
   } else if (C.me && C.me.x >= 0)
     C.R.send({ t: "use", what: id, face: C.turned() ? 1 : C.me.face || 1 }); // (an item: Shift and its key use it the same way)
   if (C.bar) setTimeout(() => C.bar && C.bar.refresh(), 60);
+}
+/* ---------- the board's H (P5, the owner's, Nov 21 18:59Z: "just click H for hotbar and you change only your hotbar")
+   ----------
+   my hotbar's window, Sandbox's h window as the board's breed (sbhotview.js), over the board; Sandbox has its own h,
+   Quacky Zombies and Mad God Justin their own keys */
+let win = null;
+export const hotHOn = () =>
+  !!C &&
+  !!C.R &&
+  C.onBoardPhase() &&
+  rowOf(C.R.state) === "board" &&
+  !sbHotOn(C.R.state);
+export function hotH() {
+  if (!hotHOn()) return false;
+  if (!win || !win.el.isConnected)
+    win = mountHotWin(
+      document.querySelector(".game") || document.body,
+      () => C.R,
+    );
+  win.toggle();
+  return true;
 }
 /* Quacky Zombies: keys 1 to 4 pick a slot, 5 the second item and 6 the grenades (Dead Ducks Arcade and Survival). A
    melee or ranged weapon stays in hand once picked; an item (4, 5) switches on and off: on, it's in hand instead of the

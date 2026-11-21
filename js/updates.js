@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v229",
+    version: 229,
+    date: "Nov 21, 2026",
+    title: "Your own hotbar, everywhere",
+    news: [
+      "Your hotbar: press H on the board to put loot on your keys (phones: the small H button). An empty key says Press H.",
+      "For Sandbox: there is no default hotbar any more; everyone starts empty and sets up their own.",
+      "Behind the scenes: the board and Sandbox share one hotbar window now instead of two.",
+    ],
+  },
+  {
     id: "v228",
     version: 228,
     date: "Nov 21, 2026",

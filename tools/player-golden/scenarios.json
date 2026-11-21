@@ -337,6 +337,41 @@
     "phase": "sandbox"
   },
   {
+    "name": "sb-hotbar",
+    "options": {
+      "mode": "sandbox",
+      "sbMap": "",
+      "map": "night"
+    },
+    "pre": [
+      {
+        "t": "sbPick"
+      }
+    ],
+    "frames": 480,
+    "input": [
+      ["key", 20, "KeyH", 100],
+      ["press", 50, ".sb-lt", 120, "scroll"],
+      ["press", 70, ".sp-key[data-to=\"me\"][data-i=\"2\"]", 120, "scroll"],
+      ["press", 90, ".sp-key[data-to=\"me\"][data-i=\"0\"]", 120, "scroll"],
+      ["press", 110, ".sb-lts .sb-lt:nth-child(3)", 120, "scroll"],
+      ["press", 130, ".sp-key[data-to=\"me\"][data-i=\"5\"]", 120, "scroll"],
+      ["press", 150, ".sp-key[data-to=\"me\"][data-i=\"5\"]", 120, "scroll"],
+      ["press", 170, ".sp-key[data-to=\"me\"][data-i=\"6\"]", 120, "scroll"],
+      ["press", 190, ".sb-opt[data-i=\"2\"]", 120, "scroll"],
+      ["press", 210, ".sb-opt[data-i=\"0\"]", 120, "scroll"],
+      ["press", 230, ".sb-opt[data-i=\"1\"]", 120, "scroll"],
+      ["press", 250, ".sb-opt[data-i=\"0\"]", 120, "scroll"],
+      ["press", 270, ".sb-opt[data-i=\"2\"]", 120, "scroll"],
+      ["press", 290, ".sb-opt[data-i=\"0\"]", 120, "scroll"],
+      ["key", 320, "KeyH", 100],
+      ["key", 360, "Digit3", 100],
+      ["key", 400, "Digit7", 100]
+    ],
+    "computers": 1,
+    "phase": "sandbox"
+  },
+  {
     "name": "sb-cabin",
     "options": {
       "mode": "sandbox",
