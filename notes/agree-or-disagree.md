@@ -7653,3 +7653,4 @@ Decision (Adam): three Dead Ducks Arcade jobs, one PR each: 1) the gas can orb; 
 - The boxes win. The normal settings show "default" in very faded text; typing anything that isn't an error replaces the default; the box version still takes priority.
 - Build it after the game runs smoothly. "I need help naming it though."
 - 04:48Z: "It beats the other boxes in the other setting regardless, not just the default ones ... We'll just call it chain ... Maybe there's a better word than chain, but with the same concept." Decision: the mode is Chain; Chain boxes always win over every normal setting, typed or default.
+- 04:51Z (Joseph thread): "It'll just be sequence, sequence mode or sequence setting or sequence options or something like that, whatever we call it." Decision (Joseph): the toggle says "Sequence"; help says "Sequence mode". Replaces "Chain".
