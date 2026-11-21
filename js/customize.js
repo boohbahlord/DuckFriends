@@ -54,8 +54,10 @@ import {
   cardHTML,
   cardBackground,
   cardSheets,
+  warmPatterns,
 } from "./card.js";
-import { picturesIn, holdLoading, shownSoon } from "./loading.js";
+import { picturesIn, shownSoon } from "./loading.js";
+import { topBar } from "./upbar.js";
 import { HATS, HAT_GROUPS, hatById } from "./hats.js";
 import { FACES, FACE_GROUPS, faceById } from "./faces.js";
 import { EYES, EYE_GROUPS, eyeById } from "./eyes.js";
@@ -79,6 +81,10 @@ import { weaponName } from "./l4ddrules.js";
 import { NPC_GUNS, NPC_MELEE } from "./sbarms.js";
 import { npcSave, npcDel, npcList, npcName } from "./sbnpcs.js";
 import { cropPicture, cropFile } from "./picrop.js";
+import { yieldNow } from "./slices.js";
+import { pxNow } from "./pxdom.js";
+import { putPage } from "./armpage.js";
+
 import { SB_WHAT, SB_ACTS } from "./sandboxrules.js";
 
 /* ---------- making an NPC (Sandbox's m window, sbnpcs.js) ----------
@@ -394,6 +400,8 @@ let lastPage = null,
 const openFolds = new Set();
 
 let warming = false; // (Customize drawing its pages out of sight as it opens: warmUp)
+let warmed = ""; // (the page warmUp asked show for, as words)
+let showTurn = 0; // (a page that is still to go on the screen gives way to one asked for after it)
 /* opts.npc: one of my NPCs (sbnpcs.js) to dress instead of my duck (Sandbox's m window); the promise ends when it shuts */
 export function openCustomize(page = lastPage, opts = {}) {
   if (page === "duck") page = null; // (the old tab name)
@@ -411,9 +419,9 @@ export function openCustomize(page = lastPage, opts = {}) {
         keyFor = null;
         unkeying = false;
         peek = null;
-        const menu = w.querySelector(".arm-menu"),
-          duckBox = w.querySelector(".arm-duck"),
+        const duckBox = w.querySelector(".arm-duck"),
           cardBox = w.querySelector(".arm-card");
+        const menu = w.querySelector(".arm-menu");
         if (MADE_SET) MADE_SET.wire(menu, NPC, () => BORROWED || npcSave()); // (another player's goes back to the room when it shuts)
         const me = () => ({
           id: "me",
@@ -684,7 +692,7 @@ export function openCustomize(page = lastPage, opts = {}) {
           lastPage = k || null;
           if (k !== "specials") unkeying = false; // (Remove from hotbar is only for its page)
           if (peek && peek.kind !== k) peek = null; // (off its page, the preview goes and the duck is as it was)
-          if (!keep) stage(); // (the Specials page shows the special on the big duck)
+          if (!keep && !warming) stage(); // (the Specials page shows the special on the big duck)
           /* Jack in a Box takes only the pages his style lists; on the others the tiles show the duck he'd turn back into */
           const D = offJack(k)
               ? { ...duckNow(), style: duckNow().prevStyle || "rubber" }
@@ -1150,6 +1158,7 @@ export function openCustomize(page = lastPage, opts = {}) {
               `<div class="arm-body arm-colors"><ul class="arm-list ctargets">${top.join("")}${fold}</ul>
             <div class="cpick"><p class="small dim cnote">${esc(cur[4] || "")}</p></div></div>`;
           }
+          if (warming) return void (warmed = html); // (warming up: only the page's words, put in the warm box below)
           const f = document.activeElement,
             had = menu.contains(f) && navSig(f),
             from = had && f.dataset.a === "back" && prev; // (the focus stays on the same tile, or the row just come back to)
@@ -1158,141 +1167,89 @@ export function openCustomize(page = lastPage, opts = {}) {
               /(<div class="arm-body[^"]*">)/,
               "$1" + randBtn(k),
             ); // (each page's own Randomize, at its top)
-          /* the same page again (a pick on it): every tile whose picture and words didn't change stays as it is, with
-             its pixels, so a pick only redraws what it changed (the owner's, Nov 20 21:38Z: a pick froze for a second).
-             A tile that changed keeps its old picture over it until its new one is in */
-          const TILE = ".arm-tile[data-g][data-v]",
-            same = keep && prev === k && !warming && menu.firstElementChild,
-            bare = (h) => h.replace(/\b(dk|ht|fc|ey|bk|jma)\d+/g, "$1"); // (the drawings' ids are new each time: duck.js uid)
-          let old = menu.querySelector(":scope > .arm-old");
-          if (old) old.remove();
-          old = null;
-          if (same) {
-            const was = new Map();
-            for (const t of menu.querySelectorAll(TILE))
-              if (t._src !== undefined)
-                was.set(t.dataset.g + " " + t.dataset.v, t);
-            const fresh = document.createElement("div");
-            fresh.innerHTML = html;
-            const redrawn = [];
-            for (const t of fresh.querySelectorAll(TILE)) {
-              const o = was.get(t.dataset.g + " " + t.dataset.v);
-              t._src = bare(t.innerHTML);
-              if (!o) continue;
-              if (o._src !== t._src) {
-                redrawn.push([t, o]);
-                continue;
-              }
-              for (const at of [...o.attributes])
-                if (!t.hasAttribute(at.name)) o.removeAttribute(at.name);
-              for (const at of t.attributes)
-                if (o.getAttribute(at.name) !== at.value)
-                  o.setAttribute(at.name, at.value);
-              t.replaceWith(o);
-            }
-            menu.replaceChildren(...fresh.childNodes);
-            for (const [t, o] of redrawn) {
-              o.classList.add("arm-was");
-              o.setAttribute("data-nopx", "");
-              o.inert = true;
-              t.append(o);
-              shownSoon(t).then(() => o.remove());
-            }
-          } else {
-            /* another page: the page shown stays over the new one until the new one's pictures are in (data-nopx:
-               left as it is), so no tile is ever empty (the owner's, Nov 20 20:46Z) */
-            if (!warming && menu.firstElementChild) {
-              old = document.createElement("div");
-              old.className = "arm-old";
-              old.setAttribute("data-nopx", "");
-              old.inert = true; // (only a picture of the last page: nothing in it is reached)
-              const top =
-                (menu.querySelector(".arm-body") || {}).scrollTop || 0;
-              old.append(...menu.childNodes);
-              old.dataset.top = top;
-            }
-            menu.innerHTML = html;
-            for (const t of menu.querySelectorAll(TILE))
-              t._src = bare(t.innerHTML); // (what it was made from, before its pixels)
-          }
-          if (old) {
-            menu.append(old);
-            const ob = old.querySelector(".arm-body");
-            if (ob) ob.scrollTop = +old.dataset.top || 0;
-            const fresh = [...menu.children].filter((e) => e !== old);
-            shownSoon(fresh).then(() => {
-              if (fresh.every((e) => e.isConnected)) old.remove();
-            });
-          }
-          if (peek)
-            menu
-              .querySelector(".arm-tile.peek")
-              ?.closest(".arm-grid")
-              ?.insertAdjacentHTML(
-                "afterend",
-                `<p class="small lock-note">${PAD(false)}${esc(lockHint(peek.kind, peek.id).replace(/\.?$/, "."))} Only a look for now.</p>`,
-              ); // (a locked pick: why, right under it)
-          const body = menu.querySelector(".arm-body");
-          if (body) body.scrollTop = scroll;
-          if (k === "colors") {
-            const T = colorTargets(),
-              cur = T.find((t) => t[0] === lastColor);
-            const pick = menu.querySelector(".cpick");
-            if (cur[0] === "name")
-              pick.insertAdjacentHTML(
-                "afterbegin",
-                `<div class="row"><button type="button" class="tile" data-a="plainname" aria-pressed="${!N.color && !N.rainbow}" data-tip="Dark letters on light, light letters on dark.">Plain</button></div>`,
+          const same = keep && prev === k && menu.firstElementChild;
+          const finish = (next) => {
+            putPage(menu, html, same, next);
+            if (peek)
+              menu
+                .querySelector(".arm-tile.peek")
+                ?.closest(".arm-grid")
+                ?.insertAdjacentHTML(
+                  "afterend",
+                  `<p class="small lock-note">${PAD(false)}${esc(lockHint(peek.kind, peek.id).replace(/\.?$/, "."))} Only a look for now.</p>`,
+                ); // (a locked pick: why, right under it)
+            const body = menu.querySelector(".arm-body");
+            if (body) body.scrollTop = scroll;
+            if (k === "colors") {
+              const T = colorTargets(),
+                cur = T.find((t) => t[0] === lastColor);
+              const pick = menu.querySelector(".cpick");
+              if (cur[0] === "name")
+                pick.insertAdjacentHTML(
+                  "afterbegin",
+                  `<div class="row"><button type="button" class="tile" data-a="plainname" aria-pressed="${!N.color && !N.rainbow}" data-tip="Dark letters on light, light letters on dark.">Plain</button></div>`,
+                );
+              pick.insertBefore(
+                colorField(
+                  cur[2],
+                  (c) => {
+                    cur[3](c);
+                    changed(false);
+                    menu
+                      .querySelectorAll('[data-a="plainname"]')
+                      .forEach((b) => b.setAttribute("aria-pressed", "false"));
+                  },
+                  { grid: true },
+                ),
+                pick.querySelector(".cnote"),
               );
-            pick.insertBefore(
-              colorField(
-                cur[2],
-                (c) => {
-                  cur[3](c);
-                  changed(false);
-                  menu
-                    .querySelectorAll('[data-a="plainname"]')
-                    .forEach((b) => b.setAttribute("aria-pressed", "false"));
-                },
-                { grid: true },
-              ),
-              pick.querySelector(".cnote"),
-            );
-          }
-          if (k === "name" && NPC) {
-            const inp = menu.querySelector(".cz-npc");
-            inp.oninput = () => {
-              const n = npcName(inp.value);
-              if (!n) return;
-              NPC.name = n;
-              npcSave();
-              stage();
-            };
-          } else if (k === "name") {
-            const inp = menu.querySelector(".cz-name");
-            inp.oninput = () => {
-              const c = cleanName(inp.value);
-              if (c !== inp.value) {
-                inp.value = c;
-                inp.classList.add("shake");
-                setTimeout(() => inp.classList.remove("shake"), 300);
-              }
-              if (c && setName(c)) {
+            }
+            if (k === "name" && NPC) {
+              const inp = menu.querySelector(".cz-npc");
+              inp.oninput = () => {
+                const n = npcName(inp.value);
+                if (!n) return;
+                NPC.name = n;
+                npcSave();
                 stage();
-                menu.querySelectorAll(".font-pic").forEach((b) => {
-                  b.textContent = c.slice(0, 8);
-                });
-              }
-            };
-          }
-          if (k === "specials" && keyFor && prev === "specials")
-            menu
-              .querySelector(".sp-pick")
-              ?.scrollIntoView({ block: "nearest", behavior: "smooth" }); // a tile's key boxes, in sight
-          if (from)
-            menu
-              .querySelector(`[data-p="${from}"]`)
-              ?.focus({ preventScroll: true });
-          else if (had) refocus(menu, had, items(menu));
+              };
+            } else if (k === "name") {
+              const inp = menu.querySelector(".cz-name");
+              inp.oninput = () => {
+                const c = cleanName(inp.value);
+                if (c !== inp.value) {
+                  inp.value = c;
+                  inp.classList.add("shake");
+                  setTimeout(() => inp.classList.remove("shake"), 300);
+                }
+                if (c && setName(c)) {
+                  stage();
+                  menu.querySelectorAll(".font-pic").forEach((b) => {
+                    b.textContent = c.slice(0, 8);
+                  });
+                }
+              };
+            }
+            if (k === "specials" && keyFor && prev === "specials")
+              menu
+                .querySelector(".sp-pick")
+                ?.scrollIntoView({ block: "nearest", behavior: "smooth" }); // a tile's key boxes, in sight
+            if (from)
+              menu
+                .querySelector(`[data-p="${from}"]`)
+                ?.focus({ preventScroll: true });
+            else if (had) refocus(menu, had, items(menu));
+          };
+          /* another page: its words are made into elements off the page first, and put on it on the next turn, so
+             neither half holds the window long (slices.js) */
+          const mine = ++showTurn;
+          if (!same && !keep && menu.firstElementChild) {
+            const next = document.createElement("div");
+            next.innerHTML = html;
+            yieldNow().then(() => {
+              if (mine === showTurn && w.isConnected) finish(next);
+            });
+          } else finish();
         };
         /* what can be colored now (a target shows only when it is in use) */
         function colorTargets() {
@@ -1778,42 +1735,71 @@ export function openCustomize(page = lastPage, opts = {}) {
           const back = w.closest(".win-back") || w,
             inGame = document.body.dataset.screen === "game";
           if (!inGame) back.classList.add("arm-warming");
-          let hold = null;
-          const slow = inGame
-            ? 0
-            : setTimeout(() => (hold = holdLoading({ maxMs: 90000 })), 150);
-          const start = lastPage,
-            folds = new Set(openFolds);
-          let all = "";
-          warming = true;
+          /* the green line at the top shows how far it has got, never the black screen (the owner's, Nov 20 22:23Z: that
+             one is for maps, modes and votes): the patterns, each page's words, each page drawn, then its pictures */
+          const bar = topBar();
           try {
-            for (const r of rows())
-              if (r) {
-                show(r[0]);
-                all += menu.innerHTML;
-              }
-          } catch {}
-          openFolds.clear();
-          folds.forEach((f) => openFolds.add(f));
-          show(start);
-          warming = false;
+            await warmPages(bar);
+          } finally {
+            bar.done();
+            back.classList.remove("arm-warming");
+          }
+        }
+        async function warmPages(bar) {
+          const folds = new Set(openFolds);
+          const pages = [];
+          await warmPatterns(profile.card, (f) => bar.set(0.03 + 0.12 * f)); // (card.js)
+          if (!w.isConnected) return;
+          /* each page's words, one page a slice, so the window never freezes while they're made (the owner's, Nov 20
+             22:23Z: "when I click customize, the game hangs up"). The page on the screen isn't touched */
+          for (const r of rows()) {
+            if (!r || !w.isConnected) continue;
+            const was = lastPage;
+            warming = true;
+            warmed = "";
+            try {
+              show(r[0]);
+              pages.push(warmed);
+            } catch {
+            } finally {
+              lastPage = was;
+              openFolds.clear();
+              folds.forEach((f) => openFolds.add(f));
+              warming = false;
+            }
+            bar.set(0.15 + (0.15 * pages.length) / rows().length);
+            await yieldNow();
+          }
+          if (!w.isConnected) return;
+          /* then every page drawn out of sight, a page a slice, so every picture in them is made once now */
           const box = document.createElement("div");
           box.className = "arm-menu arm-warm";
           box.inert = true;
           box.style.width = menu.getBoundingClientRect().width + "px";
-          box.innerHTML = all.replace(/<details\b/g, "<details open"); // (what folds away too)
           w.querySelector(".armory").append(box);
+          let put = 0;
+          for (const html of pages) {
+            if (!w.isConnected) return box.remove();
+            box.insertAdjacentHTML(
+              "beforeend",
+              html.replace(/<details\b/g, "<details open"),
+            ); // (what folds away too)
+            pxNow();
+            bar.set(0.3 + (0.15 * ++put) / pages.length);
+            await yieldNow();
+          }
+          let most = 1;
           await Promise.all([
             cardSheets(),
-            picturesIn(box),
+            picturesIn(box, undefined, (n) => {
+              most = Math.max(most, n);
+              bar.set(0.45 + 0.55 * (1 - n / most));
+            }),
             picturesIn(duckBox),
             picturesIn(menu),
           ]);
           box.remove();
           loadSounds("game"); // (the specials' previews: each gun's own sound; after the pictures, so they don't share the line)
-          clearTimeout(slow);
-          back.classList.remove("arm-warming");
-          if (hold) hold();
         }
       },
     },

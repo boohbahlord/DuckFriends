@@ -67,3 +67,42 @@ document.addEventListener(
   },
   true,
 );
+
+/* ---------- the green line at the very top ----------
+   The owner's, Nov 20 22:23Z: "the very, very, very, very top of Duck Friends. A green line will pass through the top
+   when I'm loading customization. So it shows me how much it has actually finished loading", and the black screen only
+   for maps, modes and votes. topBar(): the line, how much is in as a percent under its start; { set(0 … 1), done() }.
+   One at a time: asked for again while it shows, it's the same one (front.js starts it at the click, while the rest of
+   the game comes; customize.js carries it on). It never goes back, and it goes by itself if nothing ends it */
+let top = null;
+export function topBar() {
+  if (top) return top;
+  const bar = document.createElement("div");
+  bar.className = "top-bar";
+  bar.setAttribute("role", "progressbar");
+  bar.setAttribute("aria-label", "Loading");
+  bar.innerHTML = "<i></i><b></b>";
+  document.body.append(bar);
+  const [fill, pct] = bar.children;
+  let at = -1;
+  const set = (p) => {
+    p = Math.max(0, Math.min(1, +p || 0));
+    if (p <= at) return;
+    at = p;
+    fill.style.width = (p * 100).toFixed(1) + "%";
+    pct.textContent = Math.floor(p * 100) + "%";
+    bar.setAttribute("aria-valuenow", String(Math.floor(p * 100)));
+  };
+  const done = () => {
+    if (top !== me) return;
+    top = null;
+    clearTimeout(lost);
+    set(1);
+    setTimeout(() => bar.classList.add("up-gone"), 250);
+    setTimeout(() => bar.remove(), 700);
+  };
+  const lost = setTimeout(done, 90000);
+  const me = { set, done };
+  set(0.02);
+  return (top = me);
+}

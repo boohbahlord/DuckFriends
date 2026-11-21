@@ -22,6 +22,7 @@ import { applyPalette } from "./pixelpalette.js";
 import { rbAt, RB_P, RB_TILT } from "./rainbowskin.js";
 import { hashText, steadyText } from "./pxdom.js";
 import { filesFor } from "./loading.js";
+import { yieldNow } from "./slices.js";
 
 /* the sizes the sheets are made at: a duck's box (120 duck units) in pixels */
 const SIZES = [12, 14, 16, 19, 22, 26, 29, 32];
@@ -37,8 +38,19 @@ const most = () =>
     ? BIGGEST
     : SIZES[SIZES.length - 1]) * 1.08;
 /* the sheet for a duck want pixels across, and how many times it's grown (only past the biggest sheet) */
+/* a game's own sizes (its ducks on the board, and the small ones by the chat and the bars): outside a game a duck is made
+   from one of these too, so a part Customize or the lobby loaded is the one the game shows, loaded once (the owner's,
+   Nov 20 22:27Z: "it shouldn't have to be loaded a second time"; his pick "Match sizes (look unchanged)": the duck
+   keeps its size on the screen, made of a few more of its own pixels) */
+const GAME_SIZES = [19, 29, 32];
 function sizeFor(want) {
   const g = want > SIZES[SIZES.length - 1] * 1.08 ? GROWN : 1; // (grown only past the biggest sheet: a small duck is never a smaller one doubled)
+  if (document.body.dataset.screen !== "game")
+    return [
+      GAME_SIZES.find((s) => s * g >= want * 0.97) ||
+        GAME_SIZES[GAME_SIZES.length - 1],
+      g,
+    ]; // (the next one up: a few more of its own pixels, never fewer)
   let n = SIZES[0];
   for (const s of SIZES)
     if (Math.abs(s * g - want) < Math.abs(n * g - want)) n = s;
@@ -165,9 +177,27 @@ function sheet(n) {
             files: new Map(),
           };
         }),
+        "Ducks",
       ).catch(() => null), // (the loading screen waits for it: loading.js)
     );
   return sheets.get(n);
+}
+/* every file of one size, one file in each idle moment after the title screen (main.js), so Customize opens with its
+   ducks' parts already in (Adam's plan the owner chose, Nov 20 23:05Z: the warm-up in idle time after the title).
+   29: the size Customize's tiles take on a phone and on a computer (sizeFor) */
+export async function warmParts(n = 29) {
+  const S = await sheet(n);
+  if (!S) return;
+  const idle = () =>
+    new Promise((ok) =>
+      window.requestIdleCallback
+        ? requestIdleCallback(() => ok(), { timeout: 3000 })
+        : setTimeout(ok, 60),
+    );
+  for (let c = 0; c < S.index.f.length; c++) {
+    await idle();
+    await file(S, c);
+  }
 }
 /* one of its files, as pixels */
 function file(S, c) {
@@ -189,6 +219,7 @@ function file(S, c) {
             W: cv.width,
           };
         })(),
+        "Ducks",
       ).catch(() => {
         S.files.delete(c); // (asked again next time)
         return null;
@@ -226,6 +257,7 @@ export async function duckFromParts(d, cw, ch, frames = 1) {
   const [n, z] = sizeFor(want),
     S = await sheet(n);
   if (!S) return null;
+  await yieldNow(); // (every duck waiting on the same sheet went on in one go when it came: each its own turn now, slices.js)
   const C = codedLook(L),
     vars = Object.fromEntries(duckVars(L).map(([p, v]) => [p, hex(v)])),
     flat = styleById(L.style).flat, // (a flat duck shows no holes, tears or headshot: duck.js)
@@ -308,11 +340,15 @@ export async function duckFromParts(d, cw, ch, frames = 1) {
     if (!f) return null;
     got.set(c, f);
   }
+  await yieldNow(); // (as above: the ducks waiting on the same files)
   /* into the box it's wanted in: the hat's room only when it has a hat; its Size from its feet (60, 108). A rainbow skin
      comes as every step of its turn, one under the other (pixel.js pxRainbow), the rainbow moved on at each */
-  const top = ch > cw * 1.1 ? TOP : 0,
-    ow = cw,
-    oh = ch,
+  /* outside a game the sheet is one of the game's sizes (sizeFor), maybe not this duck's own: its picture is made at the
+     sheet's size and shown in the same box, so the duck keeps its size on the screen (in a game: at its own size) */
+  const q = document.body.dataset.screen === "game" ? 1 : (n * z) / want,
+    top = ch > cw * 1.1 ? TOP : 0,
+    ow = Math.max(1, Math.round(cw * q)),
+    oh = Math.max(1, Math.round(ch * q)),
     dx = Math.round(60 * (ow / 120) - 60 * ((n * z) / 120)),
     dy = Math.round(
       (108 + top) * (oh / (120 + top)) - (108 + TOP) * ((n * z) / 120),
