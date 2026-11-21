@@ -12,10 +12,10 @@ barrelheat.js 70 a hot barrel
 bash.js 1360 the command line's language: a small bash
 beaks.js 138 beaks
 bloodpool.js 50 a pool of blood: the one under every
-boardjustin.js 736 Justin on the boards
+boardjustin.js 735 Justin on the boards
 botduck.js 90 a computer's duck: a random look, never anything
 botlines.js 188 What the computers write and say in the
-bots.js 1408 computers
+bots.js 1405 computers
 brackets.js 467 Bicker Brackets: what the screen shows
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
@@ -98,7 +98,7 @@ laserfx.js 134 the Laser Rifle on the screen
 later.js 66 the rest of the game, once the first
 loading.js 397 the start: a slow fade to black over
 loadlines.js 590 the lines under the loading bar, one for
-lobby.js 597 the lobby, laid out like Halo: Reach's custom
+lobby.js 598 the lobby, laid out like Halo: Reach's custom
 lobbysettings.js 73 Lobby Settings
 looks.js 136 the room's duck-look settings
 looksrules.js 60 the duck-look settings' rules

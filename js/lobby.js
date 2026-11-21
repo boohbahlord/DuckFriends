@@ -49,6 +49,7 @@ import { musicBarHTML, mountMusicBar } from "./musicbar.js";
 import { paintVotes, closeVotes } from "./vote.js";
 import { paintSbPick, closeSbPick } from "./sbsaves.js";
 import { openSettings, uiScaleHTML, uiScaleWire } from "./settings.js";
+import { shuffle } from "./random.js";
 
 let R = null,
   off = null,
@@ -284,7 +285,7 @@ function artMap(s) {
   if (!s.options.mapPick || s.options.map === "cabin")
     return s.options.map || "board";
   if (!cycle.length) {
-    cycle = MAPS.map((m) => m[0]).sort(() => Math.random() - 0.5);
+    cycle = shuffle(MAPS.map((m) => m[0]));
     cycleAt = Date.now();
   }
   return cycle[Math.floor((Date.now() - cycleAt) / CYCLE_MS) % cycle.length];
