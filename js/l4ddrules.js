@@ -37,6 +37,7 @@
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
 import { ARMS, kindOf, GUN_NAMES, WEAPONS, rollDmg } from "./guns.js";
+import { JUMP, jumpDodges } from "./jump.js";
 import { SPRINT as GAME_SPRINT, POCKET_CHANGE } from "./gamedefaults.js";
 import { scaleOf } from "./duck.js";
 import { hpHeal, hpHurt, tenths } from "./hpmath.js";
@@ -878,12 +879,7 @@ export const standing = (s, id) => {
   return !!p && !p.dn && !p.gh;
 };
 /* a duck in the middle of a jump dodges a hit: not in its first fifth or its last (the owner's) */
-export function dodging(s, p, now) {
-  if (!p || !p.j) return false;
-  const T = 620,
-    u = (now - p.j) / T;
-  return u > 0.2 && u < 0.8;
-}
+export const dodging = (s, p, now) => jumpDodges(p, now, JUMP.T * 1000);
 export const at = (p) => [p.x * W, p.y * H];
 
 /* ---------- a duck's slots, points and upgrades ---------- */

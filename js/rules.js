@@ -16,6 +16,7 @@
    own rules in duncerules.js: one defender in the circle, everyone else walks to Dunce or Not a Dunce. Valentine's Duck
    Date has its own in vddrules.js: The Date at the dining table, a date with each Suitor, then a Suitor Turned Down. */
 import { HANDGUN } from "./gamedefaults.js";
+import { jumpDodges } from "./jump.js";
 import { epAct } from "./sbep.js";
 import { duckBig, picGrow, scaleOf } from "./duck.js";
 import {
@@ -3530,14 +3531,6 @@ function justinKilled(s, by, w) {
 }
 /* a player knocked down by another player's weapon: the last few, each numbered, so every device counts its own player's
    kills once (unlocks.js: the shotgun opens at 144 kills, the grenade at 360, and Justin counts too) */
-/* a jump dodges attacks, but not in its first and its last fifth: I want a dodge timed, not a jump held as a shield.
-   The jump's length is game.js' (JUMP, jumpCfg): 0.62 s */
-export function dodges(s, p, now) {
-  if (!p || !p.j) return false;
-  const T = p.tb > 0 ? 620 * Math.sqrt(p.tb / 1.35) : 620,
-    end = p.j + T;
-  return now - p.j > T * 0.2 && end - now > T * 0.2;
-}
 /* the normal game's HP (every mode but Mad God Justin and Dead Ducks Arcade): a duck has PHP HP before it plays dead
    (4: the owner's, Nov 18 16:50Z, "every player in other game modes has 4 hp by default"; it was 6), has them all back
    after PHP_BACK ms without a hit, and gets up with them all. s.php = { id: { n: HP lost, t: the last hit } }. True when the hit only took HP.
@@ -3598,7 +3591,7 @@ const SB_H = {
     if (isL4dd(s)) return l4Hurt(s, id, dmg, now, w); // (the zombie maps: as their zombies hurt)
     const P = s.players[id],
       p = s.pos[id];
-    if (!P || P.dead || !p || dodges(s, p, now)) return;
+    if (!P || P.dead || !p || jumpDodges(p, now)) return;
     if (!soaks(s, id, now, dmg, null, true)) {
       P.dead = true;
       holdDown(s, id, now);
@@ -3761,7 +3754,7 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
     if (done.includes(id)) continue;
     if (isMgj(s) && by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
     if (vdSafe(s, id)) continue; // (Valentine's Duck Date: nothing knocks down the two at the table)
-    if (dodges(s, p, now)) continue; // (a duck in the air is missed)
+    if (jumpDodges(p, now)) continue; // (a duck in the air is missed)
     const q = playerAt(s, id, p0.x, p0.y, rx, ry); // (a cut-out picture: its nearest part that shows)
     if (!q) continue;
     const n = near(
@@ -4210,7 +4203,7 @@ function firstDuck(s, sh, at, now) {
       !shotReach(s, sh, p)
     )
       continue;
-    if (dodges(s, p, now) || vdSafe(s, id)) continue;
+    if (jumpDodges(p, now) || vdSafe(s, id)) continue;
     if (isMgj(s) && sh.by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
     const px = (p.x - sh.lx) / rx,
       py = (p.y - sh.ly) / ry,
@@ -4348,7 +4341,7 @@ function duckFlame(s, by, p, aim, now) {
     const q = s.pos[id],
       P = s.players[id];
     if (id === by || !q || q.x < 0 || !P || P.dead || isGhost(s, id)) continue;
-    if (isMgj(s) || vdSafe(s, id) || dodges(s, q, now)) continue;
+    if (isMgj(s) || vdSafe(s, id) || jumpDodges(q, now)) continue;
     if (
       hang &&
       ((inCabin(q.x * HW, q.y * HH) ? 1 : 0) !== side ||
@@ -4500,7 +4493,7 @@ function groundFire(s, now) {
     const q = s.pos[id],
       P = s.players[id];
     if (!q || q.x < 0 || !P || P.dead || isGhost(s, id) || isMgj(s)) continue;
-    if (vdSafe(s, id) || dodges(s, q, now)) continue;
+    if (vdSafe(s, id) || jumpDodges(q, now)) continue;
     const g = left.find(
       ([x, y, , by, side, z]) =>
         by !== id &&
@@ -4545,7 +4538,7 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
         !shotReach(s, sh, p)
       )
         continue; // (the other side of the walls, or above or below it: heights.js)
-      if (dodges(s, p, now)) continue; // jumped over it
+      if (jumpDodges(p, now)) continue; // jumped over it
       if (isMgj(s) && sh.by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
       if (vdSafe(s, id)) continue; // (Valentine's Duck Date: the two at the table)
       /* the nearest the shot came to the duck this beat, measured in a duck's room (.03 across, .08 deep; Hangout's world is far bigger than a board) */
