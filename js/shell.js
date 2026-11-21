@@ -57,7 +57,7 @@ import { runLine, expandHistory, globRe, BUILTIN_NAMES } from "./bash.js";
 import { TEXT, getopt, lines } from "./textutils.js";
 import { MAN, PERMS_GIVE } from "./manual.js";
 import { helpPage, helpIndex, HELP_NAMES, isHelpName } from "./helppages.js";
-import { quackStats } from "./quackrules.js";
+import { quackStats, quackBlank } from "./quackrules.js";
 import { cheatCmd } from "./cheats.js";
 import { dnStats } from "./duncerules.js";
 import { mgjStats } from "./mgjrules.js";
@@ -1011,13 +1011,7 @@ function statLines(ctx, scope, args) {
     const past = s.wqPast || [],
       per = quackStats(scope === "round" ? past.slice(-1) : past);
     for (const id of ids) {
-      const p = per[id] || {
-        right: 0,
-        votes: 0,
-        quack: 0,
-        quackWins: 0,
-        wins: 0,
-      };
+      const p = per[id] || quackBlank();
       out.push(
         `${nm(id)}: ${p.right} of ${p.votes} votes for the real Quack · ${p.wins} rounds won · ${p.quack} as the Quack (${p.quackWins} won) · ${jumps(id)} jumps`,
       );

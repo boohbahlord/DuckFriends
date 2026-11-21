@@ -12,19 +12,11 @@ import { nameHTML } from "./name.js";
 import { cloudHTML } from "./brackets.js";
 import { rainbowHTML } from "./art.js";
 import { cardBackground } from "./card.js";
-import { fmtJumps } from "./format.js";
+import { fmtJumps, plural } from "./format.js";
 import { isDate, turnedDown, vdStats, TOPIC_MAX } from "./vddrules.js";
-import { seenDuck, seenName } from "./looks.js";
+import { seenDuck, seenName, GONE, player } from "./looks.js";
 
-const GONE = {
-  name: "Gone",
-  duck: { color: "#b7bccb" },
-  card: { color: "#8a8fa3" },
-  nameStyle: {},
-};
-const player = (s, id) => (id && s.players[id]) || GONE;
 const nm = (p) => `<span class="wq-w">${nameHTML(p.name, seenName(p))}</span>`; // (a name never breaks across lines)
-const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 const mmss = (ms) => {
   const t = Math.round(ms / 1000);
   return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;

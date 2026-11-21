@@ -40,7 +40,8 @@ import {
 } from "./ui.js";
 import { activeRoom } from "./net.js";
 import { sprintStep } from "./stamina.js";
-import { SPRINT } from "./gamedefaults.js";
+import { SPRINT, MGJ_HP_UNKNOWN } from "./gamedefaults.js";
+import { sprintBlur } from "./sprintblur.js";
 import { grStam, grCool } from "./sbgroups.js";
 import { grLook } from "./sbgroupview.js";
 import {
@@ -2910,10 +2911,7 @@ function drawFx(board, fxl, hang, size, s, now) {
   }
   const ad = adren(s, R.me, now);
   adrenFx(ad, pt);
-  document.documentElement.classList.toggle(
-    "sprint-blur",
-    !!(me && ((sprinting && moving) || ad) && onBoardPhase()),
-  );
+  sprintBlur(s, pt, !!(me && ((sprinting && moving) || ad) && onBoardPhase())); // (sprintblur.js)
 }
 /* Dead Ducks Arcade: duck id on an adrenaline shot (or the Speed Boost drop) now */
 const adren = (s, id, now) =>
@@ -4631,7 +4629,7 @@ const MGJ_GORE = [
   "g0",
 ];
 function mgjGore(s) {
-  const hp = s.mgj ? Math.max(0, s.mgj.hp ?? 999) : 999,
+  const hp = s.mgj ? Math.max(0, s.mgj.hp ?? MGJ_HP_UNKNOWN) : 999,
     n = hp > 100 ? 0 : hp >= 10 ? Math.floor((100 - hp) / 10) : 9 + (10 - hp);
   return MGJ_GORE.slice(0, n).join("");
 }
