@@ -120,6 +120,9 @@ const INIT = fs.readFileSync(
       ].sort();
       const board = { options: { mode: "aod" } },
         mgj = { options: { mode: "mgj" } };
+      /* the NPCs' reach: guns.js' since there is one breed row each (it was sbarms.js' and gunmenrules.js') */
+      const sbReach = (w) =>
+        GN.reachOf ? GN.reachOf(w, "sbnpc") : SA.reachOf(w);
       const per = (f) => Object.fromEntries(ids.map((w) => [w, f(w)]));
       const out = {};
       out.ids = H(ids);
@@ -145,8 +148,15 @@ const INIT = fs.readFileSync(
         lists: [MG.MGJ_GUNS, MG.PICK_WEAPONS, MG.MGJ_MELEE, MG.INF_AMMO],
       });
       out.npcs = H({
-        sb: [NA.guns, NA.melee, per(SA.reachOf)],
+        sb: [NA.guns, NA.melee, per(sbReach)],
         gunmen: GM.GM,
+      });
+      /* how far the NPCs fire each gun from, in duck lengths: one row for the gunmen, one for Sandbox's made NPCs */
+      out.reach = H({
+        gunman: per((w) =>
+          GN.reachOf ? GN.reachOf(w, "gunman") : GM.reachOf(w) / GM.GM.DUCK,
+        ),
+        sb: per(sbReach),
       });
       out.feel = H({
         crit: WD.PCRIT,

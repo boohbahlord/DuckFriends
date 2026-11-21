@@ -41,7 +41,8 @@ import {
   nameOfValue,
   slowMs,
 } from "./rules.js";
-import { modeOf, MODES } from "./modes.js";
+import { modeOf, MODES, statsOf } from "./modes.js";
+import { statRow } from "./statrows.js";
 import { MAPS, MAP_VARIANTS, mapForm, mapName } from "./maps.js";
 /* the maps the command line knows: every map, and every variation that is a map of its own (Nous Within Kenoma's) */
 const SH_MAPS = [
@@ -942,59 +943,11 @@ function statLines(ctx, scope, args) {
         out.push(`${nm(id)}: no stats yet`);
         continue;
       }
-      const base = `${nm(id)}: ${st.games} games · ${st.rounds} ${mode === "bb" ? "tournaments" : "rounds"} · ${st.answers} ${mode === "bb" ? "votes" : "answers"} · ${st.jumps} Jumps`;
-      if (mode === "bb")
-        out.push(
-          `${base} · ${st.titles} won · ${st.wins} contender wins · ${st.losses} losses`,
-        );
-      else if (mode === "quack")
-        out.push(
-          `${base} · ${st.wins} rounds won · ${st.titles} won as the Quack · ${st.majority} votes for the real Quack`,
-        );
-      else if (mode === "law")
-        out.push(
-          `${base} · ${st.argued} cases argued · ${st.wins} won · ${st.losses} lost · gave up ${st.gave}`,
-        );
-      else if (mode === "dunce")
-        out.push(
-          `${base} · ${st.argued} takes defended · not a dunce ${st.wins} · voted a dunce ${st.losses}`,
-        );
-      else if (mode === "vdd")
-        out.push(
-          `${nm(id)}: ${st.games} games · ${st.rounds} turns · ${st.argued} dates · Valentine ${st.wins} · Turned Down ${st.losses} · The Date ${st.titles} · ${st.jumps} Jumps`,
-        );
-      else if (mode === "trivia")
-        out.push(
-          `${nm(id)}: ${st.games} games · ${st.rounds} rounds · ${st.answers} answers · right ${st.wins} · wrong ${st.losses} · ${st.titles} questions written · ${st.jumps} Jumps`,
-        );
-      else if (mode === "mgj")
-        out.push(
-          `${nm(id)}: ${st.games} games · ${st.rounds} fights · won ${st.wins} · lost ${st.losses} · damage ${st.answers} · knocked down ${st.majority} · killing blows ${st.titles} · ${st.jumps} Jumps`,
-        );
-      else if (mode === "ddr")
-        out.push(
-          `${base} · related ${st.majority + st.minority ? pct(st.majority / (st.majority + st.minority)) : "—"}`,
-        );
-      else if (mode === "wyr")
-        out.push(
-          `${base} · with the bigger side ${st.majority + st.minority ? pct(st.majority / (st.majority + st.minority)) : "—"}`,
-        );
-      else if (mode === "aod" && st.counts) {
-        const top = Math.max(...st.counts),
-          avg = st.answers
-            ? st.counts.reduce((a, k, c) => a + k * (c - 3), 0) / st.answers
-            : null;
-        out.push(
-          `${base} · chose most ${
-            top
-              ? st.counts
-                  .map((k, c) => (k === top ? COLS[c] : ""))
-                  .filter(Boolean)
-                  .join(", ")
-              : "—"
-          } · average ${avg === null ? "—" : signed(Math.round(avg * 10) / 10)}`,
-        );
-      } else out.push(base);
+      out.push(
+        `${nm(id)}: ${statsOf(mode)
+          .rows.map((r) => statRow(r, st).text)
+          .join(" · ")}`,
+      );
     }
     return out.join("\n");
   }
