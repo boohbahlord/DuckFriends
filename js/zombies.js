@@ -28,7 +28,8 @@ import * as GS from "./hangout/stationmap.js";
 import { walkOf } from "./rules.js";
 import { SAME_FLOOR } from "./heights.js";
 import { SLOW as SWIM } from "./hangout/water.js";
-import { nearPairs } from "./npcrules.js";
+import { nearPairs, stillShares } from "./npcrules.js";
+import { fight, keepAt, reachTo } from "./sbarms.js";
 import { isSurv, SV, survWatch } from "./survrules.js";
 import {
   L4_HOOKS,
@@ -1516,3 +1517,98 @@ export function boardWalk(s, M, now, B, h) {
   M.zb = M.zb.filter((o) => !o.d || now - o.d < B.deadMs);
   return ch || M.zb.length !== n0;
 }
+/* ---------- Sandbox's walkers: each one's brain decides, one body walks them all ----------
+   What their brains planned (sbbrain.js think: [{ me, o, d }]), walked: to its goal (or away from what it flees), round
+   a wall, never through one; then it fights its foe; then all are kept apart, and none pushed through a wall. The brain
+   stays each kind's own (sbbrain.js, a Seriat file); the walking, the fighting and the crowd are this one, on the board
+   (sbspawn.js boardTick) as on a world (sbcabin.js cabinTick). Only units and a few ways differ, by c:
+   far(a, b) duck lengths apart; RX, RY a duck's length; reach (its claw's, duck lengths), stopK (how near a claw it
+   stops), ptStop (how near a \move\'s spot); speed(o, to, bd); go(o, to, step, bd, stop) and flee(o, to, step, bd) its
+   step; walls(o), wallGo(o, ws, x0, y0), wallStops(o, ws, x0, y0); face (the least move that turns it); strike(me, foe, o,
+   dmg, w); swipe (ms between swipes). Optional: sees(o, t) (nothing in the way of a shot), onFloor(o, to), after(o, to, d,
+   x0, y0) (its floors), still(o) (one that didn't walk), clamp(o) (kept on the board), round(o). dt: the beat's seconds.
+   Returns whether any moved or swung */
+export function brainWalk(s, now, plans, live, dt, c) {
+  let ch = !!plans.ch;
+  const moved = new Set();
+  for (const { me, o, d } of plans) {
+    const to = d.goal || d.flee;
+    if (!to) continue;
+    moved.add(o);
+    const x0 = o.x,
+      y0 = o.y,
+      bd = c.far(me, to),
+      claw = reachTo(c.reach, o, to, s), // (its hitbox, and its foe's: sbarms.js)
+      step = c.speed(o, to, bd) * dt,
+      stop = d.foe ? keepAt(o, claw) : to.pt ? c.ptStop : claw * c.stopK; // (a gun keeps its distance: sbarms.js; a \move\'s spot: right on it)
+    if (d.flee) {
+      c.flee(o, to, step, bd);
+      ch = true;
+    } else if (
+      bd > stop ||
+      (c.sees && d.foe && o.wp && bd > claw && !c.sees(o, to)) // (a gun keeps its distance once nothing's in the way)
+    ) {
+      c.go(o, to, step, bd, stop);
+      ch = true;
+    }
+    const ws = c.walls(o);
+    if (ws.length) c.wallGo(o, ws, x0, y0); // (round a wall, never through it)
+    if (c.after) c.after(o, d.flee ? null : to, d, x0, y0);
+    if (Math.abs(o.x - x0) > c.face) o.f = o.x > x0 ? 1 : -1; // (the way it goes: a made NPC's weapon points it, and its picture faces it, so it's hit where it shows, sbbody.js)
+    if (
+      d.foe &&
+      (!c.onFloor || c.onFloor(o, to)) &&
+      fight(
+        o,
+        to,
+        bd,
+        claw,
+        now,
+        c.swipe,
+        (dm, w) => c.strike(me, d.foe, o, dm, w),
+        c.sees && ((t) => c.sees(o, t)),
+      )
+    ) {
+      o.f = to.x < o.x ? -1 : 1;
+      ch = true;
+    }
+  }
+  if (c.still) for (const o of live) if (!moved.has(o)) c.still(o);
+  /* never in each other: two too close are pushed apart, each only against a few in its own and the next cells (a
+     crowd round a duck can have hundreds in a few cells) */
+  const was = live.map((o) => [o.x, o.y]);
+  nearPairs(
+    live,
+    c.RX,
+    c.RY,
+    (A, B) => {
+      const ex = (A.x - B.x) / c.RX,
+        ey = (A.y - B.y) / c.RY,
+        e = Math.hypot(ex, ey);
+      if (e >= 0.9) return;
+      const [wa, wb] = stillShares(A, B); // (Speed 0: never pushed aside, npcrules.js)
+      if (!wa && !wb) return;
+      const k = e > 1e-3 ? (0.9 - e) / 2 / e : 0.2,
+        ux = e > 1e-3 ? ex * k : Math.random() - 0.5,
+        uy = e > 1e-3 ? ey * k : Math.random() - 0.5;
+      A.x += ux * c.RX * wa;
+      A.y += uy * c.RY * wa;
+      B.x -= ux * c.RX * wb;
+      B.y -= uy * c.RY * wb;
+      if (c.clamp) {
+        c.clamp(A);
+        c.clamp(B);
+      }
+      ch = true;
+    },
+    1,
+    BRAIN_NEAR,
+  );
+  live.forEach((o, i) => {
+    const ws = c.walls(o);
+    if (ws.length && c.wallStops(o, ws, ...was[i])) [o.x, o.y] = was[i]; // (never pushed through a wall)
+  });
+  if (c.round) for (const o of live) c.round(o);
+  return ch;
+}
+const BRAIN_NEAR = 12; // (the most others each one is kept apart from in a beat)

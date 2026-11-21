@@ -79,15 +79,22 @@ import {
   heightAt,
   floorStep,
 } from "./hangout/layout.js";
-import { Z_MOST, l4Spawn, l4Live, zLook, ZOMBIE_BREEDS } from "./zombies.js";
+import {
+  Z_MOST,
+  l4Spawn,
+  l4Live,
+  zLook,
+  ZOMBIE_BREEDS,
+  brainWalk,
+} from "./zombies.js";
 import { onCabin, sbzOn, cabinLive, cabinSpawn, cabinTick } from "./sbcabin.js";
 import { listsOf, decide, MAD } from "./sbbrain.js";
-import { grudge, stillShares } from "./npcrules.js";
+import { grudge } from "./npcrules.js";
 import { hpHurt } from "./hpmath.js";
 import { zbSpawned } from "./sbzonebrain.js";
 import { botDuck } from "./botduck.js";
 import { JUSTIN } from "./hangout/npcart.js";
-import { armUp, cleanArms, fight, keepAt, reachTo } from "./sbarms.js";
+import { armUp, cleanArms } from "./sbarms.js";
 import { nbThink, nbOrder, nbKeep } from "./sbnumberat.js";
 import { SONG, songChars } from "./sbaudio.js";
 import { grFrom, grLeave, grHp, grIds, grLists } from "./sbgroups.js";
@@ -1639,8 +1646,6 @@ export function strike(s, now, me, foe, H, o, d = null, w = "claw") {
 /* ---------- the board's zombies: as Mad God Justin's wave zombies walk (mgjrules.js wavesTick), at each one's speed and
    damage, and kept apart on a grid so 800 cost little ---------- */
 const MOVE_STOP = 0.1; // duck lengths: as near as a \move\'s spot is walked to
-const CELL = 1, // (duck lengths: the grid's cells)
-  NEAR = 12; // (the most others each one is kept apart from in a beat)
 function boardTick(s, now, H) {
   const SBZ = ZOMBIE_BREEDS.sbBoard,
     [RX, RY] = boardDuck(s); // (a duck's length: less of a bigger board, Board size in G)
@@ -1649,95 +1654,50 @@ function boardTick(s, now, H) {
   z.t = now;
   const live = z.zb.filter((o) => !o.d),
     far = (a, b) => Math.hypot((a.x - b.x) / RX, (a.y - b.y) / RY);
-  let ch = false;
   const spot = (o) => ({ x: o.x, y: o.y }),
-    wallsOf = sbNpcWalls(s); // (the zones that are walls to each: plan Phase 3)
+    wallsOf = sbNpcWalls(s), // (the zones that are walls to each: plan Phase 3)
+    onBoard = (o) => {
+      o.x = Math.min(0.99, Math.max(0.01, o.x));
+      o.y = Math.min(0.97, Math.max(0.03, o.y));
+    };
   const plans = think(s, now, live, spot, H, far, (id) => spot(s.pos[id]));
-  if (plans.ch) ch = true;
-  for (const { me, o, d } of plans) {
-    const to = d.goal || d.flee;
-    if (!to) continue;
-    const x0 = o.x,
-      y0 = o.y,
-      bd = far(me, to),
-      claw = reachTo(SBZ.reach, o, to, s), // (its hitbox, and its foe's: sbarms.js)
-      sp =
-        SBZ.speed *
-        (o.sv ?? 1) *
-        (o.run && bd > 4 ? 1.5 : 1) * // (can sprint: half as fast again while far off)
-        (to.sp ?? 1), // (a \move\'s @ speed)
-      stop = d.foe ? keepAt(o, claw) : to.pt ? MOVE_STOP : claw * 0.8; // (a gun keeps its distance: sbarms.js; a \move\'s spot: right on it)
-    if (d.flee) {
-      const go = Math.min(1, (sp * dt) / Math.max(bd, 1e-3));
-      o.x = Math.min(0.99, Math.max(0.01, o.x - (to.x - o.x) * go));
-      o.y = Math.min(0.97, Math.max(0.03, o.y - (to.y - o.y) * go));
-      ch = true;
-    } else if (bd > stop) {
-      const go = Math.min(bd - stop, sp * dt) / bd;
+  const ch = brainWalk(s, now, plans, live, dt, {
+    far,
+    RX,
+    RY,
+    reach: SBZ.reach,
+    stopK: 0.8,
+    ptStop: MOVE_STOP,
+    speed: (o, to, bd) =>
+      SBZ.speed *
+      (o.sv ?? 1) *
+      (o.run && bd > 4 ? 1.5 : 1) * // (can sprint: half as fast again while far off)
+      (to.sp ?? 1), // (a \move\'s @ speed)
+    go(o, to, step, bd, stop) {
+      const go = Math.min(bd - stop, step) / bd;
       o.x += (to.x - o.x) * go;
       o.y += (to.y - o.y) * go;
-      if (to.pt) {
-        o.x = Math.min(0.99, Math.max(0.01, o.x)); // (a \move\ never walks it off the board)
-        o.y = Math.min(0.97, Math.max(0.03, o.y));
-      }
-      ch = true;
-    }
-    if (wallsOf(o).length)
-      [o.x, o.y] = sbWallGo(s, wallsOf(o), x0, y0, o.x, o.y, 0, 1, 1, o); // (round a wall, never through it)
-    if (Math.abs(o.x - x0) > 1e-4) o.f = o.x > x0 ? 1 : -1; // (the way it goes: a made NPC's weapon points it, or at what it hits; and its picture faces it, so it's hit where it shows, sbbody.js)
-    if (
-      d.foe &&
-      fight(o, to, bd, claw, now, SBZ.swipe[1], (dm, w) =>
-        strike(s, now, me, d.foe, H, o, dm, w),
-      )
-    ) {
-      o.f = to.x < o.x ? -1 : 1;
-      ch = true;
-    }
-  }
-  /* never in each other: two too close are pushed apart, each only against a few in its own and the next cells (a
-     crowd round a duck can have hundreds in a few cells) */
-  const was = live.map((o) => [o.x, o.y]),
-    grid = new Map(),
-    key = (cx, cy) => cx * 4096 + cy,
-    cell = (o) => [Math.floor(o.x / RX / CELL), Math.floor(o.y / RY / CELL)];
-  for (const o of live) {
-    const k = key(...cell(o));
-    if (!grid.has(k)) grid.set(k, []);
-    grid.get(k).push(o);
-  }
-  for (const A of live) {
-    const [cx, cy] = cell(A);
-    let seen = 0;
-    for (let gx = cx - 1; gx <= cx + 1 && seen < NEAR; gx++)
-      for (let gy = cy - 1; gy <= cy + 1 && seen < NEAR; gy++)
-        for (const B of grid.get(key(gx, gy)) || []) {
-          if (B.i <= A.i) continue;
-          if (++seen > NEAR) break;
-          const ex = (A.x - B.x) / RX,
-            ey = (A.y - B.y) / RY,
-            e = Math.hypot(ex, ey);
-          if (e >= 0.9) continue;
-          const [wa, wb] = stillShares(A, B);
-          if (!wa && !wb) continue; // (both Speed 0: neither moves)
-          const k = e > 1e-3 ? (0.9 - e) / 2 / e : 0.2,
-            ux = e > 1e-3 ? ex * k : Math.random() - 0.5,
-            uy = e > 1e-3 ? ey * k : Math.random() - 0.5;
-          A.x = Math.min(0.99, Math.max(0.01, A.x + ux * RX * wa));
-          A.y = Math.min(0.97, Math.max(0.03, A.y + uy * RY * wa));
-          B.x = Math.min(0.99, Math.max(0.01, B.x - ux * RX * wb));
-          B.y = Math.min(0.97, Math.max(0.03, B.y - uy * RY * wb));
-          ch = true;
-        }
-  }
-  live.forEach((o, i) => {
-    if (wallsOf(o).length && sbWallStops(s, wallsOf(o), ...was[i], o.x, o.y, 0))
-      [o.x, o.y] = was[i]; // (never pushed through a wall)
+      if (to.pt) onBoard(o); // (a \move\ never walks it off the board)
+    },
+    flee(o, to, step, bd) {
+      const go = Math.min(1, step / Math.max(bd, 1e-3));
+      o.x = Math.min(0.99, Math.max(0.01, o.x - (to.x - o.x) * go));
+      o.y = Math.min(0.97, Math.max(0.03, o.y - (to.y - o.y) * go));
+    },
+    walls: wallsOf,
+    wallGo(o, ws, x0, y0) {
+      [o.x, o.y] = sbWallGo(s, ws, x0, y0, o.x, o.y, 0, 1, 1, o);
+    },
+    wallStops: (o, ws, x0, y0) => sbWallStops(s, ws, x0, y0, o.x, o.y, 0),
+    face: 1e-4,
+    swipe: SBZ.swipe[1],
+    strike: (me, foe, o, dm, w) => strike(s, now, me, foe, H, o, dm, w),
+    clamp: onBoard,
+    round(o) {
+      o.x = Math.round(o.x * 1000) / 1000;
+      o.y = Math.round(o.y * 1000) / 1000;
+    },
   });
-  for (const o of live) {
-    o.x = Math.round(o.x * 1000) / 1000;
-    o.y = Math.round(o.y * 1000) / 1000;
-  }
   /* the bodies go after a moment, as his do */
   const n0 = z.zb.length;
   z.zb = z.zb.filter((o) => !o.d || now - o.d < SBZ.deadMs);
