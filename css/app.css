@@ -6193,6 +6193,29 @@ html.still .tmeter i {
   opacity: 0.75;
   letter-spacing: 0.03em;
 }
+/* Play's window: Multiplayer and Single player, and the note about downloading at its bottom */
+.play-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  width: min(18rem, 100%);
+  margin: 0.8rem auto 0;
+}
+.play-choice .btn {
+  width: 100%;
+}
+.play-choice [aria-disabled="true"] {
+  opacity: 0.55;
+}
+.play-note {
+  min-height: 3.6em;
+  margin: 0.9rem 0 0;
+  font-size: calc(0.9rem * var(--ts));
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--dim);
+}
 /* the player menu (hold Tab, or 👥): cards with connection bars and tags */
 .pmenu {
   position: fixed;

@@ -1,8 +1,8 @@
 /* ---------- the front page ----------
-   The name at the top in the middle (on a phone, above the buttons); Play, Single Player (the app only), Customize, Settings, Updates and Install Duck Friends on the left with one short line
+   The name at the top in the middle (on a phone, above the buttons); Play (it opens the choice of Single player and Multiplayer), Customize, Settings, Updates and Install Duck Friends on the left with one short line
    under them; a ball pit across the whole bottom of the page with the duck sitting in it on the right. */
 import { register, go } from "./router.js";
-import { el } from "./ui.js";
+import { el, openWindow } from "./ui.js";
 import { pitSVG, heroDuckSVG, rainbowHTML } from "./art.js";
 import { openSettings } from "./settings.js";
 import { rest, net, soon } from "./later.js";
@@ -14,23 +14,24 @@ import { installBtnHTML, install } from "./homeapp.js";
 import { inApp } from "./corners.js";
 import { keptState, onKept } from "./offline.js";
 
-let mbarOff = null,
-  keptOff = null;
-/* Single Player (the owner's, Nov 18): in the installed app, under Play; greyed out until the whole game is on the
-   device (offline.js), then a room on this device only, with no internet: Hangout, Dead Ducks Arcade and Mad God
-   Justin */
+let mbarOff = null;
+/* Play opens the choice (the owner's, Nov 21 18:05Z: "You click play and it says single player, multiplayer. There we
+   go, boom. Single player, no internet needed ... if you put your mouse over it, it will like give a description that like
+   maybe in the bottom of the screen for mobile players, and then maybe somewhere else on the screen for computer players.
+   And it'll say that you need to download the game in order to play single player"). Single Player (the owner's, Nov
+   18): a room on this device only, with no internet: Hangout, Dead Ducks Arcade and Mad God Justin; it needs the whole
+   game on the device (offline.js, the installed app) */
 const soloNote = (k) =>
-  k.ready
-    ? "No internet needed"
-    : k.total
-      ? `Downloading ${Math.floor((100 * k.done) / k.total)}%`
-      : navigator.onLine === false
-        ? "Needs internet once"
-        : "Getting ready …";
-const soloBtnHTML = () =>
-  inApp()
-    ? `<button type="button" class="btn big ghost site-btn solo-btn" data-a="solo"${keptState().ready ? "" : " disabled"}>Single Player<small>${soloNote(keptState())}</small></button>`
-    : "";
+  !inApp()
+    ? "You need to download the game to play Single player: use Install Duck Friends on the front page."
+    : k.ready
+      ? "Plays on this device: no internet needed."
+      : k.total
+        ? `Downloading the game to this device: ${Math.floor((100 * k.done) / k.total)}%`
+        : navigator.onLine === false
+          ? "You need to download the game to play Single player: it needs internet once."
+          : "Getting the game ready on this device …";
+const soloReady = (k) => inApp() && k.ready;
 /* (the room code and Customize come with the rest of the game, after the first screen: later.js) */
 const openCustomize = () =>
   soon(() => import("./customize.js")).then((m) => m.openCustomize());
@@ -50,11 +51,62 @@ function playSolo() {
   );
 }
 
+/* the window: Single player (no internet) and Multiplayer. The note about downloading sits at the window's bottom: on a
+   phone (no hover) always, on a computer while the mouse is over Single player (or it has the keys' focus) */
+function openPlay() {
+  const touch = matchMedia("(hover: none)").matches;
+  openWindow(
+    `<h2>Play</h2>
+    <div class="play-choice">
+      <button type="button" class="btn big green site-btn" data-a="multi">Multiplayer<small>With friends, online</small></button>
+      <button type="button" class="btn big ghost site-btn" data-a="solo" aria-disabled="true">Single player<small>No internet needed</small></button>
+    </div>
+    <p class="play-note" aria-live="polite"></p>`,
+    {
+      cls: "play-win",
+      onOpen(win, close) {
+        const solo = win.querySelector('[data-a="solo"]'),
+          note = win.querySelector(".play-note");
+        const show = () => {
+          note.textContent = soloNote(keptState());
+          note.classList.toggle("shown", true);
+        };
+        let off = () => {};
+        const paint = (k) => {
+          if (!win.isConnected) return off(); // (closed: stop listening)
+          solo.setAttribute("aria-disabled", soloReady(k) ? "false" : "true");
+          if (touch || note.classList.contains("shown"))
+            note.textContent = soloNote(k);
+        };
+        win.querySelector('[data-a="multi"]').onclick = () => {
+          close();
+          go("rooms");
+        };
+        solo.onclick = () => {
+          if (soloReady(keptState())) {
+            close();
+            playSolo();
+          } else show();
+        };
+        if (touch) show();
+        else {
+          solo.onmouseenter = solo.onfocus = show;
+          solo.onmouseleave = solo.onblur = () => {
+            note.classList.remove("shown");
+            note.textContent = "";
+          };
+        }
+        paint(keptState());
+        off = onKept(paint);
+      },
+    },
+  ).then(() => {});
+}
+
 register("front", {
   leave() {
     if (mbarOff) mbarOff();
-    if (keptOff) keptOff();
-    mbarOff = keptOff = null;
+    mbarOff = null;
   },
   render() {
     const s = el(`<section class="screen front">
@@ -62,7 +114,6 @@ register("front", {
       <div class="front-left">
         <div class="front-btns">
           <button type="button" class="btn big green" data-a="play">Play</button>
-          ${soloBtnHTML()}
           <button type="button" class="btn big ghost" data-a="customize">Customize</button>
           <button type="button" class="btn big ghost" data-a="settings">Settings</button>
           <button type="button" class="btn big ghost up-btn" data-a="updates">Updates</button>
@@ -73,7 +124,7 @@ register("front", {
       </div>
       <div class="pit" aria-hidden="true">${pitSVG("back")}<div class="hero-duck bob">${heroDuckSVG()}</div>${pitSVG("front")}</div>
     </section>`);
-    s.querySelector('[data-a="play"]').onclick = () => go("rooms");
+    s.querySelector('[data-a="play"]').onclick = () => openPlay();
     s.querySelector('[data-a="customize"]').onclick = () => openCustomize();
     s.querySelector('[data-a="settings"]').onclick = () => openSettings();
     const upBtn = s.querySelector('[data-a="updates"]');
@@ -91,15 +142,6 @@ register("front", {
           '<i class="up-dot" aria-label="New"></i>',
         );
     });
-    const solo = s.querySelector('[data-a="solo"]');
-    if (solo) {
-      solo.onclick = () => keptState().ready && playSolo();
-      if (keptOff) keptOff();
-      keptOff = onKept((k) => {
-        solo.disabled = !k.ready;
-        solo.querySelector("small").textContent = soloNote(k);
-      });
-    }
     const ib = s.querySelector('[data-a="install"]');
     if (ib) ib.onclick = () => install();
     if (mbarOff) mbarOff();
