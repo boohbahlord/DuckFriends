@@ -5,6 +5,7 @@
    Also the stats: the awards (Most Damage, Killing Blow, Hit the Most, Most Jumps), each player's box, and every fight. */
 import { SHOTGUN } from "./gunart.js";
 import { esc, el } from "./ui.js";
+import { topOf, joinNames, awardCard, smallLine } from "./awards.js";
 import { hpText } from "./hpmath.js";
 import { duckSVG } from "./duck.js";
 import { nameHTML } from "./name.js";
@@ -166,13 +167,14 @@ function awardsHTML(s, all) {
   const name = (id) => nm(player(s, id));
   const award = (title, who, line) =>
     who && who.length
-      ? `<div class="award"><h3>${esc(title)}</h3><p>${who.map(name).join(who.length > 2 ? ", " : " and ")}${who.length > 1 ? ' <span class="dim">(tie)</span>' : ""}</p><p class="small dim">${line}</p></div>`
+      ? awardCard(
+          title,
+          joinNames(who.map(name)),
+          who.length > 1,
+          smallLine(line),
+        )
       : "";
-  const top = (f) => {
-    const xs = ids.map((id) => [id, f(per[id])]),
-      v = Math.max(0, ...xs.map((x) => x[1]));
-    return v ? { v, who: xs.filter((x) => x[1] === v).map((x) => x[0]) } : null;
-  };
+  const top = (f) => topOf(per, ids, f);
   const dmg = top((p) => p.dmg),
     hit = top((p) => p.hits),
     kill = top((p) => p.kills),
