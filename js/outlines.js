@@ -20,7 +20,7 @@
    canvas trick: the picture drawn a pixel off each way in the color, its own shape cut back out. */
 import { gridPx, raster } from "./pixel.js";
 import {
-  floorAt,
+  onRoof,
   layoutVariant,
   deckOver,
   roofHoleOver,
@@ -55,16 +55,10 @@ for (const [k, c] of Object.entries(DROP_OL)) COLOR["drop_" + k] = c;
 const BLINK = 700; // ms an outline blinks after a hit
 
 /* which floor something is on, from where it stands (world px) and its feet's height: on Downpour, 1 up on a roof or
-   the pumps' canopy and 0 on the ground or inside (layout.js floorAt: a duck climbing the ladder is still on the ground
+   the pumps' canopy and 0 on the ground or inside (layout.js onRoof, never a car's top: a duck climbing the ladder is still on the ground
    till it steps off onto the roof); on Duck Cabin, 1 from 90 px up (the balcony) */
 let floorOf = (x, y, z) =>
-  layoutVariant() === "l4gs"
-    ? floorAt(x, y, z).deck
-      ? 1
-      : 0
-    : z >= 90
-      ? 1
-      : 0;
+  layoutVariant() === "l4gs" ? (onRoof(x, y, z) ? 1 : 0) : z >= 90 ? 1 : 0;
 export const olFloor = (x, y, z) => floorOf(x, y, z);
 
 /* the one rule for roofs (the owner's, Nov 17 20:02Z: "make a simple and basic principle"): someone at (x, y), feet at
@@ -97,7 +91,7 @@ function outline(img, kind, key = img.currentSrc || img.src) {
   c.height = h + P * 2;
   const g = c.getContext("2d"),
     color = COLOR[kind.split("-")[0]] || kind.split("-")[0], // (a Sandbox zone's own color: its kind is the color, "#rrggbb")
-    glow = kind.endsWith("-glow");
+    glow = kind.endsWith("-glow") && !kind.startsWith("justin"); // (Justin's yellow: the line alone, no glow round it, so it's thinner: the owner's, Nov 21 18:59Z, "the little yellow lines on Dead Ducks Arcade around the things be like a little smaller")
   /* the shape grown by a pixel (by two for the glow), in the color */
   const grow = (r) => {
     for (let dx = -r; dx <= r; dx++)

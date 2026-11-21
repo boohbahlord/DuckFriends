@@ -85,6 +85,7 @@ import { npcSave, npcDel, npcList, npcName } from "./sbnpcs.js";
 import { cropPicture, cropFile } from "./picrop.js";
 import { yieldNow, idle } from "./slices.js";
 import { pxNow } from "./pxdom.js";
+import { pixelOn } from "./pixel.js";
 import { putPage } from "./armpage.js";
 
 import { SB_WHAT, SB_ACTS } from "./sandboxrules.js";
@@ -252,11 +253,13 @@ const bodyName = (D) =>
     .map(([l, v]) => nameOf(l, +v, ""))
     .filter(Boolean)
     .join(", ") || "Normal";
+/* a tile's duck: with the pixel look on, only its picture (duck.js shell) */
+const TILE = () => ({ size: 58, shadow: false, shell: pixelOn() });
 /* a close look at the head, for eye and beak tiles */
 const headPic = (look) =>
   duckSVG(
     { ...look, image: null, hat: null, face: null, size: 0 },
-    { size: 58, shadow: false },
+    TILE(),
   ).replace(
     /viewBox="[^"]*" width="[^"]*" height="[^"]*"/,
     'viewBox="54 9 77 58" width="64" height="48" style="overflow:hidden"',
@@ -654,7 +657,6 @@ export function openCustomize(page = lastPage, opts = {}) {
               chaingun: sfx.chaingun,
               glauncher: sfx.glauncher,
               dbarrel: sfx.dbarrel,
-              dbuck: sfx.dbarrel,
               burst: () =>
                 [0, 70, 140].forEach((ms) => setTimeout(() => sfx.burst(), ms)),
               dagger: sfx.throw,
@@ -779,7 +781,7 @@ export function openCustomize(page = lastPage, opts = {}) {
                     ? { ...(D.hat && D.hat.id === id ? D.hat : {}), id }
                     : null,
                 },
-                { size: 58, shadow: false },
+                TILE(),
               );
             const hd = D.hat && hatById(D.hat.id);
             html =
@@ -804,10 +806,7 @@ export function openCustomize(page = lastPage, opts = {}) {
             ${D.image ? '<p class="small dim">Hats show on the duck, not on a picture.</p>' : ""}</div>`;
           } else if (k === "face") {
             const pic = (id) =>
-              duckSVG(
-                { ...D, image: null, face: id ? { id } : null },
-                { size: 58, shadow: false },
-              );
+              duckSVG({ ...D, image: null, face: id ? { id } : null }, TILE());
             html =
               head("Face") +
               `<div class="arm-body">${grouped("face", [["none", pic(null), "Nothing"], ...FACES.map((f) => [f.id, pic(f.id), f.name, f.tip])], D.face ? D.face.id : "none", FACE_GROUPS)}
@@ -845,10 +844,7 @@ export function openCustomize(page = lastPage, opts = {}) {
             ${bd.colors ? '<p class="small dim">Its colors are under Colors.</p>' : ""}</div>`;
           } else if (k === "body") {
             const pic = (look) =>
-              duckSVG(
-                { ...D, image: null, ...look },
-                { size: 58, shadow: false },
-              );
+              duckSVG({ ...D, image: null, ...look }, TILE());
             const pct = Math.round(scaleOf(D) * 100);
             /* how big my duck is, every mode (the owner's, Nov 19 15:52Z): its hitbox grows with it past 100%. Not an
                NPC's: its spawn's Size sets that (sbspawn.js) */
@@ -883,7 +879,7 @@ export function openCustomize(page = lastPage, opts = {}) {
                       }
                     : null,
                 },
-                { size: 58, shadow: false },
+                TILE(),
               );
             const od = D.outfit && outfitById(D.outfit.id);
             /* an outfit's options (the leather jacket: jeans or no pants), right under its tile */
@@ -948,7 +944,7 @@ export function openCustomize(page = lastPage, opts = {}) {
                         ? { prevStyle: D.style }
                         : {}),
                     },
-                    { size: 58, shadow: false },
+                    TILE(),
                   ),
                   x.id === "jack"
                     ? styleLabel({ ...D, style: "jack" })
@@ -1030,10 +1026,7 @@ export function openCustomize(page = lastPage, opts = {}) {
           } else if (k === "skin" && D.style === "datboi") {
             /* Dat Boi's Skin page is his ranks */
             const pic = (rank) =>
-              duckSVG(
-                { ...D, hat: null, face: null, rank },
-                { size: 58, shadow: false },
-              );
+              duckSVG({ ...D, hat: null, face: null, rank }, TILE());
             html =
               head("Skin") +
               `<div class="arm-body">${grid(
@@ -1046,7 +1039,7 @@ export function openCustomize(page = lastPage, opts = {}) {
             const pic = (look) =>
               duckSVG(
                 { ...D, hat: null, face: null, image: null, ...look },
-                { size: 58, shadow: false },
+                TILE(),
               );
             const cur = D.image
               ? "pic"
