@@ -22,6 +22,9 @@ const ITEM_COOL = 750;
    and its slot is empty; it is never refilled. An Angelic melee weapon never breaks. One number for each weapon: ARMS'
    dur */
 const MELEE_DUR = 450;
+/* every grenade's blast is 25% wider than it was (the owner's, Nov 21: "grenades should have a 25% larger explosion radius then
+   before"): the board's (rules.js GRENADE_R), Quacky Zombies' (ARMS.grenade.r) and the drawn boom (grenade.js) all read this */
+export const NADE_GROW = 1.25;
 export const ARMS = {
   knife: {
     kind: "melee",
@@ -111,7 +114,7 @@ export const ARMS = {
     kind: "grenade",
     cool: ITEM_COOL,
     far: 300,
-    r: 210,
+    r: 210 * NADE_GROW,
     start: 4, // (players start with 4: the owner's, Nov 19 19:27Z)
     most: 4,
   }, // (r: 50% wider than its first 140, owner 2026-11-04)
