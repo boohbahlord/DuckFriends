@@ -90,8 +90,8 @@ langname.js 5 the name of Sandbox's number language, in one
 laserart.js 106 the laser gun, drawn
 laserfx.js 134 the Laser Rifle on the screen
 later.js 66 the rest of the game, once the first
-loading.js 345 the start: a slow fade to black over
-loadlines.js 5 a line on the black loading screen
+loading.js 397 the start: a slow fade to black over
+loadlines.js 590 the lines under the loading bar, one for
 lobby.js 599 the lobby, laid out like Halo: Reach's custom
 lobbysettings.js 73 Lobby Settings
 looks.js 111 the room's duck-look settings

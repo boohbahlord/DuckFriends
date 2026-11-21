@@ -47,6 +47,61 @@ let busy = 0; // (loading screens asked for at once: the page comes back when th
    right of the green bar"); under that, one line of text to hold the player over, in the normal font (loadlines.js).
    The percent: what is still on its way (the files pictures are drawn from, the pictures on the screen, the screen
    itself) against the most there was, never going back */
+/* the line under the bar: a bag, every line once before any comes again, remembered on this device (the owner, Nov 20 to
+   21: shuffled as a bag). A line is { text, caption?, mono? } or { parts, caption? }; the caption goes below, smaller and
+   a little faded; code and (mono) lines use a monospace font */
+const BAG = "df-loadbag";
+let bag = []; // (the lines left in this bag, by number: used when this device won't keep them)
+function nextLine() {
+  const n = LOAD_LINES.length;
+  let left = bag;
+  try {
+    left = JSON.parse(localStorage.getItem(BAG) || "[]");
+  } catch {}
+  left = Array.isArray(left) ? left.filter((i) => i >= 0 && i < n) : [];
+  if (!left.length) {
+    left = Array.from({ length: n }, (_, i) => i);
+    for (let i = n - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [left[i], left[j]] = [left[j], left[i]];
+    }
+  }
+  const i = left.pop();
+  bag = left;
+  try {
+    localStorage.setItem(BAG, JSON.stringify(left));
+  } catch {}
+  return LOAD_LINES[i];
+}
+const span = (text, cls) => {
+  const e = document.createElement("span");
+  if (cls) e.className = cls;
+  e.textContent = text;
+  return e;
+};
+/* a line that doesn't fit the screen (a phone, upright or on its side) shrinks, never below 0.8rem */
+const FIT = [0.95, 0.9, 0.85, 0.8];
+function fit(line, v) {
+  const box = v.querySelector(".veil-box");
+  for (const r of FIT) {
+    line.style.fontSize = `calc(${r}rem * var(--ts, 1))`;
+    if (!box || box.getBoundingClientRect().bottom <= innerHeight - 6) return;
+  }
+}
+function tellLine(line, v) {
+  line.textContent = "";
+  line.style.fontSize = "";
+  const L = LOAD_LINES.length && nextLine();
+  if (!L) return;
+  const text = span("", "veil-txt");
+  text.dir = "auto";
+  if (L.parts)
+    for (const p of L.parts) text.append(span(p.text, p.mono ? "mono" : ""));
+  else text.append(span(L.text, L.mono ? "mono" : ""));
+  line.append(text);
+  if (L.caption) line.append(span(L.caption, "veil-cap"));
+  fit(line, v);
+}
 const waits = new Set(); // (the screens asked for, still not ready)
 let tell = 0;
 function telling(v) {
@@ -54,10 +109,7 @@ function telling(v) {
     pct = v.querySelector(".veil-pct"),
     what = v.querySelector(".veil-what"),
     line = v.querySelector(".veil-line");
-  if (line)
-    line.textContent = LOAD_LINES.length
-      ? LOAD_LINES[Math.floor(Math.random() * LOAD_LINES.length)]
-      : "";
+  if (line) tellLine(line, v);
   let most = 1,
     shown = 0;
   const look = () => {
