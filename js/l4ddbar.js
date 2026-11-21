@@ -34,6 +34,7 @@ import {
 import { ARMS } from "./guns.js";
 import { now as clockNow } from "./clock.js";
 import { sbNoLight } from "./sandboxrules.js";
+import { mountItemTip } from "./itemtip.js";
 
 /* what a slot says under it: the magazine and the rest, or how many are left */
 const count = (w, m) => {
@@ -82,6 +83,7 @@ const out = (s, me) => {
 
 /* api: state() → the room's state, me() → my id, held() → the weapon in hand, pick(slot), grenade(), flash() */
 export function mountL4Bar(S, api) {
+  mountItemTip(); // (hold I or press long on a slot: its card, itemtip.js; mounted once)
   const row = document.createElement("div");
   row.className = "l4bar";
   let sig = "";
@@ -139,7 +141,7 @@ export function mountL4Bar(S, api) {
       const tint = w && w !== "fl" ? tintOf(w, angelOf(s, me, w)) : ""; // (its own color: l4ddrules.js tintOf)
       const into = does === String(to); // (what I'm about to take goes here)
       ics.push(icon);
-      return `<button type="button" class="l4s k-${kind}${tint ? " " + tint : ""}${w && w === held ? " sel" : ""}${empty ? " empty" : ""}${into ? " l4s-to" : ""}" data-l4w="${does}" aria-label="${name}${n ? ", " + n : ""}"${out || (!w && does !== "fl") ? " disabled" : ""}>${w ? reloadMeter(s, me, w, m) : ""}${into ? toGlow(toW) : ""}<i></i><kbd>${key}</kbd>${n ? `<small>${n}</small>` : ""}</button>`;
+      return `<button type="button" class="l4s k-${kind}${tint ? " " + tint : ""}${w && w === held ? " sel" : ""}${empty ? " empty" : ""}${into ? " l4s-to" : ""}" data-l4w="${does}"${w && w !== "fl" ? ` data-item="${w}"` : ""} aria-label="${name}${n ? ", " + n : ""}"${out || (!w && does !== "fl") ? " disabled" : ""}>${w ? reloadMeter(s, me, w, m) : ""}${into ? toGlow(toW) : ""}<i></i><kbd>${key}</kbd>${n ? `<small>${n}</small>` : ""}</button>`;
     };
     /* (my HP isn't here any more: it's the red meter under the hotbar, hpmeter.js; owner 2026-11-04 03:16Z) */
     const ics = down ? [weaponIcon("handgun", duckOf(s, me))] : [],
