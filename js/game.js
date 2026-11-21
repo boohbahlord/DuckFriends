@@ -102,8 +102,6 @@ import {
   canGiveUp,
   lawStats,
   LAW_MID,
-  WEAPONS,
-  THROWS,
   shotAt,
   coolFor,
   coolEnds,
@@ -114,7 +112,6 @@ import {
   MAG,
   magOf,
   magSize,
-  AUTO,
   KB_MS,
   KB_HOP,
   KB_LAND,
@@ -237,7 +234,14 @@ import {
   zombieLook,
   slotOfPick,
 } from "./l4ddrules.js";
-import { ARMS } from "./guns.js";
+import {
+  ARMS,
+  BOARD_WEAPONS,
+  THROWS,
+  AUTO,
+  MGJ_MELEE,
+  MGJ_GUNS,
+} from "./guns.js";
 import { watching, watchNext, watchHTML } from "./spectate.js";
 import {
   l4Held,
@@ -398,9 +402,7 @@ import {
   MGJ_HAMMER,
   ammoOf,
   mgjMag,
-  MGJ_MELEE,
   INF_AMMO,
-  MGJ_GUNS,
   downNear,
   REVIVE,
   mgjPHp,
@@ -4083,7 +4085,7 @@ function playFx(f) {
       (f.what === "lmg" ? sfx.lmg : sfx.smg)(heard(f.by));
       return;
     }
-    if (WEAPONS.includes(f.what)) {
+    if (BOARD_WEAPONS.includes(f.what)) {
       if ((f.hit || []).includes(JUSTIN_ID) && isMgj(s)) {
         hurt(S.querySelector(`.gduck[data-pid="${JUSTIN_ID}"]`));
         sfx.hit();
@@ -5982,7 +5984,7 @@ function slidTap(i) {
   if (R && isMgj(R.state) && mgjToggles(id)) {
     useKey(i, false);
     fire(id);
-  } else if (R && !isMgj(R.state) && WEAPONS.includes(id) && id === held)
+  } else if (R && !isMgj(R.state) && BOARD_WEAPONS.includes(id) && id === held)
     fire(id); // (a weapon picked: a tap on it uses it)
   else useKey(i, false);
 }
@@ -6000,7 +6002,7 @@ function padWeapon() {
   if (isMgj(R.state))
     return R.state.phase === "boss" && mgjToggles(id) ? id : null;
   const sp = specialById(id);
-  return (WEAPONS.includes(id)
+  return (BOARD_WEAPONS.includes(id)
     ? id === held
     : THROWS.includes(id) && (!held || isSb(R.state))) &&
     sp &&
@@ -6034,7 +6036,7 @@ function selectKey(i, toggle) {
   const id = keysOf(playDuck())[i],
     jet = jetOn(R.state, R.me, clockNow());
   lastKey = i;
-  if (WEAPONS.includes(id)) {
+  if (BOARD_WEAPONS.includes(id)) {
     if (jet) R.send({ t: "aura", what: "jetpack", keep: true }); // (a weapon in hand: the jetpack goes off)
     held = toggle && held === id ? null : id;
   } else if (id === "jetpack") {
@@ -6079,7 +6081,7 @@ function useKey(i, keep, toggle = false) {
     sp = specialById(id);
   if (!sp || sp.off || !(unlocked("special", id) || sbHotOn(R.state))) return; // (a special that's off for now, or still locked, does nothing; in Sandbox the loot is everyone's)
   lastKey = i;
-  if (WEAPONS.includes(id) || id === "jetpack") {
+  if (BOARD_WEAPONS.includes(id) || id === "jetpack") {
     selectKey(i, toggle);
     if (bar) setTimeout(() => bar && bar.refresh(), 60);
     return;

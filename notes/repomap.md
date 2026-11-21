@@ -49,7 +49,7 @@ friends.js 236 friends
 front.js 109 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 214 how a held weapon and the screen move
-game.js 8820 the game screen
+game.js 8822 the game screen
 gamedefaults.js 43 the game's own numbers, for every mode
 gameready.js 47 what the game's loading screen waits for
 gamesettings.js 1750 Game Settings: the whole screen, like Customize
@@ -61,7 +61,7 @@ gunart.js 448 every weapon, drawn: one drawing for every mode,
 gunmen.js 110 the gunmen's looks
 gunmenrules.js 1160 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen
-guns.js 379 every weapon's numbers: one sheet for every mode
+guns.js 470 every weapon's numbers: one sheet for every mode
 hats.js 1073 hats
 heights.js 50 a shot's height, Doom's way
 helppages.js 1497 the command line's Help pages: help lists them;
@@ -77,19 +77,19 @@ jetart.js 39 the jetpack's pictures
 jetpack.js 33 the jetpack
 jumps.js 48 the jump counter
 keynav.js 204 menus by keyboard
-l4dd.js 3348 Quacky Zombies on every screen
+l4dd.js 3347 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
-l4ddangelui.js 203 Dead Ducks Arcade's Angel machine on every screen
+l4ddangelui.js 204 Dead Ducks Arcade's Angel machine on every screen
 l4ddart.js 623 Quacky Zombies' pictures
 l4ddbar.js 281 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and the roof's flare,
-l4ddcatalog.js 201 Quacky Zombies: the Butler's Items tab
+l4ddcatalog.js 199 Quacky Zombies: the Butler's Items tab
 l4dddrops.js 63 Quacky Zombies' drops, drawn
 l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box on every screen
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 5035 the rules of Quacky Zombies
+l4ddrules.js 5007 the rules of Quacky Zombies
 l4ddsfx.js 513 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the zombies far from
 langname.js 5 the name of Sandbox's number language, in one
@@ -110,7 +110,7 @@ merchants.js 376 the merchants
 meters.js 114 the thin bars under my duck's name
 mgj.js 217 Mad God Justin: what the screen shows
 mgjart.js 96 Mad God Justin's new pictures
-mgjrules.js 2303 
+mgjrules.js 2287 
 modes.js 255 the game modes
 music.js 590 the music: our own songs, played from recordings
 musicbar.js 169 the music bar: the song the room hears,
@@ -154,10 +154,10 @@ random.js 9 the two random helpers every mode's rules share:
 report.js 114 Report Bug or Suggest Ideas
 rooms.js 256 Play: create a room, and the rooms online
 router.js 112 screens
-rules.js 6285 the rules of Agree or Disagree
+rules.js 6250 the rules of Agree or Disagree
 sandbox.js 1359 Sandbox: the key windows
 sandboxrules.js 2059 Sandbox: which map it plays on, and who
-sbarms.js 144 Sandbox: a made NPC's weapons in a fight
+sbarms.js 143 Sandbox: a made NPC's weapons in a fight
 sbaudio.js 211 Sandbox: songs players bring in
 sbbody.js 233 Sandbox: an NPC's body, where it can be
 sbbrain.js 87 Sandbox: what a spawned NPC does , on
@@ -199,7 +199,7 @@ shared.js 497 Sandbox Phase 7: Shared, the game modes and
 shell.js 3541 the command line: a small bash
 slices.js 31 long work cut into slices
 sound.js 933 the game's sounds: real recordings, played from small
-specials.js 857 Specials
+specials.js 858 Specials
 spectate.js 97 Survival: watching the others once my duck is
 splash.js 71 the start screen: your duck on a cloud,
 sprintblur.js 54 the sprint's blurred border of my screen (css/app.css
@@ -218,7 +218,7 @@ triviarules.js 458 the rules of Trivia
 ui.js 373 small helpers every screen uses
 umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
-unlocks.js 372 things you unlock
+unlocks.js 413 things you unlock
 upbar.js 69 the green bar on an upload
 updates.js 2933 Updates
 vdd.js 190 Valentine's Duck Date: what the screen shows

@@ -77,7 +77,6 @@ import {
   slotsOf,
   SLOT_KINDS,
   BOX,
-  POOL,
   boxNow,
   HELPER,
   weaponName,
@@ -112,7 +111,7 @@ import {
   ZHATS,
   ZOUTFITS,
 } from "./l4ddrules.js";
-import { kindOf, ARMS } from "./guns.js";
+import { kindOf, ARMS, POOL } from "./guns.js";
 import { fenceZ, zombieZ, zombiesOf } from "./zombies.js";
 import { zSortY } from "./zombieroofs.js";
 import { hOk, hLock } from "./heights.js";
