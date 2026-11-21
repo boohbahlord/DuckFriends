@@ -467,8 +467,7 @@ function pxPic(o, img, w, h) {
     });
   }
 }
-/* nothing shown yet: the same zombie without its own marks or wounds, made while the game loaded (warmZombies), until
-   its own picture is made, rather than nothing (a zombie of the usual size and build) */
+/* until its own is drawn: its plain look, made while the game loaded (warmZombies; a zombie of the usual size and build) */
 function standIn(o, img, w, h) {
   const l = o.l;
   if (!l || l[3] || l[4] || img.tagName !== "IMG" || img.getAttribute("src"))
@@ -621,18 +620,14 @@ function wounds(o, l, i) {
   o.hits = want;
   o.dk = pixelOn() ? zombieDK(l, i, want) : null; // (its parts: goreCanvas)
   o.url = o.dk ? "" : zombieURL(l, i, o.hits);
-  o.uk = "";
-  o.pxk = "";
+  o.uk = o.pxk = "";
   if (!o.dk) plainImg(o);
   if (!pixelOn()) o.img.src = o.url; // (the pixel look: draw() shows it, as pixels)
 }
-/* the gore layer: a zombie is its parts, with its marks and its wounds (l4ddart.js zombieDK), put together from the part
-   sheets (duckparts.js) straight onto its own canvas, w × h css px. Before, every zombie that came in and every new wound
-   on one made a new picture file (and every wound a whole new 30 to 75 KB drawing first): about 3 ms each, mid-game, and
-   on a graphics card each file is a copy back from it (Survival round 21: 300 in 30 s). The canvas takes the img's place
-   once and stays (its hit shake and red blink run on it); until it's first drawn, the stand-in shows, and later what it
-   showed stays till the new one is ready. A zombie the sheets can't make (too big on the screen for them) is made whole,
-   as before */
+/* the gore layer: a zombie is its parts with its marks and wounds (l4ddart.js zombieDK), put together from the part
+   sheets (duckparts.js) onto its own canvas. Before, each zombie coming in and each new wound made a new picture file
+   (about 3 ms, mid-game; Survival round 21: 300 in 30 s). The canvas takes the img's place once (the stand-in till then)
+   and keeps the hit shake and blink. One the sheets can't make (too big on the screen for them) is made whole */
 function goreCanvas(o, w, h) {
   const g = gridPx(),
     cw = Math.max(1, Math.round(w / g)),
@@ -649,8 +644,7 @@ function goreCanvas(o, w, h) {
         o.dk = null;
         o.url = zombieURL(o.l, o.i, o.hits);
         o.pxk = "";
-        plainImg(o);
-        return;
+        return plainImg(o);
       }
       let cv = o.img;
       if (cv.tagName !== "CANVAS") {
