@@ -495,5 +495,34 @@
     "use": 9
    }
   }
+ },
+ "mgj-pick": {
+  "frames": 720,
+  "digest": "cxoz1y",
+  "every": [
+   "pkyz0l",
+   "6ej5wq",
+   "6ej5wq",
+   "13hu11k",
+   "2vhhkd",
+   "12cgce7",
+   "300xv2",
+   "4l1xo1",
+   "12w8y4e",
+   "a7lkg1",
+   "1e46cuk",
+   "456i8o"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.14,
+    "y": 0.2
+   },
+   "sent": {
+    "move": 16,
+    "tick": 60,
+    "use": 12
+   }
+  }
  }
 }
