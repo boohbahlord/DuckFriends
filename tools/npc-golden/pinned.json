@@ -1574,5 +1574,103 @@
    "zombies": 0,
    "sandboxNpcs": ""
   }
+ },
+ "surv-sniper-bait": {
+  "beats": 1500,
+  "digest": "u4rjpx",
+  "every": [
+   "1uec8v3",
+   "miexl0",
+   "1e4g53k",
+   "cx1mtz",
+   "1yjxjv4",
+   "16uwd5v",
+   "ql1jwn",
+   "1efkafq",
+   "1wezpwv",
+   "1pg1l9l",
+   "qj9nex",
+   "1bw4d45",
+   "vft7xe",
+   "1ljlnbi",
+   "1qzk8f8",
+   "1muy77y",
+   "1mcw1nh",
+   "132j31g",
+   "1advm0g",
+   "1jfpg46",
+   "109qgoq",
+   "utpy7z",
+   "1t8woia",
+   "lshd3i",
+   "vf4mio",
+   "1qhh1pn",
+   "ydetd6",
+   "5tmc4d",
+   "904bb0",
+   "ynpymp"
+  ],
+  "seen": {
+   "phases": {
+    "hang": 1500
+   },
+   "came": "Justin, merchant, sniper, soldier",
+   "gunmen": 55,
+   "swipes": 90,
+   "shots": 0,
+   "mgjWaveZombiesPeak": 0,
+   "sandboxMapNpcsPeak": 0,
+   "zombies": 67,
+   "sandboxNpcs": ""
+  }
+ },
+ "surv-criminals-2": {
+  "beats": 1500,
+  "digest": "1lt1s8u",
+  "every": [
+   "q7619k",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx",
+   "iw8jvx"
+  ],
+  "seen": {
+   "phases": {
+    "hang": 1500
+   },
+   "came": "Justin, criminal, merchant",
+   "gunmen": 16,
+   "swipes": 0,
+   "shots": 0,
+   "mgjWaveZombiesPeak": 0,
+   "sandboxMapNpcsPeak": 0,
+   "zombies": 13,
+   "sandboxNpcs": ""
+  }
  }
 }

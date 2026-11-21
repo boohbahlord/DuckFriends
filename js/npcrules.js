@@ -7,10 +7,10 @@
    - nearPairs: the NPCs close enough to touch, pair by pair, to keep them apart.
    - nearest: the one to go after (the nearest, by each brain's own measure).
    - grudge, grudgeOf: whoever hurt an NPC, it goes after for a while, whatever else it would pick.
-   - roll, reloadMs, refill, shotMark: an NPC's guns (a hit's damage, a reload, the magazines, where a shot went).
+   - roll, shotMark: a hit's damage, where a shot went; magOf, reloadOf, refill, spend: an NPC's magazines.
    An NPC's wounds after a hit are wounds.js hitWounds (its breed: gunman, merchant); its HP after a hit is hpmath.js
    hpHurt, as a duck's. */
-import { ARMS } from "./guns.js";
+import { ARMS, GUN_BREEDS } from "./guns.js";
 import { clearShot } from "./zombies.js";
 import { heightAt } from "./hangout/layout.js";
 
@@ -83,19 +83,32 @@ export const roll = (d) =>
     : Array.isArray(d)
       ? d[0] + Math.floor(Math.random() * (d[1] - d[0] + 1))
       : +d || 1;
-/* how long gun w takes to reload a magazine of mag rounds: its own reload time, else its shells one by one, else 1.5 s */
-export const reloadMs = (w, mag = ARMS[w].mag) =>
-  ARMS[w].reload || (ARMS[w].shell ? ARMS[w].shell * mag : 1500);
-/* the reloads that are done fill their magazines: guns (its guns, by slot), mg (rounds in each), rl (when each one's
-   reload is done, 0: none), full(g): a full magazine of g; ok(g, i): may this one fill (Sandbox's: a gun with a magazine,
-   and empty) */
-export function refill(guns, mg, rl, now, full, ok = null) {
+/* ---------- an NPC's magazines: the gunmen's and Sandbox's NPCs', one mechanic; what differs is the breed's row in
+   guns.js GUN_BREEDS (gunman, sbnpc) ----------
+   mg: the rounds left in each gun (by slot), rl: when each one's reload is done (0: none) */
+/* the magazine gun w holds: the breed's own for it, else the gun's, else the breed's for any gun (the gunmen give every
+   gun one); 0: none, it never runs out (a Sandbox NPC's bow) */
+export const magOf = (w, breed) => {
+  const B = GUN_BREEDS[breed];
+  return (B.mag && B.mag[w]) || ARMS[w].mag || B.magAll || 0;
+};
+/* how long gun w takes to reload its magazine: its own reload time, else its shells one by one, else 1.5 s */
+export const reloadOf = (w, breed) =>
+  ARMS[w].reload || (ARMS[w].shell ? ARMS[w].shell * magOf(w, breed) : 1500);
+/* the reloads that are done fill their magazines (a gun with one, emptied) */
+export function refill(guns, mg, rl, now, breed) {
   guns.forEach((g, i) => {
-    if (rl[i] && rl[i] <= now && (!ok || ok(g, i))) {
-      mg[i] = full(g);
+    if (rl[i] && rl[i] <= now && g && magOf(g, breed) && mg[i] <= 0) {
+      mg[i] = magOf(g, breed);
       rl[i] = 0;
     }
   });
+}
+/* n rounds fired from slot i's gun g: off its magazine, and the reload starts once it's empty (a gun with none: nothing) */
+export function spend(mg, rl, i, g, n, now, breed) {
+  if (!magOf(g, breed)) return;
+  mg[i] -= n;
+  if (mg[i] <= 0) rl[i] = now + reloadOf(g, breed);
 }
 /* where a shot at t went, as the screen draws it ([when, x, y]): off px from it (0: a hit) at angle a, half as far up and
    down (the floor seen from above) */
