@@ -112,7 +112,7 @@ meters.js 114 the thin bars under my duck's name
 mgj.js 217 Mad God Justin: what the screen shows
 mgjart.js 96 Mad God Justin's new pictures
 mgjrules.js 2287 
-modes.js 415 the game modes
+modes.js 417 the game modes
 music.js 590 the music: our own songs, played from recordings
 musicbar.js 169 the music bar: the song the room hears,
 name.js 165 fonts and how a player's name looks
@@ -204,7 +204,7 @@ shellcmdroom.js 201 the room, game and test commands (a pure
 shellcmds.js 4 the shell's command table:
 shellfs.js 846 the shell's files and what every command leans
 shellpeople.js 220 the people, the room and the game's helpers
-shellstats.js 244 the stats and forgame commands' helpers (a pure
+shellstats.js 245 the stats and forgame commands' helpers (a pure
 slices.js 31 long work cut into slices
 sound.js 935 the game's sounds: real recordings, played from small
 specials.js 858 Specials
@@ -227,7 +227,7 @@ triviarules.js 458 the rules of Trivia
 ui.js 380 small helpers every screen uses
 umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
-unlocks.js 413 things you unlock
+unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an upload
 updates.js 3003 Updates
 vdd.js 190 Valentine's Duck Date: what the screen shows
