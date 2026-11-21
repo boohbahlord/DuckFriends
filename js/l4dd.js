@@ -147,7 +147,7 @@ import { fxHitAt, fxEye, heavyOff } from "./fx.js";
 import { vibrate, hitPx, HIT, again } from "./fxmotion.js";
 import { pixelOn, gridPx, raster, rasterReady } from "./pixel.js";
 import { olAdd, olFloor, olRoofed, olPic, DROP_OL } from "./outlines.js";
-import { confirmBox, ducksOn, windowOpen } from "./ui.js";
+import { confirmBox, ducksOn, kept, windowOpen } from "./ui.js";
 import { angelOf, ANGEL } from "./l4ddangel.js";
 import { angelic, jerrySVG } from "./powerart.js"; // (after l4ddart.js, as game.js imports it)
 import { hashText } from "./pxdom.js";
@@ -2445,8 +2445,7 @@ function peek(tag, s, me) {
   if (!m || (w === peekW && !peekNow)) return;
   const first = peekW === null,
     was = peekW;
-  peekW = w;
-  peekNow = false;
+  [peekW, peekNow] = [w, false];
   if (first) return; // (not when the game starts: only a switch)
   let el = tag.querySelector(".l4-peek");
   if (!el) {
@@ -2470,12 +2469,13 @@ function peek(tag, s, me) {
     ),
     from = list.findIndex(([x]) => x === was),
     track = el.querySelector(".sp-track");
-  track.innerHTML = list
-    .map(
-      ([x, cls]) =>
+  track.replaceChildren(
+    ...list.map(([x, cls]) =>
+      kept(
         `<span class="sp-slot ${cls}"><i>${angelOf(s, me, x) ? angelic(weaponIcon(x, (s.players[me] || {}).duck)) : weaponIcon(x, (s.players[me] || {}).duck)}</i></span>`,
-    )
-    .join("");
+      ),
+    ),
+  ); // (each slot made once and kept: ui.js kept)
   const lay = (at) =>
     track.querySelectorAll(".sp-slot").forEach((b, j) => {
       const a = Math.abs(j - at);

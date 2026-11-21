@@ -71,6 +71,13 @@ export function el(html) {
   t.innerHTML = html.trim();
   return t.content.firstElementChild;
 }
+/* an element made from its html once and kept by it: put back on the page as it was, its pictures' pixels with it (made
+   again each time, every drawing in it went through pxdom again) */
+const keptEls = new Map();
+export const kept = (html) => {
+  if (!keptEls.has(html)) keptEls.set(html, el(html));
+  return keptEls.get(html);
+};
 
 /* a window over the page; resolves with what it was closed with (the X and Esc close it with null) */
 export function openWindow(html, { cls = "", onOpen, cover = true } = {}) {
