@@ -15921,6 +15921,7 @@ html.moving .l4-heat.hot::after {
 /* the weapons bar: on a computer in the bottom bar's right corner, my HP under it */
 .l4bar {
   --hk: clamp(1.9rem, 2.9vw, 2.8rem);
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -17537,6 +17538,41 @@ html.moving .hpm-ammo.rl {
 }
 .hpm-stam.tired i {
   background: #6a7d98;
+}
+/* the name of what's in my hand and its caliber, "M1911 (.45 ACP)": very small, next to the slots (itemname.js): on a
+   computer in the bottom bar's strip over the slots' left end, on a phone beside the specials' slider (.end: left of
+   it, held sideways) */
+.iname {
+  position: absolute;
+  z-index: 2;
+  font-size: 0.5rem;
+  line-height: 1.1;
+  color: #e9e9f2d9;
+  overflow-wrap: break-word;
+  pointer-events: none;
+  text-shadow:
+    0 0 0.1rem #000,
+    0 0.05rem 0.05rem #000;
+}
+.l4bar > .iname {
+  left: 0;
+  bottom: 100%;
+  white-space: nowrap;
+}
+.sp-phone > .iname {
+  left: calc(100% + 6px);
+  top: 50%;
+  translate: 0 -50%;
+  width: max-content;
+}
+.iname.end {
+  position: static;
+  order: -2;
+  align-self: center;
+  text-align: right;
+} /* (a phone on its side: in the row, just left of the slider, itemname.js) */
+.iname.end:has(+ .sp-phone.gone, + .sp-phone.none) {
+  opacity: 0;
 }
 /* mine: under the hotbar in the bottom bar's right corner (a phone: under the specials' slider, in the middle) */
 .hb-stack {

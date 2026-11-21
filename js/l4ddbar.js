@@ -10,6 +10,7 @@ import { el, kept } from "./ui.js";
 import { ICONS, weaponIcon } from "./l4ddart.js";
 import { angelic } from "./powerart.js";
 import { angelOf } from "./l4ddangel.js";
+import { mountItemName, itemLabel } from "./itemname.js";
 /* my duck's look (its pistol's colors) */
 const duckOf = (s, me) => (s.players[me] || {}).duck;
 /* an Angelic weapon's icon: Noah's look on a drawing; an emoji (the pistol's) gets the same glow and halo from css */
@@ -85,6 +86,7 @@ export function mountL4Bar(S, api) {
   const row = document.createElement("div");
   row.className = "l4bar";
   let sig = "";
+  const iname = mountItemName(row, () => S.querySelector(".sp-phone")); // (the name of what's in my hand, and its caliber: itemname.js)
   function draw() {
     const s = api.state();
     if (!s || !s.hang || !s.hang.l4) return;
@@ -101,6 +103,7 @@ export function mountL4Bar(S, api) {
       next = JSON.stringify([m, held, off, out, down, dark, to, toW]);
     if (next === sig) return;
     sig = next;
+
     /* each icon made once and kept (ui.js kept), put in its slot's <i>: the row is made again at every shot (its
        counts), and made again with it, every icon went through pxdom again */
     const icons = (list) =>
@@ -169,6 +172,7 @@ export function mountL4Bar(S, api) {
         b.replaceWith(nb);
       });
     icons(ics);
+    iname.show(out || !held ? "" : itemLabel(weaponName(held), held));
   }
   const press = (e) => {
     const b = e.target.closest("[data-l4w]");
@@ -187,6 +191,7 @@ export function mountL4Bar(S, api) {
     refresh: draw,
     destroy() {
       row.remove();
+      iname.destroy();
     },
   };
 }
