@@ -57,7 +57,7 @@ export const jumpKept = (j, a) =>
   j
     ? {
         ...(+a.tb > 0 ? { tb: Math.min(3.5, +a.tb) } : {}),
-        ...(a.hr != null && isFinite(a.hr)
+        ...(typeof a.hr === "number" && isFinite(a.hr)
           ? { hr: Math.min(9, Math.max(0, +a.hr)) }
           : {}),
       }
