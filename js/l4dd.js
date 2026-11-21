@@ -1419,7 +1419,7 @@ function paint(now, ctx) {
         p.left * q,
         p.top * q,
         r,
-        0.2 + 0.05 * (5 - (brd[o.id] ?? 5)),
+        0.2 + 0.05 * (5 - (brd[o.id] ?? L4.BOARDS)),
       ]);
   }
   /* the merchant stands in a little light while he sells, and the fireplace's weapon glows while it's out */

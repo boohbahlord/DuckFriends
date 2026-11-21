@@ -21,16 +21,10 @@ import {
   quackStats,
   WORD_MAX,
   CAT_MAX,
+  quackBlank,
 } from "./quackrules.js";
-import { seenDuck, seenName } from "./looks.js";
+import { seenDuck, seenName, GONE, player } from "./looks.js";
 
-const GONE = {
-  name: "Gone",
-  duck: { color: "#b7bccb" },
-  card: { color: "#8a8fa3" },
-  nameStyle: {},
-};
-const player = (s, id) => s.players[id] || GONE;
 const nm = (s, id) => {
   const p = player(s, id);
   return `<span class="wq-w">${nameHTML(p.name, seenName(p))}</span>`;
@@ -294,19 +288,7 @@ export function quackStatsHTML(s) {
 /* a player's "This game" box in the View stats window */
 export function quackBoxHTML(s, id) {
   const p = player(s, id),
-    w = quackStats(s.wqPast || [])[id] || {
-      right: 0,
-      votes: 0,
-      quack: 0,
-      quackWins: 0,
-      wins: 0,
-      losses: 0,
-      outs: 0,
-      first: 0,
-      laps: 0,
-      clueMs: 0,
-      clues: 0,
-    };
+    w = quackStats(s.wqPast || [])[id] || quackBlank();
   return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">${w.votes} vote${w.votes === 1 ? "" : "s"}</div></div></header>
     <dl><dt>Voted for the real Quack</dt><dd>${w.right}</dd><dt>Rounds won</dt><dd>${w.wins}</dd><dt>Rounds as the Quack</dt><dd>${w.quack}</dd><dt>Won as the Quack</dt><dd>${w.quackWins}</dd><dt>Laps lasted as the Quack</dt><dd>${w.laps}</dd><dt>First onto the Quack's tile</dt><dd>${w.first}</dd><dt>Voted out while innocent</dt><dd>${w.outs}</dd><dt>Average clue turn</dt><dd>${w.clues ? `${(w.clueMs / w.clues / 1000).toFixed(1)} s` : "—"}</dd><dt>Jumps this game</dt><dd>${(s.jumps || {})[id] || 0}</dd></dl></article>`;
 }

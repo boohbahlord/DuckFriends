@@ -2146,7 +2146,10 @@ export function slotFor(s, id, w, hand0) {
     kind = kindOf(w);
   if (!kit || kit.sl.includes(w)) return -1;
   const hand = kit.sl.includes(hand0) ? hand0 : ((s.pos || {})[id] || {}).w;
-  if (kind === "ranged") return [1, 2].find((i) => kit.sl[i] === hand) ?? 1; // (no ranged weapon in hand: it takes the first ranged slot's place)
+  if (kind === "ranged")
+    return (
+      [1, 2].find((i) => kit.sl[i] === hand) ?? SLOT_KINDS.indexOf("ranged")
+    ); // (no ranged weapon in hand: it takes the first ranged slot's place)
   if (kind !== "special") return kind === "melee" ? 0 : -1;
   const its = ITEM_SLOTS.filter((i) => i < kit.sl.length),
     used = (i) => {
@@ -2157,7 +2160,7 @@ export function slotFor(s, id, w, hand0) {
     its.find((i) => !kit.sl[i]) ??
     its.find(used) ??
     its.find((i) => kit.sl[i] === hand) ??
-    3
+    ITEM_SLOTS[0]
   );
 }
 export function give(s, id, w, hand0) {

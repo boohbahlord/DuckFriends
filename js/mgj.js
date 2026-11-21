@@ -9,7 +9,7 @@ import { hpText } from "./hpmath.js";
 import { duckSVG } from "./duck.js";
 import { nameHTML } from "./name.js";
 import { cloudHTML } from "./brackets.js";
-import { fmtJumps } from "./format.js";
+import { fmtJumps, plural } from "./format.js";
 import { FRIDGE } from "./art.js";
 import { JUSTIN_PLAYER } from "./boardjustin.js";
 import { mgjStats, GOOD_ID, GOOD_NAME, SKY_ID } from "./mgjrules.js";
@@ -57,7 +57,6 @@ export const pickHTML = (P) =>
 /* a name for a hit that wasn't a player's: the sky (a pickup's lightning, fire or meteor) or Good Justin God */
 const whoName = (s, id) =>
   id === GOOD_ID ? GOOD_NAME : id === SKY_ID ? "the sky" : null;
-const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 
 export const mgjHPHTML = (s) => {
   const m = s.mgj || { hp: 0, max: 1 },

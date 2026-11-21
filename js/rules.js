@@ -1465,7 +1465,7 @@ function startResults(s, now) {
 const WRITE_PHASES = ["submit", "topic", "seeds", "words", "tvwrite"];
 export const catchLen = (s) =>
   +(WRITE_PHASES.includes(s.phase)
-    ? (s.options.writeCatch ?? 30)
+    ? (s.options.writeCatch ?? OPTIONS_DEFAULT.writeCatch)
     : s.options.catchUp) || 0; // (seconds; writing has its own)
 function catchUp(s, now, enough) {
   if (enough && catchLen(s) && !s.catchEnds)
