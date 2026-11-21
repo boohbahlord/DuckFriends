@@ -17993,6 +17993,16 @@ html.keyboard .hp-pop:not(.small) {
 .l4z .hp-pop {
   bottom: calc(var(--k, 1) * 96px + var(--up, 0) * 0.7rem);
 }
+/* an NPC drawn by npcview.js (Sandbox's on the worlds, Survival's gunmen): just over its head (--top), over its name
+   when it has one */
+.l4z[data-sbi] .hp-pop {
+  bottom: auto;
+  top: calc(var(--top, 0px) - 0.2rem - var(--up, 0) * 0.7rem);
+  translate: calc(-50% + var(--dx, 0px)) -100%;
+}
+.l4z[data-sbi]:has(.sb-npc-name) .hp-pop {
+  top: calc(var(--top, 0px) - 1.3rem - var(--up, 0) * 0.7rem);
+}
 @keyframes hp-pop {
   0% {
     opacity: 0;
@@ -18011,21 +18021,23 @@ html.keyboard .hp-pop:not(.small) {
   }
 }
 /* Quacky Zombies' headshot: the head bursts in drops of blood and a CRIT rises over it (game.js, the l4crit fx; a
-   third smaller than it was: the owner's, Nov 4) */
+   third smaller than it was: the owner's, Nov 4). Lettered as "−2 HP" is (.hp-pop), a little smaller than it was (the
+   owner's, Nov 21 17:25Z: "a smidgen tiny smaller, not much (dont make it such thick lettering, make it look like the
+   normal lettering for things like "-2 hp")") */
 .l4-crit {
   position: absolute;
   z-index: 40;
   translate: -50% -100%;
   pointer-events: none;
-  font-family: "Lilita One", sans-serif;
-  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-size: clamp(1.25rem, 2.7vw, 1.8rem);
+  font-weight: 800;
   line-height: 1;
+  white-space: nowrap;
   color: #ff3b2f;
-  -webkit-text-stroke: 0.11rem #2a0508;
-  paint-order: stroke fill;
   text-shadow:
-    0 0.12rem 0 #2a0508,
-    0 0 0.8rem #ff3b2f99;
+    0 0 0.12rem #000,
+    0 0 0.12rem #000,
+    0 0.06rem 0.06rem #000;
   animation: l4-crit 1.15s ease-out both;
 }
 @keyframes l4-crit {
@@ -19017,8 +19029,7 @@ body:has(> .vt) .win-back {
 
 /* a crit on a duck outside Quacky Zombies (game.js pcrit): the same CRIT, smaller */
 .l4-crit.small {
-  font-size: clamp(1.2rem, 2.6vw, 1.8rem);
-  -webkit-text-stroke: 0.1rem #2a0508;
+  font-size: clamp(1.1rem, 2.35vw, 1.6rem);
 }
 
 /* the frame-rate readout (perf.js, fps on): small, see-through, never in the way of a click */

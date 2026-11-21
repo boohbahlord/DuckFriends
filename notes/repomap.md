@@ -124,7 +124,7 @@ notes.js 101 Notes : question ideas, written any
 npcrules.js 119 what every NPC's brain shares
 npcs.js 49 the characters you can mute: Justin,
 npcshared.js 29 what every NPC shares, whatever mode
-npcview.js 206 an NPC on a world ,
+npcview.js 213 an NPC on a world ,
 numberat.js 1323 Seriat: the language
 numberatrun.js 1675 Seriat: files that do things
 numerat.js 181 Seriat: the number reader
