@@ -49,7 +49,7 @@ friends.js 236 friends
 front.js 109 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 214 how a held weapon and the
-game.js 8649 the game screen
+game.js 8535 the game screen
 gamedefaults.js 43 the game's own numbers, for every
 gameready.js 47 what the game's loading screen waits
 gamesettings.js 1755 Game Settings: the whole screen, like
@@ -70,6 +70,7 @@ hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
 hooks.js 3 hooks between screens that can't import
 hotbar.js 480 the specials on the number keys
+hotpick.js 194 What goes in my duck's hand
 hpmath.js 23 HP in tenths
 hpmeter.js 327 HP meters and the little "+1
 invisible.js 11 Who is invisible right now :
