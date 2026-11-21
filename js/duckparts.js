@@ -399,7 +399,11 @@ export async function duckFromParts(d, cw, ch, frames = 1) {
   const c = document.createElement("canvas");
   c.width = ow;
   c.height = oh * frames;
-  c.getContext("2d").putImageData(applyPalette(img), 0, 0);
+  c.getContext("2d", { willReadFrequently: true }).putImageData(
+    applyPalette(img),
+    0,
+    0,
+  ); // (kept in memory, not on the graphics card: made into a file next (pixel.js toBlob), and a graphics card's canvas is copied back first, holding the game each time: zombies coming in, Nov 21)
   return c;
 }
 
@@ -562,6 +566,10 @@ async function catFromParts(d, cw, ch) {
   const c = document.createElement("canvas");
   c.width = cw;
   c.height = ch;
-  c.getContext("2d").putImageData(applyPalette(img), 0, 0);
+  c.getContext("2d", { willReadFrequently: true }).putImageData(
+    applyPalette(img),
+    0,
+    0,
+  );
   return c;
 }
