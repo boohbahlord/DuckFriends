@@ -122,7 +122,8 @@ window.__golden = async (sc) => {
     ever = new Set(); // (which NPCs came)
   const lastSwipe = {}; // (each zombie's last swipe, s.hang.zs: a new one is one more swipe)
   let swipes = 0,
-    mzPeak = 0; // (the most Mad God Justin's wave zombies out at once)
+    mzPeak = 0, // (the most Mad God Justin's wave zombies out at once)
+    sbPeak = 0; // (the most of Sandbox's NPCs on a map at once, s.hang.sbz)
   /* "bait": from that beat on, my duck stands on the nearest zombie each beat (and keeps its health), so the zombies swipe
      at it: every run then pins swipes, their times and the damage (the computers otherwise keep away from the zombies) */
   let hp0 = null;
@@ -135,6 +136,8 @@ window.__golden = async (sc) => {
       if ((zp[k + 3] & 15) !== 3)
         list.push([(zp[k + 1] - 150) / W, zp[k + 2] / H]);
     for (const o of (s.mz && s.mz.zb) || []) if (!o.d) list.push([o.x, o.y]);
+    for (const o of (s.hang && s.hang.sbz && s.hang.sbz.zb) || [])
+      if (!o.d) list.push([o.x / W, o.y / H]); // (Sandbox's on a map: world px, sbcabin.js)
     if (!me || !list.length) return;
     list.sort(
       (a, c) =>
@@ -172,7 +175,16 @@ window.__golden = async (sc) => {
         lastSwipe["m" + o.i] = o.a;
         swipes++;
       }
+    for (const o of (s.hang && s.hang.sbz && s.hang.sbz.zb) || [])
+      if (o.a && lastSwipe["c" + o.i] !== o.a) {
+        lastSwipe["c" + o.i] = o.a;
+        swipes++;
+      }
     mzPeak = Math.max(mzPeak, ((s.mz && s.mz.zb) || []).length);
+    sbPeak = Math.max(
+      sbPeak,
+      ((s.hang && s.hang.sbz && s.hang.sbz.zb) || []).length,
+    );
     out.all.push(hash(JSON.stringify(s)));
     const p = {};
     for (const key of Object.keys(s.hang || {}).sort())
@@ -188,6 +200,7 @@ window.__golden = async (sc) => {
     gunmen: g.length,
     swipes,
     mgjWaveZombiesPeak: mzPeak,
+    sandboxMapNpcsPeak: sbPeak,
     zombies: ((r.state.hang && r.state.hang.zp) || []).length / 4,
     sandboxNpcs: [
       ...(((r.state.hang && r.state.hang.sbz) || {}).zb || []),
