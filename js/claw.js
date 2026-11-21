@@ -7,6 +7,7 @@
    if the game plays like you see it in this footage") */
 import { pxSVG, rasterReady, pixelOn } from "./pixel.js";
 import { hashText } from "./pxdom.js";
+import { now as clockNow } from "./clock.js";
 
 const CLAW =
   '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" width="40" height="40"><path d="M10 6C16 16 18 26 14 36M19 4C25 14 27 24 23 34M28 6C34 16 36 26 32 36" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/></svg>';
@@ -43,4 +44,16 @@ export function warmClaw(k) {
   if (!pixelOn()) return;
   rasterReady("s" + hashText(CLAW), CLAW, size(k), size(k)); // (pxSVG's key)
   rasterReady("s" + hashText(SWIPE), SWIPE, swipeW(k), (swipeW(k) * 64) / 48);
+}
+/* the tell before a zombie's swing: it leans back on its heels (the owner's, Nov 21 18:59Z: "I guess we'll just stick with
+   the lean back thing for now"). From its wind-up's start (wu, the host's game time: zombies.js) it tips back over the
+   wind-up, slowing as it gets there, and comes forward as the hit lands with its swipe lines. s: the state, for the
+   game time its wind-ups keep (since the round's t0; Sandbox, no round: the clock).
+   Gives a rotate() for its body (in its own frame, so back is back whichever way it faces), or "" */
+const LEAN = { ms: 500, deg: 12 }; // (ms: zombies.js SWIPE[0], the wind-up)
+export function leanBack(wu, s) {
+  if (!wu) return "";
+  const T = clockNow() - ((s.hang.l4 || {}).t0 ?? 0),
+    k = Math.min(1, Math.max(0, (T - wu) / LEAN.ms));
+  return k ? ` rotate(${(-LEAN.deg * (1 - (1 - k) ** 2)).toFixed(1)}deg)` : "";
 }
