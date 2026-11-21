@@ -3770,7 +3770,6 @@ function crimson(ms) {
 const NEW_GUN_SFX = {
   laser: (o) => sfx.laser(o),
   dbarrel: (o) => sfx.dbarrel(o),
-  dbuck: (o) => sfx.dbarrel(o),
   burst: (o) => {
     for (let i = 0; i < ARMS.burst.burst; i++)
       setTimeout(() => sfx.burst(o), i * ARMS.burst.gap);
@@ -3829,6 +3828,14 @@ function playFx(f) {
   const s = R.state,
     fxl = S && $(".fxl", S);
   if (!fxl || !geo) return;
+  /* a small CRIT rising at (x, y), with no blood: a crit that didn't kill (Adam, Nov 21 18:31Z: every crit shows one) */
+  const critMark = (x, y) => {
+    const word = el(
+      `<div class="l4-crit small" style="left:${x.toFixed(1)}px;top:${y.toFixed(1)}px" aria-hidden="true">CRIT</div>`,
+    );
+    fxl.append(word);
+    setTimeout(() => word.remove(), 1200);
+  };
   const now = clockNow(),
     size = geo.size,
     posOf = (id) =>
@@ -4335,11 +4342,12 @@ function playFx(f) {
     /* a headshot in Quacky Zombies: its head bursts in blood (l4ddart.js draws it headless after) and a CRIT rises over
        it, so it's never missed (owner 2026-11-04 04:01Z), smaller since (the owner's, Nov 4) */
     if (!geo.hang && !f.b) return;
-    sfx.gore(f.b ? {} : { x: f.x, y: f.y }); // (a gush of gore: the owner's, Nov 17 12:28Z)
     const a = f.b
         ? place({ x: f.x, y: f.y }, 0, 1)
         : world.place({ x: f.x / HW, y: f.y / HH }, 0),
       top = a.top - size * 0.78; // (f.b: on a board, Mad God Justin's zombies; mgjrules.js mgjZombieHit)
+    if (f.m) return critMark(a.left, top - size * 0.3); // (a crit that didn't kill: only the small CRIT)
+    sfx.gore(f.b ? {} : { x: f.x, y: f.y }); // (a gush of gore: the owner's, Nov 17 12:28Z)
     bloodBurst(a.left, top, 12, 2.6, size * 0.3, size * 0.5); // (a smaller burst than it was, as a duck's crit: the owner's, Nov 4)
     neckSpray(a.left + size * 0.12, a.top - size * 0.5); // (then blood keeps spurting out of its neck for a moment)
     const word = el(
@@ -4367,11 +4375,12 @@ function playFx(f) {
   } else if (f.kind === "pcrit") {
     /* a crit on a duck (wounds.js): its head bursts in blood, its neck spurts a moment, and a CRIT smaller than Quacky
        Zombies' rises over it */
-    sfx.gore(geo.hang ? { x: f.x * HW, y: f.y * HH } : {}); // (a gush of gore: the owner's, Nov 17 12:28Z)
     const a = geo.hang
         ? world.place({ x: f.x, y: f.y }, f.hz || 0)
         : place({ x: f.x, y: f.y }, 0, 1),
       top = a.top - size * 0.78;
+    if (f.m) return critMark(a.left, top - size * 0.3); // (a crit that didn't put it down: only the small CRIT)
+    sfx.gore(geo.hang ? { x: f.x * HW, y: f.y * HH } : {}); // (a gush of gore: the owner's, Nov 17 12:28Z)
     bloodBurst(a.left, top, 12, 2.6, size * 0.3, size * 0.5);
     neckSpray(a.left + size * 0.12, a.top - size * 0.5);
     const word = el(

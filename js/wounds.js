@@ -72,7 +72,6 @@ const WOUND_OF = {
   burst: "big",
   revolver: "big",
   dbarrel: "big",
-  dbuck: "shot",
   slug: "big",
   chaingun: "big",
   chain: "big", // (the chain gun's shot outside Quacky Zombies, rules.js chainShot)
@@ -155,22 +154,23 @@ function woundCode(had, w, can = {}) {
 }
 
 /* ---------- who takes hits (Type Object: every mode's hit is Dead Ducks Arcade's; these say how each kind differs) ----------
-   head: when a headshot (or a crit) blows its head off, once: "hit" on any, "kill" only on one that kills it, never
-   without (a duck's crit is its own: rules.js wounded). blast: a blast that kills it tears it apart (every DEATH code
+   head: when a crit blows its head off, once: "kill" only on one that kills it (the owner's, Nov 21 17:25Z: "a critical
+   hit on any duck will give a headshot effect only if it is the killing blow"), never without (a duck's crit is its
+   own: rules.js wounded). blast: a blast that kills it tears it apart (every DEATH code
    it hasn't got). can(look): what a hit can knock off it (a hat, a face item) */
 const NONE = () => ({});
 export const WOUND_BREEDS = {
-  zombie: { head: "hit", can: NONE }, // (Dead Ducks Arcade's, Mad God Justin's waves, Sandbox's on a map)
-  justin: { head: "hit", can: knockable }, // (on the board and in Hangout)
+  zombie: { head: "kill", can: NONE }, // (Dead Ducks Arcade's, Mad God Justin's waves, Sandbox's on a map)
+  justin: { head: "kill", can: knockable }, // (on the board and in Hangout)
   gunman: { head: "kill", blast: true, can: NONE }, // (Survival's gunmen and the friendly squad)
   merchant: { head: "kill", blast: true, can: knockable },
   duck: { can: knockable }, // (its wounds come and go: pwHit)
 };
-/* the wounds one of breed b has after a hit by weapon w (had: its wounds so far). how: head (a headshot or a crit),
+/* the wounds one of breed b has after a hit by weapon w (had: its wounds so far). how: head (a crit),
    dead (the hit killed it), blast (it was a blast), look (what it looks like: what can be knocked off) */
 export function hitWounds(had, w, b, { head, dead, blast, look } = {}) {
   had = had || "";
-  if (head && (b.head === "hit" || (b.head === "kill" && dead)))
+  if (head && b.head === "kill" && dead)
     return had.includes("x") ? had : had + "x0";
   if (b.blast && dead && blast)
     return had + DEATH.filter((c) => !had.includes(c)).join("");
@@ -212,25 +212,9 @@ export const goreFree = (codes = "") =>
 
 /* ---------- the ducks' wounds (in Quacky Zombies too: a zombie's claw, the owner's, Nov 4 08:05Z) ----------
    Each wound goes away by itself 6 to 12 seconds (a roll for each) after its duck is up again: the clock stops while it
-   plays dead. A crit (PCRIT: a weapon's chance, as Quacky Zombies' headshots) takes all its HP, blows its head off
-   (x0) and keeps it down CRIT_DOWN ms; a grenade that kills it leaves it torn apart, headless and burnt (DEATH). s.pw = { id: { m: [[code, ms left]], at: when its clock started
+   plays dead. A crit (guns.js critOf, as everywhere) that puts it down blows its head off (x0) and keeps it down
+   CRIT_DOWN ms; a grenade that kills it leaves it torn apart, headless and burnt (DEATH). s.pw = { id: { m: [[code, ms left]], at: when its clock started
    (0: stopped, it's down) } } */
-export const PCRIT = {
-  handgun: 0.05,
-  bow: 0.05,
-  arrow: 0.05,
-  sniper: 0.05,
-  smg: 0.0175,
-  tommy: 0.05,
-  ump: 0.05,
-  ak: 0.03,
-  revolver: 0.04,
-  lmg: 0.0125,
-  pan: 0.5, // (half the pan's hits: the owner's, Nov 16)
-  burst: 0.03,
-  dbarrel: 0.1,
-  slug: 0.1,
-}; // (Quacky Zombies' guns: their headshot chances there, l4ddrules.js ARMS)
 export const CRIT_DOWN = 4000;
 export const DEATH = ["g0", "x0", "f0"];
 const FADE = [6000, 12000];

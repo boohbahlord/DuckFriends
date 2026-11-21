@@ -1,4 +1,4 @@
-import { hpHeal, hpHurt, tenths } from "./hpmath.js";
+import { hpHeal, hpHurt, hundredths } from "./hpmath.js";
 import { jumpDodges } from "./jump.js";
 /* ---------- the rules of Mad God Justin ----------
    A boss fight: every duck has the knife (1), the pistol (2: it never reloads, in place of the bow, the owner's,
@@ -115,7 +115,7 @@ export function mgjSoak(s, id, now, dmg = 1) {
   if (!max || !m || !P || P.dead || s.phase !== "boss") return false;
   if (((m.safe || {})[id] || 0) > now) return true;
   m.safe = { ...m.safe, [id]: now + SOAK_MS };
-  const lost = tenths(((m.lost || {})[id] || 0) + dmg); // (the office chair takes 2, owner 2026-11-03 17:15Z; in tenths, up while any HP is left: hpmath.js)
+  const lost = hundredths(((m.lost || {})[id] || 0) + dmg); // (the office chair takes 2, owner 2026-11-03 17:15Z; in hundredths, up while any HP is left: hpmath.js)
   if (lost >= max) {
     const rest = { ...m.lost };
     delete rest[id];
@@ -136,7 +136,7 @@ export function mgjHalf(s, id, now) {
   const lost = (m.lost || {})[id] || 0,
     cut = Math.floor((max - lost) / 2);
   if (!cut) return false;
-  m.lost = { ...m.lost, [id]: tenths(lost + cut) };
+  m.lost = { ...m.lost, [id]: hundredths(lost + cut) };
   hurtFx(s, id, now);
   return true;
 }
@@ -168,11 +168,10 @@ export const PUMP = 1750,
 /* his guns' bursts (the owner's, Nov 3, in place of the pistol): n bullets, one every gap ms, each a little off the aim
    (spread, radians); then a reload of reload ms. Each bullet takes 1 HP (rules.js: mgjSoak). PACE: how much sooner every
    attack of his comes than it used to (the owner: way faster), on top of the Xbox's 0.7 */
-/* his charge (the owner's, Nov 3): every DASH_EVERY ms or so (sooner with his faster attacks) he crouches for DASH_TELL
+/* his charge (the owner's, Nov 3): every 10 s or so (sooner with his faster attacks) he crouches for DASH_TELL
    (the tell, a red shake), then sprints at DASH_V board widths a second to where the duck stood when the tell ended;
    a duck in his way flies DASH_FAR times the hammer's distance, with no damage. Walking off his line or jumping dodges it */
-const DASH_EVERY = 10000,
-  DASH_TELL = 600,
+const DASH_TELL = 600,
   DASH_V = 0.55,
   DASH_FAR = 1.6, // (times the hammer's KB_FAR: rules.js isn't loaded yet when this file is, so it's multiplied where it's used)
   DASH_R = 1.1; // (how near his path a duck is hit, in duck lengths, times his size)
@@ -1307,7 +1306,7 @@ function pickTick(s, now, at, log, fx) {
         continue;
       const lost = { ...m.lost },
         most = mgjPHp(s),
-        left = tenths(most - hpHeal(most - lost[id], 1, most)); // (a part-empty block fills first: hpmath.js)
+        left = hundredths(most - hpHeal(most - lost[id], 1, most)); // (a part-empty block fills first: hpmath.js)
       if (left > 0) lost[id] = left;
       else delete lost[id];
       m.lost = lost;
@@ -2275,13 +2274,14 @@ export function mgjZombieHit(s, near, w, now, by, sh = null) {
     }
     if (sh) sh.zh = [...(sh.zh || []), o.i];
     hit = true;
-    o.hp = t.dmg >= ALL_HP ? 0 : hpHurt(o.hp, t.dmg); // (in tenths, as every HP: hpmath.js)
-    o.w = hitWounds(o.w, w, WOUND_BREEDS.zombie, { head: t.head }); // (its wounds, as Dead Ducks Arcade's zombie gets them: wounds.js)
+    o.hp = t.dmg >= ALL_HP ? 0 : hpHurt(o.hp, t.dmg); // (in hundredths, as every HP: hpmath.js)
+    o.w = hitWounds(o.w, w, WOUND_BREEDS.zombie, { head: t.crit, dead: !o.hp }); // (its wounds, as Dead Ducks Arcade's zombie gets them: wounds.js)
     if (o.hp <= 0) o.d = now;
     if (z.sb && by) o.mad = grudge("p:" + by, now, MAD); // (Sandbox's: it goes after whoever hurt it, sbbrain.js)
     if (o.d && (w === "grenade" || w === "glauncher") && !o.w.includes("g0"))
       o.w += "g0"; // (a blast's gore: every chunk, cuts and big holes, as there)
-    fx({ kind: t.head ? "l4crit" : "hitmark", b: 1, x: o.x, y: o.y });
+    const mk = t.crit && o.hp && { m: 1 }; // (a crit: the CRIT, and its head if it killed; m: only the mark)
+    fx({ kind: t.crit ? "l4crit" : "hitmark", b: 1, x: o.x, y: o.y, ...mk });
   }
   return sh ? (sh.zh || []).length >= most : hit;
 }

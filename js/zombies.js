@@ -155,7 +155,7 @@ export function zombies(s) {
       i,
       x: zp[k + 1],
       y: zp[k + 2],
-      hp: Math.floor(zp[k + 3] / 16) / 10, // (in tenths: a zombie's HP can be 3.5)
+      hp: Math.floor(zp[k + 3] / 16) / 100, // (in hundredths: a zombie's HP can be 3.25)
       st: zp[k + 3] % 16,
       a: sw[0],
       dir: sw[1],
@@ -177,7 +177,7 @@ export function store(s, zs, keepStatic) {
       z.i,
       Math.round(z.x),
       Math.round(z.y),
-      Math.round(z.hp * 10) * 16 + z.st,
+      Math.round(z.hp * 100) * 16 + z.st,
     );
     if (z.a > -1e5) sw[z.i] = [Math.round(z.a), z.dir];
     mine[z.i] = [Math.round(z.n), Math.round(z.d)];

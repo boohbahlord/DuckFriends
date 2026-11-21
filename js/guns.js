@@ -9,8 +9,8 @@ import { FLAME } from "./flamer.js";
 /* the weapons here, each of one kind (its slot): melee, ranged, special or the grenades. Melee swings twice as fast as
    anywhere else and hurts only mid-swing, in a bubble just past it (at: how far, r: how big); the pistol: 72 bullets in
    all, 8 a magazine; the bow: arrows that never run out (the owner's, Nov 18), one every 0.4 s; the dagger is thrown and falls to the floor; the shotgun a
-   cone of pellets, 48 shots and no magazine; the medkit puts my HP back to full, once. A headshot (a crit: critOf, headOf) kills at
-   once; grenades kill every zombie in their blast. Nothing hurts another duck. The ones I haven't given numbers for
+   cone of pellets, 48 shots and no magazine; the medkit puts my HP back to full, once. A crit (critOf, headOf) doubles the
+   damage, and blows the head off only when it kills; grenades kill every zombie in their blast. Nothing hurts another duck. The ones I haven't given numbers for
    are guesses (Adam's plan, question 2) */
 /* what anything thrown or used up waits before it can be used again (the grenades, the medkit, the zebra cake, the
    adrenaline shot, the chair): 0.75 s (the owner's, Nov 16) */
@@ -20,16 +20,57 @@ const ITEM_COOL = 750;
    and its slot is empty; it is never refilled. An Angelic melee weapon never breaks. One number for each weapon: ARMS'
    dur */
 const MELEE_DUR = 450;
+/* every pistol carries 20 magazines (the owner's, Nov 21 18:16Z) */
+const PISTOL_MAGS = 20;
 /* every grenade's blast is 25% wider than it was (the owner's, Nov 21: "grenades should have a 25% larger explosion radius then
    before"): the board's (rules.js GRENADE_R), Quacky Zombies' (ARMS.grenade.r) and the drawn boom (grenade.js) all read this */
 export const NADE_GROW = 1.25;
-/* a hit's damage from a weapon's `dmg` range: one of its numbers a `step` apart (1 unless the weapon says, the dagger's 0.5),
-   every one as likely as the next */
+/* a hit's damage from a weapon's `dmg` range: one of its numbers a `step` apart (1 unless the weapon says: a gun's 0.05,
+   the dagger's 0.5), every one as likely as the next. A gun with rolls (the Barrett's) first rolls which range it hits
+   in, each as often as its weight. Kept to hundredths, so 0.05 steps never come out as 2.2499999 */
 export const rollDmg = (A) => {
-  const [lo, hi] = A.dmg,
+  const [lo, hi] = A.rolls ? pickRoll(A.rolls) : A.dmg,
     st = A.step || 1;
-  return lo + st * Math.floor(Math.random() * (Math.floor((hi - lo) / st) + 1));
+  return (
+    Math.round(
+      (lo + st * Math.floor(Math.random() * (Math.round((hi - lo) / st) + 1))) *
+        100,
+    ) / 100
+  );
 };
+const pickRoll = (rolls) => {
+  let r = Math.random() * rolls.reduce((n, [w]) => n + w, 0);
+  for (const [w, range] of rolls) if ((r -= w) < 0) return range;
+  return rolls[rolls.length - 1][1];
+};
+/* ---------- calibers (the owner's, Nov 21 17:25Z, 17:48Z and 18:05Z) ----------
+   "a guns damage is based off of its caliber", plus its barrel: guns of one caliber hit the same and differ in their fire
+   rate and magazine. Each gun in ARMS names its caliber (cal) and barrel; its damage (dmg, in steps of DMG_STEP) is
+   made from these two below, so no other place holds a copy. A shotgun's barrel goes on each pellet. The .50 BMG rolls
+   1 to 5 first: on a 1 it does 1 to 20, on a 2 3.5 to 10, on 3 to 5 3.5 to 7 (its rolls, each with its weight) */
+const CALIBERS = {
+  ".45 ACP": [0.75, 2.25],
+  ".357 Magnum": [0.95, 2.45],
+  ".44 Magnum": [1.45, 2.95], // (the Smith & Wesson Model 29's, once it's drawn: the owner's, Nov 21 18:16Z)
+  ".50 AE": [1.75, 3.25], // (the Desert Eagle's, once it's drawn)
+  "9mm": [0.5, 1.75],
+  "5.56mm": [1, 2.5],
+  "7.62x39mm": [1.1, 2.6], // (Adam's pick, 18:05Z: 0.1 over 5.56mm, 0.15 under 7.62x51mm)
+  "7.62x51mm": [1.25, 2.75],
+  ".50 BMG": [3.5, 7],
+  "12 ga buckshot": [0.5, 2],
+  "12 ga slug": [3, 7],
+  arrow: [0.25, 1.5],
+};
+const CAL_ROLLS = {
+  ".50 BMG": [
+    [1, [1, 20]],
+    [1, [3.5, 10]],
+    [3, [3.5, 7]],
+  ],
+};
+const BARRELS = { short: 0, medium: 0.15, long: 0.25, none: 0 };
+const DMG_STEP = 0.05;
 export const ARMS = {
   knife: {
     kind: "melee",
@@ -84,16 +125,18 @@ export const ARMS = {
   handgun: {
     kind: "ranged",
     cool: ARM_COOL.handgun,
-    dmg: [1, 3], // (1 to 3: the owner's, Nov 18 15:19Z)
+    cal: ".45 ACP",
+    barrel: "short",
     speed: ARM_SPEED.handgun,
-    mag: HANDGUN.mag, // (the one M1911, 9 rounds: gamedefaults.js)
-    all: (72 + 5 * 8) * 1.5,
+    mag: HANDGUN.mag, // (the one M1911, 7 rounds: gamedefaults.js)
+    all: HANDGUN.mag * PISTOL_MAGS,
     reload: ARM_RELOAD,
   },
   bow: {
     kind: "ranged",
     cool: ARM_COOL.bow,
-    dmg: [1, 3], // (1 to 3: the owner's, Nov 18 15:19Z)
+    cal: "arrow",
+    barrel: "none",
     speed: ARM_SPEED.bow,
   }, // (no `all`: its arrows never run out, as the Laser Rifle's shots: the owner's, Nov 18 15:18Z "Make the bow have unlimited ammo")
   dagger: {
@@ -107,7 +150,8 @@ export const ARMS = {
   shotgun: {
     kind: "ranged",
     cool: ARM_COOL.shotgun,
-    dmg: [1, 3], // (each pellet: the owner's, Nov 18 15:23Z "It should be 1-3 damage per pellet")
+    cal: "12 ga buckshot",
+    barrel: "long",
     speed: ARM_SPEED.shotgun,
     all: 72, // (no magazine: the owner's, Nov 4; 48, and 50% more: the owner's, Nov 16)
     pellets: 5,
@@ -125,7 +169,7 @@ export const ARMS = {
     most: 4,
   }, // (r: 50% wider than its first 140, owner 2026-11-04)
   /* the owner's new ones (Stage 3). The sniper's bullet goes through every zombie to the wall, 2 or 3 to each, a bolt
-     action between shots; the SMG, the AK-47 and the LMG fire as long as the button is down; the chain gun (15 a second) hits at once
+     action between shots; the SMG, the AK-47 and the LMG fire as long as the button is down; the chain gun (30 a second) hits at once
      (a thin yellow line out to what it hit), never reloads and takes 4 to 5 (it killed what it hit until the owner's
      Nov 18 16:43Z numbers); the revolver has five in its
      cylinder; the grenade launcher's grenades fly straight and go off on the first zombie, a wall or their range, and
@@ -134,7 +178,8 @@ export const ARMS = {
   sniper: {
     kind: "ranged",
     cool: 750,
-    dmg: [4, 5], // (4 to 5, and 1 less to each zombie it goes through after the first: the owner's, Nov 18 16:43Z)
+    cal: ".50 BMG",
+    barrel: "long",
     speed: 1900,
     mag: 5,
     all: 24 + 5 * 5, // (5 more magazines: the owner's, Nov 16)
@@ -146,7 +191,8 @@ export const ARMS = {
     kind: "ranged",
     auto: true,
     cool: 80,
-    dmg: [1, 2], // (1 to 2: the owner's, Nov 18 16:43Z)
+    cal: "9mm",
+    barrel: "medium",
     speed: 1100,
     mag: 25, // (the owner's, Nov 19 19:27Z: "MP5 should have 25 bullets")
     all: 20 * 17, // (13 magazines, 160 and 5 more: the owner's, Nov 16; then 25% more, rounded up: the owner's, Nov 18 16:43Z)
@@ -155,13 +201,14 @@ export const ARMS = {
   },
   /* the Tommy gun and the UMP-45 (the owner's, Nov 17; from the weapon spin and Mad God Justin's pickups, not the Butler):
      the Tommy a round every 120 ms from a 50-round drum; the UMP-45 seven rounds a second, 2 damage a bullet, 25 rounds
-     (the owner's, Nov 18 16:43Z), a 1.4 s reload. Both crit 5% and miss 2.5% (slow: they hit as the single-shot guns do) */
+     (the owner's, Nov 18 16:43Z), a 1.4 s reload. Both miss 2.5% (slow: they hit as the single-shot guns do) */
   tommy: {
     kind: "ranged",
     auto: true,
     slow: true,
     cool: 120,
-    dmg: [1, 3], // (1 to 3: the owner's, Nov 18 16:43Z)
+    cal: ".45 ACP",
+    barrel: "medium",
     speed: 1100,
     mag: 50,
     all: 50 * 6, // (more ammo than the SMG's 260, and the SMG's reload: "the same stats as the SMG but slower fire rate but larger ammo capacity", the owner's, Nov 17 11:07Z)
@@ -173,7 +220,8 @@ export const ARMS = {
     auto: true,
     slow: true,
     cool: 143, // (7 a second: the owner's, Nov 18 16:43Z)
-    dmg: 2,
+    cal: ".45 ACP",
+    barrel: "medium",
     speed: 1100,
     mag: 25, // (the owner's, Nov 18 16:43Z)
     all: 25 * 6,
@@ -184,7 +232,8 @@ export const ARMS = {
     kind: "ranged",
     auto: true,
     cool: 110,
-    dmg: 2,
+    cal: "7.62x39mm",
+    barrel: "long",
     speed: 1200,
     mag: 30,
     all: 180 + 5 * 30, // (5 more magazines: the owner's, Nov 16)
@@ -194,68 +243,57 @@ export const ARMS = {
   chaingun: {
     kind: "ranged",
     auto: true,
-    cool: 67, // (15 a second)
-    dmg: [4, 5], // (4 to 5, no longer a kill: the owner's, Nov 18 16:43Z)
-    all: 300, // (300 rounds: the owner's, Nov 16, 16:06Z)
+    cool: 33, // (30 a second: the owner's, Nov 21 18:16Z)
+    cal: "7.62x51mm",
+    barrel: "long",
+    all: 600, // (600 rounds, still 20 s of fire: the owner's, Nov 21 18:16Z)
     far: 3000,
   },
   revolver: {
     kind: "ranged",
     cool: 333, // (3 a second: the owner's, Nov 18 16:43Z)
-    dmg: [2, 4], // (2 to 4: the owner's, Nov 18 16:43Z)
+    cal: ".357 Magnum",
+    barrel: "short",
     speed: 1150,
-    mag: 8, // (50% more: 7.5 up; the owner's, Nov 19 19:27Z)
+    mag: 6, // (the owner's, Nov 21 18:16Z)
     all: (75 + 5 * 5) * 1.5,
     reload: 1700,
     k: "revolver",
   },
-  glauncher: { kind: "ranged", cool: 1200, all: 12, speed: 900, far: 760 }, // (all: 15, and 50% more with no magazine: the owner's, Nov 16; half as many: Nov 19 19:27Z)
+  glauncher: { kind: "ranged", cool: 1200, all: 16, speed: 900, far: 760 }, // (16: the owner's, Nov 21 17:25Z)
   lmg: {
     kind: "ranged",
     auto: true,
     cool: 100,
-    dmg: 2, // (the owner's, Nov 18 16:43Z)
+    cal: "5.56mm",
+    barrel: "long",
     speed: 1150,
     mag: 100, // (the owner's, Nov 17: 100 bullets and twice the reload time)
     all: 225 + 3 * 75, // (3 more magazines: the owner's, Nov 16)
     reload: 5600,
     k: "lmg",
   },
-  /* the owner's three new guns (Nov 16 16:25Z). The double barrel: every shot one slug that takes all the HP of the
-     zombie it hits, blows chunks through it and throws its body back a long way (FLING); a crit's slug blows the head
-     off and goes on to the next zombie, past it only on that one's own crit (Nov 18 13:46Z). Two shells, then a reload of a second for each
-     shell it loads (shell); 150 shells in all. The flamethrower: its tank (flamer.js), everything in its cone catches
+  /* the owner's three new guns (Nov 16 16:25Z). The double barrel: every shot one slug, through the zombies in its way
+     (below); one it kills blows to chunks. Two shells, then a reload of a second for each shell it loads (shell); 150
+     shells in all. Its crit counts its reload (critReload: the only one, the owner's, Nov 21 18:05Z). The flamethrower: its tank (flamer.js), everything in its cone catches
      fire. The burst rifle (an AUG): three rounds a press (burst, gap ms apart), 21 a clip, the AK-47's damage. Where the
      owner gave no number (the crits, the speeds, the burst rifle's ammo and reload) they are guesses */
-  /* the double barrel is two now, in a bag of their own inside the shotguns' bag (the owner's, Nov 19 19:27Z: "the double
-     barrel shotgun within its bag of shotguns will have its own bag for a variant"). The slug double barrel: 6 to the
-     first one it hits, then through it and on, each next one taking 1 or 1.5 less than the one before (a new roll each
-     time), until it would do nothing ("it will continuously pass through its targets until it cannot do any possible
-     more damage"). The buckshot double barrel: the shotgun's pellets, each 1 or 1.5 harder ("plus 1 to 1.5 damage"),
-     with the slug's two shells and reload */
+  /* the slug double barrel: its caliber's roll to the first one it hits, then through it and on, each next one taking 1
+     or 1.5 less than the one before (a new roll each time), until it would do nothing (the owner's, Nov 19 19:27Z: "it
+     will continuously pass through its targets until it cannot do any possible more damage"). The buckshot one is gone
+     (the owner's, Nov 21 17:25Z) */
   dbarrel: {
     kind: "ranged",
     cool: 280,
-    dmg: 6,
+    cal: "12 ga slug",
+    barrel: "long",
     less: [1, 1.5],
     speed: 1500,
     mag: 2,
     all: 150, // (the owner's, Nov 18 13:46Z: "there should be 150 rounds in the double barrel shotgun")
     shell: 1000, // (ms a shell: one shell loads in 1 s, two in 2 s)
+    critReload: true,
     k: "slug",
-  },
-  dbuck: {
-    kind: "ranged",
-    cool: 280,
-    dmg: [1, 3], // (the shotgun's, each pellet)
-    plus: [1, 1.5],
-    speed: ARM_SPEED.shotgun,
-    mag: 2,
-    all: 150, // (my guess: the slug's)
-    shell: 1000,
-    pellets: 5,
-    spread: 0.3,
-    life: 420,
   },
   flamer: {
     kind: "ranged",
@@ -266,7 +304,8 @@ export const ARMS = {
   burst: {
     kind: "ranged",
     cool: 420, // (from one burst to the next)
-    dmg: 2,
+    cal: "5.56mm",
+    barrel: "long",
     speed: 1250,
     mag: 21,
     all: 21 * 10,
@@ -300,6 +339,50 @@ export const ARMS = {
   safekeep: { kind: "special", cool: 300, all: 1 }, // (Safe Keeping: never used by hand, SAFE below)
   chair: { kind: "special", cool: ITEM_COOL, dmg: [3, 5], speed: 600 }, // (no ammo, thrown as often as you like; 3 to 5 whole: the owner's, Nov 20 21:17Z)
 };
+/* each gun's damage: its caliber's range plus its barrel, in steps of DMG_STEP (CALIBERS) */
+const cents = (n) => Math.round(n * 100) / 100;
+for (const A of Object.values(ARMS))
+  if (A.cal) {
+    const b = BARRELS[A.barrel] || 0;
+    A.dmg = CALIBERS[A.cal].map((n) => cents(n + b));
+    A.step = DMG_STEP;
+    if (CAL_ROLLS[A.cal])
+      A.rolls = CAL_ROLLS[A.cal].map(([w, r]) => [
+        w,
+        r.map((n) => cents(n + b)),
+      ]);
+  }
+/* ---------- crits (the owner's, Nov 21 17:25Z and 18:05Z) ----------
+   "base crit chance is 25% with a fire rate of 1 per second", less for faster ones: 25% divided by the shots (a melee
+   weapon's swings) a second, with no top. Only the double barrel counts its reload (critReload: 2 shells, then 2 s,
+   about 0.78 a second). The cast iron pan keeps its own (crit: half its hits). A crit doubles the damage; it blows the
+   head off only when it kills (the rules: l4ddrules.js strike, rules.js wounded, wounds.js WOUND_BREEDS). The
+   grenades, the grenade launcher, the flamethrower and the Laser Rifle never crit. Upgrades and Angelic: l4ddrules.js
+   headOf */
+const CRIT_AT_ONE = 0.25;
+const NO_CRIT = ["grenade", "glauncher", "flamer", "laser"];
+const perSecond = (A) =>
+  A.critReload
+    ? (A.mag * 1000) / (A.mag * A.cool + A.mag * A.shell)
+    : ((A.burst || 1) * 1000) / A.cool;
+export const critOf = (w) => {
+  const A = ARMS[w];
+  if (!A || NO_CRIT.includes(w) || (A.kind !== "melee" && A.kind !== "ranged"))
+    return 0;
+  return A.crit ?? CRIT_AT_ONE / perSecond(A);
+};
+/* the weapon a board shot's kind belongs to (rules.js shots: an arrow is the bow's, a pellet the shotgun's) */
+const SHOT_ARM = {
+  arrow: "bow",
+  pellet: "shotgun",
+  slug: "dbarrel",
+  chain: "chaingun",
+  lgren: "glauncher",
+};
+export const armOfShot = (k) => SHOT_ARM[k] || k;
+/* the melee weapon a duck starts with in Dead Ducks Arcade and Survival starts at a quarter of its wear (the owner's, Nov
+   21 18:05Z: "it's of its health because it has limited amount of uses before it breaks") */
+export const START_WEAR = 0.25;
 
 /* a weapon's kind (its slot): melee, ranged, special or grenade; "" for none */
 export const kindOf = (w) => (ARMS[w] && ARMS[w].kind) || "";
@@ -313,7 +396,7 @@ export const GUN_NAMES = {
   handgun: HANDGUN.name,
   bow: "Bow",
   dagger: "Dagger",
-  shotgun: "Shotgun",
+  shotgun: "Pump action shotgun", // (the owner's, Nov 21 17:25Z)
   medkit: "Medkit",
   defib: "Defibrillator",
   safekeep: "Safe Keeping",
@@ -328,7 +411,6 @@ export const GUN_NAMES = {
   glauncher: "Grenade launcher",
   lmg: "M249 SAW",
   dbarrel: "Slug double barrel",
-  dbuck: "Buckshot double barrel",
   flamer: "Flamethrower",
   burst: "Steyr AUG",
   laser: "Laser Rifle",
@@ -351,7 +433,6 @@ export const WEAPONS = [
   "revolver",
   "shotgun",
   "dbarrel",
-  "dbuck",
   "smg",
   "tommy",
   "ump",
@@ -464,7 +545,6 @@ export const GUN_BREEDS = {
       tommy: { n: 3, gap: [2200, 3200] },
       ump: { n: 3, gap: [2200, 3200] },
       shotgun: { n: 1, gap: [2000, 2800] },
-      dbuck: { n: 1, gap: [1800, 2600] },
       ak: { n: 4, gap: [1600, 2400] },
       burst: { n: 3, gap: [1400, 2000] },
       lmg: { n: 12, gap: [1200, 1800] }, // (long bursts: suppressive fire)
@@ -473,7 +553,6 @@ export const GUN_BREEDS = {
     magAll: 6,
     reach: {
       shotgun: 3.5,
-      dbuck: 3.5,
       revolver: 8,
       ak: 11, // (assault rifles reach as far as the LMG; the sniper's SNIPE reaches farther still. The owner's, Nov 20 18:23Z:
       burst: 11, // "Any assault rifle should be able to have the range of the LMG, and the sniper even more so")
@@ -487,7 +566,6 @@ export const GUN_BREEDS = {
       revolver: 8,
       shotgun: 3.5,
       dbarrel: 3.5,
-      dbuck: 3.5,
     },
   },
   /* Mad God Justin: the knife, the sword and the pistol as fast as in every mode (the knife four a second, the pistol

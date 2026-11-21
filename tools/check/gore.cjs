@@ -70,7 +70,7 @@ const INIT = fs.readFileSync(
       /* codes: every weapon (wounds.js WOUND_OF, and one it doesn't know), on five kinds of things, 30 hits each, a
          headshot every 7th */
       const WEAPONS = [
-        ..."handgun smg tommy ump lmg sniper ak burst revolver dbarrel dbuck slug chaingun chain shotgun pellet".split(
+        ..."handgun smg tommy ump lmg sniper ak burst revolver dbarrel slug chaingun chain shotgun pellet".split(
           " ",
         ),
         ..."knife dagger hammer pan axe sword chair bow arrow claw laser flamer".split(
@@ -132,7 +132,6 @@ const INIT = fs.readFileSync(
         built.map((c) => WD.goreFree(c)),
         built.map((c) => WD.newWound(c.slice(0, 4), c.slice(0, 6))),
         WD.BY_WOUND,
-        WD.PCRIT,
         WD.CRIT_DOWN,
         WD.DEATH,
         cans,
