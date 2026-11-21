@@ -660,13 +660,9 @@ function goreCanvas(o, w, h) {
         o.img.replaceWith(cv);
         o.img = cv;
       }
-      /* in memory (willReadFrequently): a canvas on the graphics card is a layer of its own, and a crowd of them made the
-         page's every frame slower to put together (Survival round 21: 52 more layers) */
-      const g = cv.getContext("2d", { willReadFrequently: true });
-      if (cv.width !== c.width || cv.height !== c.height) {
-        cv.width = c.width;
-        cv.height = c.height;
-      } else g.clearRect(0, 0, cv.width, cv.height);
+      const g = cv.getContext("2d", { willReadFrequently: true }); // (in memory: on a graphics card each zombie's canvas was a layer of its own, 52 more in a Survival crowd, and every frame took longer to put together)
+      cv.width = c.width; // (set even when it's the same: that clears it)
+      cv.height = c.height;
       g.drawImage(c, 0, 0);
     })
     .catch(() => {});

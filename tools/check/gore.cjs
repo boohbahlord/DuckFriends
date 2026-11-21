@@ -34,7 +34,8 @@ const INIT = fs.readFileSync(
         { duckSVG } = await import("./js/duck.js"),
         { duckFromParts } = await import("./js/duckparts.js"),
         { JUSTIN } = await import("./js/hangout/npcart.js"),
-        { npcURL } = await import("./js/sbnpcart.js");
+        { npcURL } = await import("./js/sbnpcart.js"),
+        { steadyText } = await import("./js/pxdom.js");
       const hitsOf = WD.hitsOf || A.hitsOf;
       /* what a look can lose (wounds.js knockable, a breed's can since the breeds) */
       const knock = WD.knockable || WD.WOUND_BREEDS.duck.can;
@@ -178,9 +179,17 @@ const INIT = fs.readFileSync(
         }
       const made = { k: "npc", dk: DUCKS[1] };
       for (const c of some) ns.push(npcURL(made, c, true));
-      out.zombies = J(zs);
-      out.duckPics = J(ds);
-      out.npcPics = J(ns);
+      /* the drawings' ids are counted up by every drawing made since the page loaded (the idle warm-up's too), so they're
+         renamed in order first (pxdom.js steadyText, as the part sheets' names are) */
+      const steady = (t) =>
+        steadyText(
+          t.startsWith("data:")
+            ? decodeURIComponent(t.slice(t.indexOf(",") + 1))
+            : t,
+        );
+      out.zombies = J(zs.map(steady));
+      out.duckPics = J(ds.map(steady));
+      out.npcPics = J(ns.map(steady));
       /* … and as pixels: every 4th of them made from the part sheets at a game's size */
       const dkOf = (t) => {
         if (t.startsWith("data:"))
