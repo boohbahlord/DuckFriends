@@ -43,7 +43,7 @@ import {
 } from "./rules.js";
 import { modeOf, MODES, statsOf } from "./modes.js";
 import { statRow } from "./statrows.js";
-import { MAPS, MAP_VARIANTS, mapForm, mapName } from "./maps.js";
+import { MAPS, MAP_VARIANTS, isWorldMap, mapForm, mapName } from "./maps.js";
 /* the maps the command line knows: every map, and every variation that is a map of its own (Nous Within Kenoma's) */
 const SH_MAPS = [
   ...MAPS,
@@ -2552,7 +2552,7 @@ const CMDS = {
             m[1] + (m[0] === s.options.map ? "  (now)" : ""),
           ]),
         ) +
-        `\nHangout brings its own: Duck Cabin${s.options.map === "cabin" ? "  (now)" : ""}`
+        `\nHangout brings its own: Duck Cabin${isWorldMap(s.options.map) ? "  (now)" : ""}`
       );
     const id = args.join(" ").toLowerCase(),
       m = SH_MAPS.find(

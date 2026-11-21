@@ -52,7 +52,7 @@ fxmotion.js 214 how a held weapon and the screen move
 game.js 8822 the game screen
 gamedefaults.js 43 the game's own numbers, for every mode
 gameready.js 47 what the game's loading screen waits for
-gamesettings.js 1750 Game Settings: the whole screen, like Customize
+gamesettings.js 1755 Game Settings: the whole screen, like Customize
 gfx.js 8 Low graphics
 gmodes.js 246 Sandbox Phase 6: made game modes
 grenade.js 34 a grenade going off
@@ -104,7 +104,7 @@ looks.js 136 the room's duck-look settings
 looksrules.js 60 the duck-look settings' rules
 main.js 163 the start: settings on the page, the background,
 manual.js 203 the command line's manual: man <command>
-maps.js 1112 maps: the world behind the board
+maps.js 1116 maps: the world behind the board
 merchantlines.js 81 what the merchants say
 merchants.js 376 the merchants
 meters.js 114 the thin bars under my duck's name
@@ -154,7 +154,7 @@ random.js 9 the two random helpers every mode's rules share:
 report.js 114 Report Bug or Suggest Ideas
 rooms.js 256 Play: create a room, and the rooms online
 router.js 112 screens
-rules.js 6250 the rules of Agree or Disagree
+rules.js 6251 the rules of Agree or Disagree
 sandbox.js 1359 Sandbox: the key windows
 sandboxrules.js 2059 Sandbox: which map it plays on, and who
 sbarms.js 134 Sandbox: a made NPC's weapons in a fight

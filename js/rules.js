@@ -227,6 +227,7 @@ import {
   MAP_FORMS,
   mapForm,
   mapName,
+  isWorldMap,
   ZOOM_MAP,
   GREY_MAP,
 } from "./maps.js";
@@ -648,7 +649,7 @@ function placeMap(s) {
 const OLD_ZCABIN = "zcabin";
 function keepRoomMap(s) {
   const o = s.options;
-  if (o.map !== "cabin" && o.map !== OLD_ZCABIN)
+  if (!isWorldMap(o.map) && o.map !== OLD_ZCABIN)
     s.roomMap = [o.map, s.mapZoomed ? 1 : 0, s.mapGreyed ? 1 : 0];
 }
 function cabinMap(s) {
@@ -657,7 +658,7 @@ function cabinMap(s) {
     keepRoomMap(s);
     o.map = "cabin";
     s.mapZoomed = s.mapGreyed = 0;
-  } else if (o.map === "cabin" || o.map === OLD_ZCABIN) {
+  } else if (isWorldMap(o.map) || o.map === OLD_ZCABIN) {
     [o.map, s.mapZoomed, s.mapGreyed] = s.roomMap || ["board", 0, 0];
     delete s.roomMap;
     if (!o.mapPick) {
@@ -678,7 +679,7 @@ const sbSpot = () => ({
    (or a vote, or Random) puts it on the board */
 function sbMapPicked(s, o) {
   if ("sbMap" in o) return;
-  if (o.map === "cabin") s.options.sbMap = s.options.sbMap || "cabin";
+  if (isWorldMap(o.map)) s.options.sbMap = s.options.sbMap || "cabin";
   else if (o.map || o.mapPick) s.options.sbMap = "";
 }
 /* the most players the room takes: its own most, or fewer for a made game mode (its settings file's player limit, the
@@ -1861,7 +1862,7 @@ function reduceStep(state, a, now) {
         if (o.mode && !("modePick" in o)) s.options.modePick = "";
         if (o.map && !("mapPick" in o)) s.options.mapPick = "";
         if (isSb(s)) sbMapPicked(s, o);
-        else if (o.map === "cabin" && !o.mode && !isHang(s)) {
+        else if (isWorldMap(o.map) && !o.mode && !isHang(s)) {
           s.options.mode = "hang"; // Duck Cabin and its games are one: picking the map picks Hangout,
           s.options.modePick = "";
         } else if ((o.map || o.mapPick || o.modePick) && !o.mode && isHang(s))
@@ -1874,9 +1875,9 @@ function reduceStep(state, a, now) {
           s.options.map = "cabin"; // (the host's Hangout; one from Random or the vote keeps the map's settings)
           s.options.mapPick = "";
           delete s.roomMap;
-        } else if (!isHang(s) && s.options.map === "cabin" && s.roomMap)
+        } else if (!isHang(s) && isWorldMap(s.options.map) && s.roomMap)
           cabinMap(s); // (out of a Hangout that Random or the vote picked: the room's map again)
-        else if (!isHang(s) && s.options.map === "cabin") {
+        else if (!isHang(s) && isWorldMap(s.options.map)) {
           s.options.map = "board"; // leaving Duck Cabin without picking a map goes back to Vote Maps
           if (!o.map && !("mapPick" in o)) s.options.mapPick = "vote";
         }
@@ -3264,7 +3265,7 @@ function dodSet(s, k, on, to = null) {
     o.modePick = o.mapPick = "vote";
     if (o.voteBack === undefined) o.voteBack = 3;
     if (isHang(s)) o.mode = "aod";
-    if (o.map === "cabin") o.map = "board";
+    if (isWorldMap(o.map)) o.map = "board";
   }
   if (on && k === "justin") s.options.justin = 1; // (Justin in every game he can be in)
   say(s, `Democracy of Ducklings: ${DOD_NAMES[k]} is ${on ? "on" : "off"}.`);
