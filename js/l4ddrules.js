@@ -2343,7 +2343,7 @@ function bagRoll(bags0, has) {
 }
 /* the fireplace's Justin (the owner's, Nov 4): 1 spin in 100 lands on him (never while he's already here), and a
    moment later he climbs out of the fire and joins as another player, to help. He starts with 1,500 points of his own,
-   all his HP, the knife, the chain gun and the pistol; every rule is the same for him as for any duck (l4ddbots.js
+   all his HP, the knife, the chain gun and the pistol; every rule is the same for him as for any duck (bots.js
    plays him). He goes when the game does: Play again, or back to the lobby.
    Off since Nov 16 (the owner's: "Justin will be removed from the zombie game because I do not want to force him into
    it"): the fireplace never lands on him, and the General Settings Justin switch doesn't bring him in */

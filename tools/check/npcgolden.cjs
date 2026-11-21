@@ -28,7 +28,7 @@ const digest = (all) => {
       errs = [];
     p.on("pageerror", (e) => errs.push(String(e).slice(0, 200)));
     await p.addInitScript(fs.readFileSync(path.join(DIR, "init.js"), "utf8"));
-    await p.goto(url);
+    await p.goto(url, { waitUntil: "networkidle" }); // (the page's own loading done first: one run of 30 once came out other)
     await p.waitForTimeout(1500);
     await p.addScriptTag({ path: path.join(DIR, "page.js") });
     const r = await p
