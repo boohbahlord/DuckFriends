@@ -8,6 +8,7 @@
 import { esc, openWindow, toast } from "./ui.js";
 import { compileScript } from "./numberatrun.js";
 import { LANG } from "./langname.js";
+import { WHEN_MISSING } from "./gamedefaults.js";
 
 export const MY_FILES = "my-files"; // (the folder, at the top of my Seriat folder)
 const HEAD = "# Brain builder: "; // (the first line: the rows, as JSON)
@@ -169,7 +170,7 @@ export async function openBrainBuilder(done) {
         )
         .join(
           "",
-        )}</select>${n ? numRow(n.name, "data-n", r.n ?? n.def, n) : ""}${numRow("Chance (%)", "data-ch", r.ch ?? 100, { min: 1, max: 100 })}</span><button type="button" class="brb-del" data-rdel aria-label="Remove this When">×</button></div>
+        )}</select>${n ? numRow(n.name, "data-n", r.n ?? n.def, n) : ""}${numRow("Chance (%)", "data-ch", r.ch ?? WHEN_MISSING.BRAIN_CHANCE, { min: 1, max: 100 })}</span><button type="button" class="brb-del" data-rdel aria-label="Remove this When">×</button></div>
       ${(r.acts || [])
         .map((a, j) => {
           const b = BB_DO[a.k] && BB_DO[a.k][1];

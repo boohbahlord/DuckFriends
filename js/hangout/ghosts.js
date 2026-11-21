@@ -7,6 +7,7 @@
    gets up where it lay (pos.tp tells every screen to put the duck there at once). A computer comes back by itself. */
 import { rule, activity, RULES } from "./registry.js";
 import { onGetUp, isGhost } from "./death.js";
+import { WHEN_MISSING } from "../gamedefaults.js";
 
 export const FADE = 1000; // ms: the ghost fading away before the body gets up
 const BOT_BACK = 4000; // ms: a computer's ghost walks this long, then comes back
@@ -20,7 +21,7 @@ onGetUp((s, id, now) => {
   /* I don't want a ghost from a duck that's busy (holding the chalk or the eraser, at the piano, writing in the
      guestbook, at a card table, in a seat, anything an activity holds it in): it just gets up (s.options.ghostBusy, on
      unless the host turns it off). Busy: letting it go would change an activity's state */
-  if (s.options.ghostBusy ?? 1) {
+  if (s.options.ghostBusy ?? WHEN_MISSING.GHOST_BUSY) {
     const c = structuredClone(s),
       sig = (x) => JSON.stringify([x.hang, x.pos[id], x.players[id]]),
       was = sig(c);

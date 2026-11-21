@@ -40,7 +40,7 @@ import {
 } from "./ui.js";
 import { activeRoom } from "./net.js";
 import { sprintStep } from "./stamina.js";
-import { SPRINT } from "./gamedefaults.js";
+import { SPRINT, WHEN_MISSING } from "./gamedefaults.js";
 import { grStam, grCool } from "./sbgroups.js";
 import { grLook } from "./sbgroupview.js";
 import {
@@ -2974,7 +2974,11 @@ function lawRing(s, id, pos) {
       return "";
     const v = C.votes[id],
       c =
-        s.phase === "answer" ? (pos.x >= 0 ? colAt(s, pos.x) : -1) : (v ?? -1);
+        s.phase === "answer"
+          ? pos.x >= 0
+            ? colAt(s, pos.x)
+            : -1
+          : (v ?? WHEN_MISSING.NO_COLUMN);
     return c < 0 ? "" : (c ? "b" : "a") + (v === c ? "" : " faint");
   }
   const L = s.law;
@@ -2988,7 +2992,12 @@ function lawRing(s, id, pos) {
   )
     return "";
   const v = L.votes[id],
-    c = s.phase === "answer" ? (pos.x >= 0 ? colAt(s, pos.x) : -1) : (v ?? -1);
+    c =
+      s.phase === "answer"
+        ? pos.x >= 0
+          ? colAt(s, pos.x)
+          : -1
+        : (v ?? WHEN_MISSING.NO_COLUMN);
   return c < 0 ? "" : (c ? "b" : "a") + (v === c ? "" : " faint");
 }
 const caseKey = (s) => [s.startedAt, s.round, s.qi].join();
@@ -4631,7 +4640,7 @@ const MGJ_GORE = [
   "g0",
 ];
 function mgjGore(s) {
-  const hp = s.mgj ? Math.max(0, s.mgj.hp ?? 999) : 999,
+  const hp = s.mgj ? Math.max(0, s.mgj.hp ?? WHEN_MISSING.MGJ_HP) : 999,
     n = hp > 100 ? 0 : hp >= 10 ? Math.floor((100 - hp) / 10) : 9 + (10 - hp);
   return MGJ_GORE.slice(0, n).join("");
 }

@@ -84,6 +84,7 @@ import {
   mcOn,
 } from "./triviarules.js";
 import { TV_BANK } from "./triviabank.js";
+import { WHEN_MISSING } from "./gamedefaults.js";
 
 const BOT_QUESTIONS = [
   "Pineapple belongs on pizza.",
@@ -594,7 +595,7 @@ function tvBot(s, id, now, late, out) {
 /* what the computers do now; returns a list of actions */
 export function botActions(s, now) {
   const out = [],
-    wait = (s.options.botWait ?? 5) * 1000;
+    wait = (s.options.botWait ?? WHEN_MISSING.BOT_WAIT) * 1000;
   const bots = s.seat.filter((id) => s.players[id] && s.players[id].bot);
   if (!bots.length) return out;
   const people = s.seat.filter((id) => !s.players[id].bot);

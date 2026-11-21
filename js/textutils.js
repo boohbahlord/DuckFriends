@@ -4,6 +4,7 @@
    no file is named; io.read and io.write open and save files. They work the way bash's do, with the flags people use
    most; man <command> lists them. */
 import { calc, globRe } from "./bash.js";
+import { WHEN_MISSING } from "./gamedefaults.js";
 
 const fail = (msg) => {
   throw new Error(msg);
@@ -751,7 +752,7 @@ export const TEXT = {
       t = io.input(rest, stdin);
     if (o.c) return { out: t.slice(0, num(o.c, "head")), raw: true };
     return lines(t)
-      .slice(0, num(o.n ?? 10, "head"))
+      .slice(0, num(o.n ?? WHEN_MISSING.HEAD_LINES, "head"))
       .join("\n"); // -n -5: all but the last 5
   },
   tail: (args, stdin, io) => {
@@ -762,7 +763,7 @@ export const TEXT = {
       const k = Math.abs(num(o.c, "tail"));
       return { out: k ? t.slice(-k) : "", raw: true };
     }
-    const n = String(o.n ?? 10);
+    const n = String(o.n ?? WHEN_MISSING.HEAD_LINES);
     if (n.startsWith("+"))
       return L.slice(Math.max(0, num(n.slice(1), "tail") - 1)).join("\n");
     const k = Math.abs(num(n, "tail"));
@@ -952,7 +953,7 @@ export const TEXT = {
   },
   fold: (args, stdin, io) => {
     const { o, rest } = getopt(args, "w:s", "fold"),
-      W = num(o.w ?? 80, "fold");
+      W = num(o.w ?? WHEN_MISSING.FOLD_WIDTH, "fold");
     if (W < 1) fail("✗ fold: -w 1 or more");
     return lines(io.input(rest, stdin))
       .flatMap((l) => {
@@ -1091,7 +1092,7 @@ export const TEXT = {
       }
       const v = calc(
         (m ? m[2] : s).replace(/\^/g, "**"),
-        (n) => (n === "scale" ? scale : (V[n] ?? 0)),
+        (n) => (n === "scale" ? scale : (V[n] ?? WHEN_MISSING.VAR)),
         { int: false, scale },
       );
       if (m) V[m[1]] = v;

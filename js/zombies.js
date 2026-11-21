@@ -5,7 +5,7 @@
    round the side, the jump onto the canopy, its claw, and what Sandbox's board zombies and the computers ask of it.
    Moved here from l4ddrules.js as it was (nothing it does changed); the way to the ducks is zombiepath.js. Next, Mad God
    Justin's waves and Sandbox's board zombies run on it too, each a breed. */
-import { ZOMBIE_SWIPE_SLOWER } from "./gamedefaults.js";
+import { ZOMBIE_SWIPE_SLOWER, WHEN_MISSING } from "./gamedefaults.js";
 import { duckBig } from "./duck.js";
 import { SB_BOXES } from "./sandboxrules.js";
 import { valueOf } from "./numerat.js";
@@ -372,7 +372,12 @@ export function zombieAt(L, wx, wy, o = {}) {
     max = Math.max(1, o.hp ? Math.round(o.hp) : hp0()),
     v =
       o.v ||
-      Math.round(WALK * Z_SLOW * ((R[1][0] + R[1][1]) / 2) * (o.speed ?? 1)); // (a Sandbox spawn's Speed 0: it stays put)
+      Math.round(
+        WALK *
+          Z_SLOW *
+          ((R[1][0] + R[1][1]) / 2) *
+          (o.speed ?? WHEN_MISSING.SPEED),
+      ); // (a Sandbox spawn's Speed 0: it stays put)
   L.next = i + 1;
   return {
     i,
@@ -522,7 +527,9 @@ function mapClaw(s, p4, target, z, now) {
       target.id,
       now,
       "claw",
-      z.dm ? (valueOf({ ok: z.dm }, SB_BOXES.damage) ?? 1) : clawDmg(), // (the owner's, Nov 19 19:27Z: "zombies could do anywhere from 0.6 to 1 damage")
+      z.dm
+        ? (valueOf({ ok: z.dm }, SB_BOXES.damage) ?? WHEN_MISSING.DAMAGE)
+        : clawDmg(), // (the owner's, Nov 19 19:27Z: "zombies could do anywhere from 0.6 to 1 damage")
     )
   );
 }

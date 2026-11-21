@@ -24,6 +24,7 @@
 import { profile } from "./store.js";
 import { FILES } from "./sfxlist.js";
 import { netLevel } from "./settings.js";
+import { WHEN_MISSING } from "./gamedefaults.js";
 import { activeRoom } from "./later.js"; // (the room code comes after the first screen)
 
 /* how loud each sound is, in dB, the owner's to change: 0 plays the file as it is (each file peaks a little under full
@@ -334,7 +335,9 @@ export function ceiling(a, dest) {
    audio design is a background that provides feedback and it fills the air", for a game played talking with friends) */
 const HEAD = 0.7;
 const level = () =>
-  HEAD * (profile.settings.sound / 100) * ((profile.settings.sfx ?? 100) / 100);
+  HEAD *
+  (profile.settings.sound / 100) *
+  ((profile.settings.sfx ?? WHEN_MISSING.SFX) / 100);
 
 /* each mode's own loudness, in dB over everything else (the Settings sliders stay as they are). I want Survival a
    little louder than the rest, about as loud as the whole game was before Nov 19, but its annoying guns as quiet as
@@ -510,7 +513,7 @@ function voice(name, o = {}, loops = false) {
     side = sideOf(o),
     lp = o.lp || (side && side.lp) || 0, // (a muffled sound: through a floor, or a loop asked for it: ambience.js)
     k =
-      (o.k ?? 1) *
+      (o.k ?? WHEN_MISSING.GAIN) *
       far *
       (side && side.lp ? 0.8 : 1) *
       modeK(name) *
@@ -720,7 +723,8 @@ export function jetsOff() {
 const steams = new Map(); // id → its loop
 function steam(id, heat, o = {}) {
   const l = steams.get(id),
-    k = Math.min(1.5, heat || 0) * (o.rain ? 2 : 1) * (o.k ?? 1);
+    k =
+      Math.min(1.5, heat || 0) * (o.rain ? 2 : 1) * (o.k ?? WHEN_MISSING.GAIN);
   if (k < 0.05) {
     if (l) {
       l.stop();
@@ -926,7 +930,8 @@ const SFX = {
     play("nukeRing", o); // (a flashbang's ring in the ears, as the roar starts: the owner, Nov 16)
     return play("nuke", o);
   },
-  boomBig: (o = {}) => play("boom", { ...o, k: (o.k ?? 1) * 1.6 }), // (the same boom, about 4 dB louder)
+  boomBig: (o = {}) =>
+    play("boom", { ...o, k: (o.k ?? WHEN_MISSING.GAIN) * 1.6 }), // (the same boom, about 4 dB louder)
   steam,
   meteor: (fall = 1.4) =>
     setTimeout(() => play("meteor"), Math.max(0, fall - 0.05) * 1000), // (when it lands)

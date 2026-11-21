@@ -10,7 +10,7 @@
    higher ground only if it is that high at that moment; walking off an edge falls (off the deck, a long way). Other
    ducks glide to where the room says they are, and jump and fall from their own numbers (z: height, b: where the jump
    began). The activities (registry.js) add the context button, and whatever they draw. */
-import { SPRINT as GAME_SPRINT } from "../gamedefaults.js";
+import { SPRINT as GAME_SPRINT, WHEN_MISSING } from "../gamedefaults.js";
 import { baseMode, baseL4map } from "../sandboxrules.js";
 import * as L from "./layout.js";
 import { DRAW, GROUND, DECOR, groundColor } from "./shapes.js";
@@ -321,7 +321,7 @@ export function mountWorld(board, api) {
       o.x += (tx - o.x) * k;
       o.y += (ty - o.y) * k;
     }
-    const gnd = L.floorH(o.x, o.y, Math.max(p.z ?? 0, o.z)); // (on a roof: the roof; never one it jumps up under)
+    const gnd = L.floorH(o.x, o.y, Math.max(p.z ?? WHEN_MISSING.Z, o.z)); // (on a roof: the roof; never one it jumps up under)
     if (p.j && now < api.landsAt(p))
       o.z = Math.max(gnd, (p.b ?? gnd) + api.jumpZ(p, now) * L.DUCK); // a jump: the arc itself
     else if ((p.z ?? gnd) > L.floorH(tx, ty, p.z) + 2)
@@ -1044,7 +1044,12 @@ export function mountWorld(board, api) {
     let best = null;
     for (const a of acts()) {
       const n = a.near?.(pos, ctx);
-      if (n && n.label && (!best || (n.d ?? 0) < (best.d ?? 0))) best = n;
+      if (
+        n &&
+        n.label &&
+        (!best || (n.d ?? WHEN_MISSING.DIST) < (best.d ?? WHEN_MISSING.DIST))
+      )
+        best = n;
     }
     button = best;
     const sig = best
@@ -1072,7 +1077,10 @@ export function mountWorld(board, api) {
       if (acts().some((a) => a.passable && a.passable(id, ctx))) continue; // (an activity's dead: walked over, Quacky Zombies)
       const ox = p.x * L.W,
         oy = p.y * L.H;
-      if (Math.abs((p.z ?? 0) - me.z) > 40 || L.whereIn(ox, oy, p.z) !== here)
+      if (
+        Math.abs((p.z ?? WHEN_MISSING.Z) - me.z) > 40 ||
+        L.whereIn(ox, oy, p.z) !== here
+      )
         continue;
       const kb = duckRoom((s.players[id] || {}).duck),
         dx = (x - ox) / (28 * (ka.x + kb.x)),
@@ -1631,7 +1639,8 @@ export function mountWorld(board, api) {
       if (ax || ay) {
         let k = walkOf(ctx.state()); // (the lobby's Walking speed)
         for (const a of acts())
-          if (a.speed) k *= a.speed({ x, y, z: me.z }, ctx) ?? 1; // (the water slows it)
+          if (a.speed)
+            k *= a.speed({ x, y, z: me.z }, ctx) ?? WHEN_MISSING.SPEED; // (the water slows it)
         const sp = SPEED * (sprint ? SPRINT : 1) * k,
           dx = ax * sp * dt,
           dy = ay * sp * dt,
@@ -1759,7 +1768,12 @@ export function mountWorld(board, api) {
       let best = null;
       for (const a of acts()) {
         const n = a.near?.({ x: p.x, y: p.y, z: me.z, inside }, ctx);
-        if (n && n.label && n.act && (!best || (n.d ?? 0) < (best.d ?? 0)))
+        if (
+          n &&
+          n.label &&
+          n.act &&
+          (!best || (n.d ?? WHEN_MISSING.DIST) < (best.d ?? WHEN_MISSING.DIST))
+        )
           best = n;
       }
       if (best) {

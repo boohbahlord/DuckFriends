@@ -166,6 +166,7 @@ import {
 import { isSurv, survTime, clockOf } from "./survrules.js";
 import { gunLights, gunBodies } from "./gunmenview.js";
 import { heldOf, npcShot } from "./sbnpcart.js";
+import { WHEN_MISSING } from "./gamedefaults.js";
 
 const RX = 56,
   RY = 25.6; // (a zombie's room on the floor, as the rules')
@@ -1421,7 +1422,7 @@ function paint(now, ctx) {
         p.left * q,
         p.top * q,
         r,
-        0.2 + 0.05 * (5 - (brd[o.id] ?? 5)),
+        0.2 + 0.05 * (5 - (brd[o.id] ?? WHEN_MISSING.L4_BOARD)),
       ]);
   }
   /* the merchant stands in a little light while he sells, and the fireplace's weapon glows while it's out */

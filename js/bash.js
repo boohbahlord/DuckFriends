@@ -1,3 +1,4 @@
+import { WHEN_MISSING } from "./gamedefaults.js";
 /* ---------- the command line's language: a small bash ----------
    A line is read the way bash reads it:
    - history first: !! (the last command), !3 (the third), !-2, !ec (the last that starts with ec), ^old^new;
@@ -955,7 +956,7 @@ async function execCmd(c, stdin, sink, st, pipeRaw) {
   } catch (e) {
     if (e.fatal) throw e;
     sink.err(nl(e.message));
-    return (st.code = e.code ?? 1);
+    return (st.code = e.code ?? WHEN_MISSING.EXIT_FAIL);
   }
   if (!argv.length && !c.redirs.length) return (st.code = 0);
   return withRedirs(c.redirs, stdin, sink, st, (input, to) =>
@@ -997,7 +998,7 @@ async function withRedirs(redirs, stdin, sink, st, fn) {
   } catch (e) {
     if (e.fatal) throw e;
     sink.err(nl(e.message));
-    return (st.code = e.code ?? 1);
+    return (st.code = e.code ?? WHEN_MISSING.EXIT_FAIL);
   }
   const to = {
     out: outT
@@ -1046,7 +1047,7 @@ async function runArgv(c, argv, input, to, st, pipeRaw) {
       } catch (e) {
         if (e.fatal) throw e;
         to.err(nl(e.message));
-        code = e.code ?? 1;
+        code = e.code ?? WHEN_MISSING.EXIT_FAIL;
       } finally {
         st.aliasing.delete(name);
       }
@@ -1074,14 +1075,14 @@ async function runArgv(c, argv, input, to, st, pipeRaw) {
         if (res === null) {
           st.clear();
         } else if (res && typeof res === "object") {
-          code = res.code ?? 0;
+          code = res.code ?? WHEN_MISSING.EXIT_OK;
           if (res.out) to.out(res.raw ? res.out : nl(res.out));
           if (res.err) to.err(nl(res.err));
         } else if (res !== undefined && res !== "") to.out(nl(String(res)));
       } catch (e) {
         if (e.fatal) throw e;
         to.err(nl(e.message || String(e)));
-        code = e.code ?? 1;
+        code = e.code ?? WHEN_MISSING.EXIT_FAIL;
       }
     }
   }
@@ -1354,7 +1355,7 @@ export async function runLine(src, env) {
     await execList(parse(lex(src), src), "", sink, st);
   } catch (e) {
     screen += nl(e.message || String(e));
-    st.code = e.code ?? 2;
+    st.code = e.code ?? WHEN_MISSING.EXIT_USAGE;
   }
   return { text: screen, code: st.code, cleared };
 }
