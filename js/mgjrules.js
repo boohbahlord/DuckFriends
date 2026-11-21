@@ -56,7 +56,7 @@ import {
 } from "./rules.js";
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
 import { SLOT_ODDS, zombieTakes, pierceOf, ALL_HP } from "./l4ddrules.js";
-import { ARMS, GUN_BREEDS } from "./guns.js";
+import { ARMS, GUN_BREEDS, MGJ_GUNS, MGJ_MELEE } from "./guns.js";
 import { ZOMBIE_BREEDS, boardWalk, zLook } from "./zombies.js";
 import { holdDown, onGetUp, invuln, hurtFx } from "./hangout/death.js";
 import { sbOnBoard, boardDuck } from "./sandboxrules.js";
@@ -227,7 +227,6 @@ export const CAKE_EVERY = 30000,
   CAKE_SPEED = 0.45;
 /* what the ducks hold here (rules.js' move: w), and the cooldowns of their own here: the knife and the pistol, as fast
    as in every mode */
-export const MGJ_MELEE = "sword"; // (the owner's, Nov 17: the ducks start with the short sword, not the knife)
 const MGJ_HOLD = [MGJ_MELEE, "handgun"];
 /* what a duck can have out in its hand here (rules.js' move: w): the knife, the bow, the zebra cake, or the weapon it
    picked up (the owner's, Nov 3: whatever it switches to stays out) */
@@ -265,21 +264,6 @@ export const PLUS_LIFE = 10000,
     ["meteor", 2.5],
     ["sky", 5],
   ]; // (the rarest first: the owner's, Nov 18 10:38Z; the guns and the medkit come from their bags: pickKind)
-/* a gun picked up works as it does in Quacky Zombies (its magazine, R to reload, full auto, the shotgun's spread, the
-   sniper's bullet going through) and stays on key 4 until its shots are gone (MGJ_GUNS); the medkit puts my HP back to
-   full, or gets a downed duck up at once when I hold it out over it */
-export const MGJ_GUNS = [
-  "chaingun",
-  "glauncher",
-  "lmg",
-  "tommy",
-  "ump",
-  "smg",
-  "ak",
-  "burst",
-  "shotgun",
-  "dbarrel",
-]; // (no sniper, Laser Rifle or flamethrower here: the owner's, Nov 18 12:19Z and 12:32Z)
 export const PICK_WEAPONS = [...MGJ_GUNS, "medkit"];
 /* the shots a gun picked up comes with (the owner's, Nov 17): only its one magazine, the shotgun never runs out, the LMG 30 */
 export const INF_AMMO = 9999; // (the shotgun picked up never runs out: the owner's, Nov 17; a number, as the state is JSON)
