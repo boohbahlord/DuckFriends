@@ -17,7 +17,6 @@ const holy = (icon) => {
   return a !== icon ? a : `<span class="l4-holy">${icon}</span>`;
 };
 import {
-  ARMS,
   slotsOf,
   kitOf,
   SLOT_KINDS,
@@ -31,6 +30,7 @@ import {
   pickOfSlot,
   durLeft,
 } from "./l4ddrules.js";
+import { ARMS } from "./guns.js";
 import { now as clockNow } from "./clock.js";
 import { sbNoLight } from "./sandboxrules.js";
 

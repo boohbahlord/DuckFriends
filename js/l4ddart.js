@@ -16,7 +16,8 @@ import {
   hitsOf,
 } from "./wounds.js";
 import { svgDataURL } from "./hangout/art.js";
-import { zombieLook, kindOf, tintOf } from "./l4ddrules.js";
+import { zombieLook, tintOf } from "./l4ddrules.js";
+import { kindOf } from "./guns.js";
 import { specialById, pistolIcon } from "./specials.js";
 import { justinSVG } from "./hangout/npcart.js";
 

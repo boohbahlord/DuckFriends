@@ -223,7 +223,6 @@ import {
   downArmed,
   l4Dying,
   l4Down,
-  ARMS,
   slotsOf,
   maxHp,
   l4Cool,
@@ -237,6 +236,7 @@ import {
   zombieLook,
   slotOfPick,
 } from "./l4ddrules.js";
+import { ARMS } from "./guns.js";
 import { watching, watchNext, watchHTML } from "./spectate.js";
 import {
   l4Held,

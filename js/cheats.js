@@ -5,7 +5,8 @@
    marks the game (cheatflag.js): no stats, unlocks, records or jumps for the rest of it. Dead Ducks Arcade (Duck Cabin and Downpour) and Survival; jumping to a round is Dead Ducks
    Arcade's alone (Survival and Sandbox have no rounds to jump to). */
 import { rule } from "./hangout/registry.js";
-import { ARMS, GO_MS, give, kitOf, merchantGo, newRound } from "./l4ddrules.js";
+import { GO_MS, give, kitOf, merchantGo, newRound } from "./l4ddrules.js";
+import { ARMS } from "./guns.js";
 import { isSb } from "./sandboxrules.js";
 import { isSurv } from "./survrules.js";
 import { may } from "./rules.js";

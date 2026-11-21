@@ -7,7 +7,8 @@
    each gun's magazine), rl (when each one's reload ends), fa (its last shot), ma (its last melee swing), hw (what it
    holds now) and sh (its last shot: [when, x, y of where it went], for the screen's tracer) */
 import { duckBig } from "./duck.js";
-import { ARMS, WEAPONS } from "./l4ddrules.js";
+import { WEAPONS } from "./l4ddrules.js";
+import { ARMS } from "./guns.js";
 import { roll, reloadMs, refill } from "./npcrules.js";
 
 /* what it can hold: its guns and the bow (not the thrown dagger), and the melee weapons */

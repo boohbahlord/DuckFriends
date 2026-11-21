@@ -29,7 +29,8 @@ const INIT = fs.readFileSync(
   await p.waitForTimeout(1500);
   const got = await p
     .evaluate(async () => {
-      const L4 = await import("./js/l4ddrules.js"),
+      const L4m = await import("./js/l4ddrules.js"),
+        GN = await import("./js/guns.js").catch(() => ({})),
         R = await import("./js/rules.js"),
         MG = await import("./js/mgjrules.js"),
         SA = await import("./js/sbarms.js"),
@@ -43,6 +44,12 @@ const INIT = fs.readFileSync(
         AR = await import("./js/l4ddart.js"),
         CA = await import("./js/l4ddcatalog.js"),
         { steadyText } = await import("./js/pxdom.js");
+      /* the numbers' sheet: guns.js since there is one (ARMS and kindOf were l4ddrules.js') */
+      const L4 = {
+        ...L4m,
+        ARMS: GN.ARMS || L4m.ARMS,
+        kindOf: GN.kindOf || L4m.kindOf,
+      };
       const hash = (str) => {
         let h = 0x811c9dc5;
         for (let i = 0; i < str.length; i++) {

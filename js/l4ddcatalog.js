@@ -3,7 +3,6 @@
    row with its picture and name, and a tap or a click opens what it does and its numbers (the owner's, Nov 4). The
    numbers come from the rules (l4ddrules.js), so they stay right when the rules change. */
 import {
-  ARMS,
   BURN,
   POOL,
   WEAPONS,
@@ -13,7 +12,6 @@ import {
   DROPS,
   weaponName,
   dropName,
-  kindOf,
   priceOf,
   BOX,
   WEAPON_BAGS,
@@ -23,6 +21,7 @@ import {
   missOf,
   endless,
 } from "./l4ddrules.js";
+import { ARMS, kindOf } from "./guns.js";
 import { survOn } from "./survrules.js";
 import { orbHTML, UP_ICONS } from "./l4ddart.js";
 import { DROP_ICONS } from "./l4dddrops.js";
