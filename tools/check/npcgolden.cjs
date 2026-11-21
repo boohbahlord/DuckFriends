@@ -3,7 +3,7 @@
    Mad God Justin's fight and his zombie waves), each from a fixed seed and a fixed clock for a fixed number of beats (no
    Math.random and no clock but the fake ones), and hashes the whole room every beat. A digest of all the beats and one hash
    every 50 beats are kept in tools/npc-golden/pinned.json; a run that gives other hashes fails, saying the first 50 beats
-   it changed in. (The computers keep away from the zombies, so a swipe is pinned in only some runs: surv-friends has 7.) Sandbox's board zombies are left out (the sb-* scenarios). After a change I meant to make, pin again:
+   it changed in. (The computers keep away from the zombies, so each -bait scenario parks my duck on the nearest zombie each beat, keeping its health, to pin at least 50 swipes with their times and damage.) Sandbox's board zombies are left out (the sb-* scenarios). After a change I meant to make, pin again:
      PIN=1 node tools/check/npcgolden.cjs
    Beat by beat, with the part of the room that changed: node tools/npc-golden/run.cjs (save before, check after). */
 const fs = require("fs"),
@@ -42,6 +42,8 @@ const digest = (all) => {
       fail(sc.name + " did not run: " + r.err);
       continue;
     }
+    if (sc.bait !== undefined && r.seen.swipes < 50)
+      fail(`${sc.name}: only ${r.seen.swipes} swipes, so too little is pinned`);
     got[sc.name] = {
       beats: r.all.length,
       digest: digest(r.all),
