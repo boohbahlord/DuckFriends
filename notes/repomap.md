@@ -15,7 +15,7 @@ bloodpool.js 50 a pool of blood: the one under every
 boardjustin.js 735 Justin on the boards
 botduck.js 90 a computer's duck: a random look, never anything
 botlines.js 188 What the computers write and say in the
-bots.js 1406 computers
+bots.js 1426 computers
 brackets.js 467 Bicker Brackets: what the screen shows
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
@@ -78,7 +78,7 @@ jetart.js 39 the jetpack's pictures
 jetpack.js 33 the jetpack
 jumps.js 48 the jump counter
 keynav.js 204 menus by keyboard
-l4dd.js 3347 Quacky Zombies on every screen
+l4dd.js 3337 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine on every screen
 l4ddart.js 623 Quacky Zombies' pictures
@@ -232,8 +232,8 @@ walkgrid.js 67 the walking grid: which 40-px cells of a
 who.js 3 who this player is beyond this tab
 wounds.js 501 the wounds a hit leaves
 zombiepath.js 178 the zombies' way to the ducks on a
-zombieroofs.js 244 the zombies' walk over Downpour's roofs: up a
-zombies.js 1420 the zombies: one module for every mode's zombies
+zombieroofs.js 273 the zombies' walk over Downpour's roofs: up a
+zombies.js 1421 the zombies: one module for every mode's zombies
 
 ## js/hangout/
 activities.js 23 every Hangout activity, so the rules and the

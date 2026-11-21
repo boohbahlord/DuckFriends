@@ -2072,8 +2072,6 @@ function justinSays(s, key) {
 export function isWild(s, id) {
   return !!(s && s.players && s.players[id] && s.players[id].wild);
 }
-/* he's out there with nothing in his hands (always: players can hurt him) */
-export const wildOpen = (s, id) => isWild(s, id);
 function helperIn(s, by, now, wild = false) {
   const id = HELPER.id;
   if (s.players[id]) return;
@@ -3543,7 +3541,7 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
     }
   if (any) store(s, zs, true);
   const jp = s.pos[WILD.id];
-  if (jp && wildOpen(s, WILD.id)) {
+  if (jp && isWild(s, WILD.id)) {
     const [jx, jy] = at(jp);
     if (
       inCone((jx - px) / D, (jy - py) / D, dx, dy, far / D + 0.4) &&
@@ -3821,7 +3819,7 @@ function wildHurt(
   const id = WILD.id,
     p = s.pos[id],
     q = P4(s, id);
-  if (by === id || !wildOpen(s, id) || !p || !q || q.dn || q.gh) return false;
+  if (by === id || !isWild(s, id) || !p || !q || q.dn || q.gh) return false;
   const [px, py] = at(p);
   if (Math.hypot((px - x) / rx, (py - y) / ry) >= 1) return false;
   if (from && slabBetween(...from, px, py, +p.z || 0)) return false;
@@ -3878,7 +3876,7 @@ function wildFire(s, by, now) {
   const id = WILD.id,
     q = P4(s, id),
     F = s.hang.l4fire || {};
-  if (by === id || !wildOpen(s, id) || !q || q.dn || q.gh) return;
+  if (by === id || !isWild(s, id) || !q || q.dn || q.gh) return;
   if ((F.p || {})[id] || wetDuck(s.pos[id])) return; // (burning, just put out, or in the water)
   s.hang.l4fire = { z: F.z || {}, p: { ...(F.p || {}), [id]: now + BURN.P } };
   wildDown(s, by, now, "flamer", false, ["f0"]);
@@ -3987,13 +3985,11 @@ function meleeHits(s, now) {
   if (any) store(s, zs, true);
   return any;
 }
-/* dead on a roof, it lies on the roof (its deck kept, z.k: zombies.js zombieZ); dead up a wall or in the middle of its
-   jump, it drops to the ground. It fell through the roof to the ground under it before (the owner's, Nov 21 08:46 ET:
-   "corpses go below the cieling of where they were, that should be fixed") */
+/* dead on a roof, it lies on it (z.k kept: zombies.js zombieZ); up a wall or jumping, it drops (the owner's, Nov 21
+   08:46 ET: "corpses go below the cieling of where they were, that should be fixed") */
 const die = (z, T) => {
   if (z.st !== 7) delete z.k;
-  z.st = 3;
-  z.d = T;
+  Object.assign(z, { st: 3, d: T });
 };
 /* melee knockback (the owner's, Nov 18 15:25Z: "Every melee has slight knockback EVEN to players AND especially to
    zombies EVEN WHILE THEY ARE ALIVE ... Fireaxe has more knockback and the hammer has most knockback"): how far a hit
@@ -4395,7 +4391,7 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
   /* Justin out there with no weapon, in its blast: all his HP, torn apart, headless and burnt (wounds.js DEATH); no jump dodges it (the owner's, Nov 17 20:37Z) */
   const jp = s.pos[WILD.id],
     jq = P4(s, WILD.id);
-  if (jp && jq && !jq.dn && !jq.gh && wildOpen(s, WILD.id)) {
+  if (jp && jq && !jq.dn && !jq.gh && isWild(s, WILD.id)) {
     const [jx, jy] = at(jp);
     if (
       Math.hypot(jx - bx, (jy - by) * 1.25) < ARMS.grenade.r * wide &&

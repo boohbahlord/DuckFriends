@@ -81,7 +81,6 @@ import {
   boxNow,
   isHelper,
   laserHeat,
-  wildOpen,
   wildCrying,
   isWild,
   endless,
@@ -1239,7 +1238,7 @@ function justinBot(s, id, now, out) {
       .map((z) => ({ z, d: Math.hypot(z.x - x, z.y - y) }))
       .sort((a, b) => a.d - b.d),
     d0 = near.length ? near[0].d : Infinity;
-  if (wildOpen(s, id)) return wildMove(s, id, now, p, x, y, near, run, out); // (Justin out there: never armed, the owner's, Nov 17 20:02Z)
+  if (isWild(s, id)) return wildMove(s, id, now, p, x, y, near, run, out); // (Justin out there: never armed, the owner's, Nov 17 20:02Z)
   /* what he'd shoot: the nearest zombie he can see */
   const seen = near.find(
     (n) => n.d < b.see && npcSees({ x, y }, n.z, undefined, 0),
