@@ -28,7 +28,6 @@ import {
   cabinCheck,
   cabinOver,
   cabinTick,
-  cakeGone,
   canEndRound,
   clone,
   colAt,
@@ -55,8 +54,8 @@ import {
   reviewCount,
   say,
   shareOf,
-  throwCake,
 } from "./rules.js";
+import { cakeGone, throwCake } from "./boardfire.js";
 import {
   GATE_BREEDS,
   waiting,
