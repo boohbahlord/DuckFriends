@@ -297,8 +297,17 @@ export const modeName = (s) =>
 /* Single Player (the owner's, Nov 18): the room on the device with no internet plays only these, and everything that
    lists the games (the votes, Random, Game Settings) lists only these there */
 export const SOLO_MODES = ["hang", "l4dd", "surv", "mgj", "sandbox"];
+/* Survival is hidden from every list until a terminal command in the lobby turns it on for the room (the owner's, Nov
+   21 18:59Z: `sudo survival on`; s.options.survOn). */
+export const HIDDEN_MODES = { surv: "survOn" };
+const modeShown = (s, m) => {
+  const k = HIDDEN_MODES[m.id];
+  return !k || !!(s && s.options && s.options[k]);
+};
 export const modesFor = (s) =>
-  s && s.solo ? MODES.filter((m) => SOLO_MODES.includes(m.id)) : MODES;
+  (s && s.solo ? MODES.filter((m) => SOLO_MODES.includes(m.id)) : MODES).filter(
+    (m) => modeShown(s, m),
+  );
 export const CABIN_MODES = ["hang", "l4dd"]; // (Duck Cabin's own games: picking one picks the map)
 /* the three kinds of game on the Game Settings screen's Game mode page. Duck Cabin's own games sit with the others
    (Hangout with the social games, Quacky Zombies by Mad God Justin with the special ones); the Map page's Duck Cabin
