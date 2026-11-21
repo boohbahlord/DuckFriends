@@ -36,7 +36,7 @@
      l4b  { id: { o, at } }: who is boarding up which opening, since when (one more board each BOARD_MS)
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
-import { ARMS, kindOf, GUN_NAMES, WEAPONS } from "./guns.js";
+import { ARMS, kindOf, GUN_NAMES, WEAPONS, rollDmg } from "./guns.js";
 import { SPRINT as GAME_SPRINT, POCKET_CHANGE } from "./gamedefaults.js";
 import { scaleOf } from "./duck.js";
 import { hpHeal, hpHurt, tenths } from "./hpmath.js";
@@ -276,8 +276,7 @@ const SKIP = 0.25,
 /* the grenade's and the grenade launcher's blast, half as wide (the owner's, Nov 19 19:27Z: "half the blast radius") */
 const BLAST_HALF = 0.5;
 const dmgOf = (A) =>
-  (Array.isArray(A.dmg) ? rint(A.dmg[0], A.dmg[1]) : A.dmg || 1) +
-  oneOf(A.plus); // (the buckshot double barrel's pellets: 1 or 1.5 more)
+  (Array.isArray(A.dmg) ? rollDmg(A) : A.dmg || 1) + oneOf(A.plus); // (the buckshot double barrel's pellets: 1 or 1.5 more)
 /* one of two, at even odds (the double barrels' 1 or 1.5); 0 with none */
 const oneOf = (two) => (two ? two[Math.random() < 0.5 ? 0 : 1] : 0);
 /* fire (the owner's): a zombie burns 8 s and takes 1 every 2 s (the first as it's lit: 4 in all), and fire on a zombie
@@ -2732,7 +2731,7 @@ function merchantShoots(s, zs, now) {
   let dmg = 0;
   for (let k = 0; k < burst; k++)
     if (Math.random() < chance)
-      dmg += Array.isArray(A.dmg) ? rint(A.dmg[0], A.dmg[1]) : +A.dmg || 1;
+      dmg += Array.isArray(A.dmg) ? rollDmg(A) : +A.dmg || 1;
   const a = Math.random() * 2 * Math.PI,
     off = dmg ? 0 : 30 + Math.random() * 40;
   s.hang.l4m = {

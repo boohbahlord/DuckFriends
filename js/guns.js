@@ -25,6 +25,13 @@ const MELEE_DUR = 450;
 /* every grenade's blast is 25% wider than it was (the owner's, Nov 21: "grenades should have a 25% larger explosion radius then
    before"): the board's (rules.js GRENADE_R), Quacky Zombies' (ARMS.grenade.r) and the drawn boom (grenade.js) all read this */
 export const NADE_GROW = 1.25;
+/* a hit's damage from a weapon's `dmg` range: one of its numbers a `step` apart (1 unless the weapon says, the dagger's 0.5),
+   every one as likely as the next */
+export const rollDmg = (A) => {
+  const [lo, hi] = A.dmg,
+    st = A.step || 1;
+  return lo + st * Math.floor(Math.random() * (Math.floor((hi - lo) / st) + 1));
+};
 export const ARMS = {
   knife: {
     kind: "melee",
@@ -94,9 +101,10 @@ export const ARMS = {
   dagger: {
     kind: "ranged",
     cool: ARM_COOL.dagger,
-    dmg: 2,
+    dmg: [0.5, 5], // (0.5 to 5, in halves: 0.5, 1, 1.5 ... 5; the owner's, Nov 21: "daggers ammo is 300 AND they do 0.5-5 damage")
+    step: 0.5,
     speed: ARM_SPEED.dagger,
-    all: 24,
+    all: 300,
   },
   shotgun: {
     kind: "ranged",
