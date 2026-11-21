@@ -8,6 +8,7 @@ armpage.js 142 a page of Customize's tiles put
 armspeed.js 34 how fast the weapons work, in
 art.js 403 pictures drawn in code
 audioimport.js 186 a player's own song, made small
+awards.js 20 the stats' awards: one card, one
 barrelheat.js 70 a hot barrel
 bash.js 1360 the command line's language: a small
 beaks.js 138 beaks
@@ -16,7 +17,7 @@ boardjustin.js 695 Justin on the boards
 botduck.js 90 a computer's duck: a random look,
 botlines.js 188 What the computers write and say
 bots.js 1430 computers
-brackets.js 467 Bicker Brackets: what the screen shows
+brackets.js 469 Bicker Brackets: what the screen shows
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
 chat.js 1596 text chat and the command line
@@ -36,7 +37,7 @@ duck.js 776 the rubber duck avatar
 duckparts.js 598 the ducks made from pixel parts
 ducksheets.js 2 made by tools/duck-parts.cjs:
 duel.js 120 the cloud duel: two ducks share
-dunce.js 137 Duncelation: what the screen shows
+dunce.js 139 Duncelation: what the screen shows
 duncerules.js 388 the rules of Duncelation
 euclid.js 351 Euclid's Squares
 eyes.js 187 eyes
@@ -110,7 +111,7 @@ maps.js 1119 maps: the world behind the board
 merchantlines.js 81 what the merchants say
 merchants.js 376 the merchants
 meters.js 114 the thin bars under my duck's
-mgj.js 217 Mad God Justin: what the screen
+mgj.js 219 Mad God Justin: what the screen
 mgjart.js 96 Mad God Justin's new pictures
 mgjrules.js 2287 
 modes.js 428 the game modes
@@ -150,7 +151,7 @@ pxdom.js 741 the pixel look for drawings already
 pxmap.js 45 a map as pixel files
 pxpic.js 22 the maps that have a picture
 pxtext.js 263 emoji and tooltips in the pixel
-quack.js 294 Who is the Quack?: what the
+quack.js 296 Who is the Quack?: what the
 quackrules.js 789 the rules of Who is the
 rainbowskin.js 116 the rainbow skin
 random.js 9 the two random helpers every mode's
@@ -217,7 +218,7 @@ stamina.js 41 my sprint's stamina, in every mode
 statrows.js 87 I want one table for what
 stats.js 165 stats: a player's stat box and
 store.js 262 what this device remembers
-story.js 214 Story Chain: what the screen shows
+story.js 211 Story Chain: what the screen shows
 styles.js 386 duck styles
 survrules.js 325 Survival
 svgurl.js 10 a drawing as a data:

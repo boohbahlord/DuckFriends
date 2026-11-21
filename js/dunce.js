@@ -5,6 +5,7 @@
    in the circle under the dunce. A dunce wears the dunce hat in black and white for the rest of the game (drawn here and
    in game.js only, never on anyone's own duck). Also the stats: the awards, each player's box and the takes. */
 import { esc } from "./ui.js";
+import { topOf, joinNames, awardCard, smallLine } from "./awards.js";
 import { duckSVG } from "./duck.js";
 import { nameHTML } from "./name.js";
 import { cloudHTML } from "./brackets.js";
@@ -74,13 +75,14 @@ function awardsHTML(s, set) {
   const name = (id) => (s.players[id] ? nm(s.players[id]) : "Gone");
   const award = (title, who, line, tie = true) =>
     who && who.length
-      ? `<div class="award"><h3>${esc(title)}</h3><p>${who.map(name).join(who.length > 2 ? ", " : " and ")}${who.length > 1 && tie ? ' <span class="dim">(tie)</span>' : ""}</p><p class="small dim">${line}</p></div>`
+      ? awardCard(
+          title,
+          joinNames(who.map(name)),
+          who.length > 1 && tie,
+          smallLine(line),
+        )
       : "";
-  const top = (f) => {
-    const xs = ids.map((id) => [id, f(per[id])]),
-      v = Math.max(0, ...xs.map((x) => x[1]));
-    return v ? { v, who: xs.filter((x) => x[1] === v).map((x) => x[0]) } : null;
-  };
+  const top = (f) => topOf(per, ids, f);
   const best = top((p) => p.not),
     back = top((p) => p.comeback),
     jx = s.seat.map((id) => [id, (s.jumps || {})[id] || 0]),
