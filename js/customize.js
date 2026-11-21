@@ -5,6 +5,15 @@
    below a line come
    Name, Card and Colors. Each opens a grid of small picture tiles, three to a row; Colors opens the list of what can be
    colored beside a grid of swatches. Every change shows at once, is kept, and goes to the room you are in. */
+import {
+  ARROW,
+  BULLET,
+  CHAIR,
+  GRENADE,
+  ROUNDS_ART,
+  TRACE,
+  ZEBRA,
+} from "./gunart.js";
 import { profile, save, NAME_OK, cleanName, cleanStats } from "./store.js";
 import {
   openWindow,
@@ -27,11 +36,9 @@ import {
   momentHTML,
   confettiRain,
   pressFX,
-  BULLET,
   daggerHTML,
   heldHTML,
   heldBoxHTML,
-  GRENADE,
 } from "./specials.js";
 import { sfx, loadSounds } from "./sound.js";
 import {
@@ -69,9 +76,7 @@ import { who } from "./who.js";
 import { NAV_HINTS, items } from "./keynav.js";
 import { unlocked, isLocked, lockHint } from "./unlocks.js";
 import { touchOnly } from "./pointer.js";
-import { ARROW, CHAIR, ZEBRA } from "./mgjart.js";
 import { jetHTML } from "./jetpack.js";
-import { ROUNDS_ART, TRACE } from "./l4ddguns.js";
 import { GUNS_NEW, AUTO, WEAPONS } from "./rules.js";
 import { pxWords } from "./pxtext.js";
 import { botDuck, BOT_DUCKS, any } from "./botduck.js";

@@ -25,6 +25,7 @@ import {
   lostRound,
   textMax,
 } from "./rules.js";
+import { shuffle, anyOf } from "./random.js";
 
 export const isDn = (s) => s.options.mode === "dunce";
 export const DN_SIDES = ["Dunce", "Not a Dunce"];
@@ -74,15 +75,6 @@ export const DUNCE_TAKES = [
   "Ducks are smarter than people.",
   "You should always clap when the plane lands.",
 ];
-
-const shuffle = (xs) => {
-  for (let i = xs.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [xs[i], xs[j]] = [xs[j], xs[i]];
-  }
-  return xs;
-};
-const anyOf = (xs) => xs[Math.floor(Math.random() * xs.length)];
 
 /* the turn now: s.dn.cur = { def, votes (their side: 0 Dunce, 1 Not a Dunce), first (their first vote), w (the verdict:
    0 a dunce, 1 not), end ([Dunce, Not a Dunce]) } */

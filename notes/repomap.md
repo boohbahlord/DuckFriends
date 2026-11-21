@@ -21,14 +21,14 @@ brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
 chat.js 1600 text chat and the command line
 cheatflag.js 16 a game with test commands used counts nothing
-cheats.js 73 test commands: cheat round N, cheat give WEAPON
+cheats.js 74 test commands: cheat round N, cheat give WEAPON
 claw.js 36 a claw's marks: three white slashes where a
 clock.js 5 one clock for the room
 collage.js 101 Shelter Sky & Null
 color.js 101 choosing a color
 corners.js 94 full screen
 court.js 229 Lawyering: what the screen shows
-customize.js 1798 Customize: the Armory
+customize.js 1803 Customize: the Armory
 datboi.js 115 here come dat boi
 democracy.js 243 Democracy of Ducklings:
 dock.js 73 the docks: where Notes and the chat open
@@ -37,7 +37,7 @@ duckparts.js 592 the ducks made from pixel parts
 ducksheets.js 2 made by tools/duck-parts.cjs:
 duel.js 124 the cloud duel: two ducks share the cloud,
 dunce.js 137 Duncelation: what the screen shows
-duncerules.js 396 the rules of Duncelation
+duncerules.js 388 the rules of Duncelation
 euclid.js 351 Euclid's Squares
 eyes.js 187 eyes
 faces.js 308 face items
@@ -49,7 +49,7 @@ friends.js 236 friends
 front.js 109 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 214 how a held weapon and the screen move
-game.js 8823 the game screen
+game.js 8820 the game screen
 gamedefaults.js 43 the game's own numbers, for every mode
 gameready.js 47 what the game's loading screen waits for
 gamesettings.js 1750 Game Settings: the whole screen, like Customize
@@ -57,9 +57,11 @@ gfx.js 8 Low graphics
 gmodes.js 246 Sandbox Phase 6: made game modes
 grenade.js 34 a grenade going off
 ground.js 53 what a duck walks on, for its footsteps
+gunart.js 448 every weapon, drawn: one drawing for every mode,
 gunmen.js 110 the gunmen's looks
-gunmenrules.js 1159 Survival: the gunmen
+gunmenrules.js 1160 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen
+guns.js 379 every weapon's numbers: one sheet for every mode
 hats.js 1073 hats
 heights.js 50 a shot's height, Doom's way
 helppages.js 1497 the command line's Help pages: help lists them;
@@ -75,20 +77,19 @@ jetart.js 39 the jetpack's pictures
 jetpack.js 33 the jetpack
 jumps.js 48 the jump counter
 keynav.js 204 menus by keyboard
-l4dd.js 3349 Quacky Zombies on every screen
+l4dd.js 3348 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 203 Dead Ducks Arcade's Angel machine on every screen
 l4ddart.js 623 Quacky Zombies' pictures
 l4ddbar.js 281 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and the roof's flare,
-l4ddcatalog.js 202 Quacky Zombies: the Butler's Items tab
+l4ddcatalog.js 201 Quacky Zombies: the Butler's Items tab
 l4dddrops.js 63 Quacky Zombies' drops, drawn
-l4ddguns.js 279 Quacky Zombies' new weapons, drawn
 l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 338 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box on every screen
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 5362 the rules of Quacky Zombies
+l4ddrules.js 5035 the rules of Quacky Zombies
 l4ddsfx.js 513 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the zombies far from
 langname.js 5 the name of Sandbox's number language, in one
@@ -107,9 +108,9 @@ maps.js 1112 maps: the world behind the board
 merchantlines.js 81 what the merchants say
 merchants.js 376 the merchants
 meters.js 114 the thin bars under my duck's name
-mgj.js 218 Mad God Justin: what the screen shows
-mgjart.js 166 Mad God Justin's new pictures
-mgjrules.js 2321 
+mgj.js 217 Mad God Justin: what the screen shows
+mgjart.js 96 Mad God Justin's new pictures
+mgjrules.js 2303 
 modes.js 255 the game modes
 music.js 590 the music: our own songs, played from recordings
 musicbar.js 169 the music bar: the song the room hears,
@@ -147,15 +148,16 @@ pxmap.js 45 a map as pixel files
 pxpic.js 22 the maps that have a picture file :
 pxtext.js 263 emoji and tooltips in the pixel look
 quack.js 294 Who is the Quack?: what the screen shows
-quackrules.js 796 the rules of Who is the Quack?
+quackrules.js 789 the rules of Who is the Quack?
 rainbowskin.js 116 the rainbow skin
+random.js 9 the two random helpers every mode's rules share:
 report.js 114 Report Bug or Suggest Ideas
 rooms.js 256 Play: create a room, and the rooms online
 router.js 112 screens
-rules.js 6320 the rules of Agree or Disagree
+rules.js 6285 the rules of Agree or Disagree
 sandbox.js 1359 Sandbox: the key windows
 sandboxrules.js 2059 Sandbox: which map it plays on, and who
-sbarms.js 143 Sandbox: a made NPC's weapons in a fight
+sbarms.js 144 Sandbox: a made NPC's weapons in a fight
 sbaudio.js 211 Sandbox: songs players bring in
 sbbody.js 233 Sandbox: an NPC's body, where it can be
 sbbrain.js 87 Sandbox: what a spawned NPC does , on
@@ -172,11 +174,11 @@ sbhelp.js 273 Sandbox: the help manual
 sbhot.js 155 Sandbox: the hotbar , the rules
 sbhotview.js 299 Sandbox: the hotbar , the screen
 sblooks.js 48 Sandbox: a zone's look
-sbloot.js 443 Sandbox: loot orbs , the rules
-sblootview.js 481 Sandbox: loot orbs , on the screen
+sbloot.js 444 Sandbox: loot orbs , the rules
+sblootview.js 482 Sandbox: loot orbs , on the screen
 sbmake.js 203 Sandbox: making NPCs and dressing spawns , the
 sbmenu.js 264 Sandbox: presets, copy and paste, the right-click menu
-sbnpcart.js 171 Sandbox: a spawned NPC's picture, whatever it is
+sbnpcart.js 162 Sandbox: a spawned NPC's picture, whatever it is
 sbnpcs.js 73 Sandbox: the NPCs I make
 sbnumberat.js 476 Sandbox: NPCs that run a Seriat file
 sbout.js 62 Sandbox off the zombie maps: out of lives
@@ -197,7 +199,7 @@ shared.js 497 Sandbox Phase 7: Shared, the game modes and
 shell.js 3541 the command line: a small bash
 slices.js 31 long work cut into slices
 sound.js 939 the game's sounds: real recordings, played from small
-specials.js 945 Specials
+specials.js 857 Specials
 spectate.js 97 Survival: watching the others once my duck is
 splash.js 71 the start screen: your duck on a cloud,
 sprintblur.js 54 the sprint's blurred border of my screen (css/app.css
@@ -208,19 +210,19 @@ story.js 214 Story Chain: what the screen shows
 styles.js 386 duck styles
 survrules.js 325 Survival
 svgurl.js 10 a drawing as a data:
-textutils.js 1157 the command line's text tools
+textutils.js 1150 the command line's text tools
 touch.js 284 touch controls on the board
 trivia.js 464 Trivia: what the screen shows
 triviabank.js 499 Trivia's auto questions
-triviarules.js 465 the rules of Trivia
+triviarules.js 458 the rules of Trivia
 ui.js 373 small helpers every screen uses
 umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
 unlocks.js 372 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 2924 Updates
+updates.js 2933 Updates
 vdd.js 190 Valentine's Duck Date: what the screen shows
-vddrules.js 521 the rules of Valentine's Duck Date
+vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
 vote.js 278 Vote Mode & Map: the vote windows
 who.js 3 who this player is beyond this tab

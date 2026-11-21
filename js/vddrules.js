@@ -23,6 +23,7 @@ import {
   lostRound,
   VOTE_GRACE,
 } from "./rules.js";
+import { shuffle, anyOf } from "./random.js";
 
 export const isVd = (s) => s.options.mode === "vdd";
 export const VD_PHASES = ["vdprompt", "vddate", "vdpick", "vddown", "vdval"];
@@ -61,15 +62,6 @@ export const VD_TOPICS = [
   "The pet you'd love to have.",
   "What would you do with a million dollars?",
 ];
-
-const shuffle = (xs) => {
-  for (let i = xs.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [xs[i], xs[j]] = [xs[j], xs[i]];
-  }
-  return xs;
-};
-const anyOf = (xs) => xs[Math.floor(Math.random() * xs.length)];
 
 /* ---------- who is who ---------- */
 const dateOf = (s) => (s.vd && s.vd.date) || null;

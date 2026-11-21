@@ -1,9 +1,9 @@
 /* ---------- Quacky Zombies' drops, drawn (Stage 4, the owner's list) ----------
    Each one's symbol, as the owner named them: a zombie duck's head crossed out in red (Instant Kill), a bullet (Max Ammo), a nuclear bomb (Nuke), the
    adrenaline shot (Speed Boost), a dollar sign (Double Points) and a price tag (Sale). Simple shapes with the guns'
-   dark outline and a soft white shine (l4ddguns.js), each filling a 40 × 40 square; the screen floats them over the
+   dark outline and a soft white shine (gunart.js), each filling a 40 × 40 square; the screen floats them over the
    floor with a green glow (css .l4-drop). Preview: tools/l4dd-art.html */
-import { GUNS } from "./l4ddguns.js";
+import { GUNS } from "./gunart.js";
 
 const INK = "#2a2d38";
 const shine = (d, o = 0.5, w = 1.2) =>

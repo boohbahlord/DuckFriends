@@ -547,5 +547,68 @@
     },
     "computers": 3,
     "beats": 1500
+  },
+  {
+    "name": "guns-board-1",
+    "options": {
+      "mode": "aod",
+      "fun": 1
+    },
+    "computers": 3,
+    "beats": 600,
+    "phase": "*",
+    "mirror": 1,
+    "fire": [
+      "handgun",
+      "dagger",
+      "knife",
+      "hammer",
+      "axe",
+      "sword",
+      "pan",
+      "shotgun"
+    ]
+  },
+  {
+    "name": "guns-board-2",
+    "options": {
+      "mode": "aod",
+      "fun": 1
+    },
+    "computers": 3,
+    "beats": 600,
+    "phase": "*",
+    "mirror": 1,
+    "fire": [
+      "grenade",
+      "bow",
+      "sniper",
+      "smg",
+      "tommy",
+      "ump",
+      "ak",
+      "revolver"
+    ]
+  },
+  {
+    "name": "guns-board-3",
+    "options": {
+      "mode": "aod",
+      "fun": 1
+    },
+    "computers": 3,
+    "beats": 600,
+    "phase": "*",
+    "mirror": 1,
+    "fire": [
+      "lmg",
+      "chaingun",
+      "glauncher",
+      "dbarrel",
+      "flamer",
+      "burst",
+      "chair",
+      "zebra"
+    ]
   }
 ]

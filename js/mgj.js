@@ -3,6 +3,7 @@
    flickering like lightning (the cloud says "Defeat Justin!"), and his HP bar beside it. The meteor falls from the top
    right onto the middle of the board and knocks everyone down. A win: lightning strikes him where he stands.
    Also the stats: the awards (Most Damage, Killing Blow, Hit the Most, Most Jumps), each player's box, and every fight. */
+import { SHOTGUN } from "./gunart.js";
 import { esc, el } from "./ui.js";
 import { hpText } from "./hpmath.js";
 import { duckSVG } from "./duck.js";
@@ -12,9 +13,8 @@ import { fmtJumps, plural } from "./format.js";
 import { FRIDGE } from "./art.js";
 import { JUSTIN_PLAYER } from "./boardjustin.js";
 import { mgjStats, GOOD_ID, GOOD_NAME, SKY_ID } from "./mgjrules.js";
-import { heldHTML, SHOTGUN } from "./specials.js";
+import { heldHTML } from "./specials.js";
 import { seenDuck, seenName } from "./looks.js";
-import { CHAIR } from "./mgjart.js";
 import { meterHTML } from "./hpmeter.js";
 
 /* his look here: Justin, with the lightning eyes and devil horns; beaten, he cries (the tears eyes) */
@@ -85,7 +85,6 @@ export const CONTROLLER = `<svg viewBox="0 0 64 46" aria-hidden="true">
 <circle cx="47.4" cy="19.6" r="2.5" fill="#3ddc84" stroke="#1c1c28" stroke-width=".8"/><circle cx="42.8" cy="15" r="2.5" fill="#38b6ff" stroke="#1c1c28" stroke-width=".8"/>
 <circle cx="32" cy="11" r="4.6" fill="#bfe8ff" opacity=".3"/><circle cx="32" cy="11" r="3.2" fill="#f2f6ff" stroke="#1c1c28" stroke-width=".8"/><circle cx="31.2" cy="10.2" r="1" fill="#fff"/>
 <ellipse cx="28" cy="17.4" rx="1.4" ry="1" fill="#16171c"/><ellipse cx="36" cy="17.4" rx="1.4" ry="1" fill="#16171c"/></svg>`;
-export { CHAIR }; // (the office chair lives in mgjart.js now, so the Chair special can use it too)
 /* the game's name on his monitor, over the picture, in the title's many colors (one color a letter) */
 const SIEGE = `<text x="62" y="36.5" text-anchor="middle" font-family="'Lilita One', 'Fredoka', system-ui, sans-serif" font-size="19" stroke="#1c1c28" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke">${[
   ..."Siege",

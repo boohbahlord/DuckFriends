@@ -136,6 +136,10 @@ A program that is changed grows more complex unless work is spent against it (Le
   Walkable maps: one walk (`stepToward`; `mapWalk` on Quacky Zombies' maps, Hangout's 12 px steps), one move and use
   (`moveOf`, `useOf`), one revive (`downMate`, `holdE`) and grenade (`crowdOf`, `nadeOk`); breeds `BOT_BREEDS`: computer,
   justin (the fireplace's). Pinned by the npc golden (`tools/check/npcgolden.cjs`, the bots-* scenarios too).
+- Guns: every weapon's numbers in `js/guns.js` (Dead Ducks Arcade's `ARMS`, `kindOf`, `GUN_NAMES` the base; the modes'
+  own in `GUN_BREEDS`: board, mgj, read by rules.js `coolFor`/`magSize` and mgjrules.js `mgjCool`/`mgjMag`); every
+  weapon's drawing in `js/gunart.js` (held, icon, bullets and traces, `iconOf`, lengths in the hand `gwOf`; specials.js
+  `heldHTML` colors them per duck). Pinned by `tools/check/guns.cjs` and the npc golden's guns-board-* runs.
 
 ## Reading, writing and talking for less (the owner's, Nov 20 22:09Z; sources in /mnt/project-files/adam/ and project memory)
 - Map, then narrow: `git grep -l` the behavior, then read 100 to 200 line windows; never read a file over 1,500 lines
