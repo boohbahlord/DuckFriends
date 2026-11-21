@@ -9,7 +9,7 @@
    board drawn, the cards see-through, a slow breathing color behind them while the room votes), the bracket (it moves
    the way your duck walks; − and + zoom it), the podium and the stats. */
 import { esc } from "./ui.js";
-import { topOf, joinNames, awardCard, smallLine } from "./awards.js";
+import { awardKit, smallLine } from "./awards.js";
 import { duckSVG } from "./duck.js";
 import { nameHTML, fontHTML } from "./name.js";
 import { cardBackground } from "./card.js";
@@ -385,18 +385,8 @@ export function podiumHTML(s) {
 
 /* ---------- the stats: this tournament's awards, then the whole game's once the review vote passes ---------- */
 function awardsHTML(s, per, scope) {
-  const ids = Object.keys(per).filter((id) => s.players[id]),
-    nm = (id) => nameHTML(s.players[id].name, seenName(s.players[id]));
-  const top = (f) => topOf(per, ids, f);
-  const award = (title, r, line) =>
-    r
-      ? awardCard(
-          title,
-          joinNames(r.who.map(nm)),
-          r.who.length > 1,
-          smallLine(line(r.v)),
-        )
-      : "";
+  const { ids, nm, top, award: card } = awardKit(s, per);
+  const award = (title, r, line) => card(title, r, (x) => smallLine(line(x.v)));
   const n = (v, one, many = one + "s") => `${v} ${v === 1 ? one : many}`;
   const jx = s.seat.map((id) => [id, (s.jumps || {})[id] || 0]),
     jv = Math.max(0, ...jx.map((x) => x[1]));

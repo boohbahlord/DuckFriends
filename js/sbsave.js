@@ -25,9 +25,10 @@ import {
   sbRule,
   SB_WORLDS,
   SB_WORLD_NAMES,
+  SB_TILE,
 } from "./sandboxrules.js";
 
-export const SAVE_V = 1; // (a save's version: a newer game still opens an older save)
+export const SAVE_V = 2; // (a save's version: a newer game still opens an older save. 2: sizes typed in tiles)
 const MINE = ["sbsv", "sbpk", "sbAsked"]; // (this file's own parts: never in a save)
 export const isPart = (k) => /^(sb|nb)/.test(k) && !MINE.includes(k);
 const isOpt = (k) => /^sb/.test(k);
@@ -72,6 +73,7 @@ export function sbSnapshot(s) {
   for (const [id, P] of Object.entries(s.players))
     if (!P.bot && !P.helper) who[id] = P.name;
   return {
+    v: SAVE_V, // (in the data too: a made game mode or a test's copy has no save record around it)
     parts,
     back,
     options: Object.fromEntries(
@@ -90,6 +92,22 @@ export function sbSnapshot(s) {
 export const newSaveId = () =>
   Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
+/* a save from before version 2 typed a block's Width, Height and Square size in duck lengths (the owner's, Nov 21
+   19:13Z: every distance in tiles now): each number in those boxes becomes tiles, four to a duck length, so nothing in
+   it changes size. A box holding Seriat code is left as it is */
+const TILED = ["zw", "zh", "sq"];
+const tiles = (t) =>
+  typeof t === "string" && /^[\d.\s,:]+$/.test(t)
+    ? t.replace(/\d+(\.\d+)?|\.\d+/g, (n) =>
+        String(Math.round((+n / SB_TILE) * 100) / 100),
+      )
+    : t;
+function inTiles(sb) {
+  for (const p of Object.values((sb && sb.pts) || {}))
+    for (const f of TILED)
+      if (p && p.f && p.f[f])
+        p.f[f] = { ...p.f[f], t: tiles(p.f[f].t), ok: tiles(p.f[f].ok) };
+}
 /* the Sandbox's parts out of the room: a new Sandbox starts from nothing */
 function clear(s) {
   for (const k of Object.keys(s)) if (isPart(k)) delete s[k];
@@ -178,6 +196,7 @@ export function sbPick(s, a, now) {
     return false;
   clear(s);
   for (const [k, v] of Object.entries(d.parts)) if (isPart(k)) s[k] = copy(v);
+  if (!(+d.v >= 2)) inTiles(s.sb); // (from before tiles: its sizes as big as they were)
   for (const [k, v] of Object.entries(d.options || {}))
     if (isOpt(k)) s.options[k] = v;
   s.options.sbMap = SB_WORLDS[d.world] ? d.world : ""; // (a world save brings its world; a board save, the board)

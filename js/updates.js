@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v227",
+    version: 227,
+    date: "Nov 21, 2026",
+    title: "Tiles instead of duck lengths",
+    news: [
+      "For Sandbox: every distance is in tiles now (4 tiles = the old 1 duck length): zone width, height and square size, and Seriat's near, moves and size. Saved games keep their sizes; Seriat files made before read 4 times shorter.",
+      "Behind the scenes: Game Settings reads what each game mode needs from the mode itself instead of checking its name, and a few more copies of the same code were folded into one (Bicker Brackets' and Story Chain's awards, Survival's walkers, the fireflies), so a fix lands everywhere at once.",
+    ],
+  },
+  {
     id: "v226",
     version: 226,
     date: "Nov 21, 2026",

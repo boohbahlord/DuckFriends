@@ -23,7 +23,7 @@ export const BB_WHEN = {
   near: [
     "A duck comes near",
     "when near duck",
-    { name: "Duck lengths", min: 1, max: 20, def: 3 },
+    { name: "Tiles", min: 4, max: 80, def: 12 }, // (Seriat's distances: four to a duck length)
   ],
   every: [
     "Every few seconds",
