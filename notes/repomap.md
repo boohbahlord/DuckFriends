@@ -61,7 +61,7 @@ gunart.js 448 every weapon, drawn: one drawing for every mode,
 gunmen.js 110 the gunmen's looks
 gunmenrules.js 1160 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen
-guns.js 465 every weapon's numbers: one sheet for every mode
+guns.js 470 every weapon's numbers: one sheet for every mode
 hats.js 1073 hats
 heights.js 50 a shot's height, Doom's way
 helppages.js 1497 the command line's Help pages: help lists them;
@@ -198,7 +198,7 @@ shared.js 497 Sandbox Phase 7: Shared, the game modes and
 shell.js 3547 the command line: a small bash
 slices.js 31 long work cut into slices
 sound.js 937 the game's sounds: real recordings, played from small
-specials.js 857 Specials
+specials.js 858 Specials
 spectate.js 97 Survival: watching the others once my duck is
 splash.js 71 the start screen: your duck on a cloud,
 stamina.js 41 my sprint's stamina, in every mode
@@ -216,7 +216,7 @@ triviarules.js 456 the rules of Trivia
 ui.js 349 small helpers every screen uses
 umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
-unlocks.js 372 things you unlock
+unlocks.js 413 things you unlock
 upbar.js 69 the green bar on an upload
 updates.js 2915 Updates
 vdd.js 198 Valentine's Duck Date: what the screen shows

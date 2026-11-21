@@ -445,6 +445,7 @@ export const GUN_BREEDS = {
       dbarrel: [2, 2 * ARMS.dbarrel.shell],
       flamer: [FLAME.TANK, FLAME.RELOAD],
     },
+    names: { dbarrel: "Double barrel" }, // (the board has only the one: Dead Ducks Arcade's slug double barrel)
   },
   /* Mad God Justin: the knife, the sword and the pistol as fast as in every mode (the knife four a second, the pistol
      five), a gun picked up Quacky Zombies' own; every gun picked up has to reload here (the owner's, Nov 16), so the ones
@@ -463,3 +464,7 @@ export const GUN_BREEDS = {
     },
   },
 };
+/* a weapon's name in a mode (the specials picker and the unlocks say the board's): Dead Ducks Arcade's unless the
+   mode names it its own way */
+export const nameOf = (w, breed) =>
+  ((GUN_BREEDS[breed] || {}).names || {})[w] || GUN_NAMES[w] || w;

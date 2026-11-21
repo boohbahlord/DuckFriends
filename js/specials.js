@@ -33,6 +33,7 @@ import {
   ZEBRA,
 } from "./gunart.js";
 import { HANDGUN } from "./gamedefaults.js";
+import { nameOf } from "./guns.js";
 import { el } from "./ui.js";
 import { gridPx, pxSVG, rasterReady, pixelOn } from "./pixel.js";
 import { hashText } from "./pxdom.js";
@@ -204,7 +205,7 @@ export const SPECIALS = [
   },
   {
     id: "dagger",
-    name: "Dagger",
+    name: nameOf("dagger", "board"),
     kind: "item",
     icon: DAGGER(["#d9dee8", "#6b3e1e", "#c9a24a"]).replace(
       "<svg ",
@@ -219,7 +220,7 @@ export const SPECIALS = [
   },
   {
     id: "knife",
-    name: "Knife",
+    name: nameOf("knife", "board"),
     kind: "item",
     icon: iconOf(KNIFE(["#d9dee8", "#3b2a22", "#c9a24a"])),
     tip: "Stab the duck right in front of you, toward your mouse: it plays dead. Four times a second. Shift and its key keeps it out: left click stabs. (Off when the host turns off the silly commands.)",
@@ -231,7 +232,7 @@ export const SPECIALS = [
   },
   {
     id: "axe",
-    name: "Fire axe",
+    name: nameOf("axe", "board"),
     kind: "item",
     icon: iconOf(AXE(["#c62f2f", "#b8864e", "#c9ced8"])),
     tip: "A big swing in front of you, toward your mouse: 1 to 4 damage to every duck in it. A little faster than the hammer. Shift and its key keeps it out: left click swings. (Off when the host turns off the silly commands.)",
@@ -243,7 +244,7 @@ export const SPECIALS = [
   },
   {
     id: "sword",
-    name: "Short sword",
+    name: nameOf("sword", "board"),
     kind: "item",
     icon: iconOf(SWORD(["#d9dee8", "#5a3a26", "#c9a24a"])),
     tip: "A quick short swing in front of you, toward your mouse: 1 damage to every duck in it. Faster than the knife. Shift and its key keeps it out: left click swings. (Off when the host turns off the silly commands.)",
@@ -255,7 +256,7 @@ export const SPECIALS = [
   },
   {
     id: "pan",
-    name: "Cast iron pan",
+    name: nameOf("pan", "board"),
     kind: "item",
     icon: iconOf(PAN(["#2b2d33", "#1c1d22", "#6a6f7c"])),
     tip: "A short heavy swing in front of you, toward your mouse: it misses half the time, but half its hits are critical. 1 damage. Shift and its key keeps it out: left click swings. (Off when the host turns off the silly commands.)",
@@ -267,7 +268,7 @@ export const SPECIALS = [
   },
   {
     id: "hammer",
-    name: "Hammer",
+    name: nameOf("hammer", "board"),
     kind: "item",
     icon: iconOf(HAMMER(["#5f646e", "#c98a3a", "#3a3d48"])),
     tip: "A big swing in front of you, toward your mouse: every duck in it is knocked back and plays dead. Once every 2.25 seconds. Shift and its key keeps it out: left click swings. Its ⚙ makes it a wrench. (Off when the host turns off the silly commands.)",
@@ -279,14 +280,14 @@ export const SPECIALS = [
   },
   {
     id: "shotgun",
-    name: "Shotgun",
+    name: nameOf("shotgun", "board"),
     kind: "item",
     icon: iconOf(SHOTGUN, 0.82),
     tip: "A blast of pellets in a cone toward your mouse: every duck one hits plays dead. Then a pump before the next. Shift and its key keeps it out: left click shoots. (Off when the host turns off the silly commands.)",
   },
   {
     id: "grenade",
-    name: "Grenade",
+    name: nameOf("grenade", "board"),
     kind: "item",
     icon: GRENADE(["#5d8a3a", "#a4a8b4", "#c9a24a"]),
     tip: "Throw a grenade toward your mouse: where it lands it blows up, and every duck near it (three ducks across) plays dead, flies off and is burnt for a while. Shift and its key keeps it out: left click throws. (Off when the host turns off the silly commands.)",
@@ -298,7 +299,7 @@ export const SPECIALS = [
   },
   {
     id: "bow",
-    name: "Bow",
+    name: nameOf("bow", "board"),
     kind: "item",
     icon: iconOf(BOW, 1.2),
     tip: "An arrow flies straight toward your mouse, fast: any duck it hits plays dead. One every 0.4 seconds. Shift and its key keeps it out: left click shoots. (Off when the host turns off the silly commands.)",
@@ -307,7 +308,7 @@ export const SPECIALS = [
      (unlocks.js) */
   {
     id: "sniper",
-    name: "Barrett .50 Cal",
+    name: nameOf("sniper", "board"),
     kind: "item",
     get icon() {
       return GUNS.sniper.icon;
@@ -316,7 +317,7 @@ export const SPECIALS = [
   },
   {
     id: "smg",
-    name: "MP5",
+    name: nameOf("smg", "board"),
     kind: "item",
     get icon() {
       return GUNS.smg.icon;
@@ -325,7 +326,7 @@ export const SPECIALS = [
   },
   {
     id: "tommy",
-    name: "Tommy gun",
+    name: nameOf("tommy", "board"),
     kind: "item",
     get icon() {
       return GUNS.tommy.icon;
@@ -334,7 +335,7 @@ export const SPECIALS = [
   },
   {
     id: "ump",
-    name: "UMP-45",
+    name: nameOf("ump", "board"),
     kind: "item",
     get icon() {
       return GUNS.ump.icon;
@@ -343,7 +344,7 @@ export const SPECIALS = [
   },
   {
     id: "ak",
-    name: "AK-47",
+    name: nameOf("ak", "board"),
     kind: "item",
     get icon() {
       return GUNS.ak.icon;
@@ -352,7 +353,7 @@ export const SPECIALS = [
   },
   {
     id: "revolver",
-    name: "Revolver",
+    name: nameOf("revolver", "board"),
     kind: "item",
     get icon() {
       return GUNS.revolver.icon;
@@ -361,7 +362,7 @@ export const SPECIALS = [
   },
   {
     id: "lmg",
-    name: "M249 SAW",
+    name: nameOf("lmg", "board"),
     kind: "item",
     get icon() {
       return GUNS.lmg.icon;
@@ -370,7 +371,7 @@ export const SPECIALS = [
   },
   {
     id: "chaingun",
-    name: "Chain gun",
+    name: nameOf("chaingun", "board"),
     kind: "item",
     get icon() {
       return GUNS.chaingun.icon;
@@ -379,7 +380,7 @@ export const SPECIALS = [
   },
   {
     id: "dbarrel",
-    name: "Double barrel",
+    name: nameOf("dbarrel", "board"),
     kind: "item",
     get icon() {
       return GUNS.dbarrel.icon;
@@ -388,7 +389,7 @@ export const SPECIALS = [
   },
   {
     id: "flamer",
-    name: "Flamethrower",
+    name: nameOf("flamer", "board"),
     kind: "item",
     get icon() {
       return GUNS.flamer.icon;
@@ -397,7 +398,7 @@ export const SPECIALS = [
   },
   {
     id: "burst",
-    name: "Steyr AUG",
+    name: nameOf("burst", "board"),
     kind: "item",
     get icon() {
       return GUNS.burst.icon;
@@ -406,7 +407,7 @@ export const SPECIALS = [
   },
   {
     id: "glauncher",
-    name: "Grenade launcher",
+    name: nameOf("glauncher", "board"),
     kind: "item",
     get icon() {
       return GUNS.glauncher.icon;
@@ -415,14 +416,14 @@ export const SPECIALS = [
   },
   {
     id: "chair",
-    name: "Chair",
+    name: nameOf("chair", "board"),
     kind: "item",
     icon: CHAIR.replace("<svg ", '<svg class="sp-chair" '), // (upright, as he throws it; a light edge so it shows on the dark keys)
     tip: "Throw Justin's office chair toward your mouse: it rolls along slowly, and every duck it hits plays dead and is shoved back. Once every 15 seconds. (Off when the host turns off the silly commands.)",
   },
   {
     id: "zebra",
-    name: "Zebra cake",
+    name: nameOf("zebra", "board"),
     kind: "item",
     icon: ZEBRA,
     tip: "Throw a zebra cake toward your mouse: Justin runs after it and eats it, and does nothing else meanwhile. Once every 30 seconds. (In Mad God Justin everyone shares one.)",
@@ -431,7 +432,7 @@ export const SPECIALS = [
      picture (the zebra cake is everyone's too, above) */
   {
     id: "medkit",
-    name: "Medkit",
+    name: nameOf("medkit", "board"),
     kind: "item",
     only: "l4dd",
     icon: MEDKIT,
@@ -439,7 +440,7 @@ export const SPECIALS = [
   },
   {
     id: "laser",
-    name: "Laser Rifle",
+    name: nameOf("laser", "board"),
     kind: "item",
     only: "mgj", // (never a duck's own special: Dead Ducks Arcade's weapon spin gives it, and Mad God Justin's pickups)
     get icon() {
