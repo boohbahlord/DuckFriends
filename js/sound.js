@@ -18,7 +18,7 @@
 
      sfx.<name>(o)          a sound by its name (sfx.handgun(), sfx.count(last) …); a name with no file yet is silent
      play(name, o)          o: { k: louder or quieter (1), x, y: where in the world (px; fades with distance), rate }
-     loop(name, o)          a sound on a loop (the jetpack): { stop(), move(x, y) }
+     loop(name, o)          a sound on a loop (the flamethrower's roar): { stop(), move(x, y) }
      setListener(fn)        fn() → where my duck is ({ x, y }), for the distance; null for none
      loadSounds(group)      "game", "l4dd", "cabin": fetch and decode that group's files ahead of time */
 import { profile, SETTINGS_DEFAULT } from "./store.js";
@@ -54,9 +54,6 @@ export const VOL = {
   climb: -26,
   thud: -13,
   hop: -19,
-  jetStart: -19,
-  jetLoop: -23,
-  jetStop: -18,
   // the flamethrower: lit, its roar while held, its last puff
   flameStart: -11,
   flameLoop: -14,
@@ -263,7 +260,7 @@ const GROUPS = {
     ...["shotgun", "pump", "glauncher", "bow", "empty", "medkit", "adrenaline"],
     ...["dbarrel", "burst", "flameStart", "flameLoop", "flameStop"],
     ...["fire", "fireLight", "trombone"],
-    ...["jetStart", "jetLoop", "jetStop", "chomp", "sip"],
+    ...["chomp", "sip"],
     ...["knife", "hammer", "chair", "throw", "cakeThrow", "bonk"],
     ...["axe", "sword", "pan", "axeHit", "swordHit", "panHit", "break"],
     ...["sbPlace", "sbCut", "sbOrb", "cheatOn", "cheatOff", "seRun", "seStop"],
@@ -526,7 +523,7 @@ function voice(name, o = {}, loops = false) {
   if (low && far < LITE.far) return null;
   const t = soon();
   if (loops) {
-    /* a loop (the wind, the rain, a fire, the hum, a jetpack): its own budget, LOOPS at once. Full: the quietest gives
+    /* a loop (the wind, the rain, a fire, the hum): its own budget, LOOPS at once. Full: the quietest gives
        way to a louder one; a quieter one waits (its owner tries again: ambience.js every 250 ms) */
     const ls = live.filter((v) => v.loop && !v.cut);
     if (ls.length >= (low ? LITE.loops : LOOPS)) {
@@ -590,7 +587,7 @@ export function hush(v) {
   if (v && !v.cut && ac) cut(v, soon());
 }
 
-/* a sound on a loop, faded in and out (the jetpack's roar) */
+/* a sound on a loop, faded in and out (the flamethrower's roar) */
 export function loop(name, o = {}) {
   const v = voice(name, o, true);
   let at = o; // where it is now (move)
@@ -657,21 +654,6 @@ function glide(param, to, t, secs, exp) {
   else param.linearRampToValueAtTime(to, t + secs);
 }
 
-/* the jetpack: its start, its roar while the jets are on, and a hiss as they stop (each duck's own) */
-const jets = new Map();
-function jet(id, on, o = {}) {
-  const j = jets.get(id);
-  if (!!j === !!on) return;
-  if (on) {
-    play("jetStart", o);
-    jets.set(id, loop("jetLoop", o));
-  } else {
-    j.stop();
-    jets.delete(id);
-    play("jetStop", o);
-  }
-}
-
 /* the flamethrower: the game tells me each puff (ten a second while it's held, o.id the duck's); the first one lights
    it (its start, then its roar on a loop, following the duck), and once the puffs stop coming it goes out (its last
    puff). Each duck's own */
@@ -709,9 +691,8 @@ function fire(o = {}) {
   burn(1.6, o);
 }
 
-/* leaving a game: every jet and every flamethrower quiet */
-export function jetsOff() {
-  for (const id of [...jets.keys()]) jet(id, false);
+/* leaving a game: every flamethrower and every laser's steam quiet */
+export function weaponsOff() {
   for (const id of [...flames.keys()]) flameOut(id);
   for (const id of [...steams.keys()]) steam(id, 0);
 }
@@ -908,7 +889,6 @@ const SFX = {
   bang: named("handgun"),
   tat: named("smg"),
   reload,
-  jet,
   flamer,
   burn,
   fire,

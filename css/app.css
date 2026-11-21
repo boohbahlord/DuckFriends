@@ -5451,21 +5451,24 @@ html.moving .pix-sun {
 .colors.grid3 .invent {
   margin-top: 0.4rem;
 }
-/* Colors' drop-downs, under the hex box: the human skins (swatches, their hex on hover) and the metals (a chip and its
-   name), each a list of its own that scrolls; one open at a time */
+/* Colors' drop-downs, under the hex box: the human skins and the metals, each a list of swatches drawn as the colors
+   above them are (the owner's, Nov 21 16:37Z: "conform to the UI of the top colors above it"), no names (a skin's hex
+   and a metal's name on hover); one open at a time */
 .cdrops {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-top: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.22rem;
+  margin-top: 0.4rem;
 }
 .cdrop {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
-  padding: 0.35rem 0.7rem;
-  border: 0.14rem solid var(--line);
-  border-radius: 0.5rem;
+  height: 1.9rem;
+  padding: 0 0.5rem;
+  border: 0.1rem solid var(--line);
+  border-radius: 0.4rem;
   background: var(--panel);
   color: inherit;
   font: inherit;
@@ -5485,14 +5488,9 @@ html.moving .pix-sun {
 }
 .clist {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(2.2rem, 1fr));
-  gap: 0.25rem;
-  max-height: 9.5rem;
-  overflow-y: auto;
-  margin-top: 0.4rem;
-  padding: 0.3rem;
-  border: 0.12rem solid var(--line);
-  border-radius: 0.5rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.22rem;
+  margin-top: 0.22rem;
 }
 .clist[hidden] {
   display: none;
@@ -5501,36 +5499,13 @@ html.moving .pix-sun {
   width: 100%;
   height: 1.7rem;
   border-radius: 0.3rem;
+  border-width: 0.1rem;
 }
-.clist .sw[aria-pressed="true"],
-.cmetal[aria-pressed="true"] {
+.clist .sw[aria-pressed="true"] {
   outline: 0.18rem solid var(--blue);
   outline-offset: 0.05rem;
 }
-.clist.cmetals {
-  grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
-}
-.cmetal {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.3rem 0.45rem;
-  border: 0.12rem solid transparent;
-  border-radius: 0.4rem;
-  background: var(--panel);
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.cmetal i {
-  flex: none;
-  width: 1.3rem;
-  height: 1.3rem;
-  border-radius: 0.3rem;
-  box-shadow: inset 0 0 0 0.12rem #0004;
-}
-.cmetal[aria-disabled="true"] {
+.clist .sw[aria-disabled="true"] {
   opacity: 0.45;
   cursor: default;
 }
@@ -5583,7 +5558,8 @@ html.moving .pix-sun {
     flex-direction: row;
     flex-wrap: wrap;
   }
-  .colors.grid3 .swatches {
+  .colors.grid3 .swatches,
+  .clist {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
@@ -7498,44 +7474,6 @@ html.still .spx-disco .disco-spot {
 
 /* (he pops out, then runs off) */
 
-/* the Jetpack on the big duck: worn on its back (the pack's own place, without the board's foot offset), it flies up on
-   its flames, keeps the height a moment, and comes down */
-.arm-pic .gduck-jet {
-  bottom: calc(var(--sz, 60px) * ((120 - var(--jy) - 56 * var(--jk)) / 120));
-}
-.arm-duck.fly .arm-pic {
-  animation: spfly 2.6s ease-in-out;
-}
-.arm-duck.fly .gduck-jet .jet-f {
-  display: block;
-  animation:
-    jet-flick 0.12s steps(2) infinite,
-    jet-on 2.6s step-end forwards;
-}
-@keyframes spfly {
-  0%,
-  8% {
-    transform: none;
-  }
-  40%,
-  62% {
-    transform: translateY(-22%);
-  }
-  100% {
-    transform: none;
-  }
-}
-@keyframes jet-on {
-  0% {
-    visibility: hidden;
-  }
-  6% {
-    visibility: visible;
-  }
-  64% {
-    visibility: hidden;
-  }
-}
 @keyframes wstab {
   0% {
     transform: rotate(-6deg) translateX(calc(var(--s) * 0.44));
@@ -10384,8 +10322,7 @@ html.map-is-vellum .l4s {
 html.map-is-vellum .hk b {
   color: #d9893a;
 }
-html.map-is-vellum .hk.on,
-html.map-is-vellum .l4s.on {
+html.map-is-vellum .hk.on {
   border-color: #ff8a1f;
   background: #ff8a1f40;
   box-shadow: 0 0 0.5rem #ff8a1f70;
@@ -16343,9 +16280,27 @@ html.moving .l4-heat.hot::after {
 .screen:has(.l4-shopping) .tpad,
 .screen:has(.l4-shopping) .cabin-end,
 body:has(.win-back, .dock-panel:not([hidden]), .pmenu:not([hidden])) .cabin-end,
-body:has(.l4-shopping, .win-back) .l4-sr,
-body:has(.l4-shopping, .win-back) .l4-srv,
-body:has(.l4-shopping, .win-back) .l4-srb {
+body:has(
+    .l4-shopping,
+    .win-back,
+    .dock-panel:not([hidden]),
+    .pmenu:not([hidden])
+  )
+  .l4-sr,
+body:has(
+    .l4-shopping,
+    .win-back,
+    .dock-panel:not([hidden]),
+    .pmenu:not([hidden])
+  )
+  .l4-srv,
+body:has(
+    .l4-shopping,
+    .win-back,
+    .dock-panel:not([hidden]),
+    .pmenu:not([hidden])
+  )
+  .l4-srb {
   visibility: hidden;
 } /* (on a phone the jump and aim buttons step aside for it: they sat over its last row; Exit Cabin too: it sat on its
      tabs) */
@@ -17412,71 +17367,7 @@ body:has(.l4-shopping, .win-back) .l4-srb {
     opacity: 0;
   }
 } /* (lying there 12 s, gone in 15 s: NUKE.DEAD in l4ddrules.js) */
-/* the jetpack (jetpack.js, Noah's pictures in jetart.js): on the duck's back, behind it (JET_AT in the duck's 120 box,
-   from the duck's feet so a hat doesn't move it), and the flames under its nozzles while its jets are on */
-.gduck-jet {
-  position: absolute;
-  z-index: -1;
-  left: calc(var(--sz, 60px) * var(--jx) / 120);
-  bottom: calc(
-    var(--sz, 60px) * ((120 - var(--jy) - 56 * var(--jk)) / 120 - 0.08)
-  );
-  width: calc(var(--sz, 60px) * 40 * var(--jk) / 120);
-  pointer-events: none;
-}
-.gduck-jet > svg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-.gduck-jet .jet-f {
-  position: absolute;
-  top: calc(100% * 53 / 56);
-  width: 50%;
-  display: none;
-  transform-origin: 50% 0;
-  animation: jet-flick 0.12s steps(2) infinite;
-}
-.gduck-jet .jet-f.far {
-  left: 5%;
-  opacity: 0.85;
-}
-.gduck-jet .jet-f.near {
-  left: 27.5%;
-  animation-delay: -0.06s;
-}
-.gduck-jet .jet-f svg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-.gduck.jet-on .gduck-jet .jet-f {
-  display: block;
-}
-@keyframes jet-flick {
-  0% {
-    transform: scaleY(1) scaleX(1);
-  }
-  50% {
-    transform: scaleY(0.8) scaleX(0.92);
-  }
-}
-/* the Jetpack special's key, and a Quacky Zombies slot switched on (the jetpack, the long jump): a green ring */
-.sp-jet {
-  display: block;
-  width: 70%;
-  margin: 0 auto;
-}
-.sp-jet svg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-.l4s.on {
-  box-shadow:
-    0 0 0 2px #6dff8a,
-    0 0 8px #3ee06a;
-}
+
 /* the slot what I'm about to take goes to (l4ddbar.js toSlot; the owner's, Nov 19 19:27Z): a white ring that stays still
    with animations off, and a glow inside it in that weapon's own color, breathing */
 .l4s.l4s-to,
@@ -19274,6 +19165,8 @@ html.pixel .chat-sugg li,
 html.pixel .chip,
 html.pixel .colors.grid3 .brush,
 html.pixel .colors.grid3 .sw,
+html.pixel .clist .sw,
+html.pixel .cdrop,
 html.pixel .cols,
 html.pixel .confetti-rain i,
 html.pixel .cooldown,

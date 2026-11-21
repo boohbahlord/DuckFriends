@@ -98,7 +98,7 @@ export function colorField(
     </div>
     <div class="cdrops"><button type="button" class="cdrop" data-l="skin" aria-expanded="false">Skin colors</button>${metals ? `<button type="button" class="cdrop" data-l="metal" aria-expanded="false">Metallic colors</button>` : ""}</div>
     <div class="clist" data-l="skin" hidden>${SKIN_TONES.map((c) => `<button type="button" class="sw" style="background:${c}" data-c="${c}" data-k="skin" aria-label="${c}" data-tip="${c.toUpperCase()}" aria-pressed="${c === value}"></button>`).join("")}</div>
-    ${metals ? `<div class="clist cmetals" data-l="metal" hidden>${metals.map(([id, name, lock, on]) => `<button type="button" class="cmetal" data-m="${id}" aria-pressed="${!!on}"${lock ? ` aria-disabled="true" data-tip="${esc(lock)}"` : ""}><i style="background:${chip(METAL[id])}"></i>${esc(name)}</button>`).join("")}</div>` : ""}
+    ${metals ? `<div class="clist cmetals" data-l="metal" hidden>${metals.map(([id, name, lock, on]) => `<button type="button" class="sw cmetal" style="background:${chip(METAL[id])}" data-m="${id}" aria-label="${esc(name)}" data-tip="${esc(lock || name)}" aria-pressed="${!!on}"${lock ? ` aria-disabled="true"` : ""}></button>`).join("")}</div>` : ""}
     </div>`);
   const inv = box.querySelector(".invent"),
     picker = inv.querySelector("[type=color]"),
