@@ -17,6 +17,7 @@
    Hangout walks around Duck Cabin instead of a board: the world (hangout/world.js) draws it, follows my duck with its
    camera and works out how it stands and falls; this file only hands it the keys, the stick and the taps, and puts its
    one context button where the Vote button goes. */
+import { underVeil } from "./loading.js";
 import {
   ARROW,
   BULLET,
@@ -524,7 +525,7 @@ import {
   kickOf,
   jitter,
   shake,
-  shakeNow,
+  shakeBoard,
   vibrate,
   VIB,
   hitPx,
@@ -2821,12 +2822,7 @@ function drawFx(board, fxl, hang, size, s, now) {
   fxFrame(pt);
   /* my screen shakes as I fire (fxmotion.js); sprinting blurs the map a little (css/app.css: fades in and out, never
      stacks); my adrenaline shot taken: a fast wobble, then a small steady shake and the blurred border while it lasts */
-  const [kx, ky] = shakeNow(pt),
-    sk = kx || ky ? `${kx.toFixed(1)}px ${ky.toFixed(1)}px` : "";
-  if (board._sk !== sk) {
-    board._sk = sk;
-    board.style.translate = sk;
-  }
+  shakeBoard(board, pt);
   const ad = adren(s, R.me, now);
   adrenFx(ad, pt);
   sprintBlur(s, pt, !!(me && ((sprinting && moving) || ad) && onBoardPhase())); // (sprintblur.js)
@@ -4780,7 +4776,7 @@ function capped(t) {
 }
 function loop(t) {
   raf = requestAnimationFrame(loop);
-  if (capped(t)) return;
+  if (capped(t) || underVeil()) return; // (under the loading screen, a frame in a few: loading.js)
   const dt = Math.min(0.05, (t - (lastT || t)) / 1000);
   lastT = t;
   if (!S || !R) return;

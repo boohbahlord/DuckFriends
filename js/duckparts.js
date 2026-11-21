@@ -233,6 +233,11 @@ function file(S, c) {
     );
   return S.files.get(c);
 }
+/* a size's headless parts (its "x" file: a zombie's head shot off, wounds.js), on their way with the rest */
+const headless = (S) => {
+  const c = S.index.f.findIndex((f) => /(^|\/)x-/.test(f));
+  if (c >= 0) file(S, c);
+};
 const hex = (h) => {
   const n = parseInt(h.slice(1), 16);
   return [n >> 16, (n >> 8) & 255, n & 255];
@@ -263,6 +268,7 @@ export async function duckFromParts(d, cw, ch, frames = 1) {
   const [n, z] = sizeFor(want),
     S = await sheet(n);
   if (!S) return null;
+  if (d.sk) headless(S); // (a zombie: its headless parts come with it, so a headshot fetches nothing mid-game)
   await yieldNow(); // (every duck waiting on the same sheet went on in one go when it came: each its own turn now, slices.js)
   const C = codedLook(L),
     ck = JSON.stringify(C), // (its look, for partOf)
