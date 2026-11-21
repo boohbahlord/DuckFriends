@@ -10,7 +10,7 @@
    - roll, reloadMs, refill, shotMark: an NPC's guns (a hit's damage, a reload, the magazines, where a shot went).
    An NPC's wounds after a hit are wounds.js hitWounds (its breed: gunman, merchant); its HP after a hit is hpmath.js
    hpHurt, as a duck's. */
-import { ARMS } from "./l4ddrules.js";
+import { ARMS } from "./guns.js";
 import { clearShot } from "./zombies.js";
 import { heightAt } from "./hangout/layout.js";
 

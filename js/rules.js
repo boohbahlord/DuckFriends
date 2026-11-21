@@ -54,13 +54,7 @@ import {
 } from "./sbsave.js";
 import { onCabin } from "./sbcabin.js";
 import { stamp, took } from "./perf.js";
-import {
-  boardSpeed,
-  ARM_COOL,
-  ARM_SWING,
-  ARM_RELOAD,
-  BOARD_PX,
-} from "./armspeed.js";
+import { boardSpeed, ARM_SWING, ARM_RELOAD, BOARD_PX } from "./armspeed.js";
 import {
   isDn,
   DN_GRACE,
@@ -210,13 +204,13 @@ import {
   l4Shots,
   l4Holds,
   helperOut,
-  ARMS,
   laserHeat,
   laserNext,
   l4Heal,
   maxHp,
   l4Again,
 } from "./l4ddrules.js";
+import { ARMS, GUN_BREEDS } from "./guns.js";
 import { l4Zups, l4SetHp } from "./zombies.js";
 import { JET } from "./jetpack.js";
 import { hOk, hLock, sameFloorAhead, floorLock } from "./heights.js";
@@ -1156,25 +1150,9 @@ const PRESS = [
   "trombone",
   "confetti",
 ]; // the items, used with their number key
-/* how long an item waits before its key works again (ms); the key shows a bar draining meanwhile */
-const COOLDOWN = {
-  handgun: ARM_COOL.handgun,
-  dagger: ARM_COOL.dagger,
-  knife: ARM_COOL.knife, // (four stabs a second, in every mode: the owner's, Nov 3)
-  hammer: ARM_COOL.hammer,
-  axe: ARM_COOL.axe,
-  sword: ARM_COOL.sword,
-  pan: ARM_COOL.pan,
-  shotgun: ARM_COOL.shotgun,
-  grenade: 12000,
-  confetti: 15000,
-  bow: ARM_COOL.bow,
-  chair: 15000,
-  zebra: 30000, // (as Mad God Justin's CAKE_EVERY)
-};
 export const coolFor = (sp, s) =>
   (s && isMgj(s) && mgjCool(sp)) ||
-  COOLDOWN[sp] ||
+  GUN_BREEDS.board.cool[sp] ||
   (GUNS_NEW.includes(sp) && ARMS[sp].cool) ||
   1500; // (Mad God Justin has its own for the knife and the bow; Quacky Zombies' guns keep theirs, l4ddrules.js ARMS)
 /* every gun from Quacky Zombies is a special too (the owner's, Nov 4 07:43Z), working as it does there: the sniper's
@@ -1213,12 +1191,6 @@ export const AUTO = [
    { "id gun": … } for the others */
 export const MAG = HANDGUN.mag,
   RELOAD = ARM_RELOAD;
-const MAG_MORE = {
-  chaingun: [300, 4000],
-  glauncher: [3, 4000],
-  dbarrel: [2, 2 * ARMS.dbarrel.shell],
-  flamer: [FLAME.TANK, FLAME.RELOAD],
-}; // (the chain gun 300 rounds: the owner's, Nov 16; the double barrel's two shells and the flamethrower's tank, Nov 16 16:25Z)
 /* how long a reload takes with n shots gone: the double barrel a second for each shell it loads, the rest their own */
 const reloadFor = (w, n) =>
   w === "dbarrel"
@@ -1227,7 +1199,7 @@ const reloadFor = (w, n) =>
 export const magSize = (w) =>
   w === "handgun"
     ? [MAG, RELOAD]
-    : MAG_MORE[w] ||
+    : GUN_BREEDS.board.mag[w] ||
       (GUNS_NEW.includes(w) && ARMS[w].mag
         ? [ARMS[w].mag, ARMS[w].reload]
         : null); // ([shots, reload ms], or null: no magazine)

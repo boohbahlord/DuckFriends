@@ -94,8 +94,6 @@ import {
   openingById,
   reloadOf,
   l4Cool,
-  kindOf,
-  ARMS,
   zombieLook,
   magIn,
   fullFor,
@@ -114,6 +112,7 @@ import {
   ZHATS,
   ZOUTFITS,
 } from "./l4ddrules.js";
+import { kindOf, ARMS } from "./guns.js";
 import { fenceZ, zombieZ, zombiesOf } from "./zombies.js";
 import { zSortY } from "./zombieroofs.js";
 import { hOk, hLock } from "./heights.js";

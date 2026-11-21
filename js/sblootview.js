@@ -18,7 +18,8 @@ import {
 import { boxText } from "./sbspawn.js";
 import { lootOk, ammoOf } from "./sbloot.js";
 import { LOOT, lootOf } from "./sbhotview.js";
-import { ARMS, fullAmmo, weaponName } from "./l4ddrules.js";
+import { fullAmmo, weaponName } from "./l4ddrules.js";
+import { ARMS } from "./guns.js";
 import { orbHTML, weaponIcon, ICONS } from "./l4ddart.js";
 import { DROP_ICONS } from "./l4dddrops.js";
 import { specialById } from "./specials.js";

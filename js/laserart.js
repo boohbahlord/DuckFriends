@@ -1,5 +1,5 @@
 /* ---------- the laser gun, drawn (the owner's idea, Nov 17) ----------
-   Drawn as the other guns are (l4ddguns.js): simple shapes with a dark outline, side on, pointing right with the grip at
+   Drawn as the other guns are (gunart.js): simple shapes with a dark outline, side on, pointing right with the grip at
    the left, a soft white shine along the top. Its barrel heats up from its end back: from the dark metal to red, then
    orange, then a bright orange once it's overheated. LASER(heat 0 … 1, over: overheated) → svg; LASER.tip: where the
    beam comes out, in its viewBox. Preview:

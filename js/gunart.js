@@ -1,9 +1,10 @@
-/* ---------- Quacky Zombies' new weapons, drawn (the owner's list, Stage 3) ----------
-   Each one as the pistol and the shotgun are drawn (specials.js): simple shapes with a dark outline, side on, pointing
-   right with the stock or the grip at the left (the game turns it toward the aim), a soft white shine along the top.
-   held: in a duck's hand; icon: the weapons bar's picture (turned 45°, its grip down at the left, filling a square);
-   w: how wide it is in the hand, in duck sizes. Their bullets are here too (the screens turn them the way they fly).
-   Preview: tools/l4dd-art.html */
+/* ---------- every weapon, drawn: one drawing for every mode, the specials picker, the hotbars and the previews ----------
+   Simple shapes with a dark outline, side on, pointing right with the stock, the grip or the handle at the left (the game
+   turns it toward the aim), a soft white shine along the top. The guns: held, in a duck's hand; icon, the weapons bar's
+   picture (iconOf: turned 45°, its grip down at the left, filling a square); w, how long it is in the hand, in duck
+   sizes (gwOf: every weapon's). Their bullets and traces are here too (the screens turn them the way they fly). Then the
+   melee weapons, the grenade, the pump shotgun and the pistol, each taking its colors (specials.js colorsOf, heldHTML),
+   and the bow, the medkit, the chair and the zebra cake. Preview: tools/l4dd-art.html */
 import { LASER } from "./laserart.js";
 const INK = "#2a2d38";
 /* the colors they share: the guns' dark metal, lighter metal, the underside, polymer, two woods and their grain */
@@ -186,42 +187,42 @@ ${part("M40.2 14.6H44L43.2 22.6Q43 23.6 42 23.6H41.4Q40.4 23.6 40.4 22.6Z", POLY
 ${box(37, 11.4, 21, 3.6, 1, M2, 1)}${box(57.4, 10.6, 6.8, 5.2, 1, M0, 1)}<path d="M59.4 11.4V15M61.8 11.4V15" stroke="#0e0e14" stroke-width=".8"/>
 ${part("M17.4 10.2L19.4 7.6H30.6L32.6 10.2Z", OLIVE_D, 1)}${box(14.4, 2.2, 21, 6, 3, POLY, 1.15)}${part("M35 3.2L38.4 2.2V9.2L35 8.2Z", M0, 0.9)}<ellipse cx="38" cy="5.7" rx=".9" ry="2.8" fill="#7fd0ff" opacity=".9"/><path d="M14.8 5.2H13.2" stroke="${INK}" stroke-width="2.4"/>${shine("M17 3.6H33", 0.4, 0.8)}</svg>`;
 
-/* a tile's picture: the weapon turned 45°, its grip down at the left, filling a square (as specials.js' iconOf); k
-   zooms in (under 1: its far corners go past the square) or out. A light edge (css: .l4-gun) keeps the dark metal
-   showing on the dark slots */
-const iconOf = (svg, k = 1) => {
+/* a tile's picture: the weapon turned 45°, its grip or handle down at the left, filling a square; k zooms in (under 1:
+   its far corners go past the square) or out. A gun (long) fills it by its length and height, with a light edge (css:
+   .l4-gun) to keep its dark metal showing on the dark slots; an item by its length */
+export const iconOf = (svg, k = 1, gun = false) => {
   const [, w, h] = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/),
-    S = (+w + +h) * 0.72 * k;
+    S = (gun ? (+w + +h) * 0.72 : w * 0.78) * k;
   return svg
     .replace(/viewBox="[^"]+"/, `viewBox="0 0 ${S.toFixed(1)} ${S.toFixed(1)}"`)
     .replace(
       /^<svg ([^>]*)>/,
-      `<svg class="l4-gun" $1><g transform="translate(${(S / 2).toFixed(1)} ${(S / 2).toFixed(1)}) rotate(-45) translate(${-w / 2} ${-h / 2})">`,
+      `<svg ${gun ? 'class="l4-gun" ' : ""}$1><g transform="translate(${(S / 2).toFixed(1)} ${(S / 2).toFixed(1)}) rotate(-45) translate(${-w / 2} ${-h / 2})">`,
     )
     .replace(/<\/svg>$/, "</g></svg>");
 };
 
 /* every new gun: its picture in the hand, its icon, and how wide it is in the hand (duck sizes) */
 export const GUNS = {
-  sniper: { held: SNIPER, icon: iconOf(SNIPER, 0.8), w: 1.25 },
-  smg: { held: SMG, icon: iconOf(SMG, 0.74), w: 0.74 }, // (an MP5: a little shorter than the UMP-45, as the real ones are)
-  tommy: { held: TOMMY, icon: iconOf(TOMMY, 0.8), w: 0.92 }, // (almost the AK-47's size: the owner's, Nov 18 10:38Z)
-  ump: { held: UMP, icon: iconOf(UMP, 0.78), w: 0.78 }, // (a little shorter than the Tommy gun, as the real ones are)
-  ak: { held: AK, icon: iconOf(AK, 0.8), w: 1 },
-  chaingun: { held: CHAINGUN, icon: iconOf(CHAINGUN, 0.8), w: 1.05 },
-  revolver: { held: REVOLVER, icon: iconOf(REVOLVER, 0.72), w: 0.44 },
-  glauncher: { held: LAUNCHER, icon: iconOf(LAUNCHER, 0.8), w: 0.9 },
-  lmg: { held: LMG, icon: iconOf(LMG, 0.8), w: 1.2 },
-  dbarrel: { held: DBARREL, icon: iconOf(DBARREL, 0.8), w: 1.15 },
-  dbuck: { held: DBARREL, icon: iconOf(DBARREL, 0.8), w: 1.15 }, // (the buckshot double barrel: the same gun, its shells told apart by its color in the slot)
-  flamer: { held: FLAMER, icon: iconOf(FLAMER, 0.8), w: 1.1 },
-  burst: { held: BURST, icon: iconOf(BURST, 0.8), w: 0.85 },
-  laser: { held: LASER(0), icon: iconOf(LASER(0), 0.8), w: 1.1 }, // (its barrel's heat: game.js draws LASER(heat))
+  sniper: { held: SNIPER, icon: iconOf(SNIPER, 0.8, true), w: 1.25 },
+  smg: { held: SMG, icon: iconOf(SMG, 0.74, true), w: 0.74 }, // (an MP5: a little shorter than the UMP-45, as the real ones are)
+  tommy: { held: TOMMY, icon: iconOf(TOMMY, 0.8, true), w: 0.92 }, // (almost the AK-47's size: the owner's, Nov 18 10:38Z)
+  ump: { held: UMP, icon: iconOf(UMP, 0.78, true), w: 0.78 }, // (a little shorter than the Tommy gun, as the real ones are)
+  ak: { held: AK, icon: iconOf(AK, 0.8, true), w: 1 },
+  chaingun: { held: CHAINGUN, icon: iconOf(CHAINGUN, 0.8, true), w: 1.05 },
+  revolver: { held: REVOLVER, icon: iconOf(REVOLVER, 0.72, true), w: 0.44 },
+  glauncher: { held: LAUNCHER, icon: iconOf(LAUNCHER, 0.8, true), w: 0.9 },
+  lmg: { held: LMG, icon: iconOf(LMG, 0.8, true), w: 1.2 },
+  dbarrel: { held: DBARREL, icon: iconOf(DBARREL, 0.8, true), w: 1.15 },
+  dbuck: { held: DBARREL, icon: iconOf(DBARREL, 0.8, true), w: 1.15 }, // (the buckshot double barrel: the same gun, its shells told apart by its color in the slot)
+  flamer: { held: FLAMER, icon: iconOf(FLAMER, 0.8, true), w: 1.1 },
+  burst: { held: BURST, icon: iconOf(BURST, 0.8, true), w: 0.85 },
+  laser: { held: LASER(0), icon: iconOf(LASER(0), 0.8, true), w: 1.1 }, // (its barrel's heat: game.js draws LASER(heat))
   safekeep: { icon: HALO, w: 0.5 }, // (never in hand: only its picture)
   adrenaline: {
     held: ADRENALINE,
-    icon: iconOf(ADRENALINE, 0.8),
-    whole: iconOf(ADRENALINE, 1.06), // (the Speed Boost drop: the whole syringe, its corners in, as the owner asked)
+    icon: iconOf(ADRENALINE, 0.8, true),
+    whole: iconOf(ADRENALINE, 1.06, true), // (the Speed Boost drop: the whole syringe, its corners in, as the owner asked)
     w: 0.44,
   },
 };
@@ -277,3 +278,171 @@ export const TRACE = {
   box: [72, 32],
   spread: 0.24, // radians: how far apart the extra lines can point
 };
+
+/* ---------- the melee weapons, the grenade, the pump shotgun, the pistol and its bullet (the specials' own first) ----------
+   Each takes its colors ([Primary, Secondary, Accent]: specials.js colorsOf) */
+/* the dagger, pointing right: the blade, the guard across it, the handle */
+export const DAGGER = ([a, b, c]) =>
+  `<svg viewBox="0 0 44 16"><path d="M14 5.2H36L43 8 36 10.8H14Z" fill="${a}" stroke="#2a2d38" stroke-width="1.2" stroke-linejoin="round"/><path d="M15 8H38" stroke="#fff" stroke-width=".9" opacity=".55"/><rect x="11" y="1.5" width="3.6" height="13" rx="1.5" fill="${c}" stroke="#2a2d38" stroke-width="1.1"/><rect x="2" y="5.6" width="9.4" height="4.8" rx="2" fill="${b}" stroke="#2a2d38" stroke-width="1.1"/><circle cx="2.4" cy="8" r="2" fill="${c}" stroke="#2a2d38" stroke-width="1"/></svg>`;
+/* the knife: a kitchen knife, the spine straight to the tip and the edge curving up to it; a bolster, a handle with
+   three rivets. Colors: blade, handle, rivets */
+export const KNIFE = ([a, b, c]) =>
+  `<svg viewBox="0 0 48 16"><rect x="1.5" y="5.4" width="16" height="6.2" rx="2.6" fill="${b}" stroke="${INK}" stroke-width="1.1"/><path d="M3.6 7h11.6" stroke="#fff" stroke-width=".8" opacity=".25"/>${[5.6, 9.8, 14].map((x) => `<circle cx="${x}" cy="8.5" r="1.15" fill="${c}" stroke="${INK}" stroke-width=".7"/>`).join("")}<path d="M18.6 3.2H39.5Q44.8 3.4 47.4 4.7Q43.4 10.8 34.5 12.6H18.6Z" fill="${a}" stroke="${INK}" stroke-width="1.15" stroke-linejoin="round"/><path d="M20.5 11H34.2Q41 9.9 45.4 5.6" fill="none" stroke="#fff" stroke-width=".9" opacity=".6"/><path d="M20 5.2H38" stroke="${INK}" stroke-width=".6" opacity=".25"/><rect x="16.8" y="3.6" width="2.6" height="8.8" rx="1" fill="${c}" stroke="${INK}" stroke-width="1"/></svg>`;
+/* the hammer (the owner's picture): a big mallet head with rounded corners across the handle's end, a shine along its
+   top; a long wooden handle, a little wider at the grip. Colors: head, handle, the band under the head */
+export const HAMMER = ([a, b, c]) =>
+  `<svg viewBox="0 0 56 30"><path d="M3 11.8Q1.4 11.8 1.4 13.6V16.6Q1.4 18.4 3.2 18.3L37 17.6V12.6L3.2 11.8Z" fill="${b}" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/><path d="M5 13.4L32 13.9" stroke="#fff" stroke-width="1.1" opacity=".3"/><path d="M6 16.8L30 16.4" stroke="${INK}" stroke-width=".7" opacity=".22"/><rect x="33.4" y="11.6" width="4.2" height="7" rx="1" fill="${c}" stroke="${INK}" stroke-width="1.1"/><rect x="37" y="1.4" width="17.4" height="27.2" rx="5.6" fill="${a}" stroke="${INK}" stroke-width="1.4"/><path d="M39.6 7.4Q39.6 4 43 4H45.4" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".4"/><path d="M40.2 10.4V20" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".22"/><path d="M51.6 6V24.6" stroke="${INK}" stroke-width="1.2" stroke-linecap="round" opacity=".2"/></svg>`;
+/* the new melees (the owner's, Nov 16): each points right, its handle at the left, as the hammer. The fire axe, like
+   the one in Left 4 Dead 2: a long varnished handle with a dark rubber grip at its end, a red head with a pick at the
+   back (top) and a broad steel blade below (the side that leads the swing), its edge ground bright. Colors: head,
+   handle, blade */
+export const AXE = ([a, b, c]) =>
+  `<svg viewBox="0 0 62 36"><path d="M2.8 15.6Q1 15.6 1 17.4V19.4Q1 21.2 2.9 21.1L49 20.2V16.6Z" fill="${b}" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"/><path d="M4 17.2L44 17.6" stroke="#fff" stroke-width="1.2" opacity=".35"/><path d="M4 19.8L44 19.4" stroke="${INK}" stroke-width=".9" opacity=".25"/><path d="M14 16.6V21M24 16.8V20.8" stroke="${INK}" stroke-width=".7" opacity=".2"/>
+<path d="M45 12.4L48.2 2.6Q49.6 .6 51 2.4L53.8 12.4L54.6 23.6L58.4 30.6Q46.6 37.4 33.8 34.6Q39.6 30.4 41.4 25.6Q42.8 23.6 45 23.2Z" fill="${a}" stroke="${INK}" stroke-width="1.5" stroke-linejoin="round"/>
+<path d="M36.6 33.2Q47.4 34.8 56.8 28.4L58.4 30.6Q46.6 37.4 33.8 34.6Z" fill="${c}" stroke="${INK}" stroke-width="1" stroke-linejoin="round"/><path d="M36.8 35Q47 36.4 57.2 30.6" fill="none" stroke="#fff" stroke-width="1" opacity=".9"/>
+<rect x="45.6" y="15.4" width="8.2" height="6.4" rx="1" fill="#000" opacity=".22"/><path d="M48.6 4.4L47.2 12M44.4 25.2Q42.6 28.4 39.8 31" fill="none" stroke="#fff" stroke-width="1.3" opacity=".4" stroke-linecap="round"/></svg>`;
+/* the short sword (redrawn, the owner's, Nov 19 19:47Z: "clearly different from the knife"): a gladius. Its blade
+   double-edged and straight, as long again as the knife's, a ridge down its middle with its upper half bright and its
+   lower half in shadow, and a long symmetric point (the knife's edge curves up to its tip; this one's two edges meet
+   in the middle); a wide crossguard with rounded ends standing out past the blade on both sides; a grip wrapped in
+   leather and a big round pommel. Colors: blade, grip, guard and pommel */
+export const SWORD = ([a, b, c]) =>
+  `<svg viewBox="0 0 66 20"><circle cx="3.8" cy="10" r="3.2" fill="${c}" stroke="${INK}" stroke-width="1.2"/><circle cx="3" cy="9" r="1" fill="#fff" opacity=".45"/>
+<rect x="6.4" y="7.4" width="10" height="5.2" rx="1.6" fill="${b}" stroke="${INK}" stroke-width="1.1"/><path d="M8.4 7.6L10.4 12.4M11.2 7.6L13.2 12.4M14 7.6L16 12.4" stroke="${INK}" stroke-width=".8" opacity=".5"/>
+<path d="M16.6 2.6Q16.4 .8 18.2 1L19.6 1.4Q20.8 1.8 20.6 3.2V16.8Q20.8 18.2 19.6 18.6L18.2 19Q16.4 19.2 16.6 17.4Z" fill="${c}" stroke="${INK}" stroke-width="1.15" stroke-linejoin="round"/><path d="M18 3.4V8" stroke="#fff" stroke-width=".9" opacity=".5" stroke-linecap="round"/>
+<path d="M20.6 6.4H24L50 6.8Q56 7.6 64.8 10Q56 12.4 50 13.2L24 13.6H20.6Z" fill="${a}" stroke="${INK}" stroke-width="1.2" stroke-linejoin="round"/>
+<path d="M22.4 10H52Q57 10 62.6 10V10.2Q56 12.1 50 12.9L24 13.3H22.4Z" fill="${INK}" opacity=".2"/><path d="M22.4 10H59" stroke="${INK}" stroke-width=".8" opacity=".45"/>
+<path d="M24 8H50Q55 8.6 59 9.6" fill="none" stroke="#fff" stroke-width="1" opacity=".75"/><path d="M20.6 6.4H24V13.6H20.6" fill="none" stroke="${INK}" stroke-width=".7" opacity=".4"/></svg>`;
+/* the cast iron pan: seen from above, a heavy black round pan with a thick rim, its dark cooking surface with a dull
+   shine, a pour spout notch on each side, and its long iron handle with the hanging hole. Colors: iron, handle, rim
+   shine */
+export const PAN = ([a, b, c]) =>
+  `<svg viewBox="0 0 60 34"><path d="M3 13.8Q1 13.8 1 15.8V18.2Q1 20.2 3 20.2L28.6 19.2V14.8Z" fill="${b}" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/><ellipse cx="6" cy="17" rx="2" ry="1.3" fill="#0b0b0e"/><path d="M10 16H26" stroke="#fff" stroke-width=".9" opacity=".2"/>
+<circle cx="43" cy="17" r="15.6" fill="${a}" stroke="${INK}" stroke-width="1.5"/><circle cx="43" cy="17" r="12.4" fill="#14151a" stroke="${c}" stroke-width="1.2" opacity=".95"/><path d="M33.6 10.6Q37.8 6.2 44 6" fill="none" stroke="#fff" stroke-width="1.6" opacity=".3" stroke-linecap="round"/><path d="M46.6 25.6Q51.4 24 53.4 19.6" fill="none" stroke="${c}" stroke-width="1.2" opacity=".5" stroke-linecap="round"/>
+<path d="M41 1.6Q43 .4 45 1.6" fill="none" stroke="${INK}" stroke-width="1.2"/><path d="M41 32.4Q43 33.6 45 32.4" fill="none" stroke="${INK}" stroke-width="1.2"/></svg>`;
+/* the grenade: a round pineapple grenade, its body in a grid of rounded lumps with a shine at the top left; the metal cap
+   with the lever curving down its right side, and the pin's ring at the left (thrown: no pin, it falls off as it leaves
+   the hand, GRENADE_PIN). Colors: body, metal, ring */
+export const GRENADE = ([a, b, c], pin = true) =>
+  `<svg viewBox="0 0 28 28"><ellipse cx="13.6" cy="17.4" rx="8.6" ry="9.4" fill="${a}" stroke="${INK}" stroke-width="1.3"/><g fill="none" stroke="${INK}" stroke-width=".8" opacity=".35"><path d="M5.6 14.4Q13.6 12.4 21.6 14.4M5.4 20.2Q13.6 22.4 21.8 20.2"/><path d="M10.2 8.6Q8.4 17.4 10.2 26.2M17 8.6Q18.8 17.4 17 26.2"/></g><ellipse cx="9.4" cy="12.2" rx="2.4" ry="1.5" fill="#fff" opacity=".35" transform="rotate(-30 9.4 12.2)"/><rect x="10.2" y="5.2" width="7" height="4.4" rx="1.3" fill="${b}" stroke="${INK}" stroke-width="1.1"/><path d="M14.6 5.6Q22.6 4.4 23 11.6L22.6 16.8Q21.2 17.2 21 15.8L21 11.6Q20.8 7.6 15.2 7.8Z" fill="${b}" stroke="${INK}" stroke-width="1.05" stroke-linejoin="round"/><path d="M16.4 6.4Q21 6.2 21.8 10.6" fill="none" stroke="#fff" stroke-width=".7" opacity=".5"/>${pin ? PIN(c) : ""}</svg>`;
+const PIN = (c) =>
+  `<circle cx="6.6" cy="5.6" r="3" fill="none" stroke="${INK}" stroke-width="2.4"/><circle cx="6.6" cy="5.6" r="3" fill="none" stroke="${c}" stroke-width="1.2"/><path d="M9.4 6.6L11 7" stroke="${INK}" stroke-width="1.2" stroke-linecap="round"/>`;
+/* the pin alone, falling from the hand as the grenade is thrown (the same 28 wide box, so it sits where it was) */
+export const GRENADE_PIN = ([, , c]) =>
+  `<svg viewBox="0 0 28 28">${PIN(c)}</svg>`;
+/* the wrench, after the owner's BioShock picture: an old pipe wrench, its red paint worn through in chips, a sunk panel
+   down the handle and a hole at its end; the frame, the hook jaw over the heel jaw (their teeth facing), the knurled nut
+   under them, worn metal with rust. Colors: paint, metal, rust */
+export const WRENCH = ([a, b, c]) => {
+  const chip = (x, y, w) =>
+    `<path d="M${x} ${y}l${w} -.5l${w * 0.5} ${w * 0.45}l${-w * 0.9} .5Z" fill="#d6cec4" opacity=".55"/>`;
+  const rust = (x, y, w) =>
+    `<path d="M${x} ${y}q${w * 0.6} -${w * 0.5} ${w} 0q-.2 ${w * 0.5} -${w} ${w * 0.35}Z" fill="${c}" opacity=".7"/>`;
+  return `<svg viewBox="0 0 56 28"><path d="M5 12.6Q1.6 12.6 1.6 16Q1.6 19.4 5 19.4L37 18.4V13.6Z" fill="${a}" stroke="${INK}" stroke-width="1.2" stroke-linejoin="round"/><circle cx="5.2" cy="16" r="1.7" fill="#14161c" stroke="${INK}" stroke-width=".8"/><path d="M10 14.5L33.4 14.2V17.8L10 17.5Z" fill="none" stroke="${INK}" stroke-width=".8" opacity=".45"/><path d="M10.6 14.3L33 14" stroke="#fff" stroke-width=".7" opacity=".3"/>${chip(12.5, 16.4, 1.6)}${chip(20, 15.6, 1.1)}${chip(26.5, 17, 1.4)}${chip(31, 15.4, 0.9)}${chip(7.6, 18.6, 1)}
+  <path d="M36.4 12.2H43.6V19.8H36.4Z" fill="${b}" stroke="${INK}" stroke-width="1.1"/>
+  <rect x="38.4" y="19.4" width="5.4" height="6.6" rx="1.6" fill="${b}" stroke="${INK}" stroke-width="1"/><path d="M38.8 21.6l1.6 -1.8M38.8 24.2l3.6 -4M40.4 25.6l3 -3.4" stroke="${INK}" stroke-width=".6" opacity=".7"/>
+  <path d="M39.2 12.4V6Q39.2 1.8 43.4 1.8H50Q54.6 1.8 54.6 6.4V9H50.2V7.2Q50.2 6.2 49.2 6.2H43.8V12.4Z" fill="${b}" stroke="${INK}" stroke-width="1.15" stroke-linejoin="round"/><path d="M44 9H50.2M44 9l.8 1.2l.8 -1.2l.8 1.2l.8 -1.2l.8 1.2l.8 -1.2l.8 1.2l.8 -1.2" fill="none" stroke="${INK}" stroke-width=".7"/>
+  <path d="M43.6 13.6H52.8Q54.4 13.6 54.4 15.2V17.6H43.6Z" fill="${b}" stroke="${INK}" stroke-width="1.1" stroke-linejoin="round"/><path d="M44 13.6l.8 -1.2l.8 1.2l.8 -1.2l.8 1.2l.8 -1.2l.8 1.2l.8 -1.2l.8 1.2" fill="none" stroke="${INK}" stroke-width=".7"/>
+  <path d="M40.6 4.6Q41.6 3 43.4 3H49.6" stroke="#fff" stroke-width=".8" opacity=".5" fill="none"/>${rust(51.4, 4.4, 2)}${rust(39.8, 9.4, 1.6)}${rust(37.4, 17.6, 1.8)}${rust(50.6, 16.4, 1.4)}</svg>`;
+};
+/* the pump shotgun (Mad God Justin's, and a player's once it's unlocked): a classic pump-action with a short barrel; the wooden stock and pump, the dark
+   receiver with its trigger guard, the magazine tube under the barrel and a bead sight at the muzzle */
+export const SHOTGUN = `<svg viewBox="0 0 62 20"><path d="M2.6 6.4L15.6 8V13.4L5.6 17.2Q1.4 18.4 1.4 14.8V8.2Q1.4 6.3 2.6 6.4Z" fill="#8a4b2a" stroke="${INK}" stroke-width="1.15" stroke-linejoin="round"/><path d="M1.6 8.4V14.8" stroke="#2b1a10" stroke-width="2.2"/><path d="M5 9.2L14 10.2" stroke="#fff" stroke-width=".8" opacity=".3"/>
+<path d="M19.6 12.4Q19.4 16.6 22.6 16.6Q25.6 16.6 25.4 12.4" fill="none" stroke="${INK}" stroke-width="1.1"/><path d="M22.4 12L23.2 15" stroke="${INK}" stroke-width="1.1" stroke-linecap="round"/>
+<rect x="14.6" y="6" width="15.6" height="6.6" rx="1.4" fill="#33384a" stroke="${INK}" stroke-width="1.15"/><path d="M16.4 7.6H28.4" stroke="#fff" stroke-width=".8" opacity=".25"/><rect x="21" y="8.4" width="4.6" height="1.6" rx=".6" fill="#1c1c28" opacity=".55"/>
+<rect x="29.4" y="9.6" width="23" height="2.6" rx="1" fill="#2a2e3c" stroke="${INK}" stroke-width="1"/>
+<rect x="29.4" y="6" width="30.4" height="3.2" rx="1" fill="#454b5e" stroke="${INK}" stroke-width="1.1"/><path d="M31 6.9H58" stroke="#fff" stroke-width=".7" opacity=".3"/><circle cx="58.4" cy="5.6" r=".9" fill="#ffd23f" stroke="${INK}" stroke-width=".5"/>
+<rect x="34.4" y="8.4" width="13.6" height="5.2" rx="1.8" fill="#a0612f" stroke="${INK}" stroke-width="1.1"/>${[37.2, 39.8, 42.4, 45].map((x) => `<path d="M${x} 9.4V12.6" stroke="#5a3218" stroke-width=".8"/>`).join("")}</svg>`;
+export const PISTOL = ([a, b]) =>
+  `<svg viewBox="0 0 40 24"><path d="M17 11l-2 10H8l2-10Z" fill="${b}" stroke="#0e0e14" stroke-width="1.4" stroke-linejoin="round"/><path d="M4 5h30v6H4Z" fill="${a}" stroke="#0e0e14" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 11l4 4" stroke="#0e0e14" stroke-width="1.4"/></svg>`;
+/* the handgun's bullet, in the shooter's Accent color */
+export const BULLET = (c = "#c9a24a") =>
+  `<svg viewBox="0 0 24 10"><path d="M2 5h14" stroke="#ffd84a" stroke-width="2" opacity=".6"/><path d="M14 2h5a3 3 0 0 1 0 6h-5Z" fill="${c}" stroke="#5a4310" stroke-width="1"/></svg>`;
+
+/* ---------- the bow, its arrow, the medkit, the chair and the zebra cake (Mad God Justin's first) ---------- */
+const INK_DARK = "#1c1c28"; // (their ink: a little darker than the guns')
+/* the bow: a wooden recurve bow, its limbs curling back at the tips, a leather grip in the middle, the string on the left.
+   Turned around its middle by the aim */
+export const BOW = `<svg viewBox="0 0 40 64" aria-hidden="true">
+<path d="M13.4 4.6V59.4" stroke="#efe6cf" stroke-width="1.3"/>
+<path d="M12 3.4Q15.6 1.6 18 4.4Q29.6 12 30.4 26.4Q30.8 32 30.4 37.6Q29.6 52 18 59.6Q15.6 62.4 12 60.6" fill="none" stroke="${INK_DARK}" stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12 3.4Q15.6 1.6 18 4.4Q29.6 12 30.4 26.4Q30.8 32 30.4 37.6Q29.6 52 18 59.6Q15.6 62.4 12 60.6" fill="none" stroke="#b5743c" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M18.6 6.4Q27 13 28.4 24" fill="none" stroke="#f0c48e" stroke-width="1.1" stroke-linecap="round" opacity=".8"/>
+<path d="M18.6 57.6Q25.6 52 27.8 44" fill="none" stroke="#7a4a22" stroke-width="1" stroke-linecap="round" opacity=".7"/>
+<rect x="27.2" y="25" width="7" height="14" rx="2.4" fill="#5a3420" stroke="${INK_DARK}" stroke-width="1.4"/>
+<path d="M27.6 28.4H33.8M27.6 31.4H33.8M27.6 34.4H33.8" stroke="#8a5634" stroke-width="1"/>
+<path d="M29 26.6V37.4" stroke="#fff" stroke-width=".8" opacity=".25"/></svg>`;
+
+/* the arrow: a wooden shaft, a steel head, red feathers at the tail. Pointing right, turned by its flight */
+export const ARROW = `<svg viewBox="0 0 64 12" aria-hidden="true">
+<path d="M2 1.6L9 5.2H15L12 1.6Z" fill="#ef3b3b" stroke="${INK_DARK}" stroke-width="1" stroke-linejoin="round"/>
+<path d="M2 10.4L9 6.8H15L12 10.4Z" fill="#c92a2a" stroke="${INK_DARK}" stroke-width="1" stroke-linejoin="round"/>
+<rect x="6" y="4.8" width="46" height="2.4" rx="1.2" fill="#c98a4b" stroke="${INK_DARK}" stroke-width=".9"/>
+<path d="M8 5.6H50" stroke="#fff" stroke-width=".6" opacity=".35"/>
+<path d="M50 2.2L63 6L50 9.8L52.4 6Z" fill="#c9d1dc" stroke="${INK_DARK}" stroke-width="1" stroke-linejoin="round"/>
+<path d="M52 3.6L60 6" stroke="#fff" stroke-width=".8" opacity=".7" stroke-linecap="round"/></svg>`;
+
+/* the medkit: a white case with a red cross, a dark handle on top and two latches */
+export const MEDKIT = `<svg viewBox="0 0 48 40" aria-hidden="true">
+<path d="M17 9.6V6.4Q17 4 19.4 4H28.6Q31 4 31 6.4V9.6" fill="none" stroke="${INK_DARK}" stroke-width="4.6" stroke-linecap="round"/>
+<path d="M17 9.6V6.4Q17 4 19.4 4H28.6Q31 4 31 6.4V9.6" fill="none" stroke="#4a4e5c" stroke-width="2.4" stroke-linecap="round"/>
+<rect x="3" y="9" width="42" height="28" rx="5" fill="#f4f6fa" stroke="${INK_DARK}" stroke-width="2"/>
+<path d="M3.6 31H44.4V32Q44.4 36.4 40 36.4H8Q3.6 36.4 3.6 32Z" fill="#d6dbe5"/>
+<rect x="9" y="10.6" width="4" height="3" rx="1" fill="#9aa1b0" stroke="${INK_DARK}" stroke-width=".9"/><rect x="35" y="10.6" width="4" height="3" rx="1" fill="#9aa1b0" stroke="${INK_DARK}" stroke-width=".9"/>
+<path d="M20.4 15H27.6V20.4H33V27.6H27.6V33H20.4V27.6H15V20.4H20.4Z" fill="#e63946" stroke="${INK_DARK}" stroke-width="1.4" stroke-linejoin="round"/>
+<path d="M7 13.6Q7 12 9 12" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/><path d="M21.6 16.4V20" stroke="#fff" stroke-width="1" opacity=".5" stroke-linecap="round"/></svg>`;
+
+/* Mad God Justin's big black office chair (padded back, a seat, one post, five legs on wheels; no arms): his throw, and
+   the Chair special's (specials.js) */
+export const CHAIR = `<svg viewBox="0 0 100 120" aria-hidden="true">
+<path d="M50 96L18 106M50 96L30 115M50 96L70 115M50 96L83 106M50 96L52 104" stroke="#1c1c28" stroke-width="6.6" stroke-linecap="round"/>
+<path d="M50 96L18 106M50 96L30 115M50 96L70 115M50 96L83 106M50 96L52 104" stroke="#2c2e36" stroke-width="3.8" stroke-linecap="round"/>
+<g fill="#2b2d34" stroke="#1c1c28" stroke-width="1.6"><circle cx="17" cy="108.6" r="4.4"/><circle cx="29.4" cy="116.4" r="4.4"/><circle cx="70.6" cy="116.4" r="4.4"/><circle cx="84" cy="108.6" r="4.4"/><circle cx="52.4" cy="106.4" r="3.8"/></g>
+<rect x="46.4" y="76" width="7.4" height="21" rx="2" fill="#24262d" stroke="#1c1c28" stroke-width="1.6"/><path d="M48.6 79V94" stroke="#fff" stroke-width="1.2" opacity=".2" stroke-linecap="round"/>
+<path d="M36 7C48 2.6 72 3.4 82 8.6C86 10.6 87 14.6 86.4 20.6L82.6 58.6C82 65 78.6 67.6 72 67.4L41 65.8C35 65.4 32.4 62.4 32.2 56.4L31 17C30.8 11 32 8.6 36 7Z" fill="#3b3d46" stroke="#1c1c28" stroke-width="2" stroke-linejoin="round"/>
+<path d="M38 12C49 8.4 70 9 79 13" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".16"/>
+<path d="M36 36C46 33 68 34 80 38" fill="none" stroke="#24262d" stroke-width="1.6" stroke-linecap="round"/>
+<path d="M58 14.6L57 34" stroke="#24262d" stroke-width="1.3" stroke-linecap="round" opacity=".7"/>
+<path d="M17 66C26 60.4 72 60.6 84.6 64.4C89.4 66 89.6 72.4 85 75.6C74 82 30 82.4 17.6 78C11.6 75.8 11.8 69 17 66Z" fill="#45474f" stroke="#1c1c28" stroke-width="2" stroke-linejoin="round"/>
+<path d="M14.6 73.4C26 79 72 79.4 87 72.6" fill="none" stroke="#2a2c33" stroke-width="2.2" stroke-linecap="round"/>
+<path d="M22 66.6C34 63.6 62 63.6 76 66" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".18"/>
+</svg>`;
+/* the golden chair, Quacky Zombies' 1 in 100 from the fireplace (the owner's, Nov 18 12:19Z: "the chair is golden"): the
+   same chair, its black turned to gold, darker where it was darker; its outline and shine as they are */
+const GOLDS = {
+  "#3b3d46": "#e0aa24",
+  "#45474f": "#f2c443",
+  "#2b2d34": "#b98612",
+  "#2c2e36": "#c4911a",
+  "#2a2c33": "#a8780c",
+  "#24262d": "#9a6c08",
+};
+export const GOLD_CHAIR = CHAIR.replace(
+  /#(3b3d46|45474f|2b2d34|2c2e36|2a2c33|24262d)\b/g,
+  (c) => GOLDS[c],
+);
+/* the zebra cake (the owner's picture): a square snack cake in white icing with thin chocolate stripes across the top and
+   down the sides, its cut front showing the golden sponge and the cream between */
+export const ZEBRA = `<svg viewBox="0 0 56 36" aria-hidden="true">
+<path d="M4 12L30 6L52 11L26 18Z" fill="#fbf8f0" stroke="${INK_DARK}" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M26 18L52 11V25L26 33Z" fill="#efe9dc" stroke="${INK_DARK}" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M4 12L26 18V33L4 26Z" fill="#f2c66d" stroke="${INK_DARK}" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M4 18.6L26 24.8V27.4L4 21.2Z" fill="#fffaf0"/><path d="M4 12.8L26 18.8V20.6L4 14.6Z" fill="#fbf8f0"/>
+<g fill="#e2ab4c"><circle cx="9" cy="23.6" r=".7"/><circle cx="16" cy="28.6" r=".7"/><circle cx="21" cy="29.6" r=".6"/><circle cx="12" cy="17.6" r=".6"/><circle cx="19" cy="21" r=".6"/></g>
+<g fill="none" stroke="#3b2314" stroke-width="1.6" stroke-linecap="round"><path d="M8.7 10.9Q19.7 15.4 30.7 16.7M30.7 16.7Q31.9 20.7 30.9 25.3M14.9 9.5Q25.9 13.9 36.9 15.1M36.9 15.1Q38.1 19.1 37.1 24.3M21.2 8.0Q32.2 12.3 43.2 13.4M43.2 13.4Q44.4 17.4 43.4 23.4M26.9 6.7Q37.9 10.9 48.9 11.8M48.9 11.8Q50.1 15.8 49.1 22.5"/></g>
+<path d="M14 11Q22 9 30 8.2" stroke="#fff" stroke-width="1.2" opacity=".8" stroke-linecap="round"/></svg>`;
+/* each weapon's length in the hand, in ducks: the guns their GUNS w (above), these their own, any other 0.34
+   (the pistol). One table, so the picture is made at the size the box shows it (they were css rules of their own) */
+const HELD_GW = {
+  dagger: 0.4,
+  knife: 0.46,
+  hammer: 0.8,
+  axe: 0.86,
+  sword: 0.8, // (the short sword redrawn longer than the knife, the owner's, Nov 19 19:47Z)
+  pan: 0.66,
+  grenade: 0.3,
+  shotgun: 0.95,
+  chair: 0.62,
+  zebra: 0.5,
+};
+export const gwOf = (w) => (GUNS[w] ? GUNS[w].w : HELD_GW[w] || 0.34);

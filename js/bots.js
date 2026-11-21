@@ -68,7 +68,6 @@ import {
   l4Up,
   l4Cool,
   kitOf,
-  kindOf,
   ptsOf,
   upOf,
   priceOf,
@@ -88,6 +87,7 @@ import {
   wetSlow,
   hasLeft,
 } from "./l4ddrules.js";
+import { kindOf } from "./guns.js";
 import {
   isVd,
   VD_PHASES,

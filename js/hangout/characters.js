@@ -7,6 +7,7 @@
    he eats, a glass when he drinks, the zebra cake (the Zebra cake special) when he's caught it; bullets and daggers knock him down (rules.js asks targets and hit), and so does
    kill @Justin. The shadow duck (shadowduck.js) fades in and out (its record's o) with a whoosh, and whooshes away when
    it gets Justin (it fades). */
+import { BULLET, ZEBRA } from "../gunart.js";
 import { clawMark } from "../claw.js";
 import { rule, activity } from "./registry.js";
 import { npcTick, npcAct, npcHit, npcAt, BRAINS } from "./npc.js";
@@ -20,8 +21,7 @@ import {
   glassSVG,
   JUSTIN,
 } from "./npcart.js";
-import { heldHTML, pressFX, BULLET } from "../specials.js";
-import { ZEBRA } from "../mgjart.js";
+import { heldHTML, pressFX } from "../specials.js";
 import { now as clockNow } from "../clock.js";
 import { nameHTML } from "../name.js";
 import { seen, npcMuted } from "../npcs.js";

@@ -1,4 +1,3 @@
-import { ARM_COOL } from "./armspeed.js";
 import { hpHeal, hpHurt, tenths } from "./hpmath.js";
 /* ---------- the rules of Mad God Justin ----------
    A boss fight: every duck has the knife (1), the pistol (2: it never reloads, in place of the bow, the owner's,
@@ -56,7 +55,8 @@ import {
   aimOf,
 } from "./rules.js";
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
-import { ARMS, SLOT_ODDS, zombieTakes, pierceOf, ALL_HP } from "./l4ddrules.js";
+import { SLOT_ODDS, zombieTakes, pierceOf, ALL_HP } from "./l4ddrules.js";
+import { ARMS, GUN_BREEDS } from "./guns.js";
 import { ZOMBIE_BREEDS, boardWalk, zLook } from "./zombies.js";
 import { holdDown, onGetUp, invuln, hurtFx } from "./hangout/death.js";
 import { sbOnBoard, boardDuck } from "./sandboxrules.js";
@@ -235,13 +235,8 @@ export const mgjHolds = (s, id, w) =>
   MGJ_HOLD.includes(w) ||
   w === "zebra" ||
   (!!w && !!s.mgj && (s.mgj.held || {})[id] === w);
-const MGJ_COOL = {
-  sword: ARM_COOL.sword,
-  knife: ARM_COOL.knife,
-  handgun: ARM_COOL.handgun,
-}; // (as fast as in every mode: the knife four a second, the pistol five)
 export const mgjCool = (sp) =>
-  MGJ_COOL[sp] || (MGJ_GUNS.includes(sp) ? ARMS[sp].cool : 0); // (a gun picked up: Quacky Zombies' own)
+  GUN_BREEDS.mgj.cool[sp] || (MGJ_GUNS.includes(sp) ? ARMS[sp].cool : 0); // (a gun picked up: Quacky Zombies' own)
 /* getting a downed duck up (the owner's, Nov 3, in place of the medkit): stand within REVIVE.REACH duck lengths of it and
    hold E (a phone: the Revive button) for REVIVE.MS (3 s, always: the owner's, Nov 17 11:19Z; it was 2.5 s); with the
    medkit picked up out in my hand it's at once (the owner's, Nov 16) */
@@ -294,20 +289,13 @@ const pickAmmo = (k) =>
     : k === "lmg" || k === "chaingun"
       ? 30 // (the LMG and the chain gun only 30 rounds here: the owner's, Nov 17)
       : (mgjMag(k) || [ARMS[k].all])[0]; // (every other gun only its one magazine)
-/* a gun's magazine here ([shots, reload ms], or null): Quacky Zombies' own; the pistol's never runs out. Every gun picked
-   up has to reload here (the owner's, Nov 16), so the ones with no magazine in Quacky Zombies get one: the shotgun 6
-   shells, the grenade launcher 3 (as in the other modes) and the chain gun a belt of 100 of its 300 (my guesses) */
-const MGJ_MAG_MORE = {
-  shotgun: [6, 2600],
-  glauncher: [3, 4000],
-  chaingun: [100, 4000],
-};
+/* a gun's magazine here ([shots, reload ms], or null): guns.js GUN_BREEDS.mgj */
 export const mgjMag = (k) =>
   !MGJ_GUNS.includes(k)
     ? null
     : ARMS[k].mag
       ? [ARMS[k].mag, ARMS[k].reload]
-      : MGJ_MAG_MORE[k] || null;
+      : GUN_BREEDS.mgj.mag[k] || null;
 /* the shots left in the gun duck id picked up (0: none, or it holds something else) */
 export const ammoOf = (s, id) =>
   (s.mgj &&

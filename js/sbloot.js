@@ -43,7 +43,8 @@ import {
   liveNpcs,
 } from "./sbspawn.js";
 import { W, H } from "./hangout/layout.js";
-import { ARMS, DROP, l4Loot, l4Hurt, l4Ammo, fullAmmo } from "./l4ddrules.js";
+import { DROP, l4Loot, l4Hurt, l4Ammo, fullAmmo } from "./l4ddrules.js";
+import { ARMS } from "./guns.js";
 import { grFrom, grIn } from "./sbgroups.js";
 
 const words = (t) =>

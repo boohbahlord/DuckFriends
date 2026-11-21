@@ -167,9 +167,44 @@ window.__golden = async (sc) => {
       s.hang = { ...s.hang, l4p: { ...s.hang.l4p, [r.me]: hp0 } };
     }
   };
+  /* "fire": my duck has these weapons on its number keys and uses them in turn, each beat one, aimed at the nearest
+     duck (the board modes' specials, rules.js "use"; the guns pinned in play there) */
+  let shots = 0;
+  const fire = () => {
+    const s = r.state,
+      me = s.pos[r.me];
+    if (!me) return;
+    const P = s.players[r.me];
+    if (!P.duck || P.duck.keys !== sc.fire)
+      s.players = {
+        ...s.players,
+        [r.me]: { ...P, duck: { ...P.duck, keys: sc.fire } },
+      };
+    const them = s.seat
+      .filter((id) => id !== r.me && s.pos[id] && s.pos[id].x >= 0)
+      .map((id) => s.pos[id])
+      .sort(
+        (a, c) =>
+          Math.hypot(a.x - me.x, a.y - me.y) -
+          Math.hypot(c.x - me.x, c.y - me.y),
+      )[0];
+    const ax = them ? them.x - me.x : 1,
+      ay = them ? them.y - me.y : 0,
+      was = r.state;
+    r.send({
+      t: "use",
+      id: r.me,
+      what: sc.fire[b % sc.fire.length],
+      face: ax < 0 ? -1 : 1,
+      ax: +ax.toFixed(4),
+      ay: +ay.toFixed(4),
+    });
+    if (r.state !== was) shots++;
+  };
   for (b = 0; b < sc.beats; b++) {
     if (patches.length) patch();
     if (sc.bait !== undefined && b >= sc.bait) bait();
+    if (sc.fire) fire();
     beat();
     const s = r.state;
     per[s.phase] = (per[s.phase] || 0) + 1;
@@ -215,6 +250,7 @@ window.__golden = async (sc) => {
     came: [...ever].sort().join(", "),
     gunmen: g.length,
     swipes,
+    shots,
     mgjWaveZombiesPeak: mzPeak,
     sandboxMapNpcsPeak: sbPeak,
     zombies: ((r.state.hang && r.state.hang.zp) || []).length / 4,
