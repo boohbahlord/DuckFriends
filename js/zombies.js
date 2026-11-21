@@ -28,7 +28,7 @@ import {
 } from "./hangout/layout.js";
 import * as GS from "./hangout/stationmap.js";
 import { walkOf } from "./rules.js";
-import { SAME_FLOOR } from "./heights.js";
+import { SAME_FLOOR, zOf, heightWay } from "./heights.js";
 import { SLOW as SWIM } from "./hangout/water.js";
 import { nearPairs } from "./npcrules.js";
 import { isSurv, SV, survWatch } from "./survrules.js";
@@ -425,7 +425,7 @@ export function moveZombies(s, zs, now, T, up) {
     pls = up.map((id) => {
       const p = s.pos[id],
         xy = toPx(p),
-        zz = +p.z || 0,
+        zz = zOf(p),
         on = dp() ? mapDeck(deckAt(xy[0], xy[1], zz)) : null, // (Downpour: up on a roof, or the canopy; Sandbox's floors are Phase 4's zombies, later)
         dk = chaseDeck(on),
         way = dk && dk.kind === "canopy" ? stationDeck() : dk; // (the canopy: by way of the gas station's roof, then a jump)
@@ -835,7 +835,7 @@ function walkAll(zs, c) {
       /* at the foot of its wall, outside: up it goes. Never from inside, under the roof (the owner's, Nov 17 20:02Z: "WHEN
          THEY TRY TO ATTACK A PLAYER ON THE ROOF, THEY TRY TO GET ON THE ROOF, THEY DONT TRY TO GO UNDER IT FROM THE
          INSIDE OF THE BUILDING AND ATTACK FROM THE FUCKING FLOOR"): from in there it walks out to the foot first */
-      if (z.cm && best < 0.9 && !deckOver(z.x, z.y, zombieZ(z))) {
+      if (z.cm && best < 0.9 && !deckOver(z.x, z.y, zOf(z, "zombie"))) {
         const at = climbFrom(z, GS.DECKS[z.cm[3]], z.cm[1], z.cm[2]);
         if (Math.hypot(at[0] - z.x, at[1] - z.y) > 0.5) {
           walkTo(z, ...at, v * dt);
@@ -889,7 +889,7 @@ function walkAll(zs, c) {
           (duckBig(s, target.id) - 1) / 2 +
           (queued ? QUEUE.reach : 0) && // (a duck bigger than 100% is reached sooner: duck.js)
       zFloor(z) === target.dk &&
-      Math.abs(target.zz - zombieZ(z)) < 50
+      Math.abs(target.zz - zOf(z, "zombie")) < 50
     ) {
       /* a swing: at its duck c.swipe[0] (its wind-up) and c.swipe[1] since its last hit. The wind-up shows from z.wu (since
          when, sent to every screen for the tell and the swipe lines: Adam, Nov 21 18:47Z), at least c.swipe[0] before
@@ -988,12 +988,12 @@ export const zFloor = (z) =>
   z.st === 6 || z.st === 8
     ? undefined
     : dp()
-      ? deckAt(z.x, z.y, zombieZ(z))
+      ? deckAt(z.x, z.y, zOf(z, "zombie"))
       : null;
-export const duckFloor = (p) => (dp() ? deckAt(...toPx(p), +p.z || 0) : null);
+export const duckFloor = (p) => (dp() ? deckAt(...toPx(p), zOf(p)) : null);
 /* a zombie's height: up a fence, up a wall, on a roof (alive or dead there: l4ddrules.js die), jumping onto the canopy,
    or on the ground */
-export const zombieZ = (z) =>
+const zombieZ = (z) =>
   z.st === 5
     ? fenceZ(z.x, z.y, z.l[2])
     : z.st === 6
@@ -1003,6 +1003,7 @@ export const zombieZ = (z) =>
         : z.st === 8 && z.j
           ? jumpZ(z)
           : gr().h(z.x, z.y);
+heightWay("zombie", zombieZ); // (every zombie's height is asked through heights.js zOf)
 /* an opening's two spots for zombie z: out (where it waits and tears) and in (where it's through). A fence's at the
    zombie's own place along it; a boarded hole on Downpour from the side it came to it (z.n: 1 outside, -1 inside) */
 function sidesOf(o, z) {
@@ -1063,7 +1064,7 @@ function crowdOf(zs) {
     h = new Map();
   for (const z of zs) {
     if (z.st === 3) continue;
-    h.set(z, dp() ? zombieZ(z) : 0);
+    h.set(z, dp() ? zOf(z, "zombie") : 0);
     const k = cellOf(z.x, z.y);
     if (!cells.has(k)) cells.set(k, []);
     cells.get(k).push(z);
@@ -1171,10 +1172,10 @@ export function walkable(x0, y0, x1, y1) {
    floor (SAME_FLOOR): one up on a roof and one under it, or one on the canopy and one on the ground by the pumps, pushed
    each other every heartbeat and walked back, so they shook in place ("zombies shouldnt viibrate on roof of gas pump",
    the owner's, Nov 20 03:58Z) */
-function separate(zs, zOf = dp() ? zombieZ : null) {
+function separate(zs, zf = dp() ? zombieZ : null) {
   const g = gr(),
     live = zs.filter((z) => z.st !== 3),
-    hz = new Map(zOf ? live.map((z) => [z, zOf(z)]) : []);
+    hz = new Map(zf ? live.map((z) => [z, zf(z)]) : []);
   nearPairs(
     live,
     64,

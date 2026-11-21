@@ -112,9 +112,9 @@ import {
   ZOUTFITS,
 } from "./l4ddrules.js";
 import { kindOf, ARMS, POOL } from "./guns.js";
-import { fenceZ, zombieZ, zombiesOf } from "./zombies.js";
+import { fenceZ, zombiesOf } from "./zombies.js";
 import { zSortY } from "./zombieroofs.js";
-import { hOk, hLock } from "./heights.js";
+import { hOk, hLock, zOf } from "./heights.js";
 import { toPx } from "./units.js";
 import { ammoBar, stackBars, noReload } from "./meters.js";
 import { laserMeter } from "./laserfx.js";
@@ -735,7 +735,7 @@ function seeZombies(s, ctx, now) {
       shown &&
       z.st !== 3 &&
       !!me &&
-      slabBetween(me.x * W, me.y * H, +me.z || 0, z.x, z.y, zombieZ(z));
+      slabBetween(me.x * W, me.y * H, zOf(me), z.x, z.y, zOf(z, "zombie"));
     if (o.dark !== dark) {
       o.dark = dark;
       o.el.classList.toggle("l4-unseen", dark);
@@ -795,7 +795,7 @@ function seeZombies(s, ctx, now) {
     }
     o.hp = z.hp;
     o.st = z.st;
-    o.k = z.k; // (the roof it climbs or walks, and its jump onto the canopy: l4ddrules.js zombieZ)
+    o.k = z.k; // (the roof it climbs or walks, and its jump onto the canopy: heights.js zOf)
     o.j = z.j;
     [o.a, o.wu] = [z.a, z.wu]; // (its last swipe, and its swing's wind-up since: it leans back, draw)
   }
@@ -3022,7 +3022,7 @@ activity({
                 o.st === 7 ||
                 o.st === 8 ||
                 (o.st === 3 && o.k !== undefined)
-              ? zombieZ(o) - heightAt(o.x, o.y)
+              ? zOf(o, "zombie") - heightAt(o.x, o.y)
               : 0, // (Downpour: up a fence, or dropping off it; up a wall, or on a roof, alive or dead)
         z = heightAt(o.x, o.y) + up,
         lean =

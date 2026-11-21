@@ -112,7 +112,7 @@ import { JUSTIN, ETHAN, jerseyOf } from "./hangout/npcart.js";
 import { MERCHANTS, merchantById, merchantLook } from "./merchants.js";
 import { linesOf } from "./merchantlines.js";
 import { invuln } from "./hangout/death.js";
-import { hOk, hLock, shotFeet, SAME_FLOOR } from "./heights.js";
+import { hOk, hLock, shotFeet, SAME_FLOOR, zOf, nearH } from "./heights.js";
 import { toPx } from "./units.js";
 import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
@@ -187,7 +187,6 @@ import {
   STATION,
   zFloor,
   duckFloor,
-  zombieZ,
   boardsAhead,
   walkTo,
   setZWall,
@@ -318,9 +317,7 @@ const wetZ = (z) => flood(z.x, z.y) && zFloor(z) === null;
 function wetDuck(p) {
   if (!p) return false;
   const [x, y] = toPx(p);
-  return (
-    flood(x, y) && duckFloor(p) === null && (+p.z || 0) <= heightAt(x, y) + 4
-  );
+  return flood(x, y) && duckFloor(p) === null && zOf(p) <= heightAt(x, y) + 4;
 }
 /* Downpour: is duck id swimming in the deep flood? Its guns, its bow and its melee are put away until it's out (the
    owner's, Nov 17 05:46Z) */
@@ -1348,7 +1345,7 @@ function troopTick(s, now, ids) {
     const x = p.x * W,
       y = p.y * H;
     return (
-      whereIn(x, y, +p.z || 0) === STATION ||
+      whereIn(x, y, zOf(p)) === STATION ||
       Math.hypot(
         (x - GS.TROOPER.x) / TROOP.SEE_X,
         (y - GS.TROOPER.y) / TROOP.SEE_Y,
@@ -3095,7 +3092,7 @@ export function l4Use(s, a, now) {
   const [dx, dy] = aimDir(a),
     face = dx < 0 ? -1 : 1,
     [px, py] = toPx(p),
-    hz = Math.round(+p.z || 0);
+    hz = Math.round(zOf(p));
   const n = addFx(s, {
     kind: "use",
     what,
@@ -3450,7 +3447,7 @@ export const CAKE_R = 40, // world px: how near a zombie bites it
 function cakeOut(s, id, p, dx, dy, now) {
   const A = ARMS.zebra,
     [px, py] = toPx(p),
-    hz = Math.round(+p.z || 0);
+    hz = Math.round(zOf(p));
   let t = 0;
   while (t < A.far / A.speed) {
     const n = t + 0.02;
@@ -3576,7 +3573,7 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
       [jx, jy] = toPx(jp);
     if (
       inCone((jx - px) / D, (jy - py) / D, dx, dy, far / D + 0.4) &&
-      !slabBetween(px, py, hz, jx, jy, +jp.z || 0)
+      !slabBetween(px, py, hz, jx, jy, zOf(jp))
     )
       wildFire(s, j, id, now); // (Justin with no weapon burns too)
   }
@@ -3644,7 +3641,7 @@ function flameTick(s, zs, now, T) {
         if (
           z.st !== 3 &&
           Math.hypot(z.x - x, (z.y - y) * 1.3) < r &&
-          (!dp() || Math.abs(zombieZ(z) - (h || 0)) < SAME_FLOOR)
+          (!dp() || Math.abs(zOf(z, "zombie") - (h || 0)) < SAME_FLOOR)
         )
           catchFire(s, z, by, now, T);
   }
@@ -3665,7 +3662,7 @@ function flameTick(s, zs, now, T) {
           b.st !== 3 &&
           !(fz[b.i] && fz[b.i][0] > now) &&
           Math.hypot((a.x - b.x) / 26, (a.y - b.y) / 22) < TOUCH_Z &&
-          (!dp() || Math.abs(zombieZ(a) - zombieZ(b)) < SAME_FLOOR)
+          (!dp() || Math.abs(zOf(a, "zombie") - zOf(b, "zombie")) < SAME_FLOOR)
         )
           catchFire(s, b, fz[a.i][2], now, T);
   }
@@ -3854,7 +3851,7 @@ function wildHurt(
     if (by === id || !isWild(s, id) || !p || !q || q.dn || q.gh) continue;
     const [px, py] = toPx(p);
     if (Math.hypot((px - x) / rx, (py - y) / ry) >= 1) continue;
-    if (from && slabBetween(...from, px, py, +p.z || 0)) continue;
+    if (from && slabBetween(...from, px, py, zOf(p))) continue;
     /* a crit (guns.js critOf, a weapon's chance as on any duck) doubles it, and blows his head off if it puts him down */
     const crit = Math.random() < critOf(w);
     wildDown(s, id, by, now, w, false, crit ? ["x0"] : null, crit ? 2 : 1);
@@ -3985,11 +3982,7 @@ function meleeHits(s, now) {
       if (id === k.by || !q || k.hit.includes("p" + id) || !standing(s, id))
         continue;
       const [qx, qy] = toPx(q);
-      if (
-        Math.hypot(qx - bx, qy - by) > R ||
-        Math.abs((+q.z || 0) - (+p.z || 0)) > 48
-      )
-        continue;
+      if (Math.hypot(qx - bx, qy - by) > R || !nearH(zOf(q), zOf(p))) continue;
       k.hit.push("p" + id);
       const far = knockOf(k.w) * KNOCK_DUCK,
         dX = 0.006 * W,
@@ -4031,7 +4024,7 @@ function meleeHits(s, now) {
   if (any) store(s, zs, true);
   return any;
 }
-/* dead on a roof, it lies on it (z.k kept: zombies.js zombieZ); up a wall or jumping, it drops (the owner's, Nov 21
+/* dead on a roof, it lies on it (z.k kept: zombies.js zombieZ, asked through heights.js zOf); up a wall or jumping, it drops (the owner's, Nov 21
    08:46 ET: "corpses go below the cieling of where they were, that should be fixed") */
 const die = (z, T) => {
   if (z.st !== 7) delete z.k;
@@ -4099,7 +4092,7 @@ export const shotWalled = (sh, x, y) => walled(x, y, shotFeet(sh));
 /* may a shot from my duck (feet at hz, at (px, py)) hit zombie z? Only with nothing solid between us: the one rule
    (layout.js slabBetween, the owner's, Nov 17 20:02Z); the walls on the way are the shot's own walk */
 const canShoot = (z, px, py, hz) =>
-  !dp() || !slabBetween(px, py, hz, z.x, z.y, zombieZ(z));
+  !dp() || !slabBetween(px, py, hz, z.x, z.y, zOf(z, "zombie"));
 /* the zombies by 64-px square (a spatial grid), so a shot only looks at the few round it instead of every zombie on the
    map: the same hits, far fewer looks. A zombie's hit room (26 by 22 px) never reaches past the squares next to its own */
 const HIT_CELL = 64;
@@ -4166,7 +4159,7 @@ export function l4Shots(s, now) {
           (z) =>
             z.st !== 3 &&
             Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1 &&
-            hOk(sh, zombieZ(z), z.x, z.y, sh.x0 * W, sh.y0 * H) &&
+            hOk(sh, zOf(z, "zombie"), z.x, z.y, sh.x0 * W, sh.y0 * H) &&
             !past(sh, "glauncher", z),
         )
       )
@@ -4221,8 +4214,8 @@ export function l4Shots(s, now) {
         near = (z) =>
           z.st !== 3 &&
           Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1 &&
-          hOk(sh, zombieZ(z), z.x, z.y, sh.x0 * W, sh.y0 * H) &&
-          !hLock(sh, zombieZ(z)); // (at its height, the first one setting it: heights.js)
+          hOk(sh, zOf(z, "zombie"), z.x, z.y, sh.x0 * W, sh.y0 * H) &&
+          !hLock(sh, zOf(z, "zombie")); // (at its height, the first one setting it: heights.js)
       if (
         wildHurt(s, sh.by, x, y, now, w, 26, 22, [
           sh.x0 * W,
@@ -4301,7 +4294,7 @@ export function l4Shots(s, now) {
               T,
               now,
               ANGEL.PISTOL.BOOM,
-              zombieZ(z),
+              zOf(z, "zombie"),
             ); // (half a grenade's blast, its boom weaker: the owner's, Nov 17 11:07Z; it goes off where that zombie is)
         } else if (strike(s, z, dmgOf(A), critRoll(s, sh.by, w), sh.by, w, now))
           die(z, T);
@@ -4390,7 +4383,7 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
     if (
       z.st !== 3 &&
       Math.hypot(z.x - bx, (z.y - by) * 1.25) < ARMS.grenade.r * wide &&
-      open(z.x, z.y, zombieZ(z))
+      open(z.x, z.y, zOf(z, "zombie"))
     ) {
       strike(s, z, z.hp, false, sh.by); // (all its HP: 5 points for each)
       die(z, T);
@@ -4406,7 +4399,7 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
     const [jx, jy] = toPx(jp);
     if (
       Math.hypot(jx - bx, (jy - by) * 1.25) < ARMS.grenade.r * wide &&
-      open(jx, jy, +jp.z || 0)
+      open(jx, jy, zOf(jp))
     )
       wildDown(s, j, sh.by, now, "grenade", true, DEATH);
   }
@@ -4449,7 +4442,7 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
     if (
       cut > 0 &&
       Math.hypot(mx - bx, (my - by) * 1.25) < ARMS.grenade.r * wide &&
-      open(mx, my, +mine.z || 0)
+      open(mx, my, zOf(mine))
     )
       s.hang.l4p = {
         ...s.hang.l4p,
@@ -4553,7 +4546,7 @@ function l4Tick(s, now) {
         s.hang.still = still;
         s.hang.ghost = {
           ...(s.hang.ghost || {}),
-          [id]: { x: q.x, y: q.y, z: Math.round(+q.z || 0), t: now, l4: 1 },
+          [id]: { x: q.x, y: q.y, z: Math.round(zOf(q)), t: now, l4: 1 },
         };
         const b = { ...(s.hang.l4b || {}) };
         delete b[id];
