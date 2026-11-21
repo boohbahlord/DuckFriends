@@ -4,19 +4,9 @@
    orange, then a bright orange once it's overheated. LASER(heat 0 … 1, over: overheated) → svg; LASER.tip: where the
    beam comes out, in its viewBox. Preview:
    tools/laser-art.html */
-const INK = "#2a2d38";
-const M1 = "#33384a",
-  M2 = "#454b5e",
-  M0 = "#2a2e3c",
-  POLY = "#1f2230",
-  RED = "#e0262f",
+import { INK, M0, M1, M2, POLY, shine, box, part } from "./gunparts.js";
+const RED = "#e0262f",
   COPPER = "#c9733a";
-const shine = (d, o = 0.28, w = 0.8) =>
-  `<path d="${d}" stroke="#fff" stroke-width="${w}" opacity="${o}" fill="none" stroke-linecap="round"/>`;
-const box = (x, y, w, h, r, fill, sw = 1.1) =>
-  `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${fill}" stroke="${INK}" stroke-width="${sw}"/>`;
-const part = (d, fill, sw = 1.1) =>
-  `<path d="${d}" fill="${fill}" stroke="${INK}" stroke-width="${sw}" stroke-linejoin="round"/>`;
 
 /* the hot metal's color at heat h (0 … 1): the metal, then a dull red, red, orange; overheated, a bright orange */
 const HOT = [
