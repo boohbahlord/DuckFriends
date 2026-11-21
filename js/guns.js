@@ -6,7 +6,6 @@
 import { HANDGUN } from "./gamedefaults.js";
 import { ARM_SPEED, ARM_COOL, ARM_SWING, ARM_RELOAD } from "./armspeed.js";
 import { FLAME } from "./flamer.js";
-import { JET } from "./jetpack.js";
 /* the weapons here, each of one kind (its slot): melee, ranged, special or the grenades. Melee swings twice as fast as
    anywhere else and hurts only mid-swing, in a bubble just past it (at: how far, r: how big); the pistol: 72 bullets in
    all, 8 a magazine; the bow: arrows that never run out (the owner's, Nov 18), one every 0.4 s; the dagger is thrown and falls to the floor; the shotgun a
@@ -14,8 +13,7 @@ import { JET } from "./jetpack.js";
    once; grenades kill every zombie in their blast. Nothing hurts another duck. The ones I haven't given numbers for
    are guesses (Adam's plan, question 2) */
 /* what anything thrown or used up waits before it can be used again (the grenades, the medkit, the zebra cake, the
-   adrenaline shot, the chair): 0.75 s (the owner's, Nov 16). Not the jetpack (switched on
-   and off) */
+   adrenaline shot, the chair): 0.75 s (the owner's, Nov 16) */
 const ITEM_COOL = 750;
 /* a melee weapon breaks (the owner's, Nov 19 22:41Z): its bar is 100% of the damage it can deal, HP actually taken off
    (not overkill), 450 for each, the cast iron pan only 50 ("cast irons is only 50 damage"). At 0% it is gone for good
@@ -297,9 +295,6 @@ export const ARMS = {
      20 s) */
   zebra: { kind: "special", cool: ITEM_COOL, all: 1, speed: 650, far: 520 },
   adrenaline: { kind: "special", cool: ITEM_COOL, all: 1, ms: 20000 },
-  /* the jetpack (Stage 4): each use switches it on or off, as the long jump; on, Space flies (jetpack.js), and its
-     10 s of flight (all, in ms) burn only while its jets are on in the air; a Max Ammo fills it */
-  jetpack: { kind: "special", cool: 300, all: JET.FUEL },
   /* Justin's office chair (the owner's, Nov 3): thrown the way I aim, 3 to 5 HP to the zombie it hits and it shoves it
      back like the hammer; no ammo unless a Sandbox sets one */
   safekeep: { kind: "special", cool: 300, all: 1 }, // (Safe Keeping: never used by hand, SAFE below)
@@ -339,7 +334,6 @@ export const GUN_NAMES = {
   laser: "Laser Rifle",
   zebra: "Zebra cake",
   adrenaline: "Adrenaline shot",
-  jetpack: "Jetpack",
   chair: "Chair",
 };
 /* ---------- the modes' lists ----------

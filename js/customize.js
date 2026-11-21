@@ -76,7 +76,6 @@ import { who } from "./who.js";
 import { NAV_HINTS, items } from "./keynav.js";
 import { unlocked, isLocked, lockHint } from "./unlocks.js";
 import { touchOnly } from "./pointer.js";
-import { jetHTML } from "./jetpack.js";
 import { BOARD_GUNS, AUTO, BOARD_WEAPONS } from "./guns.js";
 import { pxWords } from "./pxtext.js";
 import { botDuck, BOT_DUCKS, any } from "./botduck.js";
@@ -522,19 +521,6 @@ export function openCustomize(page = lastPage, opts = {}) {
             clearTimeout(pic._see);
             pic._see = setTimeout(() => pic.classList.remove("see"), 5000);
           } // (the Invisible duck: see-through a while, as in a game)
-          if (id === "jetpack") {
-            pic.querySelectorAll(".gduck-jet").forEach((e) => e.remove());
-            pic.style.setProperty("--sz", w.width.toFixed(0) + "px");
-            pic.insertAdjacentHTML("afterbegin", jetHTML(duckNow()));
-            duckBox.classList.remove("fly");
-            void duckBox.offsetWidth;
-            duckBox.classList.add("fly");
-            clearTimeout(pic._jet);
-            pic._jet = setTimeout(() => {
-              duckBox.classList.remove("fly");
-              pic.querySelectorAll(".gduck-jet").forEach((e) => e.remove());
-            }, 5000);
-          } // (the Jetpack: on the duck's back, it flies up on its flames, keeps the height, and comes down, as in a game)
           if (sp.kind === "effect") {
             pic.querySelectorAll(".sp-prev-fx").forEach((e) => e.remove());
             const fx = el(

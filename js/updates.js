@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v219",
+    version: 219,
+    date: "Nov 21, 2026",
+    title: "Shorter sprint, Survival ghosts",
+    news: [
+      "Sprint lasts half as long (2.5 seconds).",
+      "For Survival: a duck that bleeds out walks as a ghost instead of watching others. Zombies and gunmen ignore it, and the defibrillator still brings it back where it fell.",
+      "The jetpack is gone.",
+      "For Dead Ducks Arcade: Change starting round no longer covers the chat or the players list.",
+    ],
+  },
+  {
     id: "v218",
     version: 218,
     date: "Nov 21, 2026",
