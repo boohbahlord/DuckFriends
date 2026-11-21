@@ -48,6 +48,9 @@ const INIT = `(() => {
       net = await import("./js/net.js");
     const r = net.createLocalRoom({ name: "G", test: true, computers: 3 });
     net.setActive(r);
+    /* (which song plays, and when, follows the audio's timing, so under load `song` printed "(playing now)" on a different
+       line: nothing is playing for this run) */
+    (await import("./js/music.js")).music.nowPlaying = () => null;
     const out = [];
     const run = async (line) => {
       window.__now += 1000;
