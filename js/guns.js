@@ -450,6 +450,22 @@ export const GUN_BREEDS = {
   /* the NPCs that fire guns: how far each gun is fired from, in duck lengths (REACH if not named). The two rows don't
      agree yet: the owner decides whether they become one */
   gunman: {
+    /* how each gun is fired: rounds a burst, ms from one burst to the next (their hidden cooldowns; a gun not named: one
+       round, 1.2 to 1.8 s), and the magazine a gun with none gets (the shotgun 6 shells, any other 6) */
+    burst: {
+      handgun: { n: 1, gap: [1400, 2200] },
+      revolver: { n: 1, gap: [1600, 2400] },
+      smg: { n: 3, gap: [2200, 3200] },
+      tommy: { n: 3, gap: [2200, 3200] },
+      ump: { n: 3, gap: [2200, 3200] },
+      shotgun: { n: 1, gap: [2000, 2800] },
+      dbuck: { n: 1, gap: [1800, 2600] },
+      ak: { n: 4, gap: [1600, 2400] },
+      burst: { n: 3, gap: [1400, 2000] },
+      lmg: { n: 12, gap: [1200, 1800] }, // (long bursts: suppressive fire)
+    },
+    mag: { shotgun: 6 },
+    magAll: 6,
     reach: {
       shotgun: 3.5,
       dbuck: 3.5,

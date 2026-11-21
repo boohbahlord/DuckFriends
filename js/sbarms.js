@@ -8,7 +8,7 @@
    holds now) and sh (its last shot: [when, x, y of where it went], for the screen's tracer) */
 import { duckBig } from "./duck.js";
 import { ARMS, WEAPONS, reachOf } from "./guns.js";
-import { roll, reloadMs, refill } from "./npcrules.js";
+import { roll, refill, spend, magOf } from "./npcrules.js";
 
 /* what it can hold: its guns and the bow (not the thrown dagger), and the melee weapons (made the first time they're
    asked for) */
@@ -43,7 +43,7 @@ export function armUp(wp) {
   if (!guns.length && !W.m) return W.sw ? {} : { wp: W }; // (only the swipe: a plain one; nothing: it never attacks)
   return {
     wp: W,
-    mg: W.p.map((g) => (g && ARMS[g].mag) || 0),
+    mg: W.p.map((g) => (g && magOf(g, "sbnpc")) || 0),
     hw: guns[0] || W.m,
   };
 }
@@ -90,16 +90,9 @@ export function fight(o, to, bd, claw, now, clawMs, hit, sees = null) {
   /* its guns: reloads that are done fill the magazine; it shoots the one in hand, or the other while that reloads */
   const mg = [...(o.mg || [0, 0])],
     rl = [...(o.rl || [0, 0])];
-  refill(
-    W.p,
-    mg,
-    rl,
-    now,
-    (g) => ARMS[g].mag,
-    (g, i) => g && ARMS[g].mag && mg[i] <= 0,
-  );
+  refill(W.p, mg, rl, now, "sbnpc");
   const ready = (i) =>
-      W.p[i] && (!ARMS[W.p[i]].mag || mg[i] > 0) && bd <= reach(W.p[i]),
+      W.p[i] && (!magOf(W.p[i], "sbnpc") || mg[i] > 0) && bd <= reach(W.p[i]),
     i = [0, 1]
       .filter(ready)
       .sort((a, b) => +(W.p[b] === o.hw) - +(W.p[a] === o.hw))[0]; // (the one in hand first)
@@ -112,7 +105,7 @@ export function fight(o, to, bd, claw, now, clawMs, hit, sees = null) {
   /* a beat is longer than the fast guns' wait: every shot it had time for in the last beat (never a whole magazine at
      once after a wait), up to what's left in its magazine */
   let n = Math.max(1, Math.floor(Math.min(BEAT, now - (o.fa || 0)) / A.cool));
-  if (A.mag) n = Math.min(n, mg[i]);
+  if (magOf(g, "sbnpc")) n = Math.min(n, mg[i]);
   let dmg = 0;
   for (let k = 0; k < n; k++)
     dmg +=
@@ -125,10 +118,7 @@ export function fight(o, to, bd, claw, now, clawMs, hit, sees = null) {
   o.fa = now;
   o.hw = g;
   o.sh = [now, Math.round(to.x * 1000) / 1000, Math.round(to.y * 1000) / 1000];
-  if (A.mag) {
-    mg[i] -= n;
-    if (mg[i] <= 0) rl[i] = now + reloadMs(g);
-  }
+  spend(mg, rl, i, g, n, now, "sbnpc");
   hit(Math.round(dmg * 10) / 10, g);
   return "shot";
 }
