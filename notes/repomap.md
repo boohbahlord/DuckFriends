@@ -32,7 +32,7 @@ datboi.js 115 here come dat boi
 democracy.js 243 Democracy of Ducklings:
 dock.js 73 the docks: where Notes and the chat open
 duck.js 728 the rubber duck avatar
-duckparts.js 575 the ducks made from pixel parts
+duckparts.js 592 the ducks made from pixel parts
 ducksheets.js 2 made by tools/duck-parts.cjs:
 duel.js 124 the cloud duel: two ducks share the cloud,
 dunce.js 145 Duncelation: what the screen shows
@@ -48,7 +48,7 @@ friends.js 254 friends
 front.js 109 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 218 how a held weapon and the screen move
-game.js 8836 the game screen
+game.js 8825 the game screen
 gamedefaults.js 29 the game's own numbers, for every mode
 gameready.js 47 what the game's loading screen waits for
 gamesettings.js 1751 Game Settings: the whole screen, like Customize
@@ -57,7 +57,7 @@ gmodes.js 246 Sandbox Phase 6: made game modes
 grenade.js 34 a grenade going off
 ground.js 54 what a duck walks on, for its footsteps
 gunmen.js 110 the gunmen's looks
-gunmenrules.js 1155 Survival: the gunmen
+gunmenrules.js 1159 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen
 hats.js 1073 hats
 heights.js 50 a shot's height, Doom's way
@@ -74,10 +74,10 @@ jetart.js 39 the jetpack's pictures
 jetpack.js 33 the jetpack
 jumps.js 48 the jump counter
 keynav.js 204 menus by keyboard
-l4dd.js 3308 Quacky Zombies on every screen
+l4dd.js 3350 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 203 Dead Ducks Arcade's Angel machine on every screen
-l4ddart.js 756 Quacky Zombies' pictures
+l4ddart.js 623 Quacky Zombies' pictures
 l4ddbar.js 281 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and the roof's flare,
 l4ddbots.js 571 Quacky Zombies' computers
@@ -88,7 +88,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 338 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box on every screen
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 5362 the rules of Quacky Zombies
+l4ddrules.js 5365 the rules of Quacky Zombies
 l4ddsfx.js 513 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the zombies far from
 langname.js 5 the name of Sandbox's number language, in one
@@ -117,7 +117,7 @@ name.js 165 fonts and how a player's name looks
 nbperms.js 167 Seriat: everyone's home folder, and the rights players
 net.js 127 the room connection
 notes.js 101 Notes : question ideas, written any time
-npcrules.js 120 what every NPC's brain shares
+npcrules.js 106 what every NPC's brain shares
 npcs.js 49 the characters you can mute: Justin, the cats,
 npcshared.js 29 what every NPC shares, whatever mode it's in
 npcview.js 206 an NPC on a world , drawn the
@@ -223,7 +223,7 @@ vddrules.js 521 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
 vote.js 278 Vote Mode & Map: the vote windows
 who.js 3 who this player is beyond this tab
-wounds.js 295 the wounds a hit leaves
+wounds.js 501 the wounds a hit leaves
 zombiepath.js 186 the zombies' way to the ducks on a
 zombieroofs.js 244 the zombies' walk over Downpour's roofs: up a
 zombies.js 1420 the zombies: one module for every mode's zombies

@@ -60,7 +60,7 @@ import { ARMS, SLOT_ODDS, zombieTakes, pierceOf, ALL_HP } from "./l4ddrules.js";
 import { ZOMBIE_BREEDS, boardWalk, zLook } from "./zombies.js";
 import { holdDown, onGetUp, invuln, hurtFx } from "./hangout/death.js";
 import { sbOnBoard, boardDuck } from "./sandboxrules.js";
-import { hitCode } from "./wounds.js";
+import { hitWounds, WOUND_BREEDS } from "./wounds.js";
 import { MAD } from "./sbbrain.js";
 import { grudge } from "./npcrules.js";
 import { npcBody, duOf } from "./sbbody.js";
@@ -2310,7 +2310,7 @@ export function mgjZombieHit(s, near, w, now, by, sh = null) {
     if (sh) sh.zh = [...(sh.zh || []), o.i];
     hit = true;
     o.hp = t.dmg >= ALL_HP ? 0 : hpHurt(o.hp, t.dmg); // (in tenths, as every HP: hpmath.js)
-    o.w = (o.w || "") + hitCode(o.w || "", w, t.head); // (its wounds, as Dead Ducks Arcade's zombie gets them: l4ddrules.js wound)
+    o.w = hitWounds(o.w, w, WOUND_BREEDS.zombie, { head: t.head }); // (its wounds, as Dead Ducks Arcade's zombie gets them: wounds.js)
     if (o.hp <= 0) o.d = now;
     if (z.sb && by) o.mad = grudge("p:" + by, now, MAD); // (Sandbox's: it goes after whoever hurt it, sbbrain.js)
     if (o.d && (w === "grenade" || w === "glauncher") && !o.w.includes("g0"))

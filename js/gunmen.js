@@ -3,7 +3,7 @@
    how they're handled, and maybe even small variations, like maybe glasses versus other facial apparel, different
    collar colors". Each is a duck look (duck.js) built from the players' items and the NPCs' own (outfits.js NPC_OUTFITS,
    hats.js NPC_HATS, faces.js NPC_FACES), so they match the game's art. gunmanLook(kind, n): the look of gunman number
-   n, the same on every screen (the rules hand out the numbers); wounds and gore come from l4ddart.js hitsOf, as a
+   n, the same on every screen (the rules hand out the numbers); wounds and gore come from wounds.js hitsOf, as a
    zombie's. Preview: tools/gunmen-art.html */
 import { CAMO } from "./outfits.js";
 

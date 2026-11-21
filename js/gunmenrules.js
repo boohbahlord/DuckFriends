@@ -34,8 +34,8 @@ import {
   reloadMs,
   refill,
   shotMark,
-  woundsAfter,
 } from "./npcrules.js";
+import { hitWounds, WOUND_BREEDS } from "./wounds.js";
 import {
   friend,
   friendsTick,
@@ -1016,7 +1016,11 @@ function takes(s, o, by, w, t, now, H, how = "") {
     head = typeof t === "object" && t.head,
     took = Math.min(o.hp, dmg),
     hp = hpHurt(o.hp, dmg);
-  o.w = woundsAfter(o.w || "", w, !hp, head, how === "blast");
+  o.w = hitWounds(o.w, w, WOUND_BREEDS.gunman, {
+    dead: !hp,
+    head,
+    blast: how === "blast",
+  });
   o.hp = hp;
   if (!hp) {
     o.d = now;
