@@ -238,7 +238,7 @@ walkgrid.js 67 the walking grid: which 40-px cells
 who.js 3 who this player is beyond this
 wounds.js 501 the wounds a hit leaves
 zombiepath.js 178 the zombies' way to the ducks
-zombieroofs.js 305 the zombies' walk over Downpour's roofs:
+zombieroofs.js 320 the zombies' walk over Downpour's roofs:
 zombies.js 1450 the zombies: one module for every
 
 ## js/hangout/

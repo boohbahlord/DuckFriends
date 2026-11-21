@@ -183,6 +183,13 @@ export const zSortY = (z, zz) =>
   z.st === 6 && deckOf(z) ? deckKey(deckOf(z), z.y) : sortY(z.x, z.y, zz);
 /* the feet of each roof's walls where a zombie can start up (every CL.step along its edges, on open ground), made once */
 let footOf = null;
+const CLEAR = [
+  [0, 0],
+  [0, -CL.step],
+  [0, CL.step],
+  [-CL.step, 0],
+  [CL.step, 0],
+];
 export function climbSpot(dk, [x, y]) {
   if (!footOf || footOf.rev !== layoutRev()) {
     footOf = new Map();
@@ -198,7 +205,15 @@ export function climbSpot(dk, [x, y]) {
     footOf.set(
       dk,
       spots.filter(
-        ([sx, sy]) => zOk(sx, sy, heightAt(sx, sy)) && wallUnder(dk, sx, sy),
+        ([sx, sy]) =>
+          zOk(sx, sy, heightAt(sx, sy)) &&
+          !GS.DECKS.some(
+            (d) =>
+              d !== dk &&
+              !d.solid &&
+              CLEAR.some(([a, b]) => onDeckAt(d, sx + a, sy + b)),
+          ) && // (none under a floor or by one: the plank over the red car's west end, where none starts up and the ones waiting under it jammed the spot)
+          wallUnder(dk, sx, sy),
       ),
     );
   }
