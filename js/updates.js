@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v238",
+    version: 238,
+    date: "Nov 21, 2026",
+    title: "One push for everything",
+    news: [
+      "Behind the scenes: every push and knock-back (hammer, grenades, melee on zombies) now runs through one module.",
+      "Behind the scenes: your duck's hand (the number-key specials, firing, reloading and aiming) lives in its own file now, out of the board screen's huge file. Nothing plays differently.",
+    ],
+  },
+  {
     id: "v237",
     version: 237,
     date: "Nov 21, 2026",

@@ -1351,8 +1351,9 @@ function reduceStep(state, a, now) {
       (a.t === "voteStart" && ["skip", "turn"].includes(a.kind)))
   )
     return state; // waiting for players: no turn ends
-  const act = ACTS[a.t];
-  return act && Object.hasOwn(ACTS, a.t)
+  const acts = actsOf();
+  const act = acts[a.t];
+  return act && Object.hasOwn(acts, a.t)
     ? act({ state, s, a, now, P, me, host, boss })
     : s;
 }
@@ -1727,6 +1728,9 @@ export const signed = (v) =>
 export const nameOfValue = (v) =>
   v === null ? "" : COLS[Math.max(0, Math.min(6, Math.round(v) + 3))];
 
-/* ---------- the actions, one handler each (owner, Nov 21): reduceStep above looks the action up here ---------- */
-
-const ACTS = { ...ROOM_ACTS, ...PLAY_ACTS, ...SB_ACTS };
+/* ---------- the actions, one handler each (owner, Nov 21): reduceStep above looks the action up here ----------
+   made on the first action, never when this file loads: actplay.js and actroom.js import back from here, so whichever
+   loads first must not need the other's table yet */
+let ACTS = null;
+const actsOf = () =>
+  ACTS || (ACTS = { ...ROOM_ACTS, ...PLAY_ACTS, ...SB_ACTS });

@@ -169,7 +169,7 @@ report.js 114 Report Bug or Suggest Ideas
 roomrules.js 368 room governance: groups and permissions ,
 rooms.js 256 Play: create a room, and the
 router.js 112 screens
-rules.js 1732 the rules of Agree or Disagree
+rules.js 1736 the rules of Agree or Disagree
 sandbox.js 1347 Sandbox: the key windows
 sandboxrules.js 2056 Sandbox: which map it plays on,
 sbarms.js 124 Sandbox: a made NPC's weapons in
@@ -245,7 +245,7 @@ umaps.js 371 Made maps: making them, and keeping
 units.js 10 the game's units, in one place
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 3224 Updates
+updates.js 3234 Updates
 vdd.js 190 Valentine's Duck Date: what the screen
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
