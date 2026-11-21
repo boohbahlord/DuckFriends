@@ -3987,7 +3987,11 @@ function meleeHits(s, now) {
   if (any) store(s, zs, true);
   return any;
 }
+/* dead on a roof, it lies on the roof (its deck kept, z.k: zombies.js zombieZ); dead up a wall or in the middle of its
+   jump, it drops to the ground. It fell through the roof to the ground under it before (the owner's, Nov 21 08:46 ET:
+   "corpses go below the cieling of where they were, that should be fixed") */
 const die = (z, T) => {
+  if (z.st !== 7) delete z.k;
   z.st = 3;
   z.d = T;
 };

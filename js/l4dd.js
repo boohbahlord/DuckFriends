@@ -3026,9 +3026,12 @@ activity({
       const up =
           o.st === 5
             ? fenceZ(o.x, o.y, o.l[2])
-            : o.st === 6 || o.st === 7 || o.st === 8
+            : o.st === 6 ||
+                o.st === 7 ||
+                o.st === 8 ||
+                (o.st === 3 && o.k !== undefined)
               ? zombieZ(o) - heightAt(o.x, o.y)
-              : 0, // (Downpour: up a fence, or dropping off it; up a wall, or on a roof)
+              : 0, // (Downpour: up a fence, or dropping off it; up a wall, or on a roof, alive or dead)
         z = heightAt(o.x, o.y) + up,
         lean =
           o.st === 5 && up && openingById(o.l[2])?.axis === "y"
