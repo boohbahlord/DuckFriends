@@ -47,8 +47,8 @@ format.js 12 numbers as the settings ask
 friends.js 254 friends
 front.js 109 the front page
 fx.js 1200 the effects, drawn as pixels
-fxmotion.js 209 how a held weapon and the screen move
-game.js 8838 the game screen
+fxmotion.js 218 how a held weapon and the screen move
+game.js 8839 the game screen
 gamedefaults.js 29 the game's own numbers, for every mode
 gameready.js 47 what the game's loading screen waits for
 gamesettings.js 1751 Game Settings: the whole screen, like Customize
@@ -117,7 +117,7 @@ name.js 165 fonts and how a player's name looks
 nbperms.js 167 Seriat: everyone's home folder, and the rights players
 net.js 127 the room connection
 notes.js 101 Notes : question ideas, written any time
-npcrules.js 128 what every NPC's brain shares
+npcrules.js 120 what every NPC's brain shares
 npcs.js 49 the characters you can mute: Justin, the cats,
 npcshared.js 29 what every NPC shares, whatever mode it's in
 npcview.js 206 an NPC on a world , drawn the
@@ -159,7 +159,7 @@ sbarms.js 136 Sandbox: a made NPC's weapons in a fight
 sbaudio.js 211 Sandbox: songs players bring in
 sbbody.js 233 Sandbox: an NPC's body, where it can be
 sbbrain.js 87 Sandbox: what a spawned NPC does , on
-sbcabin.js 390 Sandbox: the zombies on Duck Cabin , the
+sbcabin.js 336 Sandbox: the zombies on Duck Cabin , the
 sbdrag.js 353 Sandbox, moving blocks with the mouse :
 sbep.js 50 Sandbox Phase 7: what other players may do
 sbepview.js 162 Sandbox Phase 7: what other players may do
@@ -184,7 +184,7 @@ sbrotate.js 102 Sandbox, Direction's Rotate in the right-click menu :
 sbsave.js 273 Sandbox: saving a Sandbox as it is and
 sbsaves.js 743 Sandbox's saves: kept on the host's device, the
 sbsfx.js 74 Sandbox's sounds
-sbspawn.js 1762 Sandbox: spawns and respawns , the rules
+sbspawn.js 1708 Sandbox: spawns and respawns , the rules
 sbspawnview.js 2212 Sandbox: spawns and respawns , on the screen
 sbzone.js 349 Sandbox: board zones , the rules
 sbzonebrain.js 265 Sandbox: zones that run a Seriat file
@@ -200,7 +200,7 @@ sound.js 937 the game's sounds: real recordings, played from small
 specials.js 945 Specials
 spectate.js 97 Survival: watching the others once my duck is
 splash.js 71 the start screen: your duck on a cloud,
-stamina.js 34 my sprint's stamina, in every mode
+stamina.js 41 my sprint's stamina, in every mode
 stats.js 241 stats: a player's stat box and the View
 store.js 262 what this device remembers
 story.js 221 Story Chain: what the screen shows
@@ -212,12 +212,12 @@ touch.js 284 touch controls on the board
 trivia.js 472 Trivia: what the screen shows
 triviabank.js 499 Trivia's auto questions
 triviarules.js 469 the rules of Trivia
-ui.js 342 small helpers every screen uses
+ui.js 349 small helpers every screen uses
 umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
 unlocks.js 372 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 2875 Updates
+updates.js 2888 Updates
 vdd.js 198 Valentine's Duck Date: what the screen shows
 vddrules.js 521 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
@@ -226,7 +226,7 @@ who.js 3 who this player is beyond this tab
 wounds.js 295 the wounds a hit leaves
 zombiepath.js 186 the zombies' way to the ducks on a
 zombieroofs.js 244 the zombies' walk over Downpour's roofs: up a
-zombies.js 1312 the zombies: one module for every mode's zombies
+zombies.js 1420 the zombies: one module for every mode's zombies
 
 ## js/hangout/
 activities.js 23 every Hangout activity, so the rules and the
