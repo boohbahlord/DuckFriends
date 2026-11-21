@@ -19,6 +19,8 @@ export const PERMS_GIVE = {
 
 export const MAN = {
   /* the basics */
+  cheat:
+    "cheat round N: Dead Ducks Arcade jumps to round N (its zombies come in 3 seconds). cheat give WEAPON [@player … | all]: puts a weapon in a hand (cheat give chaingun; cheat give flamer all). cheat alone: whether this game used one. For testing: the first one used turns off stats, unlocks, records and jumps for the rest of that game (Play again turns them back on). Dead Ducks Arcade and Survival, sudo or a group with cansettings.",
   help: "help [page]: the Help pages (HelpCommandLine, HelpBasics, HelpChat, HelpFile, HelpGroups, HelpSudo, HelpGame …); help chat opens HelpChat. help all: every command. HelpHelp says how help works.",
   man: "man <command>: how a command works and its flags. man -k word: the commands whose page says word (apropos word does the same).",
   apropos:

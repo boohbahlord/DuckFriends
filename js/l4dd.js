@@ -46,7 +46,8 @@ import { low } from "./gfx.js";
 import { mapMount, mapUnmount, mapDraw } from "./l4ddmap.js";
 import { rainMount, rainUnmount, rainDraw } from "./l4ddrain.js";
 import { nameHTML } from "./name.js";
-import { profile, save, statMode } from "./store.js";
+import { profile, save } from "./store.js";
+import { statsOf } from "./cheatflag.js";
 import { sfx } from "./sound.js";
 import { l4Hear, l4Steps, l4Reset, bellStrikes } from "./l4ddsfx.js";
 import { now as clockNow } from "./clock.js";
@@ -1106,13 +1107,12 @@ function nukeScreen(at) {
 }
 const DROPS_SEED = { kill: 3, ammo: 7, nuke: 2, speed: 9, double: 4, sale: 6 };
 
-/* my all-time stats (not in test rooms): a game once its first round starts, a round each time one is cleared, and the
+/* my all-time stats (not in test rooms, nor with test commands used: cheatflag.js): a game once its first round starts, a round each time one is cleared, and the
    best round reached; with Round 16 Start on, its own stats (store.js statMode) */
 let kzGame = "",
   kzDone = 0; // the zombies I killed this game that the all-time stats already hold
 function record(s, L, cleared, me) {
-  if (s.test) return;
-  const st = profile.stats[statMode(s)];
+  const st = statsOf(s);
   if (!st) return;
   const game = `${s.id}:${s.startedAt}:${L.g || 0}`;
   if (profile.stats.lastGame !== game) {
@@ -1144,8 +1144,7 @@ function seeClock(s) {
   hud.innerHTML = `<b>${clockOf(t)}</b>`;
 }
 function survRecord(s, L) {
-  if (s.test) return;
-  const st = profile.stats[statMode(s)],
+  const st = statsOf(s),
     game = `${s.id}:${s.startedAt}:${L.g || 0}`;
   if (!st || profile.stats.lastGame === game) return;
   profile.stats.lastGame = game;
@@ -1191,8 +1190,8 @@ function seeHud(s, ctx) {
   const end = L.over ? JSON.stringify(L.over) + (s.hostId === ctx.me) : "";
   if (end === overShown) return;
   overShown = end;
-  if (L.over && !s.test && !isSb(s)) {
-    const st = profile.stats[statMode(s)];
+  if (L.over && !isSb(s)) {
+    const st = statsOf(s);
     if (st) {
       recordKills(s, st, `${s.id}:${s.startedAt}:${L.g || 0}`, ctx.me);
       if (isSurv(s))

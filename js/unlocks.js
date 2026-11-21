@@ -18,6 +18,7 @@
 import { profile, save } from "./store.js";
 import { fmtJumps } from "./format.js";
 import { toast } from "./ui.js";
+import { cheated } from "./cheatflag.js";
 
 const CODE = "1357911";
 export const LOCKS = [
@@ -196,7 +197,8 @@ function countKill() {
 }
 /* a room's kills (the rules' s.pk, numbered by s.pkN, and Justin's s.jk, numbered by s.jkN): mine count, each once;
    what happened before I joined doesn't. The same for Duncelation's dunces (s.dn.dk, numbered by s.dn.dkN): me voted a dunce,
-   outside TEST rooms; and Mad God Justin's wins (s.mgjWins, numbered by s.mgjWinN) I played in */
+   outside TEST rooms; and Mad God Justin's wins (s.mgjWins, numbered by s.mgjWinN) I played in. None in a game with
+   test commands used (cheatflag.js) */
 export function watchKills(room) {
   let seen = null,
     seenD = null,
@@ -212,6 +214,17 @@ export function watchKills(room) {
       jin = justinIn(s);
       document.dispatchEvent(new Event("jumpsbox"));
     } // (the Justin Kills line comes and goes with him)
+    if (cheated(s)) {
+      [seenP, seen, seenD, seenW, seenL, seenS] = [
+        topP,
+        s.jkN || 0,
+        (s.dn || {}).dkN || 0,
+        s.mgjWinN || 0,
+        s.lossN || 0,
+        s.shkN || 0,
+      ];
+      return;
+    } // (a game with test commands used: what happens in it never counts, cheatflag.js)
     if (seenP === null || topP < seenP) seenP = topP;
     else {
       for (const k of (s && s.pk) || [])
