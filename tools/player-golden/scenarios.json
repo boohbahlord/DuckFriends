@@ -500,9 +500,11 @@
       ["click", 110, 0.6, 0.4, 100],
       ["key", 150, "Digit3", 100],
       ["click", 170, 0.6, 0.4, 100],
+      ["key", 185, "KeyR", 100],
       ["click", 230, 0.6, 0.45, 100],
       ["click", 290, 0.6, 0.35, 100],
       ["click", 340, 0.6, 0.4, 100],
+      ["key", 360, "KeyR", 100],
       ["key", 370, "Digit2", 100],
       ["key", 400, "Digit4", 100],
       ["click", 420, 0.6, 0.4, 100],
@@ -516,6 +518,56 @@
       ["click", 665, 0.6, 0.4, 100],
       ["key", 680, "Digit2", 100],
       ["click", 695, 0.6, 0.4, 100]
+    ]
+  },
+  {
+    "name": "board-reload",
+    "options": {
+      "mode": "aod"
+    },
+    "phase": "answer",
+    "pre": [
+      {
+        "t": "submit",
+        "text": "Rubber ducks float best"
+      }
+    ],
+    "keys": ["smg", "handgun"],
+    "frames": 480,
+    "input": [
+      ["mouse", 5, 0.7, 0.5],
+      ["key", 10, "Digit2", 100],
+      ["click", 30, 0.7, 0.5],
+      ["click", 60, 0.3, 0.4],
+      ["key", 90, "Digit2", 100],
+      ["key", 110, "KeyR", 100],
+      ["key", 200, "Digit1", 100],
+      ["click", 220, 0.6, 0.5, 300],
+      ["key", 300, "KeyR", 100],
+      ["key", 400, "Digit1", 100],
+      ["key", 420, "KeyR", 100]
+    ],
+    "computers": 1
+  },
+  {
+    "name": "mgj-reload",
+    "options": {
+      "mode": "mgj"
+    },
+    "phase": "boss",
+    "computers": 3,
+    "pick": "smg",
+    "frames": 420,
+    "input": [
+      ["mouse", 5, 0.6, 0.4],
+      ["key", 20, "Digit3", 100],
+      ["click", 40, 0.6, 0.4, 200],
+      ["key", 120, "KeyR", 100],
+      ["key", 200, "Digit2", 100],
+      ["key", 220, "KeyR", 100],
+      ["key", 300, "Digit3", 100],
+      ["click", 320, 0.6, 0.4, 100],
+      ["key", 360, "KeyR", 100]
     ]
   }
 ]

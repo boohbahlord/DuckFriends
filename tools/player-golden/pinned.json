@@ -521,7 +521,59 @@
    "sent": {
     "move": 16,
     "tick": 60,
-    "use": 12
+    "use": 12,
+    "reload": 2
+   }
+  }
+ },
+ "board-reload": {
+  "frames": 480,
+  "digest": "1aktda6",
+  "every": [
+   "vmamh",
+   "eu103x",
+   "126czy2",
+   "rtduf",
+   "g0l6c5",
+   "146xlf9",
+   "146xlf9",
+   "12qoa5i"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.6169,
+    "y": 0.0027
+   },
+   "sent": {
+    "move": 8,
+    "tick": 40,
+    "use": 6,
+    "reload": 3
+   }
+  }
+ },
+ "mgj-reload": {
+  "frames": 420,
+  "digest": "193zxr7",
+  "every": [
+   "1wkkr31",
+   "1cq0t0t",
+   "1cq0t0t",
+   "12x4632",
+   "81ppcx",
+   "3277o2",
+   "1mmpa8c"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.14,
+    "y": 0.2
+   },
+   "sent": {
+    "move": 4,
+    "tick": 35,
+    "use": 5,
+    "reload": 2
    }
   }
  }
