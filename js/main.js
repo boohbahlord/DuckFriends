@@ -24,6 +24,7 @@ import { showSplash } from "./splash.js";
 import { fullOnFirstTap, fsBtnHTML } from "./corners.js";
 import { loadingScreen, pageReady } from "./loading.js";
 import { pixelsAt, DUCK_PIC_PX, CARD_PIC } from "./duck.js";
+import { idle } from "./slices.js";
 
 applySettings();
 
@@ -144,7 +145,8 @@ firstUp
       import("./card.js").then((m) => m.cardSheets()), // (in with the rest already: lobby.js)
     ]),
   )
-  .then(() => import("./duckparts.js").then((m) => m.warmParts())) // (Customize's ducks' parts, in idle moments)
+  .then(idle)
+  .then(() => import("./customize.js").then((m) => m.warmCustomize())) // (Customize's first page's pictures, made and kept)
   .catch(() => {});
 setTimeout(accountStart, 300);
 setTimeout(askConnection, 600); // once, on the first visit   // a device that signed in before connects after the first screen is up

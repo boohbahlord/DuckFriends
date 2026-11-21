@@ -17,6 +17,8 @@ import {
   afterPaint,
   bakedPiece,
   bakedWait,
+  pxKeep,
+  pxKept,
 } from "./pixel.js";
 import { hasRb, RB_N } from "./rainbowskin.js";
 import { yieldNow } from "./slices.js";
@@ -194,7 +196,7 @@ function words(svg) {
 }
 /* classes that only move the board (its quake shake is a transform animation) change no pixel of a drawing: left out of
    the key, every shake made all the walls and the HP badge into pictures again (Downpour: dozens a second) */
-const MOTION = /(^|\s)quake(?=\s|$)/g;
+const MOTION = /(^|\s)(quake|arm-warm|arm-ghost|arm-warming|win-back)(?=\s|$)/g; // (and the boxes Customize draws in out of sight, or shows from: the same look)
 function around(svg, root) {
   let s = "";
   for (let e = svg; e && e !== root; e = e.parentElement)
@@ -255,8 +257,32 @@ function plan(svg, root, size) {
 /* the drawings' new pictures. Every drawing is read first (as it looks: its hiding rule taken off all of them at
    once), then every picture put in: read one by one between the changes, the browser worked out the whole page's
    styles again for each */
-function make(jobs) {
+function make(all) {
   css();
+  /* a kept drawing (Customize's: [data-pxkeep]) seen before as it is now isn't read again: its picture's name is known
+     (seenAs), and its picture is kept (pixel.js pxKept). Reading every tile's look was most of Customize's opening */
+  const jobs = [];
+  for (const j of all) {
+    j.keep = !!j.svg.closest("[data-pxkeep]");
+    if (j.keep && !j.slow && !j.svg.querySelector("text")) {
+      j.qk = quickKey(j);
+      j.k = seenAs().get(j.qk) || null;
+      if (j.k) continue;
+    }
+    /* a duck the sheets can make (duck.js data-dk) is made from what it says alone, so its look isn't read either; one
+       they can't make after all (too big) is read and made as before. Not a rainbow one: it moves (rbShow) */
+    const dk = !j.slow && j.svg.getAttribute("data-dk");
+    if (
+      dk &&
+      !j.svg.querySelector("linearGradient[gradientTransform*='translate(']")
+    ) {
+      j.dk = dk;
+      j.k = "c" + hash("dk" + dk);
+      continue;
+    }
+    j.dk = null;
+    jobs.push(j);
+  }
   const hid = jobs.map((j) => [
     j.svg.hasAttribute("data-px"),
     j.svg.hasAttribute("data-pxwait"),
@@ -273,14 +299,74 @@ function make(jobs) {
     if (hid[i][0]) j.svg.setAttribute("data-px", "");
     if (hid[i][1]) j.svg.setAttribute("data-pxwait", "");
   }); // (read as it looks, all in one go, so nothing is seen in between)
-  for (const j of jobs) put(j);
+  for (const j of all) put(j);
+}
+/* a kept drawing's look in words: its own (ids renamed in order, without my marks), its size, the classes and styles
+   around it and the page's own classes */
+const INHERITS = /(--[\w-]+|color)\s*:[^;]*/g;
+function quickKey(j) {
+  let s = "";
+  for (
+    let e = j.svg.parentElement;
+    e && e !== document.body;
+    e = e.parentElement
+  )
+    s +=
+      ((e.getAttribute("style") || "").match(INHERITS) || []).join(";") + "|"; // (what a style around it passes down)
+  return hash(
+    sameIds(j.key.replace(/ data-px(?:wait)?=""/g, "")) +
+      s +
+      document.documentElement.className +
+      "|" +
+      document.body.className,
+  );
+}
+/* what each kept drawing's look was named (its quick key -> its picture's key), kept with this version of the game */
+const SEEN =
+  "df-pxseen-" + (new URL(import.meta.url).searchParams.get("v") || "0");
+let seen = null,
+  saving = 0;
+const seenAs = () => {
+  if (seen) return seen;
+  seen = new Map();
+  try {
+    for (let i = localStorage.length; i--; ) {
+      const n = localStorage.key(i);
+      if (n && n.startsWith("df-pxseen-") && n !== SEEN)
+        localStorage.removeItem(n); // (an older version's)
+    }
+    seen = new Map(JSON.parse(localStorage.getItem(SEEN) || "[]"));
+  } catch {}
+  return seen;
+};
+function learn(qk, k) {
+  if (seenAs().get(qk) === k) return;
+  seen.set(qk, k);
+  clearTimeout(saving);
+  saving = setTimeout(() => {
+    try {
+      localStorage.setItem(SEEN, JSON.stringify([...seen].slice(-3000)));
+    } catch {}
+  }, 1500);
 }
 /* many drawings' pictures (a whole page of tiles, every page of Customize as it warms up), a few at a time: each batch
    as many as fit in a slice (what the last one cost each), the page getting a turn between them (slices.js). One that
    left the page meanwhile is skipped */
+/* drawings made out of sight for later ([data-pxlater]: Customize's other pages) wait while any on the screen are made */
+let front = 0;
 async function makeSliced(jobs) {
+  const later = jobs.every((j) => j.svg.closest("[data-pxlater]"));
+  if (!later) front++;
+  try {
+    await slices(jobs, later);
+  } finally {
+    if (!later) front--;
+  }
+}
+async function slices(jobs, later) {
   let n = 4;
   for (let i = 0; i < jobs.length; ) {
+    while (later && front) await new Promise((ok) => setTimeout(ok, 30));
     const batch = jobs.slice(i, i + n).filter((j) => j.svg.isConnected);
     i += n;
     if (batch.length) {
@@ -293,10 +379,17 @@ async function makeSliced(jobs) {
   }
 }
 const SLICE = 8; // (ms of picture making at a time)
+/* what the sheets need to make a duck (pixel.js fromParts reads its first tag) */
+const dkSrc = (dk) =>
+  `<svg data-dk="${dk.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}">`;
 function put(job) {
   const { svg, st, key, vb, w, h, text, tx } = job;
-  const k = (svg.matches(".duck, .cat") ? "c" : "d") + hash(text); // (c: a character, made from its parts: the ducks' sheets)
-  if (hasRb(text)) return rbShow(svg, st, key, text, vb, w, h);
+  const k = job.k || (svg.matches(".duck, .cat") ? "c" : "d") + hash(text); // (c: a character, made from its parts: the ducks' sheets)
+  if (text && hasRb(text)) return rbShow(svg, st, key, text, vb, w, h);
+  if (job.keep) {
+    pxKeep(k);
+    if (job.qk && text) learn(job.qk, k);
+  }
   const piece = bakedPiece(k, w, h);
   if (piece) return fileShow(svg, st, piece, vb, tx);
   const files = bakedWait(k); // (in the files, and they're on their way: shown from them once they're here)
@@ -326,12 +419,28 @@ function put(job) {
     svg.setAttribute("data-px", ""); // (its picture there: its own parts hidden)
     svg.removeAttribute("data-pxwait");
   };
+  const late = !!svg.closest("[data-pxlater]");
+  if (job.dk)
+    return void rasterReady(k, dkSrc(job.dk), w, h, late, true).then((u) => {
+      if (st.key !== key) return;
+      if (u) return show(u);
+      job.slow = true; // (the sheets couldn't make it: its look is read and it's made whole)
+      job.k = null;
+      make([job]);
+    });
+  if (!text)
+    return void pxKept(k, w, h).then((u) => {
+      if (st.key !== key) return;
+      if (u) return show(u);
+      job.slow = true; // (not kept after all: its look is read and it's made)
+      make([job]);
+    });
   const ext = inlined(text);
-  if (ext) ext.then((t) => rasterReady(k, t, w, h)).then(show);
+  if (ext) ext.then((t) => rasterReady(k, t, w, h, late)).then(show);
   else {
-    const u = raster(k, text, w, h);
+    const u = raster(k, text, w, h, late);
     if (u) show(u);
-    else rasterReady(k, text, w, h).then(show);
+    else rasterReady(k, text, w, h, late).then(show);
   }
 }
 

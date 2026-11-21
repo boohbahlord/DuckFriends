@@ -283,17 +283,35 @@ async function fromParts(src, cw, ch) {
     return null;
   }
 }
-async function make(fk, src, cw, ch) {
-  await yieldNow(); // (each picture its own task: many made at once, as a page of tiles comes in, held the page: slices.js)
-  const key = fk.slice(0, fk.lastIndexOf("@"));
-  let c = await fromFiles(key, cw, ch);
-  if (!c) c = await fromParts(src, cw, ch);
-  if (!c) {
-    if (window.__pxHear) window.__pxHear(key, src, cw, ch); // (tools/pixel-art.cjs, listing what the game makes)
-    c = await pxCanvas(src, cw, ch);
-  }
-  const blob = await new Promise((f) => c.toBlob(f));
-  const url = URL.createObjectURL(blob);
+/* ---------- pictures kept on the device (Adam's ask with the owner's, Nov 21 00:40Z: Customize took seconds every time)
+   A picture asked to be kept (pxKeep: Customize's tiles and its duck, pxdom.js [data-pxkeep]) goes into the browser's
+   Cache Storage once made, under this version of the game (the stamp on this file: tools/stamp.py). Asked for again,
+   even after the page is loaded again, it comes from there and nothing is made. A new version starts a new store */
+const VERSION = new URL(import.meta.url).searchParams.get("v") || "0",
+  STORE = "df-px-" + VERSION,
+  toKeep = new Set(); // (keys whose pictures are kept)
+let box = null;
+const store = () =>
+  (box ||= (async () => {
+    if (!globalThis.caches || !isSecureContext) return null;
+    const c = await caches.open(STORE);
+    for (const n of await caches.keys())
+      if (n.startsWith("df-px-") && n !== STORE) caches.delete(n); // (an older version's)
+    return c;
+  })().catch(() => null));
+const keptAt = (fk) => "/px-kept/" + encodeURIComponent(fk);
+export const pxKeep = (key) => toKeep.add(key);
+/* a kept picture's URL, or null (only for keys asked to be kept) */
+export async function pxKept(key, w, h) {
+  const [fk] = full(key, w, h);
+  if (made.has(fk)) return made.get(fk);
+  const c = toKeep.has(key) && (await store());
+  const r = c && (await c.match(keptAt(fk)).catch(() => null));
+  if (!r) return null;
+  if (made.has(fk)) return made.get(fk);
+  return remember(fk, URL.createObjectURL(await r.blob()));
+}
+function remember(fk, url) {
   made.set(fk, url);
   if (made.size > KEEP) {
     const [old, ou] = made.entries().next().value;
@@ -306,17 +324,65 @@ async function make(fk, src, cw, ch) {
     el.src = url;
   return url;
 }
+/* pictures made for later (Customize's pages out of sight: pxdom.js [data-pxlater]) wait while any asked for now are
+   made, so a page the player jumps to gets its pictures first */
+const later = new Set();
+let fronts = 0;
+async function make(fk, src, cw, ch, partsOnly) {
+  const front = !later.has(fk);
+  if (front) fronts++;
+  try {
+    await yieldNow(); // (each picture its own task: many made at once, as a page of tiles comes in, held the page: slices.js)
+    while (later.has(fk) && fronts)
+      await new Promise((ok) => setTimeout(ok, 16));
+    return await making1(fk, src, cw, ch, partsOnly);
+  } finally {
+    if (front) fronts--;
+    later.delete(fk);
+  }
+}
+async function making1(fk, src, cw, ch, partsOnly) {
+  const key = fk.slice(0, fk.lastIndexOf("@"));
+  if (toKeep.has(key)) {
+    const c = await store(),
+      r = c && (await c.match(keptAt(fk)).catch(() => null));
+    if (r) return remember(fk, URL.createObjectURL(await r.blob()));
+  }
+  let c = await fromFiles(key, cw, ch);
+  if (!c) c = await fromParts(src, cw, ch);
+  if (!c && partsOnly) return null; // (only its parts were given: made from its drawing by the one who asked)
+  if (!c) {
+    if (window.__pxHear) window.__pxHear(key, src, cw, ch); // (tools/pixel-art.cjs, listing what the game makes)
+    c = await pxCanvas(src, cw, ch);
+  }
+  const blob = await new Promise((f) => c.toBlob(f));
+  if (toKeep.has(key))
+    store().then(
+      (k) =>
+        k &&
+        k
+          .put(
+            keptAt(fk),
+            new Response(blob, { headers: { "content-type": "image/png" } }),
+          )
+          .catch(() => {}),
+    );
+  return remember(fk, URL.createObjectURL(blob));
+}
 
 /* a picture (an SVG string or an image's URL) shown w × h css px: its pixel version's URL, or null while it's made */
-export function raster(key, src, w, h) {
+export function raster(key, src, w, h, forLater = false, partsOnly = false) {
   const [fk, cw, ch] = full(key, w, h);
   const u = made.get(fk);
   if (u) return u;
+  if (!forLater)
+    later.delete(fk); // (asked for now: no longer waits)
+  else if (!making.has(fk)) later.add(fk);
   if (!making.has(fk))
     making.set(
       fk,
       holdGame(
-        make(fk, src, cw, ch)
+        make(fk, src, cw, ch, partsOnly)
           .catch(() => null)
           .finally(() => making.delete(fk)),
       ), // (a game that's loading waits for it: gameready.js)
@@ -324,11 +390,18 @@ export function raster(key, src, w, h) {
   return null;
 }
 /* the same, waited for */
-export function rasterReady(key, src, w, h) {
+export function rasterReady(
+  key,
+  src,
+  w,
+  h,
+  forLater = false,
+  partsOnly = false,
+) {
   const [fk] = full(key, w, h);
   return made.has(fk)
     ? Promise.resolve(made.get(fk))
-    : (raster(key, src, w, h),
+    : (raster(key, src, w, h, forLater, partsOnly),
       making.get(fk) || Promise.resolve(made.get(fk) || null));
 }
 
