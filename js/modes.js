@@ -23,6 +23,7 @@ export const SURV_READY = true;
 export const MODES = [
   {
     id: "aod",
+    boardSymbol: true, // (its symbol is the board's own drawing: art.js)
     cat: "social",
     name: "Agree or Disagree",
     stats: {
@@ -164,6 +165,9 @@ export const MODES = [
   },
   {
     id: "mgj",
+    ownDeath: true, // (it comes back its own way, not the boards' spawn protection: death.js normalGame)
+    downMs: 5000, // (how long a knocked-down duck can't move: always 5 s, whatever the host picks: death.js downFor)
+    downLocked: true,
     cat: "special",
     name: "Mad God Justin",
     stats: {
@@ -183,6 +187,7 @@ export const MODES = [
   },
   {
     id: "vdd",
+    noBoardJustin: true,
     cat: "comp",
     name: "Valentine's Duck Date",
     stats: {
@@ -219,6 +224,8 @@ export const MODES = [
   },
   {
     id: "hang",
+    noBoardJustin: true, // (Justin is never on its board: boardjustin.js)
+    ownDeath: true,
     cat: "social",
     name: "Hangout",
     timed: true, // (a time limit when Random or the vote picked it: Game Settings hangTime)
@@ -228,6 +235,8 @@ export const MODES = [
   },
   {
     id: "l4dd",
+    ownDeath: true,
+    downMs: 1000, // (its default: half a second longer than 0.5 s, the owner 2026-11-03 17:15Z)
     cat: "special",
     name: "Dead Ducks Arcade",
     stats: {
@@ -250,6 +259,8 @@ export const MODES = [
     ? [
         {
           id: "surv",
+          lookClass: "map-is-nwk", // (its map wears Nous Within Kenoma's look: maps.js)
+          ownDeath: true,
           cat: "special",
           name: "Survival",
           stats: {
