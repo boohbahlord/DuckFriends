@@ -36,6 +36,7 @@ import {
   setHTML,
   toast,
   ducksLayer,
+  flag,
 } from "./ui.js";
 import { activeRoom } from "./net.js";
 import { sprintStep } from "./stamina.js";
@@ -532,11 +533,10 @@ import {
   jitter,
   shake,
   shakeNow,
-  holdShake,
   vibrate,
   VIB,
   hitPx,
-  wobble,
+  adrenFx,
   HIT,
   again,
 } from "./fxmotion.js";
@@ -551,13 +551,6 @@ let shown = ""; // which phase view is up (phase|round|question)
 const keys = new Set();
 let me = null; // my duck here: { x, y, j (jump start), face }
 let target = null; // where a click or a tap asked my duck to walk: { x, y, sprint, mark }
-/* a duck's class set only when it changes: toggled every frame for every duck, it was 35 calls a frame that changed nothing */
-const flag = (el, cls, on) => {
-  const k = "_f" + cls;
-  if (el[k] === on) return;
-  el[k] = on;
-  el.classList.toggle(cls, on);
-};
 /* the chain gun's recoil (the owner's, Nov 16): while I fire it, my duck is pushed slowly back, away from the aim, at
    RECOIL.K of my walking speed; the keys add their own way to it, so walking into the aim holds against it (a vector
    sum, as real physics). Each of my shots keeps it on for RECOIL.MS (it fires every 67 ms). recoil = { until, dx, dy:
@@ -2920,13 +2913,11 @@ function drawFx(board, fxl, hang, size, s, now) {
     board.style.translate = sk;
   }
   const ad = adren(s, R.me, now);
-  holdShake(ad);
+  adrenFx(ad, pt);
   document.documentElement.classList.toggle(
     "sprint-blur",
     !!(me && ((sprinting && moving) || ad) && onBoardPhase()),
   );
-  if (ad && !board._ad) wobble(pt);
-  board._ad = ad;
 }
 /* Dead Ducks Arcade: duck id on an adrenaline shot (or the Speed Boost drop) now */
 const adren = (s, id, now) =>

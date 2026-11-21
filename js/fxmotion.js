@@ -173,11 +173,13 @@ export function shake(amount) {
    Nov 21 05:08Z: "might cause your screen to shake a little with some already existent shake effect") */
 const ADREN_TRAUMA = 0.18; // (about 1 px)
 let held = false;
-export function holdShake(on) {
+/* every frame: am I on adrenaline now (game.js); taking it starts the wobble below */
+export function adrenFx(on, now) {
+  if (on && !held) wobble(now);
   held = !!on && !heavyOff();
 }
 /* an adrenaline shot taken: a short fast wobble */
-export function wobble(now, ms = 650) {
+function wobble(now, ms = 650) {
   if (heavyOff()) return;
   wobbleTill = now + ms;
 }

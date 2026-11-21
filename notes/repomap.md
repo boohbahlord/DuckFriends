@@ -47,8 +47,8 @@ format.js 12 numbers as the settings ask
 friends.js 254 friends
 front.js 109 the front page
 fx.js 1200 the effects, drawn as pixels
-fxmotion.js 216 how a held weapon and the screen move
-game.js 8848 the game screen
+fxmotion.js 218 how a held weapon and the screen move
+game.js 8839 the game screen
 gamedefaults.js 29 the game's own numbers, for every mode
 gameready.js 47 what the game's loading screen waits for
 gamesettings.js 1751 Game Settings: the whole screen, like Customize
@@ -212,7 +212,7 @@ touch.js 284 touch controls on the board
 trivia.js 472 Trivia: what the screen shows
 triviabank.js 499 Trivia's auto questions
 triviarules.js 469 the rules of Trivia
-ui.js 342 small helpers every screen uses
+ui.js 349 small helpers every screen uses
 umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
 unlocks.js 372 things you unlock

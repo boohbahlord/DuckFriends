@@ -7,6 +7,13 @@ import { coverChanges } from "./loading.js";
 
 export const $ = (s, r = document) => r.querySelector(s);
 export const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+/* a class set only when it changes: toggled every frame for every duck, it was 35 calls a frame that changed nothing */
+export const flag = (el, cls, on) => {
+  const k = "_f" + cls;
+  if (el[k] === on) return;
+  el[k] = on;
+  el.classList.toggle(cls, on);
+};
 /* a board's ducks layer, found once and kept on the board: on Duck Cabin and Downpour it comes after every prop, so each
    search for it walked all of them, many times a frame */
 export const ducksLayer = (board) => {
