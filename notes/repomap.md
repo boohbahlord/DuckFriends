@@ -74,7 +74,7 @@ jetart.js 39 the jetpack's pictures
 jetpack.js 33 the jetpack
 jumps.js 48 the jump counter
 keynav.js 204 menus by keyboard
-l4dd.js 3312 Quacky Zombies on every screen
+l4dd.js 3313 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 203 Dead Ducks Arcade's Angel machine on every screen
 l4ddart.js 756 Quacky Zombies' pictures
@@ -225,7 +225,8 @@ vote.js 278 Vote Mode & Map: the vote windows
 who.js 3 who this player is beyond this tab
 wounds.js 295 the wounds a hit leaves
 zombiepath.js 186 the zombies' way to the ducks on a
-zombies.js 1518 the zombies: one module for every mode's zombies
+zombieroofs.js 244 the zombies' walk over Downpour's roofs: up a
+zombies.js 1312 the zombies: one module for every mode's zombies
 
 ## js/hangout/
 activities.js 23 every Hangout activity, so the rules and the
