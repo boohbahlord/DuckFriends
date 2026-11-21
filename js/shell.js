@@ -55,7 +55,7 @@ import { hatById } from "./hats.js";
 import { outfitById } from "./outfits.js";
 import { runLine, expandHistory, globRe, BUILTIN_NAMES } from "./bash.js";
 import { TEXT, getopt, lines } from "./textutils.js";
-import { MAN, PERMS_TAKE, PERMS_GIVE } from "./manual.js";
+import { MAN, PERMS_GIVE } from "./manual.js";
 import { helpPage, helpIndex, HELP_NAMES, isHelpName } from "./helppages.js";
 import { quackStats } from "./quackrules.js";
 import { cheatCmd } from "./cheats.js";

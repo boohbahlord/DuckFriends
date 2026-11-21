@@ -6,7 +6,6 @@ import { cabinVotes, cabinNeeded, isHang } from "../rules.js";
 import { isSb, sbOnBoard, baseL4map } from "../sandboxrules.js";
 import {
   isL4dd,
-  srOpen,
   srVote,
   srCan,
   startOf,

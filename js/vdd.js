@@ -98,7 +98,7 @@ function tilesHTML(s) {
     .join("")}</div>`;
 }
 /* over the board: The Date on the cloud, and the topic (or what's going on) beside it */
-export function vdTopHTML(s, me) {
+function vdTopHTML(s, me) {
   const V = s.vd;
   if (!V) return "";
   const d = player(s, V.date),

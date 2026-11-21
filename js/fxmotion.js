@@ -101,7 +101,7 @@ export function jitter(on, unit) {
   ];
 }
 /* a duck gone from the board: its motion forgotten */
-export function forget(id) {
+function forget(id) {
   S.delete(id);
 }
 

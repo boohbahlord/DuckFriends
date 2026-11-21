@@ -31,7 +31,7 @@ import { collageScene } from "./collage.js";
 import { euclidScene } from "./euclid.js";
 import { vellumScene } from "./vellum.js";
 import { NWK_VARIANTS, isNwk, nwkScene } from "./nwk.js";
-import { seenDuck, seenName } from "./looks.js";
+import { seenDuck } from "./looks.js";
 import { isUmap, UMAP_UIS } from "./umaprules.js";
 import { seriatThemeOn } from "./seriattheme.js";
 
@@ -1113,4 +1113,4 @@ export function mountMap(layer, s) {
     },
   };
 }
-export const mapLabel = (id) => esc(mapName(id));
+const mapLabel = (id) => esc(mapName(id));

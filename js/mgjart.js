@@ -3,7 +3,6 @@
    mgjrules.js and mgj.js. The same ink and the same small white shines as the other items (specials.js, mgj.js), so they
    sit with them. Sizes, in a duck's size: the bow 0.9, the arrow 0.8, the flame covers the duck, the
    teleport flash 1.6 tall */
-import { DUCK_DEFAULT } from "./duck.js";
 
 const INK = "#1c1c28";
 let uid = 0; // (each picture's gradients get their own ids, so two on a page never share one)
