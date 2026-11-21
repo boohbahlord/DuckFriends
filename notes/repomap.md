@@ -105,14 +105,14 @@ looks.js 136 the room's duck-look settings
 looksrules.js 60 the duck-look settings' rules
 main.js 163 the start: settings on the page, the background,
 manual.js 203 the command line's manual: man <command>
-maps.js 1116 maps: the world behind the board
+maps.js 1119 maps: the world behind the board
 merchantlines.js 81 what the merchants say
 merchants.js 376 the merchants
 meters.js 114 the thin bars under my duck's name
 mgj.js 217 Mad God Justin: what the screen shows
 mgjart.js 96 Mad God Justin's new pictures
 mgjrules.js 2287 
-modes.js 415 the game modes
+modes.js 426 the game modes
 music.js 590 the music: our own songs, played from recordings
 musicbar.js 169 the music bar: the song the room hears,
 name.js 165 fonts and how a player's name looks
@@ -253,13 +253,13 @@ cabinend.js 135 End Cabin / Exit Cabin
 cats.js 662 Duck Cabin's cats: Annabelle, Bubbles, Oreo and Opal
 chalk.js 631 the chalk floor: draw on it with the
 characters.js 593 Duck Cabin's characters on the map: the host's
-death.js 103 how long a knocked-down duck can't move
+death.js 101 how long a knocked-down duck can't move
 doors.js 32 the doors: they swing open while a duck
 dpground.js 320 Downpour's ground
 falls.js 118 falling a long way
 fireflies.js 178 fireflies
 flicker.js 83 now and then a light stutters
-ghosts.js 108 Duck Cabin's ghosts
+ghosts.js 110 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in blue jeans and
 lamp.js 71 the lamps: the example activity
 layout.js 1466 Duck Cabin: the world of Hangout

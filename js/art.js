@@ -47,7 +47,7 @@ ${pips.map(([x, y, c]) => `<circle cx="${x}" cy="${y}" r="2.7" fill="${c}" strok
 
 /* a game mode's symbol */
 export const gameSymbol = (mode, size = 32) =>
-  modeOf(mode).id === "aod" ? symbolSVG(size) : modeSymbol(mode, size);
+  modeOf(mode).boardSymbol ? symbolSVG(size) : modeSymbol(mode, size);
 
 /* multicolored letters as HTML: each letter its own fridge-magnet color, a little tilt; on any font */
 export function rainbowHTML(
