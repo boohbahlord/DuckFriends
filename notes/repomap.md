@@ -24,12 +24,12 @@ collage.js 101 Shelter Sky & Null
 color.js 101 choosing a color
 corners.js 94 full screen
 court.js 237 Lawyering: what the screen shows
-customize.js 1810 Customize: the Armory
+customize.js 1798 Customize: the Armory
 datboi.js 115 here come dat boi
 democracy.js 243 Democracy of Ducklings:
 dock.js 73 the docks: where Notes and the chat open
 duck.js 728 the rubber duck avatar
-duckparts.js 577 the ducks made from pixel parts
+duckparts.js 567 the ducks made from pixel parts
 ducksheets.js 11 made by tools/duck-parts.cjs:
 duel.js 124 the cloud duel: two ducks share the cloud,
 dunce.js 145 Duncelation: what the screen shows
@@ -42,7 +42,7 @@ flamer.js 50 the flamethrower
 flowfield.js 165 the zombies' flow field, worked out off the
 format.js 12 numbers as the settings ask
 friends.js 254 friends
-front.js 112 the front page
+front.js 109 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 209 how a held weapon and the screen move
 game.js 8841 the game screen
@@ -96,7 +96,7 @@ lobby.js 599 the lobby, laid out like Halo: Reach's custom
 lobbysettings.js 73 Lobby Settings
 looks.js 111 the room's duck-look settings
 looksrules.js 60 the duck-look settings' rules
-main.js 161 the start: settings on the page, the background,
+main.js 163 the start: settings on the page, the background,
 manual.js 210 the command line's manual: man <command>
 maps.js 1116 maps: the world behind the board
 merchantlines.js 81 what the merchants say
@@ -129,7 +129,7 @@ outlines.js 349 the outlines
 perf.js 92 the frame-rate readout
 phonepad.js 128 phones: the aim-and-attack stick and the jump button
 picrop.js 268 cropping a picture: every picture put into the
-pixel.js 641 the pixel look
+pixel.js 714 the pixel look
 pixelpalette.js 192 the pixel look's colors
 players.js 340 the player menu and the room's votes
 pointer.js 54 a computer or a phone
@@ -137,7 +137,7 @@ powerart.js 377 Dead Ducks Arcade: the power box and the
 pxa.js 341 made by tools/pixel-art.cjs:
 pxbake.js 652 a map's pictures made into pixels once, instead
 pxcard.js 259 the player cards' pattern motifs as pixel files:
-pxdom.js 638 the pixel look for drawings already on the
+pxdom.js 747 the pixel look for drawings already on the
 pxmap.js 45 a map as pixel files
 pxpic.js 22 the maps that have a picture file :
 pxtext.js 263 emoji and tooltips in the pixel look
@@ -190,7 +190,7 @@ settings.js 298 Settings
 sfxlist.js 164 the sound files
 shared.js 497 Sandbox Phase 7: Shared, the game modes and
 shell.js 3547 the command line: a small bash
-slices.js 23 long work cut into slices
+slices.js 31 long work cut into slices
 sound.js 937 the game's sounds: real recordings, played from small
 specials.js 886 Specials
 spectate.js 97 Survival: watching the others once my duck is
@@ -211,8 +211,8 @@ ui.js 320 small helpers every screen uses
 umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
 unlocks.js 359 things you unlock
-upbar.js 108 the green bar on an upload
-updates.js 2818 Updates
+upbar.js 69 the green bar on an upload
+updates.js 2827 Updates
 vdd.js 198 Valentine's Duck Date: what the screen shows
 vddrules.js 521 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
