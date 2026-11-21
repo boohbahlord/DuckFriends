@@ -99,7 +99,6 @@ import {
   downArmed,
   wilds,
   isWild,
-  at as l4At,
   pierceOf,
   shotArm,
   shotWalled,
@@ -116,6 +115,7 @@ import { kindOf, ARMS, POOL } from "./guns.js";
 import { fenceZ, zombiesOf } from "./zombies.js";
 import { zSortY } from "./zombieroofs.js";
 import { hOk, hLock, zOf } from "./heights.js";
+import { toPx } from "./units.js";
 import { ammoBar, stackBars, noReload } from "./meters.js";
 import { laserMeter } from "./laserfx.js";
 import { goreFree, BY_WOUND, newWound, woundLook } from "./wounds.js";
@@ -2681,7 +2681,7 @@ function holdTarget(pos, ctx) {
     const p = P4(s, id);
     const body = !!p && !!p.gh && !!p.ex && !!(s.hang.ghost || {})[id]; // (Survival's ghost: its body lies where it fell, only the defibrillator gets it up)
     if (id === me || !p || (!p.dn && !body) || (p.ex && !back(id))) continue; // (dead for good: no revive, no button; the owner's, Nov 17 20:37Z, "JUSTIN CANNOT BE REVIVED WHEN DEAD NOR CAN ANY PLAYER WHEN DEAD SO THE FUCKING REVIVE BUTTON GOES AWAY")
-    const [bx, by] = body ? l4At(s.hang.ghost[id]) : [0, 0],
+    const [bx, by] = body ? toPx(s.hang.ghost[id]) : [0, 0],
       a = body ? { x: bx, y: by } : ctx.world.at(id);
     if (!a) continue;
     const d = Math.hypot(a.x - pos.x, a.y - pos.y);

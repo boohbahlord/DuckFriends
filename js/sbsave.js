@@ -25,8 +25,8 @@ import {
   sbRule,
   SB_WORLDS,
   SB_WORLD_NAMES,
-  SB_TILE,
 } from "./sandboxrules.js";
+import { TILE } from "./units.js";
 
 export const SAVE_V = 2; // (a save's version: a newer game still opens an older save. 2: sizes typed in tiles)
 const MINE = ["sbsv", "sbpk", "sbAsked"]; // (this file's own parts: never in a save)
@@ -99,7 +99,7 @@ const TILED = ["zw", "zh", "sq"];
 const tiles = (t) =>
   typeof t === "string" && /^[\d.\s,:]+$/.test(t)
     ? t.replace(/\d+(\.\d+)?|\.\d+/g, (n) =>
-        String(Math.round((+n / SB_TILE) * 100) / 100),
+        String(Math.round((+n / TILE) * 100) / 100),
       )
     : t;
 function inTiles(sb) {

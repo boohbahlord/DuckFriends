@@ -19,6 +19,7 @@ import { puffHTML } from "../specials.js";
 import { mix } from "../duck.js";
 import { sfx } from "../sound.js";
 import { fewer } from "../gfx.js";
+import { toPx } from "../units.js";
 
 const FLOOR = PROPS.find((p) => p.kind === "chalkfloor"),
   CHALK = PROPS.find((p) => p.kind === "chalk"),
@@ -149,7 +150,7 @@ rule("chalk", {
     let ch = false;
     for (const id of Object.keys(c.h)) {
       const p = s.pos[id];
-      if (!p || !s.players[id] || !nearFloor(p.x * W, p.y * H, AWAY + 60)) {
+      if (!p || !s.players[id] || !nearFloor(...toPx(p), AWAY + 60)) {
         delete c.h[id];
         ch = true;
       }
@@ -503,12 +504,7 @@ activity({
     const me = ctx.duck(),
       have = holding(ctx),
       now = performance.now();
-    if (
-      have &&
-      me &&
-      !nearFloor(me.x * W, me.y * H, AWAY) &&
-      now - v.putSent > 1500
-    ) {
+    if (have && me && !nearFloor(...toPx(me), AWAY) && now - v.putSent > 1500) {
       v.putSent = now;
       if (v.cur) {
         flush(ctx);

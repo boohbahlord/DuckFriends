@@ -26,6 +26,7 @@ import { music } from "../music.js";
 import { now as clockNow } from "../clock.js";
 import { profile } from "../store.js";
 import { touchOnly } from "../pointer.js";
+import { toPx } from "../units.js";
 
 const BODY = PROPS.find((p) => p.kind === "piano");
 const WHITE = [0, 2, 4, 5, 7, 9, 11],
@@ -188,7 +189,7 @@ const colorOf = (id) => {
 };
 const vel = () => {
   const d = C && C.duck();
-  return d && !inCabin(d.x * W, d.y * H) ? 0.35 : 0.8;
+  return d && !inCabin(...toPx(d)) ? 0.35 : 0.8;
 }; // outside, the piano is heard through the walls
 const tracker = (map, id) => {
   if (!map.has(id)) map.set(id, makeTracker());
