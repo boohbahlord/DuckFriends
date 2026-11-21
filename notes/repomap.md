@@ -46,7 +46,7 @@ flamer.js 50 the flamethrower
 flowfield.js 173 the zombies' flow field, worked out
 format.js 15 numbers as the settings ask
 friends.js 236 friends
-front.js 109 the front page
+front.js 151 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 229 how a held weapon and the
 game.js 8471 the game screen
