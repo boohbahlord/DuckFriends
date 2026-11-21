@@ -25,6 +25,9 @@ import {
   coneOf,
   roundAt,
   flyShots,
+  swingOn,
+  swinging,
+  swingMisses,
 } from "./weaponuse.js";
 import { HANDGUN } from "./gamedefaults.js";
 import { jumpDodges, jumpKept } from "./jump.js";
@@ -3748,7 +3751,6 @@ export const REACH = {
 }; // how far (duck lengths), and how wide (the cosine of the half angle): the fire axe swings as far as the hammer, the short sword and the pan not as far out
 /* the melees, swung or stabbed up close (the fire axe, the short sword and the pan: the owner's, Nov 16) */
 const MELEE = ["knife", "hammer", "axe", "sword", "pan"];
-const PAN_MISS = 0.5; // (the pan misses half its swings; half its hits are critical, guns.js critOf)
 function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
   // (from: where the swing starts; Justin on the boards isn't in s.pos)
   const p0 = from,
@@ -3893,10 +3895,10 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
    s.atk = [{ by, sp, ax, ay, t, until, hit: [who it hit] }] */
 const ATK_MS = ARM_SWING;
 export function strike(s, by, sp, aim, now, from = s.pos[by]) {
-  if (sp === "pan" && Math.random() < PAN_MISS) return []; // (a miss: it swings through nothing)
+  if (swingMisses(sp)) return []; // (the pan, half its swings: it swings through nothing)
   const hit = swing(s, by, sp, aim, now, from);
-  s.atk = [
-    ...(s.atk || []).filter((a) => a.until > now && a.by !== by),
+  s.atk = swingOn(
+    s.atk,
     {
       by,
       sp,
@@ -3909,7 +3911,8 @@ export function strike(s, by, sp, aim, now, from = s.pos[by]) {
         ? { at: { x: from.x, y: from.y, z: from.z } }
         : {}), // (Justin's swing: from where he stood)
     },
-  ];
+    now,
+  );
   return hit;
 }
 function attacks(s, now) {
@@ -3917,7 +3920,7 @@ function attacks(s, now) {
   const keep = [];
   let ch = false;
   for (const a of s.atk) {
-    if (now > a.until || (a.sp === "knife" && a.hit.length)) {
+    if (!swinging(a, now) || (a.sp === "knife" && a.hit.length)) {
       ch = true;
       continue;
     }

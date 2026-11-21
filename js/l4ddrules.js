@@ -46,6 +46,11 @@ import {
   coneOf,
   roundAt,
   flyShots,
+  swingOn,
+  swinging,
+  swingMisses,
+  knockOf,
+  KNOCK_DUCK,
 } from "./weaponuse.js";
 import {
   ARMS,
@@ -3126,10 +3131,8 @@ export function l4Use(s, a, now) {
     }
   }
   if (kind === "melee") {
-    s.hang.l4k = [
-      ...(s.hang.l4k || []).filter(
-        (k) => now - k.t < (ARMS[k.w] || A).swing && k.by !== id,
-      ),
+    s.hang.l4k = swingOn(
+      s.hang.l4k,
       {
         by: id,
         w: what,
@@ -3137,9 +3140,10 @@ export function l4Use(s, a, now) {
         dy,
         t: now,
         hit: [],
-        ...(A.miss && Math.random() < A.miss ? { miss: 1 } : {}), // (the pan: it swings through nothing)
+        ...(swingMisses(what) ? { miss: 1 } : {}), // (the pan: it swings through nothing)
       },
-    ];
+      now,
+    );
     meleeHits(s, now);
   } else if (what === "medkit") {
     const p4 = s.hang.l4p || {};
@@ -3943,9 +3947,7 @@ function wearDown(s, by, w, dealt) {
   s.hang.l4a = { ...s.hang.l4a, [by]: { ...kit, sl, du } };
 }
 function meleeHits(s, now) {
-  const ks = (s.hang.l4k || []).filter(
-    (k) => now - k.t <= (ARMS[k.w] || ARMS.knife).swing,
-  );
+  const ks = (s.hang.l4k || []).filter((k) => swinging(k, now));
   if (!ks.length) {
     if (s.hang.l4k && s.hang.l4k.length) s.hang.l4k = [];
     return false;
@@ -3974,7 +3976,7 @@ function meleeHits(s, now) {
         dead = strike(s, z, dmg, critRoll(s, k.by, k.w), k.by, k.w, now);
       wearDown(s, k.by, k.w, hp0 - Math.max(0, z.hp)); // (the HP it took off, not the overkill)
       if (dead) die(z, T);
-      else if (z.st === 2) knockZ(z, k.dx, k.dy, KNOCK[k.w] || KNOCK.knife); // (alive: pushed back, KNOCK)
+      else if (z.st === 2) knockZ(z, k.dx, k.dy, knockOf(k.w)); // (alive: pushed back, ARMS knock)
       any = true;
     }
     /* another duck in the swing: a slight shove, no HP lost (nothing hurts another duck here) */
@@ -3989,7 +3991,7 @@ function meleeHits(s, now) {
       )
         continue;
       k.hit.push("p" + id);
-      const far = (KNOCK[k.w] || KNOCK.knife) * KNOCK.DUCK,
+      const far = knockOf(k.w) * KNOCK_DUCK,
         dX = 0.006 * W,
         dY = 0.012 * H; // (rules.js' duck lengths in Hangout's world, across and up and down, for its shove)
       shove(
@@ -4036,10 +4038,8 @@ const die = (z, T) => {
   Object.assign(z, { st: 3, d: T });
 };
 /* melee knockback (the owner's, Nov 18 15:25Z: "Every melee has slight knockback EVEN to players AND especially to
-   zombies EVEN WHILE THEY ARE ALIVE ... Fireaxe has more knockback and the hammer has most knockback"): how far a hit
-   pushes a living zombie back, in world px (a duck is 64), and DUCK: how much of that another duck in the swing is
-   shoved */
-const KNOCK = { knife: 16, sword: 16, pan: 16, axe: 28, hammer: 40, DUCK: 0.5 };
+   zombies EVEN WHILE THEY ARE ALIVE ... Fireaxe has more knockback and the hammer has most knockback"): guns.js ARMS
+   knock, read by weaponuse.js knockOf */
 /* a living zombie inside pushed `far` world px along (ux, uy) (a unit), a few px at a time, stopping where it can't
    stand (a wall, furniture, a step too high) */
 function knockZ(z, ux, uy, far) {
@@ -4306,7 +4306,7 @@ export function l4Shots(s, now) {
         } else if (strike(s, z, dmgOf(A), critRoll(s, sh.by, w), sh.by, w, now))
           die(z, T);
         else if (w === "chair" && z.st === 2)
-          knockZ(z, sh.vx * W, sh.vy * H, KNOCK.hammer); // (the chair shoves like the hammer: the owner's, Nov 20 21:17Z)
+          knockZ(z, sh.vx * W, sh.vy * H, knockOf("hammer")); // (the chair shoves like the hammer: the owner's, Nov 20 21:17Z)
         hitAny = true;
         gone = true;
       }
