@@ -28,7 +28,7 @@ export const POCKET_CHANGE = {
   SAYS: "Justin forgot to deposit his pocket change",
 };
 
-/* the sprint's blurred border (sprintblur.js): a blur of what's behind it costs the graphics card about 40% of
-   a crowded frame, whatever its size. So it shows only where the game runs fast enough without it: frames timed while
-   it's off, and under this many a second it stays off until the next round or map */
+/* the sprint's blurred border (sprintblur.js): a blur of what's behind it costs the graphics card about 40% of a
+   crowded frame, whatever its size. So it shows only where the game runs fast enough, its own cost counted: under this
+   many frames a second (two 2-second stretches in a row) it stays off until the next round or map */
 export const SPRINT_BLUR_MIN_FPS = 40;
