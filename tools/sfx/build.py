@@ -58,6 +58,7 @@ OGA_URL = {
     "crack35": "https://opengameart.org/content/35-wooden-crackshitsdestructions",
     "zombies": "https://opengameart.org/content/zombies-sound-pack",
     "electricity": "https://opengameart.org/content/electricity-game-sound-pack",
+    "zvoices": "https://opengameart.org/content/zombie-skeleton-monster-voice-effects",
 }
 KENNEY_IMPACT = "https://kenney.nl/assets/impact-sounds"
 KENNEY_UI = "https://kenney.nl/assets/ui-audio"
@@ -111,7 +112,7 @@ GUNS = ("Still North Media, The Free Firearm Sound Library", OGA_URL["guns"])
   fin    a longer fade-in (s; default 5 ms), to ease a sharp attack
 Files: "oga:<folder>/<file>" (SOURCES/opengameart.org), "gh:" (SOURCES/github.com: CC0 files found in open-source games'
 repositories, their credits in its sources.csv), "wm:" (SOURCES/commons.wikimedia.org), "kn:<path>" (KENNEY),
-"sf:<maker>"."""
+"mi:" (SOURCES/miles: sources already shaped for one sound, their credits in its sources.csv), "sf:<maker>"."""
 SOUNDS = {
     # ---- the lobby countdown (the owner's take B) and Dead Ducks Arcade's new round ----
     "countTick": dict(
@@ -713,6 +714,19 @@ SOUNDS = {
         lp=2600,
         rate=0.92,
         credit=("artisticdude, Zombies Sound Pack", OGA_URL["zombies"]),
+    ),
+    # a zombie winding up its swing (the tell, from its wu: l4ddsfx.js): the owner's pick B2 (Nov 21, "More like it,
+    # please"), and three CC0 zombie yells shaped like it (SOURCES/miles: slowed, darkened, drawn in to their peak)
+    "zwindup": dict(
+        takes=[
+            [(f"mi:zombie-windup-{n}.wav", 0, 1.4, 0, 1)]
+            for n in ("B2-growl", "yell1", "yell5", "death1")
+        ],
+        lp=2200,
+        credit=(
+            "The owner's pick B2 (made for the game); ArcadeParty, Zombie, Skeleton, Monster Voice Effects",
+            OGA_URL["zvoices"],
+        ),
     ),
     # the merchant arriving at his spot (open for business) and running off: a little shop bell, up, then down
     "merchantIn": dict(
@@ -1628,6 +1642,8 @@ def load(path, srcs, kenney):
         path = os.path.join(srcs, "commons.wikimedia.org", path[3:])
     elif path.startswith("kn:"):
         path = os.path.join(kenney, path[3:])
+    elif path.startswith("mi:"):
+        path = os.path.join(srcs, "miles", path[3:])
     raw = subprocess.run(
         [
             "ffmpeg",
