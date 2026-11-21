@@ -859,7 +859,7 @@ export const heldPicHTML = (w, duck, size) =>
   pixelOn()
     ? pxSVG(sizedSVG(heldHTML(w, duck)), heldW(w, size))
     : heldHTML(w, duck);
-export function warmHeld(w, duck, size) {
+function warmHeld(w, duck, size) {
   if (!pixelOn()) return;
   const svg = sizedSVG(heldHTML(w, duck)),
     head = svg.slice(0, svg.indexOf(">")),
@@ -867,6 +867,23 @@ export function warmHeld(w, duck, size) {
     H = +(/\sheight="([\d.]+)"/.exec(head) || [])[1] || W,
     pw = heldW(w, size);
   rasterReady("s" + hashText(svg), svg, pw, (pw * H) / W); // (pxSVG's key)
+}
+/* the guns a hand can hold in a world (Duck Cabin, Downpour), as pixels while it loads (warmHeld): the pistol in each
+   duck's own colors and in the plain ones (a computer squad member's), and every gun picked up, the same for everyone;
+   once for each size and set of ducks */
+const handsWarm = new Set();
+export function warmHands(s, size) {
+  const k = size + "|" + s.seat.join();
+  if (!pixelOn() || handsWarm.has(k)) return;
+  handsWarm.add(k);
+  const guns = Object.keys(GUNS).filter(
+    (w) => typeof GUNS[w].held === "string",
+  );
+  for (const id of [null, ...s.seat]) {
+    const duck = id && s.players[id] ? s.players[id].duck : null;
+    warmHeld("handgun", duck, size);
+    if (!id) for (const w of guns) warmHeld(w, null, size);
+  }
 }
 /* a weapon in a duck's hand, pointing right (the game turns it toward where it aims); the hammer is a wrench on a duck
    that picked the wrench (its ⚙ under Customize → Specials: duck.wrench) */

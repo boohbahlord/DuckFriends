@@ -182,7 +182,7 @@ import {
   BULLET,
   heldHTML,
   heldPicHTML,
-  warmHeld,
+  warmHands,
   heldBoxHTML,
   daggerHTML,
   DUCKLING,
@@ -242,7 +242,7 @@ import {
   l4ZBoxes,
   shotStop,
 } from "./l4dd.js";
-import { JPOOL, poolHTML, warmPool } from "./bloodpool.js";
+import { poolUnder, warmPool } from "./bloodpool.js";
 import { clawMark } from "./claw.js";
 import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
 import { JET, jetHTML, myFuel, burnFuel } from "./jetpack.js";
@@ -1368,23 +1368,6 @@ function drawMeters(s, board, layer, now) {
     box.classList.toggle("see", see);
   }
 }
-/* the guns a hand can hold in a world (Duck Cabin, Downpour), as pixels while it loads (specials.js warmHeld): the
-   pistol in each duck's own colors and in the plain ones (a computer squad member's), and every gun picked up, the same
-   for everyone; once for each size and set of ducks */
-const handsWarm = new Set();
-function warmHands(s, size) {
-  const k = size + "|" + s.seat.join();
-  if (handsWarm.has(k)) return;
-  handsWarm.add(k);
-  const guns = Object.keys(GUNS).filter(
-    (w) => typeof GUNS[w].held === "string",
-  );
-  for (const id of [null, ...s.seat]) {
-    const duck = id && s.players[id] ? s.players[id].duck : null;
-    warmHeld("handgun", duck, size);
-    if (!id) for (const w of guns) warmHeld(w, null, size);
-  }
-}
 function drawDucks(now = clockNow()) {
   frameNo++;
   const board = S && $(".board", S);
@@ -2033,33 +2016,16 @@ function drawDucks(now = clockNow()) {
       d._olOnly = olOnly;
       d.classList.toggle("ol-only", olOnly);
     }
-    /* every duck that dies, in every mode: a pool of blood spreads out under it, as under Justin out in Downpour (the
-       owner's, Nov 18 10:38Z: "every player duck that dies in any game mode has a puddle of blood start to spill out
-       beneath their duck like justin's"). The same pool (bloodpool.js), growing over JPOOL.ms from when it fell,
-       gone when it's up again; none with Gore off. Downpour's Justin keeps his own (l4dd.js seePool) */
-    const pooled = dead && !noGoreOf(s) && !(isL4dd(s) && isWild(s, olId));
-    if (!pooled) {
-      if (d._pool) {
-        d._pool.remove();
-        d._pool = null;
-      }
-    } else {
-      if (!d._pool) {
-        d._pool = el(
-          `<span class="gduck-pool" aria-hidden="true">${poolHTML(size * 1.875)}</span>`,
-        );
-        d.prepend(d._pool);
-        d._poolAt = now;
-        d._poolK = "";
-      }
-      const k = Math.min(1, (now - d._poolAt) / JPOOL.ms),
-        grow = 0.15 + 0.85 * (1 - (1 - k) * (1 - k)),
-        pk = `translate(${(mid[0] - at.left + size / 2).toFixed(1)}px, ${(size * 0.06 - z).toFixed(1)}px) scale(${grow.toFixed(3)})`; // (where its body lies: on the podium, on it)
-      if (d._poolK !== pk) {
-        d._poolK = pk;
-        d._pool.style.transform = pk;
-      }
-    }
+    /* every duck that dies, in every mode, bleeds a pool under it (bloodpool.js); none with Gore off. Downpour's
+       Justin keeps his own (l4dd.js seePool) */
+    poolUnder(
+      d,
+      dead && !noGoreOf(s) && !(isL4dd(s) && isWild(s, olId)),
+      now,
+      size,
+      mid[0] - at.left + size / 2,
+      size * 0.06 - z,
+    ); // (where its body lies: on the podium, on it)
     if (d._j !== pos.j) {
       d._j = pos.j;
       if (pos.j && pic && pic.classList.contains("jack")) {
