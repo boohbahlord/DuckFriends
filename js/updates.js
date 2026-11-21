@@ -9,6 +9,24 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v217",
+    version: 217,
+    date: "Nov 21, 2026",
+    title: "Tidying up",
+    news: [
+      "Behind the scenes: the command line is split into smaller pieces, and its game stats come from one table.",
+    ],
+  },
+  {
+    id: "v216",
+    version: 216,
+    date: "Nov 21, 2026",
+    title: "Tidying up",
+    news: [
+      "Behind the scenes: the game asks what a mode or a map can do, instead of checking its name.",
+    ],
+  },
+  {
     id: "v215",
     version: 215,
     date: "Nov 21, 2026",

@@ -8,6 +8,7 @@
    nobody is left standing or down to watch. game.js puts the camera on that duck (world.js eye) and the card in the
    bottom bar's middle, where the Vote button goes (bottom bar, never over a window). */
 import { isSurv } from "./survrules.js";
+import { inWorld } from "./rules.js";
 import { isWild, isL4dd } from "./l4ddrules.js";
 import { isSb, sbRule } from "./sandboxrules.js";
 import { sbOffZ, sbOut } from "./sbout.js";
@@ -42,12 +43,12 @@ function watchable(s, me) {
   const L = s && s.hang && s.hang.l4;
   if (
     !(isSurv(s) || (isSb(s) && sbRule(s, "spec"))) || // (Sandbox: out of lives, with its Rules' watching on)
-    s.phase !== "hang" ||
+    !inWorld(s) ||
     !L ||
     L.over ||
     !dead(s, me)
   )
-    return ghostDda(s, me) && s.phase === "hang" && L && !L.over
+    return ghostDda(s, me) && inWorld(s) && L && !L.over
       ? [me, ...others(s, me)]
       : [];
   return others(s, me);

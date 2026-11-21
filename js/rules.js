@@ -227,6 +227,7 @@ import {
   MAP_FORMS,
   mapForm,
   mapName,
+  isWorldMap,
   ZOOM_MAP,
   GREY_MAP,
 } from "./maps.js";
@@ -512,10 +513,7 @@ const fits = (s, id) => s.seat.length >= (MIN_PLAYERS[id] || 0);
 export const randomPool = (s) => {
   const all = modesFor(s)
       .map((m) => m.id)
-      .filter(
-        (id) =>
-          id !== "l4dd" && id !== "surv" && id !== "sandbox" && fits(s, id),
-      ), // (Sandbox never ends: never from Random; Survival is vote-only too, the owner's, Nov 19 19:53Z)
+      .filter((id) => modeOf(id).inRandom !== false && fits(s, id)),
     off = s.options.modesOff || [],
     on = all.filter((id) => !off.includes(id));
   return on.length ? on : all; // (every one turned off: Random and the vote still have games to pick from)
@@ -533,8 +531,10 @@ function nextMode(s) {
 /* I want a write timer of 2:12 everywhere but Bicker Brackets: changing to or from them moves it along while it's still
    at the other default */
 function writeTimerFor(s, wasMode) {
-  if (isBb(s) && s.options.submitTime === 132) s.options.submitTime = 0;
-  else if (!isBb(s) && s.options.submitTime === 0 && wasMode === "bb")
+  const bare = (m) => !!modeOf(m).noWriteTimer;
+  if (bare(s.options.mode) && s.options.submitTime === 132)
+    s.options.submitTime = 0;
+  else if (!bare(s.options.mode) && s.options.submitTime === 0 && bare(wasMode))
     s.options.submitTime = 132;
 }
 function setMode(s, mode) {
@@ -648,7 +648,7 @@ function placeMap(s) {
 const OLD_ZCABIN = "zcabin";
 function keepRoomMap(s) {
   const o = s.options;
-  if (o.map !== "cabin" && o.map !== OLD_ZCABIN)
+  if (!isWorldMap(o.map) && o.map !== OLD_ZCABIN)
     s.roomMap = [o.map, s.mapZoomed ? 1 : 0, s.mapGreyed ? 1 : 0];
 }
 function cabinMap(s) {
@@ -657,7 +657,7 @@ function cabinMap(s) {
     keepRoomMap(s);
     o.map = "cabin";
     s.mapZoomed = s.mapGreyed = 0;
-  } else if (o.map === "cabin" || o.map === OLD_ZCABIN) {
+  } else if (isWorldMap(o.map) || o.map === OLD_ZCABIN) {
     [o.map, s.mapZoomed, s.mapGreyed] = s.roomMap || ["board", 0, 0];
     delete s.roomMap;
     if (!o.mapPick) {
@@ -668,7 +668,7 @@ function cabinMap(s) {
 }
 /* in Duck Cabin's games or Sandbox, playing (no rounds: the End Cabin or Leave Sandbox vote ends it) */
 const sbHere = (s) =>
-  (isHang(s) && s.phase === "hang") || (sbOnBoard(s) && s.phase === "sandbox");
+  (isHang(s) && inWorld(s)) || (sbOnBoard(s) && s.phase === "sandbox");
 /* Sandbox on the board: where a duck comes in (anywhere; the spawn points are stage 2) */
 const sbSpot = () => ({
   x: +(0.1 + 0.8 * Math.random()).toFixed(4),
@@ -678,7 +678,7 @@ const sbSpot = () => ({
    (or a vote, or Random) puts it on the board */
 function sbMapPicked(s, o) {
   if ("sbMap" in o) return;
-  if (o.map === "cabin") s.options.sbMap = s.options.sbMap || "cabin";
+  if (isWorldMap(o.map)) s.options.sbMap = s.options.sbMap || "cabin";
   else if (o.map || o.mapPick) s.options.sbMap = "";
 }
 /* the most players the room takes: its own most, or fewer for a made game mode (its settings file's player limit, the
@@ -713,7 +713,7 @@ function nextVote(s, now) {
 }
 /* Quacky Zombies: its map vote opens before each of its games (once: zmapAsked till the game begins) */
 function zmapDue(s, now) {
-  if (s.options.mode !== "l4dd" || s.zmapAsked) return false;
+  if (!modeOf(s.options.mode).asksMap || s.zmapAsked) return false;
   s.zmapAsked = 1;
   openVote(s, "zmap", now);
   return true;
@@ -861,6 +861,9 @@ export const isDdr = (s) => s.options.mode === "ddr";
 export const isBb = (s) => s.options.mode === "bb";
 export const isSc = (s) => s.options.mode === "sc";
 export const isLaw = (s) => s.options.mode === "law";
+/* the walkable world is running: phase "hang" is the one phase every game on a world map plays in (Hangout, Quacky
+   Zombies, Survival, Mad God Justin, Sandbox on a world), so everyone asks this, never the phase's name */
+export const inWorld = (s) => s.phase === "hang";
 /* Duck Cabin's world: Hangout, and Quacky Zombies on the same map (its own rules: l4ddrules.js) */
 export const isHang = (s) =>
   baseMode(s.options) === "hang" || baseMode(s.options) === "l4dd"; // (Sandbox on a world map runs as that world's mode: sandboxrules.js)
@@ -1269,7 +1272,7 @@ export function newRoom({
     hostId: host.id,
     options: {
       ...OPTIONS_DEFAULT,
-      ...(options.mode === "bb" ? { submitTime: 0 } : {}), // (Bicker Brackets starts with no write timer)
+      ...(modeOf(options.mode).noWriteTimer ? { submitTime: 0 } : {}), // (Bicker Brackets starts with no write timer)
       ...options,
     },
     players: { [host.id]: { ...host, bot: false, ready: false } },
@@ -1311,7 +1314,7 @@ function phaseLimit(s) {
   if (s.phase === "vddown") return VD_DOWN;
   if (s.phase === "vdval") return VD_VAL;
   if (s.phase === "wqpick") return s.options.wqPickTime;
-  if (s.phase === "hang") return hangLimit(s);
+  if (inWorld(s)) return hangLimit(s);
   if (s.phase === "choice" || s.phase === "accuse") return s.options.wqTimer;
   return 0;
 }
@@ -1611,7 +1614,7 @@ function seatNewcomer(s, id) {
   const me = s.players[id],
     ph = s.phase;
   if (isHang(s)) {
-    if (ph === "hang") hangJoin(s, id);
+    if (inWorld(s)) hangJoin(s, id);
     return;
   } // Hangout: at the front door, at once
   if (sbOnBoard(s)) {
@@ -1861,7 +1864,7 @@ function reduceStep(state, a, now) {
         if (o.mode && !("modePick" in o)) s.options.modePick = "";
         if (o.map && !("mapPick" in o)) s.options.mapPick = "";
         if (isSb(s)) sbMapPicked(s, o);
-        else if (o.map === "cabin" && !o.mode && !isHang(s)) {
+        else if (isWorldMap(o.map) && !o.mode && !isHang(s)) {
           s.options.mode = "hang"; // Duck Cabin and its games are one: picking the map picks Hangout,
           s.options.modePick = "";
         } else if ((o.map || o.mapPick || o.modePick) && !o.mode && isHang(s))
@@ -1874,9 +1877,9 @@ function reduceStep(state, a, now) {
           s.options.map = "cabin"; // (the host's Hangout; one from Random or the vote keeps the map's settings)
           s.options.mapPick = "";
           delete s.roomMap;
-        } else if (!isHang(s) && s.options.map === "cabin" && s.roomMap)
+        } else if (!isHang(s) && isWorldMap(s.options.map) && s.roomMap)
           cabinMap(s); // (out of a Hangout that Random or the vote picked: the room's map again)
-        else if (!isHang(s) && s.options.map === "cabin") {
+        else if (!isHang(s) && isWorldMap(s.options.map)) {
           s.options.map = "board"; // leaving Duck Cabin without picking a map goes back to Vote Maps
           if (!o.map && !("mapPick" in o)) s.options.mapPick = "vote";
         }
@@ -2669,9 +2672,7 @@ function reduceStep(state, a, now) {
     case "wqWord":
       return wqWord(s, a, now) || state; // Who is the Quack?: the secret word, from its picker
     case "hang":
-      return me && isHang(s) && s.phase === "hang" && hangAction(s, a, now)
-        ? s
-        : state; // Hangout: an activity (k) did something
+      return me && isHang(s) && inWorld(s) && hangAction(s, a, now) ? s : state; // Hangout: an activity (k) did something
     case "counsel": {
       // Lawyering: my pick (as the writer) or my vote (the room) for an attorney; it can change until the picking ends
       const L = s.law,
@@ -2999,7 +3000,7 @@ function reduceStep(state, a, now) {
       if (
         !may(s, a.id, "canskip") ||
         ["lobby", "over"].includes(s.phase) ||
-        s.phase === "hang"
+        inWorld(s)
       )
         return state;
       say(s, `${me.name} skipped ahead.`);
@@ -3105,7 +3106,7 @@ function reduceStep(state, a, now) {
       if (sbHere(s) && cabinTick(s, now)) return s;
       if (
         isL4dd(s) &&
-        s.phase === "hang" &&
+        inWorld(s) &&
         s.hang &&
         s.hang.l4 &&
         s.hang.l4.over &&
@@ -3114,11 +3115,7 @@ function reduceStep(state, a, now) {
       )
         return cabinOver(s, now, "Everyone's down.");
       const sbOut =
-        isL4dd(s) &&
-        s.phase === "hang" &&
-        s.hang &&
-        s.hang.l4 &&
-        s.hang.l4.over;
+        isL4dd(s) && inWorld(s) && s.hang && s.hang.l4 && s.hang.l4.over;
       if (
         sbOut &&
         isSb(s) &&
@@ -3132,15 +3129,10 @@ function reduceStep(state, a, now) {
       const sbEnd = sbOutTick(s, now); // (the same off the zombie maps: sbout.js)
       if (sbEnd === "lobby") return backToLobby(s, "Everyone's out.");
       if (sbEnd) return s;
-      if (
-        s.phase === "hang" &&
-        s.options.mode === "hang" &&
-        s.ends &&
-        now >= s.ends
-      )
+      if (inWorld(s) && modeOf(s.options.mode).timed && s.ends && now >= s.ends)
         return cabinOver(s, now, "Time's up in the cabin."); // (Hangout from Random or the vote: its time limit)
       const shots = isL4dd(s) ? l4Shots(s, now) : moveShots(s, now),
-        hung = isHang(s) && s.phase === "hang" && hangTick(s, now),
+        hung = isHang(s) && inWorld(s) && hangTick(s, now),
         jus =
           justinTick(s, now, logLine) |
           dnTick(s, now) |
@@ -3264,7 +3256,7 @@ function dodSet(s, k, on, to = null) {
     o.modePick = o.mapPick = "vote";
     if (o.voteBack === undefined) o.voteBack = 3;
     if (isHang(s)) o.mode = "aod";
-    if (o.map === "cabin") o.map = "board";
+    if (isWorldMap(o.map)) o.map = "board";
   }
   if (on && k === "justin") s.options.justin = 1; // (Justin in every game he can be in)
   say(s, `Democracy of Ducklings: ${DOD_NAMES[k]} is ${on ? "on" : "off"}.`);
@@ -4955,7 +4947,8 @@ const SB_OUT_MS = 5000;
 const HANG_TIMES = [0, 5, 10, 15, 20, 30];
 function hangLimit(s) {
   const o = s.options;
-  if (o.mode !== "hang" || !["random", "vote"].includes(o.modePick)) return 0;
+  if (!modeOf(o.mode).timed || !["random", "vote"].includes(o.modePick))
+    return 0;
   const m = HANG_TIMES.includes(+o.hangTime) ? +o.hangTime : 15;
   return m * 60;
 }

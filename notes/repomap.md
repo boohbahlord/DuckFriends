@@ -15,7 +15,7 @@ bloodpool.js 50 a pool of blood: the one under every
 boardjustin.js 735 Justin on the boards
 botduck.js 90 a computer's duck: a random look, never anything
 botlines.js 188 What the computers write and say in the
-bots.js 1405 computers
+bots.js 1406 computers
 brackets.js 467 Bicker Brackets: what the screen shows
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
@@ -49,10 +49,11 @@ friends.js 236 friends
 front.js 109 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 214 how a held weapon and the screen move
-game.js 8820 the game screen
+game.js 8816 the game screen
 gamedefaults.js 43 the game's own numbers, for every mode
 gameready.js 47 what the game's loading screen waits for
-gamesettings.js 1750 Game Settings: the whole screen, like Customize
+gamesettings.js 1755 Game Settings: the whole screen, like Customize
+gamestats.js 191 what `stats` and `roundstats` print for the game
 gfx.js 8 Low graphics
 gmodes.js 246 Sandbox Phase 6: made game modes
 grenade.js 34 a grenade going off
@@ -104,14 +105,14 @@ looks.js 136 the room's duck-look settings
 looksrules.js 60 the duck-look settings' rules
 main.js 163 the start: settings on the page, the background,
 manual.js 203 the command line's manual: man <command>
-maps.js 1112 maps: the world behind the board
+maps.js 1116 maps: the world behind the board
 merchantlines.js 81 what the merchants say
 merchants.js 376 the merchants
 meters.js 114 the thin bars under my duck's name
 mgj.js 217 Mad God Justin: what the screen shows
 mgjart.js 96 Mad God Justin's new pictures
 mgjrules.js 2287 
-modes.js 409 the game modes
+modes.js 415 the game modes
 music.js 590 the music: our own songs, played from recordings
 musicbar.js 169 the music bar: the song the room hears,
 name.js 165 fonts and how a player's name looks
@@ -154,7 +155,7 @@ random.js 9 the two random helpers every mode's rules share:
 report.js 114 Report Bug or Suggest Ideas
 rooms.js 256 Play: create a room, and the rooms online
 router.js 112 screens
-rules.js 6250 the rules of Agree or Disagree
+rules.js 6243 the rules of Agree or Disagree
 sandbox.js 1359 Sandbox: the key windows
 sandboxrules.js 2059 Sandbox: which map it plays on, and who
 sbarms.js 124 Sandbox: a made NPC's weapons in a fight
@@ -196,11 +197,12 @@ seriattheme.js 63 Seriat's and the command line's look: Nous Within
 settings.js 298 Settings
 sfxlist.js 164 the sound files
 shared.js 497 Sandbox Phase 7: Shared, the game modes and
-shell.js 3494 the command line: a small bash
+shell.js 2576 the command line: a small bash
+shellfs.js 846 the shell's files and what every command leans
 slices.js 31 long work cut into slices
 sound.js 935 the game's sounds: real recordings, played from small
 specials.js 858 Specials
-spectate.js 97 Survival: watching the others once my duck is
+spectate.js 98 Survival: watching the others once my duck is
 splash.js 71 the start screen: your duck on a cloud,
 sprintblur.js 54 the sprint's blurred border of my screen (css/app.css
 stamina.js 41 my sprint's stamina, in every mode
@@ -221,7 +223,7 @@ umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
 unlocks.js 413 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 2969 Updates
+updates.js 2987 Updates
 vdd.js 190 Valentine's Duck Date: what the screen shows
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival

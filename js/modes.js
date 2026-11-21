@@ -87,6 +87,7 @@ export const MODES = [
         ["Jumps", "jumps"],
       ],
     },
+    noWriteTimer: true, // (starts with no write timer: rules.js writeTimerFor)
     tip: "A tournament: pick a topic, write the contenders together, then walk onto the one you back, match by match, until one is the champion.",
   },
   {
@@ -220,6 +221,7 @@ export const MODES = [
     id: "hang",
     cat: "social",
     name: "Hangout",
+    timed: true, // (a time limit when Random or the vote picked it: Game Settings hangTime)
     tip: "No rounds, no winners, no pressure: hang out in Duck Cabin. Piano, couches, chalk, a pool, soccer, until you all go back to the lobby. It can only be played on the Duck Cabin map.",
   },
   {
@@ -236,6 +238,8 @@ export const MODES = [
         ["Jumps", "jumps"],
       ],
     },
+    asksMap: true, // (its map vote opens before each game: zmapDue)
+    inRandom: false, // (never from Random: Sandbox never ends; Survival and Quacky Zombies are vote-only, the owner's, Nov 19 19:53Z)
     tip: "The power's out in Duck Cabin and zombie ducks are coming, round after round. Board up the doors and holes, revive each other, and see how long you last. It can only be played on the Duck Cabin map.",
   },
   /* Survival (the owner's, Nov 19 19:27Z): Dead Ducks Arcade's zombies without rounds, swelling and calming on Downpour.
@@ -255,6 +259,7 @@ export const MODES = [
               ["Jumps", "jumps"],
             ],
           },
+          inRandom: false,
           tip: "No rounds: the zombies keep coming on Downpour, calm one moment and a horde the next. Buy from the merchants, stay together and see how long you last.",
         },
       ]
@@ -263,6 +268,7 @@ export const MODES = [
     id: "sandbox",
     cat: "special",
     name: "Sandbox",
+    inRandom: false,
     tip: "No rounds and no end: mess around on any map. Hold C for the cheat sheet. Leave Sandbox at the top left when you're done.",
   },
 ];
