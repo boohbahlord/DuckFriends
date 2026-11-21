@@ -6,6 +6,7 @@ import { profile, save, statMode } from "./store.js";
 import { fmtJumps } from "./format.js";
 import { activeRoom } from "./later.js"; // (the room code comes after the first screen)
 import { checkUnlocks, justinIn } from "./unlocks.js";
+import { cheated } from "./cheatflag.js";
 
 /* in a room's bottom bar (.jumps-slot), Justin Kills goes under Jumps in the same box whenever Justin is in the game */
 export function showJumps(root) {
@@ -31,14 +32,16 @@ export function showJumps(root) {
   });
 }
 export function countJump() {
-  profile.jumps = (profile.jumps || 0) + 1;
-  save();
-  showJumps();
-  checkUnlocks();
   const r = activeRoom();
+  if (!r || !cheated(r.state)) {
+    profile.jumps = (profile.jumps || 0) + 1;
+    save();
+    showJumps();
+    checkUnlocks();
+  } // (a game with test commands used counts no jumps: cheatflag.js)
   if (!r) return;
   r.send({ t: "jumps", n: (r.state.jumps[r.me] || 0) + 1 });
-  const st = profile.stats[statMode(r.state)];
+  const st = !cheated(r.state) && profile.stats[statMode(r.state)];
   if (st) st.jumps++; // all-time, test rooms too
 }
 document.addEventListener("settings", showJumps);

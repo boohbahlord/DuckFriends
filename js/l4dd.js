@@ -11,6 +11,7 @@
    (l4ddrules.js); the weapons bar is l4ddbar.js. */
 import { holdGame, offView } from "./gameready.js";
 import { clawMark, warmClaw } from "./claw.js";
+import { JPOOL, poolHTML, warmPool } from "./bloodpool.js";
 import { isInvisible } from "./invisible.js";
 import { invOn } from "./sbgod.js";
 import { sprintLeft, sprintReset } from "./stamina.js";
@@ -46,9 +47,10 @@ import { low } from "./gfx.js";
 import { mapMount, mapUnmount, mapDraw } from "./l4ddmap.js";
 import { rainMount, rainUnmount, rainDraw } from "./l4ddrain.js";
 import { nameHTML } from "./name.js";
-import { profile, save, statMode } from "./store.js";
+import { profile, save } from "./store.js";
+import { statsOf } from "./cheatflag.js";
 import { sfx } from "./sound.js";
-import { l4Hear, l4Steps, l4Reset, bellStrikes } from "./l4ddsfx.js";
+import { l4Hear, l4Steps, l4Reset } from "./l4ddsfx.js";
 import { now as clockNow } from "./clock.js";
 import {
   inShallow,
@@ -59,12 +61,8 @@ import {
   PUMPS,
 } from "./hangout/stationmap.js";
 import { floatDuck, SINK, WADE_SINK, SLOW as SWIM } from "./hangout/water.js";
-import {
-  fenceLean,
-  BELL_ANGLES,
-  BELL_REST,
-  JUSTIN_POOL,
-} from "./hangout/stationart.js";
+import { fenceLean } from "./hangout/stationart.js";
+import { bellSwing, bellReset, flareDraw, flareOn } from "./l4ddbell.js";
 import {
   L4,
   OPENINGS,
@@ -148,11 +146,11 @@ import {
 } from "./l4ddangelui.js";
 import { DROP_ICONS } from "./l4dddrops.js";
 import { popHP } from "./hpmeter.js";
-import { fxHitAt, fxEye, heavyOff, fxSparks, fxSteam } from "./fx.js";
+import { fxHitAt, fxEye, heavyOff } from "./fx.js";
 import { vibrate, hitPx, HIT, again } from "./fxmotion.js";
 import { pixelOn, gridPx, raster, rasterReady } from "./pixel.js";
 import { olAdd, olFloor, olRoofed, olPic, DROP_OL } from "./outlines.js";
-import { confirmBox } from "./ui.js";
+import { confirmBox, ducksOn, windowOpen } from "./ui.js";
 import { angelOf, ANGEL } from "./l4ddangel.js";
 import { angelic, jerrySVG } from "./powerart.js"; // (after l4ddart.js, as game.js imports it)
 import { hashText } from "./pxdom.js";
@@ -528,6 +526,7 @@ function warmZombies(sc) {
   if (!pixelOn() || !sc || warmAt === sc) return false;
   warmAt = sc;
   warmClaw(sc * 1.25); // (their claw marks too: claw)
+  warmPool(120 * sc); // (and the pool of blood under a duck that dies: bloodpool.js)
   const looks = [
     ...ZHATS.map((_, h) => [h, -1]),
     ...ZOUTFITS.map((_, o) => [-1, o]),
@@ -918,11 +917,8 @@ function spinSquare(s, ctx) {
   sqEl.style.setProperty("--k", Wd.sc.toFixed(3));
 }
 /* Justin out there, once he's dead (bled out, dead for good: nobody can revive him now): a pool of blood spreads out under him over
-   JPOOL.ms (the owner's, Nov 17 18:05Z: "on death a blood pool spreads"); none with Gore off. Its own few dark ellipses,
+   JPOOL.ms (bloodpool.js; the owner's, Nov 17 18:05Z: "on death a blood pool spreads"); none with Gore off. Its own few dark ellipses,
    as flat as the floor. Every other duck that dies has the same one (game.js .gduck-pool) */
-export const JPOOL = { ms: 6000 };
-// (its shapes: stationart.js JUSTIN_POOL, the trooper in the gas station lies in the same)
-export const POOL_SVG = `<svg viewBox="-60 -26 120 52" width="120" height="52">${JUSTIN_POOL}</svg>`;
 let poolEl = null,
   poolAt = 0,
   poolSig = "";
@@ -937,6 +933,10 @@ function seePool(s, ctx) {
   else if (!poolAt) poolAt = clockNow();
   if (poolEl.hidden !== !show) poolEl.hidden = !show;
   if (!show) return;
+  if (poolEl._sc !== Wd.sc) {
+    poolEl._sc = Wd.sc;
+    poolEl.innerHTML = poolHTML(120 * Wd.sc); // (css .l4-jpool: 120 px, scaled with the world: its pixels the grid's)
+  }
   const k = Math.min(1, (clockNow() - poolAt) / JPOOL.ms),
     grow = 0.15 + 0.85 * (1 - (1 - k) * (1 - k)),
     p = Wd.toScreen(a.x, a.y + 4, a.z),
@@ -1106,13 +1106,12 @@ function nukeScreen(at) {
 }
 const DROPS_SEED = { kill: 3, ammo: 7, nuke: 2, speed: 9, double: 4, sale: 6 };
 
-/* my all-time stats (not in test rooms): a game once its first round starts, a round each time one is cleared, and the
+/* my all-time stats (not in test rooms, nor with test commands used: cheatflag.js): a game once its first round starts, a round each time one is cleared, and the
    best round reached; with Round 16 Start on, its own stats (store.js statMode) */
 let kzGame = "",
   kzDone = 0; // the zombies I killed this game that the all-time stats already hold
 function record(s, L, cleared, me) {
-  if (s.test) return;
-  const st = profile.stats[statMode(s)];
+  const st = statsOf(s);
   if (!st) return;
   const game = `${s.id}:${s.startedAt}:${L.g || 0}`;
   if (profile.stats.lastGame !== game) {
@@ -1144,8 +1143,7 @@ function seeClock(s) {
   hud.innerHTML = `<b>${clockOf(t)}</b>`;
 }
 function survRecord(s, L) {
-  if (s.test) return;
-  const st = profile.stats[statMode(s)],
+  const st = statsOf(s),
     game = `${s.id}:${s.startedAt}:${L.g || 0}`;
   if (!st || profile.stats.lastGame === game) return;
   profile.stats.lastGame = game;
@@ -1191,8 +1189,8 @@ function seeHud(s, ctx) {
   const end = L.over ? JSON.stringify(L.over) + (s.hostId === ctx.me) : "";
   if (end === overShown) return;
   overShown = end;
-  if (L.over && !s.test && !isSb(s)) {
-    const st = profile.stats[statMode(s)];
+  if (L.over && !isSb(s)) {
+    const st = statsOf(s);
     if (st) {
       recordKills(s, st, `${s.id}:${s.startedAt}:${L.g || 0}`, ctx.me);
       if (isSurv(s))
@@ -1322,133 +1320,9 @@ function litNames(s, ctx, beams) {
   const sig = lit.join();
   if (sig === litSig) return;
   litSig = sig;
-  for (const el of Wd.board.querySelectorAll(".gduck[data-pid]"))
-    el.classList.toggle("l4-lit", lit.includes(el.dataset.pid));
-}
-/* ---------- Downpour: the church bell and the roof's flare, as each round starts (the owner's, Nov 17 12:28Z) ----------
-   The bell swings to its own strikes (l4ddsfx.js bellStrikes: when each sounds): out to one side on a strike, through
-   the middle and out to the other on the next, settling after the last. Its drawing is one of BELL_ANGLES, the nearest */
-const SWING = 30, // degrees out at a strike
-  SWING_IN = 0.6, // strikes' gaps it takes to swing all the way out
-  SWING_OUT = 1.2; // how fast it settles after the last (larger: sooner)
-let bellEl = null,
-  bellLook = 0;
-function bellSwing(ctx, now) {
-  if (!bellEl || !bellEl.isConnected) {
-    if (now - bellLook < 500) return; // (only made while the tower is near the view: world.js)
-    bellLook = now;
-    bellEl = ctx.world.board.querySelector('.hp-tower[data-part="bell"]');
-    if (!bellEl) return;
-  }
-  const t = bellStrikes();
-  let a = 0;
-  if (t) {
-    const gap = (t[t.length - 1] - t[0]) / (t.length - 1),
-      u = (now - t[0]) / gap,
-      last = t.length - 1,
-      k =
-        u < 0
-          ? 0
-          : u < SWING_IN
-            ? u / SWING_IN
-            : u <= last
-              ? 1
-              : Math.exp(-(u - last) * SWING_OUT);
-    if (k > 0.03) a = SWING * k * Math.cos(Math.PI * u); // (a strike at every whole u: out at one side or the other)
-  }
-  let best = BELL_REST;
-  BELL_ANGLES.forEach((v, i) => {
-    if (Math.abs(v - a) < Math.abs(BELL_ANGLES[best] - a)) best = i;
-  });
-  ctx.world.frameOf(bellEl, best);
-}
-/* the dead soldier's flare on the gas station's roof lights as the bell starts and burns red a while: a glow, sparks
-   and smoke (the light it throws: paint) */
-const FLARE_MS = 14000;
-let flareEl = null,
-  fxAt = 0;
-const flareOn = (now) => {
-  const t = bellStrikes();
-  return !!t && now >= t[0] && now < t[0] + FLARE_MS;
-};
-/* the flare's red glow, n pixels across, drawn pixel by pixel: white hot in the middle, red, then a dark red fading
-   out (as css's radial-gradient drew it, to its farthest corner); made once for each size */
-const FLICK = [0.9, 0.975, 1.05, 0.975],
-  FLARE_INK = [
-    [0, 255, 236, 220, 0.95],
-    [0.05, 255, 236, 220, 0.95],
-    [0.13, 255, 52, 36, 0.75],
-    [0.38, 210, 10, 10, 0.28],
-    [0.68, 210, 10, 10, 0],
-  ],
-  flarePics = new Map();
-function flarePic(n) {
-  if (flarePics.has(n)) return flarePics.get(n);
-  const c = document.createElement("canvas");
-  c.width = c.height = n;
-  c.className = "l4-flare-px";
-  const x = c.getContext("2d"),
-    img = x.createImageData(n, n),
-    d = img.data,
-    h = n / 2;
-  for (let j = 0; j < n; j++)
-    for (let i = 0; i < n; i++) {
-      const f = Math.hypot(i + 0.5 - h, j + 0.5 - h) / (h * Math.SQRT2);
-      let k = 1;
-      while (k < FLARE_INK.length - 1 && f > FLARE_INK[k][0]) k++;
-      const A = FLARE_INK[k - 1],
-        B = FLARE_INK[k],
-        t = Math.min(1, Math.max(0, (f - A[0]) / (B[0] - A[0] || 1))),
-        a = A[4] + (B[4] - A[4]) * t,
-        o = (j * n + i) * 4;
-      if (a <= 0) continue;
-      for (let q = 1; q < 4; q++)
-        d[o + q - 1] = (A[q] * A[4] + (B[q] * B[4] - A[q] * A[4]) * t) / a; // (mixed as css mixes them: by how much is there)
-      d[o + 3] = a * 255;
-    }
-  x.putImageData(img, 0, 0);
-  if (flarePics.size > 40) flarePics.clear();
-  flarePics.set(n, c);
-  return c;
-}
-function flareDraw(ctx, now) {
-  const Wd = ctx.world,
-    on = dp() && !Wd.inside && flareOn(now);
-  if (!on) {
-    if (flareEl && !flareEl.hidden) flareEl.hidden = true;
-    return;
-  }
-  if (!flareEl || !flareEl.isConnected) {
-    flareEl = document.createElement("div");
-    flareEl.className = "l4-flare";
-    flareEl.setAttribute("aria-hidden", "true");
-    layer.append(flareEl);
-  }
-  if (flareEl.hidden) flareEl.hidden = false;
-  const p = Wd.toScreen(FLARE.x, FLARE.y, STATION.wall + 4),
-    left = (now - bellStrikes()[0]) / FLARE_MS; // (0 lit … 1 out)
-  flareEl.style.transform = Wd.boxTr(p.left, p.top);
-  /* its glow, flickering a little bigger and smaller each 60 ms, as pixels of the grid's size */
-  const g = gridPx() || 2,
-    n = Math.max(
-      2,
-      Math.round((160 * Wd.sc * FLICK[Math.floor(now / 60) % 4]) / g),
-    ),
-    pic = flarePic(n);
-  if (flareEl.firstChild !== pic) {
-    flareEl.replaceChildren(pic);
-    pic.style.cssText = `left:${(-n * g) / 2}px;top:${(-n * g) / 2}px;width:${n * g}px;height:${n * g}px`;
-  }
-  flareEl.style.setProperty(
-    "--f",
-    (left > 0.85 ? (1 - left) / 0.15 : 1).toFixed(2),
-  ); // (dying down at the end)
-  flareEl.style.zIndex = Math.round(STATION.y1) + 60; // (over the roof it lies on: world.js gives the roof its south edge, and a little)
-  if (now - fxAt > 70 && left < 0.92) {
-    fxAt = now;
-    fxSparks(p.left, p.top, 2 * Wd.sc, 1);
-    if (Math.random() < 0.35) fxSteam(p.left, p.top - 6 * Wd.sc);
-  }
+  for (const el of ducksOn(Wd.board))
+    if (el.dataset.pid)
+      el.classList.toggle("l4-lit", lit.includes(el.dataset.pid));
 }
 function paint(now, ctx) {
   CTX = ctx;
@@ -1651,7 +1525,7 @@ function paint(now, ctx) {
   coneSp.length = Math.min(coneSp.length, cones.length);
   for (let i = 0; i < cones.length; i++) {
     const o = coneSprite(i, cones[i], keys[i], Wd, q, w, h);
-    if (o) g.drawImage(o.cv, o.x, o.y);
+    if (o) g.drawImage(o.cv, 0, 0, o.w, o.h, o.x, o.y, o.w, o.h);
   }
   g.globalCompositeOperation = "source-over";
 }
@@ -1659,7 +1533,8 @@ function paint(now, ctx) {
    walls its rays stop at, raised up the tallest prop's height, so that much more all round): { cv, x, y } where it goes on
    the dark, or null when none of it is on the screen */
 function coneSprite(i, c, key, Wd, q, w, h) {
-  const o = coneSp[i] || (coneSp[i] = { cv: null, key: "", x: 0, y: 0 });
+  const o =
+    coneSp[i] || (coneSp[i] = { cv: null, key: "", x: 0, y: 0, w: 0, h: 0 });
   if (o.key === key) return o.cv && o;
   o.key = key;
   const [ox, oy, pts, far] = c,
@@ -1686,9 +1561,12 @@ function coneSprite(i, c, key, Wd, q, w, h) {
   o.cv = cv2;
   o.x = x0;
   o.y = y0;
-  if (cv2.width !== x1 - x0 || cv2.height !== y1 - y0) {
-    cv2.width = x1 - x0;
-    cv2.height = y1 - y0;
+  o.w = x1 - x0;
+  o.h = y1 - y0;
+  /* only ever grown, a 64 px step at a time: a canvas made a new size is a new canvas (each walking step was one) */
+  if (cv2.width < o.w || cv2.height < o.h) {
+    cv2.width = Math.max(cv2.width, Math.ceil(o.w / 64) * 64);
+    cv2.height = Math.max(cv2.height, Math.ceil(o.h / 64) * 64);
   }
   const c2 = cv2.getContext("2d");
   c2.setTransform(1, 0, 0, 1, 0, 0);
@@ -1934,7 +1812,7 @@ function drawMerchant(ctx, t) {
       butler.pool = document.createElement("span");
       butler.pool.className = "l4-jpool l4-mpool";
       butler.pool.setAttribute("aria-hidden", "true");
-      butler.pool.innerHTML = POOL_SVG;
+      butler.pool.innerHTML = poolHTML(120 * Wd.sc); // (css .l4-jpool: 120 px, scaled with the world: its pixels the grid's)
       butler.el.prepend(butler.pool);
     }
   }
@@ -2080,7 +1958,7 @@ function drawCorpses(ctx) {
       o.pool = document.createElement("span");
       o.pool.className = "l4-jpool";
       o.pool.setAttribute("aria-hidden", "true");
-      o.pool.innerHTML = POOL_SVG;
+      o.pool.innerHTML = poolHTML(120 * Wd.sc); // (css .l4-jpool: 120 px, scaled with the world: its pixels the grid's)
       o.el.prepend(o.pool);
       CORPSES.set(c.v, o);
     }
@@ -2382,9 +2260,10 @@ function safeLook(ctx) {
     now = clockNow(),
     p4 = s.hang.l4p || {},
     inv = s.hang.l4inv || {};
-  for (const d of ctx.world.board.querySelectorAll(".ducks .gduck[data-pid]")) {
-    const id = d.dataset.pid,
-      sk = !!(p4[id] && p4[id].skAt),
+  for (const d of ducksOn(ctx.world.board)) {
+    const id = d.dataset.pid;
+    if (!id) continue;
+    const sk = !!(p4[id] && p4[id].skAt),
       on = inv[id] > now;
     if (d.classList.contains("l4-skglow") !== sk)
       d.classList.toggle("l4-skglow", sk);
@@ -2572,13 +2451,18 @@ function peek(tag, s, me) {
     });
   track.classList.add("sliding"); // (at the old slot at once, then it scrolls)
   lay(from < 0 ? to : from);
-  void track.offsetWidth;
-  track.classList.remove("sliding");
-  lay(to);
   el.classList.remove("go");
-  void el.offsetWidth;
-  el.classList.add("go");
+  /* the scroll and the fade start on the next frame, once this one has shown the old slot (before, the page was made
+     to lay itself out on the spot to start them: up to 30 ms on a slow computer, at every switch) */
+  const tok = ++peekTok;
+  requestAnimationFrame(() => {
+    if (tok !== peekTok) return; // (switched again since)
+    track.classList.remove("sliding");
+    lay(to);
+    el.classList.add("go");
+  });
 }
+let peekTok = 0;
 function say(text) {
   if (!sayEl) return;
   sayEl.textContent = text;
@@ -2680,7 +2564,7 @@ function closeShop() {
   removeEventListener("keydown", shopEsc, true);
 }
 function shopEsc(e) {
-  if (!shop || !shop.open || document.querySelector(".win-back, .ctx")) return;
+  if (!shop || !shop.open || windowOpen()) return;
   if (e.key === "Escape") {
     e.preventDefault();
     e.stopPropagation();
@@ -2949,7 +2833,6 @@ activity({
     poolEl = document.createElement("div");
     poolEl.className = "l4-jpool";
     poolEl.setAttribute("aria-hidden", "true");
-    poolEl.innerHTML = POOL_SVG;
     poolEl.hidden = true;
     poolAt = 0;
     poolSig = "";
@@ -3014,7 +2897,7 @@ activity({
     cv = g = hud = endEl = over = layer = fxl = null;
     ptsEl = sayEl = onEl = gotEl = killEl = boxEl = butler = shop = null;
     vitEl = hintEl = null;
-    bellEl = flareEl = null;
+    bellReset();
     vitShown = "";
     ctx?.world?.board.classList.remove("blackout", "l4-board");
   },
@@ -3207,7 +3090,7 @@ activity({
     /* Downpour: a duck in the deep flood swims, sunk to its waterline and bobbing, as in the Hangout pool; one in the
        shallow flood wades, its bottom fifth under it (water.js) */
     if (dp())
-      for (const d of Wd.board.querySelectorAll(".ducks .gduck")) {
+      for (const d of ducksOn(Wd.board)) {
         const id = d.dataset.pid,
           a = id && Wd.at(id),
           wet = !!a && a.z <= heightAt(a.x, a.y) + 4;
@@ -3310,11 +3193,16 @@ activity({
     angelDraw(ctx);
     if (dp()) {
       bellSwing(ctx, t); // (the bell's times are the page's clock: performance.now())
-      flareDraw(ctx, t);
+      flareDraw(ctx, t, layer);
     }
     paint(now, ctx);
     /* my sprint: a thin blue bar under my name, while it isn't full (and under my HP meter: game.js asks sprintLeft()) */
-    const tag = Wd.board.querySelector(".gduck.mine .gduck-name");
+    const mine = ducksOn(Wd.board).find((d) => d.classList.contains("mine")),
+      tag =
+        mine &&
+        (mine.contains(mine._nameEl)
+          ? mine._nameEl
+          : (mine._nameEl = mine.querySelector(".gduck-name")));
     if (tag) {
       let sp = tag.querySelector(".l4-sprint");
       if (!sp) {

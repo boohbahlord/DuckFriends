@@ -15,7 +15,8 @@
    up to three colors (Primary, Secondary, Accent) under Customize → Colors. */
 import { HANDGUN } from "./gamedefaults.js";
 import { el } from "./ui.js";
-import { gridPx } from "./pixel.js";
+import { gridPx, pxSVG, rasterReady, pixelOn } from "./pixel.js";
+import { hashText } from "./pxdom.js";
 import { fewer } from "./gfx.js";
 import { BOW, MEDKIT, ZEBRA, CHAIR } from "./mgjart.js";
 import { GUNS } from "./l4ddguns.js";
@@ -838,7 +839,65 @@ export function heldBoxHTML(
   size,
   { cls = "", attrs = "", style = "", art } = {},
 ) {
-  return `<div class="held${cls}" data-w="${w}"${attrs} style="--s:${Math.round(size)}px${GUNS[w] ? `;--gw:${GUNS[w].w}` : ""}${style}"><i>${art ?? heldHTML(w, duck)}</i></div>`;
+  return `<div class="held${cls}" data-w="${w}"${attrs} style="--s:${Math.round(size)}px;--gw:${gwOf(w)}${style}"><i>${art ?? heldHTML(w, duck)}</i></div>`;
+}
+/* a weapon in a hand as one picture made into pixels (pixel.js pxSVG), its duck `size` css px (heldBoxHTML's --s): the
+   same weapon, colors and size are one picture, made once, and warmHeld makes it while the game loads. As a drawing on
+   the page pxdom.js made it the moment it was first held, mid-game (the owner's, Nov 20 20:46Z: "pop-ins") */
+/* each weapon's length in the hand, in ducks: Quacky Zombies' guns their l4ddguns.js w, these their own, any other 0.34
+   (the pistol). One table, so the picture is made at the size the box shows it (they were css rules of their own) */
+const HELD_GW = {
+  dagger: 0.4,
+  knife: 0.46,
+  hammer: 0.8,
+  axe: 0.86,
+  sword: 0.8, // (the short sword redrawn longer than the knife, the owner's, Nov 19 19:47Z)
+  pan: 0.66,
+  grenade: 0.3,
+  shotgun: 0.95,
+  chair: 0.62,
+  zebra: 0.5,
+};
+const gwOf = (w) => (GUNS[w] ? GUNS[w].w : HELD_GW[w] || 0.34);
+const heldW = (w, size) => Math.round(size) * gwOf(w);
+function sizedSVG(svg) {
+  const head = svg.slice(0, svg.indexOf(">")),
+    vb = /viewBox="[-\d.]+ [-\d.]+ ([\d.]+) ([\d.]+)"/.exec(head);
+  if (/\swidth=/.test(head) || !vb) return svg;
+  return svg.replace(
+    "<svg ",
+    `<svg${/\sxmlns=/.test(head) ? "" : ' xmlns="http://www.w3.org/2000/svg"'} width="${vb[1]}" height="${vb[2]}" `,
+  ); // (a size of its own: pxSVG takes its shape from it, and Firefox won't draw an SVG with none)
+}
+export const heldPicHTML = (w, duck, size) =>
+  pixelOn()
+    ? pxSVG(sizedSVG(heldHTML(w, duck)), heldW(w, size))
+    : heldHTML(w, duck);
+function warmHeld(w, duck, size) {
+  if (!pixelOn()) return;
+  const svg = sizedSVG(heldHTML(w, duck)),
+    head = svg.slice(0, svg.indexOf(">")),
+    W = +(/\swidth="([\d.]+)"/.exec(head) || [])[1] || 1,
+    H = +(/\sheight="([\d.]+)"/.exec(head) || [])[1] || W,
+    pw = heldW(w, size);
+  rasterReady("s" + hashText(svg), svg, pw, (pw * H) / W); // (pxSVG's key)
+}
+/* the guns a hand can hold in a world (Duck Cabin, Downpour), as pixels while it loads (warmHeld): the pistol in each
+   duck's own colors and in the plain ones (a computer squad member's), and every gun picked up, the same for everyone;
+   once for each size and set of ducks */
+const handsWarm = new Set();
+export function warmHands(s, size) {
+  const k = size + "|" + s.seat.join();
+  if (!pixelOn() || handsWarm.has(k)) return;
+  handsWarm.add(k);
+  const guns = Object.keys(GUNS).filter(
+    (w) => typeof GUNS[w].held === "string",
+  );
+  for (const id of [null, ...s.seat]) {
+    const duck = id && s.players[id] ? s.players[id].duck : null;
+    warmHeld("handgun", duck, size);
+    if (!id) for (const w of guns) warmHeld(w, null, size);
+  }
 }
 /* a weapon in a duck's hand, pointing right (the game turns it toward where it aims); the hammer is a wrench on a duck
    that picked the wrench (its ⚙ under Customize → Specials: duck.wrench) */

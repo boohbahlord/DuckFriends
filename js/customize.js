@@ -53,11 +53,9 @@ import {
   CARD_SIZES,
   cardHTML,
   cardBackground,
-  cardSheets,
   warmPatterns,
 } from "./card.js";
-import { picturesIn, shownSoon } from "./loading.js";
-import { topBar } from "./upbar.js";
+import { shownSoon } from "./loading.js";
 import { HATS, HAT_GROUPS, hatById } from "./hats.js";
 import { FACES, FACE_GROUPS, faceById } from "./faces.js";
 import { EYES, EYE_GROUPS, eyeById } from "./eyes.js";
@@ -81,7 +79,7 @@ import { weaponName } from "./l4ddrules.js";
 import { NPC_GUNS, NPC_MELEE } from "./sbarms.js";
 import { npcSave, npcDel, npcList, npcName } from "./sbnpcs.js";
 import { cropPicture, cropFile } from "./picrop.js";
-import { yieldNow } from "./slices.js";
+import { yieldNow, idle } from "./slices.js";
 import { pxNow } from "./pxdom.js";
 import { putPage } from "./armpage.js";
 
@@ -402,6 +400,24 @@ const openFolds = new Set();
 let warming = false; // (Customize drawing its pages out of sight as it opens: warmUp)
 let warmed = ""; // (the page warmUp asked show for, as words)
 let showTurn = 0; // (a page that is still to go on the screen gives way to one asked for after it)
+/* the title's warm-up (main.js): Customize's first page, its big duck and its card, drawn out of sight as the window
+   draws them, at the sizes it shows them, so their pictures are made (and kept: pixel.js) before it's first opened.
+   Unseen (opacity 0, its own box: no window is open meanwhile) and gone once they're in */
+export function warmCustomize() {
+  if (document.querySelector(".win-armory")) return Promise.resolve();
+  const me = {
+      id: "me",
+      name: profile.name,
+      duck: profile.duck,
+      card: profile.card,
+      nameStyle: profile.nameStyle,
+    },
+    g = el(
+      `<div class="arm-ghost" aria-hidden="true" inert data-pxkeep><div class="win win-armory win-full"><button type="button" class="win-x">×</button><div class="armory"><div class="arm-menu"></div><div class="arm-stage"><div class="arm-duck"><span class="arm-pic">${duckSVG(profile.duck, { size: 220, title: profile.name })}</span></div><div class="arm-card">${cardHTML(me, { size: 52 })}</div><p class="hints arm-keys">${NAV_HINTS}</p></div></div></div></div>`,
+    );
+  document.body.prepend(g);
+  return shownSoon(g, 15000).then(() => g.remove());
+}
 /* opts.npc: one of my NPCs (sbnpcs.js) to dress instead of my duck (Sandbox's m window); the promise ends when it shuts */
 export function openCustomize(page = lastPage, opts = {}) {
   if (page === "duck") page = null; // (the old tab name)
@@ -415,6 +431,7 @@ export function openCustomize(page = lastPage, opts = {}) {
       cls: "win-armory win-full",
       cover: false, // (one loading screen as it opens, for every picture of every page: warmUp below)
       onOpen(w, close) {
+        w.setAttribute("data-pxkeep", ""); // (its pictures kept on the device: pixel.js)
         openFolds.clear();
         keyFor = null;
         unkeying = false;
@@ -1724,42 +1741,32 @@ export function openCustomize(page = lastPage, opts = {}) {
         stage();
         show(page);
         warmUp();
-        /* the owner's, Nov 20 20:46Z: "The customized menu shouldn't even have loading screens. Like maybe you load the
-           whole customization menu and that has a loading screen. And it loads everything you can select in it before
-           it opens rather than just certain menus". Every page is drawn once, out of sight, before the window shows
-           (a loading screen if that takes more than a moment): every tile's picture and the patterns' sheets are then
-           in, and a page comes up whole */
+        /* Customize opens at once (the owner's, Nov 21 00:40Z: "a very, very long time just watching that loading
+           screen"): the window shows as soon as its first page's pictures are in (its big duck and its card: made at
+           the title, main.js warmCustomize, and kept on the device, pixel.js). Every other page is then drawn out of
+           sight, one at a time in idle moments, so each one is whole when it's opened; a page opened before its turn
+           is made first (pxdom.js [data-pxlater]). In a game it shows at once (no loading ever comes there) */
         async function warmUp() {
-          /* (in a game no loading screen ever comes (the owner's, Nov 19 22:52Z): there it shows at once, its pages
-             drawn behind it) */
-          const back = w.closest(".win-back") || w,
-            inGame = document.body.dataset.screen === "game";
-          if (!inGame) back.classList.add("arm-warming");
-          /* the green line at the top shows how far it has got, never the black screen (the owner's, Nov 20 22:23Z: that
-             one is for maps, modes and votes): the patterns, each page's words, each page drawn, then its pictures */
-          const bar = topBar();
-          try {
-            await warmPages(bar);
-          } finally {
-            bar.done();
+          const back = w.closest(".win-back") || w;
+          if (document.body.dataset.screen !== "game") {
+            back.classList.add("arm-warming");
+            await shownSoon([duckBox, cardBox, menu], 1500);
             back.classList.remove("arm-warming");
           }
-        }
-        async function warmPages(bar) {
+          import("./duckparts.js").then((m) => m.warmParts()); // (every tile's parts on their way now: a page clicked early waits on nothing)
+          await warmPatterns(profile.card); // (card.js: the card page's patterns, each drawn once and kept)
           const folds = new Set(openFolds);
-          const pages = [];
-          await warmPatterns(profile.card, (f) => bar.set(0.03 + 0.12 * f)); // (card.js)
-          if (!w.isConnected) return;
-          /* each page's words, one page a slice, so the window never freezes while they're made (the owner's, Nov 20
-             22:23Z: "when I click customize, the game hangs up"). The page on the screen isn't touched */
           for (const r of rows()) {
-            if (!r || !w.isConnected) continue;
+            if (!r || !w.isConnected) return;
+            await idle();
+            while (w.isConnected && menu.querySelector("svg[data-pxwait]"))
+              await shownSoon(menu); // (the page on the screen first)
+            if (!w.isConnected) return;
             const was = lastPage;
             warming = true;
             warmed = "";
             try {
               show(r[0]);
-              pages.push(warmed);
             } catch {
             } finally {
               lastPage = was;
@@ -1767,38 +1774,19 @@ export function openCustomize(page = lastPage, opts = {}) {
               folds.forEach((f) => openFolds.add(f));
               warming = false;
             }
-            bar.set(0.15 + (0.15 * pages.length) / rows().length);
-            await yieldNow();
-          }
-          if (!w.isConnected) return;
-          /* then every page drawn out of sight, a page a slice, so every picture in them is made once now */
-          const box = document.createElement("div");
-          box.className = "arm-menu arm-warm";
-          box.inert = true;
-          box.style.width = menu.getBoundingClientRect().width + "px";
-          w.querySelector(".armory").append(box);
-          let put = 0;
-          for (const html of pages) {
-            if (!w.isConnected) return box.remove();
-            box.insertAdjacentHTML(
-              "beforeend",
-              html.replace(/<details\b/g, "<details open"),
-            ); // (what folds away too)
+            /* the page's words, drawn out of sight as the menu is (its own box, so its tiles are what the menu's
+               would be): its pictures made, then the box goes (they're kept) */
+            const box = document.createElement("div");
+            box.className = "arm-menu arm-warm";
+            box.inert = true;
+            box.setAttribute("data-pxlater", "");
+            box.style.width = menu.getBoundingClientRect().width + "px";
+            box.innerHTML = warmed.replace(/<details\b/g, "<details open"); // (what folds away too)
+            w.querySelector(".armory").append(box);
             pxNow();
-            bar.set(0.3 + (0.15 * ++put) / pages.length);
-            await yieldNow();
+            await shownSoon(box, 20000);
+            box.remove();
           }
-          let most = 1;
-          await Promise.all([
-            cardSheets(),
-            picturesIn(box, undefined, (n) => {
-              most = Math.max(most, n);
-              bar.set(0.45 + 0.55 * (1 - n / most));
-            }),
-            picturesIn(duckBox),
-            picturesIn(menu),
-          ]);
-          box.remove();
           loadSounds("game"); // (the specials' previews: each gun's own sound; after the pictures, so they don't share the line)
         }
       },

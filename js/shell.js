@@ -58,6 +58,7 @@ import { TEXT, getopt, lines } from "./textutils.js";
 import { MAN, PERMS_TAKE, PERMS_GIVE } from "./manual.js";
 import { helpPage, helpIndex, HELP_NAMES, isHelpName } from "./helppages.js";
 import { quackStats } from "./quackrules.js";
+import { cheatCmd } from "./cheats.js";
 import { dnStats } from "./duncerules.js";
 import { mgjStats } from "./mgjrules.js";
 import { vdStats, turnedDown } from "./vddrules.js";
@@ -1536,16 +1537,21 @@ const pingOf = (ctx, p) =>
         : p.ms + " ms";
 const allJumps = (st) =>
   Object.values(st || {}).reduce((a, m) => a + ((m && m.jumps) || 0), 0);
+/* "up 1:05, 3 players": how long the game has gone (0:00 in the lobby), for top, w and uptime */
+const upLine = (s) => {
+  const m =
+    s.startedAt && s.phase !== "lobby"
+      ? Math.floor((Date.now() - s.startedAt) / 60000)
+      : 0;
+  return `up ${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}, ${s.seat.length} players`;
+};
+const idle = (s) => ["lobby", "over"].includes(s.phase); // (no game going)
 function topLines(ctx) {
   const s = needRoom(ctx),
-    up =
-      s.startedAt && s.phase !== "lobby"
-        ? Math.floor((Date.now() - s.startedAt) / 60000)
-        : 0,
     J = s.jumps || {};
   const ids = [...s.seat].sort((a, b) => (J[b] || 0) - (J[a] || 0));
   return [
-    `top - ${new Date().toTimeString().slice(0, 8)} up ${Math.floor(up / 60)}:${String(up % 60).padStart(2, "0")}, ${s.seat.length} players, ${STAGE[s.phase] || "lobby"}`,
+    `top - ${new Date().toTimeString().slice(0, 8)} ${upLine(s)}, ${STAGE[s.phase] || "lobby"}`,
     "",
     table(
       [
@@ -2305,13 +2311,9 @@ const CMDS = {
   },
   w: (a, i, x) => {
     const s = needRoom(x.ctx),
-      up =
-        s.startedAt && s.phase !== "lobby"
-          ? Math.floor((Date.now() - s.startedAt) / 60000)
-          : 0,
       st = STAGE[s.phase] || "lobby";
     return [
-      ` ${new Date().toTimeString().slice(0, 8)} up ${Math.floor(up / 60)}:${String(up % 60).padStart(2, "0")}, ${s.seat.length} players, ${st}`,
+      ` ${new Date().toTimeString().slice(0, 8)} ${upLine(s)}, ${st}`,
       table([
         ["PLAYER", "PING", "WHAT"],
         ...s.seat.map((id) => {
@@ -2519,8 +2521,7 @@ const CMDS = {
   uptime: (a, i, x) => {
     const s = needRoom(x.ctx);
     if (!s.startedAt || s.phase === "lobby") return "The game hasn't started.";
-    const m = Math.floor((Date.now() - s.startedAt) / 60000);
-    return `up ${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}, ${s.seat.length} players${isSb(s) ? "" : `, round ${s.round + 1}`}`; // (Sandbox has no rounds)
+    return `${upLine(s)}${isSb(s) ? "" : `, round ${s.round + 1}`}`; // (Sandbox has no rounds)
   },
   ps: (args, i, x) =>
     psLines(
@@ -2570,10 +2571,10 @@ const CMDS = {
   ducksay: (args, stdin) =>
     ducksay(args.length ? args.join(" ") : stdin.trim() || "Quack."),
   fortune: () => FORTUNES[Math.floor(Math.random() * FORTUNES.length)],
+  cheat: (args, i, x) => cheatCmd(args, x, { needMay, who, fail }),
   skip: (args, i, x) => {
     const s = needMay(x, "canskip", "skip");
-    if (["lobby", "over"].includes(s.phase))
-      fail("✗ skip works during a game.");
+    if (idle(s)) fail("✗ skip works during a game.");
     if (s.options.mode === "hang")
       fail(
         "✗ skip: Hangout has nothing to skip. The pause menu takes everyone back to the lobby.",
@@ -2622,7 +2623,7 @@ const CMDS = {
     needSudo(x, "map");
     if (s.options.mode === "hang")
       fail("✗ map: Hangout is always in Duck Cabin.");
-    if (!["lobby", "over"].includes(s.phase)) fail("✗ map: in the lobby.");
+    if (!idle(s)) fail("✗ map: in the lobby.");
     x.ctx.room.send({ t: "options", options: { map: m[0] } });
     return `Map: ${m[1]}.`;
   },
@@ -2644,14 +2645,13 @@ const CMDS = {
       );
     if (!m) fail(`✗ mode: no game type ${args.join(" ")} (mode lists them)`);
     needSudo(x, "mode");
-    if (!["lobby", "over"].includes(s.phase)) fail("✗ mode: in the lobby.");
+    if (!idle(s)) fail("✗ mode: in the lobby.");
     x.ctx.room.send({ t: "options", options: { mode: m.id } });
     return `Game: ${m.name}.`;
   },
   start: (a, i, x) => {
     const s = needSudo(x, "start");
-    if (!["lobby", "over"].includes(s.phase))
-      fail("✗ start: the game is already going.");
+    if (!idle(s)) fail("✗ start: the game is already going.");
     x.ctx.room.send({ t: "start" });
     return "Starting…";
   },

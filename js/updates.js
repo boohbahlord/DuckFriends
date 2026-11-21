@@ -9,6 +9,25 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v201",
+    version: 201,
+    date: "Nov 20, 2026",
+    title: "Smoother, and a line to read",
+    news: [
+      "For Survival: far fewer stutters (sudden slow frames down by about 40%).",
+      "Every loading screen shows a line to read while it loads.",
+    ],
+  },
+  {
+    id: "v200",
+    version: 200,
+    date: "Nov 20, 2026",
+    title: "Customize at once",
+    news: [
+      "For Customize: it opens at once, with no loading line, and every page is ready when you open it.",
+    ],
+  },
+  {
     id: "v199",
     version: 199,
     date: "Nov 20, 2026",
