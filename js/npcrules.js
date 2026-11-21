@@ -28,14 +28,6 @@ export function sees(o, t, z = heightAt(o.x, o.y), floor = 60) {
    ones in a's cell of a grid of cw x ch world px (made once, where they stood) and in the 8 cells round it. passes: how
    many times over them all; most: how many others each one is kept apart from (Sandbox's NPCs: a crowd costs little).
    Quacky Zombies' zombies and Sandbox's NPCs; each push is the caller's own (fn(a, b)) */
-/* two NPCs too close: each one's share of the push apart. One with Speed 0 never moves (the owner's, Nov 20 17:25Z: "Spawns
-   or respawns dont move off their position anymore to make room, since their movement being zero means zero"), so the
-   other takes all of it; both 0: neither */
-export const stillShares = (A, B) => {
-  const a = A.sv === 0 ? 0 : 1,
-    b = B.sv === 0 ? 0 : 1;
-  return [a && (b ? 1 : 2), b && (a ? 1 : 2)];
-};
 export function nearPairs(live, cw, ch, fn, passes = 1, most = Infinity) {
   const grid = new Map(),
     key = (cx, cy) => cx * 100000 + cy;

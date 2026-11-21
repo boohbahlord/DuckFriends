@@ -36,6 +36,7 @@ import {
   setHTML,
   toast,
   ducksLayer,
+  flag,
 } from "./ui.js";
 import { activeRoom } from "./net.js";
 import { sprintStep } from "./stamina.js";
@@ -534,7 +535,7 @@ import {
   vibrate,
   VIB,
   hitPx,
-  wobble,
+  adrenFx,
   HIT,
   again,
 } from "./fxmotion.js";
@@ -2033,22 +2034,23 @@ function drawDucks(now = clockNow()) {
         pic.classList.add("bob");
       }
     } // Jack in a Box bobs on his spring as he jumps
-    d.classList.toggle("sprint", mine ? sprinting && moving : !!pos.sp);
-    d.classList.toggle("adren", adren(s, id, now)); // (an adrenaline shot: it jitters, css/app.css)
-    d.classList.toggle(
+    flag(d, "sprint", !!(mine ? sprinting && moving : pos.sp));
+    flag(d, "adren", !!adren(s, id, now)); // (an adrenaline shot: it jitters, css/app.css)
+    flag(
+      d,
       "dodge",
-      isL4dd(s) ? dodging(s, pos, now) : dodges(s, pos, now),
+      !!(isL4dd(s) ? dodging(s, pos, now) : dodges(s, pos, now)),
     ); // (see-through while a jump makes it safe: Dead Ducks Arcade's, in every mode now, the owner's, Nov 18 16:50Z)
-    d.classList.toggle("air", z > 1 && !seated(s, id)); // (sitting on a chair isn't flying)
-    d.classList.toggle("left", d._face < 0);
+    flag(d, "air", z > 1 && !seated(s, id)); // (sitting on a chair isn't flying)
+    flag(d, "left", d._face < 0);
     const dn0 = !s.done[id];
     if (d._doneH !== dn0) {
       d._doneH = dn0;
       d.querySelector(".gduck-done").hidden = dn0;
     } // (set only when it changes: set again every frame, the page restyled every duck every frame)
-    d.classList.toggle("idle", !!p.idle); // gone quiet: Zs float up
+    flag(d, "idle", !!p.idle); // gone quiet: Zs float up
     const jetOnNow = !!(jet && (id === R.me ? me : s.pos[id] || {}).jt);
-    d.classList.toggle("jet-on", jetOnNow); // (the jetpack's jets: their flames)
+    flag(d, "jet-on", jetOnNow); // (the jetpack's jets: their flames)
     if (jetOnNow !== !!d._jetS) {
       d._jetS = jetOnNow;
       sfx.jet(id, jetOnNow, heard(id)); // (… and their roar: sound.js)
@@ -2902,20 +2904,19 @@ function drawFx(board, fxl, hang, size, s, now) {
   } else fxOrigin(0, 0);
   fxFrame(pt);
   /* my screen shakes as I fire (fxmotion.js); sprinting blurs the map a little (css/app.css: fades in and out, never
-     stacks); my adrenaline shot taken: a fast wobble */
+     stacks); my adrenaline shot taken: a fast wobble, then a small steady shake and the blurred border while it lasts */
   const [kx, ky] = shakeNow(pt),
     sk = kx || ky ? `${kx.toFixed(1)}px ${ky.toFixed(1)}px` : "";
   if (board._sk !== sk) {
     board._sk = sk;
     board.style.translate = sk;
   }
+  const ad = adren(s, R.me, now);
+  adrenFx(ad, pt);
   document.documentElement.classList.toggle(
     "sprint-blur",
-    !!(me && sprinting && moving && onBoardPhase()),
+    !!(me && ((sprinting && moving) || ad) && onBoardPhase()),
   );
-  const ad = adren(s, R.me, now);
-  if (ad && !board._ad) wobble(pt);
-  board._ad = ad;
 }
 /* Dead Ducks Arcade: duck id on an adrenaline shot (or the Speed Boost drop) now */
 const adren = (s, id, now) =>
