@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v224",
+    version: 224,
+    date: "Nov 21, 2026",
+    title: "The plank fixed, a roomier phone screen",
+    news: [
+      "For Dead Ducks Arcade: the plank on Downpour no longer covers your duck while you stand on it, at either end.",
+      "On a phone held upright, the screen starts at the new normal size (what 80% used to be), so more fits.",
+      "On a phone held sideways: nothing hides under the rounded corners, the lobby's buttons sit lower, and you see a little more of the map.",
+      "The top buttons stay over the music bar when you change the UI scale.",
+    ],
+  },
+  {
     id: "v223",
     version: 223,
     date: "Nov 21, 2026",

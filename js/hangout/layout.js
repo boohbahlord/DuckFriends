@@ -1400,10 +1400,27 @@ const BAND = 40,
 /* the depth of someone on deck d at y: in front of it, and among themselves by y (the 8 steps after its front) */
 export const deckKey = (d, y) =>
   d.key + 1 + Math.min(1, Math.max(0, (y - d.y0) / (d.y1 - d.y0))) * 7;
+/* a slope laid over deck d where feet at (x, y, z) stand (Downpour's plank, whose ends rest on the canopy and the car's
+   roof): drawn over that deck, so whoever stands on it or just past its ends is drawn over it too, never under it (the owner's video,
+   Nov 21 15:44 ET: the plank covered my duck at both of its ends) */
+const SLOPE_SIDE = 24; // (just past a slope's end, beside where it rests: a duck there still overlaps its drawing)
+function slopeOn(d, x, y, z) {
+  for (const s of allDecks()) {
+    if (s === d || !s.hAt || s.key <= d.key) continue;
+    const sx = Math.min(s.x1 - 1, Math.max(s.x0 + 1, x));
+    if (
+      Math.abs(sx - x) <= SLOPE_SIDE &&
+      onDeck(s, sx, y) &&
+      Math.abs(deckH(s, sx, y) - z) <= STEP
+    )
+      return s;
+  }
+  return null;
+}
 export function sortY(x, y, z) {
   if (variant === "l4gs" || extraDecks().length) {
     const d = deckAt(x, y, z);
-    if (d) return deckKey(d, y); // (on a roof, or a Sandbox floor: in front of it, the same way as on a bed)
+    if (d) return deckKey(slopeOn(d, x, y, z) || d, y); // (on a roof, or a Sandbox floor: in front of it, the same way as on a bed)
     if (variant === "l4gs") return y;
   }
   const pl = PLATS.length && platAt(x, y);
