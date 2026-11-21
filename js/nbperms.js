@@ -10,7 +10,7 @@
      "@o" (everyone) or "@g:<group>" (a group's members).
    Both are kept with the Sandbox's start (s.nbp.at = s.startedAt): a new Sandbox starts with none, and nobody's rights are
    ever kept on a device. Nobody means the host and sudo too: canhomes (sudo has it) only shows the names. */
-import { groupsOf, may } from "./rules.js";
+import { groupsOf, may } from "./roomrules.js";
 import { isSb } from "./sandboxrules.js";
 
 const NB_NAMES = 300; // (names one folder shows the room)
