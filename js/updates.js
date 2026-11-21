@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v202",
+    version: 202,
+    date: "Nov 20, 2026",
+    title: "Every color yours",
+    news: [
+      "For Customize: every color on every hat and outfit can be changed, the firefighter coat's stripes and trim included.",
+    ],
+  },
+  {
     id: "v201",
     version: 201,
     date: "Nov 20, 2026",
