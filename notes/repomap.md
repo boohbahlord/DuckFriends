@@ -19,6 +19,8 @@ brackets.js 474 Bicker Brackets: what the screen shows
 brainbuild.js 332 Sandbox: M's Brain builder
 card.js 424 the player card
 chat.js 1601 text chat and the command line
+cheatflag.js 16 a game with test commands used counts nothing
+cheats.js 73 test commands: cheat round N, cheat give WEAPON
 claw.js 36 a claw's marks: three white slashes where a
 clock.js 5 one clock for the room
 collage.js 101 Shelter Sky & Null
@@ -69,9 +71,9 @@ hpmeter.js 307 HP meters and the little "+1 HP" over
 invisible.js 11 Who is invisible right now :
 jetart.js 39 the jetpack's pictures
 jetpack.js 33 the jetpack
-jumps.js 45 the jump counter
+jumps.js 48 the jump counter
 keynav.js 204 menus by keyboard
-l4dd.js 3315 Quacky Zombies on every screen
+l4dd.js 3314 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 203 Dead Ducks Arcade's Angel machine on every screen
 l4ddart.js 756 Quacky Zombies' pictures
@@ -92,14 +94,14 @@ langname.js 5 the name of Sandbox's number language, in one
 laserart.js 106 the laser gun, drawn
 laserfx.js 134 the Laser Rifle on the screen
 later.js 66 the rest of the game, once the first
-loading.js 345 the start: a slow fade to black over
-loadlines.js 5 a line on the black loading screen
+loading.js 397 the start: a slow fade to black over
+loadlines.js 590 the lines under the loading bar, one for
 lobby.js 599 the lobby, laid out like Halo: Reach's custom
 lobbysettings.js 73 Lobby Settings
 looks.js 111 the room's duck-look settings
 looksrules.js 60 the duck-look settings' rules
 main.js 163 the start: settings on the page, the background,
-manual.js 210 the command line's manual: man <command>
+manual.js 212 the command line's manual: man <command>
 maps.js 1116 maps: the world behind the board
 merchantlines.js 81 what the merchants say
 merchants.js 376 the merchants
@@ -212,9 +214,9 @@ triviarules.js 450 the rules of Trivia
 ui.js 342 small helpers every screen uses
 umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
-unlocks.js 359 things you unlock
+unlocks.js 372 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 2827 Updates
+updates.js 2837 Updates
 vdd.js 198 Valentine's Duck Date: what the screen shows
 vddrules.js 521 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
@@ -223,7 +225,7 @@ who.js 3 who this player is beyond this tab
 wounds.js 295 the wounds a hit leaves
 
 ## js/hangout/
-activities.js 22 every Hangout activity, so the rules and the
+activities.js 23 every Hangout activity, so the rules and the
 ambience.js 112 the air: the wind round the cabin, the
 art.js 3051 Duck Cabin: the drawings
 beachball.js 365 the beach ball
