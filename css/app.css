@@ -13422,8 +13422,14 @@ html.moving .hp.hang-shimmer {
   overscroll-behavior: contain;
   padding-right: 0.3rem;
 } /* I want a long version's info to scroll inside the window, so the title and the arrows stay put */
-.up-body > .up-h:first-child {
+.up-body > .up-h:first-child,
+.up-body > .up-vh:first-child {
   margin-top: 0;
+}
+.up-vh {
+  margin: 1rem 0 0.1rem;
+  font-size: calc(1.05rem * var(--ts));
+  font-weight: 700;
 }
 .up-h {
   margin: 0.7rem 0 0.25rem;

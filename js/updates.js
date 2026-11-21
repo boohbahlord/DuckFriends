@@ -25,6 +25,8 @@ export const UPDATES = [
       "Colors: a Skin colors list, drawn flat with no shine, and a Metallic colors list, for the duck and for clothes and hats.",
       "Ducks jump 0.3 of the gas station roof's height.",
       "Loading screens are shorter, and the screen shake moves only the world: the bars and the round stay still.",
+      "Behind the scenes: the hotbar runs on one shared module in every mode, so picking weapons and pressing R work the same everywhere.",
+      "Behind the scenes: deaths, ghosts, Duck Cabin and the board's Justin follow each mode's own settings instead of special cases, so new modes work without new code.",
     ],
   },
   {
@@ -37,6 +39,7 @@ export const UPDATES = [
       "For Survival: a duck that bleeds out walks as a ghost instead of watching others. Zombies and gunmen ignore it, and the defibrillator still brings it back where it fell.",
       "The jetpack is gone.",
       "For Dead Ducks Arcade: Change starting round no longer covers the chat or the players list.",
+      "Behind the scenes: walking and jumping each live in one shared module for every mode, so the jump height is one number for the whole game.",
     ],
   },
   {
@@ -2978,28 +2981,45 @@ export function openUpdates() {
   markSeen();
   return openWindow(
     `<h2 class="up-title">${rainbowHTML("Updates")}</h2>
-    <div class="up-nav"><button type="button" class="btn ghost up-arrow" data-d="1" aria-label="Older update">◀</button>
+    <div class="up-nav"><button type="button" class="btn ghost up-arrow" data-d="1" aria-label="Older day">◀</button>
       <div class="up-head"><b class="up-ver"></b><span class="up-date"></span><span class="up-name"></span></div>
-      <button type="button" class="btn ghost up-arrow" data-d="-1" aria-label="Newer update">▶</button></div>
+      <button type="button" class="btn ghost up-arrow" data-d="-1" aria-label="Newer day">▶</button></div>
     <div class="up-body"></div><p class="up-count dim"></p>
     <p class="up-count"><button type="button" class="linkbtn" data-a="upcoming">Upcoming Updates and Release Dates</button></p>${reportLinkHTML()}`,
     {
       cls: "win-updates",
       onOpen(w) {
+        /* one page a day (the owner's: "make it to where it shows the day ... I can't scroll through all of this"):
+           every version of that day on it, newest first */
+        const days = [];
+        for (const u of UPDATES) {
+          const d = days[days.length - 1];
+          if (d && d.date === u.date) d.list.push(u);
+          else days.push({ date: u.date, list: [u] });
+        }
         let i = 0;
         const show = (n) => {
-          i = Math.max(0, Math.min(UPDATES.length - 1, n));
-          const u = UPDATES[i];
-          w.querySelector(".up-ver").textContent = `Version ${u.version}`;
-          w.querySelector(".up-date").textContent = u.date;
-          w.querySelector(".up-name").textContent = u.title;
+          i = Math.max(0, Math.min(days.length - 1, n));
+          const d = days[i],
+            a = d.list[d.list.length - 1].version,
+            b = d.list[0].version;
+          w.querySelector(".up-ver").textContent = d.date;
+          w.querySelector(".up-date").textContent =
+            a === b ? `Version ${a}` : `Versions ${a} to ${b}`;
+          w.querySelector(".up-name").textContent = "";
           const body = w.querySelector(".up-body");
-          body.innerHTML =
-            list("new", "New", u.news) + list("fix", "Fixed", u.fixed);
-          body.scrollTop = 0; // each version starts at its top
+          body.innerHTML = d.list
+            .map(
+              (u) =>
+                `<h3 class="up-vh">Version ${u.version}: ${esc(u.title)}</h3>` +
+                list("new", "New", u.news) +
+                list("fix", "Fixed", u.fixed),
+            )
+            .join("");
+          body.scrollTop = 0; // each day starts at its top
           w.querySelector(".up-count").textContent =
-            `${i + 1} of ${UPDATES.length}`;
-          w.querySelector('[data-d="1"]').disabled = i === UPDATES.length - 1;
+            `Day ${i + 1} of ${days.length}`;
+          w.querySelector('[data-d="1"]').disabled = i === days.length - 1;
           w.querySelector('[data-d="-1"]').disabled = i === 0;
         };
         w.querySelectorAll(".up-arrow").forEach(
