@@ -200,7 +200,7 @@ sound.js 937 the game's sounds: real recordings, played from small
 specials.js 945 Specials
 spectate.js 97 Survival: watching the others once my duck is
 splash.js 71 the start screen: your duck on a cloud,
-sprintblur.js 40 the sprint's blurred border of my screen (css/app.css
+sprintblur.js 57 the sprint's blurred border of my screen (css/app.css
 stamina.js 41 my sprint's stamina, in every mode
 stats.js 241 stats: a player's stat box and the View
 store.js 262 what this device remembers
