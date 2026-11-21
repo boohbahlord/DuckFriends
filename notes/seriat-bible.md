@@ -283,7 +283,7 @@ Built (help file `help/brains/move.txt`, example `help/examples/weaver.se`):
 **[open]** whether the owner wants the arrows relative to the NPC's way (left/right of travel) instead of the screen;
 built as the screen (`/\` is always up).
 
-## 19. Shuffle and escape (owner, Nov 21 16:29Z and 16:34Z; settled, NOT built yet: plan step 5)
+## 19. Shuffle and escape (owner, Nov 21 16:29Z, 16:34Z, confirmed 16:38Z; settled, NOT built yet: plan step 5)
 Shuffle = the bag: each value plays once, in a random order, then they all shuffle again.
 | Write | Means |
 |---|---|
