@@ -4747,24 +4747,27 @@ function wounded(s, id, w, now, crit) {
   const P = s.players[id];
   if (!pwOn(s) || !P) return;
   if (normalGame(s) && shielded(s, id, now)) return; // (spawn protection: no wounds either)
-  if (crit && P.dead) {
+  const head = crit && P.dead;
+  if (head) {
     pwAdd(s, id, ["x0"], now, true);
     holdDown(s, id, now, CRIT_DOWN);
-    const p = s.pos[id] || {};
-    s.fxN = (s.fxN || 0) + 1;
-    s.fx = [
-      ...(s.fx || []).slice(-19),
-      {
-        n: s.fxN,
-        kind: "pcrit",
-        who: [id],
-        t: now,
-        x: p.x,
-        y: p.y,
-        ...(isHang(s) ? { hz: Math.round(+p.z || 0) } : {}),
-      },
-    ];
   } else pwHit(s, id, w, now, !!P.dead);
+  if (!crit) return;
+  const p = s.pos[id] || {};
+  s.fxN = (s.fxN || 0) + 1;
+  s.fx = [
+    ...(s.fx || []).slice(-19),
+    {
+      n: s.fxN,
+      kind: "pcrit",
+      who: [id],
+      t: now,
+      x: p.x,
+      y: p.y,
+      ...(head ? {} : { m: 1 }), // (a crit that didn't put it down: only the small CRIT, Adam's, Nov 21 18:31Z)
+      ...(isHang(s) ? { hz: Math.round(+p.z || 0) } : {}),
+    },
+  ];
 }
 /* a vote passes once enough say yes, and fails once it can't pass any more */
 function settleVote(s, now) {

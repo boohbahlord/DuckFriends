@@ -172,7 +172,7 @@ export function justinHit(s, by, now, log, w) {
       x: r3(at.x),
       y: r3(at.y),
     },
-    ...(crit && dies
+    ...(crit
       ? [
           {
             n: ++s.fxN,
@@ -181,6 +181,7 @@ export function justinHit(s, by, now, log, w) {
             t: now,
             x: r3(at.x),
             y: r3(at.y),
+            ...(dies ? {} : { m: 1 }), // (m: only the small CRIT, he's still up)
           },
         ]
       : []),

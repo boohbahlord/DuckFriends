@@ -2746,7 +2746,7 @@ function merchantShot(s, by, x, y, now, w, rx, ry, from) {
   if (from && slabBetween(...from, m.x, m.y, heightAt(m.x, m.y))) return false;
   const n = Math.random() < critOf(w) ? 2 : 1, // (a crit doubles it)
     head = n > 1 && m.hp <= n; // (a crit that kills him: his head bursts as a zombie's does, game.js draws it)
-  if (head)
+  if (n > 1)
     addFx(s, {
       kind: "l4crit",
       by,
@@ -2754,7 +2754,8 @@ function merchantShot(s, by, x, y, now, w, rx, ry, from) {
       t: now,
       x: Math.round(m.x),
       y: Math.round(m.y),
-    });
+      ...(head ? {} : { m: 1 }),
+    }); // (m: only the CRIT mark)
   merchantHurt(s, by, n, now, w, head ? "crit" : "");
   return true;
 }
@@ -3240,7 +3241,7 @@ function strike(s, z, dmg, crit, by, w = "", now = 0) {
   z.hp = all ? 0 : hpHurt(z.hp, dmg);
   const head = !!crit && z.hp <= 0;
   if (w) wound(s, z, w, crit);
-  if (head)
+  if (crit)
     addFx(s, {
       kind: "l4crit",
       by,
@@ -3249,7 +3250,8 @@ function strike(s, z, dmg, crit, by, w = "", now = 0) {
       t: now,
       x: Math.round(z.x),
       y: Math.round(z.y),
-    });
+      ...(head ? {} : { m: 1 }),
+    }); // (every crit shows a small CRIT; m: only the mark, it didn't kill: Adam, Nov 21 18:31Z)
   addPts(s, by, (head ? PTS.HEAD : PTS.HIT * took) * (on.double ? 2 : 1));
   if (z.hp <= 0) {
     /* the zombies each duck killed this game (the overall stats' Zombies killed: l4dd.js record) */
@@ -3814,6 +3816,16 @@ function wildHurt(
   /* a crit (guns.js critOf, a weapon's chance as on any duck) doubles it, and blows his head off if it puts him down */
   const crit = Math.random() < critOf(w);
   wildDown(s, by, now, w, false, crit ? ["x0"] : null, crit ? 2 : 1);
+  if (crit)
+    addFx(s, {
+      kind: "l4crit",
+      by,
+      who: [],
+      t: now,
+      x: Math.round(px),
+      y: Math.round(py),
+      m: 1,
+    }); // (the small CRIT over him; his head, if it put him down, is his gore's x0)
   return true;
 }
 /* Justin out there takes a hit of dmg from duck by with weapon w (all: every HP he has, a blast); codes: the gore he's
