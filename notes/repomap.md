@@ -28,7 +28,7 @@ collage.js 101 Shelter Sky & Null
 color.js 101 choosing a color
 corners.js 94 full screen
 court.js 229 Lawyering: what the screen shows
-customize.js 1803 Customize: the Armory
+customize.js 1790 Customize: the Armory
 datboi.js 115 here come dat boi
 democracy.js 243 Democracy of Ducklings:
 dock.js 73 the docks: where Notes and the chat open
@@ -49,7 +49,7 @@ friends.js 236 friends
 front.js 109 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 214 how a held weapon and the screen move
-game.js 8816 the game screen
+game.js 8691 the game screen
 gamedefaults.js 43 the game's own numbers, for every mode
 gameready.js 47 what the game's loading screen waits for
 gamesettings.js 1755 Game Settings: the whole screen, like Customize
@@ -62,9 +62,9 @@ gunart.js 448 every weapon, drawn: one drawing for every mode,
 gunmen.js 110 the gunmen's looks
 gunmenrules.js 1140 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen
-guns.js 522 every weapon's numbers: one sheet for every mode
+guns.js 516 every weapon's numbers: one sheet for every mode
 hats.js 1073 hats
-heights.js 50 a shot's height, Doom's way
+heights.js 49 a shot's height, Doom's way
 helppages.js 1497 the command line's Help pages: help lists them;
 hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
@@ -74,23 +74,21 @@ hpmath.js 23 HP in tenths
 hpmeter.js 327 HP meters and the little "+1 HP" over
 invisible.js 11 Who is invisible right now :
 itemtone.js 61 the colors an outfit or a hat draws
-jetart.js 39 the jetpack's pictures
-jetpack.js 33 the jetpack
 jumps.js 48 the jump counter
 keynav.js 204 menus by keyboard
 l4dd.js 3337 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine on every screen
 l4ddart.js 623 Quacky Zombies' pictures
-l4ddbar.js 311 Quacky Zombies' weapons bar
+l4ddbar.js 307 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and the roof's flare,
-l4ddcatalog.js 199 Quacky Zombies: the Butler's Items tab
+l4ddcatalog.js 196 Quacky Zombies: the Butler's Items tab
 l4dddrops.js 63 Quacky Zombies' drops, drawn
 l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box on every screen
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 5006 the rules of Quacky Zombies
+l4ddrules.js 4978 the rules of Quacky Zombies
 l4ddsfx.js 513 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the zombies far from
 langname.js 5 the name of Sandbox's number language, in one
@@ -134,7 +132,7 @@ online.js 975 online rooms
 outfits.js 1141 outfits
 outlines.js 353 the outlines
 perf.js 92 the frame-rate readout
-phonepad.js 132 phones: the aim-and-attack stick and the jump button
+phonepad.js 129 phones: the aim-and-attack stick and the jump button
 picrop.js 268 cropping a picture: every picture put into the
 pixel.js 724 the pixel look
 pixelpalette.js 192 the pixel look's colors
@@ -155,7 +153,7 @@ random.js 9 the two random helpers every mode's rules share:
 report.js 114 Report Bug or Suggest Ideas
 rooms.js 256 Play: create a room, and the rooms online
 router.js 112 screens
-rules.js 6244 the rules of Agree or Disagree
+rules.js 6225 the rules of Agree or Disagree
 sandbox.js 1359 Sandbox: the key windows
 sandboxrules.js 2059 Sandbox: which map it plays on, and who
 sbarms.js 124 Sandbox: a made NPC's weapons in a fight
@@ -195,7 +193,7 @@ secret.js 79 secrets between two browsers
 seriatbible.js 108 The Seriat bible in the game (the owner's,
 seriattheme.js 63 Seriat's and the command line's look: Nous Within
 settings.js 298 Settings
-sfxlist.js 164 the sound files
+sfxlist.js 161 the sound files
 shared.js 497 Sandbox Phase 7: Shared, the game modes and
 shell.js 1120 the command line: a small bash
 shellcmdfiles.js 583 the files and folders commands (a pure move
@@ -206,7 +204,7 @@ shellfs.js 846 the shell's files and what every command leans
 shellpeople.js 220 the people, the room and the game's helpers
 shellstats.js 244 the stats and forgame commands' helpers (a pure
 slices.js 31 long work cut into slices
-sound.js 935 the game's sounds: real recordings, played from small
+sound.js 915 the game's sounds: real recordings, played from small
 specials.js 858 Specials
 spectate.js 98 Survival: watching the others once my duck is
 splash.js 71 the start screen: your duck on a cloud,
@@ -288,7 +286,7 @@ stationmap.js 1092 Dead Ducks Arcade's second map: the gas station,
 trampoline.js 141 the trampoline
 tv.js 117 the TV: seven channels, the next one with
 water.js 442 the pool: ducks in the water, ripples and
-world.js 1786 Hangout on the screen: the camera, the ground,
+world.js 1753 Hangout on the screen: the camera, the ground,
 
 ## js/pxm/
 board-light.js 7 the menus' background in the light, as pixel

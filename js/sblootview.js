@@ -36,8 +36,8 @@ export const nameOf = (w) =>
 /* the categories an orb can pick from here: the Customize groups on the board and Duck Cabin; the weapons and the
    zombies' drops on Dead Ducks Arcade's maps */
 /* never in a loot list on the zombie maps: Survival's defibrillator (nobody dies for good in Sandbox), Safe Keeping (never
-   used by hand), and the jet pack ("remove jet pack from the whole game") */
-const NOT_LOOT = new Set(["defib", "safekeep", "jetpack"]);
+   used by hand) */
+const NOT_LOOT = new Set(["defib", "safekeep"]);
 export function lootCats(s) {
   const drops = Object.keys(SB_DROPS).filter((w) => lootOk(s, w)),
     cats = drops.length

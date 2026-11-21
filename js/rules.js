@@ -220,7 +220,6 @@ import {
   NADE_GROW,
 } from "./guns.js";
 import { l4Zups, l4SetHp } from "./zombies.js";
-import { JET } from "./jetpack.js";
 import { hOk, hLock, sameFloorAhead, floorLock } from "./heights.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
@@ -1205,11 +1204,6 @@ export const KB_MS = 380,
   KB_FAR = 2.4,
   KB_HOP = 0.3,
   KB_LAND = 110; // (KB_LAND: ms until the swing gets there; the duck falls then)
-/* may this duck fly? Never: the Jetpack is gone from the whole game (the owner's, Nov 18 12:19Z: "remove jet pack from
-   the whole game"), the special, its unlock and Dead Ducks Arcade's item alike */
-function canFly() {
-  return false;
-}
 const EFFECTS = [
   "zap",
   "flames",
@@ -2190,22 +2184,12 @@ function reduceStep(state, a, now) {
               ...(j && +a.tb > 0 ? { tb: Math.min(3.5, +a.tb) } : {}),
             }
           : {}),
-        ...(a.jf && canFly(s, a.id, now)
-          ? {
-              jf: 1,
-              ...(a.jt ? { jt: 1 } : {}),
-              ...(a.fly ? { fly: 1 } : {}),
-              ...(isHang(s)
-                ? {}
-                : { fz: Math.max(0, Math.min(JET.TOP, +a.fz || 0)) }),
-            }
-          : {}),
         ...(was &&
         was.kb &&
         now - was.kb.t < (was.kb.l ?? KB_LAND) + (was.kb.ms || KB_MS)
           ? { kb: was.kb }
           : {}),
-      }; // q: squashed against l/r/u/d; sp: sprinting; tb: a trampoline bounce's height; jf: flying with the jetpack (jt: its jets on, fly: high enough that a hit misses, fz: its height on the boards)
+      }; // q: squashed against l/r/u/d; sp: sprinting; tb: a trampoline bounce's height
       quackMoved(s, a.id); // (Who is the Quack?: first onto the Quack's tile)
       if (me.dead && (x !== was.x || y !== was.y)) {
         delete me.dead;
@@ -4165,11 +4149,8 @@ function moveShots(s, now) {
    as every duck's bullets are (the grenade launcher's grenade keeps its own) */
 const gunSpeed = (w) =>
   (ARMS[w].speed / BOARD_PX) * (w === "glauncher" ? 1 : FASTER);
-/* a duck's height for a shot (heights.js): in Hangout and Quacky Zombies its feet's (world px); on the boards 0, or
-   flying, its jetpack's */
-const duckH = (s, p) =>
-  isHang(s) ? +p.z || 0 : p.jf ? (+p.fz || 0) * DUCK_PX : 0;
-const DUCK_PX = 64;
+/* a duck's height for a shot (heights.js): in Hangout and Quacky Zombies its feet's (world px); on the boards 0 */
+const duckH = (s, p) => (isHang(s) ? +p.z || 0 : 0);
 /* Doom's same floor first, as in Dead Ducks Arcade (heights.js sameFloorAhead, the one rule for every mode): a duck (or,
    in Hangout, Justin or the shadow duck) on my floor in the line of my shot keeps the shot on my floor: { lh }, else {}
    (it goes to the first target at any height). Measured in duck lengths; in Hangout the cabin's walls stop the look */
