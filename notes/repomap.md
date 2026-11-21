@@ -28,11 +28,11 @@ collage.js 101 Shelter Sky & Null
 color.js 101 choosing a color
 corners.js 94 full screen
 court.js 229 Lawyering: what the screen shows
-customize.js 1803 Customize: the Armory
+customize.js 1798 Customize: the Armory
 datboi.js 115 here come dat boi
 democracy.js 243 Democracy of Ducklings:
 dock.js 73 the docks: where Notes and the chat open
-duck.js 728 the rubber duck avatar
+duck.js 751 the rubber duck avatar
 duckparts.js 592 the ducks made from pixel parts
 ducksheets.js 2 made by tools/duck-parts.cjs:
 duel.js 120 the cloud duel: two ducks share the cloud,
@@ -144,7 +144,7 @@ powerart.js 377 Dead Ducks Arcade: the power box and the
 pxa.js 341 made by tools/pixel-art.cjs:
 pxbake.js 627 a map's pictures made into pixels once, instead
 pxcard.js 259 the player cards' pattern motifs as pixel files:
-pxdom.js 741 the pixel look for drawings already on the
+pxdom.js 754 the pixel look for drawings already on the
 pxmap.js 45 a map as pixel files
 pxpic.js 22 the maps that have a picture file :
 pxtext.js 263 emoji and tooltips in the pixel look
