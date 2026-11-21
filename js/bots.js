@@ -114,6 +114,7 @@ import {
 import { TV_BANK } from "./triviabank.js";
 import { SPRINT as GAME_SPRINT } from "./gamedefaults.js";
 import { W, H, heightAt, standable, STEP } from "./hangout/layout.js";
+import { spotIn } from "./walkgrid.js";
 import { zombiesOf, wayTo, clearShot } from "./zombies.js";
 import { isSurv } from "./survrules.js";
 import { WANDER } from "./hangout/justin.js";
@@ -1324,19 +1325,18 @@ function wanderSpot(id, now, x, y) {
   let w = wander.get(id);
   if (w && now <= w.until)
     return Math.hypot(w.x - x, w.y - y) < 90 ? { ...w, rest: true } : w;
-  w = null;
-  for (let i = 0; i < 24 && !w; i++) {
-    const tx = Math.random() * W,
-      ty = Math.random() * H;
-    if (playable(tx, ty) && standable(tx, ty, heightAt(tx, ty), STEP))
-      w = {
-        x: tx,
-        y: ty,
-        until:
-          now + (WANDER[0] + Math.random() * (WANDER[1] - WANDER[0])) * 1000,
-      };
-  }
-  if (w) wander.set(id, w);
+  const p = spotIn(
+    Math.random,
+    (tx, ty) => playable(tx, ty) && standable(tx, ty, heightAt(tx, ty), STEP),
+    { x0: 0, y0: 0, x1: W, y1: H, tries: 24 },
+  ); // (walkgrid.js: every stroll's next spot)
+  if (!p) return null;
+  w = {
+    x: p[0],
+    y: p[1],
+    until: now + (WANDER[0] + Math.random() * (WANDER[1] - WANDER[0])) * 1000,
+  };
+  wander.set(id, w);
   return w;
 }
 function wildMove(s, id, now, p, x, y, near, run, out, forced = false) {
