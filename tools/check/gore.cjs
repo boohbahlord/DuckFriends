@@ -35,6 +35,7 @@ const INIT = fs.readFileSync(
         { duckFromParts } = await import("./js/duckparts.js"),
         { JUSTIN } = await import("./js/hangout/npcart.js"),
         { npcURL } = await import("./js/sbnpcart.js");
+      const hitsOf = WD.hitsOf || A.hitsOf; // (wounds.js since hits and gore became one module)
       const hash = (str) => {
         let h = 0x811c9dc5;
         for (let i = 0; i < str.length; i++) {
@@ -123,7 +124,7 @@ const INIT = fs.readFileSync(
       const single = [];
       for (const k of "bBscrakpxgfehm")
         for (let i = 0; i < 9; i++) single.push(k + i);
-      out.marks = J([...single, ...built].map((c) => A.hitsOf(c)));
+      out.marks = J([...single, ...built].map((c) => hitsOf(c)));
       /* pictures: zombies of six looks, ducks of five, a made NPC, with 10 of the codes each (and none) */
       const some = [
         "",
@@ -146,7 +147,7 @@ const INIT = fs.readFileSync(
       );
       for (const d of DUCKS)
         for (const c of some) {
-          const h = A.hitsOf(c);
+          const h = hitsOf(c);
           ds.push(
             duckSVG(d, {
               size: 64,

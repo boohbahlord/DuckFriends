@@ -6,7 +6,7 @@
    tools/downpour-art.html. */
 
 import { duckSVG, DUCK_DEFAULT } from "../duck.js";
-import { hitsOf } from "../l4ddart.js";
+import { hitsOf } from "../wounds.js";
 import { zombieLook } from "../l4ddrules.js";
 import {
   rnd,

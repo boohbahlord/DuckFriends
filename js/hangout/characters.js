@@ -29,8 +29,7 @@ import { play, loop, setListener } from "./sounds.js";
 import "./cats.js";
 import "./justin.js";
 import "./shadowduck.js";
-import { hitCode, knockable, PCRIT, goreFree } from "../wounds.js";
-import { hitsOf } from "../l4ddart.js";
+import { hitCode, knockable, PCRIT, goreFree, woundLook } from "../wounds.js";
 import { poolHTML, warmPool } from "../bloodpool.js";
 import { pxSVG, rasterReady, pixelOn } from "../pixel.js";
 import { hashText } from "../pxdom.js";
@@ -211,11 +210,6 @@ function dress(id, o) {
   o.dead = !!dead;
   o.el.classList.toggle("dead", dead);
 }
-/* his wounds on his drawing (l4ddart.js hitsOf, as game.js woundLook does for every duck) */
-const woundsOn = (wc) => {
-  const h = hitsOf(wc);
-  return { skin: { head: h.inner, out: h.out }, gone: h.gone };
-};
 /* his gun: a ready-made picture 26 px wide (css .hang-npc-held.gun) times the board's scale (handSc: the scale his
    drawings were last made at), made while the game loads (warmJustin), never the first time he draws it */
 const GUN = heldHTML("handgun", JUSTIN).replace(
@@ -240,7 +234,7 @@ function svgFor(id, pose, step, wc = "") {
         size: DUCK,
         shadow: pose !== "dead",
         dead: pose === "dead",
-        ...(wc ? woundsOn(wc) : {}),
+        ...woundLook(wc), // (his wounds on his drawing, as every duck's)
       }) + (HAND[pose] ? HAND[pose]() : "")
     );
   if (b.svg) return b.svg(pose); // (a character that draws itself: the Butler)

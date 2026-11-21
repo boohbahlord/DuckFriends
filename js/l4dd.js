@@ -119,7 +119,7 @@ import { zSortY } from "./zombieroofs.js";
 import { hOk, hLock } from "./heights.js";
 import { ammoBar, stackBars, noReload } from "./meters.js";
 import { laserMeter } from "./laserfx.js";
-import { goreFree, BY_WOUND, newWound } from "./wounds.js";
+import { goreFree, BY_WOUND, newWound, woundLook } from "./wounds.js";
 import { catalogHTML } from "./l4ddcatalog.js";
 import {
   pwMount,
@@ -161,7 +161,6 @@ import {
   orbHTML,
   UP_ICONS,
   weaponIcon,
-  hitsOf,
 } from "./l4ddart.js";
 import { isSurv, survTime, clockOf } from "./survrules.js";
 import { gunLights, gunBodies } from "./gunmenview.js";
@@ -1755,21 +1754,11 @@ let mSig = "",
   mAt = null,
   mSeen = { v: null, hp: null, alive: false, fx: 0, stab: 0 },
   mPoolAt = 0;
-/* his wound codes as I draw them (Gore off: only a hat knocked off), and the look they give duckSVG (game.js woundLook) */
+/* his wound codes as I draw them (Gore off: only a hat knocked off); wounds.js woundLook makes their look */
 const mWounds = (s, m) => {
   const w = typeof m.w === "string" ? m.w : "";
   return +s.options.noGore ? goreFree(w) : w;
 };
-const MLOOK = new Map();
-function mWoundLook(wc) {
-  if (!wc) return {};
-  if (!MLOOK.has(wc)) {
-    if (MLOOK.size > 60) MLOOK.clear();
-    const h = hitsOf(wc);
-    MLOOK.set(wc, { skin: { head: h.inner, out: h.out }, gone: h.gone });
-  }
-  return MLOOK.get(wc);
-}
 const mMax = (m) => Math.max(1, +m.max || 4.5); // (m.max: the HP he rolled, as a zombie's: the rules' hp0)
 function drawMerchant(ctx, t) {
   const s = ctx.state(),
@@ -1790,7 +1779,7 @@ function drawMerchant(ctx, t) {
         size: 64,
         dead,
         ...(hid ? { title: "The Merchant" } : {}),
-        ...mWoundLook(wc),
+        ...woundLook(wc),
       }),
       m.who.name,
     );
@@ -1832,7 +1821,7 @@ function drawMerchant(ctx, t) {
         size: 64,
         dead,
         ...(m.who.hideName ? { title: "The Merchant" } : {}),
-        ...mWoundLook(wc),
+        ...woundLook(wc),
       }),
     );
     butler.uk = "";
@@ -1955,7 +1944,7 @@ function drawCorpses(ctx) {
           size: 64,
           dead: true,
           ...(who.hideName ? { title: "The Merchant" } : {}),
-          ...mWoundLook(wc),
+          ...woundLook(wc),
         }),
         who.name,
       );

@@ -21,7 +21,7 @@
      zs   { i: [a, dir] }: a zombie's last swipe (ms since t0) and its way (1/100 radians), only for one that swiped
      (the host keeps the rest to itself, in s.hidden, which never goes online: l4z { i: [n, d, { cm, k, fl, wp, j }] }, n since when it's at a
      duck (0: not), d its tear clock (st 1) or when it died (st 3); l4tk its last heartbeat)
-     zw   { i: "B3c1…" }: the wounds hits left on a zombie, two letters each (wound(), l4ddart.js' hitsOf)
+     zw   { i: "B3c1…" }: the wounds hits left on a zombie, two letters each (wound(), wounds.js hitsOf)
      zl   { i: [max hp, speed (px a second at the Normal Walking speed), opening, size, build, hat, outfit] }: set once, when it comes
      brd  { opening: boards up, 0 … BOARDS }
      l4p  { id: { hp, at (its last hit or heal), dn (down: bleeds out then), rv: { by, at } (being revived), gh (a ghost
@@ -3613,7 +3613,7 @@ function strike(s, z, dmg, head, by, w = "") {
   }
   return z.hp <= 0;
 }
-/* the wounds a hit leaves (owner 2026-11-04 04:01Z), drawn by l4ddart.js' hitsOf: zw { i: "B3c1…" }, two letters for
+/* the wounds a hit leaves (owner 2026-11-04 04:01Z), drawn by wounds.js hitsOf: zw { i: "B3c1…" }, two letters for
    each, its kind and its spot (0 … 7, or 0 … 5 for an arrow or a chunk). Small guns leave small bullet holes, the big
    ones big holes, the shotgun its pellets, now and then a bleeding cut instead; knives cut; the hammer and the chair
    bruise; an arrow cuts or stays stuck in it; a bullet now and then tears a chunk out, or the beak off; a headshot
