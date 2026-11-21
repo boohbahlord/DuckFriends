@@ -332,8 +332,6 @@ function dropHeld(m, id) {
 }
 /* how many uses a picked-up weapon gives (none of the guns: they count shots instead) */
 const PICK_USES = {};
-export const usesOf = (s, id) =>
-  (s.mgj && (s.mgj.held || {})[id] && (s.mgj.uses || {})[id]) || 0;
 /* how much each hit takes off him (we decided: a picked-up weapon hits harder than the knife; each pellet 1) */
 export const DMG = {
   knife: 1,
@@ -1841,8 +1839,6 @@ function mgjBurn(s, id, now) {
   m.burn = { ...m.burn, [id]: now + BURN_MS };
   m.burnt = { ...m.burnt, [id]: now + BURNT_MS };
 }
-export const mgjBurning = (s, id, now) =>
-  ((s.mgj && s.mgj.burn) || {})[id] > now;
 const alive = (o, now) =>
   Object.fromEntries(Object.entries(o || {}).filter(([, v]) => v > now));
 /* the burns run out; a burning duck lights every duck it touches (that takes 1 HP) */

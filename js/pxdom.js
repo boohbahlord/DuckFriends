@@ -19,6 +19,7 @@ import {
   bakedWait,
 } from "./pixel.js";
 import { hasRb, RB_N } from "./rainbowskin.js";
+import { yieldNow } from "./slices.js";
 
 const NS = "http://www.w3.org/2000/svg",
   PACE = 120, // (ms between two new pictures of one drawing that keeps changing)
@@ -274,6 +275,24 @@ function make(jobs) {
   }); // (read as it looks, all in one go, so nothing is seen in between)
   for (const j of jobs) put(j);
 }
+/* many drawings' pictures (a whole page of tiles, every page of Customize as it warms up), a few at a time: each batch
+   as many as fit in a slice (what the last one cost each), the page getting a turn between them (slices.js). One that
+   left the page meanwhile is skipped */
+async function makeSliced(jobs) {
+  let n = 4;
+  for (let i = 0; i < jobs.length; ) {
+    const batch = jobs.slice(i, i + n).filter((j) => j.svg.isConnected);
+    i += n;
+    if (batch.length) {
+      const t0 = performance.now();
+      make(batch);
+      const each = (performance.now() - t0) / batch.length;
+      n = Math.max(1, Math.min(32, Math.floor(SLICE / Math.max(0.1, each))));
+    }
+    if (i < jobs.length) await yieldNow();
+  }
+}
+const SLICE = 8; // (ms of picture making at a time)
 function put(job) {
   const { svg, st, key, vb, w, h, text, tx } = job;
   const k = (svg.matches(".duck, .cat") ? "c" : "d") + hash(text); // (c: a character, made from its parts: the ducks' sheets)
@@ -463,6 +482,12 @@ const ATTRS = [
   "viewBox",
   "hidden",
 ];
+/* the drawings just put on the page, marked now rather than after the task: a page that is laid out at once (its
+   scroll set) then leaves their shapes out of its style work (css/app.css .arm-menu svg[data-pxwait]) */
+const waiting = new Set();
+export function pxNow() {
+  for (const now of waiting) now();
+}
 export function pxWatch(root, { skip = "" } = {}) {
   let queued = new Set(),
     raf = 0,
@@ -485,7 +510,7 @@ export function pxWatch(root, { skip = "" } = {}) {
         if (sized) sized.observe(svg);
         else svg.removeAttribute("data-pxwait");
     }); // (not on the screen yet: made once it shows, hidden till then)
-    if (jobs.length) make(jobs);
+    if (jobs.length) makeSliced(jobs);
   };
   /* a new drawing is hidden from the start until its picture is there (the owner's, Nov 19 17:00Z: the original
      pictures popped in before their pixels). Set as it comes in, before the screen is drawn */
@@ -529,7 +554,7 @@ export function pxWatch(root, { skip = "" } = {}) {
     else if (n.ownerSVGElement) want(rootSvg(n));
     else n.querySelectorAll("svg").forEach((s) => s.ownerSVGElement || want(s));
   };
-  const mo = new MutationObserver((recs) => {
+  const seen = (recs) => {
     if (!pixelOn()) return;
     for (const r of recs) {
       const t = r.target;
@@ -556,7 +581,10 @@ export function pxWatch(root, { skip = "" } = {}) {
       else if (r.attributeName === "class" || r.attributeName === "hidden")
         scan(t); // (a class on something that holds drawings, or it shows again: they may look different)
     }
-  });
+  };
+  const mo = new MutationObserver(seen),
+    now = () => seen(mo.takeRecords());
+  waiting.add(now);
   mo.observe(root, {
     subtree: true,
     childList: true,
@@ -572,6 +600,7 @@ export function pxWatch(root, { skip = "" } = {}) {
   addEventListener("resize", all);
   if (pixelOn()) all();
   function stop() {
+    waiting.delete(now);
     mo.disconnect();
     if (sized) sized.disconnect();
     removeEventListener("pixelchange", onSwitch);

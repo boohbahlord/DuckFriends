@@ -94,14 +94,6 @@ function place(c, from, G, keep = false) {
     from.classList.add("px-gone");
   } else from.replaceWith(c);
 }
-/* back to the drawings themselves under the filter, before they're drawn again (bakeStill's keep, movers) */
-export function unbake(root, mark = root) {
-  mark.classList.remove("px-own");
-  root.querySelectorAll(".px-baked").forEach((c) => c.remove());
-  root
-    .querySelectorAll(".px-gone")
-    .forEach((e) => e.classList.remove("px-gone"));
-}
 /* still pictures on root (sel: its <img>s and <canvas>es that don't change once drawn) made into pixels in their
    place (keep: the drawings stay, out of sight, for their code to draw on again; sel null: none), and what moves on it
    (moving: { sel, before, bg, every }) drawn each frame as pixels (movers; bg: root's own background, a color or a top
@@ -628,71 +620,6 @@ async function svgItems(root, svg, anim) {
   }
   if (!svg.isConnected || items.some((it) => !it.pic)) return null;
   return items;
-}
-export async function bakeSvg(root, svg, mark, anim) {
-  const G = grid(),
-    { d, n, at, g } = G,
-    rb = root.getBoundingClientRect();
-  const items = await svgItems(root, svg, anim);
-  if (!items) return false;
-  const canvas = () => {
-    const c = document.createElement("canvas");
-    c.className = "bd-layer px-baked px-movers";
-    c.setAttribute("aria-hidden", "true");
-    c.width = Math.ceil(rb.width / g);
-    c.height = Math.ceil(rb.height / g);
-    c.style.cssText = `width:${(c.width * g).toFixed(3)}px;height:${(c.height * g).toFixed(3)}px;right:auto;bottom:auto`;
-    return c;
-  };
-  const still = (it) => {
-    if (!it.pic._empty) bx.drawImage(it.pic, it.pic._at[0], it.pic._at[1]);
-  };
-  /* what lies under every moving part (the sky) on a canvas of its own, drawn once */
-  const under = canvas(),
-    bx = under.getContext("2d");
-  while (items.length && items[0].leaves) still(items.shift());
-  const cv = canvas(),
-    x = cv.getContext("2d");
-  x.imageSmoothingEnabled = false;
-  const shift = (n / 2 - at - 0.5) / d,
-    base = new DOMMatrix()
-      .scale(1 / g)
-      .translate(shift, shift)
-      .translate(-rb.left, -rb.top); // (the page's corner to root's, then to the grid's pixels)
-  let last = "";
-  const draw = () => {
-    const where = items.map((it) =>
-        it.leaves
-          ? null
-          : [base.multiply(it.part.getScreenCTM()), +it.cs.opacity],
-      ),
-      key = where.map((w) => (w ? w[0].toString() + w[1] : "")).join();
-    if (key === last) return; // (nothing moved: as it is)
-    last = key;
-    x.setTransform(1, 0, 0, 1, 0, 0);
-    x.clearRect(0, 0, cv.width, cv.height);
-    items.forEach((it, i) => {
-      if (it.leaves) {
-        if (it.pic._empty) return;
-        x.setTransform(1, 0, 0, 1, 0, 0);
-        x.globalAlpha = 1;
-        x.drawImage(it.pic, it.pic._at[0], it.pic._at[1]);
-        return;
-      }
-      const [m, o] = where[i];
-      if (!(o > 0)) return;
-      const [ux, uy, k] = it.at;
-      x.setTransform(m.translate(ux, uy).scale(1 / k));
-      x.globalAlpha = Math.min(1, o);
-      x.drawImage(it.pic, 0, 0);
-    });
-    x.globalAlpha = 1;
-  };
-  svg.after(under, cv);
-  svg.classList.add("px-gone");
-  frames(cv, 64, draw); // (15 a second: slow turns and twinkles)
-  mark.classList.add("px-own");
-  return true;
 }
 
 /* ---------- a layer drawn in code, once, as pixels ----------

@@ -10,13 +10,7 @@
    - Change player tag color (tagColor, with Vote colors): the name tag takes the duck's vote color too. */
 import { DUCK_DEFAULT, mix } from "./duck.js";
 import { activeRoom } from "./net.js";
-import {
-  RAINBOW,
-  BROWN,
-  FAKE_JUSTIN,
-  hidesLooks,
-  rainbowOn,
-} from "./looksrules.js";
+import { hidesLooks, rainbowOn } from "./looksrules.js";
 export * from "./looksrules.js";
 
 /* a duck's specials stay with it whatever it looks like */
@@ -26,17 +20,6 @@ const keepPlay = (L) => ({
   spc: L.spc ?? null,
   scale: L.scale ?? null, // (its size: its hitbox goes with it, so it shows as it is hit, duck.js scaleOf)
 });
-
-/* the eight looks: a rainbow duck is the plain duck in one color; the eighth is brown, in Justin's glasses and jeans */
-export const rainbowLook = (k) =>
-  k === FAKE_JUSTIN
-    ? {
-        ...DUCK_DEFAULT,
-        color: BROWN,
-        face: { id: "glasses" },
-        outfit: { id: "jeans" },
-      }
-    : { ...DUCK_DEFAULT, color: RAINBOW[k % RAINBOW.length] };
 
 /* the look a game draws for a player (p: one of s.players, with its id) */
 export function shownDuck(s, p) {

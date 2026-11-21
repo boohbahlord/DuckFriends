@@ -255,12 +255,6 @@ const BUST_LINES = pick(
   "This is so STUPID!",
   "You are such a stupid IDIOT!",
 );
-export const SHADOW_LINES = [
-  "I literally got killed by a black duck!",
-  "WAIT!",
-  "HE WAS LITERALLY BLACK!",
-  "NOT RACIALLY OF COURSE!",
-];
 const SHUT_UPS = E_LINES.filter((l) => /^shut up/i.test(l));
 const RANT_SHOUT = "SHUT UP!";
 
@@ -357,9 +351,6 @@ const poolNear = (x, y, r) =>
   x > POOL.x0 - r && x < POOL.x1 + r && y > POOL.y0 - r && y < POOL.y1 + r;
 const DRY = { dry: true };
 let mm = null; // what he's up to (the host's own notes)
-export const resetJustin = () => {
-  mm = null;
-};
 const shuffle = (rand, a) => {
   a = [...a];
   for (let i = a.length - 1; i > 0; i--) {
