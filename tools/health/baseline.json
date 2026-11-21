@@ -3,7 +3,7 @@
   "nullishNumbers": 0,
   "unusedExports": 109,
   "unusedFiles": 0,
-  "clones": 45,
+  "clones": 42,
   "bigFiles": {
     "js/chat.js": 1600,
     "js/customize.js": 1798,
@@ -15,13 +15,13 @@
     "js/hangout/world.js": 1786,
     "js/l4dd.js": 3349,
     "js/l4ddrules.js": 5362,
-    "js/mgjrules.js": 2321,
+    "js/mgjrules.js": 2315,
     "js/numberatrun.js": 1675,
-    "js/rules.js": 6320,
+    "js/rules.js": 6313,
     "js/sandboxrules.js": 2059,
     "js/sbspawn.js": 1708,
     "js/sbspawnview.js": 2212,
     "js/shell.js": 3541,
-    "js/updates.js": 2915
+    "js/updates.js": 2924
   }
 }
