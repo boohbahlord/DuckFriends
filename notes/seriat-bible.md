@@ -38,6 +38,7 @@ old wording; history and word-for-word quotes live in `notes/agree-or-disagree.m
 | `2` | always 2 | 2, 2, 2 |
 | `2:4` | a new random whole number from 2 to 4 each time (whole numbers even where the stat takes tenths) | 3, 2, 4 |
 | `2,4` | 2 or 4, true random | 4, 4, 2 |
+| `1.5:2.4` | every tenth from 1.5 to 2.4: 1.5, 1.6 … 2.4 (owner, Nov 21: a range with a decimal end goes through every tenth) | 1.8 |
 | `1.0:*` | 1.0 to 9 | 6.3 |
 | `1.0:1.*` | 1.0 to 1.9 (how to write a tenths range) | 1.4 |
 | `1.[0:9]`, `1.[0:*]` | 1 and a tenth digit 0 to 9 | 1.0 to 1.9 |
@@ -45,7 +46,8 @@ old wording; history and word-for-word quotes live in `notes/agree-or-disagree.m
 | `*.*` | a digit and a tenth digit | 4.2 |
 | `t`, `f` | true, false | |
 
-The `.` puts what follows in the tenths place. Whole-number stats (spawn limit, counts) take whole numbers only.
+The `.` puts what follows in the tenths place. A range with a decimal end (`1.5:2.4`, `1.5:2`) goes through every
+tenth between its ends, the ends included. Whole-number stats (spawn limit, counts) take whole numbers only.
 HP, damage and speed take tenths.
 
 ## 2. Order and repeats

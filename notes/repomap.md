@@ -126,7 +126,7 @@ npcview.js 206 an NPC on a world , drawn the
 numberat.js 1323 Seriat: the language
 numberatrun.js 1675 Seriat: files that do things
 numerat.js 181 Seriat: the number reader
-numerathelp.js 565 Seriat's help files
+numerathelp.js 566 Seriat's help files
 numeratwin.js 657 Sandbox: the Seriat window
 nwk.js 543 Nous Within Kenoma: the map in my book
 offline.js 45 Single Player's files on the device
