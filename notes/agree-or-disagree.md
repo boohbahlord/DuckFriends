@@ -7665,3 +7665,53 @@ Decision (Adam): three Dead Ducks Arcade jobs, one PR each: 1) the gas can orb; 
 - 05:12Z: "Adam should have a list he keeps of only things to do, not of things that were done, for himself and for the group. Where he keeps track of what he has to do next, what we have to do next. And that way we don't lose things. Because I notice there's a lot of things that will never get implemented that I've said to a long time ago. And it's just not worth the usage to dig up right now. Because we're very busy with good things, important things. No. Let me see something real quick about when the 5-hour limit is. I'm going to go to bed."
 - 05:13Z: "I don't think you guys are going to hit the limit, but at 2:23 p.m. or 2:25 p.m., not p.m., sorry, a.m. At 2:23 a.m. or 2:25 a.m., if you're not working because you were out of the short limit, then you can start working again then. You can just work all night and not stop, unless you don't got anything else to do, which you probably do, because there's a bunch of things that haven't been implemented from the past that I requested, but that's a further down the road thing. I'm just really tired. I'm going to bed."
 - Decision (Adam): one to-do-only list at /mnt/project-files/adam/todo.md (done lines are deleted, never ticked); work all night; after a short-limit stop, resume at 2:25 AM Eastern (07:25Z).
+
+## Nov 21 08:46 (owner's time): chat notes in a video (Downpour, round 3)
+Typed by Joseph from the frames of "Screen Recording 2026-11-21 084639.mp4", word for word (Justin's lines left out; spelling the owner's). The last line after 46 is cut off in the video.
+- 1. as you can see here, the zombies are stuck on one another and not going up a ladder.
+- 2. justin is also jitterying in the bottom corner, he has been doing that a lot when there are zombies
+- 3. we can add a new duck named "Ethan" that keeps that jitter though, and he wears the basketball jersey for the lakers and ill determine his hair later. He is a yellow duck.
+- 4. zombies also climb on the brick walls that doesnt connect to the cieling on the bathroom, which doesnt work, so they shouldnt be able to climb tha wall
+- 5. grenades should have a 25% larger explosion radius then before
+- 6. and daggers ammo is 300 AND they do 0.5-5 damage. The dagger can also do half an integer of damage within it's range as well.
+- 7. if a decimal value is put in range for seriat, it goes through every possible tenth range now
+- 8. for example
+- 9. 1.5:2.4
+- 10. This range means it could be 1.5 1.6 1.7 1.8 1.9 2 2.1 2.2 2.3 or 2.4
+- 11. corpses go below the cieling of where they were, that should be fixed
+- 12. i think i need to work on new gun damages based on calibers
+- 13. make players and zombies able to walk onto the front hood of this red car and then able to get onto it's roof, with the roof being almost the hieght of the gas pump. From the roof of this car to my right, the zombies or players can jump onto the gas...   (message is cut off with "..." in the chat; the rest isn't visible in the video)
+- 14. then we can make every car possible to jump on
+- 15. then we can make the car let's say half the hieght of a veritality measure
+- 16. i cant remember
+- 17. oh yeah it is called elevation
+- 18. so it is half the height of an elevation
+- 19. then from there
+- 20. for sandbox
+- 21. we can have assets added to it
+- 22. such as a car, one clean version and one damaged version
+- 23. the jeep from cabin can be jumped onto the same
+- 24. this means that we can add tees as well
+- 25. for an asset you place from build menu, it is under structures
+- 26. and in structures are different variations of structures
+- 27. so if i click structures, one option in the list is damaged structures
+- 28. no sorry
+- 29. it is vehicles
+- 30. and then the vehicle list when click shows damaged vehicles
+- 31. so then damaged vehicle can be selected and it shows another list of the different kinds of damaged vehicles
+- 32. on the structure when placed
+- 33. it can be accessed kind of like a zone
+- 34. and inside it's window includes the colors of an object
+- 35. primary color
+- 36. secondary color
+- 37. tertiary one
+- 38. tertiary two
+- 39. and so on
+- 40. or accent instead of tertiary ?
+- 41. you get it
+- 42. we will also add trees from the game
+- 43. as an asset
+- 44. which colors can be changed
+- 45. and the power supply is not an asset
+- 46. that exit downpour shouldn't be in the way when i open text chat, terminal, pause menu, or any menu or window in sandbox
+- Decision (Adam, to-do V1 to V8): V1 (note 1), V2 (2), V3 (4), V4 (11) and V8 (7-10) go to Solomon; V5 (5), V6 (6) and V7 (46) to Jackal. V8: a range with a decimal end already picks every tenth where the stat takes tenths; the Seriat bible and help say so now, and tools/check/seriat.cjs pins it.
