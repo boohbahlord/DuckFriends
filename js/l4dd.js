@@ -99,6 +99,7 @@ import {
   downArmed,
   WILD,
   isWild,
+  at as l4At,
   pierceOf,
   shotArm,
   shotWalled,
@@ -2386,7 +2387,7 @@ function coolBar(tag, s, me) {
   }
 }
 /* the ammo of what's in my hand, for the yellow bar (meters.js): { f, rl, dry, nr: a reload can't be done } or null (a melee weapon, the Laser
-   Rifle: its heat has its own meter, the jetpack) */
+   Rifle: its heat has its own meter) */
 export function l4Ammo(s, me, w) {
   const m = kitOf(s, me),
     now = clockNow();
@@ -2676,8 +2677,10 @@ function holdTarget(pos, ctx) {
     back = (id) => defib && !isWild(s, id) && !(s.players[id] || {}).helper;
   for (const id of s.seat) {
     const p = P4(s, id);
-    if (id === me || !p || !p.dn || (p.ex && !back(id))) continue; // (dead for good: no revive, no button; the owner's, Nov 17 20:37Z, "JUSTIN CANNOT BE REVIVED WHEN DEAD NOR CAN ANY PLAYER WHEN DEAD SO THE FUCKING REVIVE BUTTON GOES AWAY")
-    const a = ctx.world.at(id);
+    const body = !!p && !!p.gh && !!p.ex && !!(s.hang.ghost || {})[id]; // (Survival's ghost: its body lies where it fell, only the defibrillator gets it up)
+    if (id === me || !p || (!p.dn && !body) || (p.ex && !back(id))) continue; // (dead for good: no revive, no button; the owner's, Nov 17 20:37Z, "JUSTIN CANNOT BE REVIVED WHEN DEAD NOR CAN ANY PLAYER WHEN DEAD SO THE FUCKING REVIVE BUTTON GOES AWAY")
+    const [bx, by] = body ? l4At(s.hang.ghost[id]) : [0, 0],
+      a = body ? { x: bx, y: by } : ctx.world.at(id);
     if (!a) continue;
     const d = Math.hypot(a.x - pos.x, a.y - pos.y);
     if (d < L4.REACH && (!best || d < best.d))

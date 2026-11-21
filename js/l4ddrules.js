@@ -37,6 +37,7 @@
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
 import { ARMS, kindOf, GUN_NAMES, WEAPONS, rollDmg } from "./guns.js";
+import { JUMP, jumpDodges } from "./jump.js";
 import { SPRINT as GAME_SPRINT, POCKET_CHANGE } from "./gamedefaults.js";
 import { scaleOf } from "./duck.js";
 import { hpHeal, hpHurt, tenths } from "./hpmath.js";
@@ -287,25 +288,25 @@ export const BURN = { Z: 8000, EVERY: 2000, P: 3000, AGAIN: 1000, SPREAD: 500 };
 /* Downpour's water over the road, shallow or deep: fire never stays on it, and nothing in it burns; a zombie or a duck
    on fire that goes in is put out (the owner's, Nov 18 10:38Z: "flamethrower's fire doesnt stay in the water ...
    enemies in the water of the road do not catch on fire and if were on fire are no longer on fire, and swimming in
-   water has the same effect"). Up on a car over it, or a jetpack over it, isn't in it. The rain changes nothing */
+   water has the same effect"). Up on a car over it isn't in it. The rain changes nothing */
 const flood = (x, y) => dp() && (GS.inDeep(x, y) || GS.inShallow(x, y));
 const wetZ = (z) => flood(z.x, z.y) && zFloor(z) === null;
 function wetDuck(p) {
-  if (!p || p.fly) return false;
+  if (!p) return false;
   const [x, y] = at(p);
   return (
     flood(x, y) && duckFloor(p) === null && (+p.z || 0) <= heightAt(x, y) + 4
   );
 }
 /* Downpour: is duck id swimming in the deep flood? Its guns, its bow and its melee are put away until it's out (the
-   owner's, Nov 17 05:46Z); a jetpack high over the water isn't swimming */
+   owner's, Nov 17 05:46Z) */
 export function swims(s, id) {
   const p = s && s.pos && s.pos[id];
-  return !!p && dp() && !p.fly && GS.inDeep(p.x * W, p.y * H);
+  return !!p && dp() && GS.inDeep(p.x * W, p.y * H);
 }
 /* what a duck holds out (a special used up isn't there) */
 export const inHand = (w, s, id) => {
-  if (!w || w === "longjump" || w === "jetpack" || w === "safekeep") return ""; // (the jetpack is on the back: game.js; Safe Keeping, picked, holds nothing out)
+  if (!w || w === "longjump" || w === "safekeep") return ""; // (Safe Keeping, picked, holds nothing out)
   const c = s && kindOf(w) === "special" && ((kitOf(s, id) || {}).am || {})[w];
   return c && c[0] <= 0 ? "" : w;
 };
@@ -873,18 +874,14 @@ export const players = (s) => s.seat.filter((id) => s.players[id] && s.pos[id]);
 const P4 = (s, id) => ((s.hang && s.hang.l4p) || {})[id] || null;
 const isDown = (s, id) => !!(P4(s, id) && P4(s, id).dn);
 const isGhost4 = (s, id) => !!(P4(s, id) && P4(s, id).gh);
+/* a ghost that comes back at the next round (Survival's stays one, ex: only a defibrillator brings it back) */
+const returns = (s, id) => isGhost4(s, id) && !P4(s, id).ex;
 export const standing = (s, id) => {
   const p = P4(s, id);
   return !!p && !p.dn && !p.gh;
 };
 /* a duck in the middle of a jump dodges a hit: not in its first fifth or its last (the owner's) */
-export function dodging(s, p, now) {
-  if (p && p.fly) return true; // (the jetpack, high in the air)
-  if (!p || !p.j) return false;
-  const T = 620,
-    u = (now - p.j) / T;
-  return u > 0.2 && u < 0.8;
-}
+export const dodging = (s, p, now) => jumpDodges(p, now, JUMP.T * 1000);
 export const at = (p) => [p.x * W, p.y * H];
 
 /* ---------- a duck's slots, points and upgrades ---------- */
@@ -1157,26 +1154,6 @@ const bare = (x, y, out, far) =>
   OPENINGS.every((o) => Math.hypot(x - o.in[0], y - o.in[1]) > 200) &&
   Math.hypot(x - 2800, y - 1420) > 320 &&
   out.every(([a, b]) => Math.hypot(x - a, y - b) > far);
-/* the jetpack's fuel: it burns while a duck flies with its jets on (its move says so: rules.js' jt), from one heartbeat to
-   the next; at 0 the jets stop and the duck comes down (game.js) */
-function jetBurn(s, now, ids) {
-  const was = s.hang.l4jt || {},
-    next = {};
-  for (const id of ids) {
-    const m = kitOf(s, id),
-      p = s.pos[id];
-    if (!m || !m.jp || !p || !p.jt) continue;
-    next[id] = now;
-    const c = (m.am || {}).jetpack;
-    if (!c || !was[id]) continue;
-    const left = Math.max(0, c[0] - Math.min(500, now - was[id]));
-    s.hang.l4a = {
-      ...s.hang.l4a,
-      [id]: { ...m, am: { ...m.am, jetpack: [Math.round(left), 0] } },
-    };
-  }
-  if (Object.keys(was).length || Object.keys(next).length) s.hang.l4jt = next;
-}
 /* ---------- the drops (Stage 4, the owner's) ----------
    Each round: a 25% chance of one in its first 30 s, and then a 25% chance of a second 30 s after it; and on their
    own, a 5% chance of a Max Ammo in the first minute. When its time comes, the next zombie killed drops it where it
@@ -1748,7 +1725,8 @@ function l4Act(s, a, now) {
       p4 = s.hang.l4p || {},
       tp = p4[t],
       pos = s.pos[t];
-    if (!tp || !tp.dn || !pos || t === id) return false;
+    const body = !!tp && !!tp.gh && !!tp.ex && !!(s.hang.ghost || {})[t]; // (Survival's ghost: its body lies where it fell)
+    if (!tp || (!tp.dn && !body) || !pos || t === id) return false;
     if (!a.hold) {
       if (!tp.rv || tp.rv.by !== id) return false;
       s.hang.l4p = {
@@ -1757,7 +1735,7 @@ function l4Act(s, a, now) {
       }; // (a revive pauses the bleeding-out: it goes on from where it was, the owner's, Nov 17 11:07Z)
       return true;
     }
-    const [tx, ty] = at(pos);
+    const [tx, ty] = at(body ? s.hang.ghost[t] : pos);
     if (Math.hypot(tx - mx, ty - my) > L4.REACH * 1.6) return false;
     if (tp.ex) return defibUse(s, id, t, me, now); // (dead for good: only Survival's defibrillator brings a player back)
     if (tp.rv && tp.rv.by !== id && s.pos[tp.rv.by]) return false; // (someone else is at it)
@@ -1809,6 +1787,22 @@ function defibUse(s, id, t, me, now) {
   if (!isSurv(s) || isWild(s, t) || isHelper(s, t) || !s.players[t])
     return false;
   if (me.w !== "defib" || !hasLeft(s, id, "defib")) return false;
+  const g = (s.hang.ghost || {})[t];
+  if (g && s.pos[t]) {
+    /* a ghost: it gets up where its body lies, and the ghost is gone */
+    s.pos[t] = {
+      ...s.pos[t],
+      x: g.x,
+      y: g.y,
+      z: g.z || 0,
+      j: 0,
+      b: g.z || 0, // (as Duck Cabin's ghosts: hangout/ghosts.js)
+      tp: now,
+    };
+    const gs = { ...s.hang.ghost };
+    delete gs[t];
+    s.hang.ghost = gs;
+  }
   getUp(s, t, now, false);
   const kit = kitOf(s, id),
     c = kit.am.defib;
@@ -3028,12 +3022,6 @@ export function l4Use(s, a, now) {
   finishReload(m, now);
   if (now - (m.u[what] || 0) < l4Cool(s, id, what) * (A.auto ? 0.8 : 1))
     return false; // (full auto: the shots can come a little bunched over the network)
-  if (what === "jetpack") {
-    m.u[what] = now;
-    m.jp = !m.jp;
-    s.hang.l4a = { ...s.hang.l4a, [id]: m };
-    return true;
-  } // (switched on or off, empty or not: its fuel burns only in flight, in l4Tick)
   const c = down ? [m.dg, ARMS.handgun.mag] : m.am[what];
   if (kind === "grenade" ? m.g <= 0 : c && (c[0] <= 0 || m.rw === rw))
     return false; // (empty, or reloading)
@@ -4459,6 +4447,18 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
   return any;
 }
 
+/* a test command (cheats.js): Survival's next wave is gunmen now, "c" criminals or "s" soldiers, as its peak sends them
+   (survrules.js survTick): the phase goes to a peak with them, so the clock and the bags go on after it */
+export function cheatGunmen(s, side, now) {
+  const L = s.hang.l4,
+    sv = s.hang.sv;
+  if (!isSurv(s) || !L || !sv || !L4_HOOKS.gm || !["c", "s"].includes(side))
+    return false;
+  L4_HOOKS.gm.start(s, side, now, gmHelp(s, now));
+  s.hang.l4 = { ...L, t0: now, n: 0, made: 0, owe: 0, acc: 0, sec: -1 };
+  s.hang.sv = { ...sv, ph: "peak", t: now, until: 0, big: 0, g: side };
+  return true;
+}
 /* ---------- the host's heartbeat ---------- */
 function l4Tick(s, now) {
   const L = s.hang.l4;
@@ -4500,28 +4500,16 @@ function l4Tick(s, now) {
         const still = { ...(s.hang.still || {}) };
         delete still[id];
         s.hang.still = still;
-      } else if (
-        !rv &&
-        !p.skAt &&
-        now >= p.dn &&
-        (isWild(s, id) || isSurv(s))
-      ) {
+      } else if (!rv && !p.skAt && now >= p.dn && isWild(s, id)) {
         p = { hp: 0, at: now, dn: now + 1e13, ex: 1 }; // (Justin in Downpour bled out: dead for good, his body stays)
         s.hang.still = { ...(s.hang.still || {}), [id]: now + 1e13 };
-        /* Survival: a duck that bleeds out is dead, as Justin: no ghost, no coming back at a rest (the owner's, Nov 19
-           22:25Z: "in survival, when players die, they do not come back"), only a defibrillator brings it back
-           (defib); it watches the others meanwhile (l4dd.js spectate) */
-        if (isSurv(s) && !isWild(s, id)) {
-          if (s.players[id]) s.players[id].dead = true;
-          s.hang.l4u = { ...(s.hang.l4u || {}), [id]: {} }; // (its upgrades go, as a ghost's)
-          downGun(s, id, false);
-          const b = { ...(s.hang.l4b || {}) };
-          delete b[id];
-          s.hang.l4b = b;
-        }
       } else if (!rv && !p.skAt && now >= p.dn) {
         const safe = !!p.sk || hasSafe(s, id);
-        p = { hp: 0, at: now, gh: 1 }; // (bled out: a ghost until the next round)
+        /* bled out: a ghost until the next round; in Survival (ex) it stays one, no coming back at a rest (the owner's, Nov 19
+           22:25Z: "in survival, when players die, they do not come back"), only a defibrillator brings it back (defibUse), at its
+           body (the owner's, Nov 21 15:39Z: "remove spectators mode from survival and just use the mechanic we already do
+           where the duck becomes a ghost and they can walk around") */
+        p = { hp: 0, at: now, gh: 1, ...(isSurv(s) ? { ex: 1 } : {}) };
         /* the duck died: its upgrades go, unless it holds Safe Keeping, which then keeps them (and is spent: the
            owner's, Nov 19 19:27Z, "you can either revive yourself, or if you die, you come back with your stuff") */
         if (safe) {
@@ -4600,7 +4588,6 @@ function l4Tick(s, now) {
     )
       s.hang.l4a = { ...s.hang.l4a, [id]: { ...am[id], rl: 0, rw: "" } }; // (switched to another slot: the reload is lost, the owner's, Nov 16)
   justinChat(s, now);
-  jetBurn(s, now, ids);
   for (const b of Object.values(boxesOf(s)))
     if (b.w === HELPER.w && now >= b.t + BOX.spin + HELPER.out) {
       dropBox(s, b.by);
@@ -4762,7 +4749,7 @@ function l4Tick(s, now) {
         merchantCome(s, now, true);
         if (L4_HOOKS.gm) L4_HOOKS.gm.rest(s, now, gmHelp(s, now)); // (the friendly squad, now and then: allies.js)
         ids.forEach((id, k) => {
-          if (isGhost4(s, id)) bringBack(s, id, now, k, false);
+          if (returns(s, id)) bringBack(s, id, now, k, false);
         });
       },
     });
@@ -4776,7 +4763,7 @@ function l4Tick(s, now) {
     store(s, bodies, false);
     merchantCome(s, now); // (the rest before the next round: half the time)
     ids.forEach((id, k) => {
-      if (isGhost4(s, id)) bringBack(s, id, now, k, false);
+      if (returns(s, id)) bringBack(s, id, now, k, false);
     });
     return true;
   }
