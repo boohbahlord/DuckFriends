@@ -87,9 +87,10 @@ for (const f of jsFiles) {
 }
 
 const resolveSpec = (from, spec) => {
+  /* "/js/x.js" is the site's root (the tools' pages import that way), "./x.js" is next to the file */
+  if (spec.startsWith("/")) return join(root, spec.split("?")[0]);
   if (!spec.startsWith(".")) return null;
-  const p = resolve(dirname(from), spec.split("?")[0]);
-  return p;
+  return resolve(dirname(from), spec.split("?")[0]);
 };
 const imported = new Map(); // file -> Set of names imported by name
 const whole = new Set(); // files used whole (namespace or dynamic import)

@@ -54,8 +54,6 @@ import {
   shove,
   KB_FAR,
   aimOf,
-  FASTER,
-  GRENADE_R,
 } from "./rules.js";
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
 import { ARMS, SLOT_ODDS, zombieTakes, pierceOf, ALL_HP } from "./l4ddrules.js";

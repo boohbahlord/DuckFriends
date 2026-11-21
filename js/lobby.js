@@ -22,8 +22,8 @@ import {
 } from "./ui.js";
 import { activeRoom } from "./net.js";
 import { now } from "./clock.js";
-import { gameArtSVG, lobbyDuck, artBackdrop } from "./art.js";
-import { modeOf, modeName } from "./modes.js";
+import { gameArtSVG, lobbyDuck } from "./art.js";
+import { modeName } from "./modes.js";
 import { cardHTML } from "./card.js";
 import { netHTML, kickItems } from "./players.js";
 import { isSudo, minOf, dodRoom, dodOn, dodVoting, DOD_KEYS } from "./rules.js";

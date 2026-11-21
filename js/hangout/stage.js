@@ -11,7 +11,7 @@
 import { activity } from "./registry.js";
 import { PROPS, STAGE, sortY } from "./layout.js";
 import * as A from "./art.js";
-import { pxAt } from "../pxdom.js";
+
 import { offView } from "../gameready.js";
 
 const OWN = ["stage", "stagestairs", "mic"];

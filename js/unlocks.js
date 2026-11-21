@@ -21,7 +21,7 @@ import { toast } from "./ui.js";
 import { cheated } from "./cheatflag.js";
 
 const CODE = "1357911";
-export const LOCKS = [
+const LOCKS = [
   { kind: "hat", id: "jester", jumps: 1728, code: CODE, name: "Jester hat" },
   {
     kind: "outfit",

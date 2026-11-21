@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v207",
+    version: 207,
+    date: "Nov 21, 2026",
+    title: "Wounds without the hitch",
+    news: [
+      "For Dead Ducks Arcade: a zombie getting a new wound no longer makes the game hitch.",
+    ],
+  },
+  {
     id: "v206",
     version: 206,
     date: "Nov 21, 2026",

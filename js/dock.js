@@ -4,7 +4,7 @@
    or the lobby gets narrower or shorter to make room, so nothing ever covers anything. The bottom bar holds the Notes and
    chat buttons, the small key hints, and the jump counter in the middle. */
 import { $ } from "./ui.js";
-import { profile } from "./store.js";
+
 import { notesWidget } from "./notes.js";
 import { chatWidget } from "./chat.js";
 import { showJumps } from "./jumps.js";

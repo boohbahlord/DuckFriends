@@ -28,7 +28,6 @@ import { JET } from "../jetpack.js";
 import {
   pixelOn,
   gridPx,
-  snap,
   setDuckSize,
   PAGE_DUCK,
   raster,

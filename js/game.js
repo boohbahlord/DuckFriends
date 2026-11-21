@@ -187,7 +187,6 @@ import {
   heldBoxHTML,
   daggerHTML,
   DUCKLING,
-  looksOf,
   ammoHTML,
   GRENADE,
   GRENADE_PIN,
@@ -355,7 +354,6 @@ import {
   DN_HAT,
   DN_BW,
   DN_PODIUM,
-  TAKE_MAX,
   isDefender,
   voters,
   dnTally,
@@ -470,7 +468,6 @@ import {
 } from "./vddrules.js";
 import {
   vdBoardHTML,
-  vdTopHTML,
   vdStatsHTML,
   TABLE_W,
   SEAT_OUT,

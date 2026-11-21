@@ -14,7 +14,6 @@ import { WATER, SOUTH, ripple, splash, wallGlow } from "./water.js";
 import { play } from "./sounds.js";
 import { beachBall } from "./art.js";
 import { sfx } from "../sound.js";
-import { pxAt } from "../pxdom.js";
 
 const R = 24,
   DR = 26; // the ball's radius; a duck's reach round its middle (world px)

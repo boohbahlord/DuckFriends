@@ -1301,7 +1301,7 @@ export const kitOf = (s, id) => ((s && s.hang && s.hang.l4a) || {})[id] || null;
 /* Sandbox's loot (plan Loot 3, sbloot.js): what a loot orb set for weapon w in duck id's hands, kept in its kit as
    lm = { w: { d: its damage, dp: its damage in % of its own, c: its wait between uses (ms), r: 0 (it can't reload),
    b: 1 (it breaks when empty) } }; null when it came plain */
-export const lmOf = (s, id, w) => {
+const lmOf = (s, id, w) => {
   const k = kitOf(s, id),
     own = (k && k.lm && k.lm[w]) || null;
   if (!isSb(s) || !s.sb || !s.sb.it) return own;
@@ -1903,7 +1903,7 @@ function giveBonus(s, sr) {
 export const GO_MS = 3000; // ms of "Round N" after the vote, before its zombies come
 const SR_VOTE_MS = 30000; // ms a "Start at round N" vote stays up
 /* the starting-round vote: who may start one (not after a No, only in round 0, none up), and what it needs */
-export const srOpen = (s) => {
+const srOpen = (s) => {
   const L = s.hang && s.hang.l4;
   return !!L && L.r === 0 && !L.over && !!L.wait;
 };
