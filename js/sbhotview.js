@@ -11,7 +11,7 @@ import { boxText } from "./sbspawn.js";
 import { sbSlots, sbIcon, spawnOf, SB_SHAPES, SB_SLOTS } from "./sbhot.js";
 import { SPECIALS, KEYS, specialById, looksOf, keysOf } from "./specials.js";
 import { npcURL, npcBox } from "./sbnpcart.js";
-import { zLook } from "./mgjrules.js";
+import { zLook, ZOMBIE_BREEDS } from "./zombies.js";
 import { botDuck } from "./botduck.js";
 import { JUSTIN } from "./hangout/npcart.js";
 
@@ -35,7 +35,7 @@ const oneOf = (k) =>
   ONE[k] ||
   (ONE[k] =
     k === "zombie"
-      ? { k, l: zLook(), i: 1 }
+      ? { k, l: zLook(ZOMBIE_BREEDS.sbBoard), i: 1 }
       : { k, dk: k === "justin" ? { ...JUSTIN } : botDuck() });
 /* the top of its picture: its head */
 export function headSVG(k) {

@@ -58,7 +58,6 @@ import {
   standing,
   dodging,
   at,
-  room,
   JCHASE,
   isWild,
   MERCH,
@@ -79,6 +78,22 @@ import { openNear, flowFrom, heading } from "./zombiepath.js";
 /* the most zombies a round in all, every player counted (l4ddrules.js zombiesFor; was 400); Sandbox keeps its NPCs alive
    under it too (sbspawn.js) */
 export const Z_MOST = 800;
+/* ---------- the ground a walk is on ----------
+   Where a zombie walks differs by place, never by mode: a map (Duck Cabin, Downpour: walls, floors, roofs) or the board
+   (Mad God Justin's fight: open and flat to its edges). The walk asks the ground, in the ground's own px: rx and ry, a
+   duck's room on it (room: 1 is two ducks touching); h(x, y), its floor's height there; ok(x, y, z, up), can a zombie
+   stand there; free(x, y), is it inside at all. Every walk is on the map's but a board's (boardWalk, while it runs) */
+let MAP = null,
+  BOARD = null;
+const gr = () =>
+  BOARD ||
+  MAP ||
+  (MAP = { rx: RX, ry: RY, h: heightAt, ok: zOk, free: playable }); // (made at the first walk: RX and the rest come from l4ddrules.js, which imports this file)
+/* the ellipse distance between two spots on the ground: 1 is two ducks touching */
+export const room = (ax, ay, bx, by) => {
+  const g = gr();
+  return Math.hypot((ax - bx) / g.rx, (ay - by) / g.ry);
+};
 /* where zombies can stand inside (the walls, the furniture, the beds stop them; the outside too) */
 export const zOk = (x, y, z, up = STEP) =>
   playable(x, y) && standable(x, y, z, up, null, true) && !onPlatform(x, y); // (Downpour: zombies wade the deep flood, climb the fallen tree)
@@ -216,12 +231,7 @@ export function newZombie(s, L, T, zs = []) {
     } else from = byFence(o.fence, FENCE.from, rnd(...o.fence.climb)); // (nowhere to land that leads to anyone: anywhere along it)
   }
   const i = L.next++;
-  const dress = Math.random() < 0.2 ? Math.random() : -1, // (20% wear something: a hat, an outfit or both)
-    hat = dress >= 0 && dress < 0.6 ? rint(0, ZHATS.length - 1) : -1,
-    outfit = dress >= 0.4 ? rint(0, ZOUTFITS.length - 1) : -1,
-    odd = Math.random() < 0.25, // (25% are another size or build; every one has the same room on the floor)
-    size = odd && Math.random() < 0.5 ? +rnd(-1, 1).toFixed(2) : 0,
-    build = odd && !size ? +rnd(-1, 1).toFixed(2) : 0,
+  const [size, build, hat, outfit] = lookOf(),
     max = Math.max(1, hp0()),
     jus = Math.random() < Z_JUSTIN ? 1 : 0,
     v = Math.round(WALK * Z_SLOW * rnd(R[1][0], R[1][1])),
@@ -242,6 +252,16 @@ export function newZombie(s, L, T, zs = []) {
       ? [max, v, o.id, 0, 0, -1, -1, 1]
       : [max, v, o.id, size, build, hat, outfit],
   };
+}
+/* a new zombie's look, every kind's: [size, build, hat, outfit] (l: its look, after its HP, speed and opening) */
+function lookOf() {
+  const dress = Math.random() < 0.2 ? Math.random() : -1, // (20% wear something: a hat, an outfit or both)
+    hat = dress >= 0 && dress < 0.6 ? rint(0, ZHATS.length - 1) : -1,
+    outfit = dress >= 0.4 ? rint(0, ZOUTFITS.length - 1) : -1,
+    odd = Math.random() < 0.25, // (25% are another size or build; every one has the same room on the floor)
+    size = odd && Math.random() < 0.5 ? +rnd(-1, 1).toFixed(2) : 0,
+    build = odd && !size ? +rnd(-1, 1).toFixed(2) : 0;
+  return [size, build, hat, outfit];
 }
 /* Downpour: one of the road's two ends (just inside the map's edge, on the road) that no duck sees and that leads to the
    ducks (pts: where they stand), or null */
@@ -444,14 +464,65 @@ export function moveZombies(s, zs, now, T, up) {
   const p4 = { ...s.hang.l4p },
     eating = { ...((s.hidden && s.hidden.l4ze) || {}) },
     ducks = pls.filter((q) => !q.m); // (what a walker notices: never the merchant)
-  let cake = cakeDown(s, now);
   for (const k of Object.keys(eating))
     if (k !== "fx" && eating[k] <= now) delete eating[k];
+  const c = {
+    s,
+    now,
+    T,
+    dt,
+    pls,
+    dist,
+    brd,
+    eating,
+    ducks,
+    cake: cakeDown(s, now),
+    swipe: [R[2], R[3] + ZOMBIE_SWIPE_SLOWER],
+    reach: CLAW,
+    way: (x, y, tx, ty) => wayTo(x, y, tx, ty, now),
+    bite: (x, y) => addFx(s, { kind: "l4bite", who: [], t: now, x, y }),
+    claw: (target, z) => mapClaw(s, p4, target, z, now),
+  };
+  walkAll(zs, c);
+  /* Survival: the merchant runs only once the zombies actually come for him (the owner's, Nov 20 18:23Z: "the merchant
+     doesn't run away on survival until the zombies actually start chasing them. So that way it's like feels less
+     scripted and more natural") */
+  if (c.chasedM && (merchantOf(s) || {}).st === "here") merchantGo(s, now);
+  fireTick(s, zs, now, T, p4);
+  s.hang.l4p = p4;
+  s.hang.brd = brd;
+  s.hidden = { ...s.hidden, l4ze: eating };
+}
+/* a swipe on the map: at the merchant, a gunman or a duck (p4: the ducks' points this heartbeat). True when the target
+   is down (no more swipes at it this heartbeat) */
+function mapClaw(s, p4, target, z, now) {
+  if (target.m) return merchantHurt(s, null, 1, now, "claw"); // (the merchant: a swipe takes 1, and no line)
+  if (target.g)
+    return L4_HOOKS.gm.claw(s, target.g, z, clawDmg(), now, gmHelp(s, now)); // (a gunman: gunmenrules.js)
+  return (
+    !dodging(s, target.p, now) &&
+    hurtDuck(
+      s,
+      p4,
+      target.id,
+      now,
+      "claw",
+      z.dm ? (valueOf({ ok: z.dm }, SB_BOXES.damage) ?? 1) : clawDmg(), // (the owner's, Nov 19 19:27Z: "zombies could do anywhere from 0.6 to 1 damage")
+    )
+  );
+}
+/* ---------- the walk: every zombie's heartbeat, on whatever ground (the template every walk runs) ----------
+   c: what the walk it is part of hands it: s, now, T (the clock its swipes keep), dt, pls (what they go for: ducks, and
+   on the map the merchant and the gunmen), dist (the flow field to them; none on open ground: straight at them), brd
+   (the boards up), eating, ducks, cake ([x, y] or null), swipe ([wind-up, between]), reach (duck lengths), way(x, y,
+   tx, ty) (the next point toward a spot), bite(x, y) (a chomp at the cake, or null) and claw(target, z) (a swipe's hit:
+   true once the target is down). It sets c.chasedM when one comes close for the merchant */
+function walkAll(zs, c) {
+  const { s, now, T, dt, pls, dist, brd, eating, ducks, cake } = c;
   ZC = crowdOf(zs); // (no walking into one another: stepZombie)
-  let chasedM = false;
   for (const z of zs) {
     if (z.st === 3) continue;
-    const o = openingById(z.l[2]),
+    const o = z.l[2] ? openingById(z.l[2]) : null,
       v =
         z.l[1] *
         walkOf(s) * // (as much faster or slower as the ducks, by the lobby's Walking speed)
@@ -654,16 +725,16 @@ export function moveZombies(s, zs, now, T, up) {
     if (cake && z.st !== 7) {
       if (Math.hypot(z.x - cake[0], z.y - cake[1]) < CAKE_R) {
         eating[z.i] = now + CAKE_BITE;
-        if (now - (eating.fx || 0) >= 450) {
+        if (c.bite && now - (eating.fx || 0) >= 450) {
           eating.fx = now;
-          addFx(s, { kind: "l4bite", who: [], t: now, x: z.x, y: z.y });
+          c.bite(z.x, z.y);
         } // (a chomp now and then, not one for every zombie at it)
         continue;
       }
       const aim =
         Math.hypot(z.x - cake[0], z.y - cake[1]) < 120
           ? cake
-          : wayTo(z.x, z.y, cake[0], cake[1], now);
+          : c.way(z.x, z.y, cake[0], cake[1]);
       if (aim) stepZombie(z, aim, v * dt, pls);
       z.n = 0;
       continue;
@@ -695,7 +766,7 @@ export function moveZombies(s, zs, now, T, up) {
           !z.wk &&
           room(z.x, z.y, ...target.xy) < MERCH.CHASE_NEAR
         )
-          chasedM = true; // (a zombie of the wave coming for the merchant, and close: he goes, below)
+          c.chasedM = true; // (a zombie of the wave coming for the merchant, and close: he goes, below)
         goal = target.goal;
         let way = target.way;
         if (
@@ -718,14 +789,15 @@ export function moveZombies(s, zs, now, T, up) {
         z.n = 0;
         continue;
       }
-      const c = openNear(z.x, z.y),
+      const cc = dist ? openNear(z.x, z.y) : -1,
         close =
-          (best < 2.6 || (c >= 0 && dist[c] <= 1.5)) &&
-          walkable(z.x, z.y, ...goal); // (straight at it only with nothing in between: a trunk, a car or a pew in the way and it goes round by the field)
+          !dist || // (open ground: no field, straight at it)
+          ((best < 2.6 || (cc >= 0 && dist[cc] <= 1.5)) &&
+            walkable(z.x, z.y, ...goal)); // (straight at it only with nothing in between: a trunk, a car or a pew in the way and it goes round by the field)
       let aim = close
         ? goal
         : z.cm || target.j
-          ? wayTo(z.x, z.y, goal[0], goal[1], now) // (its own way up's foot, wherever the duck goes meanwhile; Justin: the field is the players')
+          ? c.way(z.x, z.y, goal[0], goal[1]) // (its own way up's foot, wherever the duck goes meanwhile; Justin: the field is the players')
           : heading(dist, z.x, z.y);
       if (z.fl && !z.cm && !close) aim = flank(z, target, now) || aim; // (a flanker: round the side first)
       /* Downpour: its way goes through a boarded hole with its boards up: it stops there and tears them down */
@@ -752,47 +824,26 @@ export function moveZombies(s, zs, now, T, up) {
     /* the claw: at a duck long enough, then again every so often (it keeps walking meanwhile); only one on its own
        floor (zFloor), never one up on a roof over it or down below it, nor one up the ladder */
     const d = room(z.x, z.y, ...target.xy),
-      queued = !!z.bl && room(z.bl.x, z.bl.y, ...target.xy) < CLAW + QUEUE.near; // (its way blocked by one at this duck)
+      queued =
+        !!z.bl && room(z.bl.x, z.bl.y, ...target.xy) < c.reach + QUEUE.near; // (its way blocked by one at this duck)
     if (
-      d < CLAW + (duckBig(s, target.id) - 1) / 2 + (queued ? QUEUE.reach : 0) && // (a duck bigger than 100% is reached sooner: duck.js)
+      d <
+        c.reach +
+          (duckBig(s, target.id) - 1) / 2 +
+          (queued ? QUEUE.reach : 0) && // (a duck bigger than 100% is reached sooner: duck.js)
       zFloor(z) === target.dk &&
       Math.abs(target.zz - zombieZ(z)) < 50
     ) {
       if (!z.n) z.n = T || 1;
-      if (T - z.n >= R[2] && T - z.a >= R[3] + ZOMBIE_SWIPE_SLOWER) {
+      if (T - z.n >= c.swipe[0] && T - z.a >= c.swipe[1]) {
         z.a = T;
         z.dir = Math.round(
           Math.atan2(target.xy[1] - z.y, target.xy[0] - z.x) * 100,
         );
-        if (target.m) {
-          if (merchantHurt(s, null, 1, now, "claw"))
-            pls.splice(pls.indexOf(target), 1); // (the merchant: a swipe takes 1, and no line)
-        } else if (target.g) {
-          if (L4_HOOKS.gm.claw(s, target.g, z, clawDmg(), now, gmHelp(s, now)))
-            pls.splice(pls.indexOf(target), 1); // (a gunman: gunmenrules.js)
-        } else if (
-          !dodging(s, target.p, now) &&
-          hurtDuck(
-            s,
-            p4,
-            target.id,
-            now,
-            "claw",
-            z.dm ? (valueOf({ ok: z.dm }, SB_BOXES.damage) ?? 1) : clawDmg(), // (the owner's, Nov 19 19:27Z: "zombies could do anywhere from 0.6 to 1 damage")
-          )
-        )
-          pls.splice(pls.indexOf(target), 1);
+        if (c.claw(target, z)) pls.splice(pls.indexOf(target), 1);
       }
     } else z.n = 0;
   }
-  /* Survival: the merchant runs only once the zombies actually come for him (the owner's, Nov 20 18:23Z: "the merchant
-     doesn't run away on survival until the zombies actually start chasing them. So that way it's like feels less
-     scripted and more natural") */
-  if (chasedM && (merchantOf(s) || {}).st === "here") merchantGo(s, now);
-  fireTick(s, zs, now, T, p4);
-  s.hang.l4p = p4;
-  s.hang.brd = brd;
-  s.hidden = { ...s.hidden, l4ze: eating };
   ZC = null;
   separate(zs);
 }
@@ -995,7 +1046,7 @@ export const zombieZ = (z) =>
         ? edgeOf(z.x, z.y, deckOf(z)).d.h
         : z.st === 8 && z.j
           ? jumpZ(z)
-          : heightAt(z.x, z.y);
+          : gr().h(z.x, z.y);
 /* the feet of each roof's walls where a zombie can start up (every CL.step along its edges, on open ground), made once */
 let footOf = null;
 function climbSpot(dk, [x, y]) {
@@ -1153,7 +1204,8 @@ function intoCrowd(z, x, y) {
   return null;
 }
 export function stepZombie(z, aim, far, pls) {
-  const n = Math.max(1, Math.ceil(far / 8)),
+  const g = gr(),
+    n = Math.max(1, Math.ceil(far / 8)),
     crowd = !!ZC && ZC.h.has(z),
     side = z.i % 2 ? -1 : 1; // (when it has to turn, its own side first: one way, then the other, and it swung about)
   for (let k = 0; k < n; k++) {
@@ -1164,11 +1216,10 @@ export function stepZombie(z, aim, far, pls) {
     const len = Math.min(d, far / n),
       ux = dx / d,
       uy = dy / d,
-      zz = heightAt(z.x, z.y),
-      stuckIn = !zOk(z.x, z.y, zz);
+      zz = g.h(z.x, z.y),
+      stuckIn = !g.ok(z.x, z.y, zz);
     const ok = (x, y) => {
-      if (stuckIn ? !playable(x, y) : !zOk(x, y, zz, z.up ?? STEP))
-        return false; // (z.up: how high a Sandbox NPC steps, its Can jump and Can climb walls, sbspawn.js)
+      if (stuckIn ? !g.free(x, y) : !g.ok(x, y, zz, z.up ?? STEP)) return false; // (z.up: how high a Sandbox NPC steps, its Can jump and Can climb walls, sbspawn.js)
       if (ZW && ZW.stops(z, x, y, zz)) return false; // (a zone that's a wall to it)
       for (const q of pls) {
         if (Math.abs((q.zz || 0) - zz) > 50) continue; // (a duck up on a roof over it: it walks under it)
@@ -1223,10 +1274,11 @@ export function stepZombie(z, aim, far, pls) {
 /* can a zombie walk straight from (x0, y0) up to a duck at (x1, y1)? (nothing it can't step on in between, every 8 px;
    the last 30 px don't count: a duck up on a car or by a pew is still clawed from the foot of it) */
 export function walkable(x0, y0, x1, y1) {
-  const z = heightAt(x0, y0),
+  const g = gr(),
+    z = g.h(x0, y0),
     d = Math.hypot(x1 - x0, y1 - y0);
   for (let t = 8; t < d - 30; t += 8)
-    if (!zOk(x0 + ((x1 - x0) * t) / d, y0 + ((y1 - y0) * t) / d, z))
+    if (!g.ok(x0 + ((x1 - x0) * t) / d, y0 + ((y1 - y0) * t) / d, z))
       return false;
   return true;
 }
@@ -1235,7 +1287,8 @@ export function walkable(x0, y0, x1, y1) {
    each other every heartbeat and walked back, so they shook in place ("zombies shouldnt viibrate on roof of gas pump",
    the owner's, Nov 20 03:58Z) */
 function separate(zs) {
-  const live = zs.filter((z) => z.st !== 3),
+  const g = gr(),
+    live = zs.filter((z) => z.st !== 3),
     hz = new Map(dp() ? live.map((z) => [z, zombieZ(z)]) : []);
   nearPairs(
     live,
@@ -1243,8 +1296,8 @@ function separate(zs) {
     64,
     (a, b) => {
       if (hz.size && Math.abs(hz.get(a) - hz.get(b)) >= SAME_FLOOR) return; // (a floor apart: never in each other's way)
-      let ex = (a.x - b.x) / RX,
-        ey = (a.y - b.y) / RY,
+      let ex = (a.x - b.x) / g.rx,
+        ey = (a.y - b.y) / g.ry,
         e = Math.hypot(ex, ey);
       if (e >= 1) return;
       if (e < 1e-3) {
@@ -1256,8 +1309,8 @@ function separate(zs) {
         sb = still(b);
       if (sa && sb) return;
       const push = (1 - e) / 2,
-        ux = (ex / e) * push * RX,
-        uy = (ey / e) * push * RY;
+        ux = (ex / e) * push * g.rx,
+        uy = (ey / e) * push * g.ry;
       if (!sa) nudge(a, sb ? 2 * ux : ux, sb ? 2 * uy : uy);
       if (!sb) nudge(b, sa ? -2 * ux : -ux, sa ? -2 * uy : -uy); // (a Sandbox spawn with Speed 0 is never pushed aside: the other takes it all)
     },
@@ -1274,8 +1327,8 @@ function nudge(z, dx, dy) {
     z.st === 7
       ? e.o < -6 && !!deckAt(x, y, e.d.h)
       : z.st === 2
-        ? zOk(x, y, heightAt(z.x, z.y))
-        : !playable(x, y) || z.st === 4
+        ? gr().ok(x, y, gr().h(z.x, z.y))
+        : !gr().free(x, y) || z.st === 4
   ) {
     z.x = x;
     z.y = y;
@@ -1321,4 +1374,97 @@ export function clearShot(x0, y0, x1, y1, z = 0) {
     if (walled(x0 + ((x1 - x0) * k) / n, y0 + ((y1 - y0) * k) / n, z))
       return false;
   return true;
+}
+/* ---------- the kinds of zombie (breeds: the Type Object pattern, Nystrom) ----------
+   What differs between one kind of zombie and another is these numbers, never code: the walk asks the breed. Dead
+   Ducks Arcade's own zombies take theirs from the round (l4ddrules.js roundOf); a breed here is every other kind.
+   speed: duck lengths a second; hp; reach: duck lengths, how far its claw reaches from the duck's middle (it stops
+   touching it, at 1); swipe: [ms at the duck before its first swipe, ms between swipes]; deadMs: how long its body lies
+   there */
+export const ZOMBIE_BREEDS = {
+  /* Mad God Justin's waves (mgjrules.js wavesTick), on the board */
+  mgjWave: {
+    speed: 3.2,
+    hp: 3,
+    reach: 1.2, // (it stops at 1, touching, as on the map; it used to stop at 0.8 and reach 1)
+    swipe: [0, 1200],
+    deadMs: 4000, // (as long as Dead Ducks Arcade's, L4.DEAD_MS: the owner's, Nov 19 01:34Z, "everything" with its feel)
+  },
+  /* Sandbox's zombies, on the board and on Duck Cabin (sbspawn.js boardTick, sbcabin.js cabinTick), until they walk
+     this walk too: reach is from the duck's middle to where its claw lands, as Mad God Justin's waves had it (they
+     stop at 0.8 of it) */
+  sbBoard: { speed: 3.2, hp: 3, reach: 1.0, swipe: [0, 1200], deadMs: 4000 },
+};
+/* a board zombie's look (l): its breed's HP, no speed nor opening of its own, then lookOf's */
+export const zLook = (B) => [B.hp, 0, "", ...lookOf()];
+/* ---------- the board's zombies: the map's walk, on the board ----------
+   The board's spots are fractions of it (x across, y down), and a duck's length there is duck = [across, down] of them.
+   The walk's px on the board are DL to a duck's length both ways, so its steps, its crowd and its turns are the map's,
+   unchanged. This is the one place the board's units turn into the walk's and back.
+   M: the zombies' holder ({ zb: [{ i, x, y, hp, a (its last swipe), n (since when it's at its duck), f (which way it
+   faces), l, d (when it died), w }], t (the last heartbeat), ze (the ones biting the cake) }). B: its breed. h: ids
+   (the ducks it goes for), cake ([x, y] on the board, or null), claw(id, now) (a swipe at that duck: true once it's
+   down). Returns whether any moved, swiped or was buried */
+const DL = 56; // the walk's px in a duck's length on the board (the map's own, RX)
+export function boardWalk(s, M, now, B, h) {
+  const [kx, ky] = [DL / h.duck[0], DL / h.duck[1]],
+    inside = (x, y) =>
+      x >= 0.01 * kx && x <= 0.99 * kx && y >= 0.03 * ky && y <= 0.97 * ky,
+    v = B.speed * DL,
+    dt = Math.min(0.35, Math.max(0.05, (now - (M.t || now - 200)) / 1000)),
+    zs = M.zb.map((o) => ({
+      i: o.i,
+      x: o.x * kx,
+      y: o.y * ky,
+      st: o.d ? 3 : 2,
+      a: o.a || 0,
+      n: o.n || 0,
+      l: [o.hp, v, ""],
+      o,
+    })),
+    pls = h.ids.map((id) => {
+      const xy = [s.pos[id].x * kx, s.pos[id].y * ky];
+      return { id, p: s.pos[id], xy, zz: 0, dk: null, way: null, goal: xy };
+    }),
+    eating = { ...(M.ze || {}) };
+  M.t = now;
+  for (const k of Object.keys(eating))
+    if (k !== "fx" && eating[k] <= now) delete eating[k];
+  BOARD = { rx: DL, ry: DL, h: () => 0, ok: inside, free: inside };
+  try {
+    walkAll(zs, {
+      s,
+      now,
+      T: now,
+      dt,
+      pls,
+      dist: null,
+      brd: {},
+      eating,
+      ducks: pls,
+      cake: h.cake ? [h.cake[0] * kx, h.cake[1] * ky] : null,
+      swipe: B.swipe,
+      reach: B.reach,
+      way: (x, y, tx, ty) => [tx, ty],
+      bite: null,
+      claw: (target) => h.claw(target.id, now),
+    });
+  } finally {
+    BOARD = null;
+  }
+  let ch = false;
+  for (const z of zs) {
+    const o = z.o,
+      x = Math.round((z.x / kx) * 1000) / 1000,
+      y = Math.round((z.y / ky) * 1000) / 1000;
+    if (x !== o.x || y !== o.y || z.a !== (o.a || 0)) ch = true;
+    if (z.a !== (o.a || 0)) o.f = Math.abs(z.dir) > 157 ? -1 : 1; // (it swiped: it faces the duck)
+    Object.assign(o, { x, y, a: z.a, n: z.n });
+  }
+  if (Object.keys(eating).length) M.ze = eating;
+  else delete M.ze; // (none biting: nothing kept)
+  /* the bodies go after a moment */
+  const n0 = M.zb.length;
+  M.zb = M.zb.filter((o) => !o.d || now - o.d < B.deadMs);
+  return ch || M.zb.length !== n0;
 }

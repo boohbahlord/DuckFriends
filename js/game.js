@@ -3323,7 +3323,7 @@ function placeZombies(board, s, now) {
     if (!!o.d !== !!n._dead) {
       n._dead = !!o.d;
       n.classList.toggle("dead", !!o.d);
-    } // (dead: it falls over, lies there, then fades, its 4 s as Dead Ducks Arcade's: mgjrules.js WAVE.DEAD_MS)
+    } // (dead: it falls over, lies there, then fades, its 4 s as Dead Ducks Arcade's: zombies.js ZOMBIE_BREEDS, deadMs)
     const clawing = !o.d && now - (o.a || 0) < 350;
     n.classList.toggle("claw", clawing);
     if (clawing && n._a !== o.a && fxl && marks-- > 0)

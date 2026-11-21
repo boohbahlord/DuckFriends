@@ -88,7 +88,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 338 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box on every screen
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 5355 the rules of Quacky Zombies
+l4ddrules.js 5339 the rules of Quacky Zombies
 l4ddsfx.js 513 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the zombies far from
 langname.js 5 the name of Sandbox's number language, in one
@@ -109,7 +109,7 @@ merchants.js 376 the merchants
 meters.js 114 the thin bars under my duck's name
 mgj.js 219 Mad God Justin: what the screen shows
 mgjart.js 167 Mad God Justin's new pictures
-mgjrules.js 2395 
+mgjrules.js 2323 
 modes.js 255 the game modes
 music.js 590 the music: our own songs, played from recordings
 musicbar.js 169 the music bar: the song the room hears,
@@ -159,7 +159,7 @@ sbarms.js 136 Sandbox: a made NPC's weapons in a fight
 sbaudio.js 211 Sandbox: songs players bring in
 sbbody.js 233 Sandbox: an NPC's body, where it can be
 sbbrain.js 87 Sandbox: what a spawned NPC does , on
-sbcabin.js 384 Sandbox: the zombies on Duck Cabin , the
+sbcabin.js 390 Sandbox: the zombies on Duck Cabin , the
 sbdrag.js 353 Sandbox, moving blocks with the mouse :
 sbep.js 50 Sandbox Phase 7: what other players may do
 sbepview.js 162 Sandbox Phase 7: what other players may do
@@ -225,7 +225,7 @@ vote.js 278 Vote Mode & Map: the vote windows
 who.js 3 who this player is beyond this tab
 wounds.js 295 the wounds a hit leaves
 zombiepath.js 186 the zombies' way to the ducks on a
-zombies.js 1324 the zombies: one module for every mode's zombies
+zombies.js 1470 the zombies: one module for every mode's zombies
 
 ## js/hangout/
 activities.js 23 every Hangout activity, so the rules and the

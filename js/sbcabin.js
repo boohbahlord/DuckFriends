@@ -2,7 +2,7 @@
    A spawn on Duck Cabin makes Dead Ducks Arcade's zombie (its look, its hits, its claw), walking the way every map's
    zombies walk (l4ddrules.js chaseField and chaseStep: the flow field over the map's own solids, then turns round
    what's in the way), never a route drawn by hand. They live in s.hang.sbz = { n, zb: [{ i, x, y (world px), hp, a (its
-   last claw), f (which way it faces), l (its look: mgjrules.js zLook), sp (its spawn), sv (its speed), dm (its damage
+   last claw), f (which way it faces), l (its look: zombies.js zLook), sp (its spawn), sv (its speed), dm (its damage
    box), run (it may sprint), w (its wounds), d (when it died), and a duck-shaped one's k, dk, nm and weapons (sbarms.js)
    }] }.
    Shots, daggers and swings hit them as they hit Justin (hangout/rules.js hangTargets and hangHit); each takes what a
@@ -30,10 +30,16 @@ import {
   sbClimbAt,
 } from "./sandboxrules.js";
 import { Z_ROOM, zombieTakes, ALL_HP, L4_HOOKS } from "./l4ddrules.js";
-import { chaseField, chaseStep, setZWall, zWalk } from "./zombies.js";
+import {
+  chaseField,
+  chaseStep,
+  setZWall,
+  zWalk,
+  zLook,
+  ZOMBIE_BREEDS,
+} from "./zombies.js";
 import { hitCode } from "./wounds.js";
 import { hpHurt } from "./hpmath.js";
-import { WAVE, zLook } from "./mgjrules.js";
 import { MAD } from "./sbbrain.js";
 import { fight, keepAt, reachTo } from "./sbarms.js";
 import { npcBody, DU_WORLD } from "./sbbody.js";
@@ -59,7 +65,7 @@ export function cabinSpawn(s, x, y, o) {
   if (!s.hang) return 0;
   const z = s.hang.sbz || { n: 0, zb: [] },
     i = z.n + 1,
-    l = zLook();
+    l = zLook(ZOMBIE_BREEDS.sbBoard);
   l[0] = o.hp;
   s.hang = {
     ...s.hang,
@@ -232,7 +238,7 @@ export function cabinTick(s, now, H0) {
         bd,
         claw,
         now,
-        WAVE.CLAW_MS,
+        ZOMBIE_BREEDS.sbBoard.swipe[1],
         (dm, w) => H0.strike(s, now, me, d.foe, Hs, o, dm, w),
         (t) => sees(o, t),
       )
@@ -266,7 +272,7 @@ export function cabinTick(s, now, H0) {
     sbz: {
       ...z,
       t: now,
-      zb: zb.filter((o) => !o.d || now - o.d < WAVE.DEAD_MS), // (the bodies go after a moment)
+      zb: zb.filter((o) => !o.d || now - o.d < ZOMBIE_BREEDS.sbBoard.deadMs), // (the bodies go after a moment)
     },
   };
   return true;

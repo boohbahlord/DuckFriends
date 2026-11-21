@@ -36,12 +36,8 @@
      l4b  { id: { o, at } }: who is boarding up which opening, since when (one more board each BOARD_MS)
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
-import {
-  SPRINT as GAME_SPRINT,
-  ZOMBIE_SWIPE_SLOWER,
-  HANDGUN,
-} from "./gamedefaults.js";
-import { duckBig, scaleOf } from "./duck.js";
+import { SPRINT as GAME_SPRINT, HANDGUN } from "./gamedefaults.js";
+import { scaleOf } from "./duck.js";
 import { hpHeal, hpHurt, tenths } from "./hpmath.js";
 import {
   baseMode,
@@ -49,12 +45,11 @@ import {
   sbPlayerSpot,
   SB_BACK_MS,
   sbRule,
-  SB_BOXES,
   sbZombieWall,
   sbItemMods,
 } from "./sandboxrules.js";
 import { godOn, godHas } from "./sbgod.js";
-import { valueOf } from "./numerat.js";
+
 import { rule, keepOnly } from "./hangout/registry.js";
 import {
   W,
@@ -75,7 +70,6 @@ import {
   layoutRev,
   layoutVariant,
   deckAt,
-  deckOver,
 } from "./hangout/layout.js";
 import * as GS from "./hangout/stationmap.js";
 import { ARM_SPEED, ARM_COOL, ARM_SWING, ARM_RELOAD } from "./armspeed.js";
@@ -93,7 +87,7 @@ import { MERCHANTS, merchantById, merchantLook } from "./merchants.js";
 import { linesOf } from "./merchantlines.js";
 import { invuln } from "./hangout/death.js";
 import { JET } from "./jetpack.js";
-import { hOk, hLock, shotFeet, MID, SAME_FLOOR } from "./heights.js";
+import { hOk, hLock, shotFeet, SAME_FLOOR } from "./heights.js";
 import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
@@ -129,14 +123,9 @@ import {
   pwName,
 } from "./l4ddpower.js";
 import { ANGEL, angelOf, angelAmmo, angelAct, angelLeft } from "./l4ddangel.js";
-import { fieldOf, askField } from "./flowfield.js";
+
 import { NPC_RUN } from "./npcshared.js";
-import {
-  sees as npcSees,
-  nearPairs,
-  shotMark,
-  woundsAfter,
-} from "./npcrules.js";
+import { sees as npcSees, shotMark, woundsAfter } from "./npcrules.js";
 import { grHp, grCool } from "./sbgroups.js";
 import {
   isSurv,
@@ -144,13 +133,10 @@ import {
   SV,
   survStart,
   survTick,
-  survWatch,
   wholeIn,
 } from "./survrules.js";
 import {
   CELL,
-  GX,
-  GY,
   GW,
   GH,
   setGrid,
@@ -164,6 +150,7 @@ import {
 import {
   zOk,
   Z_MOST,
+  room,
   zombies,
   store,
   minus,
@@ -1251,9 +1238,6 @@ export function dodging(s, p, now) {
   return u > 0.2 && u < 0.8;
 }
 export const at = (p) => [p.x * W, p.y * H];
-/* the ellipse distance between two spots on the floor: 1 is two ducks touching */
-export const room = (ax, ay, bx, by) =>
-  Math.hypot((ax - bx) / RX, (ay - by) / RY);
 
 /* ---------- a duck's slots, points and upgrades ---------- */
 /* a weapon's ammo, full: [in the magazine, the rest], or [all of it, 0] without a magazine; none for melee */
