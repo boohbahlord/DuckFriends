@@ -99,7 +99,7 @@ l4ddpower.js 329 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box on
 l4ddrain.js 326 Downpour's rain
 l4ddrules.js 5010 the rules of Quacky Zombies
-l4ddsfx.js 512 Dead Ducks Arcade's sounds
+l4ddsfx.js 545 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the zombies
 langname.js 5 the name of Sandbox's number language,
 laserart.js 95 the laser gun, drawn
@@ -207,7 +207,7 @@ secret.js 79 secrets between two browsers
 seriatbible.js 108 The Seriat bible in the game
 seriattheme.js 63 Seriat's and the command line's look:
 settings.js 298 Settings
-sfxlist.js 161 the sound files
+sfxlist.js 162 the sound files
 shared.js 497 Sandbox Phase 7: Shared, the game
 shell.js 1127 the command line: a small bash
 shellcmdfiles.js 583 the files and folders commands (a
@@ -218,7 +218,7 @@ shellfs.js 846 the shell's files and what every
 shellpeople.js 221 the people, the room and the
 shellstats.js 245 the stats and forgame commands' helpers
 slices.js 31 long work cut into slices
-sound.js 916 the game's sounds: real recordings, played
+sound.js 918 the game's sounds: real recordings, played
 specials.js 858 Specials
 spectate.js 98 Sandbox: watching the others once my
 splash.js 71 the start screen: your duck on
