@@ -1,5 +1,6 @@
 import { hpHeal, hpHurt, hundredths } from "./hpmath.js";
 import { jumpDodges } from "./jump.js";
+import { coneOf } from "./weaponuse.js";
 /* ---------- the rules of Mad God Justin ----------
    A boss fight: every duck has the knife (1), the pistol (2: it never reloads, in place of the bow, the owner's,
    Nov 16), the weapon it picked
@@ -833,9 +834,8 @@ function brain(s, now, log) {
       ay: +Math.sin(a0).toFixed(3),
     });
     const n0 = s.fxN;
-    for (let i = 0; i < PELLETS; i++) {
-      const a = a0 + SPREAD * ((i / (PELLETS - 1)) * 2 - 1) + rnd(-0.04, 0.04),
-        bx = Math.cos(a) * RX,
+    for (const [i, a] of coneOf(a0, PELLETS, SPREAD).entries()) {
+      const bx = Math.cos(a) * RX,
         by = Math.sin(a) * RY,
         bl = Math.hypot(bx, by);
       s.shots = [
@@ -1428,9 +1428,8 @@ export function mgjUse(s, a, now, log) {
 }
 /* a cone of pellets from (at), toward the angle a0 (in a duck's room) */
 function pellets(s, by, at, a0, n0, now) {
-  for (let i = 0; i < PELLETS; i++) {
-    const a = a0 + SPREAD * ((i / (PELLETS - 1)) * 2 - 1) + rnd(-0.04, 0.04),
-      bx = Math.cos(a) * RX,
+  for (const [i, a] of coneOf(a0, PELLETS, SPREAD).entries()) {
+    const bx = Math.cos(a) * RX,
       by2 = Math.sin(a) * RY,
       bl = Math.hypot(bx, by2);
     s.shots = [
