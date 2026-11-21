@@ -13,6 +13,7 @@
 
    Plan px: x across (0 west … 4600 east), y is depth (0 north … 6200 south). Heights: 0 is the grass and every floor;
    the road lies ROAD.low under it. */
+import { CAR_TOP, carDeck, ELEV_PLAN } from "./vehicles.js";
 export const K = 0.6;
 export let GS_W = 4600,
   GS_H = 6200;
@@ -57,7 +58,13 @@ export const BOT = [
 ];
 /* the buildings: the gas station (its storeroom and restroom on the west side) and the chapel (the bell tower at its
    north-east corner, solid for now) */
-export const STATION = { x0: 1100, y0: 550, x1: 3500, y1: 1750, wall: 180 };
+export const STATION = {
+  x0: 1100,
+  y0: 550,
+  x1: 3500,
+  y1: 1750,
+  wall: ELEV_PLAN,
+}; // (its roof: one elevation)
 export const CHAPEL = { x0: 1600, y0: 3650, x1: 3000, y1: 5750, wall: 240 };
 export const TOWER = { x0: 3000, y0: 3650, x1: 3300, y1: 3950, h: 520 };
 const INNER = 120;
@@ -361,6 +368,11 @@ const CAR_LOOKS = [
   {},
   { smash: "front" },
 ];
+/* a seed from where a thing stands (world px): its look, the same on every device */
+export const seedAt = (x, y) => Math.abs(Math.round(x / 7 + y / 13)) + 1;
+/* which way a car faces (its box's corner, world px): east on an even seed; the hood-up car west, its hood where E uses
+   it */
+export const carEast = (x, y, hood) => !hood && seedAt(x, y) % 2 === 0;
 /* the cars stopped on the road (420 by 200 each; one more by the hood-up car is HOOD) */
 export const CARS = [
   [250, 2790],
@@ -376,7 +388,27 @@ export const PUMPS = [
 ];
 /* the canopy over the pumps: its roof at z, a little under the gas station's roof (Part B, the owner's, Nov 17 12:28Z:
    it "can be jumped onto from there", "slightly lower"; from the ground only by way of the station's roof) */
-export const CANOPY = { x0: 1400, y0: 1950, x1: 3200, y1: 2500, z: 150 };
+export const CANOPY = {
+  x0: 1400,
+  y0: 1950,
+  x1: 3200,
+  y1: 2500,
+  z: 0.85 * ELEV_PLAN,
+}; // (0.85 of an elevation: the owner's, Nov 21 10:48 ET)
+/* the plank from the red car's roof up to the canopy (the owner's, Nov 21 09:52 ET, his OK 16:37Z: construction wood
+   like a pallet, walked as a slope): from REST over the canopy's east edge to REST onto the car's roof, z0 up at its east
+   end (the car's roof), z1 at its west end (the canopy); its drawing plank.js, its floor plankDeck below */
+const REST = 26;
+export const PLANK = {
+  x0: CANOPY.x1 - REST,
+  y0: 2050,
+  x1: HOOD.x1 - CAR_TOP.roof[1] + REST, // (the hood-up car faces west: its roof starts roof[1] in from its east end)
+  y1: 2120,
+  z0: CAR_TOP.h - CAR_TOP.below,
+  z1: CANOPY.z,
+  rest: REST,
+  key: CANOPY.y1 + 10, // (over the canopy's roof and the car)
+};
 /* the fallen tree across the east end of the road: ducks jump it (TOP_TREE tall), zombies climb over */
 export const FALLEN = {
   x0: 3500,
@@ -395,7 +427,7 @@ export const PART_SPOTS = [
   { x: 1350, y: 1430, z: 0, can: "S" }, // (the restroom)
   { x: 1850, y: 2300, z: 0, can: "GS" }, // (the west pump)
   { x: 2750, y: 2300, z: 0, can: "GS" }, // (the east pump)
-  { x: 1260, y: 3200, z: 110, can: "TS" }, // (a car's roof)
+  { x: 1260, y: 3200, z: CAR_TOP.h - CAR_TOP.below, can: "TS" }, // (a car's roof)
   { x: 2560, y: 3050, z: 0, can: "TS" }, // (a car's front)
   { x: 3060, y: 2770, z: 0, can: "TS" }, // (a car's back)
   { x: 1950, y: 4100, z: 45, can: "FS" }, // (a pew)
@@ -597,6 +629,21 @@ function planBuild(b) {
     CANOPY.z + 50,
     { zt: CANOPY.z, hoopKey: CANOPY.y1 + 2 },
   );
+  put(
+    "plank",
+    PLANK.x0,
+    PLANK.y0,
+    PLANK.x1 - PLANK.x0,
+    PLANK.y1 - PLANK.y0,
+    PLANK.z1 + 16,
+    {
+      z: 0,
+      key: PLANK.key,
+      z0: PLANK.z0,
+      z1: PLANK.z1,
+      rest: REST,
+    },
+  );
   for (const p of PUMPS) solid("pump", p, 140);
   solid(
     "generator",
@@ -606,7 +653,32 @@ function planBuild(b) {
   put("l4power", POWER_SPOT.x - 34, POWER_SPOT.y - 14, 68, 28, 120, {
     solid: true,
   });
-  solid("car", HOOD, 110, {
+  /* a car: solid up to its waist (over it, its top is a floor: vehicles.js carDeck). Walking into it is its floor's too
+     (layout.js standable), so a jump that reaches its hood lands on it (a duck jumps 0.3 of an elevation, the hood's
+     height: the owner's, Nov 21 10:48 ET) */
+  const car = (r, o) => {
+    const T = CAR_TOP,
+      z = groundAt((r.x0 + r.x1) / 2, r.y1 - 1),
+      w = r.x1 - r.x0,
+      east = r !== HOOD && carEast(r.x0 * K, r.y0 * K, false);
+    put(
+      "carglass",
+      r.x0 + (east ? T.glass[0] : w - T.glass[1]),
+      r.y0 + T.side + 2,
+      T.glass[1] - T.glass[0],
+      r.y1 - r.y0 - 2 * (T.side + 2),
+      T.h - T.below - T.waist,
+      {
+        solid: true,
+        pass: true,
+        layer: "none",
+        z: z + T.waist,
+        top: z + T.h - T.below,
+      },
+    ); // (its glass and roof: they stop a shot up to the roof; walking over them is its floor's)
+    return solid("car", r, T.h, { top: z + T.waist, pass: true, ...o });
+  };
+  car(HOOD, {
     hood: true,
     smash: "side",
     light: {
@@ -618,7 +690,7 @@ function planBuild(b) {
       flick: 0.6,
     },
   });
-  CARS.forEach((c, i) => solid("car", c, 110, CAR_LOOKS[i]));
+  CARS.forEach((c, i) => car(c, CAR_LOOKS[i]));
   /* the fallen tree: a row of low blocks along it (a jump clears them; zombies climb over: zx) */
   {
     const F = FALLEN,
@@ -1039,6 +1111,7 @@ for (const o of [
   GEN,
   POWER_SPOT,
   HOOD,
+  PLANK,
 ])
   scaled(o);
 for (const o of [PRIEST, ANGEL, START, CARS, PUMPS, CANOPY, FALLEN]) scaled(o);
@@ -1077,6 +1150,28 @@ export const DECKS = [
     bldg: 0,
   },
 ];
+/* every car's top: a floor over it (vehicles.js carDeck) */
+const carZ = (c) => groundAt((c.x0 + c.x1) / 2, c.y1 - 1);
+DECKS.push(
+  carDeck(HOOD, false, carZ(HOOD), K, true),
+  ...CARS.map((c) => carDeck(c, carEast(c.x0, c.y0, false), carZ(c), K)),
+  {
+    kind: "plank",
+    x0: PLANK.x0,
+    y0: PLANK.y0,
+    x1: PLANK.x1,
+    y1: PLANK.y1,
+    h: PLANK.z1,
+    hAt: (x) =>
+      PLANK.z1 +
+      (PLANK.z0 - PLANK.z1) *
+        Math.min(1, Math.max(0, (x - PLANK.x0) / (PLANK.x1 - PLANK.x0))),
+    key: PLANK.key,
+    holes: [],
+    bldg: 0,
+    thin: true, // (slats with gaps: seen through, layout.js seeLine)
+  }, // (the plank: a slope from the car's roof up to the canopy)
+);
 export function build(b) {
   for (const [f, ...a] of CALLS) {
     if (f !== "add") {

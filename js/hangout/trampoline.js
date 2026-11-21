@@ -72,6 +72,7 @@ activity({
     me.tb = was ? Math.min(TOP, was + MORE) : FIRST;
     me.j = now;
     me._j = now;
+    me.hr = undefined; // (no roof over a trampoline: none kept from the last jump, jump.js)
     me.b = me.z;
     me.vz = null;
     me._za = undefined;

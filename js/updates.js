@@ -9,6 +9,50 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v222",
+    version: 222,
+    date: "Nov 21, 2026",
+    title: "Calibers, climbable cars, the plank",
+    news: [
+      "For Dead Ducks Arcade: on Downpour you can climb the cars and the jeep (hood, roof, trunk), and so can zombies. A wooden plank runs from the red car's roof up to the gas station's canopy: walk it up, and zombies follow you up it.",
+      "A jump under a roof stops when your head hits it.",
+      "Guns: each gun's damage now comes from the bullet it fires (its caliber) and how long its barrel is, so guns with the same bullet hit alike. Damage and HP are counted in hundredths.",
+      "A crit now doubles the hit instead of taking all the HP, and the head only comes off when a crit is the killing hit. Slower guns crit more often (25% divided by shots a second); grenades, the grenade launcher, the flamethrower and the Laser Rifle never crit.",
+      "The CRIT text is a little smaller in normal lettering, and \u2212N HP now shows over Sandbox's NPCs and Survival's gunmen too.",
+      "The buckshot double barrel is gone, and the shotgun is now called the Pump action shotgun. Bullets no longer knock zombies back.",
+      "The M1911 holds 7 rounds (140 carried), the revolver 6, the chain gun fires 30 a second with 600 rounds, and the sledgehammer swings as fast as the fire axe.",
+      "Zombies swing at the pace of rounds 1 to 4 in every round: a short wind-up, then about 1.2 seconds between hits.",
+      "For Dead Ducks Arcade and Survival: the melee weapon you start with is already a quarter worn.",
+      "The merchant's sheet and the Items page show each gun's caliber, barrel and how hard it kicks. Hold I over an item (a long press on phones) to see its card.",
+      "Your HP meter no longer jumps while you fire.",
+      "For Dead Ducks Arcade: Justin's yellow outline behind walls is thinner.",
+      "Seriat on a phone held upright: the Seriat bible's text is bigger and the code gets more room than the terminal.",
+      "Behind the scenes: Customize's Hat page opens faster (from about 2,000 pieces on the page to 170), and ducks with skin colors are made from ready pieces like every other duck.",
+      "Behind the scenes: whether a weapon can fire right now is decided by one shared module for the boards and the maps.",
+    ],
+  },
+  {
+    id: "v221",
+    version: 221,
+    date: "Nov 21, 2026",
+    title: "Single player under Play",
+    news: ["Play now asks Single player or Multiplayer."],
+  },
+  {
+    id: "v220",
+    version: 220,
+    date: "Nov 21, 2026",
+    title: "Ethan, skin colors, a lower jump",
+    news: [
+      "Ethan walks Downpour and Duck Cabin beside Justin. He says nothing yet.",
+      "Colors: a Skin colors list, drawn flat with no shine, and a Metallic colors list, for the duck and for clothes and hats.",
+      "Ducks jump 0.3 of the gas station roof's height.",
+      "Loading screens are shorter, and the screen shake moves only the world: the bars and the round stay still.",
+      "Behind the scenes: the hotbar runs on one shared module in every mode, so picking weapons and pressing R work the same everywhere.",
+      "Behind the scenes: deaths, ghosts, Duck Cabin and the board's Justin follow each mode's own settings instead of special cases, so new modes work without new code.",
+    ],
+  },
+  {
     id: "v219",
     version: 219,
     date: "Nov 21, 2026",
@@ -18,6 +62,7 @@ export const UPDATES = [
       "For Survival: a duck that bleeds out walks as a ghost instead of watching others. Zombies and gunmen ignore it, and the defibrillator still brings it back where it fell.",
       "The jetpack is gone.",
       "For Dead Ducks Arcade: Change starting round no longer covers the chat or the players list.",
+      "Behind the scenes: walking and jumping each live in one shared module for every mode, so the jump height is one number for the whole game.",
     ],
   },
   {
@@ -2959,28 +3004,45 @@ export function openUpdates() {
   markSeen();
   return openWindow(
     `<h2 class="up-title">${rainbowHTML("Updates")}</h2>
-    <div class="up-nav"><button type="button" class="btn ghost up-arrow" data-d="1" aria-label="Older update">◀</button>
+    <div class="up-nav"><button type="button" class="btn ghost up-arrow" data-d="1" aria-label="Older day">◀</button>
       <div class="up-head"><b class="up-ver"></b><span class="up-date"></span><span class="up-name"></span></div>
-      <button type="button" class="btn ghost up-arrow" data-d="-1" aria-label="Newer update">▶</button></div>
+      <button type="button" class="btn ghost up-arrow" data-d="-1" aria-label="Newer day">▶</button></div>
     <div class="up-body"></div><p class="up-count dim"></p>
     <p class="up-count"><button type="button" class="linkbtn" data-a="upcoming">Upcoming Updates and Release Dates</button></p>${reportLinkHTML()}`,
     {
       cls: "win-updates",
       onOpen(w) {
+        /* one page a day (the owner's: "make it to where it shows the day ... I can't scroll through all of this"):
+           every version of that day on it, newest first */
+        const days = [];
+        for (const u of UPDATES) {
+          const d = days[days.length - 1];
+          if (d && d.date === u.date) d.list.push(u);
+          else days.push({ date: u.date, list: [u] });
+        }
         let i = 0;
         const show = (n) => {
-          i = Math.max(0, Math.min(UPDATES.length - 1, n));
-          const u = UPDATES[i];
-          w.querySelector(".up-ver").textContent = `Version ${u.version}`;
-          w.querySelector(".up-date").textContent = u.date;
-          w.querySelector(".up-name").textContent = u.title;
+          i = Math.max(0, Math.min(days.length - 1, n));
+          const d = days[i],
+            a = d.list[d.list.length - 1].version,
+            b = d.list[0].version;
+          w.querySelector(".up-ver").textContent = d.date;
+          w.querySelector(".up-date").textContent =
+            a === b ? `Version ${a}` : `Versions ${a} to ${b}`;
+          w.querySelector(".up-name").textContent = "";
           const body = w.querySelector(".up-body");
-          body.innerHTML =
-            list("new", "New", u.news) + list("fix", "Fixed", u.fixed);
-          body.scrollTop = 0; // each version starts at its top
+          body.innerHTML = d.list
+            .map(
+              (u) =>
+                `<h3 class="up-vh">Version ${u.version}: ${esc(u.title)}</h3>` +
+                list("new", "New", u.news) +
+                list("fix", "Fixed", u.fixed),
+            )
+            .join("");
+          body.scrollTop = 0; // each day starts at its top
           w.querySelector(".up-count").textContent =
-            `${i + 1} of ${UPDATES.length}`;
-          w.querySelector('[data-d="1"]').disabled = i === UPDATES.length - 1;
+            `Day ${i + 1} of ${days.length}`;
+          w.querySelector('[data-d="1"]').disabled = i === days.length - 1;
           w.querySelector('[data-d="-1"]').disabled = i === 0;
         };
         w.querySelectorAll(".up-arrow").forEach(

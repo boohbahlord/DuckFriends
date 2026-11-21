@@ -17,6 +17,7 @@ import {
 } from "./sbnpcart.js";
 import { goreFree } from "./wounds.js";
 import { clawMark } from "./claw.js";
+import { popHP } from "./hpmeter.js";
 import { FLAME } from "./mgjart.js";
 import { now as clockNow } from "./clock.js";
 
@@ -105,6 +106,12 @@ export function drawNpcs(ctx, list, ZB, layer, fxl, opt = {}) {
       ),
       hide = unseen || (!!opt.hide && opt.hide(o, z, Wd)) || !onCam;
     if (z.el.hidden !== hide) z.el.hidden = hide;
+    /* "−N HP" over it when it loses HP or gets some back, as over every duck and zombie (hpmeter.js; the owner's, Nov 21
+       17:25Z: "The game now has the -{hp number} above any entity that takes damage now"); kept while it's out of sight
+       so it never pops an old hit when it comes back into view */
+    if (z.hv !== undefined && o.hp !== z.hv && !hide && !z.dead)
+      popHP(z.el, o.hp - z.hv, true);
+    z.hv = o.hp;
     /* its outline (outlines.js), where a mode gives them one: true when only the line shows (a roof or a wall over it) */
     const olOnly =
       !!opt.ol && !o.d && onCam && !!opt.ol(o, z, f, unseen, h, sc);

@@ -34,7 +34,7 @@ import {
   LIGHTS,
   PROPS,
   layoutRev,
-  deckAt,
+  onRoof,
 } from "./hangout/layout.js";
 import { sway, stutterOf, lightNow } from "./hangout/flicker.js";
 import { play, setListener } from "./hangout/sounds.js";
@@ -97,7 +97,7 @@ import {
   magIn,
   fullFor,
   downArmed,
-  WILD,
+  wilds,
   isWild,
   at as l4At,
   pierceOf,
@@ -119,7 +119,8 @@ import { hOk, hLock } from "./heights.js";
 import { ammoBar, stackBars, noReload } from "./meters.js";
 import { laserMeter } from "./laserfx.js";
 import { goreFree, BY_WOUND, newWound, woundLook } from "./wounds.js";
-import { catalogHTML } from "./l4ddcatalog.js";
+import { catalogHTML, statLineOf } from "./l4ddcatalog.js";
+import { mountItemTip } from "./itemtip.js";
 import {
   pwMount,
   pwUnmount,
@@ -971,9 +972,9 @@ let poolEl = null,
 function seePool(s, ctx) {
   if (!poolEl) return;
   const Wd = ctx.world,
-    q = P4(s, WILD.id),
-    down = !!(q && q.ex && isWild(s, WILD.id)),
-    a = down && !+s.options.noGore ? Wd.at(WILD.id) : null,
+    dead = wilds(s).find((id) => (P4(s, id) || {}).ex), // (the first of them lying dead gets the one pool)
+    down = !!dead,
+    a = down && !+s.options.noGore ? Wd.at(dead) : null,
     show = !!a && seenFrom(a.x, a.y, Wd.inside, a.z);
   if (!down) poolAt = 0;
   else if (!poolAt) poolAt = clockNow();
@@ -1492,7 +1493,7 @@ function paint(now, ctx) {
   function beamOf(id, a, t) {
     const c = Wd.toScreen(a.x, a.y, a.z + 26);
     if (!on(c.left * q, c.top * q, CONE.far * sc)) return; // (its light can't reach the screen: no rays)
-    const roof = !!deckAt(a.x, a.y, a.z), // (up on a roof: over the walls, nothing stops it)
+    const roof = onRoof(a.x, a.y, a.z), // (up on a roof: over the walls, nothing stops it)
       pts = [],
       ends = []; // (the same rays on the floor in world px, on into the wall each one stops at: shineProps)
     for (let k = 0; k <= rays; k++) {
@@ -2564,7 +2565,7 @@ function shopFill(s, ctx) {
             price = stockPrice(s, p),
             was = price < p ? `<s>${p}</s> ` : "",
             off = (have && !again) || pts < price;
-          return `<li class="l4-up l4-buyw"><i class="l4-up-ic">${orbHTML(w)}</i><span class="l4-up-t"><b>${weaponName(w)}${n > 1 ? ` <span class="l4-up-n">x${n}</span>` : ""}</b><small>${kindWord(w)}</small></span><button type="button" class="btn small ${have && !again ? "" : "yellow"} l4-up-buy" data-buy="${w}"${off ? " disabled" : ""}>${have && !again ? "Owned" : was + price}</button></li>`;
+          return `<li class="l4-up l4-buyw" data-item="${w}"><i class="l4-up-ic">${orbHTML(w)}</i><span class="l4-up-t"><b>${weaponName(w)}${n > 1 ? ` <span class="l4-up-n">x${n}</span>` : ""}</b><small>${kindWord(w)}</small>${statLineOf(w) ? `<small class="l4-up-s">${statLineOf(w)}</small>` : ""}</span><button type="button" class="btn small ${have && !again ? "" : "yellow"} l4-up-buy" data-buy="${w}"${off ? " disabled" : ""}>${have && !again ? "Owned" : was + price}</button></li>`;
         })
         .join("")
     : '<li class="l4-up l4-sold">Sold out</li>';
@@ -2604,6 +2605,7 @@ function shopEsc(e) {
   } else if (e.key.startsWith("Arrow")) closeShop(); // (the arrows close it at once too, and still do what they do)
 } // (before the game's own Escape: the pause menu)
 function shopEl(ctx) {
+  mountItemTip(); // (hold I on an item: its card)
   const el = document.createElement("div");
   el.className = "hang-book l4-shop";
   el.hidden = true;

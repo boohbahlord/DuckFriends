@@ -23,7 +23,7 @@ import {
   afterShots,
 } from "./weaponuse.js";
 import { HANDGUN } from "./gamedefaults.js";
-import { jumpDodges } from "./jump.js";
+import { jumpDodges, jumpKept } from "./jump.js";
 import { epAct } from "./sbep.js";
 import { duckBig, picGrow, scaleOf } from "./duck.js";
 import {
@@ -2191,7 +2191,7 @@ function reduceStep(state, a, now) {
           ? {
               z: hz(a.z),
               b: hz(a.b),
-              ...(j && +a.tb > 0 ? { tb: Math.min(3.5, +a.tb) } : {}),
+              ...jumpKept(j, a),
             }
           : {}),
         ...(was &&

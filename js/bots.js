@@ -1316,7 +1316,8 @@ function justinBot(s, id, now, out) {
    away from the nearest zombies (running only from one really close, with his meter: a duck's own, at the shared slow
    speed), cries and runs off when he's hurt, never jumps or dodges, and otherwise strolls about as he does in Duck
    Cabin */
-const wander = new Map(); // Justin → { x, y, until }
+const wander = new Map(), // Justin → { x, y, until }
+  fleeing = new Set(); // (Justin while he's walking away from zombies)
 /* where Justin strolls to, his Duck Cabin way (hangout/justin.js WANDER, the owner's, Nov 17 19:11Z: "HE SHOULD BE CASUALLY
    WALKING AROUND WHICH IS ALREADY IN HIS CHARACTER SHEET! STOP REWRITING CODE TERRIBLY FOR THINGS ALREADY FIGURED OUT!"):
    a spot anywhere on the map, walked to; once he's there he stands about (rest: true) until WANDER seconds have gone by
@@ -1347,7 +1348,7 @@ function wildMove(s, id, now, p, x, y, near, run, out, forced = false) {
      running from zombies not every player"), and no longer the shots flying by him: running from those before they
      landed was the dodging (the owner's, Nov 19 19:27Z: "Justin should stop dodging bullets like a fucking god") */
   const threats = [...near],
-    cry = wildCrying(s, id, now) && s.hang.l4jcry; // (hurt: crying, he runs off from where it came from, l4ddrules.js CRY)
+    cry = wildCrying(s, id, now) && s.hang.l4jcry[id]; // (hurt: crying, he runs off from where it came from, l4ddrules.js CRY)
   if (cry)
     threats.push({
       z: { x: cry.x, y: cry.y },
@@ -1358,8 +1359,12 @@ function wildMove(s, id, now, p, x, y, near, run, out, forced = false) {
      about (within KEEP * 4), never back through them: he went back to the old spot, a step towards them, was scared, a step
      away, and so on every heartbeat, shaking on the spot (the owner's, Nov 21 08:46 ET: "justin is also jitterying in the
      bottom corner, he has been doing that a lot when there are zombies") */
+  /* once scared he stays so until they're a little farther (KEEP * 1.7): right at the line, a zombie walking by at about
+     KEEP * 1.4 had him a step away, calm, a step back towards his spot, scared again, every heartbeat */
   const d0 = threats.length ? threats[0].d : Infinity,
-    scared = forced || !!cry || d0 < KEEP * 1.4;
+    scared = forced || !!cry || d0 < KEEP * (fleeing.has(id) ? 1.7 : 1.4);
+  if (scared) fleeing.add(id);
+  else fleeing.delete(id);
   if (scared) wander.delete(id); // (where he was strolling to: maybe through them)
   const w = scared
     ? null

@@ -17,7 +17,17 @@ import {
   missOf,
   endless,
 } from "./l4ddrules.js";
-import { ARMS, kindOf, POOL, WEAPONS, critOf } from "./guns.js";
+import {
+  ARMS,
+  kindOf,
+  POOL,
+  WEAPONS,
+  critOf,
+  kickOf,
+  recoilWord,
+  caliberOf,
+  barrelOf,
+} from "./guns.js";
 import { survOn } from "./survrules.js";
 import { orbHTML, UP_ICONS } from "./l4ddart.js";
 import { DROP_ICONS } from "./l4dddrops.js";
@@ -89,6 +99,9 @@ function stats(w) {
           : num(A.dmg),
     ]);
   if (w === "glauncher" || w === "grenade") out.push(["Damage", "Kills"]);
+  if (caliberOf(w)) out.push(["Caliber", caliberOf(w)]);
+  if (barrelOf(w)) out.push(["Barrel", barrelOf(w)]);
+  if (recoilWord(kickOf(w))) out.push(["Recoil", recoilWord(kickOf(w))]); // (only a gun that has recoil)
   if (A.pellets) out.push(["Pellets", A.pellets]);
   if (A.cool && A.kind !== "special" && w !== "flamer")
     out.push(["Rate", `${num(1000 / A.cool, 1)} a second`]);
@@ -137,14 +150,38 @@ function stats(w) {
   return out;
 }
 
-const row = (ic, name, say, list) =>
-  `<li><details class="l4-cat-it"><summary><i class="l4-up-ic">${ic}</i><b>${name}</b></summary><div class="l4-cat-body"><p>${say}</p>${
+const row = (ic, name, say, list, item = "") =>
+  `<li${item ? ` data-item="${item}"` : ""}><details class="l4-cat-it"><summary><i class="l4-up-ic">${ic}</i><b>${name}</b></summary><div class="l4-cat-body"><p>${say}</p>${
     list.length
       ? `<dl>${list.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>`
       : ""
   }</div></details></li>`;
 
-const weaponRow = (w) => row(orbHTML(w), weaponName(w), SAY[w] || "", stats(w));
+const weaponRow = (w) =>
+  row(orbHTML(w), weaponName(w), SAY[w] || "", stats(w), w);
+/* a weapon's numbers in one line for the merchant's list: damage, rate, caliber and barrel, and its recoil as a word (only a gun that has recoil) */
+export const statLineOf = (w) => {
+  const m = Object.fromEntries(stats(w));
+  return [
+    m.Damage && `Damage ${m.Damage}`,
+    m.Rate,
+    m.Caliber &&
+      [m.Caliber, m.Barrel && `${m.Barrel} barrel`].filter(Boolean).join(", "),
+    m.Recoil && `Recoil ${m.Recoil}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+};
+/* an item's card, the popup held I shows over it: its name, what it does and its numbers (the same rows as the Items tab) */
+export const itemCardHTML = (w) =>
+  ARMS[w] || w === "grenade"
+    ? `<b class="itip-name">${weaponName(w)}</b><p>${SAY[w] || ""}</p>${(() => {
+        const list = stats(w).filter(([k]) => k !== "Where");
+        return list.length
+          ? `<dl>${list.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>`
+          : "";
+      })()}`
+    : "";
 
 /* the whole tab: a heading and a list for each category */
 export function catalogHTML() {

@@ -106,20 +106,20 @@
  },
  "board-specials": {
   "frames": 720,
-  "digest": "8315bu",
+  "digest": "1dknnk1",
   "every": [
    "1fung0u",
    "1hxovei",
-   "6vdlw",
-   "rhykag",
-   "1ap5zy5",
-   "9g37w7",
-   "1l6k0df",
-   "1ww3pei",
-   "d5s50g",
-   "cea82p",
-   "n3f2c9",
-   "1dsz6pc"
+   "13z2jmj",
+   "1o5pjev",
+   "1ef39nu",
+   "1cuy6gc",
+   "tzelf9",
+   "5lgdke",
+   "1ox3mwt",
+   "rvnv5h",
+   "1722jlq",
+   "19mymd7"
   ],
   "seen": {
    "me": {
@@ -136,7 +136,7 @@
  },
  "hang-keys": {
   "frames": 660,
-  "digest": "xdrz4b",
+  "digest": "1p1wzto",
   "every": [
    "2e6q21",
    "mf7cgw",
@@ -147,7 +147,7 @@
    "u3pqy5",
    "1iu3a8d",
    "j90ksa",
-   "dwjb3l",
+   "1qgntbt",
    "nu0484"
   ],
   "seen": {
@@ -157,14 +157,14 @@
     "z": 0
    },
    "sent": {
-    "move": 111,
+    "move": 109,
     "tick": 55
    }
   }
  },
  "hang-phone": {
   "frames": 600,
-  "digest": "g1cv22",
+  "digest": "1qd8w7y",
   "every": [
    "2e6q21",
    "1tq64li",
@@ -173,7 +173,7 @@
    "tykvk7",
    "ql539v",
    "mq1rsh",
-   "f3jyoh",
+   "mtm7k8",
    "j25rfi",
    "gat4u8"
   ],
@@ -184,28 +184,28 @@
     "z": 0
    },
    "sent": {
-    "move": 76,
+    "move": 74,
     "tick": 50
    }
   }
  },
  "dda-downpour": {
   "frames": 780,
-  "digest": "f0otmm",
+  "digest": "1p8d6u1",
   "every": [
-   "1b9xrpl",
-   "1mixxwg",
-   "tmjuzt",
-   "1qn52jr",
-   "17asipr",
-   "rwxrlv",
-   "s31i52",
-   "1vqs1i6",
-   "l1pqks",
-   "1kg8oog",
-   "gwd2zh",
-   "16xixfp",
-   "1g0l3jc"
+   "10zrf20",
+   "11wa5gs",
+   "z5sjqm",
+   "doajxt",
+   "18u2f5g",
+   "1kdiptm",
+   "16xc4wy",
+   "1shtdgf",
+   "1cidgkc",
+   "10x24at",
+   "176af26",
+   "1k4u577",
+   "axj5ns"
   ],
   "seen": {
    "me": {
@@ -214,7 +214,7 @@
     "z": 0
    },
    "sent": {
-    "move": 105,
+    "move": 103,
     "tick": 65,
     "use": 7,
     "reload": 1
@@ -223,7 +223,7 @@
  },
  "dda-cabin": {
   "frames": 600,
-  "digest": "vub7ih",
+  "digest": "1oowkpl",
   "every": [
    "1d30e8e",
    "9cxvwb",
@@ -243,7 +243,7 @@
     "z": 0
    },
    "sent": {
-    "move": 80,
+    "move": 79,
     "tick": 50,
     "use": 5
    }
@@ -251,20 +251,20 @@
  },
  "dda-phone": {
   "frames": 720,
-  "digest": "91dlpy",
+  "digest": "b2yv0e",
   "every": [
-   "1b9xrpl",
-   "1i30bt9",
-   "1wpl4by",
-   "10bulxx",
-   "hdgex5",
-   "1sq6aur",
-   "h0ea1e",
-   "2kqzce",
-   "12vyw9g",
-   "15uf9nl",
-   "116ikzv",
-   "dn6o72"
+   "10zrf20",
+   "1hyaylp",
+   "v24km3",
+   "19hzdvv",
+   "1cro5gm",
+   "1qi609u",
+   "1to1hu6",
+   "myo63e",
+   "56bgh8",
+   "emdsrl",
+   "1ut071i",
+   "163zwos"
   ],
   "seen": {
    "me": {
@@ -274,7 +274,7 @@
    },
    "sent": {
     "tick": 60,
-    "move": 90,
+    "move": 88,
     "use": 4
    }
   }
@@ -335,7 +335,7 @@
  },
  "sb-cabin": {
   "frames": 600,
-  "digest": "1w0hj6n",
+  "digest": "vz7d5",
   "every": [
    "12k933n",
    "2qfwny",
@@ -346,7 +346,7 @@
    "ofr2zj",
    "qc2l5w",
    "1ozkgmw",
-   "10bsu57"
+   "5ip0yu"
   ],
   "seen": {
    "me": {
@@ -355,7 +355,7 @@
     "z": 0
    },
    "sent": {
-    "move": 105,
+    "move": 102,
     "tick": 50
    }
   }
@@ -441,7 +441,7 @@
  },
  "hang-phone-tap": {
   "frames": 600,
-  "digest": "wc6df3",
+  "digest": "1nlortn",
   "every": [
    "2e6q21",
    "7ujbp1",
@@ -451,7 +451,7 @@
    "10m846p",
    "roos3z",
    "hiqo6g",
-   "h3x1yw",
+   "dgpbln",
    "1inqla8"
   ],
   "seen": {
@@ -461,27 +461,27 @@
     "z": 0
    },
    "sent": {
-    "move": 66,
+    "move": 65,
     "tick": 50
    }
   }
  },
  "dda-pick": {
   "frames": 720,
-  "digest": "1o5o14a",
+  "digest": "4dd38u",
   "every": [
    "1d530du",
    "1jb5n0i",
    "1on2xib",
    "1calr9",
    "xkyb2g",
-   "x1pnb9",
-   "1fvz2gu",
-   "l1d87q",
-   "xnyw5q",
-   "1ki6237",
-   "jgi2gm",
-   "1tknchv"
+   "1eapk0d",
+   "pp9av8",
+   "65gzju",
+   "3uwddl",
+   "17v25s7",
+   "dr39fw",
+   "agqopj"
   ],
   "seen": {
    "me": {
@@ -528,16 +528,16 @@
  },
  "board-reload": {
   "frames": 480,
-  "digest": "1aktda6",
+  "digest": "1y3nhpj",
   "every": [
    "vmamh",
-   "eu103x",
-   "126czy2",
-   "rtduf",
-   "g0l6c5",
-   "146xlf9",
-   "146xlf9",
-   "12qoa5i"
+   "1oytn59",
+   "11n4tbd",
+   "1vxupfm",
+   "eou5al",
+   "1utsws1",
+   "1utsws1",
+   "17ugy49"
   ],
   "seen": {
    "me": {

@@ -70,7 +70,7 @@ import { BEAKS, BEAK_GROUPS, beakById } from "./beaks.js";
 import { STYLES, styleById } from "./styles.js";
 import { OUTFITS, OUTFIT_GROUPS, outfitById } from "./outfits.js";
 import { FONTS, fontHTML } from "./name.js";
-import { colorField } from "./color.js";
+import { colorField, paintBody, metalChoices } from "./color.js";
 import { activeRoom } from "./net.js";
 import { who } from "./who.js";
 import { NAV_HINTS, items } from "./keynav.js";
@@ -85,6 +85,7 @@ import { npcSave, npcDel, npcList, npcName } from "./sbnpcs.js";
 import { cropPicture, cropFile } from "./picrop.js";
 import { yieldNow, idle } from "./slices.js";
 import { pxNow } from "./pxdom.js";
+import { pixelOn } from "./pixel.js";
 import { putPage } from "./armpage.js";
 
 import { SB_WHAT, SB_ACTS } from "./sandboxrules.js";
@@ -158,6 +159,7 @@ function randomize(D, k) {
     D.patternColor = hex();
     D.metal = "none";
     D.image = null;
+    D.matte = false;
   }
 }
 
@@ -251,11 +253,13 @@ const bodyName = (D) =>
     .map(([l, v]) => nameOf(l, +v, ""))
     .filter(Boolean)
     .join(", ") || "Normal";
+/* a tile's duck: with the pixel look on, only its picture (duck.js shell) */
+const TILE = () => ({ size: 58, shadow: false, shell: pixelOn() });
 /* a close look at the head, for eye and beak tiles */
 const headPic = (look) =>
   duckSVG(
     { ...look, image: null, hat: null, face: null, size: 0 },
-    { size: 58, shadow: false },
+    TILE(),
   ).replace(
     /viewBox="[^"]*" width="[^"]*" height="[^"]*"/,
     'viewBox="54 9 77 58" width="64" height="48" style="overflow:hidden"',
@@ -777,7 +781,7 @@ export function openCustomize(page = lastPage, opts = {}) {
                     ? { ...(D.hat && D.hat.id === id ? D.hat : {}), id }
                     : null,
                 },
-                { size: 58, shadow: false },
+                TILE(),
               );
             const hd = D.hat && hatById(D.hat.id);
             html =
@@ -802,10 +806,7 @@ export function openCustomize(page = lastPage, opts = {}) {
             ${D.image ? '<p class="small dim">Hats show on the duck, not on a picture.</p>' : ""}</div>`;
           } else if (k === "face") {
             const pic = (id) =>
-              duckSVG(
-                { ...D, image: null, face: id ? { id } : null },
-                { size: 58, shadow: false },
-              );
+              duckSVG({ ...D, image: null, face: id ? { id } : null }, TILE());
             html =
               head("Face") +
               `<div class="arm-body">${grouped("face", [["none", pic(null), "Nothing"], ...FACES.map((f) => [f.id, pic(f.id), f.name, f.tip])], D.face ? D.face.id : "none", FACE_GROUPS)}
@@ -843,10 +844,7 @@ export function openCustomize(page = lastPage, opts = {}) {
             ${bd.colors ? '<p class="small dim">Its colors are under Colors.</p>' : ""}</div>`;
           } else if (k === "body") {
             const pic = (look) =>
-              duckSVG(
-                { ...D, image: null, ...look },
-                { size: 58, shadow: false },
-              );
+              duckSVG({ ...D, image: null, ...look }, TILE());
             const pct = Math.round(scaleOf(D) * 100);
             /* how big my duck is, every mode (the owner's, Nov 19 15:52Z): its hitbox grows with it past 100%. Not an
                NPC's: its spawn's Size sets that (sbspawn.js) */
@@ -881,7 +879,7 @@ export function openCustomize(page = lastPage, opts = {}) {
                       }
                     : null,
                 },
-                { size: 58, shadow: false },
+                TILE(),
               );
             const od = D.outfit && outfitById(D.outfit.id);
             /* an outfit's options (the leather jacket: jeans or no pants), right under its tile */
@@ -946,7 +944,7 @@ export function openCustomize(page = lastPage, opts = {}) {
                         ? { prevStyle: D.style }
                         : {}),
                     },
-                    { size: 58, shadow: false },
+                    TILE(),
                   ),
                   x.id === "jack"
                     ? styleLabel({ ...D, style: "jack" })
@@ -1028,10 +1026,7 @@ export function openCustomize(page = lastPage, opts = {}) {
           } else if (k === "skin" && D.style === "datboi") {
             /* Dat Boi's Skin page is his ranks */
             const pic = (rank) =>
-              duckSVG(
-                { ...D, hat: null, face: null, rank },
-                { size: 58, shadow: false },
-              );
+              duckSVG({ ...D, hat: null, face: null, rank }, TILE());
             html =
               head("Skin") +
               `<div class="arm-body">${grid(
@@ -1044,7 +1039,7 @@ export function openCustomize(page = lastPage, opts = {}) {
             const pic = (look) =>
               duckSVG(
                 { ...D, hat: null, face: null, image: null, ...look },
-                { size: 58, shadow: false },
+                TILE(),
               );
             const cur = D.image
               ? "pic"
@@ -1200,14 +1195,14 @@ export function openCustomize(page = lastPage, opts = {}) {
               pick.insertBefore(
                 colorField(
                   cur[2],
-                  (c) => {
-                    cur[3](c);
+                  (c, kind) => {
+                    cur[3](c, kind);
                     changed(false);
                     menu
                       .querySelectorAll('[data-a="plainname"]')
                       .forEach((b) => b.setAttribute("aria-pressed", "false"));
                   },
-                  { grid: true },
+                  { grid: true, metals: metalChoices(duckNow(), cur) },
                 ),
                 pick.querySelector(".cnote"),
               );
@@ -1285,11 +1280,7 @@ export function openCustomize(page = lastPage, opts = {}) {
                       key,
                       label,
                       D.metal !== "none" || D.image ? "" : D[key] || def,
-                      (c) => {
-                        D[key] = c;
-                        D.metal = "none";
-                        D.image = null;
-                      },
+                      (c, kind) => paintBody(D, key, c, kind),
                       "Picking a color takes off a metal or a picture.",
                       st.colors.length > 1 && st.name,
                     ],
@@ -1299,11 +1290,7 @@ export function openCustomize(page = lastPage, opts = {}) {
               "duck",
               "Duck",
               D.metal !== "none" || D.image ? "" : D.color,
-              (c) => {
-                D.color = c;
-                D.metal = "none";
-                D.image = null;
-              },
+              (c, kind) => paintBody(D, "color", c, kind),
               "Picking a color takes off a metal or a picture.",
             ]);
           const box = !!st.pages, // (Jack draws no pattern, hat, beak, outfit or face, so their colors wait for the duck;
