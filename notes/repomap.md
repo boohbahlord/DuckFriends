@@ -59,9 +59,9 @@ grenade.js 34 a grenade going off
 ground.js 53 what a duck walks on, for its footsteps
 gunart.js 448 every weapon, drawn: one drawing for every mode,
 gunmen.js 110 the gunmen's looks
-gunmenrules.js 1152 Survival: the gunmen
+gunmenrules.js 1140 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen
-guns.js 495 every weapon's numbers: one sheet for every mode
+guns.js 511 every weapon's numbers: one sheet for every mode
 hats.js 1073 hats
 heights.js 50 a shot's height, Doom's way
 helppages.js 1497 the command line's Help pages: help lists them;
@@ -118,7 +118,7 @@ name.js 165 fonts and how a player's name looks
 nbperms.js 167 Seriat: everyone's home folder, and the rights players
 net.js 127 the room connection
 notes.js 101 Notes : question ideas, written any time
-npcrules.js 106 what every NPC's brain shares
+npcrules.js 119 what every NPC's brain shares
 npcs.js 49 the characters you can mute: Justin, the cats,
 npcshared.js 29 what every NPC shares, whatever mode it's in
 npcview.js 206 an NPC on a world , drawn the
@@ -157,7 +157,7 @@ router.js 112 screens
 rules.js 6250 the rules of Agree or Disagree
 sandbox.js 1359 Sandbox: the key windows
 sandboxrules.js 2059 Sandbox: which map it plays on, and who
-sbarms.js 134 Sandbox: a made NPC's weapons in a fight
+sbarms.js 124 Sandbox: a made NPC's weapons in a fight
 sbaudio.js 211 Sandbox: songs players bring in
 sbbody.js 233 Sandbox: an NPC's body, where it can be
 sbbrain.js 87 Sandbox: what a spawned NPC does , on
