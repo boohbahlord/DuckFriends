@@ -1363,10 +1363,13 @@ const boardAt = (x, y) =>
 const BAND = 40,
   BACK = STAGE.cy - STAGE.ry,
   LOW = STAGE.cy + STAGE.ry + BAND;
+/* the depth of someone on deck d at y: in front of it, and among themselves by y (the 8 steps after its front) */
+export const deckKey = (d, y) =>
+  d.key + 1 + Math.min(1, Math.max(0, (y - d.y0) / (d.y1 - d.y0))) * 7;
 export function sortY(x, y, z) {
   if (variant === "l4gs" || extraDecks().length) {
     const d = deckAt(x, y, z);
-    if (d) return d.key + 1 + ((y - d.y0) / (d.y1 - d.y0)) * 7; // (on a roof, or a Sandbox floor: in front of it, the same way as on a bed)
+    if (d) return deckKey(d, y); // (on a roof, or a Sandbox floor: in front of it, the same way as on a bed)
     if (variant === "l4gs") return y;
   }
   const pl = PLATS.length && platAt(x, y);

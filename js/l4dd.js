@@ -114,7 +114,7 @@ import {
   ZHATS,
   ZOUTFITS,
 } from "./l4ddrules.js";
-import { fenceZ, zombieZ, zombiesOf } from "./zombies.js";
+import { fenceZ, zombieZ, zombiesOf, zSortY } from "./zombies.js";
 import { hOk, hLock } from "./heights.js";
 import { ammoBar, stackBars, noReload } from "./meters.js";
 import { laserMeter } from "./laserfx.js";
@@ -2996,7 +2996,7 @@ activity({
             ? Math.round(hole.key) + 11 // (over the roof, in its hole)
             : o.st === 3
               ? bodyZ(o.x, o.y, z) // (dead: under every duck, layout.js)
-              : Math.round(sortY(o.x, o.y, z)) + 10,
+              : Math.round(zSortY(o, z)) + 10, // (up a wall: in front of its roof, zombies.js)
         onCam = Wd.onView(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc),
         hide =
           unseen ||
@@ -3063,8 +3063,8 @@ activity({
         o.bt = body;
         o.body.style.transform = body;
       }
-      if (o.k !== sc) {
-        o.k = sc;
+      if (o.ks !== sc) {
+        o.ks = sc; // (its own name: o.k is the roof it climbs, and the scale kept there turned every climber's roof into the chapel's each frame, so it flickered between the ground and its height: the owner's, Nov 21 03:40Z)
         o.el.style.setProperty("--k", sc.toFixed(3));
       }
       if (o.zi !== zi) {
