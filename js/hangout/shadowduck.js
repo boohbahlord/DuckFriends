@@ -65,9 +65,6 @@ const way = (s) => {
   };
 };
 let mm = null;
-export const resetShadow = () => {
-  mm = null;
-};
 /* where to lurk behind someone: further out from the cabin than they are, in the dark */
 function behind(d, c) {
   const a = Math.atan2(d.y - MID[1], d.x - MID[0]) + (c.rand() - 0.5) * 0.9,

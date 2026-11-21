@@ -4,6 +4,8 @@ A browser party game for friends on a voice call: rubber ducks walk around a boa
 HTML, CSS and JavaScript modules, no build step. Live at https://boohbahlord.github.io/DuckFriends/ (GitHub Pages
 serves `main`, so merging to `main` is deploying).
 
+Find a file in notes/repomap.md before searching.
+
 ## Notes (search them, don't read them whole)
 - `notes/agree-or-disagree.md`: every request the owner has made, word for word, with the decisions taken. It is long:
   search it for the request you're working on instead of reading it all. Add each new request to the end of it, word

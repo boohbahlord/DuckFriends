@@ -506,7 +506,6 @@ const GORE = () => ({
   ],
   holes: CHUNK_AT,
 });
-const HIT_KINDS = "bBscrakpxgfehm";
 /* the hits as duckSVG's skin and gone: codes is s.hang.zw's string for one zombie. inner and out are lists of marks */
 export function hitsOf(codes = "") {
   const inner = [],
@@ -562,7 +561,6 @@ export function hitsOf(codes = "") {
   if (rips.length) gone.rips = rips;
   return { inner, out, gone }; // (lists, a mark to each: duckSVG's skin takes them so)
 }
-export const HIT_CODES = { kinds: HIT_KINDS, spots: HIT_AT.length };
 
 /* a zombie's picture, made once for each look, marks and wounds (the same ones are the same picture): 64 px wide, its
    shadow under it; n is its number, which picks its marks; hits, its wounds from hits (s.hang.zw) */

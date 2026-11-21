@@ -61,7 +61,6 @@ const mini = (p, size = 22) =>
 const choiceHTML = (i, extra) =>
   `<div class="tv-choice" data-i="${i}"><button type="button" class="tv-mark" data-mark="${i}" aria-pressed="false" aria-label="Mark ${LETTERS[i]} right">${letter(i)}<b class="tv-tick" aria-hidden="true">✓</b></button>
   <textarea class="tv-ain" data-note-box rows="1" maxlength="${A_MAX}" placeholder="Answer ${LETTERS[i]}" aria-label="Answer ${LETTERS[i]}" spellcheck="true"></textarea>${extra ? `<button type="button" class="tv-del" data-del="${i}" aria-label="Take answer ${LETTERS[i]} away">×</button>` : ""}</div>`;
-export const tvChoiceHTML = choiceHTML;
 function markHint(s) {
   if (!multiOn(s))
     return noWrongOn(s)

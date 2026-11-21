@@ -57,10 +57,6 @@ export function blockMap(no) {
     for (let i = 0; i < GW; i++) b[idx(i, j)] = no(...mid(i, j)) ? 1 : 0;
   return b;
 }
-/* rebuild after the map changes (tests) */
-export const resetGrid = () => {
-  grid = hts = null;
-};
 const POOLPAD = 60;
 const nearPool = (x, y) =>
   x > POOL.x0 - POOLPAD &&
@@ -216,12 +212,6 @@ export function findPath(ax, ay, bx, by, o = {}) {
 }
 
 /* ---------- walking: everyone works out where a character is from its walk ---------- */
-const len = (p) => {
-  let L = 0;
-  for (let k = 1; k < p.length; k++)
-    L += Math.hypot(p[k][0] - p[k - 1][0], p[k][1] - p[k - 1][1]);
-  return L;
-};
 /* where a walk has got to at the room's time now: { x, y, moving, dx } */
 export function walkAt(w, now) {
   if (!w || !w.p || !w.p.length) return null;
@@ -248,8 +238,6 @@ export function walkAt(w, now) {
     [px] = w.p[w.p.length - 2];
   return { x, y, moving: false, dx: x - px };
 }
-/* when a walk ends (the room's time) */
-export const walkEnd = (w) => w.t + (len(w.p) / w.v) * 1000;
 /* a walk from where a character is now to (x, y); null if there's no way (o: { dry }) */
 function walkTo(from, x, y, v, now, o = {}) {
   const p = findPath(from.x, from.y, x, y, o);
