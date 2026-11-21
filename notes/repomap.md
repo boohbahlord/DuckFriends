@@ -37,7 +37,7 @@ duckparts.js 592 the ducks made from pixel parts
 ducksheets.js 2 made by tools/duck-parts.cjs:
 duel.js 124 the cloud duel: two ducks share the cloud,
 dunce.js 137 Duncelation: what the screen shows
-duncerules.js 396 the rules of Duncelation
+duncerules.js 388 the rules of Duncelation
 euclid.js 351 Euclid's Squares
 eyes.js 187 eyes
 faces.js 308 face items
@@ -110,7 +110,7 @@ merchants.js 376 the merchants
 meters.js 114 the thin bars under my duck's name
 mgj.js 217 Mad God Justin: what the screen shows
 mgjart.js 96 Mad God Justin's new pictures
-mgjrules.js 2309 
+mgjrules.js 2303 
 modes.js 255 the game modes
 music.js 590 the music: our own songs, played from recordings
 musicbar.js 169 the music bar: the song the room hears,
@@ -148,12 +148,13 @@ pxmap.js 45 a map as pixel files
 pxpic.js 22 the maps that have a picture file :
 pxtext.js 263 emoji and tooltips in the pixel look
 quack.js 294 Who is the Quack?: what the screen shows
-quackrules.js 796 the rules of Who is the Quack?
+quackrules.js 789 the rules of Who is the Quack?
 rainbowskin.js 116 the rainbow skin
+random.js 9 the two random helpers every mode's rules share:
 report.js 114 Report Bug or Suggest Ideas
 rooms.js 256 Play: create a room, and the rooms online
 router.js 112 screens
-rules.js 6292 the rules of Agree or Disagree
+rules.js 6285 the rules of Agree or Disagree
 sandbox.js 1359 Sandbox: the key windows
 sandboxrules.js 2059 Sandbox: which map it plays on, and who
 sbarms.js 144 Sandbox: a made NPC's weapons in a fight
@@ -209,11 +210,11 @@ story.js 214 Story Chain: what the screen shows
 styles.js 386 duck styles
 survrules.js 325 Survival
 svgurl.js 10 a drawing as a data:
-textutils.js 1157 the command line's text tools
+textutils.js 1150 the command line's text tools
 touch.js 284 touch controls on the board
 trivia.js 464 Trivia: what the screen shows
 triviabank.js 499 Trivia's auto questions
-triviarules.js 465 the rules of Trivia
+triviarules.js 458 the rules of Trivia
 ui.js 373 small helpers every screen uses
 umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
@@ -221,7 +222,7 @@ unlocks.js 372 things you unlock
 upbar.js 69 the green bar on an upload
 updates.js 2924 Updates
 vdd.js 190 Valentine's Duck Date: what the screen shows
-vddrules.js 521 the rules of Valentine's Duck Date
+vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
 vote.js 278 Vote Mode & Map: the vote windows
 who.js 3 who this player is beyond this tab

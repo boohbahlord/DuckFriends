@@ -70,6 +70,7 @@ import {
   GOD_LINES,
   WIN_LINES,
 } from "./hangout/justin.js";
+import { shuffle } from "./random.js";
 
 export const isMgj = (s) => s.options.mode === "mgj";
 /* no time limit (the owner, Nov 3): the fight goes on until he's at 0 HP or every duck is out of HP. What his HP sets off:
@@ -345,13 +346,6 @@ export const SKY_ID = "sky"; // (the pickups' lightning, fire and meteor, in the
 const rnd = (a, b) => a + Math.random() * (b - a);
 const any = (xs) => xs[Math.floor(Math.random() * xs.length)];
 const r3 = (v) => Math.round(v * 1000) / 1000;
-const shuffle = (xs) => {
-  for (let i = xs.length - 1; i > 0; i--) {
-    const k = Math.floor(Math.random() * (i + 1));
-    [xs[i], xs[k]] = [xs[k], xs[i]];
-  }
-  return xs;
-};
 
 /* is the fight paused (the meteor falling, or his Xbox off)? */
 export const mgjFrozen = (s) =>

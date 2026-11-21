@@ -34,6 +34,7 @@ import {
   OPTIONS_DEFAULT,
 } from "./rules.js";
 import { TV_BANK } from "./triviabank.js";
+import { shuffle, anyOf } from "./random.js";
 
 export const isTv = (s) => s.options.mode === "trivia";
 export const TV_PHASES = ["tvwrite", "tvq", "tvw", "tvg", "tvr"];
@@ -49,14 +50,6 @@ export const LETTERS = ["A", "B", "C", "D"];
 /* the rows fill the board down to here; under them is a strip where a duck stands on no row */
 export const TV_ROWS_END = 0.84;
 
-const shuffle = (xs) => {
-  for (let i = xs.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [xs[i], xs[j]] = [xs[j], xs[i]];
-  }
-  return xs;
-};
-const anyOf = (xs) => xs[Math.floor(Math.random() * xs.length)];
 /* an auto question, one not dealt yet this game (once they've all been dealt, any of them) */
 function autoQ(s) {
   const T = s.tv,
