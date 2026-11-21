@@ -15,7 +15,7 @@ bloodpool.js 50 a pool of blood: the one
 boardjustin.js 735 Justin on the boards
 botduck.js 90 a computer's duck: a random look,
 botlines.js 188 What the computers write and say
-bots.js 1430 computers
+bots.js 1435 computers
 brackets.js 467 Bicker Brackets: what the screen shows
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
