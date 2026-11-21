@@ -1,2 +1,11 @@
 /* made by tools/duck-parts.cjs: don't change it by hand (duckparts.js) */
-export const SHEETS = {"12":{"index":"assets/px/ducks/12/index-2c5c717a.json"},"14":{"index":"assets/px/ducks/14/index-2083a9f7.json"},"16":{"index":"assets/px/ducks/16/index-6c95901a.json"},"19":{"index":"assets/px/ducks/19/index-a383c0e9.json"},"22":{"index":"assets/px/ducks/22/index-95f0d9ad.json"},"26":{"index":"assets/px/ducks/26/index-7b215d7f.json"},"29":{"index":"assets/px/ducks/29/index-d7f1a052.json"},"32":{"index":"assets/px/ducks/32/index-f392e592.json"}};
+export const SHEETS = {
+  12: { index: "assets/px/ducks/12/index-2c5c717a.json" },
+  14: { index: "assets/px/ducks/14/index-2083a9f7.json" },
+  16: { index: "assets/px/ducks/16/index-6c95901a.json" },
+  19: { index: "assets/px/ducks/19/index-a383c0e9.json" },
+  22: { index: "assets/px/ducks/22/index-95f0d9ad.json" },
+  26: { index: "assets/px/ducks/26/index-7b215d7f.json" },
+  29: { index: "assets/px/ducks/29/index-d7f1a052.json" },
+  32: { index: "assets/px/ducks/32/index-f392e592.json" },
+};

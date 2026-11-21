@@ -18,7 +18,7 @@ import { DECKS } from "./hangout/stationmap.js";
 import { ARMS } from "./guns.js";
 import { isSb } from "./sandboxrules.js";
 import { isSurv } from "./survrules.js";
-import { may } from "./rules.js";
+import { may } from "./roomrules.js";
 import { cheated, markCheat } from "./cheatflag.js";
 
 const ROUND_MAX = 999;

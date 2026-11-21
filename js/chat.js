@@ -17,7 +17,8 @@
 import { el, esc, typing, windowOpen, setHTML, confirmBox } from "./ui.js";
 import { profile, save, cleanName, NAME_OK } from "./store.js";
 import { activeRoom } from "./net.js";
-import { boardPhases, denied, canOpen, gameMuted, slowMs } from "./rules.js";
+import { boardPhases } from "./rules.js";
+import { denied, canOpen, gameMuted, slowMs } from "./roomrules.js";
 import { shellRun, shellSuggest, shellHistory } from "./shell.js";
 import { paint, isHelpName } from "./helppages.js";
 import { nameHTML, fontHTML, FONTS, findFont } from "./name.js";

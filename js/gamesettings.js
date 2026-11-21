@@ -21,13 +21,12 @@ import { isUmap, umapIds } from "./umaprules.js";
 import { bringMaps, myMaps } from "./umaps.js";
 import {
   OPTIONS_DEFAULT,
-  isSudo,
   randomPool,
-  dodOn,
   GEN_RULES,
   genVal,
   ruleFor,
 } from "./rules.js";
+import { isSudo, dodOn } from "./roomrules.js";
 import { downFor, NO_INVULN } from "./hangout/death.js";
 import { profile, save } from "./store.js";
 

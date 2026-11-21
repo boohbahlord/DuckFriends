@@ -6,7 +6,7 @@ import {
   permOk,
   GROUP_PERMS,
   STAGE,
-} from "./rules.js";
+} from "./roomrules.js";
 import { finger, lastLines, pingOf, upLine } from "./shellpeople.js";
 import {
   fail,
