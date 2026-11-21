@@ -22,6 +22,13 @@ const ITEM_COOL = 750;
    and its slot is empty; it is never refilled. An Angelic melee weapon never breaks. One number for each weapon: ARMS'
    dur */
 const MELEE_DUR = 450;
+/* a hit's damage from a weapon's `dmg` range: one of its numbers a `step` apart (1 unless the weapon says, the dagger's 0.5),
+   every one as likely as the next */
+export const rollDmg = (A) => {
+  const [lo, hi] = A.dmg,
+    st = A.step || 1;
+  return lo + st * Math.floor(Math.random() * (Math.floor((hi - lo) / st) + 1));
+};
 export const ARMS = {
   knife: {
     kind: "melee",
@@ -91,9 +98,10 @@ export const ARMS = {
   dagger: {
     kind: "ranged",
     cool: ARM_COOL.dagger,
-    dmg: 2,
+    dmg: [0.5, 5], // (0.5 to 5, in halves: 0.5, 1, 1.5 ... 5; the owner's, Nov 21: "daggers ammo is 300 AND they do 0.5-5 damage")
+    step: 0.5,
     speed: ARM_SPEED.dagger,
-    all: 24,
+    all: 300,
   },
   shotgun: {
     kind: "ranged",
