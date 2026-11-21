@@ -48,7 +48,7 @@ format.js 15 numbers as the settings ask
 friends.js 236 friends
 front.js 109 the front page
 fx.js 1200 the effects, drawn as pixels
-fxmotion.js 214 how a held weapon and the screen move
+fxmotion.js 216 how a held weapon and the screen move
 game.js 8816 the game screen
 gamedefaults.js 43 the game's own numbers, for every mode
 gameready.js 47 what the game's loading screen waits for

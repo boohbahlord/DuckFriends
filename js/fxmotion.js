@@ -210,5 +210,7 @@ export function shakeNow(now) {
     x += 2.5 * k * Math.sin(now / 17);
     y += 1.5 * k * Math.cos(now / 13);
   }
-  return [x, y];
+  /* in whole pixels: moved by a part of one, every layer over the map with words or a drawing on it was drawn again
+     (the Round banner each shot) */
+  return [Math.round(x), Math.round(y)];
 }
