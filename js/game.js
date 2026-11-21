@@ -328,6 +328,7 @@ import { mountMap } from "./maps.js";
 import { knockOff, bothOff } from "./duel.js";
 import { hooks } from "./hooks.js";
 import { mountTouch, stick } from "./touch.js";
+import { walkIntent } from "./playerinput.js";
 import { mountPad } from "./phonepad.js";
 import { now as clockNow } from "./clock.js";
 import {
@@ -4826,24 +4827,11 @@ function step(dt, now) {
     countJump();
     sendMove(true);
   }
-  const k = (c) => keys.has(c),
-    aims = arrowsAim(); // (Mad God Justin: WASD walks, the arrows aim)
-  const up = k("KeyW") || (!aims && k("ArrowUp")),
-    down = k("KeyS") || (!aims && k("ArrowDown")),
-    left = k("KeyA") || (!aims && k("ArrowLeft")),
-    right = k("KeyD") || (!aims && k("ArrowRight"));
-  let hx = (right ? 1 : 0) - (left ? 1 : 0),
-    vy = (down ? 1 : 0) - (up ? 1 : 0); // on screen: right, down
-  if (!hx && !vy && (stick.x || stick.y)) {
-    hx = stick.x;
-    vy = stick.y;
-  } // the joystick: slower near its middle
+  const want = walkIntent(keys, arrowsAim()), // (Mad God Justin: WASD walks, the arrows aim)
+    hx = want.x,
+    vy = want.y; // on screen: right, down
   if (hx || vy) target = null;
-  sprinting =
-    k("ShiftLeft") ||
-    k("ShiftRight") ||
-    stick.sprint ||
-    !!(target && target.sprint);
+  sprinting = want.sprint || !!(target && target.sprint);
   if (isMgj(s)) sprinting = false; // (no sprint in Mad God Justin: Shift, the stick's edge and a double tap all walk. The owner's, Nov 17 19:11Z: "the sprint should be removed from mad god justin")
   sprinting = sprintStep(
     sprinting && !!(hx || vy || target),
@@ -5045,24 +5033,11 @@ function step(dt, now) {
 /* Hangout: the keys, the stick or a tap say which way; the world walks my duck (walls, steps, edges, falls) */
 function hangStep(dt, now) {
   if (!world || !geo) return;
-  const k = (c) => keys.has(c);
-  const aims = arrowsAim(); // (the arrows aim: WASD walks)
-  let ax =
-      (k("KeyD") || (!aims && k("ArrowRight")) ? 1 : 0) -
-      (k("KeyA") || (!aims && k("ArrowLeft")) ? 1 : 0),
-    ay =
-      (k("KeyS") || (!aims && k("ArrowDown")) ? 1 : 0) -
-      (k("KeyW") || (!aims && k("ArrowUp")) ? 1 : 0);
-  if (!ax && !ay && (stick.x || stick.y)) {
-    ax = stick.x;
-    ay = stick.y;
-  }
+  const want = walkIntent(keys, arrowsAim()); // (the arrows aim: WASD walks)
+  let ax = want.x,
+    ay = want.y;
   if (ax || ay) target = null;
-  sprinting =
-    k("ShiftLeft") ||
-    k("ShiftRight") ||
-    stick.sprint ||
-    !!(target && target.sprint);
+  sprinting = want.sprint || !!(target && target.sprint);
   if (target) {
     // a click or a tap: there, or held up by something
     const a = world.aim(me, target);

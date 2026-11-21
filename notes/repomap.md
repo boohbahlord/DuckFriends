@@ -49,7 +49,7 @@ friends.js 236 friends
 front.js 109 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 214 how a held weapon and the screen move
-game.js 8691 the game screen
+game.js 8666 the game screen
 gamedefaults.js 43 the game's own numbers, for every mode
 gameready.js 47 what the game's loading screen waits for
 gamesettings.js 1755 Game Settings: the whole screen, like Customize
@@ -136,6 +136,7 @@ phonepad.js 129 phones: the aim-and-attack stick and the jump button
 picrop.js 268 cropping a picture: every picture put into the
 pixel.js 724 the pixel look
 pixelpalette.js 192 the pixel look's colors
+playerinput.js 26 what I ask my duck to do: one
 players.js 340 the player menu and the room's votes
 pointer.js 54 a computer or a phone
 powerart.js 377 Dead Ducks Arcade: the power box and the
