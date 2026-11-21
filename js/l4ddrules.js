@@ -1708,7 +1708,7 @@ function addPts(s, id, n) {
 
 /* ---------- a game, a round ---------- */
 const countFor = (s, r) => zombiesFor(r, Math.max(1, players(s).length));
-function newRound(s, r, now, wait) {
+export function newRound(s, r, now, wait) {
   s.hang.l4 = {
     ...s.hang.l4,
     r,
@@ -2169,7 +2169,7 @@ function giveBonus(s, sr) {
   }
   s.hang.l4 = { ...L, bonus: want };
 }
-const GO_MS = 3000; // ms of "Round N" after the vote, before its zombies come
+export const GO_MS = 3000; // ms of "Round N" after the vote, before its zombies come
 const SR_VOTE_MS = 30000; // ms a "Start at round N" vote stays up
 /* the starting-round vote: who may start one (not after a No, only in round 0, none up), and what it needs */
 export const srOpen = (s) => {
@@ -2789,7 +2789,7 @@ export function slotFor(s, id, w, hand0) {
     3
   );
 }
-function give(s, id, w, hand0) {
+export function give(s, id, w, hand0) {
   const kit = kitOf(s, id),
     k = slotFor(s, id, w, hand0);
   if (k < 0) return false;
@@ -3126,7 +3126,7 @@ function merchantCome(s, now, sure = false) {
   };
 }
 /* the zombies are coming: a leaving line, and he runs */
-function merchantGo(s, now) {
+export function merchantGo(s, now) {
   const m = merchantOf(s);
   if (!m || !["in", "here", "fight", "shoot", "hide", "flee"].includes(m.st))
     return;

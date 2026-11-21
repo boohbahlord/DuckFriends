@@ -7103,6 +7103,7 @@ html.still .spx-disco .disco-spot {
 }
 .thrown svg,
 .held svg,
+.held i > img,
 .duckling svg {
   width: 100%;
   height: auto;
@@ -7127,7 +7128,9 @@ html.still .spx-disco .disco-spot {
   position: absolute;
   left: 0;
   top: 0;
-  width: calc(var(--s) * var(--gw, 0.34));
+  width: calc(
+    var(--s) * var(--gw, 0.34)
+  ); /* (each weapon's --gw: specials.js HELD_GW, one number each) */
   display: block;
   transform: translate(-50%, -50%);
   transition: opacity 0.15s;
@@ -7139,27 +7142,6 @@ html.still .spx-disco .disco-spot {
   filter: drop-shadow(0 0 calc(var(--s) * 0.025 * var(--hg)) var(--hot))
     drop-shadow(0 0 calc(var(--s) * 0.07 * var(--hg)) var(--hot))
     drop-shadow(0 0.08rem 0.08rem #0006) brightness(calc(1 + 0.12 * var(--hg)));
-}
-.held[data-w="dagger"] i {
-  width: calc(var(--s) * 0.4);
-}
-.held[data-w="knife"] i {
-  width: calc(var(--s) * 0.46);
-}
-.held[data-w="hammer"] i {
-  width: calc(var(--s) * 0.8);
-}
-.held[data-w="axe"] i {
-  width: calc(var(--s) * 0.86);
-}
-.held[data-w="sword"] i {
-  width: calc(var(--s) * 0.8);
-} /* (the short sword redrawn longer than the knife, the owner's, Nov 19 19:47Z) */
-.held[data-w="pan"] i {
-  width: calc(var(--s) * 0.66);
-}
-.held[data-w="grenade"] i {
-  width: calc(var(--s) * 0.3);
 }
 .thrown.grenade i {
   width: calc(var(--s) * 0.3);
@@ -12187,7 +12169,8 @@ html.moving .hp.hang-shimmer {
   display: block;
   pointer-events: none;
 }
-.hang-npc-held svg {
+.hang-npc-held svg,
+.hang-npc-held img {
   display: block;
   width: 100%;
   height: auto;
@@ -14250,9 +14233,6 @@ html.moving .eye-zap {
   visibility: visible;
 }
 /* his shotgun and its pellets */
-.held[data-w="shotgun"] i {
-  width: calc(var(--s) * 0.95);
-}
 .bullet.pellet {
   width: 16px;
   margin: -4px 0 0 -8px;
@@ -14262,15 +14242,6 @@ html.moving .eye-zap {
    gun. They had a width each here, and a new gun with none was left at a knife's size (the Laser Rifle, then the Tommy
    gun and the UMP-45: the owner, Nov 18 10:38Z, "the tommy gun is obviously supposed to be almost the size of the
    ak47"). Their bullets (the SMG's with no glow: many fly at once); the chain gun's line, flashing in and out */
-.held[data-w="adrenaline"] i {
-  width: calc(var(--s) * 0.44);
-}
-.held[data-w="chair"] i {
-  width: calc(var(--s) * 0.62);
-}
-.held[data-w="zebra"] i {
-  width: calc(var(--s) * 0.5);
-}
 /* (every gun's own bullet, game.js .round: the Tommy gun's and the UMP-45's had been left out of a list here, so they flew
    at the handgun's size, off their line) */
 .bullet.round {
@@ -15060,6 +15031,19 @@ html.moving .eye-tears .tdrop.t2 {
 }
 .veil-line:empty {
   display: none;
+}
+.veil-line > span {
+  display: block;
+}
+.veil-line .mono {
+  font-family:
+    ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+/* the source below its line: smaller and a little faded, still easy to read */
+.veil-line .veil-cap {
+  margin-top: 0.35em;
+  font-size: 0.85em;
+  opacity: 0.8;
 }
 .lobby-status {
   position: relative;
@@ -16104,6 +16088,11 @@ html.moving .l4-heat.hot::after {
 .l4-jpool svg {
   display: block;
 }
+.l4-jpool img {
+  display: block;
+  width: 100%;
+  height: 100%;
+} /* (made at its size on the screen, l4dd.js: the box is scaled with the world) */
 .l4-pts-pop {
   position: absolute;
   left: 100%;
@@ -20736,7 +20725,9 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   grid-template-columns: auto minmax(0, 1fr);
   align-items: start;
 }
-.sb-row:has(.sb-acts) > span:first-child {
+/* (the :has on the name itself, not on its row: a :has over a row with a plain span under it made the browser restyle
+   every span on the page each time anything a :has looks for changed, a few times a second in play) */
+.sb-row > span:first-child:has(+ .sb-acts) {
   padding-top: 0.3rem; /* (level with its dropdown's first line, open or shut) */
 }
 /* a spawn's tabs: Entities, Players, its + pages and the + (sbspawnview.js) */

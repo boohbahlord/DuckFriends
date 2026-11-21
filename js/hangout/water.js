@@ -9,6 +9,7 @@
    Other things in the water use it too: ripple(x, y, k) and splash(x, y, k) at a spot on the water (world px). */
 import { activity } from "./registry.js";
 import { fewer } from "../gfx.js";
+import { ducksOn } from "../ui.js";
 import {
   POOL,
   SLOPE,
@@ -344,7 +345,7 @@ activity({
     for (let i = splashes.length - 1; i >= 0; i--)
       if (!drawSplash(splashes[i], W, sc)) splashes.splice(i, 1);
     /* the ducks: in the water, sunk to the waterline and bobbing */
-    for (const d of board.querySelectorAll(".ducks .gduck")) {
+    for (const d of ducksOn(board)) {
       const o = seen.get(d.dataset.pid);
       floatDuck(d, !!o && o.sw && !W.inside, o && o.ph, now, sc);
     }
