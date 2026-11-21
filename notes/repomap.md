@@ -63,7 +63,7 @@ gunmen.js 110 the gunmen's looks
 gunmenrules.js 1140 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen
 guns.js 516 every weapon's numbers: one sheet for
-hats.js 1074 hats
+hats.js 1096 hats
 heights.js 52 a shot's height, Doom's way
 helppages.js 1498 the command line's Help pages: help
 hideui.js 30 hide ui
@@ -90,7 +90,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box on
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4993 the rules of Quacky Zombies
+l4ddrules.js 5048 the rules of Quacky Zombies
 l4ddsfx.js 513 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the zombies
 langname.js 5 the name of Sandbox's number language,
@@ -230,7 +230,7 @@ umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 3026 Updates
+updates.js 3027 Updates
 vdd.js 190 Valentine's Duck Date: what the screen
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
@@ -265,7 +265,7 @@ justin.js 925 Justin: a yellow duck in blue
 lamp.js 71 the lamps: the example activity
 layout.js 1466 Duck Cabin: the world of Hangout
 npc.js 495 Duck Cabin's characters: how they get
-npcart.js 271 Duck Cabin's characters: the drawings
+npcart.js 283 Duck Cabin's characters: the drawings
 piano.js 530 the piano in the cabin ,
 pianokeys.js 665 Hangout: the piano's keyboard mode
 poker.js 1185 poker at the blackjack table
