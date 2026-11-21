@@ -7715,3 +7715,6 @@ Decision (Adam): three Dead Ducks Arcade jobs, one PR each: 1) the gas can orb; 
 - 46. that exit downpour shouldn't be in the way when i open text chat, terminal, pause menu, or any menu or window in sandbox
 - 47. just saying
 - Decision (Adam): fixes first (1, 2, 4, 11, 46 and the numbers 5, 6) now; Seriat tenths (7) to Solomon; cars you can climb (13-19, 23) and Ethan (3) to Noah, Ethan's art shown to the owner first; Sandbox assets (20-45) after the freeze; 12 is the owner's own. Note 13 is cut off in the chat ("...jump onto the gas"): asked.
+- 13:57Z (Ethan's picture, gold or purple jersey): "either, he could spawn in with either purple or yellow
+
+we need blond hair that looks a little fluffy but not too big at all for the duck as well, and the hair is blond but can be recolored" Decision: Ethan spawns with the purple or the gold jersey at random; Noah draws small fluffy blond hair as a pixel part whose color is a slot.
