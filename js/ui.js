@@ -7,6 +7,22 @@ import { coverChanges } from "./loading.js";
 
 export const $ = (s, r = document) => r.querySelector(s);
 export const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+/* a board's ducks layer, found once and kept on the board: on Duck Cabin and Downpour it comes after every prop, so each
+   search for it walked all of them, many times a frame */
+export const ducksLayer = (board) => {
+  let l = board._ducksEl;
+  if (!l || !board.contains(l))
+    l = board._ducksEl = board.querySelector(".ducks");
+  return l;
+};
+/* the ducks on a board: the layer's own children (never a search of the whole board) */
+export function ducksOn(board) {
+  const l = board && ducksLayer(board),
+    out = [];
+  if (l)
+    for (const d of l.children) if (d.classList.contains("gduck")) out.push(d);
+  return out;
+}
 export const esc = (s) =>
   String(s ?? "").replace(
     /[&<>"']/g,
@@ -267,8 +283,14 @@ export function onMenu(node, fn) {
     node.addEventListener(k, () => clearTimeout(t), { passive: true }),
   );
 }
-/* a window is open over the page */
-export const windowOpen = () => !!document.querySelector(".win-back, .ctx");
+/* a window is open over the page. Asked every frame in a game: both go straight into <body> (openWindow, contextMenu),
+   so only its children are looked at, never the whole page (that search was 1.7 s a minute at 4x CPU on Downpour) */
+export const windowOpen = () => {
+  for (const c of document.body.children)
+    if (c.classList.contains("win-back") || c.classList.contains("ctx"))
+      return true;
+  return false;
+};
 
 /* headings that fold, as in Word (the owner's, Nov 20 02:37Z: "the headings to be collapsible with an arrow down to their
    left ... you click it, boom, it collapses the information"): every heading among root's own children that matches

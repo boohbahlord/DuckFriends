@@ -31,7 +31,7 @@ import "./justin.js";
 import "./shadowduck.js";
 import { hitCode, knockable, PCRIT, goreFree } from "../wounds.js";
 import { hitsOf } from "../l4ddart.js";
-import { JUSTIN_POOL } from "./stationart.js";
+import { poolHTML, warmPool } from "../bloodpool.js";
 import { pxSVG, rasterReady, pixelOn } from "../pixel.js";
 import { hashText } from "../pxdom.js";
 import { popHP } from "../hpmeter.js";
@@ -216,10 +216,17 @@ const woundsOn = (wc) => {
   const h = hitsOf(wc);
   return { skin: { head: h.inner, out: h.out }, gone: h.gone };
 };
+/* his gun: a ready-made picture 26 px wide (css .hang-npc-held.gun) times the board's scale (handSc: the scale his
+   drawings were last made at), made while the game loads (warmJustin), never the first time he draws it */
+const GUN = heldHTML("handgun", JUSTIN).replace(
+  "<svg ",
+  '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="24" ',
+);
+let handSc = 1;
 /* what's in Justin's hand: his gun, a glass */
 const HAND = {
   gun: () =>
-    `<span class="hang-npc-held gun">${heldHTML("handgun", JUSTIN)}</span>`,
+    `<span class="hang-npc-held gun">${pxSVG(GUN, 26 * handSc)}</span>`,
   drink: () => `<span class="hang-npc-held glass">${glassSVG()}</span>`,
   cake: () => `<span class="hang-npc-held cake"><i>${ZEBRA}</i></span>`, // (the Zebra cake special's, a bite at a time)
 };
@@ -239,17 +246,15 @@ function svgFor(id, pose, step, wc = "") {
   if (b.svg) return b.svg(pose); // (a character that draws itself: the Butler)
   return shadowSVG({ size: DUCK });
 }
-/* Justin's pool of blood: one picture made into pixels at the size it shows (css .gduck-pool: 1.875 × 0.8125 ducks),
-   made while the game loads (warmPool), so his fall never makes it mid-game. As a drawing pxdom.js made it the moment
-   he fell (the owner's, Nov 20 20:46Z: "pop-ins") */
-const POOL = `<svg viewBox="-60 -26 120 52" xmlns="http://www.w3.org/2000/svg" width="120" height="52">${JUSTIN_POOL}</svg>`;
-const poolW = (sc) => DUCK * sc * 1.875; // (its height from its own: 0.8125 ducks)
-const poolHTML = (sc) => pxSVG(POOL, poolW(sc));
-let poolAt = 0;
-function warmPool(sc) {
-  if (poolAt === sc || !pixelOn()) return;
-  poolAt = sc;
-  rasterReady("s" + hashText(POOL), POOL, poolW(sc), (poolW(sc) * 52) / 120); // (pxSVG's key)
+/* Justin's pool of blood (bloodpool.js) at the size it shows (css .gduck-pool: 1.875 ducks wide), made while the game
+   loads (warmJustin), so his fall never makes it mid-game */
+const poolW = (sc) => DUCK * sc * 1.875;
+let warmAt = 0;
+function warmJustin(sc) {
+  if (warmAt === sc || !pixelOn()) return;
+  warmAt = sc;
+  rasterReady("s" + hashText(GUN), GUN, 26 * sc, (26 * sc * 24) / 40); // (pxSVG's key)
+  warmPool(poolW(sc));
 }
 /* a claw swipe over whoever got it (claw.js, as every claw), or a heart from a purr */
 function burst(kind, x, y, ctx) {
@@ -416,7 +421,7 @@ activity({
           o.pool = document.createElement("span");
           o.pool.className = "gduck-pool hang-npc-pool";
           o.pool.setAttribute("aria-hidden", "true");
-          o.pool.innerHTML = poolHTML(ctx.world.sc);
+          o.pool.innerHTML = poolHTML(poolW(ctx.world.sc));
           o.el.prepend(o.pool);
         } else {
           o.pool.remove();
@@ -558,7 +563,7 @@ activity({
         o.el.style.opacity = o.op.toFixed(3);
       }
       o.el.style.transform = Wd.boxTr(f.left, f.top);
-      if (o.duck) warmPool(sc);
+      if (o.duck) warmJustin(sc);
       if (o.pool && o.sz !== sc) {
         o.sz = sc;
         o.el.style.setProperty("--sz", (DUCK * sc).toFixed(1) + "px");
@@ -567,6 +572,11 @@ activity({
       if (o.sc !== sc) {
         // (the bubble sits over its head)
         o.sc = sc;
+        if (handSc !== sc) handSc = sc;
+        if (o.looks.size && o.duck) {
+          o.looks.clear();
+          o.pose = "";
+        } // (his drawings made again at the new size: his gun's picture is made at it)
         o.el.style.setProperty("--h", (o.tall * sc).toFixed(1) + "px");
         if (o.duck) {
           // (its name where a player's goes: under its drawing, less .08 of a duck; seated, over the top of the duck's square)

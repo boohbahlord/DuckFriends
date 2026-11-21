@@ -35,6 +35,7 @@ import {
   contextMenu,
   setHTML,
   toast,
+  ducksLayer,
 } from "./ui.js";
 import { activeRoom } from "./net.js";
 import { sprintStep } from "./stamina.js";
@@ -180,6 +181,8 @@ import {
   pressFX,
   BULLET,
   heldHTML,
+  heldPicHTML,
+  warmHands,
   heldBoxHTML,
   daggerHTML,
   DUCKLING,
@@ -238,9 +241,8 @@ import {
   l4Ammo,
   l4ZBoxes,
   shotStop,
-  POOL_SVG,
-  JPOOL,
 } from "./l4dd.js";
+import { poolUnder, warmPool } from "./bloodpool.js";
 import { clawMark } from "./claw.js";
 import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
 import { JET, jetHTML, myFuel, burnFuel } from "./jetpack.js";
@@ -1371,9 +1373,10 @@ function drawDucks(now = clockNow()) {
   const board = S && $(".board", S);
   if (!board || !R || !geo) return;
   const s = R.state,
-    layer = $(".ducks", board),
+    layer = ducksLayer(board),
     size = geo.size,
     hang = !!geo.hang;
+  warmPool(size * 1.875); // (the pool of blood under a duck that dies, as pixels before anyone does: css .gduck-pool)
   if (isSb(s)) {
     const go = (sbGo(s) || {}).id || "";
     if (go !== lastSbGo) {
@@ -1842,7 +1845,16 @@ function drawDucks(now = clockNow()) {
     const body = `scaleX(${fx})${deadPose ? " rotate(-100deg) translateY(-12%)" : ""}`,
       squish = `scale(${sx}, ${sy})`,
       sh = (1 - Math.min(0.6, z / (size * 3.2))).toFixed(3);
-    if (d._tr !== tr || d._dz !== deadPose) {
+    /* off the camera (a duck's room past the screen's edges, Hangout's world): not drawn at all, so the page doesn't style
+       or paint it; it still walks, fights and counts as before, and shows again as it comes near. Where it stands isn't
+       written while it's off (each write restyled it, every frame): it's written as it comes back */
+    const off =
+      hang &&
+      (at.left < -size * 2 ||
+        at.left > geo.W + size * 2 ||
+        at.top - z < -size * 2 ||
+        at.top - z > geo.H + size * 3);
+    if (!off && (d._tr !== tr || d._dz !== deadPose)) {
       d._tr = tr;
       d._dz = deadPose;
       d.style.transform = tr;
@@ -1860,7 +1872,7 @@ function drawDucks(now = clockNow()) {
       // Hangout: in front of what it stands in front of; unseen through the cabin's walls; lying dead, under every duck
       const zi = deadPose ? world.bodyKey(id, pos) : world.key(id, pos),
         hid = world.hidden(id, pos);
-      if (d._zi !== zi) {
+      if (!off && d._zi !== zi) {
         d._zi = zi;
         d.style.zIndex = zi;
       }
@@ -1868,13 +1880,6 @@ function drawDucks(now = clockNow()) {
         d._hid = hid;
         d.classList.toggle("hang-hid", hid);
       }
-      /* off the camera (a duck's room past the screen's edges): not drawn at all, so the page doesn't style or paint
-         it; it still walks, fights and counts as before, and shows again as it comes near */
-      const off =
-        at.left < -size * 2 ||
-        at.left > geo.W + size * 2 ||
-        at.top - z < -size * 2 ||
-        at.top - z > geo.H + size * 3;
       if (d._off !== off) {
         d._off = off;
         d.classList.toggle("off-cam", off);
@@ -1884,11 +1889,11 @@ function drawDucks(now = clockNow()) {
       d._sz = size;
       d.style.setProperty("--sz", size + "px");
     }
-    if (d._lift !== lift) {
+    if (!off && d._lift !== lift) {
       d._lift = lift;
       d._liftEl.style.transform = lift;
     }
-    if (d._sh !== sh) {
+    if (!off && d._sh !== sh) {
       d._sh = sh;
       d._shadowEl.style.transform = `translateX(-50%) scale(${sh})`;
     }
@@ -2011,33 +2016,16 @@ function drawDucks(now = clockNow()) {
       d._olOnly = olOnly;
       d.classList.toggle("ol-only", olOnly);
     }
-    /* every duck that dies, in every mode: a pool of blood spreads out under it, as under Justin out in Downpour (the
-       owner's, Nov 18 10:38Z: "every player duck that dies in any game mode has a puddle of blood start to spill out
-       beneath their duck like justin's"). The same pool (l4dd.js POOL_SVG), growing over JPOOL.ms from when it fell,
-       gone when it's up again; none with Gore off. Downpour's Justin keeps his own (l4dd.js seePool) */
-    const pooled = dead && !noGoreOf(s) && !(isL4dd(s) && isWild(s, olId));
-    if (!pooled) {
-      if (d._pool) {
-        d._pool.remove();
-        d._pool = null;
-      }
-    } else {
-      if (!d._pool) {
-        d._pool = el(
-          `<span class="gduck-pool" aria-hidden="true">${POOL_SVG}</span>`,
-        );
-        d.prepend(d._pool);
-        d._poolAt = now;
-        d._poolK = "";
-      }
-      const k = Math.min(1, (now - d._poolAt) / JPOOL.ms),
-        grow = 0.15 + 0.85 * (1 - (1 - k) * (1 - k)),
-        pk = `translate(${(mid[0] - at.left + size / 2).toFixed(1)}px, ${(size * 0.06 - z).toFixed(1)}px) scale(${grow.toFixed(3)})`; // (where its body lies: on the podium, on it)
-      if (d._poolK !== pk) {
-        d._poolK = pk;
-        d._pool.style.transform = pk;
-      }
-    }
+    /* every duck that dies, in every mode, bleeds a pool under it (bloodpool.js); none with Gore off. Downpour's
+       Justin keeps his own (l4dd.js seePool) */
+    poolUnder(
+      d,
+      dead && !noGoreOf(s) && !(isL4dd(s) && isWild(s, olId)),
+      now,
+      size,
+      mid[0] - at.left + size / 2,
+      size * 0.06 - z,
+    ); // (where its body lies: on the podium, on it)
     if (d._j !== pos.j) {
       d._j = pos.j;
       if (pos.j && pic && pic.classList.contains("jack")) {
@@ -2450,9 +2438,10 @@ function drawDucks(now = clockNow()) {
       shotDone(b);
     } // (landed, gone, or off the screen: kept for the next shot that looks the same)
   /* the handgun or the dagger in hand, turned toward where it aims: my mouse, or the aim the others sent */
+  if (hang) warmHands(s, size);
   const handed = new Set(),
     heldEls = fxl._held || (fxl._held = new Map()),
-    lowLayer = hang && $(".ducks", board);
+    lowLayer = hang && ducksLayer(board);
   for (const [id, w, pos, duck, mine] of arms) {
     const c = bodyAt(id, pos, now),
       sh = shows[id] && now < shows[id].until ? shows[id] : null;
@@ -2491,7 +2480,9 @@ function drawDucks(now = clockNow()) {
           ? laserArt(lz)
           : w === "chair" && isL4dd(s)
             ? GOLD_CHAIR // (Quacky Zombies' chair, the fireplace's 1 in 100: golden)
-            : heldHTML(w, duck),
+            : holy
+              ? heldHTML(w, duck) // (Angelic: its glow is drawn into the drawing, angelic())
+              : heldPicHTML(w, duck, hs),
         pic = dual ? angelic(dualPistolHTML(duck)) : holy ? angelic(art) : art;
       /* every gun as long in the hand as its l4ddguns.js w (--gw, css .held i): one number for each, so no new gun is
          left at a knife's size. The Laser Rifle getting hot: the whole gun glows (laserfx.js laserGlow) */
@@ -3116,7 +3107,7 @@ function placeTiles(board) {
 /* Mad God Justin: his Xbox's desk, where it came in; dark once he turns it off, gone a moment after he's back */
 function placeDesk(board, s, now) {
   const x = isMgj(s) && s.mgj && s.mgj.xb,
-    layer = $(".ducks", board);
+    layer = ducksLayer(board);
   let n = layer && layer.querySelector(".mgj-desk");
   const on =
     !!x &&
@@ -3196,7 +3187,7 @@ function walkFace(n, x, now) {
   return now - n._turnAt >= FACE_HOLD ? dir : f;
 }
 function placeZombies(board, s, now) {
-  const layer = $(".ducks", board),
+  const layer = ducksLayer(board),
     zb =
       (((isMgj(s) && s.phase === "boss") || sbOnBoard(s)) && s.mz && s.mz.zb) ||
       []; // (and Sandbox's board: its spawns' zombies, sbspawn.js)
@@ -3380,7 +3371,7 @@ function placePick(board, s) {
   placeToken(board, m && m.plus, "plus"); // (the little plus sign every 30 s: the owner's, Nov 17)
 }
 function placeToken(board, P, tag) {
-  const layer = $(".ducks", board),
+  const layer = ducksLayer(board),
     sel = tag ? ".mgj-pick.k-" + tag : ".mgj-pick:not(.k-plus)";
   let n = layer && layer.querySelector(sel);
   if (n && (!P || +n.dataset.n !== P.n)) {
@@ -3463,7 +3454,7 @@ function placeCake(board, s, now) {
   const c = isMgj(s)
       ? s.phase === "boss" && s.mgj && s.mgj.cake
       : boardPhases(s).includes(s.phase) && s.zcake,
-    layer = $(".ducks", board);
+    layer = ducksLayer(board);
   let n = layer && layer.querySelector(".mgj-cake");
   if (n && (!c || c.eat || +n.dataset.n !== c.n)) {
     n.remove();
@@ -3501,7 +3492,7 @@ function placeSnack(board, s, now) {
       (isMgj(s) ? s.phase === "boss" : justinShown(s)) &&
       s.justin &&
       s.justin.eat,
-    layer = $(".ducks", board);
+    layer = ducksLayer(board);
   if (!layer) return;
   for (const id of [JUSTIN_ID, JUSTIN2]) {
     let n = layer.querySelector(`.mgj-snack[data-pid="${id}"]`);

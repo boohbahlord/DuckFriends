@@ -361,11 +361,19 @@ async function floorPixels(root, cvs, rows, g) {
 /* the worker drawing the floor, told when the page's motion setting or theme changes; stopped while hidden, and for
    good once it's gone */
 function floorRun(root, cv, wk, off, out) {
+  /* whether it shows: asked of the page once, then told by an IntersectionObserver as it changes (asking the page every
+     second made it lay itself out again mid-game, up to 30 ms on a slow computer) */
+  let seen = !!cv.getClientRects().length;
+  const io = new IntersectionObserver((es) => {
+    seen = es[es.length - 1].isIntersecting;
+    tell();
+  });
+  io.observe(cv);
   const html = document.documentElement,
     state = () => ({
       moving: html.classList.contains("moving"),
       light: !!root.closest("#shapes") && !html.classList.contains("dark"),
-      on: !document.hidden && cv.isConnected && !!cv.getClientRects().length,
+      on: !document.hidden && cv.isConnected && seen,
     });
   wk.postMessage({ canvas: off, rows: out, ...state() }, [
     off,
@@ -388,6 +396,7 @@ function floorRun(root, cv, wk, off, out) {
     if (cv.isConnected) return tell();
     clearInterval(watch);
     mo.disconnect();
+    io.disconnect();
     document.removeEventListener("visibilitychange", tell);
     wk.terminate();
   }, 1000);
