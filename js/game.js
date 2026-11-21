@@ -196,6 +196,17 @@ import {
   DUAL,
 } from "./specials.js";
 import { mountHotbar } from "./hotbar.js";
+import {
+  hand,
+  pickWith,
+  mgjBackIfGone,
+  mgjToggles,
+  mgjOut2,
+  heldNow,
+  selectKey,
+  useKey,
+  l4Pick,
+} from "./hotpick.js";
 import { heatUp, heatDraw, heldOn } from "./barrelheat.js";
 import {
   laserLook,
@@ -271,7 +282,7 @@ import {
   sbOlColor,
 } from "./sandboxrules.js";
 import { mountCabinEnd } from "./hangout/cabinend.js";
-import { mountSandboxKeys, whyNot } from "./sandbox.js";
+import { mountSandboxKeys } from "./sandbox.js";
 import { sbCheat } from "./sbmenu.js";
 import { sbHotOn, sbLook, sbHotSig } from "./sbhotview.js";
 import { sbSlots, spawnOf } from "./sbhot.js";
@@ -560,8 +571,7 @@ let lastFx = -1,
   follows = []; // the silly commands seen so far; hotdogs and items following their ducks
 let bar = null,
   meter = null, // my HP meter, under the hotbar (hpmeter.js)
-  pad = null, // phones: the jump button and the attack button
-  lastKey = -1; // the specials' number keys: the row, the key last pressed (V presses it again)
+  pad = null; // phones: the jump button and the attack button
 const kept = new Set(); // the jumps kept on here (Shift and the key); kept effects are in the room's state
 const DOWN_TURN = (-100 * Math.PI) / 180; // (a duck lying dead is turned this far: css .gduck-body, rotate(-100deg))
 const BODY = "~body"; // a Duck Cabin ghost's body is drawn as a duck of its own: its player's id and this
@@ -572,13 +582,7 @@ const isJustin = (id) => id === JUSTIN_ID || id === JUSTIN2;
 const bigOf = (s, id) =>
   (isJustin(id) && isMgj(s) ? MGJ_SCALE : 1) *
   (s.players[id] ? scaleOf(shownDuck(s, s.players[id])) : 1);
-let held = null,
-  l4Slot = 0, // Quacky Zombies: the pick in hand (0 melee, 1 and 2 ranged, 3 the item, 4 the second item, 5 the grenades: keys 1 to 6, l4ddrules.js slotOfPick), and the weapon's before an item
-  l4Last = 0,
-  mgjHold = "handgun", // Mad God Justin: what's out in my hand (the short sword, the pistol, the weapon picked up, the zebra cake)
-  mgjBack = "handgun", // (and what goes back in hand once a picked-up weapon is used up, or the zebra cake thrown)
-  mgjFight = -1, // (the fight it was set for: each fight starts with the pistol out, the owner's, Nov 16)
-  mgjRv = false, // (E held down for a revive, or the phone's Revive button)
+let mgjRv = false, // (E held down for a revive, or the phone's Revive button)
   keyAim = null, // … and where the arrow keys aim (on the screen), when they moved last: null when the mouse did
   mouse = null,
   shovedAt = 0,
@@ -2001,7 +2005,7 @@ function drawDucks(now = clockNow()) {
       shows[id].what !== "grenade" &&
       shows[id].what; // (a dagger or a grenade thrown without keeping it out: only the one in the air)
     const w =
-      mine && held === "none" && isMgj(s)
+      mine && hand.held === "none" && isMgj(s)
         ? null // (Mad God Justin: an empty slot picked, nothing in hand)
         : (id === JUSTIN_ID || id === JUSTIN2) && isMgj(s)
           ? !mgjGone(s, now) &&
@@ -2010,7 +2014,7 @@ function drawDucks(now = clockNow()) {
               ? (mgjOut(s, id) && (s.players[id] || {}).dead
                   ? "handgun" // (out of HP: the down pistol, the owner's, Nov 17 11:07Z)
                   : mine
-                    ? held
+                    ? hand.held
                     : pos.w) || MGJ_MELEE
               : isL4dd(s)
                 ? downArmed(s, id)
@@ -2019,7 +2023,7 @@ function drawDucks(now = clockNow()) {
                     !l4Swims(s, id) && // (Downpour: swimming, it's put away)
                     inHand(mine ? heldNow() : pos.w, s, id)
                 : mine
-                  ? held && hasKey(p.duck, held) && held
+                  ? hand.held && hasKey(p.duck, hand.held) && hand.held
                   : pos.w) || shown; // (Quacky Zombies: in hand while it's up) // (Mad God Justin: every duck's knife always out; his hammer swing over his gun)   // (Mad God Justin: every duck's knife always out)   // (a dagger thrown without keeping it out: only the one in the air)
     if (w) arms.push([id, w, pos, p.duck, mine]);
     const lx = losers.has(id) || wearsX.has(id);
@@ -2622,7 +2626,7 @@ function drawDucks(now = clockNow()) {
   olDraw(ol ? (hang ? board : fxl) : null, geo.W, geo.H); // (the outlines: over the dark and the rain in Dead Ducks Arcade, over the board in Mad God Justin)
   if (isMgj(s)) {
     const tag = S.querySelector(".gduck.mine .gduck-name");
-    if (tag) laserMeter(tag, s, R.me, held); // (and its heat under my duck, as in Dead Ducks Arcade)
+    if (tag) laserMeter(tag, s, R.me, hand.held); // (and its heat under my duck, as in Dead Ducks Arcade)
   }
   if (!isL4dd(s)) handBars(s); // (the white and yellow bars under my duck: meters.js)
   flames(s, now, hang, size, fxl, heldAll);
@@ -3358,7 +3362,7 @@ function mgjRevive(on) {
       what: "revive",
       hold: on ? 1 : 0,
       face: 1,
-      w: mgjHold === "none" ? "" : mgjHold,
+      w: hand.mgjHold === "none" ? "" : hand.mgjHold,
     }); // (w: the medkit out in my hand gets it up at once)
 }
 /* Mad God Justin's zebra cake, or the Zebra cake special's (s.zcake): spinning on its way, then lying where it landed
@@ -5736,42 +5740,6 @@ const playDuck = () =>
       : R && sbHotOn(R.state)
         ? { ...myDuck(), keys: sbSlots(R.state, R.me) } // (Sandbox's own hotbar: sbhot.js; its spawn buttons aren't specials)
         : myDuck();
-/* Mad God Justin: a picked-up weapon used up, or the zebra cake thrown: back to the one out before (on each new state,
-   and when the slider asks what's in hand, so it never picks the next one over by itself) */
-function mgjBackIfGone(s) {
-  if (s.mgj && s.mgj.n !== mgjFight) {
-    mgjFight = s.mgj.n;
-    mgjHold = mgjBack = "handgun"; // (a new fight: the pistol in hand, the short sword on 1)
-  }
-  const thrown =
-    mgjHold === "zebra" &&
-    s.mgj &&
-    (s.mgj.cake || clockNow() - (s.mgj.zebraAt || 0) < CAKE_EVERY);
-  if (
-    (mgjHold !== MGJ_MELEE &&
-      mgjHold !== "none" && // (an empty slot picked: nothing in hand)
-      mgjHold !== "handgun" &&
-      mgjHold !== "zebra" &&
-      mgjHold !== myPick()) ||
-    thrown
-  ) {
-    mgjHold = mgjBack || MGJ_MELEE;
-    if (me && s.phase === "boss") setTimeout(() => sendMove(true), 0);
-  }
-  held = s.phase === "boss" ? mgjHold : null;
-}
-/* Mad God Justin: what a key puts out in my hand, kept there (the owner's, Nov 3) */
-const mgjToggles = (id) =>
-  id === MGJ_MELEE ||
-  id === "handgun" ||
-  id === "zebra" ||
-  (!!id && id === myPick());
-function mgjOut2(id) {
-  if (mgjHold !== id && (mgjHold === MGJ_MELEE || mgjHold === "handgun"))
-    mgjBack = mgjHold; // (the one to go back to)
-  mgjHold = held = id;
-  sendMove(true);
-}
 /* L (PC, every mode; the owner's, Nov 19 21:59Z): my laser sight on or off, and my flashlight with it. Starts
    the way the mode had it: on in Quacky Zombies and Mad God Justin, off in the others */
 let sightPref = null;
@@ -5785,22 +5753,6 @@ function toggleSight() {
     if (off === on) R.send({ t: "hang", k: "l4", do: "fl" }); // (the flashlight goes with it)
   }
   sendMove(true);
-}
-/* the weapon in my duck's hand: the one kept out (Shift and its key); Quacky Zombies: always the one in the slot
-   picked (the melee weapon at first; back to the one before when the special is used up), none while I'm down or a
-   ghost */
-function heldNow() {
-  if (R && isL4dd(R.state)) {
-    const sl = slotsOf(R.state, R.me);
-    const kit = kitOf(R.state, R.me);
-    if (l4Slot === 5 && !(kit && kit.g > 0)) l4Slot = sl[l4Last] ? l4Last : 0; // (the last grenade thrown: the weapon before it comes back)
-    if (l4Slot !== 5 && !sl[slotOfPick(l4Slot)])
-      l4Slot = sl[l4Last] ? l4Last : 0;
-    if (downArmed(R.state, R.me)) return "handgun"; // (down: the down pistol)
-    if (l4Hp(R.state, R.me) <= 0) return "";
-    return l4Slot === 5 ? "grenade" : sl[slotOfPick(l4Slot)] || "";
-  }
-  return held && hasKey(playDuck(), held) ? held : "";
 }
 const DYING_MS = 20000; // (Mad God Justin: how long a duck out of HP takes to go all grey)
 /* Mad God Justin: I'm out of HP and down, the down pistol in my hand (the owner's, Nov 17 11:07Z) */
@@ -5816,10 +5768,29 @@ const downGunNow = () =>
 /* Mad God Justin: the weapon I picked up (one use), or none */
 const myPick = () =>
   (R && R.state.mgj && (R.state.mgj.held || {})[R.me]) || null;
+pickWith({
+  get R() {
+    return R;
+  },
+  get me() {
+    return me;
+  },
+  get bar() {
+    return bar;
+  },
+  sendMove,
+  fire,
+  myPick,
+  onBoardPhase,
+  playDuck,
+  turned,
+});
 /* the effects kept on for my duck (in the room's state), and the jumps and the weapon kept on here */
 function keptNow() {
   const out = new Set(
-      [...kept, ...(held ? [held] : [])].filter((id) => hasKey(playDuck(), id)),
+      [...kept, ...(hand.held ? [hand.held] : [])].filter((id) =>
+        hasKey(playDuck(), id),
+      ),
     ),
     a = ((R && R.state.aura) || {})[R && R.me] || {};
   for (const [id, u] of Object.entries(a)) if (u === 0) out.add(id);
@@ -5839,7 +5810,12 @@ function slidTap(i) {
   if (R && isMgj(R.state) && mgjToggles(id)) {
     useKey(i, false);
     fire(id);
-  } else if (R && !isMgj(R.state) && BOARD_WEAPONS.includes(id) && id === held)
+  } else if (
+    R &&
+    !isMgj(R.state) &&
+    BOARD_WEAPONS.includes(id) &&
+    id === hand.held
+  )
     fire(id); // (a weapon picked: a tap on it uses it)
   else useKey(i, false);
 }
@@ -5858,8 +5834,8 @@ function padWeapon() {
     return R.state.phase === "boss" && mgjToggles(id) ? id : null;
   const sp = specialById(id);
   return (BOARD_WEAPONS.includes(id)
-    ? id === held
-    : THROWS.includes(id) && (!held || isSb(R.state))) &&
+    ? id === hand.held
+    : THROWS.includes(id) && (!hand.held || isSb(R.state))) &&
     sp &&
     !sp.off &&
     (unlocked("special", id) || sbHotOn(R.state))
@@ -5878,107 +5854,9 @@ function padAttack() {
     fire(id);
     return coolFor(id, R.state);
   } // (out of HP: the down pistol, without taking it out for after)
-  if (isMgj(R.state) && mgjToggles(id) && mgjHold !== id) mgjOut2(id);
+  if (isMgj(R.state) && mgjToggles(id) && hand.mgjHold !== id) mgjOut2(id);
   fire(id);
   return coolFor(id, R.state) / grCool(R.state, R.me); // (Sandbox: a group's Cooldown speed)
-}
-/* key i (0 is key 1 … 9 is key 0): an effect for 5 seconds (keep: on until kept off), a jump, or an item */
-/* a number key toggles a weapon (the owner's, Nov 16): the key picks it and puts it in hand, the same key again puts it
-   away, another key puts it away and takes the other. One weapon at a time, and a weapon has to be in hand to be used (a
-   click, V, a phone's attack button): nothing fires beside it. toggle: a keyboard's key (a tap on a phone only picks). */
-function selectKey(i, toggle) {
-  const id = keysOf(playDuck())[i];
-  lastKey = i;
-  held = BOARD_WEAPONS.includes(id) && !(toggle && held === id) ? id : null;
-  if (bar) bar.show(i);
-  sendMove(true);
-}
-function useKey(i, keep, toggle = false) {
-  if (!R || !onBoardPhase()) return;
-  if (isL4dd(R.state)) {
-    l4Pick(i);
-    return;
-  }
-  if (sbHotOn(R.state)) {
-    const v = sbSlots(R.state, R.me)[i];
-    if (spawnOf(v)) {
-      if (bar) bar.show(i);
-      const why = whyNot(R.state, [spawnOf(v)]); // (why it won't: at its limit, or its tab tied to no zone)
-      R.send({ t: "sbh", k: "go", v }); // (a spawn button: it spawns)
-      if (why) toast(why);
-      return;
-    }
-  }
-  if (bar) bar.show(i);
-  /* an empty slot puts the weapon away (the owner's, Nov 19 21:59Z: no Shift to put it away; "you just switch to an empty
-     hotbar using the number key") */
-  if (!keysOf(playDuck())[i]) {
-    if (isMgj(R.state)) mgjHold = "none";
-    held = isMgj(R.state) ? "none" : null;
-    sendMove(true);
-    return;
-  }
-  if (isMgj(R.state)) {
-    const id = keysOf(playDuck())[i];
-    if (mgjToggles(id)) mgjOut2(id); // (kept out once picked: a click or V uses it)
-    if (bar) setTimeout(() => bar && bar.refresh(), 60);
-    return;
-  } // (Mad God Justin's own keys)
-  const id = keysOf(playDuck())[i],
-    sp = specialById(id);
-  if (!sp || sp.off || !(unlocked("special", id) || sbHotOn(R.state))) return; // (a special that's off for now, or still locked, does nothing; in Sandbox the loot is everyone's)
-  lastKey = i;
-  if (BOARD_WEAPONS.includes(id)) {
-    selectKey(i, toggle);
-    if (bar) setTimeout(() => bar && bar.refresh(), 60);
-    return;
-  } // (a weapon: the number key picks it and toggles it)
-  if (sp.kind === "effect")
-    R.send({
-      t: "aura",
-      what: id,
-      keep: !!keep || id === "invisible",
-    });
-  // (the Invisible duck: the key turns it on and off)
-  else if (THROWS.includes(id)) {
-    if (held && isSb(R.state)) {
-      held = null; // (Sandbox: the key puts the weapon in hand away and throws; the owner's, Nov 19 16:38Z, "WHY THE FUCK CAN I NOT THROW THE CHAIR IN SANDBOX")
-      sendMove(true);
-    }
-    if (!held) fire(id); // (the Chair and the Zebra cake: thrown toward the mouse, but not with a weapon in hand)
-  } else if (me && me.x >= 0)
-    R.send({ t: "use", what: id, face: turned() ? 1 : me.face || 1 }); // (an item: Shift and its key use it the same way)
-  if (bar) setTimeout(() => bar && bar.refresh(), 60);
-}
-/* Quacky Zombies: keys 1 to 4 pick a slot, 5 the second item and 6 the grenades (Dead Ducks Arcade and Survival). A
-   melee or ranged weapon stays in hand once picked; an item (4, 5) switches on and off: on, it's in hand instead of the
-   weapon, and off (or used up) that weapon is back. */
-function l4Pick(i) {
-  const sl = slotsOf(R.state, R.me),
-    kit = kitOf(R.state, R.me);
-  if (i === 5) {
-    /* the grenades are a number key now (6), and picked like a weapon: the key again puts them away (the owner's, Nov 16) */
-    if (l4Slot === 5) l4Slot = l4Last;
-    else if (kit && kit.g > 0) {
-      if (l4Slot < 3) l4Last = l4Slot;
-      l4Slot = 5;
-    } else return;
-    sendMove(true);
-    if (bar) bar.refresh();
-    return;
-  }
-  const k = slotOfPick(i),
-    item = k >= 3;
-  if (k < 0 || !sl[k]) return;
-  if (item) {
-    if (l4Slot === i) l4Slot = l4Last;
-    else {
-      if (l4Slot < 3) l4Last = l4Slot;
-      l4Slot = i;
-    }
-  } else l4Slot = l4Last = i;
-  sendMove(true);
-  if (bar) bar.refresh();
 }
 /* the handgun or the dagger, toward the mouse */
 function fire(id) {
@@ -6045,7 +5923,7 @@ function handBars(s) {
   if (!tag || !R) return;
   const now = clockNow(),
     m = isMgj(s) && s.mgj,
-    w = mgjDownGun() ? "handgun" : held,
+    w = mgjDownGun() ? "handgun" : hand.held,
     c = w ? coolOne(w, now, m) : null;
   let el = tag.querySelector(".l4-cool");
   if (!el && c) {
@@ -6142,14 +6020,14 @@ function canReloadNow() {
   if (isMgj(s)) {
     w = mgjDownGun()
       ? "handgun"
-      : held && held === myPick() && mgjMag(held)
-        ? held
+      : hand.held && hand.held === myPick() && mgjMag(hand.held)
+        ? hand.held
         : "";
   } else {
     const k = keysOf(playDuck());
     w =
-      held && magSize(held) && hasKey(playDuck(), held)
-        ? held
+      hand.held && magSize(hand.held) && hasKey(playDuck(), hand.held)
+        ? hand.held
         : k.includes("handgun")
           ? "handgun"
           : k.find((id) => id && magSize(id)) || "";
@@ -6170,16 +6048,21 @@ function reload() {
       R.send({ t: "reload", w: "handgun" });
       return true;
     } // (out of HP: the down pistol)
-    if (!onBoardPhase() || !held || held !== myPick() || !mgjMag(held))
+    if (
+      !onBoardPhase() ||
+      !hand.held ||
+      hand.held !== myPick() ||
+      !mgjMag(hand.held)
+    )
       return false;
-    R.send({ t: "reload", w: held });
+    R.send({ t: "reload", w: hand.held });
     return true;
   } // (Mad God Justin: the gun picked up, out in my hand)
   if (!R || !onBoardPhase()) return false;
   const k = keysOf(playDuck()),
     w =
-      held && magSize(held) && hasKey(playDuck(), held)
-        ? held
+      hand.held && magSize(hand.held) && hasKey(playDuck(), hand.held)
+        ? hand.held
         : k.includes("handgun")
           ? "handgun"
           : k.find((id) => id && magSize(id));
@@ -6287,10 +6170,10 @@ function wheelPick(dir) {
       kit = kitOf(s, R.me),
       has = (i) => (i === 5 ? !!(kit && kit.g > 0) : !!sl[slotOfPick(i)]),
       n = 6; // (the second item, key 5, then the grenades, key 6: an empty one is skipped)
-    let i = l4Slot;
+    let i = hand.l4Slot;
     for (let k = 0; k < n; k++) {
       i = (i + dir + n) % n;
-      if (i !== l4Slot && has(i)) {
+      if (i !== hand.l4Slot && has(i)) {
         l4Pick(i);
         return true;
       }
@@ -6302,7 +6185,9 @@ function wheelPick(dir) {
       .map((id, i) => [id, i])
       .filter(([id]) => id && (!mgj || mgjToggles(id))); // (Mad God Justin: only what goes out in hand)
   if (!ids.length) return false;
-  const at = ids.findIndex(([id, i]) => (mgj ? id === held : i === lastKey)),
+  const at = ids.findIndex(([id, i]) =>
+      mgj ? id === hand.held : i === hand.lastKey,
+    ),
     [id, i] =
       ids[
         (at < 0 ? (dir > 0 ? 0 : ids.length - 1) : at + dir + ids.length) %
@@ -6373,7 +6258,7 @@ function mgjTip(s) {
     return mgjRv
       ? "Reviving… keep holding"
       : `A duck is down: ${phone ? "hold Revive" : "hold <kbd>E</kbd>"} for ${REVIVE.MS / 1000} s to get it up`;
-  if (myPick() && held !== myPick())
+  if (myPick() && hand.held !== myPick())
     return `${PICK_NAMES[myPick()] || "A weapon"} picked up: ${phone ? "slide to it" : "<kbd>4</kbd>"} to take it out`;
   return phone
     ? padWeapon()
@@ -7113,7 +6998,8 @@ function paintNow(force) {
     const hp = $(".mgj-hp", S);
     if (hp) setHTML(hp, mgjHPHTML(s));
   } // Mad God Justin: the knife always out; his HP
-  else if (held === "knife" && !hasKey(myDuck(), "knife")) held = null;
+  else if (hand.held === "knife" && !hasKey(myDuck(), "knife"))
+    hand.held = null;
   const round =
     s.phase === "over" || isHang(s) || isSb(s)
       ? ""
@@ -7697,9 +7583,9 @@ function keydown(e) {
   if (e.code === "KeyV" && !e.repeat && onBoardPhase()) {
     e.preventDefault();
     if (isMgj(R.state))
-      fire(held || MGJ_MELEE); // (out of HP: fire() makes it the down pistol)
+      fire(hand.held || MGJ_MELEE); // (out of HP: fire() makes it the down pistol)
     else if (heldNow()) fire(heldNow());
-    else if (lastKey >= 0) useKey(lastKey, false);
+    else if (hand.lastKey >= 0) useKey(hand.lastKey, false);
     else if (bar) bar.show();
     return;
   } // V: the special kept out (toggled), or else the one I used last (Mad God Justin: what's in hand)
@@ -8016,9 +7902,9 @@ const aimHere = (e) =>
 /* a left click that uses the weapon kept out */
 function heldClick(e) {
   return (
-    !!held &&
+    !!hand.held &&
     !!R &&
-    (isMgj(R.state) || hasKey(playDuck(), held)) &&
+    (isMgj(R.state) || hasKey(playDuck(), hand.held)) &&
     e.button === 0 &&
     onBoardPhase() &&
     aimHere(e)
@@ -8076,15 +7962,15 @@ function autoPress(e) {
     !R ||
     isL4dd(R.state) ||
     e.pointerType !== "mouse" ||
-    !repeats(held) ||
+    !repeats(hand.held) ||
     !heldClick(e)
   )
     return;
   autoDid = true;
   holdTrigger(() => {
-    if (!R || !repeats(held) || !onBoardPhase()) return 0;
-    fire(held);
-    return Math.max(60, coolFor(held, R.state) / grCool(R.state, R.me)); // (Sandbox: a group's Cooldown speed)
+    if (!R || !repeats(hand.held) || !onBoardPhase()) return 0;
+    fire(hand.held);
+    return Math.max(60, coolFor(hand.held, R.state) / grCool(R.state, R.me)); // (Sandbox: a group's Cooldown speed)
   });
 }
 /* Quacky Zombies: the left mouse button down on the board uses the weapon in hand, and again as soon as it can while
@@ -8157,10 +8043,10 @@ register("game", {
     sbk = null;
     if (insetsOff) insetsOff();
     insetsOff = null;
-    lastKey = -1;
+    hand.lastKey = -1;
     kept.clear();
-    held = null;
-    l4Slot = l4Last = 0;
+    hand.held = null;
+    hand.l4Slot = hand.l4Last = 0;
     shows = {};
     mouse = null;
     removeEventListener("mousemove", aimAt);
@@ -8246,7 +8132,7 @@ register("game", {
           state: () => R.state,
           me: () => R.me,
           held: heldNow,
-          slot: () => l4Slot,
+          slot: () => hand.l4Slot,
           pick: l4Pick,
           fire,
           grenade: () => l4Pick(5),
@@ -8296,7 +8182,7 @@ register("game", {
         current: () => {
           if (!R || !isMgj(R.state) || R.state.phase !== "boss") return null;
           mgjBackIfGone(R.state);
-          return held;
+          return hand.held;
         },
         tag: () => S && S.querySelector(".gduck.mine .gduck-name"), // (the switch's box under my duck, on a phone: hotbar.js peekSwitch)
       });
@@ -8392,8 +8278,8 @@ register("game", {
         return;
       } // (Quacky Zombies: the mouse button fires as it goes down, l4Down below; a tap walks)
       if (heldClick(e)) {
-        if (autoDid && repeats(held)) autoDid = false;
-        else fire(held); // (a gun that fires while the mouse button is down already did: autoPress)
+        if (autoDid && repeats(hand.held)) autoDid = false;
+        else fire(hand.held); // (a gun that fires while the mouse button is down already did: autoPress)
         return;
       } // a weapon kept out: a left click uses it
       const mc = e.target.closest("[data-col]");
