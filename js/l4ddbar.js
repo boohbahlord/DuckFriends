@@ -6,6 +6,7 @@
    On a phone the slots are the specials' slider in the bottom middle, as in every mode (hotbar.js, l4Slider below), the
    purple switch right of it, and the aim-and-attack stick with the jump button above it (phonepad.js); my HP shows on
    my duck's green bar. */
+import { el, kept } from "./ui.js";
 import { ICONS, weaponIcon } from "./l4ddart.js";
 import { angelic } from "./powerart.js";
 import { angelOf } from "./l4ddangel.js";
@@ -101,6 +102,15 @@ export function mountL4Bar(S, api) {
       next = JSON.stringify([m, held, off, out, down, dark, to, toW]);
     if (next === sig) return;
     sig = next;
+    /* each icon made once and kept (ui.js kept), put in its slot's <i>: the row is made again at every shot (its
+       counts), and made again with it, every icon went through pxdom again */
+    const icons = (list) =>
+      row.querySelectorAll(".l4s > i").forEach((e, j) => {
+        if (!list[j]) return;
+        const h = `<i>${list[j]}</i>`,
+          k = kept(h);
+        e.replaceWith(row.contains(k) ? el(h) : k); // (the same icon twice in the row: the second a copy)
+      });
     /* one slot: [key, the weapon (or "" when empty), its kind, what a press does]; down, only the down pistol (the
        owner's, Nov 17 11:07Z). The second item slot (Dead Ducks Arcade, Survival) is key 5, the grenades key 6 */
     const one = (w, i) => [
@@ -119,7 +129,8 @@ export function mountL4Bar(S, api) {
           ];
     if (down) {
       const n = count("dg", m);
-      row.innerHTML = `<div class="l4slots"><button type="button" class="l4s k-ranged c-plain sel l4s-down" aria-label="Pistol, ${n}" disabled>${reloadMeter(s, me, "dg", m)}<i>${weaponIcon("handgun", duckOf(s, me))}</i><kbd>R</kbd><small>${n}</small></button></div>`;
+      row.innerHTML = `<div class="l4slots"><button type="button" class="l4s k-ranged c-plain sel l4s-down" aria-label="Pistol, ${n}" disabled>${reloadMeter(s, me, "dg", m)}<i></i><kbd>R</kbd><small>${n}</small></button></div>`;
+      icons([weaponIcon("handgun", duckOf(s, me))]);
       return;
     } // (R reloads it; it fires as the pistol always does)
     const slot = ([key, w, kind, does]) => {
@@ -137,10 +148,13 @@ export function mountL4Bar(S, api) {
       const on = w === "jetpack" && m && m.jp; // (switched on: a green ring)
       const tint = w && w !== "fl" ? tintOf(w, angelOf(s, me, w)) : ""; // (its own color: l4ddrules.js tintOf)
       const into = does === String(to); // (what I'm about to take goes here)
-      return `<button type="button" class="l4s k-${kind}${tint ? " " + tint : ""}${w && w === held ? " sel" : ""}${empty ? " empty" : ""}${on ? " on" : ""}${into ? " l4s-to" : ""}" data-l4w="${does}" aria-label="${name}${n ? ", " + n : ""}"${out || (!w && does !== "fl") ? " disabled" : ""}>${w ? reloadMeter(s, me, w, m) : ""}${into ? toGlow(toW) : ""}<i>${icon}</i><kbd>${key}</kbd>${n ? `<small>${n}</small>` : ""}</button>`;
+      ics.push(icon);
+      return `<button type="button" class="l4s k-${kind}${tint ? " " + tint : ""}${w && w === held ? " sel" : ""}${empty ? " empty" : ""}${on ? " on" : ""}${into ? " l4s-to" : ""}" data-l4w="${does}" aria-label="${name}${n ? ", " + n : ""}"${out || (!w && does !== "fl") ? " disabled" : ""}>${w ? reloadMeter(s, me, w, m) : ""}${into ? toGlow(toW) : ""}<i></i><kbd>${key}</kbd>${n ? `<small>${n}</small>` : ""}</button>`;
     };
     /* (my HP isn't here any more: it's the red meter under the hotbar, hpmeter.js; owner 2026-11-04 03:16Z) */
+    const ics = [];
     row.innerHTML = `<div class="l4slots">${slots.map(slot).join("")}</div>`;
+    icons(ics);
   }
   const press = (e) => {
     const b = e.target.closest("[data-l4w]");

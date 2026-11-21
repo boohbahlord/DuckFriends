@@ -7,7 +7,7 @@
    push the knob out and the duck aims that way; push it a little further, past the stick's edge, and it attacks that
    way, again each time the weapon is ready, for as long as it's held out there. Coming back inside the edge stops the
    attacks and keeps aiming; letting go stops both. Only on touch phones (css/app.css shows it). */
-import { el } from "./ui.js";
+import { el, flag } from "./ui.js";
 
 const AIM = 10; // pushed this many pixels from the stick's middle: it aims
 const FIRE = 30; // this far (about the stick's edge): it attacks
@@ -31,16 +31,20 @@ export function mountPad(api) {
     knob = atk.querySelector("i");
   let push = null; // the finger on the stick: { id, x, y (the stick's middle), firing, t (the next attack) }
 
+  /* set only when it changes: set every 150 ms to what it already was, each one still made the page look at itself */
+  const hide = (e, on) => {
+    if (e.hidden !== on) e.hidden = on;
+  };
   const sync = () => {
     const on = api.active(),
       w = on && api.weapon();
-    box.classList.toggle("gone", !on);
-    box.classList.toggle("armed", !!w);
-    atk.hidden = !w;
-    jumpBtn.hidden = !!(api.noJump && api.noJump()); // (a duck that's down can't jump: only its down pistol)
+    flag(box, "gone", !on);
+    flag(box, "armed", !!w);
+    hide(atk, !w);
+    hide(jumpBtn, !!(api.noJump && api.noJump())); // (a duck that's down can't jump: only its down pistol)
     const rl = !!on && !!api.reloadOn && !!api.reloadOn(); // (the small R above the jump button: the guns that reload)
-    rlBtn.hidden = !rl;
-    box.classList.toggle("rl", rl);
+    hide(rlBtn, !rl);
+    flag(box, "rl", rl);
     if (!w && push) letGo();
   };
   const tick = setInterval(sync, 150);
