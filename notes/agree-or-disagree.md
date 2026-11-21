@@ -7718,3 +7718,21 @@ Decision (Adam): three Dead Ducks Arcade jobs, one PR each: 1) the gas can orb; 
 - 13:57Z (Ethan's picture, gold or purple jersey): "either, he could spawn in with either purple or yellow
 
 we need blond hair that looks a little fluffy but not too big at all for the duck as well, and the hair is blond but can be recolored" Decision: Ethan spawns with the purple or the gold jersey at random; Noah draws small fluffy blond hair as a pixel part whose color is a slot.
+- 14:06Z (answer to note 13, and Sandbox rules): "to the pump's roof, not the gas station roof, since we could assume the hieght of the pummp to be 3/4th the hieight of the gas roof
+
+remember these hieghts because the elevation height of the gas station roof from ground level equals one elevation or x, with the roof being the floor of elevation level two AND the cieling of elevation level one
+
+have adam asks me different use cases to what this means because this logic carries over to sandbox
+
+objects can now have elevations to the tenth place
+
+adam can ask me relevent questions
+
+assets comes before implementing tenths place hieghts for elevations into sandbox
+
+new weight setting changes how much entities can move when hit, so more weight in their setting equals less knockback from things like explosions or hammer, where less weight equals more knockback. More knockback for a given weapon is related to the math for the object being hit. 
+
+these settings are in simple mode for editing properties of zones for the things they spawn AND there should be a way to make weight's 100% set to the number ten maybe ? or number 100? idk, however simple way, esp if arriving from already set in stone principles for seriat, that we can make weight set to a value or variable to indicate that it CANNOT be moved. 0 speed still allows entites and objects to suffer from knockback 
+
+vehicles on build can have a knockback stat that can be changed AND they can be given a brain if a player wants (not trees though) AND trees and vehicles have a sequence mode"
+  Decision (Adam): note 13 = from the red car's roof (half an elevation) the jump goes onto the pump's roof (3/4 of an elevation), never the gas station roof (Noah, V9). One elevation (x) = the gas station roof's height over the ground: that roof is the floor of level two and the ceiling of level one; it carries over to Sandbox. Elevations to tenths, weight (knockback), vehicle knockback and brain, tree and vehicle sequence mode: Sandbox, after the freeze and after assets (V11); Adam asks the owner the use cases first.
