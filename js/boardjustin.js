@@ -71,6 +71,16 @@ const RX = 0.03,
 const rnd = ([a, b]) => a + Math.random() * (b - a);
 const any = (xs) => xs[Math.floor(Math.random() * xs.length)];
 const r3 = (v) => Math.round(v * 1000) / 1000;
+/* Justin stops where he stands (at, at time now): no walk left to make */
+const stopAt = (j, at, now) =>
+  Object.assign(j, {
+    k: null,
+    x0: r3(at.x),
+    y0: r3(at.y),
+    x1: r3(at.x),
+    y1: r3(at.y),
+    t: now,
+  });
 
 /* where he is at a moment (board units, like s.pos), and whether he's walking */
 export function justinAt(j, now) {
@@ -184,15 +194,7 @@ function rageTick(s, now, at, fx, calm) {
     r = j.rage,
     P = s.players[r.id],
     p = s.pos[r.id];
-  const stop = () =>
-    Object.assign(j, {
-      k: null,
-      x0: r3(at.x),
-      y0: r3(at.y),
-      x1: r3(at.x),
-      y1: r3(at.y),
-      t: now,
-    });
+  const stop = () => stopAt(j, at, now);
   if (now >= r.until || !P || !p || p.x < 0 || vdSafe(s, r.id) || calm) {
     delete j.rage;
     delete j.tell;
@@ -438,14 +440,7 @@ function cakeChase(s, now, at) {
     d = Math.hypot((p.x - at.x) / RX, (p.y - at.y) / RY);
   if (now >= c.stop && d < 1.3) {
     c.eat = now;
-    Object.assign(j, {
-      k: null,
-      x0: r3(at.x),
-      y0: r3(at.y),
-      x1: r3(at.x),
-      y1: r3(at.y),
-      t: now,
-    });
+    stopAt(j, at, now);
     j.eat = { k: "zebra", at: now, until: now + CAKE_EAT_MS, cake: true };
     s.fxN = (s.fxN || 0) + 1;
     s.fx = [

@@ -36,7 +36,7 @@
      l4b  { id: { o, at } }: who is boarding up which opening, since when (one more board each BOARD_MS)
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
-import { ARMS, kindOf, GUN_NAMES } from "./guns.js";
+import { ARMS, kindOf, GUN_NAMES, WEAPONS } from "./guns.js";
 import { SPRINT as GAME_SPRINT, POCKET_CHANGE } from "./gamedefaults.js";
 import { scaleOf } from "./duck.js";
 import { hpHeal, hpHurt, tenths } from "./hpmath.js";
@@ -321,33 +321,6 @@ const ITEM_SLOTS = [3, 4];
    "The secondary item slot is number 5. The grenade is number 6") and its slot, -1 for the grenades */
 export const slotOfPick = (i) => (i < 5 ? i : -1);
 export const pickOfSlot = (k) => (k < 5 ? k : -1);
-/* every weapon there is (the Items page lists them all: l4ddcatalog.js) */
-export const WEAPONS = [
-  "knife",
-  "axe",
-  "sword",
-  "hammer",
-  "pan",
-  "dagger",
-  "bow",
-  "handgun",
-  "revolver",
-  "shotgun",
-  "dbarrel",
-  "dbuck",
-  "smg",
-  "tommy",
-  "ump",
-  "ak",
-  "burst",
-  "sniper",
-  "glauncher",
-  "lmg",
-  "chaingun",
-  "flamer",
-  "laser",
-];
-export const ITEMS = ["medkit", "zebra", "adrenaline", "safekeep", "chair"]; // (no Jetpack any more: the owner's, Nov 18 12:19Z, "long jump is removed from zombies bag and slots", "normal jaime is removed from all zombie modes", "remove jet pack from the whole game")
 /* the fireplace's bags (the owner's, Nov 18 12:19Z, and the answers to Adam's questions at 12:32Z). Rolled the rarest
    first, each only if the one before it failed: the Chair bag 1% (the golden chair), the Special bag 5%, the Item bag
    20%, else the Weapon bag. The Weapon bag holds seven bags that take turns; each bag then gives the next one of its
@@ -389,7 +362,6 @@ const bagsNow = () =>
     ? SURV_BAGS
     : { odds: SLOT_ODDS, slot: SLOT_BAGS, weapon: WEAPON_BAGS };
 export const bagThings = (bag) => bag.flatMap((x) => INNER_BAGS[x] || [x]);
-export const POOL = [...WEAPONS, ...ITEMS];
 export const weaponName = (w) => (isPw(w) ? pwName(w) : GUN_NAMES[w] || w);
 /* each one's own color, in its slot and as its orb (the owner's, Nov 18 12:19Z: "every weapon, melee, or item has a
    corresponding color to it's slot now ... The purples all glow. Any weapon made angelic now has a red slot color and

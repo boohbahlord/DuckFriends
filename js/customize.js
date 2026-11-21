@@ -77,7 +77,7 @@ import { NAV_HINTS, items } from "./keynav.js";
 import { unlocked, isLocked, lockHint } from "./unlocks.js";
 import { touchOnly } from "./pointer.js";
 import { jetHTML } from "./jetpack.js";
-import { GUNS_NEW, AUTO, WEAPONS } from "./rules.js";
+import { BOARD_GUNS, AUTO, BOARD_WEAPONS } from "./guns.js";
 import { pxWords } from "./pxtext.js";
 import { botDuck, BOT_DUCKS, any } from "./botduck.js";
 import { weaponName } from "./l4ddrules.js";
@@ -616,7 +616,7 @@ export function openCustomize(page = lastPage, opts = {}) {
             /* the handgun and Quacky Zombies' guns: in the duck's hand with a kick, and their bullets (three for the ones
                that fire while the button is down) across the preview; the chain gun's yellow line, the launcher's grenade */
             if (id === "handgun") inHand(" spe-gun");
-            if (GUNS_NEW.includes(id)) {
+            if (BOARD_GUNS.includes(id)) {
               inHand(" spe-gun");
               const far = Math.round(
                   duckBox.getBoundingClientRect().right - b.left - x + 40,
@@ -1009,7 +1009,7 @@ export function openCustomize(page = lastPage, opts = {}) {
                   x.kind === kind &&
                   !x.only &&
                   !NOT_HERE.includes(x.id) &&
-                  (weapon === undefined || WEAPONS.includes(x.id) === weapon),
+                  (weapon === undefined || BOARD_WEAPONS.includes(x.id) === weapon),
               )
                 .map((sp) => {
                   const x = looksOf(sp, D),

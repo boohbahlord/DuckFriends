@@ -475,14 +475,18 @@ function sideOf(o) {
   };
 }
 
-/* a voice cut short: a quick fade, then stopped */
-function cut(v, t) {
-  const g = v.g.gain;
+/* a gain held where it is at time t (what was scheduled after t is dropped), to go on from there */
+function freeze(g, t) {
   if (g.cancelAndHoldAtTime) g.cancelAndHoldAtTime(t);
   else {
     g.cancelScheduledValues(t);
     g.setValueAtTime(g.value, t);
   }
+}
+/* a voice cut short: a quick fade, then stopped */
+function cut(v, t) {
+  const g = v.g.gain;
+  freeze(g, t);
   g.setTargetAtTime(0, t, 0.006);
   try {
     v.src.stop(t + 0.05);
@@ -613,11 +617,7 @@ export function loop(name, o = {}) {
       if (!v || v.cut || !ac) return;
       const t = soon(),
         g = v.g.gain;
-      if (g.cancelAndHoldAtTime) g.cancelAndHoldAtTime(t);
-      else {
-        g.cancelScheduledValues(t);
-        g.setValueAtTime(g.value, t);
-      }
+      freeze(g, t);
       v.k = k * near(o) * 10 ** ((VOL[name] || 0) / 20); // (as at its start, where move measures from)
       g.linearRampToValueAtTime(
         (v.k * near(at)) / Math.max(1e-6, near(o)),
@@ -850,11 +850,7 @@ function holdStop() {
   if (!v || v.cut || !ac) return;
   const t = soon(),
     g = v.g.gain;
-  if (g.cancelAndHoldAtTime) g.cancelAndHoldAtTime(t);
-  else {
-    g.cancelScheduledValues(t);
-    g.setValueAtTime(g.value, t);
-  }
+  freeze(g, t);
   g.setTargetAtTime(0, t, 0.02);
   try {
     v.src.stop(t + 0.15); // (past 6 time constants: silent by then)

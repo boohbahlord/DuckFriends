@@ -30,9 +30,9 @@ const INIT = fs.readFileSync(
   const got = await p
     .evaluate(async () => {
       const L4m = await import("./js/l4ddrules.js"),
-        GN = await import("./js/guns.js").catch(() => ({})),
-        R = await import("./js/rules.js"),
-        MG = await import("./js/mgjrules.js"),
+        GN = await import("./js/guns.js"),
+        Rm = await import("./js/rules.js"),
+        MGm = await import("./js/mgjrules.js"),
         SA = await import("./js/sbarms.js"),
         GM = await import("./js/gunmenrules.js"),
         WD = await import("./js/wounds.js"),
@@ -51,7 +51,23 @@ const INIT = fs.readFileSync(
         ...L4m,
         ARMS: GN.ARMS || L4m.ARMS,
         kindOf: GN.kindOf || L4m.kindOf,
+        WEAPONS: GN.WEAPONS || L4m.WEAPONS,
+        POOL: GN.POOL || L4m.POOL,
       };
+      L4.ITEMS = L4m.ITEMS || L4.POOL.filter((w) => !L4.WEAPONS.includes(w)); // (guns.js keeps its ITEMS to itself: POOL's)
+      /* the board's and Mad God Justin's lists: guns.js since part 2 (they were rules.js' and mgjrules.js') */
+      const R = {
+          ...Rm,
+          WEAPONS: GN.BOARD_WEAPONS || Rm.WEAPONS,
+          GUNS_NEW: GN.BOARD_GUNS || Rm.GUNS_NEW,
+          AUTO: GN.AUTO || Rm.AUTO,
+          THROWS: GN.THROWS || Rm.THROWS,
+        },
+        MG = {
+          ...MGm,
+          MGJ_GUNS: GN.MGJ_GUNS || MGm.MGJ_GUNS,
+          MGJ_MELEE: GN.MGJ_MELEE || MGm.MGJ_MELEE,
+        };
       /* Sandbox's made NPCs' lists: made when first asked since V209 (sbarms.js npcArms) */
       const NA = SA.npcArms
         ? SA.npcArms()
@@ -118,7 +134,8 @@ const INIT = fs.readFileSync(
       out.board = H({
         cool: per((w) => R.coolFor(w, board)),
         mag: per(R.magSize),
-        lists: [R.WEAPONS, R.GUNS_NEW, R.AUTO, R.THROWS],
+        lists: [R.WEAPONS, R.GUNS_NEW, R.THROWS],
+        auto: per((w) => R.AUTO.includes(w)), // (which fire while held: a set, its order means nothing)
         mag0: [R.MAG, R.RELOAD],
       });
       out.mgj = H({

@@ -42,18 +42,8 @@ export function knockOff(lord, loser, done = () => {}) {
   setTimeout(() => {
     sfx.quack();
     // the loser flies off the cloud: a copy of it, fixed to the screen, falls through the bottom
-    const r = lose.getBoundingClientRect(),
-      copy = lose.cloneNode(true);
-    copy.classList.remove("lord-duck");
-    copy.classList.add("duel-falling");
-    Object.assign(copy.style, {
-      left: r.left + "px",
-      top: r.top + "px",
-      width: r.width + "px",
-    });
-    document.body.append(copy);
-    lose.style.visibility = "hidden";
-    const drop = innerHeight - r.top + r.height * 1.5;
+    const [copy, r] = fallingCopy(lose),
+      drop = innerHeight - r.top + r.height * 1.5;
     copy.animate(
       [
         { transform: "none" },
@@ -72,8 +62,9 @@ export function knockOff(lord, loser, done = () => {}) {
   }, 360);
 }
 
-/* a falling copy of a duck on the cloud, fixed to the screen: it hops out to its side, then drops through the bottom */
-function drop(duck, dir, hop) {
+/* the copy of a duck on the cloud that falls (fixed to the screen where the duck was; the duck itself is hidden), and
+   the duck's box */
+function fallingCopy(duck) {
   const r = duck.getBoundingClientRect(),
     copy = duck.cloneNode(true);
   copy.classList.remove("lord-duck");
@@ -85,7 +76,12 @@ function drop(duck, dir, hop) {
   });
   document.body.append(copy);
   duck.style.visibility = "hidden";
-  const fall = innerHeight - r.top + r.height * 1.5;
+  return [copy, r];
+}
+/* a falling copy of a duck on the cloud, fixed to the screen: it hops out to its side, then drops through the bottom */
+function drop(duck, dir, hop) {
+  const [copy, r] = fallingCopy(duck),
+    fall = innerHeight - r.top + r.height * 1.5;
   copy.animate(
     [
       { transform: "none" },

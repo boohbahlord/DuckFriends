@@ -66,6 +66,16 @@ const way = (s) => {
 };
 let mm = null;
 /* where to lurk behind someone: further out from the cabin than they are, in the dark */
+/* the ducks out in the dark, the furthest from the cabin first */
+function farOut(c) {
+  return c.ducks
+    .filter((d) => !d.dead && dark(c.s)(d.x, d.y))
+    .sort(
+      (a, b) =>
+        c.dist({ x: MID[0], y: MID[1] }, b) -
+        c.dist({ x: MID[0], y: MID[1] }, a),
+    );
+}
 function behind(d, c) {
   const a = Math.atan2(d.y - MID[1], d.x - MID[0]) + (c.rand() - 0.5) * 0.9,
     r = 340 + c.rand() * 200;
@@ -115,13 +125,7 @@ brain("shadow", {
         c.now < (mm.show || 0)
       )
         return false;
-      const out = c.ducks
-        .filter((d) => !d.dead && dark(c.s)(d.x, d.y))
-        .sort(
-          (a, b) =>
-            c.dist({ x: MID[0], y: MID[1] }, b) -
-            c.dist({ x: MID[0], y: MID[1] }, a),
-        );
+      const out = farOut(c);
       const p =
         (out[0] && behind(out[0], c)) ||
         randomSpot(c.rand, edge(c.s), way(c.s));
@@ -206,13 +210,7 @@ brain("shadow", {
     /* stalk the one furthest from the cabin (in the dark); one that runs away from it is let go */
     if (c.now < mm.next) return false;
     mm.next = c.now + 3000;
-    const out = c.ducks
-      .filter((d) => !d.dead && dark(c.s)(d.x, d.y))
-      .sort(
-        (a, b) =>
-          c.dist({ x: MID[0], y: MID[1] }, b) -
-          c.dist({ x: MID[0], y: MID[1] }, a),
-      );
+    const out = farOut(c);
     if (out.length) {
       const d = out[0],
         gap = c.dist(at, d);

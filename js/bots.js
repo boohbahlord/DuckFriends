@@ -58,7 +58,7 @@ import {
   DN_GRACE,
   DUNCE_TAKES,
 } from "./duncerules.js";
-import { isMgj, mgjGone, PICK_WEAPONS, MGJ_MELEE } from "./mgjrules.js";
+import { isMgj, mgjGone, PICK_WEAPONS } from "./mgjrules.js";
 import {
   isL4dd,
   L4,
@@ -87,7 +87,7 @@ import {
   wetSlow,
   hasLeft,
 } from "./l4ddrules.js";
-import { kindOf } from "./guns.js";
+import { kindOf, MGJ_MELEE } from "./guns.js";
 import {
   isVd,
   VD_PHASES,
