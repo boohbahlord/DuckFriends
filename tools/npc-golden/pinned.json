@@ -331,26 +331,26 @@
   },
   "sb-board": {
     "beats": 900,
-    "digest": "7wwr1d",
+    "digest": "ayk9le",
     "every": [
       "vny7fo",
-      "1aqi8zb",
-      "sq213t",
-      "yjml5q",
-      "1ci1x7y",
-      "4pq4i1",
-      "1j8oan8",
-      "5w238p",
-      "cuc4os",
-      "9p5um3",
-      "z4qoi6",
-      "1j4v83s",
-      "sxzc10",
-      "10p6f7n",
-      "3f2xs9",
-      "1py018l",
-      "cqdm0",
-      "6x6i3i"
+      "1v6bb17",
+      "1gqrsb6",
+      "r587k6",
+      "67ubiw",
+      "1j80x20",
+      "vtmkzg",
+      "o39uoa",
+      "nm4wnr",
+      "1cxna45",
+      "14vnlb5",
+      "1h58hjm",
+      "10a3vn4",
+      "qcyjfo",
+      "1332524",
+      "ynhs2b",
+      "11yotjv",
+      "1mf36zt"
     ],
     "seen": {
       "phases": {
@@ -358,11 +358,11 @@
       },
       "came": "",
       "gunmen": 0,
-      "swipes": 63,
+      "swipes": 185,
       "mgjWaveZombiesPeak": 6,
       "sandboxMapNpcsPeak": 0,
       "zombies": 0,
-      "sandboxNpcs": "gun gun plain gun gun plain"
+      "sandboxNpcs": "gun gun plain gun plain plain"
     }
   },
   "mgj": {
