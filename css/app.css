@@ -7039,8 +7039,8 @@ html.still .spx-disco .disco-spot {
   position: absolute;
   left: 0;
   top: 0;
-  width: 34px;
-  margin: -7px 0 0 -17px;
+  width: 26px; /* (the handgun's: the .45's picture, gunart.js BULLET, at its own size like every caliber's) */
+  margin: -5px 0 0 -13px;
   pointer-events: none;
   z-index: 6;
   filter: drop-shadow(0 0 3px #ffd84a);

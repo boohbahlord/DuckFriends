@@ -58,7 +58,7 @@ gfx.js 8 Low graphics
 gmodes.js 246 Sandbox Phase 6: made game modes
 grenade.js 35 a grenade going off
 ground.js 53 what a duck walks on, for
-gunart.js 447 every weapon, drawn: one drawing for
+gunart.js 454 every weapon, drawn: one drawing for
 gunmen.js 110 the gunmen's looks
 gunmenrules.js 1141 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen

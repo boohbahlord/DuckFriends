@@ -6,6 +6,7 @@
    melee weapons, the grenade, the pump shotgun and the pistol, each taking its colors (specials.js colorsOf, heldHTML),
    and the bow, the medkit, the chair and the zebra cake. Preview: tools/l4dd-art.html */
 import { LASER } from "./laserart.js";
+import { ARMS } from "./guns.js";
 const INK = "#2a2d38";
 /* the colors they share: the guns' dark metal, lighter metal, the underside, polymer, two woods and their grain */
 const M1 = "#33384a",
@@ -226,48 +227,54 @@ export const GUNS = {
   },
 };
 
-/* the bullets, flying right (the screens turn them): the sniper's, a longer pistol bullet with a long streak; the
-   SMG's, a small pointed one, not tiny (owner 2026-11-04 03:16Z), and cheap since many fly at once (no glow); the AK-47's, a pointed copper
-   one; the revolver's, a big round-nosed slug; the LMG's, a tracer with a red streak. Each: its picture and how wide
-   it shows (px) */
-export const ROUNDS_ART = {
-  sniper: {
-    w: 56,
-    svg: `<svg viewBox="0 0 48 10"><path d="M2 5h30" stroke="#ffd84a" stroke-width="2" opacity=".6"/><path d="M27 2.6h12.6q6 .2 8.2 2.4q-2.2 2.2-8.2 2.4H27Z" fill="#c9a24a" stroke="#5a4310" stroke-width="1"/><path d="M33 2.8v4.4" stroke="#5a4310" stroke-width=".7" opacity=".6"/></svg>`,
-  },
-  smg: {
-    w: 22,
-    svg: `<svg viewBox="0 0 20 8"><path d="M0 4h11" stroke="#ffd84a" stroke-width="1.8" opacity=".55"/><path d="M8 1.9h6.2q4 .3 5.4 2.1q-1.4 1.8-5.4 2.1H8Z" fill="#e0b04a" stroke="#6a4c12" stroke-width=".8"/></svg>`,
-  },
-  tommy: {
-    w: 26,
-    svg: `<svg viewBox="0 0 24 9"><path d="M0 4.5h12" stroke="#ffd84a" stroke-width="2" opacity=".55"/><path d="M9 2.2h7q4.4.3 6.4 2.3q-2 2-6.4 2.3H9Z" fill="#d9a54a" stroke="#6a4c12" stroke-width=".9"/></svg>`,
-  },
-  ump: {
-    w: 24,
-    svg: `<svg viewBox="0 0 22 9"><path d="M0 4.5h11" stroke="#ffd84a" stroke-width="1.9" opacity=".55"/><path d="M8 2.1h6.6q4 .3 5.8 2.4q-1.8 2-5.8 2.3H8Z" fill="#e0b04a" stroke="#6a4c12" stroke-width=".9"/></svg>`,
-  },
-  ak: {
-    w: 30,
-    svg: `<svg viewBox="0 0 28 10"><path d="M2 5h16" stroke="#ffd84a" stroke-width="2" opacity=".6"/><path d="M14 2.7h7q5 .4 6.6 2.3q-1.6 1.9-6.6 2.3h-7Z" fill="#c98a3a" stroke="#5a3510" stroke-width="1"/></svg>`,
-  },
-  revolver: {
-    w: 30,
-    svg: `<svg viewBox="0 0 26 12"><path d="M2 6h13" stroke="#ffd84a" stroke-width="2.4" opacity=".6"/><path d="M13 2.3h6.4a3.7 3.7 0 0 1 0 7.4H13Z" fill="#b87333" stroke="#4a2a10" stroke-width="1"/><path d="M15 3.4h3.6" stroke="#fff" stroke-width=".8" opacity=".45"/></svg>`,
-  },
-  slug: {
-    w: 30,
-    svg: `<svg viewBox="0 0 26 14"><path d="M1 7h14" stroke="#ffd84a" stroke-width="3" opacity=".6"/><path d="M12 2.4h7.6a4.6 4.6 0 0 1 0 9.2H12Z" fill="#8d929e" stroke="#33384a" stroke-width="1"/><path d="M14 4h4.6" stroke="#fff" stroke-width=".9" opacity=".5"/></svg>`,
-  },
-  burst: {
-    w: 28,
-    svg: `<svg viewBox="0 0 26 10"><path d="M2 5h14" stroke="#ffd84a" stroke-width="2" opacity=".6"/><path d="M12 2.8h7q5 .4 6.4 2.2q-1.4 1.8-6.4 2.2h-7Z" fill="#d9a24a" stroke="#5a3510" stroke-width="1"/></svg>`,
-  },
-  lmg: {
-    w: 32,
-    svg: `<svg viewBox="0 0 30 10"><path d="M1 5h19" stroke="#ff6a3d" stroke-width="2.4" opacity=".75"/><path d="M16 2.7h6.6q5 .4 6.6 2.3q-1.6 1.9-6.6 2.3H16Z" fill="#c98a3a" stroke="#5a3510" stroke-width="1"/><path d="M25.4 3.3q2.6.6 3.6 1.7q-1 1.1-3.6 1.7Z" fill="#ff5a1a"/></svg>`,
-  },
+/* ---------- the bullets, by caliber ----------
+   The owner's, Nov 21 17:25Z: "Every bullet now gets redesigned for its caliber. Some bullets we can reuse, others we
+   change. What that means is that different calibers get different size bullets ... chain gun still appears like it does
+   in terms of the little lines that shoot across the screen." Each caliber is drawn from its real bullet's length and
+   width (mm, at MM px a mm), flying right (the screens turn them), with its streak behind it: a round nose for the
+   handgun calibers and the slug, a pointed one for the rifles. Every gun of a caliber fires the same bullet (guns.js
+   ARMS[w].cal), so the M1911, the Tommy gun and the UMP-45 all fire the .45's. Each: its picture and how wide it shows
+   (px) */
+const MM = 0.7;
+/* a bullet l mm long and d mm wide, pointed or round-nosed, in fill with ink round it, its streak in tc behind it. Its
+   picture is never thinner than 0.36 of its width, the bullet in its middle, as css .bullet.round centers it */
+function roundArt(l, d, pointed, fill, ink, tc = "#ffd84a") {
+  const L = l * MM,
+    D = d * MM,
+    T = Math.round(L * 1.1), // (its streak)
+    W = Math.ceil(T + L + 1),
+    H = Math.max(D + 2, W * 0.36),
+    y = H / 2,
+    r = D / 2,
+    nose = pointed ? L * 0.45 : r,
+    b = T + L - nose,
+    f = (n) => +n.toFixed(2),
+    tip = pointed
+      ? `Q${f(b + nose * 0.7)} ${f(y - r)} ${f(T + L)} ${f(y)}Q${f(b + nose * 0.7)} ${f(y + r)} ${f(b)} ${f(y + r)}`
+      : `A${f(r)} ${f(r)} 0 0 1 ${f(b)} ${f(y + r)}`;
+  return {
+    w: W,
+    svg: `<svg viewBox="0 0 ${W} ${f(H)}"><path d="M0 ${f(y)}H${f(T + 1)}" stroke="${tc}" stroke-width="${f(Math.max(1.2, D * 0.45))}" opacity=".6"/><path d="M${T} ${f(y - r)}H${f(b)}${tip}H${T}Z" fill="${fill}" stroke="${ink}" stroke-width=".8" stroke-linejoin="round"/><path d="M${T + 1} ${f(y - r * 0.45)}H${f(b - 0.5)}" stroke="#fff" stroke-width=".6" opacity=".45"/></svg>`,
+  };
+}
+const JACKET = ["#e0b04a", "#6a4c12"],
+  COPPER = ["#c98a3a", "#5a3510"];
+const CAL_ROUNDS = {
+  "9mm": roundArt(15.5, 9, false, ...JACKET),
+  ".45 ACP": roundArt(17, 11.5, false, ...JACKET),
+  ".357 Magnum": roundArt(18, 9.1, false, "#b87333", "#4a2a10"),
+  "5.56mm": roundArt(23, 5.7, true, ...COPPER),
+  "7.62x39mm": roundArt(26, 7.9, true, ...COPPER),
+  ".50 BMG": roundArt(58, 13, true, "#c9a24a", "#5a4310"),
+  "12 ga slug": roundArt(20, 18.5, false, "#8d929e", "#33384a"),
 };
+/* each gun's bullet (game.js: a shot's k): its caliber's; the M249's keeps its red tracer streak */
+export const ROUNDS_ART = Object.fromEntries(
+  Object.values(ARMS)
+    .filter((a) => a.k && CAL_ROUNDS[a.cal])
+    .map((a) => [a.k, CAL_ROUNDS[a.cal]]),
+);
+ROUNDS_ART.lmg = roundArt(23, 5.7, true, ...COPPER, "#ff6a3d");
 /* the chain gun's shots: thin yellow lines from the barrel out to what each hit, flashing in and out */
 export const TRACE = {
   color: "#ffe066",
@@ -354,9 +361,9 @@ export const SHOTGUN = `<svg viewBox="0 0 62 20"><path d="M2.6 6.4L15.6 8V13.4L5
 <rect x="34.4" y="8.4" width="13.6" height="5.2" rx="1.8" fill="#a0612f" stroke="${INK}" stroke-width="1.1"/>${[37.2, 39.8, 42.4, 45].map((x) => `<path d="M${x} 9.4V12.6" stroke="#5a3218" stroke-width=".8"/>`).join("")}</svg>`;
 export const PISTOL = ([a, b]) =>
   `<svg viewBox="0 0 40 24"><path d="M17 11l-2 10H8l2-10Z" fill="${b}" stroke="#0e0e14" stroke-width="1.4" stroke-linejoin="round"/><path d="M4 5h30v6H4Z" fill="${a}" stroke="#0e0e14" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 11l4 4" stroke="#0e0e14" stroke-width="1.4"/></svg>`;
-/* the handgun's bullet, in the shooter's Accent color */
+/* the handgun's bullet: the .45's (the M1911 fires .45 ACP), in the shooter's Accent color */
 export const BULLET = (c = "#c9a24a") =>
-  `<svg viewBox="0 0 24 10"><path d="M2 5h14" stroke="#ffd84a" stroke-width="2" opacity=".6"/><path d="M14 2h5a3 3 0 0 1 0 6h-5Z" fill="${c}" stroke="#5a4310" stroke-width="1"/></svg>`;
+  roundArt(17, 11.5, false, c, "#5a4310").svg;
 
 /* ---------- the bow, its arrow, the medkit, the chair and the zebra cake (Mad God Justin's first) ---------- */
 const INK_DARK = "#1c1c28"; // (their ink: a little darker than the guns')
