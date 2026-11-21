@@ -3,7 +3,7 @@
    questions here; where their numbers differ, each side's way is breed data (GATE_BREEDS), never an if on the mode. */
 
 /* full auto: the shots can come a little bunched over the network, so they may come this share of the wait early */
-export const AUTO_SLACK = 0.2;
+const AUTO_SLACK = 0.2;
 /* each side's slack rule: the board takes it off when the weapon is free again (its wait's end, or its reload's), as a
    share of its plain wait; the maps cut the wait since the last use by it */
 export const GATE_BREEDS = {
