@@ -82,17 +82,6 @@ import {
   isSudo,
   canOpen,
   isSc,
-  SC_BOARD,
-  SC_VOTES,
-  scZones,
-  zoneAt,
-  scCanVote,
-  scLineOf,
-  scWriter,
-  scStats,
-  wordAt,
-  cleanWord,
-  LINE_MAX,
   textMax,
   isCounsel,
   jury,
@@ -123,6 +112,19 @@ import {
   votesDue,
   REACH,
 } from "./rules.js";
+import {
+  SC_BOARD,
+  SC_VOTES,
+  scZones,
+  zoneAt,
+  scCanVote,
+  scLineOf,
+  scWriter,
+  scStats,
+  wordAt,
+  cleanWord,
+  LINE_MAX,
+} from "./scrules.js";
 import { bbMatch, roundName, bbStats } from "./bbrules.js";
 import { mountWorld, BOARD_HTML as HANG_HTML } from "./hangout/world.js";
 import { W as HW, H as HH } from "./hangout/layout.js";

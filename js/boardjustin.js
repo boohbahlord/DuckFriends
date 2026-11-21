@@ -48,9 +48,6 @@ import { vdSafe } from "./vddrules.js";
 import {
   twoSided,
   isSc,
-  scZones,
-  scLineOf,
-  zoneAt,
   colAt,
   colBoundsAt,
   startX,
@@ -59,6 +56,7 @@ import {
   BOSS_SHOT_SPEED,
   strike,
 } from "./rules.js";
+import { scZones, scLineOf, zoneAt } from "./scrules.js";
 
 export const JUSTIN_ID = "justin";
 export const JUSTIN_PLAYER = { name: "Justin", duck: JUSTIN };

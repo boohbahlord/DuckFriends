@@ -27,10 +27,6 @@ import {
   isCounsel,
   jury,
   canGiveUp,
-  SC_WORDS,
-  scWriter,
-  scZones,
-  scCanVote,
   canEndRound,
   endDone,
   playing,
@@ -42,6 +38,7 @@ import {
   walkOf,
   inWorld,
 } from "./rules.js";
+import { SC_WORDS, scWriter, scZones, scCanVote } from "./scrules.js";
 import { BB_TOPICS } from "./bbrules.js";
 import {
   anyWord,
