@@ -576,5 +576,30 @@
     "reload": 2
    }
   }
+ },
+ "sb-hotbar": {
+  "frames": 480,
+  "digest": "99anzy",
+  "every": [
+   "1j7bi85",
+   "15wwlb7",
+   "1nhnm71",
+   "1qjrrdj",
+   "nrkuz3",
+   "kmfoas",
+   "kmfoas",
+   "kmfoas"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.1022,
+    "y": 0.5192
+   },
+   "sent": {
+    "tick": 40,
+    "sbh": 11,
+    "move": 2
+   }
+  }
  }
 }
