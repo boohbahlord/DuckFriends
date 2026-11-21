@@ -74,7 +74,7 @@ jetart.js 39 the jetpack's pictures
 jetpack.js 33 the jetpack
 jumps.js 48 the jump counter
 keynav.js 204 menus by keyboard
-l4dd.js 3350 Quacky Zombies on every screen
+l4dd.js 3349 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 203 Dead Ducks Arcade's Angel machine on every screen
 l4ddart.js 623 Quacky Zombies' pictures
@@ -217,7 +217,7 @@ umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
 unlocks.js 372 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 2897 Updates
+updates.js 2906 Updates
 vdd.js 198 Valentine's Duck Date: what the screen shows
 vddrules.js 521 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
