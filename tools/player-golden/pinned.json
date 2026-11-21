@@ -1,580 +1,580 @@
 {
-  "board-keys": {
-    "frames": 660,
-    "digest": "10xsq0w",
-    "every": [
-      "7vgnxa",
-      "y80hx7",
-      "yasccj",
-      "cc1sd2",
-      "819yrt",
-      "1lmb6ql",
-      "18wuvi9",
-      "10jchj9",
-      "1abhqfk",
-      "1oxp7w4",
-      "jzu4md"
-    ],
-    "seen": {
-      "me": {
-        "x": 0.835,
-        "y": 0.945
-      },
-      "sent": {
-        "move": 82,
-        "tick": 55
-      }
-    }
-  },
-  "board-click": {
-    "frames": 600,
-    "digest": "144y7vu",
-    "every": [
-      "7vgnxa",
-      "1b527vu",
-      "i42y3a",
-      "bu0q4j",
-      "1a2nha5",
-      "2zj86m",
-      "59fwx",
-      "1ply7w0",
-      "14yp5ij",
-      "14yp5ij"
-    ],
-    "seen": {
-      "me": {
-        "x": 0.5962,
-        "y": 0.5988
-      },
-      "sent": {
-        "move": 63,
-        "tick": 50
-      }
-    }
-  },
-  "board-phone-stick": {
-    "frames": 600,
-    "digest": "12vifit",
-    "every": [
-      "7vgnxa",
-      "szoqo6",
-      "i5nl4y",
-      "13tq22h",
-      "98z66o",
-      "1qc8zhm",
-      "1klfnn4",
-      "4r9vlw",
-      "udafxk",
-      "udafxk"
-    ],
-    "seen": {
-      "me": {
-        "x": 0.6511,
-        "y": 0.5107
-      },
-      "sent": {
-        "move": 58,
-        "tick": 50
-      }
-    }
-  },
-  "board-phone-tap": {
-    "frames": 600,
-    "digest": "1ksdjk1",
-    "every": [
-      "7vgnxa",
-      "1je3bn4",
-      "uk0udf",
-      "1xh4qd5",
-      "1nrmydk",
-      "s2vxs5",
-      "u9afm8",
-      "1vmem1p",
-      "1fkhh2d",
-      "1mjlq5g"
-    ],
-    "seen": {
-      "me": {
-        "x": 0.3037,
-        "y": 0.5001
-      },
-      "sent": {
-        "move": 57,
-        "tick": 50
-      }
-    }
-  },
-  "board-specials": {
-    "frames": 720,
-    "digest": "12ki77v",
-    "every": [
-      "kdnicx",
-      "1qipcjs",
-      "9tlc0g",
-      "1sx6fqc",
-      "l7tx29",
-      "zpd157",
-      "j5jfjj",
-      "5698hz",
-      "14dd3km",
-      "1tmd0l0",
-      "1k9yc19",
-      "5zadfa"
-    ],
-    "seen": {
-      "me": {
-        "x": 0.8869,
-        "y": 0.0027
-      },
-      "sent": {
-        "move": 24,
-        "tick": 60,
-        "use": 18,
-        "reload": 1
-      }
-    }
-  },
-  "hang-keys": {
-    "frames": 660,
-    "digest": "1g6g09h",
-    "every": [
-      "1iwpufa",
-      "ipmr6",
-      "1pfgoka",
-      "1phtnet",
-      "18x3asq",
-      "hv55oj",
-      "1pkivke",
-      "16wre2o",
-      "dcw4ps",
-      "nz0pz",
-      "14c88p2"
-    ],
-    "seen": {
-      "me": {
-        "x": 0.4189,
-        "y": 0.129,
-        "z": 0
-      },
-      "sent": {
-        "move": 109,
-        "tick": 55
-      }
-    }
-  },
-  "hang-phone": {
-    "frames": 600,
-    "digest": "6vn7n4",
-    "every": [
-      "1iwpufa",
-      "1gx9i8s",
-      "9yf4x4",
-      "1jceku",
-      "fdnsue",
-      "10vnytb",
-      "cu9ggq",
-      "1v7dcn",
-      "djlaj8",
-      "6mz28q"
-    ],
-    "seen": {
-      "me": {
-        "x": 0.3608,
-        "y": 0.1096,
-        "z": 0
-      },
-      "sent": {
-        "move": 74,
-        "tick": 50
-      }
-    }
-  },
-  "dda-downpour": {
-    "frames": 780,
-    "digest": "ro1p3i",
-    "every": [
-      "1li1t2z",
-      "nsw2yu",
-      "12xdb71",
-      "zim3zl",
-      "1kxsx9u",
-      "1df3hs1",
-      "1ged9q5",
-      "1u7wdg3",
-      "8xlm5p",
-      "9ixvls",
-      "1vts7ti",
-      "1byxt34",
-      "9ak7yf"
-    ],
-    "seen": {
-      "me": {
-        "x": 0.6722,
-        "y": 0.2746,
-        "z": 0
-      },
-      "sent": {
-        "move": 103,
-        "tick": 65,
-        "use": 7,
-        "reload": 1
-      }
-    }
-  },
-  "dda-cabin": {
-    "frames": 600,
-    "digest": "g9tcm4",
-    "every": [
-      "9hqn3q",
-      "x69i6g",
-      "13v3twz",
-      "2cp7p9",
-      "i25yo2",
-      "z9iz5a",
-      "11xdt66",
-      "wcx78y",
-      "1kfqj1j",
-      "xzryha"
-    ],
-    "seen": {
-      "me": {
-        "x": 0.5172,
-        "y": 0.3291,
-        "z": 0
-      },
-      "sent": {
-        "move": 79,
-        "tick": 50,
-        "use": 5
-      }
-    }
-  },
-  "dda-phone": {
-    "frames": 720,
-    "digest": "1quvqjg",
-    "every": [
-      "1li1t2z",
-      "7jrynt",
-      "1jvw3ls",
-      "1bhrtl3",
-      "7zti5w",
-      "msa8ih",
-      "10uswq9",
-      "1oqwaxq",
-      "e8nhod",
-      "1q9bauk",
-      "1uogl3i",
-      "1wvnn1r"
-    ],
-    "seen": {
-      "me": {
-        "x": 0.7006,
-        "y": 0.2518,
-        "z": 0
-      },
-      "sent": {
-        "tick": 60,
-        "move": 88,
-        "use": 4
-      }
-    }
-  },
-  "mgj": {
-    "frames": 660,
-    "digest": "1wtmqlk",
-    "every": [
-      "mj4yne",
-      "h6dddb",
-      "1grjsf",
-      "r2epe1",
-      "b9vyya",
-      "76nitk",
-      "hlk7w2",
-      "v4jw6e",
-      "nhohqm",
-      "1hfl4w5",
-      "s4j6bs"
-    ],
-    "seen": {
-      "me": {
-        "x": 0.392,
-        "y": 0.68
-      },
-      "sent": {
-        "move": 84,
-        "tick": 55,
-        "use": 5
-      }
-    }
-  },
-  "sb-board": {
-    "frames": 600,
-    "digest": "16wsuwc",
-    "every": [
-      "1j7bi85",
-      "1p2ev3",
-      "xurigg",
-      "k80hlk",
-      "1yftbbl",
-      "1mhhamt",
-      "bpum48",
-      "dm5d3e",
-      "1hglixk",
-      "1fl3kbf"
-    ],
-    "seen": {
-      "me": {
-        "x": 0.7862,
-        "y": 0
-      },
-      "sent": {
-        "move": 83,
-        "tick": 50
-      }
-    }
-  },
-  "sb-cabin": {
-    "frames": 600,
-    "digest": "vz7d5",
-    "every": [
-      "12k933n",
-      "2qfwny",
-      "1r94ee7",
-      "1u36lg",
-      "8vldgz",
-      "16v7w86",
-      "ofr2zj",
-      "qc2l5w",
-      "1ozkgmw",
-      "5ip0yu"
-    ],
-    "seen": {
-      "me": {
-        "x": 0.4189,
-        "y": 0.063,
-        "z": 0
-      },
-      "sent": {
-        "move": 102,
-        "tick": 50
-      }
-    }
-  },
-  "board-sprint-out": {
-    "frames": 720,
-    "digest": "1hxlnge",
-    "every": [
-      "7vgnxa",
-      "spzln6",
-      "1x8bqby",
-      "m29l8l",
-      "1pq0ky5",
-      "5i7a8t",
-      "19vrkna",
-      "19vrkna",
-      "u0r6u8",
-      "1uqbbo5",
-      "l8x2id",
-      "6fh2s8"
-    ],
-    "seen": {
-      "me": {
-        "x": 0.8153,
-        "y": 0
-      },
-      "sent": {
-        "move": 72,
-        "tick": 60
-      }
-    }
-  },
-  "board-bump": {
-    "frames": 480,
-    "digest": "1fgw5xu",
-    "every": [
-      "7vgnxa",
-      "1ritne4",
-      "1p9zsw",
-      "lbujh0",
-      "lbujh0",
-      "1o0xgyx",
-      "16ig8bl",
-      "16ig8bl"
-    ],
-    "seen": {
-      "me": {
-        "x": 0.4916,
-        "y": 0.3013
-      },
-      "sent": {
-        "move": 37,
-        "tick": 40
-      }
-    }
-  },
-  "hang-click": {
-    "frames": 600,
-    "digest": "wvnwcp",
-    "every": [
-      "1iwpufa",
-      "12e75qa",
-      "1l1t1my",
-      "vv34fo",
-      "vv34fo",
-      "3x8l1a",
-      "1hq9xrt",
-      "pixxw7",
-      "3yi4g8",
-      "d27ohw"
-    ],
-    "seen": {
-      "me": {
-        "x": 0.4041,
-        "y": 0.1911,
-        "z": 0
-      },
-      "sent": {
-        "move": 52,
-        "tick": 50
-      }
-    }
-  },
-  "hang-phone-tap": {
-    "frames": 600,
-    "digest": "ff59jv",
-    "every": [
-      "1iwpufa",
-      "th0ypx",
-      "5tb16h",
-      "17m7xyx",
-      "17m7xyx",
-      "rfrr1l",
-      "j5mrpu",
-      "1xzfxxv",
-      "1fbsjho",
-      "1sxqby3"
-    ],
-    "seen": {
-      "me": {
-        "x": 0.3629,
-        "y": 0.227,
-        "z": 0
-      },
-      "sent": {
-        "move": 65,
-        "tick": 50
-      }
-    }
-  },
-  "dda-pick": {
-    "frames": 720,
-    "digest": "1aws7sx",
-    "every": [
-      "7rb9aq",
-      "m8jbul",
-      "1ohby01",
-      "1c0zqx0",
-      "s8divd",
-      "mjxm5j",
-      "1tbfj4b",
-      "1n9jncw",
-      "1l3crlu",
-      "14dtkdn",
-      "19ez7fu",
-      "143exnj"
-    ],
-    "seen": {
-      "me": {
-        "x": 0.47,
-        "y": 0.325,
-        "z": 0
-      },
-      "sent": {
-        "move": 14,
-        "tick": 60,
-        "use": 9
-      }
-    }
-  },
-  "mgj-pick": {
-    "frames": 720,
-    "digest": "wli3hn",
-    "every": [
-      "8wlov",
-      "1njh6h0",
-      "1njh6h0",
-      "1dezv5y",
-      "z032g7",
-      "1cu4j3g",
-      "fw2iah",
-      "1fk8wiv",
-      "182zs6w",
-      "ok3zd7",
-      "sm3j7q",
-      "1ytck7j"
-    ],
-    "seen": {
-      "me": {
-        "x": 0.14,
-        "y": 0.2
-      },
-      "sent": {
-        "move": 16,
-        "tick": 60,
-        "use": 12,
-        "reload": 2
-      }
-    }
-  },
-  "board-reload": {
-    "frames": 480,
-    "digest": "pc2lhe",
-    "every": [
-      "utf3c8",
-      "1rtl73",
-      "1v9boow",
-      "yhh6vl",
-      "1xszsr6",
-      "8wovxo",
-      "8wovxo",
-      "1sqb1ku"
-    ],
-    "seen": {
-      "me": {
-        "x": 0.6169,
-        "y": 0.0027
-      },
-      "sent": {
-        "move": 8,
-        "tick": 40,
-        "use": 6,
-        "reload": 3
-      }
-    }
-  },
-  "mgj-reload": {
-    "frames": 420,
-    "digest": "tf7dvl",
-    "every": [
-      "1861fvb",
-      "qkaajr",
-      "qkaajr",
-      "15jsu9s",
-      "1i529nn",
-      "1cjurv3",
-      "ojadqf"
-    ],
-    "seen": {
-      "me": {
-        "x": 0.14,
-        "y": 0.2
-      },
-      "sent": {
-        "move": 4,
-        "tick": 35,
-        "use": 5,
-        "reload": 2
-      }
-    }
+ "board-keys": {
+  "frames": 660,
+  "digest": "10xsq0w",
+  "every": [
+   "7vgnxa",
+   "y80hx7",
+   "yasccj",
+   "cc1sd2",
+   "819yrt",
+   "1lmb6ql",
+   "18wuvi9",
+   "10jchj9",
+   "1abhqfk",
+   "1oxp7w4",
+   "jzu4md"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.835,
+    "y": 0.945
+   },
+   "sent": {
+    "move": 82,
+    "tick": 55
+   }
   }
+ },
+ "board-click": {
+  "frames": 600,
+  "digest": "144y7vu",
+  "every": [
+   "7vgnxa",
+   "1b527vu",
+   "i42y3a",
+   "bu0q4j",
+   "1a2nha5",
+   "2zj86m",
+   "59fwx",
+   "1ply7w0",
+   "14yp5ij",
+   "14yp5ij"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.5962,
+    "y": 0.5988
+   },
+   "sent": {
+    "move": 63,
+    "tick": 50
+   }
+  }
+ },
+ "board-phone-stick": {
+  "frames": 600,
+  "digest": "1sr4b6r",
+  "every": [
+   "7vgnxa",
+   "szoqo6",
+   "i5nl4y",
+   "1e9goa",
+   "1ssjcn1",
+   "1njuu0p",
+   "1n3uvqn",
+   "1rq8m47",
+   "tkq0pf",
+   "tkq0pf"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.6511,
+    "y": 0.5107
+   },
+   "sent": {
+    "move": 58,
+    "tick": 50
+   }
+  }
+ },
+ "board-phone-tap": {
+  "frames": 600,
+  "digest": "hncazr",
+  "every": [
+   "7vgnxa",
+   "1aplqjr",
+   "s28sl6",
+   "18tb7qo",
+   "17ak1ex",
+   "135s0i4",
+   "1xpwxa0",
+   "97vbbg",
+   "19w8gjw",
+   "g8n808"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.3102,
+    "y": 0.5001
+   },
+   "sent": {
+    "move": 55,
+    "tick": 50
+   }
+  }
+ },
+ "board-specials": {
+  "frames": 720,
+  "digest": "12ki77v",
+  "every": [
+   "kdnicx",
+   "1qipcjs",
+   "9tlc0g",
+   "1sx6fqc",
+   "l7tx29",
+   "zpd157",
+   "j5jfjj",
+   "5698hz",
+   "14dd3km",
+   "1tmd0l0",
+   "1k9yc19",
+   "5zadfa"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.8869,
+    "y": 0.0027
+   },
+   "sent": {
+    "move": 24,
+    "tick": 60,
+    "use": 18,
+    "reload": 1
+   }
+  }
+ },
+ "hang-keys": {
+  "frames": 660,
+  "digest": "1g6g09h",
+  "every": [
+   "1iwpufa",
+   "ipmr6",
+   "1pfgoka",
+   "1phtnet",
+   "18x3asq",
+   "hv55oj",
+   "1pkivke",
+   "16wre2o",
+   "dcw4ps",
+   "nz0pz",
+   "14c88p2"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.4189,
+    "y": 0.129,
+    "z": 0
+   },
+   "sent": {
+    "move": 109,
+    "tick": 55
+   }
+  }
+ },
+ "hang-phone": {
+  "frames": 600,
+  "digest": "6vn7n4",
+  "every": [
+   "1iwpufa",
+   "1gx9i8s",
+   "9yf4x4",
+   "1jceku",
+   "fdnsue",
+   "10vnytb",
+   "cu9ggq",
+   "1v7dcn",
+   "djlaj8",
+   "6mz28q"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.3608,
+    "y": 0.1096,
+    "z": 0
+   },
+   "sent": {
+    "move": 74,
+    "tick": 50
+   }
+  }
+ },
+ "dda-downpour": {
+  "frames": 780,
+  "digest": "ro1p3i",
+  "every": [
+   "1li1t2z",
+   "nsw2yu",
+   "12xdb71",
+   "zim3zl",
+   "1kxsx9u",
+   "1df3hs1",
+   "1ged9q5",
+   "1u7wdg3",
+   "8xlm5p",
+   "9ixvls",
+   "1vts7ti",
+   "1byxt34",
+   "9ak7yf"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.6722,
+    "y": 0.2746,
+    "z": 0
+   },
+   "sent": {
+    "move": 103,
+    "tick": 65,
+    "use": 7,
+    "reload": 1
+   }
+  }
+ },
+ "dda-cabin": {
+  "frames": 600,
+  "digest": "g9tcm4",
+  "every": [
+   "9hqn3q",
+   "x69i6g",
+   "13v3twz",
+   "2cp7p9",
+   "i25yo2",
+   "z9iz5a",
+   "11xdt66",
+   "wcx78y",
+   "1kfqj1j",
+   "xzryha"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.5172,
+    "y": 0.3291,
+    "z": 0
+   },
+   "sent": {
+    "move": 79,
+    "tick": 50,
+    "use": 5
+   }
+  }
+ },
+ "dda-phone": {
+  "frames": 720,
+  "digest": "1quvqjg",
+  "every": [
+   "1li1t2z",
+   "7jrynt",
+   "1jvw3ls",
+   "1bhrtl3",
+   "7zti5w",
+   "msa8ih",
+   "10uswq9",
+   "1oqwaxq",
+   "e8nhod",
+   "1q9bauk",
+   "1uogl3i",
+   "1wvnn1r"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.7006,
+    "y": 0.2518,
+    "z": 0
+   },
+   "sent": {
+    "tick": 60,
+    "move": 88,
+    "use": 4
+   }
+  }
+ },
+ "mgj": {
+  "frames": 660,
+  "digest": "1wtmqlk",
+  "every": [
+   "mj4yne",
+   "h6dddb",
+   "1grjsf",
+   "r2epe1",
+   "b9vyya",
+   "76nitk",
+   "hlk7w2",
+   "v4jw6e",
+   "nhohqm",
+   "1hfl4w5",
+   "s4j6bs"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.392,
+    "y": 0.68
+   },
+   "sent": {
+    "move": 84,
+    "tick": 55,
+    "use": 5
+   }
+  }
+ },
+ "sb-board": {
+  "frames": 600,
+  "digest": "16wsuwc",
+  "every": [
+   "1j7bi85",
+   "1p2ev3",
+   "xurigg",
+   "k80hlk",
+   "1yftbbl",
+   "1mhhamt",
+   "bpum48",
+   "dm5d3e",
+   "1hglixk",
+   "1fl3kbf"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.7862,
+    "y": 0
+   },
+   "sent": {
+    "move": 83,
+    "tick": 50
+   }
+  }
+ },
+ "sb-cabin": {
+  "frames": 600,
+  "digest": "vz7d5",
+  "every": [
+   "12k933n",
+   "2qfwny",
+   "1r94ee7",
+   "1u36lg",
+   "8vldgz",
+   "16v7w86",
+   "ofr2zj",
+   "qc2l5w",
+   "1ozkgmw",
+   "5ip0yu"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.4189,
+    "y": 0.063,
+    "z": 0
+   },
+   "sent": {
+    "move": 102,
+    "tick": 50
+   }
+  }
+ },
+ "board-sprint-out": {
+  "frames": 720,
+  "digest": "1hxlnge",
+  "every": [
+   "7vgnxa",
+   "spzln6",
+   "1x8bqby",
+   "m29l8l",
+   "1pq0ky5",
+   "5i7a8t",
+   "19vrkna",
+   "19vrkna",
+   "u0r6u8",
+   "1uqbbo5",
+   "l8x2id",
+   "6fh2s8"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.8153,
+    "y": 0
+   },
+   "sent": {
+    "move": 72,
+    "tick": 60
+   }
+  }
+ },
+ "board-bump": {
+  "frames": 480,
+  "digest": "1fgw5xu",
+  "every": [
+   "7vgnxa",
+   "1ritne4",
+   "1p9zsw",
+   "lbujh0",
+   "lbujh0",
+   "1o0xgyx",
+   "16ig8bl",
+   "16ig8bl"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.4916,
+    "y": 0.3013
+   },
+   "sent": {
+    "move": 37,
+    "tick": 40
+   }
+  }
+ },
+ "hang-click": {
+  "frames": 600,
+  "digest": "wvnwcp",
+  "every": [
+   "1iwpufa",
+   "12e75qa",
+   "1l1t1my",
+   "vv34fo",
+   "vv34fo",
+   "3x8l1a",
+   "1hq9xrt",
+   "pixxw7",
+   "3yi4g8",
+   "d27ohw"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.4041,
+    "y": 0.1911,
+    "z": 0
+   },
+   "sent": {
+    "move": 52,
+    "tick": 50
+   }
+  }
+ },
+ "hang-phone-tap": {
+  "frames": 600,
+  "digest": "ff59jv",
+  "every": [
+   "1iwpufa",
+   "th0ypx",
+   "5tb16h",
+   "17m7xyx",
+   "17m7xyx",
+   "rfrr1l",
+   "j5mrpu",
+   "1xzfxxv",
+   "1fbsjho",
+   "1sxqby3"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.3629,
+    "y": 0.227,
+    "z": 0
+   },
+   "sent": {
+    "move": 65,
+    "tick": 50
+   }
+  }
+ },
+ "dda-pick": {
+  "frames": 720,
+  "digest": "1aws7sx",
+  "every": [
+   "7rb9aq",
+   "m8jbul",
+   "1ohby01",
+   "1c0zqx0",
+   "s8divd",
+   "mjxm5j",
+   "1tbfj4b",
+   "1n9jncw",
+   "1l3crlu",
+   "14dtkdn",
+   "19ez7fu",
+   "143exnj"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.47,
+    "y": 0.325,
+    "z": 0
+   },
+   "sent": {
+    "move": 14,
+    "tick": 60,
+    "use": 9
+   }
+  }
+ },
+ "mgj-pick": {
+  "frames": 720,
+  "digest": "wli3hn",
+  "every": [
+   "8wlov",
+   "1njh6h0",
+   "1njh6h0",
+   "1dezv5y",
+   "z032g7",
+   "1cu4j3g",
+   "fw2iah",
+   "1fk8wiv",
+   "182zs6w",
+   "ok3zd7",
+   "sm3j7q",
+   "1ytck7j"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.14,
+    "y": 0.2
+   },
+   "sent": {
+    "move": 16,
+    "tick": 60,
+    "use": 12,
+    "reload": 2
+   }
+  }
+ },
+ "board-reload": {
+  "frames": 480,
+  "digest": "pc2lhe",
+  "every": [
+   "utf3c8",
+   "1rtl73",
+   "1v9boow",
+   "yhh6vl",
+   "1xszsr6",
+   "8wovxo",
+   "8wovxo",
+   "1sqb1ku"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.6169,
+    "y": 0.0027
+   },
+   "sent": {
+    "move": 8,
+    "tick": 40,
+    "use": 6,
+    "reload": 3
+   }
+  }
+ },
+ "mgj-reload": {
+  "frames": 420,
+  "digest": "tf7dvl",
+  "every": [
+   "1861fvb",
+   "qkaajr",
+   "qkaajr",
+   "15jsu9s",
+   "1i529nn",
+   "1cjurv3",
+   "ojadqf"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.14,
+    "y": 0.2
+   },
+   "sent": {
+    "move": 4,
+    "tick": 35,
+    "use": 5,
+    "reload": 2
+   }
+  }
+ }
 }
