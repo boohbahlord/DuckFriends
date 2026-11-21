@@ -7621,3 +7621,7 @@ Adam: smoothness = frame pacing (frame-time spikes, 1% lows), not average fps. M
 under ~0.15 s steps (Noah, in progress), Downpour load 21 -> 7 s with nothing after the drop, mid-game picture making
 removed. Solomon measuring frames over 16 ms in a minute of play (target: none over 50 ms, half as many over 16 ms);
 before/after numbers promised when his PR lands.
+
+## Owner, 2026-11-21 00:31Z (via Moses): test commands in the terminal
+"If you need to make codes in the terminal to make testing easier and more usage efficient, you can. Just have it to where that disables stats within a game when those certain things are turned on for something in the special games."
+Decision: workers may add terminal (shell) test commands (jump to a round, give a weapon). Any game where one is used has stats off for that whole game. Passed to Solomon for his stutter tests.
