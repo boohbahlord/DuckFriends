@@ -136,7 +136,7 @@ outlines.js 353 the outlines
 perf.js 92 the frame-rate readout
 phonepad.js 129 phones: the aim-and-attack stick and the
 picrop.js 268 cropping a picture: every picture put
-pixel.js 724 the pixel look
+pixel.js 756 the pixel look
 pixelpalette.js 192 the pixel look's colors
 playerinput.js 26 what I ask my duck to
 players.js 340 the player menu and the room's

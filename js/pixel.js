@@ -571,6 +571,35 @@ export function pxImgWatch(root) {
 /* ---------- the mouse pointer as pixels (owner, Nov 16: "that would be cool if it was also 64 bit") ----------
    Drawn here, a pixel at a time: each pixel is CURSOR_ZOOM css px, sharp on any screen (image-set: 1x, 2x, 3x). k is
    the dark edge, w the fill, y the duck-yellow shine. css/app.css puts them on (--cur-*) */
+/* the crosshair: the duck-yellow dot, and four ticks round it, a little see-through (K, W), that start close to the dot
+   and move out as the gun heats up (the owner's, Nov 21 17:48Z: the crosshair stays the same size, its four outside
+   ticks start close to the center dot, a little see-through, and move outward as the gun heats up). heat: 0 … 1; the
+   picture is as big at every heat, so it never jumps */
+const CROSS_LEVELS = 6,
+  TICK = 4, // (each tick's length, pointer pixels)
+  GAP0 = 3, // (from the dot to a tick, cold)
+  GAP1 = 7; // (hot)
+function crossArt(heat) {
+  const g = Math.round(GAP0 + (GAP1 - GAP0) * heat),
+    c = GAP1 + TICK + 1,
+    n = c * 2 + 1,
+    m = Array.from({ length: n }, () => Array(n).fill("."));
+  const tick = (dx, dy) => {
+    for (let t = -1; t <= TICK; t++)
+      for (let o = -1; o <= 1; o++) {
+        const d = g + t,
+          x = c + dx * d + dy * o,
+          y = c + dy * d + dx * o;
+        m[y][x] = t < 0 || t === TICK || o ? "K" : "W";
+      }
+  };
+  tick(1, 0);
+  tick(-1, 0);
+  tick(0, 1);
+  tick(0, -1);
+  m[c][c] = "y";
+  return [c, c, m.map((r) => r.join("")).join("\n")];
+}
 const CURSORS = {
   arrow: [
     0,
@@ -614,25 +643,7 @@ kwwkywwwwwwwk
 ...kwwwwwwk
 ...kkkkkkkk`,
   ],
-  cross: [
-    7,
-    7,
-    `......kkk
-......kwk
-......kwk
-......kwk
-......kkk
-
-kkkkk.....kkkkk
-kwwwk..y..kwwwk
-kkkkk.....kkkkk
-
-......kkk
-......kwk
-......kwk
-......kwk
-......kkk`,
-  ],
+  cross: crossArt(0),
   text: [
     3,
     6,
@@ -651,7 +662,13 @@ kwwkwwk
 kkk.kkk`,
   ],
 };
-const INK = { k: "#101016", w: "#f7f8f3", y: "#fcdb4e" };
+const INK = {
+  k: "#101016",
+  w: "#f7f8f3",
+  y: "#fcdb4e",
+  K: "#10101699",
+  W: "#f7f8f3b8",
+};
 function cursorURL(rows, s) {
   const w = Math.max(...rows.map((r) => r.length)),
     c = document.createElement("canvas");
@@ -688,6 +705,24 @@ let cursorSizes = { mouse: 100, pointer: 100, cross: 100 },
 /* each pointer's picture is drawn in whole pixels of the screen (as many as its size needs, rounded up) and told how
    many of them make a css px (image-set), so it shows at exactly its size: sharp wherever that is a whole number of the
    screen's pixels (100% on most screens) */
+function cursorCss(name, [hx, hy, art], d, sets) {
+  const rows = art.split("\n"),
+    big = Math.max(rows.length, ...rows.map((r) => r.length)),
+    z = (CURSOR_ZOOM[name] * cursorSizes[CURSOR_SIZE[name]]) / 100, // (one pointer pixel, in css px)
+    px = sets
+      ? Math.max(
+          1,
+          Math.min(Math.ceil(z * d - 0.01), Math.floor(CURSOR_MAX / big)),
+        )
+      : Math.max(1, Math.round(z)),
+    img = sets
+      ? `image-set(url(${cursorURL(rows, px)}) ${+(px / z).toFixed(4)}x)`
+      : `url(${cursorURL(rows, px)})`,
+    at = sets ? z : px;
+  return `${img} ${Math.round(hx * at)} ${Math.round(hy * at)}`;
+}
+let crossSets = [],
+  crossLv = 0;
 function setCursors() {
   const d = dpr(),
     key = [d, cursorSizes.mouse, cursorSizes.pointer, cursorSizes.cross].join();
@@ -695,27 +730,24 @@ function setCursors() {
   cursorsAt = key;
   const sets = CSS.supports("cursor", "image-set(url(a.png) 1.5x) 0 0, auto"),
     root = document.documentElement.style;
-  for (const [name, [hx, hy, art]] of Object.entries(CURSORS)) {
-    const rows = art.split("\n"),
-      big = Math.max(rows.length, ...rows.map((r) => r.length)),
-      z = (CURSOR_ZOOM[name] * cursorSizes[CURSOR_SIZE[name]]) / 100, // (one pointer pixel, in css px)
-      px = sets
-        ? Math.max(
-            1,
-            Math.min(Math.ceil(z * d - 0.01), Math.floor(CURSOR_MAX / big)),
-          )
-        : Math.max(1, Math.round(z)),
-      img = sets
-        ? `image-set(url(${cursorURL(rows, px)}) ${+(px / z).toFixed(4)}x)`
-        : `url(${cursorURL(rows, px)})`,
-      at = sets ? z : px;
-    root.setProperty(
-      `--cur-${name}`,
-      `${img} ${Math.round(hx * at)} ${Math.round(hy * at)}`,
-    );
-  }
+  for (const [name, art] of Object.entries(CURSORS))
+    root.setProperty(`--cur-${name}`, cursorCss(name, art, d, sets));
+  crossSets = Array.from({ length: CROSS_LEVELS }, (_, i) =>
+    cursorCss("cross", crossArt(i / (CROSS_LEVELS - 1)), d, sets),
+  ); // (every heat's crosshair made now, so heating up never makes one mid-fight)
+  crossLv = 0;
 }
 setCursors();
+/* the gun's heat now, 0 … 1 (Solomon's spread): the crosshair's ticks move out with it. Only a new step of it changes
+   the pointer (CROSS_LEVELS of them), so a long burst changes it a handful of times, never every frame */
+export function crossHeat(heat) {
+  const lv = Math.round(
+    Math.max(0, Math.min(1, +heat || 0)) * (CROSS_LEVELS - 1),
+  );
+  if (lv === crossLv || !crossSets[lv]) return;
+  crossLv = lv;
+  document.documentElement.style.setProperty("--cur-cross", crossSets[lv]);
+}
 /* Settings → Controls: Mouse size, Pointer size, Crosshair size (in %) */
 export function setCursorSizes(mouse, pointer, cross) {
   const pc = (v) => Math.max(25, Math.min(400, +v || 100));
