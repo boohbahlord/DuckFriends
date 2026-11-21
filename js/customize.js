@@ -70,13 +70,12 @@ import { BEAKS, BEAK_GROUPS, beakById } from "./beaks.js";
 import { STYLES, styleById } from "./styles.js";
 import { OUTFITS, OUTFIT_GROUPS, outfitById } from "./outfits.js";
 import { FONTS, fontHTML } from "./name.js";
-import { colorField } from "./color.js";
+import { colorField, paintBody, metalChoices } from "./color.js";
 import { activeRoom } from "./net.js";
 import { who } from "./who.js";
 import { NAV_HINTS, items } from "./keynav.js";
 import { unlocked, isLocked, lockHint } from "./unlocks.js";
 import { touchOnly } from "./pointer.js";
-import { jetHTML } from "./jetpack.js";
 import { BOARD_GUNS, AUTO, BOARD_WEAPONS } from "./guns.js";
 import { pxWords } from "./pxtext.js";
 import { botDuck, BOT_DUCKS, any } from "./botduck.js";
@@ -160,6 +159,7 @@ function randomize(D, k) {
     D.patternColor = hex();
     D.metal = "none";
     D.image = null;
+    D.matte = false;
   }
 }
 
@@ -524,19 +524,6 @@ export function openCustomize(page = lastPage, opts = {}) {
             clearTimeout(pic._see);
             pic._see = setTimeout(() => pic.classList.remove("see"), 5000);
           } // (the Invisible duck: see-through a while, as in a game)
-          if (id === "jetpack") {
-            pic.querySelectorAll(".gduck-jet").forEach((e) => e.remove());
-            pic.style.setProperty("--sz", w.width.toFixed(0) + "px");
-            pic.insertAdjacentHTML("afterbegin", jetHTML(duckNow()));
-            duckBox.classList.remove("fly");
-            void duckBox.offsetWidth;
-            duckBox.classList.add("fly");
-            clearTimeout(pic._jet);
-            pic._jet = setTimeout(() => {
-              duckBox.classList.remove("fly");
-              pic.querySelectorAll(".gduck-jet").forEach((e) => e.remove());
-            }, 5000);
-          } // (the Jetpack: on the duck's back, it flies up on its flames, keeps the height, and comes down, as in a game)
           if (sp.kind === "effect") {
             pic.querySelectorAll(".sp-prev-fx").forEach((e) => e.remove());
             const fx = el(
@@ -1209,14 +1196,14 @@ export function openCustomize(page = lastPage, opts = {}) {
               pick.insertBefore(
                 colorField(
                   cur[2],
-                  (c) => {
-                    cur[3](c);
+                  (c, kind) => {
+                    cur[3](c, kind);
                     changed(false);
                     menu
                       .querySelectorAll('[data-a="plainname"]')
                       .forEach((b) => b.setAttribute("aria-pressed", "false"));
                   },
-                  { grid: true },
+                  { grid: true, metals: metalChoices(duckNow(), cur) },
                 ),
                 pick.querySelector(".cnote"),
               );
@@ -1294,11 +1281,7 @@ export function openCustomize(page = lastPage, opts = {}) {
                       key,
                       label,
                       D.metal !== "none" || D.image ? "" : D[key] || def,
-                      (c) => {
-                        D[key] = c;
-                        D.metal = "none";
-                        D.image = null;
-                      },
+                      (c, kind) => paintBody(D, key, c, kind),
                       "Picking a color takes off a metal or a picture.",
                       st.colors.length > 1 && st.name,
                     ],
@@ -1308,11 +1291,7 @@ export function openCustomize(page = lastPage, opts = {}) {
               "duck",
               "Duck",
               D.metal !== "none" || D.image ? "" : D.color,
-              (c) => {
-                D.color = c;
-                D.metal = "none";
-                D.image = null;
-              },
+              (c, kind) => paintBody(D, "color", c, kind),
               "Picking a color takes off a metal or a picture.",
             ]);
           const box = !!st.pages, // (Jack draws no pattern, hat, beak, outfit or face, so their colors wait for the duck;

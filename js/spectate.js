@@ -1,4 +1,6 @@
-/* ---------- Survival: watching the others once my duck is dead ----------
+/* ---------- Sandbox: watching the others once my duck is out of lives ----------
+   (Survival used to watch from here too; since the owner's Nov 21 15:39Z "remove spectators mode from survival" a Survival duck
+   that dies is a walking ghost, as in Dead Ducks Arcade, and has the ghost's own card below.)
    The owner's, Nov 19 22:25Z: a duck that dies in Survival doesn't come back, and its player spectates: "show a player
    ... a little bit around where the vote button is ... their player card. ... a left arrow and a right arrow. And it
    only shows up the left or right arrow if there's other players that are alive or down to watch. If the player's dead,
@@ -7,7 +9,6 @@
    "". It is "" (and the camera is mine again) the moment my duck is up again (a defibrillator), the game is over, or
    nobody is left standing or down to watch. game.js puts the camera on that duck (world.js eye) and the card in the
    bottom bar's middle, where the Vote button goes (bottom bar, never over a window). */
-import { isSurv } from "./survrules.js";
 import { inWorld } from "./rules.js";
 import { isWild, isL4dd } from "./l4ddrules.js";
 import { isSb, sbRule } from "./sandboxrules.js";
@@ -20,8 +21,7 @@ const dead = (s, id) => !!(P4(s, id) || {}).ex; // (dead for good: l4ddrules.js,
 /* Dead Ducks Arcade, the owner's, Nov 19 21:59Z: "Make it to where when you die, that you can spectate players in survival
    and Dead Ducks Arcade". There a duck that bleeds out is a ghost until the next round and still walks, so my ghost is the
    first card (my own camera) and the arrows go on to the others and back */
-const ghostDda = (s, id) =>
-  isL4dd(s) && !isSurv(s) && !isSb(s) && !!(P4(s, id) || {}).gh;
+const ghostDda = (s, id) => isL4dd(s) && !isSb(s) && !!(P4(s, id) || {}).gh;
 let watch = "";
 /* the ducks I may watch: the other players still in it (up or down), never a dead one, nor Justin out there */
 function watchable(s, me) {
@@ -42,7 +42,7 @@ function watchable(s, me) {
       : [];
   const L = s && s.hang && s.hang.l4;
   if (
-    !(isSurv(s) || (isSb(s) && sbRule(s, "spec"))) || // (Sandbox: out of lives, with its Rules' watching on)
+    !(isSb(s) && sbRule(s, "spec")) || // (Sandbox: out of lives, with its Rules' watching on)
     !inWorld(s) ||
     !L ||
     L.over ||

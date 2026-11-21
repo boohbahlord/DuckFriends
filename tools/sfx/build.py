@@ -408,28 +408,13 @@ SOUNDS = {
         layers=[("oga:adrenaline-injector/Nasal_Spray.wav", 0, 0.36, 0, 1)],
         credit=("OwlishMedia, 202 More Sound Effects (Nasal_Spray)", OGA_URL["owlish"]),
     ),
-    # ---- moving: a really small jump, and the jetpack ----
+    # ---- moving: a really small jump ----
     "hop": dict(
         layers=[("oga:jump-land/boots-leather-jump-01.wav", 0, 0.3, 0, 1)],
         rate=1.15,
         room=False,
         kbps=32,
         credit=("Vehicle, Fantasy Weapons and Apparel SFX Library", OGA_URL["jump"]),
-    ),
-    "jetStart": dict(
-        layers=[("oga:jetpack-start/thrusterFire_000.ogg", 0, 0.45, 0, 1)],
-        credit=("Kenney, Sci-fi Sounds (thrusterFire_000)", OGA_URL["scifi"]),
-    ),
-    "jetLoop": dict(
-        layers=[("oga:jetpack-loop/spaceEngine_001.ogg", 1.0, 2.2, 0, 1)],
-        loop=1.2,
-        kbps=48,
-        credit=("Kenney, Sci-fi Sounds (spaceEngine_001)", OGA_URL["scifi"]),
-    ),
-    "jetStop": dict(
-        layers=[("oga:jetpack-stop/steam_hisses_-_Marker_2.wav", 0, 0.5, 0, 1)],
-        lp=4000,
-        credit=("bart, Steam Release Sounds", OGA_URL["steam"]),
     ),
     # ==== batch 2 ====
     # ---- a shot in flesh, by its round (fx.js BLEED_OF: small, big, heavy, shot) and the blades and blunt things ----

@@ -8,13 +8,15 @@
 import { rule, activity, RULES } from "./registry.js";
 import { onGetUp, isGhost } from "./death.js";
 import { OPTIONS_DEFAULT } from "../rules.js";
+import { modeOf } from "../modes.js";
 
 export const FADE = 1000; // ms: the ghost fading away before the body gets up
 const BOT_BACK = 4000; // ms: a computer's ghost walks this long, then comes back
 
 /* the knocked-down time is up: with ghosts on, the duck becomes one (out of its seat, off the piano, out of the games) */
 onGetUp((s, id, now) => {
-  if (s.options.mode !== "hang" || !s.options.ghosts || !s.hang) return false;
+  if (!modeOf(s.options.mode).cabinHome || !s.options.ghosts || !s.hang)
+    return false;
   const P = s.players[id],
     p = s.pos[id];
   if (!P || !p || p.x < 0) return false;

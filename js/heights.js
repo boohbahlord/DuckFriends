@@ -1,14 +1,16 @@
-/* ---------- a shot's height, Doom's way (Part B, the owner's, Nov 17 12:28Z; every mode, jetpacks too) ----------
+/* ---------- a shot's height, Doom's way (Part B, the owner's, Nov 17 12:28Z; every mode) ----------
    A shot flies flat. It sets off at its shooter's middle, and the first target it passes over (on the floor plan, at
-   any height: up on a roof, flying) is hit, and sets its height: that target's middle. From there on, a shot that goes
+   any height: up on a roof) is hit, and sets its height: that target's middle. From there on, a shot that goes
    through hits only what that height passes through, and a wall stops it only if the wall is taller than it. Between
    two floors, the one rule: nothing solid between shooter and target (layout.js slabBetween), and the chain-link fence
    never stops one.
-   sh.hz: the shooter's feet, as the rules always kept it; sh.lh: its height once a target has set it (world px). On
-   the boards, a flying duck's height is its jetpack's (fz, in duck heights) */
+   sh.hz: the shooter's feet, as the rules always kept it; sh.lh: its height once a target has set it (world px) */
 import { DUCK, slabBetween } from "./hangout/layout.js";
 
 const MID = DUCK / 2;
+/* one elevation: the gas station's roof over the ground (world px; the owner's, Nov 21 14:06Z). Heights the owner
+   gives in elevations are times this */
+export const ELEV = 108;
 /* how high shot sh flies now (world px) */
 const shotH = (sh) => sh.lh ?? (sh.hz || 0) + MID;
 /* can shot sh hit a target whose feet are at tz, at (tx, ty), world px? (its shooter at (sx, sy), world px; leave
@@ -29,8 +31,8 @@ export function hLock(sh, tz) {
    within SAME_FLOOR of mine, hz) in my shot's line before anything stops it? Then the shot stays on my floor
    (floorLock); if not, it goes to the first target at any height (hOk, hLock). targets: [{ x, y, z }] (z: feet, world
    px); my shot from (px, py) along (dx, dy) (a unit), as far as far, looking every step, in the units of x and y; r: a
-   target's hit room [rx, ry] in those units; stop(x, y): something there stops it (a wall). The normal modes' ducks and
-   jetpacks (rules.js); Dead Ducks Arcade's roofs go by layout.js slabBetween alone (the owner's, Nov 17 20:02Z) */
+   target's hit room [rx, ry] in those units; stop(x, y): something there stops it (a wall). The normal modes' ducks
+   (rules.js); Dead Ducks Arcade's roofs go by layout.js slabBetween alone (the owner's, Nov 17 20:02Z) */
 export const SAME_FLOOR = 20;
 export function sameFloorAhead(t, px, py, hz, dx, dy, far, r, step, stop) {
   const mine = t.filter((o) => Math.abs(o.z - hz) < SAME_FLOOR);

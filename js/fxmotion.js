@@ -187,8 +187,23 @@ export function hurtSway(now) {
   if (heavyOff()) return;
   swayAt = now;
 }
+/* the shake moves only the world (the ground, the props and ducks, the dark, the pixel effects, the outlines); the HUD,
+   the round banner and every window over it hold still, so they are never painted again for a shake (the owner's
+   rule: anything that shouldn't shake moves outside what shakes). Boards that are not a map shake whole, as before. */
+const WORLD =
+  ":scope > :is(.hang-ground, .hang-world, .hang-dark, .fx-px, .fxl, .ol-px)";
+export function shakeBoard(board, now) {
+  const [kx, ky] = shakeNow(now),
+    sk = kx || ky ? `${kx.toFixed(1)}px ${ky.toFixed(1)}px` : "";
+  if (board._sk === sk) return;
+  board._sk = sk;
+  const els = board.classList.contains("hang-board")
+    ? board.querySelectorAll(WORLD)
+    : [board];
+  for (const el of els) el.style.translate = sk;
+}
 /* where the board sits now, [x, y] css px (0, 0 when still) */
-export function shakeNow(now) {
+function shakeNow(now) {
   const dt = shook ? Math.min(0.1, (now - shook) / 1000) : 0;
   shook = now;
   trauma = Math.max(held ? ADREN_TRAUMA : 0, trauma - dt * 2.4);

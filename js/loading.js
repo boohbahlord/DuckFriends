@@ -42,6 +42,12 @@ export function brighten() {
 /* the game starts: duck, ping and bar on the black; ready() says when the game is on its screen. The bar fills as long as
    the game takes (at least a moment, so it shows), then the game fades in fast. */
 let busy = 0; // (loading screens asked for at once: the page comes back when the last one is ready)
+/* under the loading screen the game draws one frame in VEILED: nobody sees it, and each frame it drew there (its map,
+   every duck and zombie, the layers put together) took the time the pictures it waits for are made in. Its drawing still
+   asks for what it needs: gameready.js waits a whole beat of frames for that */
+export const VEILED = 4;
+let veilFrame = 0;
+export const underVeil = () => busy > 0 && veilFrame++ % VEILED !== 0;
 /* under the bar, what is loading in plain words, and how much of it is in at the bar's right (the owner's, Nov 20
    22:25Z: "it says what's being loaded ... below the loading bar. And it might even have a percent of load like to the
    right of the green bar"); under that, one line of text to hold the player over, in the normal font (loadlines.js).

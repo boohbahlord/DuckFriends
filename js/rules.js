@@ -16,6 +16,7 @@
    own rules in duncerules.js: one defender in the circle, everyone else walks to Dunce or Not a Dunce. Valentine's Duck
    Date has its own in vddrules.js: The Date at the dining table, a date with each Suitor, then a Suitor Turned Down. */
 import { HANDGUN } from "./gamedefaults.js";
+import { jumpDodges } from "./jump.js";
 import { epAct } from "./sbep.js";
 import { duckBig, picGrow, scaleOf } from "./duck.js";
 import {
@@ -220,7 +221,6 @@ import {
   NADE_GROW,
 } from "./guns.js";
 import { l4Zups, l4SetHp } from "./zombies.js";
-import { JET } from "./jetpack.js";
 import { hOk, hLock, sameFloorAhead, floorLock } from "./heights.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
@@ -1205,11 +1205,6 @@ export const KB_MS = 380,
   KB_FAR = 2.4,
   KB_HOP = 0.3,
   KB_LAND = 110; // (KB_LAND: ms until the swing gets there; the duck falls then)
-/* may this duck fly? Never: the Jetpack is gone from the whole game (the owner's, Nov 18 12:19Z: "remove jet pack from
-   the whole game"), the special, its unlock and Dead Ducks Arcade's item alike */
-function canFly() {
-  return false;
-}
 const EFFECTS = [
   "zap",
   "flames",
@@ -2190,22 +2185,12 @@ function reduceStep(state, a, now) {
               ...(j && +a.tb > 0 ? { tb: Math.min(3.5, +a.tb) } : {}),
             }
           : {}),
-        ...(a.jf && canFly(s, a.id, now)
-          ? {
-              jf: 1,
-              ...(a.jt ? { jt: 1 } : {}),
-              ...(a.fly ? { fly: 1 } : {}),
-              ...(isHang(s)
-                ? {}
-                : { fz: Math.max(0, Math.min(JET.TOP, +a.fz || 0)) }),
-            }
-          : {}),
         ...(was &&
         was.kb &&
         now - was.kb.t < (was.kb.l ?? KB_LAND) + (was.kb.ms || KB_MS)
           ? { kb: was.kb }
           : {}),
-      }; // q: squashed against l/r/u/d; sp: sprinting; tb: a trampoline bounce's height; jf: flying with the jetpack (jt: its jets on, fly: high enough that a hit misses, fz: its height on the boards)
+      }; // q: squashed against l/r/u/d; sp: sprinting; tb: a trampoline bounce's height
       quackMoved(s, a.id); // (Who is the Quack?: first onto the Quack's tile)
       if (me.dead && (x !== was.x || y !== was.y)) {
         delete me.dead;
@@ -3546,14 +3531,6 @@ function justinKilled(s, by, w) {
 }
 /* a player knocked down by another player's weapon: the last few, each numbered, so every device counts its own player's
    kills once (unlocks.js: the shotgun opens at 144 kills, the grenade at 360, and Justin counts too) */
-/* a jump dodges attacks, but not in its first and its last fifth: I want a dodge timed, not a jump held as a shield.
-   The jump's length is game.js' (JUMP, jumpCfg): 0.62 s */
-export function dodges(s, p, now) {
-  if (!p || !p.j) return false;
-  const T = p.tb > 0 ? 620 * Math.sqrt(p.tb / 1.35) : 620,
-    end = p.j + T;
-  return now - p.j > T * 0.2 && end - now > T * 0.2;
-}
 /* the normal game's HP (every mode but Mad God Justin and Dead Ducks Arcade): a duck has PHP HP before it plays dead
    (4: the owner's, Nov 18 16:50Z, "every player in other game modes has 4 hp by default"; it was 6), has them all back
    after PHP_BACK ms without a hit, and gets up with them all. s.php = { id: { n: HP lost, t: the last hit } }. True when the hit only took HP.
@@ -3614,7 +3591,7 @@ const SB_H = {
     if (isL4dd(s)) return l4Hurt(s, id, dmg, now, w); // (the zombie maps: as their zombies hurt)
     const P = s.players[id],
       p = s.pos[id];
-    if (!P || P.dead || !p || dodges(s, p, now)) return;
+    if (!P || P.dead || !p || jumpDodges(p, now)) return;
     if (!soaks(s, id, now, dmg, null, true)) {
       P.dead = true;
       holdDown(s, id, now);
@@ -3777,7 +3754,7 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
     if (done.includes(id)) continue;
     if (isMgj(s) && by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
     if (vdSafe(s, id)) continue; // (Valentine's Duck Date: nothing knocks down the two at the table)
-    if (dodges(s, p, now)) continue; // (a duck in the air is missed)
+    if (jumpDodges(p, now)) continue; // (a duck in the air is missed)
     const q = playerAt(s, id, p0.x, p0.y, rx, ry); // (a cut-out picture: its nearest part that shows)
     if (!q) continue;
     const n = near(
@@ -4165,11 +4142,8 @@ function moveShots(s, now) {
    as every duck's bullets are (the grenade launcher's grenade keeps its own) */
 const gunSpeed = (w) =>
   (ARMS[w].speed / BOARD_PX) * (w === "glauncher" ? 1 : FASTER);
-/* a duck's height for a shot (heights.js): in Hangout and Quacky Zombies its feet's (world px); on the boards 0, or
-   flying, its jetpack's */
-const duckH = (s, p) =>
-  isHang(s) ? +p.z || 0 : p.jf ? (+p.fz || 0) * DUCK_PX : 0;
-const DUCK_PX = 64;
+/* a duck's height for a shot (heights.js): in Hangout and Quacky Zombies its feet's (world px); on the boards 0 */
+const duckH = (s, p) => (isHang(s) ? +p.z || 0 : 0);
 /* Doom's same floor first, as in Dead Ducks Arcade (heights.js sameFloorAhead, the one rule for every mode): a duck (or,
    in Hangout, Justin or the shadow duck) on my floor in the line of my shot keeps the shot on my floor: { lh }, else {}
    (it goes to the first target at any height). Measured in duck lengths; in Hangout the cabin's walls stop the look */
@@ -4229,7 +4203,7 @@ function firstDuck(s, sh, at, now) {
       !shotReach(s, sh, p)
     )
       continue;
-    if (dodges(s, p, now) || vdSafe(s, id)) continue;
+    if (jumpDodges(p, now) || vdSafe(s, id)) continue;
     if (isMgj(s) && sh.by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
     const px = (p.x - sh.lx) / rx,
       py = (p.y - sh.ly) / ry,
@@ -4367,7 +4341,7 @@ function duckFlame(s, by, p, aim, now) {
     const q = s.pos[id],
       P = s.players[id];
     if (id === by || !q || q.x < 0 || !P || P.dead || isGhost(s, id)) continue;
-    if (isMgj(s) || vdSafe(s, id) || dodges(s, q, now)) continue;
+    if (isMgj(s) || vdSafe(s, id) || jumpDodges(q, now)) continue;
     if (
       hang &&
       ((inCabin(q.x * HW, q.y * HH) ? 1 : 0) !== side ||
@@ -4519,7 +4493,7 @@ function groundFire(s, now) {
     const q = s.pos[id],
       P = s.players[id];
     if (!q || q.x < 0 || !P || P.dead || isGhost(s, id) || isMgj(s)) continue;
-    if (vdSafe(s, id) || dodges(s, q, now)) continue;
+    if (vdSafe(s, id) || jumpDodges(q, now)) continue;
     const g = left.find(
       ([x, y, , by, side, z]) =>
         by !== id &&
@@ -4564,7 +4538,7 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
         !shotReach(s, sh, p)
       )
         continue; // (the other side of the walls, or above or below it: heights.js)
-      if (dodges(s, p, now)) continue; // jumped over it
+      if (jumpDodges(p, now)) continue; // jumped over it
       if (isMgj(s) && sh.by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
       if (vdSafe(s, id)) continue; // (Valentine's Duck Date: the two at the table)
       /* the nearest the shot came to the duck this beat, measured in a duck's room (.03 across, .08 deep; Hangout's world is far bigger than a board) */

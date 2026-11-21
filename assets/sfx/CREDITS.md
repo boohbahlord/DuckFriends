@@ -41,9 +41,6 @@ instruments (its license: LICENSES.md).
 | medkit | OwlishMedia, 202 More Sound Effects (Velcro_01, Cloth_03) — https://opengameart.org/content/202-more-sound-effects | CC0 1.0 |
 | adrenaline | OwlishMedia, 202 More Sound Effects (Nasal_Spray) — https://opengameart.org/content/202-more-sound-effects | CC0 1.0 |
 | hop | Vehicle, Fantasy Weapons and Apparel SFX Library — https://opengameart.org/content/fantasy-weapons-and-apparel-sfx-library | CC0 1.0 |
-| jetStart | Kenney, Sci-fi Sounds (thrusterFire_000) — https://opengameart.org/content/sci-fi-sounds | CC0 1.0 |
-| jetLoop | Kenney, Sci-fi Sounds (spaceEngine_001) — https://opengameart.org/content/sci-fi-sounds | CC0 1.0 |
-| jetStop | bart, Steam Release Sounds — https://opengameart.org/content/steam-release-sounds | CC0 1.0 |
 | hitSmall | Kenney, Impact Sounds (impactPunch_medium) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
 | hitBig | Kenney, Impact Sounds (impactPunch_heavy, impactSoft_medium) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
 | hitHeavy | Kenney, Impact Sounds (impactPunch_heavy, impactSoft_heavy) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
