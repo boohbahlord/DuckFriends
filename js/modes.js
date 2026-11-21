@@ -25,66 +25,195 @@ export const MODES = [
     id: "aod",
     cat: "social",
     name: "Agree or Disagree",
+    stats: {
+      title: null,
+      rows: [
+        ["Games", "games"],
+        ["Rounds", "rounds"],
+        ["Answers", "answers"],
+        ["Chose most", "", "aodMost"],
+        ["Average", "", "aodAvg"],
+        ["Jumps", "jumps"],
+      ],
+    },
     tip: "Everyone writes a statement; for each one, walk to how much you agree, then talk it over.",
   },
   {
     id: "wyr",
     cat: "social",
     name: "Would You Rather",
+    stats: {
+      title: "Would You Rather",
+      rows: [
+        ["Games", "games"],
+        ["Rounds", "rounds"],
+        ["Answers", "answers"],
+        ["With the bigger side", "", "sideShare"],
+        ["Jumps", "jumps"],
+      ],
+    },
     tip: 'Everyone writes a "would you rather" with two choices, in secret; for each one, walk to the side you\'d pick.',
   },
   {
     id: "ddr",
     cat: "social",
     name: "Does Duck Relate?",
+    stats: {
+      title: "Does Duck Relate?",
+      rows: [
+        ["Games", "games"],
+        ["Rounds", "rounds"],
+        ["Answers", "answers"],
+        ["Chose most", "", "ddrMost"],
+        ["Related", "", "ddrShare"],
+        ["Jumps", "jumps"],
+      ],
+    },
     tip: "Everyone writes something relatable; for each one, walk to Duck Does Relate or Duck Doesn't Relate, then talk it over.",
   },
   {
     id: "bb",
     cat: "comp",
     name: "Bicker Brackets",
+    stats: {
+      title: "Bicker Brackets",
+      rows: [
+        ["Games", "games"],
+        ["Tournaments", "rounds"],
+        ["Tournaments won", "titles"],
+        ["Contender wins", "wins"],
+        ["Contender losses", "losses"],
+        ["Votes in matches", "answers"],
+        ["Jumps", "jumps"],
+      ],
+    },
     tip: "A tournament: pick a topic, write the contenders together, then walk onto the one you back, match by match, until one is the champion.",
   },
   {
     id: "sc",
     cat: "social",
     name: "Story Chain",
+    stats: {
+      title: "Story Chain",
+      rows: [
+        ["Games", "games"],
+        ["Rounds", "rounds"],
+        ["Lines written", "answers"],
+        ["Votes for their lines", "wins"],
+        ["Votes for their secret words", "titles"],
+        ["Jumps", "jumps"],
+      ],
+    },
     tip: "Write a story together, one line each, each with someone else's secret word sneaked in; then walk onto your favorite line and your favorite word.",
   },
   {
     id: "quack",
     cat: "comp",
     name: "Who is the Quack?",
+    stats: {
+      title: "Who is the Quack?",
+      rows: [
+        ["Games", "games"],
+        ["Rounds", "rounds"],
+        ["Rounds won", "wins"],
+        ["Won as the Quack", "titles"],
+        ["Votes", "answers"],
+        ["For the real Quack", "majority"],
+        ["Jumps", "jumps"],
+      ],
+    },
     tip: "Everyone's Secret Card has the same word except the Quack's. Give clues, then walk onto the duck you think is faking it. 3 players or more.",
   },
   {
     id: "law",
     cat: "comp",
     name: "Lawyering; Juryful of Ducklings",
+    stats: {
+      title: "Lawyering",
+      rows: [
+        ["Games", "games"],
+        ["Rounds", "rounds"],
+        ["Cases argued", "argued"],
+        ["Cases won", "wins"],
+        ["Cases lost", "losses"],
+        ["Gave up", "gave"],
+        ["Jury votes", "answers"],
+        ["Jumps", "jumps"],
+      ],
+    },
     tip: "Everyone writes a topic in secret; for each one, two players argue it out and everyone else walks to whoever convinced them. 3 players or more.",
   },
   {
     id: "dunce",
     cat: "comp",
     name: "Duncelation",
+    stats: {
+      title: "Duncelation",
+      rows: [
+        ["Games", "games"],
+        ["Rounds", "rounds"],
+        ["Takes defended", "argued"],
+        ["Not a dunce", "wins"],
+        ["Voted a dunce", "losses"],
+        ["Votes", "answers"],
+        ["Jumps", "jumps"],
+      ],
+    },
     tip: "Everyone writes a controversial take; defend the one you get while everyone else walks to Dunce or Not a Dunce. 3 players or more.",
   },
   {
     id: "mgj",
     cat: "special",
     name: "Mad God Justin",
+    stats: {
+      title: "Mad God Justin",
+      rows: [
+        ["Games", "games"],
+        ["Fights", "rounds"],
+        ["Won", "wins"],
+        ["Lost", "losses"],
+        ["Damage", "answers"],
+        ["Knocked down", "majority"],
+        ["Killing blows", "titles"],
+        ["Jumps", "jumps"],
+      ],
+    },
     tip: "A boss fight: everyone gets a knife, and together you have to stab Justin down to 0 HP. He shoots back.",
   },
   {
     id: "vdd",
     cat: "comp",
     name: "Valentine's Duck Date",
+    stats: {
+      title: "Valentine's Duck Date",
+      rows: [
+        ["Games", "games"],
+        ["Turns", "rounds"],
+        ["Dates", "argued"],
+        ["Valentine", "wins"],
+        ["Turned Down", "losses"],
+        ["The Date", "titles"],
+        ["Jumps", "jumps"],
+      ],
+    },
     tip: "A random duck is The Date. Each Suitor gets a date at the dining table, then The Date turns one down, until one is left: the Valentine. 3 players or more.",
   },
   {
     id: "trivia",
     cat: "comp",
     name: "Trivia",
+    stats: {
+      title: "Trivia",
+      rows: [
+        ["Games", "games"],
+        ["Rounds", "rounds"],
+        ["Answers", "answers"],
+        ["Right", "wins"],
+        ["Wrong", "losses"],
+        ["Questions written", "titles"],
+        ["Jumps", "jumps"],
+      ],
+    },
     tip: "Everyone writes a question, multiple choice or written. Walk onto the answer you think is right and press Enter, or type yours and let its writer grade it. 2 players or more.",
   },
   {
@@ -97,6 +226,16 @@ export const MODES = [
     id: "l4dd",
     cat: "special",
     name: "Dead Ducks Arcade",
+    stats: {
+      title: "Dead Ducks Arcade",
+      rows: [
+        ["Games", "games"],
+        ["Rounds cleared", "rounds"],
+        ["Best round", "titles", "best"],
+        ["Zombies killed", "kills"],
+        ["Jumps", "jumps"],
+      ],
+    },
     tip: "The power's out in Duck Cabin and zombie ducks are coming, round after round. Board up the doors and holes, revive each other, and see how long you last. It can only be played on the Duck Cabin map.",
   },
   /* Survival (the owner's, Nov 19 19:27Z): Dead Ducks Arcade's zombies without rounds, swelling and calming on Downpour.
@@ -107,6 +246,15 @@ export const MODES = [
           id: "surv",
           cat: "special",
           name: "Survival",
+          stats: {
+            title: "Survival",
+            rows: [
+              ["Games", "games"],
+              ["Best time", "titles", "clock"],
+              ["Zombies killed", "kills"],
+              ["Jumps", "jumps"],
+            ],
+          },
           tip: "No rounds: the zombies keep coming on Downpour, calm one moment and a horde the next. Buy from the merchants, stay together and see how long you last.",
         },
       ]
@@ -118,6 +266,9 @@ export const MODES = [
     tip: "No rounds and no end: mess around on any map. Hold C for the cheat sheet. Leave Sandbox at the top left when you're done.",
   },
 ];
+/* what a mode's all-time stats show, for the Stats window and the shell's totalstats alike (one table, js/statrows.js
+   reads it): a title and rows of [label, the key kept in the profile, how to show it] (no how = a plain number) */
+export const statsOf = (m) => modeOf(m === "l4r16" ? "l4dd" : m).stats;
 export const modeOf = (id) => MODES.find((m) => m.id === id) || MODES[0];
 /* the room's game's name: a made game mode's own (Sandbox, gmodes.js), else its mode's */
 export const modeName = (s) =>
