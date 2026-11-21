@@ -20,6 +20,9 @@ import {
   layoutRev,
   deckAt,
   deckOver,
+  PROPS,
+  sortY,
+  deckKey,
 } from "./hangout/layout.js";
 import * as GS from "./hangout/stationmap.js";
 import { walkOf } from "./rules.js";
@@ -713,6 +716,11 @@ export function moveZombies(s, zs, now, T, up) {
          THEY TRY TO ATTACK A PLAYER ON THE ROOF, THEY TRY TO GET ON THE ROOF, THEY DONT TRY TO GO UNDER IT FROM THE
          INSIDE OF THE BUILDING AND ATTACK FROM THE FUCKING FLOOR"): from in there it walks out to the foot first */
       if (z.cm && best < 0.9 && !deckOver(z.x, z.y, zombieZ(z))) {
+        const at = climbFrom(z, GS.DECKS[z.cm[3]], z.cm[1], z.cm[2]);
+        if (Math.hypot(at[0] - z.x, at[1] - z.y) > 0.5) {
+          walkTo(z, ...at, v * dt);
+          continue;
+        } // (to it first, on the ground; up from the next heartbeat on, so it is drawn there before it climbs)
         z.st = 6;
         z.k = z.cm[3];
         z.n = 0;
@@ -836,7 +844,7 @@ export function fenceZ(x, y, id) {
    A duck up on a roof (or on the canopy over the pumps) is reached by climbing: a zombie goes to the foot of the edge
    nearest the duck (CL.out outside it), climbs straight up the wall onto it (st 6, slower than it walks: CL.speed of its
    walk), and walks the roof at it (st 7). Its height comes from where it is, as on a fence */
-const CL = { out: 26, in: 14, step: 40, speed: 0.25 };
+const CL = { out: 26, in: 14, step: 40, speed: 0.25, wide: 10, deep: 40 };
 /* does a way up deck d still lead to duck q? Its own way (the deck it is on, or the gas station's roof for the canopy),
    or the canopy's ladder. Once q is off the roof (landed, not just jumping) it doesn't, and a zombie keeping to that
    way gives it up at once (the owner's, Nov 19 19:27Z; it used to keep to it unless the duck was near) */
@@ -996,6 +1004,10 @@ export const zombieZ = (z) =>
         : z.st === 8 && z.j
           ? jumpZ(z)
           : heightAt(z.x, z.y);
+/* where a zombie is drawn in depth: up a wall, in front of the roof it climbs onto, as a duck up a ladder is drawn in
+   front of it (layout.js onLadder), so no part of the roof hides it on its way up; else as anyone at its height */
+export const zSortY = (z, zz) =>
+  z.st === 6 && deckOf(z) ? deckKey(deckOf(z), z.y) : sortY(z.x, z.y, zz);
 /* the feet of each roof's walls where a zombie can start up (every CL.step along its edges, on open ground), made once */
 let footOf = null;
 function climbSpot(dk, [x, y]) {
@@ -1012,7 +1024,9 @@ function climbSpot(dk, [x, y]) {
       spots.push([dk.x0 - o, b], [dk.x1 + o, b]);
     footOf.set(
       dk,
-      spots.filter(([sx, sy]) => zOk(sx, sy, heightAt(sx, sy))),
+      spots.filter(
+        ([sx, sy]) => zOk(sx, sy, heightAt(sx, sy)) && wallUnder(dk, sx, sy),
+      ),
     );
   }
   let best = null,
@@ -1025,6 +1039,40 @@ function climbSpot(dk, [x, y]) {
     }
   }
   return best;
+}
+/* is a wall drawn under deck dk's edge in front of the foot spot (x, y)? Looked for from the spot in toward the deck,
+   past the roof's overhang and through the wall's thickness (CL.deep more): a wall's drawing (layout.js PROPS, the
+   same pieces the art draws) as tall as the roof, under the whole width of a zombie (CL.wide each side). A hole or a
+   door is no wall piece, so nobody climbs it (the owner's, Nov 21 03:40Z: "zombies should not be able to climb over
+   holes in a wall because there's a hole in the wall. So they can't climb what isn't there"). The canopy has no walls
+   (its ladder is climbed instead) */
+function wallUnder(dk, x, y) {
+  const e = edgeOf(x, y, dk),
+    walls = PROPS.filter((p) => p.kind === "wall" && p.z + p.h >= dk.h - 1),
+    drawn = (px, py) =>
+      walls.some(
+        (p) => px >= p.x && px <= p.x + p.w && py >= p.y && py <= p.y + p.d,
+      ),
+    under = (t) => {
+      for (let d = 0; d <= CL.out + CL.deep; d += 4)
+        if (drawn(x - e.nx * d - e.ny * t, y - e.ny * d + e.nx * t))
+          return true;
+      return false;
+    };
+  return under(-CL.wide) && under(0) && under(CL.wide);
+}
+/* where zombie z starts up deck dk's wall, its way up's foot (gx, gy) near: at the foot of the wall straight in front of
+   it, if a wall stands there too, else that foot itself. It walks there first and starts from the ground: it started
+   wherever it was within reach of the foot before, up to the roof's edge, and was halfway up the moment it began (the
+   owner's, Nov 21 03:40Z: "not just stand there and then teleport to the top") */
+function climbFrom(z, dk, gx, gy) {
+  const e = edgeOf(gx, gy, dk),
+    at = e.nx ? [gx, z.y] : [z.x, gy];
+  return dk.kind !== "canopy" &&
+    zOk(at[0], at[1], heightAt(at[0], at[1])) &&
+    wallUnder(dk, at[0], at[1])
+    ? at
+    : [gx, gy];
 }
 /* an opening's two spots for zombie z: out (where it waits and tears) and in (where it's through). A fence's at the
    zombie's own place along it; a boarded hole on Downpour from the side it came to it (z.n: 1 outside, -1 inside) */
