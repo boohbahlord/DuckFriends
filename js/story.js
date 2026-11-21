@@ -20,15 +20,8 @@ import {
   LINE_MAX,
   WORD_MAX,
 } from "./rules.js";
-import { seenDuck, seenName } from "./looks.js";
+import { seenDuck, seenName, GONE, player } from "./looks.js";
 
-const GONE = {
-  name: "Gone",
-  duck: { color: "#b7bccb" },
-  card: { color: "#8a8fa3" },
-  nameStyle: {},
-};
-const player = (s, id) => s.players[id] || GONE;
 /* a player's font, scaled so every player's letters look the same size */
 const fontStyle = (p) => styleOf(p && p.nameStyle && p.nameStyle.font);
 const cardColor = (p) => (p && p.card && p.card.color) || "#8a8fa3";

@@ -10,16 +10,9 @@ import { nameHTML, fontHTML } from "./name.js";
 import { cardBackground, cardHTML } from "./card.js";
 import { duelCloudHTML } from "./brackets.js";
 import { lawStats, attCands, attRole } from "./rules.js";
-import { fmtJumps } from "./format.js";
-import { seenDuck, seenName } from "./looks.js";
+import { fmtJumps, plural } from "./format.js";
+import { seenDuck, seenName, GONE, player } from "./looks.js";
 
-const GONE = {
-  name: "Gone",
-  duck: { color: "#b7bccb" },
-  card: { color: "#8a8fa3" },
-  nameStyle: {},
-};
-const player = (s, id) => (id && s.players[id]) || GONE;
 const inFont = (p, html) =>
   fontHTML(p && p.nameStyle && p.nameStyle.font, html); // (a player's font, scaled to match)
 const nm = (p) => nameHTML(p.name, seenName(p));
@@ -165,7 +158,6 @@ function lawCasesHTML(s, round = null) {
     .join("")}</div>`;
 }
 /* ---------- the stats: the awards, each player's box, then the cases ---------- */
-const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 const quote = (t) => `"${t.length > 60 ? t.slice(0, 58).trimEnd() + "…" : t}"`;
 function awardsHTML(s, round) {
   const { per, cases } = lawStats(s, round),

@@ -16,7 +16,7 @@ boardjustin.js 741 Justin on the boards
 botduck.js 90 a computer's duck: a random look, never anything
 botlines.js 188 What the computers write and say in the
 bots.js 1408 computers
-brackets.js 474 Bicker Brackets: what the screen shows
+brackets.js 467 Bicker Brackets: what the screen shows
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
 chat.js 1600 text chat and the command line
@@ -27,7 +27,7 @@ clock.js 5 one clock for the room
 collage.js 101 Shelter Sky & Null
 color.js 101 choosing a color
 corners.js 94 full screen
-court.js 237 Lawyering: what the screen shows
+court.js 229 Lawyering: what the screen shows
 customize.js 1798 Customize: the Armory
 datboi.js 115 here come dat boi
 democracy.js 243 Democracy of Ducklings:
@@ -36,7 +36,7 @@ duck.js 728 the rubber duck avatar
 duckparts.js 592 the ducks made from pixel parts
 ducksheets.js 2 made by tools/duck-parts.cjs:
 duel.js 124 the cloud duel: two ducks share the cloud,
-dunce.js 145 Duncelation: what the screen shows
+dunce.js 137 Duncelation: what the screen shows
 duncerules.js 396 the rules of Duncelation
 euclid.js 351 Euclid's Squares
 eyes.js 187 eyes
@@ -44,7 +44,7 @@ faces.js 308 face items
 feet.js 70 footsteps in every mode
 flamer.js 50 the flamethrower
 flowfield.js 173 the zombies' flow field, worked out off the
-format.js 12 numbers as the settings ask
+format.js 15 numbers as the settings ask
 friends.js 254 friends
 front.js 109 the front page
 fx.js 1200 the effects, drawn as pixels
@@ -99,7 +99,7 @@ loading.js 397 the start: a slow fade to black over
 loadlines.js 590 the lines under the loading bar, one for
 lobby.js 597 the lobby, laid out like Halo: Reach's custom
 lobbysettings.js 73 Lobby Settings
-looks.js 127 the room's duck-look settings
+looks.js 136 the room's duck-look settings
 looksrules.js 60 the duck-look settings' rules
 main.js 163 the start: settings on the page, the background,
 manual.js 203 the command line's manual: man <command>
@@ -107,7 +107,7 @@ maps.js 1112 maps: the world behind the board
 merchantlines.js 81 what the merchants say
 merchants.js 376 the merchants
 meters.js 114 the thin bars under my duck's name
-mgj.js 219 Mad God Justin: what the screen shows
+mgj.js 218 Mad God Justin: what the screen shows
 mgjart.js 166 Mad God Justin's new pictures
 mgjrules.js 2321 
 modes.js 255 the game modes
@@ -146,7 +146,7 @@ pxdom.js 739 the pixel look for drawings already on the
 pxmap.js 45 a map as pixel files
 pxpic.js 22 the maps that have a picture file :
 pxtext.js 263 emoji and tooltips in the pixel look
-quack.js 312 Who is the Quack?: what the screen shows
+quack.js 305 Who is the Quack?: what the screen shows
 quackrules.js 794 the rules of Who is the Quack?
 rainbowskin.js 116 the rainbow skin
 report.js 114 Report Bug or Suggest Ideas
@@ -204,13 +204,13 @@ sprintblur.js 54 the sprint's blurred border of my screen (css/app.css
 stamina.js 41 my sprint's stamina, in every mode
 stats.js 241 stats: a player's stat box and the View
 store.js 262 what this device remembers
-story.js 221 Story Chain: what the screen shows
+story.js 214 Story Chain: what the screen shows
 styles.js 386 duck styles
 survrules.js 325 Survival
 svgurl.js 10 a drawing as a data:
 textutils.js 1157 the command line's text tools
 touch.js 284 touch controls on the board
-trivia.js 472 Trivia: what the screen shows
+trivia.js 464 Trivia: what the screen shows
 triviabank.js 499 Trivia's auto questions
 triviarules.js 465 the rules of Trivia
 ui.js 349 small helpers every screen uses
@@ -219,7 +219,7 @@ umaps.js 371 Made maps: making them, and keeping them on
 unlocks.js 372 things you unlock
 upbar.js 69 the green bar on an upload
 updates.js 2915 Updates
-vdd.js 198 Valentine's Duck Date: what the screen shows
+vdd.js 190 Valentine's Duck Date: what the screen shows
 vddrules.js 521 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
 vote.js 278 Vote Mode & Map: the vote windows

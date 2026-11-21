@@ -10,3 +10,6 @@ export function fmtJumps(n) {
     m = (n / 10 ** e).toFixed(2).replace(/\.?0+$/, "");
   return `${m} × 10${[...String(e)].map((d) => SUP[d]).join("")}`;
 }
+
+/* "1 duck", "2 ducks" */
+export const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;

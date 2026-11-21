@@ -22,15 +22,8 @@ import {
   WORD_MAX,
   CAT_MAX,
 } from "./quackrules.js";
-import { seenDuck, seenName } from "./looks.js";
+import { seenDuck, seenName, GONE, player } from "./looks.js";
 
-const GONE = {
-  name: "Gone",
-  duck: { color: "#b7bccb" },
-  card: { color: "#8a8fa3" },
-  nameStyle: {},
-};
-const player = (s, id) => s.players[id] || GONE;
 const nm = (s, id) => {
   const p = player(s, id);
   return `<span class="wq-w">${nameHTML(p.name, seenName(p))}</span>`;
