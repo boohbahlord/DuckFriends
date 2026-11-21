@@ -118,6 +118,7 @@ import { zombiesOf, wayTo, clearShot } from "./zombies.js";
 import { isSurv } from "./survrules.js";
 import { WANDER } from "./hangout/justin.js";
 import { NPC_RUN } from "./npcshared.js";
+import { anyOf, shuffle } from "./random.js";
 import { sees as npcSees } from "./npcrules.js";
 import {
   BOT_QUESTIONS,
@@ -130,7 +131,6 @@ import {
   TV_BOT_ANSWERS,
 } from "./botlines.js";
 
-const anyOf = (xs) => xs[Math.floor(Math.random() * xs.length)];
 const hash = (k) => {
   let h = 7;
   for (const c of k) h = (h * 31 + c.charCodeAt(0)) | 0;
@@ -408,10 +408,7 @@ function tvBot(s, id, now, late, out) {
       const rows = q.ans.map((_, i) => i),
         right = Math.random() < 0.6 && q.ok.length,
         k = needOf(q);
-      tvPlan.set(
-        key,
-        right ? [...q.ok] : rows.sort(() => Math.random() - 0.5).slice(0, k),
-      );
+      tvPlan.set(key, right ? [...q.ok] : shuffle(rows).slice(0, k));
       if (tvPlan.size > 200) tvPlan.delete(tvPlan.keys().next().value);
     }
     const mine = T.votes[id] || [],
