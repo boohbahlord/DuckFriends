@@ -15,13 +15,13 @@ bloodpool.js 50 a pool of blood: the one
 boardjustin.js 735 Justin on the boards
 botduck.js 90 a computer's duck: a random look,
 botlines.js 188 What the computers write and say
-bots.js 1426 computers
+bots.js 1430 computers
 brackets.js 467 Bicker Brackets: what the screen shows
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
 chat.js 1600 text chat and the command line
 cheatflag.js 16 a game with test commands used
-cheats.js 74 test commands: cheat round N, cheat
+cheats.js 146 test commands: cheat round N, cheat
 claw.js 36 a claw's marks: three white slashes
 clock.js 5 one clock for the room
 collage.js 101 Shelter Sky & Null
@@ -65,7 +65,7 @@ gunmenview.js 137 Survival: the gunmen on the screen
 guns.js 516 every weapon's numbers: one sheet for
 hats.js 1073 hats
 heights.js 49 a shot's height, Doom's way
-helppages.js 1497 the command line's Help pages: help
+helppages.js 1498 the command line's Help pages: help
 hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
 hooks.js 3 hooks between screens that can't import
@@ -77,7 +77,7 @@ itemtone.js 61 the colors an outfit or a
 jump.js 36 a duck's jump: one arc for
 jumps.js 48 the jump counter
 keynav.js 204 menus by keyboard
-l4dd.js 3337 Quacky Zombies on every screen
+l4dd.js 3340 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine on
 l4ddart.js 623 Quacky Zombies' pictures
@@ -89,7 +89,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box on
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4974 the rules of Quacky Zombies
+l4ddrules.js 4993 the rules of Quacky Zombies
 l4ddsfx.js 513 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the zombies
 langname.js 5 the name of Sandbox's number language,
@@ -208,7 +208,7 @@ shellstats.js 244 the stats and forgame commands' helpers
 slices.js 31 long work cut into slices
 sound.js 915 the game's sounds: real recordings, played
 specials.js 858 Specials
-spectate.js 98 Survival: watching the others once my
+spectate.js 98 Sandbox: watching the others once my
 splash.js 71 the start screen: your duck on
 sprintblur.js 54 the sprint's blurred border of my
 stamina.js 41 my sprint's stamina, in every mode
@@ -229,7 +229,7 @@ umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping
 unlocks.js 413 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 3003 Updates
+updates.js 3015 Updates
 vdd.js 190 Valentine's Duck Date: what the screen
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival

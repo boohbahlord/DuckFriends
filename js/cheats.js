@@ -70,7 +70,7 @@ const SPOTS = {
   chapel: (d) => d.kind === "roof" && d.bldg === 2,
   canopy: (d) => d.kind === "canopy",
 };
-export function spotOf(name) {
+function spotOf(name) {
   const d = DECKS.find(SPOTS[name] || (() => false));
   if (!d) return null;
   const cx = (d.x0 + d.x1) / 2,
