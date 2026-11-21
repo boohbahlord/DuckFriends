@@ -148,8 +148,7 @@ export function catSVG(name, { pose = "stand", step = 0, size = 1 } = {}) {
   const C = CATS[name] || CATS.oreo,
     P = POSES[pose] || POSES.stand,
     id = uid();
-  const sc = (C.tall / 63) * size,
-    len = C.len,
+  const len = C.len,
     thin = C.thin;
   /* Opal: a bit longer and skinnier, from the middle of her body (the head stays the same) */
   const bodyT =

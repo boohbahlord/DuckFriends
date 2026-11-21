@@ -992,8 +992,7 @@ export function bellSVG({ a = 0 } = {}) {
 /* the bell tower, w × d, h tall: white clapboard, the belfry's arch with the bell in it near the top, its hip roof seen
    from above. bell: false, the arch without its bell (Downpour draws it apart, swinging: bellSVG) */
 export function towerSVG({ w = 300, d = 300, h = 520, bell = true } = {}) {
-  const id = uid(),
-    H = h;
+  const id = uid();
   const defs =
     SKINS.ch.face(id, h) +
     F`<radialGradient id="${id}b"><stop offset="0" stop-color="#453219"/><stop offset="1" stop-color="#101016"/></radialGradient>`;
@@ -1418,8 +1417,6 @@ function bigPlan(kind, v, seed) {
   ]); // (the top, highest)
   for (let i = 0; i < K.points; i++) {
     const a = ((i + r() * 0.6) / K.points) * Math.PI * 2,
-      c = Math.cos(a),
-      s = Math.sin(a),
       len = K.pointLen * (0.6 + r() * 0.8),
       wid = K.pointW * (0.7 + r() * 0.6);
     // (a point: its two corners just inside the edge, its tip out past it)

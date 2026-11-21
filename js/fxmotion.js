@@ -100,10 +100,6 @@ export function jitter(on, unit) {
     (Math.random() - 0.5) * unit * 0.04,
   ];
 }
-/* a duck gone from the board: its motion forgotten */
-function forget(id) {
-  S.delete(id);
-}
 
 /* ---------- a drawing's own vibration ---------- */
 /* how far (px) a duck's drawing vibrates with each shot it fires (the owner's, Nov 17: "shooting guns causes a slight

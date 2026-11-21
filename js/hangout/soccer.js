@@ -293,7 +293,6 @@ let ball = null,
   drawn = 0;
 const BW = 34,
   BH = 38;
-const ballShown = () => shown && { ...shown }; // where this screen draws the ball (world px)
 function cheer(ctx, now) {
   const x0 = NET.mouth + 30,
     y0 = (NET.in0 + NET.in1) / 2;

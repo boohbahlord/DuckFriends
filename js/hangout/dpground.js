@@ -18,8 +18,6 @@ const piece = (body, x, y, w, h, defs = "") => ({
   w,
   h,
 });
-const poly = (P, dx = 0, dy = 0) =>
-  P.map(([x, y]) => `${n1(x - dx)},${n1(y - dy)}`).join(" ");
 
 /* the patterns, each a tile that repeats */
 function grassTile(id, r) {

@@ -600,7 +600,6 @@ const returnIn = (s) => {
   const v = s.options.voteBack;
   return v === "r" ? 1 + Math.floor(Math.random() * 6) : Math.max(0, +v || 0);
 };
-const voteCount = (s) => tally(s, (s.vt || {}).votes);
 function openVote(s, k, now) {
   s.phase = "countdown";
   s.at = now;
@@ -5316,7 +5315,6 @@ function nextMatch(s, now) {
    Returns false on a tie. */
 function endMatch(s, now) {
   const b = s.bb,
-    m = b.rounds[b.r][b.m],
     who = {};
   for (const id of playing(s)) {
     const p = s.pos[id],
@@ -6075,7 +6073,6 @@ function counselDone(s, id) {
 /* the picking is over: the defense first, then the offense (a pick that clashes falls to the next best, then to chance) */
 function endCounsel(s, now) {
   const L = s.law,
-    q = s.qs[s.qi],
     on = playing(s).filter((id) => s.players[id]);
   for (const role of ["def", "off"]) {
     const ok = (id) => counselOk(s, role, id),

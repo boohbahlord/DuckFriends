@@ -30,7 +30,6 @@ export const isDn = (s) => s.options.mode === "dunce";
 export const DN_SIDES = ["Dunce", "Not a Dunce"];
 export const DN_GRACE = 15; // seconds before the Take timer starts (and before anyone can vote)
 export const DN_CEREMONY = 12; // seconds of the dunce's moment, then the stats
-const TAKE_MAX = 200;
 /* the dunce's moment, in ms from its start: the hat lands with the first of three strikes, the podium rises, then the
    trombone over and over and one more strike */
 export const DN_HAT = 800,
