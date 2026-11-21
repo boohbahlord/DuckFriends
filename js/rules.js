@@ -513,10 +513,7 @@ const fits = (s, id) => s.seat.length >= (MIN_PLAYERS[id] || 0);
 export const randomPool = (s) => {
   const all = modesFor(s)
       .map((m) => m.id)
-      .filter(
-        (id) =>
-          id !== "l4dd" && id !== "surv" && id !== "sandbox" && fits(s, id),
-      ), // (Sandbox never ends: never from Random; Survival is vote-only too, the owner's, Nov 19 19:53Z)
+      .filter((id) => modeOf(id).inRandom !== false && fits(s, id)),
     off = s.options.modesOff || [],
     on = all.filter((id) => !off.includes(id));
   return on.length ? on : all; // (every one turned off: Random and the vote still have games to pick from)
@@ -534,8 +531,10 @@ function nextMode(s) {
 /* I want a write timer of 2:12 everywhere but Bicker Brackets: changing to or from them moves it along while it's still
    at the other default */
 function writeTimerFor(s, wasMode) {
-  if (isBb(s) && s.options.submitTime === 132) s.options.submitTime = 0;
-  else if (!isBb(s) && s.options.submitTime === 0 && wasMode === "bb")
+  const bare = (m) => !!modeOf(m).noWriteTimer;
+  if (bare(s.options.mode) && s.options.submitTime === 132)
+    s.options.submitTime = 0;
+  else if (!bare(s.options.mode) && s.options.submitTime === 0 && bare(wasMode))
     s.options.submitTime = 132;
 }
 function setMode(s, mode) {
@@ -714,7 +713,7 @@ function nextVote(s, now) {
 }
 /* Quacky Zombies: its map vote opens before each of its games (once: zmapAsked till the game begins) */
 function zmapDue(s, now) {
-  if (s.options.mode !== "l4dd" || s.zmapAsked) return false;
+  if (!modeOf(s.options.mode).asksMap || s.zmapAsked) return false;
   s.zmapAsked = 1;
   openVote(s, "zmap", now);
   return true;
@@ -1273,7 +1272,7 @@ export function newRoom({
     hostId: host.id,
     options: {
       ...OPTIONS_DEFAULT,
-      ...(options.mode === "bb" ? { submitTime: 0 } : {}), // (Bicker Brackets starts with no write timer)
+      ...(modeOf(options.mode).noWriteTimer ? { submitTime: 0 } : {}), // (Bicker Brackets starts with no write timer)
       ...options,
     },
     players: { [host.id]: { ...host, bot: false, ready: false } },
@@ -3130,7 +3129,7 @@ function reduceStep(state, a, now) {
       const sbEnd = sbOutTick(s, now); // (the same off the zombie maps: sbout.js)
       if (sbEnd === "lobby") return backToLobby(s, "Everyone's out.");
       if (sbEnd) return s;
-      if (inWorld(s) && s.options.mode === "hang" && s.ends && now >= s.ends)
+      if (inWorld(s) && modeOf(s.options.mode).timed && s.ends && now >= s.ends)
         return cabinOver(s, now, "Time's up in the cabin."); // (Hangout from Random or the vote: its time limit)
       const shots = isL4dd(s) ? l4Shots(s, now) : moveShots(s, now),
         hung = isHang(s) && inWorld(s) && hangTick(s, now),
@@ -4948,7 +4947,8 @@ const SB_OUT_MS = 5000;
 const HANG_TIMES = [0, 5, 10, 15, 20, 30];
 function hangLimit(s) {
   const o = s.options;
-  if (o.mode !== "hang" || !["random", "vote"].includes(o.modePick)) return 0;
+  if (!modeOf(o.mode).timed || !["random", "vote"].includes(o.modePick))
+    return 0;
   const m = HANG_TIMES.includes(+o.hangTime) ? +o.hangTime : 15;
   return m * 60;
 }

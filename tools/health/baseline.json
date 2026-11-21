@@ -1,5 +1,5 @@
 {
-  "modeCompares": 79,
+  "modeCompares": 64,
   "nullishNumbers": 0,
   "unusedExports": 108,
   "unusedFiles": 0,
@@ -21,7 +21,7 @@
     "js/sandboxrules.js": 2059,
     "js/sbspawn.js": 1709,
     "js/sbspawnview.js": 2212,
-    "js/shell.js": 3495,
-    "js/updates.js": 2969
+    "js/shell.js": 2576,
+    "js/updates.js": 2978
   }
 }

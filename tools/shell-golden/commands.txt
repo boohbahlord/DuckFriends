@@ -1,0 +1,214 @@
+# the command lines the shell golden runs, one per line, in order, in one room (test room, me the host, in the lobby),
+# then again after a game starts (the lines after the "== game" line). Blank lines and # lines are skipped.
+help
+help all
+help chat
+help help
+man ls
+man -k stat
+man nosuchthing
+apropos room
+echo hello world
+echo "a b"  c
+printf "%s-%d\n" a 5
+true
+false
+test -f nothing && echo yes || echo no
+[ 1 = 1 ] && echo same
+alias ll='ls -l'
+ll
+unalias ll
+type ls
+which cd
+export A=5
+echo $A
+env
+printenv A
+unset A
+echo $A
+eval echo evaluated
+echo a b c | xargs echo
+seq 3 | xargs
+pwd
+ls
+ls -la
+cd /
+ls
+ls -l bin | head -5
+cd usr
+ls
+cd ~/notes
+pwd
+mkdir t1
+mkdir -p t2/a/b
+touch t1/f
+echo data > t1/g
+echo more >> t1/g
+cat t1/g
+less t1/g
+more t1/g
+cp t1/g t1/h
+mv t1/h t1/i
+ls -l t1
+tree
+tree t2
+find . -name g
+find . -type d
+stat t1/g
+file t1/g
+file t2
+chmod 600 t1/g
+ls -l t1
+chmod g+r t1/g
+getfacl t1/g
+setfacl -m g:sudo:r t1/g
+getfacl t1/g
+chgrp sudo t1/g
+chown t1/g
+rmdir t2/a/b
+rmdir t1
+rm t1/i
+rm -r t2
+ls
+cat t1/g | head -1
+cat t1/g | tail -1
+cat t1/g | wc
+echo b a c | tr ' ' '\n' | sort
+echo b a c | tr ' ' '\n' | sort -r
+printf "a\na\nb\n" | uniq
+printf "a\na\nb\n" | uniq -c
+echo hello | grep ell
+echo hello | grep -v ell
+echo hello world | cut -d' ' -f2
+echo hello | sed 's/l/L/g'
+echo "1 2 3" | awk '{print $2}'
+echo abc | rev
+printf "a\nb\n" | tac
+printf "a\nb\n" | nl
+echo abcdefghij | fold -w 4
+printf "a b\nc d\n" | column -t
+seq 5
+seq 2 4
+seq 5 | shuf
+seq 3 | paste -s
+expr 2 + 3
+echo 2+3 | bc
+diff t1/g t1/f
+basename /a/b/c.txt
+dirname /a/b/c.txt
+yes | head -2
+echo x | tee t1/tee
+cat t1/tee
+history
+whoami
+id
+groups
+members sudo
+getent group sudo
+users
+who
+w
+finger
+last
+sudo ls
+sudo whoami
+sudo usermod -aG sudo Player1
+usermod -aG sudo Player1
+sudo groupadd g1
+sudo groupmod -n g2 g1
+sudo gpasswd -a Player1 g2
+members g2
+getent group g2
+sudo gpasswd -d Player1 g2
+sudo groupdel g2
+sudo adduser Player2 sudo
+sudo deluser Player2 sudo
+groupadd g3
+newgrp sudo
+visudo
+su
+passwd
+hostname
+uname
+uname -a
+date
+cal
+uptime
+ps
+jumps
+roll
+roll 6
+roll 2d6
+flip
+ducksay hi
+fortune
+ping
+sleep 0
+send @everyone hi
+send @everyone whoami
+whoami | send @everyone
+map
+map board
+sudo map sky
+sudo map nosuch
+mode
+mode wyr
+sudo mode wyr
+sudo mode aod
+sudo mode nosuch
+song
+songs
+theme
+theme nosuchtheme
+fps off
+secret nosuchcode
+hide ui
+show ui
+lightning
+love @Computer-1
+\show
+\mute
+logout
+source nothing
+. nothing
+read V < t1/g
+echo $V
+head -n 1 t1/g
+tail -n 1 t1/g
+sleep 0 && echo slept
+roundstats
+gamestats
+totalstats
+totalstats -m wyr
+forgame
+forgame nosuch
+cheat
+skip
+sudo skip
+kick @nobody
+sudo kick @nobody
+start
+sudo forgame
+== game
+roundstats
+gamestats
+totalstats
+totalstats -m aod
+gamestats -m wyr
+roundstats @everyone
+forgame
+sudo forgame discuss off
+sudo forgame freeroam on
+sudo forgame
+forgame
+sudo skip
+sudo cheat
+w
+ps
+jumps
+who
+map
+mode
+cheat
+cat t1/g
+ls
