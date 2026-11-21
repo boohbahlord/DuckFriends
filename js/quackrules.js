@@ -22,20 +22,13 @@ import {
   toStats,
   lostRound,
 } from "./rules.js";
+import { shuffle, anyOf } from "./random.js";
 
 export const CLUE_GRACE = 12; // seconds before a clue turn can end
 export const WORD_MAX = 24,
   CAT_MAX = 20;
 export const QUACK_PHASES = ["wqpick", "clue", "choice", "accuse", "reveal"];
 export const isQuack = (s) => (s.options || {}).mode === "quack";
-const shuffle = (xs) => {
-  for (let i = xs.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [xs[i], xs[j]] = [xs[j], xs[i]];
-  }
-  return xs;
-};
-const anyOf = (xs) => xs[Math.floor(Math.random() * xs.length)];
 const oneLine = (v, n) =>
   String(v || "")
     .replace(/\s+/g, " ")

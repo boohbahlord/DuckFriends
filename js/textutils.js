@@ -4,6 +4,7 @@
    no file is named; io.read and io.write open and save files. They work the way bash's do, with the flags people use
    most; man <command> lists them. */
 import { calc, globRe } from "./bash.js";
+import { shuffle } from "./random.js";
 
 const fail = (msg) => {
   throw new Error(msg);
@@ -708,14 +709,6 @@ function awk(src, text, FS, vars) {
   run({ line: L[L.length - 1] || "", f: [], nr, out }, "END");
   return out.join("\n");
 }
-
-const shuffle = (a) => {
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-};
 
 export const TEXT = {
   echo: (args) => {
