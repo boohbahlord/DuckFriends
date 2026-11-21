@@ -1,23 +1,17 @@
 /* ---------- the zombies' way to the ducks on a map: its cells and its flow field ----------
-   The grid over the map (Duck Cabin's cabin and deck, or all of Downpour), what each cell costs to walk, and the
+   The grid over the map (Duck Cabin's cabin and deck, or all of Downpour: walkgrid.js' one grid), what each cell costs to walk, and the
    walking distance from every cell to the nearest duck (flowfield.js fieldOf works it out, on the page or in its
    worker). Its own file: the way is its own mechanic (pathing), and flowfield.js stands alone so its worker can run it.
    Moved here from l4ddrules.js as it was. */
-import {
-  STEP,
-  heightAt,
-  standable,
-  onPlatform,
-  layoutRev,
-} from "./hangout/layout.js";
+import { STEP, layoutRev } from "./hangout/layout.js";
 import { fieldOf, askField, stepper } from "./flowfield.js";
+import { gridOf, CELL } from "./walkgrid.js";
 import { playable, OPENINGS, dp, syncMap } from "./l4ddrules.js";
 
 /* ---------- the zombies' way to the ducks: a flow field ----------
    A grid of 40-px cells over the cabin and the deck (built once). Every heartbeat, the walking distance from every cell
    to the nearest duck standing, all at once (Dijkstra from all of them); each zombie walks downhill on it, so it takes
    the way of least walking, never the duck nearest through a wall. */
-export const CELL = 40;
 let GX = 1280,
   GY = 580;
 export let GW = 82,
@@ -42,17 +36,15 @@ export function cells() {
   if (walk && walkRev === layoutRev()) return walk;
   walkRev = layoutRev();
   FLOWS.clear(); // (their ways were for the cabin before)
-  walk = new Uint8Array(GW * GH);
-  hts = new Float32Array(GW * GH);
-  for (let c = 0; c < GW * GH; c++) {
-    const [x, y] = mid(c),
-      z = heightAt(x, y);
-    hts[c] = z;
-    walk[c] =
-      playable(x, y) && standable(x, y, z, 0, null, true) && !onPlatform(x, y)
-        ? 1
-        : 0;
-  }
+  ({ walk, hts } = gridOf({
+    name: "zombies",
+    x0: GX,
+    y0: GY,
+    gw: GW,
+    gh: GH,
+    zombie: true,
+    ok: playable,
+  })); // (walkgrid.js: the one grid, for the zombies' walk in the play area)
   /* Downpour: a boarded hole's cells cost a few more (a zombie goes round by an open way if it isn't much further, or
      stops at the boards and tears them down) */
   extra = new Float32Array(GW * GH);

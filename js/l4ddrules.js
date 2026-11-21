@@ -135,7 +135,6 @@ import {
   wholeIn,
 } from "./survrules.js";
 import {
-  CELL,
   GW,
   GH,
   setGrid,
@@ -146,6 +145,7 @@ import {
   flowFrom,
   heading,
 } from "./zombiepath.js";
+import { CELL } from "./walkgrid.js";
 import {
   zOk,
   Z_MOST,

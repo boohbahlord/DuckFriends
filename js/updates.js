@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v214",
+    version: 214,
+    date: "Nov 21, 2026",
+    title: "Less busywork per frame",
+    news: [
+      "For Dead Ducks Arcade: the health bar, the weapon bar and the phone buttons redraw only when something changes.",
+    ],
+  },
+  {
     id: "v213",
     version: 213,
     date: "Nov 21, 2026",

@@ -70,7 +70,7 @@ homeapp.js 43 Install Duck Friends
 hooks.js 3 hooks between screens that can't import each other
 hotbar.js 480 the specials on the number keys
 hpmath.js 23 HP in tenths
-hpmeter.js 307 HP meters and the little "+1 HP" over
+hpmeter.js 318 HP meters and the little "+1 HP" over
 invisible.js 11 Who is invisible right now :
 itemtone.js 61 the colors an outfit or a hat draws
 jetart.js 39 the jetpack's pictures
@@ -81,7 +81,7 @@ l4dd.js 3347 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine on every screen
 l4ddart.js 623 Quacky Zombies' pictures
-l4ddbar.js 281 Quacky Zombies' weapons bar
+l4ddbar.js 295 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and the roof's flare,
 l4ddcatalog.js 199 Quacky Zombies: the Butler's Items tab
 l4dddrops.js 63 Quacky Zombies' drops, drawn
@@ -111,7 +111,7 @@ meters.js 114 the thin bars under my duck's name
 mgj.js 217 Mad God Justin: what the screen shows
 mgjart.js 96 Mad God Justin's new pictures
 mgjrules.js 2287 
-modes.js 406 the game modes
+modes.js 409 the game modes
 music.js 590 the music: our own songs, played from recordings
 musicbar.js 169 the music bar: the song the room hears,
 name.js 165 fonts and how a player's name looks
@@ -133,7 +133,7 @@ online.js 975 online rooms
 outfits.js 1141 outfits
 outlines.js 353 the outlines
 perf.js 92 the frame-rate readout
-phonepad.js 128 phones: the aim-and-attack stick and the jump button
+phonepad.js 132 phones: the aim-and-attack stick and the jump button
 picrop.js 268 cropping a picture: every picture put into the
 pixel.js 724 the pixel look
 pixelpalette.js 192 the pixel look's colors
@@ -216,19 +216,20 @@ touch.js 284 touch controls on the board
 trivia.js 464 Trivia: what the screen shows
 triviabank.js 499 Trivia's auto questions
 triviarules.js 458 the rules of Trivia
-ui.js 373 small helpers every screen uses
+ui.js 380 small helpers every screen uses
 umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
 unlocks.js 413 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 2951 Updates
+updates.js 2960 Updates
 vdd.js 190 Valentine's Duck Date: what the screen shows
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
 vote.js 278 Vote Mode & Map: the vote windows
+walkgrid.js 55 the walking grid: which 40-px cells of a
 who.js 3 who this player is beyond this tab
 wounds.js 501 the wounds a hit leaves
-zombiepath.js 186 the zombies' way to the ducks on a
+zombiepath.js 178 the zombies' way to the ducks on a
 zombieroofs.js 244 the zombies' walk over Downpour's roofs: up a
 zombies.js 1420 the zombies: one module for every mode's zombies
 
@@ -254,7 +255,7 @@ ghosts.js 108 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in blue jeans and
 lamp.js 71 the lamps: the example activity
 layout.js 1466 Duck Cabin: the world of Hangout
-npc.js 498 Duck Cabin's characters: how they get around, and
+npc.js 493 Duck Cabin's characters: how they get around, and
 npcart.js 271 Duck Cabin's characters: the drawings
 piano.js 530 the piano in the cabin , against the
 pianokeys.js 665 Hangout: the piano's keyboard mode
