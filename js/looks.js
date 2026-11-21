@@ -125,3 +125,12 @@ export const seenName = (p) =>
   p && p.id && !p.shown
     ? shownNameStyle(roomState(), p)
     : (p && p.nameStyle) || {};
+
+/* a player who has left: what a screen draws in his place (every mode's screen reads this one) */
+export const GONE = {
+  name: "Gone",
+  duck: { color: "#b7bccb" },
+  card: { color: "#8a8fa3" },
+  nameStyle: {},
+};
+export const player = (s, id) => (id && s.players[id]) || GONE;

@@ -5,6 +5,7 @@
    An invite or a friend request arriving shows as a notice at the bottom middle. */
 import {
   openWindow,
+  askPasskey,
   typing,
   windowOpen,
   esc,
@@ -194,26 +195,7 @@ export async function joinRoom(entry, passkey = "") {
   }
 }
 function askPass(entry, note) {
-  openWindow(
-    `<h2>🔒 ${esc(entry.name)}</h2><form class="pass-form" autocomplete="off"><input class="passkey" placeholder="Passkey" maxlength="20" aria-label="Passkey">
-    ${note ? `<p class="small bad">${esc(note)}</p>` : '<p class="small dim">A private room: ask your friend for the passkey.</p>'}<p class="acts"><button type="submit" class="btn green">Join</button></p></form>`,
-    {
-      cls: "win-small",
-      onOpen: (w, close) => {
-        const i = w.querySelector("input");
-        i.focus();
-        w.querySelector("form").onsubmit = (ev) => {
-          ev.preventDefault();
-          if (!i.value.trim()) {
-            i.focus();
-            return;
-          }
-          close();
-          joinRoom(entry, i.value);
-        };
-      },
-    },
-  );
+  askPasskey(entry.name, note, (key) => joinRoom(entry, key), true);
 }
 
 /* invites and requests arriving */

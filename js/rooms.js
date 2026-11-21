@@ -2,7 +2,7 @@
    An online room (open, or private with a passkey) is hosted by this browser through Firebase; anyone can join it from
    the list. A TEST room stays on this device, filled with computers; nothing in it counts toward stats. */
 import { register, go, backTo } from "./router.js";
-import { el, esc, openWindow } from "./ui.js";
+import { el, esc, askPasskey } from "./ui.js";
 import { profile, save } from "./store.js";
 import { createLocalRoom } from "./net.js";
 import {
@@ -223,27 +223,7 @@ register("rooms", {
       else say(text);
     };
     const askPass = (r, note = "") =>
-      openWindow(
-        `<h2>🔒 ${esc(r.name)}</h2><form class="pass-form" autocomplete="off">
-        <input class="passkey" placeholder="Passkey" maxlength="20" aria-label="Passkey">${note ? `<p class="small bad">${esc(note)}</p>` : ""}
-        <p class="acts"><button type="submit" class="btn green">Join</button></p></form>`,
-        {
-          cls: "win-small",
-          onOpen: (w, close) => {
-            const i = w.querySelector("input");
-            i.focus();
-            w.querySelector("form").onsubmit = (ev) => {
-              ev.preventDefault();
-              if (!i.value.trim()) {
-                i.focus();
-                return;
-              }
-              close();
-              join(r, i.value);
-            };
-          },
-        },
-      );
+      askPasskey(r.name, note, (key) => join(r, key));
     list.onclick = (e) => {
       const b = e.target.closest(".room-row");
       if (!b || b.disabled) return;

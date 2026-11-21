@@ -24,7 +24,15 @@
    the screens), subs and drafts (the writing), votes { id: [row] }, ids (a written question's rows, one per answerer),
    text { id: answer }, sent { id: true }, grades { id: true | false }, stop { id: true } (the reveal's Stop timer), used (auto questions dealt), log (every played
    question: { round, by, auto, kind, text, right, wrong, none }) } */
-import { enter, say, playing, seatLate, toStats, shareOf } from "./rules.js";
+import {
+  enter,
+  say,
+  playing,
+  seatLate,
+  toStats,
+  shareOf,
+  OPTIONS_DEFAULT,
+} from "./rules.js";
 import { TV_BANK } from "./triviabank.js";
 import { shuffle, anyOf } from "./random.js";
 
@@ -416,7 +424,8 @@ export function tvJoin(s, id) {
 }
 /* a Trivia phase's time limit (0: none) */
 export function tvLimit(s) {
-  if (s.phase === "tvwrite") return +(s.options.tvWrite ?? 210) || 0;
+  if (s.phase === "tvwrite")
+    return +(s.options.tvWrite ?? OPTIONS_DEFAULT.tvWrite) || 0;
   if (s.phase === "tvw") return TV_ANSWER;
   if (s.phase === "tvg") return +s.options.tvGrade ? TV_GRADE : 0;
   if (s.phase === "tvr") return TV_REVEAL;

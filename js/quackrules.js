@@ -740,23 +740,25 @@ export function quackMoved(s, id) {
 }
 
 /* ---------- stats ---------- */
+/* a player's stats before any round: every count at 0 (the stats here, the View stats box in quack.js, the command line's
+   stats in shell.js all start from it) */
+export const quackBlank = () => ({
+  right: 0,
+  votes: 0,
+  quack: 0,
+  quackWins: 0,
+  wins: 0,
+  losses: 0,
+  outs: 0,
+  first: 0,
+  laps: 0,
+  clueMs: 0,
+  clues: 0,
+});
 /* over a list of finished rounds: correct votes (for a real Quack), votes, rounds as the Quack and won as the Quack, rounds won */
 export function quackStats(list) {
   const per = {},
-    P = (id) =>
-      (per[id] = per[id] || {
-        right: 0,
-        votes: 0,
-        quack: 0,
-        quackWins: 0,
-        wins: 0,
-        losses: 0,
-        outs: 0,
-        first: 0,
-        laps: 0,
-        clueMs: 0,
-        clues: 0,
-      });
+    P = (id) => (per[id] = per[id] || quackBlank());
   for (const r of list) {
     for (const v of r.votes || [])
       for (const [id, t] of Object.entries(v.who || {})) {

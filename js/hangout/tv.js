@@ -11,12 +11,14 @@ import { tvScreen } from "./art.js";
 import { tvScreenStrip } from "./shapes.js";
 import { play, loop } from "./sounds.js";
 import { powered } from "./power.js";
+import { TV_FIRST_CHANNEL } from "../gamedefaults.js";
 
 const CH = ["static", "board", "rabbit", "stars", "ec", "bath", "kitten"];
 const REACH = 130; // world px from the stand's middle
 const F = 3; // the picture's px for each of the screen's units (it is drawn bigger, then laid on the screen)
 const TV_ID = PROPS.find((p) => p.kind === "tv").id;
-const chan = (s) => ((s && s.hang && s.hang.tv) ?? 1) % CH.length;
+const chan = (s) =>
+  ((s && s.hang && s.hang.tv) ?? TV_FIRST_CHANNEL) % CH.length;
 
 rule("tv", {
   init: () => ({ tv: 1 }), // the channel on (Night Show to start)
