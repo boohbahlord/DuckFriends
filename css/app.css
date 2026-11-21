@@ -15307,6 +15307,7 @@ html.still:not(.low) .l4z.dead.nuked {
   transform: translateX(-50%);
   z-index: 31000;
   pointer-events: none;
+  will-change: transform; /* (a layer of its own: the board's shake moved it by parts of a pixel, and its words were drawn again at each one) */
   font-family: "Lilita One", sans-serif;
   font-size: clamp(1.7rem, 4.6vw, 2.8rem);
   line-height: 1;

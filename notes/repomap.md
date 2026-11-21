@@ -49,9 +49,9 @@ friends.js 236 friends
 front.js 109 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 214 how a held weapon and the screen move
-game.js 8816 the game screen
+game.js 8814 the game screen
 gamedefaults.js 43 the game's own numbers, for every mode
-gameready.js 47 what the game's loading screen waits for
+gameready.js 47 
 gamesettings.js 1755 Game Settings: the whole screen, like Customize
 gamestats.js 191 what `stats` and `roundstats` print for the game
 gfx.js 8 Low graphics
@@ -97,7 +97,7 @@ langname.js 5 the name of Sandbox's number language, in one
 laserart.js 105 the laser gun, drawn
 laserfx.js 134 the Laser Rifle on the screen
 later.js 66 the rest of the game, once the first
-loading.js 397 the start: a slow fade to black over
+loading.js 403 the start: a slow fade to black over
 loadlines.js 590 the lines under the loading bar, one for
 lobby.js 598 the lobby, laid out like Halo: Reach's custom
 lobbysettings.js 73 Lobby Settings
