@@ -48,6 +48,7 @@ export const DROP_OL = {
   speed: "#ffffff", // (Speed Boost: white)
   double: "#c8ff3a", // (Double Points: lime, the dollar's)
   sale: "#ff7aa8", // (Sale: pink)
+  coins: "#ffd23f", // (Justin's pocket change: gold)
   can: "#ff8a1a", // (a jerry can, gas: orange)
 };
 for (const [k, c] of Object.entries(DROP_OL)) COLOR["drop_" + k] = c;

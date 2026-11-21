@@ -9,6 +9,19 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v205",
+    version: 205,
+    date: "Nov 20, 2026",
+    title: "One zombie for every mode",
+    news: [
+      "For Mad God Justin: the wave zombies think like Dead Ducks Arcade's, so they surround you instead of piling up.",
+      "For Dead Ducks Arcade: zombies climb only where there is a wall (never up a hole), rise as they climb, and no longer flicker.",
+      "For Dead Ducks Arcade: a dropped jerry can shows inside its orb.",
+      "For Dead Ducks Arcade: once in a while, Justin drops his pocket change when he dies.",
+      "For Dead Ducks Arcade: Safe Keeping can be picked in the hotbar like anything else, and clicking it says what it does.",
+    ],
+  },
+  {
     id: "v204",
     version: 204,
     date: "Nov 20, 2026",

@@ -18,7 +18,7 @@ bots.js 1050 computers
 brackets.js 474 Bicker Brackets: what the screen shows
 brainbuild.js 332 Sandbox: M's Brain builder
 card.js 424 the player card
-chat.js 1601 text chat and the command line
+chat.js 1600 text chat and the command line
 cheatflag.js 16 a game with test commands used counts nothing
 cheats.js 73 test commands: cheat round N, cheat give WEAPON
 claw.js 36 a claw's marks: three white slashes where a
@@ -48,8 +48,8 @@ friends.js 254 friends
 front.js 109 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 209 how a held weapon and the screen move
-game.js 8832 the game screen
-gamedefaults.js 20 the game's own numbers, for every mode
+game.js 8838 the game screen
+gamedefaults.js 29 the game's own numbers, for every mode
 gameready.js 47 what the game's loading screen waits for
 gamesettings.js 1751 Game Settings: the whole screen, like Customize
 gfx.js 8 Low graphics
@@ -74,7 +74,7 @@ jetart.js 39 the jetpack's pictures
 jetpack.js 33 the jetpack
 jumps.js 48 the jump counter
 keynav.js 204 menus by keyboard
-l4dd.js 3313 Quacky Zombies on every screen
+l4dd.js 3308 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 203 Dead Ducks Arcade's Angel machine on every screen
 l4ddart.js 756 Quacky Zombies' pictures
@@ -82,13 +82,13 @@ l4ddbar.js 281 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and the roof's flare,
 l4ddbots.js 572 Quacky Zombies' computers
 l4ddcatalog.js 202 Quacky Zombies: the Butler's Items tab
-l4dddrops.js 58 Quacky Zombies' drops, drawn
+l4dddrops.js 63 Quacky Zombies' drops, drawn
 l4ddguns.js 279 Quacky Zombies' new weapons, drawn
 l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 338 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box on every screen
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 5339 the rules of Quacky Zombies
+l4ddrules.js 5362 the rules of Quacky Zombies
 l4ddsfx.js 513 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the zombies far from
 langname.js 5 the name of Sandbox's number language, in one
@@ -130,7 +130,7 @@ nwk.js 543 Nous Within Kenoma: the map in my book
 offline.js 45 Single Player's files on the device
 online.js 972 online rooms
 outfits.js 1141 outfits
-outlines.js 352 the outlines
+outlines.js 353 the outlines
 perf.js 92 the frame-rate readout
 phonepad.js 128 phones: the aim-and-attack stick and the jump button
 picrop.js 268 cropping a picture: every picture put into the
@@ -217,7 +217,7 @@ umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
 unlocks.js 372 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 2862 Updates
+updates.js 2875 Updates
 vdd.js 198 Valentine's Duck Date: what the screen shows
 vddrules.js 521 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival

@@ -204,7 +204,7 @@ export function pwDraw(ctx) {
     if (o.el.hidden !== off) o.el.hidden = off;
     if (onCam && o.o.k === "can") canOutline(Wd, o, q, z, sc, unseen, myFloor);
     if (off) continue;
-    const tr = `translate(${q.left.toFixed(1)}px, ${q.top.toFixed(1)}px)`;
+    const tr = Wd.boxTr(q.left, q.top); // (in the world's box, as the power box above: world.js)
     if (o.tr !== tr) {
       o.tr = tr;
       o.el.style.transform = tr;

@@ -1103,7 +1103,15 @@ function nukeScreen(at) {
   };
   requestAnimationFrame(step);
 }
-const DROPS_SEED = { kill: 3, ammo: 7, nuke: 2, speed: 9, double: 4, sale: 6 };
+const DROPS_SEED = {
+  kill: 3,
+  ammo: 7,
+  nuke: 2,
+  speed: 9,
+  double: 4,
+  sale: 6,
+  coins: 8,
+};
 
 /* my all-time stats (not in test rooms, nor with test commands used: cheatflag.js): a game once its first round starts, a round each time one is cleared, and the
    best round reached; with Round 16 Start on, its own stats (store.js statMode) */
@@ -2252,8 +2260,7 @@ function seePts(s, ctx) {
    A duck it's getting up glows a heavenly light blue; up, for SAFE.INV ms its picture softly breathes see-through in
    that glow and nothing hurts it, while my own screen counts down from 6, then says "Vitals Stabilized" */
 let vitEl = null,
-  vitShown = "",
-  hintEl = null;
+  vitShown = "";
 function safeLook(ctx) {
   const s = ctx.state(),
     now = clockNow(),
@@ -2290,23 +2297,12 @@ function safeLook(ctx) {
     vitEl.classList.toggle("done", left <= 0);
   }
 }
-/* a click or a key on Safe Keeping in the hotbar: it can't be used by hand, so a note says how it works, only to me,
-   at the bottom left (game.js' l4Pick) */
-export function l4SafeHint() {
-  const board = document.querySelector(".hang-board.l4-board");
-  if (!board) return;
-  if (!hintEl || !hintEl.isConnected) {
-    hintEl = document.createElement("div");
-    hintEl.className = "l4-hint";
-    hintEl.setAttribute("role", "status");
-    board.append(hintEl);
-  }
-  hintEl.innerHTML =
-    "<b>Safe Keeping</b>: when you go down <kbd>E</kbd> gets you up; if you die you keep what you bought.";
-  hintEl.classList.remove("on");
-  void hintEl.offsetWidth;
-  hintEl.classList.add("on");
-}
+/* a left click (or V, or a tap) with Safe Keeping in hand: it can't be used by hand, so the chat says what it does, every
+   time (the owner, Nov 21): one line for a duck alone in the lobby, another when there are 2 or more */
+export const safeKeepLine = (ducks) =>
+  ducks < 2
+    ? "Safe Keeping: if you go down you get back up by yourself, and if you die you keep what you bought."
+    : "Safe Keeping: if you go down, a friend's E gets you up (by yourself if none is standing), and if you die you keep what you bought.";
 
 /* ---------- under my duck's sprint bar (the owner's, Nov 16) ----------
    A second, white bar: the cooldown running now, shrinking as it runs out (a reload, the melee weapon's swing, a
@@ -2883,7 +2879,6 @@ activity({
       gotEl,
       killEl,
       vitEl,
-      hintEl,
       boxEl,
       butler && butler.el,
       egg && egg.el,
@@ -2895,7 +2890,7 @@ activity({
     sqEl = poolEl = null;
     cv = g = hud = endEl = over = layer = fxl = null;
     ptsEl = sayEl = onEl = gotEl = killEl = boxEl = butler = shop = null;
-    vitEl = hintEl = null;
+    vitEl = null;
     bellReset();
     vitShown = "";
     ctx?.world?.board.classList.remove("blackout", "l4-board");
