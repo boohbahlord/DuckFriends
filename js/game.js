@@ -551,6 +551,13 @@ let shown = ""; // which phase view is up (phase|round|question)
 const keys = new Set();
 let me = null; // my duck here: { x, y, j (jump start), face }
 let target = null; // where a click or a tap asked my duck to walk: { x, y, sprint, mark }
+/* a duck's class set only when it changes: toggled every frame for every duck, it was 35 calls a frame that changed nothing */
+const flag = (el, cls, on) => {
+  const k = "_f" + cls;
+  if (el[k] === on) return;
+  el[k] = on;
+  el.classList.toggle(cls, on);
+};
 /* the chain gun's recoil (the owner's, Nov 16): while I fire it, my duck is pushed slowly back, away from the aim, at
    RECOIL.K of my walking speed; the keys add their own way to it, so walking into the aim holds against it (a vector
    sum, as real physics). Each of my shots keeps it on for RECOIL.MS (it fires every 67 ms). recoil = { until, dx, dy:
@@ -2035,22 +2042,23 @@ function drawDucks(now = clockNow()) {
         pic.classList.add("bob");
       }
     } // Jack in a Box bobs on his spring as he jumps
-    d.classList.toggle("sprint", mine ? sprinting && moving : !!pos.sp);
-    d.classList.toggle("adren", adren(s, id, now)); // (an adrenaline shot: it jitters, css/app.css)
-    d.classList.toggle(
+    flag(d, "sprint", !!(mine ? sprinting && moving : pos.sp));
+    flag(d, "adren", !!adren(s, id, now)); // (an adrenaline shot: it jitters, css/app.css)
+    flag(
+      d,
       "dodge",
-      isL4dd(s) ? dodging(s, pos, now) : dodges(s, pos, now),
+      !!(isL4dd(s) ? dodging(s, pos, now) : dodges(s, pos, now)),
     ); // (see-through while a jump makes it safe: Dead Ducks Arcade's, in every mode now, the owner's, Nov 18 16:50Z)
-    d.classList.toggle("air", z > 1 && !seated(s, id)); // (sitting on a chair isn't flying)
-    d.classList.toggle("left", d._face < 0);
+    flag(d, "air", z > 1 && !seated(s, id)); // (sitting on a chair isn't flying)
+    flag(d, "left", d._face < 0);
     const dn0 = !s.done[id];
     if (d._doneH !== dn0) {
       d._doneH = dn0;
       d.querySelector(".gduck-done").hidden = dn0;
     } // (set only when it changes: set again every frame, the page restyled every duck every frame)
-    d.classList.toggle("idle", !!p.idle); // gone quiet: Zs float up
+    flag(d, "idle", !!p.idle); // gone quiet: Zs float up
     const jetOnNow = !!(jet && (id === R.me ? me : s.pos[id] || {}).jt);
-    d.classList.toggle("jet-on", jetOnNow); // (the jetpack's jets: their flames)
+    flag(d, "jet-on", jetOnNow); // (the jetpack's jets: their flames)
     if (jetOnNow !== !!d._jetS) {
       d._jetS = jetOnNow;
       sfx.jet(id, jetOnNow, heard(id)); // (… and their roar: sound.js)
