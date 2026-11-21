@@ -11,18 +11,49 @@ export const jumpCfg = (pos) => {
     return { T: JUMP.T * Math.sqrt(pos.tb / JUMP.H), H: pos.tb }; // Hangout's trampoline: a bounce tb duck heights high
   return JUMP;
 };
-const arc = (t0, now, T, H) => {
-  const t = (now - t0) / 1000 / T;
-  return t <= 0 || t >= 1 ? 0 : 4 * H * t * (1 - t);
+/* head room (the owner's, Nov 21 14:52Z: a duck is about 0.6 of an elevation tall, and a jump stops when its head hits a
+   ceiling, then it falls back): pos.hr, in duck heights, from the head where it jumped to the roof over it (world.js
+   sets it as the jump starts; none under the open sky). Under the apex the arc rises to it and comes back down as its
+   own mirror. th: the share of the jump where the head hits (half: never) */
+const bump = (hr, H) =>
+  hr === undefined || hr >= H
+    ? 0.5
+    : hr <= 0
+      ? 0
+      : (1 - Math.sqrt(1 - hr / H)) / 2;
+const arc = (t0, now, T, H, th = 0.5) => {
+  let t = (now - t0) / 1000 / T;
+  if (t <= 0 || t >= 2 * th) return 0;
+  if (t > th) t = 2 * th - t; // (bumped: back down the way it came)
+  return 4 * H * t * (1 - t);
 };
 /* how high a duck is in its jump now, in duck heights (0 on the ground) */
 export const jumpZ = (pos, now) => {
   if (!pos || !pos.j) return 0;
   const { T, H } = jumpCfg(pos);
-  return arc(pos.j, now, T, H);
+  return arc(pos.j, now, T, H, bump(pos.hr, H));
 };
 /* when its jump comes down (ms, on the room's clock) */
-export const landsAt = (pos) => pos.j + jumpCfg(pos).T * 1000;
+export const landsAt = (pos) =>
+  pos.j + jumpCfg(pos).T * 1000 * 2 * bump(pos.hr, jumpCfg(pos).H);
+/* what a move sends of its jump (game.js), and what the rules keep of it (rules.js): a trampoline bounce's height and
+   the head room */
+export const jumpSend = (p) =>
+  p.j
+    ? {
+        ...(p.tb ? { tb: p.tb } : {}),
+        ...(p.hr !== undefined ? { hr: p.hr } : {}),
+      }
+    : {};
+export const jumpKept = (j, a) =>
+  j
+    ? {
+        ...(+a.tb > 0 ? { tb: Math.min(3.5, +a.tb) } : {}),
+        ...(a.hr != null && isFinite(a.hr)
+          ? { hr: Math.min(9, Math.max(0, +a.hr)) }
+          : {}),
+      }
+    : {};
 /* a jump dodges attacks, but not in its first and its last fifth: I want a dodge timed, not a jump held as a shield.
    T: its length in ms (a trampoline's bounce is longer; Dead Ducks Arcade counts a plain jump's, l4ddrules.js dodging) */
 export function jumpDodges(
@@ -31,6 +62,7 @@ export function jumpDodges(
   T = p && p.tb > 0 ? JUMP.T * 1000 * Math.sqrt(p.tb / JUMP.H) : JUMP.T * 1000,
 ) {
   if (!p || !p.j) return false;
+  T *= 2 * bump(p.hr, jumpCfg(p).H); // (a bumped jump is shorter: so is its dodge)
   const end = p.j + T;
   return now - p.j > T * 0.2 && end - now > T * 0.2;
 }

@@ -1658,7 +1658,7 @@ export function mountWorld(board, api) {
     },
     started(me) {
       ensure(me);
-      me.b = me.z;
+      me.hr = L.headRoom(me.x * L.W, me.y * L.H, (me.b = me.z)); // (from where it jumps)
       me.vz = null;
       me._za = undefined;
     },

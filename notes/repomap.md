@@ -74,7 +74,7 @@ hpmath.js 23 HP in tenths
 hpmeter.js 327 HP meters and the little "+1
 invisible.js 11 Who is invisible right now :
 itemtone.js 61 the colors an outfit or a
-jump.js 36 a duck's jump: one arc for
+jump.js 68 a duck's jump: one arc for
 jumps.js 48 the jump counter
 keynav.js 204 menus by keyboard
 l4dd.js 3337 Quacky Zombies on every screen
@@ -262,7 +262,7 @@ flicker.js 83 now and then a light stutters
 ghosts.js 108 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in blue
 lamp.js 71 the lamps: the example activity
-layout.js 1466 Duck Cabin: the world of Hangout
+layout.js 1472 Duck Cabin: the world of Hangout
 npc.js 495 Duck Cabin's characters: how they get
 npcart.js 271 Duck Cabin's characters: the drawings
 piano.js 530 the piano in the cabin ,

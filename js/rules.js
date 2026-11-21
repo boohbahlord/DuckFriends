@@ -16,7 +16,7 @@
    own rules in duncerules.js: one defender in the circle, everyone else walks to Dunce or Not a Dunce. Valentine's Duck
    Date has its own in vddrules.js: The Date at the dining table, a date with each Suitor, then a Suitor Turned Down. */
 import { HANDGUN } from "./gamedefaults.js";
-import { jumpDodges } from "./jump.js";
+import { jumpDodges, jumpKept } from "./jump.js";
 import { epAct } from "./sbep.js";
 import { duckBig, picGrow, scaleOf } from "./duck.js";
 import {
@@ -2182,7 +2182,7 @@ function reduceStep(state, a, now) {
           ? {
               z: hz(a.z),
               b: hz(a.b),
-              ...(j && +a.tb > 0 ? { tb: Math.min(3.5, +a.tb) } : {}),
+              ...jumpKept(j, a),
             }
           : {}),
         ...(was &&

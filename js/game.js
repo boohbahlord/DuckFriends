@@ -328,7 +328,7 @@ import { knockOff, bothOff } from "./duel.js";
 import { hooks } from "./hooks.js";
 import { mountTouch, stick } from "./touch.js";
 import { walkIntent } from "./playerinput.js";
-import { jumpCfg, jumpZ, landsAt, jumpDodges } from "./jump.js";
+import { jumpCfg, jumpZ, landsAt, jumpDodges, jumpSend } from "./jump.js";
 import { mountPad } from "./phonepad.js";
 import { now as clockNow } from "./clock.js";
 import {
@@ -4727,7 +4727,7 @@ function sendMove(force) {
     x: me.x,
     y: me.y,
     j: me.j || 0,
-    ...(me.j && me.tb ? { tb: me.tb } : {}),
+    ...jumpSend(me),
     q,
     sp: sprinting && moving,
     ...(w ? { w, ax: aim[0], ay: aim[1] } : {}),
