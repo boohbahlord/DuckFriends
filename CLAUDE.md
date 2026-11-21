@@ -125,6 +125,8 @@ A program that is changed grows more complex unless work is spent against it (Le
   is the place, never the mode. Breeds: `ZOMBIE_BREEDS` (mgjWave; sbBoard until Sandbox walks it). Pathing: `js/zombiepath.js` (the map's cells and the
   flow field kept per ducks' cells) over `js/flowfield.js` (the Dijkstra and its step, also run in a Web Worker from its
   own text, so it imports nothing). Round pacing stays in `js/l4ddrules.js`.
+  Downpour's roofs: `js/zombieroofs.js` (up a wall where one is drawn, along a roof, the jump onto the canopy), called
+  from zombies.js; its own file only because zombies.js passed 1,500 lines.
 
 ## Reading, writing and talking for less (the owner's, Nov 20 22:09Z; sources in /mnt/project-files/adam/ and project memory)
 - Map, then narrow: `git grep -l` the behavior, then read 100 to 200 line windows; never read a file over 1,500 lines

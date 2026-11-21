@@ -114,7 +114,8 @@ import {
   ZHATS,
   ZOUTFITS,
 } from "./l4ddrules.js";
-import { fenceZ, zombieZ, zombiesOf, zSortY } from "./zombies.js";
+import { fenceZ, zombieZ, zombiesOf } from "./zombies.js";
+import { zSortY } from "./zombieroofs.js";
 import { hOk, hLock } from "./heights.js";
 import { ammoBar, stackBars, noReload } from "./meters.js";
 import { laserMeter } from "./laserfx.js";
