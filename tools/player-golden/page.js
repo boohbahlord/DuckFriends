@@ -106,7 +106,7 @@ window.__pgPlay = async (sc) => {
   /* the scenario's input, by frame (x, y in shares of the screen, ms how long it's held):
      ["key", f, code, ms] a key; ["mouse", f, x, y] the mouse moved there; ["click", f, x, y, ms] the left button there;
      ["wheel", f, dy]; ["tap", f, x, y] a finger down and up; ["drag", f, x0, y0, x1, y1, ms, hold] a finger moved
-     from there to there over ms, held there, and up; ["press", f, selector, ms] a finger on that button; ["swipe", f, selector, dx, dy, ms, hold] a
+     from there to there over ms, held there, and up; ["press", f, selector, ms, "scroll"] a finger on that button (scroll: scrolled into sight first, for one down a list); ["swipe", f, selector, dx, dy, ms, hold] a
      finger down on that (as my duck, ".gduck.mine", or the attack stick, ".tpad-atk"), moved by dx, dy, held, and up;
      ["botOnMe", f] a computer put right on my duck (the room's own spot for it), so my duck eases away */
   const at = new Map(),
@@ -141,9 +141,10 @@ window.__pgPlay = async (sc) => {
     if (mouse && type === "up") t.dispatchEvent(new MouseEvent("click", o));
     return t;
   };
-  const middle = (sel) => {
-    const e = document.querySelector(sel),
-      b = e && e.getBoundingClientRect();
+  const middle = (sel, scroll) => {
+    const e = document.querySelector(sel);
+    if (e && scroll) e.scrollIntoView({ block: "center" });
+    const b = e && e.getBoundingClientRect();
     if (!b || !b.width) {
       const pad = document.querySelector(".tpad");
       throw new Error(
@@ -183,7 +184,7 @@ window.__pgPlay = async (sc) => {
       on(f + fr(120), () => point("up", e[2], e[3]));
     } else if (kind === "press") {
       let xy;
-      on(f, () => point("down", ...(xy = middle(e[2]))));
+      on(f, () => point("down", ...(xy = middle(e[2], e[4] === "scroll"))));
       on(f + fr(e[3] || 120), () => {
         point("up", ...xy);
         document

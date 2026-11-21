@@ -1,11 +1,12 @@
 /* ---------- Sandbox: the hotbar (stage 4a), the rules ----------
    The owner's Sandbox file: "Build mode starts out with a full and empty hotbar" (the owner's, Nov 19 01:57Z: every slot
    shows, all empty). From the cheat sheet (c) anyone can "preview all loot and categories of loot to click and place them
-   in their hotbar"; whoever may change Sandbox (sandboxrules.js sbCan) can "make the defaults in a hotbar", pick "the
-   default loot for hotbar in what place", and "lock the hotbar OR allow player's personal hotbar" (h). A spawn can go on
+   in their hotbar"; whoever may change Sandbox (sandboxrules.js sbCan) can "lock the hotbar OR allow player's personal
+   hotbar" (h). No default hotbar is handed to anyone (P5, the owner's, Nov 21 18:59Z: "Instead of like having players
+   have a default hotbar, how about we remove that?"): everyone starts empty and changes only their own. A spawn can go on
    a slot as a spawn button ("in order for an entity to spawn, it must be set to a hotbar spawn item OR a key"), drawn as
    a simple 2D shape in a color, or the head of one of the things it spawns.
-   s.sb.hb = { d: the default's 10 slots, lock: 1 when locked, own: { player id: their 10 slots }, ic: { spawn id:
+   s.sb.hb = { lock: 1 when locked (nobody changes theirs), own: { player id: their 10 slots }, ic: { spawn id:
    [shape, color, head] }, got: { player id: [[what they took from a loot orb, until when (0: for good)]] } }. A slot holds a special's id, "sp:" and a spawn's id, or null.
    No screen here: the screen half is sbhotview.js */
 import { isSb, sbMay, SB_COLORS, SB_WHAT } from "./sandboxrules.js";
@@ -34,12 +35,8 @@ const clean = (s, a) =>
     const v = Array.isArray(a) ? a[i] : null;
     return v && okSlot(s, v) ? v : null;
   });
-/* the slots player id plays with: the default while it's locked or they have none of their own */
-const baseSlots = (s, id) => {
-  const hb = hbOf(s),
-    own = !hb.lock && hb.own && hb.own[id];
-  return clean(s, own || hb.d || EMPTY());
-};
+/* the slots player id plays with: their own (empty until they put something there) */
+const baseSlots = (s, id) => clean(s, (hbOf(s).own || {})[id] || EMPTY());
 export function sbSlots(s, id) {
   const hb = hbOf(s),
     out = baseSlots(s, id);
@@ -93,9 +90,8 @@ export function sbIcon(s, p) {
 }
 
 /* ---------- the actions: { t: "sbh", k, … } ----------
-   put: slot i of mine ("me", while it isn't locked) or of the default ("def", sbCan) gets v (null: emptied); a spawn
-   button only from someone who may change Sandbox. mine: my slots become v (my Customize hotbar). clear: mine or the
-   default emptied. def: my slots become the default. lock: on or off. icon: a spawn button's look. go: a spawn button on
+   put: slot i of mine (while it isn't locked) gets v (null: emptied); a spawn button only from someone who may change
+   Sandbox. mine: my slots become v (my Customize hotbar). clear: mine emptied. lock: on or off. icon: a spawn button's look. go: a spawn button on
    one of my slots is pressed: it spawns, whoever presses it (the owner's: the host puts it on the hotbar to let them) */
 export function sbHotAct(s, a, now) {
   if (!isSb(s) || !s.players[a.id]) return false;
@@ -116,12 +112,6 @@ export function sbHotAct(s, a, now) {
     if (!(i >= 0 && i < SB_SLOTS) || i !== Math.floor(i) || !okSlot(s, v))
       return false;
     if (spawnOf(v) && !can) return false;
-    if (a.to === "def") {
-      if (!can) return false;
-      const d = clean(s, hb.d);
-      d[i] = v;
-      return set({ d });
-    }
     if (hb.lock) return false;
     const mine = baseSlots(s, a.id);
     if (v) mine.forEach((w, j) => w === v && (mine[j] = null)); // (one slot each, as in Customize)
@@ -135,13 +125,11 @@ export function sbHotAct(s, a, now) {
     return set({ own });
   }
   if (a.k === "clear") {
-    if (a.to === "def") return can && set({ d: EMPTY() });
     if (hb.lock) return false;
     own[a.id] = EMPTY();
     return set({ own });
   }
   if (!can) return false;
-  if (a.k === "def") return set({ d: baseSlots(s, a.id) });
   if (a.k === "lock") return set({ lock: a.on ? 1 : 0 });
   if (a.k === "icon") {
     const p = String(a.p || "");

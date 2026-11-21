@@ -112,7 +112,7 @@ export const SB_HELP = {
     ],
     [
       "Loot and the host's hotbar",
-      "Pick a loot item in the list, then a key to put it there. The host can lock the hotbar, make one everyone's default, and add spawn buttons.",
+      "Pick a loot item in the list, then a key to put it there. The host can lock the hotbar and add spawn buttons.",
     ],
   ],
   g: [

@@ -212,6 +212,7 @@ import {
   selectKey,
   useKey,
   l4Pick,
+  hotH,
 } from "./hotpick.js";
 import { heatUp, heatDraw, heldOn } from "./barrelheat.js";
 import {
@@ -1221,7 +1222,6 @@ let othersSig = "",
   othersShape = "", // (their rows, names and numbers' lengths: what sets the box's size)
   othersAt = 0,
   othersBox = null, // the others' meters' box, in the board's px (measured when it changes)
-  myBox = null, // my duck's box in the last frame, in the board's px
   allBoxes = [], // every duck's box in the last frame, in the board's px (mine too)
   overBoxes = null; // the cloud's and the question's boxes over the board, in the board's px (measured a few times a second)
 function drawMeters(s, board, layer, now) {
@@ -2213,7 +2213,6 @@ function drawDucks(now = clockNow()) {
       t: at.top - size - z,
       b: at.top - z,
     });
-    if (mine) myBox = boxes[boxes.length - 1];
   }
   allBoxes = boxes;
   layer.querySelectorAll(".gduck").forEach((d) => {
@@ -5282,7 +5281,7 @@ const PICK_NAMES = Object.fromEntries(
 ); // (as Quacky Zombies names them)
 /* Mad God Justin: "Defeat Justin!" as the fight starts; then he's defeated, or time's up */
 async function announceMgj(s, phase) {
-  const job = ++sayJob;
+  ++sayJob; // (any announcement still waiting stops)
   if (phase === "boss") {
     sfx.drum();
     say("Defeat Justin!");
@@ -7501,6 +7500,7 @@ function keydown(e) {
     if (!e.repeat) jump();
     return;
   }
+  if (e.code === "KeyH" && !e.repeat && hotH()) return e.preventDefault(); // (my hotbar's window, P5)
   if (e.code === "KeyL" && onBoardPhase() && me) {
     e.preventDefault();
     if (!e.repeat) toggleSight();
