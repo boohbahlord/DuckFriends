@@ -524,7 +524,7 @@ function warmZombies(sc) {
   if (!pixelOn() || !sc || warmAt === sc) return false;
   warmAt = sc;
   warmClaw(sc * 1.25); // (their claw marks too: claw)
-  warmPool(120); // (and the pool of blood under a duck that dies: bloodpool.js)
+  warmPool(120 * sc); // (and the pool of blood under a duck that dies: bloodpool.js)
   const looks = [
     ...ZHATS.map((_, h) => [h, -1]),
     ...ZOUTFITS.map((_, o) => [-1, o]),
@@ -931,6 +931,10 @@ function seePool(s, ctx) {
   else if (!poolAt) poolAt = clockNow();
   if (poolEl.hidden !== !show) poolEl.hidden = !show;
   if (!show) return;
+  if (poolEl._sc !== Wd.sc) {
+    poolEl._sc = Wd.sc;
+    poolEl.innerHTML = poolHTML(120 * Wd.sc); // (css .l4-jpool: 120 px, scaled with the world: its pixels the grid's)
+  }
   const k = Math.min(1, (clockNow() - poolAt) / JPOOL.ms),
     grow = 0.15 + 0.85 * (1 - (1 - k) * (1 - k)),
     p = Wd.toScreen(a.x, a.y + 4, a.z),
@@ -1928,7 +1932,7 @@ function drawMerchant(ctx, t) {
       butler.pool = document.createElement("span");
       butler.pool.className = "l4-jpool l4-mpool";
       butler.pool.setAttribute("aria-hidden", "true");
-      butler.pool.innerHTML = poolHTML(120); // (css .l4-jpool: 120 px, scaled with the world)
+      butler.pool.innerHTML = poolHTML(120 * Wd.sc); // (css .l4-jpool: 120 px, scaled with the world: its pixels the grid's)
       butler.el.prepend(butler.pool);
     }
   }
@@ -2074,7 +2078,7 @@ function drawCorpses(ctx) {
       o.pool = document.createElement("span");
       o.pool.className = "l4-jpool";
       o.pool.setAttribute("aria-hidden", "true");
-      o.pool.innerHTML = poolHTML(120); // (css .l4-jpool: 120 px, scaled with the world)
+      o.pool.innerHTML = poolHTML(120 * Wd.sc); // (css .l4-jpool: 120 px, scaled with the world: its pixels the grid's)
       o.el.prepend(o.pool);
       CORPSES.set(c.v, o);
     }
@@ -2949,7 +2953,6 @@ activity({
     poolEl = document.createElement("div");
     poolEl.className = "l4-jpool";
     poolEl.setAttribute("aria-hidden", "true");
-    poolEl.innerHTML = poolHTML(120); // (css .l4-jpool: 120 px, scaled with the world)
     poolEl.hidden = true;
     poolAt = 0;
     poolSig = "";
