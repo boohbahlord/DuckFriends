@@ -197,8 +197,9 @@ seriattheme.js 63 Seriat's and the command line's look: Nous Within
 settings.js 298 Settings
 sfxlist.js 164 the sound files
 shared.js 497 Sandbox Phase 7: Shared, the game modes and
-shell.js 2343 the command line: a small bash
+shell.js 2147 the command line: a small bash
 shellfs.js 846 the shell's files and what every command leans
+shellpeople.js 220 the people, the room and the game's helpers
 shellstats.js 244 the stats and forgame commands' helpers (a pure
 slices.js 31 long work cut into slices
 sound.js 935 the game's sounds: real recordings, played from small
