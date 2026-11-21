@@ -165,6 +165,7 @@ export const MODES = [
   },
   {
     id: "mgj",
+    push: { hammer: 1, grenade: 3 }, // (how many KB_FAR the hammer and a grenade push a duck: push.js)
     ownDeath: true, // (it comes back its own way, not the boards' spawn protection: death.js normalGame)
     downMs: 5000, // (how long a knocked-down duck can't move: always 5 s, whatever the host picks: death.js downFor)
     downLocked: true,
@@ -235,6 +236,7 @@ export const MODES = [
   },
   {
     id: "l4dd",
+    push: { grenade: 3 }, // (how many KB_FAR the hammer and a grenade push a duck: push.js)
     ownDeath: true,
     darkCabin: true, // (its Duck Cabin picture in the settings' preview is the dark one)
     l4map: true, // (it has its own map pick, Game Settings l4map: Duck Cabin or Downpour)
