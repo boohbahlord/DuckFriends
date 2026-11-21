@@ -24,20 +24,16 @@ import {
   isSc,
   isLaw,
   twoSided,
-  isCounsel,
-  jury,
-  canGiveUp,
   canEndRound,
   endDone,
   playing,
   voteIds,
   DICE,
-  attCands,
-  attRole,
   OPTIONS_DEFAULT,
   walkOf,
   inWorld,
 } from "./rules.js";
+import { isCounsel, jury, canGiveUp, attCands, attRole } from "./lawrules.js";
 import { SC_WORDS, scWriter, scZones, scCanVote } from "./scrules.js";
 import { BB_TOPICS } from "./bbrules.js";
 import {

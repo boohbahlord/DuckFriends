@@ -17,7 +17,7 @@ bloodpool.js 50 a pool of blood: the one
 boardjustin.js 699 Justin on the boards
 botduck.js 90 a computer's duck: a random look,
 botlines.js 188 What the computers write and say
-bots.js 1431 computers
+bots.js 1427 computers
 brackets.js 459 Bicker Brackets: what the screen shows
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
@@ -51,7 +51,7 @@ friends.js 236 friends
 front.js 151 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 229 how a held weapon and the
-game.js 8480 the game screen
+game.js 8482 the game screen
 gamedefaults.js 43 the game's own numbers, for every
 gameready.js 47 
 gamesettings.js 1758 Game Settings: the whole screen, like
@@ -101,6 +101,7 @@ langname.js 5 the name of Sandbox's number language,
 laserart.js 95 the laser gun, drawn
 laserfx.js 134 the Laser Rifle on the screen
 later.js 66 the rest of the game, once
+lawrules.js 360 the rules of Lawyering
 loading.js 403 the start: a slow fade to
 loadlines.js 590 the lines under the loading bar,
 lobby.js 619 the lobby, laid out like Halo:
@@ -160,7 +161,7 @@ random.js 9 the two random helpers every mode's
 report.js 114 Report Bug or Suggest Ideas
 rooms.js 256 Play: create a room, and the
 router.js 112 screens
-rules.js 5493 the rules of Agree or Disagree
+rules.js 5166 the rules of Agree or Disagree
 sandbox.js 1359 Sandbox: the key windows
 sandboxrules.js 2056 Sandbox: which map it plays on,
 sbarms.js 124 Sandbox: a made NPC's weapons in
