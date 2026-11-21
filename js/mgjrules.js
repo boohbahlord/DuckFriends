@@ -168,11 +168,10 @@ export const PUMP = 1750,
 /* his guns' bursts (the owner's, Nov 3, in place of the pistol): n bullets, one every gap ms, each a little off the aim
    (spread, radians); then a reload of reload ms. Each bullet takes 1 HP (rules.js: mgjSoak). PACE: how much sooner every
    attack of his comes than it used to (the owner: way faster), on top of the Xbox's 0.7 */
-/* his charge (the owner's, Nov 3): every DASH_EVERY ms or so (sooner with his faster attacks) he crouches for DASH_TELL
+/* his charge (the owner's, Nov 3): every 10 s or so (sooner with his faster attacks) he crouches for DASH_TELL
    (the tell, a red shake), then sprints at DASH_V board widths a second to where the duck stood when the tell ended;
    a duck in his way flies DASH_FAR times the hammer's distance, with no damage. Walking off his line or jumping dodges it */
-const DASH_EVERY = 10000,
-  DASH_TELL = 600,
+const DASH_TELL = 600,
   DASH_V = 0.55,
   DASH_FAR = 1.6, // (times the hammer's KB_FAR: rules.js isn't loaded yet when this file is, so it's multiplied where it's used)
   DASH_R = 1.1; // (how near his path a duck is hit, in duck lengths, times his size)
@@ -2281,7 +2280,8 @@ export function mgjZombieHit(s, near, w, now, by, sh = null) {
     if (z.sb && by) o.mad = grudge("p:" + by, now, MAD); // (Sandbox's: it goes after whoever hurt it, sbbrain.js)
     if (o.d && (w === "grenade" || w === "glauncher") && !o.w.includes("g0"))
       o.w += "g0"; // (a blast's gore: every chunk, cuts and big holes, as there)
-    fx({ kind: t.crit && !o.hp ? "l4crit" : "hitmark", b: 1, x: o.x, y: o.y }); // (a crit that kills: its head)
+    const mk = t.crit && o.hp && { m: 1 }; // (a crit: the CRIT, and its head if it killed; m: only the mark)
+    fx({ kind: t.crit ? "l4crit" : "hitmark", b: 1, x: o.x, y: o.y, ...mk });
   }
   return sh ? (sh.zh || []).length >= most : hit;
 }
