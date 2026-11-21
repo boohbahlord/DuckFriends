@@ -21,7 +21,7 @@
      loop(name, o)          a sound on a loop (the jetpack): { stop(), move(x, y) }
      setListener(fn)        fn() → where my duck is ({ x, y }), for the distance; null for none
      loadSounds(group)      "game", "l4dd", "cabin": fetch and decode that group's files ahead of time */
-import { profile, SETTINGS_DEFAULT } from "./store.js";
+import { profile } from "./store.js";
 import { FILES } from "./sfxlist.js";
 import { netLevel } from "./settings.js";
 import { activeRoom } from "./later.js"; // (the room code comes after the first screen)
@@ -334,9 +334,7 @@ export function ceiling(a, dest) {
    audio design is a background that provides feedback and it fills the air", for a game played talking with friends) */
 const HEAD = 0.7;
 const level = () =>
-  HEAD *
-  (profile.settings.sound / 100) *
-  ((profile.settings.sfx ?? SETTINGS_DEFAULT.sfx) / 100);
+  HEAD * (profile.settings.sound / 100) * ((profile.settings.sfx ?? 100) / 100);
 
 /* each mode's own loudness, in dB over everything else (the Settings sliders stay as they are). I want Survival a
    little louder than the rest, about as loud as the whole game was before Nov 19, but its annoying guns as quiet as
@@ -475,14 +473,18 @@ function sideOf(o) {
   };
 }
 
-/* a voice cut short: a quick fade, then stopped */
-function cut(v, t) {
-  const g = v.g.gain;
+/* a gain held where it is at time t (what was scheduled after t is dropped), to go on from there */
+function freeze(g, t) {
   if (g.cancelAndHoldAtTime) g.cancelAndHoldAtTime(t);
   else {
     g.cancelScheduledValues(t);
     g.setValueAtTime(g.value, t);
   }
+}
+/* a voice cut short: a quick fade, then stopped */
+function cut(v, t) {
+  const g = v.g.gain;
+  freeze(g, t);
   g.setTargetAtTime(0, t, 0.006);
   try {
     v.src.stop(t + 0.05);
@@ -613,11 +615,7 @@ export function loop(name, o = {}) {
       if (!v || v.cut || !ac) return;
       const t = soon(),
         g = v.g.gain;
-      if (g.cancelAndHoldAtTime) g.cancelAndHoldAtTime(t);
-      else {
-        g.cancelScheduledValues(t);
-        g.setValueAtTime(g.value, t);
-      }
+      freeze(g, t);
       v.k = k * near(o) * 10 ** ((VOL[name] || 0) / 20); // (as at its start, where move measures from)
       g.linearRampToValueAtTime(
         (v.k * near(at)) / Math.max(1e-6, near(o)),
@@ -850,11 +848,7 @@ function holdStop() {
   if (!v || v.cut || !ac) return;
   const t = soon(),
     g = v.g.gain;
-  if (g.cancelAndHoldAtTime) g.cancelAndHoldAtTime(t);
-  else {
-    g.cancelScheduledValues(t);
-    g.setValueAtTime(g.value, t);
-  }
+  freeze(g, t);
   g.setTargetAtTime(0, t, 0.02);
   try {
     v.src.stop(t + 0.15); // (past 6 time constants: silent by then)
