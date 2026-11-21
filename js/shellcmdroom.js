@@ -111,7 +111,7 @@ Object.assign(CMDS, {
   skip: (args, i, x) => {
     const s = needMay(x, "canskip", "skip");
     if (idle(s)) fail("✗ skip works during a game.");
-    if (s.options.mode === "hang")
+    if (modeOf(s.options.mode).noRounds)
       fail(
         "✗ skip: Hangout has nothing to skip. The pause menu takes everyone back to the lobby.",
       );
@@ -157,7 +157,7 @@ Object.assign(CMDS, {
           : `✗ map: no map ${args.join(" ")} (map lists them)`,
       );
     needSudo(x, "map");
-    if (s.options.mode === "hang")
+    if (modeOf(s.options.mode).cabinHome)
       fail("✗ map: Hangout is always in Duck Cabin.");
     if (!idle(s)) fail("✗ map: in the lobby.");
     x.ctx.room.send({ t: "options", options: { map: m[0] } });

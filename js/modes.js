@@ -222,6 +222,8 @@ export const MODES = [
     cat: "social",
     name: "Hangout",
     timed: true, // (a time limit when Random or the vote picked it: Game Settings hangTime)
+    noRounds: true, // (no rounds, no winners, no stats of its own: the command line and the stats window ask this, never the name)
+    cabinHome: true, // (Duck Cabin is its own map, where its ghosts and Duck Cabin's Justin live)
     tip: "No rounds, no winners, no pressure: hang out in Duck Cabin. Piano, couches, chalk, a pool, soccer, until you all go back to the lobby. It can only be played on the Duck Cabin map.",
   },
   {

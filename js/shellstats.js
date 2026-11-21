@@ -21,7 +21,7 @@ export function statLines(ctx, scope, args) {
     mi = args.indexOf("-m"),
     mode = mi >= 0 ? args[mi + 1] : s.options.mode || "aod",
     at = args.filter((a) => a.startsWith("@"));
-  if (mode === "hang")
+  if (modeOf(mode).noRounds)
     fail(
       "✗ Hangout keeps no stats of its own; try totalstats -m aod (or another game).",
     );
@@ -104,10 +104,10 @@ function forgameShow(s) {
           )} (${m.kinds.join(", ")}${m.turns ? `, ${m.turns} turns` : ""}${m.stages && m.stages.length ? `, in ${m.stages.join(" ")}` : ""})`,
     );
   return [
-    `${modeOf(o.mode).name} on ${mapName(o.map)}${s.phase === "lobby" ? " (in the lobby)" : o.mode === "hang" ? ", hanging out" : `, round ${s.round + 1}`}`,
+    `${modeOf(o.mode).name} on ${mapName(o.map)}${s.phase === "lobby" ? " (in the lobby)" : modeOf(o.mode).noRounds ? ", hanging out" : `, round ${s.round + 1}`}`,
     `  timers:    writing ${t(o.submitTime)} · answer ${o.answerOff ? "off" : t(o.answerTime)} · catch-up ${t(o.catchUp)}`,
     `  turn-end:  ${sh}`,
-    `  order ${o.order} · freeroam ${o.freeRoam ? "on" : "off"}${o.mode === "hang" ? "" : ` · discussion ${o.discuss ? "on" : "off"} · unvote-stops ${o.unvoteStops ? "on" : "off"}`} · silly ${o.fun ? "on" : "off"}${o.mode === "hang" ? ` · ghosts ${o.ghosts ? "on" : "off"}` : ` · justin ${o.justin ? "on" : "off"}`}`,
+    `  order ${o.order} · freeroam ${o.freeRoam ? "on" : "off"}${modeOf(o.mode).noRounds ? "" : ` · discussion ${o.discuss ? "on" : "off"} · unvote-stops ${o.unvoteStops ? "on" : "off"}`} · silly ${o.fun ? "on" : "off"}${modeOf(o.mode).cabinHome ? ` · ghosts ${o.ghosts ? "on" : "off"}` : ` · justin ${o.justin ? "on" : "off"}`}`,
     `  mutes for everyone: ${mutes.join("; ") || "none"}`,
   ].join("\n");
 }
@@ -180,13 +180,14 @@ export function forgame(x, args) {
   }
   if (a0 === "ghosts") {
     if (!onOff) fail("✗ forgame ghosts on | off");
-    if (s.options.mode !== "hang") fail("✗ Ghosts are only in Duck Cabin.");
+    if (!modeOf(s.options.mode).cabinHome)
+      fail("✗ Ghosts are only in Duck Cabin.");
     set({ ghosts: on ? 1 : 0 });
     return `Ghosts ${on ? "on: a knocked-down duck's ghost walks about until Space" : "off"}.`;
   }
   if (a0 === "justin") {
     if (!onOff) fail("✗ forgame justin on | off");
-    if (s.options.mode === "hang")
+    if (modeOf(s.options.mode).cabinHome)
       fail("✗ Justin already lives in Duck Cabin.");
     if (["l4dd", "surv", "mgj"].includes(s.options.mode))
       fail("✗ Not in this game: Justin can't be called in here.");
