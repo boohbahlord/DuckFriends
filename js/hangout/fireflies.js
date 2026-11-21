@@ -6,7 +6,7 @@
 import { activity } from "./registry.js";
 import { low } from "../gfx.js";
 import { inCabin, inPool, W, H, EDGE } from "./layout.js";
-import { pxAt } from "../pxdom.js";
+import { pxAt, fitLayer } from "../pxdom.js";
 import { pixelOn, gridPx } from "../pixel.js";
 
 const MOST = 40,
@@ -154,11 +154,7 @@ activity({
     drawnAt = now;
     from = [o.left, o.top];
     if (slid) cv.style.transform = slid = "";
-    if (cv.width !== w || cv.height !== h) {
-      cv.width = w;
-      cv.height = h;
-    }
-    g.setTransform(1, 0, 0, 1, 0, 0);
+    fitLayer(cv, g, w, h);
     g.clearRect(0, 0, w, h);
     g.globalCompositeOperation = "lighter";
     const base = 36 * Wd.sc * dpr;

@@ -74,7 +74,7 @@ export function zoneStat(s, zid, n) {
     p = ptsOf(s)[id];
   if (!p) return 0;
   if (n === "steps") return sbStep(s, id);
-  if (n === "size") return +txt(p, "sq") || 1;
+  if (n === "size") return +txt(p, "sq") || 4; // (in tiles, as its box)
   if (n === "squares") {
     const v = txt(p, "n").trim();
     return v ? +v : sbGrid(s, p, W, H).cells.length; // (blank: all of them)
@@ -105,7 +105,7 @@ export function zoneSet(s, zid, n, v) {
       s,
       id,
       "sq",
-      Math.round(Math.min(20, Math.max(0.25, v)) * 100) / 100,
+      Math.round(Math.min(80, Math.max(1, v))), // (whole tiles)
     );
   else if (n === "squares")
     setBox(s, id, "n", Math.round(Math.min(4096, Math.max(1, v))));

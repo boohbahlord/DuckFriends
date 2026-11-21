@@ -8,7 +8,7 @@ armpage.js 142 a page of Customize's tiles put
 armspeed.js 34 how fast the weapons work, in
 art.js 403 pictures drawn in code
 audioimport.js 186 a player's own song, made small
-awards.js 20 the stats' awards: one card, one
+awards.js 37 the stats' awards: one card, one
 barrelheat.js 70 a hot barrel
 bash.js 1360 the command line's language: a small
 bbrules.js 380 the rules of Bicker Brackets
@@ -18,7 +18,7 @@ boardjustin.js 701 Justin on the boards
 botduck.js 90 a computer's duck: a random look,
 botlines.js 188 What the computers write and say
 bots.js 1434 computers
-brackets.js 469 Bicker Brackets: what the screen shows
+brackets.js 459 Bicker Brackets: what the screen shows
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
 chat.js 1596 text chat and the command line
@@ -54,7 +54,7 @@ fxmotion.js 229 how a held weapon and the
 game.js 8478 the game screen
 gamedefaults.js 43 the game's own numbers, for every
 gameready.js 47 
-gamesettings.js 1755 Game Settings: the whole screen, like
+gamesettings.js 1758 Game Settings: the whole screen, like
 gamestats.js 191 what `stats` and `roundstats` print for
 gfx.js 8 Low graphics
 gmodes.js 246 Sandbox Phase 6: made game modes
@@ -116,7 +116,7 @@ meters.js 114 the thin bars under my duck's
 mgj.js 219 Mad God Justin: what the screen
 mgjart.js 96 Mad God Justin's new pictures
 mgjrules.js 2286 
-modes.js 437 the game modes
+modes.js 440 the game modes
 music.js 590 the music: our own songs, played
 musicbar.js 169 the music bar: the song the
 name.js 165 fonts and how a player's name
@@ -149,7 +149,7 @@ powerart.js 377 Dead Ducks Arcade: the power box
 pxa.js 341 made by tools/pixel-art.cjs:
 pxbake.js 627 a map's pictures made into pixels
 pxcard.js 259 the player cards' pattern motifs as
-pxdom.js 754 the pixel look for drawings already
+pxdom.js 764 the pixel look for drawings already
 pxmap.js 45 a map as pixel files
 pxpic.js 22 the maps that have a picture
 pxtext.js 263 emoji and tooltips in the pixel
@@ -162,7 +162,7 @@ rooms.js 256 Play: create a room, and the
 router.js 112 screens
 rules.js 5885 the rules of Agree or Disagree
 sandbox.js 1359 Sandbox: the key windows
-sandboxrules.js 2059 Sandbox: which map it plays on,
+sandboxrules.js 2056 Sandbox: which map it plays on,
 sbarms.js 124 Sandbox: a made NPC's weapons in
 sbaudio.js 211 Sandbox: songs players bring in
 sbbody.js 233 Sandbox: an NPC's body, where it
@@ -189,7 +189,7 @@ sbnpcs.js 73 Sandbox: the NPCs I make
 sbnumberat.js 476 Sandbox: NPCs that run a Seriat
 sbout.js 62 Sandbox off the zombie maps: out
 sbrotate.js 102 Sandbox, Direction's Rotate in the right-click
-sbsave.js 273 Sandbox: saving a Sandbox as it
+sbsave.js 292 Sandbox: saving a Sandbox as it
 sbsaves.js 743 Sandbox's saves: kept on the host's
 sbsfx.js 74 Sandbox's sounds
 sbspawn.js 1709 Sandbox: spawns and respawns , the
@@ -220,9 +220,9 @@ stamina.js 41 my sprint's stamina, in every mode
 statrows.js 87 I want one table for what
 stats.js 165 stats: a player's stat box and
 store.js 262 what this device remembers
-story.js 211 Story Chain: what the screen shows
+story.js 205 Story Chain: what the screen shows
 styles.js 386 duck styles
-survrules.js 324 Survival
+survrules.js 321 Survival
 svgurl.js 10 a drawing as a data:
 textutils.js 1150 the command line's text tools
 touch.js 284 touch controls on the board
@@ -234,7 +234,7 @@ umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 3121 Updates
+updates.js 3131 Updates
 vdd.js 190 Valentine's Duck Date: what the screen
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
@@ -263,7 +263,7 @@ death.js 101 how long a knocked-down duck can't
 doors.js 32 the doors: they swing open while
 dpground.js 320 Downpour's ground
 falls.js 118 falling a long way
-fireflies.js 178 fireflies
+fireflies.js 174 fireflies
 flicker.js 83 now and then a light stutters
 ghosts.js 110 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in blue
@@ -276,7 +276,7 @@ pianokeys.js 665 Hangout: the piano's keyboard mode
 plank.js 90 the plank from the red car's
 poker.js 1185 poker at the blackjack table
 pool.js 9 down the hill: the water and
-power.js 504 the power box, the blackout, the
+power.js 500 the power box, the blackout, the
 pxw-cabin-l4.js 418 made by tools/pixel-world.cjs:
 pxw-cabin.js 433 made by tools/pixel-world.cjs:
 pxw-downpour.js 344 made by tools/pixel-world.cjs:

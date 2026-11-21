@@ -32,7 +32,7 @@ import { cabinSVG } from "./shapes.js";
 import { sway, stutterOf, lightNow } from "./flicker.js";
 import { play, loop } from "./sounds.js";
 import { music } from "../music.js";
-import { pxAt } from "../pxdom.js";
+import { pxAt, fitLayer } from "../pxdom.js";
 import { pixelOn, gridPx } from "../pixel.js";
 
 const WAIT = 10000; // ms before the power can go back on
@@ -284,11 +284,7 @@ function paint(now, ctx) {
   drawnAt = now;
   from = [ox, oy];
   if (slid) cv.style.transform = slid = "";
-  if (cv.width !== w || cv.height !== h) {
-    cv.width = w;
-    cv.height = h;
-  }
-  g.setTransform(1, 0, 0, 1, 0, 0);
+  fitLayer(cv, g, w, h);
   g.globalCompositeOperation = "source-over";
   g.clearRect(0, 0, w, h);
   if (base) {

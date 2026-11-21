@@ -555,23 +555,20 @@ const listBox = (name, def) => ({
   def,
   len: 200, // (its text kept up to this long: sbspawn.js withField; a plain box keeps 80)
 });
+export const SB_TILE = 0.25; // (duck lengths: a hitbox tile, sbTiles below)
+const sideBox = (name) => ({
+  name,
+  kind: "int",
+  per: SB_TILE,
+  min: 1,
+  max: 160,
+  def: "16",
+}); // (per: duck lengths in one)
 export const SB_ZONE = {
-  /* a thin rectangle is a wall (plan Phase 3), down to one hitbox tile (a quarter of a duck length): sizes go in
-     quarters, a typed 2.3 is 2.25 */
-  zw: {
-    name: "Width (duck lengths)",
-    kind: "tenth",
-    min: 0.25,
-    max: 40,
-    def: "4",
-  },
-  zh: {
-    name: "Height (duck lengths)",
-    kind: "tenth",
-    min: 0.25,
-    max: 40,
-    def: "4",
-  },
+  /* a thin rectangle is a wall (plan Phase 3), down to one hitbox tile: typed in whole tiles (the owner's, Nov 21
+     19:13Z: distances in tiles, never duck lengths), four to a duck length; kept as duck lengths (p.zw, p.zh) */
+  zw: sideBox("Width (tiles)"),
+  zh: sideBox("Height (tiles)"),
   fx: {
     name: "Act",
     check: (t) =>
@@ -800,9 +797,8 @@ export const SB_ZONE_PX = 48;
    adjusted like they did before and be different sizes and shapes. But how they do that is based on the smallest units
    that build up their size. And those units are based on the tiles that check for hitbox"): a quarter of a duck length
    each, one tile at least, 40 duck lengths at most */
-const QUARTER = 0.25; // (SB_TILE, below)
 export const sbFitSide = (v) =>
-  Math.max(QUARTER, Math.min(40, Math.round(v / QUARTER) * QUARTER));
+  Math.max(SB_TILE, Math.min(40, Math.round(v / SB_TILE) * SB_TILE));
 /* ---------- every build block's shape (plan Phase 2: "Spawn, respawn, loot and zone become one thing you put down") ----------
    A block has a shape and a size (zw, zh: duck lengths; a zone starts at 4 by 4, the rest at 1 by 1) or fills the whole
    map. Square by default; the others by adding sides, stopping once it already looks round. It is made of the hitbox
@@ -955,12 +951,10 @@ export const SB_ORDER = {
     def: "",
   },
   sq: {
-    name: "Square size (duck lengths)",
+    name: "Square size (tiles)",
     check: (t) =>
-      /^\d+(\.\d+)?$/.test(String(t).trim()) && +t >= 0.25 && +t <= 20
-        ? ""
-        : "0.25 to 20",
-    def: "1",
+      /^\d+$/.test(String(t).trim()) && +t >= 1 && +t <= 80 ? "" : "1 to 80",
+    def: "4",
   },
   st: {
     name: "Seconds per step",
@@ -1113,8 +1107,7 @@ export const sbOrder = (id, p) =>
    tile sticking out past its edge by less than 0.4 is still all of it. A block thinner than a tile has one tile that
    thin. With Snap on (the default) its corner sits on the ground's tile lines, one every tile from the map's top left
    corner, and it turns a quarter at a time, so its tiles are the ground's tiles (sbSnapSpot). Its potential order's
-   squares (Square size) are made of its tiles */
-export const SB_TILE = QUARTER; // (duck lengths)
+   squares (Square size) are made of its tiles (SB_TILE, above) */
 export const SB_TAKE = 0.6;
 const SAMPLES = 6, // (points across a tile each way, to tell how much of it the shape covers)
   MAX_TILES = 256, // (tiles along a side at most: a bigger block has bigger tiles)
@@ -1193,7 +1186,11 @@ export function sbGrid(s, p, W = 1, H = 1) {
     const [rx, ry] = sbUnit(s, W, H);
     [w, h] = [1 / rx, 1 / ry];
   }
-  const sq = Math.max(+ordTxt(p, "sq") || 1, w / MAX_SIDE, h / MAX_SIDE),
+  const sq = Math.max(
+      (+ordTxt(p, "sq") || 4) * SB_TILE, // (typed in tiles)
+      w / MAX_SIDE,
+      h / MAX_SIDE,
+    ),
     key = `${fill ? "fill" : sbShape(p)} ${w} ${h} ${sq} ${sbFlips(p)}`;
   let g = GRIDS.get(key);
   if (g) return g;
