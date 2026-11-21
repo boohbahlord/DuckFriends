@@ -330,6 +330,9 @@ html {
     font-size: calc(14px * var(--ui, 1));
   }
 } /* a phone's 100% is a little smaller */
+html.phone:not(.phone-land) {
+  font-size: calc(12.8px * var(--ui, 1));
+} /* (the owner's, Nov 21 18:59Z: 80% is a phone's new 100%; on its side it is 12px, html.phone-land below) */
 body {
   margin: 0;
   min-height: 100dvh;
@@ -2451,6 +2454,9 @@ textarea.note-glow {
   display: flex;
   align-items: center;
   gap: 0.8rem;
+  position: relative;
+  z-index: 2; /* (the top buttons stay over the music bar and the stage's name at every UI scale) */
+  flex: none;
 }
 .gbar .iconbtn {
   width: 2.3rem;
@@ -19825,6 +19831,10 @@ html.phone-land .lobby-left {
     "art status"
     "menu menu"
     "info info";
+  grid-template-rows: auto auto auto auto 1fr auto;
+  min-height: calc(
+    100dvh - 8.5rem
+  ); /* (the room's own height: the menu goes to the bottom of it) */
   column-gap: 1rem;
   align-content: start;
 }
@@ -19855,9 +19865,23 @@ html.phone-land .lobby-left > .lobby-status {
 html.phone-land .lobby-left > .lmenu {
   grid-area: menu;
   margin-top: 0.6rem;
+  align-self: end; /* (the menu, Ready and Start, sits low, by the thumb, not floating mid-screen: the owner's, Nov 21 18:59Z) */
 }
 html.phone-land .lobby-left > .lmenu-info {
   grid-area: info;
+}
+/* a phone on its side has rounded corners and a case around them: the corner pieces (the top bar's pause, the bottom bar's
+   health meter, Notes at the bottom left, the docks) come in from the screen's edge (the owner's, Nov 21 18:59Z) */
+html.phone-land .gbar,
+html.phone-land .bbar {
+  padding-left: max(1.8rem, env(safe-area-inset-left));
+  padding-right: max(1.8rem, env(safe-area-inset-right));
+}
+html.phone-land .dock-l {
+  padding-left: max(1.8rem, env(safe-area-inset-left));
+}
+html.phone-land .dock-r {
+  padding-right: max(1.8rem, env(safe-area-inset-right));
 }
 /* a phone held upright: the full-screen button joins the top right, so the buttons sit a little closer and smaller,
    leaving the stage's name about the room it had */

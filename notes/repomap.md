@@ -295,7 +295,7 @@ trampoline.js 142 the trampoline
 tv.js 117 the TV: seven channels, the next
 vehicles.js 116 what a duck stands on on
 water.js 442 the pool: ducks in the water,
-world.js 1753 Hangout on the screen: the camera,
+world.js 1754 Hangout on the screen: the camera,
 
 ## js/pxm/
 board-light.js 7 the menus' background in the light,
