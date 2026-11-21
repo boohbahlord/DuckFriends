@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v226",
+    version: 226,
+    date: "Nov 21, 2026",
+    title: "One weapon engine",
+    news: [
+      "Behind the scenes: every weapon in every mode (the boards, Dead Ducks Arcade, Survival, Sandbox and Mad God Justin) now runs on one shared weapon engine: shots in the air, the grenade's arc, melee swings and their knock-back. Nothing plays differently, but a weapon change now works the same everywhere at once.",
+    ],
+  },
+  {
     id: "v225",
     version: 225,
     date: "Nov 21, 2026",
