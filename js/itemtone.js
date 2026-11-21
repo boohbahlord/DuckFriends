@@ -5,16 +5,38 @@
    place's color, the same shade it was drawn in (at the item's own colors it comes out exactly as written, so nothing
    looks different until a player picks), and any other color stays as written. A shade is a mix of the place's color
    and a fixed color, so it stays a palette swap for the part sheets (duckparts.js). */
+import { METAL } from "./duck.js";
+
 let cur = null; // (the item being drawn: { def, o } with o its colors now)
 /* draw an item: its colors o, the item def ({ colors: [[place, name, default]…], fixed: { hex: place } }) */
 export function drawing(def, o, make) {
   const was = cur;
   cur = { def, o };
   try {
-    return make();
+    return bands(make(), o);
   } finally {
     cur = was;
   }
+}
+/* a metal place's color written straight into the drawing (not through F) comes out as the metal's middle tone
+   (flatMetal): painted, filled or stroked, it gets the metal's bands too */
+function bands(res, o) {
+  const ms = Object.values(o).map(metalOf).filter(Boolean);
+  if (!ms.length) return res;
+  const swap = (s) =>
+    typeof s === "string"
+      ? ms.reduce(
+          (t, m) =>
+            t.replace(
+              new RegExp(`(fill|stroke)="${METAL[m][2]}"`, "gi"),
+              `$1="url(#mt-${m})"`,
+            ),
+          s,
+        )
+      : s;
+  return res && typeof res === "object"
+    ? Object.fromEntries(Object.entries(res).map(([k, v]) => [k, swap(v)]))
+    : swap(res);
 }
 const norm = (h) =>
   h.length === 4
@@ -47,15 +69,30 @@ function shade(from, to) {
   seen.set(key, found);
   return found;
 }
+/* a place in a metal ("m:gold", from Colors' Metallic list): its own color is the metal's bands (duck.js metalDefs
+   draws them as "mt-gold"), its shades are shades of the metal's middle tone */
+const metalOf = (v) =>
+  typeof v === "string" && v.startsWith("m:") && METAL[v.slice(2)]
+    ? v.slice(2)
+    : null;
+/* an item's colors for its own drawing code: a metal place as the metal's middle tone (F gives the bands) */
+export const flatMetal = (o) =>
+  Object.fromEntries(
+    Object.entries(o).map(([k, v]) => [
+      k,
+      metalOf(v) ? METAL[metalOf(v)][2] : v,
+    ]),
+  );
 export function F(hex) {
   if (!cur) return hex;
   const h = norm(hex),
     place = cur.def.fixed && cur.def.fixed[h];
   if (!place) return hex;
   const from = norm(cur.def.colors.find(([k]) => k === place)[2]),
-    now = cur.o[place];
-  if (!now || norm(now) === from) return hex;
-  if (from === h) return now;
+    m = metalOf(cur.o[place]),
+    now = m ? METAL[m][2] : cur.o[place];
+  if (!now || (!m && norm(now) === from)) return hex;
+  if (from === h) return m ? `url(#mt-${m})` : now;
   const [c, t] = shade(from, h);
   return t >= 1 ? hex : blend(now, c, t);
 }

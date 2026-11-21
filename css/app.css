@@ -5451,6 +5451,64 @@ html.moving .pix-sun {
 .colors.grid3 .invent {
   margin-top: 0.4rem;
 }
+/* Colors' drop-downs, under the hex box: the human skins and the metals, each a list of swatches drawn as the colors
+   above them are (the owner's, Nov 21 16:37Z: "conform to the UI of the top colors above it"), no names (a skin's hex
+   and a metal's name on hover); one open at a time */
+.cdrops {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.22rem;
+  margin-top: 0.4rem;
+}
+.cdrop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  height: 1.9rem;
+  padding: 0 0.5rem;
+  border: 0.1rem solid var(--line);
+  border-radius: 0.4rem;
+  background: var(--panel);
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.cdrop::after {
+  content: "▸";
+  font-size: 0.7em;
+  opacity: 0.8;
+}
+.cdrop[aria-expanded="true"] {
+  border-color: var(--blue);
+}
+.cdrop[aria-expanded="true"]::after {
+  content: "▾";
+}
+.clist {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.22rem;
+  margin-top: 0.22rem;
+}
+.clist[hidden] {
+  display: none;
+}
+.clist .sw {
+  width: 100%;
+  height: 1.7rem;
+  border-radius: 0.3rem;
+  border-width: 0.1rem;
+}
+.clist .sw[aria-pressed="true"] {
+  outline: 0.18rem solid var(--blue);
+  outline-offset: 0.05rem;
+}
+.clist .sw[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: default;
+}
 @media (max-width: 760px) {
   .win-armory {
     padding: 0.7rem;
@@ -5500,7 +5558,8 @@ html.moving .pix-sun {
     flex-direction: row;
     flex-wrap: wrap;
   }
-  .colors.grid3 .swatches {
+  .colors.grid3 .swatches,
+  .clist {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
@@ -19106,6 +19165,8 @@ html.pixel .chat-sugg li,
 html.pixel .chip,
 html.pixel .colors.grid3 .brush,
 html.pixel .colors.grid3 .sw,
+html.pixel .clist .sw,
+html.pixel .cdrop,
 html.pixel .cols,
 html.pixel .confetti-rain i,
 html.pixel .cooldown,
