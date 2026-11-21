@@ -8,6 +8,7 @@
    way, again each time the weapon is ready, for as long as it's held out there. Coming back inside the edge stops the
    attacks and keeps aiming; letting go stops both. Only on touch phones (css/app.css shows it). */
 import { el, flag } from "./ui.js";
+import { hotH, hotHOn } from "./hotpick.js";
 
 /* the knob's ring is 120 px across (60 px from the middle) and the knob itself goes no farther than REACH, 42 px. It
    aims from 10 px out, and attacks from 36 px: 86% of the knob's travel but only 60% of the ring, so the thumb has a wide
@@ -27,11 +28,12 @@ const CROSS =
    reloadOn() → what is in hand can be reloaded (the small R shows), reload() */
 export function mountPad(api) {
   const box = el(
-    `<div class="tpad gone"><div class="tpad-atk" role="button" aria-label="Aim and attack" hidden><div class="tpad-ring" aria-hidden="true"></div><i aria-hidden="true">${CROSS}</i></div><div class="tpad-col"><button type="button" class="tpad-jump" aria-label="Jump">${ARROW}</button><button type="button" class="tpad-reload" aria-label="Reload" hidden>R</button></div></div>`,
+    `<div class="tpad gone"><div class="tpad-atk" role="button" aria-label="Aim and attack" hidden><div class="tpad-ring" aria-hidden="true"></div><i aria-hidden="true">${CROSS}</i></div><div class="tpad-col"><button type="button" class="tpad-jump" aria-label="Jump">${ARROW}</button><button type="button" class="tpad-reload" aria-label="Reload" hidden>R</button><button type="button" class="tpad-hot" aria-label="Hotbar" hidden>H</button></div></div>`,
   );
   const atk = box.querySelector(".tpad-atk"),
     jumpBtn = box.querySelector(".tpad-jump"),
     rlBtn = box.querySelector(".tpad-reload"),
+    hotBtn = box.querySelector(".tpad-hot"),
     knob = atk.querySelector("i");
   let push = null; // the finger on the stick: { id, x, y (the stick's middle), firing, t (the next attack) }
 
@@ -49,6 +51,9 @@ export function mountPad(api) {
     const rl = !!on && !!api.reloadOn && !!api.reloadOn(); // (the small R above the jump button: the guns that reload)
     hide(rlBtn, !rl);
     flag(box, "rl", rl);
+    const hot = !!on && hotHOn(); // (the small H on top: my hotbar's window, as the H key; P5)
+    hide(hotBtn, !hot);
+    flag(box, "hot", hot);
     if (!w && push) letGo();
   };
   const tick = setInterval(sync, 150);
@@ -118,7 +123,11 @@ export function mountPad(api) {
   }
   atk.addEventListener("pointerup", letGo);
   atk.addEventListener("pointercancel", letGo);
-  for (const b of [atk, jumpBtn, rlBtn])
+  hotBtn.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    hotH();
+  });
+  for (const b of [atk, jumpBtn, rlBtn, hotBtn])
     b.addEventListener("contextmenu", (e) => e.preventDefault());
 
   return {

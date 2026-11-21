@@ -71,8 +71,8 @@ helppages.js 1498 the command line's Help pages: help
 hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
 hooks.js 3 hooks between screens that can't import
-hotbar.js 480 the specials on the number keys
-hotpick.js 296 What goes in my duck's hand
+hotbar.js 497 the specials on the number keys
+hotpick.js 318 What goes in my duck's hand
 hpmath.js 23 HP in hundredths
 hpmeter.js 327 HP meters and the little "+1
 invisible.js 11 Who is invisible right now :
@@ -137,7 +137,7 @@ online.js 975 online rooms
 outfits.js 1141 outfits
 outlines.js 347 the outlines
 perf.js 92 the frame-rate readout
-phonepad.js 133 phones: the aim-and-attack stick and the
+phonepad.js 142 phones: the aim-and-attack stick and the
 picrop.js 268 cropping a picture: every picture put
 pixel.js 724 the pixel look
 pixelpalette.js 192 the pixel look's colors
@@ -160,7 +160,7 @@ report.js 114 Report Bug or Suggest Ideas
 rooms.js 256 Play: create a room, and the
 router.js 112 screens
 rules.js 6240 the rules of Agree or Disagree
-sandbox.js 1348 Sandbox: the key windows
+sandbox.js 1347 Sandbox: the key windows
 sandboxrules.js 2059 Sandbox: which map it plays on,
 sbarms.js 124 Sandbox: a made NPC's weapons in
 sbaudio.js 211 Sandbox: songs players bring in
@@ -176,8 +176,8 @@ sbgodview.js 34 Sandbox: invisible players, on the screen
 sbgroups.js 486 Sandbox: groups , the rules
 sbgroupview.js 416 Sandbox: groups , on the screen
 sbhelp.js 273 Sandbox: the help manual
-sbhot.js 155 Sandbox: the hotbar , the rules
-sbhotview.js 323 Sandbox: the hotbar , the screen
+sbhot.js 143 Sandbox: the hotbar , the rules
+sbhotview.js 406 Sandbox: the hotbar , the screen
 sblooks.js 48 Sandbox: a zone's look
 sbloot.js 444 Sandbox: loot orbs , the rules
 sblootview.js 482 Sandbox: loot orbs , on the

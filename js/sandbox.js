@@ -51,7 +51,6 @@ import {
   hotState,
   hotWinHTML,
   hotWinSig,
-  openPut,
   sbHotOn,
 } from "./sbhotview.js";
 import {
@@ -99,7 +98,7 @@ export const SB_SHEET = [
   ],
   [
     "H",
-    "Hotbar: use your Customize hotbar or empty it. The host can lock it, make one everyone's default and add spawn buttons.",
+    "Hotbar: use your Customize hotbar or empty it. The host can lock it and add spawn buttons.",
   ],
   [
     "G",
@@ -273,7 +272,7 @@ const OPTIONS = {
     ]; // (Build a brain, New NPC, then the four kinds' defaults, then the made ones)
   },
   n: [],
-  h: (R) => [...hotRows(R, openPut), helpRow("h")],
+  h: (R) => [...hotRows(R), helpRow("h")],
   g: (R) => {
     return [...saveRows(R), listsRow, helpRow("g")]; // (Save, Save as, Make a map and Music: sbsaves.js; My lists: sbgroupview.js)
   },
