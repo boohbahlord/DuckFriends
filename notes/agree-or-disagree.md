@@ -7810,3 +7810,6 @@ Make the Ethan duck have a pale white skin tone of a human being, so that his ha
 
 - 19:10Z: "Okay, I don't know if we should call that tile duct lengths though, because I don't even think it is a duct length. But those tiles are, they need to be called something because they're the units in which a lot of these things are determined by. So yeah. I like the numbers that you used. We can go with that. The tiles for the zones, whatever they're called, they're fine as they are. Let's just make sure they're renamed to something that works. Because duck length is kind of confusing to me, because it doesn't look like an actual duck length."
   Decision (Adam): explosion falloff = halving (9 center always crit, 9, 4.5, 2.25, 1.13, 0.56, stop under 0.5, 25% crit outside the center). The zone tiles stay the size they are; only the unit's name "duck lengths" changes, to a name the owner picks (asked). B0 = one unit, that tile, named his way everywhere.
+
+- 19:13Z (in Joseph's thread): "I'm torn between tiles or cells. I'll say tiles."
+  Decision: the distance unit is called "tiles" everywhere "duck lengths" shows; the size stays.
