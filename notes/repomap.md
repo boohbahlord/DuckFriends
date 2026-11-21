@@ -12,7 +12,7 @@ barrelheat.js 70 a hot barrel
 bash.js 1360 the command line's language: a small
 beaks.js 138 beaks
 bloodpool.js 50 a pool of blood: the one
-boardjustin.js 735 Justin on the boards
+boardjustin.js 695 Justin on the boards
 botduck.js 90 a computer's duck: a random look,
 botlines.js 188 What the computers write and say
 bots.js 1430 computers
