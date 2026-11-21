@@ -579,16 +579,16 @@
  },
  "sb-hotbar": {
   "frames": 480,
-  "digest": "99anzy",
+  "digest": "1h595l3",
   "every": [
    "1j7bi85",
    "15wwlb7",
-   "1nhnm71",
-   "1qjrrdj",
-   "nrkuz3",
-   "kmfoas",
-   "kmfoas",
-   "kmfoas"
+   "68d9sb",
+   "1nixeep",
+   "14w6l9q",
+   "14w6l9q",
+   "14w6l9q",
+   "14w6l9q"
   ],
   "seen": {
    "me": {
@@ -598,7 +598,7 @@
    "sent": {
     "tick": 40,
     "sbh": 11,
-    "move": 2
+    "move": 4
    }
   }
  }
