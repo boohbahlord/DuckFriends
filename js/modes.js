@@ -298,11 +298,11 @@ export const modeName = (s) =>
    lists the games (the votes, Random, Game Settings) lists only these there */
 export const SOLO_MODES = ["hang", "l4dd", "surv", "mgj", "sandbox"];
 /* Survival is hidden from every list until a terminal command in the lobby turns it on for the room (the owner's, Nov
-   21 18:59Z: `sudo survival on`; s.options.survOn). It stays listed while it is the game being played */
+   21 18:59Z: `sudo survival on`; s.options.survOn). */
 export const HIDDEN_MODES = { surv: "survOn" };
-export const modeShown = (s, m) => {
+const modeShown = (s, m) => {
   const k = HIDDEN_MODES[m.id];
-  return !k || !!(s && s.options && (s.options[k] || s.options.mode === m.id));
+  return !k || !!(s && s.options && s.options[k]);
 };
 export const modesFor = (s) =>
   (s && s.solo ? MODES.filter((m) => SOLO_MODES.includes(m.id)) : MODES).filter(

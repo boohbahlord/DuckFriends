@@ -1,6 +1,6 @@
 /* the room, game and test commands (a pure move out of shell.js: the entries of its CMDS table, run by the same shell) */
 import { profile } from "./store.js";
-import { modeOf, modesFor } from "./modes.js";
+import { modeOf, modesFor, HIDDEN_MODES } from "./modes.js";
 import {
   FORTUNES,
   allJumps,
@@ -193,7 +193,7 @@ Object.assign(CMDS, {
       fail("✗ survival: sudo survival <on | off>");
     if (!idle(s)) fail("✗ survival: in the lobby.");
     const set = { survOn: on === "on" };
-    if (on === "off" && s.options.mode === "surv") set.mode = "aod";
+    if (on === "off" && HIDDEN_MODES[s.options.mode]) set.mode = "aod"; // (a hidden game being played goes back to the first)
     x.ctx.room.send({ t: "options", options: set });
     return on === "on"
       ? "Survival is in the game lists."
