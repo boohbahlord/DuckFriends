@@ -158,7 +158,7 @@ import { inCabin, useMode, W as HW, H as HH } from "./hangout/layout.js";
 
 import { justinTick, justinDown } from "./boardjustin.js";
 
-import { pwAdd, pwHit, pwTick, CRIT_DOWN } from "./wounds.js";
+import { pwTick } from "./wounds.js";
 
 import {
   isMgj,
@@ -173,8 +173,6 @@ import {
   PELLET_LIFE,
   SPREAD,
   CHAIR_R,
-  CAKE_SPEED,
-  CAKE_EAT_MS,
   mgjMag,
   mgjOut,
   ammoOf,
@@ -203,8 +201,6 @@ import {
   MGJ_GUNS,
   MGJ_MELEE,
   NADE_GROW,
-  critOf,
-  armOfShot,
 } from "./guns.js";
 
 import { MAPS, MAP_FORMS, mapForm, mapName, isWorldMap } from "./maps.js";
@@ -263,19 +259,16 @@ import {
 
 import {
   MELEE,
-  PHP,
   SB_H,
   attacks,
   chainShot,
   cutPic,
-  dmgOf,
   duckFlame,
   floorFirst,
   groundFire,
   gunSpeed,
   moveShots,
   sizeShots,
-  soaks,
   strike,
 } from "./boardfire.js";
 
@@ -326,6 +319,8 @@ import {
   voteRate,
   votesDue,
 } from "./voterules.js";
+
+import { cakeGone, throwCake } from "./boardfire.js";
 
 import { shuffle, anyOf } from "./random.js";
 
@@ -2987,105 +2982,6 @@ export function safeReduce(state, a, now = Date.now()) {
   }
 }
 
-/* ---------- the Zebra cake special ----------
-   One in the room at a time: s.zcake = { n, by, x0, y0, vx, vy, t, stop, eat, hin }. It flies the way it was thrown, as
-   Mad God Justin's does, and lands at the board's edge or after 6 s (Hangout: at the cabin's walls or the world's edge
-   too; hin, the side it's on). Justin runs after it wherever he is and eats it, and does nothing else meanwhile
-   (boardjustin.js, hangout/justin.js: eat, when he started); with no Justin to eat it, it's gone 12 s after it lands */
-const CAKE_LEFT = 12000;
-function throwCake(s, by, p, aim, now) {
-  const vx = aim[0] * CAKE_SPEED,
-    vy = aim[1] * CAKE_SPEED;
-  let stop = 6;
-  if (isHang(s)) {
-    const side = inCabin(p.x * HW, p.y * HH) ? 1 : 0;
-    for (let t = 0.05; t <= 6; t += 0.05) {
-      const x = p.x + vx * t,
-        y = p.y + vy * t;
-      if (
-        x < 0.005 ||
-        x > 0.995 ||
-        y < 0.005 ||
-        y > 0.995 ||
-        (inCabin(x * HW, y * HH) ? 1 : 0) !== side
-      ) {
-        stop = t - 0.05;
-        break;
-      }
-    }
-  } else {
-    const tx =
-        vx > 0 ? (0.97 - p.x) / vx : vx < 0 ? (0.03 - p.x) / vx : Infinity,
-      ty = vy > 0 ? (0.96 - p.y) / vy : vy < 0 ? (0.04 - p.y) / vy : Infinity;
-    stop = Math.min(tx, ty, 6);
-  }
-  s.zcake = {
-    n: s.fxN,
-    by,
-    x0: p.x,
-    y0: p.y,
-    vx: +vx.toFixed(4),
-    vy: +vy.toFixed(4),
-    t: now,
-    stop: now + Math.max(0, stop) * 1000,
-    eat: 0,
-    ...(isHang(s) ? { hin: inCabin(p.x * HW, p.y * HH) ? 1 : 0 } : {}),
-  };
-}
-/* a cake nobody ate (no Justin, or he's down), or one out of its stage: gone */
-function cakeGone(s, now) {
-  const c = s.zcake;
-  if (!c) return false;
-  if (
-    !boardPhases(s).includes(s.phase) ||
-    isMgj(s) ||
-    (c.eat ? now > c.eat + CAKE_EAT_MS + 3000 : now > c.stop + CAKE_LEFT)
-  ) {
-    s.zcake = null;
-    return true;
-  }
-  return false;
-}
-
-/* ---------- the ducks' wounds and crits outside Quacky Zombies and Mad God Justin (wounds.js) ---------- */
-export const pwOn = (s) => !isMgj(s) && !isL4dd(s);
-export const critRoll = (s, w) =>
-  pwOn(s) && Math.random() < critOf(armOfShot(w));
-/* a hit of weapon (or shot kind) k on duck id: a crit doubles it (guns.js critOf), and takes no more than that; what
-   takes all of it (the slug, the chain gun: PHP) still does */
-export function hitSoaks(s, id, now, k, crit, by) {
-  const d = dmgOf(s, k);
-  return soaks(s, id, now, crit ? d * 2 : d, by, crit && d < PHP);
-}
-/* duck id was hit by weapon w: a wound, or (crit, and it went down) its head blown off, down CRIT_DOWN ms, and a
-   smaller CRIT over it on every screen (the pcrit fx) */
-export function wounded(s, id, w, now, crit) {
-  const P = s.players[id];
-  if (!pwOn(s) || !P) return;
-  if (normalGame(s) && shielded(s, id, now)) return; // (spawn protection: no wounds either)
-  const head = crit && P.dead;
-  if (head) {
-    pwAdd(s, id, ["x0"], now, true);
-    holdDown(s, id, now, CRIT_DOWN);
-  } else pwHit(s, id, w, now, !!P.dead);
-  if (!crit) return;
-  const p = s.pos[id] || {};
-  s.fxN = (s.fxN || 0) + 1;
-  s.fx = [
-    ...(s.fx || []).slice(-19),
-    {
-      n: s.fxN,
-      kind: "pcrit",
-      who: [id],
-      t: now,
-      x: p.x,
-      y: p.y,
-      ...(head ? {} : { m: 1 }), // (a crit that didn't put it down: only the small CRIT, Adam's, Nov 21 18:31Z)
-      ...(isHang(s) ? { hz: Math.round(+p.z || 0) } : {}),
-    },
-  ];
-}
-/* a vote passes once enough say yes, and fails once it can't pass any more */
 function settleVote(s, now) {
   const v = s.vote;
   if (!v) return s;
