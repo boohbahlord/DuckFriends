@@ -1,14 +1,5 @@
 /* ---------- the command line's manual: man <command> ----------
    Every command has a page here (man shows it; man -k word searches them). The Help pages are in helppages.js. */
-const PERMS_TAKE = {
-  nocmd: "no command line",
-  nochat: "no chat",
-  nosend: "can't send to the chat from the command line",
-  nofun: "no silly commands",
-  nomute: "can't \\mute others",
-  slow: "one message every 15 seconds",
-  slowN: "one message every N seconds (slow30)",
-};
 export const PERMS_GIVE = {
   canskip: "may skip the stage",
   canmute: "may forgame \\mute others",

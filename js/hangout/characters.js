@@ -54,7 +54,6 @@ const feetOf = (svg) =>
       .split(" ")
       .map(Number),
   ); // a duck's drawing: 64 px wide, its feet this far down (Justin's glasses make it taller)
-const FEET = feetOf(justinSVG({ size: DUCK }));
 const boxOf = (svg) =>
   svg
     .match(/viewBox="([^"]+)"/)[1]

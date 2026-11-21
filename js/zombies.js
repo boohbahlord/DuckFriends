@@ -1179,7 +1179,7 @@ function nudge(z, dx, dy) {
     z.y = y;
   }
 }
-/* ---------- for the computers (l4ddbots.js) ---------- */
+/* ---------- for the computers (bots.js) ---------- */
 /* the way from (x, y) toward (tx, ty) by walking (the next point along the flow field), or null; one field per target
    cell (flowFrom keeps them) */
 export function wayTo(x, y, tx, ty, now) {

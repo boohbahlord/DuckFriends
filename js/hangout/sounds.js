@@ -15,4 +15,3 @@ export const parts = { env: quiet, tone: quiet, hiss: quiet, ring: quiet };
 export const setListener = listen;
 export const play = (name, o) => playSound(name, o);
 export const loop = (name, o) => loopSound(name, o);
-const render = async () => null;

@@ -24,7 +24,6 @@ const mix = (hex, to, t) => {
   );
 };
 
-const RB_MS = 6000; // one turn of the rainbow: each spot goes through every color in this time
 export const RB_N = 24; // the pixel look's steps in a turn
 const P = 84; // the rainbow's width across its bands (the 120 box's units): a whole rainbow fits across a duck
 const TILT = -35.5; // the bands' slant (and a mark only these gradients carry: rbFrame finds them by it)

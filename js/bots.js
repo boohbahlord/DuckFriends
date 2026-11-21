@@ -13,7 +13,7 @@
    Mad God Justin they walk at Justin, stab him up close and now and then jump (his bullets fly under a jump). In
    Hangout they wander about Duck Cabin, stopping now and
    then, and jump once in a while (they never walk off an edge or up a wall). In Quacky Zombies they fight the zombies
-   and revive each other (l4ddbots.js). */
+   and revive each other (below: the computers on a walkable map). */
 import * as HL from "./hangout/layout.js";
 import { bjBot } from "./hangout/blackjack.js";
 import { findPath } from "./hangout/npc.js";
@@ -40,6 +40,7 @@ import {
   attCands,
   attRole,
   OPTIONS_DEFAULT,
+  walkOf,
 } from "./rules.js";
 import {
   anyWord,
@@ -58,8 +59,35 @@ import {
   DUNCE_TAKES,
 } from "./duncerules.js";
 import { isMgj, mgjGone, PICK_WEAPONS, MGJ_MELEE } from "./mgjrules.js";
-import { isL4dd } from "./l4ddrules.js";
-import { l4Bot } from "./l4ddbots.js";
+import {
+  isL4dd,
+  L4,
+  WALK,
+  startSpot,
+  playable,
+  l4Up,
+  l4Cool,
+  kitOf,
+  kindOf,
+  ptsOf,
+  upOf,
+  priceOf,
+  maxHp,
+  SHOP,
+  merchantOf,
+  upOffer,
+  selling,
+  BOX,
+  boxNow,
+  isHelper,
+  laserHeat,
+  wildOpen,
+  wildCrying,
+  isWild,
+  endless,
+  wetSlow,
+  hasLeft,
+} from "./l4ddrules.js";
 import {
   isVd,
   VD_PHASES,
@@ -73,7 +101,6 @@ import {
   isTv,
   TV_PHASES,
   TV_ROWS_END,
-  TV_BOT_ANSWERS,
   tvQ,
   isWriter,
   answerers,
@@ -85,180 +112,30 @@ import {
   mcOn,
 } from "./triviarules.js";
 import { TV_BANK } from "./triviabank.js";
+import { SPRINT as GAME_SPRINT } from "./gamedefaults.js";
+import { W, H, heightAt, standable, STEP } from "./hangout/layout.js";
+import { zombiesOf, wayTo, clearShot } from "./zombies.js";
+import { isSurv } from "./survrules.js";
+import { WANDER } from "./hangout/justin.js";
+import { NPC_RUN } from "./npcshared.js";
+import { sees as npcSees } from "./npcrules.js";
+import {
+  BOT_QUESTIONS,
+  BOT_WYR,
+  BB_SEEDS,
+  ANY_SEEDS,
+  SC_LINES,
+  CLUES,
+  TV_BOT_WRITTEN,
+  TV_BOT_ANSWERS,
+} from "./botlines.js";
 
-const BOT_QUESTIONS = [
-  "Pineapple belongs on pizza.",
-  "A hot dog is a sandwich.",
-  "Cereal is a soup.",
-  "Cats are better than dogs.",
-  "Mornings are the best part of the day.",
-  "Socks with sandals look good.",
-  "Water is wet.",
-  "Ducks are secretly plotting something.",
-  "Cold pizza beats hot pizza.",
-  "The book is always better than the movie.",
-  "Everyone should learn to cook.",
-  "Summer is the best season.",
-  "Video games are art.",
-  "Ketchup goes on eggs.",
-  "A tomato is a vegetable.",
-  "Texting is better than calling.",
-  "Spoilers ruin a story.",
-  "Board games beat video games.",
-  "Naps are underrated.",
-  "Aliens have visited Earth.",
-  "Homework should be banned.",
-  "Cake is better than pie.",
-  "Being early is being on time.",
-  "Mint chocolate chip is the best ice cream.",
-  "Every party needs a rubber duck.",
-  "Dinosaurs were cooler than sharks.",
-  "Breakfast for dinner is the best dinner.",
-  "You can be friends with your ex.",
-  "Clowns are scary.",
-  "Robots will be our friends.",
-];
-
-const BOT_WYR = [
-  ["fight one horse-sized duck", "a hundred duck-sized horses"],
-  ["only eat pizza", "never eat pizza again"],
-  ["be able to fly", "be invisible"],
-  ["always be ten minutes late", "always be twenty minutes early"],
-  ["live without music", "live without movies"],
-  ["talk to animals", "speak every language"],
-  ["have a rewind button", "have a pause button"],
-  ["never use a phone again", "never watch TV again"],
-  ["be a famous singer", "be a famous athlete"],
-  ["sweat syrup", "cry maple syrup"],
-  ["live on the moon", "live under the sea"],
-  ["have hiccups forever", "always feel a sneeze coming"],
-];
-/* seeds for the ready-made topics (in BB_TOPICS' order), and some for any topic */
-const BB_SEEDS = [
-  [
-    "Nachos",
-    "Popcorn",
-    "Cookies",
-    "Pretzels",
-    "Cheese puffs",
-    "Fruit snacks",
-    "Ice cream",
-    "Cold pizza",
-  ],
-  [
-    "Biting your nails",
-    "Being late",
-    "Snoozing the alarm",
-    "Doomscrolling",
-    "Interrupting",
-    "Leaving dishes out",
-  ],
-  [
-    "Darth Vader",
-    "The Joker",
-    "Thanos",
-    "Hannibal Lecter",
-    "Voldemort",
-    "Scar",
-    "The Wicked Witch",
-  ],
-  [
-    "Brunch",
-    "Avocado toast",
-    "Pumpkin spice",
-    "Sports cars",
-    "Fancy water",
-    "Reality TV",
-  ],
-  [
-    "Flying",
-    "Teleporting",
-    "Invisibility",
-    "Time travel",
-    "Super strength",
-    "Reading minds",
-  ],
-  [
-    "Folding laundry",
-    "Dishes",
-    "Taking out the trash",
-    "Scrubbing the toilet",
-    "Vacuuming",
-    "Making the bed",
-  ],
-  [
-    "Pepperoni",
-    "Pineapple",
-    "Mushrooms",
-    "Extra cheese",
-    "Olives",
-    "Sausage",
-    "Jalapeños",
-  ],
-  [
-    "Nails on a chalkboard",
-    "A dripping tap",
-    "Chewing loudly",
-    "An alarm clock",
-    "A car alarm",
-    "Snoring",
-  ],
-];
-const ANY_SEEDS = [
-  "Rubber ducks",
-  "Grandma",
-  "Tacos",
-  "Naps",
-  "Dinosaurs",
-  "Socks",
-  "Wi-Fi",
-  "Pizza",
-  "Mondays",
-  "Cats",
-  "Glitter",
-  "The moon",
-  "Pickles",
-  "Bubble wrap",
-];
-/* Story Chain: lines with a place for the secret word */
-const SC_LINES = [
-  (w) =>
-    `Out of nowhere a ${w} appeared, and everyone agreed not to talk about it.`,
-  (w) =>
-    `The duck stared at the ${w} for a very long time, then quacked twice and walked away.`,
-  (w) =>
-    `It was a perfectly normal day, apart from the ${w} sitting on the roof.`,
-  (w) =>
-    `Grandma said the ${w} was hers, which explained a lot about last Thanksgiving.`,
-  (w) =>
-    `So they hid the ${w} under the bed and hoped nobody would ask any questions.`,
-  (w) =>
-    `Suddenly the lights went out, and someone in the dark whispered "${w}" very slowly.`,
-  (w) => `Nobody could explain why the ${w} was wet, but it definitely was.`,
-  (w) => `Then the mayor showed up holding a ${w}, looking extremely proud.`,
-  (w) => `It turns out the ${w} had been the real hero all along.`,
-  (w) => `They held a vote, and the ${w} won by a landslide.`,
-];
 const anyOf = (xs) => xs[Math.floor(Math.random() * xs.length)];
 const hash = (k) => {
   let h = 7;
   for (const c of k) h = (h * 31 + c.charCodeAt(0)) | 0;
   return h >>> 0;
 };
-const CLUES = [
-  "Hmm… you see it everywhere.",
-  "My uncle has strong feelings about it.",
-  "It shows up in stories.",
-  "Pretty famous.",
-  "Kids love it.",
-  "Not my favorite, honestly.",
-  "It can get messy.",
-  "Everybody knows one.",
-  "Better with friends.",
-  "I think about it way too much.",
-  "Sometimes loud.",
-  "Classic.",
-];
 const said = new Set(); // computer + clue turn: its clue is out
 /* a step of a computer's walk toward (x, y); then, there, what it does next */
 function walk(s, id, to, then, now) {
@@ -298,41 +175,28 @@ const pick = (id, key) => {
   return plan.get(k);
 };
 
-/* Lawyering: a juror walks to the side it leans to and votes; in closing arguments it may be talked round (it walks over
-   and votes again). An attorney stays on its own side, and behind in closing arguments may give up. */
+/* Lawyering and Duncelation: a voter walks to the side it leans to and votes; now and then it's talked round (it walks over
+   and votes again). In Lawyering only in closing arguments; an attorney stays on its own side, and behind in closing
+   arguments may give up. In Duncelation it waits for the grace period, and a defender stays in the circle */
 const swayed = new Map(); // computer id + case → the side it was talked round to
-function lawBot(s, id, late, now, out) {
-  const L = s.law;
-  if (!L || L.w != null || !late) return;
-  if (isCounsel(s, id)) {
-    if (
-      canGiveUp(s, id) &&
-      now - (L.close - (+s.options.lawClose || 60) * 1000) > 8000 &&
-      Math.random() < 0.004
-    )
-      out.push({ t: "giveUp", id });
-    return;
-  }
-  if (!jury(s).includes(id)) return;
-  const key = `${id}|${s.round}:${s.qi}`;
-  if (
-    L.close &&
-    L.votes[id] !== undefined &&
-    !swayed.has(key) &&
-    Math.random() < 0.003
-  ) {
-    swayed.set(key, 1 - L.votes[id]);
+/* talked round, now and then (chance each heartbeat), once it has voted */
+function sway(key, mine, chance) {
+  if (mine !== undefined && !swayed.has(key) && Math.random() < chance) {
+    swayed.set(key, 1 - mine);
     if (swayed.size > 300) swayed.delete(swayed.keys().next().value);
   }
-  const side = swayed.has(key)
+}
+/* the side it wants: talked round, else its vote, else its lean (c, 0 … 6; a 3 goes either way: tie()) */
+const sideOf = (key, mine, c, tie) =>
+  swayed.has(key)
     ? swayed.get(key)
-    : L.votes[id] !== undefined
-      ? L.votes[id]
-      : pick(id, s.round + ":" + s.qi) < 3 ||
-          (pick(id, s.round + ":" + s.qi) === 3 && Math.random() < 0.5)
+    : mine !== undefined
+      ? mine
+      : c() < 3 || (c() === 3 && tie())
         ? 0
         : 1;
-  if (L.votes[id] === side) return;
+/* a step toward that side's column; there, it votes */
+function toSide(s, id, side, out) {
   const p = s.pos[id],
     want = colXAt(s, side),
     step = 0.035;
@@ -347,9 +211,29 @@ function lawBot(s, id, late, now, out) {
       j: p.j || 0,
     });
 }
-
-/* Duncelation: a voter walks to the side it leans to once the grace period is over, and votes; now and then it's talked
-   round (it walks over and votes again) */
+function lawBot(s, id, late, now, out) {
+  const L = s.law;
+  if (!L || L.w != null || !late) return;
+  if (isCounsel(s, id)) {
+    if (
+      canGiveUp(s, id) &&
+      now - (L.close - (+s.options.lawClose || 60) * 1000) > 8000 &&
+      Math.random() < 0.004
+    )
+      out.push({ t: "giveUp", id });
+    return;
+  }
+  if (!jury(s).includes(id)) return;
+  const key = `${id}|${s.round}:${s.qi}`;
+  if (L.close) sway(key, L.votes[id], 0.003);
+  const side = sideOf(
+    key,
+    L.votes[id],
+    () => pick(id, s.round + ":" + s.qi),
+    () => Math.random() < 0.5,
+  );
+  if (L.votes[id] !== side) toSide(s, id, side, out);
+}
 function dnBot(s, id, late, now, out) {
   const C = s.dn && s.dn.cur;
   if (
@@ -363,32 +247,15 @@ function dnBot(s, id, late, now, out) {
     return;
   const key = `${id}|${s.round}:${s.qi}`,
     mine = C.votes[id];
-  if (mine !== undefined && !swayed.has(key) && Math.random() < 0.002) {
-    swayed.set(key, 1 - mine);
-    if (swayed.size > 300) swayed.delete(swayed.keys().next().value);
-  }
+  sway(key, mine, 0.002);
   const c = pick(id, s.round + ":" + s.qi),
-    side = swayed.has(key)
-      ? swayed.get(key)
-      : mine !== undefined
-        ? mine
-        : c < 3 || (c === 3 && hash(key) % 2)
-          ? 0
-          : 1;
-  if (mine === side) return;
-  const p = s.pos[id],
-    want = colXAt(s, side),
-    step = 0.035;
-  if (Math.abs(p.x - want) <= step)
-    out.push({ t: "move", id, x: want, y: p.y, j: p.j || 0 }, { t: "end", id });
-  else
-    out.push({
-      t: "move",
-      id,
-      x: p.x + Math.sign(want - p.x) * step,
-      y: p.y,
-      j: p.j || 0,
-    });
+    side = sideOf(
+      key,
+      mine,
+      () => c,
+      () => hash(key) % 2,
+    );
+  if (mine !== side) toSide(s, id, side, out);
 }
 
 /* Mad God Justin: up to him (stopping a little short, off to one side), a stab once he's in reach, a jump now and then */
@@ -502,13 +369,6 @@ function vdBot(s, id, now, late, out) {
    them (right a little more often than not: a TEST room's computers can see the answer), types a written answer, and as
    the writer walks to each row and grades it. It presses End round only once every duck has voted and a while has
    passed, so a person usually gets there first */
-const TV_BOT_WRITTEN = [
-  "Name a famous scientist.",
-  "What's the capital of Australia?",
-  "Name a planet with rings.",
-  "What year did the Titanic sink?",
-  "Name a Shakespeare play.",
-];
 const tvPlan = new Map(); // computer id + question → the rows it votes for
 function tvBot(s, id, now, late, out) {
   const T = s.tv,
@@ -637,7 +497,7 @@ export function botActions(s, now) {
     }
     if (isHang(s)) {
       if (s.phase === "hang")
-        (isL4dd(s) ? l4Bot : hangBot)(s, id, now, out); // (Quacky Zombies: they fight, l4ddbots.js)
+        (isL4dd(s) ? l4Bot : hangBot)(s, id, now, out); // (Quacky Zombies: they fight, l4Bot below)
       else if (s.phase === "lobby" && !s.players[id].ready)
         out.push({ t: "ready", id, v: true });
       return;
@@ -928,31 +788,27 @@ function hangBot(s, id, now, out) {
   }
   const jump = !jumping && Math.random() < 0.006;
   if (Math.hypot(g.x - x, g.y - y) < 20 && !jump) return;
-  const d = Math.hypot(g.x - x, g.y - y),
-    n = Math.min(6, Math.ceil(d / 12)),
-    ux = d ? (g.x - x) / d : 0,
-    uy = d ? (g.y - y) / d : 0;
-  for (let i = 0; i < n; i++) {
-    // 12 px at a time: up or down a step at most, never through a wall
-    const nx = x + ux * Math.min(12, d - i * 12),
-      ny = y + uy * Math.min(12, d - i * 12),
-      nz = HL.heightAt(nx, ny);
-    if (
-      Math.abs(nz - z) > HL.STEP ||
-      !HL.standable(nx, ny, z, HL.STEP, [x, y])
-    ) {
-      if (g.seat) g.path = null;
-      else {
-        g.x = x;
-        g.y = y;
-        g.rest = now + 800;
-      }
-      break;
-    } // in the way: another spot soon (or another path)
-    x = nx;
-    y = ny;
-    z = nz;
-  }
+  let stopped;
+  [x, y, stopped] = stepToward(
+    x,
+    y,
+    g.x,
+    g.y,
+    72,
+    12,
+    (nx, ny, z0, x0, y0) =>
+      Math.abs(heightAt(nx, ny) - z0) <= STEP &&
+      standable(nx, ny, z0, STEP, [x0, y0]),
+  ); // (12 px at a time: up or down a step at most, never through a wall)
+  z = heightAt(x, y);
+  if (stopped) {
+    if (g.seat) g.path = null;
+    else {
+      g.x = x;
+      g.y = y;
+      g.rest = now + 800;
+    }
+  } // in the way: another spot soon (or another path)
   out.push({
     t: "move",
     id,
@@ -1048,4 +904,505 @@ function storyBot(s, id, now, wait, late, people, out) {
         });
     }
   }
+}
+/* ---------- the computers on a walkable map: Quacky Zombies, Survival, Sandbox (TEST rooms) ----------
+   A computer goes to a downed teammate and holds E by it; otherwise it shoots the nearest zombie it can see (a ranged
+   weapon with something left in it, the melee weapon up close, the medkit when it's hurt), backs away from one that's
+   too close, throws a grenade into a crowd now and then, and keeps near the middle of the great room. With no zombie in
+   sight it spends its points: an upgrade from Justin's Butler, or a spin at the fireplace (and it goes to take what
+   lands, swapping its emptier ranged weapon). A ghost or a downed computer does nothing. */
+const SEE = 460; // world px: how far a computer looks for a zombie to shoot
+const TOO_CLOSE = 95;
+const STEP_MS = 200; // (the TEST room's heartbeat: how far it walks each time)
+const AT = 90; // world px: near enough to the Butler or the fireplace
+const spinAt = new Map(); // computer → when it last spun the fireplace (one spin in a while, not every time it can)
+const readyAt = new Map(); // "computer round" → when it presses End turn (Ready in round 0): a few seconds into the wait
+
+/* the one walk on a walkable map: steps of px toward (tx, ty), as far as far, each one only if ok(nx, ny, z, x, y) lets it
+   (z: the height where it stands); [x, y, stopped] */
+function stepToward(x, y, tx, ty, far, px, ok) {
+  const d = Math.hypot(tx - x, ty - y);
+  if (d < 1) return [x, y, false];
+  const n = Math.ceil(Math.min(far, d) / px),
+    ux = (tx - x) / d,
+    uy = (ty - y) / d;
+  for (let k = 0; k < n; k++) {
+    const nx = x + ux * Math.min(px, d - k * px),
+      ny = y + uy * Math.min(px, d - k * px);
+    if (!ok(nx, ny, heightAt(x, y), x, y)) return [x, y, true];
+    x = nx;
+    y = ny;
+  }
+  return [x, y, false];
+}
+/* a few small steps toward (tx, ty), never off the cabin and the deck, never up a wall */
+const mapWalk = (x, y, tx, ty, far) =>
+  stepToward(
+    x,
+    y,
+    tx,
+    ty,
+    far,
+    8,
+    (nx, ny, z, x0, y0) =>
+      playable(nx, ny) && standable(nx, ny, z, STEP, [x0, y0]),
+  );
+/* the actions of a computer on a walkable map (world px): a move holding w, aimed (ax, ay), and a use */
+const moveOf = (id, nx, ny, w, ax, ay, j = 0) => ({
+  t: "move",
+  id,
+  x: +(nx / W).toFixed(5),
+  y: +(ny / H).toFixed(5),
+  j,
+  z: Math.round(heightAt(nx, ny)),
+  b: Math.round(heightAt(nx, ny)),
+  w,
+  ax: +(ax / W).toFixed(4),
+  ay: +(ay / H).toFixed(4),
+});
+const useOf = (id, what, ax, ay) => ({
+  t: "use",
+  id,
+  what,
+  face: ax < 0 ? -1 : 1,
+  ax: ax / W,
+  ay: ay / H,
+});
+/* what tells the two kinds of computer apart (Type Object): the room's computers, and the fireplace's Justin (better:
+   he sees farther, goes farther to revive, and throws a grenade sooner into a crowd a little farther off) */
+const BOT_BREEDS = {
+  computer: { see: SEE, revive: 900, crowd: 130, nadeMin: 200, nadeGap: 4000 },
+  justin: {
+    see: SEE * 1.3,
+    revive: 1200,
+    crowd: 150,
+    nadeMin: 220,
+    nadeGap: 3000,
+  },
+};
+/* a gun with something in it (not reloading); the Laser Rifle while it's cool enough */
+const loadedIn = (s, id, now, m) => (w) =>
+  w === "laser"
+    ? laserOk(s, id, now)
+    : endless(w) || (w && m.am[w] && m.am[w][0] > 0 && m.rw !== w);
+/* how many of zs are within r of z, and whether that's a crowd worth a grenade from d away */
+const crowdOf = (zs, z, r) =>
+  zs.filter((o) => Math.hypot(o.x - z.x, o.y - z.y) < r).length;
+const nadeOk = (b, crowd, m, d, now) =>
+  crowd >= 4 &&
+  m.g > 0 &&
+  d > b.nadeMin &&
+  now - ((m.u || {}).grenade || 0) > b.nadeGap;
+/* the nearest downed teammate: down, not dead (the dead only with a defibrillator, and never the wild or Justin); with zs,
+   only one with no zombie within KEEP of it */
+function downMate(s, id, x, y, defib, zs) {
+  const l4p = s.hang.l4p || {},
+    dead = (t) => !!(l4p[t] || {}).ex;
+  return s.seat
+    .filter(
+      (t) =>
+        t !== id &&
+        (l4p[t] || {}).dn &&
+        (!dead(t) || (defib && !isWild(s, t) && !isHelper(s, t))) &&
+        s.pos[t],
+    )
+    .map((t) => ({ t, x: s.pos[t].x * W, y: s.pos[t].y * H, dead: dead(t) }))
+    .filter(
+      (t) => !zs || zs.every((z) => Math.hypot(z.x - t.x, z.y - t.y) > KEEP),
+    )
+    .sort(
+      (a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y),
+    )[0];
+}
+/* by it: hold E (the hold goes on by itself until the revive is done) */
+function holdE(s, id, t, out) {
+  const rv = ((s.hang.l4p || {})[t] || {}).rv;
+  if (!rv || rv.by !== id)
+    out.push({ t: "hang", k: "l4", do: "rev", on: t, hold: true, id });
+}
+
+export function l4Bot(s, id, now, out) {
+  const p = s.pos[id],
+    h = s.hang;
+  if (!p || !h || !h.l4 || h.l4.over || !l4Up(s, id)) return;
+  if (isHelper(s, id)) return justinBot(s, id, now, out); // (the fireplace's Justin: his own, better brain)
+  const wait = h.l4.wait;
+  if (wait && !wait.v[id]) {
+    const k = `${id} ${h.l4.r}`;
+    if (!readyAt.has(k)) readyAt.set(k, now + 1500 + Math.random() * 2500);
+    if (now >= readyAt.get(k)) {
+      readyAt.delete(k);
+      out.push({ t: "hang", k: "l4", do: "endturn", on: true, id });
+    }
+  }
+  const x = p.x * W,
+    y = p.y * H,
+    far = WALK * walkOf(s) * (STEP_MS / 1000) * (upOf(s, id).sp ? 1.1 : 1), // (as fast as my duck: the Walking speed, the Butler's Speed)
+    m = kitOf(s, id) || { sl: [], am: {}, u: {} },
+    sl = m.sl,
+    b = BOT_BREEDS.computer,
+    send = (nx, ny, w, ax, ay) => out.push(moveOf(id, nx, ny, w, ax, ay));
+  /* a teammate down: go to it and hold E (the hold goes on by itself until the revive is done); in Survival with a
+     defibrillator, a dead player too (the defibrillator out in hand) */
+  const down = downMate(s, id, x, y, isSurv(s) && hasLeft(s, id, "defib"));
+  if (down && Math.hypot(down.x - x, down.y - y) < b.revive) {
+    const d = Math.hypot(down.x - x, down.y - y);
+    if (d < L4.REACH * 0.9) {
+      if (down.dead) send(x, y, "defib", down.x - x, down.y - y); // (in hand first)
+      holdE(s, id, down.t, out);
+      return;
+    }
+    const to = wayTo(x, y, down.x, down.y, now) || [down.x, down.y],
+      [nx, ny] = mapWalk(x, y, to[0], to[1], far);
+    send(nx, ny, "knife", to[0] - x, to[1] - y);
+    return;
+  }
+  /* the nearest zombie in sight */
+  const zs = zombiesOf(s).filter((z) => z.st === 2 || z.st === 4);
+  let best = null,
+    bd = b.see;
+  for (const z of zs) {
+    const d = Math.hypot(z.x - x, z.y - y);
+    if (d < bd && clearShot(x, y, z.x, z.y, heightAt(x, y))) {
+      bd = d;
+      best = z;
+    }
+  }
+  const home = startSpot(s.seat.indexOf(id));
+  if (!best) {
+    if (shopping(s, id, now, x, y, far, m, send, out)) return;
+    const [nx, ny] =
+      Math.hypot(home.x - x, home.y - y) > 140
+        ? mapWalk(
+            x,
+            y,
+            ...(wayTo(x, y, home.x, home.y, now) || [home.x, home.y]),
+            far,
+          )
+        : [x, y];
+    if (nx !== x || ny !== y) send(nx, ny, sl[1], nx - x || 1, ny - y);
+    return;
+  }
+  const ax = best.x - x,
+    ay = best.y - y,
+    u = m.u || {};
+  /* a crowd: a grenade now and then */
+  if (nadeOk(b, crowdOf(zs, best, b.crowd), m, bd, now)) {
+    out.push(useOf(id, "grenade", ax, ay));
+    return;
+  }
+  /* the special from the fireplace, now and then, with a zombie close (the medkit waits for low HP below; the long
+     jump and the jetpack stay as they are) */
+  const sp = [sl[3], sl[4]].find(
+    (w) => ["zebra", "adrenaline"].includes(w) && m.am[w] && m.am[w][0] > 0,
+  ); // (either item slot)
+  if (sp && bd < 400 && now - (u[sp] || 0) > 6000) {
+    out.push(useOf(id, sp, ax, ay));
+    return;
+  }
+  const loaded = [sl[1], sl[2]].filter(loadedIn(s, id, now, m)),
+    hp = ((h.l4p || {})[id] || {}).hp,
+    w =
+      hasLeft(s, id, "medkit") && hp <= 1 && hp < maxHp(s, id)
+        ? "medkit"
+        : bd < 75 || !loaded.length
+          ? sl[0]
+          : (bd < 220 && loaded.find((v) => v === "shotgun")) || loaded[0];
+  /* too close: back away while it shoots */
+  let [nx, ny] = [x, y];
+  if (bd < TOO_CLOSE && kindOf(w) !== "melee")
+    [nx, ny] = mapWalk(x, y, x - ax, y - ay, far);
+  send(nx, ny, w, ax, ay);
+  if (now - (u[w] || 0) >= l4Cool(s, id, w)) out.push(useOf(id, w, ax, ay));
+}
+/* no zombie in sight: walk to the Butler or the fireplace and spend points there, or take what the fireplace landed on;
+   true while it's busy with that */
+function shopping(s, id, now, x, y, far, m, send, out) {
+  const b = boxNow(s, now, id),
+    pts = ptsOf(s, id),
+    mine = !!b;
+  let to = null,
+    act = null,
+    hand = m.sl[1];
+  if (mine) {
+    if (now < b.t + BOX.spin) return true; // (it waits by the fire while it spins)
+    if (kindOf(b.w) === "ranged") {
+      const left = (w) =>
+        endless(w) ? Infinity : m.am[w] ? m.am[w][0] + m.am[w][1] : 0;
+      hand = left(m.sl[1]) <= left(m.sl[2]) ? m.sl[1] : m.sl[2];
+    } // (it gives up the emptier one)
+    to = BOX;
+    act = { t: "hang", k: "l4", do: "box", hand, id };
+  } else {
+    const up = upOf(s, id),
+      want = SHOP.find(
+        (it) =>
+          it.id === upOffer(s, id) &&
+          (up[it.id] || 0) < it.most &&
+          pts >= priceOf(it.id, up[it.id] || 0),
+      ); // (only the one the merchant offers it this visit)
+    if (want && selling(s)) {
+      to = merchantOf(s); // (only while a merchant is here and selling)
+      act = { t: "hang", k: "l4", do: "buy", what: want.id, id };
+    } else if (!b && pts >= BOX.price && now - (spinAt.get(id) || 0) > 45000) {
+      to = BOX;
+      act = { t: "hang", k: "l4", do: "box", id };
+    }
+  }
+  if (!to) return false;
+  const d = Math.hypot(to.x - x, to.y - y);
+  if (d < AT) {
+    send(x, y, hand, to.x - x || 1, to.y - y);
+    out.push(act);
+    if (act.do === "box" && !mine) spinAt.set(id, now);
+    return true;
+  }
+  const way = wayTo(x, y, to.x, to.y, now) || [to.x, to.y],
+    [nx, ny] = mapWalk(x, y, way[0], way[1], far);
+  send(nx, ny, hand, way[0] - x, way[1] - y);
+  return true;
+}
+
+/* ---------- the fireplace's Justin (the owner's, Nov 4: "make his npc decent or good at the game") ----------
+   He plays by every rule a duck does, through the same actions, only better than the computers above: a gun over the
+   knife whenever one has anything in it (the chain gun kept for when it counts: a zombie close, or a crowd), the
+   knife only once every gun is empty and nothing can be bought. He keeps his distance: each heartbeat he tries 16 ways
+   to step and takes the one that leaves him farthest from every zombie with the most open floor ahead (so never into a
+   corner), sprinting (with a duck's own 7 seconds of breath) when one gets too close. He revives a downed duck when no
+   zombie is on it, ends the turn between rounds, and shops like the others when the room is clear (no ammo to buy:
+   the merchants never sell it, the owner's, Nov 18 13:46Z). He walks exactly as fast as a duck would: by the time since his last step, at the Walking speed, the
+   Butler's Speed and an adrenaline shot (a Speed Boost) */
+const KEEP = 240, // world px: the room he keeps from every zombie
+  CLOSE = 150, // nearer than this he sprints away
+  LOOK = 220, // how far ahead he checks a way is open
+  WAYS = 16;
+const lastAt = new Map(), // Justin → when he last walked
+  breath = new Map(); // Justin → his sprint left (0 … 1), and whether he's run out until he stops
+/* how much a gun is worth to him (more is better): what kills fastest first; the chain gun on its own below */
+const GUN_RANK = [
+  "lmg",
+  "dbarrel",
+  "dbuck",
+  "ak",
+  "burst",
+  "laser",
+  "tommy",
+  "ump",
+  "smg",
+  "sniper",
+  "revolver",
+  "shotgun",
+  "handgun",
+  "glauncher",
+  "flamer",
+  "bow",
+  "dagger",
+];
+/* the Laser Rifle has no ammo: a computer fires it only while it's cool enough not to overheat it (its meter not full) */
+const laserOk = (s, id, now) => {
+  const q = laserHeat(s, id, now);
+  return !q.over && Math.round(q.h) < q.max;
+};
+
+function justinBot(s, id, now, out) {
+  const p = s.pos[id],
+    h = s.hang;
+  // (Justin never presses End turn or Ready: only the players end a rest phase, the owner's, Nov 17 13:38Z)
+  const x = p.x * W,
+    y = p.y * H,
+    dt = Math.min(400, Math.max(0, now - (lastAt.get(id) || now - STEP_MS)));
+  lastAt.set(id, now);
+  const fast = ((h.l4ad || {})[id] || 0) > now,
+    walkPx =
+      (fast ? WALK / (0.6 * 1.05) : WALK * (upOf(s, id).sp ? 1.1 : 1)) *
+      walkOf(s) *
+      wetSlow(x, y) * // (Downpour's flood: as a player's duck is slowed)
+      (dt / 1000),
+    m = kitOf(s, id) || { sl: [], am: {}, u: {} },
+    sl = m.sl;
+  const br = breath.get(id) || { left: 1, out: false };
+  breath.set(id, br);
+  const run = (want) => {
+    const go = want && !br.out && br.left > 0;
+    if (go) {
+      br.left = Math.max(0, br.left - dt / L4.SPRINT);
+      if (br.left <= 0) br.out = true;
+    } else {
+      br.left = Math.min(1, br.left + dt / (L4.SPRINT * GAME_SPRINT.refill));
+      if (br.left >= 1) br.out = false; // (like a player's: empty, it sprints again only once full, stamina.js)
+    }
+    return go ? walkPx * NPC_RUN : walkPx; // (the shared slow speed, npcshared.js: "if he does sprint, he sprints slower", the owner's, Nov 19 19:27Z. It was a duck's sprint, world.js SPRINT)
+  };
+  const b = BOT_BREEDS.justin,
+    send = (nx, ny, w, ax, ay) => out.push(moveOf(id, nx, ny, w, ax || 1, ay));
+  const zs = zombiesOf(s).filter((z) => z.st === 2 || z.st === 4),
+    near = zs
+      .map((z) => ({ z, d: Math.hypot(z.x - x, z.y - y) }))
+      .sort((a, b) => a.d - b.d),
+    d0 = near.length ? near[0].d : Infinity;
+  if (wildOpen(s, id)) return wildMove(s, id, now, p, x, y, near, run, out); // (Justin out there: never armed, the owner's, Nov 17 20:02Z)
+  /* what he'd shoot: the nearest zombie he can see */
+  const seen = near.find(
+    (n) => n.d < b.see && npcSees({ x, y }, n.z, undefined, 0),
+  );
+  /* his gun: the best one with something in it (not reloading); the chain gun when a zombie is close or they crowd */
+  const crowd = seen ? crowdOf(zs, seen.z, b.crowd) : 0;
+  const guns = [sl[1], sl[2]].filter(loadedIn(s, id, now, m)),
+    others = guns
+      .filter(
+        (w) => w !== "chaingun" && !(w === "shotgun" && seen && seen.d > 260),
+      )
+      .sort(
+        (a, b) =>
+          ((GUN_RANK.indexOf(a) + 99) % 99) - ((GUN_RANK.indexOf(b) + 99) % 99),
+      );
+  let gun =
+    guns.includes("chaingun") && (d0 < 300 || crowd >= 3 || !others.length)
+      ? "chaingun"
+      : others[0] || (guns.includes("shotgun") ? "shotgun" : "");
+  /* a downed teammate with no zombie on it (nor on him): go and hold E by it */
+  const down = downMate(s, id, x, y, false, zs);
+  if (down && d0 > CLOSE && Math.hypot(down.x - x, down.y - y) < b.revive) {
+    const d = Math.hypot(down.x - x, down.y - y);
+    if (d < L4.REACH * 0.9) {
+      holdE(s, id, down.t, out);
+      if (seen && gun)
+        shoot(s, id, now, m, gun, seen.z.x - x, seen.z.y - y, out); // (he shoots while he holds E)
+      return;
+    }
+    const to = wayTo(x, y, down.x, down.y, now) || [down.x, down.y],
+      [nx, ny] = mapWalk(x, y, to[0], to[1], run(false));
+    send(nx, ny, gun || sl[0], to[0] - x, to[1] - y);
+    if (seen && gun) shoot(s, id, now, m, gun, seen.z.x - x, seen.z.y - y, out);
+    return;
+  }
+  /* nothing to fear and nothing to shoot: shop like the others, else stay by the nearest duck */
+  if (!seen && d0 > KEEP * 1.5) {
+    if (shopping(s, id, now, x, y, run(false), m, send, out)) return;
+    const mate = s.seat
+        .filter((t) => t !== id && s.pos[t] && l4Up(s, t))
+        .map((t) => ({ x: s.pos[t].x * W, y: s.pos[t].y * H }))
+        .sort(
+          (a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y),
+        )[0],
+      home = mate || startSpot(s.seat.indexOf(id));
+    if (Math.hypot(home.x - x, home.y - y) > 150) {
+      const to = wayTo(x, y, home.x, home.y, now) || [home.x, home.y],
+        [nx, ny] = mapWalk(x, y, to[0], to[1], run(false));
+      send(nx, ny, gun || sl[1], nx - x, ny - y);
+    } else run(false);
+    return;
+  }
+  /* step: where every zombie is farthest and the floor ahead is open; staying put is one of the choices */
+  const far = run(d0 < CLOSE);
+  let [nx, ny] = [x, y];
+  if (d0 < KEEP) [nx, ny] = away(x, y, far, near);
+  /* the gun on the nearest he can see; with no gun at all, the knife on one at arm's length */
+  const ax = seen ? seen.z.x - x : nx - x,
+    ay = seen ? seen.z.y - y : ny - y;
+  if (gun) {
+    send(nx, ny, gun, ax, ay);
+    if (seen) shoot(s, id, now, m, gun, ax, ay, out);
+  } else if (seen && seen.d < 80) {
+    send(nx, ny, sl[0], ax, ay);
+    shoot(s, id, now, m, sl[0], ax, ay, out);
+  } else send(nx, ny, sl[0], ax, ay);
+  /* a grenade into a crowd that isn't on him */
+  if (seen && nadeOk(b, crowd, m, seen.d, now))
+    out.push(useOf(id, "grenade", ax, ay));
+}
+/* Justin out there with no weapon (the owner's, Nov 17; Nov 19 19:27Z: "he still tries to protect himself"): he walks
+   away from the nearest zombies (running only from one really close, with his meter: a duck's own, at the shared slow
+   speed), cries and runs off when he's hurt, never jumps or dodges, and otherwise strolls about as he does in Duck
+   Cabin */
+const wander = new Map(); // Justin → { x, y, until }
+/* where Justin strolls to, his Duck Cabin way (hangout/justin.js WANDER, the owner's, Nov 17 19:11Z: "HE SHOULD BE CASUALLY
+   WALKING AROUND WHICH IS ALREADY IN HIS CHARACTER SHEET! STOP REWRITING CODE TERRIBLY FOR THINGS ALREADY FIGURED OUT!"):
+   a spot anywhere on the map, walked to; once he's there he stands about (rest: true) until WANDER seconds have gone by
+   since he set off, then the next spot */
+function wanderSpot(id, now, x, y) {
+  let w = wander.get(id);
+  if (w && now <= w.until)
+    return Math.hypot(w.x - x, w.y - y) < 90 ? { ...w, rest: true } : w;
+  w = null;
+  for (let i = 0; i < 24 && !w; i++) {
+    const tx = Math.random() * W,
+      ty = Math.random() * H;
+    if (playable(tx, ty) && standable(tx, ty, heightAt(tx, ty), STEP))
+      w = {
+        x: tx,
+        y: ty,
+        until:
+          now + (WANDER[0] + Math.random() * (WANDER[1] - WANDER[0])) * 1000,
+      };
+  }
+  if (w) wander.set(id, w);
+  return w;
+}
+function wildMove(s, id, now, p, x, y, near, run, out, forced = false) {
+  /* only the zombies scare him, and being hurt; never the ducks themselves (the owner's, Nov 17 18:05Z: "justin should be
+     running from zombies not every player"), and no longer the shots flying by him: running from those before they
+     landed was the dodging (the owner's, Nov 19 19:27Z: "Justin should stop dodging bullets like a fucking god") */
+  const threats = [...near],
+    cry = wildCrying(s, id, now) && s.hang.l4jcry; // (hurt: crying, he runs off from where it came from, l4ddrules.js CRY)
+  if (cry)
+    threats.push({
+      z: { x: cry.x, y: cry.y },
+      d: Math.hypot(cry.x - x, cry.y - y),
+    });
+  threats.sort((a, b) => a.d - b.d);
+  const d0 = threats.length ? threats[0].d : Infinity,
+    scared = forced || !!cry || d0 < KEEP * 1.4;
+  const w = scared ? null : wanderSpot(id, now, x, y);
+  let [nx, ny] = [x, y];
+  /* he runs only with a reason, and less often (the owner's, Nov 17 19:11Z: "WHY IS JUSTIN ALWAYS SPRINTING WITHOUT EVER
+     STOPPING", and Nov 19 19:27Z: "he shouldn't sprint as often"): hurt, or a zombie really close (CLOSE); one farther off
+     and he walks away from it. His meter is a duck's own (run: L4.SPRINT to empty, as long to fill, and none until he
+     stops wanting it once it ran out) */
+  const far = run(forced || !!cry || d0 < CLOSE);
+  if (scared) [nx, ny] = away(x, y, far, threats);
+  else if (w && !w.rest) {
+    const to = wayTo(x, y, w.x, w.y, now) || [w.x, w.y];
+    [nx, ny] = mapWalk(x, y, to[0], to[1], far);
+    if (Math.hypot(nx - x, ny - y) < far * 0.2) wander.delete(id); // (stuck: another spot next time)
+  }
+  /* no jumps: he gets out of the way only by moving, as a player does (the owner's, Nov 17 20:37Z: "WHEN HE TRIES TO DODGE,
+     IT ISNT SOME ANIMATION THAT IS DONE BY MATH, HE SIMPLLY TRIES MOVING OUT THE WAY LIKE A PLAYER DOES") */
+  out.push(moveOf(id, nx, ny, "", nx - x || 1, ny - y));
+}
+function shoot(s, id, now, m, w, ax, ay, out) {
+  if (!w) return; // (a melee weapon that broke: nothing in that slot)
+  if (now - ((m.u || {})[w] || 0) < l4Cool(s, id, w)) return;
+  out.push(useOf(id, w, ax, ay));
+}
+/* the best step away: farthest from the zombies (the nearest counts most), with room ahead to keep going */
+function away(x, y, far, near) {
+  const zs = near.slice(0, 12).map((n) => n.z),
+    score = (px, py, ahead) => {
+      let low = Infinity,
+        press = 0;
+      for (const z of zs) {
+        const d = Math.hypot(z.x - px, z.y - py);
+        low = Math.min(low, d);
+        press += 1 / Math.max(40, d);
+      }
+      return Math.min(low, 500) - press * 900 + ahead * 0.5;
+    };
+  let best = [x, y],
+    top = score(x, y, 0) - 40; // (staying put: no room ahead to count, and a little worse than a good step)
+  for (let k = 0; k < WAYS; k++) {
+    const a = (k / WAYS) * Math.PI * 2,
+      ux = Math.cos(a),
+      uy = Math.sin(a),
+      [nx, ny] = mapWalk(x, y, x + ux * far, y + uy * far, far);
+    if (Math.hypot(nx - x, ny - y) < far * 0.3) continue; // (a wall that way)
+    const [fx, fy] = mapWalk(nx, ny, nx + ux * LOOK, ny + uy * LOOK, LOOK),
+      room = Math.hypot(fx - nx, fy - ny),
+      v = score(nx, ny, room) + Math.min(500, score(fx, fy, 0)) * 0.35;
+    if (v > top) {
+      top = v;
+      best = [nx, ny];
+    }
+  }
+  return best;
 }
