@@ -174,7 +174,7 @@ function waiting(root = document.body) {
 const STUCK = 8000; /* (counted from the last file that came in, arrived above: on a slow line the pictures wait behind other
    files, and that isn't stuck. The owner's, Nov 20 20:31Z: "even after the loading screen, the duck on the cloud and the
    click to play shit isnt finished loading": the loading screen went while the pictures were still on their way) */
-export function picturesIn(root = document.body, maxMs = 90000) {
+export function picturesIn(root = document.body, maxMs = 90000, onLeft) {
   return new Promise((done) => {
     const t0 = performance.now();
     let least = Infinity,
@@ -182,6 +182,7 @@ export function picturesIn(root = document.body, maxMs = 90000) {
     const look = () => {
       const n = root.isConnected ? waiting(root).n : 0,
         t = performance.now();
+      if (onLeft) onLeft(n); // (how many are still to come: Customize's green line, customize.js)
       if (!n || t - t0 > maxMs) return done();
       if (n < least) {
         least = n;
