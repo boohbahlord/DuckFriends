@@ -1,5 +1,5 @@
 {
-  "modeCompares": 44,
+  "modeCompares": 38,
   "nullishNumbers": 0,
   "unusedExports": 108,
   "unusedFiles": 0,
@@ -8,7 +8,7 @@
     "js/chat.js": 1596,
     "js/customize.js": 1776,
     "js/game.js": 8480,
-    "js/gamesettings.js": 1755,
+    "js/gamesettings.js": 1758,
     "js/hangout/art.js": 3050,
     "js/hangout/layout.js": 1517,
     "js/hangout/shapes.js": 1704,

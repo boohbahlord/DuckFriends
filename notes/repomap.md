@@ -53,7 +53,7 @@ fxmotion.js 229 how a held weapon and the
 game.js 8480 the game screen
 gamedefaults.js 43 the game's own numbers, for every
 gameready.js 47 
-gamesettings.js 1755 Game Settings: the whole screen, like
+gamesettings.js 1758 Game Settings: the whole screen, like
 gamestats.js 191 what `stats` and `roundstats` print for
 gfx.js 8 Low graphics
 gmodes.js 246 Sandbox Phase 6: made game modes
@@ -115,7 +115,7 @@ meters.js 114 the thin bars under my duck's
 mgj.js 219 Mad God Justin: what the screen
 mgjart.js 96 Mad God Justin's new pictures
 mgjrules.js 2286 
-modes.js 437 the game modes
+modes.js 440 the game modes
 music.js 590 the music: our own songs, played
 musicbar.js 169 the music bar: the song the
 name.js 165 fonts and how a player's name

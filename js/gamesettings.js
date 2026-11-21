@@ -980,10 +980,22 @@ function boardSketch(mode) {
     h = 200,
     tile = (x, tw, fill) =>
       `<rect x="${x}" y="${y0}" width="${tw}" height="${h}" rx="6" style="fill:${fill}" fill-opacity=".5" stroke="#1c1c28" stroke-opacity=".35"/>`;
-  if (mode === "aod")
-    return Array.from({ length: 7 }, (_, i) =>
-      tile(x0 + (i * w) / 7 + 1, w / 7 - 2, `var(--c${i + 1})`),
-    ).join("");
+  const own = {
+    aod: () =>
+      Array.from({ length: 7 }, (_, i) =>
+        tile(x0 + (i * w) / 7 + 1, w / 7 - 2, `var(--c${i + 1})`),
+      ).join(""),
+    sc: () =>
+      `<rect x="120" y="${y0}" width="240" height="${h}" rx="10" fill="#fff" fill-opacity=".72" stroke="#1c1c28" stroke-opacity=".35"/>${[
+        0, 1, 2, 3, 4,
+      ]
+        .map(
+          (i) =>
+            `<rect x="140" y="${y0 + 22 + i * 34}" width="${[190, 160, 200, 150, 120][i]}" height="7" rx="3.5" fill="#1c1c28" fill-opacity=".45"/>`,
+        )
+        .join("")}`,
+  }[mode];
+  if (own) return own();
   const two = {
     wyr: ["#2fa4ff", "#ff8c2b", 0.46],
     ddr: ["var(--c6)", "var(--c2)", 0.46],
@@ -1000,15 +1012,6 @@ function boardSketch(mode) {
           : "";
     return tile(x0, side, a) + tile(x0 + w - side, side, b) + ring;
   }
-  if (mode === "sc")
-    return `<rect x="120" y="${y0}" width="240" height="${h}" rx="10" fill="#fff" fill-opacity=".72" stroke="#1c1c28" stroke-opacity=".35"/>${[
-      0, 1, 2, 3, 4,
-    ]
-      .map(
-        (i) =>
-          `<rect x="140" y="${y0 + 22 + i * 34}" width="${[190, 160, 200, 150, 120][i]}" height="7" rx="3.5" fill="#1c1c28" fill-opacity=".45"/>`,
-      )
-      .join("")}`;
   return "";
 }
 /* the map large: Duck Cabin as the real map (one picture of all of it; dark with the power cut in Left 4 Dead Ducks), any
@@ -1021,7 +1024,7 @@ function mapPic(s, id, mode) {
       : "";
   }
   if (isWorldMap(id))
-    return `<img class="gs-cabin${mode === "l4dd" ? " dark" : ""}" src="assets/px/maps/duck-cabin.webp" data-pxready data-pxok alt="Duck Cabin" draggable="false">`;
+    return `<img class="gs-cabin${modeOf(mode).darkCabin ? " dark" : ""}" src="assets/px/maps/duck-cabin.webp" data-pxready data-pxok alt="Duck Cabin" draggable="false">`;
   const f = mapForm(id),
     grey = f.grey || (id === "collage" && s.options.mapGrey) ? " grey" : "";
   return `<svg class="gs-map${grey}" viewBox="0 0 480 270" role="img" aria-label="${esc(mapName(id))}"><g class="gs-back">${artBackdrop(f.grey ? f.map : id)}</g>${CABIN_MODES.includes(mode) ? "" : boardSketch(mode)}</svg>`;
@@ -1132,7 +1135,7 @@ export function openGameSettings(R, start = null) {
       cur = !mr ? valueOf(s, o.k) : o.k in mine ? mine[o.k] : "same",
       c = [
         ...(mr ? [["same", "Same as General"]] : []),
-        ...(o.k === "downMs" && s.options.mode !== "hang"
+        ...(o.k === "downMs" && !modeOf(s.options.mode).cabinHome
           ? o.c.filter((x) => x[0] !== 6000)
           : o.c),
       ];
@@ -1315,10 +1318,10 @@ export function openGameSettings(R, start = null) {
       /* the maps aren't voted on here: Vote Mode & Map has its own window as the game starts; a map picked here is just
          played (Vote for map and Random go off) */
       const dis = !host() || dodOn(s, "vote");
-      if (o.mode === "surv")
+      if (modeOf(o.mode).onlyMap)
         return (
           head("Map") +
-          `<div class="arm-body"><ul class="arm-list">${row('data-map="surv"', "Downpour", "", true, true)}</ul></div>`
+          `<div class="arm-body"><ul class="arm-list">${row('data-map="surv"', modeOf(o.mode).onlyMap, "", true, true)}</ul></div>`
         ); // (Survival plays only Downpour: nothing else is offered, the owner's, Nov 20)
       return (
         head("Map") +
@@ -1335,7 +1338,7 @@ export function openGameSettings(R, start = null) {
                   ),
                 )
                 .join("") // (Sandbox: the maps with a world of their own, walked whole: sandboxrules.js)
-            : `${row('data-map="cabin"', "Duck Cabin", "", isWorldMap(o.map) && o.l4map !== "downpour", dis)}${row('data-map="downpour"', "Downpour", "", o.mode === "l4dd" && o.l4map === "downpour", dis)}`
+            : `${row('data-map="cabin"', "Duck Cabin", "", isWorldMap(o.map) && o.l4map !== "downpour", dis)}${row('data-map="downpour"', "Downpour", "", modeOf(o.mode).l4map && o.l4map === "downpour", dis)}`
         }${LINE}${MAPS.map(([id, name]) =>
           row(
             `data-map="${id}"`,
