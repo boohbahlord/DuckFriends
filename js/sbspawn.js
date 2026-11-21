@@ -79,8 +79,7 @@ import {
   heightAt,
   floorStep,
 } from "./hangout/layout.js";
-import { Z_MOST, l4Spawn, l4Live } from "./zombies.js";
-import { WAVE, zLook } from "./mgjrules.js";
+import { Z_MOST, l4Spawn, l4Live, zLook, ZOMBIE_BREEDS } from "./zombies.js";
 import { onCabin, sbzOn, cabinLive, cabinSpawn, cabinTick } from "./sbcabin.js";
 import { listsOf, decide, MAD } from "./sbbrain.js";
 import { grudge, stillShares } from "./npcrules.js";
@@ -440,7 +439,7 @@ function makeOne(s, id, at) {
     };
   let i;
   if (sbOnBoard(s)) {
-    const l = zLook();
+    const l = zLook(ZOMBIE_BREEDS.sbBoard);
     l[0] = hp;
     s.mz = s.mz && s.mz.sb ? s.mz : { zb: [], n: 0, sb: 1 };
     i = ++s.mz.n;
@@ -1643,7 +1642,8 @@ const MOVE_STOP = 0.1; // duck lengths: as near as a \move\'s spot is walked to
 const CELL = 1, // (duck lengths: the grid's cells)
   NEAR = 12; // (the most others each one is kept apart from in a beat)
 function boardTick(s, now, H) {
-  const [RX, RY] = boardDuck(s); // (a duck's length: less of a bigger board, Board size in G)
+  const SBZ = ZOMBIE_BREEDS.sbBoard,
+    [RX, RY] = boardDuck(s); // (a duck's length: less of a bigger board, Board size in G)
   const z = s.mz,
     dt = Math.min(0.4, Math.max(0, (now - (z.t || now)) / 1000));
   z.t = now;
@@ -1660,9 +1660,9 @@ function boardTick(s, now, H) {
     const x0 = o.x,
       y0 = o.y,
       bd = far(me, to),
-      claw = reachTo(WAVE.CLAW, o, to, s), // (its hitbox, and its foe's: sbarms.js)
+      claw = reachTo(SBZ.reach, o, to, s), // (its hitbox, and its foe's: sbarms.js)
       sp =
-        WAVE.SPEED *
+        SBZ.speed *
         (o.sv ?? 1) *
         (o.run && bd > 4 ? 1.5 : 1) * // (can sprint: half as fast again while far off)
         (to.sp ?? 1), // (a \move\'s @ speed)
@@ -1687,7 +1687,7 @@ function boardTick(s, now, H) {
     if (Math.abs(o.x - x0) > 1e-4) o.f = o.x > x0 ? 1 : -1; // (the way it goes: a made NPC's weapon points it, or at what it hits; and its picture faces it, so it's hit where it shows, sbbody.js)
     if (
       d.foe &&
-      fight(o, to, bd, claw, now, WAVE.CLAW_MS, (dm, w) =>
+      fight(o, to, bd, claw, now, SBZ.swipe[1], (dm, w) =>
         strike(s, now, me, d.foe, H, o, dm, w),
       )
     ) {
@@ -1740,7 +1740,7 @@ function boardTick(s, now, H) {
   }
   /* the bodies go after a moment, as his do */
   const n0 = z.zb.length;
-  z.zb = z.zb.filter((o) => !o.d || now - o.d < WAVE.DEAD_MS);
+  z.zb = z.zb.filter((o) => !o.d || now - o.d < SBZ.deadMs);
   return ch || z.zb.length !== n0;
 }
 /* the same press from elsewhere (a hotbar's spawn button), the rights checked by its caller */

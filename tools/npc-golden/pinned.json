@@ -42,6 +42,7 @@
       "gunmen": 0,
       "swipes": 0,
       "mgjWaveZombiesPeak": 0,
+      "sandboxMapNpcsPeak": 0,
       "zombies": 41,
       "sandboxNpcs": ""
     }
@@ -89,6 +90,7 @@
       "gunmen": 0,
       "swipes": 0,
       "mgjWaveZombiesPeak": 0,
+      "sandboxMapNpcsPeak": 0,
       "zombies": 2,
       "sandboxNpcs": ""
     }
@@ -136,6 +138,7 @@
       "gunmen": 16,
       "swipes": 0,
       "mgjWaveZombiesPeak": 0,
+      "sandboxMapNpcsPeak": 0,
       "zombies": 12,
       "sandboxNpcs": ""
     }
@@ -183,6 +186,7 @@
       "gunmen": 32,
       "swipes": 0,
       "mgjWaveZombiesPeak": 0,
+      "sandboxMapNpcsPeak": 0,
       "zombies": 35,
       "sandboxNpcs": ""
     }
@@ -248,8 +252,117 @@
       "gunmen": 20,
       "swipes": 7,
       "mgjWaveZombiesPeak": 0,
+      "sandboxMapNpcsPeak": 0,
       "zombies": 28,
       "sandboxNpcs": ""
+    }
+  },
+  "sb-cabin": {
+    "beats": 900,
+    "digest": "10h5gkh",
+    "every": [
+      "13iszhv",
+      "1kg6pir",
+      "slk54a",
+      "1ygh3sd",
+      "1eselya",
+      "1yw4rlx",
+      "aj2hp",
+      "185s9e0",
+      "1hggv3",
+      "33psxe",
+      "108ifmi",
+      "1mhzdai",
+      "24wge2",
+      "1nvh19l",
+      "jsl3se",
+      "uh9ufg",
+      "wrjsex",
+      "1scwse9"
+    ],
+    "seen": {
+      "phases": {
+        "hang": 900
+      },
+      "came": "",
+      "gunmen": 0,
+      "swipes": 178,
+      "mgjWaveZombiesPeak": 0,
+      "sandboxMapNpcsPeak": 6,
+      "zombies": 0,
+      "sandboxNpcs": "gun plain plain gun plain plain"
+    }
+  },
+  "sb-downpour": {
+    "beats": 900,
+    "digest": "g9bd9o",
+    "every": [
+      "xnqmyt",
+      "1qh13km",
+      "1tehm74",
+      "6bzzmx",
+      "1khijan",
+      "1u6631k",
+      "1o68arl",
+      "1k60yh",
+      "1rrwxl1",
+      "1h8jltc",
+      "1rpu6o6",
+      "1ca80h0",
+      "1h7qc9n",
+      "1umym7u",
+      "mqxv7v",
+      "1lhhf4v",
+      "m3eiim",
+      "fds2lw"
+    ],
+    "seen": {
+      "phases": {
+        "hang": 900
+      },
+      "came": "Justin",
+      "gunmen": 0,
+      "swipes": 1,
+      "mgjWaveZombiesPeak": 0,
+      "sandboxMapNpcsPeak": 4,
+      "zombies": 0,
+      "sandboxNpcs": ""
+    }
+  },
+  "sb-board": {
+    "beats": 900,
+    "digest": "1ido09x",
+    "every": [
+      "vny7fo",
+      "1az6mgo",
+      "13si5tl",
+      "1m0mmjd",
+      "19px3du",
+      "1r77n70",
+      "1vj1i3p",
+      "194tvps",
+      "mnqm2c",
+      "157ryna",
+      "2wzvux",
+      "7sl82c",
+      "vcakww",
+      "150nofe",
+      "1roaq95",
+      "5vsdzd",
+      "61j79h",
+      "16pbcj5"
+    ],
+    "seen": {
+      "phases": {
+        "sandbox": 900
+      },
+      "came": "",
+      "gunmen": 0,
+      "swipes": 124,
+      "mgjWaveZombiesPeak": 6,
+      "sandboxMapNpcsPeak": 0,
+      "zombies": 0,
+      "sandboxNpcs": "gun gun plain gun plain plain"
     }
   },
   "mgj": {
@@ -275,33 +388,35 @@
       "gunmen": 0,
       "swipes": 0,
       "mgjWaveZombiesPeak": 0,
+      "sandboxMapNpcsPeak": 0,
       "zombies": 0,
       "sandboxNpcs": ""
     }
   },
   "mgj-waves": {
     "beats": 400,
-    "digest": "5dc7z7",
+    "digest": "17royp3",
     "every": [
       "146p466",
-      "1s8figg",
-      "15ilqip",
-      "sedo0z",
-      "sedo0z",
-      "sedo0z",
-      "sedo0z",
-      "sedo0z"
+      "1h4odhp",
+      "1woi48s",
+      "1vcz27r",
+      "1vcz27r",
+      "1vcz27r",
+      "1vcz27r",
+      "1vcz27r"
     ],
     "seen": {
       "phases": {
-        "boss": 72,
+        "boss": 76,
         "mgjend": 45,
-        "results": 283
+        "results": 279
       },
       "came": "",
       "gunmen": 0,
-      "swipes": 71,
+      "swipes": 81,
       "mgjWaveZombiesPeak": 27,
+      "sandboxMapNpcsPeak": 0,
       "zombies": 0,
       "sandboxNpcs": ""
     }
@@ -349,6 +464,7 @@
       "gunmen": 0,
       "swipes": 998,
       "mgjWaveZombiesPeak": 0,
+      "sandboxMapNpcsPeak": 0,
       "zombies": 41,
       "sandboxNpcs": ""
     }
@@ -426,6 +542,7 @@
       "gunmen": 0,
       "swipes": 4339,
       "mgjWaveZombiesPeak": 0,
+      "sandboxMapNpcsPeak": 0,
       "zombies": 52,
       "sandboxNpcs": ""
     }
@@ -503,43 +620,81 @@
       "gunmen": 0,
       "swipes": 1260,
       "mgjWaveZombiesPeak": 0,
+      "sandboxMapNpcsPeak": 0,
       "zombies": 50,
       "sandboxNpcs": ""
     }
   },
   "mgj-waves-bait": {
     "beats": 800,
-    "digest": "1ir2zoa",
+    "digest": "11qqufr",
     "every": [
       "146p466",
-      "azo9c4",
-      "ue65ch",
-      "hbqdkn",
-      "hbqdkn",
-      "hbqdkn",
-      "hbqdkn",
-      "hbqdkn",
-      "hbqdkn",
-      "hbqdkn",
-      "hbqdkn",
-      "hbqdkn",
-      "hbqdkn",
-      "hbqdkn",
-      "hbqdkn",
-      "hbqdkn"
+      "fogvx",
+      "u8qajv",
+      "pqfd3a",
+      "pqfd3a",
+      "pqfd3a",
+      "pqfd3a",
+      "pqfd3a",
+      "pqfd3a",
+      "pqfd3a",
+      "pqfd3a",
+      "pqfd3a",
+      "pqfd3a",
+      "pqfd3a",
+      "pqfd3a",
+      "pqfd3a"
     ],
     "seen": {
       "phases": {
-        "boss": 73,
+        "boss": 76,
         "mgjend": 45,
-        "results": 682
+        "results": 679
       },
       "came": "",
       "gunmen": 0,
-      "swipes": 79,
+      "swipes": 81,
       "mgjWaveZombiesPeak": 27,
+      "sandboxMapNpcsPeak": 0,
       "zombies": 0,
       "sandboxNpcs": ""
+    }
+  },
+  "sb-cabin-bait": {
+    "beats": 900,
+    "digest": "1cbwtgm",
+    "every": [
+      "13iszhv",
+      "1kg6pir",
+      "1at67yo",
+      "1cbbam4",
+      "7hod74",
+      "1ij3qsr",
+      "xib52k",
+      "vq4z03",
+      "1g0f4l9",
+      "18epll1",
+      "2itby5",
+      "9j3w6d",
+      "ghuo9f",
+      "894ktg",
+      "pq6yiz",
+      "1904nqh",
+      "1wnd4xl",
+      "ehx8sm"
+    ],
+    "seen": {
+      "phases": {
+        "hang": 900
+      },
+      "came": "",
+      "gunmen": 0,
+      "swipes": 341,
+      "mgjWaveZombiesPeak": 0,
+      "sandboxMapNpcsPeak": 6,
+      "zombies": 0,
+      "sandboxNpcs": "gun plain plain plain gun plain"
     }
   }
 }

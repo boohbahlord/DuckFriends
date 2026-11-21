@@ -38,10 +38,10 @@
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
 import {
   SPRINT as GAME_SPRINT,
-  ZOMBIE_SWIPE_SLOWER,
   HANDGUN,
+  POCKET_CHANGE,
 } from "./gamedefaults.js";
-import { duckBig, scaleOf } from "./duck.js";
+import { scaleOf } from "./duck.js";
 import { hpHeal, hpHurt, tenths } from "./hpmath.js";
 import {
   baseMode,
@@ -49,12 +49,11 @@ import {
   sbPlayerSpot,
   SB_BACK_MS,
   sbRule,
-  SB_BOXES,
   sbZombieWall,
   sbItemMods,
 } from "./sandboxrules.js";
 import { godOn, godHas } from "./sbgod.js";
-import { valueOf } from "./numerat.js";
+
 import { rule, keepOnly } from "./hangout/registry.js";
 import {
   W,
@@ -75,7 +74,6 @@ import {
   layoutRev,
   layoutVariant,
   deckAt,
-  deckOver,
 } from "./hangout/layout.js";
 import * as GS from "./hangout/stationmap.js";
 import { ARM_SPEED, ARM_COOL, ARM_SWING, ARM_RELOAD } from "./armspeed.js";
@@ -93,7 +91,7 @@ import { MERCHANTS, merchantById, merchantLook } from "./merchants.js";
 import { linesOf } from "./merchantlines.js";
 import { invuln } from "./hangout/death.js";
 import { JET } from "./jetpack.js";
-import { hOk, hLock, shotFeet, MID, SAME_FLOOR } from "./heights.js";
+import { hOk, hLock, shotFeet, SAME_FLOOR } from "./heights.js";
 import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
@@ -129,14 +127,9 @@ import {
   pwName,
 } from "./l4ddpower.js";
 import { ANGEL, angelOf, angelAmmo, angelAct, angelLeft } from "./l4ddangel.js";
-import { fieldOf, askField } from "./flowfield.js";
+
 import { NPC_RUN } from "./npcshared.js";
-import {
-  sees as npcSees,
-  nearPairs,
-  shotMark,
-  woundsAfter,
-} from "./npcrules.js";
+import { sees as npcSees, shotMark, woundsAfter } from "./npcrules.js";
 import { grHp, grCool } from "./sbgroups.js";
 import {
   isSurv,
@@ -144,13 +137,10 @@ import {
   SV,
   survStart,
   survTick,
-  survWatch,
   wholeIn,
 } from "./survrules.js";
 import {
   CELL,
-  GX,
-  GY,
   GW,
   GH,
   setGrid,
@@ -164,6 +154,7 @@ import {
 import {
   zOk,
   Z_MOST,
+  room,
   zombies,
   store,
   minus,
@@ -608,7 +599,7 @@ export function swims(s, id) {
 }
 /* what a duck holds out (a special used up isn't there) */
 export const inHand = (w, s, id) => {
-  if (!w || w === "longjump" || w === "jetpack") return ""; // (the jetpack is on the back: game.js)
+  if (!w || w === "longjump" || w === "jetpack" || w === "safekeep") return ""; // (the jetpack is on the back: game.js; Safe Keeping, picked, holds nothing out)
   const c = s && kindOf(w) === "special" && ((kitOf(s, id) || {}).am || {})[w];
   return c && c[0] <= 0 ? "" : w;
 };
@@ -1251,9 +1242,6 @@ export function dodging(s, p, now) {
   return u > 0.2 && u < 0.8;
 }
 export const at = (p) => [p.x * W, p.y * H];
-/* the ellipse distance between two spots on the floor: 1 is two ducks touching */
-export const room = (ax, ay, bx, by) =>
-  Math.hypot((ax - bx) / RX, (ay - by) / RY);
 
 /* ---------- a duck's slots, points and upgrades ---------- */
 /* a weapon's ammo, full: [in the magazine, the rest], or [all of it, 0] without a magazine; none for melee */
@@ -1573,6 +1561,7 @@ const DROP_NAMES = {
   speed: "Speed Boost",
   double: "Double Points",
   sale: "Sale",
+  coins: "Pocket Change",
 };
 export const dropName = (k) => DROP_NAMES[k] || k;
 /* which drop: one from the game's bag (s.hang.l4bag: the ones not come yet), each as likely as the others, Max Ammo
@@ -1680,7 +1669,8 @@ function takeDrop(s, k, by, zs, now, ids) {
   } else if (k === "sale") {
     s.hang.l4on = { ...(s.hang.l4on || {}), sale: now + DROP.FOR };
     s.hang.l4sale = { used: {} }; // (a new Sale: every half price can be spent again)
-  } else if (k === "ammo") maxAmmo(s);
+  } else if (k === "coins") addPts(s, by, POCKET_CHANGE.POINTS);
+  else if (k === "ammo") maxAmmo(s);
   else if (k === "nuke") s.hang.l4nk = { at: now + NUKE.SWEEP }; // (it goes off once the sweep covers the screen: nukeTick)
 }
 /* the Nuke on every screen (owner 2026-11-16, l4dd.js nukeScreen): grey static sweeps out over the screen in a second,
@@ -4215,9 +4205,26 @@ function wildDown(s, by, now, w, all, codes) {
          justinKilled writes; the owner's, Nov 17 13:30Z */
       s.jkN = (s.jkN || 0) + 1;
       s.jk = [...(s.jk || []).slice(-9), { n: s.jkN, by, w }];
+      if (Math.random() < POCKET_CHANGE.CHANCE) pocketChange(s, now); // (and a rare orb of coins where he fell)
     }
   }
   s.hang.l4p = p4;
+}
+/* Justin's pocket change: an orb of gold coins lies where he fell, like a drop (the first duck over it takes it, for
+   itself: POCKET_CHANGE.POINTS, takeDrop), and the chat says so */
+function pocketChange(s, now) {
+  const [x, y] = at(s.pos[WILD.id]);
+  s.hang.l4dr = [
+    ...(s.hang.l4dr || []),
+    {
+      n: now,
+      k: "coins",
+      x: Math.round(x),
+      y: Math.round(y),
+      until: now + DROP.LIFE,
+    },
+  ];
+  say(s, POCKET_CHANGE.SAYS);
 }
 /* the flamethrower's fire on Justin out there with no weapon: lit as a duck is (1 HP as it's lit, burning BURN.P ms, and
    fireTick spreads it from him), left burnt if it puts him down */

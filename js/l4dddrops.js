@@ -48,6 +48,10 @@ const TAG = `<svg viewBox="0 0 40 40"><path d="M11.6 19.4Q7.4 12.6 3.4 9.6" fill
 <g stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round"><circle cx="21" cy="15.6" r="2.4"/><circle cx="28.6" cy="26.4" r="2.4"/><path d="M29 13.6L20.6 28.4"/></g>
 ${shine("M15.4 11.4H31", 0.5, 1.2)}</svg>`;
 
+/* Justin's pocket change: a gold orb like the weapons' (the same gold, its dark rim, its soft shine) with a stack of coins in it */
+const COINS = `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="18.2" fill="#2f8f5a" stroke="#1c1c28" stroke-width="2"/><path d="M6.6 26A15 15 0 0 0 33.4 26A15.4 15.4 0 0 1 6.6 26Z" fill="#0f3d27" opacity=".6"/><ellipse cx="14.2" cy="10.6" rx="6" ry="3" fill="#c8ffd8" opacity=".6" transform="rotate(-32 14.2 10.6)"/>
+<g transform="translate(20 21) scale(1.3) translate(-20 -22.5)" stroke="${INK}" stroke-width="1" stroke-linejoin="round"><path d="M7.5 24V26.8A5 2.2 0 0 0 17.5 26.8V24Z" fill="#e0a516"/><ellipse cx="12.5" cy="24" rx="5" ry="2.2" fill="#ffe14d"/><path d="M7.5 20.5V23.3A5 2.2 0 0 0 17.5 23.3V20.5Z" fill="#e0a516"/><ellipse cx="12.5" cy="20.5" rx="5" ry="2.2" fill="#ffe14d"/><path d="M7.5 17V19.8A5 2.2 0 0 0 17.5 19.8V17Z" fill="#e0a516"/><ellipse cx="12.5" cy="17" rx="5" ry="2.2" fill="#ffe14d"/><path d="M22.5 22V24.8A5 2.2 0 0 0 32.5 24.8V22Z" fill="#e0a516"/><ellipse cx="27.5" cy="22" rx="5" ry="2.2" fill="#ffe14d"/><path d="M22.5 18.5V21.3A5 2.2 0 0 0 32.5 21.3V18.5Z" fill="#e0a516"/><ellipse cx="27.5" cy="18.5" rx="5" ry="2.2" fill="#ffe14d"/><circle cx="20" cy="27" r="7.2" fill="#ffe14d"/><circle cx="20" cy="27" r="5" fill="none" stroke="#c98a0a" stroke-width="1"/><circle cx="20" cy="27" r="1.8" fill="#c98a0a" stroke="none"/></g></svg>`;
+
 export const DROP_ICONS = {
   kill: SKULL,
   ammo: BULLET,
@@ -55,4 +59,5 @@ export const DROP_ICONS = {
   speed: GUNS.adrenaline.whole,
   double: DOLLAR,
   sale: TAG,
+  coins: COINS, // (not rolled with the others: only Justin's pocket change, l4ddrules.js wildDown)
 };

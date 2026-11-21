@@ -170,7 +170,7 @@ import {
   allOut,
 } from "./brackets.js";
 import { mountPlayers, trackIdle, lobbyVote, kickItems } from "./players.js";
-import { isMuted } from "./chat.js";
+import { isMuted, chatNote } from "./chat.js";
 import {
   specialById,
   keysOf,
@@ -236,7 +236,7 @@ import {
   peekAgain as l4PeekAgain,
   l4Got,
   sprintLeft,
-  l4SafeHint,
+  safeKeepLine,
   laserEnd,
   l4Ammo,
   l4ZBoxes,
@@ -3323,7 +3323,7 @@ function placeZombies(board, s, now) {
     if (!!o.d !== !!n._dead) {
       n._dead = !!o.d;
       n.classList.toggle("dead", !!o.d);
-    } // (dead: it falls over, lies there, then fades, its 4 s as Dead Ducks Arcade's: mgjrules.js WAVE.DEAD_MS)
+    } // (dead: it falls over, lies there, then fades, its 4 s as Dead Ducks Arcade's: zombies.js ZOMBIE_BREEDS, deadMs)
     const clawing = !o.d && now - (o.a || 0) < 350;
     n.classList.toggle("claw", clawing);
     if (clawing && n._a !== o.a && fxl && marks-- > 0)
@@ -6065,7 +6065,7 @@ function selectKey(i, toggle) {
 function useKey(i, keep, toggle = false) {
   if (!R || !onBoardPhase()) return;
   if (isL4dd(R.state)) {
-    l4Pick(i, toggle || touchOnly()); // (Safe Keeping's note: only on its number key on a computer, on a tap on a phone)
+    l4Pick(i);
     return;
   }
   if (sbHotOn(R.state)) {
@@ -6123,7 +6123,7 @@ function useKey(i, keep, toggle = false) {
    melee or ranged weapon stays in hand once picked; an item (4, 5) switches on and off: on, it's in hand instead of the
    weapon, and off (or used up) that weapon is back. The Long jump and the jetpack only switch themselves on and off,
    and the weapon stays in hand (the owner's, Nov 3) */
-function l4Pick(i, hint = false) {
+function l4Pick(i) {
   const sl = slotsOf(R.state, R.me),
     kit = kitOf(R.state, R.me);
   if (i === 5) {
@@ -6142,7 +6142,6 @@ function l4Pick(i, hint = false) {
     item = k >= 3;
   if (k < 0 || !sl[k]) return;
   if (!item && kit && kit.jp && sl[3] === "jetpack") fire("jetpack"); // (a weapon picked: the jetpack goes off)
-  if (item && sl[k] === "safekeep") return hint ? l4SafeHint() : undefined; // (it can't be used by hand: a short note says how it works, never from the scroll wheel)
   if (item && L4_TOGGLES.includes(sl[k])) {
     fire(sl[k]);
     if (bar) bar.refresh();
@@ -6163,6 +6162,16 @@ const L4_TOGGLES = ["jetpack"];
 function fire(id) {
   if (!me || me.x < 0 || !R || !onBoardPhase()) return;
   if (mgjDownGun()) id = "handgun"; // (Mad God Justin, out of HP: only the down pistol fires)
+  if (id === "safekeep") {
+    /* Safe Keeping can't be used by hand: the chat says what it does, every time (the lone duck's line, or the room's) */
+    const s = R.state;
+    chatNote(
+      safeKeepLine(
+        s.seat.filter((q) => s.players[q] && !s.players[q].bot).length,
+      ),
+    );
+    return;
+  }
   const [ax, ay] = myAim();
   R.send({ t: "use", what: id, face: ax < 0 ? -1 : 1, ax, ay });
   if (bar) setTimeout(() => bar && bar.refresh(), 60); // (the handgun's dots, a cooldown's bar)
@@ -6451,13 +6460,10 @@ function wheelPick(dir) {
   if (isL4dd(s)) {
     /* the next slot that has something: an empty one between is skipped, and the grenades (key 6) are in the row when I
        have some (the owner's, Nov 17 17:41Z: "bow at key number 3, nothing at 4, but a grenade at five, then the scroll
-       wheel will skip the empty one and go straight to the grenade"); Safe Keeping is never picked by hand */
+       wheel will skip the empty one and go straight to the grenade"); Safe Keeping is picked like any slot (the owner, Nov 21) */
     const sl = slotsOf(s, R.me),
       kit = kitOf(s, R.me),
-      has = (i) =>
-        i === 5
-          ? !!(kit && kit.g > 0)
-          : !!sl[slotOfPick(i)] && sl[slotOfPick(i)] !== "safekeep",
+      has = (i) => (i === 5 ? !!(kit && kit.g > 0) : !!sl[slotOfPick(i)]),
       n = 6; // (the second item, key 5, then the grenades, key 6: an empty one is skipped)
     let i = l4Slot;
     for (let k = 0; k < n; k++) {
