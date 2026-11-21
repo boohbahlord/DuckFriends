@@ -161,7 +161,7 @@ rooms.js 256 Play: create a room, and the
 router.js 112 screens
 rules.js 6240 the rules of Agree or Disagree
 sandbox.js 1359 Sandbox: the key windows
-sandboxrules.js 2059 Sandbox: which map it plays on,
+sandboxrules.js 2056 Sandbox: which map it plays on,
 sbarms.js 124 Sandbox: a made NPC's weapons in
 sbaudio.js 211 Sandbox: songs players bring in
 sbbody.js 233 Sandbox: an NPC's body, where it
@@ -188,7 +188,7 @@ sbnpcs.js 73 Sandbox: the NPCs I make
 sbnumberat.js 476 Sandbox: NPCs that run a Seriat
 sbout.js 62 Sandbox off the zombie maps: out
 sbrotate.js 102 Sandbox, Direction's Rotate in the right-click
-sbsave.js 273 Sandbox: saving a Sandbox as it
+sbsave.js 292 Sandbox: saving a Sandbox as it
 sbsaves.js 743 Sandbox's saves: kept on the host's
 sbsfx.js 74 Sandbox's sounds
 sbspawn.js 1709 Sandbox: spawns and respawns , the

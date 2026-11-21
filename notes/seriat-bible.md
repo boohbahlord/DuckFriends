@@ -22,6 +22,9 @@ old wording; history and word-for-word quotes live in `notes/agree-or-disagree.m
   double quotes every let/for/def name is worked out, so `say "rage is rage"` says "7 is 7" (write
   `say 'rage is ' rage`); `let` works its value out once, when it runs; `for n in 3` is 1 to 3, `for n in [2,4]` is
   each; `attack`/`flee` with no one named mean the nearest duck; `team` is the NPCs the file runs.
+- **Distances are tiles** (owner Nov 21 19:13Z: one unit, tiles, everywhere players see a distance; B0, Adam's (a)):
+  `when near`, the `\move\` legs and a zone's `size` read tiles, four to a duck length; touching is 4 tiles, as
+  before. Files written before this read 4 times shorter (no rewriting of saved files).
 - Marks: **[open]** = not settled yet; **[proposal]** = Adam's idea, the owner hasn't said yes.
 
 ## 0. Reading a file
@@ -162,7 +165,7 @@ cycling `[2,4]` that many times, then `[5,7,9]` or `[3,5]` a digit minus 1 or 2 
 
 ## 14. NPC brains and joining files (owner said yes, Nov 19 13:21Z)
 Every Seriat value works anywhere a number goes below: `wait 1:3`, `every [2,4]s`, `when near duck '1*'`.
-1. **Events**, code that runs when something happens: `when spawn`, `when hit`, `when dead`, `when near duck 3`,
+1. **Events**, code that runs when something happens: `when spawn`, `when hit`, `when dead`, `when near duck 12` (tiles),
    `when touch`, `every 2s`. Owner: "Code for more, like hitbox of duck for example": every stat of a duck or NPC can be
    read and set by name, its hitbox too: `((hitbox 150%))` (= `((hitbox 150))`), `\if hitbox > 200\` (in percent, 10% to 300%,
    owner 15:52Z: bigger to hit, longer reach; a percent here is of its usual size, not of its most; live V102). Another NPC's stat is `z hp` with `z` from a loop: `for z in team ((z hp z hp+1))` (live V99).
@@ -208,11 +211,11 @@ Every Seriat value works anywhere a number goes below: `wait 1:3`, `every [2,4]s
 
 17. **Zones** (owner Nov 20 03:10Z: yes): a zone's Brain box takes a file that runs for the zone and moves its squares
     (its Potential order). Events: `every [2,4]s step`, `when enter step 2` (a player steps in), `when spawn step` (one
-    of its tabs made something in it). Words: `step` / `step n`, `squares 3:5` (squares at once), `size 1.5` (square
-    size, duck lengths), `order shuffle` (random, absolute, shuffle, shuffleonce, rows, columns, line, alternating, all; absolute and the extra shuffles from V141), `dir right` (right, left, up, down,
+    of its tabs made something in it). Words: `step` / `step n`, `squares 3:5` (squares at once), `size 6` (square
+    size, tiles), `order shuffle` (random, absolute, shuffle, shuffleonce, rows, columns, line, alternating, all; absolute and the extra shuffles from V141), `dir right` (right, left, up, down,
     upright, upleft, downright, downleft, none); at a file's top they're for every zone that names it. Names inside a
     when: `steps`, `squares`, `size`, `inside` (players standing in it). Any file reaches a zone by its variable name:
-    `((zone 'Pit' size 2))`, `\if zone 'Pit' steps mod 3 == 0\`. Live V136.
+    `((zone 'Pit' size 8))`, `\if zone 'Pit' steps mod 3 == 0\`. Live V136.
 
 ## 16. Worked examples (Adam, Nov 19 13:25Z, in the owner's style)
 1. Speed that sticks per NPC: `{1.0:1.*}='1*'\>>\||"['1*'][1,2]"`: picks 1.0 to 1.9 (asterisk 1), then times 1 or 2,
@@ -263,10 +266,10 @@ Built (help file `help/brains/move.txt`, example `help/examples/weaver.se`):
 1. **The block**: `\move\{ ... }` inside an NPC's `when`/`every`; `\move\` with no `{` takes the rest of its line. Parts
    inside go with `;` or a new line between. `#` notes work inside.
 2. **Arrows**: `>` right, `<` left, `/\` up, `\/` down. Arrows together make one slanted leg (`>/\2` = 2 right and 2 up);
-   `>>` is two right. A number after them is duck lengths (1 when none); any Seriat value works, in `( )` when it has
+   `>>` is two right. A number after them is tiles (1 when none; a duck is 4 tiles long); any Seriat value works, in `( )` when it has
    more than one piece: `>(1+1)`, `>rage`, `>2:4`. Legs go in order: `>3 \/2 <3 /\2` walks a box and comes home.
 3. **`to <who>`** (`to nearest duck`, `to me`, a for's name, `to zone 'Pit'`): the way there is cut into one part per leg,
-   and each leg pushes its part that far to that side (`/\3` = 3 duck lengths above the straight way); it still arrives.
+   and each leg pushes its part that far to that side (`/\12` = 12 tiles above the straight way); it still arrives.
    `-` is a part with no push (`-2`: two). With no legs it walks straight there.
 4. **`@n`**: the move at n times the NPC's speed (`@1.5`).
 5. **Bends** (`bend ...`, a part of the move, or a line of its own for every move after it: at a file's top for all its

@@ -13,7 +13,7 @@
    over. Everything here runs inside sbspawn.js think(), on the board and on the worlds the same. */
 import { compileScript, brain, paramsOf } from "./numberatrun.js";
 import { valueOf } from "./numerat.js";
-import { SB_BOXES } from "./sandboxrules.js";
+import { SB_BOXES, SB_TILE } from "./sandboxrules.js";
 import {
   zoneByName,
   zoneStat,
@@ -144,7 +144,7 @@ export function nbThink(s, now, them, all, ducks, far, brainOf) {
       if (g.B.needs.duck || g.B.needs.touch) {
         let d = Infinity;
         for (const t of ducks) d = Math.min(d, far(me, t));
-        if (g.B.needs.duck) g.B.near(me.key, "duck", d);
+        if (g.B.needs.duck) g.B.near(me.key, "duck", d / SB_TILE); // (Seriat's distances are tiles: the owner's, Nov 21 19:13Z)
         if (g.B.needs.touch) g.B.touch(me.key, d <= TOUCH);
       }
       if (g.B.needs.zombie) {
@@ -156,8 +156,8 @@ export function nbThink(s, now, them, all, ducks, far, brainOf) {
           dn = Math.min(dn, d);
           if (t.k === "zombie") dz = Math.min(dz, d);
         }
-        g.B.near(me.key, "zombie", dz);
-        g.B.near(me.key, "npc", dn);
+        g.B.near(me.key, "zombie", dz / SB_TILE);
+        g.B.near(me.key, "npc", dn / SB_TILE);
       }
     }
     g.B.tick();
@@ -416,8 +416,8 @@ export function movePart(A, B, ox, oy, kind, toward) {
   return pushed && toward ? [at(0.5, 1), B] : [B];
 }
 function moveStep(me, m, all, far, now) {
-  const ux = 1 / (far({ x: 0, y: 0 }, { x: 1, y: 0 }) || 1),
-    uy = 1 / (far({ x: 0, y: 0 }, { x: 0, y: 1 }) || 1); // (a duck length in the map's units)
+  const ux = SB_TILE / (far({ x: 0, y: 0 }, { x: 1, y: 0 }) || 1),
+    uy = SB_TILE / (far({ x: 0, y: 0 }, { x: 0, y: 1 }) || 1); // (a tile in the map's units: a leg's numbers are tiles)
   const t = m.to ? all.find((x) => x.key === m.to) : null;
   if (m.to && !t) return null; // (what it went to is gone)
   const L = m.L || [],
