@@ -2310,7 +2310,7 @@ function reduceStep(state, a, now) {
       if (a.k === "again") return sbAgainAct(s, a, now) ? s : state; // (everyone out, off the zombie maps: the host's Play again, sbout.js)
       return sbRulesAct(s, a) ? s : state;
     case "sbh":
-      // Sandbox's hotbar: its slots, the default, the lock, a spawn button's look and press (sbhot.js)
+      // Sandbox's hotbar: its slots, the lock, a spawn button's look and press (sbhot.js)
       return sbHotAct(s, a, now) ? s : state;
     case "sbep":
       // Sandbox: what others may do with my made NPCs and groups, for this Sandbox (P, sbep.js)

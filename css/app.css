@@ -7732,6 +7732,38 @@ html.still .spe-bone .bone-slide {
   pointer-events: none;
   transition: opacity 0.45s ease;
 }
+/* "Press H" over the bar, flashing a moment: an empty key pressed (P5; hotbar.js flash) */
+.hotbar {
+  position: relative;
+}
+.hk-tip {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.4rem);
+  padding: 0.2rem 0.6rem;
+  border-radius: 0.45rem;
+  background: var(--yellow);
+  color: #1c1c28;
+  font-style: normal;
+  font-weight: 800;
+  white-space: nowrap;
+  animation: hk-tip 1.8s ease-out both;
+}
+@keyframes hk-tip {
+  0%,
+  30%,
+  60%,
+  85% {
+    opacity: 1;
+  }
+  15%,
+  45% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+  }
+}
 .hotbar.gone {
   opacity: 0;
   visibility: hidden;
@@ -8126,6 +8158,19 @@ html.still .spe-bone .bone-slide {
   html:not(.keyboard):not(.phone-land) .tpad.rl {
     top: 1.9rem;
   }
+  /* and with the small H (P5) on top of them, as much again */
+  html:not(.keyboard):not(.phone-land) .bbar:has(.tpad.hot:not(.gone)) {
+    padding-top: 6rem;
+  }
+  html:not(.keyboard):not(.phone-land) .tpad.hot {
+    top: 1.9rem;
+  }
+  html:not(.keyboard):not(.phone-land) .bbar:has(.tpad.rl.hot:not(.gone)) {
+    padding-top: 7.7rem;
+  }
+  html:not(.keyboard):not(.phone-land) .tpad.rl.hot {
+    top: 3.6rem;
+  }
   html:not(.keyboard) body:has(.tpad:not(.gone)) #toasts {
     left: calc(50vw - 3.15rem);
     max-width: calc(100vw - 7.3rem);
@@ -8164,7 +8209,8 @@ html.still .spe-bone .bone-slide {
     bottom 0.15s ease-out,
     right 0.15s ease-out;
 }
-.tpad-reload {
+.tpad-reload,
+.tpad-hot {
   width: 1.7rem;
   height: 1.7rem;
   padding: 0;
@@ -8184,10 +8230,12 @@ html.still .spe-bone .bone-slide {
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
-.tpad-reload[hidden] {
+.tpad-reload[hidden],
+.tpad-hot[hidden] {
   display: none;
 }
-.tpad-reload:active {
+.tpad-reload:active,
+.tpad-hot:active {
   transform: translateY(0.1rem);
   box-shadow: 0 0.04rem 0 var(--line);
 }

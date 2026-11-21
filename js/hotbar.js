@@ -42,7 +42,9 @@ export function mountHotbar(S, api) {
     sig = "",
     wheel = null,
     wheelT = 0,
-    coolT = 0;
+    coolT = 0,
+    tipT = 0,
+    tip = 0; // ("Press H" over the bar: flash())
   const look = (id) => {
     if (api.look) return api.look(id);
     const own = api.own && api.own(id); // (a slot the game draws itself, the rest the specials: Sandbox's spawn buttons)
@@ -82,6 +84,7 @@ export function mountHotbar(S, api) {
       api.duck && !!(api.duck() || {}).wrench,
       k.map(dots),
       api.sig && api.sig(),
+      tip,
     ]);
     bar.classList.toggle("full", full());
     if (now === sig) return;
@@ -90,6 +93,8 @@ export function mountHotbar(S, api) {
       const sp = look(k[i]);
       return `<span class="hk${sp ? "" : " empty"}${sp && sp.off ? " off" : ""}${i === sel ? " sel" : ""}${sp && on.has(sp.id) ? " on" : ""}${cd[i] && !cd[i][3] ? " cool" : ""}"><b>${n}</b>${sp ? `<i>${sp.icon}</i>` : ""}${drain(cd[i])}${dots(k[i])}</span>`;
     }).join("");
+    if (tip)
+      bar.insertAdjacentHTML("beforeend", `<em class="hk-tip">Press H</em>`);
     /* when the next one is ready again, its bar goes */
     const left = cd.filter(Boolean).map(([end, , t]) => end - t);
     clearTimeout(coolT);
@@ -467,8 +472,20 @@ export function mountHotbar(S, api) {
       draw();
       settle();
     },
+    /* an empty key pressed (P5, the owner's, Nov 21 18:59Z: "if the player clicks their hotbar and it's empty, it like
+       flashes with a text over their hotbar saying to click H"): "Press H" flashes over the bar */
+    flash() {
+      tip++;
+      draw(); // (the key pressed shows already: useKey)
+      clearTimeout(tipT);
+      tipT = setTimeout(() => {
+        tip = 0;
+        draw();
+      }, 1800);
+    },
     destroy() {
       clearTimeout(coolT);
+      clearTimeout(tipT);
       clearInterval(slideT);
       hide();
       bar.remove();
