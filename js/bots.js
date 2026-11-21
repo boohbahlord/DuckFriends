@@ -1295,7 +1295,7 @@ function justinBot(s, id, now, out) {
   /* step: where every zombie is farthest and the floor ahead is open; staying put is one of the choices */
   const far = run(d0 < CLOSE);
   let [nx, ny] = [x, y];
-  if (d0 < KEEP) [nx, ny] = away(x, y, far, near);
+  if (d0 < KEEP) [nx, ny] = away(id, x, y, far, near);
   /* the gun on the nearest he can see; with no gun at all, the knife on one at arm's length */
   const ax = seen ? seen.z.x - x : nx - x,
     ay = seen ? seen.z.y - y : ny - y;
@@ -1319,13 +1319,16 @@ const wander = new Map(); // Justin → { x, y, until }
    WALKING AROUND WHICH IS ALREADY IN HIS CHARACTER SHEET! STOP REWRITING CODE TERRIBLY FOR THINGS ALREADY FIGURED OUT!"):
    a spot anywhere on the map, walked to; once he's there he stands about (rest: true) until WANDER seconds have gone by
    since he set off, then the next spot */
-function wanderSpot(id, now, x, y) {
+function wanderSpot(id, now, x, y, from = null) {
   let w = wander.get(id);
   if (w && now <= w.until)
     return Math.hypot(w.x - x, w.y - y) < 90 ? { ...w, rest: true } : w;
   const p = spotIn(
     Math.random,
-    (tx, ty) => playable(tx, ty) && standable(tx, ty, heightAt(tx, ty), STEP),
+    (tx, ty) =>
+      playable(tx, ty) &&
+      standable(tx, ty, heightAt(tx, ty), STEP) &&
+      (!from || (tx - x) * (x - from.x) + (ty - y) * (y - from.y) > 0), // (a zombie about: never back past it)
     { x0: 0, y0: 0, x1: W, y1: H, tries: 24 },
   ); // (walkgrid.js: every stroll's next spot)
   if (!p) return null;
@@ -1349,16 +1352,23 @@ function wildMove(s, id, now, p, x, y, near, run, out, forced = false) {
       d: Math.hypot(cry.x - x, cry.y - y),
     });
   threats.sort((a, b) => a.d - b.d);
+  /* scared by a zombie within KEEP * 1.4, he walks away; calm again, he strolls on to a new spot away from the zombies
+     about (within KEEP * 4), never back through them: he went back to the old spot, a step towards them, was scared, a step
+     away, and so on every heartbeat, shaking on the spot (the owner's, Nov 21 08:46 ET: "justin is also jitterying in the
+     bottom corner, he has been doing that a lot when there are zombies") */
   const d0 = threats.length ? threats[0].d : Infinity,
     scared = forced || !!cry || d0 < KEEP * 1.4;
-  const w = scared ? null : wanderSpot(id, now, x, y);
+  if (scared) wander.delete(id); // (where he was strolling to: maybe through them)
+  const w = scared
+    ? null
+    : wanderSpot(id, now, x, y, d0 < KEEP * 4 ? threats[0].z : null);
   let [nx, ny] = [x, y];
   /* he runs only with a reason, and less often (the owner's, Nov 17 19:11Z: "WHY IS JUSTIN ALWAYS SPRINTING WITHOUT EVER
      STOPPING", and Nov 19 19:27Z: "he shouldn't sprint as often"): hurt, or a zombie really close (CLOSE); one farther off
      and he walks away from it. His meter is a duck's own (run: L4.SPRINT to empty, as long to fill, and none until he
      stops wanting it once it ran out) */
   const far = run(forced || !!cry || d0 < CLOSE);
-  if (scared) [nx, ny] = away(x, y, far, threats);
+  if (scared) [nx, ny] = away(id, x, y, far, threats);
   else if (w && !w.rest) {
     const to = wayTo(x, y, w.x, w.y, now) || [w.x, w.y];
     [nx, ny] = mapWalk(x, y, to[0], to[1], far);
@@ -1373,8 +1383,14 @@ function shoot(s, id, now, m, w, ax, ay, out) {
   if (now - ((m.u || {})[w] || 0) < l4Cool(s, id, w)) return;
   out.push(useOf(id, w, ax, ay));
 }
-/* the best step away: farthest from the zombies (the nearest counts most), with room ahead to keep going */
-function away(x, y, far, near) {
+/* the best step away: farthest from the zombies (the nearest counts most), with room ahead to keep going, and on the
+   way he was already going (TURN for keeping on): against a wall the best way flipped back and forth every heartbeat
+   (a step out, a step back), so he shook there (the owner's, Nov 21 08:46 ET: "justin is also jitterying in the bottom
+   corner, he has been doing that a lot when there are zombies") */
+const heading = new Map(), // Justin → his last step away (a unit vector)
+  TURN = 40;
+function away(id, x, y, far, near) {
+  const was = heading.get(id);
   const zs = near.slice(0, 12).map((n) => n.z),
     score = (px, py, ahead) => {
       let low = Infinity,
@@ -1396,11 +1412,16 @@ function away(x, y, far, near) {
     if (Math.hypot(nx - x, ny - y) < far * 0.3) continue; // (a wall that way)
     const [fx, fy] = mapWalk(nx, ny, nx + ux * LOOK, ny + uy * LOOK, LOOK),
       room = Math.hypot(fx - nx, fy - ny),
-      v = score(nx, ny, room) + Math.min(500, score(fx, fy, 0)) * 0.35;
+      v =
+        score(nx, ny, room) +
+        Math.min(500, score(fx, fy, 0)) * 0.35 +
+        (was ? (ux * was[0] + uy * was[1]) * TURN : 0);
     if (v > top) {
       top = v;
       best = [nx, ny];
     }
   }
+  const d = Math.hypot(best[0] - x, best[1] - y);
+  if (d) heading.set(id, [(best[0] - x) / d, (best[1] - y) / d]);
   return best;
 }
