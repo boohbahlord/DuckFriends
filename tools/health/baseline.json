@@ -1,12 +1,12 @@
 {
   "modeCompares": 170,
   "nullishNumbers": 81,
-  "unusedExports": 132,
+  "unusedExports": 134,
   "unusedFiles": 0,
-  "clones": 67,
+  "clones": 66,
   "bigFiles": {
     "js/chat.js": 1601,
-    "js/customize.js": 1824,
+    "js/customize.js": 1810,
     "js/game.js": 8841,
     "js/gamesettings.js": 1751,
     "js/hangout/art.js": 3051,
@@ -22,6 +22,6 @@
     "js/sbspawn.js": 1762,
     "js/sbspawnview.js": 2212,
     "js/shell.js": 3547,
-    "js/updates.js": 2799
+    "js/updates.js": 2818
   }
 }

@@ -151,7 +151,7 @@ const MANY = {
   biteTail: ["body", "tail", "Bite (tail)", place(BITE, 22, 64, 30, 1.2)],
   holeTail: ["body", "tail", "Torn hole (tail)", place(HOLE, 22, 63, 20, 1.3)],
 };
-const WOUNDS = {
+export const WOUNDS = {
   // the head
   scar: {
     on: "head",

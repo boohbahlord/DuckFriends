@@ -33,7 +33,7 @@ democracy.js 243 Democracy of Ducklings:
 dock.js 73 the docks: where Notes and the chat open
 duck.js 728 the rubber duck avatar
 duckparts.js 567 the ducks made from pixel parts
-ducksheets.js 11 made by tools/duck-parts.cjs:
+ducksheets.js 2 made by tools/duck-parts.cjs:
 duel.js 124 the cloud duel: two ducks share the cloud,
 dunce.js 145 Duncelation: what the screen shows
 duncerules.js 397 the rules of Duncelation
@@ -59,7 +59,7 @@ ground.js 54 what a duck walks on, for its footsteps
 gunmen.js 110 the gunmen's looks
 gunmenrules.js 1161 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen
-hats.js 765 hats
+hats.js 1073 hats
 heights.js 50 a shot's height, Doom's way
 helppages.js 1497 the command line's Help pages: help lists them;
 hideui.js 30 hide ui
@@ -69,6 +69,7 @@ hotbar.js 480 the specials on the number keys
 hpmath.js 23 HP in tenths
 hpmeter.js 307 HP meters and the little "+1 HP" over
 invisible.js 11 Who is invisible right now :
+itemtone.js 61 the colors an outfit or a hat draws
 jetart.js 39 the jetpack's pictures
 jetpack.js 33 the jetpack
 jumps.js 48 the jump counter
@@ -128,7 +129,7 @@ numeratwin.js 657 Sandbox: the Seriat window
 nwk.js 543 Nous Within Kenoma: the map in my book
 offline.js 45 Single Player's files on the device
 online.js 972 online rooms
-outfits.js 904 outfits
+outfits.js 1141 outfits
 outlines.js 352 the outlines
 perf.js 92 the frame-rate readout
 phonepad.js 128 phones: the aim-and-attack stick and the jump button
@@ -216,7 +217,7 @@ umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
 unlocks.js 372 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 2837 Updates
+updates.js 2846 Updates
 vdd.js 198 Valentine's Duck Date: what the screen shows
 vddrules.js 521 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
