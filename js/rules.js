@@ -327,6 +327,9 @@ import {
   votesDue,
 } from "./voterules.js";
 
+import { SB_ACTS } from "./actsb.js";
+import { PLAY_ACTS } from "./actplay.js";
+import { ROOM_ACTS } from "./actroom.js";
 import { shuffle, anyOf } from "./random.js";
 
 export const COLS = [
@@ -464,7 +467,7 @@ export function ruleFor(s, mode, k) {
   return +s.options.genOff ? OPTIONS_DEFAULT[k] : genVal(s, k);
 }
 /* after every change: the options hold the rules of the mode now picked */
-function applyRules(s) {
+export function applyRules(s) {
   const o = s.options;
   if (!o) return;
   if (!o.gen) {
@@ -478,7 +481,7 @@ function applyRules(s) {
   }
 }
 /* Mode Rules as sent (from Game Settings or a save slot): only General Rules, each a plain value */
-function cleanModeRules(x) {
+export function cleanModeRules(x) {
   const out = {};
   if (!x || typeof x !== "object" || Array.isArray(x)) return out;
   for (const [m, r] of Object.entries(x)) {
@@ -492,7 +495,7 @@ function cleanModeRules(x) {
   return out;
 }
 /* the settings as the chat words a change: the General Rules as set, each Mode Rule as "mr:<mode>:<setting>" */
-function flatOptions(s) {
+export function flatOptions(s) {
   const o = { ...s.options, max: s.max };
   delete o.gen;
   delete o.modeRules;
@@ -651,7 +654,7 @@ export const VOTE_GRACE = 5; // seconds at the start of a question before anyone
    objects, arrays, strings and numbers (it travels as JSON online), and copying those by hand is 2 to 6 times faster
    than structuredClone (measured Nov 15 in Quacky Zombies, Mad God Justin, Hangout and Agree or Disagree). Anything
    else, a Set or a Date say, still goes through structuredClone. */
-function clone(o) {
+export function clone(o) {
   if (o === null || typeof o !== "object") return o;
   if (Array.isArray(o)) {
     const n = o.length,
@@ -761,7 +764,7 @@ export const seatLate = (s) => {
    goes on once enough are back */
 const MIN_PLAYERS = { quack: 3, law: 3, dunce: 3, vdd: 3, trivia: 2 };
 export const minOf = (s) => MIN_PLAYERS[s.options.mode] || 0;
-const running = (s) => !["lobby", "over", "countdown"].includes(s.phase);
+export const running = (s) => !["lobby", "over", "countdown"].includes(s.phase);
 const WAIT_BLOCK = [
   "end",
   "wqWord",
@@ -772,7 +775,7 @@ const WAIT_BLOCK = [
   "dnEnd",
   "vdTimer",
 ];
-const tooFew = (s) => running(s) && s.seat.length < minOf(s);
+export const tooFew = (s) => running(s) && s.seat.length < minOf(s);
 /* resume: 'phase' (go on where it stopped), 'quackRound' (a new secret word), 'case' (this case again) or 'take' (this
    take again) */
 export function waitFor(
@@ -797,7 +800,7 @@ export function waitFor(
   say(s, line);
   return s;
 }
-function resumeGame(s, now, line = "Enough players: the game goes on!") {
+export function resumeGame(s, now, line = "Enough players: the game goes on!") {
   const w = s.waiting;
   if (!w) return s;
   delete s.waiting;
@@ -822,8 +825,8 @@ export const counselBounds = (s, id) => {
     [lo, hi] = colBoundsAt(s, off ? 0 : 1);
   return off ? [lo, hi - 0.04] : [lo + 0.04, hi];
 };
-const holdsBack = (s) => (isLaw(s) || isDn(s) || isVd(s)) && running(s);
-const holdsCase = (s, id) =>
+export const holdsBack = (s) => (isLaw(s) || isDn(s) || isVd(s)) && running(s);
+export const holdsCase = (s, id) =>
   !s.players[id].bot &&
   ((s.phase === "answer" &&
     ((isLaw(s) &&
@@ -836,7 +839,7 @@ const holdsCase = (s, id) =>
         s.dn.cur.w == null &&
         isDefender(s, id)))) ||
     (isVd(s) && VD_PHASES.includes(s.phase) && isDate(s, id))); // (Valentine's Duck Date: The Date)
-function holdFor(s, id, name, now) {
+export function holdFor(s, id, name, now) {
   waitFor(
     s,
     now,
@@ -847,7 +850,7 @@ function holdFor(s, id, name, now) {
 }
 /* enough pressed Next round: the game goes on without the one who left. I want this checked whenever the count can change,
    a press, or someone else leaving (the need drops with them). It returns the new state, or null if not enough yet */
-function goOnDone(s, now) {
+export function goOnDone(s, now) {
   const w = s.waiting;
   if (!w || !w.for || goOnVotes(s).length < goOnNeed(s)) return null;
   const name = w.name;
@@ -868,7 +871,7 @@ export const goOnNeed = (s) =>
     ),
   ); // (the usual share of the players; computers don't vote)
 /* someone left or was removed: a game below its fewest players waits (a countdown that can't start goes back to the lobby) */
-function shortHanded(s, now, gone, wasQuack) {
+export function shortHanded(s, now, gone, wasQuack) {
   if (s.phase === "countdown" && s.seat.length < minOf(s)) {
     s.phase = "lobby";
     s.ends = 0;
@@ -911,7 +914,7 @@ export const turnKey = (s) =>
       : s.phase === "write" && s.sc
         ? `write${s.round}.${s.sc.turn}`
         : `${s.phase}${s.round}.${s.qi}`;
-const VOTE_TIME = 30; // seconds a kick or back-to-lobby vote stays open
+export const VOTE_TIME = 30; // seconds a kick or back-to-lobby vote stays open
 /* every duck's arrows, bullets and thrown daggers fly this much faster than they first did, in every mode (the owner,
    Nov 3: "slightly faster"); Mad God Justin's own bullets keep their speed (mgjrules.js JUSTIN_SHOT) */
 export const FASTER = 1.15;
@@ -945,7 +948,7 @@ export const grenadeZ = (t) => {
   const u = Math.min(1, t / (GRENADE_MS / 1000));
   return 0.45 * (1 - u) + 4.4 * u * (1 - u);
 }; // (t in seconds)
-const PRESS = [
+export const PRESS = [
   "coffee",
   "watergun",
   "hotdog",
@@ -991,7 +994,7 @@ export const coolFor = (sp, s) =>
 export const MAG = HANDGUN.mag,
   RELOAD = ARM_RELOAD;
 /* how long a reload takes with n shots gone: the double barrel a second for each shell it loads, the rest their own */
-const reloadFor = (w, n) =>
+export const reloadFor = (w, n) =>
   w === "dbarrel"
     ? ARMS.dbarrel.shell * Math.max(1, Math.min(2, n))
     : (magSize(w) || [0, RELOAD])[1];
@@ -1002,7 +1005,7 @@ export const magSize = (w) =>
       (BOARD_GUNS.includes(w) && ARMS[w].mag
         ? [ARMS[w].mag, ARMS[w].reload]
         : null); // ([shots, reload ms], or null: no magazine)
-const magKey = (id, w) => (w === "handgun" ? id : `${id} ${w}`);
+export const magKey = (id, w) => (w === "handgun" ? id : `${id} ${w}`);
 export const magOf = (s, id, now, w = "handgun") => {
   const m = (s.mag || {})[magKey(id, w)];
   return !m || (m.r && now >= m.r) ? { n: 0, r: 0 } : m;
@@ -1021,7 +1024,7 @@ export const KB_MS = 380,
   KB_FAR = 2.4,
   KB_HOP = 0.3,
   KB_LAND = 110; // (KB_LAND: ms until the swing gets there; the duck falls then)
-const EFFECTS = [
+export const EFFECTS = [
   "zap",
   "flames",
   "hearts",
@@ -1034,7 +1037,7 @@ const EFFECTS = [
 ]; // the effects, shown around a duck (the Invisible duck: only on or off, never for 5 seconds)
 /* the Chair special's chair: Mad God Justin's own, as slow and as wide (CHAIR_DUCKS duck lengths a second, CHAIR_R
    duck lengths near), for CHAIR_MS */
-const CHAIR_DUCKS = 2.8,
+export const CHAIR_DUCKS = 2.8,
   CHAIR_MS = 8000;
 /* an aim from the player: a direction on the board (x, y), about one board width long on their screen */
 export const aimOf = (a, face) => {
@@ -1043,7 +1046,7 @@ export const aimOf = (a, face) => {
   return Math.hypot(ax, ay) > 0.05 ? [ax, ay] : [face, 0];
 };
 /* is this special on one of the duck's number keys? (a duck from before the keys had one special) */
-const onKeys = (d, id) =>
+export const onKeys = (d, id) =>
   !!d &&
   (Array.isArray(d.keys) ? d.keys.slice(0, 10).includes(id) : d.special === id);
 /* who votes, and how many yes votes pass it: a kick needs every other player; back to the lobby needs the usual share */
@@ -1422,7 +1425,7 @@ export function advance(s, now, force = false) {
 /* someone joins a game in progress and plays at once: they vote on the question, the match or the case, write a line
    in Story Chain, get a tile in Who is the Quack?. While the room talks a turn over (or votes out a Quack) they walk
    around and chat, and play from the next turn */
-function seatNewcomer(s, id) {
+export function seatNewcomer(s, id) {
   const me = s.players[id],
     ph = s.phase;
   if (isHang(s)) {
@@ -1515,1455 +1518,10 @@ function reduceStep(state, a, now) {
       (a.t === "voteStart" && ["skip", "turn"].includes(a.kind)))
   )
     return state; // waiting for players: no turn ends
-  switch (a.t) {
-    case "join": {
-      if (P[a.p.id]) {
-        P[a.p.id] = { ...P[a.p.id], ...a.p };
-        return s;
-      }
-      if (s.seat.filter((id) => !P[id].helper).length >= capOf(s)) return s; // (the fireplace's Justin takes nobody's seat)
-      if (
-        (s.banned || {})[a.p.id] ||
-        (a.p.acct && (s.banned || {})["acct:" + a.p.acct])
-      )
-        return state; // voted out until the lobby
-      P[a.p.id] = { ...a.p, ready: false, joined: now };
-      s.seat.push(a.p.id);
-      const back = holdsBack(s) && (s.back || {})[a.p.id];
-      if (back) {
-        if (back.pos && boardPhases(s).includes(s.phase))
-          s.pos[a.p.id] = back.pos;
-        else seatNewcomer(s, a.p.id);
-        if (back.k === turnKey(s)) {
-          if (back.lock !== undefined) s.lock[a.p.id] = back.lock;
-          if (back.done) s.done[a.p.id] = back.done;
-        } // (what they'd done counts only in the same turn)
-        delete s.back[a.p.id];
-      } // (Lawyering, Duncelation: back to their place)
-      else if (!["lobby", "over", "countdown"].includes(s.phase))
-        seatNewcomer(s, a.p.id);
-      if (s.phase !== "lobby") rainbowJoin(s, a.p.id); // (Rainbow Ducks: a look for someone who joins mid-game)
-      if (isMgj(s)) mgjCount(s); // (Mad God Justin: a duck joining mid-fight adds its share of his HP)
-      if (isSb(s) && s.sbsv) sbRekey(s, a.p.id); // (Sandbox: a player in the save gets their own settings back, by name)
-      say(s, `${a.p.name} ${back ? "is back" : "joined"}.`);
-      if (s.waiting && s.waiting.for === a.p.id) {
-        delete s.waiting.for;
-        delete s.waiting.go;
-        if (!tooFew(s))
-          return resumeGame(s, now, `${a.p.name} is back: the game goes on!`);
-      }
-      if (s.waiting && !s.waiting.for && !tooFew(s)) return resumeGame(s, now);
-      return s;
-    }
-    case "leave": {
-      if (!me) return s;
-      say(s, `${me.name} left.`);
-      if (holdsBack(s))
-        s.back = {
-          ...s.back,
-          [a.id]: {
-            pos: s.pos[a.id],
-            lock: s.lock[a.id],
-            done: s.done[a.id],
-            k: turnKey(s),
-          },
-        }; // (their place, for when they're back)
-      const held = holdsCase(s, a.id);
-      reopenMatch(s, a.id);
-      if (isHang(s)) hangLeft(s, a.id);
-      const wasQuack =
-        isQuack(s) && !!(s.hidden && (s.hidden.quacks || []).includes(a.id));
-      delete P[a.id];
-      s.seat = s.seat.filter((id) => id !== a.id);
-      delete s.pos[a.id];
-      delete s.done[a.id];
-      if (host) s.hostId = humanIds(s)[0] || null;
-      if (s.vote) settleVote(s, now);
-      if (!held && s.waiting && s.waiting.for) {
-        const on = goOnDone(s, now); // (the rest were waiting to go on: one fewer needed)
-        if (on) return on;
-      }
-      if (held) holdFor(s, a.id, me.name, now); // (an attorney, the defender: the case waits for them)
-      if (shortHanded(s, now, a.id, wasQuack) || held) return s;
-      if (isQuack(s)) quackLeft(s, now);
-      return s.phase === "lobby" || s.phase === "over" ? s : advance(s, now);
-    }
-    case "look":
-      if (me) Object.assign(me, a.look);
-      if (me && a.look && a.look.name && isSb(s) && s.sbsv) sbRekey(s, a.id); // (Sandbox: a new name may be one the save knows)
-      return s;
-    case "ready":
-      if (me && (s.phase === "lobby" || s.phase === "over"))
-        me.ready = a.v ?? !me.ready;
-      return s;
-    case "roomName": {
-      const n = String(a.name || "")
-        .replace(/\s+/g, " ")
-        .trim()
-        .slice(0, 32);
-      if (boss && n) s.name = n;
-      return s;
-    }
-    case "options": {
-      const o = { ...a.options };
-      delete o.dod; // (Democracy of Ducklings is set when the room is made, and stays)
-      if (s.solo && o.mode && !SOLO_MODES.includes(o.mode)) delete o.mode; // (Single Player: only its games)
-      if (dodOn(s, "vote"))
-        for (const k of ["mode", "modePick", "map", "mapPick", "voteBack"])
-          delete o[k]; // (Ducks Vote Mode & Game: the votes stay as they are)
-      if (dodOn(s, "justin")) delete o.justin; // (Invite Justin: he stays)
-      /* the modes in Random and the vote can change mid-game too, all but the one being played (owner 2026-11-15) */
-      if (
-        Array.isArray(o.modesOff) &&
-        (boss || (dodOn(s, "settings") && me && !me.bot)) &&
-        running(s)
-      ) {
-        const cur = s.options.mode,
-          was = s.options.modesOff || [],
-          next = o.modesOff.filter(
-            (id) => typeof id === "string" && id !== cur,
-          );
-        if (was.includes(cur)) next.push(cur);
-        if (JSON.stringify(next) !== JSON.stringify(was)) {
-          s.options.modesOff = next;
-          logLine(s, {
-            sys: true,
-            float: true,
-            by: a.id,
-            opts: { modesOff: next },
-            text: `${me ? me.name : "The host"} changed the game settings.`,
-          });
-        }
-        return s;
-      }
-      if ("modesOff" in o && !Array.isArray(o.modesOff)) delete o.modesOff;
-      if (
-        (boss || (dodOn(s, "settings") && me && !me.bot)) &&
-        (s.phase === "lobby" || s.phase === "over")
-      ) {
-        const was = s.options.discuss,
-          wasMode = s.options.mode,
-          before = flatOptions(s),
-          reset = Object.keys(OPTIONS_DEFAULT)
-            .filter((k) => typeof OPTIONS_DEFAULT[k] !== "object") // (an empty list or {} doesn't make it through Firebase)
-            .every((k) => k in o);
-        /* the General Rules go to their own layer (a save slot brings its own; its plain values were one mode's) */
-        const G = (s.options.gen = Object.fromEntries(
-          GEN_RULES.map((k) => [k, genVal(s, k)]),
-        ));
-        if (o.gen && typeof o.gen === "object") {
-          for (const k of GEN_RULES) if (k in o.gen) G[k] = o.gen[k];
-        } else for (const k of GEN_RULES) if (k in o) G[k] = o[k];
-        for (const k of GEN_RULES) delete o[k];
-        delete o.gen;
-        if (reset && !("modeRules" in o)) o.modeRules = {}; // (Defaults: no Mode Rules either)
-        if ("modeRules" in o) o.modeRules = cleanModeRules(o.modeRules);
-        Object.assign(s.options, o);
-        if (a.max) s.max = Math.max(s.seat.length, a.max);
-        /* I want half the votes to end a turn by default with the Discussion round on, 2 of 3 without it: turning it on or
-         off moves the share along while it's still at the other default */
-        if (
-          "discuss" in o &&
-          !("share" in o) &&
-          !!was !== !!s.options.discuss
-        ) {
-          const [from, to] = s.options.discuss ? [0.67, 0.5] : [0.5, 0.67];
-          if (G.share === from) G.share = to;
-        }
-        if (o.mode && !("submitTime" in o)) writeTimerFor(s, wasMode);
-        /* picking a game ends Vote Game Mode and Random; picking a map ends Vote Maps and Random. A new vote starts from
-           nobody */
-        if (o.mode && !("modePick" in o)) s.options.modePick = "";
-        if (o.map && !("mapPick" in o)) s.options.mapPick = "";
-        if (isSb(s)) sbMapPicked(s, o);
-        else if (isWorldMap(o.map) && !o.mode && !isHang(s)) {
-          s.options.mode = "hang"; // Duck Cabin and its games are one: picking the map picks Hangout,
-          s.options.modePick = "";
-        } else if ((o.map || o.mapPick || o.modePick) && !o.mode && isHang(s))
-          s.options.mode = "aod"; // and another map (or a vote, or Random) leaves Duck Cabin
-        if (isSb(s) && !sbOnBoard(s)) {
-          keepRoomMap(s);
-          s.options.map = "cabin"; // (Sandbox on a world: the room's map waits for it, as with Duck Cabin's games)
-          s.options.mapPick = "";
-        } else if (isHang(s) && !s.options.modePick) {
-          s.options.map = "cabin"; // (the host's Hangout; one from Random or the vote keeps the map's settings)
-          s.options.mapPick = "";
-          delete s.roomMap;
-        } else if (!isHang(s) && isWorldMap(s.options.map) && s.roomMap)
-          cabinMap(s); // (out of a Hangout that Random or the vote picked: the room's map again)
-        else if (!isHang(s) && isWorldMap(s.options.map)) {
-          s.options.map = "board"; // leaving Duck Cabin without picking a map goes back to Vote Maps
-          if (!o.map && !("mapPick" in o)) s.options.mapPick = "vote";
-        }
-        /* the looks (looks.js): Rainbow Ducks needs Hide customization, and Vote colors and Rainbow Ducks never go together
-         (the one just turned on wins); the tag's color goes with Vote colors */
-        const L = s.options;
-        if (o.rainbowDucks) L.voteColor = 0;
-        if (o.voteColor) L.rainbowDucks = 0;
-        if (!L.hideLooks) L.rainbowDucks = 0;
-        if (!L.voteColor) L.tagColor = 0;
-        /* every change goes in the chat, with who made it (from Game Settings or the command line alike): the chat
-           words it from the keys (settingText in gamesettings.js) */
-        applyRules(s);
-        const after = flatOptions(s),
-          ch = {};
-        for (const k of new Set([
-          ...Object.keys(after),
-          ...Object.keys(before),
-        ]))
-          if (JSON.stringify(after[k]) !== JSON.stringify(before[k]))
-            ch[k] = k in after ? after[k] : "same"; // (a Mode Rule taken away: Same as General)
-        if (Object.keys(ch).length)
-          logLine(s, {
-            sys: true,
-            float: true,
-            by: a.id,
-            opts: ch,
-            reset,
-            text: `${me ? me.name : "The host"} changed the game settings.`,
-          });
-      }
-      return s;
-    }
-    case "kick": {
-      // the host (or sudo) removes a player at once, no vote; a person stays out until the room goes back to the lobby
-      const p = P[a.who];
-      if (
-        !may(s, a.id, "cankick") ||
-        !p ||
-        a.who === s.hostId ||
-        a.who === a.id
-      )
-        return state;
-      if (!p.bot) {
-        s.banned = {
-          ...(s.banned || {}),
-          [a.who]: true,
-          ...(p.acct ? { ["acct:" + p.acct]: true } : {}),
-        };
-        sayFloat(s, `${me.name} removed ${p.name} from the room.`, a.id);
-      }
-      reopenMatch(s, a.who);
-      if (isHang(s)) hangLeft(s, a.who);
-      const wasQuack =
-        isQuack(s) && !!(s.hidden && (s.hidden.quacks || []).includes(a.who));
-      delete P[a.who];
-      s.seat = s.seat.filter((id) => id !== a.who);
-      delete s.pos[a.who];
-      delete s.done[a.who];
-      if (s.vote) settleVote(s, now);
-      if (s.waiting && s.waiting.for) {
-        const on = goOnDone(s, now);
-        if (on) return on;
-      }
-      if (shortHanded(s, now, a.who, wasQuack)) return s;
-      if (isQuack(s)) quackLeft(s, now);
-      return s.phase === "lobby" ||
-        s.phase === "over" ||
-        s.phase === "countdown"
-        ? s
-        : advance(s, now);
-    }
-    case "vote": {
-      // Vote Mode & Map: a player clicks a game or a map (the same one again takes the vote back); once every player has
-      // voted, the clock runs twice as fast
-      const vt = s.vt;
-      if (
-        !me ||
-        s.phase !== "countdown" ||
-        !vt ||
-        !s.seat.includes(a.id) ||
-        !(a.v === DICE || voteIds(s, vt.k).includes(a.v))
-      )
-        return state;
-      const votes = { ...(vt.votes || {}) };
-      if (votes[a.id] === a.v) delete votes[a.id];
-      else votes[a.id] = a.v;
-      vt.votes = votes; // (online, an empty list of votes doesn't come back)
-      if (s.solo && votes[a.id]) return nextVote(s, now); // (Single Player: picked, and on at once)
-      const voters = s.seat.filter((id) => s.players[id]);
-      if (
-        !vt.fast &&
-        voters.filter((id) => votes[id]).length >=
-          Math.max(1, Math.ceil(voters.length * shareOf(s) - 1e-9))
-      ) {
-        // (the majority is in: 6 s left, at normal speed, or as fast as Next has made it)
-        vt.fast = 1;
-        voteClock(s, now, Math.min(voteLeft(s, now), ALL_IN), voteRate(s));
-      }
-      return s;
-    }
-    case "vnext": {
-      // Vote Mode & Map's Next: a player who has voted speeds the clock up (once each)
-      const vt = s.vt;
-      if (
-        !me ||
-        s.phase !== "countdown" ||
-        !vt ||
-        !s.seat.includes(a.id) ||
-        !(vt.votes || {})[a.id] ||
-        (vt.next || {})[a.id]
-      )
-        return state;
-      const left = voteLeft(s, now);
-      vt.next = { ...(vt.next || {}), [a.id]: 1 };
-      voteClock(s, now, left, voteRate(s));
-      return s;
-    }
-    case "dod": {
-      // Democracy of Ducklings: a duck votes (again: takes the vote back); the host turns a rule on, or hands the host over, directly
-      const k = a.k;
-      if (!me || me.bot || !dodRoom(s) || !DOD_KEYS.includes(k)) return state; // (in any stage: Lobby Settings votes during a game too, owner Nov 15)
-      s.dod = { on: {}, votes: {}, ...(s.dod || {}) };
-      s.dod.votes = { ...(s.dod.votes || {}) };
-      if (k === "host") {
-        const to = a.v;
-        if (!s.players[to] || s.players[to].bot || to === s.hostId)
-          return state;
-        if (host) {
-          delete s.dod.votes.host;
-          dodSet(s, k, true, to);
-          return s;
-        }
-        const x = s.dod.votes.host || (s.dod.votes.host = { at: now, by: {} });
-        if (x.by[a.id] === to) delete x.by[a.id];
-        else x.by[a.id] = to;
-      } else {
-        if (host && !dodOn(s, k)) {
-          delete s.dod.votes[k];
-          dodSet(s, k, true);
-          return s;
-        }
-        const x = s.dod.votes[k] || (s.dod.votes[k] = { at: now, by: {} });
-        if (x.by[a.id]) delete x.by[a.id];
-        else x.by[a.id] = true;
-      }
-      dodSettle(s, now);
-      return s;
-    }
-    case "start":
-      if (!boss || !(s.phase === "lobby" || s.phase === "over")) return s;
-      if (dodOn(s, "ready") || dodVoting(s)) return state; // (Democracy of Ducklings: the host readies like everyone)
-      return countdown(s, now) || state;
-    case "cancel":
-      if (me && s.phase === "countdown") {
-        // (any player stops the start; the next start counts from 5 again)
-        s.phase = "lobby";
-        s.ends = 0;
-        delete s.vt; // (the votes too)
-        delete s.voteQ;
-        delete s.sbpk; // (Sandbox's pick too)
-        delete s.sbAsked;
-        if (dodRoom(s)) me.ready = false; // (with every duck ready, Democracy of Ducklings would start it again at once)
-      }
-      return s;
-    case "submit": {
-      if (isVd(s)) return vdWrite(s, a, now, true) || state; // (Valentine's Duck Date: The Date's topic)
-      if (isTv(s)) {
-        const r = tvWrite(s, a, now, true);
-        return !r ? state : r.phase === "tvwrite" ? advance(r, now) : r;
-      } // (Trivia: a question, or a written answer)
-      if (isBb(s)) return bbWrite(s, a, now, true);
-      if (isSc(s)) return scWrite(s, a, now, true) || state;
-      if (!me || s.phase !== "submit" || s.done[a.id]) return s;
-      const q = question(s, a);
-      s.subs = (s.subs || []).filter((x) => x.by !== a.id);
-      if (q)
-        s.subs.push({
-          by: a.id,
-          ...q,
-          time: [0, 30, 60, 90].includes(a.time)
-            ? a.time
-            : s.options.answerTime,
-        });
-      s.done[a.id] = true;
-      return advance(s, now);
-    }
-    case "draft": {
-      // what a player has typed so far (kept by the host, sent in for them at the end)
-      if (isVd(s)) return vdWrite(s, a, now, false) || state;
-      if (isTv(s)) return tvWrite(s, a, now, false) || state;
-      if (isBb(s)) return bbWrite(s, a, now, false) || state;
-      if (isSc(s)) return scWrite(s, a, now, false) || state;
-      if (!me || s.phase !== "submit" || s.done[a.id]) return state;
-      s.drafts = {
-        ...(s.drafts || {}),
-        [a.id]: {
-          ...(question(s, a) || { text: "" }),
-          time: [0, 30, 60, 90].includes(a.time)
-            ? a.time
-            : s.options.answerTime,
-        },
-      };
-      return s;
-    }
-    case "move": {
-      // x, y on the board; j = when the current jump started (0 = on the ground)
-      if (!me || !s.pos[a.id]) return state;
-      if (!boardPhases(s).includes(s.phase)) return state;
-      const was = s.pos[a.id],
-        j = +a.j || 0;
-      if (holdStill(s, a.id, now)) return state; // Who is the Quack?: the last duck plays dead for a moment
-      if (
-        (isL4dd(s) || isSb(s)) &&
-        was.tp &&
-        now - was.tp < 1500 &&
-        Math.hypot((+a.x || 0) - was.x, (+a.y || 0) - was.y) > 0.03
-      )
-        return state; // (Quacky Zombies and Sandbox: the host just put it at a start spot; a move sent before that got there is old)
-      if (isHang(s) && hangStill(s, a.id, now)) return state; // Hangout: shot by Justin, it can't move for a while
-      if (downStill(s, a.id, now)) return state; // the boards: knocked down, it can't move for the host's time (1 s unless set)
-      if (sbOut(s, a.id)) return state; // (Sandbox: out of lives, it stays down: sbout.js)
-      if (seated(s, a.id)) return state; // (Valentine's Duck Date: the two at the table stay in their seats)
-      let x = Math.max(0, Math.min(1, +a.x || 0)),
-        y = Math.max(0, Math.min(1, +a.y || 0));
-      // a vote keeps its answer: the duck walks only inside its own column until Vote is pressed again (a juror may walk over and change their vote)
-      {
-        const c = heldCol(s, a.id);
-        if (c != null && c >= 0) {
-          const [lo, hi] = colBoundsAt(s, c);
-          x = Math.max(lo, Math.min(hi, x));
-        }
-      }
-      if (s.phase === "answer" && isLaw(s) && isCounsel(s, a.id)) {
-        const [lo, hi] = counselBounds(s, a.id);
-        x = Math.max(lo, Math.min(hi, x));
-      } // the attorneys argue from their own side, the offense left, the defense right
-      if (s.phase === "answer" && isDn(s) && isDefender(s, a.id)) {
-        const [lo, hi] = colBoundsAt(s, -1);
-        x = Math.max(lo, Math.min(hi, x));
-      } // (Duncelation: the defender from the circle)
-      if (isDn(s) && s.phase === "dunced" && isDefender(s, a.id)) return state; // the dunce stays on the podium
-      if (
-        isQuack(s) &&
-        ["choice", "accuse"].includes(s.phase) &&
-        s.done[a.id]
-      ) {
-        x = was.x;
-        y = was.y;
-      } // a vote holds its spot
-      if (isSc(s) && SC_VOTES.includes(s.phase) && s.done[a.id]) {
-        x = was.x;
-        y = was.y;
-      } // a story vote holds its spot
-      if (
-        s.phase !== "answer" &&
-        s.phase !== "bracket" &&
-        s.phase !== "dunced" &&
-        !isSc(s) &&
-        !me.late &&
-        !isQuack(s) &&
-        !isHang(s) &&
-        !isMgj(s) &&
-        !isVd(s) &&
-        !isTv(s) &&
-        !isSb(s)
-      ) {
-        // after answering: inside your own column; no answer, no board (late joiners roam; over the bracket anyone does)
-        const c = s.lock[a.id];
-        if (c === undefined) {
-          x = was.x;
-          y = was.y;
-        } else {
-          const [lo, hi] = colBoundsAt(s, c);
-          x = Math.max(lo, Math.min(hi, x));
-        }
-      }
-      const w = (
-          isL4dd(s)
-            ? l4Holds(s, a.id, a.w)
-            : isMgj(s)
-              ? mgjHolds(s, a.id, a.w)
-              : BOARD_WEAPONS.includes(a.w) &&
-                onKeys(me.duck, a.w) &&
-                s.options.fun
-        )
-          ? a.w
-          : "",
-        [ax, ay] = w ? aimOf(a, 1) : [0, 0]; // a weapon kept out, and where it aims
-      const hz = (v) => Math.max(-400, Math.min(1200, Math.round(+v || 0))); // Hangout: z, the height of its feet; b, where its jump began (world px)
-      s.pos[a.id] = {
-        x,
-        y,
-        j,
-        ...(cutPic(me)
-          ? {
-              f: x < was.x - 0.0005 ? -1 : x > was.x + 0.0005 ? 1 : was.f || 1,
-            }
-          : {}), // (a cut-out picture: the way it faces, as the screens turn it, so it's hit where it shows: playerAt)
-        q: /^[lrud]$/.test(a.q) ? a.q : "",
-        sp: !!a.sp,
-        ...(w ? { w, ax: +ax.toFixed(3), ay: +ay.toFixed(3) } : {}),
-        ...(isHang(s)
-          ? {
-              z: hz(a.z),
-              b: hz(a.b),
-              ...jumpKept(j, a),
-            }
-          : {}),
-        ...(was &&
-        was.kb &&
-        now - was.kb.t < (was.kb.l ?? KB_LAND) + (was.kb.ms || KB_MS)
-          ? { kb: was.kb }
-          : {}),
-      }; // q: squashed against l/r/u/d; sp: sprinting; tb: a trampoline bounce's height
-      quackMoved(s, a.id); // (Who is the Quack?: first onto the Quack's tile)
-      if (me.dead && (x !== was.x || y !== was.y)) {
-        delete me.dead;
-        comeBack(s, a.id, now);
-      }
-      attacks(s, now); // (walked into a swing, or swung into a duck)
-      return s;
-    }
-    case "end": {
-      // end your turn (answer, discuss) or be ready for the next round (results)
-      if (isQuack(s) && QUACK_PHASES.includes(s.phase))
-        return quackEnd(s, a, now) || state;
-      if (isSc(s)) return scVote(s, a, now) || state;
-      if (isHang(s)) return state; // (Hangout's button is its own action, below)
-      if (isMgj(s) && s.phase !== "results") return state; // (Mad God Justin: only Try again, on the stats)
-      if (isVd(s) && VD_PHASES.includes(s.phase))
-        return vdEnd(s, a, now) || state; // (Valentine's Duck Date: only The Date's Next duck and Turn down)
-      if (isTv(s) && TV_BOARD.includes(s.phase)) return state; // (Trivia: its own action, below)
-      if (
-        !me ||
-        me.late ||
-        ![...boardPhases(s), "results"].includes(s.phase) ||
-        s.phase === "tie"
-      )
-        return s; // (a tie is settled with tieVote)
-      if (s.phase === "dunced") return state; // (Duncelation: the dunce's moment runs its time, then the stats)
-      if (
-        s.phase === "answer" &&
-        !(s.pos[a.id] && s.pos[a.id].x >= 0 && colAt(s, s.pos[a.id].x) >= 0)
-      )
-        return s; // stand on a column (a tile) first
-      if (
-        s.phase === "answer" &&
-        now < s.at + (isDn(s) ? DN_GRACE : VOTE_GRACE) * 1000
-      )
-        return state; // not in the first seconds (Duncelation: its grace period)
-      if (s.phase === "answer" && isLaw(s)) return lawVote(s, a, now) || state;
-      if (s.phase === "answer" && isDn(s)) return dnVote(s, a, now) || state;
-      s.done[a.id] = a.v ?? !s.done[a.id]; // pressing Vote again takes the vote back (and frees the duck to walk)
-      return advance(s, now);
-    }
-    case "endRound":
-      // the End round button: anyone playing, once enough have voted
-      if (!me || me.late || !playing(s).includes(a.id) || !canEndRound(s))
-        return state;
-      return advance(s, now, true);
-    case "voteReview":
-      if (!me || s.phase !== "results" || s.round < 1 || s.reviewVotes[a.id])
-        return s;
-      s.reviewVotes[a.id] = true;
-      if (reviewCount(s) >= needed(s)) s.review = true;
-      return s;
-    case "sbOk": {
-      // Sandbox: whoever has the rights gives them to a player or takes them back (the owner's answer 2, Nov 19
-      // 01:34Z: the host "decide[s] who else gets it"). The host's own rights never go
-      /* with a window's letter (win): that window opens to every player or shuts again (Player settings, p; the owner's,
-         Nov 19 17:15Z: "determines what settings players get ... if they can access every menu or only certain ones") */
-      if (a.win !== undefined) {
-        const w = SB_RIGHTS.find(([k]) => k === a.win);
-        if (!sbCan(s, a.id) || !w) return state;
-        s.options["sbOk" + w[0].toUpperCase()] = a.on ? 1 : 0;
-        say(
-          s,
-          `${me ? me.name : "The host"} ${a.on ? "opened" : "closed"} ${w[1]} to every player.`,
-        );
-        return s;
-      }
-      const who = s.players[a.who];
-      if (!sbCan(s, a.id) || !who || who.bot || a.who === s.hostId)
-        return state;
-      const ok = { ...((s.sb || {}).ok || {}) };
-      if (a.on) ok[a.who] = true;
-      else delete ok[a.who];
-      s.sb = { ...(s.sb || {}), ok };
-      say(
-        s,
-        `${me ? me.name : "The host"} ${a.on ? "let" : "stopped"} ${who.name} ${a.on ? "change" : "changing"} Sandbox.`,
-      );
-      return s;
-    }
-    case "sb":
-      // Sandbox's spawns and respawns: place one, change a box, press one (sbspawn.js)
-      if (a.k === "land") return sbLandAct(s, a, now, SB_H) ? s : state; // (a fall onto a zone that hurts: sbzone.js)
-      return sbAct(s, a, now) ? s : state;
-    case "sbg":
-      // Sandbox's God mode and invisibility: mine, or a player's if I have the rights (sbgod.js)
-      return sbGodAct(s, a) ? s : state;
-    case "sbr":
-      // Sandbox's Rules in G: lives, down phase, crits, watching when out (sandboxrules.js)
-      if (a.k === "again") return sbAgainAct(s, a, now) ? s : state; // (everyone out, off the zombie maps: the host's Play again, sbout.js)
-      return sbRulesAct(s, a) ? s : state;
-    case "sbh":
-      // Sandbox's hotbar: its slots, the lock, a spawn button's look and press (sbhot.js)
-      return sbHotAct(s, a, now) ? s : state;
-    case "sbep":
-      // Sandbox: what others may do with my made NPCs and groups, for this Sandbox (P, sbep.js)
-      return epAct(s, a) ? s : state;
-    case "nbn":
-    case "nbp":
-      // Seriat: my folder's names and the rights I give other players, for this Sandbox (nbperms.js)
-      return nbPermAct(s, a) ? s : state;
-    case "nbs":
-    case "nbw":
-      // Seriat: my shared copies, and a write into another player's file they let me write (nbperms.js)
-      return nbShareAct(s, a) ? s : state;
-    case "sbl":
-      // Sandbox's loot orbs: an orb's own picture (sbloot.js)
-      return sbLootAct(s, a) ? s : state;
-    case "sbgr":
-      // Sandbox's groups (sbgroups.js)
-      return sbGroupAct(s, a) ? s : state;
-    case "cabinEnd": {
-      // Hangout's End Cabin and Quacky Zombies' Exit Cabin: a click votes, another takes it back; half the people
-      // (never the computers) start a CABIN_END_MS timer, and the cabin game ends when it runs out
-      // (and Sandbox's Leave Sandbox, on the board too)
-      if (!sbHere(s) || !me || me.bot) return state;
-      const c = (s.cabinEnd = s.cabinEnd || { by: {}, at: 0 });
-      c.by = c.by || {}; // (online, an empty list of votes doesn't come back)
-      if (c.by[a.id]) delete c.by[a.id];
-      else c.by[a.id] = true;
-      cabinCheck(s, now);
-      return s;
-    }
-    case "toLobby":
-      /* Single Player: leaving a game goes back to its own lobby, whatever the game (the owner's, Nov 19 23:10Z: "When
-         you quit a game in single player, it should not take you back to the rooms for multiplayer") */
-      if (boss && s.solo && s.phase !== "lobby")
-        return backToLobby(s, "Back to the lobby.");
-      if (boss && sbHere(s))
-        return backToLobby(s, `${me.name} took everyone back to the lobby.`); // (Hangout and Sandbox: the host ends it whenever)
-      if (boss && s.phase === "over") {
-        s.phase = "lobby";
-        s.round = 0;
-        s.history = [];
-        s.jumps = {};
-        s.dn = null;
-        s.vd = null;
-        for (const id of s.seat) P[id].ready = false;
-      }
-      return s;
-    case "fx": {
-      // the silly commands, seen by everyone on the board
-      const who = (a.who || []).filter((id) => P[id]);
-      if (
-        a.justin &&
-        a.kind === "kill" &&
-        me &&
-        s.options.fun &&
-        !denied(s, a.id, "nofun")
-      )
-        return justinDown(s, now, logLine) ? s : state; // (the Justin option: kill @Justin on the boards)
-      if (
-        !me ||
-        !s.options.fun ||
-        denied(s, a.id, "nofun") ||
-        !who.length ||
-        !["lightning", "love", "kill", "hotdog", "fire"].includes(a.kind)
-      )
-        return state;
-      if (a.kind === "kill") {
-        for (const id of who)
-          if (!isGhost(s, id) && !vdSafe(s, id)) {
-            P[id].dead = true;
-            holdDown(s, id, now);
-          }
-      } // (it can't move for the knocked-down time: 6 s in Duck Cabin, as from Justin's gun)
-      logLine(s, {
-        sys: true,
-        small: true,
-        float: true,
-        by: a.id,
-        text: `${me.name} used ${a.kind} on ${who.map((id) => P[id].name).join(" and ")}.`,
-      }); // who did it, in small print
-      s.fxN = (s.fxN || 0) + 1;
-      s.fx = [
-        ...(s.fx || []).slice(-19),
-        { n: s.fxN, kind: a.kind, who, by: a.id, t: now },
-      ];
-      return s;
-    }
-    case "jumps":
-      if (me) s.jumps[a.id] = Math.max(0, +a.n || 0);
-      return s; // completed jumps this game
-    case "ping": {
-      // a player's connection: milliseconds to the game server and back
-      const ms = Math.max(0, Math.min(9999, Math.round(+a.ms || 0)));
-      if (!me || me.ms === ms) return state;
-      me.ms = ms;
-      return s;
-    }
-    case "idle":
-      if (!me || !!me.idle === !!a.v) return state;
-      me.idle = !!a.v;
-      return s; // no key, click or touch in 2 minutes
-    case "use": {
-      // an item on the board, seen by everyone; the handgun's bullet or the dagger then flies the way it was aimed
-      const sp = a.what || (me && me.duck && me.duck.special),
-        p = s.pos[a.id];
-      if (!me || !p || p.x < 0 || !boardPhases(s).includes(s.phase))
-        return state;
-      if (isL4dd(s)) return l4Use(s, a, now) ? s : state; // (Quacky Zombies: its own weapons, l4ddrules.js)
-      /* the normal games: a downed duck can't use a weapon, and neither can one just back from dying, in its spawn protection,
-         where what it shot or swung hurt nobody anyway (the owner's, Nov 19 16:30Z: "when players are downed in normal modes
-         they should not be able to do damage or use their weapons" and "they still get their invulnerability frames where they
-         cannot fire or attack with weapons during"). Sandbox keeps its own downs */
-      if (normalGame(s) && !isSb(s) && (me.dead || shielded(s, a.id, now)))
-        return state;
-      if (isSb(s) && me.dead) return state; // (Sandbox: a downed duck can't use a weapon either)
-      const downGun =
-        isMgj(s) && sp === "handgun" && !!me.dead && mgjOut(s, a.id); // (Mad God Justin: out of HP, the down pistol still fires: the owner's, Nov 17 11:07Z)
-      if (
-        isMgj(s)
-          ? s.phase !== "boss" || (me.dead && !downGun)
-          : !PRESS.includes(sp) ||
-            !(isSb(s) ? sbSlots(s, a.id).includes(sp) : onKeys(me.duck, sp))
-      )
-        return state; // (Mad God Justin: not while down, but the down pistol)
-      if (isMgj(s) && ["revive", "zebra"].includes(sp))
-        return mgjTeamUse(s, a, now, logLine) ? s : state; // (Mad God Justin: a revive held or let go, the zebra cake)
-      const mgjGun = isMgj(s) && MGJ_GUNS.includes(sp);
-      if (isMgj(s) && sp !== MGJ_MELEE && sp !== "handgun" && !mgjGun)
-        return mgjUse(s, a, now, logLine) ? s : state; // (Mad God Justin: the medkit picked up)
-      if (mgjGun && (s.mgj.held[a.id] !== sp || !ammoOf(s, a.id))) return state; // (Mad God Justin: a gun picked up, until its shots are gone)
-      if (
-        (BOARD_WEAPONS.includes(sp) || sp === "chair") &&
-        !s.options.fun &&
-        !isMgj(s)
-      )
-        return state; // the silly-commands switch covers them
-      if (isGhost(s, a.id)) return state; // (Duck Cabin: a ghost can't use anything)
-      const gotM = isSb(s) && sbGot(s, a.id, sp); // (Sandbox: taken from a loot orb with its own numbers, sbhot.js)
-      if (gotM && gotM.u === 0) return state; // (used up, still in its slot)
-      if (sp === "sound") return state; // (Sound is off for now: specials.js off)
-      const k = `${a.id} ${sp}`; // (each item waits on its own)
-      if (
-        waiting(
-          GATE_BREEDS.board,
-          {
-            auto: AUTO.includes(sp),
-            cool: coolFor(sp, s),
-            ends: coolEnds(s, a.id, sp),
-          },
-          now,
-        ) ||
-        heldBack(s, sp, () => laserHeat(s, a.id, now).over)
-      )
-        return state; // (weaponuse.js: its wait, the one zebra cake, Mad God Justin's Laser Rifle overheated)
-      const mg = downGun ? magSize(sp) : isMgj(s) ? mgjMag(sp) : magSize(sp); // (Mad God Justin's pistol never reloads: the owner's, Nov 16; a gun picked up has Quacky Zombies' magazine; the down pistol does, its bullets never run out)
-      const many =
-        sp === "burst" && !isMgj(s)
-          ? roundsOf(ARMS.burst, mg[0] - magOf(s, a.id, now, sp).n)
-          : 1; // (the burst rifle: three rounds a press, or the rest of its clip)
-      if (mg) {
-        // one shot from the magazine; the last starts the reload
-        const m = magOf(s, a.id, now, sp),
-          n = m.n + many,
-          d = isMgj(s) ? mg[1] : reloadFor(sp, n);
-        s.mag = {
-          ...(s.mag || {}),
-          [magKey(a.id, sp)]: afterShots(mg[0] - m.n, many).empty
-            ? { n, r: now + d, d }
-            : { n, r: 0 },
-        };
-      }
-      s.lastUse = { ...(s.lastUse || {}), [k]: now };
-      if (mgjGun) mgjSpend(s, a.id);
-      if (gotM) sbSpend(s, a.id, sp); // (one of its uses: sbhot.js)
-      const face = a.face < 0 ? -1 : 1,
-        aim =
-          BOARD_WEAPONS.includes(sp) || THROWS.includes(sp)
-            ? aimOf(a, face)
-            : null;
-      const hit = MELEE.includes(sp) ? strike(s, a.id, sp, aim, now) : null; // (the melees hit at once, up close, and while they swing: attacks)
-      s.fxN = (s.fxN || 0) + 1;
-      s.fx = [
-        ...(s.fx || []).slice(-19),
-        {
-          n: s.fxN,
-          kind: "use",
-          what: sp,
-          by: a.id,
-          who: [a.id],
-          face,
-          t: now,
-          ...(aim ? { ax: +aim[0].toFixed(3), ay: +aim[1].toFixed(3) } : {}),
-          ...(hit ? { hit } : {}),
-        },
-      ];
-      if (aim && !hit && sp === "chaingun") chainShot(s, a.id, p, aim, now);
-      else if (aim && !hit && sp === "laser" && isMgj(s)) {
-        /* Mad God Justin's Laser Rifle (picked up): the chain gun's line, red, through everything on it, 1 damage; it
-           heats up as in Dead Ducks Arcade (l4ddrules.js laserNext), its heat in s.mgj.lz */
-        chainShot(s, a.id, p, aim, now, "laser");
-        const next = laserNext(s, a.id, now);
-        s.mgj.lz = { ...(s.mgj.lz || {}), [a.id]: next.lz };
-        if (next.hot) {
-          s.fxN = (s.fxN || 0) + 1;
-          s.fx = [
-            ...(s.fx || []).slice(-19),
-            { n: s.fxN, kind: "l4hot", by: a.id, who: [], t: now },
-          ];
-        }
-      } else if (aim && !hit && sp === "flamer")
-        duckFlame(s, a.id, p, aim, now);
-      else if (aim && !hit) {
-        const v =
-            (sp === "dagger"
-              ? DAGGER_SPEED
-              : sp === "bow"
-                ? ARROW_SPEED
-                : BOARD_GUNS.includes(sp)
-                  ? gunSpeed(sp)
-                  : SHOT_SPEED) / sbBoardK(s), // (Sandbox's bigger board: the same speed in ducks)
-          hang = {
-            ...(isHang(s)
-              ? {
-                  hz: Math.round(+p.z || 0),
-                  hin: inCabin(p.x * HW, p.y * HH) ? 1 : 0,
-                }
-              : {}), // (Hangout: the height it flies at, and which side of the cabin's walls)
-            ...(["grenade", "glauncher", "chair", "zebra"].includes(sp)
-              ? {}
-              : floorFirst(s, a.id, p, aim, now)), // (a duck on my floor in its line: it stays on my floor)
-          };
-        const shot = (n, k, vx, vy, more) => ({
-          n,
-          by: a.id,
-          k,
-          x0: p.x,
-          y0: p.y,
-          vx: +vx.toFixed(4),
-          vy: +vy.toFixed(4),
-          t: now,
-          lx: p.x,
-          ly: p.y,
-          ...hang,
-          ...more,
-        });
-        const [rx, ry] = isHang(s) ? [0.006, 0.012] : boardDuck(s),
-          dx = aim[0] / rx,
-          dy = aim[1] / ry,
-          dl = Math.hypot(dx, dy) || 1; // (the aim in duck lengths: the shotgun's cone and the grenade's throw are measured in them)
-        if (sp === "shotgun") {
-          // a cone of pellets, as Mad God Justin's shotgun
-          const out = [];
-          for (const [i, an] of coneOf(
-            Math.atan2(dy, dx),
-            PELLETS,
-            SPREAD,
-          ).entries()) {
-            const bx = Math.cos(an) * rx,
-              by = Math.sin(an) * ry,
-              bl = Math.hypot(bx, by);
-            out.push(
-              shot(
-                s.fxN * 10 + i,
-                shotKind(sp),
-                (bx / bl) * (PELLET_V / sbBoardK(s)),
-                (by / bl) * (PELLET_V / sbBoardK(s)),
-                { life: DUCK_PELLET_LIFE },
-              ),
-            );
-          }
-          s.shots = [...(s.shots || []), ...out];
-        } else if (sp === "chair") {
-          const k = CHAIR_DUCKS / dl;
-          s.shots = [
-            ...(s.shots || []),
-            shot(s.fxN, "chair", dx * k * rx, dy * k * ry, {
-              r: CHAIR_R,
-              life: CHAIR_MS,
-            }),
-          ];
-        } else if (sp === "zebra") throwCake(s, a.id, p, aim, now);
-        else if (sp === "grenade") {
-          const k = GRENADE_FAR / (GRENADE_MS / 1000) / dl;
-          s.shots = [
-            ...(s.shots || []),
-            shot(s.fxN, "grenade", dx * k * rx, dy * k * ry),
-          ];
-        } else if (sp === "glauncher")
-          s.shots = [
-            ...(s.shots || []),
-            shot(s.fxN, "lgren", aim[0] * v, aim[1] * v, {
-              life: Math.round(
-                (ARMS.glauncher.far / ARMS.glauncher.speed) * 1000,
-              ),
-            }),
-          ];
-        // (straight, and it goes off on the first duck or at its range: moveShots)
-        else
-          for (let i = 0; i < many; i++)
-            s.shots = [
-              ...(s.shots || []),
-              shot(
-                s.fxN,
-                shotKind(sp),
-                aim[0] * v,
-                aim[1] * v,
-                roundAt(s.fxN, i, now, ARMS[sp] && ARMS[sp].gap),
-              ),
-            ]; // (a burst's rounds leave one after another: each waits until its time, t)
-      }
-      return s;
-    }
-    case "reload": {
-      // R: the handgun reloads before its magazine is empty
-      if (me && isL4dd(s)) return l4Reload(s, a, now) ? s : state;
-      if (me && isMgj(s)) {
-        // Mad God Justin: the gun picked up, if it has a magazine (or the down pistol)
-        const w = a.w,
-          mg =
-            w === "handgun" && me.dead && mgjOut(s, a.id)
-              ? magSize(w)
-              : mgjMag(w),
-          m = mg && magOf(s, a.id, now, w);
-        if (
-          !m ||
-          (s.mgj.held[a.id] !== w && !(w === "handgun" && me.dead)) ||
-          !m.n ||
-          m.r
-        )
-          return state;
-        s.mag = {
-          ...(s.mag || {}),
-          [magKey(a.id, w)]: { n: m.n, r: now + mg[1] },
-        };
-        return s;
-      }
-      const w = magSize(a.w) ? a.w : "handgun"; // (the gun named, or the handgun)
-      if (!me || !onKeys(me.duck, w) || !s.options.fun) return state;
-      const m = magOf(s, a.id, now, w),
-        d = reloadFor(w, m.n);
-      if (!m.n || m.r) return state;
-      s.mag = {
-        ...(s.mag || {}),
-        [magKey(a.id, w)]: { n: m.n, r: now + d, d },
-      };
-      return s;
-    }
-    case "aura": {
-      // an effect around a duck's head, seen by everyone: 5 seconds, or kept on (keep) until kept off
-      const what = a.what;
-      if (!me || !EFFECTS.includes(what) || !onKeys(me.duck, what) || isMgj(s))
-        return state; // (Mad God Justin: no specials)
-      const cur = (s.aura || {})[a.id] || {},
-        next = {};
-      for (const [k, u] of Object.entries(cur)) if (!u || u > now) next[k] = u; // (0: kept on)
-      if (a.keep) {
-        if (cur[what] === 0) delete next[what];
-        else next[what] = 0;
-      } else next[what] = now + 5000; // (a kept one goes on for 5 more seconds)
-      s.aura = { ...(s.aura || {}), [a.id]: next };
-      return s;
-    }
-    case "tieVote": {
-      // Bicker Brackets, a tied match: vote again, or a coin toss (it can be changed until everyone has chosen)
-      if (
-        !me ||
-        me.late ||
-        s.phase !== "tie" ||
-        !["again", "coin"].includes(a.v)
-      )
-        return state;
-      s.bb.tie = {
-        ...s.bb.tie,
-        votes: { ...(s.bb.tie || {}).votes, [a.id]: a.v },
-      };
-      s.done[a.id] = true;
-      return advance(s, now);
-    }
-    case "wqWord":
-      return wqWord(s, a, now) || state; // Who is the Quack?: the secret word, from its picker
-    case "hang":
-      return me && isHang(s) && inWorld(s) && hangAction(s, a, now) ? s : state; // Hangout: an activity (k) did something
-    case "counsel": {
-      // Lawyering: my pick (as the writer) or my vote (the room) for an attorney; it can change until the picking ends
-      const L = s.law,
-        how = L && L.how && L.how[a.role];
-      if (
-        !me ||
-        me.late ||
-        s.phase !== "counsel" ||
-        !how ||
-        (how === "writer" && a.id !== s.qs[s.qi].by) ||
-        !counselOk(s, a.role, a.who)
-      )
-        return state;
-      L.picks[a.role] = { ...L.picks[a.role], [a.id]: a.who };
-      s.done[a.id] = counselDone(s, a.id);
-      return advance(s, now);
-    }
-    case "attvote": {
-      // Lawyering's attorney vote: my vote for the defense (then the offense); it can change until the clock runs out
-      const L = s.law;
-      if (
-        !me ||
-        me.late ||
-        !isLaw(s) ||
-        !L ||
-        !ATT_PHASES.includes(s.phase) ||
-        !counselOk(s, attRole(s), a.who)
-      )
-        return state;
-      const role = attRole(s),
-        picks = (L.picks[role] = { ...L.picks[role], [a.id]: a.who }),
-        on = playing(s).filter((id) => s.players[id]);
-      if (
-        !L.fast &&
-        on.filter((id) => picks[id] !== undefined).length >=
-          Math.max(1, Math.ceil(on.length * shareOf(s) - 1e-9))
-      ) {
-        L.fast = 1;
-        s.ends = now + Math.min(Math.max(0, s.ends - now), ATT_FAST);
-      } // (the share of the room is in: 0:05 left)
-      return s;
-    }
-    case "goOn": {
-      // Next round: go on without the attorney (the defender) who left, once enough press it (again: take it back)
-      const w = s.waiting;
-      if (!me || me.late || !w || !w.for) return state;
-      w.go = { ...w.go };
-      if (w.go[a.id]) delete w.go[a.id];
-      else w.go[a.id] = true;
-      return goOnDone(s, now) || s;
-    }
-    case "tv": {
-      // Trivia: a vote on a row (pick), End round (end), the writer's Correct or Wrong (grade), the reveal's Stop timer (stop)
-      if (!me || !isTv(s)) return state;
-      const r =
-        a.k === "pick"
-          ? tvPick(s, a, now)
-          : a.k === "end"
-            ? tvEnd(s, a, now)
-            : a.k === "grade"
-              ? tvGrade(s, a, now)
-              : a.k === "stop"
-                ? tvStop(s, a, now)
-                : null;
-      return r || state;
-    }
-    case "vdTimer":
-      return me && isVd(s) ? vdTimer(s, a, now) || state : state; // Valentine's Duck Date: The Date's Start timer (pause, go on)
-    case "dnEnd":
-      return me && isDn(s) ? dnEndVote(s, a, now) || state : state; // Duncelation: End round (or take it back)
-    case "giveUp": {
-      // Lawyering: an attorney who isn't ahead in closing arguments gives the case to the other side
-      const L = s.law;
-      if (
-        !me ||
-        !isLaw(s) ||
-        s.phase !== "answer" ||
-        !L ||
-        !L.close ||
-        !canGiveUp(s, a.id)
-      )
-        return state;
-      L.gave = a.id;
-      say(s, `${me.name} gave up the case.`);
-      return verdict(s, a.id === L.off ? 1 : 0, now);
-    }
-    case "pick": {
-      // Bicker Brackets: my vote for a topic (it can be changed until the vote ends)
-      if (
-        !me ||
-        me.late ||
-        s.phase !== "tvote" ||
-        !Number.isInteger(a.i) ||
-        !s.bb.topics[a.i]
-      )
-        return state;
-      s.bb.tvotes = { ...s.bb.tvotes, [a.id]: a.i };
-      s.done[a.id] = true;
-      return advance(s, now);
-    }
-    case "voteStart": {
-      // a vote to kick a player, or to go back to the lobby; the one who starts it votes yes
-      if (
-        !me ||
-        me.bot ||
-        (["lobby", "countdown", "over"].includes(s.phase) &&
-          !(s.phase === "countdown" && s.vt && a.kind === "lobby"))
-      )
-        return state; // (in the game and map votes, only a vote to go back to the lobby: owner, Nov 16)
-      if (s.vote) return state;
-      const used = (s.voteUsed || {})[a.id] || {},
-        tk = voteKey(s, now);
-      if (a.kind === "kick") {
-        if (!P[a.target] || a.target === a.id) return state;
-        if (humanIds(s).length <= 2) return state; // two people: no kick vote (it would pass on the starter's vote alone)
-        if (used.kick !== undefined && s.round - used.kick < 2) return state; // one kick vote every two rounds
-      } else if (
-        a.kind === "lobby" ||
-        a.kind === "skip" ||
-        a.kind === "turn" ||
-        a.kind === "newgame"
-      ) {
-        if (a.kind === "turn" && isBb(s)) return state; // (not in Bicker Brackets)
-        if (
-          a.kind === "newgame" &&
-          (!votesDue(s).length || s.phase !== "results")
-        )
-          return state; // (Vote for a new game now: only on the stats screen, while the ducks vote on games or maps)
-        if (a.kind !== "lobby" && isHang(s)) return state; // (Hangout has no turns or rounds to skip)
-        if (used[a.kind] === tk) return state; // one back-to-lobby (or skip) vote a turn
-      } else return state;
-      s.voteN = (s.voteN || 0) + 1;
-      s.vote = {
-        n: s.voteN,
-        kind: a.kind,
-        target: a.kind === "kick" ? a.target : null,
-        by: a.id,
-        yes: { [a.id]: true },
-        no: {},
-        ends: now + VOTE_TIME * 1000,
-      };
-      s.voteUsed = {
-        ...(s.voteUsed || {}),
-        [a.id]: { ...used, [a.kind]: a.kind === "kick" ? s.round : tk },
-      };
-      say(
-        s,
-        a.kind === "kick"
-          ? `${me.name} started a vote to kick ${P[a.target].name}.`
-          : a.kind === "skip"
-            ? `${me.name} started a vote to skip this round.`
-            : a.kind === "turn"
-              ? `${me.name} started a vote to skip this turn.`
-              : a.kind === "newgame"
-                ? `${me.name} started a vote for a new ${votesDue(s).includes("mode") ? "game" : "map"} now.`
-                : `${me.name} started a vote to go back to the lobby.`,
-      );
-      return settleVote(s, now);
-    }
-    case "voteCast": {
-      const v = s.vote;
-      if (!me || !v || v.n !== a.n) return state;
-      if (!voteNeeds(s).voters.includes(a.id)) return state;
-      if (a.v) {
-        v.yes[a.id] = true;
-        delete v.no[a.id];
-      } else {
-        v.no[a.id] = true;
-        delete v.yes[a.id];
-      }
-      return settleVote(s, now);
-    }
-    case "chat": {
-      // a message; from the command line (send) it carries the command (cmd) and may be a file
-      if (!me) return s;
-      if (
-        denied(s, a.id, "nochat") ||
-        (a.cmd && (denied(s, a.id, "nocmd") || denied(s, a.id, "nosend")))
-      )
-        return state;
-      if (now - ((s.lastChat || {})[a.id] || 0) < slowMs(s, a.id)) return state; // slow: one message every 15 s (slow30: 30 s)
-      const text = String(a.text || "")
-        .trim()
-        .slice(0, a.cmd ? 2000 : 500);
-      if (!text) return state;
-      if (a.to && !P[a.to]) return state;
-      s.lastChat = { ...(s.lastChat || {}), [a.id]: now };
-      logLine(s, {
-        from: a.id,
-        to: a.to || null,
-        text,
-        ...(a.cmd ? { cmd: String(a.cmd).slice(0, 200) } : {}),
-        ...(a.file
-          ? {
-              file: String(a.file).slice(0, 40),
-              ...(a.pub ? { pub: true } : {}),
-              ...(a.grp && groupsOf0(s)[a.grp] ? { grp: String(a.grp) } : {}),
-            }
-          : {}),
-      });
-      return s;
-    }
-    case "hostMoved": {
-      // (only the host's own browser applies it) the host went quiet and this player took over: the old host keeps sudo
-      if (!me || a.id === s.hostId) return state;
-      const old = s.hostId;
-      s.hostId = a.id;
-      if (old && P[old]) {
-        const g = groupsOf0(s).sudo;
-        if (!g.members.includes(old)) g.members = [...g.members, old];
-        say(
-          s,
-          `${P[old].name} went quiet, so ${me.name} hosts now. ${P[old].name} keeps sudo.`,
-        );
-      }
-      return s;
-    }
-    case "usermod": {
-      // sudo: put a player in groups (add), take them out (remove), or give them exactly these (set)
-      const G = groupsOf0(s),
-        list = (a.groups || []).map(String).filter((g) => G[g]);
-      if (
-        !me ||
-        !isSudo(s, a.id) ||
-        !P[a.target] ||
-        !list.length ||
-        !["add", "remove", "set"].includes(a.mode)
-      )
-        return state;
-      for (const [name, g] of Object.entries(G)) {
-        const has = g.members.includes(a.target);
-        let want =
-          a.mode === "set"
-            ? list.includes(name)
-            : list.includes(name)
-              ? a.mode === "add"
-              : has;
-        if (name === "sudo" && a.target === s.hostId) want = false; // (the host is sudo without being listed, always)
-        if (want !== has)
-          g.members = want
-            ? [...g.members, a.target]
-            : g.members.filter((x) => x !== a.target);
-      }
-      sayFloat(
-        s,
-        `${me.name} changed ${P[a.target].name}'s groups: ${groupsOf(s, a.target).join(", ") || "none"}.`,
-        a.id,
-      );
-      return s;
-    }
-    case "groupadd": {
-      // sudo: a new group with any of the restrictions
-      const name = String(a.name || "").toLowerCase(),
-        G = groupsOf0(s);
-      if (
-        !me ||
-        !isSudo(s, a.id) ||
-        !/^[a-z][a-z0-9_-]{0,19}$/.test(name) ||
-        G[name] ||
-        name.startsWith("superuser-") ||
-        Object.keys(G).length >= 20
-      )
-        return state;
-      G[name] = {
-        perms: [...new Set((a.perms || []).filter(permOk))],
-        members: [],
-      };
-      sayFloat(
-        s,
-        `${me.name} made the group ${name}${G[name].perms.length ? ` (${G[name].perms.join(", ")})` : ""}.`,
-        a.id,
-      );
-      return s;
-    }
-    case "groupdel": {
-      const G = groupsOf0(s);
-      if (
-        !me ||
-        !isSudo(s, a.id) ||
-        !G[a.name] ||
-        ["sudo", "dumbasses"].includes(a.name)
-      )
-        return state;
-      delete G[a.name];
-      sayFloat(s, `${me.name} removed the group ${a.name}.`, a.id);
-      return s;
-    }
-    case "groupmod": {
-      // sudo: rename a group (newName), or set its perms (perms); not sudo, dumbasses or a superuser group
-      const G = groupsOf0(s),
-        g = G[a.name],
-        to = String(a.newName || "").toLowerCase();
-      if (
-        !me ||
-        !isSudo(s, a.id) ||
-        !g ||
-        ["sudo", "dumbasses"].includes(a.name)
-      )
-        return state;
-      if (a.newName !== undefined) {
-        if (
-          !/^[a-z][a-z0-9_-]{0,19}$/.test(to) ||
-          G[to] ||
-          to.startsWith("superuser-")
-        )
-          return state;
-        delete G[a.name];
-        G[to] = g;
-        sayFloat(s, `${me.name} renamed the group ${a.name} to ${to}.`, a.id);
-        return s;
-      }
-      if (!Array.isArray(a.perms)) return state;
-      g.perms = [...new Set(a.perms.filter(permOk))];
-      sayFloat(
-        s,
-        `${me.name} set the group ${a.name}'s perms: ${g.perms.join(", ") || "none"}.`,
-        a.id,
-      );
-      return s;
-    }
-    case "forgame":
-      return forgame(s, a, now) || state;
-    case "skip": {
-      // the host (or sudo): end the current stage now, as if everyone were done
-      if (
-        !may(s, a.id, "canskip") ||
-        ["lobby", "over"].includes(s.phase) ||
-        inWorld(s)
-      )
-        return state;
-      say(s, `${me.name} skipped ahead.`);
-      if (s.phase === "countdown") {
-        s.ends = now;
-        return s;
-      } // the next tick starts the game
-      return advance(s, now, true);
-    }
-    case "sbPick":
-      // Sandbox's start: the host's pick, a new Sandbox or a save from its device (sbsave.js)
-      if (!host || s.phase !== "countdown" || !s.sbpk) return state;
-      delete s.sbpk;
-      if (!sbPick(s, a, now)) return state;
-      if (a.save) {
-        if (s.options.sbMap || (s.gmPlay && !sbRule(s, "pickmap")))
-          s.voteQ = (s.voteQ || []).filter((k) => k !== "map"); // (a world save brings its own map; a made game mode, its own: gmodes.js)
-        say(s, `${me.name} is loading a save: ${s.sbsv.name}`);
-      } else say(s, `${me.name} started a new Sandbox.`);
-      return nextVote(s, now);
-    case "umap":
-      // a map the host made, brought into the room or taken out (umaprules.js)
-      return umapAct(s, a) ? s : state;
-    case "sbTest": {
-      /* G's Test game mode (gmodes.js): the host's device hands the build, and the Sandbox starts again from it as players
-         would see it, no tools (on: 1); Stop test starts it again from the build as it was (on: 0) */
-      if (!host || !isSb(s) || !["sandbox", "hang"].includes(s.phase))
-        return state;
-      if (!a.on && !s.gmTest) return state;
-      const banned = s.banned;
-      backToLobby(
-        s,
-        a.on
-          ? `${me.name} is testing the game mode.`
-          : `${me.name} stopped the test.`,
-      );
-      s.banned = banned;
-      s.sbAsked = 1;
-      if (!sbPick(s, { save: a.save, play: a.on ? 1 : 0, test: 1 }, now))
-        return state;
-      placeMap(s);
-      return beginGame(s, now);
-    }
-    case "sbsv":
-      // Sandbox: Save as, the session's new name (and id) on the host's device (sbsave.js)
-      return host && sbRename(s, a, now) ? s : state;
-    case "music": {
-      // (the host's own browser) the room's songs: the one now and the one after it, so everyone hears the same (music.js)
-      if (!host) return state;
-      const song = (e) =>
-        e && typeof e.n === "string" && Number.isFinite(e.at)
-          ? { n: e.n.slice(0, 60), at: +e.at, seed: (+e.seed || 0) >>> 0 }
-          : null;
-      s.music = {
-        a: song(a.a),
-        b: song(a.b),
-        off: (s.music && s.music.off) || [],
-      };
-      return s;
-    }
-    case "songs": {
-      // the host, sudo or cansettings: songs taken off the room's list (off) or put back (on); all: 'on' puts every song back
-      if (!may(s, a.id, "cansettings") && !sbMay(s, a.id, "g")) return state; // (Sandbox: G's Music row too)
-      const off = new Set((s.music && s.music.off) || []),
-        names = (v) =>
-          (Array.isArray(v) ? v : [])
-            .filter((n) => typeof n === "string")
-            .map((n) => n.slice(0, 60));
-      if (a.all === "on") off.clear();
-      for (const n of names(a.off)) off.add(n);
-      for (const n of names(a.on)) off.delete(n);
-      s.music = {
-        a: null,
-        b: null,
-        ...(s.music || {}),
-        off: [...off].slice(0, 60),
-      };
-      return s;
-    }
-    case "tick": {
-      // the host's heartbeat; the same state comes back when nothing changed, so nothing redraws
-      if (s.phase === "countdown" && now >= s.ends) return nextVote(s, now);
-      if (isQuack(s) && QUACK_PHASES.includes(s.phase) && s.wq && !s.hidden) {
-        say(s, "A new host took over, so a new secret word.");
-        return startQuackRound(s, now);
-      } // (the old host's Secret Cards can't be opened)
-      if (s.phase === "lobby" || s.phase === "over") {
-        if (!dodRoom(s)) return state;
-        const changed = dodSettle(s, now);
-        if (dodStarts(s)) {
-          const c = countdown(clone(s), now);
-          if (c) return c;
-        }
-        return changed ? s : state;
-      }
-      if (s.phase === "countdown") return state;
-      const dv = dodVoting(s) && dodSettle(s, now); // (Democracy of Ducklings: a vote during a game passes or runs out here)
-      if (s.vote && now >= s.vote.ends) {
-        say(s, "The vote ran out of time.");
-        s.vote = null;
-        return s;
-      }
-      if (sbHere(s) && cabinTick(s, now)) return s;
-      if (
-        isL4dd(s) &&
-        inWorld(s) &&
-        s.hang &&
-        s.hang.l4 &&
-        s.hang.l4.over &&
-        (votesDue(s).length || rolling(s)) &&
-        now - s.hang.l4.over.at >= L4_OVER_MS
-      )
-        return cabinOver(s, now, "Everyone's down.");
-      const sbOut =
-        isL4dd(s) && inWorld(s) && s.hang && s.hang.l4 && s.hang.l4.over;
-      if (
-        sbOut &&
-        isSb(s) &&
-        (sbOut.sb === "lobby" || sbOut.sb === "again") &&
-        now - sbOut.at >= SB_OUT_MS
-      ) {
-        if (sbOut.sb === "lobby") return backToLobby(s, "Everyone's out.");
-        l4Again(s, now);
-        return s;
-      } // (Sandbox's Rules: everyone out of lives, then the lobby or a new start)
-      const sbEnd = sbOutTick(s, now); // (the same off the zombie maps: sbout.js)
-      if (sbEnd === "lobby") return backToLobby(s, "Everyone's out.");
-      if (sbEnd) return s;
-      if (inWorld(s) && modeOf(s.options.mode).timed && s.ends && now >= s.ends)
-        return cabinOver(s, now, "Time's up in the cabin."); // (Hangout from Random or the vote: its time limit)
-      const shots = isL4dd(s) ? l4Shots(s, now) : moveShots(s, now),
-        hung = isHang(s) && inWorld(s) && hangTick(s, now),
-        jus =
-          justinTick(s, now, logLine) |
-          dnTick(s, now) |
-          vdTick(s, now) |
-          attacks(s, now) | // (the knife and the hammer, still swinging)
-          cakeGone(s, now) |
-          (isL4dd(s) ? 0 : groundFire(s, now)) | // (the flamethrower's burning ground)
-          pwTick(s, now, normalGame(s)) | // (the ducks' wounds going away: wounds.js)
-          (isSb(s)
-            ? +sbTick(s, now, SB_H) |
-              +sbLootTick(s, now, SB_H) |
-              +sbZoneTick(s, now, SB_H) |
-              +sbGroupTick(s, now, SB_H)
-            : 0), // (Sandbox: its spawns, respawns and the board's zombies; its loot orbs; its zones; its groups)
-        up = standUps(s, now); // (a knocked-down duck stands up by itself when its time is up)
-      const sig = () => [s.phase, s.qi, s.catchEnds, s.round, s.at].join(),
-        was = sig();
-      advance(s, now);
-      return sig() === was && !shots && !hung && !jus && !up && !dv ? state : s;
-    }
-  }
-  return s;
+  const act = ACTS[a.t];
+  return act && Object.hasOwn(ACTS, a.t)
+    ? act({ state, s, a, now, P, me, host, boss })
+    : s;
 }
 
 /* the safety net: an action that throws is skipped (the room keeps going) and the room's log says so, once a minute at
@@ -2993,7 +1551,7 @@ export function safeReduce(state, a, now = Date.now()) {
    too; hin, the side it's on). Justin runs after it wherever he is and eats it, and does nothing else meanwhile
    (boardjustin.js, hangout/justin.js: eat, when he started); with no Justin to eat it, it's gone 12 s after it lands */
 const CAKE_LEFT = 12000;
-function throwCake(s, by, p, aim, now) {
+export function throwCake(s, by, p, aim, now) {
   const vx = aim[0] * CAKE_SPEED,
     vy = aim[1] * CAKE_SPEED;
   let stop = 6;
@@ -3033,7 +1591,7 @@ function throwCake(s, by, p, aim, now) {
   };
 }
 /* a cake nobody ate (no Justin, or he's down), or one out of its stage: gone */
-function cakeGone(s, now) {
+export function cakeGone(s, now) {
   const c = s.zcake;
   if (!c) return false;
   if (
@@ -3086,7 +1644,7 @@ export function wounded(s, id, w, now, crit) {
   ];
 }
 /* a vote passes once enough say yes, and fails once it can't pass any more */
-function settleVote(s, now) {
+export function settleVote(s, now) {
   const v = s.vote;
   if (!v) return s;
   const { voters, need } = voteNeeds(s, v),
@@ -3153,7 +1711,7 @@ function settleVote(s, now) {
 /* someone leaves (or is kicked) in the middle of a bracket match or its tie vote: the match isn't settled by them going.
    The others' votes open again, so it waits for the players still here to end their turn (or for its own timer). In the
    tie vote the others keep their picks; only the one who left loses theirs */
-function reopenMatch(s, id) {
+export function reopenMatch(s, id) {
   if (
     !isBb(s) ||
     !["answer", "tie"].includes(s.phase) ||
@@ -3226,7 +1784,7 @@ export const cabinNeeded = (s) =>
   Math.max(1, Math.ceil(humanIds(s).length / 2));
 /* starts the timer when enough have voted, and starts it over (from CABIN_END_MS) when the votes drop; true when it
    changed anything */
-function cabinCheck(s, now) {
+export function cabinCheck(s, now) {
   const c = s.cabinEnd;
   if (!c) return false;
   const enough = cabinVotes(s) >= cabinNeeded(s),
@@ -3238,7 +1796,7 @@ function cabinCheck(s, now) {
 /* a cabin game ends (the vote won, or a Hangout's time limit ran out): the whole stay is one game. With Vote Mode & Map
    on, Vote return counts it (the votes come back when it's time, or the same game starts over); with Random the next
    game begins; otherwise the room goes back to the lobby, as when the host ends it */
-function cabinOver(s, now, why = "The ducks voted to leave the cabin.") {
+export function cabinOver(s, now, why = "The ducks voted to leave the cabin.") {
   delete s.cabinEnd;
   const due = votesDue(s);
   if (!due.length && !rolling(s)) return backToLobby(s, why); // (the host's own pick: back to the lobby)
@@ -3248,9 +1806,9 @@ function cabinOver(s, now, why = "The ducks voted to leave the cabin.") {
   return due.length ? voteAgain(s, now, due) : rotate(s, now);
 }
 /* Quacky Zombies from the vote or Random: once everyone's down, the score shows a moment, then the room moves on */
-const L4_OVER_MS = 8000;
+export const L4_OVER_MS = 8000;
 /* Sandbox: everyone's out, the card shows this long before the lobby or the new start */
-const SB_OUT_MS = 5000;
+export const SB_OUT_MS = 5000;
 /* Hangout's time limit (Game Settings, hangTime): only when Random or the vote picked it, never when the host did; in
    seconds, 0 for none */
 const HANG_TIMES = [0, 5, 10, 15, 20, 30];
@@ -3262,7 +1820,7 @@ function hangLimit(s) {
   return m * 60;
 }
 /* every beat in the cabin: the votes of players who left stop counting; true when the game ended or the timer changed */
-function cabinTick(s, now) {
+export function cabinTick(s, now) {
   if (!s.cabinEnd) return false;
   const was = s.cabinEnd.at,
     changed = cabinCheck(s, now);
@@ -3433,3 +1991,7 @@ export const signed = (v) =>
       Math.abs(v).toFixed(Number.isInteger(v) ? 0 : 1);
 export const nameOfValue = (v) =>
   v === null ? "" : COLS[Math.max(0, Math.min(6, Math.round(v) + 3))];
+
+/* ---------- the actions, one handler each (owner, Nov 21): reduceStep above looks the action up here ---------- */
+
+const ACTS = { ...ROOM_ACTS, ...PLAY_ACTS, ...SB_ACTS };
