@@ -24,9 +24,16 @@
    the screens), subs and drafts (the writing), votes { id: [row] }, ids (a written question's rows, one per answerer),
    text { id: answer }, sent { id: true }, grades { id: true | false }, stop { id: true } (the reveal's Stop timer), used (auto questions dealt), log (every played
    question: { round, by, auto, kind, text, right, wrong, none }) } */
-import { enter, say, playing, seatLate, toStats, shareOf } from "./rules.js";
+import {
+  enter,
+  say,
+  playing,
+  seatLate,
+  toStats,
+  shareOf,
+  OPTIONS_DEFAULT,
+} from "./rules.js";
 import { TV_BANK } from "./triviabank.js";
-import { WHEN_MISSING } from "./gamedefaults.js";
 
 export const isTv = (s) => s.options.mode === "trivia";
 export const TV_PHASES = ["tvwrite", "tvq", "tvw", "tvg", "tvr"];
@@ -87,12 +94,11 @@ const line = (v, max) =>
     .slice(0, max);
 
 /* ---------- the settings ---------- */
-export const multiOn = (s) => +(s.options.tvMulti ?? WHEN_MISSING.TV_ON) !== 0;
+export const multiOn = (s) => +(s.options.tvMulti ?? 1) !== 0;
 export const noWrongOn = (s) => !!+s.options.tvNoWrong;
-export const mcOn = (s) => +(s.options.tvMc ?? WHEN_MISSING.TV_ON) !== 0;
-export const wrOn = (s) =>
-  +(s.options.tvWr ?? WHEN_MISSING.TV_ON) !== 0 || !mcOn(s); // (never both off)
-export const stopOn = (s) => (s.options.tvStop ?? WHEN_MISSING.TV_ON) !== 0;
+export const mcOn = (s) => +(s.options.tvMc ?? 1) !== 0;
+export const wrOn = (s) => +(s.options.tvWr ?? 1) !== 0 || !mcOn(s); // (never both off)
+export const stopOn = (s) => (s.options.tvStop ?? 1) !== 0;
 export const hideWriter = (s) => !!+s.options.tvHide;
 
 /* a question as its writer sent it, checked: null when it isn't valid. With multiple choice off every question is
@@ -439,7 +445,7 @@ export function tvJoin(s, id) {
 /* a Trivia phase's time limit (0: none) */
 export function tvLimit(s) {
   if (s.phase === "tvwrite")
-    return +(s.options.tvWrite ?? WHEN_MISSING.TV_WRITE) || 0;
+    return +(s.options.tvWrite ?? OPTIONS_DEFAULT.tvWrite) || 0;
   if (s.phase === "tvw") return TV_ANSWER;
   if (s.phase === "tvg") return +s.options.tvGrade ? TV_GRADE : 0;
   if (s.phase === "tvr") return TV_REVEAL;

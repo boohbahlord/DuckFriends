@@ -17,7 +17,6 @@ import { isGhost } from "./death.js";
 import { PROPS, SOLIDS, FIELD, W, H, EDGE, heightAt } from "./layout.js";
 import * as A from "./art.js";
 import { fewer } from "../gfx.js";
-import { WHEN_MISSING } from "../gamedefaults.js";
 
 const R = 16,
   DT = 20,
@@ -412,7 +411,7 @@ activity({
       sp = Math.hypot(vx, vy);
     if (
       ctx.world.inside ||
-      (me.z ?? WHEN_MISSING.Z) - heightAt(mx, my) > 14 ||
+      (me.z ?? 0) - heightAt(mx, my) > 14 ||
       now < cool ||
       !touch(tx, ty, mx, my)
     )

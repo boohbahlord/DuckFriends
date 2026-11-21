@@ -54,7 +54,6 @@ import { activeRoom } from "../net.js";
 import { handouts } from "../secret.js";
 import { jPoker } from "./justin.js";
 import { play as sound } from "./sounds.js";
-import { WHEN_MISSING } from "../gamedefaults.js";
 
 const JOIN = 12000,
   SHOW = 6000,
@@ -199,7 +198,7 @@ const ready = (s, pk) =>
     ...atTable(s).map((q) => q.id),
     ...(pk.set.butler ? ["butler"] : []),
     ...(pk.k.justin !== undefined ? ["justin"] : []),
-  ].filter((id) => (pk.chips[id] ?? WHEN_MISSING.CHIPS) > 0);
+  ].filter((id) => (pk.chips[id] ?? 0) > 0);
 const blindNow = (pk) =>
   pk.set.blinds * (pk.set.up ? 2 ** Math.floor(pk.n / 10) : 1); // (the small blind; the big one is twice it)
 /* the host's deck and everyone's two cards for the hand it's dealing */
@@ -274,7 +273,7 @@ function over(pk, now) {
 /* one puts chips in (no more than they have: then they're all in) */
 function put(pk, id, n) {
   const p = pk.p[id],
-    k = Math.max(0, Math.min(n, pk.chips[id] ?? WHEN_MISSING.CHIPS));
+    k = Math.max(0, Math.min(n, pk.chips[id] ?? 0));
   pk.chips[id] -= k;
   p.bet += k;
   p.in += k;
@@ -422,15 +421,10 @@ function showdown(pk, now) {
 }
 /* after the showdown: Justin out of chips shoots the richest player and leaves (he gets no chips from the house) */
 function justinAfter(s, pk, now) {
-  if (pk.k.justin === undefined || (pk.chips.justin ?? WHEN_MISSING.CHIPS) > 0)
-    return;
+  if (pk.k.justin === undefined || (pk.chips.justin ?? 0) > 0) return;
   const rich = atTable(s)
     .map((q) => q.id)
-    .sort(
-      (a, b) =>
-        (pk.chips[b] ?? WHEN_MISSING.CHIPS) -
-        (pk.chips[a] ?? WHEN_MISSING.CHIPS),
-    )[0];
+    .sort((a, b) => (pk.chips[b] ?? 0) - (pk.chips[a] ?? 0))[0];
   jPoker.bust(s, rich, now);
   delete pk.k.justin;
   delete pk.chips.justin;
@@ -439,7 +433,7 @@ function justinAfter(s, pk, now) {
 function play(s, pk, id, d, v, now) {
   const p = pk.p[id],
     owe = Math.max(0, pk.high - p.bet),
-    have = pk.chips[id] ?? WHEN_MISSING.CHIPS;
+    have = pk.chips[id] ?? 0;
   if (d === "fold") {
     p.s = "fold";
     p.a = "Fold";
@@ -483,7 +477,7 @@ function strength(cards, board) {
 function brainMove(pk, id, cards, rand = Math.random) {
   const p = pk.p[id],
     owe = Math.max(0, pk.high - p.bet),
-    have = pk.chips[id] ?? WHEN_MISSING.CHIPS,
+    have = pk.chips[id] ?? 0,
     pot = potOf(pk),
     st = strength(cards, pk.board),
     r = rand();
@@ -630,8 +624,7 @@ rule("pk", {
     if (pk.id && mem.id !== pk.id && ["deal", "bet"].includes(pk.st)) {
       // (a new host: the cards went with the old one, so the bets go back and the hand starts again)
       for (const id of pk.order)
-        pk.chips[id] =
-          (pk.chips[id] ?? WHEN_MISSING.CHIPS) + (pk.p[id] ? pk.p[id].in : 0);
+        pk.chips[id] = (pk.chips[id] ?? 0) + (pk.p[id] ? pk.p[id].in : 0);
       toJoin(s, pk, now);
     }
     if (pk.k.justin !== undefined && !jPoker.here()) {
@@ -908,12 +901,11 @@ function render(s, now) {
     if (inHand && pk.st !== "show") {
       const can = mineTurn && p && !p.s,
         up = can && raiseMax(pk, me) > 0;
-      acts = `<div class="pkr-row"><button type="button" class="btn red" data-do="fold"${can ? "" : " disabled"}>Fold</button><button type="button" class="btn green" data-do="call"${can ? "" : " disabled"}>${owe ? "Call " + Math.min(owe, pk.chips[me] ?? WHEN_MISSING.CHIPS) : "Check"}</button></div><div class="pkr-row pkr-raise${up ? "" : " off"}">${amtHTML(pk.high ? "Raise" : "Bet", "yellow")}</div>`;
+      acts = `<div class="pkr-row"><button type="button" class="btn red" data-do="fold"${can ? "" : " disabled"}>Fold</button><button type="button" class="btn green" data-do="call"${can ? "" : " disabled"}>${owe ? "Call " + Math.min(owe, pk.chips[me] ?? 0) : "Check"}</button></div><div class="pkr-row pkr-raise${up ? "" : " off"}">${amtHTML(pk.high ? "Raise" : "Bet", "yellow")}</div>`;
     }
   }
   v.say.innerHTML = say;
-  v.chipsEl.innerHTML =
-    chipSVG(GOLD) + `<b>${pk.chips[me] ?? WHEN_MISSING.CHIPS}</b>`;
+  v.chipsEl.innerHTML = chipSVG(GOLD) + `<b>${pk.chips[me] ?? 0}</b>`;
   v.chipsEl.hidden = pk.chips[me] === undefined;
   v.body.innerHTML = body;
   if (v.acts.dataset.sig !== acts) {
@@ -931,8 +923,7 @@ function render(s, now) {
   amtShow(v);
 }
 /* the most I can raise by: my chips after calling (more than that is All in) */
-const raiseMax = (pk, id) =>
-  Math.max(0, (pk.chips[id] ?? WHEN_MISSING.CHIPS) - toCall(pk, id));
+const raiseMax = (pk, id) => Math.max(0, (pk.chips[id] ?? 0) - toCall(pk, id));
 function timer(pk, now) {
   const [from, len] =
     pk.st === "join"
@@ -1044,7 +1035,7 @@ function pokerSVG(s, now, me) {
           return tableCard(
             X(q.x + (i - 0.5) * 12),
             Y(q.y),
-            c ?? WHEN_MISSING.NO_COLUMN,
+            c ?? -1,
             (i - 0.5) * 6,
             HAND_K,
             pk.st === "show" && best.has(c) ? "pkr-best" : "",

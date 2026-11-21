@@ -15,7 +15,7 @@
    room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). Duncelation has its
    own rules in duncerules.js: one defender in the circle, everyone else walks to Dunce or Not a Dunce. Valentine's Duck
    Date has its own in vddrules.js: The Date at the dining table, a date with each Suitor, then a Suitor Turned Down. */
-import { HANDGUN, WHEN_MISSING } from "./gamedefaults.js";
+import { HANDGUN } from "./gamedefaults.js";
 import { epAct } from "./sbep.js";
 import { duckBig, picGrow, scaleOf } from "./duck.js";
 import {
@@ -890,7 +890,7 @@ export const colAt = (s, x) =>
           : -1
       : colOf(x);
 export const colXAt = (s, c) =>
-  twoSided(s) ? ([0.25, 0.75][c] ?? WHEN_MISSING.COL_MID) : colX(c);
+  twoSided(s) ? ([0.25, 0.75][c] ?? 0.5) : colX(c);
 export const colBoundsAt = (s, c) =>
   ringed(s)
     ? [
@@ -1533,7 +1533,7 @@ function startResults(s, now) {
 const WRITE_PHASES = ["submit", "topic", "seeds", "words", "tvwrite"];
 export const catchLen = (s) =>
   +(WRITE_PHASES.includes(s.phase)
-    ? (s.options.writeCatch ?? WHEN_MISSING.WRITE_CATCH)
+    ? (s.options.writeCatch ?? OPTIONS_DEFAULT.writeCatch)
     : s.options.catchUp) || 0; // (seconds; writing has its own)
 function catchUp(s, now, enough) {
   if (enough && catchLen(s) && !s.catchEnds)

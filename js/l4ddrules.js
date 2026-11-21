@@ -40,7 +40,6 @@ import {
   SPRINT as GAME_SPRINT,
   HANDGUN,
   POCKET_CHANGE,
-  WHEN_MISSING,
 } from "./gamedefaults.js";
 import { scaleOf } from "./duck.js";
 import { hpHeal, hpHurt, tenths } from "./hpmath.js";
@@ -1328,8 +1327,7 @@ export const l4Holds = (s, id, w) =>
   kindOf(w) !== "grenade" &&
   w !== "safekeep" &&
   slotsOf(s, id).includes(w);
-export const ptsOf = (s, id) =>
-  ((s && s.hang && s.hang.l4pt) || {})[id] ?? WHEN_MISSING.POINTS;
+export const ptsOf = (s, id) => ((s && s.hang && s.hang.l4pt) || {})[id] ?? 0;
 export const upOf = (s, id) => ((s && s.hang && s.hang.l4u) || {})[id] || {};
 export const maxHp = (s, id) =>
   isWild(s, id) ? wildMax(s) : grHp(s, id, L4.HP + (upOf(s, id).hp || 0)); // (Sandbox: a group's Max HP over it, sbgroups.js)
@@ -2509,7 +2507,9 @@ export function slotFor(s, id, w, hand0) {
   if (!kit || kit.sl.includes(w)) return -1;
   const hand = kit.sl.includes(hand0) ? hand0 : ((s.pos || {})[id] || {}).w;
   if (kind === "ranged")
-    return [1, 2].find((i) => kit.sl[i] === hand) ?? WHEN_MISSING.RANGED_SLOT; // (no ranged weapon in hand: it takes the first ranged slot's place)
+    return (
+      [1, 2].find((i) => kit.sl[i] === hand) ?? SLOT_KINDS.indexOf("ranged")
+    ); // (no ranged weapon in hand: it takes the first ranged slot's place)
   if (kind !== "special") return kind === "melee" ? 0 : -1;
   const its = ITEM_SLOTS.filter((i) => i < kit.sl.length),
     used = (i) => {
@@ -2520,7 +2520,7 @@ export function slotFor(s, id, w, hand0) {
     its.find((i) => !kit.sl[i]) ??
     its.find(used) ??
     its.find((i) => kit.sl[i] === hand) ??
-    WHEN_MISSING.ITEM_SLOT
+    ITEM_SLOTS[0]
   );
 }
 export function give(s, id, w, hand0) {
@@ -3205,7 +3205,7 @@ function merchantTick(s, now) {
     x: Math.round(m.x),
     y: Math.round(m.y),
     f: Math.abs(dx) > 0.5 ? Math.sign(dx) : m0.f,
-    sp: Math.round((mh(s).sp ?? WHEN_MISSING.SPRINT_FULL) * 100) / 100, // (his sprint left, online for his meter: a player's thin blue bar, l4dd.js)
+    sp: Math.round((mh(s).sp ?? 1) * 100) / 100, // (his sprint left, online for his meter: a player's thin blue bar, l4dd.js)
     ...(leg.c ? { c: 1 } : {}),
     ...(leg.jump ? { st: "jump" } : {}),
   };
@@ -3216,7 +3216,7 @@ function merchantTick(s, now) {
    left, 0 to 1; h.tired) */
 function merchantSprints(s, m, now, dt) {
   const h = mh(s);
-  let sp = h.sp ?? WHEN_MISSING.SPRINT_FULL,
+  let sp = h.sp ?? 1,
     tired = !!h.tired,
     run = false;
   const must =

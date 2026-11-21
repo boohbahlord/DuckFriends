@@ -23,11 +23,18 @@ export default [
         modeCompare("!=="),
         {
           selector:
-            "LogicalExpression[operator='??']:matches([right.raw=/^[0-9.]/], [right.operator='-'][right.argument.raw=/^[0-9.]/])",
+            "LogicalExpression[operator='??']:matches([right.raw=/^(?!(0|1|0\\.5)$)[0-9.]/], [right.operator='-'][right.argument.raw=/^(?!1$)[0-9.]/])",
           message:
             "?? with a number on the right hides a missing number: put the default in js/gamedefaults.js.",
         },
       ],
+    },
+  },
+  {
+    /* the command line's own numbers (exit codes, head and fold sizes) are the shell's, not game rules */
+    files: ["js/shell.js", "js/bash.js", "js/textutils.js"],
+    rules: {
+      "no-restricted-syntax": ["warn", modeCompare("==="), modeCompare("!==")],
     },
   },
 ];

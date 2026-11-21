@@ -9,7 +9,7 @@ armspeed.js 34 how fast the weapons work, in every mode
 art.js 403 pictures drawn in code
 audioimport.js 186 a player's own song, made small
 barrelheat.js 70 a hot barrel
-bash.js 1361 
+bash.js 1360 the command line's language: a small bash
 beaks.js 138 beaks
 bloodpool.js 50 a pool of blood: the one under every
 boardjustin.js 741 Justin on the boards
@@ -48,8 +48,8 @@ friends.js 254 friends
 front.js 109 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 218 how a held weapon and the screen move
-game.js 8834 the game screen
-gamedefaults.js 62 the game's own numbers, for every mode
+game.js 8825 the game screen
+gamedefaults.js 38 the game's own numbers, for every mode
 gameready.js 47 what the game's loading screen waits for
 gamesettings.js 1751 Game Settings: the whole screen, like Customize
 gfx.js 8 Low graphics
@@ -74,7 +74,7 @@ jetart.js 39 the jetpack's pictures
 jetpack.js 33 the jetpack
 jumps.js 48 the jump counter
 keynav.js 204 menus by keyboard
-l4dd.js 3350 Quacky Zombies on every screen
+l4dd.js 3349 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 203 Dead Ducks Arcade's Angel machine on every screen
 l4ddart.js 623 Quacky Zombies' pictures
@@ -196,7 +196,7 @@ sfxlist.js 164 the sound files
 shared.js 497 Sandbox Phase 7: Shared, the game modes and
 shell.js 3547 the command line: a small bash
 slices.js 31 long work cut into slices
-sound.js 942 the game's sounds: real recordings, played from small
+sound.js 939 the game's sounds: real recordings, played from small
 specials.js 945 Specials
 spectate.js 97 Survival: watching the others once my duck is
 splash.js 71 the start screen: your duck on a cloud,
@@ -207,11 +207,11 @@ story.js 221 Story Chain: what the screen shows
 styles.js 386 duck styles
 survrules.js 325 Survival
 svgurl.js 10 a drawing as a data:
-textutils.js 1158 the command line's text tools
+textutils.js 1157 the command line's text tools
 touch.js 284 touch controls on the board
 trivia.js 472 Trivia: what the screen shows
 triviabank.js 499 Trivia's auto questions
-triviarules.js 472 the rules of Trivia
+triviarules.js 478 the rules of Trivia
 ui.js 349 small helpers every screen uses
 umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
@@ -226,14 +226,14 @@ who.js 3 who this player is beyond this tab
 wounds.js 501 the wounds a hit leaves
 zombiepath.js 186 the zombies' way to the ducks on a
 zombieroofs.js 244 the zombies' walk over Downpour's roofs: up a
-zombies.js 1427 the zombies: one module for every mode's zombies
+zombies.js 1420 the zombies: one module for every mode's zombies
 
 ## js/hangout/
 activities.js 23 every Hangout activity, so the rules and the
 ambience.js 112 the air: the wind round the cabin, the
 art.js 3051 Duck Cabin: the drawings
 beachball.js 364 the beach ball
-blackjack.js 1393 the blackjack table in the great room
+blackjack.js 1382 the blackjack table in the great room
 book.js 170 the guestbook: a book on a stand in
 bricks.js 485 loose bricks, drawn as pixels
 cabinend.js 135 End Cabin / Exit Cabin
@@ -254,7 +254,7 @@ npc.js 498 Duck Cabin's characters: how they get around, and
 npcart.js 272 Duck Cabin's characters: the drawings
 piano.js 530 the piano in the cabin , against the
 pianokeys.js 665 Hangout: the piano's keyboard mode
-poker.js 1194 poker at the blackjack table
+poker.js 1185 poker at the blackjack table
 pool.js 9 down the hill: the water and the bouncing
 power.js 504 the power box, the blackout, the dark outside
 pxw-cabin-l4.js 418 made by tools/pixel-world.cjs:
@@ -267,7 +267,7 @@ rules.js 87 Hangout's rules: s.hang and the { t: 'hang',
 seats.js 439 the couches, the campfire's logs, the kitchen chairs
 shadowduck.js 256 the shadow duck
 shapes.js 1707 Duck Cabin's props, drawn: art.js's drawings put where
-soccer.js 510 soccer: one ball on the field, one net
+soccer.js 509 soccer: one ball on the field, one net
 sounds.js 18 Duck Cabin's sounds
 stage.js 134 the stage: half an oval 70 high on
 stationart.js 1967 Downpour's things: the drawings
@@ -275,7 +275,7 @@ stationmap.js 1092 Dead Ducks Arcade's second map: the gas station,
 trampoline.js 141 the trampoline
 tv.js 117 the TV: seven channels, the next one with
 water.js 442 the pool: ducks in the water, ripples and
-world.js 1800 Hangout on the screen: the camera, the ground,
+world.js 1786 Hangout on the screen: the camera, the ground,
 
 ## js/pxm/
 board-light.js 7 the menus' background in the light, as pixel

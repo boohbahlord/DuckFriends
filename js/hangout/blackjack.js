@@ -42,7 +42,6 @@ import { nameHTML } from "../name.js";
 import { rainbowHTML } from "../art.js";
 import { duckSVG } from "../duck.js";
 import { jPoker } from "./justin.js";
-import { WHEN_MISSING } from "../gamedefaults.js";
 
 export const BET = 15000,
   TURN = 20000,
@@ -342,7 +341,7 @@ function move(b, id, d, now) {
       if (h.c.length !== 2) return false;
       if (b.mode === "chips") {
         const bet = b.bets[id] || 0;
-        if ((b.chips[id] ?? WHEN_MISSING.CHIPS) < bet) return false;
+        if ((b.chips[id] ?? 0) < bet) return false;
         b.chips[id] -= bet;
         b.bets[id] = bet * 2;
       }
@@ -411,13 +410,13 @@ rule("bj", {
       if (a.v) b.bvotes[id] = 1;
       else delete b.bvotes[id];
     } else if (a.do === "bet") {
-      const n = a.v === "all" ? (b.chips[id] ?? WHEN_MISSING.CHIPS) : +a.v;
+      const n = a.v === "all" ? (b.chips[id] ?? 0) : +a.v;
       if (
         b.st !== "bet" ||
         !Number.isInteger(n) ||
         n < 1 ||
         b.bets[id] ||
-        (b.chips[id] ?? WHEN_MISSING.CHIPS) < n
+        (b.chips[id] ?? 0) < n
       )
         return false;
       b.chips[id] -= n;
@@ -497,7 +496,7 @@ rule("bj", {
         if (
           b.jk !== undefined &&
           !b.bets.justin &&
-          (b.chips.justin ?? WHEN_MISSING.CHIPS) > 0 &&
+          (b.chips.justin ?? 0) > 0 &&
           now - b.t > 700
         ) {
           const have = b.chips.justin;
@@ -508,14 +507,13 @@ rule("bj", {
           b.chips.justin -= b.bets.justin;
         } // (Justin bets small)
         const can = seated.filter(
-          (q) =>
-            (b.chips[q.id] ?? WHEN_MISSING.CHIPS) >= BETS[0] || b.bets[q.id],
+          (q) => (b.chips[q.id] ?? 0) >= BETS[0] || b.bets[q.id],
         );
         if (
           (!can.every((q) => b.bets[q.id]) ||
             (b.jk !== undefined &&
               !b.bets.justin &&
-              (b.chips.justin ?? WHEN_MISSING.CHIPS) > 0)) &&
+              (b.chips.justin ?? 0) > 0)) &&
           now - b.t < BET
         )
           break; // (Justin bets too)
@@ -560,16 +558,12 @@ rule("bj", {
           if (
             b.jk !== undefined &&
             b.mode === "chips" &&
-            (b.chips.justin ?? WHEN_MISSING.CHIPS) < BETS[0]
+            (b.chips.justin ?? 0) < BETS[0]
           ) {
             // (Justin out of chips: he shoots the richest player and leaves)
             const rich = seated
               .map((q) => q.id)
-              .sort(
-                (x, y) =>
-                  (b.chips[y] ?? WHEN_MISSING.CHIPS) -
-                  (b.chips[x] ?? WHEN_MISSING.CHIPS),
-              )[0];
+              .sort((x, y) => (b.chips[y] ?? 0) - (b.chips[x] ?? 0))[0];
             jPoker.bust(s, rich, now);
             delete b.jk;
             delete b.chips.justin;
@@ -650,8 +644,7 @@ function basic(b, id) {
     up = b.dealer[0] % 13 === 0 ? 11 : pts(b.dealer[0]);
   const dbl =
     h.c.length === 2 &&
-    (b.mode !== "chips" ||
-      (b.chips[id] ?? WHEN_MISSING.CHIPS) >= (b.bets[id] || 0))
+    (b.mode !== "chips" || (b.chips[id] ?? 0) >= (b.bets[id] || 0))
       ? "double"
       : "hit";
   if (soft)
@@ -712,7 +705,7 @@ export function bjBot(s, id, now) {
         }),
       ];
     if (b.st === "bet" && !b.bets[id] && now - b.t > think) {
-      const have = b.chips[id] ?? WHEN_MISSING.CHIPS,
+      const have = b.chips[id] ?? 0,
         h = hash(id + b.t);
       return have
         ? A({
@@ -788,7 +781,7 @@ export const COLORS = ["#ef3b3b", "#2fa4ff", "#37d421"],
   GOLD = "#ffd23f",
   COUNT = 700; // (COUNT: how long a chip count takes to count up or down)
 /* the chips each one has on this screen: they count up or down to the real number (v.disp) */
-const shownChips = (b, id) => v.disp[id] ?? b.chips[id] ?? WHEN_MISSING.CHIPS;
+const shownChips = (b, id) => v.disp[id] ?? b.chips[id] ?? 0;
 function countChips(b, dt) {
   let moved = false;
   for (const [id, n] of Object.entries(b.chips)) {
@@ -861,11 +854,9 @@ function render(s, now) {
       `<button type="button" class="btn small bj-let${b.bvotes[me] ? " on" : ""}" data-do="butler" data-v="${b.bvotes[me] ? 0 : 1}" aria-pressed="${!!b.bvotes[me]}">${b.bvotes[me] ? "✓" : "✗"} ${BUTLER} plays too${bn ? ` <b>${bn}</b>` : ""}</button>` +
       `<button type="button" class="btn small bj-let${jv[me] ? " on" : ""}" data-do="justin" data-v="${jv[me] ? 0 : 1}" aria-pressed="${!!jv[me]}">${jv[me] ? "✓" : "✗"} Invite Justin${jn ? ` <b>${jn}</b>` : ""}</button>`;
   } else if (b.st === "bet") {
-    const have = b.chips[me] ?? WHEN_MISSING.CHIPS;
+    const have = b.chips[me] ?? 0;
     if (b.bets[me])
-      say =
-        ((b.chips[me] ?? WHEN_MISSING.CHIPS) === 0 ? "All in " : "Bet ") +
-        b.bets[me];
+      say = ((b.chips[me] ?? 0) === 0 ? "All in " : "Bet ") + b.bets[me];
     else if (have < BETS[0]) say = "Next hand";
     else {
       say = b.gift[me] ? "+100 chips, on the house" : "Bet";
@@ -876,8 +867,7 @@ function render(s, now) {
     say = "Your turn";
     const h = b.hands[me],
       dbl =
-        h.c.length === 2 &&
-        (!chips || (b.chips[me] ?? WHEN_MISSING.CHIPS) >= (b.bets[me] || 0));
+        h.c.length === 2 && (!chips || (b.chips[me] ?? 0) >= (b.bets[me] || 0));
     acts = play3(true, dbl);
   } else if (b.st === "play")
     say = inHand ? `${nameOf(s, turnId)}'s turn` : "Next hand";
@@ -931,7 +921,7 @@ function render(s, now) {
   const stats =
     (inHand && chips && b.bets[me]
       ? stat(
-          (b.chips[me] ?? WHEN_MISSING.CHIPS) === 0 ? "All in" : "Bet",
+          (b.chips[me] ?? 0) === 0 ? "All in" : "Bet",
           chipSVG() + b.bets[me],
         )
       : "") +
@@ -1191,7 +1181,7 @@ function press(e) {
   const d = btn.dataset.do,
     s = v.ctx.state(),
     b = s.hang.bj;
-  const have = b ? (b.chips[v.ctx.me] ?? WHEN_MISSING.CHIPS) : 0;
+  const have = b ? (b.chips[v.ctx.me] ?? 0) : 0;
   if (amtPress(v, d, btn, have)) return;
   if (d === "bet") {
     if (v.amt)
@@ -1260,8 +1250,7 @@ activity({
     };
     el.querySelector(".hang-book-x").onclick = () => getUp(ctx);
     el.addEventListener("click", press);
-    const have = () =>
-      v.ctx.state().hang.bj.chips[v.ctx.me] ?? WHEN_MISSING.CHIPS;
+    const have = () => v.ctx.state().hang.bj.chips[v.ctx.me] ?? 0;
     el.addEventListener("input", (e) => amtTyped(v, e, have()));
     el.addEventListener("keydown", (e) => amtKeys(v, e, have()));
     addEventListener("keydown", esc_, true);
