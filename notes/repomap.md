@@ -268,7 +268,7 @@ registry.js 111 Hangout's two registries: what each activity adds
 rubberducks.js 183 the little rubber ducks in the pool
 rules.js 87 Hangout's rules: s.hang and the { t: 'hang',
 seats.js 439 the couches, the campfire's logs, the kitchen chairs
-shadowduck.js 256 the shadow duck
+shadowduck.js 254 the shadow duck
 shapes.js 1707 Duck Cabin's props, drawn: art.js's drawings put where
 soccer.js 508 soccer: one ball on the field, one net
 sounds.js 17 Duck Cabin's sounds
