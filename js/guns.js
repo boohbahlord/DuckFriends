@@ -71,6 +71,33 @@ const CAL_ROLLS = {
 };
 const BARRELS = { short: 0, medium: 0.15, long: 0.25, none: 0 };
 const DMG_STEP = 0.05;
+/* the kick of one round of each caliber (the owner's, Nov 21 18:24Z, with the recoil a gun has: /mnt/project-files/adam/calibers.md; K14 turns it into one score a gun): what the item sheets say as a word. A gun with no caliber here (the blade, the flamethrower, the laser, the bow) has none */
+const KICK = {
+  "9mm": 0.3,
+  ".45 ACP": 0.5,
+  "5.56mm": 0.5,
+  ".357 Magnum": 0.6,
+  "7.62x39mm": 0.7,
+  "7.62x51mm": 0.8,
+  ".44 Magnum": 0.9,
+  ".50 AE": 1,
+  "12 ga buckshot": 1,
+  "12 ga slug": 1,
+  ".50 BMG": 1.5,
+};
+export const kickOf = (w) => KICK[(ARMS[w] || {}).cal] || 0;
+/* the kick as a word: small to .5, medium to .8, heavy above; "" for none */
+export const recoilWord = (kick) =>
+  !(kick > 0) ? "" : kick <= 0.5 ? "small" : kick <= 0.8 ? "medium" : "heavy";
+/* what a gun is loaded with and how long its barrel is, for the item sheets ("" when it has none) */
+export const caliberOf = (w) => {
+  const c = (ARMS[w] || {}).cal;
+  return c && c in KICK ? c : "";
+};
+export const barrelOf = (w) => {
+  const b = (ARMS[w] || {}).barrel;
+  return b && b !== "none" ? b : "";
+};
 export const ARMS = {
   knife: {
     kind: "melee",

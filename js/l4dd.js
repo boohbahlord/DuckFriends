@@ -119,7 +119,8 @@ import { hOk, hLock } from "./heights.js";
 import { ammoBar, stackBars, noReload } from "./meters.js";
 import { laserMeter } from "./laserfx.js";
 import { goreFree, BY_WOUND, newWound, woundLook } from "./wounds.js";
-import { catalogHTML } from "./l4ddcatalog.js";
+import { catalogHTML, statLineOf } from "./l4ddcatalog.js";
+import { mountItemTip } from "./itemtip.js";
 import {
   pwMount,
   pwUnmount,
@@ -2564,7 +2565,7 @@ function shopFill(s, ctx) {
             price = stockPrice(s, p),
             was = price < p ? `<s>${p}</s> ` : "",
             off = (have && !again) || pts < price;
-          return `<li class="l4-up l4-buyw"><i class="l4-up-ic">${orbHTML(w)}</i><span class="l4-up-t"><b>${weaponName(w)}${n > 1 ? ` <span class="l4-up-n">x${n}</span>` : ""}</b><small>${kindWord(w)}</small></span><button type="button" class="btn small ${have && !again ? "" : "yellow"} l4-up-buy" data-buy="${w}"${off ? " disabled" : ""}>${have && !again ? "Owned" : was + price}</button></li>`;
+          return `<li class="l4-up l4-buyw" data-item="${w}"><i class="l4-up-ic">${orbHTML(w)}</i><span class="l4-up-t"><b>${weaponName(w)}${n > 1 ? ` <span class="l4-up-n">x${n}</span>` : ""}</b><small>${kindWord(w)}</small>${statLineOf(w) ? `<small class="l4-up-s">${statLineOf(w)}</small>` : ""}</span><button type="button" class="btn small ${have && !again ? "" : "yellow"} l4-up-buy" data-buy="${w}"${off ? " disabled" : ""}>${have && !again ? "Owned" : was + price}</button></li>`;
         })
         .join("")
     : '<li class="l4-up l4-sold">Sold out</li>';
@@ -2604,6 +2605,7 @@ function shopEsc(e) {
   } else if (e.key.startsWith("Arrow")) closeShop(); // (the arrows close it at once too, and still do what they do)
 } // (before the game's own Escape: the pause menu)
 function shopEl(ctx) {
+  mountItemTip(); // (hold I on an item: its card)
   const el = document.createElement("div");
   el.className = "hang-book l4-shop";
   el.hidden = true;
