@@ -19,20 +19,20 @@ bots.js 1430 computers
 brackets.js 467 Bicker Brackets: what the screen shows
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
-chat.js 1600 text chat and the command line
+chat.js 1596 text chat and the command line
 cheatflag.js 16 a game with test commands used
 cheats.js 146 test commands: cheat round N, cheat
 claw.js 36 a claw's marks: three white slashes
 clock.js 5 one clock for the room
 collage.js 101 Shelter Sky & Null
-color.js 101 choosing a color
+color.js 165 choosing a color
 corners.js 94 full screen
 court.js 229 Lawyering: what the screen shows
-customize.js 1790 Customize: the Armory
+customize.js 1783 Customize: the Armory
 datboi.js 115 here come dat boi
 democracy.js 243 Democracy of Ducklings:
 dock.js 73 the docks: where Notes and the
-duck.js 728 the rubber duck avatar
+duck.js 776 the rubber duck avatar
 duckparts.js 592 the ducks made from pixel parts
 ducksheets.js 2 made by tools/duck-parts.cjs:
 duel.js 120 the cloud duel: two ducks share
@@ -63,7 +63,7 @@ gunmen.js 110 the gunmen's looks
 gunmenrules.js 1140 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen
 guns.js 516 every weapon's numbers: one sheet for
-hats.js 1073 hats
+hats.js 1074 hats
 heights.js 49 a shot's height, Doom's way
 helppages.js 1498 the command line's Help pages: help
 hideui.js 30 hide ui
@@ -73,7 +73,7 @@ hotbar.js 480 the specials on the number keys
 hpmath.js 23 HP in tenths
 hpmeter.js 327 HP meters and the little "+1
 invisible.js 11 Who is invisible right now :
-itemtone.js 61 the colors an outfit or a
+itemtone.js 98 the colors an outfit or a
 jump.js 36 a duck's jump: one arc for
 jumps.js 48 the jump counter
 keynav.js 204 menus by keyboard

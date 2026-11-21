@@ -43,10 +43,19 @@ function looks({ WOUNDS, hitsOf, ZOUTFITS }) {
   }
   for (const st of styles)
     for (const [b] of BUILDS)
-      for (const m of st.fixed || st.flat ? ["none"] : [...metals, "rainbow"]) {
-        const L = { ...D, style: st.id, build: b, metal: m };
+      for (const m of st.fixed || st.flat
+        ? ["none"]
+        : [...metals, "rainbow", "matte"]) {
+        /* "matte": a human skin, drawn flat (duck.js) */
+        const L = {
+          ...D,
+          style: st.id,
+          build: b,
+          metal: m === "matte" ? "none" : m,
+          matte: m === "matte",
+        };
         for (const sh of [true, false]) out.push([L, { shadow: sh }]);
-        if (m === "none" && !st.fixed && !st.flat)
+        if ((m === "none" || m === "matte") && !st.fixed && !st.flat)
           for (const [p] of DUCK_PATTERNS) out.push([{ ...L, pattern: p }, {}]);
         for (const o of outfits) out.push([{ ...L, outfit: o }, {}]);
       }
@@ -357,6 +366,7 @@ export async function listParts() {
   await import("/js/rules.js");
   const list = parts({
     ...(await import("/js/l4ddart.js")),
+    ...(await import("/js/wounds.js")), // (hitsOf lives there since the wounds moved)
     ...(await import("/js/l4ddrules.js")),
   });
   /* Duck Cabin's cats (hangout/npcart.js): each pose one part, as it is (their colors never change) */

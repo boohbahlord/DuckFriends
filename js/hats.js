@@ -4,7 +4,7 @@
    that can be recolored name their colors in `colors` (c1, c2); the hotdog has ketchup; the crown takes a metal. A hat can
    also be a player card's pattern (small hats in a repeating tile). Ducks with hats get headroom above them. */
 import { METAL, mix, metalBands, metalGlints } from "./duck.js";
-import { F, drawing } from "./itemtone.js";
+import { F, drawing, flatMetal } from "./itemtone.js";
 import { eyesSVG } from "./eyes.js";
 
 export const HATS = [
@@ -1017,15 +1017,16 @@ export function hatLayers(hat, look, dead) {
   // look, dead: the duck's eyes, for the hats that show them
   const def = hat && hatById(hat.id);
   if (!def) return { back: "", front: "" };
-  const h = {
-    ...Object.fromEntries((def.colors || []).map(([k, , d]) => [k, d])),
-    ...hat,
-    metal: hat.metal || "gold",
-    look,
-    dead,
-  };
+  const h0 = {
+      ...Object.fromEntries((def.colors || []).map(([k, , d]) => [k, d])),
+      ...hat,
+      metal: hat.metal || "gold",
+      look,
+      dead,
+    },
+    h = flatMetal(h0); // (a color place in a metal: F draws its bands, itemtone.js)
   const id = "ht" + ++uid;
-  return drawing(def, h, () => {
+  return drawing(def, h0, () => {
     const front = `<g transform="translate(76 18) rotate(-6)">${DRAW[def.id](h, id)}</g>`;
     const back =
       def.id === "afro"

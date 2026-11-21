@@ -44,6 +44,25 @@ export const DUCK_METALS = [
   ["silver", "Silver"],
   ["bronze", "Bronze"],
 ];
+/* the human skins (the owner's, Nov 21 15:28Z: under the colors, a drop-down arrow opens a scrolling list of human skin
+   colors, drawn flat without the shine), fair to deep. Swatches with their hex on hover, no names: the owner names
+   things himself. On a duck's body a skin picked from this list draws flat (matte, below); on clothes it is just its color */
+export const SKIN_TONES = [
+  "#f7dccb",
+  "#f3d2bc",
+  "#efc4a4",
+  "#e8b892",
+  "#e2a983",
+  "#d69c74",
+  "#c68f64",
+  "#b97d52",
+  "#a86c43",
+  "#93593a",
+  "#7c4a30",
+  "#653b26",
+  "#4e2d1e",
+  "#3b2219",
+];
 /* the rainbow skin (rainbowskin.js): picked where the metals are (metal "rainbow"), locked until its jumps (unlocks.js);
    never a hat's metal */
 export const RAINBOW_SKIN = ["rainbow", "Rainbow"];
@@ -183,7 +202,7 @@ function plainLook(o) {
   const out = {};
   for (const [k, v] of Object.entries(o)) {
     if (typeof v === "string") {
-      if (k === "image" || PLAIN.test(v)) out[k] = v;
+      if (k === "image" || PLAIN.test(v) || /^m:[a-z]+$/.test(v)) out[k] = v; // (a metal color place: "m:gold")
     } else if (typeof v === "number") {
       if (isFinite(v)) out[k] = v;
     } else if (typeof v === "boolean" || v === null) out[k] = v;
@@ -356,7 +375,7 @@ ${dead ? '<path d="M24 20L96 92M96 20L24 92" stroke="#e01b1b" stroke-width="10" 
       hatFront: worn(hat.front, gone && gone.hat),
     };
     if (layer) return F[layer] ? layerSVG(F[layer]) : "";
-    return `<svg class="duck flat${top ? " hatted" : ""}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${((size * (120 + top)) / 120).toFixed(1)}" role="img" aria-label="${esc(title || "Duck")}"${partsOK(L, { extra, gone }) ? ` data-dk="${esc(JSON.stringify({ L, dead, shadow, gone }))}"` : ""}>
+    return `<svg class="duck flat${top ? " hatted" : ""}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${((size * (120 + top)) / 120).toFixed(1)}" role="img" aria-label="${esc(title || "Duck")}"${partsOK(L, { extra, gone }) ? ` data-dk="${esc(JSON.stringify({ L, dead, shadow, gone }))}"` : ""}>${metalDefs(L) && `<defs>${metalDefs(L)}</defs>`}
 ${k !== 1 ? `<g transform="translate(60 108) scale(${k.toFixed(3)}) translate(-60 -108)">` : ""}
 ${F.shadow}
 ${F.hatBack}${F.ofBack}${F.fill}${F.cloth}
@@ -396,7 +415,10 @@ ${F.beak}${F.eyes}${F.face}${F.eyesZap}${F.hatFront}${k !== 1 ? "</g>" : ""}${ex
       : "";
   const own = !st.fixed,
     M = own && L.metal !== "none" && METAL[L.metal],
-    RB = own && L.metal === "rainbow"; // (the rainbow skin: rainbowskin.js. Not a metal: no reflections, its own shading)
+    RB = own && L.metal === "rainbow", // (the rainbow skin: rainbowskin.js. Not a metal: no reflections, its own shading)
+    /* a human skin: the color drawn flat, no shine and no brightness (the owner's, Nov 21 15:28Z: "draws the colors
+       onto it without all of the shiny effects and brightness") */
+    MT = own && !M && !RB && !!L.matte;
   /* the body's and the head's colors (most styles: one color; a mallard or an eagle: a head of its own) */
   const bodyC = st.fixed ? L.tint || st.body : styleColor(L, st, "color"),
     headC = st.fixed
@@ -418,8 +440,8 @@ ${F.beak}${F.eyes}${F.face}${F.eyesZap}${F.hatFront}${k !== 1 ? "</g>" : ""}${ex
         ? { base: M[2], light: M[1], dark: M[5], edge: M[5] }
         : {
             base: c,
-            light: mix(c, 255, 0.5),
-            dark: mix(c, 0, 0.32),
+            light: mix(c, 255, MT ? 0.1 : 0.5),
+            dark: mix(c, 0, MT ? 0.14 : 0.32),
             edge: mix(c, 0, 0.45),
           };
   const TB = tone(bodyC),
@@ -444,8 +466,12 @@ ${F.beak}${F.eyes}${F.face}${F.eyesZap}${F.hatFront}${k !== 1 ? "</g>" : ""}${ex
     OF = marks(outfitLayers(L.outfit, TB), size);
   const bare =
     SL.wing ||
-    `<path d="${WING}" fill="${M ? M[2] : dark}" opacity="${M ? ".5" : ".32"}"${bt}/>
-  <path d="M42 77C51 71 67 72 74 79" stroke="#fff" stroke-width="1.6" fill="none" opacity=".45"${bt}/>`;
+    `<path d="${WING}" fill="${M ? M[2] : dark}" opacity="${M ? ".5" : MT ? ".5" : ".32"}"${bt}/>${
+      MT
+        ? ""
+        : `
+  <path d="M42 77C51 71 67 72 74 79" stroke="#fff" stroke-width="1.6" fill="none" opacity=".45"${bt}/>`
+    }`;
   /* an outfit: its sleeve takes the wing's place (a tank top's trim goes over the bare wing); a bare arm I paint solid in
      the body's own color first, so the see-through shade doesn't turn grey over the shirt */
   const solid = SL.wing ? "" : `<path d="${WING}" fill="url(#${id}b)"${bt}/>`;
@@ -482,6 +508,7 @@ ${F.beak}${F.eyes}${F.face}${F.eyesZap}${F.hatFront}${k !== 1 ? "</g>" : ""}${ex
       ? `<filter id="${id}wh"><feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"/></filter><mask id="${id}cm" maskUnits="userSpaceOnUse" x="-20" y="-40" width="160" height="180"><g filter="url(#${id}wh)"><g${bt}>${OF.cloth}</g></g></mask>`
       : "",
     M ? metalGlints(id) : "",
+    metalDefs(L),
     RB
       ? rbGrad(id + "rb") +
         rbGrad(id + "rl", 0.5) +
@@ -548,14 +575,19 @@ ${noHead ? "" : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="url
 ${
   noHead
     ? ""
-    : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="none" stroke="${TH.edge}" stroke-width="2.2"/>
+    : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="none" stroke="${TH.edge}" stroke-width="2.2"/>${
+        MT
+          ? ""
+          : `
 <ellipse cx="68" cy="28" rx="8" ry="4.6" fill="#fff" opacity="${M ? ".9" : ".6"}" transform="rotate(-25 68 28)"/>
 <circle cx="88" cy="47" r="2.2" fill="#fff" opacity="${M ? ".6" : ".3"}"/>`
+      }`
 }`,
-    spots: spots
-      ? `<g${bt}><ellipse cx="38" cy="73" rx="11" ry="5" fill="#fff" opacity="${M ? ".75" : ".38"}" transform="rotate(-14 38 73)"/>
+    spots:
+      spots && !MT
+        ? `<g${bt}><ellipse cx="38" cy="73" rx="11" ry="5" fill="#fff" opacity="${M ? ".75" : ".38"}" transform="rotate(-14 38 73)"/>
 <ellipse cx="17" cy="56" rx="2.6" ry="5" fill="#fff" opacity="${M ? ".6" : ".3"}" transform="rotate(-30 17 56)"/></g>`
-      : "",
+        : "",
     slOver: SL.over || "",
     ofOver: OF && OF.over ? ripped(`<g${bt}>${OF.over}</g>`) : "",
     beak: noHead ? "" : beak,
@@ -650,8 +682,24 @@ const CLIPPED = [
    face, eyes, beak, holes through it, its clothes torn) the parts leave out; its skin (a zombie's marks, the wounds hits
    leave) is made of parts too, a mark at a time */
 function partsOK(L, { extra }) {
-  return !L.image && !extra;
+  return !L.image && !extra && !itemMetals(L).length;
 }
+/* the metals a duck's clothes and hat take in their color places ("m:gold", Colors' Metallic list): the sheets don't
+   have them (one for every place of every item), so such a duck is made whole; its bands, "mt-gold" (itemtone.js) */
+const itemMetals = (L) => [
+  ...new Set(
+    [L.hat, L.outfit]
+      .flatMap((o) => Object.values(o || {}))
+      .filter(
+        (v) => typeof v === "string" && METAL[v.slice(2)] && v.startsWith("m:"),
+      )
+      .map((v) => v.slice(2)),
+  ),
+];
+const metalDefs = (L) =>
+  itemMetals(L)
+    .map((m) => metalBands("mt-" + m, METAL[m]))
+    .join("");
 
 /* a square picture from the player's files, cut to its middle and made into real pixels (the owner's, Nov 19 23:26Z:
    "It should be saved as real pixels"): px × px, every pixel the nearest of the game's colors (pixelpalette.js), a

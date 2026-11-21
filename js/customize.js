@@ -70,7 +70,7 @@ import { BEAKS, BEAK_GROUPS, beakById } from "./beaks.js";
 import { STYLES, styleById } from "./styles.js";
 import { OUTFITS, OUTFIT_GROUPS, outfitById } from "./outfits.js";
 import { FONTS, fontHTML } from "./name.js";
-import { colorField } from "./color.js";
+import { colorField, paintBody, metalChoices } from "./color.js";
 import { activeRoom } from "./net.js";
 import { who } from "./who.js";
 import { NAV_HINTS, items } from "./keynav.js";
@@ -158,6 +158,7 @@ function randomize(D, k) {
     D.patternColor = hex();
     D.metal = "none";
     D.image = null;
+    D.matte = false;
   }
 }
 
@@ -1201,14 +1202,14 @@ export function openCustomize(page = lastPage, opts = {}) {
               pick.insertBefore(
                 colorField(
                   cur[2],
-                  (c) => {
-                    cur[3](c);
+                  (c, kind) => {
+                    cur[3](c, kind);
                     changed(false);
                     menu
                       .querySelectorAll('[data-a="plainname"]')
                       .forEach((b) => b.setAttribute("aria-pressed", "false"));
                   },
-                  { grid: true },
+                  { grid: true, metals: metalChoices(duckNow(), cur) },
                 ),
                 pick.querySelector(".cnote"),
               );
@@ -1286,11 +1287,7 @@ export function openCustomize(page = lastPage, opts = {}) {
                       key,
                       label,
                       D.metal !== "none" || D.image ? "" : D[key] || def,
-                      (c) => {
-                        D[key] = c;
-                        D.metal = "none";
-                        D.image = null;
-                      },
+                      (c, kind) => paintBody(D, key, c, kind),
                       "Picking a color takes off a metal or a picture.",
                       st.colors.length > 1 && st.name,
                     ],
@@ -1300,11 +1297,7 @@ export function openCustomize(page = lastPage, opts = {}) {
               "duck",
               "Duck",
               D.metal !== "none" || D.image ? "" : D.color,
-              (c) => {
-                D.color = c;
-                D.metal = "none";
-                D.image = null;
-              },
+              (c, kind) => paintBody(D, "color", c, kind),
               "Picking a color takes off a metal or a picture.",
             ]);
           const box = !!st.pages, // (Jack draws no pattern, hat, beak, outfit or face, so their colors wait for the duck;
