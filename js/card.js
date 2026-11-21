@@ -385,7 +385,7 @@ export async function warmPatterns(C, step) {
       color: C.color,
     });
     if (clock.over()) {
-      step((i + 1) / list.length);
+      if (step) step((i + 1) / list.length);
       await clock.next();
     }
   }

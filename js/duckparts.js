@@ -182,22 +182,12 @@ function sheet(n) {
     );
   return sheets.get(n);
 }
-/* every file of one size, one file in each idle moment after the title screen (main.js), so Customize opens with its
-   ducks' parts already in (Adam's plan the owner chose, Nov 20 23:05Z: the warm-up in idle time after the title).
+/* every file of one size at once, as soon as Customize's first page is in: a page clicked before its turn waited on its
+   parts coming (Adam's ask, Nov 21 00:43Z: "A page clicked before it's made shows its own pictures within 0.2 s").
    29: the size Customize's tiles take on a phone and on a computer (sizeFor) */
 export async function warmParts(n = 29) {
   const S = await sheet(n);
-  if (!S) return;
-  const idle = () =>
-    new Promise((ok) =>
-      window.requestIdleCallback
-        ? requestIdleCallback(() => ok(), { timeout: 3000 })
-        : setTimeout(ok, 60),
-    );
-  for (let c = 0; c < S.index.f.length; c++) {
-    await idle();
-    await file(S, c);
-  }
+  if (S) await Promise.all(S.index.f.map((_, c) => file(S, c)));
 }
 /* one of its files, as pixels */
 function file(S, c) {
