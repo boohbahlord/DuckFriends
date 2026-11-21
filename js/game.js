@@ -41,6 +41,7 @@ import {
 import { activeRoom } from "./net.js";
 import { sprintStep } from "./stamina.js";
 import { SPRINT, MGJ_HP_UNKNOWN } from "./gamedefaults.js";
+import { sprintBlur } from "./sprintblur.js";
 import { grStam, grCool } from "./sbgroups.js";
 import { grLook } from "./sbgroupview.js";
 import {
@@ -2910,10 +2911,7 @@ function drawFx(board, fxl, hang, size, s, now) {
   }
   const ad = adren(s, R.me, now);
   adrenFx(ad, pt);
-  document.documentElement.classList.toggle(
-    "sprint-blur",
-    !!(me && ((sprinting && moving) || ad) && onBoardPhase()),
-  );
+  sprintBlur(s, pt, !!(me && ((sprinting && moving) || ad) && onBoardPhase())); // (sprintblur.js)
 }
 /* Dead Ducks Arcade: duck id on an adrenaline shot (or the Speed Boost drop) now */
 const adren = (s, id, now) =>
