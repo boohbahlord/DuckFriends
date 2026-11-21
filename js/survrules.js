@@ -138,14 +138,17 @@ export function survTick(s, L, zs, now, n, h) {
       delete sv.wm;
     }
   }
-  if (sv.ph === "rest") {
-    if (now >= sv.nx) {
-      sv.nx = now + SV.REST_EVERY;
-      if (walkers.length < SV.REST_MOST[0] + SV.REST_MOST[1] * n) {
-        const z = h.walker();
-        if (z) zs.push(z);
-      }
+  /* every REST_EVERY, in a rest and in a horde's lull: one more walker, up to the most for this many players */
+  const restWalker = () => {
+    if (now < sv.nx) return;
+    sv.nx = now + SV.REST_EVERY;
+    if (walkers.length < SV.REST_MOST[0] + SV.REST_MOST[1] * n) {
+      const z = h.walker();
+      if (z) zs.push(z);
     }
+  };
+  if (sv.ph === "rest") {
+    restWalker();
     if (sv.wm) {
       /* (still waiting for him: no wave yet) */
     } else if (now >= sv.until && sv.k && Math.random() < SV.GUNMEN) {
@@ -214,13 +217,7 @@ export function survTick(s, L, zs, now, n, h) {
     };
     if (!sv.g) L.n = L.made;
   } else if (sv.ph === "peak" && sv.g) {
-    if (now >= sv.nx) {
-      sv.nx = now + SV.REST_EVERY;
-      if (walkers.length < SV.REST_MOST[0] + SV.REST_MOST[1] * n) {
-        const z = h.walker();
-        if (z) zs.push(z);
-      }
-    } // ("the lame walker zombies ... will kind of be spawning in different parts of the map")
+    restWalker(); // ("the lame walker zombies ... will kind of be spawning in different parts of the map")
     if (h.gunDone()) {
       sv = {
         ...sv,

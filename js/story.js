@@ -5,7 +5,7 @@
    the box to type in. Once the lines are voted on, the secret words show below the story, each in its writer's card, and
    each one lights up inside its line. The stats sit beside the three choices: continue, a new story, or the lobby. */
 import { esc } from "./ui.js";
-import { topOf, joinNames, awardCard } from "./awards.js";
+import { awardKit } from "./awards.js";
 import { duckSVG } from "./duck.js";
 import { nameHTML, fontStyle as styleOf } from "./name.js";
 import { cardFor, cloudHTML } from "./brackets.js";
@@ -145,13 +145,7 @@ export const boardHTML = (
 
 /* ---------- the stats: this paragraph's awards, then the whole game's once the review vote passes ---------- */
 function awardsHTML(s, per) {
-  const ids = Object.keys(per).filter((id) => s.players[id]),
-    nm = (id) => nameHTML(s.players[id].name, seenName(s.players[id]));
-  const top = (f) => topOf(per, ids, f);
-  const award = (title, r, line) =>
-    r
-      ? awardCard(title, joinNames(r.who.map(nm)), r.who.length > 1, line(r))
-      : "";
+  const { ids, nm, top, award } = awardKit(s, per);
   const quote = (r, f, cls = "") =>
     r.who.length === 1 && f(per[r.who[0]])
       ? `<p class="sc-quote${cls}" style="${fontStyle(s.players[r.who[0]])}">${esc(f(per[r.who[0]]))}</p>`
