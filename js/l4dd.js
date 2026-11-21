@@ -461,18 +461,22 @@ function pxPic(o, img, w, h) {
     u = raster(key, o.url, w, h);
   if (u) img.src = u;
   else {
-    /* nothing shown yet: the same zombie without its own wounds, made while the game loaded (warmZombies), until its own
-       picture is made, rather than nothing (a zombie of the usual size and build) */
-    const l = o.l;
-    if (l && !l[3] && !l[4] && !img.getAttribute("src")) {
-      const bu = zombieURL([0, 0, "", 0, 0, l[5], l[6], 0, 0], 0),
-        b = raster("z" + ukOf(bu), bu, w, h);
-      if (b) img.src = b;
-    }
+    standIn(o, img, w, h);
     rasterReady(key, o.url, w, h).then((v) => {
       if (v && o.pxk === k) img.src = v;
     });
   }
+}
+/* nothing shown yet: the same zombie without its own marks or wounds, made while the game loaded (warmZombies), until
+   its own picture is made, rather than nothing (a zombie of the usual size and build) */
+function standIn(o, img, w, h) {
+  const l = o.l;
+  if (!l || l[3] || l[4] || img.tagName !== "IMG" || img.getAttribute("src"))
+    return;
+  img.classList.add("px");
+  const bu = zombieURL([0, 0, "", 0, 0, l[5], l[6], 0, 0], 0),
+    b = raster("z" + ukOf(bu), bu, w, h);
+  if (b) img.src = b;
 }
 /* … and with the power on (l4ddpower.js), the electric ones too: the lamps, the stage, the sink, the balcony's windows
    and the porch's string lights (made again for the map: layout.js' LIGHTS are the room's map's) */
@@ -576,7 +580,7 @@ function zombieEl(z) {
     j: z.j,
     a: z.a,
     sh: "",
-    hits: "",
+    hits: null, // (its picture comes in wounds(), as its parts: goreCanvas)
     want: "",
     l: z.l,
     i: z.i,
@@ -615,18 +619,20 @@ function wounds(o, l, i) {
   const want = o.ng ? goreFree(o.want) : o.want; // (Gore off: none of them shows. o.ng, the setting as seeZombies last saw it: draw() asks too, and before, it left the setting out, so with Gore off a zombie on the screen got its gore back every frame and lost it again every update, a new picture each time)
   if (o.hits === want) return;
   o.hits = want;
-  o.dk = want && pixelOn() ? zombieDK(l, i, want) : null; // (wounded: the gore layer, goreCanvas)
+  o.dk = pixelOn() ? zombieDK(l, i, want) : null; // (its parts: goreCanvas)
   o.url = o.dk ? "" : zombieURL(l, i, o.hits);
   o.uk = "";
   o.pxk = "";
   if (!o.dk) plainImg(o);
   if (!pixelOn()) o.img.src = o.url; // (the pixel look: draw() shows it, as pixels)
 }
-/* the gore layer: a wounded zombie is its parts with its wounds (l4ddart.js zombieDK), put together from the part sheets
-   (duckparts.js) straight onto its own canvas, w × h css px. Before, every new wound on every zombie made a whole new
-   drawing (30 to 75 KB), found all its parts again and made a new picture file from them (about 3 ms each, mid-game).
-   The canvas takes the img's place once and stays (its hit shake and red blink run on it); what it showed stays till the
-   new one is ready. A zombie the sheets can't make (too big on the screen for them) is made whole, as before */
+/* the gore layer: a zombie is its parts, with its marks and its wounds (l4ddart.js zombieDK), put together from the part
+   sheets (duckparts.js) straight onto its own canvas, w × h css px. Before, every zombie that came in and every new wound
+   on one made a new picture file (and every wound a whole new 30 to 75 KB drawing first): about 3 ms each, mid-game, and
+   on a graphics card each file is a copy back from it (Survival round 21: 300 in 30 s). The canvas takes the img's place
+   once and stays (its hit shake and red blink run on it); until it's first drawn, the stand-in shows, and later what it
+   showed stays till the new one is ready. A zombie the sheets can't make (too big on the screen for them) is made whole,
+   as before */
 function goreCanvas(o, w, h) {
   const g = gridPx(),
     cw = Math.max(1, Math.round(w / g)),
@@ -634,6 +640,7 @@ function goreCanvas(o, w, h) {
     k = o.hits + "@" + cw + "x" + ch;
   if (o.pxk === k) return;
   o.pxk = k;
+  standIn(o, o.img, w, h);
   import("./duckparts.js")
     .then((m) => m.duckFromParts(o.dk, cw, ch))
     .then((c) => {
@@ -653,11 +660,14 @@ function goreCanvas(o, w, h) {
         o.img.replaceWith(cv);
         o.img = cv;
       }
+      /* in memory (willReadFrequently): a canvas on the graphics card is a layer of its own, and a crowd of them made the
+         page's every frame slower to put together (Survival round 21: 52 more layers) */
+      const g = cv.getContext("2d", { willReadFrequently: true });
       if (cv.width !== c.width || cv.height !== c.height) {
         cv.width = c.width;
         cv.height = c.height;
-      } else cv.getContext("2d").clearRect(0, 0, cv.width, cv.height);
-      cv.getContext("2d").drawImage(c, 0, 0);
+      } else g.clearRect(0, 0, cv.width, cv.height);
+      g.drawImage(c, 0, 0);
     })
     .catch(() => {});
 }
