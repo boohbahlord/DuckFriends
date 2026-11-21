@@ -18,7 +18,8 @@
    cv (where it hides), ls (where it last saw its target), tg (its target: "p:" a duck, "z:" a zombie), lo (its
    flashlight on), ad (where it aims, in degrees), mad ([who hurt it, until when]), nx (its next shot), bn (rounds left
    in this burst), bt (its last burn), w (its wounds: wounds.js codes), d (when it died) } */
-import { L4_HOOKS, critOf } from "./l4ddrules.js";
+import { L4_HOOKS } from "./l4ddrules.js";
+import { critOf } from "./guns.js";
 import { ARMS, GUN_BREEDS, reachOf as gunReach } from "./guns.js";
 import { clearShot, chaseField, chaseStep } from "./zombies.js";
 import { heightAt, slabBetween, PROPS } from "./hangout/layout.js";
@@ -99,7 +100,7 @@ export const GM = {
 const CRIM_GUNS = [
   ["handgun", "revolver"],
   ["smg", "tommy", "ump"],
-  ["shotgun", "dbuck"],
+  ["shotgun"],
 ];
 /* how far each gun is fired from (duck lengths) and how likely a round is to hit a duck there: AIM.near up close, less
    for each duck length, never under AIM.min; a sprinting duck is harder to hit */
@@ -844,21 +845,21 @@ const zombieOf = (t) => (t.z && typeof t.z === "object" ? t.z : null);
 /* a headshot (the owner's, Nov 20 18:23Z, principles kept from now on: "headshots are based on critical hits only"; "Justin
    and NPCs and anyone else do lose their head on any headshot, no matter what"; "gunmen can get critical on other
    people, but they can't get it on a player ... No enemy can get a headshot critical hit on a player if they had
-   guns"): one of theirs crits as a duck's does with that weapon (l4ddrules.js critOf), on anyone but a player, and the
-   crit takes the head, as a zombie's does */
+   guns"): one of theirs crits as a duck's does with that weapon (guns.js critOf), on anyone but a player: twice the
+   damage, and the head only when it kills (the owner's, Nov 21 17:25Z) */
 export function hitOn(s, o, t, dmg, w, now, H) {
   const half = Math.round(dmg * GM.DMG * 10) / 10,
     player = !zombieOf(t) && !t.fr && !t.mc && !H.wild(t.id),
-    head = !player && Math.random() < critOf(w);
-  if (zombieOf(t)) H.hitZ(t.z, o.k === "f" ? half : dmg, w, head);
+    crit = !player && Math.random() < critOf(w);
+  if (zombieOf(t)) H.hitZ(t.z, o.k === "f" ? half : dmg, w, crit);
   else if (t.fr) {
     if (!s) return;
     const q = gmOf(s).gb.find((g) => g.i === t.fr.i);
     if (q && !q.d)
-      takes(s, q, null, w, head ? { dmg: q.hp, head } : half, now, H);
+      takes(s, q, null, w, crit ? { dmg: half * 2, crit } : half, now, H);
   } else if (t.mc) {
-    if (o.k !== "f") H.mhurt(o.i, half, w, head);
-  } else H.hurt(t.id, half, w, head); // (head: only ever Justin, never a player)
+    if (o.k !== "f") H.mhurt(o.i, half, w, crit);
+  } else H.hurt(t.id, half, w, crit); // (crit: only ever Justin, never a player)
 }
 /* an LMG burst at t: every duck its rounds fly near is suppressed a moment (its screen shakes and darkens) */
 export function suppress(s, o, t, ducks, now) {
@@ -990,13 +991,13 @@ function push(o, dx, dy, H) {
 }
 
 /* ---------- what hits them ---------- */
-/* one takes a hit by duck `by` with weapon w (t: zombieTakes' { dmg, head }, or how many HP): its wounds, its points;
-   how: "blast" tears it apart */
+/* one takes a hit by duck `by` with weapon w (t: zombieTakes' { dmg, crit }, or how many HP): its wounds, its points (25
+   for a headshot: a crit that kills); how: "blast" tears it apart */
 function takes(s, o, by, w, t, now, H, how = "") {
   const dmg = typeof t === "number" ? t : t.dmg,
-    head = typeof t === "object" && t.head,
     took = Math.min(o.hp, dmg),
-    hp = hpHurt(o.hp, dmg);
+    hp = hpHurt(o.hp, dmg),
+    head = typeof t === "object" && t.crit && !hp;
   o.w = hitWounds(o.w, w, WOUND_BREEDS.gunman, {
     dead: !hp,
     head,

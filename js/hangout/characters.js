@@ -29,14 +29,9 @@ import { play, loop, setListener } from "./sounds.js";
 import "./cats.js";
 import "./justin.js";
 import "./shadowduck.js";
-import {
-  hitWounds,
-  WOUND_BREEDS,
-  PCRIT,
-  goreFree,
-  woundLook,
-} from "../wounds.js";
+import { hitWounds, WOUND_BREEDS, goreFree, woundLook } from "../wounds.js";
 import { poolHTML, warmPool } from "../bloodpool.js";
+import { critOf, armOfShot } from "../guns.js";
 import { pxSVG, rasterReady, pixelOn } from "../pixel.js";
 import { hashText } from "../pxdom.js";
 import { popHP } from "../hpmeter.js";
@@ -95,14 +90,18 @@ rule("npc", {
 });
 /* Justin knocked down by a duck's hit: Dead Ducks Arcade's hit feel on him too (the owner's, Nov 19 01:34Z: "any NPC that
    can take damage"). The wound the weapon leaves (wounds.js; his record's wc), now and then a crit that blows his head
-   off with a CRIT over him (PCRIT, the pcrit fx, as a duck's), and hit, the hits he took, so every screen bleeds him
+   off with a CRIT over him (guns.js critOf, the pcrit fx, as a duck's), and hit, the hits he took, so every screen bleeds him
    and shows "−1 HP" once for each (draw below). Both go when he's up again (justin.js revive) */
 function justinWounded(s, w, now) {
   const r = s.hang.npc.justin,
     p = r && npcAt(r, now);
   if (!r) return;
-  const crit = Math.random() < (PCRIT[w] || 0),
-    wc = hitWounds(r.wc, w, WOUND_BREEDS.justin, { head: crit, look: JUSTIN });
+  const crit = Math.random() < critOf(armOfShot(w)), // (w can be a shot's kind: an arrow is the bow's)
+    wc = hitWounds(r.wc, w, WOUND_BREEDS.justin, {
+      head: crit,
+      dead: true,
+      look: JUSTIN,
+    });
   s.hang.npc = { ...s.hang.npc, justin: { ...r, wc, hit: (r.hit || 0) + 1 } };
   if (crit && p) {
     s.fxN = (s.fxN || 0) + 1;

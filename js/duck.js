@@ -231,10 +231,33 @@ const layerSVG = (s, defs = "") =>
 export function duckSVG(look = DUCK_DEFAULT, o = {}) {
   const was = rbFlat((look && look.rbFlat) || null); // (the part sheets' plain rainbow: rainbowskin.js)
   try {
-    return drawDuck(look, o);
+    const s = drawDuck(look, o),
+      top = s.slice(0, s.indexOf(">"));
+    /* a shell (Customize's tiles with the pixel look on): only its first tag, which says all the sheets need (data-dk),
+       so a page of tiles has no hidden shapes to read and style. Its shapes are drawn only when it must be read or shown
+       as a drawing after all (duckWhole). Never a moving rainbow (pxdom.js shows its steps from the drawing) */
+    return o.shell &&
+      top.includes(" data-dk=") &&
+      !/gradientTransform="[^"]*translate\(/.test(s)
+      ? top + ' data-shell=""></svg>'
+      : s;
   } finally {
     rbFlat(was);
   }
+}
+/* a shell's shapes (duckSVG's shell), drawn from what its first tag says; it's no longer one the sheets make (pxdom.js) */
+export function duckWhole(svg) {
+  if (!svg.hasAttribute("data-shell")) return;
+  const d = JSON.parse(svg.getAttribute("data-dk")),
+    s = duckSVG(d.L, {
+      shadow: d.shadow,
+      dead: d.dead,
+      gone: d.gone,
+      skin: d.sk,
+    });
+  svg.removeAttribute("data-shell");
+  svg.removeAttribute("data-dk");
+  svg.innerHTML = s.slice(s.indexOf(">") + 1, s.lastIndexOf("</svg>"));
 }
 function drawDuck(
   look = DUCK_DEFAULT,

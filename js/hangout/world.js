@@ -916,7 +916,7 @@ export function mountWorld(board, api) {
         r: f.left + size * 0.4,
         t: f.top - lift - size * 0.9,
         b: f.top - lift,
-        up: !!L.deckAt(a.x, a.y, a.z), // (up on a roof: no wall or roof turns see-through, only a tree's crown over me)
+        up: L.onRoof(a.x, a.y, a.z), // (up on a roof: no wall or roof turns see-through, only a tree's crown over me)
       });
     }
     /* and what must never be hidden (Downpour's Angel machine: keep): a wall or a roof turns see-through while it
@@ -1097,7 +1097,7 @@ export function mountWorld(board, api) {
   /* the slope my duck walks on (Sandbox, plan Phase 4): it holds it while it's on it, however steep, so it walks up it */
   const slopeOf = (me) => {
     const d = me._sl;
-    if (!d) return null;
+    if (!d || d.sb === undefined) return d; // (none, or a car's top: the map's own, always the same one)
     return L.allDecks().find((q) => q.sb === d.sb && q.hAt) || null;
   };
   const floor = (me, x, y) => {
@@ -1659,7 +1659,7 @@ export function mountWorld(board, api) {
     },
     started(me) {
       ensure(me);
-      me.b = me.z;
+      me.hr = L.headRoom(me.x * L.W, me.y * L.H, (me.b = me.z)); // (from where it jumps)
       me.vz = null;
       me._za = undefined;
     },

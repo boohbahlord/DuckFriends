@@ -6222,6 +6222,52 @@ html.still .tmeter i {
   text-align: center;
   color: var(--dim);
 }
+/* hold I on an item: its card beside the pointer (itemtip.js) */
+.item-tip {
+  position: fixed;
+  z-index: 9999;
+  max-width: min(19rem, calc(100vw - 16px));
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.7rem;
+  background: #1d1b2bf2;
+  border: 2px solid #3a3752;
+  color: #eee;
+  font-size: calc(0.85rem * var(--ts));
+  line-height: 1.3;
+  pointer-events: none;
+  box-shadow: 0 6px 18px #000a;
+}
+.item-tip[hidden] {
+  display: none;
+}
+.item-tip .itip-name {
+  display: block;
+  font-size: calc(1rem * var(--ts));
+}
+.item-tip p {
+  margin: 0.2rem 0 0.4rem;
+}
+.item-tip dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.1rem 0.8rem;
+  margin: 0;
+}
+.item-tip dl div {
+  display: contents;
+}
+.item-tip dt {
+  opacity: 0.7;
+}
+.item-tip dd {
+  margin: 0;
+  font-weight: 700;
+}
+.l4-up-s {
+  display: block;
+  font-size: calc(0.72rem * var(--ts));
+  opacity: 0.8;
+}
 /* the player menu (hold Tab, or 👥): cards with connection bars and tags */
 .pmenu {
   position: fixed;
@@ -17568,16 +17614,15 @@ html.still .hpm.low .hpm-badge {
   display: none;
 }
 /* above the sprint bar, the same bars as under my name (meters.js mirrorBars): the cooldown, white, and the ammo,
-   yellow (empty: black, blinking dark grey; reloading: blinking white). Each takes its row only while it shows */
+   yellow (empty: black, blinking dark grey; reloading: blinking white). Each keeps its row while it's off, so the
+   meter never moves when one comes and goes (a bug found on V220: firing the chain gun, its cooldown bar came and went
+   and moved my HP meter up and down 6 px; the owner's rule: anything that shouldn't move holds still) */
 .hpm-bars {
   display: flex;
   flex-direction: column;
   align-self: stretch;
   gap: calc(var(--h) * 0.16);
   margin: 0 0 0 calc(var(--h) * 1.5);
-}
-.hpm-bars:not(:has(> :not(.off), > .no)) {
-  display: none;
 }
 .hpm-cool,
 .hpm-ammo {
@@ -17592,7 +17637,7 @@ html.still .hpm.low .hpm-badge {
 }
 .hpm-cool.off:not(.no),
 .hpm-ammo.off {
-  display: none;
+  visibility: hidden;
 }
 .hpm-cool i,
 .hpm-ammo i {
@@ -17953,6 +17998,16 @@ html.keyboard .hp-pop:not(.small) {
 .l4z .hp-pop {
   bottom: calc(var(--k, 1) * 96px + var(--up, 0) * 0.7rem);
 }
+/* an NPC drawn by npcview.js (Sandbox's on the worlds, Survival's gunmen): just over its head (--top), over its name
+   when it has one */
+.l4z[data-sbi] .hp-pop {
+  bottom: auto;
+  top: calc(var(--top, 0px) - 0.2rem - var(--up, 0) * 0.7rem);
+  translate: calc(-50% + var(--dx, 0px)) -100%;
+}
+.l4z[data-sbi]:has(.sb-npc-name) .hp-pop {
+  top: calc(var(--top, 0px) - 1.3rem - var(--up, 0) * 0.7rem);
+}
 @keyframes hp-pop {
   0% {
     opacity: 0;
@@ -17971,21 +18026,23 @@ html.keyboard .hp-pop:not(.small) {
   }
 }
 /* Quacky Zombies' headshot: the head bursts in drops of blood and a CRIT rises over it (game.js, the l4crit fx; a
-   third smaller than it was: the owner's, Nov 4) */
+   third smaller than it was: the owner's, Nov 4). Lettered as "−2 HP" is (.hp-pop), a little smaller than it was (the
+   owner's, Nov 21 17:25Z: "a smidgen tiny smaller, not much (dont make it such thick lettering, make it look like the
+   normal lettering for things like "-2 hp")") */
 .l4-crit {
   position: absolute;
   z-index: 40;
   translate: -50% -100%;
   pointer-events: none;
-  font-family: "Lilita One", sans-serif;
-  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-size: clamp(1.25rem, 2.7vw, 1.8rem);
+  font-weight: 800;
   line-height: 1;
+  white-space: nowrap;
   color: #ff3b2f;
-  -webkit-text-stroke: 0.11rem #2a0508;
-  paint-order: stroke fill;
   text-shadow:
-    0 0.12rem 0 #2a0508,
-    0 0 0.8rem #ff3b2f99;
+    0 0 0.12rem #000,
+    0 0 0.12rem #000,
+    0 0.06rem 0.06rem #000;
   animation: l4-crit 1.15s ease-out both;
 }
 @keyframes l4-crit {
@@ -18977,8 +19034,7 @@ body:has(> .vt) .win-back {
 
 /* a crit on a duck outside Quacky Zombies (game.js pcrit): the same CRIT, smaller */
 .l4-crit.small {
-  font-size: clamp(1.2rem, 2.6vw, 1.8rem);
-  -webkit-text-stroke: 0.1rem #2a0508;
+  font-size: clamp(1.1rem, 2.35vw, 1.6rem);
 }
 
 /* the frame-rate readout (perf.js, fps on): small, see-through, never in the way of a click */
@@ -21435,7 +21491,8 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .nm-line .nm-in {
   flex: 1;
 }
-/* a phone: the files over the code */
+/* a phone: the files over the code, and the terminal smaller than the code (the owner's, Nov 21 18:59Z: "Make sure that
+   the terminal isn't too big on vertical version when writing the Seriat") */
 @media (max-width: 40rem) {
   .nm {
     grid-template-columns: minmax(0, 1fr);
@@ -21444,6 +21501,13 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   }
   .nm-tree {
     max-height: 7rem;
+  }
+  .nm-ed {
+    flex: 4;
+  }
+  .nm-term {
+    flex: 1;
+    min-height: 5.5rem;
   }
 }
 
@@ -21723,10 +21787,21 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .sbb-page th {
   background: #333858;
 }
+/* a phone held upright: bigger letters, and less room round them so a line still holds enough (the owner's, Nov 21
+   18:59Z: "make sure that the text is larger on vertical version of mobile ... whenever you're trying to read the
+   Seriat Bible") */
 @media (max-width: 600px) {
+  .win.sbb-win {
+    padding: 0.35rem;
+  }
   .sbb-page {
-    padding: 0.8rem 0.9rem 1.5rem;
-    font-size: 1.05rem;
+    padding: 0.6rem 0.6rem 1.5rem;
+    font-size: 1.35rem;
+    line-height: 1.3;
+  }
+  .sbb-page code,
+  .sbb-page pre {
+    font-size: 0.72em;
   }
 }
 /* the help pages of Sandbox's windows (js/sbhelp.js): a few lines at a time, in the game's own window (the owner's, Nov

@@ -286,8 +286,11 @@ function npcHit(s, i, by, now, w) {
   if (!o) return false;
   const t = zombieTakes(s, by, w);
   if (!t) return false; // (a miss)
-  const hp = t.dmg >= ALL_HP ? 0 : hpHurt(o.hp, t.dmg), // (in tenths, as every HP: hpmath.js)
-    wd = hitWounds(o.w, w, WOUND_BREEDS.zombie, { head: t.head });
+  const hp = t.dmg >= ALL_HP ? 0 : hpHurt(o.hp, t.dmg), // (in hundredths, as every HP: hpmath.js)
+    wd = hitWounds(o.w, w, WOUND_BREEDS.zombie, {
+      head: t.crit,
+      dead: hp <= 0,
+    });
   s.hang = {
     ...s.hang,
     sbz: {

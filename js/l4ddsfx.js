@@ -40,7 +40,6 @@ const STRIDE = 44, // world px a duck walks for each footstep
   CLIMBS = 2, // rattles at once at most (the nearest climbers)
   GM_SHOTS = 3, // Survival's gunmen: shots heard each time the state comes in, at most
   GM_K = 0.8, // … each as loud as this much of a duck's
-  GM_GUN = { dbuck: "dbarrel" }, // (a gunman's gun whose sound has another name)
   NEAR_MOST = 40; // only the nearest this many walkers count for their steps and groans (Sandbox can have 800: grouping them all would cost too much each frame)
 /* the budgets every walker shares, whichever path asks (who: "l4" the map's zombies, "mz" the wave zombies, "sb"
    Sandbox's own): Z_PER_S steps a second, GROANS groans in 1.2 s; while another path is asking too, one takes at most two thirds
@@ -197,7 +196,7 @@ export function l4Hear(s, ctx) {
     if (shot[o.i] === t) continue;
     shot[o.i] = t;
     if (!t || st.first || o.d || shots++ >= GM_SHOTS) continue; // (not the shots already fired as I first look)
-    play(GM_GUN[o.hw] || (FILES[o.hw] ? o.hw : "handgun"), {
+    play(FILES[o.hw] ? o.hw : "handgun", {
       x: o.x,
       y: o.y,
       k: GM_K,

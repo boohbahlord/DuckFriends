@@ -15,10 +15,11 @@ import {
   joint,
   roofHoleShape as holeShape,
 } from "./stationmap.js";
+import { CAR_TOP } from "./vehicles.js";
 
-const O = "#1c1c28"; // the ducks' ink
+export const O = "#1c1c28"; // the ducks' ink
 const n1 = (v) => Math.round(v * 10) / 10;
-const F = (s, ...v) =>
+export const F = (s, ...v) =>
   s.reduce(
     (a, x, i) =>
       a +
@@ -30,11 +31,11 @@ const F = (s, ...v) =>
         : ""),
     "",
   );
-const ln = (w = 2.4, c = O) =>
+export const ln = (w = 2.4, c = O) =>
   `stroke="${c}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`;
 let N = 0;
 const uid = () => "dp" + (++N).toString(36);
-const wrap = (w, h, body, defs = "", cls = "") =>
+export const wrap = (w, h, body, defs = "", cls = "") =>
   F`<svg class="hg${cls ? " " + cls : ""}" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" overflow="visible" aria-hidden="true">${defs ? "<defs>" + defs + "</defs>" : ""}${body}</svg>`;
 const R = (x, y, w, h, fill, more = "") =>
   F`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" ${more}/>`;
@@ -659,7 +660,7 @@ export function corpseSVG({ w = 140, d = 70, kind = "body", only = "" } = {}) {
 export function carSVG({
   w = 420,
   d = 200,
-  h = 110,
+  h = CAR_TOP.h,
   seed = 1,
   east = true,
   hood = false,
@@ -672,16 +673,15 @@ export function carSVG({
       ? ["#a24337", "#89132c"]
       : CAR_COLORS[seed % CAR_COLORS.length],
     H = h + up,
-    y0 = 16, // (its sides, north and south)
-    y1 = d - 16,
+    T = CAR_TOP, // (its top's shape: the same numbers the floor on it walks, vehicles.js carDeck)
+    y0 = T.side, // (its sides, north and south)
+    y1 = d - T.side,
     zb = 22, // (the body's foot over the road)
-    zt = 62, // (its waist: the hood and the trunk)
-    zr = h - 2, // (its roof)
-    c0 = 130, // (the roof, back to front)
-    c1 = 285,
-    g0 = 80, // (the glass reaches down to the waist here, back and front)
-    g1 = 345,
-    inset = 14; // (the roof is narrower than the body)
+    zt = T.waist, // (its waist: the hood and the trunk)
+    zr = h - T.below, // (its roof)
+    [c0, c1] = T.roof, // (the roof, back to front)
+    [g0, g1] = T.glass, // (the glass reaches down to the waist here, back and front)
+    inset = T.inset; // (the roof is narrower than the body)
   const X = (x) => n1(east ? x : w - x); // (drawn facing east, mirrored)
   const P = (x, y, z) => `${X(x)} ${n1(y - z + H)}`;
   const poly = (pts, fill, more = ln(2.4)) =>

@@ -54,7 +54,6 @@ export const SV = {
   BEAM: { far: 560, half: (27 * Math.PI) / 180 }, // a flashlight (as l4dd.js CONE draws it)
   ARROWS: 300, // a bought bow's arrows ("The bow has 300 arrows")
   KIT: ["knife", "handgun", "", ""], // what a duck starts with ("players start out with only a pistol. No bow"; Nov 20 02:32Z: "players do spawn in with a knife. They have to")
-  KNIFE: 0.25, // … and that knife's wear left ("the knife they spawn in with is at 25% usage": its percent bar at 25%)
   GUNMEN: 0.25, // a peak's chance of gunmen instead of zombies ("maybe a 25% chance, that a group of ducks come in that have guns")
   CRIM: 0.75, // gunmen: criminals this likely, soldiers the rest ("like 75% chance") …
   STEP: 0.05, // … each pick making its own side this much less likely, till the other side comes up ("Every time that it's a criminal, it becomes 5% chance less likely")
