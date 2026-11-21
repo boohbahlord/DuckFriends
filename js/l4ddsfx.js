@@ -40,11 +40,13 @@ const STRIDE = 44, // world px a duck walks for each footstep
   CLIMBS = 2, // rattles at once at most (the nearest climbers)
   GM_SHOTS = 3, // Survival's gunmen: shots heard each time the state comes in, at most
   GM_K = 0.8, // … each as loud as this much of a duck's
-  NEAR_MOST = 40; // only the nearest this many walkers count for their steps and groans (Sandbox can have 800: grouping them all would cost too much each frame)
+  NEAR_MOST = 40,
+  WINDUPS = 3, // zombies' wind-up growls in a second at most (the nearest first: the tell of a swing, from its wu)
+  WINDUP_K = 1; // (sound.js VOL.zwindup sets how quiet) // only the nearest this many walkers count for their steps and groans (Sandbox can have 800: grouping them all would cost too much each frame)
 /* the budgets every walker shares, whichever path asks (who: "l4" the map's zombies, "mz" the wave zombies, "sb"
    Sandbox's own): Z_PER_S steps a second, GROANS groans in 1.2 s; while another path is asking too, one takes at most two thirds
    of it, so a crowd of one kind never silences the other (Sandbox's ducks beside a zombie map's mob) */
-const crowd = { steps: [], groans: [], asked: {} };
+const crowd = { steps: [], groans: [], windups: [], asked: {} };
 function allow(k, ms, most, now, who) {
   const a = crowd[k],
     asked = (crowd.asked[k] = crowd.asked[k] || {});
@@ -233,7 +235,9 @@ export function l4Hear(s, ctx) {
   st.first = false;
   /* the zombies: how fast each is going, from its last two spots */
   const seen = new Set(),
-    gap = Math.max(0.1, Math.min(0.5, (now - (st.zAt || now - 200)) / 1000));
+    gap = Math.max(0.1, Math.min(0.5, (now - (st.zAt || now - 200)) / 1000)),
+    me = ctx && ctx.world && ctx.world.at(ctx.me),
+    winding = [];
   for (const z of zombiesOf(s)) {
     seen.add(z.i);
     let o = st.z.get(z.i);
@@ -244,19 +248,37 @@ export function l4Hear(s, ctx) {
         v: 0,
         acc: rnd(0, Z_STRIDE),
         next: now + rnd(1500, GROAN[1]),
+        wu: z.wu,
       };
       st.z.set(z.i, o);
-    } else if (z.x !== o.x || z.y !== o.y) {
-      const dd = Math.hypot(z.x - o.x, z.y - o.y);
-      o.v = dd > 300 ? 0 : dd / gap;
-      o.x = z.x;
-      o.y = z.y;
-    } else o.v = 0;
+    } else {
+      if (z.wu && z.wu !== o.wu && z.st !== 3) winding.push(z); // (a swing winding up: its tell)
+      if (z.x !== o.x || z.y !== o.y) {
+        const dd = Math.hypot(z.x - o.x, z.y - o.y);
+        o.v = dd > 300 ? 0 : dd / gap;
+        o.x = z.x;
+        o.y = z.y;
+      } else o.v = 0;
+    }
+    o.wu = z.wu;
     o.st = z.st;
   }
   st.zAt = now;
   for (const i of st.z.keys()) if (!seen.has(i)) st.z.delete(i);
+  if (me)
+    winding.sort(
+      (p, q) =>
+        Math.hypot(p.x - me.x, p.y - me.y) - Math.hypot(q.x - me.x, q.y - me.y),
+    );
+  for (const z of winding)
+    if (allow("windups", 1000, WINDUPS, now, "l4"))
+      windup({ x: z.x, y: z.y, z: heightAt(z.x, z.y) });
 }
+
+/* a zombie winding up its swing (the owner, Nov 21: "maybe there's like a sound effect when the zombie's about to hit as a
+   tell"; his pick, B2, "More like it, please"): one of the growls, quiet, never cutting another sound */
+const windup = (at) =>
+  play("zwindup", { k: WINDUP_K, ...at, rate: rnd(0.94, 1.06), yield: true });
 
 /* every frame: footsteps (mine and every duck's, the zombies' quieter) and the groans */
 export function l4Steps(dt, ctx) {
@@ -398,9 +420,18 @@ function walk(pool, list, now, o) {
         acc: 0,
         next: now + rnd(0, GROAN[1]),
         z: !b.k,
+        wu: b.wu,
       });
       continue;
     }
+    if (
+      b.wu &&
+      b.wu !== w.wu &&
+      o.windup &&
+      allow("windups", 1000, WINDUPS, now, o.who)
+    )
+      o.windup(w); // (a swing winding up: its tell)
+    w.wu = b.wu;
     const d = o.len(b.x - w.x, b.y - w.y);
     w.x = b.x;
     w.y = b.y;
@@ -467,6 +498,7 @@ export function mgjSteps(s) {
         : play("step", { k: DUCK_K * n, rate: rnd(0.92, 1.08), yield: true }),
     groan: () =>
       play("l4groan", { rate: rnd(0.88, 1.12), k: MZ.GROAN_K, yield: true }),
+    windup: () => windup({ k: MZ.GROAN_K }),
   });
 }
 
@@ -508,5 +540,6 @@ export function sbSteps(ctx) {
     },
     groan: (w) =>
       play("l4groan", { x: w.x, y: w.y, rate: rnd(0.88, 1.12), k: 0.9 }),
+    windup: (w) => windup({ x: w.x, y: w.y, z: heightAt(w.x, w.y) }),
   });
 }
