@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v200",
+    version: 200,
+    date: "Nov 20, 2026",
+    title: "Customize at once",
+    news: [
+      "For Customize: it opens at once, with no loading line, and every page is ready when you open it.",
+    ],
+  },
+  {
     id: "v199",
     version: 199,
     date: "Nov 20, 2026",
