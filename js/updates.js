@@ -9,6 +9,19 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v206",
+    version: 206,
+    date: "Nov 21, 2026",
+    title: "A faster sprint",
+    news: [
+      "Sprinting is faster: 1.35 times your walk.",
+      "Letting go of a sprint means waiting for the sprint bar to fill before sprinting again.",
+      "Sprinting blurs only the edges of your screen, not the whole screen.",
+      "For Dead Ducks Arcade: an adrenaline shot or a Speed Boost keeps the edges blurred and shakes your screen a little while it lasts.",
+      "Ducks cost a little less to draw.",
+    ],
+  },
+  {
     id: "v205",
     version: 205,
     date: "Nov 20, 2026",
