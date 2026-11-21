@@ -8,7 +8,7 @@
    the boards, a flying duck's height is its jetpack's (fz, in duck heights) */
 import { DUCK, slabBetween } from "./hangout/layout.js";
 
-export const MID = DUCK / 2;
+const MID = DUCK / 2;
 /* how high shot sh flies now (world px) */
 const shotH = (sh) => sh.lh ?? (sh.hz || 0) + MID;
 /* can shot sh hit a target whose feet are at tz, at (tx, ty), world px? (its shooter at (sx, sy), world px; leave

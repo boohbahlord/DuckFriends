@@ -15,7 +15,7 @@ import { applyPalette } from "./pixelpalette.js";
 import { cropFile } from "./picrop.js";
 import { SB_WHAT } from "./sandboxrules.js";
 import { zombieURL } from "./l4ddart.js";
-import { zLook } from "./mgjrules.js";
+import { zLook, ZOMBIE_BREEDS } from "./zombies.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { botDuck } from "./botduck.js";
 import { SB_PIC, picKey, madeOf } from "./sbspawn.js";
@@ -77,7 +77,7 @@ const pic = (dk) => duckSVG(dk, { size: 44, shadow: false });
 let kindPics = null;
 const kindPic = (k) => {
   kindPics = kindPics || {
-    zombie: `<img src="${zombieURL(zLook(), 0, "")}" alt="">`,
+    zombie: `<img src="${zombieURL(zLook(ZOMBIE_BREEDS.sbBoard), 0, "")}" alt="">`,
     blank: pic(botDuck()),
     justin: pic(JUSTIN),
     test: pic(botDuck()),

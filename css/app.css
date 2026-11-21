@@ -1311,7 +1311,6 @@ html.still
       .mgj-pick,
       .l4-got,
       .l4-say,
-      .l4-hint,
       .l4-pts-pop,
       .l4-duck-pop,
       .l4-nuke,
@@ -1332,7 +1331,6 @@ html.still
       .mgj-pick,
       .l4-got,
       .l4-say,
-      .l4-hint,
       .l4-pts-pop,
       .l4-duck-pop,
       .l4-nuke,
@@ -1353,7 +1351,6 @@ html.still
       .mgj-pick,
       .l4-got,
       .l4-say,
-      .l4-hint,
       .l4-pts-pop,
       .l4-duck-pop,
       .l4-nuke,
@@ -17063,51 +17060,6 @@ body:has(.l4-shopping, .win-back) .l4-srb {
     opacity: 0;
   }
 }
-/* a note only I see, at the bottom left, on how Safe Keeping works (l4dd.js l4SafeHint) */
-.l4-hint {
-  position: absolute;
-  left: 14px;
-  bottom: 14rem;
-  z-index: 31100;
-  max-width: min(22rem, calc(100% - 28px));
-  padding: 0.5rem 0.7rem;
-  border-radius: 0.5rem;
-  background: #10202bf0;
-  box-shadow:
-    0 0 0 2px #9fe3ff,
-    0 0 0.8rem #9fe3ff66;
-  color: #eaf7ff;
-  font-size: 0.85rem;
-  line-height: 1.35;
-  pointer-events: none;
-  opacity: 0;
-}
-.l4-hint b {
-  color: #9fe3ff;
-}
-.l4-hint.on {
-  animation: l4-hint 7s ease-out forwards;
-}
-@keyframes l4-hint {
-  0% {
-    opacity: 0;
-    transform: translateY(0.4rem);
-  }
-  5%,
-  85% {
-    opacity: 1;
-    transform: none;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-@media (max-width: 600px) {
-  .l4-hint {
-    bottom: 9.5rem;
-    font-size: 1rem;
-  }
-}
 /* Instant Kill: a soft blood-crimson glow breathing over everything on the board */
 .l4-killglow {
   position: absolute;
@@ -19256,7 +19208,6 @@ html.pixel .l4-cool,
 html.pixel .l4-ammo,
 html.pixel .l4-heat,
 html.pixel .l4-heat i,
-html.pixel .l4-hint,
 html.pixel .l4-up,
 html.pixel .l4hp i,
 html.pixel .l4s,

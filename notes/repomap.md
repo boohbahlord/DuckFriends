@@ -18,7 +18,7 @@ bots.js 1050 computers
 brackets.js 474 Bicker Brackets: what the screen shows
 brainbuild.js 332 Sandbox: M's Brain builder
 card.js 424 the player card
-chat.js 1601 text chat and the command line
+chat.js 1600 text chat and the command line
 cheatflag.js 16 a game with test commands used counts nothing
 cheats.js 73 test commands: cheat round N, cheat give WEAPON
 claw.js 36 a claw's marks: three white slashes where a
@@ -48,8 +48,8 @@ friends.js 254 friends
 front.js 109 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 209 how a held weapon and the screen move
-game.js 8832 the game screen
-gamedefaults.js 20 the game's own numbers, for every mode
+game.js 8838 the game screen
+gamedefaults.js 29 the game's own numbers, for every mode
 gameready.js 47 what the game's loading screen waits for
 gamesettings.js 1751 Game Settings: the whole screen, like Customize
 gfx.js 8 Low graphics
@@ -74,7 +74,7 @@ jetart.js 39 the jetpack's pictures
 jetpack.js 33 the jetpack
 jumps.js 48 the jump counter
 keynav.js 204 menus by keyboard
-l4dd.js 3312 Quacky Zombies on every screen
+l4dd.js 3308 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 203 Dead Ducks Arcade's Angel machine on every screen
 l4ddart.js 756 Quacky Zombies' pictures
@@ -82,13 +82,13 @@ l4ddbar.js 281 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and the roof's flare,
 l4ddbots.js 572 Quacky Zombies' computers
 l4ddcatalog.js 202 Quacky Zombies: the Butler's Items tab
-l4dddrops.js 58 Quacky Zombies' drops, drawn
+l4dddrops.js 63 Quacky Zombies' drops, drawn
 l4ddguns.js 279 Quacky Zombies' new weapons, drawn
 l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 338 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box on every screen
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 5355 the rules of Quacky Zombies
+l4ddrules.js 5362 the rules of Quacky Zombies
 l4ddsfx.js 513 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the zombies far from
 langname.js 5 the name of Sandbox's number language, in one
@@ -109,7 +109,7 @@ merchants.js 376 the merchants
 meters.js 114 the thin bars under my duck's name
 mgj.js 219 Mad God Justin: what the screen shows
 mgjart.js 167 Mad God Justin's new pictures
-mgjrules.js 2395 
+mgjrules.js 2323 
 modes.js 255 the game modes
 music.js 590 the music: our own songs, played from recordings
 musicbar.js 169 the music bar: the song the room hears,
@@ -130,7 +130,7 @@ nwk.js 543 Nous Within Kenoma: the map in my book
 offline.js 45 Single Player's files on the device
 online.js 972 online rooms
 outfits.js 1141 outfits
-outlines.js 352 the outlines
+outlines.js 353 the outlines
 perf.js 92 the frame-rate readout
 phonepad.js 128 phones: the aim-and-attack stick and the jump button
 picrop.js 268 cropping a picture: every picture put into the
@@ -159,7 +159,7 @@ sbarms.js 136 Sandbox: a made NPC's weapons in a fight
 sbaudio.js 211 Sandbox: songs players bring in
 sbbody.js 233 Sandbox: an NPC's body, where it can be
 sbbrain.js 87 Sandbox: what a spawned NPC does , on
-sbcabin.js 384 Sandbox: the zombies on Duck Cabin , the
+sbcabin.js 390 Sandbox: the zombies on Duck Cabin , the
 sbdrag.js 353 Sandbox, moving blocks with the mouse :
 sbep.js 50 Sandbox Phase 7: what other players may do
 sbepview.js 162 Sandbox Phase 7: what other players may do
@@ -217,7 +217,7 @@ umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
 unlocks.js 372 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 2862 Updates
+updates.js 2875 Updates
 vdd.js 198 Valentine's Duck Date: what the screen shows
 vddrules.js 521 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
@@ -225,7 +225,8 @@ vote.js 278 Vote Mode & Map: the vote windows
 who.js 3 who this player is beyond this tab
 wounds.js 295 the wounds a hit leaves
 zombiepath.js 186 the zombies' way to the ducks on a
-zombies.js 1324 the zombies: one module for every mode's zombies
+zombieroofs.js 244 the zombies' walk over Downpour's roofs: up a
+zombies.js 1312 the zombies: one module for every mode's zombies
 
 ## js/hangout/
 activities.js 23 every Hangout activity, so the rules and the
@@ -248,7 +249,7 @@ flicker.js 83 now and then a light stutters
 ghosts.js 107 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in blue jeans and
 lamp.js 71 the lamps: the example activity
-layout.js 1463 Duck Cabin: the world of Hangout
+layout.js 1466 Duck Cabin: the world of Hangout
 npc.js 498 Duck Cabin's characters: how they get around, and
 npcart.js 272 Duck Cabin's characters: the drawings
 piano.js 530 the piano in the cabin , against the
