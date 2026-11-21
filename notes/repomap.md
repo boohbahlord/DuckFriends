@@ -62,7 +62,7 @@ gunart.js 447 every weapon, drawn: one drawing for
 gunmen.js 110 the gunmen's looks
 gunmenrules.js 1141 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen
-guns.js 594 every weapon's numbers: one sheet for
+guns.js 621 every weapon's numbers: one sheet for
 hats.js 1073 hats
 heights.js 49 a shot's height, Doom's way
 helppages.js 1498 the command line's Help pages: help
@@ -74,17 +74,18 @@ hotpick.js 296 What goes in my duck's hand
 hpmath.js 23 HP in hundredths
 hpmeter.js 327 HP meters and the little "+1
 invisible.js 11 Who is invisible right now :
+itemtip.js 99 hold I on an item: its
 itemtone.js 61 the colors an outfit or a
 jump.js 36 a duck's jump: one arc for
 jumps.js 48 the jump counter
 keynav.js 204 menus by keyboard
-l4dd.js 3340 Quacky Zombies on every screen
+l4dd.js 3342 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine on
 l4ddart.js 623 Quacky Zombies' pictures
 l4ddbar.js 307 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and the
-l4ddcatalog.js 193 Quacky Zombies: the Butler's Items tab
+l4ddcatalog.js 230 Quacky Zombies: the Butler's Items tab
 l4dddrops.js 63 Quacky Zombies' drops, drawn
 l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power box

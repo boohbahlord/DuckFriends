@@ -80,10 +80,10 @@ export function mountItemTip() {
       clearTimeout(timer);
       timer = setTimeout(() => show(t.clientX, t.clientY), HOLD_MS);
     },
-    { passive: true },
+    { passive: true, capture: true }, // (capture: the hotbar's own touch handlers may stop the event before the page's end)
   );
   for (const k of ["touchend", "touchcancel"])
-    addEventListener(k, hide, { passive: true });
+    addEventListener(k, hide, { passive: true, capture: true });
   addEventListener(
     "touchmove",
     (e) => {
