@@ -15,6 +15,13 @@
    room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). Duncelation has its
    own rules in duncerules.js: one defender in the circle, everyone else walks to Dunce or Not a Dunce. Valentine's Duck
    Date has its own in vddrules.js: The Date at the dining table, a date with each Suitor, then a Suitor Turned Down. */
+import {
+  GATE_BREEDS,
+  waiting,
+  heldBack,
+  roundsOf,
+  afterShots,
+} from "./weaponuse.js";
 import { HANDGUN } from "./gamedefaults.js";
 import { jumpDodges } from "./jump.js";
 import { epAct } from "./sbep.js";
@@ -2426,16 +2433,22 @@ function reduceStep(state, a, now) {
       if (sp === "sound") return state; // (Sound is off for now: specials.js off)
       const k = `${a.id} ${sp}`; // (each item waits on its own)
       if (
-        now <
-        coolEnds(s, a.id, sp) - (AUTO.includes(sp) ? coolFor(sp, s) * 0.2 : 0)
+        waiting(
+          GATE_BREEDS.board,
+          {
+            auto: AUTO.includes(sp),
+            cool: coolFor(sp, s),
+            ends: coolEnds(s, a.id, sp),
+          },
+          now,
+        ) ||
+        heldBack(s, sp, () => laserHeat(s, a.id, now).over)
       )
-        return state; // (full auto: the shots can come a little bunched over the network, as in Quacky Zombies)
-      if (sp === "zebra" && s.zcake) return state; // (one zebra cake in the room at a time)
-      if (sp === "laser" && laserHeat(s, a.id, now).over) return state; // (Mad God Justin's Laser Rifle overheated: it can't fire until it has cooled)
+        return state; // (weaponuse.js: its wait, the one zebra cake, Mad God Justin's Laser Rifle overheated)
       const mg = downGun ? magSize(sp) : isMgj(s) ? mgjMag(sp) : magSize(sp); // (Mad God Justin's pistol never reloads: the owner's, Nov 16; a gun picked up has Quacky Zombies' magazine; the down pistol does, its bullets never run out)
       const many =
         sp === "burst" && !isMgj(s)
-          ? Math.min(ARMS.burst.burst, mg[0] - magOf(s, a.id, now, sp).n)
+          ? roundsOf(ARMS.burst, mg[0] - magOf(s, a.id, now, sp).n)
           : 1; // (the burst rifle: three rounds a press, or the rest of its clip)
       if (mg) {
         // one shot from the magazine; the last starts the reload
@@ -2444,7 +2457,9 @@ function reduceStep(state, a, now) {
           d = isMgj(s) ? mg[1] : reloadFor(sp, n);
         s.mag = {
           ...(s.mag || {}),
-          [magKey(a.id, sp)]: n >= mg[0] ? { n, r: now + d, d } : { n, r: 0 },
+          [magKey(a.id, sp)]: afterShots(mg[0] - m.n, many).empty
+            ? { n, r: now + d, d }
+            : { n, r: 0 },
         };
       }
       s.lastUse = { ...(s.lastUse || {}), [k]: now };

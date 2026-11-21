@@ -8,6 +8,7 @@
    flips over in the middle for everyone: the category and "You are the Quack". Then the stats. Nobody but the picker
    ever sees who picked the word. */
 import { esc } from "./ui.js";
+import { topOf, awardCard, smallLine } from "./awards.js";
 import { duckSVG } from "./duck.js";
 import { nameHTML } from "./name.js";
 import { cardBackground } from "./card.js";
@@ -216,16 +217,17 @@ export function pickHTML(s, me) {
 function awardsHTML(s, per, game = false) {
   // game: the whole game's (Duckguise, Quick Quack and Wrongly Accused show only there)
   const ids = Object.keys(per).filter((id) => s.players[id]);
-  const top = (f) => {
-    const xs = ids.map((id) => [id, f(per[id])]);
-    const v = Math.max(0, ...xs.map((x) => x[1]));
-    return v ? { v, who: xs.filter((x) => x[1] === v).map((x) => x[0]) } : null;
-  };
+  const top = (f) => topOf(per, ids, f);
   const award = (title, r, line, none) =>
     r
-      ? `<div class="award"><h3>${esc(title)}</h3><p>${list(r.who.map((id) => nm(s, id)))}${r.who.length > 1 ? ' <span class="dim">(tie)</span>' : ""}</p><p class="small dim">${line(r.v)}</p></div>`
+      ? awardCard(
+          title,
+          list(r.who.map((id) => nm(s, id))),
+          r.who.length > 1,
+          smallLine(line(r.v)),
+        )
       : none
-        ? `<div class="award"><h3>${esc(title)}</h3><p class="dim">None</p><p class="small dim">${none}</p></div>`
+        ? `<div class="award"><h3>${esc(title)}</h3><p class="dim">None</p>${smallLine(none)}</div>`
         : "";
   const n = (v, one, many = one + "s") => `${v} ${v === 1 ? one : many}`;
   const jx = s.seat.map((id) => [id, (s.jumps || {})[id] || 0]),
