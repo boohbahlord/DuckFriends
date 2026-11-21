@@ -9,6 +9,19 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v223",
+    version: 223,
+    date: "Nov 21, 2026",
+    title: "Zombies lean back before they hit",
+    news: [
+      "Zombies lean back during the half second before a swipe, so you can see a hit coming, and red lines show the swipe in the direction it lands.",
+      "The lobby's map picture now shows only the maps that can come up: the vote's maps with Vote for Map, Random's with Random.",
+      "Survival is hidden from the game lists for now.",
+      "On a phone, a long press on a hotbar slot shows the item's card (it showed only in the shop before).",
+      "Behind the scenes: the shotgun's spread and the burst rifle's rounds are worked out by one shared module for the boards, the maps and Mad God Justin, instead of four copies.",
+    ],
+  },
+  {
     id: "v222",
     version: 222,
     date: "Nov 21, 2026",

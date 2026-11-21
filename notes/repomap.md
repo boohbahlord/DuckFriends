@@ -76,6 +76,7 @@ hotpick.js 296 What goes in my duck's hand
 hpmath.js 23 HP in hundredths
 hpmeter.js 327 HP meters and the little "+1
 invisible.js 11 Who is invisible right now :
+itemtip.js 104 hold I on an item: its
 itemtone.js 98 the colors an outfit or a
 jump.js 78 a duck's jump: one arc for
 jumps.js 48 the jump counter
@@ -84,7 +85,7 @@ l4dd.js 3342 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine on
 l4ddart.js 623 Quacky Zombies' pictures
-l4ddbar.js 307 Quacky Zombies' weapons bar
+l4ddbar.js 309 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and the
 l4ddcatalog.js 230 Quacky Zombies: the Butler's Items tab
 l4dddrops.js 63 Quacky Zombies' drops, drawn
@@ -92,7 +93,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box on
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 5043 the rules of Quacky Zombies
+l4ddrules.js 5031 the rules of Quacky Zombies
 l4ddsfx.js 512 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the zombies
 langname.js 5 the name of Sandbox's number language,
@@ -113,7 +114,7 @@ merchants.js 376 the merchants
 meters.js 114 the thin bars under my duck's
 mgj.js 219 Mad God Justin: what the screen
 mgjart.js 96 Mad God Justin's new pictures
-mgjrules.js 2287 
+mgjrules.js 2286 
 modes.js 437 the game modes
 music.js 590 the music: our own songs, played
 musicbar.js 169 the music bar: the song the
@@ -158,7 +159,7 @@ random.js 9 the two random helpers every mode's
 report.js 114 Report Bug or Suggest Ideas
 rooms.js 256 Play: create a room, and the
 router.js 112 screens
-rules.js 6247 the rules of Agree or Disagree
+rules.js 6249 the rules of Agree or Disagree
 sandbox.js 1359 Sandbox: the key windows
 sandboxrules.js 2059 Sandbox: which map it plays on,
 sbarms.js 124 Sandbox: a made NPC's weapons in
@@ -232,13 +233,13 @@ umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 3077 Updates
+updates.js 3090 Updates
 vdd.js 190 Valentine's Duck Date: what the screen
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
 vote.js 278 Vote Mode & Map: the vote
 walkgrid.js 67 the walking grid: which 40-px cells
-weaponuse.js 30 using a weapon: one module for
+weaponuse.js 52 using a weapon: one module for
 who.js 3 who this player is beyond this
 wounds.js 485 the wounds a hit leaves
 zombiepath.js 178 the zombies' way to the ducks
