@@ -97,7 +97,7 @@ import {
   magIn,
   fullFor,
   downArmed,
-  WILD,
+  wilds,
   isWild,
   at as l4At,
   pierceOf,
@@ -971,9 +971,9 @@ let poolEl = null,
 function seePool(s, ctx) {
   if (!poolEl) return;
   const Wd = ctx.world,
-    q = P4(s, WILD.id),
-    down = !!(q && q.ex && isWild(s, WILD.id)),
-    a = down && !+s.options.noGore ? Wd.at(WILD.id) : null,
+    dead = wilds(s).find((id) => (P4(s, id) || {}).ex), // (the first of them lying dead gets the one pool)
+    down = !!dead,
+    a = down && !+s.options.noGore ? Wd.at(dead) : null,
     show = !!a && seenFrom(a.x, a.y, Wd.inside, a.z);
   if (!down) poolAt = 0;
   else if (!poolAt) poolAt = clockNow();

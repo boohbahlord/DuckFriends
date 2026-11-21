@@ -6,7 +6,7 @@
    The duck faces right: its chest is the right edge of the body under the head (x 84–100, y 60–96); its waist is about
    y 86; the tail is up at the left. */
 import { mix } from "./duck.js";
-import { F, drawing } from "./itemtone.js";
+import { F, drawing, flatMetal } from "./itemtone.js";
 
 const dk = (c, t = 0.3) => mix(c, 0, t),
   lt = (c, t = 0.35) => mix(c, 255, t);
@@ -1129,7 +1129,7 @@ export function outfitLayers(outfit, T) {
   };
   for (const [k, choices] of def.opts || [])
     o[k] = choices.some(([v]) => v === outfit[k]) ? outfit[k] : choices[0][0]; // an option: the look's pick, or the first
-  const run = (f) => (f ? drawing(def, o, () => f(o, T)) : "");
+  const run = (f) => (f ? drawing(def, o, () => f(flatMetal(o), T)) : "");
   return {
     cloth: run(def.cloth),
     sleeve: def.sleeve ? run(def.sleeve) : null,

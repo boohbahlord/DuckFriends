@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v220",
+    version: 220,
+    date: "Nov 21, 2026",
+    title: "Ethan, skin colors, a lower jump",
+    news: [
+      "Ethan walks Downpour and Duck Cabin beside Justin. He says nothing yet.",
+      "Colors: a Skin colors list, drawn flat with no shine, and a Metallic colors list, for the duck and for clothes and hats.",
+      "Ducks jump 0.3 of the gas station roof's height.",
+      "Loading screens are shorter, and the screen shake moves only the world: the bars and the round stay still.",
+    ],
+  },
+  {
     id: "v219",
     version: 219,
     date: "Nov 21, 2026",

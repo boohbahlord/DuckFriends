@@ -5,29 +5,27 @@
    command), so they can't drift apart. While it lasts the duck can't move: Duck Cabin keeps it in s.hang.still
    (hangout/rules.js hangStill), the boards in s.down = { id: until } (downStill). Then it plays dead until it moves. */
 import { baseMode } from "../sandboxrules.js";
+import { modeOf } from "../modes.js";
 
 export const DEAD_STILL = 6000; // ms: the Duck Cabin's default
-const DOWN_GAMES = 1000; // ms: the boards' default (owner 2026-11-03 17:15Z: half a second longer than 0.5 s)
 export const DOWN_OK = [0, 500, 1000, 2000, 3000, 5000, 6000]; // (6 s only in Duck Cabin)
-const cabin = (s) => baseMode(s.options) === "hang"; // (Sandbox on Duck Cabin too)
+const cabin = (s) => !!modeOf(baseMode(s.options)).cabinHome; // (Sandbox on Duck Cabin too)
 const DOWN_NORMAL = 3000; // ms: the normal games' default (owner, Nov 16: their death lasts three seconds)
 export const downFor = (s) => {
-  if (s.options.mode === "mgj") return 5000; // (Mad God Justin: always 5 s)
+  const own = modeOf(s.options.mode);
+  if (own.downLocked) return own.downMs; // (Mad God Justin: always 5 s)
   const v = s.options.downMs;
   return DOWN_OK.includes(v) && (v !== DEAD_STILL || cabin(s))
     ? v
     : cabin(s)
       ? DEAD_STILL
-      : baseMode(s.options) === "l4dd"
-        ? DOWN_GAMES
-        : DOWN_NORMAL;
+      : modeOf(baseMode(s.options)).downMs || DOWN_NORMAL;
 };
 /* I want the normal games (every mode but Quacky Zombies, Mad God Justin and Duck Cabin) to give a duck that comes
    back from dying its body back at once (its wounds, holes and knocked-off things gone) and then SPAWN_MS of spawn
    protection: nothing hurts it, and what it shoots, swings or blows up hurts nobody (s.prot[id] = until) */
 export const SPAWN_MS = 2500;
-export const normalGame = (s) =>
-  !["l4dd", "surv", "mgj", "hang"].includes(s.options.mode);
+export const normalGame = (s) => !modeOf(s.options.mode).ownDeath;
 export const shielded = (s, id, now) => !!(s.prot && s.prot[id] > now);
 export function comeBack(s, id, now) {
   if (!normalGame(s)) return;
