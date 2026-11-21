@@ -1,6 +1,6 @@
 /* ---------- Dead Ducks Arcade's Angel machine (the owner's, Nov 16 17:22Z) ----------
    It stands on the stage. E with a gun or a melee weapon in hand puts it in, for 2,500 points (never the grenade, never
-   an item: the jetpack, the medkit and so on). It works only while the power is on (l4ddpower.js); a weapon already in
+   an item: the medkit and so on). It works only while the power is on (l4ddpower.js); a weapon already in
    it when the power goes out still comes out. It works 5 seconds, glowing, throwing sparks and smoke, then the weapon
    comes back as an orb that only the duck who put it in can take (E), and it stays there till that duck does. The
    weapon is Angelic now:

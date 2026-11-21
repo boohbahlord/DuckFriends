@@ -2389,7 +2389,7 @@ function coolBar(tag, s, me) {
   }
 }
 /* the ammo of what's in my hand, for the yellow bar (meters.js): { f, rl, dry, nr: a reload can't be done } or null (a melee weapon, the Laser
-   Rifle: its heat has its own meter, the jetpack) */
+   Rifle: its heat has its own meter) */
 export function l4Ammo(s, me, w) {
   const m = kitOf(s, me),
     now = clockNow();

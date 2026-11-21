@@ -63,8 +63,6 @@ const SAY = {
   zebra:
     "Thrown. Every zombie goes for it and bites it until it's gone. Justin's favorite.",
   adrenaline: "You walk at the game's usual speed for 20 seconds.",
-  jetpack:
-    "Each use turns it on or off. While it's on, Space flies. A Max Ammo fills it.",
   chair:
     "Justin's office chair, thrown the way you aim, as often as you like; it shoves what it hits.",
   grenade: "Thrown with G. Kills every zombie in its blast.",
@@ -116,8 +114,7 @@ function stats(w) {
     out.push(["You can hold", A.most]);
   }
   if (A.kind === "special") {
-    if (w === "jetpack") out.push(["Flight", secs(A.all)]);
-    else if (A.all) out.push(["Uses", A.all]);
+    if (A.all) out.push(["Uses", A.all]);
     if (A.ms) out.push(["Lasts", secs(A.ms)]);
     if (A.dmg) out.push(["Damage", A.dmg]);
   }
