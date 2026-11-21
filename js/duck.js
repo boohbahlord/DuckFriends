@@ -396,7 +396,10 @@ ${F.beak}${F.eyes}${F.face}${F.eyesZap}${F.hatFront}${k !== 1 ? "</g>" : ""}${ex
       : "";
   const own = !st.fixed,
     M = own && L.metal !== "none" && METAL[L.metal],
-    RB = own && L.metal === "rainbow"; // (the rainbow skin: rainbowskin.js. Not a metal: no reflections, its own shading)
+    RB = own && L.metal === "rainbow", // (the rainbow skin: rainbowskin.js. Not a metal: no reflections, its own shading)
+    /* a human skin: the color drawn flat, no shine and no brightness (the owner's, Nov 21 15:28Z: "draws the colors
+       onto it without all of the shiny effects and brightness") */
+    MT = own && !M && !RB && !!L.matte;
   /* the body's and the head's colors (most styles: one color; a mallard or an eagle: a head of its own) */
   const bodyC = st.fixed ? L.tint || st.body : styleColor(L, st, "color"),
     headC = st.fixed
@@ -418,8 +421,8 @@ ${F.beak}${F.eyes}${F.face}${F.eyesZap}${F.hatFront}${k !== 1 ? "</g>" : ""}${ex
         ? { base: M[2], light: M[1], dark: M[5], edge: M[5] }
         : {
             base: c,
-            light: mix(c, 255, 0.5),
-            dark: mix(c, 0, 0.32),
+            light: mix(c, 255, MT ? 0.1 : 0.5),
+            dark: mix(c, 0, MT ? 0.14 : 0.32),
             edge: mix(c, 0, 0.45),
           };
   const TB = tone(bodyC),
@@ -444,8 +447,12 @@ ${F.beak}${F.eyes}${F.face}${F.eyesZap}${F.hatFront}${k !== 1 ? "</g>" : ""}${ex
     OF = marks(outfitLayers(L.outfit, TB), size);
   const bare =
     SL.wing ||
-    `<path d="${WING}" fill="${M ? M[2] : dark}" opacity="${M ? ".5" : ".32"}"${bt}/>
-  <path d="M42 77C51 71 67 72 74 79" stroke="#fff" stroke-width="1.6" fill="none" opacity=".45"${bt}/>`;
+    `<path d="${WING}" fill="${M ? M[2] : dark}" opacity="${M ? ".5" : MT ? ".5" : ".32"}"${bt}/>${
+      MT
+        ? ""
+        : `
+  <path d="M42 77C51 71 67 72 74 79" stroke="#fff" stroke-width="1.6" fill="none" opacity=".45"${bt}/>`
+    }`;
   /* an outfit: its sleeve takes the wing's place (a tank top's trim goes over the bare wing); a bare arm I paint solid in
      the body's own color first, so the see-through shade doesn't turn grey over the shirt */
   const solid = SL.wing ? "" : `<path d="${WING}" fill="url(#${id}b)"${bt}/>`;
@@ -548,14 +555,19 @@ ${noHead ? "" : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="url
 ${
   noHead
     ? ""
-    : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="none" stroke="${TH.edge}" stroke-width="2.2"/>
+    : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="none" stroke="${TH.edge}" stroke-width="2.2"/>${
+        MT
+          ? ""
+          : `
 <ellipse cx="68" cy="28" rx="8" ry="4.6" fill="#fff" opacity="${M ? ".9" : ".6"}" transform="rotate(-25 68 28)"/>
 <circle cx="88" cy="47" r="2.2" fill="#fff" opacity="${M ? ".6" : ".3"}"/>`
+      }`
 }`,
-    spots: spots
-      ? `<g${bt}><ellipse cx="38" cy="73" rx="11" ry="5" fill="#fff" opacity="${M ? ".75" : ".38"}" transform="rotate(-14 38 73)"/>
+    spots:
+      spots && !MT
+        ? `<g${bt}><ellipse cx="38" cy="73" rx="11" ry="5" fill="#fff" opacity="${M ? ".75" : ".38"}" transform="rotate(-14 38 73)"/>
 <ellipse cx="17" cy="56" rx="2.6" ry="5" fill="#fff" opacity="${M ? ".6" : ".3"}" transform="rotate(-30 17 56)"/></g>`
-      : "",
+        : "",
     slOver: SL.over || "",
     ofOver: OF && OF.over ? ripped(`<g${bt}>${OF.over}</g>`) : "",
     beak: noHead ? "" : beak,
