@@ -15,7 +15,7 @@ bloodpool.js 50 a pool of blood: the one under every
 boardjustin.js 735 Justin on the boards
 botduck.js 90 a computer's duck: a random look, never anything
 botlines.js 188 What the computers write and say in the
-bots.js 1406 computers
+bots.js 1426 computers
 brackets.js 467 Bicker Brackets: what the screen shows
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
@@ -56,13 +56,13 @@ gamesettings.js 1755 Game Settings: the whole screen, like Customize
 gamestats.js 191 what `stats` and `roundstats` print for the game
 gfx.js 8 Low graphics
 gmodes.js 246 Sandbox Phase 6: made game modes
-grenade.js 34 a grenade going off
+grenade.js 35 a grenade going off
 ground.js 53 what a duck walks on, for its footsteps
 gunart.js 448 every weapon, drawn: one drawing for every mode,
 gunmen.js 110 the gunmen's looks
 gunmenrules.js 1140 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen
-guns.js 511 every weapon's numbers: one sheet for every mode
+guns.js 522 every weapon's numbers: one sheet for every mode
 hats.js 1073 hats
 heights.js 50 a shot's height, Doom's way
 helppages.js 1497 the command line's Help pages: help lists them;
@@ -78,11 +78,11 @@ jetart.js 39 the jetpack's pictures
 jetpack.js 33 the jetpack
 jumps.js 48 the jump counter
 keynav.js 204 menus by keyboard
-l4dd.js 3347 Quacky Zombies on every screen
+l4dd.js 3337 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine on every screen
 l4ddart.js 623 Quacky Zombies' pictures
-l4ddbar.js 295 Quacky Zombies' weapons bar
+l4ddbar.js 311 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and the roof's flare,
 l4ddcatalog.js 199 Quacky Zombies: the Butler's Items tab
 l4dddrops.js 63 Quacky Zombies' drops, drawn
@@ -90,7 +90,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box on every screen
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 5007 the rules of Quacky Zombies
+l4ddrules.js 5006 the rules of Quacky Zombies
 l4ddsfx.js 513 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the zombies far from
 langname.js 5 the name of Sandbox's number language, in one
@@ -126,7 +126,7 @@ npcview.js 206 an NPC on a world , drawn the
 numberat.js 1323 Seriat: the language
 numberatrun.js 1675 Seriat: files that do things
 numerat.js 181 Seriat: the number reader
-numerathelp.js 565 Seriat's help files
+numerathelp.js 566 Seriat's help files
 numeratwin.js 657 Sandbox: the Seriat window
 nwk.js 543 Nous Within Kenoma: the map in my book
 offline.js 45 Single Player's files on the device
@@ -155,7 +155,7 @@ random.js 9 the two random helpers every mode's rules share:
 report.js 114 Report Bug or Suggest Ideas
 rooms.js 256 Play: create a room, and the rooms online
 router.js 112 screens
-rules.js 6243 the rules of Agree or Disagree
+rules.js 6244 the rules of Agree or Disagree
 sandbox.js 1359 Sandbox: the key windows
 sandboxrules.js 2059 Sandbox: which map it plays on, and who
 sbarms.js 124 Sandbox: a made NPC's weapons in a fight
@@ -197,8 +197,14 @@ seriattheme.js 63 Seriat's and the command line's look: Nous Within
 settings.js 298 Settings
 sfxlist.js 164 the sound files
 shared.js 497 Sandbox Phase 7: Shared, the game modes and
-shell.js 2576 the command line: a small bash
+shell.js 1120 the command line: a small bash
+shellcmdfiles.js 583 the files and folders commands (a pure move
+shellcmdpeople.js 308 the people and groups commands (a pure move
+shellcmdroom.js 201 the room, game and test commands (a pure
+shellcmds.js 4 the shell's command table:
 shellfs.js 846 the shell's files and what every command leans
+shellpeople.js 220 the people, the room and the game's helpers
+shellstats.js 244 the stats and forgame commands' helpers (a pure
 slices.js 31 long work cut into slices
 sound.js 935 the game's sounds: real recordings, played from small
 specials.js 858 Specials
@@ -223,7 +229,7 @@ umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
 unlocks.js 413 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 2987 Updates
+updates.js 3003 Updates
 vdd.js 190 Valentine's Duck Date: what the screen shows
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
@@ -232,8 +238,8 @@ walkgrid.js 67 the walking grid: which 40-px cells of a
 who.js 3 who this player is beyond this tab
 wounds.js 501 the wounds a hit leaves
 zombiepath.js 178 the zombies' way to the ducks on a
-zombieroofs.js 244 the zombies' walk over Downpour's roofs: up a
-zombies.js 1420 the zombies: one module for every mode's zombies
+zombieroofs.js 273 the zombies' walk over Downpour's roofs: up a
+zombies.js 1421 the zombies: one module for every mode's zombies
 
 ## js/hangout/
 activities.js 23 every Hangout activity, so the rules and the

@@ -451,11 +451,18 @@ async function once(url) {
       per = new Map();
     for (const e of t.traceEvents || t) {
       const d = e.name === "RasterTask" && e.args && e.args.tileData;
-      if (d) per.set(String(d.layerId), (per.get(String(d.layerId)) || 0) + 1);
+      if (!d) continue;
+      const q = per.get(String(d.layerId)) || [0, 0];
+      q[0]++;
+      q[1] += (e.dur || 0) / 1000; // (its raster time, ms)
+      per.set(String(d.layerId), q);
     }
+    const allMs = [...per.values()].reduce((a, q) => a + q[1], 0) || 1;
     const byId = new Map(tree.map((l) => [l.layerId, l])),
       rows = [];
-    for (const [id, n] of [...per].sort((a, b) => b[1] - a[1]).slice(0, 15)) {
+    for (const [id, [n, ms]] of [...per]
+      .sort((a, b) => b[1][1] - a[1][1])
+      .slice(0, 15)) {
       const l = byId.get(id) || {};
       let who = "(gone by the end)";
       if (l.backendNodeId)
@@ -475,10 +482,13 @@ async function once(url) {
           (l.parentLayerId ? "a child layer" : "the root") +
           ")";
       rows.push(
-        `${(n / SECS).toFixed(1)} tiles/s: layer ${id} ${l.width | 0}x${l.height | 0} ${who}`,
+        `${(n / SECS).toFixed(1)} tiles/s, ${(ms / SECS).toFixed(1)} ms/s (${((ms / allMs) * 100).toFixed(0)}% of raster): layer ${id} ${l.width | 0}x${l.height | 0} ${who}`,
       );
     }
     console.log(rows.join("\n"));
+    console.log(
+      `raster in all: ${([...per.values()].reduce((a, q) => a + q[0], 0) / SECS).toFixed(1)} tiles/s, ${(allMs / SECS).toFixed(1)} ms/s`,
+    );
   }
   await b.close();
   const parsed = JSON.parse(raw),
