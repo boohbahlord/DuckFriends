@@ -32,15 +32,17 @@ import {
 import { Z_ROOM, zombieTakes, ALL_HP, L4_HOOKS } from "./l4ddrules.js";
 import {
   chaseField,
-  chaseStep,
   setZWall,
   zWalk,
   zLook,
   ZOMBIE_BREEDS,
+  brainWalk,
 } from "./zombies.js";
 import { hitCode } from "./wounds.js";
+import { fight, keepAt, reachTo } from "./sbarms.js";
+
 import { hpHurt } from "./hpmath.js";
-import { MAD, brainWalk } from "./sbbrain.js";
+import { MAD } from "./sbbrain.js";
 import { npcBody, DU_WORLD } from "./sbbody.js";
 import { sees as npcSees, grudge } from "./npcrules.js";
 
@@ -185,33 +187,21 @@ export function cabinTick(s, now, H0) {
     duckAt,
   );
   brainWalk(s, now, plans, live, dt, {
+    arms: { fight, keepAt, reachTo },
     far,
-    RX,
-    RY,
+    ducks: pls.map((q) => ({ x: q.xy[0], y: q.xy[1], z: q.zz })),
+    field: fieldTo,
     reach: CLAW,
     stopK: 0.9,
     ptStop: 0.1,
     speed: (o, to) =>
-      zWalk() *
+      (zWalk() / RX) *
       (o.sv ?? 1) *
       (o.run && Math.hypot(o.x - to.x, o.y - to.y) > SPRINT.FAR
         ? SPRINT.K
         : 1) *
       (to.sp ?? 1), // (a \move\'s @ speed)
-    go: (o, to, step) =>
-      chaseStep(o, to.pt ? null : fieldTo(to), [to.x, to.y], step, pls), // (a \move\'s spot: straight at it, round what's in the way)
-    flee(o, to, step) {
-      const dx = o.x - to.x,
-        dy = o.y - to.y,
-        n = Math.hypot(dx, dy) || 1;
-      chaseStep(
-        o,
-        null,
-        [o.x + (dx / n) * 200, o.y + (dy / n) * 200],
-        step,
-        pls,
-      );
-    },
+    z: npcZ,
     walls: wallsOf,
     wallGo(o, ws, x0, y0) {
       const [x, y] = sbWallGo(

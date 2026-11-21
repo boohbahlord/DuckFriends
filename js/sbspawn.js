@@ -79,15 +79,22 @@ import {
   heightAt,
   floorStep,
 } from "./hangout/layout.js";
-import { Z_MOST, l4Spawn, l4Live, zLook, ZOMBIE_BREEDS } from "./zombies.js";
+import {
+  Z_MOST,
+  l4Spawn,
+  l4Live,
+  zLook,
+  ZOMBIE_BREEDS,
+  brainWalk,
+} from "./zombies.js";
 import { onCabin, sbzOn, cabinLive, cabinSpawn, cabinTick } from "./sbcabin.js";
-import { listsOf, decide, MAD, brainWalk } from "./sbbrain.js";
+import { listsOf, decide, MAD } from "./sbbrain.js";
 import { grudge } from "./npcrules.js";
 import { hpHurt } from "./hpmath.js";
 import { zbSpawned } from "./sbzonebrain.js";
 import { botDuck } from "./botduck.js";
 import { JUSTIN } from "./hangout/npcart.js";
-import { armUp, cleanArms } from "./sbarms.js";
+import { armUp, cleanArms, fight, keepAt, reachTo } from "./sbarms.js";
 import { nbThink, nbOrder, nbKeep } from "./sbnumberat.js";
 import { SONG, songChars } from "./sbaudio.js";
 import { grFrom, grLeave, grHp, grIds, grLists } from "./sbgroups.js";
@@ -1648,16 +1655,14 @@ function boardTick(s, now, H) {
   const live = z.zb.filter((o) => !o.d),
     far = (a, b) => Math.hypot((a.x - b.x) / RX, (a.y - b.y) / RY);
   const spot = (o) => ({ x: o.x, y: o.y }),
-    wallsOf = sbNpcWalls(s), // (the zones that are walls to each: plan Phase 3)
-    onBoard = (o) => {
-      o.x = Math.min(0.99, Math.max(0.01, o.x));
-      o.y = Math.min(0.97, Math.max(0.03, o.y));
-    };
+    wallsOf = sbNpcWalls(s); // (the zones that are walls to each: plan Phase 3)
   const plans = think(s, now, live, spot, H, far, (id) => spot(s.pos[id]));
   const ch = brainWalk(s, now, plans, live, dt, {
+    arms: { fight, keepAt, reachTo },
     far,
-    RX,
-    RY,
+    duck: [RX, RY], // (the board's shares turn into the walk's px there)
+    ducks: H.ducks(s).map((id) => ({ x: s.pos[id].x, y: s.pos[id].y })),
+    field: () => null, // (open ground: straight at it, round what's in the way)
     reach: SBZ.reach,
     stopK: 0.8,
     ptStop: MOVE_STOP,
@@ -1666,17 +1671,6 @@ function boardTick(s, now, H) {
       (o.sv ?? 1) *
       (o.run && bd > 4 ? 1.5 : 1) * // (can sprint: half as fast again while far off)
       (to.sp ?? 1), // (a \move\'s @ speed)
-    go(o, to, step, bd, stop) {
-      const go = Math.min(bd - stop, step) / bd;
-      o.x += (to.x - o.x) * go;
-      o.y += (to.y - o.y) * go;
-      if (to.pt) onBoard(o); // (a \move\ never walks it off the board)
-    },
-    flee(o, to, step, bd) {
-      const go = Math.min(1, step / Math.max(bd, 1e-3));
-      o.x = Math.min(0.99, Math.max(0.01, o.x - (to.x - o.x) * go));
-      o.y = Math.min(0.97, Math.max(0.03, o.y - (to.y - o.y) * go));
-    },
     walls: wallsOf,
     wallGo(o, ws, x0, y0) {
       [o.x, o.y] = sbWallGo(s, ws, x0, y0, o.x, o.y, 0, 1, 1, o);
@@ -1685,7 +1679,6 @@ function boardTick(s, now, H) {
     face: 1e-4,
     swipe: SBZ.swipe[1],
     strike: (me, foe, o, dm, w) => strike(s, now, me, foe, H, o, dm, w),
-    clamp: onBoard,
     round(o) {
       o.x = Math.round(o.x * 1000) / 1000;
       o.y = Math.round(o.y * 1000) / 1000;
