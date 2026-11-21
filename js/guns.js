@@ -447,6 +447,28 @@ export const GUN_BREEDS = {
     },
     names: { dbarrel: "Double barrel" }, // (the board has only the one: Dead Ducks Arcade's slug double barrel)
   },
+  /* the NPCs that fire guns: how far each gun is fired from, in duck lengths (REACH if not named). The two rows don't
+     agree yet: the owner decides whether they become one */
+  gunman: {
+    reach: {
+      shotgun: 3.5,
+      dbuck: 3.5,
+      revolver: 8,
+      ak: 11, // (assault rifles reach as far as the LMG; the sniper's SNIPE reaches farther still. The owner's, Nov 20 18:23Z:
+      burst: 11, // "Any assault rifle should be able to have the range of the LMG, and the sniper even more so")
+      lmg: 11,
+    },
+  },
+  sbnpc: {
+    reach: {
+      sniper: 14, // (across the map; the shotguns only close)
+      bow: 9,
+      revolver: 8,
+      shotgun: 3.5,
+      dbarrel: 3.5,
+      dbuck: 3.5,
+    },
+  },
   /* Mad God Justin: the knife, the sword and the pistol as fast as in every mode (the knife four a second, the pistol
      five), a gun picked up Quacky Zombies' own; every gun picked up has to reload here (the owner's, Nov 16), so the ones
      with no magazine in Quacky Zombies get one: the shotgun 6 shells, the grenade launcher 3 (as in the other modes) and
@@ -468,3 +490,6 @@ export const GUN_BREEDS = {
    mode names it its own way */
 export const nameOf = (w, breed) =>
   ((GUN_BREEDS[breed] || {}).names || {})[w] || GUN_NAMES[w] || w;
+/* how far an NPC of that breed fires gun w from, in duck lengths */
+const REACH = 7;
+export const reachOf = (w, breed) => GUN_BREEDS[breed].reach[w] || REACH;

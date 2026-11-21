@@ -59,9 +59,9 @@ grenade.js 34 a grenade going off
 ground.js 53 what a duck walks on, for its footsteps
 gunart.js 448 every weapon, drawn: one drawing for every mode,
 gunmen.js 110 the gunmen's looks
-gunmenrules.js 1160 Survival: the gunmen
+gunmenrules.js 1152 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen
-guns.js 470 every weapon's numbers: one sheet for every mode
+guns.js 495 every weapon's numbers: one sheet for every mode
 hats.js 1073 hats
 heights.js 50 a shot's height, Doom's way
 helppages.js 1497 the command line's Help pages: help lists them;
@@ -157,7 +157,7 @@ router.js 112 screens
 rules.js 6250 the rules of Agree or Disagree
 sandbox.js 1359 Sandbox: the key windows
 sandboxrules.js 2059 Sandbox: which map it plays on, and who
-sbarms.js 143 Sandbox: a made NPC's weapons in a fight
+sbarms.js 134 Sandbox: a made NPC's weapons in a fight
 sbaudio.js 211 Sandbox: songs players bring in
 sbbody.js 233 Sandbox: an NPC's body, where it can be
 sbbrain.js 87 Sandbox: what a spawned NPC does , on
@@ -221,7 +221,7 @@ umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
 unlocks.js 413 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 2942 Updates
+updates.js 2951 Updates
 vdd.js 190 Valentine's Duck Date: what the screen shows
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
