@@ -58,7 +58,6 @@ import { startStory } from "./scrules.js";
 
 import { dodOn } from "./roomrules.js";
 
-
 /* ---------- Vote Mode & Map (owner 2026-11-04) ----------
    After the start's 5 s countdown, a window over the whole screen: Vote for Game Mode (1:05), then Vote for Map (0:20;
    not for the games that bring their own place: Duck Cabin's and Mad God Justin's). Every player clicks one (the same

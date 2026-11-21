@@ -1,7 +1,7 @@
 {
   "modeCompares": 38,
   "nullishNumbers": 0,
-  "unusedExports": 107,
+  "unusedExports": 172,
   "unusedFiles": 0,
   "clones": 21,
   "bigFiles": {
@@ -18,10 +18,10 @@
     "js/l4ddrules.js": 5017,
     "js/mgjrules.js": 2285,
     "js/numberatrun.js": 1675,
-    "js/rules.js": 3435,
+    "js/rules.js": 1997,
     "js/sandboxrules.js": 2056,
     "js/sbspawn.js": 1709,
     "js/sbspawnview.js": 2212,
-    "js/updates.js": 3169
+    "js/updates.js": 3178
   }
 }
