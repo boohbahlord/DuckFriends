@@ -91,7 +91,7 @@ function outline(img, kind, key = img.currentSrc || img.src) {
   c.height = h + P * 2;
   const g = c.getContext("2d"),
     color = COLOR[kind.split("-")[0]] || kind.split("-")[0], // (a Sandbox zone's own color: its kind is the color, "#rrggbb")
-    glow = kind.endsWith("-glow");
+    glow = kind.endsWith("-glow") && !kind.startsWith("justin"); // (Justin's yellow: the line alone, no glow round it, so it's thinner: the owner's, Nov 21 18:59Z, "the little yellow lines on Dead Ducks Arcade around the things be like a little smaller")
   /* the shape grown by a pixel (by two for the glow), in the color */
   const grow = (r) => {
     for (let dx = -r; dx <= r; dx++)
