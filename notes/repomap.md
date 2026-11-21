@@ -32,7 +32,7 @@ datboi.js 115 here come dat boi
 democracy.js 243 Democracy of Ducklings:
 dock.js 73 the docks: where Notes and the chat open
 duck.js 728 the rubber duck avatar
-duckparts.js 567 the ducks made from pixel parts
+duckparts.js 575 the ducks made from pixel parts
 ducksheets.js 2 made by tools/duck-parts.cjs:
 duel.js 124 the cloud duel: two ducks share the cloud,
 dunce.js 145 Duncelation: what the screen shows
@@ -134,7 +134,7 @@ outlines.js 352 the outlines
 perf.js 92 the frame-rate readout
 phonepad.js 128 phones: the aim-and-attack stick and the jump button
 picrop.js 268 cropping a picture: every picture put into the
-pixel.js 714 the pixel look
+pixel.js 724 the pixel look
 pixelpalette.js 192 the pixel look's colors
 players.js 340 the player menu and the room's votes
 pointer.js 54 a computer or a phone

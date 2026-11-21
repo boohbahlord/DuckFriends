@@ -250,7 +250,17 @@ async function fromFiles(key, cw, ch) {
   const c = document.createElement("canvas");
   c.width = v[0];
   c.height = v[1];
-  c.getContext("2d").drawImage(s.im, v[2], v[3], v[0], v[1], 0, 0, v[0], v[1]);
+  c.getContext("2d", { willReadFrequently: true }).drawImage(
+    s.im,
+    v[2],
+    v[3],
+    v[0],
+    v[1],
+    0,
+    0,
+    v[0],
+    v[1],
+  ); // (in memory: made into a file next, duckparts.js)
   return c;
 }
 /* a duck, from its pixel parts (duckparts.js), when its drawing says what it is (duck.js data-dk) */
