@@ -41,7 +41,12 @@ function show(x, y) {
   tip.hidden = false;
   const r = tip.getBoundingClientRect(),
     left = Math.max(8, Math.min(innerWidth - r.width - 8, x + 16)),
-    top = Math.max(8, Math.min(innerHeight - r.height - 8, y + 16));
+    top = Math.max(
+      8,
+      y + 16 + r.height > innerHeight - 8
+        ? y - r.height - 16 // (no room below: above the pointer or finger, never over it)
+        : y + 16,
+    );
   tip.style.left = `${Math.round(left)}px`;
   tip.style.top = `${Math.round(top)}px`;
 }
@@ -80,10 +85,10 @@ export function mountItemTip() {
       clearTimeout(timer);
       timer = setTimeout(() => show(t.clientX, t.clientY), HOLD_MS);
     },
-    { passive: true },
+    { passive: true, capture: true }, // (capture: the hotbar's own touch handlers may stop the event before the page's end)
   );
   for (const k of ["touchend", "touchcancel"])
-    addEventListener(k, hide, { passive: true });
+    addEventListener(k, hide, { passive: true, capture: true });
   addEventListener(
     "touchmove",
     (e) => {

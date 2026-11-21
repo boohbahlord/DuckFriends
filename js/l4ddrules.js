@@ -42,6 +42,9 @@ import {
   heldBack,
   roundsOf,
   afterShots,
+  shotKind,
+  coneOf,
+  roundAt,
 } from "./weaponuse.js";
 import {
   ARMS,
@@ -3165,41 +3168,26 @@ export function l4Use(s, a, now) {
       ...more,
     });
     if (A.pellets) {
-      const a0 = Math.atan2(dy, dx),
-        out = [];
-      for (let i = 0; i < A.pellets; i++) {
-        const an =
-          a0 +
-          A.spread * ((i / (A.pellets - 1)) * 2 - 1) +
-          (Math.random() - 0.5) * 0.08;
-        out.push(
-          shot("pellet", Math.cos(an), Math.sin(an), A.speed * FASTER, {
-            n: n * 10 + i,
-            life: A.life,
-          }),
-        );
-      }
+      const out = coneOf(Math.atan2(dy, dx), A.pellets, A.spread).map((an, i) =>
+        shot(shotKind(what), Math.cos(an), Math.sin(an), A.speed * FASTER, {
+          n: n * 10 + i,
+          life: A.life,
+        }),
+      );
       s.shots = [...(s.shots || []), ...out];
     } else {
       const v =
           what === "grenade"
             ? ARMS.grenade.far / (GRENADE_MS / 1000)
             : A.speed * (BULLETS.has(what) ? FASTER : 1), // (arrows, bullets and daggers: a little faster, as in every mode)
-        k =
-          what === "bow"
-            ? "arrow"
-            : what === "glauncher"
-              ? "lgren"
-              : A.k || what; // (the new guns' bullets each look their own way)
+        k = shotKind(what); // (the new guns' bullets each look their own way)
       const out = [];
       for (let i = 0; i < many; i++)
         out.push(
           shot(k, dx, dy, v, {
             ...(what === "glauncher"
               ? { life: (A.far / A.speed) * 1000 }
-              : i
-                ? { n: n * 10 + i, t: now + i * (A.gap || 60) }
-                : {}),
+              : roundAt(n, i, now, A.gap || 60)),
             ...(dual ? { al: m.alt } : {}), // (the Angelic pistols: which one fired it, game.js' muzzle flash)
           }),
         ); // (a burst's rounds leave one after another: each waits until its time, t)

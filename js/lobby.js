@@ -25,7 +25,16 @@ import { gameArtSVG, lobbyDuck } from "./art.js";
 import { modeName } from "./modes.js";
 import { cardHTML } from "./card.js";
 import { netHTML, kickItems } from "./players.js";
-import { isSudo, minOf, dodRoom, dodOn, dodVoting, DOD_KEYS } from "./rules.js";
+import {
+  isSudo,
+  minOf,
+  dodRoom,
+  dodOn,
+  dodVoting,
+  DOD_KEYS,
+  mapChoices,
+} from "./rules.js";
+import { isUmap, umapTitle } from "./umaprules.js";
 import { openDemocracy } from "./democracy.js";
 import { lsetWatch } from "./lobbysettings.js";
 import { openGameSettings } from "./gamesettings.js";
@@ -41,7 +50,7 @@ import {
   shownSoon,
 } from "./loading.js";
 import { mountDocks, DOCK_HTML, BAR_HTML } from "./dock.js";
-import { MAPS, mapName, isWorldMap } from "./maps.js";
+import { mapName, isWorldMap } from "./maps.js";
 import { acct, onAccount, requestFriend, canAdd } from "./account.js";
 import { openFriends } from "./friends.js";
 import { NAV_HINTS } from "./keynav.js";
@@ -49,7 +58,6 @@ import { musicBarHTML, mountMusicBar } from "./musicbar.js";
 import { paintVotes, closeVotes } from "./vote.js";
 import { paintSbPick, closeSbPick } from "./sbsaves.js";
 import { openSettings, uiScaleHTML, uiScaleWire } from "./settings.js";
-import { shuffle } from "./random.js";
 
 let R = null,
   off = null,
@@ -276,21 +284,34 @@ function paint() {
   lastSeat = s.seat.length;
 }
 
-/* the picture: the game and the map. With Vote for Map or Random, as the map isn't picked yet, the maps one after
-   another, 10 seconds each, fading from one into the next, starting on a random one */
+/* the picture: the game and the map. With Vote for Map or Random, as the map isn't picked yet, the maps it can land on
+   (rules.js mapChoices, the lists the vote and Random choose from) one after another, 10 seconds each, fading from one
+   into the next, starting on a random one; a game that brings its own place shows that place */
 let cycle = [],
+  cycleSig = "",
   cycleAt = 0;
 const CYCLE_MS = 10000;
+/* the picture's order is its own random, never Math.random: the walking-pin runs replay that one from a seed, and a
+   picture's shuffle must not move what they hash (the owner's rule: Adam, Nov 21) */
+const shuffle = (xs) => {
+  const r = crypto.getRandomValues(new Uint32Array(xs.length));
+  return xs
+    .map((x, i) => [x, r[i]])
+    .sort((a, b) => a[1] - b[1])
+    .map((e) => e[0]);
+};
+const cycling = (s) => !isWorldMap(s.options.map) && mapChoices(s).length > 0;
 function artMap(s) {
-  if (!s.options.mapPick || isWorldMap(s.options.map))
-    return s.options.map || "board";
-  if (!cycle.length) {
-    cycle = shuffle(MAPS.map((m) => m[0]));
+  if (!cycling(s)) return s.options.map || "board";
+  const pool = mapChoices(s),
+    sig = pool.join();
+  if (!cycle.length || cycleSig !== sig) {
+    cycle = shuffle(pool);
+    cycleSig = sig;
     cycleAt = Date.now();
   }
   return cycle[Math.floor((Date.now() - cycleAt) / CYCLE_MS) % cycle.length];
 }
-const cycling = (s) => !!s.options.mapPick && !isWorldMap(s.options.map);
 function paintArt(s) {
   const mode = s.options.mode || "aod",
     art = $(".lobby-art", S),
@@ -309,7 +330,7 @@ function paintArt(s) {
     width: 480,
     duck,
     map,
-    mapLabel: mapName(map),
+    mapLabel: isUmap(map) ? umapTitle(s, map) : mapName(map),
     mode,
   });
   if (!fade || !art.firstElementChild) {

@@ -12342,6 +12342,33 @@ html.moving .hp.hang-shimmer {
   filter: drop-shadow(0 0 3px #ff4d6d);
   animation: npc-claw 1s ease-out forwards;
 }
+/* a zombie's swipe over its marks (claw.js SWIPE): its arc's middle on them, sweeping across and gone in a third of a
+   second, turned the way it swung (--a, up and down too) and flipped for a swing to the left (--sx), so it still sweeps
+   from its top */
+.hang-npc-claw > img.claw-swipe {
+  left: calc(-47.5px * var(--k));
+  top: calc(-40px * var(--k));
+  width: calc(60px * var(--k));
+  height: calc(80px * var(--k));
+  filter: none;
+  animation: claw-swipe 0.3s ease-out forwards;
+}
+.hang-npc-claw > img.claw-swipe {
+  transform-origin: 79.1667% 50%; /* (its marks: 47.5 of 60, 40 of 80) */
+  rotate: var(--a, 0deg);
+  scale: var(--sx, 1) 1;
+}
+@keyframes claw-swipe {
+  0% {
+    clip-path: inset(0 0 100% 0);
+  }
+  45% {
+    clip-path: inset(0 0 0 0);
+  }
+  100% {
+    clip-path: inset(100% 0 0 0);
+  }
+}
 @keyframes npc-claw {
   0% {
     opacity: 0;
