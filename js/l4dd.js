@@ -119,7 +119,7 @@ import { zSortY } from "./zombieroofs.js";
 import { hOk, hLock } from "./heights.js";
 import { ammoBar, stackBars, noReload } from "./meters.js";
 import { laserMeter } from "./laserfx.js";
-import { goreFree, BY_WOUND, newWound } from "./wounds.js";
+import { goreFree, BY_WOUND, newWound, woundLook } from "./wounds.js";
 import { catalogHTML } from "./l4ddcatalog.js";
 import {
   pwMount,
@@ -155,13 +155,13 @@ import { angelic, jerrySVG } from "./powerart.js"; // (after l4ddart.js, as game
 import { hashText } from "./pxdom.js";
 import {
   zombieURL,
+  zombieDK,
   zombieBox,
   boardsSVG,
   boardsBox,
   orbHTML,
   UP_ICONS,
   weaponIcon,
-  hitsOf,
 } from "./l4ddart.js";
 import { isSurv, survTime, clockOf } from "./survrules.js";
 import { gunLights, gunBodies } from "./gunmenview.js";
@@ -450,6 +450,7 @@ function ukOf(url) {
    crowd (the owner's, Nov 18 14:20Z: "i want more frames") */
 function pxPic(o, img, w, h) {
   if (!pixelOn()) return;
+  if (o.dk) return goreCanvas(o, w, h);
   const g = gridPx(),
     uk = o.uk || (o.uk = ukOf(o.url)),
     k = uk + "@" + Math.round(w / g) + "x" + Math.round(h / g);
@@ -614,9 +615,60 @@ function wounds(o, l, i) {
   const want = o.ng ? goreFree(o.want) : o.want; // (Gore off: none of them shows. o.ng, the setting as seeZombies last saw it: draw() asks too, and before, it left the setting out, so with Gore off a zombie on the screen got its gore back every frame and lost it again every update, a new picture each time)
   if (o.hits === want) return;
   o.hits = want;
-  o.url = zombieURL(l, i, o.hits);
+  o.dk = want && pixelOn() ? zombieDK(l, i, want) : null; // (wounded: the gore layer, goreCanvas)
+  o.url = o.dk ? "" : zombieURL(l, i, o.hits);
   o.uk = "";
+  o.pxk = "";
+  if (!o.dk) plainImg(o);
   if (!pixelOn()) o.img.src = o.url; // (the pixel look: draw() shows it, as pixels)
+}
+/* the gore layer: a wounded zombie is its parts with its wounds (l4ddart.js zombieDK), put together from the part sheets
+   (duckparts.js) straight onto its own canvas, w × h css px. Before, every new wound on every zombie made a whole new
+   drawing (30 to 75 KB), found all its parts again and made a new picture file from them (about 3 ms each, mid-game).
+   The canvas takes the img's place once and stays (its hit shake and red blink run on it); what it showed stays till the
+   new one is ready. A zombie the sheets can't make (too big on the screen for them) is made whole, as before */
+function goreCanvas(o, w, h) {
+  const g = gridPx(),
+    cw = Math.max(1, Math.round(w / g)),
+    ch = Math.max(1, Math.round(h / g)),
+    k = o.hits + "@" + cw + "x" + ch;
+  if (o.pxk === k) return;
+  o.pxk = k;
+  import("./duckparts.js")
+    .then((m) => m.duckFromParts(o.dk, cw, ch))
+    .then((c) => {
+      if (o.pxk !== k) return;
+      if (!c) {
+        o.dk = null;
+        o.url = zombieURL(o.l, o.i, o.hits);
+        o.pxk = "";
+        plainImg(o);
+        return;
+      }
+      let cv = o.img;
+      if (cv.tagName !== "CANVAS") {
+        cv = document.createElement("canvas");
+        cv.className = "px";
+        cv.setAttribute("aria-hidden", "true");
+        o.img.replaceWith(cv);
+        o.img = cv;
+      }
+      if (cv.width !== c.width || cv.height !== c.height) {
+        cv.width = c.width;
+        cv.height = c.height;
+      } else cv.getContext("2d").clearRect(0, 0, cv.width, cv.height);
+      cv.getContext("2d").drawImage(c, 0, 0);
+    })
+    .catch(() => {});
+}
+/* back to its picture as an img (its wounds gone, Gore turned off, or made whole) */
+function plainImg(o) {
+  if (o.img.tagName !== "CANVAS") return;
+  const img = document.createElement("img");
+  img.alt = "";
+  img.draggable = false;
+  o.img.replaceWith(img);
+  o.img = img;
 }
 /* the zombies in a new state: where each glides to, its hits, its swipes, its death.
    A new beat is one where a zombie moved. Before, any change counted (a hit's HP between two beats too), and every
@@ -1755,21 +1807,11 @@ let mSig = "",
   mAt = null,
   mSeen = { v: null, hp: null, alive: false, fx: 0, stab: 0 },
   mPoolAt = 0;
-/* his wound codes as I draw them (Gore off: only a hat knocked off), and the look they give duckSVG (game.js woundLook) */
+/* his wound codes as I draw them (Gore off: only a hat knocked off); wounds.js woundLook makes their look */
 const mWounds = (s, m) => {
   const w = typeof m.w === "string" ? m.w : "";
   return +s.options.noGore ? goreFree(w) : w;
 };
-const MLOOK = new Map();
-function mWoundLook(wc) {
-  if (!wc) return {};
-  if (!MLOOK.has(wc)) {
-    if (MLOOK.size > 60) MLOOK.clear();
-    const h = hitsOf(wc);
-    MLOOK.set(wc, { skin: { head: h.inner, out: h.out }, gone: h.gone });
-  }
-  return MLOOK.get(wc);
-}
 const mMax = (m) => Math.max(1, +m.max || 4.5); // (m.max: the HP he rolled, as a zombie's: the rules' hp0)
 function drawMerchant(ctx, t) {
   const s = ctx.state(),
@@ -1790,7 +1832,7 @@ function drawMerchant(ctx, t) {
         size: 64,
         dead,
         ...(hid ? { title: "The Merchant" } : {}),
-        ...mWoundLook(wc),
+        ...woundLook(wc),
       }),
       m.who.name,
     );
@@ -1832,7 +1874,7 @@ function drawMerchant(ctx, t) {
         size: 64,
         dead,
         ...(m.who.hideName ? { title: "The Merchant" } : {}),
-        ...mWoundLook(wc),
+        ...woundLook(wc),
       }),
     );
     butler.uk = "";
@@ -1955,7 +1997,7 @@ function drawCorpses(ctx) {
           size: 64,
           dead: true,
           ...(who.hideName ? { title: "The Merchant" } : {}),
-          ...mWoundLook(wc),
+          ...woundLook(wc),
         }),
         who.name,
       );

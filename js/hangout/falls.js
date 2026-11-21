@@ -6,7 +6,6 @@ import { activity } from "./registry.js";
 import { ducksOn } from "../ui.js";
 import { heightAt } from "./layout.js";
 import { swimming } from "./water.js";
-import { pxAt } from "../pxdom.js";
 
 const FLAIL = 60,
   PUFF = 90; // flails with more than this under it; a puff when it fell more than this

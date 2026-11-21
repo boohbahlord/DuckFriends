@@ -13,7 +13,7 @@
 import { rule, activity } from "./registry.js";
 import { PROPS, W, H, heightAt, standable, STEP, BJ } from "./layout.js";
 import * as A from "./art.js";
-import { pxAt } from "../pxdom.js";
+
 import { offView } from "../gameready.js";
 
 const KINDS = ["couch", "log"],

@@ -28,7 +28,7 @@ import * as GS from "./hangout/stationmap.js";
    screen ONLY in downpour") */
 const dpOn = () => layoutVariant() === "l4gs";
 
-export const PARTS = ["fuse", "lever", "tools", "gas"];
+const PARTS = ["fuse", "lever", "tools", "gas"];
 const NAMES = {
   fuse: "Fuse",
   lever: "Lever",
@@ -81,7 +81,7 @@ export const pwName = (w) => {
 /* where the parts lie: on the bathroom's sink, the kitchen's first counter, the great room's couch; each with the floor
    in front of it, where a duck takes it */
 const prop = (k, f = () => true) => PROPS.find((p) => p.kind === k && f(p));
-export function spotOf(k) {
+function spotOf(k) {
   if (String(k).startsWith("dp")) {
     const q = GS.PART_SPOTS[+k.slice(2)];
     return {

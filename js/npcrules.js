@@ -8,12 +8,11 @@
    - nearest: the one to go after (the nearest, by each brain's own measure).
    - grudge, grudgeOf: whoever hurt an NPC, it goes after for a while, whatever else it would pick.
    - roll, reloadMs, refill, shotMark: an NPC's guns (a hit's damage, a reload, the magazines, where a shot went).
-   - woundsAfter: the wounds a hit leaves (a headshot that kills, a blast that kills, any other hit). An NPC's HP after a
-     hit is hpmath.js hpHurt, as a duck's. */
+   An NPC's wounds after a hit are wounds.js hitWounds (its breed: gunman, merchant); its HP after a hit is hpmath.js
+   hpHurt, as a duck's. */
 import { ARMS } from "./l4ddrules.js";
 import { clearShot } from "./zombies.js";
 import { heightAt } from "./hangout/layout.js";
-import { woundCode, DEATH } from "./wounds.js";
 
 /* does NPC o (world px: x, y) see t (x, y, z)? Nothing in the way at height z (its own floor unless given), and, with
    floor, t on its floor (less than floor px above or below it). The gunmen and the friendly squad keep to their floor
@@ -105,16 +104,3 @@ export const shotMark = (now, t, a, off) => [
   Math.round(t.x + Math.cos(a) * off),
   Math.round(t.y + Math.sin(a) * off * 0.5),
 ];
-
-/* an NPC's wounds after a hit by weapon w (wounds.js codes; had: its wounds so far). Killed by a headshot (a crit): its
-   head blown off, once. Killed by a blast: torn apart (every DEATH code it hasn't got). Any other hit: the weapon's own
-   wound, where can() says what can be knocked off it (a hat, a face item), worked out only then. The gunmen's (and the
-   friendly squad's) and the merchants' */
-export const woundsAfter = (had, w, dead, head, blast, can = () => ({})) =>
-  dead && head
-    ? had.includes("x")
-      ? had
-      : had + "x0"
-    : dead && blast
-      ? had + DEATH.filter((c) => !had.includes(c)).join("")
-      : had + woundCode(had, w, can());

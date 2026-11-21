@@ -29,7 +29,7 @@
 import { E_LINES, DEATH_LINES, GOD_LINES } from "./hangout/justin.js";
 import { holdDown, downFor, invuln, hurtFx } from "./hangout/death.js";
 import { JUSTIN } from "./hangout/npcart.js";
-import { hitCode, knockable, PCRIT } from "./wounds.js";
+import { hitWounds, WOUND_BREEDS, PCRIT } from "./wounds.js";
 import { isQuack, tileAt, tileCenter, stillIn } from "./quackrules.js";
 import {
   isMgj,
@@ -143,7 +143,7 @@ export function justinHit(s, by, now, log, w) {
      NPC that can take damage"): its hitmarker, the wound it leaves (game.js draws them, his blood and "−1 HP"), and on
      the hit that kills him now and then a crit, his head blown off with a CRIT over it, as a duck's (rules.js wounded).
      Gone when he's back up (justinTick: "spawns back with gore effects lost on the next turn") */
-  j.w = (j.w || "") + hitCode(j.w || "", w, crit, knockable(JUSTIN));
+  j.w = hitWounds(j.w, w, WOUND_BREEDS.justin, { head: crit, look: JUSTIN });
   s.fxN = (s.fxN || 0) + 1;
   s.fx = [
     ...(s.fx || []).slice(-18),

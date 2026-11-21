@@ -1,6 +1,6 @@
 /* ---------- the command line's manual: man <command> ----------
    Every command has a page here (man shows it; man -k word searches them). The Help pages are in helppages.js. */
-export const PERMS_TAKE = {
+const PERMS_TAKE = {
   nocmd: "no command line",
   nochat: "no chat",
   nosend: "can't send to the chat from the command line",

@@ -187,7 +187,6 @@ import {
   heldBoxHTML,
   daggerHTML,
   DUCKLING,
-  looksOf,
   ammoHTML,
   GRENADE,
   GRENADE_PIN,
@@ -355,7 +354,6 @@ import {
   DN_HAT,
   DN_BW,
   DN_PODIUM,
-  TAKE_MAX,
   isDefender,
   voters,
   dnTally,
@@ -420,7 +418,6 @@ import {
   edgeHTML,
   GOLD_CHAIR,
 } from "./mgjart.js";
-import { hitsOf } from "./l4ddart.js";
 import { gunLasers } from "./gunmenview.js";
 import {
   npcURL,
@@ -437,7 +434,7 @@ import {
 import { sbHpOf, sbWalkOf } from "./sbspawn.js";
 import { angelic, angelGlow } from "./powerart.js"; // (after l4ddart.js: Noah's note on an old import cycle)
 import { angelOf } from "./l4ddangel.js";
-import { pwCodes, goreFree, BY_WOUND, newWound } from "./wounds.js";
+import { pwCodes, goreFree, BY_WOUND, newWound, woundLook } from "./wounds.js";
 import { hatLayers, HAT_TOP } from "./hats.js";
 import { faceLayer } from "./faces.js";
 import { beakSVG } from "./beaks.js";
@@ -471,7 +468,6 @@ import {
 } from "./vddrules.js";
 import {
   vdBoardHTML,
-  vdTopHTML,
   vdStatsHTML,
   TABLE_W,
   SEAT_OUT,
@@ -1617,7 +1613,7 @@ function drawDucks(now = clockNow()) {
         shadow: false,
         title: p.name,
         dead,
-        ...(wc ? woundLook(noGoreOf(s) ? goreFree(wc) : wc) : {}), // (Gore off: only a hat knocked off shows)
+        ...woundLook(noGoreOf(s) ? goreFree(wc) : wc), // (Gore off: only a hat knocked off shows)
         grow: true,
       });
       const F = picFrame(look); // (a thin or sparse cut-out picture, drawn bigger: its box is wider than the duck's)
@@ -4638,16 +4634,6 @@ function mgjGore(s) {
   const hp = s.mgj ? Math.max(0, s.mgj.hp ?? 999) : 999,
     n = hp > 100 ? 0 : hp >= 10 ? Math.floor((100 - hp) / 10) : 9 + (10 - hp);
   return MGJ_GORE.slice(0, n).join("");
-}
-/* a duck's wounds (wounds.js codes) as duck.js' skin and what it has lost */
-const WLOOK = new Map();
-function woundLook(wc) {
-  if (!WLOOK.has(wc)) {
-    if (WLOOK.size > 200) WLOOK.clear();
-    const h = hitsOf(wc);
-    WLOOK.set(wc, { skin: { head: h.inner, out: h.out }, gone: h.gone });
-  }
-  return WLOOK.get(wc);
 }
 /* ---------- my duck ---------- */
 const onBoardPhase = () => R && boardPhases(R.state).includes(R.state.phase);

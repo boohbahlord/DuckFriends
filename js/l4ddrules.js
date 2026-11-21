@@ -21,7 +21,7 @@
      zs   { i: [a, dir] }: a zombie's last swipe (ms since t0) and its way (1/100 radians), only for one that swiped
      (the host keeps the rest to itself, in s.hidden, which never goes online: l4z { i: [n, d, { cm, k, fl, wp, j }] }, n since when it's at a
      duck (0: not), d its tear clock (st 1) or when it died (st 3); l4tk its last heartbeat)
-     zw   { i: "B3c1…" }: the wounds hits left on a zombie, two letters each (wound(), l4ddart.js' hitsOf)
+     zw   { i: "B3c1…" }: the wounds hits left on a zombie, two letters each (wound(), wounds.js hitsOf)
      zl   { i: [max hp, speed (px a second at the Normal Walking speed), opening, size, build, hat, outfit] }: set once, when it comes
      brd  { opening: boards up, 0 … BOARDS }
      l4p  { id: { hp, at (its last hit or heal), dn (down: bleeds out then), rv: { by, at } (being revived), gh (a ghost
@@ -95,8 +95,8 @@ import { hOk, hLock, shotFeet, SAME_FLOOR } from "./heights.js";
 import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
-  hitCode,
-  knockable,
+  hitWounds,
+  WOUND_BREEDS,
   pwHit,
   pwAdd,
   explodedLook,
@@ -129,7 +129,7 @@ import {
 import { ANGEL, angelOf, angelAmmo, angelAct, angelLeft } from "./l4ddangel.js";
 
 import { NPC_RUN } from "./npcshared.js";
-import { sees as npcSees, shotMark, woundsAfter } from "./npcrules.js";
+import { sees as npcSees, shotMark } from "./npcrules.js";
 import { grHp, grCool } from "./sbgroups.js";
 import {
   isSurv,
@@ -1301,7 +1301,7 @@ export const kitOf = (s, id) => ((s && s.hang && s.hang.l4a) || {})[id] || null;
 /* Sandbox's loot (plan Loot 3, sbloot.js): what a loot orb set for weapon w in duck id's hands, kept in its kit as
    lm = { w: { d: its damage, dp: its damage in % of its own, c: its wait between uses (ms), r: 0 (it can't reload),
    b: 1 (it breaks when empty) } }; null when it came plain */
-export const lmOf = (s, id, w) => {
+const lmOf = (s, id, w) => {
   const k = kitOf(s, id),
     own = (k && k.lm && k.lm[w]) || null;
   if (!isSb(s) || !s.sb || !s.sb.it) return own;
@@ -1903,7 +1903,7 @@ function giveBonus(s, sr) {
 export const GO_MS = 3000; // ms of "Round N" after the vote, before its zombies come
 const SR_VOTE_MS = 30000; // ms a "Start at round N" vote stays up
 /* the starting-round vote: who may start one (not after a No, only in round 0, none up), and what it needs */
-export const srOpen = (s) => {
+const srOpen = (s) => {
   const L = s.hang && s.hang.l4;
   return !!L && L.r === 0 && !L.over && !!L.wait;
 };
@@ -2919,9 +2919,12 @@ export function merchantHurt(s, by, n, now, w = "", how = "", from = "") {
      gets gore effects ... all the gore effects that everyone else gets"): a crit that kills him blows his head off
      ("there's a chance you might get a crit on them, so their head explodes just like a zombie will"), a blast tears
      him apart (as it does a duck), any other hit leaves its weapon's wound */
-  const wd = woundsAfter(had, w, !hp, how === "crit", how === "blast", () =>
-    knockable(merchantLook(merchantById(m.id), m.roll)),
-  );
+  const wd = hitWounds(had, w, WOUND_BREEDS.merchant, {
+    dead: !hp,
+    head: how === "crit",
+    blast: how === "blast",
+    look: merchantLook(merchantById(m.id), m.roll),
+  });
   if (!hp) {
     s.hang.l4m = {
       ...m,
@@ -3613,7 +3616,7 @@ function strike(s, z, dmg, head, by, w = "") {
   }
   return z.hp <= 0;
 }
-/* the wounds a hit leaves (owner 2026-11-04 04:01Z), drawn by l4ddart.js' hitsOf: zw { i: "B3c1…" }, two letters for
+/* the wounds a hit leaves (owner 2026-11-04 04:01Z), drawn by wounds.js hitsOf: zw { i: "B3c1…" }, two letters for
    each, its kind and its spot (0 … 7, or 0 … 5 for an arrow or a chunk). Small guns leave small bullet holes, the big
    ones big holes, the shotgun its pellets, now and then a bleeding cut instead; knives cut; the hammer and the chair
    bruise; an arrow cuts or stays stuck in it; a bullet now and then tears a chunk out, or the beak off; a headshot
@@ -3621,8 +3624,8 @@ function strike(s, z, dmg, head, by, w = "") {
 function wound(s, z, w, head) {
   const zw = s.hang.zw || {},
     had = zw[z.i] || "";
-  const add = hitCode(had, w, head); // (wounds.js)
-  if (add) s.hang.zw = { ...zw, [z.i]: had + add };
+  const wd = hitWounds(had, w, WOUND_BREEDS.zombie, { head }); // (wounds.js)
+  if (wd !== had) s.hang.zw = { ...zw, [z.i]: wd };
 }
 /* a mark that comes once and stays, past the 6 wounds (owner 2026-11-04 06:44Z): g a grenade's gore, f burnt by fire */
 function mark(s, z, code) {
