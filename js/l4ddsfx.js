@@ -40,9 +40,9 @@ const STRIDE = 44, // world px a duck walks for each footstep
   CLIMBS = 2, // rattles at once at most (the nearest climbers)
   GM_SHOTS = 3, // Survival's gunmen: shots heard each time the state comes in, at most
   GM_K = 0.8, // … each as loud as this much of a duck's
-  NEAR_MOST = 40,
+  NEAR_MOST = 40, // only the nearest this many walkers count for their steps and groans (Sandbox can have 800: grouping them all would cost too much each frame)
   WINDUPS = 3, // zombies' wind-up growls in a second at most (the nearest first: the tell of a swing, from its wu)
-  WINDUP_K = 1; // (sound.js VOL.zwindup sets how quiet) // only the nearest this many walkers count for their steps and groans (Sandbox can have 800: grouping them all would cost too much each frame)
+  WINDUP_K = 1; // (sound.js VOL.zwindup sets how quiet)
 /* the budgets every walker shares, whichever path asks (who: "l4" the map's zombies, "mz" the wave zombies, "sb"
    Sandbox's own): Z_PER_S steps a second, GROANS groans in 1.2 s; while another path is asking too, one takes at most two thirds
    of it, so a crowd of one kind never silences the other (Sandbox's ducks beside a zombie map's mob) */
