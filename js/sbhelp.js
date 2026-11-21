@@ -22,7 +22,7 @@ export const SB_HELP = {
     ],
     [
       "Hitbox tiles and Snap",
-      "A zone is made of the small hitbox tiles on the ground (four to a duck length), the same tiles that tell where a duck stands. A tile is the zone's when its shape covers 0.6 of it or more, so a circle is a little blocky at its edge. Sizes go in whole tiles. Right-click, Snap: Snap to grid (on by default) keeps the zone on the ground's tiles and turns it a quarter at a time; turned off, it goes anywhere and turns freely, and the 0.6 rule still counts. Fixed zone: no other zone on its overlay level can be put on it, and it can't be put on one. It only changes building.",
+      "A zone is made of the small hitbox tiles on the ground, the same tiles that tell where a duck stands (a duck is four tiles long). Every distance in Sandbox and Seriat is in tiles. A tile is the zone's when its shape covers 0.6 of it or more, so a circle is a little blocky at its edge. Sizes go in whole tiles. Right-click, Snap: Snap to grid (on by default) keeps the zone on the ground's tiles and turns it a quarter at a time; turned off, it goes anywhere and turns freely, and the 0.6 rule still counts. Fixed zone: no other zone on its overlay level can be put on it, and it can't be put on one. It only changes building.",
     ],
     [
       "Direction",

@@ -752,3 +752,13 @@ function hash(str) {
   }
   return (h >>> 0).toString(36) + str.length.toString(36);
 }
+
+/* a layer's canvas made the size it is drawn at, and its transform back to the identity (the fireflies' and the power's
+   layers draw over the board each time the camera moves) */
+export const fitLayer = (cv, g, w, h) => {
+  if (cv.width !== w || cv.height !== h) {
+    cv.width = w;
+    cv.height = h;
+  }
+  g.setTransform(1, 0, 0, 1, 0, 0);
+};
