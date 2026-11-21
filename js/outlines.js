@@ -64,7 +64,6 @@ let floorOf = (x, y, z) =>
     : z >= 90
       ? 1
       : 0;
-export const setFloorOf = (f) => (floorOf = f);
 export const olFloor = (x, y, z) => floorOf(x, y, z);
 
 /* the one rule for roofs (the owner's, Nov 17 20:02Z: "make a simple and basic principle"): someone at (x, y), feet at

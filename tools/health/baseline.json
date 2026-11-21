@@ -1,7 +1,7 @@
 {
   "modeCompares": 170,
   "nullishNumbers": 81,
-  "unusedExports": 157,
+  "unusedExports": 132,
   "unusedFiles": 0,
   "clones": 67,
   "bigFiles": {
@@ -13,15 +13,15 @@
     "js/hangout/shapes.js": 1707,
     "js/hangout/stationart.js": 1967,
     "js/hangout/world.js": 1787,
-    "js/l4dd.js": 3447,
-    "js/l4ddrules.js": 6754,
-    "js/mgjrules.js": 2399,
+    "js/l4dd.js": 3426,
+    "js/l4ddrules.js": 6751,
+    "js/mgjrules.js": 2395,
     "js/numberatrun.js": 1675,
-    "js/rules.js": 6327,
+    "js/rules.js": 6326,
     "js/sandboxrules.js": 2059,
     "js/sbspawn.js": 1762,
     "js/sbspawnview.js": 2212,
     "js/shell.js": 3547,
-    "js/updates.js": 2789
+    "js/updates.js": 2799
   }
 }

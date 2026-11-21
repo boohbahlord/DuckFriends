@@ -5988,7 +5988,6 @@ export const nameOfValue = (v) =>
    any time. No timer until every juror has voted: all on one side ends the case at once; a split jury gets closing
    arguments (a minute by default), and when it runs out the bigger side wins (a tie: nobody does). In closing arguments
    an attorney who isn't ahead may give up. → the verdict, talked over → the next case → the round's stats. */
-export const LAW_TOPIC_MAX = 200;
 export const isCounsel = (s, id) =>
   !!(s.law && (s.law.def === id || s.law.off === id));
 /* the jury: everyone playing but the two attorneys */

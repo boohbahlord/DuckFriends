@@ -22,7 +22,6 @@ import {
 } from "./npc.js";
 import { PROPS } from "./layout.js";
 
-export const CAT_IDS = ["annabelle", "bubbles", "oreo", "opal"];
 const WALK = 110,
   TROT = 200,
   SPRINT = 560;
@@ -40,7 +39,6 @@ const M = (id, now, rand) => {
     });
   return mem.get(id);
 };
-export const resetCats = () => mem.clear();
 
 /* the furniture a cat gets up on: couches (on the seat), tables and beds (on top) */
 const PERCH = PROPS.filter(

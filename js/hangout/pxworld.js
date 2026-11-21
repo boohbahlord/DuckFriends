@@ -36,6 +36,12 @@ const DATA = {
   l4gs: () => import("./pxw-downpour.js"),
 };
 const loaded = new Map();
+/* (each world's name, for the loading screen: loading.js) */
+const NAMES = {
+  "": "Duck Cabin's pictures",
+  l4: "Duck Cabin's pictures",
+  l4gs: "Downpour's pictures",
+};
 export function worldArt(variant) {
   if (!loaded.has(variant))
     loaded.set(
@@ -66,6 +72,7 @@ export function worldArt(variant) {
             };
           })
           .catch(() => null),
+        NAMES[variant] || "The map's pictures",
       ), // (the loading screen waits for them: loading.js)
     );
   return loaded.get(variant);

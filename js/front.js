@@ -12,6 +12,7 @@ const updates = () => import("./updates.js");
 import { mountCornerMusicBar } from "./musicbar.js";
 import { installBtnHTML, install } from "./homeapp.js";
 import { inApp } from "./corners.js";
+import { topBar } from "./upbar.js";
 import { keptState, onKept } from "./offline.js";
 
 let mbarOff = null,
@@ -32,8 +33,10 @@ const soloBtnHTML = () =>
     ? `<button type="button" class="btn big ghost site-btn solo-btn" data-a="solo"${keptState().ready ? "" : " disabled"}>Single Player<small>${soloNote(keptState())}</small></button>`
     : "";
 /* (the room code and Customize come with the rest of the game, after the first screen: later.js) */
-const openCustomize = () =>
-  soon(() => import("./customize.js")).then((m) => m.openCustomize());
+const openCustomize = () => {
+  topBar(); // (the green line from the click on: customize.js carries it on)
+  return soon(() => import("./customize.js")).then((m) => m.openCustomize());
+};
 function playSolo() {
   soon(rest).then(() =>
     go(

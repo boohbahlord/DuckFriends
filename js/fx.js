@@ -278,7 +278,6 @@ export function fxLimits(gore, heavy) {
   low = document.documentElement.classList.contains("low");
 }
 export const heavyOff = () => noHeavy || low; // (no screen shake, a plain Nuke screen, a still crimson)
-export const lowFx = () => low;
 const many = (r) => (Array.isArray(r) ? Math.round(rnd(r[0], r[1])) : r);
 
 /* blood out of something hit at (x, y) (css px on the screen), h px over its feet, by weapon w; (dx, dy): the way the
