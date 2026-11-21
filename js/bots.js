@@ -174,41 +174,28 @@ const pick = (id, key) => {
   return plan.get(k);
 };
 
-/* Lawyering: a juror walks to the side it leans to and votes; in closing arguments it may be talked round (it walks over
-   and votes again). An attorney stays on its own side, and behind in closing arguments may give up. */
+/* Lawyering and Duncelation: a voter walks to the side it leans to and votes; now and then it's talked round (it walks over
+   and votes again). In Lawyering only in closing arguments; an attorney stays on its own side, and behind in closing
+   arguments may give up. In Duncelation it waits for the grace period, and a defender stays in the circle */
 const swayed = new Map(); // computer id + case → the side it was talked round to
-function lawBot(s, id, late, now, out) {
-  const L = s.law;
-  if (!L || L.w != null || !late) return;
-  if (isCounsel(s, id)) {
-    if (
-      canGiveUp(s, id) &&
-      now - (L.close - (+s.options.lawClose || 60) * 1000) > 8000 &&
-      Math.random() < 0.004
-    )
-      out.push({ t: "giveUp", id });
-    return;
-  }
-  if (!jury(s).includes(id)) return;
-  const key = `${id}|${s.round}:${s.qi}`;
-  if (
-    L.close &&
-    L.votes[id] !== undefined &&
-    !swayed.has(key) &&
-    Math.random() < 0.003
-  ) {
-    swayed.set(key, 1 - L.votes[id]);
+/* talked round, now and then (chance each heartbeat), once it has voted */
+function sway(key, mine, chance) {
+  if (mine !== undefined && !swayed.has(key) && Math.random() < chance) {
+    swayed.set(key, 1 - mine);
     if (swayed.size > 300) swayed.delete(swayed.keys().next().value);
   }
-  const side = swayed.has(key)
+}
+/* the side it wants: talked round, else its vote, else its lean (c, 0 … 6; a 3 goes either way: tie()) */
+const sideOf = (key, mine, c, tie) =>
+  swayed.has(key)
     ? swayed.get(key)
-    : L.votes[id] !== undefined
-      ? L.votes[id]
-      : pick(id, s.round + ":" + s.qi) < 3 ||
-          (pick(id, s.round + ":" + s.qi) === 3 && Math.random() < 0.5)
+    : mine !== undefined
+      ? mine
+      : c() < 3 || (c() === 3 && tie())
         ? 0
         : 1;
-  if (L.votes[id] === side) return;
+/* a step toward that side's column; there, it votes */
+function toSide(s, id, side, out) {
   const p = s.pos[id],
     want = colXAt(s, side),
     step = 0.035;
@@ -223,9 +210,29 @@ function lawBot(s, id, late, now, out) {
       j: p.j || 0,
     });
 }
-
-/* Duncelation: a voter walks to the side it leans to once the grace period is over, and votes; now and then it's talked
-   round (it walks over and votes again) */
+function lawBot(s, id, late, now, out) {
+  const L = s.law;
+  if (!L || L.w != null || !late) return;
+  if (isCounsel(s, id)) {
+    if (
+      canGiveUp(s, id) &&
+      now - (L.close - (+s.options.lawClose || 60) * 1000) > 8000 &&
+      Math.random() < 0.004
+    )
+      out.push({ t: "giveUp", id });
+    return;
+  }
+  if (!jury(s).includes(id)) return;
+  const key = `${id}|${s.round}:${s.qi}`;
+  if (L.close) sway(key, L.votes[id], 0.003);
+  const side = sideOf(
+    key,
+    L.votes[id],
+    () => pick(id, s.round + ":" + s.qi),
+    () => Math.random() < 0.5,
+  );
+  if (L.votes[id] !== side) toSide(s, id, side, out);
+}
 function dnBot(s, id, late, now, out) {
   const C = s.dn && s.dn.cur;
   if (
@@ -239,32 +246,15 @@ function dnBot(s, id, late, now, out) {
     return;
   const key = `${id}|${s.round}:${s.qi}`,
     mine = C.votes[id];
-  if (mine !== undefined && !swayed.has(key) && Math.random() < 0.002) {
-    swayed.set(key, 1 - mine);
-    if (swayed.size > 300) swayed.delete(swayed.keys().next().value);
-  }
+  sway(key, mine, 0.002);
   const c = pick(id, s.round + ":" + s.qi),
-    side = swayed.has(key)
-      ? swayed.get(key)
-      : mine !== undefined
-        ? mine
-        : c < 3 || (c === 3 && hash(key) % 2)
-          ? 0
-          : 1;
-  if (mine === side) return;
-  const p = s.pos[id],
-    want = colXAt(s, side),
-    step = 0.035;
-  if (Math.abs(p.x - want) <= step)
-    out.push({ t: "move", id, x: want, y: p.y, j: p.j || 0 }, { t: "end", id });
-  else
-    out.push({
-      t: "move",
-      id,
-      x: p.x + Math.sign(want - p.x) * step,
-      y: p.y,
-      j: p.j || 0,
-    });
+    side = sideOf(
+      key,
+      mine,
+      () => c,
+      () => hash(key) % 2,
+    );
+  if (mine !== side) toSide(s, id, side, out);
 }
 
 /* Mad God Justin: up to him (stopping a little short, off to one side), a stab once he's in reach, a jump now and then */
@@ -797,31 +787,27 @@ function hangBot(s, id, now, out) {
   }
   const jump = !jumping && Math.random() < 0.006;
   if (Math.hypot(g.x - x, g.y - y) < 20 && !jump) return;
-  const d = Math.hypot(g.x - x, g.y - y),
-    n = Math.min(6, Math.ceil(d / 12)),
-    ux = d ? (g.x - x) / d : 0,
-    uy = d ? (g.y - y) / d : 0;
-  for (let i = 0; i < n; i++) {
-    // 12 px at a time: up or down a step at most, never through a wall
-    const nx = x + ux * Math.min(12, d - i * 12),
-      ny = y + uy * Math.min(12, d - i * 12),
-      nz = HL.heightAt(nx, ny);
-    if (
-      Math.abs(nz - z) > HL.STEP ||
-      !HL.standable(nx, ny, z, HL.STEP, [x, y])
-    ) {
-      if (g.seat) g.path = null;
-      else {
-        g.x = x;
-        g.y = y;
-        g.rest = now + 800;
-      }
-      break;
-    } // in the way: another spot soon (or another path)
-    x = nx;
-    y = ny;
-    z = nz;
-  }
+  let stopped;
+  [x, y, stopped] = stepToward(
+    x,
+    y,
+    g.x,
+    g.y,
+    72,
+    12,
+    (nx, ny, z0, x0, y0) =>
+      Math.abs(heightAt(nx, ny) - z0) <= STEP &&
+      standable(nx, ny, z0, STEP, [x0, y0]),
+  ); // (12 px at a time: up or down a step at most, never through a wall)
+  z = heightAt(x, y);
+  if (stopped) {
+    if (g.seat) g.path = null;
+    else {
+      g.x = x;
+      g.y = y;
+      g.rest = now + 800;
+    }
+  } // in the way: another spot soon (or another path)
   out.push({
     t: "move",
     id,
@@ -931,22 +917,107 @@ const AT = 90; // world px: near enough to the Butler or the fireplace
 const spinAt = new Map(); // computer → when it last spun the fireplace (one spin in a while, not every time it can)
 const readyAt = new Map(); // "computer round" → when it presses End turn (Ready in round 0): a few seconds into the wait
 
-/* a few small steps toward (tx, ty), never off the cabin and the deck, never up a wall */
-function mapWalk(x, y, tx, ty, far) {
+/* the one walk on a walkable map: steps of px toward (tx, ty), as far as far, each one only if ok(nx, ny, z, x, y) lets it
+   (z: the height where it stands); [x, y, stopped] */
+function stepToward(x, y, tx, ty, far, px, ok) {
   const d = Math.hypot(tx - x, ty - y);
-  if (d < 1) return [x, y];
-  const n = Math.ceil(Math.min(far, d) / 8),
+  if (d < 1) return [x, y, false];
+  const n = Math.ceil(Math.min(far, d) / px),
     ux = (tx - x) / d,
     uy = (ty - y) / d;
   for (let k = 0; k < n; k++) {
-    const nx = x + ux * Math.min(8, d - k * 8),
-      ny = y + uy * Math.min(8, d - k * 8),
-      z = heightAt(x, y);
-    if (!playable(nx, ny) || !standable(nx, ny, z, STEP, [x, y])) break;
+    const nx = x + ux * Math.min(px, d - k * px),
+      ny = y + uy * Math.min(px, d - k * px);
+    if (!ok(nx, ny, heightAt(x, y), x, y)) return [x, y, true];
     x = nx;
     y = ny;
   }
-  return [x, y];
+  return [x, y, false];
+}
+/* a few small steps toward (tx, ty), never off the cabin and the deck, never up a wall */
+const mapWalk = (x, y, tx, ty, far) =>
+  stepToward(
+    x,
+    y,
+    tx,
+    ty,
+    far,
+    8,
+    (nx, ny, z, x0, y0) =>
+      playable(nx, ny) && standable(nx, ny, z, STEP, [x0, y0]),
+  );
+/* the actions of a computer on a walkable map (world px): a move holding w, aimed (ax, ay), and a use */
+const moveOf = (id, nx, ny, w, ax, ay, j = 0) => ({
+  t: "move",
+  id,
+  x: +(nx / W).toFixed(5),
+  y: +(ny / H).toFixed(5),
+  j,
+  z: Math.round(heightAt(nx, ny)),
+  b: Math.round(heightAt(nx, ny)),
+  w,
+  ax: +(ax / W).toFixed(4),
+  ay: +(ay / H).toFixed(4),
+});
+const useOf = (id, what, ax, ay) => ({
+  t: "use",
+  id,
+  what,
+  face: ax < 0 ? -1 : 1,
+  ax: ax / W,
+  ay: ay / H,
+});
+/* what tells the two kinds of computer apart (Type Object): the room's computers, and the fireplace's Justin (better:
+   he sees farther, goes farther to revive, and throws a grenade sooner into a crowd a little farther off) */
+const BOT_BREEDS = {
+  computer: { see: SEE, revive: 900, crowd: 130, nadeMin: 200, nadeGap: 4000 },
+  justin: {
+    see: SEE * 1.3,
+    revive: 1200,
+    crowd: 150,
+    nadeMin: 220,
+    nadeGap: 3000,
+  },
+};
+/* a gun with something in it (not reloading); the Laser Rifle while it's cool enough */
+const loadedIn = (s, id, now, m) => (w) =>
+  w === "laser"
+    ? laserOk(s, id, now)
+    : endless(w) || (w && m.am[w] && m.am[w][0] > 0 && m.rw !== w);
+/* how many of zs are within r of z, and whether that's a crowd worth a grenade from d away */
+const crowdOf = (zs, z, r) =>
+  zs.filter((o) => Math.hypot(o.x - z.x, o.y - z.y) < r).length;
+const nadeOk = (b, crowd, m, d, now) =>
+  crowd >= 4 &&
+  m.g > 0 &&
+  d > b.nadeMin &&
+  now - ((m.u || {}).grenade || 0) > b.nadeGap;
+/* the nearest downed teammate: down, not dead (the dead only with a defibrillator, and never the wild or Justin); with zs,
+   only one with no zombie within KEEP of it */
+function downMate(s, id, x, y, defib, zs) {
+  const l4p = s.hang.l4p || {},
+    dead = (t) => !!(l4p[t] || {}).ex;
+  return s.seat
+    .filter(
+      (t) =>
+        t !== id &&
+        (l4p[t] || {}).dn &&
+        (!dead(t) || (defib && !isWild(s, t) && !isHelper(s, t))) &&
+        s.pos[t],
+    )
+    .map((t) => ({ t, x: s.pos[t].x * W, y: s.pos[t].y * H, dead: dead(t) }))
+    .filter(
+      (t) => !zs || zs.every((z) => Math.hypot(z.x - t.x, z.y - t.y) > KEEP),
+    )
+    .sort(
+      (a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y),
+    )[0];
+}
+/* by it: hold E (the hold goes on by itself until the revive is done) */
+function holdE(s, id, t, out) {
+  const rv = ((s.hang.l4p || {})[t] || {}).rv;
+  if (!rv || rv.by !== id)
+    out.push({ t: "hang", k: "l4", do: "rev", on: t, hold: true, id });
 }
 
 export function l4Bot(s, id, now, out) {
@@ -968,42 +1039,16 @@ export function l4Bot(s, id, now, out) {
     far = WALK * walkOf(s) * (STEP_MS / 1000) * (upOf(s, id).sp ? 1.1 : 1), // (as fast as my duck: the Walking speed, the Butler's Speed)
     m = kitOf(s, id) || { sl: [], am: {}, u: {} },
     sl = m.sl,
-    send = (nx, ny, w, ax, ay) =>
-      out.push({
-        t: "move",
-        id,
-        x: +(nx / W).toFixed(5),
-        y: +(ny / H).toFixed(5),
-        j: 0,
-        z: Math.round(heightAt(nx, ny)),
-        b: Math.round(heightAt(nx, ny)),
-        w,
-        ax: +(ax / W).toFixed(4),
-        ay: +(ay / H).toFixed(4),
-      });
+    b = BOT_BREEDS.computer,
+    send = (nx, ny, w, ax, ay) => out.push(moveOf(id, nx, ny, w, ax, ay));
   /* a teammate down: go to it and hold E (the hold goes on by itself until the revive is done); in Survival with a
      defibrillator, a dead player too (the defibrillator out in hand) */
-  const defib = isSurv(s) && hasLeft(s, id, "defib"),
-    dead = (t) => !!((h.l4p || {})[t] || {}).ex,
-    down = s.seat
-      .filter(
-        (t) =>
-          t !== id &&
-          ((h.l4p || {})[t] || {}).dn &&
-          (!dead(t) || (defib && !isWild(s, t) && !isHelper(s, t))) &&
-          s.pos[t],
-      ) // (down, not dead: the dead are never revived, but by the defibrillator)
-      .map((t) => ({ t, x: s.pos[t].x * W, y: s.pos[t].y * H }))
-      .sort(
-        (a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y),
-      )[0];
-  if (down && Math.hypot(down.x - x, down.y - y) < 900) {
-    const d = Math.hypot(down.x - x, down.y - y),
-      rv = ((h.l4p || {})[down.t] || {}).rv;
+  const down = downMate(s, id, x, y, isSurv(s) && hasLeft(s, id, "defib"));
+  if (down && Math.hypot(down.x - x, down.y - y) < b.revive) {
+    const d = Math.hypot(down.x - x, down.y - y);
     if (d < L4.REACH * 0.9) {
-      if (dead(down.t)) send(x, y, "defib", down.x - x, down.y - y); // (in hand first)
-      if (!rv || rv.by !== id)
-        out.push({ t: "hang", k: "l4", do: "rev", on: down.t, hold: true, id });
+      if (down.dead) send(x, y, "defib", down.x - x, down.y - y); // (in hand first)
+      holdE(s, id, down.t, out);
       return;
     }
     const to = wayTo(x, y, down.x, down.y, now) || [down.x, down.y],
@@ -1014,7 +1059,7 @@ export function l4Bot(s, id, now, out) {
   /* the nearest zombie in sight */
   const zs = zombiesOf(s).filter((z) => z.st === 2 || z.st === 4);
   let best = null,
-    bd = SEE;
+    bd = b.see;
   for (const z of zs) {
     const d = Math.hypot(z.x - x, z.y - y);
     if (d < bd && clearShot(x, y, z.x, z.y, heightAt(x, y))) {
@@ -1041,18 +1086,8 @@ export function l4Bot(s, id, now, out) {
     ay = best.y - y,
     u = m.u || {};
   /* a crowd: a grenade now and then */
-  const crowd = zs.filter(
-    (z) => Math.hypot(z.x - best.x, z.y - best.y) < 130,
-  ).length;
-  if (crowd >= 4 && m.g > 0 && bd > 200 && now - (u.grenade || 0) > 4000) {
-    out.push({
-      t: "use",
-      id,
-      what: "grenade",
-      face: ax < 0 ? -1 : 1,
-      ax: ax / W,
-      ay: ay / H,
-    });
+  if (nadeOk(b, crowdOf(zs, best, b.crowd), m, bd, now)) {
+    out.push(useOf(id, "grenade", ax, ay));
     return;
   }
   /* the special from the fireplace, now and then, with a zombie close (the medkit waits for low HP below; the long
@@ -1061,21 +1096,10 @@ export function l4Bot(s, id, now, out) {
     (w) => ["zebra", "adrenaline"].includes(w) && m.am[w] && m.am[w][0] > 0,
   ); // (either item slot)
   if (sp && bd < 400 && now - (u[sp] || 0) > 6000) {
-    out.push({
-      t: "use",
-      id,
-      what: sp,
-      face: ax < 0 ? -1 : 1,
-      ax: ax / W,
-      ay: ay / H,
-    });
+    out.push(useOf(id, sp, ax, ay));
     return;
   }
-  const loaded = [sl[1], sl[2]].filter((w) =>
-      w === "laser"
-        ? laserOk(s, id, now)
-        : endless(w) || (w && m.am[w] && m.am[w][0] > 0 && m.rw !== w),
-    ),
+  const loaded = [sl[1], sl[2]].filter(loadedIn(s, id, now, m)),
     hp = ((h.l4p || {})[id] || {}).hp,
     w =
       hasLeft(s, id, "medkit") && hp <= 1 && hp < maxHp(s, id)
@@ -1088,15 +1112,7 @@ export function l4Bot(s, id, now, out) {
   if (bd < TOO_CLOSE && kindOf(w) !== "melee")
     [nx, ny] = mapWalk(x, y, x - ax, y - ay, far);
   send(nx, ny, w, ax, ay);
-  if (now - (u[w] || 0) >= l4Cool(s, id, w))
-    out.push({
-      t: "use",
-      id,
-      what: w,
-      face: ax < 0 ? -1 : 1,
-      ax: ax / W,
-      ay: ay / H,
-    });
+  if (now - (u[w] || 0) >= l4Cool(s, id, w)) out.push(useOf(id, w, ax, ay));
 }
 /* no zombie in sight: walk to the Butler or the fireplace and spend points there, or take what the fireplace landed on;
    true while it's busy with that */
@@ -1202,8 +1218,7 @@ function justinBot(s, id, now, out) {
       wetSlow(x, y) * // (Downpour's flood: as a player's duck is slowed)
       (dt / 1000),
     m = kitOf(s, id) || { sl: [], am: {}, u: {} },
-    sl = m.sl,
-    u = m.u || {};
+    sl = m.sl;
   const br = breath.get(id) || { left: 1, out: false };
   breath.set(id, br);
   const run = (want) => {
@@ -1217,19 +1232,8 @@ function justinBot(s, id, now, out) {
     }
     return go ? walkPx * NPC_RUN : walkPx; // (the shared slow speed, npcshared.js: "if he does sprint, he sprints slower", the owner's, Nov 19 19:27Z. It was a duck's sprint, world.js SPRINT)
   };
-  const send = (nx, ny, w, ax, ay, j = 0) =>
-    out.push({
-      t: "move",
-      id,
-      x: +(nx / W).toFixed(5),
-      y: +(ny / H).toFixed(5),
-      j,
-      z: Math.round(heightAt(nx, ny)),
-      b: Math.round(heightAt(nx, ny)),
-      w,
-      ax: +((ax || 1) / W).toFixed(4),
-      ay: +(ay / H).toFixed(4),
-    });
+  const b = BOT_BREEDS.justin,
+    send = (nx, ny, w, ax, ay) => out.push(moveOf(id, nx, ny, w, ax || 1, ay));
   const zs = zombiesOf(s).filter((z) => z.st === 2 || z.st === 4),
     near = zs
       .map((z) => ({ z, d: Math.hypot(z.x - x, z.y - y) }))
@@ -1238,17 +1242,11 @@ function justinBot(s, id, now, out) {
   if (wildOpen(s, id)) return wildMove(s, id, now, p, x, y, near, run, out); // (Justin out there: never armed, the owner's, Nov 17 20:02Z)
   /* what he'd shoot: the nearest zombie he can see */
   const seen = near.find(
-    (n) => n.d < SEE * 1.3 && npcSees({ x, y }, n.z, undefined, 0),
+    (n) => n.d < b.see && npcSees({ x, y }, n.z, undefined, 0),
   );
   /* his gun: the best one with something in it (not reloading); the chain gun when a zombie is close or they crowd */
-  const loaded = (w) =>
-    w === "laser"
-      ? laserOk(s, id, now)
-      : endless(w) || (w && m.am[w] && m.am[w][0] > 0 && m.rw !== w);
-  const crowd = seen
-    ? zs.filter((z) => Math.hypot(z.x - seen.z.x, z.y - seen.z.y) < 150).length
-    : 0;
-  const guns = [sl[1], sl[2]].filter(loaded),
+  const crowd = seen ? crowdOf(zs, seen.z, b.crowd) : 0;
+  const guns = [sl[1], sl[2]].filter(loadedIn(s, id, now, m)),
     others = guns
       .filter(
         (w) => w !== "chaingun" && !(w === "shotgun" && seen && seen.d > 260),
@@ -1262,25 +1260,11 @@ function justinBot(s, id, now, out) {
       ? "chaingun"
       : others[0] || (guns.includes("shotgun") ? "shotgun" : "");
   /* a downed teammate with no zombie on it (nor on him): go and hold E by it */
-  const down = s.seat
-    .filter(
-      (t) =>
-        t !== id &&
-        ((h.l4p || {})[t] || {}).dn &&
-        !((h.l4p || {})[t] || {}).ex &&
-        s.pos[t],
-    ) // (down, not dead: the dead are never revived)
-    .map((t) => ({ t, x: s.pos[t].x * W, y: s.pos[t].y * H }))
-    .filter((t) => zs.every((z) => Math.hypot(z.x - t.x, z.y - t.y) > KEEP))
-    .sort(
-      (a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y),
-    )[0];
-  if (down && d0 > CLOSE && Math.hypot(down.x - x, down.y - y) < 1200) {
-    const d = Math.hypot(down.x - x, down.y - y),
-      rv = ((h.l4p || {})[down.t] || {}).rv;
+  const down = downMate(s, id, x, y, false, zs);
+  if (down && d0 > CLOSE && Math.hypot(down.x - x, down.y - y) < b.revive) {
+    const d = Math.hypot(down.x - x, down.y - y);
     if (d < L4.REACH * 0.9) {
-      if (!rv || rv.by !== id)
-        out.push({ t: "hang", k: "l4", do: "rev", on: down.t, hold: true, id });
+      holdE(s, id, down.t, out);
       if (seen && gun)
         shoot(s, id, now, m, gun, seen.z.x - x, seen.z.y - y, out); // (he shoots while he holds E)
       return;
@@ -1323,21 +1307,8 @@ function justinBot(s, id, now, out) {
     shoot(s, id, now, m, sl[0], ax, ay, out);
   } else send(nx, ny, sl[0], ax, ay);
   /* a grenade into a crowd that isn't on him */
-  if (
-    seen &&
-    crowd >= 4 &&
-    m.g > 0 &&
-    seen.d > 220 &&
-    now - (u.grenade || 0) > 3000
-  )
-    out.push({
-      t: "use",
-      id,
-      what: "grenade",
-      face: ax < 0 ? -1 : 1,
-      ax: ax / W,
-      ay: ay / H,
-    });
+  if (seen && nadeOk(b, crowd, m, seen.d, now))
+    out.push(useOf(id, "grenade", ax, ay));
 }
 /* Justin out there with no weapon (the owner's, Nov 17; Nov 19 19:27Z: "he still tries to protect himself"): he walks
    away from the nearest zombies (running only from one really close, with his meter: a duck's own, at the shared slow
@@ -1396,30 +1367,12 @@ function wildMove(s, id, now, p, x, y, near, run, out, forced = false) {
   }
   /* no jumps: he gets out of the way only by moving, as a player does (the owner's, Nov 17 20:37Z: "WHEN HE TRIES TO DODGE,
      IT ISNT SOME ANIMATION THAT IS DONE BY MATH, HE SIMPLLY TRIES MOVING OUT THE WAY LIKE A PLAYER DOES") */
-  out.push({
-    t: "move",
-    id,
-    x: +(nx / W).toFixed(5),
-    y: +(ny / H).toFixed(5),
-    j: 0,
-    z: Math.round(heightAt(nx, ny)),
-    b: Math.round(heightAt(nx, ny)),
-    w: "",
-    ax: +((nx - x || 1) / W).toFixed(4),
-    ay: +((ny - y) / H).toFixed(4),
-  });
+  out.push(moveOf(id, nx, ny, "", nx - x || 1, ny - y));
 }
 function shoot(s, id, now, m, w, ax, ay, out) {
   if (!w) return; // (a melee weapon that broke: nothing in that slot)
   if (now - ((m.u || {})[w] || 0) < l4Cool(s, id, w)) return;
-  out.push({
-    t: "use",
-    id,
-    what: w,
-    face: ax < 0 ? -1 : 1,
-    ax: ax / W,
-    ay: ay / H,
-  });
+  out.push(useOf(id, w, ax, ay));
 }
 /* the best step away: farthest from the zombies (the nearest counts most), with room ahead to keep going */
 function away(x, y, far, near) {
