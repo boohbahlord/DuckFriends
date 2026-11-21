@@ -34,6 +34,7 @@ import {
 import { ARMS } from "./guns.js";
 import { now as clockNow } from "./clock.js";
 import { sbNoLight } from "./sandboxrules.js";
+import { mountItemTip } from "./itemtip.js";
 
 /* what a slot says under it: the magazine and the rest, or how many are left */
 const count = (w, m) => {
@@ -82,6 +83,7 @@ const out = (s, me) => {
 
 /* api: state() → the room's state, me() → my id, held() → the weapon in hand, pick(slot), grenade(), flash() */
 export function mountL4Bar(S, api) {
+  mountItemTip(); // (hold I or press long on a slot: its card, itemtip.js; mounted once)
   const row = document.createElement("div");
   row.className = "l4bar";
   let sig = "";
