@@ -148,7 +148,7 @@ export function hotWinHTML(R, picked) {
   return `${list}${now}<h3>Your hotbar</h3>${hb.lock ? `<p class="sb-none">The hotbar is locked.</p>` : ""}${keysHTML(s, duck, sbSlots(s, R.me), "me", !!hb.lock, picked)}${can ? `<h3>Everyone's default</h3>${keysHTML(s, duck, hb.d || [], "def", false, picked)}` : ""}`;
 }
 /* a key of the h window pressed with `v` picked: put it there, or take it off if it is there already */
-export function hotKeyPut(R, v, el) {
+function hotKeyPut(R, v, el) {
   const to = el.dataset.to,
     i = +el.dataset.i,
     slots =
@@ -156,6 +156,30 @@ export function hotKeyPut(R, v, el) {
         ? ((R.state.sb || {}).hb || {}).d || []
         : sbSlots(R.state, R.me);
   R.send({ t: "sbh", k: "put", to, i, v: slots[i] === v ? null : v });
+}
+
+/* the h window's own state, kept by whichever screen holds it (Sandbox's key window): the loot picked */
+export const hotState = () => ({ picked: "" });
+/* what makes the h window draw again */
+export const hotWinSig = (R, hot) =>
+  hot.picked +
+  JSON.stringify((R.state.sb || {}).hb || {}) +
+  JSON.stringify(sbSlots(R.state, R.me)) +
+  sbHotSig(R.state) +
+  Object.keys((R.state.sb || {}).pts || {}).length;
+/* a click in the h window: a loot picked (again to let go), a key given it, or its look's popup (close: the window
+   goes first). True when it must draw again */
+export function hotClick(e, getR, hot, close) {
+  const lt = e.target.closest(".sb-lt");
+  if (lt) hot.picked = hot.picked === lt.dataset.v ? "" : lt.dataset.v;
+  const key = e.target.closest(".sp-key[data-i]");
+  if (key && hot.picked) hotKeyPut(getR(), hot.picked, key);
+  if (e.target.closest("[data-look]")) {
+    const v = hot.picked;
+    close();
+    openPut(getR, v); // (a spawn button's look and name)
+  }
+  return !!lt;
 }
 
 /* ---------- the h window ---------- */
