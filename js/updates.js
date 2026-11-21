@@ -12,8 +12,9 @@ export const UPDATES = [
     id: "v225",
     version: 225,
     date: "Nov 21, 2026",
-    title: "Your own shots never cut out",
+    title: "Shots never cut out, the aim stick moved in",
     news: [
+      "For Dead Ducks Arcade: on a phone the aim-and-attack stick sits further in from the corner, so you can drag it all the way in every direction, and it takes a little more push to attack than to aim (still well short of a full push).",
       "Your own shots and swings never cut out any more, even in a loud fight. Before, when many other ducks fired at once, a quiet weapon like the bow could go silent.",
     ],
   },
