@@ -282,3 +282,24 @@ Built (help file `help/brains/move.txt`, example `help/examples/weaver.se`):
    walk off the edge. Not in boxes (a value line), only in brains.
 **[open]** whether the owner wants the arrows relative to the NPC's way (left/right of travel) instead of the screen;
 built as the screen (`/\` is always up).
+
+## 19. Shuffle and escape (owner, Nov 21 16:29Z and 16:34Z; settled, NOT built yet: plan step 5)
+Shuffle = the bag: each value plays once, in a random order, then they all shuffle again.
+| Write | Means |
+|---|---|
+| `2;4;6` | a shuffled "or": 2, 4 and 6 each once in a random order, then again (a comma is plain random) |
+| `[2;4;6]` | the bag inside a bracket: each visit takes the next one; no repeat until all are used |
+| `2;:6`, `2:;6` | every number 2 to 6 once, shuffled (`;` on either side of the colon) |
+| `2:6;8` | a shuffled pick between "one from 2:6" and 8 |
+| `2,4;6` | `;` binds tighter than `,` (owner 16:34Z): 2, or the bag of 4 and 6 (when the bag gave 4, it gives 6 next) |
+| `\;\` | shuffle every true random after it on the line, ranges too; parts written with arrows keep their order |
+| `\;3\` | the number is how many full passes through the bag before it goes back to plain random (owner: yes) |
+| `\;>\`, `\<;\` | arrows inside: shuffle what comes after / before it, through every `\|` on the line |
+| `>\;\` | an arrow outside: the same, but it stops at the next `\|`, as everything else does |
+| `\;!\` | the whole file or box; more `!` is stronger, as in line rules |
+| `\esc\` | leave the bracket it's in at once (any case: `\ESC\`) |
+| `\esc2\` | leave two brackets (the number only after `esc`, never before) |
+| `\esc!\` | leave every bracket it's in (absolute: not "the most", not "forever") |
+- Leaving a repeat (`\>>\||`) ends the repeat and goes on after it. Leaving `{ }=` keeps what was picked before.
+- The bag keeps its place between spawns, as arrows do.
+- `?` stays free for a later use.
