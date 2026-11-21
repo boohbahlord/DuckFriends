@@ -39,6 +39,7 @@ import {
   DICE,
   attCands,
   attRole,
+  OPTIONS_DEFAULT,
   walkOf,
 } from "./rules.js";
 import {
@@ -454,7 +455,7 @@ function tvBot(s, id, now, late, out) {
 /* what the computers do now; returns a list of actions */
 export function botActions(s, now) {
   const out = [],
-    wait = (s.options.botWait ?? 5) * 1000;
+    wait = (s.options.botWait ?? OPTIONS_DEFAULT.botWait) * 1000;
   const bots = s.seat.filter((id) => s.players[id] && s.players[id].bot);
   if (!bots.length) return out;
   const people = s.seat.filter((id) => !s.players[id].bot);

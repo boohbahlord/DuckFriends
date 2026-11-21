@@ -27,3 +27,17 @@ export const POCKET_CHANGE = {
   POINTS: 5000,
   SAYS: "Justin forgot to deposit his pocket change",
 };
+
+/* a made NPC rule's Chance (%) when it has none: every time (brainbuild.js) */
+export const BRAIN_RULE = { CHANCE: 100 };
+
+/* Mad God Justin's HP before his HP is known: more than he ever has, so no gore shows (game.js mgjGore) */
+export const MGJ_HP_UNKNOWN = 999;
+
+/* the TV's channel before anyone changed it (hangout/tv.js) */
+export const TV_FIRST_CHANNEL = 1;
+
+/* the sprint's blurred border (sprintblur.js): a blur of what's behind it costs the graphics card about 40% of a
+   crowded frame, whatever its size. So it shows only where the game runs fast enough, its own cost counted: under this
+   many frames a second (two 2-second stretches in a row) it stays off until the next round or map */
+export const SPRINT_BLUR_MIN_FPS = 40;

@@ -9,17 +9,10 @@ import { duckSVG } from "./duck.js";
 import { nameHTML } from "./name.js";
 import { cloudHTML } from "./brackets.js";
 import { rainbowHTML } from "./art.js";
-import { fmtJumps } from "./format.js";
+import { fmtJumps, plural } from "./format.js";
 import { DN_SIDES, dnStats, wearsDunce } from "./duncerules.js";
-import { seenDuck, seenName } from "./looks.js";
+import { seenDuck, seenName, GONE, player } from "./looks.js";
 
-const GONE = {
-  name: "Gone",
-  duck: { color: "#b7bccb" },
-  card: { color: "#8a8fa3" },
-  nameStyle: {},
-};
-const player = (s, id) => (id && s.players[id]) || GONE;
 const nm = (p) => nameHTML(p.name, seenName(p));
 /* the sides' colors: the board's red and green (the colorblind palettes swap them like every board) */
 export const DN_COLORS = ["var(--c2)", "var(--c6)"];
@@ -69,7 +62,6 @@ export function dnTopHTML(s, bw) {
 }
 
 /* ---------- the stats: the awards, each player's box, then the takes ---------- */
-const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 const quote = (t) => `"${t.length > 60 ? t.slice(0, 58).trimEnd() + "…" : t}"`;
 const faceOf = (s, id, size) => {
   const p = player(s, id),

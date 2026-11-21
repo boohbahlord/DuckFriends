@@ -23,14 +23,8 @@ import {
   SEED_MAX,
   TOPIC_MAX,
 } from "./rules.js";
-import { seenDuck, seenName } from "./looks.js";
+import { seenDuck, seenName, GONE, player } from "./looks.js";
 
-const GONE = {
-  name: "Gone",
-  duck: { color: "#b7bccb" },
-  card: { color: "#8a8fa3" },
-  nameStyle: {},
-};
 const inFont = (p, html) =>
   fontHTML(p && p.nameStyle && p.nameStyle.font, html); // (a player's font, scaled to match)
 
@@ -79,7 +73,6 @@ function seedCardHTML(s, b, i, o = {}) {
     { ...o, attrs: ` data-seed="${i}"` },
   );
 }
-const player = (s, id) => s.players[id] || GONE;
 
 /* ---------- the topic ---------- */
 export function topicHTML(s, me, who) {

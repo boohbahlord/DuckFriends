@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v210",
+    version: 210,
+    date: "Nov 21, 2026",
+    title: "Blur only when it's smooth",
+    news: [
+      "The sprint's blurred edges turn themselves off for the round if they make the game run slowly on your device.",
+    ],
+  },
+  {
     id: "v209",
     version: 209,
     date: "Nov 21, 2026",
