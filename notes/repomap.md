@@ -99,7 +99,7 @@ loading.js 397 the start: a slow fade to black over
 loadlines.js 590 the lines under the loading bar, one for
 lobby.js 599 the lobby, laid out like Halo: Reach's custom
 lobbysettings.js 73 Lobby Settings
-looks.js 111 the room's duck-look settings
+looks.js 127 the room's duck-look settings
 looksrules.js 60 the duck-look settings' rules
 main.js 163 the start: settings on the page, the background,
 manual.js 212 the command line's manual: man <command>
@@ -211,7 +211,7 @@ textutils.js 1157 the command line's text tools
 touch.js 284 touch controls on the board
 trivia.js 472 Trivia: what the screen shows
 triviabank.js 499 Trivia's auto questions
-triviarules.js 450 the rules of Trivia
+triviarules.js 469 the rules of Trivia
 ui.js 342 small helpers every screen uses
 umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
@@ -246,7 +246,7 @@ falls.js 119 falling a long way
 fireflies.js 178 fireflies
 flicker.js 83 now and then a light stutters
 ghosts.js 107 Duck Cabin's ghosts
-justin.js 919 Justin: a yellow duck in blue jeans and
+justin.js 925 Justin: a yellow duck in blue jeans and
 lamp.js 71 the lamps: the example activity
 layout.js 1463 Duck Cabin: the world of Hangout
 npc.js 498 Duck Cabin's characters: how they get around, and
