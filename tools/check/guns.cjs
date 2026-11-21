@@ -118,7 +118,8 @@ const INIT = fs.readFileSync(
       out.board = H({
         cool: per((w) => R.coolFor(w, board)),
         mag: per(R.magSize),
-        lists: [R.WEAPONS, R.GUNS_NEW, R.AUTO, R.THROWS],
+        lists: [R.WEAPONS, R.GUNS_NEW, R.THROWS],
+        auto: per((w) => R.AUTO.includes(w)), // (which fire while held: a set, its order means nothing)
         mag0: [R.MAG, R.RELOAD],
       });
       out.mgj = H({
