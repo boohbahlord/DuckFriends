@@ -58,7 +58,6 @@ import { musicBarHTML, mountMusicBar } from "./musicbar.js";
 import { paintVotes, closeVotes } from "./vote.js";
 import { paintSbPick, closeSbPick } from "./sbsaves.js";
 import { openSettings, uiScaleHTML, uiScaleWire } from "./settings.js";
-import { shuffle } from "./random.js";
 
 let R = null,
   off = null,
@@ -292,13 +291,22 @@ let cycle = [],
   cycleSig = "",
   cycleAt = 0;
 const CYCLE_MS = 10000;
+/* the picture's order is its own random, never Math.random: the walking-pin runs replay that one from a seed, and a
+   picture's shuffle must not move what they hash (the owner's rule: Adam, Nov 21) */
+const shuffle = (xs) => {
+  const r = crypto.getRandomValues(new Uint32Array(xs.length));
+  return xs
+    .map((x, i) => [x, r[i]])
+    .sort((a, b) => a[1] - b[1])
+    .map((e) => e[0]);
+};
 const cycling = (s) => !isWorldMap(s.options.map) && mapChoices(s).length > 0;
 function artMap(s) {
   if (!cycling(s)) return s.options.map || "board";
   const pool = mapChoices(s),
     sig = pool.join();
   if (!cycle.length || cycleSig !== sig) {
-    cycle = shuffle([...pool]);
+    cycle = shuffle(pool);
     cycleSig = sig;
     cycleAt = Date.now();
   }

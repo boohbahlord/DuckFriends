@@ -9,7 +9,7 @@ import { esc, flag } from "./ui.js";
 import { mirrorBars } from "./meters.js";
 import { hurtSway } from "./fxmotion.js";
 import { bakeFill } from "./pxbake.js";
-import { hpText, tenths } from "./hpmath.js";
+import { hpText, hundredths } from "./hpmath.js";
 
 /* a meter shows one block for each HP; with more HP than this, each block holds a few, so the blocks stay blocks */
 const MOST_BLOCKS = 40;
@@ -307,7 +307,7 @@ export function othersHpHTML(list) {
    hit; put back in the page, the rise starts over by itself */
 const POPS_KEPT = [];
 export function popHP(host, n0, small = false) {
-  const n = tenths(n0); // (in tenths: "−1.5 HP", the owner's, Nov 19 10:30Z)
+  const n = hundredths(n0); // (in hundredths: "−1.5 HP", the owner's, Nov 19 10:30Z)
   if (!host || !n) return;
   let p = POPS_KEPT.pop();
   if (!p) {

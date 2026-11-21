@@ -23,7 +23,7 @@ import {
   afterShots,
 } from "./weaponuse.js";
 import { HANDGUN } from "./gamedefaults.js";
-import { jumpDodges } from "./jump.js";
+import { jumpDodges, jumpKept } from "./jump.js";
 import { epAct } from "./sbep.js";
 import { duckBig, picGrow, scaleOf } from "./duck.js";
 import {
@@ -45,7 +45,7 @@ import { survSet } from "./survrules.js";
 import "./gunmenrules.js"; // (Survival's gunmen: their rules hook into l4ddrules.js)
 import { sbAct, sbTick, sbPlaceDuck, sbHpOf } from "./sbspawn.js";
 import { sbOut, sbOutTick, sbAgainAct } from "./sbout.js";
-import { hpHeal, tenths } from "./hpmath.js";
+import { hpHeal, hundredths } from "./hpmath.js";
 import { sbHotAct, sbSlots, sbGot, sbSpend } from "./sbhot.js";
 import { sbLootAct, sbLootTick } from "./sbloot.js";
 import { nbPermAct, nbShareAct } from "./nbperms.js";
@@ -166,7 +166,7 @@ import {
   justinAt,
   JUSTIN_ID,
 } from "./boardjustin.js";
-import { pwAdd, pwHit, pwTick, PCRIT, CRIT_DOWN, DEATH } from "./wounds.js";
+import { pwAdd, pwHit, pwTick, CRIT_DOWN, DEATH } from "./wounds.js";
 import {
   isMgj,
   mgjStart,
@@ -226,6 +226,8 @@ import {
   MGJ_GUNS,
   MGJ_MELEE,
   NADE_GROW,
+  critOf,
+  armOfShot,
 } from "./guns.js";
 import { l4Zups, l4SetHp } from "./zombies.js";
 import { hOk, hLock, sameFloorAhead, floorLock } from "./heights.js";
@@ -2200,7 +2202,7 @@ function reduceStep(state, a, now) {
           ? {
               z: hz(a.z),
               b: hz(a.b),
-              ...(j && +a.tb > 0 ? { tb: Math.min(3.5, +a.tb) } : {}),
+              ...jumpKept(j, a),
             }
           : {}),
         ...(was &&
@@ -3594,7 +3596,7 @@ function soaks(s, id, now, dmg = 1, by, raw = false) {
     return true; // (spawn protection: nothing hurts a duck that just came back, and what it shoots hurts nobody)
   if (invuln(s)) return hurtFx(s, id, now); // (Invulnerability: the hit only flashes)
   const max = sbHpOf(s, id) || PHP, // (Sandbox: a spawn's or a respawn's HP for it, sbspawn.js)
-    n = tenths(phpLost(s, id, now) + (dmg >= PHP && !raw ? max : dmg)), // (a crit, the slug, the chain gun: all of it, whatever it has; in tenths, up while any HP is left: hpmath.js)
+    n = hundredths(phpLost(s, id, now) + (dmg >= PHP && !raw ? max : dmg)), // (the slug, the chain gun: all of it, whatever it has; in hundredths, up while any HP is left: hpmath.js)
     rest = { ...s.php };
   delete rest[id];
   s.php = n >= max ? rest : { ...rest, [id]: { n, t: now } };
@@ -3633,7 +3635,7 @@ const SB_H = {
     const h = (s.php || {})[id];
     if (!h || now - h.t >= PHP_BACK) return;
     const max = sbHpOf(s, id) || PHP,
-      n = tenths(max - hpHeal(max - h.n, amt, max)), // (a part-empty block fills first: hpmath.js)
+      n = hundredths(max - hpHeal(max - h.n, amt, max)), // (a part-empty block fills first: hpmath.js)
       rest = { ...s.php };
     if (n > 0) rest[id] = { ...h, n };
     else delete rest[id];
@@ -3743,7 +3745,7 @@ export const REACH = {
 }; // how far (duck lengths), and how wide (the cosine of the half angle): the fire axe swings as far as the hammer, the short sword and the pan not as far out
 /* the melees, swung or stabbed up close (the fire axe, the short sword and the pan: the owner's, Nov 16) */
 const MELEE = ["knife", "hammer", "axe", "sword", "pan"];
-const PAN_MISS = 0.5; // (the pan misses half its swings; half its hits are critical, wounds.js PCRIT)
+const PAN_MISS = 0.5; // (the pan misses half its swings; half its hits are critical, guns.js critOf)
 function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
   // (from: where the swing starts; Justin on the boards isn't in s.pos)
   const p0 = from,
@@ -3796,9 +3798,7 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
   for (const h of hits) {
     const crit = critRoll(s, sp);
     if (
-      !(isMgj(s)
-        ? mgjSoak(s, h.id, now)
-        : soaks(s, h.id, now, crit ? PHP : dmgOf(s, sp), by))
+      !(isMgj(s) ? mgjSoak(s, h.id, now) : hitSoaks(s, h.id, now, sp, crit, by))
     ) {
       s.players[h.id].dead = true;
       holdDown(s, h.id, now);
@@ -4590,7 +4590,7 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
         if (
           isMgj(s)
             ? mgjSoak(s, id, now, sh.k === "chair" ? 2 : 1)
-            : soaks(s, id, now, crit ? PHP : dmgOf(s, sh.k), sh.by)
+            : hitSoaks(s, id, now, sh.k, crit, sh.by)
         )
           sh.got = [...(sh.got || []), id];
         else {
@@ -4598,12 +4598,6 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
           holdDown(s, id, now);
           playerKilled(s, sh.by, id, sh.k);
           if (sh.k === "slug") {
-            const ul = Math.sqrt(len) || 1;
-            shove(s, id, ux / ul, uy / ul, KB_FAR * 2, now, sh.hin || 0, {
-              ms: 650,
-              h: 0.9,
-              l: 0,
-            });
             if (pwOn(s)) pwAdd(s, id, ["g0"], now, true);
             s.fxN = (s.fxN || 0) + 1;
             s.fx = [
@@ -4619,7 +4613,7 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
                 crit: crit ? 1 : 0,
               },
             ];
-          } // (the double barrel's slug: thrown back as a grenade throws it, chunks blown through it: game.js)
+          } // (the double barrel's slug: chunks blown through it where it stands, game.js; no bullet knocks back, the owner's, Nov 21 17:48Z)
         } // (the HP: a hit it can take keeps the duck up)
         wounded(s, id, sh.k, now, crit); // (its wounds: wounds.js)
         if (sh.by === JUSTIN_ID) mgjHurt(s, id);
@@ -4751,31 +4745,40 @@ function cakeGone(s, now) {
 
 /* ---------- the ducks' wounds and crits outside Quacky Zombies and Mad God Justin (wounds.js) ---------- */
 const pwOn = (s) => !isMgj(s) && !isL4dd(s);
-const critRoll = (s, w) => pwOn(s) && Math.random() < (PCRIT[w] || 0);
+const critRoll = (s, w) => pwOn(s) && Math.random() < critOf(armOfShot(w));
+/* a hit of weapon (or shot kind) k on duck id: a crit doubles it (guns.js critOf), and takes no more than that; what
+   takes all of it (the slug, the chain gun: PHP) still does */
+function hitSoaks(s, id, now, k, crit, by) {
+  const d = dmgOf(s, k);
+  return soaks(s, id, now, crit ? d * 2 : d, by, crit && d < PHP);
+}
 /* duck id was hit by weapon w: a wound, or (crit, and it went down) its head blown off, down CRIT_DOWN ms, and a
    smaller CRIT over it on every screen (the pcrit fx) */
 function wounded(s, id, w, now, crit) {
   const P = s.players[id];
   if (!pwOn(s) || !P) return;
   if (normalGame(s) && shielded(s, id, now)) return; // (spawn protection: no wounds either)
-  if (crit && P.dead) {
+  const head = crit && P.dead;
+  if (head) {
     pwAdd(s, id, ["x0"], now, true);
     holdDown(s, id, now, CRIT_DOWN);
-    const p = s.pos[id] || {};
-    s.fxN = (s.fxN || 0) + 1;
-    s.fx = [
-      ...(s.fx || []).slice(-19),
-      {
-        n: s.fxN,
-        kind: "pcrit",
-        who: [id],
-        t: now,
-        x: p.x,
-        y: p.y,
-        ...(isHang(s) ? { hz: Math.round(+p.z || 0) } : {}),
-      },
-    ];
   } else pwHit(s, id, w, now, !!P.dead);
+  if (!crit) return;
+  const p = s.pos[id] || {};
+  s.fxN = (s.fxN || 0) + 1;
+  s.fx = [
+    ...(s.fx || []).slice(-19),
+    {
+      n: s.fxN,
+      kind: "pcrit",
+      who: [id],
+      t: now,
+      x: p.x,
+      y: p.y,
+      ...(head ? {} : { m: 1 }), // (a crit that didn't put it down: only the small CRIT, Adam's, Nov 21 18:31Z)
+      ...(isHang(s) ? { hz: Math.round(+p.z || 0) } : {}),
+    },
+  ];
 }
 /* a vote passes once enough say yes, and fails once it can't pass any more */
 function settleVote(s, now) {

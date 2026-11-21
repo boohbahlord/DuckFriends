@@ -138,7 +138,7 @@ const asURL = (src) =>
 
 /* a picture (an SVG string or an image's URL) made into cw × ch pixels in the game's colors: a canvas. The game makes
    them ahead of time with it too (tools/pixel-world.cjs), so the files come out as the game would make them */
-async function pxCanvas(src, cw, ch) {
+export async function pxCanvas(src, cw, ch) {
   const img = new Image();
   img.decoding = "async";
   img.src = asURL(src);

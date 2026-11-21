@@ -31,6 +31,10 @@ const setBox = (win, vb) => {
   win.setAttribute("height", vb.height);
 };
 
+/* a duck drawn as a shell (duck.js duckSVG's shell: only its first tag, Customize's tiles) gets its shapes when it has
+   to be read or shown as a drawing after all */
+const whole = (svgs) =>
+  import("./duck.js").then((m) => svgs.forEach((e) => m.duckWhole(e)));
 const NS = "http://www.w3.org/2000/svg",
   PACE = 120, // (ms between two new pictures of one drawing that keeps changing)
   /* what CSS can change in a drawing, copied into the copy that's made into pixels */
@@ -229,6 +233,7 @@ const requeue = new WeakMap(); // root -> its pxWatch's want(): a drawing that w
 function plan(svg, root, size) {
   if (!pixelOn()) {
     unPx(svg);
+    if (svg.hasAttribute("data-shell")) whole([svg]);
     return null;
   }
   if (noPx(svg) || svg.ownerSVGElement) return null; // (inside another drawing: that one carries it)
@@ -290,6 +295,11 @@ function make(all) {
     }
     j.dk = null;
     jobs.push(j);
+  }
+  const shells = jobs.filter((j) => j.svg.hasAttribute("data-shell"));
+  if (shells.length) {
+    whole(shells.map((j) => j.svg)).then(() => make(shells));
+    return make(all.filter((j) => !shells.includes(j)));
   }
   const hid = jobs.map((j) => [
     j.svg.hasAttribute("data-px"),
@@ -418,7 +428,10 @@ function put(job) {
   img.setAttribute("height", vb.height);
   const show = (url) => {
     if (st.key !== key) return;
-    if (!url) return svg.removeAttribute("data-pxwait"); // (it couldn't be made: the drawing after all, rather than nothing)
+    if (!url) {
+      if (svg.hasAttribute("data-shell")) whole([svg]);
+      return svg.removeAttribute("data-pxwait"); // (it couldn't be made: the drawing after all, rather than nothing)
+    }
     img.setAttribute("href", url);
     if (img.parentNode !== svg) svg.append(img);
     if (st.win) st.win.remove();

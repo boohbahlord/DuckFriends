@@ -9,6 +9,29 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v222",
+    version: 222,
+    date: "Nov 21, 2026",
+    title: "Calibers, climbable cars, the plank",
+    news: [
+      "For Dead Ducks Arcade: on Downpour you can climb the cars and the jeep (hood, roof, trunk), and so can zombies. A wooden plank runs from the red car's roof up to the gas station's canopy: walk it up, and zombies follow you up it.",
+      "A jump under a roof stops when your head hits it.",
+      "Guns: each gun's damage now comes from the bullet it fires (its caliber) and how long its barrel is, so guns with the same bullet hit alike. Damage and HP are counted in hundredths.",
+      "A crit now doubles the hit instead of taking all the HP, and the head only comes off when a crit is the killing hit. Slower guns crit more often (25% divided by shots a second); grenades, the grenade launcher, the flamethrower and the Laser Rifle never crit.",
+      "The CRIT text is a little smaller in normal lettering, and \u2212N HP now shows over Sandbox's NPCs and Survival's gunmen too.",
+      "The buckshot double barrel is gone, and the shotgun is now called the Pump action shotgun. Bullets no longer knock zombies back.",
+      "The M1911 holds 7 rounds (140 carried), the revolver 6, the chain gun fires 30 a second with 600 rounds, and the sledgehammer swings as fast as the fire axe.",
+      "Zombies swing at the pace of rounds 1 to 4 in every round: a short wind-up, then about 1.2 seconds between hits.",
+      "For Dead Ducks Arcade and Survival: the melee weapon you start with is already a quarter worn.",
+      "The merchant's sheet and the Items page show each gun's caliber, barrel and how hard it kicks. Hold I over an item (a long press on phones) to see its card.",
+      "Your HP meter no longer jumps while you fire.",
+      "For Dead Ducks Arcade: Justin's yellow outline behind walls is thinner.",
+      "Seriat on a phone held upright: the Seriat bible's text is bigger and the code gets more room than the terminal.",
+      "Behind the scenes: Customize's Hat page opens faster (from about 2,000 pieces on the page to 170), and ducks with skin colors are made from ready pieces like every other duck.",
+      "Behind the scenes: whether a weapon can fire right now is decided by one shared module for the boards and the maps.",
+    ],
+  },
+  {
     id: "v221",
     version: 221,
     date: "Nov 21, 2026",

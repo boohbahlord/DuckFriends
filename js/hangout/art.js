@@ -18,6 +18,7 @@
    with its default box and its anchor, for the world and the preview page (tools/hangout-art.html). */
 import { mix } from "../duck.js";
 import { DOOR } from "./layout.js";
+import { JEEP } from "./vehicles.js";
 
 const O = "#1c1c28"; // the ducks' ink
 const n1 = (v) => Math.round(v * 10) / 10;
@@ -2856,9 +2857,7 @@ export function jeep({
   color = "#c42b2b",
 } = {}) {
   const id = uid(),
-    kx = 0.62,
-    ox = 22,
-    DD = 100,
+    { kx, ox, DD } = JEEP,
     Y = h - DD;
   const top = mix(color, 255, 0.14),
     south = color,
@@ -2919,15 +2918,15 @@ export function jeep({
   s += g(E(-20), sp(4.4, O) + sp(0, "#2c2c33"));
   s += box(-8, 6, 10, 90, 16, 26, "#3a3a42", blk, blk2);
   /* the tub, the doors, the soft top with its windows, the windshield */
-  s += box(4, 150, 8, 92, 20, 62, top, south, east, {
+  s += box(...JEEP.tub, top, south, east, {
     s: F`<path d="M92 24V60M144 24V60" stroke="${dark}" stroke-width="2"/><rect x="98" y="52" width="12" height="3.5" rx="1.5" fill="${blk}"/><path d="M8 56H146" stroke="#fff" stroke-width="2.5" opacity=".18"/>`,
   });
-  s += box(10, 134, 10, 90, 62, 112, "#2e2e37", "#25252c", "#1f1f25", {
+  s += box(...JEEP.soft, "#2e2e37", "#25252c", "#1f1f25", {
     r: 4,
     s: F`<rect x="72" y="70" width="54" height="34" rx="4" fill="#3d5574" ${ln(1.6)}/><path d="M80 76l14 20M92 74l10 14" stroke="#9ab4d4" stroke-width="3" opacity=".5"/><rect x="20" y="72" width="40" height="30" rx="4" fill="#33465f" ${ln(1.6)}/><path d="M66 64V110" stroke="#18181d" stroke-width="2"/>`,
     t: '<path d="M14 30H130M14 70H130" stroke="#3c3c47" stroke-width="2"/>',
   });
-  s += box(134, 141, 10, 90, 62, 110, top, south, "#3e587a", {
+  s += box(...JEEP.glass, top, south, "#3e587a", {
     e: F`<rect x="14" y="66" width="72" height="40" fill="#3e587a" stroke="${color}" stroke-width="5"/><path d="M24 70l22 32M40 70l16 24" stroke="#a8c4e4" stroke-width="3" opacity=".55"/>`,
   });
   /* the hood and its grille face: seven slots between two round headlights, both whole (the fenders end beside them),
@@ -2937,7 +2936,7 @@ export function jeep({
     slots += F`<rect x="${35 + k * 4.6}" y="38" width="2.8" height="21" rx="1.3" fill="${blk2}"/>`;
   const lamp = (dep, rx) =>
     F`<ellipse cx="${dep}" cy="50" rx="${rx}" ry="10" fill="#c9ced6" ${ln(1.8)}/><ellipse cx="${dep}" cy="50" rx="${rx - 3}" ry="7" fill="#fff4cf"/><circle cx="${dep - 2}" cy="52" r="2.4" fill="#fff"/><circle cx="${dep}" cy="38.5" r="2.6" fill="#ffb02e" ${ln(1)}/>`;
-  s += box(141, 197, 14, 86, 30, 64, top, south, east, {
+  s += box(...JEEP.hood, top, south, east, {
     e: slots + lamp(24, 10) + lamp(75, 9) + R(16, 30, 68, 3, dark),
     t: F`<path d="M146 22v56M190 22v56" stroke="${dark}" stroke-width="1.6" opacity=".7"/><rect x="186" y="44" width="6" height="12" rx="2" fill="${dark}"/>`,
   });
