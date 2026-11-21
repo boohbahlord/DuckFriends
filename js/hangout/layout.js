@@ -9,7 +9,8 @@
    the back door in the south wall onto the deck), the deck raised over the slope with its stairs down at the east end,
    the downhill in the south (the pool, the campfire, the trampoline), and forest all round. */
 import * as GS from "./stationmap.js";
-export { GS };
+import { jeepTops, JEEP } from "./vehicles.js";
+export { GS, JEEP };
 /* W, H: the world's size; Dead Ducks Arcade's second map has its own (useMode switches them) */
 export let W = 6000,
   H = 4400;
@@ -104,7 +105,14 @@ export const onTramp = (x, y) =>
 /* things a duck can jump onto and stand on (beds, tables): { x0, y0, x1, y1, top, key }, filled by add() */
 const PLATS = [];
 const platAt = (x, y) =>
-  PLATS.find((q) => x >= q.x0 && x < q.x1 && y >= q.y0 && y < q.y1) || null;
+  PLATS.find(
+    (q) =>
+      x >= q.x0 &&
+      x < q.x1 &&
+      y >= q.y0 &&
+      y < q.y1 &&
+      (!q.hAt || q.hAt(x, y) !== null),
+  ) || null;
 /* on top of a bed or a table (somewhere a duck jumps up to, never walks to) */
 export const onPlatform = (x, y) => !!platAt(x, y);
 /* the height of whatever a duck stands on at (x, y) */
@@ -122,7 +130,7 @@ export function heightAt(x, y) {
           STAGE.n)
     ); // (steps of 12 at most; the top one level with the stage)
   const pl = PLATS.length && platAt(x, y);
-  if (pl) return pl.top;
+  if (pl) return pl.hAt ? pl.hAt(x, y) : pl.top;
   if (
     (x >= CABIN.x0 && x < CABIN.x1 && y >= CABIN.y0 && y < CABIN.y1) ||
     inDeck(x, y)
@@ -185,6 +193,12 @@ export function allDecks() {
   if (variant !== "l4gs") return e;
   return e.length ? [...GS.DECKS, ...e] : GS.DECKS;
 }
+/* up on a roof (or the canopy, or a Sandbox floor) at (x, y), feet at z: on a floor over the ground, not on a thing's top
+   (a car: solid all the way down, vehicles.js carDeck) */
+export const onRoof = (x, y, z) => {
+  const d = deckAt(x, y, z);
+  return !!d && !d.solid;
+};
 /* a floor's height step: the gas station's roof (100%: the owner's, "100% being the roof of the gas station") */
 export const floorStep = () => GS.DECKS[0].h;
 /* a deck's height at (x, y): its own, or along a Sandbox slope (sbfloors.js hAt) */
@@ -302,6 +316,7 @@ export function seeLine(ax, ay, az, bx, by, bz) {
     dx = bx - ax,
     dy = by - ay;
   for (const d of allDecks()) {
+    if (d.solid) continue; // (a car's top: never a floor between, as the cars never were)
     /* when is the line inside this floor's thickness */
     const lo = q(d.h - SIGHT_SLAB),
       hi = q(d.h);
@@ -1021,7 +1036,14 @@ for (let x = 2350; x < 4300; x += 320)
   });
 
 /* outside: the jeep on the dirt path, lampposts, the campfire and its logs, the trampoline, the soccer goal */
-add("jeep", 580, 495, 260, 125, 110, { solid: true });
+{
+  /* the jeep: its tops are floors a duck jumps onto (vehicles.js jeepTops), solid up to the lowest of them */
+  const j = add("jeep", 580, 495, 260, 125, 110, { solid: true }),
+    pl = jeepTops(j);
+  j.top = pl.top;
+  j.plat = true; // (Quacky Zombies: solid all the way up, as every bed and table there, makeSolids)
+  PLATS.push(pl);
+}
 const POST = { solid: true, fade: true };
 for (const [x, y] of [
   [950, 400],
@@ -1334,6 +1356,7 @@ export function solidsAt(x, y, z = -Infinity) {
 }
 /* can a duck's feet at height z go to (x, y)? up: how much higher the ground there may be (a step on the ground; a little
    in the air, so a jump has to clear an edge). from: where it comes from (a solid it is already in doesn't hold it) */
+const SOLID_DECKS = GS.DECKS.filter((d) => d.solid);
 export function standable(x, y, z, up = STEP, from = null, zombie = false) {
   if (variant === "l4gs") {
     // (the second map: a duck walks anywhere, past the forest line too (only the trunks stop it, the owner's, Nov 17
@@ -1342,6 +1365,10 @@ export function standable(x, y, z, up = STEP, from = null, zombie = false) {
     if (x < 0 || x > W || y < 0 || y > H) return false;
     if (!zombie && (x < 70 || x > W - 70 || y < 70 || y > H - 70)) return false;
     if (!zombie && z < GS.STATION.wall - 1 && boardAt(x, y)) return false; // (up on a roof, over the boards: no)
+    if (
+      SOLID_DECKS.some((d) => onDeck(d, x, y) && deckH(d, x, y) > z + up + 1e-6)
+    )
+      return false; // (a car's side or its glass, higher than I can step: vehicles.js carDeck)
   } else if (x < EDGE || x > W - EDGE || y < EDGE || y > H - EDGE) return false;
   if (heightAt(x, y) > z + up + 1e-6) return false; // (a deck never stops a duck: it walks under it, or onto it from one as high)
   return !solidsAt(x, y, z).some(

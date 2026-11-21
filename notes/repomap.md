@@ -90,7 +90,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box on every screen
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 5007 the rules of Quacky Zombies
+l4ddrules.js 5005 the rules of Quacky Zombies
 l4ddsfx.js 513 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the zombies far from
 langname.js 5 the name of Sandbox's number language, in one
@@ -132,7 +132,7 @@ nwk.js 543 Nous Within Kenoma: the map in my book
 offline.js 45 Single Player's files on the device
 online.js 975 online rooms
 outfits.js 1141 outfits
-outlines.js 353 the outlines
+outlines.js 347 the outlines
 perf.js 92 the frame-rate readout
 phonepad.js 132 phones: the aim-and-attack stick and the jump button
 picrop.js 268 cropping a picture: every picture put into the
@@ -232,13 +232,13 @@ walkgrid.js 67 the walking grid: which 40-px cells of a
 who.js 3 who this player is beyond this tab
 wounds.js 501 the wounds a hit leaves
 zombiepath.js 178 the zombies' way to the ducks on a
-zombieroofs.js 244 the zombies' walk over Downpour's roofs: up a
-zombies.js 1420 the zombies: one module for every mode's zombies
+zombieroofs.js 273 the zombies' walk over Downpour's roofs: up a
+zombies.js 1424 the zombies: one module for every mode's zombies
 
 ## js/hangout/
 activities.js 23 every Hangout activity, so the rules and the
 ambience.js 112 the air: the wind round the cabin, the
-art.js 3051 Duck Cabin: the drawings
+art.js 3050 Duck Cabin: the drawings
 beachball.js 364 the beach ball
 blackjack.js 1382 the blackjack table in the great room
 book.js 170 the guestbook: a book on a stand in
@@ -256,7 +256,7 @@ flicker.js 83 now and then a light stutters
 ghosts.js 108 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in blue jeans and
 lamp.js 71 the lamps: the example activity
-layout.js 1466 Duck Cabin: the world of Hangout
+layout.js 1493 Duck Cabin: the world of Hangout
 npc.js 495 Duck Cabin's characters: how they get around, and
 npcart.js 271 Duck Cabin's characters: the drawings
 piano.js 530 the piano in the cabin , against the
@@ -266,7 +266,7 @@ pool.js 9 down the hill: the water and the bouncing
 power.js 504 the power box, the blackout, the dark outside
 pxw-cabin-l4.js 418 made by tools/pixel-world.cjs:
 pxw-cabin.js 433 made by tools/pixel-world.cjs:
-pxw-downpour.js 4 made by tools/pixel-world.cjs:
+pxw-downpour.js 343 made by tools/pixel-world.cjs:
 pxworld.js 87 Duck Cabin's and Downpour's art as real pixels
 registry.js 111 Hangout's two registries: what each activity adds
 rubberducks.js 183 the little rubber ducks in the pool
@@ -278,9 +278,10 @@ soccer.js 508 soccer: one ball on the field, one net
 sounds.js 17 Duck Cabin's sounds
 stage.js 134 the stage: half an oval 70 high on
 stationart.js 1964 Downpour's things: the drawings
-stationmap.js 1092 Dead Ducks Arcade's second map: the gas station,
+stationmap.js 1110 Dead Ducks Arcade's second map: the gas station,
 trampoline.js 141 the trampoline
 tv.js 117 the TV: seven channels, the next one with
+vehicles.js 111 what a duck stands on on top of
 water.js 442 the pool: ducks in the water, ripples and
 world.js 1786 Hangout on the screen: the camera, the ground,
 

@@ -13,6 +13,7 @@
 
    Plan px: x across (0 west … 4600 east), y is depth (0 north … 6200 south). Heights: 0 is the grass and every floor;
    the road lies ROAD.low under it. */
+import { CAR_TOP, carDeck } from "./vehicles.js";
 export const K = 0.6;
 export let GS_W = 4600,
   GS_H = 6200;
@@ -361,6 +362,11 @@ const CAR_LOOKS = [
   {},
   { smash: "front" },
 ];
+/* a seed from where a thing stands (world px): its look, the same on every device */
+export const seedAt = (x, y) => Math.abs(Math.round(x / 7 + y / 13)) + 1;
+/* which way a car faces (its box's corner, world px): east on an even seed; the hood-up car west, its hood where E uses
+   it */
+export const carEast = (x, y, hood) => !hood && seedAt(x, y) % 2 === 0;
 /* the cars stopped on the road (420 by 200 each; one more by the hood-up car is HOOD) */
 export const CARS = [
   [250, 2790],
@@ -395,7 +401,7 @@ export const PART_SPOTS = [
   { x: 1350, y: 1430, z: 0, can: "S" }, // (the restroom)
   { x: 1850, y: 2300, z: 0, can: "GS" }, // (the west pump)
   { x: 2750, y: 2300, z: 0, can: "GS" }, // (the east pump)
-  { x: 1260, y: 3200, z: 110, can: "TS" }, // (a car's roof)
+  { x: 1260, y: 3200, z: CAR_TOP.h - CAR_TOP.below, can: "TS" }, // (a car's roof)
   { x: 2560, y: 3050, z: 0, can: "TS" }, // (a car's front)
   { x: 3060, y: 2770, z: 0, can: "TS" }, // (a car's back)
   { x: 1950, y: 4100, z: 45, can: "FS" }, // (a pew)
@@ -606,7 +612,13 @@ function planBuild(b) {
   put("l4power", POWER_SPOT.x - 34, POWER_SPOT.y - 14, 68, 28, 120, {
     solid: true,
   });
-  solid("car", HOOD, 110, {
+  /* a car: solid up to its waist (over it, its top is a floor: carDeck below) */
+  const car = (r, o) =>
+    solid("car", r, CAR_TOP.h, {
+      top: groundAt((r.x0 + r.x1) / 2, r.y1 - 1) + CAR_TOP.waist,
+      ...o,
+    });
+  car(HOOD, {
     hood: true,
     smash: "side",
     light: {
@@ -618,7 +630,7 @@ function planBuild(b) {
       flick: 0.6,
     },
   });
-  CARS.forEach((c, i) => solid("car", c, 110, CAR_LOOKS[i]));
+  CARS.forEach((c, i) => car(c, CAR_LOOKS[i]));
   /* the fallen tree: a row of low blocks along it (a jump clears them; zombies climb over: zx) */
   {
     const F = FALLEN,
@@ -1077,6 +1089,12 @@ export const DECKS = [
     bldg: 0,
   },
 ];
+/* every car's top: a floor over it (vehicles.js carDeck) */
+const carZ = (c) => groundAt((c.x0 + c.x1) / 2, c.y1 - 1);
+DECKS.push(
+  carDeck(HOOD, false, carZ(HOOD), K, true),
+  ...CARS.map((c) => carDeck(c, carEast(c.x0, c.y0, false), carZ(c), K)),
+);
 export function build(b) {
   for (const [f, ...a] of CALLS) {
     if (f !== "add") {
