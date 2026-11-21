@@ -79,16 +79,9 @@ import {
   heightAt,
   floorStep,
 } from "./hangout/layout.js";
-import {
-  Z_MOST,
-  l4Spawn,
-  l4Live,
-  zLook,
-  ZOMBIE_BREEDS,
-  brainWalk,
-} from "./zombies.js";
+import { Z_MOST, l4Spawn, l4Live, zLook, ZOMBIE_BREEDS } from "./zombies.js";
 import { onCabin, sbzOn, cabinLive, cabinSpawn, cabinTick } from "./sbcabin.js";
-import { listsOf, decide, MAD } from "./sbbrain.js";
+import { listsOf, decide, MAD, brainWalk } from "./sbbrain.js";
 import { grudge } from "./npcrules.js";
 import { hpHurt } from "./hpmath.js";
 import { zbSpawned } from "./sbzonebrain.js";

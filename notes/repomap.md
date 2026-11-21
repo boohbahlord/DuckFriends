@@ -158,8 +158,8 @@ sandboxrules.js 2059 Sandbox: which map it plays on, and who
 sbarms.js 136 Sandbox: a made NPC's weapons in a fight
 sbaudio.js 211 Sandbox: songs players bring in
 sbbody.js 233 Sandbox: an NPC's body, where it can be
-sbbrain.js 87 Sandbox: what a spawned NPC does , on
-sbcabin.js 390 Sandbox: the zombies on Duck Cabin , the
+sbbrain.js 184 Sandbox: what a spawned NPC does , on
+sbcabin.js 346 Sandbox: the zombies on Duck Cabin , the
 sbdrag.js 353 Sandbox, moving blocks with the mouse :
 sbep.js 50 Sandbox Phase 7: what other players may do
 sbepview.js 162 Sandbox Phase 7: what other players may do
@@ -184,7 +184,7 @@ sbrotate.js 102 Sandbox, Direction's Rotate in the right-click menu :
 sbsave.js 273 Sandbox: saving a Sandbox as it is and
 sbsaves.js 743 Sandbox's saves: kept on the host's device, the
 sbsfx.js 74 Sandbox's sounds
-sbspawn.js 1762 Sandbox: spawns and respawns , the rules
+sbspawn.js 1715 Sandbox: spawns and respawns , the rules
 sbspawnview.js 2212 Sandbox: spawns and respawns , on the screen
 sbzone.js 349 Sandbox: board zones , the rules
 sbzonebrain.js 265 Sandbox: zones that run a Seriat file

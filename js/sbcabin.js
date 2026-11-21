@@ -37,11 +37,10 @@ import {
   zWalk,
   zLook,
   ZOMBIE_BREEDS,
-  brainWalk,
 } from "./zombies.js";
 import { hitCode } from "./wounds.js";
 import { hpHurt } from "./hpmath.js";
-import { MAD } from "./sbbrain.js";
+import { MAD, brainWalk } from "./sbbrain.js";
 import { npcBody, DU_WORLD } from "./sbbody.js";
 import { sees as npcSees, grudge } from "./npcrules.js";
 
