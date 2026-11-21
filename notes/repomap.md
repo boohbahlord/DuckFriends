@@ -82,7 +82,7 @@ l4dd.js 3347 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine on every screen
 l4ddart.js 623 Quacky Zombies' pictures
-l4ddbar.js 295 Quacky Zombies' weapons bar
+l4ddbar.js 311 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and the roof's flare,
 l4ddcatalog.js 199 Quacky Zombies: the Butler's Items tab
 l4dddrops.js 63 Quacky Zombies' drops, drawn
