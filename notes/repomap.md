@@ -63,7 +63,7 @@ gunmen.js 110 the gunmen's looks
 gunmenrules.js 1140 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen
 guns.js 511 every weapon's numbers: one sheet for every mode
-hats.js 1073 hats
+hats.js 1095 hats
 heights.js 50 a shot's height, Doom's way
 helppages.js 1497 the command line's Help pages: help lists them;
 hideui.js 30 hide ui
