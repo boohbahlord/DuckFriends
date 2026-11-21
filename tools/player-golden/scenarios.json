@@ -447,5 +447,40 @@
       ["press", 450, ".tpad-jump"]
     ],
     "computers": 1
+  },
+  {
+    "name": "dda-pick",
+    "options": {
+      "mode": "l4dd",
+      "l4map": "cabin",
+      "wildJustin": 0
+    },
+    "kit": {
+      "sl": ["knife", "handgun", "bow", "adrenaline", "chair"],
+      "g": 2
+    },
+    "frames": 720,
+    "input": [
+      ["mouse", 5, 0.3, 0.5],
+      ["key", 20, "Digit2", 100],
+      ["click", 40, 0.3, 0.5, 100],
+      ["key", 80, "Digit4", 100],
+      ["key", 110, "Digit4", 100],
+      ["key", 140, "Digit4", 100],
+      ["click", 160, 0.3, 0.5, 100],
+      ["click", 200, 0.3, 0.5, 100],
+      ["key", 240, "Digit5", 100],
+      ["click", 260, 0.35, 0.5, 100],
+      ["key", 300, "Digit5", 100],
+      ["key", 330, "Digit3", 100],
+      ["key", 360, "Digit6", 100],
+      ["click", 380, 0.3, 0.45, 100],
+      ["click", 460, 0.3, 0.55, 100],
+      ["click", 540, 0.3, 0.5, 100],
+      ["click", 580, 0.3, 0.5, 100],
+      ["key", 620, "Digit6", 100],
+      ["key", 640, "Digit1", 100],
+      ["click", 660, 0.3, 0.5, 100]
+    ]
   }
 ]
