@@ -6,6 +6,10 @@
    Moved here from l4ddrules.js as it was (nothing it does changed); the way to the ducks is zombiepath.js. Next, Mad God
    Justin's waves and Sandbox's board zombies run on it too, each a breed. */
 import { ZOMBIE_SWIPE_SLOWER } from "./gamedefaults.js";
+/* Dead Ducks Arcade's zombies' swipe in every round: its wind-up (from the tell to the hit) and the ms from one hit to the
+   next, rounds 1 to 4's (the owner's, Nov 21 18:24Z: "all of the zombies have the default attack speed as they do in
+   rounds 1 through 4"); the 0.2 s slower of Nov 20 is in the second */
+const SWIPE = [500, 1000 + ZOMBIE_SWIPE_SLOWER];
 import { duckBig } from "./duck.js";
 import { SB_BOXES } from "./sandboxrules.js";
 import { valueOf } from "./numerat.js";
@@ -163,6 +167,7 @@ export function zombies(s) {
       st: zp[k + 3] % 16,
       a: sw[0],
       dir: sw[1],
+      wu: sw[2] || 0, // (its swing's wind-up since, or 0)
       n: h[0],
       d: h[1],
       l,
@@ -183,7 +188,10 @@ export function store(s, zs, keepStatic) {
       Math.round(z.y),
       Math.round(z.hp * 100) * 16 + z.st,
     );
-    if (z.a > -1e5) sw[z.i] = [Math.round(z.a), z.dir];
+    if (z.a > -1e5 || z.wu)
+      sw[z.i] = z.wu
+        ? [Math.round(z.a), z.dir, Math.round(z.wu)]
+        : [Math.round(z.a), z.dir];
     mine[z.i] = [Math.round(z.n), Math.round(z.d)];
     const x = {};
     for (const k of KEEP) if (z[k] !== undefined) x[k] = z[k];
@@ -503,7 +511,7 @@ export function moveZombies(s, zs, now, T, up) {
     eating,
     ducks,
     cake: cakeDown(s, now),
-    swipe: [R[2], R[3] + ZOMBIE_SWIPE_SLOWER],
+    swipe: SWIPE,
     reach: CLAW,
     way: (x, y, tx, ty) => wayTo(x, y, tx, ty, now),
     bite: (x, y) => addFx(s, { kind: "l4bite", who: [], t: now, x, y }),
@@ -883,15 +891,20 @@ function walkAll(zs, c) {
       zFloor(z) === target.dk &&
       Math.abs(target.zz - zombieZ(z)) < 50
     ) {
+      /* a swing: at its duck c.swipe[0] (its wind-up) and c.swipe[1] since its last hit. The wind-up shows from z.wu (since
+         when, sent to every screen for the tell and the swipe lines: Adam, Nov 21 18:47Z), at least c.swipe[0] before
+         the hit */
       if (!z.n) z.n = T || 1;
+      if (!z.wu && T - z.a >= c.swipe[1] - c.swipe[0]) z.wu = T || 1;
       if (T - z.n >= c.swipe[0] && T - z.a >= c.swipe[1]) {
         z.a = T;
+        z.wu = 0;
         z.dir = Math.round(
           Math.atan2(target.xy[1] - z.y, target.xy[0] - z.x) * 100,
         );
         if (c.claw(target, z)) pls.splice(pls.indexOf(target), 1);
       }
-    } else z.n = 0;
+    } else z.n = z.wu = 0; // (out of reach: the swing is lost)
   }
   ZC = null;
   separate(zs);
@@ -1276,7 +1289,7 @@ export const zLook = (B) => [B.hp, 0, "", ...lookOf()];
    The board's spots are fractions of it (x across, y down), and a duck's length there is duck = [across, down] of them.
    The walk's px on the board are DL to a duck's length both ways, so its steps, its crowd and its turns are the map's,
    unchanged. This is the one place the board's units turn into the walk's and back.
-   M: the zombies' holder ({ zb: [{ i, x, y, hp, a (its last swipe), n (since when it's at its duck), f (which way it
+   M: the zombies' holder ({ zb: [{ i, x, y, hp, a (its last swipe), wu (its swing's wind-up since), n (since when it's at its duck), f (which way it
    faces), l, d (when it died), w }], t (the last heartbeat), ze (the ones biting the cake) }). B: its breed. h: ids
    (the ducks it goes for), cake ([x, y] on the board, or null), claw(id, now) (a swipe at that duck: true once it's
    down). Returns whether any moved, swiped or was buried */
@@ -1300,6 +1313,7 @@ export function boardWalk(s, M, now, B, h) {
       st: o.d ? 3 : 2,
       a: o.a || 0,
       n: o.n || 0,
+      wu: o.wu || 0,
       l: [o.hp, v, ""],
       o,
     })),
@@ -1338,9 +1352,12 @@ export function boardWalk(s, M, now, B, h) {
     const o = z.o,
       x = Math.round((z.x / kx) * 1000) / 1000,
       y = Math.round((z.y / ky) * 1000) / 1000;
-    if (x !== o.x || y !== o.y || z.a !== (o.a || 0)) ch = true;
+    if (x !== o.x || y !== o.y || z.a !== (o.a || 0) || z.wu !== (o.wu || 0))
+      ch = true;
     if (z.a !== (o.a || 0)) o.f = Math.abs(z.dir) > 157 ? -1 : 1; // (it swiped: it faces the duck)
     Object.assign(o, { x, y, a: z.a, n: z.n });
+    if (z.wu) o.wu = z.wu;
+    else delete o.wu; // (its swing's wind-up since: the tell)
   }
   if (Object.keys(eating).length) M.ze = eating;
   else delete M.ze; // (none biting: nothing kept)

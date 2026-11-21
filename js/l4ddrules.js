@@ -238,15 +238,15 @@ const invulnOf = (s, id, now) =>
   ((s && s.hang && s.hang.l4inv) || {})[id] > now;
 export const WALK = 380 * 0.6 * 1.05; // world px a second: ducks at 63% of Duck Cabin's walk (world.js SPEED, l4dd.js SPEED: 5% faster than 60%, the owner's, Nov 3), at the Normal Walking speed; every zombie's speed is a share of it
 export const Z_SLOW = 0.8 / 1.05; // (and the zombies 20% slower than they were, whatever the ducks' speed did)
-/* the owner's rounds: up to which round, the zombies' speed as a share of the ducks' [slowest, fastest], how long one
-   is at a duck before it swipes and how often after (ms), and the most on the board at once. The steps come every 4
-   rounds, not 5 (the owner's, Nov 4: 5, 10, 15 and 25 became 4, 8, 12 and 20). How many come: zombiesFor */
+/* the owner's rounds: up to which round, the zombies' speed as a share of the ducks' [slowest, fastest] and the most on
+   the board at once. The steps come every 4 rounds, not 5 (the owner's, Nov 4: 5, 10, 15 and 25 became 4, 8, 12 and
+   20). How many come: zombiesFor. Their swipes are rounds 1 to 4's in every round (zombies.js SWIPE) */
 const ROUNDS = [
-  [4, [0.5, 0.67], 500, 1000, Infinity],
-  [8, [0.5, 0.75], 300, 750, 35],
-  [12, [0.75, 0.75], 300, 750, 35],
-  [20, [0.75, 0.75], 300, 750, 45],
-  [Infinity, [0.75, 0.75], 300, 750, 50],
+  [4, [0.5, 0.67], Infinity],
+  [8, [0.5, 0.75], 35],
+  [12, [0.75, 0.75], 35],
+  [20, [0.75, 0.75], 45],
+  [Infinity, [0.75, 0.75], 50],
 ]; // (after round 12, every zombie keeps round 9-12's speed and swipes; only the most at once still grows: the owner's, Nov 18 13:46Z, "the stat for every zombie AFTER round 12 now (but ignore the most at map at once, that still changes as the rounds go up)")
 export const roundOf = (r) => ROUNDS.find((x) => r <= x[0]);
 /* the zombies in round r with p players (the owner's, Nov 16 22:11Z and 22:16Z; the sheet: charts/zombies-per-round.xlsx).
@@ -4731,7 +4731,7 @@ function l4Tick(s, now) {
     }
   }
   if (L2.owe > 0) {
-    const room = Math.max(0, R[4] - live),
+    const room = Math.max(0, R[2] - live),
       k = Math.min(L2.owe, room);
     for (let q = 0; q < k; q++) {
       zs.push(newZombie(s, L2, T, zs));
