@@ -119,8 +119,10 @@ A program that is changed grows more complex unless work is spent against it (Le
   it's made.
 
 ## Shared modules (the index above asks for)
-- Zombies: `js/zombies.js` (spawning, the walk, the climbs, the crowd, the swipes; breeds `ZOMBIE_BREEDS`, hooks
-  spawnAt/targets/way/claw/list, each added with its first user). Pathing: `js/zombiepath.js` (the map's cells and the
+- Zombies: `js/zombies.js` (spawning, the walk, the climbs, the crowd, the swipes). One walk, `walkAll(zs, c)`, run by
+  `moveZombies` (a map) and `boardWalk` (the board: its units turn into the walk's there only). Hooks in `c`: pls (what
+  they go for), dist (the field; none on open ground), cake, way, claw, bite. The ground (`gr()`: rx/ry, h, ok, free)
+  is the place, never the mode. Breeds: `ZOMBIE_BREEDS` (mgjWave; sbBoard until Sandbox walks it). Pathing: `js/zombiepath.js` (the map's cells and the
   flow field kept per ducks' cells) over `js/flowfield.js` (the Dijkstra and its step, also run in a Web Worker from its
   own text, so it imports nothing). Round pacing stays in `js/l4ddrules.js`.
 
