@@ -17,7 +17,7 @@ import { invOn } from "./sbgod.js";
 import { sprintLeft, sprintReset } from "./stamina.js";
 import { isSb, sbNoLight, sbHasOl, sbOlColor } from "./sandboxrules.js";
 import { activity } from "./hangout/registry.js";
-import { votesDue } from "./rules.js";
+import { votesDue } from "./voterules.js";
 import {
   CABIN,
   DECK,

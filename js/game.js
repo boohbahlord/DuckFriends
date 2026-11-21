@@ -98,8 +98,8 @@ import {
   goOnNeed,
   counselBounds,
   walkOf,
-  votesDue,
 } from "./rules.js";
+import { votesDue } from "./voterules.js";
 import { isSudo, canOpen } from "./roomrules.js";
 import { shotAt, phpLost, PHP, REACH } from "./boardfire.js";
 import {

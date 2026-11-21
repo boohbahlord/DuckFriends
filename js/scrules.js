@@ -11,13 +11,13 @@ import {
   catchUp,
   endBtnOn,
   enter,
-  gameOver,
   needed,
   oneLine,
   playing,
   say,
   seatLate,
 } from "./rules.js";
+import { gameOver } from "./voterules.js";
 import { shuffle, anyOf } from "./random.js";
 
 /* ---------- Story Chain ----------
