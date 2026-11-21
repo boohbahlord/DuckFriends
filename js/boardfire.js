@@ -2,6 +2,12 @@
    Moved out of rules.js to keep that file under control: rules.js runs the shared turn and the actions, this file the
    mode's own phases. It imports back from rules.js as duncerules.js does; rules.js calls it from the phase table and the
    actions. */
+import { CRIT_DOWN } from "./wounds.js";
+
+import { CAKE_SPEED, CAKE_EAT_MS } from "./mgjrules.js";
+
+import { critOf, armOfShot } from "./guns.js";
+
 import {
   DAGGER_LIFE,
   FASTER,
@@ -9,15 +15,11 @@ import {
   GRENADE_R,
   KB_FAR,
   boardPhases,
-  critRoll,
   daggerZ,
   grenadeZ,
-  hitSoaks,
   isHang,
   logLine,
   playing,
-  pwOn,
-  wounded,
 } from "./rules.js";
 
 import { flyShots, swingOn, swinging, swingMisses } from "./weaponuse.js";
@@ -89,9 +91,11 @@ import { ARMS } from "./guns.js";
 import { l4Zups, l4SetHp } from "./zombies.js";
 
 import { hOk, hLock, sameFloorAhead, floorLock } from "./heights.js";
+
 import { zOf, nearH } from "./heights.js";
 
 import { FLAME, flameReach, inCone } from "./flamer.js";
+import { toPx } from "./units.js";
 
 /* Justin knocked down by a player's weapon (the clown items unlock at 12): the last few, each numbered, so
    every device counts its own player's once (unlocks.js) */
@@ -305,7 +309,7 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
   const al = Math.hypot(aim[0] / rx, aim[1] / ry) || 1,
     ux = aim[0] / rx / al,
     uy = aim[1] / ry / al;
-  const side = hang ? (inCabin(p0.x * HW, p0.y * HH) ? 1 : 0) : 0,
+  const side = hang ? (inCabin(...toPx(p0)) ? 1 : 0) : 0,
     z0 = duckH(s, p0);
   const near = (x, y, z, inSide, big = 1) => {
     // where (x, y) is from the swinger, in duck lengths, if it's in reach (big: a Seriat NPC's hitbox, reached sooner)
@@ -332,7 +336,7 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
       q.x,
       q.y,
       zOf(p),
-      hang ? (inCabin(p.x * HW, p.y * HH) ? 1 : 0) : 0,
+      hang ? (inCabin(...toPx(p)) ? 1 : 0) : 0,
       cutPic(P) ? 1 : duckBig(s, id),
     ); // (a duck bigger than 100%: its hitbox too, duck.js; a cut-out's size is in its picture)
     if (n) hits.push({ id, ...n });
@@ -547,7 +551,7 @@ function blast(s, sh, x, y, now, o = {}) {
       p.x,
       p.y,
       zOf(p),
-      hang ? (inCabin(p.x * HW, p.y * HH) ? 1 : 0) : 0,
+      hang ? (inCabin(...toPx(p)) ? 1 : 0) : 0,
       duckBig(s, id),
     ); // (a duck bigger than 100%: its hitbox too, duck.js)
     if (!n) continue;
@@ -637,8 +641,7 @@ export function moveShots(s, now) {
   if (!s.shots || !s.shots.length) return false;
   const on = () => boardPhases(s).includes(s.phase),
     walled = (sh, at) =>
-      sh.hin !== undefined &&
-      (inCabin(at.x * HW, at.y * HH) ? 1 : 0) !== sh.hin; // (Hangout: it hit the cabin's wall)
+      sh.hin !== undefined && (inCabin(...toPx(at)) ? 1 : 0) !== sh.hin; // (Hangout: it hit the cabin's wall)
   s.shots = flyShots(
     s.shots.filter((sh) => sh.k), // (one fired before aiming: gone)
     now,
@@ -708,7 +711,7 @@ export function floorFirst(s, id, p, aim, now) {
     [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
     l = Math.hypot(aim[0] / rx, aim[1] / ry) || 1,
     hz = duckH(s, p),
-    side = hang && !!inCabin(p.x * HW, p.y * HH),
+    side = hang && !!inCabin(...toPx(p)),
     t = s.seat
       .filter((o) => o !== id && s.pos[o] && !(s.players[o] || {}).dead)
       .map((o) => ({
@@ -736,7 +739,7 @@ export function floorFirst(s, id, p, aim, now) {
 /* can shot sh reach duck p at its height (and no roof between: Downpour)? */
 const shotReach = (s, sh, p) =>
   isHang(s)
-    ? hOk(sh, duckH(s, p), p.x * HW, p.y * HH, sh.x0 * HW, sh.y0 * HH)
+    ? hOk(sh, duckH(s, p), ...toPx(p), sh.x0 * HW, sh.y0 * HH)
     : hOk(sh, duckH(s, p));
 /* the first duck in the way of a shot from (sh.lx, sh.ly) to at, within a duck's room of the line: its id, how far
    along (0 … 1) and where, or null (not the shooter, a duck that's down or jumping over it, a ghost, the other side
@@ -754,8 +757,7 @@ function firstDuck(s, sh, at, now) {
     if (id === sh.by || !p || p.x < 0 || !P || P.dead || isGhost(s, id))
       continue;
     if (
-      (sh.hin !== undefined &&
-        (inCabin(p.x * HW, p.y * HH) ? 1 : 0) !== sh.hin) ||
+      (sh.hin !== undefined && (inCabin(...toPx(p)) ? 1 : 0) !== sh.hin) ||
       !shotReach(s, sh, p)
     )
       continue;
@@ -803,7 +805,7 @@ export function chainShot(s, by, p, aim, now, w = "chaingun") {
       ...(hang
         ? {
             hz: Math.round(zOf(p)),
-            hin: inCabin(p.x * HW, p.y * HH) ? 1 : 0,
+            hin: inCabin(...toPx(p)) ? 1 : 0,
           }
         : {}),
       ...floorFirst(s, by, p, aim, now), // (a duck on my floor in its line: it stays on my floor)
@@ -868,7 +870,7 @@ export function duckFlame(s, by, p, aim, now) {
     uy = aim[1] / ry / al,
     was = (s.flame || {})[by],
     t0 = was && now - was[1] < FLAME.GAP ? was[0] : now,
-    side = hang ? (inCabin(p.x * HW, p.y * HH) ? 1 : 0) : 0,
+    side = hang ? (inCabin(...toPx(p)) ? 1 : 0) : 0,
     z0 = duckH(s, p);
   let far = flameReach(now - t0);
   if (hang)
@@ -898,10 +900,7 @@ export function duckFlame(s, by, p, aim, now) {
       P = s.players[id];
     if (id === by || !q || q.x < 0 || !P || P.dead || isGhost(s, id)) continue;
     if (isMgj(s) || vdSafe(s, id) || jumpDodges(q, now)) continue;
-    if (
-      hang &&
-      ((inCabin(q.x * HW, q.y * HH) ? 1 : 0) !== side || !nearH(zOf(q), z0))
-    )
+    if (hang && ((inCabin(...toPx(q)) ? 1 : 0) !== side || !nearH(zOf(q), z0)))
       continue;
     if (inCone((q.x - p.x) / rx, (q.y - p.y) / ry, ux, uy, far + 0.3))
       scorch(s, by, id, now);
@@ -1053,8 +1052,7 @@ export function groundFire(s, now) {
       ([x, y, , by, side, z]) =>
         by !== id &&
         Math.hypot((q.x - x) / rx, (q.y - y) / ry) < FLAME.PATCH_R &&
-        (!hang ||
-          ((inCabin(q.x * HW, q.y * HH) ? 1 : 0) === side && nearH(zOf(q), z))),
+        (!hang || ((inCabin(...toPx(q)) ? 1 : 0) === side && nearH(zOf(q), z))),
     );
     if (g && ((s.flamed || {})[id] || 0) <= now) {
       scorch(s, g[3], id, now);
@@ -1087,8 +1085,7 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
       if (id === sh.by || !p || p.x < 0 || !P || P.dead || isGhost(s, id))
         continue;
       if (
-        (sh.hin !== undefined &&
-          (inCabin(p.x * HW, p.y * HH) ? 1 : 0) !== sh.hin) ||
+        (sh.hin !== undefined && (inCabin(...toPx(p)) ? 1 : 0) !== sh.hin) ||
         !shotReach(s, sh, p)
       )
         continue; // (the other side of the walls, or above or below it: heights.js)
@@ -1210,3 +1207,103 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
     }
   return false;
 }
+
+/* ---------- the Zebra cake special ----------
+   One in the room at a time: s.zcake = { n, by, x0, y0, vx, vy, t, stop, eat, hin }. It flies the way it was thrown, as
+   Mad God Justin's does, and lands at the board's edge or after 6 s (Hangout: at the cabin's walls or the world's edge
+   too; hin, the side it's on). Justin runs after it wherever he is and eats it, and does nothing else meanwhile
+   (boardjustin.js, hangout/justin.js: eat, when he started); with no Justin to eat it, it's gone 12 s after it lands */
+const CAKE_LEFT = 12000;
+export function throwCake(s, by, p, aim, now) {
+  const vx = aim[0] * CAKE_SPEED,
+    vy = aim[1] * CAKE_SPEED;
+  let stop = 6;
+  if (isHang(s)) {
+    const side = inCabin(p.x * HW, p.y * HH) ? 1 : 0;
+    for (let t = 0.05; t <= 6; t += 0.05) {
+      const x = p.x + vx * t,
+        y = p.y + vy * t;
+      if (
+        x < 0.005 ||
+        x > 0.995 ||
+        y < 0.005 ||
+        y > 0.995 ||
+        (inCabin(x * HW, y * HH) ? 1 : 0) !== side
+      ) {
+        stop = t - 0.05;
+        break;
+      }
+    }
+  } else {
+    const tx =
+        vx > 0 ? (0.97 - p.x) / vx : vx < 0 ? (0.03 - p.x) / vx : Infinity,
+      ty = vy > 0 ? (0.96 - p.y) / vy : vy < 0 ? (0.04 - p.y) / vy : Infinity;
+    stop = Math.min(tx, ty, 6);
+  }
+  s.zcake = {
+    n: s.fxN,
+    by,
+    x0: p.x,
+    y0: p.y,
+    vx: +vx.toFixed(4),
+    vy: +vy.toFixed(4),
+    t: now,
+    stop: now + Math.max(0, stop) * 1000,
+    eat: 0,
+    ...(isHang(s) ? { hin: inCabin(p.x * HW, p.y * HH) ? 1 : 0 } : {}),
+  };
+}
+/* a cake nobody ate (no Justin, or he's down), or one out of its stage: gone */
+export function cakeGone(s, now) {
+  const c = s.zcake;
+  if (!c) return false;
+  if (
+    !boardPhases(s).includes(s.phase) ||
+    isMgj(s) ||
+    (c.eat ? now > c.eat + CAKE_EAT_MS + 3000 : now > c.stop + CAKE_LEFT)
+  ) {
+    s.zcake = null;
+    return true;
+  }
+  return false;
+}
+
+/* ---------- the ducks' wounds and crits outside Quacky Zombies and Mad God Justin (wounds.js) ---------- */
+export const pwOn = (s) => !isMgj(s) && !isL4dd(s);
+export const critRoll = (s, w) =>
+  pwOn(s) && Math.random() < critOf(armOfShot(w));
+/* a hit of weapon (or shot kind) k on duck id: a crit doubles it (guns.js critOf), and takes no more than that; what
+   takes all of it (the slug, the chain gun: PHP) still does */
+export function hitSoaks(s, id, now, k, crit, by) {
+  const d = dmgOf(s, k);
+  return soaks(s, id, now, crit ? d * 2 : d, by, crit && d < PHP);
+}
+/* duck id was hit by weapon w: a wound, or (crit, and it went down) its head blown off, down CRIT_DOWN ms, and a
+   smaller CRIT over it on every screen (the pcrit fx) */
+export function wounded(s, id, w, now, crit) {
+  const P = s.players[id];
+  if (!pwOn(s) || !P) return;
+  if (normalGame(s) && shielded(s, id, now)) return; // (spawn protection: no wounds either)
+  const head = crit && P.dead;
+  if (head) {
+    pwAdd(s, id, ["x0"], now, true);
+    holdDown(s, id, now, CRIT_DOWN);
+  } else pwHit(s, id, w, now, !!P.dead);
+  if (!crit) return;
+  const p = s.pos[id] || {};
+  s.fxN = (s.fxN || 0) + 1;
+  s.fx = [
+    ...(s.fx || []).slice(-19),
+    {
+      n: s.fxN,
+      kind: "pcrit",
+      who: [id],
+      t: now,
+      x: p.x,
+      y: p.y,
+      ...(head ? {} : { m: 1 }), // (a crit that didn't put it down: only the small CRIT, Adam's, Nov 21 18:31Z)
+      ...(isHang(s) ? { hz: Math.round(+p.z || 0) } : {}),
+    },
+  ];
+}
+/* a vote passes once enough say yes, and fails once it can't pass any more */

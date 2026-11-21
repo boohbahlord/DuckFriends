@@ -9,7 +9,7 @@
    world.js measure), around that player's duck, and two ducks more (as far out as anything is drawn: world.js
    onView), with room to spare for a camera held in from the map's edge. A zombie walking from far to near is sent at
    full rate from out there, before it shows. */
-import { W, H } from "./hangout/layout.js";
+import { toPx } from "./units.js";
 
 const NEAR_X = 1000, // (world px either side of a duck)
   NEAR_Y = 700,
@@ -29,7 +29,7 @@ export function wireOut(s, t) {
   const ducks = [];
   for (const id of s.seat || []) {
     const p = s.pos && s.pos[id];
-    if (p && p.x === +p.x && p.y === +p.y) ducks.push(p.x * W, p.y * H);
+    if (p && p.x === +p.x && p.y === +p.y) ducks.push(...toPx(p));
   }
   if (!ducks.length) return s;
   const near = [],

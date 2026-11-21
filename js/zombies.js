@@ -62,7 +62,6 @@ import {
   players,
   standing,
   dodging,
-  at,
   JCHASE,
   isWild,
   MERCH,
@@ -80,6 +79,7 @@ import {
   gmHelp,
 } from "./l4ddrules.js";
 import { openNear, flowFrom, heading } from "./zombiepath.js";
+import { toPx } from "./units.js";
 import {
   CL,
   reaches,
@@ -234,7 +234,7 @@ export function newZombie(s, L, T, zs = []) {
   syncMap();
   const R = roundOf(L.r),
     ids = players(s).filter((id) => standing(s, id)),
-    pts = ids.map((id) => at(s.pos[id])),
+    pts = ids.map((id) => toPx(s.pos[id])),
     near = (o) =>
       Math.min(
         ...pts.map(([x, y]) => Math.hypot(x - o.in[0], y - o.in[1])),
@@ -424,7 +424,7 @@ export function moveZombies(s, zs, now, T, up) {
     brd = { ...(s.hang.brd || {}) },
     pls = up.map((id) => {
       const p = s.pos[id],
-        xy = at(p),
+        xy = toPx(p),
         zz = zOf(p),
         on = dp() ? mapDeck(deckAt(xy[0], xy[1], zz)) : null, // (Downpour: up on a roof, or the canopy; Sandbox's floors are Phase 4's zombies, later)
         dk = chaseDeck(on),
@@ -990,7 +990,7 @@ export const zFloor = (z) =>
     : dp()
       ? deckAt(z.x, z.y, zOf(z, "zombie"))
       : null;
-export const duckFloor = (p) => (dp() ? deckAt(...at(p), zOf(p)) : null);
+export const duckFloor = (p) => (dp() ? deckAt(...toPx(p), zOf(p)) : null);
 /* a zombie's height: up a fence, up a wall, on a roof (alive or dead there: l4ddrules.js die), jumping onto the canopy,
    or on the ground */
 const zombieZ = (z) =>

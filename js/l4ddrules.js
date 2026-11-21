@@ -113,6 +113,7 @@ import { MERCHANTS, merchantById, merchantLook } from "./merchants.js";
 import { linesOf } from "./merchantlines.js";
 import { invuln } from "./hangout/death.js";
 import { hOk, hLock, shotFeet, SAME_FLOOR, zOf, nearH } from "./heights.js";
+import { toPx } from "./units.js";
 import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
@@ -315,14 +316,14 @@ const flood = (x, y) => dp() && (GS.inDeep(x, y) || GS.inShallow(x, y));
 const wetZ = (z) => flood(z.x, z.y) && zFloor(z) === null;
 function wetDuck(p) {
   if (!p) return false;
-  const [x, y] = at(p);
+  const [x, y] = toPx(p);
   return flood(x, y) && duckFloor(p) === null && zOf(p) <= heightAt(x, y) + 4;
 }
 /* Downpour: is duck id swimming in the deep flood? Its guns, its bow and its melee are put away until it's out (the
    owner's, Nov 17 05:46Z) */
 export function swims(s, id) {
   const p = s && s.pos && s.pos[id];
-  return !!p && dp() && GS.inDeep(p.x * W, p.y * H);
+  return !!p && dp() && GS.inDeep(...toPx(p));
 }
 /* what a duck holds out (a special used up isn't there) */
 export const inHand = (w, s, id) => {
@@ -896,7 +897,6 @@ export const standing = (s, id) => {
 };
 /* a duck in the middle of a jump dodges a hit: not in its first fifth or its last (the owner's) */
 export const dodging = (s, p, now) => jumpDodges(p, now, JUMP.T * 1000);
-export const at = (p) => [p.x * W, p.y * H];
 
 /* ---------- a duck's slots, points and upgrades ---------- */
 /* a weapon's ammo, full: [in the magazine, the rest], or [all of it, 0] without a magazine; none for melee */
@@ -1369,7 +1369,7 @@ const BOLT = {
 function boltTick(s, zs, now, ids) {
   const B = s.hang.l4lt;
   if (!B || !B.next || now < B.next) return;
-  const pts = ids.filter((id) => standing(s, id)).map((id) => at(s.pos[id])),
+  const pts = ids.filter((id) => standing(s, id)).map((id) => toPx(s.pos[id])),
     can = zs.filter(
       (z) =>
         z.st !== 3 &&
@@ -1491,7 +1491,7 @@ function survSetUp(s, now) {
 const walkSpeed = () => Math.round(WALK * Z_SLOW * ROUNDS[0][1][0] * SV.WALK_K);
 function survWalker(s, L, ids) {
   syncMap();
-  const pts = ids.filter((id) => standing(s, id)).map((id) => at(s.pos[id]));
+  const pts = ids.filter((id) => standing(s, id)).map((id) => toPx(s.pos[id]));
   if (!pts.length) return null;
   const dist = flowFrom(pts.map((q) => openNear(...q))),
     away = SV.FAR * W;
@@ -1727,7 +1727,7 @@ function l4Act(s, a, now) {
     return true;
   } // (Safe Keeping: I get myself up, E while down)
   if (L.over || !standing(s, id)) return false;
-  const [mx, my] = at(me);
+  const [mx, my] = toPx(me);
   if (a.do === "rev") {
     const t = String(a.on || ""),
       p4 = s.hang.l4p || {},
@@ -1743,7 +1743,7 @@ function l4Act(s, a, now) {
       }; // (a revive pauses the bleeding-out: it goes on from where it was, the owner's, Nov 17 11:07Z)
       return true;
     }
-    const [tx, ty] = at(body ? s.hang.ghost[t] : pos);
+    const [tx, ty] = toPx(body ? s.hang.ghost[t] : pos);
     if (Math.hypot(tx - mx, ty - my) > L4.REACH * 1.6) return false;
     if (tp.ex) return defibUse(s, id, t, me, now); // (dead for good: only Survival's defibrillator brings a player back)
     if (tp.rv && tp.rv.by !== id && s.pos[tp.rv.by]) return false; // (someone else is at it)
@@ -2675,7 +2675,7 @@ function merchantFight(s, m0, now, dt) {
   const F = (merchantById(m0.id) || {}).fights || {},
     p = s.pos[m0.foe];
   if (!p || !standing(s, m0.foe)) return merchantRun(s, now);
-  const [fx, fy] = at(p),
+  const [fx, fy] = toPx(p),
     d = Math.hypot(fx - m0.x, fy - m0.y);
   if (d > MERCH.FOE_FAR) return merchantRun(s, now);
   const m = { x: m0.x, y: m0.y };
@@ -2725,7 +2725,7 @@ function merchantShoots(s, zs, now) {
   let t = null;
   if (s.players[foe]) {
     if (standing(s, foe) && s.pos[foe]) {
-      const [x, y] = at(s.pos[foe]);
+      const [x, y] = toPx(s.pos[foe]);
       t = { id: foe, x, y };
     }
   } else if (foe[0] === "g" && gm) {
@@ -2823,7 +2823,7 @@ function merchantTick(s, now) {
     let greet = false;
     for (const id of players(s)) {
       if (!standing(s, id) || isWild(s, id)) continue;
-      const [x, y] = at(s.pos[id]),
+      const [x, y] = toPx(s.pos[id]),
         d = Math.hypot(x - m0.x, y - m0.y);
       if (d < MERCH.GREET && !near[id]) {
         near[id] = 1;
@@ -3091,7 +3091,7 @@ export function l4Use(s, a, now) {
   }
   const [dx, dy] = aimDir(a),
     face = dx < 0 ? -1 : 1,
-    [px, py] = at(p),
+    [px, py] = toPx(p),
     hz = Math.round(zOf(p));
   const n = addFx(s, {
     kind: "use",
@@ -3446,7 +3446,7 @@ export const CAKE_R = 40, // world px: how near a zombie bites it
   CAKE_BITE = 900; // ms a zombie stands there chewing
 function cakeOut(s, id, p, dx, dy, now) {
   const A = ARMS.zebra,
-    [px, py] = at(p),
+    [px, py] = toPx(p),
     hz = Math.round(zOf(p));
   let t = 0;
   while (t < A.far / A.speed) {
@@ -3570,7 +3570,7 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
   if (any) store(s, zs, true);
   for (const j of wilds(s)) {
     const jp = s.pos[j],
-      [jx, jy] = at(jp);
+      [jx, jy] = toPx(jp);
     if (
       inCone((jx - px) / D, (jy - py) / D, dx, dy, far / D + 0.4) &&
       !slabBetween(px, py, hz, jx, jy, zOf(jp))
@@ -3702,11 +3702,11 @@ export function fireTick(s, zs, now, T, p4) {
         .map((z) => ["", z.x, z.y, zFloor(z)]),
       ...ids
         .filter((id) => fp[id] > now)
-        .map((id) => [id, ...at(s.pos[id]), duckFloor(s.pos[id])]),
+        .map((id) => [id, ...toPx(s.pos[id]), duckFloor(s.pos[id])]),
     ];
   for (const id of ids) {
     if (fp[id] || dodging(s, s.pos[id], now) || wetDuck(s.pos[id])) continue; // (burning, just put out, mid-jump, or in the water)
-    const [x, y] = at(s.pos[id]),
+    const [x, y] = toPx(s.pos[id]),
       f = duckFloor(s.pos[id]);
     if (
       !hot.some(
@@ -3849,7 +3849,7 @@ function wildHurt(
     const p = s.pos[id],
       q = P4(s, id);
     if (by === id || !isWild(s, id) || !p || !q || q.dn || q.gh) continue;
-    const [px, py] = at(p);
+    const [px, py] = toPx(p);
     if (Math.hypot((px - x) / rx, (py - y) / ry) >= 1) continue;
     if (from && slabBetween(...from, px, py, zOf(p))) continue;
     /* a crit (guns.js critOf, a weapon's chance as on any duck) doubles it, and blows his head off if it puts him down */
@@ -3878,7 +3878,7 @@ function wildDown(s, id, by, now, w, all, codes, dmg = 1) {
   const was = p4[id] && p4[id].hp,
     down = hurtDuck(s, p4, id, now, w, dmg);
   if (!down && p4[id] && p4[id].hp < was) {
-    const [hx, hy] = s.pos[by] ? at(s.pos[by]) : at(s.pos[id]);
+    const [hx, hy] = s.pos[by] ? toPx(s.pos[by]) : toPx(s.pos[id]);
     s.hang.l4jcry = {
       ...(s.hang.l4jcry || {}),
       [id]: { t: now, x: Math.round(hx), y: Math.round(hy) },
@@ -3902,7 +3902,7 @@ function wildDown(s, id, by, now, w, all, codes, dmg = 1) {
 /* Justin's pocket change: an orb of gold coins lies where he fell, like a drop (the first duck over it takes it, for
    itself: POCKET_CHANGE.POINTS, takeDrop), and the chat says so */
 function pocketChange(s, id, now) {
-  const [x, y] = at(s.pos[id]);
+  const [x, y] = toPx(s.pos[id]);
   s.hang.l4dr = [
     ...(s.hang.l4dr || []),
     {
@@ -3958,7 +3958,7 @@ function meleeHits(s, now) {
     if (!p || k.miss || !standing(s, k.by)) continue;
     const sz = scaleOf((s.players[k.by] || {}).duck), // (my Size: a bigger duck's swing reaches farther and wider, a smaller one's not as far, as they're drawn; the owner's, Nov 19 16:50Z)
       R = (A.r + 22) * sz,
-      [px, py] = at(p),
+      [px, py] = toPx(p),
       bx = px + k.dx * A.at * sz,
       by = py + k.dy * A.at * sz;
     for (const z of zs) {
@@ -3981,7 +3981,7 @@ function meleeHits(s, now) {
       const q = s.pos[id];
       if (id === k.by || !q || k.hit.includes("p" + id) || !standing(s, id))
         continue;
-      const [qx, qy] = at(q);
+      const [qx, qy] = toPx(q);
       if (Math.hypot(qx - bx, qy - by) > R || !nearH(zOf(q), zOf(p))) continue;
       k.hit.push("p" + id);
       const far = knockOf(k.w) * KNOCK_DUCK,
@@ -4396,7 +4396,7 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
     const jp = s.pos[j],
       jq = P4(s, j);
     if (!jq || jq.dn || jq.gh) continue;
-    const [jx, jy] = at(jp);
+    const [jx, jy] = toPx(jp);
     if (
       Math.hypot(jx - bx, (jy - by) * 1.25) < ARMS.grenade.r * wide &&
       open(jx, jy, zOf(jp))
@@ -4437,7 +4437,7 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
   const mine = sh.k && s.pos[sh.by],
     q = mine && (s.hang.l4p || {})[sh.by];
   if (q && !q.dn && !q.gh && !invuln(s) && !invulnOf(s, sh.by, now)) {
-    const [mx, my] = at(mine),
+    const [mx, my] = toPx(mine),
       cut = Math.floor(q.hp / 2);
     if (
       cut > 0 &&
@@ -4503,7 +4503,7 @@ function l4Tick(s, now) {
         rv &&
         (!by ||
           !standing(s, rv.by) ||
-          Math.hypot(...minus(at(by), at(s.pos[id]))) > L4.REACH * 1.8)
+          Math.hypot(...minus(toPx(by), toPx(s.pos[id]))) > L4.REACH * 1.8)
       )
         p = { ...p, rv: null, dn: p.dn + (now - rv.at) }; // (the bleeding-out waited while they were at it)
       else if (p.skAt && now >= p.skAt) {
@@ -4834,7 +4834,7 @@ export function gmHelp(s, now) {
       syncMap();
       const pts = players(s)
         .filter((id) => standing(s, id))
-        .map((id) => at(s.pos[id]));
+        .map((id) => toPx(s.pos[id]));
       if (!pts.length) return null;
       /* the owner's, Nov 19 19:27Z: "they're climbing the fence or they're coming through the roads": a group in
          three comes along the road, from one of its ends nobody sees */
