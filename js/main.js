@@ -144,6 +144,7 @@ firstUp
       import("./card.js").then((m) => m.cardSheets()), // (in with the rest already: lobby.js)
     ]),
   )
+  .then(() => import("./duckparts.js").then((m) => m.warmParts())) // (Customize's ducks' parts, in idle moments)
   .catch(() => {});
 setTimeout(accountStart, 300);
 setTimeout(askConnection, 600); // once, on the first visit   // a device that signed in before connects after the first screen is up
