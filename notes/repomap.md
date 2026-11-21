@@ -74,7 +74,7 @@ hotpick.js 296 What goes in my duck's hand
 hpmath.js 23 HP in hundredths
 hpmeter.js 327 HP meters and the little "+1
 invisible.js 11 Who is invisible right now :
-itemtip.js 99 hold I on an item: its
+itemtip.js 104 hold I on an item: its
 itemtone.js 61 the colors an outfit or a
 jump.js 36 a duck's jump: one arc for
 jumps.js 48 the jump counter
@@ -83,7 +83,7 @@ l4dd.js 3342 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine on
 l4ddart.js 623 Quacky Zombies' pictures
-l4ddbar.js 307 Quacky Zombies' weapons bar
+l4ddbar.js 309 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and the
 l4ddcatalog.js 230 Quacky Zombies: the Butler's Items tab
 l4dddrops.js 63 Quacky Zombies' drops, drawn
