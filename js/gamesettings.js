@@ -9,7 +9,14 @@ import { esc, openWindow, setHTML } from "./ui.js";
 import { artBackdrop } from "./art.js";
 import { modesFor, modeOf, modeName, CABIN_MODES, CATS } from "./modes.js";
 import { modesNow, loadModes } from "./gmodes.js";
-import { MAPS, MAP_VARIANTS, mapName, mapForm, umapOf } from "./maps.js";
+import {
+  MAPS,
+  MAP_VARIANTS,
+  isWorldMap,
+  mapName,
+  mapForm,
+  umapOf,
+} from "./maps.js";
 import { isUmap, umapIds } from "./umaprules.js";
 import { bringMaps, myMaps } from "./umaps.js";
 import {
@@ -1013,7 +1020,7 @@ function mapPic(s, id, mode) {
       ? `<img class="gs-made" src="${m.d}" alt="${esc(m.t)}" draggable="false">`
       : "";
   }
-  if (id === "cabin")
+  if (isWorldMap(id))
     return `<img class="gs-cabin${mode === "l4dd" ? " dark" : ""}" src="assets/px/maps/duck-cabin.webp" data-pxready data-pxok alt="Duck Cabin" draggable="false">`;
   const f = mapForm(id),
     grey = f.grey || (id === "collage" && s.options.mapGrey) ? " grey" : "";
@@ -1030,7 +1037,7 @@ function gamePic(s, mode) {
   if (CABIN_MODES.includes(mode))
     return `<svg class="gs-map" viewBox="0 0 480 270" role="img" aria-label="${esc(modeOf(mode).name)}">${shot}</svg>`;
   const map =
-      s.options.map && s.options.map !== "cabin" ? s.options.map : "board",
+      s.options.map && !isWorldMap(s.options.map) ? s.options.map : "board",
     grey = map === "collage" && s.options.mapGrey ? " grey" : "";
   return `<svg class="gs-map${grey}" viewBox="0 0 480 270" role="img" aria-label="${esc(modeOf(mode).name)}: ${esc(mapName(map))}"><g class="gs-back">${artBackdrop(map)}</g>${shot}</svg>`;
 }
@@ -1289,7 +1296,7 @@ export function openGameSettings(R, start = null) {
           .join("")}</ul></div>`
       );
     }
-    if (page === "cabin") {
+    if (isWorldMap(page)) {
       const dis = !host() || dodOn(s, "vote");
       return (
         head("Duck Cabin") +
@@ -1328,7 +1335,7 @@ export function openGameSettings(R, start = null) {
                   ),
                 )
                 .join("") // (Sandbox: the maps with a world of their own, walked whole: sandboxrules.js)
-            : `${row('data-map="cabin"', "Duck Cabin", "", o.map === "cabin" && o.l4map !== "downpour", dis)}${row('data-map="downpour"', "Downpour", "", o.mode === "l4dd" && o.l4map === "downpour", dis)}`
+            : `${row('data-map="cabin"', "Duck Cabin", "", isWorldMap(o.map) && o.l4map !== "downpour", dis)}${row('data-map="downpour"', "Downpour", "", o.mode === "l4dd" && o.l4map === "downpour", dis)}`
         }${LINE}${MAPS.map(([id, name]) =>
           row(
             `data-map="${id}"`,
@@ -1411,26 +1418,25 @@ export function openGameSettings(R, start = null) {
   function stageCard(s, o) {
     let p = peek;
     if (!p)
-      p =
-        page === "cabin"
-          ? CABIN_MODES.includes(o.mode)
-            ? { kind: "mode", id: o.mode }
-            : { kind: "map", id: "cabin" }
-          : page === "map"
-            ? { kind: "map", id: o.mapPick ? o.mapPick : o.map }
-            : page === "opts"
-              ? { kind: "opts" }
-              : page && page.startsWith("cat:")
-                ? { kind: "cat", id: page.slice(4) }
-                : page === "vote"
-                  ? { kind: "mode", id: "vote" }
-                  : page === "pool"
-                    ? {
-                        kind: "set",
-                        title: "Modes in Random & Vote",
-                        text: "Turn a game off and Random and the vote leave it out. During a game, every one but the game being played can change.",
-                      }
-                    : { kind: "mode", id: o.modePick || o.mode };
+      p = isWorldMap(page)
+        ? CABIN_MODES.includes(o.mode)
+          ? { kind: "mode", id: o.mode }
+          : { kind: "map", id: "cabin" }
+        : page === "map"
+          ? { kind: "map", id: o.mapPick ? o.mapPick : o.map }
+          : page === "opts"
+            ? { kind: "opts" }
+            : page && page.startsWith("cat:")
+              ? { kind: "cat", id: page.slice(4) }
+              : page === "vote"
+                ? { kind: "mode", id: "vote" }
+                : page === "pool"
+                  ? {
+                      kind: "set",
+                      title: "Modes in Random & Vote",
+                      text: "Turn a game off and Random and the vote leave it out. During a game, every one but the game being played can change.",
+                    }
+                  : { kind: "mode", id: o.modePick || o.mode };
     const card = (title, text, pic = "") =>
       `<div class="gs-pic${pic ? "" : " empty"}">${pic}</div><div class="gs-text"><h3>${esc(title)}</h3>${text ? `<p>${esc(text)}</p>` : ""}</div>`;
     if (p.kind === "gm") {
@@ -1466,18 +1472,17 @@ export function openGameSettings(R, start = null) {
         );
       const mode = CABIN_MODES.includes(o.mode)
           ? o.mode
-          : p.id === "cabin"
+          : isWorldMap(p.id)
             ? "hang"
             : o.modePick
               ? "aod"
               : o.mode,
-        tip =
-          p.id === "cabin"
-            ? CABIN_TIP
-            : isUmap(p.id)
-              ? (umapOf(p.id) || {}).de || ""
-              : ([...MAPS, ...MAP_VARIANTS].find((m) => m[0] === p.id) ||
-                  [])[2] || "";
+        tip = isWorldMap(p.id)
+          ? CABIN_TIP
+          : isUmap(p.id)
+            ? (umapOf(p.id) || {}).de || ""
+            : ([...MAPS, ...MAP_VARIANTS].find((m) => m[0] === p.id) ||
+                [])[2] || "";
       return card(mapName(p.id), tip, mapPic(s, p.id, mode));
     }
     if (p.kind === "set") return card(p.title, p.text);
@@ -1621,7 +1626,7 @@ export function openGameSettings(R, start = null) {
             return go(
               page && page.startsWith("cat:")
                 ? "mode"
-                : page === "cabin"
+                : isWorldMap(page)
                   ? "map"
                   : null,
             );
@@ -1717,7 +1722,7 @@ export function openGameSettings(R, start = null) {
             myMaps(R); // (the maps on the host's device: make, change, play)
             return;
           }
-          if (r.dataset.map === "cabin") return go("cabin"); // (Duck Cabin's own games, on a page of their own)
+          if (isWorldMap(r.dataset.map)) return go("cabin"); // (Duck Cabin's own games, on a page of their own)
           if (r.dataset.map === "downpour") {
             if (boss) send({ mode: "l4dd", l4map: "downpour" }); // (Downpour: Dead Ducks Arcade's own map; its map vote still comes first, the owner's, Nov 17)
             return;

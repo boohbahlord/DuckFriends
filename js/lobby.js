@@ -41,7 +41,7 @@ import {
   shownSoon,
 } from "./loading.js";
 import { mountDocks, DOCK_HTML, BAR_HTML } from "./dock.js";
-import { MAPS, mapName } from "./maps.js";
+import { MAPS, mapName, isWorldMap } from "./maps.js";
 import { acct, onAccount, requestFriend, canAdd } from "./account.js";
 import { openFriends } from "./friends.js";
 import { NAV_HINTS } from "./keynav.js";
@@ -282,7 +282,7 @@ let cycle = [],
   cycleAt = 0;
 const CYCLE_MS = 10000;
 function artMap(s) {
-  if (!s.options.mapPick || s.options.map === "cabin")
+  if (!s.options.mapPick || isWorldMap(s.options.map))
     return s.options.map || "board";
   if (!cycle.length) {
     cycle = shuffle(MAPS.map((m) => m[0]));
@@ -290,7 +290,7 @@ function artMap(s) {
   }
   return cycle[Math.floor((Date.now() - cycleAt) / CYCLE_MS) % cycle.length];
 }
-const cycling = (s) => !!s.options.mapPick && s.options.map !== "cabin";
+const cycling = (s) => !!s.options.mapPick && !isWorldMap(s.options.map);
 function paintArt(s) {
   const mode = s.options.mode || "aod",
     art = $(".lobby-art", S),

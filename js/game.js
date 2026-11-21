@@ -109,6 +109,7 @@ import {
   PHP,
   dodges,
   isHang,
+  inWorld,
   MAG,
   magOf,
   magSize,
@@ -1251,7 +1252,7 @@ let frameNo = 0;
 function hpFull(s, id, now) {
   const seated = s.seat.includes(id) && s.players[id];
   if (isL4dd(s))
-    return seated && s.phase === "hang"
+    return seated && inWorld(s)
       ? [Math.max(0, l4Hp(s, id) || 0), maxHp(s, id)]
       : null;
   if (isMgj(s)) {
@@ -1717,7 +1718,7 @@ function drawDucks(now = clockNow()) {
     const l4 =
         isL4dd(s) &&
         !g &&
-        s.phase === "hang" &&
+        inWorld(s) &&
         (s.seat.includes(id) ||
           (isWild(s, id) && l4Hp(s, id) >= 0 && l4Hp(s, id) < maxHp(s, id))), // (Justin out there: his HP once he's hit, as anyone's; the owner's, Nov 18 15:35Z: "When Justin gets hit, his health bar shows in the zombie game")
       bj = id === JUSTIN_ID && !g && !isMgj(s) && !hang && justinShown(s), // (Justin on the board: the board's Mad God Justin's 10 HP, or his 1, always shown while he's up; the owner's, Nov 19 01:34Z, HP for "everything")
@@ -7207,8 +7208,8 @@ function paintNow(force) {
     main.innerHTML = viewHTML(s);
     const vin = $(".vd-in", main);
     if (vin && !touchOnly()) vin.focus(); // (The Date writes the topic at once; on a phone the keyboard waits for a tap)
-    if (isHang(s) && s.phase === "hang") loadSounds("cabin"); // (Duck Cabin's own: its lamps, lever, cards …)
-    if (isHang(s) && s.phase === "hang")
+    if (isHang(s) && inWorld(s)) loadSounds("cabin"); // (Duck Cabin's own: its lamps, lever, cards …)
+    if (isHang(s) && inWorld(s))
       world = mountWorld($(".hang-board", main), {
         room: () => R,
         me: () => me,
@@ -7236,11 +7237,7 @@ function paintNow(force) {
       sfx.done();
     if (was && was.split("|")[0] === "answer" && s.phase === "discuss")
       scene.cheer(topColors(s)); // the votes are in
-    if (
-      (s.phase === "answer" || s.phase === "hang") &&
-      !touchTold &&
-      touchOnly()
-    ) {
+    if ((s.phase === "answer" || inWorld(s)) && !touchTold && touchOnly()) {
       // a touch screen: how to move, once
       touchTold = true;
       toast(
@@ -7252,8 +7249,8 @@ function paintNow(force) {
     }
     $(".phase", S).textContent =
       (isSb(s) && "Sandbox") || // (on every map)
-      (s.phase === "hang" && s.options.mode === "surv" && "Survival") ||
-      (s.phase === "hang" &&
+      (inWorld(s) && s.options.mode === "surv" && "Survival") ||
+      (inWorld(s) &&
         s.options.mode === "l4dd" &&
         s.options.l4map === "downpour" &&
         "Downpour") || // (Dead Ducks Arcade's second map)
