@@ -5,7 +5,7 @@
    nearest duck by walking distance. Everyone has 3 HP, the knife, the pistol, the bow and 2 grenades; a duck at 0 HP is
    down until a teammate holds E by it for 10 seconds, or it bleeds out and walks as a ghost until the next round. The
    game ends when nobody is left standing. The host runs it all (this file); every screen draws it (l4dd.js).
-   Points (the owner's): 50 to start, 5 for each point of damage to a zombie, 25 for a headshot (it kills at once), 10
+   Points (the owner's): 50 to start, 5 for each point of damage to a zombie, 25 for a headshot (a crit that kills), 10
    for each board put up (50 a round at most). They buy upgrades from Justin's Butler, who stands by the card table, and
    a weapon at the fireplace (210: it flickers through the weapons, then lands on one only the payer can take). Each duck
    has five slots: one melee, two ranged, one special and the grenades.
@@ -43,11 +43,19 @@ import {
   roundsOf,
   afterShots,
 } from "./weaponuse.js";
-import { ARMS, kindOf, GUN_NAMES, WEAPONS, rollDmg } from "./guns.js";
+import {
+  ARMS,
+  kindOf,
+  GUN_NAMES,
+  WEAPONS,
+  rollDmg,
+  critOf,
+  START_WEAR,
+} from "./guns.js";
 import { JUMP, jumpDodges } from "./jump.js";
 import { SPRINT as GAME_SPRINT, POCKET_CHANGE } from "./gamedefaults.js";
 import { scaleOf } from "./duck.js";
-import { hpHeal, hpHurt, tenths } from "./hpmath.js";
+import { hpHeal, hpHurt, hundredths } from "./hpmath.js";
 import {
   baseMode,
   isSb,
@@ -79,6 +87,7 @@ import {
   layoutRev,
   layoutVariant,
   deckAt,
+  floorH,
 } from "./hangout/layout.js";
 import * as GS from "./hangout/stationmap.js";
 import {
@@ -103,7 +112,6 @@ import {
   pwHit,
   pwAdd,
   explodedLook,
-  PCRIT,
   DEATH,
 } from "./wounds.js";
 /* a line in the chat (as rules.js' logLine) */
@@ -230,15 +238,15 @@ const invulnOf = (s, id, now) =>
   ((s && s.hang && s.hang.l4inv) || {})[id] > now;
 export const WALK = 380 * 0.6 * 1.05; // world px a second: ducks at 63% of Duck Cabin's walk (world.js SPEED, l4dd.js SPEED: 5% faster than 60%, the owner's, Nov 3), at the Normal Walking speed; every zombie's speed is a share of it
 export const Z_SLOW = 0.8 / 1.05; // (and the zombies 20% slower than they were, whatever the ducks' speed did)
-/* the owner's rounds: up to which round, the zombies' speed as a share of the ducks' [slowest, fastest], how long one
-   is at a duck before it swipes and how often after (ms), and the most on the board at once. The steps come every 4
-   rounds, not 5 (the owner's, Nov 4: 5, 10, 15 and 25 became 4, 8, 12 and 20). How many come: zombiesFor */
+/* the owner's rounds: up to which round, the zombies' speed as a share of the ducks' [slowest, fastest] and the most on
+   the board at once. The steps come every 4 rounds, not 5 (the owner's, Nov 4: 5, 10, 15 and 25 became 4, 8, 12 and
+   20). How many come: zombiesFor. Their swipes are rounds 1 to 4's in every round (zombies.js SWIPE) */
 const ROUNDS = [
-  [4, [0.5, 0.67], 500, 1000, Infinity],
-  [8, [0.5, 0.75], 300, 750, 35],
-  [12, [0.75, 0.75], 300, 750, 35],
-  [20, [0.75, 0.75], 300, 750, 45],
-  [Infinity, [0.75, 0.75], 300, 750, 50],
+  [4, [0.5, 0.67], Infinity],
+  [8, [0.5, 0.75], 35],
+  [12, [0.75, 0.75], 35],
+  [20, [0.75, 0.75], 45],
+  [Infinity, [0.75, 0.75], 50],
 ]; // (after round 12, every zombie keeps round 9-12's speed and swipes; only the most at once still grows: the owner's, Nov 18 13:46Z, "the stat for every zombie AFTER round 12 now (but ignore the most at map at once, that still changes as the rounds go up)")
 export const roundOf = (r) => ROUNDS.find((x) => r <= x[0]);
 /* the zombies in round r with p players (the owner's, Nov 16 22:11Z and 22:16Z; the sheet: charts/zombies-per-round.xlsx).
@@ -280,12 +288,11 @@ function zombiesFor(r, p) {
 const SKIP = 0.25,
   LATER = 10000, // ms into a round before they come twice as fast
   EARLY = 4000; // ms into a round they come half as fast
-/* a hit's damage: the weapon's, or a roll between its two (the sniper's 2 to 3) */
 /* the grenade's and the grenade launcher's blast, half as wide (the owner's, Nov 19 19:27Z: "half the blast radius") */
 const BLAST_HALF = 0.5;
-const dmgOf = (A) =>
-  (Array.isArray(A.dmg) ? rollDmg(A) : A.dmg || 1) + oneOf(A.plus); // (the buckshot double barrel's pellets: 1 or 1.5 more)
-/* one of two, at even odds (the double barrels' 1 or 1.5); 0 with none */
+/* a hit's damage: the weapon's, or a roll in its range (guns.js rollDmg) */
+const dmgOf = (A) => (Array.isArray(A.dmg) ? rollDmg(A) : A.dmg || 1);
+/* one of two, at even odds (the double barrel's 1 or 1.5); 0 with none */
 const oneOf = (two) => (two ? two[Math.random() < 0.5 ? 0 : 1] : 0);
 /* fire (the owner's): a zombie burns 8 s and takes 1 every 2 s (the first as it's lit: 4 in all), and fire on a zombie
    already burning starts its 8 s again (the owner's, Nov 18 16:43Z, "1 damage for every 2 seconds for 8 seconds per
@@ -343,16 +350,12 @@ export const SLOT_BAGS = {
 export const WEAPON_BAGS = {
   melee: ["axe", "sword", "hammer"],
   weak: ["dagger", "knife", "pan", "bow"],
-  shotgun: ["shotgun", "dbl"],
+  shotgun: ["shotgun", "dbarrel"],
   pistol: ["revolver", "handgun"],
   smg: ["tommy", "ump", "smg"],
   rifle: ["ak", "burst"],
   heavy: ["sniper", "glauncher", "lmg"],
 };
-/* the bags inside a bag: when the shotguns' bag gives "dbl", the double barrels' own bag gives one of its two, in its own
-   shuffled turns (the owner's, Nov 19 19:27Z) */
-const INNER_BAGS = { dbl: ["dbarrel", "dbuck"] };
-/* everything a bag can give, the inner bags' things in place of the inner bags */
 /* Survival's bags: no Laser Rifle, chain gun or cast iron pan; the sniper is a special; twice the items ("They also have
    twice as many options for items") */
 const SURV_BAGS = {
@@ -368,7 +371,6 @@ const bagsNow = () =>
   survOn()
     ? SURV_BAGS
     : { odds: SLOT_ODDS, slot: SLOT_BAGS, weapon: WEAPON_BAGS };
-export const bagThings = (bag) => bag.flatMap((x) => INNER_BAGS[x] || [x]);
 export const weaponName = (w) => (isPw(w) ? pwName(w) : GUN_NAMES[w] || w);
 /* each one's own color, in its slot and as its orb (the owner's, Nov 18 12:19Z: "every weapon, melee, or item has a
    corresponding color to it's slot now ... The purples all glow. Any weapon made angelic now has a red slot color and
@@ -406,7 +408,6 @@ const TINTS = {
   revolver: "green",
   zebra: "blue",
   dbarrel: "blue",
-  dbuck: "blue",
   tommy: "blue",
   ump: "blue",
   smg: "blue",
@@ -931,7 +932,8 @@ function freshKit(s) {
     sl = [...(survOn() ? SV.KIT : START)]; // (Survival: the pistol only)
   for (const w of sl) if (fullAmmo(w)) am[w] = fullAmmo(w);
   if (!isSb(s)) sl.push(""); // (the second item slot: not in Sandbox)
-  const du = survOn() ? { knife: tenths(ARMS.knife.dur * SV.KNIFE) } : null; // (Survival: a worn knife, 25% left)
+  const melee = !isSb(s) && sl.find((w) => kindOf(w) === "melee"),
+    du = melee ? { [melee]: hundredths(ARMS[melee].dur * START_WEAR) } : null; // (the melee I start with: a quarter of its wear left, guns.js START_WEAR)
   return {
     sl,
     am,
@@ -1041,28 +1043,19 @@ export const reloadOf = (s, id, w, c) =>
       ? ANGEL.PISTOL.RELOAD
       : ANGEL.RELOAD
     : 1); // (the double barrel: a second for each shell it loads; Angelic: 20% faster, the dual pistols twice as long)
-/* crits and misses (the owner's, Nov 16 21:47Z): every gun and melee weapon crits 5% of its hits, the fast ones (those
-   that fire as long as the button is down, and the burst rifle) 2.5%; each Critical Chance upgrade adds 2.5% to every
-   one of them; an Angelic weapon's own chance is doubled (not the upgrades'). A hit misses ("critical failure") 2.5% of
-   the time, a fast weapon's 5%. The cast iron pan keeps its own: half its swings miss, half its hits crit. The chain
-   gun crits too (the fast 2.5%). The grenades, the grenade launcher and the flamethrower never crit, and the thrown
-   grenade and the flamethrower never miss (the owner's, Nov 16 22:21Z); the grenade launcher's shell can */
-const CRIT = { SLOW: 0.05, FAST: 0.025, UP: 0.025 };
+/* crits and misses (the owner's, Nov 16 21:47Z): a weapon's own crit chance is guns.js critOf (25% divided by its shots
+   a second, the owner's, Nov 21 17:25Z); each Critical Chance upgrade adds 2.5% to every one of them; an Angelic
+   weapon's own chance is doubled (not the upgrades'). A hit misses ("critical failure") 2.5% of the time, a fast
+   weapon's 5% (those that fire as long as the button is down, and the burst rifle). The cast iron pan keeps its own:
+   half its swings miss, half its hits crit. The thrown grenade and the flamethrower never miss (the owner's, Nov 16
+   22:21Z); the grenade launcher's shell can */
+const CRIT_UP = 0.025;
 const MISS = { SLOW: 0.025, FAST: 0.05 };
-const NO_CRIT = ["grenade", "glauncher", "flamer"];
 const fastArm = (w) =>
   !!(ARMS[w] && !ARMS[w].slow && (ARMS[w].auto || ARMS[w].burst)); // (the Tommy gun and the UMP-45 fire on and hit as the slow ones: 5% crits, 2.5% misses)
 const canHit = (w) =>
   !!ARMS[w] && (ARMS[w].kind === "melee" || ARMS[w].kind === "ranged");
-/* a weapon's own crit chance, and its miss chance (0: never) */
-export const critOf = (w) =>
-  w === "pan"
-    ? ARMS.pan.crit
-    : !canHit(w) || NO_CRIT.includes(w)
-      ? 0
-      : fastArm(w)
-        ? CRIT.FAST
-        : CRIT.SLOW;
+/* a weapon's miss chance (0: never) */
 export const missOf = (w) =>
   !canHit(w) || w === "pan" || w === "flamer"
     ? 0
@@ -1074,7 +1067,7 @@ const headOf = (s, id, w) => {
   if (!own || (isSb(s) && !sbRule(s, "crit"))) return 0; // (Sandbox's Rules: crits off)
   if (isSb(s) && sbRule(s, "critp") >= 0) return sbRule(s, "critp") / 100; // (Sandbox's settings file: one crit chance for every weapon that crits, just as set)
   const holy = w !== "pan" && angelOf(s, id, w) ? 2 : 1; // (the pan has its own: not doubled)
-  return own * holy + CRIT.UP * (upOf(s, id).acc || 0);
+  return own * holy + CRIT_UP * (upOf(s, id).acc || 0);
 };
 function addPts(s, id, n) {
   if (isWild(s, id)) return; // (Justin out there earns nothing: he never has a gun, the owner's, Nov 17 20:02Z)
@@ -1976,17 +1969,13 @@ function bagRoll(bags0, has) {
   /* the weapon bags, in turns: the next one that still has something for this duck (one it has all of is skipped and
      keeps its turn) */
   const names = Object.keys(weapon),
-    owns = (x) => (INNER_BAGS[x] || [x]).every(has), // (an inner bag: the duck has all of it)
-    can = (n) => weapon[n].some((w) => !owns(w));
+    can = (n) => weapon[n].some((w) => !has(w));
   const [n, turns] = fromBag(bags.w, names, (x) => !can(x));
   bags.w = turns;
   if (!n) return [null, bags];
-  const [w, rest] = fromBag(bags.b[n], weapon[n], owns);
+  const [w, rest] = fromBag(bags.b[n], weapon[n], has);
   bags.b[n] = rest;
-  if (!INNER_BAGS[w]) return [w, bags];
-  const [w2, rest2] = fromBag(bags.b[w], INNER_BAGS[w], has);
-  bags.b[w] = rest2;
-  return [w2, bags];
+  return [w, bags];
 }
 /* the fireplace's Justin (the owner's, Nov 4): 1 spin in 100 lands on him (never while he's already here), and a
    moment later he climbs out of the fire and joins as another player, to help. He starts with 1,500 points of his own,
@@ -2797,14 +2786,15 @@ function merchantShoots(s, zs, now) {
     s.hang.l4p = p4;
   }
 }
-/* a shot or a swing at (x, y) by duck `by` with weapon w: on him? (as wildHurt for Justin: 1 HP, a crit all of them) */
+/* a shot or a swing at (x, y) by duck `by` with weapon w: on him? (as wildHurt for Justin: 1 HP, a crit 2) */
 function merchantShot(s, by, x, y, now, w, rx, ry, from) {
   const m = merchantOf(s);
   if (!m || m.st === "dead" || m.st === "jump" || !s.players[by]) return false;
   if (Math.hypot((m.x - x) / rx, (m.y - y) / ry) >= 1) return false;
   if (from && slabBetween(...from, m.x, m.y, heightAt(m.x, m.y))) return false;
-  const crit = Math.random() < (PCRIT[w] || 0);
-  if (crit)
+  const n = Math.random() < critOf(w) ? 2 : 1, // (a crit doubles it)
+    head = n > 1 && m.hp <= n; // (a crit that kills him: his head bursts as a zombie's does, game.js draws it)
+  if (n > 1)
     addFx(s, {
       kind: "l4crit",
       by,
@@ -2812,8 +2802,9 @@ function merchantShot(s, by, x, y, now, w, rx, ry, from) {
       t: now,
       x: Math.round(m.x),
       y: Math.round(m.y),
-    }); // (his head bursts as a zombie's does: game.js draws it)
-  merchantHurt(s, by, crit ? m.hp : 1, now, w, crit ? "crit" : "");
+      ...(head ? {} : { m: 1 }),
+    }); // (m: only the CRIT mark)
+  merchantHurt(s, by, n, now, w, head ? "crit" : "");
   return true;
 }
 /* every heartbeat: he walks his way (in, or out), breaks the boards in it, and greets the ducks that walk up to him */
@@ -3248,9 +3239,9 @@ export const pierceOf = (s, by, w) =>
         ? ARMS.sniper.pierce + ANGEL.SNIPER
         : (ARMS[w] && ARMS[w].pierce) || 0;
 /* a hit from duck by's weapon w on a zombie anywhere else (Mad God Justin's waves: the owner's, Nov 17 16:23Z, "guns do
-   their normal damage from zombies"), as it lands on one here: null when it misses (missOf), else { dmg, head }. A
-   headshot (headOf) takes all its HP, as do the grenades' blasts and the double barrel; Angelic adds its
-   1. The Laser Rifle never misses or crits (laser, below) */
+   their normal damage from zombies"), as it lands on one here: null when it misses (missOf), else { dmg, crit }. A
+   crit (headOf) doubles it, and blows the head off only if it kills (the taker's to say: crit and dead); the
+   grenades' blasts take all its HP; Angelic adds its 1. The Laser Rifle never misses or crits (laser, below) */
 export const ALL_HP = 999;
 /* Survival: every bullet, pellet, arrow, thrown dagger and beam a duck fires does 0.5 less (the owner's, Nov 20 04:09Z,
    "reduce all ammo by 0.5 damage"); never under 0.5. Melee, grenades and the merchant's own gun stay as they were */
@@ -3262,38 +3253,53 @@ const svGun = (s, by, w, dmg0) => {
       : lm.d != null
         ? lm.d
         : lm.dp != null
-          ? Math.max(0.1, tenths((dmg0 * lm.dp) / 100))
+          ? Math.max(0.1, hundredths((dmg0 * lm.dp) / 100))
           : dmg0;
   return survOn() && by && s.players[by] && ARMS[w] && ARMS[w].kind === "ranged"
-    ? Math.max(0.5, tenths(dmg - SV_GUN_LESS))
+    ? Math.max(0.5, hundredths(dmg - SV_GUN_LESS))
     : dmg;
 };
 export function zombieTakes(s, by, w) {
   const A = ARMS[w];
-  if (!A) return { dmg: 1, head: false };
+  if (!A) return { dmg: 1, crit: false };
   const beam = w === "laser";
   if (!beam && Math.random() < missOf(w)) return null;
-  const head = !beam && Math.random() < headOf(s, by, w),
-    all = head || A.dmg === "all" || w === "grenade" || w === "glauncher";
+  const crit = !beam && Math.random() < headOf(s, by, w),
+    all = A.dmg === "all" || w === "grenade" || w === "glauncher";
   return {
     dmg: all
       ? ALL_HP
-      : svGun(s, by, w, dmgOf(A)) +
-        (!beam && angelOf(s, by, w) ? ANGEL.DMG : 0),
-    head,
+      : (svGun(s, by, w, dmgOf(A)) +
+          (!beam && angelOf(s, by, w) ? ANGEL.DMG : 0)) *
+        (crit ? 2 : 1),
+    crit,
   };
 }
-/* a zombie takes damage from a duck, and the duck gets its points: 5 for each HP it took, or 25 for a headshot (which
-   takes all of it); true when it died */
-function strike(s, z, dmg, head, by, w = "") {
+/* a zombie takes damage from a duck, and the duck gets its points: 5 for each HP it took, or 25 for a headshot. A crit
+   doubles the damage; one that kills blows the head off with a CRIT over it (the owner's, Nov 21 17:25Z: "a critical hit
+   on any duck will give a headshot effect only if it is the killing blow"); true when it died */
+function strike(s, z, dmg, crit, by, w = "", now = 0) {
   if (z.st === 3) return false;
-  if (w) wound(s, z, w, head);
   dmg = svGun(s, by, w, dmg);
   if (w && w !== "laser" && angelOf(s, by, w)) dmg += ANGEL.DMG; // (Angelic: +1, l4ddangel.js; the Laser Rifle has its own, laser)
+  if (crit) dmg *= 2;
   const on = s.hang.l4on || {},
-    all = head || !!on.kill, // (Instant Kill: every hit takes all its HP, 5 points for each)
+    all = !!on.kill, // (Instant Kill: every hit takes all its HP, 5 points for each)
     took = all ? z.hp : Math.min(z.hp, dmg);
   z.hp = all ? 0 : hpHurt(z.hp, dmg);
+  const head = !!crit && z.hp <= 0;
+  if (w) wound(s, z, w, crit);
+  if (crit)
+    addFx(s, {
+      kind: "l4crit",
+      by,
+      z: z.i,
+      who: [],
+      t: now,
+      x: Math.round(z.x),
+      y: Math.round(z.y),
+      ...(head ? {} : { m: 1 }),
+    }); // (every crit shows a small CRIT; m: only the mark, it didn't kill: Adam, Nov 21 18:31Z)
   addPts(s, by, (head ? PTS.HEAD : PTS.HIT * took) * (on.double ? 2 : 1));
   if (z.hp <= 0) {
     /* the zombies each duck killed this game (the overall stats' Zombies killed: l4dd.js record) */
@@ -3310,10 +3316,13 @@ function strike(s, z, dmg, head, by, w = "") {
    ones big holes, the shotgun its pellets, now and then a bleeding cut instead; knives cut; the hammer and the chair
    bruise; an arrow cuts or stays stuck in it; a bullet now and then tears a chunk out, or the beak off; a headshot
    blows the head off. At most 6 on a zombie, and a headless one keeps its head off */
-function wound(s, z, w, head) {
+function wound(s, z, w, crit) {
   const zw = s.hang.zw || {},
     had = zw[z.i] || "";
-  const wd = hitWounds(had, w, WOUND_BREEDS.zombie, { head }); // (wounds.js)
+  const wd = hitWounds(had, w, WOUND_BREEDS.zombie, {
+    head: crit,
+    dead: z.hp <= 0,
+  }); // (wounds.js)
   if (wd !== had) s.hang.zw = { ...zw, [z.i]: wd };
 }
 /* a mark that comes once and stays, past the 6 wounds (owner 2026-11-04 06:44Z): g a grenade's gore, f burnt by fire */
@@ -3322,20 +3331,8 @@ function mark(s, z, code) {
     had = zw[z.i] || "";
   if (!had.includes(code)) s.hang.zw = { ...zw, [z.i]: had + code };
 }
-/* a headshot, now and then (the weapon's chance and the duck's Accuracy): every screen shows it */
-function headshot(s, by, w, z, now) {
-  if (Math.random() >= headOf(s, by, w)) return false;
-  addFx(s, {
-    kind: "l4crit",
-    by,
-    z: z.i,
-    who: [],
-    t: now,
-    x: Math.round(z.x),
-    y: Math.round(z.y),
-  });
-  return true;
-}
+/* a crit, now and then (the weapon's chance and the duck's Accuracy): strike doubles it */
+const critRoll = (s, by, w) => Math.random() < headOf(s, by, w);
 /* a miss, now and then (missOf): the hit doesn't land, and every screen shows "missed" over that zombie */
 function missed(s, by, w, z, now) {
   if (Math.random() >= missOf(w)) return false;
@@ -3381,14 +3378,7 @@ function trace(s, id, px, py, dx, dy, hz, now) {
   }
   for (const hit of hits)
     if (
-      strike(
-        s,
-        hit,
-        dmgOf(A),
-        headshot(s, id, "chaingun", hit, now),
-        id,
-        "chaingun",
-      )
+      strike(s, hit, dmgOf(A), critRoll(s, id, "chaingun"), id, "chaingun", now)
     )
       die(hit, T);
   if (hits.length) store(s, zs, true);
@@ -3622,7 +3612,7 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
   const gx = px + dx * far,
     gy = py + dy * far,
     gd = deckAt(gx, gy, hz),
-    gz = gd ? gd.h : heightAt(gx, gy); // (the floor it lands on: the roof I'm on, or the ground past its ledge)
+    gz = floorH(gx, gy, hz); // (the floor it lands on: the roof I'm on, or the ground past its ledge)
   if (
     now - (m.gf || 0) >= FLAME.PATCH &&
     !(flood(gx, gy) && !gd) &&
@@ -3752,7 +3742,7 @@ export function hurtDuck(s, p4, id, now, w = "", dmg = 1) {
   const p = p4[id];
   if (!p || p.dn || p.gh || godOn(s, id)) return false; // (God mode: it never dies)
   const safe = invuln(s) || invulnOf(s, id, now); // (Invulnerability, or just up from Safe Keeping: it only flashes)
-  const hp = safe ? p.hp : hpHurt(p.hp, dmg); // (dmg: 1, or a Sandbox spawn's damage box; in tenths, and up while above 0: hpmath.js)
+  const hp = safe ? p.hp : hpHurt(p.hp, dmg); // (dmg: 1, or a Sandbox spawn's damage box; in hundredths, and up while above 0: hpmath.js)
   if (w && !safe) pwHit(s, id, w, now, hp <= 0);
   if (hp > 0) {
     p4[id] = { ...p, hp, at: now };
@@ -3872,21 +3862,31 @@ function wildHurt(
     const [px, py] = at(p);
     if (Math.hypot((px - x) / rx, (py - y) / ry) >= 1) continue;
     if (from && slabBetween(...from, px, py, +p.z || 0)) continue;
-    /* a crit (wounds.js PCRIT, a weapon's chance as on any duck) takes all his HP and blows his head off */
-    const crit = Math.random() < (PCRIT[w] || 0);
-    wildDown(s, id, by, now, w, crit, crit ? ["x0"] : null);
+    /* a crit (guns.js critOf, a weapon's chance as on any duck) doubles it, and blows his head off if it puts him down */
+    const crit = Math.random() < critOf(w);
+    wildDown(s, id, by, now, w, false, crit ? ["x0"] : null, crit ? 2 : 1);
+    if (crit)
+      addFx(s, {
+        kind: "l4crit",
+        by,
+        who: [],
+        t: now,
+        x: Math.round(px),
+        y: Math.round(py),
+        m: 1,
+      }); // (the small CRIT over him; his head, if it put him down, is his gore's x0)
     return true;
   }
   return false;
 }
-/* Justin out there takes a hit from duck by with weapon w (all: every HP he has, a crit or a blast); codes: the gore he's
+/* Justin out there takes a hit of dmg from duck by with weapon w (all: every HP he has, a blast); codes: the gore he's
    left with if it puts him down (the owner's, Nov 17 18:05Z: "all gore works on him"). wildHurt, boom, wildFire */
-function wildDown(s, id, by, now, w, all, codes) {
+function wildDown(s, id, by, now, w, all, codes, dmg = 1) {
   const p4 = { ...(s.hang.l4p || {}) };
   if (all && p4[id] && !invuln(s) && !invulnOf(s, id, now))
     p4[id] = { ...p4[id], hp: 1 };
   const was = p4[id] && p4[id].hp,
-    down = hurtDuck(s, p4, id, now, w);
+    down = hurtDuck(s, p4, id, now, w, dmg);
   if (!down && p4[id] && p4[id].hp < was) {
     const [hx, hy] = s.pos[by] ? at(s.pos[by]) : at(s.pos[id]);
     s.hang.l4jcry = {
@@ -3943,7 +3943,7 @@ function wearDown(s, by, w, dealt) {
   if (i < 0 || !(dealt > 0) || !ARMS[w] || !ARMS[w].dur) return;
   if (isSb(s) && !(kit.lm && kit.lm[w] && kit.lm[w].b)) return; // (Sandbox: only with its loot's Breaks when empty)
   if (ARMS[w].kind !== "melee" || angelOf(s, by, w)) return;
-  const left = tenths(durLeft(kit, w) - dealt),
+  const left = hundredths(durLeft(kit, w) - dealt),
     du = { ...(kit.du || {}) },
     sl = [...kit.sl];
   if (left <= 0) {
@@ -3982,7 +3982,7 @@ function meleeHits(s, now) {
         ? A.dmg[0] + Math.floor(Math.random() * (A.dmg[1] - A.dmg[0] + 1))
         : A.dmg; // (the fire axe: 1 to 4)
       const hp0 = z.hp,
-        dead = strike(s, z, dmg, headshot(s, k.by, k.w, z, now), k.by, k.w);
+        dead = strike(s, z, dmg, critRoll(s, k.by, k.w), k.by, k.w, now);
       wearDown(s, k.by, k.w, hp0 - Math.max(0, z.hp)); // (the HP it took off, not the overkill)
       if (dead) die(z, T);
       else if (z.st === 2) knockZ(z, k.dx, k.dy, KNOCK[k.w] || KNOCK.knife); // (alive: pushed back, KNOCK)
@@ -4065,7 +4065,7 @@ function knockZ(z, ux, uy, far) {
   }
 }
 /* the shots in the air (instead of rules.js' moveShots here): walls and furniture stop them, a zombie stops a bullet
-   or an arrow (a headshot now and then kills it at once), a grenade goes off where it lands or where a wall stops it */
+   or an arrow (a crit now and then doubles it), a grenade goes off where it lands or where a wall stops it */
 const OPEN_PAD = 30;
 /* by an opening: a shot goes on through its boards and the wall either side of it, out to the zombies beating on them
    (the owner's, Nov 15), never further out than they stand */
@@ -4281,21 +4281,21 @@ export function l4Shots(s, now) {
       if (w === "dbarrel") {
         /* the slug double barrel's slug: through every zombie in its way, each once, 6 to the first and 1 or 1.5 less to
            each one after (sh.d: what the next one takes), until it would do nothing (the owner's, Nov 19 19:27Z). A crit
-           still takes all of that one's HP. One it kills blows to pieces and is thrown back */
+           doubles that one's. One it kills blows to pieces where it stands (no bullet knocks back: the owner's, Nov 21
+           17:48Z) */
         let stop = false;
         for (const z of nearby(grid, zs, x, y))
           if (near(z) && !(sh.hit || []).includes(z.i) && !past(sh, w, z)) {
-            const head = headshot(s, sh.by, w, z, now),
-              dmg = sh.d === undefined ? A.dmg : sh.d;
+            const crit = critRoll(s, sh.by, w),
+              dmg = sh.d === undefined ? dmgOf(A) : sh.d;
             sh.hit = [...(sh.hit || []), z.i];
-            if (strike(s, z, dmg, head, sh.by, w)) {
+            if (strike(s, z, dmg, crit, sh.by, w, now)) {
               die(z, T);
               mark(s, z, "g0"); // (chunks blown through it: l4ddart.js)
-              slugs.push([Math.round(z.x), Math.round(z.y), head ? 1 : 0]);
-              fling(z, sh, sh.hz);
+              slugs.push([Math.round(z.x), Math.round(z.y), crit ? 1 : 0]);
             }
             hitAny = true;
-            sh.d = tenths(dmg - oneOf(A.less));
+            sh.d = hundredths(dmg - oneOf(A.less));
             if (sh.d <= 0) {
               stop = true;
               break;
@@ -4313,13 +4313,13 @@ export function l4Shots(s, now) {
         for (const z of nearby(grid, zs, x, y))
           if (near(z) && !(sh.hit || []).includes(z.i) && !past(sh, w, z)) {
             const sniper = w === "sniper",
-              head = (sniper && !!sh.crit) || headshot(s, sh.by, w, z, now),
+              crit = (sniper && !!sh.crit) || critRoll(s, sh.by, w),
               dmg = sniper
                 ? Math.max(1, dmgOf(A) - (sh.hit || []).length)
                 : dmgOf(A);
-            if (sniper && head) sh.crit = 1;
+            if (sniper && crit) sh.crit = 1;
             sh.hit = [...(sh.hit || []), z.i];
-            if (strike(s, z, dmg, head, sh.by, w)) die(z, T);
+            if (strike(s, z, dmg, crit, sh.by, w, now)) die(z, T);
             hitAny = true;
             if (sh.hit.length >= pierce) break;
           }
@@ -4331,10 +4331,10 @@ export function l4Shots(s, now) {
         if (w === "handgun" && angelOf(s, sh.by, w)) {
           /* the Angelic pistol: every bullet kills at once, and a crit sets off a grenade's blast there (its shooter
              isn't hurt by it: no sh.k) */
-          const head = headshot(s, sh.by, w, z, now);
-          strike(s, z, z.hp, head, sh.by, w);
+          const crit = critRoll(s, sh.by, w);
+          strike(s, z, z.hp, crit, sh.by, w, now);
           die(z, T);
-          if (head)
+          if (crit)
             boom(
               s,
               { by: sh.by, hz: sh.hz },
@@ -4346,9 +4346,7 @@ export function l4Shots(s, now) {
               ANGEL.PISTOL.BOOM,
               zombieZ(z),
             ); // (half a grenade's blast, its boom weaker: the owner's, Nov 17 11:07Z; it goes off where that zombie is)
-        } else if (
-          strike(s, z, dmgOf(A), headshot(s, sh.by, w, z, now), sh.by, w)
-        )
+        } else if (strike(s, z, dmgOf(A), critRoll(s, sh.by, w), sh.by, w, now))
           die(z, T);
         else if (w === "chair" && z.st === 2)
           knockZ(z, sh.vx * W, sh.vy * H, KNOCK.hammer); // (the chair shoves like the hammer: the owner's, Nov 20 21:17Z)
@@ -4375,20 +4373,6 @@ export function l4Shots(s, now) {
   s.shots = keep;
   if (hitAny) store(s, zs, true);
   return true;
-}
-/* a zombie the double barrel killed is thrown back the way the slug flew, FLING world px (less if a wall is nearer) */
-const FLING = 170;
-function fling(z, sh, hz) {
-  const l = Math.hypot(sh.vx * W, sh.vy * H) || 1,
-    ux = (sh.vx * W) / l,
-    uy = (sh.vy * H) / l;
-  for (let d = 0; d < FLING; d += 10) {
-    const nx = z.x + ux * 10,
-      ny = z.y + uy * 10;
-    if (walled(nx, ny, hz || 0) || !playable(nx, ny)) break; // (never thrown out past the fence)
-    z.x = nx;
-    z.y = ny;
-  }
 }
 
 /* the Angelic grenade launcher's fire: a few burning patches round where it went off, as the flamethrower's ground */
@@ -4422,10 +4406,7 @@ function burnAt(s, by, x, y, now, z0 = 0) {
    out: the floor there at its shooter's height, sh.hz). It reaches only what the shots' one rule lets it: nothing solid
    between (layout.js slabBetween; the owner's, Nov 17 20:02Z, "IT IS PHYISCALLY RETARDED"), so one on a roof never gets
    anything inside or under it, and one inside never gets anything up on it */
-const blastZ = (x, y, hz) => {
-  const d = dp() && deckAt(x, y, hz);
-  return d ? d.h : heightAt(x, y);
-};
+const blastZ = (x, y, hz) => (dp() ? floorH(x, y, hz) : heightAt(x, y));
 function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
   let any = false;
   const gore = [],
@@ -4498,7 +4479,7 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
     )
       s.hang.l4p = {
         ...s.hang.l4p,
-        [sh.by]: { ...q, hp: tenths(q.hp - cut), at: now },
+        [sh.by]: { ...q, hp: hundredths(q.hp - cut), at: now },
       };
   }
   addFx(s, {
@@ -4750,7 +4731,7 @@ function l4Tick(s, now) {
     }
   }
   if (L2.owe > 0) {
-    const room = Math.max(0, R[4] - live),
+    const room = Math.max(0, R[2] - live),
       k = Math.min(L2.owe, room);
     for (let q = 0; q < k; q++) {
       zs.push(newZombie(s, L2, T, zs));
@@ -4850,11 +4831,11 @@ export function gmHelp(s, now) {
     hp: () => Math.max(1, hp0()),
     open: (x, y) => openNear(x, y) >= 0 && zOk(x, y, heightAt(x, y)),
     stands: (x, y, z) => zOk(x, y, z), // (where a zombie at height z may stand: apart's walls)
-    hurt(id, dmg, w, head = false) {
-      if (head && isWild(s, id)) {
+    hurt(id, dmg, w, crit = false) {
+      if (crit && isWild(s, id)) {
         const q = P4(s, id),
           up = q && !q.dn && !q.gh;
-        wildDown(s, id, "", now, w, true, ["x0"]); // (a gunman's headshot on Justin: all his HP and his head, as a duck's crit)
+        wildDown(s, id, "", now, w, false, ["x0"], dmg * 2); // (a gunman's crit on Justin: twice, and his head if it puts him down, as a duck's crit)
         return up && !!P4(s, id).dn;
       }
       const p4 = { ...(s.hang.l4p || {}) },
@@ -4862,9 +4843,9 @@ export function gmHelp(s, now) {
       s.hang.l4p = p4;
       return down;
     }, // (a duck, Justin out there too: true when it went down. A player never takes a headshot from them: gunmenrules.js hitOn)
-    hitZ(z, dmg, w, head = false) {
-      if (strike(s, z, dmg, head, null, w)) die(z, T);
-    }, // (a zombie: nobody's points; a headshot takes all its HP and its head)
+    hitZ(z, dmg, w, crit = false) {
+      if (strike(s, z, dmg, crit, null, w, now)) die(z, T);
+    }, // (a zombie: nobody's points; a crit doubles it, and takes its head if it kills)
     pts: (id, n) => addPts(s, id, n),
     takes: (by, w) => zombieTakes(s, by, w),
     up: (id) => standing(s, id),
@@ -4897,16 +4878,16 @@ export function gmHelp(s, now) {
       const pick = fenceSpot(pts);
       return pick ? pick.land : null;
     }, // (a spot just inside a fence that nobody sees: where they come in, "they show up from the outside")
-    mhurt: (i, dmg, w, head = false) =>
+    mhurt: (i, dmg, w, crit = false) =>
       merchantHurt(
         s,
         null,
-        head ? (merchantOf(s) || {}).hp || dmg : dmg,
+        crit ? dmg * 2 : dmg,
         now,
         w,
-        head ? "crit" : "",
+        crit && ((merchantOf(s) || {}).hp || 0) <= dmg * 2 ? "crit" : "",
         "g" + i,
-      ), // (one of them shot the merchant; a headshot: all his HP and his head)
+      ), // (one of them shot the merchant; a crit: twice, and his head if it kills him)
     notice: (k) => addFx(s, { kind: "l4drop", k, who: [], t: now }), // (a notice for everyone, as "The Merchant has Arrived": l4dd.js l4Got)
     speed: WALK * walkOf(s) * NPC_RUN, // (the shared slow speed, npcshared.js)
     T,

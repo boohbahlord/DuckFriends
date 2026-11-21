@@ -7813,3 +7813,6 @@ Make the Ethan duck have a pale white skin tone of a human being, so that his ha
 
 - 19:13Z (in Joseph's thread): "I'm torn between tiles or cells. I'll say tiles."
   Decision: the distance unit is called "tiles" everywhere "duck lengths" shows; the size stays.
+
+- 19:31Z (with a link to the Doom PSX fire algorithm): "U see that link? Is this something we can redo differently for our fire effect in the future with pur pixel sizes?"
+  Decision: yes, later (after the freeze): one shared fire module (a heat grid at our pixel size stepped through a recolorable palette, the Doom PSX fire method, MIT) for every fire: flamethrower, burning, Sandbox. Nothing built now.
