@@ -55,8 +55,9 @@ friends.js 236 friends
 front.js 151 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 229 how a held weapon and the
-game.js 8476 the game screen
+game.js 7823 the game screen
 gamedefaults.js 43 the game's own numbers, for every
+gamefx.js 853 the silly commands and the room's
 gameready.js 47 
 gamesettings.js 1757 Game Settings: the whole screen, like
 gamestats.js 191 what `stats` and `roundstats` print for
