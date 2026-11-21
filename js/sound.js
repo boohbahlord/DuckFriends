@@ -177,6 +177,7 @@ export const VOL = {
   l4crack: -12,
   l4nail: -14,
   l4groan: -20,
+  zwindup: -22, // (a zombie's swing winding up: the tell, quiet; l4ddsfx.js)
   l4slot: -15,
   l4till: -16,
   dropIn: -16,
@@ -283,6 +284,7 @@ const GROUPS = {
       "l4crack",
       "l4nail",
       "l4groan",
+      "zwindup",
       "l4slot",
     ],
     ...["l4till", "dropIn", "dropGot", "flashOn", "flashOff"],
