@@ -8,6 +8,7 @@
 import { rule, activity, RULES } from "./registry.js";
 import { onGetUp, isGhost } from "./death.js";
 import { OPTIONS_DEFAULT } from "../rules.js";
+import { zOf } from "../heights.js";
 import { modeOf } from "../modes.js";
 
 export const FADE = 1000; // ms: the ghost fading away before the body gets up
@@ -33,7 +34,7 @@ onGetUp((s, id, now) => {
   for (const [k, r] of RULES) if (k !== "ghost") r.left?.(s, id);
   s.hang.ghost = {
     ...(s.hang.ghost || {}),
-    [id]: { x: p.x, y: p.y, z: Math.round(+p.z || 0), t: now },
+    [id]: { x: p.x, y: p.y, z: Math.round(zOf(p)), t: now },
   };
   delete P.dead; // (the ghost walks as itself; the body is what lies there)
   return true;

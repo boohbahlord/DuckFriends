@@ -42,6 +42,7 @@ import { hitWounds, WOUND_BREEDS } from "./wounds.js";
 import { fight, keepAt, reachTo } from "./sbarms.js";
 
 import { hpHurt } from "./hpmath.js";
+import { nearH } from "./heights.js";
 import { MAD } from "./sbbrain.js";
 import { npcBody, DU_WORLD } from "./sbbody.js";
 import { sees as npcSees, grudge } from "./npcrules.js";
@@ -227,7 +228,7 @@ export function cabinTick(s, now, H0) {
           if (o.z != null || o.vz != null) heights(s, o, null, dt, o.x, o.y); // (standing still: it still falls, and it rides a floor that goes)
         }
       : null,
-    onFloor: (o, to) => !sbfl || Math.abs(npcZ(o) - (to.z ?? npcZ(o))) < 48, // (on its floor: never a claw through one)
+    onFloor: (o, to) => !sbfl || nearH(npcZ(o), to.z ?? npcZ(o)), // (on its floor: never a claw through one)
     sees,
     face: 0.5,
     swipe: ZOMBIE_BREEDS.sbBoard.swipe[1],

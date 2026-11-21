@@ -238,6 +238,7 @@ import {
 } from "./guns.js";
 import { l4Zups, l4SetHp } from "./zombies.js";
 import { hOk, hLock, sameFloorAhead, floorLock } from "./heights.js";
+import { zOf, nearH } from "./heights.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
   MAPS,
@@ -2577,7 +2578,7 @@ function reduceStep(state, a, now) {
           hang = {
             ...(isHang(s)
               ? {
-                  hz: Math.round(+p.z || 0),
+                  hz: Math.round(zOf(p)),
                   hin: inCabin(p.x * HW, p.y * HH) ? 1 : 0,
                 }
               : {}), // (Hangout: the height it flies at, and which side of the cabin's walls)
@@ -3765,7 +3766,7 @@ export function shove(s, id, ux, uy, far, now, side, more = {}) {
       ty = Math.max(0, Math.min(1, p.y + (vy * i) / n));
     if (
       hang &&
-      (!standable(tx * HW, ty * HH, +p.z || 0, undefined, [x * HW, y * HH]) ||
+      (!standable(tx * HW, ty * HH, zOf(p), undefined, [x * HW, y * HH]) ||
         (inCabin(tx * HW, ty * HH) ? 1 : 0) !== side)
     )
       break;
@@ -3811,10 +3812,10 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
     ux = aim[0] / rx / al,
     uy = aim[1] / ry / al;
   const side = hang ? (inCabin(p0.x * HW, p0.y * HH) ? 1 : 0) : 0,
-    z0 = hang ? +p0.z || 0 : 0;
+    z0 = duckH(s, p0);
   const near = (x, y, z, inSide, big = 1) => {
     // where (x, y) is from the swinger, in duck lengths, if it's in reach (big: a Seriat NPC's hitbox, reached sooner)
-    if (hang && (inSide !== side || Math.abs(z - z0) > 48)) return null;
+    if (hang && (inSide !== side || !nearH(z, z0))) return null;
     const dx = (x - p0.x) / rx,
       dy = (y - p0.y) / ry,
       d = Math.max(0, Math.hypot(dx, dy) - (big - 1) / 2);
@@ -3836,7 +3837,7 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
     const n = near(
       q.x,
       q.y,
-      +p.z || 0,
+      zOf(p),
       hang ? (inCabin(p.x * HW, p.y * HH) ? 1 : 0) : 0,
       cutPic(P) ? 1 : duckBig(s, id),
     ); // (a duck bigger than 100%: its hitbox too, duck.js; a cut-out's size is in its picture)
@@ -4035,8 +4036,7 @@ function blast(s, sh, x, y, now, o = {}) {
     side = sh.hin || 0,
     hit = [];
   const near = (px, py, pz, inSide, big = 1) => {
-    if (hang && (inSide !== side || Math.abs(pz - (sh.hz || 0)) > 48))
-      return null;
+    if (hang && (inSide !== side || !nearH(pz, sh.hz || 0))) return null;
     const dx = (px - x) / rx,
       dy = (py - y) / ry,
       d = Math.max(0, Math.hypot(dx, dy) - (big - 1) / 2); // (big: a Seriat NPC's hitbox)
@@ -4052,7 +4052,7 @@ function blast(s, sh, x, y, now, o = {}) {
     const n = near(
       p.x,
       p.y,
-      +p.z || 0,
+      zOf(p),
       hang ? (inCabin(p.x * HW, p.y * HH) ? 1 : 0) : 0,
       duckBig(s, id),
     ); // (a duck bigger than 100%: its hitbox too, duck.js)
@@ -4205,7 +4205,7 @@ function moveShots(s, now) {
 const gunSpeed = (w) =>
   (ARMS[w].speed / BOARD_PX) * (w === "glauncher" ? 1 : FASTER);
 /* a duck's height for a shot (heights.js): in Hangout and Quacky Zombies its feet's (world px); on the boards 0 */
-const duckH = (s, p) => (isHang(s) ? +p.z || 0 : 0);
+const duckH = (s, p) => (isHang(s) ? zOf(p) : 0);
 /* Doom's same floor first, as in Dead Ducks Arcade (heights.js sameFloorAhead, the one rule for every mode): a duck (or,
    in Hangout, Justin or the shadow duck) on my floor in the line of my shot keeps the shot on my floor: { lh }, else {}
    (it goes to the first target at any height). Measured in duck lengths; in Hangout the cabin's walls stop the look */
@@ -4308,7 +4308,7 @@ function chainShot(s, by, p, aim, now, w = "chaingun") {
       t: now,
       ...(hang
         ? {
-            hz: Math.round(+p.z || 0),
+            hz: Math.round(zOf(p)),
             hin: inCabin(p.x * HW, p.y * HH) ? 1 : 0,
           }
         : {}),
@@ -4358,7 +4358,7 @@ function chainShot(s, by, p, aim, now, w = "chaingun") {
       y0: +(p.y * k[1]).toFixed(4),
       x1: +(at.x * k[0]).toFixed(4),
       y1: +(at.y * k[1]).toFixed(4),
-      hz: Math.round(+p.z || 0),
+      hz: Math.round(zOf(p)),
     },
   ]; // (b: board units; in Hangout, the world's pixels, as Quacky Zombies' own)
 }
@@ -4375,7 +4375,7 @@ function duckFlame(s, by, p, aim, now) {
     was = (s.flame || {})[by],
     t0 = was && now - was[1] < FLAME.GAP ? was[0] : now,
     side = hang ? (inCabin(p.x * HW, p.y * HH) ? 1 : 0) : 0,
-    z0 = hang ? +p.z || 0 : 0;
+    z0 = duckH(s, p);
   let far = flameReach(now - t0);
   if (hang)
     for (let d = 0.25; d <= far; d += 0.25)
@@ -4406,8 +4406,7 @@ function duckFlame(s, by, p, aim, now) {
     if (isMgj(s) || vdSafe(s, id) || jumpDodges(q, now)) continue;
     if (
       hang &&
-      ((inCabin(q.x * HW, q.y * HH) ? 1 : 0) !== side ||
-        Math.abs((+q.z || 0) - z0) > 48)
+      ((inCabin(q.x * HW, q.y * HH) ? 1 : 0) !== side || !nearH(zOf(q), z0))
     )
       continue;
     if (inCone((q.x - p.x) / rx, (q.y - p.y) / ry, ux, uy, far + 0.3))
@@ -4561,8 +4560,7 @@ function groundFire(s, now) {
         by !== id &&
         Math.hypot((q.x - x) / rx, (q.y - y) / ry) < FLAME.PATCH_R &&
         (!hang ||
-          ((inCabin(q.x * HW, q.y * HH) ? 1 : 0) === side &&
-            Math.abs((+q.z || 0) - z) < 48)),
+          ((inCabin(q.x * HW, q.y * HH) ? 1 : 0) === side && nearH(zOf(q), z))),
     );
     if (g && ((s.flamed || {})[id] || 0) <= now) {
       scorch(s, g[3], id, now);
@@ -4576,7 +4574,7 @@ function groundFire(s, now) {
         by,
         (x, y, zz, sd) =>
           Math.hypot((x - gx) / rx, (y - gy) / ry) < FLAME.PATCH_R &&
-          (!hang || (sd === side && Math.abs((+zz || 0) - z) < 48)),
+          (!hang || (sd === side && nearH(+zz || 0, z))),
         now,
       )
     )
@@ -4812,7 +4810,7 @@ function wounded(s, id, w, now, crit) {
       x: p.x,
       y: p.y,
       ...(head ? {} : { m: 1 }), // (a crit that didn't put it down: only the small CRIT, Adam's, Nov 21 18:31Z)
-      ...(isHang(s) ? { hz: Math.round(+p.z || 0) } : {}),
+      ...(isHang(s) ? { hz: Math.round(zOf(p)) } : {}),
     },
   ];
 }

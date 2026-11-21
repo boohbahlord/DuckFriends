@@ -51,7 +51,7 @@ friends.js 236 friends
 front.js 151 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 229 how a held weapon and the
-game.js 8482 the game screen
+game.js 8480 the game screen
 gamedefaults.js 43 the game's own numbers, for every
 gameready.js 47 
 gamesettings.js 1758 Game Settings: the whole screen, like
@@ -62,12 +62,12 @@ grenade.js 35 a grenade going off
 ground.js 53 what a duck walks on, for
 gunart.js 437 every weapon, drawn: one drawing for
 gunmen.js 110 the gunmen's looks
-gunmenrules.js 1141 Survival: the gunmen
+gunmenrules.js 1142 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen
 gunparts.js 15 the pieces every weapon's drawing is
 guns.js 626 every weapon's numbers: one sheet for
 hats.js 1096 hats
-heights.js 52 a shot's height, Doom's way
+heights.js 63 a shot's height, Doom's way
 helppages.js 1498 the command line's Help pages: help
 hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
@@ -94,7 +94,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box on
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 5017 the rules of Quacky Zombies
+l4ddrules.js 5010 the rules of Quacky Zombies
 l4ddsfx.js 512 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the zombies
 langname.js 5 the name of Sandbox's number language,
@@ -161,14 +161,14 @@ random.js 9 the two random helpers every mode's
 report.js 114 Report Bug or Suggest Ideas
 rooms.js 256 Play: create a room, and the
 router.js 112 screens
-rules.js 5166 the rules of Agree or Disagree
+rules.js 5164 the rules of Agree or Disagree
 sandbox.js 1347 Sandbox: the key windows
 sandboxrules.js 2056 Sandbox: which map it plays on,
 sbarms.js 124 Sandbox: a made NPC's weapons in
 sbaudio.js 211 Sandbox: songs players bring in
 sbbody.js 233 Sandbox: an NPC's body, where it
 sbbrain.js 87 Sandbox: what a spawned NPC does
-sbcabin.js 339 Sandbox: the zombies on Duck Cabin
+sbcabin.js 340 Sandbox: the zombies on Duck Cabin
 sbdrag.js 353 Sandbox, moving blocks with the mouse
 sbep.js 50 Sandbox Phase 7: what other players
 sbepview.js 162 Sandbox Phase 7: what other players
@@ -247,7 +247,7 @@ who.js 3 who this player is beyond this
 wounds.js 485 the wounds a hit leaves
 zombiepath.js 178 the zombies' way to the ducks
 zombieroofs.js 320 the zombies' walk over Downpour's roofs:
-zombies.js 1467 the zombies: one module for every
+zombies.js 1468 the zombies: one module for every
 
 ## js/hangout/
 activities.js 23 every Hangout activity, so the rules
@@ -267,7 +267,7 @@ dpground.js 320 Downpour's ground
 falls.js 118 falling a long way
 fireflies.js 174 fireflies
 flicker.js 83 now and then a light stutters
-ghosts.js 110 Duck Cabin's ghosts
+ghosts.js 111 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in blue
 lamp.js 71 the lamps: the example activity
 layout.js 1517 Duck Cabin: the world of Hangout
