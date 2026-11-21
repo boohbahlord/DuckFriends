@@ -612,12 +612,29 @@ function planBuild(b) {
   put("l4power", POWER_SPOT.x - 34, POWER_SPOT.y - 14, 68, 28, 120, {
     solid: true,
   });
-  /* a car: solid up to its waist (over it, its top is a floor: carDeck below) */
-  const car = (r, o) =>
-    solid("car", r, CAR_TOP.h, {
-      top: groundAt((r.x0 + r.x1) / 2, r.y1 - 1) + CAR_TOP.waist,
-      ...o,
-    });
+  /* a car: solid up to its waist (over it, its top is a floor: vehicles.js carDeck) */
+  const car = (r, o) => {
+    const T = CAR_TOP,
+      z = groundAt((r.x0 + r.x1) / 2, r.y1 - 1),
+      w = r.x1 - r.x0,
+      east = r !== HOOD && carEast(r.x0 * K, r.y0 * K, false);
+    put(
+      "carglass",
+      r.x0 + (east ? T.glass[0] : w - T.glass[1]),
+      r.y0 + T.side + 2,
+      T.glass[1] - T.glass[0],
+      r.y1 - r.y0 - 2 * (T.side + 2),
+      T.h - T.below - T.waist,
+      {
+        solid: true,
+        pass: true,
+        layer: "none",
+        z: z + T.waist,
+        top: z + T.h - T.below,
+      },
+    ); // (its glass and roof: they stop a shot up to the roof; walking over them is its floor's)
+    return solid("car", r, T.h, { top: z + T.waist, ...o });
+  };
   car(HOOD, {
     hood: true,
     smash: "side",

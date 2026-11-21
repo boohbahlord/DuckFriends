@@ -256,7 +256,7 @@ flicker.js 83 now and then a light stutters
 ghosts.js 108 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in blue jeans and
 lamp.js 71 the lamps: the example activity
-layout.js 1493 Duck Cabin: the world of Hangout
+layout.js 1494 Duck Cabin: the world of Hangout
 npc.js 495 Duck Cabin's characters: how they get around, and
 npcart.js 271 Duck Cabin's characters: the drawings
 piano.js 530 the piano in the cabin , against the
@@ -278,7 +278,7 @@ soccer.js 508 soccer: one ball on the field, one net
 sounds.js 17 Duck Cabin's sounds
 stage.js 134 the stage: half an oval 70 high on
 stationart.js 1964 Downpour's things: the drawings
-stationmap.js 1110 Dead Ducks Arcade's second map: the gas station,
+stationmap.js 1127 Dead Ducks Arcade's second map: the gas station,
 trampoline.js 141 the trampoline
 tv.js 117 the TV: seven channels, the next one with
 vehicles.js 111 what a duck stands on on top of
