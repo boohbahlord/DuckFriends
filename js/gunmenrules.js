@@ -18,14 +18,8 @@
    cv (where it hides), ls (where it last saw its target), tg (its target: "p:" a duck, "z:" a zombie), lo (its
    flashlight on), ad (where it aims, in degrees), mad ([who hurt it, until when]), nx (its next shot), bn (rounds left
    in this burst), bt (its last burn), w (its wounds: wounds.js codes), d (when it died) } */
-import {
-  L4_HOOKS,
-  ARMS,
-  critOf,
-  clearShot,
-  chaseField,
-  chaseStep,
-} from "./l4ddrules.js";
+import { L4_HOOKS, ARMS, critOf } from "./l4ddrules.js";
+import { clearShot, chaseField, chaseStep } from "./zombies.js";
 import { heightAt, slabBetween, PROPS } from "./hangout/layout.js";
 import { DECKS } from "./hangout/stationmap.js";
 import { hpHurt } from "./hpmath.js";

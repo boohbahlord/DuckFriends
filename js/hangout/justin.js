@@ -255,6 +255,12 @@ const BUST_LINES = pick(
   "This is so STUPID!",
   "You are such a stupid IDIOT!",
 );
+const SHADOW_LINES = [
+  "I literally got killed by a black duck!",
+  "WAIT!",
+  "HE WAS LITERALLY BLACK!",
+  "NOT RACIALLY OF COURSE!",
+];
 const SHUT_UPS = E_LINES.filter((l) => /^shut up/i.test(l));
 const RANT_SHOUT = "SHUT UP!";
 

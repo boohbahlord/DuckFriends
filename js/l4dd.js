@@ -68,10 +68,7 @@ import {
   OPENINGS,
   syncMap,
   dp,
-  fenceZ,
-  zombieZ,
   playable,
-  zombiesOf,
   startSpot,
   SHOP,
   priceOf,
@@ -117,6 +114,7 @@ import {
   ZHATS,
   ZOUTFITS,
 } from "./l4ddrules.js";
+import { fenceZ, zombieZ, zombiesOf } from "./zombies.js";
 import { hOk, hLock } from "./heights.js";
 import { ammoBar, stackBars, noReload } from "./meters.js";
 import { laserMeter } from "./laserfx.js";

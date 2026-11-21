@@ -304,5 +304,67 @@
     "computers": 3,
     "beats": 400,
     "phase": "boss"
+  },
+  {
+    "name": "mgj-waves",
+    "options": {
+      "mode": "mgj"
+    },
+    "computers": 7,
+    "beats": 400,
+    "phase": "boss",
+    "mz": {
+      "next": "$now"
+    }
+  },
+  {
+    "name": "qz-downpour-bait",
+    "options": {
+      "mode": "l4dd",
+      "l4map": "downpour"
+    },
+    "computers": 3,
+    "beats": 1500,
+    "bait": 100
+  },
+  {
+    "name": "qz-cabin-bait",
+    "options": {
+      "mode": "l4dd",
+      "l4map": "cabin",
+      "wildJustin": 0
+    },
+    "computers": 3,
+    "beats": 3000,
+    "bait": 100
+  },
+  {
+    "name": "surv-zombies-bait",
+    "options": {
+      "mode": "surv",
+      "l4map": "downpour"
+    },
+    "computers": 3,
+    "beats": 3000,
+    "peakNow": 1,
+    "sv": {
+      "GUNMEN": 0,
+      "CRIM": 0,
+      "STEP": 0
+    },
+    "bait": 0
+  },
+  {
+    "name": "mgj-waves-bait",
+    "options": {
+      "mode": "mgj"
+    },
+    "computers": 7,
+    "beats": 800,
+    "phase": "boss",
+    "mz": {
+      "next": "$now"
+    },
+    "bait": 0
   }
 ]

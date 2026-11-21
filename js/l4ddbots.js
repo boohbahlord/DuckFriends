@@ -9,11 +9,8 @@ import { W, H, heightAt, standable, STEP } from "./hangout/layout.js";
 import {
   L4,
   WALK,
-  zombiesOf,
   startSpot,
   playable,
-  wayTo,
-  clearShot,
   l4Up,
   l4Cool,
   kitOf,
@@ -38,6 +35,7 @@ import {
   wetSlow,
   hasLeft,
 } from "./l4ddrules.js";
+import { zombiesOf, wayTo, clearShot } from "./zombies.js";
 import { isSurv } from "./survrules.js";
 import { walkOf } from "./rules.js";
 import { WANDER } from "./hangout/justin.js";
