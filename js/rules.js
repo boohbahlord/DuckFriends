@@ -281,7 +281,7 @@ import {
 
 /* (what l4ddrules.js asks of the board's weapons comes by here, not from boardfire.js: boardfire.js imports sbcabin.js, which
    needs l4ddrules.js whole before it runs, so l4ddrules.js must not import boardfire.js itself) */
-export { shove } from "./boardfire.js";
+export { shovePx } from "./boardfire.js";
 
 import {
   DOD_KEYS,
@@ -1018,10 +1018,9 @@ export const coolEnds = (s, id, sp) =>
         grCool(s, id), // (Sandbox: a loot orb's own wait, sbhot.js; a group's Cooldown speed, sbgroups.js)
     magSize(sp) ? ((s.mag || {})[magKey(id, sp)] || {}).r || 0 : 0,
   ); // (a time on the room's clock)
-/* the hammer's knock-back: a duck it hits is shoved KB_FAR duck lengths away from the swing in KB_MS, with a little hop
+/* the hammer's knock-back: a duck it hits is shoved (push.js KB_FAR) away from the swing in KB_MS, with a little hop
    (KB_HOP duck sizes high), and lands playing dead; pos.kb = { t, x, y: where it was } lets every screen draw the shove */
 export const KB_MS = 380,
-  KB_FAR = 2.4,
   KB_HOP = 0.3,
   KB_LAND = 110; // (KB_LAND: ms until the swing gets there; the duck falls then)
 export const EFFECTS = [
