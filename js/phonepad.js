@@ -9,9 +9,13 @@
    attacks and keeps aiming; letting go stops both. Only on touch phones (css/app.css shows it). */
 import { el, flag } from "./ui.js";
 
+/* the knob's ring is 120 px across (60 px from the middle) and the knob itself goes no farther than REACH, 42 px. It
+   aims from 10 px out, and attacks from 36 px: 86% of the knob's travel but only 60% of the ring, so the thumb has a wide
+   aiming zone first (it was 30, the owner's, Nov 21 20:51Z: "a little more to aiming before fire") and an attack still
+   never needs the full push. It stops again under 28 px, so a shaky thumb doesn't start and stop it. */
 const AIM = 10; // pushed this many pixels from the stick's middle: it aims
-const FIRE = 30; // this far (about the stick's edge): it attacks
-const BACK = 24; // attacking, it stops again once back under this (so a shaky thumb doesn't start and stop it)
+const FIRE = 36; // this far: it attacks
+const BACK = 28; // attacking, it stops again once back under this
 const REACH = 42; // the knob goes no farther than this
 const ARROW =
   '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.2 19.4 12.4H14.6V19.6H9.4V12.4H4.6Z"/></svg>';

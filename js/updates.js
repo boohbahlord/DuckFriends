@@ -9,6 +9,25 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v226",
+    version: 226,
+    date: "Nov 21, 2026",
+    title: "One weapon engine",
+    news: [
+      "Behind the scenes: every weapon in every mode (the boards, Dead Ducks Arcade, Survival, Sandbox and Mad God Justin) now runs on one shared weapon engine: shots in the air, the grenade's arc, melee swings and their knock-back. Nothing plays differently, but a weapon change now works the same everywhere at once.",
+    ],
+  },
+  {
+    id: "v225",
+    version: 225,
+    date: "Nov 21, 2026",
+    title: "Shots never cut out, the aim stick moved in",
+    news: [
+      "For Dead Ducks Arcade: on a phone the aim-and-attack stick sits further in from the corner, so you can drag it all the way in every direction, and it takes a little more push to attack than to aim (still well short of a full push).",
+      "Your own shots and swings never cut out any more, even in a loud fight. Before, when many other ducks fired at once, a quiet weapon like the bow could go silent.",
+    ],
+  },
+  {
     id: "v224",
     version: 224,
     date: "Nov 21, 2026",

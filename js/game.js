@@ -6065,7 +6065,7 @@ function tileKnock(s, p, now) {
 /* how a duck's sound is heard: mine as it is, another's quieter; in Duck Cabin and Dead Ducks Arcade from where it
    stands (sound.js fades it with its distance from my duck) */
 function heard(id) {
-  const o = { id, k: id === R.me ? 1 : OTHERS }; // (id: whose it is, for a sound that's each duck's own: sound.js flamer)
+  const o = { id, k: id === R.me ? 1 : OTHERS, mine: id === R.me }; // (id: whose it is, for a sound that's each duck's own: sound.js flamer; mine: never left out, sound.js voice)
   if (world && R && isHang(R.state)) {
     const p = (R.state.pos || {})[id];
     if (p && p.x >= 0) Object.assign(o, { x: p.x * HW, y: p.y * HH });

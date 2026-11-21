@@ -2,7 +2,9 @@
    8f-1, the gate: may I use it now. The board (rules.js case "use") and the maps (l4ddrules.js l4Use) ask the same
    questions here; where their numbers differ, each side's way is breed data (GATE_BREEDS), never an if on the mode.
    8f-2, what comes out: the shot's kind, the shotgun's cone and a burst's rounds, the same for the board, the maps and
-   Mad God Justin (each side still builds its own shot from these: its units differ, 8f-3). */
+   Mad God Justin (each side still builds its own shot from these: its units differ).
+   8f-3, flight: the shots in the air, one loop (flyShots).
+   8f-4, melee: a swing's life, the pan's miss and the knock-back as data (ARMS knock). */
 import { ARMS } from "./guns.js";
 
 /* full auto: the shots can come a little bunched over the network, so they may come this share of the wait early */
@@ -50,3 +52,53 @@ export const coneOf = (a0, n, spread) =>
    leaves at once, as the shot */
 export const roundAt = (n, i, now, gap) =>
   i ? { n: n * 10 + i, t: now + i * gap } : {};
+/* 8f-3, flight: every shot in the air, one beat, one loop for every mode. A burst's round still waiting stays; a thrown
+   grenade arcs and goes off where it lands, or where a wall stops it (at its last spot); the launcher's grenade and the
+   bullets fly by each side's hooks, as what they hit differs (ducks on the board; zombies, NPCs and ducks on the maps).
+   F: { fuse (ms), U ([x, y]: a spot's units over a share of the board or world), at(sh, ms), walled(sh, at),
+   boom(sh, at), launched(sh, age), bullet(sh, age) }; each true keeps the shot. What's kept comes back, in order */
+export function flyShots(list, now, F) {
+  const keep = [];
+  for (const sh of list) {
+    const age = now - sh.t;
+    if (
+      age < 0 ||
+      (sh.k === "grenade"
+        ? arc(sh, age, F)
+        : sh.k === "lgren"
+          ? F.launched(sh, age)
+          : F.bullet(sh, age))
+    )
+      keep.push(sh);
+  }
+  return keep;
+}
+const arc = (sh, age, F) => {
+  const at = F.at(sh, Math.min(age, F.fuse)),
+    [w, h] = F.U,
+    wall = F.walled(sh, at);
+  if (wall || age >= F.fuse) {
+    F.boom(sh, wall ? { x: sh.lx * w, y: sh.ly * h } : at);
+    return false;
+  }
+  sh.lx = at.x / w;
+  sh.ly = at.y / h;
+  return true;
+};
+/* 8f-4, melee: a swing hurts for its swing's ms (ARMS swing), each thing it reaches once, one live swing a swinger;
+   the pan misses half of them (ARMS miss), rolled once at the press. Each side keeps its own record (the board's s.atk
+   names the weapon sp, the maps' s.hang.l4k w) and its own targets */
+const swingMs = (k) => (ARMS[k.w || k.sp] || ARMS.knife).swing;
+export const swinging = (k, now) => now - k.t <= swingMs(k);
+export const swingOn = (list, rec, now) => [
+  ...(list || []).filter((k) => now - k.t < swingMs(k) && k.by !== rec.by),
+  rec,
+];
+export const swingMisses = (w) => {
+  const m = (ARMS[w] || {}).miss;
+  return !!m && Math.random() < m;
+};
+/* how far a melee hit pushes a living zombie back, in world px (a duck is 64; ARMS knock), and how much of that another
+   duck in the swing is shoved */
+export const knockOf = (w) => (ARMS[w] || ARMS.knife).knock || ARMS.knife.knock;
+export const KNOCK_DUCK = 0.5;

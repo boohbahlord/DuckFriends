@@ -8092,7 +8092,9 @@ html.still .spe-bone .bone-slide {
    when the special in the slider's middle can attack, the attack stick takes its place and it moves up above it */
 .tpad {
   position: absolute;
-  right: calc(2rem + env(safe-area-inset-right));
+  right: calc(
+    5.2rem + env(safe-area-inset-right)
+  ); /* (the stick's middle is 7.1rem in: more than the ring's 60px, so the finger can go the whole way right and down, the owner's, Nov 21 20:51Z) */
   bottom: calc(100% + 0.7rem);
   width: 3.8rem;
   height: 3.8rem;
@@ -19807,7 +19809,10 @@ html.fs-on .fs-btn .fs-in {
 /* on its side the aim stick and the jump button sit a little in from the right edge, so a thumb can push the stick all
    the way out; the walking stick's middle stays that far in from its edges too (js/touch.js) */
 html.phone-land .tpad {
-  right: calc(3.8rem + env(safe-area-inset-right));
+  right: calc(5.2rem + env(safe-area-inset-right));
+  bottom: calc(
+    100% + 1.6rem
+  ); /* (its middle 60 px or more from the screen's bottom too, at 80% UI as at 100%) */
 }
 /* ---------- a phone on its side (html.phone-land, js/pointer.js) ----------
    It is short (about 360 px), so every size made of rem shrinks with the page's base size, and the places that
