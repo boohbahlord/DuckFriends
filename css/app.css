@@ -15050,6 +15050,19 @@ html.moving .eye-tears .tdrop.t2 {
 .veil-line:empty {
   display: none;
 }
+.veil-line > span {
+  display: block;
+}
+.veil-line .mono {
+  font-family:
+    ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+/* the source below its line: smaller and a little faded, still easy to read */
+.veil-line .veil-cap {
+  margin-top: 0.35em;
+  font-size: 0.85em;
+  opacity: 0.8;
+}
 .lobby-status {
   position: relative;
   z-index: 41;
