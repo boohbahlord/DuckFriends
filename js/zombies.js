@@ -20,6 +20,7 @@ import {
   deckAt,
   deckOver,
   deckH,
+  onDeckAt,
 } from "./hangout/layout.js";
 import * as GS from "./hangout/stationmap.js";
 import { walkOf } from "./rules.js";
@@ -91,6 +92,7 @@ import {
   climbSpot,
   climbFrom,
   roofStep,
+  chaseDeck,
 } from "./zombieroofs.js";
 /* the most zombies a round in all, every player counted (l4ddrules.js zombiesFor; was 400); Sandbox keeps its NPCs alive
    under it too (sbspawn.js) */
@@ -416,7 +418,8 @@ export function moveZombies(s, zs, now, T, up) {
       const p = s.pos[id],
         xy = at(p),
         zz = +p.z || 0,
-        dk = dp() ? mapDeck(deckAt(xy[0], xy[1], zz)) : null, // (Downpour: up on a roof, or the canopy; Sandbox's floors are Phase 4's zombies, later)
+        on = dp() ? mapDeck(deckAt(xy[0], xy[1], zz)) : null, // (Downpour: up on a roof, or the canopy; Sandbox's floors are Phase 4's zombies, later)
+        dk = chaseDeck(on),
         way = dk && dk.kind === "canopy" ? stationDeck() : dk; // (the canopy: by way of the gas station's roof, then a jump)
       return {
         id,
@@ -424,6 +427,7 @@ export function moveZombies(s, zs, now, T, up) {
         xy,
         zz,
         dk,
+        on,
         way,
         goal: (way && climbSpot(way, xy)) || xy,
         alts:
@@ -653,9 +657,24 @@ function walkAll(zs, c) {
       continue;
     }
     if (z.st === 8) {
-      // jumping from the gas station's roof onto the canopy (or, 1 time in 20, short of it, down to the ground)
-      const [, , x1, y1, , h1] = z.j;
-      if (walkTo(z, x1, y1, JUMP.speed * dt)) {
+      // jumping from the gas station's roof onto the canopy (or, 1 time in 20, short of it, down to the ground), or walking up the plank
+      const [, , x1, y1, , h1, walk] = z.j,
+        q =
+          walk &&
+          pls.find(
+            (q) =>
+              room(z.x, z.y, ...q.xy) < c.reach &&
+              Math.abs(q.zz - jumpZ(z)) < 50,
+          );
+      if (q) {
+        if (T - (z.a || 0) >= c.swipe[1]) {
+          z.a = T;
+          z.dir = Math.round(Math.atan2(q.xy[1] - z.y, q.xy[0] - z.x) * 100);
+          if (c.claw(q, z)) pls.splice(pls.indexOf(q), 1);
+        }
+        continue;
+      } // (a duck on the plank in its way: it stops there and claws at it)
+      if (walkTo(z, x1, y1, walk ? v * dt : JUMP.speed * dt)) {
         const fell = h1 < canopyDeck().h - 1;
         z.st = fell ? 2 : 7;
         z.n = 0;
@@ -709,7 +728,10 @@ function walkAll(zs, c) {
         continue;
       }
       for (const q of pls)
-        if (q.dk === e.d && room(z.x, z.y, ...q.xy) * far(q) < best) {
+        if (
+          q.dk === chaseDeck(e.d) &&
+          room(z.x, z.y, ...q.xy) * far(q) < best
+        ) {
           best = room(z.x, z.y, ...q.xy) * far(q);
           target = q;
         }
@@ -733,8 +755,11 @@ function walkAll(zs, c) {
           v * dt,
           zs,
         ); // (and never into another one up there)
-        const o2 = edgeOf(z.x, z.y, e.d);
-        if (o2.o > -6) {
+        const o2 = edgeOf(z.x, z.y, e.d),
+          P = target.on && target.on.kind === "plank" ? target.on : null;
+        if (P && e.d !== P && onDeckAt(P, z.x, z.y))
+          z.k = GS.DECKS.indexOf(P); // (onto the plank, after a duck on it)
+        else if (o2.o > -6) {
           z.x += o2.nx * (o2.o + 6) * -1;
           z.y += o2.ny * (o2.o + 6) * -1;
         } // (never off its edge while it goes for a duck)

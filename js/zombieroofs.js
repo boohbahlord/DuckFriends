@@ -122,12 +122,11 @@ function leapOf(S, C, [qx, qy], lane) {
     return [x, y, x, C.y0 + JUMP.in, x, (S.y1 + C.y0) / 2];
   }
   if (S !== carLeap()) return null;
-  const R = S.roof,
-    y = pick(qy, Math.max(C.y0, R.y0), Math.min(C.y1, R.y1)),
-    west = C.x1 <= R.x0,
-    x0 = west ? R.x0 + 4 : R.x1 - 4,
-    x1 = west ? C.x1 - JUMP.in : C.x0 + JUMP.in;
-  return [x0, y, x1, y, (S.x0 + C.x1) / 2, y];
+  /* the red car's roof: up the plank to the canopy (stationmap.js PLANK, the owner's OK Nov 21 16:37Z), walked, never
+     missed (7th: a walk) */
+  const P = GS.PLANK,
+    y = (P.y0 + P.y1) / 2;
+  return [S.roof.x0 + 4, y, C.x1 - JUMP.in, y, P.x0, y, 1];
 }
 export function jumpOn(z, pls, far, S) {
   const C = canopyDeck();
@@ -149,7 +148,7 @@ export function jumpOn(z, pls, far, S) {
     if (!l) return false;
     z.jp = [l, q.id, k];
   } // (its spot, picked once: kept while its duck stays on the canopy)
-  const [x, y, x1, y1, fx, fy] = z.jp[0];
+  const [x, y, x1, y1, fx, fy, walk] = z.jp[0];
   if (Math.hypot(x - z.x, y - z.y) > far + JUMP.near) {
     walkTo(z, x, y, far);
     return true;
@@ -157,11 +156,13 @@ export function jumpOn(z, pls, far, S) {
   z.x = x;
   z.y = y;
   delete z.jp;
-  const fell = Math.random() < JUMP.fail,
+  const fell = !walk && Math.random() < JUMP.fail,
     h0 = deckH(S, x, y);
   z.st = 8;
   z.n = 0;
-  z.j = fell ? [x, y, fx, fy, h0, heightAt(fx, fy)] : [x, y, x1, y1, h0, C.h];
+  z.j = fell
+    ? [x, y, fx, fy, h0, heightAt(fx, fy)]
+    : [x, y, x1, y1, h0, C.h, walk];
   return true;
 }
 export const jumpZ = (z) => {
@@ -170,8 +171,11 @@ export const jumpZ = (z) => {
       1,
       Math.hypot(z.x - x0, z.y - y0) / (Math.hypot(x1 - x0, y1 - y0) || 1),
     );
-  return h0 + (h1 - h0) * u + JUMP.arc * 4 * u * (1 - u);
+  return h0 + (h1 - h0) * u + (z.j[6] ? 0 : JUMP.arc * 4 * u * (1 - u));
 };
+/* the floor a duck on the plank is chased on: the canopy's (zombies come up the plank to it from the red car's roof,
+   and claw at it on their way: zombies.js) */
+export const chaseDeck = (d) => (d && d.kind === "plank" ? canopyDeck() : d);
 
 /* where a zombie is drawn in depth: up a wall, in front of the roof it climbs onto, as a duck up a ladder is drawn in
    front of it (layout.js onLadder), so no part of the roof hides it on its way up; else as anyone at its height */

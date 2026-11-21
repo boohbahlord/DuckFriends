@@ -322,7 +322,7 @@ export function seeLine(ax, ay, az, bx, by, bz) {
     dx = bx - ax,
     dy = by - ay;
   for (const d of allDecks()) {
-    if (d.solid) continue; // (a car's top: never a floor between, as the cars never were)
+    if (d.solid || d.thin) continue; // (a car's top: never a floor between, as the cars never were; nor the plank)
     /* when is the line inside this floor's thickness */
     const lo = q(d.h - SIGHT_SLAB),
       hi = q(d.h);

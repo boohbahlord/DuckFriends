@@ -28,6 +28,7 @@ import * as GS from "./stationmap.js";
 import * as SA from "./stationart.js";
 import { floorBricks, heapBricks } from "./bricks.js";
 import { ART } from "./pxworld.js";
+import { plankArt } from "./plank.js";
 
 const C = L.CABIN,
   T = 12,
@@ -489,6 +490,7 @@ const SK = Object.fromEntries(
 );
 const GS_DRAW = {
   pump: (p) => gsPart(p, () => SK.pumpSVG({ w: p.w, d: p.d, h: p.h })),
+  plank: (p) => gsPart(p, () => plankArt(p, GS.K)),
   car: (p) => {
     const up = p.hood ? 110 * GS.K : 0,
       k = seedOf(p);
@@ -672,12 +674,7 @@ export const DRAW = {
   /* the rubble out of a smashed north-south wall, flat on the floor under everyone (stationmap.js) */
   rubble: (p) => [
     part(
-      () =>
-        floorBricks({
-          w: p.w,
-          d: p.d,
-          seed: Math.round(p.x + p.y),
-        }),
+      () => floorBricks({ w: p.w, d: p.d, seed: Math.round(p.x + p.y) }),
       p.x,
       p.y,
       p.w,

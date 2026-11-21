@@ -17,9 +17,9 @@ import {
 } from "./stationmap.js";
 import { CAR_TOP } from "./vehicles.js";
 
-const O = "#1c1c28"; // the ducks' ink
+export const O = "#1c1c28"; // the ducks' ink
 const n1 = (v) => Math.round(v * 10) / 10;
-const F = (s, ...v) =>
+export const F = (s, ...v) =>
   s.reduce(
     (a, x, i) =>
       a +
@@ -31,11 +31,11 @@ const F = (s, ...v) =>
         : ""),
     "",
   );
-const ln = (w = 2.4, c = O) =>
+export const ln = (w = 2.4, c = O) =>
   `stroke="${c}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`;
 let N = 0;
 const uid = () => "dp" + (++N).toString(36);
-const wrap = (w, h, body, defs = "", cls = "") =>
+export const wrap = (w, h, body, defs = "", cls = "") =>
   F`<svg class="hg${cls ? " " + cls : ""}" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" overflow="visible" aria-hidden="true">${defs ? "<defs>" + defs + "</defs>" : ""}${body}</svg>`;
 const R = (x, y, w, h, fill, more = "") =>
   F`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" ${more}/>`;

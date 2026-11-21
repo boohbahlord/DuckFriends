@@ -395,6 +395,20 @@ export const CANOPY = {
   y1: 2500,
   z: 0.85 * ELEV_PLAN,
 }; // (0.85 of an elevation: the owner's, Nov 21 10:48 ET)
+/* the plank from the red car's roof up to the canopy (the owner's, Nov 21 09:52 ET, his OK 16:37Z: construction wood
+   like a pallet, walked as a slope): from REST over the canopy's east edge to REST onto the car's roof, z0 up at its east
+   end (the car's roof), z1 at its west end (the canopy); its drawing plank.js, its floor plankDeck below */
+const REST = 26;
+export const PLANK = {
+  x0: CANOPY.x1 - REST,
+  y0: 2050,
+  x1: HOOD.x1 - CAR_TOP.roof[1] + REST, // (the hood-up car faces west: its roof starts roof[1] in from its east end)
+  y1: 2120,
+  z0: CAR_TOP.h - CAR_TOP.below,
+  z1: CANOPY.z,
+  rest: REST,
+  key: CANOPY.y1 + 10, // (over the canopy's roof and the car)
+};
 /* the fallen tree across the east end of the road: ducks jump it (TOP_TREE tall), zombies climb over */
 export const FALLEN = {
   x0: 3500,
@@ -614,6 +628,21 @@ function planBuild(b) {
     PUMP_LADDER.y1 - PUMP_LADDER.y0,
     CANOPY.z + 50,
     { zt: CANOPY.z, hoopKey: CANOPY.y1 + 2 },
+  );
+  put(
+    "plank",
+    PLANK.x0,
+    PLANK.y0,
+    PLANK.x1 - PLANK.x0,
+    PLANK.y1 - PLANK.y0,
+    PLANK.z1 + 16,
+    {
+      z: 0,
+      key: PLANK.key,
+      z0: PLANK.z0,
+      z1: PLANK.z1,
+      rest: REST,
+    },
   );
   for (const p of PUMPS) solid("pump", p, 140);
   solid(
@@ -1082,6 +1111,7 @@ for (const o of [
   GEN,
   POWER_SPOT,
   HOOD,
+  PLANK,
 ])
   scaled(o);
 for (const o of [PRIEST, ANGEL, START, CARS, PUMPS, CANOPY, FALLEN]) scaled(o);
@@ -1125,6 +1155,22 @@ const carZ = (c) => groundAt((c.x0 + c.x1) / 2, c.y1 - 1);
 DECKS.push(
   carDeck(HOOD, false, carZ(HOOD), K, true),
   ...CARS.map((c) => carDeck(c, carEast(c.x0, c.y0, false), carZ(c), K)),
+  {
+    kind: "plank",
+    x0: PLANK.x0,
+    y0: PLANK.y0,
+    x1: PLANK.x1,
+    y1: PLANK.y1,
+    h: PLANK.z1,
+    hAt: (x) =>
+      PLANK.z1 +
+      (PLANK.z0 - PLANK.z1) *
+        Math.min(1, Math.max(0, (x - PLANK.x0) / (PLANK.x1 - PLANK.x0))),
+    key: PLANK.key,
+    holes: [],
+    bldg: 0,
+    thin: true, // (slats with gaps: seen through, layout.js seeLine)
+  }, // (the plank: a slope from the car's roof up to the canopy)
 );
 export function build(b) {
   for (const [f, ...a] of CALLS) {

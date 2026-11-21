@@ -238,8 +238,8 @@ walkgrid.js 67 the walking grid: which 40-px cells
 who.js 3 who this player is beyond this
 wounds.js 501 the wounds a hit leaves
 zombiepath.js 178 the zombies' way to the ducks
-zombieroofs.js 301 the zombies' walk over Downpour's roofs:
-zombies.js 1425 the zombies: one module for every
+zombieroofs.js 305 the zombies' walk over Downpour's roofs:
+zombies.js 1450 the zombies: one module for every
 
 ## js/hangout/
 activities.js 23 every Hangout activity, so the rules
@@ -267,24 +267,25 @@ npc.js 495 Duck Cabin's characters: how they get
 npcart.js 271 Duck Cabin's characters: the drawings
 piano.js 530 the piano in the cabin ,
 pianokeys.js 665 Hangout: the piano's keyboard mode
+plank.js 90 the plank from the red car's
 poker.js 1185 poker at the blackjack table
 pool.js 9 down the hill: the water and
 power.js 504 the power box, the blackout, the
 pxw-cabin-l4.js 418 made by tools/pixel-world.cjs:
 pxw-cabin.js 433 made by tools/pixel-world.cjs:
-pxw-downpour.js 343 made by tools/pixel-world.cjs:
+pxw-downpour.js 344 made by tools/pixel-world.cjs:
 pxworld.js 87 Duck Cabin's and Downpour's art as
 registry.js 111 Hangout's two registries: what each activity
 rubberducks.js 183 the little rubber ducks in the
 rules.js 87 Hangout's rules: s.hang and the {
 seats.js 439 the couches, the campfire's logs, the
 shadowduck.js 254 the shadow duck
-shapes.js 1707 Duck Cabin's props, drawn: art.js's drawings
+shapes.js 1704 Duck Cabin's props, drawn: art.js's drawings
 soccer.js 508 soccer: one ball on the field,
 sounds.js 17 Duck Cabin's sounds
 stage.js 134 the stage: half an oval 70
 stationart.js 1964 Downpour's things: the drawings
-stationmap.js 1141 Dead Ducks Arcade's second map: the
+stationmap.js 1187 Dead Ducks Arcade's second map: the
 trampoline.js 141 the trampoline
 tv.js 117 the TV: seven channels, the next
 vehicles.js 116 what a duck stands on on
