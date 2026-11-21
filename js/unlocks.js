@@ -18,6 +18,7 @@
 import { profile, save } from "./store.js";
 import { fmtJumps } from "./format.js";
 import { toast } from "./ui.js";
+import { modeOf } from "./modes.js";
 import { cheated } from "./cheatflag.js";
 import { nameOf } from "./guns.js";
 
@@ -332,7 +333,7 @@ export function watchKills(room) {
     }
     for (const k of (s && s.jk) || [])
       if (k.n > seen && k.by === room.me) {
-        if (s.options && s.options.mode === "hang")
+        if (s.options && modeOf(s.options.mode).cabinHome)
           profile.cabinKills = (profile.cabinKills || 0) + 1; // (Duck Cabin's Justin, in Hangout: toward the Chair)
         countKill();
         countJustinKill();

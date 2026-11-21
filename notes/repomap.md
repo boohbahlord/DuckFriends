@@ -104,14 +104,14 @@ looks.js 136 the room's duck-look settings
 looksrules.js 60 the duck-look settings' rules
 main.js 163 the start: settings on the page,
 manual.js 203 the command line's manual: man <command>
-maps.js 1116 maps: the world behind the board
+maps.js 1119 maps: the world behind the board
 merchantlines.js 81 what the merchants say
 merchants.js 376 the merchants
 meters.js 114 the thin bars under my duck's
 mgj.js 217 Mad God Justin: what the screen
 mgjart.js 96 Mad God Justin's new pictures
 mgjrules.js 2287 
-modes.js 415 the game modes
+modes.js 428 the game modes
 music.js 590 the music: our own songs, played
 musicbar.js 169 the music bar: the song the
 name.js 165 fonts and how a player's name
@@ -204,7 +204,7 @@ shellcmdroom.js 201 the room, game and test commands
 shellcmds.js 4 the shell's command table:
 shellfs.js 846 the shell's files and what every
 shellpeople.js 220 the people, the room and the
-shellstats.js 244 the stats and forgame commands' helpers
+shellstats.js 245 the stats and forgame commands' helpers
 slices.js 31 long work cut into slices
 sound.js 915 the game's sounds: real recordings, played
 specials.js 858 Specials
@@ -227,7 +227,7 @@ triviarules.js 458 the rules of Trivia
 ui.js 380 small helpers every screen uses
 umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping
-unlocks.js 413 things you unlock
+unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an upload
 updates.js 3015 Updates
 vdd.js 190 Valentine's Duck Date: what the screen
@@ -253,13 +253,13 @@ cabinend.js 135 End Cabin / Exit Cabin
 cats.js 662 Duck Cabin's cats: Annabelle, Bubbles, Oreo
 chalk.js 631 the chalk floor: draw on it
 characters.js 593 Duck Cabin's characters on the map:
-death.js 103 how long a knocked-down duck can't
+death.js 101 how long a knocked-down duck can't
 doors.js 32 the doors: they swing open while
 dpground.js 320 Downpour's ground
 falls.js 118 falling a long way
 fireflies.js 178 fireflies
 flicker.js 83 now and then a light stutters
-ghosts.js 108 Duck Cabin's ghosts
+ghosts.js 110 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in blue
 lamp.js 71 the lamps: the example activity
 layout.js 1466 Duck Cabin: the world of Hangout

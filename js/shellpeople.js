@@ -95,9 +95,9 @@ export function psLines(s, all) {
   const sb = isSb(s) && s.phase !== "lobby"; // (Sandbox: no rounds, no stages, no turns)
   const out = [
     "PID WHAT     DOING",
-    `  1 game     ${modeOf(o.mode).name} on ${sbWorld(o) ? SB_WORLD_NAMES[sbWorld(o)] : mapName(o.map)}${s.phase === "lobby" ? ", in the lobby" : o.mode === "hang" ? ", hanging out" : sb ? "" : `, round ${s.round + 1}`}`,
+    `  1 game     ${modeOf(o.mode).name} on ${sbWorld(o) ? SB_WORLD_NAMES[sbWorld(o)] : mapName(o.map)}${s.phase === "lobby" ? ", in the lobby" : modeOf(o.mode).noRounds ? ", hanging out" : sb ? "" : `, round ${s.round + 1}`}`,
   ];
-  if (s.phase !== "lobby" && !sb && !(o.mode === "hang" && inWorld(s)))
+  if (s.phase !== "lobby" && !sb && !(modeOf(o.mode).noRounds && inWorld(s)))
     out.push(
       `  2 ${st.padEnd(8)} ${["answer", "discuss", "results", "bracket"].includes(s.phase) || s.done ? `${done} of ${n} have ended their turn` : ""}`,
     );

@@ -14,7 +14,7 @@ import { duckSVG } from "./duck.js";
 import { nameHTML } from "./name.js";
 import { openWindow, esc } from "./ui.js";
 import { profile, STAT_MODES } from "./store.js";
-import { SURV_READY, statsOf } from "./modes.js";
+import { SURV_READY, modeOf, statsOf } from "./modes.js";
 import { statRow } from "./statrows.js";
 import { fmtJumps } from "./format.js";
 import { bbBoxHTML } from "./brackets.js";
@@ -111,7 +111,7 @@ export function openStats(s, id, me) {
         const body = w.querySelector(".stats-one"),
           note = w.querySelector(".stat-note"),
           mode = w.querySelector(".stat-mode");
-        if (s.options.mode === "hang") {
+        if (modeOf(s.options.mode).noRounds) {
           lastTab = "all";
           w.querySelector('[data-st="game"]').hidden = true;
         } // (Hangout keeps no stats of its own: all time only)
