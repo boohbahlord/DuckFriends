@@ -8,7 +8,7 @@ armpage.js 142 a page of Customize's tiles put
 armspeed.js 34 how fast the weapons work, in
 art.js 403 pictures drawn in code
 audioimport.js 186 a player's own song, made small
-awards.js 20 the stats' awards: one card, one
+awards.js 37 the stats' awards: one card, one
 barrelheat.js 70 a hot barrel
 bash.js 1360 the command line's language: a small
 beaks.js 138 beaks
@@ -17,7 +17,7 @@ boardjustin.js 701 Justin on the boards
 botduck.js 90 a computer's duck: a random look,
 botlines.js 188 What the computers write and say
 bots.js 1434 computers
-brackets.js 469 Bicker Brackets: what the screen shows
+brackets.js 459 Bicker Brackets: what the screen shows
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
 chat.js 1596 text chat and the command line
@@ -219,7 +219,7 @@ stamina.js 41 my sprint's stamina, in every mode
 statrows.js 87 I want one table for what
 stats.js 165 stats: a player's stat box and
 store.js 262 what this device remembers
-story.js 211 Story Chain: what the screen shows
+story.js 205 Story Chain: what the screen shows
 styles.js 386 duck styles
 survrules.js 324 Survival
 svgurl.js 10 a drawing as a data:

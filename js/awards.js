@@ -3,6 +3,8 @@
    a small line under it) and finds the winner the same way: the most of one number, none when nobody has any. The games
    hand it their numbers and their lines; the cards' shape lives only here. */
 import { esc } from "./ui.js";
+import { nameHTML } from "./name.js";
+import { seenName } from "./looks.js";
 
 /* who has the most of f(per[id]) among ids: { v, who: [ids tied] }, or null when it's 0 for everyone */
 export const topOf = (per, ids, f) => {
@@ -18,3 +20,18 @@ export const awardCard = (title, names, tie, body) =>
   `<div class="award"><h3>${esc(title)}</h3><p>${names}${tie ? ' <span class="dim">(tie)</span>' : ""}</p>${body}</div>`;
 /* a small line under a card */
 export const smallLine = (line) => `<p class="small dim">${line}</p>`;
+/* what every awards list starts with: the ducks still in the room, a name as HTML, the winner of one number, and the
+   card for a winner (none for null) with body(r) under it */
+export const awardKit = (s, per) => {
+  const ids = Object.keys(per).filter((id) => s.players[id]),
+    nm = (id) => nameHTML(s.players[id].name, seenName(s.players[id]));
+  return {
+    ids,
+    nm,
+    top: (f) => topOf(per, ids, f),
+    award: (title, r, body) =>
+      r
+        ? awardCard(title, joinNames(r.who.map(nm)), r.who.length > 1, body(r))
+        : "",
+  };
+};
