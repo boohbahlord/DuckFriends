@@ -36,6 +36,13 @@
      l4b  { id: { o, at } }: who is boarding up which opening, since when (one more board each BOARD_MS)
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
+import {
+  GATE_BREEDS,
+  waiting,
+  heldBack,
+  roundsOf,
+  afterShots,
+} from "./weaponuse.js";
 import { ARMS, kindOf, GUN_NAMES, WEAPONS, rollDmg } from "./guns.js";
 import { JUMP, jumpDodges } from "./jump.js";
 import { SPRINT as GAME_SPRINT, POCKET_CHANGE } from "./gamedefaults.js";
@@ -3020,14 +3027,19 @@ export function l4Use(s, a, now) {
   if (what === "defib") return false; // (only on a dead player: the revive's hold, defibUse)
   const m = { ...m0, u: { ...m0.u }, am: { ...m0.am } };
   finishReload(m, now);
-  if (now - (m.u[what] || 0) < l4Cool(s, id, what) * (A.auto ? 0.8 : 1))
-    return false; // (full auto: the shots can come a little bunched over the network)
+  if (
+    waiting(
+      GATE_BREEDS.maps,
+      { auto: !!A.auto, cool: l4Cool(s, id, what), last: m.u[what] || 0 },
+      now,
+    )
+  )
+    return false; // (weaponuse.js: full auto's shots may come a little bunched over the network)
   const c = down ? [m.dg, ARMS.handgun.mag] : m.am[what];
   if (kind === "grenade" ? m.g <= 0 : c && (c[0] <= 0 || m.rw === rw))
     return false; // (empty, or reloading)
   if (what === "medkit" && (P4(s, id) || {}).hp >= maxHp(s, id)) return false; // (nothing to heal)
-  if (what === "zebra" && s.zcake) return false; // (one zebra cake in the room at a time)
-  if (what === "laser" && laserHeat(s, id, now).over) return false; // (overheated: it can't fire until it has cooled)
+  if (heldBack(s, what, () => laserHeat(s, id, now).over)) return false; // (one zebra cake in the room at a time; the Laser Rifle overheated)
   m.u[what] = now;
   if (m.rw && m.rw !== rw) {
     m.rl = 0;
@@ -3048,7 +3060,7 @@ export function l4Use(s, a, now) {
     ay: +(dy / H).toFixed(5),
   });
   const dual = what === "handgun" && angelOf(s, id, what), // (the Angelic pistols: they take turns, one bullet each press)
-    many = A.burst ? Math.min(A.burst, c[0]) : 1; // (the burst rifle: three rounds a press, or the rest of its clip)
+    many = roundsOf(A, c && c[0]); // (the burst rifle: three rounds a press, or the rest of its clip)
   if (dual) m.alt = (m.alt || 0) ^ 1; // (which pistol fires: the left, then the right …)
   /* God mode's switches (sbgod.js): items (grenades, medkits, chairs …) and ammo never run out; no reloading keeps the
      magazine full while the spare rounds go down */
@@ -3058,15 +3070,17 @@ export function l4Use(s, a, now) {
     if (!spare) m.g--;
   } else if (down) {
     if (!spare) {
-      m.dg = c[0] - 1;
-      if (m.dg <= 0) startReload(s, id, m, "dg", now);
+      const shot = afterShots(c[0], 1);
+      m.dg = shot.left;
+      if (shot.empty) startReload(s, id, m, "dg", now);
     }
   } else if (c && !spare) {
     if (godHas(s, id, "reload") && c[1] > 0)
       m.am[what] = [c[0], Math.max(0, c[1] - many)];
     else {
-      m.am[what] = [c[0] - many, c[1]];
-      if (c[0] - many <= 0) startReload(s, id, m, what, now); // (empty: it reloads by itself)
+      const shot = afterShots(c[0], many);
+      m.am[what] = [shot.left, c[1]];
+      if (shot.empty) startReload(s, id, m, what, now); // (empty: it reloads by itself)
     }
   }
   if (kind === "melee") {
