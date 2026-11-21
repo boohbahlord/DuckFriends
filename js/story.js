@@ -5,6 +5,7 @@
    the box to type in. Once the lines are voted on, the secret words show below the story, each in its writer's card, and
    each one lights up inside its line. The stats sit beside the three choices: continue, a new story, or the lobby. */
 import { esc } from "./ui.js";
+import { topOf, joinNames, awardCard } from "./awards.js";
 import { duckSVG } from "./duck.js";
 import { nameHTML, fontStyle as styleOf } from "./name.js";
 import { cardFor, cloudHTML } from "./brackets.js";
@@ -146,14 +147,10 @@ export const boardHTML = (
 function awardsHTML(s, per) {
   const ids = Object.keys(per).filter((id) => s.players[id]),
     nm = (id) => nameHTML(s.players[id].name, seenName(s.players[id]));
-  const top = (f) => {
-    const xs = ids.map((id) => [id, f(per[id])]);
-    const v = Math.max(0, ...xs.map((x) => x[1]));
-    return v ? { v, who: xs.filter((x) => x[1] === v).map((x) => x[0]) } : null;
-  };
+  const top = (f) => topOf(per, ids, f);
   const award = (title, r, line) =>
     r
-      ? `<div class="award"><h3>${esc(title)}</h3><p>${r.who.map(nm).join(r.who.length > 2 ? ", " : " and ")}${r.who.length > 1 ? ' <span class="dim">(tie)</span>' : ""}</p>${line(r)}</div>`
+      ? awardCard(title, joinNames(r.who.map(nm)), r.who.length > 1, line(r))
       : "";
   const quote = (r, f, cls = "") =>
     r.who.length === 1 && f(per[r.who[0]])

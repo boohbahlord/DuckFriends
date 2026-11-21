@@ -38,6 +38,20 @@ const PHONE = {
       errs = [];
     p.on("pageerror", (e) => errs.push(String(e).slice(0, 200)));
     await p.addInitScript(fs.readFileSync(path.join(DIR, "init.js"), "utf8"));
+    /* a phone has no mouse: Chromium sometimes sends the page a real mouse move of its own (its cursor at 0, 0 when the
+       layout changes), and pointer.js then takes the phone for a computer (html.keyboard) and hides the pad. My own
+       fingers are made by page.js (not trusted), so only Chromium's mouse is kept out */
+    if (sc.phone)
+      await p.addInitScript(() =>
+        addEventListener(
+          "pointermove",
+          (e) => {
+            if (e.isTrusted && e.pointerType === "mouse")
+              e.stopImmediatePropagation();
+          },
+          true,
+        ),
+      );
     await p.goto(url, { waitUntil: "networkidle" });
     await p.waitForTimeout(1500);
     await p.addScriptTag({ path: path.join(DIR, "page.js") });

@@ -8,15 +8,16 @@ armpage.js 142 a page of Customize's tiles put
 armspeed.js 34 how fast the weapons work, in
 art.js 403 pictures drawn in code
 audioimport.js 186 a player's own song, made small
+awards.js 20 the stats' awards: one card, one
 barrelheat.js 70 a hot barrel
 bash.js 1360 the command line's language: a small
 beaks.js 138 beaks
 bloodpool.js 50 a pool of blood: the one
-boardjustin.js 735 Justin on the boards
+boardjustin.js 695 Justin on the boards
 botduck.js 90 a computer's duck: a random look,
 botlines.js 188 What the computers write and say
 bots.js 1430 computers
-brackets.js 467 Bicker Brackets: what the screen shows
+brackets.js 469 Bicker Brackets: what the screen shows
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
 chat.js 1596 text chat and the command line
@@ -36,7 +37,7 @@ duck.js 799 the rubber duck avatar
 duckparts.js 598 the ducks made from pixel parts
 ducksheets.js 2 made by tools/duck-parts.cjs:
 duel.js 120 the cloud duel: two ducks share
-dunce.js 137 Duncelation: what the screen shows
+dunce.js 139 Duncelation: what the screen shows
 duncerules.js 388 the rules of Duncelation
 euclid.js 351 Euclid's Squares
 eyes.js 187 eyes
@@ -46,7 +47,7 @@ flamer.js 50 the flamethrower
 flowfield.js 173 the zombies' flow field, worked out
 format.js 15 numbers as the settings ask
 friends.js 236 friends
-front.js 109 the front page
+front.js 151 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 229 how a held weapon and the
 game.js 8471 the game screen
@@ -58,10 +59,11 @@ gfx.js 8 Low graphics
 gmodes.js 246 Sandbox Phase 6: made game modes
 grenade.js 35 a grenade going off
 ground.js 53 what a duck walks on, for
-gunart.js 448 every weapon, drawn: one drawing for
+gunart.js 438 every weapon, drawn: one drawing for
 gunmen.js 110 the gunmen's looks
 gunmenrules.js 1140 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen
+gunparts.js 15 the pieces every weapon's drawing is
 guns.js 516 every weapon's numbers: one sheet for
 hats.js 1096 hats
 heights.js 52 a shot's height, Doom's way
@@ -90,11 +92,11 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box on
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 5048 the rules of Quacky Zombies
+l4ddrules.js 5062 the rules of Quacky Zombies
 l4ddsfx.js 513 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the zombies
 langname.js 5 the name of Sandbox's number language,
-laserart.js 105 the laser gun, drawn
+laserart.js 95 the laser gun, drawn
 laserfx.js 134 the Laser Rifle on the screen
 later.js 66 the rest of the game, once
 loading.js 403 the start: a slow fade to
@@ -109,7 +111,7 @@ maps.js 1119 maps: the world behind the board
 merchantlines.js 81 what the merchants say
 merchants.js 376 the merchants
 meters.js 114 the thin bars under my duck's
-mgj.js 217 Mad God Justin: what the screen
+mgj.js 219 Mad God Justin: what the screen
 mgjart.js 96 Mad God Justin's new pictures
 mgjrules.js 2287 
 modes.js 428 the game modes
@@ -149,14 +151,14 @@ pxdom.js 754 the pixel look for drawings already
 pxmap.js 45 a map as pixel files
 pxpic.js 22 the maps that have a picture
 pxtext.js 263 emoji and tooltips in the pixel
-quack.js 294 Who is the Quack?: what the
+quack.js 296 Who is the Quack?: what the
 quackrules.js 789 the rules of Who is the
 rainbowskin.js 116 the rainbow skin
 random.js 9 the two random helpers every mode's
 report.js 114 Report Bug or Suggest Ideas
 rooms.js 256 Play: create a room, and the
 router.js 112 screens
-rules.js 6218 the rules of Agree or Disagree
+rules.js 6233 the rules of Agree or Disagree
 sandbox.js 1359 Sandbox: the key windows
 sandboxrules.js 2059 Sandbox: which map it plays on,
 sbarms.js 124 Sandbox: a made NPC's weapons in
@@ -216,7 +218,7 @@ stamina.js 41 my sprint's stamina, in every mode
 statrows.js 87 I want one table for what
 stats.js 165 stats: a player's stat box and
 store.js 262 what this device remembers
-story.js 214 Story Chain: what the screen shows
+story.js 211 Story Chain: what the screen shows
 styles.js 386 duck styles
 survrules.js 325 Survival
 svgurl.js 10 a drawing as a data:
@@ -230,12 +232,13 @@ umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 3027 Updates
+updates.js 3054 Updates
 vdd.js 190 Valentine's Duck Date: what the screen
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
 vote.js 278 Vote Mode & Map: the vote
 walkgrid.js 67 the walking grid: which 40-px cells
+weaponuse.js 30 using a weapon: one module for
 who.js 3 who this player is beyond this
 wounds.js 501 the wounds a hit leaves
 zombiepath.js 178 the zombies' way to the ducks
@@ -249,7 +252,7 @@ art.js 3051 Duck Cabin: the drawings
 beachball.js 364 the beach ball
 blackjack.js 1382 the blackjack table in the great
 book.js 170 the guestbook: a book on a
-bricks.js 485 loose bricks, drawn as pixels
+bricks.js 482 loose bricks, drawn as pixels
 cabinend.js 135 End Cabin / Exit Cabin
 cats.js 662 Duck Cabin's cats: Annabelle, Bubbles, Oreo
 chalk.js 631 the chalk floor: draw on it
