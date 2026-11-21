@@ -233,7 +233,7 @@ umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 3090 Updates
+updates.js 3102 Updates
 vdd.js 190 Valentine's Duck Date: what the screen
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
@@ -267,7 +267,7 @@ flicker.js 83 now and then a light stutters
 ghosts.js 110 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in blue
 lamp.js 71 the lamps: the example activity
-layout.js 1500 Duck Cabin: the world of Hangout
+layout.js 1517 Duck Cabin: the world of Hangout
 npc.js 495 Duck Cabin's characters: how they get
 npcart.js 283 Duck Cabin's characters: the drawings
 piano.js 530 the piano in the cabin ,
