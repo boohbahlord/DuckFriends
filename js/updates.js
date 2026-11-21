@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v236",
+    version: 236,
+    date: "Nov 21, 2026",
+    title: "One set of units",
+    news: [
+      "Behind the scenes: one place now holds the game's units (tiles and map distances).",
+      "Behind the scenes: Zebra cake and wounds on the board now live with the board's other weapons. Nothing plays differently.",
+    ],
+  },
+  {
     id: "v235",
     version: 235,
     date: "Nov 21, 2026",

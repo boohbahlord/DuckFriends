@@ -15,58 +15,26 @@
    room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). Duncelation has its
    own rules in duncerules.js: one defender in the circle, everyone else walks to Dunce or Not a Dunce. Valentine's Duck
    Date has its own in vddrules.js: The Date at the dining table, a date with each Suitor, then a Suitor Turned Down. */
-import {
-  GATE_BREEDS,
-  waiting,
-  heldBack,
-  roundsOf,
-  afterShots,
-  shotKind,
-  coneOf,
-  roundAt,
-} from "./weaponuse.js";
 
 import { HANDGUN } from "./gamedefaults.js";
-
-import { jumpKept } from "./jump.js";
-
-import { epAct } from "./sbep.js";
 
 import {
   baseMode,
   baseL4map,
   isSb,
-  sbCan,
-  sbMay,
-  SB_RIGHTS,
   sbOnBoard,
-  sbRulesAct,
-  boardDuck,
-  sbBoardK,
   sbItemMods,
-  sbRule,
 } from "./sandboxrules.js";
-
-import { sbGodAct } from "./sbgod.js";
 
 import { survSet } from "./survrules.js";
 
 import "./gunmenrules.js"; // (Survival's gunmen: their rules hook into l4ddrules.js)
-import { sbAct, sbTick } from "./sbspawn.js";
 
-import { sbOut, sbOutTick, sbAgainAct } from "./sbout.js";
+import { sbGot } from "./sbhot.js";
 
-import { sbHotAct, sbSlots, sbGot, sbSpend } from "./sbhot.js";
+import { grCool } from "./sbgroups.js";
 
-import { sbLootAct, sbLootTick } from "./sbloot.js";
-
-import { nbPermAct, nbShareAct } from "./nbperms.js";
-
-import { sbZoneTick, sbLandAct } from "./sbzone.js";
-
-import { sbGroupTick, sbGroupAct, grCool } from "./sbgroups.js";
-
-import { sbEnd, sbPick, sbRekey, sbRename } from "./sbsave.js";
+import { sbEnd } from "./sbsave.js";
 
 import { stamp, took } from "./perf.js";
 
@@ -74,17 +42,13 @@ import { boardSpeed, ARM_RELOAD } from "./armspeed.js";
 
 import {
   isDn,
-  DN_GRACE,
   DN_CEREMONY,
   dealTakes,
   startTake,
   nextTake,
   afterDunce,
-  dnVote,
   dnCheck,
-  dnTick,
   isDefender,
-  dnEndVote,
 } from "./duncerules.js";
 
 import {
@@ -95,14 +59,8 @@ import {
   VD_VAL,
   vdAdvance,
   vdAfter,
-  vdEnd,
   vdSkip,
-  vdTimer,
   vdJoin,
-  vdTick,
-  vdWrite,
-  vdSafe,
-  seated,
   isDate,
 } from "./vddrules.js";
 
@@ -112,11 +70,6 @@ import {
   tvRound,
   tvDeal,
   tvAdvance,
-  tvWrite,
-  tvPick,
-  tvEnd,
-  tvGrade,
-  tvStop,
   tvJoin,
   tvSkip,
   tvLimit,
@@ -126,98 +79,35 @@ import {
   isQuack,
   QUACK_PHASES,
   startQuackRound,
-  quackEnd,
   quackAdvance,
-  quackLeft,
   quackSkip,
-  wqWord,
-  holdStill,
-  quackMoved,
   tileCenter,
 } from "./quackrules.js";
 
-import {
-  holdDown,
-  shielded,
-  comeBack,
-  normalGame,
-  downStill,
-  standUps,
-  isGhost,
-} from "./hangout/death.js";
+import { hangJoin, hangLeft } from "./hangout/rules.js";
 
-import {
-  hangAction,
-  hangTick,
-  hangJoin,
-  hangLeft,
-  hangStill,
-} from "./hangout/rules.js";
-
-import { inCabin, useMode, W as HW, H as HH } from "./hangout/layout.js";
-
-import { justinTick, justinDown } from "./boardjustin.js";
-
-import { pwAdd, pwHit, pwTick, CRIT_DOWN } from "./wounds.js";
+import { useMode } from "./hangout/layout.js";
 
 import {
   isMgj,
   mgjAdvance,
-  mgjCount,
-  mgjUse,
-  mgjTeamUse,
   mgjCool,
-  mgjHolds,
-  PELLETS,
   PELLET_SPEED,
   PELLET_LIFE,
-  SPREAD,
-  CHAIR_R,
-  CAKE_SPEED,
-  CAKE_EAT_MS,
-  mgjMag,
-  mgjOut,
-  ammoOf,
-  mgjSpend,
 } from "./mgjrules.js";
 
-import {
-  isL4dd,
-  l4Use,
-  l4Reload,
-  l4Shots,
-  l4Holds,
-  helperOut,
-  laserHeat,
-  laserNext,
-  l4Again,
-} from "./l4ddrules.js";
+import { helperOut } from "./l4ddrules.js";
 
-import {
-  ARMS,
-  GUN_BREEDS,
-  BOARD_GUNS,
-  BOARD_WEAPONS,
-  AUTO,
-  THROWS,
-  MGJ_GUNS,
-  MGJ_MELEE,
-  NADE_GROW,
-  critOf,
-  armOfShot,
-} from "./guns.js";
+import { ARMS, GUN_BREEDS, BOARD_GUNS, NADE_GROW } from "./guns.js";
 
-import { MAPS, MAP_FORMS, mapForm, mapName, isWorldMap } from "./maps.js";
+import { MAPS, MAP_FORMS, mapForm, mapName } from "./maps.js";
 
-import { modesFor, modeOf, SOLO_MODES } from "./modes.js";
+import { modesFor, modeOf } from "./modes.js";
 
-import { umapAct, umapTitle, isUmap } from "./umaprules.js";
-
-import { rainbowJoin } from "./looksrules.js";
+import { umapTitle, isUmap } from "./umaprules.js";
 
 import {
   PODIUM,
-  bbWrite,
   endMatch,
   endSeedTurn,
   endTopics,
@@ -230,106 +120,50 @@ import {
 import {
   SC_BOARD,
   SC_PHASES,
-  SC_VOTES,
   SC_WORDS,
   scAdvance,
   scFreeOf,
   scPara,
   scStory,
-  scVote,
-  scWrite,
   scZones,
   startNext,
   startStory,
 } from "./scrules.js";
 
 import {
-  ATT_FAST,
   ATT_PHASES,
   ATT_TIME,
   attCheck,
-  attRole,
-  canGiveUp,
   counselDone,
-  counselOk,
   endCounsel,
-  isCounsel,
   lawCheck,
-  lawVote,
   nextCase,
   startCase,
-  verdict,
 } from "./lawrules.js";
 
-import {
-  MELEE,
-  PHP,
-  SB_H,
-  attacks,
-  chainShot,
-  cutPic,
-  dmgOf,
-  duckFlame,
-  floorFirst,
-  groundFire,
-  gunSpeed,
-  moveShots,
-  sizeShots,
-  soaks,
-  strike,
-} from "./boardfire.js";
+import { sizeShots } from "./boardfire.js";
 
 /* (what l4ddrules.js asks of the board's weapons comes by here, not from boardfire.js: boardfire.js imports sbcabin.js, which
    needs l4ddrules.js whole before it runs, so l4ddrules.js must not import boardfire.js itself) */
 export { shovePx } from "./boardfire.js";
 
-import {
-  DOD_KEYS,
-  STAGE,
-  countTurn,
-  denied,
-  dodOn,
-  dodRoom,
-  dodSet,
-  dodSettle,
-  dodStarts,
-  dodVoting,
-  forgame,
-  groupsOf,
-  groupsOf0,
-  isSudo,
-  may,
-  permOk,
-  slowMs,
-} from "./roomrules.js";
+import { STAGE, countTurn, dodOn, isSudo } from "./roomrules.js";
 
 import {
-  ALL_IN,
-  DICE,
-  beginGame,
-  cabinMap,
-  capOf,
-  countdown,
   gameOver,
-  keepRoomMap,
-  nextVote,
-  placeMap,
   rolling,
   rotate,
-  sbHere,
-  sbMapPicked,
   sbSpot,
   voteAgain,
-  voteClock,
-  voteIds,
-  voteLeft,
-  voteRate,
   votesDue,
 } from "./voterules.js";
 
 import { SB_ACTS } from "./actsb.js";
+
 import { PLAY_ACTS } from "./actplay.js";
+
 import { ROOM_ACTS } from "./actroom.js";
+
 import { shuffle, anyOf } from "./random.js";
 
 export const COLS = [
@@ -1544,104 +1378,6 @@ export function safeReduce(state, a, now = Date.now()) {
   }
 }
 
-/* ---------- the Zebra cake special ----------
-   One in the room at a time: s.zcake = { n, by, x0, y0, vx, vy, t, stop, eat, hin }. It flies the way it was thrown, as
-   Mad God Justin's does, and lands at the board's edge or after 6 s (Hangout: at the cabin's walls or the world's edge
-   too; hin, the side it's on). Justin runs after it wherever he is and eats it, and does nothing else meanwhile
-   (boardjustin.js, hangout/justin.js: eat, when he started); with no Justin to eat it, it's gone 12 s after it lands */
-const CAKE_LEFT = 12000;
-export function throwCake(s, by, p, aim, now) {
-  const vx = aim[0] * CAKE_SPEED,
-    vy = aim[1] * CAKE_SPEED;
-  let stop = 6;
-  if (isHang(s)) {
-    const side = inCabin(p.x * HW, p.y * HH) ? 1 : 0;
-    for (let t = 0.05; t <= 6; t += 0.05) {
-      const x = p.x + vx * t,
-        y = p.y + vy * t;
-      if (
-        x < 0.005 ||
-        x > 0.995 ||
-        y < 0.005 ||
-        y > 0.995 ||
-        (inCabin(x * HW, y * HH) ? 1 : 0) !== side
-      ) {
-        stop = t - 0.05;
-        break;
-      }
-    }
-  } else {
-    const tx =
-        vx > 0 ? (0.97 - p.x) / vx : vx < 0 ? (0.03 - p.x) / vx : Infinity,
-      ty = vy > 0 ? (0.96 - p.y) / vy : vy < 0 ? (0.04 - p.y) / vy : Infinity;
-    stop = Math.min(tx, ty, 6);
-  }
-  s.zcake = {
-    n: s.fxN,
-    by,
-    x0: p.x,
-    y0: p.y,
-    vx: +vx.toFixed(4),
-    vy: +vy.toFixed(4),
-    t: now,
-    stop: now + Math.max(0, stop) * 1000,
-    eat: 0,
-    ...(isHang(s) ? { hin: inCabin(p.x * HW, p.y * HH) ? 1 : 0 } : {}),
-  };
-}
-/* a cake nobody ate (no Justin, or he's down), or one out of its stage: gone */
-export function cakeGone(s, now) {
-  const c = s.zcake;
-  if (!c) return false;
-  if (
-    !boardPhases(s).includes(s.phase) ||
-    isMgj(s) ||
-    (c.eat ? now > c.eat + CAKE_EAT_MS + 3000 : now > c.stop + CAKE_LEFT)
-  ) {
-    s.zcake = null;
-    return true;
-  }
-  return false;
-}
-
-/* ---------- the ducks' wounds and crits outside Quacky Zombies and Mad God Justin (wounds.js) ---------- */
-export const pwOn = (s) => !isMgj(s) && !isL4dd(s);
-export const critRoll = (s, w) =>
-  pwOn(s) && Math.random() < critOf(armOfShot(w));
-/* a hit of weapon (or shot kind) k on duck id: a crit doubles it (guns.js critOf), and takes no more than that; what
-   takes all of it (the slug, the chain gun: PHP) still does */
-export function hitSoaks(s, id, now, k, crit, by) {
-  const d = dmgOf(s, k);
-  return soaks(s, id, now, crit ? d * 2 : d, by, crit && d < PHP);
-}
-/* duck id was hit by weapon w: a wound, or (crit, and it went down) its head blown off, down CRIT_DOWN ms, and a
-   smaller CRIT over it on every screen (the pcrit fx) */
-export function wounded(s, id, w, now, crit) {
-  const P = s.players[id];
-  if (!pwOn(s) || !P) return;
-  if (normalGame(s) && shielded(s, id, now)) return; // (spawn protection: no wounds either)
-  const head = crit && P.dead;
-  if (head) {
-    pwAdd(s, id, ["x0"], now, true);
-    holdDown(s, id, now, CRIT_DOWN);
-  } else pwHit(s, id, w, now, !!P.dead);
-  if (!crit) return;
-  const p = s.pos[id] || {};
-  s.fxN = (s.fxN || 0) + 1;
-  s.fx = [
-    ...(s.fx || []).slice(-19),
-    {
-      n: s.fxN,
-      kind: "pcrit",
-      who: [id],
-      t: now,
-      x: p.x,
-      y: p.y,
-      ...(head ? {} : { m: 1 }), // (a crit that didn't put it down: only the small CRIT, Adam's, Nov 21 18:31Z)
-      ...(isHang(s) ? { hz: Math.round(+p.z || 0) } : {}),
-    },
-  ];
-}
 /* a vote passes once enough say yes, and fails once it can't pass any more */
 export function settleVote(s, now) {
   const v = s.vote;
