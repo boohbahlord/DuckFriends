@@ -160,7 +160,7 @@ report.js 114 Report Bug or Suggest Ideas
 rooms.js 256 Play: create a room, and the
 router.js 112 screens
 rules.js 6240 the rules of Agree or Disagree
-sandbox.js 1359 Sandbox: the key windows
+sandbox.js 1348 Sandbox: the key windows
 sandboxrules.js 2059 Sandbox: which map it plays on,
 sbarms.js 124 Sandbox: a made NPC's weapons in
 sbaudio.js 211 Sandbox: songs players bring in
@@ -177,7 +177,7 @@ sbgroups.js 486 Sandbox: groups , the rules
 sbgroupview.js 416 Sandbox: groups , on the screen
 sbhelp.js 273 Sandbox: the help manual
 sbhot.js 155 Sandbox: the hotbar , the rules
-sbhotview.js 299 Sandbox: the hotbar , the screen
+sbhotview.js 323 Sandbox: the hotbar , the screen
 sblooks.js 48 Sandbox: a zone's look
 sbloot.js 444 Sandbox: loot orbs , the rules
 sblootview.js 482 Sandbox: loot orbs , on the
