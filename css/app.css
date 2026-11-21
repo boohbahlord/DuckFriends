@@ -21382,7 +21382,8 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .nm-line .nm-in {
   flex: 1;
 }
-/* a phone: the files over the code */
+/* a phone: the files over the code, and the terminal smaller than the code (the owner's, Nov 21 18:59Z: "Make sure that
+   the terminal isn't too big on vertical version when writing the Seriat") */
 @media (max-width: 40rem) {
   .nm {
     grid-template-columns: minmax(0, 1fr);
@@ -21391,6 +21392,13 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   }
   .nm-tree {
     max-height: 7rem;
+  }
+  .nm-ed {
+    flex: 4;
+  }
+  .nm-term {
+    flex: 1;
+    min-height: 5.5rem;
   }
 }
 
@@ -21670,10 +21678,21 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .sbb-page th {
   background: #333858;
 }
+/* a phone held upright: bigger letters, and less room round them so a line still holds enough (the owner's, Nov 21
+   18:59Z: "make sure that the text is larger on vertical version of mobile ... whenever you're trying to read the
+   Seriat Bible") */
 @media (max-width: 600px) {
+  .win.sbb-win {
+    padding: 0.35rem;
+  }
   .sbb-page {
-    padding: 0.8rem 0.9rem 1.5rem;
-    font-size: 1.05rem;
+    padding: 0.6rem 0.6rem 1.5rem;
+    font-size: 1.35rem;
+    line-height: 1.3;
+  }
+  .sbb-page code,
+  .sbb-page pre {
+    font-size: 0.72em;
   }
 }
 /* the help pages of Sandbox's windows (js/sbhelp.js): a few lines at a time, in the game's own window (the owner's, Nov
