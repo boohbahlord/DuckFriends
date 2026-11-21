@@ -40,7 +40,9 @@ const INIT = fs.readFileSync(
         AS = await import("./js/armspeed.js"),
         GD = await import("./js/gamedefaults.js"),
         SP = await import("./js/specials.js"),
-        GA = await import("./js/gunart.js"),
+        GA = await import("./js/gunart.js").catch(
+          () => import("./js/l4ddguns.js"),
+        ), // (l4ddguns.js before there was one drawing)
         AR = await import("./js/l4ddart.js"),
         CA = await import("./js/l4ddcatalog.js"),
         { steadyText } = await import("./js/pxdom.js");
@@ -50,6 +52,10 @@ const INIT = fs.readFileSync(
         ARMS: GN.ARMS || L4m.ARMS,
         kindOf: GN.kindOf || L4m.kindOf,
       };
+      /* Sandbox's made NPCs' lists: made when first asked since V209 (sbarms.js npcArms) */
+      const NA = SA.npcArms
+        ? SA.npcArms()
+        : { guns: SA.NPC_GUNS, melee: SA.NPC_MELEE };
       const hash = (str) => {
         let h = 0x811c9dc5;
         for (let i = 0; i < str.length; i++) {
@@ -58,19 +64,22 @@ const INIT = fs.readFileSync(
         }
         return (h >>> 0).toString(36);
       };
-      /* functions out (a special's icon may be one: called), keys sorted */
+      /* functions out (a special's icon may be one: called), keys sorted, every text through steadyText (a picture may
+         hold a duck, and duckSVG's ids count every duck drawn since load) */
       const plain = (v) =>
         JSON.parse(
           JSON.stringify(v, (k, x) =>
             typeof x === "function"
-              ? "fn:" + hash(String(x()))
-              : x && typeof x === "object" && !Array.isArray(x)
-                ? Object.fromEntries(
-                    Object.keys(x)
-                      .sort()
-                      .map((a) => [a, x[a]]),
-                  )
-                : x,
+              ? "fn:" + steadyText(String(x()))
+              : typeof x === "string"
+                ? steadyText(x)
+                : x && typeof x === "object" && !Array.isArray(x)
+                  ? Object.fromEntries(
+                      Object.keys(x)
+                        .sort()
+                        .map((a) => [a, x[a]]),
+                    )
+                  : x,
           ),
         );
       const H = (v) => hash(JSON.stringify(plain(v)));
@@ -83,8 +92,8 @@ const INIT = fs.readFileSync(
           ...R.GUNS_NEW,
           ...MG.MGJ_GUNS,
           ...MG.PICK_WEAPONS,
-          ...SA.NPC_GUNS,
-          ...SA.NPC_MELEE,
+          ...NA.guns,
+          ...NA.melee,
           ...Object.keys(GA.GUNS),
           "grenade",
           "chair",
@@ -119,7 +128,7 @@ const INIT = fs.readFileSync(
         lists: [MG.MGJ_GUNS, MG.PICK_WEAPONS, MG.MGJ_MELEE, MG.INF_AMMO],
       });
       out.npcs = H({
-        sb: [SA.NPC_GUNS, SA.NPC_MELEE, per(SA.reachOf)],
+        sb: [NA.guns, NA.melee, per(SA.reachOf)],
         gunmen: GM.GM,
       });
       out.feel = H({

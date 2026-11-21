@@ -2081,11 +2081,6 @@ function justinChat(s, now) {
   if (JSON.stringify(at) !== JSON.stringify(s.hang.l4jc)) s.hang.l4jc = at;
   if (text) logIn(s, { from: WILD.id, to: null, text });
 }
-/* is the Justin out there (or the fireplace's) here and up, to say something? */
-const justinUp = (s) => {
-  const q = P4(s, HELPER.id);
-  return !!s.players[HELPER.id] && !!q && !q.dn && !q.gh;
-};
 function justinSays(s, key) {
   const list = LINES[key],
     bags = { ...(s.hang.l4jl || {}) };
@@ -4960,7 +4955,6 @@ export function l4Loot(s, id, w, inf, mods = null) {
   }
   if (!give(s, id, w)) return false;
   const kit = kitOf(s, id),
-    full = fullAmmo(w),
     am = { ...kit.am },
     M = mods || {};
   if (inf === undefined) inf = M.inf;

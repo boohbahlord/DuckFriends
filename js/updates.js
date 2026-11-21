@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v209",
+    version: 209,
+    date: "Nov 21, 2026",
+    title: "Tidying up",
+    news: [
+      "Computers play from one shared brain in every mode, so a fix to one is a fix to all.",
+    ],
+  },
+  {
     id: "v208",
     version: 208,
     date: "Nov 21, 2026",
