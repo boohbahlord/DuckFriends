@@ -19,47 +19,116 @@ import { whyNot } from "./sandbox.js";
 import { sbHotOn } from "./sbhotview.js";
 import { sbSlots, spawnOf } from "./sbhot.js";
 
-/* what's in hand: the board's weapon kept out (held), the key last pressed (lastKey: V presses it again); Quacky
-   Zombies' pick (l4Slot: 0 melee, 1 and 2 ranged, 3 the item, 4 the second item, 5 the grenades: keys 1 to 6,
-   l4ddrules.js slotOfPick) and the weapon's before an item (l4Last); Mad God Justin's (mgjHold: the short sword, the
-   pistol, the weapon picked up, the zebra cake), what goes back in hand once a picked-up weapon is used up or the
-   zebra cake thrown (mgjBack), and the fight it was set for (mgjFight: each fight starts with the pistol out, the
-   owner's, Nov 16) */
-export const hand = {
-  held: null,
-  lastKey: -1,
-  l4Slot: 0,
-  l4Last: 0,
-  mgjHold: "handgun",
-  mgjBack: "handgun",
-  mgjFight: -1,
+/* One machine for every mode: what's out in my hand (hand.in) and what comes back once it's put away or used up
+   (hand.back). Each mode is a row of data:
+   - in: the board and Mad God Justin keep a weapon's id; Quacky Zombies a pick (0 melee, 1 and 2 ranged, 3 the item,
+     4 the second item, 5 the grenades: keys 1 to 6, l4ddrules.js slotOfPick)
+   - start: what's in hand at first (Mad God Justin: the pistol, each fight; the owner's, Nov 16)
+   - stays: a weapon that stays in hand once picked; toggles: picked again, it goes away and the one back comes back
+   - self: picking a weapon that stays makes it the one to come back (Quacky Zombies), or else the one before stays it
+   - weapons: the board's, the ones a key puts in hand; held(s): the weapon out in hand, for the board's ways
+   - empty(s): the hand empties itself (Quacky Zombies: no grenades or no slot left; Mad God Justin: the picked-up
+     weapon used up or the zebra cake thrown), and backTo(s) is what comes back then */
+const ROWS = {
+  board: {
+    start: null,
+    weapons: BOARD_WEAPONS, // (what a key puts in hand; any other key puts it away)
+    held: () => hand.in,
+    stays: () => false,
+    toggles: (x, key) => key, // (a keyboard's key toggles; a tap on a phone only picks)
+  },
+  l4: {
+    start: 0,
+    held: () => null,
+    stays: (i) => i < 3,
+    toggles: (i) => i >= 3,
+    self: true,
+    empty: (s) => {
+      const sl = slotsOf(s, C.R.me),
+        kit = kitOf(s, C.R.me);
+      return hand.in === 5 ? !(kit && kit.g > 0) : !sl[slotOfPick(hand.in)]; // (the last grenade thrown, or the item used up)
+    },
+    backTo: (s) => (slotsOf(s, C.R.me)[hand.back] ? hand.back : 0),
+  },
+  mgj: {
+    start: "handgun",
+    held: (s) => (s.phase === "boss" ? hand.in : null), // (only in the fight)
+    byFight: true, // (a new screen keeps it: it starts over each fight)
+    stays: (id) => id === MGJ_MELEE || id === "handgun",
+    toggles: () => false,
+    empty: (s) =>
+      (hand.in !== MGJ_MELEE &&
+        hand.in !== "none" && // (an empty slot picked: nothing in hand)
+        hand.in !== "handgun" &&
+        hand.in !== "zebra" &&
+        hand.in !== C.myPick()) ||
+      (hand.in === "zebra" &&
+        !!s.mgj &&
+        !!(s.mgj.cake || clockNow() - (s.mgj.zebraAt || 0) < CAKE_EVERY)),
+    backTo: () => hand.back || MGJ_MELEE,
+  },
 };
+const rowOf = (s) => (isL4dd(s) ? "l4" : isMgj(s) ? "mgj" : "board");
+/* the key last pressed (lastKey: V presses it again); fight: the Mad God Justin fight the hand was set for */
+export const hand = {
+  of: "",
+  in: null,
+  back: null,
+  lastKey: -1,
+  fight: -1,
+  /* the board's and Mad God Justin's weapon out in hand (Mad God Justin: only in the fight), or null */
+  get held() {
+    return mine().held(C && C.R && C.R.state);
+  },
+};
+/* my mode's row, the hand set to its start when the mode changed */
+function mine() {
+  const k = C && C.R ? rowOf(C.R.state) : "board";
+  if (hand.of !== k) {
+    hand.of = k;
+    hand.in = hand.back = ROWS[k].start;
+  }
+  return ROWS[k];
+}
+/* what's in hand now, in my mode's way (Quacky Zombies: the pick) */
+export const handIn = () => (mine(), hand.in);
+/* a new screen: the board and Quacky Zombies start over (Mad God Justin's hand goes by its fight) */
+export function handReset() {
+  hand.lastKey = -1;
+  if (!(ROWS[hand.of] || {}).byFight) hand.of = "";
+}
+/* x picked (key: a keyboard's key): the one machine */
+function put(x, key) {
+  const M = mine();
+  if (M.toggles(x, key) && hand.in === x) hand.in = hand.back;
+  else {
+    if (M.stays(x)) {
+      if (M.self) hand.back = x;
+      else if (hand.in !== x && M.stays(hand.in)) hand.back = hand.in;
+    } else if (M.stays(hand.in)) hand.back = hand.in;
+    hand.in = x;
+  }
+}
+/* the hand emptied itself: the one back comes back (true when it did) */
+function settle(s) {
+  const M = mine();
+  if (!M.empty || !M.empty(s)) return false;
+  hand.in = M.backTo(s);
+  return true;
+}
 /* game.js's side: R, me, bar (getters), sendMove, fire, myPick, onBoardPhase, playDuck, turned */
 let C = null;
 export const pickWith = (c) => (C = c);
 /* Mad God Justin: a picked-up weapon used up, or the zebra cake thrown: back to the one out before (on each new state,
    and when the slider asks what's in hand, so it never picks the next one over by itself) */
 export function mgjBackIfGone(s) {
-  if (s.mgj && s.mgj.n !== hand.mgjFight) {
-    hand.mgjFight = s.mgj.n;
-    hand.mgjHold = hand.mgjBack = "handgun"; // (a new fight: the pistol in hand, the short sword on 1)
+  mine();
+  if (s.mgj && s.mgj.n !== hand.fight) {
+    hand.fight = s.mgj.n;
+    hand.in = hand.back = "handgun"; // (a new fight: the pistol in hand, the short sword on 1)
   }
-  const thrown =
-    hand.mgjHold === "zebra" &&
-    s.mgj &&
-    (s.mgj.cake || clockNow() - (s.mgj.zebraAt || 0) < CAKE_EVERY);
-  if (
-    (hand.mgjHold !== MGJ_MELEE &&
-      hand.mgjHold !== "none" && // (an empty slot picked: nothing in hand)
-      hand.mgjHold !== "handgun" &&
-      hand.mgjHold !== "zebra" &&
-      hand.mgjHold !== C.myPick()) ||
-    thrown
-  ) {
-    hand.mgjHold = hand.mgjBack || MGJ_MELEE;
-    if (C.me && s.phase === "boss") setTimeout(() => C.sendMove(true), 0);
-  }
-  hand.held = s.phase === "boss" ? hand.mgjHold : null;
+  if (settle(s) && C.me && s.phase === "boss")
+    setTimeout(() => C.sendMove(true), 0);
 }
 /* Mad God Justin: what a key puts out in my hand, kept there (the owner's, Nov 3) */
 export const mgjToggles = (id) =>
@@ -68,12 +137,7 @@ export const mgjToggles = (id) =>
   id === "zebra" ||
   (!!id && id === C.myPick());
 export function mgjOut2(id) {
-  if (
-    hand.mgjHold !== id &&
-    (hand.mgjHold === MGJ_MELEE || hand.mgjHold === "handgun")
-  )
-    hand.mgjBack = hand.mgjHold; // (the one to go back to)
-  hand.mgjHold = hand.held = id;
+  put(id);
   C.sendMove(true);
 }
 /* the weapon in my duck's hand: the one kept out (Shift and its key); Quacky Zombies: always the one in the slot
@@ -81,15 +145,12 @@ export function mgjOut2(id) {
    ghost */
 export function heldNow() {
   if (C.R && isL4dd(C.R.state)) {
-    const sl = slotsOf(C.R.state, C.R.me);
-    const kit = kitOf(C.R.state, C.R.me);
-    if (hand.l4Slot === 5 && !(kit && kit.g > 0))
-      hand.l4Slot = sl[hand.l4Last] ? hand.l4Last : 0; // (the last grenade thrown: the weapon before it comes back)
-    if (hand.l4Slot !== 5 && !sl[slotOfPick(hand.l4Slot)])
-      hand.l4Slot = sl[hand.l4Last] ? hand.l4Last : 0;
+    settle(C.R.state); // (the last grenade thrown, or the item used up: the weapon before it comes back)
     if (downArmed(C.R.state, C.R.me)) return "handgun"; // (down: the down pistol)
     if (l4Hp(C.R.state, C.R.me) <= 0) return "";
-    return hand.l4Slot === 5 ? "grenade" : sl[slotOfPick(hand.l4Slot)] || "";
+    return hand.in === 5
+      ? "grenade"
+      : slotsOf(C.R.state, C.R.me)[slotOfPick(hand.in)] || "";
   }
   return hand.held && hasKey(C.playDuck(), hand.held) ? hand.held : "";
 }
@@ -100,8 +161,11 @@ export function heldNow() {
 export function selectKey(i, toggle) {
   const id = keysOf(C.playDuck())[i];
   hand.lastKey = i;
-  hand.held =
-    BOARD_WEAPONS.includes(id) && !(toggle && hand.held === id) ? id : null;
+  const M = mine();
+  if (M.weapons) {
+    if (M.weapons.includes(id)) put(id, toggle);
+    else hand.in = null;
+  }
   if (C.bar) C.bar.show(i);
   C.sendMove(true);
 }
@@ -125,8 +189,8 @@ export function useKey(i, keep, toggle = false) {
   /* an empty slot puts the weapon away (the owner's, Nov 19 21:59Z: no Shift to put it away; "you just switch to an empty
      hotbar using the number key") */
   if (!keysOf(C.playDuck())[i]) {
-    if (isMgj(C.R.state)) hand.mgjHold = "none";
-    hand.held = isMgj(C.R.state) ? "none" : null;
+    mine();
+    hand.in = isMgj(C.R.state) ? "none" : null;
     C.sendMove(true);
     return;
   }
@@ -154,7 +218,7 @@ export function useKey(i, keep, toggle = false) {
   // (the Invisible duck: the key turns it on and off)
   else if (THROWS.includes(id)) {
     if (hand.held && isSb(C.R.state)) {
-      hand.held = null; // (Sandbox: the key puts the weapon in hand away and throws; the owner's, Nov 19 16:38Z, "WHY THE FUCK CAN I NOT THROW THE CHAIR IN SANDBOX")
+      hand.in = null; // (Sandbox: the key puts the weapon in hand away and throws; the owner's, Nov 19 16:38Z, "WHY THE FUCK CAN I NOT THROW THE CHAIR IN SANDBOX")
       C.sendMove(true);
     }
     if (!hand.held) C.fire(id); // (the Chair and the Zebra cake: thrown toward the mouse, but not with a weapon in hand)
@@ -168,27 +232,12 @@ export function useKey(i, keep, toggle = false) {
 export function l4Pick(i) {
   const sl = slotsOf(C.R.state, C.R.me),
     kit = kitOf(C.R.state, C.R.me);
+  mine();
   if (i === 5) {
     /* the grenades are a number key now (6), and picked like a weapon: the key again puts them away (the owner's, Nov 16) */
-    if (hand.l4Slot === 5) hand.l4Slot = hand.l4Last;
-    else if (kit && kit.g > 0) {
-      if (hand.l4Slot < 3) hand.l4Last = hand.l4Slot;
-      hand.l4Slot = 5;
-    } else return;
-    C.sendMove(true);
-    if (C.bar) C.bar.refresh();
-    return;
-  }
-  const k = slotOfPick(i),
-    item = k >= 3;
-  if (k < 0 || !sl[k]) return;
-  if (item) {
-    if (hand.l4Slot === i) hand.l4Slot = hand.l4Last;
-    else {
-      if (hand.l4Slot < 3) hand.l4Last = hand.l4Slot;
-      hand.l4Slot = i;
-    }
-  } else hand.l4Slot = hand.l4Last = i;
+    if (hand.in !== 5 && !(kit && kit.g > 0)) return;
+  } else if (slotOfPick(i) < 0 || !sl[slotOfPick(i)]) return;
+  put(i);
   C.sendMove(true);
   if (C.bar) C.bar.refresh();
 }
