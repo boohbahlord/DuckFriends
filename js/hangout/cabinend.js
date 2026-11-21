@@ -2,7 +2,7 @@
    A small vote button at the board's top left in Hangout ("End Cabin"), Quacky Zombies ("Exit Cabin", or "Exit Downpour" on Downpour) and Sandbox ("Leave Sandbox", on any map). A click votes, a
    click again takes the vote back (never Enter or E). Half of the people (not the computers) start a 10 second timer
    that shows on the button; fewer than half stops it. The rules are in js/rules.js (`cabinEnd`, `cabinOver`). */
-import { cabinVotes, cabinNeeded, isHang } from "../rules.js";
+import { cabinVotes, cabinNeeded, isHang, inWorld } from "../rules.js";
 import { isSb, sbOnBoard, baseL4map } from "../sandboxrules.js";
 import {
   isL4dd,
@@ -108,7 +108,7 @@ export function mountCabinEnd(S, getR) {
     if (!R) return;
     const s = R.state,
       on =
-        ((isHang(s) && s.phase === "hang") ||
+        ((isHang(s) && inWorld(s)) ||
           (sbOnBoard(s) && s.phase === "sandbox")) &&
         !(R.state.players[R.me] || {}).bot, // (and Sandbox's Leave Sandbox, on the board too)
       c = s.cabinEnd || {},

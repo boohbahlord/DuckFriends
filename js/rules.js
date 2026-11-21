@@ -669,7 +669,7 @@ function cabinMap(s) {
 }
 /* in Duck Cabin's games or Sandbox, playing (no rounds: the End Cabin or Leave Sandbox vote ends it) */
 const sbHere = (s) =>
-  (isHang(s) && s.phase === "hang") || (sbOnBoard(s) && s.phase === "sandbox");
+  (isHang(s) && inWorld(s)) || (sbOnBoard(s) && s.phase === "sandbox");
 /* Sandbox on the board: where a duck comes in (anywhere; the spawn points are stage 2) */
 const sbSpot = () => ({
   x: +(0.1 + 0.8 * Math.random()).toFixed(4),
@@ -862,6 +862,9 @@ export const isDdr = (s) => s.options.mode === "ddr";
 export const isBb = (s) => s.options.mode === "bb";
 export const isSc = (s) => s.options.mode === "sc";
 export const isLaw = (s) => s.options.mode === "law";
+/* the walkable world is running: phase "hang" is the one phase every game on a world map plays in (Hangout, Quacky
+   Zombies, Survival, Mad God Justin, Sandbox on a world), so everyone asks this, never the phase's name */
+export const inWorld = (s) => s.phase === "hang";
 /* Duck Cabin's world: Hangout, and Quacky Zombies on the same map (its own rules: l4ddrules.js) */
 export const isHang = (s) =>
   baseMode(s.options) === "hang" || baseMode(s.options) === "l4dd"; // (Sandbox on a world map runs as that world's mode: sandboxrules.js)
@@ -1312,7 +1315,7 @@ function phaseLimit(s) {
   if (s.phase === "vddown") return VD_DOWN;
   if (s.phase === "vdval") return VD_VAL;
   if (s.phase === "wqpick") return s.options.wqPickTime;
-  if (s.phase === "hang") return hangLimit(s);
+  if (inWorld(s)) return hangLimit(s);
   if (s.phase === "choice" || s.phase === "accuse") return s.options.wqTimer;
   return 0;
 }
@@ -1612,7 +1615,7 @@ function seatNewcomer(s, id) {
   const me = s.players[id],
     ph = s.phase;
   if (isHang(s)) {
-    if (ph === "hang") hangJoin(s, id);
+    if (inWorld(s)) hangJoin(s, id);
     return;
   } // Hangout: at the front door, at once
   if (sbOnBoard(s)) {
@@ -2670,9 +2673,7 @@ function reduceStep(state, a, now) {
     case "wqWord":
       return wqWord(s, a, now) || state; // Who is the Quack?: the secret word, from its picker
     case "hang":
-      return me && isHang(s) && s.phase === "hang" && hangAction(s, a, now)
-        ? s
-        : state; // Hangout: an activity (k) did something
+      return me && isHang(s) && inWorld(s) && hangAction(s, a, now) ? s : state; // Hangout: an activity (k) did something
     case "counsel": {
       // Lawyering: my pick (as the writer) or my vote (the room) for an attorney; it can change until the picking ends
       const L = s.law,
@@ -3000,7 +3001,7 @@ function reduceStep(state, a, now) {
       if (
         !may(s, a.id, "canskip") ||
         ["lobby", "over"].includes(s.phase) ||
-        s.phase === "hang"
+        inWorld(s)
       )
         return state;
       say(s, `${me.name} skipped ahead.`);
@@ -3106,7 +3107,7 @@ function reduceStep(state, a, now) {
       if (sbHere(s) && cabinTick(s, now)) return s;
       if (
         isL4dd(s) &&
-        s.phase === "hang" &&
+        inWorld(s) &&
         s.hang &&
         s.hang.l4 &&
         s.hang.l4.over &&
@@ -3115,11 +3116,7 @@ function reduceStep(state, a, now) {
       )
         return cabinOver(s, now, "Everyone's down.");
       const sbOut =
-        isL4dd(s) &&
-        s.phase === "hang" &&
-        s.hang &&
-        s.hang.l4 &&
-        s.hang.l4.over;
+        isL4dd(s) && inWorld(s) && s.hang && s.hang.l4 && s.hang.l4.over;
       if (
         sbOut &&
         isSb(s) &&
@@ -3133,15 +3130,10 @@ function reduceStep(state, a, now) {
       const sbEnd = sbOutTick(s, now); // (the same off the zombie maps: sbout.js)
       if (sbEnd === "lobby") return backToLobby(s, "Everyone's out.");
       if (sbEnd) return s;
-      if (
-        s.phase === "hang" &&
-        s.options.mode === "hang" &&
-        s.ends &&
-        now >= s.ends
-      )
+      if (inWorld(s) && s.options.mode === "hang" && s.ends && now >= s.ends)
         return cabinOver(s, now, "Time's up in the cabin."); // (Hangout from Random or the vote: its time limit)
       const shots = isL4dd(s) ? l4Shots(s, now) : moveShots(s, now),
-        hung = isHang(s) && s.phase === "hang" && hangTick(s, now),
+        hung = isHang(s) && inWorld(s) && hangTick(s, now),
         jus =
           justinTick(s, now, logLine) |
           dnTick(s, now) |

@@ -40,6 +40,7 @@ import {
   signed,
   nameOfValue,
   slowMs,
+  inWorld,
 } from "./rules.js";
 import { modeOf, MODES, statsOf } from "./modes.js";
 import { statRow } from "./statrows.js";
@@ -1431,7 +1432,7 @@ function psLines(s, all) {
     "PID WHAT     DOING",
     `  1 game     ${modeOf(o.mode).name} on ${sbWorld(o) ? SB_WORLD_NAMES[sbWorld(o)] : mapName(o.map)}${s.phase === "lobby" ? ", in the lobby" : o.mode === "hang" ? ", hanging out" : sb ? "" : `, round ${s.round + 1}`}`,
   ];
-  if (s.phase !== "lobby" && !sb && !(o.mode === "hang" && s.phase === "hang"))
+  if (s.phase !== "lobby" && !sb && !(o.mode === "hang" && inWorld(s)))
     out.push(
       `  2 ${st.padEnd(8)} ${["answer", "discuss", "results", "bracket"].includes(s.phase) || s.done ? `${done} of ${n} have ended their turn` : ""}`,
     );
