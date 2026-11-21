@@ -3,7 +3,7 @@
    Mad God Justin's fight and his zombie waves), each from a fixed seed and a fixed clock for a fixed number of beats (no
    Math.random and no clock but the fake ones), and hashes the whole room every beat. A digest of all the beats and one hash
    every 50 beats are kept in tools/npc-golden/pinned.json; a run that gives other hashes fails, saying the first 50 beats
-   it changed in. (The computers keep away from the zombies, so each -bait scenario parks my duck on the nearest zombie each beat, keeping its health, to pin at least 50 swipes with their times and damage.) Sandbox's NPCs are in too (the sb-* scenarios: on Duck Cabin, on Downpour and on the board; sb-cabin-bait parks my duck on them as well). After a change I meant to make, pin again:
+   it changed in. (The computers keep away from the zombies, so each -bait scenario parks my duck on the nearest zombie each beat, keeping its health, to pin at least 50 swipes with their times and damage.) Sandbox's NPCs are in too (the sb-* scenarios: on Duck Cabin, on Downpour and on the board; sb-cabin-bait parks my duck on them as well). The computer players are pinned too: they play in every run above, and the bots-* scenarios play each board mode and Hangout (in the board modes my duck plays as a computer as well, "mirror", since they wait for a person). After a change I meant to make, pin again:
      PIN=1 node tools/check/npcgolden.cjs
    Beat by beat, with the part of the room that changed: node tools/npc-golden/run.cjs (save before, check after). */
 const fs = require("fs"),
@@ -28,7 +28,7 @@ const digest = (all) => {
       errs = [];
     p.on("pageerror", (e) => errs.push(String(e).slice(0, 200)));
     await p.addInitScript(fs.readFileSync(path.join(DIR, "init.js"), "utf8"));
-    await p.goto(url);
+    await p.goto(url, { waitUntil: "networkidle" }); // (the page's own loading done first: one run of 30 once came out other)
     await p.waitForTimeout(1500);
     await p.addScriptTag({ path: path.join(DIR, "page.js") });
     const r = await p
@@ -63,7 +63,7 @@ const digest = (all) => {
     else if (o.beats !== g.beats || o.digest !== g.digest) {
       const at = g.every.findIndex((h, i) => h !== o.every[i]);
       fail(
-        `${name}: the zombies' game changed` +
+        `${name}: the game changed` +
           (at < 0
             ? " (after the last pinned beat)"
             : ` between beats ${Math.max(0, at - 1) * EVERY} and ${at * EVERY}`),

@@ -40,19 +40,6 @@ export const W_MAX = 140; // … a written answer
 export const LETTERS = ["A", "B", "C", "D"];
 /* the rows fill the board down to here; under them is a strip where a duck stands on no row */
 export const TV_ROWS_END = 0.84;
-/* what a computer types as a written answer */
-export const TV_BOT_ANSWERS = [
-  "No idea, honestly.",
-  "42",
-  "Pretty sure it's the second one.",
-  "Photosynthesis?",
-  "The French, probably.",
-  "I learned this in class once.",
-  "Isaac Newton",
-  "Something about the brain.",
-  "About a thousand.",
-  "Yes",
-];
 
 const shuffle = (xs) => {
   for (let i = xs.length - 1; i > 0; i--) {

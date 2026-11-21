@@ -14,7 +14,8 @@ beaks.js 138 beaks
 bloodpool.js 50 a pool of blood: the one under every
 boardjustin.js 741 Justin on the boards
 botduck.js 90 a computer's duck: a random look, never anything
-bots.js 1050 computers
+botlines.js 188 What the computers write and say in the
+bots.js 1407 computers
 brackets.js 474 Bicker Brackets: what the screen shows
 brainbuild.js 332 Sandbox: M's Brain builder
 card.js 424 the player card
@@ -80,7 +81,6 @@ l4ddangelui.js 203 Dead Ducks Arcade's Angel machine on every screen
 l4ddart.js 623 Quacky Zombies' pictures
 l4ddbar.js 281 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and the roof's flare,
-l4ddbots.js 571 Quacky Zombies' computers
 l4ddcatalog.js 202 Quacky Zombies: the Butler's Items tab
 l4dddrops.js 63 Quacky Zombies' drops, drawn
 l4ddguns.js 279 Quacky Zombies' new weapons, drawn
@@ -211,7 +211,7 @@ textutils.js 1157 the command line's text tools
 touch.js 284 touch controls on the board
 trivia.js 472 Trivia: what the screen shows
 triviabank.js 499 Trivia's auto questions
-triviarules.js 469 the rules of Trivia
+triviarules.js 456 the rules of Trivia
 ui.js 349 small helpers every screen uses
 umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on

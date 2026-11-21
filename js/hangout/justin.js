@@ -281,7 +281,7 @@ const LINE = 4000,
   HEARD = 5000; // each shadow line: shown this long, and the next one this long after (never two bubbles at once); E on him: he stays still at least this long
 const sec = (rand, [a, b]) => (a + rand() * (b - a)) * 1000;
 /* his stroll: off to a spot, then he stands about there until WANDER seconds have gone by since he set off (Dead Ducks
-   Arcade's Justin strolls the same way: l4ddbots.js wanderSpot) */
+   Arcade's Justin strolls the same way: bots.js wanderSpot) */
 export const WANDER = [10, 40];
 const CAKE_EAT_MS = 2500; // (as Mad God Justin's)
 /* where the zebra cake is (world px): as mgjrules.js' cakeAt */
