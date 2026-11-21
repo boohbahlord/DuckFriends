@@ -34,6 +34,7 @@ import { play, loop } from "./sounds.js";
 import { music } from "../music.js";
 import { pxAt, fitLayer } from "../pxdom.js";
 import { pixelOn, gridPx } from "../pixel.js";
+import { toPx } from "../units.js";
 
 const WAIT = 10000; // ms before the power can go back on
 const REACH = 110; // world px from the box (and from a flame's spot, past its bias)
@@ -144,7 +145,7 @@ rule("flame", {
   act(s, a) {
     const f = FLAMES.find((f) => f.id === a.f),
       me = s.pos[a.id];
-    if (!f || !me || flameD(f, me.x * W, me.y * H) > REACH * 2) return false;
+    if (!f || !me || flameD(f, ...toPx(me)) > REACH * 2) return false;
     const u = { ...(s.hang.unlit || {}) };
     if (u[f.id]) delete u[f.id];
     else u[f.id] = 1;

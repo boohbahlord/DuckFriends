@@ -95,6 +95,7 @@ import { hOk, hLock, sameFloorAhead, floorLock } from "./heights.js";
 import { zOf, nearH } from "./heights.js";
 
 import { FLAME, flameReach, inCone } from "./flamer.js";
+import { toPx } from "./units.js";
 
 /* Justin knocked down by a player's weapon (the clown items unlock at 12): the last few, each numbered, so
    every device counts its own player's once (unlocks.js) */
@@ -308,7 +309,7 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
   const al = Math.hypot(aim[0] / rx, aim[1] / ry) || 1,
     ux = aim[0] / rx / al,
     uy = aim[1] / ry / al;
-  const side = hang ? (inCabin(p0.x * HW, p0.y * HH) ? 1 : 0) : 0,
+  const side = hang ? (inCabin(...toPx(p0)) ? 1 : 0) : 0,
     z0 = duckH(s, p0);
   const near = (x, y, z, inSide, big = 1) => {
     // where (x, y) is from the swinger, in duck lengths, if it's in reach (big: a Seriat NPC's hitbox, reached sooner)
@@ -335,7 +336,7 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
       q.x,
       q.y,
       zOf(p),
-      hang ? (inCabin(p.x * HW, p.y * HH) ? 1 : 0) : 0,
+      hang ? (inCabin(...toPx(p)) ? 1 : 0) : 0,
       cutPic(P) ? 1 : duckBig(s, id),
     ); // (a duck bigger than 100%: its hitbox too, duck.js; a cut-out's size is in its picture)
     if (n) hits.push({ id, ...n });
@@ -550,7 +551,7 @@ function blast(s, sh, x, y, now, o = {}) {
       p.x,
       p.y,
       zOf(p),
-      hang ? (inCabin(p.x * HW, p.y * HH) ? 1 : 0) : 0,
+      hang ? (inCabin(...toPx(p)) ? 1 : 0) : 0,
       duckBig(s, id),
     ); // (a duck bigger than 100%: its hitbox too, duck.js)
     if (!n) continue;
@@ -640,8 +641,7 @@ export function moveShots(s, now) {
   if (!s.shots || !s.shots.length) return false;
   const on = () => boardPhases(s).includes(s.phase),
     walled = (sh, at) =>
-      sh.hin !== undefined &&
-      (inCabin(at.x * HW, at.y * HH) ? 1 : 0) !== sh.hin; // (Hangout: it hit the cabin's wall)
+      sh.hin !== undefined && (inCabin(...toPx(at)) ? 1 : 0) !== sh.hin; // (Hangout: it hit the cabin's wall)
   s.shots = flyShots(
     s.shots.filter((sh) => sh.k), // (one fired before aiming: gone)
     now,
@@ -711,7 +711,7 @@ export function floorFirst(s, id, p, aim, now) {
     [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
     l = Math.hypot(aim[0] / rx, aim[1] / ry) || 1,
     hz = duckH(s, p),
-    side = hang && !!inCabin(p.x * HW, p.y * HH),
+    side = hang && !!inCabin(...toPx(p)),
     t = s.seat
       .filter((o) => o !== id && s.pos[o] && !(s.players[o] || {}).dead)
       .map((o) => ({
@@ -739,7 +739,7 @@ export function floorFirst(s, id, p, aim, now) {
 /* can shot sh reach duck p at its height (and no roof between: Downpour)? */
 const shotReach = (s, sh, p) =>
   isHang(s)
-    ? hOk(sh, duckH(s, p), p.x * HW, p.y * HH, sh.x0 * HW, sh.y0 * HH)
+    ? hOk(sh, duckH(s, p), ...toPx(p), sh.x0 * HW, sh.y0 * HH)
     : hOk(sh, duckH(s, p));
 /* the first duck in the way of a shot from (sh.lx, sh.ly) to at, within a duck's room of the line: its id, how far
    along (0 … 1) and where, or null (not the shooter, a duck that's down or jumping over it, a ghost, the other side
@@ -757,8 +757,7 @@ function firstDuck(s, sh, at, now) {
     if (id === sh.by || !p || p.x < 0 || !P || P.dead || isGhost(s, id))
       continue;
     if (
-      (sh.hin !== undefined &&
-        (inCabin(p.x * HW, p.y * HH) ? 1 : 0) !== sh.hin) ||
+      (sh.hin !== undefined && (inCabin(...toPx(p)) ? 1 : 0) !== sh.hin) ||
       !shotReach(s, sh, p)
     )
       continue;
@@ -806,7 +805,7 @@ export function chainShot(s, by, p, aim, now, w = "chaingun") {
       ...(hang
         ? {
             hz: Math.round(zOf(p)),
-            hin: inCabin(p.x * HW, p.y * HH) ? 1 : 0,
+            hin: inCabin(...toPx(p)) ? 1 : 0,
           }
         : {}),
       ...floorFirst(s, by, p, aim, now), // (a duck on my floor in its line: it stays on my floor)
@@ -871,7 +870,7 @@ export function duckFlame(s, by, p, aim, now) {
     uy = aim[1] / ry / al,
     was = (s.flame || {})[by],
     t0 = was && now - was[1] < FLAME.GAP ? was[0] : now,
-    side = hang ? (inCabin(p.x * HW, p.y * HH) ? 1 : 0) : 0,
+    side = hang ? (inCabin(...toPx(p)) ? 1 : 0) : 0,
     z0 = duckH(s, p);
   let far = flameReach(now - t0);
   if (hang)
@@ -901,10 +900,7 @@ export function duckFlame(s, by, p, aim, now) {
       P = s.players[id];
     if (id === by || !q || q.x < 0 || !P || P.dead || isGhost(s, id)) continue;
     if (isMgj(s) || vdSafe(s, id) || jumpDodges(q, now)) continue;
-    if (
-      hang &&
-      ((inCabin(q.x * HW, q.y * HH) ? 1 : 0) !== side || !nearH(zOf(q), z0))
-    )
+    if (hang && ((inCabin(...toPx(q)) ? 1 : 0) !== side || !nearH(zOf(q), z0)))
       continue;
     if (inCone((q.x - p.x) / rx, (q.y - p.y) / ry, ux, uy, far + 0.3))
       scorch(s, by, id, now);
@@ -1056,8 +1052,7 @@ export function groundFire(s, now) {
       ([x, y, , by, side, z]) =>
         by !== id &&
         Math.hypot((q.x - x) / rx, (q.y - y) / ry) < FLAME.PATCH_R &&
-        (!hang ||
-          ((inCabin(q.x * HW, q.y * HH) ? 1 : 0) === side && nearH(zOf(q), z))),
+        (!hang || ((inCabin(...toPx(q)) ? 1 : 0) === side && nearH(zOf(q), z))),
     );
     if (g && ((s.flamed || {})[id] || 0) <= now) {
       scorch(s, g[3], id, now);
@@ -1090,8 +1085,7 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
       if (id === sh.by || !p || p.x < 0 || !P || P.dead || isGhost(s, id))
         continue;
       if (
-        (sh.hin !== undefined &&
-          (inCabin(p.x * HW, p.y * HH) ? 1 : 0) !== sh.hin) ||
+        (sh.hin !== undefined && (inCabin(...toPx(p)) ? 1 : 0) !== sh.hin) ||
         !shotReach(s, sh, p)
       )
         continue; // (the other side of the walls, or above or below it: heights.js)

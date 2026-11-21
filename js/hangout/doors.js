@@ -3,7 +3,7 @@
    every screen works it out from where the ducks are. Doors never block walking. Other things that walk (the cabin's
    characters) open them too: addOpeners(fn), fn(s) → [[x, y], …] in world px. */
 import { activity } from "./registry.js";
-import { W, H } from "./layout.js";
+import { toPx } from "../units.js";
 
 const NEAR = 90; // world px from the door's line, either side
 const openers = [];
@@ -15,7 +15,7 @@ function doorOpen(s, d) {
   const pts = [];
   for (const id of s.seat || []) {
     const p = s.pos[id];
-    if (p) pts.push([p.x * W, p.y * H]);
+    if (p) pts.push(toPx(p));
   }
   for (const fn of openers) pts.push(...(fn(s) || []));
   return pts.some(([x, y]) =>
