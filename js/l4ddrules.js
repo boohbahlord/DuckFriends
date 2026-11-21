@@ -106,7 +106,7 @@ import {
   FASTER,
   shareOf,
   say,
-  shove,
+  shovePx,
 } from "./rules.js";
 import { JUSTIN, ETHAN, jerseyOf } from "./hangout/npcart.js";
 import { MERCHANTS, merchantById, merchantLook } from "./merchants.js";
@@ -114,6 +114,7 @@ import { linesOf } from "./merchantlines.js";
 import { invuln } from "./hangout/death.js";
 import { hOk, hLock, shotFeet, SAME_FLOOR, zOf, nearH } from "./heights.js";
 import { toPx } from "./units.js";
+import { pushAlong } from "./push.js";
 import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
@@ -3984,18 +3985,15 @@ function meleeHits(s, now) {
       const [qx, qy] = toPx(q);
       if (Math.hypot(qx - bx, qy - by) > R || !nearH(zOf(q), zOf(p))) continue;
       k.hit.push("p" + id);
-      const far = knockOf(k.w) * KNOCK_DUCK,
-        dX = 0.006 * W,
-        dY = 0.012 * H; // (rules.js' duck lengths in Hangout's world, across and up and down, for its shove)
-      shove(
+      shovePx(
         s,
         id,
         k.dx,
-        (k.dy * dX) / dY,
-        far / dX,
+        k.dy,
+        knockOf(k.w) * KNOCK_DUCK,
         now,
         inCabin(qx, qy) ? 1 : 0,
-      ); // (shove counts in those duck lengths: this way it goes `far` world px whichever way)
+      ); // (world px: boardfire.js)
     }
     if (L4_HOOKS.npc)
       L4_HOOKS.npc(s, k.by, bx, by, now, k.w, R, R, null, k.hit); // (Sandbox's NPCs in its bubble, each once a swing: sbcabin.js)
@@ -4038,13 +4036,13 @@ const die = (z, T) => {
 function knockZ(z, ux, uy, far) {
   const n = Math.max(1, Math.ceil(far / 8)),
     h = heightAt(z.x, z.y);
-  for (let i = 0; i < n; i++) {
-    const x = z.x + (ux * far) / n,
-      y = z.y + (uy * far) / n;
-    if (!zOk(x, y, h)) break;
-    z.x = Math.round(x);
-    z.y = Math.round(y);
-  }
+  [z.x, z.y] = pushAlong(
+    [z.x, z.y],
+    n,
+    (i, [x, y]) => [x + (ux * far) / n, y + (uy * far) / n],
+    ([x, y]) => zOk(x, y, h),
+    ([x, y]) => [Math.round(x), Math.round(y)],
+  ); // (one loop for every push: push.js)
 }
 /* the shots in the air (instead of rules.js' moveShots here): walls and furniture stop them, a zombie stops a bullet
    or an arrow (a crit now and then doubles it), a grenade goes off where it lands or where a wall stops it */

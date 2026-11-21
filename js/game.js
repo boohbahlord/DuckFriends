@@ -18,6 +18,47 @@
    camera and works out how it stands and falls; this file only hands it the keys, the stick and the taps, and puts its
    one context button where the Vote button goes. */
 import {
+  ARROWS,
+  DYING_MS,
+  aimAt,
+  ammo,
+  arrowsAim,
+  canReloadNow,
+  cool,
+  dots,
+  downGunNow,
+  fire,
+  graceLeft,
+  graceLeftMs,
+  graceOf,
+  handBars,
+  heard,
+  heardReloads,
+  keptNow,
+  keyAim,
+  keyAimNow,
+  keyIndex,
+  mgjTip,
+  mouse,
+  myDuck,
+  onWheel,
+  padAttack,
+  padWeapon,
+  playDuck,
+  reload,
+  setKeyAim,
+  setMouse,
+  setReloadsSeen,
+  sightOn,
+  slidPick,
+  slidTap,
+  tileKnock,
+  toggleSight,
+  myPick,
+  mgjDownGun,
+} from "./gamehand.js";
+
+import {
   LAW_GLOW,
   against,
   crimson,
@@ -556,6 +597,7 @@ import {
 import { sbHpOf, sbWalkOf } from "./sbspawn.js";
 
 import { angelic, angelGlow } from "./powerart.js";
+
 // (after l4ddart.js: Noah's note on an old import cycle)
 import { angelOf } from "./l4ddangel.js";
 
@@ -683,7 +725,7 @@ export let R = null,
   tick = 0,
   docks = null;
 let shown = ""; // which phase view is up (phase|round|question)
-const keys = new Set();
+export const keys = new Set();
 export let me = null; // my duck here: { x, y, j (jump start), face }
 let target = null; // where a click or a tap asked my duck to walk: { x, y, sprint, mark }
 /* the chain gun's recoil (the owner's, Nov 16): while I fire it, my duck is pushed slowly back, away from the aim, at
@@ -704,10 +746,10 @@ let squash = { q: "", t: 0 },
 let lastFx = -1,
   hotdogs = [],
   follows = []; // the silly commands seen so far; hotdogs and items following their ducks
-let bar = null,
+export let bar = null,
   meter = null, // my HP meter, under the hotbar (hpmeter.js)
   pad = null; // phones: the jump button and the attack button
-const kept = new Set(); // the jumps kept on here (Shift and the key); kept effects are in the room's state
+export const kept = new Set(); // the jumps kept on here (Shift and the key); kept effects are in the room's state
 const DOWN_TURN = (-100 * Math.PI) / 180; // (a duck lying dead is turned this far: css .gduck-body, rotate(-100deg))
 const BODY = "~body"; // a Duck Cabin ghost's body is drawn as a duck of its own: its player's id and this
 export const JUSTIN2 = "justin2"; // Mad God Justin's double, drawn as a duck of its own
@@ -717,9 +759,7 @@ const isJustin = (id) => id === JUSTIN_ID || id === JUSTIN2;
 export const bigOf = (s, id) =>
   (isJustin(id) && isMgj(s) ? MGJ_SCALE : 1) *
   (s.players[id] ? scaleOf(shownDuck(s, s.players[id])) : 1);
-let mgjRv = false, // (E held down for a revive, or the phone's Revive button)
-  keyAim = null, // … and where the arrow keys aim (on the screen), when they moved last: null when the mouse did
-  mouse = null,
+export let mgjRv = false, // (E held down for a revive, or the phone's Revive button)
   shovedAt = 0,
   putAt = 0; // the handgun or dagger kept out (Shift and its key), and where the mouse is on the screen
 export let shows = {}; // a handgun just fired, shown turned toward its aim for a moment: by player id
@@ -763,7 +803,7 @@ const PORTRAIT =
     : null;
 const portrait = () => !!PORTRAIT && PORTRAIT.matches;
 /* on a phone held upright the board turns (agree at the top); the bracket and the story don't: they keep their own layout */
-const turned = () =>
+export const turned = () =>
   portrait() &&
   !(
     R &&
@@ -773,7 +813,7 @@ const turned = () =>
       isVd(R.state) ||
       isTv(R.state))
   ); // (Valentine's Duck Date keeps its table the right way up; Trivia's rows stay rows)
-let cam = null; // the bracket's camera: the diagram's corner on the board (dx, dy), the bracket's offset in it (ox, oy), its zoom and size
+export let cam = null; // the bracket's camera: the diagram's corner on the board (dx, dy), the bracket's offset in it (ox, oy), its zoom and size
 
 /* ---------- movement numbers (board widths or heights per second) ---------- */
 const SPEED = { x: 0.45, y: 1.0, px: 0.5, py: 0.85, sprint: SPRINT.speed }; // (sprint: the whole game's, gamedefaults.js)
@@ -3903,7 +3943,8 @@ function mgjGore(s) {
   return MGJ_GORE.slice(0, n).join("");
 }
 /* ---------- my duck ---------- */
-const onBoardPhase = () => R && boardPhases(R.state).includes(R.state.phase);
+export const onBoardPhase = () =>
+  R && boardPhases(R.state).includes(R.state.phase);
 const locked = () =>
   isSc(R.state)
     ? SC_VOTES.includes(R.state.phase) && !!R.state.done[R.me]
@@ -4021,7 +4062,7 @@ function trackWalk() {
   }
   walkLast = [me.x, me.y];
 }
-function myAim() {
+export function myAim() {
   const face = turned() ? 1 : (me && me.face) || 1;
   if (!geo || !me) return [face, 0];
   if (keyAim) return toBoard(keyAim[0], keyAim[1]) || [face, 0]; // (the arrow keys moved last)
@@ -4041,7 +4082,7 @@ function myAim() {
   );
 }
 const STILL_MS = 600; // ms between my duck's updates on a Poor connection while it stands still (moving: 220)
-function sendMove(force) {
+export function sendMove(force) {
   if (!me) return;
   const now = performance.now(),
     q = clockNow() - squash.t < 170 ? squash.q : "";
@@ -4618,7 +4659,7 @@ async function announce(phase) {
   );
 }
 
-const PICK_NAMES = Object.fromEntries(
+export const PICK_NAMES = Object.fromEntries(
   PICK_WEAPONS.map((k) => [k, weaponName(k)]),
 ); // (as Quacky Zombies names them)
 /* Mad God Justin: "Defeat Justin!" as the fight starts; then he's defeated, or time's up */
@@ -5057,503 +5098,6 @@ function recordRound(s) {
   shareLook();
 }
 
-/* ---------- the specials on the number keys ---------- */
-const myDuck = () => ((R && R.state.players[R.me]) || {}).duck || profile.duck;
-/* the duck my keys play with: in Quacky Zombies its slots on 1 to 4 (melee, ranged, ranged, the special); in Mad God
-   Justin its own keys: 1 the knife, 2 the pistol (it never reloads: in place of the bow, the owner's, Nov 16),
-   3 the weapon picked up, 4 the zebra cake (my own keys stay as they are) */
-const playDuck = () =>
-  R && isL4dd(R.state)
-    ? {
-        ...myDuck(),
-        keys: [
-          ...slotsOf(R.state, R.me)
-            .slice(0, 4)
-            .map((w) => w || null),
-          slotsOf(R.state, R.me)[4] || null, // (5: the second item)
-          null, // (6: the grenades)
-          ...Array(4).fill(null),
-        ],
-      }
-    : R && isMgj(R.state)
-      ? {
-          ...myDuck(),
-          keys: [
-            MGJ_MELEE,
-            "handgun",
-            specialById(myPick()) ? myPick() : null,
-            "zebra",
-            ...Array(6).fill(null),
-          ],
-        }
-      : R && sbHotOn(R.state)
-        ? { ...myDuck(), keys: sbSlots(R.state, R.me) } // (Sandbox's own hotbar: sbhot.js; its spawn buttons aren't specials)
-        : myDuck();
-/* L (PC, every mode; the owner's, Nov 19 21:59Z): my laser sight on or off, and my flashlight with it. Starts
-   the way the mode had it: on in Quacky Zombies and Mad God Justin, off in the others */
-let sightPref = null;
-const sightOn = () =>
-  sightPref != null ? sightPref : !!R && (isL4dd(R.state) || isMgj(R.state));
-function toggleSight() {
-  const on = !sightOn();
-  sightPref = on;
-  if (R && isL4dd(R.state)) {
-    const off = !!((R.state.hang.l4f || {})[R.me] || 0);
-    if (off === on) R.send({ t: "hang", k: "l4", do: "fl" }); // (the flashlight goes with it)
-  }
-  sendMove(true);
-}
-const DYING_MS = 20000; // (Mad God Justin: how long a duck out of HP takes to go all grey)
-/* Mad God Justin: I'm out of HP and down, the down pistol in my hand (the owner's, Nov 17 11:07Z) */
-const mgjDownGun = () =>
-  !!R &&
-  isMgj(R.state) &&
-  R.state.phase === "boss" &&
-  !!(R.state.players[R.me] || {}).dead &&
-  mgjOut(R.state, R.me);
-/* down with the down pistol, in either mode */
-const downGunNow = () =>
-  !!R && (mgjDownGun() || (isL4dd(R.state) && downArmed(R.state, R.me)));
-/* Mad God Justin: the weapon I picked up (one use), or none */
-const myPick = () =>
-  (R && R.state.mgj && (R.state.mgj.held || {})[R.me]) || null;
-pickWith({
-  get R() {
-    return R;
-  },
-  get me() {
-    return me;
-  },
-  get bar() {
-    return bar;
-  },
-  sendMove,
-  fire,
-  myPick,
-  mgjDownGun,
-  onBoardPhase,
-  playDuck,
-  turned,
-});
-/* the effects kept on for my duck (in the room's state), and the jumps and the weapon kept on here */
-function keptNow() {
-  const out = new Set(
-      [...kept, ...(hand.held ? [hand.held] : [])].filter((id) =>
-        hasKey(playDuck(), id),
-      ),
-    ),
-    a = ((R && R.state.aura) || {})[R && R.me] || {};
-  for (const [id, u] of Object.entries(a)) if (u === 0) out.add(id);
-  return out;
-}
-/* phones: the slider picked key i (in Mad God Justin it goes out in hand) */
-function slidPick(i) {
-  const id = keysOf(playDuck())[i];
-  if (!R) return;
-  if (isMgj(R.state)) {
-    if (mgjToggles(id) || !id) useKey(i, false);
-  } else if (onBoardPhase()) selectKey(i, false); // (the one in the middle is the one picked: a weapon goes in hand)
-}
-/* phones: the special in the slider's middle tapped: used (a weapon attacks the way the duck faces) */
-function slidTap(i) {
-  const id = keysOf(playDuck())[i];
-  if (R && isMgj(R.state) && mgjToggles(id)) {
-    useKey(i, false);
-    fire(id);
-  } else if (
-    R &&
-    !isMgj(R.state) &&
-    BOARD_WEAPONS.includes(id) &&
-    id === hand.held
-  )
-    fire(id); // (a weapon picked: a tap on it uses it)
-  else useKey(i, false);
-}
-/* phones: the weapon in the slider's middle, which the attack button uses (or null) */
-function padWeapon() {
-  if (downGunNow()) return "handgun"; // (down: the down pistol, whatever the slider shows)
-  const id = bar && bar.current && bar.current();
-  if (id && R && isL4dd(R.state)) {
-    if (id === "grenade") return id;
-    return ARMS[id] && ARMS[id].kind !== "special" && id === heldNow()
-      ? id
-      : null; // (the flashlight and the medkit don't attack: a tap on the slider uses them)
-  } // (Quacky Zombies: the weapon in hand, or the grenades)
-  if (!id || !R || !hasKey(playDuck(), id)) return null;
-  if (isMgj(R.state))
-    return R.state.phase === "boss" && mgjToggles(id) ? id : null;
-  const sp = specialById(id);
-  return (BOARD_WEAPONS.includes(id)
-    ? id === hand.held
-    : THROWS.includes(id) && (!hand.held || isSb(R.state))) &&
-    sp &&
-    !sp.off &&
-    (unlocked("special", id) || sbHotOn(R.state))
-    ? id
-    : null; // (a weapon is used only while it is the one in hand)
-}
-/* phones: the attack button: the weapon in the slider's middle, where the button aims; says when it can again (ms) */
-function padAttack() {
-  const id = padWeapon();
-  if (!id) return 500;
-  if (isL4dd(R.state)) {
-    fire(id);
-    return l4Cool(R.state, R.me, id);
-  }
-  if (mgjDownGun()) {
-    fire(id);
-    return coolFor(id, R.state);
-  } // (out of HP: the down pistol, without taking it out for after)
-  if (isMgj(R.state) && mgjToggles(id) && handIn() !== id) mgjOut2(id);
-  fire(id);
-  return coolFor(id, R.state) / grCool(R.state, R.me); // (Sandbox: a group's Cooldown speed)
-}
-/* the handgun or the dagger, toward the mouse */
-export function fire(id) {
-  if (!me || me.x < 0 || !R || !onBoardPhase()) return;
-  if (mgjDownGun()) id = "handgun"; // (Mad God Justin, out of HP: only the down pistol fires)
-  if (id === "safekeep") {
-    /* Safe Keeping can't be used by hand: the chat says what it does, every time (the lone duck's line, or the room's) */
-    const s = R.state;
-    chatNote(
-      safeKeepLine(
-        s.seat.filter((q) => s.players[q] && !s.players[q].bot).length,
-      ),
-    );
-    return;
-  }
-  const [ax, ay] = myAim();
-  R.send({ t: "use", what: id, face: ax < 0 ? -1 : 1, ax, ay });
-  if (bar) setTimeout(() => bar && bar.refresh(), 60); // (the handgun's dots, a cooldown's bar)
-}
-/* the items on my keys still waiting to work again: [ends (room clock), how long it waits, now] for each key, or null */
-function cool() {
-  if (!R) return [];
-  const now = clockNow();
-  const m = isMgj(R.state) && R.state.mgj;
-  return keysOf(playDuck()).map((id) => coolOne(id, now, m));
-}
-/* … one item's: [ends, how long it waits, now] or null (m: Mad God Justin's state, or false) */
-function coolOne(id, now, m) {
-  {
-    const sp = specialById(id);
-    if (!sp || sp.kind !== "item") return null;
-    if (m && id === "zebra") {
-      const end = (m.zebraAt || 0) + CAKE_EVERY;
-      return end > now || m.cake
-        ? [Math.max(end, now + 1), CAKE_EVERY, now]
-        : null;
-    } // (shared too)
-    const mg = magFor(id);
-    if (mg) {
-      const mm = magOf(R.state, R.me, now, id),
-        r = mm.r;
-      return r > now
-        ? [r, mm.d || mg[1], now] // (the double barrel's: a second for each shell it loads)
-        : AUTO.includes(id)
-          ? null
-          : (() => {
-              const end = coolEnds(R.state, R.me, id);
-              return end > now + 250
-                ? [end, coolFor(id, R.state) / grCool(R.state, R.me), now]
-                : null;
-            })();
-    } // (between quick shots no bar: only the reload, and the sniper's bolt or the launcher's wait)
-    const end = coolEnds(R.state, R.me, id);
-    return end > now
-      ? [end, coolFor(id, R.state) / grCool(R.state, R.me), now]
-      : null;
-  }
-}
-/* the white, the yellow and the blue bars under my duck in the modes besides Dead Ducks Arcade (which has its own,
-   l4dd.js): what's in my hand, its cooldown or reload, its magazine, and my sprint while it isn't full (meters.js; the
-   sprint every mode has now, stamina.js; the owner's, Nov 18 16:50Z. Mad God Justin has no sprint) */
-function handBars(s) {
-  const tag = S && S.querySelector(".gduck.mine .gduck-name");
-  if (!tag || !R) return;
-  const now = clockNow(),
-    m = isMgj(s) && s.mgj,
-    w = mgjDownGun() ? "handgun" : hand.held,
-    c = w ? coolOne(w, now, m) : null;
-  let el = tag.querySelector(".l4-cool");
-  if (!el && c) {
-    el = document.createElement("span");
-    el.className = "l4-cool off";
-    el.setAttribute("aria-hidden", "true");
-    el.innerHTML = "<i></i>";
-    tag.append(el);
-  }
-  const v = c ? Math.min(1, (c[0] - now) / c[1]).toFixed(3) : "0";
-  if (el && el._v !== v) {
-    el._v = v;
-    el.style.setProperty("--cl", v);
-    el.classList.toggle("off", v === "0");
-  }
-  const mg = !w ? null : mgjDownGun() ? magSize("handgun") : magFor(w);
-  let a = null;
-  if (mg && !(m && !mgjDownGun() && w !== myPick())) {
-    const mm = magOf(s, R.me, now, w),
-      rl = mm.r > now,
-      left =
-        m && !mgjDownGun() && ammoOf(s, R.me) < INF_AMMO
-          ? Math.min(mg[0] - mm.n, ammoOf(s, R.me))
-          : mg[0] - mm.n; // (Mad God Justin: a gun picked up with fewer shots left than its magazine)
-    a = { f: rl ? 0 : left / mg[0], rl, dry: false };
-  }
-  ammoBar(tag, a);
-  let sp = tag.querySelector(".l4-sprint");
-  if (!sp && !isMgj(s)) {
-    sp = document.createElement("span");
-    sp.className = "l4-sprint full";
-    sp.setAttribute("aria-hidden", "true");
-    sp.innerHTML = "<i></i>";
-    tag.append(sp);
-  }
-  if (sp) {
-    const [left, tired] = isMgj(s) ? [1, false] : sprintLeft(),
-      sv = left.toFixed(3);
-    if (sp._v !== sv) {
-      sp._v = sv;
-      sp.style.setProperty("--sp", sv);
-      sp.classList.toggle("full", left >= 1);
-    }
-    sp.classList.toggle("tired", tired);
-  }
-  stackBars(tag);
-}
-/* the handgun's shots left (for the dots under its key), or another gun's */
-function ammo(id = "handgun") {
-  const n = (magSize(id) || [MAG])[0];
-  return R ? n - magOf(R.state, R.me, clockNow(), id).n : n;
-}
-/* the dots under a key: a gun's shots (a number past 8: the SMG's 20 … the LMG's 75), or in Mad God Justin the uses left
-   of the weapon picked up */
-const dots = (id) =>
-  R && isMgj(R.state)
-    ? MGJ_GUNS.includes(id) && id === myPick()
-      ? `<span class="ammo ammo-n" aria-label="${ammoOf(R.state, R.me) >= INF_AMMO ? "no limit on" : ammoOf(R.state, R.me)} shots left">${ammoOf(R.state, R.me) >= INF_AMMO ? "∞" : ammoOf(R.state, R.me)}</span>`
-      : ""
-    : id === "flamer"
-      ? `<span class="ammo ammo-n" aria-label="Tank">${Math.ceil((ammo(id) / magSize(id)[0]) * 100)}%</span>`
-      : magSize(id)
-        ? magSize(id)[0] > 8
-          ? `<span class="ammo ammo-n" aria-label="${ammo(id)} shots left">${ammo(id)}</span>`
-          : ammoHTML(ammo(id), magSize(id)[0])
-        : "";
-/* the small R on a phone (phonepad.js) shows in every mode, but only while what's in my hand can be reloaded: it has a
-   magazine, it isn't full, and no reload is going on (the owner's, Nov 18 16:50Z: "r only shows up on mobile for anything
-   IF something CAN be reloaded") */
-function canReloadNow() {
-  if (!R || !onBoardPhase()) return false;
-  const w = reloadsNow();
-  return !!w && reloadReady(R.state, w, clockNow());
-}
-/* R: the gun in hand reloads (Quacky Zombies: the weapon in hand; Mad God Justin: the gun picked up, or the down
-   pistol; the board: the handgun, or the first gun with a magazine on my keys) */
-function reload() {
-  if (!R || !onBoardPhase()) return false;
-  const w = reloadsNow();
-  if (w == null) return false;
-  if (reloadDry(R.state, w)) noReload(); // (no ammo left to reload it with: the white bar flashes red, meters.js)
-  R.send({ t: "reload", w });
-  return true;
-}
-/* each reload of mine (by R, or on its own once a magazine is empty) makes its gun's own reload sound: the room's
-   state says when a reload ends (s.mag in every mode, my kit's rl in Dead Ducks Arcade); a new end is a new reload */
-let reloadsSeen = {},
-  reloadVoices = {}; // (each weapon's reload sound playing, to stop it when the reload is given up)
-function heardReloads(s) {
-  const now = clockNow(),
-    seen = {};
-  if (isL4dd(s)) {
-    const k = kitOf(s, R.me);
-    if (k && k.rl > now && k.rw) seen[k.rw === "dg" ? "handgun" : k.rw] = k.rl; // (the down pistol's: the pistol's sound)
-  } else
-    for (const [key, m] of Object.entries(s.mag || {}))
-      if (m && m.r > now && (key === R.me || key.startsWith(R.me + " ")))
-        seen[key === R.me ? "handgun" : key.slice(R.me.length + 1)] = m.r;
-  for (const [w, r] of Object.entries(seen))
-    if (reloadsSeen[w] !== r) {
-      hush(reloadVoices[w]);
-      reloadVoices[w] = sfx.reload(w, { secs: (r - now) / 1000 }); // (to end as it ends)
-    }
-  for (const [w, r] of Object.entries(reloadsSeen))
-    if (!seen[w] && r > now + 100) hush(reloadVoices[w]); // (given up before its end: switched weapons)
-  reloadsSeen = seen;
-}
-/* stepping onto another tile or answer (the owner, Nov 16: "a sound for stepping over different tiles"): a faint
-   knock as my duck enters it, a little higher toward the right (Agree, B, Not a Dunce), nothing on the strip between
-   tiles; Story Chain and Trivia have rows, not tiles */
-let tileWas = null,
-  tileAtMs = 0;
-function tileKnock(s, p, now) {
-  if (!p || p.x < 0 || isSc(s) || isTv(s) || cam) return void (tileWas = null);
-  const c = isQuack(s) && s.phase !== "choice" ? tileAt(s, p) : colAt(s, p.x),
-    n =
-      isQuack(s) && s.phase !== "choice"
-        ? (s.wq.ids || []).length
-        : twoSided(s)
-          ? 2
-          : 7;
-  if (c === tileWas) return;
-  const was = tileWas;
-  tileWas = c;
-  if (was === null || c < 0 || now - tileAtMs < 120) return; // (the first look, the strip, or a duck wobbling on an edge)
-  tileAtMs = now;
-  sfx.tileIn({ rate: 0.88 + (0.24 * (c % n)) / Math.max(1, n - 1) });
-}
-/* how a duck's sound is heard: mine as it is, another's quieter; in Duck Cabin and Dead Ducks Arcade from where it
-   stands (sound.js fades it with its distance from my duck) */
-export function heard(id) {
-  const o = { id, k: id === R.me ? 1 : OTHERS, mine: id === R.me }; // (id: whose it is, for a sound that's each duck's own: sound.js flamer; mine: never left out, sound.js voice)
-  if (world && R && isHang(R.state)) {
-    const p = (R.state.pos || {})[id];
-    if (p && p.x >= 0) Object.assign(o, { x: p.x * HW, y: p.y * HH });
-  }
-  return o;
-}
-let mouseAt = 0; // when the mouse last moved
-const MOUSE_IDLE = 2500; // ms without the mouse before the arrow keys aim
-const aimAt = (e) => {
-  mouse = { x: e.clientX, y: e.clientY };
-  mouseAt = performance.now();
-  keyAim = null;
-}; // (the handgun and the dagger aim at the mouse; in Mad God Justin the arrow keys too, whichever moved last)
-/* the arrow keys aim instead of walking (WASD walks): in Mad God Justin's fight, and in every mode while a weapon is in
-   hand and the mouse is still (a player who isn't aiming with the mouse) */
-const arrowsAim = () =>
-  !!R &&
-  ((isMgj(R.state) && R.state.phase === "boss") ||
-    (onBoardPhase() &&
-      !!heldNow() &&
-      (!mouse || performance.now() - mouseAt > MOUSE_IDLE)));
-const ARROWS = {
-  ArrowUp: [0, -1],
-  ArrowDown: [0, 1],
-  ArrowLeft: [-1, 0],
-  ArrowRight: [1, 0],
-};
-function keyAimNow() {
-  let x = 0,
-    y = 0;
-  for (const [k, [dx, dy]] of Object.entries(ARROWS))
-    if (keys.has(k)) {
-      x += dx;
-      y += dy;
-    }
-  if (x || y) keyAim = [x * 100, y * 100]; // (on the screen; let go, it keeps aiming that way)
-}
-/* the scroll wheel: the next (or last) special in the hotbar. A weapon goes in hand, anything else is the one V uses
-   (Quacky Zombies: the next slot; Mad God Justin: its own picking) */
-let wheelSum = 0,
-  wheelAt = 0;
-function wheelPick(dir) {
-  if (!R || !onBoardPhase()) return false;
-  const s = R.state;
-  if (isL4dd(s)) {
-    /* the next slot that has something: an empty one between is skipped, and the grenades (key 6) are in the row when I
-       have some (the owner's, Nov 17 17:41Z: "bow at key number 3, nothing at 4, but a grenade at five, then the scroll
-       wheel will skip the empty one and go straight to the grenade"); Safe Keeping is picked like any slot (the owner, Nov 21) */
-    const sl = slotsOf(s, R.me),
-      kit = kitOf(s, R.me),
-      has = (i) => (i === 5 ? !!(kit && kit.g > 0) : !!sl[slotOfPick(i)]),
-      n = 6; // (the second item, key 5, then the grenades, key 6: an empty one is skipped)
-    let i = handIn();
-    for (let k = 0; k < n; k++) {
-      i = (i + dir + n) % n;
-      if (i !== handIn() && has(i)) {
-        l4Pick(i);
-        return true;
-      }
-    }
-    return false;
-  }
-  const mgj = isMgj(s),
-    ids = keysOf(playDuck())
-      .map((id, i) => [id, i])
-      .filter(([id]) => id && (!mgj || mgjToggles(id))); // (Mad God Justin: only what goes out in hand)
-  if (!ids.length) return false;
-  const at = ids.findIndex(([id, i]) =>
-      mgj ? id === hand.held : i === hand.lastKey,
-    ),
-    [id, i] =
-      ids[
-        (at < 0 ? (dir > 0 ? 0 : ids.length - 1) : at + dir + ids.length) %
-          ids.length
-      ];
-  if (isMgj(s)) useKey(i, false);
-  else selectKey(i, false);
-  return true;
-}
-const onWheel = (e) => {
-  if (!R || !onBoardPhase() || windowOpen() || typing(e) || e.ctrlKey) return; // (Ctrl: the browser's zoom)
-  /* with my duck in the game, the wheel over the board is the hotbar's and never moves the board (the camera follows
-     the duck, owner 2026-11-04 07:12Z); without one (watching), or over a list off the board, it scrolls as always */
-  const onBoard =
-    !!me &&
-    !!R.state.pos[R.me] &&
-    !!(e.target.closest && e.target.closest(".gmain"));
-  if (onBoard) e.preventDefault(); // (a touchpad's small steps and sideways swipes too)
-  if (!e.deltaY) return;
-  if (!onBoard)
-    for (let el = e.target; el && el !== document.body; el = el.parentElement)
-      if (
-        el.scrollHeight > el.clientHeight + 2 &&
-        /auto|scroll/.test(getComputedStyle(el).overflowY)
-      )
-        return; // (a list scrolling: leave it)
-  const now = performance.now();
-  wheelSum = now - wheelAt > 400 ? 0 : wheelSum;
-  wheelAt = now;
-  wheelSum += e.deltaY;
-  if (Math.abs(wheelSum) < 40) return;
-  const dir = wheelSum > 0 ? 1 : -1;
-  wheelSum = 0;
-  if (wheelPick(dir)) e.preventDefault();
-};
-const KEY_CODES = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
-const keyIndex = (e) => {
-  const m = /^(?:Digit|Numpad)(\d)$/.exec(e.code);
-  return m ? KEY_CODES.indexOf(m[1]) : -1;
-};
-
-/* the first seconds of a vote (no voting yet), or of a clue turn in Who is the Quack? (12 s before it can end) */
-const graceOf = (s) =>
-  isVd(s) && s.phase === "vddate"
-    ? VD_GRACE
-    : isVd(s) && s.phase === "vdpick"
-      ? VOTE_GRACE
-      : s.phase === "answer" && isDn(s)
-        ? DN_GRACE
-        : s.phase === "answer" ||
-            (isSc(s) && SC_VOTES.includes(s.phase)) ||
-            (isQuack(s) && ["choice", "accuse"].includes(s.phase))
-          ? VOTE_GRACE
-          : isQuack(s) && s.phase === "clue"
-            ? CLUE_GRACE
-            : 0;
-const graceLeftMs = (s) =>
-  graceOf(s) ? Math.max(0, s.at + graceOf(s) * 1000 - clockNow()) : 0;
-const graceLeft = (s) => Math.ceil(graceLeftMs(s) / 1000);
-/* Mad God Justin: what my keys do now, in a line */
-function mgjTip(s) {
-  const phone = touchOnly();
-  if ((s.players[R.me] || {}).dead)
-    return mgjOut(s, R.me)
-      ? `Out of HP! Your pistol still fires. A duck that holds E by you for ${REVIVE.MS / 1000} s, or the fight's end, gets you up.`
-      : "Knocked down! Up again in a moment.";
-  if (downNear(s, R.me))
-    return mgjRv
-      ? "Reviving… keep holding"
-      : `A duck is down: ${phone ? "hold Revive" : "hold <kbd>E</kbd>"} for ${REVIVE.MS / 1000} s to get it up`;
-  if (myPick() && hand.held !== myPick())
-    return `${PICK_NAMES[myPick()] || "A weapon"} picked up: ${phone ? "slide to it" : "<kbd>4</kbd>"} to take it out`;
-  return phone
-    ? padWeapon()
-      ? "Aim the crosshair at Justin, then push a little further to attack"
-      : "Tap the special in the middle to use it"
-    : "<kbd>WASD</kbd> walk · <kbd>Arrows</kbd> or the mouse aim · <kbd>Click</kbd> use";
-}
 /* Sandbox on the board: the build (spawn, respawn, loot or zone) my duck stands by, { id, label }, or null: its settings
    open with E or the button, as on Duck Cabin and Downpour (sbspawnview.js near). The owner, Nov 19 16:17Z: "interact
    button shows on the interactable builds". Only for who may build (B) */
@@ -7295,7 +6839,7 @@ register("game", {
     if (off) off();
     off = null;
     weaponsOff();
-    reloadsSeen = {};
+    setReloadsSeen({});
     if (docks) docks.destroy();
     docks = null;
     if (world) world.destroy();
@@ -7334,7 +6878,7 @@ register("game", {
     handReset();
     kept.clear();
     shows = {};
-    mouse = null;
+    setMouse(null);
     removeEventListener("mousemove", aimAt);
     removeEventListener("wheel", onWheel);
     if (scene) scene.destroy();
@@ -7485,7 +7029,7 @@ register("game", {
       noJump: downGunNow, // (down: only the attack stick, for the down pistol)
       weapon: padWeapon,
       aim: (dx, dy) => {
-        keyAim = dx == null ? null : [dx, dy];
+        setKeyAim(dx == null ? null : [dx, dy]);
       }, // (let go: the weapon goes back to the way the duck faces; in Quacky Zombies the flashlight to the nearest zombie)
       attack: padAttack,
       jump: () => jump(),
@@ -7510,7 +7054,7 @@ register("game", {
       },
       hold: (x, y) => (!!sbk && sbk.hold(x, y)) || (!!bar && bar.wheel(x, y)), // (Sandbox: a placed thing's menu first)
       aim: (dx, dy) => {
-        keyAim = dx == null ? null : [dx, dy];
+        setKeyAim(dx == null ? null : [dx, dy]);
       }, // (a second finger dragging on the board aims, like the aim stick's: the owner's, Nov 18 15:18Z)
       swipe:
         bar && bar.nudge
@@ -7820,4 +7364,23 @@ register("game", {
   },
 });
 
+/* the picked weapon's window reads these through getters (it is called from the hand's files, which load before this one) */
+pickWith({
+  get R() {
+    return R;
+  },
+  get me() {
+    return me;
+  },
+  get bar() {
+    return bar;
+  },
+  sendMove,
+  fire,
+  myPick,
+  mgjDownGun,
+  onBoardPhase,
+  playDuck,
+  turned,
+});
 export { follows, geo, hotdogs }; // (what the files moved out of here read)
