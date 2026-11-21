@@ -13,14 +13,14 @@
     "js/hangout/shapes.js": 1707,
     "js/hangout/stationart.js": 1964,
     "js/hangout/world.js": 1786,
-    "js/l4dd.js": 3347,
-    "js/l4ddrules.js": 5007,
+    "js/l4dd.js": 3337,
+    "js/l4ddrules.js": 5006,
     "js/mgjrules.js": 2287,
     "js/numberatrun.js": 1675,
-    "js/rules.js": 6243,
+    "js/rules.js": 6244,
     "js/sandboxrules.js": 2059,
     "js/sbspawn.js": 1709,
     "js/sbspawnview.js": 2212,
-    "js/updates.js": 2987
+    "js/updates.js": 3003
   }
 }
