@@ -5,13 +5,13 @@ import {
   statsFor,
   ddrStats,
   wyrStats,
-  bbStats,
   scStats,
   lawStats,
   COLS,
   signed,
   nameOfValue,
 } from "./rules.js";
+import { bbStats } from "./bbrules.js";
 import { quackStats, quackBlank } from "./quackrules.js";
 import { dnStats } from "./duncerules.js";
 import { mgjStats } from "./mgjrules.js";

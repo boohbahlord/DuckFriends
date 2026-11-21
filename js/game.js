@@ -73,15 +73,12 @@ import {
   isLaw,
   twoSided,
   boardPhases,
-  bbMatch,
-  roundName,
   colAt,
   colXAt,
   colBoundsAt,
   heldCol,
   startX,
   wyrStats,
-  bbStats,
   isSudo,
   canOpen,
   isSc,
@@ -126,6 +123,7 @@ import {
   votesDue,
   REACH,
 } from "./rules.js";
+import { bbMatch, roundName, bbStats } from "./bbrules.js";
 import { mountWorld, BOARD_HTML as HANG_HTML } from "./hangout/world.js";
 import { W as HW, H as HH } from "./hangout/layout.js";
 import { hangStill } from "./hangout/rules.js";

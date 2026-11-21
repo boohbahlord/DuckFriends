@@ -27,7 +27,6 @@ import {
   isCounsel,
   jury,
   canGiveUp,
-  BB_TOPICS,
   SC_WORDS,
   scWriter,
   scZones,
@@ -43,6 +42,7 @@ import {
   walkOf,
   inWorld,
 } from "./rules.js";
+import { BB_TOPICS } from "./bbrules.js";
 import {
   anyWord,
   tileCenter,

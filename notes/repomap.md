@@ -11,6 +11,7 @@ audioimport.js 186 a player's own song, made small
 awards.js 20 the stats' awards: one card, one
 barrelheat.js 70 a hot barrel
 bash.js 1360 the command line's language: a small
+bbrules.js 383 the rules of Bicker Brackets
 beaks.js 138 beaks
 bloodpool.js 50 a pool of blood: the one
 boardjustin.js 701 Justin on the boards
@@ -50,7 +51,7 @@ friends.js 236 friends
 front.js 151 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 229 how a held weapon and the
-game.js 8480 the game screen
+game.js 8478 the game screen
 gamedefaults.js 43 the game's own numbers, for every
 gameready.js 47 
 gamesettings.js 1755 Game Settings: the whole screen, like
@@ -159,7 +160,7 @@ random.js 9 the two random helpers every mode's
 report.js 114 Report Bug or Suggest Ideas
 rooms.js 256 Play: create a room, and the
 router.js 112 screens
-rules.js 6240 the rules of Agree or Disagree
+rules.js 5885 the rules of Agree or Disagree
 sandbox.js 1359 Sandbox: the key windows
 sandboxrules.js 2059 Sandbox: which map it plays on,
 sbarms.js 124 Sandbox: a made NPC's weapons in
