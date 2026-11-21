@@ -10,7 +10,7 @@
    Paths: the one walking grid (walkgrid.js) over the whole world, made from layout.js, so moved props and new doors
    are found by themselves. A* finds the way; the pool can be kept out of it. Plain logic, no drawing: node can run it. */
 import { holdDown, isGhost, invuln, hurtFx } from "./death.js";
-import { gridOf, CELL } from "../walkgrid.js";
+import { gridOf, spotIn, CELL } from "../walkgrid.js";
 import {
   W,
   H,
@@ -250,12 +250,14 @@ export const stand = (x, y, now) => ({
 /* a random open spot that passes ok(x, y), from rand() (0 … 1) */
 export function randomSpot(rand, ok = () => true, o = {}) {
   walkGrid();
-  for (let t = 0; t < 400; t++) {
-    const x = EDGE + rand() * (W - 2 * EDGE),
-      y = EDGE + rand() * (H - 2 * EDGE);
-    if (ok(x, y) && walkable(x, y, o)) return [Math.round(x), Math.round(y)];
-  }
-  return null;
+  const p = spotIn(rand, (x, y) => ok(x, y) && walkable(x, y, o), {
+    x0: EDGE,
+    y0: EDGE,
+    x1: W - EDGE,
+    y1: H - EDGE,
+    tries: 400,
+  });
+  return p && [Math.round(p[0]), Math.round(p[1])];
 }
 /* inside the cabin, away from its walls */
 export const indoors = (x, y) =>

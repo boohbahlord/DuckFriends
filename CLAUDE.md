@@ -139,7 +139,13 @@ A program that is changed grows more complex unless work is spent against it (Le
 - Guns: every weapon's numbers in `js/guns.js` (Dead Ducks Arcade's `ARMS`, `kindOf`, `GUN_NAMES` the base; the modes'
   own in `GUN_BREEDS`: board, mgj, read by rules.js `coolFor`/`magSize` and mgjrules.js `mgjCool`/`mgjMag`); every
   weapon's drawing in `js/gunart.js` (held, icon, bullets and traces, `iconOf`, lengths in the hand `gwOf`; specials.js
-  `heldHTML` colors them per duck). Pinned by `tools/check/guns.cjs` and the npc golden's guns-board-* runs.
+  `heldHTML` colors them per duck). Pinned by `tools/check/guns.cjs` and the npc golden's guns-board-* runs. The lists (every mode's: `WEAPONS`, `BOARD_WEAPONS`,
+  `MGJ_GUNS`, `AUTO` from ARMS' flag) and the names (`nameOf(w, breed)`) are there too.
+- NPC brains: one walking grid, `js/walkgrid.js` `gridOf(q)` (the query names the area, a zombie or not, the mode's own
+  rule; Hangout's A* and the zombies' flow field both read it) and `spotIn` (every stroll's next spot); an NPC's
+  magazines in `js/npcrules.js` (`magOf`, `reloadOf`, `refill`, `spend`) with `sees`, `nearest`, `grudge`; each
+  shooting NPC's numbers are its row of `GUN_BREEDS` (gunman: bursts, magazines, reach; sbnpc: reach; one `reachOf(w,
+  breed)`). Pinned by the npc golden (`ONLY=a,b` plays a few).
 
 ## Reading, writing and talking for less (the owner's, Nov 20 22:09Z; sources in /mnt/project-files/adam/ and project memory)
 - Map, then narrow: `git grep -l` the behavior, then read 100 to 200 line windows; never read a file over 1,500 lines

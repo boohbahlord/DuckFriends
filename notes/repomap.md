@@ -226,7 +226,7 @@ vdd.js 190 Valentine's Duck Date: what the screen shows
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
 vote.js 278 Vote Mode & Map: the vote windows
-walkgrid.js 55 the walking grid: which 40-px cells of a
+walkgrid.js 67 the walking grid: which 40-px cells of a
 who.js 3 who this player is beyond this tab
 wounds.js 501 the wounds a hit leaves
 zombiepath.js 178 the zombies' way to the ducks on a
@@ -255,7 +255,7 @@ ghosts.js 108 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in blue jeans and
 lamp.js 71 the lamps: the example activity
 layout.js 1466 Duck Cabin: the world of Hangout
-npc.js 493 Duck Cabin's characters: how they get around, and
+npc.js 495 Duck Cabin's characters: how they get around, and
 npcart.js 271 Duck Cabin's characters: the drawings
 piano.js 530 the piano in the cabin , against the
 pianokeys.js 665 Hangout: the piano's keyboard mode
