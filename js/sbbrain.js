@@ -8,7 +8,7 @@
    - Protect: what it guards: it keeps by it and goes after whatever comes for it.
    A zombie whose spawn never set its Target goes after the players; the others go after nothing.
    decide() is the same on the board and on the worlds: the map's tick (sbspawn.js, sbcabin.js) gives it the things on
-   the map and how far apart two of them are, in duck lengths, and walks and claws as it says. */
+   the map and how far apart two of them are, in duck lengths, and zombies.js brainWalk walks and claws as it says. */
 import { nearest, grudgeOf } from "./npcrules.js";
 
 export const MAD = 10000; // ms it goes after whatever hurt it

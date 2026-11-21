@@ -117,7 +117,7 @@ name.js 165 fonts and how a player's name looks
 nbperms.js 167 Seriat: everyone's home folder, and the rights players
 net.js 127 the room connection
 notes.js 101 Notes : question ideas, written any time
-npcrules.js 128 what every NPC's brain shares
+npcrules.js 120 what every NPC's brain shares
 npcs.js 49 the characters you can mute: Justin, the cats,
 npcshared.js 29 what every NPC shares, whatever mode it's in
 npcview.js 206 an NPC on a world , drawn the
@@ -159,7 +159,7 @@ sbarms.js 136 Sandbox: a made NPC's weapons in a fight
 sbaudio.js 211 Sandbox: songs players bring in
 sbbody.js 233 Sandbox: an NPC's body, where it can be
 sbbrain.js 87 Sandbox: what a spawned NPC does , on
-sbcabin.js 390 Sandbox: the zombies on Duck Cabin , the
+sbcabin.js 336 Sandbox: the zombies on Duck Cabin , the
 sbdrag.js 353 Sandbox, moving blocks with the mouse :
 sbep.js 50 Sandbox Phase 7: what other players may do
 sbepview.js 162 Sandbox Phase 7: what other players may do
@@ -184,7 +184,7 @@ sbrotate.js 102 Sandbox, Direction's Rotate in the right-click menu :
 sbsave.js 273 Sandbox: saving a Sandbox as it is and
 sbsaves.js 743 Sandbox's saves: kept on the host's device, the
 sbsfx.js 74 Sandbox's sounds
-sbspawn.js 1762 Sandbox: spawns and respawns , the rules
+sbspawn.js 1708 Sandbox: spawns and respawns , the rules
 sbspawnview.js 2212 Sandbox: spawns and respawns , on the screen
 sbzone.js 349 Sandbox: board zones , the rules
 sbzonebrain.js 265 Sandbox: zones that run a Seriat file
@@ -226,7 +226,7 @@ who.js 3 who this player is beyond this tab
 wounds.js 295 the wounds a hit leaves
 zombiepath.js 186 the zombies' way to the ducks on a
 zombieroofs.js 244 the zombies' walk over Downpour's roofs: up a
-zombies.js 1312 the zombies: one module for every mode's zombies
+zombies.js 1420 the zombies: one module for every mode's zombies
 
 ## js/hangout/
 activities.js 23 every Hangout activity, so the rules and the
