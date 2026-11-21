@@ -82,7 +82,7 @@ l4ddbar.js 281 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and the roof's flare,
 l4ddbots.js 572 Quacky Zombies' computers
 l4ddcatalog.js 202 Quacky Zombies: the Butler's Items tab
-l4dddrops.js 64 Quacky Zombies' drops, drawn
+l4dddrops.js 63 Quacky Zombies' drops, drawn
 l4ddguns.js 279 Quacky Zombies' new weapons, drawn
 l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 338 Dead Ducks Arcade's power box
