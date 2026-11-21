@@ -600,7 +600,6 @@ const returnIn = (s) => {
   const v = s.options.voteBack;
   return v === "r" ? 1 + Math.floor(Math.random() * 6) : Math.max(0, +v || 0);
 };
-const voteCount = (s) => tally(s, (s.vt || {}).votes);
 function openVote(s, k, now) {
   s.phase = "countdown";
   s.at = now;

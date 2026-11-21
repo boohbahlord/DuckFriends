@@ -36,7 +36,7 @@ duckparts.js 592 the ducks made from pixel parts
 ducksheets.js 2 made by tools/duck-parts.cjs:
 duel.js 124 the cloud duel: two ducks share the cloud,
 dunce.js 145 Duncelation: what the screen shows
-duncerules.js 397 the rules of Duncelation
+duncerules.js 396 the rules of Duncelation
 euclid.js 351 Euclid's Squares
 eyes.js 187 eyes
 faces.js 308 face items
@@ -47,7 +47,7 @@ format.js 12 numbers as the settings ask
 friends.js 254 friends
 front.js 109 the front page
 fx.js 1200 the effects, drawn as pixels
-fxmotion.js 218 how a held weapon and the screen move
+fxmotion.js 214 how a held weapon and the screen move
 game.js 8825 the game screen
 gamedefaults.js 29 the game's own numbers, for every mode
 gameready.js 47 what the game's loading screen waits for
@@ -55,7 +55,7 @@ gamesettings.js 1751 Game Settings: the whole screen, like Customize
 gfx.js 8 Low graphics
 gmodes.js 246 Sandbox Phase 6: made game modes
 grenade.js 34 a grenade going off
-ground.js 54 what a duck walks on, for its footsteps
+ground.js 53 what a duck walks on, for its footsteps
 gunmen.js 110 the gunmen's looks
 gunmenrules.js 1159 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen
@@ -88,7 +88,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 338 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box on every screen
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 5365 the rules of Quacky Zombies
+l4ddrules.js 5360 the rules of Quacky Zombies
 l4ddsfx.js 513 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the zombies far from
 langname.js 5 the name of Sandbox's number language, in one
@@ -102,8 +102,8 @@ lobbysettings.js 73 Lobby Settings
 looks.js 127 the room's duck-look settings
 looksrules.js 60 the duck-look settings' rules
 main.js 163 the start: settings on the page, the background,
-manual.js 212 the command line's manual: man <command>
-maps.js 1116 maps: the world behind the board
+manual.js 203 the command line's manual: man <command>
+maps.js 1112 maps: the world behind the board
 merchantlines.js 81 what the merchants say
 merchants.js 376 the merchants
 meters.js 114 the thin bars under my duck's name
@@ -140,19 +140,19 @@ players.js 340 the player menu and the room's votes
 pointer.js 54 a computer or a phone
 powerart.js 377 Dead Ducks Arcade: the power box and the
 pxa.js 341 made by tools/pixel-art.cjs:
-pxbake.js 652 a map's pictures made into pixels once, instead
+pxbake.js 627 a map's pictures made into pixels once, instead
 pxcard.js 259 the player cards' pattern motifs as pixel files:
-pxdom.js 747 the pixel look for drawings already on the
+pxdom.js 739 the pixel look for drawings already on the
 pxmap.js 45 a map as pixel files
 pxpic.js 22 the maps that have a picture file :
 pxtext.js 263 emoji and tooltips in the pixel look
 quack.js 312 Who is the Quack?: what the screen shows
 quackrules.js 794 the rules of Who is the Quack?
-rainbowskin.js 117 the rainbow skin
+rainbowskin.js 116 the rainbow skin
 report.js 114 Report Bug or Suggest Ideas
 rooms.js 276 Play: create a room, and the rooms online
 router.js 112 screens
-rules.js 6323 the rules of Agree or Disagree
+rules.js 6322 the rules of Agree or Disagree
 sandbox.js 1359 Sandbox: the key windows
 sandboxrules.js 2059 Sandbox: which map it plays on, and who
 sbarms.js 136 Sandbox: a made NPC's weapons in a fight
@@ -242,7 +242,7 @@ chalk.js 631 the chalk floor: draw on it with the
 characters.js 594 Duck Cabin's characters on the map: the host's
 death.js 103 how long a knocked-down duck can't move
 doors.js 32 the doors: they swing open while a duck
-dpground.js 322 Downpour's ground
+dpground.js 320 Downpour's ground
 falls.js 118 falling a long way
 fireflies.js 178 fireflies
 flicker.js 83 now and then a light stutters
@@ -267,8 +267,8 @@ rules.js 87 Hangout's rules: s.hang and the { t: 'hang',
 seats.js 439 the couches, the campfire's logs, the kitchen chairs
 shadowduck.js 256 the shadow duck
 shapes.js 1707 Duck Cabin's props, drawn: art.js's drawings put where
-soccer.js 509 soccer: one ball on the field, one net
-sounds.js 18 Duck Cabin's sounds
+soccer.js 508 soccer: one ball on the field, one net
+sounds.js 17 Duck Cabin's sounds
 stage.js 134 the stage: half an oval 70 high on
 stationart.js 1967 Downpour's things: the drawings
 stationmap.js 1092 Dead Ducks Arcade's second map: the gas station,

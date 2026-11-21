@@ -94,31 +94,6 @@ function place(c, from, G, keep = false) {
     from.classList.add("px-gone");
   } else from.replaceWith(c);
 }
-/* still pictures on root (sel: its <img>s and <canvas>es that don't change once drawn) made into pixels in their
-   place (keep: the drawings stay, out of sight, for their code to draw on again; sel null: none), and what moves on it
-   (moving: { sel, before, bg, every }) drawn each frame as pixels (movers; bg: root's own background, a color or a top
-   to bottom gradient, painted under them, Sky's; every: ms between frames, 32); mark (root, or the map's layer) is marked px-own. Resolves true once they are. Call it again after each new
-   drawing (a new size, a new grid): the drawing goes under the filter until then (take px-own off first) */
-async function bakeStill(root, sel, mark = root, moving = null, keep = false) {
-  const G = grid(),
-    rootBox = root.getBoundingClientRect();
-  if (!rootBox.width || !rootBox.height) return false;
-  const els = sel ? [...root.querySelectorAll(sel)] : [];
-  if (sel && !els.length) return false;
-  const made = await Promise.all(els.map((el) => bakeImg(el, rootBox, G)));
-  if (!els.every((el) => el.isConnected) || made.some((c) => !c)) return false;
-  made.forEach((c, k) => place(c, els[k], G, keep));
-  if (moving) {
-    const parts = [...root.querySelectorAll(moving.sel)];
-    if (
-      (parts.length || moving.bg) &&
-      !(await movers(root, parts, G, moving.before, moving.bg, moving.every))
-    )
-      return false;
-  }
-  mark.classList.add("px-own");
-  return true;
-}
 /* the Night Show backdrop (tools/pixel-src/nightshow.js backdropHTML) on root: its pictures made into pixels, its train
    and its drifting shapes in boxes of their own, for its pixel files (tools/pixel-maps.cjs). Resolves true once done */
 export async function bakeBackdrop(root, mark = root) {
