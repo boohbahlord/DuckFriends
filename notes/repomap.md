@@ -45,7 +45,7 @@ feet.js 70 footsteps in every mode
 flamer.js 50 the flamethrower
 flowfield.js 173 the zombies' flow field, worked out off the
 format.js 12 numbers as the settings ask
-friends.js 254 friends
+friends.js 236 friends
 front.js 109 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 214 how a held weapon and the screen move
@@ -150,7 +150,7 @@ quack.js 312 Who is the Quack?: what the screen shows
 quackrules.js 794 the rules of Who is the Quack?
 rainbowskin.js 116 the rainbow skin
 report.js 114 Report Bug or Suggest Ideas
-rooms.js 276 Play: create a room, and the rooms online
+rooms.js 256 Play: create a room, and the rooms online
 router.js 112 screens
 rules.js 6320 the rules of Agree or Disagree
 sandbox.js 1359 Sandbox: the key windows
@@ -212,7 +212,7 @@ touch.js 284 touch controls on the board
 trivia.js 472 Trivia: what the screen shows
 triviabank.js 499 Trivia's auto questions
 triviarules.js 456 the rules of Trivia
-ui.js 349 small helpers every screen uses
+ui.js 373 small helpers every screen uses
 umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
 unlocks.js 372 things you unlock

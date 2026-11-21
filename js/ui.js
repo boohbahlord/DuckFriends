@@ -115,6 +115,30 @@ export function openWindow(html, { cls = "", onOpen, cover = true } = {}) {
     if (f) f.focus();
   });
 }
+/* the window that asks for a private room's passkey (the friends list and the rooms list both open it): onKey gets the
+   passkey typed; note is what went wrong last time; hint says what a passkey is when there is no note */
+export function askPasskey(name, note, onKey, hint = false) {
+  openWindow(
+    `<h2>🔒 ${esc(name)}</h2><form class="pass-form" autocomplete="off"><input class="passkey" placeholder="Passkey" maxlength="20" aria-label="Passkey">
+    ${note ? `<p class="small bad">${esc(note)}</p>` : hint ? '<p class="small dim">A private room: ask your friend for the passkey.</p>' : ""}<p class="acts"><button type="submit" class="btn green">Join</button></p></form>`,
+    {
+      cls: "win-small",
+      onOpen: (w, close) => {
+        const i = w.querySelector("input");
+        i.focus();
+        w.querySelector("form").onsubmit = (ev) => {
+          ev.preventDefault();
+          if (!i.value.trim()) {
+            i.focus();
+            return;
+          }
+          close();
+          onKey(i.value);
+        };
+      },
+    },
+  );
+}
 
 /* Are you sure? Yes or No; the X is No */
 export function confirmBox(title, line, yes = "Yes", no = "No") {
