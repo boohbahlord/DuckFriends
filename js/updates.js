@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v225",
+    version: 225,
+    date: "Nov 21, 2026",
+    title: "Your own shots never cut out",
+    news: [
+      "Your own shots and swings never cut out any more, even in a loud fight. Before, when many other ducks fired at once, a quiet weapon like the bow could go silent.",
+    ],
+  },
+  {
     id: "v224",
     version: 224,
     date: "Nov 21, 2026",
