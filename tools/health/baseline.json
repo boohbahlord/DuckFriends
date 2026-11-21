@@ -3,7 +3,7 @@
   "nullishNumbers": 0,
   "unusedExports": 109,
   "unusedFiles": 0,
-  "clones": 45,
+  "clones": 43,
   "bigFiles": {
     "js/chat.js": 1600,
     "js/customize.js": 1798,
@@ -22,6 +22,6 @@
     "js/sbspawn.js": 1708,
     "js/sbspawnview.js": 2212,
     "js/shell.js": 3541,
-    "js/updates.js": 2915
+    "js/updates.js": 2924
   }
 }
