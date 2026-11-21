@@ -21,7 +21,7 @@
      loop(name, o)          a sound on a loop (the jetpack): { stop(), move(x, y) }
      setListener(fn)        fn() → where my duck is ({ x, y }), for the distance; null for none
      loadSounds(group)      "game", "l4dd", "cabin": fetch and decode that group's files ahead of time */
-import { profile } from "./store.js";
+import { profile, SETTINGS_DEFAULT } from "./store.js";
 import { FILES } from "./sfxlist.js";
 import { netLevel } from "./settings.js";
 import { activeRoom } from "./later.js"; // (the room code comes after the first screen)
@@ -334,7 +334,9 @@ export function ceiling(a, dest) {
    audio design is a background that provides feedback and it fills the air", for a game played talking with friends) */
 const HEAD = 0.7;
 const level = () =>
-  HEAD * (profile.settings.sound / 100) * ((profile.settings.sfx ?? 100) / 100);
+  HEAD *
+  (profile.settings.sound / 100) *
+  ((profile.settings.sfx ?? SETTINGS_DEFAULT.sfx) / 100);
 
 /* each mode's own loudness, in dB over everything else (the Settings sliders stay as they are). I want Survival a
    little louder than the rest, about as loud as the whole game was before Nov 19, but its annoying guns as quiet as

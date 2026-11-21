@@ -198,7 +198,7 @@ sfxlist.js 164 the sound files
 shared.js 497 Sandbox Phase 7: Shared, the game modes and
 shell.js 3541 the command line: a small bash
 slices.js 31 long work cut into slices
-sound.js 933 the game's sounds: real recordings, played from small
+sound.js 935 the game's sounds: real recordings, played from small
 specials.js 858 Specials
 spectate.js 97 Survival: watching the others once my duck is
 splash.js 71 the start screen: your duck on a cloud,
@@ -220,7 +220,7 @@ umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
 unlocks.js 413 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 2933 Updates
+updates.js 2942 Updates
 vdd.js 190 Valentine's Duck Date: what the screen shows
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
