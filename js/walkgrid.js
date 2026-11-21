@@ -53,3 +53,15 @@ export function gridOf(q) {
   made.set(q.name, out);
   return out;
 }
+
+/* a random spot in the area a = { x0, y0, x1, y1, tries } that passes ok(x, y): x then y from rand() (0 … 1), up to
+   a.tries times; null when none did. Every stroll picks its next spot this way: Hangout's characters (hangout/npc.js
+   randomSpot, on the grid) and Justin out in Dead Ducks Arcade (bots.js wanderSpot) */
+export function spotIn(rand, ok, a) {
+  for (let t = 0; t < a.tries; t++) {
+    const x = a.x0 + rand() * (a.x1 - a.x0),
+      y = a.y0 + rand() * (a.y1 - a.y0);
+    if (ok(x, y)) return [x, y];
+  }
+  return null;
+}

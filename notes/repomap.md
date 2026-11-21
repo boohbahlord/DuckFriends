@@ -49,7 +49,7 @@ friends.js 236 friends
 front.js 109 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 214 how a held weapon and the screen move
-game.js 8822 the game screen
+game.js 8820 the game screen
 gamedefaults.js 43 the game's own numbers, for every mode
 gameready.js 47 what the game's loading screen waits for
 gamesettings.js 1755 Game Settings: the whole screen, like Customize
@@ -59,9 +59,9 @@ grenade.js 34 a grenade going off
 ground.js 53 what a duck walks on, for its footsteps
 gunart.js 448 every weapon, drawn: one drawing for every mode,
 gunmen.js 110 the gunmen's looks
-gunmenrules.js 1152 Survival: the gunmen
+gunmenrules.js 1140 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen
-guns.js 495 every weapon's numbers: one sheet for every mode
+guns.js 511 every weapon's numbers: one sheet for every mode
 hats.js 1073 hats
 heights.js 50 a shot's height, Doom's way
 helppages.js 1497 the command line's Help pages: help lists them;
@@ -70,7 +70,7 @@ homeapp.js 43 Install Duck Friends
 hooks.js 3 hooks between screens that can't import each other
 hotbar.js 480 the specials on the number keys
 hpmath.js 23 HP in tenths
-hpmeter.js 318 HP meters and the little "+1 HP" over
+hpmeter.js 327 HP meters and the little "+1 HP" over
 invisible.js 11 Who is invisible right now :
 itemtone.js 61 the colors an outfit or a hat draws
 jetart.js 39 the jetpack's pictures
@@ -118,7 +118,7 @@ name.js 165 fonts and how a player's name looks
 nbperms.js 167 Seriat: everyone's home folder, and the rights players
 net.js 127 the room connection
 notes.js 101 Notes : question ideas, written any time
-npcrules.js 106 what every NPC's brain shares
+npcrules.js 119 what every NPC's brain shares
 npcs.js 49 the characters you can mute: Justin, the cats,
 npcshared.js 29 what every NPC shares, whatever mode it's in
 npcview.js 206 an NPC on a world , drawn the
@@ -157,7 +157,7 @@ router.js 112 screens
 rules.js 6251 the rules of Agree or Disagree
 sandbox.js 1359 Sandbox: the key windows
 sandboxrules.js 2059 Sandbox: which map it plays on, and who
-sbarms.js 134 Sandbox: a made NPC's weapons in a fight
+sbarms.js 124 Sandbox: a made NPC's weapons in a fight
 sbaudio.js 211 Sandbox: songs players bring in
 sbbody.js 233 Sandbox: an NPC's body, where it can be
 sbbrain.js 87 Sandbox: what a spawned NPC does , on
@@ -186,7 +186,7 @@ sbrotate.js 102 Sandbox, Direction's Rotate in the right-click menu :
 sbsave.js 273 Sandbox: saving a Sandbox as it is and
 sbsaves.js 743 Sandbox's saves: kept on the host's device, the
 sbsfx.js 74 Sandbox's sounds
-sbspawn.js 1708 Sandbox: spawns and respawns , the rules
+sbspawn.js 1709 Sandbox: spawns and respawns , the rules
 sbspawnview.js 2212 Sandbox: spawns and respawns , on the screen
 sbzone.js 349 Sandbox: board zones , the rules
 sbzonebrain.js 265 Sandbox: zones that run a Seriat file
@@ -221,12 +221,12 @@ umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
 unlocks.js 413 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 2960 Updates
+updates.js 2969 Updates
 vdd.js 190 Valentine's Duck Date: what the screen shows
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
 vote.js 278 Vote Mode & Map: the vote windows
-walkgrid.js 55 the walking grid: which 40-px cells of a
+walkgrid.js 67 the walking grid: which 40-px cells of a
 who.js 3 who this player is beyond this tab
 wounds.js 501 the wounds a hit leaves
 zombiepath.js 178 the zombies' way to the ducks on a
@@ -255,7 +255,7 @@ ghosts.js 108 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in blue jeans and
 lamp.js 71 the lamps: the example activity
 layout.js 1466 Duck Cabin: the world of Hangout
-npc.js 493 Duck Cabin's characters: how they get around, and
+npc.js 495 Duck Cabin's characters: how they get around, and
 npcart.js 271 Duck Cabin's characters: the drawings
 piano.js 530 the piano in the cabin , against the
 pianokeys.js 665 Hangout: the piano's keyboard mode

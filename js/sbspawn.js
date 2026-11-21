@@ -17,6 +17,7 @@
    (l4ddrules.js l4Spawn), already inside; on Duck Cabin they are Sandbox's own (sbcabin.js), walking as those do. Every
    other kind (a Blank NPC, Justin, a Test NPC, a made NPC) is Sandbox's own on every world, the zombie maps too, where
    their guns and swings hit them (l4ddrules.js L4_HOOKS). */
+import { shuffle } from "./random.js";
 import { epMay } from "./sbep.js";
 import { keep, read, valueOf } from "./numerat.js";
 import {
@@ -351,7 +352,7 @@ function kindFor(s, id, p) {
     return ks[Math.floor(Math.random() * ks.length)];
   const bags = { ...((s.sb && s.sb.bag) || {}) };
   let bag = (bags[id] || []).filter((k) => ks.includes(k));
-  if (!bag.length) bag = [...ks].sort(() => Math.random() - 0.5);
+  if (!bag.length) bag = shuffle([...ks]); // (a fair shuffle: a random sort calls Math.random a different number of times run to run)
   const k = bag.shift();
   bags[id] = bag;
   s.sb = { ...s.sb, bag: bags };

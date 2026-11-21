@@ -1,17 +1,12 @@
 /* how busy a frame is, steadily enough to judge a change by (Adam's ask, Nov 21 04:47Z): one busy scene, played the
    same way each time, and from a Chrome trace the main thread's and the graphics card's (the GPU process's) busy time
-   in each frame, frames a second, the processes' processor time a frame and the layers drawn.
-   The scene: Dead Ducks Arcade on Downpour (or Duck Cabin, or Survival), round 21 by the test command's action, every
-   duck kept up. Headless Chromium has no graphics card: with GPU=1 (the default) it draws with SwiftShader, a stand-in
-   that does the card's work on the processor, so the card's share is seen at all.
-   A live scene changes from run to run (where the zombies go), so the steady way is a replay: RECORD=file once, then
-   REPLAY=file hands the screen the same recorded states every run (within ±7% over 3 runs, Nov 21).
-   node tools/perf/frames.cjs [runs]
-   env: MAP (downpour|cabin), MODE (l4dd|surv), SECS (the window, 15), GPU (1|0), BOTS (computers, 0),
-     RECORD / REPLAY (a gzipped recording), B (another folder: A and B in turns, B/A printed), URL / URL_B (running
-     servers), CSS (a style added first, e.g. a layer hidden), PROBE (what's on screen, by size and filters),
-     EVENTS (where the time goes, by thread and event), SHOT (a picture), CATS / DUMP (more trace categories; the
-     trace to a file), THREADS (busy time by thread) */
+   in each frame: the median and the 95th percentile, with frames a second.
+   The scene: Dead Ducks Arcade on Downpour (or Duck Cabin, or Survival), 3 computers, round 21 by the test command's
+   action, every duck kept up (so a run doesn't change with when they go down). Headless Chromium has no graphics card:
+   with GPU=1 (the default) it draws with SwiftShader, a stand-in that does the card's work on the processor, so the
+   card's share is seen at all.
+   node tools/perf/frames.cjs [runs]   env: MAP (downpour|cabin), MODE (l4dd|surv), SECS (the window, 15), GPU (1|0),
+   URL (a running server; without it I serve this folder myself) */
 const { chromium } = require("playwright");
 const http = require("http");
 const fs = require("fs");
@@ -25,6 +20,8 @@ const RUNS = +(process.argv[2] || 3),
   GPU = process.env.GPU !== "0",
   RECORD = process.env.RECORD, // (a file: this run's room states are written there, gzipped, for replays)
   REPLAY = process.env.REPLAY, // (a recording played to the screen instead of the rules: the same scene every run)
+  ROUND = +(process.env.ROUND || 21), // (the round the test command jumps to, Dead Ducks Arcade)
+  LONG = process.env.LONG, // (the page's long tasks: how many over 16 and 50 ms, and what each is, from a processor profile)
   CSS = process.env.CSS, // (a style added before the window, e.g. one layer hidden, to see what that layer costs)
   BOTS = +(process.env.BOTS || 0), // (computers: none by default, so the zombies crowd my duck the same way every run)
   ROOT = path.resolve(__dirname, "../..");
@@ -197,12 +194,42 @@ async function once(url) {
     await p.waitForTimeout(rec.lead || 3000); // (into the recording before the window starts)
   } else {
     if (MODE === "l4dd")
-      await p.evaluate(() =>
-        window._r.send({ t: "hang", k: "cheat", do: "round", n: 21 }),
-      ); // (cheat round 21: cheats.js)
+      await p.evaluate(
+        (ROUND) =>
+          window._r.send({ t: "hang", k: "cheat", do: "round", n: ROUND }),
+        ROUND,
+      ); // (cheat round 21, or ROUND: cheats.js)
     await p.waitForTimeout(MODE === "surv" ? 40000 : 12000); // (the zombies in: a horde comes on its own in Survival)
   }
-  if (CSS) await p.addStyleTag({ content: CSS });
+  if (cssNow) await p.addStyleTag({ content: cssNow });
+  /* WATCH: a css selector; what changes inside those elements during the window (attributes, text, children), counted
+     by element and kind, to find what makes a layer paint again */
+  if (process.env.WATCH)
+    await p.evaluate((sel) => {
+      window.__mut = {};
+      const name = (n) => {
+        const e = n.nodeType === 1 ? n : n.parentElement;
+        const one = (x) =>
+          x.tagName.toLowerCase() +
+          (x.classList[0] ? "." + [...x.classList].slice(0, 2).join(".") : "");
+        return e
+          ? (e.parentElement ? one(e.parentElement) + " > " : "") + one(e)
+          : "?";
+      };
+      const mo = new MutationObserver((ls) => {
+        for (const m of ls) {
+          const k = `${name(m.target)} ${m.type}${m.attributeName ? " " + m.attributeName : ""}`;
+          window.__mut[k] = (window.__mut[k] || 0) + 1;
+        }
+      });
+      for (const el of document.querySelectorAll(sel))
+        mo.observe(el, {
+          subtree: true,
+          attributes: true,
+          childList: true,
+          characterData: true,
+        });
+    }, process.env.WATCH);
   if (process.env.SHOT)
     (await p.waitForTimeout(800),
       await p.screenshot({ path: process.env.SHOT })); // (a picture of the scene, the style added)
@@ -323,6 +350,14 @@ async function once(url) {
   };
   const cdp = await cx.newCDPSession(p);
   const cpu0 = await cpu();
+  if (process.env.RASTER)
+    (await cdp.send("DOM.enable"),
+      await cdp.send("DOM.getDocument", { depth: 0 }));
+  if (LONG) {
+    await cdp.send("Profiler.enable");
+    await cdp.send("Profiler.setSamplingInterval", { interval: 250 });
+    await cdp.send("Profiler.start");
+  }
   await cdp.send("Tracing.start", {
     categories:
       "toplevel,viz,gpu,devtools.timeline,disabled-by-default-devtools.timeline.frame" +
@@ -331,6 +366,9 @@ async function once(url) {
   });
   await p.waitForTimeout(SECS * 1000);
   const cpu1 = await cpu();
+  const prof = LONG ? (await cdp.send("Profiler.stop")).profile : null;
+  if (prof && process.env.PROFILE)
+    fs.writeFileSync(process.env.PROFILE, JSON.stringify(prof)); // (open it in DevTools' Performance panel, or read its lines)
   const done = new Promise((ok) => cdp.once("Tracing.tracingComplete", ok));
   await cdp.send("Tracing.end");
   const { stream } = await done;
@@ -353,18 +391,64 @@ async function once(url) {
   const zombies = await p.evaluate(
     () => document.querySelectorAll(".l4z:not(.dead)").length,
   );
+  if (process.env.WATCH)
+    console.log(
+      Object.entries(await p.evaluate(() => window.__mut))
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 25)
+        .map(([k, n]) => `${(n / SECS).toFixed(1)}/s ${k}`)
+        .join("\n"),
+    );
   /* the composited layers at the window's end (each one the graphics card draws on its own) */
+  let tree = [];
   const layerN = await new Promise((ok) => {
     const t = setTimeout(() => ok(-1), 5000);
     cdp.once(
       "LayerTree.layerTreeDidChange",
       ({ layers }) => (
         clearTimeout(t),
+        (tree = layers || []),
         ok(layers ? layers.filter((l) => l.drawsContent).length : -1)
       ),
     );
     cdp.send("LayerTree.enable").catch(() => ok(-1));
   });
+  if (process.env.RASTER) {
+    /* RASTER (with CATS=cc,disabled-by-default-cc.debug): the layers whose tiles the graphics card rasters again during
+       the window, by tiles a second, named by the element that makes them */
+    const t = JSON.parse(raw),
+      per = new Map();
+    for (const e of t.traceEvents || t) {
+      const d = e.name === "RasterTask" && e.args && e.args.tileData;
+      if (d) per.set(String(d.layerId), (per.get(String(d.layerId)) || 0) + 1);
+    }
+    const byId = new Map(tree.map((l) => [l.layerId, l])),
+      rows = [];
+    for (const [id, n] of [...per].sort((a, b) => b[1] - a[1]).slice(0, 15)) {
+      const l = byId.get(id) || {};
+      let who = "(gone by the end)";
+      if (l.backendNodeId)
+        try {
+          const { node } = await cdp.send("DOM.describeNode", {
+            backendNodeId: l.backendNodeId,
+          });
+          const at = node.attributes || [],
+            ci = at.indexOf("class");
+          who =
+            node.localName +
+            (ci >= 0 ? "." + at[ci + 1].split(" ").slice(0, 3).join(".") : "");
+        } catch {}
+      else if (l.layerId)
+        who =
+          "(no element: " +
+          (l.parentLayerId ? "a child layer" : "the root") +
+          ")";
+      rows.push(
+        `${(n / SECS).toFixed(1)} tiles/s: layer ${id} ${l.width | 0}x${l.height | 0} ${who}`,
+      );
+    }
+    console.log(rows.join("\n"));
+  }
   await b.close();
   const parsed = JSON.parse(raw),
     ev = parsed.traceEvents || parsed;
@@ -384,6 +468,7 @@ async function once(url) {
         )
         .map((e) => [e.ts, e.ts + e.dur]),
     );
+  if (LONG) longTasks(ev, names, prof);
   if (process.env.THREADS) {
     const per = new Map();
     for (const e of ev)
@@ -460,6 +545,102 @@ async function once(url) {
 /* two builds compared (B=folder or URL_B): their runs taken in turns, A then B, and each pair's ratio reported. This
    machine's processors are shared with others, so a run's numbers drift with the time; a pair run back to back drifts
    together, and its ratio holds */
+let cssNow = CSS; // (CSS_B: a style for B only, so A and B can be the same folder with one layer hidden in B)
+/* LONG: the page's main-thread tasks over 16 ms (a frame at 60) and over 50 ms (a long task), and what's in them: the
+   page's own steps (style, layout, paint, garbage collection) from the trace, and the functions that ran, by their own
+   time, from the processor profile's samples inside each task */
+function longTasks(ev, names, prof) {
+  const main = [...names].find(([, n]) => n === "CrRendererMain");
+  if (!main) return;
+  const [pid, tid] = main[0].split(":").map(Number),
+    mine = ev.filter(
+      (e) => e.pid === pid && e.tid === tid && e.ph === "X" && e.dur,
+    ),
+    tasks = mine
+      .filter(
+        (e) =>
+          e.name === "ThreadControllerImpl::RunTask" || e.name === "RunTask",
+      )
+      .filter((e) => e.dur > 16000);
+  /* the samples: when each was taken, and the function it caught (its own time, not its callers') */
+  const node = new Map((prof ? prof.nodes : []).map((n) => [n.id, n])),
+    at = [];
+  const parent = new Map();
+  for (const n of prof ? prof.nodes : [])
+    for (const c of n.children || []) parent.set(c, n.id);
+  if (prof) {
+    let t = prof.startTime;
+    prof.samples.forEach((id, i) => {
+      t += prof.timeDeltas[i];
+      const c = node.get(id).callFrame;
+      if (c.functionName === "(idle)" || c.functionName === "(program)") return;
+      const nm = (f) =>
+        `${f.functionName || "(anonymous)"} ${f.url.split("/").pop().split("?")[0]}:${f.lineNumber + 1}`;
+      let k = nm(c);
+      if (!c.url) {
+        /* the browser's own (a size read, a drawImage): named with the game's function that called it */
+        let q = parent.get(id);
+        while (q && !node.get(q).callFrame.url) q = parent.get(q);
+        if (q) k = `${c.functionName} in ${nm(node.get(q).callFrame)}`;
+      }
+      at.push([t, k]);
+    });
+  }
+  const STEPS = [
+      "UpdateLayoutTree",
+      "Layout",
+      "PrePaint",
+      "Paint",
+      "Layerize",
+      "Commit",
+      "MajorGC",
+      "MinorGC",
+      "ParseHTML",
+      "EvaluateScript",
+      "Decode Image",
+      "HitTest",
+    ],
+    all = new Map(),
+    rows = [];
+  for (const k of tasks) {
+    const end = k.ts + k.dur,
+      steps = {},
+      fns = new Map();
+    for (const e of mine)
+      if (e.ts >= k.ts && e.ts + e.dur <= end && STEPS.includes(e.name))
+        steps[e.name] = (steps[e.name] || 0) + e.dur / 1000;
+    for (const [t, f] of at)
+      if (t >= k.ts && t <= end) {
+        fns.set(f, (fns.get(f) || 0) + 0.25);
+        all.set(f, (all.get(f) || 0) + 0.25);
+      }
+    for (const [n, ms] of Object.entries(steps))
+      all.set("[" + n + "]", (all.get("[" + n + "]") || 0) + ms);
+    rows.push({
+      ms: k.dur / 1000,
+      steps,
+      fns: [...fns].sort((a, b) => b[1] - a[1]).slice(0, 4),
+    });
+  }
+  const n50 = tasks.filter((k) => k.dur > 50000).length;
+  console.log(
+    `long tasks: ${tasks.length} over 16 ms (${(tasks.length / SECS).toFixed(1)}/s), ${n50} over 50 ms (${(n50 / SECS).toFixed(2)}/s); the longest ${rows.length ? Math.max(...rows.map((r) => r.ms)).toFixed(0) : 0} ms`,
+  );
+  for (const r of rows.sort((a, b) => b.ms - a.ms).slice(0, 8))
+    console.log(
+      `  ${r.ms.toFixed(0)} ms: ` +
+        Object.entries(r.steps)
+          .filter(([, ms]) => ms >= 1)
+          .map(([n, ms]) => `${n} ${ms.toFixed(0)}`)
+          .join(", ") +
+        (r.fns.length
+          ? " | " + r.fns.map(([f, ms]) => `${f} ${ms.toFixed(1)}`).join(", ")
+          : ""),
+    );
+  console.log("in all of them, by own time (ms in the window):");
+  for (const [f, ms] of [...all].sort((a, b) => b[1] - a[1]).slice(0, 15))
+    console.log(`  ${ms.toFixed(1)} ${f}`);
+}
 async function pairs() {
   const sa = process.env.URL ? null : await serve(),
     sb = process.env.URL_B ? null : await serve(process.env.B),
@@ -468,13 +649,16 @@ async function pairs() {
   await once(ua); // (warm-up, not counted)
   const rs = [];
   for (let r = 1; r <= RUNS; r++) {
-    const a = await once(ua),
-      b = await once(ub),
-      q = {
-        fps: b.fps / a.fps,
-        main: b.cpuPage / a.cpuPage,
-        gpu: b.cpuGpu / a.cpuGpu,
-      };
+    cssNow = CSS;
+    const a = await once(ua);
+    cssNow = process.env.CSS_B !== undefined ? CSS + process.env.CSS_B : CSS;
+    const b = await once(ub);
+    cssNow = CSS;
+    const q = {
+      fps: b.fps / a.fps,
+      main: b.cpuPage / a.cpuPage,
+      gpu: b.cpuGpu / a.cpuGpu,
+    };
     rs.push(q);
     console.log(
       `pair ${r}: A ${a.fps.toFixed(1)} fps, page ${a.cpuPage.toFixed(1)} ms, GPU ${a.cpuGpu.toFixed(1)} ms a frame, ${a.layerN} layers | B ${b.fps.toFixed(1)} fps, page ${b.cpuPage.toFixed(1)} ms, GPU ${b.cpuGpu.toFixed(1)} ms, ${b.layerN} layers | B/A fps ${q.fps.toFixed(2)}, page ${q.main.toFixed(2)}, GPU ${q.gpu.toFixed(2)}`,
