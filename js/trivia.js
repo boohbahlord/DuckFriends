@@ -17,8 +17,8 @@ import { duckSVG } from "./duck.js";
 import { nameHTML } from "./name.js";
 import { cloudHTML, SECRET } from "./brackets.js";
 import { rainbowHTML } from "./art.js";
-import { fmtJumps } from "./format.js";
-import { seenDuck, seenName } from "./looks.js";
+import { fmtJumps, plural } from "./format.js";
+import { seenDuck, seenName, GONE, player } from "./looks.js";
 import { touchOnly } from "./pointer.js";
 import {
   tvQ,
@@ -43,15 +43,7 @@ import {
   W_MAX,
 } from "./triviarules.js";
 
-const GONE = {
-  name: "Gone",
-  duck: { color: "#b7bccb" },
-  card: { color: "#8a8fa3" },
-  nameStyle: {},
-};
-const player = (s, id) => (id && s.players[id]) || GONE;
 const nm = (p) => `<span class="wq-w">${nameHTML(p.name, seenName(p))}</span>`; // (a name never breaks across lines)
-const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 const letter = (i) =>
   `<span class="tv-let">${rainbowHTML(`(${LETTERS[i]})`, { seed: 5 + i, from: i * 2 })}</span>`;
 const mini = (p, size = 22) =>
