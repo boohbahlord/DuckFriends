@@ -24,6 +24,7 @@ import {
   shotKind,
   coneOf,
   roundAt,
+  flyShots,
 } from "./weaponuse.js";
 import { HANDGUN } from "./gamedefaults.js";
 import { jumpDodges, jumpKept } from "./jump.js";
@@ -4094,76 +4095,63 @@ function blast(s, sh, x, y, now, o = {}) {
    it */
 function moveShots(s, now) {
   if (!s.shots || !s.shots.length) return false;
-  const keep = [];
-  for (const sh of s.shots) {
-    if (!sh.k) continue; // (one fired before aiming: gone)
-    if (sh.k === "grenade") {
-      // it hits nothing on its way; it goes off where it lands (Hangout: or where a wall stops it)
-      const at = shotAt(sh, Math.min(now - sh.t, GRENADE_MS)),
-        walled =
-          sh.hin !== undefined &&
-          (inCabin(at.x * HW, at.y * HH) ? 1 : 0) !== sh.hin;
-      if (walled || now - sh.t >= GRENADE_MS) {
-        if (boardPhases(s).includes(s.phase))
-          blast(s, sh, walled ? sh.lx : at.x, walled ? sh.ly : at.y, now);
-        continue;
-      }
-      sh.lx = at.x;
-      sh.ly = at.y;
-      keep.push(sh);
-      continue;
-    }
-    if (sh.k === "lgren") {
-      // the grenade launcher's: straight, and it goes off on the first duck it gets to, a wall, or at its range
-      const at = shotAt(sh, Math.min(now - sh.t, sh.life)),
-        walled =
-          sh.hin !== undefined &&
-          (inCabin(at.x * HW, at.y * HH) ? 1 : 0) !== sh.hin;
-      if (
-        walled ||
-        now - sh.t >= sh.life ||
-        lgrenHits(s, sh, at, now) ||
-        at.x < -0.05 ||
-        at.x > 1.05 ||
-        at.y < -0.05 ||
-        at.y > 1.05
-      ) {
-        if (boardPhases(s).includes(s.phase))
-          blast(s, sh, walled ? sh.lx : at.x, walled ? sh.ly : at.y, now, {
-            w: "glauncher",
-          });
-        continue;
-      }
-      sh.lx = at.x;
-      sh.ly = at.y;
-      keep.push(sh);
-      continue;
-    }
-    if (now < sh.t) {
-      keep.push(sh);
-      continue;
-    } // (a burst's round still waiting for its turn)
-    const at = shotAt(sh, now - sh.t),
-      x0 = sh.lx,
-      y0 = sh.ly,
-      dx = at.x - x0,
-      dy = at.y - y0;
-    const walled =
+  const on = () => boardPhases(s).includes(s.phase),
+    walled = (sh, at) =>
       sh.hin !== undefined &&
       (inCabin(at.x * HW, at.y * HH) ? 1 : 0) !== sh.hin; // (Hangout: it hit the cabin's wall)
-    if (shotHits(s, sh, at, x0, y0, dx, dy, now)) continue;
-    sh.lx = at.x;
-    sh.ly = at.y;
-    const on =
-      !walled &&
-      at.x > -0.3 &&
-      at.x < 1.3 &&
-      at.y > -0.6 &&
-      at.y < 1.6 &&
-      now - sh.t < (sh.k === "dagger" ? DAGGER_LIFE : sh.life || 12000); // (a shotgun's pellet: its own short life)
-    if (on && boardPhases(s).includes(s.phase)) keep.push(sh); // (on past the board to the screen's edge)
-  }
-  s.shots = keep;
+  s.shots = flyShots(
+    s.shots.filter((sh) => sh.k), // (one fired before aiming: gone)
+    now,
+    {
+      fuse: GRENADE_MS,
+      U: [1, 1],
+      at: shotAt,
+      walled,
+      boom: (sh, at) => on() && blast(s, sh, at.x, at.y, now), // (a grenade hits nothing on its way)
+      launched: (sh, age) => {
+        // the grenade launcher's: straight, and it goes off on the first duck it gets to, a wall, or at its range
+        const at = shotAt(sh, Math.min(age, sh.life)),
+          wall = walled(sh, at);
+        if (
+          wall ||
+          age >= sh.life ||
+          lgrenHits(s, sh, at, now) ||
+          at.x < -0.05 ||
+          at.x > 1.05 ||
+          at.y < -0.05 ||
+          at.y > 1.05
+        ) {
+          if (on())
+            blast(s, sh, wall ? sh.lx : at.x, wall ? sh.ly : at.y, now, {
+              w: "glauncher",
+            });
+          return false;
+        }
+        sh.lx = at.x;
+        sh.ly = at.y;
+        return true;
+      },
+      bullet: (sh, age) => {
+        const at = shotAt(sh, age),
+          x0 = sh.lx,
+          y0 = sh.ly,
+          wall = walled(sh, at);
+        if (shotHits(s, sh, at, x0, y0, at.x - x0, at.y - y0, now))
+          return false;
+        sh.lx = at.x;
+        sh.ly = at.y;
+        return (
+          !wall &&
+          at.x > -0.3 &&
+          at.x < 1.3 &&
+          at.y > -0.6 &&
+          at.y < 1.6 &&
+          age < (sh.k === "dagger" ? DAGGER_LIFE : sh.life || 12000) && // (a shotgun's pellet: its own short life)
+          on()
+        ); // (on past the board to the screen's edge)
+      },
+    },
+  );
   return true;
 }
 /* how fast one of Quacky Zombies' guns' bullets flies here: its speed there, in board widths a second, a little faster

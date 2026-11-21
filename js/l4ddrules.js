@@ -45,6 +45,7 @@ import {
   shotKind,
   coneOf,
   roundAt,
+  flyShots,
 } from "./weaponuse.js";
 import {
   ARMS,
@@ -4136,7 +4137,6 @@ export function l4Shots(s, now) {
     T = now - L.t0,
     zs = zombies(s),
     grid = hitGrid(zs),
-    keep = [],
     slugs = []; // (the double barrel's kills this beat: [x, y, crit])
   /* does shot sh fly on past zombie z? It missed it, now or before (sh.ms: the ones it missed, each rolled once); then
      it goes on to the next one, which rolls again */
@@ -4147,85 +4147,54 @@ export function l4Shots(s, now) {
     return true;
   };
   let hitAny = false;
-  for (const sh0 of list) {
-    const sh = { ...sh0 },
-      age = now - sh.t;
-    if (age < 0) {
-      keep.push(sh);
-      continue;
-    } // (a burst's round still waiting for its turn)
-    if (sh.k === "grenade") {
-      const u = Math.min(age, GRENADE_MS) / 1000,
-        x = (sh.x0 + sh.vx * u) * W,
-        y = (sh.y0 + sh.vy * u) * H,
-        wall = walled(x, y, sh.hz);
-      if (wall || age >= GRENADE_MS) {
-        hitAny =
-          boom(
-            s,
-            sh,
-            wall ? sh.lx * W : x,
-            wall ? sh.ly * H : y,
-            zs,
-            T,
-            now,
-            BLAST_HALF,
-          ) || hitAny;
-        continue;
-      }
-      sh.lx = x / W;
-      sh.ly = y / H;
-      keep.push(sh);
-      continue;
-    }
-    if (sh.k === "lgren") {
-      /* the grenade launcher's: straight, and off at the first zombie, a wall or its range */
-      const u = age / 1000,
-        x0 = sh.lx * W,
-        y0 = sh.ly * H,
-        x1 = (sh.x0 + sh.vx * u) * W,
-        y1 = (sh.y0 + sh.vy * u) * H,
-        n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 12));
-      let at = null;
-      for (let k = 1; k <= n && !at; k++) {
-        const x = x0 + ((x1 - x0) * k) / n,
-          y = y0 + ((y1 - y0) * k) / n;
-        if (walled(x, y, shotFeet(sh)))
-          at = [x0 + ((x1 - x0) * (k - 1)) / n, y0 + ((y1 - y0) * (k - 1)) / n];
-        else if (
-          nearby(grid, zs, x, y).some(
-            (z) =>
-              z.st !== 3 &&
-              Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1 &&
-              hOk(sh, zombieZ(z), z.x, z.y, sh.x0 * W, sh.y0 * H) &&
-              !past(sh, "glauncher", z),
-          )
+  const launched = (sh, age) => {
+    /* the grenade launcher's: straight, and off at the first zombie, a wall or its range */
+    const u = age / 1000,
+      x0 = sh.lx * W,
+      y0 = sh.ly * H,
+      x1 = (sh.x0 + sh.vx * u) * W,
+      y1 = (sh.y0 + sh.vy * u) * H,
+      n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 12));
+    let at = null;
+    for (let k = 1; k <= n && !at; k++) {
+      const x = x0 + ((x1 - x0) * k) / n,
+        y = y0 + ((y1 - y0) * k) / n;
+      if (walled(x, y, shotFeet(sh)))
+        at = [x0 + ((x1 - x0) * (k - 1)) / n, y0 + ((y1 - y0) * (k - 1)) / n];
+      else if (
+        nearby(grid, zs, x, y).some(
+          (z) =>
+            z.st !== 3 &&
+            Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1 &&
+            hOk(sh, zombieZ(z), z.x, z.y, sh.x0 * W, sh.y0 * H) &&
+            !past(sh, "glauncher", z),
         )
-          at = [x, y];
-      }
-      if (!at && age >= sh.life) at = [x1, y1];
-      if (at) {
-        const ang = angelOf(s, sh.by, "glauncher");
-        hitAny =
-          boom(
-            s,
-            sh,
-            at[0],
-            at[1],
-            zs,
-            T,
-            now,
-            BLAST_HALF * (ang ? ANGEL.GL_RADIUS : 1),
-          ) || hitAny;
-        if (ang)
-          burnAt(s, sh.by, at[0], at[1], now, blastZ(at[0], at[1], sh.hz || 0)); // (Angelic: a smaller blast, and the ground there on fire)
-        continue;
-      }
-      sh.lx = x1 / W;
-      sh.ly = y1 / H;
-      keep.push(sh);
-      continue;
+      )
+        at = [x, y];
     }
+    if (!at && age >= sh.life) at = [x1, y1];
+    if (at) {
+      const ang = angelOf(s, sh.by, "glauncher");
+      hitAny =
+        boom(
+          s,
+          sh,
+          at[0],
+          at[1],
+          zs,
+          T,
+          now,
+          BLAST_HALF * (ang ? ANGEL.GL_RADIUS : 1),
+        ) || hitAny;
+      if (ang)
+        burnAt(s, sh.by, at[0], at[1], now, blastZ(at[0], at[1], sh.hz || 0)); // (Angelic: a smaller blast, and the ground there on fire)
+      return false;
+    }
+    sh.lx = x1 / W;
+    sh.ly = y1 / H;
+    return true;
+  };
+  const bullet = (sh, age) => {
     const x0 = sh.lx * W,
       y0 = sh.ly * H,
       u = age / 1000,
@@ -4353,12 +4322,29 @@ export function l4Shots(s, now) {
         gore: slugs.splice(0),
       }); // (every screen: the chunks and the blood blown out of each, more from a crit's head: l4dd.js)
     }
-    if (gone) continue;
+    if (gone) return false;
     sh.lx = endX / W;
     sh.ly = endY / H;
-    keep.push(sh);
-  }
-  s.shots = keep;
+    return true;
+  };
+  s.shots = flyShots(
+    list.map((sh) => ({ ...sh })),
+    now,
+    {
+      fuse: GRENADE_MS,
+      U: [W, H],
+      at: (sh, t) => ({
+        x: (sh.x0 + sh.vx * (t / 1000)) * W,
+        y: (sh.y0 + sh.vy * (t / 1000)) * H,
+      }),
+      walled: (sh, at) => walled(at.x, at.y, sh.hz),
+      boom: (sh, at) => {
+        hitAny = boom(s, sh, at.x, at.y, zs, T, now, BLAST_HALF) || hitAny;
+      },
+      launched,
+      bullet,
+    },
+  );
   if (hitAny) store(s, zs, true);
   return true;
 }
