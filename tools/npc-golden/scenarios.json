@@ -366,5 +366,78 @@
       "next": "$now"
     },
     "bait": 0
+  },
+  {
+    "name": "sb-cabin-bait",
+    "options": {
+      "mode": "sandbox",
+      "sbMap": "cabin"
+    },
+    "pre": [
+      {
+        "t": "sbPick"
+      }
+    ],
+    "computers": 2,
+    "beats": 900,
+    "setup": [
+      {
+        "t": "sb",
+        "k": "npc",
+        "n": {
+          "id": "gunner",
+          "name": "Gunner",
+          "duck": "$duck",
+          "w": {
+            "p": ["ak", "handgun"],
+            "m": "knife"
+          },
+          "beh": {
+            "target": "players"
+          }
+        }
+      },
+      {
+        "t": "sb",
+        "k": "add",
+        "kind": "spawn",
+        "x": "$mx",
+        "y": "$my"
+      },
+      {
+        "t": "sb",
+        "p": "p1",
+        "k": "set",
+        "f": "what",
+        "v": "c:gunner zombie"
+      },
+      {
+        "t": "sb",
+        "p": "p1",
+        "k": "set",
+        "f": "limit",
+        "v": "6"
+      },
+      {
+        "t": "sb",
+        "p": "p1",
+        "k": "set",
+        "f": "cont",
+        "v": "t"
+      },
+      {
+        "t": "sb",
+        "p": "p1",
+        "k": "set",
+        "f": "every",
+        "v": "1"
+      },
+      {
+        "t": "sb",
+        "p": "p1",
+        "k": "go"
+      }
+    ],
+    "bait": 100
   }
 ]
