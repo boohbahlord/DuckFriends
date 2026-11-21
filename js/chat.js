@@ -37,7 +37,7 @@ import { unlocked, lockHint } from "./unlocks.js";
 import { OUTFITS, outfitById } from "./outfits.js";
 import { SPECIALS, KEYS, keysOf as keysOfDuck } from "./specials.js";
 import { CARD_PATTERNS, CARD_LAYOUTS, CARD_SIZES } from "./card.js";
-import { normHex } from "./color.js";
+import { normHex, paintBody } from "./color.js";
 import { shareLook } from "./customize.js";
 import { applySettings } from "./settings.js";
 import { sfx } from "./sound.js";
@@ -135,11 +135,7 @@ const TREE = {
             run: (v) => {
               const c = colorOf(v);
               if (!c) return bad(v);
-              Object.assign(profile.duck, {
-                color: c,
-                metal: "none",
-                image: null,
-              });
+              paintBody(profile.duck, "color", c); // (a skin's flat look comes off too)
               return `Duck color: ${c}`;
             },
           },

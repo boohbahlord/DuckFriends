@@ -5451,6 +5451,89 @@ html.moving .pix-sun {
 .colors.grid3 .invent {
   margin-top: 0.4rem;
 }
+/* Colors' drop-downs, under the hex box: the human skins (swatches, their hex on hover) and the metals (a chip and its
+   name), each a list of its own that scrolls; one open at a time */
+.cdrops {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+.cdrop {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.7rem;
+  border: 0.14rem solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--panel);
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.cdrop::after {
+  content: "▸";
+  font-size: 0.7em;
+  opacity: 0.8;
+}
+.cdrop[aria-expanded="true"] {
+  border-color: var(--blue);
+}
+.cdrop[aria-expanded="true"]::after {
+  content: "▾";
+}
+.clist {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(2.2rem, 1fr));
+  gap: 0.25rem;
+  max-height: 9.5rem;
+  overflow-y: auto;
+  margin-top: 0.4rem;
+  padding: 0.3rem;
+  border: 0.12rem solid var(--line);
+  border-radius: 0.5rem;
+}
+.clist[hidden] {
+  display: none;
+}
+.clist .sw {
+  width: 100%;
+  height: 1.7rem;
+  border-radius: 0.3rem;
+}
+.clist .sw[aria-pressed="true"],
+.cmetal[aria-pressed="true"] {
+  outline: 0.18rem solid var(--blue);
+  outline-offset: 0.05rem;
+}
+.clist.cmetals {
+  grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+}
+.cmetal {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.45rem;
+  border: 0.12rem solid transparent;
+  border-radius: 0.4rem;
+  background: var(--panel);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.cmetal i {
+  flex: none;
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 0.3rem;
+  box-shadow: inset 0 0 0 0.12rem #0004;
+}
+.cmetal[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: default;
+}
 @media (max-width: 760px) {
   .win-armory {
     padding: 0.7rem;
