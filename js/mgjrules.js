@@ -8,7 +8,7 @@ import { jumpDodges } from "./jump.js";
    Nov 3; every win counts toward the lightning eyes). His HP is hpOf (below) when the fight starts, and one
    stab takes 1. Each duck has 6 HP (the lobby's Player HP); after any hit nothing can hurt it for a second (it
    flickers), and a duck out of HP stays down until another holds E by it for 2.5 s (REVIVE) or the fight's end. He never goes after a duck that's down. A jump dodges everything but
-   in its first and last fifth (rules.js dodges).
+   in its first and last fifth (jump.js jumpDodges).
    - His guns (the owner's, Nov 3: no more pistol): the LMG and the SMG fire bursts at a duck (each bullet takes 1 HP),
      and the pump shotgun a cone of pellets at a duck close enough. After each burst he reloads; while he reloads he
      sprints at a duck to hammer it, and a duck that comes up close gets the hammer too. He walks faster than before and
