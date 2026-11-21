@@ -35,7 +35,7 @@ dock.js 73 the docks: where Notes and the chat open
 duck.js 728 the rubber duck avatar
 duckparts.js 592 the ducks made from pixel parts
 ducksheets.js 2 made by tools/duck-parts.cjs:
-duel.js 124 the cloud duel: two ducks share the cloud,
+duel.js 120 the cloud duel: two ducks share the cloud,
 dunce.js 137 Duncelation: what the screen shows
 duncerules.js 388 the rules of Duncelation
 euclid.js 351 Euclid's Squares
