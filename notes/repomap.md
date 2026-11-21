@@ -225,7 +225,7 @@ vote.js 278 Vote Mode & Map: the vote windows
 who.js 3 who this player is beyond this tab
 wounds.js 295 the wounds a hit leaves
 zombiepath.js 186 the zombies' way to the ducks on a
-zombies.js 1470 the zombies: one module for every mode's zombies
+zombies.js 1518 the zombies: one module for every mode's zombies
 
 ## js/hangout/
 activities.js 23 every Hangout activity, so the rules and the
@@ -248,7 +248,7 @@ flicker.js 83 now and then a light stutters
 ghosts.js 107 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in blue jeans and
 lamp.js 71 the lamps: the example activity
-layout.js 1463 Duck Cabin: the world of Hangout
+layout.js 1466 Duck Cabin: the world of Hangout
 npc.js 498 Duck Cabin's characters: how they get around, and
 npcart.js 272 Duck Cabin's characters: the drawings
 piano.js 530 the piano in the cabin , against the
