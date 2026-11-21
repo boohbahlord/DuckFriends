@@ -23,7 +23,7 @@ import {
   stab,
   suppress,
 } from "./gunmenrules.js";
-import { chaseStep } from "./l4ddrules.js";
+import { chaseStep } from "./zombies.js";
 import { CHAPEL, CHAPEL_DOOR } from "./hangout/stationmap.js";
 import { sees as npcSees, nearest } from "./npcrules.js";
 

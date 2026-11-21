@@ -11,7 +11,7 @@
      the spawn, until the limit is alive; pressing again meanwhile does nothing ("it has to finish first").
    - Can respawn: one that dies comes back after the time between spawns, at a respawn of its spawn's color or name (a
      respawn's "who" box: "red", or "red, blue", "players" for the ducks), or at its spawn when there is none.
-   - Never more NPCs alive on a map than the zombies' cap (l4ddrules.js Z_MOST, the owner's, Nov 19 01:57Z).
+   - Never more NPCs alive on a map than the zombies' cap (zombies.js Z_MOST, the owner's, Nov 19 01:57Z).
    On the board the zombies are Mad God Justin's wave zombies' kind (s.mz.zb: drawn, hit and heard as his are, with
    their HP, speed and damage from the boxes); on the zombie cabin and Downpour they are Dead Ducks Arcade's own
    (l4ddrules.js l4Spawn), already inside; on Duck Cabin they are Sandbox's own (sbcabin.js), walking as those do. Every
@@ -79,7 +79,7 @@ import {
   heightAt,
   floorStep,
 } from "./hangout/layout.js";
-import { Z_MOST, l4Spawn, l4Live } from "./l4ddrules.js";
+import { Z_MOST, l4Spawn, l4Live } from "./zombies.js";
 import { WAVE, zLook } from "./mgjrules.js";
 import { onCabin, sbzOn, cabinLive, cabinSpawn, cabinTick } from "./sbcabin.js";
 import { listsOf, decide, MAD } from "./sbbrain.js";

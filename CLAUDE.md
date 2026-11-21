@@ -118,6 +118,12 @@ A program that is changed grows more complex unless work is spent against it (Le
 - Keep an index of the shared modules here (mechanic, its file, its breeds and hooks) and write each decision the day
   it's made.
 
+## Shared modules (the index above asks for)
+- Zombies: `js/zombies.js` (spawning, the walk, the climbs, the crowd, the swipes; breeds `ZOMBIE_BREEDS`, hooks
+  spawnAt/targets/way/claw/list, each added with its first user). Pathing: `js/zombiepath.js` (the map's cells and the
+  flow field kept per ducks' cells) over `js/flowfield.js` (the Dijkstra and its step, also run in a Web Worker from its
+  own text, so it imports nothing). Round pacing stays in `js/l4ddrules.js`.
+
 ## Reading, writing and talking for less (the owner's, Nov 20 22:09Z; sources in /mnt/project-files/adam/ and project memory)
 - Map, then narrow: `git grep -l` the behavior, then read 100 to 200 line windows; never read a file over 1,500 lines
   whole, nor `notes/agree-or-disagree.md` (about 270k tokens: search it).

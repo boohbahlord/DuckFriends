@@ -217,10 +217,9 @@ import {
   laserNext,
   l4Heal,
   maxHp,
-  l4Zups,
-  l4SetHp,
   l4Again,
 } from "./l4ddrules.js";
+import { l4Zups, l4SetHp } from "./zombies.js";
 import { JET } from "./jetpack.js";
 import { hOk, hLock, sameFloorAhead, floorLock } from "./heights.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
