@@ -196,7 +196,7 @@ sfxlist.js 164 the sound files
 shared.js 497 Sandbox Phase 7: Shared, the game modes and
 shell.js 3541 the command line: a small bash
 slices.js 31 long work cut into slices
-sound.js 939 the game's sounds: real recordings, played from small
+sound.js 933 the game's sounds: real recordings, played from small
 specials.js 945 Specials
 spectate.js 97 Survival: watching the others once my duck is
 splash.js 71 the start screen: your duck on a cloud,
