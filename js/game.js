@@ -3248,7 +3248,7 @@ function placeZombies(board, s, now) {
         c.left + (o.f || face) * ds * 0.55,
         c.top - ds * 0.45,
         k * 1.25,
-        o.f || face,
+        (o.f || face) < 0 ? Math.PI : 0,
       ); // (its claw marks and swipe on the duck it swiped, as Dead Ducks Arcade's: claw.js)
     n._a = o.a;
     npcSay(n, o); // (Sandbox: what its Seriat file has it say, sbnumberat.js)
