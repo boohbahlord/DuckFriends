@@ -7,7 +7,7 @@
   "bigFiles": {
     "js/chat.js": 1600,
     "js/customize.js": 1803,
-    "js/game.js": 8817,
+    "js/game.js": 8816,
     "js/gamesettings.js": 1755,
     "js/hangout/art.js": 3051,
     "js/hangout/shapes.js": 1707,
@@ -22,6 +22,6 @@
     "js/sbspawn.js": 1709,
     "js/sbspawnview.js": 2212,
     "js/shell.js": 3356,
-    "js/updates.js": 2969
+    "js/updates.js": 2978
   }
 }

@@ -7497,7 +7497,6 @@ function showTimer() {
     if (t.className !== "timer") t.className = "timer";
     return;
   }
-  if (meter) meter.classList.remove("frozen");
   if (
     !end ||
     ![

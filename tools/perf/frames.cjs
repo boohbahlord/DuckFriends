@@ -211,21 +211,52 @@ async function once(url) {
         const e = n.nodeType === 1 ? n : n.parentElement;
         const one = (x) =>
           x.tagName.toLowerCase() +
-          (x.classList[0] ? "." + [...x.classList].slice(0, 2).join(".") : "");
+          (x.classList[0] ? "." + [...x.classList].slice(0, 2).join(".") : "") +
+          (x.dataset && x.dataset.a ? `[data-a=${x.dataset.a}]` : "");
         return e
           ? (e.parentElement ? one(e.parentElement) + " > " : "") + one(e)
           : "?";
       };
       const mo = new MutationObserver((ls) => {
+        const add = (k) => (window.__mut[k] = (window.__mut[k] || 0) + 1);
+        const props = (t) =>
+          new Map(
+            (t || "")
+              .split(";")
+              .map((x) => x.split(":").map((y) => y.trim()))
+              .filter((x) => x[0]),
+          );
+        const first = new Map(); // (each element's value before this batch: several writes in one frame count once)
         for (const m of ls) {
           const k = `${name(m.target)} ${m.type}${m.attributeName ? " " + m.attributeName : ""}`;
-          window.__mut[k] = (window.__mut[k] || 0) + 1;
+          add(k);
+          if (m.attributeName !== "style" && m.attributeName !== "class")
+            continue;
+          const fk = m.attributeName,
+            seen = first.get(m.target) || {};
+          if (!(fk in seen)) seen[fk] = m.oldValue;
+          first.set(m.target, seen);
+        }
+        /* which style property, which class changed: the value before the batch against the one after it */
+        for (const [t, seen] of first) {
+          if ("style" in seen) {
+            const [a, b] = [props(seen.style), props(t.getAttribute("style"))];
+            for (const q of new Set([...a.keys(), ...b.keys()]))
+              if (a.get(q) !== b.get(q)) add(`${name(t)} style:${q}`);
+          }
+          if ("class" in seen) {
+            const a = new Set((seen.class || "").split(" "));
+            const b = new Set(t.classList);
+            for (const c of b) if (c && !a.has(c)) add(`${name(t)} +${c}`);
+            for (const c of a) if (c && !b.has(c)) add(`${name(t)} -${c}`);
+          }
         }
       });
       for (const el of document.querySelectorAll(sel))
         mo.observe(el, {
           subtree: true,
           attributes: true,
+          attributeOldValue: true,
           childList: true,
           characterData: true,
         });
@@ -395,7 +426,7 @@ async function once(url) {
     console.log(
       Object.entries(await p.evaluate(() => window.__mut))
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 25)
+        .slice(0, +process.env.TOP || 25)
         .map(([k, n]) => `${(n / SECS).toFixed(1)}/s ${k}`)
         .join("\n"),
     );
@@ -622,6 +653,19 @@ function longTasks(ev, names, prof) {
       fns: [...fns].sort((a, b) => b[1] - a[1]).slice(0, 4),
     });
   }
+  /* the browser's steps over the whole window, every task, not only the long ones (ms a second) */
+  const whole = {};
+  for (const e of mine)
+    if (STEPS.includes(e.name))
+      whole[e.name] = (whole[e.name] || 0) + e.dur / 1000;
+  console.log(
+    "every task, ms a second: " +
+      Object.entries(whole)
+        .filter(([, ms]) => ms / SECS >= 0.5)
+        .sort((a, b) => b[1] - a[1])
+        .map(([n, ms]) => `${n} ${(ms / SECS).toFixed(1)}`)
+        .join(", "),
+  );
   const n50 = tasks.filter((k) => k.dur > 50000).length;
   console.log(
     `long tasks: ${tasks.length} over 16 ms (${(tasks.length / SECS).toFixed(1)}/s), ${n50} over 50 ms (${(n50 / SECS).toFixed(2)}/s); the longest ${rows.length ? Math.max(...rows.map((r) => r.ms)).toFixed(0) : 0} ms`,

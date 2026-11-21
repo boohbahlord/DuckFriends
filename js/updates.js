@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v216",
+    version: 216,
+    date: "Nov 21, 2026",
+    title: "Tidying up",
+    news: [
+      "Behind the scenes: the game asks what a mode or a map can do, instead of checking its name.",
+    ],
+  },
+  {
     id: "v215",
     version: 215,
     date: "Nov 21, 2026",
