@@ -29,6 +29,7 @@
 import { E_LINES, DEATH_LINES, GOD_LINES } from "./hangout/justin.js";
 import { holdDown, downFor, invuln, hurtFx } from "./hangout/death.js";
 import { JUSTIN } from "./hangout/npcart.js";
+import { shuffle } from "./random.js";
 import { hitWounds, WOUND_BREEDS, PCRIT } from "./wounds.js";
 import { isQuack, tileAt, tileCenter, stillIn } from "./quackrules.js";
 import {
@@ -523,8 +524,7 @@ export function justinTick(s, now, log) {
   }
   /* his lines, a shuffled playlist */
   if (now >= j.say) {
-    if (!j.list.length)
-      j.list = E_LINES.map((_, i) => i).sort(() => Math.random() - 0.5);
+    if (!j.list.length) j.list = shuffle(E_LINES.map((_, i) => i));
     log(s, { npc: JUSTIN_ID, name: "Justin", text: E_LINES[j.list.shift()] });
     j.say = now + rnd(SAY);
     ch = true;
@@ -628,8 +628,7 @@ export function justinTick(s, now, log) {
     j.godAt = now + rnd(GOD);
     const them = targets();
     if (!calm && them.length) {
-      if (!(j.gods || []).length)
-        j.gods = GOD_LINES.map((_, i) => i).sort(() => Math.random() - 0.5);
+      if (!(j.gods || []).length) j.gods = shuffle(GOD_LINES.map((_, i) => i));
       log(s, {
         npc: JUSTIN_ID,
         name: "Justin",

@@ -143,17 +143,10 @@ window.__golden = async (sc) => {
   /* "bait": from that beat on, my duck stands on the nearest zombie each beat (and keeps its health), so the zombies swipe
      at it: every run then pins swipes, their times and the damage (the computers otherwise keep away from the zombies) */
   let hp0 = null;
-  const bait = () => {
+  /* my duck stands on the nearest of these spots (shares of the map) and keeps its health */
+  const parkOn = (list) => {
     const s = r.state,
-      zp = (s.hang && s.hang.zp) || [],
-      me = s.pos[r.me],
-      list = []; // (the zombies' spots, in the shares of the map as the duck's: Dead Ducks Arcade's are in world px)
-    for (let k = 0; k + 3 < zp.length; k += 4)
-      if ((zp[k + 3] & 15) !== 3)
-        list.push([(zp[k + 1] - 150) / W, zp[k + 2] / H]);
-    for (const o of (s.mz && s.mz.zb) || []) if (!o.d) list.push([o.x, o.y]);
-    for (const o of (s.hang && s.hang.sbz && s.hang.sbz.zb) || [])
-      if (!o.d) list.push([o.x / W, o.y / H]); // (Sandbox's on a map: world px, sbcabin.js)
+      me = s.pos[r.me];
     if (!me || !list.length) return;
     list.sort(
       (a, c) =>
@@ -167,6 +160,26 @@ window.__golden = async (sc) => {
       s.hang = { ...s.hang, l4p: { ...s.hang.l4p, [r.me]: hp0 } };
     }
   };
+  const bait = () => {
+    const s = r.state,
+      zp = (s.hang && s.hang.zp) || [],
+      list = []; // (the zombies' spots, in the shares of the map as the duck's: Dead Ducks Arcade's are in world px)
+    for (let k = 0; k + 3 < zp.length; k += 4)
+      if ((zp[k + 3] & 15) !== 3)
+        list.push([(zp[k + 1] - 150) / W, zp[k + 2] / H]);
+    for (const o of (s.mz && s.mz.zb) || []) if (!o.d) list.push([o.x, o.y]);
+    for (const o of (s.hang && s.hang.sbz && s.hang.sbz.zb) || [])
+      if (!o.d) list.push([o.x / W, o.y / H]); // (Sandbox's on a map: world px, sbcabin.js)
+    parkOn(list);
+  };
+  /* "baitGm": { at: beat, k: kind ("sn" the sniper, "c" a criminal…) }: the same with Survival's gunmen of that kind
+     (world px), so they fight my duck up close */
+  const baitGm = () =>
+    parkOn(
+      ((r.state.hang && r.state.hang.gm && r.state.hang.gm.gb) || [])
+        .filter((o) => !o.d && (!sc.baitGm.k || o.k === sc.baitGm.k))
+        .map((o) => [o.x / W, o.y / H]),
+    );
   /* "fire": my duck has these weapons on its number keys and uses them in turn, each beat one, aimed at the nearest
      duck (the board modes' specials, rules.js "use"; the guns pinned in play there) */
   let shots = 0;
@@ -204,6 +217,7 @@ window.__golden = async (sc) => {
   for (b = 0; b < sc.beats; b++) {
     if (patches.length) patch();
     if (sc.bait !== undefined && b >= sc.bait) bait();
+    if (sc.baitGm && b >= sc.baitGm.at) baitGm();
     if (sc.fire) fire();
     beat();
     const s = r.state;

@@ -19,7 +19,7 @@
    flashlight on), ad (where it aims, in degrees), mad ([who hurt it, until when]), nx (its next shot), bn (rounds left
    in this burst), bt (its last burn), w (its wounds: wounds.js codes), d (when it died) } */
 import { L4_HOOKS, critOf } from "./l4ddrules.js";
-import { ARMS, reachOf as gunReach } from "./guns.js";
+import { ARMS, GUN_BREEDS, reachOf as gunReach } from "./guns.js";
 import { clearShot, chaseField, chaseStep } from "./zombies.js";
 import { heightAt, slabBetween, PROPS } from "./hangout/layout.js";
 import { DECKS } from "./hangout/stationmap.js";
@@ -32,8 +32,10 @@ import {
   grudge,
   grudgeOf,
   roll,
-  reloadMs,
   refill,
+  spend,
+  magOf as npcMag,
+  reloadOf as npcReload,
   shotMark,
 } from "./npcrules.js";
 import { hitWounds, WOUND_BREEDS } from "./wounds.js";
@@ -93,25 +95,12 @@ export const GM = {
   MAD: 8000, // ms: one that hurt it, it goes after this long (npcrules.js grudge)
   GONE: 2.5, // duck lengths: a soldier going back the way it came is gone this near the spot it came in by (row 112: at 40 px, the squad crowding round it, most never got there and stood about at the map's edge for good)
 };
-/* the criminals' guns, and how each fires: rounds a burst, ms from one burst to the next (their hidden cooldowns), and
-   the magazine a gun with none gets */
+/* the criminals' guns (how each is fired, its bursts and magazine: guns.js GUN_BREEDS.gunman) */
 const CRIM_GUNS = [
   ["handgun", "revolver"],
   ["smg", "tommy", "ump"],
   ["shotgun", "dbuck"],
 ];
-const FIRE = {
-  handgun: { n: 1, gap: [1400, 2200] },
-  revolver: { n: 1, gap: [1600, 2400] },
-  smg: { n: 3, gap: [2200, 3200] },
-  tommy: { n: 3, gap: [2200, 3200] },
-  ump: { n: 3, gap: [2200, 3200] },
-  shotgun: { n: 1, gap: [2000, 2800], mag: 6 },
-  dbuck: { n: 1, gap: [1800, 2600] },
-  ak: { n: 4, gap: [1600, 2400] },
-  burst: { n: 3, gap: [1400, 2000] },
-  lmg: { n: 12, gap: [1200, 1800] }, // (long bursts: suppressive fire)
-};
 /* how far each gun is fired from (duck lengths) and how likely a round is to hit a duck there: AIM.near up close, less
    for each duck length, never under AIM.min; a sprinting duck is harder to hit */
 const reachOf = (w) => gunReach(w, "gunman") * GM.DUCK; // (guns.js)
@@ -177,8 +166,8 @@ export function newGunman(s, k, x, y, H, ro = "") {
     ad: 0,
   };
 }
-const magOf = (w) => (FIRE[w] && FIRE[w].mag) || ARMS[w].mag || 6;
-const reloadOf = (w) => reloadMs(w, magOf(w));
+const magOf = (w) => npcMag(w, "gunman"),
+  reloadOf = (w) => npcReload(w, "gunman");
 
 /* a spot round (x, y), up to rx and ry off, where it can stand (H.open), else (x, y) itself. Row 112 (the owner: "It
    should not feel like an Easter egg hunt"): a group spread round a spot just inside a fence put some of them on the
@@ -922,7 +911,7 @@ export function shoot(s, o, t, now, H, only = null, blind = false) {
   o.ad = Math.round((Math.atan2(t.y - o.y, t.x - o.x) * 180) / Math.PI);
   o.f = t.x < o.x ? -1 : 1;
   /* its guns: a reload that's done fills it; the one in its hands, or the other while that one reloads */
-  refill(o.wp.p, o.mg, o.rl, now, magOf);
+  refill(o.wp.p, o.mg, o.rl, now, "gunman");
   const d = Math.hypot(t.x - o.x, t.y - o.y),
     i = o.wp.p.findIndex(
       (g, k) =>
@@ -933,7 +922,7 @@ export function shoot(s, o, t, now, H, only = null, blind = false) {
     );
   if (i < 0) return false;
   const g = o.wp.p[i],
-    F = FIRE[g] || { n: 1, gap: [1200, 1800] };
+    F = GUN_BREEDS.gunman.burst[g] || { n: 1, gap: [1200, 1800] };
   o.hw = g;
   if (now < (o.nx || 0)) return false;
   /* a burst's rounds, a beat's worth at a time (its gun's own wait between them) */
@@ -944,8 +933,7 @@ export function shoot(s, o, t, now, H, only = null, blind = false) {
     Math.max(1, Math.floor(200 / ARMS[g].cool)),
   );
   o.bn -= many;
-  o.mg[i] -= many;
-  if (o.mg[i] <= 0) o.rl[i] = now + reloadOf(g);
+  spend(o.mg, o.rl, i, g, many, now, "gunman");
   if (o.bn <= 0) {
     o.bn = 0;
     o.nx = now + rnd(...F.gap);

@@ -701,5 +701,43 @@
     },
     "computers": 3,
     "beats": 4500
+  },
+  {
+    "name": "surv-sniper-bait",
+    "options": {
+      "mode": "surv",
+      "l4map": "downpour"
+    },
+    "computers": 3,
+    "beats": 1500,
+    "peakNow": 1,
+    "sv": {
+      "GUNMEN": 1,
+      "CRIM": 0,
+      "STEP": 0
+    },
+    "gm": {
+      "SNIPER": 1
+    },
+    "baitGm": {
+      "at": 100,
+      "k": "sn"
+    }
+  },
+  {
+    "name": "surv-criminals-2",
+    "seed": 5,
+    "options": {
+      "mode": "surv",
+      "l4map": "downpour"
+    },
+    "computers": 3,
+    "beats": 1500,
+    "peakNow": 1,
+    "sv": {
+      "GUNMEN": 1,
+      "CRIM": 1,
+      "STEP": 0
+    }
   }
 ]
