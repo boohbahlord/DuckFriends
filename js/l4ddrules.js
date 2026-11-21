@@ -36,7 +36,7 @@
      l4b  { id: { o, at } }: who is boarding up which opening, since when (one more board each BOARD_MS)
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
-import { SPRINT as GAME_SPRINT, HANDGUN } from "./gamedefaults.js";
+import { SPRINT as GAME_SPRINT, HANDGUN, POCKET_CHANGE } from "./gamedefaults.js";
 import { scaleOf } from "./duck.js";
 import { hpHeal, hpHurt, tenths } from "./hpmath.js";
 import {
@@ -1557,6 +1557,7 @@ const DROP_NAMES = {
   speed: "Speed Boost",
   double: "Double Points",
   sale: "Sale",
+  coins: "Pocket Change",
 };
 export const dropName = (k) => DROP_NAMES[k] || k;
 /* which drop: one from the game's bag (s.hang.l4bag: the ones not come yet), each as likely as the others, Max Ammo
@@ -1664,7 +1665,8 @@ function takeDrop(s, k, by, zs, now, ids) {
   } else if (k === "sale") {
     s.hang.l4on = { ...(s.hang.l4on || {}), sale: now + DROP.FOR };
     s.hang.l4sale = { used: {} }; // (a new Sale: every half price can be spent again)
-  } else if (k === "ammo") maxAmmo(s);
+  } else if (k === "coins") addPts(s, by, POCKET_CHANGE.POINTS);
+  else if (k === "ammo") maxAmmo(s);
   else if (k === "nuke") s.hang.l4nk = { at: now + NUKE.SWEEP }; // (it goes off once the sweep covers the screen: nukeTick)
 }
 /* the Nuke on every screen (owner 2026-11-16, l4dd.js nukeScreen): grey static sweeps out over the screen in a second,
@@ -4199,9 +4201,26 @@ function wildDown(s, by, now, w, all, codes) {
          justinKilled writes; the owner's, Nov 17 13:30Z */
       s.jkN = (s.jkN || 0) + 1;
       s.jk = [...(s.jk || []).slice(-9), { n: s.jkN, by, w }];
+      if (Math.random() < POCKET_CHANGE.CHANCE) pocketChange(s, now); // (and a rare orb of coins where he fell)
     }
   }
   s.hang.l4p = p4;
+}
+/* Justin's pocket change: an orb of gold coins lies where he fell, like a drop (the first duck over it takes it, for
+   itself: POCKET_CHANGE.POINTS, takeDrop), and the chat says so */
+function pocketChange(s, now) {
+  const [x, y] = at(s.pos[WILD.id]);
+  s.hang.l4dr = [
+    ...(s.hang.l4dr || []),
+    {
+      n: now,
+      k: "coins",
+      x: Math.round(x),
+      y: Math.round(y),
+      until: now + DROP.LIFE,
+    },
+  ];
+  say(s, POCKET_CHANGE.SAYS);
 }
 /* the flamethrower's fire on Justin out there with no weapon: lit as a duck is (1 HP as it's lit, burning BURN.P ms, and
    fireTick spreads it from him), left burnt if it puts him down */

@@ -18,3 +18,12 @@ export const ZOMBIE_SWIPE_SLOWER = 200; // ms added to the wait between one swip
 /* the handgun, one gun everywhere (Nov 20 21:38Z: "one gun named M1911 with a 9-round magazine"): the specials' pistol
    and the zombie modes' handgun both read this */
 export const HANDGUN = { name: "M1911", mag: 9 };
+
+/* Justin's pocket change (Nov 21, the owner: "a 1% chance that when a player kills Justin … Justin forgot to deposit his
+   pocket change"): the chance a player's kill of Justin drops a gold orb of coins, the points whoever walks over it gets,
+   and the line the chat says */
+export const POCKET_CHANGE = {
+  CHANCE: 0.01,
+  POINTS: 5000,
+  SAYS: "Justin forgot to deposit his pocket change",
+};

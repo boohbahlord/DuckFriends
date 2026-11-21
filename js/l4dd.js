@@ -1103,7 +1103,15 @@ function nukeScreen(at) {
   };
   requestAnimationFrame(step);
 }
-const DROPS_SEED = { kill: 3, ammo: 7, nuke: 2, speed: 9, double: 4, sale: 6 };
+const DROPS_SEED = {
+  kill: 3,
+  ammo: 7,
+  nuke: 2,
+  speed: 9,
+  double: 4,
+  sale: 6,
+  coins: 8,
+};
 
 /* my all-time stats (not in test rooms, nor with test commands used: cheatflag.js): a game once its first round starts, a round each time one is cleared, and the
    best round reached; with Round 16 Start on, its own stats (store.js statMode) */
