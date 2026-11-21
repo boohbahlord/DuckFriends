@@ -7741,3 +7741,6 @@ vehicles on build can have a knockback stat that can be changed AND they can be 
 
 ## Nov 21 16:05Z: mode-name checks left (Adam: to-do line 5 leftovers)
 - Decision (Adam): remove the mode-name checks left outside Sandbox, the social-mode screens and game.js. First batch: the "hang" compares become two fields on Hangout's modes.js entry, `noRounds` (no stats, no skip, no round text) and `cabinHome` (its own map; ghosts and Duck Cabin's Justin), read in shellstats/shellcmdroom/shellpeople/stats/unlocks. modeCompares 64 to 52.
+
+## Nov 21 16:11Z: mode-name checks, second batch (Adam)
+- Decision (Adam): hangout/death.js, ghosts.js first, then boardjustin.js, maps.js, art.js (world.js and layout.js wait for Noah's cars PR; registry.js, store.js, quackrules.js left: their compares are the registry's own mode keys, a stats-split rule and a quack result, not mode names read for behavior). Modes.js fields: ownDeath, downMs, downLocked (death.js), boardSymbol (art.js), noBoardJustin (boardjustin.js), lookClass (maps.js), on top of #876's noRounds and cabinHome. modeCompares 64 to 44 with #876.
