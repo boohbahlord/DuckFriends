@@ -8,6 +8,9 @@
 import { DUCK, slabBetween } from "./hangout/layout.js";
 
 const MID = DUCK / 2;
+/* one elevation: the gas station's roof over the ground (world px; the owner's, Nov 21 14:06Z). Heights the owner
+   gives in elevations are times this */
+export const ELEV = 108;
 /* how high shot sh flies now (world px) */
 const shotH = (sh) => sh.lh ?? (sh.hz || 0) + MID;
 /* can shot sh hit a target whose feet are at tz, at (tx, ty), world px? (its shooter at (sx, sy), world px; leave

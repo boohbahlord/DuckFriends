@@ -64,7 +64,7 @@ gunmenrules.js 1140 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen
 guns.js 516 every weapon's numbers: one sheet for
 hats.js 1073 hats
-heights.js 49 a shot's height, Doom's way
+heights.js 52 a shot's height, Doom's way
 helppages.js 1498 the command line's Help pages: help
 hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
@@ -74,7 +74,7 @@ hpmath.js 23 HP in tenths
 hpmeter.js 327 HP meters and the little "+1
 invisible.js 11 Who is invisible right now :
 itemtone.js 61 the colors an outfit or a
-jump.js 36 a duck's jump: one arc for
+jump.js 46 a duck's jump: one arc for
 jumps.js 48 the jump counter
 keynav.js 204 menus by keyboard
 l4dd.js 3340 Quacky Zombies on every screen
