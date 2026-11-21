@@ -1236,8 +1236,9 @@ export const ZOMBIE_BREEDS = {
     deadMs: 4000, // (as long as Dead Ducks Arcade's, L4.DEAD_MS: the owner's, Nov 19 01:34Z, "everything" with its feel)
   },
   /* Sandbox's zombies, on the board and on Duck Cabin (sbspawn.js boardTick, sbcabin.js cabinTick, both by brainWalk):
-     reach 1.2 as the waves', as they now stop at 1, touching, as on the map (they stopped at 0.8 of a reach of 1) */
-  sbBoard: { speed: 3.2, hp: 3, reach: 1.2, swipe: [0, 1200], deadMs: 4000 },
+     they now stop at 1, touching, as on the map (they stopped at 0.8 of a reach of 1); reach 1.1 keeps the board's damage
+     as it was (tools/npc-golden sb-board: 1,349 before, 1,358 after) */
+  sbBoard: { speed: 3.2, hp: 3, reach: 1.1, swipe: [0, 1200], deadMs: 4000 },
 };
 /* a board zombie's look (l): its breed's HP, no speed nor opening of its own, then lookOf's */
 export const zLook = (B) => [B.hp, 0, "", ...lookOf()];
