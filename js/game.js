@@ -83,11 +83,6 @@ import {
   canOpen,
   isSc,
   textMax,
-  isCounsel,
-  jury,
-  lawTally,
-  canGiveUp,
-  lawStats,
   LAW_MID,
   shotAt,
   coolFor,
@@ -107,11 +102,18 @@ import {
   goOnVotes,
   goOnNeed,
   counselBounds,
-  ATT_PHASES,
   walkOf,
   votesDue,
   REACH,
 } from "./rules.js";
+import {
+  isCounsel,
+  jury,
+  lawTally,
+  canGiveUp,
+  lawStats,
+  ATT_PHASES,
+} from "./lawrules.js";
 import {
   SC_BOARD,
   SC_VOTES,
