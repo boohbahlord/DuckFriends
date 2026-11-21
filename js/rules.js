@@ -233,6 +233,7 @@ import {
 import { modesFor, modeOf, CABIN_MODES, SOLO_MODES } from "./modes.js";
 import { umapAct, umapIds, umapTitle, isUmap } from "./umaprules.js";
 import { dealRainbow, rainbowJoin } from "./looksrules.js";
+import { shuffle, anyOf } from "./random.js";
 
 export const COLS = [
   "Strongly disagree",
@@ -5042,18 +5043,10 @@ export const BB_TOPICS = [
 ];
 export const TOPIC_MAX = 24,
   SEED_MAX = 32;
-const shuffle = (xs) => {
-  for (let i = xs.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [xs[i], xs[j]] = [xs[j], xs[i]];
-  }
-  return xs;
-};
 const oneLine = (v, n) =>
   String(v || "")
     .replace(/\s+/g, " ")
     .slice(0, n);
-const anyOf = (xs) => xs[Math.floor(Math.random() * xs.length)];
 
 function startTourney(s, now) {
   seatLate(s);
