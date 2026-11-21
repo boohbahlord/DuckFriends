@@ -39,8 +39,9 @@ const C = require("./lib.cjs");
     const id = Object.keys(pts()).find((k) => pts()[k].k === "zone");
     if (!id) return { err: "no zone" };
     /* a save from before: its boxes typed in duck lengths */
-    const data = JSON.parse(JSON.stringify(V.sbSnapshot(r.state))),
+    const data = JSON.parse(JSON.stringify(V.sbSnapshot(r.state))), // (with no v: from before tiles)
       z = data.parts.sb.pts[id];
+    delete data.v;
     z.f = {
       ...z.f,
       zw: { t: "2.25", ok: "2.25" },
@@ -57,9 +58,10 @@ const C = require("./lib.cjs");
       )
     )
       return { err: "the save didn't open" }; // (the rules' own open, as the host's pick runs it)
+    const TILED = ["zw", "zh", "sq"];
     const look = (q) => {
       const g = S.sbGrid(r.state, q);
-      return [...S.sbSize(q), g.sq, g.nx, g.ny];
+      return [...S.sbSize(q), g.sq, g.nx, g.ny, ...TILED.map((f) => q.f[f].ok)]; // (and its boxes, in tiles)
     };
     const old = look(pts()[id]);
     /* a resize handle: 2 by 1.25 duck lengths */
@@ -69,7 +71,10 @@ const C = require("./lib.cjs");
     return { old, dragged };
   });
   console.log("sbtiles", JSON.stringify(got));
-  const want = { old: [2.25, 3, 0.75, 3, 4], dragged: [2, 1.25, 0.75, 3, 2] };
+  const want = {
+    old: [2.25, 3, 0.75, 3, 4, "9", "12", "3"],
+    dragged: [2, 1.25, 0.75, 3, 2, "8", "5", "3"],
+  };
   if (JSON.stringify(got) !== JSON.stringify(want))
     C.fail(
       `a Sandbox block's size moved: ${JSON.stringify(got)}, not ${JSON.stringify(want)}`,

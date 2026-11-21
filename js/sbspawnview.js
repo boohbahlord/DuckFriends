@@ -1195,8 +1195,8 @@ export function sbSettings(getR, id, tab = "") {
                 `<label><input type="radio" name="sb-sh" data-sh="${v}"${shapeNow === v ? " checked" : ""}> ${n}</label>`,
             )
             .join("")}</span></div>
-          ${row("zw", SB_ZONE.zw, p.f.zw ? typed("zw") : String(sbSize(p)[0]), why("zw"))}
-          ${row("zh", SB_ZONE.zh, p.f.zh ? typed("zh") : String(sbSize(p)[1]), why("zh"))}
+          ${row("zw", SB_ZONE.zw, p.f.zw ? typed("zw") : String(sbSize(p)[0] / SB_ZONE.zw.per), why("zw"))}
+          ${row("zh", SB_ZONE.zh, p.f.zh ? typed("zh") : String(sbSize(p)[1] / SB_ZONE.zh.per), why("zh"))}
           ${flagRow("fill", SB_SHAPE.fill, typed("fill"), why("fill"))}`,
         ) +
         fold(3, "Color", colorRow)

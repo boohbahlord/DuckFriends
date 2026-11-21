@@ -218,7 +218,7 @@ don't define a limit yourself, the box uses the one below.
   Speed                        0 to 5          (starts at 1; 0: stays put)
   Players' HP                  0.1 to 100
   Players' speed               0 to 5          (0: they can't walk)
-  Zone width and height        1 to 40 duck lengths (start at 4)
+  Zone width and height        1 to 160 tiles  (start at 16)
   Zone HP each time            0.1 to 100      (starts at 1)
   Zone seconds between         0 to 60         (starts at 1; 0: every beat)
   Seconds before it comes back 0 to 600        (starts at 10; 0: at once)
@@ -283,7 +283,7 @@ starts (Run); its when's and every's play for each NPC it runs.
   when spawn ((hp 10))         when an NPC comes in
   when hit [attack 75%, flee 25%]
   when dead print 'gone'
-  when near duck 3 flee        a duck 3 or nearer (near zombie too)
+  when near duck 12 flee       a duck 12 tiles or nearer (near zombie too)
   when touch say "boop"
   every [2,4]s say "brains"    each NPC, every 2 or 4 seconds
   wait 1.5                     sleep a little, then go on
@@ -349,9 +349,9 @@ Blocks:
 A move walks an NPC along a path you draw with arrows:
   >  right     <  left     /\\  up     \\/  down
 Two together slant: >/\\ is up and right. A number after them is
-how many duck lengths (1 when there is none):
-  when spawn \\move\\{ >3 \\/2 <3 /\\2 }     a box, then home
-  \\move\\ >/\\2 <(1+1)        no { }: the rest of the line
+how many tiles (1 when there is none; a duck is 4 tiles long):
+  when spawn \\move\\{ >12 \\/8 <12 /\\8 }   a box, then home
+  \\move\\ >/\\8 <(4+4)        no { }: the rest of the line
 
 Parts go with ; or a new line between, inside the { }:
   to nearest duck    go there; the arrows now push the way
@@ -373,7 +373,7 @@ A bend line on its own sets it for every move after it:
 at a file's top for every NPC, inside a when for that one.
 
   when spawn {
-    \\move\\{ to nearest duck; bend bow; /\\3 }
+    \\move\\{ to nearest duck; bend bow; /\\12 }
     attack nearest duck
   }
 The move comes first; when it's done, its go, attack or flee
@@ -415,7 +415,7 @@ When:
 Words:
   step  /  step 3         its squares move on 1 (or 3) steps
   squares 3:5             how many squares work at once
-  size 1.5                a square's size, in duck lengths
+  size 6                  a square's size, in tiles
   order shuffle           random, absolute, shuffle, shuffleonce,
                           rows, columns, line, alternating, all
   dir right               right, left, up, down, upright, upleft,
@@ -427,7 +427,7 @@ Names (inside a when): steps, squares, size, inside (how many
 players stand in it).
 
 Any file reaches a zone by its variable name:
-  ((zone 'Pit' size 2))
+  ((zone 'Pit' size 8))
   \\if zone 'Pit' steps mod 3 == 0\\ print "third step"
 `,
   "print.txt": `print and say
@@ -520,16 +520,16 @@ export const EXAMPLES = {
 # Two doglegs, then a weave, over and over (see help/brains/move.txt).
 bend dogleg x2, weave
 when spawn {
-  \\move\\{ to nearest duck; >2 /\\2 <2 \\/2 }
+  \\move\\{ to nearest duck; >8 /\\8 <8 \\/8 }
   attack nearest duck
 }
-every 6s \\move\\{ to nearest duck; /\\1 \\/1 }
+every 6s \\move\\{ to nearest duck; /\\4 \\/4 }
 `,
   "chaser.se": `# A chaser: runs at the nearest duck, and bites when it is close.
 # Copy it, then write its name in a spawn's Brain box.
 when spawn { ((speed 1.2:1.6)); go nearest duck }
 every 2s go nearest duck
-when near duck 1 attack
+when near duck 4 attack
 `,
   "coward.se": `# A coward: it chases, but flees whenever it has under 30% of its HP.
 # (hppct is its HP as a percent of its most.)

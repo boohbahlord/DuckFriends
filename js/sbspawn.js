@@ -634,7 +634,7 @@ function withField(p, f, v) {
         ? { t, ok: "" }
         : keep(was, t, b);
   const q = { ...p, f: { ...p.f, [f]: k } };
-  if (f === "zw" || f === "zh") q[f] = valueOf(k, b, () => 0.5); // (a block's size, as a number: a range's middle)
+  if (f === "zw" || f === "zh") q[f] = valueOf(k, b, () => 0.5) * b.per; // (a block's size, as a number: a range's middle, typed in tiles, kept in duck lengths)
   if (f === "sh") q.sh = k.ok || "sq"; // (its shape: sandboxrules.js)
   if (f === "fill") {
     if (valueOf(k, b) === true) q.fill = 1;
@@ -1241,17 +1241,17 @@ export function sbAct(s, a, now) {
     s.sb = { ...s.sb, pts: spread({ ...pts, [a.p]: q }, a.p) };
     return true;
   }
-  /* its size from a resize handle: zw, zh (duck lengths, 1 to 40) and its new middle x, y */
   if (a.k === "size") {
     if (p.grp) return false;
     const zw = sbFitSide(+a.zw),
       zh = sbFitSide(+a.zh),
+      tl = (v) => String(v / SB_ZONE.zw.per), // (a resize handle's size: zw, zh in duck lengths, 1 to 40, and its new middle x, y; its boxes say tiles)
       x = +a.x,
       y = +a.y;
     if (![zw, zh, x, y].every(Number.isFinite)) return false;
     if (zw !== +a.zw || zh !== +a.zh) return false; // (as dragged: sbFitSide)
     if (x < 0 || x > 1 || y < 0 || y > 1) return false;
-    let q = withField(withField(p, "zw", String(zw)), "zh", String(zh));
+    let q = withField(withField(p, "zw", tl(zw)), "zh", tl(zh));
     q = { ...q, x: +x.toFixed(4), y: +y.toFixed(4) };
     const all = snapTo(s, geoTo({ ...pts, [a.p]: q }, a.p), a.p);
     if (fixedHit(s, all, a.p)) return false;
