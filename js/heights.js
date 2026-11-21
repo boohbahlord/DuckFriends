@@ -13,6 +13,17 @@ const MID = DUCK / 2;
 export const ELEV = 108;
 /* how high shot sh flies now (world px) */
 const shotH = (sh) => sh.lh ?? (sh.hz || 0) + MID;
+/* ---------- the height of a body: one way to ask it, for every body in every mode (the cornerstone's one module per
+   mechanic, after 8f: 1) ----------
+   zOf(b): its feet, world px. A duck, an NPC, a gunman or a ghost keeps them in b.z (0 or none: on the ground); a
+   zombie works its out (up a fence, up a wall, on a roof, jumping: zombies.js gives its way, zOf(z, "zombie")); a
+   shot flies at shotH ("shot"). A new kind of body gives its way with heightWay(kind, f) */
+const WAYS = { body: (b) => +b.z || 0, shot: shotH };
+export const heightWay = (k, f) => (WAYS[k] = f);
+export const zOf = (b, k = "body") => WAYS[k](b);
+/* two bodies near enough in height for a flame or a swing to reach from one to the other (feet, world px) */
+const NEAR_H = 48;
+export const nearH = (za, zb) => Math.abs(za - zb) <= NEAR_H;
 /* can shot sh hit a target whose feet are at tz, at (tx, ty), world px? (its shooter at (sx, sy), world px; leave
    them out where there are no roofs) */
 export function hOk(sh, tz, tx, ty, sx, sy) {

@@ -1,7 +1,7 @@
 /* I want a zombie killed on a roof to lie on that roof, and one killed up a wall to drop to the ground (the owner's video
    notes, Nov 21 08:46 ET: "corpses go below the cieling of where they were, that should be fixed"). On Downpour it puts
    one zombie on the canopy, one on the gas station's roof and one halfway up the station's wall, kills all three (as a
-   Sandbox kill zone does, l4ddrules.js l4Zone) and checks the height each dead one is at (zombies.js zombieZ, which the
+   Sandbox kill zone does, l4ddrules.js l4Zone) and checks the height each dead one is at (heights.js zOf(z, "zombie"), which the
    screen draws it at). Fake clock and seed (tools/npc-golden/init.js). */
 const fs = require("fs"),
   path = require("path");
@@ -22,6 +22,7 @@ const { url, fail, noErrors } = require("./lib.cjs");
       LY = await import("./js/hangout/layout.js"),
       Z = await import("./js/zombies.js"),
       ZR = await import("./js/zombieroofs.js"),
+      HT = await import("./js/heights.js"),
       R = await import("./js/l4ddrules.js");
     const room = net.createLocalRoom({ name: "C", test: true, computers: 0 });
     room.close();
@@ -104,7 +105,7 @@ const { url, fail, noErrors } = require("./lib.cjs");
     const out = [];
     put.forEach((o, i) => {
       const z = Z.zombies(s).find((q) => q.i === zs[i].i),
-        h = Z.zombieZ(z),
+        h = HT.zOf(z, "zombie"),
         want = o.want === null ? LY.heightAt(o.x, o.y) : o.want;
       out.push({
         what: o.what,
