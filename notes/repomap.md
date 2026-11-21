@@ -23,7 +23,7 @@ card.js 424 the player card
 chat.js 1596 text chat and the command line
 cheatflag.js 16 a game with test commands used
 cheats.js 146 test commands: cheat round N, cheat
-claw.js 59 a claw's marks: three white slashes
+claw.js 68 a claw's marks: three white slashes
 clock.js 5 one clock for the room
 collage.js 101 Shelter Sky & Null
 color.js 165 choosing a color
