@@ -21,6 +21,9 @@ import {
   heldBack,
   roundsOf,
   afterShots,
+  shotKind,
+  coneOf,
+  roundAt,
 } from "./weaponuse.js";
 import { HANDGUN } from "./gamedefaults.js";
 import { jumpDodges, jumpKept } from "./jump.js";
@@ -579,6 +582,17 @@ export const voteIds = (s, k) =>
     : k === "zmap"
       ? ZMAPS
       : [...VOTE_MAPS, ...umapIds(s)]; // (and the maps the host made and brought in: umaprules.js)
+/* the maps the room's map pick can land on, for the lobby's picture to cycle through and no others (the owner's, Nov 21
+   18:05Z: the lobby's map preview "follows vote or random"): the vote's list (every form, and the host's made maps), or
+   Random's (every map in each of its forms), the very lists they choose from. None when the map isn't a pick, or when
+   the host's game brings its own place (Duck Cabin's games, Mad God Justin, Survival) */
+export const mapChoices = (s) =>
+  !s.options.mapPick ||
+  (!s.options.modePick && NO_MAP_VOTE.includes(s.options.mode))
+    ? []
+    : s.options.mapPick === "vote"
+      ? voteIds(s, "map")
+      : VOTE_MAPS;
 /* Quacky Zombies' own maps: before each of its games everyone votes for one of them, the vote showing only these
    (the owner's, Nov 17 00:17Z). Its "zmap" vote works as the map vote does, its time as long */
 const ZMAPS = ["cabin", "downpour"];
@@ -2544,20 +2558,19 @@ function reduceStep(state, a, now) {
           dl = Math.hypot(dx, dy) || 1; // (the aim in duck lengths: the shotgun's cone and the grenade's throw are measured in them)
         if (sp === "shotgun") {
           // a cone of pellets, as Mad God Justin's shotgun
-          const a0 = Math.atan2(dy, dx),
-            out = [];
-          for (let i = 0; i < PELLETS; i++) {
-            const an =
-                a0 +
-                SPREAD * ((i / (PELLETS - 1)) * 2 - 1) +
-                (Math.random() - 0.5) * 0.08,
-              bx = Math.cos(an) * rx,
+          const out = [];
+          for (const [i, an] of coneOf(
+            Math.atan2(dy, dx),
+            PELLETS,
+            SPREAD,
+          ).entries()) {
+            const bx = Math.cos(an) * rx,
               by = Math.sin(an) * ry,
               bl = Math.hypot(bx, by);
             out.push(
               shot(
                 s.fxN * 10 + i,
-                "pellet",
+                shotKind(sp),
                 (bx / bl) * (PELLET_V / sbBoardK(s)),
                 (by / bl) * (PELLET_V / sbBoardK(s)),
                 { life: DUCK_PELLET_LIFE },
@@ -2596,11 +2609,11 @@ function reduceStep(state, a, now) {
             s.shots = [
               ...(s.shots || []),
               shot(
-                i ? s.fxN * 10 + i : s.fxN,
-                sp === "bow" ? "arrow" : (ARMS[sp] && ARMS[sp].k) || sp,
+                s.fxN,
+                shotKind(sp),
                 aim[0] * v,
                 aim[1] * v,
-                i ? { t: now + i * ARMS.burst.gap } : {},
+                roundAt(s.fxN, i, now, ARMS[sp] && ARMS[sp].gap),
               ),
             ]; // (a burst's rounds leave one after another: each waits until its time, t)
       }

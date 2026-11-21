@@ -1,6 +1,6 @@
 /* the room, game and test commands (a pure move out of shell.js: the entries of its CMDS table, run by the same shell) */
 import { profile } from "./store.js";
-import { modeOf, MODES } from "./modes.js";
+import { modeOf, modesFor, HIDDEN_MODES } from "./modes.js";
 import {
   FORTUNES,
   allJumps,
@@ -167,13 +167,13 @@ Object.assign(CMDS, {
     const s = needRoom(x.ctx);
     if (!args.length)
       return table(
-        MODES.map((m) => [
+        modesFor(s).map((m) => [
           m.id,
           m.name + (m.id === s.options.mode ? "  (now)" : ""),
         ]),
       );
     const id = args.join(" ").toLowerCase(),
-      m = MODES.find(
+      m = modesFor(s).find(
         (v) =>
           v.id === id ||
           v.name.toLowerCase() === id ||
@@ -184,6 +184,20 @@ Object.assign(CMDS, {
     if (!idle(s)) fail("✗ mode: in the lobby.");
     x.ctx.room.send({ t: "options", options: { mode: m.id } });
     return `Game: ${m.name}.`;
+  },
+  /* Survival stays hidden from every list until this turns it on for the room (modes.js HIDDEN_MODES) */
+  survival: (args, i, x) => {
+    const s = needSudo(x, "survival"),
+      on = (args[0] || "").toLowerCase();
+    if (!["on", "off"].includes(on))
+      fail("✗ survival: sudo survival <on | off>");
+    if (!idle(s)) fail("✗ survival: in the lobby.");
+    const set = { survOn: on === "on" };
+    if (on === "off" && HIDDEN_MODES[s.options.mode]) set.mode = "aod"; // (a hidden game being played goes back to the first)
+    x.ctx.room.send({ t: "options", options: set });
+    return on === "on"
+      ? "Survival is in the game lists."
+      : "Survival is hidden.";
   },
   start: (a, i, x) => {
     const s = needSudo(x, "start");

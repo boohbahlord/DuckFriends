@@ -126,6 +126,7 @@ export function drawNpcs(ctx, list, ZB, layer, fxl, opt = {}) {
           f.left + (o.f || 1) * 44 * zs,
           f.top - 36 * zs,
           zs * 1.25,
+          o.f < 0 ? Math.PI : 0,
         );
       z.a = o.a;
     }

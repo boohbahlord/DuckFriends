@@ -14,13 +14,13 @@
     "js/hangout/stationart.js": 1964,
     "js/hangout/world.js": 1754,
     "js/l4dd.js": 3342,
-    "js/l4ddrules.js": 5043,
-    "js/mgjrules.js": 2287,
+    "js/l4ddrules.js": 5031,
+    "js/mgjrules.js": 2286,
     "js/numberatrun.js": 1675,
-    "js/rules.js": 6236,
+    "js/rules.js": 6249,
     "js/sandboxrules.js": 2059,
     "js/sbspawn.js": 1709,
     "js/sbspawnview.js": 2212,
-    "js/updates.js": 3077
+    "js/updates.js": 3090
   }
 }
