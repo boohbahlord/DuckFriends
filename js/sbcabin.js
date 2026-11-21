@@ -32,26 +32,26 @@ import {
 import { Z_ROOM, zombieTakes, ALL_HP, L4_HOOKS } from "./l4ddrules.js";
 import {
   chaseField,
-  chaseStep,
   setZWall,
   zWalk,
   zLook,
   ZOMBIE_BREEDS,
+  brainWalk,
 } from "./zombies.js";
 import { hitCode } from "./wounds.js";
+import { fight, keepAt, reachTo } from "./sbarms.js";
+
 import { hpHurt } from "./hpmath.js";
 import { MAD } from "./sbbrain.js";
-import { fight, keepAt, reachTo } from "./sbarms.js";
 import { npcBody, DU_WORLD } from "./sbbody.js";
-import { sees as npcSees, nearPairs, grudge, stillShares } from "./npcrules.js";
+import { sees as npcSees, grudge } from "./npcrules.js";
 
 export const onCabin = (s) => isSb(s) && baseMode(s.options) === "hang";
 /* the worlds these walk on: Duck Cabin and the zombie maps (there, every kind but a zombie: those are the map's own) */
 export const sbzOn = (s) =>
   isSb(s) && ["hang", "l4dd"].includes(baseMode(s.options));
 const SPRINT = { K: 1.5, FAR: 300 }; // (half as fast again, while more than 300 px off)
-const NEAR = 12, // (the most others each one is kept apart from in a beat)
-  FIELDS = 6; // (the most new ways worked out in a beat, besides the one to the ducks)
+const FIELDS = 6; // (the most new ways worked out in a beat, besides the one to the ducks)
 
 const zbOf = (s) => (s.hang && s.hang.sbz && s.hang.sbz.zb) || [];
 /* the zombies standing now, each { i, x, y (shares of the map), sp } */
@@ -175,15 +175,7 @@ export function cabinTick(s, now, H0) {
         fields.set(k, chaseField([[t.x, t.y]]));
       return fields.get(k) || null;
     };
-  const wallsOf = sbNpcWalls(s), // (the zones that are walls to each: plan Phase 3)
-    unwall = (o, x0, y0) => {
-      const ws = wallsOf(o);
-      if (!ws.length) return;
-      const z = npcZ(o),
-        [x, y] = sbWallGo(s, ws, x0 / W, y0 / H, o.x / W, o.y / H, z, W, H, o);
-      o.x = x * W;
-      o.y = y * H;
-    };
+  const wallsOf = sbNpcWalls(s); // (the zones that are walls to each: plan Phase 3)
   setZWall(sbZombieWall(s, W, H)); // (they turn round a wall as round anything in the way)
   const plans = H0.think(
     s,
@@ -194,79 +186,58 @@ export function cabinTick(s, now, H0) {
     far,
     duckAt,
   );
-  const moved = new Set();
-  for (const { me, o, d } of plans) {
-    const to = d.goal || d.flee;
-    if (!to) continue;
-    moved.add(o);
-    const bd = far(me, to),
-      claw = reachTo(CLAW, o, to, s), // (its hitbox, and its foe's: sbarms.js)
-      v =
-        zWalk() *
-        (o.sv ?? 1) *
-        (o.run && Math.hypot(o.x - to.x, o.y - to.y) > SPRINT.FAR
-          ? SPRINT.K
-          : 1) *
-        (to.sp ?? 1), // (a \move\'s @ speed)
-      x0 = o.x,
-      y0 = o.y;
-    if (d.flee) {
-      const dx = o.x - to.x,
-        dy = o.y - to.y,
-        n = Math.hypot(dx, dy) || 1;
-      chaseStep(
+  brainWalk(s, now, plans, live, dt, {
+    arms: { fight, keepAt, reachTo },
+    far,
+    ducks: pls.map((q) => ({ x: q.xy[0], y: q.xy[1], z: q.zz })),
+    field: fieldTo,
+    reach: CLAW,
+    stopK: 0.9,
+    ptStop: 0.1,
+    speed: (o, to) =>
+      (zWalk() / RX) *
+      (o.sv ?? 1) *
+      (o.run && Math.hypot(o.x - to.x, o.y - to.y) > SPRINT.FAR
+        ? SPRINT.K
+        : 1) *
+      (to.sp ?? 1), // (a \move\'s @ speed)
+    z: npcZ,
+    walls: wallsOf,
+    wallGo(o, ws, x0, y0) {
+      const [x, y] = sbWallGo(
+        s,
+        ws,
+        x0 / W,
+        y0 / H,
+        o.x / W,
+        o.y / H,
+        npcZ(o),
+        W,
+        H,
         o,
-        null,
-        [o.x + (dx / n) * 200, o.y + (dy / n) * 200],
-        v * dt,
-        pls,
       );
-    } else if (
-      bd > (d.foe ? keepAt(o, claw) : to.pt ? 0.1 : claw * 0.9) ||
-      (d.foe && o.wp && bd > claw && !sees(o, to))
-    )
-      chaseStep(o, to.pt ? null : fieldTo(to), [to.x, to.y], v * dt, pls); // (a \move\'s spot: straight at it, round what's in the way) // (a gun keeps its distance, once nothing's in the way: sbarms.js)
-    unwall(o, x0, y0); // (round a wall, never through it)
-    if (sbfl) heights(s, o, d.flee ? null : to, dt, x0, y0); // (Sandbox's floors: plan Phase 4)
-    if (Math.abs(o.x - x0) > 0.5) o.f = o.x > x0 ? 1 : -1;
-    if (
-      d.foe &&
-      (!sbfl || Math.abs(npcZ(o) - (to.z ?? npcZ(o))) < 48) && // (on its floor: never a claw through one)
-      fight(
-        o,
-        to,
-        bd,
-        claw,
-        now,
-        ZOMBIE_BREEDS.sbBoard.swipe[1],
-        (dm, w) => H0.strike(s, now, me, d.foe, Hs, o, dm, w),
-        (t) => sees(o, t),
-      )
-    )
-      o.f = to.x < o.x ? -1 : 1;
-  }
-  setZWall(null);
-  if (sbfl)
-    for (const o of live)
-      if (!moved.has(o) && (o.z != null || o.vz != null))
-        heights(s, o, null, dt, o.x, o.y); // (standing still: it still falls, and it rides a floor that goes)
-  const was = live.map((o) => [o.x, o.y]);
-  apart(live, RX, RY);
-  live.forEach((o, i) => {
-    const ws = wallsOf(o),
-      [x0, y0] = was[i];
-    if (
-      ws.length &&
-      sbWallStops(s, ws, x0 / W, y0 / H, o.x / W, o.y / H, npcZ(o), W, H)
-    ) {
-      o.x = x0;
-      o.y = y0;
-    } // (never pushed through a wall)
+      o.x = x * W;
+      o.y = y * H;
+    },
+    wallStops: (o, ws, x0, y0) =>
+      sbWallStops(s, ws, x0 / W, y0 / H, o.x / W, o.y / H, npcZ(o), W, H),
+    after: sbfl ? (o, to, d, x0, y0) => heights(s, o, to, dt, x0, y0) : null, // (Sandbox's floors: plan Phase 4)
+    still: sbfl
+      ? (o) => {
+          if (o.z != null || o.vz != null) heights(s, o, null, dt, o.x, o.y); // (standing still: it still falls, and it rides a floor that goes)
+        }
+      : null,
+    onFloor: (o, to) => !sbfl || Math.abs(npcZ(o) - (to.z ?? npcZ(o))) < 48, // (on its floor: never a claw through one)
+    sees,
+    face: 0.5,
+    swipe: ZOMBIE_BREEDS.sbBoard.swipe[1],
+    strike: (me, foe, o, dm, w) => H0.strike(s, now, me, foe, Hs, o, dm, w),
+    round(o) {
+      o.x = Math.round(o.x);
+      o.y = Math.round(o.y);
+    },
   });
-  for (const o of live) {
-    o.x = Math.round(o.x);
-    o.y = Math.round(o.y);
-  }
+  setZWall(null);
   s.hang = {
     ...s.hang,
     sbz: {
@@ -279,31 +250,6 @@ export function cabinTick(s, now, H0) {
 }
 /* a made NPC's shot from o to t goes through no wall */
 const sees = (o, t) => npcSees(o, t, npcZ(o), 0);
-/* never in each other: two too close are pushed apart, each only against a few in its own and the next cells */
-function apart(live, RX, RY) {
-  nearPairs(
-    live,
-    RX,
-    RY,
-    (A, B) => {
-      const ex = (A.x - B.x) / RX,
-        ey = (A.y - B.y) / RY,
-        e = Math.hypot(ex, ey);
-      if (e >= 0.9) return;
-      const [wa, wb] = stillShares(A, B); // (Speed 0: never pushed aside, npcrules.js)
-      if (!wa && !wb) return;
-      const k = e > 1e-3 ? (0.9 - e) / 2 / e : 0.2,
-        ux = e > 1e-3 ? ex * k : Math.random() - 0.5,
-        uy = e > 1e-3 ? ey * k : Math.random() - 0.5;
-      A.x += ux * RX * wa;
-      A.y += uy * RY * wa;
-      B.x -= ux * RX * wb;
-      B.y -= uy * RY * wb;
-    },
-    1,
-    NEAR,
-  );
-}
 
 /* ---------- what hits them: the same as hits Justin ---------- */
 rule("sbz", {

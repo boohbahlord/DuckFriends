@@ -7,7 +7,7 @@
 /* sprint (Nov 20 18:46Z: "make it 1.25 times faster ... we can do 5 seconds ... it refills 50% slower, the sprint meter
    does, after you've used it"; 18:27Z: "sprint has to be all the way up before you can use it again") */
 export const SPRINT = {
-  speed: 1.25, // times walking speed
+  speed: 1.35, // times walking speed (Nov 21 05:10Z: "Try making it 1.35 times faster instead of 1.25")
   ms: 5000, // ms of sprint from a full bar
   refill: 1.5, // the bar fills this many times as slowly as it drains (5 s of sprint: 7.5 s to fill)
 };
