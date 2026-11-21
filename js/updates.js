@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v213",
+    version: 213,
+    date: "Nov 21, 2026",
+    title: "Stats in one place",
+    news: [
+      "The totalstats command now shows Dead Ducks Arcade's and Survival's zombie and best-round lines too.",
+    ],
+  },
+  {
     id: "v212",
     version: 212,
     date: "Nov 21, 2026",

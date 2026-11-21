@@ -19,7 +19,7 @@
    flashlight on), ad (where it aims, in degrees), mad ([who hurt it, until when]), nx (its next shot), bn (rounds left
    in this burst), bt (its last burn), w (its wounds: wounds.js codes), d (when it died) } */
 import { L4_HOOKS, critOf } from "./l4ddrules.js";
-import { ARMS } from "./guns.js";
+import { ARMS, reachOf as gunReach } from "./guns.js";
 import { clearShot, chaseField, chaseStep } from "./zombies.js";
 import { heightAt, slabBetween, PROPS } from "./hangout/layout.js";
 import { DECKS } from "./hangout/stationmap.js";
@@ -114,15 +114,7 @@ const FIRE = {
 };
 /* how far each gun is fired from (duck lengths) and how likely a round is to hit a duck there: AIM.near up close, less
    for each duck length, never under AIM.min; a sprinting duck is harder to hit */
-const REACH = {
-  shotgun: 3.5,
-  dbuck: 3.5,
-  revolver: 8,
-  ak: 11, // (assault rifles reach as far as the LMG; the sniper's SNIPE reaches farther still. The owner's, Nov 20 18:23Z:
-  burst: 11, // "Any assault rifle should be able to have the range of the LMG, and the sniper even more so")
-  lmg: 11,
-};
-const reachOf = (w) => (REACH[w] || 7) * GM.DUCK;
+const reachOf = (w) => gunReach(w, "gunman") * GM.DUCK; // (guns.js)
 const AIM = {
   near: 0.25,
   drop: 0.03,

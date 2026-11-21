@@ -14,8 +14,8 @@ import { duckSVG } from "./duck.js";
 import { nameHTML } from "./name.js";
 import { openWindow, esc } from "./ui.js";
 import { profile, STAT_MODES } from "./store.js";
-import { SURV_READY } from "./modes.js";
-import { clockOf } from "./survrules.js";
+import { SURV_READY, statsOf } from "./modes.js";
+import { statRow } from "./statrows.js";
 import { fmtJumps } from "./format.js";
 import { bbBoxHTML } from "./brackets.js";
 import { lawBoxHTML } from "./court.js";
@@ -80,91 +80,15 @@ function wyrBoxHTML(s, id) {
 /* all time, in one game mode: games, rounds, answers, what they chose most, their average, their jumps */
 function totalsHTML(p, t, mode = "aod") {
   if (!t) return '<p class="dim">No all-time stats from this player yet.</p>';
-  const top = Math.max(...t.counts),
-    most = top
-      ? t.counts.map((k, c) => (k === top ? c : -1)).filter((c) => c >= 0)
-      : [];
-  const avg = t.answers
-    ? t.counts.reduce((a, k, c) => a + k * (c - 3), 0) / t.answers
-    : null;
-  if (mode === "bb") {
-    // Bicker Brackets: their seeds' wins and losses, and the tournaments they won
-    return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">all time · Bicker Brackets</div></div></header>
-      <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Tournaments</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Tournaments won</dt><dd>${fmtJumps(t.titles)}</dd>
-        <dt>Contender wins</dt><dd>${fmtJumps(t.wins)}</dd><dt>Contender losses</dt><dd>${fmtJumps(t.losses)}</dd><dt>Votes in matches</dt><dd>${fmtJumps(t.answers)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
-  }
-  if (mode === "sc") {
-    // Story Chain: their lines, and the votes for their lines and their secret words
-    return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">all time · Story Chain</div></div></header>
-      <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Rounds</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Lines written</dt><dd>${fmtJumps(t.answers)}</dd>
-        <dt>Votes for their lines</dt><dd>${fmtJumps(t.wins)}</dd><dt>Votes for their secret words</dt><dd>${fmtJumps(t.titles)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
-  }
-  if (mode === "quack") {
-    // Who is the Quack?: rounds won, won as the Quack, and their votes for the real Quack
-    return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">all time · Who is the Quack?</div></div></header>
-      <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Rounds</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Rounds won</dt><dd>${fmtJumps(t.wins)}</dd><dt>Won as the Quack</dt><dd>${fmtJumps(t.titles)}</dd>
-        <dt>Votes</dt><dd>${fmtJumps(t.answers)}</dd><dt>For the real Quack</dt><dd>${fmtJumps(t.majority)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
-  }
-  if (mode === "law") {
-    // Lawyering: their cases and their jury votes
-    return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">all time · Lawyering</div></div></header>
-      <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Rounds</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Cases argued</dt><dd>${fmtJumps(t.argued)}</dd><dt>Cases won</dt><dd>${fmtJumps(t.wins)}</dd>
-        <dt>Cases lost</dt><dd>${fmtJumps(t.losses)}</dd><dt>Gave up</dt><dd>${fmtJumps(t.gave)}</dd><dt>Jury votes</dt><dd>${fmtJumps(t.answers)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
-  }
-  if (mode === "mgj") {
-    // Mad God Justin: their fights won and lost, stabs, the times he got them, killing blows
-    return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">all time · Mad God Justin</div></div></header>
-      <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Fights</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Won</dt><dd>${fmtJumps(t.wins)}</dd><dt>Lost</dt><dd>${fmtJumps(t.losses)}</dd>
-        <dt>Damage</dt><dd>${fmtJumps(t.answers)}</dd><dt>Knocked down</dt><dd>${fmtJumps(t.majority)}</dd><dt>Killing blows</dt><dd>${fmtJumps(t.titles)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
-  }
-  if (mode === "l4dd" || mode === "l4r16") {
-    // Quacky Zombies (or its Round 16 Start): games, rounds cleared, the best round reached
-    return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">all time · ${mode === "l4r16" ? "Round 16 Start" : "Dead Ducks Arcade"}</div></div></header>
-      <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Rounds cleared</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Best round</dt><dd>${t.titles ? fmtJumps(t.titles) : "—"}</dd><dt>Zombies killed</dt><dd>${fmtJumps(t.kills || 0)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
-  }
-  if (mode === "surv") {
-    // Survival: games, the longest time survived, zombies killed
-    return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">all time · Survival</div></div></header>
-      <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Best time</dt><dd>${t.titles ? clockOf(t.titles) : "—"}</dd><dt>Zombies killed</dt><dd>${fmtJumps(t.kills || 0)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
-  }
-  if (mode === "vdd") {
-    // Valentine's Duck Date: their games, dates, Valentines and Turned Downs, and their games as The Date
-    return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">all time · Valentine's Duck Date</div></div></header>
-      <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Turns</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Dates</dt><dd>${fmtJumps(t.argued)}</dd><dt>Valentine</dt><dd>${fmtJumps(t.wins)}</dd>
-        <dt>Turned Down</dt><dd>${fmtJumps(t.losses)}</dd><dt>The Date</dt><dd>${fmtJumps(t.titles)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
-  }
-  if (mode === "trivia") {
-    // Trivia: their answers, right and wrong, and the questions they wrote
-    return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">all time · Trivia</div></div></header>
-      <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Rounds</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Answers</dt><dd>${fmtJumps(t.answers)}</dd><dt>Right</dt><dd>${fmtJumps(t.wins)}</dd>
-        <dt>Wrong</dt><dd>${fmtJumps(t.losses)}</dd><dt>Questions written</dt><dd>${fmtJumps(t.titles)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
-  }
-  if (mode === "dunce") {
-    // Duncelation: their takes defended, not a dunce and a dunce, and their votes
-    return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">all time · Duncelation</div></div></header>
-      <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Rounds</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Takes defended</dt><dd>${fmtJumps(t.argued)}</dd><dt>Not a dunce</dt><dd>${fmtJumps(t.wins)}</dd>
-        <dt>Voted a dunce</dt><dd>${fmtJumps(t.losses)}</dd><dt>Votes</dt><dd>${fmtJumps(t.answers)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
-  }
-  if (mode === "ddr") {
-    // Does Duck Relate?: how often they related
-    const sided = t.majority + t.minority;
-    return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">all time · Does Duck Relate?</div></div></header>
-      <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Rounds</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Answers</dt><dd>${fmtJumps(t.answers)}</dd>
-        <dt>Chose most</dt><dd>${sided ? (t.majority > t.minority ? ddrChip(0) : t.majority < t.minority ? ddrChip(1) : ddrChip(0) + " " + ddrChip(1)) : "—"}</dd>
-        <dt>Related</dt><dd>${sided ? `${Math.round((t.majority / sided) * 100)}%` : "—"}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
-  }
-  if (mode === "wyr") {
-    // Would You Rather: the sides they took
-    const sided = t.majority + t.minority;
-    return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">all time · Would You Rather</div></div></header>
-      <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Rounds</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Answers</dt><dd>${fmtJumps(t.answers)}</dd>
-        <dt>With the bigger side</dt><dd>${sided ? `${Math.round((t.majority / sided) * 100)}%` : "—"}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
-  }
-  return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">all time</div></div></header>
-    <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Rounds</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Answers</dt><dd>${fmtJumps(t.answers)}</dd>
-      <dt>Chose most</dt><dd>${most.length ? most.map((c) => `<span class="chip c${c + 1}">${esc(COLS[c])}</span>`).join(" ") : "—"}</dd>
-      <dt>Average</dt><dd>${avg === null ? "—" : `${signed(Math.round(avg * 10) / 10)} <span class="dim">${esc(nameOfValue(avg))}</span>`}</dd>
-      <dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
+  const tab = statsOf(mode),
+    name = tab.title
+      ? ` · ${mode === "l4r16" ? "Round 16 Start" : tab.title}`
+      : "";
+  return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">all time${name}</div></div></header>
+    <dl>${tab.rows
+      .map((r) => statRow(r, t))
+      .map((r) => `<dt>${esc(r.label)}</dt><dd>${r.html}</dd>`)
+      .join("")}</dl></article>`;
 }
 let lastTab = "game",
   lastMode = STAT_MODES[0][0];

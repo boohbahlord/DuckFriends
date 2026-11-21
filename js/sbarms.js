@@ -7,7 +7,7 @@
    each gun's magazine), rl (when each one's reload ends), fa (its last shot), ma (its last melee swing), hw (what it
    holds now) and sh (its last shot: [when, x, y of where it went], for the screen's tracer) */
 import { duckBig } from "./duck.js";
-import { ARMS, WEAPONS } from "./guns.js";
+import { ARMS, WEAPONS, reachOf } from "./guns.js";
 import { roll, reloadMs, refill } from "./npcrules.js";
 
 /* what it can hold: its guns and the bow (not the thrown dagger), and the melee weapons (made the first time they're
@@ -23,16 +23,7 @@ export const npcArms = () =>
     ),
     melee: WEAPONS.filter((w) => ARMS[w].kind === "melee"),
   });
-/* how far each gun reaches, in duck lengths (the sniper across the map, the shotguns only close) */
-const REACH = {
-  sniper: 14,
-  bow: 9,
-  revolver: 8,
-  shotgun: 3.5,
-  dbarrel: 3.5,
-  dbuck: 3.5,
-};
-export const reachOf = (w) => REACH[w] || 7;
+const reach = (w) => reachOf(w, "sbnpc"); // (how far it fires each gun from: guns.js)
 /* a kit as a player sent it, cleaned: only weapons it can hold, each in its own place */
 export function cleanArms(w) {
   const x = w || {},
@@ -67,7 +58,7 @@ const bigOf = (o) => (o.hb || 1) * (o.sz || 1);
 export const keepAt = (o, claw) => {
   const g = gunsOf(o);
   return g.length
-    ? Math.max(claw * 0.9, Math.min(...g.map(reachOf)) * 0.7)
+    ? Math.max(claw * 0.9, Math.min(...g.map(reach)) * 0.7)
     : claw * 0.9;
 };
 const BEAT = 250; // ms: the most time a beat's shots are counted over (the host's heartbeat is 200)
@@ -108,7 +99,7 @@ export function fight(o, to, bd, claw, now, clawMs, hit, sees = null) {
     (g, i) => g && ARMS[g].mag && mg[i] <= 0,
   );
   const ready = (i) =>
-      W.p[i] && (!ARMS[W.p[i]].mag || mg[i] > 0) && bd <= reachOf(W.p[i]),
+      W.p[i] && (!ARMS[W.p[i]].mag || mg[i] > 0) && bd <= reach(W.p[i]),
     i = [0, 1]
       .filter(ready)
       .sort((a, b) => +(W.p[b] === o.hw) - +(W.p[a] === o.hw))[0]; // (the one in hand first)
@@ -127,7 +118,7 @@ export function fight(o, to, bd, claw, now, clawMs, hit, sees = null) {
     dmg +=
       (roll(A.dmg) + (A.plus ? A.plus[Math.random() < 0.5 ? 0 : 1] : 0)) *
       (A.pellets
-        ? bd < reachOf(g) / 2
+        ? bd < reach(g) / 2
           ? A.pellets
           : Math.ceil(A.pellets / 2)
         : 1); // (a shotgun: every pellet up close)

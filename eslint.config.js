@@ -3,7 +3,9 @@
    counts them and `--check` fails any deploy where a count goes up. Run: npx eslint@9 js */
 const MODES = "aod|wyr|bb|sc|quack|law|dunce|vdd|hang|l4dd|surv|mgj|sb|cabin";
 const modeCompare = (op) => ({
-  selector: `BinaryExpression[operator='${op}'] > Literal[value=/^(${MODES})$/]`,
+  /* (not counted: the isX predicates that are each mode's one place for its own name, a winning side
+     (`r.win`), and a button's action name (`dataset.a`): none of them asks what mode the room is in) */
+  selector: `BinaryExpression[operator='${op}']:not(:has(MemberExpression[property.name=/^(win|a)$/])):not(VariableDeclarator[id.name=/^(is[A-Z]|survSet$)/] BinaryExpression) > Literal[value=/^(${MODES})$/]`,
   message:
     "A mode id compared with " +
     op +
