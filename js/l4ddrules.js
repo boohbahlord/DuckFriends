@@ -45,6 +45,12 @@ import {
   shotKind,
   coneOf,
   roundAt,
+  flyShots,
+  swingOn,
+  swinging,
+  swingMisses,
+  knockOf,
+  KNOCK_DUCK,
 } from "./weaponuse.js";
 import {
   ARMS,
@@ -3125,10 +3131,8 @@ export function l4Use(s, a, now) {
     }
   }
   if (kind === "melee") {
-    s.hang.l4k = [
-      ...(s.hang.l4k || []).filter(
-        (k) => now - k.t < (ARMS[k.w] || A).swing && k.by !== id,
-      ),
+    s.hang.l4k = swingOn(
+      s.hang.l4k,
       {
         by: id,
         w: what,
@@ -3136,9 +3140,10 @@ export function l4Use(s, a, now) {
         dy,
         t: now,
         hit: [],
-        ...(A.miss && Math.random() < A.miss ? { miss: 1 } : {}), // (the pan: it swings through nothing)
+        ...(swingMisses(what) ? { miss: 1 } : {}), // (the pan: it swings through nothing)
       },
-    ];
+      now,
+    );
     meleeHits(s, now);
   } else if (what === "medkit") {
     const p4 = s.hang.l4p || {};
@@ -3942,9 +3947,7 @@ function wearDown(s, by, w, dealt) {
   s.hang.l4a = { ...s.hang.l4a, [by]: { ...kit, sl, du } };
 }
 function meleeHits(s, now) {
-  const ks = (s.hang.l4k || []).filter(
-    (k) => now - k.t <= (ARMS[k.w] || ARMS.knife).swing,
-  );
+  const ks = (s.hang.l4k || []).filter((k) => swinging(k, now));
   if (!ks.length) {
     if (s.hang.l4k && s.hang.l4k.length) s.hang.l4k = [];
     return false;
@@ -3973,7 +3976,7 @@ function meleeHits(s, now) {
         dead = strike(s, z, dmg, critRoll(s, k.by, k.w), k.by, k.w, now);
       wearDown(s, k.by, k.w, hp0 - Math.max(0, z.hp)); // (the HP it took off, not the overkill)
       if (dead) die(z, T);
-      else if (z.st === 2) knockZ(z, k.dx, k.dy, KNOCK[k.w] || KNOCK.knife); // (alive: pushed back, KNOCK)
+      else if (z.st === 2) knockZ(z, k.dx, k.dy, knockOf(k.w)); // (alive: pushed back, ARMS knock)
       any = true;
     }
     /* another duck in the swing: a slight shove, no HP lost (nothing hurts another duck here) */
@@ -3988,7 +3991,7 @@ function meleeHits(s, now) {
       )
         continue;
       k.hit.push("p" + id);
-      const far = (KNOCK[k.w] || KNOCK.knife) * KNOCK.DUCK,
+      const far = knockOf(k.w) * KNOCK_DUCK,
         dX = 0.006 * W,
         dY = 0.012 * H; // (rules.js' duck lengths in Hangout's world, across and up and down, for its shove)
       shove(
@@ -4035,10 +4038,8 @@ const die = (z, T) => {
   Object.assign(z, { st: 3, d: T });
 };
 /* melee knockback (the owner's, Nov 18 15:25Z: "Every melee has slight knockback EVEN to players AND especially to
-   zombies EVEN WHILE THEY ARE ALIVE ... Fireaxe has more knockback and the hammer has most knockback"): how far a hit
-   pushes a living zombie back, in world px (a duck is 64), and DUCK: how much of that another duck in the swing is
-   shoved */
-const KNOCK = { knife: 16, sword: 16, pan: 16, axe: 28, hammer: 40, DUCK: 0.5 };
+   zombies EVEN WHILE THEY ARE ALIVE ... Fireaxe has more knockback and the hammer has most knockback"): guns.js ARMS
+   knock, read by weaponuse.js knockOf */
 /* a living zombie inside pushed `far` world px along (ux, uy) (a unit), a few px at a time, stopping where it can't
    stand (a wall, furniture, a step too high) */
 function knockZ(z, ux, uy, far) {
@@ -4136,7 +4137,6 @@ export function l4Shots(s, now) {
     T = now - L.t0,
     zs = zombies(s),
     grid = hitGrid(zs),
-    keep = [],
     slugs = []; // (the double barrel's kills this beat: [x, y, crit])
   /* does shot sh fly on past zombie z? It missed it, now or before (sh.ms: the ones it missed, each rolled once); then
      it goes on to the next one, which rolls again */
@@ -4147,85 +4147,54 @@ export function l4Shots(s, now) {
     return true;
   };
   let hitAny = false;
-  for (const sh0 of list) {
-    const sh = { ...sh0 },
-      age = now - sh.t;
-    if (age < 0) {
-      keep.push(sh);
-      continue;
-    } // (a burst's round still waiting for its turn)
-    if (sh.k === "grenade") {
-      const u = Math.min(age, GRENADE_MS) / 1000,
-        x = (sh.x0 + sh.vx * u) * W,
-        y = (sh.y0 + sh.vy * u) * H,
-        wall = walled(x, y, sh.hz);
-      if (wall || age >= GRENADE_MS) {
-        hitAny =
-          boom(
-            s,
-            sh,
-            wall ? sh.lx * W : x,
-            wall ? sh.ly * H : y,
-            zs,
-            T,
-            now,
-            BLAST_HALF,
-          ) || hitAny;
-        continue;
-      }
-      sh.lx = x / W;
-      sh.ly = y / H;
-      keep.push(sh);
-      continue;
-    }
-    if (sh.k === "lgren") {
-      /* the grenade launcher's: straight, and off at the first zombie, a wall or its range */
-      const u = age / 1000,
-        x0 = sh.lx * W,
-        y0 = sh.ly * H,
-        x1 = (sh.x0 + sh.vx * u) * W,
-        y1 = (sh.y0 + sh.vy * u) * H,
-        n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 12));
-      let at = null;
-      for (let k = 1; k <= n && !at; k++) {
-        const x = x0 + ((x1 - x0) * k) / n,
-          y = y0 + ((y1 - y0) * k) / n;
-        if (walled(x, y, shotFeet(sh)))
-          at = [x0 + ((x1 - x0) * (k - 1)) / n, y0 + ((y1 - y0) * (k - 1)) / n];
-        else if (
-          nearby(grid, zs, x, y).some(
-            (z) =>
-              z.st !== 3 &&
-              Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1 &&
-              hOk(sh, zombieZ(z), z.x, z.y, sh.x0 * W, sh.y0 * H) &&
-              !past(sh, "glauncher", z),
-          )
+  const launched = (sh, age) => {
+    /* the grenade launcher's: straight, and off at the first zombie, a wall or its range */
+    const u = age / 1000,
+      x0 = sh.lx * W,
+      y0 = sh.ly * H,
+      x1 = (sh.x0 + sh.vx * u) * W,
+      y1 = (sh.y0 + sh.vy * u) * H,
+      n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 12));
+    let at = null;
+    for (let k = 1; k <= n && !at; k++) {
+      const x = x0 + ((x1 - x0) * k) / n,
+        y = y0 + ((y1 - y0) * k) / n;
+      if (walled(x, y, shotFeet(sh)))
+        at = [x0 + ((x1 - x0) * (k - 1)) / n, y0 + ((y1 - y0) * (k - 1)) / n];
+      else if (
+        nearby(grid, zs, x, y).some(
+          (z) =>
+            z.st !== 3 &&
+            Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1 &&
+            hOk(sh, zombieZ(z), z.x, z.y, sh.x0 * W, sh.y0 * H) &&
+            !past(sh, "glauncher", z),
         )
-          at = [x, y];
-      }
-      if (!at && age >= sh.life) at = [x1, y1];
-      if (at) {
-        const ang = angelOf(s, sh.by, "glauncher");
-        hitAny =
-          boom(
-            s,
-            sh,
-            at[0],
-            at[1],
-            zs,
-            T,
-            now,
-            BLAST_HALF * (ang ? ANGEL.GL_RADIUS : 1),
-          ) || hitAny;
-        if (ang)
-          burnAt(s, sh.by, at[0], at[1], now, blastZ(at[0], at[1], sh.hz || 0)); // (Angelic: a smaller blast, and the ground there on fire)
-        continue;
-      }
-      sh.lx = x1 / W;
-      sh.ly = y1 / H;
-      keep.push(sh);
-      continue;
+      )
+        at = [x, y];
     }
+    if (!at && age >= sh.life) at = [x1, y1];
+    if (at) {
+      const ang = angelOf(s, sh.by, "glauncher");
+      hitAny =
+        boom(
+          s,
+          sh,
+          at[0],
+          at[1],
+          zs,
+          T,
+          now,
+          BLAST_HALF * (ang ? ANGEL.GL_RADIUS : 1),
+        ) || hitAny;
+      if (ang)
+        burnAt(s, sh.by, at[0], at[1], now, blastZ(at[0], at[1], sh.hz || 0)); // (Angelic: a smaller blast, and the ground there on fire)
+      return false;
+    }
+    sh.lx = x1 / W;
+    sh.ly = y1 / H;
+    return true;
+  };
+  const bullet = (sh, age) => {
     const x0 = sh.lx * W,
       y0 = sh.ly * H,
       u = age / 1000,
@@ -4337,7 +4306,7 @@ export function l4Shots(s, now) {
         } else if (strike(s, z, dmgOf(A), critRoll(s, sh.by, w), sh.by, w, now))
           die(z, T);
         else if (w === "chair" && z.st === 2)
-          knockZ(z, sh.vx * W, sh.vy * H, KNOCK.hammer); // (the chair shoves like the hammer: the owner's, Nov 20 21:17Z)
+          knockZ(z, sh.vx * W, sh.vy * H, knockOf("hammer")); // (the chair shoves like the hammer: the owner's, Nov 20 21:17Z)
         hitAny = true;
         gone = true;
       }
@@ -4353,12 +4322,29 @@ export function l4Shots(s, now) {
         gore: slugs.splice(0),
       }); // (every screen: the chunks and the blood blown out of each, more from a crit's head: l4dd.js)
     }
-    if (gone) continue;
+    if (gone) return false;
     sh.lx = endX / W;
     sh.ly = endY / H;
-    keep.push(sh);
-  }
-  s.shots = keep;
+    return true;
+  };
+  s.shots = flyShots(
+    list.map((sh) => ({ ...sh })),
+    now,
+    {
+      fuse: GRENADE_MS,
+      U: [W, H],
+      at: (sh, t) => ({
+        x: (sh.x0 + sh.vx * (t / 1000)) * W,
+        y: (sh.y0 + sh.vy * (t / 1000)) * H,
+      }),
+      walled: (sh, at) => walled(at.x, at.y, sh.hz),
+      boom: (sh, at) => {
+        hitAny = boom(s, sh, at.x, at.y, zs, T, now, BLAST_HALF) || hitAny;
+      },
+      launched,
+      bullet,
+    },
+  );
   if (hitAny) store(s, zs, true);
   return true;
 }
