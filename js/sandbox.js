@@ -43,16 +43,16 @@ import { boxText, sbWhyNot, sbWave } from "./sbspawn.js";
 import { now as clockNow } from "./clock.js";
 import { npcRows } from "./sbmake.js";
 import { sbCheatSound } from "./sbsfx.js";
-import { sbSlots } from "./sbhot.js";
 import { saveRows } from "./sbsaves.js";
 import { groupRows, listsRow } from "./sbgroupview.js";
 import {
-  hotKeyPut,
+  hotClick,
   hotRows,
+  hotState,
   hotWinHTML,
+  hotWinSig,
   openPut,
   sbHotOn,
-  sbHotSig,
 } from "./sbhotview.js";
 import {
   closeMenu,
@@ -344,7 +344,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
   const uncover = coverChanges(box); // (a window's pictures in behind the loading screen: loading.js)
   const k = sbKeys();
   let shown = "";
-  let hotPick = ""; // (the loot picked in the h window: then a key puts it there)
+  const hot = hotState(); // (the h window's own: sbhotview.js)
   /* the host hears when my Build is up, so the zones' damage and Kill leave me alone meanwhile (sbspawn.js "bld") */
   const building = (R) => {
     if (!R || !isSb(R.state) || !R.state.sb) return;
@@ -412,13 +412,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
       opts.map((o) => o.label).join("|") +
       (k.open === "c" ? sbCheat.on + "" + mayBuild(R) : "") +
       (k.open === "b" ? Object.keys((R.state.sb || {}).pts || {}).length : "") +
-      (hotWin
-        ? hotPick +
-          JSON.stringify((R.state.sb || {}).hb || {}) +
-          JSON.stringify(sbSlots(R.state, R.me)) +
-          sbHotSig(R.state) +
-          Object.keys((R.state.sb || {}).pts || {}).length
-        : "");
+      (hotWin ? hotWinSig(R, hot) : "");
     if (sig !== shown) {
       shown = sig;
       box.classList.toggle("sb-sheet", k.open === "c");
@@ -429,7 +423,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
           : !can
             ? `<p class="sb-none">Only the host can change this.</p>`
             : opts.length
-              ? `${k.open === "b" ? `<p class="sb-budget">Zone budget ${Object.keys((R.state.sb || {}).pts || {}).length}/${SB_POINTS}</p>` : ""}<div class="sb-opts${hotWin ? " sb-hotopts" : ""}">${opts.map((o, i) => `<button type="button" class="sb-opt${o.on ? " on" : ""}" data-i="${i}">${i < 9 ? `<kbd>${i + 1}</kbd>` : ""}${esc(o.label)}</button>`).join("")}</div>${hotWin ? hotWinHTML(R, hotPick) : ""}`
+              ? `${k.open === "b" ? `<p class="sb-budget">Zone budget ${Object.keys((R.state.sb || {}).pts || {}).length}/${SB_POINTS}</p>` : ""}<div class="sb-opts${hotWin ? " sb-hotopts" : ""}">${opts.map((o, i) => `<button type="button" class="sb-opt${o.on ? " on" : ""}" data-i="${i}">${i < 9 ? `<kbd>${i + 1}</kbd>` : ""}${esc(o.label)}</button>`).join("")}</div>${hotWin ? hotWinHTML(R, hot.picked) : ""}`
               : `<p class="sb-none">Nothing here yet.</p>`;
       box.innerHTML = `<header><span class="sb-tip">Press <kbd>${k.open.toUpperCase()}</kbd> again to close</span><h2>${esc(w.name)}</h2><button type="button" class="sb-x" aria-label="Close">×</button></header>${body}`;
     }
@@ -1110,19 +1104,14 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
     }
     const b = e.target.closest(".sb-opt");
     if (b) pick(+b.dataset.i);
-    const lt = e.target.closest(".sb-lt");
-    if (lt) {
-      hotPick = hotPick === lt.dataset.v ? "" : lt.dataset.v; // (picked; again to let go)
+    if (
+      hotClick(e, getR, hot, () => {
+        sbClose(k, false);
+        paint();
+      })
+    ) {
       shown = "";
       paint();
-    }
-    const key = e.target.closest(".sp-key[data-i]");
-    if (key && hotPick) hotKeyPut(getR(), hotPick, key);
-    if (e.target.closest("[data-look]")) {
-      const v = hotPick;
-      sbClose(k, false);
-      paint();
-      openPut(getR, v); // (a spawn button's look and name)
     }
   });
   const mine = (e) => {
