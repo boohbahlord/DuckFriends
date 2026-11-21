@@ -122,7 +122,7 @@ const REACH = {
   burst: 11, // "Any assault rifle should be able to have the range of the LMG, and the sniper even more so")
   lmg: 11,
 };
-const reachOf = (w) => (REACH[w] || 7) * GM.DUCK;
+export const reachOf = (w) => (REACH[w] || 7) * GM.DUCK; // (exported for the guns pin until the reach is guns.js')
 const AIM = {
   near: 0.25,
   drop: 0.03,

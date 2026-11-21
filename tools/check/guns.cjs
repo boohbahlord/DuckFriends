@@ -148,6 +148,11 @@ const INIT = fs.readFileSync(
         sb: [NA.guns, NA.melee, per(SA.reachOf)],
         gunmen: GM.GM,
       });
+      /* how far the NPCs fire each gun from, in duck lengths: one row for the gunmen, one for Sandbox's made NPCs */
+      out.reach = H({
+        gunman: per((w) => GM.reachOf(w) / GM.GM.DUCK),
+        sb: per(SA.reachOf),
+      });
       out.feel = H({
         crit: WD.PCRIT,
         vib: FM.VIB,
