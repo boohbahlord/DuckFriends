@@ -41,6 +41,7 @@ import {
   attRole,
   OPTIONS_DEFAULT,
   walkOf,
+  inWorld,
 } from "./rules.js";
 import {
   anyWord,
@@ -494,7 +495,7 @@ export function botActions(s, now) {
       return;
     }
     if (isHang(s)) {
-      if (s.phase === "hang")
+      if (inWorld(s))
         (isL4dd(s) ? l4Bot : hangBot)(s, id, now, out); // (Quacky Zombies: they fight, l4Bot below)
       else if (s.phase === "lobby" && !s.players[id].ready)
         out.push({ t: "ready", id, v: true });

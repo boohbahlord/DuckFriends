@@ -130,9 +130,13 @@ export const mapForm = (id) =>
     : id === GREY_MAP[0]
       ? { map: "collage", grey: 1 }
       : { map: id };
+/* what a map is besides a drawing: `world` = a walkable world, not a board (Duck Cabin, Hangout's and its games'); asked
+   through isWorldMap, so no one compares a map's id to "cabin" */
+const MAP_KINDS = { cabin: { name: "Duck Cabin", world: true } };
+export const isWorldMap = (id) => !!(MAP_KINDS[id] && MAP_KINDS[id].world);
 export const mapName = (id) =>
-  id === "cabin"
-    ? "Duck Cabin"
+  MAP_KINDS[id]
+    ? MAP_KINDS[id].name
     : isUmap(id)
       ? (UMAPS[id] || {}).t || "A made map"
       : ([...MAPS, ...MAP_VARIANTS].find((m) => m[0] === id) || MAPS[0])[1];

@@ -40,10 +40,11 @@ import {
   signed,
   nameOfValue,
   slowMs,
+  inWorld,
 } from "./rules.js";
 import { modeOf, MODES, statsOf } from "./modes.js";
 import { statRow } from "./statrows.js";
-import { MAPS, MAP_VARIANTS, mapForm, mapName } from "./maps.js";
+import { MAPS, MAP_VARIANTS, isWorldMap, mapForm, mapName } from "./maps.js";
 /* the maps the command line knows: every map, and every variation that is a map of its own (Nous Within Kenoma's) */
 const SH_MAPS = [
   ...MAPS,
@@ -1431,7 +1432,7 @@ function psLines(s, all) {
     "PID WHAT     DOING",
     `  1 game     ${modeOf(o.mode).name} on ${sbWorld(o) ? SB_WORLD_NAMES[sbWorld(o)] : mapName(o.map)}${s.phase === "lobby" ? ", in the lobby" : o.mode === "hang" ? ", hanging out" : sb ? "" : `, round ${s.round + 1}`}`,
   ];
-  if (s.phase !== "lobby" && !sb && !(o.mode === "hang" && s.phase === "hang"))
+  if (s.phase !== "lobby" && !sb && !(o.mode === "hang" && inWorld(s)))
     out.push(
       `  2 ${st.padEnd(8)} ${["answer", "discuss", "results", "bracket"].includes(s.phase) || s.done ? `${done} of ${n} have ended their turn` : ""}`,
     );
@@ -2552,7 +2553,7 @@ const CMDS = {
             m[1] + (m[0] === s.options.map ? "  (now)" : ""),
           ]),
         ) +
-        `\nHangout brings its own: Duck Cabin${s.options.map === "cabin" ? "  (now)" : ""}`
+        `\nHangout brings its own: Duck Cabin${isWorldMap(s.options.map) ? "  (now)" : ""}`
       );
     const id = args.join(" ").toLowerCase(),
       m = SH_MAPS.find(
