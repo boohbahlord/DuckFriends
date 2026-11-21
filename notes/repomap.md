@@ -115,7 +115,7 @@ meters.js 114 the thin bars under my duck's
 mgj.js 219 Mad God Justin: what the screen
 mgjart.js 96 Mad God Justin's new pictures
 mgjrules.js 2287 
-modes.js 428 the game modes
+modes.js 437 the game modes
 music.js 590 the music: our own songs, played
 musicbar.js 169 the music bar: the song the
 name.js 165 fonts and how a player's name
@@ -204,7 +204,7 @@ shared.js 497 Sandbox Phase 7: Shared, the game
 shell.js 1120 the command line: a small bash
 shellcmdfiles.js 583 the files and folders commands (a
 shellcmdpeople.js 308 the people and groups commands (a
-shellcmdroom.js 201 the room, game and test commands
+shellcmdroom.js 215 the room, game and test commands
 shellcmds.js 4 the shell's command table:
 shellfs.js 846 the shell's files and what every
 shellpeople.js 220 the people, the room and the
