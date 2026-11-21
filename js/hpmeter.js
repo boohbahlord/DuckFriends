@@ -110,12 +110,21 @@ export function mountMeter() {
   edge.className = "hurt-edge";
   edge.setAttribute("aria-hidden", "true");
   document.body.append(edge);
+  /* its size kept as it changes, so a hit never makes the page measure itself (bakeFill below, once a second at most:
+     each read was a whole layout in the middle of a frame) */
+  if (typeof ResizeObserver !== "undefined")
+    new ResizeObserver(([e]) => {
+      edge._wh = [
+        Math.round(e.contentRect.width),
+        Math.round(e.contentRect.height),
+      ];
+    }).observe(edge);
   let bakedAt = -1e9;
   const blink = () => {
     const now = performance.now();
     if (now - bakedAt > 1000) {
       bakedAt = now;
-      bakeFill(edge, hurtPaint);
+      bakeFill(edge, hurtPaint, edge._wh);
     } // (its corners as pixels, made once: no filter on the whole board. Looked at once a second at most: it measures the board, and a crowd of zombies hit me many times a second)
     /* a second hit starts it over: two copies of it, on and on-b (css/app.css), swapped, so the page doesn't measure
        itself for every hit */

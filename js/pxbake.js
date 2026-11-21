@@ -599,12 +599,12 @@ async function svgItems(root, svg, anim) {
 
 /* ---------- a layer drawn in code, once, as pixels ----------
    el's picture painted by paint(x, w, h, el) (in its css px) onto a canvas with a pixel for each grid square, each pixel's
-   color the one at the screen pixel the filter keeps; made again only when el's size or the grid changes. el is marked
+   color the one at the screen pixel the filter keeps; made again only when el's size or the grid changes (size: its [w, h]
+   when the caller knows it, e.g. from a ResizeObserver). el is marked
    px-own (its css drops the filter and its own background for the canvas) */
-export function bakeFill(el, paint) {
+export function bakeFill(el, paint, size) {
   const G = grid(),
-    w = el.clientWidth,
-    h = el.clientHeight,
+    [w, h] = size || [el.clientWidth, el.clientHeight], // (size known: no layout in the middle of a frame)
     key = [w, h, G.n, G.d].join();
   if (!w || !h || el._pxKey === key) return;
   el._pxKey = key;

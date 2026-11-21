@@ -1777,10 +1777,10 @@ function drawDucks(now = clockNow()) {
           bar.style.setProperty("--was", (hp / hpMax).toFixed(3));
           red.style.animation = "none";
           if (l4 && was >= 0 && hp > was) {
-            d.classList.remove("l4-heal");
-            void d.offsetWidth;
-            d.classList.add("l4-heal");
-          } // (Quacky Zombies: 1 HP back, a green glow that fades)
+            const b = d.classList.contains("l4-heal");
+            d.classList.toggle("l4-heal", !b);
+            d.classList.toggle("l4-heal-b", b);
+          } // (Quacky Zombies: 1 HP back, a green glow that fades; its twin, -b, starts it over without a layout)
         }
       }
     }
@@ -4354,9 +4354,7 @@ function playFx(f) {
     if (dk) {
       burn(dk, 0, true);
       clearTimeout(dk._joltT);
-      dk.classList.remove("l4-jolt");
-      void dk.offsetWidth;
-      dk.classList.add("l4-jolt");
+      dk.classList.add("l4-jolt"); // (already jolting: it lasts longer; its jitter needs no start over, no layout)
       dk._joltT = setTimeout(() => dk.classList.remove("l4-jolt"), 1400);
     }
     if (f.by === R.me) shake(0.25);

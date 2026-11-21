@@ -15796,6 +15796,9 @@ html.moving .l4-heat.hot::after {
 .gduck.l4-heal .gduck-body {
   animation: l4-heal 1.4s ease-out;
 }
+.gduck.l4-heal-b .gduck-body {
+  animation: l4-heal-b 1.4s ease-out;
+}
 @keyframes l4-heal {
   0% {
     filter: drop-shadow(0 0 0.5rem #5be35b) brightness(1.25);
@@ -15803,7 +15806,15 @@ html.moving .l4-heat.hot::after {
   100% {
     filter: none;
   }
-} /* (1 HP back: a green glow that fades) */
+}
+@keyframes l4-heal-b {
+  0% {
+    filter: drop-shadow(0 0 0.5rem #5be35b) brightness(1.25);
+  }
+  100% {
+    filter: none;
+  }
+} /* (1 HP back: a green glow that fades; the twin, -b, starts it over: game.js) */
 /* the slots' colors (the owner's): melee blue, ranged red, the special purple, the grenades white; a weapon out in the
    world is an orb in its color (the fireplace's) */
 .l4s,
