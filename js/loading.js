@@ -4,6 +4,7 @@
    screen, so it stays up while the router swaps the lobby for the game. */
 import { duckSVG } from "./duck.js";
 import { profile } from "./store.js";
+import { LOAD_LINES } from "./loadlines.js";
 
 let veil = null;
 const make = () => {
@@ -13,7 +14,7 @@ const make = () => {
   veil = document.createElement("div");
   veil.className = "veil";
   veil.setAttribute("aria-hidden", "true");
-  veil.innerHTML = `<div class="veil-box"><div class="veil-duck"></div><p class="veil-ping"></p><div class="veil-bar"><i></i></div></div>`;
+  veil.innerHTML = `<div class="veil-box"><div class="veil-duck"></div><p class="veil-ping"></p><div class="veil-row"><div class="veil-bar"><i></i></div><b class="veil-pct"></b></div><p class="veil-what"></p><p class="veil-line"></p></div>`;
   document.body.appendChild(veil);
   return veil;
 };
@@ -41,6 +42,53 @@ export function brighten() {
 /* the game starts: duck, ping and bar on the black; ready() says when the game is on its screen. The bar fills as long as
    the game takes (at least a moment, so it shows), then the game fades in fast. */
 let busy = 0; // (loading screens asked for at once: the page comes back when the last one is ready)
+/* under the bar, what is loading in plain words, and how much of it is in at the bar's right (the owner's, Nov 20
+   22:25Z: "it says what's being loaded ... below the loading bar. And it might even have a percent of load like to the
+   right of the green bar"); under that, one line of text to hold the player over, in the normal font (loadlines.js).
+   The percent: what is still on its way (the files pictures are drawn from, the pictures on the screen, the screen
+   itself) against the most there was, never going back */
+const waits = new Set(); // (the screens asked for, still not ready)
+let tell = 0;
+function telling(v) {
+  const bar = v.querySelector(".veil-bar i"),
+    pct = v.querySelector(".veil-pct"),
+    what = v.querySelector(".veil-what"),
+    line = v.querySelector(".veil-line");
+  if (line)
+    line.textContent = LOAD_LINES.length
+      ? LOAD_LINES[Math.floor(Math.random() * LOAD_LINES.length)]
+      : "";
+  let most = 1,
+    shown = 0;
+  const look = () => {
+    const w = waiting(document.body),
+      left = w.n + (waits.size ? 1 : 0),
+      p = Math.max(shown, 1 - left / (most = Math.max(most, left, 1)));
+    shown = Math.min(p, 0.97); // (full only once it's all up: below)
+    if (bar) bar.style.width = (shown * 100).toFixed(1) + "%";
+    if (pct) pct.textContent = Math.floor(shown * 100) + "%";
+    if (what) what.textContent = loadingWhat(w);
+  };
+  clearInterval(tell);
+  look();
+  tell = setInterval(look, 200);
+}
+function told() {
+  clearInterval(tell);
+  tell = 0;
+  const v = make(),
+    pct = v.querySelector(".veil-pct"),
+    what = v.querySelector(".veil-what");
+  if (pct) pct.textContent = "100%";
+  if (what) what.textContent = "";
+}
+/* what is loading now, in words: the files a drawing waits for (named where they're asked for: filesFor), then the
+   pictures on the screen, then the screen itself */
+function loadingWhat(w) {
+  for (const what of pending.values()) if (what) return what;
+  if (w.n > pending.size) return "Pictures";
+  return "The game";
+}
 export function loadingScreen({ duck, ping, ready, max = 5000 }) {
   const v = make();
   busy++;
@@ -70,18 +118,21 @@ export function loadingScreen({ duck, ping, ready, max = 5000 }) {
     bar.style.transition = "none";
     bar.style.width = "0%";
     bar.getBoundingClientRect();
-    bar.style.transition = `width ${MIN}ms ease-out`;
-    bar.style.width = "88%"; // (it creeps to nearly full, and fills when the game is up)
+    bar.style.transition = "width 200ms linear";
   }
   const up = Promise.race([
     Promise.resolve(ready && ready()).catch(() => null),
     new Promise((r) => setTimeout(r, MAX)),
   ]);
+  waits.add(up);
+  if (busy === 1) telling(v);
   up.then(() => {
+    waits.delete(up);
     if (--busy > 0) return; // (another screen is still waiting)
     const wait = Math.max(0, MIN - (performance.now() - t0));
     setTimeout(() => {
       if (busy) return; // (another loading screen came in the meantime: it stays up for that one)
+      told();
       bar.style.transition = "width 180ms ease-out";
       bar.style.width = "100%";
       setTimeout(() => {
@@ -127,9 +178,9 @@ const sheetIn = (e) => {
 };
 /* files a picture is drawn from out of sight (a world's ground on a canvas, a duck's parts), still on their way: a
    loading screen up now waits for them too (a world popped in after Duck Cabin's loading screen) */
-const pending = new Set();
-export function filesFor(p) {
-  pending.add(p);
+const pending = new Map(); // (each one's name, in words, for the loading screen: "Ducks", "Downpour's pictures")
+export function filesFor(p, what = "") {
+  pending.set(p, what);
   const off = () => pending.delete(p);
   p.then(off, off);
   return p;

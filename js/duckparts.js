@@ -177,9 +177,27 @@ function sheet(n) {
             files: new Map(),
           };
         }),
+        "Ducks",
       ).catch(() => null), // (the loading screen waits for it: loading.js)
     );
   return sheets.get(n);
+}
+/* every file of one size, one file in each idle moment after the title screen (main.js), so Customize opens with its
+   ducks' parts already in (Adam's plan the owner chose, Nov 20 23:05Z: the warm-up in idle time after the title).
+   29: the size Customize's tiles take on a phone and on a computer (sizeFor) */
+export async function warmParts(n = 29) {
+  const S = await sheet(n);
+  if (!S) return;
+  const idle = () =>
+    new Promise((ok) =>
+      window.requestIdleCallback
+        ? requestIdleCallback(() => ok(), { timeout: 3000 })
+        : setTimeout(ok, 60),
+    );
+  for (let c = 0; c < S.index.f.length; c++) {
+    await idle();
+    await file(S, c);
+  }
 }
 /* one of its files, as pixels */
 function file(S, c) {
@@ -201,6 +219,7 @@ function file(S, c) {
             W: cv.width,
           };
         })(),
+        "Ducks",
       ).catch(() => {
         S.files.delete(c); // (asked again next time)
         return null;

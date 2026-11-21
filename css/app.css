@@ -15017,6 +15017,39 @@ html.moving .eye-tears .tdrop.t2 {
   border-radius: 1rem;
   background: var(--green);
 }
+/* the percent to the right of the bar (the bar stays in the middle), what is loading under it, then a line of text in
+   the normal font (loading.js telling) */
+.veil-row {
+  position: relative;
+}
+.veil-pct {
+  position: absolute;
+  left: calc(100% + 0.6rem);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: calc(0.85rem * var(--ts));
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}
+.veil-what,
+.veil-line {
+  margin: 0;
+  text-align: center;
+  max-width: min(22rem, 86vw);
+}
+.veil-what {
+  font-size: calc(0.85rem * var(--ts));
+  opacity: 0.75;
+  min-height: 1.3em;
+}
+.veil-line {
+  font-size: calc(0.95rem * var(--ts));
+  line-height: 1.35;
+}
+.veil-line:empty {
+  display: none;
+}
 .lobby-status {
   position: relative;
   z-index: 41;
