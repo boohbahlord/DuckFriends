@@ -13,7 +13,7 @@
 
    Plan px: x across (0 west … 4600 east), y is depth (0 north … 6200 south). Heights: 0 is the grass and every floor;
    the road lies ROAD.low under it. */
-import { CAR_TOP, carDeck } from "./vehicles.js";
+import { CAR_TOP, carDeck, ELEV_PLAN } from "./vehicles.js";
 export const K = 0.6;
 export let GS_W = 4600,
   GS_H = 6200;
@@ -58,7 +58,13 @@ export const BOT = [
 ];
 /* the buildings: the gas station (its storeroom and restroom on the west side) and the chapel (the bell tower at its
    north-east corner, solid for now) */
-export const STATION = { x0: 1100, y0: 550, x1: 3500, y1: 1750, wall: 180 };
+export const STATION = {
+  x0: 1100,
+  y0: 550,
+  x1: 3500,
+  y1: 1750,
+  wall: ELEV_PLAN,
+}; // (its roof: one elevation)
 export const CHAPEL = { x0: 1600, y0: 3650, x1: 3000, y1: 5750, wall: 240 };
 export const TOWER = { x0: 3000, y0: 3650, x1: 3300, y1: 3950, h: 520 };
 const INNER = 120;
@@ -382,7 +388,13 @@ export const PUMPS = [
 ];
 /* the canopy over the pumps: its roof at z, a little under the gas station's roof (Part B, the owner's, Nov 17 12:28Z:
    it "can be jumped onto from there", "slightly lower"; from the ground only by way of the station's roof) */
-export const CANOPY = { x0: 1400, y0: 1950, x1: 3200, y1: 2500, z: 150 };
+export const CANOPY = {
+  x0: 1400,
+  y0: 1950,
+  x1: 3200,
+  y1: 2500,
+  z: 0.85 * ELEV_PLAN,
+}; // (0.85 of an elevation: the owner's, Nov 21 10:48 ET)
 /* the fallen tree across the east end of the road: ducks jump it (TOP_TREE tall), zombies climb over */
 export const FALLEN = {
   x0: 3500,

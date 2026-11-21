@@ -10,10 +10,15 @@
    walks it): its body's top at the waist from end to end (side: how far in its sides are), the glass rising from the
    waist (glass, back to front) to the roof (roof, back to front; inset: how far in from the sides; below: how far under
    the car's height) */
+/* one elevation in the plan's numbers: the gas station's roof (stationmap.js STATION.wall; heights.js ELEV is the same
+   in world px). Heights are whole twentieths of it (the owner's, Nov 21 10:48 ET: the car's height is fine, a duck jumps
+   0.3 of an elevation) */
+export const ELEV_PLAN = 180;
+const E = (f) => (Math.round(f * 20) / 20) * ELEV_PLAN;
 export const CAR_TOP = {
-  h: 92, // (its roof half an elevation up, the gas station's roof one: the owner's, Nov 21 08:46Z, "half the height of an elevation")
+  h: E(0.6) + 2, // (its roof 0.6 up, as drawn: + below)
   side: 16,
-  waist: 62,
+  waist: E(0.3), // (its hood and trunk 0.3 up: a duck jumps onto it from the ground)
   glass: [80, 345],
   roof: [130, 285],
   inset: 14,
