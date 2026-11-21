@@ -236,6 +236,8 @@ export const MODES = [
   {
     id: "l4dd",
     ownDeath: true,
+    darkCabin: true, // (its Duck Cabin picture in the settings' preview is the dark one)
+    l4map: true, // (it has its own map pick, Game Settings l4map: Duck Cabin or Downpour)
     downMs: 1000, // (its default: half a second longer than 0.5 s, the owner 2026-11-03 17:15Z)
     cat: "special",
     name: "Dead Ducks Arcade",
@@ -259,6 +261,7 @@ export const MODES = [
     ? [
         {
           id: "surv",
+          onlyMap: "Downpour", // (the only map it plays: Game Settings offers that one and nothing else)
           lookClass: "map-is-nwk", // (its map wears Nous Within Kenoma's look: maps.js)
           ownDeath: true,
           cat: "special",
