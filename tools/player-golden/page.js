@@ -132,7 +132,12 @@ window.__pgPlay = async (sc) => {
   const middle = (sel) => {
     const e = document.querySelector(sel),
       b = e && e.getBoundingClientRect();
-    if (!b || !b.width) throw new Error("no " + sel + " to press");
+    if (!b || !b.width) {
+      const pad = document.querySelector(".tpad");
+      throw new Error(
+        `no ${sel} to press (html: ${document.documentElement.className}; pad: ${pad && pad.className}; hidden: ${e && e.hidden})`,
+      );
+    }
     return [
       (b.left + b.width / 2) / innerWidth,
       (b.top + b.height / 2) / innerHeight,
