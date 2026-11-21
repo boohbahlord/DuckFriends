@@ -79,8 +79,6 @@ import {
   heldCol,
   startX,
   wyrStats,
-  isSudo,
-  canOpen,
   isSc,
   textMax,
   LAW_MID,
@@ -102,6 +100,7 @@ import {
   walkOf,
   votesDue,
 } from "./rules.js";
+import { isSudo, canOpen } from "./roomrules.js";
 import { shotAt, phpLost, PHP, REACH } from "./boardfire.js";
 import {
   isCounsel,
