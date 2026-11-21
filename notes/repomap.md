@@ -111,7 +111,7 @@ meters.js 114 the thin bars under my duck's name
 mgj.js 217 Mad God Justin: what the screen shows
 mgjart.js 96 Mad God Justin's new pictures
 mgjrules.js 2287 
-modes.js 255 the game modes
+modes.js 406 the game modes
 music.js 590 the music: our own songs, played from recordings
 musicbar.js 169 the music bar: the song the room hears,
 name.js 165 fonts and how a player's name looks
@@ -196,7 +196,7 @@ seriattheme.js 63 Seriat's and the command line's look: Nous Within
 settings.js 298 Settings
 sfxlist.js 164 the sound files
 shared.js 497 Sandbox Phase 7: Shared, the game modes and
-shell.js 3541 the command line: a small bash
+shell.js 3494 the command line: a small bash
 slices.js 31 long work cut into slices
 sound.js 935 the game's sounds: real recordings, played from small
 specials.js 858 Specials
@@ -204,7 +204,8 @@ spectate.js 97 Survival: watching the others once my duck is
 splash.js 71 the start screen: your duck on a cloud,
 sprintblur.js 54 the sprint's blurred border of my screen (css/app.css
 stamina.js 41 my sprint's stamina, in every mode
-stats.js 241 stats: a player's stat box and the View
+statrows.js 87 I want one table for what a mode's
+stats.js 165 stats: a player's stat box and the View
 store.js 262 what this device remembers
 story.js 214 Story Chain: what the screen shows
 styles.js 386 duck styles
@@ -220,7 +221,7 @@ umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
 unlocks.js 413 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 2942 Updates
+updates.js 2951 Updates
 vdd.js 190 Valentine's Duck Date: what the screen shows
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
