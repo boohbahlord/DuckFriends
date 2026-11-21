@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v228",
+    version: 228,
+    date: "Nov 21, 2026",
+    title: "Tidier rules",
+    news: [
+      "Behind the scenes: the rules of Bicker Brackets, Story Chain and Lawyering each live in their own file now instead of one huge file of every mode's rules (about 1,100 lines moved), so fixing one mode can't break another by accident. Nothing plays differently.",
+    ],
+  },
+  {
     id: "v227",
     version: 227,
     date: "Nov 21, 2026",
