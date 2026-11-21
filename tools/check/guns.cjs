@@ -159,7 +159,7 @@ const INIT = fs.readFileSync(
         sb: per(sbReach),
       });
       out.feel = H({
-        crit: WD.PCRIT,
+        crit: GN.critOf ? per(GN.critOf) : WD.PCRIT, // (one rule for every weapon since K1: guns.js critOf)
         vib: FM.VIB,
         speed: [AS.ARM_SPEED, AS.ARM_COOL, AS.ARM_SWING, AS.ARM_RELOAD],
         handgun: GD.HANDGUN,

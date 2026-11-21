@@ -1,4 +1,4 @@
-import { hpHeal, hpHurt, tenths } from "./hpmath.js";
+import { hpHeal, hpHurt, hundredths } from "./hpmath.js";
 import { jumpDodges } from "./jump.js";
 /* ---------- the rules of Mad God Justin ----------
    A boss fight: every duck has the knife (1), the pistol (2: it never reloads, in place of the bow, the owner's,
@@ -115,7 +115,7 @@ export function mgjSoak(s, id, now, dmg = 1) {
   if (!max || !m || !P || P.dead || s.phase !== "boss") return false;
   if (((m.safe || {})[id] || 0) > now) return true;
   m.safe = { ...m.safe, [id]: now + SOAK_MS };
-  const lost = tenths(((m.lost || {})[id] || 0) + dmg); // (the office chair takes 2, owner 2026-11-03 17:15Z; in tenths, up while any HP is left: hpmath.js)
+  const lost = hundredths(((m.lost || {})[id] || 0) + dmg); // (the office chair takes 2, owner 2026-11-03 17:15Z; in hundredths, up while any HP is left: hpmath.js)
   if (lost >= max) {
     const rest = { ...m.lost };
     delete rest[id];
@@ -136,7 +136,7 @@ export function mgjHalf(s, id, now) {
   const lost = (m.lost || {})[id] || 0,
     cut = Math.floor((max - lost) / 2);
   if (!cut) return false;
-  m.lost = { ...m.lost, [id]: tenths(lost + cut) };
+  m.lost = { ...m.lost, [id]: hundredths(lost + cut) };
   hurtFx(s, id, now);
   return true;
 }
@@ -1307,7 +1307,7 @@ function pickTick(s, now, at, log, fx) {
         continue;
       const lost = { ...m.lost },
         most = mgjPHp(s),
-        left = tenths(most - hpHeal(most - lost[id], 1, most)); // (a part-empty block fills first: hpmath.js)
+        left = hundredths(most - hpHeal(most - lost[id], 1, most)); // (a part-empty block fills first: hpmath.js)
       if (left > 0) lost[id] = left;
       else delete lost[id];
       m.lost = lost;
@@ -2275,13 +2275,13 @@ export function mgjZombieHit(s, near, w, now, by, sh = null) {
     }
     if (sh) sh.zh = [...(sh.zh || []), o.i];
     hit = true;
-    o.hp = t.dmg >= ALL_HP ? 0 : hpHurt(o.hp, t.dmg); // (in tenths, as every HP: hpmath.js)
-    o.w = hitWounds(o.w, w, WOUND_BREEDS.zombie, { head: t.head }); // (its wounds, as Dead Ducks Arcade's zombie gets them: wounds.js)
+    o.hp = t.dmg >= ALL_HP ? 0 : hpHurt(o.hp, t.dmg); // (in hundredths, as every HP: hpmath.js)
+    o.w = hitWounds(o.w, w, WOUND_BREEDS.zombie, { head: t.crit, dead: !o.hp }); // (its wounds, as Dead Ducks Arcade's zombie gets them: wounds.js)
     if (o.hp <= 0) o.d = now;
     if (z.sb && by) o.mad = grudge("p:" + by, now, MAD); // (Sandbox's: it goes after whoever hurt it, sbbrain.js)
     if (o.d && (w === "grenade" || w === "glauncher") && !o.w.includes("g0"))
       o.w += "g0"; // (a blast's gore: every chunk, cuts and big holes, as there)
-    fx({ kind: t.head ? "l4crit" : "hitmark", b: 1, x: o.x, y: o.y });
+    fx({ kind: t.crit && !o.hp ? "l4crit" : "hitmark", b: 1, x: o.x, y: o.y }); // (a crit that kills: its head)
   }
   return sh ? (sh.zh || []).length >= most : hit;
 }

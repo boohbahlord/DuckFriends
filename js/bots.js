@@ -1184,7 +1184,6 @@ const lastAt = new Map(), // Justin → when he last walked
 const GUN_RANK = [
   "lmg",
   "dbarrel",
-  "dbuck",
   "ak",
   "burst",
   "laser",

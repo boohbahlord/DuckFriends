@@ -3770,7 +3770,6 @@ function crimson(ms) {
 const NEW_GUN_SFX = {
   laser: (o) => sfx.laser(o),
   dbarrel: (o) => sfx.dbarrel(o),
-  dbuck: (o) => sfx.dbarrel(o),
   burst: (o) => {
     for (let i = 0; i < ARMS.burst.burst; i++)
       setTimeout(() => sfx.burst(o), i * ARMS.burst.gap);

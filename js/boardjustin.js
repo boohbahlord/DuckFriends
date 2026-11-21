@@ -30,7 +30,8 @@ import { E_LINES, DEATH_LINES, GOD_LINES } from "./hangout/justin.js";
 import { holdDown, downFor, invuln, hurtFx } from "./hangout/death.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { shuffle } from "./random.js";
-import { hitWounds, WOUND_BREEDS, PCRIT } from "./wounds.js";
+import { hitWounds, WOUND_BREEDS } from "./wounds.js";
+import { critOf, armOfShot } from "./guns.js";
 import { isQuack, tileAt, tileCenter, stillIn } from "./quackrules.js";
 import {
   isMgj,
@@ -143,18 +144,22 @@ export function justinHit(s, by, now, log, w) {
   const j = s.justin;
   if (!justinShown(s) || j.down || isMgj(s)) return 0;
   const at = justinAt(j, now),
-    mgj = boardMgj(s);
+    mgj = boardMgj(s),
+    crit = Math.random() < critOf(armOfShot(w)); // (a crit doubles it: guns.js critOf; w can be a shot's kind)
   if (mgj) {
     j.max = BJ_HP;
-    j.hp = Math.max(0, (j.hp ?? BJ_HP) - (DMG[w] || 1));
+    j.hp = Math.max(0, (j.hp ?? BJ_HP) - (DMG[w] || 1) * (crit ? 2 : 1));
   }
-  const dies = !mgj || j.hp <= 0,
-    crit = dies && Math.random() < (PCRIT[w] || 0);
+  const dies = !mgj || j.hp <= 0;
   /* the hit feel of Dead Ducks Arcade on him too (the owner's, Nov 19 01:34Z: "not just players, not just Justin, but any
      NPC that can take damage"): its hitmarker, the wound it leaves (game.js draws them, his blood and "−1 HP"), and on
      the hit that kills him now and then a crit, his head blown off with a CRIT over it, as a duck's (rules.js wounded).
      Gone when he's back up (justinTick: "spawns back with gore effects lost on the next turn") */
-  j.w = hitWounds(j.w, w, WOUND_BREEDS.justin, { head: crit, look: JUSTIN });
+  j.w = hitWounds(j.w, w, WOUND_BREEDS.justin, {
+    head: crit,
+    dead: dies,
+    look: JUSTIN,
+  });
   s.fxN = (s.fxN || 0) + 1;
   s.fx = [
     ...(s.fx || []).slice(-18),
@@ -167,7 +172,7 @@ export function justinHit(s, by, now, log, w) {
       x: r3(at.x),
       y: r3(at.y),
     },
-    ...(crit
+    ...(crit && dies
       ? [
           {
             n: ++s.fxN,

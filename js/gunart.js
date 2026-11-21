@@ -214,7 +214,6 @@ export const GUNS = {
   glauncher: { held: LAUNCHER, icon: iconOf(LAUNCHER, 0.8, true), w: 0.9 },
   lmg: { held: LMG, icon: iconOf(LMG, 0.8, true), w: 1.2 },
   dbarrel: { held: DBARREL, icon: iconOf(DBARREL, 0.8, true), w: 1.15 },
-  dbuck: { held: DBARREL, icon: iconOf(DBARREL, 0.8, true), w: 1.15 }, // (the buckshot double barrel: the same gun, its shells told apart by its color in the slot)
   flamer: { held: FLAMER, icon: iconOf(FLAMER, 0.8, true), w: 1.1 },
   burst: { held: BURST, icon: iconOf(BURST, 0.8, true), w: 0.85 },
   laser: { held: LASER(0), icon: iconOf(LASER(0), 0.8, true), w: 1.1 }, // (its barrel's heat: game.js draws LASER(heat))
