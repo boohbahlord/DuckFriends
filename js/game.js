@@ -198,6 +198,8 @@ import {
 import { mountHotbar } from "./hotbar.js";
 import {
   hand,
+  handIn,
+  handReset,
   pickWith,
   mgjBackIfGone,
   mgjToggles,
@@ -3362,7 +3364,7 @@ function mgjRevive(on) {
       what: "revive",
       hold: on ? 1 : 0,
       face: 1,
-      w: hand.mgjHold === "none" ? "" : hand.mgjHold,
+      w: handIn() === "none" ? "" : handIn(),
     }); // (w: the medkit out in my hand gets it up at once)
 }
 /* Mad God Justin's zebra cake, or the Zebra cake special's (s.zcake): spinning on its way, then lying where it landed
@@ -5854,7 +5856,7 @@ function padAttack() {
     fire(id);
     return coolFor(id, R.state);
   } // (out of HP: the down pistol, without taking it out for after)
-  if (isMgj(R.state) && mgjToggles(id) && hand.mgjHold !== id) mgjOut2(id);
+  if (isMgj(R.state) && mgjToggles(id) && handIn() !== id) mgjOut2(id);
   fire(id);
   return coolFor(id, R.state) / grCool(R.state, R.me); // (Sandbox: a group's Cooldown speed)
 }
@@ -6170,10 +6172,10 @@ function wheelPick(dir) {
       kit = kitOf(s, R.me),
       has = (i) => (i === 5 ? !!(kit && kit.g > 0) : !!sl[slotOfPick(i)]),
       n = 6; // (the second item, key 5, then the grenades, key 6: an empty one is skipped)
-    let i = hand.l4Slot;
+    let i = handIn();
     for (let k = 0; k < n; k++) {
       i = (i + dir + n) % n;
-      if (i !== hand.l4Slot && has(i)) {
+      if (i !== handIn() && has(i)) {
         l4Pick(i);
         return true;
       }
@@ -6998,8 +7000,7 @@ function paintNow(force) {
     const hp = $(".mgj-hp", S);
     if (hp) setHTML(hp, mgjHPHTML(s));
   } // Mad God Justin: the knife always out; his HP
-  else if (hand.held === "knife" && !hasKey(myDuck(), "knife"))
-    hand.held = null;
+  else if (hand.held === "knife" && !hasKey(myDuck(), "knife")) hand.in = null;
   const round =
     s.phase === "over" || isHang(s) || isSb(s)
       ? ""
@@ -8043,10 +8044,8 @@ register("game", {
     sbk = null;
     if (insetsOff) insetsOff();
     insetsOff = null;
-    hand.lastKey = -1;
+    handReset();
     kept.clear();
-    hand.held = null;
-    hand.l4Slot = hand.l4Last = 0;
     shows = {};
     mouse = null;
     removeEventListener("mousemove", aimAt);
@@ -8132,7 +8131,7 @@ register("game", {
           state: () => R.state,
           me: () => R.me,
           held: heldNow,
-          slot: () => hand.l4Slot,
+          slot: handIn,
           pick: l4Pick,
           fire,
           grenade: () => l4Pick(5),

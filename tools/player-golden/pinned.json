@@ -465,5 +465,64 @@
     "tick": 50
    }
   }
+ },
+ "dda-pick": {
+  "frames": 720,
+  "digest": "kg7bkb",
+  "every": [
+   "9o7cto",
+   "1dq9oo4",
+   "yu2r29",
+   "vyaokn",
+   "nbrk0e",
+   "1gqizhv",
+   "wx5r8",
+   "12m5u0w",
+   "ooeo6s",
+   "d3mdm1",
+   "1whpj9g",
+   "moc49h"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.47,
+    "y": 0.325,
+    "z": 0
+   },
+   "sent": {
+    "move": 14,
+    "tick": 60,
+    "use": 9
+   }
+  }
+ },
+ "mgj-pick": {
+  "frames": 720,
+  "digest": "cxoz1y",
+  "every": [
+   "pkyz0l",
+   "6ej5wq",
+   "6ej5wq",
+   "13hu11k",
+   "2vhhkd",
+   "12cgce7",
+   "300xv2",
+   "4l1xo1",
+   "12w8y4e",
+   "a7lkg1",
+   "1e46cuk",
+   "456i8o"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.14,
+    "y": 0.2
+   },
+   "sent": {
+    "move": 16,
+    "tick": 60,
+    "use": 12
+   }
+  }
  }
 }
