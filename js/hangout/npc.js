@@ -7,17 +7,16 @@
         the network all the time.
      a  what they're doing ('', 'sit', 'loaf', 'swipe', 'eat', 'drink', 'dead', 'tv' …), f the way they face (1 right,
         -1 left), z a height of their own (on a couch or a table; none: the ground), say { text, t } their last words.
-   Paths: a grid of 40-px cells over the world, built once from layout.js (standable), so moved props and new doors are
-   found by themselves. A* finds the way; the pool can be kept out of it. Plain logic, no drawing: node can run it. */
+   Paths: the one walking grid (walkgrid.js) over the whole world, made from layout.js, so moved props and new doors
+   are found by themselves. A* finds the way; the pool can be kept out of it. Plain logic, no drawing: node can run it. */
 import { holdDown, isGhost, invuln, hurtFx } from "./death.js";
+import { gridOf, CELL } from "../walkgrid.js";
 import {
   W,
   H,
   EDGE,
   STEP,
   heightAt,
-  standable,
-  onPlatform,
   inCabin,
   inPool,
   POOL,
@@ -25,7 +24,6 @@ import {
   CABIN,
 } from "./layout.js";
 
-const CELL = 40;
 const GW = Math.ceil(W / CELL),
   GH = Math.ceil(H / CELL);
 let grid = null; // per cell: 0 blocked, 1 open; heights beside it
@@ -36,18 +34,15 @@ const cellOf = (x, y) => [
   Math.max(0, Math.min(GH - 1, Math.floor(y / CELL))),
 ];
 const mid = (i, j) => [i * CELL + CELL / 2, j * CELL + CELL / 2];
-/* the walking grid (built the first time it's asked for) */
+/* the walking grid over the whole world (walkgrid.js, the one the zombies walk too) */
 function walkGrid() {
-  if (grid) return grid;
-  grid = new Uint8Array(GW * GH);
-  hts = new Float32Array(GW * GH);
-  for (let j = 0; j < GH; j++)
-    for (let i = 0; i < GW; i++) {
-      const [x, y] = mid(i, j),
-        z = heightAt(x, y);
-      hts[idx(i, j)] = z;
-      grid[idx(i, j)] = standable(x, y, z, 0) && !onPlatform(x, y) ? 1 : 0; // (beds and tables: hopped onto, not walked)
-    }
+  ({ walk: grid, hts } = gridOf({
+    name: "hangout",
+    x0: 0,
+    y0: 0,
+    gw: GW,
+    gh: GH,
+  }));
   return grid;
 }
 /* the cells where no(x, y) is true, for o.block (the shadow duck's lit places) */
