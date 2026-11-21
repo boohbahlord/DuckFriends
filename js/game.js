@@ -205,6 +205,10 @@ import {
   mgjToggles,
   mgjOut2,
   heldNow,
+  magFor,
+  reloadsNow,
+  reloadReady,
+  reloadDry,
   selectKey,
   useKey,
   l4Pick,
@@ -259,7 +263,6 @@ import {
   sprintLeft,
   safeKeepLine,
   laserEnd,
-  l4Ammo,
   l4ZBoxes,
   shotStop,
 } from "./l4dd.js";
@@ -410,7 +413,6 @@ import {
   MGJ_SCALE,
   MGJ_HAMMER,
   ammoOf,
-  mgjMag,
   INF_AMMO,
   downNear,
   REVIVE,
@@ -5783,6 +5785,7 @@ pickWith({
   sendMove,
   fire,
   myPick,
+  mgjDownGun,
   onBoardPhase,
   playDuck,
   turned,
@@ -5896,7 +5899,7 @@ function coolOne(id, now, m) {
         ? [Math.max(end, now + 1), CAKE_EVERY, now]
         : null;
     } // (shared too)
-    const mg = m ? mgjMag(id) : magSize(id);
+    const mg = magFor(id);
     if (mg) {
       const mm = magOf(R.state, R.me, now, id),
         r = mm.r;
@@ -5941,13 +5944,7 @@ function handBars(s) {
     el.style.setProperty("--cl", v);
     el.classList.toggle("off", v === "0");
   }
-  const mg = !w
-    ? null
-    : m
-      ? mgjDownGun()
-        ? magSize("handgun")
-        : mgjMag(w)
-      : magSize(w);
+  const mg = !w ? null : mgjDownGun() ? magSize("handgun") : magFor(w);
   let a = null;
   if (mg && !(m && !mgjDownGun() && w !== myPick())) {
     const mm = magOf(s, R.me, now, w),
@@ -5998,77 +5995,21 @@ const dots = (id) =>
           ? `<span class="ammo ammo-n" aria-label="${ammo(id)} shots left">${ammo(id)}</span>`
           : ammoHTML(ammo(id), magSize(id)[0])
         : "";
-/* R: the gun in hand reloads (or the handgun, or the first gun with a magazine on my keys) */
 /* the small R on a phone (phonepad.js) shows in every mode, but only while what's in my hand can be reloaded: it has a
    magazine, it isn't full, and no reload is going on (the owner's, Nov 18 16:50Z: "r only shows up on mobile for anything
    IF something CAN be reloaded") */
 function canReloadNow() {
   if (!R || !onBoardPhase()) return false;
-  const s = R.state,
-    now = clockNow();
-  if (isL4dd(s)) {
-    const w = heldNow(),
-      a = w ? l4Ammo(s, R.me, w) : null;
-    return (
-      !!a &&
-      !a.rl &&
-      !a.dry &&
-      !a.nr &&
-      a.f < 0.999 &&
-      (a.nr !== undefined || downArmed(s, R.me))
-    ); // (a gun with a magazine, or the down pistol; the bow's and the flamethrower's have none)
-  }
-  let w;
-  if (isMgj(s)) {
-    w = mgjDownGun()
-      ? "handgun"
-      : hand.held && hand.held === myPick() && mgjMag(hand.held)
-        ? hand.held
-        : "";
-  } else {
-    const k = keysOf(playDuck());
-    w =
-      hand.held && magSize(hand.held) && hasKey(playDuck(), hand.held)
-        ? hand.held
-        : k.includes("handgun")
-          ? "handgun"
-          : k.find((id) => id && magSize(id)) || "";
-  }
-  if (!w) return false;
-  const mm = magOf(s, R.me, now, w);
-  return mm.n > 0 && !(mm.r > now);
+  const w = reloadsNow();
+  return !!w && reloadReady(R.state, w, clockNow());
 }
+/* R: the gun in hand reloads (Quacky Zombies: the weapon in hand; Mad God Justin: the gun picked up, or the down
+   pistol; the board: the handgun, or the first gun with a magazine on my keys) */
 function reload() {
-  if (R && isL4dd(R.state) && onBoardPhase()) {
-    const a = l4Ammo(R.state, R.me, heldNow());
-    if (a && (a.dry || a.nr)) noReload(); // (no ammo left to reload it with: the white bar flashes red, meters.js)
-    R.send({ t: "reload", w: heldNow() });
-    return true;
-  } // (Quacky Zombies: the ranged weapon in hand)
-  if (R && isMgj(R.state)) {
-    if (mgjDownGun() && onBoardPhase()) {
-      R.send({ t: "reload", w: "handgun" });
-      return true;
-    } // (out of HP: the down pistol)
-    if (
-      !onBoardPhase() ||
-      !hand.held ||
-      hand.held !== myPick() ||
-      !mgjMag(hand.held)
-    )
-      return false;
-    R.send({ t: "reload", w: hand.held });
-    return true;
-  } // (Mad God Justin: the gun picked up, out in my hand)
   if (!R || !onBoardPhase()) return false;
-  const k = keysOf(playDuck()),
-    w =
-      hand.held && magSize(hand.held) && hasKey(playDuck(), hand.held)
-        ? hand.held
-        : k.includes("handgun")
-          ? "handgun"
-          : k.find((id) => id && magSize(id));
-  if (!w) return false;
+  const w = reloadsNow();
+  if (w == null) return false;
+  if (reloadDry(R.state, w)) noReload(); // (no ammo left to reload it with: the white bar flashes red, meters.js)
   R.send({ t: "reload", w });
   return true;
 }

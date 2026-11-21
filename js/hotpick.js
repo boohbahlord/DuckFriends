@@ -5,7 +5,9 @@ import { toast } from "./ui.js";
 import { unlocked } from "./unlocks.js";
 import { hasKey, keysOf, specialById } from "./specials.js";
 import { BOARD_WEAPONS, MGJ_MELEE, THROWS } from "./guns.js";
-import { CAKE_EVERY, isMgj } from "./mgjrules.js";
+import { CAKE_EVERY, isMgj, mgjMag } from "./mgjrules.js";
+import { magOf, magSize } from "./rules.js";
+import { l4Ammo } from "./l4dd.js";
 import {
   isL4dd,
   downArmed,
@@ -27,8 +29,15 @@ import { sbSlots, spawnOf } from "./sbhot.js";
    - stays: a weapon that stays in hand once picked; toggles: picked again, it goes away and the one back comes back
    - self: picking a weapon that stays makes it the one to come back (Quacky Zombies), or else the one before stays it
    - weapons: the board's, the ones a key puts in hand; held(s): the weapon out in hand, for the board's ways
+   - mag(w): a gun's magazine [shots, reload ms]; reloads(s): the gun R reloads (null: none; Quacky Zombies: the one
+     in hand, "" too, the rules say no); ready(s, w, now): R can reload it now; dry(s, w): no ammo left to reload with
    - empty(s): the hand empties itself (Quacky Zombies: no grenades or no slot left; Mad God Justin: the picked-up
      weapon used up or the zebra cake thrown), and backTo(s) is what comes back then */
+/* a magazine that isn't full and isn't reloading (the board and Mad God Justin) */
+const magReady = (s, w, now) => {
+  const mm = magOf(s, C.R.me, now, w);
+  return mm.n > 0 && !(mm.r > now);
+};
 const ROWS = {
   board: {
     start: null,
@@ -36,6 +45,18 @@ const ROWS = {
     held: () => hand.in,
     stays: () => false,
     toggles: (x, key) => key, // (a keyboard's key toggles; a tap on a phone only picks)
+    mag: magSize,
+    /* the gun in hand, or the handgun, or the first gun with a magazine on my keys */
+    reloads: () => {
+      const d = C.playDuck(),
+        k = keysOf(d);
+      return hand.in && magSize(hand.in) && hasKey(d, hand.in)
+        ? hand.in
+        : k.includes("handgun")
+          ? "handgun"
+          : k.find((id) => id && magSize(id)) || null;
+    },
+    ready: magReady,
   },
   l4: {
     start: 0,
@@ -49,6 +70,24 @@ const ROWS = {
       return hand.in === 5 ? !(kit && kit.g > 0) : !sl[slotOfPick(hand.in)]; // (the last grenade thrown, or the item used up)
     },
     backTo: (s) => (slotsOf(s, C.R.me)[hand.back] ? hand.back : 0),
+    mag: magSize,
+    reloads: () => heldNow(),
+    /* a gun with a magazine, or the down pistol (the bow's and the flamethrower's have none) */
+    ready: (s, w) => {
+      const a = l4Ammo(s, C.R.me, w);
+      return (
+        !!a &&
+        !a.rl &&
+        !a.dry &&
+        !a.nr &&
+        a.f < 0.999 &&
+        (a.nr !== undefined || downArmed(s, C.R.me))
+      );
+    },
+    dry: (s, w) => {
+      const a = l4Ammo(s, C.R.me, w);
+      return !!(a && (a.dry || a.nr));
+    },
   },
   mgj: {
     start: "handgun",
@@ -66,6 +105,15 @@ const ROWS = {
         !!s.mgj &&
         !!(s.mgj.cake || clockNow() - (s.mgj.zebraAt || 0) < CAKE_EVERY)),
     backTo: () => hand.back || MGJ_MELEE,
+    mag: mgjMag,
+    /* the gun picked up, out in my hand, or the down pistol */
+    reloads: () =>
+      C.mgjDownGun()
+        ? "handgun"
+        : hand.held && hand.held === C.myPick() && mgjMag(hand.held)
+          ? hand.held
+          : null,
+    ready: magReady,
   },
 };
 const rowOf = (s) => (isL4dd(s) ? "l4" : isMgj(s) ? "mgj" : "board");
@@ -97,6 +145,11 @@ export function handReset() {
   hand.lastKey = -1;
   if (!(ROWS[hand.of] || {}).byFight) hand.of = "";
 }
+/* the bars and R ask the hand: a gun's magazine in my mode, the gun R reloads, can it now, is it out of ammo */
+export const magFor = (w) => mine().mag(w);
+export const reloadsNow = () => mine().reloads(C.R.state);
+export const reloadReady = (s, w, now) => mine().ready(s, w, now);
+export const reloadDry = (s, w) => !!(mine().dry && mine().dry(s, w));
 /* x picked (key: a keyboard's key): the one machine */
 function put(x, key) {
   const M = mine();
@@ -116,7 +169,7 @@ function settle(s) {
   hand.in = M.backTo(s);
   return true;
 }
-/* game.js's side: R, me, bar (getters), sendMove, fire, myPick, onBoardPhase, playDuck, turned */
+/* game.js's side: R, me, bar (getters), sendMove, fire, myPick, mgjDownGun, onBoardPhase, playDuck, turned */
 let C = null;
 export const pickWith = (c) => (C = c);
 /* Mad God Justin: a picked-up weapon used up, or the zebra cake thrown: back to the one out before (on each new state,
