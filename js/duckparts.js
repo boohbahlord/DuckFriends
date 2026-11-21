@@ -119,6 +119,22 @@ export function partKey(layer, svg) {
   return layer + ":" + hashText(steadyText(svg));
 }
 
+/* the gore layer (Adam's job, Nov 21: zombie pictures that cost nothing for their wounds): a part's name for coded look
+   ck (codedLook, as JSON), worked out once. Before, every picture drew every one of its layers again (duckSVG, its ids
+   renamed, hashed: about 3 ms) only to learn their names, so each new wound on each zombie cost all of that; now only a
+   part it never had (its new wound) is drawn. null: a layer with nothing in it */
+const PARTS = new Map();
+function partOf(ck, layer, m) {
+  const k = ck + "|" + JSON.stringify(m);
+  let v = PARTS.get(k);
+  if (v === undefined) {
+    if (PARTS.size > 6000) PARTS.clear(); // (a few hundred looks' worth)
+    const svg = duckSVG(JSON.parse(ck), m);
+    PARTS.set(k, (v = svg ? partKey(layer, svg) : null));
+  }
+  return v;
+}
+
 /* ---------- the sheets, one per size: an index, and its files (one per outfit, one per face item, the rest), each
    fetched the first time a duck needs it ---------- */
 /* a size's index as numbers, and the parts' names it shares with every size (tools/duck-index.cjs: names cut short,
@@ -249,6 +265,7 @@ export async function duckFromParts(d, cw, ch, frames = 1) {
   if (!S) return null;
   await yieldNow(); // (every duck waiting on the same sheet went on in one go when it came: each its own turn now, slices.js)
   const C = codedLook(L),
+    ck = JSON.stringify(C), // (its look, for partOf)
     vars = Object.fromEntries(duckVars(L).map(([p, v]) => [p, hex(v)])),
     flat = styleById(L.style).flat, // (a flat duck shows no holes, tears or headshot: duck.js)
     gone = flat
@@ -316,9 +333,9 @@ export async function duckFromParts(d, cw, ch, frames = 1) {
         }))
       : [o];
     for (const m of marks) {
-      const svg = duckSVG(C, m);
-      if (!svg) continue;
-      const e = entryOf(S, partKey(layer, svg));
+      const pk = partOf(ck, layer, m);
+      if (!pk) continue;
+      const e = entryOf(S, pk);
       if (e === 0) continue; // (a part with nothing to show at this size)
       if (!e) return null; // (a part the sheets don't have: the whole duck is made as before)
       plan.push([layer, e, fade === undefined ? 1 : fade]);
