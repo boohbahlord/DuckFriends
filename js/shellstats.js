@@ -1,6 +1,6 @@
 /* the stats and forgame commands' helpers (a pure move out of shell.js; the commands that use them stay in shell.js's table) */
 import { profile, STAT_MODES } from "./store.js";
-import { STAGE } from "./rules.js";
+import { STAGE } from "./roomrules.js";
 import { modeOf, statsOf } from "./modes.js";
 import { statRow } from "./statrows.js";
 import { fail, needMay, needRoom, pct, pname, tag, who } from "./shellfs.js";

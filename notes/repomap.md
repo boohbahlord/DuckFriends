@@ -22,7 +22,7 @@ bots.js 1427 computers
 brackets.js 459 Bicker Brackets: what the screen shows
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
-chat.js 1596 text chat and the command line
+chat.js 1597 text chat and the command line
 cheatflag.js 16 a game with test commands used
 cheats.js 146 test commands: cheat round N, cheat
 claw.js 68 a claw's marks: three white slashes
@@ -37,7 +37,7 @@ democracy.js 243 Democracy of Ducklings:
 dock.js 73 the docks: where Notes and the
 duck.js 799 the rubber duck avatar
 duckparts.js 598 the ducks made from pixel parts
-ducksheets.js 2 made by tools/duck-parts.cjs:
+ducksheets.js 11 made by tools/duck-parts.cjs:
 duel.js 120 the cloud duel: two ducks share
 dunce.js 139 Duncelation: what the screen shows
 duncerules.js 388 the rules of Duncelation
@@ -52,10 +52,10 @@ friends.js 236 friends
 front.js 151 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 229 how a held weapon and the
-game.js 8479 the game screen
+game.js 8478 the game screen
 gamedefaults.js 43 the game's own numbers, for every
 gameready.js 47 
-gamesettings.js 1758 Game Settings: the whole screen, like
+gamesettings.js 1757 Game Settings: the whole screen, like
 gamestats.js 191 what `stats` and `roundstats` print for
 gfx.js 8 Low graphics
 gmodes.js 246 Sandbox Phase 6: made game modes
@@ -105,7 +105,7 @@ later.js 66 the rest of the game, once
 lawrules.js 360 the rules of Lawyering
 loading.js 403 the start: a slow fade to
 loadlines.js 590 the lines under the loading bar,
-lobby.js 619 the lobby, laid out like Halo:
+lobby.js 612 the lobby, laid out like Halo:
 lobbysettings.js 73 Lobby Settings
 looks.js 136 the room's duck-look settings
 looksrules.js 60 the duck-look settings' rules
@@ -145,7 +145,7 @@ picrop.js 268 cropping a picture: every picture put
 pixel.js 724 the pixel look
 pixelpalette.js 192 the pixel look's colors
 playerinput.js 26 what I ask my duck to
-players.js 340 the player menu and the room's
+players.js 341 the player menu and the room's
 pointer.js 54 a computer or a phone
 powerart.js 377 Dead Ducks Arcade: the power box
 pxa.js 341 made by tools/pixel-art.cjs:
@@ -160,9 +160,10 @@ quackrules.js 789 the rules of Who is the
 rainbowskin.js 116 the rainbow skin
 random.js 9 the two random helpers every mode's
 report.js 114 Report Bug or Suggest Ideas
+roomrules.js 368 room governance: groups and permissions ,
 rooms.js 256 Play: create a room, and the
 router.js 112 screens
-rules.js 4060 the rules of Agree or Disagree
+rules.js 3719 the rules of Agree or Disagree
 sandbox.js 1347 Sandbox: the key windows
 sandboxrules.js 2056 Sandbox: which map it plays on,
 sbarms.js 124 Sandbox: a made NPC's weapons in
@@ -205,13 +206,13 @@ seriattheme.js 63 Seriat's and the command line's look:
 settings.js 298 Settings
 sfxlist.js 161 the sound files
 shared.js 497 Sandbox Phase 7: Shared, the game
-shell.js 1120 the command line: a small bash
+shell.js 1127 the command line: a small bash
 shellcmdfiles.js 583 the files and folders commands (a
 shellcmdpeople.js 308 the people and groups commands (a
 shellcmdroom.js 215 the room, game and test commands
 shellcmds.js 4 the shell's command table:
 shellfs.js 846 the shell's files and what every
-shellpeople.js 220 the people, the room and the
+shellpeople.js 221 the people, the room and the
 shellstats.js 245 the stats and forgame commands' helpers
 slices.js 31 long work cut into slices
 sound.js 916 the game's sounds: real recordings, played
@@ -237,7 +238,7 @@ umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 3160 Updates
+updates.js 3169 Updates
 vdd.js 190 Valentine's Duck Date: what the screen
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival

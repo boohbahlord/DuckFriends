@@ -11,7 +11,7 @@ import {
   dodNeed,
   dodCount,
   dodRoom,
-} from "./rules.js";
+} from "./roomrules.js";
 import { now } from "./clock.js";
 import { infoUnder, openGameSettings } from "./gamesettings.js";
 

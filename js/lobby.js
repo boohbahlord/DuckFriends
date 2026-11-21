@@ -25,15 +25,8 @@ import { gameArtSVG, lobbyDuck } from "./art.js";
 import { modeName } from "./modes.js";
 import { cardHTML } from "./card.js";
 import { netHTML, kickItems } from "./players.js";
-import {
-  isSudo,
-  minOf,
-  dodRoom,
-  dodOn,
-  dodVoting,
-  DOD_KEYS,
-  mapChoices,
-} from "./rules.js";
+import { minOf, mapChoices } from "./rules.js";
+import { isSudo, dodRoom, dodOn, dodVoting, DOD_KEYS } from "./roomrules.js";
 import { isUmap, umapTitle } from "./umaprules.js";
 import { openDemocracy } from "./democracy.js";
 import { lsetWatch } from "./lobbysettings.js";

@@ -3,7 +3,7 @@
    folders and files of a game, /usr/<you>, perma-notes, the Seriat folder kept on this device), reading and writing
    them, listing, the helpers every command uses (who, needRoom, needSudo, table …). It imports nothing from shell.js. */
 import { profile, save } from "./store.js";
-import { isSudo, denied } from "./rules.js";
+import { isSudo, denied } from "./roomrules.js";
 import { globRe } from "./bash.js";
 import { isSb, sbSettingsText, sbSettingsRead } from "./sandboxrules.js";
 import { HELP, EXAMPLES } from "./numerathelp.js";
