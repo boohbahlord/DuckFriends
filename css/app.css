@@ -17533,16 +17533,15 @@ html.still .hpm.low .hpm-badge {
   display: none;
 }
 /* above the sprint bar, the same bars as under my name (meters.js mirrorBars): the cooldown, white, and the ammo,
-   yellow (empty: black, blinking dark grey; reloading: blinking white). Each takes its row only while it shows */
+   yellow (empty: black, blinking dark grey; reloading: blinking white). Each keeps its row while it's off, so the
+   meter never moves when one comes and goes (a bug found on V220: firing the chain gun, its cooldown bar came and went
+   and moved my HP meter up and down 6 px; the owner's rule: anything that shouldn't move holds still) */
 .hpm-bars {
   display: flex;
   flex-direction: column;
   align-self: stretch;
   gap: calc(var(--h) * 0.16);
   margin: 0 0 0 calc(var(--h) * 1.5);
-}
-.hpm-bars:not(:has(> :not(.off), > .no)) {
-  display: none;
 }
 .hpm-cool,
 .hpm-ammo {
@@ -17557,7 +17556,7 @@ html.still .hpm.low .hpm-badge {
 }
 .hpm-cool.off:not(.no),
 .hpm-ammo.off {
-  display: none;
+  visibility: hidden;
 }
 .hpm-cool i,
 .hpm-ammo i {
