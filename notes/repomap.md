@@ -18,7 +18,7 @@ boardfire.js 1214 the board's weapons: hits, shots, blasts,
 boardjustin.js 699 Justin on the boards
 botduck.js 90 a computer's duck: a random look,
 botlines.js 188 What the computers write and say
-bots.js 1427 computers
+bots.js 1426 computers
 brackets.js 459 Bicker Brackets: what the screen shows
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
@@ -105,7 +105,7 @@ later.js 66 the rest of the game, once
 lawrules.js 360 the rules of Lawyering
 loading.js 403 the start: a slow fade to
 loadlines.js 590 the lines under the loading bar,
-lobby.js 612 the lobby, laid out like Halo:
+lobby.js 613 the lobby, laid out like Halo:
 lobbysettings.js 73 Lobby Settings
 looks.js 136 the room's duck-look settings
 looksrules.js 60 the duck-look settings' rules
@@ -145,7 +145,7 @@ picrop.js 268 cropping a picture: every picture put
 pixel.js 724 the pixel look
 pixelpalette.js 192 the pixel look's colors
 playerinput.js 26 what I ask my duck to
-players.js 341 the player menu and the room's
+players.js 342 the player menu and the room's
 pointer.js 54 a computer or a phone
 powerart.js 377 Dead Ducks Arcade: the power box
 pxa.js 341 made by tools/pixel-art.cjs:
@@ -163,7 +163,7 @@ report.js 114 Report Bug or Suggest Ideas
 roomrules.js 368 room governance: groups and permissions ,
 rooms.js 256 Play: create a room, and the
 router.js 112 screens
-rules.js 3719 the rules of Agree or Disagree
+rules.js 3435 the rules of Agree or Disagree
 sandbox.js 1347 Sandbox: the key windows
 sandboxrules.js 2056 Sandbox: which map it plays on,
 sbarms.js 124 Sandbox: a made NPC's weapons in
@@ -242,7 +242,8 @@ updates.js 3169 Updates
 vdd.js 190 Valentine's Duck Date: what the screen
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
-vote.js 278 Vote Mode & Map: the vote
+vote.js 279 Vote Mode & Map: the vote
+voterules.js 348 the lobby's vote for the mode
 walkgrid.js 67 the walking grid: which 40-px cells
 weaponuse.js 104 using a weapon: one module for
 who.js 3 who this player is beyond this
