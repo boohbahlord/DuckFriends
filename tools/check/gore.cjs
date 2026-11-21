@@ -35,7 +35,23 @@ const INIT = fs.readFileSync(
         { duckFromParts } = await import("./js/duckparts.js"),
         { JUSTIN } = await import("./js/hangout/npcart.js"),
         { npcURL } = await import("./js/sbnpcart.js");
-      const hitsOf = WD.hitsOf || A.hitsOf; // (wounds.js since hits and gore became one module)
+      const hitsOf = WD.hitsOf || A.hitsOf;
+      /* what a look can lose (wounds.js knockable, a breed's can since the breeds) */
+      const knock = WD.knockable || WD.WOUND_BREEDS.duck.can;
+      /* hitCode and woundCode as they were, through the breeds since (wounds.js hitWounds) */
+      const hitCode =
+          WD.hitCode ||
+          ((had, w, head, can) =>
+            WD.hitWounds(
+              had,
+              w,
+              { head: "hit", can: () => can },
+              { head },
+            ).slice(had.length)),
+        woundCode =
+          WD.woundCode ||
+          ((had, w, can) =>
+            WD.hitWounds(had, w, { can: () => can }).slice(had.length)); // (wounds.js since hits and gore became one module)
       const hash = (str) => {
         let h = 0x811c9dc5;
         for (let i = 0; i < str.length; i++) {
@@ -71,18 +87,18 @@ const INIT = fs.readFileSync(
         {},
         { hat: true, face: true, beak: true },
         { beak: false },
-        WD.knockable(JUSTIN),
-        ...DUCKS.map((d) => WD.knockable(d)),
+        knock(JUSTIN),
+        ...DUCKS.map((d) => knock(d)),
       ];
       const built = [];
       for (const w of WEAPONS)
         for (const can of cans) {
           let had = "";
           for (let i = 1; i <= 30; i++)
-            had += WD.hitCode(had, w, i % 7 === 0, can);
+            had += hitCode(had, w, i % 7 === 0, can);
           built.push(had);
           let wc = "";
-          for (let i = 0; i < 12; i++) wc += WD.woundCode(wc, w, can);
+          for (let i = 0; i < 12; i++) wc += woundCode(wc, w, can);
           built.push(wc);
         }
       out.codes = J(built);

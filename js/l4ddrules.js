@@ -95,8 +95,8 @@ import { hOk, hLock, shotFeet, SAME_FLOOR } from "./heights.js";
 import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
-  hitCode,
-  knockable,
+  hitWounds,
+  WOUND_BREEDS,
   pwHit,
   pwAdd,
   explodedLook,
@@ -129,7 +129,7 @@ import {
 import { ANGEL, angelOf, angelAmmo, angelAct, angelLeft } from "./l4ddangel.js";
 
 import { NPC_RUN } from "./npcshared.js";
-import { sees as npcSees, shotMark, woundsAfter } from "./npcrules.js";
+import { sees as npcSees, shotMark } from "./npcrules.js";
 import { grHp, grCool } from "./sbgroups.js";
 import {
   isSurv,
@@ -2919,9 +2919,12 @@ export function merchantHurt(s, by, n, now, w = "", how = "", from = "") {
      gets gore effects ... all the gore effects that everyone else gets"): a crit that kills him blows his head off
      ("there's a chance you might get a crit on them, so their head explodes just like a zombie will"), a blast tears
      him apart (as it does a duck), any other hit leaves its weapon's wound */
-  const wd = woundsAfter(had, w, !hp, how === "crit", how === "blast", () =>
-    knockable(merchantLook(merchantById(m.id), m.roll)),
-  );
+  const wd = hitWounds(had, w, WOUND_BREEDS.merchant, {
+    dead: !hp,
+    head: how === "crit",
+    blast: how === "blast",
+    look: merchantLook(merchantById(m.id), m.roll),
+  });
   if (!hp) {
     s.hang.l4m = {
       ...m,
@@ -3621,8 +3624,8 @@ function strike(s, z, dmg, head, by, w = "") {
 function wound(s, z, w, head) {
   const zw = s.hang.zw || {},
     had = zw[z.i] || "";
-  const add = hitCode(had, w, head); // (wounds.js)
-  if (add) s.hang.zw = { ...zw, [z.i]: had + add };
+  const wd = hitWounds(had, w, WOUND_BREEDS.zombie, { head }); // (wounds.js)
+  if (wd !== had) s.hang.zw = { ...zw, [z.i]: wd };
 }
 /* a mark that comes once and stays, past the 6 wounds (owner 2026-11-04 06:44Z): g a grenade's gore, f burnt by fire */
 function mark(s, z, code) {

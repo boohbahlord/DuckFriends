@@ -57,7 +57,7 @@ gmodes.js 246 Sandbox Phase 6: made game modes
 grenade.js 34 a grenade going off
 ground.js 54 what a duck walks on, for its footsteps
 gunmen.js 110 the gunmen's looks
-gunmenrules.js 1155 Survival: the gunmen
+gunmenrules.js 1159 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen
 hats.js 1073 hats
 heights.js 50 a shot's height, Doom's way
@@ -88,7 +88,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 338 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box on every screen
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 5362 the rules of Quacky Zombies
+l4ddrules.js 5365 the rules of Quacky Zombies
 l4ddsfx.js 513 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the zombies far from
 langname.js 5 the name of Sandbox's number language, in one
@@ -117,7 +117,7 @@ name.js 165 fonts and how a player's name looks
 nbperms.js 167 Seriat: everyone's home folder, and the rights players
 net.js 127 the room connection
 notes.js 101 Notes : question ideas, written any time
-npcrules.js 128 what every NPC's brain shares
+npcrules.js 114 what every NPC's brain shares
 npcs.js 49 the characters you can mute: Justin, the cats,
 npcshared.js 29 what every NPC shares, whatever mode it's in
 npcview.js 206 an NPC on a world , drawn the
@@ -223,7 +223,7 @@ vddrules.js 521 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
 vote.js 278 Vote Mode & Map: the vote windows
 who.js 3 who this player is beyond this tab
-wounds.js 481 the wounds a hit leaves
+wounds.js 501 the wounds a hit leaves
 zombiepath.js 186 the zombies' way to the ducks on a
 zombieroofs.js 244 the zombies' walk over Downpour's roofs: up a
 zombies.js 1312 the zombies: one module for every mode's zombies
@@ -239,7 +239,7 @@ bricks.js 485 loose bricks, drawn as pixels
 cabinend.js 136 End Cabin / Exit Cabin
 cats.js 662 Duck Cabin's cats: Annabelle, Bubbles, Oreo and Opal
 chalk.js 631 the chalk floor: draw on it with the
-characters.js 588 Duck Cabin's characters on the map: the host's
+characters.js 594 Duck Cabin's characters on the map: the host's
 death.js 103 how long a knocked-down duck can't move
 doors.js 32 the doors: they swing open while a duck
 dpground.js 322 Downpour's ground

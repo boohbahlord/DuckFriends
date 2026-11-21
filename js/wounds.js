@@ -109,7 +109,7 @@ const STAYS = {
 /* what duck look `d` wears that a hit could knock off: { hat, face, beak }. Jack in a Box and an uploaded picture
    show no hat or face item, and they and Dat Boi have no beak, so nothing of those flies off them */
 const idOf = (v) => (v && typeof v === "object" ? v.id : v) || "";
-export const knockable = (d) => {
+const knockable = (d) => {
   const hat = idOf(d && d.hat),
     face = idOf(d && d.face),
     style = d && d.style,
@@ -124,7 +124,7 @@ const KNOCKED = 10000; // (ms a knocked-off hat or face item stays off: the owne
 const BACK = 1500; // (its last ms of those it shows half see-through, coming back on)
 /* a new wound for a hit by weapon w on something that has `had` (or "": none this time, or it has enough: 6); can:
    what it wears that could be knocked off (knockable) */
-export function woundCode(had, w, can = {}) {
+function woundCode(had, w, can = {}) {
   const W = WOUND[WOUND_OF[w]];
   if (!W) return "";
   const off = (k) => !had.includes(k + "0") && !had.includes(k + "1");
@@ -154,10 +154,28 @@ export function woundCode(had, w, can = {}) {
   return had.includes(add) ? "" : add;
 }
 
-/* the wound a hit leaves on something that has `had`: its head blown off on a headshot or a crit (x0, once), else a
-   wound as woundCode gives. Dead Ducks Arcade's zombies, Mad God Justin's wave zombies and Justin on the board */
-export const hitCode = (had, w, head, can = {}) =>
-  head ? (had.includes("x") ? "" : "x0") : woundCode(had, w, can);
+/* ---------- who takes hits (Type Object: every mode's hit is Dead Ducks Arcade's; these say how each kind differs) ----------
+   head: when a headshot (or a crit) blows its head off, once: "hit" on any, "kill" only on one that kills it, never
+   without (a duck's crit is its own: rules.js wounded). blast: a blast that kills it tears it apart (every DEATH code
+   it hasn't got). can(look): what a hit can knock off it (a hat, a face item) */
+const NONE = () => ({});
+export const WOUND_BREEDS = {
+  zombie: { head: "hit", can: NONE }, // (Dead Ducks Arcade's, Mad God Justin's waves, Sandbox's on a map)
+  justin: { head: "hit", can: knockable }, // (on the board and in Hangout)
+  gunman: { head: "kill", blast: true, can: NONE }, // (Survival's gunmen and the friendly squad)
+  merchant: { head: "kill", blast: true, can: knockable },
+  duck: { can: knockable }, // (its wounds come and go: pwHit)
+};
+/* the wounds one of breed b has after a hit by weapon w (had: its wounds so far). how: head (a headshot or a crit),
+   dead (the hit killed it), blast (it was a blast), look (what it looks like: what can be knocked off) */
+export function hitWounds(had, w, b, { head, dead, blast, look } = {}) {
+  had = had || "";
+  if (head && (b.head === "hit" || (b.head === "kill" && dead)))
+    return had.includes("x") ? had : had + "x0";
+  if (b.blast && dead && blast)
+    return had + DEATH.filter((c) => !had.includes(c)).join("");
+  return had + woundCode(had, w, b.can(look));
+}
 /* the weapon a newest wound tells of, for its blood when no shot hit it (a knife, a hammer): fx.js fxHitAt's kinds */
 export const BY_WOUND = {
   b: "handgun",
@@ -235,7 +253,9 @@ export function pwAdd(s, id, codes, now, down) {
 /* a wound for a hit by weapon w (none if this one leaves nothing) */
 export function pwHit(s, id, w, now, down) {
   const had = pwCodes(s, id, now),
-    c = woundCode(had, w, knockable((s.players[id] || {}).duck));
+    c = hitWounds(had, w, WOUND_BREEDS.duck, {
+      look: (s.players[id] || {}).duck,
+    }).slice(had.length);
   if (c) pwAdd(s, id, [c], now, down);
 }
 /* the host's heartbeat: each duck's clock stops while it's down and starts once it's up; wounds that ran out go */

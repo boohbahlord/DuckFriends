@@ -29,7 +29,13 @@ import { play, loop, setListener } from "./sounds.js";
 import "./cats.js";
 import "./justin.js";
 import "./shadowduck.js";
-import { hitCode, knockable, PCRIT, goreFree, woundLook } from "../wounds.js";
+import {
+  hitWounds,
+  WOUND_BREEDS,
+  PCRIT,
+  goreFree,
+  woundLook,
+} from "../wounds.js";
 import { poolHTML, warmPool } from "../bloodpool.js";
 import { pxSVG, rasterReady, pixelOn } from "../pixel.js";
 import { hashText } from "../pxdom.js";
@@ -97,7 +103,7 @@ function justinWounded(s, w, now) {
     p = r && npcAt(r, now);
   if (!r) return;
   const crit = Math.random() < (PCRIT[w] || 0),
-    wc = (r.wc || "") + hitCode(r.wc || "", w, crit, knockable(JUSTIN));
+    wc = hitWounds(r.wc, w, WOUND_BREEDS.justin, { head: crit, look: JUSTIN });
   s.hang.npc = { ...s.hang.npc, justin: { ...r, wc, hit: (r.hit || 0) + 1 } };
   if (crit && p) {
     s.fxN = (s.fxN || 0) + 1;

@@ -127,7 +127,8 @@ A program that is changed grows more complex unless work is spent against it (Le
   own text, so it imports nothing). Round pacing stays in `js/l4ddrules.js`.
   Downpour's roofs: `js/zombieroofs.js` (up a wall where one is drawn, along a roof, the jump onto the canopy), called
   from zombies.js; its own file only because zombies.js passed 1,500 lines.
-- Hits and gore: `js/wounds.js` (Dead Ducks Arcade's, for every mode): the wound codes a hit leaves (`hitCode`), the
+- Hits and gore: `js/wounds.js` (Dead Ducks Arcade's, for every mode): the wounds a hit leaves (`hitWounds`; breeds `WOUND_BREEDS`: zombie, justin,
+  gunman, merchant, duck), the
   ducks' wounds over time (`pw*`), how each wound looks (`hitsOf`) and the look duckSVG takes (`woundLook`). Pinned by
   `tools/check/gore.cjs`.
 

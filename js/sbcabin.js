@@ -38,7 +38,7 @@ import {
   zLook,
   ZOMBIE_BREEDS,
 } from "./zombies.js";
-import { hitCode } from "./wounds.js";
+import { hitWounds, WOUND_BREEDS } from "./wounds.js";
 import { hpHurt } from "./hpmath.js";
 import { MAD } from "./sbbrain.js";
 import { fight, keepAt, reachTo } from "./sbarms.js";
@@ -341,7 +341,7 @@ function npcHit(s, i, by, now, w) {
   const t = zombieTakes(s, by, w);
   if (!t) return false; // (a miss)
   const hp = t.dmg >= ALL_HP ? 0 : hpHurt(o.hp, t.dmg), // (in tenths, as every HP: hpmath.js)
-    wd = (o.w || "") + hitCode(o.w || "", w, t.head);
+    wd = hitWounds(o.w, w, WOUND_BREEDS.zombie, { head: t.head });
   s.hang = {
     ...s.hang,
     sbz: {
