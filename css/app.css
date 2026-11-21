@@ -16221,9 +16221,27 @@ html.moving .l4-heat.hot::after {
 .screen:has(.l4-shopping) .tpad,
 .screen:has(.l4-shopping) .cabin-end,
 body:has(.win-back, .dock-panel:not([hidden]), .pmenu:not([hidden])) .cabin-end,
-body:has(.l4-shopping, .win-back) .l4-sr,
-body:has(.l4-shopping, .win-back) .l4-srv,
-body:has(.l4-shopping, .win-back) .l4-srb {
+body:has(
+    .l4-shopping,
+    .win-back,
+    .dock-panel:not([hidden]),
+    .pmenu:not([hidden])
+  )
+  .l4-sr,
+body:has(
+    .l4-shopping,
+    .win-back,
+    .dock-panel:not([hidden]),
+    .pmenu:not([hidden])
+  )
+  .l4-srv,
+body:has(
+    .l4-shopping,
+    .win-back,
+    .dock-panel:not([hidden]),
+    .pmenu:not([hidden])
+  )
+  .l4-srb {
   visibility: hidden;
 } /* (on a phone the jump and aim buttons step aside for it: they sat over its last row; Exit Cabin too: it sat on its
      tabs) */
