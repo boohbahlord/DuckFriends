@@ -51,7 +51,7 @@ fxmotion.js 214 how a held weapon and the screen move
 game.js 8825 the game screen
 gamedefaults.js 29 the game's own numbers, for every mode
 gameready.js 47 what the game's loading screen waits for
-gamesettings.js 1751 Game Settings: the whole screen, like Customize
+gamesettings.js 1750 Game Settings: the whole screen, like Customize
 gfx.js 8 Low graphics
 gmodes.js 246 Sandbox Phase 6: made game modes
 grenade.js 34 a grenade going off
@@ -88,16 +88,16 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 338 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box on every screen
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 5360 the rules of Quacky Zombies
+l4ddrules.js 5359 the rules of Quacky Zombies
 l4ddsfx.js 513 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the zombies far from
 langname.js 5 the name of Sandbox's number language, in one
-laserart.js 106 the laser gun, drawn
+laserart.js 105 the laser gun, drawn
 laserfx.js 134 the Laser Rifle on the screen
 later.js 66 the rest of the game, once the first
 loading.js 397 the start: a slow fade to black over
 loadlines.js 590 the lines under the loading bar, one for
-lobby.js 599 the lobby, laid out like Halo: Reach's custom
+lobby.js 597 the lobby, laid out like Halo: Reach's custom
 lobbysettings.js 73 Lobby Settings
 looks.js 127 the room's duck-look settings
 looksrules.js 60 the duck-look settings' rules
@@ -152,7 +152,7 @@ rainbowskin.js 116 the rainbow skin
 report.js 114 Report Bug or Suggest Ideas
 rooms.js 276 Play: create a room, and the rooms online
 router.js 112 screens
-rules.js 6322 the rules of Agree or Disagree
+rules.js 6320 the rules of Agree or Disagree
 sandbox.js 1359 Sandbox: the key windows
 sandboxrules.js 2059 Sandbox: which map it plays on, and who
 sbarms.js 136 Sandbox: a made NPC's weapons in a fight
@@ -239,7 +239,7 @@ bricks.js 485 loose bricks, drawn as pixels
 cabinend.js 135 End Cabin / Exit Cabin
 cats.js 662 Duck Cabin's cats: Annabelle, Bubbles, Oreo and Opal
 chalk.js 631 the chalk floor: draw on it with the
-characters.js 594 Duck Cabin's characters on the map: the host's
+characters.js 593 Duck Cabin's characters on the map: the host's
 death.js 103 how long a knocked-down duck can't move
 doors.js 32 the doors: they swing open while a duck
 dpground.js 320 Downpour's ground
@@ -251,7 +251,7 @@ justin.js 925 Justin: a yellow duck in blue jeans and
 lamp.js 71 the lamps: the example activity
 layout.js 1466 Duck Cabin: the world of Hangout
 npc.js 498 Duck Cabin's characters: how they get around, and
-npcart.js 272 Duck Cabin's characters: the drawings
+npcart.js 271 Duck Cabin's characters: the drawings
 piano.js 530 the piano in the cabin , against the
 pianokeys.js 665 Hangout: the piano's keyboard mode
 poker.js 1185 poker at the blackjack table
@@ -270,7 +270,7 @@ shapes.js 1707 Duck Cabin's props, drawn: art.js's drawings put where
 soccer.js 508 soccer: one ball on the field, one net
 sounds.js 17 Duck Cabin's sounds
 stage.js 134 the stage: half an oval 70 high on
-stationart.js 1967 Downpour's things: the drawings
+stationart.js 1964 Downpour's things: the drawings
 stationmap.js 1092 Dead Ducks Arcade's second map: the gas station,
 trampoline.js 141 the trampoline
 tv.js 115 the TV: seven channels, the next one with

@@ -1185,7 +1185,6 @@ export function openGameSettings(R, start = null) {
 
   function menuHTML() {
     const s = S(),
-      me = R.me,
       o = s.options;
     if (!page)
       return (

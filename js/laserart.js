@@ -10,7 +10,6 @@ const M1 = "#33384a",
   M0 = "#2a2e3c",
   POLY = "#1f2230",
   RED = "#e0262f",
-  RED_D = "#8a1018",
   COPPER = "#c9733a";
 const shine = (d, o = 0.28, w = 0.8) =>
   `<path d="${d}" stroke="#fff" stroke-width="${w}" opacity="${o}" fill="none" stroke-linecap="round"/>`;
