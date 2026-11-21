@@ -421,6 +421,39 @@ export function zombieURL(l, n = 0, hits = "") {
   }
   return LOOKS.get(k);
 }
+/* the gore layer (Adam's job, Nov 21: zombie pictures that cost nothing for their wounds): a wounded zombie as its parts
+   (duck.js data-dk, as zombieURL's drawing carries them) without making its drawing: its unwounded look's, read once,
+   with the wounds' marks added. l4dd.js draws it from the part sheets straight onto its own canvas, so a new wound makes
+   no new drawing and no new picture file. null: no parts for it (made whole) */
+const DKS = new Map();
+const unq = (s) =>
+  s
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
+export function zombieDK(l, n = 0, hits = "") {
+  const base = zombieURL(l, n, "");
+  let b = DKS.get(base);
+  if (b === undefined) {
+    if (DKS.size > 600) DKS.clear(); // (as LOOKS)
+    const t = decodeURIComponent(base.slice(base.indexOf(",") + 1)),
+      m = /\sdata-dk="([^"]*)"/.exec(t.slice(0, t.indexOf(">") + 1));
+    DKS.set(base, (b = m ? JSON.parse(unq(m[1])) : null));
+  }
+  if (!b) return null;
+  const h = hitsOf(hits);
+  return {
+    ...b,
+    gone: h.gone,
+    sk: {
+      body: b.sk.body,
+      head: [...b.sk.head, ...h.inner].filter(Boolean),
+      out: h.out.filter(Boolean),
+    },
+  };
+}
 /* its box: 64 wide, as tall as its drawing (a hat makes it taller); feet 10 units over the bottom, as a duck's */
 const BOXES = new Map();
 export function zombieBox(l) {

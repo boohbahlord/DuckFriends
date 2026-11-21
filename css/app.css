@@ -15187,12 +15187,16 @@ html.moving .eye-tears .tdrop.t2 {
 .l4z-body {
   position: absolute;
 }
-.l4z-body img {
+.l4z-body img,
+.l4z-body canvas {
   display: block;
   width: 100%;
   height: 100%;
   user-select: none;
   -webkit-user-drag: none;
+}
+.l4z-body canvas {
+  image-rendering: pixelated; /* (a wounded zombie's own canvas, its parts put together: l4dd.js goreCanvas) */
 }
 .l4z:not(.hurt) .l4z-hp,
 .mgj-z:not(.hurt) .l4z-hp {

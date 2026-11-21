@@ -197,6 +197,18 @@ const INIT = fs.readFileSync(
             )
           : null;
       };
+      /* the gore layer's parts (l4ddart.js zombieDK, made without the drawing) are the drawing's, for every zombie above */
+      let dkDiff = 0;
+      if (A.zombieDK)
+        LOOKS.forEach((l, n) =>
+          some.forEach((c) => {
+            if (
+              JSON.stringify(A.zombieDK(l, n * 5, c)) !==
+              JSON.stringify(dkOf(A.zombieURL(l, n * 5, c)))
+            )
+              dkDiff++;
+          }),
+        );
       const px = [];
       let none = 0;
       for (const t of [...zs, ...ds, ...ns].filter((_, i) => i % 4 === 0)) {
@@ -219,18 +231,23 @@ const INIT = fs.readFileSync(
       out.pixelsMade =
         px.filter((v) => v !== "whole").length + " of " + (px.length + none);
       window.__fake = false;
-      return out;
+      return { out, dkDiff };
     })
     .catch((e) => ({ err: String(e).slice(0, 300) }));
   await b.close();
   noErrors(errs);
   if (got.err) return fail("gore pin did not run: " + got.err);
+  if (got.dkDiff)
+    fail(
+      `gore: ${got.dkDiff} zombies' parts (zombieDK) differ from their drawing's`,
+    );
   if (process.env.PIN) {
-    fs.writeFileSync(PINNED, JSON.stringify(got, null, 1) + "\n");
-    console.log("pinned", JSON.stringify(got));
+    fs.writeFileSync(PINNED, JSON.stringify(got.out, null, 1) + "\n");
+    console.log("pinned", JSON.stringify(got.out));
     return;
   }
   const pin = JSON.parse(fs.readFileSync(PINNED, "utf8"));
-  for (const k of new Set([...Object.keys(pin), ...Object.keys(got)]))
-    if (pin[k] !== got[k]) fail(`gore: ${k} changed (${pin[k]} -> ${got[k]})`);
+  for (const k of new Set([...Object.keys(pin), ...Object.keys(got.out)]))
+    if (pin[k] !== got.out[k])
+      fail(`gore: ${k} changed (${pin[k]} -> ${got.out[k]})`);
 })();

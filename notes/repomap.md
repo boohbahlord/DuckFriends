@@ -74,10 +74,10 @@ jetart.js 39 the jetpack's pictures
 jetpack.js 33 the jetpack
 jumps.js 48 the jump counter
 keynav.js 204 menus by keyboard
-l4dd.js 3297 Quacky Zombies on every screen
+l4dd.js 3350 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 203 Dead Ducks Arcade's Angel machine on every screen
-l4ddart.js 590 Quacky Zombies' pictures
+l4ddart.js 623 Quacky Zombies' pictures
 l4ddbar.js 281 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and the roof's flare,
 l4ddbots.js 572 Quacky Zombies' computers
