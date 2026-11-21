@@ -56,13 +56,13 @@ gamesettings.js 1755 Game Settings: the whole screen, like Customize
 gamestats.js 191 what `stats` and `roundstats` print for the game
 gfx.js 8 Low graphics
 gmodes.js 246 Sandbox Phase 6: made game modes
-grenade.js 34 a grenade going off
+grenade.js 35 a grenade going off
 ground.js 53 what a duck walks on, for its footsteps
 gunart.js 448 every weapon, drawn: one drawing for every mode,
 gunmen.js 110 the gunmen's looks
 gunmenrules.js 1140 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen
-guns.js 511 every weapon's numbers: one sheet for every mode
+guns.js 514 every weapon's numbers: one sheet for every mode
 hats.js 1073 hats
 heights.js 50 a shot's height, Doom's way
 helppages.js 1497 the command line's Help pages: help lists them;
@@ -155,7 +155,7 @@ random.js 9 the two random helpers every mode's rules share:
 report.js 114 Report Bug or Suggest Ideas
 rooms.js 256 Play: create a room, and the rooms online
 router.js 112 screens
-rules.js 6243 the rules of Agree or Disagree
+rules.js 6244 the rules of Agree or Disagree
 sandbox.js 1359 Sandbox: the key windows
 sandboxrules.js 2059 Sandbox: which map it plays on, and who
 sbarms.js 124 Sandbox: a made NPC's weapons in a fight
