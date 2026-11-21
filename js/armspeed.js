@@ -14,11 +14,11 @@ export const ARM_SPEED = {
 export const ARM_COOL = {
   handgun: 200,
   knife: 250,
-  hammer: 1100,
+  hammer: 880, // (the fire axe's: the owner's, Nov 21 18:59Z; it was 1100)
   bow: 400,
   dagger: 600,
   shotgun: 900,
-  axe: 880, // (25% faster than the hammer: the owner's, Nov 16)
+  axe: 880, // (25% faster than the hammer was: the owner's, Nov 16)
   sword: 167, // (50% faster than the knife)
   pan: 880, // (as slow as the fire axe)
 };
