@@ -21,7 +21,7 @@ brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
 chat.js 1600 text chat and the command line
 cheatflag.js 16 a game with test commands used counts nothing
-cheats.js 74 test commands: cheat round N, cheat give WEAPON
+cheats.js 146 test commands: cheat round N, cheat give WEAPON,
 claw.js 36 a claw's marks: three white slashes where a
 clock.js 5 one clock for the room
 collage.js 101 Shelter Sky & Null
@@ -65,7 +65,7 @@ gunmenview.js 137 Survival: the gunmen on the screen
 guns.js 522 every weapon's numbers: one sheet for every mode
 hats.js 1073 hats
 heights.js 50 a shot's height, Doom's way
-helppages.js 1497 the command line's Help pages: help lists them;
+helppages.js 1498 the command line's Help pages: help lists them;
 hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
 hooks.js 3 hooks between screens that can't import each other
@@ -90,7 +90,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box on every screen
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 5006 the rules of Quacky Zombies
+l4ddrules.js 5018 the rules of Quacky Zombies
 l4ddsfx.js 513 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the zombies far from
 langname.js 5 the name of Sandbox's number language, in one
