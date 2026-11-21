@@ -21,6 +21,9 @@ import {
   heldBack,
   roundsOf,
   afterShots,
+  shotKind,
+  coneOf,
+  roundAt,
 } from "./weaponuse.js";
 import { HANDGUN } from "./gamedefaults.js";
 import { jumpDodges } from "./jump.js";
@@ -2544,20 +2547,19 @@ function reduceStep(state, a, now) {
           dl = Math.hypot(dx, dy) || 1; // (the aim in duck lengths: the shotgun's cone and the grenade's throw are measured in them)
         if (sp === "shotgun") {
           // a cone of pellets, as Mad God Justin's shotgun
-          const a0 = Math.atan2(dy, dx),
-            out = [];
-          for (let i = 0; i < PELLETS; i++) {
-            const an =
-                a0 +
-                SPREAD * ((i / (PELLETS - 1)) * 2 - 1) +
-                (Math.random() - 0.5) * 0.08,
-              bx = Math.cos(an) * rx,
+          const out = [];
+          for (const [i, an] of coneOf(
+            Math.atan2(dy, dx),
+            PELLETS,
+            SPREAD,
+          ).entries()) {
+            const bx = Math.cos(an) * rx,
               by = Math.sin(an) * ry,
               bl = Math.hypot(bx, by);
             out.push(
               shot(
                 s.fxN * 10 + i,
-                "pellet",
+                shotKind(sp),
                 (bx / bl) * (PELLET_V / sbBoardK(s)),
                 (by / bl) * (PELLET_V / sbBoardK(s)),
                 { life: DUCK_PELLET_LIFE },
@@ -2596,11 +2598,11 @@ function reduceStep(state, a, now) {
             s.shots = [
               ...(s.shots || []),
               shot(
-                i ? s.fxN * 10 + i : s.fxN,
-                sp === "bow" ? "arrow" : (ARMS[sp] && ARMS[sp].k) || sp,
+                s.fxN,
+                shotKind(sp),
                 aim[0] * v,
                 aim[1] * v,
-                i ? { t: now + i * ARMS.burst.gap } : {},
+                roundAt(s.fxN, i, now, ARMS[sp] && ARMS[sp].gap),
               ),
             ]; // (a burst's rounds leave one after another: each waits until its time, t)
       }
