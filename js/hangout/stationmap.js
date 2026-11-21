@@ -624,7 +624,9 @@ function planBuild(b) {
   put("l4power", POWER_SPOT.x - 34, POWER_SPOT.y - 14, 68, 28, 120, {
     solid: true,
   });
-  /* a car: solid up to its waist (over it, its top is a floor: vehicles.js carDeck) */
+  /* a car: solid up to its waist (over it, its top is a floor: vehicles.js carDeck). Walking into it is its floor's too
+     (layout.js standable), so a jump that reaches its hood lands on it (a duck jumps 0.3 of an elevation, the hood's
+     height: the owner's, Nov 21 10:48 ET) */
   const car = (r, o) => {
     const T = CAR_TOP,
       z = groundAt((r.x0 + r.x1) / 2, r.y1 - 1),
@@ -645,7 +647,7 @@ function planBuild(b) {
         top: z + T.h - T.below,
       },
     ); // (its glass and roof: they stop a shot up to the roof; walking over them is its floor's)
-    return solid("car", r, T.h, { top: z + T.waist, ...o });
+    return solid("car", r, T.h, { top: z + T.waist, pass: true, ...o });
   };
   car(HOOD, {
     hood: true,
