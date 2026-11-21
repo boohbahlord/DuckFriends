@@ -50,7 +50,7 @@ export const jumpSend = (p) =>
   p.j
     ? {
         ...(p.tb ? { tb: p.tb } : {}),
-        ...(p.hr !== undefined ? { hr: p.hr } : {}),
+        ...(p.hr < jumpCfg(p).H ? { hr: p.hr } : {}), // (only a roof the jump would hit: under a high one, nothing new)
       }
     : {};
 export const jumpKept = (j, a) =>
