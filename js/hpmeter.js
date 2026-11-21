@@ -5,7 +5,7 @@
    20% HP or less it slowly breathes a red glow. Justin's HP in Mad God Justin is the same bar, and in Quacky Zombies and
    Mad God Justin the other players' meters are small ones in the board's bottom right corner (a computer only; off in
    Settings). A duck, Justin or a zombie that gains or loses HP shows it for a moment over its head, in small letters. */
-import { esc } from "./ui.js";
+import { esc, flag } from "./ui.js";
 import { mirrorBars } from "./meters.js";
 import { hurtSway } from "./fxmotion.js";
 import { bakeFill } from "./pxbake.js";
@@ -184,22 +184,30 @@ export function mountMeter() {
         g1 = fillOf(i, k, hp + ghost, max);
         if (g1 <= g0) g0 = g1 = 0;
       }
+      /* in steps a block can show (a fiftieth of it, a twentieth of the white's strength): finer, the blocks were
+         restyled every frame for changes nobody sees, and each one painted the bar round them again */
+      const q = (x, st) => Math.round(x / st) * st;
+      ol = q(ol, 0.02);
+      ow = q(ow, 0.02);
+      oa = q(oa, 0.05);
+      g0 = q(g0, 0.02);
+      g1 = q(g1, 0.02);
       const v = ow
-        ? `${ol.toFixed(3)} ${ow.toFixed(3)} ${oa.toFixed(2)}`
+        ? `${ol.toFixed(2)} ${ow.toFixed(2)} ${oa.toFixed(2)}`
         : g1
-          ? `g${g0.toFixed(3)} ${g1.toFixed(3)}`
+          ? `g${g0.toFixed(2)} ${g1.toFixed(2)}`
           : "";
       if (b._ov === v) return;
       b._ov = v;
       if (ow) {
-        b.style.setProperty("--ol", ol.toFixed(3));
-        b.style.setProperty("--ow", ow.toFixed(3));
+        b.style.setProperty("--ol", ol.toFixed(2));
+        b.style.setProperty("--ow", ow.toFixed(2));
         b.style.setProperty("--oa", oa.toFixed(2));
       } else
         for (const n of ["--ol", "--ow", "--oa"]) b.style.removeProperty(n);
       if (g1) {
-        b.style.setProperty("--g0", g0.toFixed(3));
-        b.style.setProperty("--g1", g1.toFixed(3));
+        b.style.setProperty("--g0", g0.toFixed(2));
+        b.style.setProperty("--g1", g1.toFixed(2));
       } else for (const n of ["--g0", "--g1"]) b.style.removeProperty(n);
     });
   };
@@ -240,12 +248,15 @@ export function mountMeter() {
         hp = h;
         [...blocks.children].forEach((b, i) => {
           const f = fillOf(i, k, h, max);
-          b.classList.toggle("on", f >= 1);
-          if (f > 0 && f < 1) b.style.setProperty("--f", f.toFixed(2));
+          flag(b, "on", f >= 1);
+          const fv = f > 0 && f < 1 ? f.toFixed(2) : "";
+          if (b._fv === fv) return;
+          b._fv = fv;
+          if (fv) b.style.setProperty("--f", fv);
           else b.style.removeProperty("--f");
         });
         el.setAttribute("aria-valuenow", hpText(h));
-        el.classList.toggle("low", low(h, max));
+        flag(el, "low", low(h, max));
       }
       paint(now, regen);
       const v = sprint == null ? "" : sprint.toFixed(3) + (tired ? "t" : "");
