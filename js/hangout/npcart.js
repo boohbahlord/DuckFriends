@@ -240,6 +240,18 @@ export const JUSTIN = {
   face: { id: "glasses" },
   outfit: { id: "jeans" },
 };
+/* Ethan (the owner's, Nov 21 16:40Z: "Ethan is a character like Justin"): a human, flat skin (matte), blond Fluffy hair, a
+   Lakers jersey; jerseyOf picks the gold or the purple one, at random, each time he spawns */
+export const ETHAN = {
+  color: "#efc4a4",
+  matte: true,
+  hat: { id: "fluffy" },
+  outfit: { id: "lakers" },
+};
+export const jerseyOf = (rand = Math.random) =>
+  rand() < 0.5
+    ? { c1: "#fdb927", c2: "#552583" }
+    : { c1: "#552583", c2: "#fdb927" };
 /* the shadow duck: all black, only its eyes catch a little light */
 const SHADOW = { color: "#0c0c12" };
 /* Justin's Butler: a pale grey-white duck in a suit and bow tie, with a monocle (he deals at the blackjack table) */

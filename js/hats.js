@@ -56,6 +56,9 @@ export const HATS = [
     },
   },
   { id: "afro", name: "Afro", colors: [["c1", "Hair", "#2b1a10"]] },
+  /* Ethan's hair (the owner's, Nov 21 13:58Z: "blond hair that looks a little fluffy but not too big at all for the duck
+     ... the hair is blond but can be recolored") */
+  { id: "fluffy", name: "Fluffy hair", colors: [["c1", "Hair", "#f6e4a6"]] },
   {
     id: "jordan",
     name: "Air Jordan 1",
@@ -557,6 +560,25 @@ const DRAW = {
     .map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`)
     .join("")}</g>
     <path d="M-16 1a2.4 2.4 0 1 1 3.2 1.4M-6-2a2.4 2.4 0 1 1 3.2 1.4M5-1a2.4 2.4 0 1 1 3 1.4" stroke="${lt(h.c1, 0.3)}" stroke-width="1.1" fill="none"/>`,
+  /* a small fluffy tuft on the crown: soft puffs round a low mound, a few light curls (no wisps standing up: the owner's,
+     Nov 21 16:37Z, "that little black line coming out of his hair ... Probably fix that") */
+  fluffy: (h) => {
+    const c = h.c1,
+      edge = dk(c, 0.5),
+      hi = lt(c, 0.45);
+    const puffs = [
+      [-17, 4, 4],
+      [-13, -1, 4.6],
+      [-6.5, -4.5, 5],
+      [0.5, -4.6, 4.9],
+      [7.5, -4.5, 4.8],
+      [13, -0.5, 4.3],
+      [17, 4, 3.6],
+    ];
+    return `<g fill="${c}" stroke="${edge}" stroke-width="1.1">${puffs.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join("")}</g>
+    <path d="M-19 7C-19-3-10-8 0-8C10-8 19-3 19 6C11 3-11 3-19 7Z" fill="${c}"/>
+    <path d="M-14-2a2.2 2.2 0 1 1 3 1M-4-5.5a2.2 2.2 0 1 1 3 1M6-4.5a2.2 2.2 0 1 1 2.8 1.2" stroke="${hi}" stroke-width="1" fill="none" stroke-linecap="round"/>`;
+  },
   jordan: (
     h,
   ) => `<path d="M-27 2L30 2C31-1 30-4 28-5L-27-5Z" fill="${F("#fff")}" ${O}/>
