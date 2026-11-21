@@ -23,6 +23,14 @@ import {
 import { hasRb, RB_N } from "./rainbowskin.js";
 import { yieldNow } from "./slices.js";
 
+/* an svg window set to the box vb (x, y, width, height) */
+const setBox = (win, vb) => {
+  win.setAttribute("x", vb.x);
+  win.setAttribute("y", vb.y);
+  win.setAttribute("width", vb.width);
+  win.setAttribute("height", vb.height);
+};
+
 const NS = "http://www.w3.org/2000/svg",
   PACE = 120, // (ms between two new pictures of one drawing that keeps changing)
   /* what CSS can change in a drawing, copied into the copy that's made into pixels */
@@ -461,10 +469,7 @@ function fileShow(svg, st, { url, W, H, at }, vb, tx) {
     win.append(im);
     st.win = win;
   }
-  win.setAttribute("x", vb.x);
-  win.setAttribute("y", vb.y);
-  win.setAttribute("width", vb.width);
-  win.setAttribute("height", vb.height);
+  setBox(win, vb);
   win.setAttribute("viewBox", `${at[2]} ${at[3]} ${at[0]} ${at[1]}`);
   /* (in its own words too: the page's rules for a drawing's svg, its size or "overflow: visible", reach this one inside
      it, and the whole picture of every drawing showed round the speaker) */
@@ -500,10 +505,7 @@ function rbShow(svg, st, key, text, vb, w, h) {
     win.append(im);
     st.win = win;
   }
-  win.setAttribute("x", vb.x);
-  win.setAttribute("y", vb.y);
-  win.setAttribute("width", vb.width);
-  win.setAttribute("height", vb.height);
+  setBox(win, vb);
   win.setAttribute("viewBox", `0 0 ${vb.width} ${vb.height}`);
   const im = win.firstChild;
   im.setAttribute("width", vb.width);
