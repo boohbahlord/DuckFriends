@@ -3,6 +3,9 @@ file lines job
 
 ## js/
 account.js 397 the Google account: the profile online,
+actplay.js 957 a game's actions
+actroom.js 744 the room's actions
+actsb.js 156 Sandbox's windows, saves and maps
 allies.js 383 Survival: the friendly squad
 armpage.js 142 a page of Customize's tiles put
 armspeed.js 34 how fast the weapons work, in
@@ -163,7 +166,7 @@ report.js 114 Report Bug or Suggest Ideas
 roomrules.js 368 room governance: groups and permissions ,
 rooms.js 256 Play: create a room, and the
 router.js 112 screens
-rules.js 3435 the rules of Agree or Disagree
+rules.js 1997 the rules of Agree or Disagree
 sandbox.js 1347 Sandbox: the key windows
 sandboxrules.js 2056 Sandbox: which map it plays on,
 sbarms.js 124 Sandbox: a made NPC's weapons in
@@ -238,12 +241,12 @@ umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 3187 Updates
+updates.js 3196 Updates
 vdd.js 190 Valentine's Duck Date: what the screen
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
 vote.js 279 Vote Mode & Map: the vote
-voterules.js 348 the lobby's vote for the mode
+voterules.js 347 the lobby's vote for the mode
 walkgrid.js 67 the walking grid: which 40-px cells
 weaponuse.js 104 using a weapon: one module for
 who.js 3 who this player is beyond this
