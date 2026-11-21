@@ -30,20 +30,12 @@ import {
   permOk,
   GROUP_PERMS,
   STAGE,
-  statsFor,
-  ddrStats,
-  wyrStats,
-  bbStats,
-  scStats,
-  lawStats,
-  COLS,
-  signed,
-  nameOfValue,
   slowMs,
   inWorld,
 } from "./rules.js";
 import { modeOf, MODES, statsOf } from "./modes.js";
 import { statRow } from "./statrows.js";
+import { GAME_LINES } from "./gamestats.js";
 import { MAPS, MAP_VARIANTS, isWorldMap, mapForm, mapName } from "./maps.js";
 /* the maps the command line knows: every map, and every variation that is a map of its own (Nous Within Kenoma's) */
 const SH_MAPS = [
@@ -59,12 +51,7 @@ import { runLine, expandHistory, globRe, BUILTIN_NAMES } from "./bash.js";
 import { TEXT, getopt, lines } from "./textutils.js";
 import { MAN, PERMS_GIVE } from "./manual.js";
 import { helpPage, helpIndex, HELP_NAMES, isHelpName } from "./helppages.js";
-import { quackStats, quackBlank } from "./quackrules.js";
 import { cheatCmd } from "./cheats.js";
-import { dnStats } from "./duncerules.js";
-import { mgjStats } from "./mgjrules.js";
-import { vdStats, turnedDown } from "./vddrules.js";
-import { tvStats } from "./triviarules.js";
 import { setPerf, perfOn } from "./perf.js";
 import { secret } from "./unlocks.js";
 import { uiCommand } from "./hideui.js";
@@ -961,142 +948,16 @@ function statLines(ctx, scope, args) {
   out.push(
     `${scope === "round" ? `Round ${s.round + 1}` : "This game"} · ${modeOf(mode).name}:`,
   );
-  if (mode === "quack") {
-    const past = s.wqPast || [],
-      per = quackStats(scope === "round" ? past.slice(-1) : past);
-    for (const id of ids) {
-      const p = per[id] || quackBlank();
-      out.push(
-        `${nm(id)}: ${p.right} of ${p.votes} votes for the real Quack · ${p.wins} rounds won · ${p.quack} as the Quack (${p.quackWins} won) · ${jumps(id)} jumps`,
-      );
-    }
-  } else if (mode === "bb") {
-    const past = s.bbPast || [],
-      cur =
-        s.bb && s.bb.rounds && s.bb.rounds.length && s.phase !== "results"
-          ? [s.bb]
-          : [];
-    const per = bbStats(
-      scope === "round"
-        ? cur.length
-          ? cur
-          : past.slice(-1)
-        : [...past, ...cur],
-    );
-    for (const id of ids) {
-      const p = per[id] || {
-        wins: 0,
-        losses: 0,
-        own: 0,
-        votes: 0,
-        king: 0,
-        titles: 0,
-      };
-      out.push(
-        `${nm(id)}: ${p.titles} won · ${p.wins} contender wins · ${p.losses} losses · voted for their own ${p.own} · ${p.votes} votes · ${jumps(id)} Jumps`,
-      );
-    }
-  } else if (mode === "law") {
-    const per = lawStats(s, round).per;
-    for (const id of ids) {
-      const p = per[id] || {
-        argued: 0,
-        won: 0,
-        lost: 0,
-        wonDef: 0,
-        wonOff: 0,
-        gave: 0,
-        votes: 0,
-        flips: 0,
-      };
-      out.push(
-        `${nm(id)}: ${p.argued} cases argued · ${p.won} won (${p.wonDef} as defense, ${p.wonOff} as offense) · ${p.lost} lost · gave up ${p.gave} · ${p.votes} jury votes · switched sides ${p.flips} · ${jumps(id)} Jumps`,
-      );
-    }
-  } else if (mode === "dunce") {
-    const per = dnStats(s).per;
-    for (const id of ids) {
-      const p = per[id] || {
-        turns: 0,
-        not: 0,
-        dunce: 0,
-        comeback: 0,
-        dunced: 0,
-        votes: 0,
-      };
-      out.push(
-        `${nm(id)}: ${p.turns} takes defended · ${p.not} Not a Dunce votes · ${p.dunce} Dunce votes · comeback ${p.comeback} · voted a dunce ${p.dunced} · ${p.votes} votes · ${jumps(id)} Jumps`,
-      );
-    }
-  } else if (mode === "vdd") {
-    const V = s.vd || {},
-      per = vdStats(s).per;
-    for (const id of ids) {
-      const p = per[id] || { dates: 0, ms: 0, early: 0 },
-        role =
-          V.date === id
-            ? "The Date"
-            : V.val === id
-              ? "Valentine"
-              : turnedDown(s, id)
-                ? "Turned Down"
-                : "Suitor";
-      out.push(
-        `${nm(id)}: ${role} · ${p.dates} dates · ${Math.round(p.ms / 1000)} s on dates · ended early ${p.early} · ${jumps(id)} Jumps`,
-      );
-    }
-  } else if (mode === "trivia") {
-    const per = tvStats(s, round).per;
-    for (const id of ids) {
-      const p = per[id] || { right: 0, wrong: 0, asked: 0, got: 0, of: 0 };
-      out.push(
-        `${nm(id)}: right ${p.right} · wrong ${p.wrong} · ${p.asked} questions written${p.of ? ` · ${pct(p.got / p.of)} of their answers right` : ""} · ${jumps(id)} Jumps`,
-      );
-    }
-  } else if (mode === "mgj") {
-    const per = mgjStats(s, scope !== "round").per;
-    for (const id of ids) {
-      const p = per[id] || { dmg: 0, hits: 0, kills: 0, fights: 0, wins: 0 };
-      out.push(
-        `${nm(id)}: damage ${p.dmg} · knocked down ${p.hits} · killing blows ${p.kills} · ${p.fights} fights (${p.wins} won) · ${jumps(id)} Jumps`,
-      );
-    }
-  } else if (mode === "wyr") {
-    const per = wyrStats(s, round).per;
-    for (const id of ids) {
-      const p = per[id] || { answers: 0, written: 0, split: 0, maj: 0, min: 0 };
-      out.push(
-        `${nm(id)}: ${p.answers} answers · bigger side ${p.maj} · smaller side ${p.min}${p.written ? ` · their questions split ${pct(p.split / p.written)} evenly` : ""} · ${jumps(id)} Jumps`,
-      );
-    }
-  } else if (mode === "ddr") {
-    for (const id of ids) {
-      const p = ddrStats(s, id, round);
-      out.push(
-        `${nm(id)}: ${p.n} answers · related ${p.yes} · didn't ${p.no}${p.n ? ` (${pct(p.yes / p.n)} related)` : ""} · ${p.jumps} Jumps`,
-      );
-    }
-  } else if (mode === "sc") {
-    const paras = s.sc
-        ? s.sc.stories
-            .flatMap((x) => x.paras)
-            .filter((x) => round === null || x.round === round)
-        : [],
-      per = scStats(paras);
-    for (const id of ids) {
-      const p = per[id] || { lines: 0, lvotes: 0, wvotes: 0 };
-      out.push(
-        `${nm(id)}: ${p.lines} lines · ${p.lvotes} votes for their lines · ${p.wvotes} for their words · ${jumps(id)} Jumps`,
-      );
-    }
-  } else {
-    for (const id of ids) {
-      const st = statsFor(s, id, round);
-      out.push(
-        `${nm(id)}: ${st.n} answers · chose most ${st.most.length ? st.most.map((c) => COLS[c]).join(", ") : "—"} · median ${signed(st.median)}${st.median !== null ? ` (${nameOfValue(st.median)})` : ""} · average ${st.avg === null ? "—" : signed(Math.round(st.avg * 10) / 10)} · ${jumps(id)} Jumps`,
-      );
-    }
-  }
+  out.push(
+    ...(GAME_LINES[mode] || GAME_LINES.aod)({
+      s,
+      scope,
+      round,
+      ids,
+      nm,
+      jumps,
+    }),
+  );
   return out.join("\n");
 }
 
