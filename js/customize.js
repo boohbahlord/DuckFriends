@@ -76,7 +76,7 @@ import { GUNS_NEW, AUTO, WEAPONS } from "./rules.js";
 import { pxWords } from "./pxtext.js";
 import { botDuck, BOT_DUCKS, any } from "./botduck.js";
 import { weaponName } from "./l4ddrules.js";
-import { NPC_GUNS, NPC_MELEE } from "./sbarms.js";
+import { npcArms } from "./sbarms.js";
 import { npcSave, npcDel, npcList, npcName } from "./sbnpcs.js";
 import { cropPicture, cropFile } from "./picrop.js";
 import { yieldNow, idle } from "./slices.js";
@@ -744,9 +744,9 @@ export function openCustomize(page = lastPage, opts = {}) {
               W = NPC.w;
             html =
               head("Weapons") +
-              `<div class="arm-body arm-weapons"><h3>Primary 1</h3>${grid("np0", [none, ...NPC_GUNS.map(tile)], W.p[0] || "none")}
-            <h3>Primary 2</h3>${grid("np1", [none, ...NPC_GUNS.map(tile)], W.p[1] || "none")}
-            <h3>Melee</h3>${grid("nmel", [none, ...NPC_MELEE.map(tile)], W.m || "none")}
+              `<div class="arm-body arm-weapons"><h3>Primary 1</h3>${grid("np0", [none, ...npcArms().guns.map(tile)], W.p[0] || "none")}
+            <h3>Primary 2</h3>${grid("np1", [none, ...npcArms().guns.map(tile)], W.p[1] || "none")}
+            <h3>Melee</h3>${grid("nmel", [none, ...npcArms().melee.map(tile)], W.m || "none")}
             <h3>Zombie swipe</h3><div class="row small-tiles">${[
               [1, "On"],
               [0, "Off"],

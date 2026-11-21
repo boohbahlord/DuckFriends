@@ -727,14 +727,6 @@ const rootSvg = (n) => {
   return s;
 };
 
-/* every drawing under root made again at its size now (after the board changed size, or a drawing came into view) */
-function pxRefresh(root) {
-  if (!pixelOn()) return;
-  root
-    .querySelectorAll("svg")
-    .forEach((s) => s.ownerSVGElement || pxSvgEl(s, root));
-}
-
 /* a key for a drawing from its text (FNV-1a), so the same look is made into pixels once */
 export const hashText = (str) => hash(str);
 function hash(str) {

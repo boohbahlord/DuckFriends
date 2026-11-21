@@ -19,7 +19,6 @@
    starry night sky, and it is not in the Map window. */
 import { duckSVG } from "./duck.js";
 import { pixelOn, gridPx } from "./pixel.js";
-import { esc } from "./ui.js";
 import { floorCanvas } from "./art.js";
 import BOARD from "./pxm/board.js";
 import CARNIVAL from "./pxm/carnival.js";
@@ -146,8 +145,6 @@ export const useUmaps = (u) => {
 export const umapOf = (id) => UMAPS[id] || null;
 
 /* ---------- Sky: its sun, moon, stars and clouds as pixel files (js/pxm/sky.js), laid out anew each round ---------- */
-const CLOUD =
-  '<svg viewBox="0 0 200 90" aria-hidden="true"><g fill="#fff"><circle cx="52" cy="56" r="28"/><circle cx="92" cy="42" r="34"/><circle cx="140" cy="50" r="30"/><circle cx="170" cy="64" r="20"/><circle cx="28" cy="66" r="18"/><rect x="28" y="56" width="146" height="28" rx="14"/></g></svg>';
 const mixHex = (a, b, t) => {
   const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)),
     A = p(a),
@@ -1113,4 +1110,3 @@ export function mountMap(layer, s) {
     },
   };
 }
-const mapLabel = (id) => esc(mapName(id));

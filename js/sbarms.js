@@ -10,12 +10,19 @@ import { duckBig } from "./duck.js";
 import { ARMS, WEAPONS } from "./l4ddrules.js";
 import { roll, reloadMs, refill } from "./npcrules.js";
 
-/* what it can hold: its guns and the bow (not the thrown dagger), and the melee weapons */
-export const NPC_GUNS = WEAPONS.filter(
-  (w) =>
-    ARMS[w].kind === "ranged" && ARMS[w].dmg !== undefined && w !== "dagger",
-);
-export const NPC_MELEE = WEAPONS.filter((w) => ARMS[w].kind === "melee");
+/* what it can hold: its guns and the bow (not the thrown dagger), and the melee weapons. Made the first time they're
+   asked for, never at load: l4ddrules.js reaches this file through rules.js before its own WEAPONS exists */
+let arms = null;
+export const npcArms = () =>
+  (arms ??= {
+    guns: WEAPONS.filter(
+      (w) =>
+        ARMS[w].kind === "ranged" &&
+        ARMS[w].dmg !== undefined &&
+        w !== "dagger",
+    ),
+    melee: WEAPONS.filter((w) => ARMS[w].kind === "melee"),
+  });
 /* how far each gun reaches, in duck lengths (the sniper across the map, the shotguns only close) */
 const REACH = {
   sniper: 14,
@@ -30,10 +37,10 @@ export const reachOf = (w) => REACH[w] || 7;
 export function cleanArms(w) {
   const x = w || {},
     p = Array.isArray(x.p) ? x.p : [],
-    gun = (g) => (NPC_GUNS.includes(g) ? g : "");
+    gun = (g) => (npcArms().guns.includes(g) ? g : "");
   return {
     p: [gun(p[0]), gun(p[1])],
-    m: NPC_MELEE.includes(x.m) ? x.m : "",
+    m: npcArms().melee.includes(x.m) ? x.m : "",
     sw: !!x.sw,
   };
 }

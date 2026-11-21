@@ -131,6 +131,11 @@ A program that is changed grows more complex unless work is spent against it (Le
   `WOUND_BREEDS`: zombie, justin, gunman, merchant, duck), the ducks' wounds over time (`pw*`), how each wound looks
   (`hitsOf`) and the look duckSVG takes (`woundLook`). As pixels, each wound is its own part (`js/duckparts.js`
   `partOf`: a part is drawn once, so a new wound costs only its own). Pinned by `tools/check/gore.cjs`.
+- Computer players: `js/bots.js` (`botActions`, run by the host's heartbeat in TEST and online rooms). Board modes: what
+  each computer writes and votes (the lines are data, `js/botlines.js`; `toSide`/`sway` for the walk-to-a-side modes).
+  Walkable maps: one walk (`stepToward`; `mapWalk` on Quacky Zombies' maps, Hangout's 12 px steps), one move and use
+  (`moveOf`, `useOf`), one revive (`downMate`, `holdE`) and grenade (`crowdOf`, `nadeOk`); breeds `BOT_BREEDS`: computer,
+  justin (the fireplace's). Pinned by the npc golden (`tools/check/npcgolden.cjs`, the bots-* scenarios too).
 
 ## Reading, writing and talking for less (the owner's, Nov 20 22:09Z; sources in /mnt/project-files/adam/ and project memory)
 - Map, then narrow: `git grep -l` the behavior, then read 100 to 200 line windows; never read a file over 1,500 lines

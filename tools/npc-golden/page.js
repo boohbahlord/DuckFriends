@@ -32,10 +32,22 @@ window.__golden = async (sc) => {
     computers: sc.computers ?? 3,
   });
   r.close(); // (no real-time heartbeat: I play it below)
+  /* "mirror": my duck plays as a computer too (the board modes wait for a person: with me idle, much of what they do never
+     comes). It gets its moves from a room where only I am a computer, so the others' plans aren't touched */
+  const mine = () => {
+    const s = r.state,
+      players = {};
+    for (const [id, P] of Object.entries(s.players))
+      players[id] = { ...P, bot: id === r.me };
+    return botActions({ ...s, players }, window.__now).filter(
+      (a) => a.id === r.me,
+    );
+  };
   const beat = () => {
     window.__now += 200;
     r.send({ t: "tick", id: r.me });
     for (const a of botActions(r.state, window.__now)) r.send(a);
+    if (sc.mirror) for (const a of mine()) r.send(a);
   };
   r.send({
     t: "options",
@@ -45,7 +57,11 @@ window.__golden = async (sc) => {
   r.send({ t: "start" });
   const pre = [...(sc.pre || [])]; // (moves before the game, as the host's Sandbox pick: each tried every beat till it takes)
   const inGame = () =>
-    sc.phase ? r.state.phase === sc.phase : r.state.phase === "hang";
+    sc.phase === "*" // (any phase of the game: the board modes)
+      ? !["lobby", "countdown"].includes(r.state.phase)
+      : sc.phase
+        ? r.state.phase === sc.phase
+        : r.state.phase === "hang";
   let k = 0;
   const phases = [r.state.phase];
   while (!inGame() && k++ < 600) {

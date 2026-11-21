@@ -2343,7 +2343,7 @@ function bagRoll(bags0, has) {
 }
 /* the fireplace's Justin (the owner's, Nov 4): 1 spin in 100 lands on him (never while he's already here), and a
    moment later he climbs out of the fire and joins as another player, to help. He starts with 1,500 points of his own,
-   all his HP, the knife, the chain gun and the pistol; every rule is the same for him as for any duck (l4ddbots.js
+   all his HP, the knife, the chain gun and the pistol; every rule is the same for him as for any duck (bots.js
    plays him). He goes when the game does: Play again, or back to the lobby.
    Off since Nov 16 (the owner's: "Justin will be removed from the zombie game because I do not want to force him into
    it"): the fireplace never lands on him, and the General Settings Justin switch doesn't bring him in */
@@ -2408,11 +2408,6 @@ function justinChat(s, now) {
   if (JSON.stringify(at) !== JSON.stringify(s.hang.l4jc)) s.hang.l4jc = at;
   if (text) logIn(s, { from: WILD.id, to: null, text });
 }
-/* is the Justin out there (or the fireplace's) here and up, to say something? */
-const justinUp = (s) => {
-  const q = P4(s, HELPER.id);
-  return !!s.players[HELPER.id] && !!q && !q.dn && !q.gh;
-};
 function justinSays(s, key) {
   const list = LINES[key],
     bags = { ...(s.hang.l4jl || {}) };
@@ -5287,7 +5282,6 @@ export function l4Loot(s, id, w, inf, mods = null) {
   }
   if (!give(s, id, w)) return false;
   const kit = kitOf(s, id),
-    full = fullAmmo(w),
     am = { ...kit.am },
     M = mods || {};
   if (inf === undefined) inf = M.inf;

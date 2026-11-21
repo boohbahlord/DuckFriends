@@ -439,5 +439,113 @@
       }
     ],
     "bait": 100
+  },
+  {
+    "name": "bots-aod",
+    "options": {
+      "mode": "aod"
+    },
+    "computers": 3,
+    "beats": 1500,
+    "phase": "*",
+    "mirror": 1
+  },
+  {
+    "name": "bots-wyr",
+    "options": {
+      "mode": "wyr"
+    },
+    "computers": 3,
+    "beats": 1500,
+    "phase": "*",
+    "mirror": 1
+  },
+  {
+    "name": "bots-ddr",
+    "options": {
+      "mode": "ddr"
+    },
+    "computers": 3,
+    "beats": 1500,
+    "phase": "*",
+    "mirror": 1
+  },
+  {
+    "name": "bots-bb",
+    "options": {
+      "mode": "bb"
+    },
+    "computers": 3,
+    "beats": 1500,
+    "phase": "*",
+    "mirror": 1
+  },
+  {
+    "name": "bots-sc",
+    "options": {
+      "mode": "sc"
+    },
+    "computers": 3,
+    "beats": 1500,
+    "phase": "*",
+    "mirror": 1
+  },
+  {
+    "name": "bots-quack",
+    "options": {
+      "mode": "quack"
+    },
+    "computers": 3,
+    "beats": 1500,
+    "phase": "*",
+    "mirror": 1
+  },
+  {
+    "name": "bots-law",
+    "options": {
+      "mode": "law"
+    },
+    "computers": 3,
+    "beats": 1500,
+    "phase": "*",
+    "mirror": 1
+  },
+  {
+    "name": "bots-dunce",
+    "options": {
+      "mode": "dunce"
+    },
+    "computers": 3,
+    "beats": 1500,
+    "phase": "*",
+    "mirror": 1
+  },
+  {
+    "name": "bots-vdd",
+    "options": {
+      "mode": "vdd"
+    },
+    "computers": 3,
+    "beats": 1500,
+    "phase": "*",
+    "mirror": 1
+  },
+  {
+    "name": "bots-trivia",
+    "options": {
+      "mode": "trivia"
+    },
+    "computers": 3,
+    "beats": 1500,
+    "phase": "*",
+    "mirror": 1
+  },
+  {
+    "name": "bots-hang",
+    "options": {
+      "mode": "hang"
+    },
+    "computers": 3,
+    "beats": 1500
   }
 ]
