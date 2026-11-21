@@ -238,6 +238,7 @@ const GAME = [
       "Too slow? `sudo forgame turn-end 3/4` ends a turn when 3 of 4 players are done, or `sudo forgame timer on writing 45`.",
       "Too fast? `sudo forgame all-timer off` turns every timer off.",
       "Stuck? `sudo skip` moves on.",
+      "Testing Dead Ducks Arcade or Survival? `sudo cheat round 20`, `sudo cheat give flamer`, `sudo cheat gunmen soldiers`, `sudo cheat goto canopy` (the game then counts no stats).",
       'A song nobody likes? `sudo song off "Bouncy Chicks"` takes it off the list (quotes around a name with spaces); `song` lists them, `sudo song on all` brings them all back.',
       "Someone too loud? `sudo forgame \\mute on text @name` mutes them for everyone; `sudo forgame rounds2 \\mute on all @name` for two turns only.",
       "Someone ruining it? `sudo kick @name`; they stay out until the room goes back to the lobby.",
