@@ -356,8 +356,6 @@ let layer = null,
   roundShown = -1, // (none yet)
   overShown = "",
   holding = null,
-  walkDir = [1, 0],
-  lastXY = null,
   drawn = "",
   coneSp = []; // (each flashlight's cone on its own small canvas, drawn again only when it moves: paint)
 /* the Butler, the fireplace's weapon, my points, the big words, his shop */
@@ -427,7 +425,6 @@ let butler = null,
   ptsShown = -1,
   boxSig = "",
   boxSpun = false,
-  upSig = "",
   slotSig = "";
 
 /* a picture's short name (its text's hash), made once for each picture: the same text (every zombie that looks the
@@ -2885,7 +2882,7 @@ activity({
     Z.clear();
     B.clear();
     D.clear();
-    overShown = endSig = drawn = boxSig = upSig = slotSig = onSig = litSig = "";
+    overShown = endSig = drawn = boxSig = slotSig = onSig = litSig = "";
     roundShown = clockShown = -1;
     ptsShown = -1;
     l4Reset();
@@ -2950,8 +2947,7 @@ activity({
     l4Hear(s, ctx); // (its sounds: l4ddsfx.js)
     if (shop.open) shopFill(s, ctx);
     /* a ding: a weapon from the fireplace taken (an upgrade bought rings the Butler's till: l4ddsfx.js) */
-    const u = JSON.stringify(upOf(s, ctx.me)),
-      sl = slotsOf(s, ctx.me),
+    const sl = slotsOf(s, ctx.me),
       had = slotSig.split(",");
     if (
       slotSig &&
@@ -2966,24 +2962,15 @@ activity({
       )
     )
       sfx.done(); // (not for what I bought from the merchant: his till rings)
-    upSig = u;
     slotSig = sl.join();
     if (holding && !up(s, ctx.me)) holding = null;
   },
   step(dt, now, ctx) {
     l4Steps(dt, ctx); // (footsteps and groans: l4ddsfx.js)
-    /* the way I last walked (a phone's aim without a zombie in sight) */
     const me = ctx.duck();
     if (me) {
       const x = me.x * W,
         y = me.y * H;
-      if (lastXY) {
-        const dx = x - lastXY[0],
-          dy = y - lastXY[1],
-          d = Math.hypot(dx, dy);
-        if (d > 0.5 && d < 60) walkDir = [dx / d, dy / d]; // (not a jump back to a start spot)
-      }
-      lastXY = [x, y];
       if (
         shop.open &&
         (!up(ctx.state(), ctx.me) ||
@@ -3026,9 +3013,12 @@ activity({
       const up =
           o.st === 5
             ? fenceZ(o.x, o.y, o.l[2])
-            : o.st === 6 || o.st === 7 || o.st === 8
+            : o.st === 6 ||
+                o.st === 7 ||
+                o.st === 8 ||
+                (o.st === 3 && o.k !== undefined)
               ? zombieZ(o) - heightAt(o.x, o.y)
-              : 0, // (Downpour: up a fence, or dropping off it; up a wall, or on a roof)
+              : 0, // (Downpour: up a fence, or dropping off it; up a wall, or on a roof, alive or dead)
         z = heightAt(o.x, o.y) + up,
         lean =
           o.st === 5 && up && openingById(o.l[2])?.axis === "y"
