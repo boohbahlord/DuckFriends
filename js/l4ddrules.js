@@ -36,7 +36,11 @@
      l4b  { id: { o, at } }: who is boarding up which opening, since when (one more board each BOARD_MS)
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
-import { SPRINT as GAME_SPRINT, HANDGUN, POCKET_CHANGE } from "./gamedefaults.js";
+import {
+  SPRINT as GAME_SPRINT,
+  HANDGUN,
+  POCKET_CHANGE,
+} from "./gamedefaults.js";
 import { scaleOf } from "./duck.js";
 import { hpHeal, hpHurt, tenths } from "./hpmath.js";
 import {
