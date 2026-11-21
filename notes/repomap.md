@@ -11,7 +11,7 @@ audioimport.js 186 a player's own song, made small
 awards.js 20 the stats' awards: one card, one
 barrelheat.js 70 a hot barrel
 bash.js 1360 the command line's language: a small
-bbrules.js 383 the rules of Bicker Brackets
+bbrules.js 380 the rules of Bicker Brackets
 beaks.js 138 beaks
 bloodpool.js 50 a pool of blood: the one
 boardjustin.js 701 Justin on the boards

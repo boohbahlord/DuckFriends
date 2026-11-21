@@ -3,7 +3,7 @@
   "nullishNumbers": 0,
   "unusedExports": 108,
   "unusedFiles": 0,
-  "clones": 26,
+  "clones": 25,
   "bigFiles": {
     "js/chat.js": 1596,
     "js/customize.js": 1776,

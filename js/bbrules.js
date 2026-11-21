@@ -219,14 +219,18 @@ export function nextMatch(s, now) {
   }
   b.m = i;
   s.qi++;
-  s.lordTime = s.options.answerOff ? 0 : +s.options.bbTimer || 0;
   delete b.tie;
+  return openAnswer(s, now);
+}
+/* a match's voting (and a vote again): everyone starts between the two seeds */
+function openAnswer(s, now) {
+  s.lordTime = s.options.answerOff ? 0 : +s.options.bbTimer || 0;
   s.pos = {};
   s.lock = {};
   seatLate(s);
   s.seat.forEach((id, k) => {
     s.pos[id] = { x: 0.5, y: (k + 1) / (s.seat.length + 1) };
-  }); // everyone starts between the two seeds
+  });
   return enter(s, "answer", now);
 }
 /* the votes are in: the side with more ducks wins and moves on; a tie goes to the room (vote again or a coin toss).
@@ -280,14 +284,7 @@ export function settleTie(s, now) {
     say(s, "Voting again.");
     delete b.tie;
     s.qi++;
-    s.pos = {};
-    s.lock = {};
-    s.lordTime = s.options.answerOff ? 0 : +s.options.bbTimer || 0;
-    seatLate(s);
-    s.seat.forEach((id, k) => {
-      s.pos[id] = { x: 0.5, y: (k + 1) / (s.seat.length + 1) };
-    });
-    return enter(s, "answer", now);
+    return openAnswer(s, now);
   }
   decide(s, Math.random() < 0.5 ? 0 : 1, t.va, t.vb, t.who, true);
   delete b.tie;
