@@ -9,6 +9,22 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v218",
+    version: 218,
+    date: "Nov 21, 2026",
+    title: "Fixes from your video",
+    news: [
+      "For Dead Ducks Arcade: zombies climb the canopy's ladder side by side instead of pushing each other off it, and stop falling into the broken roof corner.",
+      "For Dead Ducks Arcade: zombies no longer climb the restroom's brick walls that don't reach the roof.",
+      "For Dead Ducks Arcade: Justin stops jittering when zombies are near.",
+      "For Dead Ducks Arcade: a zombie killed on a roof lies on the roof.",
+      "Grenades blow up 25% wider.",
+      "Daggers: 300 of them, 0.5 to 5 damage in halves.",
+      "The Exit button hides while the chat, the terminal, the pause menu or a window is open.",
+      "For Sandbox: a Seriat range like 1.5:2.4 picks every tenth in it.",
+    ],
+  },
+  {
     id: "v217",
     version: 217,
     date: "Nov 21, 2026",

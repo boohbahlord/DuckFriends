@@ -36,7 +36,7 @@
      l4b  { id: { o, at } }: who is boarding up which opening, since when (one more board each BOARD_MS)
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
-import { ARMS, kindOf, GUN_NAMES, WEAPONS } from "./guns.js";
+import { ARMS, kindOf, GUN_NAMES, WEAPONS, rollDmg } from "./guns.js";
 import { SPRINT as GAME_SPRINT, POCKET_CHANGE } from "./gamedefaults.js";
 import { scaleOf } from "./duck.js";
 import { hpHeal, hpHurt, tenths } from "./hpmath.js";
@@ -276,8 +276,7 @@ const SKIP = 0.25,
 /* the grenade's and the grenade launcher's blast, half as wide (the owner's, Nov 19 19:27Z: "half the blast radius") */
 const BLAST_HALF = 0.5;
 const dmgOf = (A) =>
-  (Array.isArray(A.dmg) ? rint(A.dmg[0], A.dmg[1]) : A.dmg || 1) +
-  oneOf(A.plus); // (the buckshot double barrel's pellets: 1 or 1.5 more)
+  (Array.isArray(A.dmg) ? rollDmg(A) : A.dmg || 1) + oneOf(A.plus); // (the buckshot double barrel's pellets: 1 or 1.5 more)
 /* one of two, at even odds (the double barrels' 1 or 1.5); 0 with none */
 const oneOf = (two) => (two ? two[Math.random() < 0.5 ? 0 : 1] : 0);
 /* fire (the owner's): a zombie burns 8 s and takes 1 every 2 s (the first as it's lit: 4 in all), and fire on a zombie
@@ -2051,8 +2050,6 @@ function justinSays(s, key) {
 export function isWild(s, id) {
   return !!(s && s.players && s.players[id] && s.players[id].wild);
 }
-/* he's out there with nothing in his hands (always: players can hurt him) */
-export const wildOpen = (s, id) => isWild(s, id);
 function helperIn(s, by, now, wild = false) {
   const id = HELPER.id;
   if (s.players[id]) return;
@@ -2711,7 +2708,7 @@ function merchantShoots(s, zs, now) {
   let dmg = 0;
   for (let k = 0; k < burst; k++)
     if (Math.random() < chance)
-      dmg += Array.isArray(A.dmg) ? rint(A.dmg[0], A.dmg[1]) : +A.dmg || 1;
+      dmg += Array.isArray(A.dmg) ? rollDmg(A) : +A.dmg || 1;
   const a = Math.random() * 2 * Math.PI,
     off = dmg ? 0 : 30 + Math.random() * 40;
   s.hang.l4m = {
@@ -3516,7 +3513,7 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
     }
   if (any) store(s, zs, true);
   const jp = s.pos[WILD.id];
-  if (jp && wildOpen(s, WILD.id)) {
+  if (jp && isWild(s, WILD.id)) {
     const [jx, jy] = at(jp);
     if (
       inCone((jx - px) / D, (jy - py) / D, dx, dy, far / D + 0.4) &&
@@ -3794,7 +3791,7 @@ function wildHurt(
   const id = WILD.id,
     p = s.pos[id],
     q = P4(s, id);
-  if (by === id || !wildOpen(s, id) || !p || !q || q.dn || q.gh) return false;
+  if (by === id || !isWild(s, id) || !p || !q || q.dn || q.gh) return false;
   const [px, py] = at(p);
   if (Math.hypot((px - x) / rx, (py - y) / ry) >= 1) return false;
   if (from && slabBetween(...from, px, py, +p.z || 0)) return false;
@@ -3851,7 +3848,7 @@ function wildFire(s, by, now) {
   const id = WILD.id,
     q = P4(s, id),
     F = s.hang.l4fire || {};
-  if (by === id || !wildOpen(s, id) || !q || q.dn || q.gh) return;
+  if (by === id || !isWild(s, id) || !q || q.dn || q.gh) return;
   if ((F.p || {})[id] || wetDuck(s.pos[id])) return; // (burning, just put out, or in the water)
   s.hang.l4fire = { z: F.z || {}, p: { ...(F.p || {}), [id]: now + BURN.P } };
   wildDown(s, by, now, "flamer", false, ["f0"]);
@@ -3960,9 +3957,11 @@ function meleeHits(s, now) {
   if (any) store(s, zs, true);
   return any;
 }
+/* dead on a roof, it lies on it (z.k kept: zombies.js zombieZ); up a wall or jumping, it drops (the owner's, Nov 21
+   08:46 ET: "corpses go below the cieling of where they were, that should be fixed") */
 const die = (z, T) => {
-  z.st = 3;
-  z.d = T;
+  if (z.st !== 7) delete z.k;
+  Object.assign(z, { st: 3, d: T });
 };
 /* melee knockback (the owner's, Nov 18 15:25Z: "Every melee has slight knockback EVEN to players AND especially to
    zombies EVEN WHILE THEY ARE ALIVE ... Fireaxe has more knockback and the hammer has most knockback"): how far a hit
@@ -4364,7 +4363,7 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
   /* Justin out there with no weapon, in its blast: all his HP, torn apart, headless and burnt (wounds.js DEATH); no jump dodges it (the owner's, Nov 17 20:37Z) */
   const jp = s.pos[WILD.id],
     jq = P4(s, WILD.id);
-  if (jp && jq && !jq.dn && !jq.gh && wildOpen(s, WILD.id)) {
+  if (jp && jq && !jq.dn && !jq.gh && isWild(s, WILD.id)) {
     const [jx, jy] = at(jp);
     if (
       Math.hypot(jx - bx, (jy - by) * 1.25) < ARMS.grenade.r * wide &&
