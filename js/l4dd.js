@@ -587,7 +587,7 @@ function claw(x, y, dir, ctx) {
   const px = x + Math.cos(dir) * 44,
     py = y + Math.sin(dir) * 22,
     f = ctx.world.toScreen(px, py, heightAt(px, py) + 36);
-  clawMark(fxl, f.left, f.top, ctx.world.sc * 1.25); // (a little bigger than the cats')
+  clawMark(fxl, f.left, f.top, ctx.world.sc * 1.25, Math.cos(dir) < 0 ? -1 : 1); // (a little bigger than the cats', and its swipe the way it swung)
   play("swipe", { x: px, y: py });
 }
 /* a zombie that got a new look (Survival's remodel: another hat, outfit and tilt, l4ddrules.js) shows it at once: its box

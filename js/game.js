@@ -3234,8 +3234,7 @@ function placeZombies(board, s, now) {
         );
       }
     }
-    /* its HP bar: shown once it's hurt, then stays; a hit's white drains to the red (css/app.css, .l4z-hp) */
-    const sh = (Math.max(0, o.hp) / (o.l[0] || 1)).toFixed(3);
+    const sh = (Math.max(0, o.hp) / (o.l[0] || 1)).toFixed(3); // (its HP bar: shown once it's hurt, then stays; a hit's white drains to the red, css/app.css .l4z-hp)
     if (n._sh !== sh) {
       n._sh = sh;
       n._bar.style.setProperty("--hp", sh);
@@ -3253,7 +3252,8 @@ function placeZombies(board, s, now) {
         c.left + (o.f || face) * ds * 0.55,
         c.top - ds * 0.45,
         k * 1.25,
-      ); // (its claw marks on the duck it swiped, as Dead Ducks Arcade's: claw.js)
+        o.f || face,
+      ); // (its claw marks and swipe on the duck it swiped, as Dead Ducks Arcade's: claw.js)
     n._a = o.a;
     npcSay(n, o); // (Sandbox: what its Seriat file has it say, sbnumberat.js)
     const oc = sbOl && !o.d && sbOlColor(s, { k: o.k, sp: o.sp }, o.x, o.y, 0);
