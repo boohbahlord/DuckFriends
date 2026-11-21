@@ -1,0 +1,451 @@
+[
+  {
+    "name": "board-keys",
+    "options": {
+      "mode": "aod"
+    },
+    "phase": "answer",
+    "pre": [
+      {
+        "t": "submit",
+        "text": "Rubber ducks float best"
+      }
+    ],
+    "frames": 660,
+    "input": [
+      ["key", 10, "KeyD", 800],
+      ["key", 70, "KeyS", 500],
+      ["key", 120, "KeyA", 600],
+      ["key", 120, "KeyW", 600],
+      ["key", 200, "ShiftLeft", 1200],
+      ["key", 200, "KeyD", 1200],
+      ["key", 300, "Space", 100],
+      ["key", 330, "KeyA", 700],
+      ["key", 380, "Space", 100],
+      ["key", 420, "ArrowUp", 500],
+      ["key", 480, "ArrowRight", 400],
+      ["key", 520, "Space", 100],
+      ["key", 540, "KeyS", 700],
+      ["key", 540, "ShiftRight", 700]
+    ],
+    "computers": 1
+  },
+  {
+    "name": "board-click",
+    "options": {
+      "mode": "aod"
+    },
+    "phase": "answer",
+    "pre": [
+      {
+        "t": "submit",
+        "text": "Rubber ducks float best"
+      }
+    ],
+    "settings": {
+      "mouseMove": true
+    },
+    "frames": 600,
+    "input": [
+      ["click", 10, 0.3, 0.5],
+      ["click", 120, 0.7, 0.35],
+      ["click", 240, 0.55, 0.8],
+      ["key", 250, "ShiftLeft", 600],
+      ["click", 250, 0.2, 0.3],
+      ["click", 400, 0.6, 0.6]
+    ],
+    "computers": 1
+  },
+  {
+    "name": "board-phone-stick",
+    "phone": 1,
+    "options": {
+      "mode": "aod"
+    },
+    "phase": "answer",
+    "pre": [
+      {
+        "t": "submit",
+        "text": "Rubber ducks float best"
+      }
+    ],
+    "frames": 600,
+    "input": [
+      ["drag", 10, 0.5, 0.55, 0.68, 0.55, 250, 900],
+      ["drag", 100, 0.5, 0.55, 0.5, 0.4, 250, 600],
+      ["drag", 180, 0.4, 0.6, 0.55, 0.6, 120, 0],
+      ["drag", 200, 0.4, 0.6, 0.55, 0.6, 120, 1200],
+      ["press", 300, ".tpad-jump"],
+      ["drag", 340, 0.5, 0.6, 0.38, 0.66, 250, 700],
+      ["press", 400, ".tpad-jump"],
+      ["tap", 460, 0.5, 0.5]
+    ],
+    "computers": 1,
+    "ready": ".tpad-jump"
+  },
+  {
+    "name": "board-phone-tap",
+    "phone": 1,
+    "options": {
+      "mode": "aod"
+    },
+    "phase": "answer",
+    "pre": [
+      {
+        "t": "submit",
+        "text": "Rubber ducks float best"
+      }
+    ],
+    "settings": {
+      "touch": "tap"
+    },
+    "frames": 600,
+    "input": [
+      ["tap", 10, 0.3, 0.5],
+      ["tap", 120, 0.7, 0.4],
+      ["drag", 240, 0.3, 0.6, 0.75, 0.6, 150, 0],
+      ["drag", 330, 0.6, 0.5, 0.4, 0.45, 900, 0],
+      ["press", 450, ".tpad-jump"],
+      ["tap", 500, 0.5, 0.7]
+    ],
+    "computers": 1,
+    "ready": ".tpad-jump"
+  },
+  {
+    "name": "board-specials",
+    "options": {
+      "mode": "aod"
+    },
+    "phase": "answer",
+    "pre": [
+      {
+        "t": "submit",
+        "text": "Rubber ducks float best"
+      }
+    ],
+    "keys": ["handgun", "smg", "chair", "shotgun", "bow"],
+    "frames": 720,
+    "input": [
+      ["mouse", 5, 0.7, 0.5],
+      ["key", 10, "Digit1", 100],
+      ["click", 30, 0.7, 0.5],
+      ["click", 60, 0.3, 0.4],
+      ["key", 90, "Digit2", 100],
+      ["click", 110, 0.6, 0.5, 1000],
+      ["key", 200, "Digit3", 100],
+      ["mouse", 210, 0.2, 0.6],
+      ["key", 240, "Digit4", 100],
+      ["click", 260, 0.8, 0.5],
+      ["click", 330, 0.8, 0.5],
+      ["key", 380, "KeyR", 100],
+      ["key", 420, "Digit5", 100],
+      ["click", 440, 0.5, 0.2, 600],
+      ["wheel", 520, 100],
+      ["wheel", 540, 100],
+      ["click", 560, 0.6, 0.6],
+      ["key", 600, "Digit5", 100],
+      ["key", 620, "KeyD", 600]
+    ],
+    "computers": 1
+  },
+  {
+    "name": "hang-keys",
+    "options": {
+      "mode": "hang"
+    },
+    "frames": 660,
+    "input": [
+      ["key", 10, "KeyD", 800],
+      ["key", 70, "KeyS", 500],
+      ["key", 120, "KeyA", 600],
+      ["key", 120, "KeyW", 600],
+      ["key", 200, "ShiftLeft", 1200],
+      ["key", 200, "KeyD", 1200],
+      ["key", 300, "Space", 100],
+      ["key", 330, "KeyA", 700],
+      ["key", 380, "Space", 100],
+      ["key", 420, "ArrowUp", 500],
+      ["key", 480, "ArrowRight", 400],
+      ["key", 520, "Space", 100],
+      ["key", 540, "KeyS", 700],
+      ["key", 540, "ShiftRight", 700]
+    ],
+    "computers": 1
+  },
+  {
+    "name": "hang-phone",
+    "phone": 1,
+    "options": {
+      "mode": "hang"
+    },
+    "frames": 600,
+    "input": [
+      ["drag", 10, 0.5, 0.55, 0.68, 0.55, 250, 900],
+      ["drag", 100, 0.5, 0.55, 0.5, 0.4, 250, 600],
+      ["drag", 180, 0.4, 0.6, 0.55, 0.6, 120, 0],
+      ["drag", 200, 0.4, 0.6, 0.55, 0.6, 120, 1200],
+      ["press", 300, ".tpad-jump"],
+      ["drag", 340, 0.5, 0.6, 0.38, 0.66, 250, 700],
+      ["press", 400, ".tpad-jump"],
+      ["tap", 460, 0.5, 0.5]
+    ],
+    "computers": 1,
+    "ready": ".tpad-jump"
+  },
+  {
+    "name": "dda-downpour",
+    "options": {
+      "mode": "l4dd",
+      "l4map": "downpour"
+    },
+    "frames": 780,
+    "input": [
+      ["key", 10, "KeyD", 800],
+      ["key", 70, "KeyS", 500],
+      ["key", 120, "KeyA", 600],
+      ["key", 120, "KeyW", 600],
+      ["key", 200, "ShiftLeft", 1200],
+      ["key", 200, "KeyD", 1200],
+      ["key", 300, "Space", 100],
+      ["key", 330, "KeyA", 700],
+      ["key", 380, "Space", 100],
+      ["key", 420, "ArrowUp", 500],
+      ["key", 480, "ArrowRight", 400],
+      ["key", 520, "Space", 100],
+      ["key", 540, "KeyS", 700],
+      ["key", 540, "ShiftRight", 700],
+      ["mouse", 5, 0.7, 0.5],
+      ["key", 560, "Digit2", 100],
+      ["click", 580, 0.7, 0.5],
+      ["click", 600, 0.3, 0.4, 500],
+      ["key", 640, "KeyR", 100],
+      ["key", 680, "Digit1", 100],
+      ["click", 690, 0.6, 0.5],
+      ["wheel", 720, 100],
+      ["click", 740, 0.4, 0.6, 300]
+    ],
+    "computers": 1
+  },
+  {
+    "name": "dda-cabin",
+    "options": {
+      "mode": "l4dd",
+      "l4map": "cabin",
+      "wildJustin": 0
+    },
+    "frames": 600,
+    "input": [
+      ["key", 10, "KeyD", 800],
+      ["key", 70, "KeyS", 500],
+      ["key", 120, "KeyA", 600],
+      ["key", 120, "KeyW", 600],
+      ["key", 200, "ShiftLeft", 1200],
+      ["key", 200, "KeyD", 1200],
+      ["key", 300, "Space", 100],
+      ["key", 330, "KeyA", 700],
+      ["mouse", 5, 0.3, 0.5],
+      ["key", 400, "Digit2", 100],
+      ["click", 420, 0.3, 0.5, 600],
+      ["key", 500, "Digit1", 100],
+      ["click", 520, 0.6, 0.4]
+    ],
+    "computers": 1
+  },
+  {
+    "name": "dda-phone",
+    "phone": 1,
+    "options": {
+      "mode": "l4dd",
+      "l4map": "downpour"
+    },
+    "frames": 720,
+    "input": [
+      ["drag", 10, 0.5, 0.55, 0.68, 0.55, 250, 900],
+      ["drag", 100, 0.5, 0.55, 0.5, 0.4, 250, 600],
+      ["drag", 180, 0.4, 0.6, 0.55, 0.6, 120, 0],
+      ["drag", 200, 0.4, 0.6, 0.55, 0.6, 120, 1200],
+      ["press", 300, ".tpad-jump"],
+      ["drag", 340, 0.5, 0.6, 0.38, 0.66, 250, 700],
+      ["press", 400, ".tpad-jump"],
+      ["tap", 460, 0.5, 0.5],
+      ["swipe", 520, ".gduck.mine", -0.12, 0, 300],
+      ["swipe", 580, ".tpad-atk", 0.13, 0, 150, 700],
+      ["swipe", 640, ".gduck.mine", 0.12, 0, 300]
+    ],
+    "computers": 1,
+    "ready": ".tpad-jump"
+  },
+  {
+    "name": "mgj",
+    "options": {
+      "mode": "mgj"
+    },
+    "phase": "boss",
+    "computers": 3,
+    "frames": 660,
+    "input": [
+      ["key", 10, "KeyD", 800],
+      ["key", 70, "KeyS", 500],
+      ["key", 120, "KeyA", 600],
+      ["key", 120, "KeyW", 600],
+      ["key", 200, "ShiftLeft", 1200],
+      ["key", 200, "KeyD", 1200],
+      ["key", 300, "Space", 100],
+      ["key", 330, "KeyA", 700],
+      ["key", 380, "Space", 100],
+      ["key", 420, "ArrowUp", 500],
+      ["key", 480, "ArrowRight", 400],
+      ["key", 520, "Space", 100],
+      ["key", 540, "KeyS", 700],
+      ["key", 540, "ShiftRight", 700],
+      ["key", 30, "ArrowLeft", 300],
+      ["key", 90, "ArrowDown", 300],
+      ["key", 560, "Digit2", 100],
+      ["click", 580, 0.6, 0.4, 600],
+      ["key", 630, "Digit1", 100],
+      ["click", 640, 0.4, 0.4]
+    ]
+  },
+  {
+    "name": "sb-board",
+    "options": {
+      "mode": "sandbox",
+      "sbMap": "",
+      "map": "night"
+    },
+    "pre": [
+      {
+        "t": "sbPick"
+      }
+    ],
+    "frames": 600,
+    "input": [
+      ["key", 10, "KeyD", 800],
+      ["key", 70, "KeyS", 500],
+      ["key", 120, "KeyA", 600],
+      ["key", 120, "KeyW", 600],
+      ["key", 200, "ShiftLeft", 1200],
+      ["key", 200, "KeyD", 1200],
+      ["key", 300, "Space", 100],
+      ["key", 330, "KeyA", 700],
+      ["key", 380, "Space", 100],
+      ["key", 420, "ArrowUp", 500],
+      ["key", 480, "ArrowRight", 400],
+      ["key", 520, "Space", 100]
+    ],
+    "computers": 1,
+    "phase": "sandbox"
+  },
+  {
+    "name": "sb-cabin",
+    "options": {
+      "mode": "sandbox",
+      "sbMap": "cabin"
+    },
+    "pre": [
+      {
+        "t": "sbPick"
+      }
+    ],
+    "frames": 600,
+    "input": [
+      ["key", 10, "KeyD", 800],
+      ["key", 70, "KeyS", 500],
+      ["key", 120, "KeyA", 600],
+      ["key", 120, "KeyW", 600],
+      ["key", 200, "ShiftLeft", 1200],
+      ["key", 200, "KeyD", 1200],
+      ["key", 300, "Space", 100],
+      ["key", 330, "KeyA", 700],
+      ["key", 380, "Space", 100],
+      ["key", 420, "ArrowUp", 500],
+      ["key", 480, "ArrowRight", 400],
+      ["key", 520, "Space", 100]
+    ],
+    "computers": 1
+  },
+  {
+    "name": "board-sprint-out",
+    "options": {
+      "mode": "aod"
+    },
+    "phase": "answer",
+    "pre": [
+      {
+        "t": "submit",
+        "text": "Rubber ducks float best"
+      }
+    ],
+    "frames": 720,
+    "input": [
+      ["key", 10, "ShiftLeft", 6800],
+      ["key", 10, "KeyD", 3000],
+      ["key", 190, "KeyA", 3800],
+      ["key", 420, "ShiftLeft", 1500],
+      ["key", 420, "KeyD", 1500],
+      ["key", 600, "KeyW", 800]
+    ],
+    "computers": 1
+  },
+  {
+    "name": "board-bump",
+    "options": {
+      "mode": "aod"
+    },
+    "phase": "answer",
+    "pre": [
+      {
+        "t": "submit",
+        "text": "Rubber ducks float best"
+      }
+    ],
+    "frames": 480,
+    "input": [
+      ["key", 5, "KeyD", 300],
+      ["botOnMe", 40],
+      ["botOnMe", 160],
+      ["key", 250, "KeyS", 300],
+      ["botOnMe", 300]
+    ],
+    "computers": 1
+  },
+  {
+    "name": "hang-click",
+    "options": {
+      "mode": "hang"
+    },
+    "settings": {
+      "mouseMove": true
+    },
+    "frames": 600,
+    "input": [
+      ["click", 10, 0.62, 0.5],
+      ["click", 130, 0.4, 0.62],
+      ["click", 250, 0.55, 0.35],
+      ["key", 260, "ShiftLeft", 700],
+      ["click", 400, 0.3, 0.45],
+      ["click", 410, 0.7, 0.6]
+    ],
+    "computers": 1
+  },
+  {
+    "name": "hang-phone-tap",
+    "phone": 1,
+    "ready": ".tpad-jump",
+    "options": {
+      "mode": "hang"
+    },
+    "settings": {
+      "touch": "tap"
+    },
+    "frames": 600,
+    "input": [
+      ["tap", 10, 0.65, 0.5],
+      ["tap", 130, 0.35, 0.6],
+      ["drag", 250, 0.3, 0.6, 0.75, 0.6, 150, 0],
+      ["drag", 330, 0.6, 0.5, 0.4, 0.45, 900, 0],
+      ["press", 450, ".tpad-jump"]
+    ],
+    "computers": 1
+  }
+]

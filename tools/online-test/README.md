@@ -20,3 +20,9 @@ close the host's browser in the middle of votes, so another player has to take o
 
 It ends with every error any browser hit (and exits with 1 if there were any), and saves a screenshot of each player in
 `shots/`.
+
+`node walk.js [mode] [map]` (`l4dd downpour` at first) checks the players' own walk online: a host and a guest on the
+map, each walking with real keys (the guest also sprints, jumps, picks its gun and fires). Both screens must show each
+duck in the same spot, each must see the other move and jump, and the host must get the guest's shots. Run it before
+and after changing how my duck walks, jumps or uses its hotbar (`tools/check/player.cjs` pins the same offline, frame
+by frame).
