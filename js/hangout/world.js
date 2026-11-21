@@ -24,7 +24,6 @@ import { isInvisible } from "../invisible.js";
 import { low } from "../gfx.js";
 import { walkOf } from "../rules.js";
 import { survSet } from "../survrules.js";
-import { JET } from "../jetpack.js";
 import {
   pixelOn,
   gridPx,
@@ -1118,10 +1117,6 @@ export function mountWorld(board, api) {
   /* after a step: up or down a step, landing on what it walked onto, or off an edge (it falls) */
   function ground(me, x, y, ev) {
     const gnd = floor(me, x, y);
-    if (me.jf) {
-      if (me.z < gnd) me.z = gnd; // (flying: onto anything higher, still flying)
-      return;
-    }
     if (me.j) {
       if (me.z < gnd) {
         ev.land = 1;
@@ -1153,8 +1148,7 @@ export function mountWorld(board, api) {
   const CLIMB = 150; // px a second
   function climb(me, x, y, ax0, ay0, dt, ev) {
     const turn = (A) => (A.side === "w" ? [-ay0, ax0] : [ax0, ay0]); // (the canopy's, from its left: pushing east climbs it)
-    const d =
-      !me.lad && !me.j && !me.jf && me.vz == null && L.ladderDown(x, y, me.z);
+    const d = !me.lad && !me.j && me.vz == null && L.ladderDown(x, y, me.z);
     if (d) {
       const [ax, ay] = turn(d.A);
       if (ay < -0.5 && Math.abs(ax) < 0.7) {
@@ -1166,7 +1160,7 @@ export function mountWorld(board, api) {
         ev.force = true;
       }
     } // (on the roof at its top, turning back to it: onto the ladder, to climb down it, drawn on it: layout.js onLadder)
-    const A = !me.j && !me.jf && L.ladderAt(x, y);
+    const A = !me.j && L.ladderAt(x, y);
     if (!A) return (me.lad = false);
     const top = L.ladderTop(A),
       [ax, ay] = turn(A);
@@ -1212,7 +1206,7 @@ export function mountWorld(board, api) {
      onto another elevation ... the same mechanism as the ladder"): in it, pushing in toward its middle climbs at the
      ladder's pace up to its top; let go and it holds on; push away and it lets go and falls. True while my duck is on it */
   function zClimb(me, x, y, ax, ay, dt, ev) {
-    if (me.j || me.jf || !hasClimbs) return (me.zc = false);
+    if (me.j || !hasClimbs) return (me.zc = false);
     const c = climbAt(x, y, me.z);
     if (!c || me.z >= c.top - 0.5) return (me.zc = false);
     const mx = c.x * L.W - x,
@@ -1443,9 +1437,7 @@ export function mountWorld(board, api) {
       for (const a of acts()) shift += a.view?.(ctx) || 0; // (an activity's panel covers the bottom: my duck shows higher)
       for (const a of acts()) if ((f = a.focus?.(ctx))) break; // (or the camera looks somewhere else: the blackjack table while I sit at it)
       const tx = f ? f.x : me.x * L.W,
-        ty = f
-          ? f.y
-          : me.y * L.H - (me.j || me.jf ? me.b : me.z) + shift / cam.sc;
+        ty = f ? f.y : me.y * L.H - (me.j ? me.b : me.z) + shift / cam.sc;
       if (!cam.set) {
         cam.x = tx;
         cam.y = ty;
@@ -1554,31 +1546,7 @@ export function mountWorld(board, api) {
       const cfg = api.cfg(),
         Hpx = cfg.H * L.DUCK,
         G = (8 * Hpx) / (cfg.T * cfg.T);
-      if (me.jf) {
-        // the jetpack: up while its jets are on, the height kept, or falling; never higher than JET.TOP over the ground
-        const jet = api.jet?.() || {},
-          gnd = floor(me, x, y),
-          over = L.deckOver(x, y, me.z),
-          top = Math.min(
-            gnd + JET.TOP * L.DUCK,
-            over ? over.h - L.DUCK * 0.9 : Infinity,
-          ); // (never up through a roof: through its holes only)
-        if (jet.up)
-          me.vz = Math.min(JET.RISE * L.DUCK, me.vz + JET.PUSH * L.DUCK * dt);
-        else if (jet.hold) me.vz = 0;
-        else me.vz -= G * dt;
-        me.z += me.vz * dt;
-        if (me.z > top) {
-          me.z = top;
-          me.vz = Math.min(0, me.vz);
-        }
-        if (me.z <= gnd && me.vz <= 0) {
-          me.z = gnd;
-          me.jf = false;
-          me.vz = null;
-          ev.force = true; // (landed: the others hear of it at once)
-        }
-      } else if (me.j) {
+      if (me.j) {
         // a jump's arc, from where it began; it lands early on anything high enough, or falls on past its end
         const za = me.b + api.jumpZ(me, now) * L.DUCK,
           gnd = floor(me, x, y);
@@ -1667,8 +1635,7 @@ export function mountWorld(board, api) {
       }
       ground(me, x, y, ev);
       {
-        const d =
-          me.vz == null && !me.j && !me.jf ? L.deckAt(x, y, me.z) : null;
+        const d = me.vz == null && !me.j ? L.deckAt(x, y, me.z) : null;
         me._sl = d && d.hAt ? d : null; // (on a slope: it holds my duck next frame too)
       }
       me.x = x / L.W;
@@ -1691,7 +1658,7 @@ export function mountWorld(board, api) {
     },
     started(me) {
       ensure(me);
-      me.b = me.z;
+      me.hr = L.headRoom(me.x * L.W, me.y * L.H, (me.b = me.z)); // (from where it jumps)
       me.vz = null;
       me._za = undefined;
     },

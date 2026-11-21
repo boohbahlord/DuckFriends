@@ -235,6 +235,12 @@ export function deckOver(x, y, z) {
   }
   return best;
 }
+/* the room over a duck's head standing at z, in duck heights, or undefined under the open sky: a jump's head stops there
+   (jump.js) */
+export function headRoom(x, y, z) {
+  const d = deckOver(x, y, z);
+  return d ? (deckH(d, x, y) - z - DUCK) / DUCK : undefined;
+}
 /* the height of the floor under a duck's feet at height z: a deck it is on or over, or the ground (z left out: the
    ground) */
 export function floorH(x, y, z) {

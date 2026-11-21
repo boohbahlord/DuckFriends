@@ -37,6 +37,7 @@
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
 import { ARMS, kindOf, GUN_NAMES, WEAPONS, rollDmg } from "./guns.js";
+import { JUMP, jumpDodges } from "./jump.js";
 import { SPRINT as GAME_SPRINT, POCKET_CHANGE } from "./gamedefaults.js";
 import { scaleOf } from "./duck.js";
 import { hpHeal, hpHurt, tenths } from "./hpmath.js";
@@ -288,25 +289,25 @@ export const BURN = { Z: 8000, EVERY: 2000, P: 3000, AGAIN: 1000, SPREAD: 500 };
 /* Downpour's water over the road, shallow or deep: fire never stays on it, and nothing in it burns; a zombie or a duck
    on fire that goes in is put out (the owner's, Nov 18 10:38Z: "flamethrower's fire doesnt stay in the water ...
    enemies in the water of the road do not catch on fire and if were on fire are no longer on fire, and swimming in
-   water has the same effect"). Up on a car over it, or a jetpack over it, isn't in it. The rain changes nothing */
+   water has the same effect"). Up on a car over it isn't in it. The rain changes nothing */
 const flood = (x, y) => dp() && (GS.inDeep(x, y) || GS.inShallow(x, y));
 const wetZ = (z) => flood(z.x, z.y) && zFloor(z) === null;
 function wetDuck(p) {
-  if (!p || p.fly) return false;
+  if (!p) return false;
   const [x, y] = at(p);
   return (
     flood(x, y) && duckFloor(p) === null && (+p.z || 0) <= heightAt(x, y) + 4
   );
 }
 /* Downpour: is duck id swimming in the deep flood? Its guns, its bow and its melee are put away until it's out (the
-   owner's, Nov 17 05:46Z); a jetpack high over the water isn't swimming */
+   owner's, Nov 17 05:46Z) */
 export function swims(s, id) {
   const p = s && s.pos && s.pos[id];
-  return !!p && dp() && !p.fly && GS.inDeep(p.x * W, p.y * H);
+  return !!p && dp() && GS.inDeep(p.x * W, p.y * H);
 }
 /* what a duck holds out (a special used up isn't there) */
 export const inHand = (w, s, id) => {
-  if (!w || w === "longjump" || w === "jetpack" || w === "safekeep") return ""; // (the jetpack is on the back: game.js; Safe Keeping, picked, holds nothing out)
+  if (!w || w === "longjump" || w === "safekeep") return ""; // (Safe Keeping, picked, holds nothing out)
   const c = s && kindOf(w) === "special" && ((kitOf(s, id) || {}).am || {})[w];
   return c && c[0] <= 0 ? "" : w;
 };
@@ -879,13 +880,7 @@ export const standing = (s, id) => {
   return !!p && !p.dn && !p.gh;
 };
 /* a duck in the middle of a jump dodges a hit: not in its first fifth or its last (the owner's) */
-export function dodging(s, p, now) {
-  if (p && p.fly) return true; // (the jetpack, high in the air)
-  if (!p || !p.j) return false;
-  const T = 620,
-    u = (now - p.j) / T;
-  return u > 0.2 && u < 0.8;
-}
+export const dodging = (s, p, now) => jumpDodges(p, now, JUMP.T * 1000);
 export const at = (p) => [p.x * W, p.y * H];
 
 /* ---------- a duck's slots, points and upgrades ---------- */
@@ -1158,26 +1153,6 @@ const bare = (x, y, out, far) =>
   OPENINGS.every((o) => Math.hypot(x - o.in[0], y - o.in[1]) > 200) &&
   Math.hypot(x - 2800, y - 1420) > 320 &&
   out.every(([a, b]) => Math.hypot(x - a, y - b) > far);
-/* the jetpack's fuel: it burns while a duck flies with its jets on (its move says so: rules.js' jt), from one heartbeat to
-   the next; at 0 the jets stop and the duck comes down (game.js) */
-function jetBurn(s, now, ids) {
-  const was = s.hang.l4jt || {},
-    next = {};
-  for (const id of ids) {
-    const m = kitOf(s, id),
-      p = s.pos[id];
-    if (!m || !m.jp || !p || !p.jt) continue;
-    next[id] = now;
-    const c = (m.am || {}).jetpack;
-    if (!c || !was[id]) continue;
-    const left = Math.max(0, c[0] - Math.min(500, now - was[id]));
-    s.hang.l4a = {
-      ...s.hang.l4a,
-      [id]: { ...m, am: { ...m.am, jetpack: [Math.round(left), 0] } },
-    };
-  }
-  if (Object.keys(was).length || Object.keys(next).length) s.hang.l4jt = next;
-}
 /* ---------- the drops (Stage 4, the owner's) ----------
    Each round: a 25% chance of one in its first 30 s, and then a 25% chance of a second 30 s after it; and on their
    own, a 5% chance of a Max Ammo in the first minute. When its time comes, the next zombie killed drops it where it
@@ -3029,12 +3004,6 @@ export function l4Use(s, a, now) {
   finishReload(m, now);
   if (now - (m.u[what] || 0) < l4Cool(s, id, what) * (A.auto ? 0.8 : 1))
     return false; // (full auto: the shots can come a little bunched over the network)
-  if (what === "jetpack") {
-    m.u[what] = now;
-    m.jp = !m.jp;
-    s.hang.l4a = { ...s.hang.l4a, [id]: m };
-    return true;
-  } // (switched on or off, empty or not: its fuel burns only in flight, in l4Tick)
   const c = down ? [m.dg, ARMS.handgun.mag] : m.am[what];
   if (kind === "grenade" ? m.g <= 0 : c && (c[0] <= 0 || m.rw === rw))
     return false; // (empty, or reloading)
@@ -4598,7 +4567,6 @@ function l4Tick(s, now) {
     )
       s.hang.l4a = { ...s.hang.l4a, [id]: { ...am[id], rl: 0, rw: "" } }; // (switched to another slot: the reload is lost, the owner's, Nov 16)
   justinChat(s, now);
-  jetBurn(s, now, ids);
   for (const b of Object.values(boxesOf(s)))
     if (b.w === HELPER.w && now >= b.t + BOX.spin + HELPER.out) {
       dropBox(s, b.by);
