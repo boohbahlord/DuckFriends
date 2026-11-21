@@ -137,7 +137,7 @@ online.js 975 online rooms
 outfits.js 1141 outfits
 outlines.js 347 the outlines
 perf.js 92 the frame-rate readout
-phonepad.js 129 phones: the aim-and-attack stick and the
+phonepad.js 133 phones: the aim-and-attack stick and the
 picrop.js 268 cropping a picture: every picture put
 pixel.js 724 the pixel look
 pixelpalette.js 192 the pixel look's colors
@@ -210,7 +210,7 @@ shellfs.js 846 the shell's files and what every
 shellpeople.js 220 the people, the room and the
 shellstats.js 245 the stats and forgame commands' helpers
 slices.js 31 long work cut into slices
-sound.js 913 the game's sounds: real recordings, played
+sound.js 916 the game's sounds: real recordings, played
 specials.js 858 Specials
 spectate.js 98 Sandbox: watching the others once my
 splash.js 71 the start screen: your duck on
@@ -233,7 +233,7 @@ umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 3102 Updates
+updates.js 3112 Updates
 vdd.js 190 Valentine's Duck Date: what the screen
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival

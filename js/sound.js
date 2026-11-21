@@ -535,16 +535,19 @@ function voice(name, o = {}, loops = false) {
     /* a one-off: a few of each kind, VOICES in all; the loops never count here, so a busy fight never cuts the wind or
        a fire (the owner OK'd it, Nov 18 14:50Z). A sound that gives way (o.yield: a zombie's step) is left out when
        its kind is full instead of cutting one (my own step under a mob), and when every voice is busy, one quieter
-       than all of them (a far step or hit) is left out instead of cutting the oldest */
-    const same = live.filter((v) => v.name === name && !v.cut && !v.loop);
+       than all of them (a far step or hit) is left out instead of cutting the oldest. My own (o.mine: my shots, my
+       swings) are never left out, and what gives way for them is someone else's first (the owner, Nov 21: "audio
+       shouldn't just stop working for the bow when I'm shooting it actively") */
+    const same = live.filter((v) => v.name === name && !v.cut && !v.loop),
+      first = (vs) => vs.find((v) => !v.mine) || vs[0]; // (the oldest that isn't mine)
     if (same.length >= (low ? LITE.cap : CAP[name] || CAP_ANY)) {
       if (o.yield) return null;
-      cut(same[0], t);
+      cut(first(same), t);
     }
     const all = live.filter((v) => !v.cut && !v.loop);
     if (all.length >= (low ? LITE.voices : VOICES)) {
-      if (all.every((v) => k < v.k)) return null;
-      cut(all[0], t);
+      if (!o.mine && all.every((v) => k < v.k)) return null;
+      cut(first(all), t);
     }
   }
   const src = ac.createBufferSource(),
@@ -576,7 +579,7 @@ function voice(name, o = {}, loops = false) {
   }
   tail.connect(out);
   src.start(t, loops ? FILES[name].loop[0] : 0);
-  const v = { name, src, g, t, k, f, p, loop: loops };
+  const v = { name, src, g, t, k, f, p, loop: loops, mine: !!o.mine };
   src.onended = () => drop(v);
   live.push(v);
   return v;
