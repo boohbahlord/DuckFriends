@@ -12,7 +12,7 @@ barrelheat.js 70 a hot barrel
 bash.js 1360 the command line's language: a small bash
 beaks.js 138 beaks
 bloodpool.js 50 a pool of blood: the one under every
-boardjustin.js 741 Justin on the boards
+boardjustin.js 736 Justin on the boards
 botduck.js 90 a computer's duck: a random look, never anything
 botlines.js 188 What the computers write and say in the
 bots.js 1408 computers
@@ -35,7 +35,7 @@ dock.js 73 the docks: where Notes and the chat open
 duck.js 728 the rubber duck avatar
 duckparts.js 592 the ducks made from pixel parts
 ducksheets.js 2 made by tools/duck-parts.cjs:
-duel.js 124 the cloud duel: two ducks share the cloud,
+duel.js 120 the cloud duel: two ducks share the cloud,
 dunce.js 137 Duncelation: what the screen shows
 duncerules.js 388 the rules of Duncelation
 euclid.js 351 Euclid's Squares
@@ -86,7 +86,7 @@ l4ddbell.js 136 Downpour: the church bell and the roof's flare,
 l4ddcatalog.js 199 Quacky Zombies: the Butler's Items tab
 l4dddrops.js 63 Quacky Zombies' drops, drawn
 l4ddmap.js 253 Quacky Zombies' minimap
-l4ddpower.js 338 Dead Ducks Arcade's power box
+l4ddpower.js 329 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box on every screen
 l4ddrain.js 326 Downpour's rain
 l4ddrules.js 5007 the rules of Quacky Zombies
@@ -129,7 +129,7 @@ numerathelp.js 565 Seriat's help files
 numeratwin.js 657 Sandbox: the Seriat window
 nwk.js 543 Nous Within Kenoma: the map in my book
 offline.js 45 Single Player's files on the device
-online.js 972 online rooms
+online.js 975 online rooms
 outfits.js 1141 outfits
 outlines.js 353 the outlines
 perf.js 92 the frame-rate readout
@@ -143,7 +143,7 @@ powerart.js 377 Dead Ducks Arcade: the power box and the
 pxa.js 341 made by tools/pixel-art.cjs:
 pxbake.js 627 a map's pictures made into pixels once, instead
 pxcard.js 259 the player cards' pattern motifs as pixel files:
-pxdom.js 739 the pixel look for drawings already on the
+pxdom.js 741 the pixel look for drawings already on the
 pxmap.js 45 a map as pixel files
 pxpic.js 22 the maps that have a picture file :
 pxtext.js 263 emoji and tooltips in the pixel look
@@ -198,7 +198,7 @@ sfxlist.js 164 the sound files
 shared.js 497 Sandbox Phase 7: Shared, the game modes and
 shell.js 3541 the command line: a small bash
 slices.js 31 long work cut into slices
-sound.js 939 the game's sounds: real recordings, played from small
+sound.js 935 the game's sounds: real recordings, played from small
 specials.js 858 Specials
 spectate.js 97 Survival: watching the others once my duck is
 splash.js 71 the start screen: your duck on a cloud,
@@ -220,7 +220,7 @@ umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
 unlocks.js 413 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 2933 Updates
+updates.js 2942 Updates
 vdd.js 190 Valentine's Duck Date: what the screen shows
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
@@ -268,7 +268,7 @@ registry.js 111 Hangout's two registries: what each activity adds
 rubberducks.js 183 the little rubber ducks in the pool
 rules.js 87 Hangout's rules: s.hang and the { t: 'hang',
 seats.js 439 the couches, the campfire's logs, the kitchen chairs
-shadowduck.js 256 the shadow duck
+shadowduck.js 254 the shadow duck
 shapes.js 1707 Duck Cabin's props, drawn: art.js's drawings put where
 soccer.js 508 soccer: one ball on the field, one net
 sounds.js 17 Duck Cabin's sounds

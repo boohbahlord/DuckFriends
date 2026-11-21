@@ -93,19 +93,8 @@ function spotOf(k) {
       key: q.y + 2,
     };
   }
-  if (k === "sink") {
-    const p = prop("sink");
-    return {
-      x: p.x + p.w / 2,
-      y: p.y + p.d - 12, // (at the front of its top)
-      z: 40, // (its top as drawn)
-      px: p.x + p.w / 2,
-      py: p.y + p.d + 60,
-      key: p.key + 2,
-    };
-  }
-  if (k === "counter") {
-    const p = prop("counter");
+  if (k === "sink" || k === "counter") {
+    const p = prop(k);
     return {
       x: p.x + p.w / 2,
       y: p.y + p.d - 12, // (at the front of its top)
@@ -315,6 +304,11 @@ export const pumpNear = (mx, my) =>
 export function powerPump(s, id, now, mx, my, h) {
   const pw = s.hang.pw;
   if (!pw || !pumpNear(mx, my) || gasFull(s)) return false;
+  return buyGas(s, id, now, h);
+}
+/* one more gas at the pump's price (the pump's, and the merchant's in Duck Cabin) */
+function buyGas(s, id, now, h) {
+  const pw = s.hang.pw;
   if (h.ptsOf(s, id) < PW.PUMP) return false;
   h.addPts(s, id, -PW.PUMP);
   s.hang.pw = { ...pw, gas: (pw.gas || 0) + 1 };
@@ -326,11 +320,8 @@ export function powerPump(s, id, now, mx, my, h) {
    the gas never runs out from the merchant"). The rules check he's there */
 export function powerGas(s, id, now, h) {
   const pw = s.hang.pw;
-  if (!pw || gasFull(s) || h.ptsOf(s, id) < PW.PUMP) return false;
-  h.addPts(s, id, -PW.PUMP);
-  s.hang.pw = { ...pw, gas: (pw.gas || 0) + 1 };
-  h.addFx(s, { kind: "l4pwfill", by: id, who: [], t: now });
-  return true;
+  if (!pw || gasFull(s)) return false;
+  return buyGas(s, id, now, h);
 }
 /* what E at the box would do now, for its button: "pour" or "" */
 export function powerNext(s) {
