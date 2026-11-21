@@ -39,7 +39,7 @@ const INIT = fs.readFileSync(
         AS = await import("./js/armspeed.js"),
         GD = await import("./js/gamedefaults.js"),
         SP = await import("./js/specials.js"),
-        GA = await import("./js/l4ddguns.js"),
+        GA = await import("./js/gunart.js"),
         AR = await import("./js/l4ddart.js"),
         CA = await import("./js/l4ddcatalog.js"),
         { steadyText } = await import("./js/pxdom.js");
@@ -135,12 +135,13 @@ const INIT = fs.readFileSync(
         per((w) => [AR.weaponIcon(w, duck), AR.weaponIcon(w, wrench)]),
       );
       out.guns = H([GA.GUNS, GA.ROUNDS_ART, GA.TRACE]);
+      const ART = { ...SP, ...GA }; // (the drawings: gunart.js since there is one)
       out.bits = H([
-        SP.SHOTGUN,
-        SP.GRENADE(["#a", "#b", "#c"]),
+        ART.SHOTGUN,
+        ART.GRENADE(["#a", "#b", "#c"]),
         SP.pistolIcon(duck),
         SP.daggerHTML(duck),
-        SP.BULLET(),
+        ART.BULLET(),
         SP.dualPistolHTML(duck),
         SP.ammoHTML(3),
       ]);

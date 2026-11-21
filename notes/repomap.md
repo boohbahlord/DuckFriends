@@ -28,7 +28,7 @@ collage.js 101 Shelter Sky & Null
 color.js 101 choosing a color
 corners.js 94 full screen
 court.js 237 Lawyering: what the screen shows
-customize.js 1798 Customize: the Armory
+customize.js 1803 Customize: the Armory
 datboi.js 115 here come dat boi
 democracy.js 243 Democracy of Ducklings:
 dock.js 73 the docks: where Notes and the chat open
@@ -49,7 +49,7 @@ friends.js 254 friends
 front.js 109 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 218 how a held weapon and the screen move
-game.js 8825 the game screen
+game.js 8822 the game screen
 gamedefaults.js 29 the game's own numbers, for every mode
 gameready.js 47 what the game's loading screen waits for
 gamesettings.js 1751 Game Settings: the whole screen, like Customize
@@ -57,6 +57,7 @@ gfx.js 8 Low graphics
 gmodes.js 246 Sandbox Phase 6: made game modes
 grenade.js 34 a grenade going off
 ground.js 54 what a duck walks on, for its footsteps
+gunart.js 448 every weapon, drawn: one drawing for every mode,
 gunmen.js 110 the gunmen's looks
 gunmenrules.js 1159 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen
@@ -78,12 +79,11 @@ keynav.js 204 menus by keyboard
 l4dd.js 3349 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 203 Dead Ducks Arcade's Angel machine on every screen
-l4ddart.js 623 Quacky Zombies' pictures
+l4ddart.js 622 Quacky Zombies' pictures
 l4ddbar.js 281 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and the roof's flare,
 l4ddcatalog.js 202 Quacky Zombies: the Butler's Items tab
 l4dddrops.js 63 Quacky Zombies' drops, drawn
-l4ddguns.js 279 Quacky Zombies' new weapons, drawn
 l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 338 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box on every screen
@@ -107,8 +107,8 @@ maps.js 1116 maps: the world behind the board
 merchantlines.js 81 what the merchants say
 merchants.js 376 the merchants
 meters.js 114 the thin bars under my duck's name
-mgj.js 219 Mad God Justin: what the screen shows
-mgjart.js 166 Mad God Justin's new pictures
+mgj.js 218 Mad God Justin: what the screen shows
+mgjart.js 96 Mad God Justin's new pictures
 mgjrules.js 2321 
 modes.js 255 the game modes
 music.js 590 the music: our own songs, played from recordings
@@ -176,7 +176,7 @@ sbloot.js 443 Sandbox: loot orbs , the rules
 sblootview.js 481 Sandbox: loot orbs , on the screen
 sbmake.js 203 Sandbox: making NPCs and dressing spawns , the
 sbmenu.js 264 Sandbox: presets, copy and paste, the right-click menu
-sbnpcart.js 171 Sandbox: a spawned NPC's picture, whatever it is
+sbnpcart.js 162 Sandbox: a spawned NPC's picture, whatever it is
 sbnpcs.js 73 Sandbox: the NPCs I make
 sbnumberat.js 476 Sandbox: NPCs that run a Seriat file
 sbout.js 62 Sandbox off the zombie maps: out of lives
@@ -197,7 +197,7 @@ shared.js 497 Sandbox Phase 7: Shared, the game modes and
 shell.js 3547 the command line: a small bash
 slices.js 31 long work cut into slices
 sound.js 937 the game's sounds: real recordings, played from small
-specials.js 945 Specials
+specials.js 857 Specials
 spectate.js 97 Survival: watching the others once my duck is
 splash.js 71 the start screen: your duck on a cloud,
 stamina.js 41 my sprint's stamina, in every mode

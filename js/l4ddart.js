@@ -3,6 +3,7 @@
    fatter), the boards over the doors, the holes and the top of the deck's stairs, and the
    flashlight's icon on the weapons bar (the bow and its arrow are Mad God Justin's: mgjart.js); a weapon as an orb in its
    slot's color, and the pictures on Justin's Butler's upgrades. Preview: tools/l4dd-art.html */
+import { GOLD_CHAIR, GUNS } from "./gunart.js";
 import { duckSVG } from "./duck.js";
 import {
   BLOOD,
@@ -17,9 +18,7 @@ import {
 import { svgDataURL } from "./hangout/art.js";
 import { zombieLook, kindOf, tintOf } from "./l4ddrules.js";
 import { specialById, pistolIcon } from "./specials.js";
-import { GUNS } from "./l4ddguns.js";
 import { justinSVG } from "./hangout/npcart.js";
-import { GOLD_CHAIR } from "./mgjart.js";
 
 const INK = "#1c1c28";
 
@@ -586,7 +585,7 @@ export const ICONS = {
 };
 
 const GOLD_CHAIR_ICON = GOLD_CHAIR.replace("<svg ", '<svg class="sp-chair" ');
-/* a weapon's picture: the specials' bar's (the knife, the pistol, the bow …), and the new guns' own (l4ddguns.js) */
+/* a weapon's picture: the specials' bar's (the knife, the pistol, the bow …), and the new guns' own (gunart.js) */
 /* Survival's defibrillator: a red case with a green heartbeat on its screen and a yellow bolt, its two paddles on
    curly cords in front */
 const DEFIB_ICON = `<svg viewBox="0 0 48 40" aria-hidden="true">

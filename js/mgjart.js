@@ -4,29 +4,9 @@
    sit with them. Sizes, in a duck's size: the bow 0.9, the arrow 0.8, the flame covers the duck, the
    teleport flash 1.6 tall */
 
+import { ZEBRA } from "./gunart.js";
 const INK = "#1c1c28";
 let uid = 0; // (each picture's gradients get their own ids, so two on a page never share one)
-
-/* the bow: a wooden recurve bow, its limbs curling back at the tips, a leather grip in the middle, the string on the left.
-   Turned around its middle by the aim */
-export const BOW = `<svg viewBox="0 0 40 64" aria-hidden="true">
-<path d="M13.4 4.6V59.4" stroke="#efe6cf" stroke-width="1.3"/>
-<path d="M12 3.4Q15.6 1.6 18 4.4Q29.6 12 30.4 26.4Q30.8 32 30.4 37.6Q29.6 52 18 59.6Q15.6 62.4 12 60.6" fill="none" stroke="${INK}" stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M12 3.4Q15.6 1.6 18 4.4Q29.6 12 30.4 26.4Q30.8 32 30.4 37.6Q29.6 52 18 59.6Q15.6 62.4 12 60.6" fill="none" stroke="#b5743c" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M18.6 6.4Q27 13 28.4 24" fill="none" stroke="#f0c48e" stroke-width="1.1" stroke-linecap="round" opacity=".8"/>
-<path d="M18.6 57.6Q25.6 52 27.8 44" fill="none" stroke="#7a4a22" stroke-width="1" stroke-linecap="round" opacity=".7"/>
-<rect x="27.2" y="25" width="7" height="14" rx="2.4" fill="#5a3420" stroke="${INK}" stroke-width="1.4"/>
-<path d="M27.6 28.4H33.8M27.6 31.4H33.8M27.6 34.4H33.8" stroke="#8a5634" stroke-width="1"/>
-<path d="M29 26.6V37.4" stroke="#fff" stroke-width=".8" opacity=".25"/></svg>`;
-
-/* the arrow: a wooden shaft, a steel head, red feathers at the tail. Pointing right, turned by its flight */
-export const ARROW = `<svg viewBox="0 0 64 12" aria-hidden="true">
-<path d="M2 1.6L9 5.2H15L12 1.6Z" fill="#ef3b3b" stroke="${INK}" stroke-width="1" stroke-linejoin="round"/>
-<path d="M2 10.4L9 6.8H15L12 10.4Z" fill="#c92a2a" stroke="${INK}" stroke-width="1" stroke-linejoin="round"/>
-<rect x="6" y="4.8" width="46" height="2.4" rx="1.2" fill="#c98a4b" stroke="${INK}" stroke-width=".9"/>
-<path d="M8 5.6H50" stroke="#fff" stroke-width=".6" opacity=".35"/>
-<path d="M50 2.2L63 6L50 9.8L52.4 6Z" fill="#c9d1dc" stroke="${INK}" stroke-width="1" stroke-linejoin="round"/>
-<path d="M52 3.6L60 6" stroke="#fff" stroke-width=".8" opacity=".7" stroke-linecap="round"/></svg>`;
 
 /* the burning duck: one big flame over the whole duck (the owner: "the whole duck covered in one large enough flame"),
    red outside, orange, then yellow and a pale core, its tongues licking up past the head. It flickers (css: .gduck-fire) */
@@ -44,56 +24,6 @@ export const POOF = `<svg viewBox="0 0 100 70" aria-hidden="true">
 <g fill="#ffffff"><circle cx="30" cy="40" r="12.6"/><circle cx="50" cy="30" r="16.6"/><circle cx="70" cy="40" r="12.6"/><circle cx="42" cy="50" r="11.6"/><circle cx="60" cy="50" r="11.6"/></g>
 <path d="M40 22Q46 16 54 17" fill="none" stroke="#e9edf5" stroke-width="3" stroke-linecap="round"/>
 <g fill="#fff" stroke="#b9bfcc" stroke-width="1.4"><circle cx="11" cy="24" r="4.4"/><circle cx="89" cy="22" r="4"/><circle cx="14" cy="58" r="3.4"/><circle cx="88" cy="58" r="3.6"/><circle cx="50" cy="6" r="3.2"/></g></svg>`;
-
-/* the medkit: a white case with a red cross, a dark handle on top and two latches */
-export const MEDKIT = `<svg viewBox="0 0 48 40" aria-hidden="true">
-<path d="M17 9.6V6.4Q17 4 19.4 4H28.6Q31 4 31 6.4V9.6" fill="none" stroke="${INK}" stroke-width="4.6" stroke-linecap="round"/>
-<path d="M17 9.6V6.4Q17 4 19.4 4H28.6Q31 4 31 6.4V9.6" fill="none" stroke="#4a4e5c" stroke-width="2.4" stroke-linecap="round"/>
-<rect x="3" y="9" width="42" height="28" rx="5" fill="#f4f6fa" stroke="${INK}" stroke-width="2"/>
-<path d="M3.6 31H44.4V32Q44.4 36.4 40 36.4H8Q3.6 36.4 3.6 32Z" fill="#d6dbe5"/>
-<rect x="9" y="10.6" width="4" height="3" rx="1" fill="#9aa1b0" stroke="${INK}" stroke-width=".9"/><rect x="35" y="10.6" width="4" height="3" rx="1" fill="#9aa1b0" stroke="${INK}" stroke-width=".9"/>
-<path d="M20.4 15H27.6V20.4H33V27.6H27.6V33H20.4V27.6H15V20.4H20.4Z" fill="#e63946" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"/>
-<path d="M7 13.6Q7 12 9 12" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/><path d="M21.6 16.4V20" stroke="#fff" stroke-width="1" opacity=".5" stroke-linecap="round"/></svg>`;
-
-/* Mad God Justin's big black office chair (padded back, a seat, one post, five legs on wheels; no arms): his throw, and
-   the Chair special's (specials.js) */
-export const CHAIR = `<svg viewBox="0 0 100 120" aria-hidden="true">
-<path d="M50 96L18 106M50 96L30 115M50 96L70 115M50 96L83 106M50 96L52 104" stroke="#1c1c28" stroke-width="6.6" stroke-linecap="round"/>
-<path d="M50 96L18 106M50 96L30 115M50 96L70 115M50 96L83 106M50 96L52 104" stroke="#2c2e36" stroke-width="3.8" stroke-linecap="round"/>
-<g fill="#2b2d34" stroke="#1c1c28" stroke-width="1.6"><circle cx="17" cy="108.6" r="4.4"/><circle cx="29.4" cy="116.4" r="4.4"/><circle cx="70.6" cy="116.4" r="4.4"/><circle cx="84" cy="108.6" r="4.4"/><circle cx="52.4" cy="106.4" r="3.8"/></g>
-<rect x="46.4" y="76" width="7.4" height="21" rx="2" fill="#24262d" stroke="#1c1c28" stroke-width="1.6"/><path d="M48.6 79V94" stroke="#fff" stroke-width="1.2" opacity=".2" stroke-linecap="round"/>
-<path d="M36 7C48 2.6 72 3.4 82 8.6C86 10.6 87 14.6 86.4 20.6L82.6 58.6C82 65 78.6 67.6 72 67.4L41 65.8C35 65.4 32.4 62.4 32.2 56.4L31 17C30.8 11 32 8.6 36 7Z" fill="#3b3d46" stroke="#1c1c28" stroke-width="2" stroke-linejoin="round"/>
-<path d="M38 12C49 8.4 70 9 79 13" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".16"/>
-<path d="M36 36C46 33 68 34 80 38" fill="none" stroke="#24262d" stroke-width="1.6" stroke-linecap="round"/>
-<path d="M58 14.6L57 34" stroke="#24262d" stroke-width="1.3" stroke-linecap="round" opacity=".7"/>
-<path d="M17 66C26 60.4 72 60.6 84.6 64.4C89.4 66 89.6 72.4 85 75.6C74 82 30 82.4 17.6 78C11.6 75.8 11.8 69 17 66Z" fill="#45474f" stroke="#1c1c28" stroke-width="2" stroke-linejoin="round"/>
-<path d="M14.6 73.4C26 79 72 79.4 87 72.6" fill="none" stroke="#2a2c33" stroke-width="2.2" stroke-linecap="round"/>
-<path d="M22 66.6C34 63.6 62 63.6 76 66" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".18"/>
-</svg>`;
-/* the golden chair, Quacky Zombies' 1 in 100 from the fireplace (the owner's, Nov 18 12:19Z: "the chair is golden"): the
-   same chair, its black turned to gold, darker where it was darker; its outline and shine as they are */
-const GOLDS = {
-  "#3b3d46": "#e0aa24",
-  "#45474f": "#f2c443",
-  "#2b2d34": "#b98612",
-  "#2c2e36": "#c4911a",
-  "#2a2c33": "#a8780c",
-  "#24262d": "#9a6c08",
-};
-export const GOLD_CHAIR = CHAIR.replace(
-  /#(3b3d46|45474f|2b2d34|2c2e36|2a2c33|24262d)\b/g,
-  (c) => GOLDS[c],
-);
-/* the zebra cake (the owner's picture): a square snack cake in white icing with thin chocolate stripes across the top and
-   down the sides, its cut front showing the golden sponge and the cream between */
-export const ZEBRA = `<svg viewBox="0 0 56 36" aria-hidden="true">
-<path d="M4 12L30 6L52 11L26 18Z" fill="#fbf8f0" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/>
-<path d="M26 18L52 11V25L26 33Z" fill="#efe9dc" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/>
-<path d="M4 12L26 18V33L4 26Z" fill="#f2c66d" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/>
-<path d="M4 18.6L26 24.8V27.4L4 21.2Z" fill="#fffaf0"/><path d="M4 12.8L26 18.8V20.6L4 14.6Z" fill="#fbf8f0"/>
-<g fill="#e2ab4c"><circle cx="9" cy="23.6" r=".7"/><circle cx="16" cy="28.6" r=".7"/><circle cx="21" cy="29.6" r=".6"/><circle cx="12" cy="17.6" r=".6"/><circle cx="19" cy="21" r=".6"/></g>
-<g fill="none" stroke="#3b2314" stroke-width="1.6" stroke-linecap="round"><path d="M8.7 10.9Q19.7 15.4 30.7 16.7M30.7 16.7Q31.9 20.7 30.9 25.3M14.9 9.5Q25.9 13.9 36.9 15.1M36.9 15.1Q38.1 19.1 37.1 24.3M21.2 8.0Q32.2 12.3 43.2 13.4M43.2 13.4Q44.4 17.4 43.4 23.4M26.9 6.7Q37.9 10.9 48.9 11.8M48.9 11.8Q50.1 15.8 49.1 22.5"/></g>
-<path d="M14 11Q22 9 30 8.2" stroke="#fff" stroke-width="1.2" opacity=".8" stroke-linecap="round"/></svg>`;
 
 /* Justin's snacks: the zebra cake, a slice of pizza and a pink donut with sprinkles (held at his beak, a bite at a time) */
 export const FOODS = {

@@ -17,6 +17,18 @@
    Hangout walks around Duck Cabin instead of a board: the world (hangout/world.js) draws it, follows my duck with its
    camera and works out how it stands and falls; this file only hands it the keys, the stick and the taps, and puts its
    one context button where the Vote button goes. */
+import {
+  ARROW,
+  BULLET,
+  CHAIR,
+  GOLD_CHAIR,
+  GRENADE,
+  GRENADE_PIN,
+  GUNS,
+  ROUNDS_ART,
+  TRACE,
+  ZEBRA,
+} from "./gunart.js";
 import { isInvisible } from "./invisible.js";
 import { invOn } from "./sbgod.js";
 import { syncHidden } from "./sbgodview.js";
@@ -180,7 +192,6 @@ import {
   momentHTML,
   confettiRain,
   pressFX,
-  BULLET,
   heldHTML,
   heldPicHTML,
   warmHands,
@@ -188,8 +199,6 @@ import {
   daggerHTML,
   DUCKLING,
   ammoHTML,
-  GRENADE,
-  GRENADE_PIN,
   dualPistolHTML,
   DUAL,
 } from "./specials.js";
@@ -229,7 +238,6 @@ import {
   slotOfPick,
 } from "./l4ddrules.js";
 import { watching, watchNext, watchHTML } from "./spectate.js";
-import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
 import {
   l4Held,
   l4To,
@@ -407,17 +415,7 @@ import {
   cakeAt,
   mgjStop,
 } from "./mgjrules.js";
-import {
-  FLAME,
-  ARROW,
-  POOF,
-  ZEBRA,
-  FOODS,
-  TELEPORT,
-  HITMARK,
-  edgeHTML,
-  GOLD_CHAIR,
-} from "./mgjart.js";
+import { FLAME, POOF, FOODS, TELEPORT, HITMARK, edgeHTML } from "./mgjart.js";
 import { gunLasers } from "./gunmenview.js";
 import {
   npcURL,
@@ -447,7 +445,6 @@ import {
   MAD_JUSTIN,
   SAD_JUSTIN,
   CONTROLLER,
-  CHAIR,
   DESK,
   GOOD_JUSTIN,
   pickHTML as mgjPickHTML,
@@ -2482,7 +2479,7 @@ function drawDucks(now = clockNow()) {
               ? heldHTML(w, duck) // (Angelic: its glow is drawn into the drawing, angelic())
               : heldPicHTML(w, duck, hs),
         pic = dual ? angelic(dualPistolHTML(duck)) : holy ? angelic(art) : art;
-      /* every gun as long in the hand as its l4ddguns.js w (--gw, css .held i): one number for each, so no new gun is
+      /* every gun as long in the hand as its gunart.js w (--gw, css .held i): one number for each, so no new gun is
          left at a knife's size. The Laser Rifle getting hot: the whole gun glows (laserfx.js laserGlow) */
       const [gc, gs] = lz ? laserGlow(lz) : ["", ""];
       h = el(

@@ -23,12 +23,12 @@ const digest = (all) => {
 (async () => {
   const b = await chromium.launch(),
     got = {};
-  for (const sc of SCENARIOS) {
+  const play = async (sc) => {
     const p = await b.newPage({ viewport: { width: 800, height: 450 } }),
       errs = [];
     p.on("pageerror", (e) => errs.push(String(e).slice(0, 200)));
     await p.addInitScript(fs.readFileSync(path.join(DIR, "init.js"), "utf8"));
-    await p.goto(url, { waitUntil: "networkidle" }); // (the page's own loading done first: one run of 30 once came out other)
+    await p.goto(url, { waitUntil: "networkidle" }); // (the page's own loading done first)
     await p.waitForTimeout(1500);
     await p.addScriptTag({ path: path.join(DIR, "page.js") });
     const r = await p
@@ -36,6 +36,10 @@ const digest = (all) => {
       .catch((e) => ({ err: String(e).slice(0, 200) }));
     await p.close();
     noErrors(errs, sc.name + " page errors");
+    return r;
+  };
+  for (const sc of SCENARIOS) {
+    const r = await play(sc);
     if (r.err) {
       fail(sc.name + " did not run: " + r.err);
       continue;
@@ -47,11 +51,26 @@ const digest = (all) => {
       digest: digest(r.all),
       every: r.all.filter((_, i) => i % EVERY === 0),
       seen: r.seen,
+      all: r.all,
+      parts: r.parts,
     };
   }
-  await b.close();
+  const keep = (g) => ({
+    beats: g.beats,
+    digest: g.digest,
+    every: g.every,
+    seen: g.seen,
+  });
   if (process.env.PIN) {
-    fs.writeFileSync(PINNED, JSON.stringify(got, null, 1) + "\n");
+    await b.close();
+    fs.writeFileSync(
+      PINNED,
+      JSON.stringify(
+        Object.fromEntries(Object.entries(got).map(([k, g]) => [k, keep(g)])),
+        null,
+        1,
+      ) + "\n",
+    );
     console.log("pinned", Object.keys(got).join(", "));
     return;
   }
@@ -68,8 +87,21 @@ const digest = (all) => {
             ? " (after the last pinned beat)"
             : ` between beats ${Math.max(0, at - 1) * EVERY} and ${at * EVERY}`),
       );
+      /* once more: if the second run gives the pinned game, the first one parted from it by itself (a flaky run, still a
+         failure), and here is where and in which parts of the room, to find why */
+      const again = await play(SCENARIOS.find((x) => x.name === name));
+      if (!again.err && digest(again.all) === o.digest) {
+        const i = g.all.findIndex((h, j) => h !== again.all[j]),
+          parts = Object.keys(g.parts[i] || {}).filter(
+            (k) => g.parts[i][k] !== again.parts[i][k],
+          );
+        fail(
+          `${name}: a second run gave the pinned game, so this one was flaky: it parted at beat ${i}, in ${parts.join(", ")}`,
+        );
+      }
     }
   }
   for (const name of Object.keys(pin))
     if (!got[name]) fail(name + " is pinned but no longer a scenario");
+  await b.close();
 })();

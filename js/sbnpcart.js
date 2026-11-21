@@ -8,6 +8,7 @@
    makes all of it bigger or smaller: the screens draw it at that size, and sbbody.js hits it there. A made NPC's weapon is in its hand (o.hw:
    heldOf) and its shots are lines to where they went (npcShot). Used on the board (game.js placeZombies) and on Duck Cabin
    (sbspawnview.js) */
+import { gwOf, TRACE } from "./gunart.js";
 import { duckSVG } from "./duck.js";
 import { svgDataURL } from "./svgurl.js";
 import { zombieURL, zombieBox } from "./l4ddart.js";
@@ -15,7 +16,6 @@ import { woundLook } from "./wounds.js";
 import { zombieLook } from "./l4ddrules.js";
 import { esc } from "./ui.js";
 import { heldHTML } from "./specials.js";
-import { GUNS, TRACE } from "./l4ddguns.js";
 import { sfx } from "./sound.js";
 
 export const isZombie = (o) =>
@@ -124,15 +124,6 @@ export function npcSay(el, o) {
 }
 
 /* ---------- a made NPC's weapon and shots ---------- */
-/* how long each weapon is in the hand, in duck widths (as css .held i: the guns' own from l4ddguns.js) */
-const HELD_W = {
-  knife: 0.46,
-  hammer: 0.8,
-  axe: 0.86,
-  sword: 0.62,
-  pan: 0.66,
-  shotgun: 0.95,
-};
 const HELD = new Map();
 /* what it holds: { w, url, gw (its length in duck widths) }, or null */
 export function heldOf(o) {
@@ -142,7 +133,7 @@ export function heldOf(o) {
     HELD.set(k, {
       w: o.hw,
       url: svgDataURL(heldHTML(o.hw, o.dk || {})),
-      gw: (GUNS[o.hw] && GUNS[o.hw].w) || HELD_W[o.hw] || 0.34,
+      gw: gwOf(o.hw), // (its length in the hand: as a player's, gunart.js)
     });
   return HELD.get(k);
 }
