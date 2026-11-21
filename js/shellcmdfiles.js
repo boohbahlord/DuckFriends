@@ -1,5 +1,5 @@
 /* the files and folders commands (a pure move out of shell.js: the entries of its CMDS table, run by the same shell) */
-import { groupsOf, isSudo } from "./rules.js";
+import { groupsOf, isSudo } from "./roomrules.js";
 import {
   NO_HELP,
   below,

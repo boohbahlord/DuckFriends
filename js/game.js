@@ -79,16 +79,11 @@ import {
   heldCol,
   startX,
   wyrStats,
-  isSudo,
-  canOpen,
   isSc,
   textMax,
   LAW_MID,
-  shotAt,
   coolFor,
   coolEnds,
-  phpLost,
-  PHP,
   isHang,
   inWorld,
   MAG,
@@ -104,8 +99,9 @@ import {
   counselBounds,
   walkOf,
   votesDue,
-  REACH,
 } from "./rules.js";
+import { isSudo, canOpen } from "./roomrules.js";
+import { shotAt, phpLost, PHP, REACH } from "./boardfire.js";
 import {
   isCounsel,
   jury,

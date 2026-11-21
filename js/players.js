@@ -6,7 +6,8 @@
    minutes shows Zs over their duck. */
 import { esc, el, setHTML, confirmBox, contextMenu, toast } from "./ui.js";
 import { cardHTML } from "./card.js";
-import { voteNeeds, voteKey, isBb, isHang, may, votesDue } from "./rules.js";
+import { voteNeeds, voteKey, isBb, isHang, votesDue } from "./rules.js";
+import { may } from "./roomrules.js";
 import { now as clockNow } from "./clock.js";
 import { openStats } from "./stats.js";
 import { canAdd, requestFriend } from "./account.js";

@@ -22,7 +22,14 @@
    or everyone (o+r). The chat's \mute, \permmute and \show work here too. A line sends 3 times at most, and fires 3 silly
    commands at most, a second apart. */
 import { profile, save, STAT_MODES } from "./store.js";
-import { isSudo, may, denied, GROUP_PERMS, STAGE, slowMs } from "./rules.js";
+import {
+  isSudo,
+  may,
+  denied,
+  GROUP_PERMS,
+  STAGE,
+  slowMs,
+} from "./roomrules.js";
 import { MODES } from "./modes.js";
 import { CMDS } from "./shellcmds.js";
 import "./shellcmdfiles.js";

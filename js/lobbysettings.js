@@ -5,7 +5,7 @@
    small see-through note shows under the cloud for a moment ("Democracy of Ducklings: New Legislation is Being
    Passed"); the same line goes in the chat (chat.js) */
 import { openDemocracy } from "./democracy.js";
-import { dodVoting } from "./rules.js";
+import { dodVoting } from "./roomrules.js";
 import { el } from "./ui.js";
 
 export const DOD_NEWS =

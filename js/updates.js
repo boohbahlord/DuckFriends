@@ -9,6 +9,24 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v231",
+    version: 231,
+    date: "Nov 21, 2026",
+    title: "Tidier room rules",
+    news: [
+      "Behind the scenes: groups, permissions and Democracy of Ducklings live in their own file now, out of the big rules file. Nothing plays differently.",
+    ],
+  },
+  {
+    id: "v230",
+    version: 230,
+    date: "Nov 21, 2026",
+    title: "Tidier weapons rules",
+    news: [
+      "Behind the scenes: the board's weapons (shots, blasts, swings and flames) live in their own file now, out of the big rules file (about 1,100 lines moved). Nothing plays differently.",
+    ],
+  },
+  {
     id: "v229",
     version: 229,
     date: "Nov 21, 2026",

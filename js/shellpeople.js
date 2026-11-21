@@ -1,5 +1,6 @@
 /* the people, the room and the game's helpers (fortunes, ducksay, cal, ps, top, last, finger ...) the commands print with (a pure move out of shell.js) */
-import { groupsOf, isSudo, STAGE, inWorld } from "./rules.js";
+import { inWorld } from "./rules.js";
+import { groupsOf, isSudo, STAGE } from "./roomrules.js";
 import { modeOf } from "./modes.js";
 import { clock, left, needRoom, pname, procs, table, tag } from "./shellfs.js";
 import { mapName } from "./maps.js";

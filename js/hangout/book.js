@@ -9,7 +9,7 @@ import { PROPS, W, H } from "./layout.js";
 import { nameHTML } from "../name.js";
 import { rainbowHTML } from "../art.js";
 import { esc } from "../ui.js";
-import { denied } from "../rules.js";
+import { denied } from "../roomrules.js";
 import { touchOnly } from "../pointer.js";
 
 const BOOK = PROPS.find((p) => p.kind === "book");
