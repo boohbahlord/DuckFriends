@@ -7819,3 +7819,6 @@ Make the Ethan duck have a pale white skin tone of a human being, so that his ha
 
 - 20:26Z (about the zombie swipe lines, #903): "Only want the red lines for the hit, for the zombie hits, and it can go up and down as well in any direction with where the zombie hits at. Or maybe there's like a sound effect when the zombie's about to hit as a tell as well."
   Decision: the swipe lines are red and show only with the hit (never in the wind-up), in whatever direction the swing goes, up and down included (Noah, #903). The lean-back stays. A wind-up sound is a "maybe": Miles Jr. makes a quiet one as a sample for the owner to try before it goes in.
+
+- 20:46Z (with a phone screen recording of Downpour, walking the plank): "Can anyone tell me what's wrong with this and tell me why? It's pretty obvious. Doesn't gotta be everyone, but whoever is best in line most fit to judge the problem with this."
+  Decision (Adam): the plank drew over the duck standing on it (at its canopy end the duck counted as on the canopy, at its car end as on the car, both drawn under the plank). Fixed in layout.js sortY (slopeOn): on the plank or just past its ends, a duck is drawn over it. Ships in V224.
