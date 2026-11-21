@@ -5451,21 +5451,24 @@ html.moving .pix-sun {
 .colors.grid3 .invent {
   margin-top: 0.4rem;
 }
-/* Colors' drop-downs, under the hex box: the human skins (swatches, their hex on hover) and the metals (a chip and its
-   name), each a list of its own that scrolls; one open at a time */
+/* Colors' drop-downs, under the hex box: the human skins and the metals, each a list of swatches drawn as the colors
+   above them are (the owner's, Nov 21 16:37Z: "conform to the UI of the top colors above it"), no names (a skin's hex
+   and a metal's name on hover); one open at a time */
 .cdrops {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-top: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.22rem;
+  margin-top: 0.4rem;
 }
 .cdrop {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
-  padding: 0.35rem 0.7rem;
-  border: 0.14rem solid var(--line);
-  border-radius: 0.5rem;
+  height: 1.9rem;
+  padding: 0 0.5rem;
+  border: 0.1rem solid var(--line);
+  border-radius: 0.4rem;
   background: var(--panel);
   color: inherit;
   font: inherit;
@@ -5485,14 +5488,9 @@ html.moving .pix-sun {
 }
 .clist {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(2.2rem, 1fr));
-  gap: 0.25rem;
-  max-height: 9.5rem;
-  overflow-y: auto;
-  margin-top: 0.4rem;
-  padding: 0.3rem;
-  border: 0.12rem solid var(--line);
-  border-radius: 0.5rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.22rem;
+  margin-top: 0.22rem;
 }
 .clist[hidden] {
   display: none;
@@ -5501,36 +5499,13 @@ html.moving .pix-sun {
   width: 100%;
   height: 1.7rem;
   border-radius: 0.3rem;
+  border-width: 0.1rem;
 }
-.clist .sw[aria-pressed="true"],
-.cmetal[aria-pressed="true"] {
+.clist .sw[aria-pressed="true"] {
   outline: 0.18rem solid var(--blue);
   outline-offset: 0.05rem;
 }
-.clist.cmetals {
-  grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
-}
-.cmetal {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.3rem 0.45rem;
-  border: 0.12rem solid transparent;
-  border-radius: 0.4rem;
-  background: var(--panel);
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.cmetal i {
-  flex: none;
-  width: 1.3rem;
-  height: 1.3rem;
-  border-radius: 0.3rem;
-  box-shadow: inset 0 0 0 0.12rem #0004;
-}
-.cmetal[aria-disabled="true"] {
+.clist .sw[aria-disabled="true"] {
   opacity: 0.45;
   cursor: default;
 }
@@ -5583,7 +5558,8 @@ html.moving .pix-sun {
     flex-direction: row;
     flex-wrap: wrap;
   }
-  .colors.grid3 .swatches {
+  .colors.grid3 .swatches,
+  .clist {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
@@ -19189,6 +19165,8 @@ html.pixel .chat-sugg li,
 html.pixel .chip,
 html.pixel .colors.grid3 .brush,
 html.pixel .colors.grid3 .sw,
+html.pixel .clist .sw,
+html.pixel .cdrop,
 html.pixel .cols,
 html.pixel .confetti-rain i,
 html.pixel .cooldown,
