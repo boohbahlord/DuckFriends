@@ -9,7 +9,7 @@ import { duckSVG } from "./duck.js";
 import { nameHTML, fontHTML } from "./name.js";
 import { cardBackground, cardHTML } from "./card.js";
 import { duelCloudHTML } from "./brackets.js";
-import { lawStats, attCands, attRole } from "./rules.js";
+import { lawStats, attCands, attRole } from "./lawrules.js";
 import { fmtJumps, plural } from "./format.js";
 import { seenDuck, seenName, GONE, player } from "./looks.js";
 

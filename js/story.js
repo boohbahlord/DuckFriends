@@ -20,7 +20,7 @@ import {
   SC_NEXT,
   LINE_MAX,
   WORD_MAX,
-} from "./rules.js";
+} from "./scrules.js";
 import { seenDuck, seenName, GONE, player } from "./looks.js";
 
 /* a player's font, scaled so every player's letters look the same size */

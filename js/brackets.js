@@ -23,7 +23,7 @@ import {
   seedOut,
   SEED_MAX,
   TOPIC_MAX,
-} from "./rules.js";
+} from "./bbrules.js";
 import { seenDuck, seenName, GONE, player } from "./looks.js";
 
 const inFont = (p, html) =>
