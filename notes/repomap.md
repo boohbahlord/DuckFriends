@@ -146,8 +146,8 @@ pxdom.js 739 the pixel look for drawings already on the
 pxmap.js 45 a map as pixel files
 pxpic.js 22 the maps that have a picture file :
 pxtext.js 263 emoji and tooltips in the pixel look
-quack.js 312 Who is the Quack?: what the screen shows
-quackrules.js 794 the rules of Who is the Quack?
+quack.js 301 Who is the Quack?: what the screen shows
+quackrules.js 796 the rules of Who is the Quack?
 rainbowskin.js 116 the rainbow skin
 report.js 114 Report Bug or Suggest Ideas
 rooms.js 276 Play: create a room, and the rooms online
@@ -194,7 +194,7 @@ seriattheme.js 63 Seriat's and the command line's look: Nous Within
 settings.js 298 Settings
 sfxlist.js 164 the sound files
 shared.js 497 Sandbox Phase 7: Shared, the game modes and
-shell.js 3547 the command line: a small bash
+shell.js 3541 the command line: a small bash
 slices.js 31 long work cut into slices
 sound.js 937 the game's sounds: real recordings, played from small
 specials.js 945 Specials
