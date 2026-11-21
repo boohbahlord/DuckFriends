@@ -4447,6 +4447,18 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
   return any;
 }
 
+/* a test command (cheats.js): Survival's next wave is gunmen now, "c" criminals or "s" soldiers, as its peak sends them
+   (survrules.js survTick): the phase goes to a peak with them, so the clock and the bags go on after it */
+export function cheatGunmen(s, side, now) {
+  const L = s.hang.l4,
+    sv = s.hang.sv;
+  if (!isSurv(s) || !L || !sv || !L4_HOOKS.gm || !["c", "s"].includes(side))
+    return false;
+  L4_HOOKS.gm.start(s, side, now, gmHelp(s, now));
+  s.hang.l4 = { ...L, t0: now, n: 0, made: 0, owe: 0, acc: 0, sec: -1 };
+  s.hang.sv = { ...sv, ph: "peak", t: now, until: 0, big: 0, g: side };
+  return true;
+}
 /* ---------- the host's heartbeat ---------- */
 function l4Tick(s, now) {
   const L = s.hang.l4;
