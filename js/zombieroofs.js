@@ -5,6 +5,7 @@
 import * as GS from "./hangout/stationmap.js";
 import {
   heightAt,
+  deckH,
   deckKey,
   sortY,
   layoutRev,
@@ -29,7 +30,7 @@ export const CL = {
    or the canopy's ladder. Once q is off the roof (landed, not just jumping) it doesn't, and a zombie keeping to that
    way gives it up at once (the owner's, Nov 19 19:27Z; it used to keep to it unless the duck was near) */
 export const reaches = (q, d) =>
-  !!d && (q.way === d || (!!q.alt && q.alt.way === d));
+  !!d && (q.way === d || !!q.alts?.some((a) => a.way === d));
 /* the foot of the canopy's ladder (stationmap.js PUMP_LADDER), where a zombie starts up it: the canopy's edge, as a wall */
 export const ladderFoot = () => [
   GS.PUMP_LADDER.at - CL.out,
@@ -56,10 +57,18 @@ export const deckOf = (z) => (z.k === undefined ? null : GS.DECKS[z.k] || null);
 export const stationDeck = () =>
   GS.DECKS.find((d) => d.kind === "roof" && d.bldg === 1);
 export const canopyDeck = () => GS.DECKS.find((d) => d.kind === "canopy");
-/* how high a zombie climbing a wall (st 6) is at (x, y): up from the foot (CL.out out) to the top at the edge */
+/* how high a zombie climbing a wall (st 6) is at (x, y): up from the ground at the foot (CL.out out) to the top at the
+   edge (a car's: its top's height there, vehicles.js carDeck) */
 export const climbZ = (x, y, only = null) => {
-  const e = edgeOf(x, y, only);
-  return e.d.h * Math.min(1, Math.max(0, (CL.out - e.o) / CL.out));
+  const e = edgeOf(x, y, only),
+    d = e.d,
+    g = GS.groundAt(x, y),
+    top = deckH(
+      d,
+      Math.min(d.x1 - 1, Math.max(d.x0, x)),
+      Math.min(d.y1 - 1, Math.max(d.y0, y)),
+    );
+  return g + (top - g) * Math.min(1, Math.max(0, (CL.out - e.o) / CL.out));
 };
 
 /* ---------- onto the canopy (the owner's, Nov 17 18:05Z: "zombies can jump onto the gas pump roof with only a 5%
@@ -70,7 +79,8 @@ export const climbZ = (x, y, only = null) => {
    to the ground (JUMP.fail). It picks its spot on the roof's edge once (z.jp [x, the duck]) and keeps it till it jumps,
    or till that duck leaves the canopy (the owner's, Nov 19 01:00Z: "zombies should pick a part to jump onto the gas
    pump from and commit, not going left and right over and over until the player stands still because that is ripe
-   for exploit") */
+   for exploit"). The red car's roof is a second way (the owner's, Nov 21 14:06Z: from it "to the pump's roof"): up the
+   car's side, along its roof to the edge facing the canopy, and up across (leapOf) */
 export const JUMP = {
   speed: 300,
   arc: 40,
@@ -97,9 +107,30 @@ const roofAlong = (S, x, y) => {
   }
   return x;
 };
-export function jumpOn(z, pls, far) {
-  const C = canopyDeck(),
-    S = stationDeck();
+export const carLeap = () => GS.DECKS.find((d) => d.hood);
+/* the jump from floor S onto the canopy C for a duck at q (its spot along the edge: v): [x0, y0, x1, y1] from its edge
+   to C, and [x, y] where one that falls short lands; null: none from S. The gas station's roof: from its south edge
+   over the canopy, down onto it. The red car's: from its roof's edge facing the canopy, up across to it */
+function leapOf(S, C, [qx, qy], lane) {
+  const pick = (v, a, b) =>
+    Math.round(Math.min(Math.max(v + lane, a + JUMP.in), b - JUMP.in));
+  if (S === stationDeck()) {
+    const y = S.y1 - 10,
+      x = Math.round(
+        roofAlong(S, pick(qx, Math.max(C.x0, S.x0), Math.min(C.x1, S.x1)), y),
+      );
+    return [x, y, x, C.y0 + JUMP.in, x, (S.y1 + C.y0) / 2];
+  }
+  if (S !== carLeap()) return null;
+  const R = S.roof,
+    y = pick(qy, Math.max(C.y0, R.y0), Math.min(C.y1, R.y1)),
+    west = C.x1 <= R.x0,
+    x0 = west ? R.x0 + 4 : R.x1 - 4,
+    x1 = west ? C.x1 - JUMP.in : C.x0 + JUMP.in;
+  return [x0, y, x1, y, (S.x0 + C.x1) / 2, y];
+}
+export function jumpOn(z, pls, far, S) {
+  const C = canopyDeck();
   let q = null;
   for (const p of pls)
     if (p.dk === C && (!q || room(z.x, z.y, ...p.xy) < room(z.x, z.y, ...q.xy)))
@@ -108,22 +139,17 @@ export function jumpOn(z, pls, far) {
     delete z.jp;
     return false;
   }
-  const y = S.y1 - 10;
-  if (!z.jp || !pls.some((p) => p.dk === C && p.id === z.jp[1]))
-    z.jp = [
-      Math.round(
-        roofAlong(
-          S,
-          Math.min(
-            Math.max(q.xy[0] + jumpLane(z), Math.max(C.x0, S.x0) + JUMP.in),
-            Math.min(C.x1, S.x1) - JUMP.in,
-          ),
-          y,
-        ),
-      ),
-      q.id,
-    ]; // (its spot, picked once: kept while its duck stays on the canopy)
-  const x = z.jp[0];
+  const k = GS.DECKS.indexOf(S);
+  if (
+    !z.jp ||
+    z.jp[2] !== k ||
+    !pls.some((p) => p.dk === C && p.id === z.jp[1])
+  ) {
+    const l = leapOf(S, C, q.xy, jumpLane(z));
+    if (!l) return false;
+    z.jp = [l, q.id, k];
+  } // (its spot, picked once: kept while its duck stays on the canopy)
+  const [x, y, x1, y1, fx, fy] = z.jp[0];
   if (Math.hypot(x - z.x, y - z.y) > far + JUMP.near) {
     walkTo(z, x, y, far);
     return true;
@@ -132,10 +158,10 @@ export function jumpOn(z, pls, far) {
   z.y = y;
   delete z.jp;
   const fell = Math.random() < JUMP.fail,
-    y1 = fell ? (S.y1 + C.y0) / 2 : C.y0 + JUMP.in;
+    h0 = deckH(S, x, y);
   z.st = 8;
   z.n = 0;
-  z.j = [x, y, x, y1, S.h, fell ? heightAt(x, y1) : C.h];
+  z.j = fell ? [x, y, fx, fy, h0, heightAt(fx, fy)] : [x, y, x1, y1, h0, C.h];
   return true;
 }
 export const jumpZ = (z) => {
@@ -193,7 +219,9 @@ export function climbSpot(dk, [x, y]) {
    that doesnt connect to the cieling on the bathroom, which doesnt work, so they shouldnt be able to climb tha wall") */
 function wallUnder(dk, x, y) {
   const e = edgeOf(x, y, dk),
-    walls = PROPS.filter((p) => p.kind === "wall" && p.z + p.h >= dk.h - 1),
+    walls = PROPS.filter(
+      (p) => (p.kind === "wall" || p.kind === "car") && p.z + p.h >= dk.h - 1,
+    ), // (a car's side is its own wall: its top, vehicles.js carDeck)
     drawn = (px, py) =>
       walls.some(
         (p) => px >= p.x && px <= p.x + p.w && py >= p.y && py <= p.y + p.d,

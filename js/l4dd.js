@@ -34,7 +34,7 @@ import {
   LIGHTS,
   PROPS,
   layoutRev,
-  deckAt,
+  onRoof,
 } from "./hangout/layout.js";
 import { sway, stutterOf, lightNow } from "./hangout/flicker.js";
 import { play, setListener } from "./hangout/sounds.js";
@@ -1491,7 +1491,7 @@ function paint(now, ctx) {
   function beamOf(id, a, t) {
     const c = Wd.toScreen(a.x, a.y, a.z + 26);
     if (!on(c.left * q, c.top * q, CONE.far * sc)) return; // (its light can't reach the screen: no rays)
-    const roof = !!deckAt(a.x, a.y, a.z), // (up on a roof: over the walls, nothing stops it)
+    const roof = onRoof(a.x, a.y, a.z), // (up on a roof: over the walls, nothing stops it)
       pts = [],
       ends = []; // (the same rays on the floor in world px, on into the wall each one stops at: shineProps)
     for (let k = 0; k <= rays; k++) {

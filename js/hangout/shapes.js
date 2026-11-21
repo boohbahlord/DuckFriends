@@ -414,7 +414,7 @@ const gsPart = (p, svg, o = {}) => [
     { fade: true, ...o.opt },
   ),
 ];
-const seedOf = (p) => Math.abs(Math.round(p.x / 7 + p.y / 13)) + 1;
+const seedOf = (p) => GS.seedAt(p.x, p.y);
 /* Downpour's trees: about 3 cypresses to 3 willows to 2 oaks, each in one of its three looks, two seeds, and mirrored
    half the time, all picked from the tree's id so every device grows the same forest. Each drawing is made once */
 const SWAMP_MIX = [
@@ -500,7 +500,7 @@ const GS_DRAW = {
           d: p.d,
           h: p.h,
           seed: k,
-          east: p.hood ? false : k % 2 === 0, // (the hood-up car faces west: its hood where E uses it)
+          east: GS.carEast(p.x, p.y, p.hood),
           hood: !!p.hood,
           up,
           smash: p.smash || "",
@@ -1143,12 +1143,12 @@ export const DRAW = {
   dealerstool: (p) => DRAW.stool(p), // (the Butler's: black)
   jeep(p) {
     // the red jeep facing the cabin (east); its shadow is in the ground
-    const s = 1.1,
+    const s = L.JEEP.s,
       pr = A.jeep({ facing: "e" });
     return [
       part(
         pr.front,
-        p.x - 4,
+        p.x + L.JEEP.left,
         p.y + p.d - p.z - 214 * s,
         292 * s,
         214 * s,
@@ -1552,10 +1552,10 @@ function groundPieces() {
     G.push(
       piece(
         A.jeep({ facing: "e" }).back,
-        jp.x - 4,
-        jp.y + jp.d - jp.z - 214 * 1.1,
-        292 * 1.1,
-        214 * 1.1,
+        jp.x + L.JEEP.left,
+        jp.y + jp.d - jp.z - 214 * L.JEEP.s,
+        292 * L.JEEP.s,
+        214 * L.JEEP.s,
       ),
     );
   /* the forest past the ring of trees, behind everything: north, west and east, in small pieces (a tile paints the few

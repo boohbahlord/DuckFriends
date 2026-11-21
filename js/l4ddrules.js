@@ -71,6 +71,7 @@ import {
   layoutRev,
   layoutVariant,
   deckAt,
+  floorH,
 } from "./hangout/layout.js";
 import * as GS from "./hangout/stationmap.js";
 import {
@@ -3573,7 +3574,7 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
   const gx = px + dx * far,
     gy = py + dy * far,
     gd = deckAt(gx, gy, hz),
-    gz = gd ? gd.h : heightAt(gx, gy); // (the floor it lands on: the roof I'm on, or the ground past its ledge)
+    gz = floorH(gx, gy, hz); // (the floor it lands on: the roof I'm on, or the ground past its ledge)
   if (
     now - (m.gf || 0) >= FLAME.PATCH &&
     !(flood(gx, gy) && !gd) &&
@@ -4366,10 +4367,7 @@ function burnAt(s, by, x, y, now, z0 = 0) {
    out: the floor there at its shooter's height, sh.hz). It reaches only what the shots' one rule lets it: nothing solid
    between (layout.js slabBetween; the owner's, Nov 17 20:02Z, "IT IS PHYISCALLY RETARDED"), so one on a roof never gets
    anything inside or under it, and one inside never gets anything up on it */
-const blastZ = (x, y, hz) => {
-  const d = dp() && deckAt(x, y, hz);
-  return d ? d.h : heightAt(x, y);
-};
+const blastZ = (x, y, hz) => (dp() ? floorH(x, y, hz) : heightAt(x, y));
 function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
   let any = false;
   const gore = [],

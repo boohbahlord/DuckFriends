@@ -19,6 +19,7 @@ import {
   onPlatform,
   deckAt,
   deckOver,
+  deckH,
 } from "./hangout/layout.js";
 import * as GS from "./hangout/stationmap.js";
 import { walkOf } from "./rules.js";
@@ -85,6 +86,7 @@ import {
   climbZ,
   JUMP,
   jumpOn,
+  carLeap,
   jumpZ,
   climbSpot,
   climbFrom,
@@ -424,10 +426,13 @@ export function moveZombies(s, zs, now, T, up) {
         dk,
         way,
         goal: (way && climbSpot(way, xy)) || xy,
-        alt:
+        alts:
           dk && dk.kind === "canopy"
-            ? { way: dk, goal: ladderFoot() } // (or up the ladder on its left: whichever is nearer the zombie)
-            : null,
+            ? [
+                { way: dk, goal: ladderFoot() },
+                { way: carLeap(), goal: climbSpot(carLeap(), xy) },
+              ] // (or up the ladder on its left, or the red car's roof and a jump: whichever is nearest the zombie)
+            : [],
         j: isWild(s, id), // (Justin out there: JCHASE)
       };
     });
@@ -472,7 +477,9 @@ export function moveZombies(s, zs, now, T, up) {
   const field = pls.filter((q) => !q.j),
     dist = flowFrom(
       (field.length ? field : pls).flatMap((q) =>
-        [q.goal, ...(q.alt ? [q.alt.goal] : [])].map((g) => openNear(...g)),
+        [q.goal, ...(q.alts || []).map((a) => a.goal)].map((g) =>
+          openNear(...g),
+        ),
       ),
       true,
     ); // (to a duck up on a roof: to the foot of its wall. The players only: a zombie after Justin finds its own way, wayTo)
@@ -707,8 +714,7 @@ function walkAll(zs, c) {
           target = q;
         }
       if (target) best = room(z.x, z.y, ...target.xy); // (how far it really is)
-      if (!target && !cake && e.d === stationDeck() && jumpOn(z, pls, v * dt))
-        continue; // (nobody up here, a duck on the canopy: to the roof's edge over it, then the jump)
+      if (!target && !cake && jumpOn(z, pls, v * dt, e.d)) continue; // (nobody up here, a duck on the canopy: to the roof's edge facing it, then the jump)
       if (!target || cake) {
         walkTo(z, z.x + e.nx * 200, z.y + e.ny * 200, v * dt);
         if (edgeOf(z.x, z.y, e.d).o >= CL.out) {
@@ -784,14 +790,12 @@ function walkAll(zs, c) {
           c.chasedM = true; // (a zombie of the wave coming for the merchant, and close: he goes, below)
         goal = target.goal;
         let way = target.way;
-        if (
-          target.alt &&
-          room(z.x, z.y, ...target.alt.goal) < room(z.x, z.y, ...goal)
-        ) {
-          goal = target.alt.goal;
-          way = target.alt.way;
-          best = room(z.x, z.y, ...goal);
-        } // (the canopy's ladder is nearer than the gas station's wall: up the ladder)
+        for (const a of target.alts || [])
+          if (room(z.x, z.y, ...a.goal) < room(z.x, z.y, ...goal)) {
+            goal = a.goal;
+            way = a.way;
+            best = room(z.x, z.y, ...goal);
+          } // (the canopy's ladder, or the red car, is nearer than the gas station's wall: that way)
         if (target.j) best = room(z.x, z.y, ...goal); // (how far it really is, for what follows)
         if (way) z.cm = [target.id, goal[0], goal[1], GS.DECKS.indexOf(way)]; // (its way up, from now on)
       }
@@ -957,7 +961,7 @@ export const zombieZ = (z) =>
     : z.st === 6
       ? climbZ(z.x, z.y, deckOf(z))
       : z.st === 7 || (z.st === 3 && deckOf(z))
-        ? edgeOf(z.x, z.y, deckOf(z)).d.h
+        ? deckH(edgeOf(z.x, z.y, deckOf(z)).d, z.x, z.y)
         : z.st === 8 && z.j
           ? jumpZ(z)
           : gr().h(z.x, z.y);
