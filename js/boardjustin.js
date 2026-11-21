@@ -54,8 +54,8 @@ import {
   boardPhases,
   playing,
   BOSS_SHOT_SPEED,
-  strike,
 } from "./rules.js";
+import { strike } from "./boardfire.js";
 import { scZones, scLineOf, zoneAt } from "./scrules.js";
 
 export const JUSTIN_ID = "justin";
