@@ -304,5 +304,17 @@
     "computers": 3,
     "beats": 400,
     "phase": "boss"
+  },
+  {
+    "name": "mgj-waves",
+    "options": {
+      "mode": "mgj"
+    },
+    "computers": 7,
+    "beats": 400,
+    "phase": "boss",
+    "mz": {
+      "next": "$now"
+    }
   }
 ]

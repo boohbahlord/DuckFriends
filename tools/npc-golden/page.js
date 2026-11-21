@@ -94,6 +94,8 @@ window.__golden = async (sc) => {
       return false;
     }));
   patch();
+  /* Mad God Justin: his zombie wave state (s.mz) changed to bring a wave now ("mz": { "next": "$now" }) */
+  if (sc.mz) r.state.mz = { ...r.state.mz, ...fill(sc.mz) };
   /* the scenario's own first moves */
   for (const a of sc.setup || []) {
     const was = r.state;
@@ -118,6 +120,7 @@ window.__golden = async (sc) => {
   const out = { all: [], parts: [] },
     per = {}, // (beats in each phase)
     ever = new Set(); // (which NPCs came)
+  let mzPeak = 0; // (the most Mad God Justin's wave zombies out at once)
   for (b = 0; b < sc.beats; b++) {
     if (patches.length) patch();
     beat();
@@ -131,6 +134,7 @@ window.__golden = async (sc) => {
     if (s.hang && s.hang.l4m) ever.add("merchant");
     if (s.seat.some((id) => s.players[id] && s.players[id].helper))
       ever.add("Justin");
+    mzPeak = Math.max(mzPeak, ((s.mz && s.mz.zb) || []).length);
     out.all.push(hash(JSON.stringify(s)));
     const p = {};
     for (const key of Object.keys(s.hang || {}).sort())
@@ -144,6 +148,7 @@ window.__golden = async (sc) => {
     phases: per,
     came: [...ever].sort().join(", "),
     gunmen: g.length,
+    mgjWaveZombiesPeak: mzPeak,
     zombies: ((r.state.hang && r.state.hang.zp) || []).length / 4,
     sandboxNpcs: [
       ...(((r.state.hang && r.state.hang.sbz) || {}).zb || []),
