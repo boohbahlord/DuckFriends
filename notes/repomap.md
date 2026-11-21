@@ -244,7 +244,7 @@ umaps.js 371 Made maps: making them, and keeping
 units.js 10 the game's units, in one place
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 3215 Updates
+updates.js 3224 Updates
 vdd.js 190 Valentine's Duck Date: what the screen
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival

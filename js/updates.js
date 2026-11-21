@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v237",
+    version: 237,
+    date: "Nov 21, 2026",
+    title: "Tidier board screen",
+    news: [
+      "Behind the scenes: the silly commands and the shots and blasts you see on the board live in their own file now, out of the board screen's huge file. Nothing plays differently.",
+    ],
+  },
+  {
     id: "v236",
     version: 236,
     date: "Nov 21, 2026",
