@@ -186,7 +186,7 @@ sbrotate.js 102 Sandbox, Direction's Rotate in the right-click menu :
 sbsave.js 273 Sandbox: saving a Sandbox as it is and
 sbsaves.js 743 Sandbox's saves: kept on the host's device, the
 sbsfx.js 74 Sandbox's sounds
-sbspawn.js 1708 Sandbox: spawns and respawns , the rules
+sbspawn.js 1709 Sandbox: spawns and respawns , the rules
 sbspawnview.js 2212 Sandbox: spawns and respawns , on the screen
 sbzone.js 349 Sandbox: board zones , the rules
 sbzonebrain.js 265 Sandbox: zones that run a Seriat file
@@ -221,7 +221,7 @@ umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and keeping them on
 unlocks.js 413 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 2960 Updates
+updates.js 2969 Updates
 vdd.js 190 Valentine's Duck Date: what the screen shows
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
