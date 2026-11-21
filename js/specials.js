@@ -839,13 +839,27 @@ export function heldBoxHTML(
   size,
   { cls = "", attrs = "", style = "", art } = {},
 ) {
-  return `<div class="held${cls}" data-w="${w}"${attrs} style="--s:${Math.round(size)}px${GUNS[w] ? `;--gw:${GUNS[w].w}` : ""}${style}"><i>${art ?? heldHTML(w, duck)}</i></div>`;
+  return `<div class="held${cls}" data-w="${w}"${attrs} style="--s:${Math.round(size)}px;--gw:${gwOf(w)}${style}"><i>${art ?? heldHTML(w, duck)}</i></div>`;
 }
 /* a weapon in a hand as one picture made into pixels (pixel.js pxSVG), its duck `size` css px (heldBoxHTML's --s): the
    same weapon, colors and size are one picture, made once, and warmHeld makes it while the game loads. As a drawing on
    the page pxdom.js made it the moment it was first held, mid-game (the owner's, Nov 20 20:46Z: "pop-ins") */
-const HELD_W = 0.34; // (css .held i: a weapon's width in ducks, when its gun has no width of its own)
-const heldW = (w, size) => Math.round(size) * (GUNS[w] ? GUNS[w].w : HELD_W);
+/* each weapon's length in the hand, in ducks: Quacky Zombies' guns their l4ddguns.js w, these their own, any other 0.34
+   (the pistol). One table, so the picture is made at the size the box shows it (they were css rules of their own) */
+const HELD_GW = {
+  dagger: 0.4,
+  knife: 0.46,
+  hammer: 0.8,
+  axe: 0.86,
+  sword: 0.8, // (the short sword redrawn longer than the knife, the owner's, Nov 19 19:47Z)
+  pan: 0.66,
+  grenade: 0.3,
+  shotgun: 0.95,
+  chair: 0.62,
+  zebra: 0.5,
+};
+const gwOf = (w) => (GUNS[w] ? GUNS[w].w : HELD_GW[w] || 0.34);
+const heldW = (w, size) => Math.round(size) * gwOf(w);
 function sizedSVG(svg) {
   const head = svg.slice(0, svg.indexOf(">")),
     vb = /viewBox="[-\d.]+ [-\d.]+ ([\d.]+) ([\d.]+)"/.exec(head);
