@@ -532,6 +532,7 @@ import {
   jitter,
   shake,
   shakeNow,
+  holdShake,
   vibrate,
   VIB,
   hitPx,
@@ -2903,18 +2904,19 @@ function drawFx(board, fxl, hang, size, s, now) {
   } else fxOrigin(0, 0);
   fxFrame(pt);
   /* my screen shakes as I fire (fxmotion.js); sprinting blurs the map a little (css/app.css: fades in and out, never
-     stacks); my adrenaline shot taken: a fast wobble */
+     stacks); my adrenaline shot taken: a fast wobble, then a small steady shake and the blurred border while it lasts */
   const [kx, ky] = shakeNow(pt),
     sk = kx || ky ? `${kx.toFixed(1)}px ${ky.toFixed(1)}px` : "";
   if (board._sk !== sk) {
     board._sk = sk;
     board.style.translate = sk;
   }
+  const ad = adren(s, R.me, now);
+  holdShake(ad);
   document.documentElement.classList.toggle(
     "sprint-blur",
-    !!(me && sprinting && moving && onBoardPhase()),
+    !!(me && ((sprinting && moving) || ad) && onBoardPhase()),
   );
-  const ad = adren(s, R.me, now);
   if (ad && !board._ad) wobble(pt);
   board._ad = ad;
 }

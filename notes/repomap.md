@@ -47,8 +47,8 @@ format.js 12 numbers as the settings ask
 friends.js 254 friends
 front.js 109 the front page
 fx.js 1200 the effects, drawn as pixels
-fxmotion.js 209 how a held weapon and the screen move
-game.js 8838 the game screen
+fxmotion.js 216 how a held weapon and the screen move
+game.js 8840 the game screen
 gamedefaults.js 29 the game's own numbers, for every mode
 gameready.js 47 what the game's loading screen waits for
 gamesettings.js 1751 Game Settings: the whole screen, like Customize
@@ -200,7 +200,7 @@ sound.js 937 the game's sounds: real recordings, played from small
 specials.js 945 Specials
 spectate.js 97 Survival: watching the others once my duck is
 splash.js 71 the start screen: your duck on a cloud,
-stamina.js 34 my sprint's stamina, in every mode
+stamina.js 41 my sprint's stamina, in every mode
 stats.js 241 stats: a player's stat box and the View
 store.js 262 what this device remembers
 story.js 221 Story Chain: what the screen shows

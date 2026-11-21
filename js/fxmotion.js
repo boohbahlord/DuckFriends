@@ -169,6 +169,13 @@ export function shake(amount) {
   if (heavyOff()) return;
   trauma = Math.min(1, trauma + amount); // (at most about 6 px: the chain gun held down, a grenade close by)
 }
+/* on an adrenaline shot or the Speed Boost: my screen keeps a small shake, the firing shake held low (the owner's,
+   Nov 21 05:08Z: "might cause your screen to shake a little with some already existent shake effect") */
+const ADREN_TRAUMA = 0.18; // (about 1 px)
+let held = false;
+export function holdShake(on) {
+  held = !!on && !heavyOff();
+}
 /* an adrenaline shot taken: a short fast wobble */
 export function wobble(now, ms = 650) {
   if (heavyOff()) return;
@@ -186,7 +193,7 @@ export function hurtSway(now) {
 export function shakeNow(now) {
   const dt = shook ? Math.min(0.1, (now - shook) / 1000) : 0;
   shook = now;
-  trauma = Math.max(0, trauma - dt * 2.4);
+  trauma = Math.max(held ? ADREN_TRAUMA : 0, trauma - dt * 2.4);
   let x = 0,
     y = 0;
   if (trauma > 0.005) {

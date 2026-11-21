@@ -11890,8 +11890,11 @@ html.moving .hp .flick {
 .gduck.dodge:not(.ghost) .gduck-body {
   opacity: 0.55;
 }
-/* sprinting blurs the map a little: it fades in and out, and it's one layer, so it never stacks (game.js toggles
-   html.sprint-blur); on a board the map is behind it, in Hangout and Dead Ducks Arcade the ground */
+/* sprinting blurs the border of my screen, like the red corners of a hit, never the whole screen (the owner's, Nov 21
+   05:08Z: "the border of your screen that goes blurry, like how it is with the blood. Not the whole screen"): the
+   middle stays sharp. It fades in and out, and it's one layer, so it never stacks (game.js toggles html.sprint-blur,
+   also the whole time I'm on an adrenaline shot or the Speed Boost); on a board the map is behind it, in Hangout and
+   Dead Ducks Arcade the ground */
 .game::after,
 .hang-board::after {
   content: "";
@@ -11899,7 +11902,11 @@ html.moving .hp .flick {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  backdrop-filter: blur(1.2px);
+  backdrop-filter: blur(2.5px);
+  -webkit-mask-image: radial-gradient(closest-side, transparent 62%, #000 100%);
+  mask-image: radial-gradient(closest-side, transparent 62%, #000 100%);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
   opacity: 0;
   visibility: hidden;
   transition:
