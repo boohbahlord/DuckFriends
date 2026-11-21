@@ -6,13 +6,9 @@
    melee weapons, the grenade, the pump shotgun and the pistol, each taking its colors (specials.js colorsOf, heldHTML),
    and the bow, the medkit, the chair and the zebra cake. Preview: tools/l4dd-art.html */
 import { LASER } from "./laserart.js";
-const INK = "#2a2d38";
-/* the colors they share: the guns' dark metal, lighter metal, the underside, polymer, two woods and their grain */
-const M1 = "#33384a",
-  M2 = "#454b5e",
-  M0 = "#2a2e3c",
-  POLY = "#1f2230",
-  WOOD = "#8a4b2a",
+import { INK, M0, M1, M2, POLY, shine, box, part } from "./gunparts.js";
+/* the colors only the guns have: two woods and their grain, olive, steel and brass (the dark metals are gunparts.js') */
+const WOOD = "#8a4b2a",
   AKWOOD = "#b0602a",
   GRAIN = "#5a3218",
   OLIVE = "#5d6b3a",
@@ -21,12 +17,6 @@ const M1 = "#33384a",
   STEEL_D = "#8d929e",
   BRASS = "#e0a43a",
   BEAD = "#ffd23f";
-const shine = (d, o = 0.28, w = 0.8) =>
-  `<path d="${d}" stroke="#fff" stroke-width="${w}" opacity="${o}" fill="none" stroke-linecap="round"/>`;
-const box = (x, y, w, h, r, fill, sw = 1.1) =>
-  `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${fill}" stroke="${INK}" stroke-width="${sw}"/>`;
-const part = (d, fill, sw = 1.1) =>
-  `<path d="${d}" fill="${fill}" stroke="${INK}" stroke-width="${sw}" stroke-linejoin="round"/>`;
 
 /* the sniper, a Barrett .50 Cal (the owner's, Nov 18 12:19Z: "give it the look of a Barret 50 caliber"): long and
    heavy, all dark metal. The stock with its black recoil pad and the monopod under it, the pistol grip, the big box
