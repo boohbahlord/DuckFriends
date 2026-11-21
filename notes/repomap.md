@@ -148,7 +148,7 @@ powerart.js 377 Dead Ducks Arcade: the power box
 pxa.js 341 made by tools/pixel-art.cjs:
 pxbake.js 627 a map's pictures made into pixels
 pxcard.js 259 the player cards' pattern motifs as
-pxdom.js 754 the pixel look for drawings already
+pxdom.js 764 the pixel look for drawings already
 pxmap.js 45 a map as pixel files
 pxpic.js 22 the maps that have a picture
 pxtext.js 263 emoji and tooltips in the pixel
@@ -221,7 +221,7 @@ stats.js 165 stats: a player's stat box and
 store.js 262 what this device remembers
 story.js 211 Story Chain: what the screen shows
 styles.js 386 duck styles
-survrules.js 324 Survival
+survrules.js 321 Survival
 svgurl.js 10 a drawing as a data:
 textutils.js 1150 the command line's text tools
 touch.js 284 touch controls on the board
@@ -262,7 +262,7 @@ death.js 101 how long a knocked-down duck can't
 doors.js 32 the doors: they swing open while
 dpground.js 320 Downpour's ground
 falls.js 118 falling a long way
-fireflies.js 178 fireflies
+fireflies.js 174 fireflies
 flicker.js 83 now and then a light stutters
 ghosts.js 110 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in blue
@@ -275,7 +275,7 @@ pianokeys.js 665 Hangout: the piano's keyboard mode
 plank.js 90 the plank from the red car's
 poker.js 1185 poker at the blackjack table
 pool.js 9 down the hill: the water and
-power.js 504 the power box, the blackout, the
+power.js 500 the power box, the blackout, the
 pxw-cabin-l4.js 418 made by tools/pixel-world.cjs:
 pxw-cabin.js 433 made by tools/pixel-world.cjs:
 pxw-downpour.js 344 made by tools/pixel-world.cjs:
