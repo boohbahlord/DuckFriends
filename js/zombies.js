@@ -949,13 +949,14 @@ export const zFloor = (z) =>
       ? deckAt(z.x, z.y, zombieZ(z))
       : null;
 export const duckFloor = (p) => (dp() ? deckAt(...at(p), +p.z || 0) : null);
-/* a zombie's height: up a fence, up a wall, on a roof, jumping onto the canopy, or on the ground */
+/* a zombie's height: up a fence, up a wall, on a roof (alive or dead there: l4ddrules.js die), jumping onto the canopy,
+   or on the ground */
 export const zombieZ = (z) =>
   z.st === 5
     ? fenceZ(z.x, z.y, z.l[2])
     : z.st === 6
       ? climbZ(z.x, z.y, deckOf(z))
-      : z.st === 7
+      : z.st === 7 || (z.st === 3 && deckOf(z))
         ? edgeOf(z.x, z.y, deckOf(z)).d.h
         : z.st === 8 && z.j
           ? jumpZ(z)

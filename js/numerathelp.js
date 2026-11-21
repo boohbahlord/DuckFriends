@@ -107,7 +107,8 @@ and tells you why.
 
 Boxes that take tenths (speed and damage) read 0.8, 1.5 and so on.
 1.25 is read as 1.3 (the nearest tenth).
-0.8:1.2 picks a tenth from 0.8 to 1.2, each time.
+0.8:1.2 picks a tenth from 0.8 to 1.2, each time: a range with a decimal end goes
+through every tenth, so 1.5:2.4 is 1.5, 1.6, 1.7 ... 2.3 or 2.4.
 
 The . puts what follows in the tenths place:
   1.0:1.*   1.0 to 1.9

@@ -105,7 +105,7 @@ export function mountL4Bar(S, api) {
        counts), and made again with it, every icon went through pxdom again */
     const icons = (list) =>
       row.querySelectorAll(".l4s > i").forEach((e, j) => {
-        if (!list[j]) return;
+        if (!list[j] || e.firstChild) return; // (a slot kept from before has its icon in already)
         const h = `<i>${list[j]}</i>`,
           k = kept(h);
         e.replaceWith(row.contains(k) ? el(h) : k); // (the same icon twice in the row: the second a copy)
@@ -118,20 +118,12 @@ export function mountL4Bar(S, api) {
         SLOT_KINDS[i],
         String(pickOfSlot(i)),
       ],
-      slots = down
-        ? [["", "handgun", "ranged", "dg"]]
-        : [
-            ...sl.slice(0, 4).map(one),
-            ...sl.slice(4, 5).map((w) => one(w, 4)),
-            ["6", "grenade", "grenade", "grenade"],
-            ...(dark ? [] : [["0", "fl", "light", "fl"]]),
-          ];
-    if (down) {
-      const n = count("dg", m);
-      row.innerHTML = `<div class="l4slots"><button type="button" class="l4s k-ranged c-plain sel l4s-down" aria-label="Pistol, ${n}" disabled>${reloadMeter(s, me, "dg", m)}<i></i><kbd>R</kbd><small>${n}</small></button></div>`;
-      icons([weaponIcon("handgun", duckOf(s, me))]);
-      return;
-    } // (R reloads it; it fires as the pistol always does)
+      slots = [
+        ...sl.slice(0, 4).map(one),
+        ...sl.slice(4, 5).map((w) => one(w, 4)),
+        ["6", "grenade", "grenade", "grenade"],
+        ...(dark ? [] : [["0", "fl", "light", "fl"]]),
+      ];
     const slot = ([key, w, kind, does]) => {
       const n = w ? count(w, m) : "",
         empty = !w || spent(w, m),
@@ -150,8 +142,32 @@ export function mountL4Bar(S, api) {
       return `<button type="button" class="l4s k-${kind}${tint ? " " + tint : ""}${w && w === held ? " sel" : ""}${empty ? " empty" : ""}${into ? " l4s-to" : ""}" data-l4w="${does}" aria-label="${name}${n ? ", " + n : ""}"${out || (!w && does !== "fl") ? " disabled" : ""}>${w ? reloadMeter(s, me, w, m) : ""}${into ? toGlow(toW) : ""}<i></i><kbd>${key}</kbd>${n ? `<small>${n}</small>` : ""}</button>`;
     };
     /* (my HP isn't here any more: it's the red meter under the hotbar, hpmeter.js; owner 2026-11-04 03:16Z) */
-    const ics = [];
-    row.innerHTML = `<div class="l4slots">${slots.map(slot).join("")}</div>`;
+    const ics = down ? [weaponIcon("handgun", duckOf(s, me))] : [],
+      n = down && count("dg", m),
+      html = down
+        ? [
+            `<button type="button" class="l4s k-ranged c-plain sel l4s-down" aria-label="Pistol, ${n}" disabled>${reloadMeter(s, me, "dg", m)}<i></i><kbd>R</kbd><small>${n}</small></button>`,
+          ] // (R reloads it; it fires as the pistol always does)
+        : slots.map(slot),
+      /* what a slot shows, its icon with it; a reload by when it ends, not by how far it's gone (its meter runs in css) */
+      key = (j) => html[j].replace(/--rd:-\d+ms/, `rl${m && m.rl}`) + ics[j],
+      box = row.firstElementChild;
+    /* only the slots that changed are made again: the whole row made again at every shot painted the bottom bar again,
+       and every icon went through pxdom again */
+    if (
+      !box ||
+      !box.matches(".l4slots") ||
+      box.children.length !== html.length
+    ) {
+      row.innerHTML = `<div class="l4slots">${html.join("")}</div>`;
+      [...row.firstElementChild.children].forEach((b, j) => (b._k = key(j)));
+    } else
+      [...box.children].forEach((b, j) => {
+        if (b._k === key(j)) return;
+        const nb = el(html[j]);
+        nb._k = key(j);
+        b.replaceWith(nb);
+      });
     icons(ics);
   }
   const press = (e) => {

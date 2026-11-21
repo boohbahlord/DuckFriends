@@ -9,6 +9,7 @@ import {
   sortY,
   layoutRev,
   PROPS,
+  onDeckAt,
 } from "./hangout/layout.js";
 import { RX, RY } from "./l4ddrules.js";
 import { room, walkTo, zOk } from "./zombies.js";
@@ -84,6 +85,18 @@ export const JUMP = {
    back, over and over, so they shook at the roof's edge (the owner's, Nov 20 03:58Z: "zombies shouldnt viibrate on
    roof of gas pump") */
 const jumpLane = (z) => ((z.i % (2 * JUMP.wide + 1)) - JUMP.wide) * JUMP.gap;
+/* the nearest x along the roof's edge (at y) that has roof under it, JUMP.near either side: a spot over the hole broken
+   out of the corner by the restroom had them walk into it, drop to the ground, climb back up and walk into it again,
+   over and over (the owner's, Nov 21 08:46 ET: "the zombies are stuck on one another and not going up a ladder") */
+const roofAlong = (S, x, y) => {
+  const ok = (a) =>
+    [-JUMP.near, 0, JUMP.near].every((t) => onDeckAt(S, a + t, y));
+  for (let t = 0; t <= S.x1 - S.x0; t += 4) {
+    if (ok(x + t)) return x + t;
+    if (ok(x - t)) return x - t;
+  }
+  return x;
+};
 export function jumpOn(z, pls, far) {
   const C = canopyDeck(),
     S = stationDeck();
@@ -95,18 +108,22 @@ export function jumpOn(z, pls, far) {
     delete z.jp;
     return false;
   }
+  const y = S.y1 - 10;
   if (!z.jp || !pls.some((p) => p.dk === C && p.id === z.jp[1]))
     z.jp = [
       Math.round(
-        Math.min(
-          Math.max(q.xy[0] + jumpLane(z), Math.max(C.x0, S.x0) + JUMP.in),
-          Math.min(C.x1, S.x1) - JUMP.in,
+        roofAlong(
+          S,
+          Math.min(
+            Math.max(q.xy[0] + jumpLane(z), Math.max(C.x0, S.x0) + JUMP.in),
+            Math.min(C.x1, S.x1) - JUMP.in,
+          ),
+          y,
         ),
       ),
       q.id,
     ]; // (its spot, picked once: kept while its duck stays on the canopy)
-  const x = z.jp[0],
-    y = S.y1 - 10;
+  const x = z.jp[0];
   if (Math.hypot(x - z.x, y - z.y) > far + JUMP.near) {
     walkTo(z, x, y, far);
     return true;
@@ -171,7 +188,9 @@ export function climbSpot(dk, [x, y]) {
    same pieces the art draws) as tall as the roof, under the whole width of a zombie (CL.wide each side). A hole or a
    door is no wall piece, so nobody climbs it (the owner's, Nov 21 03:40Z: "zombies should not be able to climb over
    holes in a wall because there's a hole in the wall. So they can't climb what isn't there"). The canopy has no walls
-   (its ladder is climbed instead) */
+   (its ladder is climbed instead). And only a wall that holds the roof up: the roof must be there at its top, where the
+   climb comes out (CL.in onto it), never a hole in the roof (the owner's, Nov 21: "zombies also climb on the brick walls
+   that doesnt connect to the cieling on the bathroom, which doesnt work, so they shouldnt be able to climb tha wall") */
 function wallUnder(dk, x, y) {
   const e = edgeOf(x, y, dk),
     walls = PROPS.filter((p) => p.kind === "wall" && p.z + p.h >= dk.h - 1),
@@ -185,17 +204,27 @@ function wallUnder(dk, x, y) {
           return true;
       return false;
     };
-  return under(-CL.wide) && under(0) && under(CL.wide);
+  const roof = (t) =>
+    onDeckAt(
+      dk,
+      x - e.nx * (CL.out + CL.in) - e.ny * t,
+      y - e.ny * (CL.out + CL.in) + e.nx * t,
+    );
+  return [-CL.wide, 0, CL.wide].every((t) => under(t) && roof(t));
 }
 /* where zombie z starts up deck dk's wall, its way up's foot (gx, gy) near: at the foot of the wall straight in front of
    it, if a wall stands there too, else that foot itself. It walks there first and starts from the ground: it started
    wherever it was within reach of the foot before, up to the roof's edge, and was halfway up the moment it began (the
    owner's, Nov 21 03:40Z: "not just stand there and then teleport to the top") */
 export function climbFrom(z, dk, gx, gy) {
+  /* the canopy's ladder is as wide as its rungs: each zombie starts up it where it stands along it, not all of them at
+     its middle (there they pushed one another off it for good and none went up: the owner's, Nov 21 08:46 ET, "the
+     zombies are stuck on one another and not going up a ladder") */
+  if (dk.kind === "canopy")
+    return [gx, Math.min(Math.max(z.y, GS.PUMP_LADDER.y0), GS.PUMP_LADDER.y1)];
   const e = edgeOf(gx, gy, dk),
     at = e.nx ? [gx, z.y] : [z.x, gy];
-  return dk.kind !== "canopy" &&
-    zOk(at[0], at[1], heightAt(at[0], at[1])) &&
+  return zOk(at[0], at[1], heightAt(at[0], at[1])) &&
     wallUnder(dk, at[0], at[1])
     ? at
     : [gx, gy];

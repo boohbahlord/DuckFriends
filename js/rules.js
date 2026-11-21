@@ -217,6 +217,7 @@ import {
   THROWS,
   MGJ_GUNS,
   MGJ_MELEE,
+  NADE_GROW,
 } from "./guns.js";
 import { l4Zups, l4SetHp } from "./zombies.js";
 import { hOk, hLock, sameFloorAhead, floorLock } from "./heights.js";
@@ -1122,7 +1123,7 @@ export const daggerZ = (t) => DAGGER_Z + DAGGER_UP * t - (DAGGER_G * t * t) / 2;
    looks burnt for a while */
 export const GRENADE_MS = 900,
   GRENADE_FAR = 8,
-  GRENADE_R = 2.25;
+  GRENADE_R = 2.25 * NADE_GROW;
 const grenadeZ = (t) => {
   const u = Math.min(1, t / (GRENADE_MS / 1000));
   return 0.45 * (1 - u) + 4.4 * u * (1 - u);
