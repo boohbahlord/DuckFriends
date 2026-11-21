@@ -1081,6 +1081,12 @@ export function chatWidget() {
     lastN = 0;
   const room = () => activeRoom();
 
+  const addNote = (text, float) => {
+    ui.notes.push({ t: Date.now(), mine: true, text }); // (a line only I see; float: the chat's button floats it too while the chat is closed)
+    if (ui.mode === "chat") drawLog();
+    if (float && !ui.open && room())
+      showFloat(room().state, room().me, { sys: true, text });
+  };
   const drawLog = () => {
     const r = room(),
       s = r && r.state;
@@ -1404,10 +1410,7 @@ export function chatWidget() {
     }
     const r = room(),
       note = (...t) => {
-        ui.notes.push(
-          ...t.map((text) => ({ t: Date.now(), mine: true, text })),
-        );
-        drawLog();
+        t.forEach(addNote);
         refresh();
       };
     /* the command line's words, typed in the chat: clear clears the chat on your screen, help is the chat's help, and a
@@ -1519,21 +1522,16 @@ export function chatWidget() {
     /* a Democracy of Ducklings vote starting: a line in the chat (the note under the cloud says the same) */
     const dv = Object.keys((s.dod && s.dod.votes) || {}),
       dk = `${s.id}`;
-    if (ui.dodRoom === dk && dv.some((k) => !ui.dodVotes.includes(k))) {
-      ui.notes.push({ t: Date.now(), mine: true, text: DOD_NEWS });
-      if (ui.mode === "chat") drawLog();
-    }
+    if (ui.dodRoom === dk && dv.some((k) => !ui.dodVotes.includes(k)))
+      addNote(DOD_NEWS);
     ui.dodRoom = dk;
     ui.dodVotes = dv;
     const g = s.startedAt ? `${s.id}:${s.startedAt}` : ""; // each new game: a note on the chat's suggestions
     if (g && g !== ui.game) {
       ui.game = g;
-      ui.notes.push({
-        t: Date.now(),
-        mine: true,
-        text: `New game. \\togglesuggest turns the chat's suggestions ${profile.settings.chatSuggest === false ? "back on" : "off"}.`,
-      });
-      if (ui.mode === "chat") drawLog();
+      addNote(
+        `New game. \\togglesuggest turns the chat's suggestions ${profile.settings.chatSuggest === false ? "back on" : "off"}.`,
+      );
     }
     if ((s.logN || 0) !== lastN) {
       const fresh = s.log.filter((m) => m.n > lastN);
@@ -1574,6 +1572,7 @@ export function chatWidget() {
     if (current === w) current = null;
   };
   w.isOpen = () => ui.open;
+  w.note = (text) => addNote(text, true);
   setMode(ui.mode);
   if (ui.open) {
     panel.hidden = false;
@@ -1583,7 +1582,7 @@ export function chatWidget() {
   current = w;
   return w;
 }
-
+export const chatNote = (text) => current && current.note(text); // (a line of the chat only I see: game.js)
 /* T opens the chat, Shift+T the command line (not while typing or with a window open) */
 addEventListener("keydown", (e) => {
   if (
