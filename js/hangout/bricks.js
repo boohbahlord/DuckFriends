@@ -112,7 +112,21 @@ function draw(w, h, bricks, crumbs, up, r) {
     H = h + up,
     depth = new Float32Array(W * H).fill(-1e9),
     who = new Int32Array(W * H).fill(-1),
-    col = new Array(W * H).fill(null);
+    col = new Array(W * H).fill(null),
+    /* every pixel in the box round some points (xs, ys), row by row: fn(px, py) */
+    eachPixel = (xs, ys, fn) => {
+      for (
+        let py = Math.max(0, Math.floor(Math.min(...ys)));
+        py < Math.min(H, Math.ceil(Math.max(...ys)));
+        py++
+      )
+        for (
+          let px = Math.max(0, Math.floor(Math.min(...xs)));
+          px < Math.min(W, Math.ceil(Math.max(...xs)));
+          px++
+        )
+          fn(px, py);
+    };
   bricks.forEach((b, id) => {
     const z0 = b.z,
       z1 = b.z + b.h,
@@ -148,36 +162,27 @@ function draw(w, h, bricks, crumbs, up, r) {
     for (const f of faces) {
       const xs = f.poly.map((v) => v[0]),
         ys = f.poly.map((v) => v[1]);
-      for (
-        let py = Math.max(0, Math.floor(Math.min(...ys)));
-        py < Math.min(H, Math.ceil(Math.max(...ys)));
-        py++
-      )
-        for (
-          let px = Math.max(0, Math.floor(Math.min(...xs)));
-          px < Math.min(W, Math.ceil(Math.max(...xs)));
-          px++
-        ) {
-          const sx = px + 0.5,
-            sy = py + 0.5;
-          if (!inside(f.poly, sx, sy)) continue;
-          /* how near the eye: y + z along the ray through this pixel (the world is seen from the south and above) */
-          let t;
-          if (f.top != null) t = f.top;
-          else t = (f.c - f.n[0] * sx - f.n[1] * (sy - up)) / f.n[1];
-          const d = sy + 2 * t,
-            k = py * W + px;
-          if (d <= depth[k]) continue;
-          depth[k] = d;
-          who[k] = id;
-          const M = MATS[b.mat];
-          col[k] =
-            f.top != null
-              ? M[0]
-              : f.n[0] > 0.45
-                ? M[2]
-                : M[1]; /* (lit from the west: a face turned east is darker) */
-        }
+      eachPixel(xs, ys, (px, py) => {
+        const sx = px + 0.5,
+          sy = py + 0.5;
+        if (!inside(f.poly, sx, sy)) return;
+        /* how near the eye: y + z along the ray through this pixel (the world is seen from the south and above) */
+        let t;
+        if (f.top != null) t = f.top;
+        else t = (f.c - f.n[0] * sx - f.n[1] * (sy - up)) / f.n[1];
+        const d = sy + 2 * t,
+          k = py * W + px;
+        if (d <= depth[k]) return;
+        depth[k] = d;
+        who[k] = id;
+        const M = MATS[b.mat];
+        col[k] =
+          f.top != null
+            ? M[0]
+            : f.n[0] > 0.45
+              ? M[2]
+              : M[1]; /* (lit from the west: a face turned east is darker) */
+      });
     }
   });
   /* chips and cracks on the tops: a corner knocked off shows the brick's inside; a crack, a faint line a shade under */
@@ -242,18 +247,10 @@ function draw(w, h, bricks, crumbs, up, r) {
       }),
       xs = grown.map((v) => v[0]),
       ys = grown.map((v) => v[1] + up);
-    for (
-      let py = Math.max(0, Math.floor(Math.min(...ys)));
-      py < Math.min(H, Math.ceil(Math.max(...ys)));
-      py++
-    )
-      for (
-        let px = Math.max(0, Math.floor(Math.min(...xs)));
-        px < Math.min(W, Math.ceil(Math.max(...xs)));
-        px++
-      )
-        if (!out[py * W + px] && inside(grown, px + 0.5, py + 0.5 - up))
-          shade[py * W + px] = true;
+    eachPixel(xs, ys, (px, py) => {
+      if (!out[py * W + px] && inside(grown, px + 0.5, py + 0.5 - up))
+        shade[py * W + px] = true;
+    });
   }
   for (const [x, y, c] of crumbs) {
     const px = Math.floor(x),

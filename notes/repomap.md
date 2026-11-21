@@ -250,7 +250,7 @@ art.js 3051 Duck Cabin: the drawings
 beachball.js 364 the beach ball
 blackjack.js 1382 the blackjack table in the great
 book.js 170 the guestbook: a book on a
-bricks.js 485 loose bricks, drawn as pixels
+bricks.js 482 loose bricks, drawn as pixels
 cabinend.js 135 End Cabin / Exit Cabin
 cats.js 662 Duck Cabin's cats: Annabelle, Bubbles, Oreo
 chalk.js 631 the chalk floor: draw on it
