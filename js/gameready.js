@@ -1,3 +1,4 @@
+import { VEILED } from "./loading.js";
 /* ---------- what the game's loading screen waits for (the owner's, Nov 20 20:46Z: "countless moments of like jittering,
    like pop-ins, things being unloaded ... I don't care if you have good frames, if the game plays like you see it in
    this footage") ----------
@@ -19,8 +20,7 @@ const frame = () => new Promise((r) => requestAnimationFrame(() => r()));
 export async function gameHeld(maxMs = 60000) {
   const t0 = performance.now();
   for (;;) {
-    await frame();
-    await frame();
+    for (let i = 0; i <= VEILED; i++) await frame(); // (two frames the game drew: it draws one in VEILED under the screen)
     if (!held.size || performance.now() - t0 > maxMs) return;
     await Promise.race([
       Promise.allSettled([...held]),

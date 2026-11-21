@@ -82,6 +82,18 @@ window.__pgSetup = async (sc) => {
       [r.me]: { ...P, duck: { ...P.duck, keys: sc.keys } },
     };
   } // (my duck's specials on its number keys)
+  if (sc.kit) {
+    const a = r.state.hang.l4a || {};
+    r.state.hang = {
+      ...r.state.hang,
+      l4a: { ...a, [r.me]: { ...a[r.me], ...sc.kit } },
+    };
+  } // (Dead Ducks Arcade: my kit, as items in slots 4 and 5 and grenades on 6)
+  if (sc.pick)
+    r.state.mgj = {
+      ...r.state.mgj,
+      held: { ...(r.state.mgj.held || {}), [r.me]: sc.pick },
+    }; // (Mad God Justin: the weapon I picked up, on key 3)
   F.rnd = false; // (the screen's loading: real chance, nothing it makes is in the room)
   if (!inGame()) throw new Error("never got to the game: " + r.state.phase);
   return r.state.phase;

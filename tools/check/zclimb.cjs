@@ -48,6 +48,9 @@ const INIT = path.resolve(__dirname, "../npc-golden/init.js");
     room.state.zmapAsked = 1;
     room.send({ t: "start" });
     for (let k = 0; k < 600 && room.state.phase !== "hang"; k++) beat();
+    /* the ducks out there (Justin, Ethan) run about the ground and the zombies go after them, off the canopy's way (two
+       of them took 49 of 72 off it): this checks the way up to a player, so they leave */
+    (await import("./js/l4ddrules.js")).helperOut(room.state);
     const S = ZR.stationDeck(),
       C = ZR.canopyDeck(),
       ci = GS.DECKS.indexOf(C);

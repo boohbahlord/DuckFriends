@@ -26,6 +26,7 @@
    pistol, the controllers and the chair; never the edge lightning; no fireball, the owner's, Nov 18 10:38Z). A duck he hits by accident doesn't
    become his target for it, nor does a duck a mode keeps safe (The Date and the Suitor at the table). At 0 HP he goes
    down for the room's knocked-down time, then gets up with his HP full. */
+import { modeOf } from "./modes.js";
 import { E_LINES, DEATH_LINES, GOD_LINES } from "./hangout/justin.js";
 import { holdDown, downFor, invuln, hurtFx } from "./hangout/death.js";
 import { JUSTIN } from "./hangout/npcart.js";
@@ -101,8 +102,7 @@ export function justinAt(j, now) {
 export const justinShown = (s) =>
   !!s.justin &&
   (!!s.options.justin || isMgj(s)) &&
-  s.options.mode !== "hang" &&
-  s.options.mode !== "vdd" &&
+  !modeOf(s.options.mode).noBoardJustin &&
   boardPhases(s).includes(s.phase);
 /* the turn he is in (a question, a round): not each stage of it */
 const turnKey = (s) => [s.round, s.qi, s.startedAt].join();

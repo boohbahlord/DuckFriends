@@ -1348,7 +1348,7 @@ function wildMove(s, id, now, p, x, y, near, run, out, forced = false) {
      running from zombies not every player"), and no longer the shots flying by him: running from those before they
      landed was the dodging (the owner's, Nov 19 19:27Z: "Justin should stop dodging bullets like a fucking god") */
   const threats = [...near],
-    cry = wildCrying(s, id, now) && s.hang.l4jcry; // (hurt: crying, he runs off from where it came from, l4ddrules.js CRY)
+    cry = wildCrying(s, id, now) && s.hang.l4jcry[id]; // (hurt: crying, he runs off from where it came from, l4ddrules.js CRY)
   if (cry)
     threats.push({
       z: { x: cry.x, y: cry.y },
