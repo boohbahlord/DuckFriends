@@ -129,7 +129,7 @@ numerathelp.js 565 Seriat's help files
 numeratwin.js 657 Sandbox: the Seriat window
 nwk.js 543 Nous Within Kenoma: the map in my book
 offline.js 45 Single Player's files on the device
-online.js 972 online rooms
+online.js 975 online rooms
 outfits.js 1141 outfits
 outlines.js 353 the outlines
 perf.js 92 the frame-rate readout
