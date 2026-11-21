@@ -10,7 +10,7 @@
    speed (Speed: 10% faster) and has 7 seconds of sprint (a thin blue bar under my name). The rules are the host's
    (l4ddrules.js); the weapons bar is l4ddbar.js. */
 import { holdGame, offView } from "./gameready.js";
-import { clawMark, warmClaw } from "./claw.js";
+import { clawMark, warmClaw, leanBack } from "./claw.js";
 import { JPOOL, poolHTML, warmPool } from "./bloodpool.js";
 import { isInvisible } from "./invisible.js";
 import { invOn } from "./sbgod.js";
@@ -588,7 +588,7 @@ function claw(x, y, dir, ctx) {
   const px = x + Math.cos(dir) * 44,
     py = y + Math.sin(dir) * 22,
     f = ctx.world.toScreen(px, py, heightAt(px, py) + 36);
-  clawMark(fxl, f.left, f.top, ctx.world.sc * 1.25); // (a little bigger than the cats')
+  clawMark(fxl, f.left, f.top, ctx.world.sc * 1.25, Math.atan2(py - y, px - x)); // (a little bigger than the cats', and its swipe the way it swung, up and down too, as drawn)
   play("swipe", { x: px, y: py });
 }
 /* a zombie that got a new look (Survival's remodel: another hat, outfit and tilt, l4ddrules.js) shows it at once: its box
@@ -797,7 +797,7 @@ function seeZombies(s, ctx, now) {
     o.st = z.st;
     o.k = z.k; // (the roof it climbs or walks, and its jump onto the canopy: l4ddrules.js zombieZ)
     o.j = z.j;
-    o.a = z.a;
+    [o.a, o.wu] = [z.a, z.wu]; // (its last swipe, and its swing's wind-up since: it leans back, draw)
   }
   for (const [i, o] of Z)
     if (!seen.has(i)) {
@@ -3101,7 +3101,7 @@ activity({
         o.clip = clip;
         o.body.style.clipPath = clip;
       }
-      const body = `scale(${(o.face < 0 ? -sc : sc).toFixed(4)}, ${sc.toFixed(4)})${o.st === 3 ? " rotate(-100deg)" : ""}`;
+      const body = `scale(${(o.face < 0 ? -sc : sc).toFixed(4)}, ${sc.toFixed(4)})${o.st === 3 ? " rotate(-100deg)" : leanBack(o.wu, st0)}`; // (dead: it lies down; winding up a swing: it leans back, claw.js)
       if (o.bt !== body) {
         o.bt = body;
         o.body.style.transform = body;
