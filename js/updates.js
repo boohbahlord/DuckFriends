@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v232",
+    version: 232,
+    date: "Nov 21, 2026",
+    title: "Tidier vote rules",
+    news: [
+      "Behind the scenes: the lobby's vote for the mode and the map, the map rotation and the end of a game live in their own file now, out of the big rules file. Nothing plays differently.",
+    ],
+  },
+  {
     id: "v231",
     version: 231,
     date: "Nov 21, 2026",

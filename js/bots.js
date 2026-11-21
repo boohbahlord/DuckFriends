@@ -27,12 +27,11 @@ import {
   canEndRound,
   endDone,
   playing,
-  voteIds,
-  DICE,
   OPTIONS_DEFAULT,
   walkOf,
   inWorld,
 } from "./rules.js";
+import { voteIds, DICE } from "./voterules.js";
 import { isCounsel, jury, canGiveUp, attCands, attRole } from "./lawrules.js";
 import { SC_WORDS, scWriter, scZones, scCanVote } from "./scrules.js";
 import { BB_TOPICS } from "./bbrules.js";
