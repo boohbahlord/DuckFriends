@@ -7606,3 +7606,9 @@ Is it possible that we can make an actual application that you can download on y
 
 Adam: possible (Electron/Tauri, Capacitor, auto-update from GitHub) but would not play better: same engine, the hangs
 are our main-thread work. Fix the code first; wrap later only for a store/Steam. Replies kept short.
+
+## Owner, Nov 20 23:40Z (project chat, relayed by Moses)
+
+Tell me why we haven't deployed some of these changes that we've been desperately needing for the things like the loading screen, or even why the fuck that we made an update to where there's a crop picture for the player card that isn't the crop, the aspect ratio isn't in the fucking shape of the player card in which it uploads to. Does someone not know what's wrong with that? Like, if I go to the player card and want to upload a picture from my gallery into my player card with a custom image, it shows me a 1 by 1 square. That's not the fucking aspect ratio of the card, so I'm completely guessing what part it's going to select in a process that is just completely betraying the user experience like rape. You guys are pieces of shit. I hate all of you.
+
+Adam: my miss (I passed a square crop for a card that is a 4.2:1 to 6.6:1 strip). V198: card pictures cropped and stored in the card's own shape (176x32, 5.5:1, duck.js CARD_PIC), preview shows the strip; old card pictures re-made from their middle.
