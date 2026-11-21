@@ -58,10 +58,11 @@ gfx.js 8 Low graphics
 gmodes.js 246 Sandbox Phase 6: made game modes
 grenade.js 35 a grenade going off
 ground.js 53 what a duck walks on, for
-gunart.js 448 every weapon, drawn: one drawing for
+gunart.js 438 every weapon, drawn: one drawing for
 gunmen.js 110 the gunmen's looks
 gunmenrules.js 1140 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen
+gunparts.js 15 the pieces every weapon's drawing is
 guns.js 516 every weapon's numbers: one sheet for
 hats.js 1096 hats
 heights.js 52 a shot's height, Doom's way
@@ -94,7 +95,7 @@ l4ddrules.js 5048 the rules of Quacky Zombies
 l4ddsfx.js 513 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the zombies
 langname.js 5 the name of Sandbox's number language,
-laserart.js 105 the laser gun, drawn
+laserart.js 95 the laser gun, drawn
 laserfx.js 134 the Laser Rifle on the screen
 later.js 66 the rest of the game, once
 loading.js 403 the start: a slow fade to
