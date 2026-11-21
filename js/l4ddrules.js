@@ -1821,7 +1821,7 @@ function defibUse(s, id, t, me, now) {
       y: g.y,
       z: g.z || 0,
       j: 0,
-      b: 0,
+      b: g.z || 0, // (as Duck Cabin's ghosts: hangout/ghosts.js)
       tp: now,
     };
     const gs = { ...s.hang.ghost };
