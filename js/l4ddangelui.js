@@ -13,7 +13,8 @@ import { pixelOn, rasterReady } from "./pixel.js";
 import { hashText } from "./pxdom.js";
 import { ANGEL, angelNow, angelDone, angelOf, canAngel } from "./l4ddangel.js";
 import { powerOn } from "./l4ddpower.js";
-import { WEAPONS, weaponName, ptsOf, slotsOf, dp } from "./l4ddrules.js";
+import { WEAPONS } from "./guns.js";
+import { weaponName, ptsOf, slotsOf, dp } from "./l4ddrules.js";
 
 let mc = null, // { el, img, orb, who, sig, tr, k }
   heard = { t: 0, out: 0 },

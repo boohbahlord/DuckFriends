@@ -331,6 +331,92 @@ export const GUN_NAMES = {
   jetpack: "Jetpack",
   chair: "Chair",
 };
+/* ---------- the modes' lists ----------
+   Dead Ducks Arcade's are the base; the board's specials and Mad God Justin's pickups are their own lists */
+/* every weapon there is (the Items page lists them all: l4ddcatalog.js) */
+export const WEAPONS = [
+  "knife",
+  "axe",
+  "sword",
+  "hammer",
+  "pan",
+  "dagger",
+  "bow",
+  "handgun",
+  "revolver",
+  "shotgun",
+  "dbarrel",
+  "dbuck",
+  "smg",
+  "tommy",
+  "ump",
+  "ak",
+  "burst",
+  "sniper",
+  "glauncher",
+  "lmg",
+  "chaingun",
+  "flamer",
+  "laser",
+];
+const ITEMS = ["medkit", "zebra", "adrenaline", "safekeep", "chair"]; // (no Jetpack any more: the owner's, Nov 18 12:19Z, "long jump is removed from zombies bag and slots", "normal jaime is removed from all zombie modes", "remove jet pack from the whole game")
+export const POOL = [...WEAPONS, ...ITEMS];
+/* the guns that fire while the button is down, in every mode: ARMS' auto (the Laser Rifle only as a Mad God Justin
+   pickup) */
+export const AUTO = Object.keys(ARMS).filter((w) => ARMS[w].auto);
+/* every gun from Quacky Zombies is a special too (the owner's, Nov 4 07:43Z), working as it does there: the sniper's
+   bullet, the SMG's, the AK-47's, the revolver's and the LMG's fly as theirs do (every bullet goes through every duck it
+   passes, as the handgun's does), the SMG, the AK-47, the LMG and the chain gun fire as long as the button is down, the
+   chain gun's shot hits at once and takes all the HP of the first duck on its line, and the grenade launcher's grenade
+   flies straight and goes off on the first duck or at its range, as a grenade does */
+export const BOARD_GUNS = [
+  "sniper",
+  "smg",
+  "tommy",
+  "ump",
+  "ak",
+  "revolver",
+  "lmg",
+  "chaingun",
+  "glauncher",
+  "dbarrel",
+  "flamer",
+  "burst",
+];
+export const BOARD_WEAPONS = [
+  "handgun",
+  "dagger",
+  "knife",
+  "hammer",
+  "axe",
+  "sword",
+  "pan",
+  "shotgun",
+  "grenade",
+  "bow",
+  ...BOARD_GUNS,
+  "laser", // (not a special: only Mad God Justin's pickup, mgjrules.js)
+]; // aimed (with the mouse), and kept out with Shift and their key
+/* thrown the way the mouse aims, but never kept out: the Chair special (the silly commands' switch covers it, as the
+   weapons) and the Zebra cake */
+export const THROWS = ["chair", "zebra"];
+/* Mad God Justin: what the ducks hold (rules.js' move: w) */
+export const MGJ_MELEE = "sword"; // (the owner's, Nov 17: the ducks start with the short sword, not the knife)
+/* a gun picked up works as it does in Quacky Zombies (its magazine, R to reload, full auto, the shotgun's spread, the
+   sniper's bullet going through) and stays on key 4 until its shots are gone (MGJ_GUNS); the medkit puts my HP back to
+   full, or gets a downed duck up at once when I hold it out over it */
+export const MGJ_GUNS = [
+  "chaingun",
+  "glauncher",
+  "lmg",
+  "tommy",
+  "ump",
+  "smg",
+  "ak",
+  "burst",
+  "shotgun",
+  "dbarrel",
+]; // (no sniper, Laser Rifle or flamethrower here: the owner's, Nov 18 12:19Z and 12:32Z)
 /* the modes' own numbers, where a weapon works its own way there */
 export const GUN_BREEDS = {
   /* the board's specials (the normal games): how long one waits before its key works again (ms; the key shows a bar
@@ -359,6 +445,7 @@ export const GUN_BREEDS = {
       dbarrel: [2, 2 * ARMS.dbarrel.shell],
       flamer: [FLAME.TANK, FLAME.RELOAD],
     },
+    names: { dbarrel: "Double barrel" }, // (the board has only the one: Dead Ducks Arcade's slug double barrel)
   },
   /* Mad God Justin: the knife, the sword and the pistol as fast as in every mode (the knife four a second, the pistol
      five), a gun picked up Quacky Zombies' own; every gun picked up has to reload here (the owner's, Nov 16), so the ones
@@ -377,3 +464,7 @@ export const GUN_BREEDS = {
     },
   },
 };
+/* a weapon's name in a mode (the specials picker and the unlocks say the board's): Dead Ducks Arcade's unless the
+   mode names it its own way */
+export const nameOf = (w, breed) =>
+  ((GUN_BREEDS[breed] || {}).names || {})[w] || GUN_NAMES[w] || w;

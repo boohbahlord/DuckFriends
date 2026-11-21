@@ -7,12 +7,11 @@
    each gun's magazine), rl (when each one's reload ends), fa (its last shot), ma (its last melee swing), hw (what it
    holds now) and sh (its last shot: [when, x, y of where it went], for the screen's tracer) */
 import { duckBig } from "./duck.js";
-import { WEAPONS } from "./l4ddrules.js";
-import { ARMS } from "./guns.js";
+import { ARMS, WEAPONS } from "./guns.js";
 import { roll, reloadMs, refill } from "./npcrules.js";
 
-/* what it can hold: its guns and the bow (not the thrown dagger), and the melee weapons. Made the first time they're
-   asked for, never at load: l4ddrules.js reaches this file through rules.js before its own WEAPONS exists */
+/* what it can hold: its guns and the bow (not the thrown dagger), and the melee weapons (made the first time they're
+   asked for) */
 let arms = null;
 export const npcArms = () =>
   (arms ??= {

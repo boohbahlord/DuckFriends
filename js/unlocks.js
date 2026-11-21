@@ -19,6 +19,7 @@ import { profile, save } from "./store.js";
 import { fmtJumps } from "./format.js";
 import { toast } from "./ui.js";
 import { cheated } from "./cheatflag.js";
+import { nameOf } from "./guns.js";
 
 const CODE = "1357911";
 const LOCKS = [
@@ -46,23 +47,63 @@ const LOCKS = [
   { kind: "rank", id: "rose", jumps: 31104, name: "Dat Boi, rose gold" },
   { kind: "rank", id: "rainbow", jumps: 62208, name: "Dat Boi, rainbow" },
   { kind: "skin", id: "m:rainbow", jumps: 62208, name: "Rainbow skin" }, // (the same rainbow on any duck, at the same jumps: the owner, Nov 17)
-  { kind: "special", id: "chair", cabin: 1123, name: "Chair" },
+  { kind: "special", id: "chair", cabin: 1123, name: nameOf("chair", "board") },
   { kind: "special", id: "invisible", shadow: 1, name: "Invisible duck" },
-  { kind: "special", id: "zebra", kills: 72, name: "Zebra cake" },
-  { kind: "special", id: "shotgun", frags: 144, name: "Shotgun" },
-  { kind: "special", id: "sniper", later: true, name: "Barrett .50 Cal" },
-  { kind: "special", id: "smg", later: true, name: "MP5" },
-  { kind: "special", id: "tommy", later: true, name: "Tommy gun" },
-  { kind: "special", id: "ump", later: true, name: "UMP-45" },
-  { kind: "special", id: "ak", later: true, name: "AK-47" },
-  { kind: "special", id: "revolver", later: true, name: "Revolver" },
-  { kind: "special", id: "lmg", later: true, name: "M249 SAW" },
-  { kind: "special", id: "chaingun", later: true, name: "Chain gun" },
-  { kind: "special", id: "dbarrel", later: true, name: "Double barrel" },
-  { kind: "special", id: "flamer", later: true, name: "Flamethrower" },
-  { kind: "special", id: "burst", later: true, name: "Steyr AUG" },
-  { kind: "special", id: "glauncher", later: true, name: "Grenade launcher" }, // (Quacky Zombies' guns: the owner will say how they unlock)
-  { kind: "special", id: "grenade", frags: 360, name: "Grenade" },
+  { kind: "special", id: "zebra", kills: 72, name: nameOf("zebra", "board") },
+  {
+    kind: "special",
+    id: "shotgun",
+    frags: 144,
+    name: nameOf("shotgun", "board"),
+  },
+  {
+    kind: "special",
+    id: "sniper",
+    later: true,
+    name: nameOf("sniper", "board"),
+  },
+  { kind: "special", id: "smg", later: true, name: nameOf("smg", "board") },
+  { kind: "special", id: "tommy", later: true, name: nameOf("tommy", "board") },
+  { kind: "special", id: "ump", later: true, name: nameOf("ump", "board") },
+  { kind: "special", id: "ak", later: true, name: nameOf("ak", "board") },
+  {
+    kind: "special",
+    id: "revolver",
+    later: true,
+    name: nameOf("revolver", "board"),
+  },
+  { kind: "special", id: "lmg", later: true, name: nameOf("lmg", "board") },
+  {
+    kind: "special",
+    id: "chaingun",
+    later: true,
+    name: nameOf("chaingun", "board"),
+  },
+  {
+    kind: "special",
+    id: "dbarrel",
+    later: true,
+    name: nameOf("dbarrel", "board"),
+  },
+  {
+    kind: "special",
+    id: "flamer",
+    later: true,
+    name: nameOf("flamer", "board"),
+  },
+  { kind: "special", id: "burst", later: true, name: nameOf("burst", "board") },
+  {
+    kind: "special",
+    id: "glauncher",
+    later: true,
+    name: nameOf("glauncher", "board"),
+  }, // (Quacky Zombies' guns: the owner will say how they unlock)
+  {
+    kind: "special",
+    id: "grenade",
+    frags: 360,
+    name: nameOf("grenade", "board"),
+  },
   { kind: "hat", id: "clownwig", kills: 12, hidden: true, name: "Clown wig" },
   {
     kind: "outfit",

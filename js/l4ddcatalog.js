@@ -4,8 +4,6 @@
    numbers come from the rules (l4ddrules.js), so they stay right when the rules change. */
 import {
   BURN,
-  POOL,
-  WEAPONS,
   SLOT_ODDS,
   SLOT_BAGS,
   SHOP,
@@ -21,7 +19,7 @@ import {
   missOf,
   endless,
 } from "./l4ddrules.js";
-import { ARMS, kindOf } from "./guns.js";
+import { ARMS, kindOf, POOL, WEAPONS } from "./guns.js";
 import { survOn } from "./survrules.js";
 import { orbHTML, UP_ICONS } from "./l4ddart.js";
 import { DROP_ICONS } from "./l4dddrops.js";

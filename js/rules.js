@@ -185,11 +185,9 @@ import {
   CHAIR_R,
   CAKE_SPEED,
   CAKE_EAT_MS,
-  MGJ_GUNS,
   mgjHalf,
   mgjMag,
   mgjOut,
-  MGJ_MELEE,
   ammoOf,
   mgjSpend,
   mgjLgren,
@@ -210,7 +208,16 @@ import {
   maxHp,
   l4Again,
 } from "./l4ddrules.js";
-import { ARMS, GUN_BREEDS } from "./guns.js";
+import {
+  ARMS,
+  GUN_BREEDS,
+  BOARD_GUNS,
+  BOARD_WEAPONS,
+  AUTO,
+  THROWS,
+  MGJ_GUNS,
+  MGJ_MELEE,
+} from "./guns.js";
 import { l4Zups, l4SetHp } from "./zombies.js";
 import { JET } from "./jetpack.js";
 import { hOk, hLock, sameFloorAhead, floorLock } from "./heights.js";
@@ -1154,37 +1161,8 @@ const PRESS = [
 export const coolFor = (sp, s) =>
   (s && isMgj(s) && mgjCool(sp)) ||
   GUN_BREEDS.board.cool[sp] ||
-  (GUNS_NEW.includes(sp) && ARMS[sp].cool) ||
+  (BOARD_GUNS.includes(sp) && ARMS[sp].cool) ||
   1500; // (Mad God Justin has its own for the knife and the bow; Quacky Zombies' guns keep theirs, l4ddrules.js ARMS)
-/* every gun from Quacky Zombies is a special too (the owner's, Nov 4 07:43Z), working as it does there: the sniper's
-   bullet, the SMG's, the AK-47's, the revolver's and the LMG's fly as theirs do (every bullet goes through every duck it
-   passes, as the handgun's does), the SMG, the AK-47, the LMG and the chain gun fire as long as the button is down, the
-   chain gun's shot hits at once and takes all the HP of the first duck on its line, and the grenade launcher's grenade
-   flies straight and goes off on the first duck or at its range, as a grenade does */
-export const GUNS_NEW = [
-  "sniper",
-  "smg",
-  "tommy",
-  "ump",
-  "ak",
-  "revolver",
-  "lmg",
-  "chaingun",
-  "glauncher",
-  "dbarrel",
-  "flamer",
-  "burst",
-];
-export const AUTO = [
-  "smg",
-  "tommy",
-  "ump",
-  "ak",
-  "lmg",
-  "chaingun",
-  "flamer",
-  "laser",
-]; // (they fire while the button is down; the Laser Rifle only as a Mad God Justin pickup)
 /* the handgun holds MAG shots, about five a second; after the last it reloads for RELOAD ms by itself (R reloads sooner).
    The other guns' magazines are Quacky Zombies' (no ammo to run out of here: only the magazine and its reload); the chain
    gun and the grenade launcher have none there, so here the chain gun reloads after its 300, and the launcher after 3
@@ -1201,7 +1179,7 @@ export const magSize = (w) =>
   w === "handgun"
     ? [MAG, RELOAD]
     : GUN_BREEDS.board.mag[w] ||
-      (GUNS_NEW.includes(w) && ARMS[w].mag
+      (BOARD_GUNS.includes(w) && ARMS[w].mag
         ? [ARMS[w].mag, ARMS[w].reload]
         : null); // ([shots, reload ms], or null: no magazine)
 const magKey = (id, w) => (w === "handgun" ? id : `${id} ${w}`);
@@ -1217,20 +1195,6 @@ export const coolEnds = (s, id, sp) =>
         grCool(s, id), // (Sandbox: a loot orb's own wait, sbhot.js; a group's Cooldown speed, sbgroups.js)
     magSize(sp) ? ((s.mag || {})[magKey(id, sp)] || {}).r || 0 : 0,
   ); // (a time on the room's clock)
-export const WEAPONS = [
-  "handgun",
-  "dagger",
-  "knife",
-  "hammer",
-  "axe",
-  "sword",
-  "pan",
-  "shotgun",
-  "grenade",
-  "bow",
-  ...GUNS_NEW,
-  "laser", // (not a special: only Mad God Justin's pickup, mgjrules.js)
-]; // aimed (with the mouse), and kept out with Shift and their key
 /* the hammer's knock-back: a duck it hits is shoved KB_FAR duck lengths away from the swing in KB_MS, with a little hop
    (KB_HOP duck sizes high), and lands playing dead; pos.kb = { t, x, y: where it was } lets every screen draw the shove */
 export const KB_MS = 380,
@@ -1253,9 +1217,6 @@ const EFFECTS = [
   "disco",
   "invisible",
 ]; // the effects, shown around a duck (the Invisible duck: only on or off, never for 5 seconds)
-/* thrown the way the mouse aims, but never kept out: the Chair special (the silly commands' switch covers it, as the
-   weapons) and the Zebra cake */
-export const THROWS = ["chair", "zebra"];
 /* the Chair special's chair: Mad God Justin's own, as slow and as wide (CHAIR_DUCKS duck lengths a second, CHAIR_R
    duck lengths near), for CHAIR_MS */
 const CHAIR_DUCKS = 2.8,
@@ -2198,7 +2159,9 @@ function reduceStep(state, a, now) {
             ? l4Holds(s, a.id, a.w)
             : isMgj(s)
               ? mgjHolds(s, a.id, a.w)
-              : WEAPONS.includes(a.w) && onKeys(me.duck, a.w) && s.options.fun
+              : BOARD_WEAPONS.includes(a.w) &&
+                onKeys(me.duck, a.w) &&
+                s.options.fun
         )
           ? a.w
           : "",
@@ -2463,7 +2426,7 @@ function reduceStep(state, a, now) {
         return mgjUse(s, a, now, logLine) ? s : state; // (Mad God Justin: the medkit picked up)
       if (mgjGun && (s.mgj.held[a.id] !== sp || !ammoOf(s, a.id))) return state; // (Mad God Justin: a gun picked up, until its shots are gone)
       if (
-        (WEAPONS.includes(sp) || sp === "chair") &&
+        (BOARD_WEAPONS.includes(sp) || sp === "chair") &&
         !s.options.fun &&
         !isMgj(s)
       )
@@ -2500,7 +2463,9 @@ function reduceStep(state, a, now) {
       if (gotM) sbSpend(s, a.id, sp); // (one of its uses: sbhot.js)
       const face = a.face < 0 ? -1 : 1,
         aim =
-          WEAPONS.includes(sp) || THROWS.includes(sp) ? aimOf(a, face) : null;
+          BOARD_WEAPONS.includes(sp) || THROWS.includes(sp)
+            ? aimOf(a, face)
+            : null;
       const hit = MELEE.includes(sp) ? strike(s, a.id, sp, aim, now) : null; // (the melees hit at once, up close, and while they swing: attacks)
       s.fxN = (s.fxN || 0) + 1;
       s.fx = [
@@ -2539,7 +2504,7 @@ function reduceStep(state, a, now) {
               ? DAGGER_SPEED
               : sp === "bow"
                 ? ARROW_SPEED
-                : GUNS_NEW.includes(sp)
+                : BOARD_GUNS.includes(sp)
                   ? gunSpeed(sp)
                   : SHOT_SPEED) / sbBoardK(s), // (Sandbox's bigger board: the same speed in ducks)
           hang = {

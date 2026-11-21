@@ -102,7 +102,15 @@ export function whyNot(e) {
   return "Online rooms failed: " + c;
 }
 
+/* what changed in the room since it was last written: the new or changed keys at their values, the gone ones at null (into up) */
+function changedInto(up, enc, written) {
+  for (const [k, v] of Object.entries(enc))
+    if (written[k] !== v) up["s/" + k] = v;
+  for (const k of Object.keys(written)) if (!(k in enc)) up["s/" + k] = null;
+}
+
 /* ---------- the room list ---------- */
+
 export async function watchRooms(fn, fail) {
   const { D, ref } = await connect();
   let last = [];
@@ -501,9 +509,7 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
     extra = {};
     for (const [id, box] of Object.entries(cards))
       if (box) enc["cards/" + id] = JSON.stringify(box);
-    for (const [k, v] of Object.entries(enc))
-      if (written[k] !== v) up["s/" + k] = v;
-    for (const k of Object.keys(written)) if (!(k in enc)) up["s/" + k] = null;
+    changedInto(up, enc, written);
     written = enc;
     if (Object.keys(up).length)
       await D.update(ref("games/" + g), up).catch(quiet);
@@ -937,10 +943,7 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
             state = reduce(state, { t: "leave", id: me }, now());
           const enc = encode(state),
             up = { ...extra };
-          for (const [k, v] of Object.entries(enc))
-            if (written[k] !== v) up["s/" + k] = v;
-          for (const k of Object.keys(written))
-            if (!(k in enc)) up["s/" + k] = null;
+          changedInto(up, enc, written);
           D.update(ref("games/" + g), up)
             .then(() => D.remove(ref("lobby/" + rid)))
             .then(() => D.set(path("host"), state.hostId || humans[0]))
