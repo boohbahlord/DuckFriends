@@ -137,7 +137,7 @@ online.js 975 online rooms
 outfits.js 1141 outfits
 outlines.js 347 the outlines
 perf.js 92 the frame-rate readout
-phonepad.js 129 phones: the aim-and-attack stick and the
+phonepad.js 133 phones: the aim-and-attack stick and the
 picrop.js 268 cropping a picture: every picture put
 pixel.js 724 the pixel look
 pixelpalette.js 192 the pixel look's colors
