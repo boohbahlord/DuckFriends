@@ -14,7 +14,8 @@
    once at most). */
 import { play, loadSounds } from "./sound.js";
 import { heightAt, layoutVariant } from "./hangout/layout.js";
-import { OPENINGS, BUTLER, BOX, zombiesOf, ptsOf } from "./l4ddrules.js";
+import { OPENINGS, BUTLER, BOX, ptsOf } from "./l4ddrules.js";
+import { zombiesOf } from "./zombies.js";
 import { groundAt, stepOf } from "./ground.js";
 import { isSurv } from "./survrules.js";
 import { FILES } from "./sfxlist.js";

@@ -94,6 +94,8 @@ window.__golden = async (sc) => {
       return false;
     }));
   patch();
+  /* Mad God Justin: his zombie wave state (s.mz) changed to bring a wave now ("mz": { "next": "$now" }) */
+  if (sc.mz) r.state.mz = { ...r.state.mz, ...fill(sc.mz) };
   /* the scenario's own first moves */
   for (const a of sc.setup || []) {
     const was = r.state;
@@ -118,8 +120,37 @@ window.__golden = async (sc) => {
   const out = { all: [], parts: [] },
     per = {}, // (beats in each phase)
     ever = new Set(); // (which NPCs came)
+  const lastSwipe = {}; // (each zombie's last swipe, s.hang.zs: a new one is one more swipe)
+  let swipes = 0,
+    mzPeak = 0; // (the most Mad God Justin's wave zombies out at once)
+  /* "bait": from that beat on, my duck stands on the nearest zombie each beat (and keeps its health), so the zombies swipe
+     at it: every run then pins swipes, their times and the damage (the computers otherwise keep away from the zombies) */
+  let hp0 = null;
+  const bait = () => {
+    const s = r.state,
+      zp = (s.hang && s.hang.zp) || [],
+      me = s.pos[r.me],
+      list = []; // (the zombies' spots, in the shares of the map as the duck's: Dead Ducks Arcade's are in world px)
+    for (let k = 0; k + 3 < zp.length; k += 4)
+      if ((zp[k + 3] & 15) !== 3)
+        list.push([(zp[k + 1] - 150) / W, zp[k + 2] / H]);
+    for (const o of (s.mz && s.mz.zb) || []) if (!o.d) list.push([o.x, o.y]);
+    if (!me || !list.length) return;
+    list.sort(
+      (a, c) =>
+        Math.hypot(a[0] - me.x, (a[1] - me.y) * 0.5) -
+        Math.hypot(c[0] - me.x, (c[1] - me.y) * 0.5),
+    );
+    s.pos = { ...s.pos, [r.me]: { ...me, x: list[0][0], y: list[0][1] } };
+    const l4p = s.hang && s.hang.l4p && s.hang.l4p[r.me];
+    if (l4p) {
+      if (hp0 === null) hp0 = l4p;
+      s.hang = { ...s.hang, l4p: { ...s.hang.l4p, [r.me]: hp0 } };
+    }
+  };
   for (b = 0; b < sc.beats; b++) {
     if (patches.length) patch();
+    if (sc.bait !== undefined && b >= sc.bait) bait();
     beat();
     const s = r.state;
     per[s.phase] = (per[s.phase] || 0) + 1;
@@ -131,6 +162,17 @@ window.__golden = async (sc) => {
     if (s.hang && s.hang.l4m) ever.add("merchant");
     if (s.seat.some((id) => s.players[id] && s.players[id].helper))
       ever.add("Justin");
+    for (const [i, z] of Object.entries((s.hang && s.hang.zs) || {}))
+      if (lastSwipe[i] !== z[0]) {
+        lastSwipe[i] = z[0];
+        swipes++;
+      }
+    for (const o of (s.mz && s.mz.zb) || [])
+      if (o.a && lastSwipe["m" + o.i] !== o.a) {
+        lastSwipe["m" + o.i] = o.a;
+        swipes++;
+      }
+    mzPeak = Math.max(mzPeak, ((s.mz && s.mz.zb) || []).length);
     out.all.push(hash(JSON.stringify(s)));
     const p = {};
     for (const key of Object.keys(s.hang || {}).sort())
@@ -144,6 +186,8 @@ window.__golden = async (sc) => {
     phases: per,
     came: [...ever].sort().join(", "),
     gunmen: g.length,
+    swipes,
+    mgjWaveZombiesPeak: mzPeak,
     zombies: ((r.state.hang && r.state.hang.zp) || []).length / 4,
     sandboxNpcs: [
       ...(((r.state.hang && r.state.hang.sbz) || {}).zb || []),

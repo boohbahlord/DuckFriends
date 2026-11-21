@@ -1,29 +1,29 @@
 /* ---------- the zombies' flow field, worked out off the page's own thread (the owner's, Nov 18 14:20Z: "sure to move
    path for zombies thingy i think for off the main thread") ----------
    fieldOf is the walking distance from every cell of the grid to the nearest of `starts` (Dijkstra from all of them at
-   once), as l4ddrules.js worked it out itself before. It stands alone (nothing from outside it), so the same function
+   once), as l4ddrules.js worked it out itself before. It stands alone (nothing from outside this file), so the same function
    runs in two places: on the page, when it has to have a field at once, and in a Web Worker made from its own text, so
    a big crowd's field never holds up a frame. I looked for a small library first: path-finding libraries (PathFinding.js,
    EasyStar.js) find one way from one spot to another, not a field from many ducks at once, and EasyStar's worker mode
    is gone; this is the textbook Dijkstra we already had, moved.
    grid: { walk (1 open, 0 not, per cell), hts (each cell's floor height), extra (each cell's added cost), gw, gh (cells
    across and down), climb (the most height a step between two cells may change) } */
-export function fieldOf(grid, starts) {
-  const { walk, hts, extra, gw, gh, climb } = grid,
-    n = gw * gh,
-    dist = new Float64Array(n).fill(Infinity); // (64-bit: a 32-bit copy can be a hair under the heap's number, and its cell was never looked past)
-  /* the eight neighbors: across, down, and the diagonals (no cutting a corner past a wall) */
-  const N8 = [
-    [1, 0, 1],
-    [-1, 0, 1],
-    [0, 1, 1],
-    [0, -1, 1],
-    [1, 1, Math.SQRT2],
-    [1, -1, Math.SQRT2],
-    [-1, 1, Math.SQRT2],
-    [-1, -1, Math.SQRT2],
-  ];
-  const nextTo = (c, k) => {
+/* the eight neighbors: across, down, and the diagonals, with each step's length */
+const N8 = [
+  [1, 0, 1],
+  [-1, 0, 1],
+  [0, 1, 1],
+  [0, -1, 1],
+  [1, 1, Math.SQRT2],
+  [1, -1, Math.SQRT2],
+  [-1, 1, Math.SQRT2],
+  [-1, -1, Math.SQRT2],
+];
+/* the step for this grid: can a zombie step from cell c to its neighbor k? That cell, or -1 (no climbing more than
+   climb; no cutting a corner past a wall). One for both the field here and the way a zombie heads (zombiepath.js) */
+export function stepper(grid) {
+  const { walk, hts, gw, gh, climb } = grid;
+  return (c, k) => {
     const di = N8[k][0],
       dj = N8[k][1],
       i = (c % gw) + di,
@@ -34,6 +34,12 @@ export function fieldOf(grid, starts) {
     if (di && dj && (!walk[c + di] || !walk[c + dj * gw])) return -1;
     return b;
   };
+}
+export function fieldOf(grid, starts) {
+  const { extra, gw, gh } = grid,
+    n = gw * gh,
+    dist = new Float64Array(n).fill(Infinity), // (64-bit: a 32-bit copy can be a hair under the heap's number, and its cell was never looked past)
+    nextTo = stepper(grid);
   /* the heap: distances and cells side by side in typed arrays (every cell can be pushed once per neighbor) */
   const heapD = new Float64Array(n * 8 + 8),
     heapC = new Int32Array(n * 8 + 8);
@@ -110,7 +116,9 @@ function theWorker(onField) {
   try {
     if (typeof Worker === "undefined" || typeof Blob === "undefined")
       return null;
-    const src = `const fieldOf = ${fieldOf.toString()};
+    const src = `const N8 = ${JSON.stringify(N8)};
+const stepper = ${stepper.toString()};
+const fieldOf = ${fieldOf.toString()};
 let grid = null, rev = -1;
 onmessage = (e) => {
   const m = e.data;
