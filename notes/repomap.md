@@ -76,7 +76,6 @@ hotpick.js 296 What goes in my duck's hand
 hpmath.js 23 HP in hundredths
 hpmeter.js 327 HP meters and the little "+1
 invisible.js 11 Who is invisible right now :
-itemtip.js 99 hold I on an item: its
 itemtone.js 98 the colors an outfit or a
 jump.js 78 a duck's jump: one arc for
 jumps.js 48 the jump counter
