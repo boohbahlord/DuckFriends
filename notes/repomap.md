@@ -292,7 +292,7 @@ stationmap.js 1092 Dead Ducks Arcade's second map: the
 trampoline.js 141 the trampoline
 tv.js 117 the TV: seven channels, the next
 water.js 442 the pool: ducks in the water,
-world.js 1753 Hangout on the screen: the camera,
+world.js 1754 Hangout on the screen: the camera,
 
 ## js/pxm/
 board-light.js 7 the menus' background in the light,
