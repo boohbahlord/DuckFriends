@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v233",
+    version: 233,
+    date: "Nov 21, 2026",
+    title: "One way to know how high",
+    news: [
+      "Behind the scenes: every duck, zombie and shot now asks its height one way, so heights stay the same everywhere.",
+    ],
+  },
+  {
     id: "v232",
     version: 232,
     date: "Nov 21, 2026",

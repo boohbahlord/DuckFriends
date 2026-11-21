@@ -126,6 +126,7 @@ import {
 import { bbMatch, roundName, bbStats } from "./bbrules.js";
 import { mountWorld, BOARD_HTML as HANG_HTML } from "./hangout/world.js";
 import { W as HW, H as HH } from "./hangout/layout.js";
+import { zOf } from "./heights.js";
 import { hangStill } from "./hangout/rules.js";
 import {
   downStill,
@@ -1852,7 +1853,7 @@ function drawDucks(now = clockNow()) {
               { duck: olP.name || "" },
               pos.x,
               pos.y,
-              +pos.z || 0,
+              zOf(pos),
               hang ? HW : 1,
               hang ? HH : 1,
             )
@@ -3714,7 +3715,7 @@ function flames(s, now, hang, size, fxl, heldAll) {
       FLAME_CARRY.delete(id);
       continue;
     }
-    const z = +p.z || 0,
+    const z = zOf(p),
       a = spot(p.x, p.y, z),
       b = l4
         ? spot(p.x + (f[2] * f[4]) / HW, p.y + (f[3] * f[4]) / HH, z)
@@ -4302,10 +4303,7 @@ function playFx(f) {
               const p = s.pos[id],
                 o = p && p.kb ? { x: p.kb.x, y: p.kb.y } : p;
               return o
-                ? [
-                    geo.hang ? world.place(o, +p.z || 0) : place(o, 0, 1),
-                    f.crit,
-                  ]
+                ? [geo.hang ? world.place(o, zOf(p)) : place(o, 0, 1), f.crit]
                 : null;
             })
             .filter(Boolean);

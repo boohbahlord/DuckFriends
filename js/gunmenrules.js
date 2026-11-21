@@ -23,6 +23,7 @@ import { critOf } from "./guns.js";
 import { ARMS, GUN_BREEDS, reachOf as gunReach } from "./guns.js";
 import { clearShot, chaseField, chaseStep } from "./zombies.js";
 import { heightAt, slabBetween, PROPS } from "./hangout/layout.js";
+import { zOf } from "./heights.js";
 import { DECKS } from "./hangout/stationmap.js";
 import { hpHurt } from "./hpmath.js";
 import { gunmanLook } from "./gunmen.js";
@@ -355,7 +356,7 @@ function tick(s, zs, now, ids, H) {
         const p = s.pos[id],
           x = p.x * H.ww,
           y = p.y * H.wh;
-        return { id, x, y, z: +p.z || 0, sp: !!p.sp, j: H.wild(id) };
+        return { id, x, y, z: zOf(p), sp: !!p.sp, j: H.wild(id) };
       }),
     pls = ducks.map((d) => ({ xy: [d.x, d.y], zz: d.z })),
     fields = new Map(),
