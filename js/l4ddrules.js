@@ -5287,7 +5287,6 @@ export function l4Loot(s, id, w, inf, mods = null) {
   }
   if (!give(s, id, w)) return false;
   const kit = kitOf(s, id),
-    full = fullAmmo(w),
     am = { ...kit.am },
     M = mods || {};
   if (inf === undefined) inf = M.inf;

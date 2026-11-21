@@ -11,7 +11,6 @@ import {
   el,
   esc,
   $,
-  $$,
   openWindow,
   contextMenu,
   onMenu,
@@ -344,7 +343,6 @@ function onState(s) {
   if (!S) return;
   if (!["lobby", "countdown"].includes(s.phase)) {
     if (lastCount > 0) sfx.count(true);
-    const started = counting;
     lastCount = -1;
     counting = false;
     const room = R;
