@@ -73,15 +73,55 @@ const RX = 0.03,
 const rnd = ([a, b]) => a + Math.random() * (b - a);
 const any = (xs) => xs[Math.floor(Math.random() * xs.length)];
 const r3 = (v) => Math.round(v * 1000) / 1000;
-/* Justin stops where he stands (at, at time now): no walk left to make */
-const stopAt = (j, at, now) =>
+/* Justin starts a walk from at to to (board units) at time now, at v a second (left out: the speed he had) */
+const walkTo = (j, at, to, now, v) =>
   Object.assign(j, {
     k: null,
     x0: r3(at.x),
     y0: r3(at.y),
-    x1: r3(at.x),
-    y1: r3(at.y),
+    x1: r3(to.x),
+    y1: r3(to.y),
     t: now,
+    ...(v === undefined ? {} : { v }),
+  });
+/* Justin stops where he stands (at, at time now): no walk left to make */
+const stopAt = (j, at, now) => walkTo(j, at, at, now);
+/* he sprints at a duck (id) to swing the hammer once he's there */
+const dashTo = (j, at, to, now, v, id) => {
+  walkTo(j, at, to, now, v);
+  j.swing = {
+    id,
+    at: now + (Math.hypot(to.x - at.x, to.y - at.y) / v) * 1000 + 250,
+  };
+};
+/* his pistol's slow bullet from where he stands toward (ax, ay), numbered n */
+const bossShot = (s, n, at, ax, ay, now) => {
+  s.shots = [
+    ...(s.shots || []),
+    {
+      n,
+      by: JUSTIN_ID,
+      k: "handgun",
+      x0: at.x,
+      y0: at.y,
+      vx: +(ax * BOSS_SHOT_SPEED).toFixed(4),
+      vy: +(ay * BOSS_SHOT_SPEED).toFixed(4),
+      t: now,
+      lx: at.x,
+      ly: at.y,
+    },
+  ];
+};
+/* the hammer's swing, toward aim, the hit ducks with it */
+const hammerFx = (fx, aim, hit) =>
+  fx({
+    kind: "use",
+    what: "hammer",
+    who: [],
+    face: aim[0] < 0 ? -1 : 1,
+    ax: +aim[0].toFixed(3),
+    ay: +aim[1].toFixed(3),
+    ...(hit.length ? { hit } : {}),
   });
 
 /* where he is at a moment (board units, like s.pos), and whether he's walking */
@@ -114,13 +154,8 @@ export function justinDown(s, now, log) {
   Object.assign(j, {
     down: now,
     dkey: turnKey(s), // (the turn he went down in: he stays down till the next one, see justinTick)
-    k: null,
-    x0: r3(at.x),
-    y0: r3(at.y),
-    x1: r3(at.x),
-    y1: r3(at.y),
-    t: now,
   });
+  stopAt(j, at, now);
   delete j.rage;
   delete j.tell;
   delete j.swing;
@@ -223,15 +258,7 @@ function rageTick(s, now, at, fx, calm) {
     delete j.swing;
     const aim = Math.hypot(dx, dy) > 1e-4 ? [dx, dy] : [1, 0],
       hit = strike(s, JUSTIN_ID, "hammer", aim, now, at);
-    fx({
-      kind: "use",
-      what: "hammer",
-      who: [],
-      face: aim[0] < 0 ? -1 : 1,
-      ax: +aim[0].toFixed(3),
-      ay: +aim[1].toFixed(3),
-      ...(hit.length ? { hit } : {}),
-    });
+    hammerFx(fx, aim, hit);
     r.fireAt = Math.max(r.fireAt, now + 600);
     return true;
   }
@@ -250,19 +277,7 @@ function rageTick(s, now, at, fx, calm) {
         y: Math.max(0, Math.min(1, p.y + (uy / u) * 1.4 * RY)),
       },
       v = SPEED * 1.9;
-    Object.assign(j, {
-      k: null,
-      x0: r3(at.x),
-      y0: r3(at.y),
-      x1: r3(to.x),
-      y1: r3(to.y),
-      t: now,
-      v,
-    });
-    j.swing = {
-      id: r.id,
-      at: now + (Math.hypot(to.x - at.x, to.y - at.y) / v) * 1000 + 250,
-    };
+    dashTo(j, at, to, now, v, r.id);
     return true;
   } // (further off: he sprints at it, then swings)
   if (now >= j.chairAt || now >= j.ctlAt) {
@@ -292,21 +307,7 @@ function rageTick(s, now, at, fx, calm) {
       ax: +ax.toFixed(3),
       ay: +ay.toFixed(3),
     });
-    s.shots = [
-      ...(s.shots || []),
-      {
-        n: s.fxN * 10,
-        by: JUSTIN_ID,
-        k: "handgun",
-        x0: at.x,
-        y0: at.y,
-        vx: +(ax * BOSS_SHOT_SPEED).toFixed(4),
-        vy: +(ay * BOSS_SHOT_SPEED).toFixed(4),
-        t: now,
-        lx: at.x,
-        ly: at.y,
-      },
-    ];
+    bossShot(s, s.fxN * 10, at, ax, ay, now);
     return true;
   }
   /* where to stand: a few duck lengths from it, looked at again every 1.5 to 2.5 seconds */
@@ -314,15 +315,16 @@ function rageTick(s, now, at, fx, calm) {
   r.next = now + rnd([1500, 2500]);
   const want = rnd([5, 8]),
     ang = Math.atan2((at.y - p.y) / RY, (at.x - p.x) / RX) + rnd([-0.9, 0.9]);
-  Object.assign(j, {
-    k: null,
-    x0: r3(at.x),
-    y0: r3(at.y),
-    x1: r3(Math.max(0.05, Math.min(0.95, p.x + Math.cos(ang) * want * RX))),
-    y1: r3(Math.max(0.06, Math.min(0.94, p.y + Math.sin(ang) * want * RY))),
-    t: now,
-    v: SPEED,
-  });
+  walkTo(
+    j,
+    at,
+    {
+      x: Math.max(0.05, Math.min(0.95, p.x + Math.cos(ang) * want * RX)),
+      y: Math.max(0.06, Math.min(0.94, p.y + Math.sin(ang) * want * RY)),
+    },
+    now,
+    SPEED,
+  );
   return true;
 }
 
@@ -452,15 +454,7 @@ function cakeChase(s, now, at) {
   }
   if (Math.abs(j.x1 - p.x) < 0.004 && Math.abs(j.y1 - p.y) < 0.004)
     return false;
-  Object.assign(j, {
-    k: null,
-    x0: r3(at.x),
-    y0: r3(at.y),
-    x1: r3(p.x),
-    y1: r3(p.y),
-    t: now,
-    v: SPEED * 1.9,
-  }); // (he runs after it)
+  walkTo(j, at, p, now, SPEED * 1.9); // (he runs after it)
   return true;
 }
 /* the host's part, every heartbeat: true when s.justin changed. log: the rules' chat line */
@@ -563,21 +557,7 @@ export function justinTick(s, now, log) {
           ay: +ay.toFixed(3),
         },
       ];
-      s.shots = [
-        ...(s.shots || []),
-        {
-          n: s.fxN,
-          by: JUSTIN_ID,
-          k: "handgun",
-          x0: at.x,
-          y0: at.y,
-          vx: +(ax * BOSS_SHOT_SPEED).toFixed(4),
-          vy: +(ay * BOSS_SHOT_SPEED).toFixed(4),
-          t: now,
-          lx: at.x,
-          ly: at.y,
-        },
-      ];
+      bossShot(s, s.fxN, at, ax, ay, now);
       ch = true;
     }
   }
@@ -656,15 +636,7 @@ export function justinTick(s, now, log) {
       dy = p.y - at.y,
       aim = Math.hypot(dx, dy) > 1e-4 ? [dx, dy] : [1, 0];
     const hit = strike(s, JUSTIN_ID, "hammer", aim, now, at);
-    fx({
-      kind: "use",
-      what: "hammer",
-      who: [],
-      face: aim[0] < 0 ? -1 : 1,
-      ax: +aim[0].toFixed(3),
-      ay: +aim[1].toFixed(3),
-      ...(hit.length ? { hit } : {}),
-    });
+    hammerFx(fx, aim, hit);
     delete j.swing;
     j.next = now + 1500;
     return true;
@@ -684,19 +656,7 @@ export function justinTick(s, now, log) {
           y: Math.max(0, Math.min(1, p.y + (uy / d) * 1.4 * RY)),
         },
         v = SPEED * 1.8;
-      Object.assign(j, {
-        k: null,
-        x0: r3(at.x),
-        y0: r3(at.y),
-        x1: r3(to.x),
-        y1: r3(to.y),
-        t: now,
-        v,
-      });
-      j.swing = {
-        id,
-        at: now + (Math.hypot(to.x - at.x, to.y - at.y) / v) * 1000 + 250,
-      };
+      dashTo(j, at, to, now, v, id);
       return true;
     }
   }
