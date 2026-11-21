@@ -102,7 +102,7 @@ laserfx.js 134 the Laser Rifle on the screen
 later.js 66 the rest of the game, once
 loading.js 403 the start: a slow fade to
 loadlines.js 590 the lines under the loading bar,
-lobby.js 598 the lobby, laid out like Halo:
+lobby.js 619 the lobby, laid out like Halo:
 lobbysettings.js 73 Lobby Settings
 looks.js 136 the room's duck-look settings
 looksrules.js 60 the duck-look settings' rules
@@ -159,7 +159,7 @@ random.js 9 the two random helpers every mode's
 report.js 114 Report Bug or Suggest Ideas
 rooms.js 256 Play: create a room, and the
 router.js 112 screens
-rules.js 6236 the rules of Agree or Disagree
+rules.js 6247 the rules of Agree or Disagree
 sandbox.js 1359 Sandbox: the key windows
 sandboxrules.js 2059 Sandbox: which map it plays on,
 sbarms.js 124 Sandbox: a made NPC's weapons in
