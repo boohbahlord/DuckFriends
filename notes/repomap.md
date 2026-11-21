@@ -49,7 +49,7 @@ friends.js 236 friends
 front.js 109 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 214 how a held weapon and the screen move
-game.js 8666 the game screen
+game.js 8649 the game screen
 gamedefaults.js 43 the game's own numbers, for every mode
 gameready.js 47 what the game's loading screen waits for
 gamesettings.js 1755 Game Settings: the whole screen, like Customize
@@ -74,6 +74,7 @@ hpmath.js 23 HP in tenths
 hpmeter.js 327 HP meters and the little "+1 HP" over
 invisible.js 11 Who is invisible right now :
 itemtone.js 61 the colors an outfit or a hat draws
+jump.js 36 a duck's jump: one arc for every mode
 jumps.js 48 the jump counter
 keynav.js 204 menus by keyboard
 l4dd.js 3347 Quacky Zombies on every screen
@@ -88,7 +89,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box on every screen
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4979 the rules of Quacky Zombies
+l4ddrules.js 4975 the rules of Quacky Zombies
 l4ddsfx.js 513 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the zombies far from
 langname.js 5 the name of Sandbox's number language, in one
@@ -154,7 +155,7 @@ random.js 9 the two random helpers every mode's rules share:
 report.js 114 Report Bug or Suggest Ideas
 rooms.js 256 Play: create a room, and the rooms online
 router.js 112 screens
-rules.js 6224 the rules of Agree or Disagree
+rules.js 6217 the rules of Agree or Disagree
 sandbox.js 1359 Sandbox: the key windows
 sandboxrules.js 2059 Sandbox: which map it plays on, and who
 sbarms.js 124 Sandbox: a made NPC's weapons in a fight

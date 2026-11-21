@@ -1,4 +1,5 @@
 import { hpHeal, hpHurt, tenths } from "./hpmath.js";
+import { jumpDodges } from "./jump.js";
 /* ---------- the rules of Mad God Justin ----------
    A boss fight: every duck has the knife (1), the pistol (2: it never reloads, in place of the bow, the owner's,
    Nov 16), the weapon it picked
@@ -49,7 +50,6 @@ import {
   DUCK_PELLET_LIFE,
   DAGGER_SPEED,
   strike,
-  dodges,
   shove,
   KB_FAR,
   aimOf,
@@ -978,7 +978,7 @@ function brain(s, now, log) {
         ox = px - k * sx,
         oy = py - k * sy,
         od = Math.hypot(ox, oy);
-      if (od > DASH_R * MGJ_SCALE || dodges(s, p, now)) continue;
+      if (od > DASH_R * MGJ_SCALE || jumpDodges(p, now)) continue;
       D.hit.push(id);
       const sl = Math.sqrt(len) || 1,
         fx0 = sx / sl,
@@ -1787,7 +1787,7 @@ function mgjKnock(s, id, now) {
   }
   const P = s.players[id],
     p = s.pos[id];
-  if (!P || P.dead || !p || mgjSafe(s, id, now) || dodges(s, p, now))
+  if (!P || P.dead || !p || mgjSafe(s, id, now) || jumpDodges(p, now))
     return false;
   if (!mgjSoak(s, id, now)) {
     P.dead = true;
@@ -1817,7 +1817,7 @@ function burnTick(s, now) {
   m.burnt = burnt;
   for (const a of Object.keys(burn)) {
     const p = s.pos[a];
-    if (!p || p.x < 0 || dodges(s, p, now)) continue;
+    if (!p || p.x < 0 || jumpDodges(p, now)) continue;
     for (const b of playing(s)) {
       const q = s.pos[b];
       if (b === a || !q || q.x < 0 || m.burn[b] > now) continue;

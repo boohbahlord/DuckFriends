@@ -107,7 +107,6 @@ import {
   coolEnds,
   phpLost,
   PHP,
-  dodges,
   isHang,
   inWorld,
   MAG,
@@ -329,6 +328,7 @@ import { knockOff, bothOff } from "./duel.js";
 import { hooks } from "./hooks.js";
 import { mountTouch, stick } from "./touch.js";
 import { walkIntent } from "./playerinput.js";
+import { jumpCfg, jumpZ, landsAt, jumpDodges } from "./jump.js";
 import { mountPad } from "./phonepad.js";
 import { now as clockNow } from "./clock.js";
 import {
@@ -639,23 +639,6 @@ let cam = null; // the bracket's camera: the diagram's corner on the board (dx, 
 /* ---------- movement numbers (board widths or heights per second) ---------- */
 const SPEED = { x: 0.45, y: 1.0, px: 0.5, py: 0.85, sprint: SPRINT.speed }; // (sprint: the whole game's, gamedefaults.js)
 const MGJ_SLOW = 0.8;
-const JUMP = { T: 0.62, H: 1.35 }; // seconds in the air; apex in duck heights (one jump for everyone: no long, short or double jump, no slow gravity, the owner's, Nov 20 21:38Z)
-/* a duck's jump: the one arc; Hangout's trampoline bounces higher (pos.tb) */
-const jumpCfg = (pos) => {
-  if (pos && pos.tb > 0)
-    return { T: JUMP.T * Math.sqrt(pos.tb / JUMP.H), H: pos.tb }; // Hangout's trampoline: a bounce tb duck heights high
-  return JUMP;
-};
-const arc = (t0, now, T, H) => {
-  const t = (now - t0) / 1000 / T;
-  return t <= 0 || t >= 1 ? 0 : 4 * H * t * (1 - t);
-};
-const jumpZ = (pos, now) => {
-  if (!pos || !pos.j) return 0;
-  const { T, H } = jumpCfg(pos);
-  return arc(pos.j, now, T, H);
-};
-const landsAt = (pos) => pos.j + jumpCfg(pos).T * 1000;
 
 /* ---------- the board ---------- */
 /* Would You Rather: two tiles, each choice in its writer's font, with an OR strip between them */
@@ -1978,7 +1961,7 @@ function drawDucks(now = clockNow()) {
     flag(
       d,
       "dodge",
-      !!(isL4dd(s) ? dodging(s, pos, now) : dodges(s, pos, now)),
+      !!(isL4dd(s) ? dodging(s, pos, now) : jumpDodges(pos, now)),
     ); // (see-through while a jump makes it safe: Dead Ducks Arcade's, in every mode now, the owner's, Nov 18 16:50Z)
     flag(d, "air", z > 1 && !seated(s, id)); // (sitting on a chair isn't flying)
     flag(d, "left", d._face < 0);
