@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v234",
+    version: 234,
+    date: "Nov 21, 2026",
+    title: "Tidier actions",
+    news: [
+      "Behind the scenes: every move a player makes (a vote, a jump, a shot, a Sandbox window) is now looked up in a short table instead of one very long list, and the big rules file is half its old size. Nothing plays differently.",
+    ],
+  },
+  {
     id: "v233",
     version: 233,
     date: "Nov 21, 2026",
