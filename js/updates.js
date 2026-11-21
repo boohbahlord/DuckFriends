@@ -9,6 +9,13 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v221",
+    version: 221,
+    date: "Nov 21, 2026",
+    title: "Single player under Play",
+    news: ["Play now asks Single player or Multiplayer."],
+  },
+  {
     id: "v220",
     version: 220,
     date: "Nov 21, 2026",
