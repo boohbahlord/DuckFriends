@@ -595,7 +595,7 @@ export function swims(s, id) {
 }
 /* what a duck holds out (a special used up isn't there) */
 export const inHand = (w, s, id) => {
-  if (!w || w === "longjump" || w === "jetpack") return ""; // (the jetpack is on the back: game.js)
+  if (!w || w === "longjump" || w === "jetpack" || w === "safekeep") return ""; // (the jetpack is on the back: game.js; Safe Keeping, picked, holds nothing out)
   const c = s && kindOf(w) === "special" && ((kitOf(s, id) || {}).am || {})[w];
   return c && c[0] <= 0 ? "" : w;
 };

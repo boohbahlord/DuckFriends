@@ -18,7 +18,7 @@ bots.js 1050 computers
 brackets.js 474 Bicker Brackets: what the screen shows
 brainbuild.js 332 Sandbox: M's Brain builder
 card.js 424 the player card
-chat.js 1601 text chat and the command line
+chat.js 1600 text chat and the command line
 cheatflag.js 16 a game with test commands used counts nothing
 cheats.js 73 test commands: cheat round N, cheat give WEAPON
 claw.js 36 a claw's marks: three white slashes where a
@@ -48,7 +48,7 @@ friends.js 254 friends
 front.js 109 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 209 how a held weapon and the screen move
-game.js 8832 the game screen
+game.js 8838 the game screen
 gamedefaults.js 20 the game's own numbers, for every mode
 gameready.js 47 what the game's loading screen waits for
 gamesettings.js 1751 Game Settings: the whole screen, like Customize
@@ -74,7 +74,7 @@ jetart.js 39 the jetpack's pictures
 jetpack.js 33 the jetpack
 jumps.js 48 the jump counter
 keynav.js 204 menus by keyboard
-l4dd.js 3312 Quacky Zombies on every screen
+l4dd.js 3299 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 203 Dead Ducks Arcade's Angel machine on every screen
 l4ddart.js 756 Quacky Zombies' pictures
