@@ -62,7 +62,7 @@ gunart.js 447 every weapon, drawn: one drawing for
 gunmen.js 110 the gunmen's looks
 gunmenrules.js 1141 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen
-guns.js 594 every weapon's numbers: one sheet for
+guns.js 599 every weapon's numbers: one sheet for
 hats.js 1073 hats
 heights.js 49 a shot's height, Doom's way
 helppages.js 1498 the command line's Help pages: help
@@ -156,7 +156,7 @@ random.js 9 the two random helpers every mode's
 report.js 114 Report Bug or Suggest Ideas
 rooms.js 256 Play: create a room, and the
 router.js 112 screens
-rules.js 6226 the rules of Agree or Disagree
+rules.js 6229 the rules of Agree or Disagree
 sandbox.js 1359 Sandbox: the key windows
 sandboxrules.js 2059 Sandbox: which map it plays on,
 sbarms.js 124 Sandbox: a made NPC's weapons in
@@ -236,7 +236,7 @@ vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
 vote.js 278 Vote Mode & Map: the vote
 walkgrid.js 67 the walking grid: which 40-px cells
-weaponuse.js 86 using a weapon: one module for
+weaponuse.js 104 using a weapon: one module for
 who.js 3 who this player is beyond this
 wounds.js 485 the wounds a hit leaves
 zombiepath.js 178 the zombies' way to the ducks
