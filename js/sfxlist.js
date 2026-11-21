@@ -79,6 +79,7 @@ export const FILES = {
   l4crack: { n: 3 },
   l4nail: { n: 3 },
   l4groan: { n: 4 },
+  zwindup: { n: 4 },
   svHorde: { n: 1 },
   defib: { n: 1 },
   merchantIn: { n: 1 },
