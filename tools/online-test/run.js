@@ -134,13 +134,14 @@ const PLAYER = (scen) => {
         } else if (Math.random() < (scen === "storm" ? 0.05 : 0.006)) {
           if (scen !== "lobby" && others.length && Math.random() < 0.6) {
             const t = others[Math.floor(Math.random() * others.length)];
-            if (!pm.whyNotVote(s, me, "kick"))
+            if (!(pm.whyNotVote || (() => ""))(s, me, "kick"))
               R.send({ t: "voteStart", kind: "kick", target: t });
           } else {
             const kind = ["skip", "lobby", "turn"][
               Math.floor(Math.random() * 3)
             ];
-            if (!pm.whyNotVote(s, me, kind)) pm.lobbyVote(R, kind);
+            if (!(pm.whyNotVote || (() => ""))(s, me, kind))
+              pm.lobbyVote(R, kind);
           }
         }
       } catch (e) {
