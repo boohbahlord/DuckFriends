@@ -9,13 +9,22 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
-    id: "v255",
-    version: 255,
+    id: "v256",
+    version: 256,
     date: "Nov 22, 2026",
     title: "Darker below",
     news: [
       "For Dead Ducks Arcade: standing up high, everything below you gets 20% darker for each level down (ground, props, ducks, zombies, their outlines), and falling steps it down level by level; a jump changes nothing. Arrows show a duck's level number when it stands on a whole level (the ground is 1).",
       "Behind the scenes: chat, the board screen's shots and announcements, and the settings windows are split into smaller files, and some copied code is now shared (the settings windows' drawing, Lawyering's votes, the duck's hat and beak colors in chat). Nothing plays differently.",
+    ],
+  },
+  {
+    id: "v255",
+    version: 255,
+    date: "Nov 22, 2026",
+    title: "Zombies climb to the pump roof",
+    news: [
+      "For Dead Ducks Arcade: on Downpour, zombies no longer get stuck at the red car under the gas pump roof; they climb up to you.",
     ],
   },
   {
