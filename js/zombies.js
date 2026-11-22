@@ -28,9 +28,9 @@ import {
 } from "./hangout/layout.js";
 import * as GS from "./hangout/stationmap.js";
 import { walkOf } from "./rules.js";
-import { SAME_FLOOR, zOf, heightWay } from "./heights.js";
+import { zOf, heightWay } from "./heights.js";
 import { SLOW as SWIM } from "./hangout/water.js";
-import { nearPairs } from "./npcrules.js";
+import { apart, crowdOf, into } from "./crowd.js";
 import { isSurv, SV, survWatch } from "./survrules.js";
 import {
   L4_HOOKS,
@@ -553,7 +553,11 @@ function mapClaw(s, p4, target, z, now) {
    true once the target is down). It sets c.chasedM when one comes close for the merchant */
 function walkAll(zs, c) {
   const { s, now, T, dt, pls, dist, brd, eating, ducks, cake } = c;
-  ZC = crowdOf(zs); // (no walking into one another: stepZombie)
+  ZC = crowdOf(
+    zs.filter((z) => z.st !== 3),
+    "zombie",
+    dp() ? (z) => zOf(z, "zombie") : () => 0,
+  ); // (no walking into one another: stepZombie)
   for (const z of zs) {
     if (z.st === 3) continue;
     const o = z.l[2] ? openingById(z.l[2]) : null,
@@ -1053,42 +1057,8 @@ const TURNS = [0, 0.52, -0.52, 1.05, -1.05, 1.57, -1.57];
 let ZW = null;
 export const setZWall = (f) => (ZW = f);
 /* the zombies walking this heartbeat (moveZombies), so one never walks into another on its floor, as a duck never
-   walks into one (world.js crowd): before, the ones behind walked into the ones in front every heartbeat and were
-   pushed back out (separate), so a crowd round a duck standing still shook (the owner's, Nov 20 03:58Z, "zombies
-   shouldnt viibrate on roof of gas pump", and the same crowd on the ground). { cells: zombies by CROWD_CELL square,
-   h: each one's height } */
-const CROWD_CELL = 96;
+   walks into one (world.js crowd): crowd.js crowdOf and into */
 let ZC = null;
-function crowdOf(zs) {
-  const cells = new Map(),
-    h = new Map();
-  for (const z of zs) {
-    if (z.st === 3) continue;
-    h.set(z, dp() ? zOf(z, "zombie") : 0);
-    const k = cellOf(z.x, z.y);
-    if (!cells.has(k)) cells.set(k, []);
-    cells.get(k).push(z);
-  }
-  return { cells, h };
-}
-const cellOf = (x, y) =>
-  Math.floor(x / CROWD_CELL) * 100000 + Math.floor(y / CROWD_CELL);
-/* would zombie z stepping to (x, y) walk into another on its floor? That one, or null (only closer to one it's already
-   touching or about to: stepping away is always free) */
-function intoCrowd(z, x, y) {
-  const hz = ZC.h.get(z),
-    i0 = Math.floor(x / CROWD_CELL),
-    j0 = Math.floor(y / CROWD_CELL);
-  for (let di = -1; di <= 1; di++)
-    for (let dj = -1; dj <= 1; dj++)
-      for (const o of ZC.cells.get((i0 + di) * 100000 + j0 + dj) || []) {
-        if (o === z || o.st === 3) continue;
-        if (Math.abs(ZC.h.get(o) - hz) >= SAME_FLOOR) continue;
-        const then = room(x, y, o.x, o.y);
-        if (then < 1 && then < room(z.x, z.y, o.x, o.y)) return o;
-      }
-  return null;
-}
 export function stepZombie(z, aim, far, pls) {
   const g = gr(),
     n = Math.max(1, Math.ceil(far / 8)),
@@ -1113,7 +1083,7 @@ export function stepZombie(z, aim, far, pls) {
           then = room(x, y, ...q.xy);
         if (then < 1 && then < now) return false;
       }
-      const o = crowd && intoCrowd(z, x, y);
+      const o = crowd && into(ZC, z, x, y, room);
       if (o) z.bl = o; // (the one in its way, this heartbeat: QUEUE)
       return !o;
     };
@@ -1168,40 +1138,20 @@ export function walkable(x0, y0, x1, y1) {
       return false;
   return true;
 }
-/* zombies never stand in each other: two too close are pushed apart (each half), where it's open. Only two on the same
-   floor (SAME_FLOOR): one up on a roof and one under it, or one on the canopy and one on the ground by the pumps, pushed
-   each other every heartbeat and walked back, so they shook in place ("zombies shouldnt viibrate on roof of gas pump",
-   the owner's, Nov 20 03:58Z) */
-function separate(zs, zf = dp() ? zombieZ : null) {
+/* zombies never stand in each other: two too close are pushed apart (crowd.js apart), where it's open. Only two on the
+   same floor (SAME_FLOOR): one up on a roof and one under it, or one on the canopy and one on the ground by the pumps,
+   pushed each other every heartbeat and walked back, so they shook in place ("zombies shouldnt viibrate on roof of gas
+   pump", the owner's, Nov 20 03:58Z) */
+function separate(zs, zf = dp() ? zombieZ : null, k = "zombie") {
   const g = gr(),
-    live = zs.filter((z) => z.st !== 3),
-    hz = new Map(zf ? live.map((z) => [z, zf(z)]) : []);
-  nearPairs(
-    live,
-    64,
-    64,
-    (a, b) => {
-      if (hz.size && Math.abs(hz.get(a) - hz.get(b)) >= SAME_FLOOR) return; // (a floor apart: never in each other's way)
-      let ex = (a.x - b.x) / g.rx,
-        ey = (a.y - b.y) / g.ry,
-        e = Math.hypot(ex, ey);
-      if (e >= 1) return;
-      if (e < 1e-3) {
-        ex = Math.random() - 0.5;
-        ey = Math.random() - 0.5;
-        e = Math.hypot(ex, ey);
-      }
-      const sa = still(a),
-        sb = still(b);
-      if (sa && sb) return;
-      const push = (1 - e) / 2,
-        ux = (ex / e) * push * g.rx,
-        uy = (ey / e) * push * g.ry;
-      if (!sa) nudge(a, sb ? 2 * ux : ux, sb ? 2 * uy : uy);
-      if (!sb) nudge(b, sa ? -2 * ux : -ux, sa ? -2 * uy : -uy); // (a Sandbox spawn with Speed 0 is never pushed aside: the other takes it all)
-    },
-    2,
-  );
+    live = zs.filter((z) => z.st !== 3);
+  apart(live, k, {
+    rx: g.rx,
+    ry: g.ry,
+    fl: new Map(zf ? live.map((z) => [z, zf(z)]) : []),
+    still,
+    move: nudge,
+  });
 }
 /* one that never moves to make room: Speed 0 (the owner's, Nov 20 17:25Z: "Spawns or respawns dont move off their
    position anymore to make room, since their movement being zero means zero"); the other takes all of the push */
@@ -1453,7 +1403,7 @@ export function brainWalk(s, now, plans, live, dt, c) {
     /* never in each other: the zombies' own crowd */
     const was = live.map((o) => [o.x, o.y]);
     live.forEach(px);
-    separate(live, c.z || null);
+    separate(live, c.z || null, "npc"); // (Sandbox's NPCs: crowd.js CROWD_BREEDS.npc)
     live.forEach(back);
     live.forEach((o, i) => {
       if (o.x !== was[i][0] || o.y !== was[i][1]) ch = true;
