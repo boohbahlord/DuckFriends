@@ -13,7 +13,6 @@ import {
   FASTER,
   GRENADE_MS,
   GRENADE_R,
-  KB_FAR,
   boardPhases,
   daggerZ,
   grenadeZ,
@@ -23,6 +22,7 @@ import {
 } from "./rules.js";
 
 import { flyShots, swingOn, swinging, swingMisses } from "./weaponuse.js";
+import { KB_FAR, pushOf, pushAlong } from "./push.js";
 
 import { jumpDodges } from "./jump.js";
 
@@ -269,27 +269,31 @@ function shotMeets(s, id, x0, y0, dx, dy, rx, ry, up) {
     ).line(x0, y0, x0 + dx, y0 + dy, up) >= 0
   );
 }
+/* a shove counted in world px (Hangout and the maps' own): far world px whichever way, in shove's duck lengths */
+export function shovePx(s, id, ux, uy, far, now, side) {
+  const dX = 0.006 * HW,
+    dY = 0.012 * HH;
+  shove(s, id, ux, (uy * dX) / dY, far / dX, now, side);
+}
 export function shove(s, id, ux, uy, far, now, side, more = {}) {
   const p = s.pos[id],
     hang = isHang(s),
     [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
     vx = ux * far * rx,
     vy = uy * far * ry,
-    n = Math.ceil(far * 3);
-  let x = p.x,
-    y = p.y;
-  for (let i = 1; i <= n; i++) {
-    const tx = Math.max(0, Math.min(1, p.x + (vx * i) / n)),
-      ty = Math.max(0, Math.min(1, p.y + (vy * i) / n));
-    if (
-      hang &&
-      (!standable(tx * HW, ty * HH, zOf(p), undefined, [x * HW, y * HH]) ||
-        (inCabin(tx * HW, ty * HH) ? 1 : 0) !== side)
-    )
-      break;
-    x = tx;
-    y = ty;
-  }
+    n = Math.ceil(far * 3),
+    [x, y] = pushAlong(
+      [p.x, p.y],
+      n,
+      (i) => [
+        Math.max(0, Math.min(1, p.x + (vx * i) / n)),
+        Math.max(0, Math.min(1, p.y + (vy * i) / n)),
+      ],
+      ([tx, ty], [x, y]) =>
+        !hang ||
+        (standable(tx * HW, ty * HH, zOf(p), undefined, [x * HW, y * HH]) &&
+          (inCabin(tx * HW, ty * HH) ? 1 : 0) === side),
+    ); // (one loop for every push: push.js)
   s.pos[id] = {
     ...p,
     x: +x.toFixed(4),
@@ -379,7 +383,7 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
         h.id,
         h.d > 0.05 ? h.dx * k : ux,
         h.d > 0.05 ? h.dy * k : uy,
-        KB_FAR * (isMgj(s) ? 1 : 1.5), // (50% farther than it was: the owner's, Nov 4)
+        pushOf(s, "hammer"), // (the mode's own: push.js)
         now,
         side,
       );
@@ -592,7 +596,7 @@ function blast(s, sh, x, y, now, o = {}) {
       id,
       a === null ? tx : Math.cos(a),
       a === null ? ty : Math.sin(a),
-      KB_FAR * (isMgj(s) || isL4dd(s) ? 3 : 2), // (twice the hammer's in the normal game, owner 2026-11-03 17:15Z)
+      pushOf(s, "grenade"), // (the mode's own: push.js)
       now,
       side,
       { ms: 650, h: 0.9, l: 0 },

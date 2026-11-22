@@ -145,7 +145,7 @@ import { sizeShots } from "./boardfire.js";
 
 /* (what l4ddrules.js asks of the board's weapons comes by here, not from boardfire.js: boardfire.js imports sbcabin.js, which
    needs l4ddrules.js whole before it runs, so l4ddrules.js must not import boardfire.js itself) */
-export { shove } from "./boardfire.js";
+export { shovePx } from "./boardfire.js";
 
 import { STAGE, countTurn, dodOn, isSudo } from "./roomrules.js";
 
@@ -852,10 +852,9 @@ export const coolEnds = (s, id, sp) =>
         grCool(s, id), // (Sandbox: a loot orb's own wait, sbhot.js; a group's Cooldown speed, sbgroups.js)
     magSize(sp) ? ((s.mag || {})[magKey(id, sp)] || {}).r || 0 : 0,
   ); // (a time on the room's clock)
-/* the hammer's knock-back: a duck it hits is shoved KB_FAR duck lengths away from the swing in KB_MS, with a little hop
+/* the hammer's knock-back: a duck it hits is shoved (push.js KB_FAR) away from the swing in KB_MS, with a little hop
    (KB_HOP duck sizes high), and lands playing dead; pos.kb = { t, x, y: where it was } lets every screen draw the shove */
 export const KB_MS = 380,
-  KB_FAR = 2.4,
   KB_HOP = 0.3,
   KB_LAND = 110; // (KB_LAND: ms until the swing gets there; the duck falls then)
 export const EFFECTS = [
@@ -1352,8 +1351,9 @@ function reduceStep(state, a, now) {
       (a.t === "voteStart" && ["skip", "turn"].includes(a.kind)))
   )
     return state; // waiting for players: no turn ends
-  const act = ACTS[a.t];
-  return act && Object.hasOwn(ACTS, a.t)
+  const acts = actsOf();
+  const act = acts[a.t];
+  return act && Object.hasOwn(acts, a.t)
     ? act({ state, s, a, now, P, me, host, boss })
     : s;
 }
@@ -1728,6 +1728,9 @@ export const signed = (v) =>
 export const nameOfValue = (v) =>
   v === null ? "" : COLS[Math.max(0, Math.min(6, Math.round(v) + 3))];
 
-/* ---------- the actions, one handler each (owner, Nov 21): reduceStep above looks the action up here ---------- */
-
-const ACTS = { ...ROOM_ACTS, ...PLAY_ACTS, ...SB_ACTS };
+/* ---------- the actions, one handler each (owner, Nov 21): reduceStep above looks the action up here ----------
+   made on the first action, never when this file loads: actplay.js and actroom.js import back from here, so whichever
+   loads first must not need the other's table yet */
+let ACTS = null;
+const actsOf = () =>
+  ACTS || (ACTS = { ...ROOM_ACTS, ...PLAY_ACTS, ...SB_ACTS });

@@ -50,10 +50,10 @@ import {
   PELLET_V,
   DUCK_PELLET_LIFE,
   DAGGER_SPEED,
-  KB_FAR,
   aimOf,
 } from "./rules.js";
 import { strike, shove } from "./boardfire.js";
+import { KB_FAR } from "./push.js";
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
 import { SLOT_ODDS, zombieTakes, pierceOf, ALL_HP } from "./l4ddrules.js";
 import { ARMS, GUN_BREEDS, MGJ_GUNS, MGJ_MELEE } from "./guns.js";

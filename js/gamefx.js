@@ -8,45 +8,62 @@ import {
   bigOf,
   bloodBurst,
   boomShake,
-  fire,
   follows,
   frameNo,
   geo,
-  heard,
-  hidden,
   hotdogs,
   me,
   neckSpray,
-  off,
   place,
   podLift,
   setRecoil,
   shows,
-  step,
   toScreen,
   world,
 } from "./game.js";
+import { heard } from "./gamehand.js";
 import { CHAIR, TRACE } from "./gunart.js";
+
 import { el, $ } from "./ui.js";
+
 import { isLaw, KB_LAND } from "./rules.js";
+
 import { W as HW, H as HH } from "./hangout/layout.js";
+
 import { zOf } from "./heights.js";
+
 import { grenadeBoom } from "./grenade.js";
+
 import { confettiRain, pressFX } from "./specials.js";
+
 import { heatUp, heldOn } from "./barrelheat.js";
+
 import { BEAM } from "./laserart.js";
+
 import { isL4dd, inHand } from "./l4ddrules.js";
+
 import { ARMS, BOARD_WEAPONS, AUTO } from "./guns.js";
+
 import { l4Got } from "./l4dd.js";
+
 import { isSb, boardDuck, sbSfx, sbCellMids } from "./sandboxrules.js";
+
 import { duckSVG } from "./duck.js";
+
 import { seenDuck } from "./looks.js";
+
 import { justinAt, justinShown, JUSTIN_ID } from "./boardjustin.js";
+
 import { sfx } from "./sound.js";
+
 import { now as clockNow } from "./clock.js";
+
 import { isMgj, MGJ_SCALE } from "./mgjrules.js";
+
 import { POOF, TELEPORT, HITMARK, edgeHTML } from "./mgjart.js";
+
 import { dropMeteor, CONTROLLER } from "./mgj.js";
+
 import {
   fxImpact,
   fxSmolder,
@@ -62,8 +79,11 @@ import {
   heavyOff,
   MUZZLE,
 } from "./fx.js";
+
 import { FLAME as FLAMER, flameRate, band } from "./flamer.js";
+
 import { low } from "./gfx.js";
+
 import { kick, shake, vibrate, VIB } from "./fxmotion.js";
 
 /* ---------- the silly commands: lightning, love, kill, hotdog ---------- */
