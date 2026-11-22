@@ -9,6 +9,35 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v249",
+    version: 249,
+    date: "Nov 22, 2026",
+    title: "No more ladder lines",
+    news: [
+      "For Dead Ducks Arcade and Survival: when you're up on the canopy, zombies stop lining up at the ladder and take the roof or the red car instead, and a few criminals now sneak round the side.",
+      "Behind the scenes: Justin's walk, hammer swing and flash are written once for every mode he's in. Nothing plays differently.",
+    ],
+  },
+  {
+    id: "v248",
+    version: 248,
+    date: "Nov 22, 2026",
+    title: "Tidier Select screen",
+    news: [
+      "Single Player's Select Game Mode on a phone: the menu button no longer runs off the screen, the empty bar after the title is gone, and each game's row is only as tall as its picture and name.",
+    ],
+  },
+  {
+    id: "v247",
+    version: 247,
+    date: "Nov 22, 2026",
+    title: "A rainbow arena",
+    news: [
+      "For Mad God Justin: the arena isn't one flat color anymore. It slowly turns through the rainbow, one full turn about every 30 seconds, and stays see-through like every board.",
+      "Behind the scenes: your made modes, made maps and Sandbox saves are kept on your device through one shared piece instead of three copies. Nothing changes for you; they're all still there.",
+    ],
+  },
+  {
     id: "v246",
     version: 246,
     date: "Nov 22, 2026",

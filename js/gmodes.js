@@ -13,38 +13,11 @@
 import { esc, openWindow, toast } from "./ui.js";
 import { isSb, sbRule } from "./sandboxrules.js";
 import { sbSnapshot, newSaveId, oldPics } from "./sbsave.js";
+import { idbStore, req, done } from "./idbstore.js";
 
 /* ---------- the store: { id, name, desc, at, made, world, map, most, data (the snapshot's text) } ---------- */
 const DB = "duckfriends-modes";
-let dbP = null;
-function db() {
-  if (!dbP)
-    dbP = new Promise((ok, no) => {
-      const q = indexedDB.open(DB, 1);
-      q.onupgradeneeded = () => {
-        if (!q.result.objectStoreNames.contains("modes"))
-          q.result.createObjectStore("modes", { keyPath: "id" });
-      };
-      q.onsuccess = () => ok(q.result);
-      q.onerror = () => no(q.error);
-      q.onblocked = () => no(new Error("blocked"));
-    }).catch((e) => {
-      dbP = null;
-      throw e;
-    });
-  return dbP;
-}
-const req = (r) =>
-  new Promise((ok, no) => {
-    r.onsuccess = () => ok(r.result);
-    r.onerror = () => no(r.error);
-  });
-const done = (t) =>
-  new Promise((ok, no) => {
-    t.oncomplete = () => ok();
-    t.onerror = () => no(t.error);
-    t.onabort = () => no(t.error || new Error("aborted"));
-  });
+const { db } = idbStore(DB, "modes");
 let cache = null; // (the list as last read: Game Settings draws it at once)
 /* every game mode on this device, A to Z, without its data */
 export async function listModes() {
