@@ -7974,3 +7974,7 @@ Decision: added to the next-week plan as N16 (rain).
 ## Owner, 18:04Z Nov 22 (edit, one more line to the 17:58Z plan message, word for word)
 Walls like floors or cielings have elevation levels, and thus can be stood upon
 Decision: added to the next-week plan as N17.
+
+## Owner, 18:07Z Nov 22 (screenshot /mnt/project-files/adam/bugs/2026-11-22-1807-zombie-stuck-tree.png, red arrow at the tree)
+I found zombie ducks getting stuck on a tree in Dead Ducks Arcade and not moving around it. It was the tree rightmost to the right wall on the outside of it on the gas station. I can send a picture.
+Decision: a bug from V273b/V275 trunks; Solomon fixes it (zombies go round that tree, a check that a zombie there reaches the duck), ships alone as soon as green.
