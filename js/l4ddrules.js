@@ -202,13 +202,13 @@ import {
    when it landed) */
 export const L4_HOOKS = { npc: null, gm: null }; // (gm: Survival's gunmen, gunmenrules.js: { tick, shot, blast, fire, near, claw })
 export const isL4dd = (s) => !!s && baseMode(s.options) === "l4dd"; // (and Sandbox on its cabin or Downpour: sandboxrules.js)
-/* I want only the lights' stutter and the air (the wind, the rain, the fires: ambience.js) on of Hangout's activities.
-   The couches, the stage, the card table and the piano's keys are still drawn, but quiet: nothing to sit on, sing into
-   or play at, and nothing else to write in or switch. */
+/* I want only the lights' stutter, the air (the wind, the rain, the fires: ambience.js) and the darker below (below.js) on of
+   Hangout's activities. The couches, the stage, the card table and the piano's keys are still drawn, but quiet: nothing to
+   sit on, sing into or play at, and nothing else to write in or switch. */
 keepOnly(
   "l4dd",
   [],
-  ["flicker", "ambience"],
+  ["flicker", "ambience", "below"],
   ["seats", "stage", "bj", "piano", "tv"],
 ); // (the TV only shows while the power is on: l4ddpower.js)
 

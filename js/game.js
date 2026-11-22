@@ -297,7 +297,7 @@ import {
   laserMeter,
 } from "./laserfx.js";
 
-import { olAdd, olDraw, olFloor, olRoofed } from "./outlines.js";
+import { olAdd, olDraw, olAway, olRoofed } from "./outlines.js";
 
 import { LASER } from "./laserart.js";
 
@@ -883,7 +883,7 @@ function drawDucks(now = clockNow()) {
   const sbOl = sbHasOl(s), // (Sandbox: a zone with Outlines, sandboxrules.js)
     ol = isL4dd(s) || isMgj(s) || hang || sbOl, // (the outlines, outlines.js: every zombie game, and Hangout's world too, the universal way to see who's hidden: the owner's, Nov 17 17:41Z)
     olAt = ol && hang ? world.at(R.me) : null,
-    olMe = olAt ? olFloor(olAt.x, olAt.y, olAt.z) : null; // (my floor)
+    olMe = olAt ? olAway(olAt.x, olAt.y, olAt.z).f : null; // (my floor)
   trackWalk();
   drawMeters(s, board, layer, now);
   const jp =
@@ -1454,7 +1454,7 @@ function drawDucks(now = clockNow()) {
       const x = (pixelOn() ? snap(at.left) : at.left) - size / 2,
         y = b - ph + size * 0.08; // (the picture hangs 8% under the body, css/app.css .gduck-body img.px)
       let hidden = false,
-        floor = 0;
+        away = null;
       if (hang) {
         const a = olMe !== null ? world.at(id) : null,
           az = a && (pos.j && pos.b !== undefined ? pos.b : a.z);
@@ -1476,7 +1476,7 @@ function drawDucks(now = clockNow()) {
                 b,
                 d._zi, // (its z-index: only what is really drawn over it hides it, world.js)
               ));
-        if (a) floor = Math.sign(olFloor(a.x, a.y, az) - olMe);
+        if (a) away = olAway(a.x, a.y, az, olMe); // (its floor against mine, its elevation, how much darker)
       }
       olAdd({
         id,
@@ -1488,7 +1488,7 @@ function drawDucks(now = clockNow()) {
         flip: fx < 0,
         kind: olKind,
         hidden,
-        floor,
+        ...away,
         hp: hv ? hv[0] : d._hp >= 0 ? d._hp : undefined,
         down: deadPose ? [b, ph - size * 0.08] : null, // (out of HP, lying down: its outline lies down too)
         mid: deadPose ? mid : null, // (lying down: the arrow inside its body)

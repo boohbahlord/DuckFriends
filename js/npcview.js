@@ -18,6 +18,7 @@ import {
 import { goreFree } from "./wounds.js";
 import { clawMark } from "./claw.js";
 import { popHP } from "./hpmeter.js";
+import { belowBody } from "./below.js";
 import { FLAME } from "./mgjart.js";
 import { now as clockNow } from "./clock.js";
 
@@ -106,6 +107,7 @@ export function drawNpcs(ctx, list, ZB, layer, fxl, opt = {}) {
       ),
       hide = unseen || (!!opt.hide && opt.hide(o, z, Wd)) || !onCam;
     if (z.el.hidden !== hide) z.el.hidden = hide;
+    if (!hide) belowBody(z.el, z.x, z.y, h); // (darker for each elevation it's under me: below.js)
     /* "−N HP" over it when it loses HP or gets some back, as over every duck and zombie (hpmeter.js; the owner's, Nov 21
        17:25Z: "The game now has the -{hp number} above any entity that takes damage now"); kept while it's out of sight
        so it never pops an old hit when it comes back into view */

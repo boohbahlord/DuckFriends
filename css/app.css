@@ -22128,6 +22128,11 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .l4-unseen {
   opacity: 0.55;
 }
+/* under my floor: darker by --below (below.js; B5, the owner's, Nov 21 16:17Z: "the color value becomes darker of the
+   pixels"), whatever it is: the ground, a prop, a duck, a zombie */
+.below-me {
+  filter: brightness(calc(1 - var(--below, 0)));
+}
 /* Sandbox: Dark outside, round the zone my duck is in (sbspawnview.js darkOut) */
 .sb-dark {
   position: absolute;
