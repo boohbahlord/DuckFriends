@@ -1,25 +1,31 @@
 /* ---------- Seriat: the language (part A: values) ----------
    The rules are in notes/seriat-bible.md (the source of truth). This part is sections 0 to 5 and the percent picks
    (14.4): plain values, ranges, tenths, the asterisks and the $ letters, ~, order arrows and repeats, the four kinds of
-   brackets, math, = and the asterisk rules mormax, mormini, negbrahm, posbrahm and caps.
+   brackets, math, = and the asterisk rules mormax, mormini, negbrahm, posbrahm and caps; and section 19, shuffle (the
+   bag: ";", the \;\ marks) and \esc\ (leave a bracket).
    "this code is like math, components give rise to new logical possibilities", so every piece is a small part that
    fits into every other: a range can be a list item, a list can be a range's end, anything can be named and used again.
    A text is compiled once (compile()) into small steps, plain functions, so a spawn only runs those (bible section 12).
    A program keeps its own place in its orders and repeats between runs (spawn 1, spawn 2 ...); each run starts its
    inputs (the asterisks) and its { } groups over.
    Bad writing never breaks the game: compile() and run() give { why } and the caller keeps its last good value.
-   No imports, so the rules, the boxes and the Seriat window all use this one compiler. */
+   It imports only seriatbag.js (shuffle and escape), so the rules, the boxes and the Seriat window all use this one
+   compiler. */
+
+import {
+  NbError,
+  Esc,
+  ESC,
+  isMark,
+  markShuffles,
+  deal,
+  bagState,
+} from "./seriatbag.js";
 
 export const NOTHING = Symbol("nothing"); // (a pick that landed on "do nothing", or a repeat that played 0 times)
 const MOST = 1000; // a repeat plays at most this many times
 const RULE_WORDS = ["mormax", "mormini", "negbrahm", "posbrahm", "caps"];
 
-class NbError extends Error {
-  constructor(why) {
-    super(why);
-    this.why = why;
-  }
-}
 /* an error says why, and which help page tells more */
 const no = (why, page) => {
   throw new NbError(page ? `${why}. See ${page}` : why);
@@ -261,7 +267,9 @@ const RESERVED = new Set([
 /* ---------- the parser ---------- */
 class Parser {
   constructor(toks, prog) {
+    toks = markShuffles(toks);
     this.toks = toks.filter((t) => t.t !== "sp");
+    this.esc = this.toks.some((t) => t.t === "bs" && ESC.test(t.v)); // (only a line with \esc\ wraps its brackets)
     this.raw = toks; // (spaces kept, for a value and its percent: "3 60%")
     this.i = 0;
     this.prog = prog;
@@ -349,8 +357,10 @@ class Parser {
           : keyOf(first, null);
     if (!key) no("After \"=\" comes the asterisk (or $) to name: =*, ='1*'");
     const fn = (ctx) => {
+      ctx.left = false;
       const v = left(ctx);
-      ctx.b.set(key, v);
+      if (!(ctx.left && v === NOTHING)) ctx.b.set(key, v); // (a { }= left with \esc\ keeps what was picked before)
+      ctx.left = false;
       return right(ctx);
     };
     fn.def = right.only === key; // (a line that only names: "{…}='1*'")
@@ -439,18 +449,39 @@ class Parser {
   startsGroup() {
     return this.is("[") || this.is("(");
   }
+  /* a bracket \esc\ can leave: it gives nothing, and one bracket fewer is left to leave */
+  leave(f) {
+    if (!this.esc) return f;
+    const g = (ctx) => {
+      try {
+        return f(ctx);
+      } catch (e) {
+        if (!(e instanceof Esc) || --e.n > 0) throw e;
+        ctx.left = true;
+        return NOTHING;
+      }
+    };
+    return Object.assign(g, f); // (its parts' marks: len, st, opts, span …)
+  }
 
   /* , : one of these, true random. With percents: "[3 60%, 5 40%]" */
   choice() {
-    const items = [this.item()];
+    const items = [this.bagItem()];
+    let shuf = null;
     while (this.is(",")) {
+      shuf = shuf || this.peek().shuf;
       this.i++;
-      items.push(this.item());
+      items.push(this.bagItem());
     }
     if (items.length === 1 && !items[0].w) return items[0].v;
     const weighted = items.filter((x) => x.w).length;
     if (weighted && weighted !== items.length)
       no("Give every choice a percent, or none of them");
+    if (shuf && !weighted)
+      return this.bag(
+        items.map((x) => x.v),
+        shuf.n,
+      ); // (a "," a \;\ mark reaches: a bag)
     if (!weighted) {
       const vs = items.map((x) => x.v);
       const fn = (ctx) => vs[rnd(ctx, vs.length)](ctx);
@@ -468,6 +499,30 @@ class Parser {
       }
       return NOTHING;
     };
+  }
+  /* ; : a bag, tighter than "," ("2,4;6" is 2, or the bag of 4 and 6) */
+  bagItem() {
+    const first = this.item();
+    if (!this.is(";")) return first;
+    const items = [first];
+    while (this.is(";")) {
+      this.i++;
+      items.push(this.item());
+    }
+    if (items.some((x) => x.w)) no('A shuffle (";") takes no percents');
+    return {
+      v: this.bag(
+        items.map((x) => x.v),
+        Infinity,
+      ),
+    };
+  }
+  /* a bag of these values: each once, shuffled, then again (after passes passes: plain random) */
+  bag(vs, passes) {
+    const st = this.state(bagState());
+    const fn = (ctx) => vs[deal(ctx, st, vs.length, passes)](ctx);
+    fn.opts = vs; // (for "in" and "for": each of them)
+    return fn;
   }
   /* one choice: a value, a value and its percent ("3 60%"), or a percent alone ("30%": true 3 times in 10) */
   item() {
@@ -577,9 +632,19 @@ class Parser {
   /* : a range. Whole numbers, unless an end is written with tenths ("1.0:1.*" is 1.0 to 1.9) */
   range() {
     const a = this.atom();
-    if (!this.is(":")) return a;
-    this.i++;
-    const b = this.atom();
+    let bag = null; // ("2;:6" and "2:;6": a bag of every number; a ":" a \;\ mark reaches too)
+    if (this.is(";") && this.is(":", 1)) {
+      this.i += 2;
+      bag = Infinity;
+    } else if (this.is(":")) {
+      const c = this.toks[this.i++];
+      if (this.is(";")) {
+        this.i++;
+        bag = Infinity;
+      } else if (c.shuf) bag = c.shuf.n;
+    } else return a;
+    const b = this.atom(),
+      st = bag ? this.state(bagState()) : null;
     const tenths = !!(a.tenths || b.tenths);
     const span = (ctx) => {
       let lo = num(a.lo ? a.lo(ctx) : a(ctx), "A range's start"),
@@ -587,15 +652,16 @@ class Parser {
       if (lo > hi) [lo, hi] = [hi, lo]; // (4:2 is 2 to 4)
       return [lo, hi, tenths || !Number.isInteger(lo) || !Number.isInteger(hi)];
     };
+    const pick = (ctx, n) => (st ? deal(ctx, st, n, bag) : rnd(ctx, n));
     const fn = (ctx) => {
       const [lo, hi, t10] = span(ctx);
       if (t10) {
         const l = Math.ceil(tenth(lo) * 10 - 1e-9),
           h = Math.floor(tenth(hi) * 10 + 1e-9);
         if (h < l) return tenth(lo);
-        return (l + rnd(ctx, h - l + 1)) / 10;
+        return (l + pick(ctx, h - l + 1)) / 10;
       }
-      return lo + rnd(ctx, hi - lo + 1);
+      return lo + pick(ctx, hi - lo + 1);
     };
     fn.span = span; // (for "in" and "for": every number of the range)
     return fn;
@@ -697,6 +763,18 @@ class Parser {
       };
     }
     if (t.t === "bs") {
+      const e = ESC.exec(t.v);
+      if (e) {
+        this.i++;
+        const n = !e[1] ? 1 : e[1] === "!" ? Infinity : +e[1];
+        if (n < 1)
+          no("\\esc0\\ leaves nothing: write \\esc\\, \\esc2\\ or \\esc!\\");
+        return () => {
+          throw new Esc(n);
+        };
+      }
+      if (/^\s*\d+\s*esc\s*$/i.test(t.v))
+        no("The number goes after esc: \\esc2\\");
       const rep = this.repeatOf(t.v);
       if (!rep) no(`"\\${t.v}\\" can't go here`);
       this.i++;
@@ -706,7 +784,11 @@ class Parser {
         const n = rep.count ? rep.count(ctx) : 1;
         if (n === Infinity) no("A repeat in a value needs a count");
         let v = NOTHING;
-        for (let k = 0; k < n; k++) v = a(ctx);
+        try {
+          for (let k = 0; k < n; k++) v = a(ctx);
+        } catch (x) {
+          if (!(x instanceof Esc)) throw x; // (left with \esc\: the repeat ends there)
+        }
         return v;
       };
     }
@@ -717,7 +799,7 @@ class Parser {
         if (this.is(close)) no(`Empty ${t.v}${close}`);
         const inner = this.seq();
         this.take(close);
-        return inner;
+        return this.leave(inner);
       }
       if (t.v === "{") {
         this.i++;
@@ -736,7 +818,7 @@ class Parser {
         };
         fn.only = inner.only;
         fn.def = inner.def; // ({[2,4]='2*'} only names '2*')
-        return fn;
+        return this.leave(fn);
       }
       if (t.v === '"') {
         this.i++;
@@ -1084,17 +1166,20 @@ function judge(rules) {
 const NO_RULES = judge([]);
 /* the rules written at the start of a line, and what's left: { rules, rest } */
 function lineRules(toks, line) {
-  const rules = [];
+  const rules = [],
+    kept = [];
   let k = 0;
   while (k < toks.length && (toks[k].t === "sp" || toks[k].t === "bs")) {
     const t = toks[k];
-    if (t.t === "bs") {
+    if (t.t === "bs" && isMark(t))
+      kept.push(t); // (\;\ and \esc\: the line's own, not rules)
+    else if (t.t === "bs") {
       if (/^[<>]|^if\b/.test(t.v.trim())) break; // (a repeat or an \if …\, not a rule)
       rules.push(parseRule(t.v, t.line || line, rules.length));
     }
     k++;
   }
-  return { rules, rest: toks.slice(k) };
+  return { rules, rest: [...kept, ...toks.slice(k)] };
 }
 
 /* ---------- compile: a line of Seriat into a program ----------
@@ -1149,7 +1234,11 @@ function build(toks, rules) {
     for (const s of segs) {
       if (!s.def) continue;
       const n = s.count ? s.count(ctx) : 1;
-      for (let j = 0; j < Math.min(n, MOST); j++) last = s.node(ctx);
+      try {
+        for (let j = 0; j < Math.min(n, MOST); j++) last = s.node(ctx);
+      } catch (e) {
+        if (!(e instanceof Esc)) throw e; // (left with \esc\: the repeat ends, the line goes on)
+      }
     }
     if (!vals.length) return out(last);
     // (a part whose count came out 0 plays nothing: the next one plays. Once round, the line gives nothing)
@@ -1167,7 +1256,14 @@ function build(toks, rules) {
         next();
         continue;
       }
-      const v = s.node(ctx);
+      let v;
+      try {
+        v = s.node(ctx);
+      } catch (e) {
+        if (!(e instanceof Esc)) throw e;
+        next(); // (left with \esc\: this part ends, the next one plays)
+        continue;
+      }
       if (++st.used >= st.limit) next();
       return out(v);
     }
@@ -1176,7 +1272,11 @@ function build(toks, rules) {
   /* a line rule took a result out: play again from the same place (orders don't move on), at most 1,000 times */
   const save = () => [
     { ...st },
-    prog.states.map((x) => ({ ...x, deck: x.deck && [...x.deck] })),
+    prog.states.map((x) => ({
+      ...x,
+      deck: x.deck && [...x.deck],
+      sw: x.sw && { ...x.sw },
+    })),
   ];
   const load = ([a, b]) => {
     Object.assign(st, a);
@@ -1246,6 +1346,7 @@ export function compileFile(text) {
     const at = String(text).split("\n").length;
     return { n: 0, errs: [{ line: at, why: e.why }], lines };
   }
+  toks = markShuffles(toks, true); // (\;!\: the whole file's)
   /* first the lines and their rules (a rule for the whole file or for other lines can sit anywhere), then each line */
   const all = [];
   let cur = [];
@@ -1319,5 +1420,6 @@ export const NB_WORDS = [
   "rm",
   "lin",
   "lim",
+  "esc",
   ...RULE_WORDS,
 ];

@@ -41,6 +41,30 @@ HP, damage and speed take tenths.
 - Groups side by side, `[ ]` or `( )`, are picked in a random order unless arrows say otherwise.
 - An ordered value keeps its place between spawns.
 
+## Shuffle and escape
+A shuffle is a bag: each value plays once, in a random order, and then they all shuffle again.
+
+| Write | Means |
+|---|---|
+| `2;4;6` | 2, 4 and 6 each once in a random order, then again (a comma is plain random) |
+| `[2;4;6]` | the bag inside a bracket: each visit takes the next one, with no repeat until all are used |
+| `2;:6`, `2:;6` | every number from 2 to 6 once, shuffled |
+| `2:6;8` | a shuffled pick between one number from 2 to 6 and 8 |
+| `2,4;6` | `;` binds tighter than `,`: 2, or the bag of 4 and 6 (after the bag gives 4, it gives 6 next) |
+| `\;\` | shuffle every comma and range after it on the line; values written with arrows keep their order |
+| `\;3\` | three full passes through each bag, then plain random again |
+| `\;>\`, `\<;\` | shuffle what comes after it, or before it, through every `\|` on the line |
+| `>\;\` | shuffle what comes after it, up to the next `\|` |
+| `\;!\` | the whole file or box; more `!` wins over fewer |
+| `\esc\` | leave the bracket it's in at once (`\ESC\` works too) |
+| `\esc2\` | leave two brackets (the number goes after `esc`) |
+| `\esc!\` | leave every bracket it's in |
+
+- A bracket that is left gives nothing. A `{ }=` that is left keeps the value its name had before.
+- Leaving a repeat (`\>>\||`) ends the repeat, and the line goes on after it.
+- A bag keeps its place between spawns, as an order does.
+- In a file, a `;` between two values is a bag; anywhere else it ends a statement.
+
 ## Brackets
 | Write | Means | Example |
 |---|---|---|
