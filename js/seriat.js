@@ -169,6 +169,9 @@ function lex(text) {
 const rnd = (ctx, n) => Math.min(n - 1, Math.floor(ctx.r() * n)); // (0 … n-1)
 const tenth = (n) => Math.round(n * 10) / 10;
 const out = (v) => (typeof v === "number" ? tenth(v) : v); // (a result keeps tenths at most)
+const step = (ctx) => (ctx.box && ctx.box.kind === "half" ? 20 : 10); // (a box in half tenths: an elevation)
+const outIn = (ctx, v) =>
+  typeof v === "number" ? Math.round(v * step(ctx)) / step(ctx) : v;
 const num = (v, what = "this") => {
   if (v === NOTHING) no(`${what} came out as nothing`);
   if (typeof v === "string") no(`Letters can't do math ("${v}")`);
@@ -656,10 +659,11 @@ class Parser {
     const fn = (ctx) => {
       const [lo, hi, t10] = span(ctx);
       if (t10) {
-        const l = Math.ceil(tenth(lo) * 10 - 1e-9),
-          h = Math.floor(tenth(hi) * 10 + 1e-9);
-        if (h < l) return tenth(lo);
-        return (l + pick(ctx, h - l + 1)) / 10;
+        const k = step(ctx),
+          l = Math.round(lo * k),
+          h = Math.round(hi * k);
+        if (h < l) return outIn(ctx, lo);
+        return (l + pick(ctx, h - l + 1)) / k;
       }
       return lo + pick(ctx, hi - lo + 1);
     };
@@ -1240,7 +1244,7 @@ function build(toks, rules) {
         if (!(e instanceof Esc)) throw e; // (left with \esc\: the repeat ends, the line goes on)
       }
     }
-    if (!vals.length) return out(last);
+    if (!vals.length) return outIn(ctx, last);
     // (a part whose count came out 0 plays nothing: the next one plays. Once round, the line gives nothing)
     for (let tries = 0; tries <= vals.length; tries++) {
       const s = segs[vals[st.cur]];
@@ -1265,7 +1269,7 @@ function build(toks, rules) {
         continue;
       }
       if (++st.used >= st.limit) next();
-      return out(v);
+      return outIn(ctx, v);
     }
     return NOTHING;
   };
