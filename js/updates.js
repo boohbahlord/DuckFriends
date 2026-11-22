@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v248",
+    version: 248,
+    date: "Nov 22, 2026",
+    title: "Tidier Select screen",
+    news: [
+      "Single Player's Select Game Mode on a phone: the menu button no longer runs off the screen, the empty bar after the title is gone, and each game's row is only as tall as its picture and name.",
+    ],
+  },
+  {
     id: "v247",
     version: 247,
     date: "Nov 22, 2026",

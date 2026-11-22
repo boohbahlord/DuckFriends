@@ -19028,16 +19028,27 @@ body:has(> .vt) .win-back {
   height: 2rem;
   margin-left: -0.6rem;
 }
+/* Single Player picks at once: no clock, no votes' numbers, no voters' ducks, so none of their empty room (the owner's,
+   Nov 22 03:02Z: an empty dark bar after the title and every row twice as tall as its symbol and name) */
+.vt-solo .vt-time,
+.vt-solo .vt-mode .n,
+.vt-solo .vt-mode .who {
+  display: none;
+}
+.vt-solo .vt-mode {
+  grid-template-rows: auto;
+  padding: 0.45rem 0.75rem;
+}
 @media (max-width: 760px) {
   .vt {
     padding: max(0.8rem, env(safe-area-inset-top)) 0.75rem 0.7rem;
     gap: 0.45rem;
   }
   .vt-title {
-    font-size: 2.05rem;
-  }
+    font-size: min(2.05rem, 6.6vw);
+  } /* (the title shrinks to fit beside the buttons: at a big UI size it pushed the menu button off the screen) */
   .vt-head {
-    grid-template-columns: auto 1fr;
+    grid-template-columns: minmax(0, auto) 1fr;
     row-gap: 0.4rem;
   }
   .vt-head .vt-title {
