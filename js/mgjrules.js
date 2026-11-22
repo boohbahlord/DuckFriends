@@ -1,12 +1,8 @@
-import { fxOf } from "./mgjbrain.js";
+import { r3, walkTo, fxOf } from "./justinmoves.js";
 
-import { pickTick } from "./mgjpicks.js";
-
-import { hpHeal, hpHurt, hundredths, hpBreed } from "./hpmath.js";
+import { hpHurt, hundredths, hpBreed } from "./hpmath.js";
 
 import { jumpDodges } from "./jump.js";
-
-import { coneOf } from "./weaponuse.js";
 
 /* ---------- the rules of Mad God Justin ----------
    A boss fight: every duck has the knife (1), the pistol (2: it never reloads, in place of the bow, the owner's,
@@ -51,22 +47,12 @@ import {
   seatLate,
   needed,
   say,
-  boardPhases,
-  SHOT_SPEED,
-  ARROW_SPEED,
-  PELLET_V,
-  DUCK_PELLET_LIFE,
-  DAGGER_SPEED,
   aimOf,
 } from "./rules.js";
 
-import { strike, shove } from "./boardfire.js";
-
-import { KB_FAR } from "./push.js";
-
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
 
-import { SLOT_ODDS, zombieTakes, pierceOf, ALL_HP } from "./l4ddrules.js";
+import { zombieTakes, pierceOf, ALL_HP } from "./l4ddrules.js";
 
 import { ARMS, GUN_BREEDS, MGJ_GUNS, MGJ_MELEE } from "./guns.js";
 
@@ -74,7 +60,7 @@ import { ZOMBIE_BREEDS, boardWalk, zLook } from "./zombies.js";
 
 import { holdDown, onGetUp, invuln, hurtFx } from "./hangout/death.js";
 
-import { sbOnBoard, boardDuck } from "./sandboxrules.js";
+import { sbOnBoard } from "./sandboxrules.js";
 
 import { hitWounds, WOUND_BREEDS } from "./wounds.js";
 
@@ -84,14 +70,9 @@ import { grudge } from "./npcrules.js";
 
 import { npcBody, duOf } from "./sbbody.js";
 
-import {
-  E_LINES,
-  DEATH_LINES,
-  GOD_LINES,
-  WIN_LINES,
-} from "./hangout/justin.js";
+import { DEATH_LINES, GOD_LINES, WIN_LINES } from "./hangout/justin.js";
 
-import { shuffle, roll } from "./random.js";
+import { shuffle } from "./random.js";
 
 export const isMgj = (s) => s.options.mode === "mgj";
 /* no time limit (the owner, Nov 3): the fight goes on until he's at 0 HP or every duck is out of HP. What his HP sets off:
@@ -360,7 +341,6 @@ export const GOOD_ID = "goodjustin",
 export const SKY_ID = "sky"; // (the pickups' lightning, fire and meteor, in the damage and the killing blow)
 export const rnd = (a, b) => a + Math.random() * (b - a);
 export const any = (xs) => xs[Math.floor(Math.random() * xs.length)];
-export const r3 = (v) => Math.round(v * 1000) / 1000;
 
 /* is the fight paused (the meteor falling, or his Xbox off)? */
 export const mgjFrozen = (s) =>
@@ -562,16 +542,8 @@ function mgjEnd(s, now, won, log, allOut = false) {
   if (won) {
     // he stays where he is (no podium: the owner's, Nov 20 18:23Z), and the lightning strikes him there
     const at = justinAt(j, now);
-    Object.assign(j, {
-      k: null,
-      x0: r3(at.x),
-      y0: r3(at.y),
-      x1: r3(at.x),
-      y1: r3(at.y),
-      t: now,
-      v: SPEED,
-      w: "",
-    });
+    walkTo(j, at, at, now, SPEED);
+    j.w = "";
     if (m.gj) m.gj.down = 0; // (Good Justin God gets up to cheer)
     /* at 0 HP he dies there (game.js: lying, bleeding, no more crying), and the dead say nothing (the owner's, Nov 18
        12:19Z: "justin cannot make dialog when outright dead in zombies or mad god justin"): no losing lines */
@@ -631,7 +603,8 @@ export function goodDown(s, now) {
   g.safe = now + SOAK_MS;
   if (g.hp > 0) return;
   const p = s.pos[GOOD_ID];
-  if (p) fxOf(s, now)({ kind: "poof", x: p.x, y: p.y, who: [GOOD_ID] });
+  if (p)
+    fxOf(s, now, JUSTIN_ID)({ kind: "poof", x: p.x, y: p.y, who: [GOOD_ID] });
   delete s.pos[GOOD_ID];
   s.mgj.gj = null;
   say(s, `${GOOD_NAME} is gone.`);
@@ -816,7 +789,7 @@ export function burnTick(s, now) {
       if (Math.hypot((p.x - q.x) / RX, (p.y - q.y) / RY) > TOUCH) continue;
       if (mgjKnock(s, b, now)) {
         mgjBurn(s, b, now);
-        fxOf(s, now)({ kind: "burn", who: [b] });
+        fxOf(s, now, JUSTIN_ID)({ kind: "burn", who: [b] });
         ch = true;
       }
     }
@@ -899,7 +872,7 @@ export function mgjHitAt(s, by, now, near, log, n = 1) {
   if (!bodies.length) return false;
   const b = bodies.find((x) => x.real) || bodies[0];
   if (b.real) mgjStab(s, by, now, log, n);
-  fxOf(s, now)({ kind: "hitmark", x: b.x, y: b.y }); // (the owner: every hit shows it, on him and on his double alike)
+  fxOf(s, now, JUSTIN_ID)({ kind: "hitmark", x: b.x, y: b.y }); // (the owner: every hit shows it, on him and on his double alike)
   return true;
 }
 /* his double's shots: each new shot of his this beat gets a mirrored twin, and the fake one's are marked */
@@ -1047,14 +1020,14 @@ function getUp(s, by, id, now, full) {
   else delete lost[id];
   m.lost = lost;
   m.safe = { ...m.safe, [id]: now + SOAK_MS };
-  fxOf(s, now)({ kind: "revive", by, who: [id] });
+  fxOf(s, now, JUSTIN_ID)({ kind: "revive", by, who: [id] });
   say(s, `${P.name} got ${T.name} up.`);
 }
 
 export function mgjTeamUse(s, a, now, log) {
   const m = s.mgj,
     p = s.pos[a.id],
-    fx = fxOf(s, now);
+    fx = fxOf(s, now, JUSTIN_ID);
   if (!m || !p) return false;
   if (a.what === "revive") {
     const rv = { ...(m.rv || {}) };
@@ -1254,7 +1227,7 @@ export function mgjZombieHit(s, near, w, now, by, sh = null) {
         Math.hypot(a.x - sh.x0, a.y - sh.y0) -
         Math.hypot(b.x - sh.x0, b.y - sh.y0),
     );
-  const fx = fxOf(s, now),
+  const fx = fxOf(s, now, JUSTIN_ID),
     most = !sh || w === "laser" ? Infinity : Math.max(1, pierceOf(s, by, w));
   let hit = false;
   for (const o of got) {
