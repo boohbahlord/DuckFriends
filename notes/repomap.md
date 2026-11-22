@@ -66,12 +66,15 @@ gamehand.js 604 the hand: the number-key specials,
 gameplace.js 738 where things are put on
 gameready.js 47 
 gameround.js 597 round
-gamesettings.js 1757 Game Settings: the whole screen,
+gamesettings.js 764 Game Settings: the whole screen,
 gamestats.js 191 what `stats` and `roundstats` print
 gfx.js 8 Low graphics
 gmodes.js 219 Sandbox Phase 6: made game
 grenade.js 35 a grenade going off
 ground.js 53 what a duck walks on,
+gspreview.js 86 Game Settings: the pictures in the preview box
+gssettings.js 773 Game Settings: every setting, its name, its choices and its category
+gstext.js 185 Game Settings: what a setting says, what is greyed, which rows a mode has
 gunart.js 437 every weapon, drawn: one drawing
 gunmen.js 110 the gunmen's looks
 gunmenrules.js 1145 Survival: the gunmen
