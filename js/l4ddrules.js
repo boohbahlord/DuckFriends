@@ -114,7 +114,7 @@ import { invuln } from "./hangout/death.js";
 import { hOk, hLock, shotFeet, SAME_FLOOR, zOf, nearH } from "./heights.js";
 import { toPx, DUCK } from "./units.js";
 import { blast, reach, hitOf, REACH } from "./blast.js";
-import { carsBlast } from "./carpush.js";
+import { carsBlast, carsSwing } from "./carpush.js";
 import { pushAlong, walkOf, pushTaken, immobile, sizeOf } from "./push.js";
 import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
@@ -2053,9 +2053,8 @@ export const wildCrying = (s, id, now) => {
   const c = isWild(s, id) && s.hang && (s.hang.l4jcry || {})[id];
   return !!c && now < c.t + CRY.ms && !isDown(s, id);
 };
-/* what Justin says besides his everyday lines: hurt by a
-   player, an aggressive line; going down, a death line. Each list is a shuffled bag, every line once before any comes again (s.hang.l4jl { key: [line
-   numbers left] }) */
+/* what Justin says besides his everyday lines: hurt by a player, an aggressive line; going down, a death line. Each
+   list is a shuffled bag, every line once before any comes again (s.hang.l4jl { key: [line numbers left] }) */
 /* hurt by a player, an aggressive line (his GOD_LINES, a bag of them), every single time (the owner's, Nov 19 19:27Z:
    "He should dialogue every time you damage him in an aggressive way"); a new line takes the place of the one over him
    (one bubble for each duck, game.js bubbles), so they never stack */
@@ -3994,6 +3993,7 @@ function meleeHits(s, now) {
         inCabin(qx, qy) ? 1 : 0,
       ); // (world px: boardfire.js)
     }
+    if (dp()) carsSwing(s, bx, by, R, k, knockOf(k.w) * KNOCK_DUCK * sz); // (Downpour's cars in it: carpush.js)
     if (L4_HOOKS.npc)
       L4_HOOKS.npc(s, k.by, bx, by, now, k.w, R, R, null, k.hit); // (Sandbox's NPCs in its bubble, each once a swing: sbcabin.js)
     if (L4_HOOKS.gm && s.hang.gm)

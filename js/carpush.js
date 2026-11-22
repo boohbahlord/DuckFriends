@@ -29,39 +29,58 @@ export function carsAt(s) {
     if (r) regrid(...r);
   });
 }
-/* a blast's push on the cars (near: who it reaches, blast.js reach; from (x, y) world px): each car it reaches is pushed
-   away from it as far as it pushes a duck (push.js pushOf), over the car's weight */
-export function carsBlast(s, near, x, y) {
+/* every push on the cars, the one rule (B6d: "weight or knockback or power", explosions too): from (x, y) world px,
+   push(i, qx, qy) says how car i, its nearest part at (qx, qy), is pushed: [ux, uy, px], a way and how far it would push
+   a duck (world px), or null; the car goes px over its weight (push.js pushTaken), a step at a time while it stands
+   clear (layout.js carClear) */
+function carsPushed(s, x, y, push) {
   const at = s.hang.cars || NONE;
   let to = null;
   CARS.forEach((c, i) => {
     const [ox, oy] = at[i] || [0, 0],
-      x0 = c.x0 + ox,
-      y0 = c.y0 + oy,
-      x1 = c.x1 + ox,
-      y1 = c.y1 + oy,
-      px = Math.min(x1, Math.max(x0, x)),
-      py = Math.min(y1, Math.max(y0, y)); // (its nearest part)
-    if (!near(px, py, heightAt(px, py), 0, 0.001)) return;
-    const far = pushTaken(pushOf(s, "grenade"), WEIGHT.CAR) * DUCK,
-      ax = (x0 + x1) / 2 - x,
-      ay = (y0 + y1) / 2 - y,
-      d = Math.hypot(ax, ay) || 1,
+      qx = Math.min(c.x1 + ox, Math.max(c.x0 + ox, x)),
+      qy = Math.min(c.y1 + oy, Math.max(c.y0 + oy, y)),
+      u = push(i, qx, qy);
+    if (!u) return;
+    const far = pushTaken(u[2], WEIGHT.CAR),
       n = Math.ceil(far / STEP),
       [nx, ny] = pushAlong(
         [ox, oy],
         n,
         (k) => [
-          Math.round(ox + (ax / d) * far * (k / n)),
-          Math.round(oy + (ay / d) * far * (k / n)),
+          Math.round(ox + u[0] * far * (k / n)),
+          Math.round(oy + u[1] * far * (k / n)),
         ],
-        ([qx, qy]) => carClear(i, qx, qy),
+        ([px, py]) => carClear(i, px, py),
       );
     if (nx !== ox || ny !== oy) (to = to || { ...at })[i] = [nx, ny];
   });
   if (!to) return;
   s.hang.cars = to;
   carsAt(s);
+}
+/* a blast (near: who it reaches, blast.js reach) from (x, y): each car it reaches, away from it, as far as it pushes a
+   duck (push.js pushOf) */
+export function carsBlast(s, near, x, y) {
+  carsPushed(s, x, y, (i, qx, qy) => {
+    if (!near(qx, qy, heightAt(qx, qy), 0, 0.001)) return null;
+    const c = CARS[i],
+      [ox, oy] = (s.hang.cars || NONE)[i] || [0, 0],
+      ax = (c.x0 + c.x1) / 2 + ox - x,
+      ay = (c.y0 + c.y1) / 2 + oy - y,
+      d = Math.hypot(ax, ay) || 1;
+    return [ax / d, ay / d, pushOf(s, "grenade") * DUCK];
+  });
+}
+/* a melee swing k's bubble (r world px round (x, y)): each car in it, once a swing (k.hit), along the swing (k.dx,
+   k.dy), as far as it shoves a duck (px world px: l4ddrules.js meleeHits) */
+export function carsSwing(s, x, y, r, k, px) {
+  const d = Math.hypot(k.dx, k.dy) || 1;
+  carsPushed(s, x, y, (i, qx, qy) => {
+    if (Math.hypot(qx - x, qy - y) > r || k.hit.includes("c" + i)) return null;
+    k.hit.push("c" + i);
+    return [k.dx / d, k.dy / d, px];
+  });
 }
 /* … and on my screen, each frame (on Downpour: every mode there is Dead Ducks Arcade's, registry.js): the cars' parts at
    their depth now (world.js set it when it made them) */

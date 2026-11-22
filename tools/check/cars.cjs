@@ -4,6 +4,7 @@
    - the walk grid made again round it only (walkgrid.js regrid) is the same as the whole grid made new, so zombies
      path round the car where it is now;
    - a car stops before another car or a wall (layout.js carClear), and put back, the map is as it was;
+   - a melee swing shoves a car as it shoves a duck, over its weight, once a swing;
    - every move of the six cars takes well under 50 ms.
    Run: node tools/check/run.mjs cars */
 const C = require("./lib.cjs");
@@ -45,6 +46,15 @@ const { chromium } = require("playwright");
     out.blocked = L.carClear(1, c5.x0 - c.x0, c5.y0 - c.y0); // (car 1 on car 5's spot)
     CP.carsAt({ hang: {} });
     out.backDiff = same(kept, base);
+    /* a melee swing: car 1 shoved east 30 px' worth (a duck's), once a swing */
+    const m = { hang: {} },
+      k = { dx: 1, dy: 0, hit: [] },
+      mx = c.x0 - 5,
+      my = (c.y0 + c.y1) / 2;
+    CP.carsSwing(m, mx, my, 20, k, 30);
+    CP.carsSwing(m, mx, my, 20, k, 30);
+    out.swing = m.hang.cars;
+    CP.carsAt({ hang: {} });
     return out;
   });
   const [dx, dy] = got.cars[1] || [0, 0];
@@ -56,6 +66,11 @@ const { chromium } = require("playwright");
   if (got.blocked) C.fail("a car can stand on another car");
   if (got.backDiff)
     C.fail("cars put back, the walk grid differs: " + got.backDiff);
+  if (JSON.stringify(got.swing) !== '{"1":[2,0]}')
+    C.fail(
+      "a swing's 30 px on a car (15 duck weights): " +
+        JSON.stringify(got.swing),
+    );
   if (got.ms > 25) C.fail("six cars moved in " + got.ms + " ms");
   C.noErrors(errs);
   await b.close();
