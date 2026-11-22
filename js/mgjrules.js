@@ -1,4 +1,4 @@
-import { r3, walkTo, fxOf } from "./justinmoves.js";
+import { r3, walkTo, stopAt, fxOf } from "./justinmoves.js";
 
 import { hpHurt, hundredths, hpBreed } from "./hpmath.js";
 
@@ -913,51 +913,43 @@ export const cakeAt = (c, now) => {
   const t = (Math.min(now, c.stop) - c.t) / 1000;
   return { x: c.x0 + c.vx * t, y: c.y0 + c.vy * t };
 };
-export function cakeTick(s, now, at, fx) {
-  const m = s.mgj,
-    j = s.justin,
-    c = m.cake;
+/* the zebra cake c, one chase for both Justins (the board's, boardjustin.js cakeChase; Mad God Justin's, cakeTick): he
+   runs after it at v, and once it has landed he eats it (j.eat, drawn at his beak) for CAKE_EAT_MS, then gone() takes
+   it away. fx: his flash. True when anything changed */
+export function chaseCake(j, c, at, now, v, fx, gone) {
   delete j.swing;
-  delete j.tell;
-  delete j.dash;
   if (c.eat) {
     if (now < c.eat + CAKE_EAT_MS) return false;
-    m.cake = null;
     delete j.eat;
-    ateHp(m);
-    j.next = now;
-    j.fireAt = Math.max(j.fireAt, now + 800);
-    j.hamAt = Math.max(j.hamAt, now + 1200);
+    gone();
     return true;
   }
   const p = cakeAt(c, now),
     d = Math.hypot((p.x - at.x) / RX, (p.y - at.y) / RY);
   if (now >= c.stop && d < 1.3) {
     c.eat = now;
-    Object.assign(j, {
-      k: null,
-      x0: r3(at.x),
-      y0: r3(at.y),
-      x1: r3(at.x),
-      y1: r3(at.y),
-      t: now,
-    });
+    stopAt(j, at, now);
     j.eat = { k: "zebra", at: now, until: now + CAKE_EAT_MS, cake: true };
     fx({ kind: "eat", what: "zebra" });
     return true;
   }
   if (Math.abs(j.x1 - p.x) < 0.004 && Math.abs(j.y1 - p.y) < 0.004)
     return false;
-  Object.assign(j, {
-    k: null,
-    x0: r3(at.x),
-    y0: r3(at.y),
-    x1: r3(p.x),
-    y1: r3(p.y),
-    t: now,
-    v: SPEED * 1.9,
-  }); // (he runs after it)
+  walkTo(j, at, p, now, v); // (he runs after it)
   return true;
+}
+export function cakeTick(s, now, at, fx) {
+  const m = s.mgj,
+    j = s.justin;
+  delete j.tell;
+  delete j.dash;
+  return chaseCake(j, m.cake, at, now, SPEED * 1.9, fx, () => {
+    m.cake = null;
+    ateHp(m);
+    j.next = now;
+    j.fireAt = Math.max(j.fireAt, now + 800);
+    j.hamAt = Math.max(j.hamAt, now + 1200);
+  });
 }
 
 /* ---------- the ducks' own: reviving, the zebra cake (a = the use action) ---------- */

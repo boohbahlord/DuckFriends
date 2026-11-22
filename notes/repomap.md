@@ -20,7 +20,7 @@ below.js 88 darker below
 blast.js 67 explosions: one module
 bloodpool.js 50 a pool of blood:
 boardfire.js 1338 the board's weapons: hits,
-boardjustin.js 667 Justin on the boards
+boardjustin.js 652 Justin on the boards
 botduck.js 90 a computer's duck: a
 botlines.js 188 What the computers write
 bots.js 1439 computers
@@ -71,14 +71,14 @@ gameboard.js 589 the board: each mode's
 gamedefaults.js 71 the game's own numbers,
 gamefx.js 876 the silly commands and
 gamehand.js 620 the hand: the number-key
-gameplace.js 738 where things are put
+gameplace.js 734 where things are put
 gameready.js 47 
 gameround.js 572 round
 gamesettings.js 756 Game Settings: the whole
 gameshots.js 137 The bullets in the
 gamestats.js 191 what `stats` and `roundstats`
 gfx.js 8 Low graphics
-gmodes.js 219 Sandbox Phase 6: made
+gmodes.js 272 Sandbox Phase 6: made
 grenade.js 33 a grenade going off
 ground.js 53 what a duck walks
 gspreview.js 86 Game Settings: the pictures
@@ -147,7 +147,7 @@ mgj.js 219 Mad God Justin: what
 mgjart.js 96 Mad God Justin's new
 mgjbrain.js 613 Mad God Justin's brain,
 mgjpicks.js 507 Mad God Justin's pickups:
-mgjrules.js 1263 
+mgjrules.js 1255 
 modes.js 445 the game modes
 music.js 590 the music: our own
 musicbar.js 169 the music bar: the
@@ -219,7 +219,7 @@ sbnpcs.js 73 Sandbox: the NPCs I
 sbout.js 62 Sandbox off the zombie
 sbrotate.js 102 Sandbox, Direction's Rotate in
 sbsave.js 292 Sandbox: saving a Sandbox
-sbsaves.js 733 Sandbox's saves: kept on
+sbsaves.js 734 Sandbox's saves: kept on
 sbseriat.js 477 Sandbox: NPCs that run
 sbsfx.js 74 Sandbox's sounds
 sbspawn.js 1708 Sandbox: spawns and respawns
@@ -272,7 +272,7 @@ umaps.js 371 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on
-updates.js 3580 Updates
+updates.js 3590 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival
