@@ -39,6 +39,7 @@ collage.js 101 Shelter Sky & Null
 color.js 165 choosing a color
 corners.js 94 full screen
 court.js 230 Lawyering: what the screen
+courtrules.js 17 the courtroom's seats: Lawyering
 crowd.js 242 crowds: walkers never stand
 customize.js 1776 Customize: the Armory
 datboi.js 115 here come dat boi
@@ -49,7 +50,7 @@ duckparts.js 598 the ducks made from
 ducksheets.js 11 made by tools/duck-parts.cjs:
 duel.js 120 the cloud duel: two
 dunce.js 139 Duncelation: what the screen
-duncerules.js 388 the rules of Duncelation
+duncerules.js 387 the rules of Duncelation
 euclid.js 351 Euclid's Squares
 eyes.js 187 eyes
 faces.js 297 face items
@@ -124,7 +125,7 @@ langname.js 5 the name of Sandbox's
 laserart.js 95 the laser gun, drawn
 laserfx.js 135 the Laser Rifle on
 later.js 66 the rest of the
-lawrules.js 361 the rules of Lawyering
+lawrules.js 360 the rules of Lawyering
 loading.js 403 the start: a slow
 loadlines.js 590 the lines under the
 lobby.js 613 the lobby, laid out
