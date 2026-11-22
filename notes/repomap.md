@@ -211,7 +211,7 @@ sbhot.js 143 Sandbox: the hotbar ,
 sbhotview.js 406 Sandbox: the hotbar ,
 sblooks.js 48 Sandbox: a zone's look
 sbloot.js 495 Sandbox: loot orbs ,
-sblootview.js 499 Sandbox: loot orbs ,
+sblootview.js 510 Sandbox: loot orbs ,
 sbmake.js 203 Sandbox: making NPCs and
 sbmenu.js 264 Sandbox: presets, copy and
 sbnpcart.js 162 Sandbox: a spawned NPC's
