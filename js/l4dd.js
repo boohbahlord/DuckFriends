@@ -111,6 +111,7 @@ import {
   ZOUTFITS,
 } from "./l4ddrules.js";
 import { SLOT_KINDS } from "./kitslots.js";
+import { lootAt } from "./l4ddloot.js";
 import { kindOf, ARMS, POOL, loadTo } from "./guns.js";
 import { fenceZ, zombiesOf } from "./zombies.js";
 import { zSortY } from "./zombieroofs.js";
@@ -364,8 +365,7 @@ let layer = null,
 /* the Butler, the fireplace's weapon, my points, the big words, his shop */
 /* my sprint left (0 … 1) and whether I'm too tired to sprint: now in every mode (stamina.js) */
 export { sprintLeft };
-/* every zombie on my screen: its box in the board's px, from its last drawing (game.js: the others' HP meters turn
-   see-through over one) */
+/* every zombie on my screen: its box in the board's px, from its last drawing (game.js: HP meters see-through over one) */
 export function l4ZBoxes() {
   const out = [];
   for (const o of Z.values())
@@ -882,7 +882,7 @@ function seeDrops(s) {
     if (D.has(d.n)) continue;
     const el = document.createElement("div");
     el.className = "l4-drop k-" + d.k;
-    el.innerHTML = `<i>${DROP_ICONS[d.k] || ""}</i>`;
+    el.innerHTML = d.w ? orbHTML(d.w) : `<i>${DROP_ICONS[d.k] || ""}</i>`; // (a weapon or an item a zombie left: its orb)
     layer.append(el);
     D.set(d.n, { el, n: d.n, kind: d.k, x: d.x, y: d.y, until: d.until });
   }
@@ -2117,8 +2117,7 @@ function mBars(s, m, dead) {
     cl.style.setProperty("--cl", cv);
     cl.classList.toggle("off", cv === "0");
   }
-  /* stacked as mine are (meters.js stackBars: white, then blue, each a row only while it shows), without my own
-     reload's red flash */
+  /* stacked as mine are (meters.js stackBars: white, then blue, each a row while it shows), without my reload's flash */
   const rows = [
     [cl, 0.12, cv !== "0"],
     [sp, 0.2, left < 1],
@@ -2416,8 +2415,7 @@ export function l4Ammo(s, me, w) {
   return all > 1 ? { f: c[0] / all, rl: false, dry: c[0] <= 0 } : null; // (the bow: its arrows left)
 }
 let dryW = "";
-/* the yellow bar under my duck, and the bars stacked (meters.js); a gun just run dry, its reload can't be done: the
-   white bar flashes red */
+/* the yellow bar under my duck, and the bars stacked (meters.js); a gun run dry that can't reload: the white bar flashes red */
 function ammoBars(tag, s, me) {
   const w = heldFn() || "",
     a = l4Ammo(s, me, w),
@@ -2695,6 +2693,8 @@ function holdTarget(pos, ctx) {
       best = { kind: "board", o: o.id, d, n };
   }
   if (best) return best;
+  const lt = lootAt(s, pos.x, pos.y, clockNow()); // (something on the ground: only E takes it, l4ddloot.js)
+  if (lt) return { kind: "take", do: "pick", d: 0, w: lt.w, k: lt.k };
   const sv = isSurv(s), // (Survival: no power, no pump, no Angel machine and no slot machine)
     pt =
       !sv &&
@@ -2704,9 +2704,9 @@ function holdTarget(pos, ctx) {
   const now = clockNow(),
     db = Math.max(Math.abs(BOX.zx - pos.x), Math.abs(BOX.y - pos.y)); // (a square, as its yellow line shows it: spinSquare)
   if (db < NEAR && !sv) {
-    const b = boxNow(s, now, me); // (my own spin: anyone else's doesn't stop me)
-    if (!b) return { kind: "box", d: db };
-    if (now >= b.t + BOX.spin && b.w !== HELPER.w)
+    const b = boxNow(s, now, me); // (my own spin; anyone's still there stops every spin, l4ddloot.js)
+    if (!b && !boxNow(s, now)) return { kind: "box", d: db };
+    if (b && now >= b.t + BOX.spin && b.w !== HELPER.w)
       return { kind: "take", d: db, w: b.w }; // (Justin climbs out by himself)
   }
   const m = merchantOf(s);
@@ -2725,7 +2725,7 @@ function tap(t, ctx) {
     if (ptsOf(s, me) < priceFor(s, me, "box")) return say("Not enough points");
     ctx.send({ t: "hang", k: "l4", do: "box" });
   } else if (t.kind === "take") {
-    ctx.send({ t: "hang", k: "l4", do: "box", hand: heldFn() }); // (a ranged weapon takes the place of the one in hand, else the first)
+    ctx.send({ t: "hang", k: "l4", do: t.do || "box", hand: heldFn() }); // (a ranged weapon takes the place of the one in hand, else the first; do: off the ground)
   } else if (t.kind === "sk") ctx.send({ t: "hang", k: "l4", do: "sk" });
   else if (t.kind === "power") pwTap(ctx);
   else if (t.kind === "pump") {
@@ -2758,7 +2758,8 @@ function stopHold(ctx) {
 function holdLabel(t, s, ctx, now) {
   if (t.kind === "box")
     return `Spin for a weapon · ${priceFor(s, ctx.me, "box")}${saleOn(s) ? " (Sale)" : ""}`;
-  if (t.kind === "take") return `Take the ${weaponName(t.w)}`;
+  if (t.kind === "take")
+    return `Take the ${t.w ? weaponName(t.w) : dropName(t.k)}`;
   if (t.kind === "shop") return shop && shop.open ? "Close" : "Shop";
   if (t.kind === "sk") return "Get up (Safe Keeping)";
   if (t.kind === "power") return pwLabel(s);

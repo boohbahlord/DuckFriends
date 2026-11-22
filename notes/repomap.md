@@ -23,7 +23,7 @@ boardfire.js 1331 the board's weapons: hits,
 boardjustin.js 663 Justin on the boards
 botduck.js 90 a computer's duck: a
 botlines.js 188 What the computers write
-bots.js 1426 computers
+bots.js 1429 computers
 brackets.js 459 Bicker Brackets: what the
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
@@ -109,7 +109,7 @@ jumps.js 48 the jump counter
 justinmoves.js 45 Justin's moves on the
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which
-l4dd.js 3337 Quacky Zombies on every
+l4dd.js 3338 Quacky Zombies on every
 l4ddangel.js 151 Dead Ducks Arcade's Angel
 l4ddangelui.js 204 Dead Ducks Arcade's Angel
 l4ddart.js 623 Quacky Zombies' pictures
@@ -117,11 +117,12 @@ l4ddbar.js 332 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell
 l4ddcatalog.js 230 Quacky Zombies: the Butler's
 l4dddrops.js 63 Quacky Zombies' drops, drawn
+l4ddloot.js 41 Dead Ducks Arcade: what
 l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power
 l4ddpowerui.js 278 Dead Ducks Arcade's power
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4973 the rules of Quacky
+l4ddrules.js 4947 the rules of Quacky
 l4ddsfx.js 545 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online:
 langname.js 5 the name of Sandbox's
