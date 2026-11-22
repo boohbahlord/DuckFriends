@@ -797,6 +797,7 @@ function makeSolids() {
         roof: p.roof || 0, // (Downpour: under a roof, it stops a duck's feet up to the roof's height, a shot up to its top)
         zx: !!p.zx, // (zombies climb over it: the fallen tree)
         pass: !!p.pass, // (it stops shots only: walking over it is a floor's, a car's glass, vehicles.js)
+        car: p.car, // (Downpour's car i, or its glass: carClear)
       });
   for (const b of SOLIDS)
     for (
@@ -963,6 +964,61 @@ export function solidsAt(x, y, z = -Infinity) {
   return (
     grid.get(Math.floor(x / CELL) * 1000 + Math.floor(y / CELL)) || []
   ).filter((b) => hits(b, x, y) && z < Math.max(b.top, b.roof));
+}
+/* ---------- a car pushed (carpush.js; the owner's, Nov 21 19:07Z: "cars can be moved around") ----------
+   carAt(i, ox, oy): Downpour's car i (stationmap.js CARS) moved to (ox, oy) world px from where the map puts it: its
+   props (the car and its glass: their spots, solids, depth and drawn parts, shapes.js), and its floor (carDeckAt).
+   Everything is moved in place, so whatever holds them sees it. Returns the box it was in and the one it's in now
+   together (for walkgrid.js regrid), or null when it was there already. moveRev() counts the moves */
+const carOff = {};
+let moves = 0;
+export const moveRev = () => moves;
+export function carAt(i, ox, oy) {
+  const [px, py] = carOff[i] || [0, 0],
+    dx = ox - px,
+    dy = oy - py;
+  if (!dx && !dy) return null;
+  carOff[i] = [ox, oy];
+  for (const p of ALL) {
+    if (p.car !== i) continue;
+    p.seed ??= GS.seedAt(p.x, p.y); // (its look stays the one it had where the map put it: shapes.js)
+    p.east ??= GS.carEast(p.x, p.y, p.hood);
+    p.x += dx;
+    p.y += dy;
+    p.key += dy;
+    for (const b of [p.box, ...(p.drawn || []).map((d) => d.box)]) {
+      b.l += dx;
+      b.t += dy;
+    }
+    if (p.block) for (let k = 0; k < 4; k++) p.block[k] += k % 2 ? dy : dx;
+  }
+  const k = GS.DECKS.findIndex((d) => d.car === i),
+    was = GS.DECKS[k];
+  GS.DECKS[k] = GS.carDeckAt(i, ox, oy);
+  if (SOLID_DECKS.includes(was))
+    SOLID_DECKS[SOLID_DECKS.indexOf(was)] = GS.DECKS[k];
+  makeSolids();
+  moves++;
+  const c = GS.CARS[i];
+  return [
+    c.x0 + Math.min(px, ox),
+    c.y0 + Math.min(py, oy),
+    c.x1 + Math.max(px, ox),
+    c.y1 + Math.max(py, oy),
+  ];
+}
+/* can car i stand at (ox, oy) from its place: in the world, short of its edge as a duck is, and over no solid but its
+   own (a wall, a tree's trunk, another car, a pump) */
+export function carClear(i, ox, oy) {
+  const c = GS.CARS[i],
+    x0 = c.x0 + ox,
+    y0 = c.y0 + oy,
+    x1 = c.x1 + ox,
+    y1 = c.y1 + oy;
+  if (x0 < 70 || y0 < 70 || x1 > W - 70 || y1 > H - 70) return false;
+  return !SOLIDS.some(
+    (b) => b.car !== i && b.x0 < x1 && b.x1 > x0 && b.y0 < y1 && b.y1 > y0,
+  );
 }
 /* can a duck's feet at height z go to (x, y)? up: how much higher the ground there may be (a step on the ground; a little
    in the air, so a jump has to clear an edge). from: where it comes from (a solid it is already in doesn't hold it) */
