@@ -7886,3 +7886,14 @@ Why is there not an ability to change maps in the gane?
 Where is the map change button?
 
 My maps should show in map vote when i have them made"
+
+## 2026-11-22 13:22Z-13:24Z (owner, screenshot of the in-game Seriat bible: /mnt/project-files/adam/bugs/2026-11-22-1322-seriat-bible.jpg)
+
+13:22Z: "Can someone tell me the problem with the Seriat bible text on screen is?"
+13:23Z: "Make it read like documentation or wikipedia as well, not this bullshit owner talk"
+13:24Z: "File names flr seriat get corrected to Seriat"
+
+Decision (Adam): the in-game bible shows a player reference (notes/seriat-bible.md stays Claude's notes, never shown):
+neutral documentation, no owner quotes, dates, file paths or history. The Seriat code files (numerat*, numberat*) are
+renamed to seriat* names, a pure rename (Adam). Sandbox map asks of 13:15Z: red rim fixed V266; made maps into the vote
+and changing the map in Sandbox: Noah.
