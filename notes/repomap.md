@@ -23,7 +23,7 @@ boardfire.js 1318 the board's weapons: hits,
 boardjustin.js 663 Justin on the boards
 botduck.js 90 a computer's duck: a
 botlines.js 188 What the computers write
-bots.js 1425 computers
+bots.js 1426 computers
 brackets.js 459 Bicker Brackets: what the
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
@@ -69,7 +69,7 @@ gameannounce.js 212 The cloud's words and
 gameboard.js 589 the board: each mode's
 gamedefaults.js 71 the game's own numbers,
 gamefx.js 876 the silly commands and
-gamehand.js 604 the hand: the number-key
+gamehand.js 594 the hand: the number-key
 gameplace.js 738 where things are put
 gameready.js 47 
 gameround.js 567 round
@@ -97,7 +97,7 @@ hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
 hooks.js 3 hooks between screens that
 hotbar.js 506 the specials on the
-hotpick.js 319 What goes in my
+hotpick.js 315 What goes in my
 hpmath.js 59 HP in hundredths
 hpmeter.js 311 HP meters and the
 idbstore.js 38 One place that opens
@@ -108,11 +108,12 @@ jump.js 85 a duck's jump: one
 jumps.js 48 the jump counter
 justinmoves.js 45 Justin's moves on the
 keynav.js 204 menus by keyboard
-l4dd.js 3338 Quacky Zombies on every
+kitslots.js 56 the walk-around hotbar: which
+l4dd.js 3337 Quacky Zombies on every
 l4ddangel.js 151 Dead Ducks Arcade's Angel
 l4ddangelui.js 204 Dead Ducks Arcade's Angel
 l4ddart.js 623 Quacky Zombies' pictures
-l4ddbar.js 322 Quacky Zombies' weapons bar
+l4ddbar.js 332 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell
 l4ddcatalog.js 230 Quacky Zombies: the Butler's
 l4dddrops.js 63 Quacky Zombies' drops, drawn
@@ -120,7 +121,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power
 l4ddpowerui.js 278 Dead Ducks Arcade's power
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4987 the rules of Quacky
+l4ddrules.js 4973 the rules of Quacky
 l4ddsfx.js 545 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online:
 langname.js 5 the name of Sandbox's

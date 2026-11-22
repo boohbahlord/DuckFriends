@@ -318,6 +318,7 @@ import {
   wildCrying,
   isWild,
 } from "./l4ddrules.js";
+import { GRENADE as NADE_KEY } from "./kitslots.js";
 
 import { AUTO, MGJ_MELEE, armOfShot } from "./guns.js";
 import { armedView, heatShake } from "./heat.js";
@@ -4076,13 +4077,12 @@ function watchInsets(S) {
 
 const HINTS =
   "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Space</kbd> Jump <kbd>Enter</kbd> End turn";
-/* a second line: a number key picks a weapon (the same key puts it away) and a click uses it; Shift and a number key keep
-   a jump on (not in Mad God Justin or Quacky Zombies: their keys work their own way) */
+/* a second line (the boards'): a number key picks a weapon (again: away), a click uses it, Shift+number keeps a jump on */
 const KEEP_HINT =
   '<i class="hints-br"></i><kbd>Number</kbd> Pick a weapon <kbd>Click</kbd> Use it <kbd>Shift</kbd>+<kbd>Number</kbd> Keep a jump on';
 const L4_HINTS =
   "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Click</kbd> Attack <kbd>R</kbd> Reload" +
-  '<i class="hints-br"></i><kbd>E</kbd> Use <kbd>6</kbd> Grenade'; // (E with it, so no key is split from its word; the grenades are the 6 key now, Nov 20, after the second item on 5; no B any more: the merchants never sell ammo, the owner's, Nov 18 13:46Z)
+  `<i class="hints-br"></i><kbd>E</kbd> Use <kbd>${NADE_KEY + 1}</kbd> Grenade`; // (E with it, so no key is split from its word; the grenades' key after the last slot, kitslots.js; no B any more: the merchants never sell ammo, the owner's, Nov 18 13:46Z)
 /* where a click attacks: on a computer anywhere on the game's screen but a button, a field, a card, a panel or a window
    (the board is the whole screen now, the owner's, Nov 4 07:43Z); on a touch screen only on the board */
 const NOT_AIM =
@@ -4326,7 +4326,7 @@ register("game", {
           slot: handIn,
           pick: l4Pick,
           fire,
-          grenade: () => l4Pick(5),
+          grenade: () => l4Pick(NADE_KEY),
           flash: () => R.send({ t: "hang", k: "l4", do: "fl" }),
           to: l4To, // (the weapon I'm about to take: its slot lights up)
         },

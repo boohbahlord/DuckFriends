@@ -113,6 +113,7 @@ import { JUSTIN, ETHAN, jerseyOf } from "./hangout/npcart.js";
 import { MERCHANTS, merchantById, merchantLook } from "./merchants.js";
 import { linesOf } from "./merchantlines.js";
 import { invuln } from "./hangout/death.js";
+import { kitSlots, gunSlotFor, ITEM_SLOTS } from "./kitslots.js";
 import { hOk, hLock, shotFeet, SAME_FLOOR, zOf, swingH } from "./heights.js";
 import { toPx, DUCK } from "./units.js";
 import { blast, reach, hitOf, REACH } from "./blast.js";
@@ -334,17 +335,8 @@ export const inHand = (w, s, id) => {
   const c = s && kindOf(w) === "special" && ((kitOf(s, id) || {}).am || {})[w];
   return c && c[0] <= 0 ? "" : w;
 };
-/* the slots, in order (keys 1 to 4; the grenades are 5): blue, red, red, purple, and the grenades white. Dead Ducks
-   Arcade and Survival have a second item slot after the grenades, key 6 (the owner's, Nov 19 22:25Z: "In Dead Ducks
-   Arcade and in Survival, there is now 2 item slots"): the kit's fifth (freshKit); Sandbox keeps one */
-const START = ["knife", "handgun", "bow", ""];
-export const SLOT_KINDS = ["melee", "ranged", "ranged", "special", "special"];
-/* the item slots in a kit's slots (3, and 4 when there are two) */
-const ITEM_SLOTS = [3, 4];
-/* a pick (game.js l4Pick: 0 to 3 the slots, 4 the second item, 5 the grenades, as keys 1 to 6: the owner's, Nov 20 21:17Z,
-   "The secondary item slot is number 5. The grenade is number 6") and its slot, -1 for the grenades */
-export const slotOfPick = (i) => (i < 5 ? i : -1);
-export const pickOfSlot = (k) => (k < 5 ? k : -1);
+/* what a kit starts with: the knife and the pistol (its slots: kitslots.js; the bow is in the weak bag) */
+const START = kitSlots(["knife", "handgun"]);
 /* the fireplace's bags (the owner's, Nov 18 12:19Z, and the answers to Adam's questions at 12:32Z). Rolled the rarest
    first, each only if the one before it failed: the Chair bag 1% (the golden chair), the Special bag 5%, the Item bag
    20%, else the Weapon bag. The Weapon bag holds seven bags that take turns; each bag then gives the next one of its
@@ -930,9 +922,8 @@ export const magIn = (m, w) =>
     : 0;
 function freshKit(s) {
   const am = {},
-    sl = [...(survOn() ? SV.KIT : START)]; // (Survival: the pistol only)
+    sl = kitSlots(survOn() ? SV.KIT : START, isSb(s) ? 1 : undefined); // (Survival: the pistol only; Sandbox one item slot)
   for (const w of sl) if (fullAmmo(w)) am[w] = fullAmmo(w);
-  if (!isSb(s)) sl.push(""); // (the second item slot: not in Sandbox)
   const melee = !isSb(s) && sl.find((w) => kindOf(w) === "melee"),
     du = melee ? { [melee]: hundredths(ARMS[melee].dur * START_WEAR) } : null; // (the melee I start with: a quarter of its wear left, guns.js START_WEAR)
   return {
@@ -2122,7 +2113,7 @@ function helperIn(s, by, now, wild = false, breed = "justin") {
   s.seat.push(id);
   bringBack(s, id, now, players(s).length, true);
   const kit = freshKit(s);
-  kit.sl = wild ? ["", "", "", ""] : ["knife", "chaingun", "handgun", ""];
+  kit.sl = kitSlots(wild ? [] : ["knife", "handgun", "chaingun"]);
   kit.am = wild
     ? {}
     : { chaingun: fullAmmo("chaingun"), handgun: fullAmmo("handgun") };
@@ -2168,20 +2159,15 @@ function helperDrop(s, id) {
         s.hang[k] = o;
       }
 }
-/* weapon w into duck id's slots, full: a melee weapon or a special takes its own slot, a ranged one the ranged weapon
-   in hand (hand, else the one the duck holds out, else the first ranged slot) */
 /* the slot w would go to in duck id's bar (hand0: the weapon it holds), or -1 when it can't take it: a melee weapon the
-   first, a ranged weapon the place of the ranged one in hand, else the first ranged slot; a special an empty item slot,
-   else one used up, else the one in hand, else the first (ITEM_SLOTS). The hotbar shows it before (l4ddbar.js) */
+   first; a gun the secondary or a primary (kitslots.js gunSlotFor); a special an empty item slot, else one used up, else
+   the one in hand, else the first (ITEM_SLOTS). The hotbar shows it before (l4ddbar.js) */
 export function slotFor(s, id, w, hand0) {
   const kit = kitOf(s, id),
     kind = kindOf(w);
   if (!kit || kit.sl.includes(w)) return -1;
   const hand = kit.sl.includes(hand0) ? hand0 : ((s.pos || {})[id] || {}).w;
-  if (kind === "ranged")
-    return (
-      [1, 2].find((i) => kit.sl[i] === hand) ?? SLOT_KINDS.indexOf("ranged")
-    ); // (no ranged weapon in hand: it takes the first ranged slot's place)
+  if (kind === "ranged") return gunSlotFor(kit.sl, w, hand); // (kitslots.js)
   if (kind !== "special") return kind === "melee" ? 0 : -1;
   const its = ITEM_SLOTS.filter((i) => i < kit.sl.length),
     used = (i) => {

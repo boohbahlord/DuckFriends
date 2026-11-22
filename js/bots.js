@@ -79,6 +79,7 @@ import {
   hasLeft,
 } from "./l4ddrules.js";
 import { kindOf, MGJ_MELEE } from "./guns.js";
+import { gunsIn, itemsIn, PRIMARY } from "./kitslots.js";
 import {
   isVd,
   VD_PHASES,
@@ -1086,14 +1087,14 @@ export function l4Bot(s, id, now, out) {
   }
   /* the special from the fireplace, now and then, with a zombie close (the medkit waits for low HP below; the long
      jump stays as it is) */
-  const sp = [sl[3], sl[4]].find(
+  const sp = itemsIn(sl).find(
     (w) => ["zebra", "adrenaline"].includes(w) && m.am[w] && m.am[w][0] > 0,
   ); // (either item slot)
   if (sp && bd < 400 && now - (u[sp] || 0) > 6000) {
     out.push(useOf(id, sp, ax, ay));
     return;
   }
-  const loaded = [sl[1], sl[2]].filter(loadedIn(s, id, now, m)),
+  const loaded = gunsIn(sl).filter(loadedIn(s, id, now, m)),
     hp = ((h.l4p || {})[id] || {}).hp,
     w =
       hasLeft(s, id, "medkit") && hp <= 1 && hp < maxHp(s, id)
@@ -1122,8 +1123,8 @@ function shopping(s, id, now, x, y, far, m, send, out) {
     if (kindOf(b.w) === "ranged") {
       const left = (w) =>
         endless(w) ? Infinity : m.am[w] ? m.am[w][0] + m.am[w][1] : 0;
-      hand = left(m.sl[1]) <= left(m.sl[2]) ? m.sl[1] : m.sl[2];
-    } // (it gives up the emptier one)
+      hand = PRIMARY.map((i) => m.sl[i]).sort((a, c) => left(a) - left(c))[0];
+    } // (a primary: it gives up the emptier one, an empty slot first; kitslots.js)
     to = BOX;
     act = { t: "hang", k: "l4", do: "box", hand, id };
   } else {
@@ -1239,7 +1240,7 @@ function justinBot(s, id, now, out) {
   );
   /* his gun: the best one with something in it (not reloading); the chain gun when a zombie is close or they crowd */
   const crowd = seen ? crowdOf(zs, seen.z, b.crowd) : 0;
-  const guns = [sl[1], sl[2]].filter(loadedIn(s, id, now, m)),
+  const guns = gunsIn(sl).filter(loadedIn(s, id, now, m)),
     others = guns
       .filter(
         (w) => w !== "chaingun" && !(w === "shotgun" && seen && seen.d > 260),
