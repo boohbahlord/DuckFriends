@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v257",
+    version: 257,
+    date: "Nov 22, 2026",
+    title: "Jumps and swings by height",
+    news: [
+      "For Dead Ducks Arcade: a jump counts the moment you make it (shots fly from your jump's height), and a melee swing only reaches what's at your own height: no more slashing zombies on the ground from a roof.",
+    ],
+  },
+  {
     id: "v256",
     version: 256,
     date: "Nov 22, 2026",
