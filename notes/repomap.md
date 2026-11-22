@@ -66,7 +66,7 @@ gamefx.js 874 the silly commands and
 gamehand.js 604 the hand: the number-key
 gameplace.js 738 where things are put
 gameready.js 47 
-gameround.js 597 round
+gameround.js 570 round
 gamesettings.js 764 Game Settings: the whole
 gamestats.js 191 what `stats` and `roundstats`
 gfx.js 8 Low graphics
