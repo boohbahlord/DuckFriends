@@ -3,7 +3,7 @@ file lines job
 
 ## js/
 account.js 397 the Google account: the
-actplay.js 937 a game's actions
+actplay.js 942 a game's actions
 actroom.js 744 the room's actions
 actsb.js 156 Sandbox's windows, saves and
 allies.js 383 Survival: the friendly squad
@@ -88,7 +88,7 @@ gunmen.js 110 the gunmen's looks
 gunmenrules.js 1158 Survival: the gunmen
 gunmenview.js 135 Survival: the gunmen on
 gunparts.js 15 the pieces every weapon's
-guns.js 642 every weapon's numbers: one
+guns.js 656 every weapon's numbers: one
 hats.js 1096 hats
 heights.js 82 a shot's height, Doom's
 helppages.js 1498 the command line's Help
@@ -96,7 +96,7 @@ hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
 hooks.js 3 hooks between screens that
 hotbar.js 506 the specials on the
-hotpick.js 318 What goes in my
+hotpick.js 319 What goes in my
 hpmath.js 59 HP in hundredths
 hpmeter.js 311 HP meters and the
 idbstore.js 38 One place that opens
@@ -119,7 +119,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power
 l4ddpowerui.js 278 Dead Ducks Arcade's power
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4983 the rules of Quacky
+l4ddrules.js 4987 the rules of Quacky
 l4ddsfx.js 545 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online:
 langname.js 5 the name of Sandbox's

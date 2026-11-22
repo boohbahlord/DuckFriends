@@ -60,6 +60,7 @@ import {
   rollDmg,
   critOf,
   START_WEAR,
+  loadTo,
 } from "./guns.js";
 import { JUMP, jumpDodges } from "./jump.js";
 import { SPRINT as GAME_SPRINT, POCKET_CHANGE } from "./gamedefaults.js";
@@ -2972,7 +2973,7 @@ function finishReload(m, now) {
   if (w === "dg" && m.dg !== undefined)
     m.dg = ARMS.handgun.mag; // (the down pistol: its bullets never run out)
   else if (c && magIn(m, w)) {
-    const k = Math.min(magIn(m, w) - c[0], c[1]);
+    const k = Math.min((m.rf || magIn(m, w)) - c[0], c[1]); // (rf: what it fills to, one more for a full one)
     m.am = { ...m.am, [w]: [c[0] + k, c[1] - k] };
   }
   m.rl = 0;
@@ -2991,8 +2992,11 @@ function startReload(s, id, m, w, now) {
   const c = m.am[w];
   if (!magIn(m, w) || !c || m.rl) return false;
   if (m.lm && m.lm[w] && m.lm[w].r === 0) return false; // (Sandbox's loot: Reload off, sbloot.js)
-  if (c[0] >= magIn(m, w) || c[1] <= 0) return false;
-  m.rt = reloadOf(s, id, w, c);
+  const to = loadTo(w, c[0], magIn(m, w)); // (a full one: one more in the chamber, faster: guns.js)
+  if (!to || c[1] <= 0) return false;
+  m.rt = reloadOf(s, id, w, c) * to[1];
+  if (to[1] < 1) m.rf = to[0];
+  else delete m.rf;
   m.rl = now + m.rt;
   m.rw = w;
   return true;

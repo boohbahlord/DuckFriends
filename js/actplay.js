@@ -144,6 +144,7 @@ import {
   THROWS,
   MGJ_GUNS,
   MGJ_MELEE,
+  loadTo,
 } from "./guns.js";
 import { modeOf } from "./modes.js";
 import { SC_VOTES, scVote, scWrite } from "./scrules.js";
@@ -677,31 +678,35 @@ export function act_reload({ state, s, a, now, me }) {
     const w = a.w,
       mg =
         w === "handgun" && me.dead && mgjOut(s, a.id) ? magSize(w) : mgjMag(w),
-      m = mg && magOf(s, a.id, now, w);
+      m = mg && magOf(s, a.id, now, w),
+      to = m && loadTo(w, mg[0] - m.n, mg[0]); // (a full one: one more in the chamber, faster: guns.js)
     if (
       !m ||
       (s.mgj.held[a.id] !== w && !(w === "handgun" && me.dead)) ||
-      !m.n ||
+      !to ||
       m.r
     )
       return state;
     s.mag = {
       ...(s.mag || {}),
-      [magKey(a.id, w)]: { n: m.n, r: now + mg[1] },
+      [magKey(a.id, w)]: { n: m.n, r: now + mg[1] * to[1], ...more(to, mg) },
     };
     return s;
   }
   const w = magSize(a.w) ? a.w : "handgun"; // (the gun named, or the handgun)
   if (!me || !onKeys(me.duck, w) || !s.options.fun) return state;
   const m = magOf(s, a.id, now, w),
-    d = reloadFor(w, m.n);
-  if (!m.n || m.r) return state;
+    to = loadTo(w, magSize(w)[0] - m.n, magSize(w)[0]),
+    d = reloadFor(w, m.n) * (to ? to[1] : 1);
+  if (!to || m.r) return state;
   s.mag = {
     ...(s.mag || {}),
-    [magKey(a.id, w)]: { n: m.n, r: now + d, d },
+    [magKey(a.id, w)]: { n: m.n, r: now + d, d, ...more(to, magSize(w)) },
   };
   return s;
 }
+/* a reload to one more than the magazine holds (loadTo): marked, so it starts one short of empty (rules.js magOf) */
+const more = (to, mg) => (to[0] > mg[0] ? { p: 1 } : {});
 
 export function act_aura({ state, s, a, now, me }) {
   // an effect around a duck's head, seen by everyone: 5 seconds, or kept on (keep) until kept off

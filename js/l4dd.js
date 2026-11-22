@@ -111,7 +111,7 @@ import {
   ZHATS,
   ZOUTFITS,
 } from "./l4ddrules.js";
-import { kindOf, ARMS, POOL } from "./guns.js";
+import { kindOf, ARMS, POOL, loadTo } from "./guns.js";
 import { fenceZ, zombiesOf } from "./zombies.js";
 import { zSortY } from "./zombieroofs.js";
 import { hOk, hLock, zOf } from "./heights.js";
@@ -1667,8 +1667,7 @@ const tallest = () => {
   }
   return tallH;
 };
-/* the props cone c may light: shown now, under the box its rays reach (not from up on a roof: the roof's top is all it
-   lights) */
+/* the props cone c may light: shown now, under the box its rays reach (up on a roof: only the roof's top) */
 function litBy(c, Wd) {
   if (c[5]) return [];
   const [ax, ay, ends] = c[4];
@@ -2407,7 +2406,8 @@ export function l4Ammo(s, me, w) {
   const mag = magIn(m, w);
   if (mag)
     return {
-      f: rl ? 0 : c[0] / mag,
+      f: rl ? 0 : Math.min(1, c[0] / mag), // (one more in the chamber: still full)
+      up: !rl && c[1] > 0 && !!loadTo(w, c[0], mag), // (R loads it: not full, or a full one gets one more, guns.js)
       rl,
       dry: !rl && c[0] <= 0 && c[1] <= 0,
       nr: !rl && c[1] <= 0 && c[0] < mag, // (no ammo left to reload it with)

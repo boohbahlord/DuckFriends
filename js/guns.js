@@ -68,6 +68,20 @@ const CAL_ROLLS = {
 };
 const BARRELS = { short: 0, medium: 0.15, long: 0.25, none: 0 };
 const DMG_STEP = 0.05;
+/* a reload with a full magazine (the owner's, Nov 21 18:16Z: "if you have full ammo in a mag and you reload it again,
+   you get that extra one bullet on top of it ... the reload ... only half as long ... only 3/4 as long for the LMG";
+   "real revolvers and double barrel can't hold an extra round, so they should be left out. Anything that doesn't work
+   like that should be left out"): one more round, in the chamber, in CHAMBER.MS of its reload (the LMG's CHAMBER.LMG).
+   The Tommy gun fires from an open bolt, so it holds no round in its chamber either. loadTo(w, n, cap): what a reload
+   of gun w with n rounds in a magazine of cap fills it to and how much of its time it takes, [rounds, share], or null
+   when it can't reload */
+const CHAMBER = { MS: 0.5, LMG: 0.75, NONE: ["revolver", "dbarrel", "tommy"] };
+export const loadTo = (w, n, cap) =>
+  n < cap
+    ? [cap, 1]
+    : n === cap && ARMS[w] && ARMS[w].mag && !CHAMBER.NONE.includes(w)
+      ? [cap + 1, w === "lmg" ? CHAMBER.LMG : CHAMBER.MS]
+      : null;
 /* the kick of one round of each caliber (the owner's, Nov 21 18:24Z, with the recoil a gun has: /mnt/project-files/adam/calibers.md; K14 turns it into one score a gun): what the item sheets say as a word. A gun with no caliber here (the blade, the flamethrower, the laser, the bow) has none */
 const KICK = {
   "9mm": 0.3,
