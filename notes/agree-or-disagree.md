@@ -7897,3 +7897,6 @@ Decision (Adam): the in-game bible shows a player reference (notes/seriat-bible.
 neutral documentation, no owner quotes, dates, file paths or history. The Seriat code files (numerat*, numberat*) are
 renamed to seriat* names, a pure rename (Adam). Sandbox map asks of 13:15Z: red rim fixed V266; made maps into the vote
 and changing the map in Sandbox: Noah.
+
+13:25Z (screenshot /mnt/project-files/adam/bugs/2026-11-22-1325-bible-proposals.jpg): "Why the FUCK ARE THERE PROPOSALS IN THE BIBLE!? REVIEW THIS SHIT IT SHOULDNT BE LIKE THIS"
+Decision (Adam): the player reference (docs/seriat.md) holds only built, settled rules as plain facts; a check fails on owner, proposal, open, times, names or paths in it; `**` inside code shows as written.
