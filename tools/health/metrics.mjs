@@ -3,7 +3,7 @@
    - modeCompares: `=== "l4dd"` style compares of a mode id (rules in eslint.config.js);
    - nullishNumbers: `?? 5` style hidden defaults (same file);
    - unusedExports and unusedFiles: from tools/unused-exports.mjs;
-   - clones: pieces of 50 or more tokens that appear twice (jscpd), in hand-written code (the pxw-*.js files tools/pixel-world.cjs makes are skipped);
+   - clones: pieces of 50 or more tokens that appear twice (jscpd), in hand-written code, big files included (the pxw-*.js files tools/pixel-world.cjs makes are skipped);
    - bigFiles: each js file over 1,500 lines, with its line count.
    Run: node tools/health/metrics.mjs          prints today's numbers
         node tools/health/metrics.mjs --check  prints only what rose above the baseline and exits 1 (silent when fine)
@@ -65,6 +65,10 @@ export function measure() {
     "javascript",
     "--ignore",
     "**/pxw-*.js", // (made by tools/pixel-world.cjs: generated data, not copies someone wrote)
+    "--max-lines",
+    "100000", // (jscpd skips files over 1,000 lines unless told: a split used to make old copies appear)
+    "--max-size",
+    "10mb",
     "--reporters",
     "json",
     "--output",

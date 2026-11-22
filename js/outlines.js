@@ -24,7 +24,10 @@ import {
   layoutVariant,
   deckOver,
   roofHoleOver,
+  floorH,
 } from "./hangout/layout.js";
+import { ELEV } from "./heights.js";
+import { below } from "./below.js";
 
 const GREEN = "#2f9e44", // (the other players: a slightly darker green than the friendly squad's light green, the owner's, Nov 19 19:27Z)
   DARK_BLUE = "#2a5bd7",
@@ -59,7 +62,39 @@ const BLINK = 700; // ms an outline blinks after a hit
    till it steps off onto the roof); on Duck Cabin, 1 from 90 px up (the balcony) */
 let floorOf = (x, y, z) =>
   layoutVariant() === "l4gs" ? (onRoof(x, y, z) ? 1 : 0) : z >= 90 ? 1 : 0;
-export const olFloor = (x, y, z) => floorOf(x, y, z);
+/* the same for an outline: f, and floor (olAdd's), against mine (my own f), and what its arrow and line add (B5, the
+   owner's, Nov 21 16:17Z: "The arrows have numbers to them if the duck is on an elevation level, not a fraction of an
+   elevation level ... even the outlines for the ducks become darker the higher you go up"): lv, its elevation as Sandbox
+   counts them (the ground 1) while it stands on a whole one; dk, how much darker it shows from my floor (below.js) */
+export function olAway(x, y, z, mine = 0) {
+  const f = floorOf(x, y, z),
+    h = floorH(x, y, z),
+    n = Math.round(h / ELEV);
+  return {
+    floor: Math.sign(f - mine),
+    f,
+    lv: Math.abs(h - n * ELEV) <= ELEV * 0.02 ? n + 1 : null,
+    dk: below(h),
+  };
+}
+/* a line darker by dk (0 … 1): its color times 1 - dk, as a kind of its own ("#rrggbb", kept once for each color and
+   step; Justin's thin line stays without a glow) */
+function darkKind(kind, dk) {
+  const [base, ...rest] = kind.split("-"),
+    c = COLOR[base] || base;
+  if (!dk || c[0] !== "#") return kind;
+  const v = parseInt(c.slice(1), 16),
+    d =
+      "#" +
+      [16, 8, 0]
+        .map((s) =>
+          Math.round(((v >> s) & 255) * (1 - dk))
+            .toString(16)
+            .padStart(2, "0"),
+        )
+        .join("");
+  return base === "justin" ? d : [d, ...rest].join("-");
+}
 
 /* the one rule for roofs (the owner's, Nov 17 20:02Z: "make a simple and basic principle"): someone at (x, y), feet at
    z, with a roof or the canopy over its head (layout.js deckOver) is hidden by it, unless I'm under that same one too
@@ -253,9 +288,11 @@ export function olDraw(host, W, H, now = performance.now()) {
             ? 0.85
             : 0.14; // (nothing hides it: very faint)
     if (hit) a = blink ? 1 : 0.15;
-    const kind =
+    const kind = darkKind(
         o.kind +
-        (drop || (!zombie && !zone && (o.hidden || hit)) ? "-glow" : ""),
+          (drop || (!zombie && !zone && (o.hidden || hit)) ? "-glow" : ""),
+        o.dk,
+      ), // (darker under my floor: olAway)
       c = outline(o.img, kind);
     if (!c) continue;
     const sw = o.w / gp / o.img.naturalWidth, // (the picture's pixels against the grid's: about 1)
@@ -286,9 +323,10 @@ export function olDraw(host, W, H, now = performance.now()) {
         P -
         (AH >> 1); // (lying down: in the middle of its body, where it lies, mid)
     }
-    ops.push({ o, c, a, x, y, sw, sh, dw, dh, ac, aa, ax, ay });
+    const nc = ac && o.lv ? outline(number(o.lv), kind, "n" + o.lv) : null; // (its elevation's number beside the arrow, the same line)
+    ops.push({ o, c, a, x, y, sw, sh, dw, dh, ac, aa, ax, ay, nc });
     sig.push(
-      `${cid(c)}|${a}|${x},${y}|${dw.toFixed(2)},${dh.toFixed(2)}|${o.flip ? 1 : 0}|${o.down ? o.down.map((v) => v.toFixed(1)) : ""}|${ac ? `${cid(ac)},${ax},${ay},${aa}` : ""}`,
+      `${cid(c)}|${a}|${x},${y}|${dw.toFixed(2)},${dh.toFixed(2)}|${o.flip ? 1 : 0}|${o.down ? o.down.map((v) => v.toFixed(1)) : ""}|${ac ? `${cid(ac)},${ax},${ay},${aa}` : ""}|${nc ? cid(nc) : ""}`,
     );
   }
   const drawing = sig.join(";"),
@@ -305,7 +343,7 @@ export function olDraw(host, W, H, now = performance.now()) {
     pic(g);
     g.restore();
   }
-  for (const { o, c, a, x, y, sw, sh, dw, dh, ac, aa, ax, ay } of ops) {
+  for (const { o, c, a, x, y, sw, sh, dw, dh, ac, aa, ax, ay, nc } of ops) {
     g.globalAlpha = a;
     if (o.flip || o.down) {
       /* turned left (mirrored round its middle), or lying down as a duck out of HP lies (css: rotate(-100deg)
@@ -325,6 +363,7 @@ export function olDraw(host, W, H, now = performance.now()) {
     if (ac) {
       g.globalAlpha = aa;
       g.drawImage(ac, ax, ay);
+      if (nc) g.drawImage(nc, ax + AW + P + 1, ay + ((AH - NH) >> 1));
     }
     drawn = true;
   }
@@ -345,3 +384,36 @@ const ARROW = [true, false].map((up) => {
   x.fillRect(3, up ? 5 : 0, 3, 6); // (the stem)
   return c;
 });
+/* the numbers beside an arrow (an elevation: 1 the ground), in pixels: each digit 3 by 5 squares of 2 pixels, a square
+   between them, the outline drawn round them as round the arrows */
+const DIGITS = [
+    "111101101101111",
+    "010110010010111",
+    "111001111100111",
+    "111001111001111",
+    "101101111001001",
+    "111100111001111",
+    "111100111101111",
+    "111001001001001",
+    "111101111101111",
+    "111101111001111",
+  ],
+  NH = 10,
+  NUMS = new Map();
+function number(n) {
+  let c = NUMS.get(n);
+  if (c) return c;
+  const ds = String(n);
+  c = document.createElement("canvas");
+  c.width = ds.length * 8 - 2;
+  c.height = NH;
+  const x = c.getContext("2d");
+  x.fillStyle = "#000";
+  [...ds].forEach((d, k) => {
+    for (let i = 0; i < 15; i++)
+      if (DIGITS[d][i] === "1")
+        x.fillRect(k * 8 + (i % 3) * 2, Math.floor(i / 3) * 2, 2, 2);
+  });
+  NUMS.set(n, c);
+  return c;
+}

@@ -63,7 +63,7 @@ import {
 } from "./guns.js";
 import { JUMP, jumpDodges } from "./jump.js";
 import { SPRINT as GAME_SPRINT, POCKET_CHANGE } from "./gamedefaults.js";
-import { hpHeal, hpHurt, hundredths, hpBreed } from "./hpmath.js";
+import { hpHeal, hpHurt, hundredths, hpBreed, regenOf } from "./hpmath.js";
 import {
   baseMode,
   isSb,
@@ -202,20 +202,20 @@ import {
    (x, y) into its NPCs there (hit: a swing's list, each in reach once; none: a shot, the first, true if it landed) */
 export const L4_HOOKS = { npc: null, gm: null }; // (gm: Survival's gunmen, gunmenrules.js: { tick, shot, blast, fire, near, claw })
 export const isL4dd = (s) => !!s && baseMode(s.options) === "l4dd"; // (and Sandbox on its cabin or Downpour: sandboxrules.js)
-/* I want only the lights' stutter and the air (the wind, the rain, the fires: ambience.js) on of Hangout's activities.
-   The couches, the stage, the card table and the piano's keys are still drawn, but quiet: nothing to sit on, sing into
-   or play at, and nothing else to write in or switch. */
+/* I want only the lights' stutter, the air (the wind, the rain, the fires: ambience.js) and the darker below (below.js) on of
+   Hangout's activities. The couches, the stage, the card table and the piano's keys are still drawn, but quiet: nothing to
+   sit on, sing into or play at, and nothing else to write in or switch. */
 keepOnly(
   "l4dd",
   [],
-  ["flicker", "ambience"],
+  ["flicker", "ambience", "below"],
   ["seats", "stage", "bj", "piano", "tv"],
 ); // (the TV only shows while the power is on: l4ddpower.js)
 
 /* ---------- the numbers ---------- */
 export const L4 = {
   HP: 3,
-  REGEN: 15000, // ms: 1 HP back, 15 s after the last hit or heal
+  REGEN: 15000, // ms for 1 HP to come back on its own, a hundredth at a time (hpmath.js regenOf)
   REVIVE: 5000, // ms of holding E by a downed duck (5 s: the owner's, Nov 17 11:07Z; it was 10)
   QUICK: 3000, // … with Quick Revive bought (the Butler's, 750: the owner's, Nov 17 11:19Z)
   BACK_HP: 2, // a revived duck comes up with 2 HP
@@ -1155,12 +1155,12 @@ const bare = (x, y, out, far) =>
   Math.hypot(x - 2800, y - 1420) > 320 &&
   out.every(([a, b]) => Math.hypot(x - a, y - b) > far);
 /* ---------- the drops (Stage 4, the owner's) ----------
-   Each round: a 25% chance of one in its first 30 s, and then a 25% chance of a second 30 s after it; and on their
-   own, a 5% chance of a Max Ammo in the first minute. When its time comes, the next zombie killed drops it where it
-   fell (the owner's, Nov 3); it lies there 30 s (the owner's, Nov 17), into the next round too, and the first duck to walk over it takes
-   it for everyone. Instant Kill, Double Points and Sale last 45 s, Speed Boost a minute (the owner's, Nov 16). Which
-   drop comes is a shuffle, one bag for the game: each comes once before any comes again, and Max Ammo never leaves
-   the bag (the owner's, Nov 16). */
+   Each round: a 25% chance of one in its first 30 s, and then a 25% chance of a second 30 s after it; and on their own,
+   a 5% chance of a Max Ammo in the first minute. When its time comes, the next zombie killed drops it where it fell
+   (the owner's, Nov 3); it lies there 30 s (the owner's, Nov 17), into the next round too, and the first duck to walk
+   over it takes it for everyone. Instant Kill, Double Points and Sale last 45 s, Speed Boost a minute (the owner's, Nov
+   16). Which drop comes is a shuffle, one bag for the game: each comes once before any comes again, and Max Ammo never
+   leaves the bag (the owner's, Nov 16). */
 export const DROPS = ["kill", "nuke", "speed", "double", "sale", "ammo"]; // (Max Ammo, the likeliest, last: the owner's, Nov 18 10:38Z)
 export const DROP = {
   CHANCE: 0.25,
@@ -1953,9 +1953,8 @@ function fireRoll(s, id, kit) {
   };
   return got;
 }
-/* one roll from a set of bags (the fireplace's for a duck, or a merchant's: merchantStock): the chair, the specials and
-   the items by SLOT_ODDS, else the weapon bags; has(w): what's skipped and keeps its place. [what it gave (or null),
-   the bags after] */
+/* one roll from a set of bags (a duck's fireplace, or a merchant's: merchantStock): the chair, the specials and the
+   items by SLOT_ODDS, else the weapon bags; has(w): skipped, kept in place. [what it gave (or null), the bags after] */
 function bagRoll(bags0, has) {
   const bags = { ...bags0, b: { ...(bags0.b || {}) } },
     { odds, slot, weapon } = bagsNow();
@@ -2171,8 +2170,7 @@ function helperDrop(s, id) {
    in hand (hand, else the one the duck holds out, else the first ranged slot) */
 /* the slot w would go to in duck id's bar (hand0: the weapon it holds), or -1 when it can't take it: a melee weapon the
    first, a ranged weapon the place of the ranged one in hand, else the first ranged slot; a special an empty item slot,
-   else one used up, else the one in hand, else the first (ITEM_SLOTS). The hotbar shows it before it's taken
-   (l4ddbar.js) */
+   else one used up, else the one in hand, else the first (ITEM_SLOTS). The hotbar shows it before (l4ddbar.js) */
 export function slotFor(s, id, w, hand0) {
   const kit = kitOf(s, id),
     kind = kindOf(w);
@@ -2634,8 +2632,7 @@ export function merchantHurt(s, by, n, now, w = "", how = "", from = "") {
     setMh(s, { hurt: 1 });
     merchantSays(s, "hurt", now); // ("these are the lines they will say once when they take damage from a player")
   }
-  /* Survival: armed, he fights back at whoever hurt him (from: one of the gunmen, "g" + its number; a zombie: the
-     nearest one) */
+  /* Survival: armed, he fights back at whoever hurt him (from: a gunman, "g" + its number; a zombie: the nearest) */
   if (m.gun && m.st !== "shoot") {
     s.hang.l4m = {
       ...merchantOf(s),
@@ -3481,9 +3478,8 @@ export function cakeDown(s, now) {
   const t = (c.stop - c.t) / 1000;
   return [(c.x0 + c.vx * t) * W, (c.y0 + c.vy * t) * H];
 }
-/* fire, every heartbeat (BURN): burning zombies take 1 every 3 s, the ducks' fires go out, and anyone burning lights
-   a duck it touches. s.hang.l4fire = { z: { zombie: [until, next hurt, by, from when its fire spreads] }, p: { id:
-   until } } */
+/* fire, every heartbeat (BURN): burning zombies lose 1 every 3 s, the ducks' fires go out, and anyone burning lights a
+   duck touched. s.hang.l4fire = { z: { zombie: [until, next hurt, by, when its fire spreads] }, p: { id: until } } */
 function light(s, z, by, now) {
   mark(s, z, "f0"); // (burnt for good, even once the fire is out)
   const F = s.hang.l4fire || {};
@@ -4581,11 +4577,11 @@ function l4Tick(s, now) {
       continue;
     } // (Sandbox: no next round to wait for, so a ghost is back up a moment later, at a start spot, with its weapons)
     if (p.gh) continue;
-    if (
-      p.hp < maxHp(s, id) &&
-      now - p.at >= (isWild(s, id) ? WILD.regen : L4.REGEN)
-    )
-      p4[id] = { ...p, hp: hpHeal(p.hp, 1, maxHp(s, id)), at: now }; // (a part-empty block fills first: hpmath.js)
+    if (p.hp < maxHp(s, id)) {
+      const w = isWild(s, id),
+        [amt, at] = regenOf(s, p.at, now, w ? WILD.regen : L4.REGEN, w); // (a duck's in hundredths, smoothly; Justin's in whole HP: hpmath.js)
+      if (amt) p4[id] = { ...p, hp: hpHeal(p.hp, amt, maxHp(s, id)), at };
+    }
   }
   s.hang.l4p = p4;
   const am = s.hang.l4a || {};
@@ -4863,16 +4859,6 @@ export { standing as l4Up };
 
 /* what the screens ask: a duck's HP, its bleeding out, the round */
 export const l4Hp = (s, id) => (P4(s, id) || { hp: -1 }).hp;
-/* how far my next HP is to coming back on its own, 0 … 1 (a hit or a heal starts it over: p.at), or null while it can't
-   (full, down, a ghost) (the HP meter's faint red fill, hpmeter.js) */
-export const l4Regen = (s, id, now) => {
-  const p = P4(s, id);
-  if (!p || p.gh || p.dn || p.hp <= 0 || p.hp >= maxHp(s, id)) return null;
-  return Math.max(
-    0,
-    Math.min(1, (now - p.at) / (isWild(s, id) ? WILD.regen : L4.REGEN)),
-  );
-};
 /* how far a downed duck is into its bleeding-out (k, 0 to 1), and whether someone is reviving it (wait: it's stopped) */
 export const l4Dying = (s, id, now) => {
   const p = P4(s, id);

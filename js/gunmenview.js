@@ -7,7 +7,7 @@ import { npcURL, handAt } from "./sbnpcart.js";
 import { shake } from "./fxmotion.js";
 import { drawNpcs, dropNpcs } from "./npcview.js";
 import { now as clockNow } from "./clock.js";
-import { olAdd, olFloor, olRoofed } from "./outlines.js";
+import { olAdd, olAway, olRoofed } from "./outlines.js";
 import { whereIn, heightAt } from "./hangout/layout.js";
 
 const ZB = new Map(),
@@ -70,9 +70,7 @@ activity({
           flip: (o.f || 1) < 0,
           kind: fr ? "friend" : "zombie",
           hidden: hid,
-          floor: Math.sign(
-            olFloor(z.x, z.y, h) - (me ? olFloor(me.x, me.y, me.z) : 0),
-          ),
+          ...olAway(z.x, z.y, h, me ? olAway(me.x, me.y, me.z).f : 0),
         });
         return hid && !unseen;
       },

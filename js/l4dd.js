@@ -148,7 +148,8 @@ import { popHP } from "./hpmeter.js";
 import { fxHitAt, fxEye, heavyOff } from "./fx.js";
 import { vibrate, hitPx, HIT, again } from "./fxmotion.js";
 import { pixelOn, gridPx, raster, rasterReady } from "./pixel.js";
-import { olAdd, olFloor, olRoofed, olPic, DROP_OL } from "./outlines.js";
+import { olAdd, olAway, olRoofed, olPic, DROP_OL } from "./outlines.js";
+import { belowBody } from "./below.js";
 import { confirmBox, ducksOn, kept, windowOpen } from "./ui.js";
 import { angelOf, ANGEL } from "./l4ddangel.js";
 import { angelic, jerrySVG } from "./powerart.js"; // (after l4ddart.js, as game.js imports it)
@@ -510,7 +511,7 @@ function zOutline(Wd, o, f, dip, sc, hidden, z, myFloor, zi = 0, kind = "") {
     flip: o.face < 0,
     kind: kind || "zombie", // (or a Sandbox zone's Outlines color)
     hidden: hid,
-    floor: Math.sign(olFloor(o.x, o.y, z) - myFloor),
+    ...olAway(o.x, o.y, z, myFloor), // (its floor against mine, its elevation, how much darker)
   });
   return hid;
 }
@@ -737,10 +738,8 @@ function seeZombies(s, ctx, now) {
       z.st !== 3 &&
       !!me &&
       slabBetween(me.x * W, me.y * H, mz, z.x, z.y, zOf(z, "zombie"));
-    if (o.dark !== dark) {
-      o.dark = dark;
-      o.el.classList.toggle("l4-unseen", dark);
-    }
+    if (o.dark !== dark) o.el.classList.toggle("l4-unseen", (o.dark = dark));
+    belowBody(o.el, z.x, z.y, zOf(z, "zombie")); // (and darker for each elevation it's under me: below.js)
     if (z.hp < o.hp && shown && o.st !== 3)
       vibrate(o.img, hitPx(o.hp - z.hp), z.st === 3); // (a zombie hit shakes once by the HP it lost, and once more as it dies: the owner's, Nov 17, 32)
     if (z.hp < o.hp && z.st !== 3 && shown) o.img.animate(HIT, 320); // (hit: a red blink, started over without the page measuring itself)
@@ -910,7 +909,7 @@ function dropOutline(Wd, o, p, sc, unseen, myFloor) {
     hidden:
       unseen ||
       Wd.coverAt(x, x + w, y, y + w, Math.round(sortY(o.x, o.y, 0)) + 10),
-    floor: Math.sign(olFloor(o.x, o.y, 0) - myFloor),
+    ...olAway(o.x, o.y, 0, myFloor),
   });
 }
 /* between rounds (every zombie dead, before the ducks are ready), a thin yellow square on the ground round the fireplace or
@@ -1770,7 +1769,7 @@ function butlerEl(svg, name) {
     h = (64 * v[3]) / v[2],
     feet = (64 * (v[3] - 10)) / v[2],
     el = document.createElement("div");
-  el.className = "hang-npc duck l4-butler";
+  el.className = "hang-npc duck l4-butler on-ground"; // (on-ground: as dark as the ground under my floor, below.js)
   const url = svgDataURL(svg);
   el.innerHTML = `<div class="hang-npc-body"><img alt="" draggable="false" src="${url}" style="width:100%;height:100%"></div><span class="gduck-name hang-npc-name">${nameHTML(name)}<span class="gduck-hp" aria-hidden="true"><b></b><i></i></span></span>`; // (the HP in his tag, as a player's: shown once he's hurt, the merchant's)
   const body = el.firstChild;
@@ -3007,7 +3006,7 @@ activity({
       sc = Wd.sc,
       t = performance.now(),
       meAt = Wd.at(ctx.me),
-      myFloor = meAt ? olFloor(meAt.x, meAt.y, meAt.z) : 0, // (for the outlines: a zombie a floor away)
+      myFloor = meAt ? olAway(meAt.x, meAt.y, meAt.z).f : 0, // (for the outlines: a zombie a floor away)
       st0 = ctx.state(),
       sbOl = sbHasOl(st0); // (Sandbox: zones with Outlines)
     /* the zombies, gliding from where they were to where the host says, one heartbeat's time */

@@ -17605,16 +17605,7 @@ html.still .l4to {
   width: 100%;
 }
 /* my meter's moves (hpmeter.js, the owner's Nov 17 17:41Z): the blocks a hit took blink to white and drain, an HP back
-   is white blinking into red (an overlay, --ol from the left, --ow wide, --oa how white), and the next HP regen fills
-   with a very faint red (--g0 to --g1) */
-.hpm-blocks i {
-  background: linear-gradient(
-    90deg,
-    transparent calc(var(--g0, 0) * 100%),
-    #ff2a5a3a calc(var(--g0, 0) * 100%) calc(var(--g1, 0) * 100%),
-    transparent calc(var(--g1, 0) * 100%)
-  );
-}
+   is white blinking into red (an overlay, --ol from the left, --ow wide, --oa how white) */
 .hpm-blocks i::after {
   content: "";
   position: absolute;
@@ -22127,6 +22118,11 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 /* a zombie my shots can't reach from where I stand (the sightline): a little darker */
 .l4-unseen {
   opacity: 0.55;
+}
+/* under my floor: darker by --below (below.js; B5, the owner's, Nov 21 16:17Z: "the color value becomes darker of the
+   pixels"), whatever it is: the ground, a prop, a duck, a zombie */
+.below-me {
+  filter: brightness(calc(1 - var(--below, 0)));
 }
 /* Sandbox: Dark outside, round the zone my duck is in (sbspawnview.js darkOut) */
 .sb-dark {
