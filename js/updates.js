@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v247",
+    version: 247,
+    date: "Nov 22, 2026",
+    title: "A rainbow arena",
+    news: [
+      "For Mad God Justin: the arena isn't one flat color anymore. It slowly turns through the rainbow, one full turn about every 30 seconds, and stays see-through like every board.",
+      "Behind the scenes: your made modes, made maps and Sandbox saves are kept on your device through one shared piece instead of three copies. Nothing changes for you; they're all still there.",
+    ],
+  },
+  {
     id: "v246",
     version: 246,
     date: "Nov 22, 2026",
