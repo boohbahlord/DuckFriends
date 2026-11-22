@@ -76,7 +76,6 @@ import {
   wildCrying,
   isWild,
   endless,
-  wetSlow,
   hasLeft,
 } from "./l4ddrules.js";
 import { kindOf, MGJ_MELEE } from "./guns.js";
@@ -1209,7 +1208,7 @@ function justinBot(s, id, now, out) {
     walkPx =
       (fast ? WALK / (0.6 * 1.05) : WALK * (upOf(s, id).sp ? 1.1 : 1)) *
       walkOf(s, id) *
-      wetSlow(x, y) * // (Downpour's flood: as a player's duck is slowed)
+      HL.wetK(x, y, p.z) * // (Downpour's flood: as a player's duck is slowed)
       (dt / 1000),
     m = kitOf(s, id) || { sl: [], am: {}, u: {} },
     sl = m.sl;

@@ -27,6 +27,10 @@ export const WEIGHT = {
   CAR: 15, // a car, in duck weights (carpush.js; a small 80s or 90s car, about 1,000 kg: Adam's OK, Nov 22 03:08Z)
 };
 
+/* water (hangout/layout.js wetK): how fast every walker goes in it, of its walk. WADE in shallow water (Downpour's
+   flood over the road, the owner's, Nov 17 11:07Z: 30% slower), SWIM swimming (the Hangout pool, Downpour's deep flood) */
+export const WET = { WADE: 0.7, SWIM: 0.55 };
+
 /* zombies (Nov 20 21:17Z: "zombies should have a slightly slower attack speed by, let's say, 0.2 seconds") */
 export const ZOMBIE_SWIPE_SLOWER = 200; // ms added to the wait between one swipe and the next, every zombie
 

@@ -8,6 +8,7 @@
    everything a duck wears or shows; a splash is drawn just in front of its own duck.
    Other things in the water use it too: ripple(x, y, k) and splash(x, y, k) at a spot on the water (world px). */
 import { activity } from "./registry.js";
+import { WET } from "../gamedefaults.js";
 import { fewer } from "../gfx.js";
 import { ducksOn } from "../ui.js";
 import {
@@ -25,7 +26,6 @@ import { pixelOn, gridPx } from "../pixel.js";
 export const WATER = POOL.h; // the water's surface: a duck floats with its feet there
 export const SINK = 16; // how far into the water a floating duck sits (world px)
 export const WADE_SINK = 0.2; // a duck wading shallow water: its bottom fifth under it (Downpour's road, the owner's, Nov 17 11:07Z)
-export const SLOW = 0.55; // swimming speed, of walking speed (Downpour's deep flood too, ducks' and zombies')
 /* a duck at (x, y) with its feet at z is in the water (not on the steps) */
 export const swimming = (x, y, z) =>
   inPool(x, y) && heightAt(x, y) === WATER && z <= WATER + 4;
@@ -271,7 +271,7 @@ activity({
     seen.clear();
     layer = null;
   },
-  speed: (pos) => (swimming(pos.x, pos.y, pos.z) ? SLOW : 1),
+  speed: (pos) => (swimming(pos.x, pos.y, pos.z) ? WET.SWIM : 1), // (swimming: gamedefaults.js)
   /* my duck under the ground in the near strip (dropping in, or swimming up to the near edge) keeps north of it by as much
      as it is under the ground: on the screen it stays at the coping's edge, never over the coping */
   after(me) {

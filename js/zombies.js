@@ -25,11 +25,11 @@ import {
   deckOver,
   deckH,
   onDeckAt,
+  wetK,
 } from "./hangout/layout.js";
 import * as GS from "./hangout/stationmap.js";
 import { walkOf, immobile } from "./push.js";
 import { zOf, heightWay } from "./heights.js";
-import { SLOW as SWIM } from "./hangout/water.js";
 import {
   apart,
   crowdOf,
@@ -584,7 +584,7 @@ function walkAll(zs, c) {
       v =
         z.l[1] *
         walkOf(s) * // (as much faster or slower as the ducks, by the lobby's Walking speed)
-        (dp() && GS.inDeep(z.x, z.y) ? SWIM : 1), // (Downpour: swimming the deep flood, as slow of its own walk as a duck is of its)
+        wetK(z.x, z.y, zOf(z, "zombie")), // (water: as slow of its own walk as a duck is of its, layout.js)
       sp = o && sidesOf(o, z);
     if (z.st === 0) {
       // coming: to the spot outside its opening (Downpour: the foot of the fence)
@@ -1254,7 +1254,7 @@ export function chaseStep(z, dist, goal, far, ducks = []) {
       goal) ||
     (dist && heading(dist, z.x, z.y)) ||
     goal;
-  stepZombie(z, aim, far, ducks);
+  stepZombie(z, aim, far * wetK(z.x, z.y, z.z), ducks); // (water: layout.js)
 }
 /* a zombie's walk in world px a second at round 1, before its spawn's speed box */
 export const zWalk = () => {

@@ -26,7 +26,6 @@ export const ROAD = { y0: 2750, y1: 3350, mid: 3050, low: -40, ramp: 120 }; // (
 export let SHORE = ROAD.ramp * 0.6;
 export const DEEP = [0, ROAD.y0 + SHORE, 1000, ROAD.y1 - SHORE],
   SHALLOW = [1000, ROAD.y0 + SHORE, GS_W, ROAD.y1 - SHORE];
-export const WADE = 0.7;
 /* the owner's forest line: inside TOP (north of the road) and BOT (south of it) is open ground; outside them, forest */
 export const TOP = [
   [0, ROAD.y0],
@@ -1122,6 +1121,14 @@ GS_W *= K;
 GS_H *= K;
 FENCE_H *= K;
 SHORE *= K;
+/* the flood, for every walker's one water rule (layout.js wetK): its bed's lowest (the swim floor), its water's top
+   (where it meets the banks, SHORE in), and where it is deep or shallow */
+export const FLOOD = {
+  floor: ROAD.low,
+  top: groundAt(0, ROAD.y0 + SHORE),
+  deep: inDeep,
+  shallow: inShallow,
+};
 /* Part B: what a duck stands on over the ground (layout.js floorAt), at K already. The two roofs at their walls' height,
    as wide as their drawing (30 past the walls), the gas station's with its two holes (a duck falls through them), and
    the canopy over the pumps. key: the depth its top is drawn at (a duck on it is drawn just in front of it); bldg: the
