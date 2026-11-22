@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v255",
+    version: 255,
+    date: "Nov 22, 2026",
+    title: "Zombies climb to the pump roof",
+    news: [
+      "For Dead Ducks Arcade: on Downpour, zombies no longer get stuck at the red car under the gas pump roof; they climb up to you.",
+    ],
+  },
+  {
     id: "v254",
     version: 254,
     date: "Nov 22, 2026",
