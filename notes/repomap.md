@@ -60,7 +60,7 @@ fxmotion.js 229 how a held weapon and
 game.js 5125 the game screen
 gameact.js 546 the action window and the
 gameboard.js 589 the board: each mode's board
-gamedefaults.js 47 the game's own numbers, for
+gamedefaults.js 50 the game's own numbers, for
 gamefx.js 873 the silly commands and the
 gamehand.js 604 the hand: the number-key specials,
 gameplace.js 738 where things are put on
@@ -80,7 +80,7 @@ gunmen.js 110 the gunmen's looks
 gunmenrules.js 1145 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the
 gunparts.js 15 the pieces every weapon's drawing
-guns.js 626 every weapon's numbers: one sheet
+guns.js 646 every weapon's numbers: one sheet
 hats.js 1096 hats
 heights.js 63 a shot's height, Doom's way
 helppages.js 1498 the command line's Help pages:
@@ -166,7 +166,7 @@ playerinput.js 26 what I ask my duck
 players.js 342 the player menu and the
 pointer.js 54 a computer or a phone
 powerart.js 377 Dead Ducks Arcade: the power
-push.js 55 push and knock-back: one module
+push.js 64 push and knock-back: one module
 pxa.js 341 made by tools/pixel-art.cjs:
 pxbake.js 627 a map's pictures made into
 pxcard.js 259 the player cards' pattern motifs

@@ -14,7 +14,10 @@ export const SPRINT = {
 
 /* weight (push.js): a duck 10% bigger walks 10% slower (Nov 21 15:56Z), never slower than this share of its walk
    (Size goes from 50% to 152%, duck.js DUCK_SCALE, so it only holds 151% and 152% back; Adam's pick, Nov 22 03:38Z) */
-export const WEIGHT = { SLOWEST: 0.5 };
+export const WEIGHT = {
+  SLOWEST: 0.5,
+  DEAD_FROM: "held", // whose dead weight a duck carries (guns.js DEAD_WEIGHT): "held", what it holds out; "all", its whole kit (B6b: the owner hasn't picked)
+};
 
 /* zombies (Nov 20 21:17Z: "zombies should have a slightly slower attack speed by, let's say, 0.2 seconds") */
 export const ZOMBIE_SWIPE_SLOWER = 200; // ms added to the wait between one swipe and the next, every zombie

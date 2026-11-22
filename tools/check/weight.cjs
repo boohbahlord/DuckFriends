@@ -4,7 +4,9 @@
    - the ratio: a push on a 110% duck moves it 1/1.1 as far as on a 100% one;
    - melee: a board hit at 110% takes 1.1 times the HP; a zombie map's melee does 1.1 times the damage (zombieTakes), a
      shot the same at any Size;
-   - immobile: a body with im is never pushed.
+   - immobile: a body with im is never pushed;
+   - dead weight (B6b, guns.js DEAD_WEIGHT): a duck holding the chain gun (0.25) is moved 1/1.25 as far, and walks as
+     fast; a 110% duck holding a knife (0.02), 1/1.12.
    Run: node tools/check/run.mjs weight */
 const C = require("./lib.cjs");
 const { chromium } = require("playwright");
@@ -53,6 +55,13 @@ const near = (a, b, e = 0.002) => Math.abs(a - b) <= e;
       ];
       Math.random = rnd;
     }
+    const held = (sc, w) => {
+      const s = sized(sc);
+      s.pos[a] = { ...s.pos[a], w };
+      BF.shove(s, a, 1, 0, 1, now, 0);
+      return [s.pos[a].x - 0.3, P.walkOf(s, a)];
+    };
+    out.held = [held(100, "chaingun"), held(110, "knife")];
     out.imm = [
       P.immobile({ im: true }),
       P.immobile({ sv: 0 }),
@@ -79,6 +88,15 @@ const near = (a, b, e = 0.002) => Math.abs(a - b) <= e;
     [k1, g1] = got.dmg[110];
   if (!(near(k1, k0 * 1.1, 0.001) && g1 === g0))
     C.fail("a zombie map's melee at 110%: " + JSON.stringify(got.dmg));
+  const [[cg, cw], [kn]] = got.held;
+  if (
+    !(
+      near(cg, m[100] / 1.25, 0.0002) &&
+      cw === 1 &&
+      near(kn, m[100] / 1.12, 0.0002)
+    )
+  )
+    C.fail("dead weight: " + JSON.stringify(got.held));
   if (got.imm.join() !== "true,false,0") C.fail("immobile: " + got.imm);
   C.noErrors(errs);
   await b.close();
