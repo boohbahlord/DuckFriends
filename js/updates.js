@@ -15,6 +15,7 @@ export const UPDATES = [
     title: "Tidier action window",
     news: [
       "Behind the scenes: the action window (what you can do on the board, mode by mode) lives in its own file now, out of the board screen's huge file. Nothing plays differently.",
+      "Behind the scenes: the checks that replay whole games before every update no longer fail now and then for no reason.",
     ],
   },
   {
