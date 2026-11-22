@@ -27,8 +27,8 @@ window's read-only `help/` folder has a page for every part described here, from
 | `t`, `f` | true, false | |
 
 The `.` puts what follows it in the tenths place. Whole-number stats, such as a spawn limit, take whole numbers only;
-HP, damage and speed take tenths. A zone's elevation takes tenths and half tenths (`1.05`, `1.5`; 1 is the ground,
-2 a gas station roof up), and a range with a decimal end goes through every half tenth there.
+HP, damage and speed take tenths. A zone's elevation takes tenths and half tenths (`0.05`, `0.5`; 0 is the ground,
+1 a gas station roof up), and a range with a decimal end goes through every half tenth there.
 
 ## Order and repeats
 - With no arrow, a pick is random.

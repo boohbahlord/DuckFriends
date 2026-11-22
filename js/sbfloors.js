@@ -19,8 +19,7 @@ import {
 } from "./sandboxrules.js";
 import { valueOf } from "./seriatbox.js";
 import { boxText } from "./sbspawn.js";
-import { levelOf, levelZ } from "./heights.js";
-import { LEVEL } from "./gamedefaults.js";
+import { levelZ } from "./heights.js";
 import {
   W,
   H,
@@ -44,7 +43,7 @@ export function sbFloorsFrom(s) {
 export function sbSlope(p) {
   if (!p || p.k !== "zone" || !p.f || !p.f.slto) return null;
   const n = valueOf({ ok: boxText(p, "slto") }, SB_ZONE.slto);
-  if (!Number.isFinite(n) || n < 1) return null;
+  if (!Number.isFinite(n) || n <= 0) return null; // (0: flat)
   const lo = p.z || 0,
     hi = levelZ(Math.min(6, n)),
     d = boxText(p, "sldir").trim();
@@ -75,7 +74,7 @@ export const sbIsFloor = (p) =>
   !!p &&
   p.k === "zone" &&
   boxText(p, "gnd") === "t" &&
-  (levelOf(p.z || 0) > LEVEL.GROUND || !!sbSlope(p));
+  ((p.z || 0) > 0 || !!sbSlope(p));
 
 function decks() {
   if (!cur || Date.now() - seen > FRESH) return NONE;
