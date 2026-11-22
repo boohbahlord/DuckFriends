@@ -26,6 +26,7 @@ bots.js 1426 computers
 brackets.js 459 Bicker Brackets: what the screen
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
+carpush.js 82 a car pushed: Downpour's cars
 chat.js 1597 text chat and the command
 cheatflag.js 16 a game with test commands
 cheats.js 146 test commands: cheat round N,
@@ -60,7 +61,7 @@ fxmotion.js 229 how a held weapon and
 game.js 5125 the game screen
 gameact.js 546 the action window and the
 gameboard.js 589 the board: each mode's board
-gamedefaults.js 57 the game's own numbers, for
+gamedefaults.js 58 the game's own numbers, for
 gamefx.js 874 the silly commands and the
 gamehand.js 604 the hand: the number-key specials,
 gameplace.js 738 where things are put on
@@ -179,7 +180,7 @@ report.js 114 Report Bug or Suggest Ideas
 roomrules.js 368 room governance: groups and permissions
 rooms.js 256 Play: create a room, and
 router.js 112 screens
-rules.js 1729 the rules of Agree or
+rules.js 1731 the rules of Agree or
 sandbox.js 1347 Sandbox: the key windows
 sandboxrules.js 2056 Sandbox: which map it plays
 sbarms.js 124 Sandbox: a made NPC's weapons
@@ -261,11 +262,11 @@ vddrules.js 513 the rules of Valentine's Duck
 vellum.js 28 The King's Festival
 vote.js 279 Vote Mode & Map: the
 voterules.js 347 the lobby's vote for the
-walkgrid.js 67 the walking grid: which 40-px
+walkgrid.js 83 the walking grid: which 40-px
 weaponuse.js 104 using a weapon: one module
 who.js 3 who this player is beyond
 wounds.js 485 the wounds a hit leaves
-zombiepath.js 178 the zombies' way to the
+zombiepath.js 187 the zombies' way to the
 zombieroofs.js 322 the zombies' walk over Downpour's
 zombies.js 1477 the zombies: one module for
 
@@ -290,7 +291,7 @@ flicker.js 83 now and then a light
 ghosts.js 111 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in
 lamp.js 71 the lamps: the example activity
-layout.js 1120 Duck Cabin: the world of
+layout.js 1176 Duck Cabin: the world of
 layoutbase.js 78 Duck Cabin: the world's numbers
 layoutheights.js 396 Duck Cabin: the heights :
 npc.js 495 Duck Cabin's characters: how they
@@ -315,7 +316,7 @@ soccer.js 508 soccer: one ball on the
 sounds.js 17 Duck Cabin's sounds
 stage.js 134 the stage: half an oval
 stationart.js 1964 Downpour's things: the drawings
-stationmap.js 1187 Dead Ducks Arcade's second map:
+stationmap.js 1194 Dead Ducks Arcade's second map:
 trampoline.js 142 the trampoline
 tv.js 117 the TV: seven channels, the
 vehicles.js 116 what a duck stands on

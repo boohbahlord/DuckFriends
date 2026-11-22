@@ -493,8 +493,8 @@ const GS_DRAW = {
   plank: (p) => gsPart(p, () => plankArt(p, GS.K)),
   car: (p) => {
     const up = p.hood ? 110 * GS.K : 0,
-      k = seedOf(p);
-    return gsPart(
+      k = p.seed ?? seedOf(p); // (a pushed car keeps its look: layout.js carAt)
+    return (p.drawn = gsPart(
       p,
       () =>
         SK.carSVG({
@@ -502,14 +502,14 @@ const GS_DRAW = {
           d: p.d,
           h: p.h,
           seed: k,
-          east: GS.carEast(p.x, p.y, p.hood),
+          east: p.east ?? GS.carEast(p.x, p.y, p.hood),
           hood: !!p.hood,
           up,
           smash: p.smash || "",
           dead: p.dead || "",
         }),
       { up },
-    );
+    ));
   },
   generator: (p) => {
     const cable = 20 * GS.K; // (to the power box, just east of it)

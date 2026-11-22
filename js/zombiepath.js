@@ -3,7 +3,7 @@
    walking distance from every cell to the nearest duck (flowfield.js fieldOf works it out, on the page or in its
    worker). Its own file: the way is its own mechanic (pathing), and flowfield.js stands alone so its worker can run it.
    Moved here from l4ddrules.js as it was. */
-import { STEP, layoutRev } from "./hangout/layout.js";
+import { STEP, layoutRev, moveRev } from "./hangout/layout.js";
 import { fieldOf, askField, stepper } from "./flowfield.js";
 import { gridOf, CELL } from "./walkgrid.js";
 import { playable, OPENINGS, dp, syncMap } from "./l4ddrules.js";
@@ -21,7 +21,8 @@ const BOARD_COST = 6; // (cells' worth of walking)
 export let walk = null;
 let extra = null,
   walkRev = -1, // (the cabin it was made for: layout.js' layoutRev)
-  hts = null;
+  hts = null,
+  mvRev = -1; // (and the cars' moves it has: layout.js moveRev)
 const cellAt = (x, y) => {
   const i = Math.floor((x - GX) / CELL),
     j = Math.floor((y - GY) / CELL);
@@ -33,8 +34,16 @@ export const mid = (c) => [
 ];
 export function cells() {
   syncMap();
-  if (walk && walkRev === layoutRev()) return walk;
+  if (walk && walkRev === layoutRev()) {
+    if (mvRev !== moveRev()) {
+      mvRev = moveRev();
+      FLOWS.clear();
+      G = null;
+    } // (a car pushed: walkgrid.js made its cells again in place; the chase keeps its last field till the worker's new one)
+    return walk;
+  }
   walkRev = layoutRev();
+  mvRev = moveRev();
   FLOWS.clear(); // (their ways were for the cabin before)
   ({ walk, hts } = gridOf({
     name: "zombies",

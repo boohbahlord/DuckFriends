@@ -114,6 +114,7 @@ import { invuln } from "./hangout/death.js";
 import { hOk, hLock, shotFeet, SAME_FLOOR, zOf, nearH } from "./heights.js";
 import { toPx, DUCK } from "./units.js";
 import { blast, reach, hitOf, REACH } from "./blast.js";
+import { carsBlast } from "./carpush.js";
 import { pushAlong, walkOf, pushTaken, immobile, sizeOf } from "./push.js";
 import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
@@ -4402,12 +4403,11 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
       },
       (j) => wildDown(s, j, sh.by, now, "grenade", true, DEATH),
     ], // (Justin out there with no weapon: all his HP, torn apart, headless and burnt, wounds.js DEATH; no jump dodges it: the owner's, Nov 17 20:37Z)
-    (near) =>
-      void (
-        L4_HOOKS.gm &&
-        s.hang.gm &&
-        L4_HOOKS.gm.blast(s, sh.by, near, now, sh.w, gmHelp(s, now))
-      ), // (Survival's gunmen in it: gunmenrules.js)
+    (near) => {
+      if (L4_HOOKS.gm && s.hang.gm)
+        L4_HOOKS.gm.blast(s, sh.by, near, now, sh.w, gmHelp(s, now)); // (Survival's gunmen in it: gunmenrules.js)
+      if (dp()) carsBlast(s, near, bx, by); // (Downpour's cars: pushed, carpush.js)
+    },
     [
       () =>
         [merchantOf(s)].filter((m) => m && m.st !== "dead" && m.st !== "jump"),
