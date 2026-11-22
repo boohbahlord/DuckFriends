@@ -106,7 +106,7 @@
  },
  "board-specials": {
   "frames": 720,
-  "digest": "ifpq6k",
+  "digest": "148qnam",
   "every": [
    "142lsmz",
    "1rvzktg",
@@ -116,10 +116,10 @@
    "hwczj1",
    "1gh098c",
    "1aljzq0",
-   "1xgvltp",
-   "zjcyjj",
-   "1jrfg0s",
-   "151imsv"
+   "nt6rc7",
+   "bx42w8",
+   "16o45bs",
+   "n536er"
   ],
   "seen": {
    "me": {
@@ -130,7 +130,8 @@
     "move": 24,
     "tick": 60,
     "use": 18,
-    "reload": 1
+    "reload": 1,
+    "draw": 1
    }
   }
  },
@@ -493,7 +494,7 @@
  },
  "dda-pick": {
   "frames": 720,
-  "digest": "1mbhdh5",
+  "digest": "1rt8ogt",
   "every": [
    "1o33vg6",
    "cadhq4",
@@ -504,9 +505,9 @@
    "rnj3b3",
    "1kdster",
    "omhnc9",
-   "4cox3m",
-   "1o6iuj1",
-   "1q67vfo"
+   "9a1upt",
+   "1n4w28m",
+   "7i8va6"
   ],
   "seen": {
    "me": {
@@ -517,7 +518,8 @@
    "sent": {
     "move": 12,
     "tick": 60,
-    "use": 9
+    "use": 9,
+    "draw": 2
    }
   }
  },
