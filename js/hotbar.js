@@ -9,7 +9,7 @@
    picks another (a longer slide goes past more of them), a tap on the middle one uses it, a tap on a side one picks it,
    (there is no square to switch one on: the one picked is the one toggled, the owner's, Nov 16). */
 import { esc } from "./ui.js";
-import { heldTag, caliberOf } from "./guns.js";
+import { heldTag, nameOf, ARMS } from "./guns.js";
 import {
   KEYS,
   specialById,
@@ -208,14 +208,15 @@ export function mountHotbar(S, api) {
   const track = slide.querySelector(".sp-track"),
     capEl = slide.querySelector(".sp-cap");
   /* over the slider, the one in the middle in very small text: the game's own words for it (api.caption(id): Dead
-     Ducks Arcade's, l4ddbar.js), else a gun's name and caliber, in every mode (guns.js heldTag) */
+     Ducks Arcade's, l4ddbar.js), else any weapon's or item's name, with a gun's caliber, in every mode (guns.js
+     heldTag, by the board's names) */
   const caption = () => {
     const t =
       (cur &&
         (api.caption
           ? api.caption(cur)
-          : caliberOf(cur)
-            ? heldTag(cur)
+          : ARMS[cur]
+            ? heldTag(cur, nameOf(cur, "board"))
             : "")) ||
       "";
     if (capEl.textContent !== t) capEl.textContent = t;
