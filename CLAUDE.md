@@ -15,7 +15,9 @@ Find a file in notes/repomap.md before searching.
 - `notes/map-building-rules.md`: rules for building any walkable map (size, see-through covers, walls, holes, rooms,
   light, water, zombie paths, phone UI). Read it before building or changing a map.
 - `notes/seriat-bible.md`: the Seriat language (Sandbox's number code), current rules, operators and examples.
-  Read it before touching Seriat; update it the day the owner settles something.
+  Read it before touching Seriat; update it the day the owner settles something. Players never see it: the game's
+  Seriat bible window shows `docs/seriat.md`, the players' reference (documentation style, built rules only, no
+  owner talk, dates, proposals or file names; `tools/check/seriatdoc.cjs`). Update both when a rule ships.
 - `notes/principles.md`: the numbers, heights and push on one page (units, levels, water, weight, blasts, hitboxes, HP).
   Read it before touching any of them.
 - `notes/ref/`: the owner's reference pictures (board colors, the Halo Reach lobby idea).

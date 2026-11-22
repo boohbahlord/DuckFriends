@@ -195,7 +195,7 @@ roomrules.js 368 room governance: groups and
 rooms.js 256 Play: create a room,
 router.js 112 screens
 rules.js 1731 the rules of Agree
-sandbox.js 1347 Sandbox: the key windows
+sandbox.js 1351 Sandbox: the key windows
 sandboxrules.js 2056 Sandbox: which map it
 saybubble.js 78 a duck's speech bubble
 sbarms.js 124 Sandbox: a made NPC's
@@ -233,7 +233,7 @@ sbzone.js 348 Sandbox: board zones ,
 sbzonebrain.js 265 Sandbox: zones that run
 scrules.js 428 the rules of Story
 secret.js 79 secrets between two browsers
-seriatbible.js 108 The Seriat bible in
+seriatbible.js 116 The Seriat bible in
 seriattheme.js 63 Seriat's and the command
 settings.js 298 Settings
 sfxlist.js 162 the sound files
@@ -271,7 +271,7 @@ umaps.js 371 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on
-updates.js 3492 Updates
+updates.js 3520 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival

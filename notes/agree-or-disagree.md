@@ -7870,3 +7870,33 @@ Decision: function first (before B2). Find why the zombies stop by the red car/p
 > Also, when the HP fix goes in, to where the amount that heals is also a point or fraction of HP, and then we can make it to where that HP isn't like darkened out while it regens anymore if it becomes decimal to everything too.
 
 Decision: B5 keeps ground = 1 and 20% a level, with NO cap (only clamped at fully dark); a fall (not a jump) moves the floor reading down through each level as the duck passes it. B7 (Noah): heals count in whole or fractional HP points, and the HP bar no longer shows a darkened regenerating part once it fills smoothly.
+
+## 2026-11-22 13:02Z (owner, decision card on the K14 recoil table)
+
+Question: "How wide should a gun's cone get at full heat, per recoil point?" Chose: "15 degrees a point".
+
+Decision: K14+K18 recoil score as in /mnt/project-files/solomon/k14-recoil-scores.md (0.70 kick against dead weight, 0.20 fire rate, 0.10 barrel), widest cone 15 degrees x score; grenade launcher only kicks (Adam default, owner told 10:58Z); Solomon builds.
+
+## 2026-11-22 13:15Z (owner, phone screenshot of Sandbox: /mnt/project-files/adam/bugs/2026-11-22-1315-sandbox-red-border.jpg)
+
+"Why is this board in a red border? It shouldn't be at all
+
+Why is there not an ability to change maps in the gane?
+
+Where is the map change button?
+
+My maps should show in map vote when i have them made"
+
+## 2026-11-22 13:22Z-13:24Z (owner, screenshot of the in-game Seriat bible: /mnt/project-files/adam/bugs/2026-11-22-1322-seriat-bible.jpg)
+
+13:22Z: "Can someone tell me the problem with the Seriat bible text on screen is?"
+13:23Z: "Make it read like documentation or wikipedia as well, not this bullshit owner talk"
+13:24Z: "File names flr seriat get corrected to Seriat"
+
+Decision (Adam): the in-game bible shows a player reference (notes/seriat-bible.md stays Claude's notes, never shown):
+neutral documentation, no owner quotes, dates, file paths or history. The Seriat code files (numerat*, numberat*) are
+renamed to seriat* names, a pure rename (Adam). Sandbox map asks of 13:15Z: red rim fixed V266; made maps into the vote
+and changing the map in Sandbox: Noah.
+
+13:25Z (screenshot /mnt/project-files/adam/bugs/2026-11-22-1325-bible-proposals.jpg): "Why the FUCK ARE THERE PROPOSALS IN THE BIBLE!? REVIEW THIS SHIT IT SHOULDNT BE LIKE THIS"
+Decision (Adam): the player reference (docs/seriat.md) holds only built, settled rules as plain facts; a check fails on owner, proposal, open, times, names or paths in it; `**` inside code shows as written.
