@@ -302,7 +302,7 @@ bricks.js 482 loose bricks, drawn as
 cabinend.js 135 End Cabin / Exit
 cats.js 662 Duck Cabin's cats: Annabelle,
 chalk.js 627 the chalk floor: draw
-characters.js 592 Duck Cabin's characters on
+characters.js 595 Duck Cabin's characters on
 death.js 101 how long a knocked-down
 doors.js 32 the doors: they swing
 dpflood.js 72 Downpour's flood over its

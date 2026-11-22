@@ -281,8 +281,11 @@ function shot(from, to, miss, ctx) {
       (to.z || 0) + 30,
     );
   const el = document.createElement("div");
-  el.className = "bullet hang-npc-bullet";
-  el.innerHTML = roundOf("handgun").svg;
+  const art = roundOf("handgun");
+  el.className = "bullet round hang-npc-bullet";
+  el.innerHTML = art.svg;
+  el.style.setProperty("--w", art.w + "px"); // (its own size and centering, as game.js gives every flying bullet)
+  el.style.setProperty("--h", art.h + "px");
   el.style.setProperty(
     "--ang",
     Math.atan2(b.top - a.top, b.left - a.left).toFixed(3) + "rad",
