@@ -544,38 +544,8 @@ import {
   dnOverHTML,
 } from "./dunce.js";
 
-import {
-  isMgj,
-  MGJ_ZAP,
-  mgjFrozen,
-  mgjGone,
-  mgjSpawning,
-  SPAWN_MS,
-  mgjStats,
-  GOOD_ID,
-  PICK_FADE,
-  XB,
-  PICK_WEAPONS,
-  MGJ_DOWN,
-  MGJ_SCALE,
-  MGJ_HAMMER,
-  ammoOf,
-  INF_AMMO,
-  downNear,
-  REVIVE,
-  mgjPHp,
-  mgjOut,
-  mgjSafe,
-  EDGE_WARN,
-  GUN_TELL,
-  HAMMER_TELL,
-  BURST,
-  SPREAD,
-  DUCK_LEN,
-  CAKE_EVERY,
-  cakeAt,
-  mgjStop,
-} from "./mgjrules.js";
+import { isMgj, MGJ_ZAP, mgjFrozen, mgjGone, mgjSpawning, SPAWN_MS, mgjStats, GOOD_ID, PICK_FADE, XB, PICK_WEAPONS, MGJ_DOWN, MGJ_SCALE, MGJ_HAMMER, ammoOf, INF_AMMO, downNear, REVIVE, mgjPHp, mgjOut, mgjSafe, EDGE_WARN, GUN_TELL, HAMMER_TELL, BURST, SPREAD, DUCK_LEN, CAKE_EVERY, cakeAt } from "./mgjrules.js";
+import { mgjStop } from "./mgjpicks.js";
 
 import { FLAME, POOF, FOODS, TELEPORT, HITMARK, edgeHTML } from "./mgjart.js";
 

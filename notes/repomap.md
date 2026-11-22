@@ -3,7 +3,7 @@ file lines job
 
 ## js/
 account.js 397 the Google account: the profile online,
-actplay.js 956 a game's actions
+actplay.js 945 a game's actions
 actroom.js 744 the room's actions
 actsb.js 156 Sandbox's windows, saves and maps
 allies.js 383 Survival: the friendly squad
@@ -17,7 +17,7 @@ bash.js 1360 the command line's language: a small
 bbrules.js 380 the rules of Bicker Brackets
 beaks.js 138 beaks
 bloodpool.js 50 a pool of blood: the one
-boardfire.js 1313 the board's weapons: hits, shots, blasts,
+boardfire.js 1300 the board's weapons: hits, shots, blasts,
 boardjustin.js 699 Justin on the boards
 botduck.js 90 a computer's duck: a random look,
 botlines.js 188 What the computers write and say
@@ -55,7 +55,7 @@ friends.js 236 friends
 front.js 151 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 229 how a held weapon and the
-game.js 7386 the game screen
+game.js 7356 the game screen
 gamedefaults.js 43 the game's own numbers, for every
 gamefx.js 873 the silly commands and the room's
 gamehand.js 604 the hand: the number-key specials, firing,
@@ -122,7 +122,8 @@ merchants.js 376 the merchants
 meters.js 114 the thin bars under my duck's
 mgj.js 219 Mad God Justin: what the screen
 mgjart.js 96 Mad God Justin's new pictures
-mgjrules.js 2285 
+mgjpicks.js 496 Mad God Justin's pickups: what drops,
+mgjrules.js 1861 
 modes.js 442 the game modes
 music.js 590 the music: our own songs, played
 musicbar.js 169 the music bar: the song the
