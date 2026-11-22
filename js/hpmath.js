@@ -36,6 +36,15 @@ const healer = (s) => (breedOf(s).heal ? breedOf(s) : HP_BREEDS.board);
 export const hpOf = (s, id, now) =>
   breedOf(s).of(s, id, now, !!(s.seat.includes(id) && s.players[id]));
 export const hpMostOf = (s, id) => healer(s).most(s, id);
+/* the bar over a duck, Justin or his double (game.js): { hp, most } while it shows, else null. A breed's bar(s, id,
+   now, seated) says when and how full (full: a bar that first shows below full flashes down from full); without one,
+   its HP while above 0 (glow: the breed's HP back glows green) */
+export function hpBarOf(s, id, now) {
+  const B = breedOf(s);
+  if (B.bar) return B.bar(s, id, now, s.seat.includes(id));
+  const v = hpOf(s, id, now);
+  return v && v[0] > 0 && v[1] ? { hp: v[0], most: v[1], glow: B.glow } : null;
+}
 /* amt of HP back for duck id; true when the state changed */
 export function hpHealOf(s, id, amt, now) {
   const B = healer(s),

@@ -4331,7 +4331,6 @@ export function l4Shots(s, now) {
   if (hitAny) store(s, zs, true);
   return true;
 }
-
 /* the Angelic grenade launcher's fire: a few burning patches round where it went off, as the flamethrower's ground */
 function burnAt(s, by, x, y, now, z0 = 0) {
   const r = REACH * DUCK * ANGEL.GL_RADIUS, // (its blast's rings: blast.js)
@@ -4452,7 +4451,6 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
   });
   return any;
 }
-
 /* a test command (cheats.js): Survival's next wave is gunmen now, "c" criminals or "s" soldiers, as its peak sends them
    (survrules.js survTick): the phase goes to a peak with them, so the clock and the bags go on after it */
 export function cheatGunmen(s, side, now) {
@@ -4945,7 +4943,8 @@ export function l4Hurt(s, id, dmg, now, w = "claw") {
   hurtDuck(s, p4, id, now, w, dmg);
   s.hang.l4p = p4;
 }
-/* the zombie maps' HP (hpmath.js): a zone's or a group's heal gives a duck up amt HP back, up to its most */
+/* the zombie maps' HP (hpmath.js): a zone's or a group's heal gives a duck up amt HP back, up to its most; HP back
+   glows green on its bar (a duck's bar shows while it stands: down or a ghost, none) */
 hpBreed("maps", {
   of: (s, id, now, seated) =>
     seated && inWorld(s) ? [Math.max(0, l4Hp(s, id) || 0), maxHp(s, id)] : null,
@@ -4957,6 +4956,7 @@ hpBreed("maps", {
   },
   most: maxHp,
   store: (s) => s.hang && s.hang.l4p,
+  glow: true,
 });
 /* Sandbox's zones: each zombie standing where on({ x, y: shares of the map, z: the ground's height there, sp }) says
    loses amt HP ("damage", whole HP, at least 1), gets it back ("heal", up to its most) or dies ("kill") */
