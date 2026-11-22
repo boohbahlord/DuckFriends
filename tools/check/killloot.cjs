@@ -82,8 +82,13 @@ const { url, fail, noErrors } = require("./lib.cjs");
     const r = window._r,
       L = await import("./js/l4ddloot.js"),
       { W, H } = await import("./js/hangout/layout.js"),
-      q = r.state.pos[r.me],
-      now = Date.now();
+      bot = r.state.pos[r.state.seat.find((id) => id !== r.me)],
+      now = Date.now(),
+      q = (r.state.pos[r.me] = {
+        ...r.state.pos[r.me],
+        x: bot.x + 0.06,
+        tp: now,
+      }); // (away from the computer, which takes what it stands on)
     L.layDrop(r.state, "ammo", q.x * W, q.y * H, now, now + 30000);
     return now;
   });
@@ -135,22 +140,44 @@ const { url, fail, noErrors } = require("./lib.cjs");
     r.send({ t: "hang", k: "l4", do: "box" });
     return { blocked, after: !!r.state.hang.l4box[r.me] };
   });
-  /* 5. a kill with the odds at 1 */
+  /* 5. a kill with the odds at 1: the zombies come at me by the fireplace, and I shoot the nearest with the AK-47 */
   const kill = await p.evaluate(async () => {
     const r = window._r,
-      L = await import("./js/l4ddloot.js");
+      L = await import("./js/l4ddloot.js"),
+      Z = await import("./js/zombies.js"),
+      { W, H } = await import("./js/hangout/layout.js");
     L.KILL.ARM = 1;
     r.send({ t: "hang", k: "l4", do: "endturn", on: true }); // (I'm ready too: the zombies come)
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < 480; i++) {
       const d = (r.state.hang.l4dr || []).find((q) => q.k === "arm");
       if (d)
         return {
           w: d.w,
           el: !!document.querySelector(".l4-drop.k-arm .l4orb"),
         };
+      const q = r.state.pos[r.me],
+        z = Z.zombiesOf(r.state)
+          .filter((o) => o.st === 2 || o.st === 4)
+          .sort(
+            (a, b) =>
+              Math.hypot(a.x - q.x * W, a.y - q.y * H) -
+              Math.hypot(b.x - q.x * W, b.y - q.y * H),
+          )[0];
+      if (z) {
+        const ax = z.x - q.x * W,
+          ay = z.y - q.y * H;
+        r.state.pos[r.me] = { ...q, w: "ak", ax: ax / W, ay: ay / H };
+        r.send({
+          t: "use",
+          what: "ak",
+          face: ax < 0 ? -1 : 1,
+          ax: ax / W,
+          ay: ay / H,
+        });
+      }
       await new Promise((ok) => setTimeout(ok, 250));
     }
-    return null;
+    return { kz: r.state.hang.l4kz || null };
   });
   await b.close();
   noErrors(errs);
