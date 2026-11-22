@@ -14,33 +14,12 @@ import { cropFile } from "./picrop.js";
 import { UMAP, UMAP_UIS, isUmap } from "./umaprules.js";
 import { MAPS } from "./maps.js";
 import { NWK_VARIANTS } from "./nwk.js";
+import { idbStore, req } from "./idbstore.js";
 
 /* ---------- the store ---------- */
 const DB = "duckfriends-maps",
   KIND = "duckfriends-map";
-let dbP = null;
-function db() {
-  if (!dbP)
-    dbP = new Promise((ok, no) => {
-      const q = indexedDB.open(DB, 1);
-      q.onupgradeneeded = () => {
-        if (!q.result.objectStoreNames.contains("maps"))
-          q.result.createObjectStore("maps", { keyPath: "id" });
-      };
-      q.onsuccess = () => ok(q.result);
-      q.onerror = () => no(q.error);
-      q.onblocked = () => no(new Error("blocked"));
-    }).catch((e) => {
-      dbP = null;
-      throw e;
-    });
-  return dbP;
-}
-const req = (r) =>
-  new Promise((ok, no) => {
-    r.onsuccess = () => ok(r.result);
-    r.onerror = () => no(r.error);
-  });
+const { db } = idbStore(DB, "maps");
 /* every map on this device, newest first */
 export async function listMaps() {
   try {

@@ -86,6 +86,7 @@ hotbar.js 497 the specials on the number keys
 hotpick.js 318 What goes in my duck's hand
 hpmath.js 46 HP in hundredths
 hpmeter.js 327 HP meters and the little "+1
+idbstore.js 35 one IndexedDB store with its promises (maps and game modes on this device)
 invisible.js 11 Who is invisible right now :
 itemtip.js 104 hold I on an item: its
 itemtone.js 98 the colors an outfit or a
