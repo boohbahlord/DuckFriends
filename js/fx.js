@@ -187,7 +187,7 @@ const BLEED = {
     squirt: 3,
     big: 0.45,
     chunk: 3,
-  }, // (the sniper, the chain gun: chunks fly)
+  }, // (the sniper: chunks fly)
   shot: {
     flesh: [0, 2],
     drops: [6, 10],
@@ -247,8 +247,6 @@ const BLEED_OF = {
   sniper: "heavy",
   slug: "heavy",
   dbarrel: "heavy",
-  chaingun: "heavy",
-  chain: "heavy",
   pellet: "shot",
   shotgun: "shot",
   knife: "blade",
@@ -421,10 +419,10 @@ export function fxBurst(x, y, h, n, chunks = 0, body = "") {
    smoke (owner 2026-11-16): reach, the flash's length in ducks; cone, how wide it fans out (narrow and long for the
    sniper, a wide spray for the shotgun); n, its pixels; core, the size of the hot pixels in the middle; smoke, its
    puffs; puff, their size; drift, how far they travel; shake and kick, the screen's shake and the gun's recoil
-   (fxmotion.js). Weaker and smaller guns get the least; the chain gun, the sniper, the LMG and the shotgun the most.
-   More for the big guns (the owner's, Nov 17 11:07Z: "LMG, Sniper, especially chain gun, shotguns somewhat, and high
-   caliber weapons in general SHOULD shake the screen more"): the chain gun and the LMG fire fast enough that it builds
-   up while held (the chain gun the most), the sniper the biggest single shake */
+   (fxmotion.js). Weaker and smaller guns get the least; the sniper, the LMG and the shotgun the most. More for
+   the big guns (the owner's, Nov 17 11:07Z: "LMG, Sniper, especially chain gun, shotguns somewhat, and high caliber
+   weapons in general SHOULD shake the screen more"): the LMG fires fast enough that it builds up while held, the
+   sniper the biggest single shake */
 export const MUZZLE = {
   handgun: {
     reach: 0.45,
@@ -546,17 +544,6 @@ export const MUZZLE = {
     drift: 0.9,
     shake: 0.75,
     kick: 1.2,
-  },
-  chaingun: {
-    reach: 1.1,
-    cone: 0.7,
-    n: 44,
-    core: 5,
-    smoke: 4,
-    puff: 4,
-    drift: 0.8,
-    shake: 0.24,
-    kick: 0.45,
   },
   laser: {
     reach: 0.45,

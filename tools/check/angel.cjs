@@ -20,14 +20,7 @@ const { url, fail, noErrors } = require("./lib.cjs");
       G = await import("./js/guns.js"),
       L = await import("./js/l4ddrules.js"),
       out = { adds: {}, ammo: [] };
-    for (const w of [
-      "handgun",
-      "sniper",
-      "chaingun",
-      "dbarrel",
-      "bow",
-      "knife",
-    ])
+    for (const w of ["handgun", "sniper", "lmg", "dbarrel", "bow", "knife"])
       out.adds[w] = [A.angelDmg(w), +(A.angelCrit(w) * 100).toFixed(3)];
     for (const w of Object.keys(G.ARMS)) {
       const f = L.fullAmmo(w),
@@ -68,7 +61,7 @@ const { url, fail, noErrors } = require("./lib.cjs");
   const want = {
     handgun: [0.5, 2.5],
     sniper: [1.88, 9.375],
-    chaingun: [0.08, 0.413],
+    lmg: [0.25, 1.25],
   };
   for (const [w, v] of Object.entries(want))
     if (JSON.stringify(got.adds[w]) !== JSON.stringify(v))

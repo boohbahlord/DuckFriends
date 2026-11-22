@@ -198,11 +198,6 @@ SOUNDS = {
         drive=4,
         credit=GUNS + ("AR-15 5.56",),
     ),
-    "chaingun": dict(
-        layers=[("oga:guns-smg/P_30P.wav", 0.96, 0.4, 0, 1)],
-        drive=4,
-        credit=GUNS + ("PPSh",),
-    ),
     # the Tommy gun (.45, quick and chattering: a shot every 120 ms): one shot of an M45's burst, a PPSh's crack on top
     # and a .45's low thump under it (each cut before its recording's next shot)
     "tommy": dict(
@@ -359,24 +354,6 @@ SOUNDS = {
         ],
         credit=(
             "LFA, Equipment Clicks III; Kenney, RPG Audio (beltHandle, metalClick)",
-            OGA_URL["clicks3"],
-        ),
-    ),
-    # the chain gun, 4 s (no reload in Dead Ducks Arcade): the empty box off, a new one on, its belt fed in, the
-    # barrels' cover shut
-    "reloadChaingun": dict(
-        layers=[
-            (C3, 3.24, 0.3, 0, 1),
-            (C3, 3.7, 0.3, 0.45, 0.8),
-            (KR + "beltHandle1.ogg", 0, 0.28, 1.2, 0.5),
-            (C3, 6.35, 0.3, 1.75, 1),
-            (C3, 7.2, 0.3, 2.3, 0.8),
-            (KR + "beltHandle2.ogg", 0, 0.28, 2.75, 0.5),
-            (C3, 11.38, 0.3, 3.3, 1),
-            (KR + "metalLatch.ogg", 0.03, 0.2, 3.7, 0.6),
-        ],
-        credit=(
-            "LFA, Equipment Clicks III; Kenney, RPG Audio (beltHandle, metalLatch)",
             OGA_URL["clicks3"],
         ),
     ),

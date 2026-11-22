@@ -1172,9 +1172,8 @@ function shopping(s, id, now, x, y, far, m, send, out) {
 
 /* ---------- the fireplace's Justin (the owner's, Nov 4: "make his npc decent or good at the game") ----------
    He plays by every rule a duck does, through the same actions, only better than the computers above: a gun over the
-   knife whenever one has anything in it (the chain gun kept for when it counts: a zombie close, or a crowd), the
-   knife only once every gun is empty and nothing can be bought. He keeps his distance: each heartbeat he tries 16 ways
-   to step and takes the one that leaves him farthest from every zombie with the most open floor ahead (so never into a
+   knife whenever one has anything in it, the knife only once every gun is empty and nothing can be bought. He keeps
+   his distance: each heartbeat he tries 16 ways to step and takes the one that leaves him farthest from every zombie with the most open floor ahead (so never into a
    corner), sprinting (with a duck's own 7 seconds of breath) when one gets too close. He revives a downed duck when no
    zombie is on it, ends the turn between rounds, and shops like the others when the room is clear (no ammo to buy:
    the merchants never sell it, the owner's, Nov 18 13:46Z). He walks exactly as fast as a duck would: by the time since his last step, at the Walking speed, the
@@ -1185,7 +1184,7 @@ const KEEP = 240, // world px: the room he keeps from every zombie
   WAYS = 16;
 const lastAt = new Map(), // Justin → when he last walked
   breath = new Map(); // Justin → his sprint left (0 … 1), and whether he's run out until he stops
-/* how much a gun is worth to him (more is better): what kills fastest first; the chain gun on its own below */
+/* how much a gun is worth to him (more is better): what kills fastest first */
 const GUN_RANK = [
   "lmg",
   "dbarrel",
@@ -1251,21 +1250,16 @@ function justinBot(s, id, now, out) {
   const seen = near.find(
     (n) => n.d < b.see && npcSees({ x, y }, n.z, undefined, 0),
   );
-  /* his gun: the best one with something in it (not reloading); the chain gun when a zombie is close or they crowd */
+  /* his gun: the best one with something in it (not reloading); the crowd is for his grenade */
   const crowd = seen ? crowdOf(zs, seen.z, b.crowd) : 0;
   const guns = gunsIn(sl).filter(loadedIn(s, id, now, m)),
     others = guns
-      .filter(
-        (w) => w !== "chaingun" && !(w === "shotgun" && seen && seen.d > 260),
-      )
+      .filter((w) => !(w === "shotgun" && seen && seen.d > 260))
       .sort(
         (a, b) =>
           ((GUN_RANK.indexOf(a) + 99) % 99) - ((GUN_RANK.indexOf(b) + 99) % 99),
       );
-  let gun =
-    guns.includes("chaingun") && (d0 < 300 || crowd >= 3 || !others.length)
-      ? "chaingun"
-      : others[0] || (guns.includes("shotgun") ? "shotgun" : "");
+  let gun = others[0] || (guns.includes("shotgun") ? "shotgun" : "");
   /* a downed teammate with no zombie on it (nor on him): go and hold E by it */
   const down = downMate(s, id, x, y, false, zs);
   if (down && d0 > CLOSE && Math.hypot(down.x - x, down.y - y) < b.revive) {

@@ -5,7 +5,7 @@
    - Sprint: half a second to ease into the faster sway and out of it.
    - Recoil: each shot kicks a gun back and lifts its end, which bounces back down (more for heavier guns: fx.js MUZZLE).
    - Adrenaline: a duck on an adrenaline shot (or the Speed Boost drop) jitters, its weapon too.
-   - Shake: firing shakes my screen, a little for a pistol, most for the chain gun but never too much; an adrenaline
+   - Shake: firing shakes my screen, a little for a pistol, most for the sniper and the LMG but never too much; an adrenaline
      shot taken wobbles it fast for a moment.
    Everything here is per duck and costs a few sums a frame. */
 import { MUZZLE, heavyOff } from "./fx.js";
@@ -104,7 +104,7 @@ export function jitter(on, unit) {
 /* ---------- a drawing's own vibration ---------- */
 /* how far (px) a duck's drawing vibrates with each shot it fires (the owner's, Nov 17: "shooting guns causes a slight
    vibration in your duck"): none for the bow, pistol, dagger, melee, grenades, grenade launcher and laser; the SMG very
-   faint, then the AK, then the LMG and the sniper, the chain gun most (the revolver, the burst rifle and the shotguns weren't
+   faint, then the AK, then the LMG and the sniper (the revolver, the burst rifle and the shotguns weren't
    named: set between them). Every player sees it on every duck that fires */
 export const VIB = {
   smg: 0.5,
@@ -117,7 +117,6 @@ export const VIB = {
   sniper: 1.5,
   shotgun: 1.7,
   slug: 1.7,
-  chaingun: 2.2,
 };
 /* shakes a drawing once sideways by px (the translate property: its own jumps and squash keep their transform); twice when
    it also goes down (the owner's, "once more as it dies"). Works on a duck, Justin or a zombie */
@@ -163,7 +162,7 @@ let trauma = 0,
 /* a shot of mine (how much: fx.js MUZZLE's shake) */
 export function shake(amount) {
   if (heavyOff()) return;
-  trauma = Math.min(1, trauma + amount); // (at most about 6 px: the chain gun held down, a grenade close by)
+  trauma = Math.min(1, trauma + amount); // (at most about 6 px: the LMG held down, a grenade close by)
 }
 /* on an adrenaline shot or the Speed Boost: my screen keeps a small shake, the firing shake held low (the owner's,
    Nov 21 05:08Z: "might cause your screen to shake a little with some already existent shake effect") */
