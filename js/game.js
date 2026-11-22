@@ -319,7 +319,8 @@ import {
   isWild,
 } from "./l4ddrules.js";
 
-import { AUTO, MGJ_MELEE } from "./guns.js";
+import { AUTO, MGJ_MELEE, armOfShot } from "./guns.js";
+import { armedView, heatShake } from "./heat.js";
 
 import { watching, watchNext } from "./spectate.js";
 
@@ -2055,10 +2056,7 @@ function drawDucks(now = clockNow()) {
       h.remove();
       heldEls.delete(id);
     }
-  document.documentElement.classList.toggle(
-    "armed",
-    arms.some((a) => a[4]),
-  ); // (a weapon in my hand: the mouse is a crosshair over the board, owner Nov 16, css/app.css)
+  armedView(arms, s, now); // (a weapon in my hand: the mouse is a crosshair over the board, its ticks out with my heat: heat.js)
   /* the shots fired since last frame: a flash and smoke at the barrel's end, its kick, my screen's shake (fx.js,
      fxmotion.js); a shotgun's pellets are one shot */
   const went = new Set(),
@@ -2068,6 +2066,7 @@ function drawDucks(now = clockNow()) {
     if (!MUZZLE[gun] || went.has(sh.by + "/" + sh.t)) continue;
     went.add(sh.by + "/" + sh.t);
     const hd = heldAll.get(sh.by),
+      hs = heatShake(s, sh.by, armOfShot(gun), now), // (a hot gun kicks and shakes up to 30% more: heat.js)
       e =
         hd &&
         heldOn(hd, fxl) &&
@@ -2083,9 +2082,9 @@ function drawDucks(now = clockNow()) {
         : place(shotAt(sh, 0), 0, 1);
       fxMuzzle(a0.left, a0.top - size * 0.45, Math.atan2(sh.vy, sh.vx), gun);
     }
-    kick(sh.by, gun, now);
+    kick(sh.by, gun, now, hs);
     heatUp(sh.by, gun); // (the LMG's barrel heats up as it keeps firing: barrelheat.js)
-    if (sh.by === R.me) shake(MUZZLE[gun].shake);
+    if (sh.by === R.me) shake(MUZZLE[gun].shake * hs);
     vibrate(shooterBody(sh.by), VIB[gun]); // (the firing duck's drawing, in rhythm with the fire rate)
   }
   /* Dead Ducks Arcade: the laser sights, out of each gun to the end of its flashlight (l4dd.js), never the bow's. I only
