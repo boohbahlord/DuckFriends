@@ -10,6 +10,7 @@ import { modeOf } from "./modes.js";
 import { baseMode } from "./sandboxrules.js";
 import { scaleOf } from "./duck.js";
 import { WEIGHT } from "./gamedefaults.js";
+import { ARMS, DEAD_WEIGHT } from "./guns.js";
 
 /* weight follows Size (the owner's, Nov 21 15:56Z: "a duck's weight increases in proportion with its size by
    percentage. So a duck that is 110% bigger has 10% more weight and also 10% less speed ... A duck with more weight has
@@ -19,7 +20,15 @@ import { WEIGHT } from "./gamedefaults.js";
    projectiles do not become affected by your weight"). Justin and the computers' made ducks without one: 1 */
 export const sizeOf = (s, id) =>
   (s.players && s.players[id] && scaleOf(s.players[id].duck)) || 1;
-export const weightOf = sizeOf;
+/* its weight: its Size and the dead weight it carries (16:53Z: "this kind of weight ... does not add to your
+   knockback"; nor to its walk): what it holds out (s.pos' w), or with WEIGHT.DEAD_FROM "all", everything in its kit */
+const deadOf = (w) => DEAD_WEIGHT[(ARMS[w] || {}).dw] || 0;
+const carried = (s, id) =>
+  WEIGHT.DEAD_FROM === "all"
+    ? ((s.hang && s.hang.l4a && s.hang.l4a[id]) || {}).sl || []
+    : [s.pos && s.pos[id] && s.pos[id].w];
+export const weightOf = (s, id) =>
+  sizeOf(s, id) + carried(s, id).reduce((t, w) => t + deadOf(w), 0);
 const walkK = (s, id) =>
   id == null ? 1 : Math.max(WEIGHT.SLOWEST, 2 - sizeOf(s, id));
 /* the ratio: a push of far on a body of weight w moves it far / w (110%: 1/1.1 as far); an immobile one, never */
