@@ -7844,3 +7844,6 @@ Decision (Adam): function first, before B. 1) Phone UI scale and the top-right b
 "We don't have to make them have different see-throughs. That's a dangerous thing. We should consider making them to the transparency that agree or disagree was. And Mad God Justin doesn't need a board that's a single caller. His board can be maybe rainbow or slowly changes. Who knows?"
 
 Decision (Adam): one see-through level for every board in every mode, Agree or Disagree's (45%); the 42% on Shelter Sky & Null and Euclid's Squares goes. The solid tiles were every board mode (one rule for all, `.board .col`) on a map players made; the old rule listed built-in maps by name. Mad God Justin's board color: options to the owner before building.
+
+## Nov 22 02:57Z (owner, on a choice card)
+Picked "Slowly changing" for Mad God Justin's board: the whole field fades through the rainbow colors, one full turn about every 30 seconds, at the same see-through level as every board.
