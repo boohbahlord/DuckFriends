@@ -1,12 +1,12 @@
 /* made by tools/pixel-world.cjs: don't change it by hand (pxworld.js) */
 export const GROUND = {
-  parts: ["assets/px/world/downpour-ground-c564fc2b.webp"],
+  parts: ["assets/px/world/downpour-ground-46c52c6d.webp"],
   x: -1024,
   y: -1024,
   w: 2304,
   h: 2816,
 };
-export const ATLAS = "assets/px/world/downpour-props-d21a77eb.webp";
+export const ATLAS = "assets/px/world/downpour-props-730aa221.webp";
 export const INDEX = {
   "1ej1aazrm@66x66": { "": [1557, 2994, 66, 66] },
   "njlwc7rm@447x66": { "": [0, 3088, 447, 66] },
@@ -165,7 +165,7 @@ export const INDEX = {
   "dqa4b5o7@27x36": { "": [226, 3285, 27, 36] },
   "2n7cyko7@27x36": { "": [254, 3285, 27, 36] },
   "vpfvkzo7@27x36": { "": [282, 3285, 27, 36] },
-  "t1j2s44yb@42x26": { "": [310, 3285, 42, 26] },
+  "73hg9k4yb@42x26": { "": [310, 3285, 42, 26] },
   "1qpyae7es@42x26": { "": [353, 3285, 42, 26] },
   "11vwc8h67l@42x26": { "": [396, 3285, 42, 26] },
   "j75lel13g@150x38": { "": [1698, 3220, 150, 38] },

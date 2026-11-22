@@ -12712,6 +12712,22 @@ html.moving .hp.hang-shimmer {
    The chalk lines are a canvas laid on the slate, over the floor and under every duck; erased, they fade off. A duck
    holding chalk carries a little stick of it at its beak. The guestbook is a page in the board (beside my duck on a
    computer, over the top of the board on a phone held upright), the game's panel with ruled lines. */
+/* Downpour's flood (dpflood.js): the bed's shade under the water, in the world's box under everything standing */
+.dp-flood {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+.dp-flood > canvas,
+.dp-flood > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
 .hang-chalk-ink {
   position: absolute;
   left: 0;

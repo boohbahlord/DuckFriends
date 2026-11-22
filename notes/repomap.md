@@ -16,7 +16,7 @@ barrelheat.js 70 a hot barrel
 bash.js 1360 the command line's language:
 bbrules.js 380 the rules of Bicker
 beaks.js 138 beaks
-below.js 88 darker below
+below.js 89 darker below
 blast.js 67 explosions: one module
 bloodpool.js 50 a pool of blood:
 boardfire.js 1338 the board's weapons: hits,
@@ -272,7 +272,7 @@ umaps.js 371 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on
-updates.js 3600 Updates
+updates.js 3609 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival
@@ -287,7 +287,7 @@ zombieroofs.js 326 the zombies' walk over
 zombies.js 1478 the zombies: one module
 
 ## js/hangout/
-activities.js 24 every Hangout activity, so
+activities.js 25 every Hangout activity, so
 ambience.js 112 the air: the wind
 art.js 252 Duck Cabin: the drawings
 artbase.js 156 the drawings' shared pieces
@@ -305,7 +305,8 @@ chalk.js 627 the chalk floor: draw
 characters.js 592 Duck Cabin's characters on
 death.js 101 how long a knocked-down
 doors.js 32 the doors: they swing
-dpground.js 320 Downpour's ground
+dpflood.js 72 Downpour's flood over its
+dpground.js 323 Downpour's ground
 falls.js 118 falling a long way
 fireflies.js 174 fireflies
 flicker.js 83 now and then a
