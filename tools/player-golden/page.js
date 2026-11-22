@@ -88,13 +88,20 @@ window.__pgSetup = async (sc) => {
       if (JSON.stringify(r.state) !== was) pre.shift();
     }
   }
-  if (sc.keys) {
+  if (sc.keys || sc.scale) {
     const P = r.state.players[r.me];
     r.state.players = {
       ...r.state.players,
-      [r.me]: { ...P, duck: { ...P.duck, keys: sc.keys } },
+      [r.me]: {
+        ...P,
+        duck: {
+          ...P.duck,
+          ...(sc.keys ? { keys: sc.keys } : {}),
+          ...(sc.scale ? { scale: sc.scale } : {}),
+        },
+      },
     };
-  } // (my duck's specials on its number keys)
+  } // (my duck's specials on its number keys; scale: its Size, for weight, push.js)
   if (sc.kit) {
     const a = r.state.hang.l4a || {};
     r.state.hang = {

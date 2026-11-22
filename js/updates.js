@@ -9,6 +9,25 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v252",
+    version: 252,
+    date: "Nov 22, 2026",
+    title: "Tidier files",
+    news: [
+      "Behind the scenes: Hangout's drawings and the Game Settings window are split into smaller files, and explosions in Hangout and on Survival's gunmen are now recorded so later changes can be checked against them. Nothing plays differently.",
+    ],
+  },
+  {
+    id: "v251",
+    version: 251,
+    date: "Nov 22, 2026",
+    title: "Bigger ducks are heavier",
+    news: [
+      "Bigger ducks are heavier: a duck 10% bigger walks 10% slower, hits 10% harder with melee and knocks others 10% farther, and gets pushed 10% less far. Smaller ducks are the other way. Grenades and shots push the same whoever throws them.",
+      "Behind the scenes: the end of a round (results, the stats pages, the celebration) lives in its own file now, out of the board screen's big file. Nothing plays differently.",
+    ],
+  },
+  {
     id: "v250",
     version: 250,
     date: "Nov 22, 2026",

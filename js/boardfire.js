@@ -22,11 +22,18 @@ import {
 } from "./rules.js";
 
 import { flyShots, swingOn, swinging, swingMisses } from "./weaponuse.js";
-import { KB_FAR, pushOf, pushAlong } from "./push.js";
+import {
+  KB_FAR,
+  pushOf,
+  pushAlong,
+  pushTaken,
+  sizeOf,
+  weightOf,
+} from "./push.js";
 
 import { jumpDodges } from "./jump.js";
 
-import { duckBig, picGrow, scaleOf } from "./duck.js";
+import { duckBig, picGrow } from "./duck.js";
 
 import { isSb, sbOnBoard, boardDuck, sbRule } from "./sandboxrules.js";
 
@@ -275,8 +282,9 @@ export function shovePx(s, id, ux, uy, far, now, side) {
     dY = 0.012 * HH;
   shove(s, id, ux, (uy * dX) / dY, far / dX, now, side);
 }
-export function shove(s, id, ux, uy, far, now, side, more = {}) {
-  const p = s.pos[id],
+export function shove(s, id, ux, uy, far0, now, side, more = {}) {
+  const far = pushTaken(far0, weightOf(s, id)), // (the ratio: a bigger duck is moved less far, push.js)
+    p = s.pos[id],
     hang = isHang(s),
     [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
     vx = ux * far * rx,
@@ -368,7 +376,9 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
   for (const h of hits) {
     const crit = critRoll(s, sp);
     if (
-      !(isMgj(s) ? mgjSoak(s, h.id, now) : hitSoaks(s, h.id, now, sp, crit, by))
+      !(isMgj(s)
+        ? mgjSoak(s, h.id, now)
+        : hitSoaks(s, h.id, now, sp, crit, by, sizeOf(s, by)))
     ) {
       s.players[h.id].dead = true;
       holdDown(s, h.id, now);
@@ -383,7 +393,7 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
         h.id,
         h.d > 0.05 ? h.dx * k : ux,
         h.d > 0.05 ? h.dy * k : uy,
-        pushOf(s, "hammer"), // (the mode's own: push.js)
+        pushOf(s, "hammer") * sizeOf(s, by), // (the mode's own, and a bigger swinger's harder: push.js)
         now,
         side,
       );
@@ -403,7 +413,7 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
           0,
         ), // (he's bigger: a swing reaches him from MGJ_SCALE times as far)
       logLine,
-      DMG[sp] || 1,
+      (DMG[sp] || 1) * sizeOf(s, by),
     );
   // (Mad God Justin: 1 damage; a hit on his double counts for nothing)
   else if (
@@ -532,9 +542,6 @@ export function sizeShots(s) {
   });
   if (ch) s.shots = out;
 }
-/* a duck's Size, as a share (1: 100%); Justin and the computers' made ducks without one: 1 */
-const sizeOf = (s, id) =>
-  (s.players && s.players[id] && scaleOf(s.players[id].duck)) || 1;
 /* how high a swing is, in duck widths over the swinger's feet: their hand, as the screens draw it (game.js bodyAt) */
 const handUp = (s, id) => 0.45 * sizeOf(s, id);
 export const shotAt = (sh, t) => ({
@@ -1311,8 +1318,8 @@ export const critRoll = (s, w) =>
   pwOn(s) && Math.random() < critOf(armOfShot(w));
 /* a hit of weapon (or shot kind) k on duck id: a crit doubles it (guns.js critOf), and takes no more than that; what
    takes all of it (the slug, the chain gun: PHP) still does */
-export function hitSoaks(s, id, now, k, crit, by) {
-  const d = dmgOf(s, k);
+export function hitSoaks(s, id, now, k, crit, by, big = 1) {
+  const d = dmgOf(s, k) * big; // (big: a melee swinger's Size, push.js)
   return soaks(s, id, now, crit ? d * 2 : d, by, crit && d < PHP);
 }
 /* duck id was hit by weapon w: a wound, or (crit, and it went down) its head blown off, down CRIT_DOWN ms, and a
