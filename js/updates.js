@@ -9,6 +9,28 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v242",
+    version: 242,
+    date: "Nov 22, 2026",
+    title: "See-through tiles again",
+    news: [
+      "The board's tiles are see-through over the map again in every mode (Agree or Disagree, Lawyering, Mad God Justin and the rest), on every map, the maps you make too, and all at the same see-through level as Agree or Disagree's.",
+      "On a phone, the lobby's buttons in the top corner keep their space from the edge at any UI size, and a phone's UI never shrinks below 90%.",
+      "My maps: Import now says it opens a map file saved with Export (not a picture), and tells you if you pick the wrong file.",
+      "Behind the scenes: Mad God Justin's pickups live in their own file now. Nothing plays differently.",
+    ],
+  },
+  {
+    id: "v241",
+    version: 241,
+    date: "Nov 22, 2026",
+    title: "One rule for crowds",
+    news: [
+      "Behind the scenes: zombies, soldiers, criminals, the friendly squad and Sandbox's NPCs now keep out of each other's way through one shared rule. Nothing plays differently.",
+      "Behind the scenes: the board itself (its squares, the story's lines, where each duck stands) lives in its own file now; the board screen's file is a third smaller than yesterday.",
+    ],
+  },
+  {
     id: "v240",
     version: 240,
     date: "Nov 22, 2026",

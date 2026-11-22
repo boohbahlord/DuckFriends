@@ -246,14 +246,20 @@ const fileName = (t) =>
     .trim()
     .replace(/\s+/g, " ") || "map") + ".duckmap.json";
 /* an exported map, read back (Import): its picture made into pixels again, so nothing but a picture ever comes in */
+/* what a wrong file gets, in words (the owner's, Nov 22 01:37Z: "if I select something, nothing ever comes of it") */
+const NOT_MAP =
+    "That file is not a map file. Import only opens a map saved with Export.",
+  A_PICTURE =
+    "That's a picture, not a map file. To make a map from a picture, use New map.";
 async function importMap(file) {
+  if (/^(image|video)\//.test(file.type)) throw new Error(A_PICTURE);
   let o = null;
   try {
     o = JSON.parse(await file.text());
   } catch (e) {
-    throw new Error("That file is not a map.");
+    throw new Error(NOT_MAP);
   }
-  if (!o || o.kind !== KIND) throw new Error("That file is not a map.");
+  if (!o || o.kind !== KIND) throw new Error(NOT_MAP);
   return mapFromObj(o);
 }
 /* a map from outside this device (a file, or the Shared page: shared.js), kept here: its picture made into pixels again,
@@ -299,7 +305,8 @@ export function myMaps(R) {
   };
   return openWindow(
     `<h2>My maps</h2><p class="small dim">Made from a picture, kept on this device.</p>
-    <p class="acts"><button type="button" class="btn small" data-new>New map</button><label class="btn small ghost"><input type="file" accept=".json,application/json" hidden data-in>Import</label></p>
+    <p class="acts"><button type="button" class="btn small" data-new>New map</button><label class="btn small ghost"><input type="file" accept=".json,application/json" hidden data-in>Import a map file</label></p>
+    <p class="small dim um-hint">Import opens a map file saved with Export (a .json file), not a picture.</p>
     <ul class="um-list"></ul>`,
     {
       cls: "um-list-win",
@@ -308,7 +315,13 @@ export function myMaps(R) {
         w.querySelector("[data-new]").onclick = async () => {
           if (await makeMap(R)) draw(w);
         };
-        const inp = w.querySelector("[data-in]");
+        const inp = w.querySelector("[data-in]"),
+          hint = w.querySelector(".um-hint"),
+          say = (t, bad) => {
+            hint.textContent = t;
+            hint.classList.toggle("bad", bad);
+            hint.classList.toggle("dim", !bad);
+          }; // (what came of it, in the window under the button: a toast alone was missed behind it)
         inp.onchange = async () => {
           const file = inp.files && inp.files[0];
           inp.value = "";
@@ -316,10 +329,11 @@ export function myMaps(R) {
           try {
             const m = await importMap(file);
             bringMap(R, m);
+            say(`Imported: ${m.t}`, false);
             toast(`Imported: ${m.t}`);
             draw(w);
           } catch (e) {
-            toast(e.message);
+            say(e.message, true);
           }
         };
         w.querySelector(".um-list").addEventListener("click", async (e) => {
