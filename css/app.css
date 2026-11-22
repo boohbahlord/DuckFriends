@@ -13763,12 +13763,13 @@ svg.defs {
   }
 }
 /* ---------- Mad God Justin ---------- */
-/* the arena: one see-through field over the map (each map's .col rule makes it see-through like every board's
-   tiles). I want its color to drift slowly through the Twister colors, kept dark so the ducks still read on it */
+/* the arena: one see-through field over the map, at every board's one level (.board .col mixes it). Its color turns
+   slowly through the rainbow, one full turn about every 30 seconds (the owner's pick, Nov 22 02:57Z: "Mad God Justin
+   doesn't need a board that's a single caller. His board can be maybe rainbow or slowly changes") */
 @property --mgjc {
   syntax: "<color>";
   inherits: true;
-  initial-value: #3a2a86;
+  initial-value: #c0262d;
 }
 .cols.mgj-cols {
   display: block;
@@ -13777,27 +13778,29 @@ svg.defs {
   --c: var(--mgjc);
   height: 100%;
   border-right: 0;
-  background: var(--c);
 }
 html.moving .mgj-field {
-  animation: mgjboard 48s steps(48) infinite;
+  animation: mgjboard 30s steps(150) infinite;
 } /* (in small steps, five a second, each too small to see: a smooth drift repainted the whole field every frame) */
 @keyframes mgjboard {
   0%,
   100% {
-    --mgjc: #3a2a86;
+    --mgjc: #c0262d;
   }
-  20% {
-    --mgjc: #6d2a7e;
+  16.7% {
+    --mgjc: #d2701e;
   }
-  40% {
-    --mgjc: #23498f;
+  33.3% {
+    --mgjc: #c9b21a;
   }
-  60% {
-    --mgjc: #19706a;
+  50% {
+    --mgjc: #2f9e3a;
   }
-  80% {
-    --mgjc: #7a3a2c;
+  66.7% {
+    --mgjc: #2a5fc4;
+  }
+  83.3% {
+    --mgjc: #7a35b8;
   }
 }
 /* Sandbox on the board: the map shows plain; the arena's color is only there when its setting is on (the owner, Nov 19

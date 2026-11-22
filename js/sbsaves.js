@@ -10,6 +10,7 @@
      and when the tab is hidden or closed, so a crash or a closed tab never loses more than a minute. Only the host's
      device saves; Save and Save as are in G. */
 import { esc, openWindow, confirmBox, toast } from "./ui.js";
+import { req, done } from "./idbstore.js"; // (the opener stays here: Sandbox keeps two stores, saves and prev)
 import { rainbowHTML } from "./art.js";
 import { fsBtnHTML } from "./corners.js";
 import { lobbyVote } from "./players.js";
@@ -62,17 +63,6 @@ function db() {
     });
   return dbP;
 }
-const done = (t) =>
-  new Promise((ok, no) => {
-    t.oncomplete = () => ok();
-    t.onerror = () => no(t.error);
-    t.onabort = () => no(t.error || new Error("aborted"));
-  });
-const req = (r) =>
-  new Promise((ok, no) => {
-    r.onsuccess = () => ok(r.result);
-    r.onerror = () => no(r.error);
-  });
 /* a save's check: FNV-1a over its text, and its length */
 function sumOf(t) {
   let h = 2166136261;
