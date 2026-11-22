@@ -5678,6 +5678,19 @@ html.moving .pix-sun {
   color: var(--blue);
   font-weight: 700;
 } /* (the picked one, or my vote) */
+/* a row I can't pick (not the host, a vote holds it, or it waits for the lobby): dim, and it doesn't light up under the
+   pointer; a picked one keeps its mark */
+.gs .arm-row[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: default;
+}
+.gs .arm-row[aria-disabled="true"]:not([aria-pressed="true"]):hover {
+  background: transparent;
+  border-left-color: transparent;
+}
+html.pixel .gs .arm-row[aria-disabled="true"] {
+  cursor: var(--cur-arrow), default;
+}
 .gs-set.faded {
   opacity: 0.45;
 } /* (it needs another setting on first) */
