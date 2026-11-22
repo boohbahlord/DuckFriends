@@ -78,7 +78,7 @@ gamesettings.js 756 Game Settings: the whole
 gameshots.js 137 The bullets in the
 gamestats.js 191 what `stats` and `roundstats`
 gfx.js 8 Low graphics
-gmodes.js 219 Sandbox Phase 6: made
+gmodes.js 272 Sandbox Phase 6: made
 grenade.js 33 a grenade going off
 ground.js 53 what a duck walks
 gspreview.js 86 Game Settings: the pictures
@@ -219,7 +219,7 @@ sbnpcs.js 73 Sandbox: the NPCs I
 sbout.js 62 Sandbox off the zombie
 sbrotate.js 102 Sandbox, Direction's Rotate in
 sbsave.js 292 Sandbox: saving a Sandbox
-sbsaves.js 733 Sandbox's saves: kept on
+sbsaves.js 734 Sandbox's saves: kept on
 sbseriat.js 477 Sandbox: NPCs that run
 sbsfx.js 74 Sandbox's sounds
 sbspawn.js 1708 Sandbox: spawns and respawns

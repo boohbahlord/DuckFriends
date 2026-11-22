@@ -19,12 +19,47 @@ import { idbStore, req, done } from "./idbstore.js";
 const DB = "duckfriends-modes";
 const { db } = idbStore(DB, "modes");
 let cache = null; // (the list as last read: Game Settings draws it at once)
-/* every game mode on this device, A to Z, without its data */
+/* ---------- the game's own game modes (owner card, Nov 22 16:06Z: "Ship them in the game") ----------
+   Files in modes/, named in modes/index.json (a list of file names: a web host can't list a folder), each the shape
+   addMode takes: { name, desc, most, world, map, data, umap? } (umap: its own made map, as shared.js keeps it). Every
+   host sees them under Custom next to their own and plays them the same way; their id starts with "game:", and they
+   are never replaced or deleted. */
+const GAME = "game:";
+const isGame = (id) => String(id || "").startsWith(GAME);
+let shipped = null; // (read once a visit)
+function gameModes() {
+  if (!shipped)
+    shipped = fetch("modes/index.json")
+      .then((r) => (r.ok ? r.json() : []))
+      .catch(() => [])
+      .then((list) =>
+        Promise.all(
+          (Array.isArray(list) ? list : []).map((f) =>
+            fetch("modes/" + f)
+              .then((r) => r.json())
+              .then((m) => ({
+                ...m,
+                id: GAME + String(f).replace(/\.json$/, ""),
+                game: true,
+                at: 0,
+                data: typeof m.data === "string" ? JSON.parse(m.data) : m.data,
+              }))
+              .catch(() => null),
+          ),
+        ),
+      )
+      .then((a) => a.filter((m) => m && m.name && m.data && m.data.parts));
+  return shipped;
+}
+const az = (a, b) => a.name.localeCompare(b.name);
+/* every game mode: the game's own, then this device's, each A to Z, without its data */
 export async function listModes() {
-  const d = await db(),
-    all = await req(d.transaction("modes").objectStore("modes").getAll());
-  cache = all
-    .map(({ id, name, desc, at, made, world, map, most }) => ({
+  const own = await db()
+      .then((d) => req(d.transaction("modes").objectStore("modes").getAll()))
+      .catch(() => []), // (a window that can't keep any still sees the game's own)
+    ours = await gameModes();
+  cache = [...[...ours].sort(az), ...own.sort(az)].map(
+    ({ id, name, desc, at, made, world, map, most, game }) => ({
       id,
       name,
       desc,
@@ -33,8 +68,9 @@ export async function listModes() {
       world,
       map,
       most,
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+      game: !!game,
+    }),
+  );
   return cache;
 }
 export const modesNow = () => cache || [];
@@ -46,6 +82,13 @@ export function loadModes(fn) {
 }
 /* one game mode with its data read, or null */
 export async function readMode(id) {
+  if (isGame(id)) {
+    const m = (await gameModes()).find((x) => x.id === id);
+    if (!m) return null;
+    const data = structuredClone(m.data); // (its own copy: the file as read stays as it is)
+    await oldPics(data);
+    return { ...m, data };
+  }
   const d = await db(),
     r = await req(d.transaction("modes").objectStore("modes").get(id));
   if (!r) return null;
@@ -60,12 +103,14 @@ export async function readMode(id) {
   return { ...r, data };
 }
 async function putMode(rec) {
+  if (isGame(rec.id)) throw new Error("the game's own");
   const d = await db(),
     t = d.transaction("modes", "readwrite");
   t.objectStore("modes").put(rec);
   await done(t);
 }
 export async function deleteMode(id) {
+  if (isGame(id)) return;
   const d = await db(),
     t = d.transaction("modes", "readwrite");
   t.objectStore("modes").delete(id);
@@ -105,7 +150,7 @@ export async function saveModeWin(R) {
   if (!got) return;
   try {
     const same = (await listModes()).find(
-        (m) => m.name.toLowerCase() === got.name.toLowerCase(),
+        (m) => !m.game && m.name.toLowerCase() === got.name.toLowerCase(),
       ),
       st = R.state,
       data = sbSnapshot(st),
@@ -178,13 +223,7 @@ export function autoPick(R) {
         );
         return R.send({ t: "sbPick" });
       }
-      if (m.data && /^um[a-z0-9]{8}$/.test(m.data.map || ""))
-        await import("./umaps.js")
-          .then(async (U) => {
-            const um = (await U.listMaps()).find((x) => x.id === m.data.map);
-            if (um) U.bringMap(R, um); // (its own made map into the room first, a shared one too: shared.js)
-          })
-          .catch(() => {});
+      await bringModeMap(R, m);
       R.send({
         t: "sbPick",
         play: 1,
@@ -192,6 +231,20 @@ export function autoPick(R) {
       });
     });
   return true;
+}
+
+/* a game mode's own made map into the room first (a shared one too: shared.js; the game's own carries it as umap) */
+export async function bringModeMap(R, m) {
+  const id = (m && m.data && m.data.map) || "";
+  if (!/^um[a-z0-9]{8}$/.test(id)) return;
+  await import("./umaps.js")
+    .then(async (U) => {
+      const um = m.umap
+        ? { ...m.umap, id }
+        : (await U.listMaps()).find((x) => x.id === id);
+      if (um) U.bringMap(R, um);
+    })
+    .catch(() => {});
 }
 
 /* ---------- a game mode from the Shared page (shared.js), kept on this device ---------- */

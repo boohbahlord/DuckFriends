@@ -117,7 +117,7 @@ const W = (ms) => new Promise((r) => setTimeout(r, ms));
       R.send({ t: "cabinEnd" });
       await w8(11500);
       o.lobby = R.state.phase;
-      const m = (await GM.listModes())[0];
+      const m = (await GM.listModes()).find((x) => !x.game); // (not one of the game's own)
       R.send({
         t: "options",
         options: {
