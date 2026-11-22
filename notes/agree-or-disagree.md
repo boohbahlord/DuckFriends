@@ -7858,3 +7858,15 @@ Single Player's game list: picked "Keep it as it is" (only Hangout, Dead Ducks A
 
 ## Nov 22 03:25Z (owner, on a choice card)
 Explosion rings: picked "One tile, as written" (each ring one tile, a quarter duck length: center 2x2 9 and always crits, first ring 9, then halving, stop under 0.5; grenades hurt out to about 1.5 duck lengths).
+
+## Owner, 06:18Z Nov 22 (screenshot: Downpour round 6, phone; he stands on the pump roof, zombies bunched by the red car and the plank)
+> Zombies got stuck and werent moving up to the gas pump roof, seemingly stuck on notbing. Check principles
+
+Decision: function first (before B2). Find why the zombies stop by the red car/plank instead of climbing to the pump roof; fix it in zombies.js/zombieroofs.js (one walk, the same ways up ducks use, walkable = what looks open); add a pin that fails if zombies can't reach a duck on the pump roof.
+
+## Owner, 06:24Z Nov 22 (answering the B5 card: arrow numbers count from the ground as 1, 20% darker a level, capped at 60%)
+> The first recommended options is good, we can do that one, but darkness keeps going up beyond 60%, because if a duck is at max ground hieght and falls, the floor changes through all of it.
+>
+> Also, when the HP fix goes in, to where the amount that heals is also a point or fraction of HP, and then we can make it to where that HP isn't like darkened out while it regens anymore if it becomes decimal to everything too.
+
+Decision: B5 keeps ground = 1 and 20% a level, with NO cap (only clamped at fully dark); a fall (not a jump) moves the floor reading down through each level as the duck passes it. B7 (Noah): heals count in whole or fractional HP points, and the HP bar no longer shows a darkened regenerating part once it fills smoothly.
