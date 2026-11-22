@@ -4,7 +4,8 @@
    1. a game starts my pistol full, Dead Ducks Arcade's 7 and 133 more;
    2. a click fires the last round; another click fires nothing and R reloads nothing (out of ammo);
    3. with G's Unlimited ammo on, R reloads it full and the rest stays as it was.
-   And Mad God Justin's gun picked up comes with Dead Ducks Arcade's whole amount, and goes once it's all fired.
+   And Mad God Justin's gun picked up comes with Dead Ducks Arcade's whole amount, and goes once it's all fired; a
+   room's ammo kept the old way ({ n, r }) reads as full.
    Run: node tools/check/run.mjs ammo */
 const { chromium } = require("playwright");
 const { url, fail, noErrors } = require("./lib.cjs");
@@ -145,8 +146,22 @@ const reload = async (p) => {
     out.push(r);
     await p.close();
   }
+  /* a room from before this rule kept { n: shots fired, r }: read as full, never a crash */
+  const p0 = await b.newPage();
+  await p0.goto(url);
+  out.old = await p0.evaluate(
+    async () =>
+      (await import("./js/ammo.js")).magOf(
+        { mag: { a: { n: 3, r: 0 } } },
+        "a",
+        0,
+      ).c,
+  );
+  await p0.close();
   noErrors(errs);
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  if (!same(out.old, [7, 133]))
+    fail(`a room's ammo kept the old way isn't read as full (${out.old})`);
   for (const r of out) {
     if (!same(r.full, [7, 133]))
       fail(`${r.name}: the pistol didn't start full (${r.full})`);
