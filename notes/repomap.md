@@ -16,6 +16,7 @@ barrelheat.js 70 a hot barrel
 bash.js 1360 the command line's language:
 bbrules.js 380 the rules of Bicker
 beaks.js 138 beaks
+below.js 81 darker below
 blast.js 67 explosions: one module
 bloodpool.js 50 a pool of blood:
 boardfire.js 1314 the board's weapons: hits,
@@ -27,7 +28,9 @@ brackets.js 459 Bicker Brackets: what the
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
 carpush.js 101 a car pushed: Downpour's
-chat.js 1597 text chat and the
+chat.js 633 text chat and the
+chatcmds.js 688 The command line's commands:
+chatmutes.js 318 The chat's suggestions, mutes
 cheatflag.js 16 a game with test
 cheats.js 146 test commands: cheat round
 claw.js 68 a claw's marks: three
@@ -39,7 +42,7 @@ court.js 229 Lawyering: what the screen
 crowd.js 242 crowds: walkers never stand
 customize.js 1776 Customize: the Armory
 datboi.js 115 here come dat boi
-democracy.js 243 Democracy of Ducklings:
+democracy.js 233 Democracy of Ducklings:
 dock.js 73 the docks: where Notes
 duck.js 799 the rubber duck avatar
 duckparts.js 598 the ducks made from
@@ -58,16 +61,18 @@ friends.js 236 friends
 front.js 151 the front page
 fx.js 1200 the effects, drawn as
 fxmotion.js 234 how a held weapon
-game.js 5099 the game screen
+game.js 4799 the game screen
 gameact.js 546 the action window and
+gameannounce.js 212 The cloud's words and
 gameboard.js 589 the board: each mode's
-gamedefaults.js 58 the game's own numbers,
+gamedefaults.js 64 the game's own numbers,
 gamefx.js 874 the silly commands and
 gamehand.js 604 the hand: the number-key
 gameplace.js 738 where things are put
 gameready.js 47 
 gameround.js 597 round
-gamesettings.js 764 Game Settings: the whole
+gamesettings.js 755 Game Settings: the whole
+gameshots.js 137 The bullets in the
 gamestats.js 191 what `stats` and `roundstats`
 gfx.js 8 Low graphics
 gmodes.js 219 Sandbox Phase 6: made
@@ -75,11 +80,11 @@ grenade.js 33 a grenade going off
 ground.js 53 what a duck walks
 gspreview.js 86 Game Settings: the pictures
 gssettings.js 773 Game Settings: every setting,
-gstext.js 185 Game Settings: what a
+gstext.js 200 Game Settings: what a
 gunart.js 437 every weapon, drawn: one
 gunmen.js 110 the gunmen's looks
 gunmenrules.js 1156 Survival: the gunmen
-gunmenview.js 137 Survival: the gunmen on
+gunmenview.js 135 Survival: the gunmen on
 gunparts.js 15 the pieces every weapon's
 guns.js 642 every weapon's numbers: one
 hats.js 1096 hats
@@ -100,7 +105,7 @@ jump.js 78 a duck's jump: one
 jumps.js 48 the jump counter
 justinmoves.js 34 Justin's moves on the
 keynav.js 204 menus by keyboard
-l4dd.js 3342 Quacky Zombies on every
+l4dd.js 3341 Quacky Zombies on every
 l4ddangel.js 151 Dead Ducks Arcade's Angel
 l4ddangelui.js 204 Dead Ducks Arcade's Angel
 l4ddart.js 623 Quacky Zombies' pictures
@@ -119,7 +124,7 @@ langname.js 5 the name of Sandbox's
 laserart.js 95 the laser gun, drawn
 laserfx.js 135 the Laser Rifle on
 later.js 66 the rest of the
-lawrules.js 360 the rules of Lawyering
+lawrules.js 361 the rules of Lawyering
 loading.js 403 the start: a slow
 loadlines.js 590 the lines under the
 lobby.js 613 the lobby, laid out
@@ -147,7 +152,7 @@ notes.js 101 Notes : question ideas,
 npcrules.js 91 what every NPC's brain
 npcs.js 49 the characters you can
 npcshared.js 29 what every NPC shares,
-npcview.js 214 an NPC on a
+npcview.js 216 an NPC on a
 numberat.js 1323 Seriat: the language
 numberatrun.js 1675 Seriat: files that do
 numerat.js 181 Seriat: the number reader
@@ -157,7 +162,7 @@ nwk.js 543 Nous Within Kenoma: the
 offline.js 45 Single Player's files on
 online.js 975 online rooms
 outfits.js 1141 outfits
-outlines.js 347 the outlines
+outlines.js 419 the outlines
 perf.js 92 the frame-rate readout
 phonepad.js 142 phones: the aim-and-attack stick
 picrop.js 268 cropping a picture: every
@@ -260,7 +265,7 @@ umaps.js 371 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on
-updates.js 3396 Updates
+updates.js 3406 Updates
 vdd.js 190 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival
@@ -275,7 +280,7 @@ zombieroofs.js 322 the zombies' walk over
 zombies.js 1477 the zombies: one module
 
 ## js/hangout/
-activities.js 23 every Hangout activity, so
+activities.js 24 every Hangout activity, so
 ambience.js 112 the air: the wind
 art.js 252 Duck Cabin: the drawings
 artbase.js 156 the drawings' shared pieces

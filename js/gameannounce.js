@@ -33,7 +33,7 @@ export function say(text, small = false) {
     .join(" ");
   sfx.letters(text.length);
 }
-export function unsay() {
+function unsay() {
   const el = S && $(".topover .lord-say", S);
   if (!el || !el.textContent) return;
   el.classList.add("out");
@@ -109,7 +109,7 @@ export const PICK_NAMES = Object.fromEntries(
   PICK_WEAPONS.map((k) => [k, weaponName(k)]),
 ); // (as Quacky Zombies names them)
 /* Mad God Justin: "Defeat Justin!" as the fight starts; then he's defeated, or time's up */
-export async function announceMgj(s, phase) {
+async function announceMgj(s, phase) {
   ++sayJob; // (any announcement still waiting stops)
   if (phase === "boss") {
     sfx.drum();
@@ -127,7 +127,7 @@ export async function announceMgj(s, phase) {
   say("Justin defeated");
 }
 /* Duncelation: the cloud asks "Dunce or Not?" as a take starts; the verdict; the dunce */
-export async function announceDunce(s, phase) {
+async function announceDunce(s, phase) {
   const job = ++sayJob,
     C = s.dn && s.dn.cur,
     p = C && s.players[C.def],
@@ -154,7 +154,7 @@ export async function announceDunce(s, phase) {
   say("LOSER!");
 }
 /* Valentine's Duck Date: the cloud as a date starts, at the pick, and the news */
-export async function announceVd(s, phase) {
+async function announceVd(s, phase) {
   const job = ++sayJob,
     V = s.vd;
   if (!V) return;
@@ -181,7 +181,7 @@ export async function announceVd(s, phase) {
   }
 }
 /* Who is the Quack?: whose clue it is; the vote; then the drumroll and the news, a line at a time */
-export async function announceQuack(s) {
+async function announceQuack(s) {
   const job = ++sayJob,
     lines = quackLines(s),
     w = s.wq;

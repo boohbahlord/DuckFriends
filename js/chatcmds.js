@@ -61,6 +61,23 @@ const COLORS = {
 };
 const colorOf = (v) => COLORS[String(v).toLowerCase()] || normHex(v);
 const COLOR_HINT = [...Object.keys(COLORS), "#hex"];
+/* a hat's or a beak's color, one rule for its first and second color */
+const hatColor = (key, label) => (v) => {
+  const c = colorOf(v),
+    h = profile.duck.hat;
+  if (!h) return "✗ No hat on. custom avatar hat …";
+  if (!c) return bad(v);
+  profile.duck.hat = { ...h, [key]: c };
+  return `${label}: ${c}`;
+};
+const beakColor = (key, label) => (v) => {
+  const c = colorOf(v);
+  if (!/^(blocks|geo)$/.test(profile.duck.beak))
+    return "✗ Only the block beak and the flat beak take a color.";
+  if (!c) return bad(v);
+  profile.duck[key] = c;
+  return `${label}: ${c}`;
+};
 export const CMD_MAX = 2000; // the command line's longest line
 const keysOf = (list) => list.map((x) => x[0]);
 /* the silly commands: each names players with @; the host can turn them off (Game options → Additional settings) */
@@ -170,25 +187,11 @@ export const TREE = {
           },
           "hat color": {
             vals: COLOR_HINT,
-            run: (v) => {
-              const c = colorOf(v),
-                h = profile.duck.hat;
-              if (!h) return "✗ No hat on. custom avatar hat …";
-              if (!c) return bad(v);
-              profile.duck.hat = { ...h, c1: c };
-              return `Hat color: ${c}`;
-            },
+            run: hatColor("c1", "Hat color"),
           },
           "hat color 2": {
             vals: COLOR_HINT,
-            run: (v) => {
-              const c = colorOf(v),
-                h = profile.duck.hat;
-              if (!h) return "✗ No hat on. custom avatar hat …";
-              if (!c) return bad(v);
-              profile.duck.hat = { ...h, c2: c };
-              return `Hat second color: ${c}`;
-            },
+            run: hatColor("c2", "Hat second color"),
           },
           "hat metal": {
             vals: keysOf(DUCK_METALS.slice(1)),
@@ -277,25 +280,11 @@ export const TREE = {
           },
           "beak color": {
             vals: COLOR_HINT,
-            run: (v) => {
-              const c = colorOf(v);
-              if (!/^(blocks|geo)$/.test(profile.duck.beak))
-                return "✗ Only the block beak and the flat beak take a color.";
-              if (!c) return bad(v);
-              profile.duck.beakColor = c;
-              return `Beak color: ${c}`;
-            },
+            run: beakColor("beakColor", "Beak color"),
           },
           "beak color 2": {
             vals: COLOR_HINT,
-            run: (v) => {
-              const c = colorOf(v);
-              if (!/^(blocks|geo)$/.test(profile.duck.beak))
-                return "✗ Only the block beak and the flat beak take a color.";
-              if (!c) return bad(v);
-              profile.duck.beakColor2 = c;
-              return `Beak shade: ${c}`;
-            },
+            run: beakColor("beakColor2", "Beak shade"),
           },
           outfit: {
             vals: ["none", ...OUTFITS.map((x) => x.id)],
@@ -532,7 +521,7 @@ function pick(list, v, set, label) {
 }
 
 /* splits a line into words ("two words" in quotes stay one); last = the word being typed, from = where it starts */
-export function words(line) {
+function words(line) {
   const out = [];
   let cur = "",
     q = false,
@@ -574,7 +563,7 @@ export const funOn = () => {
   const r = activeRoom();
   return !r || !!r.state.options.fun;
 };
-export const names = () => {
+const names = () => {
   const r = activeRoom();
   return r ? r.state.seat.map((id) => "@" + tag(r.state.players[id].name)) : [];
 };
