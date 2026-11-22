@@ -3,8 +3,10 @@
    120 × 120 space after its eyes and beak and before its hat: the head is centered at (76, 40) with a radius of 23, the
    eye at (83, 34), the beak from x = 96 to its tip at 116. A face item can also be a player card's pattern. Items that
    can be recolored name their colors (c1, c2), which show under Colors. */
-import { ROBOT } from "./hats.js";
+import { ROBOT, O, dk, lt } from "./hats.js";
+
 import { beakSVG } from "./beaks.js";
+
 import { eyesSVG } from "./eyes.js";
 
 export const FACES = [
@@ -88,19 +90,6 @@ export const FACE_GROUPS = [
   ["Jesters and clowns", ["clownpaint"]],
 ];
 
-const O = 'stroke="#1c1c28" stroke-width="1.6" stroke-linejoin="round"';
-const dk = (hex, t) => {
-  const n = parseInt(String(hex).slice(1), 16) || 0,
-    c = [n >> 16, (n >> 8) & 255, n & 255].map((v) => Math.round(v * (1 - t)));
-  return "#" + c.map((v) => v.toString(16).padStart(2, "0")).join("");
-};
-const lt = (hex, t) => {
-  const n = parseInt(String(hex).slice(1), 16) || 0,
-    c = [n >> 16, (n >> 8) & 255, n & 255].map((v) =>
-      Math.round(v + (255 - v) * t),
-    );
-  return "#" + c.map((v) => v.toString(16).padStart(2, "0")).join("");
-};
 const arm = (c, w = 2.2) =>
   `<path d="M77 32L56 30" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`;
 
