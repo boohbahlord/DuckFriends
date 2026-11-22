@@ -20,7 +20,7 @@ below.js 88 darker below
 blast.js 67 explosions: one module
 bloodpool.js 50 a pool of blood:
 boardfire.js 1338 the board's weapons: hits,
-boardjustin.js 667 Justin on the boards
+boardjustin.js 652 Justin on the boards
 botduck.js 90 a computer's duck: a
 botlines.js 188 What the computers write
 bots.js 1439 computers
@@ -147,7 +147,7 @@ mgj.js 219 Mad God Justin: what
 mgjart.js 96 Mad God Justin's new
 mgjbrain.js 613 Mad God Justin's brain,
 mgjpicks.js 507 Mad God Justin's pickups:
-mgjrules.js 1263 
+mgjrules.js 1255 
 modes.js 445 the game modes
 music.js 590 the music: our own
 musicbar.js 169 the music bar: the
