@@ -4521,11 +4521,7 @@ html.moving .cl-sq {
 .scene.collage.grey .cl-live {
   filter: grayscale(1);
 }
-.map-collage {
-  --board-a: 42%;
-}
 .map-collage .col {
-  background: color-mix(in srgb, var(--c) 42%, transparent);
   border-right-color: #ffffff30;
   box-shadow: inset 0 0 0 0.14rem #ffffff38;
 }
@@ -4555,11 +4551,7 @@ html.moving .cl-sq {
   height: 100%;
   image-rendering: pixelated;
 } /* (drawn by code in the world's pixels: euclid.js) */
-.map-euclid {
-  --board-a: 42%;
-}
 .map-euclid .col {
-  background: color-mix(in srgb, var(--c) 42%, transparent);
   border-right-color: #ffffff30;
   box-shadow: inset 0 0 0 0.14rem #ffffff38;
 }
