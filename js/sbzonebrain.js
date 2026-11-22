@@ -5,9 +5,9 @@
    (a square's size in duck lengths), order shuffle, dir right. It reads steps, squares, size and inside (how many
    players stand in it). Any file reaches a zone by its variable name: ((zone 'Pit' size 2)), \if zone 'Pit' steps mod 3
    == 0\. In a file a zone is "zone:" and its block's id, so it never mixes with an NPC.
-   The brains are the host's only, as the NPCs' are (sbnumberat.js); the files come with the box the same way. */
-import { compileScript, brain, paramsOf } from "./numberatrun.js";
-import { nbFiles, nbLog } from "./sbnumberat.js";
+   The brains are the host's only, as the NPCs' are (sbseriat.js); the files come with the box the same way. */
+import { compileScript, brain, paramsOf } from "./seriatrun.js";
+import { nbFiles, nbLog } from "./sbseriat.js";
 import {
   sbNameOf,
   sbStep,

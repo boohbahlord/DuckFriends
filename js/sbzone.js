@@ -27,7 +27,7 @@ import {
   SB_LAND_MIN,
   sbSaRows,
 } from "./sandboxrules.js";
-import { valueOf } from "./numerat.js";
+import { valueOf } from "./seriatbox.js";
 import { boxText, spawnsHere } from "./sbspawn.js";
 import { W, H, heightAt } from "./hangout/layout.js";
 import { l4Hurt, l4Zone } from "./l4ddrules.js";
@@ -241,7 +241,7 @@ function scope(s, pts, id, p, H0) {
   return { ducks, hits, box };
 }
 /* a Seriat box's value on something other than HP: what it hits becomes it (NPCs as Seriat's ((speed 2)) sets them,
-   sbnumberat.js; a duck's Speed: its walk, as a spawn's Players' speed gives it) */
+   sbseriat.js; a duck's Speed: its walk, as a spawn's Players' speed gives it) */
 const SET_LIM = {
   speed: [0, 5],
   damage: [0, 100],

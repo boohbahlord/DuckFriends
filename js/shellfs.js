@@ -6,7 +6,7 @@ import { profile, save } from "./store.js";
 import { isSudo, denied } from "./roomrules.js";
 import { globRe } from "./bash.js";
 import { isSb, sbSettingsText, sbSettingsRead } from "./sandboxrules.js";
-import { HELP, EXAMPLES } from "./numerathelp.js";
+import { HELP, EXAMPLES } from "./seriathelp.js";
 import { LANG, LANG_DIR } from "./langname.js";
 import {
   nbBy,
@@ -63,7 +63,7 @@ const perma = () => (profile.permaNotes = profile.permaNotes || {});
 const NUM_MOST = 100000;
 export const numRoot = () => fs.home + "/notes/" + LANG_DIR; // (the language is Seriat: the owner, Nov 19 16:42Z; its name is langname.js')
 export const inNum = (path) => path.startsWith(numRoot() + "/");
-/* the help/ folder in it: Seriat's read-only help files (numerathelp.js), made again at the start of every game, never
+/* the help/ folder in it: Seriat's read-only help files (seriathelp.js), made again at the start of every game, never
    kept in the profile, and refused every change, copy and delete (the owner's, Nov 19 12:59Z) */
 const helpRoot = () => numRoot() + "/help";
 export const inHelp = (path) =>

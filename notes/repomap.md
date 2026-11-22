@@ -159,11 +159,6 @@ npcrules.js 91 what every NPC's brain
 npcs.js 49 the characters you can
 npcshared.js 29 what every NPC shares,
 npcview.js 216 an NPC on a
-numberat.js 1323 Seriat: the language
-numberatrun.js 1675 Seriat: files that do
-numerat.js 181 Seriat: the number reader
-numerathelp.js 566 Seriat's help files
-numeratwin.js 657 Sandbox: the Seriat window
 nwk.js 543 Nous Within Kenoma: the
 offline.js 45 Single Player's files on
 online.js 975 online rooms
@@ -221,11 +216,11 @@ sbmake.js 203 Sandbox: making NPCs and
 sbmenu.js 264 Sandbox: presets, copy and
 sbnpcart.js 162 Sandbox: a spawned NPC's
 sbnpcs.js 73 Sandbox: the NPCs I
-sbnumberat.js 477 Sandbox: NPCs that run
 sbout.js 62 Sandbox off the zombie
 sbrotate.js 102 Sandbox, Direction's Rotate in
 sbsave.js 292 Sandbox: saving a Sandbox
 sbsaves.js 733 Sandbox's saves: kept on
+sbseriat.js 477 Sandbox: NPCs that run
 sbsfx.js 74 Sandbox's sounds
 sbspawn.js 1708 Sandbox: spawns and respawns
 sbspawnview.js 2212 Sandbox: spawns and respawns
@@ -233,8 +228,13 @@ sbzone.js 348 Sandbox: board zones ,
 sbzonebrain.js 265 Sandbox: zones that run
 scrules.js 428 the rules of Story
 secret.js 79 secrets between two browsers
+seriat.js 1323 Seriat: the language
 seriatbible.js 116 The Seriat bible in
+seriatbox.js 181 Seriat: the number reader
+seriathelp.js 566 Seriat's help files
+seriatrun.js 1675 Seriat: files that do
 seriattheme.js 63 Seriat's and the command
+seriatwin.js 657 Sandbox: the Seriat window
 settings.js 298 Settings
 sfxlist.js 162 the sound files
 shared.js 497 Sandbox Phase 7: Shared,

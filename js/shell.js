@@ -90,7 +90,7 @@ import { npcsHere, npcTag } from "./npcs.js";
 import { isSb, sbMay } from "./sandboxrules.js";
 import { LANG, LANG_DIR } from "./langname.js";
 import { nbRights, nbGiven, nbCopy, nbCopies } from "./nbperms.js";
-import { compileScript, brain, paramsOf } from "./numberatrun.js";
+import { compileScript, brain, paramsOf } from "./seriatrun.js";
 
 /* send: posts what a command prints (or a file, or what came through |) to the chat */
 export async function send(args, stdin, x) {
@@ -669,7 +669,7 @@ export async function shellRun(text, ctx) {
   if (fs.log.length > 2000) fs.log.splice(0, fs.log.length - 2000);
   return { lines: res, cleared: r.cleared };
 }
-/* ---------- the Seriat window (numeratwin.js): its folder, read and written as the command line does ----------
+/* ---------- the Seriat window (seriatwin.js): its folder, read and written as the command line does ----------
    ctx: the command line's (chat.js shellCtx) */
 export const numerat = {
   root(ctx) {
@@ -893,7 +893,7 @@ export const numerat = {
     sync(ctx);
     return useText(from, name);
   },
-  /* a spawn's Brain box (sbnumberat.js): the file it names, from the folder's top, and every file it uses, each kept
+  /* a spawn's Brain box (sbseriat.js): the file it names, from the folder's top, and every file it uses, each kept
      under the name it's written with; null when there's no such file */
   bundle(ctx, name) {
     sync(ctx);

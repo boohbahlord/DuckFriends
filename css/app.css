@@ -14773,7 +14773,7 @@ html.moving .board.quake {
 .l4z.dead .sb-npc-name {
   display: none;
 }
-/* what a Seriat file has an NPC say (sbnumberat.js): a chat bubble over its name, as the ducks' (.gduck-say) */
+/* what a Seriat file has an NPC say (sbseriat.js): a chat bubble over its name, as the ducks' (.gduck-say) */
 .sb-npc-say {
   position: absolute;
   left: 50%;
@@ -21350,7 +21350,7 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   }
 }
 
-/* ---------- Sandbox: the Seriat window (js/numeratwin.js), as an editor: files on the left, the code, a terminal
+/* ---------- Sandbox: the Seriat window (js/seriatwin.js), as an editor: files on the left, the code, a terminal
    line under it; every letter Cascadia Code, as the command line's ---------- */
 .nm-win {
   width: min(60rem, calc(100vw - 1.5rem));
@@ -21401,7 +21401,7 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   border: 0.12rem solid var(--line);
   border-radius: 0.45rem;
 }
-/* the left side, as File Explorer: Back, Forward and the path bar over one folder's files (js/numeratwin.js) */
+/* the left side, as File Explorer: Back, Forward and the path bar over one folder's files (js/seriatwin.js) */
 .nm-nav {
   display: flex;
   align-items: center;
