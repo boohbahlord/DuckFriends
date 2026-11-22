@@ -17,8 +17,18 @@ import { CAR_TOP, carDeck, ELEV_PLAN } from "./vehicles.js";
 export const K = 0.6;
 export let GS_W = 4600,
   GS_H = 6200;
-/* the road: y0 … y1, its middle line at mid; its bed `low` under the grass, sloping down over `ramp` at each side */
-export const ROAD = { y0: 2750, y1: 3350, mid: 3050, low: -40, ramp: 120 }; // (a ramp of 120: never more than 20 up between two zombie path cells 40 apart)
+/* the road: y0 … y1, its middle line at mid; its bed `low` under the grass, sloping down over `ramp` at each side, and
+   under the water at the west end `deep` lower again, sloping down over `run` west of DEEP's east edge (the owner's, Nov
+   22 16:06Z: the water's lowest point is elevation 0, and it gets deeper till you swim) */
+export const ROAD = {
+  y0: 2750,
+  y1: 3350,
+  mid: 3050,
+  low: -40,
+  ramp: 120,
+  deep: -40,
+  run: 400,
+}; // (a ramp of 120: never more than 20 up between two zombie path cells 40 apart)
 /* the flood over the road: deep at the west end (ducks and zombies swim it, as in the Hangout pool: water.js), shallow
    over the rest, the whole road to the east edge (ducks walk 30% slower in it, sunk by a fifth: the owner's, Nov 17
    11:07Z "the water should be seen over the entire road"). It fills the road's bed up to SHORE in from each side, a
@@ -455,13 +465,16 @@ export const inOpen = (x, y) =>
   (y >= ROAD.y0 && y < ROAD.y1 && x >= 0 && x < GS_W) ||
   inPoly(x, y, TOP) ||
   inPoly(x, y, BOT);
-export const inDeep = (x, y) => inR(x, y, DEEP);
-export const inShallow = (x, y) => inR(x, y, SHALLOW);
-/* the ground's height: 0, but the road's bed, sloping down at its edges */
+/* how deep the flood is over the bed at (x, y) (world px; 0: dry), and where it's swum (WET.DEEP or more) or only in it */
+export const waterAt = (x, y) => Math.max(0, FLOOD.top - groundAt(x, y));
+export const inDeep = (x, y) => waterAt(x, y) >= WET.DEEP;
+export const inShallow = (x, y) => waterAt(x, y) > 0 && !inDeep(x, y);
+/* the ground's height: 0, but the road's bed, sloping down at its edges, and under the water deeper to the west */
 export function groundAt(x, y) {
   if (y < ROAD.y0 || y >= ROAD.y1) return 0;
-  const t = Math.min(y - ROAD.y0, ROAD.y1 - y) / ROAD.ramp;
-  return ROAD.low * smooth(t);
+  const t = Math.min(y - ROAD.y0, ROAD.y1 - y) / ROAD.ramp,
+    w = (DEEP[2] - x) / ROAD.run; // (0 at DEEP's east edge, 1 a run west of it)
+  return ROAD.low * smooth(t) + ROAD.deep * smooth(w) * smooth((t - 0.6) / 0.4); // (the deep end under the waterline only)
 }
 /* which building (x, y) is in: 1 the gas station, 2 the chapel, 0 outside (the walls' middle lines) */
 export function buildingAt(x, y) {
@@ -1121,14 +1134,11 @@ GS_W *= K;
 GS_H *= K;
 FENCE_H *= K;
 SHORE *= K;
-/* the flood, for every walker's one water rule (layout.js wetK): its floor, the swim floor (its bed's lowest), its
-   depth over that floor (up to where it meets the banks, SHORE in), and where it is deep or shallow */
-export const FLOOD = {
-  floor: ROAD.low,
-  depth: groundAt(0, ROAD.y0 + SHORE) - ROAD.low,
-  deep: inDeep,
-  shallow: inShallow,
-};
+/* the flood, for every walker's one water rule (layout.js wetK): its floor, its bed's lowest (the map's elevation 0),
+   its top (where it meets the banks, SHORE in) and its depth over that floor */
+export const FLOOD = { floor: ROAD.low + ROAD.deep };
+FLOOD.top = groundAt(GS_W, ROAD.y0 + SHORE);
+FLOOD.depth = FLOOD.top - FLOOD.floor;
 /* Part B: what a duck stands on over the ground (layout.js floorAt), at K already. The two roofs at their walls' height,
    as wide as their drawing (30 past the walls), the gas station's with its two holes (a duck falls through them), and
    the canopy over the pumps. key: the depth its top is drawn at (a duck on it is drawn just in front of it); bldg: the
