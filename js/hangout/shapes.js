@@ -30,7 +30,7 @@ import { ART } from "./pxworld.js";
 
 import { plankArt } from "./plank.js";
 
-import { C, T, hash, lit, pairParts, part } from "./shapesbase.js";
+import { C, T, lit, pairParts, part } from "./shapesbase.js";
 
 import {
   cabinSVG,
@@ -70,24 +70,11 @@ const gsPart = (p, svg, o = {}) => [
   ),
 ];
 const seedOf = (p) => GS.seedAt(p.x, p.y);
-/* Downpour's trees: about 3 cypresses to 3 willows to 2 oaks, each in one of its three looks, two seeds, and mirrored
-   half the time, all picked from the tree's id so every device grows the same forest. Each drawing is made once */
-const SWAMP_MIX = [
-    "cypress",
-    "cypress",
-    "cypress",
-    "willow",
-    "willow",
-    "willow",
-    "oak",
-    "oak",
-  ],
-  SWAMP_URL = {};
-function swampTree(h) {
-  const kind = SWAMP_MIX[Math.floor(h * SWAMP_MIX.length)],
-    v = Math.floor(((h * 97) % 1) * 3),
-    flip = (h * 991) % 1 < 0.5,
-    seed = 1 + Math.floor(((h * 7919) % 1) * 2),
+/* Downpour's trees: which one grows where is the map's (stationmap.js swampPick, from the tree's id, as its size); each
+   drawing is made once */
+const SWAMP_URL = {};
+function swampTree(id) {
+  const { kind, v, flip, seed } = GS.swampPick(id),
     key = kind + v + seed + flip;
   if (!SWAMP_URL[key]) {
     const shade = SA.swampShadeSVG(kind, v, seed, flip),
@@ -883,8 +870,8 @@ export const DRAW = {
          roof (world.js: see-through while a duck is under it). Their sizes are the world's own (a duck is 64), not K's;
          a bigger tree (big) a little bigger. Only from outside: from inside a building no leaf or trunk shows over its
          rooms (the owner's, Nov 17 05:46Z) */
-      const t = swampTree(hash(p.id + "k")),
-        k = 0.9 + (p.big - 0.85) * 0.6,
+      const t = swampTree(p.id),
+        k = GS.treeK(p.big),
         fx = p.x + p.w / 2,
         fy = p.y + p.d / 2 - p.z,
         put = (q, url) => {
