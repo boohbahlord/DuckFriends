@@ -32,7 +32,7 @@ import {
 
 import { jumpDodges } from "./jump.js";
 
-import { duckBig, picGrow } from "./duck.js";
+import { duckBig } from "./duck.js";
 
 import { isSb, sbOnBoard, boardDuck, sbRule } from "./sandboxrules.js";
 
@@ -89,8 +89,6 @@ import {
   mgjHalf,
 } from "./mgjrules.js";
 import { mgjShot, mgjLgren } from "./mgjpicks.js";
-
-import { picBody, duOfRoom } from "./sbbody.js";
 
 import { isL4dd, l4Hurt, standing as l4Standing } from "./l4ddrules.js";
 
@@ -241,40 +239,6 @@ function playerKilled(s, by, id, w) {
    as it goes before a wall, a tree or the edge (Hangout: only on its side of the cabin's walls), or the board's edge.
    pos.kb = { t, x, y: where it was } lets every screen draw it; a grenade's adds ms (how long it flies), h (how high)
    and l: 0 (it falls at once, not when a swing gets there) */
-/* a player's own picture when it's a cut-out (cropped, or erased before it was uploaded: Customize, duck.js cut), else
-   null */
-export const cutPic = (P) =>
-  (P && P.duck && P.duck.cut && P.duck.image) || null;
-/* where on player id a hit from (x, y) lands: their feet, or, for a cut-out picture, the nearest part of it that shows
-   (sbbody.js picBody; the owner's, Nov 20: "cropped images can also be used for players' custom avatars", hit only
-   where they show), or null when none of it is in reach. [rx, ry]: the rules' duck room there; up: the hit's height */
-function playerAt(s, id, x, y, rx, ry, up = 0.4) {
-  const p = s.pos[id],
-    pic = cutPic(s.players[id]);
-  if (!pic) return p;
-  return picBody(
-    p,
-    pic,
-    duckBig(s, id),
-    duOfRoom(rx, ry),
-    picGrow(s.players[id].duck),
-  ).at(x, y, up);
-}
-/* does a shot from (x0, y0) along (dx, dy), at height up, meet what shows of player id's cut-out picture (true for
-   any other duck: the reach test says) */
-function shotMeets(s, id, x0, y0, dx, dy, rx, ry, up) {
-  const pic = cutPic(s.players[id]);
-  return (
-    !pic ||
-    picBody(
-      s.pos[id],
-      pic,
-      duckBig(s, id),
-      duOfRoom(rx, ry),
-      picGrow(s.players[id].duck),
-    ).line(x0, y0, x0 + dx, y0 + dy, up) >= 0
-  );
-}
 /* a shove counted in world px (Hangout and the maps' own): far world px whichever way, in shove's duck lengths */
 export function shovePx(s, id, ux, uy, far, now, side) {
   const dX = 0.006 * HW,
@@ -360,15 +324,13 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
     if (isMgj(s) && by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
     if (vdSafe(s, id)) continue; // (Valentine's Duck Date: nothing knocks down the two at the table)
     if (jumpDodges(p, now)) continue; // (a duck in the air is missed)
-    const q = playerAt(s, id, p0.x, p0.y, rx, ry); // (a cut-out picture: its nearest part that shows)
-    if (!q) continue;
     const n = near(
-      q.x,
-      q.y,
+      p.x,
+      p.y,
       zOf(p),
       hang ? (inCabin(...toPx(p)) ? 1 : 0) : 0,
-      cutPic(P) ? 1 : duckBig(s, id),
-    ); // (a duck bigger than 100%: its hitbox too, duck.js; a cut-out's size is in its picture)
+      duckBig(s, id),
+    ); // (a duck bigger than 100%: its hitbox too, duck.js; an uploaded picture is hit as a duck, never where it shows: the owner's, Nov 21 19:07Z, "only the duck does. Same with the images players upload")
     if (n) hits.push({ id, ...n });
   }
   if (sp === "knife") hits = hits.sort((a, b) => a.d - b.d).slice(0, 1);
@@ -1149,11 +1111,8 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
       const ox = px - k * ux,
         oy = py - k * uy,
         od = Math.hypot(ox, oy);
-      if (
-        od < (sh.r || 1) + (duckBig(s, id) - 1) / 2 &&
-        shotMeets(s, id, x0, y0, dx, dy, rx, ry, Math.max(0, at.z))
-      ) {
-        // (a duck bigger than 100%: its hitbox too, duck.js; a cut-out picture: only where it shows, shotMeets)
+      if (od < (sh.r || 1) + (duckBig(s, id) - 1) / 2) {
+        // (a duck bigger than 100%: its hitbox too, duck.js; an uploaded picture as a duck)
         if (sh.got && sh.got.includes(id)) continue; // (it already took HP from this duck)
         hLock(sh, duckH(s, p)); // (the first it passes over sets its height)
         if (sh.fake) continue; // (Mad God Justin: his double's, or his own while the double is the real one: no harm)

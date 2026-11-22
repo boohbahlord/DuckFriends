@@ -10,8 +10,8 @@
    corners to size it (any shape), and only what's in it is kept. It's made as pixels (DUCK_PIC_PX to a side, the way
    a duck's picture always is, through the game's colors: pixelpalette.js), standing at the bottom of its square, what's
    round it see-through. A picture that was erased round its shape before it was uploaded keeps its see-through parts
-   too. Either way, a picture with see-through parts is a cut-out (cut): drawn with no card round it and hit only where
-   it shows (duck.js, sbbody.js picBody). The original is never kept. */
+   too. Either way, a picture with see-through parts is a cut-out (cut): drawn with no card round it (duck.js), and hit
+   as a duck, as every picture is (boardfire.js). The original is never kept. */
 import { openWindow } from "./ui.js";
 import { applyPalette } from "./pixelpalette.js";
 import { DUCK_PIC_PX } from "./duck.js";
