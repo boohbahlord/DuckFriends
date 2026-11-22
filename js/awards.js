@@ -12,6 +12,12 @@ export const topOf = (per, ids, f) => {
     v = Math.max(0, ...xs.map((x) => x[1]));
   return v ? { v, who: xs.filter((x) => x[1] === v).map((x) => x[0]) } : null;
 };
+/* the ducks that jumped the most: { v, who: [ids tied] }, or null when nobody jumped (every game's Most Jumps card) */
+export const jumpsTop = (s) => {
+  const jx = s.seat.map((id) => [id, (s.jumps || {})[id] || 0]),
+    v = Math.max(0, ...jx.map((x) => x[1]));
+  return v ? { v, who: jx.filter((x) => x[1] === v).map((x) => x[0]) } : null;
+};
 /* the winners' names: "A", "A and B", "A, B, C" */
 export const joinNames = (names) =>
   names.join(names.length > 2 ? ", " : " and ");

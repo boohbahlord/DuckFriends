@@ -124,7 +124,7 @@ import { hangAction, hangTick, hangStill } from "./hangout/rules.js";
 import { inCabin, W as HW, H as HH } from "./hangout/layout.js";
 import { justinTick, justinDown } from "./boardjustin.js";
 import { pwTick } from "./wounds.js";
-import { isMgj, mgjTeamUse, mgjHolds, PELLETS, SPREAD, CHAIR_R, mgjMag, mgjOut, ammoOf, mgjSpend } from "./mgjrules.js";
+import { isMgj, mgjTeamUse, mgjHolds, PELLETS, SPREAD, mgjMag, mgjOut, ammoOf, mgjSpend } from "./mgjrules.js";
 import { mgjUse } from "./mgjpicks.js";
 import {
   isL4dd,
@@ -178,6 +178,7 @@ import {
   dodVoting,
 } from "./roomrules.js";
 import { countdown, nextVote, rolling, sbHere, votesDue } from "./voterules.js";
+import { zOf } from "./heights.js";
 
 /* ---------- the actions of a game: answers, moves, the specials, fights, the turn's end and the clock ---------- */
 export function act_submit({ state, s, a, now, me }) {
@@ -583,7 +584,7 @@ export function act_use({ state, s, a, now, me, boss }) {
       hang = {
         ...(isHang(s)
           ? {
-              hz: Math.round(+p.z || 0),
+              hz: Math.round(zOf(p, "body", now)), // (in a jump: its arc now, heights.js)
               hin: inCabin(p.x * HW, p.y * HH) ? 1 : 0,
             }
           : {}), // (Hangout: the height it flies at, and which side of the cabin's walls)
@@ -635,10 +636,7 @@ export function act_use({ state, s, a, now, me, boss }) {
       const k = CHAIR_DUCKS / dl;
       s.shots = [
         ...(s.shots || []),
-        shot(s.fxN, "chair", dx * k * rx, dy * k * ry, {
-          r: CHAIR_R,
-          life: CHAIR_MS,
-        }),
+        shot(s.fxN, "chair", dx * k * rx, dy * k * ry, { life: CHAIR_MS }), // (its reach: its picture's, boardfire.js sizeShots)
       ];
     } else if (sp === "zebra") throwCake(s, a.id, p, aim, now);
     else if (sp === "grenade") {

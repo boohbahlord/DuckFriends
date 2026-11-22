@@ -12,6 +12,7 @@
    marks it. The reveal lights up the right answers.
    Also the stats: Genius, Dumbo, Easiest Prompts, Hardest Prompts and Most Jumps, each player's box, and the round's
    questions. */
+import { jumpsTop } from "./awards.js";
 import { esc } from "./ui.js";
 import { duckSVG } from "./duck.js";
 import { nameHTML } from "./name.js";
@@ -413,11 +414,7 @@ function awardsHTML(s, round) {
     hard = top((w) => share(w), true, writers),
     genius = top((w) => w.right),
     dumbo = top((w) => w.wrong);
-  const jx = s.seat.map((id) => [id, (s.jumps || {})[id] || 0]),
-    jv = Math.max(0, ...jx.map((x) => x[1])),
-    jumps = jv
-      ? { v: jv, who: jx.filter((x) => x[1] === jv).map((x) => x[0]) }
-      : null;
+  const jumps = jumpsTop(s);
   const pct = (v) => `${Math.round(v * 100)}%`;
   return `<div class="awards">${award("Genius", genius && genius.v ? genius : null, (v) => `${plural(v, "right answer")}.`)}
     ${award("Dumbo", dumbo && dumbo.v ? dumbo : null, (v) => `${plural(v, "wrong answer")}.`)}
