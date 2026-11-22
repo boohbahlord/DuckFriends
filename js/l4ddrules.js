@@ -63,7 +63,7 @@ import {
 } from "./guns.js";
 import { JUMP, jumpDodges } from "./jump.js";
 import { SPRINT as GAME_SPRINT, POCKET_CHANGE } from "./gamedefaults.js";
-import { hpHeal, hpHurt, hundredths, hpBreed } from "./hpmath.js";
+import { hpHeal, hpHurt, hundredths, hpBreed, regenOf } from "./hpmath.js";
 import {
   baseMode,
   isSb,
@@ -215,7 +215,7 @@ keepOnly(
 /* ---------- the numbers ---------- */
 export const L4 = {
   HP: 3,
-  REGEN: 15000, // ms: 1 HP back, 15 s after the last hit or heal
+  REGEN: 15000, // ms for 1 HP to come back on its own, a hundredth at a time (hpmath.js regenOf)
   REVIVE: 5000, // ms of holding E by a downed duck (5 s: the owner's, Nov 17 11:07Z; it was 10)
   QUICK: 3000, // … with Quick Revive bought (the Butler's, 750: the owner's, Nov 17 11:19Z)
   BACK_HP: 2, // a revived duck comes up with 2 HP
@@ -4581,11 +4581,11 @@ function l4Tick(s, now) {
       continue;
     } // (Sandbox: no next round to wait for, so a ghost is back up a moment later, at a start spot, with its weapons)
     if (p.gh) continue;
-    if (
-      p.hp < maxHp(s, id) &&
-      now - p.at >= (isWild(s, id) ? WILD.regen : L4.REGEN)
-    )
-      p4[id] = { ...p, hp: hpHeal(p.hp, 1, maxHp(s, id)), at: now }; // (a part-empty block fills first: hpmath.js)
+    if (p.hp < maxHp(s, id)) {
+      const w = isWild(s, id),
+        [amt, at] = regenOf(s, p.at, now, w ? WILD.regen : L4.REGEN, w); // (a duck's in hundredths, smoothly; Justin's in whole HP: hpmath.js)
+      if (amt) p4[id] = { ...p, hp: hpHeal(p.hp, amt, maxHp(s, id)), at };
+    }
   }
   s.hang.l4p = p4;
   const am = s.hang.l4a || {};
@@ -4863,16 +4863,6 @@ export { standing as l4Up };
 
 /* what the screens ask: a duck's HP, its bleeding out, the round */
 export const l4Hp = (s, id) => (P4(s, id) || { hp: -1 }).hp;
-/* how far my next HP is to coming back on its own, 0 … 1 (a hit or a heal starts it over: p.at), or null while it can't
-   (full, down, a ghost) (the HP meter's faint red fill, hpmeter.js) */
-export const l4Regen = (s, id, now) => {
-  const p = P4(s, id);
-  if (!p || p.gh || p.dn || p.hp <= 0 || p.hp >= maxHp(s, id)) return null;
-  return Math.max(
-    0,
-    Math.min(1, (now - p.at) / (isWild(s, id) ? WILD.regen : L4.REGEN)),
-  );
-};
 /* how far a downed duck is into its bleeding-out (k, 0 to 1), and whether someone is reviving it (wait: it's stopped) */
 export const l4Dying = (s, id, now) => {
   const p = P4(s, id);

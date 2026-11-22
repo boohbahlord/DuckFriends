@@ -306,7 +306,6 @@ import {
   dodging,
   L4,
   l4Hp,
-  l4Regen,
   downArmed,
   l4Dying,
   l4Down,
@@ -757,13 +756,7 @@ function drawMeters(s, board, layer, now) {
   const hv = R.me && hpOf(s, R.me, now);
   if (hv) {
     const [sp, tired] = isMgj(s) ? [null, false] : sprintLeft(); // (every mode's sprint (gamedefaults.js), stamina.js; Mad God Justin has no sprint, so no sprint bar)
-    meter.set(
-      hv[0],
-      hv[1],
-      sp,
-      tired,
-      isL4dd(s) ? l4Regen(s, R.me, clockNow()) : null,
-    );
+    meter.set(hv[0], hv[1], sp, tired);
     meter.bars(board && board.querySelector(".gduck.mine .gduck-name")); // (the cooldown and the ammo under it too)
     if (board && meter.edge.parentNode !== board) board.append(meter.edge); // (the red corners: the board's, not the window's)
   } else meter.hide();
