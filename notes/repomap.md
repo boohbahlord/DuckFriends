@@ -56,8 +56,8 @@ format.js 15 numbers as the settings ask
 friends.js 236 friends
 front.js 151 the front page
 fx.js 1200 the effects, drawn as pixels
-fxmotion.js 229 how a held weapon and
-game.js 5125 the game screen
+fxmotion.js 234 how a held weapon and
+game.js 5099 the game screen
 gameact.js 546 the action window and the
 gameboard.js 589 the board: each mode's board
 gamedefaults.js 57 the game's own numbers, for
@@ -90,7 +90,7 @@ hooks.js 3 hooks between screens that can't
 hotbar.js 497 the specials on the number
 hotpick.js 318 What goes in my duck's
 hpmath.js 46 HP in hundredths
-hpmeter.js 327 HP meters and the little
+hpmeter.js 328 HP meters and the little
 idbstore.js 38 One place that opens a
 invisible.js 11 Who is invisible right now
 itemtip.js 104 hold I on an item:
@@ -185,6 +185,7 @@ router.js 112 screens
 rules.js 1729 the rules of Agree or
 sandbox.js 1347 Sandbox: the key windows
 sandboxrules.js 2056 Sandbox: which map it plays
+saybubble.js 78 a duck's speech bubble kept
 sbarms.js 124 Sandbox: a made NPC's weapons
 sbaudio.js 211 Sandbox: songs players bring in
 sbbody.js 233 Sandbox: an NPC's body, where
