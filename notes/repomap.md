@@ -64,7 +64,7 @@ friends.js 236 friends
 front.js 151 the front page
 fx.js 1200 the effects, drawn as
 fxmotion.js 234 how a held weapon
-game.js 4749 the game screen
+game.js 4747 the game screen
 gameact.js 546 the action window and
 gameannounce.js 212 The cloud's words and
 gameboard.js 589 the board: each mode's
@@ -98,7 +98,7 @@ hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
 hooks.js 3 hooks between screens that
 hotbar.js 506 the specials on the
-hotpick.js 315 What goes in my
+hotpick.js 324 What goes in my
 hpmath.js 68 HP in hundredths
 hpmeter.js 311 HP meters and the
 idbstore.js 38 One place that opens

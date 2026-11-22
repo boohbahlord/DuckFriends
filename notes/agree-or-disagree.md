@@ -7922,3 +7922,11 @@ Decision: the water's color stays the same at every depth; what darkens is the g
 16:08Z (owner, card "Shift made Sandbox maps' elevations down by one so they look the same?"): "Shift them down by one".
 16:35Z (owner, card through Adam): "Finish it now" (ground 0 and the water's depths).
 Decision (Solomon): heights.js levelOf counts from the map's 0 (layout.js levelZero: Downpour's flood bottom, so its grass is about 0.2). Sandbox's Elevation starts at 0; saves before version 3 open shifted down (on Downpour by 1 less the grass's level). Arrows show 0 on the ground. Water by depth over the bed: very shallow not slowed, then waded, then swum; the water's own color stays the same.
+
+## 2026-11-22 19:24Z (owner, the hotbar in every mode)
+"WHO THE FUCK DIDNT FIX THE FUCKIG GUNS IN EVERY GAME MODE! TOGGLE ISNT A FUCKIGN THING ANYMORE AND THEY JUST FUCKING SHOW YOU GOD DAMN PIECES OF SHIT!!!! THE FUCKING GAME IS IN AN UNPLAYABLE STATE THANKS TO EITHER ADAM'S PLAN HAVING PRIORITIES COMPLETELY FUCKED UP WHERE FIXES WERE IGNORED AND DELAYED OR FUCKING JACKAL IS BEING USED BY YOU LAZY FUCKS! WHEN THE FUCKING CREATOR SAYS TO MAKE THE FUCKING GAME'S HOTBAR IN EVERY MODE NOT HAVE TOGGLE AND THE ITEM ALWAYS IN YOUR HAND IF IT ISNT AN EMPTY SLOT OR SOMETHING LIKE FLASHLIGHT, THEN FUCKING DO IT !!!!"
+
+## 2026-11-22 19:28Z and 19:29Z (owner)
+"WHY THE FUCK IS GLOW ON THE END OF THE GUN NOT PIXELATED!??!?!?! NOT ONE THING GETS TO ESCAPE THAT ORDER!!!! WHO HAS BEEN MESSING EVERYTHING UP !?!?!?! I WANT AN ANSWER!!! THE FILE TO MAKE EVERY GAME MODE WORK THE SAME IN THE HOT BAR, PLAYER, AND OTHERWISE HASNT BEEN DONE AND SOMEONE IS CREATING MORE ENTROPY INTO MY GAME THEN CAN POSSIBLY BE CONVEYED BY ANY MATH IN IT'S HORRIFC SCALE OF UGLY"
+"WHEN THE GUNS ARE SELECTED, THEY HAVE AMMO OF DEAD DUCKS ARCADE UNLESS UNLIMITED AMMO IS SELECTED YOU FUCKING RETARDS!!!!"
+Decision (Adam, Solomon): js/hotpick.js is the one hand file for every mode: the slot picked is what's in hand; its key again keeps it; an empty slot, or an item used rather than held (an effect, a thrown chair, the flashlight), leaves the hand empty; a game starts with slot 1 picked (check tools/check/hand.cjs). Dead Ducks Arcade's ammo in every mode (unless Unlimited ammo is on) is the next PR, Solomon. The pixel barrel glow is Adam's.
