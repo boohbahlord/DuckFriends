@@ -99,7 +99,7 @@ import { l4Zups, l4SetHp } from "./zombies.js";
 
 import { hOk, hLock, sameFloorAhead, floorLock } from "./heights.js";
 
-import { zOf, nearH, swingH } from "./heights.js";
+import { zOf, nearH, overlapH } from "./heights.js";
 import { chairReach } from "./chair.js";
 
 import { FLAME, flameReach, inCone } from "./flamer.js";
@@ -320,10 +320,10 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
     uy = aim[1] / ry / al;
   const side = hang ? (inCabin(...toPx(p0)) ? 1 : 0) : 0,
     z0 = duckH(s, p0, now),
-    h0 = DUCK * sizeOf(s, by); // (my height: a swing reaches only within it, heights.js swingH)
+    h0 = DUCK * sizeOf(s, by); // (my height: a swing reaches only within it, heights.js overlapH)
   const near = (x, y, z, inSide, big = 1) => {
     // where (x, y) is from the swinger, in duck lengths, if it's in reach (big: a Seriat NPC's hitbox, reached sooner)
-    if (hang && (inSide !== side || !swingH(z0, h0, z, DUCK * big)))
+    if (hang && (inSide !== side || !overlapH(z0, h0, z, DUCK * big)))
       return null;
     const dx = (x - p0.x) / rx,
       dy = (y - p0.y) / ry,

@@ -4,7 +4,7 @@
    ladder in the same way it would a slope, and the way in which you shoot them based on their height is then inputted
    into the trigonometry"):
    1. a duck in a jump is at its arc on the room's clock (heights.js zOf with now), at its feet without it or once down;
-   2. a swing reaches only within the swinger's height (heights.js swingH): a zombie up on the gas station's roof is out
+   2. a swing reaches only within the swinger's height (heights.js overlapH): a zombie up on the gas station's roof is out
       of reach of a duck on the ground, one on a car's top within it;
    3. a zombie up the canopy's ladder rises as up a slope, and a shot from a duck on the canopy reaches it once its head
       is over the canopy's edge (high up the ladder) and not while it is low (the roof's edge between).
@@ -45,8 +45,8 @@ const { chromium } = require("playwright");
       want: 10 + J.JUMP.H * L.DUCK,
       noNow: HT.zOf(duck),
       down: HT.zOf(duck, "body", t0 + 3 * half),
-      roof: HT.swingH(0, L.DUCK, GS.DECKS[0].h),
-      car: HT.swingH(0, L.DUCK, 41),
+      roof: HT.overlapH(0, L.DUCK, GS.DECKS[0].h),
+      car: HT.overlapH(0, L.DUCK, 41),
       low: shot(C.x0 - ZR.CL.out),
       mid: shot(C.x0 - ZR.CL.out / 2),
       high: shot(C.x0 - 2),

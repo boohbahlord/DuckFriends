@@ -256,6 +256,7 @@ function waiting(root = document.body) {
     ...root.querySelectorAll(sel),
   ]) {
     /* the cheap tests first: this runs every frame while a part of the page waits (shownSoon), over every picture in it */
+    if (e.closest("[data-nocover]")) continue; // (a preview that changes as the pointer moves: never a loading screen for it)
     if (e.tagName === "IMG") {
       if (
         e.complete && // (one still downloading counts)

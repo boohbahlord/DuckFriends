@@ -26,10 +26,11 @@ import {
   deckH,
   onDeckAt,
   wetK,
+  DUCK,
 } from "./hangout/layout.js";
 import * as GS from "./hangout/stationmap.js";
 import { walkOf, immobile } from "./push.js";
-import { zOf, heightWay } from "./heights.js";
+import { zOf, heightWay, overlapH } from "./heights.js";
 import {
   apart,
   crowdOf,
@@ -812,7 +813,7 @@ function walkAll(zs, c) {
       const aim =
         Math.hypot(z.x - cake[0], z.y - cake[1]) < 120
           ? cake
-          : c.way(z.x, z.y, cake[0], cake[1]);
+          : c.way(z.x, z.y, cake[0], cake[1]) || cake; // (no way from the field: straight at it, see below)
       if (aim) stepZombie(z, aim, v * dt, pls);
       z.n = 0;
       continue;
@@ -874,8 +875,21 @@ function walkAll(zs, c) {
       /* at the foot of its wall, outside: up it goes. Never from inside, under the roof (the owner's, Nov 17 20:02Z: "WHEN
          THEY TRY TO ATTACK A PLAYER ON THE ROOF, THEY TRY TO GET ON THE ROOF, THEY DONT TRY TO GO UNDER IT FROM THE
          INSIDE OF THE BUILDING AND ATTACK FROM THE FUCKING FLOOR"): from in there it walks out to the foot first */
-      if (z.cm && best < 0.9 && !deckOver(z.x, z.y, zOf(z, "zombie"))) {
-        const at = climbFrom(z, GS.DECKS[z.cm[3]], z.cm[1], z.cm[2]);
+      const up =
+        z.cm &&
+        best < CL.along &&
+        !deckOver(z.x, z.y, zOf(z, "zombie")) &&
+        climbFrom(z, GS.DECKS[z.cm[3]], z.cm[1], z.cm[2]);
+      /* up from the foot of its way up, or from the same wall straight in front of it, a few ducks along: one spot
+         was all a crowd had, and as they keep a duck apart, none got near enough to it and none went up (the owner's,
+         Nov 22 18:13Z: "zombies that will not move and will not kill me", under him on the gas station's roof) */
+      if (
+        up &&
+        (best < 0.9 ||
+          ((up[0] !== z.cm[1] || up[1] !== z.cm[2]) &&
+            Math.hypot(up[0] - z.x, up[1] - z.y) < CL.deep))
+      ) {
+        const at = up;
         if (Math.hypot(at[0] - z.x, at[1] - z.y) > CL.at) {
           walkTo(z, ...at, v * dt);
           continue;
@@ -896,6 +910,12 @@ function walkAll(zs, c) {
         : z.cm || target.j
           ? c.way(z.x, z.y, goal[0], goal[1]) // (its own way up's foot, wherever the duck goes meanwhile; Justin: the field is the players')
           : heading(dist, z.x, z.y);
+      /* the field has no way on when the zombie's cell is already its goal's, or the nearest open one to it (pressed
+         into a wall's foot under a duck on the roof, or across a trunk from a duck): it went nowhere, and the crowd
+         behind it waited for good (the owner's, Nov 22 18:07Z and 18:13Z: "stuck on a tree ... not moving around it",
+         "zombies that will not move and will not kill me"). Then it's straight at its goal, and stepZombie's turns take
+         it round what's in between, as everywhere else (chaseStep, wayTo's callers) */
+      aim ||= goal;
       if (z.fl && !z.cm && !close) aim = flank(z, target, now) || aim; // (a flanker: round the side first)
       if (z.ga) {
         if (
@@ -1131,12 +1151,12 @@ export function stepZombie(z, aim, far, pls) {
       if (stuckIn ? !g.free(x, y) : !g.ok(x, y, zz, z.up ?? STEP)) return false; // (z.up: how high a Sandbox NPC steps, its Can jump and Can climb walls, sbspawn.js)
       if (ZW && ZW.stops(z, x, y, zz)) return false; // (a zone that's a wall to it)
       for (const q of pls) {
-        if (Math.abs((q.zz || 0) - zz) > 50) continue; // (a duck up on a roof over it: it walks under it)
+        if (!overlapH(zz, DUCK, q.zz || 0, q.h)) continue; // (a duck up on a roof over it: it walks under it; heights.js overlapH)
         const now = room(z.x, z.y, ...q.xy),
           then = room(x, y, ...q.xy);
         if (then < 1 && then < now) return false;
       }
-      const o = crowd && into(ZC, z, x, y, room);
+      const o = crowd && into(ZC, z, x, y, room, aim);
       if (o) z.bl = o; // (the one in its way, this heartbeat: QUEUE)
       return !o;
     };

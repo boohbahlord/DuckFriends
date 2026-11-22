@@ -1076,6 +1076,34 @@ const toFallen = (x, y) => {
     );
   return Math.hypot(x - x0 - t * dx, y - y0 - t * dy);
 };
+/* a tree by a building's wall stands far enough out that the zombies pass it several abreast (the owner's, Nov 22
+   18:07Z: "zombie ducks getting stuck on a tree ... not moving around it", the tree by the gas station's east wall: its
+   flared trunk left a gap one zombie wide, and the rest queued behind it). A tree closer than WALL_ROOM to one is moved
+   straight out to it once the forest has picked it, so the forest keeps its trees and their looks (their ids) */
+const WALL_ROOM = 260, // (plan px: about 156 of the world's, a big trunk's foot and two zombies)
+  WALLED = [STATION, CHAPEL, TOWER, GEN];
+function offWalls(x, y) {
+  const rs = WALLED.map((b) => [
+      b.x0 - WALL_ROOM,
+      b.y0 - WALL_ROOM,
+      b.x1 + WALL_ROOM,
+      b.y1 + WALL_ROOM,
+    ]),
+    clear = ([u, v]) => !rs.some((r) => inR(u, v, r)),
+    ways = rs
+      .filter((r) => inR(x, y, r))
+      .flatMap((r) => [
+        [r[0] - 1, y],
+        [r[2], y],
+        [x, r[1] - 1],
+        [x, r[3]],
+      ]); // (out of each it stands in, by each side: the nearest that's clear of them all)
+  if (!ways.length) return [x, y];
+  ways.sort(
+    (p, q) => Math.hypot(p[0] - x, p[1] - y) - Math.hypot(q[0] - x, q[1] - y),
+  );
+  return ways.find(clear) || ways[0];
+}
 function forest(put) {
   const tree = (cx, cy, big) =>
     put("tree", cx - 18, cy - 12, 36, 24, 0, {
@@ -1124,7 +1152,7 @@ function forest(put) {
       const k = keyOf(x, y);
       if (!bucket.has(k)) bucket.set(k, []);
       bucket.get(k).push([x, y]);
-      tree(x, y, big);
+      tree(...offWalls(x, y), big);
     }
 }
 

@@ -19,6 +19,7 @@
      hands them ({ t: "sbPick" }) and name the session (s.sbsv), so that device knows where to save it again.
    s.sbsv = { id, name, made, who (names not back yet), room (the room's own Sandbox settings, back after a save) };
    s.sbpk: the host is picking (a phase of the start, like a vote); s.sbAsked: picked for this game. */
+import { isUmap } from "./umaprules.js";
 import {
   isSb,
   sbWorld,
@@ -193,6 +194,18 @@ export function sbAsk(s, now) {
 }
 /* the host's pick: { t: "sbPick" } a new Sandbox, { t: "sbPick", save } one of the saves its device keeps (save: { id,
    name, made, v, data: sbSnapshot's }). False when the save can't be read */
+/* the board map a save or a made game mode brings, played as it is with no map vote (the owner's, Nov 22 19:14Z: "WHY
+   THE FUCK AM I BEING ASKED TO VOTE FOR MAP BACKGROUND ON A SANDBOX SAVE ALREADY MADE?"): none for a world's (it
+   brings its world), or for a made game mode whose G lets players pick the map, or for a made map not in the room */
+export const saveMap = (s, d, play) =>
+  d &&
+  !SB_WORLDS[d.world] &&
+  typeof d.map === "string" &&
+  d.map &&
+  !(play && sbRule(s, "pickmap")) &&
+  (!isUmap(d.map) || (s.umap || {})[d.map])
+    ? d.map
+    : "";
 export function sbPick(s, a, now) {
   const room = Object.fromEntries(
     Object.entries(s.options).filter(([k]) => isOpt(k)),
@@ -229,14 +242,8 @@ export function sbPick(s, a, now) {
   for (const [k, v] of Object.entries(d.options || {}))
     if (isOpt(k)) s.options[k] = v;
   s.options.sbMap = SB_WORLDS[d.world] ? d.world : ""; // (a world save brings its world; a board save, the board)
-  if (
-    a.play &&
-    !SB_WORLDS[d.world] &&
-    typeof d.map === "string" &&
-    d.map &&
-    !sbRule(s, "pickmap")
-  )
-    s.options.map = d.map; // (a made game mode on the board: its own map, no map vote, unless G lets players pick it)
+  const own = saveMap(s, d, a.play);
+  if (own) s.options.map = own;
   if (d.music && Array.isArray(d.music.off))
     s.music = {
       a: null,

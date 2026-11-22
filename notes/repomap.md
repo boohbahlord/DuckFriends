@@ -5,7 +5,7 @@ file lines job
 account.js 397 the Google account: the
 actplay.js 965 a game's actions
 actroom.js 768 the room's actions
-actsb.js 156 Sandbox's windows, saves and
+actsb.js 160 Sandbox's windows, saves and
 allies.js 383 Survival: the friendly squad
 armpage.js 142 a page of Customize's
 armspeed.js 34 how fast the weapons
@@ -42,7 +42,7 @@ color.js 165 choosing a color
 corners.js 94 full screen
 court.js 230 Lawyering: what the screen
 courtrules.js 17 the courtroom's seats: Lawyering
-crowd.js 242 crowds: walkers never stand
+crowd.js 249 crowds: walkers never stand
 customize.js 1766 Customize: the Armory
 datboi.js 115 here come dat boi
 democracy.js 233 Democracy of Ducklings:
@@ -69,12 +69,12 @@ gameact.js 546 the action window and
 gameannounce.js 212 The cloud's words and
 gameboard.js 589 the board: each mode's
 gamedefaults.js 71 the game's own numbers,
-gamefx.js 876 the silly commands and
+gamefx.js 878 the silly commands and
 gamehand.js 620 the hand: the number-key
 gameplace.js 734 where things are put
 gameready.js 47 
 gameround.js 572 round
-gamesettings.js 756 Game Settings: the whole
+gamesettings.js 765 Game Settings: the whole
 gameshots.js 137 The bullets in the
 gamestats.js 191 what `stats` and `roundstats`
 gfx.js 8 Low graphics
@@ -92,7 +92,7 @@ gunparts.js 15 the pieces every weapon's
 guns.js 728 every weapon's numbers: one
 hats.js 1096 hats
 heat.js 74 a gun's heat: the
-heights.js 83 a shot's height, Doom's
+heights.js 87 a shot's height, Doom's
 helppages.js 1498 the command line's Help
 hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
@@ -131,7 +131,7 @@ laserart.js 95 the laser gun, drawn
 laserfx.js 135 the Laser Rifle on
 later.js 66 the rest of the
 lawrules.js 360 the rules of Lawyering
-loading.js 403 the start: a slow
+loading.js 404 the start: a slow
 loadlines.js 590 the lines under the
 lobby.js 614 the lobby, laid out
 lobbysettings.js 73 Lobby Settings
@@ -148,7 +148,7 @@ mgjart.js 96 Mad God Justin's new
 mgjbrain.js 613 Mad God Justin's brain,
 mgjpicks.js 507 Mad God Justin's pickups:
 mgjrules.js 1255 
-modes.js 445 the game modes
+modes.js 446 the game modes
 music.js 590 the music: our own
 musicbar.js 169 the music bar: the
 name.js 165 fonts and how a
@@ -173,7 +173,7 @@ playerinput.js 26 what I ask my
 players.js 342 the player menu and
 pointer.js 54 a computer or a
 powerart.js 377 Dead Ducks Arcade: the
-push.js 64 push and knock-back: one
+push.js 70 push and knock-back: one
 pxa.js 954 made by tools/pixel-art.cjs:
 pxbake.js 627 a map's pictures made
 pxcard.js 259 the player cards' pattern
@@ -218,8 +218,8 @@ sbnpcart.js 162 Sandbox: a spawned NPC's
 sbnpcs.js 73 Sandbox: the NPCs I
 sbout.js 62 Sandbox off the zombie
 sbrotate.js 102 Sandbox, Direction's Rotate in
-sbsave.js 321 Sandbox: saving a Sandbox
-sbsaves.js 734 Sandbox's saves: kept on
+sbsave.js 328 Sandbox: saving a Sandbox
+sbsaves.js 735 Sandbox's saves: kept on
 sbseriat.js 477 Sandbox: NPCs that run
 sbsfx.js 74 Sandbox's sounds
 sbspawn.js 1707 Sandbox: spawns and respawns
@@ -268,11 +268,11 @@ triviabank.js 499 Trivia's auto questions
 triviarules.js 458 the rules of Trivia
 ui.js 380 small helpers every screen
 umaprules.js 72 Made maps: the room's
-umaps.js 371 Made maps: making them,
+umaps.js 374 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on
-updates.js 3609 Updates
+updates.js 3632 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival
@@ -283,8 +283,8 @@ weaponuse.js 104 using a weapon: one
 who.js 3 who this player is
 wounds.js 485 the wounds a hit
 zombiepath.js 187 the zombies' way to
-zombieroofs.js 326 the zombies' walk over
-zombies.js 1478 the zombies: one module
+zombieroofs.js 327 the zombies' walk over
+zombies.js 1498 the zombies: one module
 
 ## js/hangout/
 activities.js 25 every Hangout activity, so
@@ -343,7 +343,7 @@ stage.js 134 the stage: half an
 stationart.js 50 Downpour's things: the drawings
 stationbase.js 67 Downpour's drawings: the shared
 stationcars.js 513 Downpour's drawings: the cars,
-stationmap.js 1276 Dead Ducks Arcade's second
+stationmap.js 1304 Dead Ducks Arcade's second
 stationparts.js 455 Downpour's drawings: the gas
 stationroof.js 340 Downpour's drawings: the roofs,
 stationtrees.js 599 Downpour's drawings: the swamp's

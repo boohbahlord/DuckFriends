@@ -165,6 +165,7 @@ export const MODES = [
   },
   {
     id: "mgj",
+    hitMarks: true, // (hitmarkers show only here: the owner's, Nov 22 19:26Z, "HIT MARKERS SHOLDNT EVEN EXIST IN OTHER GAME MODES BUT ESPECIALLY SANDBOX"; gamefx.js)
     push: { hammer: 1, grenade: 3 }, // (how many KB_FAR the hammer and a grenade push a duck: push.js)
     ownDeath: true, // (it comes back its own way, not the boards' spawn protection: death.js normalGame)
     downMs: 5000, // (how long a knocked-down duck can't move: always 5 s, whatever the host picks: death.js downFor)
