@@ -24,7 +24,7 @@ async function board(p, mode, map) {
       r.send({ t: "start" });
       for (
         let i = 0;
-        i < 80 && r.state.phase !== "submit" && mode === "aod";
+        i < 300 && r.state.phase !== "submit" && mode === "aod";
         i++
       )
         await new Promise((ok) => setTimeout(ok, 100));
@@ -32,13 +32,24 @@ async function board(p, mode, map) {
       const { boardPhases } = await import("./js/rules.js");
       for (
         let i = 0;
-        i < 100 && !boardPhases(r.state).includes(r.state.phase);
+        i < 300 && !boardPhases(r.state).includes(r.state.phase);
         i++
       )
         await new Promise((ok) => setTimeout(ok, 100));
     },
     [mode, map],
   );
+  /* the game screen up with its hotbar before any key (on a loaded machine the board can take longer than a fixed wait) */
+  await p
+    .waitForFunction(
+      () =>
+        document.body.dataset.screen === "game" &&
+        !document.querySelector(".veil[data-on]") &&
+        !!document.querySelector(".hotbar"),
+      null,
+      { timeout: 30000 },
+    )
+    .catch(() => {});
   await p.waitForTimeout(1500);
 }
 const win = (p) =>
@@ -89,6 +100,26 @@ const win = (p) =>
   });
   q.on("pageerror", (e) => errs.push(String(e)));
   await board(q, "hang", "cabin");
+  await q
+    .waitForFunction(
+      () => {
+        const h = document.querySelector(".tpad-hot");
+        return !!h && !h.hidden && h.getBoundingClientRect().width > 0;
+      },
+      null,
+      { timeout: 30000 },
+    )
+    .catch(async () =>
+      console.log(
+        "boardhot: the phone's pad never came up (phase, mode, screen, H there):",
+        await q.evaluate(() => [
+          window._r.state.phase,
+          window._r.state.options.mode,
+          document.body.dataset.screen,
+          !!document.querySelector(".tpad-hot"),
+        ]),
+      ),
+    ); // (a phone's pad: its buttons up first)
   const btn = await q.evaluate(() => {
     const h = document.querySelector(".tpad-hot"),
       j = document.querySelector(".tpad-jump");
@@ -119,4 +150,8 @@ const win = (p) =>
   if (!phone) C.fail("the phone's H didn't open the window");
   C.noErrors(errs);
   await b.close();
-})();
+})().catch((e) => {
+  // (a step that threw, a click that found nothing: said as a failure, never a bare crash)
+  C.fail("boardhot stopped: " + String(e).split("\n")[0].slice(0, 200));
+  process.exit(1);
+});
