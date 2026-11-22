@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v251",
+    version: 251,
+    date: "Nov 22, 2026",
+    title: "Round's end in its own file",
+    news: [
+      "Behind the scenes: the end of a round (results, the stats pages, the celebration) lives in its own file now, out of the board screen's big file. Nothing plays differently.",
+    ],
+  },
+  {
     id: "v250",
     version: 250,
     date: "Nov 22, 2026",
