@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v270",
+    version: 270,
+    date: "Nov 22, 2026",
+    title: "Angelic weapons, orbs and shuffles",
+    news: [
+      "For Dead Ducks Arcade: Angelic weapons no longer get extra ammo. Instead they hit harder and crit more by how fast they fire: a slow gun like the sniper gains the most on each shot, a fast one like the chain gun a little on each of its many shots.",
+      "For Sandbox: loot orbs are picked up with E now, the same as everything on the ground. Stand on one and press E to take it.",
+      "For Sandbox's Seriat: shuffles and escapes. Write 2;4;6 to play each value once in a random order before any repeats (2;:6 does it for a range, and \\;\\ turns everything after it into shuffles). \\esc\\ leaves the bracket it's in. The Seriat bible has the whole section.",
+    ],
+  },
+  {
     id: "v269",
     version: 269,
     date: "Nov 22, 2026",
