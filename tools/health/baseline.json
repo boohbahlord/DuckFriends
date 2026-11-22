@@ -3,11 +3,11 @@
   "nullishNumbers": 0,
   "unusedExports": 178,
   "unusedFiles": 0,
-  "clones": 24,
+  "clones": 25,
   "bigFiles": {
     "js/chat.js": 1597,
     "js/customize.js": 1776,
-    "js/game.js": 6760,
+    "js/game.js": 6196,
     "js/gamesettings.js": 1757,
     "js/hangout/art.js": 3050,
     "js/hangout/layout.js": 1517,
@@ -22,6 +22,6 @@
     "js/sandboxrules.js": 2056,
     "js/sbspawn.js": 1709,
     "js/sbspawnview.js": 2212,
-    "js/updates.js": 3234
+    "js/updates.js": 3244
   }
 }

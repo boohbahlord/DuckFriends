@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v239",
+    version: 239,
+    date: "Nov 22, 2026",
+    title: "Tidier action window",
+    news: [
+      "Behind the scenes: the action window (what you can do on the board, mode by mode) lives in its own file now, out of the board screen's huge file. Nothing plays differently.",
+      "Behind the scenes: the checks that replay whole games before every update, and the board hotbar check, no longer fail now and then for no reason.",
+    ],
+  },
+  {
     id: "v238",
     version: 238,
     date: "Nov 21, 2026",

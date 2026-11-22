@@ -4,7 +4,6 @@ import {
   JUSTIN2,
   R,
   S,
-  actHTML,
   bbZoom,
   geo,
   hidden,
@@ -19,6 +18,7 @@ import {
   turned,
   world,
 } from "./game.js";
+import { actHTML } from "./gameact.js";
 import { fire } from "./gamehand.js";
 import { hurt } from "./gamefx.js";
 import { ZEBRA } from "./gunart.js";

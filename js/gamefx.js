@@ -1,26 +1,6 @@
 /* ---------- the silly commands (lightning, love, kill, hotdog) and the room's shots and blasts, as they are drawn ----------
    Moved out of game.js to keep that file small (a pure move). It imports back from game.js, which imports it. */
-import {
-  JUSTIN2,
-  R,
-  RECOIL,
-  S,
-  bigOf,
-  bloodBurst,
-  boomShake,
-  follows,
-  frameNo,
-  geo,
-  hotdogs,
-  me,
-  neckSpray,
-  place,
-  podLift,
-  setRecoil,
-  shows,
-  toScreen,
-  world,
-} from "./game.js";
+import { JUSTIN2, R, RECOIL, S, bigOf, bloodBurst, boomShake, follows, frameNo, geo, hotdogs, me, neckSpray, place, podLift, setRecoil, shows, toScreen, world } from "./game.js";
 import { heard } from "./gamehand.js";
 import { CHAIR, TRACE } from "./gunart.js";
 
