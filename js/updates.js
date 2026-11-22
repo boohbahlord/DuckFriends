@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v263",
+    version: 263,
+    date: "Nov 22, 2026",
+    title: "A new hotbar",
+    news: [
+      "For Dead Ducks Arcade and Survival: a new hotbar. 1 melee, 2 your secondary (pistols, the revolver, the bow, daggers), 3 and 4 two primary guns, 5 and 6 items, 7 grenades. You start with the knife and the pistol.",
+      "Behind the scenes: the HP bar over a duck's head now comes from one place for every mode, so it shows the same way on the board, in Mad God Justin and on the zombie maps.",
+    ],
+  },
+  {
     id: "v262",
     version: 262,
     date: "Nov 22, 2026",

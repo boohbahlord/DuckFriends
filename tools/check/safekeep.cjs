@@ -40,13 +40,13 @@ const { url, fail, noErrors } = require("./lib.cjs");
     await p.waitForTimeout(300);
   }
   await p.waitForTimeout(2500);
-  /* Safe Keeping in the item slot (key 4), nothing else there */
+  /* Safe Keeping in the first item slot (key 5: js/kitslots.js), nothing else there */
   await p.evaluate(() => {
     const r = window._r,
       a = r.state.hang.l4a[r.me];
     r.state.hang.l4a = {
       ...r.state.hang.l4a,
-      [r.me]: { ...a, sl: [a.sl[0], a.sl[1], a.sl[2], "safekeep"] },
+      [r.me]: { ...a, sl: a.sl.map((w, i) => (i === 4 ? "safekeep" : w)) },
     };
   });
   await p.waitForTimeout(600);
@@ -61,7 +61,7 @@ const { url, fail, noErrors } = require("./lib.cjs");
         (await import("./js/l4ddrules.js")).slotsOf(
           window._r.state,
           window._r.me,
-        )[3],
+        )[4],
     );
   if ((await hand()) !== "safekeep")
     fail("Safe Keeping did not get into the slot");
@@ -72,10 +72,10 @@ const { url, fail, noErrors } = require("./lib.cjs");
       ].map((e) => e.textContent),
     );
   /* the number key picks it */
-  await p.keyboard.press("Digit4");
+  await p.keyboard.press("Digit5");
   await p.waitForTimeout(300);
   const picked = await slot();
-  /* the wheel from the melee weapon stops on it (the ranged slots are full, then the item) */
+  /* the wheel from the melee weapon stops on it (the pistol, the empty primaries skipped, then the item) */
   await p.keyboard.press("Digit1");
   const seen = new Set();
   for (let i = 0; i < 6; i++) {
@@ -84,8 +84,11 @@ const { url, fail, noErrors } = require("./lib.cjs");
     await p.waitForTimeout(160);
     seen.add(await slot());
   }
-  /* a left click on the board with it in hand: the lone duck's line, again each click */
-  await p.keyboard.press("Digit4");
+  /* a left click on the board with it in hand: the lone duck's line, again each click (from the knife: the wheel may
+     have stopped on it, and its key again would put it away) */
+  await p.keyboard.press("Digit1");
+  await p.waitForTimeout(200);
+  await p.keyboard.press("Digit5");
   await p.waitForTimeout(200);
   for (let i = 0; i < 2; i++) {
     await p.mouse.click(700, 400);
@@ -124,6 +127,6 @@ const { url, fail, noErrors } = require("./lib.cjs");
     !said.some((t) => /friend/.test(t))
   )
     fail("the two lines are wrong: " + JSON.stringify(said));
-  if (picked !== "3") fail("its number key did not pick it: " + picked);
-  if (!seen.has("3")) fail("the scroll wheel skipped it: " + [...seen]);
+  if (picked !== "4") fail("its number key did not pick it: " + picked);
+  if (!seen.has("4")) fail("the scroll wheel skipped it: " + [...seen]);
 })();

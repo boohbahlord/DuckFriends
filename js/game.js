@@ -206,7 +206,7 @@ import { walkOf } from "./push.js";
 
 import { isSudo, canOpen } from "./roomrules.js";
 
-import { shotAt, phpLost, PHP } from "./boardfire.js";
+import { shotAt } from "./boardfire.js";
 
 import { isCounsel, ATT_PHASES } from "./lawrules.js";
 
@@ -308,7 +308,6 @@ import {
   downArmed,
   l4Dying,
   l4Down,
-  maxHp,
   l4Cool,
   kitOf,
   inHand,
@@ -318,6 +317,7 @@ import {
   wildCrying,
   isWild,
 } from "./l4ddrules.js";
+import { GRENADE as NADE_KEY } from "./kitslots.js";
 
 import { AUTO, MGJ_MELEE, armOfShot } from "./guns.js";
 import { armedView, heatShake } from "./heat.js";
@@ -385,8 +385,6 @@ import {
   justinShown,
   JUSTIN_ID,
   JUSTIN_PLAYER,
-  boardMgj,
-  BJ_HP,
 } from "./boardjustin.js";
 
 import { openStats } from "./stats.js";
@@ -485,7 +483,6 @@ import {
   MGJ_SCALE,
   MGJ_HAMMER,
   downNear,
-  mgjPHp,
   mgjOut,
   mgjSafe,
 } from "./mgjrules.js";
@@ -497,9 +494,9 @@ import { FLAME } from "./mgjart.js";
 
 import { gunLasers } from "./gunmenview.js";
 
-import { sbHpOf, sbWalkOf } from "./sbspawn.js";
+import { sbWalkOf } from "./sbspawn.js";
 
-import { hpOf } from "./hpmath.js";
+import { hpOf, hpBarOf } from "./hpmath.js";
 
 import { angelic, angelGlow } from "./powerart.js";
 
@@ -1187,58 +1184,18 @@ function drawDucks(now = clockNow()) {
         m.style.animationDelay = Math.min(0, dn - now - all) + "ms";
       }
     }
-    /* Mad God Justin's Player HP: see-through red blocks behind the letters (one for each HP, the real meter is under the
-       hotbar); the part a hit took flashes light at once, then fades.
-       Never with the down meter: a duck that's down shows only the down meter, and stands up full */
-    /* the normal game's HP (rules.js PHP): the same bar, always shown while the duck is up on the board, as Dead Ducks
-       Arcade's (it was shown only while a hit was still counted); Quacky Zombies: its own HP, always shown (down or a
-       ghost, none) */
-    const l4 =
-        isL4dd(s) &&
-        !g &&
-        inWorld(s) &&
-        (s.seat.includes(id) ||
-          (isWild(s, id) && l4Hp(s, id) >= 0 && l4Hp(s, id) < maxHp(s, id))), // (Justin out there: his HP once he's hit, as anyone's; the owner's, Nov 18 15:35Z: "When Justin gets hit, his health bar shows in the zombie game")
-      bj = id === JUSTIN_ID && !g && !isMgj(s) && !hang && justinShown(s), // (Justin on the board: the board's Mad God Justin's 10 HP, or his 1, always shown while he's up; the owner's, Nov 19 01:34Z, HP for "everything")
-      lost =
-        !l4 && !isMgj(s) && !g && s.seat.includes(id) && !dead
-          ? phpLost(s, id, now)
-          : 0,
-      hpMax = bj
-        ? boardMgj(s)
-          ? s.justin.max || BJ_HP
-          : 1
-        : l4
-          ? maxHp(s, id)
-          : isMgj(s)
-            ? !g && s.seat.includes(id) && s.phase === "boss"
-              ? mgjPHp(s)
-              : 0
-            : !g && s.seat.includes(id) && !dead && !isL4dd(s) && onBoardPhase()
-              ? sbHpOf(s, id) || PHP
-              : 0, // (every other mode: always shown, as in Dead Ducks Arcade; the owner's, Nov 18 16:43Z: "the health meter ... from zombies is in every game mode now")
-      hp = !hpMax
-        ? -1
-        : bj
-          ? dead
-            ? -1
-            : boardMgj(s)
-              ? (s.justin.hp ?? hpMax)
-              : 1
-          : l4
-            ? !dead && l4Hp(s, id) > 0
-              ? l4Hp(s, id)
-              : -1
-            : isMgj(s)
-              ? s.mgj && !dead
-                ? Math.max(0, hpMax - ((s.mgj.lost || {})[id] || 0))
-                : -1
-              : hpMax - lost;
+    /* the HP bar over a duck, Justin or his double: one pass for every mode, when and how full from the mode's HP breed
+       (hpmath.js hpBarOf; Mad God Justin's Player HP: see-through red blocks behind the letters, the real meter is
+       under the hotbar); the part a hit took flashes light at once, then fades. None on a body or a duck that's down:
+       it shows only the down meter, and stands up full */
+    const hb = !g && !dead ? hpBarOf(s, id, now) : null,
+      hpMax = hb ? hb.most : 0,
+      hp = hb ? hb.hp : -1;
     if (d._hp !== hp) {
       /* the normal game's bar only shows once a hit is counted, so the first HP lost comes from a full bar (the same
          flash and sound as every later one) */
       const was0 = d._hp === null ? (d._hpWas ?? null) : d._hp,
-        was = was0 === -1 && lost && hp >= 0 ? hpMax : was0;
+        was = was0 === -1 && hb && hb.full && hp < hpMax ? hpMax : was0;
       d._hp = hp;
       d.classList.toggle("php", hp >= 0);
       const bar = d.querySelector(".gduck-hp");
@@ -1255,7 +1212,7 @@ function drawDucks(now = clockNow()) {
         } else {
           bar.style.setProperty("--was", (hp / hpMax).toFixed(3));
           red.style.animation = "none";
-          if (l4 && was >= 0 && hp > was) {
+          if (hb.glow && was >= 0 && hp > was) {
             const b = d.classList.contains("l4-heal");
             d.classList.toggle("l4-heal", !b);
             d.classList.toggle("l4-heal-b", b);
@@ -4109,13 +4066,12 @@ function watchInsets(S) {
 
 const HINTS =
   "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Space</kbd> Jump <kbd>Enter</kbd> End turn";
-/* a second line: a number key picks a weapon (the same key puts it away) and a click uses it; Shift and a number key keep
-   a jump on (not in Mad God Justin or Quacky Zombies: their keys work their own way) */
+/* a second line (the boards'): a number key picks a weapon (again: away), a click uses it, Shift+number keeps a jump on */
 const KEEP_HINT =
   '<i class="hints-br"></i><kbd>Number</kbd> Pick a weapon <kbd>Click</kbd> Use it <kbd>Shift</kbd>+<kbd>Number</kbd> Keep a jump on';
 const L4_HINTS =
   "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Click</kbd> Attack <kbd>R</kbd> Reload" +
-  '<i class="hints-br"></i><kbd>E</kbd> Use <kbd>6</kbd> Grenade'; // (E with it, so no key is split from its word; the grenades are the 6 key now, Nov 20, after the second item on 5; no B any more: the merchants never sell ammo, the owner's, Nov 18 13:46Z)
+  `<i class="hints-br"></i><kbd>E</kbd> Use <kbd>${NADE_KEY + 1}</kbd> Grenade`; // (E with it, so no key is split from its word; the grenades' key after the last slot, kitslots.js; no B any more: the merchants never sell ammo, the owner's, Nov 18 13:46Z)
 /* where a click attacks: on a computer anywhere on the game's screen but a button, a field, a card, a panel or a window
    (the board is the whole screen now, the owner's, Nov 4 07:43Z); on a touch screen only on the board */
 const NOT_AIM =
@@ -4359,7 +4315,7 @@ register("game", {
           slot: handIn,
           pick: l4Pick,
           fire,
-          grenade: () => l4Pick(5),
+          grenade: () => l4Pick(NADE_KEY),
           flash: () => R.send({ t: "hang", k: "l4", do: "fl" }),
           to: l4To, // (the weapon I'm about to take: its slot lights up)
         },

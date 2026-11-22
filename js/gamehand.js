@@ -57,14 +57,8 @@ import {
 } from "./hotpick.js";
 import { ammoBar, stackBars, noReload } from "./meters.js";
 
-import {
-  isL4dd,
-  downArmed,
-  slotsOf,
-  l4Cool,
-  kitOf,
-  slotOfPick,
-} from "./l4ddrules.js";
+import { isL4dd, downArmed, slotsOf, l4Cool, kitOf } from "./l4ddrules.js";
+import { GRENADE, slotOfPick, kitKeys } from "./kitslots.js";
 
 import {
   ARMS,
@@ -122,21 +116,17 @@ export const setMouse = (v) => {
 };
 export const myDuck = () =>
   ((R && R.state.players[R.me]) || {}).duck || profile.duck;
-/* the duck my keys play with: in Quacky Zombies its slots on 1 to 4 (melee, ranged, ranged, the special); in Mad God
+/* the duck my keys play with: in Quacky Zombies its slots, then the grenades (kitslots.js); in Mad God
    Justin its own keys: 1 the knife, 2 the pistol (it never reloads: in place of the bow, the owner's, Nov 16),
    3 the weapon picked up, 4 the zebra cake (my own keys stay as they are) */
 export const playDuck = () =>
   R && isL4dd(R.state)
     ? {
         ...myDuck(),
-        keys: [
-          ...slotsOf(R.state, R.me)
-            .slice(0, 4)
-            .map((w) => w || null),
-          slotsOf(R.state, R.me)[4] || null, // (5: the second item)
-          null, // (6: the grenades)
-          ...Array(4).fill(null),
-        ],
+        keys: Array.from(
+          { length: 10 },
+          (x, i) => (i < GRENADE && kitKeys(slotsOf(R.state, R.me))[i]) || null,
+        ), // (the grenades' key and the rest: none)
       }
     : R && isMgj(R.state)
       ? {
@@ -499,13 +489,13 @@ function wheelPick(dir) {
   if (!R || !onBoardPhase()) return false;
   const s = R.state;
   if (isL4dd(s)) {
-    /* the next slot that has something: an empty one between is skipped, and the grenades (key 6) are in the row when I
+    /* the next slot that has something: an empty one between is skipped, and the grenades (after the slots) are in the row when I
        have some (the owner's, Nov 17 17:41Z: "bow at key number 3, nothing at 4, but a grenade at five, then the scroll
        wheel will skip the empty one and go straight to the grenade"); Safe Keeping is picked like any slot (the owner, Nov 21) */
     const sl = slotsOf(s, R.me),
       kit = kitOf(s, R.me),
-      has = (i) => (i === 5 ? !!(kit && kit.g > 0) : !!sl[slotOfPick(i)]),
-      n = 6; // (the second item, key 5, then the grenades, key 6: an empty one is skipped)
+      has = (i) => (i === GRENADE ? !!(kit && kit.g > 0) : !!sl[slotOfPick(i)]),
+      n = GRENADE + 1; // (the slots, then the grenades: an empty one is skipped)
     let i = handIn();
     for (let k = 0; k < n; k++) {
       i = (i + dir + n) % n;

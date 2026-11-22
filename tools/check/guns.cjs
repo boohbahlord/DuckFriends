@@ -45,12 +45,14 @@ const INIT = fs.readFileSync(
         ), // (l4ddguns.js before there was one drawing)
         AR = await import("./js/l4ddart.js"),
         CA = await import("./js/l4ddcatalog.js"),
+        KS = await import("./js/kitslots.js").catch(() => ({})), // (the kit's slots: kitslots.js since K2c, l4ddrules.js' before)
         { steadyText } = await import("./js/pxdom.js");
       /* the numbers' sheet: guns.js since there is one (ARMS and kindOf were l4ddrules.js') */
       const L4 = {
         ...L4m,
         ARMS: GN.ARMS || L4m.ARMS,
         kindOf: GN.kindOf || L4m.kindOf,
+        SLOT_KINDS: KS.SLOT_KINDS || L4m.SLOT_KINDS,
         WEAPONS: GN.WEAPONS || L4m.WEAPONS,
         POOL: GN.POOL || L4m.POOL,
       };
