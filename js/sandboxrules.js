@@ -596,11 +596,11 @@ export const SB_ZONE = {
      zone sits at its elevation, one gas station roof over the next (elevation 1: the map's own ground); with Ground on,
      its working squares are a floor (sbfloors.js) */
   fl: {
-    name: "Elevation (1 is the ground)",
-    kind: "half", // (tenths and half tenths: 1.05 is a twentieth of a gas station roof up)
-    min: 1,
+    name: "Elevation (0 is the ground)",
+    kind: "half", // (tenths and half tenths: 0.05 is a twentieth of a gas station roof up)
+    min: 0,
     max: 6,
-    def: "1",
+    def: "0",
   },
   gnd: { name: "Ground (stand and walk on it)", kind: "bool", def: "f" },
   /* the owner's floor-is-lava idea: "you fall down, and the bottom elevation, the ground level, level 1, is set to do maybe

@@ -9,6 +9,26 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v275",
+    version: 275,
+    date: "Nov 22, 2026",
+    title: "Ground 0 and deeper water",
+    news: [
+      "For Sandbox: elevations now count from 0 at the ground. Your made maps keep their look.",
+      "For Dead Ducks Arcade (Downpour): the road's water gets deeper to the west. Its very edge doesn't slow you, the middle makes you wade, and the deep end makes you swim.",
+    ],
+  },
+  {
+    id: "v274",
+    version: 274,
+    date: "Nov 22, 2026",
+    title: "The Boss, a built-in Sandbox game",
+    news: [
+      "For Sandbox: The Boss, a game made in Sandbox by our playtester, is built in. Pick it in Game Settings, Custom: fight the Boss over the lava, with loot orbs to grab.",
+      "Behind the scenes: Justin's zebra cake chase, where a shot can hit a duck, Mad God Justin's spot picking and where ducks are placed each use one shared rule now instead of two copies. Nothing plays differently.",
+    ],
+  },
+  {
     id: "v273",
     version: 273,
     date: "Nov 22, 2026",

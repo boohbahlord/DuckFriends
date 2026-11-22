@@ -773,6 +773,24 @@ const shotReach = (s, sh, p) =>
   isHang(s)
     ? hOk(sh, duckH(s, p), ...toPx(p), sh.x0 * HW, sh.y0 * HH)
     : hOk(sh, duckH(s, p));
+/* can shot sh hit duck id at all? Not the shooter, a duck that's off the board, out or a ghost, the other side of the
+   cabin's walls or above or below it (heights.js), jumping over it, one of the two at Valentine's Duck Date's table,
+   or, against Mad God Justin, anyone's but his (the ducks are on one side). One rule for a bullet's hits (shotHits)
+   and for the first duck in its way (firstDuck) */
+function shotCan(s, sh, id, now) {
+  const p = s.pos[id],
+    P = s.players[id];
+  if (id === sh.by || !p || p.x < 0 || !P || P.dead || isGhost(s, id))
+    return false;
+  if (sh.hin !== undefined && (inCabin(...toPx(p)) ? 1 : 0) !== sh.hin)
+    return false;
+  return (
+    shotReach(s, sh, p) &&
+    !jumpDodges(p, now) &&
+    !vdSafe(s, id) &&
+    !(isMgj(s) && sh.by !== JUSTIN_ID)
+  );
+}
 /* the first duck in the way of a shot from (sh.lx, sh.ly) to at, within a duck's room of the line: its id, how far
    along (0 … 1) and where, or null (not the shooter, a duck that's down or jumping over it, a ghost, the other side
    of the cabin's walls) */
@@ -784,17 +802,8 @@ function firstDuck(s, sh, at, now) {
     len = ux * ux + uy * uy;
   let best = null;
   for (const id of s.seat) {
-    const p = s.pos[id],
-      P = s.players[id];
-    if (id === sh.by || !p || p.x < 0 || !P || P.dead || isGhost(s, id))
-      continue;
-    if (
-      (sh.hin !== undefined && (inCabin(...toPx(p)) ? 1 : 0) !== sh.hin) ||
-      !shotReach(s, sh, p)
-    )
-      continue;
-    if (jumpDodges(p, now) || vdSafe(s, id)) continue;
-    if (isMgj(s) && sh.by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
+    if (!shotCan(s, sh, id, now)) continue;
+    const p = s.pos[id];
     const px = (p.x - sh.lx) / rx,
       py = (p.y - sh.ly) / ry,
       k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
@@ -1112,18 +1121,9 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
     for (const id of s.seat) {
       // (a dagger over a duck's head, or already fallen, hits nobody: a bigger duck's head is higher, duck.js)
       if (at.z >= 1.05 * duckBig(s, id)) continue;
+      if (!shotCan(s, sh, id, now)) continue;
       const p = s.pos[id],
         P = s.players[id];
-      if (id === sh.by || !p || p.x < 0 || !P || P.dead || isGhost(s, id))
-        continue;
-      if (
-        (sh.hin !== undefined && (inCabin(...toPx(p)) ? 1 : 0) !== sh.hin) ||
-        !shotReach(s, sh, p)
-      )
-        continue; // (the other side of the walls, or above or below it: heights.js)
-      if (jumpDodges(p, now)) continue; // jumped over it
-      if (isMgj(s) && sh.by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
-      if (vdSafe(s, id)) continue; // (Valentine's Duck Date: the two at the table)
       /* the nearest the shot came to the duck this beat, measured in a duck's room (.03 across, .08 deep; Hangout's world is far bigger than a board) */
       const [rx, ry] = isHang(s) ? [0.006, 0.012] : boardDuck(s);
       const ux = dx / rx,

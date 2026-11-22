@@ -5,18 +5,19 @@
    two floors, the one rule: nothing solid between shooter and target (layout.js slabBetween), and the chain-link fence
    never stops one.
    sh.hz: the shooter's feet, as the rules always kept it; sh.lh: its height once a target has set it (world px) */
-import { DUCK, slabBetween } from "./hangout/layout.js";
-import { LEVEL } from "./gamedefaults.js";
+import { DUCK, slabBetween, levelZero } from "./hangout/layout.js";
 
 const MID = DUCK / 2;
 /* one elevation: the gas station's roof over the ground (world px; the owner's, Nov 21 14:06Z). Heights the owner
    gives in elevations are times this */
 export const ELEV = 108;
 /* the one reading of a height as a level (B5's arrows, Sandbox's Elevation): feet at z (world px over the ground) stand on
-   level levelOf(z), the ground's LEVEL.GROUND (gamedefaults.js), a whole level more each roof up; levelZ(n): level n's
-   height */
-export const levelOf = (z) => z / ELEV + LEVEL.GROUND;
-export const levelZ = (n) => (n - LEVEL.GROUND) * ELEV;
+   level levelOf(z), a whole level more each roof up, from the map's 0 (the owner's, Nov 22 16:06Z: "The ground level is
+   zero everywhere ... the water in Downpour is actually the lowest point of it is the elevation. Where its elevation is
+   zero. So ... the actual grass you walk on ... should be above elevation zero to probably a decimal point": layout.js
+   levelZero); levelZ(n): level n's height */
+export const levelOf = (z) => (z - levelZero()) / ELEV;
+export const levelZ = (n) => n * ELEV + levelZero();
 /* how high shot sh flies now (world px) */
 const shotH = (sh) => sh.lh ?? (sh.hz || 0) + MID;
 /* ---------- the height of a body: one way to ask it, for every body in every mode (the cornerstone's one module per

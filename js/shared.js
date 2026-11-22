@@ -337,7 +337,7 @@ async function mineWin() {
       import("./gmodes.js"),
     ]),
     maps = await U.listMaps(),
-    modes = await G.listModes().catch(() => []);
+    modes = (await G.listModes().catch(() => [])).filter((m) => !m.game); // (the game's own aren't mine to share)
   const li = (kind, id, name, sub) =>
     `<li class="sh-mine"><span><b>${esc(name)}</b><small class="dim">${esc(sub)}</small></span><button type="button" class="btn small" data-k="${kind}" data-id="${esc(id)}">Share</button></li>`;
   return openWindow(

@@ -99,6 +99,18 @@ const pickKind = (s) => {
   if (Math.random() < MGJ_CHAIN) return "chaingun";
   return bagGun(s);
 };
+/* a spot on the board for the next plus or weapon, not right on top of Justin (at): twelve tries, the last one if none
+   is far enough */
+const spotAway = (at) => {
+  let x = 0.5,
+    y = 0.5;
+  for (let i = 0; i < 12; i++) {
+    x = rnd(0.1, 0.9);
+    y = rnd(0.14, 0.86);
+    if (Math.hypot((x - at.x) / RX, (y - at.y) / RY) > 4) break;
+  }
+  return { x, y };
+};
 export function pickTick(s, now, at, log, fx) {
   const m = s.mgj;
   let ch = false;
@@ -194,13 +206,7 @@ export function pickTick(s, now, at, log, fx) {
   const plusNow = now >= m.plusAt;
   if (plusNow) m.plusAt = now + PLUS_EVERY;
   if (plusNow && Math.random() < PLUS_CHANCE) {
-    let x = 0.5,
-      y = 0.5;
-    for (let i = 0; i < 12; i++) {
-      x = rnd(0.1, 0.9);
-      y = rnd(0.14, 0.86);
-      if (Math.hypot((x - at.x) / RX, (y - at.y) / RY) > 4) break;
-    }
+    const { x, y } = spotAway(at);
     m.plusN = (m.plusN || 0) + 1;
     m.plus = { n: m.plusN, k: "plus", x: r3(x), y: r3(y), t: now };
     ch = true;
@@ -210,13 +216,7 @@ export function pickTick(s, now, at, log, fx) {
     m.pickAt = now + PICK_EVERY;
     let k = pickKind(s);
     if (k === "sky") k = Math.random() < 0.5 ? "lightning" : "fire";
-    let x = 0.5,
-      y = 0.5;
-    for (let i = 0; i < 12; i++) {
-      x = rnd(0.1, 0.9);
-      y = rnd(0.14, 0.86);
-      if (Math.hypot((x - at.x) / RX, (y - at.y) / RY) > 4) break;
-    } // (not right on top of him)
+    const { x, y } = spotAway(at); // (not right on top of him)
     m.pickN = (m.pickN || 0) + 1;
     m.pick = { n: m.pickN, k, x: r3(x), y: r3(y), t: now };
     ch = true;

@@ -80,7 +80,6 @@ import {
   heightAt,
 } from "./hangout/layout.js";
 import { levelZ } from "./heights.js";
-import { LEVEL } from "./gamedefaults.js";
 import {
   Z_MOST,
   l4Spawn,
@@ -1339,7 +1338,7 @@ function floorsTo(pts) {
   for (const [id, p] of Object.entries(pts)) {
     if (!hasFl(p)) continue;
     const n = valueOf({ ok: boxText(p, "fl") }, SB_ZONE.fl),
-      z = levelZ(Math.min(6, Math.max(LEVEL.GROUND, n || 0))); // (none or under it: the ground)
+      z = Math.max(0, levelZ(Math.min(6, n || 0))); // (none or under it: the ground)
     for (const [q, t] of Object.entries(out))
       if ((q === id || (!p.grp && t.grp === id && !hasFl(t))) && t.z !== z)
         out[q] = { ...t, z };

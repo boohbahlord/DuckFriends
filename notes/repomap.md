@@ -20,7 +20,7 @@ below.js 88 darker below
 blast.js 67 explosions: one module
 bloodpool.js 50 a pool of blood:
 boardfire.js 1338 the board's weapons: hits,
-boardjustin.js 667 Justin on the boards
+boardjustin.js 652 Justin on the boards
 botduck.js 90 a computer's duck: a
 botlines.js 188 What the computers write
 bots.js 1439 computers
@@ -71,14 +71,14 @@ gameboard.js 589 the board: each mode's
 gamedefaults.js 71 the game's own numbers,
 gamefx.js 876 the silly commands and
 gamehand.js 620 the hand: the number-key
-gameplace.js 738 where things are put
+gameplace.js 734 where things are put
 gameready.js 47 
 gameround.js 572 round
 gamesettings.js 756 Game Settings: the whole
 gameshots.js 137 The bullets in the
 gamestats.js 191 what `stats` and `roundstats`
 gfx.js 8 Low graphics
-gmodes.js 219 Sandbox Phase 6: made
+gmodes.js 272 Sandbox Phase 6: made
 grenade.js 33 a grenade going off
 ground.js 53 what a duck walks
 gspreview.js 86 Game Settings: the pictures
@@ -92,7 +92,7 @@ gunparts.js 15 the pieces every weapon's
 guns.js 728 every weapon's numbers: one
 hats.js 1096 hats
 heat.js 74 a gun's heat: the
-heights.js 82 a shot's height, Doom's
+heights.js 83 a shot's height, Doom's
 helppages.js 1498 the command line's Help
 hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
@@ -147,7 +147,7 @@ mgj.js 219 Mad God Justin: what
 mgjart.js 96 Mad God Justin's new
 mgjbrain.js 613 Mad God Justin's brain,
 mgjpicks.js 507 Mad God Justin's pickups:
-mgjrules.js 1263 
+mgjrules.js 1255 
 modes.js 445 the game modes
 music.js 590 the music: our own
 musicbar.js 169 the music bar: the
@@ -163,7 +163,7 @@ nwk.js 543 Nous Within Kenoma: the
 offline.js 45 Single Player's files on
 online.js 975 online rooms
 outfits.js 1141 outfits
-outlines.js 420 the outlines
+outlines.js 421 the outlines
 perf.js 92 the frame-rate readout
 phonepad.js 144 phones: the aim-and-attack stick
 picrop.js 268 cropping a picture: every
@@ -201,7 +201,7 @@ sbcabin.js 341 Sandbox: the zombies on
 sbdrag.js 353 Sandbox, moving blocks with
 sbep.js 50 Sandbox Phase 7: what
 sbepview.js 162 Sandbox Phase 7: what
-sbfloors.js 116 Sandbox Phase 4: floors
+sbfloors.js 115 Sandbox Phase 4: floors
 sbgod.js 55 Sandbox: God mode and
 sbgodview.js 34 Sandbox: invisible players, on
 sbgroups.js 477 Sandbox: groups , the
@@ -218,11 +218,11 @@ sbnpcart.js 162 Sandbox: a spawned NPC's
 sbnpcs.js 73 Sandbox: the NPCs I
 sbout.js 62 Sandbox off the zombie
 sbrotate.js 102 Sandbox, Direction's Rotate in
-sbsave.js 292 Sandbox: saving a Sandbox
-sbsaves.js 733 Sandbox's saves: kept on
+sbsave.js 321 Sandbox: saving a Sandbox
+sbsaves.js 734 Sandbox's saves: kept on
 sbseriat.js 477 Sandbox: NPCs that run
 sbsfx.js 74 Sandbox's sounds
-sbspawn.js 1708 Sandbox: spawns and respawns
+sbspawn.js 1707 Sandbox: spawns and respawns
 sbspawnview.js 2211 Sandbox: spawns and respawns
 sbzone.js 348 Sandbox: board zones ,
 sbzonebrain.js 265 Sandbox: zones that run
@@ -272,7 +272,7 @@ umaps.js 371 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on
-updates.js 3580 Updates
+updates.js 3600 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival
@@ -342,7 +342,7 @@ stage.js 134 the stage: half an
 stationart.js 50 Downpour's things: the drawings
 stationbase.js 67 Downpour's drawings: the shared
 stationcars.js 513 Downpour's drawings: the cars,
-stationmap.js 1265 Dead Ducks Arcade's second
+stationmap.js 1276 Dead Ducks Arcade's second
 stationparts.js 455 Downpour's drawings: the gas
 stationroof.js 340 Downpour's drawings: the roofs,
 stationtrees.js 599 Downpour's drawings: the swamp's
