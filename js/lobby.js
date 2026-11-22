@@ -518,6 +518,7 @@ register("lobby", {
   render(arg) {
     R = arg || activeRoom();
     if (!R) return null;
+    import("./umaps.js").then((m) => m.bringMaps(R)); // (the host's made maps into the room as the lobby opens, so the map vote has them without opening Game Settings: the owner's, Nov 22 13:15Z)
     cycle = []; // (each visit to the lobby starts on a random map)
     if (!["lobby", "countdown"].includes(R.state.phase)) {
       setTimeout(() => go("game", R));
