@@ -22,9 +22,6 @@ const ITEM_COOL = 750;
 const MELEE_DUR = 450;
 /* every pistol carries 20 magazines (the owner's, Nov 21 18:16Z) */
 const PISTOL_MAGS = 20;
-/* every grenade's blast is 25% wider than it was (the owner's, Nov 21: "grenades should have a 25% larger explosion radius then
-   before"): the board's (rules.js GRENADE_R), Quacky Zombies' (ARMS.grenade.r) and the drawn boom (grenade.js) all read this */
-export const NADE_GROW = 1.25;
 /* a hit's damage from a weapon's `dmg` range: one of its numbers a `step` apart (1 unless the weapon says: a gun's 0.05,
    the dagger's 0.5), every one as likely as the next. A gun with rolls (the Barrett's) first rolls which range it hits
    in, each as often as its weight. Kept to hundredths, so 0.05 steps never come out as 2.2499999 */
@@ -195,8 +192,7 @@ export const ARMS = {
   grenade: {
     kind: "grenade",
     cool: ITEM_COOL,
-    far: 300,
-    r: 210 * NADE_GROW,
+    far: 300, // (its blast: blast.js rings)
     start: 4, // (players start with 4: the owner's, Nov 19 19:27Z)
     most: 4,
   }, // (r: 50% wider than its first 140, owner 2026-11-04)
@@ -384,6 +380,26 @@ for (const A of Object.values(ARMS))
         r.map((n) => cents(n + b)),
       ]);
   }
+/* dead weight (the owner's, Nov 21 16:53Z: "We can give guns different weight stats ... dead weight ... when it adds to
+   your weight, it does not add to your knockback"): each weapon's group (ARMS dw) and what it weighs, in duck weights
+   (the groups: 18:59Z, /mnt/project-files/adam/calibers.md). push.js weightOf adds it to its carrier's; recoil reads
+   the group later */
+export const DEAD_WEIGHT = {
+  light: 0.02,
+  medium: 0.05,
+  rifle: 0.1,
+  heavy: 0.15,
+  superheavy: 0.25,
+};
+const DW_GROUPS = {
+  light: ["handgun", "revolver", "knife", "dagger", "sword", "pan", "bow"],
+  medium: ["smg", "tommy", "ump", "axe"],
+  rifle: ["ak", "burst", "shotgun", "dbarrel", "glauncher"],
+  heavy: ["lmg", "sniper", "hammer", "flamer"],
+  superheavy: ["chaingun"],
+};
+for (const [g, ws] of Object.entries(DW_GROUPS))
+  for (const w of ws) ARMS[w].dw = g;
 /* ---------- crits (the owner's, Nov 21 17:25Z and 18:05Z) ----------
    "base crit chance is 25% with a fire rate of 1 per second", less for faster ones: 25% divided by the shots (a melee
    weapon's swings) a second, with no top. Only the double barrel counts its reload (critReload: 2 shells, then 2 s,
