@@ -3,7 +3,7 @@ file lines job
 
 ## js/
 account.js 397 the Google account: the
-actplay.js 942 a game's actions
+actplay.js 951 a game's actions
 actroom.js 744 the room's actions
 actsb.js 156 Sandbox's windows, saves and
 allies.js 383 Survival: the friendly squad
@@ -63,12 +63,12 @@ friends.js 236 friends
 front.js 151 the front page
 fx.js 1200 the effects, drawn as
 fxmotion.js 234 how a held weapon
-game.js 4792 the game screen
+game.js 4791 the game screen
 gameact.js 546 the action window and
 gameannounce.js 212 The cloud's words and
 gameboard.js 589 the board: each mode's
 gamedefaults.js 71 the game's own numbers,
-gamefx.js 874 the silly commands and
+gamefx.js 876 the silly commands and
 gamehand.js 594 the hand: the number-key
 gameplace.js 738 where things are put
 gameready.js 47 
@@ -88,8 +88,9 @@ gunmen.js 110 the gunmen's looks
 gunmenrules.js 1158 Survival: the gunmen
 gunmenview.js 135 Survival: the gunmen on
 gunparts.js 15 the pieces every weapon's
-guns.js 656 every weapon's numbers: one
+guns.js 661 every weapon's numbers: one
 hats.js 1096 hats
+heat.js 72 a gun's heat: the
 heights.js 82 a shot's height, Doom's
 helppages.js 1498 the command line's Help
 hideui.js 30 hide ui
@@ -169,7 +170,7 @@ outlines.js 420 the outlines
 perf.js 92 the frame-rate readout
 phonepad.js 142 phones: the aim-and-attack stick
 picrop.js 268 cropping a picture: every
-pixel.js 724 the pixel look
+pixel.js 767 the pixel look
 pixelpalette.js 192 the pixel look's colors
 playerinput.js 26 what I ask my
 players.js 342 the player menu and
@@ -268,7 +269,7 @@ umaps.js 371 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on
-updates.js 3454 Updates
+updates.js 3463 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival

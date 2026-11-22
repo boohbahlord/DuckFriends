@@ -73,12 +73,12 @@ export function sway(id, x, y, z, now, sprinting, unit, aim, left) {
 }
 
 /* a shot fired by duck id with gun: its kick starts over */
-export function kick(id, gun, now) {
+export function kick(id, gun, now, more = 1) {
   const M = MUZZLE[gun];
   if (!M) return;
   const o = stateOf(id);
   o.kt = now;
-  o.ka = M.kick;
+  o.ka = M.kick * more; // (more: a hot gun's, heat.js heatShake)
 }
 /* its kick now: [turn (rad, lifting its end), back (css px)] */
 export function kickOf(id, now, unit, left) {

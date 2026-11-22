@@ -86,6 +86,7 @@ import { FLAME as FLAMER, flameRate, band } from "./flamer.js";
 import { low } from "./gfx.js";
 
 import { kick, shake, vibrate, VIB } from "./fxmotion.js";
+import { heatShake } from "./heat.js";
 
 /* ---------- the silly commands: lightning, love, kill, hotdog ---------- */
 const HOTDOG = `<svg viewBox="-34 -24 68 30" width="100%"><path d="M-24-13C-26-18-20-21-12-19L14-19C22-21 27-17 25-12Z" fill="#e2a65a" stroke="#1c1c28" stroke-width="1.6"/><rect x="-31" y="-17" width="62" height="10" rx="5" fill="#c0502b" stroke="#1c1c28" stroke-width="1.6"/><path d="M-24-13l4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3" stroke="#f2c230" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M-27-9C-28-1-20 2-10 2L10 2C20 2 28-1 27-9C18-6-18-6-27-9Z" fill="#eab36a" stroke="#1c1c28" stroke-width="1.6"/></svg>`;
@@ -709,11 +710,12 @@ export function playFx(f) {
     };
     line(0, far, 0);
     fxMuzzle(x0, y0, ang, kind);
-    kick(f.by, kind, now);
+    const hs = heatShake(s, f.by, kind, now); // (a hot gun kicks and shakes up to 30% more: heat.js)
+    kick(f.by, kind, now, hs);
     if (!lz) heatUp(f.by, "chaingun"); // (and the chain gun's; the Laser Rifle's heat is the room's: laserfx.js)
     vibrate(shooterBody(f.by), VIB[kind]);
     if (f.by === R.me) {
-      shake(MUZZLE[kind].shake);
+      shake(MUZZLE[kind].shake * hs);
       if (!lz)
         setRecoil({
           until: performance.now() + RECOIL.MS,

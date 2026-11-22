@@ -16,6 +16,8 @@ Find a file in notes/repomap.md before searching.
   light, water, zombie paths, phone UI). Read it before building or changing a map.
 - `notes/seriat-bible.md`: the Seriat language (Sandbox's number code), current rules, operators and examples.
   Read it before touching Seriat; update it the day the owner settles something.
+- `notes/principles.md`: the numbers, heights and push on one page (units, levels, water, weight, blasts, hitboxes, HP).
+  Read it before touching any of them.
 - `notes/ref/`: the owner's reference pictures (board colors, the Halo Reach lobby idea).
 
 ## How it fits together

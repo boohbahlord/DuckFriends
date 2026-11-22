@@ -118,6 +118,7 @@ import { hOk, hLock, shotFeet, SAME_FLOOR, zOf, swingH } from "./heights.js";
 import { toPx, DUCK } from "./units.js";
 import { blast, reach, hitOf, REACH } from "./blast.js";
 import { carsBlast, carsSwing } from "./carpush.js";
+import { spreadAim } from "./heat.js";
 import { pushAlong, walkOf, pushTaken, immobile, sizeOf } from "./push.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
@@ -2864,9 +2865,8 @@ function merchantTick(s, now) {
   };
   if (done) setMh(s, { p: (h.p || 0) + 1 });
 }
-/* running away, does he sprint this step? Only if he has to (a zombie near, or just hurt by a player) and has breath
-   left; it drains in L4.SPRINT ms and fills again as slowly, and once empty he walks until it's full (h.sp: what's
-   left, 0 to 1; h.tired) */
+/* fleeing, does he sprint this step? Only if he must (a zombie near, or a player hurt him) and has breath left; it
+   drains in L4.SPRINT ms and fills as slowly, and once empty he walks until it's full (h.sp: left, 0 to 1; h.tired) */
 function merchantSprints(s, m, now, dt) {
   const h = mh(s);
   let sp = h.sp ?? 1,
@@ -3063,7 +3063,7 @@ export function l4Use(s, a, now) {
     m.rl = 0;
     m.rw = ""; // (something else used before the reload was done: it's lost, the owner's, Nov 16)
   }
-  const [dx, dy] = aimDir(a),
+  const [dx, dy] = spreadAim(s, id, what, aimDir(a), now), // (a gun fired fast: off its aim, as wide as its heat)
     face = dx < 0 ? -1 : 1,
     [px, py] = toPx(p),
     hz = Math.round(zOf(p, "body", now));
