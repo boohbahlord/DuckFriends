@@ -7855,3 +7855,6 @@ Decision (Adam): on phones every corner-placed control (lobby, game top bar, win
 
 ## Nov 22 03:24Z (owner, on a choice card)
 Single Player's game list: picked "Keep it as it is" (only Hangout, Dead Ducks Arcade, Mad God Justin and Sandbox; no greyed-out social games).
+
+## Nov 22 03:25Z (owner, on a choice card)
+Explosion rings: picked "One tile, as written" (each ring one tile, a quarter duck length: center 2x2 9 and always crits, first ring 9, then halving, stop under 0.5; grenades hurt out to about 1.5 duck lengths).
