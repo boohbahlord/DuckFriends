@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v241",
+    version: 241,
+    date: "Nov 22, 2026",
+    title: "One rule for crowds",
+    news: [
+      "Behind the scenes: zombies, soldiers, criminals, the friendly squad and Sandbox's NPCs now keep out of each other's way through one shared rule. Nothing plays differently.",
+      "Behind the scenes: the board itself (its squares, the story's lines, where each duck stands) lives in its own file now; the board screen's file is a third smaller than yesterday.",
+    ],
+  },
+  {
     id: "v240",
     version: 240,
     date: "Nov 22, 2026",

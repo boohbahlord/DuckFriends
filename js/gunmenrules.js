@@ -25,11 +25,11 @@ import { clearShot, chaseField, chaseStep } from "./zombies.js";
 import { heightAt, slabBetween, PROPS } from "./hangout/layout.js";
 import { zOf } from "./heights.js";
 import { DECKS } from "./hangout/stationmap.js";
+import { apart } from "./crowd.js";
 import { hpHurt } from "./hpmath.js";
 import { gunmanLook } from "./gunmen.js";
 import {
   sees as npcSees,
-  nearPairs,
   nearest,
   grudge,
   grudgeOf,
@@ -394,7 +394,7 @@ function tick(s, zs, now, ids, H) {
     else crim(s, o, zs, foes, pls, fieldTo, now, dt, H);
   }
   gm.gb = gm.gb.filter((o) => !o.gone); // (soldiers who got away)
-  apart(
+  keepApart(
     gm.gb.filter((o) => !o.d && o.k !== "sn"),
     H,
   );
@@ -967,21 +967,11 @@ export function shoot(s, o, t, now, H, only = null, blind = false) {
   return true;
 }
 
-/* never in each other: two too close are pushed apart (each half), but only where it's open, by the zombies' own check
-   at their floor (as l4ddrules' nudge), so a crowd never pushes one through a wall */
-function apart(live, H) {
-  nearPairs(live, 40, 22, (A, B) => {
-    const dx = A.x - B.x,
-      dy = A.y - B.y,
-      e = Math.hypot(dx / 40, dy / 22);
-    if (e >= 1) return;
-    const k = e > 1e-3 ? (1 - e) / 2 / e : 0.3,
-      ux = e > 1e-3 ? dx * k : 4,
-      uy = e > 1e-3 ? dy * k : 2;
-    push(A, ux, uy, H);
-    push(B, -ux, -uy, H);
-  });
-}
+/* never in each other (crowd.js apart, CROWD_BREEDS.gunman): two too close are pushed apart (each half), but only
+   where it's open, by the zombies' own check at their floor (as l4ddrules' nudge), so a crowd never pushes one through
+   a wall */
+const keepApart = (live, H) =>
+  apart(live, "gunman", { move: (o, dx, dy) => push(o, dx, dy, H) });
 function push(o, dx, dy, H) {
   const x = o.x + dx,
     y = o.y + dy;

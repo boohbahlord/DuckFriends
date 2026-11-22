@@ -34,6 +34,7 @@ collage.js 101 Shelter Sky & Null
 color.js 165 choosing a color
 corners.js 94 full screen
 court.js 229 Lawyering: what the screen shows
+crowd.js 122 crowds: walkers never stand in each
 customize.js 1776 Customize: the Armory
 datboi.js 115 here come dat boi
 democracy.js 243 Democracy of Ducklings:
@@ -55,10 +56,11 @@ friends.js 236 friends
 front.js 151 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 229 how a held weapon and the
-game.js 6163 the game screen
+game.js 5679 the game screen
 gameact.js 526 the action window and the view's
+gameboard.js 579 the board: each mode's board HTML,
 gamedefaults.js 43 the game's own numbers, for every
-gamefx.js 853 the silly commands and the room's
+gamefx.js 873 the silly commands and the room's
 gamehand.js 604 the hand: the number-key specials, firing,
 gameplace.js 738 where things are put on the
 gameready.js 47 
@@ -70,7 +72,7 @@ grenade.js 35 a grenade going off
 ground.js 53 what a duck walks on, for
 gunart.js 437 every weapon, drawn: one drawing for
 gunmen.js 110 the gunmen's looks
-gunmenrules.js 1142 Survival: the gunmen
+gunmenrules.js 1132 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the screen
 gunparts.js 15 the pieces every weapon's drawing is
 guns.js 626 every weapon's numbers: one sheet for
@@ -132,7 +134,7 @@ name.js 165 fonts and how a player's name
 nbperms.js 167 Seriat: everyone's home folder, and the
 net.js 127 the room connection
 notes.js 101 Notes : question ideas, written any
-npcrules.js 119 what every NPC's brain shares
+npcrules.js 91 what every NPC's brain shares
 npcs.js 49 the characters you can mute: Justin,
 npcshared.js 29 what every NPC shares, whatever mode
 npcview.js 214 an NPC on a world ,
@@ -247,7 +249,7 @@ umaps.js 371 Made maps: making them, and keeping
 units.js 10 the game's units, in one place
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 3254 Updates
+updates.js 3264 Updates
 vdd.js 190 Valentine's Duck Date: what the screen
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
@@ -259,7 +261,7 @@ who.js 3 who this player is beyond this
 wounds.js 485 the wounds a hit leaves
 zombiepath.js 178 the zombies' way to the ducks
 zombieroofs.js 320 the zombies' walk over Downpour's roofs:
-zombies.js 1468 the zombies: one module for every
+zombies.js 1418 the zombies: one module for every
 
 ## js/hangout/
 activities.js 23 every Hangout activity, so the rules
