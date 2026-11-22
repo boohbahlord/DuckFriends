@@ -30,6 +30,7 @@ import {
   sbClimbAt,
 } from "./sandboxrules.js";
 import { Z_ROOM, zombieTakes, ALL_HP, L4_HOOKS } from "./l4ddrules.js";
+import { armOfShot } from "./guns.js";
 import {
   chaseField,
   setZWall,
@@ -102,7 +103,7 @@ export function cabinSpawn(s, x, y, o) {
    that lets it while what it's after is higher. o.z: its feet, when it isn't on the ground; o.vz, o.top: falling */
 const FALL_T = 0.35, // (s: a fall from the gas station roof, as a duck's)
   CLIMB = 150; // (px a second, as a duck's)
-export const npcZ = (o) => (o.z != null ? o.z : heightAt(o.x, o.y));
+const npcZ = (o) => (o.z != null ? o.z : heightAt(o.x, o.y));
 function heights(s, o, to, dt, x0, y0) {
   const z0 = npcZ(o),
     roof = floorStep();
@@ -274,18 +275,18 @@ rule("sbz", {
         };
       });
   },
-  hit(s, id, by, now, w) {
+  hit(s, id, by, now, w, dr) {
     if (!String(id).startsWith("sbz")) return false;
-    return npcHit(s, +String(id).slice(3), by, now, w);
+    return npcHit(s, +String(id).slice(3), by, now, w, dr);
   },
 });
 
 /* NPC i takes a hit from duck by with weapon w: what a Dead Ducks Arcade zombie takes (zombieTakes); false on a miss */
-function npcHit(s, i, by, now, w) {
+function npcHit(s, i, by, now, w, dr) {
   const z = s.hang.sbz,
     o = z && z.zb.find((q) => q.i === i && !q.d);
   if (!o) return false;
-  const t = zombieTakes(s, by, w);
+  const t = zombieTakes(s, by, armOfShot(w), dr); // (w can be a board shot's kind: an arrow is the bow's, dr its draw)
   if (!t) return false; // (a miss)
   const hp = t.dmg >= ALL_HP ? 0 : hpHurt(o.hp, t.dmg), // (in hundredths, as every HP: hpmath.js)
     wd = hitWounds(o.w, w, WOUND_BREEDS.zombie, {
@@ -314,7 +315,7 @@ function npcHit(s, i, by, now, w) {
 
 /* … and on the zombie maps, where shots and swings are Dead Ducks Arcade's own (l4ddrules.js wildHurt) */
 const HIT_UP = 0.41; // (duck widths over the ground: where a shot flies, rules.js shotAt)
-L4_HOOKS.npc = (s, by, x, y, now, w, rx, ry, from, hit) => {
+L4_HOOKS.npc = (s, by, x, y, now, w, rx, ry, from, hit, dr) => {
   if (!isSb(s) || baseMode(s.options) !== "l4dd") return false;
   const near = zbOf(s).filter((o) => {
     if (o.d || (hit && hit.includes("c" + o.i))) return false;
@@ -329,12 +330,12 @@ L4_HOOKS.npc = (s, by, x, y, now, w, rx, ry, from, hit) => {
   if (hit) {
     for (const o of near) {
       hit.push("c" + o.i);
-      npcHit(s, o.i, by, now, w);
+      npcHit(s, o.i, by, now, w, dr);
     }
     return near.length > 0;
   }
   near.sort(
     (a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y),
   );
-  return near.some((o) => npcHit(s, o.i, by, now, w)); // (a miss goes on by)
+  return near.some((o) => npcHit(s, o.i, by, now, w, dr)); // (a miss goes on by)
 };

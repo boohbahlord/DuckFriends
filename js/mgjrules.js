@@ -1242,7 +1242,7 @@ export function mgjZombieHit(s, near, w, now, by, sh = null, take = null) {
   let hit = false;
   for (const o of got) {
     if (sh && (sh.zh || []).length >= most) break;
-    const t = take ? take(ns.get(o)) : zombieTakes(s, by, w);
+    const t = take ? take(ns.get(o)) : zombieTakes(s, by, w, sh && sh.dr); // (a drawn arrow: its draw, bowdraw.js)
     if (!t) {
       if (sh) sh.zp = [...(sh.zp || []), o.i];
       fx({ kind: "l4miss", b: 1, x: o.x, y: o.y });

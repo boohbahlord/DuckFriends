@@ -1,6 +1,6 @@
 /* ---------- Mad God Justin's pickups: what drops, what comes next, and what each one does ----------
    Moved out of mgjrules.js to keep that file small (a pure move). It imports back from mgjrules.js, which imports it. */
-import { drawFast } from "./bowdraw.js";
+import { drawDmg, drawFast } from "./bowdraw.js";
 import { r3, fxOf } from "./justinmoves.js";
 
 import {
@@ -384,7 +384,7 @@ export function mgjShot(s, sh, x0, y0, dx, dy, now, log, z = 0.41) {
     mgjZombieHit(s, (x, y, r) => near({ x, y }, r), armOf(sh.k), now, sh.by, sh)
   )
     return true; // (one of his zombies in the way: it stops there, but the shots that go through them)
-  return mgjHitAt(s, sh.by, now, nearHim, log, shotDmg(sh.k));
+  return mgjHitAt(s, sh.by, now, nearHim, log, shotDmg(sh.k) + drawDmg(sh.dr)); // (a drawn arrow: more, bowdraw.js)
 }
 /* where a duck's shot I draw stops (the owner's, Nov 17 20:37Z: "BULLETS THAT DO NOT PASS THROUGH ZOMBIES WILL NO
    LONGER PASS THRU ZOMBIES ... THE BULLET KIND IS SEEN GOING PAST THEM A BIT"): the host finds its hit at its next beat

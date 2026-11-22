@@ -78,9 +78,9 @@ rule("npc", {
       ...(q ? [{ id: "shadow", x: q.x, y: q.y, z: q.z }] : []),
     ];
   },
-  hit(s, id, by, now, w) {
+  hit(s, id, by, now, w, dr) {
     const got = npcHit(s, id, by, now);
-    if (got && id === "justin") justinWounded(s, w, now);
+    if (got && id === "justin") justinWounded(s, w, now, dr);
     if (got && id === "shadow") {
       s.shkN = (s.shkN || 0) + 1;
       s.shk = [...(s.shk || []).slice(-9), { n: s.shkN, by }];
@@ -92,11 +92,11 @@ rule("npc", {
    can take damage"). The wound the weapon leaves (wounds.js; his record's wc), now and then a crit that blows his head
    off with a CRIT over him (guns.js critOf, the pcrit fx, as a duck's), and hit, the hits he took, so every screen bleeds him
    and shows "−1 HP" once for each (draw below). Both go when he's up again (justin.js revive) */
-function justinWounded(s, w, now) {
+function justinWounded(s, w, now, dr) {
   const r = s.hang.npc.justin,
     p = r && npcAt(r, now);
   if (!r) return;
-  const crit = Math.random() < critOf(armOfShot(w)), // (w can be a shot's kind: an arrow is the bow's)
+  const crit = Math.random() < critOf(armOfShot(w), dr), // (w can be a shot's kind: an arrow is the bow's, dr its draw)
     wc = hitWounds(r.wc, w, WOUND_BREEDS.justin, {
       head: crit,
       dead: true,
