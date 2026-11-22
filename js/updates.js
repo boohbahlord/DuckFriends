@@ -15,6 +15,7 @@ export const UPDATES = [
     title: "No black lines in Sandbox",
     news: [
       "For Sandbox: the board has no dark frame any more, so a phone turned sideways shows no black lines across the map.",
+      "For Sandbox: every zone, spawn and loot setting left at its default now says so with its value, like Default (16) or Default (true).",
     ],
   },
   {
