@@ -69,21 +69,8 @@ import {
 
 import { pwAdd, pwHit, DEATH } from "./wounds.js";
 
-import {
-  isMgj,
-  mgjZombieHit,
-  mgjStab,
-  mgjHurt,
-  mgjSoak,
-  mgjGone,
-  mgjShot,
-  mgjHitAt,
-  MGJ_SCALE,
-  MGJ_HAMMER,
-  DMG,
-  mgjHalf,
-  mgjLgren,
-} from "./mgjrules.js";
+import { isMgj, mgjZombieHit, mgjStab, mgjHurt, mgjSoak, mgjGone, mgjHitAt, MGJ_SCALE, MGJ_HAMMER, DMG, mgjHalf } from "./mgjrules.js";
+import { mgjShot, mgjLgren } from "./mgjpicks.js";
 
 import { picBody, duOfRoom } from "./sbbody.js";
 
