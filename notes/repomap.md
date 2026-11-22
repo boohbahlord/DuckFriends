@@ -272,7 +272,12 @@ zombies.js 1477 the zombies: one module for
 ## js/hangout/
 activities.js 23 every Hangout activity, so the
 ambience.js 112 the air: the wind round
-art.js 3050 Duck Cabin: the drawings
+art.js 250 the drawings' table (ART), re-exporting the art files
+artbase.js 157 the drawings' shared pieces (ink, defs, string lights, fire, the CSS)
+artcabin.js 516 the cabin's shell: walls, doors, fireplace
+artindoor.js 1104 the cabin's inside: furniture, stage, kitchen, bathroom, beds
+artpool.js 358 the deck and the pool
+artyard.js 901 the yard: ground, trees, lamps, campfire, trampoline, soccer, jeep
 beachball.js 364 the beach ball
 blackjack.js 1382 the blackjack table in the
 book.js 170 the guestbook: a book on
