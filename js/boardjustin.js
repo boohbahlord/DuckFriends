@@ -39,7 +39,7 @@ import { shuffle } from "./random.js";
 import { hitWounds, WOUND_BREEDS } from "./wounds.js";
 
 import { critOf, armOfShot } from "./guns.js";
-import { drawCrit, drawDmg } from "./bowdraw.js";
+import { drawDmg } from "./bowdraw.js";
 
 import { isQuack, tileAt, tileCenter, stillIn } from "./quackrules.js";
 
@@ -168,9 +168,7 @@ export function justinHit(s, by, now, log, w, sh) {
   if (!justinShown(s) || j.down || isMgj(s)) return 0;
   const at = justinAt(j, now),
     mgj = boardMgj(s),
-    crit =
-      Math.random() <
-      (sh && sh.dr != null ? drawCrit(sh.dr) : critOf(armOfShot(w))); // (a crit doubles it: guns.js critOf; w can be a shot's kind; a drawn arrow: its draw's, bowdraw.js)
+    crit = Math.random() < critOf(armOfShot(w), sh && sh.dr); // (a crit doubles it: guns.js critOf; w can be a shot's kind; a drawn arrow: its draw's)
   if (mgj) {
     j.max = BJ_HP;
     j.hp = Math.max(

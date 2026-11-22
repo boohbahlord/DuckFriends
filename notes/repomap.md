@@ -3,7 +3,7 @@ file lines job
 
 ## js/
 account.js 397 the Google account: the
-actplay.js 966 a game's actions
+actplay.js 965 a game's actions
 actroom.js 744 the room's actions
 actsb.js 156 Sandbox's windows, saves and
 allies.js 383 Survival: the friendly squad
@@ -19,11 +19,11 @@ beaks.js 138 beaks
 below.js 88 darker below
 blast.js 67 explosions: one module
 bloodpool.js 50 a pool of blood:
-boardfire.js 1340 the board's weapons: hits,
-boardjustin.js 669 Justin on the boards
+boardfire.js 1338 the board's weapons: hits,
+boardjustin.js 667 Justin on the boards
 botduck.js 90 a computer's duck: a
 botlines.js 188 What the computers write
-bots.js 1426 computers
+bots.js 1437 computers
 bowdraw.js 46 the bow, drawn to
 brackets.js 459 Bicker Brackets: what the
 brainbuild.js 333 Sandbox: M's Brain builder
@@ -89,7 +89,7 @@ gunmen.js 110 the gunmen's looks
 gunmenrules.js 1158 Survival: the gunmen
 gunmenview.js 135 Survival: the gunmen on
 gunparts.js 15 the pieces every weapon's
-guns.js 661 every weapon's numbers: one
+guns.js 664 every weapon's numbers: one
 hats.js 1096 hats
 heat.js 72 a gun's heat: the
 heights.js 82 a shot's height, Doom's
@@ -116,13 +116,14 @@ l4ddangelui.js 204 Dead Ducks Arcade's Angel
 l4ddart.js 623 Quacky Zombies' pictures
 l4ddbar.js 332 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell
-l4ddcatalog.js 230 Quacky Zombies: the Butler's
+l4ddcatalog.js 233 Quacky Zombies: the Butler's
 l4dddrops.js 63 Quacky Zombies' drops, drawn
+l4ddloot.js 41 Dead Ducks Arcade: what
 l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power
 l4ddpowerui.js 278 Dead Ducks Arcade's power
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4986 the rules of Quacky
+l4ddrules.js 4956 the rules of Quacky
 l4ddsfx.js 545 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online:
 langname.js 5 the name of Sandbox's
@@ -201,7 +202,7 @@ sbarms.js 124 Sandbox: a made NPC's
 sbaudio.js 211 Sandbox: songs players bring
 sbbody.js 196 Sandbox: an NPC's body,
 sbbrain.js 87 Sandbox: what a spawned
-sbcabin.js 340 Sandbox: the zombies on
+sbcabin.js 341 Sandbox: the zombies on
 sbdrag.js 353 Sandbox, moving blocks with
 sbep.js 50 Sandbox Phase 7: what
 sbepview.js 162 Sandbox Phase 7: what
@@ -270,7 +271,7 @@ umaps.js 371 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on
-updates.js 3492 Updates
+updates.js 3502 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival
@@ -327,7 +328,7 @@ pxw-downpour.js 344 made by tools/pixel-world.cjs:
 pxworld.js 87 Duck Cabin's and Downpour's
 registry.js 111 Hangout's two registries: what
 rubberducks.js 183 the little rubber ducks
-rules.js 87 Hangout's rules: s.hang and
+rules.js 88 Hangout's rules: s.hang and
 seats.js 440 the couches, the campfire's
 shadowduck.js 254 the shadow duck
 shapes.js 944 Duck Cabin's props, drawn:

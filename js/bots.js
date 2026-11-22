@@ -79,7 +79,9 @@ import {
   hasLeft,
 } from "./l4ddrules.js";
 import { kindOf, MGJ_MELEE } from "./guns.js";
+import { draws } from "./bowdraw.js";
 import { gunsIn, itemsIn, PRIMARY } from "./kitslots.js";
+import { lootAt } from "./l4ddloot.js";
 import {
   isVd,
   VD_PHASES,
@@ -442,8 +444,15 @@ function tvBot(s, id, now, late, out) {
     j: !p.j && Math.random() < 0.3 ? now : 0,
   });
 }
-/* what the computers do now; returns a list of actions */
-export function botActions(s, now) {
+/* what the computers do now; returns a list of actions. A computer draws the bow again the moment it lets go, as a
+   player holding the button would (bowdraw.js): its next arrow flies with the draw it held since */
+export const botActions = (s, now) =>
+  botThink(s, now).flatMap((a) =>
+    a.t === "use" && draws(a.what)
+      ? [a, { t: "draw", id: a.id, w: a.what }]
+      : [a],
+  );
+function botThink(s, now) {
   const out = [],
     wait = (s.options.botWait ?? OPTIONS_DEFAULT.botWait) * 1000;
   const bots = s.seat.filter((id) => s.players[id] && s.players[id].bot);
@@ -1019,6 +1028,8 @@ export function l4Bot(s, id, now, out) {
   const p = s.pos[id],
     h = s.hang;
   if (!p || !h || !h.l4 || h.l4.over || !l4Up(s, id)) return;
+  if (lootAt(s, p.x * W, p.y * H, now))
+    out.push({ t: "hang", k: "l4", do: "pick", id }); // (on something on the ground: E, as a player presses it, l4ddloot.js)
   if (isHelper(s, id)) return justinBot(s, id, now, out); // (the fireplace's Justin: his own, better brain)
   const wait = h.l4.wait;
   if (wait && !wait.v[id]) {

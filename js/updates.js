@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v265",
+    version: 265,
+    date: "Nov 22, 2026",
+    title: "Loot on the ground",
+    news: [
+      "For Dead Ducks Arcade: a zombie you kill very rarely leaves a weapon or an item behind; everything on the ground (drops, Pocket Change, weapons) is now picked up with E instead of by walking over it; and nobody can spin the slot machine while the weapon it landed on is still lying there.",
+      "The bow follows one rule everywhere: how long you draw it sets its crit chance and extra damage against zombies, Justin, the merchant, Sandbox NPCs and soldiers alike, and computer players draw their bows too.",
+    ],
+  },
+  {
     id: "v264",
     version: 264,
     date: "Nov 22, 2026",
