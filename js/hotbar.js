@@ -29,7 +29,7 @@ const drain = (c) =>
    [when it works again, how long it waits, now] (an item just used: its key shows a bar draining until then), duck() →
    my duck (the hammer shows as a wrench on a duck that picked it), ammo() → the handgun's shots left (dots under its key),
    dots(id) → the dots under a key, when the game has its own (Mad God Justin: the uses left of a weapon picked up),
-   select(i) → the slider picked key i, tap(i) → its middle one was tapped, current() → the id the game wants in the slider's middle (or null).
+   select(i) → the slider picked key i, tap(i) → its middle one was tapped, current() → the id the game wants in the slider's middle (or null), caption(id) → the small text over the slider (or none).
    A game with slots of its own (Quacky Zombies) gives look(id) → { id, name, icon, off, keep, cls } for each (keep:
    false, the square can't switch it; cls, the slot's color) and sig() → what changes how they look. own(id) → the same for
    only some slots (Sandbox's spawn buttons), null for the rest, which look as specials do */
@@ -203,8 +203,15 @@ export function mountHotbar(S, api) {
   const slide = document.createElement("div");
   slide.className = "sp-phone gone";
   slide.innerHTML =
-    '<div class="sp-slide" role="listbox" aria-label="Specials"><div class="sp-track"></div></div>';
-  const track = slide.querySelector(".sp-track");
+    '<small class="sp-cap"></small><div class="sp-slide" role="listbox" aria-label="Specials"><div class="sp-track"></div></div>';
+  const track = slide.querySelector(".sp-track"),
+    capEl = slide.querySelector(".sp-cap");
+  /* over the slider, the one in the middle in very small text, when the game names it (api.caption(id): Dead Ducks
+     Arcade's name and caliber, l4ddbar.js) */
+  const caption = () => {
+    const t = (api.caption && cur && api.caption(cur)) || "";
+    if (capEl.textContent !== t) capEl.textContent = t;
+  };
   let list = [], // [id, key index] of each special on my keys, in key order
     cur = null, // the id in the middle
     pos = 0, // where the slider is: the list index in the middle (between two while a finger slides it)
@@ -260,6 +267,7 @@ export function mountHotbar(S, api) {
     pos = j;
     track.classList.remove("sliding");
     lay();
+    caption();
     if (tell && cur !== was && api.select) api.select(list[j][1]);
     if (cur !== was) peekSwitch(false, was);
   };
@@ -377,6 +385,7 @@ export function mountHotbar(S, api) {
       pos = Math.max(0, curI());
       lay();
     }
+    caption();
   }
   /* a finger on the slider: it follows the finger; let go, the nearest one is picked. A tap: the middle one is used,
      one beside it is picked */
