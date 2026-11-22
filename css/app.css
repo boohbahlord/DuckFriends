@@ -16156,7 +16156,8 @@ html.moving .l4-heat.hot::after {
   font-size: 0.6rem;
   font-weight: 600;
   line-height: 1.15;
-  color: var(--dim);
+  /* the slots' numbers' color, a little softer: it reads at arm's length */
+  color: color-mix(in srgb, var(--ink) 85%, transparent);
   white-space: nowrap;
   text-overflow: ellipsis;
   pointer-events: none;
