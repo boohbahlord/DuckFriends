@@ -174,7 +174,7 @@ import {
   MELEE,
   SB_H,
   attacks,
-  chainShot,
+  beamShot,
   duckFlame,
   floorFirst,
   groundFire,
@@ -579,11 +579,10 @@ export function act_use({ state, s, a, now, me, boss }) {
       ...(hit ? { hit } : {}),
     },
   ];
-  if (aim && !hit && sp === "chaingun") chainShot(s, a.id, p, aim, now);
-  else if (aim && !hit && sp === "laser" && isMgj(s)) {
-    /* Mad God Justin's Laser Rifle (picked up): the chain gun's line, red, through everything on it, 1 damage; it
-           heats up as in Dead Ducks Arcade (l4ddrules.js laserNext), its heat in s.mgj.lz */
-    chainShot(s, a.id, p, aim, now, "laser");
+  if (aim && !hit && sp === "laser" && isMgj(s)) {
+    /* Mad God Justin's Laser Rifle (picked up): a red line through everything on it, 1 damage; it heats up as in Dead
+           Ducks Arcade (l4ddrules.js laserNext), its heat in s.mgj.lz */
+    beamShot(s, a.id, p, aim, now);
     const next = laserNext(s, a.id, now);
     s.mgj.lz = { ...(s.mgj.lz || {}), [a.id]: next.lz };
     if (next.hot) {

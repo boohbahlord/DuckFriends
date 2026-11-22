@@ -9,6 +9,38 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v279",
+    version: 279,
+    date: "Nov 22, 2026",
+    title: "No more chain gun",
+    news: [
+      "The chain gun is gone from every mode. The fireplace's Justin and Dyson carry the LMG instead. A saved hotbar that held it shows an empty slot.",
+    ],
+  },
+  {
+    id: "v278",
+    version: 278,
+    date: "Nov 22, 2026",
+    title: "Lobby and map fixes",
+    news: [
+      "Scrolling through the map list in Game Settings no longer brings up a loading screen.",
+      "For Sandbox: a saved board that already has its map goes straight in, with no map vote, and opening it brings its made map along.",
+      "For Sandbox: My maps' Play it works mid-game too, so you can change the board's map picture while playing, and the preview follows the map you picked.",
+    ],
+  },
+  {
+    id: "v277",
+    version: 277,
+    date: "Nov 22, 2026",
+    title: "Zombies reach you",
+    news: [
+      "For Dead Ducks Arcade and Survival: zombies no longer freeze in a crowd at a wall, a doorway or a tree. They climb up to you anywhere along the wall, trees stand clear of the buildings, and a zombie on the ground below your roof never blocks you.",
+      "Ducks and zombies only bump into each other when they're at the same height: jump over a duck or stand on a roof and nothing below you stops you.",
+      "Hitmarkers show only in Mad God Justin, never in Sandbox or other modes.",
+      "A hot gun barrel's glow is made of pixels like everything else.",
+    ],
+  },
+  {
     id: "v276",
     version: 276,
     date: "Nov 22, 2026",

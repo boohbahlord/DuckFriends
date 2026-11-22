@@ -37,6 +37,7 @@ import {
   layoutRev,
   onRoof,
 } from "./hangout/layout.js";
+import { meets } from "./push.js";
 import { sway, stutterOf, lightNow } from "./hangout/flicker.js";
 import { play, setListener } from "./hangout/sounds.js";
 import { svgDataURL } from "./svgurl.js";
@@ -3319,9 +3320,8 @@ activity({
     let d = 0;
     for (const o of Z.values()) {
       if (o.st === 3 || o.st === 0 || o.st === 1) continue;
-      const dx = (x - o.x) / RX,
-        dy = (y - o.y) / RY;
-      d = Math.max(d, 1 - (dx * dx + dy * dy));
+      if (!meets(ctx.state(), ctx.me, me.z, null, zOf(o, "zombie"))) continue; // (below me under my roof, or over me: never in my way)
+      d = Math.max(d, 1 - ((x - o.x) / RX) ** 2 - ((y - o.y) / RY) ** 2);
     }
     return d;
   },

@@ -99,7 +99,7 @@ import { l4Zups, l4SetHp } from "./zombies.js";
 
 import { hOk, hLock, sameFloorAhead, floorLock } from "./heights.js";
 
-import { zOf, nearH, swingH } from "./heights.js";
+import { zOf, nearH, overlapH } from "./heights.js";
 import { chairReach } from "./chair.js";
 
 import { FLAME, flameReach, inCone } from "./flamer.js";
@@ -138,8 +138,7 @@ const HIT_DMG = {
   burst: 2, // (the burst rifle: the AK-47's, the owner's, Nov 16 16:25Z)
   slug: PHP, // (the double barrel's slug: all of it)
   revolver: 2,
-  chain: PHP,
-}; // (Quacky Zombies' guns take what they take there: the sniper 2 or 3, the AK-47 and the revolver 2, the chain gun all)
+}; // (Quacky Zombies' guns take what they take there: the sniper 2 or 3, the AK-47 and the revolver 2)
 export const dmgOf = (s, k) => roll(isL4dd(s) ? 1 : HIT_DMG[k] || 1); // (random.js)
 export function soaks(s, id, now, dmg = 1, by, raw = false) {
   if (isMgj(s)) return false;
@@ -147,7 +146,7 @@ export function soaks(s, id, now, dmg = 1, by, raw = false) {
     return true; // (spawn protection: nothing hurts a duck that just came back, and what it shoots hurts nobody)
   if (invuln(s)) return hurtFx(s, id, now); // (Invulnerability: the hit only flashes)
   const max = sbHpOf(s, id) || PHP, // (Sandbox: a spawn's or a respawn's HP for it, sbspawn.js)
-    n = hundredths(phpLost(s, id, now) + (dmg >= PHP && !raw ? max : dmg)), // (the slug, the chain gun: all of it, whatever it has; in hundredths, up while any HP is left: hpmath.js)
+    n = hundredths(phpLost(s, id, now) + (dmg >= PHP && !raw ? max : dmg)), // (the slug: all of it, whatever it has; in hundredths, up while any HP is left: hpmath.js)
     rest = { ...s.php };
   delete rest[id];
   s.php = n >= max ? rest : { ...rest, [id]: { n, t: now } };
@@ -320,10 +319,10 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
     uy = aim[1] / ry / al;
   const side = hang ? (inCabin(...toPx(p0)) ? 1 : 0) : 0,
     z0 = duckH(s, p0, now),
-    h0 = DUCK * sizeOf(s, by); // (my height: a swing reaches only within it, heights.js swingH)
+    h0 = DUCK * sizeOf(s, by); // (my height: a swing reaches only within it, heights.js overlapH)
   const near = (x, y, z, inSide, big = 1) => {
     // where (x, y) is from the swinger, in duck lengths, if it's in reach (big: a Seriat NPC's hitbox, reached sooner)
-    if (hang && (inSide !== side || !swingH(z0, h0, z, DUCK * big)))
+    if (hang && (inSide !== side || !overlapH(z0, h0, z, DUCK * big)))
       return null;
     const dx = (x - p0.x) / rx,
       dy = (y - p0.y) / ry,
@@ -826,16 +825,17 @@ function lgrenHits(s, sh, at, now) {
   at.y = d.y;
   return true;
 }
-/* the chain gun's shot: at once, along the aim to the first duck (all its HP) or on past the board's edge; anything
-   else on that line is hit as a bullet hits it. Every screen draws its thin yellow line (the l4line fx) */
-const CHAIN_FAR = 1.6; // (board widths: on past the board's edge)
-export function chainShot(s, by, p, aim, now, w = "chaingun") {
+/* the Laser Rifle's beam (Mad God Justin's pickup): at once, along the aim to the first duck or on past the board's
+   edge; anything else on that line is hit as a bullet hits it. Every screen draws its red line (the l4line fx, w
+   "laser"). The chain gun that shot this way too is gone (the owner's, Nov 22 19:26Z: "REMOVE CHAIN GUN") */
+const BEAM_FAR = 1.6; // (board widths: on past the board's edge)
+export function beamShot(s, by, p, aim, now) {
   const hang = isHang(s),
     l = Math.hypot(aim[0], aim[1]) || 1,
     sh = {
       n: s.fxN,
       by,
-      k: w === "laser" ? "laser" : "chain", // (the Laser Rifle's beam: 1 damage, mgjrules.js shotDmg)
+      k: "laser", // (1 damage: mgjrules.js shotDmg)
       x0: p.x,
       y0: p.y,
       lx: p.x,
@@ -851,7 +851,7 @@ export function chainShot(s, by, p, aim, now, w = "chaingun") {
         : {}),
       ...floorFirst(s, by, p, aim, now), // (a duck on my floor in its line: it stays on my floor)
     },
-    far = hang ? CHAIN_FAR * 0.25 : CHAIN_FAR, // (Hangout's world is far bigger than a board)
+    far = hang ? BEAM_FAR * 0.25 : BEAM_FAR, // (Hangout's world is far bigger than a board)
     up = 0.41 * sizeOf(s, by); // (out of its gun, at my Size: sizeShots)
   let at = {
     x: p.x + (aim[0] / l) * far,
@@ -889,7 +889,8 @@ export function chainShot(s, by, p, aim, now, w = "chaingun") {
       by,
       who: [],
       t: now,
-      ...(w === "laser" ? { w, ...(d ? { hd: 1 } : {}) } : {}), // (hd: it stopped at a duck, which smokes: game.js)
+      w: "laser",
+      ...(d ? { hd: 1 } : {}), // (hd: it stopped at a duck, which smokes: game.js)
       ...(hang ? {} : { b: 1 }),
       x0: +(p.x * k[0]).toFixed(4),
       y0: +(p.y * k[1]).toFixed(4),
@@ -1302,7 +1303,7 @@ export const pwOn = (s) => !isMgj(s) && !isL4dd(s);
 export const critRoll = (s, w, sh) =>
   pwOn(s) && Math.random() < critOf(armOfShot(w), sh && sh.dr); // (a drawn arrow: its draw's, bowdraw.js)
 /* a hit of weapon (or shot kind) k on duck id: a crit doubles it (guns.js critOf), and takes no more than that; what
-   takes all of it (the slug, the chain gun: PHP) still does */
+   takes all of it (the slug: PHP) still does */
 export function hitSoaks(s, id, now, k, crit, by, big = 1, more = 0) {
   const d = dmgOf(s, k) * big + more; // (big: a melee swinger's Size, push.js; more: a drawn arrow's, bowdraw.js)
   return soaks(s, id, now, crit ? d * 2 : d, by, crit && d < PHP);

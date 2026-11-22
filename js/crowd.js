@@ -130,13 +130,20 @@ function first(C, z, x, y, f) {
       }
   return null;
 }
-/* would walker z stepping to (x, y) walk into another of crowd C on its floor (nearer than touching and the gap)? That
-   one, or null (only closer to one it's already that near or about to be: stepping away is always free).
+/* would walker z stepping to (x, y) on its way to aim ([x, y]) walk into another of crowd C on its floor (nearer than
+   touching and the gap)? That one, or null (only closer to one it's already that near or about to be: stepping away is
+   always free). Only one ahead of it holds it up, no farther from its aim than it is: two making for the same spot
+   (a doorway, a wall's foot) each held the other up for good, so neither went on (the owner's, Nov 22 18:13Z:
+   "zombies that will not move and will not kill me"); now the nearer goes first and the other waits behind it.
    room(ax, ay, bx, by): how far apart, 1 touching */
-export const into = (C, z, x, y, room) =>
+export const into = (C, z, x, y, room, aim) =>
   first(C, z, x, y, (o) => {
     const then = room(x, y, o.x, o.y);
-    return then < C.T && then < room(z.x, z.y, o.x, o.y);
+    return (
+      then < C.T &&
+      then < room(z.x, z.y, o.x, o.y) &&
+      (!aim || room(o.x, o.y, ...aim) <= room(z.x, z.y, ...aim))
+    );
   });
 /* how near is too near for breed k (room units: touching, 1, and its gap) */
 export const tooNear = (k) => 1 + (CROWD_BREEDS[k].gap || 0);

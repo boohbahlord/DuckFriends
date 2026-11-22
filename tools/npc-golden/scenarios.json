@@ -600,16 +600,7 @@
     "beats": 600,
     "phase": "*",
     "mirror": 1,
-    "fire": [
-      "lmg",
-      "chaingun",
-      "glauncher",
-      "dbarrel",
-      "flamer",
-      "burst",
-      "chair",
-      "zebra"
-    ]
+    "fire": ["lmg", "glauncher", "dbarrel", "flamer", "burst", "chair", "zebra"]
   },
   {
     "name": "sb-avoid",

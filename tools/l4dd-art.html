@@ -88,7 +88,7 @@
     } from "../js/l4ddart.js";
     import { OPENINGS, POOL, SHOP, weaponName } from "../js/l4ddrules.js";
     import { modeSymbol } from "../js/modes.js";
-    import { GUNS, ROUNDS_ART, TRACE, BULLET } from "../js/gunart.js";
+    import { GUNS, ROUNDS_ART, BULLET } from "../js/gunart.js";
     import { heldHTML } from "../js/specials.js";
     import { DROP_ICONS } from "../js/l4dddrops.js";
     import { DROPS, dropName } from "../js/l4ddrules.js";
@@ -152,7 +152,6 @@
       "sniper",
       "smg",
       "ak",
-      "chaingun",
       "revolver",
       "glauncher",
       "lmg",
@@ -196,7 +195,6 @@
       sniper: "5 | 19",
       smg: "20 | 140",
       ak: "30 | 150",
-      chaingun: "60",
       revolver: "5 | 70",
       glauncher: "15",
       lmg: "75 | 150",
@@ -225,12 +223,7 @@
             "floor wall",
           ),
         )
-        .join("") +
-      fig(
-        `<svg width="220" height="40"><line x1="4" y1="20" x2="216" y2="20" stroke="${TRACE.glow}" stroke-width="4" opacity=".35" stroke-linecap="round"/><line x1="4" y1="20" x2="216" y2="20" stroke="${TRACE.color}" stroke-width="1.6" stroke-linecap="round"/></svg>`,
-        "the chain gun's line",
-        "floor wall",
-      );
+        .join("");
     dr.innerHTML = DROPS.map((k) =>
       fig(
         `<div style="display:flex;gap:18px;align-items:flex-end"><div style="width:120px">${DROP_ICONS[k]}</div><div class="l4-drop k-${k}" style="position:relative;transform:none;--k:1"><i>${DROP_ICONS[k]}</i></div></div>`,

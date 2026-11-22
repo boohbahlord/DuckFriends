@@ -5,7 +5,7 @@
    - melee: a board hit at 110% takes 1.1 times the HP; a zombie map's melee does 1.1 times the damage (zombieTakes), a
      shot the same at any Size;
    - immobile: a body with im is never pushed;
-   - dead weight (B6b, guns.js DEAD_WEIGHT): a duck holding the chain gun (0.25) is moved 1/1.25 as far, and walks as
+   - dead weight (B6b, guns.js DEAD_WEIGHT): a duck holding the LMG (0.15) is moved 1/1.15 as far, and walks as
      fast; a 110% duck holding a knife (0.02), 1/1.12;
    - the rings (B6 P4, blast.js): rings of one tile, 9 in the center (always a crit, so 18) and in ring 2, then half each
      ring out, none past ring 6; a grenade reaches 1.5 duck lengths.
@@ -63,7 +63,7 @@ const near = (a, b, e = 0.002) => Math.abs(a - b) <= e;
       BF.shove(s, a, 1, 0, 1, now, 0);
       return [s.pos[a].x - 0.3, P.walkOf(s, a)];
     };
-    out.held = [held(100, "chaingun"), held(110, "knife")];
+    out.held = [held(100, "lmg"), held(110, "knife")];
     out.imm = [
       P.immobile({ im: true }),
       P.immobile({ sv: 0 }),
@@ -104,7 +104,7 @@ const near = (a, b, e = 0.002) => Math.abs(a - b) <= e;
   const [[cg, cw], [kn]] = got.held;
   if (
     !(
-      near(cg, m[100] / 1.25, 0.0002) &&
+      near(cg, m[100] / 1.15, 0.0002) &&
       cw === 1 &&
       near(kn, m[100] / 1.12, 0.0002)
     )

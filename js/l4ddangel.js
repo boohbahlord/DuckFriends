@@ -10,7 +10,6 @@
        increase ammo");
      - the bow: each arrow goes on through one zombie;
      - the sniper: through two more zombies than before;
-     - the chain gun: through two zombies, the third stops it;
      - the flamethrower: it reaches farther, sooner, and the ground it lights burns 2.5 s longer;
      - the default pistol: two of them, one in each hand, taking turns one bullet at a time (twice the pistol's fire
        rate), a magazine twice as big, a reload twice as long; every bullet kills at once, and every crit sets off a
@@ -51,7 +50,6 @@ export const ANGEL = {
   RELOAD: 0.8, // reloads 20% faster
   BOW: 2, // zombies an Angelic arrow hits (through one)
   SNIPER: 2, // more zombies the sniper's bullet goes through
-  CHAIN: 3, // zombies an Angelic chain gun's bullet hits (through two)
   FLAME_FAR: 4 / 3, // the flamethrower reaches a third farther …
   FLAME_SOON: 1.6, // … and gets there sooner
   FLAME_GROUND: 2500, // ms longer its ground burns

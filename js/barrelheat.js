@@ -1,13 +1,13 @@
 /* ---------- a hot barrel (the owner, Nov 17) ----------
-   Guns that fire fast and long (the LMG, the chain gun) heat up as they keep firing: the end of the barrel glows,
+   Guns that fire fast and long (the LMG) heat up as they keep firing: the end of the barrel glows,
    dull red, then red, then orange, hotter and hotter, and cools down slowly once they stop. Every duck's, as each shot
-   is seen (game.js calls heatUp next to its kick). The glow is a soft round light at the barrel's end, its color the
-   laser gun's hot metal (laserart.js hotColor). */
+   is seen (game.js calls heatUp next to its kick). The glow is a plus of pixels at the barrel's end (css .barrel-heat),
+   its color the laser gun's hot metal (laserart.js hotColor). */
 import { hotColor } from "./laserart.js";
 
 /* how long each gun fires before its barrel is as hot as it gets (s), and how fast it cools. The heat goes by the time
    it keeps firing, not by its shots counted (a slow screen sees only some of them) */
-const HOT = { lmg: 4, chaingun: 4 };
+const HOT = { lmg: 4 };
 const GAP = 0.6; // (s: a longer wait between two shots seen is a pause, not firing)
 const COOL = 0.22, // (heat lost a second)
   SHOW = 0.15; // (below this, no glow)
@@ -32,7 +32,7 @@ export function heatUp(id, gun) {
     gun,
   }); // (the cooling since the last shot is given back: firing, it only heats)
 }
-/* every frame: a glow at each hot barrel's end. held: duck id → its weapon in hand (game.js; _tip, the chain gun's
+/* every frame: a glow at each hot barrel's end. held: duck id → its weapon in hand (game.js; _tip, a line gun's
    barrel end, or _end), fxl: the layer they're in, size: a duck's size */
 const GLOW = new Map(); // duck id → its glow
 /* is a weapon in hand (game.js .held) still on this board? In fxl, or with its duck in the ducks' layer under a roof
@@ -64,7 +64,7 @@ export function heatDraw(held, fxl, size) {
       GLOW.set(id, g);
     }
     g.hidden = false;
-    const r = size * (0.08 + 0.1 * heat);
-    g.style.cssText = `transform:translate(${at[0].toFixed(1)}px,${at[1].toFixed(1)}px);width:${(r * 2).toFixed(1)}px;height:${(r * 2).toFixed(1)}px;--c:${hotColor(heat)};opacity:${Math.min(1, (heat - SHOW) * 2.2).toFixed(2)}`;
+    const r = Math.max(3, Math.round(size * (0.08 + 0.1 * heat) * 1.5) / 1.5); // (whole steps: a pixel glow)
+    g.style.cssText = `transform:translate(${Math.round(at[0])}px,${Math.round(at[1])}px);width:${(r * 2).toFixed(1)}px;height:${(r * 2).toFixed(1)}px;--c:${hotColor(heat)};opacity:${Math.min(1, (heat - SHOW) * 2.2).toFixed(2)}`;
   }
 }

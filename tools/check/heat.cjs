@@ -79,7 +79,6 @@ const { chromium } = require("playwright");
     tommy: [0.35, "medium"],
     ump: [0.34, "medium"],
     ak: [0.32, "medium"],
-    chaingun: [0.37, "medium"],
     revolver: [0.5, "heavy"],
     glauncher: [0.45, "heavy"],
     lmg: [0.15, "small"],
