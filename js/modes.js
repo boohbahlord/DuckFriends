@@ -169,6 +169,7 @@ export const MODES = [
     ownDeath: true, // (it comes back its own way, not the boards' spawn protection: death.js normalGame)
     downMs: 5000, // (how long a knocked-down duck can't move: always 5 s, whatever the host picks: death.js downFor)
     downLocked: true,
+    hp: "mgj", // (its HP: the boss fight's, mgjrules.js; hpmath.js hpOf)
     cat: "special",
     name: "Mad God Justin",
     stats: {
@@ -241,6 +242,7 @@ export const MODES = [
     darkCabin: true, // (its Duck Cabin picture in the settings' preview is the dark one)
     l4map: true, // (it has its own map pick, Game Settings l4map: Duck Cabin or Downpour)
     downMs: 1000, // (its default: half a second longer than 0.5 s, the owner 2026-11-03 17:15Z)
+    hp: "maps", // (its HP: the zombie maps', l4ddrules.js; Survival and Sandbox on its maps too, baseMode)
     cat: "special",
     name: "Dead Ducks Arcade",
     stats: {

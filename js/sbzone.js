@@ -4,8 +4,8 @@
    it hits that stands in it, once every "Seconds between" (a Seriat range there: a new pick each time, so the rate can
    change). "Who it hits" takes what a spawn's behavior lists take: Players, Everything, a kind, a spawn by its color or
    name, and a player's name.
-   - On the board and Duck Cabin a duck loses HP as from a spawn's claw (rules.js SB_H.claw), or gets it back (SB_H.heal);
-     on the zombie maps as their zombies hurt (l4ddrules.js l4Hurt, l4Heal).
+   - On the board and Duck Cabin a duck loses HP as from a spawn's claw (rules.js SB_H.claw), or gets it back (the mode's
+     HP, hpmath.js hpHealOf); on the zombie maps as their zombies hurt (l4ddrules.js l4Hurt).
    - NPCs lose or get back their HP the same way, up to what they spawned with; the zombie maps' own zombies, whole HP
      (theirs).
    - On a world a zone is on its own floor: only what stands within 40 px of the height it was placed at.
@@ -30,7 +30,8 @@ import {
 import { valueOf } from "./numerat.js";
 import { boxText, spawnsHere } from "./sbspawn.js";
 import { W, H, heightAt } from "./hangout/layout.js";
-import { l4Hurt, l4Heal, l4Zone } from "./l4ddrules.js";
+import { l4Hurt, l4Zone } from "./l4ddrules.js";
+import { hpHealOf } from "./hpmath.js";
 import { grIn } from "./sbgroups.js";
 import { zbThink } from "./sbzonebrain.js";
 import { sbFloorsFrom } from "./sbfloors.js";
@@ -300,10 +301,8 @@ function hitWith(s, pts, id, p, now, H0, fx, amt) {
   /* the ducks */
   for (const d of ducks) {
     ch = true;
-    if (zmaps) {
-      if (fx === "heal") l4Heal(s, d, amt);
-      else l4Hurt(s, d, amt, now, "zone");
-    } else if (fx === "heal") H0.heal(s, d, amt, now);
+    if (fx === "heal") hpHealOf(s, d, amt, now);
+    else if (zmaps) l4Hurt(s, d, amt, now, "zone");
     else H0.claw(s, d, amt, now, "zone");
   }
   /* the NPCs: everything, their kind, or their spawn by its color or name */
