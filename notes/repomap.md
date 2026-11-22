@@ -67,12 +67,15 @@ gamehand.js 604 the hand: the number-key specials,
 gameplace.js 738 where things are put on
 gameready.js 47 
 gameround.js 597 round
-gamesettings.js 1757 Game Settings: the whole screen,
+gamesettings.js 764 Game Settings: the whole screen,
 gamestats.js 191 what `stats` and `roundstats` print
 gfx.js 8 Low graphics
 gmodes.js 219 Sandbox Phase 6: made game
 grenade.js 33 a grenade going off
 ground.js 53 what a duck walks on,
+gspreview.js 86 Game Settings: the pictures in
+gssettings.js 773 Game Settings: every setting, its
+gstext.js 185 Game Settings: what a setting
 gunart.js 437 every weapon, drawn: one drawing
 gunmen.js 110 the gunmen's looks
 gunmenrules.js 1156 Survival: the gunmen
@@ -256,7 +259,7 @@ umaps.js 371 Made maps: making them, and
 units.js 12 the game's units, in one
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an
-updates.js 3363 Updates
+updates.js 3372 Updates
 vdd.js 190 Valentine's Duck Date: what the
 vddrules.js 513 the rules of Valentine's Duck
 vellum.js 28 The King's Festival
@@ -273,7 +276,12 @@ zombies.js 1477 the zombies: one module for
 ## js/hangout/
 activities.js 23 every Hangout activity, so the
 ambience.js 112 the air: the wind round
-art.js 3050 Duck Cabin: the drawings
+art.js 252 Duck Cabin: the drawings
+artbase.js 156 the drawings' shared pieces
+artcabin.js 516 the cabin's shell: walls, doors,
+artindoor.js 1104 the cabin's inside: furniture, stage,
+artpool.js 358 the deck and the pool
+artyard.js 901 the yard: ground, trees, lamps,
 beachball.js 364 the beach ball
 blackjack.js 1382 the blackjack table in the
 book.js 170 the guestbook: a book on
