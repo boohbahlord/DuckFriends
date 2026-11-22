@@ -16,8 +16,6 @@
    own rules in duncerules.js: one defender in the circle, everyone else walks to Dunce or Not a Dunce. Valentine's Duck
    Date has its own in vddrules.js: The Date at the dining table, a date with each Suitor, then a Suitor Turned Down. */
 
-import { HANDGUN } from "./gamedefaults.js";
-
 import {
   baseMode,
   baseL4map,
@@ -38,7 +36,7 @@ import { sbEnd } from "./sbsave.js";
 
 import { stamp, took } from "./perf.js";
 
-import { boardSpeed, ARM_RELOAD } from "./armspeed.js";
+import { boardSpeed } from "./armspeed.js";
 
 import {
   isDn,
@@ -100,6 +98,7 @@ import {
 import { helperOut } from "./l4ddrules.js";
 
 import { ARMS, GUN_BREEDS, BOARD_GUNS } from "./guns.js";
+import { magKey } from "./ammo.js";
 
 import { MAPS, MAP_FORMS, mapForm, mapName } from "./maps.js";
 
@@ -244,6 +243,7 @@ export const OPTIONS_DEFAULT = {
   textMax: 200, // the most characters a question, topic or take can have: 80, 140, 200 (the old limit) or 280
   hideLooks: 0, // Hide customization: 1 = every duck is the plain yellow duck during the game (looks.js)
   noGore: 0, // Gore off: 1 = no blood or gore on the board (fx.js)
+  infAmmo: 0, // Unlimited ammo: 1 = guns reload but never run out (ammo.js)
   noFx: 0, // Heavy effects off: 1 = no gun smoke, muzzle flashes or screen shake, the effects that are hard on the game (fx.js)
   rainbowDucks: 0, // … Rainbow Ducks (with hideLooks only): the seven rainbow colors and a brown Justin-costume duck, dealt at random
   voteColor: 0, // Vote colors: 1 = a duck takes the color of the tile it stands on (never with Rainbow Ducks, never in Mad God Justin)
@@ -813,36 +813,13 @@ export const coolFor = (sp, s) =>
   GUN_BREEDS.board.cool[sp] ||
   (BOARD_GUNS.includes(sp) && ARMS[sp].cool) ||
   1500; // (Mad God Justin has its own for the knife and the bow; Quacky Zombies' guns keep theirs, l4ddrules.js ARMS)
-/* the handgun holds MAG shots, about five a second; after the last it reloads for RELOAD ms by itself (R reloads sooner).
-   The other guns' magazines are Quacky Zombies' (no ammo to run out of here: only the magazine and its reload); the grenade
-   launcher has none there, so here it reloads after 3 (my guess). s.mag = { id: { n: shots fired, r: when its reload ends (0: not reloading) } } for the handgun, and
-   { "id gun": … } for the others */
-export const MAG = HANDGUN.mag,
-  RELOAD = ARM_RELOAD;
-/* how long a reload takes with n shots gone: the double barrel a second for each shell it loads, the rest their own */
-export const reloadFor = (w, n) =>
-  w === "dbarrel"
-    ? ARMS.dbarrel.shell * Math.max(1, Math.min(2, n))
-    : (magSize(w) || [0, RELOAD])[1];
-export const magSize = (w) =>
-  w === "handgun"
-    ? [MAG, RELOAD]
-    : GUN_BREEDS.board.mag[w] ||
-      (BOARD_GUNS.includes(w) && ARMS[w].mag
-        ? [ARMS[w].mag, ARMS[w].reload]
-        : null); // ([shots, reload ms], or null: no magazine)
-export const magKey = (id, w) => (w === "handgun" ? id : `${id} ${w}`);
-export const magOf = (s, id, now, w = "handgun") => {
-  const m = (s.mag || {})[magKey(id, w)];
-  return !m || (m.r && now >= m.r) ? { n: m && m.p ? -1 : 0, r: 0 } : m; // (p: one more in the chamber, actplay.js)
-};
 export const coolEnds = (s, id, sp) =>
   Math.max(
     ((s.lastUse || {})[`${id} ${sp}`] || 0) +
       ((isSb(s) && (sbItemMods(s, sp).cool || (sbGot(s, id, sp) || {}).c)) ||
         coolFor(sp, s)) /
         grCool(s, id), // (Sandbox: a loot orb's own wait, sbhot.js; a group's Cooldown speed, sbgroups.js)
-    magSize(sp) ? ((s.mag || {})[magKey(id, sp)] || {}).r || 0 : 0,
+    ((s.mag || {})[magKey(id, sp)] || {}).r || 0, // (a reload: ammo.js)
   ); // (a time on the room's clock)
 /* the hammer's knock-back: a duck it hits is shoved (push.js KB_FAR) away from the swing in KB_MS, with a little hop
    (KB_HOP duck sizes high), and lands playing dead; pos.kb = { t, x, y: where it was } lets every screen draw the shove */

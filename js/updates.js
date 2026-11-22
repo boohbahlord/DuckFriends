@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v282",
+    version: 282,
+    date: "Nov 22, 2026",
+    title: "Guns have ammo in every mode",
+    news: [
+      "Every mode: guns have Dead Ducks Arcade's ammo, with their magazines, and they can run out (the pistol has 7 and 133 more). A game starts with every gun full, and a gun picked up in Mad God Justin comes full.",
+      "New in G: Unlimited ammo (off by default). Guns still reload but never run out.",
+      "The dots under a gun's key show its magazine and what's left.",
+    ],
+  },
+  {
     id: "v281",
     version: 281,
     date: "Nov 22, 2026",

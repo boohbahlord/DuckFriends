@@ -19,11 +19,12 @@ const { url, fail, noErrors } = require("./lib.cjs");
     const A = await import("./js/l4ddangel.js"),
       G = await import("./js/guns.js"),
       L = await import("./js/l4ddrules.js"),
+      AM = await import("./js/ammo.js"),
       out = { adds: {}, ammo: [] };
     for (const w of ["handgun", "sniper", "lmg", "dbarrel", "bow", "knife"])
       out.adds[w] = [A.angelDmg(w), +(A.angelCrit(w) * 100).toFixed(3)];
     for (const w of Object.keys(G.ARMS)) {
-      const f = L.fullAmmo(w),
+      const f = AM.fullAmmo(w),
         a = A.angelAmmo(f, w);
       if (!f) continue;
       const same = f[0] + f[1] === a[0] + a[1];

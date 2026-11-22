@@ -257,6 +257,15 @@ export const HOST = [
     cat: "more",
     d: "The lightning, love, kill and hotdog commands in the command line.",
   },
+  /* the owner's, Nov 22 19:29Z: "WHEN THE GUNS ARE SELECTED, THEY HAVE AMMO OF DEAD DUCKS ARCADE UNLESS UNLIMITED AMMO IS
+     SELECTED" (ammo.js) */
+  {
+    k: "infAmmo",
+    n: "Unlimited ammo",
+    c: ON_OFF,
+    cat: "more",
+    d: "Off: every gun has its magazines and runs out, as in Dead Ducks Arcade. On: guns still reload but never run out.",
+  },
   {
     k: "botWait",
     n: "Computers wait",

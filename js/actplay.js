@@ -43,14 +43,10 @@ import {
   isLaw,
   isSc,
   logLine,
-  magKey,
-  magOf,
-  magSize,
   needed,
   onKeys,
   playing,
   question,
-  reloadFor,
   reviewCount,
   say,
   shareOf,
@@ -61,13 +57,14 @@ import {
   waiting,
   heldBack,
   roundsOf,
-  afterShots,
   shotKind,
   coneOf,
   roundAt,
 } from "./weaponuse.js";
 import { spreadAim } from "./heat.js";
-import { isSb, boardDuck, sbBoardK } from "./sandboxrules.js";
+import { isSb, boardDuck, sbBoardK, sbItemMods } from "./sandboxrules.js";
+import { godHas } from "./sbgod.js";
+import { capOf, infAmmo, magOf, reloadMag, shootMag } from "./ammo.js";
 import { sbTick } from "./sbspawn.js";
 import { sbOut, sbOutTick } from "./sbout.js";
 import { sbSlots, sbGot, sbSpend } from "./sbhot.js";
@@ -131,10 +128,9 @@ import {
   mgjHolds,
   PELLETS,
   SPREAD,
-  mgjMag,
   mgjOut,
-  ammoOf,
-  mgjSpend,
+  heldGun,
+  mgjSpent,
 } from "./mgjrules.js";
 import { mgjUse } from "./mgjpicks.js";
 import {
@@ -155,7 +151,6 @@ import {
   THROWS,
   MGJ_GUNS,
   MGJ_MELEE,
-  loadTo,
 } from "./guns.js";
 import { modeOf } from "./modes.js";
 import { SC_VOTES, scVote, scWrite } from "./scrules.js";
@@ -507,7 +502,7 @@ export function act_use({ state, s, a, now, me, boss }) {
   const mgjGun = isMgj(s) && MGJ_GUNS.includes(sp);
   if (isMgj(s) && sp !== MGJ_MELEE && sp !== "handgun" && !mgjGun)
     return mgjUse(s, a, now, logLine) ? s : state; // (Mad God Justin: the medkit picked up)
-  if (mgjGun && (s.mgj.held[a.id] !== sp || !ammoOf(s, a.id))) return state; // (Mad God Justin: a gun picked up, until its shots are gone)
+  if (mgjGun && heldGun(s, a.id) !== sp) return state; // (Mad God Justin: a gun picked up, until its ammo is gone)
   if (
     (BOARD_WEAPONS.includes(sp) || sp === "chair") &&
     !s.options.fun &&
@@ -532,25 +527,12 @@ export function act_use({ state, s, a, now, me, boss }) {
     heldBack(s, sp, () => laserHeat(s, a.id, now).over)
   )
     return state; // (weaponuse.js: its wait, the one zebra cake, Mad God Justin's Laser Rifle overheated)
-  const mg = downGun ? magSize(sp) : isMgj(s) ? mgjMag(sp) : magSize(sp); // (Mad God Justin's pistol never reloads: the owner's, Nov 16; a gun picked up has Quacky Zombies' magazine; the down pistol does, its bullets never run out)
-  const many =
-    sp === "burst" && !isMgj(s)
-      ? roundsOf(ARMS.burst, mg[0] - magOf(s, a.id, now, sp).n)
-      : 1; // (the burst rifle: three rounds a press, or the rest of its clip)
-  if (mg) {
-    // one shot from the magazine; the last starts the reload
-    const m = magOf(s, a.id, now, sp),
-      n = m.n + many,
-      d = isMgj(s) ? mg[1] : reloadFor(sp, n);
-    s.mag = {
-      ...(s.mag || {}),
-      [magKey(a.id, sp)]: afterShots(mg[0] - m.n, many).empty
-        ? { n, r: now + d, d }
-        : { n, r: 0 },
-    };
-  }
+  const m = magOf(s, a.id, now, sp, downGun),
+    many = sp === "burst" && !isMgj(s) && m ? roundsOf(ARMS.burst, m.c[0]) : 1; // (the burst rifle: three rounds a press, or the rest of its clip)
+  if (!shootMag(s, a.id, now, sp, many, unlimited(s, a.id, sp, downGun)))
+    return state; // (Dead Ducks Arcade's ammo in every mode, ammo.js: empty, or reloading)
   s.lastUse = { ...(s.lastUse || {}), [k]: now };
-  if (mgjGun) mgjSpend(s, a.id);
+  if (mgjGun) mgjSpent(s, a.id, now);
   if (gotM) sbSpend(s, a.id, sp); // (one of its uses: sbhot.js)
   const face = a.face < 0 ? -1 : 1,
     u = isHang(s) ? [0.006, 0.012] : boardDuck(s), // (a duck's size each way)
@@ -694,40 +676,34 @@ export function act_use({ state, s, a, now, me, boss }) {
 export function act_reload({ state, s, a, now, me }) {
   // R: the handgun reloads before its magazine is empty
   if (me && isL4dd(s)) return l4Reload(s, a, now) ? s : state;
-  if (me && isMgj(s)) {
-    // Mad God Justin: the gun picked up, if it has a magazine (or the down pistol)
-    const w = a.w,
-      mg =
-        w === "handgun" && me.dead && mgjOut(s, a.id) ? magSize(w) : mgjMag(w),
-      m = mg && magOf(s, a.id, now, w),
-      to = m && loadTo(w, mg[0] - m.n, mg[0]); // (a full one: one more in the chamber, faster: guns.js)
-    if (
-      !m ||
-      (s.mgj.held[a.id] !== w && !(w === "handgun" && me.dead)) ||
-      !to ||
-      m.r
-    )
-      return state;
-    s.mag = {
-      ...(s.mag || {}),
-      [magKey(a.id, w)]: { n: m.n, r: now + mg[1] * to[1], ...more(to, mg) },
-    };
-    return s;
-  }
-  const w = magSize(a.w) ? a.w : "handgun"; // (the gun named, or the handgun)
-  if (!me || !onKeys(me.duck, w) || !s.options.fun) return state;
-  const m = magOf(s, a.id, now, w),
-    to = loadTo(w, magSize(w)[0] - m.n, magSize(w)[0]),
-    d = reloadFor(w, m.n) * (to ? to[1] : 1);
-  if (!to || m.r) return state;
-  s.mag = {
-    ...(s.mag || {}),
-    [magKey(a.id, w)]: { n: m.n, r: now + d, d, ...more(to, magSize(w)) },
-  };
-  return s;
+  if (!me) return state;
+  const down = isMgj(s) && a.w === "handgun" && !!me.dead && mgjOut(s, a.id), // (Mad God Justin: the down pistol)
+    w = isMgj(s) ? a.w : capOf(a.w) ? a.w : "handgun"; // (the board: the gun named, or the handgun)
+  if (
+    isMgj(s)
+      ? w === "handgun"
+        ? me.dead && !down
+        : me.dead || heldGun(s, a.id) !== w
+      : !onKeys(me.duck, w) || !s.options.fun
+  )
+    return state; // (Mad God Justin: the pistol, the gun picked up, or the down pistol)
+  return reloadMag(
+    s,
+    a.id,
+    now,
+    w,
+    unlimited(s, a.id, w, down),
+    magOf(s, a.id, now, w, down),
+  )
+    ? s
+    : state;
 }
-/* a reload to one more than the magazine holds (loadTo): marked, so it starts one short of empty (rules.js magOf) */
-const more = (to, mg) => (to[0] > mg[0] ? { p: 1 } : {});
+/* G's Unlimited ammo, the down pistol's bullets, or Sandbox's God mode or a loot's own Unlimited ammo: the rest never
+   goes down (ammo.js) */
+export const unlimited = (s, id, w, down) =>
+  down ||
+  infAmmo(s) ||
+  (isSb(s) && (godHas(s, id, "ammo") || sbItemMods(s, w).inf === true));
 
 export function act_aura({ state, s, a, now, me }) {
   // an effect around a duck's head, seen by everyone: 5 seconds, or kept on (keep) until kept off
