@@ -3,10 +3,11 @@ file lines job
 
 ## js/
 account.js 397 the Google account: the
-actplay.js 964 a game's actions
+actplay.js 940 a game's actions
 actroom.js 768 the room's actions
 actsb.js 160 Sandbox's windows, saves and
 allies.js 383 Survival: the friendly squad
+ammo.js 113 THE ONE AMMO RULE,
 armpage.js 142 a page of Customize's
 armspeed.js 34 how fast the weapons
 art.js 403 pictures drawn in code
@@ -57,7 +58,7 @@ euclid.js 351 Euclid's Squares
 eyes.js 187 eyes
 faces.js 297 face items
 feet.js 70 footsteps in every mode
-flamer.js 50 the flamethrower
+flamer.js 49 the flamethrower
 flowfield.js 173 the zombies' flow field,
 format.js 15 numbers as the settings
 friends.js 236 friends
@@ -70,7 +71,7 @@ gameannounce.js 212 The cloud's words and
 gameboard.js 589 the board: each mode's
 gamedefaults.js 71 the game's own numbers,
 gamefx.js 840 the silly commands and
-gamehand.js 620 the hand: the number-key
+gamehand.js 608 the hand: the number-key
 gameplace.js 734 where things are put
 gameready.js 47 
 gameround.js 572 round
@@ -82,14 +83,14 @@ gmodes.js 272 Sandbox Phase 6: made
 grenade.js 33 a grenade going off
 ground.js 53 what a duck walks
 gspreview.js 86 Game Settings: the pictures
-gssettings.js 773 Game Settings: every setting,
+gssettings.js 782 Game Settings: every setting,
 gstext.js 200 Game Settings: what a
 gunart.js 451 every weapon, drawn: one
 gunmen.js 110 the gunmen's looks
 gunmenrules.js 1158 Survival: the gunmen
 gunmenview.js 135 Survival: the gunmen on
 gunparts.js 15 the pieces every weapon's
-guns.js 721 every weapon's numbers: one
+guns.js 708 every weapon's numbers: one
 hats.js 1096 hats
 heat.js 74 a gun's heat: the
 heights.js 87 a shot's height, Doom's
@@ -98,7 +99,7 @@ hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
 hooks.js 3 hooks between screens that
 hotbar.js 515 the specials on the
-hotpick.js 324 What goes in my
+hotpick.js 340 What goes in my
 hpmath.js 68 HP in hundredths
 hpmeter.js 311 HP meters and the
 idbstore.js 38 One place that opens
@@ -123,7 +124,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power
 l4ddpowerui.js 278 Dead Ducks Arcade's power
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4908 the rules of Quacky
+l4ddrules.js 4881 the rules of Quacky
 l4ddsfx.js 545 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online:
 langname.js 5 the name of Sandbox's
@@ -146,8 +147,8 @@ meters.js 138 the thin bars under
 mgj.js 219 Mad God Justin: what
 mgjart.js 96 Mad God Justin's new
 mgjbrain.js 613 Mad God Justin's brain,
-mgjpicks.js 504 Mad God Justin's pickups:
-mgjrules.js 1253 
+mgjpicks.js 502 Mad God Justin's pickups:
+mgjrules.js 1237 
 modes.js 446 the game modes
 music.js 590 the music: our own
 musicbar.js 169 the music bar: the
@@ -189,7 +190,7 @@ report.js 114 Report Bug or Suggest
 roomrules.js 368 room governance: groups and
 rooms.js 256 Play: create a room,
 router.js 112 screens
-rules.js 1729 the rules of Agree
+rules.js 1706 the rules of Agree
 sandbox.js 1351 Sandbox: the key windows
 sandboxrules.js 2056 Sandbox: which map it
 saybubble.js 78 a duck's speech bubble
@@ -210,8 +211,8 @@ sbhelp.js 277 Sandbox: the help manual
 sbhot.js 143 Sandbox: the hotbar ,
 sbhotview.js 406 Sandbox: the hotbar ,
 sblooks.js 48 Sandbox: a zone's look
-sbloot.js 495 Sandbox: loot orbs ,
-sblootview.js 510 Sandbox: loot orbs ,
+sbloot.js 496 Sandbox: loot orbs ,
+sblootview.js 511 Sandbox: loot orbs ,
 sbmake.js 203 Sandbox: making NPCs and
 sbmenu.js 264 Sandbox: presets, copy and
 sbnpcart.js 162 Sandbox: a spawned NPC's
@@ -272,12 +273,12 @@ umaps.js 374 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 408 things you unlock
 upbar.js 69 the green bar on
-updates.js 3661 Updates
+updates.js 3672 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival
 vote.js 279 Vote Mode & Map:
-voterules.js 347 the lobby's vote for
+voterules.js 348 the lobby's vote for
 walkgrid.js 83 the walking grid: which
 weaponuse.js 104 using a weapon: one
 who.js 3 who this player is

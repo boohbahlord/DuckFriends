@@ -15,8 +15,8 @@ import {
   WEAPON_BAGS,
   merchantPrice,
   missOf,
-  endless,
 } from "./l4ddrules.js";
+import { endless } from "./ammo.js";
 import {
   ARMS,
   kindOf,

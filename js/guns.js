@@ -1,7 +1,7 @@
 /* ---------- every weapon's numbers: one sheet for every mode ----------
    Dead Ducks Arcade's are the base (ARMS: each weapon's kind, damage, speed, ammo and the rest; its name as players see
    it; its kind). A mode that does a weapon its own way gives only the numbers that differ (Type Object: GUN_BREEDS);
-   the rules ask through their own functions (rules.js coolFor and magSize, mgjrules.js mgjCool and mgjMag). Drawings:
+   the rules ask through their own functions (rules.js coolFor, mgjrules.js mgjCool; every gun's ammo: ammo.js). Drawings:
    gunart.js */
 import { HANDGUN } from "./gamedefaults.js";
 import { ARM_SPEED, ARM_COOL, ARM_SWING, ARM_RELOAD } from "./armspeed.js";
@@ -26,7 +26,7 @@ const PISTOL_MAGS = 20;
 /* a hit's damage from a weapon's `dmg` range: one of its numbers a `step` apart (1 unless the weapon says: a gun's 0.05,
    the dagger's 0.5), every one as likely as the next. A gun with rolls (the Barrett's) first rolls which range it hits
    in, each as often as its weight. Kept to hundredths, so 0.05 steps never come out as 2.2499999 */
-export const rollDmg = (A) => {
+const rollDmg = (A) => {
   const [lo, hi] = A.rolls ? pickRoll(A.rolls) : A.dmg,
     st = A.step || 1;
   return (
@@ -626,9 +626,7 @@ export const MGJ_GUNS = [
 /* the modes' own numbers, where a weapon works its own way there */
 export const GUN_BREEDS = {
   /* the board's specials (the normal games): how long one waits before its key works again (ms; the key shows a bar
-     draining meanwhile), and the magazines the board gives guns with none in Quacky Zombies, [shots, reload ms] (the
-     double barrel's two shells and the flamethrower's tank, Nov 16
-     16:25Z) */
+     draining meanwhile). Their ammo is Dead Ducks Arcade's (ammo.js) */
   board: {
     cool: {
       handgun: ARM_COOL.handgun,
@@ -644,11 +642,6 @@ export const GUN_BREEDS = {
       bow: ARM_COOL.bow,
       chair: 15000,
       zebra: 30000, // (as Mad God Justin's CAKE_EVERY)
-    },
-    mag: {
-      glauncher: [3, 4000],
-      dbarrel: [2, 2 * ARMS.dbarrel.shell],
-      flamer: [FLAME.TANK, FLAME.RELOAD],
     },
     names: { dbarrel: "Double barrel" }, // (the board has only the one: Dead Ducks Arcade's slug double barrel)
   },
@@ -688,18 +681,12 @@ export const GUN_BREEDS = {
     },
   },
   /* Mad God Justin: the knife, the sword and the pistol as fast as in every mode (the knife four a second, the pistol
-     five), a gun picked up Quacky Zombies' own; every gun picked up has to reload here (the owner's, Nov 16), so the ones
-     with no magazine in Quacky Zombies get one: the shotgun 6 shells, the grenade launcher 3 (as in the other modes; my
-     guess). The pistol's never runs out */
+     five), a gun picked up Quacky Zombies' own, its ammo too (ammo.js) */
   mgj: {
     cool: {
       sword: ARM_COOL.sword,
       knife: ARM_COOL.knife,
       handgun: ARM_COOL.handgun,
-    },
-    mag: {
-      shotgun: [6, 2600],
-      glauncher: [3, 4000],
     },
   },
 };

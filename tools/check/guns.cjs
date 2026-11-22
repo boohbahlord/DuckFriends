@@ -2,8 +2,8 @@
    by the NPC golden (tools/check/npcgolden.cjs: the computers and NPCs fire them in Dead Ducks Arcade, Survival, Sandbox
    and Mad God Justin, and the guns-board-* runs fire every one of the board's as a special). This pins the rest, for
    every weapon any mode has:
-   - numbers: Dead Ducks Arcade's (ARMS, names, kinds, lists and bags), the board's (cooldowns, magazines, full auto),
-     Mad God Justin's (cooldowns, magazines, damage, pickups), the NPCs' (Sandbox's lists and reach, the gunmen's), and
+   - numbers: Dead Ducks Arcade's (ARMS, names, kinds, lists and bags), the board's (cooldowns, full auto), every
+     gun's ammo (ammo.js), Mad God Justin's (cooldowns, damage, pickups), the NPCs' (Sandbox's lists and reach, the gunmen's), and
      the feel (headshot odds, the kick's vibration, the swing and fire speeds);
    - specials: each one's entry in the specials list (the picker), its icon as the hotbar and Customize show it;
    - drawings: each weapon in the hand, its icon, its bullet and trace, as drawings and as pixels;
@@ -31,6 +31,7 @@ const INIT = fs.readFileSync(
     .evaluate(async () => {
       const L4m = await import("./js/l4ddrules.js"),
         GN = await import("./js/guns.js"),
+        AM = await import("./js/ammo.js"),
         Rm = await import("./js/rules.js"),
         MGm = await import("./js/mgjrules.js"),
         SA = await import("./js/sbarms.js"),
@@ -138,16 +139,19 @@ const INIT = fs.readFileSync(
       });
       out.board = H({
         cool: per((w) => R.coolFor(w, board)),
-        mag: per(R.magSize),
         lists: [R.WEAPONS, R.GUNS_NEW, R.THROWS],
         auto: per((w) => R.AUTO.includes(w)), // (which fire while held: a set, its order means nothing)
-        mag0: [R.MAG, R.RELOAD],
+      });
+      /* every gun's ammo in every mode: Dead Ducks Arcade's (ammo.js, the owner's, Nov 22 19:29Z) */
+      out.ammo = H({
+        full: per(AM.fullAmmo),
+        cap: per(AM.capOf),
+        reload: per((w) => (AM.capOf(w) ? AM.reloadMs(w, [0, 99]) : 0)),
       });
       out.mgj = H({
         cool: per((w) => [R.coolFor(w, mgj), MG.mgjCool(w)]),
-        mag: per(MG.mgjMag),
         dmg: MG.DMG,
-        lists: [MG.MGJ_GUNS, MG.PICK_WEAPONS, MG.MGJ_MELEE, MG.INF_AMMO],
+        lists: [MG.MGJ_GUNS, MG.PICK_WEAPONS, MG.MGJ_MELEE],
       });
       out.npcs = H({
         sb: [NA.guns, NA.melee, per(sbReach)],

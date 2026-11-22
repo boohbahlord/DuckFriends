@@ -55,6 +55,7 @@ import { justinAt, JUSTIN_ID } from "./boardjustin.js";
 import { zombieTakes, pierceOf, ALL_HP } from "./l4ddrules.js";
 
 import { ARMS, GUN_BREEDS, MGJ_GUNS, MGJ_MELEE } from "./guns.js";
+import { leftOf } from "./ammo.js";
 
 import { ZOMBIE_BREEDS, boardWalk, zLook } from "./zombies.js";
 
@@ -283,36 +284,19 @@ export const PLUS_LIFE = 10000,
     ["sky", 5],
   ]; // (the rarest first: the owner's, Nov 18 10:38Z; the guns and the medkit come from their bags: pickKind)
 export const PICK_WEAPONS = [...MGJ_GUNS, "medkit"];
-/* the shots a gun picked up comes with (the owner's, Nov 17): only its one magazine, the shotgun never runs out, the LMG 30 */
-export const INF_AMMO = 9999; // (the shotgun picked up never runs out: the owner's, Nov 17; a number, as the state is JSON)
-export const pickAmmo = (k) =>
-  k === "shotgun" || k === "laser"
-    ? INF_AMMO // (the Laser Rifle never runs out anywhere: it only overheats)
-    : k === "lmg"
-      ? 30 // (the LMG only 30 rounds here: the owner's, Nov 17)
-      : (mgjMag(k) || [ARMS[k].all])[0]; // (every other gun only its one magazine)
-/* a gun's magazine here ([shots, reload ms], or null): guns.js GUN_BREEDS.mgj */
-export const mgjMag = (k) =>
-  !MGJ_GUNS.includes(k)
-    ? null
-    : ARMS[k].mag
-      ? [ARMS[k].mag, ARMS[k].reload]
-      : GUN_BREEDS.mgj.mag[k] || null;
-/* the shots left in the gun duck id picked up (0: none, or it holds something else) */
-export const ammoOf = (s, id) =>
-  (s.mgj &&
-    MGJ_GUNS.includes((s.mgj.held || {})[id]) &&
-    (s.mgj.ammo || {})[id]) ||
-  0;
-/* one shot from the gun picked up; the last one and it's gone (back to the one out before) */
-export function mgjSpend(s, id) {
-  const m = s.mgj,
-    left = ammoOf(s, id) >= INF_AMMO ? INF_AMMO : ammoOf(s, id) - 1;
-  if (left > 0) m.ammo = { ...m.ammo, [id]: left };
-  else dropHeld(m, id);
+/* the gun duck id picked up and holds (null: none) */
+export const heldGun = (s, id) => {
+  const k = s.mgj && (s.mgj.held || {})[id];
+  return MGJ_GUNS.includes(k) ? k : null;
+};
+/* after a shot from the gun picked up: all its ammo gone (ammo.js, Dead Ducks Arcade's), it's gone, back to the one
+   out before */
+export function mgjSpent(s, id, now) {
+  const k = heldGun(s, id);
+  if (k && leftOf(s, id, now, k) <= 0) dropHeld(s.mgj, id);
 }
 export function dropHeld(m, id) {
-  for (const k of ["held", "uses", "ammo"]) {
+  for (const k of ["held", "uses"]) {
     const rest = { ...(m[k] || {}) };
     delete rest[id];
     m[k] = rest;

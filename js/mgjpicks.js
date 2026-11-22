@@ -32,7 +32,6 @@ import {
   mgjPHp,
   mgjStab,
   mgjZombieHit,
-  pickAmmo,
   rnd,
 } from "./mgjrules.js";
 
@@ -149,7 +148,7 @@ export function pickTick(s, now, at, log, fx) {
       ch = true;
     }
   }
-  /* a duck walks over a weapon: a gun is theirs with its shots (pickAmmo), the medkit for one use */
+  /* a duck walks over a weapon: a gun is theirs, full (ammo.js), the medkit for one use */
   if (
     m.pick &&
     PICK_WEAPONS.includes(m.pick.k) &&
@@ -165,10 +164,9 @@ export function pickTick(s, now, at, log, fx) {
       dropHeld(m, id);
       m.held = { ...m.held, [id]: k };
       if (MGJ_GUNS.includes(k)) {
-        m.ammo = { ...m.ammo, [id]: pickAmmo(k) };
         const mag = { ...(s.mag || {}) };
         delete mag[`${id} ${k}`];
-        s.mag = mag; // (a full magazine)
+        s.mag = mag; // (full: Dead Ducks Arcade's ammo, ammo.js)
       } else m.uses = { ...m.uses, [id]: PICK_USES[k] || 1 };
       fx({ kind: "pickup", what: m.pick.k, who: [id], by: id });
       m.pick = null;

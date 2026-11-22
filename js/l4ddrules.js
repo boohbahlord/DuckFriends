@@ -60,8 +60,8 @@ import {
   armDmg,
   critOf,
   START_WEAR,
-  loadTo,
 } from "./guns.js";
+import { fullAmmo, infAmmo, fire, reloadTo, refill, reloadMs } from "./ammo.js";
 import { JUMP, jumpDodges } from "./jump.js";
 import { SPRINT as GAME_SPRINT, POCKET_CHANGE } from "./gamedefaults.js";
 import { hpHeal, hpHurt, hundredths, hpBreed, regenOf } from "./hpmath.js";
@@ -895,25 +895,6 @@ export const standing = (s, id) =>
 export const dodging = (s, p, now) => jumpDodges(p, now, JUMP.T * 1000);
 
 /* ---------- a duck's slots, points and upgrades ---------- */
-/* a weapon's ammo, full: [in the magazine, the rest], or [all of it, 0] without a magazine; none for melee */
-/* a ranged weapon whose ammo never runs out (no `all`: the Laser Rifle, the bow) */
-export const endless = (w) =>
-  !!ARMS[w] &&
-  ARMS[w].kind === "ranged" &&
-  ARMS[w].all === undefined &&
-  !(w === "bow" && survOn()); // (Survival: the bow has 300 arrows)
-/* Survival: every gun holds half as much ("every weapon now has half as much ammo"), never less than a magazine; the
-   bow 300 arrows */
-export const fullAmmo = (w) => {
-  const a = ARMS[w];
-  if (w === "bow" && survOn()) return [SV.ARROWS, 0];
-  if (!a || a.all === undefined) return null;
-  const all =
-    survOn() && a.kind === "ranged"
-      ? Math.max(a.mag || 1, Math.ceil(a.all / 2))
-      : a.all;
-  return a.mag ? [a.mag, all - a.mag] : [all, 0];
-};
 /* … and as full as duck id's own is (the Angelic pistols: one magazine twice as big, l4ddangel.js) */
 export const fullFor = (s, id, w) =>
   angelOf(s, id, w) ? angelAmmo(fullAmmo(w), w) : fullAmmo(w);
@@ -1031,13 +1012,7 @@ export function laserNext(s, id, now) {
   };
 }
 export const reloadOf = (s, id, w, c) =>
-  (ARMS[w].shell
-    ? ARMS[w].shell *
-      Math.max(
-        1,
-        Math.min(ARMS[w].mag - (c ? c[0] : 0), c ? c[1] : ARMS[w].mag),
-      )
-    : ARMS[w].reload || 1500) *
+  reloadMs(w, c, infAmmo(s)) *
   Math.pow(0.7, upOf(s, id).rl || 0) *
   (angelOf(s, id, w)
     ? w === "handgun"
@@ -2947,16 +2922,14 @@ const aimDir = (a) => {
   return l > 1e-6 ? [ax / l, ay / l] : [a.face < 0 ? -1 : 1, 0];
 };
 /* a reload that's done: the magazine fills from the rest */
-function finishReload(m, now) {
+function finishReload(m, now, inf) {
   if (!m.rl || now < m.rl) return false;
   const w = m.rw,
     c = m.am && m.am[w];
   if (w === "dg" && m.dg !== undefined)
     m.dg = ARMS.handgun.mag; // (the down pistol: its bullets never run out)
-  else if (c && magIn(m, w)) {
-    const k = Math.min((m.rf || magIn(m, w)) - c[0], c[1]); // (rf: what it fills to, one more for a full one)
-    m.am = { ...m.am, [w]: [c[0] + k, c[1] - k] };
-  }
+  else if (c && magIn(m, w))
+    m.am = { ...m.am, [w]: refill(c, m.rf || magIn(m, w), inf) }; // (rf: what it fills to, one more for a full one)
   m.rl = 0;
   m.rw = "";
   return true;
@@ -2973,8 +2946,8 @@ function startReload(s, id, m, w, now) {
   const c = m.am[w];
   if (!magIn(m, w) || !c || m.rl) return false;
   if (m.lm && m.lm[w] && m.lm[w].r === 0) return false; // (Sandbox's loot: Reload off, sbloot.js)
-  const to = loadTo(w, c[0], magIn(m, w)); // (a full one: one more in the chamber, faster: guns.js)
-  if (!to || c[1] <= 0) return false;
+  const to = reloadTo(w, c, magIn(m, w), infAmmo(s)); // (a full one: one more in the chamber, faster: guns.js)
+  if (!to) return false;
   m.rt = reloadOf(s, id, w, c) * to[1];
   if (to[1] < 1) m.rf = to[0];
   else delete m.rf;
@@ -2989,7 +2962,7 @@ export function l4Reload(s, a, now) {
   if (!m0 || !(down || (standing(s, a.id) && l4Holds(s, a.id, w))))
     return false;
   const m = { ...m0 };
-  finishReload(m, now);
+  finishReload(m, now, infAmmo(s));
   if (!startReload(s, a.id, m, w, now)) return false;
   s.hang.l4a = { ...s.hang.l4a, [a.id]: m };
   return true;
@@ -3038,7 +3011,7 @@ export function l4Use(s, a, now) {
   if (what === "safekeep") return false; // (never by hand: it works by itself)
   if (what === "defib") return false; // (only on a dead player: the revive's hold, defibUse)
   const m = { ...m0, u: { ...m0.u }, am: { ...m0.am } };
-  finishReload(m, now);
+  finishReload(m, now, infAmmo(s));
   if (
     waiting(
       GATE_BREEDS.maps,
@@ -3090,8 +3063,8 @@ export function l4Use(s, a, now) {
     if (godHas(s, id, "reload") && c[1] > 0)
       m.am[what] = [c[0], Math.max(0, c[1] - many)];
     else {
-      const shot = afterShots(c[0], many);
-      m.am[what] = [shot.left, c[1]];
+      const shot = fire(c, many, magIn(m, what), infAmmo(s));
+      m.am[what] = shot.c;
       if (shot.empty) startReload(s, id, m, what, now); // (empty: it reloads by itself)
     }
   }
@@ -4514,7 +4487,7 @@ function l4Tick(s, now) {
   for (const id of Object.keys(am))
     if (am[id].rl && now >= am[id].rl) {
       const m = { ...am[id] };
-      finishReload(m, now);
+      finishReload(m, now, infAmmo(s));
       s.hang.l4a = { ...s.hang.l4a, [id]: m };
     } else if (
       am[id].rl &&

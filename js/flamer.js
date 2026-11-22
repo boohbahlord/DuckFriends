@@ -19,7 +19,6 @@ export const FLAME = {
   PATCH: 250, // ms between my patches
   MOST: 30, // patches at once, everyone's
   PATCH_R: 0.7, // duck lengths: how near a patch's middle something catches fire
-  RELOAD: 4000, // ms (outside Dead Ducks Arcade, the tank fills again after it's empty)
   BURN: 1000, // ms: a duck in it takes 1 HP once in this long (outside Dead Ducks Arcade)
   DUCK: 56, // Dead Ducks Arcade's duck length, world px (l4ddrules.js RX)
 };
