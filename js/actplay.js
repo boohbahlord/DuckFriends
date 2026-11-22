@@ -66,6 +66,7 @@ import {
   coneOf,
   roundAt,
 } from "./weaponuse.js";
+import { spreadAim } from "./heat.js";
 import { isSb, boardDuck, sbBoardK } from "./sandboxrules.js";
 import { sbTick } from "./sbspawn.js";
 import { sbOut, sbOutTick } from "./sbout.js";
@@ -540,8 +541,16 @@ export function act_use({ state, s, a, now, me, boss }) {
   if (mgjGun) mgjSpend(s, a.id);
   if (gotM) sbSpend(s, a.id, sp); // (one of its uses: sbhot.js)
   const face = a.face < 0 ? -1 : 1,
-    aim =
-      BOARD_WEAPONS.includes(sp) || THROWS.includes(sp) ? aimOf(a, face) : null;
+    u = isHang(s) ? [0.006, 0.012] : boardDuck(s), // (a duck's size each way)
+    aim = spreadAim(
+      s,
+      a.id,
+      sp,
+      BOARD_WEAPONS.includes(sp) || THROWS.includes(sp) ? aimOf(a, face) : null,
+      now,
+      many,
+      u,
+    ); // (a gun fired fast: off its aim within a cone as wide as its heat, heat.js)
   const hit = MELEE.includes(sp) ? strike(s, a.id, sp, aim, now) : null; // (the melees hit at once, up close, and while they swing: attacks)
   s.fxN = (s.fxN || 0) + 1;
   s.fx = [
@@ -607,7 +616,7 @@ export function act_use({ state, s, a, now, me, boss }) {
       ...hang,
       ...more,
     });
-    const [rx, ry] = isHang(s) ? [0.006, 0.012] : boardDuck(s),
+    const [rx, ry] = u,
       dx = aim[0] / rx,
       dy = aim[1] / ry,
       dl = Math.hypot(dx, dy) || 1; // (the aim in duck lengths: the shotgun's cone and the grenade's throw are measured in them)

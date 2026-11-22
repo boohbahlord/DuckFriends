@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v261",
+    version: 261,
+    date: "Nov 22, 2026",
+    title: "Shots spread as you keep firing",
+    news: [
+      "For every mode with guns: keep firing and your shots spread out (the faster the gun, the sooner), and your crosshair's ticks move out to show it. The first shot is always on target, and half a second's rest makes it accurate again. Daggers and grenades never spread.",
+    ],
+  },
+  {
     id: "v260",
     version: 260,
     date: "Nov 22, 2026",

@@ -423,6 +423,11 @@ for (const [g, ws] of Object.entries(DW_GROUPS))
    headOf */
 const CRIT_AT_ONE = 0.25;
 const NO_CRIT = ["grenade", "glauncher", "flamer", "laser"];
+/* a gun's shots a second at its top rate (a burst's rounds each count; heat.js reads it too) */
+export const fireRate = (w) => {
+  const A = ARMS[w];
+  return A && A.cool ? ((A.burst || 1) * 1000) / A.cool : 0;
+};
 const perSecond = (A) =>
   A.critReload
     ? (A.mag * 1000) / (A.mag * A.cool + A.mag * A.shell)

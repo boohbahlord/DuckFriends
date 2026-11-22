@@ -651,7 +651,39 @@ kwwkwwk
 kkk.kkk`,
   ],
 };
-const INK = { k: "#101016", w: "#f7f8f3", y: "#fcdb4e" };
+/* the crosshair a weapon in hand makes (heat.js, K2; the owner's, Nov 21 17:48Z: "they should be like more precise
+   automatically when they're centered ... more contracted ... where it's more touching the center of the dot ... those
+   little outside parts should be somewhat transparent ... as you shoot, those kind of move further away from the
+   center"): the same picture at every heat, its four ticks (K and W: the edge and the fill, see-through) TICK_GAP
+   pixels from the dot when cool and one more for each level of heat, the dot (y) solid. tick0 … tick4 */
+const TICK_GAP = 1,
+  TICK_LEVELS = 4,
+  TICK_C = TICK_GAP + TICK_LEVELS + 5; // (the dot's pixel: room for the ticks at their farthest)
+function tickArt(g) {
+  const n = 2 * TICK_C + 1,
+    rows = Array.from({ length: n }, () => Array(n).fill(".")),
+    put = (x, y, ch) => (rows[y][x] = ch);
+  for (let i = 0; i < 5; i++)
+    for (let j = -1; j <= 1; j++) {
+      const ch = i === 0 || i === 4 || j !== 0 ? "K" : "W";
+      for (const side of [-1, 1]) {
+        const d = side * (g + 1 + i);
+        put(TICK_C + d, TICK_C + j, ch); // (the left and right ticks)
+        put(TICK_C + j, TICK_C + d, ch); // (the top and bottom ticks)
+      }
+    }
+  put(TICK_C, TICK_C, "y");
+  return [TICK_C, TICK_C, rows.map((r) => r.join("")).join("\n")];
+}
+for (let l = 0; l <= TICK_LEVELS; l++)
+  CURSORS["tick" + l] = tickArt(TICK_GAP + l);
+const INK = {
+  k: "#101016",
+  w: "#f7f8f3",
+  y: "#fcdb4e",
+  K: "#101016b8",
+  W: "#f7f8f3b8",
+};
 function cursorURL(rows, s) {
   const w = Math.max(...rows.map((r) => r.length)),
     c = document.createElement("canvas");
@@ -698,7 +730,8 @@ function setCursors() {
   for (const [name, [hx, hy, art]] of Object.entries(CURSORS)) {
     const rows = art.split("\n"),
       big = Math.max(rows.length, ...rows.map((r) => r.length)),
-      z = (CURSOR_ZOOM[name] * cursorSizes[CURSOR_SIZE[name]]) / 100, // (one pointer pixel, in css px)
+      as = name.startsWith("tick") ? "cross" : name, // (the ticks' crosshair: as big as the crosshair)
+      z = (CURSOR_ZOOM[as] * cursorSizes[CURSOR_SIZE[as]]) / 100, // (one pointer pixel, in css px)
       px = sets
         ? Math.max(
             1,
@@ -721,4 +754,14 @@ export function setCursorSizes(mouse, pointer, cross) {
   const pc = (v) => Math.max(25, Math.min(400, +v || 100));
   cursorSizes = { mouse: pc(mouse), pointer: pc(pointer), cross: pc(cross) };
   setCursors();
+}
+/* my crosshair's ticks at heat level n (heat.js armedView, every frame): on the boards under the mouse, only when it
+   changes (one inline cursor: level 0 is css/app.css' own) */
+let tickAt = 0;
+export function crossLevel(n) {
+  if (n === tickAt || !document.documentElement.classList.contains("pixel"))
+    return;
+  tickAt = n;
+  for (const b of document.querySelectorAll(".board, .hang-board"))
+    b.style.cursor = n ? `var(--cur-tick${n}), crosshair` : "";
 }
