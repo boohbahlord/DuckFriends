@@ -92,6 +92,7 @@ itemtip.js 104 hold I on an item:
 itemtone.js 98 the colors an outfit or
 jump.js 78 a duck's jump: one arc
 jumps.js 48 the jump counter
+justinmoves.js 36 Justin's walk, hammer swing and flash, written once
 keynav.js 204 menus by keyboard
 l4dd.js 3342 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
