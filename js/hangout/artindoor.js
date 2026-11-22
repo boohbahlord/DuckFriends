@@ -670,7 +670,7 @@ export function chalkFloor({ w = 600, h = 550, seed = 4 } = {}) {
     "hg-ground hg-chalk",
   );
 }
-export const tile = (w, h) =>
+const tile = (w, h) =>
   R(2, 2, w - 4, h - 4, "#2f3836", `rx="8" ${ln(2.4)}`) +
   R(
     2,

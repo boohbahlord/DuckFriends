@@ -75,7 +75,7 @@ const slots = () =>
     const x = (profile.saves || [])[n];
     return x && x.options ? x : null;
   });
-export const when = (t) =>
+const when = (t) =>
   new Date(t).toLocaleString([], {
     month: "short",
     day: "numeric",
