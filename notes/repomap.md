@@ -323,7 +323,7 @@ soccer.js 508 soccer: one ball on the
 sounds.js 17 Duck Cabin's sounds
 stage.js 134 the stage: half an oval
 stationart.js 51 Downpour's things: the drawings
-stationbase.js 81 Downpour's drawings: the shared pieces
+stationbase.js 67 Downpour's drawings: the shared pieces
 stationcars.js 513 Downpour's drawings: the cars, the
 stationmap.js 1187 Dead Ducks Arcade's second map:
 stationparts.js 455 Downpour's drawings: the gas station's
