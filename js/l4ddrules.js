@@ -114,6 +114,7 @@ import { MERCHANTS, merchantById, merchantLook } from "./merchants.js";
 import { linesOf } from "./merchantlines.js";
 import { invuln } from "./hangout/death.js";
 import { kitSlots, gunSlotFor, ITEM_SLOTS } from "./kitslots.js";
+import { drawCrit, drawDmg, drawFast } from "./bowdraw.js";
 import { hOk, hLock, shotFeet, SAME_FLOOR, zOf, swingH } from "./heights.js";
 import { toPx, DUCK } from "./units.js";
 import { blast, reach, hitOf, REACH } from "./blast.js";
@@ -3148,7 +3149,7 @@ export function l4Use(s, a, now) {
       const v =
           what === "grenade"
             ? ARMS.grenade.far / (GRENADE_MS / 1000)
-            : A.speed * (BULLETS.has(what) ? FASTER : 1), // (arrows, bullets and daggers: a little faster, as in every mode)
+            : A.speed * (BULLETS.has(what) ? FASTER : 1) * drawFast(a.dr), // (arrows, bullets and daggers: a little faster, as in every mode; a drawn arrow more, bowdraw.js)
         k = shotKind(what); // (the new guns' bullets each look their own way)
       const out = [];
       for (let i = 0; i < many; i++)
@@ -3158,6 +3159,7 @@ export function l4Use(s, a, now) {
               ? { life: (A.far / A.speed) * 1000 }
               : roundAt(n, i, now, A.gap || 60)),
             ...(dual ? { al: m.alt } : {}), // (the Angelic pistols: which one fired it, game.js' muzzle flash)
+            ...(a.dr != null ? { dr: a.dr } : {}), // (an arrow: its draw)
           }),
         ); // (a burst's rounds leave one after another: each waits until its time, t)
       s.shots = [...(s.shots || []), ...out];
@@ -3291,7 +3293,8 @@ function mark(s, z, code) {
   if (!had.includes(code)) s.hang.zw = { ...zw, [z.i]: had + code };
 }
 /* a crit, now and then (the weapon's chance and the duck's Accuracy): strike doubles it */
-const critRoll = (s, by, w) => Math.random() < headOf(s, by, w);
+const critRoll = (s, by, w, sh) =>
+  Math.random() < (sh && sh.dr != null ? drawCrit(sh.dr) : headOf(s, by, w)); // (a drawn arrow: its draw's, bowdraw.js)
 /* a miss, now and then (missOf): the hit doesn't land, and every screen shows "missed" over that zombie */
 function missed(s, by, w, z, now) {
   if (Math.random() >= missOf(w)) return false;
@@ -4259,7 +4262,17 @@ export function l4Shots(s, now) {
               ANGEL.PISTOL.BOOM,
               zOf(z, "zombie"),
             ); // (half a grenade's blast, its boom weaker: the owner's, Nov 17 11:07Z; it goes off where that zombie is)
-        } else if (strike(s, z, dmgOf(A), critRoll(s, sh.by, w), sh.by, w, now))
+        } else if (
+          strike(
+            s,
+            z,
+            dmgOf(A) + drawDmg(sh.dr),
+            critRoll(s, sh.by, w, sh),
+            sh.by,
+            w,
+            now,
+          ) // (a drawn arrow: more, bowdraw.js)
+        )
           die(z, T);
         hitAny = true;
         gone = true;

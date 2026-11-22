@@ -117,7 +117,8 @@ import { fenceZ, zombiesOf } from "./zombies.js";
 import { zSortY } from "./zombieroofs.js";
 import { hOk, hLock, zOf } from "./heights.js";
 import { toPx } from "./units.js";
-import { ammoBar, stackBars, noReload } from "./meters.js";
+import { ammoBar, stackBars, noReload, drawBar } from "./meters.js";
+import { myDrawShare } from "./bowdraw.js";
 import { laserMeter } from "./laserfx.js";
 import { goreFree, BY_WOUND, newWound, woundLook } from "./wounds.js";
 import { catalogHTML, statLineOf } from "./l4ddcatalog.js";
@@ -889,8 +890,7 @@ function seeDrops(s) {
 }
 /* a drop's outline on the ground, in its own color, and its arrow when it's a floor away (outlines.js DROP_OL, the
    owner's, Nov 18 13:58Z), so one under a tree's crown, a roof or out of sight isn't missed: its symbol's shape, where
-   the drop's box is (css .l4-drop: 46 × 46, its foot 16 over the spot), still at the middle of its bob. Gone with the
-   drop once it's picked up (seeDrops) */
+   the drop's box is (css .l4-drop: 46 × 46, its foot 16 over the spot), still at the middle of its bob. Gone once taken */
 function dropOutline(Wd, o, p, sc, unseen, myFloor) {
   const w = 46 * sc,
     x = p.left - 23 * sc,
@@ -2415,7 +2415,7 @@ export function l4Ammo(s, me, w) {
   return all > 1 ? { f: c[0] / all, rl: false, dry: c[0] <= 0 } : null; // (the bow: its arrows left)
 }
 let dryW = "";
-/* the yellow bar under my duck, and the bars stacked (meters.js); a gun run dry that can't reload: the white bar flashes red */
+/* the yellow bar, the bow's draw and the bars stacked (meters.js); a gun run dry can't reload: the white bar flashes red */
 function ammoBars(tag, s, me) {
   const w = heldFn() || "",
     a = l4Ammo(s, me, w),
@@ -2423,6 +2423,7 @@ function ammoBars(tag, s, me) {
   if (dry && dry !== dryW && w !== "grenade") noReload();
   dryW = dry;
   ammoBar(tag, a);
+  drawBar(tag, myDrawShare(clockNow())); // (the bow drawn: bowdraw.js)
   stackBars(tag);
 }
 /* a slot switch: a small box under my duck, the phone's slider in little (hotbar.js, the same slots in their colors): it
@@ -2430,8 +2431,7 @@ function ammoBars(tag, s, me) {
    owner, Nov 17: on a computer and a phone) */
 let peekW = null,
   peekNow = false;
-/* the box again, even with nothing switched: a swipe on my duck on a phone (touch.js), which always shows the selection
-   (the owner's, Nov 18 15:18Z) */
+/* the box again, nothing switched: a swipe on my duck on a phone (touch.js) always shows the selection (owner, Nov 18) */
 export const peekAgain = () => {
   peekNow = true;
 };

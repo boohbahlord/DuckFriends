@@ -1,5 +1,6 @@
 /* ---------- Mad God Justin's pickups: what drops, what comes next, and what each one does ----------
    Moved out of mgjrules.js to keep that file small (a pure move). It imports back from mgjrules.js, which imports it. */
+import { drawFast } from "./bowdraw.js";
 import { r3, fxOf } from "./justinmoves.js";
 
 import {
@@ -287,7 +288,12 @@ export function mgjUse(s, a, now, log) {
     return true;
   }
   const l = Math.hypot(aim[0], aim[1]) || 1,
-    v = k === "dagger" ? DAGGER_SPEED : k === "bow" ? ARROW_SPEED : SHOT_SPEED;
+    v =
+      k === "dagger"
+        ? DAGGER_SPEED
+        : k === "bow"
+          ? ARROW_SPEED * drawFast(a.dr) // (drawn: faster, bowdraw.js)
+          : SHOT_SPEED;
   s.shots = [
     ...(s.shots || []),
     {
@@ -301,6 +307,7 @@ export function mgjUse(s, a, now, log) {
       t: now,
       lx: p.x,
       ly: p.y,
+      ...(a.dr != null ? { dr: a.dr } : {}), // (an arrow: its draw)
     },
   ];
   return true;

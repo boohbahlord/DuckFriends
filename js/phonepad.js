@@ -83,6 +83,7 @@ export function mountPad(api) {
     push.firing = on;
     box.classList.toggle("firing", on);
     clearTimeout(push.t);
+    if (api.draw && api.draw(on)) return; // (the bow: pushed it draws, let back it shoots, gamehand.js padDraw)
     if (on) again();
   };
   atk.addEventListener("pointerdown", (e) => {
@@ -117,6 +118,7 @@ export function mountPad(api) {
     const p = push;
     push = null;
     clearTimeout(p.t);
+    if (p.firing && api.draw) api.draw(false); // (a drawn bow shoots as the stick is let go)
     box.classList.remove("aiming", "firing");
     knob.style.transform = "";
     api.aim(null);
