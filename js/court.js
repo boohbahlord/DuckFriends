@@ -4,6 +4,7 @@
    a dark strip with the attorneys' circle, which slowly turns through the colors (game.js places it). Over the board,
    both attorneys on the cloud and the case beside it. After the verdict the losing side turns grey (both, on a hung
    jury). Also: picking the attorneys, and the stats (the awards, each player's box and the round's cases). */
+import { jumpsTop } from "./awards.js";
 import { esc } from "./ui.js";
 import { duckSVG } from "./duck.js";
 import { nameHTML, fontHTML } from "./name.js";
@@ -175,8 +176,8 @@ function awardsHTML(s, round) {
   };
   const best = top((p) => p.won),
     flip = top((p) => p.flips),
-    jx = s.seat.map((id) => [id, (s.jumps || {})[id] || 0]),
-    jv = Math.max(0, ...jx.map((x) => x[1]));
+    jt = jumpsTop(s),
+    jv = jt ? jt.v : 0;
   const firm = ids.filter((id) => per[id].votes && !per[id].flips),
     own = ids.filter((id) => per[id].ownWin);
   /* Landslide: the biggest winning margin (a case given up doesn't count); Hard Topic: the closest vote */
@@ -200,7 +201,7 @@ function awardsHTML(s, round) {
     ${award("Unconvinced", firm, "Never switched sides once.")}
     ${award("Hard Topic", hardWho, hard[0] ? `${esc(quote(hard[0].text))} split the jury ${hard[0].o}–${hard[0].d}.` : "")}
     ${award("Turned on Their Own Idea", own, "Argued against their own topic, and won.")}
-    ${award("Most Jumps", jv ? jx.filter((x) => x[1] === jv).map((x) => x[0]) : [], `${plural(jv, "jump")}.`)}</div>`;
+    ${award("Most Jumps", jt ? jt.who : [], `${plural(jv, "jump")}.`)}</div>`;
 }
 /* a player's box: their cases and their jury votes (this round, or the whole game) */
 export function lawBoxHTML(s, id, round = null) {

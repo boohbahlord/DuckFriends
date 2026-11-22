@@ -14,6 +14,17 @@ export const walkTo = (j, at, to, now, v) =>
     t: now,
     ...(v === undefined ? {} : { v }),
   });
+/* the spot 1.4 duck lengths from duck p toward Justin (at), on the line between them and kept on the board: where he
+   dashes to before a hammer swing (rx, ry: a duck's length across and down) */
+export const nearSpot = (at, p, rx, ry) => {
+  const ux = (at.x - p.x) / rx,
+    uy = (at.y - p.y) / ry,
+    d = Math.hypot(ux, uy) || 1;
+  return {
+    x: Math.max(0.03, Math.min(0.97, p.x + (ux / d) * 1.4 * rx)),
+    y: Math.max(0, Math.min(1, p.y + (uy / d) * 1.4 * ry)),
+  };
+};
 /* Justin stops where he stands (at, at time now): no walk left to make */
 export const stopAt = (j, at, now) => walkTo(j, at, at, now);
 /* the hammer's swing, toward aim, the hit ducks with it */

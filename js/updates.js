@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v258",
+    version: 258,
+    date: "Nov 22, 2026",
+    title: "Tidier code",
+    news: [
+      "Behind the scenes: the darkening below and the level numbers read the game's one height rule, the Most Jumps card is made one way in every stats screen, and Mad God Justin's dash spot is one shared rule. Nothing plays differently.",
+    ],
+  },
+  {
     id: "v257",
     version: 257,
     date: "Nov 22, 2026",

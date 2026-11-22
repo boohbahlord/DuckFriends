@@ -11,16 +11,16 @@ armpage.js 142 a page of Customize's
 armspeed.js 34 how fast the weapons
 art.js 403 pictures drawn in code
 audioimport.js 186 a player's own song,
-awards.js 37 the stats' awards: one
+awards.js 43 the stats' awards: one
 barrelheat.js 70 a hot barrel
 bash.js 1360 the command line's language:
 bbrules.js 380 the rules of Bicker
 beaks.js 138 beaks
-below.js 81 darker below
+below.js 88 darker below
 blast.js 67 explosions: one module
 bloodpool.js 50 a pool of blood:
 boardfire.js 1316 the board's weapons: hits,
-boardjustin.js 675 Justin on the boards
+boardjustin.js 663 Justin on the boards
 botduck.js 90 a computer's duck: a
 botlines.js 188 What the computers write
 bots.js 1425 computers
@@ -38,7 +38,7 @@ clock.js 5 one clock for the
 collage.js 101 Shelter Sky & Null
 color.js 165 choosing a color
 corners.js 94 full screen
-court.js 229 Lawyering: what the screen
+court.js 230 Lawyering: what the screen
 crowd.js 242 crowds: walkers never stand
 customize.js 1776 Customize: the Armory
 datboi.js 115 here come dat boi
@@ -70,7 +70,7 @@ gamefx.js 874 the silly commands and
 gamehand.js 604 the hand: the number-key
 gameplace.js 738 where things are put
 gameready.js 47 
-gameround.js 570 round
+gameround.js 567 round
 gamesettings.js 755 Game Settings: the whole
 gameshots.js 137 The bullets in the
 gamestats.js 191 what `stats` and `roundstats`
@@ -103,7 +103,7 @@ itemtip.js 104 hold I on an
 itemtone.js 98 the colors an outfit
 jump.js 85 a duck's jump: one
 jumps.js 48 the jump counter
-justinmoves.js 34 Justin's moves on the
+justinmoves.js 45 Justin's moves on the
 keynav.js 204 menus by keyboard
 l4dd.js 3338 Quacky Zombies on every
 l4ddangel.js 151 Dead Ducks Arcade's Angel
@@ -139,7 +139,7 @@ merchants.js 376 the merchants
 meters.js 114 the thin bars under
 mgj.js 219 Mad God Justin: what
 mgjart.js 96 Mad God Justin's new
-mgjbrain.js 619 Mad God Justin's brain,
+mgjbrain.js 613 Mad God Justin's brain,
 mgjpicks.js 500 Mad God Justin's pickups:
 mgjrules.js 1259 
 modes.js 445 the game modes
@@ -162,7 +162,7 @@ nwk.js 543 Nous Within Kenoma: the
 offline.js 45 Single Player's files on
 online.js 975 online rooms
 outfits.js 1141 outfits
-outlines.js 419 the outlines
+outlines.js 420 the outlines
 perf.js 92 the frame-rate readout
 phonepad.js 142 phones: the aim-and-attack stick
 picrop.js 268 cropping a picture: every
@@ -180,7 +180,7 @@ pxdom.js 764 the pixel look for
 pxmap.js 45 a map as pixel
 pxpic.js 22 the maps that have
 pxtext.js 263 emoji and tooltips in
-quack.js 296 Who is the Quack?:
+quack.js 294 Who is the Quack?:
 quackrules.js 789 the rules of Who
 rainbowskin.js 116 the rainbow skin
 random.js 12 the two random helpers
@@ -256,7 +256,7 @@ survrules.js 321 Survival
 svgurl.js 10 a drawing as a
 textutils.js 1150 the command line's text
 touch.js 284 touch controls on the
-trivia.js 464 Trivia: what the screen
+trivia.js 461 Trivia: what the screen
 triviabank.js 499 Trivia's auto questions
 triviarules.js 458 the rules of Trivia
 ui.js 380 small helpers every screen
@@ -265,8 +265,8 @@ umaps.js 371 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on
-updates.js 3426 Updates
-vdd.js 190 Valentine's Duck Date: what
+updates.js 3435 Updates
+vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival
 vote.js 279 Vote Mode & Map:

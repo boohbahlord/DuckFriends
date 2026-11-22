@@ -6,6 +6,7 @@
    The pick: a tile for each Suitor still in (Who is the Quack?'s tiles, with room around them, where a duck stands on no
    tile). A Turned Down duck is black and white for the rest of the game (Duncelation's dn-bw), and so is its tile.
    Also the stats: Sweet Valentine and Most Jumps, each player's box, and every date with its topic. */
+import { jumpsTop } from "./awards.js";
 import { esc } from "./ui.js";
 import { duckSVG } from "./duck.js";
 import { nameHTML } from "./name.js";
@@ -150,9 +151,9 @@ const roleOf = (s, id) => {
 function awardsHTML(s) {
   const V = s.vd || {},
     val = V.val && s.players[V.val];
-  const jx = s.seat.map((id) => [id, (s.jumps || {})[id] || 0]),
-    jv = Math.max(0, ...jx.map((x) => x[1])),
-    jw = jv ? jx.filter((x) => x[1] === jv).map((x) => x[0]) : [];
+  const jt = jumpsTop(s),
+    jv = jt ? jt.v : 0,
+    jw = jt ? jt.who : [];
   const award = (title, who, line) =>
     who.length
       ? `<div class="award"><h3>${esc(title)}</h3><p>${who.map((id) => nm(player(s, id))).join(who.length > 2 ? ", " : " and ")}${who.length > 1 ? ' <span class="dim">(tie)</span>' : ""}</p><p class="small dim">${line}</p></div>`

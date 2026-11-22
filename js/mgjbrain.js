@@ -74,7 +74,7 @@ import { KB_FAR } from "./push.js";
 
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
 
-import { walkTo, stopAt, hammerFx, fxOf } from "./justinmoves.js";
+import { walkTo, stopAt, hammerFx, fxOf, nearSpot } from "./justinmoves.js";
 
 import { holdDown, invuln, hurtFx } from "./hangout/death.js";
 
@@ -564,13 +564,7 @@ function brain(s, now, log) {
   if (reloading && now >= j.hamAt) {
     const id = nearest[0],
       p = s.pos[id],
-      ux = (at.x - p.x) / RX,
-      uy = (at.y - p.y) / RY,
-      d = Math.hypot(ux, uy) || 1;
-    const to = {
-        x: Math.max(0.03, Math.min(0.97, p.x + (ux / d) * 1.4 * RX)),
-        y: Math.max(0, Math.min(1, p.y + (uy / d) * 1.4 * RY)),
-      },
+      to = nearSpot(at, p, RX, RY),
       v = SPEED * 1.9;
     walkTo(j, at, to, now, v);
     j.swing = {
