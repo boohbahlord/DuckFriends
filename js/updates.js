@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v277",
+    version: 277,
+    date: "Nov 22, 2026",
+    title: "Zombies reach you",
+    news: [
+      "For Dead Ducks Arcade and Survival: zombies no longer freeze in a crowd at a wall, a doorway or a tree. They climb up to you anywhere along the wall, trees stand clear of the buildings, and a zombie on the ground below your roof never blocks you.",
+      "Ducks and zombies only bump into each other when they're at the same height: jump over a duck or stand on a roof and nothing below you stops you.",
+      "Hitmarkers show only in Mad God Justin, never in Sandbox or other modes.",
+      "A hot gun barrel's glow is made of pixels like everything else.",
+    ],
+  },
+  {
     id: "v276",
     version: 276,
     date: "Nov 22, 2026",
