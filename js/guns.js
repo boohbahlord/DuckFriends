@@ -384,6 +384,26 @@ for (const A of Object.values(ARMS))
         r.map((n) => cents(n + b)),
       ]);
   }
+/* dead weight (the owner's, Nov 21 16:53Z: "We can give guns different weight stats ... dead weight ... when it adds to
+   your weight, it does not add to your knockback"): each weapon's group (ARMS dw) and what it weighs, in duck weights
+   (the groups: 18:59Z, /mnt/project-files/adam/calibers.md). push.js weightOf adds it to its carrier's; recoil reads
+   the group later */
+export const DEAD_WEIGHT = {
+  light: 0.02,
+  medium: 0.05,
+  rifle: 0.1,
+  heavy: 0.15,
+  superheavy: 0.25,
+};
+const DW_GROUPS = {
+  light: ["handgun", "revolver", "knife", "dagger", "sword", "pan", "bow"],
+  medium: ["smg", "tommy", "ump", "axe"],
+  rifle: ["ak", "burst", "shotgun", "dbarrel", "glauncher"],
+  heavy: ["lmg", "sniper", "hammer", "flamer"],
+  superheavy: ["chaingun"],
+};
+for (const [g, ws] of Object.entries(DW_GROUPS))
+  for (const w of ws) ARMS[w].dw = g;
 /* ---------- crits (the owner's, Nov 21 17:25Z and 18:05Z) ----------
    "base crit chance is 25% with a fire rate of 1 per second", less for faster ones: 25% divided by the shots (a melee
    weapon's swings) a second, with no top. Only the double barrel counts its reload (critReload: 2 shells, then 2 s,
