@@ -12,20 +12,22 @@
    - it keeps its heat while the gun fires as fast as it can, and once it stops it cools back to 0 in half a second
      (HEAT.COOL a second);
    - a shot flies off its aim by up to its widest cone times the heat it found (none on the first shot): the widest cone
-     is HEAT.CONE for each point of its caliber's kick (guns.js kickOf; K14 makes it one recoil score a gun), the bow
-     HEAT.BOW points; the dagger and the grenades have no kick, so they never change;
+     is HEAT.CONE (15°, the owner's pick, Nov 22 13:02Z) for each point of its recoil score (guns.js recoilOf), the
+     bow HEAT.BOW; the grenade launcher kicks but never spreads (the owner's pick, the same card), and the dagger and
+     the grenades have no recoil, so they never change;
    - my crosshair's four ticks sit close round its dot when cool, a little see-through, and move out with my heat
      (pixel.js crossLevel); the gun's kick and my screen's shake grow by up to HEAT.SHAKE (30%) at full heat.
    Where it lives: s.heat { "id weapon": [heat, ms] } (the host's, so every screen draws the same), its heat just after
    the shot fired at ms. Why its own file: one rule for every mode's guns (the boards, Mad God Justin, Sandbox and Dead
    Ducks Arcade) and for what my screen shows of it */
-import { ARMS, fireRate, kickOf } from "./guns.js";
+import { ARMS, fireRate, recoilOf } from "./guns.js";
 import { crossLevel } from "./pixel.js";
 
 const DEG = Math.PI / 180;
-const HEAT = { COOL: 2, CONE: 12 * DEG, BOW: 0.5, SHAKE: 0.3, TICKS: 4 };
+const HEAT = { COOL: 2, CONE: 15 * DEG, BOW: 6 * DEG, SHAKE: 0.3, TICKS: 4 };
 /* the widest cone of weapon w, radians each way of its aim (0: it never spreads) */
-const coneOf = (w) => (w === "bow" ? HEAT.BOW : kickOf(w)) * HEAT.CONE;
+const coneOf = (w) =>
+  w === "bow" ? HEAT.BOW : w === "glauncher" ? 0 : recoilOf(w) * HEAT.CONE;
 /* duck id's heat with weapon w at now, 0 … 1 */
 function heatOf(s, id, w, now) {
   const e = s && s.heat && s.heat[id + " " + w];
