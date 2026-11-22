@@ -7978,3 +7978,11 @@ Decision: added to the next-week plan as N17.
 ## Owner, 18:07Z Nov 22 (screenshot /mnt/project-files/adam/bugs/2026-11-22-1807-zombie-stuck-tree.png, red arrow at the tree)
 I found zombie ducks getting stuck on a tree in Dead Ducks Arcade and not moving around it. It was the tree rightmost to the right wall on the outside of it on the gas station. I can send a picture.
 Decision: a bug from V273b/V275 trunks; Solomon fixes it (zombies go round that tree, a check that a zombie there reaches the duck), ships alone as soon as green.
+
+## Owner, 18:13Z Nov 22 (screenshot /mnt/project-files/adam/bugs/2026-11-22-1813-zombies-stuck-roof.png: owner on the gas station roof, horde below on the forecourt)
+Huge game-breaking glitch once again. If this keeps happening in different particular circumstances, then we're not actually fixing the principle. We're not getting to the core of the issue. We're basically trying to treat the symptoms and not the cause, because this keeps happening. The picture is of zombies that will not move and will not kill me. They're stuck. I know we have 91% weekly usage, but this is probably more important than God knows what.
+Decision: above the throttle. Solomon finds the root cause in the shared walk/climb/height code (zombie files unchanged since V273; heights/layout/stationmap changed in V273b-V276), fixes it once, and adds a general check: on every walkable map a duck on every standable height and zombies from far spawns must reach and hit it within a time limit. The 18:07Z tree case goes in the same fix. Ships alone.
+
+## Owner, 18:14Z Nov 22
+Adam, plan this out with me. The game features for next week i mean
+Decision: plan the 17:58Z list (todo N1-N17) with him in his thread, potentials and acts first.
