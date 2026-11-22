@@ -821,11 +821,6 @@ export const OPENINGS = [...CABIN_OPENINGS];
 export const dp = () => layoutVariant() === "l4gs";
 /* the map's own roofs only (Sandbox's floors, sbfloors.js, aren't climbed to yet) */
 export const mapDeck = (d) => (d && !d.sb ? d : null);
-/* Downpour's flood slows anyone on foot just as it slows a player's duck (l4dd.js speed): wading the shallow road 30%
-   slower, swimming the deep end as slowly as in the pool. The merchants and Justin out there too, so nobody walks
-   faster than a player can (the owner's, Nov 18 15:35Z: "all of their sprinting and their movement speed is the same
-   as the players") */
-export const wetSlow = (x, y) => wetK(x, y, -Infinity); // (layout.js: at any height)
 /* the map's own numbers in: its openings, the Butler's and the fireplace's spots, the start spots, the zombies' grid.
    Called wherever they're read; it does something only when layout.js has turned to the other map */
 let mapRev = -1;
@@ -2680,12 +2675,7 @@ function merchantFight(s, m0, now, dt) {
     const aim = walkable(m.x, m.y, fx, fy)
       ? [fx, fy]
       : heading(flowFrom([openNear(fx, fy)]), m.x, m.y) || [fx, fy];
-    stepZombie(
-      m,
-      aim,
-      WALK * walkOf(s) * MERCH.WALK * wetSlow(m.x, m.y) * dt,
-      [],
-    );
+    stepZombie(m, aim, WALK * walkOf(s) * MERCH.WALK * wetK(m.x, m.y) * dt, []);
   } else if (now - (mh(s).stab || 0) >= MERCH.STAB_MS) {
     setMh(s, { stab: now });
     addFx(s, {
@@ -2858,7 +2848,7 @@ function merchantTick(s, now) {
       WALK *
       walkOf(s) *
       (leg.k || MERCH.WALK) *
-      wetSlow(m0.x, m0.y) *
+      wetK(m0.x, m0.y) *
       dt *
       (merchantSprints(s, m0, now, dt) ? MERCH.SPRINT : 1);
   let done = false;

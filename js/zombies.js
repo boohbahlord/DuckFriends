@@ -5,7 +5,7 @@
    round the side, the jump onto the canopy, its claw, and what Sandbox's board zombies and the computers ask of it.
    Moved here from l4ddrules.js as it was (nothing it does changed); the way to the ducks is zombiepath.js. Next, Mad God
    Justin's waves and Sandbox's board zombies run on it too, each a breed. */
-import { ZOMBIE_SWIPE_SLOWER, WET } from "./gamedefaults.js";
+import { ZOMBIE_SWIPE_SLOWER } from "./gamedefaults.js";
 /* Dead Ducks Arcade's zombies' swipe in every round: its wind-up (from the tell to the hit) and the ms from one hit to the
    next, rounds 1 to 4's (the owner's, Nov 21 18:24Z: "all of the zombies have the default attack speed as they do in
    rounds 1 through 4"); the 0.2 s slower of Nov 20 is in the second */
@@ -25,6 +25,7 @@ import {
   deckOver,
   deckH,
   onDeckAt,
+  wetK,
 } from "./hangout/layout.js";
 import * as GS from "./hangout/stationmap.js";
 import { walkOf, immobile } from "./push.js";
@@ -583,7 +584,7 @@ function walkAll(zs, c) {
       v =
         z.l[1] *
         walkOf(s) * // (as much faster or slower as the ducks, by the lobby's Walking speed)
-        (dp() && GS.inDeep(z.x, z.y) ? WET.SWIM : 1), // (Downpour: swimming the deep flood, as slow of its own walk as a duck is of its)
+        wetK(z.x, z.y, zOf(z, "zombie")), // (water: as slow of its own walk as a duck is of its, layout.js)
       sp = o && sidesOf(o, z);
     if (z.st === 0) {
       // coming: to the spot outside its opening (Downpour: the foot of the fence)
@@ -1252,7 +1253,7 @@ export function chaseStep(z, dist, goal, far, ducks = []) {
       goal) ||
     (dist && heading(dist, z.x, z.y)) ||
     goal;
-  stepZombie(z, aim, far, ducks);
+  stepZombie(z, aim, far * wetK(z.x, z.y, z.z), ducks); // (water: layout.js)
 }
 /* a zombie's walk in world px a second at round 1, before its spawn's speed box */
 export const zWalk = () => {
