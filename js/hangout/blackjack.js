@@ -97,7 +97,7 @@ const red = (c) => {
 
 /* the host's deck for the hand it's dealing */
 let mem = { id: "", deck: [], hole: -1 };
-function shuffled(out = []) {
+export function shuffled(out = []) {
   const d = [];
   for (let c = 0; c < 52; c++) if (!out.includes(c)) d.push(c);
   for (let i = d.length - 1; i > 0; i--) {
@@ -1158,12 +1158,9 @@ function open(ctx) {
   v.free = null;
   v.el.classList.toggle("side", ctx.world.vw > ctx.world.vh); // (a wide screen: on the left, as the guestbook; tall: along the bottom)
 }
-function close() {
-  if (!v || !v.open) return;
-  v.open = false;
-  v.el.hidden = true;
-}
-function esc_(e) {
+/* Escape gets me up from the table (before the game's own Escape: the pause menu), unless a window or a menu is open;
+   blackjack and poker each hand in their own table */
+export function escGetsUp(e, v) {
   if (
     e.key === "Escape" &&
     v &&
@@ -1174,7 +1171,20 @@ function esc_(e) {
     e.stopPropagation();
     getUp(v.ctx);
   }
-} // (before the game's own Escape: the pause menu)
+}
+/* the table drawn again only when its signature changed (grown taller: the camera finds the board left above it again) */
+export function redrawIf(v, sig, draw) {
+  if (sig === v.sig) return;
+  v.sig = sig;
+  draw();
+  if (v.free && v.el.offsetHeight > v.free.h + 1) v.free = null;
+}
+function close() {
+  if (!v || !v.open) return;
+  v.open = false;
+  v.el.hidden = true;
+}
+const esc_ = (e) => escGetsUp(e, v); // (before the game's own Escape: the pause menu)
 function press(e) {
   const btn = e.target.closest("[data-do]");
   if (!btn || btn.disabled || !v) return;
@@ -1312,11 +1322,7 @@ activity({
     v.betsSeen = bets;
     if (!v.open) return;
     const sig = JSON.stringify(b) + n + ctx.me + (v.disp[ctx.me] ?? "");
-    if (sig !== v.sig) {
-      v.sig = sig;
-      render(s, now);
-      if (v.free && v.el.offsetHeight > v.free.h + 1) v.free = null;
-    } // (grown taller: the camera finds the board left above it again)
+    redrawIf(v, sig, () => render(s, now)); // (a table grown taller: the camera finds the board left above it again)
     const k = timer(b, now);
     v.bar.style.transform = `scaleX(${k.toFixed(3)})`;
     v.bar.parentNode.classList.toggle("off", !k);
