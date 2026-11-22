@@ -4,7 +4,7 @@ import { now as clockNow } from "./clock.js";
 import { toast } from "./ui.js";
 import { unlocked } from "./unlocks.js";
 import { hasKey, keysOf, specialById } from "./specials.js";
-import { BOARD_WEAPONS, MGJ_MELEE, THROWS } from "./guns.js";
+import { BOARD_WEAPONS, MGJ_MELEE, THROWS, loadTo } from "./guns.js";
 import { CAKE_EVERY, isMgj, mgjMag } from "./mgjrules.js";
 import { magOf, magSize } from "./rules.js";
 import { l4Ammo } from "./l4dd.js";
@@ -33,10 +33,11 @@ import { sbSlots, spawnOf } from "./sbhot.js";
      in hand, "" too, the rules say no); ready(s, w, now): R can reload it now; dry(s, w): no ammo left to reload with
    - empty(s): the hand empties itself (Quacky Zombies: no grenades or no slot left; Mad God Justin: the picked-up
      weapon used up or the zebra cake thrown), and backTo(s) is what comes back then */
-/* a magazine that isn't full and isn't reloading (the board and Mad God Justin) */
+/* a magazine that isn't full, or is full and takes one more in the chamber (guns.js loadTo), and isn't reloading (the
+   board and Mad God Justin) */
 const magReady = (s, w, now) => {
   const mm = magOf(s, C.R.me, now, w);
-  return mm.n > 0 && !(mm.r > now);
+  return (mm.n > 0 || (mm.n === 0 && !!loadTo(w, 1, 1))) && !(mm.r > now);
 };
 const ROWS = {
   board: {
@@ -80,7 +81,7 @@ const ROWS = {
         !a.rl &&
         !a.dry &&
         !a.nr &&
-        a.f < 0.999 &&
+        (a.up || a.f < 0.999) &&
         (a.nr !== undefined || downArmed(s, C.R.me))
       );
     },
