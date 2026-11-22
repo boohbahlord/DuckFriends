@@ -287,6 +287,23 @@ const suitorsLeft = (s) => {
   return `${n} Suitor${n === 1 ? "" : "s"}`;
 };
 
+/* the Vote button of the two games that vote by the side you stand on (Lawyering and Duncelation; votes: who voted for
+   which side): Vote, Voted ✓ or Change vote, and Vote in n while the grace lasts (the owner's, Nov 22: one copy, A4) */
+function voteBtn(s, votes) {
+  const onBoard = me && me.x >= 0,
+    wait = graceLeft(s),
+    col = onBoard ? colAt(s, me.x) : -1,
+    mine = votes[R.me];
+  const label = wait
+    ? `Vote in ${wait}`
+    : mine !== undefined && (col < 0 || mine === col)
+      ? "Voted ✓"
+      : mine !== undefined
+        ? "Change vote"
+        : "Vote";
+  const off = !!wait || col < 0 || mine === col;
+  return `<button type="button" class="btn vote-btn${mine !== undefined ? " voted" : ""}" data-a="end" data-col="${col}"${off ? " disabled" : ""}>${label}${off ? "" : " <kbd>Enter</kbd>"}</button>`;
+}
 /* Lawyering: an attorney argues (and, behind in closing arguments, may give up); a juror votes for the side they stand on,
    and can change it at any time */
 function lawActHTML(s) {
@@ -303,25 +320,14 @@ function lawActHTML(s) {
       : "";
     return `<div class="act-row"><span class="law-you">You're the ${L.off === R.me ? "offense" : "defense"} attorney: convince them!</span>${give}${tally}</div>`;
   }
-  const onBoard = me && me.x >= 0,
-    wait = graceLeft(s),
-    col = onBoard ? colAt(s, me.x) : -1,
-    mine = L.votes[R.me];
-  const label = wait
-    ? `Vote in ${wait}`
-    : mine !== undefined && (col < 0 || mine === col)
-      ? "Voted ✓"
-      : mine !== undefined
-        ? "Change vote"
-        : "Vote";
-  const off = !!wait || col < 0 || mine === col;
+  const btn = voteBtn(s, L.votes);
   const names = [L.off, L.def].map(
     (id) => (s.players[id] || { name: "?" }).name,
   );
   const mc = profile.settings.multipleChoice
     ? `<div class="mc">${names.map((n, i) => `<button type="button" class="mc-b law-${i ? "b" : "a"}" data-col="${i}">${i ? "Defense" : "Offense"}: ${esc(n)}</button>`).join("")}</div>`
     : "";
-  return `${mc}<div class="act-row"><button type="button" class="btn vote-btn${mine !== undefined ? " voted" : ""}" data-a="end" data-col="${col}"${off ? " disabled" : ""}>${label}${off ? "" : " <kbd>Enter</kbd>"}</button>${tally}</div>`;
+  return `${mc}<div class="act-row">${btn}${tally}</div>`;
 }
 /* Duncelation: the defender defends; everyone else votes for the side they stand on, and can change it at any time */
 function dnActHTML(s) {
@@ -335,22 +341,11 @@ function dnActHTML(s) {
   const end = `<button type="button" class="btn dn-end${endMine ? " yellow" : " ghost"}" data-a="dnend" aria-pressed="${endMine}" data-tip="Ends the take now once the defender presses it too and ${endNeed(s)} players in all have.">${endMine ? "End round ✓" : "End round"} · ${ev.length}/${endNeed(s)}</button>`;
   if (isDefender(s, R.me))
     return `<div class="act-row"><span class="law-you">Defend your take: it isn't a dunce take!</span>${end}${tally}</div>`;
-  const onBoard = me && me.x >= 0,
-    wait = graceLeft(s),
-    col = onBoard ? colAt(s, me.x) : -1,
-    mine = s.dn.cur.votes[R.me];
-  const label = wait
-    ? `Vote in ${wait}`
-    : mine !== undefined && (col < 0 || mine === col)
-      ? "Voted ✓"
-      : mine !== undefined
-        ? "Change vote"
-        : "Vote";
-  const off = !!wait || col < 0 || mine === col;
+  const btn = voteBtn(s, s.dn.cur.votes);
   const mc = profile.settings.multipleChoice
     ? `<div class="mc">${DN_SIDES.map((t, i) => `<button type="button" class="mc-b law-${i ? "b" : "a"}" data-col="${i}">${esc(t)}</button>`).join("")}</div>`
     : "";
-  return `${mc}<div class="act-row"><button type="button" class="btn vote-btn${mine !== undefined ? " voted" : ""}" data-a="end" data-col="${col}"${off ? " disabled" : ""}>${label}${off ? "" : " <kbd>Enter</kbd>"}</button>${end}${tally}</div>`;
+  return `${mc}<div class="act-row">${btn}${end}${tally}</div>`;
 }
 /* Who is the Quack?: Done (the speaker) or Skip (everyone else) in a clue turn; Vote; End turn after the reveal */
 function quackActHTML(s) {

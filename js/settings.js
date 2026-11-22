@@ -9,7 +9,6 @@ import { FONTS, fontCSS } from "./name.js";
 import { openReport, reportLinkHTML } from "./report.js";
 import { setCursorSizes } from "./pixel.js";
 import { setPerf } from "./perf.js";
-import { isPhone } from "./pointer.js";
 
 const S = () => profile.settings;
 const TABS = [
@@ -46,26 +45,19 @@ export const netLevel = () => Math.max(0, Math.min(2, +S().net || 0));
    50% to 200%: 200% on an ultrawide (3440x1440) is a 1720x720 screen's worth of UI. A screen shows at most what still
    leaves it a small phone's worth of room (360 wide, 600 tall), and never less than 100%, so nothing goes off it */
 const UI_MIN = 50,
-  UI_MAX = 200,
-  /* a phone never goes under 90% (its 100% is already a computer's 80%: html.phone, css/app.css). The owner's, Nov 22
-     01:37Z: "My UI is at 85% i think or 80% ... maybe the UI should be not made smaller for mobile ? Even tho it looks
-     better" */
-  PHONE_MIN = 90;
+  UI_MAX = 200;
 const uiFit = () =>
   Math.max(
     100,
     Math.floor((Math.min(innerWidth / 360, innerHeight / 600) * 100) / 5) * 5,
   );
-const uiLow = () => (isPhone() ? PHONE_MIN : UI_MIN);
 const uiNow = () =>
-  Math.min(uiFit(), Math.max(uiLow(), Math.min(UI_MAX, +S().uiSize || 100)));
+  Math.min(uiFit(), Math.max(UI_MIN, Math.min(UI_MAX, +S().uiSize || 100)));
 /* the UI scale's slider, in Settings and in the pause menus; its note says when this screen shows less than it asks */
 const uiNote = () =>
   uiNow() < (+S().uiSize || 100)
     ? `This screen shows ${uiNow()}% at most.`
-    : uiNow() > (+S().uiSize || 100)
-      ? `A phone shows ${uiNow()}% at least.`
-      : "";
+    : "";
 export const uiScaleHTML = () =>
   `<div class="ui-scale">${slider("uiSize", "UI scale", UI_MIN, UI_MAX, 5, "%", 100)}<p class="small dim ui-note">${uiNote()}</p></div>`;
 /* its wiring in window w: the number follows the thumb; the UI changes size when it's let go (changing it while it's

@@ -115,6 +115,7 @@ import { linesOf } from "./merchantlines.js";
 import { invuln } from "./hangout/death.js";
 import { hOk, hLock, shotFeet, SAME_FLOOR, zOf, nearH } from "./heights.js";
 import { toPx } from "./units.js";
+import { blast, reach } from "./blast.js";
 import { pushAlong } from "./push.js";
 import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
@@ -4364,88 +4365,87 @@ function burnAt(s, by, x, y, now, z0 = 0) {
     ...out,
   ];
 }
-/* a grenade (thrown or launched) goes off at (bx, by): every zombie in its blast dies, and the duck that threw it, in
-   it, loses half its HP; true when it got any zombie */
-/* a blast (a grenade, the grenade launcher's, the Angelic pistol's crit) at (bx, by), its feet at bz (left
-   out: the floor there at its shooter's height, sh.hz). It reaches only what the shots' one rule lets it: nothing solid
+/* a blast (a grenade, the grenade launcher's, the Angelic pistol's crit) at (bx, by), its feet at bz (left out: the floor
+   there at its shooter's height, sh.hz): every zombie in it dies, and the duck that threw it, in it, loses half its HP;
+   true when it got any zombie. Who is in it: blast.js, reaching only what the shots' one rule lets it: nothing solid
    between (layout.js slabBetween; the owner's, Nov 17 20:02Z, "IT IS PHYISCALLY RETARDED"), so one on a roof never gets
    anything inside or under it, and one inside never gets anything up on it */
 const blastZ = (x, y, hz) => (dp() ? floorH(x, y, hz) : heightAt(x, y));
 function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
-  let any = false;
   const gore = [],
     z0 = bz ?? blastZ(bx, by, sh.hz || 0),
-    open = (x, y, z) => !slabBetween(bx, by, z0, x, y, z); // (nothing solid between)
-  for (const z of zs)
-    if (
-      z.st !== 3 &&
-      Math.hypot(z.x - bx, (z.y - by) * 1.25) < ARMS.grenade.r * wide &&
-      open(z.x, z.y, zOf(z, "zombie"))
-    ) {
-      strike(s, z, z.hp, false, sh.by); // (all its HP: 5 points for each)
-      die(z, T);
-      mark(s, z, "g0"); // (every chunk, cuts and big holes: l4ddart.js)
-      gore.push([Math.round(z.x), Math.round(z.y)]);
-      any = true;
-    }
-  /* Justin out there with no weapon, in its blast: all his HP, torn apart, headless and burnt (wounds.js DEATH); no jump dodges it (the owner's, Nov 17 20:37Z) */
-  for (const j of wilds(s)) {
-    const jp = s.pos[j],
-      jq = P4(s, j);
-    if (!jq || jq.dn || jq.gh) continue;
-    const [jx, jy] = toPx(jp);
-    if (
-      Math.hypot(jx - bx, (jy - by) * 1.25) < ARMS.grenade.r * wide &&
-      open(jx, jy, zOf(jp))
-    )
-      wildDown(s, j, sh.by, now, "grenade", true, DEATH);
-  }
-  if (L4_HOOKS.gm && s.hang.gm)
-    L4_HOOKS.gm.blast(
-      s,
-      sh.by,
-      bx,
-      by,
-      ARMS.grenade.r * wide,
-      open,
-      now,
-      sh.w,
-      gmHelp(s, now),
-    ); // (Survival's gunmen in its blast: gunmenrules.js)
-  /* the merchant in its blast: all his HP */
-  const mm = merchantOf(s);
-  if (
-    mm &&
-    mm.st !== "dead" &&
-    mm.st !== "jump" &&
-    Math.hypot(mm.x - bx, (mm.y - by) * 1.25) < ARMS.grenade.r * wide &&
-    open(mm.x, mm.y, heightAt(mm.x, mm.y))
-  )
-    merchantHurt(
-      s,
-      s.players[sh.by] ? sh.by : null,
-      mm.hp,
-      now,
-      "grenade",
-      "blast",
-    );
-  /* the one who threw or launched it, in its blast: half its HP, rounded down, and never down by it (the owner's, Nov
-     16) */
-  const mine = sh.k && s.pos[sh.by],
-    q = mine && (s.hang.l4p || {})[sh.by];
-  if (q && !q.dn && !q.gh && !invuln(s) && !invulnOf(s, sh.by, now)) {
-    const [mx, my] = toPx(mine),
-      cut = Math.floor(q.hp / 2);
-    if (
-      cut > 0 &&
-      Math.hypot(mx - bx, (my - by) * 1.25) < ARMS.grenade.r * wide &&
-      open(mx, my, zOf(mine))
-    )
-      s.hang.l4p = {
-        ...s.hang.l4p,
-        [sh.by]: { ...q, hp: hundredths(q.hp - cut), at: now },
-      };
-  }
+    near = reach({
+      x: bx,
+      y: by,
+      rx: 1,
+      ry: 0.8,
+      r: ARMS.grenade.r * wide,
+      ok: (x, y, z) => !slabBetween(bx, by, z0, x, y, z),
+    }),
+    mine = sh.k && s.pos[sh.by];
+  const any = blast(near, [
+    [
+      zs,
+      (z) => z.st !== 3 && [z.x, z.y, zOf(z, "zombie")],
+      (z) => {
+        strike(s, z, z.hp, false, sh.by); // (all its HP: 5 points for each)
+        die(z, T);
+        mark(s, z, "g0"); // (every chunk, cuts and big holes: l4ddart.js)
+        gore.push([Math.round(z.x), Math.round(z.y)]);
+        return true;
+      },
+    ],
+    [
+      wilds(s),
+      (j) => {
+        const jq = P4(s, j);
+        return jq && !jq.dn && !jq.gh && [...toPx(s.pos[j]), zOf(s.pos[j])];
+      },
+      (j) => wildDown(s, j, sh.by, now, "grenade", true, DEATH),
+    ], // (Justin out there with no weapon: all his HP, torn apart, headless and burnt, wounds.js DEATH; no jump dodges it: the owner's, Nov 17 20:37Z)
+    (near) =>
+      void (
+        L4_HOOKS.gm &&
+        s.hang.gm &&
+        L4_HOOKS.gm.blast(s, sh.by, near, now, sh.w, gmHelp(s, now))
+      ), // (Survival's gunmen in it: gunmenrules.js)
+    [
+      () =>
+        [merchantOf(s)].filter((m) => m && m.st !== "dead" && m.st !== "jump"),
+      (m) => [m.x, m.y, heightAt(m.x, m.y)],
+      (m) =>
+        merchantHurt(
+          s,
+          s.players[sh.by] ? sh.by : null,
+          m.hp,
+          now,
+          "grenade",
+          "blast",
+        ),
+    ], // (the merchant: all his HP)
+    [
+      () =>
+        [mine && (s.hang.l4p || {})[sh.by]].filter(
+          (q) =>
+            q &&
+            !q.dn &&
+            !q.gh &&
+            !invuln(s) &&
+            !invulnOf(s, sh.by, now) &&
+            Math.floor(q.hp / 2) > 0,
+        ),
+      () => [...toPx(mine), zOf(mine)],
+      (q) =>
+        (s.hang.l4p = {
+          ...s.hang.l4p,
+          [sh.by]: {
+            ...q,
+            hp: hundredths(q.hp - Math.floor(q.hp / 2)),
+            at: now,
+          },
+        }),
+    ], // (the one who threw or launched it: half its HP, rounded down, and never down by it: the owner's, Nov 16)
+  ]);
   addFx(s, {
     kind: "boom",
     by: sh.by,
