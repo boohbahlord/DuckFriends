@@ -17605,16 +17605,7 @@ html.still .l4to {
   width: 100%;
 }
 /* my meter's moves (hpmeter.js, the owner's Nov 17 17:41Z): the blocks a hit took blink to white and drain, an HP back
-   is white blinking into red (an overlay, --ol from the left, --ow wide, --oa how white), and the next HP regen fills
-   with a very faint red (--g0 to --g1) */
-.hpm-blocks i {
-  background: linear-gradient(
-    90deg,
-    transparent calc(var(--g0, 0) * 100%),
-    #ff2a5a3a calc(var(--g0, 0) * 100%) calc(var(--g1, 0) * 100%),
-    transparent calc(var(--g1, 0) * 100%)
-  );
-}
+   is white blinking into red (an overlay, --ol from the left, --ow wide, --oa how white) */
 .hpm-blocks i::after {
   content: "";
   position: absolute;

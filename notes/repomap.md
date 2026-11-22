@@ -58,7 +58,7 @@ friends.js 236 friends
 front.js 151 the front page
 fx.js 1200 the effects, drawn as
 fxmotion.js 234 how a held weapon
-game.js 5099 the game screen
+game.js 5092 the game screen
 gameact.js 546 the action window and
 gameboard.js 589 the board: each mode's
 gamedefaults.js 58 the game's own numbers,
@@ -90,8 +90,8 @@ homeapp.js 43 Install Duck Friends
 hooks.js 3 hooks between screens that
 hotbar.js 497 the specials on the
 hotpick.js 318 What goes in my
-hpmath.js 46 HP in hundredths
-hpmeter.js 328 HP meters and the
+hpmath.js 59 HP in hundredths
+hpmeter.js 311 HP meters and the
 idbstore.js 38 One place that opens
 invisible.js 11 Who is invisible right
 itemtip.js 104 hold I on an
@@ -112,7 +112,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power
 l4ddpowerui.js 278 Dead Ducks Arcade's power
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 5004 the rules of Quacky
+l4ddrules.js 4994 the rules of Quacky
 l4ddsfx.js 545 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online:
 langname.js 5 the name of Sandbox's

@@ -59,14 +59,16 @@ const low = (hp, max) => hp > 0 && hp <= max * 0.2;
 /* my meter's moves (the owner's, Nov 17 17:41Z):
      - a hit: the blocks I lost blink, getting whiter, fully white in half a second, then drain away. Another hit while
        that runs: a third longer, blinking faster, and the new ones lost join in;
-     - regen (Dead Ducks Arcade): the next block slowly fills with a very faint red; once that HP is back, it turns white
-       and blinks into full red in a second. A hit starts the regen over (the rules do: game.js gives me how far it is);
+     - a heal: what came back turns white and blinks into full red in a second. HP coming back on its own fills the bar
+       as it comes, in hundredths, with nothing over it (B7, the owner's, Nov 22 06:24Z: "that HP isn't like darkened
+       out while it regens anymore"; hpmath.js regenOf): a step that small never blinks;
      - and under the blocks, the same thin bars as under my name: the cooldown (white), the ammo (yellow), the sprint
        (blue): meters.js mirrorBars */
 const WHITE_MS = 500, // a hit's blocks: fully white in this long
   DRAIN_MS = 220, // then drained in this long
   BACK_MS = 1000, // an HP back: from white to full red in this long
-  BLINK_MS = 120; // one blink (on and off) while a hit's blocks whiten; faster with each hit more
+  BLINK_MS = 120, // one blink (on and off) while a hit's blocks whiten; faster with each hit more
+  SEEP = 0.05; // HP back by this much or less (a regen's hundredths) fills without blinking
 
 /* the hurt corners (.hurt-edge: four circles of --hc fading out by --hr, css/app.css), drawn as pixels by pxbake.js */
 let hurtColor = ""; // (--hc, read once: read at each making, it made the page work out its styles mid-frame, while hit)
@@ -91,9 +93,8 @@ function hurtPaint(x, w, h, el) {
     x.fillRect(0, 0, w, h);
   }
 }
-/* my meter: mounted once, then set every frame (it only changes what changed). set(hp, max, sprint, tired, regen):
-   sprint is 0 … 1, or null where sprinting never runs out (no blue bar then); regen is how far the next HP is to coming
-   back, 0 … 1, or null (no regen) */
+/* my meter: mounted once, then set every frame (it only changes what changed). set(hp, max, sprint, tired): sprint is
+   0 … 1, or null where sprinting never runs out (no blue bar then) */
 export function mountMeter() {
   const el = document.createElement("div");
   el.className = "hpm hpm-me gone";
@@ -145,21 +146,18 @@ export function mountMeter() {
     hurt = null, // a hit's blocks: { t0, from, to, white (ms till fully white), n (hits) }
     back = null, // an HP back: { t0, from, to }
     moving = false; // (something drawn over the blocks last frame: cleared once it stops)
-  /* each block's overlay: [left, width, how white] of it, and its faint red regen [from, to] of it */
-  const paint = (now, regen) => {
+  /* each block's overlay: [left, width, how white] of it */
+  const paint = (now) => {
     const hurtEnd = hurt ? hurt.t0 + hurt.white + DRAIN_MS : 0,
       backEnd = back ? back.t0 + BACK_MS : 0;
     if (hurt && now >= hurtEnd) hurt = null;
     if (back && now >= backEnd) back = null;
-    const ghost = regen != null && regen > 0 && hp < max ? regen : 0;
-    if (!hurt && !back && !ghost && !moving) return;
-    moving = !!(hurt || back || ghost);
+    if (!hurt && !back && !moving) return;
+    moving = !!(hurt || back);
     [...blocks.children].forEach((b, i) => {
       let ol = 0,
         ow = 0,
-        oa = 0,
-        g0 = 0,
-        g1 = 0;
+        oa = 0;
       if (hurt) {
         const a = fillOf(i, k, hurt.to, max),
           z = fillOf(i, k, hurt.from, max);
@@ -189,24 +187,13 @@ export function mountMeter() {
           oa = (1 - u) * (on ? 1 : 0.55); // (white, blinking into red)
         }
       }
-      if (ghost && !ow) {
-        g0 = fillOf(i, k, hp, max);
-        g1 = fillOf(i, k, hp + ghost, max);
-        if (g1 <= g0) g0 = g1 = 0;
-      }
       /* in steps a block can show (a fiftieth of it, a twentieth of the white's strength): finer, the blocks were
          restyled every frame for changes nobody sees, and each one painted the bar round them again */
       const q = (x, st) => Math.round(x / st) * st;
       ol = q(ol, 0.02);
       ow = q(ow, 0.02);
       oa = q(oa, 0.05);
-      g0 = q(g0, 0.02);
-      g1 = q(g1, 0.02);
-      const v = ow
-        ? `${ol.toFixed(2)} ${ow.toFixed(2)} ${oa.toFixed(2)}`
-        : g1
-          ? `g${g0.toFixed(2)} ${g1.toFixed(2)}`
-          : "";
+      const v = ow ? `${ol.toFixed(2)} ${ow.toFixed(2)} ${oa.toFixed(2)}` : "";
       if (b._ov === v) return;
       b._ov = v;
       if (ow) {
@@ -215,17 +202,13 @@ export function mountMeter() {
         b.style.setProperty("--oa", oa.toFixed(2));
       } else
         for (const n of ["--ol", "--ow", "--oa"]) b.style.removeProperty(n);
-      if (g1) {
-        b.style.setProperty("--g0", g0.toFixed(2));
-        b.style.setProperty("--g1", g1.toFixed(2));
-      } else for (const n of ["--g0", "--g1"]) b.style.removeProperty(n);
     });
   };
   return {
     el,
     edge,
     remove: () => edge.remove(),
-    set(h, m, sprint = null, tired = false, regen = null) {
+    set(h, m, sprint = null, tired = false) {
       const now = performance.now();
       if (!shown) {
         shown = true;
@@ -251,7 +234,7 @@ export function mountMeter() {
           } else hurt = { t0: now, from: hp, to: h, white: WHITE_MS, n: 0 };
           back = null;
         } else if (hp >= 0 && h > hp) {
-          back = { t0: now, from: hp, to: h };
+          if (h > hp + SEEP) back = { t0: now, from: hp, to: h };
           if (hurt && h >= hurt.from) hurt = null;
           else if (hurt) hurt.to = Math.max(hurt.to, h);
         }
@@ -268,7 +251,7 @@ export function mountMeter() {
         el.setAttribute("aria-valuenow", hpText(h));
         flag(el, "low", low(h, max));
       }
-      paint(now, regen);
+      paint(now);
       const v = sprint == null ? "" : sprint.toFixed(3) + (tired ? "t" : "");
       if (v !== sp) {
         sp = v;

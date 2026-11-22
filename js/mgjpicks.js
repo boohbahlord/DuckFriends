@@ -181,7 +181,7 @@ export function pickTick(s, now, at, log, fx) {
         continue;
       const lost = { ...m.lost },
         most = mgjPHp(s),
-        left = hundredths(most - hpHeal(most - lost[id], 1, most)); // (a part-empty block fills first: hpmath.js)
+        left = hundredths(most - hpHeal(most - lost[id], 1, most)); // (one HP, just that: hpmath.js)
       if (left > 0) lost[id] = left;
       else delete lost[id];
       m.lost = lost;
