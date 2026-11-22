@@ -8017,3 +8017,10 @@ Decision: states have their own Time, default = the zone's Time per step shown a
 ## Owner, 18:46Z Nov 22 (after Adam's memory cleanup proposal)
 so as long as rules work the same in whatever way
 Decision: read as a go for the memory cleanup (index status to 3 lines, finished notes to the archive, an 8 KB check); every rule kept word for word.
+
+## Owner, 19:13Z Nov 22 (furious)
+WHY THE FUCK IS JACKAL BEING ALLOWED TO EDIT SETTINGS OR UI!!!!???!?! YOU FUCKING RETARDED PIECE OF SHIT DONT TRUST JACKAL WITH ANYTHING THAT ISNT BEGINNER DEV BULLSHIT!!!!!!!! WHY THE FUCK IS IT THAT SCROLLING THROUGH LOBBY MAKES A NEW LOADING SCREEN FOR EVERY SCROLL!?!?!? WHY ARE WE INTIATING LOADING FOR EVERY FUCKING SCROLLL!?!??!?!?! WHY THE FUCK IS THE CREATOR MAKING THE IDEAS MEANT TO BE THE BUG TESTER FOR YOUR NIGHTMARE FEVER SLOP!!!????!?!?!? I FUCKING HATE ALL OFF YOU! KILL YOURSELF!!!! DONT LET LOBBY BE LIKE THIS EVER RETARD!!!
+
+## Owner, 19:14Z Nov 22 (furious)
+WHY THE FUCK CAN I NOT CHANGE MAP IMAGE FOR BOARD!??!?! WHY THE FUCK AM I BEING ASKED TO VOTE FOR MAP BACKGROUND ON A SANDBOX SAVE ALREADY MADE? !?!??!?!? WHY THE FUCK !?!??! KILL YOURSELF!!!! YOUR BREAKING MY GAME AND MAKING ME LIVE A FEVER DREAM EVERYDAY
+Decision: RULE: Jackal only gets beginner jobs, never settings or UI (Jackal did the gamesettings split and paintMenu, Nov 21-22). Fix now, above the throttle: lobby scroll must never start a loading screen; a Sandbox save that already has its map is never put to a map vote; the board's map picture can be changed in Sandbox. Plus a check for each so it never comes back.
