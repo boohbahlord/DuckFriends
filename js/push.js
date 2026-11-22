@@ -11,6 +11,8 @@ import { baseMode } from "./sandboxrules.js";
 import { scaleOf } from "./duck.js";
 import { WEIGHT } from "./gamedefaults.js";
 import { ARMS, DEAD_WEIGHT } from "./guns.js";
+import { overlapH } from "./heights.js";
+import { DUCK } from "./hangout/layoutbase.js";
 
 /* weight follows Size (the owner's, Nov 21 15:56Z: "a duck's weight increases in proportion with its size by
    percentage. So a duck that is 110% bigger has 10% more weight and also 10% less speed ... A duck with more weight has
@@ -20,6 +22,10 @@ import { ARMS, DEAD_WEIGHT } from "./guns.js";
    projectiles do not become affected by your weight"). Justin and the computers' made ducks without one: 1 */
 export const sizeOf = (s, id) =>
   (s.players && s.players[id] && scaleOf(s.players[id].duck)) || 1;
+/* do two bodies walk into each other at their heights (heights.js overlapH)? Player a's feet at az, and player b's at
+   bz (b null: a zombie, DUCK tall); each a duck tall times its Size (world.js and l4dd.js crowd) */
+export const meets = (s, a, az, b, bz) =>
+  overlapH(az, DUCK * sizeOf(s, a), bz, b == null ? DUCK : DUCK * sizeOf(s, b));
 /* its weight: its Size and the dead weight it carries (16:53Z: "this kind of weight ... does not add to your
    knockback"; nor to its walk): what it holds out (s.pos' w), or with WEIGHT.DEAD_FROM "all", everything in its kit */
 const deadOf = (w) => DEAD_WEIGHT[(ARMS[w] || {}).dw] || 0;
