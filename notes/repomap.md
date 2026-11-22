@@ -289,7 +289,7 @@ artindoor.js 1104 the cabin's inside: furniture,
 artpool.js 358 the deck and the
 artyard.js 901 the yard: ground, trees,
 beachball.js 364 the beach ball
-blackjack.js 1382 the blackjack table in
+blackjack.js 1388 the blackjack table in
 book.js 170 the guestbook: a book
 bricks.js 482 loose bricks, drawn as
 cabinend.js 135 End Cabin / Exit
@@ -313,7 +313,7 @@ npcart.js 283 Duck Cabin's characters: the
 piano.js 531 the piano in the
 pianokeys.js 665 Hangout: the piano's keyboard
 plank.js 90 the plank from the
-poker.js 1185 poker at the blackjack
+poker.js 1172 poker at the blackjack
 pool.js 9 down the hill: the
 power.js 501 the power box, the
 pxw-cabin-l4.js 418 made by tools/pixel-world.cjs:
