@@ -876,10 +876,11 @@ function walkAll(zs, c) {
          INSIDE OF THE BUILDING AND ATTACK FROM THE FUCKING FLOOR"): from in there it walks out to the foot first */
       if (z.cm && best < 0.9 && !deckOver(z.x, z.y, zOf(z, "zombie"))) {
         const at = climbFrom(z, GS.DECKS[z.cm[3]], z.cm[1], z.cm[2]);
-        if (Math.hypot(at[0] - z.x, at[1] - z.y) > 0.5) {
+        if (Math.hypot(at[0] - z.x, at[1] - z.y) > CL.at) {
           walkTo(z, ...at, v * dt);
           continue;
         } // (to it first, on the ground; up from the next heartbeat on, so it is drawn there before it climbs)
+        [z.x, z.y] = at;
         z.st = 6;
         z.k = z.cm[3];
         z.n = 0;

@@ -673,6 +673,7 @@ function planBuild(b) {
         layer: "none",
         z: z + T.waist,
         top: z + T.h - T.below,
+        car: o.car,
       },
     ); // (its glass and roof: they stop a shot up to the roof; walking over them is its floor's)
     return solid("car", r, T.h, { top: z + T.waist, pass: true, ...o });
@@ -689,7 +690,7 @@ function planBuild(b) {
       flick: 0.6,
     },
   });
-  CARS.forEach((c, i) => car(c, CAR_LOOKS[i]));
+  CARS.forEach((c, i) => car(c, { ...CAR_LOOKS[i], car: i })); // (car: its index, so a push moves it: layout.js carAt)
   /* the fallen tree: a row of low blocks along it (a jump clears them; zombies climb over: zx) */
   {
     const F = FALLEN,
@@ -1054,7 +1055,7 @@ function forest(put) {
    number here is turned to K of itself: the exported places and sizes in place (so whatever holds one of them, a prop's
    hole or building, sees the new one), and each prop's place, size, height and options as build() hands it on. The
    strength of a light (k) and its flicker stay. The cabin's own things keep their size, only their place moves */
-const KEEP = new Set(["k", "flick", "out", "big"]),
+const KEEP = new Set(["k", "flick", "out", "big", "car"]),
   OWN_SIZE = new Set(["priest", "l4angel", "l4power", "toilet", "sink"]),
   done = new Set();
 function scaled(o) {
@@ -1157,11 +1158,17 @@ export const DECKS = [
     bldg: 0,
   },
 ];
-/* every car's top: a floor over it (vehicles.js carDeck) */
+/* every car's top: a floor over it (vehicles.js carDeck); car i's moved (ox, oy) world px from its place (carpush.js),
+   its look and its height kept */
 const carZ = (c) => groundAt((c.x0 + c.x1) / 2, c.y1 - 1);
+export function carDeckAt(i, ox, oy) {
+  const c = CARS[i],
+    b = { x0: c.x0 + ox, y0: c.y0 + oy, x1: c.x1 + ox, y1: c.y1 + oy };
+  return { ...carDeck(b, carEast(c.x0, c.y0, false), carZ(c), K), car: i };
+}
 DECKS.push(
   carDeck(HOOD, false, carZ(HOOD), K, true),
-  ...CARS.map((c) => carDeck(c, carEast(c.x0, c.y0, false), carZ(c), K)),
+  ...CARS.map((c, i) => carDeckAt(i, 0, 0)),
   {
     kind: "plank",
     x0: PLANK.x0,

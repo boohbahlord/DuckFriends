@@ -5,20 +5,23 @@
       them is somewhere a roof stands over the wall.
    2. With my duck on the canopy by its ladder, the zombies get up to it (up the ladder, or up the gas station and the
       jump) and don't keep climbing the station, dropping through its broken corner and climbing again.
+   3. With my duck on the canopy by its east edge, just west of the plank, in round 6, the crowd coming from the south
+      east gets up to it (the owner's, Nov 22 06:18Z: "Zombies got stuck and werent moving up to the gas pump roof,
+      seemingly stuck on notbing"): on a slow phone (350 ms heartbeats) they waited at the red car for good.
    Fixed seed and fake clock (tools/npc-golden/init.js), so it plays the same every time. */
 const fs = require("fs"),
   path = require("path");
 const { chromium } = require("playwright");
 const { url, fail, noErrors } = require("./lib.cjs");
 const INIT = path.resolve(__dirname, "../npc-golden/init.js");
-(async () => {
-  const b = await chromium.launch(),
-    p = await b.newPage({ viewport: { width: 800, height: 450 } }),
-    errs = [];
+/* a game with my duck parked at spot on the canopy for 300 heartbeats of ms each; r6: in round 6, the zombies put
+   south east of the canopy as they come */
+async function play(b, errs, o) {
+  const p = await b.newPage({ viewport: { width: 800, height: 450 } });
   p.on("pageerror", (e) => errs.push(e.message));
   await p.addInitScript(fs.readFileSync(INIT, "utf8"));
   await p.goto(url, { waitUntil: "networkidle" });
-  const r = await p.evaluate(async () => {
+  return p.evaluate(async ({ spot, ms, r6 }) => {
     const net = await import("./js/net.js"),
       { botActions } = await import("./js/bots.js"),
       LY = await import("./js/hangout/layout.js"),
@@ -31,7 +34,7 @@ const INIT = path.resolve(__dirname, "../npc-golden/init.js");
     const room = net.createLocalRoom({ name: "Z", test: true, computers: 0 });
     room.close();
     const beat = () => {
-      window.__now += 200;
+      window.__now += ms;
       room.send({ t: "tick", id: room.me });
       for (const a of botActions(room.state, window.__now)) room.send(a);
     };
@@ -62,8 +65,7 @@ const INIT = path.resolve(__dirname, "../npc-golden/init.js");
       if (q && !LY.onDeckAt(S, q[0] - e.nx * 40, q[1] - e.ny * 40))
         bad.push(q.map(Math.round).join(","));
     }
-    // 2. my duck parked on the canopy by its ladder, kept alive, for 300 beats
-    const spot = [880, 1420];
+    // 2. my duck parked on the canopy, kept alive, for 300 beats
     let hp0 = null,
       drops = 0;
     const was = {};
@@ -81,6 +83,18 @@ const INIT = path.resolve(__dirname, "../npc-golden/init.js");
       }
       if (s.hang.l4 && s.hang.l4.wait && !(s.hang.l4.wait.v || {})[room.me])
         room.send({ t: "hang", k: "l4", do: "endturn", on: true, id: room.me });
+      if (r6) {
+        const L = s.hang.l4;
+        if (L && !L.wait && L.r < 6) s.hang = { ...s.hang, l4: { ...L, r: 6 } };
+        const zs = Z.zombies(room.state);
+        for (const z of zs)
+          if (z.st < 3 && !(was[z.i] >= 0)) {
+            z.x = 1960 + (z.i % 5) * 30;
+            z.y = 1560 + Math.floor(z.i / 5) * 25;
+            z.st = 2;
+          }
+        Z.store(room.state, zs);
+      }
       beat();
       for (const z of Z.zombies(room.state)) {
         if (
@@ -102,21 +116,33 @@ const INIT = path.resolve(__dirname, "../npc-golden/init.js");
       all: zs.length,
       up: zs.filter((z) => z.k === ci && z.st === 7).length,
     };
-  });
+  }, o);
+}
+(async () => {
+  const b = await chromium.launch(),
+    errs = [],
+    r = await play(b, errs, { spot: [880, 1420], ms: 200 }), // (by the ladder)
+    e = await play(b, errs, { spot: [1876, 1400], ms: 350, r6: true }); // (by the plank)
   noErrors(errs);
   if (r.bad.length)
     fail(
       "zombies climb the restroom's brick wall under the broken roof at " +
         r.bad.join(" "),
     );
-  if (r.up < r.all * 0.8)
-    fail(`only ${r.up} of ${r.all} zombies got up on the canopy in 300 beats`);
+  for (const [q, w] of [
+    [r, "by the ladder"],
+    [e, "by the plank, round 6"],
+  ])
+    if (q.up < q.all * 0.8)
+      fail(
+        `only ${q.up} of ${q.all} zombies got up on the canopy (${w}) in 300 beats`,
+      );
   if (r.drops > 3)
     fail(
       `zombies dropped off the station's roof at its south edge ${r.drops} times`,
     );
   console.log(
-    `zclimb: ${r.up} of ${r.all} on the canopy, ${r.drops} drops, restroom wall spots ok`,
+    `zclimb: ${r.up} of ${r.all} on the canopy by the ladder, ${e.up} of ${e.all} by the plank (round 6), ${r.drops} drops, restroom wall spots ok`,
   );
   await b.close();
 })();

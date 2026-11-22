@@ -18,8 +18,12 @@ import { tooNear } from "./crowd.js";
 /* ---------- up onto the roofs (Downpour, Part B: the owner's, Nov 17 12:28Z) ----------
    A duck up on a roof (or on the canopy over the pumps) is reached by climbing: a zombie goes to the foot of the edge
    nearest the duck (CL.out outside it), climbs straight up the wall onto it (st 6, slower than it walks: CL.speed of its
-   walk), and walks the roof at it (st 7). Its height comes from where it is, as on a fence */
+   walk), and walks the roof at it (st 7). Its height comes from where it is, as on a fence. at: how near the foot it
+   starts up (world px): the crowd behind it nudged the one in front a pixel off its foot every heartbeat (zombies.js
+   separate), so it never stood within half a pixel of it and the whole crowd waited at the red car for good (the
+   owner's, Nov 22 06:18Z: "Zombies got stuck and werent moving up to the gas pump roof, seemingly stuck on notbing") */
 export const CL = {
+  at: 6,
   out: 26,
   in: 14,
   step: 40,

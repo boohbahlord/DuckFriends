@@ -24,6 +24,7 @@ export const BLAST = { RING: 1, CENTER: 9, LEAST: 0.5, CRIT: 0.25 };
 export const WEIGHT = {
   SLOWEST: 0.5,
   DEAD_FROM: "held", // whose dead weight a duck carries (guns.js DEAD_WEIGHT): "held", what it holds out; "all", its whole kit (B6b: the owner hasn't picked)
+  CAR: 15, // a car, in duck weights (carpush.js; a small 80s or 90s car, about 1,000 kg: Adam's OK, Nov 22 03:08Z)
 };
 
 /* water (hangout/layout.js wetK): how fast every walker goes in it, of its walk. WADE in shallow water (Downpour's

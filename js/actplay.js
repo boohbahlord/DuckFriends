@@ -163,7 +163,6 @@ import {
   SB_H,
   attacks,
   chainShot,
-  cutPic,
   duckFlame,
   floorFirst,
   groundFire,
@@ -302,11 +301,6 @@ export function act_move({ state, s, a, now, me }) {
     x,
     y,
     j,
-    ...(cutPic(me)
-      ? {
-          f: x < was.x - 0.0005 ? -1 : x > was.x + 0.0005 ? 1 : was.f || 1,
-        }
-      : {}), // (a cut-out picture: the way it faces, as the screens turn it, so it's hit where it shows: playerAt)
     q: /^[lrud]$/.test(a.q) ? a.q : "",
     sp: !!a.sp,
     ...(w ? { w, ax: +ax.toFixed(3), ay: +ay.toFixed(3) } : {}),

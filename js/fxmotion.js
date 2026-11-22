@@ -197,9 +197,14 @@ export function shakeBoard(board, now) {
     sk = kx || ky ? `${kx.toFixed(1)}px ${ky.toFixed(1)}px` : "";
   if (board._sk === sk) return;
   board._sk = sk;
-  const els = board.classList.contains("hang-board")
-    ? board.querySelectorAll(WORLD)
-    : [board];
+  const key = board.childElementCount + board.className;
+  if (board._skn !== key) {
+    board._skn = key;
+    board._ske = board.classList.contains("hang-board")
+      ? [...board.querySelectorAll(WORLD)]
+      : [board];
+  } // (the world's layers, found again only when the board's children change: a search every frame of a shake added up)
+  const els = board._ske;
   for (const el of els) el.style.translate = sk;
 }
 /* where the board sits now, [x, y] css px (0, 0 when still) */
