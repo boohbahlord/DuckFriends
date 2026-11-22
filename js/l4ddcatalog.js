@@ -31,6 +31,7 @@ import {
 import { survOn } from "./survrules.js";
 import { orbHTML, UP_ICONS } from "./l4ddart.js";
 import { DROP_ICONS } from "./l4dddrops.js";
+import { draws } from "./bowdraw.js";
 
 /* what each one does, in a line */
 const SAY = {
@@ -115,7 +116,9 @@ function stats(w) {
     out.push(["Tank", `${num((1000 / A.cool / A.all) * 100)}% a second`]);
     out.push(["Burns", `1 every ${secs(BURN.EVERY)} for ${secs(BURN.Z)}`]);
   }
-  if (critOf(w)) out.push(["Crit", `${num(critOf(w) * 100, 1)}%`]);
+  if (draws(w))
+    out.push(["Crit", "Up to 100%, drawn"]); // (bowdraw.js drawCrit)
+  else if (critOf(w)) out.push(["Crit", `${num(critOf(w) * 100, 1)}%`]);
   if (missOf(w)) out.push(["Misses", `${num(missOf(w) * 100, 1)}%`]);
   else if (w === "pan") out.push(["Misses", "50% of swings"]);
   if (A.pierce) out.push(["Goes through", `${A.pierce} zombies`]);
