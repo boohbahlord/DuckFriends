@@ -3,7 +3,7 @@ file lines job
 
 ## js/
 account.js 397 the Google account: the
-actplay.js 940 a game's actions
+actplay.js 937 a game's actions
 actroom.js 744 the room's actions
 actsb.js 156 Sandbox's windows, saves and
 allies.js 383 Survival: the friendly squad
@@ -18,7 +18,7 @@ bbrules.js 380 the rules of Bicker
 beaks.js 138 beaks
 blast.js 67 explosions: one module
 bloodpool.js 50 a pool of blood:
-boardfire.js 1316 the board's weapons: hits,
+boardfire.js 1318 the board's weapons: hits,
 boardjustin.js 675 Justin on the boards
 botduck.js 90 a computer's duck: a
 botlines.js 188 What the computers write
@@ -27,6 +27,7 @@ brackets.js 459 Bicker Brackets: what the
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
 carpush.js 101 a car pushed: Downpour's
+chair.js 31 the chair: one thing
 chat.js 1597 text chat and the
 cheatflag.js 16 a game with test
 cheats.js 146 test commands: cheat round
@@ -112,7 +113,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power
 l4ddpowerui.js 278 Dead Ducks Arcade's power
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4997 the rules of Quacky
+l4ddrules.js 5004 the rules of Quacky
 l4ddsfx.js 545 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online:
 langname.js 5 the name of Sandbox's
@@ -136,7 +137,7 @@ mgj.js 219 Mad God Justin: what
 mgjart.js 96 Mad God Justin's new
 mgjbrain.js 619 Mad God Justin's brain,
 mgjpicks.js 500 Mad God Justin's pickups:
-mgjrules.js 1259 
+mgjrules.js 1257 
 modes.js 445 the game modes
 music.js 590 the music: our own
 musicbar.js 169 the music bar: the

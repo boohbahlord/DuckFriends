@@ -174,6 +174,7 @@ import {
   heading,
 } from "./zombiepath.js";
 import { CELL } from "./walkgrid.js";
+import { chairOver } from "./chair.js";
 import {
   zOk,
   Z_MOST,
@@ -198,8 +199,7 @@ import {
 } from "./zombies.js";
 
 /* what Sandbox lends these rules (sbcabin.js): npc(s, by, x, y, now, w, rx, ry, from, hit) puts a shot or a swing at
-   (x, y) into its NPCs standing there (hit: a swing's list, every one in reach once; none: a shot, the first one, true
-   when it landed) */
+   (x, y) into its NPCs there (hit: a swing's list, each in reach once; none: a shot, the first, true if it landed) */
 export const L4_HOOKS = { npc: null, gm: null }; // (gm: Survival's gunmen, gunmenrules.js: { tick, shot, blast, fire, near, claw })
 export const isL4dd = (s) => !!s && baseMode(s.options) === "l4dd"; // (and Sandbox on its cabin or Downpour: sandboxrules.js)
 /* I want only the lights' stutter and the air (the wind, the rain, the fires: ambience.js) on of Hangout's activities.
@@ -4219,11 +4219,20 @@ export function l4Shots(s, now) {
         endY = y;
         break;
       }
+      if (w === "chair") {
+        for (const z of chairOver(sh, zs, x, y, 26, 22, sh.x0 * W, sh.y0 * H)) {
+          hitAny = true;
+          if (strike(s, z, dmgOf(A), critRoll(s, sh.by, w), sh.by, w, now))
+            die(z, T);
+          else if (z.st === 2)
+            knockZ(z, sh.vx * W, sh.vy * H, knockOf("hammer")); // (it shoves like the hammer: the owner's, Nov 20 21:17Z)
+        }
+        continue;
+      } // (the chair: through every zombie its picture is over, each once, chair.js)
       if (w === "dbarrel") {
-        /* the slug double barrel's slug: through every zombie in its way, each once, 6 to the first and 1 or 1.5 less to
-           each one after (sh.d: what the next one takes), until it would do nothing (the owner's, Nov 19 19:27Z). A crit
-           doubles that one's. One it kills blows to pieces where it stands (no bullet knocks back: the owner's, Nov 21
-           17:48Z) */
+        /* the slug double barrel's slug: through every zombie in its way, each once, 6 to the first and 1 or 1.5 less
+           to each one after (sh.d: the next one's), until it does nothing (the owner's, Nov 19 19:27Z). A crit doubles
+           that one's. One it kills blows to pieces (no bullet knocks back: the owner's, Nov 21 17:48Z) */
         let stop = false;
         for (const z of nearby(grid, zs, x, y))
           if (near(z) && !(sh.hit || []).includes(z.i) && !past(sh, w, z)) {
@@ -4289,8 +4298,6 @@ export function l4Shots(s, now) {
             ); // (half a grenade's blast, its boom weaker: the owner's, Nov 17 11:07Z; it goes off where that zombie is)
         } else if (strike(s, z, dmgOf(A), critRoll(s, sh.by, w), sh.by, w, now))
           die(z, T);
-        else if (w === "chair" && z.st === 2)
-          knockZ(z, sh.vx * W, sh.vy * H, knockOf("hammer")); // (the chair shoves like the hammer: the owner's, Nov 20 21:17Z)
         hitAny = true;
         gone = true;
       }
