@@ -18,7 +18,7 @@ bbrules.js 380 the rules of Bicker Brackets
 beaks.js 138 beaks
 bloodpool.js 50 a pool of blood: the one
 boardfire.js 1319 the board's weapons: hits, shots, blasts,
-boardjustin.js 699 Justin on the boards
+boardjustin.js 691 Justin on the boards
 botduck.js 90 a computer's duck: a random look,
 botlines.js 188 What the computers write and say
 bots.js 1426 computers
@@ -126,8 +126,9 @@ merchants.js 376 the merchants
 meters.js 114 the thin bars under my duck's
 mgj.js 219 Mad God Justin: what the screen
 mgjart.js 96 Mad God Justin's new pictures
-mgjpicks.js 487 Mad God Justin's pickups: what drops,
-mgjrules.js 1871 
+mgjbrain.js 663 Mad God Justin's brain, on the
+mgjpicks.js 455 Mad God Justin's pickups: what drops,
+mgjrules.js 1280 
 modes.js 444 the game modes
 music.js 590 the music: our own songs, played
 musicbar.js 169 the music bar: the song the
@@ -246,11 +247,11 @@ triviabank.js 499 Trivia's auto questions
 triviarules.js 458 the rules of Trivia
 ui.js 380 small helpers every screen uses
 umaprules.js 72 Made maps: the room's part
-umaps.js 385 Made maps: making them, and keeping
+umaps.js 392 Made maps: making them, and keeping
 units.js 10 the game's units, in one place
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 3276 Updates
+updates.js 3286 Updates
 vdd.js 190 Valentine's Duck Date: what the screen
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
