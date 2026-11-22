@@ -319,7 +319,10 @@ rubberducks.js 183 the little rubber ducks in
 rules.js 87 Hangout's rules: s.hang and the
 seats.js 440 the couches, the campfire's logs,
 shadowduck.js 254 the shadow duck
-shapes.js 1704 Duck Cabin's props, drawn: art.js's
+shapes.js 962 Duck Cabin's props, drawn: art.js's
+shapesbase.js 60 Duck Cabin's props, drawn: the shared pieces
+shapesground.js 431 Duck Cabin's props, drawn: the ground and the decor
+shapeswalls.js 324 Duck Cabin's props, drawn: walls, railings, the TV, the trees
 soccer.js 508 soccer: one ball on the
 sounds.js 17 Duck Cabin's sounds
 stage.js 134 the stage: half an oval
