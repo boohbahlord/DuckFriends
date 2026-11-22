@@ -8013,3 +8013,7 @@ States can carry their own time that overrides the other given time if it's inpu
 
 Let me look at number 5. I don't know about your question.
 Decision: states have their own Time, default = the zone's Time per step shown as Default (value); general rule: an unset setting takes its parent's. Memory: talk first, no action until the owner agrees.
+
+## Owner, 18:46Z Nov 22 (after Adam's memory cleanup proposal)
+so as long as rules work the same in whatever way
+Decision: read as a go for the memory cleanup (index status to 3 lines, finished notes to the archive, an 8 KB check); every rule kept word for word.
