@@ -30,7 +30,16 @@ import * as GS from "./hangout/stationmap.js";
 import { walkOf } from "./rules.js";
 import { zOf, heightWay } from "./heights.js";
 import { SLOW as SWIM } from "./hangout/water.js";
-import { apart, crowdOf, into, goRound, tooNear } from "./crowd.js";
+import {
+  apart,
+  crowdOf,
+  into,
+  goRound,
+  tooNear,
+  otherWay,
+  sideSpot,
+  sideDone,
+} from "./crowd.js";
 import { isSurv, SV, survWatch } from "./survrules.js";
 import {
   L4_HOOKS,
@@ -266,7 +275,7 @@ export function newZombie(s, L, T, zs = []) {
     v = Math.round(WALK * Z_SLOW * rnd(R[1][0], R[1][1])),
     [sx, sy] = from || o.out;
   return {
-    ...(Math.random() < FLANK.p ? { fl: Math.random() < 0.5 ? 1 : -1 } : {}), // (a flanker: flank)
+    ...otherWay("zombie"), // (a flanker: flank)
     ...(nj ? { nj: 1 } : {}), // (never after Justin: JCHASE.last)
     i,
     x: sx + (dp() ? 0 : rnd(-12, 12) * (o.axis === "x" ? 1 : 0.3)),
@@ -976,37 +985,28 @@ export function fenceZ(x, y, id) {
 export const STATION = 1; // (layout.js whereIn: the gas station)
 const CHURCH = 2, // (and the chapel)
   TEAR_NEAR = 2.2; // duck lengths (room): a duck this close outside the church takes a zombie off the window it tears at // duck lengths (room): a duck that left the floor this close to a zombie keeping to its way up
-/* ---------- flankers (the owner's, Nov 17 17:41Z: "5% of zombies who spawn in will have a pattern where they try to
-   attack the player from a different path and direction from the other zombies if it is availible, as a way to add
-   difficulty to players making a train of zombies to herd or shepard") ----------
-   A flanker (z.fl: 1 or -1, its side) going for a duck on the ground first makes for a spot FLANK.far from the duck,
-   FLANK.turn round from the way it comes (z.wp [x, y, the duck, done]), then comes at the duck from there as the others
-   do. No room on either side (a wall, the trees, the flood's edge) and it comes as the others */
-const FLANK = { p: 0.05, far: 420, turn: 1.75, done: 1.5 };
+/* ---------- flankers: the other way round (crowd.js otherWay), for a duck on the ground; along the flow field to
+   its spot round the side. No room on either side (a wall, the trees, the flood's edge) and it comes as the others */
 function flank(z, q, now) {
   if (!q || q.dk) return null;
-  if (!z.wp || z.wp[2] !== q.id) z.wp = flankSpot(z, q);
+  if (!z.wp || z.wp[2] !== q.id) {
+    const at = sideSpot(
+      "zombie",
+      z,
+      q.xy,
+      z.fl,
+      RX,
+      RY,
+      (x, y) => zOk(x, y, heightAt(x, y)) && openNear(x, y) >= 0,
+    );
+    z.wp = at ? [...at, q.id, 0] : [0, 0, q.id, 1];
+  }
   if (z.wp[3]) return null;
-  if (
-    room(z.x, z.y, z.wp[0], z.wp[1]) < FLANK.done ||
-    room(z.x, z.y, ...q.xy) < (FLANK.far / RX) * 0.6
-  ) {
+  if (sideDone("zombie", z, z.wp, q.xy, room, RX)) {
     z.wp = [...z.wp.slice(0, 3), 1]; // (round the side: now straight at it)
     return null;
   }
   return wayTo(z.x, z.y, z.wp[0], z.wp[1], now);
-}
-function flankSpot(z, q) {
-  const [tx, ty] = q.xy,
-    a0 = Math.atan2((z.y - ty) / RY, (z.x - tx) / RX);
-  for (const sgn of [z.fl, -z.fl]) {
-    const a = a0 + sgn * FLANK.turn,
-      x = tx + Math.cos(a) * FLANK.far,
-      y = ty + Math.sin(a) * FLANK.far * (RY / RX);
-    if (zOk(x, y, heightAt(x, y)) && openNear(x, y) >= 0)
-      return [Math.round(x), Math.round(y), q.id, 0];
-  }
-  return [0, 0, q.id, 1];
 }
 /* the floor a zombie is on, as a duck's (deckAt: a roof, or null: the ground); undefined while it climbs a wall or
    jumps, between two floors. A zombie only ever claws a duck on its own floor (the owner's, Nov 17 20:02Z: "ZOMBIES

@@ -181,3 +181,32 @@ export function goRound(C, z, o, t, room, rx, ry, ok) {
     }
   return null;
 }
+
+/* ---------- the other way round ----------
+   The owner's, Nov 17 17:41Z: "5% of zombies who spawn in will have a pattern where they try to attack the player from a
+   different path and direction from the other zombies if it is availible, as a way to add difficulty to players making
+   a train of zombies to herd or shepard". p: how many of a breed do (each one rolled as it comes in: fl, its side, 1 or
+   -1); far, turn: its spot round the side, far world px from the one it goes for, turn (radians) round from the way it
+   comes; done: near enough to its spot (room units) to come straight at it */
+const ROUTE_BREEDS = {
+  zombie: { p: 0.05, far: 420, turn: 1.75, done: 1.5 },
+};
+export const otherWay = (k) =>
+  Math.random() < ROUTE_BREEDS[k].p ? { fl: Math.random() < 0.5 ? 1 : -1 } : {};
+/* the spot round the side for walker z going for t ([x, y]), its own side first, where ok(x, y) lets it stand:
+   [x, y], or null (no room either side). rx, ry: the room, in world px */
+export function sideSpot(k, z, t, side, rx, ry, ok) {
+  const B = ROUTE_BREEDS[k],
+    a0 = Math.atan2((z.y - t[1]) / ry, (z.x - t[0]) / rx);
+  for (const sgn of [side, -side]) {
+    const a = a0 + sgn * B.turn,
+      x = t[0] + Math.cos(a) * B.far,
+      y = t[1] + Math.sin(a) * B.far * (ry / rx);
+    if (ok(x, y)) return [Math.round(x), Math.round(y)];
+  }
+  return null;
+}
+/* has walker z got round the side (at its spot, or near t already)? */
+export const sideDone = (k, z, at, t, room, rx) =>
+  room(z.x, z.y, at[0], at[1]) < ROUTE_BREEDS[k].done ||
+  room(z.x, z.y, t[0], t[1]) < (ROUTE_BREEDS[k].far / rx) * 0.6;
