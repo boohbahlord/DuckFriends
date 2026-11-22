@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v243",
+    version: 243,
+    date: "Nov 22, 2026",
+    title: "Your pick sticks",
+    news: [
+      "My maps: tapping one of your maps picks it right away (before, it only showed its description), so the game starts on it with no vote.",
+      "Behind the scenes: Mad God Justin's brain lives in its own file now. Nothing plays differently.",
+    ],
+  },
+  {
     id: "v242",
     version: 242,
     date: "Nov 22, 2026",
