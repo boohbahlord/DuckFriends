@@ -27,7 +27,7 @@ import {
   onDeckAt,
 } from "./hangout/layout.js";
 import * as GS from "./hangout/stationmap.js";
-import { walkOf } from "./rules.js";
+import { walkOf, immobile } from "./push.js";
 import { zOf, heightWay } from "./heights.js";
 import { SLOW as SWIM } from "./hangout/water.js";
 import {
@@ -1206,8 +1206,10 @@ function separate(zs, zf = dp() ? zombieZ : null, k = "zombie") {
   });
 }
 /* one that never moves to make room: Speed 0 (the owner's, Nov 20 17:25Z: "Spawns or respawns dont move off their
-   position anymore to make room, since their movement being zero means zero"); the other takes all of the push */
-const still = (z) => z.sv === 0 || (!!z.sp && !!z.l && z.l[1] === 0); // (a Sandbox spawn's Speed 0: a map's zombie, zombieAt; a Sandbox walker, brainWalk)
+   position anymore to make room, since their movement being zero means zero"), and an immobile one (push.js); the other
+   takes all of the push. Speed 0 still takes a hit's knock-back (Nov 21 14:52Z: "zero speed = can't move itself") */
+const still = (z) =>
+  immobile(z) || z.sv === 0 || (!!z.sp && !!z.l && z.l[1] === 0); // (a Sandbox spawn's Speed 0: a map's zombie, zombieAt; a Sandbox walker, brainWalk)
 function nudge(z, dx, dy) {
   const x = z.x + dx,
     y = z.y + dy;

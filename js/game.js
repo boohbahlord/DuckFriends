@@ -201,8 +201,8 @@ import {
   KB_LAND,
   catchLen,
   counselBounds,
-  walkOf,
 } from "./rules.js";
+import { walkOf } from "./push.js";
 
 import { isSudo, canOpen } from "./roomrules.js";
 
@@ -610,7 +610,7 @@ const BODY = "~body"; // a Duck Cabin ghost's body is drawn as a duck of its own
 export const JUSTIN2 = "justin2"; // Mad God Justin's double, drawn as a duck of its own
 const isJustin = (id) => id === JUSTIN_ID || id === JUSTIN2;
 /* how big a duck is drawn against the others: Mad God Justin and his double a little bigger; a player at their own Size
-   (Customize, duck.js scaleOf: 50% to 500%, every mode) */
+   (Customize, duck.js scaleOf: 50% to 152%, every mode) */
 export const bigOf = (s, id) =>
   (isJustin(id) && isMgj(s) ? MGJ_SCALE : 1) *
   (s.players[id] ? scaleOf(shownDuck(s, s.players[id])) : 1);
@@ -2970,7 +2970,7 @@ export function step(dt, now) {
   const mul =
     (sprinting ? SPEED.sprint : 1) *
     (isMgj(s) ? MGJ_SLOW : 1) *
-    walkOf(s) *
+    walkOf(s, R.me) *
     sbWalkOf(s, R.me); // (Mad God Justin: the ducks a fifth slower; the lobby's Walking speed; Sandbox: a spawn's or a respawn's speed for me)
   const sx = (turned() ? SPEED.px : SPEED.x) * mul * onTree[0],
     sy = (turned() ? SPEED.py : SPEED.y) * mul * onTree[1];
