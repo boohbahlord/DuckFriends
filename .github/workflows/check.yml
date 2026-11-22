@@ -4,7 +4,7 @@
 # minutes), the owner's "full run once a day in the background, never blocking". Run by hand: Actions → Checks →
 # Run workflow, with test names (blank = all). The second job is Lighthouse (lighthouserc.json): it loads the game's
 # first page three times as a slow phone and fails the PR when the loading, accessibility or good-practice score falls
-# under the floor; the full report is kept with the run (Artifacts: lighthouse).
+# under the floor; the floors sit just under the scores of Nov 22 (performance 43, the rest 100) and only go up; the full report is kept with the run (Artifacts: lighthouse).
 name: Checks
 on:
   pull_request:
@@ -53,11 +53,11 @@ jobs:
         run: npx --yes @lhci/cli@0.16.1 autorun
       - name: Scores
         if: always()
-        run: |
-          node -e 'const m=require("./.lighthouseci/manifest.json").filter(r=>r.isRepresentativeRun);for(const r of m)console.log(Object.entries(r.summary).map(([k,v])=>k+" "+Math.round(v*100)).join(", "))'
+        run: node tools/lighthouse-scores.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: lighthouse
           path: .lighthouseci
           retention-days: 14
+          include-hidden-files: true
