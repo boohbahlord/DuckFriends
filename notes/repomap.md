@@ -69,7 +69,7 @@ gameact.js 546 the action window and
 gameannounce.js 212 The cloud's words and
 gameboard.js 589 the board: each mode's
 gamedefaults.js 71 the game's own numbers,
-gamefx.js 876 the silly commands and
+gamefx.js 878 the silly commands and
 gamehand.js 620 the hand: the number-key
 gameplace.js 734 where things are put
 gameready.js 47 
@@ -148,7 +148,7 @@ mgjart.js 96 Mad God Justin's new
 mgjbrain.js 613 Mad God Justin's brain,
 mgjpicks.js 507 Mad God Justin's pickups:
 mgjrules.js 1255 
-modes.js 445 the game modes
+modes.js 446 the game modes
 music.js 590 the music: our own
 musicbar.js 169 the music bar: the
 name.js 165 fonts and how a
@@ -272,7 +272,7 @@ umaps.js 371 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on
-updates.js 3609 Updates
+updates.js 3621 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival
