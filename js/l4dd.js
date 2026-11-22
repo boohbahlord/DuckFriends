@@ -695,7 +695,8 @@ function seeZombies(s, ctx, now) {
     snapAt = now;
   }
   const seen = new Set(),
-    me = s.pos && s.pos[ctx.me];
+    me = s.pos && s.pos[ctx.me],
+    mz = me && zOf(me, "body", clockNow()); // (in a jump: from its arc, heights.js)
   for (const z of zs) {
     seen.add(z.i);
     let o = Z.get(z.i);
@@ -736,7 +737,7 @@ function seeZombies(s, ctx, now) {
       shown &&
       z.st !== 3 &&
       !!me &&
-      slabBetween(me.x * W, me.y * H, zOf(me), z.x, z.y, zOf(z, "zombie"));
+      slabBetween(me.x * W, me.y * H, mz, z.x, z.y, zOf(z, "zombie"));
     if (o.dark !== dark) o.el.classList.toggle("l4-unseen", (o.dark = dark));
     belowBody(o.el, z.x, z.y, zOf(z, "zombie")); // (and darker for each elevation it's under me: below.js)
     if (z.hp < o.hp && shown && o.st !== 3)
@@ -1284,8 +1285,7 @@ function seeHud(s, ctx) {
 }
 
 /* ---------- the dark ---------- */
-/* one soft light, drawn once: every light's hole in the dark is this, sized and faded (instead of a new gradient for
-   each light on every frame) */
+/* one soft light, drawn once: every light's hole in the dark is this, sized and faded (no new gradient a frame) */
 let STAMP = null;
 function stamp() {
   if (STAMP) return STAMP;

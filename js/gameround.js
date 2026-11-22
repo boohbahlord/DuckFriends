@@ -1,5 +1,6 @@
 /* ---------- round ----------
    Moved out of game.js to keep that file small (a pure move). It imports back from game.js, which imports it. */
+import { jumpsTop } from "./awards.js";
 import {
   R,
   S,
@@ -198,11 +199,7 @@ function wyrStatsHTML(s) {
     };
     const writers = (id) => per[id].written > 0,
       avg = (p) => p.split / p.written;
-    const jx = s.seat.map((id) => [id, (s.jumps || {})[id] || 0]),
-      jv = Math.max(0, ...jx.map((x) => x[1])),
-      jumps = jv
-        ? { v: jv, who: jx.filter((x) => x[1] === jv).map((x) => x[0]) }
-        : null;
+    const jumps = jumpsTop(s);
     const award = (title, r, line) =>
       r && r.who.length
         ? `<div class="award"><h3>${esc(title)}</h3><p>${r.who.map(nm).join(r.who.length > 2 ? ", " : " and ")}${r.who.length > 1 ? ' <span class="dim">(tie)</span>' : ""}</p><p class="small dim">${line(r.v)}</p></div>`

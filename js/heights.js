@@ -23,13 +23,26 @@ const shotH = (sh) => sh.lh ?? (sh.hz || 0) + MID;
    mechanic, after 8f: 1) ----------
    zOf(b): its feet, world px. A duck, an NPC, a gunman or a ghost keeps them in b.z (0 or none: on the ground); a
    zombie works its out (up a fence, up a wall, on a roof, jumping: zombies.js gives its way, zOf(z, "zombie")); a
-   shot flies at shotH ("shot"). A new kind of body gives its way with heightWay(kind, f) */
-const WAYS = { body: (b) => +b.z || 0, shot: shotH };
+   shot flies at shotH ("shot"). A new kind of body gives its way with heightWay(kind, f). now (the room's clock): a
+   duck in a jump is where its arc is now (jump.js airWay), so a jump counts in sight, shots and swings (the owner's,
+   Nov 21 16:17Z: "jumping changes your projectiles and melee's attack range ... and changes your projectiles, even
+   sight"); without it, its feet as its last move sent them */
+let AIR = () => null;
+export const airWay = (f) => (AIR = f);
+const WAYS = {
+  body: (b, now) => (now === undefined ? null : AIR(b, now)) ?? (+b.z || 0),
+  shot: shotH,
+};
 export const heightWay = (k, f) => (WAYS[k] = f);
-export const zOf = (b, k = "body") => WAYS[k](b);
+export const zOf = (b, k = "body", now) => WAYS[k](b, now);
 /* two bodies near enough in height for a flame or a swing to reach from one to the other (feet, world px) */
 const NEAR_H = 48;
 export const nearH = (za, zb) => Math.abs(za - zb) <= NEAR_H;
+/* does a swing reach a body at its height? Only within the swinger's own height (the owner's, Nov 21 15:56Z: "if a
+   duck is, let's say, a height of 0.6, a melee weapon that's swung can only hit things that are within its height of 0
+   or 0.6 elevation ... Any melee works like that"): the body, its feet tz up to tz + th, overlaps the swinger's, its
+   feet sz up to sz + sh (world px; a duck is DUCK tall, about 0.6 of an elevation, times its Size) */
+export const swingH = (sz, sh, tz, th = DUCK) => tz <= sz + sh && tz + th >= sz;
 /* can shot sh hit a target whose feet are at tz, at (tx, ty), world px? (its shooter at (sx, sy), world px; leave
    them out where there are no roofs) */
 export function hOk(sh, tz, tx, ty, sx, sy) {

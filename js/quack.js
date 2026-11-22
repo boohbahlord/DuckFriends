@@ -8,7 +8,7 @@
    flips over in the middle for everyone: the category and "You are the Quack". Then the stats. Nobody but the picker
    ever sees who picked the word. */
 import { esc } from "./ui.js";
-import { topOf, awardCard, smallLine } from "./awards.js";
+import { jumpsTop, topOf, awardCard, smallLine } from "./awards.js";
 import { duckSVG } from "./duck.js";
 import { nameHTML } from "./name.js";
 import { cardBackground } from "./card.js";
@@ -230,8 +230,6 @@ function awardsHTML(s, per, game = false) {
         ? `<div class="award"><h3>${esc(title)}</h3><p class="dim">None</p>${smallLine(none)}</div>`
         : "";
   const n = (v, one, many = one + "s") => `${v} ${v === 1 ? one : many}`;
-  const jx = s.seat.map((id) => [id, (s.jumps || {})[id] || 0]),
-    jv = Math.max(0, ...jx.map((x) => x[1]));
   const quick = ids
       .filter((id) => per[id].clues)
       .map((id) => [id, per[id].clueMs / per[id].clues]),
@@ -260,7 +258,7 @@ function awardsHTML(s, per, game = false) {
           )
         : ""
     }
-    ${award("Most jumps", jv ? { v: jv, who: jx.filter((x) => x[1] === jv).map((x) => x[0]) } : null, (v) => n(v, "jump") + ".")}`;
+    ${award("Most jumps", jumpsTop(s), (v) => n(v, "jump") + ".")}`;
 }
 export function quackStatsHTML(s) {
   const past = s.wqPast || [],

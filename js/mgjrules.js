@@ -206,7 +206,6 @@ export const THROW_TELL = 800, // ms the controllers are held up before they fly
   CTL_LIFE = 9000,
   CHAIR_TELL = 1100,
   CHAIR_SPEED = 0.11, // (was 0.085)
-  CHAIR_R = 2.4, // how near it hits, in duck lengths (a bullet's is 1)
   CHAIR_LIFE = 16000;
 /* a burning duck (the rework, the owner's, Nov 3) burns for BURN_MS and looks burnt for BURNT_MS, and while it burns it
    lights every duck it touches (TOUCH duck lengths). His fireball, that set it burning, is gone (the owner's, Nov 18
@@ -736,7 +735,6 @@ export function throwIt(s, k, at, q, now, fx) {
         lx: at.x,
         ly: at.y,
         life: k === "chair" ? CHAIR_LIFE : CTL_LIFE,
-        ...(k === "chair" ? { r: CHAIR_R } : {}),
       },
     ];
   }

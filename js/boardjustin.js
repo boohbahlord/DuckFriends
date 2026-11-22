@@ -54,7 +54,7 @@ import {
 
 import { mgjTick } from "./mgjbrain.js";
 
-import { r3, walkTo, stopAt, hammerFx, fxOf } from "./justinmoves.js";
+import { r3, walkTo, stopAt, hammerFx, fxOf, nearSpot } from "./justinmoves.js";
 
 import { vdSafe } from "./vddrules.js";
 
@@ -262,13 +262,7 @@ function rageTick(s, now, at, fx, calm) {
       j.swing = { id: r.id, at: now + 350 };
       return true;
     } // (up close: a moment's wind-up, so it can step away)
-    const ux = -dx / RX,
-      uy = -dy / RY,
-      u = Math.hypot(ux, uy) || 1;
-    const to = {
-        x: Math.max(0.03, Math.min(0.97, p.x + (ux / u) * 1.4 * RX)),
-        y: Math.max(0, Math.min(1, p.y + (uy / u) * 1.4 * RY)),
-      },
+    const to = nearSpot(at, p, RX, RY),
       v = SPEED * 1.9;
     dashTo(j, at, to, now, v, r.id);
     return true;
@@ -635,13 +629,7 @@ export function justinTick(s, now, log) {
     if (!calm && them.length) {
       const id = any(them),
         p = s.pos[id],
-        ux = (at.x - p.x) / RX,
-        uy = (at.y - p.y) / RY,
-        d = Math.hypot(ux, uy) || 1;
-      const to = {
-          x: Math.max(0.03, Math.min(0.97, p.x + (ux / d) * 1.4 * RX)),
-          y: Math.max(0, Math.min(1, p.y + (uy / d) * 1.4 * RY)),
-        },
+        to = nearSpot(at, p, RX, RY),
         v = SPEED * 1.8;
       dashTo(j, at, to, now, v, id);
       return true;

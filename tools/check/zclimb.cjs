@@ -5,6 +5,8 @@
       them is somewhere a roof stands over the wall.
    2. With my duck on the canopy by its ladder, the zombies get up to it (up the ladder, or up the gas station and the
       jump) and don't keep climbing the station, dropping through its broken corner and climbing again.
+   With my duck by the ladder, more than one zombie is up it at once (the owner's, Nov 21 14:52Z: "more than one zombie
+   climb a ladder at the same time").
    3. With my duck on the canopy by its east edge, just west of the plank, in round 6, the crowd coming from the south
       east gets up to it (the owner's, Nov 22 06:18Z: "Zombies got stuck and werent moving up to the gas pump roof,
       seemingly stuck on notbing"): on a slow phone (350 ms heartbeats) they waited at the red car for good.
@@ -67,7 +69,8 @@ async function play(b, errs, o) {
     }
     // 2. my duck parked on the canopy, kept alive, for 300 beats
     let hp0 = null,
-      drops = 0;
+      drops = 0,
+      ladder = 0; // (the most up the canopy's ladder at once)
     const was = {};
     for (let n = 0; n < 300; n++) {
       const s = room.state,
@@ -96,6 +99,10 @@ async function play(b, errs, o) {
         Z.store(room.state, zs);
       }
       beat();
+      ladder = Math.max(
+        ladder,
+        Z.zombies(room.state).filter((z) => z.st === 6 && z.k === ci).length,
+      );
       for (const z of Z.zombies(room.state)) {
         if (
           was[z.i] === 7 &&
@@ -113,6 +120,7 @@ async function play(b, errs, o) {
     return {
       bad,
       drops,
+      ladder,
       all: zs.length,
       up: zs.filter((z) => z.k === ci && z.st === 7).length,
     };
@@ -137,12 +145,14 @@ async function play(b, errs, o) {
       fail(
         `only ${q.up} of ${q.all} zombies got up on the canopy (${w}) in 300 beats`,
       );
+  if (r.ladder < 2)
+    fail(`only ${r.ladder} zombie up the canopy's ladder at a time`); // (the owner's, Nov 21 14:52Z: "more than one zombie climb a ladder at the same time")
   if (r.drops > 3)
     fail(
       `zombies dropped off the station's roof at its south edge ${r.drops} times`,
     );
   console.log(
-    `zclimb: ${r.up} of ${r.all} on the canopy by the ladder, ${e.up} of ${e.all} by the plank (round 6), ${r.drops} drops, restroom wall spots ok`,
+    `zclimb: ${r.up} of ${r.all} on the canopy by the ladder, ${e.up} of ${e.all} by the plank (round 6), ${r.ladder} up the ladder at once, ${r.drops} drops, restroom wall spots ok`,
   );
   await b.close();
 })();

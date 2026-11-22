@@ -9,6 +9,34 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v259",
+    version: 259,
+    date: "Nov 22, 2026",
+    title: "The chair hits what it covers",
+    news: [
+      "For Dead Ducks Arcade: a thrown chair now goes through every zombie it's over, hurting and shoving each one, instead of stopping at the first. For the boards and Mad God Justin: the chair hits exactly where its picture is.",
+      "Behind the scenes: Lawyering and Duncelation seat their audience with one shared rule. Nothing plays differently.",
+    ],
+  },
+  {
+    id: "v258",
+    version: 258,
+    date: "Nov 22, 2026",
+    title: "Tidier code",
+    news: [
+      "Behind the scenes: the darkening below and the level numbers read the game's one height rule, the Most Jumps card is made one way in every stats screen, and Mad God Justin's dash spot is one shared rule. Nothing plays differently.",
+    ],
+  },
+  {
+    id: "v257",
+    version: 257,
+    date: "Nov 22, 2026",
+    title: "Jumps and swings by height",
+    news: [
+      "For Dead Ducks Arcade: a jump counts the moment you make it (shots fly from your jump's height), and a melee swing only reaches what's at your own height: no more slashing zombies on the ground from a roof.",
+    ],
+  },
+  {
     id: "v256",
     version: 256,
     date: "Nov 22, 2026",

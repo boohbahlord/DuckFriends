@@ -8,7 +8,7 @@
    changes once my feet are on something, or, falling, at each elevation I pass on the way down. It's the pixels' own color made darker (css .below-me: brightness), so the
    can't-hit darkening (.l4-unseen) still adds to it; the outlines take the same (outlines.js olAway) */
 import { BELOW } from "./gamedefaults.js";
-import { ELEV } from "./heights.js";
+import { levelOf, levelZ } from "./heights.js";
 import { floorH, PROPS } from "./hangout/layout.js";
 import { activity } from "./hangout/registry.js";
 
@@ -18,7 +18,7 @@ let mine = 0; // (my floor, world px)
 export const below = (h, me = mine) =>
   h >= me
     ? 0
-    : Math.round(Math.min(1, (BELOW.PER * (me - h)) / ELEV) * 50) / 50;
+    : Math.round(Math.min(1, BELOW.PER * (levelOf(me) - levelOf(h))) * 50) / 50;
 /* an element's darkness, set only when it changes */
 function look(el, b) {
   if (el._below === b) return;
@@ -55,14 +55,21 @@ activity({
       if (a.z - f < 1)
         mine = f; // (feet on it: not in a jump)
       else if (falling)
-        mine = Math.min(mine, Math.max(f, ELEV * Math.ceil(a.z / ELEV - 1e-6))); // (falling, not jumping: each elevation it passes on the way down, the owner's, Nov 22 06:24Z: "if a duck is at max ground hieght and falls, the floor changes through all of it")
+        mine = Math.min(
+          mine,
+          Math.max(f, levelZ(Math.ceil(levelOf(a.z) - 1e-6))),
+        ); // (falling, not jumping: each elevation it passes on the way down, the owner's, Nov 22 06:24Z: "if a duck is at max ground hieght and falls, the floor changes through all of it")
     }
     props ||= W.board.querySelector(".hang-props");
     ducks ||= W.board.querySelector(".ducks");
     if (!props) return;
     /* the ground and the props: only when my floor moves a tenth of an elevation, or more of them were made */
     const n = props.childElementCount;
-    if (!seen || Math.abs(seen.f - mine) >= ELEV / 10 || seen.n !== n) {
+    if (
+      !seen ||
+      Math.abs(levelOf(seen.f) - levelOf(mine)) >= 0.1 ||
+      seen.n !== n
+    ) {
       seen = { f: mine, n };
       for (const g of W.board.querySelectorAll(
         ".hang-ground, .hang-art-ground",
