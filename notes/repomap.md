@@ -23,7 +23,7 @@ boardfire.js 1314 the board's weapons: hits,
 boardjustin.js 675 Justin on the boards
 botduck.js 90 a computer's duck: a
 botlines.js 188 What the computers write
-bots.js 1426 computers
+bots.js 1425 computers
 brackets.js 459 Bicker Brackets: what the
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
@@ -61,16 +61,16 @@ friends.js 236 friends
 front.js 151 the front page
 fx.js 1200 the effects, drawn as
 fxmotion.js 234 how a held weapon
-game.js 4799 the game screen
+game.js 4792 the game screen
 gameact.js 546 the action window and
 gameannounce.js 212 The cloud's words and
 gameboard.js 589 the board: each mode's
-gamedefaults.js 64 the game's own numbers,
+gamedefaults.js 68 the game's own numbers,
 gamefx.js 874 the silly commands and
 gamehand.js 604 the hand: the number-key
 gameplace.js 738 where things are put
 gameready.js 47 
-gameround.js 597 round
+gameround.js 570 round
 gamesettings.js 755 Game Settings: the whole
 gameshots.js 137 The bullets in the
 gamestats.js 191 what `stats` and `roundstats`
@@ -83,7 +83,7 @@ gssettings.js 773 Game Settings: every setting,
 gstext.js 200 Game Settings: what a
 gunart.js 437 every weapon, drawn: one
 gunmen.js 110 the gunmen's looks
-gunmenrules.js 1156 Survival: the gunmen
+gunmenrules.js 1158 Survival: the gunmen
 gunmenview.js 135 Survival: the gunmen on
 gunparts.js 15 the pieces every weapon's
 guns.js 642 every weapon's numbers: one
@@ -95,8 +95,8 @@ homeapp.js 43 Install Duck Friends
 hooks.js 3 hooks between screens that
 hotbar.js 497 the specials on the
 hotpick.js 318 What goes in my
-hpmath.js 46 HP in hundredths
-hpmeter.js 328 HP meters and the
+hpmath.js 59 HP in hundredths
+hpmeter.js 311 HP meters and the
 idbstore.js 38 One place that opens
 invisible.js 11 Who is invisible right
 itemtip.js 104 hold I on an
@@ -105,7 +105,7 @@ jump.js 78 a duck's jump: one
 jumps.js 48 the jump counter
 justinmoves.js 34 Justin's moves on the
 keynav.js 204 menus by keyboard
-l4dd.js 3341 Quacky Zombies on every
+l4dd.js 3338 Quacky Zombies on every
 l4ddangel.js 151 Dead Ducks Arcade's Angel
 l4ddangelui.js 204 Dead Ducks Arcade's Angel
 l4ddart.js 623 Quacky Zombies' pictures
@@ -117,7 +117,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power
 l4ddpowerui.js 278 Dead Ducks Arcade's power
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 5004 the rules of Quacky
+l4ddrules.js 4983 the rules of Quacky
 l4ddsfx.js 545 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online:
 langname.js 5 the name of Sandbox's
@@ -265,7 +265,7 @@ umaps.js 371 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on
-updates.js 3406 Updates
+updates.js 3415 Updates
 vdd.js 190 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival
@@ -276,8 +276,8 @@ weaponuse.js 104 using a weapon: one
 who.js 3 who this player is
 wounds.js 485 the wounds a hit
 zombiepath.js 187 the zombies' way to
-zombieroofs.js 322 the zombies' walk over
-zombies.js 1477 the zombies: one module
+zombieroofs.js 326 the zombies' walk over
+zombies.js 1478 the zombies: one module
 
 ## js/hangout/
 activities.js 24 every Hangout activity, so
@@ -305,7 +305,7 @@ flicker.js 83 now and then a
 ghosts.js 111 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck
 lamp.js 71 the lamps: the example
-layout.js 1176 Duck Cabin: the world
+layout.js 1192 Duck Cabin: the world
 layoutbase.js 78 Duck Cabin: the world's
 layoutheights.js 396 Duck Cabin: the heights
 npc.js 495 Duck Cabin's characters: how
@@ -335,7 +335,7 @@ stage.js 134 the stage: half an
 stationart.js 51 Downpour's things: the drawings
 stationbase.js 67 Downpour's drawings: the shared
 stationcars.js 513 Downpour's drawings: the cars,
-stationmap.js 1194 Dead Ducks Arcade's second
+stationmap.js 1201 Dead Ducks Arcade's second
 stationparts.js 455 Downpour's drawings: the gas
 stationroof.js 340 Downpour's drawings: the roofs,
 stationtrees.js 616 Downpour's drawings: the swamp's
