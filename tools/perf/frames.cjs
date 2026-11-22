@@ -5,7 +5,7 @@
    action, every duck kept up (so a run doesn't change with when they go down). Headless Chromium has no graphics card:
    with GPU=1 (the default) it draws with SwiftShader, a stand-in that does the card's work on the processor, so the
    card's share is seen at all.
-   node tools/perf/frames.cjs [runs]   env: MAP (downpour|cabin), MODE (l4dd|surv), SECS (the window, 15), GPU (1|0),
+   node tools/perf/frames.cjs [runs]   env: MAP (downpour|cabin), MODE (l4dd|surv), SECS (the window, 15), GPU (1|0), SLOW (4),
    URL (a running server; without it I serve this folder myself) */
 const { chromium } = require("playwright");
 const http = require("http");
@@ -24,6 +24,7 @@ const RUNS = +(process.argv[2] || 3),
   LONG = process.env.LONG, // (the page's long tasks: how many over 16 and 50 ms, and what each is, from a processor profile)
   CSS = process.env.CSS, // (a style added before the window, e.g. one layer hidden, to see what that layer costs)
   BOTS = +(process.env.BOTS || 0), // (computers: none by default, so the zombies crowd my duck the same way every run)
+  SLOW = +(process.env.SLOW || 1), // (the processor slowed this many times for the window, as DevTools' CPU throttling: a weaker laptop)
   ROOT = path.resolve(__dirname, "../..");
 const TYPES = {
   ".html": "text/html",
@@ -380,6 +381,8 @@ async function once(url) {
     return by;
   };
   const cdp = await cx.newCDPSession(p);
+  if (SLOW > 1)
+    await cdp.send("Emulation.setCPUThrottlingRate", { rate: SLOW });
   const cpu0 = await cpu();
   if (process.env.RASTER)
     (await cdp.send("DOM.enable"),

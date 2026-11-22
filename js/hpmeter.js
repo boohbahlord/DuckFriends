@@ -69,8 +69,9 @@ const WHITE_MS = 500, // a hit's blocks: fully white in this long
   BLINK_MS = 120; // one blink (on and off) while a hit's blocks whiten; faster with each hit more
 
 /* the hurt corners (.hurt-edge: four circles of --hc fading out by --hr, css/app.css), drawn as pixels by pxbake.js */
+let hurtColor = ""; // (--hc, read once: read at each making, it made the page work out its styles mid-frame, while hit)
 function hurtPaint(x, w, h, el) {
-  x.fillStyle = getComputedStyle(el).getPropertyValue("--hc");
+  x.fillStyle = hurtColor ||= getComputedStyle(el).getPropertyValue("--hc");
   const c = x.fillStyle, // (read back as rgba(r, g, b, a) or #rrggbb)
     clear = c.startsWith("#") ? c + "00" : c.replace(/,\s*[\d.]+\)$/, ", 0)"), // (the same color, see-through: a fade to it stays red)
     r = Math.min(
