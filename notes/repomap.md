@@ -11,7 +11,7 @@ armpage.js 142 a page of Customize's
 armspeed.js 34 how fast the weapons
 art.js 403 pictures drawn in code
 audioimport.js 186 a player's own song,
-awards.js 37 the stats' awards: one
+awards.js 43 the stats' awards: one
 barrelheat.js 70 a hot barrel
 bash.js 1360 the command line's language:
 bbrules.js 380 the rules of Bicker
@@ -38,7 +38,7 @@ clock.js 5 one clock for the
 collage.js 101 Shelter Sky & Null
 color.js 165 choosing a color
 corners.js 94 full screen
-court.js 229 Lawyering: what the screen
+court.js 230 Lawyering: what the screen
 crowd.js 242 crowds: walkers never stand
 customize.js 1776 Customize: the Armory
 datboi.js 115 here come dat boi
@@ -70,7 +70,7 @@ gamefx.js 874 the silly commands and
 gamehand.js 604 the hand: the number-key
 gameplace.js 738 where things are put
 gameready.js 47 
-gameround.js 570 round
+gameround.js 567 round
 gamesettings.js 755 Game Settings: the whole
 gameshots.js 137 The bullets in the
 gamestats.js 191 what `stats` and `roundstats`
@@ -180,7 +180,7 @@ pxdom.js 764 the pixel look for
 pxmap.js 45 a map as pixel
 pxpic.js 22 the maps that have
 pxtext.js 263 emoji and tooltips in
-quack.js 296 Who is the Quack?:
+quack.js 294 Who is the Quack?:
 quackrules.js 789 the rules of Who
 rainbowskin.js 116 the rainbow skin
 random.js 12 the two random helpers
@@ -256,7 +256,7 @@ survrules.js 321 Survival
 svgurl.js 10 a drawing as a
 textutils.js 1150 the command line's text
 touch.js 284 touch controls on the
-trivia.js 464 Trivia: what the screen
+trivia.js 461 Trivia: what the screen
 triviabank.js 499 Trivia's auto questions
 triviarules.js 458 the rules of Trivia
 ui.js 380 small helpers every screen
@@ -266,7 +266,7 @@ units.js 12 the game's units, in
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on
 updates.js 3417 Updates
-vdd.js 190 Valentine's Duck Date: what
+vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival
 vote.js 279 Vote Mode & Map:

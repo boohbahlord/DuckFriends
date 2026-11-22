@@ -5,7 +5,7 @@
    in the circle under the dunce. A dunce wears the dunce hat in black and white for the rest of the game (drawn here and
    in game.js only, never on anyone's own duck). Also the stats: the awards, each player's box and the takes. */
 import { esc } from "./ui.js";
-import { topOf, joinNames, awardCard, smallLine } from "./awards.js";
+import { jumpsTop, topOf, joinNames, awardCard, smallLine } from "./awards.js";
 import { duckSVG } from "./duck.js";
 import { nameHTML } from "./name.js";
 import { cloudHTML } from "./brackets.js";
@@ -85,15 +85,15 @@ function awardsHTML(s, set) {
   const top = (f) => topOf(per, ids, f);
   const best = top((p) => p.not),
     back = top((p) => p.comeback),
-    jx = s.seat.map((id) => [id, (s.jumps || {})[id] || 0]),
-    jv = Math.max(0, ...jx.map((x) => x[1]));
+    jt = jumpsTop(s),
+    jv = jt ? jt.v : 0;
   const dunced = takes.filter((t) => t.dunce && s.players[t.def]),
     last = dunced[dunced.length - 1];
   return `<div class="awards">
     ${award("Dunce", [...new Set(dunced.map((t) => t.def))], last ? `Voted a dunce ${last.d}–${last.n} on ${esc(quote(last.text))}.` : "", false)}
     ${award("Most Convincing", best && best.who, best ? `${plural(best.v, "Not a Dunce vote")}.` : "")}
     ${award("Comeback", back && back.who, back ? `Turned ${plural(back.v, "vote")} from Dunce to Not a Dunce.` : "")}
-    ${award("Most Jumps", jv ? jx.filter((x) => x[1] === jv).map((x) => x[0]) : [], `${plural(jv, "jump")}.`)}</div>`;
+    ${award("Most Jumps", jt ? jt.who : [], `${plural(jv, "jump")}.`)}</div>`;
 }
 /* a player's box: their takes and the votes they got (since the last dunce, or the whole game) */
 export function dnBoxHTML(s, id, set = null) {
