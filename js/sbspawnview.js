@@ -272,12 +272,11 @@ const THRU = 0.3; // (how much of it shows while my duck is behind it)
    high that isn't Ground is a block, its front side down to the ground, so walls up high read as walls and a house's
    front wall and roof hide who's inside it. A Ground zone stays a floor up there (its thin edge only) */
 const upBlock = (p) => p.k === "zone" && (p.z || 0) > 0.5 && !sbIsFloor(p);
-/* the plain board is flat: there an elevation over 1 puts the zone's look over every duck (a roof, row 161), and it goes
+/* the plain board is flat: there an elevation of 2 or more puts the zone's look over every duck (a roof, row 161), and it goes
    see-through while my duck is under it */
 const BOARD_UP = "99980"; // (under SFX_TOP.board: an effect shown above everything stays above it)
 const boardUp = (p) =>
-  p.k === "zone" &&
-  Math.round(valueOf({ ok: boxText(p, "fl") }, SB_ZONE.fl)) > 1;
+  p.k === "zone" && valueOf({ ok: boxText(p, "fl") }, SB_ZONE.fl) >= 2; // (a whole level up: a curb at 1.05 stays under the ducks)
 /* my duck is inside a house: it stands under a zone up high (a roof) that overlaps zone p, so p goes see-through as a
    whole, as Downpour's buildings do from inside (their walls and roof together), not only the part in front of my duck */
 function inHouse(s, p, me) {
@@ -824,7 +823,7 @@ const row = (f, b, t, why) =>
    default"): a number box or a true or false one. Unset, it shows empty (a switch: default), never the default's own
    value as if typed */
 const dfltBox = (b) =>
-  !!b && !b.check && ["int", "tenth", "bool"].includes(b.kind);
+  !!b && !b.check && ["int", "tenth", "half", "bool"].includes(b.kind);
 export const typedOr = (o, f, p = o) =>
   o.f[f] ? o.f[f].t : dfltBox(boxOf(f)) ? "" : boxText(p, f);
 /* the Brain box, with an arrow beside it that lists my-files/ (the owner's: "they can click an arrow beside the text
