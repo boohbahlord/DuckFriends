@@ -4,8 +4,10 @@
    it when the power goes out still comes out. It works 5 seconds, glowing, throwing sparks and smoke, then the weapon
    comes back as an orb that only the duck who put it in can take (E), and it stays there till that duck does. The
    weapon is Angelic now:
-     - every one: +1 damage, attacks 20% faster, reloads 20% faster (its sound too), and two more magazines (one for the
-       LMG); a gun with no magazine (the bow, both shotguns, the flamethrower …) gets as much more in percent (MORE);
+     - every one: attacks 20% faster and reloads 20% faster (its sound too); more damage a hit and more crit chance by
+       its fire rate, the same over a second for any weapon (the owner's, Nov 21 18:07Z: "It only increases damage in
+       proportion to its fire rate per second", confirmed 18:16Z: angelDmg, angelCrit); no more ammo ("they don't
+       increase ammo");
      - the bow: each arrow goes on through one zombie;
      - the sniper: through two more zombies than before;
      - the chain gun: through two zombies, the third stops it;
@@ -21,6 +23,7 @@ import { STAGE, layoutVariant } from "./hangout/layout.js";
 import * as GS from "./hangout/stationmap.js";
 const dpOn = () => layoutVariant() === "l4gs"; // (Downpour: in the chapel, against its south wall)
 import { powerOn } from "./l4ddpower.js";
+import { shotsOf } from "./guns.js";
 
 export const ANGEL = {
   // the machine on the stage: its foot's middle, toward the back, clear of the mic (Downpour: on the chapel's floor)
@@ -42,12 +45,10 @@ export const ANGEL = {
   REACH: 120,
   PRICE: 2500, // (the owner's, Nov 18 13:46Z: "the angel machine costs 2500 now")
   WORK: 5000, // ms it works
-  DMG: 1, // more damage a hit
+  DMG: 2.5, // more damage a second: a hit gets this over the weapon's shots (swings) a second
+  CRIT: 0.125, // more crit chance a second: a hit gets this over its shots a second
   FAST: 0.8, // attacks 20% faster
   RELOAD: 0.8, // reloads 20% faster
-  MAGS: 2, // more magazines (the LMG: 1)
-  LMG_MAGS: 1,
-  MORE: 0.2, // a gun with no magazine: 20% more (about what two magazines add to the guns that have them)
   BOW: 2, // zombies an Angelic arrow hits (through one)
   SNIPER: 2, // more zombies the sniper's bullet goes through
   CHAIN: 3, // zombies an Angelic chain gun's bullet hits (through two)
@@ -72,20 +73,17 @@ export function angelOf(s, id, w) {
   if (k && w === "handgun" && k.dg !== undefined) return false; // (down: the down pistol in hand is never Angelic)
   return !!(k && k.ang && k.ang[w] && (k.sl || []).includes(w));
 }
-/* an Angelic weapon's ammo, full: two more magazines (the LMG one), or MORE more without one */
-export function angelAmmo(A, w) {
-  if (!A || A.all === undefined) return null;
-  if (w === "handgun") {
-    const mag = A.mag * ANGEL.PISTOL.MAG;
-    return [mag, A.all + A.mag * ANGEL.MAGS - mag];
-  } // (the dual pistols: one magazine twice as big, and the two more magazines every Angelic gun gets)
-  if (A.mag && A.mag > 2) {
-    const more = A.mag * (A.k === "lmg" ? ANGEL.LMG_MAGS : ANGEL.MAGS);
-    return [A.mag, A.all - A.mag + more];
-  }
-  const all = Math.round(A.all * (1 + ANGEL.MORE));
-  return A.mag ? [A.mag, all - A.mag] : [all, 0]; // (the double barrel: two shells is no magazine to speak of)
+/* an Angelic weapon's ammo, full (full: as fullAmmo gives it, [magazine, the rest]): no more than it had; the dual
+   pistols hold the same in one magazine twice as big */
+export function angelAmmo(full, w) {
+  if (!full) return null;
+  const [m, rest] = full;
+  return w === "handgun" ? [m * ANGEL.PISTOL.MAG, Math.max(0, rest - m)] : full;
 }
+/* what being Angelic adds to each hit of weapon w: damage (to hundredths) and crit chance, by its shots a second */
+export const angelDmg = (w) =>
+  shotsOf(w) ? Math.round((ANGEL.DMG / shotsOf(w)) * 100) / 100 : 0;
+export const angelCrit = (w) => (shotsOf(w) ? ANGEL.CRIT / shotsOf(w) : 0);
 export const angelNow = (s) => (s && s.hang && s.hang.l4am) || null;
 /* is the machine done with the weapon in it? */
 export const angelDone = (m, now) => !!m && now >= m.t + ANGEL.WORK;
@@ -115,7 +113,7 @@ export function angelAct(s, id, a, now, mx, my, h) {
         ang: { ...(k.ang || {}), [m.w]: 1 },
         am: {
           ...k.am,
-          ...(h.full(m.w) ? { [m.w]: angelAmmo(h.arm(m.w), m.w) } : {}),
+          ...(h.full(m.w) ? { [m.w]: angelAmmo(h.full(m.w), m.w) } : {}),
         },
       },
     };

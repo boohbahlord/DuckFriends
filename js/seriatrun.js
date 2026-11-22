@@ -28,6 +28,7 @@ import {
   NB_ZONE_STATS,
   NB_ALL_STATS,
 } from "./seriat.js";
+import { Esc, markShuffles, stmtToks } from "./seriatbag.js";
 
 const LOOPS = 1000; // ("Every loop stops after 1,000 rounds with an error")
 const BUSY = 20000; // (statements one task may run between two waits)
@@ -153,14 +154,7 @@ const HELP = {
    the same without them, for the values, which run on through breaks while a bracket is open */
 class Stmts {
   constructor(toks, R, line, file) {
-    this.T = [];
-    for (const t of toks) {
-      if (t.t === "sp") {
-        if (t.soft) this.T.push({ t: "sep", line: t.line });
-      } else if (t.t === "op" && t.v === ";")
-        this.T.push({ t: "sep", line: t.line });
-      else this.T.push(t);
-    }
+    this.T = stmtToks(toks); // (seriatbag.js)
     this.F = [];
     this.map = [];
     this.back = [];
@@ -889,6 +883,7 @@ function read(text, plan, errs, opts, seen, from) {
     errs.push({ line: text.split("\n").length, why: from + e.why });
     return;
   }
+  toks = markShuffles(toks, true); // (\;!\: the whole file's)
   /* first the names of the blocks, so a call can come before its def */
   const defs = new Set();
   toks.forEach((t, k) => {
@@ -1125,7 +1120,8 @@ export function brain(plan, host) {
         v = fn(ctx);
       } catch (e) {
         if (e === REPLAY) continue;
-        throw e;
+        if (!(e instanceof Esc)) throw e;
+        v = NOTHING; // (left with \esc\ past its last bracket: it gives nothing)
       }
       v = out(v);
       if (R && R.any && R.resOut(v)) continue;

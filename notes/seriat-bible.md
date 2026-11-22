@@ -286,7 +286,7 @@ Built (help file `help/brains/move.txt`, example `help/examples/weaver.se`):
 **[open]** whether the owner wants the arrows relative to the NPC's way (left/right of travel) instead of the screen;
 built as the screen (`/\` is always up).
 
-## 19. Shuffle and escape (owner, Nov 21 16:29Z, 16:34Z, confirmed 16:38Z; settled, NOT built yet: plan step 5)
+## 19. Shuffle and escape (owner, Nov 21 16:29Z, 16:34Z, confirmed 16:38Z; settled; built by Solomon Nov 22, C1)
 Shuffle = the bag: each value plays once, in a random order, then they all shuffle again.
 | Write | Means |
 |---|---|
@@ -306,3 +306,10 @@ Shuffle = the bag: each value plays once, in a random order, then they all shuff
 - Leaving a repeat (`\>>\||`) ends the repeat and goes on after it. Leaving `{ }=` keeps what was picked before.
 - The bag keeps its place between spawns, as arrows do.
 - `?` stays free for a later use.
+- Readings taken when building (not settled by the owner; check tools/check/shuffle.cjs):
+  - `\|` in the table is the segment bar `|`. `\;\` with no arrow reaches the rest of the line, as `\;>\`.
+  - The levels `\escN\` counts are brackets (`( )`, `[ ]`, `{ }`). A value repeat (`\>3>\[...]`) or a line's repeat
+    that an escape reaches ends there and the line goes on; so `[1,\esc\]\>>\||` keeps repeating (the bracket gives
+    nothing) and `[1,\esc2\]\>>\||` ends the repeat.
+  - In a brain file a `;` with a value on both sides is a bag (`print 2;4;6`); anywhere else it still ends a statement.
+  - A bag of a range never lists its numbers, so `1;:1000000` costs no more than `1;:3`.

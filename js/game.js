@@ -857,7 +857,7 @@ function drawDucks(now = clockNow()) {
     hang = !!geo.hang;
   warmPool(size * 1.875); // (the pool of blood under a duck that dies, as pixels before anyone does: css .gduck-pool)
   if (isSb(s)) {
-    const go = (sbGo(s) || {}).id || "";
+    const go = (sbGo(s) || {}).label || "";
     if (go !== lastSbGo) {
       setLastSbGo(go);
       setHTML($(".gact", S), actHTML(s)); // (I walked to or from a spawn build: its button comes or goes)

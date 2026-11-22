@@ -23,7 +23,7 @@ boardfire.js 1338 the board's weapons: hits,
 boardjustin.js 667 Justin on the boards
 botduck.js 90 a computer's duck: a
 botlines.js 188 What the computers write
-bots.js 1437 computers
+bots.js 1439 computers
 bowdraw.js 46 the bow, drawn to
 brackets.js 459 Bicker Brackets: what the
 brainbuild.js 333 Sandbox: M's Brain builder
@@ -73,7 +73,7 @@ gamefx.js 876 the silly commands and
 gamehand.js 620 the hand: the number-key
 gameplace.js 738 where things are put
 gameready.js 47 
-gameround.js 567 round
+gameround.js 572 round
 gamesettings.js 756 Game Settings: the whole
 gameshots.js 137 The bullets in the
 gamestats.js 191 what `stats` and `roundstats`
@@ -89,7 +89,7 @@ gunmen.js 110 the gunmen's looks
 gunmenrules.js 1158 Survival: the gunmen
 gunmenview.js 135 Survival: the gunmen on
 gunparts.js 15 the pieces every weapon's
-guns.js 712 every weapon's numbers: one
+guns.js 715 every weapon's numbers: one
 hats.js 1096 hats
 heat.js 74 a gun's heat: the
 heights.js 82 a shot's height, Doom's
@@ -111,7 +111,7 @@ justinmoves.js 45 Justin's moves on the
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which
 l4dd.js 3338 Quacky Zombies on every
-l4ddangel.js 151 Dead Ducks Arcade's Angel
+l4ddangel.js 149 Dead Ducks Arcade's Angel
 l4ddangelui.js 204 Dead Ducks Arcade's Angel
 l4ddart.js 623 Quacky Zombies' pictures
 l4ddbar.js 332 Quacky Zombies' weapons bar
@@ -123,7 +123,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power
 l4ddpowerui.js 278 Dead Ducks Arcade's power
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4956 the rules of Quacky
+l4ddrules.js 4963 the rules of Quacky
 l4ddsfx.js 545 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online:
 langname.js 5 the name of Sandbox's
@@ -190,7 +190,7 @@ roomrules.js 368 room governance: groups and
 rooms.js 256 Play: create a room,
 router.js 112 screens
 rules.js 1731 the rules of Agree
-sandbox.js 1347 Sandbox: the key windows
+sandbox.js 1351 Sandbox: the key windows
 sandboxrules.js 2056 Sandbox: which map it
 saybubble.js 78 a duck's speech bubble
 sbarms.js 124 Sandbox: a made NPC's
@@ -210,8 +210,8 @@ sbhelp.js 277 Sandbox: the help manual
 sbhot.js 143 Sandbox: the hotbar ,
 sbhotview.js 406 Sandbox: the hotbar ,
 sblooks.js 48 Sandbox: a zone's look
-sbloot.js 444 Sandbox: loot orbs ,
-sblootview.js 482 Sandbox: loot orbs ,
+sbloot.js 495 Sandbox: loot orbs ,
+sblootview.js 499 Sandbox: loot orbs ,
 sbmake.js 203 Sandbox: making NPCs and
 sbmenu.js 264 Sandbox: presets, copy and
 sbnpcart.js 162 Sandbox: a spawned NPC's
@@ -228,11 +228,12 @@ sbzone.js 348 Sandbox: board zones ,
 sbzonebrain.js 265 Sandbox: zones that run
 scrules.js 428 the rules of Story
 secret.js 79 secrets between two browsers
-seriat.js 1323 Seriat: the language
+seriat.js 1425 Seriat: the language
+seriatbag.js 130 Seriat: shuffle and escape
 seriatbible.js 116 The Seriat bible in
 seriatbox.js 181 Seriat: the number reader
 seriathelp.js 566 Seriat's help files
-seriatrun.js 1675 Seriat: files that do
+seriatrun.js 1671 Seriat: files that do
 seriattheme.js 63 Seriat's and the command
 seriatwin.js 657 Sandbox: the Seriat window
 settings.js 298 Settings
@@ -271,7 +272,7 @@ umaps.js 371 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on
-updates.js 3541 Updates
+updates.js 3552 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival
