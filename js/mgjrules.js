@@ -1,6 +1,6 @@
 import { pickTick } from "./mgjpicks.js";
 
-import { hpHeal, hpHurt, hundredths } from "./hpmath.js";
+import { hpHeal, hpHurt, hundredths, hpBreed } from "./hpmath.js";
 
 import { jumpDodges } from "./jump.js";
 
@@ -89,7 +89,7 @@ import {
   WIN_LINES,
 } from "./hangout/justin.js";
 
-import { shuffle } from "./random.js";
+import { shuffle, roll } from "./random.js";
 
 export const isMgj = (s) => s.options.mode === "mgj";
 /* no time limit (the owner, Nov 3): the fight goes on until he's at 0 HP or every duck is out of HP. What his HP sets off:
@@ -124,6 +124,17 @@ export const mgjSafe = (s, id, now) =>
   (((s.mgj || {}).safe || {})[id] || 0) > now;
 export const mgjPHp = (s) =>
   isMgj(s) && MGJ_PHP.includes(+s.options.mgjHp) ? +s.options.mgjHp : 0;
+/* its HP (hpmath.js): in the fight, his and every seated duck's; a heal is the board's */
+hpBreed("mgj", {
+  of(s, id, now, seated) {
+    if (s.phase !== "boss" || !s.mgj) return null;
+    if (id === JUSTIN_ID) return [Math.max(0, s.mgj.hp), s.mgj.max];
+    if (!seated) return null;
+    const most = mgjPHp(s),
+      lost = (s.mgj.lost || {})[id] || 0;
+    return [s.players[id].dead ? 0 : Math.max(0, most - lost), most];
+  },
+});
 /* a hit from Justin on duck id: true when its HP took it (the duck stays up), false when it goes down */
 export function mgjSoak(s, id, now, dmg = 1) {
   const max = mgjPHp(s),
@@ -356,8 +367,7 @@ export const mgjFrozen = (s) =>
 /* the fight starts with him not there: for SPAWN_MS his avatar fades in with a red glow, and only then can he attack or
    be hit (owner, Nov 16: three seconds) */
 export const SPAWN_MS = 3000;
-export const mgjSpawning = (s, now) =>
-  !!(s.mgj && s.mgj.spawn && now < s.mgj.spawn);
+export const mgjSpawning = (s, now) => now < ((s.mgj || {}).spawn || 0);
 export const mgjGone = (s, now) => {
   const m = s.mgj && s.mgj.met,
     x = s.mgj && s.mgj.xb;

@@ -18,6 +18,35 @@
    camera and works out how it stands and falls; this file only hands it the keys, the stick and the taps, and puts its
    one context button where the Vote button goes. */
 import {
+  mgjRevive,
+  panTree,
+  placeCake,
+  placeDesk,
+  placeEdge,
+  placePick,
+  placeRevive,
+  placeSnack,
+  placeTable,
+  placeTells,
+  placeTiles,
+  placeZombies,
+  seatAt,
+  storyMarks,
+  zoom,
+} from "./gameplace.js";
+
+import {
+  DN_TITLES,
+  LAW_TITLES,
+  MGJ_TITLES,
+  TITLES,
+  VD_TITLES,
+  actHTML,
+  vdRound,
+  viewHTML,
+} from "./gameact.js";
+
+import {
   ARROWS,
   DYING_MS,
   aimAt,
@@ -38,7 +67,6 @@ import {
   keyAim,
   keyAimNow,
   keyIndex,
-  mgjTip,
   mouse,
   myDuck,
   onWheel,
@@ -82,7 +110,6 @@ import {
   GUNS,
   ROUNDS_ART,
   TRACE,
-  ZEBRA,
 } from "./gunart.js";
 
 import { isInvisible } from "./invisible.js";
@@ -127,18 +154,12 @@ import { grLook } from "./sbgroupview.js";
 import {
   COLS,
   SHORT,
-  needed,
-  canEndRound,
-  reviewCount,
-  playing,
-  VOTE_GRACE,
   isWyr,
   isDdr,
   DDR_SIDES,
   ddrStats,
   isBb,
   isLaw,
-  twoSided,
   boardPhases,
   colAt,
   colXAt,
@@ -150,45 +171,25 @@ import {
   textMax,
   LAW_MID,
   coolFor,
-  coolEnds,
   isHang,
   inWorld,
-  MAG,
-  magOf,
-  magSize,
   KB_MS,
   KB_HOP,
   KB_LAND,
   catchLen,
-  minOf,
-  goOnVotes,
-  goOnNeed,
   counselBounds,
   walkOf,
 } from "./rules.js";
 
-import { votesDue } from "./voterules.js";
-
 import { isSudo, canOpen } from "./roomrules.js";
 
-import { shotAt, phpLost, PHP, REACH } from "./boardfire.js";
+import { shotAt, phpLost, PHP } from "./boardfire.js";
 
-import {
-  isCounsel,
-  jury,
-  lawTally,
-  canGiveUp,
-  lawStats,
-  ATT_PHASES,
-} from "./lawrules.js";
+import { isCounsel, lawStats, ATT_PHASES } from "./lawrules.js";
 
 import {
   SC_BOARD,
   SC_VOTES,
-  scZones,
-  zoneAt,
-  scCanVote,
-  scLineOf,
   scWriter,
   scStats,
   wordAt,
@@ -216,12 +217,7 @@ import {
 
 import { FADE as GHOST_FADE } from "./hangout/ghosts.js";
 
-import { grenadeBoom } from "./grenade.js";
-
-import { unlocked } from "./unlocks.js";
-
 import {
-  wordsHTML,
   boardHTML as storyHTML,
   typingHTML,
   statsHTML as storyStatsHTML,
@@ -247,22 +243,17 @@ import {
   matchTopHTML,
   bracketHTML,
   bracketTopHTML,
-  treeSize,
-  topicHTML,
   topicLiveHTML,
-  tvoteHTML,
   topicsHTML,
-  seedsHTML,
   othersHTML,
   sofarHTML,
-  podiumHTML,
   bbStatsHTML,
   allOut,
 } from "./brackets.js";
 
 import { mountPlayers, trackIdle, lobbyVote, kickItems } from "./players.js";
 
-import { isMuted, chatNote } from "./chat.js";
+import { isMuted } from "./chat.js";
 
 import {
   specialById,
@@ -271,14 +262,12 @@ import {
   colorsOf,
   momentHTML,
   confettiRain,
-  pressFX,
   heldHTML,
   heldPicHTML,
   warmHands,
   heldBoxHTML,
   daggerHTML,
   DUCKLING,
-  ammoHTML,
   dualPistolHTML,
   DUAL,
 } from "./specials.js";
@@ -291,14 +280,7 @@ import {
   handReset,
   pickWith,
   mgjBackIfGone,
-  mgjToggles,
-  mgjOut2,
   heldNow,
-  magFor,
-  reloadsNow,
-  reloadReady,
-  reloadDry,
-  selectKey,
   useKey,
   l4Pick,
   hotH,
@@ -316,9 +298,7 @@ import {
 
 import { olAdd, olDraw, olFloor, olRoofed } from "./outlines.js";
 
-import { ammoBar, stackBars, noReload } from "./meters.js";
-
-import { LASER, BEAM } from "./laserart.js";
+import { LASER } from "./laserart.js";
 
 import {
   isL4dd,
@@ -329,7 +309,6 @@ import {
   downArmed,
   l4Dying,
   l4Down,
-  slotsOf,
   maxHp,
   l4Cool,
   kitOf,
@@ -339,36 +318,23 @@ import {
   weaponName,
   wildCrying,
   isWild,
-  zombieLook,
-  slotOfPick,
 } from "./l4ddrules.js";
 
-import {
-  ARMS,
-  BOARD_WEAPONS,
-  THROWS,
-  AUTO,
-  MGJ_MELEE,
-  MGJ_GUNS,
-} from "./guns.js";
+import { AUTO, MGJ_MELEE } from "./guns.js";
 
-import { watching, watchNext, watchHTML } from "./spectate.js";
+import { watching, watchNext } from "./spectate.js";
 
 import {
   l4Held,
   l4To,
   peekAgain as l4PeekAgain,
-  l4Got,
   sprintLeft,
-  safeKeepLine,
   laserEnd,
   l4ZBoxes,
   shotStop,
 } from "./l4dd.js";
 
 import { poolUnder, warmPool } from "./bloodpool.js";
-
-import { clawMark } from "./claw.js";
 
 import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
 
@@ -381,10 +347,8 @@ import {
   sbBoardK,
   noGoreOf,
   sbMay,
-  sbSfx,
   sbLands,
   SB_LAND_MIN,
-  sbCellMids,
   sbWalls,
   sbWallGo,
   sbHasOl,
@@ -468,7 +432,7 @@ import { mountDocks, DOCK_HTML, BAR_HTML } from "./dock.js";
 
 import { countJump } from "./jumps.js";
 
-import { sfx, loadSounds, weaponsOff, hush, OTHERS } from "./sound.js";
+import { sfx, loadSounds, weaponsOff } from "./sound.js";
 
 import { mgjSteps } from "./l4ddsfx.js";
 
@@ -495,15 +459,10 @@ import {
   QUACK_PHASES,
   spotOf,
   isGrey,
-  speakerOf,
   frozen,
   cardOf,
-  stillIn,
-  canAccuse,
   anyWord,
-  CLUE_GRACE,
   gridOf,
-  tileAt,
 } from "./quackrules.js";
 
 import {
@@ -513,25 +472,19 @@ import {
   quackLines,
   secretCardHTML,
   revealCardsHTML,
-  pickHTML,
   quackStatsHTML,
 } from "./quack.js";
 
 import {
   isDn,
   DN_GRACE,
-  DN_SIDES,
   DN_HAT,
   DN_BW,
   DN_PODIUM,
   isDefender,
-  voters,
-  dnTally,
   wearsDunce,
   dnStill,
   dnStats,
-  endVotes,
-  endNeed,
 } from "./duncerules.js";
 
 import {
@@ -544,34 +497,22 @@ import {
   dnOverHTML,
 } from "./dunce.js";
 
-import { isMgj, MGJ_ZAP, mgjFrozen, mgjGone, mgjSpawning, SPAWN_MS, mgjStats, GOOD_ID, PICK_FADE, XB, PICK_WEAPONS, MGJ_DOWN, MGJ_SCALE, MGJ_HAMMER, ammoOf, INF_AMMO, downNear, REVIVE, mgjPHp, mgjOut, mgjSafe, EDGE_WARN, GUN_TELL, HAMMER_TELL, BURST, SPREAD, DUCK_LEN, CAKE_EVERY, cakeAt } from "./mgjrules.js";
+import { isMgj, MGJ_ZAP, mgjGone, mgjSpawning, SPAWN_MS, mgjStats, GOOD_ID, PICK_WEAPONS, MGJ_DOWN, MGJ_SCALE, MGJ_HAMMER, downNear, mgjPHp, mgjOut, mgjSafe } from "./mgjrules.js";
 import { mgjStop } from "./mgjpicks.js";
 
-import { FLAME, POOF, FOODS, TELEPORT, HITMARK, edgeHTML } from "./mgjart.js";
+import { FLAME } from "./mgjart.js";
 
 import { gunLasers } from "./gunmenview.js";
 
-import {
-  npcURL,
-  npcBox,
-  npcName,
-  npcSay,
-  isZombie,
-  npcPics,
-  npcReady,
-  heldOf,
-  handAt,
-  npcShot,
-} from "./sbnpcart.js";
-
 import { sbHpOf, sbWalkOf } from "./sbspawn.js";
+import { hpOf } from "./hpmath.js";
 
 import { angelic, angelGlow } from "./powerart.js";
 
 // (after l4ddart.js: Noah's note on an old import cycle)
 import { angelOf } from "./l4ddangel.js";
 
-import { pwCodes, goreFree, BY_WOUND, newWound, woundLook } from "./wounds.js";
+import { pwCodes, goreFree, woundLook } from "./wounds.js";
 
 import { hatLayers, HAT_TOP } from "./hats.js";
 
@@ -582,39 +523,25 @@ import { beakSVG } from "./beaks.js";
 import {
   mgjBoardHTML,
   mgjHPHTML,
-  dropMeteor,
   mgjStatsHTML,
   mgjOverHTML,
   MAD_JUSTIN,
   SAD_JUSTIN,
   CONTROLLER,
-  DESK,
   GOOD_JUSTIN,
-  pickHTML as mgjPickHTML,
 } from "./mgj.js";
 
 import {
   isVd,
-  VD_PHASES,
-  VD_GRACE,
-  VD_TABLE,
-  VD_AFTER,
   isDate,
   seated,
   seatOf,
   turnedDown,
   vdTileAt,
-  vdTileRects,
   vdStats,
 } from "./vddrules.js";
 
-import {
-  vdBoardHTML,
-  vdStatsHTML,
-  TABLE_W,
-  SEAT_OUT,
-  SEAT_LIFT,
-} from "./vdd.js";
+import { vdBoardHTML, vdStatsHTML, SEAT_LIFT } from "./vdd.js";
 
 import {
   isTv,
@@ -625,11 +552,9 @@ import {
 } from "./triviarules.js";
 
 import {
-  tvWriteHTML,
   tvBoardHTML,
   tvRefresh,
   tvTyped,
-  tvActHTML,
   tvRound,
   TV_TITLES,
   tvStatsHTML,
@@ -649,27 +574,14 @@ import {
   fxFrame,
   fxHitAt,
   fxImpact,
-  fxSmolder,
-  fxSteam,
-  fxSparks,
-  fxMelee,
   fxBurst,
   fxSpurt,
   fxMuzzle,
   fxLasers,
-  fxFlame,
-  fxGroundFire,
-  fxGround,
-  fxBlood,
-  heavyOff,
   fxKnock,
   fxEye,
   MUZZLE,
 } from "./fx.js";
-
-import { FLAME as FLAMER, flameRate, band } from "./flamer.js";
-
-import { low } from "./gfx.js";
 
 import { isNpc, npcDown } from "./npcshared.js";
 
@@ -684,7 +596,6 @@ import {
   VIB,
   hitPx,
   adrenFx,
-  HIT,
   again,
 } from "./fxmotion.js";
 
@@ -729,6 +640,19 @@ const isJustin = (id) => id === JUSTIN_ID || id === JUSTIN2;
 export const bigOf = (s, id) =>
   (isJustin(id) && isMgj(s) ? MGJ_SCALE : 1) *
   (s.players[id] ? scaleOf(shownDuck(s, s.players[id])) : 1);
+/* (the camera, the story's zone, the revive key and the bracket's zoom are set from the placing code in gameplace.js) */
+export const setMgjRv = (v) => {
+  mgjRv = v;
+};
+export const setScZone = (v) => {
+  scZone = v;
+};
+export const setCam = (v) => {
+  cam = v;
+};
+export const setBbZoom = (v) => {
+  bbZoom = v;
+};
 export let mgjRv = false, // (E held down for a revive, or the phone's Revive button)
   shovedAt = 0,
   putAt = 0; // the handgun or dagger kept out (Shift and its key), and where the mouse is on the screen
@@ -756,7 +680,7 @@ let lastLog = -1,
   bubbles = {}, // chat bubbles over the ducks: { [player]: { text, until, n, at (when it came) } }
   npcDownAt = {}; // (an NPC: when I first saw it down, to cut what it was saying)
 let lastClose = 0; // Lawyering: the closing arguments last announced
-let bbZoom = 0,
+export let bbZoom = 0,
   losers = new Set(),
   seedShift = 0,
   knocked = new Set(); // Bicker Brackets: the bracket's zoom (0: automatic); ducks wearing the Loser's X; how far the sides' colors have turned;
@@ -828,7 +752,7 @@ const quackBoard = (
   s,
 ) => `<div class="board wq-board${s.phase === "reveal" && s.wq.lastOut ? " late" : ""}">${quackBoardHTML(s, R.me)}<div class="ducks"></div><div class="fxl"></div>
   ${quackTopHTML(s, s.phase === "reveal" && s.wq.result ? revealCardsHTML(s) : myCard(s) !== undefined ? secretCardHTML(myCard(s)) : "")}</div>`;
-const boardHTML = (s) =>
+export const boardHTML = (s) =>
   isHang(s)
     ? HANG_HTML
     : isQuack(s)
@@ -1322,40 +1246,6 @@ function voteTint(s, board, pos) {
   return (tileSeen[c] ??= tileColor(board, c));
 }
 export let frameNo = 0;
-/* the HP of a duck, Justin or his double right now, as [hp, most], or null where it has none: Quacky Zombies' own,
-   Mad God Justin's (the players' and his), the board's Mad God Justin's, and the normal game's 3 (back after a while
-   without a hit) on the boards and in Duck Cabin */
-function hpFull(s, id, now) {
-  const seated = s.seat.includes(id) && s.players[id];
-  if (isL4dd(s))
-    return seated && inWorld(s)
-      ? [Math.max(0, l4Hp(s, id) || 0), maxHp(s, id)]
-      : null;
-  if (isMgj(s)) {
-    if (s.phase !== "boss" || !s.mgj) return null;
-    if (id === JUSTIN_ID) return [Math.max(0, s.mgj.hp), s.mgj.max];
-    if (!seated) return null;
-    const most = mgjPHp(s);
-    return [
-      s.players[id].dead
-        ? 0
-        : Math.max(0, most - ((s.mgj.lost || {})[id] || 0)),
-      most,
-    ];
-  }
-  if (id === JUSTIN_ID)
-    return !justinShown(s)
-      ? null
-      : boardMgj(s)
-        ? [
-            s.justin.down ? 0 : Math.max(0, s.justin.hp ?? BJ_HP),
-            s.justin.max || BJ_HP,
-          ]
-        : [s.justin.down ? 0 : 1, 1]; // (Justin on the board without Mad God Justin's HP: one hit takes his 1, as always)
-  if (!seated || !onBoardPhase()) return null;
-  const max = sbHpOf(s, id) || PHP; // (Sandbox: a spawn's or a respawn's HP for it)
-  return [s.players[id].dead ? 0 : Math.max(0, max - phpLost(s, id, now)), max];
-}
 /* my meter under the hotbar, and the other players' small ones in the board's corner (Quacky Zombies and Mad God
    Justin, on a computer, unless turned off in Settings) */
 let othersSig = "",
@@ -1366,7 +1256,7 @@ let othersSig = "",
   overBoxes = null; // the cloud's and the question's boxes over the board, in the board's px (measured a few times a second)
 function drawMeters(s, board, layer, now) {
   if (!meter) return;
-  const hv = R.me && hpFull(s, R.me, now);
+  const hv = R.me && hpOf(s, R.me, now);
   if (hv) {
     const [sp, tired] = isMgj(s) ? [null, false] : sprintLeft(); // (every mode's sprint (gamedefaults.js), stamina.js; Mad God Justin has no sprint, so no sprint bar)
     meter.set(
@@ -1379,7 +1269,7 @@ function drawMeters(s, board, layer, now) {
     meter.bars(board && board.querySelector(".gduck.mine .gduck-name")); // (the cooldown and the ammo under it too)
     if (board && meter.edge.parentNode !== board) board.append(meter.edge); // (the red corners: the board's, not the window's)
   } else meter.hide();
-  const want = profile.settings.otherHp !== false && !!board; // (every mode now, as in Dead Ducks Arcade: the owner's, Nov 18 16:43Z; only the ducks that have HP there show, hpFull)
+  const want = profile.settings.otherHp !== false && !!board; // (every mode now, as in Dead Ducks Arcade: the owner's, Nov 18 16:43Z; only the ducks that have HP there show, hpmath.js hpOf)
   let box =
     board &&
     (board._hpo && board._hpo.parentNode === board
@@ -1397,7 +1287,7 @@ function drawMeters(s, board, layer, now) {
         s.players[id] &&
         !(isL4dd(s) && (s.players[id].helper || s.players[id].wild)),
     ) // (Dead Ducks Arcade and Survival: only the players, never Justin's bar, the owner's, Nov 19 19:27Z)
-    .map((id) => [id, s.players[id].name, hpFull(s, id, now)])
+    .map((id) => [id, s.players[id].name, hpOf(s, id, now)])
     .filter(([, , h]) => h)
     .map(([id, n, h]) => [id, n, h[0], h[1]]);
   if (!box) {
@@ -1859,7 +1749,7 @@ function drawDucks(now = clockNow()) {
     }
     /* a duck, Justin or his double gaining or losing HP: "+1 HP" or "−1 HP" over it for a moment (not when a fight or a
        round starts the HP over) */
-    const hv = !g && hpFull(s, id === JUSTIN2 ? JUSTIN_ID : id, now),
+    const hv = !g && hpOf(s, id === JUSTIN2 ? JUSTIN_ID : id, now),
       hk = hv ? hv[1] + "/" + s.phase : "";
     const bled =
         hv && d._hk === hk && d._hv > hv[0] && id !== JUSTIN2
@@ -3013,7 +2903,7 @@ function inRing(x, y) {
   const u = unplace(c.left + dx / k, c.top + dy / k);
   return [u.x, u.y];
 }
-const attorney = () =>
+export const attorney = () =>
   ["answer", "discuss"].includes(R.state.phase) &&
   ((isLaw(R.state) && !!R.state.law && isCounsel(R.state, R.me)) ||
     (isDn(R.state) && isDefender(R.state, R.me))); // (Duncelation: the defender)
@@ -3096,665 +2986,6 @@ function placePodium(board, now) {
   });
 }
 
-/* ---------- Valentine's Duck Date: the table, its chairs and the two seated at it; the pick's tiles ---------- */
-/* the table's feet on this screen, and its width */
-const tableAt = () => {
-  const c = place(VD_TABLE, 0, 1);
-  return { ...c, w: geo.size * TABLE_W };
-};
-/* where a duck at the table is drawn: right beside it on this screen, whatever the board's shape (null: not seated) */
-function seatAt(s, id) {
-  const k = seatOf(s, id);
-  if (k < 0 || !geo) return null;
-  const c = tableAt();
-  return { left: c.left + (k ? 1 : -1) * SEAT_OUT * geo.size, top: c.top };
-}
-/* the table stands just behind the two at it (their name tags stay in sight) and keeps its place in depth with everyone
-   walking about; each chair stands just behind its duck */
-function placeTable(board) {
-  const tb = board.querySelector(".vd-table");
-  if (!tb || !geo) return;
-  const c = tableAt(),
-    h = (c.w * 150) / 240,
-    cw = geo.size * 0.8,
-    ch = (cw * 132) / 80,
-    st = `${c.left.toFixed(1)},${c.top.toFixed(1)},${c.w.toFixed(1)}`;
-  if (tb._st === st) return;
-  tb._st = st;
-  Object.assign(tb.style, {
-    left: (c.left - c.w / 2).toFixed(1) + "px",
-    top: (c.top - (h * 138) / 150).toFixed(1) + "px",
-    width: c.w.toFixed(1) + "px",
-    height: h.toFixed(1) + "px",
-    zIndex: Math.round(c.top) - 1,
-  });
-  for (const ch0 of board.querySelectorAll(".vd-chair")) {
-    const k = +ch0.dataset.k,
-      x = c.left + (k ? 1 : -1) * (SEAT_OUT + 0.12) * geo.size;
-    Object.assign(ch0.style, {
-      left: (x - cw / 2).toFixed(1) + "px",
-      top: (c.top - (ch * 128) / 132).toFixed(1) + "px",
-      width: cw.toFixed(1) + "px",
-      height: ch.toFixed(1) + "px",
-      zIndex: Math.round(c.top) - 2,
-    });
-  }
-}
-/* the pick's tiles, on the same spots as the host's (so a duck is on the tile it looks to be on) */
-function placeTiles(board) {
-  const box = board.querySelector(".vd-tiles");
-  if (!box || !geo) return;
-  const rs = vdTileRects(box.children.length),
-    st = `${geo.W},${geo.H},${geo.size},${rs.length}`;
-  if (box._st === st) return;
-  box._st = st;
-  [...box.children].forEach((t, k) => {
-    const a = place({ x: rs[k].x0, y: rs[k].y0 }, 0, 1),
-      b = place({ x: rs[k].x1, y: rs[k].y1 }, 0, 1);
-    Object.assign(t.style, {
-      left: a.left.toFixed(1) + "px",
-      top: a.top.toFixed(1) + "px",
-      width: (b.left - a.left).toFixed(1) + "px",
-      height: (b.top - a.top).toFixed(1) + "px",
-    });
-  });
-}
-
-/* Mad God Justin: his Xbox's desk, where it came in; dark once he turns it off, gone a moment after he's back */
-function placeDesk(board, s, now) {
-  const x = isMgj(s) && s.mgj && s.mgj.xb,
-    layer = ducksLayer(board);
-  let n = layer && layer.querySelector(".mgj-desk");
-  const on =
-    !!x &&
-    ["boss", "mgjend"].includes(s.phase) &&
-    (!x.done || now - x.done < XB.OUT);
-  if (n && (!on || +n.dataset.at !== x.at)) {
-    n.remove();
-    n = null;
-  }
-  if (!on || !layer || !geo) return;
-  if (!n) {
-    n = el(`<div class="mgj-desk" data-at="${x.at}">${DESK}</div>`);
-    n.style.setProperty("--in", XB.IN + "ms");
-    n.style.setProperty("--out", XB.OUT + "ms");
-    layer.append(n);
-  }
-  n.classList.toggle("off", !!x.off && now >= x.off);
-  n.classList.toggle("out", !!x.done);
-  const c = place(x, 0, 1),
-    w = geo.size * 2.2,
-    st = `${c.left.toFixed(1)},${c.top.toFixed(1)},${w.toFixed(1)}`;
-  if (n._st === st) return;
-  n._st = st;
-  Object.assign(n.style, {
-    left: c.left + "px",
-    top: c.top + "px",
-    width: w + "px",
-    zIndex: Math.round(c.top - 3),
-  });
-}
-
-/* Mad God Justin: his zombie waves (mgjrules.js wavesTick), each where the host says it is, gliding there (css), the
-   way it last clawed; a dead one falls over and fades */
-const ZB_GLIDE = 100;
-/* Sandbox on the board: how big a duck is on my screen, in the board's shares, [a, b, c, d] (one duck width across the
-   screen is (a, b) on the board, one down is (c, d)), so the host hits its NPCs where I see them (sbbody.js). Sent when
-   it changes, and again if the room lost it */
-let duAt = 0;
-function sendDu(s) {
-  if (!geo || geo.hang || geo.sc || geo.tl || geo.qp || !sbOnBoard(s)) return;
-  const { W, H, size, labelH } = geo,
-    du = (
-      turned()
-        ? [0, size / (0.8 * W), -size / H, 0]
-        : [size / W, 0, 0, size / (H - size * 1.08 - labelH)]
-    ).map((v) => +v.toFixed(4)), // (as place() puts the board on the screen)
-    had = ((s.sb && s.sb.du) || {})[R.me];
-  if (!du.every(Number.isFinite) || (had && had.join() === du.join())) return;
-  const t = performance.now();
-  if (t - duAt < 1500) return; // (one on its way)
-  duAt = t;
-  R.send({ t: "sb", k: "du", du });
-}
-/* the way a zombie on the board walks (n: its element, x: where it is now): turned only once it keeps going the other way
-   a moment (FACE_HOLD). Bumping into another or a wall pushed it back and forth a few px, and its picture flipped each
-   time, as if squished (the owner's, Nov 19 19:27Z: "I do not want a squish effect on zombies, for example, when they
-   walk into each other or walk into a wall"); as Dead Ducks Arcade's zombies, l4dd.js */
-const FACE_HOLD = 300;
-function walkFace(n, x, now) {
-  const f = n._f || 1,
-    dir =
-      n._x === undefined || Math.abs(x - n._x) < 0.5 ? 0 : x < n._x ? -1 : 1;
-  if (!dir || dir === f) {
-    if (dir) n._went = 1;
-    n._turn = 0;
-    return f;
-  }
-  if (!n._went) {
-    n._went = 1;
-    return dir; // (its first steps: the way it goes at once)
-  }
-  if (n._turn !== dir) {
-    n._turn = dir;
-    n._turnAt = now;
-    return f;
-  }
-  return now - n._turnAt >= FACE_HOLD ? dir : f;
-}
-function placeZombies(board, s, now) {
-  const layer = ducksLayer(board),
-    zb =
-      (((isMgj(s) && s.phase === "boss") || sbOnBoard(s)) && s.mz && s.mz.zb) ||
-      []; // (and Sandbox's board: its spawns' zombies, sbspawn.js)
-  if (!layer || !geo) return;
-  sendDu(s);
-  npcPics(s.sbpic); // (the room's uploaded pictures: a spawn's Appearance tab)
-  const sbOl = sbOnBoard(s) && sbHasOl(s),
-    want = new Set(zb.map((o) => String(o.i))),
-    fxl = $(".fxl", board),
-    ng = noGoreOf(s),
-    have = new Map(); // (found once a frame, not one search for each of up to 800)
-  /* claw marks: a few at a time (Sandbox can have 800 clawing at once, and each mark is a drawing made into pixels) */
-  let marks = fxl
-    ? 4 - Math.floor(fxl.querySelectorAll(".l4-claw").length / 4)
-    : 0;
-  /* a crowd (more than ZB_GLIDE) steps from beat to beat instead of gliding: 800 transitions cost even a graphics card */
-  layer.classList.toggle("zb-many", zb.length > ZB_GLIDE);
-  for (const n of layer.querySelectorAll(".mgj-z"))
-    if (!want.has(n.dataset.i)) n.remove();
-    else have.set(n.dataset.i, n);
-  for (const o of zb) {
-    let n = have.get(String(o.i));
-    if (!n) {
-      n = document.createElement("div");
-      n.className = "mgj-z";
-      n.dataset.i = o.i;
-      n.innerHTML = `<img alt="" draggable="false" src="${npcURL(o)}"><span class="l4z-hp"><b></b><i></i></span>${npcName(o)}`; // (Sandbox's: a zombie, or a duck of another kind, its name over it: sbnpcart.js)
-      n._img = n.firstChild;
-      n._bar = n.querySelector(".l4z-hp");
-      n._w = "";
-      n._pic = "";
-      n._shot = o.sh ? o.sh[0] : 0; // (only shots from now on are drawn)
-      layer.append(n);
-    }
-    if (sbOnBoard(s)) {
-      // (the plain board: under a roof I'm not under, an NPC is hidden whole, as a duck is: row 161, a house)
-      const rf = sbRoofed(s, "npc:" + o.i, o);
-      if (n._rf !== rf) {
-        n._rf = rf;
-        n.classList.toggle("hang-hid", rf);
-      }
-    }
-    const c = place(o, 0, 1),
-      box = npcBox(o),
-      ds = geo.size * (o.sz || 1), // (its size: a duck's, at its spawn's Size, sbspawn.js)
-      k = ds / 64, // (px to one of its box's units: a duck's box is 64 wide)
-      w = box.w * k,
-      face =
-        o.wp || (sbOnBoard(s) && o.f)
-          ? o.f || 1 // (a made NPC: the way the host turned it, so its weapon points at what it shoots: sbarms.js; Sandbox's: the way it walks, as its hits are worked out, sbbody.js)
-          : walkFace(n, c.left, now), // (the way it walks)
-      st = `${c.left.toFixed(1)},${c.top.toFixed(1)},${w.toFixed(1)},${face},${o.d ? 1 : 0}`;
-    n._x = c.left;
-    n._f = face;
-    const was = n._hp,
-      wc = o.w || "";
-    /* a hit, as on Dead Ducks Arcade's zombies (l4dd.js seeZombies; the owner's, Nov 19 01:34Z: "this is the new feel and
-       vibe of the game"): it shakes once by the HP it lost and once more as it dies, blinks red, "−N HP" over it, and
-       bleeds by the wound it got, an eye flying when that's what it lost */
-    if (was !== undefined && o.hp < was && !n._dead) {
-      vibrate(n._img, hitPx(was - o.hp), !!o.d);
-      if (!o.d) n._img.animate(HIT, 320);
-      popHP(n, o.hp - was, true);
-      const nw = newWound(n._w, wc);
-      fxHitAt(
-        c.left,
-        c.top,
-        box.h * k * 0.55,
-        null,
-        ds,
-        BY_WOUND[nw],
-        (isZombie(o) ? zombieLook(o.l) : o.dk || {}).color,
-      );
-      if (nw === "e" && !ng)
-        fxEye(c.left, c.top, box.h * k * 0.75, Math.random() < 0.5 ? -1 : 1);
-    }
-    n._hp = o.hp;
-    n._w = wc;
-    /* on fire (the flamethrower or any fire: rules.js flameThings, o.bn): the burning duck's flame over it for 3 s */
-    const lit = (o.bn || 0) > clockNow() && !o.d;
-    if (n._lit !== lit) {
-      n._lit = lit;
-      if (lit && !n.querySelector(".gduck-fire"))
-        n.insertAdjacentHTML(
-          "beforeend",
-          `<span class="gduck-fire" aria-hidden="true">${FLAME}</span>`,
-        );
-      n.classList.toggle("onfire", lit);
-    }
-    /* its wounds on its picture (Gore off: only a knocked-off hat), made only when they change */
-    const pic =
-      (ng ? goreFree(wc) : wc) +
-      (o.d && !isZombie(o) ? "+dead" : "") +
-      npcReady(o);
-    if (n._pic !== pic) {
-      n._pic = pic;
-      n._img.src = npcURL(o, ng ? goreFree(wc) : wc);
-    }
-    /* a made NPC: the weapon in its hand, and its shots (sbarms.js) */
-    const hd = heldOf(o);
-    if ((hd && hd.w) !== n._hw) {
-      n._hw = hd && hd.w;
-      n.querySelector(".sb-held")?.remove();
-      if (hd)
-        n.insertAdjacentHTML(
-          "beforeend",
-          `<img class="sb-held" alt="" draggable="false" src="${hd.url}" style="--gw:${hd.gw}">`,
-        );
-    }
-    if (o.sh && o.sh[0] !== n._shot) {
-      const fresh = now - o.sh[0] < 1500;
-      n._shot = o.sh[0];
-      if (fresh && fxl) {
-        const hand = handAt(box),
-          t = place({ x: o.sh[1], y: o.sh[2] }, 0, 1);
-        npcShot(
-          fxl,
-          c.left + (hand.x - box.w / 2) * k * face,
-          c.top - (box.feet - hand.y) * k,
-          t.left,
-          t.top - geo.size * 0.45, // (a duck's middle, where it went)
-          o.hw,
-        );
-      }
-    }
-    const sh = (Math.max(0, o.hp) / (o.l[0] || 1)).toFixed(3); // (its HP bar: shown once it's hurt, then stays; a hit's white drains to the red, css/app.css .l4z-hp)
-    if (n._sh !== sh) {
-      n._sh = sh;
-      n._bar.style.setProperty("--hp", sh);
-      if (+sh < 1) n.classList.add("hurt");
-    }
-    if (!!o.d !== !!n._dead) {
-      n._dead = !!o.d;
-      n.classList.toggle("dead", !!o.d);
-    } // (dead: it falls over, lies there, then fades, its 4 s as Dead Ducks Arcade's: zombies.js ZOMBIE_BREEDS, deadMs)
-    const clawing = !o.d && now - (o.a || 0) < 350;
-    n.classList.toggle("claw", clawing);
-    if (clawing && n._a !== o.a && fxl && marks-- > 0)
-      clawMark(
-        fxl,
-        c.left + (o.f || face) * ds * 0.55,
-        c.top - ds * 0.45,
-        k * 1.25,
-        (o.f || face) < 0 ? Math.PI : 0,
-      ); // (its claw marks and swipe on the duck it swiped, as Dead Ducks Arcade's: claw.js)
-    n._a = o.a;
-    npcSay(n, o); // (Sandbox: what its Seriat file has it say, sbnumberat.js)
-    const oc = sbOl && !o.d && sbOlColor(s, { k: o.k, sp: o.sp }, o.x, o.y, 0);
-    if (oc)
-      olAdd({
-        id: "mz" + o.i,
-        img: n._img,
-        x: c.left - w / 2,
-        y: c.top - box.feet * k,
-        w,
-        h: box.h * k,
-        flip: face < 0,
-        kind: oc,
-      }); // (Sandbox: in a zone whose Outlines take it, that color)
-    if (n._st === st) continue;
-    n._st = st;
-    /* moved by transform, not left and top: 800 gliding left and top made the page lay itself out again every frame
-       (Sandbox's board: about 10 frames a second) */
-    n.style.transform = `translate(${(c.left - w / 2).toFixed(1)}px, ${(c.top - box.feet * k).toFixed(1)}px)`;
-    const wh = `${w.toFixed(1)},${(box.h * k).toFixed(1)}`;
-    if (n._wh !== wh) {
-      n._wh = wh;
-      n.style.width = w.toFixed(1) + "px";
-      n.style.height = (box.h * k).toFixed(1) + "px";
-    }
-    n.style.zIndex = o.d ? 1 : Math.round(c.top); // (dead: under every duck, the owner's, Nov 19 10:22Z)
-    n.style.setProperty("--face", face);
-    n.style.setProperty("--feet", (box.feet * k).toFixed(1) + "px");
-    n.style.setProperty("--k", k.toFixed(3));
-  }
-}
-/* Mad God Justin: the pickup that faded in, where it lies (it goes once taken, or when the next one comes) */
-function placePick(board, s) {
-  const m = isMgj(s) && s.phase === "boss" && s.mgj;
-  placeToken(board, m && m.pick, "");
-  placeToken(board, m && m.plus, "plus"); // (the little plus sign every 30 s: the owner's, Nov 17)
-}
-function placeToken(board, P, tag) {
-  const layer = ducksLayer(board),
-    sel = tag ? ".mgj-pick.k-" + tag : ".mgj-pick:not(.k-plus)";
-  let n = layer && layer.querySelector(sel);
-  if (n && (!P || +n.dataset.n !== P.n)) {
-    n.remove();
-    n = null;
-  }
-  if (!P || !layer || !geo) return;
-  if (!n) {
-    n = el(mgjPickHTML(P));
-    n.style.setProperty("--fade", PICK_FADE + "ms");
-    layer.append(n);
-  }
-  const c = place(P, 0, 1),
-    w = geo.size * 0.9,
-    st = `${c.left.toFixed(1)},${c.top.toFixed(1)},${w.toFixed(1)}`;
-  if (n._st === st) return;
-  n._st = st;
-  Object.assign(n.style, {
-    left: c.left + "px",
-    top: c.top + "px",
-    width: w + "px",
-    height: w + "px",
-    zIndex: Math.round(c.top - 2),
-  });
-}
-
-/* Mad God Justin: getting a downed duck up (the owner's, Nov 3: hold 5 s, no medkit). Over the downed duck nearest me
-   a Revive button (hold it, or E), filling up while it's held; every revive going on shows its fill to everyone */
-function placeRevive(board, s, now) {
-  const fxl = $(".fxl", board),
-    m = isMgj(s) && s.phase === "boss" && s.mgj,
-    near = m && me && !(s.players[R.me] || {}).dead && downNear(s, R.me),
-    want = new Map();
-  if (m) {
-    for (const [by, r] of Object.entries(m.rv || {}))
-      if (s.pos[r.id]) want.set(r.id, Math.min(1, (now - r.at) / REVIVE.MS));
-    if (near && !want.has(near)) want.set(near, 0);
-  }
-  for (const b of fxl.querySelectorAll(".mgj-rv"))
-    if (!want.has(b.dataset.pid)) b.remove();
-  if (!want.size && mgjRv) mgjRevive(false);
-  for (const [id, k] of want) {
-    let b = fxl.querySelector(`.mgj-rv[data-pid="${CSS.escape(id)}"]`);
-    if (!b) {
-      b = el(
-        `<button type="button" class="mgj-rv" data-pid="${esc(id)}"><i></i><span>${touchOnly() ? "Hold" : "Hold <kbd>E</kbd>"}</span></button>`,
-      );
-      const go = (on) => (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (on !== mgjRv) mgjRevive(on);
-      };
-      b.addEventListener("pointerdown", go(true));
-      for (const ev of ["pointerup", "pointercancel", "pointerleave"])
-        b.addEventListener(ev, go(false));
-      fxl.append(b);
-    }
-    const at = place(s.pos[id], 0, 1);
-    b.style.left = at.left.toFixed(1) + "px";
-    b.style.top = (at.top - geo.size * 1.25).toFixed(1) + "px";
-    b.style.setProperty("--rv", k.toFixed(3));
-    b.disabled = id !== near;
-  }
-}
-/* holding a revive (E, or the Revive button) or letting go */
-function mgjRevive(on) {
-  mgjRv = on;
-  if (R)
-    R.send({
-      t: "use",
-      what: "revive",
-      hold: on ? 1 : 0,
-      face: 1,
-      w: handIn() === "none" ? "" : handIn(),
-    }); // (w: the medkit out in my hand gets it up at once)
-}
-/* Mad God Justin's zebra cake, or the Zebra cake special's (s.zcake): spinning on its way, then lying where it landed
-   until Justin eats it (Hangout: hidden on the other side of the cabin's walls) */
-function placeCake(board, s, now) {
-  const c = isMgj(s)
-      ? s.phase === "boss" && s.mgj && s.mgj.cake
-      : boardPhases(s).includes(s.phase) && s.zcake,
-    layer = ducksLayer(board);
-  let n = layer && layer.querySelector(".mgj-cake");
-  if (n && (!c || c.eat || +n.dataset.n !== c.n)) {
-    n.remove();
-    n = null;
-  }
-  if (!c || c.eat || !layer || !geo) return;
-  if (!n) {
-    n = el(
-      `<div class="mgj-cake" data-n="${c.n}"><i class="${c.vx < 0 ? "ccw" : ""}">${ZEBRA}</i></div>`,
-    );
-    layer.append(n);
-  }
-  n.classList.toggle("down", now >= c.stop);
-  const p = cakeAt(c, now),
-    bowl = geo.hang && c.toilet && now >= c.stop, // (Quacky Zombies: in the toilet's bowl, over the toilet)
-    at = bowl ? world.place(p, c.toilet) : place(p, 0, 1),
-    w = geo.size * (bowl ? 0.5 : 0.7);
-  const [cl, ct] = geo.hang ? world.local(at.left, at.top) : [at.left, at.top]; // (Hangout: the ducks' layer is in the world's box, world.js)
-  Object.assign(n.style, {
-    left: cl.toFixed(1) + "px",
-    top: (ct - w * 0.3).toFixed(1) + "px",
-    width: w.toFixed(1) + "px",
-    zIndex: bowl
-      ? world.key("", { x: p.x, y: p.y + 0.012 }) + 1
-      : geo.hang
-        ? world.key("", p) - 1
-        : Math.round(at.top - 1),
-    visibility: geo.hang && world.hidden("", p) ? "hidden" : "",
-  });
-}
-/* Mad God Justin's snack (a look only), or the zebra cake he picked up (the board's Justin too: the Zebra cake
-   special): at his beak, the way he faces, a bite at a time (his double eats too) */
-function placeSnack(board, s, now) {
-  const e =
-      (isMgj(s) ? s.phase === "boss" : justinShown(s)) &&
-      s.justin &&
-      s.justin.eat,
-    layer = ducksLayer(board);
-  if (!layer) return;
-  for (const id of [JUSTIN_ID, JUSTIN2]) {
-    let n = layer.querySelector(`.mgj-snack[data-pid="${id}"]`);
-    const dk = layer.querySelector(`.gduck[data-pid="${id}"]`);
-    if (n && (!e || !dk || n.dataset.k !== `${e.k} ${e.at}`)) {
-      n.remove();
-      n = null;
-    }
-    if (!e || !dk || !geo || now >= e.until) continue;
-    if (!n) {
-      n = el(
-        `<div class="mgj-snack" data-pid="${id}" data-k="${e.k} ${e.at}"><i>${FOODS[e.k] || FOODS.zebra}</i></div>`,
-      );
-      n.style.setProperty("--eat", e.until - e.at + "ms");
-      layer.append(n);
-    }
-    const j = justinAt(s.justin, now),
-      p = id === JUSTIN2 ? { x: 1 - j.x, y: 1 - j.y } : j,
-      at = place(p, 0, 1),
-      side = (turned() ? 1 : dk._face) || 1,
-      w = geo.size * 0.42;
-    Object.assign(n.style, {
-      left: (at.left + side * geo.size * 0.5).toFixed(1) + "px",
-      top: (at.top - geo.size * 0.78).toFixed(1) + "px",
-      width: w.toFixed(1) + "px",
-      zIndex: Math.round(at.top + 1),
-    });
-    n.classList.toggle("left", side < 0);
-  }
-}
-/* Mad God Justin's edge lightning: the edges glow for EDGE_WARN before it strikes (the strike itself: the "edge" fx) */
-function placeEdge(board, s, now) {
-  const m = isMgj(s) && s.phase === "boss" && s.mgj,
-    warn =
-      !!m && !mgjFrozen(s) && m.edgeAt - now <= EDGE_WARN && m.edgeAt > now;
-  let n = board.querySelector(".mgj-edge.warn");
-  if (n && (!warn || +n.dataset.at !== m.edgeAt)) {
-    n.remove();
-    n = null;
-  }
-  if (!warn || n) return;
-  n = el(edgeHTML("warn"));
-  n.dataset.at = m.edgeAt;
-  n.style.animationDelay = -(EDGE_WARN - (m.edgeAt - now)) + "ms";
-  n.style.setProperty("--ew", EDGE_WARN + "ms");
-  board.append(n);
-  sfx.warn(Math.max(0.05, (m.edgeAt - now) / 1000));
-}
-
-/* Mad God Justin's hints, one for every attack that had none (the owner's, Nov 17 11:07Z: "Every player should have an
-   animated hint or something PER attack IF there isnt one"): while he winds up his hammer, the red wedge it will
-   sweep; while he aims a burst, a red sight line to its duck; while he aims the shotgun, its red cone. Each fills in
-   as the moment comes, with a red "!" over his head (his throws, his charge and the lightning have their own) */
-function placeTells(board, s, now) {
-  const fxl = $(".fxl", board),
-    j = isMgj(s) && s.phase === "boss" && !mgjFrozen(s) && s.justin,
-    t = !j
-      ? null
-      : j.swing && s.pos[j.swing.id]
-        ? { k: "hammer", id: j.swing.id, at: j.swing.at, all: HAMMER_TELL }
-        : j.sg && s.pos[j.sg.id]
-          ? { k: "shotgun", id: j.sg.id, at: j.sg.at, all: GUN_TELL }
-          : j.burst &&
-              j.burst.left === BURST[j.burst.w].n &&
-              now < j.burst.at &&
-              s.pos[j.burst.id]
-            ? { k: "gun", id: j.burst.id, at: j.burst.at, all: GUN_TELL }
-            : null;
-  let n = fxl && fxl.querySelector(".mgj-tells"),
-    b = fxl && fxl.querySelector(".mgj-bang");
-  if (!t || !fxl || !geo) {
-    if (n) n.remove();
-    if (b) b.remove();
-    return;
-  }
-  if (!n) {
-    n = el(
-      `<svg class="mgj-tells" aria-hidden="true"><path class="w"/><line class="l"/><circle class="c" r="14"/></svg>`,
-    );
-    b = el(`<div class="mgj-bang" aria-hidden="true">!</div>`);
-    fxl.append(n, b);
-  }
-  const at = justinAt(j, now),
-    c = place(at, 0, 1, true),
-    q = t.id === R.me && me ? me : s.pos[t.id],
-    d = place(q, 0, 1, true),
-    /* a duck length along the board's x and along its y, on the screen (a phone held upright turns the board) */
-    px = place({ x: at.x + DUCK_LEN.x, y: at.y }, 0, 1, true),
-    py = place({ x: at.x, y: at.y + DUCK_LEN.y }, 0, 1, true),
-    ex = [px.left - c.left, px.top - c.top],
-    ey = [py.left - c.left, py.top - c.top],
-    det = ex[0] * ey[1] - ex[1] * ey[0] || 1,
-    ox = d.left - c.left,
-    oy = d.top - c.top,
-    a = Math.atan2(
-      (ex[0] * oy - ex[1] * ox) / det,
-      (ey[1] * ox - ey[0] * oy) / det,
-    ), // (the way to the duck, in duck lengths)
-    k = Math.max(0, Math.min(1, 1 - (t.at - now) / t.all)); // (how near it is: 0 to 1)
-  n.setAttribute("class", `mgj-tells k-${t.k}`);
-  n.style.setProperty("--k", k.toFixed(3));
-  const wedge = (far, half) => {
-    let p = `M${c.left.toFixed(1)} ${c.top.toFixed(1)}`;
-    for (let i = 0; i <= 12; i++) {
-      const u = a - half + (2 * half * i) / 12;
-      const fx = Math.cos(u) * far,
-        fy = Math.sin(u) * far;
-      p += `L${(c.left + fx * ex[0] + fy * ey[0]).toFixed(1)} ${(c.top + fx * ex[1] + fy * ey[1]).toFixed(1)}`;
-    }
-    return p + "Z";
-  };
-  const w = n.querySelector(".w"),
-    l = n.querySelector(".l"),
-    o = n.querySelector(".c");
-  if (t.k === "hammer")
-    w.setAttribute(
-      "d",
-      wedge(
-        REACH.hammer[0] * MGJ_SCALE * MGJ_HAMMER,
-        Math.acos(REACH.hammer[1]),
-      ),
-    );
-  // (where his swing hits: rules.js swing)
-  else if (t.k === "shotgun") w.setAttribute("d", wedge(9, SPREAD + 0.05));
-  else w.removeAttribute("d");
-  l.setAttribute("x1", c.left.toFixed(1));
-  l.setAttribute("y1", (c.top - geo.size * 0.5).toFixed(1));
-  l.setAttribute("x2", d.left.toFixed(1));
-  l.setAttribute("y2", (d.top - geo.size * 0.4).toFixed(1));
-  o.setAttribute("cx", d.left.toFixed(1));
-  o.setAttribute("cy", (d.top - geo.size * 0.4).toFixed(1));
-  /* the "!" over his head */
-  b.style.left = c.left.toFixed(1) + "px";
-  b.style.top = (c.top - geo.size * MGJ_SCALE * 1.3).toFixed(1) + "px";
-}
-/* Story Chain: the row under my duck lights up while voting, and the Vote button wears its color */
-function storyMarks(s, board) {
-  const zones = scZones(s),
-    z = me ? zoneAt(s, me.y, zones) : null,
-    k = zones.indexOf(z),
-    vote = SC_VOTES.includes(s.phase);
-  const can = vote && scCanVote(s, R.me, z); // (a row you can't vote for lights up grey)
-  board.querySelectorAll(".sc-row").forEach((r) => {
-    const on = vote && z !== "H" && +r.dataset.z === k;
-    r.classList.toggle("here", on);
-    r.classList.toggle("nope", on && !can);
-  });
-  if (z === scZone) return;
-  scZone = z;
-  const l = scLineOf(s, z),
-    who = l ? l.line.by : /^W:/.test(z || "") ? z.slice(2) : null,
-    p = who && s.players[who];
-  S.style.setProperty(
-    "--vb",
-    p
-      ? (p.card && p.card.color) || "#8a8fa3"
-      : {
-          "C:cont": "var(--green)",
-          "C:new": "var(--blue)",
-          "C:lobby": "var(--orange)",
-        }[z] || "var(--green)",
-  );
-  if (vote) setHTML($(".gact", S), actHTML(s)); // (your own line or word can't be voted for)
-}
-/* the ducks walk on the bracket itself (x, y across the whole bracket), so everyone sees them over the same matches; the
-   bracket slides to keep my duck in view */
-const bracketZoom = (box, b) => {
-  const { W, H } = treeSize(b);
-  return { W, H, fit: Math.min(1, box.clientWidth / W, box.clientHeight / H) };
-};
-function panTree(pos) {
-  const box = S.querySelector(".bb-diagram"),
-    tree = box && box.firstElementChild;
-  if (!tree || !geo) {
-    cam = null;
-    return;
-  }
-  const { W, H, fit } = bracketZoom(box, R.state.bb),
-    z = bbZoom || Math.max(fit, 0.55),
-    bw = box.clientWidth,
-    bh = box.clientHeight;
-  const p = pos && pos.x >= 0 ? pos : { x: 0.5, y: 0.5 };
-  const follow = (size, view, f) =>
-    size <= view
-      ? (view - size) / 2
-      : Math.max(view - size, Math.min(0, view / 2 - f * size)); // centered on my duck, never past the edges
-  const ox = follow(W * z, bw, p.x),
-    oy = follow(H * z, bh, p.y);
-  cam = { dx: box.offsetLeft, dy: box.offsetTop, ox, oy, z, W, H };
-  const tr = `translate(${ox.toFixed(1)}px, ${oy.toFixed(1)}px) scale(${z.toFixed(3)})`;
-  if (tree._tr !== tr) {
-    tree._tr = tr;
-    tree.style.transform = tr;
-  }
-}
-function zoom(how) {
-  const box = S && S.querySelector(".bb-diagram");
-  if (!box) return;
-  const { fit } = bracketZoom(box, R.state.bb),
-    z = bbZoom || Math.max(fit, 0.55);
-  bbZoom =
-    how === "fit"
-      ? fit
-      : Math.max(0.2, Math.min(2.5, z * (how === "in" ? 1.25 : 0.8)));
-}
-
 /* ---------- pools (owner 2026-11-15: "I agree with reusing objects") ----------
    The bullets in the air and the blood bursts are made and thrown away many times a second. Done with, they're kept
    (out of the page) and handed out again for the next one that looks the same, instead of building new elements every
@@ -3773,7 +3004,7 @@ const SHOT_EL = new Map(); // a shot's number → its element
    sh.zp, sh.zh), or still has it once it should long have heard (STOP_WAIT), it flies on from there. True: it's
    stopped, don't draw it */
 const STOP_WAIT = 700;
-function stopped(s, sh, at, hang, now) {
+export function stopped(s, sh, at, hang, now) {
   const r = SHOT_SEEN.get(sh.n),
     mgj = isMgj(s) || sbOnBoard(s); // (Sandbox's board: its spawns' zombies stop shots as his do)
   if (
@@ -3925,7 +3156,7 @@ const votedCol = () => {
   const c = heldCol(R.state, R.me);
   return c != null && c >= 0 ? c : null;
 }; // voted: inside that column until I unvote
-const late = () => !!(R.state.players[R.me] || {}).late; // joined mid-turn: walks anywhere, plays from the next turn
+export const late = () => !!(R.state.players[R.me] || {}).late; // joined mid-turn: walks anywhere, plays from the next turn
 const roams = () =>
   ["answer", "bracket", "dunced"].includes(R.state.phase) ||
   isMgj(R.state) ||
@@ -4744,7 +3975,7 @@ const writerFont = (s) => {
 }; // (its id)
 const lordHTML = (s) => cloudHTML(s.players[s.qs[s.qi].by] || null);
 
-function viewSubmit(s) {
+export function viewSubmit(s) {
   const mineDone = s.done[R.me],
     sent = (s.subs || []).find((q) => q.by === R.me);
   const what = isLaw(s)
@@ -4801,7 +4032,7 @@ function viewSubmit(s) {
   }
     <div class="who">${whoHTML(s)}</div></div>`;
 }
-const whoHTML = (s) =>
+export const whoHTML = (s) =>
   s.seat
     .map(
       (id) =>
@@ -4869,9 +4100,9 @@ function wyrStatsHTML(s) {
   };
   return `<h2>Round ${s.round + 1}</h2>${block(s.round)}${s.review ? `<h2 class="all-h">All rounds</h2>${block(null)}` : ""}`;
 }
-const viewResults = (s) =>
+export const viewResults = (s) =>
   `<div class="results"><div class="stage">${boardHTML(s)}</div><aside class="statpanel"></aside></div>`;
-const viewOver = (
+export const viewOver = (
   s,
 ) => `<div class="over"><h1 class="over-title">${rainbowHTML("Game over")}</h1>
     <p class="dim">${s.round + 1} round${s.round ? "s" : ""} · ${isMgj(s) ? `${(s.mgjPast || []).length} fight${(s.mgjPast || []).length === 1 ? "" : "s"}` : `${s.history.length} ${isLaw(s) ? "case" : isDn(s) ? "take" : "question"}${s.history.length === 1 ? "" : "s"}`}</p>
@@ -5077,7 +4308,7 @@ const SB_LABELS = {
   loot: "Loot settings",
   zone: "Zone settings",
 };
-function sbGo(s) {
+export function sbGo(s) {
   if (!isSb(s) || !sbOnBoard(s) || !me || !onBoardPhase()) return null;
   if (!sbMay(s, R.me, "b") || !sbCheat.on) return null;
   let best = null,
@@ -5100,446 +4331,6 @@ const sbGoOpen = () => {
   if (g) sbSettings(() => R, g.id);
 };
 /* the middle of the bottom bar: what you can do now, and how many are done */
-function actHTML(s) {
-  const sbg = sbGo(s);
-  if (sbg)
-    return `<div class="act-row"><button type="button" class="btn hang-btn" data-a="sbgo">${esc(sbg.label)} <kbd>E</kbd></button></div>`;
-  const on = playing(s),
-    n = on.length,
-    d = on.filter((id) => s.done[id]).length,
-    need = needed(s),
-    mine = s.done[R.me];
-  if (s.waiting && s.waiting.for) {
-    const g = goOnVotes(s).length,
-      mineG = !!(s.waiting.go || {})[R.me];
-    return `<div class="act-row"><span class="progress wait-bar" role="status">Waiting for ${esc(s.waiting.name || "a player")} to come back</span><button type="button" class="btn${mineG ? " yellow" : " green"}" data-a="goon" aria-pressed="${mineG}" data-tip="Go on without them">${mineG ? "Next round ✓" : "Next round"} · ${g}/${goOnNeed(s)}</button></div>`;
-  } // (Lawyering, Duncelation: an attorney or the defender left mid-case)
-  if (s.waiting)
-    return `<span class="progress wait-bar" role="status">Waiting for players to continue <b>${s.seat.length}/${minOf(s)}</b></span>`; // (a game below its fewest players: ducks still walk)
-  if (isQuack(s) && QUACK_PHASES.includes(s.phase)) return quackActHTML(s);
-  if (isVd(s) && VD_PHASES.includes(s.phase)) return vdActHTML(s);
-  if (isTv(s) && TV_BOARD.includes(s.phase)) return tvActHTML(s, R.me, me);
-  if ((isHang(s) || sbOnBoard(s)) && watching(s, R.me))
-    return watchHTML(s, R.me); // (Survival, my duck dead: the card of the one I watch: spectate.js)
-  if (isHang(s)) return world ? world.buttonHTML() : ""; // Hangout: the nearest activity's button (Light off …)
-  if (late())
-    return `<span class="progress">You joined mid-turn: walk around and chat. You play from the next ${isBb(s) ? "match" : isLaw(s) ? "case" : isDn(s) ? "take" : "question"}. · ${d}/${n} done</span>`;
-  const count = `<span class="progress">${d}/${n} done${need < n ? ` · ${need} needed` : ""}</span>`;
-  if (isSc(s)) return storyActHTML(s, d, n, need, count);
-  if (
-    ["submit", "topic", "tvote", "seeds", "counsel", "tvwrite"].includes(
-      s.phase,
-    )
-  )
-    return count;
-  if (isLaw(s) && ATT_PHASES.includes(s.phase) && s.law) {
-    const p = s.law.picks[s.phase === "lawdef" ? "def" : "off"] || {},
-      v = on.filter((id) => p[id] !== undefined).length;
-    return `<span class="progress">${v}/${n} voted</span>`;
-  } // (the attorney vote)
-  if (s.phase === "podium") return "";
-  if (s.phase === "tie") {
-    // the tied match: vote again or toss a coin (a choice can change until everyone has chosen)
-    const v = (s.bb.tie || {}).votes || {},
-      n = (k) => Object.values(v).filter((x) => x === k).length,
-      mineV = v[R.me];
-    return `<div class="act-row"><button type="button" class="btn${mineV === "again" ? " green" : " ghost"}" data-a="tieagain" aria-pressed="${mineV === "again"}">Vote again · ${n("again")}</button><button type="button" class="btn${mineV === "coin" ? " yellow" : " ghost"}" data-a="tiecoin" aria-pressed="${mineV === "coin"}">Coin toss · ${n("coin")}</button>${count}</div>`;
-  }
-  if (s.phase === "bracket")
-    return `<div class="act-row"><button type="button" class="btn theme-btn${mine ? " done" : ""}" data-a="end">${mine ? "Waiting ✓" : s.bb.champ != null ? "On to the podium" : "Next match"} <kbd>Enter</kbd></button>${count}</div>`;
-  if (s.phase === "answer" && isLaw(s) && s.law) return lawActHTML(s);
-  if (s.phase === "answer" && isDn(s) && s.dn && s.dn.cur) return dnActHTML(s);
-  if (s.phase === "boss")
-    return `<span class="progress mgj-tip">${mgjTip(s)}</span>`;
-  if (s.phase === "mgjend")
-    return `<span class="progress">${s.mgj && s.mgj.won ? "Justin is defeated!" : "Justin Wins."} The stats are next.</span>`;
-  if (s.phase === "dunced") {
-    const p = s.players[((s.dn && s.dn.cur) || {}).def];
-    return `<span class="progress">${p ? `${esc(p.name)} is the dunce` : "A dunce"}</span>`;
-  }
-  if (s.phase === "answer") {
-    /* Vote: the button takes the color of the column you stand on; no voting in the first seconds; once locked it waits
-       for everyone (End turn comes after, when the votes are in) */
-    const onBoard = me && me.x >= 0,
-      wait = graceLeft(s),
-      col = onBoard ? colAt(s, me.x) : -1;
-    const votes = `<span class="progress">${d}/${n} voted${need < n && !isBb(s) ? ` · ${need} needed` : ""}</span>`; // (a bracket match waits for every vote or its timer)
-    const q = s.qs[s.qi],
-      m = bbMatch(s);
-    const choices = m
-      ? [
-          [s.bb.seeds[m.a].text, "bb-a"],
-          [s.bb.seeds[m.b].text, "bb-b"],
-        ]
-      : isWyr(s)
-        ? [
-            [q.a, "wyr-a"],
-            [q.b, "wyr-b"],
-          ]
-        : isDdr(s)
-          ? DDR_SIDES.map((t, c) => [t, `wyr-${c ? "b" : "a"}`])
-          : COLS.map((c, i) => [c, `c${i + 1}`]);
-    const mc =
-      profile.settings.multipleChoice && (!mine || s.options.freeRoam)
-        ? `<div class="mc">${choices.map(([c, k], i) => `<button type="button" class="mc-b ${k}" data-col="${i}">${esc(c)}</button>`).join("")}</div>`
-        : "";
-    const label = wait
-      ? `Vote in ${wait}`
-      : s.options.freeRoam
-        ? mine
-          ? "Ready ✓"
-          : "Ready"
-        : mine
-          ? "Voted ✓"
-          : "Vote";
-    const off = wait || !onBoard || col < 0; // (Voted ✓ stays pressable: pressing it again takes the vote back)
-    const tip = s.options.freeRoam
-      ? "Free roam: keep moving; where you stand when the turn ends is your vote."
-      : mine
-        ? "Press again to take your vote back."
-        : "";
-    return `${mc}<div class="act-row"><button type="button" class="btn vote-btn${mine ? " voted" : ""}" data-a="end" data-col="${col}"${off ? " disabled" : ""}${tip ? ` data-tip="${tip}"` : ""}>${label}${off ? "" : " <kbd>Enter</kbd>"}</button>${endRoundHTML(s)}${votes}</div>`;
-  }
-  if (s.phase === "discuss")
-    return `<div class="act-row"><button type="button" class="btn theme-btn${mine ? " done" : ""}" data-a="end">${mine ? "Waiting ✓" : "End turn"} <kbd>Enter</kbd></button>${count}</div>`;
-  if (s.phase === "results" && isVd(s))
-    return `<div class="act-row"><button type="button" class="btn${mine ? " yellow" : " green"}" data-a="end">${mine ? "Waiting ✓" : VD_AFTER === "lobby" ? "Back to the lobby" : "New game"} <kbd>Enter</kbd></button>${count}</div>`; // (Valentine's Duck Date: one game, one Valentine)
-  if (s.phase === "results") {
-    const rv = reviewCount(s),
-      lv = s.vote && s.vote.kind === "lobby";
-    return `<div class="act-row"><button type="button" class="btn${mine ? " yellow" : " green"}" data-a="end">${mine ? "Waiting ✓" : isBb(s) ? "Next tournament" : isMgj(s) ? "Try again" : "Next round"} <kbd>Enter</kbd></button>
-      ${s.round >= 1 && !s.review && !isMgj(s) ? `<button type="button" class="btn purple" data-a="review"${s.reviewVotes[R.me] ? " disabled" : ""} data-tip="Adds every round's stats after this round's. One vote each round.">All-rounds review ${rv}/${need}</button>` : ""}
-      <button type="button" class="btn ${lv ? "red" : "ghost"}" data-a="lobbyvote"${s.round === 1 ? ' data-tip="You can also vote to go back to the lobby on the all-rounds stats screen."' : ""}>${lv ? "Vote yes: back to the lobby" : "Vote: back to the lobby"}</button>${newGameHTML(s)}${count}${voteBackNote(s)}</div>`;
-  }
-  if (s.phase === "over")
-    return `<div class="act-row">${isSudo(s, R.me) ? '<button type="button" class="btn green" data-a="lobby">Back to the lobby</button>' : '<span class="dim">The host takes everyone back to the lobby.</span>'}<button type="button" class="btn ghost" data-a="leave">Leave</button></div>`;
-  return "";
-}
-
-/* Vote Mode & Map on: the stats screen's "Vote: new game now" button (the votes come back at once once the room says
-   yes), and a line that says when the votes come back on their own (Vote return) */
-function newGameHTML(s) {
-  const due = votesDue(s);
-  if (!due.length) return "";
-  const nv = s.vote && s.vote.kind === "newgame",
-    what = due.includes("mode") ? "game" : "map";
-  return `<button type="button" class="btn ${nv ? "green" : "ghost"}" data-a="newvote">${nv ? `Vote yes: new ${what} now` : `Vote: new ${what} now`}</button>`;
-}
-function voteBackNote(s) {
-  const due = votesDue(s),
-    v = s.options.voteBack;
-  if (!due.length || !(+v > 0 || v === "r")) return "";
-  const what = due.includes("mode") ? "game" : "map",
-    every =
-      v === "r"
-        ? "Every 1 to 6 games (picked at random)"
-        : +v === 1
-          ? "After every game"
-          : `Every ${+v} games`,
-    left = Math.max(1, +s.gamesLeft || 1);
-  return `<div class="vote-back-note dim small">${every}, everyone votes on the next ${what}. Games until that vote: ${left}.</div>`;
-}
-
-/* Valentine's Duck Date: The Date's buttons (Next duck in a date, Turn down in the pick), and what everyone else sees */
-function vdActHTML(s) {
-  const V = s.vd;
-  if (!V) return "";
-  const name = (id) => esc((s.players[id] || { name: "Gone" }).name),
-    wait = graceLeft(s);
-  if (late())
-    return `<span class="progress">You joined mid-game: walk around and chat. You're a Suitor from the next turn.</span>`;
-  if (s.phase === "vdprompt")
-    return `<span class="progress">${isDate(s, R.me) ? "Write the topic for this turn's dates (empty: a random one)." : "The Date is writing the topic for this turn…"}</span>`;
-  if (s.phase === "vddate") {
-    /* the date's timer: it starts when The Date presses Start timer, and pressing it again pauses it */
-    const tm = V.tm,
-      ms = tm ? (tm.run ? Math.max(0, s.ends - clockNow()) : tm.left) : 0,
-      left = Math.ceil(ms / 1000),
-      lefts = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
-    if (isDate(s, R.me))
-      return `<div class="act-row">${tm ? `<button type="button" class="btn ${tm.run ? "yellow" : "purple"}" data-a="vdtimer" aria-pressed="${tm.run}" data-tip="${tm.run ? "Pause the timer" : "Start the timer, or go on where it stopped"}">${tm.run ? "Pause timer" : `${tm.left < (+s.options.vdTime || 0) * 1000 ? "Timer paused" : "Start timer"} · ${lefts}`}</button>` : ""}<button type="button" class="btn green" data-a="end"${wait ? " disabled" : ""} data-tip="End this date and go on to the next Suitor">${wait ? `Next duck in ${wait}` : "Next duck <kbd>Enter</kbd>"}</button></div>`;
-    return `<span class="progress">${V.cur === R.me ? "Your date! Win The Date over (on the call or in the chat)." : `${V.cur ? name(V.cur) : "A Suitor"} is on a date with The Date.`}${tm && !tm.run ? ` Timer ${tm.left < (+s.options.vdTime || 0) * 1000 ? "paused" : "not started"}.` : ""}</span>`;
-  }
-  if (s.phase === "vdpick") {
-    if (!isDate(s, R.me))
-      return `<span class="progress">The Date is picking who is Turned Down.</span>`;
-    const k = me && me.x >= 0 ? vdTileAt(s, me) : -1,
-      who = k >= 0 ? V.ids[k] : null;
-    return `<div class="act-row"><button type="button" class="btn vote-btn ${who ? "red" : "ghost"}" data-a="end" data-col="${k}"${wait ? " disabled" : ""}>${wait ? `Turn down in ${wait}` : who ? `Turn down ${name(who)} <kbd>Enter</kbd>` : "Turn down nobody <kbd>Enter</kbd>"}</button></div>`;
-  }
-  if (s.phase === "vddown")
-    return `<span class="progress">${suitorsLeft(s)} still in. The next turn is coming.</span>`;
-  if (s.phase === "vdval")
-    return `<span class="progress">${V.val ? `${name(V.val)} is The Date's Valentine!` : "The game is over."} The stats are next.</span>`;
-  return "";
-}
-const suitorsLeft = (s) => {
-  const n = (s.vd.ids || []).filter((id) => !turnedDown(s, id)).length;
-  return `${n} Suitor${n === 1 ? "" : "s"}`;
-};
-
-/* Lawyering: an attorney argues (and, behind in closing arguments, may give up); a juror votes for the side they stand on,
-   and can change it at any time */
-function lawActHTML(s) {
-  const L = s.law,
-    j = jury(s),
-    voted = j.filter((id) => L.votes[id] !== undefined).length,
-    [o, d] = lawTally(s);
-  const tally = L.close
-    ? `<span class="progress">Offense ${o} · Defense ${d}</span>`
-    : `<span class="progress">${voted}/${j.length} voted</span>`;
-  if (isCounsel(s, R.me)) {
-    const give = canGiveUp(s, R.me)
-      ? '<button type="button" class="btn red" data-a="giveup" data-tip="In honor of the better argument (or in shame): the other side wins the case.">Give up</button>'
-      : "";
-    return `<div class="act-row"><span class="law-you">You're the ${L.off === R.me ? "offense" : "defense"} attorney: convince them!</span>${give}${tally}</div>`;
-  }
-  const onBoard = me && me.x >= 0,
-    wait = graceLeft(s),
-    col = onBoard ? colAt(s, me.x) : -1,
-    mine = L.votes[R.me];
-  const label = wait
-    ? `Vote in ${wait}`
-    : mine !== undefined && (col < 0 || mine === col)
-      ? "Voted ✓"
-      : mine !== undefined
-        ? "Change vote"
-        : "Vote";
-  const off = !!wait || col < 0 || mine === col;
-  const names = [L.off, L.def].map(
-    (id) => (s.players[id] || { name: "?" }).name,
-  );
-  const mc = profile.settings.multipleChoice
-    ? `<div class="mc">${names.map((n, i) => `<button type="button" class="mc-b law-${i ? "b" : "a"}" data-col="${i}">${i ? "Defense" : "Offense"}: ${esc(n)}</button>`).join("")}</div>`
-    : "";
-  return `${mc}<div class="act-row"><button type="button" class="btn vote-btn${mine !== undefined ? " voted" : ""}" data-a="end" data-col="${col}"${off ? " disabled" : ""}>${label}${off ? "" : " <kbd>Enter</kbd>"}</button>${tally}</div>`;
-}
-/* Duncelation: the defender defends; everyone else votes for the side they stand on, and can change it at any time */
-function dnActHTML(s) {
-  const v = voters(s),
-    voted = v.filter((id) => s.dn.cur.votes[id] !== undefined).length,
-    [d, n] = dnTally(s);
-  const tally = `<span class="progress">${voted}/${v.length} voted · Dunce ${d} · Not a Dunce ${n}</span>`;
-  /* End round, beside Vote for everyone: it passes once the defender pressed it too and enough players did */
-  const ev = endVotes(s),
-    endMine = ev.includes(R.me);
-  const end = `<button type="button" class="btn dn-end${endMine ? " yellow" : " ghost"}" data-a="dnend" aria-pressed="${endMine}" data-tip="Ends the take now once the defender presses it too and ${endNeed(s)} players in all have.">${endMine ? "End round ✓" : "End round"} · ${ev.length}/${endNeed(s)}</button>`;
-  if (isDefender(s, R.me))
-    return `<div class="act-row"><span class="law-you">Defend your take: it isn't a dunce take!</span>${end}${tally}</div>`;
-  const onBoard = me && me.x >= 0,
-    wait = graceLeft(s),
-    col = onBoard ? colAt(s, me.x) : -1,
-    mine = s.dn.cur.votes[R.me];
-  const label = wait
-    ? `Vote in ${wait}`
-    : mine !== undefined && (col < 0 || mine === col)
-      ? "Voted ✓"
-      : mine !== undefined
-        ? "Change vote"
-        : "Vote";
-  const off = !!wait || col < 0 || mine === col;
-  const mc = profile.settings.multipleChoice
-    ? `<div class="mc">${DN_SIDES.map((t, i) => `<button type="button" class="mc-b law-${i ? "b" : "a"}" data-col="${i}">${esc(t)}</button>`).join("")}</div>`
-    : "";
-  return `${mc}<div class="act-row"><button type="button" class="btn vote-btn${mine !== undefined ? " voted" : ""}" data-a="end" data-col="${col}"${off ? " disabled" : ""}>${label}${off ? "" : " <kbd>Enter</kbd>"}</button>${end}${tally}</div>`;
-}
-/* Who is the Quack?: Done (the speaker) or Skip (everyone else) in a clue turn; Vote; End turn after the reveal */
-function quackActHTML(s) {
-  const w = s.wq,
-    row = (x) => `<div class="act-row">${x}</div>`,
-    P = (id) => esc((s.players[id] || {}).name || "Gone");
-  if (s.phase === "wqpick")
-    return `<span class="progress">${w.picker === R.me ? "Only you see the word you pick." : "Someone is picking the secret word."}</span>`;
-  if (!w.ids.includes(R.me))
-    return `<span class="progress">You joined mid-vote: walk around and chat. You play from the next ${w.result ? "round" : "lap of clues"}.</span>`;
-  if (s.phase === "reveal") {
-    const on = playing(s),
-      d = on.filter((id) => s.done[id]).length,
-      need = needed(s),
-      mine = s.done[R.me],
-      hold = frozen(s, R.me, clockNow());
-    return row(
-      `<button type="button" class="btn theme-btn${mine ? " done" : ""}" data-a="end"${hold ? " disabled" : ""}>${mine ? "Waiting ✓" : w.result ? "On to the stats" : "More clues"} <kbd>Enter</kbd></button><span class="progress">${d}/${on.length} done${need < on.length ? ` · ${need} needed` : ""}</span>`,
-    );
-  }
-  if (w.out[R.me])
-    return `<span class="progress">You're out this round: walk around and talk, but no clues or votes.</span>`;
-  const g = graceLeft(s),
-    inn = stillIn(s);
-  if (s.phase === "clue") {
-    const sp = speakerOf(s),
-      others = inn.filter((id) => id !== sp),
-      d = others.filter((id) => s.done[id]).length;
-    if (sp === R.me)
-      return row(
-        `<button type="button" class="btn green" data-a="end"${g ? " disabled" : ""}>${g ? `Done in ${g}` : "Done <kbd>Enter</kbd>"}</button><span class="progress">Say your clue out loud</span>`,
-      );
-    const mine = s.done[R.me];
-    return row(
-      `<button type="button" class="btn ${mine ? "yellow" : "ghost"}" data-a="end"${g || mine ? " disabled" : ""} data-tip="Everyone else has to skip it to move on.">${mine ? "Skipped ✓" : g ? `Skip in ${g}` : `Skip ${P(sp)}'s turn <kbd>Enter</kbd>`}</button><span class="progress">${d}/${others.length} skipped</span>`,
-    );
-  }
-  /* choice and accuse: stand on a side or a tile, then Vote (it holds your spot) */
-  const d = inn.filter((id) => s.done[id]).length,
-    mine = s.done[R.me],
-    k = me && me.x >= 0 ? spotOf(s, me) : -1;
-  const ok = k >= 0 && (s.phase === "choice" || canAccuse(s, R.me, w.ids[k])),
-    off = g || !ok || mine;
-  const tint =
-    s.phase === "choice" && k >= 0 ? ` wq-side-${k ? "b" : "a"}` : "";
-  const label = g
-    ? `Vote in ${g}`
-    : mine
-      ? "Voted ✓"
-      : s.phase === "accuse" && k >= 0 && !ok
-        ? w.ids[k] === R.me
-          ? "Not yourself!"
-          : "Not that one"
-        : "Vote";
-  return row(
-    `<button type="button" class="btn vote-btn${mine ? " voted" : ""}${tint}" data-a="end" data-col="${k}"${off ? " disabled" : ""}>${label}${off ? "" : " <kbd>Enter</kbd>"}</button><span class="progress">${d}/${inn.length} voted</span>`,
-  );
-}
-
-/* Story Chain: whose line it is, or Vote (stand on a line, a word or a choice; not your own) */
-/* the End round button (the host's End round setting), next to Vote once enough have voted */
-const endRoundHTML = (s) =>
-  canEndRound(s) && !late() && playing(s).includes(R.me)
-    ? '<button type="button" class="btn yellow" data-a="endround">End round</button>'
-    : "";
-function storyActHTML(s, d, n, need, count) {
-  if (s.phase === "words") return count;
-  if (s.phase === "write") return ""; // (the top bar says which line it is; the writer's window has Send)
-  const onBoard = me && me.x >= 0,
-    wait = graceLeft(s),
-    z = onBoard ? zoneAt(s, me.y) : null,
-    mine = s.done[R.me],
-    ok = !!z && scCanVote(s, R.me, z);
-  const l = scLineOf(s, z),
-    own =
-      !ok &&
-      (s.phase === "lvote"
-        ? l && l.now && l.line.by === R.me
-        : s.phase === "wvote" && z === "W:" + R.me);
-  const label = wait
-      ? `Vote in ${wait}`
-      : mine
-        ? "Voted ✓"
-        : own
-          ? s.phase === "lvote"
-            ? "Your line"
-            : "Your word"
-          : "Vote",
-    off = wait || !ok || mine;
-  const review =
-    s.phase === "results" && s.round >= 1 && !s.review
-      ? `<button type="button" class="btn purple" data-a="review"${s.reviewVotes[R.me] ? " disabled" : ""} data-tip="Adds every round's stats and the finished stories. One vote each round.">All-rounds review ${reviewCount(s)}/${need}</button>`
-      : "";
-  return `<div class="act-row"><button type="button" class="btn vote-btn sc-vote${mine ? " voted" : ""}" data-a="end"${off ? " disabled" : ""}>${label}${off ? "" : " <kbd>Enter</kbd>"}</button>${endRoundHTML(s)}<span class="progress">${d}/${n} voted${need < n ? ` · ${need} needed` : ""}</span>${review}</div>`;
-}
-const TITLES = {
-  hang: "Duck Cabin",
-  sandbox: "Sandbox",
-  submit: "Write a question",
-  answer: "Vote",
-  discuss: "Talk it over",
-  results: "Results",
-  over: "",
-  topic: "Write a topic",
-  tvote: "Pick the topic",
-  tie: "A tie",
-  seeds: "Write the contenders",
-  bracket: "The bracket",
-  podium: "The podium",
-  words: "Write a secret word",
-  write: "Write the story",
-  lvote: "Favorite line",
-  wvote: "Favorite secret word",
-  wqpick: "The secret word",
-  clue: "Clues",
-  choice: "Vote or more clues?",
-  accuse: "Vote Out the Quack",
-  reveal: "The reveal",
-};
-const LAW_TITLES = {
-  submit: "Write a topic",
-  counsel: "Pick the attorneys",
-  lawdef: "Vote the defense",
-  lawoff: "Vote the offense",
-  answer: "Court is in session",
-  discuss: "The verdict",
-};
-const DN_TITLES = {
-  submit: "Write a take",
-  answer: "Dunce or Not?",
-  discuss: "The verdict",
-  dunced: "The dunce",
-};
-const VD_TITLES = {
-  vdprompt: "The topic",
-  vddate: "On a date",
-  vdpick: "Who is Turned Down?",
-  vddown: "Turned Down",
-  vdval: "Valentine",
-  results: "Sweet Valentine",
-};
-/* Valentine's Duck Date: the turn, and the date in it */
-const vdRound = (s) => {
-  const V = s.vd;
-  if (!V || !V.turn) return "";
-  return `Turn ${V.turn}${["vdprompt", "vddate"].includes(s.phase) && V.order.length ? ` · Date ${Math.min(V.k + 1, V.order.length)} of ${V.order.length}` : ""}`;
-};
-const MGJ_TITLES = {
-  boss: "Mad God Justin",
-  mgjend: "The end",
-  results: "The fight",
-};
-/* what the middle of the screen shows */
-function viewHTML(s) {
-  if (isHang(s)) return `<div class="stage hang-stage">${HANG_HTML}</div>`;
-  if (isLaw(s) && s.phase === "counsel")
-    return '<div class="law-counsel-wrap"></div>';
-  if (isTv(s) && s.phase === "tvwrite") return tvWriteHTML(s, R.me, whoHTML(s));
-  if (
-    (isLaw(s) || isDn(s) || isMgj(s) || isVd(s) || isTv(s)) &&
-    s.phase === "results"
-  )
-    return '<div class="bb-results"><div class="statpanel law-statpanel"></div></div>';
-  if (isQuack(s))
-    switch (s.phase) {
-      case "wqpick":
-        return pickHTML(s, R.me);
-      case "results":
-        return '<div class="bb-results"><div class="statpanel bb-statpanel"></div></div>';
-    }
-  if (isSc(s)) {
-    if (s.phase === "words") return wordsHTML(s, R.me, whoHTML(s));
-    if (s.phase === "results")
-      return `<div class="results sc-results"><div class="stage">${boardHTML(s)}</div><aside class="statpanel"></aside></div>`;
-    if (SC_BOARD.includes(s.phase))
-      return `<div class="stage">${boardHTML(s)}</div>`;
-  }
-  if (isBb(s))
-    switch (s.phase) {
-      case "topic":
-        return topicHTML(s, R.me, whoHTML(s));
-      case "tvote":
-        return tvoteHTML(s, R.me);
-      case "seeds":
-        return seedsHTML(s, R.me);
-      case "podium":
-        return podiumHTML(s);
-      case "results":
-        return '<div class="bb-results"><div class="statpanel bb-statpanel"></div></div>';
-    }
-  return s.phase === "submit"
-    ? viewSubmit(s)
-    : s.phase === "results"
-      ? viewResults(s)
-      : s.phase === "over"
-        ? viewOver(s)
-        : `<div class="stage">${boardHTML(s)}</div>`;
-}
 /* the moment specials that fire on their own: confetti over the screen for the Round Lord, a match's winner and the champion */
 function celebrate(s) {
   if (isQuack(s)) {
@@ -7353,4 +6144,4 @@ pickWith({
   playDuck,
   turned,
 });
-export { follows, geo, hotdogs }; // (what the files moved out of here read)
+export { follows, geo, hotdogs, scZone }; // (what the files moved out of here read)

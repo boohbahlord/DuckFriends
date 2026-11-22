@@ -3,6 +3,19 @@
    the game is on. __pgPlay(sc): once the screen is up and loaded, everything fake (init.js), my duck back at its start
    (reset duck), and then the scenario's keys and fingers frame by frame, a beat every 12 frames, with a hash of the whole
    room each frame and one for each part of it (to say where two runs part). */
+/* the room as text with every object's keys in name order: the order keys were added in (which module loaded first, so
+   which activity or NPC came first) is not the game, and under a loaded machine it changes (Nov 22: bj and book,
+   the NPC list) */
+const sorted = (v) =>
+  JSON.stringify(v, (k, x) =>
+    x && typeof x === "object" && !Array.isArray(x)
+      ? Object.fromEntries(
+          Object.keys(x)
+            .sort()
+            .map((q) => [q, x[q]]),
+        )
+      : x,
+  );
 const hash = (str) => {
   let h = 0x811c9dc5;
   for (let i = 0; i < str.length; i++) {
@@ -243,12 +256,12 @@ window.__pgPlay = async (sc) => {
     if (f % 12 === 11) window.__pgBeat();
     await 0;
     const s = r.state;
-    out.all.push(hash(JSON.stringify(s)));
+    out.all.push(hash(sorted(s)));
     const p = {};
     for (const k of Object.keys(s.hang || {}).sort())
-      p[k] = hash(JSON.stringify(s.hang[k]));
+      p[k] = hash(sorted(s.hang[k]));
     for (const k of Object.keys(s).sort())
-      if (k !== "hang") p["s." + k] = hash(JSON.stringify(s[k]));
+      if (k !== "hang") p["s." + k] = hash(sorted(s[k]));
     out.parts.push(p);
   }
   const me = r.state.pos[r.me];

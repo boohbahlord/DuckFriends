@@ -50,6 +50,7 @@ import { justinAt, JUSTIN_ID } from "./boardjustin.js";
 import { SLOT_ODDS, pierceOf } from "./l4ddrules.js";
 import { ARMS, MGJ_GUNS } from "./guns.js";
 import { sbOnBoard, boardDuck } from "./sandboxrules.js";
+import { shuffle, roll } from "./random.js";
 
 /* ---------- the pickups ---------- */
 /* what comes next: the sky, the meteor and Good Justin as they did (SKY, their own odds); else a medkit (the Item bag's
@@ -64,17 +65,9 @@ const MGJ_BAGS = {
   rifle: ["tommy", "ump", "smg", "ak", "burst"],
   shotgun: ["shotgun", "dbarrel"],
 };
-const mix = (xs) => {
-  const a = [...xs];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-};
 /* the next one of a bag (left: its things left, in their shuffled order; all of them when it's empty) */
 const nextOf = (left, all) => {
-  const rest = left && left.length ? left : mix(all);
+  const rest = left && left.length ? left : shuffle([...all]); // (random.js)
   return [rest[0], rest.slice(1)];
 };
 function bagGun(s) {
@@ -461,9 +454,7 @@ function shotThrown(s, sh, x0, y0, dx, dy, now) {
    owner's numbers there follow here (Nov 18 16:43Z); anything else DMG's */
 const shotDmg = (k) => {
   const w = Object.keys(ARMS).find((g) => ARMS[g].k === k),
-    d = w && ARMS[w].dmg;
-  if (Array.isArray(d))
-    return d[0] + Math.floor(Math.random() * (d[1] - d[0] + 1));
+    d = roll(w && ARMS[w].dmg); // (random.js)
   return typeof d === "number" ? d : DMG[k] || 1;
 };
 /* the grenade launcher's grenade, between (x0, y0) and at this beat: true when it got to him (it goes off there) */

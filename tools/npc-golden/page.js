@@ -9,6 +9,19 @@ window.__golden = async (sc) => {
     AL = await import("../../js/allies.js"),
     GMm = await import("../../js/gunmenrules.js"),
     { W, H } = await import("../../js/hangout/layout.js");
+  /* the room as text with every object's keys in name order: the order keys were added in (which module loaded first, so
+     which activity or NPC came first) is not the game, and under a loaded machine it changes (Nov 22: bj and book,
+     the NPC list) */
+  const sorted = (v) =>
+    JSON.stringify(v, (k, x) =>
+      x && typeof x === "object" && !Array.isArray(x)
+        ? Object.fromEntries(
+            Object.keys(x)
+              .sort()
+              .map((q) => [q, x[q]]),
+          )
+        : x,
+    );
   const hash = (str) => {
     let h = 0x811c9dc5;
     for (let i = 0; i < str.length; i++) {
@@ -250,12 +263,12 @@ window.__golden = async (sc) => {
       sbPeak,
       ((s.hang && s.hang.sbz && s.hang.sbz.zb) || []).length,
     );
-    out.all.push(hash(JSON.stringify(s)));
+    out.all.push(hash(sorted(s)));
     const p = {};
     for (const key of Object.keys(s.hang || {}).sort())
-      p[key] = hash(JSON.stringify(s.hang[key]));
+      p[key] = hash(sorted(s.hang[key]));
     for (const key of Object.keys(s).sort())
-      if (key !== "hang") p["s." + key] = hash(JSON.stringify(s[key]));
+      if (key !== "hang") p["s." + key] = hash(sorted(s[key]));
     out.parts.push(p);
   }
   const g = (r.state.hang && r.state.hang.gm && r.state.hang.gm.gb) || [];

@@ -7,3 +7,6 @@ export const shuffle = (xs) => {
   return xs;
 };
 export const anyOf = (xs) => xs[Math.floor(Math.random() * xs.length)];
+/* a damage as the weapons' tables write it: a number, or [lo, hi] for any whole number from lo to hi */
+export const roll = (d) =>
+  Array.isArray(d) ? d[0] + Math.floor(Math.random() * (d[1] - d[0] + 1)) : d;

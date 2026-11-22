@@ -29,9 +29,9 @@ import {
 } from "./sandboxrules.js";
 import { read, valueOf } from "./numerat.js";
 import { W, H, heightAt } from "./hangout/layout.js";
+import { hpMostOf, hpHealOf } from "./hpmath.js";
 
 export const GR_MOST = 20; // (groups on a map at most)
-const DUCK_HP = 4; // (a duck's own HP on the board and Duck Cabin: rules.js PHP)
 const HP_MOST = 1000; // (an NPC's most: SB_BOXES.hp.max)
 const FLOOR = 40; // (world px: a zone's floor, as sbzone.js)
 const words = (t) =>
@@ -265,12 +265,9 @@ function join(s, k, gid, now, H0, npcs, ch) {
     pct = /%$/.test(heal) ? +heal.slice(0, -1) : 0;
   if (duck) {
     if (!heal) return true;
-    const max =
-        baseMode(s.options) === "l4dd" ? H0.l4max(s, id) : grHp(s, id, DUCK_HP),
+    const max = hpMostOf(s, id),
       amt = pct ? (pct >= 100 ? 1e4 : (max * pct) / 100) : val(g, "heal");
-    if (!(amt > 0)) return true;
-    if (baseMode(s.options) === "l4dd") H0.l4heal(s, id, amt);
-    else H0.heal(s, id, amt, now);
+    if (amt > 0) hpHealOf(s, id, amt, now); // (the mode's HP: hpmath.js)
     return true;
   }
   if ((o.gh || []).includes(gid)) return true; // (its HP from this group came once already: never twice)
@@ -308,8 +305,8 @@ function zoneJoins(s) {
   return out;
 }
 
-/* ---------- the host's heartbeat: joins, zones, the dead out, regen once a second. H0: rules.js SB_H (ducks, heal, and
-   the zombie maps' l4heal and l4max) ---------- */
+/* ---------- the host's heartbeat: joins, zones, the dead out, regen once a second. H0: boardfire.js SB_H (the ducks up,
+   the zombie maps' own zombies); HP comes back the mode's way (hpmath.js) ---------- */
 export function sbGroupTick(s, now, H0) {
   if (!isSb(s) || !s.sb) return false;
   const gr = grOf(s),
@@ -396,13 +393,7 @@ export function sbGroupTick(s, now, H0) {
       const amt = regen(k),
         id = k.slice(2);
       if (!(amt > 0) || !s.pos[id] || (s.players[id] || {}).dead) continue;
-      const was = baseMode(s.options) === "l4dd" ? s.hang && s.hang.l4p : s.php;
-      if (baseMode(s.options) === "l4dd") H0.l4heal(s, id, amt);
-      else H0.heal(s, id, amt, now);
-      if (
-        (baseMode(s.options) === "l4dd" ? s.hang && s.hang.l4p : s.php) !== was
-      )
-        changed = true;
+      if (hpHealOf(s, id, amt, now)) changed = true;
     }
     for (const [k, [, o0]] of npcs()) {
       const o = ch.get(o0) || o0,
