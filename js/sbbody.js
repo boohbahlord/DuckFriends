@@ -3,7 +3,7 @@
    shows. A cropped picture only where it is, a picture with its background erased only on what's left, a duck or a
    zombie only on its drawing (never its shadow). Each picture's shape is made once (which of its squares show, SQ to a
    duck's width) and every hit on a Sandbox NPC is tested against it, at the NPC's size (its spawn's Size, o.sz), its
-   Seriat hitbox (o.hb, sbnumberat.js) and turned the way it faces (o.f). Until its shape is made, its whole box counts.
+   Seriat hitbox (o.hb, sbseriat.js) and turned the way it faces (o.f). Until its shape is made, its whole box counts.
    Its shape stands up from its feet, as it's drawn: in duck widths, u across and v down the screen. du turns those into
    the place's own units (the board's shares, or the world's px): [a, b, c, d], one duck width across the screen is
    (a, b) there and one down is (c, d). On the board that's as the one who hits sees it (each screen sends its own:

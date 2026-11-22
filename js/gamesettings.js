@@ -4,7 +4,7 @@
    on it (Duck Cabin as the real map, one picture of all of it), or a setting's description. The host (or sudo) picks;
    everyone else looks. With Vote Mode & Map on, the game and the map are voted on in their own windows as the game
    starts (vote.js). */
-import { SB_WORLDS, SB_WORLD_NAMES } from "./sandboxrules.js";
+import { SB_WORLDS, SB_WORLD_NAMES, sbOnBoard } from "./sandboxrules.js";
 import { esc, openWindow, setHTML } from "./ui.js";
 
 import { modesFor, modeOf, modeName, CABIN_MODES, CATS } from "./modes.js";
@@ -24,7 +24,7 @@ import { isUmap, umapIds } from "./umaprules.js";
 
 import { bringMaps, myMaps } from "./umaps.js";
 
-import { OPTIONS_DEFAULT, GEN_RULES, ruleFor } from "./rules.js";
+import { OPTIONS_DEFAULT, GEN_RULES, ruleFor, running } from "./rules.js";
 import { isSudo, dodOn } from "./roomrules.js";
 
 import { profile, save } from "./store.js";
@@ -324,7 +324,10 @@ export function openGameSettings(R, start = null) {
     if (page === "map") {
       /* the maps aren't voted on here: Vote Mode & Map has its own window as the game starts; a map picked here is just
          played (Vote for map and Random go off) */
-      const dis = !host() || dodOn(s, "vote");
+      const dis = !host() || dodOn(s, "vote"),
+        mid = running(s), // (in a game: only Sandbox on the board takes a new map, at once, actroom.js; the rest waits)
+        boardDis = dis || (mid && !sbOnBoard(s)),
+        pickDis = dis || mid;
       if (modeOf(o.mode).onlyMap)
         return (
           head("Map") +
@@ -332,7 +335,7 @@ export function openGameSettings(R, start = null) {
         ); // (Survival plays only Downpour: nothing else is offered, the owner's, Nov 20)
       return (
         head("Map") +
-        `<div class="arm-body"><ul class="arm-list">${row('data-pick="map" data-v="random"', "Random", "", o.mapPick === "random", dis)}${
+        `<div class="arm-body"><ul class="arm-list">${row('data-pick="map" data-v="random"', "Random", "", o.mapPick === "random", pickDis)}${
           o.mode === "sandbox"
             ? Object.keys(SB_WORLDS)
                 .map((k) =>
@@ -341,18 +344,18 @@ export function openGameSettings(R, start = null) {
                     SB_WORLD_NAMES[k],
                     "",
                     !o.mapPick && o.sbMap === k,
-                    dis,
+                    pickDis,
                   ),
                 )
                 .join("") // (Sandbox: the maps with a world of their own, walked whole: sandboxrules.js)
-            : `${row('data-map="cabin"', "Duck Cabin", "", isWorldMap(o.map) && o.l4map !== "downpour", dis)}${row('data-map="downpour"', "Downpour", "", modeOf(o.mode).l4map && o.l4map === "downpour", dis)}`
+            : `${row('data-map="cabin"', "Duck Cabin", "", isWorldMap(o.map) && o.l4map !== "downpour", pickDis)}${row('data-map="downpour"', "Downpour", "", modeOf(o.mode).l4map && o.l4map === "downpour", pickDis)}`
         }${LINE}${MAPS.map(([id, name]) =>
           row(
             `data-map="${id}"`,
             name,
             "",
             !o.mapPick && picked(o) === id,
-            dis,
+            boardDis,
           ),
         ).join("")}${LINE}${MAP_VARIANTS.map(([id, name]) =>
           row(
@@ -360,22 +363,20 @@ export function openGameSettings(R, start = null) {
             name,
             "",
             !o.mapPick && picked(o) === id,
-            dis,
+            boardDis,
           ),
         ).join("")}${
-          o.mode === "sandbox"
-            ? ""
-            : `${umapIds(s).length ? LINE : ""}${umapIds(s)
-                .map((id) =>
-                  row(
-                    `data-map="${id}"`,
-                    mapName(id),
-                    "",
-                    !o.mapPick && o.map === id,
-                    dis,
-                  ),
-                )
-                .join("")}` // (the maps the host made and brought in: umaps.js)
+          `${umapIds(s).length ? LINE : ""}${umapIds(s)
+            .map((id) =>
+              row(
+                `data-map="${id}"`,
+                mapName(id),
+                "",
+                !o.mapPick && o.map === id,
+                dis,
+              ),
+            )
+            .join("")}` // (the maps the host made and brought in: umaps.js)
         }${host() ? `${LINE}${row("data-umaps", "My maps…")}` : ""}</ul>${showsCollage(s) ? `<h3 class="gs-sub">${esc(mapName("collage"))}</h3>${tiles(s, GREY)}` : ""}${showsZoom(s) ? `<h3 class="gs-sub">${esc(mapName("euclid"))}</h3>${tiles(s, ZOOM)}` : ""}</div>`
       );
     }

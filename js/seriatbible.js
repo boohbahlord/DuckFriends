@@ -1,18 +1,26 @@
 /* The Seriat bible in the game (the owner's, Nov 19 23:17Z: "a pixelated version of the Seriat bible that looks like the
    pages of a Word document, not separated into pages, in a window ... it pops up even above the Seriat window"). It
-   shows notes/seriat-bible.md as it stands, as one long page; the site publishes that file as it is. */
+   shows docs/seriat.md, the players' reference, written like documentation (the owner's, Nov 22 13:23Z: "Make it read
+   like documentation or wikipedia as well, not this bullshit owner talk"). notes/seriat-bible.md stays our own notes
+   and is never shown; tools/check/seriatdoc.cjs keeps notes talk out of the reference. */
 import { esc, openWindow, foldHeads } from "./ui.js";
 import { LANG } from "./langname.js";
 
-const URL_ = "notes/seriat-bible.md";
+const URL_ = "docs/seriat.md";
 let text = null;
 const folded = new Set(); // (the headings I folded: they stay folded the next time it opens)
 
-/* inline: `code`, **bold**; everything else is plain */
+/* inline: `code`, **bold**; everything else is plain. Code is kept as written, so a `**` inside it is two asterisks,
+   never bold */
 const inline = (s) =>
   esc(s)
-    .replace(/`([^`]+)`/g, "<code>$1</code>")
-    .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+    .split(/(`[^`]+`)/)
+    .map((p, i) =>
+      i % 2
+        ? `<code>${p.slice(1, -1)}</code>`
+        : p.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>"),
+    )
+    .join("");
 
 /* the few kinds of line the bible uses: headings, lists (numbered too), tables, fenced code, paragraphs */
 export function bibleHTML(md) {

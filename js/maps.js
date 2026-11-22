@@ -1036,6 +1036,9 @@ export function mountPreview(box, id) {
   };
 }
 
+/* what a mounted map shows: a new one is mounted when it changes (Sandbox's map, changed mid-game: actroom.js) */
+export const mapKey = (s) =>
+  [s.options.map, s.options.mapZoom, s.options.mapGrey].join();
 export function mountMap(layer, s) {
   const map = s.options.map || "board",
     cur = { cols: null };
@@ -1109,6 +1112,7 @@ export function mountMap(layer, s) {
         );
       if (scene.shower) scene.shower();
     },
+    key: mapKey(s),
     destroy() {
       if (ro) ro.disconnect();
       scene.destroy();

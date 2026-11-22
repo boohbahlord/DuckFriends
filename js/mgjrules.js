@@ -1229,7 +1229,7 @@ export function mgjZombieHit(s, near, w, now, by, sh = null, take = null) {
           near(o.x, o.y, o.hb || 1, z.sb ? npcBody(s, o, duOf(s, by)) : null),
         )
         .get(o),
-  ); // (o.hb: a Seriat file's hitbox, sbnumberat.js; near takes it as how big it is. Sandbox's: its body, only where its picture shows, sbbody.js)
+  ); // (o.hb: a Seriat file's hitbox, sbseriat.js; near takes it as how big it is. Sandbox's: its body, only where its picture shows, sbbody.js)
   if (!got.length) return false;
   if (sh)
     got.sort(

@@ -1,7 +1,7 @@
 /* I want Seriat's decimal ranges to go through every tenth (the owner, Nov 21: "if a decimal value is put in range for
    seriat, it goes through every possible tenth range now ... 1.5:2.4 ... This range means it could be 1.5 1.6 1.7 1.8 1.9
    2 2.1 2.2 2.3 or 2.4"). Each value is read for a box that takes tenths and picked many times, as a plain value
-   (js/numerat.js) and inside the language (js/numberat.js), and must give exactly every tenth between its ends. */
+   (js/seriatbox.js) and inside the language (js/seriat.js), and must give exactly every tenth between its ends. */
 const path = require("path"),
   { pathToFileURL } = require("url");
 const { fail } = require("./lib.cjs");
@@ -23,7 +23,7 @@ const CASES = [
 ];
 (async () => {
   const N = await import(
-    pathToFileURL(path.resolve(__dirname, "../../js/numerat.js")).href
+    pathToFileURL(path.resolve(__dirname, "../../js/seriatbox.js")).href
   );
   const box = { kind: "tenth", min: 0, max: 1000 };
   let seed = 7;

@@ -238,7 +238,7 @@ const FN1 = {
   up: (v) => Math.ceil(v - 1e-9),
   down: (v) => Math.floor(v + 1e-9),
 };
-/* an NPC's stats, read and set by name (numberatrun.js): "z hp" is NPC z's HP */
+/* an NPC's stats, read and set by name (seriatrun.js): "z hp" is NPC z's HP */
 export const NB_STATS = ["hp", "speed", "damage", "hitbox", "regen"]; // (regen: HP back each second, written "regen hp" as the owner named it (lex), "regen" alone too: sbgroups.js)
 /* a zone's, read and set the same way inside a zone's file, or from another file by its name: zone 'Pit' steps (the
    owner's yes, Nov 20 03:10Z). steps: how many steps its squares took; squares: how many work at once; size: a square's
@@ -1290,7 +1290,7 @@ export function compileFile(text) {
   return { n: lines.length + errs.length + ruleOnly, errs, lines };
 }
 
-/* the pieces the statements (numberatrun.js) build on */
+/* the pieces the statements (seriatrun.js) build on */
 export {
   build,
   lex,
