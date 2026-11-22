@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v254",
+    version: 254,
+    date: "Nov 22, 2026",
+    title: "Heavy cars",
+    news: [
+      "For Dead Ducks Arcade: on Downpour, a grenade's blast shoves the cars on the road a little, and a hard melee hit nudges one too; they're heavy (about 15 ducks).",
+      "Uploaded pictures are hit just like a duck now, wherever their picture shows or not.",
+      "Smoother play on slower computers: two hidden-button rules that searched the whole page every frame now look only where those buttons sit, and speech bubbles are measured once at the start of a frame.",
+      "Behind the scenes: Hangout's prop placing is split into smaller files. Nothing plays differently.",
+    ],
+  },
+  {
     id: "v253",
     version: 253,
     date: "Nov 22, 2026",
