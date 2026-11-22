@@ -260,7 +260,7 @@ umaps.js 371 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on
-updates.js 3396 Updates
+updates.js 3405 Updates
 vdd.js 190 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival
@@ -271,8 +271,8 @@ weaponuse.js 104 using a weapon: one
 who.js 3 who this player is
 wounds.js 485 the wounds a hit
 zombiepath.js 187 the zombies' way to
-zombieroofs.js 322 the zombies' walk over
-zombies.js 1477 the zombies: one module
+zombieroofs.js 326 the zombies' walk over
+zombies.js 1478 the zombies: one module
 
 ## js/hangout/
 activities.js 23 every Hangout activity, so
