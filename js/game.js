@@ -101,6 +101,9 @@ import {
   myDuck,
   onWheel,
   padAttack,
+  padDraw,
+  drawHold,
+  drawLet,
   padWeapon,
   playDuck,
   reload,
@@ -318,6 +321,7 @@ import {
   isWild,
 } from "./l4ddrules.js";
 import { GRENADE as NADE_KEY } from "./kitslots.js";
+import { draws } from "./bowdraw.js";
 
 import { AUTO, MGJ_MELEE, armOfShot } from "./guns.js";
 import { armedView, heatShake } from "./heat.js";
@@ -595,10 +599,8 @@ let shown = ""; // which phase view is up (phase|round|question)
 export const keys = new Set();
 export let me = null; // my duck here: { x, y, j (jump start), face }
 let target = null; // where a click or a tap asked my duck to walk: { x, y, sprint, mark }
-/* the chain gun's recoil (the owner's, Nov 16): while I fire it, my duck is pushed slowly back, away from the aim, at
-   RECOIL.K of my walking speed; the keys add their own way to it, so walking into the aim holds against it (a vector
-   sum, as real physics). Each of my shots keeps it on for RECOIL.MS (it fires every 67 ms). recoil = { until, dx, dy:
-   the way it pushes, in board or world units } */
+/* the chain gun's recoil (the owner's, Nov 16): firing pushes my duck slowly back from the aim at RECOIL.K of my walk;
+   walking into the aim holds against it (a vector sum). Each shot keeps it on RECOIL.MS. recoil = { until, dx, dy } */
 export const RECOIL = { K: 0.35, MS: 140 };
 let recoil = null;
 export const setRecoil = (v) => {
@@ -2528,10 +2530,9 @@ function bodyAt(id, pos, now = clockNow()) {
     top: at.top - lift - (up + 0.45 * bigOf(R.state, id)) * geo.size, // (his hand higher on a bigger Justin)
   };
 }
-/* a phone (html.phone, pointer.js: not a tablet, not a touchscreen laptop) aims with the way my duck walks, as if it were
-   the right stick, until the right stick is held (keyAim) and again once it's let go. walkScr is the way I last moved
-   on the screen: it stays when I stop, and a duck that never walked aims the way it faces. The owner, Nov 17: this is
-   so in every mode with weapons or items, and "like you would with aiming with a mouse" when the stick is used */
+/* a phone (html.phone, pointer.js) aims the way my duck walks (walkScr, kept when I stop; never walked: the way it
+   faces) until the right stick is held (keyAim). The owner, Nov 17: every mode with weapons or items, and "like you would
+   with aiming with a mouse" when the stick is used */
 const phoneAim = () => document.documentElement.classList.contains("phone");
 let walkScr = null, // [dx, dy] on the screen
   walkLast = null; // my place the last frame: [x, y]
@@ -3766,8 +3767,9 @@ function keydown(e) {
   if (e.code === "KeyV" && !e.repeat && onBoardPhase()) {
     e.preventDefault();
     if (isMgj(R.state))
-      fire(hand.held || MGJ_MELEE); // (out of HP: fire() makes it the down pistol)
-    else if (heldNow()) fire(heldNow());
+      drawHold(hand.held) || fire(hand.held || MGJ_MELEE); // (out of HP: fire() makes it the down pistol; the bow: V held draws it)
+    else if (heldNow())
+      drawHold(heldNow()) || fire(heldNow()); // (the bow: V held draws it)
     else if (hand.lastKey >= 0) useKey(hand.lastKey, false);
     else if (bar) bar.show();
     return;
@@ -3813,6 +3815,7 @@ const keyup = (e) => {
   keys.delete(e.code);
   if (e.key === "Tab" && pm) pm.keyup(e);
   if (e.code === "KeyQ") peek(false);
+  if (e.code === "KeyV") drawLet(); // (the bow drawn with V: let go, it shoots)
 };
 const blur = () => {
   keys.clear(); // (also when the tab is hidden: visibilitychange below)
@@ -4092,10 +4095,8 @@ function heldClick(e) {
     aimHere(e)
   );
 }
-/* a held trigger (autoPress, l4Press): it fires again and again until the left button is up. Every way a press can end
-   lets go of it: the button coming up anywhere, the press cancelled or its capture lost, the window or the tab losing
-   focus, the right-click menu, and any mouse event that says the left button isn't down any more (one missed button-up
-   kept it firing the whole magazine and on: the owner's, Nov 17 13:07Z). Leaving the screen lets go too */
+/* a held trigger (autoPress, l4Press) fires until the left button is up; anything that ends a press lets go (button up,
+   cancel, lost capture, blur, the right-click menu, a move without the button: owner Nov 17 13:07Z), and leaving too */
 let trigger = null;
 const TRIGGER_END = [
   "pointerup",
@@ -4130,11 +4131,9 @@ function holdTrigger(shoot) {
   };
   go();
 }
-/* the SMG, the AK-47, the LMG and the chain gun kept out (outside Quacky Zombies; in Mad God Justin, picked up): the left button
-   down fires, and again as soon as it can while the button stays down. In Mad God Justin every weapon does, as in Dead
-   Ducks Arcade (l4Press): the owner's, Nov 17 19:11Z, "WHY IS IT THAT WHEN I HOLD DOWN TO FIRE THAT THE GUN DOESNT FIRE
-   ... MAKE THE WEAPONS BEHAVE AS THEY DO IN THE ZOMBIE GAME MODE eEVEN FOR THE MAD GOD JUSTIN GAME MODE". The Chair and the
-   Zebra cake, thrown things, still go once a click */
+/* the full-auto guns kept out (outside Quacky Zombies), and every Mad God Justin weapon (owner Nov 17 19:11Z: "MAKE THE
+   WEAPONS BEHAVE AS THEY DO IN THE ZOMBIE GAME MODE"): fires while the left button is down; the Chair and the Zebra
+   cake once a click; the bow draws while held (gamehand.js drawHold) */
 const repeats = (w) =>
   AUTO.includes(w) ||
   (!!w && !!R && isMgj(R.state) && !["zebra", "chair"].includes(w));
@@ -4144,23 +4143,23 @@ function autoPress(e) {
     !R ||
     isL4dd(R.state) ||
     e.pointerType !== "mouse" ||
-    !repeats(hand.held) ||
+    !(repeats(hand.held) || draws(hand.held)) ||
     !heldClick(e)
   )
     return;
   autoDid = true;
+  if (drawHold(hand.held, true)) return; // (the bow: drawn while held, gamehand.js)
   holdTrigger(() => {
     if (!R || !repeats(hand.held) || !onBoardPhase()) return 0;
     fire(hand.held);
     return Math.max(60, coolFor(hand.held, R.state) / grCool(R.state, R.me)); // (Sandbox: a group's Cooldown speed)
   });
 }
-/* Quacky Zombies: the left mouse button down on the board uses the weapon in hand, and again as soon as it can while
-   the button stays down */
+/* Quacky Zombies: the left button down uses the weapon in hand, again as soon as it can while held (the bow: draws) */
 function l4Press(e) {
   if (!R || !isL4dd(R.state) || e.pointerType !== "mouse" || e.button !== 0)
     return;
-  if (!onBoardPhase() || !aimHere(e)) return;
+  if (!onBoardPhase() || !aimHere(e) || drawHold(heldNow(), true)) return; // (the bow: drawn while held, gamehand.js)
   holdTrigger(() => {
     if (!R || !isL4dd(R.state)) return 0;
     const w = heldNow();
@@ -4186,6 +4185,7 @@ register("game", {
   },
   leave() {
     letGo(); // (a held trigger never fires on into the next screen)
+    drawLet(false); // (nor a drawn bow)
     if (off) off();
     off = null;
     weaponsOff();
@@ -4382,6 +4382,7 @@ register("game", {
         setKeyAim(dx == null ? null : [dx, dy]);
       }, // (let go: the weapon goes back to the way the duck faces; in Quacky Zombies the flashlight to the nearest zombie)
       attack: padAttack,
+      draw: padDraw,
       jump: () => jump(),
       reloadOn: canReloadNow,
       reload: () => reload(),
@@ -4458,7 +4459,7 @@ register("game", {
         return;
       } // (Quacky Zombies: the mouse button fires as it goes down, l4Down below; a tap walks)
       if (heldClick(e)) {
-        if (autoDid && repeats(hand.held)) autoDid = false;
+        if (autoDid) autoDid = false;
         else fire(hand.held); // (a gun that fires while the mouse button is down already did: autoPress)
         return;
       } // a weapon kept out: a left click uses it

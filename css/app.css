@@ -15721,6 +15721,24 @@ html.phone-land .l4-end {
     background: #5a0b10;
   }
 }
+/* the bow drawn (meters.js drawBar): the white bar fills from light red to dark red as it's drawn, and once fully
+   drawn flashes a little white, as losing HP does */
+.l4-cool.draw i {
+  background: color-mix(in srgb, #ff9a9a, #8e0b14 calc(var(--cl, 0) * 100%));
+}
+.l4-cool.draw.full i {
+  animation: l4-drawn 0.45s steps(1) 1;
+}
+@keyframes l4-drawn {
+  0%,
+  44% {
+    background: #fff;
+  }
+  22%,
+  66% {
+    background: #8e0b14;
+  }
+}
 /* the ammo of what's in my hand, yellow, just under the white bar (meters.js ammoBar, the owner's Nov 17 12:45Z): it
    empties a step a shot; empty, black with a slow dark grey blink; reloading, it blinks white; nothing left to reload,
    black */

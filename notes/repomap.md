@@ -3,7 +3,7 @@ file lines job
 
 ## js/
 account.js 397 the Google account: the
-actplay.js 951 a game's actions
+actplay.js 966 a game's actions
 actroom.js 744 the room's actions
 actsb.js 156 Sandbox's windows, saves and
 allies.js 383 Survival: the friendly squad
@@ -19,11 +19,12 @@ beaks.js 138 beaks
 below.js 88 darker below
 blast.js 67 explosions: one module
 bloodpool.js 50 a pool of blood:
-boardfire.js 1331 the board's weapons: hits,
-boardjustin.js 663 Justin on the boards
+boardfire.js 1340 the board's weapons: hits,
+boardjustin.js 669 Justin on the boards
 botduck.js 90 a computer's duck: a
 botlines.js 188 What the computers write
 bots.js 1426 computers
+bowdraw.js 46 the bow, drawn to
 brackets.js 459 Bicker Brackets: what the
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
@@ -63,13 +64,13 @@ friends.js 236 friends
 front.js 151 the front page
 fx.js 1200 the effects, drawn as
 fxmotion.js 234 how a held weapon
-game.js 4736 the game screen
+game.js 4737 the game screen
 gameact.js 546 the action window and
 gameannounce.js 212 The cloud's words and
 gameboard.js 589 the board: each mode's
 gamedefaults.js 71 the game's own numbers,
 gamefx.js 876 the silly commands and
-gamehand.js 594 the hand: the number-key
+gamehand.js 620 the hand: the number-key
 gameplace.js 738 where things are put
 gameready.js 47 
 gameround.js 567 round
@@ -109,7 +110,7 @@ jumps.js 48 the jump counter
 justinmoves.js 45 Justin's moves on the
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which
-l4dd.js 3337 Quacky Zombies on every
+l4dd.js 3338 Quacky Zombies on every
 l4ddangel.js 151 Dead Ducks Arcade's Angel
 l4ddangelui.js 204 Dead Ducks Arcade's Angel
 l4ddart.js 623 Quacky Zombies' pictures
@@ -121,7 +122,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power
 l4ddpowerui.js 278 Dead Ducks Arcade's power
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4973 the rules of Quacky
+l4ddrules.js 4986 the rules of Quacky
 l4ddsfx.js 545 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online:
 langname.js 5 the name of Sandbox's
@@ -140,11 +141,11 @@ manual.js 203 the command line's manual:
 maps.js 1119 maps: the world behind
 merchantlines.js 81 what the merchants say
 merchants.js 376 the merchants
-meters.js 114 the thin bars under
+meters.js 138 the thin bars under
 mgj.js 219 Mad God Justin: what
 mgjart.js 96 Mad God Justin's new
 mgjbrain.js 613 Mad God Justin's brain,
-mgjpicks.js 500 Mad God Justin's pickups:
+mgjpicks.js 507 Mad God Justin's pickups:
 mgjrules.js 1263 
 modes.js 445 the game modes
 music.js 590 the music: our own
@@ -168,7 +169,7 @@ online.js 975 online rooms
 outfits.js 1141 outfits
 outlines.js 420 the outlines
 perf.js 92 the frame-rate readout
-phonepad.js 142 phones: the aim-and-attack stick
+phonepad.js 144 phones: the aim-and-attack stick
 picrop.js 268 cropping a picture: every
 pixel.js 767 the pixel look
 pixelpalette.js 192 the pixel look's colors
@@ -269,7 +270,7 @@ umaps.js 371 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on
-updates.js 3483 Updates
+updates.js 3492 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival
