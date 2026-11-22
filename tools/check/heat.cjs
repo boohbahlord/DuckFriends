@@ -2,11 +2,14 @@
    /mnt/project-files/adam/calibers.md, Spread):
    1. the pistol's first shot goes exactly where it's aimed; five at its top rate (a second's worth) bring it to full
       heat, each adding 1 over its fire rate;
-   2. a shot flies off its aim by up to its widest cone times the heat it found (the .45's kick 0.5: 6 degrees at full);
+   2. a shot flies off its aim by up to its widest cone times the heat it found (15 degrees a point of its recoil score,
+      the owner's pick Nov 22 13:02Z: the M1911's 0.49 is 7.35 degrees at full);
    3. half a second after it stops (past its wait between shots) it is cool again: that shot goes where it's aimed;
    4. the dagger and the grenade never spread and keep no heat; the bow spreads but doesn't shake;
    5. a hot gun kicks and shakes up to 30% more;
-   6. the crosshair has its ticks at 5 heat levels, each its own picture.
+   6. the crosshair has its ticks at 5 heat levels, each its own picture;
+   7. every gun's recoil score and word as in the table (K14 + K18, /mnt/project-files/solomon/k14-recoil-scores.md),
+      "none" for what has no recoil; the grenade launcher has its score but never spreads.
    Run: node tools/check/run.mjs heat */
 const C = require("./lib.cjs");
 const { chromium } = require("playwright");
@@ -40,13 +43,21 @@ const { chromium } = require("playwright");
     for (const ms of [0, 400])
       out.bow = deg(H.spreadAim(t, "a", "bow", [1, 0], ms));
     out.bowShake = H.heatShake(t, "a", "bow", 400);
+    const G = await import("./js/guns.js");
+    out.scores = Object.fromEntries(
+      Object.keys(G.ARMS)
+        .filter((w) => ["ranged", "grenade"].includes(G.ARMS[w].kind))
+        .map((w) => [w, [G.recoilOf(w), G.recoilWord(G.recoilOf(w))]]),
+    );
+    out.gl = H.spreadAim(t, "a", "glauncher", [1, 0], 0);
+    out.gl2 = H.spreadAim(t, "a", "glauncher", [1, 0], 100);
     const css = getComputedStyle(document.documentElement);
     out.ticks = [0, 1, 2, 3, 4].map((n) =>
       css.getPropertyValue("--cur-tick" + n),
     );
     return out;
   });
-  const want = [0, 0.2, 1.2, 0.4, 2.4, 0.6, 3.6, 0.8, 4.8, 1, 6, 1]; // (each shot: its angle off, then the heat after it)
+  const want = [0, 0.2, 1.47, 0.4, 2.94, 0.6, 4.41, 0.8, 5.88, 1, 7.35, 1]; // (each shot: its angle off, then the heat after it)
   if (JSON.stringify(got.shots) !== JSON.stringify(want))
     C.fail("the pistol's heat and spread: " + JSON.stringify(got.shots));
   if (got.shake[0] !== 1.3 || got.shake[1] !== 1)
@@ -57,6 +68,31 @@ const { chromium } = require("playwright");
     C.fail("the dagger or grenade spread: " + JSON.stringify(got));
   if (!(got.bow > 0) || got.bowShake !== 1)
     C.fail("the bow: spread " + got.bow + ", shake " + got.bowShake);
+  const table = {
+    handgun: [0.49, "heavy"],
+    bow: [0, "none"],
+    dagger: [0, "none"],
+    shotgun: [0.47, "heavy"],
+    grenade: [0, "none"],
+    sniper: [0.71, "a lot"],
+    smg: [0.32, "medium"],
+    tommy: [0.35, "medium"],
+    ump: [0.34, "medium"],
+    ak: [0.32, "medium"],
+    chaingun: [0.37, "medium"],
+    revolver: [0.5, "heavy"],
+    glauncher: [0.45, "heavy"],
+    lmg: [0.15, "small"],
+    dbarrel: [0.5, "heavy"],
+    flamer: [0, "none"],
+    burst: [0.17, "small"],
+    laser: [0, "none"],
+  };
+  for (const [w, v] of Object.entries(table))
+    if (JSON.stringify(got.scores[w]) !== JSON.stringify(v))
+      C.fail(w + "'s recoil: " + JSON.stringify(got.scores[w]) + ", want " + v);
+  if (JSON.stringify([got.gl, got.gl2]) !== "[[1,0],[1,0]]")
+    C.fail("the grenade launcher spread: " + JSON.stringify([got.gl, got.gl2]));
   if (got.ticks.some((v) => !v) || new Set(got.ticks).size !== 5)
     C.fail("the crosshair's 5 heat levels");
   C.noErrors(errs);

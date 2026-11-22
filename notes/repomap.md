@@ -89,9 +89,9 @@ gunmen.js 110 the gunmen's looks
 gunmenrules.js 1158 Survival: the gunmen
 gunmenview.js 135 Survival: the gunmen on
 gunparts.js 15 the pieces every weapon's
-guns.js 667 every weapon's numbers: one
+guns.js 715 every weapon's numbers: one
 hats.js 1096 hats
-heat.js 72 a gun's heat: the
+heat.js 74 a gun's heat: the
 heights.js 82 a shot's height, Doom's
 helppages.js 1498 the command line's Help
 hideui.js 30 hide ui
@@ -116,7 +116,7 @@ l4ddangelui.js 204 Dead Ducks Arcade's Angel
 l4ddart.js 623 Quacky Zombies' pictures
 l4ddbar.js 332 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell
-l4ddcatalog.js 233 Quacky Zombies: the Butler's
+l4ddcatalog.js 234 Quacky Zombies: the Butler's
 l4dddrops.js 63 Quacky Zombies' drops, drawn
 l4ddloot.js 41 Dead Ducks Arcade: what
 l4ddmap.js 253 Quacky Zombies' minimap
@@ -271,7 +271,7 @@ umaps.js 371 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on
-updates.js 3532 Updates
+updates.js 3541 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival
