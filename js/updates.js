@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v256",
+    version: 256,
+    date: "Nov 22, 2026",
+    title: "Darker below, smoother HP",
+    news: [
+      "For Dead Ducks Arcade: standing up high, everything below you gets 20% darker for each level down (ground, props, ducks, zombies, their outlines), and falling steps it down level by level; a jump changes nothing. Arrows show a duck's level number when it stands on a whole level (the ground is 1).",
+      "HP now fills back smoothly instead of a block at a time, and heals give exactly what they say.",
+      "For Dead Ducks Arcade: on Downpour, the flood slows everyone the same: zombies, gunmen and allies wade it as you do, and nobody standing on a car above it is slowed.",
+      "Behind the scenes: chat, the board screen's shots and announcements, and the settings windows are split into smaller files, and some copied code is now shared (the settings windows' drawing, Lawyering's votes, the duck's hat and beak colors in chat, card games' shuffling, the end-of-round counts, the gunmen's legs). Nothing plays differently.",
+    ],
+  },
+  {
     id: "v255",
     version: 255,
     date: "Nov 22, 2026",

@@ -203,7 +203,7 @@ hpBreed("board", {
     const h = (s.php || {})[id];
     if (!h || now - h.t >= PHP_BACK) return;
     const max = sbHpOf(s, id) || PHP,
-      n = hundredths(max - hpHeal(max - h.n, amt, max)), // (a part-empty block fills first: hpmath.js)
+      n = hundredths(max - hpHeal(max - h.n, amt, max)), // (just what it is, a point or a part of one: hpmath.js)
       rest = { ...s.php };
     if (n > 0) rest[id] = { ...h, n };
     else delete rest[id];

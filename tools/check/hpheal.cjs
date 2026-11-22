@@ -1,13 +1,15 @@
 /* I want every mode's heal pinned (a Sandbox zone's or group's heal: hpmath.js hpHealOf), so moving HP never changes a
    number: the board's HP (Agree or Disagree), Mad God Justin's (it heals as the board does) and the zombie maps' (Dead
    Ducks Arcade). Each case sets a duck's HP, heals it and compares what's left, and whether the state changed, with
-   the numbers the game gave before HP was one module (Nov 21). Then my HP meter (game.js drawMeters, hpOf) a moment
-   into Mad God Justin, Dead Ducks Arcade and Sandbox's board. Run: node tools/check/run.mjs hpheal */
+   the numbers the game gave before HP was one module (Nov 21), but the first of each: since Nov 22 a heal adds just
+   what it is, a point or a part of one (B7, the owner's 06:24Z), so 1.5 HP left healed by 1 is 2.5, not 2. Then my
+   HP meter (game.js drawMeters, hpOf) a moment into Mad God Justin, Dead Ducks Arcade and Sandbox's board. Run: node
+   tools/check/run.mjs hpheal */
 const C = require("./lib.cjs");
 const { chromium } = require("playwright");
 const EXPECT = {
   aod: [
-    [true, 2],
+    [true, 1.5],
     [true, 1.2],
     [true, 1],
     [true, 0],
@@ -15,7 +17,7 @@ const EXPECT = {
     [false, 0],
   ],
   mgj: [
-    [true, 2],
+    [true, 1.5],
     [true, 1.2],
     [true, 1],
     [true, 0],
@@ -23,7 +25,7 @@ const EXPECT = {
     [false, 0],
   ],
   l4dd: [
-    [true, 2],
+    [true, 2.5],
     [true, 1.75],
     [true, 3],
     [true, 3],

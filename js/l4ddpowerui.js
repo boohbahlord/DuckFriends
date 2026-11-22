@@ -3,7 +3,7 @@
    of jerry cans at the middle left of the screen (canRow; with a very small line under it once it's full, gasFull),
    and the sounds: the power going out, coming on, a jerry can found, gas pumped, gas poured. l4dd.js calls these. */
 import { heightAt, seenFrom, sortY, layoutVariant } from "./hangout/layout.js";
-import { olAdd, olFloor, olPic } from "./outlines.js";
+import { olAdd, olAway, olPic } from "./outlines.js";
 import { svgDataURL } from "./svgurl.js";
 import { play } from "./sound.js";
 import {
@@ -194,7 +194,7 @@ export function pwDraw(ctx) {
     }
   }
   const me = Wd.at(ctx.me),
-    myFloor = me ? olFloor(me.x, me.y, me.z) : 0;
+    myFloor = me ? olAway(me.x, me.y, me.z).f : 0;
   for (const o of items.values()) {
     const z = (o.o.z || 0) + heightAt(o.o.x, o.o.y),
       q = Wd.toScreen(o.o.x, o.o.y, z),
@@ -246,7 +246,7 @@ function canOutline(Wd, o, q, z, sc, unseen, myFloor) {
           ? Math.round(o.o.key || o.o.py) + 12
           : Math.round(sortY(o.o.x, o.o.y, 0)) + 10,
       ),
-    floor: Math.sign(olFloor(o.o.x, o.o.y, z) - myFloor),
+    ...olAway(o.o.x, o.o.y, z, myFloor),
   });
 }
 /* E by the box: what it does now */
