@@ -110,7 +110,7 @@ export function bringMap(R, m) {
   });
 }
 /* the host's maps into the room, the newest first, as many as a room holds: so they're on the Map page and in the map
-   vote. Called when the host opens the Map page */
+   vote. Called when the host's lobby opens (lobby.js) and when the host opens the Map page */
 export async function bringMaps(R) {
   if (!host(R)) return;
   const all = await listMaps(),

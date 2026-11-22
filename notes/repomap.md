@@ -4,7 +4,7 @@ file lines job
 ## js/
 account.js 397 the Google account: the
 actplay.js 965 a game's actions
-actroom.js 744 the room's actions
+actroom.js 768 the room's actions
 actsb.js 156 Sandbox's windows, saves and
 allies.js 383 Survival: the friendly squad
 armpage.js 142 a page of Customize's
@@ -64,7 +64,7 @@ friends.js 236 friends
 front.js 151 the front page
 fx.js 1200 the effects, drawn as
 fxmotion.js 234 how a held weapon
-game.js 4748 the game screen
+game.js 4749 the game screen
 gameact.js 546 the action window and
 gameannounce.js 212 The cloud's words and
 gameboard.js 589 the board: each mode's
@@ -74,7 +74,7 @@ gamehand.js 620 the hand: the number-key
 gameplace.js 738 where things are put
 gameready.js 47 
 gameround.js 567 round
-gamesettings.js 755 Game Settings: the whole
+gamesettings.js 756 Game Settings: the whole
 gameshots.js 137 The bullets in the
 gamestats.js 191 what `stats` and `roundstats`
 gfx.js 8 Low graphics
@@ -133,13 +133,13 @@ later.js 66 the rest of the
 lawrules.js 360 the rules of Lawyering
 loading.js 403 the start: a slow
 loadlines.js 590 the lines under the
-lobby.js 613 the lobby, laid out
+lobby.js 614 the lobby, laid out
 lobbysettings.js 73 Lobby Settings
 looks.js 136 the room's duck-look settings
 looksrules.js 60 the duck-look settings' rules
 main.js 163 the start: settings on
 manual.js 203 the command line's manual:
-maps.js 1119 maps: the world behind
+maps.js 1123 maps: the world behind
 merchantlines.js 81 what the merchants say
 merchants.js 376 the merchants
 meters.js 138 the thin bars under
