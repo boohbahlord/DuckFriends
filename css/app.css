@@ -16428,30 +16428,23 @@ html.moving .l4-heat.hot::after {
     transform: rotate(-10deg) translateY(4%);
   }
 }
-.screen:has(.l4-shopping) .tpad,
-.screen:has(.l4-shopping) .cabin-end,
-body:has(.win-back, .dock-panel:not([hidden]), .pmenu:not([hidden])) .cabin-end,
-body:has(
-    .l4-shopping,
-    .win-back,
-    .dock-panel:not([hidden]),
-    .pmenu:not([hidden])
-  )
-  .l4-sr,
-body:has(
-    .l4-shopping,
-    .win-back,
-    .dock-panel:not([hidden]),
-    .pmenu:not([hidden])
-  )
-  .l4-srv,
-body:has(
-    .l4-shopping,
-    .win-back,
-    .dock-panel:not([hidden]),
-    .pmenu:not([hidden])
-  )
-  .l4-srb {
+/* (each :has() looks only where those pieces live: the shop on the world's board, a window on the page, a dock's panel
+   or the players list on the game's screen. Written as a search of the whole page, as they were, they were 59% of the
+   page's style matching in Downpour, every time the jump pad or Exit Downpour restyled: A2, Nov 22) */
+.screen:has(> .gmain > * > .l4-shopping) .tpad,
+.screen:has(> .gmain > * > .l4-shopping) .cabin-end,
+.screen:has(> .gmain > * > .l4-shopping) > .l4-sr,
+.screen:has(> .gmain > * > .l4-shopping) > .l4-srv,
+.screen:has(> .gmain > * > .l4-shopping) > .l4-srb,
+body:has(> .win-back) .screen > .cabin-end,
+body:has(> .win-back) .screen > .l4-sr,
+body:has(> .win-back) .screen > .l4-srv,
+body:has(> .win-back) .screen > .l4-srb,
+.screen:has(> * > .dock-panel:not([hidden]), > .pmenu:not([hidden]))
+  > .cabin-end,
+.screen:has(> * > .dock-panel:not([hidden]), > .pmenu:not([hidden])) > .l4-sr,
+.screen:has(> * > .dock-panel:not([hidden]), > .pmenu:not([hidden])) > .l4-srv,
+.screen:has(> * > .dock-panel:not([hidden]), > .pmenu:not([hidden])) > .l4-srb {
   visibility: hidden;
 } /* (on a phone the jump and aim buttons step aside for it: they sat over its last row; Exit Cabin too: it sat on its
      tabs) */

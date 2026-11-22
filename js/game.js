@@ -490,6 +490,7 @@ import {
   mgjSafe,
 } from "./mgjrules.js";
 
+import { sayRead, sayPlace } from "./saybubble.js";
 import { mgjStop } from "./mgjpicks.js";
 
 import { FLAME } from "./mgjart.js";
@@ -812,6 +813,31 @@ function drawMeters(s, board, layer, now) {
         !!list.length &&
         (allBoxes.some(under) || (isL4dd(s) && l4ZBoxes().some(under)));
     box.classList.toggle("see", see);
+  }
+}
+/* what the frame reads of the page's boxes, read before anything in it writes (a read after a write makes the page lay
+   itself out again in the middle of the frame: A2, Nov 22) */
+function readBoxes(now) {
+  const board = S && $(".board", S);
+  if (!board || !geo) return;
+  const layer = ducksLayer(board);
+  sayRead(S, board, layer, geo, now); // (the bubbles' measures, before this frame writes anything: saybubble.js)
+  /* the Round Lord and the question turn see-through over ducks; their boxes are measured a few times a second, not
+     every frame, and before this frame writes anything (a measure after its writes made the page lay itself out again) */
+  if (!overBoxes || overBoxes.g !== geo || now - overBoxes.at > 400) {
+    overBoxes = { g: geo, at: now, list: [] };
+    for (const o of board.querySelectorAll(
+      ".topover .lord, .topover .question, .topover .wq-sidecol",
+    )) {
+      const r = o.getBoundingClientRect();
+      overBoxes.list.push([
+        o,
+        r.left - geo.left,
+        r.top - geo.top,
+        r.width,
+        r.height,
+      ]);
+    }
   }
 }
 function drawDucks(now = clockNow()) {
@@ -1653,45 +1679,9 @@ function drawDucks(now = clockNow()) {
       d._saying = saying;
       d.classList.toggle("saying", saying);
     }
-    if (saying && d._sayAt !== tr + lift + say.n + Math.floor(now / 250)) {
-      // (the bubble stays inside the board: under the name tag at its top, slid in at its sides)
-      d._sayAt = tr + lift + say.n + Math.floor(now / 250);
-      const sb = d.querySelector(".gduck-say"),
-        bw = sb.offsetWidth,
-        bh = sb.offsetHeight,
-        lay = layer.getBoundingClientRect(),
-        br = ($(".cols", board) || board).getBoundingClientRect();
-      const cx = lay.left + at.left,
-        feet = lay.top + at.top - z,
-        top = feet - size * 1.08 - bh - 4; // (where the duck is going, not where its glide has got to)
-      const dx = Math.round(
-          Math.max(
-            br.left + 4 - (cx - bw / 2),
-            Math.min(0, br.right - 4 - (cx + bw / 2)),
-          ),
-        ),
-        l = cx + dx - bw / 2;
-      let below = top < br.top; // (over the board's top, or over what sits on it: the question's cloud and its writer)
-      for (const e of S.querySelectorAll(".topover > *")) {
-        const q = e.getBoundingClientRect();
-        if (
-          q.width &&
-          q.left < l + bw &&
-          q.right > l &&
-          q.top < top + bh &&
-          q.bottom > top
-        )
-          below = true;
-      }
-      if (d._below !== below) {
-        d._below = below;
-        d.classList.toggle("say-below", below);
-      }
-      if (d._sdx !== dx) {
-        d._sdx = dx;
-        sb.style.setProperty("--say-dx", dx + "px");
-      }
-    }
+    if (saying && d._sayAt !== tr + lift + say.n + Math.floor(now / 250))
+      if (sayPlace(d, at, z, size))
+        d._sayAt = tr + lift + say.n + Math.floor(now / 250); // (inside the board, under what sits on it: saybubble.js)
     /* free roam: a see-through bubble in the color of the column the duck stands on (its vote) */
     const bub =
       s.options.freeRoam &&
@@ -2290,23 +2280,6 @@ function drawDucks(now = clockNow()) {
   placeSnack(board, s, now);
   placeEdge(board, s, now);
   placeTells(board, s, now);
-  /* the Round Lord and the question turn see-through over ducks; their boxes are measured a few times a second, not
-     every frame (a measure after this frame's writes made the page lay itself out again, every frame) */
-  if (!overBoxes || overBoxes.g !== geo || now - overBoxes.at > 400) {
-    overBoxes = { g: geo, at: now, list: [] };
-    for (const o of board.querySelectorAll(
-      ".topover .lord, .topover .question, .topover .wq-sidecol",
-    )) {
-      const r = o.getBoundingClientRect();
-      overBoxes.list.push([
-        o,
-        r.left - geo.left,
-        r.top - geo.top,
-        r.width,
-        r.height,
-      ]);
-    }
-  }
   for (const [o, L, T, w, h] of overBoxes.list) {
     const hit = boxes.some(
       (b) => b.r > L && b.l < L + w && b.b > T && b.t < T + h,
@@ -2866,6 +2839,7 @@ function loop(t) {
   const now = clockNow();
   let t0 = stamp();
   if (!geo) measure();
+  readBoxes(now); // (before this frame writes anything)
   if (me && onBoardPhase()) step(dt, now);
   syncHidden(R.state, R.me); // (invisible players: nobody else sees them)
   took("my duck", t0);

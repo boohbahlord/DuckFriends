@@ -87,6 +87,7 @@ import {
 import { hangJoin, hangLeft } from "./hangout/rules.js";
 
 import { useMode } from "./hangout/layout.js";
+import { carsAt } from "./carpush.js";
 
 import {
   isMgj,
@@ -1333,6 +1334,7 @@ export function reduce(state, a, now = Date.now()) {
 function reduceStep(state, a, now) {
   survSet(state.options); // (Survival: survrules.js)
   useMode(baseMode(state.options), baseL4map(state.options)); // (Duck Cabin as the room's mode has it, or Dead Ducks Arcade's Downpour, or Sandbox on one of them: hangout/layout.js)
+  carsAt(state); // (Downpour's cars where the state has them: carpush.js)
   const s = clone(state),
     P = s.players,
     me = P[a.id],
