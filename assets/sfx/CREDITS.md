@@ -20,7 +20,6 @@ instruments (its license: LICENSES.md).
 | smg | Still North Media, The Free Firearm Sound Library (M45 9mm SMG) — https://opengameart.org/content/the-free-firearm-sound-library | CC0 1.0 |
 | ak | Still North Media, The Free Firearm Sound Library (AK-47 7.62) — https://opengameart.org/content/the-free-firearm-sound-library | CC0 1.0 |
 | lmg | Still North Media, The Free Firearm Sound Library (AR-15 5.56) — https://opengameart.org/content/the-free-firearm-sound-library | CC0 1.0 |
-| chaingun | Still North Media, The Free Firearm Sound Library (PPSh) — https://opengameart.org/content/the-free-firearm-sound-library | CC0 1.0 |
 | tommy | Still North Media, The Free Firearm Sound Library (M45 SMG and PPSh bursts, 1911 .45) — https://opengameart.org/content/the-free-firearm-sound-library | CC0 1.0 |
 | ump | Still North Media, The Free Firearm Sound Library (1911 .45, AK-47 burst) — https://opengameart.org/content/the-free-firearm-sound-library | CC0 1.0 |
 | sniper | Still North Media, The Free Firearm Sound Library (Tikka T3 .30-06) — https://opengameart.org/content/the-free-firearm-sound-library | CC0 1.0 |
@@ -35,7 +34,6 @@ instruments (its license: LICENSES.md).
 | reloadAk | SpringySpringo, Gun Reload Sounds; Kenney, RPG Audio (metalClick) — https://opengameart.org/content/gun-reload-sounds | CC0 1.0 |
 | reloadSniper | LFA, Equipment Clicks II; rubberduck, 80 CC0 RPG SFX (lock_02); Kenney, RPG Audio (metalLatch) — https://opengameart.org/content/equipment-clicks-ii | CC0 1.0 |
 | reloadLmg | LFA, Equipment Clicks III; Kenney, RPG Audio (beltHandle, metalClick) — https://opengameart.org/content/equipment-clicks-iii | CC0 1.0 |
-| reloadChaingun | LFA, Equipment Clicks III; Kenney, RPG Audio (beltHandle, metalLatch) — https://opengameart.org/content/equipment-clicks-iii | CC0 1.0 |
 | reloadShotgun | LFA, Equipment Clicks III — https://opengameart.org/content/equipment-clicks-iii | CC0 1.0 |
 | reloadGlauncher | LFA, Equipment Clicks III; Kenney, RPG Audio (metalLatch) — https://opengameart.org/content/equipment-clicks-iii | CC0 1.0 |
 | medkit | OwlishMedia, 202 More Sound Effects (Velcro_01, Cloth_03) — https://opengameart.org/content/202-more-sound-effects | CC0 1.0 |

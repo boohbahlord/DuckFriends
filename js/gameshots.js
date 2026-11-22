@@ -26,8 +26,8 @@ export const SHOT_EL = new Map(); // a shot's number → its element
    finds the hit at its next beat and my screen hears of it later, so the shot I draw at where it is now flew on past
    what it hit until then. Now, each frame, from where I last drew it to where it is now, I look for what stops it as I
    draw things (Dead Ducks Arcade: a wall or a zombie, l4dd.js shotStop; Mad God Justin: his chair or a controller, a
-   wave zombie, him, mgjrules.js mgjStop), every gun and thrown thing but the grenade (which lands) and the chain gun's
-   and Laser Rifle's lines; the sniper's goes through as many as it does there. It ends at that spot, its hit shown
+   wave zombie, him, mgjrules.js mgjStop), every gun and thrown thing but the grenade (which lands) and the Laser
+   Rifle's line; the sniper's goes through as many as it does there. It ends at that spot, its hit shown
    there at once (fx.js fxImpact). If the host then says it went on (a miss, a crit's slug, the sniper's: sh.ms, sh.hit,
    sh.zp, sh.zh), or still has it once it should long have heard (STOP_WAIT), it flies on from there. True: it's
    stopped, don't draw it */
@@ -39,7 +39,6 @@ export function stopped(s, sh, at, hang, now) {
     !r ||
     !((hang && isL4dd(s)) || mgj) ||
     sh.k === "grenade" ||
-    sh.k === "chain" ||
     sh.k === "laser"
   )
     return false;

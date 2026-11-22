@@ -76,12 +76,6 @@ const LOCKS = [
   { kind: "special", id: "lmg", later: true, name: nameOf("lmg", "board") },
   {
     kind: "special",
-    id: "chaingun",
-    later: true,
-    name: nameOf("chaingun", "board"),
-  },
-  {
-    kind: "special",
     id: "dbarrel",
     later: true,
     name: nameOf("dbarrel", "board"),

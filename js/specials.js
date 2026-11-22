@@ -370,15 +370,6 @@ export const SPECIALS = [
     tip: "Fires toward your mouse as long as the button is down. 75 shots, then a long reload (R reloads sooner). Shift and its key keeps it out: hold the left button. (Off when the host turns off the silly commands.)",
   },
   {
-    id: "chaingun",
-    name: nameOf("chaingun", "board"),
-    kind: "item",
-    get icon() {
-      return GUNS.chaingun.icon;
-    },
-    tip: "15 shots a second toward your mouse as long as the button is down. Each hits at once and takes all the HP of the first duck in its way. 300 shots, then it reloads (R reloads sooner). Shift and its key keeps it out: hold the left button. (Off when the host turns off the silly commands.)",
-  },
-  {
     id: "dbarrel",
     name: nameOf("dbarrel", "board"),
     kind: "item",

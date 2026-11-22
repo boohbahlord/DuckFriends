@@ -5,7 +5,7 @@
    below a line come
    Name, Card and Colors. Each opens a grid of small picture tiles, three to a row; Colors opens the list of what can be
    colored beside a grid of swatches. Every change shows at once, is kept, and goes to the room you are in. */
-import { ARROW, CHAIR, GRENADE, roundOf, TRACE, ZEBRA } from "./gunart.js";
+import { ARROW, CHAIR, GRENADE, roundOf, ZEBRA } from "./gunart.js";
 import { profile, save, NAME_OK, cleanName, cleanStats } from "./store.js";
 import {
   openWindow,
@@ -594,7 +594,7 @@ export function openCustomize(page = lastPage, opts = {}) {
             )
               inHand("");
             /* the handgun and Quacky Zombies' guns: in the duck's hand with a kick, and their bullets (three for the ones
-               that fire while the button is down) across the preview; the chain gun's yellow line, the launcher's grenade */
+               that fire while the button is down) across the preview; the launcher's grenade */
             if (id === "handgun") inHand(" spe-gun");
             if (BOARD_GUNS.includes(id)) {
               inHand(" spe-gun");
@@ -603,13 +603,7 @@ export function openCustomize(page = lastPage, opts = {}) {
                 ),
                 sx = (x + w.width * 0.95).toFixed(0),
                 sy = (y - w.width * 0.47).toFixed(0);
-              if (id === "chaingun")
-                els.push(
-                  el(
-                    `<div class="spe spe-cline" style="left:${sx}px;top:${sy}px;width:${far}px;--c:${TRACE.color};--g:${TRACE.glow}"></div>`,
-                  ),
-                );
-              else if (id === "glauncher")
+              if (id === "glauncher")
                 els.push(
                   el(
                     `<div class="spe spe-shot spe-lgren" style="left:${sx}px;top:${sy}px;--s:${w.width.toFixed(0)}px;--dx:${far}px">${GRENADE(colorsOf(duckNow(), "grenade"), false)}</div>`,
@@ -644,7 +638,6 @@ export function openCustomize(page = lastPage, opts = {}) {
               ump: sfx.ump,
               ak: sfx.ak,
               lmg: sfx.lmg,
-              chaingun: sfx.chaingun,
               glauncher: sfx.glauncher,
               dbarrel: sfx.dbarrel,
               burst: () =>
@@ -970,7 +963,6 @@ export function openCustomize(page = lastPage, opts = {}) {
               "grenade",
               "sniper",
               "lmg",
-              "chaingun",
               "flamer",
               "burst",
               "glauncher",

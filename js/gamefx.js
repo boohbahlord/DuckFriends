@@ -3,7 +3,6 @@
 import {
   JUSTIN2,
   R,
-  RECOIL,
   S,
   bigOf,
   bloodBurst,
@@ -15,14 +14,13 @@ import {
   me,
   neckSpray,
   podLift,
-  setRecoil,
   shows,
   toScreen,
   world,
 } from "./game.js";
 import { place } from "./gameboard.js";
 import { heard } from "./gamehand.js";
-import { CHAIR, TRACE } from "./gunart.js";
+import { CHAIR } from "./gunart.js";
 
 import { el, $ } from "./ui.js";
 
@@ -38,7 +36,7 @@ import { REACH } from "./blast.js";
 
 import { confettiRain, pressFX } from "./specials.js";
 
-import { heatUp, heldOn } from "./barrelheat.js";
+import { heldOn } from "./barrelheat.js";
 
 import { BEAM } from "./laserart.js";
 
@@ -441,7 +439,6 @@ export function playFx(f) {
         ump: sfx.ump,
         ak: sfx.ak,
         lmg: sfx.lmg,
-        chaingun: sfx.chaingun,
         glauncher: sfx.glauncher,
         ...NEW_GUN_SFX,
         zebra: sfx.cakeThrow,
@@ -528,7 +525,6 @@ export function playFx(f) {
           ump: sfx.ump,
           ak: sfx.ak,
           lmg: sfx.lmg,
-          chaingun: sfx.chaingun,
           glauncher: sfx.glauncher,
           ...NEW_GUN_SFX,
           shotgun: sfx.shotgun,
@@ -647,8 +643,7 @@ export function playFx(f) {
     // a downed duck got up (held 5 s by another: the owner's, in place of the medkit): a pop
     sfx.pop();
   } else if (f.kind === "l4line") {
-    /* the chain gun's shot: thin yellow lines popping in and out, all from the end of its barrel: one out to what it
-       hit, and one or two shorter ones pointing a little off to the sides */
+    /* the Laser Rifle's beam: one red line from the end of its barrel out to what it hit (laserart.js BEAM) */
     if (!geo.hang && !f.b) return;
     /* a shot that went on past the board's edge: place() only knows the board (it pins a spot off it to the edge, or
        to where ducks start), so I aim the line by a short step along it, still on the board, and it runs on that way
@@ -680,7 +675,7 @@ export function playFx(f) {
           )
         : world.place({ x: f.x1 / HW, y: f.y1 / HH }, f.hz || 0),
       up = size * 0.41 * (R.state ? bigOf(R.state, f.by) : 1), // (from its gun, at its duck's Size)
-      kind = f.w === "laser" ? "laser" : "chaingun", // (the Laser Rifle's beam: one red line, laserart.js BEAM)
+      kind = "laser",
       hd = fxl._held && fxl._held.get(f.by),
       gun = heldOn(hd, fxl) && hd.dataset.w === kind ? hd : null,
       [x0, y0, aim] = (gun && gun._tip) || [
@@ -699,58 +694,25 @@ export function playFx(f) {
       ang = aim;
       far = size * 0.8;
     }
-    const lz = kind === "laser",
-      [c, g, ms] = lz
-        ? [BEAM.color, BEAM.glow, BEAM.ms]
-        : [TRACE.color, TRACE.glow, TRACE.ms];
-    const line = (turn, long, wait) => {
-      const n = el(
-        `<div class="l4-line${lz ? " l4-beam" : ""}" style="left:${x0.toFixed(1)}px;top:${y0.toFixed(1)}px;width:${long.toFixed(1)}px;transform:rotate(${(ang + turn).toFixed(3)}rad);--c:${c};--g:${g};--core:${BEAM.core};--ms:${ms}ms;animation-delay:${wait.toFixed(0)}ms"></div>`,
-      );
-      fxl.append(n);
-      setTimeout(() => n.remove(), ms + wait + 40);
-    };
-    line(0, far, 0);
+    const n = el(
+      `<div class="l4-line l4-beam" style="left:${x0.toFixed(1)}px;top:${y0.toFixed(1)}px;width:${far.toFixed(1)}px;transform:rotate(${ang.toFixed(3)}rad);--c:${BEAM.color};--g:${BEAM.glow};--core:${BEAM.core};--ms:${BEAM.ms}ms;animation-delay:0ms"></div>`,
+    );
+    fxl.append(n);
+    setTimeout(() => n.remove(), BEAM.ms + 40);
     fxMuzzle(x0, y0, ang, kind);
     const hs = heatShake(s, f.by, kind, now); // (a hot gun kicks and shakes up to 30% more: heat.js)
     kick(f.by, kind, now, hs);
-    if (!lz) heatUp(f.by, "chaingun"); // (and the chain gun's; the Laser Rifle's heat is the room's: laserfx.js)
     vibrate(shooterBody(f.by), VIB[kind]);
-    if (f.by === R.me) {
-      shake(MUZZLE[kind].shake * hs);
-      if (!lz)
-        setRecoil({
-          until: performance.now() + RECOIL.MS,
-          dx: f.x0 - f.x1,
-          dy: f.y0 - f.y1,
-        });
+    if (f.by === R.me) shake(MUZZLE[kind].shake * hs);
+    /* the beam went through every zombie on its line: each bleeds as it loses its HP (fx.js fxHitAt), and smokes and
+       steams where it went through (fx.js fxSmolder; no recoil or shake from it: the owner's, Nov 17 17:41Z) */
+    for (const [hx, hy] of f.hit || []) {
+      const at = world.place({ x: hx / HW, y: hy / HH }, f.hz || 0);
+      fxImpact(at.left, at.top, "laser", Math.cos(ang), Math.sin(ang));
+      fxSmolder(at.left, at.top, size * 0.5);
     }
-    if (lz) {
-      /* the beam went through every zombie on its line: each bleeds as it loses its HP (fx.js fxHitAt), and smokes and
-         steams where it went through (fx.js fxSmolder; no recoil or shake from it: the owner's, Nov 17 17:41Z) */
-      for (const [hx, hy] of f.hit || []) {
-        const at = world.place({ x: hx / HW, y: hy / HH }, f.hz || 0);
-        fxImpact(at.left, at.top, "laser", Math.cos(ang), Math.sin(ang));
-        fxSmolder(at.left, at.top, size * 0.5);
-      }
-      /* the other modes: it stopped at a duck (hd), which smokes and steams the same */
-      if (f.hd && !past) fxSmolder(b.left, b.top, size * 0.5);
-      return;
-    }
-    if (!past)
-      fxImpact(
-        x0 + Math.cos(ang) * far,
-        y0 + up + Math.sin(ang) * far,
-        "chaingun",
-        Math.cos(ang),
-        Math.sin(ang),
-      ); // (its flash, smoke and kick; what it hit bleeds as a chain gun's: fx.js)
-    for (let i = Math.random() < 0.5 ? 1 : 2; i > 0; i--)
-      line(
-        (Math.random() - 0.5) * TRACE.spread,
-        far * (0.25 + Math.random() * 0.5),
-        Math.random() * 30,
-      );
+    /* the other modes: it stopped at a duck (hd), which smokes and steams the same */
+    if (f.hd && !past) fxSmolder(b.left, b.top, size * 0.5);
   } else if (f.kind === "l4hot") {
     /* a Laser Rifle overheated: its hiss, and its duck burnt and shaking a moment (no damage; the owner's, Nov 17:
        "the toasted charred look already existent"); laserfx.js shows the fire pixels and the steam off the gun */

@@ -141,7 +141,6 @@ import {
   GRENADE_PIN,
   GUNS,
   shotLook,
-  TRACE,
 } from "./gunart.js";
 
 import { isInvisible } from "./invisible.js";
@@ -599,13 +598,6 @@ let shown = ""; // which phase view is up (phase|round|question)
 export const keys = new Set();
 export let me = null; // my duck here: { x, y, j (jump start), face }
 let target = null; // where a click or a tap asked my duck to walk: { x, y, sprint, mark }
-/* the chain gun's recoil (the owner's, Nov 16): firing pushes my duck slowly back from the aim at RECOIL.K of my walk;
-   walking into the aim holds against it (a vector sum). Each shot keeps it on RECOIL.MS. recoil = { until, dx, dy } */
-export const RECOIL = { K: 0.35, MS: 140 };
-let recoil = null;
-export const setRecoil = (v) => {
-  recoil = v;
-}; // (the shots' effects set it from gamefx.js)
 let touchOff = null,
   touchedAt = 0,
   touchTold = false;
@@ -2251,9 +2243,8 @@ const SWUNG = {
   pan: [ARM_SWING.pan / ARM_SWING.hammer, 0.46],
 };
 /* the guns whose shots are lines out of their barrel's end (the l4line fx): where that end is in their drawing, and the
-   drawing's size (viewBox): the chain gun's and the Laser Rifle's */
+   drawing's size (viewBox): the Laser Rifle's */
 const TIPS = {
-  chaingun: [TRACE.tip, TRACE.box],
   laser: [LASER.tip, [80, 28]],
 };
 /* the pixel effects: their canvas over the board, where the world is (the camera), this frame (fx.js) */
@@ -2731,13 +2722,9 @@ export function step(dt, now) {
     }
   }
   moving = !!(ax || ay) && canWalk();
-  const push =
-    recoil && performance.now() < recoil.until && canWalk() && !geo.hang
-      ? recoil
-      : null; // (the chain gun pushing me back)
   /* a jump can end inside another duck (in the air they pass over each other); on the ground they ease apart */
   const other = canWalk() && bumps(me.x, me.y, now);
-  if (other && !moving && !push) {
+  if (other && !moving) {
     const a = place(me, 0, 1),
       dx = a.left - other.left || Math.random() - 0.5,
       dy = a.top - other.top || Math.random() - 0.5,
@@ -2748,7 +2735,7 @@ export function step(dt, now) {
     sendMove();
     return;
   }
-  if (!moving && !push) {
+  if (!moving) {
     sendMove();
     return;
   }
@@ -2797,15 +2784,6 @@ export function step(dt, now) {
   let nx = me.x + ax * sx * dt,
     ny = me.y + ay * sy * dt,
     q = "";
-  if (push) {
-    // the push as a walk the other way, RECOIL.K as fast, added to mine (sprinting doesn't make it stronger)
-    const run = sprinting ? SPEED.sprint : 1,
-      ux = push.dx / sx,
-      uy = push.dy / sy,
-      l = Math.hypot(ux, uy) || 1;
-    nx += ((ux / l) * sx * RECOIL.K * dt) / run;
-    ny += ((uy / l) * sy * RECOIL.K * dt) / run;
-  }
   const scr = (dx, dy) =>
     turned()
       ? dx > 0
@@ -2920,12 +2898,7 @@ function hangStep(dt, now) {
   }
   if (!canWalk()) ax = ay = 0;
   sprinting = sprintStep(sprinting && !!(ax || ay), dt, grStam(R.state, R.me)); // (sprint till the bar is empty, then a walk till it's full again: stamina.js, every mode, Dead Ducks Arcade's too; Sandbox: a group's Regen stamina)
-  const kx = ax; // (which way I face: my keys, not the push)
-  if (canWalk() && recoil && performance.now() < recoil.until) {
-    const l = Math.hypot(recoil.dx, recoil.dy) || 1;
-    ax += (recoil.dx / l) * RECOIL.K;
-    ay += (recoil.dy / l) * RECOIL.K;
-  } // (the chain gun pushing me back: the world sums it with my walk, never past my full speed)
+  const kx = ax;
   const ev = world.step(me, ax, ay, sprinting, dt, now);
   moving = ev.moved;
   for (let i = 0; i < ev.land; i++) countJump();

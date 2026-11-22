@@ -798,7 +798,6 @@ export const PRESS = [
   "ak",
   "revolver",
   "lmg",
-  "chaingun",
   "glauncher",
   "dbarrel",
   "flamer",
@@ -815,9 +814,8 @@ export const coolFor = (sp, s) =>
   (BOARD_GUNS.includes(sp) && ARMS[sp].cool) ||
   1500; // (Mad God Justin has its own for the knife and the bow; Quacky Zombies' guns keep theirs, l4ddrules.js ARMS)
 /* the handgun holds MAG shots, about five a second; after the last it reloads for RELOAD ms by itself (R reloads sooner).
-   The other guns' magazines are Quacky Zombies' (no ammo to run out of here: only the magazine and its reload); the chain
-   gun and the grenade launcher have none there, so here the chain gun reloads after its 300, and the launcher after 3
-   (my guesses). s.mag = { id: { n: shots fired, r: when its reload ends (0: not reloading) } } for the handgun, and
+   The other guns' magazines are Quacky Zombies' (no ammo to run out of here: only the magazine and its reload); the grenade
+   launcher has none there, so here it reloads after 3 (my guess). s.mag = { id: { n: shots fired, r: when its reload ends (0: not reloading) } } for the handgun, and
    { "id gun": … } for the others */
 export const MAG = HANDGUN.mag,
   RELOAD = ARM_RELOAD;

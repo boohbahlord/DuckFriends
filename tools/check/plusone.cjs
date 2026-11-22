@@ -24,7 +24,7 @@ const { url, fail, noErrors } = require("./lib.cjs");
       full: loadTo("handgun", 7, 7),
       over: loadTo("handgun", 8, 7),
       lmg: loadTo("lmg", 100, 100),
-      none: ["revolver", "dbarrel", "tommy", "chaingun", "bow"].map((w) =>
+      none: ["revolver", "dbarrel", "tommy", "laser", "bow"].map((w) =>
         loadTo(w, 7, 7),
       ),
       board: magOf({ mag: { a: { n: 0, r: 100, p: 1 } } }, "a", 200).n,

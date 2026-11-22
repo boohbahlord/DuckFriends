@@ -85,7 +85,7 @@ laserGun.tip = [76.6, 10.7];
 export const LASER = laserGun;
 export const LOOKS = { laser: laserGun };
 
-/* the beam: a red straight line with a glow, a little thicker than the chain gun's line, and a little longer on the
+/* the beam: a red straight line with a glow, a little thicker than a tracer's line (gunart.js TRACE), and a little longer on the
    screen (ms: in and out) */
 export const BEAM = {
   color: "#ff2b2b",

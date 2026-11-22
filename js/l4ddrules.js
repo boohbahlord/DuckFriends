@@ -356,7 +356,7 @@ const START = kitSlots(["knife", "handgun"]);
 export const SLOT_ODDS = { chair: 0.01, special: 0.05, item: 0.2 };
 export const SLOT_BAGS = {
   chair: ["chair"],
-  special: ["chaingun", "flamer", "laser"],
+  special: ["flamer", "laser"], // (no chain gun: the owner's, Nov 22 19:26Z, "REMOVE CHAIN GUN")
   item: ["medkit", "zebra", "adrenaline", "safekeep"],
 };
 export const WEAPON_BAGS = {
@@ -368,7 +368,7 @@ export const WEAPON_BAGS = {
   rifle: ["ak", "burst"],
   heavy: ["sniper", "glauncher", "lmg"],
 };
-/* Survival's bags: no Laser Rifle, chain gun or cast iron pan; the sniper is a special; twice the items ("They also have
+/* Survival's bags: no Laser Rifle or cast iron pan; the sniper is a special; twice the items ("They also have
    twice as many options for items") */
 const SURV_BAGS = {
   odds: { ...SLOT_ODDS, item: SLOT_ODDS.item * 2 },
@@ -429,7 +429,6 @@ const TINTS = {
   lmg: "blue",
   safekeep: "purple",
   sniper: "purple",
-  chaingun: "purple",
   flamer: "purple",
   laser: "purple",
   chair: "gold",
@@ -1972,7 +1971,7 @@ function bagRoll(bags0, has) {
 }
 /* the fireplace's Justin (the owner's, Nov 4): 1 spin in 100 lands on him (never while he's already here), and a
    moment later he climbs out of the fire and joins as another player, to help. He starts with 1,500 points of his own,
-   all his HP, the knife, the chain gun and the pistol; every rule is the same for him as for any duck (bots.js
+   all his HP, the knife, the LMG and the pistol; every rule is the same for him as for any duck (bots.js
    plays him). He goes when the game does: Play again, or back to the lobby.
    Off since Nov 16 (the owner's: "Justin will be removed from the zombie game because I do not want to force him into
    it"): the fireplace never lands on him, and the General Settings Justin switch doesn't bring him in */
@@ -2115,10 +2114,8 @@ function helperIn(s, by, now, wild = false, breed = "justin") {
   s.seat.push(id);
   bringBack(s, id, now, players(s).length, true);
   const kit = freshKit(s);
-  kit.sl = kitSlots(wild ? [] : ["knife", "handgun", "chaingun"]);
-  kit.am = wild
-    ? {}
-    : { chaingun: fullAmmo("chaingun"), handgun: fullAmmo("handgun") };
+  kit.sl = kitSlots(wild ? [] : ["knife", "handgun", "lmg"]);
+  kit.am = wild ? {} : { lmg: fullAmmo("lmg"), handgun: fullAmmo("handgun") };
   s.hang.l4a = { ...s.hang.l4a, [id]: kit };
   s.hang.l4pt = { ...s.hang.l4pt, [id]: wild ? 0 : HELPER.pts };
   if (wild) {
@@ -2131,9 +2128,9 @@ function helperIn(s, by, now, wild = false, breed = "justin") {
       ...s.pos[id],
       x: +(out[0] / W).toFixed(5),
       y: +(out[1] / H).toFixed(5),
-      w: "chaingun",
+      w: "lmg",
     };
-  else s.pos[id] = { ...s.pos[id], w: "chaingun" };
+  else s.pos[id] = { ...s.pos[id], w: "lmg" };
   addFx(s, { kind: "l4justin", by, who: [], t: now });
   say(s, "Justin joined.");
 }
@@ -2276,26 +2273,24 @@ export const MERCH = {
   SAY: 3500, // (ms a line shows: l4dd.js)
   LATE: 25000, // (ms: stuck on his way in, he's at his spot; running away this long, he's gone)
   /* Survival (the owner's, Nov 19 19:27Z and 19:47Z): each rest a 50% chance he has a gun, and shot or hurt he fights
-     back with it (a pistol, half the time a revolver; Dyson a chain gun; Lucifer never: he always runs); after the
+     back with it (a pistol, half the time a revolver; Dyson the LMG; Lucifer never: he always runs); after the
      fight he runs off half the time, else stays on the map, hiding */
   ARMED: 0.5,
   GUN_GAP: {
     handgun: [900, 1400],
     revolver: [1000, 1500],
-    chaingun: [500, 800],
+    lmg: [500, 800],
   }, // (ms between his shots: my guesses)
   FIGHT_MS: 8000, // (ms he fights back before he runs or hides)
   /* the owner's, Nov 19 19:27Z: "Merchants have unlimited ammo, even if they have to reload": his gun's own magazine
-     and reload (the chain gun has none of its own: a belt of 100, my guess) */
-  MAG: { chaingun: 100 },
-  RELOAD: { chaingun: 2500 },
+     and reload (ARMS'), refilled each time */
   /* the owner's, same message: "merchants that get in a gunfight with the soldiers will not try to run out of the map.
      They will try to protect their life and run away to another part of the map": a spot this far at least from every
      gunman, out of their sight if he can */
   FLEE_FAR: 700,
 };
-const merchMag = (g) => MERCH.MAG[g] || ARMS[g].mag || 6;
-const merchReload = (g) => MERCH.RELOAD[g] || ARMS[g].reload || 1500;
+const merchMag = (g) => ARMS[g].mag || 6;
+const merchReload = (g) => ARMS[g].reload || 1500;
 export const merchantOf = (s) => (s && s.hang && s.hang.l4m) || null;
 /* is he standing at his spot, selling? */
 export const selling = (s) => (merchantOf(s) || {}).st === "here";
@@ -2511,7 +2506,7 @@ function merchantCome(s, now, sure = false) {
       ? {
           gun:
             id === "dyson"
-              ? "chaingun"
+              ? "lmg"
               : Math.random() < 0.5
                 ? "revolver"
                 : "handgun",
@@ -2733,7 +2728,7 @@ function merchantShoots(s, zs, now) {
     return;
   }
   const rounds = h.mrl ? full : left,
-    burst = m.gun === "chaingun" ? Math.min(5, rounds) : 1,
+    burst = ARMS[m.gun].auto ? Math.min(5, rounds) : 1, // (Dyson's LMG fires in bursts of five)
     after = rounds - burst;
   setMh(s, {
     gx: now + rnd(...MERCH.GUN_GAP[m.gun]),
@@ -3124,7 +3119,6 @@ export function l4Use(s, a, now) {
   } else if (what === "adrenaline")
     s.hang.l4ad = { ...(s.hang.l4ad || {}), [id]: now + A.ms };
   else if (what === "zebra") cakeOut(s, id, p, dx, dy, now);
-  else if (what === "chaingun") trace(s, id, px, py, dx, dy, hz, now);
   else if (what === "laser") laser(s, id, m, px, py, dx, dy, hz, now);
   else if (what === "flamer") flame(s, id, m, px, py, dx, dy, hz, now);
   else {
@@ -3315,53 +3309,6 @@ function missed(s, by, w, z, now) {
     y: Math.round(z.y),
   });
   return true;
-}
-/* the chain gun: it hits at once, along the aim to the first zombie or wall (4 to 5 to that zombie); every screen draws
-   the thin yellow line (the l4line fx) */
-function trace(s, id, px, py, dx, dy, hz, now) {
-  const A = ARMS.chaingun,
-    zs = zombies(s),
-    T = now - s.hang.l4.t0,
-    most = angelOf(s, id, "chaingun") ? ANGEL.CHAIN : 1, // (Angelic: through two zombies, l4ddangel.js)
-    hits = [],
-    past = []; // (the ones it missed: it goes on past them)
-  let x = px,
-    y = py;
-  for (let d = 0; d < A.far; d += 12) {
-    const nx = x + dx * 12,
-      ny = y + dy * 12;
-    if (walled(nx, ny, hz)) break;
-    x = nx;
-    y = ny;
-    if (wildHurt(s, id, x, y, now, "chaingun", 26, 22, [px, py, hz])) break; // (Justin in its way: it hits him and stops there, the owner's, Nov 17 20:37Z: "YOU CAN USE A FUCKING CHAIN GUN AND HE WILL DODGE EVERY FUCKING BULLET")
-    const hit = zs.find(
-      (z) =>
-        z.st !== 3 &&
-        !hits.includes(z) &&
-        !past.includes(z) &&
-        Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1 &&
-        canShoot(z, px, py, hz),
-    );
-    if (hit) (missed(s, id, "chaingun", hit, now) ? past : hits).push(hit);
-    if (hits.length >= most) break;
-  }
-  for (const hit of hits)
-    if (
-      strike(s, hit, dmgOf(A), critRoll(s, id, "chaingun"), id, "chaingun", now)
-    )
-      die(hit, T);
-  if (hits.length) store(s, zs, true);
-  addFx(s, {
-    kind: "l4line",
-    by: id,
-    who: [],
-    t: now,
-    x0: Math.round(px + dx * 40),
-    y0: Math.round(py + dy * 40),
-    x1: Math.round(x),
-    y1: Math.round(y),
-    hz,
-  });
 }
 /* the Laser Rifle's beam: at once, along the aim to the first wall, through every zombie on its line, 1 to each and
    never a crit or a miss (Angelic: each has a 1 in 3 chance of taking 2); one it kills is left burnt (the charred look,
