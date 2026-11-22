@@ -46,7 +46,6 @@ const { url, fail, noErrors } = require("./lib.cjs");
         await p.evaluate(
           () =>
             document.body.dataset.screen === "game" &&
-            window._r.state.sb &&
             !document.querySelector(".veil[data-on]"),
         )
       )
@@ -58,9 +57,9 @@ const { url, fail, noErrors } = require("./lib.cjs");
     const id = await p.evaluate(async () => {
       const r = window._r,
         q = r.state.pos[r.me],
-        was = Object.keys(r.state.sb.pts || {});
+        was = Object.keys((r.state.sb && r.state.sb.pts) || {}); // (Duck Cabin's has none until the first point)
       r.send({ t: "sb", k: "add", kind: "loot", x: q.x, y: q.y, z: q.z || 0 });
-      const id = Object.keys(r.state.sb.pts || {}).find(
+      const id = Object.keys((r.state.sb && r.state.sb.pts) || {}).find(
         (k) => !was.includes(k),
       );
       if (id)
