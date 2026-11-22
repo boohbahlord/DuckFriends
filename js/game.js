@@ -554,6 +554,7 @@ import {
 } from "./sbnpcart.js";
 
 import { sbHpOf, sbWalkOf } from "./sbspawn.js";
+import { hpOf } from "./hpmath.js";
 
 import { angelic, angelGlow } from "./powerart.js";
 // (after l4ddart.js: Noah's note on an old import cycle)
@@ -1312,40 +1313,6 @@ function voteTint(s, board, pos) {
   return (tileSeen[c] ??= tileColor(board, c));
 }
 export let frameNo = 0;
-/* the HP of a duck, Justin or his double right now, as [hp, most], or null where it has none: Quacky Zombies' own,
-   Mad God Justin's (the players' and his), the board's Mad God Justin's, and the normal game's 3 (back after a while
-   without a hit) on the boards and in Duck Cabin */
-function hpFull(s, id, now) {
-  const seated = s.seat.includes(id) && s.players[id];
-  if (isL4dd(s))
-    return seated && inWorld(s)
-      ? [Math.max(0, l4Hp(s, id) || 0), maxHp(s, id)]
-      : null;
-  if (isMgj(s)) {
-    if (s.phase !== "boss" || !s.mgj) return null;
-    if (id === JUSTIN_ID) return [Math.max(0, s.mgj.hp), s.mgj.max];
-    if (!seated) return null;
-    const most = mgjPHp(s);
-    return [
-      s.players[id].dead
-        ? 0
-        : Math.max(0, most - ((s.mgj.lost || {})[id] || 0)),
-      most,
-    ];
-  }
-  if (id === JUSTIN_ID)
-    return !justinShown(s)
-      ? null
-      : boardMgj(s)
-        ? [
-            s.justin.down ? 0 : Math.max(0, s.justin.hp ?? BJ_HP),
-            s.justin.max || BJ_HP,
-          ]
-        : [s.justin.down ? 0 : 1, 1]; // (Justin on the board without Mad God Justin's HP: one hit takes his 1, as always)
-  if (!seated || !onBoardPhase()) return null;
-  const max = sbHpOf(s, id) || PHP; // (Sandbox: a spawn's or a respawn's HP for it)
-  return [s.players[id].dead ? 0 : Math.max(0, max - phpLost(s, id, now)), max];
-}
 /* my meter under the hotbar, and the other players' small ones in the board's corner (Quacky Zombies and Mad God
    Justin, on a computer, unless turned off in Settings) */
 let othersSig = "",
@@ -1356,7 +1323,7 @@ let othersSig = "",
   overBoxes = null; // the cloud's and the question's boxes over the board, in the board's px (measured a few times a second)
 function drawMeters(s, board, layer, now) {
   if (!meter) return;
-  const hv = R.me && hpFull(s, R.me, now);
+  const hv = R.me && hpOf(s, R.me, now);
   if (hv) {
     const [sp, tired] = isMgj(s) ? [null, false] : sprintLeft(); // (every mode's sprint (gamedefaults.js), stamina.js; Mad God Justin has no sprint, so no sprint bar)
     meter.set(
@@ -1369,7 +1336,7 @@ function drawMeters(s, board, layer, now) {
     meter.bars(board && board.querySelector(".gduck.mine .gduck-name")); // (the cooldown and the ammo under it too)
     if (board && meter.edge.parentNode !== board) board.append(meter.edge); // (the red corners: the board's, not the window's)
   } else meter.hide();
-  const want = profile.settings.otherHp !== false && !!board; // (every mode now, as in Dead Ducks Arcade: the owner's, Nov 18 16:43Z; only the ducks that have HP there show, hpFull)
+  const want = profile.settings.otherHp !== false && !!board; // (every mode now, as in Dead Ducks Arcade: the owner's, Nov 18 16:43Z; only the ducks that have HP there show, hpmath.js hpOf)
   let box =
     board &&
     (board._hpo && board._hpo.parentNode === board
@@ -1387,7 +1354,7 @@ function drawMeters(s, board, layer, now) {
         s.players[id] &&
         !(isL4dd(s) && (s.players[id].helper || s.players[id].wild)),
     ) // (Dead Ducks Arcade and Survival: only the players, never Justin's bar, the owner's, Nov 19 19:27Z)
-    .map((id) => [id, s.players[id].name, hpFull(s, id, now)])
+    .map((id) => [id, s.players[id].name, hpOf(s, id, now)])
     .filter(([, , h]) => h)
     .map(([id, n, h]) => [id, n, h[0], h[1]]);
   if (!box) {
@@ -1849,7 +1816,7 @@ function drawDucks(now = clockNow()) {
     }
     /* a duck, Justin or his double gaining or losing HP: "+1 HP" or "−1 HP" over it for a moment (not when a fight or a
        round starts the HP over) */
-    const hv = !g && hpFull(s, id === JUSTIN2 ? JUSTIN_ID : id, now),
+    const hv = !g && hpOf(s, id === JUSTIN2 ? JUSTIN_ID : id, now),
       hk = hv ? hv[1] + "/" + s.phase : "";
     const bled =
         hv && d._hk === hk && d._hv > hv[0] && id !== JUSTIN2

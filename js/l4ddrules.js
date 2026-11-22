@@ -64,7 +64,7 @@ import {
 import { JUMP, jumpDodges } from "./jump.js";
 import { SPRINT as GAME_SPRINT, POCKET_CHANGE } from "./gamedefaults.js";
 import { scaleOf } from "./duck.js";
-import { hpHeal, hpHurt, hundredths } from "./hpmath.js";
+import { hpHeal, hpHurt, hundredths, hpBreed } from "./hpmath.js";
 import {
   baseMode,
   isSb,
@@ -102,6 +102,7 @@ import * as GS from "./hangout/stationmap.js";
 import {
   GRENADE_MS,
   daggerZ,
+  inWorld,
   walkOf,
   FASTER,
   shareOf,
@@ -891,10 +892,8 @@ const isDown = (s, id) => !!(P4(s, id) && P4(s, id).dn);
 const isGhost4 = (s, id) => !!(P4(s, id) && P4(s, id).gh);
 /* a ghost that comes back at the next round (Survival's stays one, ex: only a defibrillator brings it back) */
 const returns = (s, id) => isGhost4(s, id) && !P4(s, id).ex;
-export const standing = (s, id) => {
-  const p = P4(s, id);
-  return !!p && !p.dn && !p.gh;
-};
+export const standing = (s, id) =>
+  !!P4(s, id) && !isDown(s, id) && !isGhost4(s, id);
 /* a duck in the middle of a jump dodges a hit: not in its first fifth or its last (the owner's) */
 export const dodging = (s, p, now) => jumpDodges(p, now, JUMP.T * 1000);
 
@@ -4865,10 +4864,7 @@ export const Z_ROOM = { RX, RY, CLAW };
 export { standing as l4Up };
 
 /* what the screens ask: a duck's HP, its bleeding out, the round */
-export const l4Hp = (s, id) => {
-  const p = P4(s, id);
-  return p ? p.hp : -1;
-};
+export const l4Hp = (s, id) => (P4(s, id) || { hp: -1 }).hp;
 /* how far my next HP is to coming back on its own, 0 … 1 (a hit or a heal starts it over: p.at), or null while it can't
    (full, down, a ghost) (the HP meter's faint red fill, hpmeter.js) */
 export const l4Regen = (s, id, now) => {
@@ -4886,10 +4882,8 @@ export const l4Dying = (s, id, now) => {
   const left = p.dn - (p.rv ? p.rv.at : now);
   return { k: Math.min(1, Math.max(0, 1 - left / L4.BLEED)), wait: !!p.rv };
 };
-export const l4Down = (s, id) => {
-  const p = P4(s, id);
-  return p && p.dn && !p.ex ? p.dn : 0; // (Justin dead for good: no down meter, the owner's, Nov 17 13:30Z)
-};
+export const l4Down = (s, id) =>
+  isDown(s, id) && !P4(s, id).ex ? P4(s, id).dn : 0; // (Justin dead for good: no down meter, the owner's, Nov 17 13:30Z)
 
 /* ---------- Sandbox's loot orbs on these maps (sbloot.js) ----------
    a weapon taken from an orb goes into duck id's slots as one bought or spun does (give), full; inf: unlimited ammo (as
@@ -4971,17 +4965,19 @@ export function l4Hurt(s, id, dmg, now, w = "claw") {
   hurtDuck(s, p4, id, now, w, dmg);
   s.hang.l4p = p4;
 }
-/* Sandbox's zones (sbzone.js): a duck up gets amt HP back, up to its most */
-export function l4Heal(s, id, amt) {
-  const p = (s.hang.l4p || {})[id],
-    max = maxHp(s, id);
-  if (!p || p.dn || p.gh || p.hp >= max) return false;
-  s.hang.l4p = {
-    ...s.hang.l4p,
-    [id]: { ...p, hp: hpHeal(p.hp, amt, max) },
-  };
-  return true;
-}
+/* the zombie maps' HP (hpmath.js): a zone's or a group's heal gives a duck up amt HP back, up to its most */
+hpBreed("maps", {
+  of: (s, id, now, seated) =>
+    seated && inWorld(s) ? [Math.max(0, l4Hp(s, id) || 0), maxHp(s, id)] : null,
+  heal(s, id, amt) {
+    const p = (s.hang.l4p || {})[id],
+      max = maxHp(s, id);
+    if (!p || p.dn || p.gh || p.hp >= max) return;
+    s.hang.l4p = { ...s.hang.l4p, [id]: { ...p, hp: hpHeal(p.hp, amt, max) } };
+  },
+  most: maxHp,
+  store: (s) => s.hang && s.hang.l4p,
+});
 /* Sandbox's zones: each zombie standing where on({ x, y: shares of the map, z: the ground's height there, sp }) says
    loses amt HP ("damage", whole HP, at least 1), gets it back ("heal", up to its most) or dies ("kill") */
 export function l4Zone(s, on, fx, amt, now) {

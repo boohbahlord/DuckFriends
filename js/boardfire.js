@@ -34,7 +34,9 @@ import { godOn } from "./sbgod.js";
 
 import { sbPlaceDuck, sbHpOf } from "./sbspawn.js";
 
-import { hpHeal, hundredths } from "./hpmath.js";
+import { hpHeal, hundredths, hpBreed } from "./hpmath.js";
+import { grHp } from "./sbgroups.js";
+import { roll } from "./random.js";
 
 import { onCabin } from "./sbcabin.js";
 
@@ -56,7 +58,14 @@ import { hangTargets, hangHit } from "./hangout/rules.js";
 
 import { inCabin, standable, W as HW, H as HH } from "./hangout/layout.js";
 
-import { justinHit, justinShown, justinAt, JUSTIN_ID } from "./boardjustin.js";
+import {
+  justinHit,
+  justinShown,
+  justinAt,
+  JUSTIN_ID,
+  boardMgj,
+  BJ_HP,
+} from "./boardjustin.js";
 
 import { pwAdd, pwHit, DEATH } from "./wounds.js";
 
@@ -78,13 +87,7 @@ import {
 
 import { picBody, duOfRoom } from "./sbbody.js";
 
-import {
-  isL4dd,
-  l4Hurt,
-  standing as l4Standing,
-  l4Heal,
-  maxHp,
-} from "./l4ddrules.js";
+import { isL4dd, l4Hurt, standing as l4Standing } from "./l4ddrules.js";
 
 import { ARMS } from "./guns.js";
 
@@ -131,12 +134,7 @@ const HIT_DMG = {
   revolver: 2,
   chain: PHP,
 }; // (Quacky Zombies' guns take what they take there: the sniper 2 or 3, the AK-47 and the revolver 2, the chain gun all)
-export const dmgOf = (s, k) => {
-  const d = isL4dd(s) ? 1 : HIT_DMG[k] || 1;
-  return Array.isArray(d)
-    ? d[0] + Math.floor(Math.random() * (d[1] - d[0] + 1))
-    : d;
-};
+export const dmgOf = (s, k) => roll(isL4dd(s) ? 1 : HIT_DMG[k] || 1); // (random.js)
 export function soaks(s, id, now, dmg = 1, by, raw = false) {
   if (isMgj(s)) return false;
   if (normalGame(s) && (shielded(s, id, now) || (by && shielded(s, by, now))))
@@ -173,11 +171,30 @@ export const SB_H = {
     } // (raw: a spawn's damage box is only that much, never "all of it")
     if (pwOn(s)) pwHit(s, id, w, now, !!P.dead); // (its claw wounds, as a Dead Ducks Arcade zombie leaves them; a made NPC's weapon, that weapon's)
   },
-  l4heal: l4Heal, // (the zombie maps' heal and most HP, and their own zombies: a group's, sbgroups.js)
-  l4max: maxHp,
-  l4up: l4Zups,
+  l4up: l4Zups, // (the zombie maps' own zombies: a group's, sbgroups.js)
   l4set: l4SetHp,
-  /* a zone's heal (sbzone.js): amt of what duck id lost comes back */
+};
+/* the board's HP (hpmath.js, every mode without its own: modes.js hp): a duck's PHP (a Sandbox spawn's or respawn's
+   for it), back after a while without a hit; Justin on the board has Mad God Justin's when the board has it, else 1 */
+hpBreed("board", {
+  of(s, id, now, seated) {
+    if (id === JUSTIN_ID)
+      return !justinShown(s)
+        ? null
+        : boardMgj(s)
+          ? [
+              s.justin.down ? 0 : Math.max(0, s.justin.hp ?? BJ_HP),
+              s.justin.max || BJ_HP,
+            ]
+          : [s.justin.down ? 0 : 1, 1]; // (one hit takes his 1, as always)
+    if (!seated || !boardPhases(s).includes(s.phase)) return null;
+    const max = sbHpOf(s, id) || PHP;
+    return [
+      s.players[id].dead ? 0 : Math.max(0, max - phpLost(s, id, now)),
+      max,
+    ];
+  },
+  /* amt of what duck id lost comes back (a zone's, a group's: sbzone.js, sbgroups.js) */
   heal(s, id, amt, now) {
     const h = (s.php || {})[id];
     if (!h || now - h.t >= PHP_BACK) return;
@@ -188,7 +205,9 @@ export const SB_H = {
     else delete rest[id];
     s.php = rest;
   },
-};
+  most: (s, id) => grHp(s, id, PHP), // (a group's Max HP over it, sbgroups.js)
+  store: (s) => s.php,
+});
 /* a duck on Sandbox's board or Duck Cabin that stands up again: at a respawn for players, if there is one (the zombie
    maps bring theirs back their own way: l4ddrules.js) */
 onGetUp((s, id, now) => {

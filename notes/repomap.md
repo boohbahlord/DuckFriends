@@ -17,7 +17,7 @@ bash.js 1360 the command line's language: a small
 bbrules.js 380 the rules of Bicker Brackets
 beaks.js 138 beaks
 bloodpool.js 50 a pool of blood: the one
-boardfire.js 1309 the board's weapons: hits, shots, blasts,
+boardfire.js 1328 the board's weapons: hits, shots, blasts,
 boardjustin.js 699 Justin on the boards
 botduck.js 90 a computer's duck: a random look,
 botlines.js 188 What the computers write and say
@@ -55,7 +55,7 @@ friends.js 236 friends
 front.js 151 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 229 how a held weapon and the
-game.js 7823 the game screen
+game.js 7790 the game screen
 gamedefaults.js 43 the game's own numbers, for every
 gamefx.js 853 the silly commands and the room's
 gameready.js 47 
@@ -79,7 +79,7 @@ homeapp.js 43 Install Duck Friends
 hooks.js 3 hooks between screens that can't import
 hotbar.js 497 the specials on the number keys
 hotpick.js 318 What goes in my duck's hand
-hpmath.js 23 HP in hundredths
+hpmath.js 46 HP in hundredths
 hpmeter.js 327 HP meters and the little "+1
 invisible.js 11 Who is invisible right now :
 itemtip.js 104 hold I on an item: its
@@ -99,7 +99,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box on
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 5010 the rules of Quacky Zombies
+l4ddrules.js 5006 the rules of Quacky Zombies
 l4ddsfx.js 545 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the zombies
 langname.js 5 the name of Sandbox's number language,
@@ -122,7 +122,7 @@ meters.js 114 the thin bars under my duck's
 mgj.js 219 Mad God Justin: what the screen
 mgjart.js 96 Mad God Justin's new pictures
 mgjrules.js 2285 
-modes.js 440 the game modes
+modes.js 442 the game modes
 music.js 590 the music: our own songs, played
 musicbar.js 169 the music bar: the song the
 name.js 165 fonts and how a player's name
@@ -162,7 +162,7 @@ pxtext.js 263 emoji and tooltips in the pixel
 quack.js 296 Who is the Quack?: what the
 quackrules.js 789 the rules of Who is the
 rainbowskin.js 116 the rainbow skin
-random.js 9 the two random helpers every mode's
+random.js 12 the two random helpers every mode's
 report.js 114 Report Bug or Suggest Ideas
 roomrules.js 368 room governance: groups and permissions ,
 rooms.js 256 Play: create a room, and the
@@ -181,7 +181,7 @@ sbepview.js 162 Sandbox Phase 7: what other players
 sbfloors.js 114 Sandbox Phase 4: floors
 sbgod.js 55 Sandbox: God mode and invisibility, for
 sbgodview.js 34 Sandbox: invisible players, on the screen
-sbgroups.js 486 Sandbox: groups , the rules
+sbgroups.js 477 Sandbox: groups , the rules
 sbgroupview.js 416 Sandbox: groups , on the screen
 sbhelp.js 273 Sandbox: the help manual
 sbhot.js 143 Sandbox: the hotbar , the rules
@@ -201,7 +201,7 @@ sbsaves.js 743 Sandbox's saves: kept on the host's
 sbsfx.js 74 Sandbox's sounds
 sbspawn.js 1709 Sandbox: spawns and respawns , the
 sbspawnview.js 2212 Sandbox: spawns and respawns , on
-sbzone.js 349 Sandbox: board zones , the rules
+sbzone.js 348 Sandbox: board zones , the rules
 sbzonebrain.js 265 Sandbox: zones that run a Seriat
 scrules.js 428 the rules of Story Chain
 secret.js 79 secrets between two browsers
