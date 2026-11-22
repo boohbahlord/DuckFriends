@@ -78,7 +78,7 @@ gssettings.js 773 Game Settings: every setting,
 gstext.js 185 Game Settings: what a
 gunart.js 437 every weapon, drawn: one
 gunmen.js 110 the gunmen's looks
-gunmenrules.js 1156 Survival: the gunmen
+gunmenrules.js 1158 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on
 gunparts.js 15 the pieces every weapon's
 guns.js 642 every weapon's numbers: one
