@@ -371,7 +371,7 @@ export function placeZombies(board, s, now) {
         (o.f || face) < 0 ? Math.PI : 0,
       ); // (its claw marks and swipe on the duck it swiped, as Dead Ducks Arcade's: claw.js)
     n._a = o.a;
-    npcSay(n, o); // (Sandbox: what its Seriat file has it say, sbnumberat.js)
+    npcSay(n, o); // (Sandbox: what its Seriat file has it say, sbseriat.js)
     const oc = sbOl && !o.d && sbOlColor(s, { k: o.k, sp: o.sp }, o.x, o.y, 0);
     if (oc)
       olAdd({

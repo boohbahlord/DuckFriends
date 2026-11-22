@@ -2,7 +2,7 @@
    The owner: "programming the ai". A spawn's Brain box names a file from the Seriat window (n); its text (and the
    files it uses) come to the room with the box (s.nb = { name: text }: its own part of the state, so it goes online only
    when a file changes), so the host can read it. The host keeps one
-   brain for each file (numberatrun.js brain()), and every NPC of every spawn that names the file is one of its NPCs:
+   brain for each file (seriatrun.js brain()), and every NPC of every spawn that names the file is one of its NPCs:
    - its events come from what the NPCs do, seen beat to beat: one that wasn't there before has spawned, one with less
      HP was hit, one that's gone is dead, a duck as near as a when near says (or touching it, one duck length) is near;
    - its actions are kept on the NPC: o.nbo = { a: go | attack | flee, k: who } is what it goes after (in place of its
@@ -11,8 +11,8 @@
    - print and its mistakes go to the room's Seriat log (s.nbo, its own part too), which the Seriat window shows.
    An NPC whose spawn names no file thinks as before. The brains are the host's only: if the host changes, they start
    over. Everything here runs inside sbspawn.js think(), on the board and on the worlds the same. */
-import { compileScript, brain, paramsOf } from "./numberatrun.js";
-import { valueOf } from "./numerat.js";
+import { compileScript, brain, paramsOf } from "./seriatrun.js";
+import { valueOf } from "./seriatbox.js";
 import { SB_BOXES } from "./sandboxrules.js";
 import { TILE } from "./units.js";
 import {

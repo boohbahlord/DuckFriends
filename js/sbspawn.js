@@ -1,7 +1,7 @@
 /* ---------- Sandbox: spawns and respawns (stage 2), the rules ----------
    The owner's Sandbox file, "Build mode": in build mode (b) a spawn is set where I stand, "a white transparent circle
    with a hollow middle and a white circle at it's center", named at the top in its color. E on it opens its settings:
-   what spawns (a zombie, for now), its key, and the boxes (numerat.js): the spawn limit (1, at most 100), the time
+   what spawns (a zombie, for now), its key, and the boxes (seriatbox.js): the spawn limit (1, at most 100), the time
    between spawns (4 s), HP, damage and speed (tenths), and the true or false boxes (continuous spawn, can respawn,
    sprint, jump, climb walls). "in order for an entity to spawn, it must be set to a hotbar spawn item OR a key on the
    keybaord, and only by clicking it wil it spawn": its key (any time, the Build window up or not: SB_KEY_IN_BUILD) or the Spawn
@@ -19,7 +19,7 @@
    their guns and swings hit them (l4ddrules.js L4_HOOKS). */
 import { shuffle } from "./random.js";
 import { epMay } from "./sbep.js";
-import { keep, read, valueOf } from "./numerat.js";
+import { keep, read, valueOf } from "./seriatbox.js";
 import {
   baseMode,
   isSb,
@@ -97,13 +97,13 @@ import { zbSpawned } from "./sbzonebrain.js";
 import { botDuck } from "./botduck.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { armUp, cleanArms, fight, keepAt, reachTo } from "./sbarms.js";
-import { nbThink, nbOrder, nbKeep } from "./sbnumberat.js";
+import { nbThink, nbOrder, nbKeep } from "./sbseriat.js";
 import { SONG, songChars } from "./sbaudio.js";
 import { grFrom, grLeave, grHp, grIds, grLists } from "./sbgroups.js";
 
 /* the boxes that aren't numbers: the name over it, its key, what spawns, and a respawn's "who" */
 export const SB_TEXT = {
-  /* a Seriat file from the n window that its NPCs run (sbnumberat.js): blank, they think by their lists */
+  /* a Seriat file from the n window that its NPCs run (sbseriat.js): blank, they think by their lists */
   brain: {
     name: "Brain (a Seriat file)",
     check: (t) =>
@@ -480,7 +480,7 @@ function makeOne(s, id, at) {
     up !== STEP ||
     (+at.z || 0) > heightAt(at.x * WW, at.y * WH) + STEP // (up on a Sandbox floor, or high with nothing under it: plan Phase 4)
   ) {
-    // (a zombie with a Brain walks as Sandbox's own do, so its file can steer it: sbnumberat.js; one with its own look or
+    // (a zombie with a Brain walks as Sandbox's own do, so its file can steer it: sbseriat.js; one with its own look or
     // Size too, which the map's own zombies don't have)
     const c = cabinSpawn(s, at.x, at.y, {
       hp,
@@ -965,7 +965,7 @@ export function sbAct(s, a, now) {
     s.sbsong = all;
     return true;
   }
-  /* the Seriat files a Brain box names (and the files they use), sent by the player who set it: sbnumberat.js */
+  /* the Seriat files a Brain box names (and the files they use), sent by the player who set it: sbseriat.js */
   if (a.k === "nbf")
     return !!a.files && typeof a.files === "object" && nbKeep(s, a.files);
   /* M's defaults for a kind: kind, f (one of SB_MSET), v (its text; "" for the game's own); reset: all of them back */

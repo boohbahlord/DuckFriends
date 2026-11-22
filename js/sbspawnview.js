@@ -3,7 +3,7 @@
    center", in its own color, its name over it; a respawn looks the same "but instead they have points on four ends of
    the circle". E beside one (whoever may build) opens its settings: its name and color, what spawns, its key, the
    number boxes and the true or false boxes. A box written wrong turns red and says why; the spawn keeps its last good
-   value (numerat.js). On the board the game draws them (game.js calls sbBoardMarks); on the worlds they are an activity
+   value (seriatbox.js). On the board the game draws them (game.js calls sbBoardMarks); on the worlds they are an activity
    of Sandbox's own (registry.js only: "sandbox"). */
 import { LANG } from "./langname.js";
 import { activity } from "./hangout/registry.js";
@@ -105,7 +105,7 @@ import {
 } from "./sbspawn.js";
 import { orbWrap, lootRing, lootPage, lootWire } from "./sblootview.js";
 import { orbsOf } from "./sbloot.js";
-import { valueOf, read as nbRead } from "./numerat.js";
+import { valueOf, read as nbRead } from "./seriatbox.js";
 import { drawNpcs, dropNpcs } from "./npcview.js";
 import { groupOpts, grShown, jgRow } from "./sbgroupview.js";
 import { olAdd } from "./outlines.js";
@@ -1429,7 +1429,7 @@ export function sbSettings(getR, id, tab = "") {
         );
       }
       const timers = {};
-      /* a Brain: its file (and the files it uses) go to the room first, from my Seriat folder (numeratwin.js, loaded
+      /* a Brain: its file (and the files it uses) go to the room first, from my Seriat folder (seriatwin.js, loaded
          when it's wanted: it brings the command line) */
       const sendBrain = (i) =>
         brainCheck(i).then((files) => {
@@ -1812,7 +1812,7 @@ function npcSetClick(e, w) {
       arrow.setAttribute("aria-expanded", "false");
       return true;
     }
-    Promise.all([import("./brainbuild.js"), import("./numerathelp.js")]).then(
+    Promise.all([import("./brainbuild.js"), import("./seriathelp.js")]).then(
       async ([m, h]) => {
         const files = await m.myFiles();
         list.innerHTML =
@@ -1841,10 +1841,10 @@ function npcSetClick(e, w) {
   }
   return false;
 }
-/* a Brain box's file (and the files it uses), from my Seriat folder, or null (the row says why): numeratwin.js, loaded
+/* a Brain box's file (and the files it uses), from my Seriat folder, or null (the row says why): seriatwin.js, loaded
    when it's wanted (it brings the command line) */
 const brainCheck = (i) =>
-  import("./numeratwin.js").then((m) => {
+  import("./seriatwin.js").then((m) => {
     const v = i.value.trim(),
       files = v ? m.brainFiles(v) : {},
       lab = i.closest(".sb-row");

@@ -33,7 +33,7 @@ import {
   sbItemMods,
   sbModsOver,
 } from "./sandboxrules.js";
-import { valueOf } from "./numerat.js";
+import { valueOf } from "./seriatbox.js";
 import {
   boxOf,
   boxText,

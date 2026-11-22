@@ -6,6 +6,7 @@ import {
   GEN_RULES,
   OPTIONS_DEFAULT,
   VOTE_TIME,
+  VOTE_MAPS,
   advance,
   applyRules,
   boardPhases,
@@ -206,6 +207,29 @@ export function act_options({ s, a, me, host, boss }) {
         float: true,
         by: a.id,
         opts: { modesOff: next },
+        text: `${me ? me.name : "The host"} changed the game settings.`,
+      });
+    }
+    return s;
+  }
+  /* Sandbox on the board: its map changes mid-game too, for everyone at once (the owner's, Nov 22 13:15Z: "Why is there
+     not an ability to change maps in the gane?"): a board map, or one the host made and brought in. A map with a world of
+     its own (Duck Cabin, Downpour) still goes through the lobby */
+  if (
+    o.map &&
+    sbOnBoard(s) &&
+    running(s) &&
+    (boss || (dodOn(s, "settings") && me && !me.bot))
+  ) {
+    if (VOTE_MAPS.includes(o.map) || (s.umap || {})[o.map]) {
+      const ch = { map: o.map };
+      for (const k of ["mapZoom", "mapGrey"]) if (k in o) ch[k] = o[k] ? 1 : 0;
+      Object.assign(s.options, ch, { mapPick: "" });
+      logLine(s, {
+        sys: true,
+        float: true,
+        by: a.id,
+        opts: ch,
         text: `${me ? me.name : "The host"} changed the game settings.`,
       });
     }

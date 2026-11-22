@@ -7,12 +7,12 @@
      t / f    the true or false boxes
    Tenths ("decimal to the tenth place") only where a box allows them (speed and damage): 0.8:1.2 picks a tenth
    between, and 1.25 is read as 1.3. Anything more (orders, brackets, math, asterisks, percents …) is the full
-   language, Seriat (numberat.js): read() compiles it once and pick() runs it, so the boxes, the files and Check in the
+   language, Seriat (seriat.js): read() compiles it once and pick() runs it, so the boxes, the files and Check in the
    Seriat window all use the one compiler.
    Bad writing never breaks the game: read() says why, and the box keeps its last good value (keep()).
-   This file imports only numberat.js, so it can be used anywhere, in the game or outside it. */
-import { compile, NB_WORDS, NOTHING } from "./numberat.js";
-import { compileScript, NB_RUN_WORDS } from "./numberatrun.js";
+   This file imports only seriat.js, so it can be used anywhere, in the game or outside it. */
+import { compile, NB_WORDS, NOTHING } from "./seriat.js";
+import { compileScript, NB_RUN_WORDS } from "./seriatrun.js";
 
 /* a box's kind: "int" (whole numbers), "tenth" (tenths) or "bool" (t or f); min and max: what it allows */
 const NUM = /^-?(?:\d+(?:\.\d*)?|\.\d+)$/;

@@ -368,7 +368,7 @@ export function sbSettingsRead(text) {
 
 /* ---------- Sandbox's spawns and respawns: the settings (stage 2) ----------
    ONE list of settings that a spawn, a respawn, a made NPC and a zone (SB_ZONE, below) all read. Each box keeps the text as
-   it was typed and its last good text (numerat.js keep()), so a box written wrong never breaks anything.
+   it was typed and its last good text (seriatbox.js keep()), so a box written wrong never breaks anything.
    The owner's words for each are in the Sandbox file, "Integer or numerical options for spawn" and "true of false
    options for spawn". */
 export const SB_BOXES = {

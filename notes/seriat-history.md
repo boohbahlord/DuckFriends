@@ -7,7 +7,7 @@ Sources, newest wins: the owner's file (`/mnt/project-files/sandbox/sandbox-mode
 12:16Z (word for word in `/mnt/project-files/sandbox/numerat/owner-2026-11-19-1216.txt` and at the end of
 `notes/agree-or-disagree.md`). Owner: "this code is like math, components give rise to new logical possibilities ...
 Make sure to test possibilities of the code." Status: notation still being settled with the owner; only the plain
-values (part 1) are built (`js/numerat.js`). Owner 12:59Z: "we need more discussion prob since numerat is a big deal"
+values (part 1) are built (`js/seriatbox.js`). Owner 12:59Z: "we need more discussion prob since numerat is a big deal"
 (answers word for word in `/mnt/project-files/sandbox/numerat/owner-2026-11-19-1259.txt`). Section 14 holds those
 answers; they win over anything above.
 
