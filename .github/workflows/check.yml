@@ -36,6 +36,8 @@ jobs:
         run: |
           npm install --no-save --prefix "$RUNNER_TEMP/pw" playwright@1.63.0
           "$RUNNER_TEMP/pw/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Type checker (new mistakes only, tools/typecheck.mjs)
+        run: node tools/typecheck.mjs
       - name: Run the checks
         env:
           NODE_PATH: ${{ runner.temp }}/pw/node_modules
