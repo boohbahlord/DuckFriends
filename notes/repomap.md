@@ -34,7 +34,7 @@ collage.js 101 Shelter Sky & Null
 color.js 165 choosing a color
 corners.js 94 full screen
 court.js 229 Lawyering: what the screen shows
-crowd.js 122 crowds: walkers never stand in each
+crowd.js 183 crowds: walkers never stand in each
 customize.js 1776 Customize: the Armory
 datboi.js 115 here come dat boi
 democracy.js 243 Democracy of Ducklings:
@@ -259,8 +259,8 @@ weaponuse.js 104 using a weapon: one module for
 who.js 3 who this player is beyond this
 wounds.js 485 the wounds a hit leaves
 zombiepath.js 178 the zombies' way to the ducks
-zombieroofs.js 320 the zombies' walk over Downpour's roofs:
-zombies.js 1418 the zombies: one module for every
+zombieroofs.js 322 the zombies' walk over Downpour's roofs:
+zombies.js 1451 the zombies: one module for every
 
 ## js/hangout/
 activities.js 23 every Hangout activity, so the rules
