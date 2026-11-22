@@ -98,10 +98,10 @@ import { l4Zups, l4SetHp } from "./zombies.js";
 
 import { hOk, hLock, sameFloorAhead, floorLock } from "./heights.js";
 
-import { zOf, nearH } from "./heights.js";
+import { zOf, nearH, swingH } from "./heights.js";
 
 import { FLAME, flameReach, inCone } from "./flamer.js";
-import { toPx } from "./units.js";
+import { toPx, DUCK } from "./units.js";
 import { blast as boom, reach, hitOf, REACH as BLAST_REACH } from "./blast.js";
 
 /* Justin knocked down by a player's weapon (the clown items unlock at 12): the last few, each numbered, so
@@ -304,10 +304,12 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
     ux = aim[0] / rx / al,
     uy = aim[1] / ry / al;
   const side = hang ? (inCabin(...toPx(p0)) ? 1 : 0) : 0,
-    z0 = duckH(s, p0);
+    z0 = duckH(s, p0, now),
+    h0 = DUCK * sizeOf(s, by); // (my height: a swing reaches only within it, heights.js swingH)
   const near = (x, y, z, inSide, big = 1) => {
     // where (x, y) is from the swinger, in duck lengths, if it's in reach (big: a Seriat NPC's hitbox, reached sooner)
-    if (hang && (inSide !== side || !nearH(z, z0))) return null;
+    if (hang && (inSide !== side || !swingH(z0, h0, z, DUCK * big)))
+      return null;
     const dx = (x - p0.x) / rx,
       dy = (y - p0.y) / ry,
       d = Math.max(0, Math.hypot(dx, dy) - (big - 1) / 2);
@@ -710,7 +712,7 @@ export function moveShots(s, now) {
 export const gunSpeed = (w) =>
   (ARMS[w].speed / BOARD_PX) * (w === "glauncher" ? 1 : FASTER);
 /* a duck's height for a shot (heights.js): in Hangout and Quacky Zombies its feet's (world px); on the boards 0 */
-const duckH = (s, p) => (isHang(s) ? zOf(p) : 0);
+const duckH = (s, p, now) => (isHang(s) ? zOf(p, "body", now) : 0);
 /* Doom's same floor first, as in Dead Ducks Arcade (heights.js sameFloorAhead, the one rule for every mode): a duck (or,
    in Hangout, Justin or the shadow duck) on my floor in the line of my shot keeps the shot on my floor: { lh }, else {}
    (it goes to the first target at any height). Measured in duck lengths; in Hangout the cabin's walls stop the look */
@@ -812,7 +814,7 @@ export function chainShot(s, by, p, aim, now, w = "chaingun") {
       t: now,
       ...(hang
         ? {
-            hz: Math.round(zOf(p)),
+            hz: Math.round(zOf(p, "body", now)),
             hin: inCabin(...toPx(p)) ? 1 : 0,
           }
         : {}),
@@ -862,7 +864,7 @@ export function chainShot(s, by, p, aim, now, w = "chaingun") {
       y0: +(p.y * k[1]).toFixed(4),
       x1: +(at.x * k[0]).toFixed(4),
       y1: +(at.y * k[1]).toFixed(4),
-      hz: Math.round(zOf(p)),
+      hz: Math.round(zOf(p, "body", now)),
     },
   ]; // (b: board units; in Hangout, the world's pixels, as Quacky Zombies' own)
 }
