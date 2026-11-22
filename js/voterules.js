@@ -2,6 +2,7 @@
    Moved out of rules.js to keep that file under control: rules.js runs the shared turn and the actions, this file the
    mode's own phases. It imports back from rules.js as duncerules.js does; rules.js calls it from the phase table and the
    actions. */
+import { ammoReset } from "./ammo.js";
 import {
   COUNTDOWN,
   SOLO_COUNTDOWN,
@@ -303,7 +304,7 @@ export function rotate(s, now) {
 export function beginGame(s, now) {
   const P = s.players;
   s.startedAt = now;
-  delete s.mag; // (every gun full again: ammo.js)
+  ammoReset(s); // (every gun full again)
   if (isSb(s)) sbBegin(s, now); // (a save's NPCs back, its session named: sbsave.js)
   s.round = 0;
   s.history = [];

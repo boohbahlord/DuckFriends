@@ -684,7 +684,8 @@ export function act_reload({ state, s, a, now, me }) {
       ? w === "handgun"
         ? me.dead && !down
         : me.dead || heldGun(s, a.id) !== w
-      : !onKeys(me.duck, w) || !s.options.fun
+      : !(isSb(s) ? sbSlots(s, a.id).includes(w) : onKeys(me.duck, w)) ||
+        !s.options.fun
   )
     return state; // (Mad God Justin: the pistol, the gun picked up, or the down pistol)
   return reloadMag(

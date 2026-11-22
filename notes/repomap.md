@@ -3,11 +3,11 @@ file lines job
 
 ## js/
 account.js 397 the Google account: the
-actplay.js 940 a game's actions
+actplay.js 941 a game's actions
 actroom.js 768 the room's actions
 actsb.js 160 Sandbox's windows, saves and
 allies.js 383 Survival: the friendly squad
-ammo.js 113 THE ONE AMMO RULE,
+ammo.js 117 THE ONE AMMO RULE,
 armpage.js 142 a page of Customize's
 armspeed.js 34 how fast the weapons
 art.js 403 pictures drawn in code
@@ -124,7 +124,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power
 l4ddpowerui.js 278 Dead Ducks Arcade's power
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4881 the rules of Quacky
+l4ddrules.js 4886 the rules of Quacky
 l4ddsfx.js 545 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online:
 langname.js 5 the name of Sandbox's
@@ -273,12 +273,12 @@ umaps.js 374 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 408 things you unlock
 upbar.js 69 the green bar on
-updates.js 3672 Updates
+updates.js 3683 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival
 vote.js 279 Vote Mode & Map:
-voterules.js 348 the lobby's vote for
+voterules.js 349 the lobby's vote for
 walkgrid.js 83 the walking grid: which
 weaponuse.js 104 using a weapon: one
 who.js 3 who this player is
