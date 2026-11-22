@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v262",
+    version: 262,
+    date: "Nov 22, 2026",
+    title: "One in the chamber",
+    news: [
+      "For every mode with guns: reload a full magazine and you get one more round in the chamber, in half the time (the LMG 3/4). Revolvers, the double barrel and the Tommy gun can't.",
+      "Smoother play: every weapon, item and icon picture is made ahead again, so far fewer pictures are made during play.",
+    ],
+  },
+  {
     id: "v261",
     version: 261,
     date: "Nov 22, 2026",
