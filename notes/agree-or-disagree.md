@@ -7836,3 +7836,11 @@ Okay, so it didn't actually make sense. Why did it show a vote screen for game m
 From the lobby chat in his screenshot: "I tried selecting pandat and instead it popped up with descriptions before it was even selected and it's super annoying" / "Then it didnt even show ut was selected on the ui, instead it said vote instead of what I chose when I backed out. Map preview show the map selected if map vote or random isnt on, final."
 
 Decision (Adam): function first, before B. 1) Phone UI scale and the top-right buttons too high in the corner: Noah. 2) Picking a mode and map in Game Settings skips the vote; the setting shows the pick, not "Vote"; no description popup before a pick; the lobby's map preview shows the chosen map when map vote/random is off: Jackal. 3) Board tiles see-through again in every social mode (the owner's rule: boards are see-through over the maps), find which change made them solid, and a check so it can't happen again: Noah. 4) Lobby New map > Import: find what it does, make it work and say what it does, before anything is removed. Daniel is asked why his playtests missed the solid tiles.
+
+## Nov 22 01:49Z (owner)
+"I said almost every board. What do you mean just the agree to disagree tiles? I saw it in lawyering as well, and I saw the problem and the mad god Justin game mode. This, I told you, it's all of them, I'm pretty sure. Based off of the trim code, something went wrong and made all, and that's fine, the code should be trimmed, but we need to make it to where all the maps have the old transparency that agree or disagree had."
+
+## Nov 22 01:50Z (owner)
+"We don't have to make them have different see-throughs. That's a dangerous thing. We should consider making them to the transparency that agree or disagree was. And Mad God Justin doesn't need a board that's a single caller. His board can be maybe rainbow or slowly changes. Who knows?"
+
+Decision (Adam): one see-through level for every board in every mode, Agree or Disagree's (45%); the 42% on Shelter Sky & Null and Euclid's Squares goes. The solid tiles were every board mode (one rule for all, `.board .col`) on a map players made; the old rule listed built-in maps by name. Mad God Justin's board color: options to the owner before building.
