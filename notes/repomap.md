@@ -34,7 +34,7 @@ collage.js 101 Shelter Sky & Null
 color.js 165 choosing a color
 corners.js 94 full screen
 court.js 229 Lawyering: what the screen shows
-crowd.js 122 crowds: walkers never stand in each
+crowd.js 183 crowds: walkers never stand in each
 customize.js 1776 Customize: the Armory
 datboi.js 115 here come dat boi
 democracy.js 243 Democracy of Ducklings:
@@ -251,7 +251,7 @@ umaps.js 392 Made maps: making them, and keeping
 units.js 10 the game's units, in one place
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 3286 Updates
+updates.js 3295 Updates
 vdd.js 190 Valentine's Duck Date: what the screen
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
@@ -262,8 +262,8 @@ weaponuse.js 104 using a weapon: one module for
 who.js 3 who this player is beyond this
 wounds.js 485 the wounds a hit leaves
 zombiepath.js 178 the zombies' way to the ducks
-zombieroofs.js 320 the zombies' walk over Downpour's roofs:
-zombies.js 1418 the zombies: one module for every
+zombieroofs.js 322 the zombies' walk over Downpour's roofs:
+zombies.js 1451 the zombies: one module for every
 
 ## js/hangout/
 activities.js 23 every Hangout activity, so the rules
