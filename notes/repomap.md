@@ -5,7 +5,7 @@ file lines job
 account.js 397 the Google account: the
 actplay.js 965 a game's actions
 actroom.js 768 the room's actions
-actsb.js 156 Sandbox's windows, saves and
+actsb.js 160 Sandbox's windows, saves and
 allies.js 383 Survival: the friendly squad
 armpage.js 142 a page of Customize's
 armspeed.js 34 how fast the weapons
@@ -74,7 +74,7 @@ gamehand.js 620 the hand: the number-key
 gameplace.js 734 where things are put
 gameready.js 47 
 gameround.js 572 round
-gamesettings.js 756 Game Settings: the whole
+gamesettings.js 765 Game Settings: the whole
 gameshots.js 137 The bullets in the
 gamestats.js 191 what `stats` and `roundstats`
 gfx.js 8 Low graphics
@@ -131,7 +131,7 @@ laserart.js 95 the laser gun, drawn
 laserfx.js 135 the Laser Rifle on
 later.js 66 the rest of the
 lawrules.js 360 the rules of Lawyering
-loading.js 403 the start: a slow
+loading.js 404 the start: a slow
 loadlines.js 590 the lines under the
 lobby.js 614 the lobby, laid out
 lobbysettings.js 73 Lobby Settings
@@ -218,8 +218,8 @@ sbnpcart.js 162 Sandbox: a spawned NPC's
 sbnpcs.js 73 Sandbox: the NPCs I
 sbout.js 62 Sandbox off the zombie
 sbrotate.js 102 Sandbox, Direction's Rotate in
-sbsave.js 321 Sandbox: saving a Sandbox
-sbsaves.js 734 Sandbox's saves: kept on
+sbsave.js 328 Sandbox: saving a Sandbox
+sbsaves.js 735 Sandbox's saves: kept on
 sbseriat.js 477 Sandbox: NPCs that run
 sbsfx.js 74 Sandbox's sounds
 sbspawn.js 1707 Sandbox: spawns and respawns
@@ -268,11 +268,11 @@ triviabank.js 499 Trivia's auto questions
 triviarules.js 458 the rules of Trivia
 ui.js 380 small helpers every screen
 umaprules.js 72 Made maps: the room's
-umaps.js 371 Made maps: making them,
+umaps.js 374 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on
-updates.js 3621 Updates
+updates.js 3632 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival

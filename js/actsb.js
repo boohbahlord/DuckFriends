@@ -13,7 +13,7 @@ import { sbLootAct } from "./sbloot.js";
 import { nbPermAct, nbShareAct } from "./nbperms.js";
 import { sbLandAct } from "./sbzone.js";
 import { sbGroupAct } from "./sbgroups.js";
-import { sbPick, sbRename } from "./sbsave.js";
+import { sbPick, sbRename, saveMap } from "./sbsave.js";
 import { umapAct } from "./umaprules.js";
 import { SB_H } from "./boardfire.js";
 import { beginGame, countdown, nextVote, placeMap } from "./voterules.js";
@@ -100,8 +100,12 @@ export function act_sbPick({ state, s, a, now, me, host }) {
   delete s.sbpk;
   if (!sbPick(s, a, now)) return state;
   if (a.save) {
-    if (s.options.sbMap || (s.gmPlay && !sbRule(s, "pickmap")))
-      s.voteQ = (s.voteQ || []).filter((k) => k !== "map"); // (a world save brings its own map; a made game mode, its own: gmodes.js)
+    if (
+      s.options.sbMap ||
+      (s.gmPlay && !sbRule(s, "pickmap")) ||
+      saveMap(s, a.save.data, a.play)
+    )
+      s.voteQ = (s.voteQ || []).filter((k) => k !== "map"); // (a world save brings its own map; a board save or a made game mode, its own: sbsave.js saveMap)
     say(s, `${me.name} is loading a save: ${s.sbsv.name}`);
   } else say(s, `${me.name} started a new Sandbox.`);
   return nextVote(s, now);

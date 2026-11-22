@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v278",
+    version: 278,
+    date: "Nov 22, 2026",
+    title: "Lobby and map fixes",
+    news: [
+      "Scrolling through the map list in Game Settings no longer brings up a loading screen.",
+      "For Sandbox: a saved board that already has its map goes straight in, with no map vote, and opening it brings its made map along.",
+      "For Sandbox: My maps' Play it works mid-game too, so you can change the board's map picture while playing, and the preview follows the map you picked.",
+    ],
+  },
+  {
     id: "v277",
     version: 277,
     date: "Nov 22, 2026",

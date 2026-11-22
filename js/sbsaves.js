@@ -625,6 +625,7 @@ async function click(e) {
       return toast(
         "That save couldn't be read on this device. Your other saves are fine.",
       );
+    await bringModeMap(R, sv); // (its own made map into the room first: it plays on it, no map vote, sbsave.js saveMap)
     R.send({
       t: "sbPick",
       save: { id: sv.id, name: sv.name, made: sv.made, v: sv.v, data: sv.data },

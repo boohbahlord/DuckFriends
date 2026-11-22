@@ -15,6 +15,7 @@ import { UMAP, UMAP_UIS, isUmap } from "./umaprules.js";
 import { MAPS } from "./maps.js";
 import { NWK_VARIANTS } from "./nwk.js";
 import { idbStore, req } from "./idbstore.js";
+import { sbOnBoard } from "./sandboxrules.js";
 
 /* ---------- the store ---------- */
 const DB = "duckfriends-maps",
@@ -90,6 +91,12 @@ export async function mapPixels(src) {
 
 /* ---------- into the room (the host's) ---------- */
 const host = (R) => !!R && R.state && R.state.hostId === R.me;
+/* the host can play a map from here: in the lobby, or mid-game in Sandbox on the board, whose map changes live (the
+   owner's, Nov 22 19:14Z: "WHY THE FUCK CAN I NOT CHANGE MAP IMAGE FOR BOARD!??!?!") */
+const canPlay = (R) =>
+  host(R) &&
+  (["lobby", "over"].includes(R.state.phase) ||
+    (sbOnBoard(R.state) && R.state.phase === "sandbox"));
 /* one map into the room (again, if it changed) */
 export function bringMap(R, m) {
   if (!host(R) || !m) return;
@@ -271,7 +278,7 @@ export function myMaps(R) {
   if (document.querySelector(".um-list-win")) return;
   const draw = async (w) => {
     const all = await listMaps(),
-      can = host(R) && ["lobby", "over"].includes(R.state.phase),
+      can = canPlay(R),
       cur = R && R.state.options.map;
     w.querySelector(".um-list").innerHTML = all.length
       ? all
@@ -324,11 +331,7 @@ export function myMaps(R) {
           if (!m) return draw(w);
           /* a tap on the map itself picks it at once, like Play it (the owner's, Nov 22: it showed its description and
              picked nothing), the same as a tap on a map in Game Settings */
-          if (
-            b
-              ? b.hasAttribute("data-play")
-              : host(R) && ["lobby", "over"].includes(R.state.phase)
-          ) {
+          if (b ? b.hasAttribute("data-play") : canPlay(R)) {
             bringMap(R, m);
             R.send({ t: "options", options: { map: m.id, mapPick: "" } });
             setTimeout(() => w.isConnected && draw(w), 200);
