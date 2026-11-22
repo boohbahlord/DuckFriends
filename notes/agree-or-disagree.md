@@ -7844,3 +7844,11 @@ Decision (Adam): function first, before B. 1) Phone UI scale and the top-right b
 "We don't have to make them have different see-throughs. That's a dangerous thing. We should consider making them to the transparency that agree or disagree was. And Mad God Justin doesn't need a board that's a single caller. His board can be maybe rainbow or slowly changes. Who knows?"
 
 Decision (Adam): one see-through level for every board in every mode, Agree or Disagree's (45%); the 42% on Shelter Sky & Null and Euclid's Squares goes. The solid tiles were every board mode (one rule for all, `.board .col`) on a map players made; the old rule listed built-in maps by name. Mad God Justin's board color: options to the owner before building.
+
+## Nov 22 02:57Z (owner, on a choice card)
+Picked "Slowly changing" for Mad God Justin's board: the whole field fades through the rainbow colors, one full turn about every 30 seconds, at the same see-through level as every board.
+
+## Nov 22 02:59Z (owner)
+"It's not just the lobby UI corner buttons. It's any corner buttons, because the screen of a phone itself is rounded. The GPU and what's displayed in the machine is not what the screen shows, because every phone is usually rounded at its corner. So when things are crammed to its corner of the screen on a phone, like it would be a monitor, then it ends up getting cut off when the UI is small, or even just somewhat in general. And it ends up making the player have to touch the very tipmost of their screen, which is incredibly unpleasant for reasons you could imagine. It feels crammed because that's the same phone I'm holding in my hands. I should have to stretch and pull my fingers out all the way to the very corner and click this tiny button that's smaller than a fraction of my thumb just to do something. UI scale is fine. Just move the UI for mobile towards not on the corner of the damn screen."
+
+Decision (Adam): on phones every corner-placed control (lobby, game top bar, windows' close buttons, the bottom bar's corner pieces, Hangout and the walking maps' buttons) moves inward through ONE shared inset (safe area plus a generous margin, a CSS variable), never per screen. The 90% phone UI floor from V242 (#959) is undone: "UI scale is fine". Noah.
