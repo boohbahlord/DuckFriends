@@ -1270,8 +1270,8 @@ export function roofHoleOver(x, y, z = 0) {
    building's inside never shows, its roof stays as it is; whoever is in there shows only as their outline (the owner's,
    Nov 17 17:41Z: "it will not make it transparent unless ur player is in it") */
 export const seenFrom = (x, y, inside, z) => wallsSee(x, y, inside, z);
-export function useMode(mode, map) {
-  const v = mode === "l4dd" ? (map === "downpour" ? "l4gs" : "l4") : "";
+export function useMode(hasL4map, map) {
+  const v = hasL4map ? (map === "downpour" ? "l4gs" : "l4") : "";
   if (v === variant) return;
   variant = v;
   rev++;
