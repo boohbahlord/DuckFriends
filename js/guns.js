@@ -6,6 +6,7 @@
 import { HANDGUN } from "./gamedefaults.js";
 import { ARM_SPEED, ARM_COOL, ARM_SWING, ARM_RELOAD } from "./armspeed.js";
 import { FLAME } from "./flamer.js";
+import { draws, drawCrit } from "./bowdraw.js";
 /* the weapons here, each of one kind (its slot): melee, ranged, special or the grenades. Melee swings twice as fast as
    anywhere else and hurts only mid-swing, in a bubble just past it (at: how far, r: how big); the pistol: 72 bullets in
    all, 8 a magazine; the bow: arrows that never run out (the owner's, Nov 18), one every 0.4 s; the dagger is thrown and falls to the floor; the shotgun a
@@ -432,7 +433,8 @@ for (const [g, ws] of Object.entries(DW_GROUPS))
    weapon's swings) a second, with no top. Only the double barrel counts its reload (critReload: 2 shells, then 2 s,
    about 0.78 a second). The cast iron pan keeps its own (crit: half its hits). A crit doubles the damage; it blows the
    head off only when it kills (the rules: l4ddrules.js strike, rules.js wounded, wounds.js WOUND_BREEDS). The
-   grenades, the grenade launcher, the flamethrower and the Laser Rifle never crit. Upgrades and Angelic: l4ddrules.js
+   grenades, the grenade launcher, the flamethrower and the Laser Rifle never crit. The bow's is its draw's (dr: how
+   many ms its arrow was drawn, bowdraw.js drawCrit), the one bow rule for every hit. Upgrades and Angelic: l4ddrules.js
    headOf */
 const CRIT_AT_ONE = 0.25;
 const NO_CRIT = ["grenade", "glauncher", "flamer", "laser"];
@@ -445,7 +447,8 @@ const perSecond = (A) =>
   A.critReload
     ? (A.mag * 1000) / (A.mag * A.cool + A.mag * A.shell)
     : ((A.burst || 1) * 1000) / A.cool;
-export const critOf = (w) => {
+export const critOf = (w, dr = 0) => {
+  if (draws(w)) return drawCrit(dr);
   const A = ARMS[w];
   if (!A || NO_CRIT.includes(w) || (A.kind !== "melee" && A.kind !== "ranged"))
     return 0;

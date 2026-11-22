@@ -1029,7 +1029,7 @@ function takes(s, o, by, w, t, now, H, how = "") {
   if (!hp && Math.random() < GM.DROP) H.drop(o.x, o.y);
 }
 /* a shot or a swing at (x, y): on one of them? (hit: a swing's list, each once) */
-function shot(s, by, x, y, now, w, rx, ry, from, hit, H) {
+function shot(s, by, x, y, now, w, rx, ry, from, hit, H, dr) {
   const gm = gmOf(s);
   if (!gm || !gm.gb.some((o) => !o.d)) return false;
   const near = gm.gb.filter(
@@ -1048,7 +1048,7 @@ function shot(s, by, x, y, now, w, rx, ry, from, hit, H) {
   s.hang.gm = { ...gm, gb: gm.gb.map((o) => ({ ...o })) }; // (its own copy: allies.js writes into it too)
   for (const o0 of near) {
     const o = s.hang.gm.gb.find((q) => q.i === o0.i),
-      t = H.takes(by, w);
+      t = H.takes(by, w, dr); // (dr: a drawn arrow's draw, bowdraw.js)
     if (!t) continue; // (a miss: it goes on by)
     takes(s, o, by, w, t, now, H);
     any = true;

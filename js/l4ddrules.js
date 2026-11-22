@@ -114,7 +114,7 @@ import { MERCHANTS, merchantById, merchantLook } from "./merchants.js";
 import { linesOf } from "./merchantlines.js";
 import { invuln } from "./hangout/death.js";
 import { kitSlots, gunSlotFor, ITEM_SLOTS } from "./kitslots.js";
-import { drawCrit, drawDmg, drawFast } from "./bowdraw.js";
+import { drawDmg, drawFast } from "./bowdraw.js";
 import { hOk, hLock, shotFeet, SAME_FLOOR, zOf, swingH } from "./heights.js";
 import { toPx, DUCK } from "./units.js";
 import { blast, reach, hitOf, REACH } from "./blast.js";
@@ -178,6 +178,7 @@ import {
   heading,
 } from "./zombiepath.js";
 import { CELL } from "./walkgrid.js";
+import { killLoot, layDrop, lootAt, REACH as LOOT_REACH } from "./l4ddloot.js";
 import { chairReach } from "./chair.js";
 import {
   zOk,
@@ -1055,8 +1056,8 @@ export const missOf = (w) =>
     : fastArm(w)
       ? MISS.FAST
       : MISS.SLOW;
-const headOf = (s, id, w) => {
-  const own = critOf(w);
+const headOf = (s, id, w, dr) => {
+  const own = critOf(w, dr); // (dr: a drawn arrow's draw, bowdraw.js)
   if (!own || (isSb(s) && !sbRule(s, "crit"))) return 0; // (Sandbox's Rules: crits off)
   if (isSb(s) && sbRule(s, "critp") >= 0) return sbRule(s, "critp") / 100; // (Sandbox's settings file: one crit chance for every weapon that crits, just as set)
   const holy = w !== "pan" && angelOf(s, id, w) ? 2 : 1; // (the pan has its own: not doubled)
@@ -1167,7 +1168,7 @@ export const DROP = {
   FOR: 45000, // ms Instant Kill, Double Points and Sale last, into the next round too (the owner's, Nov 16)
   SPEED_FOR: 60000, // ms Speed Boost lasts (the owner's, Nov 4)
   AMMO_W: 1.2, // once a drop comes, Max Ammo is this likely against 1 for each of the others (the owner's, Nov 4)
-  REACH: 70, // world px: how near a duck walks over one
+  REACH: LOOT_REACH, // world px: how near E takes one (l4ddloot.js), and a Sandbox orb is walked over
 };
 const DROP_NAMES = {
   kill: "Instant Kill",
@@ -1221,44 +1222,24 @@ function dropSpot(s) {
   }
   return null;
 }
-/* the drops due now come down, the old ones go, a duck walking over one takes it; and what was taken wears off */
-function dropTick(s, L, zs, now, T, ids) {
+/* where a zombie fell, or a bare spot near if that's out of reach */
+const fellAt = (s, z) =>
+  playable(z.x, z.y) ? [z.x, z.y] : dropSpot(s) || [z.x, z.y];
+/* the drops due now come down, the old ones go; and what was taken wears off */
+function dropTick(s, L, zs, now, T) {
   if (L.dq && L.dq.length && T >= L.dq[0][0]) {
     const [, k0] = L.dq[0];
     L.dq = L.dq.slice(1); // (L: the round, as l4Tick keeps it)
     L.due = [...(L.due || []), k0 || pickDrop(s)]; // (it waits for the next kill)
   }
-  const was = s.hang.l4dr || [];
-  let dr = was.filter((d) => now < d.until);
-  for (const d of [...dr]) {
-    const by = ids.find((id) => {
-      const p = s.pos[id];
-      return (
-        standing(s, id) &&
-        p &&
-        Math.hypot(p.x * W - d.x, p.y * H - d.y) < DROP.REACH
-      );
-    });
-    if (!by) continue;
-    dr = dr.filter((x) => x !== d);
-    takeDrop(s, d.k, by, zs, now, ids);
-  }
-  if (dr.length !== was.length) s.hang.l4dr = dr; // (only when one came or went: the state stays the same object)
+  const was = s.hang.l4dr || [],
+    dr = was.filter((d) => now < d.until); // (taken only with E: pickLoot)
+  if (dr.length !== was.length) s.hang.l4dr = dr; // (only when one went: the state stays the same object)
   /* a drop due: the next zombie killed (a Nuke taken just now too) drops it where it fell */
   const fell = zs.filter((z) => z.st === 3 && T - z.d <= L4.FELL_MS); // (killed in the last second)
   if (L.due && L.due.length && fell.length) {
-    const z = fell[Math.floor(Math.random() * fell.length)],
-      [x, y] = playable(z.x, z.y) ? [z.x, z.y] : dropSpot(s) || [z.x, z.y];
-    s.hang.l4dr = [
-      ...(s.hang.l4dr || []),
-      {
-        n: now,
-        k: L.due[0],
-        x: Math.round(x),
-        y: Math.round(y),
-        until: now + DROP.LIFE,
-      },
-    ];
+    const z = fell[Math.floor(Math.random() * fell.length)];
+    layDrop(s, L.due[0], ...fellAt(s, z), now, now + DROP.LIFE);
     L.due = L.due.slice(1);
   }
   const on = s.hang.l4on || {};
@@ -1272,7 +1253,17 @@ function dropTick(s, L, zs, now, T, ids) {
 /* the Nuke: each zombie it kills has a 5% chance of +250 more (the owner's, Nov 4) */
 const NUKE_CRIT = 0.05;
 /* what a drop does, for every duck */
-function takeDrop(s, k, by, zs, now, ids) {
+/* E near something on the ground (l4ddloot.js lootAt): a drop for everyone, or a weapon or an item into my slots, as
+   one the fireplace landed on (hand: the one in my hand) */
+function pickLoot(s, id, mx, my, hand, now) {
+  const d = lootAt(s, mx, my, now);
+  if (!d || (d.w && !give(s, id, d.w, hand))) return false;
+  s.hang.l4dr = s.hang.l4dr.filter((x) => x !== d);
+  if (d.w) addFx(s, { kind: "l4take", by: id, who: [], w: d.w, t: now });
+  else takeDrop(s, d.k, id, now, players(s));
+  return true;
+}
+function takeDrop(s, k, by, now, ids) {
   addFx(s, { kind: "l4drop", k, by, who: [], t: now });
   if (k === "kill" || k === "double")
     s.hang.l4on = { ...(s.hang.l4on || {}), [k]: now + DROP.FOR };
@@ -1770,6 +1761,7 @@ function l4Act(s, a, now) {
   if (isSurv(s) && ["box", "power", "pump", "angel"].includes(a.do))
     return false; // (Survival: no slot machine, no power, no pump, no Angel machine)
   if (a.do === "box") return fireplace(s, id, a, now, mx, my);
+  if (a.do === "pick") return pickLoot(s, id, mx, my, a.hand, now);
   if (a.do === "power") return powerAct(s, id, now, mx, my, PH);
   if (a.do === "pump") return powerPump(s, id, now, mx, my, PH);
   if (a.do === "angel") return angelAct(s, id, a, now, mx, my, PH);
@@ -1889,6 +1881,7 @@ function fireplace(s, id, a, now, mx, my) {
     kit = kitOf(s, id);
   if (!kit) return false;
   if (!b) {
+    if (boxNow(s, now)) return false; // (nobody spins while what it landed on is still there: it fades first, l4ddloot.js)
     const price = priceFor(s, id, "box");
     if (ptsOf(s, id) < price) return false;
     const w = fireRoll(s, id, kit);
@@ -2766,12 +2759,12 @@ function merchantShoots(s, zs, now) {
   }
 }
 /* a shot or a swing at (x, y) by duck `by` with weapon w: on him? (as wildHurt for Justin: 1 HP, a crit 2) */
-function merchantShot(s, by, x, y, now, w, rx, ry, from) {
+function merchantShot(s, by, x, y, now, w, rx, ry, from, dr) {
   const m = merchantOf(s);
   if (!m || m.st === "dead" || m.st === "jump" || !s.players[by]) return false;
   if (Math.hypot((m.x - x) / rx, (m.y - y) / ry) >= 1) return false;
   if (from && slabBetween(...from, m.x, m.y, heightAt(m.x, m.y))) return false;
-  const n = Math.random() < critOf(w) ? 2 : 1, // (a crit doubles it)
+  const n = Math.random() < critOf(w, dr) ? 2 : 1, // (a crit doubles it; dr: a drawn arrow's draw)
     head = n > 1 && m.hp <= n; // (a crit that kills him: his head bursts as a zombie's does, game.js draws it)
   if (n > 1)
     addFx(s, {
@@ -3225,17 +3218,17 @@ const svGun = (s, by, w, dmg0) => {
     ? Math.max(0.5, hundredths(dmg - SV_GUN_LESS))
     : dmg;
 };
-export function zombieTakes(s, by, w) {
+export function zombieTakes(s, by, w, dr = 0) {
   const A = ARMS[w];
   if (!A) return { dmg: 1, crit: false };
   const beam = w === "laser";
   if (!beam && Math.random() < missOf(w)) return null;
-  const crit = !beam && Math.random() < headOf(s, by, w),
+  const crit = !beam && Math.random() < headOf(s, by, w, dr),
     all = A.dmg === "all" || w === "grenade" || w === "glauncher";
   return {
     dmg: all
       ? ALL_HP
-      : (svGun(s, by, w, dmgOf(A)) +
+      : (svGun(s, by, w, dmgOf(A) + drawDmg(dr)) +
           (!beam && angelOf(s, by, w) ? ANGEL.DMG : 0)) *
         (crit ? 2 : 1) *
         (A.kind === "melee" ? sizeOf(s, by) : 1), // (a melee's, times its swinger's Size: push.js)
@@ -3268,13 +3261,14 @@ function strike(s, z, dmg, crit, by, w = "", now = 0) {
       ...(head ? {} : { m: 1 }),
     }); // (every crit shows a small CRIT; m: only the mark, it didn't kill: Adam, Nov 21 18:31Z)
   addPts(s, by, (head ? PTS.HEAD : PTS.HIT * took) * (on.double ? 2 : 1));
-  if (z.hp <= 0) {
+  if (z.hp <= 0 && by && s.players[by]) {
     /* the zombies each duck killed this game (the overall stats' Zombies killed: l4dd.js record) */
-    if (by && s.players[by])
-      s.hang.l4kz = {
-        ...(s.hang.l4kz || {}),
-        [by]: ((s.hang.l4kz || {})[by] || 0) + 1,
-      };
+    s.hang.l4kz = {
+      ...(s.hang.l4kz || {}),
+      [by]: ((s.hang.l4kz || {})[by] || 0) + 1,
+    };
+    const w = !isSb(s) && killLoot(bagsNow()); // (now and then a weapon or an item where it fell, l4ddloot.js; Sandbox lays its own loot)
+    if (w) layDrop(s, "arm", ...fellAt(s, z), now + 0.5, now + DROP.LIFE, w);
   }
   return z.hp <= 0;
 }
@@ -3298,9 +3292,9 @@ function mark(s, z, code) {
     had = zw[z.i] || "";
   if (!had.includes(code)) s.hang.zw = { ...zw, [z.i]: had + code };
 }
-/* a crit, now and then (the weapon's chance and the duck's Accuracy): strike doubles it */
+/* a crit, now and then (the weapon's chance, a drawn arrow's its draw's, and the duck's Accuracy): strike doubles it */
 const critRoll = (s, by, w, sh) =>
-  Math.random() < (sh && sh.dr != null ? drawCrit(sh.dr) : headOf(s, by, w)); // (a drawn arrow: its draw's, bowdraw.js)
+  Math.random() < headOf(s, by, w, sh && sh.dr);
 /* a miss, now and then (missOf): the hit doesn't land, and every screen shows "missed" over that zombie */
 function missed(s, by, w, z, now) {
   if (Math.random() >= missOf(w)) return false;
@@ -3395,7 +3389,7 @@ function laser(s, id, m, px, py, dx, dy, hz, now) {
   }
   for (const z of hits) {
     const dmg = holy && Math.random() < ANGEL.LASER.two ? 2 : A.dmg;
-    if (strike(s, z, dmg, false, id, "laser")) {
+    if (strike(s, z, dmg, false, id, "laser", now)) {
       mark(s, z, "f0");
       die(z, T);
     }
@@ -3502,7 +3496,7 @@ function catchFire(s, z, by, now, T) {
       }; // (a quarter second at a time: not a new object every puff)
     return false;
   }
-  if (strike(s, z, 1, false, by)) {
+  if (strike(s, z, 1, false, by, "", now)) {
     die(z, T);
     mark(s, z, "f0");
     return true;
@@ -3665,7 +3659,7 @@ export function fireTick(s, zs, now, T, p4) {
       continue;
     } // (gone, out, or in the water: put out)
     if (now >= f[1]) {
-      if (strike(s, z, 1, false, f[2])) die(z, T);
+      if (strike(s, z, 1, false, f[2], "", now)) die(z, T);
       else fz[k] = [f[0], f[1] + BURN.EVERY, ...f.slice(2)];
     }
   }
@@ -3811,15 +3805,16 @@ function wildHurt(
   from = null,
   npc = true,
   only = null,
+  dr = 0,
 ) {
-  if (merchantShot(s, by, x, y, now, w, rx, ry, from)) return true; // (the merchant in its way: merchantShot)
-  if (npc && L4_HOOKS.npc && L4_HOOKS.npc(s, by, x, y, now, w, rx, ry, from))
-    return true; // (one of Sandbox's NPCs in its way: sbcabin.js)
+  const at = [s, by, x, y, now, w, rx, ry, from]; // (what every one in its way is hit with; dr: a drawn arrow's draw)
+  if (merchantShot(...at, dr)) return true; // (the merchant in its way: merchantShot)
+  if (npc && L4_HOOKS.npc && L4_HOOKS.npc(...at, null, dr)) return true; // (one of Sandbox's NPCs in its way: sbcabin.js)
   if (
     npc &&
     L4_HOOKS.gm &&
     s.hang.gm &&
-    L4_HOOKS.gm.shot(s, by, x, y, now, w, rx, ry, from, null, gmHelp(s, now))
+    L4_HOOKS.gm.shot(...at, null, gmHelp(s, now), dr)
   )
     return true; // (one of Survival's gunmen in its way: gunmenrules.js)
   for (const id of only ? [only] : wilds(s)) {
@@ -3830,7 +3825,7 @@ function wildHurt(
     if (Math.hypot((px - x) / rx, (py - y) / ry) >= 1) continue;
     if (from && slabBetween(...from, px, py, zOf(p))) continue;
     /* a crit (guns.js critOf, a weapon's chance as on any duck) doubles it, and blows his head off if it puts him down */
-    const crit = Math.random() < critOf(w);
+    const crit = Math.random() < critOf(w, dr);
     wildDown(s, id, by, now, w, false, crit ? ["x0"] : null, crit ? 2 : 1);
     if (crit)
       addFx(s, {
@@ -3879,17 +3874,7 @@ function wildDown(s, id, by, now, w, all, codes, dmg = 1) {
 /* Justin's pocket change: an orb of gold coins lies where he fell, like a drop (the first duck over it takes it, for
    itself: POCKET_CHANGE.POINTS, takeDrop), and the chat says so */
 function pocketChange(s, id, now) {
-  const [x, y] = toPx(s.pos[id]);
-  s.hang.l4dr = [
-    ...(s.hang.l4dr || []),
-    {
-      n: now,
-      k: "coins",
-      x: Math.round(x),
-      y: Math.round(y),
-      until: now + DROP.LIFE,
-    },
-  ];
+  layDrop(s, "coins", ...toPx(s.pos[id]), now, now + DROP.LIFE);
   say(s, POCKET_CHANGE.SAYS);
 }
 /* the flamethrower's fire on Justin out there with no weapon: lit as a duck is (1 HP as it's lit, burning BURN.P ms, and
@@ -4196,14 +4181,9 @@ export function l4Shots(s, now) {
           z.st !== 3 &&
           Math.hypot((z.x - x) / (26 * big), (z.y - y) / (22 * big)) < 1 &&
           hOk(sh, zOf(z, "zombie"), z.x, z.y, sh.x0 * W, sh.y0 * H) &&
-          !hLock(sh, zOf(z, "zombie")); // (at its height, the first one setting it: heights.js)
-      if (
-        wildHurt(s, sh.by, x, y, now, w, 26, 22, [
-          sh.x0 * W,
-          sh.y0 * H,
-          sh.hz || 0,
-        ])
-      ) {
+          !hLock(sh, zOf(z, "zombie")), // (at its height, the first one setting it: heights.js)
+        fr = [sh.x0 * W, sh.y0 * H, sh.hz || 0]; // (from the shooter, for the one rule: nothing solid between)
+      if (wildHurt(s, sh.by, x, y, now, w, 26, 22, fr, true, null, sh.dr)) {
         gone = true; // (Justin out in Downpour with no weapon: it hit him)
         endX = x;
         endY = y;
@@ -4379,7 +4359,7 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
       zs,
       (z) => z.st !== 3 && [z.x, z.y, zOf(z, "zombie")],
       (z, n) => {
-        if (!strike(s, z, n.dmg, n.crit, sh.by)) return true; // (its ring's damage, a crit twice: blast.js; it lives)
+        if (!strike(s, z, n.dmg, n.crit, sh.by, "", now)) return true; // (its ring's damage, a crit twice: blast.js; it lives)
         die(z, T);
         mark(s, z, "g0"); // (every chunk, cuts and big holes: l4ddart.js)
         gore.push([Math.round(z.x), Math.round(z.y)]);
@@ -4656,7 +4636,7 @@ function l4Tick(s, now) {
   if (s.hang.l4.wait && !isSb(s)) {
     if (waitTick(s, now)) return true;
     const Lw = { ...s.hang.l4 };
-    dropTick(s, Lw, zs, now, T, ids);
+    dropTick(s, Lw, zs, now, T);
     s.hang.l4 = Lw;
     powerTick(s, zs, now, ids, PH);
     return true;
@@ -4706,7 +4686,7 @@ function l4Tick(s, now) {
   if (isSurv(s)) merchantShoots(s, zs, now); // (and an armed merchant fighting back)
   nukeTick(s, zs, now, ids);
   boltTick(s, zs, now, ids);
-  dropTick(s, L2, zs, now, T, ids);
+  dropTick(s, L2, zs, now, T);
   powerTick(s, zs, now, ids, PH);
   const ad = s.hang.l4ad;
   if (ad && Object.values(ad).some((u) => u <= now))
@@ -4801,21 +4781,11 @@ export function gmHelp(s, now) {
       if (strike(s, z, dmg, crit, null, w, now)) die(z, T);
     }, // (a zombie: nobody's points; a crit doubles it, and takes its head if it kills)
     pts: (id, n) => addPts(s, id, n),
-    takes: (by, w) => zombieTakes(s, by, w),
+    takes: (by, w, dr) => zombieTakes(s, by, w, dr),
     up: (id) => standing(s, id),
     wild: (id) => isWild(s, id),
     drop(x, y) {
-      const k = pickDrop(s);
-      s.hang.l4dr = [
-        ...(s.hang.l4dr || []),
-        {
-          n: now,
-          k,
-          x: Math.round(x),
-          y: Math.round(y),
-          until: now + DROP.LIFE,
-        },
-      ];
+      layDrop(s, pickDrop(s), x, y, now, now + DROP.LIFE);
     }, // (a special where one fell: the owner's, "Special drops can still happen from criminals or soldiers")
     edge() {
       syncMap();
