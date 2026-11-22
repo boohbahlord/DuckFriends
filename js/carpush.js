@@ -72,6 +72,16 @@ export function carsBlast(s, near, x, y) {
     return [ax / d, ay / d, pushOf(s, "grenade") * DUCK];
   });
 }
+/* a melee swing k's bubble (r world px round (x, y)): each car in it, once a swing (k.hit), along the swing (k.dx,
+   k.dy), as far as it shoves a duck (px world px: l4ddrules.js meleeHits) */
+export function carsSwing(s, x, y, r, k, px) {
+  const d = Math.hypot(k.dx, k.dy) || 1;
+  carsPushed(s, x, y, (i, qx, qy) => {
+    if (Math.hypot(qx - x, qy - y) > r || k.hit.includes("c" + i)) return null;
+    k.hit.push("c" + i);
+    return [k.dx / d, k.dy / d, px];
+  });
+}
 /* … and on my screen, each frame (on Downpour: every mode there is Dead Ducks Arcade's, registry.js): the cars' parts at
    their depth now (world.js set it when it made them) */
 activity({
