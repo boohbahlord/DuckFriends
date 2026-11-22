@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v273",
+    version: 273,
+    date: "Nov 22, 2026",
+    title: "Trees as tall as they look",
+    news: [
+      "For Dead Ducks Arcade (Downpour): each tree is as tall as it looks and its trunk stops you where its foot is drawn; you can't stand on a trunk's top.",
+    ],
+  },
+  {
     id: "v272",
     version: 272,
     date: "Nov 22, 2026",

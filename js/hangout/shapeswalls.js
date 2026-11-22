@@ -6,7 +6,8 @@ import * as GS from "./stationmap.js";
 import * as SA from "./stationart.js";
 import { heapBricks } from "./bricks.js";
 
-import { C, hash, n1, part } from "./shapesbase.js";
+import { C, n1, part } from "./shapesbase.js";
+import { hash } from "../random.js";
 
 /* ---------- the walls: log walls cut away inside; outside, the cabin's own drawing covers them ---------- */
 let WALLS = [],
