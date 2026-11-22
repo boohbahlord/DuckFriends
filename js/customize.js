@@ -5,15 +5,7 @@
    below a line come
    Name, Card and Colors. Each opens a grid of small picture tiles, three to a row; Colors opens the list of what can be
    colored beside a grid of swatches. Every change shows at once, is kept, and goes to the room you are in. */
-import {
-  ARROW,
-  BULLET,
-  CHAIR,
-  GRENADE,
-  ROUNDS_ART,
-  TRACE,
-  ZEBRA,
-} from "./gunart.js";
+import { ARROW, CHAIR, GRENADE, roundOf, TRACE, ZEBRA } from "./gunart.js";
 import { profile, save, NAME_OK, cleanName, cleanStats } from "./store.js";
 import {
   openWindow,
@@ -76,7 +68,7 @@ import { who } from "./who.js";
 import { NAV_HINTS, items } from "./keynav.js";
 import { unlocked, isLocked, lockHint } from "./unlocks.js";
 import { touchOnly } from "./pointer.js";
-import { BOARD_GUNS, AUTO, BOARD_WEAPONS } from "./guns.js";
+import { BOARD_GUNS, AUTO, BOARD_WEAPONS, shotCal } from "./guns.js";
 import { pxWords } from "./pxtext.js";
 import { botDuck, BOT_DUCKS, any } from "./botduck.js";
 import { weaponName } from "./l4ddrules.js";
@@ -189,8 +181,6 @@ export function setName(raw) {
   return true;
 }
 
-/* the guns whose round has its own name (the double barrel shoots slugs) */
-const ROUND_OF = { dbarrel: "slug" };
 /* Jack in a Box and Dat Boi (styles.js lists the pages their styles take): on a duck page one doesn't take, its tiles
    show the duck he'd go back to, and picking one turns him back */
 const DUCK_PAGES = ["hat", "face", "eyes", "beak", "outfit", "body", "skin"];
@@ -542,7 +532,7 @@ export function openCustomize(page = lastPage, opts = {}) {
             if (id === "handgun")
               els.push(
                 el(
-                  `<div class="spe spe-shot" style="left:${(x + w.width * 0.62).toFixed(0)}px;top:${(y - w.width * 0.48).toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - x + 40)}px">${BULLET(colorsOf(duckNow(), "handgun")[2])}</div>`,
+                  `<div class="spe spe-shot" style="left:${(x + w.width * 0.62).toFixed(0)}px;top:${(y - w.width * 0.48).toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - x + 40)}px;width:${roundOf(id, colorsOf(duckNow(), "handgun")[2]).w}px">${roundOf(id, colorsOf(duckNow(), "handgun")[2]).svg}</div>`,
                 ),
               );
             /* the dagger: thrown from the beak, it spins up and over and falls away */
@@ -625,13 +615,13 @@ export function openCustomize(page = lastPage, opts = {}) {
                     `<div class="spe spe-shot spe-lgren" style="left:${sx}px;top:${sy}px;--s:${w.width.toFixed(0)}px;--dx:${far}px">${GRENADE(colorsOf(duckNow(), "grenade"), false)}</div>`,
                   ),
                 );
-              else if (ROUNDS_ART[ROUND_OF[id] || id])
+              else if (shotCal(id))
                 for (
                   let i = 0;
                   i < (AUTO.includes(id) || id === "burst" ? 3 : 1);
                   i++
                 ) {
-                  const r = ROUNDS_ART[ROUND_OF[id] || id];
+                  const r = roundOf(id);
                   els.push(
                     el(
                       `<div class="spe spe-shot spe-round" style="left:${sx}px;top:${sy}px;--dx:${far}px;--w:${r.w}px;animation-delay:${0.2 + i * (id === "burst" ? 0.07 : 0.12)}s">${r.svg}</div>`,

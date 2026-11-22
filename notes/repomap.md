@@ -40,7 +40,7 @@ color.js 165 choosing a color
 corners.js 94 full screen
 court.js 229 Lawyering: what the screen
 crowd.js 242 crowds: walkers never stand
-customize.js 1776 Customize: the Armory
+customize.js 1766 Customize: the Armory
 datboi.js 115 here come dat boi
 democracy.js 233 Democracy of Ducklings:
 dock.js 73 the docks: where Notes
@@ -61,7 +61,7 @@ friends.js 236 friends
 front.js 151 the front page
 fx.js 1200 the effects, drawn as
 fxmotion.js 234 how a held weapon
-game.js 4792 the game screen
+game.js 4781 the game screen
 gameact.js 546 the action window and
 gameannounce.js 212 The cloud's words and
 gameboard.js 589 the board: each mode's
@@ -81,12 +81,12 @@ ground.js 53 what a duck walks
 gspreview.js 86 Game Settings: the pictures
 gssettings.js 773 Game Settings: every setting,
 gstext.js 200 Game Settings: what a
-gunart.js 437 every weapon, drawn: one
+gunart.js 473 every weapon, drawn: one
 gunmen.js 110 the gunmen's looks
 gunmenrules.js 1158 Survival: the gunmen
 gunmenview.js 135 Survival: the gunmen on
 gunparts.js 15 the pieces every weapon's
-guns.js 642 every weapon's numbers: one
+guns.js 655 every weapon's numbers: one
 hats.js 1096 hats
 heights.js 69 a shot's height, Doom's
 helppages.js 1498 the command line's Help

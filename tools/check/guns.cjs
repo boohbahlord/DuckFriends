@@ -177,14 +177,19 @@ const INIT = fs.readFileSync(
       out.icons = H(
         per((w) => [AR.weaponIcon(w, duck), AR.weaponIcon(w, wrench)]),
       );
-      out.guns = H([GA.GUNS, GA.ROUNDS_ART, GA.TRACE]);
+      out.guns = H([
+        GA.GUNS,
+        per((w) => GA.roundOf(w, "#a")), // (each one's bullet: its caliber's, K5)
+        GA.roundOf("pellet"),
+        GA.TRACE,
+      ]);
       const ART = { ...SP, ...GA }; // (the drawings: gunart.js since there is one)
       out.bits = H([
         ART.SHOTGUN,
         ART.GRENADE(["#a", "#b", "#c"]),
         SP.pistolIcon(duck),
         SP.daggerHTML(duck),
-        ART.BULLET(),
+        GA.roundOf("handgun"),
         SP.dualPistolHTML(duck),
         SP.ammoHTML(3),
       ]);
