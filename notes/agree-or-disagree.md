@@ -7970,3 +7970,7 @@ this is obv as to why, same with slops btw but not ladders
 
 walls stop rain over top of them wherever they extned, so rain doesnt fall through it, regardless, same for floors/cielings
 Decision: added to the next-week plan as N16 (rain).
+
+## Owner, 18:04Z Nov 22 (edit, one more line to the 17:58Z plan message, word for word)
+Walls like floors or cielings have elevation levels, and thus can be stood upon
+Decision: added to the next-week plan as N17.
