@@ -217,7 +217,7 @@ scrules.js 428 the rules of Story Chain
 secret.js 79 secrets between two browsers
 seriatbible.js 108 The Seriat bible in the
 seriattheme.js 63 Seriat's and the command line's
-settings.js 306 Settings
+settings.js 298 Settings
 sfxlist.js 162 the sound files
 shared.js 497 Sandbox Phase 7: Shared, the
 shell.js 1127 the command line: a small
