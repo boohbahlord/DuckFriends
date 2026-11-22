@@ -184,7 +184,7 @@ pxtext.js 263 emoji and tooltips in
 quack.js 294 Who is the Quack?:
 quackrules.js 789 the rules of Who
 rainbowskin.js 116 the rainbow skin
-random.js 12 the two random helpers
+random.js 18 the two random helpers
 report.js 114 Report Bug or Suggest
 roomrules.js 368 room governance: groups and
 rooms.js 256 Play: create a room,
@@ -312,7 +312,7 @@ flicker.js 83 now and then a
 ghosts.js 111 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck
 lamp.js 71 the lamps: the example
-layout.js 1192 Duck Cabin: the world
+layout.js 1203 Duck Cabin: the world
 layoutbase.js 78 Duck Cabin: the world's
 layoutheights.js 396 Duck Cabin: the heights
 npc.js 495 Duck Cabin's characters: how
@@ -332,25 +332,25 @@ rubberducks.js 183 the little rubber ducks
 rules.js 88 Hangout's rules: s.hang and
 seats.js 440 the couches, the campfire's
 shadowduck.js 254 the shadow duck
-shapes.js 944 Duck Cabin's props, drawn:
-shapesbase.js 59 Duck Cabin's props, drawn:
+shapes.js 931 Duck Cabin's props, drawn:
+shapesbase.js 54 Duck Cabin's props, drawn:
 shapesground.js 423 Duck Cabin's props, drawn:
-shapeswalls.js 317 Duck Cabin's props, drawn:
+shapeswalls.js 318 Duck Cabin's props, drawn:
 soccer.js 508 soccer: one ball on
 sounds.js 17 Duck Cabin's sounds
 stage.js 134 the stage: half an
-stationart.js 51 Downpour's things: the drawings
+stationart.js 50 Downpour's things: the drawings
 stationbase.js 67 Downpour's drawings: the shared
 stationcars.js 513 Downpour's drawings: the cars,
-stationmap.js 1201 Dead Ducks Arcade's second
+stationmap.js 1265 Dead Ducks Arcade's second
 stationparts.js 455 Downpour's drawings: the gas
 stationroof.js 340 Downpour's drawings: the roofs,
-stationtrees.js 616 Downpour's drawings: the swamp's
+stationtrees.js 599 Downpour's drawings: the swamp's
 trampoline.js 142 the trampoline
 tv.js 117 the TV: seven channels,
 vehicles.js 116 what a duck stands
 water.js 442 the pool: ducks in
-world.js 1751 Hangout on the screen:
+world.js 1750 Hangout on the screen:
 
 ## js/pxm/
 board-light.js 7 the menus' background in

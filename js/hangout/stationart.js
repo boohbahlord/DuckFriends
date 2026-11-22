@@ -34,7 +34,6 @@ export {
   towerSVG,
 } from "./stationcars.js";
 export {
-  SWAMP_CROWN,
   SWAMP_KINDS,
   fallenSVG,
   swampCrownSVG,
