@@ -1652,7 +1652,8 @@ p.bad {
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: end;
   gap: 0.8rem;
-  padding: 0.25rem max(0.6rem, 1vw) max(0.35rem, env(safe-area-inset-bottom));
+  padding: 0.25rem max(0.6rem, 1vw)
+    max(0.35rem, env(safe-area-inset-bottom), var(--cin-b, 0px));
 }
 .bbar-l {
   display: flex;
@@ -2436,7 +2437,7 @@ textarea.note-glow {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.3rem max(0.6rem, 1vw);
+  padding: max(0.3rem, var(--cin-t, 0px)) max(0.6rem, 1vw) 0.3rem; /* (--cin-t: a phone's corners) */
 }
 .gbar-l {
   display: flex;
@@ -2736,7 +2737,7 @@ html:not(.keyboard) .game .gbar > .mbar {
 html:not(.keyboard) .game .gbar {
   grid-template-areas: "l r";
   row-gap: 0;
-  padding-block: 0.2rem;
+  padding-block: max(0.2rem, var(--cin-t, 0px)) 0.2rem;
 } /* (no row left for the music bar, and less room above and below the buttons) */
 .gact {
   display: flex;
@@ -7988,7 +7989,7 @@ html.still .spe-bone .bone-slide {
   --slot: 2.05rem;
   position: absolute;
   left: calc(50% - var(--step) - var(--slot) * 0.66);
-  bottom: max(0.35rem, env(safe-area-inset-bottom));
+  bottom: max(0.35rem, env(safe-area-inset-bottom), var(--cin-b, 0px));
   display: none;
   align-items: center;
   gap: 0.4rem;
@@ -17771,10 +17772,14 @@ html.moving .hpm-ammo.rl {
     translate: -50% 0;
   }
   html:not(.keyboard) .bbar:has(.hpm-me:not(.gone)) {
-    padding-bottom: calc(max(0.35rem, env(safe-area-inset-bottom)) + 1.95rem);
+    padding-bottom: calc(
+      max(0.35rem, env(safe-area-inset-bottom), var(--cin-b, 0px)) + 1.95rem
+    );
   }
   html:not(.keyboard) .bbar:has(.hpm-me:not(.gone)) .sp-phone {
-    bottom: calc(max(0.35rem, env(safe-area-inset-bottom)) + 1.95rem);
+    bottom: calc(
+      max(0.35rem, env(safe-area-inset-bottom), var(--cin-b, 0px)) + 1.95rem
+    );
   }
 }
 @media (max-width: 760px) {
@@ -17787,10 +17792,14 @@ html.moving .hpm-ammo.rl {
     translate: -50% 0;
   }
   .bbar:has(.hpm-me:not(.gone)) {
-    padding-bottom: calc(max(0.35rem, env(safe-area-inset-bottom)) + 1.95rem);
+    padding-bottom: calc(
+      max(0.35rem, env(safe-area-inset-bottom), var(--cin-b, 0px)) + 1.95rem
+    );
   }
   .bbar:has(.hpm-me:not(.gone)) .sp-phone {
-    bottom: calc(max(0.35rem, env(safe-area-inset-bottom)) + 1.95rem);
+    bottom: calc(
+      max(0.35rem, env(safe-area-inset-bottom), var(--cin-b, 0px)) + 1.95rem
+    );
   }
 }
 @media (orientation: landscape) and (max-height: 520px) {
@@ -17803,7 +17812,11 @@ html.moving .hpm-ammo.rl {
   }
   .bbar:has(.hpm-me:not(.gone)),
   html:not(.keyboard) .bbar:has(.hpm-me:not(.gone)) {
-    padding-bottom: max(0.35rem, env(safe-area-inset-bottom));
+    padding-bottom: max(
+      0.35rem,
+      env(safe-area-inset-bottom),
+      var(--cin-b, 0px)
+    );
   }
 } /* (a phone on its side: one short row, the meter in it beside the slider) */
 /* a phone standing up, in a game: the buttons' row on top; under it Jumps (and Justin Kills) at the left over Notes and
@@ -17838,11 +17851,15 @@ html.moving .hpm-ammo.rl {
   }
   .game .bbar:has(.hpm-me:not(.gone)),
   html:not(.keyboard) .game .bbar:has(.hpm-me:not(.gone)) {
-    padding-bottom: max(0.35rem, env(safe-area-inset-bottom));
+    padding-bottom: max(
+      0.35rem,
+      env(safe-area-inset-bottom),
+      var(--cin-b, 0px)
+    );
   }
   .game .bbar:has(.hpm-me:not(.gone)) .sp-phone,
   html:not(.keyboard) .game .bbar:has(.hpm-me:not(.gone)) .sp-phone {
-    bottom: max(0.35rem, env(safe-area-inset-bottom));
+    bottom: max(0.35rem, env(safe-area-inset-bottom), var(--cin-b, 0px));
   }
 }
 /* on a computer and on a phone on its side, never a phone standing up (the owner's, Nov 20 18:09Z: "healthbar ui and
@@ -19911,18 +19928,49 @@ html.phone-land .lobby-left > .lmenu {
 html.phone-land .lobby-left > .lmenu-info {
   grid-area: info;
 }
-/* a phone on its side has rounded corners and a case around them: the corner pieces (the top bar's pause, the bottom bar's
-   health meter, Notes at the bottom left, the docks) come in from the screen's edge (the owner's, Nov 21 18:59Z) */
-html.phone-land .gbar,
-html.phone-land .bbar {
-  padding-left: max(1.8rem, env(safe-area-inset-left));
-  padding-right: max(1.8rem, env(safe-area-inset-right));
+/* ---------- a phone's corners ----------
+   A phone's screen is rounded at its corners, and a case covers them more: whatever sits in a corner is cut off or has to
+   be tapped at its very tip. The owner's, Nov 22 02:59Z: "It's not just the lobby UI corner buttons. It's any corner
+   buttons, because the screen of a phone itself is rounded ... Just move the UI for mobile towards not on the corner of
+   the damn screen." So on a phone, every piece that sits in a screen corner keeps this far from the screen's edges (in
+   px, the same at every UI scale, plus the notch's or the home bar's safe area). One set for everything: the pieces below
+   read it, never their own numbers. On its side the rounding is at the short ends, so the sides get more */
+html.phone {
+  --cin-t: calc(16px + env(safe-area-inset-top, 0px));
+  --cin-b: calc(16px + env(safe-area-inset-bottom, 0px));
+  --cin-l: calc(22px + env(safe-area-inset-left, 0px));
+  --cin-r: calc(22px + env(safe-area-inset-right, 0px));
 }
-html.phone-land .dock-l {
-  padding-left: max(1.8rem, env(safe-area-inset-left));
+html.phone-land {
+  --cin-t: calc(12px + env(safe-area-inset-top, 0px));
+  --cin-b: calc(12px + env(safe-area-inset-bottom, 0px));
+  --cin-l: calc(32px + env(safe-area-inset-left, 0px));
+  --cin-r: calc(32px + env(safe-area-inset-right, 0px));
 }
-html.phone-land .dock-r {
-  padding-right: max(1.8rem, env(safe-area-inset-right));
+/* the game's top bar (the stage's name, the music, full screen, players, settings, pause) and the bottom bar (Notes, the
+   chat's ABC, the hotbar, the health meter) */
+html.phone :is(.gbar, .bbar) {
+  padding-left: var(--cin-l);
+  padding-right: var(--cin-r);
+} /* (their tops and bottoms read --cin-t and --cin-b in their own rules, which differ by screen) */
+/* the docks at the sides, the lobby's top right (its music, full screen, pause and leave), the vote and Select windows,
+   and every window: a window as big as the screen keeps its × off the corner */
+html.phone .dock-l {
+  padding-left: var(--cin-l);
+}
+html.phone .dock-r {
+  padding-right: var(--cin-r);
+}
+html.phone .lbar {
+  padding: var(--cin-t) var(--cin-r) 0;
+}
+html.phone .vt {
+  padding-top: var(--cin-t);
+  padding-left: var(--cin-l);
+  padding-right: var(--cin-r);
+}
+html.phone .win-back {
+  padding: var(--cin-t) var(--cin-r) var(--cin-b) var(--cin-l);
 }
 /* a phone held upright: the full-screen button joins the top right, so the buttons sit a little closer and smaller,
    leaving the stage's name about the room it had */
@@ -20013,12 +20061,12 @@ html.map-is-nwk::before {
    top": the glass's case and its dark rim covered the top 6 px, where the top bar's buttons begin. The bar starts
    below them */
 html.map-is-nwk .gbar {
-  padding-top: calc(4.8px + var(--nk-bez) + 4px);
+  padding-top: max(calc(4.8px + var(--nk-bez) + 4px), var(--cin-t, 0px));
 }
 /* on a touch screen the bar's thinner padding (html:not(.keyboard) .game .gbar) won over it, and the buttons' tops sat
    under the glass's rim again: the owner's "little bottom pieces are clipped" sweep, Nov 20 */
 html.map-is-nwk:not(.keyboard) .game .gbar {
-  padding-top: calc(0.2rem + var(--nk-bez) + 2px);
+  padding-top: max(calc(0.2rem + var(--nk-bez) + 2px), var(--cin-t, 0px));
 }
 /* the scanlines, with the faintest flicker */
 html.map-is-nwk::after {
