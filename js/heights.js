@@ -39,11 +39,15 @@ export const zOf = (b, k = "body", now) => WAYS[k](b, now);
 /* two bodies near enough in height for a flame or a swing to reach from one to the other (feet, world px) */
 const NEAR_H = 48;
 export const nearH = (za, zb) => Math.abs(za - zb) <= NEAR_H;
-/* does a swing reach a body at its height? Only within the swinger's own height (the owner's, Nov 21 15:56Z: "if a
-   duck is, let's say, a height of 0.6, a melee weapon that's swung can only hit things that are within its height of 0
-   or 0.6 elevation ... Any melee works like that"): the body, its feet tz up to tz + th, overlaps the swinger's, its
-   feet sz up to sz + sh (world px; a duck is DUCK tall, about 0.6 of an elevation, times its Size) */
-export const swingH = (sz, sh, tz, th = DUCK) => tz <= sz + sh && tz + th >= sz;
+/* do two bodies meet in height? The body b, its feet bz up to bz + bh, overlaps a's, its feet az up to az + ah (world
+   px; a duck is DUCK tall, about 0.6 of an elevation, times its Size). One rule for whatever two bodies do to each
+   other on the floor plan: a swing reaches only within the swinger's own height (the owner's, Nov 21 15:56Z: "a melee
+   weapon that's swung can only hit things that are within its height of 0 or 0.6 elevation ... Any melee works like
+   that"), and two bodies walk into each other only where their heights overlap (Nov 22 18:20Z: "if I'm on ground
+   level 2, I don't get stuck because there's a zombie on ground level 1 or 0 ... the only way you both collide into
+   each other is when your hitboxes aren't able to pass"): push.js meets, zombies.js stepZombie */
+export const overlapH = (az, ah, bz, bh = DUCK) =>
+  bz <= az + ah && bz + bh >= az;
 /* can shot sh hit a target whose feet are at tz, at (tx, ty), world px? (its shooter at (sx, sy), world px; leave
    them out where there are no roofs) */
 export function hOk(sh, tz, tx, ty, sx, sy) {

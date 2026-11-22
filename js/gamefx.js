@@ -27,6 +27,7 @@ import { CHAIR, TRACE } from "./gunart.js";
 import { el, $ } from "./ui.js";
 
 import { isLaw, KB_LAND } from "./rules.js";
+import { modeOf } from "./modes.js";
 
 import { W as HW, H as HH } from "./hangout/layout.js";
 
@@ -623,7 +624,8 @@ export function playFx(f) {
     }
     sfx.teleport();
   } else if (f.kind === "hitmark") {
-    // a hit on Justin, his double (the same marker: the owner's): the hitmarker
+    // a hit on Justin, his double (the same marker: the owner's): the hitmarker, only where the mode has them (modes.js hitMarks)
+    if (!modeOf(s.options.mode).hitMarks) return;
     const at = geo.hang
         ? world.place({ x: f.x, y: f.y }, f.hz || 0)
         : place({ x: f.x, y: f.y }, 0, 1),

@@ -20335,21 +20335,25 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
     filter: drop-shadow(0 0 0.45rem #f2d27aee) drop-shadow(0 0 0.1rem #fff3c2cc);
   }
 }
-/* a hot barrel's end: a soft round glow, its color and size from how hot (barrelheat.js) */
+/* a hot barrel's end: a glow made of pixels (the owner, Nov 22 19:28Z: "WHY THE FUCK IS GLOW ON THE END OF THE GUN NOT
+   PIXELATED"): a hard-edged plus of square steps, a pale core in the middle, its color and size from how hot
+   (barrelheat.js), never a soft gradient */
 .barrel-heat {
   position: absolute;
   left: 0;
   top: 0;
   margin: 0;
-  border-radius: 50%;
   translate: -50% -50%;
-  background: radial-gradient(
-    circle,
-    #fff3d0 0%,
-    var(--c) 30%,
-    color-mix(in srgb, var(--c) 40%, transparent) 60%,
-    transparent 72%
-  );
+  background:
+    linear-gradient(#fff3d0, #fff3d0) center / 34% 34% no-repeat,
+    linear-gradient(var(--c), var(--c)) center / 100% 34% no-repeat,
+    linear-gradient(var(--c), var(--c)) center / 34% 100% no-repeat,
+    linear-gradient(
+        color-mix(in srgb, var(--c) 45%, transparent),
+        color-mix(in srgb, var(--c) 45%, transparent)
+      )
+      center / 68% 68% no-repeat;
+  image-rendering: pixelated;
   z-index: 7;
   pointer-events: none;
 }

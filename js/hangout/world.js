@@ -22,7 +22,7 @@ import { duckRoom } from "../duck.js";
 import { esc } from "../ui.js";
 import { isInvisible } from "../invisible.js";
 import { low } from "../gfx.js";
-import { walkOf } from "../push.js";
+import { walkOf, meets } from "../push.js";
 import { survSet } from "../survrules.js";
 import {
   pixelOn,
@@ -1056,7 +1056,7 @@ export function mountWorld(board, api) {
     }
   }
 
-  /* ---------- other ducks in the way (on the ground, at about the same height, on the same side of the walls) ---------- */
+  /* ---------- other ducks in the way (where our heights overlap, on the same side of the walls) ---------- */
   function crowd(x, y, me, now) {
     const r = R(),
       s = r.state;
@@ -1072,8 +1072,8 @@ export function mountWorld(board, api) {
       if (acts().some((a) => a.passable && a.passable(id, ctx))) continue; // (an activity's dead: walked over, Quacky Zombies)
       const ox = p.x * L.W,
         oy = p.y * L.H;
-      if (Math.abs((p.z ?? 0) - me.z) > 40 || L.whereIn(ox, oy, p.z) !== here)
-        continue;
+      if (L.whereIn(ox, oy, p.z) !== here) continue;
+      if (!meets(s, r.me, me.z, id, p.z || 0)) continue; // (heights apart: one passes over the other)
       const kb = duckRoom((s.players[id] || {}).duck),
         dx = (x - ox) / (28 * (ka.x + kb.x)),
         dy = (y - oy) / (12.8 * (ka.y + kb.y));

@@ -30,6 +30,7 @@ export const CL = {
   speed: 0.25,
   wide: 10,
   deep: 40,
+  along: 4, // (how far along a wall from its way up's foot a zombie still starts up it, straight in front of it: duck lengths, zombies.js)
 };
 /* does a way up deck d still lead to duck q? Its own way (the deck it is on, or the gas station's roof for the canopy),
    or the canopy's ladder. Once q is off the roof (landed, not just jumping) it doesn't, and a zombie keeping to that
