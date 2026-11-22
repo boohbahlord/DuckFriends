@@ -14,7 +14,9 @@ export const UPDATES = [
     date: "Nov 22, 2026",
     title: "See-through tiles again",
     news: [
-      "The board's tiles are see-through over the map again on every map, the maps you make too (they had turned solid on made maps).",
+      "The board's tiles are see-through over the map again in every mode (Agree or Disagree, Lawyering, Mad God Justin and the rest), on every map, the maps you make too, and all at the same see-through level as Agree or Disagree's.",
+      "On a phone, the lobby's buttons in the top corner keep their space from the edge at any UI size, and a phone's UI never shrinks below 90%.",
+      "My maps: Import now says it opens a map file saved with Export (not a picture), and tells you if you pick the wrong file.",
       "Behind the scenes: Mad God Justin's pickups live in their own file now. Nothing plays differently.",
     ],
   },
