@@ -84,9 +84,9 @@ export function act_nbs({ state, s, a }) {
   return nbShareAct(s, a) ? s : state;
 }
 
-export function act_sbl({ state, s, a }) {
-  // Sandbox's loot orbs: an orb's own picture (sbloot.js)
-  return sbLootAct(s, a) ? s : state;
+export function act_sbl({ state, s, a, now }) {
+  // Sandbox's loot orbs: an orb's own picture, and E on one (sbloot.js)
+  return sbLootAct(s, a, now) ? s : state;
 }
 
 export function act_sbgr({ state, s, a }) {

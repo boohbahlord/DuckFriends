@@ -73,7 +73,7 @@ gamefx.js 876 the silly commands and
 gamehand.js 620 the hand: the number-key
 gameplace.js 738 where things are put
 gameready.js 47 
-gameround.js 567 round
+gameround.js 572 round
 gamesettings.js 755 Game Settings: the whole
 gameshots.js 137 The bullets in the
 gamestats.js 191 what `stats` and `roundstats`
@@ -215,8 +215,8 @@ sbhelp.js 277 Sandbox: the help manual
 sbhot.js 143 Sandbox: the hotbar ,
 sbhotview.js 406 Sandbox: the hotbar ,
 sblooks.js 48 Sandbox: a zone's look
-sbloot.js 444 Sandbox: loot orbs ,
-sblootview.js 482 Sandbox: loot orbs ,
+sbloot.js 495 Sandbox: loot orbs ,
+sblootview.js 499 Sandbox: loot orbs ,
 sbmake.js 203 Sandbox: making NPCs and
 sbmenu.js 264 Sandbox: presets, copy and
 sbnpcart.js 162 Sandbox: a spawned NPC's

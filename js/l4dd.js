@@ -3282,8 +3282,8 @@ activity({
       if (e.repeat || holding) return true;
       const me = ctx.duck(),
         t = me && holdTarget({ x: me.x * W, y: me.y * H }, ctx);
-      if (t && TAPS.includes(t.kind)) tap(t, ctx);
-      else startHold(t, ctx);
+      if (!t) return false; // (nothing of mine: the world's E, a Sandbox orb too, sblootview.js)
+      (TAPS.includes(t.kind) ? tap : startHold)(t, ctx);
       return true;
     }
     return false;
