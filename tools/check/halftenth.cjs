@@ -1,6 +1,6 @@
 /* I want Sandbox's heights in tenths and half tenths checked (E2; the owner's, Nov 21 15:39Z: "Heights can move in
-   tenths and half tenths for the one rule for every number when describing elevations"; the ground stays 1, his Nov 22
-   06:24Z pick):
+   tenths and half tenths for the one rule for every number when describing elevations"; the ground at 0, his Nov 22
+   16:06Z word, groundzero.cjs):
    1. a box in half tenths (js/seriatbox.js "half") keeps 1.05 and 1.5, snaps 1.07 to 1.05, goes through every half
       tenth of a decimal range, and Seriat code in it gives half tenths too;
    2. a zone's Elevation and "Slope up to" boxes take them, and a slope up to 1.5 rises half a gas station roof.

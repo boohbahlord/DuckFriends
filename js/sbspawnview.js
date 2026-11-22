@@ -276,7 +276,7 @@ const upBlock = (p) => p.k === "zone" && (p.z || 0) > 0.5 && !sbIsFloor(p);
    see-through while my duck is under it */
 const BOARD_UP = "99980"; // (under SFX_TOP.board: an effect shown above everything stays above it)
 const boardUp = (p) =>
-  p.k === "zone" && valueOf({ ok: boxText(p, "fl") }, SB_ZONE.fl) >= 2; // (a whole level up: a curb at 1.05 stays under the ducks)
+  p.k === "zone" && valueOf({ ok: boxText(p, "fl") }, SB_ZONE.fl) >= 1; // (a whole level up: a curb at 0.05 stays under the ducks)
 /* my duck is inside a house: it stands under a zone up high (a roof) that overlaps zone p, so p goes see-through as a
    whole, as Downpour's buildings do from inside (their walls and roof together), not only the part in front of my duck */
 function inHouse(s, p, me) {

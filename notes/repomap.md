@@ -68,7 +68,7 @@ game.js 4749 the game screen
 gameact.js 546 the action window and
 gameannounce.js 212 The cloud's words and
 gameboard.js 589 the board: each mode's
-gamedefaults.js 71 the game's own numbers,
+gamedefaults.js 68 the game's own numbers,
 gamefx.js 876 the silly commands and
 gamehand.js 620 the hand: the number-key
 gameplace.js 738 where things are put
@@ -92,7 +92,7 @@ gunparts.js 15 the pieces every weapon's
 guns.js 715 every weapon's numbers: one
 hats.js 1096 hats
 heat.js 74 a gun's heat: the
-heights.js 82 a shot's height, Doom's
+heights.js 83 a shot's height, Doom's
 helppages.js 1498 the command line's Help
 hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
@@ -163,7 +163,7 @@ nwk.js 543 Nous Within Kenoma: the
 offline.js 45 Single Player's files on
 online.js 975 online rooms
 outfits.js 1141 outfits
-outlines.js 420 the outlines
+outlines.js 421 the outlines
 perf.js 92 the frame-rate readout
 phonepad.js 144 phones: the aim-and-attack stick
 picrop.js 268 cropping a picture: every
@@ -201,7 +201,7 @@ sbcabin.js 341 Sandbox: the zombies on
 sbdrag.js 353 Sandbox, moving blocks with
 sbep.js 50 Sandbox Phase 7: what
 sbepview.js 162 Sandbox Phase 7: what
-sbfloors.js 116 Sandbox Phase 4: floors
+sbfloors.js 115 Sandbox Phase 4: floors
 sbgod.js 55 Sandbox: God mode and
 sbgodview.js 34 Sandbox: invisible players, on
 sbgroups.js 477 Sandbox: groups , the
@@ -218,11 +218,11 @@ sbnpcart.js 162 Sandbox: a spawned NPC's
 sbnpcs.js 73 Sandbox: the NPCs I
 sbout.js 62 Sandbox off the zombie
 sbrotate.js 102 Sandbox, Direction's Rotate in
-sbsave.js 292 Sandbox: saving a Sandbox
+sbsave.js 321 Sandbox: saving a Sandbox
 sbsaves.js 733 Sandbox's saves: kept on
 sbseriat.js 477 Sandbox: NPCs that run
 sbsfx.js 74 Sandbox's sounds
-sbspawn.js 1708 Sandbox: spawns and respawns
+sbspawn.js 1707 Sandbox: spawns and respawns
 sbspawnview.js 2211 Sandbox: spawns and respawns
 sbzone.js 348 Sandbox: board zones ,
 sbzonebrain.js 265 Sandbox: zones that run
@@ -312,7 +312,7 @@ flicker.js 83 now and then a
 ghosts.js 111 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck
 lamp.js 71 the lamps: the example
-layout.js 1192 Duck Cabin: the world
+layout.js 1195 Duck Cabin: the world
 layoutbase.js 78 Duck Cabin: the world's
 layoutheights.js 396 Duck Cabin: the heights
 npc.js 495 Duck Cabin's characters: how

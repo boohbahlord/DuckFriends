@@ -65,7 +65,7 @@ let floorOf = (x, y, z) =>
 /* the same for an outline: f, and floor (olAdd's), against mine (my own f), and what its arrow and line add (B5, the
    owner's, Nov 21 16:17Z: "The arrows have numbers to them if the duck is on an elevation level, not a fraction of an
    elevation level ... even the outlines for the ducks become darker the higher you go up"): lv, its elevation as Sandbox
-   counts them (the ground 1) while it stands on a whole one; dk, how much darker it shows from my floor (below.js) */
+   counts them (the ground 0) while it stands on a whole one; dk, how much darker it shows from my floor (below.js) */
 export function olAway(x, y, z, mine = 0) {
   const f = floorOf(x, y, z),
     h = floorH(x, y, z),
@@ -74,7 +74,7 @@ export function olAway(x, y, z, mine = 0) {
   return {
     floor: Math.sign(f - mine),
     f,
-    lv: Math.abs(l - n) <= 0.02 ? n : null,
+    lv: Math.abs(l - n) <= 0.02 && n >= 0 ? n : null, // (the ground's 0 too)
     dk: below(h),
   };
 }
@@ -324,7 +324,8 @@ export function olDraw(host, W, H, now = performance.now()) {
         P -
         (AH >> 1); // (lying down: in the middle of its body, where it lies, mid)
     }
-    const nc = ac && o.lv ? outline(number(o.lv), kind, "n" + o.lv) : null; // (its elevation's number beside the arrow, the same line)
+    const nc =
+      ac && o.lv != null ? outline(number(o.lv), kind, "n" + o.lv) : null; // (its elevation's number beside the arrow, the same line)
     ops.push({ o, c, a, x, y, sw, sh, dw, dh, ac, aa, ax, ay, nc });
     sig.push(
       `${cid(c)}|${a}|${x},${y}|${dw.toFixed(2)},${dh.toFixed(2)}|${o.flip ? 1 : 0}|${o.down ? o.down.map((v) => v.toFixed(1)) : ""}|${ac ? `${cid(ac)},${ax},${ay},${aa}` : ""}|${nc ? cid(nc) : ""}`,

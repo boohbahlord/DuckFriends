@@ -973,6 +973,9 @@ export function solidsAt(x, y, z = -Infinity) {
    stationmap.js FLOOD) with its feet in the water, measured from the swim floor (no higher over it than the water is
    deep): its shallow part waded, its deep end swum; over it (on a car, jumping) it walks */
 let flood = null;
+/* the map's elevation 0 (world px): Downpour's the flood's lowest, its swim floor, so its grass is a little over 0; every
+   other map's its ground (heights.js levelOf) */
+export const levelZero = () => (flood ? flood.floor : 0);
 export const wetK = (x, y, z = heightAt(x, y)) =>
   !flood || z - flood.floor > flood.depth + 4
     ? 1

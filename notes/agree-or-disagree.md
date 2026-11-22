@@ -7900,3 +7900,11 @@ and changing the map in Sandbox: Noah.
 
 13:25Z (screenshot /mnt/project-files/adam/bugs/2026-11-22-1325-bible-proposals.jpg): "Why the FUCK ARE THERE PROPOSALS IN THE BIBLE!? REVIEW THIS SHIT IT SHOULDNT BE LIKE THIS"
 Decision (Adam): the player reference (docs/seriat.md) holds only built, settled rules as plain facts; a check fails on owner, proposal, open, times, names or paths in it; `**` inside code shows as written.
+
+## 2026-11-22 16:06Z (owner, answering E2 through the coordinator)
+
+"The ground level is zero everywhere. And the gas station's roof height from the grass that it sits upon is the standard height for elevation. We've already talked about this. That's how it works everywhere, in Sandbox as well. Now, with that being said, do not rework cabin right now. I do not care about that. It's not broke, so we're not going to fix it. In regards to the elevation, the water in Downpour is actually the lowest point of it is the elevation. Where its elevation is zero. So yeah. That means the actual grass you walk on normally that the gas station sits upon should be above elevation zero to probably a decimal point, I would assume, right? Because the water is supposed to be something that you walk through it and it slows you down once it's high up enough. And if it's even more then eventually you have to swim through it. But if it's really, really shallow, then it doesn't slow down your walking. But it still has all the effects and visuals and everything. And that the elevations of things changes how dark it gets. So that means if you're staying on the grass, that certain parts that are of a lower elevation are to a decimal or fractional amount more darker the deeper it goes into the water, which tells the player how deep it is."
+
+16:08Z (card "Shift made Sandbox maps' elevations down by one so they look the same?"): "Shift them down by one".
+
+Decision (Solomon): supersedes the "ground stays 1" pick (06:24Z). heights.js levelOf counts from the map's 0 (layout.js levelZero: Downpour's flood bottom, so its grass is about 0.2; elsewhere the ground). Sandbox's Elevation starts at 0; saves before version 3 open shifted down (on Downpour by 1 less the grass's level). Arrows show 0 on the ground. Cabin untouched. Next: the water's three depths (very shallow not slowed, wade, swim) on a sloping road bed, darker the deeper.
