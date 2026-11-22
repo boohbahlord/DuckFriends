@@ -1,22 +1,8 @@
 /* ---------- Downpour's drawings: the shared pieces ----------
    Moved out of stationart.js to keep that file small (a pure move; the owner's, Nov 22). */
 
-export const O = "#1c1c28"; // the ducks' ink
-export const n1 = (v) => Math.round(v * 10) / 10;
-export const F = (s, ...v) =>
-  s.reduce(
-    (a, x, i) =>
-      a +
-      x +
-      (i < v.length
-        ? typeof v[i] === "number"
-          ? n1(v[i])
-          : (v[i] ?? "")
-        : ""),
-    "",
-  );
-export const ln = (w = 2.4, c = O) =>
-  `stroke="${c}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`;
+import { O, F, ln } from "./artbase.js"; // (the same ink, number tag and line as Hangout's drawings: one copy)
+export { O, n1, F, ln } from "./artbase.js";
 let N = 0;
 export const uid = () => "dp" + (++N).toString(36);
 export const wrap = (w, h, body, defs = "", cls = "") =>
