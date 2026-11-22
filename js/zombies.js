@@ -91,6 +91,7 @@ import {
 } from "./l4ddrules.js";
 import { openNear, flowFrom, heading } from "./zombiepath.js";
 import { toPx } from "./units.js";
+import { immobile } from "./push.js";
 import {
   CL,
   reaches,
@@ -1201,13 +1202,10 @@ function separate(zs, zf = dp() ? zombieZ : null, k = "zombie") {
     rx: g.rx,
     ry: g.ry,
     fl: new Map(zf ? live.map((z) => [z, zf(z)]) : []),
-    still,
+    still: immobile, // (one that never moves to make room, push.js: the other takes all of the push)
     move: nudge,
   });
 }
-/* one that never moves to make room: Speed 0 (the owner's, Nov 20 17:25Z: "Spawns or respawns dont move off their
-   position anymore to make room, since their movement being zero means zero"); the other takes all of the push */
-const still = (z) => z.sv === 0 || (!!z.sp && !!z.l && z.l[1] === 0); // (a Sandbox spawn's Speed 0: a map's zombie, zombieAt; a Sandbox walker, brainWalk)
 function nudge(z, dx, dy) {
   const x = z.x + dx,
     y = z.y + dy;

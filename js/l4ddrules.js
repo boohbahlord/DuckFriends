@@ -63,7 +63,6 @@ import {
 } from "./guns.js";
 import { JUMP, jumpDodges } from "./jump.js";
 import { SPRINT as GAME_SPRINT, POCKET_CHANGE } from "./gamedefaults.js";
-import { scaleOf } from "./duck.js";
 import { hpHeal, hpHurt, hundredths, hpBreed } from "./hpmath.js";
 import {
   baseMode,
@@ -115,7 +114,7 @@ import { invuln } from "./hangout/death.js";
 import { hOk, hLock, shotFeet, SAME_FLOOR, zOf, nearH } from "./heights.js";
 import { toPx } from "./units.js";
 import { blast, reach } from "./blast.js";
-import { pushAlong, walkOf } from "./push.js";
+import { pushAlong, walkOf, pushTaken, immobile, sizeOf } from "./push.js";
 import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
@@ -3261,7 +3260,8 @@ export function zombieTakes(s, by, w) {
       ? ALL_HP
       : (svGun(s, by, w, dmgOf(A)) +
           (!beam && angelOf(s, by, w) ? ANGEL.DMG : 0)) *
-        (crit ? 2 : 1),
+        (crit ? 2 : 1) *
+        (A.kind === "melee" ? sizeOf(s, by) : 1), // (a melee's, times its swinger's Size: push.js)
     crit,
   };
 }
@@ -3956,7 +3956,7 @@ function meleeHits(s, now) {
     const p = s.pos[k.by],
       A = ARMS[k.w] || ARMS.knife;
     if (!p || k.miss || !standing(s, k.by)) continue;
-    const sz = scaleOf((s.players[k.by] || {}).duck), // (my Size: a bigger duck's swing reaches farther and wider, a smaller one's not as far, as they're drawn; the owner's, Nov 19 16:50Z)
+    const sz = sizeOf(s, k.by), // (my Size: a bigger duck's swing reaches farther and wider, a smaller one's not as far, as they're drawn; the owner's, Nov 19 16:50Z)
       R = (A.r + 22) * sz,
       [px, py] = toPx(p),
       bx = px + k.dx * A.at * sz,
@@ -3968,12 +3968,12 @@ function meleeHits(s, now) {
       if (missed(s, k.by, k.w, z, now)) continue; // (this one isn't hit by this swing; the others in it still can be)
       const dmg = Array.isArray(A.dmg)
         ? A.dmg[0] + Math.floor(Math.random() * (A.dmg[1] - A.dmg[0] + 1))
-        : A.dmg; // (the fire axe: 1 to 4)
+        : A.dmg; // (the fire axe: 1 to 4; times my Size, push.js)
       const hp0 = z.hp,
-        dead = strike(s, z, dmg, critRoll(s, k.by, k.w), k.by, k.w, now);
+        dead = strike(s, z, dmg * sz, critRoll(s, k.by, k.w), k.by, k.w, now);
       wearDown(s, k.by, k.w, hp0 - Math.max(0, z.hp)); // (the HP it took off, not the overkill)
       if (dead) die(z, T);
-      else if (z.st === 2) knockZ(z, k.dx, k.dy, knockOf(k.w)); // (alive: pushed back, ARMS knock)
+      else if (z.st === 2) knockZ(z, k.dx, k.dy, knockOf(k.w) * sz); // (alive: pushed back, ARMS knock, harder from a bigger duck)
       any = true;
     }
     /* another duck in the swing: a slight shove, no HP lost (nothing hurts another duck here) */
@@ -3989,7 +3989,7 @@ function meleeHits(s, now) {
         id,
         k.dx,
         k.dy,
-        knockOf(k.w) * KNOCK_DUCK,
+        knockOf(k.w) * KNOCK_DUCK * sz,
         now,
         inCabin(qx, qy) ? 1 : 0,
       ); // (world px: boardfire.js)
@@ -4032,8 +4032,9 @@ const die = (z, T) => {
    knock, read by weaponuse.js knockOf */
 /* a living zombie inside pushed `far` world px along (ux, uy) (a unit), a few px at a time, stopping where it can't
    stand (a wall, furniture, a step too high) */
-function knockZ(z, ux, uy, far) {
-  const n = Math.max(1, Math.ceil(far / 8)),
+function knockZ(z, ux, uy, far0) {
+  const far = pushTaken(far0, immobile(z) ? Infinity : 1), // (a zombie weighs 1; Speed 0 never moves: push.js)
+    n = Math.max(1, Math.ceil(far / 8)),
     h = heightAt(z.x, z.y);
   [z.x, z.y] = pushAlong(
     [z.x, z.y],

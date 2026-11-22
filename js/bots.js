@@ -1031,7 +1031,7 @@ export function l4Bot(s, id, now, out) {
   }
   const x = p.x * W,
     y = p.y * H,
-    far = WALK * walkOf(s) * (STEP_MS / 1000) * (upOf(s, id).sp ? 1.1 : 1), // (as fast as my duck: the Walking speed, the Butler's Speed)
+    far = WALK * walkOf(s, id) * (STEP_MS / 1000) * (upOf(s, id).sp ? 1.1 : 1), // (as fast as my duck: the Walking speed, the Butler's Speed)
     m = kitOf(s, id) || { sl: [], am: {}, u: {} },
     sl = m.sl,
     b = BOT_BREEDS.computer,
@@ -1208,7 +1208,7 @@ function justinBot(s, id, now, out) {
   const fast = ((h.l4ad || {})[id] || 0) > now,
     walkPx =
       (fast ? WALK / (0.6 * 1.05) : WALK * (upOf(s, id).sp ? 1.1 : 1)) *
-      walkOf(s) *
+      walkOf(s, id) *
       wetSlow(x, y) * // (Downpour's flood: as a player's duck is slowed)
       (dt / 1000),
     m = kitOf(s, id) || { sl: [], am: {}, u: {} },

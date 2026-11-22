@@ -18,7 +18,7 @@ bbrules.js 380 the rules of Bicker Brackets
 beaks.js 138 beaks
 blast.js 37 explosions: one module
 bloodpool.js 50 a pool of blood: the
-boardfire.js 1346 the board's weapons: hits, shots,
+boardfire.js 1353 the board's weapons: hits, shots,
 boardjustin.js 675 Justin on the boards
 botduck.js 90 a computer's duck: a random
 botlines.js 188 What the computers write and
@@ -60,7 +60,7 @@ fxmotion.js 229 how a held weapon and
 game.js 5663 the game screen
 gameact.js 526 the action window and the
 gameboard.js 579 the board: each mode's board
-gamedefaults.js 43 the game's own numbers, for
+gamedefaults.js 47 the game's own numbers, for
 gamefx.js 873 the silly commands and the
 gamehand.js 604 the hand: the number-key specials,
 gameplace.js 738 where things are put on
@@ -107,7 +107,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 5003 the rules of Quacky Zombies
+l4ddrules.js 5004 the rules of Quacky Zombies
 l4ddsfx.js 545 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the
 langname.js 5 the name of Sandbox's number
@@ -162,7 +162,7 @@ playerinput.js 26 what I ask my duck
 players.js 342 the player menu and the
 pointer.js 54 a computer or a phone
 powerart.js 377 Dead Ducks Arcade: the power
-push.js 33 push and knock-back: one module
+push.js 57 push and knock-back: one module
 pxa.js 341 made by tools/pixel-art.cjs:
 pxbake.js 627 a map's pictures made into
 pxcard.js 259 the player cards' pattern motifs
@@ -194,7 +194,7 @@ sbgod.js 55 Sandbox: God mode and invisibility,
 sbgodview.js 34 Sandbox: invisible players, on the
 sbgroups.js 477 Sandbox: groups , the rules
 sbgroupview.js 416 Sandbox: groups , on the
-sbhelp.js 273 Sandbox: the help manual
+sbhelp.js 277 Sandbox: the help manual
 sbhot.js 143 Sandbox: the hotbar , the
 sbhotview.js 406 Sandbox: the hotbar , the
 sblooks.js 48 Sandbox: a zone's look
@@ -266,7 +266,7 @@ who.js 3 who this player is beyond
 wounds.js 485 the wounds a hit leaves
 zombiepath.js 178 the zombies' way to the
 zombieroofs.js 322 the zombies' walk over Downpour's
-zombies.js 1475 the zombies: one module for
+zombies.js 1473 the zombies: one module for
 
 ## js/hangout/
 activities.js 23 every Hangout activity, so the
