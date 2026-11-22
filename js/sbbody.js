@@ -176,43 +176,6 @@ export function npcBody(s, o, du) {
   let B = null;
   return target(o, () => B || (B = bodyOf(s, o)), du); // (worked out once it's asked: most aren't)
 }
-/* a player whose own picture is a cut-out (a cropped picture, or one erased before it was uploaded: Customize, duck.js
-   cut): hit only where it shows, as an NPC's picture is (the owner's, Nov 20: "a custom image upload is made for an
-   enemy target, right? In which cropped images can also be used for players' custom avatars"). p: where it stands, and
-   the way it faces (p.f: rules.js move); url: its picture; big: its size (duck.js duckBig). Its picture is drawn in the
-   duck's square as duck.js draws it: 92 of the duck's 120 across, its top 10 down, its feet at 110; z: how much bigger
-   a thin or sparse one is drawn (duck.js picGrow), its bottom where it was */
-const PIC = { w: 92 / 120, h: 92 / 120, feet: 100 / 120 };
-const KEYS = new Map();
-export function picBody(p, url, big, du, z = 1) {
-  let k = KEYS.get(url);
-  if (!k) {
-    let h = 0;
-    for (let i = 0; i < url.length; i++) h = (h * 31 + url.charCodeAt(i)) | 0;
-    k = "p" + (h >>> 0).toString(36) + url.length;
-    if (KEYS.size > 200) KEYS.clear();
-    KEYS.set(url, k);
-  }
-  let B = null;
-  return target(
-    p,
-    () =>
-      B ||
-      (B = bodyFrom(
-        { k, url: () => url },
-        PIC.w * big * z,
-        PIC.h * big * z,
-        (PIC.h * z + PIC.feet - PIC.h) * big,
-        p.f,
-        Math.round(PIC.w * SQ),
-        Math.round(PIC.h * SQ),
-      )),
-    du,
-  );
-}
-/* a duck width in the rules' own units, from their duck's room [rx, ry] (rules.js: a hit's reach, 1 of it), as the
-   board's DU_BOARD is to its [0.03, 0.08] */
-export const duOfRoom = (rx, ry) => [rx * (0.077 / 0.03), 0, 0, ry * 2.5];
 /* something to hit at o (its feet), body() its body */
 function target(o, body, du) {
   return {

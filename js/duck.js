@@ -322,7 +322,7 @@ ${DB.shadow}${DB.hatBack}${DB.fill}${DB.face}${DB.hatFront}${k !== 1 ? "</g>" : 
   if (L.image && L.cut) {
     /* a cut-out picture (cropped in Customize, or erased before it was uploaded: the owner's, Nov 20, "cropped images
        can also be used for players' custom avatars"): only what's left of it, standing on the same little shadow, no
-       card round it; its pixels square (it is made as pixels). It's hit only where it shows (sbbody.js picBody). On the
+       card round it; its pixels square (it is made as pixels). It's hit as a duck, its room times its Size (the owner's, Nov 21 19:07Z: "only the duck does. Same with the images players upload"). On the
        board and the maps (grow) a thin or sparse one is drawn bigger, standing where it stood, by picGrow, so it's as big a target
        as a duck: its box grows round it (picFrame); everywhere else (menus, chips) it keeps the duck's square */
     const F = grow ? picFrame(L) : null,

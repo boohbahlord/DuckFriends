@@ -3,7 +3,7 @@ file lines job
 
 ## js/
 account.js 397 the Google account: the profile
-actplay.js 945 a game's actions
+actplay.js 939 a game's actions
 actroom.js 744 the room's actions
 actsb.js 156 Sandbox's windows, saves and maps
 allies.js 383 Survival: the friendly squad
@@ -18,7 +18,7 @@ bbrules.js 380 the rules of Bicker Brackets
 beaks.js 138 beaks
 blast.js 67 explosions: one module
 bloodpool.js 50 a pool of blood: the
-boardfire.js 1355 the board's weapons: hits, shots,
+boardfire.js 1314 the board's weapons: hits, shots,
 boardjustin.js 675 Justin on the boards
 botduck.js 90 a computer's duck: a random
 botlines.js 188 What the computers write and
@@ -188,7 +188,7 @@ sandbox.js 1347 Sandbox: the key windows
 sandboxrules.js 2056 Sandbox: which map it plays
 sbarms.js 124 Sandbox: a made NPC's weapons
 sbaudio.js 211 Sandbox: songs players bring in
-sbbody.js 233 Sandbox: an NPC's body, where
+sbbody.js 196 Sandbox: an NPC's body, where
 sbbrain.js 87 Sandbox: what a spawned NPC
 sbcabin.js 340 Sandbox: the zombies on Duck
 sbdrag.js 353 Sandbox, moving blocks with the
