@@ -39,6 +39,8 @@ import {
   otherWay,
   sideSpot,
   sideDone,
+  fits,
+  leastWay,
 } from "./crowd.js";
 import { isSurv, SV, survWatch } from "./survrules.js";
 import {
@@ -449,12 +451,17 @@ export function moveZombies(s, zs, now, T, up) {
         on,
         way,
         goal: (way && climbSpot(way, xy)) || xy,
+        cap: way ? fits("zombie", way.x1 - way.x0, RX) : Infinity, // (how many side by side up it: crowd.js leastWay)
         alts:
           dk && dk.kind === "canopy"
             ? [
-                { way: dk, goal: ladderFoot() },
-                { way: carLeap(), goal: climbSpot(carLeap(), xy) },
-              ] // (or up the ladder on its left, or the red car's roof and a jump: whichever is nearest the zombie)
+                { way: dk, goal: ladderFoot(), cap: 1 },
+                {
+                  way: carLeap(),
+                  goal: climbSpot(carLeap(), xy),
+                  cap: fits("zombie", carLeap().x1 - carLeap().x0, RX),
+                },
+              ] // (or up the ladder on its left, or the red car's roof and a jump: whichever is nearest the zombie and not full)
             : [],
         j: isWild(s, id), // (Justin out there: JCHASE)
       };
@@ -564,6 +571,8 @@ function mapClaw(s, p4, target, z, now) {
    true once the target is down). It sets c.chasedM when one comes close for the merchant */
 function walkAll(zs, c) {
   const { s, now, T, dt, pls, dist, brd, eating, ducks, cake } = c;
+  const onWay = {}; // (the ones keeping to each way up, by its place in DECKS: crowd.js leastWay)
+  for (const z of zs) if (z.cm && z.st !== 3) (onWay[z.cm[3]] ||= []).push(z);
   ZC = crowdOf(
     zs.filter((z) => z.st !== 3),
     "zombie",
@@ -836,16 +845,31 @@ function walkAll(zs, c) {
           room(z.x, z.y, ...target.xy) < MERCH.CHASE_NEAR
         )
           c.chasedM = true; // (a zombie of the wave coming for the merchant, and close: he goes, below)
-        goal = target.goal;
-        let way = target.way;
-        for (const a of target.alts || [])
-          if (room(z.x, z.y, ...a.goal) < room(z.x, z.y, ...goal)) {
-            goal = a.goal;
-            way = a.way;
-            best = room(z.x, z.y, ...goal);
-          } // (the canopy's ladder, or the red car, is nearer than the gas station's wall: that way)
+        const w = (target.alts || []).length
+            ? leastWay(
+                "zombie",
+                [target, ...target.alts],
+                (a) =>
+                  (onWay[GS.DECKS.indexOf(a.way)] || []).filter(
+                    (q) =>
+                      !!q.cm &&
+                      q.st !== 3 &&
+                      (q.st === 6 ||
+                        room(q.x, q.y, q.cm[1], q.cm[2]) <
+                          room(z.x, z.y, ...a.goal)),
+                  ).length, // (the ones ahead of it there: up it already, or nearer its foot)
+                (a) => room(z.x, z.y, ...a.goal),
+              )
+            : target, // (the canopy's ladder, or the red car, is nearer than the gas station's wall: that way, unless it's full: crowd.js leastWay)
+          way = w.way;
+        goal = w.goal;
+        if (w !== target) best = room(z.x, z.y, ...goal);
         if (target.j) best = room(z.x, z.y, ...goal); // (how far it really is, for what follows)
-        if (way) z.cm = [target.id, goal[0], goal[1], GS.DECKS.indexOf(way)]; // (its way up, from now on)
+        if (way) {
+          const k = GS.DECKS.indexOf(way);
+          z.cm = [target.id, goal[0], goal[1], k]; // (its way up, from now on)
+          (onWay[k] ||= []).push(z);
+        }
       }
       /* at the foot of its wall, outside: up it goes. Never from inside, under the roof (the owner's, Nov 17 20:02Z: "WHEN
          THEY TRY TO ATTACK A PLAYER ON THE ROOF, THEY TRY TO GET ON THE ROOF, THEY DONT TRY TO GO UNDER IT FROM THE
