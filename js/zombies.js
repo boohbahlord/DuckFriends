@@ -12,7 +12,7 @@ import { ZOMBIE_SWIPE_SLOWER } from "./gamedefaults.js";
 const SWIPE = [500, 1000 + ZOMBIE_SWIPE_SLOWER];
 import { duckBig } from "./duck.js";
 import { SB_BOXES } from "./sandboxrules.js";
-import { valueOf } from "./numerat.js";
+import { valueOf } from "./seriatbox.js";
 import {
   W,
   H,

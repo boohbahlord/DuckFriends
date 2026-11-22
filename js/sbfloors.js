@@ -17,7 +17,7 @@ import {
   SB_ZONE,
   SB_SLOPE_DIRS,
 } from "./sandboxrules.js";
-import { valueOf } from "./numerat.js";
+import { valueOf } from "./seriatbox.js";
 import { boxText } from "./sbspawn.js";
 import { levelOf, levelZ } from "./heights.js";
 import { LEVEL } from "./gamedefaults.js";

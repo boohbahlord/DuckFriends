@@ -27,7 +27,7 @@ import {
   SB_COLORS,
   SB_RIGHTS,
 } from "./sandboxrules.js";
-import { read, valueOf } from "./numerat.js";
+import { read, valueOf } from "./seriatbox.js";
 import { W, H, heightAt } from "./hangout/layout.js";
 import { hpMostOf, hpHealOf } from "./hpmath.js";
 

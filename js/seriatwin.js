@@ -11,7 +11,7 @@
    terminal's commands); "there should be other options besides run ... such as something to test code without running it"
    (Check); "the help files ... cannot be copied or deleted or changed" (the help/ folder, read-only here too);
    "anything can be done in that terminal as it can be in the terminal in the bottom left" (the command line itself).
-   Part D (sbnumberat.js): a spawn's Brain box names a file here; what its NPCs print, and its mistakes, show in this
+   Part D (sbseriat.js): a spawn's Brain box names a file here; what its NPCs print, and its mistakes, show in this
    terminal too, and a file a Brain uses goes to the room again once it's saved with no mistakes.
    The left side is File Explorer (the owner's, Nov 19 16:12Z and 17:15Z): one folder at a time; a folder is clicked
    into, ../ (or Back) clicks out of it, Back and Forward walk where I've been, and the path bar shows where I am and takes
@@ -20,7 +20,7 @@
 import { esc, openWindow } from "./ui.js";
 import { sfx } from "./sound.js";
 import { numerat, shellRun, shellSuggest, shellHistory } from "./shell.js";
-import { check, WORDS } from "./numerat.js";
+import { check, WORDS } from "./seriatbox.js";
 import { shellCtx } from "./chat.js";
 import { activeRoom } from "./net.js";
 import {
@@ -31,7 +31,7 @@ import {
   freeSeriatTheme,
 } from "./seriattheme.js";
 import { isSb, sbMay } from "./sandboxrules.js";
-import { NB_TEXT } from "./sbnumberat.js";
+import { NB_TEXT } from "./sbseriat.js";
 import { boxText } from "./sbspawn.js";
 import { LANG } from "./langname.js";
 
