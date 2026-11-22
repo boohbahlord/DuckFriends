@@ -1121,11 +1121,11 @@ GS_W *= K;
 GS_H *= K;
 FENCE_H *= K;
 SHORE *= K;
-/* the flood, for every walker's one water rule (layout.js wetK): its bed's lowest (the swim floor), its water's top
-   (where it meets the banks, SHORE in), and where it is deep or shallow */
+/* the flood, for every walker's one water rule (layout.js wetK): its floor, the swim floor (its bed's lowest), its
+   depth over that floor (up to where it meets the banks, SHORE in), and where it is deep or shallow */
 export const FLOOD = {
   floor: ROAD.low,
-  top: groundAt(0, ROAD.y0 + SHORE),
+  depth: groundAt(0, ROAD.y0 + SHORE) - ROAD.low,
   deep: inDeep,
   shallow: inShallow,
 };

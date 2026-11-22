@@ -6,11 +6,17 @@
    never stops one.
    sh.hz: the shooter's feet, as the rules always kept it; sh.lh: its height once a target has set it (world px) */
 import { DUCK, slabBetween } from "./hangout/layout.js";
+import { LEVEL } from "./gamedefaults.js";
 
 const MID = DUCK / 2;
 /* one elevation: the gas station's roof over the ground (world px; the owner's, Nov 21 14:06Z). Heights the owner
    gives in elevations are times this */
 export const ELEV = 108;
+/* the one reading of a height as a level (B5's arrows, Sandbox's Elevation): feet at z (world px over the ground) stand on
+   level levelOf(z), the ground's LEVEL.GROUND (gamedefaults.js), a whole level more each roof up; levelZ(n): level n's
+   height */
+export const levelOf = (z) => z / ELEV + LEVEL.GROUND;
+export const levelZ = (n) => (n - LEVEL.GROUND) * ELEV;
 /* how high shot sh flies now (world px) */
 const shotH = (sh) => sh.lh ?? (sh.hz || 0) + MID;
 /* ---------- the height of a body: one way to ask it, for every body in every mode (the cornerstone's one module per
