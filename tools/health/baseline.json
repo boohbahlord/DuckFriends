@@ -3,7 +3,7 @@
   "nullishNumbers": 0,
   "unusedExports": 167,
   "unusedFiles": 0,
-  "clones": 58,
+  "clones": 57,
   "bigFiles": {
     "js/customize.js": 1776,
     "js/game.js": 4792,
@@ -13,7 +13,7 @@
     "js/numberatrun.js": 1675,
     "js/rules.js": 1731,
     "js/sandboxrules.js": 2056,
-    "js/sbspawn.js": 1709,
+    "js/sbspawn.js": 1708,
     "js/sbspawnview.js": 2212,
     "js/updates.js": 3417
   }

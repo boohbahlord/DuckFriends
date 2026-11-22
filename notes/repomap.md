@@ -20,7 +20,7 @@ below.js 81 darker below
 blast.js 67 explosions: one module
 bloodpool.js 50 a pool of blood:
 boardfire.js 1314 the board's weapons: hits,
-boardjustin.js 675 Justin on the boards
+boardjustin.js 663 Justin on the boards
 botduck.js 90 a computer's duck: a
 botlines.js 188 What the computers write
 bots.js 1425 computers
@@ -103,7 +103,7 @@ itemtip.js 104 hold I on an
 itemtone.js 98 the colors an outfit
 jump.js 78 a duck's jump: one
 jumps.js 48 the jump counter
-justinmoves.js 34 Justin's moves on the
+justinmoves.js 45 Justin's moves on the
 keynav.js 204 menus by keyboard
 l4dd.js 3338 Quacky Zombies on every
 l4ddangel.js 151 Dead Ducks Arcade's Angel
@@ -139,7 +139,7 @@ merchants.js 376 the merchants
 meters.js 114 the thin bars under
 mgj.js 219 Mad God Justin: what
 mgjart.js 96 Mad God Justin's new
-mgjbrain.js 619 Mad God Justin's brain,
+mgjbrain.js 613 Mad God Justin's brain,
 mgjpicks.js 500 Mad God Justin's pickups:
 mgjrules.js 1259 
 modes.js 445 the game modes
