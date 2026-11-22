@@ -4,7 +4,6 @@ import { late } from "./game.js";
 import {
   R,
   bar,
-  boardHTML,
   me,
   sbGo,
   viewOver,
@@ -13,6 +12,7 @@ import {
   whoHTML,
   world,
 } from "./game.js";
+import { boardHTML } from "./gameboard.js";
 import { graceLeft, mgjTip } from "./gamehand.js";
 import { go } from "./router.js";
 import { esc, $ } from "./ui.js";
