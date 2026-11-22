@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v245",
+    version: 245,
+    date: "Nov 22, 2026",
+    title: "Tidier walking maps",
+    news: [
+      "Behind the scenes: the walking maps no longer check which mode is on by its name; the phone's zoom and the map switch read the mode's own settings. Nothing plays differently.",
+    ],
+  },
+  {
     id: "v244",
     version: 244,
     date: "Nov 22, 2026",

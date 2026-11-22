@@ -9,6 +9,7 @@
    the back door in the south wall onto the deck), the deck raised over the slope with its stairs down at the east end,
    the downhill in the south (the pool, the campfire, the trampoline), and forest all round. */
 import * as GS from "./stationmap.js";
+import { modeOf } from "../modes.js";
 import { jeepTops, JEEP } from "./vehicles.js";
 export { GS, JEEP };
 /* W, H: the world's size; Dead Ducks Arcade's second map has its own (useMode switches them) */
@@ -1271,7 +1272,7 @@ export function roofHoleOver(x, y, z = 0) {
    Nov 17 17:41Z: "it will not make it transparent unless ur player is in it") */
 export const seenFrom = (x, y, inside, z) => wallsSee(x, y, inside, z);
 export function useMode(mode, map) {
-  const v = mode === "l4dd" ? (map === "downpour" ? "l4gs" : "l4") : "";
+  const v = modeOf(mode).l4map ? (map === "downpour" ? "l4gs" : "l4") : "";
   if (v === variant) return;
   variant = v;
   rev++;

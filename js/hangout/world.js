@@ -36,6 +36,7 @@ import { applyPalette } from "../pixelpalette.js";
 import { ART, artKey, worldArt, lookOf } from "./pxworld.js";
 import { holdGame, offView } from "../gameready.js";
 import { hashText, steadyText } from "../pxdom.js";
+import { modeOf } from "../modes.js";
 
 export const BOARD_HTML =
   '<div class="board hang-board"><canvas class="hang-ground" aria-hidden="true"></canvas><div class="hang-world"><div class="hang-props"></div><div class="ducks"></div><div class="hang-shade" hidden></div></div><div class="fxl"></div></div>';
@@ -1239,7 +1240,6 @@ export function mountWorld(board, api) {
     return true;
   }
 
-  const PHONE_OUT = 1.15;
   const SIDE_OUT = 1.1; // (a phone on its side: a little more of the map still, the owner's, Nov 21 18:59Z: "zoomed out a little in horizontal")
   const world = {
     measure() {
@@ -1259,11 +1259,8 @@ export function mountWorld(board, api) {
       /* Dead Ducks Arcade on a phone, upright or on its side: 15% more of the map each way (the owner's, Nov 18 15:18Z:
          "The board or map for the zombie game should be a little more zoomed out in perspective or camera for mobile
          players in vertical OR horizontal becuz it feels cramped") */
-      if (
-        baseMode(R().state.options) === "l4dd" &&
-        document.documentElement.classList.contains("phone")
-      )
-        cam.sc /= PHONE_OUT;
+      if (document.documentElement.classList.contains("phone"))
+        cam.sc /= modeOf(baseMode(R().state.options)).phoneOut || 1;
       /* real pixels (pxworld.js): one of the art's pixels is ART world px, and a whole number of the screen's own pixels,
          so every one of them is square and the same size (the zoom moves by less than one screen pixel a pixel for it) */
       {
