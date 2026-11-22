@@ -275,9 +275,9 @@ export function roundOf(k, accent = "") {
 /* a flying shot of kind k (game.js): [its class, its look, its style], turned by ang */
 export function shotLook(k, ang, accent) {
   const r = roundOf(k, accent);
-  return [`bullet round k-${k}`, r.svg, `${ang};--w:${r.w}px;--h:${r.h}px`];
+  const kc = /^[a-z0-9]+$/.test(String(k)) ? k : "x"; // (a kind from the room never writes markup into the class)
+  return [`bullet round k-${kc}`, r.svg, `${ang};--w:${r.w}px;--h:${r.h}px`];
 }
-/* the chain gun's shots: thin yellow lines from the barrel out to what each hit, flashing in and out */
 /* a shot drawn as a thin yellow line out to what it hit, flashing in and out (Sandbox's NPCs' guns: sbnpcart.js npcShot) */
 export const TRACE = {
   color: "#ffe066",
