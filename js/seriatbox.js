@@ -14,11 +14,14 @@
 import { compile, NB_WORDS, NOTHING } from "./seriat.js";
 import { compileScript, NB_RUN_WORDS } from "./seriatrun.js";
 
-/* a box's kind: "int" (whole numbers), "tenth" (tenths) or "bool" (t or f); min and max: what it allows */
+/* a box's kind: "int" (whole numbers), "tenth" (tenths), "half" (half tenths: steps of 0.05, as heights move: the
+   owner's, Nov 21 15:39Z, "Heights can move in tenths and half tenths") or "bool" (t or f); min and max: what it allows */
 const NUM = /^-?(?:\d+(?:\.\d*)?|\.\d+)$/;
 const N = String.raw`\s*-?(?:\d+(?:\.\d*)?|\.\d+)\s*`;
 const PLAIN = new RegExp(`^${N}(?::${N})?(?:,${N}(?::${N})?)*$`); // (plain values: read here, nothing to compile)
-const tenth = (n) => Math.round(n * 10) / 10;
+const tenth = (n) => Math.round(n * 10) / 10,
+  half = (n) => Math.round(n * 20) / 20,
+  snap = (kind) => (kind === "half" ? half : tenth);
 
 /* read text for a box: { ok: true, v } or { ok: false, why }. v is a list of [low, high] pairs (one pair a range, a
    number on its own [n, n], a third "tenths" when an end was written with a "."); for a bool box v is true or false;
@@ -47,9 +50,9 @@ export function read(text, box = {}) {
     let [a, b = a] = ends.map(Number);
     if (kind === "int" && (!Number.isInteger(a) || !Number.isInteger(b)))
       return { ok: false, why: "Whole numbers only here" };
-    if (kind === "tenth") {
-      a = tenth(a);
-      b = tenth(b);
+    if (kind === "tenth" || kind === "half") {
+      a = snap(kind)(a);
+      b = snap(kind)(b);
     }
     if (a > b) [a, b] = [b, a]; // (4:2 is 2 to 4)
     const whole = !ends.some((x) => x.includes(".")); // ("2:4" is whole numbers even where the box takes tenths)
@@ -101,7 +104,7 @@ function fits(v, box = {}, lim = null) {
   if (typeof v === "boolean") return { why: "A number goes here, not t or f" };
   if (typeof v !== "number" || !Number.isFinite(v))
     return { why: "A number goes here" };
-  const n = kind === "int" ? Math.round(v) : tenth(v);
+  const n = kind === "int" ? Math.round(v) : snap(kind)(v);
   const max = lim != null ? lim : box.max,
     what = box.name ? `${box.name} ` : "";
   if (box.min != null && n < box.min)
@@ -129,10 +132,11 @@ export function pick(v, box = {}, r = Math.random) {
   if (!Array.isArray(v) || !v.length) return NaN;
   const [a, b, tenths] = v[Math.min(v.length - 1, Math.floor(r() * v.length))];
   if (a === b) return a;
-  if (box.kind === "tenth" && tenths) {
-    const lo = Math.round(a * 10),
-      hi = Math.round(b * 10);
-    return (lo + Math.min(hi - lo, Math.floor(r() * (hi - lo + 1)))) / 10;
+  if ((box.kind === "tenth" || box.kind === "half") && tenths) {
+    const k = box.kind === "half" ? 20 : 10, // (a range with a decimal end goes through every tenth, or half tenth)
+      lo = Math.round(a * k),
+      hi = Math.round(b * k);
+    return (lo + Math.min(hi - lo, Math.floor(r() * (hi - lo + 1)))) / k;
   }
   return a + Math.min(b - a, Math.floor(r() * (b - a + 1)));
 }

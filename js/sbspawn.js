@@ -1332,13 +1332,13 @@ export function sbAct(s, a, now) {
 /* which boxes a point takes: a respawn its "who" and what it imported; a spawn its own, and its Players tab's (a +
    page for players only those) */
 /* plan Phase 4: a zone with an elevation sits at it, (elevation - 1) gas station roofs over the map's ground (world px);
-   on a block's own zone, so do its tabs that have none of their own */
+   on a block's own zone, so do its tabs that have none of their own (in half tenths) */
 const hasFl = (p) => p.k === "zone" && !!p.f && !!p.f.fl;
 function floorsTo(pts) {
   const out = { ...pts };
   for (const [id, p] of Object.entries(pts)) {
     if (!hasFl(p)) continue;
-    const n = Math.round(valueOf({ ok: boxText(p, "fl") }, SB_ZONE.fl)),
+    const n = valueOf({ ok: boxText(p, "fl") }, SB_ZONE.fl),
       z = levelZ(Math.min(6, Math.max(LEVEL.GROUND, n || 0))); // (none or under it: the ground)
     for (const [q, t] of Object.entries(out))
       if ((q === id || (!p.grp && t.grp === id && !hasFl(t))) && t.z !== z)
