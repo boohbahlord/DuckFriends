@@ -65,7 +65,7 @@ game.js 4792 the game screen
 gameact.js 546 the action window and
 gameannounce.js 212 The cloud's words and
 gameboard.js 589 the board: each mode's
-gamedefaults.js 68 the game's own numbers,
+gamedefaults.js 71 the game's own numbers,
 gamefx.js 874 the silly commands and
 gamehand.js 604 the hand: the number-key
 gameplace.js 738 where things are put
@@ -88,7 +88,7 @@ gunmenview.js 135 Survival: the gunmen on
 gunparts.js 15 the pieces every weapon's
 guns.js 642 every weapon's numbers: one
 hats.js 1096 hats
-heights.js 63 a shot's height, Doom's
+heights.js 69 a shot's height, Doom's
 helppages.js 1498 the command line's Help
 hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
@@ -200,7 +200,7 @@ sbcabin.js 340 Sandbox: the zombies on
 sbdrag.js 353 Sandbox, moving blocks with
 sbep.js 50 Sandbox Phase 7: what
 sbepview.js 162 Sandbox Phase 7: what
-sbfloors.js 114 Sandbox Phase 4: floors
+sbfloors.js 116 Sandbox Phase 4: floors
 sbgod.js 55 Sandbox: God mode and
 sbgodview.js 34 Sandbox: invisible players, on
 sbgroups.js 477 Sandbox: groups , the
@@ -221,7 +221,7 @@ sbrotate.js 102 Sandbox, Direction's Rotate in
 sbsave.js 292 Sandbox: saving a Sandbox
 sbsaves.js 733 Sandbox's saves: kept on
 sbsfx.js 74 Sandbox's sounds
-sbspawn.js 1709 Sandbox: spawns and respawns
+sbspawn.js 1708 Sandbox: spawns and respawns
 sbspawnview.js 2212 Sandbox: spawns and respawns
 sbzone.js 348 Sandbox: board zones ,
 sbzonebrain.js 265 Sandbox: zones that run
