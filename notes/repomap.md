@@ -95,7 +95,7 @@ helppages.js 1498 the command line's Help
 hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
 hooks.js 3 hooks between screens that
-hotbar.js 497 the specials on the
+hotbar.js 506 the specials on the
 hotpick.js 318 What goes in my
 hpmath.js 59 HP in hundredths
 hpmeter.js 311 HP meters and the
@@ -111,7 +111,7 @@ l4dd.js 3338 Quacky Zombies on every
 l4ddangel.js 151 Dead Ducks Arcade's Angel
 l4ddangelui.js 204 Dead Ducks Arcade's Angel
 l4ddart.js 623 Quacky Zombies' pictures
-l4ddbar.js 309 Quacky Zombies' weapons bar
+l4ddbar.js 322 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell
 l4ddcatalog.js 230 Quacky Zombies: the Butler's
 l4dddrops.js 63 Quacky Zombies' drops, drawn
@@ -267,7 +267,7 @@ umaps.js 371 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on
-updates.js 3445 Updates
+updates.js 3454 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival

@@ -31,7 +31,7 @@ import {
   pickOfSlot,
   durLeft,
 } from "./l4ddrules.js";
-import { ARMS } from "./guns.js";
+import { ARMS, caliberOf } from "./guns.js";
 import { now as clockNow } from "./clock.js";
 import { sbNoLight } from "./sandboxrules.js";
 import { mountItemTip } from "./itemtip.js";
@@ -53,6 +53,15 @@ const count = (w, m) => {
   if (!c || ARMS[w].all <= 1) return "";
   return ARMS[w].mag ? `${m.rw === w ? "…" : c[0]} | ${c[1]}` : String(c[0]);
 };
+/* what's in my hand, in very small text in the bottom bar's box: its name and its caliber (K4, the owner's, Nov 21
+   17:25Z: "It should say what the item is when you switch to it by name ... And it should also say what caliber it
+   uses. And maybe a semicolon after or parentheses"); the slots' row on a computer, over the slider on a phone */
+const heldTag = (w) =>
+  !w
+    ? ""
+    : w === "fl"
+      ? "Flashlight"
+      : weaponName(w) + (caliberOf(w) ? ` (${caliberOf(w)})` : "");
 /* a slot with nothing left in it (no grenades, a weapon out of ammo) */
 const spent = (w, m) => {
   const c = m && (m.am || {})[w];
@@ -86,6 +95,9 @@ export function mountL4Bar(S, api) {
   mountItemTip(); // (hold I or press long on a slot: its card, itemtip.js; mounted once)
   const row = document.createElement("div");
   row.className = "l4bar";
+  const tag = document.createElement("small");
+  tag.className = "l4-held";
+  row.append(tag);
   let sig = "";
   function draw() {
     const s = api.state();
@@ -103,6 +115,8 @@ export function mountL4Bar(S, api) {
       next = JSON.stringify([m, held, off, out, down, dark, to, toW]);
     if (next === sig) return;
     sig = next;
+    const t = heldTag(down ? "handgun" : held);
+    if (tag.textContent !== t) tag.textContent = t;
     /* each icon made once and kept (ui.js kept), put in its slot's <i>: the row is made again at every shot (its
        counts), and made again with it, every icon went through pxdom again */
     const icons = (list) =>
@@ -153,16 +167,14 @@ export function mountL4Bar(S, api) {
         : slots.map(slot),
       /* what a slot shows, its icon with it; a reload by when it ends, not by how far it's gone (its meter runs in css) */
       key = (j) => html[j].replace(/--rd:-\d+ms/, `rl${m && m.rl}`) + ics[j],
-      box = row.firstElementChild;
+      box = row.querySelector(".l4slots");
     /* only the slots that changed are made again: the whole row made again at every shot painted the bottom bar again,
        and every icon went through pxdom again */
-    if (
-      !box ||
-      !box.matches(".l4slots") ||
-      box.children.length !== html.length
-    ) {
-      row.innerHTML = `<div class="l4slots">${html.join("")}</div>`;
-      [...row.firstElementChild.children].forEach((b, j) => (b._k = key(j)));
+    if (!box || box.children.length !== html.length) {
+      const nb = el(`<div class="l4slots">${html.join("")}</div>`);
+      if (box) box.replaceWith(nb);
+      else row.append(nb);
+      [...nb.children].forEach((b, j) => (b._k = key(j)));
     } else
       [...box.children].forEach((b, j) => {
         if (b._k === key(j)) return;
@@ -282,6 +294,7 @@ export function l4Slider(api) {
       if (i < 3 || (i >= 3 && api.slot() !== i)) api.pick(i); // (the one in the middle is the one picked, grenades too)
     },
     current: () => api.held() || null,
+    caption: heldTag,
     cool: () => [],
     dots(id) {
       const k = id && kit(),
