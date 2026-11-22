@@ -106,7 +106,7 @@ export const SB_HELP = {
     ],
     [
       "Size and weight",
-      "A duck's Size is its weight. 10% bigger is 10% heavier and 10% slower, and its melee hits 10% harder and pushes 10% farther; 10% smaller is the other way. Every push moves a heavier duck less far. Grenades and shots push the same whoever throws them. A spawn with Speed 0 is immobile: it never moves and nothing pushes it.",
+      "A duck's Size is its weight. 10% bigger is 10% heavier and 10% slower, and its melee hits 10% harder and pushes 10% farther; 10% smaller is the other way. Every push moves a heavier duck less far. Grenades and shots push the same whoever throws them. A spawn with Speed 0 never walks, but a hit still pushes it.",
     ],
   ],
   h: [

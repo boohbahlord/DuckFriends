@@ -162,7 +162,7 @@ playerinput.js 26 what I ask my duck
 players.js 342 the player menu and the
 pointer.js 54 a computer or a phone
 powerart.js 377 Dead Ducks Arcade: the power
-push.js 57 push and knock-back: one module
+push.js 55 push and knock-back: one module
 pxa.js 341 made by tools/pixel-art.cjs:
 pxbake.js 627 a map's pictures made into
 pxcard.js 259 the player cards' pattern motifs
@@ -266,7 +266,7 @@ who.js 3 who this player is beyond
 wounds.js 485 the wounds a hit leaves
 zombiepath.js 178 the zombies' way to the
 zombieroofs.js 322 the zombies' walk over Downpour's
-zombies.js 1473 the zombies: one module for
+zombies.js 1477 the zombies: one module for
 
 ## js/hangout/
 activities.js 23 every Hangout activity, so the

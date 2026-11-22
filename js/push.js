@@ -25,11 +25,9 @@ const walkK = (s, id) =>
 /* the ratio: a push of far on a body of weight w moves it far / w (110%: 1/1.1 as far); an immobile one, never */
 export const pushTaken = (far, w) => (w === Infinity ? 0 : far / w);
 /* immobile (the owner's, 15:56Z: "select immobile, true. And now it has no movement. It's not affected by knockback.
-   It doesn't have its own weight, and it never moves ever"): a body with im, and a Sandbox spawn's Speed 0 (Nov 20
-   17:25Z: "Spawns or respawns dont move off their spot"): a map's zombie (zombieAt's sv), a Sandbox walker (brainWalk's
-   l) */
-export const immobile = (o) =>
-  o.im === true || o.sv === 0 || (!!o.sp && !!o.l && o.l[1] === 0);
+   It doesn't have its own weight, and it never moves ever"): a body with im. Not Speed 0, which only can't move itself:
+   a hit still pushes it (Nov 21 14:52Z, "zero speed = can't move itself") */
+export const immobile = (o) => o.im === true;
 
 /* the hammer's knock-back, in duck lengths (a duck it hits is shoved this far, times the mode's number) */
 export const KB_FAR = 2.4;

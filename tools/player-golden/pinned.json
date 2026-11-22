@@ -601,5 +601,89 @@
     "reload": 2
    }
   }
+ },
+ "board-big-walk": {
+  "frames": 660,
+  "digest": "17f8zmc",
+  "every": [
+   "hf0ucv",
+   "1xm8cch",
+   "prmsd9",
+   "1u4kj12",
+   "9d6fj0",
+   "7ieyl0",
+   "1fvfdf8",
+   "imqn6u",
+   "l3husx",
+   "udckm5",
+   "vl3d89"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.889,
+    "y": 0.567
+   },
+   "sent": {
+    "move": 88,
+    "tick": 55
+   }
+  }
+ },
+ "board-small-walk": {
+  "frames": 660,
+  "digest": "164pldr",
+  "every": [
+   "1929w2i",
+   "61x1rh",
+   "t9mp7q",
+   "1d32iab",
+   "cg015h",
+   "10nz1ul",
+   "zpe0lx",
+   "75dqok",
+   "13bz14",
+   "b7ksnq",
+   "vltjgi"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.781,
+    "y": 1
+   },
+   "sent": {
+    "move": 78,
+    "tick": 55
+   }
+  }
+ },
+ "board-big-swing": {
+  "frames": 720,
+  "digest": "10ddgjv",
+  "every": [
+   "vick6s",
+   "w9t48y",
+   "bah4pp",
+   "l5dems",
+   "2ddwa3",
+   "12k7qwr",
+   "c4qwqj",
+   "1oay1qv",
+   "13a7g3k",
+   "1b17dzn",
+   "yu17bt",
+   "1vgc5rx"
+  ],
+  "seen": {
+   "me": {
+    "x": 0.7789,
+    "y": 0.0027
+   },
+   "sent": {
+    "move": 23,
+    "tick": 60,
+    "use": 14,
+    "reload": 1
+   }
+  }
  }
 }

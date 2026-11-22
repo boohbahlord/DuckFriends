@@ -4033,7 +4033,7 @@ const die = (z, T) => {
 /* a living zombie inside pushed `far` world px along (ux, uy) (a unit), a few px at a time, stopping where it can't
    stand (a wall, furniture, a step too high) */
 function knockZ(z, ux, uy, far0) {
-  const far = pushTaken(far0, immobile(z) ? Infinity : 1), // (a zombie weighs 1; Speed 0 never moves: push.js)
+  const far = pushTaken(far0, immobile(z) ? Infinity : 1), // (a zombie weighs 1; an immobile one never moves: push.js)
     n = Math.max(1, Math.ceil(far / 8)),
     h = heightAt(z.x, z.y);
   [z.x, z.y] = pushAlong(
