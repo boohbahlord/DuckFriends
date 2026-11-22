@@ -26,7 +26,9 @@ bots.js 1426 computers
 brackets.js 459 Bicker Brackets: what the screen
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
-chat.js 1597 text chat and the command
+chat.js 633 text chat and the command
+chatcmds.js 699 The command line's commands: the
+chatmutes.js 318 The chat's suggestions, mutes and
 cheatflag.js 16 a game with test commands
 cheats.js 146 test commands: cheat round N,
 claw.js 68 a claw's marks: three white
