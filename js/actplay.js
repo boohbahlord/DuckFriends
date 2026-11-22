@@ -125,7 +125,17 @@ import { hangAction, hangTick, hangStill } from "./hangout/rules.js";
 import { inCabin, W as HW, H as HH } from "./hangout/layout.js";
 import { justinTick, justinDown } from "./boardjustin.js";
 import { pwTick } from "./wounds.js";
-import { isMgj, mgjTeamUse, mgjHolds, PELLETS, SPREAD, mgjMag, mgjOut, ammoOf, mgjSpend } from "./mgjrules.js";
+import {
+  isMgj,
+  mgjTeamUse,
+  mgjHolds,
+  PELLETS,
+  SPREAD,
+  mgjMag,
+  mgjOut,
+  ammoOf,
+  mgjSpend,
+} from "./mgjrules.js";
 import { mgjUse } from "./mgjpicks.js";
 import {
   isL4dd,
