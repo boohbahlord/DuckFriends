@@ -26,7 +26,7 @@ import {
   roofHoleOver,
   floorH,
 } from "./hangout/layout.js";
-import { ELEV } from "./heights.js";
+import { levelOf } from "./heights.js";
 import { below } from "./below.js";
 
 const GREEN = "#2f9e44", // (the other players: a slightly darker green than the friendly squad's light green, the owner's, Nov 19 19:27Z)
@@ -69,11 +69,12 @@ let floorOf = (x, y, z) =>
 export function olAway(x, y, z, mine = 0) {
   const f = floorOf(x, y, z),
     h = floorH(x, y, z),
-    n = Math.round(h / ELEV);
+    l = levelOf(h),
+    n = Math.round(l);
   return {
     floor: Math.sign(f - mine),
     f,
-    lv: Math.abs(h - n * ELEV) <= ELEV * 0.02 ? n + 1 : null,
+    lv: Math.abs(l - n) <= 0.02 ? n : null,
     dk: below(h),
   };
 }

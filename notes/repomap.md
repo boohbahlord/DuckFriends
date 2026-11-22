@@ -16,7 +16,7 @@ barrelheat.js 70 a hot barrel
 bash.js 1360 the command line's language:
 bbrules.js 380 the rules of Bicker
 beaks.js 138 beaks
-below.js 81 darker below
+below.js 88 darker below
 blast.js 67 explosions: one module
 bloodpool.js 50 a pool of blood:
 boardfire.js 1314 the board's weapons: hits,
@@ -162,7 +162,7 @@ nwk.js 543 Nous Within Kenoma: the
 offline.js 45 Single Player's files on
 online.js 975 online rooms
 outfits.js 1141 outfits
-outlines.js 419 the outlines
+outlines.js 420 the outlines
 perf.js 92 the frame-rate readout
 phonepad.js 142 phones: the aim-and-attack stick
 picrop.js 268 cropping a picture: every
