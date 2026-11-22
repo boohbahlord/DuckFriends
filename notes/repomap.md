@@ -18,7 +18,7 @@ bbrules.js 380 the rules of Bicker Brackets
 beaks.js 138 beaks
 blast.js 37 explosions: one module
 bloodpool.js 50 a pool of blood: the
-boardfire.js 1346 the board's weapons: hits, shots,
+boardfire.js 1353 the board's weapons: hits, shots,
 boardjustin.js 675 Justin on the boards
 botduck.js 90 a computer's duck: a random
 botlines.js 188 What the computers write and
@@ -60,7 +60,7 @@ fxmotion.js 229 how a held weapon and
 game.js 5125 the game screen
 gameact.js 546 the action window and the
 gameboard.js 589 the board: each mode's board
-gamedefaults.js 43 the game's own numbers, for
+gamedefaults.js 47 the game's own numbers, for
 gamefx.js 873 the silly commands and the
 gamehand.js 604 the hand: the number-key specials,
 gameplace.js 738 where things are put on
@@ -163,7 +163,7 @@ playerinput.js 26 what I ask my duck
 players.js 342 the player menu and the
 pointer.js 54 a computer or a phone
 powerart.js 377 Dead Ducks Arcade: the power
-push.js 29 push and knock-back: one module
+push.js 55 push and knock-back: one module
 pxa.js 341 made by tools/pixel-art.cjs:
 pxbake.js 627 a map's pictures made into
 pxcard.js 259 the player cards' pattern motifs
@@ -179,7 +179,7 @@ report.js 114 Report Bug or Suggest Ideas
 roomrules.js 368 room governance: groups and permissions
 rooms.js 256 Play: create a room, and
 router.js 112 screens
-rules.js 1736 the rules of Agree or
+rules.js 1732 the rules of Agree or
 sandbox.js 1347 Sandbox: the key windows
 sandboxrules.js 2056 Sandbox: which map it plays
 sbarms.js 124 Sandbox: a made NPC's weapons
@@ -195,7 +195,7 @@ sbgod.js 55 Sandbox: God mode and invisibility,
 sbgodview.js 34 Sandbox: invisible players, on the
 sbgroups.js 477 Sandbox: groups , the rules
 sbgroupview.js 416 Sandbox: groups , on the
-sbhelp.js 273 Sandbox: the help manual
+sbhelp.js 277 Sandbox: the help manual
 sbhot.js 143 Sandbox: the hotbar , the
 sbhotview.js 406 Sandbox: the hotbar , the
 sblooks.js 48 Sandbox: a zone's look
@@ -255,7 +255,7 @@ umaps.js 371 Made maps: making them, and
 units.js 10 the game's units, in one
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an
-updates.js 3362 Updates
+updates.js 3363 Updates
 vdd.js 190 Valentine's Duck Date: what the
 vddrules.js 513 the rules of Valentine's Duck
 vellum.js 28 The King's Festival
@@ -267,7 +267,7 @@ who.js 3 who this player is beyond
 wounds.js 485 the wounds a hit leaves
 zombiepath.js 178 the zombies' way to the
 zombieroofs.js 322 the zombies' walk over Downpour's
-zombies.js 1475 the zombies: one module for
+zombies.js 1477 the zombies: one module for
 
 ## js/hangout/
 activities.js 23 every Hangout activity, so the
