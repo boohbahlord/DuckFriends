@@ -970,20 +970,17 @@ export function solidsAt(x, y, z = -Infinity) {
 /* how fast a walker at (x, y), its feet at z (none: on the ground), goes in water, of its walk (gamedefaults.js WET):
    the one rule for every walker (the owner's, Nov 21 17:48Z: "water slows down entities equally"; Nov 18 15:35Z: "all
    of their sprinting and their movement speed is the same as the players"). In the map's flood (Downpour's:
-   stationmap.js FLOOD) with its feet in the water, measured from the swim floor (no higher over it than the water is
-   deep): its shallow part waded, its deep end swum; over it (on a car, jumping) it walks */
+   stationmap.js FLOOD) with its feet in the water (no higher than its top): by how deep it is over the bed there
+   (stationmap.js waterAt): very shallow walked, then waded, then swum; over it (on a car, jumping) it walks */
 let flood = null;
 /* the map's elevation 0 (world px): Downpour's the flood's lowest, its swim floor, so its grass is a little over 0; every
    other map's its ground (heights.js levelOf) */
 export const levelZero = () => (flood ? flood.floor : 0);
-export const wetK = (x, y, z = heightAt(x, y)) =>
-  !flood || z - flood.floor > flood.depth + 4
-    ? 1
-    : flood.deep(x, y)
-      ? WET.SWIM
-      : flood.shallow(x, y)
-        ? WET.WADE
-        : 1;
+export function wetK(x, y, z = heightAt(x, y)) {
+  if (!flood || z > flood.top + 4) return 1;
+  const d = GS.waterAt(x, y);
+  return d >= WET.DEEP ? WET.SWIM : d >= WET.FREE ? WET.WADE : 1;
+}
 /* ---------- a car pushed (carpush.js; the owner's, Nov 21 19:07Z: "cars can be moved around") ----------
    carAt(i, ox, oy): Downpour's car i (stationmap.js CARS) moved to (ox, oy) world px from where the map puts it: its
    props (the car and its glass: their spots, solids, depth and drawn parts, shapes.js), and its floor (carDeckAt).

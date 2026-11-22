@@ -14,6 +14,7 @@
    Plan px: x across (0 west … 4600 east), y is depth (0 north … 6200 south). Heights: 0 is the grass and every floor;
    the road lies ROAD.low under it. */
 import { CAR_TOP, carDeck, ELEV_PLAN } from "./vehicles.js";
+import { WET } from "../gamedefaults.js";
 export const K = 0.6;
 export let GS_W = 4600,
   GS_H = 6200;

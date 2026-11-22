@@ -95,6 +95,7 @@ const { url, fail, noErrors } = require("./lib.cjs");
           .map(([, e]) => v(e)),
         tall: props.filter(([t]) => t > 120).map(([, d]) => d),
         low: props.filter(([t]) => t < 20).map(([, d]) => d),
+        lowT: props.filter(([t]) => t < 20).map(([t]) => t), // (their tops: a car sunk in the deep end is a little lower)
         z: window._me ? window._me.z : -1,
       };
     });
@@ -151,7 +152,10 @@ const { url, fail, noErrors } = require("./lib.cjs");
   if (r.me) fail(`from the roof my own duck is ${r.me} darker`);
   if (r.others.some((d) => d < PER - 0.001))
     fail(`from the roof the ducks on the ground: ${r.others}`);
-  if (!r.low.length || r.low.some((d) => Math.abs(d - PER) > 0.03))
+  if (
+    !r.low.length ||
+    r.low.some((d, i) => Math.abs(d - (PER * (RH - r.lowT[i])) / RH) > 0.021)
+  )
     fail(`from the roof the props on the ground: ${r.low.slice(0, 9)}`);
   if (r.tall.some(Boolean))
     fail(`a prop taller than the roof is darker: ${r.tall.slice(0, 9)}`);

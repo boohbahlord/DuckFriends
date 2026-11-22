@@ -68,7 +68,7 @@ game.js 4749 the game screen
 gameact.js 546 the action window and
 gameannounce.js 212 The cloud's words and
 gameboard.js 589 the board: each mode's
-gamedefaults.js 68 the game's own numbers,
+gamedefaults.js 71 the game's own numbers,
 gamefx.js 876 the silly commands and
 gamehand.js 620 the hand: the number-key
 gameplace.js 738 where things are put
@@ -312,7 +312,7 @@ flicker.js 83 now and then a
 ghosts.js 111 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck
 lamp.js 71 the lamps: the example
-layout.js 1195 Duck Cabin: the world
+layout.js 1192 Duck Cabin: the world
 layoutbase.js 78 Duck Cabin: the world's
 layoutheights.js 396 Duck Cabin: the heights
 npc.js 495 Duck Cabin's characters: how
@@ -342,7 +342,7 @@ stage.js 134 the stage: half an
 stationart.js 51 Downpour's things: the drawings
 stationbase.js 67 Downpour's drawings: the shared
 stationcars.js 513 Downpour's drawings: the cars,
-stationmap.js 1201 Dead Ducks Arcade's second
+stationmap.js 1212 Dead Ducks Arcade's second
 stationparts.js 455 Downpour's drawings: the gas
 stationroof.js 340 Downpour's drawings: the roofs,
 stationtrees.js 616 Downpour's drawings: the swamp's
