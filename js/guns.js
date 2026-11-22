@@ -22,9 +22,6 @@ const ITEM_COOL = 750;
 const MELEE_DUR = 450;
 /* every pistol carries 20 magazines (the owner's, Nov 21 18:16Z) */
 const PISTOL_MAGS = 20;
-/* every grenade's blast is 25% wider than it was (the owner's, Nov 21: "grenades should have a 25% larger explosion radius then
-   before"): the board's (rules.js GRENADE_R), Quacky Zombies' (ARMS.grenade.r) and the drawn boom (grenade.js) all read this */
-export const NADE_GROW = 1.25;
 /* a hit's damage from a weapon's `dmg` range: one of its numbers a `step` apart (1 unless the weapon says: a gun's 0.05,
    the dagger's 0.5), every one as likely as the next. A gun with rolls (the Barrett's) first rolls which range it hits
    in, each as often as its weight. Kept to hundredths, so 0.05 steps never come out as 2.2499999 */
@@ -195,8 +192,7 @@ export const ARMS = {
   grenade: {
     kind: "grenade",
     cool: ITEM_COOL,
-    far: 300,
-    r: 210 * NADE_GROW,
+    far: 300, // (its blast: blast.js rings)
     start: 4, // (players start with 4: the owner's, Nov 19 19:27Z)
     most: 4,
   }, // (r: 50% wider than its first 140, owner 2026-11-04)

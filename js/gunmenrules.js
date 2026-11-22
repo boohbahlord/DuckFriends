@@ -41,6 +41,7 @@ import {
   shotMark,
 } from "./npcrules.js";
 import { hitWounds, WOUND_BREEDS } from "./wounds.js";
+import { hitOf } from "./blast.js";
 import {
   friend,
   friendsTick,
@@ -1054,15 +1055,25 @@ function shot(s, by, x, y, now, w, rx, ry, from, hit, H) {
   }
   return any;
 }
-/* a grenade's blast: all their HP (near(x, y, z): who is in it, blast.js) */
+/* a grenade's blast: its ring's damage, a crit twice (near(x, y, z): who is in it and how hard, blast.js) */
 function blast(s, by, near, now, w, H) {
   if (!gmOf(s)) return;
   const gm = (s.hang.gm = { ...gmOf(s) }); // (its own copy: allies.js writes the squad's friendly fire into it)
   let any = false;
   gm.gb = gm.gb.map((o) => {
-    if (o.d || o.hid || !near(o.x, o.y, o.z || heightAt(o.x, o.y))) return o;
+    const n = !o.d && !o.hid && near(o.x, o.y, o.z || heightAt(o.x, o.y));
+    if (!n) return o;
     const q = { ...o };
-    takes(s, q, by, w || "grenade", q.k === "f" ? 1 : q.hp, now, H, "blast"); // (a player's explosive does 1 to the friendly squad)
+    takes(
+      s,
+      q,
+      by,
+      w || "grenade",
+      q.k === "f" ? 1 : hitOf(n),
+      now,
+      H,
+      "blast",
+    ); // (a player's explosive does 1 to the friendly squad)
     any = true;
     return q;
   });

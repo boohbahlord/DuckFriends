@@ -1210,15 +1210,21 @@ export const armOf = (k) => SHOT_ARM[k] || k;
    with "CRIT" or "missed" over it as there. sh: a shot, from (sh.x0, sh.y0); it hits the nearest first, each zombie once
    (sh.zh), goes on past the ones it missed (sh.zp) and stops at the first it hits, or after pierceOf (the Laser Rifle's
    beam through every one on it). True when the shot stops here, or a swing or blast hit any */
-export function mgjZombieHit(s, near, w, now, by, sh = null) {
+export function mgjZombieHit(s, near, w, now, by, sh = null, take = null) {
   const z = s.mz;
   if (!z || !((isMgj(s) && s.phase === "boss") || sbOnBoard(s))) return false; // (and Sandbox's board: sbspawn.js)
   const seen = sh ? [...(sh.zh || []), ...(sh.zp || [])] : [];
+  const ns = new Map(); // (what near said of each: a blast's ring, take(n))
   let got = z.zb.filter(
     (o) =>
       !o.d &&
       !seen.includes(o.i) &&
-      near(o.x, o.y, o.hb || 1, z.sb ? npcBody(s, o, duOf(s, by)) : null),
+      ns
+        .set(
+          o,
+          near(o.x, o.y, o.hb || 1, z.sb ? npcBody(s, o, duOf(s, by)) : null),
+        )
+        .get(o),
   ); // (o.hb: a Seriat file's hitbox, sbnumberat.js; near takes it as how big it is. Sandbox's: its body, only where its picture shows, sbbody.js)
   if (!got.length) return false;
   if (sh)
@@ -1232,7 +1238,7 @@ export function mgjZombieHit(s, near, w, now, by, sh = null) {
   let hit = false;
   for (const o of got) {
     if (sh && (sh.zh || []).length >= most) break;
-    const t = zombieTakes(s, by, w);
+    const t = take ? take(ns.get(o)) : zombieTakes(s, by, w);
     if (!t) {
       if (sh) sh.zp = [...(sh.zp || []), o.i];
       fx({ kind: "l4miss", b: 1, x: o.x, y: o.y });

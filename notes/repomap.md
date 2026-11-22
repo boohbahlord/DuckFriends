@@ -16,9 +16,9 @@ barrelheat.js 70 a hot barrel
 bash.js 1360 the command line's language: a
 bbrules.js 380 the rules of Bicker Brackets
 beaks.js 138 beaks
-blast.js 37 explosions: one module
+blast.js 67 explosions: one module
 bloodpool.js 50 a pool of blood: the
-boardfire.js 1353 the board's weapons: hits, shots,
+boardfire.js 1355 the board's weapons: hits, shots,
 boardjustin.js 675 Justin on the boards
 botduck.js 90 a computer's duck: a random
 botlines.js 188 What the computers write and
@@ -60,8 +60,8 @@ fxmotion.js 229 how a held weapon and
 game.js 5125 the game screen
 gameact.js 546 the action window and the
 gameboard.js 589 the board: each mode's board
-gamedefaults.js 50 the game's own numbers, for
-gamefx.js 873 the silly commands and the
+gamedefaults.js 57 the game's own numbers, for
+gamefx.js 874 the silly commands and the
 gamehand.js 604 the hand: the number-key specials,
 gameplace.js 738 where things are put on
 gameready.js 47 
@@ -70,14 +70,14 @@ gamesettings.js 1757 Game Settings: the whole screen,
 gamestats.js 191 what `stats` and `roundstats` print
 gfx.js 8 Low graphics
 gmodes.js 219 Sandbox Phase 6: made game
-grenade.js 35 a grenade going off
+grenade.js 33 a grenade going off
 ground.js 53 what a duck walks on,
 gunart.js 437 every weapon, drawn: one drawing
 gunmen.js 110 the gunmen's looks
-gunmenrules.js 1145 Survival: the gunmen
+gunmenrules.js 1156 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the
 gunparts.js 15 the pieces every weapon's drawing
-guns.js 646 every weapon's numbers: one sheet
+guns.js 642 every weapon's numbers: one sheet
 hats.js 1096 hats
 heights.js 63 a shot's height, Doom's way
 helppages.js 1498 the command line's Help pages:
@@ -132,7 +132,7 @@ mgj.js 219 Mad God Justin: what the
 mgjart.js 96 Mad God Justin's new pictures
 mgjbrain.js 619 Mad God Justin's brain, on
 mgjpicks.js 500 Mad God Justin's pickups: what
-mgjrules.js 1253 
+mgjrules.js 1259 
 modes.js 445 the game modes
 music.js 590 the music: our own songs,
 musicbar.js 169 the music bar: the song
@@ -179,7 +179,7 @@ report.js 114 Report Bug or Suggest Ideas
 roomrules.js 368 room governance: groups and permissions
 rooms.js 256 Play: create a room, and
 router.js 112 screens
-rules.js 1732 the rules of Agree or
+rules.js 1729 the rules of Agree or
 sandbox.js 1347 Sandbox: the key windows
 sandboxrules.js 2056 Sandbox: which map it plays
 sbarms.js 124 Sandbox: a made NPC's weapons
@@ -252,7 +252,7 @@ triviarules.js 458 the rules of Trivia
 ui.js 380 small helpers every screen uses
 umaprules.js 72 Made maps: the room's part
 umaps.js 371 Made maps: making them, and
-units.js 10 the game's units, in one
+units.js 12 the game's units, in one
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an
 updates.js 3363 Updates
