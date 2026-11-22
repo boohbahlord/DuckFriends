@@ -7959,3 +7959,14 @@ I'm thinking that there's a drop-down menu for each one of these settings. One f
 the on, off, or both has it's own options in potentials
 
 Decision: a plan for next week, no message needed (owner's words). Written into /mnt/project-files/adam/todo.md section "Next week: boards, potentials and acts (owner 17:58Z Nov 22)". Nothing built now (usage throttle until the Friday reset). The circled "True ran" (Potential order list cut short) goes on the A fixes list.
+
+## Owner, 18:03Z Nov 22 (edit adding to the 17:58Z plan message, the new lines word for word)
+rain can be turned on or off for maps in sandbox for the map, game mode, or board
+
+the board can overide the map for rain, and the map over game mode. That way, the board doesnt have to have rain
+
+the game rain doesn't come down on the floor or player onto the place they stand IF a floor/ceiling (same thing) is above their duck.
+this is obv as to why, same with slops btw but not ladders
+
+walls stop rain over top of them wherever they extned, so rain doesnt fall through it, regardless, same for floors/cielings
+Decision: added to the next-week plan as N16 (rain).
