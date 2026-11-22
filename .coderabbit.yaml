@@ -32,6 +32,7 @@ reviews:
     - "!offline.json"
     - "!tools/**/pinned.json"
     - "!tools/health/baseline.json"
+    - "!tools/health/types-baseline.txt"
     - "!notes/**"
     - "!assets/**"
     - "!**/*.png"
