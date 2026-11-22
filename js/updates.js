@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v266",
+    version: 266,
+    date: "Nov 22, 2026",
+    title: "No red rim in Sandbox",
+    news: [
+      "For Sandbox: the board no longer has a colored rim around it (it showed red on Sky at night) unless its color setting is on.",
+    ],
+  },
+  {
     id: "v265",
     version: 265,
     date: "Nov 22, 2026",

@@ -13814,6 +13814,7 @@ html.moving .mgj-field {
    16:17Z: "remove the color overlay for the map here unless it is turned on") */
 .sb-board:not(.sb-tint) .mgj-field {
   background: transparent;
+  box-shadow: none; /* (and no rim: a map's own tile glow, Sky's at night, read the arena's red; the owner, Nov 22 13:15Z: "Why is this board in a red border? It shouldn't be at all") */
   animation: none;
 }
 .sb-board:not(.sb-tint) .mgj-field::before {
