@@ -14,6 +14,7 @@ import {
 } from "./hangout/layout.js";
 import { RX, RY } from "./l4ddrules.js";
 import { room, walkTo, zOk } from "./zombies.js";
+import { tooNear } from "./crowd.js";
 /* ---------- up onto the roofs (Downpour, Part B: the owner's, Nov 17 12:28Z) ----------
    A duck up on a roof (or on the canopy over the pumps) is reached by climbing: a zombie goes to the foot of the edge
    nearest the duck (CL.out outside it), climbs straight up the wall onto it (st 6, slower than it walks: CL.speed of its
@@ -281,7 +282,8 @@ export function climbFrom(z, dk, gx, gy) {
    into one (world.js crowd); blocked, it slides round it or waits. Before, the ones behind walked into the ones in
    front every heartbeat and were pushed back out (separate), so the whole crowd round a duck standing on the canopy
    shook (the owner's, Nov 20 03:58Z: "zombies shouldnt viibrate on roof of gas pump") */
-const ROOF_TURNS = [0, 0.52, 1.05];
+const ROOF_TURNS = [0, 0.52, 1.05],
+  ROOM = tooNear("zombie"); // (touching, and the zombies' gap: crowd.js)
 export function roofStep(z, tx, ty, far, zs) {
   const dx = tx - z.x,
     dy = ty - z.y,
@@ -300,7 +302,7 @@ export function roofStep(z, tx, ty, far, zs) {
       const o = near.find((o) => {
         const now = room(z.x, z.y, o.x, o.y),
           then = room(x, y, o.x, o.y);
-        return then < 1 && then < now;
+        return then < ROOM && then < now;
       });
       if (o) z.bl = o; // (the one in its way, this heartbeat: QUEUE)
       return !o;
