@@ -8,14 +8,8 @@ import { BOARD_WEAPONS, MGJ_MELEE, THROWS, loadTo } from "./guns.js";
 import { CAKE_EVERY, isMgj, mgjMag } from "./mgjrules.js";
 import { magOf, magSize } from "./rules.js";
 import { l4Ammo } from "./l4dd.js";
-import {
-  isL4dd,
-  downArmed,
-  kitOf,
-  l4Hp,
-  slotOfPick,
-  slotsOf,
-} from "./l4ddrules.js";
+import { isL4dd, downArmed, kitOf, l4Hp, slotsOf } from "./l4ddrules.js";
+import { GRENADE, slotOfPick, staysPick } from "./kitslots.js";
 import { isSb } from "./sandboxrules.js";
 import { whyNot } from "./sandbox.js";
 import { sbHotOn, mountHotWin } from "./sbhotview.js";
@@ -23,8 +17,8 @@ import { sbSlots, spawnOf } from "./sbhot.js";
 
 /* One machine for every mode: what's out in my hand (hand.in) and what comes back once it's put away or used up
    (hand.back). Each mode is a row of data:
-   - in: the board and Mad God Justin keep a weapon's id; Quacky Zombies a pick (0 melee, 1 and 2 ranged, 3 the item,
-     4 the second item, 5 the grenades: keys 1 to 6, l4ddrules.js slotOfPick)
+   - in: the board and Mad God Justin keep a weapon's id; Quacky Zombies a pick (a slot of the kit, then the grenades:
+     key = pick + 1, kitslots.js)
    - start: what's in hand at first (Mad God Justin: the pistol, each fight; the owner's, Nov 16)
    - stays: a weapon that stays in hand once picked; toggles: picked again, it goes away and the one back comes back
    - self: picking a weapon that stays makes it the one to come back (Quacky Zombies), or else the one before stays it
@@ -62,13 +56,15 @@ const ROWS = {
   l4: {
     start: 0,
     held: () => null,
-    stays: (i) => i < 3,
-    toggles: (i) => i >= 3,
+    stays: staysPick,
+    toggles: (i) => !staysPick(i),
     self: true,
     empty: (s) => {
       const sl = slotsOf(s, C.R.me),
         kit = kitOf(s, C.R.me);
-      return hand.in === 5 ? !(kit && kit.g > 0) : !sl[slotOfPick(hand.in)]; // (the last grenade thrown, or the item used up)
+      return hand.in === GRENADE
+        ? !(kit && kit.g > 0)
+        : !sl[slotOfPick(hand.in)]; // (the last grenade thrown, or the item used up)
     },
     backTo: (s) => (slotsOf(s, C.R.me)[hand.back] ? hand.back : 0),
     mag: magSize,
@@ -203,7 +199,7 @@ export function heldNow() {
     settle(C.R.state); // (the last grenade thrown, or the item used up: the weapon before it comes back)
     if (downArmed(C.R.state, C.R.me)) return "handgun"; // (down: the down pistol)
     if (l4Hp(C.R.state, C.R.me) <= 0) return "";
-    return hand.in === 5
+    return hand.in === GRENADE
       ? "grenade"
       : slotsOf(C.R.state, C.R.me)[slotOfPick(hand.in)] || "";
   }
@@ -302,16 +298,16 @@ export function hotH() {
   win.toggle();
   return true;
 }
-/* Quacky Zombies: keys 1 to 4 pick a slot, 5 the second item and 6 the grenades (Dead Ducks Arcade and Survival). A
-   melee or ranged weapon stays in hand once picked; an item (4, 5) switches on and off: on, it's in hand instead of the
-   weapon, and off (or used up) that weapon is back. */
+/* Quacky Zombies: a number key picks a slot, the one after the last slot the grenades (kitslots.js). A melee or ranged
+   weapon stays in hand once picked; an item switches on and off: on, it's in hand instead of the weapon, and off (or
+   used up) that weapon is back. */
 export function l4Pick(i) {
   const sl = slotsOf(C.R.state, C.R.me),
     kit = kitOf(C.R.state, C.R.me);
   mine();
-  if (i === 5) {
-    /* the grenades are a number key now (6), and picked like a weapon: the key again puts them away (the owner's, Nov 16) */
-    if (hand.in !== 5 && !(kit && kit.g > 0)) return;
+  if (i === GRENADE) {
+    /* the grenades are a number key, and picked like a weapon: the key again puts them away (the owner's, Nov 16) */
+    if (hand.in !== GRENADE && !(kit && kit.g > 0)) return;
   } else if (slotOfPick(i) < 0 || !sl[slotOfPick(i)]) return;
   put(i);
   C.sendMove(true);
