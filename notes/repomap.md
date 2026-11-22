@@ -129,7 +129,7 @@ mgjart.js 96 Mad God Justin's new pictures
 mgjbrain.js 663 Mad God Justin's brain, on the
 mgjpicks.js 455 Mad God Justin's pickups: what drops,
 mgjrules.js 1280 
-modes.js 444 the game modes
+modes.js 445 the game modes
 music.js 590 the music: our own songs, played
 musicbar.js 169 the music bar: the song the
 name.js 165 fonts and how a player's name
@@ -286,7 +286,7 @@ flicker.js 83 now and then a light stutters
 ghosts.js 111 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in blue
 lamp.js 71 the lamps: the example activity
-layout.js 1517 Duck Cabin: the world of Hangout
+layout.js 1518 Duck Cabin: the world of Hangout
 npc.js 495 Duck Cabin's characters: how they get
 npcart.js 283 Duck Cabin's characters: the drawings
 piano.js 531 the piano in the cabin ,
@@ -314,7 +314,7 @@ trampoline.js 142 the trampoline
 tv.js 117 the TV: seven channels, the next
 vehicles.js 116 what a duck stands on on
 water.js 442 the pool: ducks in the water,
-world.js 1754 Hangout on the screen: the camera,
+world.js 1751 Hangout on the screen: the camera,
 
 ## js/pxm/
 board-light.js 7 the menus' background in the light,
