@@ -79,6 +79,7 @@ import {
   hasLeft,
 } from "./l4ddrules.js";
 import { kindOf, MGJ_MELEE } from "./guns.js";
+import { draws } from "./bowdraw.js";
 import { gunsIn, itemsIn, PRIMARY } from "./kitslots.js";
 import {
   isVd,
@@ -442,8 +443,15 @@ function tvBot(s, id, now, late, out) {
     j: !p.j && Math.random() < 0.3 ? now : 0,
   });
 }
-/* what the computers do now; returns a list of actions */
-export function botActions(s, now) {
+/* what the computers do now; returns a list of actions. A computer draws the bow again the moment it lets go, as a
+   player holding the button would (bowdraw.js): its next arrow flies with the draw it held since */
+export const botActions = (s, now) =>
+  botThink(s, now).flatMap((a) =>
+    a.t === "use" && draws(a.what)
+      ? [a, { t: "draw", id: a.id, w: a.what }]
+      : [a],
+  );
+function botThink(s, now) {
   const out = [],
     wait = (s.options.botWait ?? OPTIONS_DEFAULT.botWait) * 1000;
   const bots = s.seat.filter((id) => s.players[id] && s.players[id].bot);

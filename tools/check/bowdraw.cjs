@@ -6,7 +6,10 @@
       up to 40% faster;
    2. in Dead Ducks Arcade, the left button held with the bow out fires nothing while held, the white bar under my duck
       fills red, and letting go shoots one arrow carrying its draw (about 1 s), a little faster;
-   3. a computer player's arrow, never drawn, carries no draw (its arrows as before).
+   3. one bow rule for every arrow hit (Adam, Nov 22 11:20Z: "every arrow hit read bowdraw.js' crit ... no old path
+      left"): guns.js critOf of the bow is its draw's, and what a zombie, a Sandbox NPC or a gunman takes from it
+      (l4ddrules.js zombieTakes) is always a crit at full draw and never undrawn, with the draw's damage;
+   4. a computer player draws again the moment it lets go (bots.js botActions), so its arrows carry a draw too.
    Run: node tools/check/run.mjs bowdraw */
 const { chromium } = require("playwright");
 const { url, fail, noErrors } = require("./lib.cjs");
@@ -18,11 +21,13 @@ const { url, fail, noErrors } = require("./lib.cjs");
   await p.goto(url);
   await p.waitForTimeout(2500);
   const t = await p.evaluate(async () => {
-    const B = await import("./js/bowdraw.js");
+    const B = await import("./js/bowdraw.js"),
+      G = await import("./js/guns.js");
     return {
       dmg: [0, 99, 100, 499, 500, 1000, 2500].map(B.drawDmg),
       crit: [0, 1000, 2000, 2499, 2500].map(B.drawCrit),
       fast: [0, 1250, 2500].map(B.drawFast),
+      critOf: [undefined, 0, 1000, 2500].map((d) => G.critOf("bow", d)),
     };
   });
   const same = (a, c) => JSON.stringify(a) === JSON.stringify(c);
@@ -31,6 +36,8 @@ const { url, fail, noErrors } = require("./lib.cjs");
   if (!same(t.crit, [0, 0.25, 0.5, 0.62475, 1]))
     fail("a draw's crit: " + t.crit);
   if (!same(t.fast, [1, 1.2, 1.4])) fail("a draw's speed: " + t.fast);
+  if (!same(t.critOf, [0, 0, 0.25, 1]))
+    fail("guns.js critOf of the bow: " + t.critOf);
   /* Dead Ducks Arcade */
   await p.evaluate(async () => {
     const r = await (
@@ -93,16 +100,28 @@ const { url, fail, noErrors } = require("./lib.cjs");
   await p.mouse.up();
   await p.waitForTimeout(150);
   const got = (await arrows()).slice(before);
+  const takes = await p.evaluate(async () => {
+    const r = window._r,
+      R = await import("./js/l4ddrules.js"),
+      of = (dr) =>
+        Array.from({ length: 40 }, () =>
+          R.zombieTakes(r.state, r.me, "bow", dr),
+        ).filter(Boolean);
+    return { full: of(2500), none: of(0) };
+  });
   const bot = await p.evaluate(async () => {
     const r = window._r,
       R = await import("./js/l4ddrules.js"),
       id = r.state.seat.find((q) => q !== r.me);
     R.give(r.state, id, "bow", "knife");
     r.state.pos[id] = { ...r.state.pos[id], w: "bow" };
-    r.send({ t: "use", what: "bow", ax: 1, ay: 0, face: 1, id });
-    return (r.state.shots || [])
-      .filter((s) => s.k === "arrow" && s.by === id)
-      .map((s) => s.dr);
+    const seen = new Map();
+    for (let i = 0; i < 60 && seen.size < 3; i++) {
+      for (const s of r.state.shots || [])
+        if (s.k === "arrow" && s.by === id) seen.set(s.n, s.dr);
+      await new Promise((ok) => setTimeout(ok, 250));
+    }
+    return [...seen.values()];
   });
   await b.close();
   noErrors(errs);
@@ -112,6 +131,20 @@ const { url, fail, noErrors } = require("./lib.cjs");
     fail("the white bar while drawing: " + JSON.stringify(mid));
   if (got.length !== 1 || !(got[0].dr >= 900 && got[0].dr <= 1300))
     fail("letting go: " + JSON.stringify(got));
-  if (!bot.length || bot.some((d) => d != null))
-    fail("a computer player's arrow has a draw: " + bot);
+  if (!takes.full.length || takes.full.some((q) => !q.crit))
+    fail(
+      "a full draw's hit is not always a crit: " +
+        JSON.stringify(takes.full.slice(0, 3)),
+    );
+  if (takes.none.some((q) => q.crit)) fail("an undrawn arrow's hit was a crit");
+  if (!(takes.full[0].dmg > takes.none[0].dmg))
+    fail(
+      "a full draw's hit does no more: " +
+        JSON.stringify([takes.full[0], takes.none[0]]),
+    );
+  if (bot.length < 2 || !bot.slice(1).every((d) => d > 0))
+    fail(
+      "a computer player's arrows after its first carry no draw: " +
+        JSON.stringify(bot),
+    );
 })();

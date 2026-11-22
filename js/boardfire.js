@@ -7,7 +7,7 @@ import { CRIT_DOWN } from "./wounds.js";
 import { CAKE_SPEED, CAKE_EAT_MS } from "./mgjrules.js";
 
 import { critOf, armOfShot } from "./guns.js";
-import { drawCrit, drawDmg } from "./bowdraw.js";
+import { drawDmg } from "./bowdraw.js";
 
 import {
   DAGGER_LIFE,
@@ -1218,7 +1218,7 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
       )
         hLock(sh, n.z); // (n.r: a Seriat NPC's hitbox)
       else continue;
-      if (hangHit(s, n.id, sh.by, now, sh.k) && n.id === "justin")
+      if (hangHit(s, n.id, sh.by, now, sh.k, sh.dr) && n.id === "justin")
         justinKilled(s, sh.by, sh.k);
     }
   return false;
@@ -1287,9 +1287,7 @@ export function cakeGone(s, now) {
 /* ---------- the ducks' wounds and crits outside Quacky Zombies and Mad God Justin (wounds.js) ---------- */
 export const pwOn = (s) => !isMgj(s) && !isL4dd(s);
 export const critRoll = (s, w, sh) =>
-  pwOn(s) &&
-  Math.random() <
-    (sh && sh.dr != null ? drawCrit(sh.dr) : critOf(armOfShot(w))); // (a drawn arrow: its draw's, bowdraw.js)
+  pwOn(s) && Math.random() < critOf(armOfShot(w), sh && sh.dr); // (a drawn arrow: its draw's, bowdraw.js)
 /* a hit of weapon (or shot kind) k on duck id: a crit doubles it (guns.js critOf), and takes no more than that; what
    takes all of it (the slug, the chain gun: PHP) still does */
 export function hitSoaks(s, id, now, k, crit, by, big = 1, more = 0) {

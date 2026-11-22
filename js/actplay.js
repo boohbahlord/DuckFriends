@@ -475,8 +475,7 @@ export function act_use({ state, s, a, now, me, boss }) {
   const sp = a.what || (me && me.duck && me.duck.special),
     p = s.pos[a.id];
   if (!me || !p || p.x < 0 || !boardPhases(s).includes(s.phase)) return state;
-  if (draws(sp) && (!me.bot || (s.draw && s.draw[a.id])))
-    a = { ...a, dr: drawTaken(s, a.id, now) }; // (the bow: how long it was drawn, bowdraw.js; a computer player that never draws keeps its old arrows)
+  if (draws(sp)) a = { ...a, dr: drawTaken(s, a.id, now) }; // (the bow: how long it was drawn, bowdraw.js)
   if (isL4dd(s)) return l4Use(s, a, now) ? s : state; // (Quacky Zombies: its own weapons, l4ddrules.js)
   /* the normal games: a downed duck can't use a weapon, and neither can one just back from dying, in its spawn protection,
          where what it shot or swung hurt nobody anyway (the owner's, Nov 19 16:30Z: "when players are downed in normal modes

@@ -114,7 +114,7 @@ import { MERCHANTS, merchantById, merchantLook } from "./merchants.js";
 import { linesOf } from "./merchantlines.js";
 import { invuln } from "./hangout/death.js";
 import { kitSlots, gunSlotFor, ITEM_SLOTS } from "./kitslots.js";
-import { drawCrit, drawDmg, drawFast } from "./bowdraw.js";
+import { drawDmg, drawFast } from "./bowdraw.js";
 import { hOk, hLock, shotFeet, SAME_FLOOR, zOf, swingH } from "./heights.js";
 import { toPx, DUCK } from "./units.js";
 import { blast, reach, hitOf, REACH } from "./blast.js";
@@ -1055,8 +1055,8 @@ export const missOf = (w) =>
     : fastArm(w)
       ? MISS.FAST
       : MISS.SLOW;
-const headOf = (s, id, w) => {
-  const own = critOf(w);
+const headOf = (s, id, w, dr) => {
+  const own = critOf(w, dr); // (dr: a drawn arrow's draw, bowdraw.js)
   if (!own || (isSb(s) && !sbRule(s, "crit"))) return 0; // (Sandbox's Rules: crits off)
   if (isSb(s) && sbRule(s, "critp") >= 0) return sbRule(s, "critp") / 100; // (Sandbox's settings file: one crit chance for every weapon that crits, just as set)
   const holy = w !== "pan" && angelOf(s, id, w) ? 2 : 1; // (the pan has its own: not doubled)
@@ -2766,12 +2766,12 @@ function merchantShoots(s, zs, now) {
   }
 }
 /* a shot or a swing at (x, y) by duck `by` with weapon w: on him? (as wildHurt for Justin: 1 HP, a crit 2) */
-function merchantShot(s, by, x, y, now, w, rx, ry, from) {
+function merchantShot(s, by, x, y, now, w, rx, ry, from, dr) {
   const m = merchantOf(s);
   if (!m || m.st === "dead" || m.st === "jump" || !s.players[by]) return false;
   if (Math.hypot((m.x - x) / rx, (m.y - y) / ry) >= 1) return false;
   if (from && slabBetween(...from, m.x, m.y, heightAt(m.x, m.y))) return false;
-  const n = Math.random() < critOf(w) ? 2 : 1, // (a crit doubles it)
+  const n = Math.random() < critOf(w, dr) ? 2 : 1, // (a crit doubles it; dr: a drawn arrow's draw)
     head = n > 1 && m.hp <= n; // (a crit that kills him: his head bursts as a zombie's does, game.js draws it)
   if (n > 1)
     addFx(s, {
@@ -3225,17 +3225,17 @@ const svGun = (s, by, w, dmg0) => {
     ? Math.max(0.5, hundredths(dmg - SV_GUN_LESS))
     : dmg;
 };
-export function zombieTakes(s, by, w) {
+export function zombieTakes(s, by, w, dr = 0) {
   const A = ARMS[w];
   if (!A) return { dmg: 1, crit: false };
   const beam = w === "laser";
   if (!beam && Math.random() < missOf(w)) return null;
-  const crit = !beam && Math.random() < headOf(s, by, w),
+  const crit = !beam && Math.random() < headOf(s, by, w, dr),
     all = A.dmg === "all" || w === "grenade" || w === "glauncher";
   return {
     dmg: all
       ? ALL_HP
-      : (svGun(s, by, w, dmgOf(A)) +
+      : (svGun(s, by, w, dmgOf(A) + drawDmg(dr)) +
           (!beam && angelOf(s, by, w) ? ANGEL.DMG : 0)) *
         (crit ? 2 : 1) *
         (A.kind === "melee" ? sizeOf(s, by) : 1), // (a melee's, times its swinger's Size: push.js)
@@ -3298,9 +3298,9 @@ function mark(s, z, code) {
     had = zw[z.i] || "";
   if (!had.includes(code)) s.hang.zw = { ...zw, [z.i]: had + code };
 }
-/* a crit, now and then (the weapon's chance and the duck's Accuracy): strike doubles it */
+/* a crit, now and then (the weapon's chance, a drawn arrow's its draw's, and the duck's Accuracy): strike doubles it */
 const critRoll = (s, by, w, sh) =>
-  Math.random() < (sh && sh.dr != null ? drawCrit(sh.dr) : headOf(s, by, w)); // (a drawn arrow: its draw's, bowdraw.js)
+  Math.random() < headOf(s, by, w, sh && sh.dr);
 /* a miss, now and then (missOf): the hit doesn't land, and every screen shows "missed" over that zombie */
 function missed(s, by, w, z, now) {
   if (Math.random() >= missOf(w)) return false;
@@ -3811,15 +3811,16 @@ function wildHurt(
   from = null,
   npc = true,
   only = null,
+  dr = 0,
 ) {
-  if (merchantShot(s, by, x, y, now, w, rx, ry, from)) return true; // (the merchant in its way: merchantShot)
-  if (npc && L4_HOOKS.npc && L4_HOOKS.npc(s, by, x, y, now, w, rx, ry, from))
-    return true; // (one of Sandbox's NPCs in its way: sbcabin.js)
+  const at = [s, by, x, y, now, w, rx, ry, from]; // (what every one in its way is hit with; dr: a drawn arrow's draw)
+  if (merchantShot(...at, dr)) return true; // (the merchant in its way: merchantShot)
+  if (npc && L4_HOOKS.npc && L4_HOOKS.npc(...at, null, dr)) return true; // (one of Sandbox's NPCs in its way: sbcabin.js)
   if (
     npc &&
     L4_HOOKS.gm &&
     s.hang.gm &&
-    L4_HOOKS.gm.shot(s, by, x, y, now, w, rx, ry, from, null, gmHelp(s, now))
+    L4_HOOKS.gm.shot(...at, null, gmHelp(s, now), dr)
   )
     return true; // (one of Survival's gunmen in its way: gunmenrules.js)
   for (const id of only ? [only] : wilds(s)) {
@@ -3830,7 +3831,7 @@ function wildHurt(
     if (Math.hypot((px - x) / rx, (py - y) / ry) >= 1) continue;
     if (from && slabBetween(...from, px, py, zOf(p))) continue;
     /* a crit (guns.js critOf, a weapon's chance as on any duck) doubles it, and blows his head off if it puts him down */
-    const crit = Math.random() < critOf(w);
+    const crit = Math.random() < critOf(w, dr);
     wildDown(s, id, by, now, w, false, crit ? ["x0"] : null, crit ? 2 : 1);
     if (crit)
       addFx(s, {
@@ -4196,14 +4197,9 @@ export function l4Shots(s, now) {
           z.st !== 3 &&
           Math.hypot((z.x - x) / (26 * big), (z.y - y) / (22 * big)) < 1 &&
           hOk(sh, zOf(z, "zombie"), z.x, z.y, sh.x0 * W, sh.y0 * H) &&
-          !hLock(sh, zOf(z, "zombie")); // (at its height, the first one setting it: heights.js)
-      if (
-        wildHurt(s, sh.by, x, y, now, w, 26, 22, [
-          sh.x0 * W,
-          sh.y0 * H,
-          sh.hz || 0,
-        ])
-      ) {
+          !hLock(sh, zOf(z, "zombie")), // (at its height, the first one setting it: heights.js)
+        fr = [sh.x0 * W, sh.y0 * H, sh.hz || 0]; // (from the shooter, for the one rule: nothing solid between)
+      if (wildHurt(s, sh.by, x, y, now, w, 26, 22, fr, true, null, sh.dr)) {
         gone = true; // (Justin out in Downpour with no weapon: it hit him)
         endX = x;
         endY = y;
@@ -4803,7 +4799,7 @@ export function gmHelp(s, now) {
       if (strike(s, z, dmg, crit, null, w, now)) die(z, T);
     }, // (a zombie: nobody's points; a crit doubles it, and takes its head if it kills)
     pts: (id, n) => addPts(s, id, n),
-    takes: (by, w) => zombieTakes(s, by, w),
+    takes: (by, w, dr) => zombieTakes(s, by, w, dr),
     up: (id) => standing(s, id),
     wild: (id) => isWild(s, id),
     drop(x, y) {
