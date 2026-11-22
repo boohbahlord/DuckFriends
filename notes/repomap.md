@@ -18,7 +18,7 @@ bbrules.js 380 the rules of Bicker Brackets
 beaks.js 138 beaks
 bloodpool.js 50 a pool of blood: the
 boardfire.js 1319 the board's weapons: hits, shots,
-boardjustin.js 691 Justin on the boards
+boardjustin.js 675 Justin on the boards
 botduck.js 90 a computer's duck: a random
 botlines.js 188 What the computers write and
 bots.js 1426 computers
@@ -34,7 +34,7 @@ collage.js 101 Shelter Sky & Null
 color.js 165 choosing a color
 corners.js 94 full screen
 court.js 229 Lawyering: what the screen shows
-crowd.js 183 crowds: walkers never stand in
+crowd.js 242 crowds: walkers never stand in
 customize.js 1776 Customize: the Armory
 datboi.js 115 here come dat boi
 democracy.js 243 Democracy of Ducklings:
@@ -72,7 +72,7 @@ grenade.js 35 a grenade going off
 ground.js 53 what a duck walks on,
 gunart.js 437 every weapon, drawn: one drawing
 gunmen.js 110 the gunmen's looks
-gunmenrules.js 1132 Survival: the gunmen
+gunmenrules.js 1151 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the
 gunparts.js 15 the pieces every weapon's drawing
 guns.js 626 every weapon's numbers: one sheet
@@ -92,6 +92,7 @@ itemtip.js 104 hold I on an item:
 itemtone.js 98 the colors an outfit or
 jump.js 78 a duck's jump: one arc
 jumps.js 48 the jump counter
+justinmoves.js 34 Justin's moves on the board,
 keynav.js 204 menus by keyboard
 l4dd.js 3342 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
@@ -127,9 +128,9 @@ merchants.js 376 the merchants
 meters.js 114 the thin bars under my
 mgj.js 219 Mad God Justin: what the
 mgjart.js 96 Mad God Justin's new pictures
-mgjbrain.js 663 Mad God Justin's brain, on
-mgjpicks.js 455 Mad God Justin's pickups: what
-mgjrules.js 1280 
+mgjbrain.js 619 Mad God Justin's brain, on
+mgjpicks.js 500 Mad God Justin's pickups: what
+mgjrules.js 1253 
 modes.js 445 the game modes
 music.js 590 the music: our own songs,
 musicbar.js 169 the music bar: the song
@@ -252,7 +253,7 @@ umaps.js 371 Made maps: making them, and
 units.js 10 the game's units, in one
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an
-updates.js 3332 Updates
+updates.js 3342 Updates
 vdd.js 190 Valentine's Duck Date: what the
 vddrules.js 513 the rules of Valentine's Duck
 vellum.js 28 The King's Festival
@@ -264,7 +265,7 @@ who.js 3 who this player is beyond
 wounds.js 485 the wounds a hit leaves
 zombiepath.js 178 the zombies' way to the
 zombieroofs.js 322 the zombies' walk over Downpour's
-zombies.js 1451 the zombies: one module for
+zombies.js 1475 the zombies: one module for
 
 ## js/hangout/
 activities.js 23 every Hangout activity, so the

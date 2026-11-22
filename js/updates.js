@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v249",
+    version: 249,
+    date: "Nov 22, 2026",
+    title: "No more ladder lines",
+    news: [
+      "For Dead Ducks Arcade and Survival: when you're up on the canopy, zombies stop lining up at the ladder and take the roof or the red car instead, and a few criminals now sneak round the side.",
+      "Behind the scenes: Justin's walk, hammer swing and flash are written once for every mode he's in. Nothing plays differently.",
+    ],
+  },
+  {
     id: "v248",
     version: 248,
     date: "Nov 22, 2026",
