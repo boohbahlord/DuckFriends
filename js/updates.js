@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v275",
+    version: 275,
+    date: "Nov 22, 2026",
+    title: "Ground 0 and deeper water",
+    news: [
+      "For Sandbox: elevations now count from 0 at the ground. Your made maps keep their look.",
+      "For Dead Ducks Arcade (Downpour): the road's water gets deeper to the west. Its very edge doesn't slow you, the middle makes you wade, and the deep end makes you swim.",
+    ],
+  },
+  {
     id: "v274",
     version: 274,
     date: "Nov 22, 2026",
