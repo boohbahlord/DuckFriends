@@ -176,7 +176,7 @@ players.js 342 the player menu and
 pointer.js 54 a computer or a
 powerart.js 377 Dead Ducks Arcade: the
 push.js 64 push and knock-back: one
-pxa.js 341 made by tools/pixel-art.cjs:
+pxa.js 954 made by tools/pixel-art.cjs:
 pxbake.js 627 a map's pictures made
 pxcard.js 259 the player cards' pattern
 pxdom.js 764 the pixel look for

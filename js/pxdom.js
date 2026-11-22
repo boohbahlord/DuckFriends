@@ -119,7 +119,7 @@ function snapshot(svg, vb) {
     const cs = getComputedStyle(from[i]);
     let st = "";
     for (const p of PROPS) {
-      const v = cs.getPropertyValue(p);
+      const v = i === 0 && p === "opacity" ? "1" : cs.getPropertyValue(p); // (mid-fade, a new picture each frame otherwise)
       if (v) st += `${p}:${v};`;
     }
     if (i === 0) st += "opacity:1;"; // (the drawing's own see-through belongs to what shows it: the <svg> stays as it is)
