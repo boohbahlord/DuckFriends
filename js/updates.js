@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v242",
+    version: 242,
+    date: "Nov 22, 2026",
+    title: "See-through tiles again",
+    news: [
+      "The board's tiles are see-through over the map again on every map, the maps you make too (they had turned solid on made maps).",
+      "Behind the scenes: Mad God Justin's pickups live in their own file now. Nothing plays differently.",
+    ],
+  },
+  {
     id: "v241",
     version: 241,
     date: "Nov 22, 2026",
