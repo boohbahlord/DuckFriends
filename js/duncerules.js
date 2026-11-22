@@ -26,6 +26,7 @@ import {
   textMax,
 } from "./rules.js";
 import { shuffle, anyOf } from "./random.js";
+import { seatRows } from "./courtrules.js";
 
 export const isDn = (s) => s.options.mode === "dunce";
 export const DN_SIDES = ["Dunce", "Not a Dunce"];
@@ -180,14 +181,12 @@ export function startTake(s, now) {
   s.pos = {};
   s.lock = {};
   s.pos[q.def] = { x: 0.5, y: 0.5 };
-  const rest = s.seat.filter((id) => id !== q.def),
-    half = Math.ceil(rest.length / 2);
-  rest.forEach((id, k) => {
-    const top = k < half,
-      i = top ? k : k - half,
-      n = top ? half : rest.length - half;
-    s.pos[id] = { x: 0.44 + (0.12 * (i + 1)) / (n + 1), y: top ? 0.8 : 0.96 };
-  });
+  seatRows(
+    s,
+    s.seat.filter((id) => id !== q.def),
+    0.8,
+    0.96,
+  );
   const T = +s.options.dunceTime || 0;
   s.lordTime = T ? DN_GRACE + T : 0;
   const t = q.text.trim();
