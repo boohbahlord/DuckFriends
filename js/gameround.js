@@ -228,6 +228,15 @@ export const viewOver = (
     <p class="dim">${s.round + 1} round${s.round ? "s" : ""} · ${isMgj(s) ? `${(s.mgjPast || []).length} fight${(s.mgjPast || []).length === 1 ? "" : "s"}` : `${s.history.length} ${isLaw(s) ? "case" : isDn(s) ? "take" : "question"}${s.history.length === 1 ? "" : "s"}`}</p>
     <div class="statboxes grid"></div></div>`;
 
+/* a game counts once, with the first round I played in it */
+function countGame(s, st) {
+  const game = `${s.id}:${s.startedAt}`;
+  if (profile.stats.lastGame !== game) {
+    profile.stats.lastGame = game;
+    st.games++;
+  }
+}
+
 /* my all-time stats: a round counts once its stats are up (not in test rooms), a game with its first round I played */
 export function recordRound(s) {
   const key = `${s.id}:${s.startedAt}:${s.round}`;
@@ -239,11 +248,7 @@ export function recordRound(s) {
     // Who is the Quack?: my votes (and the right ones), the round won or lost, and won as the Quack
     const r = (s.wqPast || []).slice(-1)[0];
     if (!st || !r || !r.ids.includes(R.me)) return;
-    const game = `${s.id}:${s.startedAt}`;
-    if (profile.stats.lastGame !== game) {
-      profile.stats.lastGame = game;
-      st.games++;
-    }
+    countGame(s, st);
     const mine = r.votes.map((v) => v.who[R.me]).filter(Boolean),
       q = r.quacks.includes(R.me);
     st.rounds++;
@@ -263,11 +268,7 @@ export function recordRound(s) {
     // Lawyering: my cases argued, won, lost and given up, and my jury votes
     const p = lawStats(s, s.round).per[R.me];
     if (!st || !p || !(p.argued || p.votes)) return;
-    const game = `${s.id}:${s.startedAt}`;
-    if (profile.stats.lastGame !== game) {
-      profile.stats.lastGame = game;
-      st.games++;
-    }
+    countGame(s, st);
     st.rounds++;
     st.answers += p.votes;
     st.argued += p.argued;
@@ -282,11 +283,7 @@ export function recordRound(s) {
     // Duncelation: my takes defended, not a dunce and a dunce, and my votes
     const p = dnStats(s, Math.max(0, ((s.dn && s.dn.dkN) || 0) - 1)).per[R.me];
     if (!st || !p || !(p.turns || p.votes)) return;
-    const game = `${s.id}:${s.startedAt}`;
-    if (profile.stats.lastGame !== game) {
-      profile.stats.lastGame = game;
-      st.games++;
-    }
+    countGame(s, st);
     st.rounds++;
     st.answers += p.votes;
     st.argued += p.turns;
@@ -300,11 +297,7 @@ export function recordRound(s) {
     // Trivia: my answers this round, right and wrong, and the questions I wrote
     const w = tvStats(s, s.round).per[R.me];
     if (!st) return;
-    const game = `${s.id}:${s.startedAt}`;
-    if (profile.stats.lastGame !== game) {
-      profile.stats.lastGame = game;
-      st.games++;
-    }
+    countGame(s, st);
     st.rounds++;
     if (w) {
       st.answers += w.right + w.wrong;
@@ -321,11 +314,7 @@ export function recordRound(s) {
     const V = s.vd,
       p = vdStats(s).per[R.me];
     if (!st || !V) return;
-    const game = `${s.id}:${s.startedAt}`;
-    if (profile.stats.lastGame !== game) {
-      profile.stats.lastGame = game;
-      st.games++;
-    }
+    countGame(s, st);
     st.rounds += V.turn || 0;
     st.argued += p ? p.dates : 0;
     if (V.val === R.me) st.wins++;
@@ -340,11 +329,7 @@ export function recordRound(s) {
     const f = (s.mgjPast || []).slice(-1)[0],
       p = mgjStats(s).per[R.me];
     if (!st || !f || !p || !(f.ids || []).includes(R.me)) return;
-    const game = `${s.id}:${s.startedAt}`;
-    if (profile.stats.lastGame !== game) {
-      profile.stats.lastGame = game;
-      st.games++;
-    }
+    countGame(s, st);
     st.rounds++;
     st.answers += p.dmg;
     st.majority += p.hits;
@@ -361,11 +346,7 @@ export function recordRound(s) {
       s.sc.stories.flatMap((x) => x.paras).filter((x) => x.round === s.round),
     )[R.me];
     if (!st || !p || !(p.lines || p.lvotes || p.wvotes)) return;
-    const game = `${s.id}:${s.startedAt}`;
-    if (profile.stats.lastGame !== game) {
-      profile.stats.lastGame = game;
-      st.games++;
-    }
+    countGame(s, st);
     st.rounds++;
     st.answers += p.lines;
     st.wins += p.lvotes;
@@ -379,11 +360,7 @@ export function recordRound(s) {
     const t = (s.bbPast || []).slice(-1),
       p = bbStats(t)[R.me];
     if (!st || !p || !(p.votes || p.wins || p.losses)) return;
-    const game = `${s.id}:${s.startedAt}`;
-    if (profile.stats.lastGame !== game) {
-      profile.stats.lastGame = game;
-      st.games++;
-    }
+    countGame(s, st);
     st.rounds++;
     st.answers += p.votes;
     st.wins += p.wins;
@@ -397,11 +374,7 @@ export function recordRound(s) {
     (h) => h.round === s.round && h.a[R.me] !== undefined,
   );
   if (!st || !mine.length) return;
-  const game = `${s.id}:${s.startedAt}`;
-  if (profile.stats.lastGame !== game) {
-    profile.stats.lastGame = game;
-    st.games++;
-  }
+  countGame(s, st);
   st.rounds++;
   st.answers += mine.length;
   if (isWyr(s)) {

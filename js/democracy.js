@@ -13,7 +13,7 @@ import {
   dodRoom,
 } from "./roomrules.js";
 import { now } from "./clock.js";
-import { infoUnder, openGameSettings } from "./gamesettings.js";
+import { infoUnder, openGameSettings, paintMenu } from "./gamesettings.js";
 
 /* what each rule does, as the preview says it */
 const DOD_TEXT = {
@@ -154,17 +154,7 @@ export function openDemocracy(R, { lobby = false } = {}) {
     return `<div class="gs-text"><h3>${esc(DOD_NAMES[k])}${on ? " · On" : ""}</h3><p>${esc(DOD_TEXT[k])}</p><p>${esc(what)}</p>${line}</div>`;
   }
 
-  function paint(keep = true) {
-    if (!W || !W.isConnected) return;
-    const menu = W.querySelector(".arm-menu"),
-      body = menu.querySelector(".arm-body"),
-      top = keep && body ? body.scrollTop : 0;
-    setHTML(menu, menuHTML());
-    const nb = menu.querySelector(".arm-body");
-    if (nb) nb.scrollTop = top;
-    setHTML(W.querySelector(".gs-stage"), stageHTML());
-    place();
-  }
+  const paint = (keep = true) => paintMenu(W, menuHTML, stageHTML, place, keep);
   /* on a phone the words go under the row they're about (gamesettings.js), or under the last row for how the votes work */
   const place = () => {
     const menu = W.querySelector(".arm-menu"),

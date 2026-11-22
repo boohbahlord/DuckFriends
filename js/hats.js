@@ -476,19 +476,19 @@ export const HAT_GROUPS = [
   ["Jesters and clowns", ["jester", "clownwig"]],
 ];
 export const HAT_TOP = 32; // the headroom (in duck units) a hat needs above the duck's box
-const dk = (hex, t) => {
+export const dk = (hex, t) => {
   const n = parseInt(String(hex).slice(1), 16) || 0,
     c = [n >> 16, (n >> 8) & 255, n & 255].map((v) => Math.round(v * (1 - t)));
   return "#" + c.map((v) => v.toString(16).padStart(2, "0")).join("");
 };
-const lt = (hex, t) => {
+export const lt = (hex, t) => {
   const n = parseInt(String(hex).slice(1), 16) || 0,
     c = [n >> 16, (n >> 8) & 255, n & 255].map((v) =>
       Math.round(v + (255 - v) * t),
     );
   return "#" + c.map((v) => v.toString(16).padStart(2, "0")).join("");
 };
-const O = 'stroke="#1c1c28" stroke-width="1.6" stroke-linejoin="round"';
+export const O = 'stroke="#1c1c28" stroke-width="1.6" stroke-linejoin="round"';
 
 /* every hat in local units: (0, 0) is the top of the head, x toward the beak, y up is negative */
 const DRAW = {

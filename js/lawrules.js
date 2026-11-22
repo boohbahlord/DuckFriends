@@ -110,20 +110,27 @@ export function counselDone(s, id) {
       (how === "writer" && id !== q.by) || s.law.picks[role][id] !== undefined,
   );
 }
+/* one role's votes counted: the most-voted player who can be it, a tie settled by chance, nobody voted for chance to pick
+   (a pick that clashes falls to the next best); best and top tell how it went */
+function counselVote(s, role, on) {
+  const ok = (id) => counselOk(s, role, id),
+    n = {};
+  for (const [voter, who] of Object.entries(s.law.picks[role] || {}))
+    if (s.players[voter] && on.includes(who) && ok(who))
+      n[who] = (n[who] || 0) + 1;
+  const top = Math.max(0, ...Object.values(n)),
+    best = Object.keys(n).filter((id) => n[id] === top && top > 0);
+  return {
+    who: bagPick(s, `law ${role}`, best.length ? best : on.filter(ok)),
+    best,
+    top,
+  };
+}
 /* the picking is over: the defense first, then the offense (a pick that clashes falls to the next best, then to chance) */
 export function endCounsel(s, now) {
   const L = s.law,
     on = playing(s).filter((id) => s.players[id]);
-  for (const role of ["def", "off"]) {
-    const ok = (id) => counselOk(s, role, id),
-      n = {};
-    for (const [voter, who] of Object.entries(L.picks[role] || {}))
-      if (s.players[voter] && on.includes(who) && ok(who))
-        n[who] = (n[who] || 0) + 1;
-    const top = Math.max(0, ...Object.values(n)),
-      best = Object.keys(n).filter((id) => n[id] === top && top > 0);
-    L[role] = bagPick(s, `law ${role}`, best.length ? best : on.filter(ok));
-  }
+  for (const role of ["def", "off"]) L[role] = counselVote(s, role, on).who;
   return openCase(s, now);
 }
 /* ---------- the attorney vote (the host's setting lawVote, off by default) ----------
@@ -142,14 +149,8 @@ export function attCheck(s, now, force) {
   const L = s.law,
     role = attRole(s),
     on = playing(s).filter((id) => s.players[id]),
-    ok = (id) => counselOk(s, role, id),
-    n = {};
-  for (const [voter, who] of Object.entries(L.picks[role] || {}))
-    if (s.players[voter] && on.includes(who) && ok(who))
-      n[who] = (n[who] || 0) + 1;
-  const top = Math.max(0, ...Object.values(n)),
-    best = Object.keys(n).filter((id) => n[id] === top && top > 0);
-  L[role] = bagPick(s, `law ${role}`, best.length ? best : on.filter(ok));
+    { who, best, top } = counselVote(s, role, on);
+  L[role] = who;
   L.fast = 0;
   const p = s.players[L[role]];
   if (p)

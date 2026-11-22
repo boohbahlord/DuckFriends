@@ -27,6 +27,13 @@ export const WEIGHT = {
   CAR: 15, // a car, in duck weights (carpush.js; a small 80s or 90s car, about 1,000 kg: Adam's OK, Nov 22 03:08Z)
 };
 
+/* water (hangout/layout.js wetK): how fast every walker goes in it, of its walk. WADE in shallow water (Downpour's
+   flood over the road, the owner's, Nov 17 11:07Z: 30% slower), SWIM swimming (the Hangout pool, Downpour's deep flood) */
+export const WET = { WADE: 0.7, SWIM: 0.55 };
+/* the level numbers (heights.js levelOf): the ground's. The owner's, Nov 22 06:24Z: B5's arrows count from the ground as
+   1, as Sandbox's Elevation does; one level up is a gas station roof (heights.js ELEV) */
+export const LEVEL = { GROUND: 1 };
+
 /* zombies (Nov 20 21:17Z: "zombies should have a slightly slower attack speed by, let's say, 0.2 seconds") */
 export const ZOMBIE_SWIPE_SLOWER = 200; // ms added to the wait between one swipe and the next, every zombie
 
@@ -56,3 +63,9 @@ export const TV_FIRST_CHANNEL = 1;
    crowded frame, whatever its size. So it shows only where the game runs fast enough, its own cost counted: under this
    many frames a second (two 2-second stretches in a row) it stays off until the next round or map */
 export const SPRINT_BLUR_MIN_FPS = 40;
+
+/* darker below (B5, the owner's, Nov 21 16:17Z: "as you increase in elevation ... the layers by a certain fraction or
+   percent become more dark ... including for other ducks ... that isn't true for jumping"): what's under my floor shows
+   PER darker for each elevation (heights.js ELEV) I stand over it, on to all dark (below.js; Nov 22 06:24Z: "The first
+   recommended options is good ... but darkness keeps going up beyond 60%") */
+export const BELOW = { PER: 0.2 };

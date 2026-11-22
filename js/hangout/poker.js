@@ -28,7 +28,9 @@
    A player's 2 cards stay with the host (mem, as blackjack's hole card), never in the room's state, so nobody reads
    another's cards; each player's own pair reaches only them. */
 import { rule, activity } from "./registry.js";
+
 import { BJ, bjSpot } from "./layout.js";
+
 import {
   atTable,
   cardHTML,
@@ -47,12 +49,21 @@ import {
   tableFocus,
   hash,
   START,
+  shuffled,
+  escGetsUp,
+  redrawIf,
 } from "./blackjack.js";
+
 import { seatOf, getUp } from "./seats.js";
+
 import { rainbowHTML } from "../art.js";
+
 import { activeRoom } from "../net.js";
+
 import { handouts } from "../secret.js";
+
 import { jPoker } from "./justin.js";
+
 import { play as sound } from "./sounds.js";
 
 const JOIN = 12000,
@@ -203,15 +214,6 @@ const blindNow = (pk) =>
   pk.set.blinds * (pk.set.up ? 2 ** Math.floor(pk.n / 10) : 1); // (the small blind; the big one is twice it)
 /* the host's deck and everyone's two cards for the hand it's dealing */
 let mem = { id: "", deck: [], holes: {} };
-function shuffled() {
-  const d = [];
-  for (let c = 0; c < 52; c++) d.push(c);
-  for (let i = d.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [d[i], d[j]] = [d[j], d[i]];
-  }
-  return d;
-}
 const computer = (id) => id === "butler" || id === "justin";
 /* poker picked in the table's vote (blackjack.js): the setup; everyone buys in with the same 100 (justin: the vote
    invited him) */
@@ -1090,18 +1092,7 @@ function press(e) {
     v.amt = 0;
   } // (under the smallest raise: the smallest raise)
 }
-function esc_(e) {
-  if (
-    e.key === "Escape" &&
-    v &&
-    v.open &&
-    !document.querySelector(".win-back, .ctx")
-  ) {
-    e.preventDefault();
-    e.stopPropagation();
-    getUp(v.ctx);
-  }
-}
+const esc_ = (e) => escGetsUp(e, v);
 
 activity({
   id: "pk",
@@ -1173,11 +1164,7 @@ activity({
     }
     if (!v.open) return;
     const sig = JSON.stringify(pk) + ctx.me + myCards(pk, ctx.me).join();
-    if (sig !== v.sig) {
-      v.sig = sig;
-      render(s, now);
-      if (v.free && v.el.offsetHeight > v.free.h + 1) v.free = null;
-    }
+    redrawIf(v, sig, () => render(s, now));
     const k = timer(pk, now);
     v.bar.style.transform = `scaleX(${k.toFixed(3)})`;
     v.bar.parentNode.classList.toggle("off", !k);

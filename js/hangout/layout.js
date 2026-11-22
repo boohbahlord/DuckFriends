@@ -10,6 +10,7 @@
    the downhill in the south (the pool, the campfire, the trampoline), and forest all round. */
 import * as GS from "./stationmap.js";
 import { modeOf } from "../modes.js";
+import { WET } from "../gamedefaults.js";
 import { jeepTops, JEEP } from "./vehicles.js";
 
 import {
@@ -879,6 +880,7 @@ export function useMode(mode, map) {
   const v = modeOf(mode).l4map ? (map === "downpour" ? "l4gs" : "l4") : "";
   if (v === variant) return;
   setVariant(v);
+  flood = v === "l4gs" ? GS.FLOOD : null;
   deckSpots = null;
   setWorldSize(...(v === "l4gs" ? [GS.GS_W, GS.GS_H] : [6000, 4400]));
   PROPS.length = 0;
@@ -965,6 +967,20 @@ export function solidsAt(x, y, z = -Infinity) {
     grid.get(Math.floor(x / CELL) * 1000 + Math.floor(y / CELL)) || []
   ).filter((b) => hits(b, x, y) && z < Math.max(b.top, b.roof));
 }
+/* how fast a walker at (x, y), its feet at z (none: on the ground), goes in water, of its walk (gamedefaults.js WET):
+   the one rule for every walker (the owner's, Nov 21 17:48Z: "water slows down entities equally"; Nov 18 15:35Z: "all
+   of their sprinting and their movement speed is the same as the players"). In the map's flood (Downpour's:
+   stationmap.js FLOOD) with its feet in the water, measured from the swim floor (no higher over it than the water is
+   deep): its shallow part waded, its deep end swum; over it (on a car, jumping) it walks */
+let flood = null;
+export const wetK = (x, y, z = heightAt(x, y)) =>
+  !flood || z - flood.floor > flood.depth + 4
+    ? 1
+    : flood.deep(x, y)
+      ? WET.SWIM
+      : flood.shallow(x, y)
+        ? WET.WADE
+        : 1;
 /* ---------- a car pushed (carpush.js; the owner's, Nov 21 19:07Z: "cars can be moved around") ----------
    carAt(i, ox, oy): Downpour's car i (stationmap.js CARS) moved to (ox, oy) world px from where the map puts it: its
    props (the car and its glass: their spots, solids, depth and drawn parts, shapes.js), and its floor (carDeckAt).

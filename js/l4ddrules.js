@@ -63,7 +63,7 @@ import {
 } from "./guns.js";
 import { JUMP, jumpDodges } from "./jump.js";
 import { SPRINT as GAME_SPRINT, POCKET_CHANGE } from "./gamedefaults.js";
-import { hpHeal, hpHurt, hundredths, hpBreed } from "./hpmath.js";
+import { hpHeal, hpHurt, hundredths, hpBreed, regenOf } from "./hpmath.js";
 import {
   baseMode,
   isSb,
@@ -93,6 +93,7 @@ import {
   onPlatform,
   BJ,
   layoutRev,
+  wetK,
   layoutVariant,
   deckAt,
   floorH,
@@ -116,7 +117,6 @@ import { toPx, DUCK } from "./units.js";
 import { blast, reach, hitOf, REACH } from "./blast.js";
 import { carsBlast, carsSwing } from "./carpush.js";
 import { pushAlong, walkOf, pushTaken, immobile, sizeOf } from "./push.js";
-import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
   hitWounds,
@@ -202,20 +202,20 @@ import {
    when it landed) */
 export const L4_HOOKS = { npc: null, gm: null }; // (gm: Survival's gunmen, gunmenrules.js: { tick, shot, blast, fire, near, claw })
 export const isL4dd = (s) => !!s && baseMode(s.options) === "l4dd"; // (and Sandbox on its cabin or Downpour: sandboxrules.js)
-/* I want only the lights' stutter and the air (the wind, the rain, the fires: ambience.js) on of Hangout's activities.
-   The couches, the stage, the card table and the piano's keys are still drawn, but quiet: nothing to sit on, sing into
-   or play at, and nothing else to write in or switch. */
+/* I want only the lights' stutter, the air (the wind, the rain, the fires: ambience.js) and the darker below (below.js) on of
+   Hangout's activities. The couches, the stage, the card table and the piano's keys are still drawn, but quiet: nothing to
+   sit on, sing into or play at, and nothing else to write in or switch. */
 keepOnly(
   "l4dd",
   [],
-  ["flicker", "ambience"],
+  ["flicker", "ambience", "below"],
   ["seats", "stage", "bj", "piano", "tv"],
 ); // (the TV only shows while the power is on: l4ddpower.js)
 
 /* ---------- the numbers ---------- */
 export const L4 = {
   HP: 3,
-  REGEN: 15000, // ms: 1 HP back, 15 s after the last hit or heal
+  REGEN: 15000, // ms for 1 HP to come back on its own, a hundredth at a time (hpmath.js regenOf)
   REVIVE: 5000, // ms of holding E by a downed duck (5 s: the owner's, Nov 17 11:07Z; it was 10)
   QUICK: 3000, // … with Quick Revive bought (the Butler's, 750: the owner's, Nov 17 11:19Z)
   BACK_HP: 2, // a revived duck comes up with 2 HP
@@ -822,12 +822,6 @@ export const OPENINGS = [...CABIN_OPENINGS];
 export const dp = () => layoutVariant() === "l4gs";
 /* the map's own roofs only (Sandbox's floors, sbfloors.js, aren't climbed to yet) */
 export const mapDeck = (d) => (d && !d.sb ? d : null);
-/* Downpour's flood slows anyone on foot just as it slows a player's duck (l4dd.js speed): wading the shallow road 30%
-   slower, swimming the deep end as slowly as in the pool. The merchants and Justin out there too, so nobody walks
-   faster than a player can (the owner's, Nov 18 15:35Z: "all of their sprinting and their movement speed is the same
-   as the players") */
-export const wetSlow = (x, y) =>
-  !dp() ? 1 : (GS.inShallow(x, y) ? GS.WADE : 1) * (GS.inDeep(x, y) ? SWIM : 1);
 /* the map's own numbers in: its openings, the Butler's and the fireplace's spots, the start spots, the zombies' grid.
    Called wherever they're read; it does something only when layout.js has turned to the other map */
 let mapRev = -1;
@@ -2681,12 +2675,7 @@ function merchantFight(s, m0, now, dt) {
     const aim = walkable(m.x, m.y, fx, fy)
       ? [fx, fy]
       : heading(flowFrom([openNear(fx, fy)]), m.x, m.y) || [fx, fy];
-    stepZombie(
-      m,
-      aim,
-      WALK * walkOf(s) * MERCH.WALK * wetSlow(m.x, m.y) * dt,
-      [],
-    );
+    stepZombie(m, aim, WALK * walkOf(s) * MERCH.WALK * wetK(m.x, m.y) * dt, []);
   } else if (now - (mh(s).stab || 0) >= MERCH.STAB_MS) {
     setMh(s, { stab: now });
     addFx(s, {
@@ -2859,7 +2848,7 @@ function merchantTick(s, now) {
       WALK *
       walkOf(s) *
       (leg.k || MERCH.WALK) *
-      wetSlow(m0.x, m0.y) *
+      wetK(m0.x, m0.y) *
       dt *
       (merchantSprints(s, m0, now, dt) ? MERCH.SPRINT : 1);
   let done = false;
@@ -4581,11 +4570,11 @@ function l4Tick(s, now) {
       continue;
     } // (Sandbox: no next round to wait for, so a ghost is back up a moment later, at a start spot, with its weapons)
     if (p.gh) continue;
-    if (
-      p.hp < maxHp(s, id) &&
-      now - p.at >= (isWild(s, id) ? WILD.regen : L4.REGEN)
-    )
-      p4[id] = { ...p, hp: hpHeal(p.hp, 1, maxHp(s, id)), at: now }; // (a part-empty block fills first: hpmath.js)
+    if (p.hp < maxHp(s, id)) {
+      const w = isWild(s, id),
+        [amt, at] = regenOf(s, p.at, now, w ? WILD.regen : L4.REGEN, w); // (a duck's in hundredths, smoothly; Justin's in whole HP: hpmath.js)
+      if (amt) p4[id] = { ...p, hp: hpHeal(p.hp, amt, maxHp(s, id)), at };
+    }
   }
   s.hang.l4p = p4;
   const am = s.hang.l4a || {};
@@ -4863,16 +4852,6 @@ export { standing as l4Up };
 
 /* what the screens ask: a duck's HP, its bleeding out, the round */
 export const l4Hp = (s, id) => (P4(s, id) || { hp: -1 }).hp;
-/* how far my next HP is to coming back on its own, 0 … 1 (a hit or a heal starts it over: p.at), or null while it can't
-   (full, down, a ghost) (the HP meter's faint red fill, hpmeter.js) */
-export const l4Regen = (s, id, now) => {
-  const p = P4(s, id);
-  if (!p || p.gh || p.dn || p.hp <= 0 || p.hp >= maxHp(s, id)) return null;
-  return Math.max(
-    0,
-    Math.min(1, (now - p.at) / (isWild(s, id) ? WILD.regen : L4.REGEN)),
-  );
-};
 /* how far a downed duck is into its bleeding-out (k, 0 to 1), and whether someone is reviving it (wait: it's stopped) */
 export const l4Dying = (s, id, now) => {
   const p = P4(s, id);
