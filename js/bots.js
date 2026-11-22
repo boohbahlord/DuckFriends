@@ -75,9 +75,9 @@ import {
   laserHeat,
   wildCrying,
   isWild,
-  endless,
   hasLeft,
 } from "./l4ddrules.js";
+import { endless } from "./ammo.js";
 import { kindOf, MGJ_MELEE } from "./guns.js";
 import { draws } from "./bowdraw.js";
 import { gunsIn, itemsIn, PRIMARY } from "./kitslots.js";

@@ -10,8 +10,9 @@ import { toast } from "./ui.js";
 import { unlocked } from "./unlocks.js";
 import { hasKey, keysOf, specialById } from "./specials.js";
 import { BOARD_WEAPONS, MGJ_MELEE, THROWS, loadTo } from "./guns.js";
-import { CAKE_EVERY, isMgj, mgjMag } from "./mgjrules.js";
-import { magOf, magSize } from "./rules.js";
+import { CAKE_EVERY, isMgj } from "./mgjrules.js";
+import { capOf, magOf, reloadTo } from "./ammo.js";
+import { unlimited } from "./actplay.js";
 import { l4Ammo } from "./l4dd.js";
 import { isL4dd, downArmed, kitOf, l4Hp, slotsOf } from "./l4ddrules.js";
 import { GRENADE, slotOfPick, staysPick } from "./kitslots.js";
@@ -28,15 +29,30 @@ import { sbSlots, spawnOf } from "./sbhot.js";
      (only Dead Ducks Arcade's items that switch on and off: the flashlight)
    - self: picking a weapon that stays makes it the one to come back (Quacky Zombies), or else the one before stays it
    - held(s): the weapon out in hand, for the board's ways (the board: the one in the slot picked)
-   - mag(w): a gun's magazine [shots, reload ms]; reloads(s): the gun R reloads (null: none; Quacky Zombies: the one
+   - reloads(s): the gun R reloads (null: none; Quacky Zombies: the one
      in hand, "" too, the rules say no); ready(s, w, now): R can reload it now; dry(s, w): no ammo left to reload with
    - empty(s): the hand empties itself (Quacky Zombies: no grenades or no slot left; Mad God Justin: the picked-up
      weapon used up or the zebra cake thrown), and backTo(s) is what comes back then */
-/* a magazine that isn't full, or is full and takes one more in the chamber (guns.js loadTo), and isn't reloading (the
-   board and Mad God Justin) */
+/* the board's and Mad God Justin's gun w in my hand (ammo.js): R can reload it now (its magazine not full, or full and
+   one more in the chamber, guns.js loadTo; not reloading; something left to load), or it has nothing left to load */
+const down = (w) => w === "handgun" && !!C.mgjDownGun && C.mgjDownGun();
 const magReady = (s, w, now) => {
-  const mm = magOf(s, C.R.me, now, w);
-  return (mm.n > 0 || (mm.n === 0 && !!loadTo(w, 1, 1))) && !(mm.r > now);
+  const m = magOf(s, C.R.me, now, w, down(w));
+  return (
+    !!m &&
+    !(m.r > now) &&
+    !!reloadTo(w, m.c, capOf(w), unlimited(s, C.R.me, w, down(w)))
+  );
+};
+const magDry = (s, w) => {
+  const m = magOf(s, C.R.me, clockNow(), w, down(w));
+  return (
+    !!m &&
+    !!capOf(w) &&
+    !m.r &&
+    !!loadTo(w, m.c[0], capOf(w)) &&
+    !reloadTo(w, m.c, capOf(w), unlimited(s, C.R.me, w, down(w)))
+  );
 };
 const ROWS = {
   board: {
@@ -44,18 +60,18 @@ const ROWS = {
     held: () => weaponAt(Math.max(0, hand.lastKey)), // (the slot picked; none picked yet: slot 1)
     stays: () => false,
     toggles: () => false,
-    mag: magSize,
     /* the gun in hand, or the handgun, or the first gun with a magazine on my keys */
     reloads: () => {
       const d = C.playDuck(),
         k = keysOf(d);
-      return hand.held && magSize(hand.held)
+      return hand.held && capOf(hand.held)
         ? hand.held
         : k.includes("handgun")
           ? "handgun"
-          : k.find((id) => id && magSize(id)) || null;
+          : k.find((id) => id && capOf(id)) || null;
     },
     ready: magReady,
+    dry: magDry,
   },
   l4: {
     start: 0,
@@ -71,7 +87,6 @@ const ROWS = {
         : !sl[slotOfPick(hand.in)]; // (the last grenade thrown, or the item used up)
     },
     backTo: (s) => (slotsOf(s, C.R.me)[hand.back] ? hand.back : 0),
-    mag: magSize,
     reloads: () => heldNow(),
     /* a gun with a magazine, or the down pistol (the bow's and the flamethrower's have none) */
     ready: (s, w) => {
@@ -106,15 +121,17 @@ const ROWS = {
         !!s.mgj &&
         !!(s.mgj.cake || clockNow() - (s.mgj.zebraAt || 0) < CAKE_EVERY)),
     backTo: () => hand.back || MGJ_MELEE,
-    mag: mgjMag,
-    /* the gun picked up, out in my hand, or the down pistol */
+    /* the pistol or the gun picked up, out in my hand, or the down pistol */
     reloads: () =>
       C.mgjDownGun()
         ? "handgun"
-        : hand.held && hand.held === C.myPick() && mgjMag(hand.held)
+        : hand.held &&
+            (hand.held === "handgun" || hand.held === C.myPick()) &&
+            capOf(hand.held)
           ? hand.held
           : null,
     ready: magReady,
+    dry: magDry,
   },
 };
 const rowOf = (s) => (isL4dd(s) ? "l4" : isMgj(s) ? "mgj" : "board");
@@ -161,8 +178,7 @@ export function handReset() {
   if (win) win.close();
   if (!(ROWS[hand.of] || {}).byFight) hand.of = "";
 }
-/* the bars and R ask the hand: a gun's magazine in my mode, the gun R reloads, can it now, is it out of ammo */
-export const magFor = (w) => mine().mag(w);
+/* the bars and R ask the hand: the gun R reloads, can it now, is it out of ammo */
 export const reloadsNow = () => mine().reloads(C.R.state);
 export const reloadReady = (s, w, now) => mine().ready(s, w, now);
 export const reloadDry = (s, w) => !!(mine().dry && mine().dry(s, w));

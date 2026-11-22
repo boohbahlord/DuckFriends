@@ -45,7 +45,8 @@ import {
   liveNpcs,
 } from "./sbspawn.js";
 import { W, H } from "./hangout/layout.js";
-import { DROP, l4Loot, l4Hurt, l4Ammo, fullAmmo } from "./l4ddrules.js";
+import { DROP, l4Loot, l4Hurt, l4Ammo } from "./l4ddrules.js";
+import { fullAmmo } from "./ammo.js";
 import { ARMS } from "./guns.js";
 import { grFrom, grIn } from "./sbgroups.js";
 

@@ -24,10 +24,10 @@ import {
   reloadOf,
   downArmed,
   tintOf,
-  endless,
   slotFor,
   durLeft,
 } from "./l4ddrules.js";
+import { endless } from "./ammo.js";
 import {
   SLOT_KINDS,
   GRENADE,
