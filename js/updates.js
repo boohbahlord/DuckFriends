@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v267",
+    version: 267,
+    date: "Nov 22, 2026",
+    title: "The Seriat bible, rewritten",
+    news: [
+      "For Sandbox: the Seriat bible window is now a plain reference for players: every rule, operator and example as it works today, with no build notes. Code like ** shows as written.",
+    ],
+  },
+  {
     id: "v266",
     version: 266,
     date: "Nov 22, 2026",
