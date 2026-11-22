@@ -4,7 +4,7 @@
 # minutes), the owner's "full run once a day in the background, never blocking". Run by hand: Actions → Checks →
 # Run workflow, with test names (blank = all). The second job is Lighthouse (lighthouserc.json): it loads the game's
 # first page three times as a slow phone and fails the PR when the loading, accessibility or good-practice score falls
-# under the floor; the floors sit just under the scores of Nov 22 (performance 43, the rest 100) and only go up; the full report is kept with the run (Artifacts: lighthouse).
+# under the floor; the floors sit just under the scores of Nov 22 (performance 37 to 43 from run to run, the rest 100) and only go up; the full report is kept with the run (Artifacts: lighthouse).
 name: Checks
 on:
   pull_request:
