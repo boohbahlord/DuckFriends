@@ -174,6 +174,7 @@ import {
   heading,
 } from "./zombiepath.js";
 import { CELL } from "./walkgrid.js";
+import { chairReach } from "./chair.js";
 import {
   zOk,
   Z_MOST,
@@ -198,8 +199,7 @@ import {
 } from "./zombies.js";
 
 /* what Sandbox lends these rules (sbcabin.js): npc(s, by, x, y, now, w, rx, ry, from, hit) puts a shot or a swing at
-   (x, y) into its NPCs standing there (hit: a swing's list, every one in reach once; none: a shot, the first one, true
-   when it landed) */
+   (x, y) into its NPCs there (hit: a swing's list, each in reach once; none: a shot, the first, true if it landed) */
 export const L4_HOOKS = { npc: null, gm: null }; // (gm: Survival's gunmen, gunmenrules.js: { tick, shot, blast, fire, near, claw })
 export const isL4dd = (s) => !!s && baseMode(s.options) === "l4dd"; // (and Sandbox on its cabin or Downpour: sandboxrules.js)
 /* I want only the lights' stutter, the air (the wind, the rain, the fires: ambience.js) and the darker below (below.js) on of
@@ -1155,12 +1155,12 @@ const bare = (x, y, out, far) =>
   Math.hypot(x - 2800, y - 1420) > 320 &&
   out.every(([a, b]) => Math.hypot(x - a, y - b) > far);
 /* ---------- the drops (Stage 4, the owner's) ----------
-   Each round: a 25% chance of one in its first 30 s, and then a 25% chance of a second 30 s after it; and on their
-   own, a 5% chance of a Max Ammo in the first minute. When its time comes, the next zombie killed drops it where it
-   fell (the owner's, Nov 3); it lies there 30 s (the owner's, Nov 17), into the next round too, and the first duck to walk over it takes
-   it for everyone. Instant Kill, Double Points and Sale last 45 s, Speed Boost a minute (the owner's, Nov 16). Which
-   drop comes is a shuffle, one bag for the game: each comes once before any comes again, and Max Ammo never leaves
-   the bag (the owner's, Nov 16). */
+   Each round: a 25% chance of one in its first 30 s, and then a 25% chance of a second 30 s after it; and on their own,
+   a 5% chance of a Max Ammo in the first minute. When its time comes, the next zombie killed drops it where it fell
+   (the owner's, Nov 3); it lies there 30 s (the owner's, Nov 17), into the next round too, and the first duck to walk
+   over it takes it for everyone. Instant Kill, Double Points and Sale last 45 s, Speed Boost a minute (the owner's, Nov
+   16). Which drop comes is a shuffle, one bag for the game: each comes once before any comes again, and Max Ammo never
+   leaves the bag (the owner's, Nov 16). */
 export const DROPS = ["kill", "nuke", "speed", "double", "sale", "ammo"]; // (Max Ammo, the likeliest, last: the owner's, Nov 18 10:38Z)
 export const DROP = {
   CHANCE: 0.25,
@@ -1953,9 +1953,8 @@ function fireRoll(s, id, kit) {
   };
   return got;
 }
-/* one roll from a set of bags (the fireplace's for a duck, or a merchant's: merchantStock): the chair, the specials and
-   the items by SLOT_ODDS, else the weapon bags; has(w): what's skipped and keeps its place. [what it gave (or null),
-   the bags after] */
+/* one roll from a set of bags (a duck's fireplace, or a merchant's: merchantStock): the chair, the specials and the
+   items by SLOT_ODDS, else the weapon bags; has(w): skipped, kept in place. [what it gave (or null), the bags after] */
 function bagRoll(bags0, has) {
   const bags = { ...bags0, b: { ...(bags0.b || {}) } },
     { odds, slot, weapon } = bagsNow();
@@ -2171,8 +2170,7 @@ function helperDrop(s, id) {
    in hand (hand, else the one the duck holds out, else the first ranged slot) */
 /* the slot w would go to in duck id's bar (hand0: the weapon it holds), or -1 when it can't take it: a melee weapon the
    first, a ranged weapon the place of the ranged one in hand, else the first ranged slot; a special an empty item slot,
-   else one used up, else the one in hand, else the first (ITEM_SLOTS). The hotbar shows it before it's taken
-   (l4ddbar.js) */
+   else one used up, else the one in hand, else the first (ITEM_SLOTS). The hotbar shows it before (l4ddbar.js) */
 export function slotFor(s, id, w, hand0) {
   const kit = kitOf(s, id),
     kind = kindOf(w);
@@ -2634,8 +2632,7 @@ export function merchantHurt(s, by, n, now, w = "", how = "", from = "") {
     setMh(s, { hurt: 1 });
     merchantSays(s, "hurt", now); // ("these are the lines they will say once when they take damage from a player")
   }
-  /* Survival: armed, he fights back at whoever hurt him (from: one of the gunmen, "g" + its number; a zombie: the
-     nearest one) */
+  /* Survival: armed, he fights back at whoever hurt him (from: a gunman, "g" + its number; a zombie: the nearest) */
   if (m.gun && m.st !== "shoot") {
     s.hang.l4m = {
       ...merchantOf(s),
@@ -3481,9 +3478,8 @@ export function cakeDown(s, now) {
   const t = (c.stop - c.t) / 1000;
   return [(c.x0 + c.vx * t) * W, (c.y0 + c.vy * t) * H];
 }
-/* fire, every heartbeat (BURN): burning zombies take 1 every 3 s, the ducks' fires go out, and anyone burning lights
-   a duck it touches. s.hang.l4fire = { z: { zombie: [until, next hurt, by, from when its fire spreads] }, p: { id:
-   until } } */
+/* fire, every heartbeat (BURN): burning zombies lose 1 every 3 s, the ducks' fires go out, and anyone burning lights a
+   duck touched. s.hang.l4fire = { z: { zombie: [until, next hurt, by, when its fire spreads] }, p: { id: until } } */
 function light(s, z, by, now) {
   mark(s, z, "f0"); // (burnt for good, even once the fire is out)
   const F = s.hang.l4fire || {};
@@ -4202,9 +4198,10 @@ export function l4Shots(s, now) {
       } // (a wall taller than the shot: heights.js)
       const w = shotArm(sh),
         A = ARMS[w],
+        big = w === "chair" ? chairReach(sh.sc) : 1, // (the chair: as far as its picture, chair.js)
         near = (z) =>
           z.st !== 3 &&
-          Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1 &&
+          Math.hypot((z.x - x) / (26 * big), (z.y - y) / (22 * big)) < 1 &&
           hOk(sh, zOf(z, "zombie"), z.x, z.y, sh.x0 * W, sh.y0 * H) &&
           !hLock(sh, zOf(z, "zombie")); // (at its height, the first one setting it: heights.js)
       if (
@@ -4220,10 +4217,9 @@ export function l4Shots(s, now) {
         break;
       }
       if (w === "dbarrel") {
-        /* the slug double barrel's slug: through every zombie in its way, each once, 6 to the first and 1 or 1.5 less to
-           each one after (sh.d: what the next one takes), until it would do nothing (the owner's, Nov 19 19:27Z). A crit
-           doubles that one's. One it kills blows to pieces where it stands (no bullet knocks back: the owner's, Nov 21
-           17:48Z) */
+        /* the slug double barrel's slug: through every zombie in its way, each once, 6 to the first and 1 or 1.5 less
+           to each one after (sh.d: the next one's), until it does nothing (the owner's, Nov 19 19:27Z). A crit doubles
+           that one's. One it kills blows to pieces (no bullet knocks back: the owner's, Nov 21 17:48Z) */
         let stop = false;
         for (const z of nearby(grid, zs, x, y))
           if (near(z) && !(sh.hit || []).includes(z.i) && !past(sh, w, z)) {
@@ -4245,13 +4241,13 @@ export function l4Shots(s, now) {
         if (stop) gone = true;
         continue;
       }
-      const pierce = pierceOf(s, sh.by, w);
+      const pierce = w === "chair" ? Infinity : pierceOf(s, sh.by, w); // (the chair: through every one it's over)
       if (pierce) {
         /* the sniper's: through the zombies it meets, each once, until the third (the owner's, Nov 3), or the wall. Once
            it crits, it crits every one after it, still only up to its limit (the owner's, Nov 18 12:19Z). Each one
            takes its roll less 1 for each zombie it went through before it (the owner's, Nov 18 16:43Z: "it does 1
            damage less per zombie it passes"; this replaced the first one taking its most): 4 to 5, 3 to 4, 2 to 3 */
-        for (const z of nearby(grid, zs, x, y))
+        for (const z of big > 1 ? zs : nearby(grid, zs, x, y))
           if (near(z) && !(sh.hit || []).includes(z.i) && !past(sh, w, z)) {
             const sniper = w === "sniper",
               crit = (sniper && !!sh.crit) || critRoll(s, sh.by, w),
@@ -4261,6 +4257,8 @@ export function l4Shots(s, now) {
             if (sniper && crit) sh.crit = 1;
             sh.hit = [...(sh.hit || []), z.i];
             if (strike(s, z, dmg, crit, sh.by, w, now)) die(z, T);
+            else if (w === "chair" && z.st === 2)
+              knockZ(z, sh.vx * W, sh.vy * H, knockOf("hammer")); // (the chair shoves like the hammer: the owner's, Nov 20 21:17Z)
             hitAny = true;
             if (sh.hit.length >= pierce) break;
           }
@@ -4289,8 +4287,6 @@ export function l4Shots(s, now) {
             ); // (half a grenade's blast, its boom weaker: the owner's, Nov 17 11:07Z; it goes off where that zombie is)
         } else if (strike(s, z, dmgOf(A), critRoll(s, sh.by, w), sh.by, w, now))
           die(z, T);
-        else if (w === "chair" && z.st === 2)
-          knockZ(z, sh.vx * W, sh.vy * H, knockOf("hammer")); // (the chair shoves like the hammer: the owner's, Nov 20 21:17Z)
         hitAny = true;
         gone = true;
       }

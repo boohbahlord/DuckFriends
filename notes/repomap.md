@@ -3,7 +3,7 @@ file lines job
 
 ## js/
 account.js 397 the Google account: the
-actplay.js 940 a game's actions
+actplay.js 937 a game's actions
 actroom.js 744 the room's actions
 actsb.js 156 Sandbox's windows, saves and
 allies.js 383 Survival: the friendly squad
@@ -19,7 +19,7 @@ beaks.js 138 beaks
 below.js 88 darker below
 blast.js 67 explosions: one module
 bloodpool.js 50 a pool of blood:
-boardfire.js 1316 the board's weapons: hits,
+boardfire.js 1318 the board's weapons: hits,
 boardjustin.js 663 Justin on the boards
 botduck.js 90 a computer's duck: a
 botlines.js 188 What the computers write
@@ -28,6 +28,7 @@ brackets.js 459 Bicker Brackets: what the
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
 carpush.js 101 a car pushed: Downpour's
+chair.js 14 the chair: one thing
 chat.js 633 text chat and the
 chatcmds.js 688 The command line's commands:
 chatmutes.js 318 The chat's suggestions, mutes
@@ -39,6 +40,7 @@ collage.js 101 Shelter Sky & Null
 color.js 165 choosing a color
 corners.js 94 full screen
 court.js 230 Lawyering: what the screen
+courtrules.js 17 the courtroom's seats: Lawyering
 crowd.js 242 crowds: walkers never stand
 customize.js 1776 Customize: the Armory
 datboi.js 115 here come dat boi
@@ -49,7 +51,7 @@ duckparts.js 598 the ducks made from
 ducksheets.js 11 made by tools/duck-parts.cjs:
 duel.js 120 the cloud duel: two
 dunce.js 139 Duncelation: what the screen
-duncerules.js 388 the rules of Duncelation
+duncerules.js 387 the rules of Duncelation
 euclid.js 351 Euclid's Squares
 eyes.js 187 eyes
 faces.js 297 face items
@@ -117,14 +119,14 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power
 l4ddpowerui.js 278 Dead Ducks Arcade's power
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4987 the rules of Quacky
+l4ddrules.js 4983 the rules of Quacky
 l4ddsfx.js 545 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online:
 langname.js 5 the name of Sandbox's
 laserart.js 95 the laser gun, drawn
 laserfx.js 135 the Laser Rifle on
 later.js 66 the rest of the
-lawrules.js 361 the rules of Lawyering
+lawrules.js 360 the rules of Lawyering
 loading.js 403 the start: a slow
 loadlines.js 590 the lines under the
 lobby.js 613 the lobby, laid out
@@ -141,7 +143,7 @@ mgj.js 219 Mad God Justin: what
 mgjart.js 96 Mad God Justin's new
 mgjbrain.js 613 Mad God Justin's brain,
 mgjpicks.js 500 Mad God Justin's pickups:
-mgjrules.js 1259 
+mgjrules.js 1257 
 modes.js 445 the game modes
 music.js 590 the music: our own
 musicbar.js 169 the music bar: the
@@ -265,7 +267,7 @@ umaps.js 371 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on
-updates.js 3435 Updates
+updates.js 3445 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival

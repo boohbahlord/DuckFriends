@@ -2,6 +2,7 @@
    Moved out of rules.js to keep that file under control: rules.js runs the shared turn and the actions, this file the
    mode's own phases. It imports back from rules.js as duncerules.js does; rules.js calls it from the phase table and the
    actions. */
+import { seatRows } from "./courtrules.js";
 import {
   bagPick,
   colAt,
@@ -185,14 +186,12 @@ function openCase(s, now) {
   s.lock = {};
   s.pos[L.off] = { x: 0.3, y: 0.5 };
   s.pos[L.def] = { x: 0.7, y: 0.5 };
-  const rest = s.seat.filter((id) => !isCounsel(s, id)),
-    half = Math.ceil(rest.length / 2);
-  rest.forEach((id, k) => {
-    const top = k < half,
-      i = top ? k : k - half,
-      n = top ? half : rest.length - half;
-    s.pos[id] = { x: 0.44 + (0.12 * (i + 1)) / (n + 1), y: top ? 0.04 : 0.96 };
-  });
+  seatRows(
+    s,
+    s.seat.filter((id) => !isCounsel(s, id)),
+    0.04,
+    0.96,
+  );
   const D = s.players[L.def].name,
     O = s.players[L.off].name,
     t = q.text.trim();
