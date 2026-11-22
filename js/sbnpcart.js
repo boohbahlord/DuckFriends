@@ -107,7 +107,7 @@ export function npcShape(o) {
 /* the name over one that has one (Justin, a Test NPC, a made NPC) */
 export const npcName = (o) =>
   o.nm ? `<span class="sb-npc-name">${esc(o.nm)}</span>` : "";
-/* what its Seriat file has it say (sbnumberat.js o.nbs), in a bubble over it until the host takes it away; el: its
+/* what its Seriat file has it say (sbseriat.js o.nbs), in a bubble over it until the host takes it away; el: its
    element, the bubble kept on it as el._say */
 export function npcSay(el, o) {
   const t = !o.d && o.nbs ? o.nbs[0] : "";

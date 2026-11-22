@@ -433,7 +433,7 @@ import { mgjSteps } from "./l4ddsfx.js";
 
 import { feet } from "./feet.js";
 
-import { mountMap } from "./maps.js";
+import { mountMap, mapKey } from "./maps.js";
 
 import { hooks } from "./hooks.js";
 
@@ -3146,6 +3146,7 @@ function paintNow(force) {
           if (S && R) setHTML($(".gact", S), actHTML(R.state));
         },
       });
+    if (scene && scene.key !== mapKey(s)) scene = scene.destroy(); // (Sandbox's map changed mid-game: actroom.js)
     if (!scene) scene = mountMap($(".map-layer", S), s);
     announce(s.phase);
     celebrate(s);

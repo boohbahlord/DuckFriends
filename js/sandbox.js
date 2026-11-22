@@ -547,7 +547,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
     if (key === "n") {
       sbClose(k, false);
       paint();
-      import("./numeratwin.js").then((m) => m.openNumerat());
+      import("./seriatwin.js").then((m) => m.openNumerat());
       return;
     }
     k.open = key;
@@ -1264,7 +1264,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
       e.stopImmediatePropagation();
       return;
     }
-    /* n opens the Seriat window itself (numeratwin.js), for whoever may write Seriat */
+    /* n opens the Seriat window itself (seriatwin.js), for whoever may write Seriat */
     if (l === "n" && sbMay(getR().state, getR().me, "n")) {
       e.preventDefault();
       e.stopImmediatePropagation();
@@ -1272,7 +1272,7 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
       sbClose(k, false); // (another window up: Seriat takes its place)
       paint();
       k.swallow = "n";
-      import("./numeratwin.js").then((m) => m.openNumerat()); // (loaded when it's wanted: it brings the command line)
+      import("./seriatwin.js").then((m) => m.openNumerat()); // (loaded when it's wanted: it brings the command line)
       return;
     }
     if (l) {

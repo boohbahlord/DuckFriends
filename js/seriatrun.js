@@ -2,7 +2,7 @@
    A file is lines of statements: events (when spawn, when hit, when dead, when near duck 3, when touch, every 2s),
    actions (go, attack, flee, wait, say, print), who they're for (me, nearest duck, all zombies, team), named values
    (let), blocks (def, with inputs), loops (for, while), tests (\if …\ and else), percent picks of actions, seed, use,
-   give and take. Every value in them is Seriat (numberat.js), so its line rules and principles work there too.
+   give and take. Every value in them is Seriat (seriat.js), so its line rules and principles work there too.
    compileScript() reads a file once into a plan; brain() runs that plan for the game, which hands it a host: what it
    can see (stats, ducks, NPCs, wave, time …) and do (move an NPC, say, print). The plan never touches the game itself,
    so the same file runs the same in the game and in a test.
@@ -27,11 +27,11 @@ import {
   NB_STATS,
   NB_ZONE_STATS,
   NB_ALL_STATS,
-} from "./numberat.js";
+} from "./seriat.js";
 
 const LOOPS = 1000; // ("Every loop stops after 1,000 rounds with an error")
 const BUSY = 20000; // (statements one task may run between two waits)
-export { NB_STATS }; // (an NPC's stats: numberat.js reads "z hp" with them)
+export { NB_STATS }; // (an NPC's stats: seriat.js reads "z hp" with them)
 export const NB_BUILT = ["wave", "time", "alive", "dead", "spawned"];
 /* hppct: its HP as a percent of its most (the owner's, Nov 19 21:59Z: examples use percentages, not 8 HP or 5 HP) */
 const NB_PCT = "hppct";

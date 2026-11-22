@@ -5,12 +5,12 @@ This is the source of truth for Claude. When the owner settles something, update
 old wording; history and word-for-word quotes live in `notes/agree-or-disagree.md` and
 `/mnt/project-files/sandbox/numerat/` (owner-2026-11-19-1216.txt, owner-2026-11-19-1259.txt).
 
-- Name: **Seriat** (owner, Nov 19 13:06Z: "seriat is good to go"). Code names (`js/numerat.js`, `numeratwin.js`) stay.
+- Name: **Seriat** (owner, Nov 19 13:06Z: "seriat is good to go"). The code files are named for it too (owner, Nov 22 13:24Z: "File names for seriat get corrected to Seriat"): `js/seriat.js` values, `js/seriatrun.js` statements, `js/seriatbox.js` the boxes, `js/sbseriat.js` NPC brains, `js/seriatwin.js` the n window, `js/seriathelp.js` its help folder.
 - Owner: "this code is like math, components give rise to new logical possibilities ... Make sure to test
   possibilities of the code."
-- Built so far: sections 0 to 6, 8, 9 (logic words), 10 and 14, in `js/numberat.js` (values, line rules, limits) and
-  `js/numberatrun.js` (statements, parts A to C, Nov 19). The boxes, the files, Check and Run in the n window all use
-  them (`js/numerat.js` reads plain values itself and compiles the rest). Part D (`js/sbnumberat.js`): a spawn's Brain
+- Built so far: sections 0 to 6, 8, 9 (logic words), 10 and 14, in `js/seriat.js` (values, line rules, limits) and
+  `js/seriatrun.js` (statements, parts A to C, Nov 19). The boxes, the files, Check and Run in the n window all use
+  them (`js/seriatbox.js` reads plain values itself and compiles the rest). Part D (`js/sbseriat.js`): a spawn's Brain
   box names a file; the file and the files it uses go to the room (`s.nb`), the host runs one brain per file, and its
   NPCs' when/every, go/attack/flee, say and stats come from it; print and mistakes go to `s.nbo`, shown in the n
   window. `hitbox` (in percent, 10% to 300%, 100% as it was; was 0.1 to 3 until V102) makes an NPC bigger to hit and its claw reach further. Readings taken where the rules didn't say: `1.*` is 1.0 to

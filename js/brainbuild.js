@@ -6,7 +6,7 @@
    Seriat file (notes/seriat-bible.md, part 14) in home/<me>/my-files/, ready for a spawn's Brain box (its arrow lists
    them: sbspawnview.js). The file's first line keeps the rows, so the builder can open it again. */
 import { esc, openWindow, toast } from "./ui.js";
-import { compileScript } from "./numberatrun.js";
+import { compileScript } from "./seriatrun.js";
 import { LANG } from "./langname.js";
 import { BRAIN_RULE } from "./gamedefaults.js";
 

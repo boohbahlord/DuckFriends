@@ -4,11 +4,11 @@
    help manual also includes ... the help files as they are for Seriat in the Seriat coder ... in their own path where
    you click buttons and it takes you to given files or other categories": its first page is a button for each part and
    one for the Seriat help files; a part lists its topics as buttons; the Seriat files go by folder, then file, each
-   shown exactly as it is in the Seriat window's help/ folder (numerathelp.js). A path at the top goes back to any page.
+   shown exactly as it is in the Seriat window's help/ folder (seriathelp.js). A path at the top goes back to any page.
    The words are short and say what to press or drag (the Seriat window has its own bible: seriatbible.js). */
 import { esc, openWindow } from "./ui.js";
 import { LANG } from "./langname.js";
-import { HELP, EXAMPLES } from "./numerathelp.js";
+import { HELP, EXAMPLES } from "./seriathelp.js";
 
 export const SB_HELP = {
   b: [

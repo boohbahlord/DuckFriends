@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v268",
+    version: 268,
+    date: "Nov 22, 2026",
+    title: "Change the map in Sandbox",
+    news: [
+      "For Sandbox: the host (or everyone, when Everyone can change settings is on) can change the board's map while playing, from Lobby Settings, then Map. Made maps are on that list too.",
+      "Maps you made now show up in the map vote as soon as you open a room, without opening the Map page first.",
+      "Settings you can't pick right now are dimmed.",
+      "Behind the scenes: Seriat's code files are named for Seriat.",
+    ],
+  },
+  {
     id: "v267",
     version: 267,
     date: "Nov 22, 2026",
