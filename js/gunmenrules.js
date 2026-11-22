@@ -421,15 +421,23 @@ function tick(s, zs, now, ids, H) {
   }
 }
 
-/* one criminal's beat */
-function crim(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
-  const sees = (t) => npcSees(o, t),
-    dist = (t) => Math.hypot(t.x - o.x, t.y - o.y),
-    go = (x, y, k = 1) => {
+/* what a gunman's beat shares: what it sees, how far a thing is, and a step toward a place along the field (turning to
+   face the way it moved) */
+function legsOf(o, fieldTo, H, dt, pls) {
+  return {
+    sees: (t) => npcSees(o, t),
+    dist: (t) => Math.hypot(t.x - o.x, t.y - o.y),
+    go: (x, y, k = 1) => {
       const x0 = o.x;
       chaseStep(o, fieldTo(x, y), [x, y], H.speed * k * dt, pls);
       if (Math.abs(o.x - x0) > 0.5) o.f = o.x > x0 ? 1 : -1;
-    };
+    },
+  };
+}
+
+/* one criminal's beat */
+function crim(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
+  const { sees, dist, go } = legsOf(o, fieldTo, H, dt, pls);
   /* a zombie too near (or one that just clawed it) is shot first */
   const zt = nearest(
     zs,
@@ -572,13 +580,7 @@ function soldier(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
   const gm = gmOf(s),
     sq = (gm.sq || {})[o.sq] || { n: 1, at: [o.x, o.y] },
     mates = gm.gb.filter((q) => !q.d && q.k === "s" && q.sq === o.sq),
-    sees = (t) => npcSees(o, t),
-    dist = (t) => Math.hypot(t.x - o.x, t.y - o.y),
-    go = (x, y, k = 1) => {
-      const x0 = o.x;
-      chaseStep(o, fieldTo(x, y), [x, y], H.speed * k * dt, pls);
-      if (Math.abs(o.x - x0) > 0.5) o.f = o.x > x0 ? 1 : -1;
-    },
+    { sees, dist, go } = legsOf(o, fieldTo, H, dt, pls),
     away = (t, far = 200) => {
       const dx = o.x - t.x,
         dy = o.y - t.y,
