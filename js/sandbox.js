@@ -69,6 +69,7 @@ import { mountSbDrag } from "./sbdrag.js";
 import { mountRotate } from "./sbrotate.js";
 import { sbOffZ } from "./sbout.js";
 import { nameHTML } from "./name.js";
+import { sbOrbFor } from "./sbloot.js";
 
 /* each window: its key, its title, and whether it needs the host's rights */
 export const SB_WINS = {
@@ -1211,11 +1212,14 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
         return;
       }
     }
-    /* E beside a spawn or a respawn opens its settings */
+    /* E beside a spawn or a respawn opens its settings (an orb I stand on comes first: E takes it, gameround.js sbGo) */
     if (e.code === "KeyE" && !e.repeat && sbCheat.on) {
       const R = getR(),
         s = R.state;
-      const id = sbMay(s, R.me, "b") ? sbNearPoint(s, s.pos[R.me]) : null;
+      const id =
+        sbMay(s, R.me, "b") && !sbOrbFor(s, R.me)
+          ? sbNearPoint(s, s.pos[R.me])
+          : null;
       if (id) {
         e.preventDefault();
         e.stopImmediatePropagation();
