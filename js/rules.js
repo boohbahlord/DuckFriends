@@ -862,8 +862,8 @@ export const EFFECTS = [
   "disco",
   "invisible",
 ]; // the effects, shown around a duck (the Invisible duck: only on or off, never for 5 seconds)
-/* the Chair special's chair: Mad God Justin's own, as slow and as wide (CHAIR_DUCKS duck lengths a second, CHAIR_R
-   duck lengths near), for CHAIR_MS */
+/* the Chair special's chair: Mad God Justin's own, as slow (CHAIR_DUCKS duck lengths a second), for CHAIR_MS; it hits
+   whatever its picture is over (chair.js) */
 export const CHAIR_DUCKS = 2.8,
   CHAIR_MS = 8000;
 /* an aim from the player: a direction on the board (x, y), about one board width long on their screen */

@@ -99,6 +99,7 @@ import { l4Zups, l4SetHp } from "./zombies.js";
 import { hOk, hLock, sameFloorAhead, floorLock } from "./heights.js";
 
 import { zOf, nearH, swingH } from "./heights.js";
+import { chairReach } from "./chair.js";
 
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import { toPx, DUCK } from "./units.js";
@@ -501,7 +502,8 @@ export function sizeShots(s) {
   const out = s.shots.map((sh) => {
     if (sh.sc !== undefined || !sh.by) return sh;
     ch = true;
-    return { ...sh, sc: sizeOf(s, sh.by) };
+    const sc = sizeOf(s, sh.by);
+    return { ...sh, sc, ...(sh.k === "chair" ? { r: chairReach(sc) } : {}) }; // (the chair: its picture is its hitbox, chair.js)
   });
   if (ch) s.shots = out;
 }
