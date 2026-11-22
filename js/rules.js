@@ -836,7 +836,7 @@ export const magSize = (w) =>
 export const magKey = (id, w) => (w === "handgun" ? id : `${id} ${w}`);
 export const magOf = (s, id, now, w = "handgun") => {
   const m = (s.mag || {})[magKey(id, w)];
-  return !m || (m.r && now >= m.r) ? { n: 0, r: 0 } : m;
+  return !m || (m.r && now >= m.r) ? { n: m && m.p ? -1 : 0, r: 0 } : m; // (p: one more in the chamber, actplay.js)
 };
 export const coolEnds = (s, id, sp) =>
   Math.max(
