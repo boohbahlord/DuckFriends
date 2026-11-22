@@ -64,12 +64,10 @@ import { shuffle, roll } from "./random.js";
 
 /* ---------- the pickups ---------- */
 /* what comes next: the sky, the meteor and Good Justin as they did (SKY, their own odds); else a medkit (the Item bag's
-   chance, as the fireplace's); else a gun from the bags (the owner's, Nov 18 12:19Z and 12:32Z: "the chain gun only has
-   a 5% chance of spawning for it's bag that is rolled first"): the chain gun 5% first, else the next of three bags
-   that take turns, heavy (the grenade launcher, the M249), rifles (the Tommy gun, the UMP-45, the MP5, the AK-47, the
+   chance, as the fireplace's); else a gun from the bags (the chain gun that came 5% first is gone: the owner's, Nov 22
+   19:26Z, "REMOVE CHAIN GUN"): the next of three bags that take turns, heavy (the grenade launcher, the M249), rifles (the Tommy gun, the UMP-45, the MP5, the AK-47, the
    AUG) and shotguns (the shotgun, the double barrel), each giving the next one of its own. Every bag shuffles: each of
    its things once before any comes again (s.hidden.mgjb, the host's only) */
-const MGJ_CHAIN = 0.05;
 const MGJ_BAGS = {
   heavy: ["glauncher", "lmg"],
   rifle: ["tommy", "ump", "smg", "ak", "burst"],
@@ -96,7 +94,6 @@ const pickKind = (s) => {
   let at = 0;
   for (const [k, w] of list) if (r < (at += w)) return k;
   if (Math.random() < SLOT_ODDS.item) return "medkit";
-  if (Math.random() < MGJ_CHAIN) return "chaingun";
   return bagGun(s);
 };
 /* a spot on the board for the next plus or weapon, not right on top of Justin (at): twelve tries, the last one if none

@@ -59,7 +59,6 @@ const SAY = {
   burst: "Three rounds a click, as hard as the AK-47.",
   laser:
     "Hold to fire. A red beam once a second through every zombie in its line. Never runs out, but six in a row overheat it for 8 seconds.",
-  chaingun: "Hold to fire. Hits at once, and never reloads.",
   glauncher:
     "Its grenades fly straight and go off on the first zombie or wall they hit, and kill every zombie in the blast.",
   medkit:

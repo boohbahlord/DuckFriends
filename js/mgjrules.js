@@ -288,8 +288,8 @@ export const INF_AMMO = 9999; // (the shotgun picked up never runs out: the owne
 export const pickAmmo = (k) =>
   k === "shotgun" || k === "laser"
     ? INF_AMMO // (the Laser Rifle never runs out anywhere: it only overheats)
-    : k === "lmg" || k === "chaingun"
-      ? 30 // (the LMG and the chain gun only 30 rounds here: the owner's, Nov 17)
+    : k === "lmg"
+      ? 30 // (the LMG only 30 rounds here: the owner's, Nov 17)
       : (mgjMag(k) || [ARMS[k].all])[0]; // (every other gun only its one magazine)
 /* a gun's magazine here ([shots, reload ms], or null): guns.js GUN_BREEDS.mgj */
 export const mgjMag = (k) =>
@@ -333,7 +333,6 @@ export const DMG = {
   lmg: 1,
   tommy: 1,
   ump: 2, // (the UMP-45: 2 a bullet)
-  chain: 1, // (the chain gun 1 a bullet here, not all his HP)
   laser: 1, // (the Laser Rifle's beam)
   lgren: 3, // (the grenade launcher's blast)
   lightning: 2,
@@ -1196,7 +1195,6 @@ export function wavesTick(s, now) {
 const SHOT_ARM = {
   pellet: "shotgun",
   arrow: "bow",
-  chain: "chaingun",
   slug: "dbarrel",
   lgren: "glauncher",
 };

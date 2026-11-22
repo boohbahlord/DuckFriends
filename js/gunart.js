@@ -79,25 +79,6 @@ ${part("M56.6 9.8V5H58.4L59.4 9.8Z", M1, 0.95)}${box(49.6, 7.2, 7.6, 2, 0.8, M2,
 ${box(38, 9.6, 12.4, 5, 1.8, AKWOOD, 1.1)}<path d="M40 12.4H48.4" stroke="${GRAIN}" stroke-width=".7" opacity=".6"/>${box(38.4, 6.8, 11.6, 2.8, 1.2, "#9a5224", 1)}
 ${box(17.6, 8.2, 21, 6, 1.2, M1, 1.15)}${shine("M19.4 9.5H36.4", 0.26)}<path d="M21 11.8H30" stroke="${INK}" stroke-width=".9" opacity=".45"/>${box(34.6, 10.4, 3.4, 1.8, 0.6, M2, 0.8)}${part("M36.4 8.2V6.6H38.4V8.2", M1, 0.8)}</svg>`;
 
-/* the chain gun: six barrels in a turning cluster (three show), held by three clamps, a rotor at their back, the motor's
-   housing with its vents, two spade grips at the back, a carry handle over the top, and the belt of brass rounds
-   feeding it from below */
-const ROUNDS = [
-  [19.6, 22.4, 8],
-  [18.8, 25.2, 26],
-  [17, 27.6, 46],
-  [14.6, 29.2, 66],
-  [11.8, 30, 82],
-];
-const CHAINGUN = `<svg viewBox="0 0 72 32"><path d="M8 7.4V3.6Q8 2 9.6 2H17.6Q19.2 2 19.2 3.6V7.4" fill="none" stroke="${INK}" stroke-width="3"/><path d="M8 7.4V3.6Q8 2 9.6 2H17.6Q19.2 2 19.2 3.6V7.4" fill="none" stroke="${M0}" stroke-width="1.4"/>
-<path d="M20.4 20.8Q20.6 27 15.6 29.4Q12.4 30.8 9 30.6" fill="none" stroke="${INK}" stroke-width="3.6" stroke-linecap="round"/><path d="M20.4 20.8Q20.6 27 15.6 29.4Q12.4 30.8 9 30.6" fill="none" stroke="#3a3d48" stroke-width="2" stroke-linecap="round"/>
-${ROUNDS.map(([x, y, r]) => `<g transform="rotate(${r} ${x} ${y})"><rect x="${x - 1.1}" y="${y - 3.2}" width="2.2" height="4.6" rx=".5" fill="${BRASS}" stroke="${INK}" stroke-width=".7"/><path d="M${x - 1.1} ${y - 3.2}Q${x} ${y - 5}  ${x + 1.1} ${y - 3.2}Z" fill="#c98a3a" stroke="${INK}" stroke-width=".6"/></g>`).join("")}
-${box(1, 9.2, 4.4, 3, 1.2, POLY, 0.9)}${box(1, 15.8, 4.4, 3, 1.2, POLY, 0.9)}
-${box(4, 7, 18, 14, 3.4, M2, 1.2)}<path d="M8.4 11V17M11.4 11V17M14.4 11V17" stroke="${INK}" stroke-width="1" opacity=".55" stroke-linecap="round"/>${shine("M6.4 8.6H19.4", 0.3, 0.9)}
-${box(22, 15.8, 44, 3.4, 1, M1, 1)}${box(22, 7.8, 44, 3.4, 1, M1, 1)}${box(22, 11.8, 44, 3.4, 1, M2, 1)}${shine("M24 12.8H64", 0.3, 0.6)}
-${[30, 45, 60].map((x) => box(x, 6.8, 3.4, 13.4, 1, M0, 1)).join("")}${box(19.8, 6, 4.4, 15.4, 1.2, M0, 1.1)}
-${box(65.4, 7.2, 4.2, 12.8, 1.4, POLY, 1)}${[9.5, 13.5, 17.5].map((y) => `<circle cx="69" cy="${y}" r=".9" fill="#0b0c10"/>`).join("")}</svg>`;
-
 /* the revolver: silver, with a curved wooden grip. The frame, the hammer cocked back at its top, the fluted cylinder,
    the long barrel with the ejector rod under it and the front sight */
 const REVOLVER = `<svg viewBox="0 0 44 24">${part("M7.2 9.6H14.8L13.6 19Q13.2 21.6 10.6 21.6H7.4Q4.4 21.6 4.9 18.8L6.1 12.4Q6.4 10.6 7.2 9.6Z", WOOD, 1.15)}<circle cx="9.8" cy="15.4" r="1.4" fill="#c9a24a" stroke="${INK}" stroke-width=".7"/><path d="M7.6 11.6L6.8 17.4" stroke="#fff" stroke-width=".7" opacity=".25"/>
@@ -199,7 +180,6 @@ export const GUNS = {
   tommy: { held: TOMMY, icon: iconOf(TOMMY, 0.8, true), w: 0.92 }, // (almost the AK-47's size: the owner's, Nov 18 10:38Z)
   ump: { held: UMP, icon: iconOf(UMP, 0.78, true), w: 0.78 }, // (a little shorter than the Tommy gun, as the real ones are)
   ak: { held: AK, icon: iconOf(AK, 0.8, true), w: 1 },
-  chaingun: { held: CHAINGUN, icon: iconOf(CHAINGUN, 0.8, true), w: 1.05 },
   revolver: { held: REVOLVER, icon: iconOf(REVOLVER, 0.72, true), w: 0.44 },
   glauncher: { held: LAUNCHER, icon: iconOf(LAUNCHER, 0.8, true), w: 0.9 },
   lmg: { held: LMG, icon: iconOf(LMG, 0.8, true), w: 1.2 },
@@ -258,14 +238,11 @@ export const ROUNDS_ART = {
     svg: `<svg viewBox="0 0 30 10"><path d="M1 5h19" stroke="#ff6a3d" stroke-width="2.4" opacity=".75"/><path d="M16 2.7h6.6q5 .4 6.6 2.3q-1.6 1.9-6.6 2.3H16Z" fill="#c98a3a" stroke="#5a3510" stroke-width="1"/><path d="M25.4 3.3q2.6.6 3.6 1.7q-1 1.1-3.6 1.7Z" fill="#ff5a1a"/></svg>`,
   },
 };
-/* the chain gun's shots: thin yellow lines from the barrel out to what each hit, flashing in and out */
+/* a shot drawn as a thin yellow line out to what it hit, flashing in and out (Sandbox's NPCs' guns: sbnpcart.js npcShot) */
 export const TRACE = {
   color: "#ffe066",
   glow: "#ffb347",
   ms: 70, // each line's flash, in and out
-  tip: [69.6, 13.4], // the barrel's end in the chain gun's drawing (viewBox 72 by 32)
-  box: [72, 32],
-  spread: 0.24, // radians: how far apart the extra lines can point
 };
 
 /* ---------- the melee weapons, the grenade, the pump shotgun, the pistol and its bullet (the specials' own first) ----------

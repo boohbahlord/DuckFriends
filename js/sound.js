@@ -71,7 +71,6 @@ export const VOL = {
   ump: -11, // (the UMP-45: heavier; as loud as the LMG, Nov 19)
   ak: -9,
   lmg: -8,
-  chaingun: -9,
   sniper: -12,
   shotgun: -7,
   dbarrel: -5, // (the double barrel: louder than the pump shotgun)
@@ -86,7 +85,6 @@ export const VOL = {
   reloadSmg: -10,
   reloadAk: -12,
   reloadLmg: -13,
-  reloadChaingun: -11,
   reloadBurst: -12,
   reloadDbarrel: -13,
   reloadFlamer: -13,
@@ -222,7 +220,6 @@ const LOOPS = 6, // loops at once, at most, on their own (Duck Cabin's wind, fir
     ...{
       step: 3,
       zstep: 3,
-      chaingun: 4,
       smg: 4,
       tommy: 4,
       ump: 3,
@@ -256,7 +253,7 @@ const GROUPS = {
     ...["done", "bell", "ping", "pop", "boop"],
   ],
   game: [
-    ...["handgun", "revolver", "smg", "ak", "lmg", "chaingun", "sniper"],
+    ...["handgun", "revolver", "smg", "ak", "lmg", "sniper"],
     ...["tommy", "ump"],
     ...["shotgun", "pump", "glauncher", "bow", "empty", "medkit", "adrenaline"],
     ...["dbarrel", "burst", "flameStart", "flameLoop", "flameStop"],
@@ -739,7 +736,6 @@ const RELOAD_S = {
   smg: 1.4,
   ak: 1.9,
   lmg: 2.8,
-  chaingun: 4,
   sniper: 2.2,
   glauncher: 4,
   burst: 2,
@@ -762,7 +758,6 @@ const RELOAD = {
   ump: "reloadSmg",
   ak: "reloadAk",
   lmg: "reloadLmg",
-  chaingun: "reloadChaingun",
   sniper: "reloadSniper",
   shotgun: "reloadShotgun",
   glauncher: "reloadGlauncher",
@@ -795,8 +790,6 @@ const LAND = {
   arrow: "landArrow",
   dagger: "landDagger",
   sniper: "landHeavy",
-  chaingun: "landHeavy",
-  chain: "landHeavy",
   ak: "landBig",
   burst: "landBig",
   slug: "landHeavy",

@@ -73,8 +73,6 @@ const WOUND_OF = {
   revolver: "big",
   dbarrel: "big",
   slug: "big",
-  chaingun: "big",
-  chain: "big", // (the chain gun's shot outside Quacky Zombies, rules.js chainShot)
   shotgun: "shot",
   pellet: "shot",
   knife: "blade",
@@ -185,7 +183,7 @@ export const BY_WOUND = {
   r: "hammer",
   a: "arrow",
   k: "sniper",
-  g: "chaingun",
+  g: "sniper",
 };
 /* the kind of the wound added between `had` and `now` (codes only ever grow at the end), or "" */
 export const newWound = (had = "", now = "") =>
@@ -314,7 +312,7 @@ export const bleeding = (x, y, a, k, drops = 1) =>
 /* ---------- the wounds a zombie gets from hits (owner 2026-11-04 04:01Z) ----------
    The host picks them (l4ddrules.js, s.hang.zw: two letters each, a kind and a spot), so every screen shows the same:
    b a small bleeding bullet hole (the handgun, the SMG, the LMG), B a big one with spatter (the sniper, the AK-47, the
-   revolver, the chain gun), s the shotgun's spread of pellet holes, c a bleeding cut (a knife, a dagger, now and then a
+   revolver), s the shotgun's spread of pellet holes, c a bleeding cut (a knife, a dagger, now and then a
    bullet or an arrow), r a bruise (the hammer, the chair), a an arrow left sticking in it, k a bloody chunk torn out of
    it, p its beak shot off (a bloody mess in its place), x its head blown off (a headshot), g a grenade's (owner
    2026-11-04 06:44Z: every chunk torn out, bleeding cuts and big bullet holes, all at once), f burnt by fire (black and

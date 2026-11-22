@@ -253,9 +253,7 @@ export const ARMS = {
     most: 4,
   }, // (r: 50% wider than its first 140, owner 2026-11-04)
   /* the owner's new ones (Stage 3). The sniper's bullet goes through every zombie to the wall, 2 or 3 to each, a bolt
-     action between shots; the SMG, the AK-47 and the LMG fire as long as the button is down; the chain gun (30 a second) hits at once
-     (a thin yellow line out to what it hit), never reloads and takes 4 to 5 (it killed what it hit until the owner's
-     Nov 18 16:43Z numbers); the revolver has five in its
+     action between shots; the SMG, the AK-47 and the LMG fire as long as the button is down; the revolver has five in its
      cylinder; the grenade launcher's grenades fly straight and go off on the first zombie, a wall or their range, and
      kill every zombie in their blast. Where the owner gave no number (the speeds, the reloads, the sniper's headshot)
      they are guesses: k is how the bullet looks */
@@ -323,15 +321,6 @@ export const ARMS = {
     all: 180 + 5 * 30, // (5 more magazines: the owner's, Nov 16)
     reload: 1900,
     k: "ak",
-  },
-  chaingun: {
-    kind: "ranged",
-    auto: true,
-    cool: 33, // (30 a second: the owner's, Nov 21 18:16Z)
-    cal: "7.62x51mm",
-    barrel: "long",
-    all: 600, // (600 rounds, still 20 s of fire: the owner's, Nov 21 18:16Z)
-    far: 3000,
   },
   revolver: {
     kind: "ranged",
@@ -459,8 +448,7 @@ const DW_GROUPS = {
   medium: ["smg", "tommy", "ump", "axe"],
   rifle: ["ak", "burst", "shotgun", "dbarrel", "glauncher"],
   heavy: ["lmg", "sniper", "hammer", "flamer"],
-  superheavy: ["chaingun"],
-};
+}; // (superheavy has no weapon since the chain gun went: the owner's, Nov 22 19:26Z, "REMOVE CHAIN GUN")
 for (const [g, ws] of Object.entries(DW_GROUPS))
   for (const w of ws) ARMS[w].dw = g;
 /* ---------- crits (the owner's, Nov 21 17:25Z and 18:05Z) ----------
@@ -497,7 +485,6 @@ const SHOT_ARM = {
   arrow: "bow",
   pellet: "shotgun",
   slug: "dbarrel",
-  chain: "chaingun",
   lgren: "glauncher",
 };
 export const armOfShot = (k) => SHOT_ARM[k] || k;
@@ -527,7 +514,6 @@ export const GUN_NAMES = {
   tommy: "Tommy gun",
   ump: "UMP-45",
   ak: "AK-47",
-  chaingun: "Chain gun",
   revolver: "Revolver",
   glauncher: "Grenade launcher",
   lmg: "M249 SAW",
@@ -562,7 +548,6 @@ export const WEAPONS = [
   "sniper",
   "glauncher",
   "lmg",
-  "chaingun",
   "flamer",
   "laser",
 ];
@@ -573,8 +558,7 @@ export const POOL = [...WEAPONS, ...ITEMS];
 export const AUTO = Object.keys(ARMS).filter((w) => ARMS[w].auto);
 /* every gun from Quacky Zombies is a special too (the owner's, Nov 4 07:43Z), working as it does there: the sniper's
    bullet, the SMG's, the AK-47's, the revolver's and the LMG's fly as theirs do (every bullet goes through every duck it
-   passes, as the handgun's does), the SMG, the AK-47, the LMG and the chain gun fire as long as the button is down, the
-   chain gun's shot hits at once and takes all the HP of the first duck on its line, and the grenade launcher's grenade
+   passes, as the handgun's does), the SMG, the AK-47 and the LMG fire as long as the button is down, and the grenade launcher's grenade
    flies straight and goes off on the first duck or at its range, as a grenade does */
 export const BOARD_GUNS = [
   "sniper",
@@ -584,7 +568,6 @@ export const BOARD_GUNS = [
   "ak",
   "revolver",
   "lmg",
-  "chaingun",
   "glauncher",
   "dbarrel",
   "flamer",
@@ -613,7 +596,6 @@ export const MGJ_MELEE = "sword"; // (the owner's, Nov 17: the ducks start with 
    sniper's bullet going through) and stays on key 4 until its shots are gone (MGJ_GUNS); the medkit puts my HP back to
    full, or gets a downed duck up at once when I hold it out over it */
 export const MGJ_GUNS = [
-  "chaingun",
   "glauncher",
   "lmg",
   "tommy",
@@ -628,7 +610,7 @@ export const MGJ_GUNS = [
 export const GUN_BREEDS = {
   /* the board's specials (the normal games): how long one waits before its key works again (ms; the key shows a bar
      draining meanwhile), and the magazines the board gives guns with none in Quacky Zombies, [shots, reload ms] (the
-     chain gun 300 rounds: the owner's, Nov 16; the double barrel's two shells and the flamethrower's tank, Nov 16
+     double barrel's two shells and the flamethrower's tank, Nov 16
      16:25Z) */
   board: {
     cool: {
@@ -647,7 +629,6 @@ export const GUN_BREEDS = {
       zebra: 30000, // (as Mad God Justin's CAKE_EVERY)
     },
     mag: {
-      chaingun: [300, 4000],
       glauncher: [3, 4000],
       dbarrel: [2, 2 * ARMS.dbarrel.shell],
       flamer: [FLAME.TANK, FLAME.RELOAD],
@@ -691,8 +672,8 @@ export const GUN_BREEDS = {
   },
   /* Mad God Justin: the knife, the sword and the pistol as fast as in every mode (the knife four a second, the pistol
      five), a gun picked up Quacky Zombies' own; every gun picked up has to reload here (the owner's, Nov 16), so the ones
-     with no magazine in Quacky Zombies get one: the shotgun 6 shells, the grenade launcher 3 (as in the other modes) and
-     the chain gun a belt of 100 of its 300 (my guesses). The pistol's never runs out */
+     with no magazine in Quacky Zombies get one: the shotgun 6 shells, the grenade launcher 3 (as in the other modes; my
+     guess). The pistol's never runs out */
   mgj: {
     cool: {
       sword: ARM_COOL.sword,
@@ -702,7 +683,6 @@ export const GUN_BREEDS = {
     mag: {
       shotgun: [6, 2600],
       glauncher: [3, 4000],
-      chaingun: [100, 4000],
     },
   },
 };
