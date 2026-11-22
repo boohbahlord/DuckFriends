@@ -44,7 +44,7 @@ import { specialById, keysOf, hasKey, ammoHTML } from "./specials.js";
 import {
   hand,
   handIn,
-  mgjToggles,
+  mgjInHand,
   mgjOut2,
   heldNow,
   magFor,
@@ -115,7 +115,7 @@ export const setKeyAim = (v) => {
 export const setMouse = (v) => {
   mouse = v;
 };
-export const myDuck = () =>
+const myDuck = () =>
   ((R && R.state.players[R.me]) || {}).duck || profile.duck;
 /* the duck my keys play with: in Quacky Zombies its slots, then the grenades (kitslots.js); in Mad God
    Justin its own keys: 1 the knife, 2 the pistol (it never reloads: in place of the bow, the owner's, Nov 16),
@@ -187,13 +187,13 @@ export function slidPick(i) {
   const id = keysOf(playDuck())[i];
   if (!R) return;
   if (isMgj(R.state)) {
-    if (mgjToggles(id) || !id) useKey(i, false);
-  } else if (onBoardPhase()) selectKey(i, false); // (the one in the middle is the one picked: a weapon goes in hand)
+    if (mgjInHand(id) || !id) useKey(i, false);
+  } else if (onBoardPhase()) selectKey(i); // (the one in the middle is the one picked: a weapon goes in hand)
 }
 /* phones: the special in the slider's middle tapped: used (a weapon attacks the way the duck faces) */
 export function slidTap(i) {
   const id = keysOf(playDuck())[i];
-  if (R && isMgj(R.state) && mgjToggles(id)) {
+  if (R && isMgj(R.state) && mgjInHand(id)) {
     useKey(i, false);
     fire(id);
   } else if (
@@ -217,7 +217,7 @@ export function padWeapon() {
   } // (Quacky Zombies: the weapon in hand, or the grenades)
   if (!id || !R || !hasKey(playDuck(), id)) return null;
   if (isMgj(R.state))
-    return R.state.phase === "boss" && mgjToggles(id) ? id : null;
+    return R.state.phase === "boss" && mgjInHand(id) ? id : null;
   const sp = specialById(id);
   return (BOARD_WEAPONS.includes(id)
     ? id === hand.held
@@ -240,7 +240,7 @@ export function padAttack() {
     fire(id);
     return coolFor(id, R.state);
   } // (out of HP: the down pistol, without taking it out for after)
-  if (isMgj(R.state) && mgjToggles(id) && handIn() !== id) mgjOut2(id);
+  if (isMgj(R.state) && mgjInHand(id) && handIn() !== id) mgjOut2(id);
   fire(id);
   return coolFor(id, R.state) / grCool(R.state, R.me); // (Sandbox: a group's Cooldown speed)
 }
@@ -535,7 +535,7 @@ function wheelPick(dir) {
   const mgj = isMgj(s),
     ids = keysOf(playDuck())
       .map((id, i) => [id, i])
-      .filter(([id]) => id && (!mgj || mgjToggles(id))); // (Mad God Justin: only what goes out in hand)
+      .filter(([id]) => id && (!mgj || mgjInHand(id))); // (Mad God Justin: only what goes out in hand)
   if (!ids.length) return false;
   const at = ids.findIndex(([id, i]) =>
       mgj ? id === hand.held : i === hand.lastKey,
@@ -546,7 +546,7 @@ function wheelPick(dir) {
           ids.length
       ];
   if (isMgj(s)) useKey(i, false);
-  else selectKey(i, false);
+  else selectKey(i);
   return true;
 }
 export const onWheel = (e) => {

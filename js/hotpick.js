@@ -1,5 +1,10 @@
 /* What goes in my duck's hand when I pick a hotbar key, in every mode (step 8e): the board's weapons, Quacky Zombies'
-   slots and Mad God Justin's. game.js hands it the room through pickWith(); hotbar.js draws the bar. */
+   slots and Mad God Justin's. game.js hands it the room through pickWith(); hotbar.js draws the bar.
+   THE ONE HAND RULE, every mode (the owner's, Nov 22 19:24Z: "MAKE THE FUCKING GAME'S HOTBAR IN EVERY MODE NOT HAVE
+   TOGGLE AND THE ITEM ALWAYS IN YOUR HAND IF IT ISNT AN EMPTY SLOT OR SOMETHING LIKE FLASHLIGHT"): the slot picked is
+   what's in my hand. Its key again keeps it there (nothing toggles a weapon away); an empty slot, or a slot whose item
+   is used rather than held (an effect, a thrown chair, Dead Ducks Arcade's flashlight), leaves the hand empty. A new
+   game starts with slot 1 picked. */
 import { now as clockNow } from "./clock.js";
 import { toast } from "./ui.js";
 import { unlocked } from "./unlocks.js";
@@ -10,7 +15,6 @@ import { magOf, magSize } from "./rules.js";
 import { l4Ammo } from "./l4dd.js";
 import { isL4dd, downArmed, kitOf, l4Hp, slotsOf } from "./l4ddrules.js";
 import { GRENADE, slotOfPick, staysPick } from "./kitslots.js";
-import { isSb } from "./sandboxrules.js";
 import { whyNot } from "./sandbox.js";
 import { sbHotOn, mountHotWin } from "./sbhotview.js";
 import { sbSlots, spawnOf } from "./sbhot.js";
@@ -21,8 +25,9 @@ import { sbSlots, spawnOf } from "./sbhot.js";
      key = pick + 1, kitslots.js)
    - start: what's in hand at first (Mad God Justin: the pistol, each fight; the owner's, Nov 16)
    - stays: a weapon that stays in hand once picked; toggles: picked again, it goes away and the one back comes back
+     (only Dead Ducks Arcade's items that switch on and off: the flashlight)
    - self: picking a weapon that stays makes it the one to come back (Quacky Zombies), or else the one before stays it
-   - weapons: the board's, the ones a key puts in hand; held(s): the weapon out in hand, for the board's ways
+   - held(s): the weapon out in hand, for the board's ways (the board: the one in the slot picked)
    - mag(w): a gun's magazine [shots, reload ms]; reloads(s): the gun R reloads (null: none; Quacky Zombies: the one
      in hand, "" too, the rules say no); ready(s, w, now): R can reload it now; dry(s, w): no ammo left to reload with
    - empty(s): the hand empties itself (Quacky Zombies: no grenades or no slot left; Mad God Justin: the picked-up
@@ -36,17 +41,16 @@ const magReady = (s, w, now) => {
 const ROWS = {
   board: {
     start: null,
-    weapons: BOARD_WEAPONS, // (what a key puts in hand; any other key puts it away)
-    held: () => hand.in,
+    held: () => weaponAt(Math.max(0, hand.lastKey)), // (the slot picked; none picked yet: slot 1)
     stays: () => false,
-    toggles: (x, key) => key, // (a keyboard's key toggles; a tap on a phone only picks)
+    toggles: () => false,
     mag: magSize,
     /* the gun in hand, or the handgun, or the first gun with a magazine on my keys */
     reloads: () => {
       const d = C.playDuck(),
         k = keysOf(d);
-      return hand.in && magSize(hand.in) && hasKey(d, hand.in)
-        ? hand.in
+      return hand.held && magSize(hand.held)
+        ? hand.held
         : k.includes("handgun")
           ? "handgun"
           : k.find((id) => id && magSize(id)) || null;
@@ -121,17 +125,31 @@ export const hand = {
   back: null,
   lastKey: -1,
   fight: -1,
+  bare: false, // (Dead Ducks Arcade: an empty slot picked, nothing in hand)
   /* the board's and Mad God Justin's weapon out in hand (Mad God Justin: only in the fight), or null */
   get held() {
     return mine().held(C && C.R && C.R.state);
   },
 };
+/* the board's weapon on key i, usable now (a special that's off, or locked outside Sandbox, isn't), or null: what the
+   slot picked puts in hand */
+function weaponAt(i) {
+  const id = C && C.playDuck && keysOf(C.playDuck())[i],
+    sp = id && specialById(id);
+  return BOARD_WEAPONS.includes(id) &&
+    sp &&
+    !sp.off &&
+    (unlocked("special", id) || sbHotOn(C.R.state))
+    ? id
+    : null;
+}
 /* my mode's row, the hand set to its start when the mode changed */
 function mine() {
   const k = C && C.R ? rowOf(C.R.state) : "board";
   if (hand.of !== k) {
     hand.of = k;
     hand.in = hand.back = ROWS[k].start;
+    hand.bare = false;
   }
   return ROWS[k];
 }
@@ -148,10 +166,11 @@ export const magFor = (w) => mine().mag(w);
 export const reloadsNow = () => mine().reloads(C.R.state);
 export const reloadReady = (s, w, now) => mine().ready(s, w, now);
 export const reloadDry = (s, w) => !!(mine().dry && mine().dry(s, w));
-/* x picked (key: a keyboard's key): the one machine */
-function put(x, key) {
+/* x picked: the one machine */
+function put(x) {
   const M = mine();
-  if (M.toggles(x, key) && hand.in === x) hand.in = hand.back;
+  hand.bare = false;
+  if (M.toggles(x) && hand.in === x) hand.in = hand.back;
   else {
     if (M.stays(x)) {
       if (M.self) hand.back = x;
@@ -163,7 +182,7 @@ function put(x, key) {
 /* the hand emptied itself: the one back comes back (true when it did) */
 function settle(s) {
   const M = mine();
-  if (!M.empty || !M.empty(s)) return false;
+  if (hand.bare || !M.empty || !M.empty(s)) return false;
   hand.in = M.backTo(s);
   return true;
 }
@@ -182,7 +201,7 @@ export function mgjBackIfGone(s) {
     setTimeout(() => C.sendMove(true), 0);
 }
 /* Mad God Justin: what a key puts out in my hand, kept there (the owner's, Nov 3) */
-export const mgjToggles = (id) =>
+export const mgjInHand = (id) =>
   id === MGJ_MELEE ||
   id === "handgun" ||
   id === "zebra" ||
@@ -191,36 +210,29 @@ export function mgjOut2(id) {
   put(id);
   C.sendMove(true);
 }
-/* the weapon in my duck's hand: the one kept out (Shift and its key); Quacky Zombies: always the one in the slot
-   picked (the melee weapon at first; back to the one before when the special is used up), none while I'm down or a
-   ghost */
+/* the weapon in my duck's hand: the one in the slot picked; Quacky Zombies: the one in the slot picked (the melee
+   weapon at first; back to the one before when the special is used up), none while I'm down or a ghost */
 export function heldNow() {
   if (C.R && isL4dd(C.R.state)) {
     settle(C.R.state); // (the last grenade thrown, or the item used up: the weapon before it comes back)
     if (downArmed(C.R.state, C.R.me)) return "handgun"; // (down: the down pistol)
-    if (l4Hp(C.R.state, C.R.me) <= 0) return "";
+    if (l4Hp(C.R.state, C.R.me) <= 0 || hand.bare) return ""; // (bare: an empty slot picked)
     return hand.in === GRENADE
       ? "grenade"
       : slotsOf(C.R.state, C.R.me)[slotOfPick(hand.in)] || "";
   }
   return hand.held && hasKey(C.playDuck(), hand.held) ? hand.held : "";
 }
-/* key i (0 is key 1 … 9 is key 0): an effect for 5 seconds (keep: on until kept off), a jump, or an item */
-/* a number key toggles a weapon (the owner's, Nov 16): the key picks it and puts it in hand, the same key again puts it
-   away, another key puts it away and takes the other. One weapon at a time, and a weapon has to be in hand to be used (a
-   click, V, a phone's attack button): nothing fires beside it. toggle: a keyboard's key (a tap on a phone only picks). */
-export function selectKey(i, toggle) {
-  const id = keysOf(C.playDuck())[i];
+/* key i picked (a number key, the wheel, a phone's slider): the board's slot picked is what's in hand */
+export function selectKey(i) {
   hand.lastKey = i;
-  const M = mine();
-  if (M.weapons) {
-    if (M.weapons.includes(id)) put(id, toggle);
-    else hand.in = null;
-  }
   if (C.bar) C.bar.show(i);
   C.sendMove(true);
 }
-export function useKey(i, keep, toggle = false) {
+/* key i (0 is key 1 … 9 is key 0): a weapon (in hand, the one rule above), an effect for 5 seconds (keep: on until kept
+   off), a jump, or an item. One weapon at a time, and a weapon has to be in hand to be used (a click, V, a phone's
+   attack button): nothing fires beside it */
+export function useKey(i, keep) {
   if (!C.R || !C.onBoardPhase()) return;
   if (isL4dd(C.R.state)) {
     l4Pick(i);
@@ -241,13 +253,14 @@ export function useKey(i, keep, toggle = false) {
      hotbar using the number key") */
   if (!keysOf(C.playDuck())[i]) {
     if (mine() === ROWS.board && C.bar && C.bar.flash) C.bar.flash(); // ("Press H" over the bar: P5)
-    hand.in = isMgj(C.R.state) ? "none" : null;
+    if (isMgj(C.R.state)) hand.in = "none";
+    else hand.lastKey = i;
     C.sendMove(true);
     return;
   }
   if (isMgj(C.R.state)) {
     const id = keysOf(C.playDuck())[i];
-    if (mgjToggles(id)) mgjOut2(id); // (kept out once picked: a click or V uses it)
+    if (mgjInHand(id)) mgjOut2(id); // (kept out once picked: a click or V uses it)
     if (C.bar) setTimeout(() => C.bar && C.bar.refresh(), 60);
     return;
   } // (Mad God Justin's own keys)
@@ -256,10 +269,10 @@ export function useKey(i, keep, toggle = false) {
   if (!sp || sp.off || !(unlocked("special", id) || sbHotOn(C.R.state))) return; // (a special that's off for now, or still locked, does nothing; in Sandbox the loot is everyone's)
   hand.lastKey = i;
   if (BOARD_WEAPONS.includes(id)) {
-    selectKey(i, toggle);
+    selectKey(i);
     if (C.bar) setTimeout(() => C.bar && C.bar.refresh(), 60);
     return;
-  } // (a weapon: the number key picks it and toggles it)
+  } // (a weapon: the number key puts it in hand)
   if (sp.kind === "effect")
     C.R.send({
       t: "aura",
@@ -268,11 +281,8 @@ export function useKey(i, keep, toggle = false) {
     });
   // (the Invisible duck: the key turns it on and off)
   else if (THROWS.includes(id)) {
-    if (hand.held && isSb(C.R.state)) {
-      hand.in = null; // (Sandbox: the key puts the weapon in hand away and throws; the owner's, Nov 19 16:38Z, "WHY THE FUCK CAN I NOT THROW THE CHAIR IN SANDBOX")
-      C.sendMove(true);
-    }
-    if (!hand.held) C.fire(id); // (the Chair and the Zebra cake: thrown toward the mouse, but not with a weapon in hand)
+    C.sendMove(true); // (its slot picked: the weapon in hand is away, the owner's, Nov 19 16:38Z, "WHY THE FUCK CAN I NOT THROW THE CHAIR IN SANDBOX")
+    C.fire(id); // (the Chair and the Zebra cake: thrown toward the mouse)
   } else if (C.me && C.me.x >= 0)
     C.R.send({ t: "use", what: id, face: C.turned() ? 1 : C.me.face || 1 }); // (an item: Shift and its key use it the same way)
   if (C.bar) setTimeout(() => C.bar && C.bar.refresh(), 60);
@@ -299,17 +309,16 @@ export function hotH() {
   return true;
 }
 /* Quacky Zombies: a number key picks a slot, the one after the last slot the grenades (kitslots.js). A melee or ranged
-   weapon stays in hand once picked; an item switches on and off: on, it's in hand instead of the weapon, and off (or
-   used up) that weapon is back. */
+   weapon stays in hand once picked, an empty slot leaves the hand empty; an item switches on and off: on, it's in hand
+   instead of the weapon, and off (or used up) that weapon is back. */
 export function l4Pick(i) {
   const sl = slotsOf(C.R.state, C.R.me),
     kit = kitOf(C.R.state, C.R.me);
   mine();
-  if (i === GRENADE) {
-    /* the grenades are a number key, and picked like a weapon: the key again puts them away (the owner's, Nov 16) */
-    if (hand.in !== GRENADE && !(kit && kit.g > 0)) return;
-  } else if (slotOfPick(i) < 0 || !sl[slotOfPick(i)]) return;
-  put(i);
+  if (slotOfPick(i) < 0 && i !== GRENADE) return;
+  if (i === GRENADE ? !(kit && kit.g > 0) : !sl[slotOfPick(i)])
+    hand.bare = true; // (an empty slot, or no grenades: nothing in hand, the one rule)
+  else put(i);
   C.sendMove(true);
   if (C.bar) C.bar.refresh();
 }

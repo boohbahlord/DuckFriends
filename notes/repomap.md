@@ -64,7 +64,7 @@ friends.js 236 friends
 front.js 151 the front page
 fx.js 1187 the effects, drawn as
 fxmotion.js 233 how a held weapon
-game.js 4722 the game screen
+game.js 4720 the game screen
 gameact.js 546 the action window and
 gameannounce.js 212 The cloud's words and
 gameboard.js 589 the board: each mode's
@@ -98,7 +98,7 @@ hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
 hooks.js 3 hooks between screens that
 hotbar.js 506 the specials on the
-hotpick.js 315 What goes in my
+hotpick.js 324 What goes in my
 hpmath.js 68 HP in hundredths
 hpmeter.js 311 HP meters and the
 idbstore.js 38 One place that opens
@@ -272,7 +272,7 @@ umaps.js 374 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 408 things you unlock
 upbar.js 69 the green bar on
-updates.js 3641 Updates
+updates.js 3650 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival

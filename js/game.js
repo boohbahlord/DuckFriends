@@ -98,7 +98,6 @@ import {
   keyAimNow,
   keyIndex,
   mouse,
-  myDuck,
   onWheel,
   padAttack,
   padDraw,
@@ -3167,7 +3166,6 @@ function paintNow(force) {
     const hp = $(".mgj-hp", S);
     if (hp) setHTML(hp, mgjHPHTML(s));
   } // Mad God Justin: the knife always out; his HP
-  else if (hand.held === "knife" && !hasKey(myDuck(), "knife")) hand.in = null;
   const round =
     s.phase === "over" || isHang(s) || isSb(s)
       ? ""
@@ -3731,7 +3729,7 @@ function keydown(e) {
   }
   if (keyIndex(e) >= 0 && onBoardPhase()) {
     e.preventDefault();
-    if (!e.repeat) useKey(keyIndex(e), e.shiftKey, true);
+    if (!e.repeat) useKey(keyIndex(e), e.shiftKey);
     return;
   } // the specials' keys (Shift: keep it on)
   if (e.code === "KeyE" && sbGo(R.state)) {
@@ -3758,7 +3756,7 @@ function keydown(e) {
     else if (hand.lastKey >= 0) useKey(hand.lastKey, false);
     else if (bar) bar.show();
     return;
-  } // V: the special kept out (toggled), or else the one I used last (Mad God Justin: what's in hand)
+  } // V: the weapon in hand, or else the one I used last (Mad God Justin: what's in hand)
   if (
     e.code === "KeyE" &&
     isMgj(R.state) &&
