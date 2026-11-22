@@ -28,6 +28,7 @@ import {
   bodyZ,
   roofHoleOver,
   heightAt,
+  wetK,
   slabBetween,
   W,
   H,
@@ -55,12 +56,11 @@ import { now as clockNow } from "./clock.js";
 import {
   inShallow,
   inDeep,
-  WADE,
   FLARE,
   STATION,
   PUMPS,
 } from "./hangout/stationmap.js";
-import { floatDuck, SINK, WADE_SINK, SLOW as SWIM } from "./hangout/water.js";
+import { floatDuck, SINK, WADE_SINK } from "./hangout/water.js";
 import { fenceLean } from "./hangout/stationart.js";
 import { bellSwing, bellReset, flareDraw, flareOn } from "./l4ddbell.js";
 import {
@@ -3330,10 +3330,7 @@ activity({
     (((ctx.state().hang.l4ad || {})[ctx.me] || 0) > clockNow()
       ? 1
       : SPEED * (upOf(ctx.state(), ctx.me).sp ? 1.1 : 1)) * // (Speed, from the Butler: 10% faster; an adrenaline shot: Duck Cabin's own walk, for 20 s)
-    (dp() && inShallow(pos.x, pos.y) ? WADE : 1) * // (Downpour: the flood over the road, 30% slower: the owner's)
-    (dp() && inDeep(pos.x, pos.y) && pos.z <= heightAt(pos.x, pos.y) + 4
-      ? SWIM
-      : 1), // (… and its deep end swum, as slow as in the Hangout pool)
+    wetK(pos.x, pos.y, pos.z), // (Downpour's flood: layout.js)
   spawn(ctx) {
     const s = ctx.state(),
       k = Math.max(0, s.seat.indexOf(ctx.me));

@@ -60,7 +60,7 @@ fxmotion.js 229 how a held weapon and
 game.js 5125 the game screen
 gameact.js 546 the action window and the
 gameboard.js 589 the board: each mode's board
-gamedefaults.js 57 the game's own numbers, for
+gamedefaults.js 61 the game's own numbers, for
 gamefx.js 874 the silly commands and the
 gamehand.js 604 the hand: the number-key specials,
 gameplace.js 738 where things are put on
@@ -99,7 +99,7 @@ jump.js 78 a duck's jump: one arc
 jumps.js 48 the jump counter
 justinmoves.js 34 Justin's moves on the board,
 keynav.js 204 menus by keyboard
-l4dd.js 3342 Quacky Zombies on every screen
+l4dd.js 3339 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
 l4ddart.js 623 Quacky Zombies' pictures
@@ -111,7 +111,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 5004 the rules of Quacky Zombies
+l4ddrules.js 5003 the rules of Quacky Zombies
 l4ddsfx.js 545 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the
 langname.js 5 the name of Sandbox's number
@@ -270,7 +270,7 @@ who.js 3 who this player is beyond
 wounds.js 485 the wounds a hit leaves
 zombiepath.js 178 the zombies' way to the
 zombieroofs.js 322 the zombies' walk over Downpour's
-zombies.js 1477 the zombies: one module for
+zombies.js 1476 the zombies: one module for
 
 ## js/hangout/
 activities.js 23 every Hangout activity, so the
@@ -298,7 +298,7 @@ flicker.js 83 now and then a light
 ghosts.js 111 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in
 lamp.js 71 the lamps: the example activity
-layout.js 1120 Duck Cabin: the world of
+layout.js 1128 Duck Cabin: the world of
 layoutbase.js 78 Duck Cabin: the world's numbers
 layoutheights.js 396 Duck Cabin: the heights :
 npc.js 495 Duck Cabin's characters: how they
@@ -325,7 +325,7 @@ stage.js 134 the stage: half an oval
 stationart.js 51 Downpour's things: the drawings
 stationbase.js 67 Downpour's drawings: the shared pieces
 stationcars.js 513 Downpour's drawings: the cars, the
-stationmap.js 1187 Dead Ducks Arcade's second map:
+stationmap.js 1186 Dead Ducks Arcade's second map:
 stationparts.js 455 Downpour's drawings: the gas station's
 stationroof.js 340 Downpour's drawings: the roofs, their
 stationtrees.js 616 Downpour's drawings: the swamp's trees

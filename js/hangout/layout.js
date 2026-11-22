@@ -10,6 +10,7 @@
    the downhill in the south (the pool, the campfire, the trampoline), and forest all round. */
 import * as GS from "./stationmap.js";
 import { modeOf } from "../modes.js";
+import { WET } from "../gamedefaults.js";
 import { jeepTops, JEEP } from "./vehicles.js";
 
 import {
@@ -964,6 +965,13 @@ export function solidsAt(x, y, z = -Infinity) {
     grid.get(Math.floor(x / CELL) * 1000 + Math.floor(y / CELL)) || []
   ).filter((b) => hits(b, x, y) && z < Math.max(b.top, b.roof));
 }
+/* how fast a walker at (x, y), its feet at z, goes in water, of its walk (gamedefaults.js WET): Downpour's flood, its
+   shallow part waded and its deep end swum at its bottom */
+export const wetK = (x, y, z) =>
+  variant !== "l4gs"
+    ? 1
+    : (GS.inShallow(x, y) ? WET.WADE : 1) *
+      (GS.inDeep(x, y) && z <= heightAt(x, y) + 4 ? WET.SWIM : 1);
 /* can a duck's feet at height z go to (x, y)? up: how much higher the ground there may be (a step on the ground; a little
    in the air, so a jump has to clear an edge). from: where it comes from (a solid it is already in doesn't hold it) */
 const SOLID_DECKS = GS.DECKS.filter((d) => d.solid);

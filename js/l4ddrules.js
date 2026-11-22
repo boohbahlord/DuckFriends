@@ -93,6 +93,7 @@ import {
   onPlatform,
   BJ,
   layoutRev,
+  wetK,
   layoutVariant,
   deckAt,
   floorH,
@@ -115,7 +116,6 @@ import { hOk, hLock, shotFeet, SAME_FLOOR, zOf, nearH } from "./heights.js";
 import { toPx, DUCK } from "./units.js";
 import { blast, reach, hitOf, REACH } from "./blast.js";
 import { pushAlong, walkOf, pushTaken, immobile, sizeOf } from "./push.js";
-import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
   hitWounds,
@@ -825,8 +825,7 @@ export const mapDeck = (d) => (d && !d.sb ? d : null);
    slower, swimming the deep end as slowly as in the pool. The merchants and Justin out there too, so nobody walks
    faster than a player can (the owner's, Nov 18 15:35Z: "all of their sprinting and their movement speed is the same
    as the players") */
-export const wetSlow = (x, y) =>
-  !dp() ? 1 : (GS.inShallow(x, y) ? GS.WADE : 1) * (GS.inDeep(x, y) ? SWIM : 1);
+export const wetSlow = (x, y) => wetK(x, y, -Infinity); // (layout.js: at any height)
 /* the map's own numbers in: its openings, the Butler's and the fireplace's spots, the start spots, the zombies' grid.
    Called wherever they're read; it does something only when layout.js has turned to the other map */
 let mapRev = -1;

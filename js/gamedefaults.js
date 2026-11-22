@@ -26,6 +26,10 @@ export const WEIGHT = {
   DEAD_FROM: "held", // whose dead weight a duck carries (guns.js DEAD_WEIGHT): "held", what it holds out; "all", its whole kit (B6b: the owner hasn't picked)
 };
 
+/* water (hangout/layout.js wetK): how fast every walker goes in it, of its walk. WADE in shallow water (Downpour's
+   flood over the road, the owner's, Nov 17 11:07Z: 30% slower), SWIM swimming (the Hangout pool, Downpour's deep flood) */
+export const WET = { WADE: 0.7, SWIM: 0.55 };
+
 /* zombies (Nov 20 21:17Z: "zombies should have a slightly slower attack speed by, let's say, 0.2 seconds") */
 export const ZOMBIE_SWIPE_SLOWER = 200; // ms added to the wait between one swipe and the next, every zombie
 
