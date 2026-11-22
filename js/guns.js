@@ -434,6 +434,9 @@ const perSecond = (A) =>
   A.critReload
     ? (A.mag * 1000) / (A.mag * A.cool + A.mag * A.shell)
     : ((A.burst || 1) * 1000) / A.cool;
+/* a weapon's shots (a melee weapon's swings) a second, as its crits count them (Angelic reads it too: l4ddangel.js) */
+export const shotsOf = (w) =>
+  ARMS[w] && ARMS[w].cool ? perSecond(ARMS[w]) : 0;
 export const critOf = (w, dr = 0) => {
   if (draws(w)) return drawCrit(dr);
   const A = ARMS[w];

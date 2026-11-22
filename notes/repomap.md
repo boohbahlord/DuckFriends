@@ -89,7 +89,7 @@ gunmen.js 110 the gunmen's looks
 gunmenrules.js 1158 Survival: the gunmen
 gunmenview.js 135 Survival: the gunmen on
 gunparts.js 15 the pieces every weapon's
-guns.js 664 every weapon's numbers: one
+guns.js 667 every weapon's numbers: one
 hats.js 1096 hats
 heat.js 72 a gun's heat: the
 heights.js 82 a shot's height, Doom's
@@ -111,7 +111,7 @@ justinmoves.js 45 Justin's moves on the
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which
 l4dd.js 3338 Quacky Zombies on every
-l4ddangel.js 151 Dead Ducks Arcade's Angel
+l4ddangel.js 149 Dead Ducks Arcade's Angel
 l4ddangelui.js 204 Dead Ducks Arcade's Angel
 l4ddart.js 623 Quacky Zombies' pictures
 l4ddbar.js 332 Quacky Zombies' weapons bar
@@ -123,7 +123,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power
 l4ddpowerui.js 278 Dead Ducks Arcade's power
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4956 the rules of Quacky
+l4ddrules.js 4963 the rules of Quacky
 l4ddsfx.js 545 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online:
 langname.js 5 the name of Sandbox's

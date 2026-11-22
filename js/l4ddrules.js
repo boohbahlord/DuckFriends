@@ -153,7 +153,15 @@ import {
   isPw,
   pwName,
 } from "./l4ddpower.js";
-import { ANGEL, angelOf, angelAmmo, angelAct, angelLeft } from "./l4ddangel.js";
+import {
+  ANGEL,
+  angelOf,
+  angelAmmo,
+  angelAct,
+  angelLeft,
+  angelDmg,
+  angelCrit,
+} from "./l4ddangel.js";
 
 import { NPC_RUN } from "./npcshared.js";
 import { sees as npcSees, shotMark } from "./npcrules.js";
@@ -907,9 +915,9 @@ export const fullAmmo = (w) => {
       : a.all;
   return a.mag ? [a.mag, all - a.mag] : [all, 0];
 };
-/* … and as full as duck id's own is: an Angelic weapon holds more (l4ddangel.js) */
+/* … and as full as duck id's own is (the Angelic pistols: one magazine twice as big, l4ddangel.js) */
 export const fullFor = (s, id, w) =>
-  angelOf(s, id, w) ? angelAmmo(ARMS[w], w) : fullAmmo(w);
+  angelOf(s, id, w) ? angelAmmo(fullAmmo(w), w) : fullAmmo(w);
 /* a magazine's size in kit m: the Angelic pistols' is twice the pistol's (l4ddangel.js) */
 export const magIn = (m, w) =>
   ARMS[w] && ARMS[w].mag
@@ -1060,8 +1068,8 @@ const headOf = (s, id, w, dr) => {
   const own = critOf(w, dr); // (dr: a drawn arrow's draw, bowdraw.js)
   if (!own || (isSb(s) && !sbRule(s, "crit"))) return 0; // (Sandbox's Rules: crits off)
   if (isSb(s) && sbRule(s, "critp") >= 0) return sbRule(s, "critp") / 100; // (Sandbox's settings file: one crit chance for every weapon that crits, just as set)
-  const holy = w !== "pan" && angelOf(s, id, w) ? 2 : 1; // (the pan has its own: not doubled)
-  return own * holy + CRIT_UP * (upOf(s, id).acc || 0);
+  const holy = w !== "pan" && angelOf(s, id, w) ? angelCrit(w) : 0; // (Angelic: by its fire rate, l4ddangel.js; the pan keeps its own)
+  return own + holy + CRIT_UP * (upOf(s, id).acc || 0);
 };
 function addPts(s, id, n) {
   if (isWild(s, id)) return; // (Justin out there earns nothing: he never has a gun, the owner's, Nov 17 20:02Z)
@@ -3005,7 +3013,6 @@ const PH = {
   kitOf: (s, id) => kitOf(s, id),
   give: (s, id, w, hand) => give(s, id, w, hand),
   full: (w) => fullAmmo(w),
-  arm: (w) => ARMS[w],
   weapons: WEAPONS,
   /* the world's size now (layout.js changes it for Downpour): read when used, never kept from when this was made, or
      on Downpour a duck stood on a part and never took it (the owner's, Nov 17 05:46Z: the restroom's pickup) */
@@ -3229,7 +3236,7 @@ export function zombieTakes(s, by, w, dr = 0) {
     dmg: all
       ? ALL_HP
       : (svGun(s, by, w, dmgOf(A) + drawDmg(dr)) +
-          (!beam && angelOf(s, by, w) ? ANGEL.DMG : 0)) *
+          (!beam && angelOf(s, by, w) ? angelDmg(w) : 0)) *
         (crit ? 2 : 1) *
         (A.kind === "melee" ? sizeOf(s, by) : 1), // (a melee's, times its swinger's Size: push.js)
     crit,
@@ -3241,7 +3248,7 @@ export function zombieTakes(s, by, w, dr = 0) {
 function strike(s, z, dmg, crit, by, w = "", now = 0) {
   if (z.st === 3) return false;
   dmg = svGun(s, by, w, dmg);
-  if (w && w !== "laser" && angelOf(s, by, w)) dmg += ANGEL.DMG; // (Angelic: +1, l4ddangel.js; the Laser Rifle has its own, laser)
+  if (w && w !== "laser" && angelOf(s, by, w)) dmg += angelDmg(w); // (Angelic: by its fire rate, l4ddangel.js; the Laser Rifle has its own, laser)
   if (crit) dmg *= 2;
   const on = s.hang.l4on || {},
     all = !!on.kill, // (Instant Kill: every hit takes all its HP, 5 points for each)
