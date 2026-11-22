@@ -49,8 +49,7 @@ import {
   DMG,
   THROW_TELL,
   CHAIR_TELL,
-  cakeAt,
-  CAKE_EAT_MS,
+  chaseCake,
 } from "./mgjrules.js";
 
 import { mgjTick } from "./mgjbrain.js";
@@ -417,36 +416,22 @@ function pick(sp, cur) {
 /* the Zebra cake special (rules.js' s.zcake): he runs after it, as after Mad God Justin's, and once it has landed he eats
    it (j.eat, drawn at his beak) for CAKE_EAT_MS; then it's gone and he's back to his spot. True when anything changed */
 function cakeChase(s, now, at) {
-  const j = s.justin,
-    c = s.zcake;
-  delete j.swing;
+  const j = s.justin;
   delete j.god;
-  if (c.eat) {
-    if (now < c.eat + CAKE_EAT_MS) return false;
-    s.zcake = null;
-    delete j.eat;
-    if (boardMgj(s) && j.hp > 0) j.hp = Math.min(j.max || BJ_HP, j.hp + 1); // (done eating: 1 HP back, owner 2026-11-03 23:17Z)
-    j.k = null;
-    j.next = now + 500;
-    return true;
-  }
-  const p = cakeAt(c, now),
-    d = Math.hypot((p.x - at.x) / RX, (p.y - at.y) / RY);
-  if (now >= c.stop && d < 1.3) {
-    c.eat = now;
-    stopAt(j, at, now);
-    j.eat = { k: "zebra", at: now, until: now + CAKE_EAT_MS, cake: true };
-    s.fxN = (s.fxN || 0) + 1;
-    s.fx = [
-      ...(s.fx || []).slice(-19),
-      { n: s.fxN, kind: "eat", what: "zebra", by: JUSTIN_ID, who: [], t: now },
-    ];
-    return true;
-  }
-  if (Math.abs(j.x1 - p.x) < 0.004 && Math.abs(j.y1 - p.y) < 0.004)
-    return false;
-  walkTo(j, at, p, now, SPEED * 1.9); // (he runs after it)
-  return true;
+  return chaseCake(
+    j,
+    s.zcake,
+    at,
+    now,
+    SPEED * 1.9,
+    (o) => fxOf(s, now, JUSTIN_ID)({ ...o, who: [] }),
+    () => {
+      s.zcake = null;
+      if (boardMgj(s) && j.hp > 0) j.hp = Math.min(j.max || BJ_HP, j.hp + 1); // (done eating: 1 HP back, owner 2026-11-03 23:17Z)
+      j.k = null;
+      j.next = now + 500;
+    },
+  );
 }
 /* the host's part, every heartbeat: true when s.justin changed. log: the rules' chat line */
 export function justinTick(s, now, log) {
