@@ -1,0 +1,410 @@
+{
+  "name": "The Boss",
+  "desc": "One huge Boss with three phases. Dodge the moving fire, grab guns and medkits, and bring it down together.",
+  "most": 4,
+  "world": "",
+  "map": "night",
+  "data": {
+    "v": 2,
+    "parts": {
+      "sb": {
+        "du": {
+          "p-gy6hrpbx": [0.0732, 0, 0, 0.1919]
+        },
+        "n": 8,
+        "pts": {
+          "p1": {
+            "k": "spawn",
+            "x": 0.5025,
+            "y": 0.36,
+            "z": 0,
+            "col": "red",
+            "f": {
+              "name": {
+                "t": "Boss",
+                "ok": "Boss"
+              },
+              "what": {
+                "t": "zombie",
+                "ok": "zombie"
+              },
+              "hp": {
+                "t": "1000",
+                "ok": "1000"
+              },
+              "damage": {
+                "t": "1.2",
+                "ok": "1.2"
+              },
+              "speed": {
+                "t": "1",
+                "ok": "1"
+              },
+              "size": {
+                "t": "152",
+                "ok": "152"
+              },
+              "limit": {
+                "t": "1",
+                "ok": "1"
+              },
+              "auto": {
+                "t": "t",
+                "ok": "t"
+              },
+              "brain": {
+                "t": "boss.se",
+                "ok": "boss.se"
+              },
+              "hide": {
+                "t": "t",
+                "ok": "t"
+              }
+            }
+          },
+          "p2": {
+            "k": "zone",
+            "x": 0.5025,
+            "y": 0.5,
+            "z": 0,
+            "col": "orange",
+            "f": {
+              "name": {
+                "t": "Fire",
+                "ok": "Fire"
+              },
+              "fx": {
+                "t": "damage",
+                "ok": "damage"
+              },
+              "amt": {
+                "t": "1.5",
+                "ok": "1.5"
+              },
+              "rate": {
+                "t": "1",
+                "ok": "1"
+              },
+              "zwho": {
+                "t": "players",
+                "ok": "players"
+              },
+              "zw": {
+                "t": "150",
+                "ok": "150"
+              },
+              "zh": {
+                "t": "150",
+                "ok": "150"
+              },
+              "brain": {
+                "t": "lava.se",
+                "ok": "lava.se"
+              },
+              "n": {
+                "t": "3",
+                "ok": "3"
+              },
+              "sq": {
+                "t": "10",
+                "ok": "10"
+              },
+              "ord": {
+                "t": "rand",
+                "ok": "rand"
+              }
+            },
+            "zw": 37.5,
+            "zh": 37.5
+          },
+          "p3": {
+            "k": "loot",
+            "x": 0.5025,
+            "y": 0.86,
+            "z": 0,
+            "col": "green",
+            "f": {
+              "name": {
+                "t": "Kit",
+                "ok": "Kit"
+              },
+              "loot": {
+                "t": "handgun",
+                "ok": "handgun"
+              },
+              "lown": {
+                "t": "t",
+                "ok": "t"
+              },
+              "back": {
+                "t": "f",
+                "ok": "f"
+              },
+              "ltake": {
+                "t": "players",
+                "ok": "players"
+              },
+              "i_handgun_n": {
+                "t": "30",
+                "ok": "30"
+              },
+              "i_handgun_cd": {
+                "t": "0.4",
+                "ok": "0.4"
+              },
+              "i_handgun_brk": {
+                "t": "t",
+                "ok": "t"
+              }
+            },
+            "orb": {
+              "w": "handgun",
+              "at": 1795365755421
+            }
+          },
+          "p4": {
+            "k": "loot",
+            "x": 0.15,
+            "y": 0.8,
+            "z": 0,
+            "col": "blue",
+            "f": {
+              "name": {
+                "t": "RackL",
+                "ok": "RackL"
+              },
+              "loot": {
+                "t": "shotgun ak",
+                "ok": "shotgun ak"
+              },
+              "back": {
+                "t": "t",
+                "ok": "t"
+              },
+              "again": {
+                "t": "25",
+                "ok": "25"
+              },
+              "ltake": {
+                "t": "players",
+                "ok": "players"
+              },
+              "i_shotgun_n": {
+                "t": "12",
+                "ok": "12"
+              },
+              "i_shotgun_cd": {
+                "t": "1",
+                "ok": "1"
+              },
+              "i_shotgun_brk": {
+                "t": "t",
+                "ok": "t"
+              },
+              "i_ak_n": {
+                "t": "60",
+                "ok": "60"
+              },
+              "i_ak_cd": {
+                "t": "0.3",
+                "ok": "0.3"
+              },
+              "i_ak_brk": {
+                "t": "t",
+                "ok": "t"
+              }
+            },
+            "orb": {
+              "w": "ak",
+              "at": 1795365756621
+            }
+          },
+          "p5": {
+            "k": "loot",
+            "x": 0.8475,
+            "y": 0.8,
+            "z": 0,
+            "col": "yellow",
+            "f": {
+              "name": {
+                "t": "RackR",
+                "ok": "RackR"
+              },
+              "loot": {
+                "t": "burst smg",
+                "ok": "burst smg"
+              },
+              "back": {
+                "t": "t",
+                "ok": "t"
+              },
+              "again": {
+                "t": "25",
+                "ok": "25"
+              },
+              "ltake": {
+                "t": "players",
+                "ok": "players"
+              },
+              "i_burst_n": {
+                "t": "24",
+                "ok": "24"
+              },
+              "i_burst_cd": {
+                "t": "0.5",
+                "ok": "0.5"
+              },
+              "i_burst_brk": {
+                "t": "t",
+                "ok": "t"
+              },
+              "i_smg_n": {
+                "t": "50",
+                "ok": "50"
+              },
+              "i_smg_cd": {
+                "t": "0.2",
+                "ok": "0.2"
+              },
+              "i_smg_brk": {
+                "t": "t",
+                "ok": "t"
+              }
+            },
+            "orb": {
+              "w": "burst",
+              "at": 1795365758221
+            }
+          },
+          "p6": {
+            "k": "loot",
+            "x": 0.15,
+            "y": 0.16,
+            "z": 0,
+            "col": "pink",
+            "f": {
+              "name": {
+                "t": "Med1",
+                "ok": "Med1"
+              },
+              "loot": {
+                "t": "medkit",
+                "ok": "medkit"
+              },
+              "back": {
+                "t": "t",
+                "ok": "t"
+              },
+              "again": {
+                "t": "20",
+                "ok": "20"
+              },
+              "ltake": {
+                "t": "players",
+                "ok": "players"
+              }
+            },
+            "orb": {
+              "w": "medkit",
+              "at": 1795365759821
+            }
+          },
+          "p7": {
+            "k": "loot",
+            "x": 0.8475,
+            "y": 0.16,
+            "z": 0,
+            "col": "pink",
+            "f": {
+              "name": {
+                "t": "Med2",
+                "ok": "Med2"
+              },
+              "loot": {
+                "t": "medkit",
+                "ok": "medkit"
+              },
+              "back": {
+                "t": "t",
+                "ok": "t"
+              },
+              "again": {
+                "t": "20",
+                "ok": "20"
+              },
+              "ltake": {
+                "t": "players",
+                "ok": "players"
+              }
+            },
+            "orb": {
+              "w": "medkit",
+              "at": 1795365760228
+            }
+          },
+          "p8": {
+            "k": "respawn",
+            "x": 0.5025,
+            "y": 0.9,
+            "z": 0,
+            "col": "white",
+            "f": {
+              "name": {
+                "t": "Home",
+                "ok": "Home"
+              },
+              "who": {
+                "t": "players",
+                "ok": "players"
+              }
+            }
+          }
+        },
+        "zs": {
+          "p1": 9,
+          "p2": 10,
+          "p3": 6,
+          "p4": 5,
+          "p5": 3,
+          "p6": 2,
+          "p7": 1
+        },
+        "rules": {
+          "lives": "0",
+          "most": "4"
+        }
+      },
+      "nbp": {
+        "by": {
+          "p-gy6hrpbx": {
+            "n": ["settings/", "settings/limits"],
+            "g": {}
+          }
+        }
+      },
+      "nb": {
+        "boss.se": "# The Boss: one big brain with three phases. Its stats are its memory: the hitbox says which phase it is in.\nbend weave\nwhen spawn {\n  ((hitbox 140%))\n  ((regen hp 1.5))\n  say \"I am the Boss. Run.\"\n  attack nearest duck\n}\nevery 2s [attack 75%, flee 25%]\nwhen hit {\n  let way = 1:3\n  \\if way == 1\\ \\move\\{ >4 /\\3 } else \\if way == 2\\ \\move\\{ <4 \\/3 } else \\move\\{ >3 \\/4 }\n  \\if hppct < 25 and hitbox < 200\\ {\n    ((hitbox 200%))\n    ((speed 2))\n    say \"ENOUGH! Now you see my true size!\"\n    attack nearest duck\n  } else \\if hppct < 50 and hitbox < 170\\ {\n    ((hitbox 170%))\n    ((speed 1.5))\n    say \"You hurt me. I am bigger than that.\"\n    attack nearest duck\n  }\n}\nwhen dead say \"No... you ducks...\"\n",
+        "lava.se": "# The Boss's floor: three squares of fire jump around the arena every few seconds.\nsquares 3\nsize 10\norder random\nevery 4s step\nwhen enter step\n"
+      }
+    },
+    "back": {},
+    "options": {
+      "sbMap": "",
+      "sbTint": 0,
+      "sbAll": 0,
+      "sbOkB": 0,
+      "sbOkM": 0,
+      "sbOkN": 0,
+      "sbOkH": 0,
+      "sbOkG": 0
+    },
+    "who": {},
+    "music": {
+      "off": []
+    },
+    "world": "",
+    "map": "night",
+    "zoom": 0,
+    "grey": 0
+  }
+}

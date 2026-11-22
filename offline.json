@@ -1,5 +1,5 @@
 {
-"v": "202611221643",
+"v": "202611221712",
 "files": {
 "assets/app/apple-touch-icon.png": "cda48ff597",
 "assets/app/icon-192.png": "8e062adfdc",
@@ -438,6 +438,8 @@
 "assets/sfx/zwindup-2.mp3": "821438355b",
 "assets/sfx/zwindup-3.mp3": "73b34bff78",
 "assets/sfx/zwindup-4.mp3": "4e331f5dac",
-"manifest.webmanifest": "9741769b11"
+"manifest.webmanifest": "9741769b11",
+"modes/index.json": "cd68fdbe0e",
+"modes/the-boss.json": "eac0ccf74a"
 }
 }

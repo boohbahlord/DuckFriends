@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v274",
+    version: 274,
+    date: "Nov 22, 2026",
+    title: "The Boss, a built-in Sandbox game",
+    news: [
+      "For Sandbox: The Boss, a game made in Sandbox by our playtester, is built in. Pick it in Game Settings, Custom: fight the Boss over the lava, with loot orbs to grab.",
+      "Behind the scenes: Justin's zebra cake chase, where a shot can hit a duck, Mad God Justin's spot picking and where ducks are placed each use one shared rule now instead of two copies. Nothing plays differently.",
+    ],
+  },
+  {
     id: "v273",
     version: 273,
     date: "Nov 22, 2026",

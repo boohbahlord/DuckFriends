@@ -7915,6 +7915,10 @@ Decision: ground 0 everywhere, Sandbox included (supersedes Adam's 15:14Z "groun
 "For shipping them in game, let's just do one of the game mode ideas for now and tell me about it."
 Decision (Adam): one game, The Boss (combat, Seriat brain phases), built by Daniel in Sandbox with what exists, shipped as a built-in game mode under Custom.
 
+## Owner, 16:36Z Nov 22 (correcting the water depth look)
+"water itself doesnt get darker retard the ground underneath it does IF the player is of a higher elevation... HOW many times will you continue to ask to be berrated by my lectures?"
+Decision: the water's color stays the same at every depth; what darkens is the ground under the water, and only when the player stands higher than it. Sent to Solomon for the ground-0 branch.
+
 16:08Z (owner, card "Shift made Sandbox maps' elevations down by one so they look the same?"): "Shift them down by one".
 16:35Z (owner, card through Adam): "Finish it now" (ground 0 and the water's depths).
-Decision (Solomon): heights.js levelOf counts from the map's 0 (layout.js levelZero: Downpour's flood bottom, so its grass is about 0.2). Sandbox's Elevation starts at 0; saves before version 3 open shifted down (on Downpour by 1 less the grass's level). Arrows show 0 on the ground. Water by depth over the bed: very shallow not slowed, then waded, then swum; lower water darker.
+Decision (Solomon): heights.js levelOf counts from the map's 0 (layout.js levelZero: Downpour's flood bottom, so its grass is about 0.2). Sandbox's Elevation starts at 0; saves before version 3 open shifted down (on Downpour by 1 less the grass's level). Arrows show 0 on the ground. Water by depth over the bed: very shallow not slowed, then waded, then swum; the water's own color stays the same.

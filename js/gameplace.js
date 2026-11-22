@@ -163,8 +163,14 @@ export function placeDesk(board, s, now) {
   }
   n.classList.toggle("off", !!x.off && now >= x.off);
   n.classList.toggle("out", !!x.done);
-  const c = place(x, 0, 1),
-    w = geo.size * 2.2,
+  putAt(n, x, 2.2, 3);
+}
+
+/* a board thing's element n put at the spot p, k duck widths wide, z under its top for the stacking (a square one gets
+   its height too): only when its place or size changed since the last time */
+function putAt(n, p, k, z, square) {
+  const c = place(p, 0, 1),
+    w = geo.size * k,
     st = `${c.left.toFixed(1)},${c.top.toFixed(1)},${w.toFixed(1)}`;
   if (n._st === st) return;
   n._st = st;
@@ -172,7 +178,8 @@ export function placeDesk(board, s, now) {
     left: c.left + "px",
     top: c.top + "px",
     width: w + "px",
-    zIndex: Math.round(c.top - 3),
+    ...(square ? { height: w + "px" } : {}),
+    zIndex: Math.round(c.top - z),
   });
 }
 
@@ -421,18 +428,7 @@ function placeToken(board, P, tag) {
     n.style.setProperty("--fade", PICK_FADE + "ms");
     layer.append(n);
   }
-  const c = place(P, 0, 1),
-    w = geo.size * 0.9,
-    st = `${c.left.toFixed(1)},${c.top.toFixed(1)},${w.toFixed(1)}`;
-  if (n._st === st) return;
-  n._st = st;
-  Object.assign(n.style, {
-    left: c.left + "px",
-    top: c.top + "px",
-    width: w + "px",
-    height: w + "px",
-    zIndex: Math.round(c.top - 2),
-  });
+  putAt(n, P, 0.9, 2, true);
 }
 
 /* Mad God Justin: getting a downed duck up (the owner's, Nov 3: hold 5 s, no medkit). Over the downed duck nearest me

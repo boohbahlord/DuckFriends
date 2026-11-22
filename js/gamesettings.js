@@ -277,7 +277,7 @@ export function openGameSettings(R, start = null) {
                   row(
                     `data-gm="${esc(m.id)}"`,
                     m.name,
-                    "",
+                    m.game ? "Built in" : "",
                     !o.modePick && o.mode === "sandbox" && o.gm === m.id,
                     dis,
                   ),
@@ -454,7 +454,7 @@ export function openGameSettings(R, start = null) {
       const m = modesNow().find((x) => x.id === p.id) || {};
       return card(
         m.name || "Custom",
-        `${m.desc ? m.desc + " " : ""}Made in Sandbox. Up to ${m.most || 8} players.`,
+        `${m.desc ? m.desc + " " : ""}${m.game ? "Comes with the game." : "Made in Sandbox."} Up to ${m.most || 8} players.`,
         gamePic(s, "sandbox"),
       );
     }

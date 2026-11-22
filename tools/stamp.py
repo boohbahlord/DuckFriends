@@ -90,7 +90,7 @@ open(page, "w", encoding="utf-8").write(html)
 # so the app only downloads a file again when it really changed.
 
 kept = {}
-for top in ["assets", "manifest.webmanifest"]:
+for top in ["assets", "modes", "manifest.webmanifest"]:
     path = os.path.join(root, top)
     walk = (
         [(os.path.dirname(path), [], [top])]
