@@ -6,11 +6,7 @@ import {
   cam,
   caseKey,
   geo,
-  hidden,
   knocked,
-  late,
-  lordHTML,
-  matchKey,
   me,
   portrait,
   scT,
@@ -21,9 +17,11 @@ import {
   setScY,
   turned,
   world,
-  writerFont,
 } from "./game.js";
+import { lordHTML, matchKey, writerFont } from "./gameround.js";
+
 import { esc, $ } from "./ui.js";
+
 import {
   COLS,
   SHORT,
@@ -36,35 +34,55 @@ import {
   isSc,
   isHang,
 } from "./rules.js";
+
 import { ATT_PHASES } from "./lawrules.js";
+
 import { BOARD_HTML as HANG_HTML } from "./hangout/world.js";
+
 import { boardHTML as storyHTML } from "./story.js";
+
 import { lawColsHTML, lawTopHTML, LAW_BANNER } from "./court.js";
+
 import {
   matchColsHTML,
   matchTopHTML,
   bracketHTML,
   bracketTopHTML,
 } from "./brackets.js";
+
 import { watching } from "./spectate.js";
+
 import { sbOnBoard, sbBoardK } from "./sandboxrules.js";
+
 import { fontHTML } from "./name.js";
+
 import { now as clockNow } from "./clock.js";
+
 import { isQuack, cardOf, gridOf } from "./quackrules.js";
+
 import {
   quackBoardHTML,
   quackTopHTML,
   secretCardHTML,
   revealCardsHTML,
 } from "./quack.js";
+
 import { isDn, DN_BW } from "./duncerules.js";
+
 import { dnColsHTML, dnTopHTML, DN_PODIUM as PODIUM_HTML } from "./dunce.js";
+
 import { isMgj } from "./mgjrules.js";
+
 import { mgjBoardHTML } from "./mgj.js";
+
 import { isVd } from "./vddrules.js";
+
 import { vdBoardHTML } from "./vdd.js";
+
 import { isTv, TV_ROWS_END } from "./triviarules.js";
+
 import { tvBoardHTML } from "./trivia.js";
+
 
 /* ---------- the board ---------- */
 /* Would You Rather: two tiles, each choice in its writer's font, with an OR strip between them */

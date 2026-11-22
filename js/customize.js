@@ -850,7 +850,7 @@ export function openCustomize(page = lastPage, opts = {}) {
                NPC's: its spawn's Size sets that (sbspawn.js) */
             const scale = NPC
               ? ""
-              : `<h3>Size (%)</h3><div class="arm-scale"><input type="range" min="${DUCK_SCALE.MIN}" max="${DUCK_SCALE.MAX}" step="2" value="${pct}" data-o="scale" aria-label="Size in percent"><output>${pct}%</output></div>`;
+              : `<h3>Size (%)</h3><div class="arm-scale"><input type="range" min="${DUCK_SCALE.MIN}" max="${DUCK_SCALE.MAX}" step="2" value="${pct}" data-o="scale" aria-label="Size in percent"><output>${pct}%</output></div><p class="small dim">Bigger is heavier, hits harder and walks slower.</p>`;
             html =
               head("Body") +
               `<div class="arm-body arm-bodies">${scale}<h3>Build</h3>${grid(

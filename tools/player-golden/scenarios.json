@@ -604,5 +604,107 @@
       ["click", 320, 0.6, 0.4, 100],
       ["key", 360, "KeyR", 100]
     ]
+  },
+  {
+    "name": "board-big-walk",
+    "options": {
+      "mode": "aod"
+    },
+    "phase": "answer",
+    "pre": [
+      {
+        "t": "submit",
+        "text": "Rubber ducks float best"
+      }
+    ],
+    "frames": 660,
+    "input": [
+      ["key", 10, "KeyD", 800],
+      ["key", 70, "KeyS", 500],
+      ["key", 120, "KeyA", 600],
+      ["key", 120, "KeyW", 600],
+      ["key", 200, "ShiftLeft", 1200],
+      ["key", 200, "KeyD", 1200],
+      ["key", 300, "Space", 100],
+      ["key", 330, "KeyA", 700],
+      ["key", 380, "Space", 100],
+      ["key", 420, "ArrowUp", 500],
+      ["key", 480, "ArrowRight", 400],
+      ["key", 520, "Space", 100],
+      ["key", 540, "KeyS", 700],
+      ["key", 540, "ShiftRight", 700]
+    ],
+    "computers": 1,
+    "scale": 140
+  },
+  {
+    "name": "board-small-walk",
+    "options": {
+      "mode": "aod"
+    },
+    "phase": "answer",
+    "pre": [
+      {
+        "t": "submit",
+        "text": "Rubber ducks float best"
+      }
+    ],
+    "frames": 660,
+    "input": [
+      ["key", 10, "KeyD", 800],
+      ["key", 70, "KeyS", 500],
+      ["key", 120, "KeyA", 600],
+      ["key", 120, "KeyW", 600],
+      ["key", 200, "ShiftLeft", 1200],
+      ["key", 200, "KeyD", 1200],
+      ["key", 300, "Space", 100],
+      ["key", 330, "KeyA", 700],
+      ["key", 380, "Space", 100],
+      ["key", 420, "ArrowUp", 500],
+      ["key", 480, "ArrowRight", 400],
+      ["key", 520, "Space", 100],
+      ["key", 540, "KeyS", 700],
+      ["key", 540, "ShiftRight", 700]
+    ],
+    "computers": 1,
+    "scale": 60
+  },
+  {
+    "name": "board-big-swing",
+    "options": {
+      "mode": "aod"
+    },
+    "phase": "answer",
+    "pre": [
+      {
+        "t": "submit",
+        "text": "Rubber ducks float best"
+      }
+    ],
+    "keys": ["hammer", "knife", "handgun", "smg", "chair"],
+    "frames": 720,
+    "input": [
+      ["mouse", 5, 0.7, 0.5],
+      ["key", 10, "Digit1", 100],
+      ["click", 30, 0.7, 0.5],
+      ["click", 60, 0.3, 0.4],
+      ["key", 90, "Digit2", 100],
+      ["click", 110, 0.6, 0.5, 1000],
+      ["key", 200, "Digit3", 100],
+      ["mouse", 210, 0.2, 0.6],
+      ["key", 240, "Digit4", 100],
+      ["click", 260, 0.8, 0.5],
+      ["click", 330, 0.8, 0.5],
+      ["key", 380, "KeyR", 100],
+      ["key", 420, "Digit5", 100],
+      ["click", 440, 0.5, 0.2, 600],
+      ["wheel", 520, 100],
+      ["wheel", 540, 100],
+      ["click", 560, 0.6, 0.6],
+      ["key", 600, "Digit5", 100],
+      ["key", 620, "KeyD", 600]
+    ],
+    "computers": 1,
+    "scale": 140
   }
 ]

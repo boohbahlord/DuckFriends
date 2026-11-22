@@ -22,7 +22,7 @@ import { duckRoom } from "../duck.js";
 import { esc } from "../ui.js";
 import { isInvisible } from "../invisible.js";
 import { low } from "../gfx.js";
-import { walkOf } from "../rules.js";
+import { walkOf } from "../push.js";
 import { survSet } from "../survrules.js";
 import {
   pixelOn,
@@ -1595,7 +1595,7 @@ export function mountWorld(board, api) {
         if (a.sprint && a.sprint(!!sprint && !!(ax || ay), dt, ctx) === false)
           sprint = false; // (an activity can run out of breath: Quacky Zombies' sprint bar)
       if (ax || ay) {
-        let k = walkOf(ctx.state()); // (the lobby's Walking speed)
+        let k = walkOf(ctx.state(), ctx.me); // (the lobby's Walking speed, and my Size: push.js)
         for (const a of acts())
           if (a.speed) k *= a.speed({ x, y, z: me.z }, ctx) ?? 1; // (the water slows it)
         const sp = SPEED * (sprint ? SPRINT : 1) * k,
