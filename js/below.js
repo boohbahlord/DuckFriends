@@ -13,6 +13,7 @@ import { floorH, PROPS } from "./hangout/layout.js";
 import { activity } from "./hangout/registry.js";
 
 let mine = 0; // (my floor, world px)
+export const myFloor = () => mine; // (dpflood.js: the bed under the water)
 /* how much darker something at height h shows from my floor, 0 … 1 (all dark: the owner's, Nov 22 06:24Z, "darkness
    keeps going up beyond 60%"), in steps of 2% */
 export const below = (h, me = mine) =>
