@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v279",
+    version: 279,
+    date: "Nov 22, 2026",
+    title: "No more chain gun",
+    news: [
+      "The chain gun is gone from every mode. The fireplace's Justin and Dyson carry the LMG instead. A saved hotbar that held it shows an empty slot.",
+    ],
+  },
+  {
     id: "v278",
     version: 278,
     date: "Nov 22, 2026",
