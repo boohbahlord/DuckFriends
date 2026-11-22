@@ -129,7 +129,7 @@ mgjart.js 96 Mad God Justin's new pictures
 mgjbrain.js 663 Mad God Justin's brain, on
 mgjpicks.js 455 Mad God Justin's pickups: what
 mgjrules.js 1280 
-modes.js 444 the game modes
+modes.js 445 the game modes
 music.js 590 the music: our own songs,
 musicbar.js 169 the music bar: the song
 name.js 165 fonts and how a player's
@@ -251,7 +251,7 @@ umaps.js 392 Made maps: making them, and
 units.js 10 the game's units, in one
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an
-updates.js 3295 Updates
+updates.js 3304 Updates
 vdd.js 190 Valentine's Duck Date: what the
 vddrules.js 513 the rules of Valentine's Duck
 vellum.js 28 The King's Festival
@@ -286,7 +286,7 @@ flicker.js 83 now and then a light
 ghosts.js 111 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in
 lamp.js 71 the lamps: the example activity
-layout.js 1119 Duck Cabin: the world of
+layout.js 1120 Duck Cabin: the world of
 layoutbase.js 78 Duck Cabin: the world's numbers
 layoutheights.js 396 Duck Cabin: the heights :
 npc.js 495 Duck Cabin's characters: how they
@@ -316,7 +316,7 @@ trampoline.js 142 the trampoline
 tv.js 117 the TV: seven channels, the
 vehicles.js 116 what a duck stands on
 water.js 442 the pool: ducks in the
-world.js 1754 Hangout on the screen: the
+world.js 1751 Hangout on the screen: the
 
 ## js/pxm/
 board-light.js 7 the menus' background in the

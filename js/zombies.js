@@ -324,7 +324,7 @@ export function fenceSpot(pts) {
     seen = (x, y) =>
       pts.some(
         ([a, b]) =>
-          Math.abs(x - a) < VIEW.x + 60 && Math.abs(y - b) < VIEW.y + 140, // (up and down a little more: a tall phone held upright sees farther that way, 15% more since the owner's Nov 18 15:18Z, world.js PHONE_OUT)
+          Math.abs(x - a) < VIEW.x + 60 && Math.abs(y - b) < VIEW.y + 140, // (up and down a little more: a tall phone held upright sees farther that way, 15% more since the owner's Nov 18 15:18Z, modes.js phoneOut)
       ),
     far = (x, y) =>
       Math.min(...pts.map(([a, b]) => Math.hypot(x - a, y - b)), 1e9),

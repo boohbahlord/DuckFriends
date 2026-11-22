@@ -240,7 +240,8 @@ export const MODES = [
     push: { grenade: 3 }, // (how many KB_FAR the hammer and a grenade push a duck: push.js)
     ownDeath: true,
     darkCabin: true, // (its Duck Cabin picture in the settings' preview is the dark one)
-    l4map: true, // (it has its own map pick, Game Settings l4map: Duck Cabin or Downpour)
+    l4map: true, // (it has its own map pick, Game Settings l4map: Duck Cabin or Downpour; layout.js' useMode turns to its cabin or Downpour)
+    phoneOut: 1.15, // (on a phone, 15% more of the map each way, the owner's, Nov 18 15:18Z)
     downMs: 1000, // (its default: half a second longer than 0.5 s, the owner 2026-11-03 17:15Z)
     hp: "maps", // (its HP: the zombie maps', l4ddrules.js; Survival and Sandbox on its maps too, baseMode)
     cat: "special",
