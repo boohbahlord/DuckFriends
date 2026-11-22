@@ -13833,6 +13833,13 @@ html.moving .mgj-field {
 .sb-board:not(.sb-tint) .mgj-field::before {
   display: none;
 }
+/* and no dark frame round it: on a phone turned sideways the map fills the screen past the board, and the board's own
+   edges drew two black lines across it (the owner, Nov 22 16:03Z: "What are these black lines here on the screen when I
+   turn it sideways?") */
+.sb-board:not(.sb-tint) .cols {
+  border-color: transparent;
+  box-shadow: none;
+}
 /* Sandbox's Board size over 100%: what's off the screen's board stays hidden as the camera slides (game.js boardCam) */
 .game.sb-big .sb-board {
   overflow: hidden;
@@ -20918,6 +20925,10 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .sb-tog.sb-tri.mid {
   opacity: 0.6;
   font-style: italic;
+  /* "Default (false)" on one line in the 7rem column, the default boxes' letters (.sb-box::placeholder) */
+  font-family: var(--font);
+  font-size: 0.85em;
+  white-space: nowrap;
 }
 /* a loot block's Starts: its picks are words, wider than a number box */
 .sb-row[data-row="lst"] {

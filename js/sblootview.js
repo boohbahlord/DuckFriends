@@ -274,11 +274,22 @@ export function ownOf(w, k, zm) {
 const flagOwn = (w, k) =>
   k === "inf" ? !fullAmmo(w) : k === "rl" ? true : false;
 export const ownFlag = (w, k, zm) => (zm && flagOwn(w, k) ? "true" : "false");
+/* what a three-state switch reads ("true, false, default": the owner's, Nov 20 17:25Z; it was "neutral"), the default
+   with what it gives (the owner's, Nov 22 16:03Z: "the default will say, like, default, and then in parentheses, like,
+   the number value, true, false, whatever else. So that way it's clear to the player"). Every Sandbox switch: here
+   and sbspawnview.js */
+export const triWord = (v, own = "") =>
+  v === "t"
+    ? "true"
+    : v === "f"
+      ? "false"
+      : own
+        ? `Default (${own})`
+        : "Default";
 /* a switch with three states (plan Loot 5: "every switch has true, false and neutral"): neutral (blank) steps aside
    for the next level down, here the item's own (own: what that is). Its box carries "", t or f; data-tri cycles it */
 export function triRow(f, name, v, own, attr = "") {
-  const lab = v === "t" ? "true" : v === "f" ? "false" : "default"; // ("true, false, default": the owner's, Nov 20 17:25Z; it was "neutral")
-  return `<div class="sb-row" data-row="${f}"><span>${esc(name)}</span><button type="button" class="sb-tog sb-tri${v === "t" ? " on" : v ? "" : " mid"}" data-tri="${f}" data-own="${esc(own)}" title="Default: ${esc(own)}"${attr}>${lab}</button><input type="hidden" class="sb-box" data-f="${f}" value="${esc(v)}"><em class="sb-why"></em></div>`;
+  return `<div class="sb-row" data-row="${f}"><span>${esc(name)}</span><button type="button" class="sb-tog sb-tri${v === "t" ? " on" : v ? "" : " mid"}" data-tri="${f}" data-own="${esc(own)}" title="Default: ${esc(own)}"${attr}>${esc(triWord(v, own))}</button><input type="hidden" class="sb-box" data-f="${f}" value="${esc(v)}"><em class="sb-why"></em></div>`;
 }
 /* the next state of a three-state switch: default, true, false, default … */
 export function triNext(btn) {
@@ -287,7 +298,7 @@ export function triNext(btn) {
   box.value = v;
   btn.classList.toggle("on", v === "t");
   btn.classList.toggle("mid", v === "");
-  btn.textContent = v === "t" ? "true" : v === "f" ? "false" : "default";
+  btn.textContent = triWord(v, btn.dataset.own);
   return v;
 }
 function itemRows(w, on, icon, p, h, zm) {
