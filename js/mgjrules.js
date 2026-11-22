@@ -117,6 +117,12 @@ hpBreed("mgj", {
       lost = (s.mgj.lost || {})[id] || 0;
     return [s.players[id].dead ? 0 : Math.max(0, most - lost), most];
   },
+  /* the bar over a duck in the fight (hpmath.js hpBarOf): Player HP, if it's on; Justin's is the big one */
+  bar(s, id, now, seated) {
+    const most = mgjPHp(s);
+    if (!seated || !most || s.phase !== "boss" || !s.mgj) return null;
+    return { hp: Math.max(0, most - ((s.mgj.lost || {})[id] || 0)), most };
+  },
 });
 /* a hit from Justin on duck id: true when its HP took it (the duck stays up), false when it goes down */
 export function mgjSoak(s, id, now, dmg = 1) {
