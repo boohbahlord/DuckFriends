@@ -7914,3 +7914,7 @@ Decision: ground 0 everywhere, Sandbox included (supersedes Adam's 15:14Z "groun
 ## 2026-11-22 16:06Z (owner, card "How should the playtester's three Sandbox games reach players?": "Ship them in the game"; then in words)
 "For shipping them in game, let's just do one of the game mode ideas for now and tell me about it."
 Decision (Adam): one game, The Boss (combat, Seriat brain phases), built by Daniel in Sandbox with what exists, shipped as a built-in game mode under Custom.
+
+## Owner, 16:36Z Nov 22 (correcting the water depth look)
+"water itself doesnt get darker retard the ground underneath it does IF the player is of a higher elevation... HOW many times will you continue to ask to be berrated by my lectures?"
+Decision: the water's color stays the same at every depth; what darkens is the ground under the water, and only when the player stands higher than it. Sent to Solomon for the ground-0 branch.

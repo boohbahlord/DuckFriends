@@ -1,6 +1,6 @@
 /* ---------- Downpour's drawings: the swamp's trees ----------
    Moved out of stationart.js to keep that file small (a pure move; the owner's, Nov 22). */
-import { rnd } from "./stationmap.js";
+import { CROWN_LIFT, SWAMP_CROWN, SWAMP_TRUNK, rnd } from "./stationmap.js";
 
 import { F, O, R, ln, n1, uid, wrap } from "./stationbase.js";
 
@@ -302,23 +302,6 @@ export const swampTreeSVG = (kind = "cypress", v = 0, seed = 1, flip = false) =>
    - swampTrunkSVG: the trunk, its roots and its limbs, sorted with the ducks by its foot; base: its foot's width
    - swampCrownSVG: the leaves from above, over everything, faded while a duck is under them
    flip mirrors all three the same way. */
-export const SWAMP_CROWN = {
-  cypress: [
-    { w: 230, h: 190 },
-    { w: 250, h: 176 },
-    { w: 200, h: 170 },
-  ],
-  oak: [
-    { w: 330, h: 250 },
-    { w: 350, h: 236 },
-    { w: 290, h: 230 },
-  ],
-  willow: [
-    { w: 280, h: 230 },
-    { w: 300, h: 214 },
-    { w: 250, h: 214 },
-  ],
-};
 /* each kind's shape: its clumps (a ring of them and some inside), its leaf points round the edge, its trunk */
 const BIG = {
   /* a cypress: feathery, in rings that step up to its middle, fine needles all round */
@@ -330,8 +313,8 @@ const BIG = {
     points: 34,
     pointLen: 0.12,
     pointW: 0.045,
-    trunk: 40,
-    flare: 1.9,
+    trunk: SWAMP_TRUNK.cypress.w,
+    flare: SWAMP_TRUNK.cypress.flare,
     limbs: 6,
     lit: TC.lit,
   },
@@ -344,8 +327,8 @@ const BIG = {
     points: 6,
     pointLen: 0.2,
     pointW: 0.2,
-    trunk: 54,
-    flare: 1.4,
+    trunk: SWAMP_TRUNK.oak.w,
+    flare: SWAMP_TRUNK.oak.flare,
     limbs: 5,
     lit: TC.lit,
   },
@@ -358,8 +341,8 @@ const BIG = {
     points: 44,
     pointLen: 0.2,
     pointW: 0.04,
-    trunk: 44,
-    flare: 1.6,
+    trunk: SWAMP_TRUNK.willow.w,
+    flare: SWAMP_TRUNK.willow.flare,
     limbs: 7,
     lit: "#358226",
   },
@@ -420,7 +403,7 @@ function bigPlan(kind, v, seed) {
 const ptsPath = (P, dx, dy) =>
   "M" + P.map(([x, y]) => `${n1(x + dx)} ${n1(y + dy)}`).join("L") + "Z";
 const BIG_PAD = 30; // (room round the crown for its points and its ink)
-const crownLift = (h) => Math.round(h * 0.3); // (how far above the trunk's foot the crown's middle shows)
+const crownLift = (h) => Math.round(h * CROWN_LIFT); // (how far above the trunk's foot the crown's middle shows)
 const pieceOut = (W, H, s, ax, ay, flip) => ({
   svg: tWrap(W, H, s, flip),
   w: W,
