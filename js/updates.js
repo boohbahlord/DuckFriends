@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v276",
+    version: 276,
+    date: "Nov 22, 2026",
+    title: "See how deep the water is",
+    news: [
+      "For Dead Ducks Arcade (Downpour): the flood is see-through now, and the road under it looks darker the deeper it lies below you, so you can read how deep the water is before you step in.",
+    ],
+  },
+  {
     id: "v275",
     version: 275,
     date: "Nov 22, 2026",

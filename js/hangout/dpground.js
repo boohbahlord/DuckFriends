@@ -269,23 +269,6 @@ export function downpourGround() {
       ]), // (the south bank, in the light)
     );
   }
-  /* the flood over the whole road (the owner's, Nov 17 11:07Z), its west end deep (swum: Nov 17 05:46Z), the same water:
-     past the map's edges with the road; one blue (the pixel look's nearest color to the old teal was a grass green, so it read as ground). Darker along its
-     north edge, in the bank's shadow; a pale line where it meets each bank */
-  {
-    const [, y0, , y1] = GS.DEEP,
-      h = y1 - y0;
-    G.push(
-      piece(
-        `<rect width="${RW}" height="${h}" fill="url(#dpw)"/><rect width="${RW}" height="2" fill="#9fb3c0" opacity=".35"/><rect y="${h - 2}" width="${RW}" height="2" fill="#9fb3c0" opacity=".35"/>`,
-        -OUT,
-        y0,
-        RW,
-        h,
-        `<linearGradient id="dpw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a3248" stop-opacity=".92"/><stop offset=".18" stop-color="#264660" stop-opacity=".86"/><stop offset="1" stop-color="#264660" stop-opacity=".86"/></linearGradient>`,
-      ),
-    );
-  }
   /* the floors */
   {
     const S = GS.STATION;
@@ -314,6 +297,26 @@ export function downpourGround() {
     );
   }
   return G;
+}
+/* the flood over the whole road (the owner's, Nov 17 11:07Z), its west end deep (swum: Nov 17 05:46Z), the same water:
+   past the map's edges with the road; one blue (the pixel look's nearest color to the old teal was a grass green, so it
+   read as ground). Darker along its north edge, in the bank's shadow; a pale line where it meets each bank. Not in the
+   ground's pieces: drawn over the road's bed by dpflood.js, see-through enough that the bed shows (the owner's, Nov 22
+   16:36Z: "water itself doesnt get darker ... the ground underneath it does") */
+export const DP_WATER_A = 0.62; // (how much of the bed the water hides, over most of it: dpflood.js)
+export function dpWater() {
+  const OUT = 800,
+    RW = GS.GS_W + 2 * OUT,
+    [, y0, , y1] = GS.DEEP,
+    h = y1 - y0;
+  return piece(
+    `<rect width="${RW}" height="${h}" fill="url(#dpw)"/><rect width="${RW}" height="2" fill="#9fb3c0" opacity=".35"/><rect y="${h - 2}" width="${RW}" height="2" fill="#9fb3c0" opacity=".35"/>`,
+    -OUT,
+    y0,
+    RW,
+    h,
+    `<linearGradient id="dpw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a3248" stop-opacity=".78"/><stop offset=".18" stop-color="#264660" stop-opacity="${DP_WATER_A}"/><stop offset="1" stop-color="#264660" stop-opacity="${DP_WATER_A}"/></linearGradient>`,
+  );
 }
 /* the plain color under a tile till it's painted */
 export const dpGroundColor = (y) =>
