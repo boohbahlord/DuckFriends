@@ -34,16 +34,8 @@ import { shuffle } from "./random.js";
 import { hitWounds, WOUND_BREEDS } from "./wounds.js";
 import { critOf, armOfShot } from "./guns.js";
 import { isQuack, tileAt, tileCenter, stillIn } from "./quackrules.js";
-import {
-  isMgj,
-  mgjTick,
-  throwIt,
-  DMG,
-  THROW_TELL,
-  CHAIR_TELL,
-  cakeAt,
-  CAKE_EAT_MS,
-} from "./mgjrules.js";
+import { isMgj, throwIt, DMG, THROW_TELL, CHAIR_TELL, cakeAt, CAKE_EAT_MS } from "./mgjrules.js";
+import { mgjTick } from "./mgjbrain.js";
 import { vdSafe } from "./vddrules.js";
 import {
   twoSided,

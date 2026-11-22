@@ -1,9 +1,9 @@
 {
   "modeCompares": 33,
   "nullishNumbers": 0,
-  "unusedExports": 171,
+  "unusedExports": 167,
   "unusedFiles": 0,
-  "clones": 26,
+  "clones": 32,
   "bigFiles": {
     "js/chat.js": 1597,
     "js/customize.js": 1776,
@@ -16,7 +16,6 @@
     "js/hangout/world.js": 1754,
     "js/l4dd.js": 3342,
     "js/l4ddrules.js": 5004,
-    "js/mgjrules.js": 1871,
     "js/numberatrun.js": 1675,
     "js/rules.js": 1736,
     "js/sandboxrules.js": 2056,

@@ -1,39 +1,7 @@
 /* ---------- Mad God Justin's pickups: what drops, what comes next, and what each one does ----------
    Moved out of mgjrules.js to keep that file small (a pure move). It imports back from mgjrules.js, which imports it. */
-import {
-  DMG,
-  GOOD_ID,
-  MGJ_SCALE,
-  PELLETS,
-  PICKS,
-  PICK_EVERY,
-  PICK_FADE,
-  PICK_HIT,
-  PICK_LAND,
-  PICK_USES,
-  PICK_WEAPONS,
-  PLUS_CHANCE,
-  PLUS_EVERY,
-  PLUS_LIFE,
-  RX,
-  RY,
-  SKY_ID,
-  SPREAD,
-  armOf,
-  dropHeld,
-  fxOf,
-  goodComes,
-  goodDown,
-  goodUp,
-  mgjBodies,
-  mgjHitAt,
-  mgjPHp,
-  mgjStab,
-  mgjZombieHit,
-  pickAmmo,
-  r3,
-  rnd,
-} from "./mgjrules.js";
+import { DMG, GOOD_ID, MGJ_SCALE, PELLETS, PICKS, PICK_EVERY, PICK_FADE, PICK_HIT, PICK_LAND, PICK_USES, PICK_WEAPONS, PLUS_CHANCE, PLUS_EVERY, PLUS_LIFE, RX, RY, SKY_ID, SPREAD, armOf, dropHeld, goodComes, goodDown, goodUp, mgjBodies, mgjHitAt, mgjPHp, mgjStab, mgjZombieHit, pickAmmo, r3, rnd } from "./mgjrules.js";
+import { fxOf } from "./mgjbrain.js";
 import { hpHeal, hundredths } from "./hpmath.js";
 import { coneOf } from "./weaponuse.js";
 import {
