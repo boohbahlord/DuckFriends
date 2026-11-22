@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v280",
+    version: 280,
+    date: "Nov 22, 2026",
+    title: "What you pick is in your hand",
+    news: [
+      "Every mode: the item in the hotbar slot you pick is in your hand, no toggling. Pressing its key again keeps it out, an empty slot empties your hand, and a game starts with slot 1 in hand.",
+    ],
+  },
+  {
     id: "v279",
     version: 279,
     date: "Nov 22, 2026",

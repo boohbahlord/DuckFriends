@@ -1,0 +1,63 @@
+# The free robot tester (the owner's ask, Nov 22 20:12Z: fewer bugs for less usage). On every pull request GitHub runs
+# the quick checks (the page loads, no undefined names, the code health ratchet with ESLint and copies) on its own
+# computers, so a broken PR shows a red X before it is merged. Once a day it runs the whole check list (about 25
+# minutes), the owner's "full run once a day in the background, never blocking". Run by hand: Actions → Checks →
+# Run workflow, with test names (blank = all). The second job is Lighthouse (lighthouserc.json): it loads the game's
+# first page three times as a slow phone and fails the PR when the loading, accessibility or good-practice score falls
+# under the floor; the floors sit just under the scores of Nov 22 (performance 37 to 43 from run to run, the rest 100) and only go up; the full report is kept with the run (Artifacts: lighthouse).
+name: Checks
+on:
+  pull_request:
+    paths-ignore:
+      - "notes/**"
+  schedule:
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+    inputs:
+      tests:
+        description: "Test names, space separated (blank runs every check)"
+        required: false
+        default: ""
+permissions:
+  contents: read
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Get Playwright and Chromium
+        run: |
+          npm install --no-save --prefix "$RUNNER_TEMP/pw" playwright@1.63.0
+          "$RUNNER_TEMP/pw/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Run the checks
+        env:
+          NODE_PATH: ${{ runner.temp }}/pw/node_modules
+          TESTS: ${{ github.event_name == 'pull_request' && 'load undef' || github.event.inputs.tests }}
+        run: node tools/check/run.mjs $TESTS
+  lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Lighthouse
+        run: npx --yes @lhci/cli@0.16.1 autorun
+      - name: Scores
+        if: always()
+        run: node tools/lighthouse-scores.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse
+          path: .lighthouseci
+          retention-days: 14
+          include-hidden-files: true

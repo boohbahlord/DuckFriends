@@ -1,0 +1,39 @@
+# CodeQL, GitHub's free bug and security scanner (the owner's ask, Nov 22 20:35Z: more tools that cut bugs). It reads
+# js/, tools/ and the workflows on every pull request and once a week, and marks what it finds on the PR and under
+# Security → Code scanning. It runs on GitHub's computers, so it costs us nothing.
+name: CodeQL
+on:
+  pull_request:
+    paths-ignore:
+      - "notes/**"
+  schedule:
+    - cron: "0 10 * * 1"
+  workflow_dispatch:
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript, actions]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          config: |
+            paths-ignore:
+              - notes
+              - assets
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:${{ matrix.language }}
