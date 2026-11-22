@@ -227,8 +227,61 @@ window.__golden = async (sc) => {
     });
     if (r.state !== was) shots++;
   };
+  /* "nade": { at, every, aim }: from beat at, every so many beats my duck throws a grenade at the nearest one of aim
+     ("gm": Survival's gunmen, "duck": another duck), with grenades in its kit on the maps and on its keys elsewhere, so
+     a blast's reach is pinned where the other runs never throw (Hangout, the gunmen: B6, before the rings) */
+  const NADE = ["grenade"],
+    { ARMS } = await import("../../js/guns.js");
+  const nade = () => {
+    const s = r.state,
+      N = sc.nade;
+    if (!s.pos[r.me] || b < N.at || (b - N.at) % N.every) return;
+    const P = s.players[r.me],
+      a = s.hang && s.hang.l4a;
+    if (a && a[r.me])
+      s.hang = { ...s.hang, l4a: { ...a, [r.me]: { ...a[r.me], g: 3 } } };
+    else if (P.duck && P.duck.keys !== NADE)
+      s.players = {
+        ...s.players,
+        [r.me]: { ...P, duck: { ...P.duck, keys: NADE } },
+      };
+    let me = s.pos[r.me];
+    const them = (
+      N.aim === "gm"
+        ? ((s.hang && s.hang.gm && s.hang.gm.gb) || [])
+            .filter((o) => !o.d)
+            .map((o) => ({ x: o.x / W, y: o.y / H }))
+        : s.seat
+            .filter((id) => id !== r.me && s.pos[id] && s.pos[id].x >= 0)
+            .map((id) => s.pos[id])
+    ).sort(
+      (p, q) =>
+        Math.hypot(p.x - me.x, p.y - me.y) - Math.hypot(q.x - me.x, q.y - me.y),
+    )[0];
+    if (!them) return;
+    if (N.aim === "gm") {
+      me = { ...me, x: them.x - ARMS.grenade.far / W, y: them.y };
+      s.pos = { ...s.pos, [r.me]: me };
+      const l4p = s.hang.l4p && s.hang.l4p[r.me];
+      if (l4p) {
+        if (hp0 === null) hp0 = l4p;
+        s.hang = { ...s.hang, l4p: { ...s.hang.l4p, [r.me]: hp0 } };
+      } // (and up, with its health kept, as bait keeps it)
+    } // (a grenade on the maps flies ARMS.grenade.far: my duck that far off, so it lands on them)
+    const ax = them.x - me.x,
+      ay = them.y - me.y;
+    r.send({
+      t: "use",
+      id: r.me,
+      what: "grenade",
+      face: ax < 0 ? -1 : 1,
+      ax: +ax.toFixed(4),
+      ay: +ay.toFixed(4),
+    });
+  };
   for (b = 0; b < sc.beats; b++) {
     if (patches.length) patch();
+    if (sc.nade) nade();
     if (sc.bait !== undefined && b >= sc.bait) bait();
     if (sc.baitGm && b >= sc.baitGm.at) baitGm();
     if (sc.fire) fire();

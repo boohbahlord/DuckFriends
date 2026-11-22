@@ -1672,5 +1672,73 @@
    "zombies": 14,
    "sandboxNpcs": ""
   }
+ },
+ "hang-nade": {
+  "beats": 600,
+  "digest": "1fw8aeg",
+  "every": [
+   "qjf2ok",
+   "1514b7f",
+   "h56u3f",
+   "1o7sgf8",
+   "8mb41q",
+   "1msd040",
+   "1l1x8tr",
+   "1is510h",
+   "1tvhbxo",
+   "s71yj8",
+   "1s9txlp",
+   "262nj2"
+  ],
+  "seen": {
+   "phases": {
+    "hang": 600
+   },
+   "came": "",
+   "gunmen": 0,
+   "swipes": 0,
+   "shots": 0,
+   "mgjWaveZombiesPeak": 0,
+   "sandboxMapNpcsPeak": 0,
+   "zombies": 0,
+   "sandboxNpcs": ""
+  }
+ },
+ "surv-nade-gm": {
+  "beats": 900,
+  "digest": "1agefz9",
+  "every": [
+   "18cmc5c",
+   "5x01ju",
+   "1ep88ej",
+   "pjqf5p",
+   "jc7s8v",
+   "vjlkst",
+   "ir2arw",
+   "159kziv",
+   "1b07xmv",
+   "1b07xmv",
+   "1b07xmv",
+   "1b07xmv",
+   "1b07xmv",
+   "1b07xmv",
+   "1b07xmv",
+   "1b07xmv",
+   "1b07xmv",
+   "1b07xmv"
+  ],
+  "seen": {
+   "phases": {
+    "hang": 900
+   },
+   "came": "Justin, merchant, sniper, soldier",
+   "gunmen": 19,
+   "swipes": 2,
+   "shots": 0,
+   "mgjWaveZombiesPeak": 0,
+   "sandboxMapNpcsPeak": 0,
+   "zombies": 27,
+   "sandboxNpcs": ""
+  }
  }
 }
