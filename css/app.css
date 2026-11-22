@@ -8018,6 +8018,12 @@ html.still .spe-bone .bone-slide {
     position: static;
     order: -1;
   }
+  .sp-phone > .sp-cap {
+    position: static;
+    order: -1;
+    max-width: 9rem;
+    transform: none;
+  }
   .sp-phone {
     --step: 2.2rem;
     --slot: 1.85rem;
@@ -8027,7 +8033,7 @@ html.still .spe-bone .bone-slide {
     bottom: 0.75rem;
   }
 } /* (a phone on its side: one short row, so the slider sits in it, a little smaller, and the jump button sits beside
-     the attack stick instead of above it) */
+     the attack stick instead of above it; the small text beside the slider, at its left, in the same row) */
 /* on a phone, in every mode: the slider is back in the bottom middle (the owner's, Nov 19 10:22Z: "the hotbar missing
    from the bottom and that must be fixed AND below the duck should show the hotbar being able to move around
    temporarily like it does on pc"), and a swipe on my duck still picks (touch.js), the box under my duck showing the
@@ -16138,6 +16144,41 @@ html.moving .l4-heat.hot::after {
   display: flex;
   gap: 0.3rem;
 }
+/* what's in my hand, in very small text over the slots (K4; l4ddbar.js heldTag): in the row's own column on a computer,
+   so it stays inside the bottom bar's box (its line kept even with nothing in hand, so the bar never jumps); over the
+   slider on a phone (.sp-cap) */
+.l4-held,
+.sp-cap {
+  max-width: min(70vw, 18rem);
+  overflow: hidden;
+  font-size: 0.6rem;
+  font-weight: 600;
+  line-height: 1.15;
+  /* the slots' numbers' color, a little softer: it reads at arm's length */
+  color: color-mix(in srgb, var(--ink) 85%, transparent);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+.l4-held {
+  align-self: stretch;
+  max-width: none;
+  min-height: 1.15em;
+  margin-bottom: -0.15rem;
+  text-align: center;
+}
+.sp-cap {
+  position: absolute;
+  bottom: calc(100% + 0.05rem);
+  left: calc(var(--step) + var(--slot) * 0.66);
+  transform: translateX(-50%);
+}
+.sp-cap:empty {
+  display: none;
+}
+.bbar:has(> .bbar-c > .gact > .act-row > :not(.idle)) .sp-cap {
+  visibility: hidden;
+} /* (a phone: the context button, Use or Buy, comes up just over the slider, and takes the spot while it shows) */
 .l4s {
   position: relative;
   width: var(--hk);
