@@ -83,28 +83,69 @@ export const loadTo = (w, n, cap) =>
     : n === cap && ARMS[w] && ARMS[w].mag && !CHAMBER.NONE.includes(w)
       ? [cap + 1, w === "lmg" ? CHAMBER.LMG : CHAMBER.MS]
       : null;
-/* the kick of one round of each caliber (the owner's, Nov 21 18:24Z, with the recoil a gun has: /mnt/project-files/adam/calibers.md; K14 turns it into one score a gun): what the item sheets say as a word. A gun with no caliber here (the blade, the flamethrower, the laser, the bow) has none */
-const KICK = {
-  "9mm": 0.3,
-  ".45 ACP": 0.5,
-  "5.56mm": 0.5,
-  ".357 Magnum": 0.6,
-  "7.62x39mm": 0.7,
-  "7.62x51mm": 0.8,
-  ".44 Magnum": 0.9,
-  ".50 AE": 1,
-  "12 ga buckshot": 1,
-  "12 ga slug": 1,
-  ".50 BMG": 1.5,
+/* ---------- recoil: one score a gun (K14 + K18) ----------
+   The owner's, Nov 21 18:24Z: "we got to think about its kinetic force, how big it is ... we need to make it to where
+   everything adds to a smaller output"; 18:27Z: "convergent different pools from different math and different stats
+   onto its final end ... each one of its sources are going to be a fraction or ratio more or less in effect"; 18:59Z:
+   "maybe a gun's dead weight is what is used in reference for recoil". The score, 0 to 1 (the table the owner OKed,
+   Nov 22 13:02Z: /mnt/project-files/solomon/k14-recoil-scores.md), is 70% the round's push (PUSH, kg m/s) squared
+   against the gun's dead weight, on a log scale from LO to HI; 20% its fire rate out of RATE_TOP shots a second; 10%
+   its barrel (short kicks most). heat.js turns it into the widest cone; a weapon with no caliber here (the blade, the
+   bow, the grenades, the flamethrower, the laser) has none */
+const PUSH = {
+  "9mm": 2.9,
+  ".45 ACP": 3.9,
+  ".357 Magnum": 4.4,
+  ".44 Magnum": 7,
+  ".50 AE": 8.7,
+  "5.56mm": 3.7,
+  "7.62x39mm": 5.7,
+  "7.62x51mm": 8,
+  "12 ga buckshot": 13.6,
+  "12 ga slug": 13.4,
+  ".50 BMG": 37.8,
+  "40mm": 13, // (about a 12 gauge, the way an M79's kick is told)
 };
-export const kickOf = (w) => KICK[(ARMS[w] || {}).cal] || 0;
-/* the kick as a word: small to .5, medium to .8, heavy above; "" for none */
-export const recoilWord = (kick) =>
-  !(kick > 0) ? "" : kick <= 0.5 ? "small" : kick <= 0.8 ? "medium" : "heavy";
+const RECOIL = {
+  KICK: 0.7,
+  RATE: 0.2,
+  BARREL: 0.1,
+  LO: 80,
+  HI: 10000,
+  RATE_TOP: 15,
+  BARRELS: { short: 1, medium: 0.5, long: 0 },
+};
+const unit = (x) => Math.max(0, Math.min(1, x));
+export const recoilOf = (w) => {
+  const A = ARMS[w] || {},
+    { cal, barrel } = A.recoil || A,
+    p = PUSH[cal],
+    dw = DEAD_WEIGHT[A.dw];
+  if (!p || !dw) return 0;
+  const kick = unit(
+      Math.log((p * p) / dw / RECOIL.LO) / Math.log(RECOIL.HI / RECOIL.LO),
+    ),
+    score =
+      RECOIL.KICK * kick +
+      RECOIL.RATE * Math.min(1, fireRate(w) / RECOIL.RATE_TOP) +
+      RECOIL.BARREL * (RECOIL.BARRELS[barrel] || 0);
+  return Math.round(score * 100) / 100;
+};
+/* the score as a word on the item sheets: none, small under .3, medium to .45, heavy to .65, a lot above */
+export const recoilWord = (r) =>
+  !(r > 0)
+    ? "none"
+    : r < 0.3
+      ? "small"
+      : r < 0.45
+        ? "medium"
+        : r <= 0.65
+          ? "heavy"
+          : "a lot";
 /* what a gun is loaded with and how long its barrel is, for the item sheets ("" when it has none) */
 export const caliberOf = (w) => {
   const c = (ARMS[w] || {}).cal;
-  return c && c in KICK ? c : "";
+  return c && c in PUSH ? c : "";
 };
 /* the caliber a shot flies as (gunart.js roundOf draws it), by its kind (a gun's own shot kind, ARMS' k; the shotgun's
    pellets its buckshot) or by the gun */
@@ -316,7 +357,14 @@ export const ARMS = {
     reload: 1700,
     k: "revolver",
   },
-  glauncher: { kind: "ranged", cool: 1200, all: 16, speed: 900, far: 760 }, // (16: the owner's, Nov 21 17:25Z)
+  glauncher: {
+    kind: "ranged",
+    cool: 1200,
+    all: 16,
+    speed: 900,
+    far: 760,
+    recoil: { cal: "40mm", barrel: "long" }, // (its shell has no damage by caliber: only its recoil reads these)
+  }, // (16: the owner's, Nov 21 17:25Z)
   lmg: {
     kind: "ranged",
     auto: true,
@@ -410,8 +458,8 @@ for (const A of Object.values(ARMS))
   }
 /* dead weight (the owner's, Nov 21 16:53Z: "We can give guns different weight stats ... dead weight ... when it adds to
    your weight, it does not add to your knockback"): each weapon's group (ARMS dw) and what it weighs, in duck weights
-   (the groups: 18:59Z, /mnt/project-files/adam/calibers.md). push.js weightOf adds it to its carrier's; recoil reads
-   the group later */
+   (the groups: 18:59Z, /mnt/project-files/adam/calibers.md). push.js weightOf adds it to its carrier's; recoilOf reads
+   it too */
 export const DEAD_WEIGHT = {
   light: 0.02,
   medium: 0.05,
