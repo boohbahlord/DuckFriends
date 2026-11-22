@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v269",
+    version: 269,
+    date: "Nov 22, 2026",
+    title: "One recoil number per gun",
+    news: [
+      "For Dead Ducks Arcade and every gun: each gun now has one recoil number, made from its round, its weight, how fast it fires and its barrel. The faster you shoot, the wider your shots spread, up to 15° for each point of recoil. The item sheets say how much recoil each gun has (none, small, medium, heavy or a lot). The grenade launcher kicks but stays on target.",
+    ],
+  },
+  {
     id: "v268",
     version: 268,
     date: "Nov 22, 2026",
