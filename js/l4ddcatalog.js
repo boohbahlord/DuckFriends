@@ -23,7 +23,7 @@ import {
   POOL,
   WEAPONS,
   critOf,
-  kickOf,
+  recoilOf,
   recoilWord,
   caliberOf,
   barrelOf,
@@ -102,7 +102,8 @@ function stats(w) {
   if (w === "glauncher" || w === "grenade") out.push(["Damage", "Kills"]);
   if (caliberOf(w)) out.push(["Caliber", caliberOf(w)]);
   if (barrelOf(w)) out.push(["Barrel", barrelOf(w)]);
-  if (recoilWord(kickOf(w))) out.push(["Recoil", recoilWord(kickOf(w))]); // (only a gun that has recoil)
+  if (A.kind === "ranged" || A.kind === "grenade")
+    out.push(["Recoil", recoilWord(recoilOf(w))]); // (K14: "none" for what has no recoil)
   if (A.pellets) out.push(["Pellets", A.pellets]);
   if (A.cool && A.kind !== "special" && w !== "flamer")
     out.push(["Rate", `${num(1000 / A.cool, 1)} a second`]);
