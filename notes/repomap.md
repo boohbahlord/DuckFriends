@@ -3,7 +3,7 @@ file lines job
 
 ## js/
 account.js 397 the Google account: the
-actplay.js 946 a game's actions
+actplay.js 951 a game's actions
 actroom.js 744 the room's actions
 actsb.js 156 Sandbox's windows, saves and
 allies.js 383 Survival: the friendly squad
@@ -88,7 +88,7 @@ gunmen.js 110 the gunmen's looks
 gunmenrules.js 1158 Survival: the gunmen
 gunmenview.js 135 Survival: the gunmen on
 gunparts.js 15 the pieces every weapon's
-guns.js 660 every weapon's numbers: one
+guns.js 674 every weapon's numbers: one
 hats.js 1096 hats
 heat.js 72 a gun's heat: the
 heights.js 82 a shot's height, Doom's
@@ -97,7 +97,7 @@ hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
 hooks.js 3 hooks between screens that
 hotbar.js 506 the specials on the
-hotpick.js 318 What goes in my
+hotpick.js 319 What goes in my
 hpmath.js 59 HP in hundredths
 hpmeter.js 311 HP meters and the
 idbstore.js 38 One place that opens
@@ -120,7 +120,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power
 l4ddpowerui.js 278 Dead Ducks Arcade's power
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4983 the rules of Quacky
+l4ddrules.js 4987 the rules of Quacky
 l4ddsfx.js 545 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online:
 langname.js 5 the name of Sandbox's
@@ -176,7 +176,7 @@ players.js 342 the player menu and
 pointer.js 54 a computer or a
 powerart.js 377 Dead Ducks Arcade: the
 push.js 64 push and knock-back: one
-pxa.js 341 made by tools/pixel-art.cjs:
+pxa.js 954 made by tools/pixel-art.cjs:
 pxbake.js 627 a map's pictures made
 pxcard.js 259 the player cards' pattern
 pxdom.js 764 the pixel look for
@@ -268,7 +268,7 @@ umaps.js 371 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on
-updates.js 3463 Updates
+updates.js 3473 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival

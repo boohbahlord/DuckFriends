@@ -343,7 +343,7 @@ export function handBars(s) {
         m && !mgjDownGun() && ammoOf(s, R.me) < INF_AMMO
           ? Math.min(mg[0] - mm.n, ammoOf(s, R.me))
           : mg[0] - mm.n; // (Mad God Justin: a gun picked up with fewer shots left than its magazine)
-    a = { f: rl ? 0 : left / mg[0], rl, dry: false };
+    a = { f: rl ? 0 : Math.min(1, left / mg[0]), rl, dry: false }; // (one more in the chamber: still full)
   }
   ammoBar(tag, a);
   let sp = tag.querySelector(".l4-sprint");
