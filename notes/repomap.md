@@ -66,12 +66,15 @@ gamehand.js 604 the hand: the number-key specials,
 gameplace.js 738 where things are put on
 gameready.js 47 
 gameround.js 597 round
-gamesettings.js 1757 Game Settings: the whole screen,
+gamesettings.js 764 Game Settings: the whole screen,
 gamestats.js 191 what `stats` and `roundstats` print
 gfx.js 8 Low graphics
 gmodes.js 219 Sandbox Phase 6: made game
 grenade.js 35 a grenade going off
 ground.js 53 what a duck walks on,
+gspreview.js 86 Game Settings: the pictures in
+gssettings.js 773 Game Settings: every setting, its
+gstext.js 185 Game Settings: what a setting
 gunart.js 437 every weapon, drawn: one drawing
 gunmen.js 110 the gunmen's looks
 gunmenrules.js 1145 Survival: the gunmen
@@ -255,7 +258,7 @@ umaps.js 371 Made maps: making them, and
 units.js 10 the game's units, in one
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an
-updates.js 3363 Updates
+updates.js 3372 Updates
 vdd.js 190 Valentine's Duck Date: what the
 vddrules.js 513 the rules of Valentine's Duck
 vellum.js 28 The King's Festival
@@ -272,7 +275,12 @@ zombies.js 1477 the zombies: one module for
 ## js/hangout/
 activities.js 23 every Hangout activity, so the
 ambience.js 112 the air: the wind round
-art.js 3050 Duck Cabin: the drawings
+art.js 252 Duck Cabin: the drawings
+artbase.js 156 the drawings' shared pieces
+artcabin.js 516 the cabin's shell: walls, doors,
+artindoor.js 1104 the cabin's inside: furniture, stage,
+artpool.js 358 the deck and the pool
+artyard.js 901 the yard: ground, trees, lamps,
 beachball.js 364 the beach ball
 blackjack.js 1382 the blackjack table in the
 book.js 170 the guestbook: a book on
@@ -314,8 +322,13 @@ shapes.js 1704 Duck Cabin's props, drawn: art.js's
 soccer.js 508 soccer: one ball on the
 sounds.js 17 Duck Cabin's sounds
 stage.js 134 the stage: half an oval
-stationart.js 1964 Downpour's things: the drawings
+stationart.js 71 Downpour's drawings, re-exporting the station art files
+stationbase.js 83 Downpour's drawings: the shared pieces
+stationcars.js 509 Downpour's drawings: the cars, the corpses and the chapel
 stationmap.js 1187 Dead Ducks Arcade's second map:
+stationparts.js 455 Downpour's drawings: the gas station's walls, shelves, pumps, canopy, fences
+stationroof.js 350 Downpour's drawings: the roofs, their holes and the ladders
+stationtrees.js 624 Downpour's drawings: the swamp's trees
 trampoline.js 142 the trampoline
 tv.js 117 the TV: seven channels, the
 vehicles.js 116 what a duck stands on

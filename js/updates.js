@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v252",
+    version: 252,
+    date: "Nov 22, 2026",
+    title: "Tidier files",
+    news: [
+      "Behind the scenes: Hangout's drawings and the Game Settings window are split into smaller files, and explosions in Hangout and on Survival's gunmen are now recorded so later changes can be checked against them. Nothing plays differently.",
+    ],
+  },
+  {
     id: "v251",
     version: 251,
     date: "Nov 22, 2026",

@@ -739,5 +739,38 @@
       "CRIM": 1,
       "STEP": 0
     }
+  },
+  {
+    "name": "hang-nade",
+    "options": {
+      "mode": "hang"
+    },
+    "computers": 3,
+    "beats": 600,
+    "nade": {
+      "at": 20,
+      "every": 15,
+      "aim": "duck"
+    }
+  },
+  {
+    "name": "surv-nade-gm",
+    "options": {
+      "mode": "surv",
+      "l4map": "downpour"
+    },
+    "computers": 3,
+    "beats": 900,
+    "peakNow": 1,
+    "sv": {
+      "GUNMEN": 1,
+      "CRIM": 1,
+      "STEP": 0
+    },
+    "nade": {
+      "at": 30,
+      "every": 10,
+      "aim": "gm"
+    }
   }
 ]
