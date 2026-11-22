@@ -27,11 +27,11 @@ jobs:
       run:
         working-directory: tools/online-test
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 21
@@ -44,7 +44,7 @@ jobs:
         run: >
           npx firebase emulators:exec --only auth,database --project duckfriends-bd795
           "node run.js aod 4 90 mixed && node run.js bb 4 90 storm && QUIT=1 node run.js wyr 3 90 lobby"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: online-shots
