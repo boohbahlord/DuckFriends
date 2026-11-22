@@ -258,7 +258,7 @@ umaps.js 371 Made maps: making them, and
 units.js 12 the game's units, in one
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an
-updates.js 3372 Updates
+updates.js 3384 Updates
 vdd.js 190 Valentine's Duck Date: what the
 vddrules.js 513 the rules of Valentine's Duck
 vellum.js 28 The King's Festival
@@ -322,13 +322,13 @@ shapes.js 1704 Duck Cabin's props, drawn: art.js's
 soccer.js 508 soccer: one ball on the
 sounds.js 17 Duck Cabin's sounds
 stage.js 134 the stage: half an oval
-stationart.js 71 Downpour's drawings, re-exporting the station art files
-stationbase.js 83 Downpour's drawings: the shared pieces
-stationcars.js 509 Downpour's drawings: the cars, the corpses and the chapel
+stationart.js 51 Downpour's things: the drawings
+stationbase.js 81 Downpour's drawings: the shared pieces
+stationcars.js 513 Downpour's drawings: the cars, the
 stationmap.js 1187 Dead Ducks Arcade's second map:
-stationparts.js 455 Downpour's drawings: the gas station's walls, shelves, pumps, canopy, fences
-stationroof.js 350 Downpour's drawings: the roofs, their holes and the ladders
-stationtrees.js 624 Downpour's drawings: the swamp's trees
+stationparts.js 455 Downpour's drawings: the gas station's
+stationroof.js 340 Downpour's drawings: the roofs, their
+stationtrees.js 616 Downpour's drawings: the swamp's trees
 trampoline.js 142 the trampoline
 tv.js 117 the TV: seven channels, the
 vehicles.js 116 what a duck stands on

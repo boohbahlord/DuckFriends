@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v253",
+    version: 253,
+    date: "Nov 22, 2026",
+    title: "Grenades in rings",
+    news: [
+      "Grenades and the grenade launcher hit in rings now: the middle hits hardest (and always crits), and each ring out hits half as hard. Grenades reach about 6 tiles now, smaller on purpose, and throw nearer ducks higher. Zombies and the merchant take their ring's hit instead of dying at once.",
+      "Weapons now have weight: a duck holding a heavy weapon (the chain gun most of all, then the LMG, the Barrett, the sledgehammer and the flamethrower) gets knocked back less. It doesn't make your own hits push harder or slow you down.",
+      "Ducks' ready-made pictures are rebuilt at every size, so Ethan's hair and the flat skin show right everywhere.",
+      "Behind the scenes: the gas station's drawings are split into smaller files. Nothing plays differently.",
+    ],
+  },
+  {
     id: "v252",
     version: 252,
     date: "Nov 22, 2026",
