@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v271",
+    version: 271,
+    date: "Nov 22, 2026",
+    title: "Half steps",
+    news: [
+      "For Sandbox: a zone's Elevation and Slope up to now take tenths and half tenths (1.05, 1.5), so a curb or a step can sit just above the ground.",
+    ],
+  },
+  {
     id: "v270",
     version: 270,
     date: "Nov 22, 2026",

@@ -222,7 +222,7 @@ sbsave.js 292 Sandbox: saving a Sandbox
 sbsaves.js 733 Sandbox's saves: kept on
 sbseriat.js 477 Sandbox: NPCs that run
 sbsfx.js 74 Sandbox's sounds
-sbspawn.js 1709 Sandbox: spawns and respawns
+sbspawn.js 1708 Sandbox: spawns and respawns
 sbspawnview.js 2211 Sandbox: spawns and respawns
 sbzone.js 348 Sandbox: board zones ,
 sbzonebrain.js 265 Sandbox: zones that run
@@ -272,7 +272,7 @@ umaps.js 371 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on
-updates.js 3552 Updates
+updates.js 3561 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival
