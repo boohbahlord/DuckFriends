@@ -12,7 +12,6 @@ import {
   DAGGER_LIFE,
   FASTER,
   GRENADE_MS,
-  GRENADE_R,
   boardPhases,
   daggerZ,
   grenadeZ,
@@ -103,7 +102,7 @@ import { zOf, nearH } from "./heights.js";
 
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import { toPx } from "./units.js";
-import { blast as boom, reach } from "./blast.js";
+import { blast as boom, reach, hitOf, REACH as BLAST_REACH } from "./blast.js";
 
 /* Justin knocked down by a player's weapon (the clown items unlock at 12): the last few, each numbered, so
    every device counts its own player's once (unlocks.js) */
@@ -516,9 +515,10 @@ export const shotAt = (sh, t) => ({
         ? grenadeZ(t / 1000)
         : 0.41) * (sh.sc || 1), // (a bigger duck's from higher up: its hand, sizeShots)
 });
-/* a grenade going off at (x, y): every duck within GRENADE_R plays dead and is thrown away from it, three times as far as
-   the hammer throws one; Justin is knocked down (Mad God Justin: 1 damage), Duck Cabin's Justin and cats are hit. Who
-   is in it: blast.js. Every screen draws the blast (the boom fx) */
+/* a grenade going off at (x, y): every duck in its rings takes its ring's damage (blast.js) and is thrown away from it,
+   three times as far as the hammer throws one, higher the nearer it was (the owner's, Nov 21 17:48Z: "Explosions should
+   change the height of a thing it knocks back based on how close they are"); Justin is knocked down (Mad God Justin: 1
+   damage), Duck Cabin's Justin and cats are hit. Every screen draws the blast (the boom fx) */
 function blast(s, sh, x, y, now, o = {}) {
   const hang = isHang(s),
     w = o.w || "grenade",
@@ -532,7 +532,7 @@ function blast(s, sh, x, y, now, o = {}) {
     y,
     rx,
     ry,
-    r: GRENADE_R * (o.wide || 1),
+    wide: o.wide,
     ok: (px, py, pz, inSide) =>
       !hang || (inSide === side && nearH(pz, sh.hz || 0)),
   }); // (Hangout: only on its side of the cabin's walls and at about its height)
@@ -559,8 +559,7 @@ function blast(s, sh, x, y, now, o = {}) {
           if (mgjHalf(s, id, now)) hit.push(id);
           return;
         } // (Mad God Justin: half my HP, rounded down, never down by it; no knock-back)
-        const killed =
-          !P.dead && !soaks(s, id, now, dmgOf(s, "grenade"), sh.by);
+        const killed = !P.dead && !soaks(s, id, now, hitOf(n).dmg, sh.by); // (its ring's)
         if (P.dead || killed) {
           if (!P.dead) playerKilled(s, sh.by, id, w);
           P.dead = true;
@@ -577,7 +576,7 @@ function blast(s, sh, x, y, now, o = {}) {
           pushOf(s, "grenade"), // (the mode's own: push.js)
           now,
           side,
-          { ms: 650, h: 0.9, l: 0 },
+          { ms: 650, h: 0.9 * Math.max(0, 1 - n.d / BLAST_REACH), l: 0 }, // (the lift: higher nearer the middle)
         );
         hit.push(id);
       },
@@ -588,14 +587,16 @@ function blast(s, sh, x, y, now, o = {}) {
       mgjZombieHit(
         s,
         (zx, zy, big, body) => {
-          if (!body) return !!near(zx, zy, 0, 0, big);
+          if (!body) return near(zx, zy, 0, 0, big);
           const q = body.at(x, y); // (Sandbox's: its nearest part that shows, sbbody.js)
-          return !!q && !!near(q.x, q.y, 0, 0);
+          return q && near(q.x, q.y, 0, 0);
         },
         "grenade",
         now,
         sh.by,
-      ), // (Mad God Justin's zombies in it: all their HP, as a grenade's blast in Dead Ducks Arcade)
+        null,
+        hitOf,
+      ), // (Mad God Justin's zombies in it: their ring's damage, blast.js)
     [
       !hang && mine && justinShown(s) ? [justinAt(s.justin, now)] : [],
       (j) => j && [j.x, j.y, 0, 0],
@@ -635,6 +636,7 @@ function blast(s, sh, x, y, now, o = {}) {
       hit,
       ...(hang ? { hz: sh.hz || 0 } : {}),
       ...(o.wide ? { wide: o.wide } : {}),
+      rr: BLAST_REACH * (o.wide || 1),
     },
   ];
   return hit;

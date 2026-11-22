@@ -12,9 +12,19 @@ export const SPRINT = {
   refill: 1.5, // the bar fills this many times as slowly as it drains (2.5 s of sprint: 3.75 s to fill)
 };
 
+/* a blast's rings (blast.js; the owner's, Nov 21 19:07Z: "the center of a grenade's explosion is at ... the
+   intersection of the plus of 4 squares of the pixel hitbox ... it's 4 boxes in the center of the hitbox, those have crit
+   automatically. The outside boxes ... 25% chance of crit ... We can cut off the corners though, to make it more
+   circular"; Nov 22 03:25Z: "One tile, as written"): RING tiles a ring; the center 2x2 and the ring round it do CENTER,
+   each ring after half the one inside, until it would do under LEAST; CRIT, the chance of a crit outside the center */
+export const BLAST = { RING: 1, CENTER: 9, LEAST: 0.5, CRIT: 0.25 };
+
 /* weight (push.js): a duck 10% bigger walks 10% slower (Nov 21 15:56Z), never slower than this share of its walk
    (Size goes from 50% to 152%, duck.js DUCK_SCALE, so it only holds 151% and 152% back; Adam's pick, Nov 22 03:38Z) */
-export const WEIGHT = { SLOWEST: 0.5 };
+export const WEIGHT = {
+  SLOWEST: 0.5,
+  DEAD_FROM: "held", // whose dead weight a duck carries (guns.js DEAD_WEIGHT): "held", what it holds out; "all", its whole kit (B6b: the owner hasn't picked)
+};
 
 /* zombies (Nov 20 21:17Z: "zombies should have a slightly slower attack speed by, let's say, 0.2 seconds") */
 export const ZOMBIE_SWIPE_SLOWER = 200; // ms added to the wait between one swipe and the next, every zombie
