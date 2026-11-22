@@ -19982,7 +19982,11 @@ html.phone .vt {
   padding-top: var(--cin-t);
   padding-left: var(--cin-l);
   padding-right: var(--cin-r);
+  padding-bottom: var(--cin-b);
 }
+html.phone:not(.phone-land) .vt-head .vt-title {
+  font-size: min(2.05rem, 5vw);
+} /* (its title a little smaller again upright, for the room the corners took: it met the clock) */
 html.phone .win-back {
   padding: var(--cin-t) var(--cin-r) var(--cin-b) var(--cin-l);
 }
