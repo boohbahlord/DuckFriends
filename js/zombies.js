@@ -30,7 +30,7 @@ import * as GS from "./hangout/stationmap.js";
 import { walkOf } from "./rules.js";
 import { zOf, heightWay } from "./heights.js";
 import { SLOW as SWIM } from "./hangout/water.js";
-import { apart, crowdOf, into } from "./crowd.js";
+import { apart, crowdOf, into, goRound, tooNear } from "./crowd.js";
 import { isSurv, SV, survWatch } from "./survrules.js";
 import {
   L4_HOOKS,
@@ -145,7 +145,9 @@ const KEEP = [
   "lt",
   "lw",
   "ws",
-]; // (ws: which way it goes round a Sandbox wall, sandboxrules.js sbWallGo; sp, dm: a Sandbox spawn's zombie, its spawn and its damage: sbspawn.js)
+  "ga",
+  "pk",
+]; // (ga, pk: its spot round the ones in its way, and how many it waits behind: crowd.js goRound; ws: which way it goes round a Sandbox wall, sandboxrules.js sbWallGo; sp, dm: a Sandbox spawn's zombie, its spawn and its damage: sbspawn.js)
 /* the zombies as objects, from the state's three parts, and back (k in zp: hp · 16 + st, st up to 8, the jump) */
 export function zombies(s) {
   const zp = s.hang.zp || [],
@@ -861,6 +863,15 @@ function walkAll(zs, c) {
           ? c.way(z.x, z.y, goal[0], goal[1]) // (its own way up's foot, wherever the duck goes meanwhile; Justin: the field is the players')
           : heading(dist, z.x, z.y);
       if (z.fl && !z.cm && !close) aim = flank(z, target, now) || aim; // (a flanker: round the side first)
+      if (z.ga) {
+        if (
+          z.cm ||
+          now > z.ga[2] ||
+          Math.hypot(z.ga[0] - z.x, z.ga[1] - z.y) < 6
+        )
+          delete z.ga;
+        else aim = [z.ga[0], z.ga[1]]; // (round the ones in its way: crowd.js goRound)
+      }
       /* Downpour: its way goes through a boarded hole with its boards up: it stops there and tears them down */
       const bh = aim && dp() && boardsAhead(z, aim, brd);
       if (bh) {
@@ -871,7 +882,19 @@ function walkAll(zs, c) {
         z.d = T;
         continue;
       }
-      if (aim) stepZombie(z, aim, v * dt, pls);
+      if (aim) {
+        stepZombie(z, aim, v * dt, pls);
+        if (!z.bl)
+          delete z.pk; // (nothing in its way: its next pick is rolled anew)
+        else if (!z.ga && !z.cm) {
+          const g = gr(),
+            zz = g.h(z.x, z.y),
+            at = goRound(ZC, z, z.bl, target.xy, room, g.rx, g.ry, (x, y) =>
+              g.ok(x, y, zz),
+            );
+          if (at) z.ga = [Math.round(at[0]), Math.round(at[1]), now + GO_ROUND];
+        }
+      }
     }
     /* after Justin: only so long, then it lets him be a while (JCHASE) */
     if (target.j) {
@@ -886,12 +909,13 @@ function walkAll(zs, c) {
        floor (zFloor), never one up on a roof over it or down below it, nor one up the ladder */
     const d = room(z.x, z.y, ...target.xy),
       queued =
-        !!z.bl && room(z.bl.x, z.bl.y, ...target.xy) < c.reach + QUEUE.near; // (its way blocked by one at this duck)
+        !!z.bl &&
+        room(z.bl.x, z.bl.y, ...target.xy) < c.reach + QUEUE.near + GAP; // (its way blocked by one at this duck)
     if (
       d <
         c.reach +
           (duckBig(s, target.id) - 1) / 2 +
-          (queued ? QUEUE.reach : 0) && // (a duck bigger than 100% is reached sooner: duck.js)
+          (queued ? QUEUE.reach + GAP : 0) && // (a duck bigger than 100% is reached sooner: duck.js)
       zFloor(z) === target.dk &&
       Math.abs(target.zz - zOf(z, "zombie")) < 50
     ) {
@@ -1059,6 +1083,10 @@ export const setZWall = (f) => (ZW = f);
 /* the zombies walking this heartbeat (moveZombies), so one never walks into another on its floor, as a duck never
    walks into one (world.js crowd): crowd.js crowdOf and into */
 let ZC = null;
+/* how long it makes for its spot round the ones in its way at most (ms: crowd.js goRound), and the room the zombies keep
+   between them (the queue's claw reaches that much farther: a crowd hits as hard as before) */
+const GO_ROUND = 1500,
+  GAP = tooNear("zombie") - 1;
 export function stepZombie(z, aim, far, pls) {
   const g = gr(),
     n = Math.max(1, Math.ceil(far / 8)),
@@ -1266,6 +1294,8 @@ export function boardWalk(s, M, now, B, h) {
       n: o.n || 0,
       wu: o.wu || 0,
       l: [o.hp, v, ""],
+      ...(o.ga ? { ga: o.ga } : {}),
+      ...(o.pk ? { pk: o.pk } : {}), // (round the ones in its way: crowd.js goRound)
       o,
     })),
     pls = h.ids.map((id) => {
@@ -1309,6 +1339,9 @@ export function boardWalk(s, M, now, B, h) {
     Object.assign(o, { x, y, a: z.a, n: z.n });
     if (z.wu) o.wu = z.wu;
     else delete o.wu; // (its swing's wind-up since: the tell)
+    for (const k of ["ga", "pk"])
+      if (z[k]) o[k] = z[k];
+      else delete o[k];
   }
   if (Object.keys(eating).length) M.ze = eating;
   else delete M.ze; // (none biting: nothing kept)

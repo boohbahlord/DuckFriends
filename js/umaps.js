@@ -339,15 +339,22 @@ export function myMaps(R) {
         w.querySelector(".um-list").addEventListener("click", async (e) => {
           const li = e.target.closest("[data-id]"),
             b = e.target.closest("button");
-          if (!li || !b) return;
+          if (!li || e.target.closest("label, a")) return;
           const all = await listMaps(),
             m = all.find((x) => x.id === li.dataset.id);
           if (!m) return draw(w);
-          if (b.hasAttribute("data-play")) {
+          /* a tap on the map itself picks it at once, like Play it (the owner's, Nov 22: it showed its description and
+             picked nothing), the same as a tap on a map in Game Settings */
+          if (
+            b
+              ? b.hasAttribute("data-play")
+              : host(R) && ["lobby", "over"].includes(R.state.phase)
+          ) {
             bringMap(R, m);
             R.send({ t: "options", options: { map: m.id, mapPick: "" } });
             setTimeout(() => w.isConnected && draw(w), 200);
-          } else if (b.hasAttribute("data-share"))
+          } else if (!b) return;
+          else if (b.hasAttribute("data-share"))
             import("./shared.js").then((x) => x.shareWin("map", m));
           else if (b.hasAttribute("data-edit")) {
             if (await makeMap(R, m)) draw(w);
