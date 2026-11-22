@@ -294,23 +294,11 @@ function measureStory(board) {
     contentH: list.offsetHeight,
   });
 }
-/* the story slides to keep my duck in view; while a line is typed and my duck stands still, it shows that line */
-export function panStory(pos, now) {
-  const list = S.querySelector(".sc-rows");
-  if (!list || !geo || !geo.rows.length) return;
+/* a list slides toward `want` (clamped to 0 .. max) a step each frame and shows more-up / more-down while there is more
+   above or below (Story Chain's story and Trivia's rows: the owner's, Nov 22, one copy, A4) */
+function slideList(list, want, max, now) {
   const dt = Math.min(0.1, Math.max(0, (now - (scT || now)) / 1000));
   setScT(now);
-  const n = geo.rows.length,
-    max = Math.max(0, geo.contentH - geo.H),
-    last = geo.rows[n - 1];
-  let want;
-  if (R.state.phase === "write" && now - scWalk > 2500)
-    want = last.top + last.h - geo.H + geo.size * 0.9; // (room for the names under the ducks)
-  else if (pos) {
-    const u = Math.max(0, Math.min(0.9999, pos.y)) * n,
-      row = geo.rows[Math.floor(u)];
-    want = row.top + row.h * (u % 1) - geo.H * 0.55;
-  } else want = scY;
   want = Math.max(0, Math.min(max, want));
   setScY(
     Math.abs(want - scY) < 0.5
@@ -323,8 +311,25 @@ export function panStory(pos, now) {
     list.style.transform = tr;
     const v = list.parentNode;
     v.classList.toggle("more-up", scY > 8);
-    v.classList.toggle("more-down", scY < max - 8); // more story above or below
+    v.classList.toggle("more-down", scY < max - 8);
   }
+}
+/* the story slides to keep my duck in view; while a line is typed and my duck stands still, it shows that line */
+export function panStory(pos, now) {
+  const list = S.querySelector(".sc-rows");
+  if (!list || !geo || !geo.rows.length) return;
+  const n = geo.rows.length,
+    max = Math.max(0, geo.contentH - geo.H),
+    last = geo.rows[n - 1];
+  let want;
+  if (R.state.phase === "write" && now - scWalk > 2500)
+    want = last.top + last.h - geo.H + geo.size * 0.9; // (room for the names under the ducks)
+  else if (pos) {
+    const u = Math.max(0, Math.min(0.9999, pos.y)) * n,
+      row = geo.rows[Math.floor(u)];
+    want = row.top + row.h * (u % 1) - geo.H * 0.55;
+  } else want = scY;
+  slideList(list, want, max, now);
 }
 /* Trivia: the row (or the strip) at a duck's y, and how far down it the duck stands. The rows share y up to
    TV_ROWS_END, each the same part of it, whatever their height; the strip takes the rest */
@@ -351,26 +356,13 @@ const tvFeet = (y) => {
 export function panRows(pos, now) {
   const list = S.querySelector(".tv-rows");
   if (!list || !geo.tl) return;
-  const dt = Math.min(0.1, Math.max(0, (now - (scT || now)) / 1000));
-  setScT(now);
-  const max = Math.max(0, geo.tl.contentH - geo.tl.h),
-    want = Math.max(
-      0,
-      Math.min(max, pos && pos.x >= 0 ? tvFeet(pos.y) - geo.tl.h * 0.55 : scY),
-    );
-  setScY(
-    Math.abs(want - scY) < 0.5
-      ? want
-      : scY + (want - scY) * Math.min(1, dt * 5),
+  const max = Math.max(0, geo.tl.contentH - geo.tl.h);
+  slideList(
+    list,
+    pos && pos.x >= 0 ? tvFeet(pos.y) - geo.tl.h * 0.55 : scY,
+    max,
+    now,
   );
-  const tr = `translateY(${(-scY).toFixed(1)}px)`;
-  if (list._tr !== tr) {
-    list._tr = tr;
-    list.style.transform = tr;
-    const v = list.parentNode;
-    v.classList.toggle("more-up", scY > 8);
-    v.classList.toggle("more-down", scY < max - 8); // more rows above or below
-  }
 }
 export const TAG_ROOM = 24; // px under a duck's feet: its name tag
 /* where a duck stands: x along the answers (0 strongly disagree … 1 strongly agree), y across */
