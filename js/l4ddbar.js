@@ -38,7 +38,7 @@ import {
   isItemPick,
   kitKeys,
 } from "./kitslots.js";
-import { ARMS, caliberOf } from "./guns.js";
+import { ARMS, heldTag as armTag } from "./guns.js";
 import { now as clockNow } from "./clock.js";
 import { sbNoLight } from "./sandboxrules.js";
 import { mountItemTip } from "./itemtip.js";
@@ -60,15 +60,8 @@ const count = (w, m) => {
   if (!c || ARMS[w].all <= 1) return "";
   return ARMS[w].mag ? `${m.rw === w ? "…" : c[0]} | ${c[1]}` : String(c[0]);
 };
-/* what's in my hand, in very small text in the bottom bar's box: its name and its caliber (K4, the owner's, Nov 21
-   17:25Z: "It should say what the item is when you switch to it by name ... And it should also say what caliber it
-   uses. And maybe a semicolon after or parentheses"); the slots' row on a computer, over the slider on a phone */
-const heldTag = (w) =>
-  !w
-    ? ""
-    : w === "fl"
-      ? "Flashlight"
-      : weaponName(w) + (caliberOf(w) ? ` (${caliberOf(w)})` : "");
+/* what's in my hand, by Dead Ducks Arcade's names (guns.js heldTag, every mode's) */
+const heldTag = (w) => armTag(w, weaponName(w));
 /* a slot with nothing left in it (no grenades, a weapon out of ammo) */
 const spent = (w, m) => {
   const c = m && (m.am || {})[w];

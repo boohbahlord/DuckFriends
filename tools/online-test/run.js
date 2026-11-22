@@ -59,6 +59,7 @@ const PLAYER = (scen) => {
     const net = await import("/js/net.js"),
       bots = await import("/js/bots.js"),
       rules = await import("/js/rules.js"),
+      room = await import("/js/roomrules.js"),
       pm = await import("/js/players.js");
     let lastAt = 0,
       lastKey = "";
@@ -98,7 +99,7 @@ const PLAYER = (scen) => {
         if (scen === "none" || ["lobby", "countdown", "over"].includes(s.phase))
           return;
         const others = s.seat.filter((id) => id !== me && !s.players[id].bot),
-          boss = rules.isSudo(s, me);
+          boss = room.isSudo(s, me);
         // the host (or sudo): give sudo, kick, skip
         if (scen === "boss" && boss) {
           if (me === s.hostId && others.length && Math.random() < 0.01)
@@ -133,13 +134,14 @@ const PLAYER = (scen) => {
         } else if (Math.random() < (scen === "storm" ? 0.05 : 0.006)) {
           if (scen !== "lobby" && others.length && Math.random() < 0.6) {
             const t = others[Math.floor(Math.random() * others.length)];
-            if (!pm.whyNotVote(s, me, "kick"))
+            if (!(pm.whyNotVote || (() => ""))(s, me, "kick"))
               R.send({ t: "voteStart", kind: "kick", target: t });
           } else {
             const kind = ["skip", "lobby", "turn"][
               Math.floor(Math.random() * 3)
             ];
-            if (!pm.whyNotVote(s, me, kind)) pm.lobbyVote(R, kind);
+            if (!(pm.whyNotVote || (() => ""))(s, me, kind))
+              pm.lobbyVote(R, kind);
           }
         }
       } catch (e) {

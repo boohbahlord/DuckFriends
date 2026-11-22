@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v281",
+    version: 281,
+    date: "Nov 22, 2026",
+    title: "Guns hit by caliber in every mode",
+    news: [
+      "Every mode: a gun hits for its caliber and barrel, the same as in Dead Ducks Arcade. The board games' own damage numbers are gone, and melee weapons hit for their Dead Ducks Arcade damage too.",
+      "On phones, the gun you switch to shows its name and caliber over the slider in every mode.",
+      "A big hit on a Sandbox duck with extra HP now takes its damage, never all of its HP at once.",
+    ],
+  },
+  {
     id: "v280",
     version: 280,
     date: "Nov 22, 2026",

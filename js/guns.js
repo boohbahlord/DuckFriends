@@ -36,6 +36,10 @@ export const rollDmg = (A) => {
     ) / 100
   );
 };
+/* a hit's damage by weapon, in every mode (the owner's, Nov 22 20:51Z: the guns' caliber mechanics are universal, "Fix
+   the code!"): its range rolled (rollDmg), its one number, or 1 when it has none */
+export const armDmg = (A) =>
+  A && Array.isArray(A.dmg) ? rollDmg(A) : (A && +A.dmg) || 1;
 const pickRoll = (rolls) => {
   let r = Math.random() * rolls.reduce((n, [w]) => n + w, 0);
   for (const [w, range] of rolls) if ((r -= w) < 0) return range;
@@ -690,6 +694,15 @@ export const GUN_BREEDS = {
    mode names it its own way */
 export const nameOf = (w, breed) =>
   ((GUN_BREEDS[breed] || {}).names || {})[w] || GUN_NAMES[w] || w;
+/* what's in my hand, in very small text, in every mode: its name and its caliber (K4, the owner's, Nov 21 17:25Z: "It
+   should say what the item is when you switch to it by name ... And it should also say what caliber it uses"; Nov 22
+   20:51Z: the guns' mechanics are the same in every mode). name: the mode's own word for it (Dead Ducks Arcade's) */
+export const heldTag = (w, name = nameOf(w)) =>
+  !w
+    ? ""
+    : w === "fl"
+      ? "Flashlight"
+      : name + (caliberOf(w) ? ` (${caliberOf(w)})` : "");
 /* how far an NPC of that breed fires gun w from, in duck lengths */
 const REACH = 7;
 export const reachOf = (w, breed) => GUN_BREEDS[breed].reach[w] || REACH;
