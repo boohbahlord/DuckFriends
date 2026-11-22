@@ -51,6 +51,30 @@ function flashNo(tag) {
   }
 }
 
+/* the bow drawn (bowdraw.js, f: 0 … 1 drawn, -1 not drawing): the white bar fills light red to dark red, and flashes
+   white once full (the owner's, Nov 21 17:48Z: "it shows that in your cooldown meter ... a light red as the meter grows
+   and becomes a dark red ... When it reaches max ... it flashes a little white"). Call it after the white bar is set */
+export function drawBar(tag, f) {
+  let el = tag.querySelector(".l4-cool");
+  if (!el && f < 0) return;
+  if (!el) {
+    el = document.createElement("span");
+    el.className = "l4-cool off";
+    el.setAttribute("aria-hidden", "true");
+    el.innerHTML = "<i></i>";
+    tag.append(el);
+  }
+  const v = f < 0 ? "" : f.toFixed(3);
+  if (el._dr === v && f < 0) return;
+  el._dr = v;
+  el.classList.toggle("draw", f >= 0);
+  el.classList.toggle("full", f >= 1);
+  if (f >= 0) {
+    el.classList.remove("off");
+    el.style.setProperty("--cl", v);
+  } else el._v = null; // (the cooldown's setter puts its own back next frame)
+}
+
 /* each bar's height and the room between them (rem) */
 const BARS = [
   [".l4-cool", 0.12, (el) => el._no || !el.classList.contains("off")],

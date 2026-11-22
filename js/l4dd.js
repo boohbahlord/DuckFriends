@@ -116,7 +116,8 @@ import { fenceZ, zombiesOf } from "./zombies.js";
 import { zSortY } from "./zombieroofs.js";
 import { hOk, hLock, zOf } from "./heights.js";
 import { toPx } from "./units.js";
-import { ammoBar, stackBars, noReload } from "./meters.js";
+import { ammoBar, stackBars, noReload, drawBar } from "./meters.js";
+import { myDrawShare } from "./bowdraw.js";
 import { laserMeter } from "./laserfx.js";
 import { goreFree, BY_WOUND, newWound, woundLook } from "./wounds.js";
 import { catalogHTML, statLineOf } from "./l4ddcatalog.js";
@@ -2416,8 +2417,7 @@ export function l4Ammo(s, me, w) {
   return all > 1 ? { f: c[0] / all, rl: false, dry: c[0] <= 0 } : null; // (the bow: its arrows left)
 }
 let dryW = "";
-/* the yellow bar under my duck, and the bars stacked (meters.js); a gun just run dry, its reload can't be done: the
-   white bar flashes red */
+/* the yellow bar, the bow's draw and the bars stacked (meters.js); a gun run dry can't reload: the white bar flashes red */
 function ammoBars(tag, s, me) {
   const w = heldFn() || "",
     a = l4Ammo(s, me, w),
@@ -2425,6 +2425,7 @@ function ammoBars(tag, s, me) {
   if (dry && dry !== dryW && w !== "grenade") noReload();
   dryW = dry;
   ammoBar(tag, a);
+  drawBar(tag, myDrawShare(clockNow())); // (the bow drawn: bowdraw.js)
   stackBars(tag);
 }
 /* a slot switch: a small box under my duck, the phone's slider in little (hotbar.js, the same slots in their colors): it
