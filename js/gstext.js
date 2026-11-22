@@ -1,5 +1,6 @@
 /* ---------- Game Settings: what a setting says, what is greyed, which rows the mode has ----------
    Moved out of gamesettings.js to keep that file small (a pure move; the owner's, Nov 22). */
+import { setHTML } from "./ui.js";
 import { modesFor, modeOf, CABIN_MODES } from "./modes.js";
 
 import { mapName } from "./maps.js";
@@ -139,6 +140,20 @@ export function settingText(k, v) {
     ].find((x) => x.k === k),
     c = o && (o.c || []).find(([x]) => String(x) === String(v));
   return o ? [o.n, c ? c[1] : String(v)] : null;
+}
+
+/* the menu and the preview of a settings window drawn again (the owner's, Nov 22: Democracy of Ducklings and Game
+   Settings had the same copy): the menu keeps where it was scrolled unless keep is false */
+export function paintMenu(W, menuHTML, stageHTML, place, keep = true) {
+  if (!W || !W.isConnected) return;
+  const menu = W.querySelector(".arm-menu"),
+    body = menu.querySelector(".arm-body"),
+    top = keep && body ? body.scrollTop : 0;
+  setHTML(menu, menuHTML());
+  const nb = menu.querySelector(".arm-body");
+  if (nb) nb.scrollTop = top;
+  setHTML(W.querySelector(".gs-stage"), stageHTML());
+  place();
 }
 
 /* on a phone the preview keeps only its picture, and the words go under the row they're about, one row at a time

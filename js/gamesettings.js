@@ -40,6 +40,7 @@ import {
   games,
   genFor,
   infoUnder,
+  paintMenu,
   picked,
   showsCollage,
   showsZoom,
@@ -49,7 +50,7 @@ import {
 
 import { gamePic, mapPic } from "./gspreview.js";
 
-export { infoUnder, settingText } from "./gstext.js";
+export { infoUnder, paintMenu, settingText } from "./gstext.js";
 
 /* ---------- the screen ---------- */
 const openFolds = new Set([
@@ -504,17 +505,7 @@ export function openGameSettings(R, start = null) {
     );
   }
 
-  function paint(keep = true) {
-    if (!W || !W.isConnected) return;
-    const menu = W.querySelector(".arm-menu"),
-      body = menu.querySelector(".arm-body"),
-      top = keep && body ? body.scrollTop : 0;
-    setHTML(menu, menuHTML());
-    const nb = menu.querySelector(".arm-body");
-    if (nb) nb.scrollTop = top;
-    setHTML(W.querySelector(".gs-stage"), stageHTML());
-    place();
-  }
+  const paint = (keep = true) => paintMenu(W, menuHTML, stageHTML, place, keep);
   /* the row the preview is about: the one under the pointer, or else the picked one */
   let peekSel = null;
   const keyOf = (el) =>

@@ -38,7 +38,7 @@ court.js 229 Lawyering: what the screen shows
 crowd.js 242 crowds: walkers never stand in
 customize.js 1776 Customize: the Armory
 datboi.js 115 here come dat boi
-democracy.js 243 Democracy of Ducklings:
+democracy.js 233 Democracy of Ducklings:
 dock.js 73 the docks: where Notes and
 duck.js 799 the rubber duck avatar
 duckparts.js 598 the ducks made from pixel
@@ -66,7 +66,7 @@ gamehand.js 604 the hand: the number-key specials,
 gameplace.js 738 where things are put on
 gameready.js 47 
 gameround.js 597 round
-gamesettings.js 764 Game Settings: the whole screen,
+gamesettings.js 755 Game Settings: the whole screen,
 gamestats.js 191 what `stats` and `roundstats` print
 gfx.js 8 Low graphics
 gmodes.js 219 Sandbox Phase 6: made game
@@ -74,7 +74,7 @@ grenade.js 33 a grenade going off
 ground.js 53 what a duck walks on,
 gspreview.js 86 Game Settings: the pictures in
 gssettings.js 773 Game Settings: every setting, its
-gstext.js 185 Game Settings: what a setting
+gstext.js 200 Game Settings: what a setting
 gunart.js 437 every weapon, drawn: one drawing
 gunmen.js 110 the gunmen's looks
 gunmenrules.js 1156 Survival: the gunmen
