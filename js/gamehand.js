@@ -55,7 +55,7 @@ import {
   useKey,
   l4Pick,
 } from "./hotpick.js";
-import { ammoBar, stackBars, noReload } from "./meters.js";
+import { ammoBar, stackBars, noReload, drawBar } from "./meters.js";
 
 import { isL4dd, downArmed, slotsOf, l4Cool, kitOf } from "./l4ddrules.js";
 import { GRENADE, slotOfPick, kitKeys } from "./kitslots.js";
@@ -82,6 +82,7 @@ import { profile } from "./store.js";
 import { sfx, hush, OTHERS } from "./sound.js";
 
 import { now as clockNow } from "./clock.js";
+import { draws, myDraw, myDrawShare } from "./bowdraw.js";
 
 import { isQuack, CLUE_GRACE, tileAt } from "./quackrules.js";
 
@@ -261,6 +262,30 @@ export function fire(id) {
   R.send({ t: "use", what: id, face: ax < 0 ? -1 : 1, ax, ay });
   if (bar) setTimeout(() => bar && bar.refresh(), 60); // (the handgun's dots, a cooldown's bar)
 }
+/* the bow (bowdraw.js): a press draws it (the host keeps when), letting go shoots, toward where I aim then. mouse: the
+   left button's coming up anywhere lets go, and so does anything that ends a press (game.js' held trigger's list); a key
+   or the phone's attack stick let go themselves (drawLet) */
+let drawing = null; // { w }: my bow drawn (since when: bowdraw.js myDraw, for the meter)
+const DRAW_END = ["pointerup", "pointercancel", "blur", "contextmenu"];
+export function drawHold(w, mouse = false) {
+  if (!draws(w) || !R || !onBoardPhase() || drawing) return !!drawing;
+  drawing = { w };
+  myDraw(clockNow());
+  R.send({ t: "draw", w });
+  if (mouse) for (const t of DRAW_END) addEventListener(t, drawUp, true);
+  return true;
+}
+const drawUp = () => drawLet();
+export function drawLet(shoot = true) {
+  for (const t of DRAW_END) removeEventListener(t, drawUp, true);
+  const d = drawing;
+  drawing = null;
+  myDraw(null);
+  if (d && shoot && heldNow() === d.w) fire(d.w);
+}
+/* phones: the attack stick pushed (on) or let go: the bow draws and shoots instead of firing again and again */
+export const padDraw = (on) =>
+  on ? drawHold(padWeapon()) : (drawLet(), false);
 /* the items on my keys still waiting to work again: [ends (room clock), how long it waits, now] for each key, or null */
 export function cool() {
   if (!R) return [];
@@ -354,6 +379,7 @@ export function handBars(s) {
     }
     sp.classList.toggle("tired", tired);
   }
+  drawBar(tag, myDrawShare(now));
   stackBars(tag);
 }
 /* the handgun's shots left (for the dots under its key), or another gun's */

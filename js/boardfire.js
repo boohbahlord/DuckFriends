@@ -7,6 +7,7 @@ import { CRIT_DOWN } from "./wounds.js";
 import { CAKE_SPEED, CAKE_EAT_MS } from "./mgjrules.js";
 
 import { critOf, armOfShot } from "./guns.js";
+import { drawCrit, drawDmg } from "./bowdraw.js";
 
 import {
   DAGGER_LIFE,
@@ -606,8 +607,14 @@ function blast(s, sh, x, y, now, o = {}) {
       (j) => j && [j.x, j.y, 0, 0],
       () => {
         const got = isMgj(s)
-          ? mgjStab(s, sh.by, now, logLine, w === "glauncher" ? DMG.lgren : 1)
-          : justinHit(s, sh.by, now, logLine, w);
+          ? mgjStab(
+              s,
+              sh.by,
+              now,
+              logLine,
+              w === "glauncher" ? DMG.lgren : 1 + drawDmg(sh.dr),
+            )
+          : justinHit(s, sh.by, now, logLine, w, sh);
         if (got) {
           if (got === 2) justinKilled(s, sh.by, w);
           hit.push(JUSTIN_ID);
@@ -1120,11 +1127,11 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
         if (sh.got && sh.got.includes(id)) continue; // (it already took HP from this duck)
         hLock(sh, duckH(s, p)); // (the first it passes over sets its height)
         if (sh.fake) continue; // (Mad God Justin: his double's, or his own while the double is the real one: no harm)
-        const crit = critRoll(s, sh.k);
+        const crit = critRoll(s, sh.k, sh);
         if (
           isMgj(s)
             ? mgjSoak(s, id, now, sh.k === "chair" ? 2 : 1)
-            : hitSoaks(s, id, now, sh.k, crit, sh.by)
+            : hitSoaks(s, id, now, sh.k, crit, sh.by, 1, drawDmg(sh.dr))
         )
           sh.got = [...(sh.got || []), id];
         else {
@@ -1279,12 +1286,14 @@ export function cakeGone(s, now) {
 
 /* ---------- the ducks' wounds and crits outside Quacky Zombies and Mad God Justin (wounds.js) ---------- */
 export const pwOn = (s) => !isMgj(s) && !isL4dd(s);
-export const critRoll = (s, w) =>
-  pwOn(s) && Math.random() < critOf(armOfShot(w));
+export const critRoll = (s, w, sh) =>
+  pwOn(s) &&
+  Math.random() <
+    (sh && sh.dr != null ? drawCrit(sh.dr) : critOf(armOfShot(w))); // (a drawn arrow: its draw's, bowdraw.js)
 /* a hit of weapon (or shot kind) k on duck id: a crit doubles it (guns.js critOf), and takes no more than that; what
    takes all of it (the slug, the chain gun: PHP) still does */
-export function hitSoaks(s, id, now, k, crit, by, big = 1) {
-  const d = dmgOf(s, k) * big; // (big: a melee swinger's Size, push.js)
+export function hitSoaks(s, id, now, k, crit, by, big = 1, more = 0) {
+  const d = dmgOf(s, k) * big + more; // (big: a melee swinger's Size, push.js; more: a drawn arrow's, bowdraw.js)
   return soaks(s, id, now, crit ? d * 2 : d, by, crit && d < PHP);
 }
 /* duck id was hit by weapon w: a wound, or (crit, and it went down) its head blown off, down CRIT_DOWN ms, and a
