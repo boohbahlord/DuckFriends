@@ -507,6 +507,10 @@ export function openGameSettings(R, start = null) {
   }
 
   const paint = (keep = true) => paintMenu(W, menuHTML, stageHTML, place, keep);
+  const pickOf = (s) =>
+    ["mode", "modePick", "gm", "map", "mapPick", "sbMap"]
+      .map((k) => s.options[k])
+      .join();
   /* the row the preview is about: the one under the pointer, or else the picked one */
   let peekSel = null;
   const keyOf = (el) =>
@@ -596,13 +600,18 @@ export function openGameSettings(R, start = null) {
   };
 
   return openWindow(
-    `<div class="armory gs"><div class="arm-menu"></div><div class="arm-stage gs-stage" data-nonav></div></div>`,
+    `<div class="armory gs"><div class="arm-menu"></div><div class="arm-stage gs-stage" data-nonav data-nocover></div></div>`,
     {
       cls: "win-armory win-full win-gs",
       onOpen(w) {
         W = w;
         paint(false);
-        off = R.on(() => paint());
+        let was = pickOf(S());
+        off = R.on(() => {
+          const now = pickOf(S());
+          if (now !== was) [peek, peekSel, was] = [null, null, now]; // (picked somewhere else, My maps' Play it: the preview shows it, not the row last pointed at)
+          paint();
+        });
         const menu = w.querySelector(".arm-menu");
         menu.addEventListener("pointerover", (e) => peekAt(e.target));
         menu.addEventListener("focusin", (e) => peekAt(e.target));
