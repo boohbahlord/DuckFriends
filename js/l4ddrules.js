@@ -3063,7 +3063,12 @@ export function l4Use(s, a, now) {
     if (godHas(s, id, "reload") && c[1] > 0)
       m.am[what] = [c[0], Math.max(0, c[1] - many)];
     else {
-      const shot = fire(c, many, magIn(m, what), infAmmo(s));
+      const shot = fire(
+        c,
+        many,
+        magIn(m, what),
+        kind === "ranged" && infAmmo(s),
+      ); // (Unlimited ammo: guns only; an item used is still used up)
       m.am[what] = shot.c;
       if (shot.empty) startReload(s, id, m, what, now); // (empty: it reloads by itself)
     }

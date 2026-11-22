@@ -3,11 +3,11 @@ file lines job
 
 ## js/
 account.js 397 the Google account: the
-actplay.js 940 a game's actions
+actplay.js 941 a game's actions
 actroom.js 768 the room's actions
 actsb.js 160 Sandbox's windows, saves and
 allies.js 383 Survival: the friendly squad
-ammo.js 113 THE ONE AMMO RULE,
+ammo.js 117 THE ONE AMMO RULE,
 armpage.js 142 a page of Customize's
 armspeed.js 34 how fast the weapons
 art.js 403 pictures drawn in code
@@ -20,7 +20,7 @@ beaks.js 138 beaks
 below.js 89 darker below
 blast.js 67 explosions: one module
 bloodpool.js 50 a pool of blood:
-boardfire.js 1339 the board's weapons: hits,
+boardfire.js 1327 the board's weapons: hits,
 boardjustin.js 652 Justin on the boards
 botduck.js 90 a computer's duck: a
 botlines.js 188 What the computers write
@@ -90,7 +90,7 @@ gunmen.js 110 the gunmen's looks
 gunmenrules.js 1158 Survival: the gunmen
 gunmenview.js 135 Survival: the gunmen on
 gunparts.js 15 the pieces every weapon's
-guns.js 682 every weapon's numbers: one
+guns.js 695 every weapon's numbers: one
 hats.js 1096 hats
 heat.js 74 a gun's heat: the
 heights.js 87 a shot's height, Doom's
@@ -98,7 +98,7 @@ helppages.js 1498 the command line's Help
 hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
 hooks.js 3 hooks between screens that
-hotbar.js 506 the specials on the
+hotbar.js 515 the specials on the
 hotpick.js 340 What goes in my
 hpmath.js 68 HP in hundredths
 hpmeter.js 311 HP meters and the
@@ -115,7 +115,7 @@ l4dd.js 3338 Quacky Zombies on every
 l4ddangel.js 147 Dead Ducks Arcade's Angel
 l4ddangelui.js 204 Dead Ducks Arcade's Angel
 l4ddart.js 623 Quacky Zombies' pictures
-l4ddbar.js 332 Quacky Zombies' weapons bar
+l4ddbar.js 325 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell
 l4ddcatalog.js 233 Quacky Zombies: the Butler's
 l4dddrops.js 63 Quacky Zombies' drops, drawn
@@ -124,7 +124,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power
 l4ddpowerui.js 278 Dead Ducks Arcade's power
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4883 the rules of Quacky
+l4ddrules.js 4886 the rules of Quacky
 l4ddsfx.js 545 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online:
 langname.js 5 the name of Sandbox's
@@ -273,12 +273,12 @@ umaps.js 374 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 408 things you unlock
 upbar.js 69 the green bar on
-updates.js 3650 Updates
+updates.js 3672 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival
 vote.js 279 Vote Mode & Map:
-voterules.js 348 the lobby's vote for
+voterules.js 349 the lobby's vote for
 walkgrid.js 83 the walking grid: which
 weaponuse.js 104 using a weapon: one
 who.js 3 who this player is

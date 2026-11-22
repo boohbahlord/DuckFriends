@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v283",
+    version: 283,
+    date: "Nov 22, 2026",
+    title: "Ammo fixes",
+    news: [
+      "With Unlimited ammo on, items like adrenaline are still used up.",
+      "A Sandbox gun from a loot orb now reloads with R.",
+      "A game that was already going when the ammo update came out no longer breaks when someone fires.",
+    ],
+  },
+  {
     id: "v282",
     version: 282,
     date: "Nov 22, 2026",

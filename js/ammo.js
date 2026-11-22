@@ -63,11 +63,15 @@ export const reloadMs = (w, c, inf) =>
 /* ---------- the board's and Mad God Justin's: s.mag = { key: { c: the pair, r: when its reload ends (0: not
    reloading), d: how long it takes, f: the pair once it's done } }, key: magKey ---------- */
 export const magKey = (id, w) => (w === "handgun" ? id : `${id} ${w}`);
-/* duck id's gun w now: { c, r, d } (never fired this game: full; a reload over: done), or null for none kept (not a
+/* a game starts: every gun full again */
+export const ammoReset = (s) => {
+  delete s.mag;
+};
+/* duck id's gun w now: { c, r, d } (never fired this game, or kept the old way, { n, r }, by a room from before: full; a reload over: done), or null for none kept (not a
    gun, or endless). down: the down pistol, its bullets never run out */
 export function magOf(s, id, now, w = "handgun", down) {
   const m = (s.mag || {})[magKey(id, w)];
-  if (!m) {
+  if (!m || !m.c) {
     const full = ARMS[w] && ARMS[w].kind === "ranged" && fullAmmo(w);
     return full && { c: down ? [full[0], 0] : full, r: 0, d: 0 };
   }
