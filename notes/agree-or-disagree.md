@@ -8005,3 +8005,11 @@ Either next week or 2 to 3 weeks from now, we're gonna have to have it to where,
 
 maybe in the future, 2 or 3 or 4 weeks from now, maybe next week, who knows, players can have a chainsaw, not a chainsaw, sorry. That could be an idea, but they could import sounds for their weapons or use already existing sounds from other weapons. And that the sounds play for their weapons whenever they're used. Weapons from other players, just like sounds from the actual normal player, should play around. I mean, should play their sound as well, just quieter with distance in a level of priority above some other sounds. Because, it's pretty important that we have an understanding like where bullets are coming from a given player and whatnot.
 Decision: name is STATES (state 0, state 1 ...); the existing "Act" setting (Kill/Damage/Heal/Seriat) stays inside each state. Grid snapping per N14 as he wrote it. State colors per N9. Plan N20 (UI/UX principles read, with sources, brief), N21 (weapon sounds: import or reuse; other players' weapons heard, quieter with distance, high priority). Build order (a)-(d) not objected to.
+
+## Owner, 18:37Z Nov 22 (screenshot: Project settings, MEMORY.md 22.9 KB of 16 KB, "This file is over its limit")
+Should we do some memory management as well? I'm looking at this image, not just for that, but for the countless MDs. What do people usually recommend for memory? Like, why do we do this? And let's be careful here before we do any action. Let's talk about it. And let me see what you're saying.
+
+States can carry their own time that overrides the other given time if it's inputted beyond its default, which the default will just show the time that was selected by the former, that being the time per step. But time per step still applies. There's a lot of settings like that where if it doesn't have a setting, it just takes the former of its parent if that is a thing that is happening, like in cases like these.
+
+Let me look at number 5. I don't know about your question.
+Decision: states have their own Time, default = the zone's Time per step shown as Default (value); general rule: an unset setting takes its parent's. Memory: talk first, no action until the owner agrees.
