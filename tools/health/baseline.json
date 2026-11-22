@@ -3,21 +3,18 @@
   "nullishNumbers": 0,
   "unusedExports": 167,
   "unusedFiles": 0,
-  "clones": 34,
+  "clones": 58,
   "bigFiles": {
-    "js/chat.js": 1597,
     "js/customize.js": 1776,
-    "js/game.js": 5125,
-    "js/hangout/shapes.js": 1704,
-    "js/hangout/stationart.js": 1964,
+    "js/game.js": 4792,
     "js/hangout/world.js": 1751,
-    "js/l4dd.js": 3342,
-    "js/l4ddrules.js": 5004,
+    "js/l4dd.js": 3338,
+    "js/l4ddrules.js": 4983,
     "js/numberatrun.js": 1675,
-    "js/rules.js": 1732,
+    "js/rules.js": 1731,
     "js/sandboxrules.js": 2056,
     "js/sbspawn.js": 1709,
     "js/sbspawnview.js": 2212,
-    "js/updates.js": 3372
+    "js/updates.js": 3417
   }
 }
