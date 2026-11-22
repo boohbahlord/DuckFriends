@@ -7870,3 +7870,9 @@ Decision: function first (before B2). Find why the zombies stop by the red car/p
 > Also, when the HP fix goes in, to where the amount that heals is also a point or fraction of HP, and then we can make it to where that HP isn't like darkened out while it regens anymore if it becomes decimal to everything too.
 
 Decision: B5 keeps ground = 1 and 20% a level, with NO cap (only clamped at fully dark); a fall (not a jump) moves the floor reading down through each level as the duck passes it. B7 (Noah): heals count in whole or fractional HP points, and the HP bar no longer shows a darkened regenerating part once it fills smoothly.
+
+## 2026-11-22 13:02Z (owner, decision card on the K14 recoil table)
+
+Question: "How wide should a gun's cone get at full heat, per recoil point?" Chose: "15 degrees a point".
+
+Decision: K14+K18 recoil score as in /mnt/project-files/solomon/k14-recoil-scores.md (0.70 kick against dead weight, 0.20 fire rate, 0.10 barrel), widest cone 15 degrees x score; grenade launcher only kicks (Adam default, owner told 10:58Z); Solomon builds.
