@@ -322,8 +322,13 @@ shapes.js 1704 Duck Cabin's props, drawn: art.js's
 soccer.js 508 soccer: one ball on the
 sounds.js 17 Duck Cabin's sounds
 stage.js 134 the stage: half an oval
-stationart.js 1964 Downpour's things: the drawings
+stationart.js 71 Downpour's drawings, re-exporting the station art files
+stationbase.js 83 Downpour's drawings: the shared pieces
+stationcars.js 509 Downpour's drawings: the cars, the corpses and the chapel
 stationmap.js 1187 Dead Ducks Arcade's second map:
+stationparts.js 455 Downpour's drawings: the gas station's walls, shelves, pumps, canopy, fences
+stationroof.js 350 Downpour's drawings: the roofs, their holes and the ladders
+stationtrees.js 624 Downpour's drawings: the swamp's trees
 trampoline.js 142 the trampoline
 tv.js 117 the TV: seven channels, the
 vehicles.js 116 what a duck stands on
