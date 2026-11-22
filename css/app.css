@@ -1766,8 +1766,10 @@ p.bad {
 .lbar {
   display: flex;
   justify-content: flex-end;
-  padding: 0.7rem max(0.8rem, 1.5vw) 0;
-}
+  padding: calc(12px + env(safe-area-inset-top, 0px))
+    calc(max(12px, 1.5vw) + env(safe-area-inset-right, 0px)) 0;
+} /* (in px, not rem: the same room from the corner at every UI scale. At 80% on a phone it was 8 px, tucked into the
+     corner: the owner's, Nov 22 01:37Z: "the options are too high up in the corner") */
 .lobby-x {
   position: static;
   width: 2.5rem;
