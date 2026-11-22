@@ -22,6 +22,7 @@ const { chromium } = require("playwright");
       BF = await import("./js/boardfire.js"),
       CH = await import("./js/chair.js");
     L.useMode("l4dd", "downpour");
+    Math.random = () => 0.99; // (no miss and no crit: the same every run)
     const { W, H } = L,
       y = 1400,
       x0 = 1530, // (thrown from on the middle one: its picture over all three)

@@ -174,7 +174,7 @@ import {
   heading,
 } from "./zombiepath.js";
 import { CELL } from "./walkgrid.js";
-import { chairOver } from "./chair.js";
+import { chairReach } from "./chair.js";
 import {
   zOk,
   Z_MOST,
@@ -4198,9 +4198,10 @@ export function l4Shots(s, now) {
       } // (a wall taller than the shot: heights.js)
       const w = shotArm(sh),
         A = ARMS[w],
+        big = w === "chair" ? chairReach(sh.sc) : 1, // (the chair: as far as its picture, chair.js)
         near = (z) =>
           z.st !== 3 &&
-          Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1 &&
+          Math.hypot((z.x - x) / (26 * big), (z.y - y) / (22 * big)) < 1 &&
           hOk(sh, zOf(z, "zombie"), z.x, z.y, sh.x0 * W, sh.y0 * H) &&
           !hLock(sh, zOf(z, "zombie")); // (at its height, the first one setting it: heights.js)
       if (
@@ -4215,16 +4216,6 @@ export function l4Shots(s, now) {
         endY = y;
         break;
       }
-      if (w === "chair") {
-        for (const z of chairOver(sh, zs, x, y, 26, 22, sh.x0 * W, sh.y0 * H)) {
-          hitAny = true;
-          if (strike(s, z, dmgOf(A), critRoll(s, sh.by, w), sh.by, w, now))
-            die(z, T);
-          else if (z.st === 2)
-            knockZ(z, sh.vx * W, sh.vy * H, knockOf("hammer")); // (it shoves like the hammer: the owner's, Nov 20 21:17Z)
-        }
-        continue;
-      } // (the chair: through every zombie its picture is over, each once, chair.js)
       if (w === "dbarrel") {
         /* the slug double barrel's slug: through every zombie in its way, each once, 6 to the first and 1 or 1.5 less
            to each one after (sh.d: the next one's), until it does nothing (the owner's, Nov 19 19:27Z). A crit doubles
@@ -4250,13 +4241,13 @@ export function l4Shots(s, now) {
         if (stop) gone = true;
         continue;
       }
-      const pierce = pierceOf(s, sh.by, w);
+      const pierce = w === "chair" ? Infinity : pierceOf(s, sh.by, w); // (the chair: through every one it's over)
       if (pierce) {
         /* the sniper's: through the zombies it meets, each once, until the third (the owner's, Nov 3), or the wall. Once
            it crits, it crits every one after it, still only up to its limit (the owner's, Nov 18 12:19Z). Each one
            takes its roll less 1 for each zombie it went through before it (the owner's, Nov 18 16:43Z: "it does 1
            damage less per zombie it passes"; this replaced the first one taking its most): 4 to 5, 3 to 4, 2 to 3 */
-        for (const z of nearby(grid, zs, x, y))
+        for (const z of big > 1 ? zs : nearby(grid, zs, x, y))
           if (near(z) && !(sh.hit || []).includes(z.i) && !past(sh, w, z)) {
             const sniper = w === "sniper",
               crit = (sniper && !!sh.crit) || critRoll(s, sh.by, w),
@@ -4266,6 +4257,8 @@ export function l4Shots(s, now) {
             if (sniper && crit) sh.crit = 1;
             sh.hit = [...(sh.hit || []), z.i];
             if (strike(s, z, dmg, crit, sh.by, w, now)) die(z, T);
+            else if (w === "chair" && z.st === 2)
+              knockZ(z, sh.vx * W, sh.vy * H, knockOf("hammer")); // (the chair shoves like the hammer: the owner's, Nov 20 21:17Z)
             hitAny = true;
             if (sh.hit.length >= pierce) break;
           }

@@ -28,7 +28,7 @@ brackets.js 459 Bicker Brackets: what the
 brainbuild.js 333 Sandbox: M's Brain builder
 card.js 424 the player card
 carpush.js 101 a car pushed: Downpour's
-chair.js 31 the chair: one thing
+chair.js 14 the chair: one thing
 chat.js 633 text chat and the
 chatcmds.js 688 The command line's commands:
 chatmutes.js 318 The chat's suggestions, mutes
@@ -118,7 +118,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power
 l4ddpowerui.js 278 Dead Ducks Arcade's power
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4990 the rules of Quacky
+l4ddrules.js 4983 the rules of Quacky
 l4ddsfx.js 545 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online:
 langname.js 5 the name of Sandbox's
