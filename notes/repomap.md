@@ -16,6 +16,7 @@ barrelheat.js 70 a hot barrel
 bash.js 1360 the command line's language: a
 bbrules.js 380 the rules of Bicker Brackets
 beaks.js 138 beaks
+below.js 75 darker below
 blast.js 67 explosions: one module
 bloodpool.js 50 a pool of blood: the
 boardfire.js 1355 the board's weapons: hits, shots,
@@ -60,7 +61,7 @@ fxmotion.js 229 how a held weapon and
 game.js 5125 the game screen
 gameact.js 546 the action window and the
 gameboard.js 589 the board: each mode's board
-gamedefaults.js 57 the game's own numbers, for
+gamedefaults.js 62 the game's own numbers, for
 gamefx.js 874 the silly commands and the
 gamehand.js 604 the hand: the number-key specials,
 gameplace.js 738 where things are put on
@@ -78,7 +79,7 @@ gstext.js 185 Game Settings: what a setting
 gunart.js 437 every weapon, drawn: one drawing
 gunmen.js 110 the gunmen's looks
 gunmenrules.js 1156 Survival: the gunmen
-gunmenview.js 137 Survival: the gunmen on the
+gunmenview.js 135 Survival: the gunmen on the
 gunparts.js 15 the pieces every weapon's drawing
 guns.js 642 every weapon's numbers: one sheet
 hats.js 1096 hats
@@ -99,7 +100,7 @@ jump.js 78 a duck's jump: one arc
 jumps.js 48 the jump counter
 justinmoves.js 34 Justin's moves on the board,
 keynav.js 204 menus by keyboard
-l4dd.js 3342 Quacky Zombies on every screen
+l4dd.js 3341 Quacky Zombies on every screen
 l4ddangel.js 151 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
 l4ddart.js 623 Quacky Zombies' pictures
@@ -146,7 +147,7 @@ notes.js 101 Notes : question ideas, written
 npcrules.js 91 what every NPC's brain shares
 npcs.js 49 the characters you can mute:
 npcshared.js 29 what every NPC shares, whatever
-npcview.js 214 an NPC on a world
+npcview.js 216 an NPC on a world
 numberat.js 1323 Seriat: the language
 numberatrun.js 1675 Seriat: files that do things
 numerat.js 181 Seriat: the number reader
@@ -156,7 +157,7 @@ nwk.js 543 Nous Within Kenoma: the map
 offline.js 45 Single Player's files on the
 online.js 975 online rooms
 outfits.js 1141 outfits
-outlines.js 347 the outlines
+outlines.js 419 the outlines
 perf.js 92 the frame-rate readout
 phonepad.js 142 phones: the aim-and-attack stick and
 picrop.js 268 cropping a picture: every picture
@@ -273,7 +274,7 @@ zombieroofs.js 322 the zombies' walk over Downpour's
 zombies.js 1477 the zombies: one module for
 
 ## js/hangout/
-activities.js 23 every Hangout activity, so the
+activities.js 24 every Hangout activity, so the
 ambience.js 112 the air: the wind round
 art.js 252 Duck Cabin: the drawings
 artbase.js 156 the drawings' shared pieces

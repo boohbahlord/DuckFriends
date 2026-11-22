@@ -55,3 +55,8 @@ export const TV_FIRST_CHANNEL = 1;
    crowded frame, whatever its size. So it shows only where the game runs fast enough, its own cost counted: under this
    many frames a second (two 2-second stretches in a row) it stays off until the next round or map */
 export const SPRINT_BLUR_MIN_FPS = 40;
+
+/* darker below (B5, the owner's, Nov 21 16:17Z: "as you increase in elevation ... the layers by a certain fraction or
+   percent become more dark ... including for other ducks ... that isn't true for jumping"): what's under my floor shows
+   PER darker for each elevation (heights.js ELEV) I stand over it, at most MAX (below.js) */
+export const BELOW = { PER: 0.2, MAX: 0.6 };
