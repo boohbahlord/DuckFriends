@@ -26,10 +26,9 @@ import {
   coolFor,
   coolEnds,
   isHang,
-  MAG,
-  magOf,
-  magSize,
 } from "./rules.js";
+import { barOf, capOf, magOf, sizeOf } from "./ammo.js";
+import { unlimited } from "./actplay.js";
 
 import { SC_VOTES } from "./scrules.js";
 
@@ -47,7 +46,6 @@ import {
   mgjInHand,
   mgjOut2,
   heldNow,
-  magFor,
   reloadsNow,
   reloadReady,
   reloadDry,
@@ -88,15 +86,7 @@ import { isQuack, CLUE_GRACE, tileAt } from "./quackrules.js";
 
 import { isDn, DN_GRACE } from "./duncerules.js";
 
-import {
-  isMgj,
-  ammoOf,
-  INF_AMMO,
-  downNear,
-  REVIVE,
-  mgjOut,
-  CAKE_EVERY,
-} from "./mgjrules.js";
+import { isMgj, downNear, REVIVE, mgjOut, CAKE_EVERY } from "./mgjrules.js";
 
 import { isVd, VD_GRACE } from "./vddrules.js";
 
@@ -115,8 +105,7 @@ export const setKeyAim = (v) => {
 export const setMouse = (v) => {
   mouse = v;
 };
-const myDuck = () =>
-  ((R && R.state.players[R.me]) || {}).duck || profile.duck;
+const myDuck = () => ((R && R.state.players[R.me]) || {}).duck || profile.duck;
 /* the duck my keys play with: in Quacky Zombies its slots, then the grenades (kitslots.js); in Mad God
    Justin its own keys: 1 the knife, 2 the pistol (it never reloads: in place of the bow, the owner's, Nov 16),
    3 the weapon picked up, 4 the zebra cake (my own keys stay as they are) */
@@ -304,12 +293,11 @@ function coolOne(id, now, m) {
         ? [Math.max(end, now + 1), CAKE_EVERY, now]
         : null;
     } // (shared too)
-    const mg = magFor(id);
-    if (mg) {
-      const mm = magOf(R.state, R.me, now, id),
-        r = mm.r;
+    const mm = capOf(id) && magOf(R.state, R.me, now, id, downGun(id));
+    if (mm) {
+      const r = mm.r;
       return r > now
-        ? [r, mm.d || mg[1], now] // (the double barrel's: a second for each shell it loads)
+        ? [r, mm.d, now] // (the double barrel's: a second for each shell it loads)
         : AUTO.includes(id)
           ? null
           : (() => {
@@ -349,17 +337,11 @@ export function handBars(s) {
     el.style.setProperty("--cl", v);
     el.classList.toggle("off", v === "0");
   }
-  const mg = !w ? null : mgjDownGun() ? magSize("handgun") : magFor(w);
-  let a = null;
-  if (mg && !(m && !mgjDownGun() && w !== myPick())) {
-    const mm = magOf(s, R.me, now, w),
-      rl = mm.r > now,
-      left =
-        m && !mgjDownGun() && ammoOf(s, R.me) < INF_AMMO
-          ? Math.min(mg[0] - mm.n, ammoOf(s, R.me))
-          : mg[0] - mm.n; // (Mad God Justin: a gun picked up with fewer shots left than its magazine)
-    a = { f: rl ? 0 : Math.min(1, left / mg[0]), rl, dry: false }; // (one more in the chamber: still full)
-  }
+  const mm =
+    w &&
+    !(m && !mgjDownGun() && w !== myPick() && w !== "handgun") &&
+    magOf(s, R.me, now, w, downGun(w)); // (Mad God Justin: the pistol, the gun picked up, or the down pistol)
+  const a = mm ? barOf(mm, w, now, unlimited(s, R.me, w, downGun(w))) : null;
   ammoBar(tag, a);
   let sp = tag.querySelector(".l4-sprint");
   if (!sp && !isMgj(s)) {
@@ -382,25 +364,31 @@ export function handBars(s) {
   drawBar(tag, myDrawShare(now));
   stackBars(tag);
 }
-/* the handgun's shots left (for the dots under its key), or another gun's */
+/* the handgun's shots left in its magazine (for the dots under its key), or another gun's (ammo.js) */
 export function ammo(id = "handgun") {
-  const n = (magSize(id) || [MAG])[0];
-  return R ? n - magOf(R.state, R.me, clockNow(), id).n : n;
+  const m = R && magOf(R.state, R.me, clockNow(), id, downGun(id));
+  return m ? m.c[0] : sizeOf(id);
 }
-/* the dots under a key: a gun's shots (a number past 8: the SMG's 20 … the LMG's 75), or in Mad God Justin the uses left
-   of the weapon picked up */
-export const dots = (id) =>
-  R && isMgj(R.state)
-    ? MGJ_GUNS.includes(id) && id === myPick()
-      ? `<span class="ammo ammo-n" aria-label="${ammoOf(R.state, R.me) >= INF_AMMO ? "no limit on" : ammoOf(R.state, R.me)} shots left">${ammoOf(R.state, R.me) >= INF_AMMO ? "∞" : ammoOf(R.state, R.me)}</span>`
-      : ""
-    : id === "flamer"
-      ? `<span class="ammo ammo-n" aria-label="Tank">${Math.ceil((ammo(id) / magSize(id)[0]) * 100)}%</span>`
-      : magSize(id)
-        ? magSize(id)[0] > 8
-          ? `<span class="ammo ammo-n" aria-label="${ammo(id)} shots left">${ammo(id)}</span>`
-          : ammoHTML(ammo(id), magSize(id)[0])
-        : "";
+/* the dots under a key: a gun's shots in its magazine (a number past 8: the SMG's 25 … the LMG's 100; the
+   flamethrower's tank in percent), and what's left besides (Dead Ducks Arcade's ammo, ammo.js); in Mad God Justin only
+   the gun picked up */
+export const dots = (id) => {
+  if (
+    !sizeOf(id) ||
+    (R && isMgj(R.state) && MGJ_GUNS.includes(id) && id !== myPick())
+  )
+    return "";
+  const m = R && magOf(R.state, R.me, clockNow(), id, downGun(id)),
+    n = ammo(id),
+    rest = m && capOf(id) ? m.c[1] : 0;
+  return id === "flamer"
+    ? `<span class="ammo ammo-n" aria-label="Tank">${Math.ceil((n / sizeOf(id)) * 100)}%</span>`
+    : sizeOf(id) > 8 || rest
+      ? `<span class="ammo ammo-n" aria-label="${n} shots left${rest ? `, ${rest} more` : ""}">${n}${rest ? `/${rest}` : ""}</span>`
+      : ammoHTML(n, sizeOf(id));
+};
+/* the Mad God Justin down pistol: its bullets never run out */
+const downGun = (w) => w === "handgun" && isMgj(R.state) && mgjDownGun();
 /* the small R on a phone (phonepad.js) shows in every mode, but only while what's in my hand can be reloaded: it has a
    magazine, it isn't full, and no reload is going on (the owner's, Nov 18 16:50Z: "r only shows up on mobile for anything
    IF something CAN be reloaded") */

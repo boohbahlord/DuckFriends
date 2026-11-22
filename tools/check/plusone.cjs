@@ -5,7 +5,7 @@
       already over full, a revolver, the double barrel, the Tommy gun and a gun with no magazine get none;
    2. in Dead Ducks Arcade, R with my full pistol: the reload takes half as long and the pistol then holds 8 of its 7,
       one taken from the rest; its bar stays full and the phone's R shows while a full one can take one more;
-   3. on the boards and in Mad God Justin, a magazine reloaded full starts one short of empty (rules.js magOf).
+   3. on the boards and in Mad God Justin, a full pistol reloaded holds 8, the one more taken from the rest (ammo.js).
    Run: node tools/check/run.mjs plusone */
 const { chromium } = require("playwright");
 const { url, fail, noErrors } = require("./lib.cjs");
@@ -18,7 +18,7 @@ const { url, fail, noErrors } = require("./lib.cjs");
   await p.waitForTimeout(2500);
   const table = await p.evaluate(async () => {
     const { loadTo } = await import("./js/guns.js"),
-      { magOf } = await import("./js/rules.js");
+      { magOf, reloadMag } = await import("./js/ammo.js");
     return {
       part: loadTo("handgun", 5, 7),
       full: loadTo("handgun", 7, 7),
@@ -27,8 +27,12 @@ const { url, fail, noErrors } = require("./lib.cjs");
       none: ["revolver", "dbarrel", "tommy", "laser", "bow"].map((w) =>
         loadTo(w, 7, 7),
       ),
-      board: magOf({ mag: { a: { n: 0, r: 100, p: 1 } } }, "a", 200).n,
-      plain: magOf({ mag: { a: { n: 0, r: 100 } } }, "a", 200).n,
+      board: (() => {
+        const s = {};
+        reloadMag(s, "a", 0, "handgun", false); // (a full pistol: one more)
+        return magOf(s, "a", 1e6).c;
+      })(),
+      plain: magOf({}, "a", 0).c,
     };
   });
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -38,7 +42,7 @@ const { url, fail, noErrors } = require("./lib.cjs");
     fail("over full, or the LMG: " + JSON.stringify(table));
   if (table.none.some((t) => t !== null))
     fail("a gun that holds no extra round got one: " + table.none);
-  if (table.board !== -1 || table.plain !== 0)
+  if (!same(table.board, [8, 132]) || !same(table.plain, [7, 133]))
     fail("the board's magazine after one more: " + JSON.stringify(table));
   /* Dead Ducks Arcade */
   await p.evaluate(async () => {

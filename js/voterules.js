@@ -303,6 +303,7 @@ export function rotate(s, now) {
 export function beginGame(s, now) {
   const P = s.players;
   s.startedAt = now;
+  delete s.mag; // (every gun full again: ammo.js)
   if (isSb(s)) sbBegin(s, now); // (a save's NPCs back, its session named: sbsave.js)
   s.round = 0;
   s.history = [];
