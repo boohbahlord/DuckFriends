@@ -9,6 +9,25 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v273",
+    version: 273,
+    date: "Nov 22, 2026",
+    title: "Trees as tall as they look",
+    news: [
+      "For Dead Ducks Arcade (Downpour): each tree is as tall as it looks and its trunk stops you where its foot is drawn; you can't stand on a trunk's top.",
+    ],
+  },
+  {
+    id: "v272",
+    version: 272,
+    date: "Nov 22, 2026",
+    title: "No black lines in Sandbox",
+    news: [
+      "For Sandbox: the board has no dark frame any more, so a phone turned sideways shows no black lines across the map.",
+      "For Sandbox: every zone, spawn and loot setting left at its default now says so with its value, like Default (16) or Default (true).",
+    ],
+  },
+  {
     id: "v271",
     version: 271,
     date: "Nov 22, 2026",

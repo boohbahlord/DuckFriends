@@ -104,6 +104,7 @@ import {
   SB_TEXT,
 } from "./sbspawn.js";
 import { orbWrap, lootRing, lootPage, lootWire } from "./sblootview.js";
+import { triWord } from "./sblootview.js"; // (what a switch reads: one place for every Sandbox switch)
 import { orbsOf } from "./sbloot.js";
 import { valueOf, read as nbRead } from "./seriatbox.js";
 import { drawNpcs, dropNpcs } from "./npcview.js";
@@ -817,11 +818,11 @@ export function sbNearPoint(s, me) {
 
 /* ---------- its settings window ---------- */
 const row = (f, b, t, why) =>
-  `<label class="sb-row${why ? " bad" : ""}" data-row="${f}"><span>${esc(b.name)}</span><input class="sb-box" data-f="${f}" value="${esc(t)}" maxlength="${f === "key" ? 1 : 80}" spellcheck="false" autocomplete="off"${dfltBox(b) ? ` placeholder="default${b.def != null && b.def !== "" ? ` (${esc(b.def)})` : ""}"` : ""}><em class="sb-why">${esc(why)}</em></label>`;
+  `<label class="sb-row${why ? " bad" : ""}" data-row="${f}"><span>${esc(b.name)}</span><input class="sb-box" data-f="${f}" value="${esc(t)}" maxlength="${f === "key" ? 1 : 80}" spellcheck="false" autocomplete="off"${dfltBox(b) ? ` placeholder="Default${b.def != null && b.def !== "" ? ` (${esc(b.def)})` : ""}"` : ""}><em class="sb-why">${esc(why)}</em></label>`;
 /* a setting that left empty is its default (the owner's, Nov 20 17:25Z: "every setting for spawn or respawn or zone or loot
    should have a default setting ... like true, false, default", and "the values not typed into boxes for seriat assume
-   default"): a number box or a true or false one. Unset, it shows empty (a switch: default), never the default's own
-   value as if typed */
+   default"): a number box or a true or false one. Unset, it reads "Default (its value)" (Nov 22 16:03Z), never the
+   default's own value as if typed */
 const dfltBox = (b) =>
   !!b && !b.check && ["int", "tenth", "half", "bool"].includes(b.kind);
 export const typedOr = (o, f, p = o) =>
@@ -1001,11 +1002,10 @@ const triOf = (t) => {
   const v = String(t).trim().toLowerCase();
   return !v ? "" : /^f/.test(v) ? "f" : "t";
 };
-const triWord = (v) => (v === "t" ? "true" : v === "f" ? "false" : "default");
 const flagRow = (f, b, t, why) => {
   const v = triOf(t),
-    d = triWord(triOf(b.def));
-  return `<div class="sb-row${why ? " bad" : ""}" data-row="${f}"><span>${esc(b.name)}</span><button type="button" class="sb-tog sb-tri${v === "t" ? " on" : v ? "" : " mid"}" data-tog="${f}" aria-pressed="${v === "t" ? "true" : v ? "false" : "mixed"}" title="Default: ${d}">${triWord(v)}</button><input type="hidden" class="sb-box" data-f="${f}" value="${v}"><em class="sb-why">${esc(why)}</em></div>`;
+    own = triOf(b.def) ? triWord(triOf(b.def)) : ""; // (what the default gives; none where M or the game decides)
+  return `<div class="sb-row${why ? " bad" : ""}" data-row="${f}"><span>${esc(b.name)}</span><button type="button" class="sb-tog sb-tri${v === "t" ? " on" : v ? "" : " mid"}" data-tog="${f}" data-own="${own}" aria-pressed="${v === "t" ? "true" : v ? "false" : "mixed"}" title="Default: ${own || "the game's"}">${triWord(v, own)}</button><input type="hidden" class="sb-box" data-f="${f}" value="${v}"><em class="sb-why">${esc(why)}</em></div>`;
 };
 /* a header over one part of a spawn's window, numbered like Word's headings as the settings go deeper (plan Phase 2:
    3, 3.4, 3.4.1): SECT is [the section it's under, how many came before] while a block's window is made */
@@ -1777,7 +1777,7 @@ function npcSetClick(e, w) {
       "aria-pressed",
       v === "t" ? "true" : v ? "false" : "mixed",
     );
-    tog.textContent = triWord(v);
+    tog.textContent = triWord(v, tog.dataset.own);
     box.dispatchEvent(new Event("input", { bubbles: true }));
     return true;
   }

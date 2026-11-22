@@ -211,7 +211,7 @@ sbhot.js 143 Sandbox: the hotbar ,
 sbhotview.js 406 Sandbox: the hotbar ,
 sblooks.js 48 Sandbox: a zone's look
 sbloot.js 495 Sandbox: loot orbs ,
-sblootview.js 499 Sandbox: loot orbs ,
+sblootview.js 510 Sandbox: loot orbs ,
 sbmake.js 203 Sandbox: making NPCs and
 sbmenu.js 264 Sandbox: presets, copy and
 sbnpcart.js 162 Sandbox: a spawned NPC's
@@ -272,7 +272,7 @@ umaps.js 371 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on
-updates.js 3561 Updates
+updates.js 3580 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival
