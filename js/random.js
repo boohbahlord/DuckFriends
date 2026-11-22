@@ -6,6 +6,12 @@ export const shuffle = (xs) => {
   }
   return xs;
 };
+/* a steady number 0 … 0.999 from a text (a prop's id: the same drawing, and the same size, on every device) */
+export const hash = (s) => {
+  let h = 7;
+  for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) | 0;
+  return ((h >>> 0) % 1000) / 1000;
+};
 export const anyOf = (xs) => xs[Math.floor(Math.random() * xs.length)];
 /* a damage as the weapons' tables write it: a number, or [lo, hi] for any whole number from lo to hi */
 export const roll = (d) =>
