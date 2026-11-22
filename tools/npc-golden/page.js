@@ -8,7 +8,8 @@ window.__golden = async (sc) => {
     SVm = await import("../../js/survrules.js"),
     AL = await import("../../js/allies.js"),
     GMm = await import("../../js/gunmenrules.js"),
-    { W, H } = await import("../../js/hangout/layout.js");
+    { W, H } = await import("../../js/hangout/layout.js"),
+    { ARMS } = await import("../../js/guns.js"); // (here with the others: an await once the run has begun let beat 0 part under load)
   /* the room as text with every object's keys in name order: the order keys were added in (which module loaded first, so
      which activity or NPC came first) is not the game, and under a loaded machine it changes (Nov 22: bj and book,
      the NPC list) */
@@ -230,8 +231,7 @@ window.__golden = async (sc) => {
   /* "nade": { at, every, aim }: from beat at, every so many beats my duck throws a grenade at the nearest one of aim
      ("gm": Survival's gunmen, "duck": another duck), with grenades in its kit on the maps and on its keys elsewhere, so
      a blast's reach is pinned where the other runs never throw (Hangout, the gunmen: B6, before the rings) */
-  const NADE = ["grenade"],
-    { ARMS } = await import("../../js/guns.js");
+  const NADE = ["grenade"];
   const nade = () => {
     const s = r.state,
       N = sc.nade;
