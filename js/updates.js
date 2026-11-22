@@ -9,6 +9,43 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v246",
+    version: 246,
+    date: "Nov 22, 2026",
+    title: "Smaller map files",
+    news: [
+      "Behind the scenes: the walking maps' layout is split into smaller files (heights and decks in their own). Nothing plays differently.",
+    ],
+  },
+  {
+    id: "v245",
+    version: 245,
+    date: "Nov 22, 2026",
+    title: "Tidier walking maps",
+    news: [
+      "Behind the scenes: the walking maps no longer check which mode is on by its name; the phone's zoom and the map switch read the mode's own settings. Nothing plays differently.",
+    ],
+  },
+  {
+    id: "v244",
+    version: 244,
+    date: "Nov 22, 2026",
+    title: "Zombies spread out",
+    news: [
+      "For Dead Ducks Arcade, Survival and Mad God Justin: zombies now spread out a little instead of stacking into each other, and when two or three are already in the way, the next one goes around them.",
+    ],
+  },
+  {
+    id: "v243",
+    version: 243,
+    date: "Nov 22, 2026",
+    title: "Your pick sticks",
+    news: [
+      "My maps: tapping one of your maps picks it right away (before, it only showed its description), so the game starts on it with no vote.",
+      "Behind the scenes: Mad God Justin's brain lives in its own file now. Nothing plays differently.",
+    ],
+  },
+  {
     id: "v242",
     version: 242,
     date: "Nov 22, 2026",
