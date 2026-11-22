@@ -8058,3 +8058,9 @@ Decision (Adam, Solomon): js/hotpick.js is the one hand file for every mode: the
 ## Owner, Nov 22 20:12Z (via coordinator): CodeRabbit and tools
 "have code rabbit set up for our repo for anything to work for us so we can use less usage, idk how it works just make it work for more efficiency and suggest other tools for better code or less bugs that may reduce usage"
 Decision (Adam): add .coderabbit.yaml tuned to our rules (owner installs the free app with one click at coderabbit.ai), plus a free GitHub check on every PR (smoke checks + ESLint) and Dependabot for the workflow actions.
+
+## Owner, Nov 22 20:33Z-20:35Z: Lighthouse and more tools
+20:33Z: "how does lighthouse work ?" / "okay is it working now ?" (CodeRabbit: connected; it skips bot PRs)
+20:35Z: "how we can use lighthouse, use as many tools you want as long as they improve game, reduce usage, improve code, imrpove ui, or reduce bugs AND MORE
+When you add one, i just want to here ab it, so u can go shoppinng for more so we can opimize"
+Decision (Adam): add free tools that run on GitHub (not our usage), one at a time, one line to the owner each; Lighthouse first.
