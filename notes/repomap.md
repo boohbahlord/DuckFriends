@@ -56,10 +56,11 @@ friends.js 236 friends
 front.js 151 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 229 how a held weapon and the
-game.js 6163 the game screen
+game.js 5679 the game screen
 gameact.js 526 the action window and the view's
+gameboard.js 579 the board: each mode's board HTML,
 gamedefaults.js 43 the game's own numbers, for every
-gamefx.js 853 the silly commands and the room's
+gamefx.js 873 the silly commands and the room's
 gamehand.js 604 the hand: the number-key specials, firing,
 gameplace.js 738 where things are put on the
 gameready.js 47 
@@ -248,7 +249,7 @@ umaps.js 371 Made maps: making them, and keeping
 units.js 10 the game's units, in one place
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 3254 Updates
+updates.js 3264 Updates
 vdd.js 190 Valentine's Duck Date: what the screen
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
