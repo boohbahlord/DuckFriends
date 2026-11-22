@@ -43,7 +43,7 @@ export function sbFloorsFrom(s) {
 /* a slope's ends (world px) and the side it rises toward: { lo, hi, dir }, or null when it's flat */
 export function sbSlope(p) {
   if (!p || p.k !== "zone" || !p.f || !p.f.slto) return null;
-  const n = Math.round(valueOf({ ok: boxText(p, "slto") }, SB_ZONE.slto));
+  const n = valueOf({ ok: boxText(p, "slto") }, SB_ZONE.slto);
   if (!Number.isFinite(n) || n < 1) return null;
   const lo = p.z || 0,
     hi = levelZ(Math.min(6, n)),

@@ -222,16 +222,16 @@ sbsave.js 292 Sandbox: saving a Sandbox
 sbsaves.js 733 Sandbox's saves: kept on
 sbseriat.js 477 Sandbox: NPCs that run
 sbsfx.js 74 Sandbox's sounds
-sbspawn.js 1708 Sandbox: spawns and respawns
-sbspawnview.js 2212 Sandbox: spawns and respawns
+sbspawn.js 1709 Sandbox: spawns and respawns
+sbspawnview.js 2211 Sandbox: spawns and respawns
 sbzone.js 348 Sandbox: board zones ,
 sbzonebrain.js 265 Sandbox: zones that run
 scrules.js 428 the rules of Story
 secret.js 79 secrets between two browsers
-seriat.js 1425 Seriat: the language
+seriat.js 1429 Seriat: the language
 seriatbag.js 130 Seriat: shuffle and escape
 seriatbible.js 116 The Seriat bible in
-seriatbox.js 181 Seriat: the number reader
+seriatbox.js 185 Seriat: the number reader
 seriathelp.js 566 Seriat's help files
 seriatrun.js 1671 Seriat: files that do
 seriattheme.js 63 Seriat's and the command

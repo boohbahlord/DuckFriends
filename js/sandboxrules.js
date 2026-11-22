@@ -597,7 +597,7 @@ export const SB_ZONE = {
      its working squares are a floor (sbfloors.js) */
   fl: {
     name: "Elevation (1 is the ground)",
-    kind: "int",
+    kind: "half", // (tenths and half tenths: 1.05 is a twentieth of a gas station roof up)
     min: 1,
     max: 6,
     def: "1",
@@ -628,7 +628,7 @@ export const SB_ZONE = {
      its length toward the side picked (as it's turned), in steps of 2.5% of the gas station roof (sbfloors.js) */
   slto: {
     name: "Slope up to elevation (0: flat)",
-    kind: "int",
+    kind: "half",
     min: 0,
     max: 6,
     def: "0",
