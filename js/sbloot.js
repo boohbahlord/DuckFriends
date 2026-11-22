@@ -1,7 +1,9 @@
 /* ---------- Sandbox: loot orbs (stage 4b), the rules ----------
    The owner's Sandbox file, "Loot Spawns" (sandboxrules.js SB_LOOT has the words): an orb lies on its loot point, holding
    one of the things picked for it (more than one picked: one of them at random each time). The first comes at once; a
-   duck that walks over it takes it, and with "Auto spawn" on (once "Comes back"), the next comes "Seconds before a new one comes" later.
+   duck takes it with E, standing on it (the owner's, Nov 21 18:27Z: "You only pick them up by clicking E / Same for any
+   loot on the ground now"; computers press E too, bots.js; an NPC its list names still takes it by walking over it), and with "Auto spawn" on (once
+   "Comes back"), the next comes "Seconds before a new one comes" later.
    - On the board and Duck Cabin, what's taken goes on the duck's hotbar (sbhot.js sbSlots: s.sb.hb.got), for good or
      for "Seconds you keep it".
    - On Dead Ducks Arcade's maps a weapon goes into the duck's slots, as one bought does (l4ddrules.js l4Loot), and a
@@ -75,7 +77,11 @@ export const lootList = (s, p) =>
   words(boxText(p, "loot")).filter((w) => lootOk(s, w));
 
 /* ---------- the actions: { t: "sbl", k: "img", p, v } (an orb's own picture: its key in s.sbpic, or "" for none) ---------- */
-export function sbLootAct(s, a) {
+export function sbLootAct(s, a, now) {
+  if (isSb(s) && a.do === "take" && sbOrbFor(s, a.id)) {
+    s.sb = { ...s.sb, lk: { ...(s.sb.lk || {}), [a.id]: now } }; // (E pressed on an orb: the next heartbeat gives it, sbLootTick)
+    return true;
+  }
   if (!isSb(s) || !sbMay(s, a.id, "b") || a.k !== "img") return false;
   const p = ((s.sb && s.sb.pts) || {})[a.p],
     v = typeof a.v === "string" ? a.v : "";
@@ -183,7 +189,7 @@ export function sbLootTick(s, now, H0) {
     let moved = list.length !== was;
     list = list.flatMap((o) => {
       if (o.dn != null) return [o];
-      const by = takersOf(s, q, o, who, H0).filter(
+      const by = takersOf(s, q, o, who, H0, now).filter(
         (b) => !(o.got || []).includes(b),
       );
       if (!by.length) return [o];
@@ -252,7 +258,18 @@ export function sbLootTick(s, now, H0) {
       ch = true;
     }
   if (ch) s.sb = { ...s.sb, pts, lr };
-  return wearOff(s, now) || tidy(s) || ch;
+  const gone = pressGone(s, now);
+  return wearOff(s, now) || tidy(s) || gone || ch;
+}
+/* the E presses that took nothing in time go (sbLootAct) */
+function pressGone(s, now) {
+  const lk = s.sb.lk;
+  if (!lk || Object.values(lk).every((t) => now - t < PRESS_MS)) return false;
+  const left = Object.entries(lk).filter(([, t]) => now - t < PRESS_MS);
+  const sb = { ...s.sb, lk: Object.fromEntries(left) };
+  if (!left.length) delete sb.lk;
+  s.sb = sb;
+  return true;
 }
 /* may block q lay one more: its own Loot limit, and G's for the whole map (0: none) */
 function lootMay(q, r, most, laid) {
@@ -326,20 +343,19 @@ function lay(s, q, w, now, zid = null) {
 }
 /* who walks over orb o of block q0 now and may take it: the ducks (on the board within a duck's length, on a world
    within the zombies' drops' reach, on its floor), else the NPCs its list names ("n:" and their number) */
-function takersOf(s, q0, o, who, H0) {
-  const board = sbOnBoard(s),
-    U = boardDuck(s),
-    q = o.x != null ? o : q0, // (an orb lying in a zone)
-    near = (x, y, z) =>
-      (board
-        ? Math.hypot((q.x - x) / U[0], (q.y - y) / U[1])
-        : z === null || Math.abs((+z || 0) - (q.z || 0)) < 40
-          ? Math.hypot((q.x - x) * W, (q.y - y) * H) / DROP.REACH
-          : 9) < 1,
-    out = [];
+function takersOf(s, q0, o, who, H0, now) {
+  const near = orbNear(s, q0, o),
+    out = [],
+    lk = (s.sb && s.sb.lk) || {};
   for (const id of H0.ducks(s)) {
     const me = s.pos[id];
-    if (me && near(me.x, me.y, me.z) && mayTake(s, who, id)) out.push(id);
+    if (
+      now - (lk[id] ?? -Infinity) < PRESS_MS &&
+      me &&
+      near(me.x, me.y, me.z) &&
+      mayTake(s, who, id)
+    )
+      out.push(id);
   }
   if (out.length || !who.some((w) => w !== "players")) return out;
   for (const n of liveNpcs(s))
@@ -349,6 +365,41 @@ function takersOf(s, q0, o, who, H0) {
     )
       out.push("n:" + n.i);
   return out;
+}
+/* is (x, y, z) on orb o of block q0 (on the board within a duck's length, on a world within the zombies' drops' reach,
+   on its floor) */
+function orbNear(s, q0, o) {
+  const board = sbOnBoard(s),
+    U = boardDuck(s),
+    q = o.x != null ? o : q0; // (an orb lying in a zone)
+  return (x, y, z) =>
+    (board
+      ? Math.hypot((q.x - x) / U[0], (q.y - y) / U[1])
+      : z === null || Math.abs((+z || 0) - (q.z || 0)) < 40
+        ? Math.hypot((q.x - x) * W, (q.y - y) * H) / DROP.REACH
+        : 9) < 1;
+}
+/* how long E pressed on an orb still takes it (ms: a heartbeat or two) */
+const PRESS_MS = 400;
+/* the orb duck id stands on and may take with E now, as { w } (its first thing), or null (sblootview.js, gameround.js:
+   the E button) */
+export function sbOrbFor(s, id) {
+  const me = s.pos && s.pos[id],
+    pts = (s.sb && s.sb.pts) || {};
+  if (!me || !spawnsHere(s)) return null;
+  for (const [k, q] of Object.entries(pts)) {
+    if (q.k !== "loot" || !sbTabLive(pts, k)) continue;
+    const who = words(boxText(q, "ltake"));
+    for (const o of orbsOf(q))
+      if (
+        o.dn == null && // (a zombie drop: Dead Ducks Arcade's own E, l4ddloot.js)
+        !(o.got || []).includes(id) &&
+        orbNear(s, q, o)(me.x, me.y, me.z) &&
+        mayTake(s, who, id)
+      )
+        return { w: o.w };
+  }
+  return null;
 }
 /* t takes orb o of block id: a duck gets what it holds; an NPC only takes it away */
 function takeBy(s, id, q, o, t, now, H0) {

@@ -82,6 +82,7 @@ import { kindOf, MGJ_MELEE } from "./guns.js";
 import { draws } from "./bowdraw.js";
 import { gunsIn, itemsIn, PRIMARY } from "./kitslots.js";
 import { lootAt } from "./l4ddloot.js";
+import { sbOrbFor } from "./sbloot.js";
 import {
   isVd,
   VD_PHASES,
@@ -494,6 +495,7 @@ function botThink(s, now) {
       tvBot(s, id, now, late, out);
       return;
     }
+    if (sbOrbFor(s, id)) out.push({ t: "sbl", do: "take", id }); // (Sandbox: on an orb, E, as a player presses it: sbloot.js)
     if (isHang(s)) {
       if (inWorld(s))
         (isL4dd(s) ? l4Bot : hangBot)(s, id, now, out); // (Quacky Zombies: they fight, l4Bot below)

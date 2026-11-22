@@ -50,6 +50,8 @@ import { isSb, sbOnBoard, boardDuck, sbMay } from "./sandboxrules.js";
 import { sbCheat } from "./sbmenu.js";
 
 import { sbSettings } from "./sbspawnview.js";
+import { sbOrbFor } from "./sbloot.js";
+import { nameOf } from "./sblootview.js";
 
 import { duckSVG } from "./duck.js";
 
@@ -403,6 +405,8 @@ const SB_LABELS = {
 };
 export function sbGo(s) {
   if (!isSb(s) || !sbOnBoard(s) || !me || !onBoardPhase()) return null;
+  const o = sbOrbFor(s, R.me); // (an orb I stand on: E takes it, sbloot.js)
+  if (o) return { id: "", take: 1, label: `Take the ${nameOf(o.w)}` };
   if (!sbMay(s, R.me, "b") || !sbCheat.on) return null;
   let best = null,
     bd = 1.6;
@@ -421,7 +425,8 @@ export function sbGo(s) {
 }
 export const sbGoOpen = () => {
   const g = sbGo(R.state);
-  if (g) sbSettings(() => R, g.id);
+  if (g && g.take) R.send({ t: "sbl", do: "take" });
+  else if (g) sbSettings(() => R, g.id);
 };
 /* the middle of the bottom bar: what you can do now, and how many are done */
 /* the moment specials that fire on their own: confetti over the screen for the Round Lord, a match's winner and the champion */

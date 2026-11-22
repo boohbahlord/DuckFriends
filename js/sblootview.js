@@ -16,7 +16,8 @@ import {
   sbCan,
 } from "./sandboxrules.js";
 import { boxText } from "./sbspawn.js";
-import { lootOk, ammoOf } from "./sbloot.js";
+import { lootOk, ammoOf, sbOrbFor } from "./sbloot.js";
+import { activity } from "./hangout/registry.js";
 import { LOOT, lootOf } from "./sbhotview.js";
 import { fullAmmo, weaponName } from "./l4ddrules.js";
 import { ARMS } from "./guns.js";
@@ -26,6 +27,22 @@ import { specialById } from "./specials.js";
 import { picFrom, sendParts } from "./sbmake.js";
 import { coolFor } from "./rules.js";
 
+/* on a world (Duck Cabin, Dead Ducks Arcade's maps): the E button over an orb I may take (sbloot.js sbOrbFor; the
+   owner's, Nov 21 18:27Z: "You only pick them up by clicking E / Same for any loot on the ground now") */
+activity({
+  id: "sbloot",
+  only: "sandbox",
+  near(pos, ctx) {
+    const o = sbOrbFor(ctx.state(), ctx.me);
+    return (
+      o && {
+        label: `Take the ${nameOf(o.w)}`,
+        d: 0,
+        act: () => ctx.send({ t: "sbl", do: "take" }),
+      }
+    );
+  },
+});
 export const nameOf = (w) =>
   (ammoOf(w) && `${nameOf(ammoOf(w))} ammo`) ||
   (SB_DROPS[w] && SB_DROPS[w][1]) ||
