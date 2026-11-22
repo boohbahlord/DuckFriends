@@ -75,7 +75,6 @@ import {
   upOf,
   ptsOf,
   slotsOf,
-  SLOT_KINDS,
   BOX,
   boxNow,
   HELPER,
@@ -111,6 +110,7 @@ import {
   ZHATS,
   ZOUTFITS,
 } from "./l4ddrules.js";
+import { SLOT_KINDS } from "./kitslots.js";
 import { kindOf, ARMS, POOL, loadTo } from "./guns.js";
 import { fenceZ, zombiesOf } from "./zombies.js";
 import { zSortY } from "./zombieroofs.js";
@@ -2457,8 +2457,7 @@ function peek(tag, s, me) {
   const one = (x, i) =>
     x ? [x, `k-${SLOT_KINDS[i]} ${tintOf(x, angelOf(s, me, x))}`.trim()] : null; // (each in its own color: l4ddrules.js tintOf)
   const list = [
-    ...m.sl.slice(0, 4).map(one),
-    ...m.sl.slice(4, 5).map((x) => one(x, 4)), // (the second item, key 5, then the grenades, key 6, as on the bar)
+    ...m.sl.map(one), // (then the grenades, as on the bar: kitslots.js)
     m.g > 0 ? ["grenade", "k-grenade"] : null,
   ].filter(Boolean);
   const to = Math.max(

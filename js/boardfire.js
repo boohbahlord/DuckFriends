@@ -119,9 +119,9 @@ function justinKilled(s, by, w) {
    after PHP_BACK ms without a hit, and gets up with them all. s.php = { id: { n: HP lost, t: the last hit } }. True when the hit only took HP.
    What a hit takes (owner 2026-11-03 17:15Z, not in Quacky Zombies): the hammer, the chair and a grenade 3, the knife 2,
    the rest 1 */
-export const PHP = 4;
+const PHP = 4;
 const PHP_BACK = 6000;
-export const phpLost = (s, id, now) => {
+const phpLost = (s, id, now) => {
   const h = (s.php || {})[id];
   return h && now - h.t < PHP_BACK ? h.n : 0;
 };
@@ -212,6 +212,19 @@ hpBreed("board", {
   },
   most: (s, id) => grHp(s, id, PHP), // (a group's Max HP over it, sbgroups.js)
   store: (s) => s.php,
+  /* the bar over him (hpmath.js hpBarOf): Justin's while he's up on the board, a seated duck's in the board's phases,
+     always shown, as Dead Ducks Arcade's (it was shown only while a hit was still counted, so the first HP lost still
+     comes from a full bar: full) */
+  bar(s, id, now, seated) {
+    if (id === JUSTIN_ID) {
+      if (!justinShown(s)) return null;
+      const most = boardMgj(s) ? s.justin.max || BJ_HP : 1;
+      return { hp: boardMgj(s) ? (s.justin.hp ?? most) : 1, most };
+    }
+    if (!seated || !boardPhases(s).includes(s.phase)) return null;
+    const most = sbHpOf(s, id) || PHP;
+    return { hp: most - phpLost(s, id, now), most, full: true };
+  },
 });
 /* a duck on Sandbox's board or Duck Cabin that stands up again: at a respawn for players, if there is one (the zombie
    maps bring theirs back their own way: l4ddrules.js) */
