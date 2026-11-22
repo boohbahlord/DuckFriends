@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v247",
+    version: 247,
+    date: "Nov 22, 2026",
+    title: "One way to keep lists",
+    news: [
+      "Behind the scenes: your made modes, made maps and Sandbox saves are kept on your device through one shared piece instead of three copies. Nothing changes for you; they're all still there.",
+    ],
+  },
+  {
     id: "v246",
     version: 246,
     date: "Nov 22, 2026",

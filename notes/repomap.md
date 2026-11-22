@@ -67,7 +67,7 @@ gameready.js 47
 gamesettings.js 1757 Game Settings: the whole screen,
 gamestats.js 191 what `stats` and `roundstats` print
 gfx.js 8 Low graphics
-gmodes.js 246 Sandbox Phase 6: made game
+gmodes.js 219 Sandbox Phase 6: made game
 grenade.js 35 a grenade going off
 ground.js 53 what a duck walks on,
 gunart.js 437 every weapon, drawn: one drawing
@@ -86,6 +86,7 @@ hotbar.js 497 the specials on the number
 hotpick.js 318 What goes in my duck's
 hpmath.js 46 HP in hundredths
 hpmeter.js 327 HP meters and the little
+idbstore.js 38 One place that opens a
 invisible.js 11 Who is invisible right now
 itemtip.js 104 hold I on an item:
 itemtone.js 98 the colors an outfit or
@@ -205,7 +206,7 @@ sbnumberat.js 477 Sandbox: NPCs that run a
 sbout.js 62 Sandbox off the zombie maps:
 sbrotate.js 102 Sandbox, Direction's Rotate in the
 sbsave.js 292 Sandbox: saving a Sandbox as
-sbsaves.js 743 Sandbox's saves: kept on the
+sbsaves.js 733 Sandbox's saves: kept on the
 sbsfx.js 74 Sandbox's sounds
 sbspawn.js 1709 Sandbox: spawns and respawns ,
 sbspawnview.js 2212 Sandbox: spawns and respawns ,
@@ -247,11 +248,11 @@ triviabank.js 499 Trivia's auto questions
 triviarules.js 458 the rules of Trivia
 ui.js 380 small helpers every screen uses
 umaprules.js 72 Made maps: the room's part
-umaps.js 392 Made maps: making them, and
+umaps.js 371 Made maps: making them, and
 units.js 10 the game's units, in one
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an
-updates.js 3313 Updates
+updates.js 3322 Updates
 vdd.js 190 Valentine's Duck Date: what the
 vddrules.js 513 the rules of Valentine's Duck
 vellum.js 28 The King's Festival
