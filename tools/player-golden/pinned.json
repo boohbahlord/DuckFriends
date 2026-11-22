@@ -54,7 +54,7 @@
  },
  "board-phone-stick": {
   "frames": 600,
-  "digest": "11q2los",
+  "digest": "c2hg84",
   "every": [
    "13cftem",
    "1kequfy",
@@ -80,26 +80,26 @@
  },
  "board-phone-tap": {
   "frames": 600,
-  "digest": "yrincw",
+  "digest": "1eew2de",
   "every": [
    "13cftem",
-   "1sqk3oz",
-   "1ktxiju",
-   "r66bzo",
-   "1mfidjl",
-   "og43jo",
-   "j7apoi",
-   "19ym2rw",
-   "19pw50o",
-   "1b7m5ti"
+   "jsbk5i",
+   "n0pudm",
+   "1wajos8",
+   "176uxry",
+   "16hyoa5",
+   "yfax50",
+   "t10jgf",
+   "1nc8hlv",
+   "4xupj0"
   ],
   "seen": {
    "me": {
-    "x": 0.3102,
-    "y": 0.5001
+    "x": 0.3029,
+    "y": 0.5
    },
    "sent": {
-    "move": 55,
+    "move": 57,
     "tick": 50
    }
   }

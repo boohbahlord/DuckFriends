@@ -7852,3 +7852,9 @@ Picked "Slowly changing" for Mad God Justin's board: the whole field fades throu
 "It's not just the lobby UI corner buttons. It's any corner buttons, because the screen of a phone itself is rounded. The GPU and what's displayed in the machine is not what the screen shows, because every phone is usually rounded at its corner. So when things are crammed to its corner of the screen on a phone, like it would be a monitor, then it ends up getting cut off when the UI is small, or even just somewhat in general. And it ends up making the player have to touch the very tipmost of their screen, which is incredibly unpleasant for reasons you could imagine. It feels crammed because that's the same phone I'm holding in my hands. I should have to stretch and pull my fingers out all the way to the very corner and click this tiny button that's smaller than a fraction of my thumb just to do something. UI scale is fine. Just move the UI for mobile towards not on the corner of the damn screen."
 
 Decision (Adam): on phones every corner-placed control (lobby, game top bar, windows' close buttons, the bottom bar's corner pieces, Hangout and the walking maps' buttons) moves inward through ONE shared inset (safe area plus a generous margin, a CSS variable), never per screen. The 90% phone UI floor from V242 (#959) is undone: "UI scale is fine". Noah.
+
+## Nov 22 03:24Z (owner, on a choice card)
+Single Player's game list: picked "Keep it as it is" (only Hangout, Dead Ducks Arcade, Mad God Justin and Sandbox; no greyed-out social games).
+
+## Nov 22 03:25Z (owner, on a choice card)
+Explosion rings: picked "One tile, as written" (each ring one tile, a quarter duck length: center 2x2 9 and always crits, first ring 9, then halving, stop under 0.5; grenades hurt out to about 1.5 duck lengths).

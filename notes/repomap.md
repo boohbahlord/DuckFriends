@@ -16,8 +16,9 @@ barrelheat.js 70 a hot barrel
 bash.js 1360 the command line's language: a
 bbrules.js 380 the rules of Bicker Brackets
 beaks.js 138 beaks
+blast.js 37 explosions: one module
 bloodpool.js 50 a pool of blood: the
-boardfire.js 1319 the board's weapons: hits, shots,
+boardfire.js 1346 the board's weapons: hits, shots,
 boardjustin.js 675 Justin on the boards
 botduck.js 90 a computer's duck: a random
 botlines.js 188 What the computers write and
@@ -57,8 +58,8 @@ front.js 151 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 229 how a held weapon and
 game.js 5663 the game screen
-gameact.js 526 the action window and the
-gameboard.js 579 the board: each mode's board
+gameact.js 521 the action window and the
+gameboard.js 571 the board: each mode's board
 gamedefaults.js 43 the game's own numbers, for
 gamefx.js 873 the silly commands and the
 gamehand.js 604 the hand: the number-key specials,
@@ -72,7 +73,7 @@ grenade.js 35 a grenade going off
 ground.js 53 what a duck walks on,
 gunart.js 437 every weapon, drawn: one drawing
 gunmen.js 110 the gunmen's looks
-gunmenrules.js 1151 Survival: the gunmen
+gunmenrules.js 1145 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the
 gunparts.js 15 the pieces every weapon's drawing
 guns.js 626 every weapon's numbers: one sheet
@@ -217,7 +218,7 @@ scrules.js 428 the rules of Story Chain
 secret.js 79 secrets between two browsers
 seriatbible.js 108 The Seriat bible in the
 seriattheme.js 63 Seriat's and the command line's
-settings.js 306 Settings
+settings.js 298 Settings
 sfxlist.js 162 the sound files
 shared.js 497 Sandbox Phase 7: Shared, the
 shell.js 1127 the command line: a small
@@ -253,7 +254,7 @@ umaps.js 371 Made maps: making them, and
 units.js 10 the game's units, in one
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an
-updates.js 3342 Updates
+updates.js 3353 Updates
 vdd.js 190 Valentine's Duck Date: what the
 vddrules.js 513 the rules of Valentine's Duck
 vellum.js 28 The King's Festival

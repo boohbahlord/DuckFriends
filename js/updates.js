@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v250",
+    version: 250,
+    date: "Nov 22, 2026",
+    title: "Buttons off the corners",
+    news: [
+      "On a phone, every button that sat in a corner of the screen (the top bar, the bottom bar, the lobby, the vote and windows' close buttons) now sits further in, away from the screen's rounded corners, upright and sideways. The UI scale goes as low as before again.",
+      "Behind the scenes: every explosion (board, Hangout, zombie maps) now uses one shared blast rule. Nothing plays differently yet.",
+      "Behind the scenes: Lawyering and Duncelation share one Vote button, and Story Chain and Trivia share one way of keeping your duck in view. Nothing plays differently.",
+    ],
+  },
+  {
     id: "v249",
     version: 249,
     date: "Nov 22, 2026",
