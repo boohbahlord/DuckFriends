@@ -8028,3 +8028,13 @@ Decision: RULE: Jackal only gets beginner jobs, never settings or UI (Jackal did
 ## Owner, 19:24Z Nov 22 (furious)
 WHO THE FUCK DIDNT FIX THE FUCKIG GUNS IN EVERY GAME MODE! TOGGLE ISNT A FUCKIGN THING ANYMORE AND THEY JUST FUCKING SHOW YOU GOD DAMN PIECES OF SHIT!!!! THE FUCKING GAME IS IN AN UNPLAYABLE STATE THANKS TO EITHER ADAM'S PLAN HAVING PRIORITIES COMPLETELY FUCKED UP WHERE FIXES WERE IGNORED AND DELAYED OR FUCKING JACKAL IS BEING USED BY YOU LAZY FUCKS! WHEN THE FUCKING CREATOR SAYS TO MAKE THE FUCKING GAME'S HOTBAR IN EVERY MODE NOT HAVE TOGGLE AND THE ITEM ALWAYS IN YOUR HAND IF IT ISNT AN EMPTY SLOT OR SOMETHING LIKE FLASHLIGHT, THEN FUCKING DO IT !!!!
 Decision: RULE, every mode: no weapon toggle; the hotbar's selected slot is always in hand, unless the slot is empty or is something like the flashlight. Found: Dead Ducks Arcade already works this way; the board modes (hand.held, number key again puts it away), Mad God Justin (mgjToggles/mgjOut2) and Sandbox still toggle. One shared hand rule for all, built by Solomon right after the zombie fix, ships alone. Adam's fault: the K2c "walk-around hotbar" was planned only for the walk-around modes.
+
+## Owner, 19:26Z Nov 22
+HIT MARKERS SHOLDNT EVEN EXIST IN OTHER GAME MODES BUT ESPECIALLY SANDBOX U RETARDS! REMOVE CHAIN GUN
+
+## Owner, 19:28Z Nov 22
+WHY THE FUCK IS GLOW ON THE END OF THE GUN NOT PIXELATED!??!?!?! NOT ONE THING GETS TO ESCAPE THAT ORDER!!!! WHO HAS BEEN MESSING EVERYTHING UP !?!?!?! I WANT AN ANSWER!!! THE FILE TO MAKE EVERY GAME MODE WORK THE SAME IN THE HOT BAR, PLAYER, AND OTHERWISE HASNT BEEN DONE AND SOMEONE IS CREATING MORE ENTROPY INTO MY GAME THEN CAN POSSIBLY BE CONVEYED BY ANY MATH IN IT'S HORRIFC SCALE OF UGLY
+
+## Owner, 19:29Z Nov 22
+WHEN THE GUNS ARE SELECTED, THEY HAVE AMMO OF DEAD DUCKS ARCADE UNLESS UNLIMITED AMMO IS SELECTED YOU FUCKING RETARDS!!!!
+Decision (Adam): hitmarkers only in Mad God Justin (modes.js hitMarks, the hit on Justin) - Adam, now. Barrel heat glow drawn as pixels - Adam, now. Chain gun removed from the whole game - after the lobby fix. ONE hand/hotbar/ammo module for every mode, Dead Ducks Arcade the base: no toggle, the selected slot in hand, Dead Ducks Arcade's magazines and reloads everywhere unless the mode's unlimited ammo is on (GUN_BREEDS.board/mgj mag rows deleted) - Solomon, right after the zombie fix. Answer to "who": the glow was made Nov 17 before the pixel rule and never converted; the cross-mode hand/ammo module was planned only for the walk-around modes (Adam's plan).
