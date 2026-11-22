@@ -71,7 +71,7 @@ gameboard.js 589 the board: each mode's
 gamedefaults.js 71 the game's own numbers,
 gamefx.js 876 the silly commands and
 gamehand.js 620 the hand: the number-key
-gameplace.js 738 where things are put
+gameplace.js 734 where things are put
 gameready.js 47 
 gameround.js 572 round
 gamesettings.js 756 Game Settings: the whole
