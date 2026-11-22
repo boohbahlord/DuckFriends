@@ -106,20 +106,20 @@
  },
  "board-specials": {
   "frames": 720,
-  "digest": "17x0sx",
+  "digest": "fvrz56",
   "every": [
    "142lsmz",
-   "1rvzktg",
-   "nppn5o",
-   "1ajam6f",
-   "18uqcwa",
-   "k8n8r4",
-   "ge02w5",
-   "7q4zeo",
-   "1095xj",
-   "1olga6g",
-   "1hrtib9",
-   "1sem20m"
+   "qoe4gu",
+   "1uaop43",
+   "kf1buo",
+   "bmg66d",
+   "cdd4cy",
+   "vc05xm",
+   "166uxv6",
+   "1h6kefk",
+   "p1axf8",
+   "vzjeic",
+   "46rvou"
   ],
   "seen": {
    "me": {
@@ -127,9 +127,9 @@
     "y": 0.0027
    },
    "sent": {
-    "move": 24,
+    "move": 25,
     "tick": 60,
-    "use": 18,
+    "use": 21,
     "reload": 1,
     "draw": 1
    }
@@ -494,20 +494,20 @@
  },
  "dda-pick": {
   "frames": 720,
-  "digest": "1rt8ogt",
+  "digest": "1q8jgtq",
   "every": [
    "1o33vg6",
    "cadhq4",
    "1bh92ru",
    "8frpas",
-   "l5yigd",
-   "13z9675",
-   "rnj3b3",
-   "1kdster",
-   "omhnc9",
-   "9a1upt",
-   "1n4w28m",
-   "7i8va6"
+   "fz5w52",
+   "qbd5t6",
+   "qbd5t6",
+   "v8r1oi",
+   "96qpl6",
+   "1cxpxlo",
+   "1h45691",
+   "4cgbvh"
   ],
   "seen": {
    "me": {
@@ -516,9 +516,9 @@
     "z": 0
    },
    "sent": {
-    "move": 12,
+    "move": 14,
     "tick": 60,
-    "use": 9,
+    "use": 8,
     "draw": 2
    }
   }
@@ -555,16 +555,16 @@
  },
  "board-reload": {
   "frames": 480,
-  "digest": "1lcfuv",
+  "digest": "16glea3",
   "every": [
    "1tauoug",
    "2xo9oh",
-   "d632mi",
-   "a8sfvd",
+   "1rpenn3",
+   "2qz322",
    "xzlfuk",
    "1e74g1f",
    "1e74g1f",
-   "de2uqi"
+   "1tk3li0"
   ],
   "seen": {
    "me": {
@@ -660,20 +660,20 @@
  },
  "board-big-swing": {
   "frames": 720,
-  "digest": "i8izkz",
+  "digest": "16qm0sc",
   "every": [
    "vick6s",
-   "w9t48y",
-   "bah4pp",
-   "l5dems",
-   "2ddwa3",
-   "48zzht",
-   "ij9rz",
-   "m23bdb",
-   "1w005lh",
-   "qmkgqp",
-   "13v9qq7",
-   "9u5j5z"
+   "t9kxca",
+   "qfhzr7",
+   "ccba6b",
+   "tl712u",
+   "1jjanja",
+   "1rwu9bw",
+   "1bum0q",
+   "4iz1m1",
+   "2j67pl",
+   "hwllb5",
+   "zyjz9m"
   ],
   "seen": {
    "me": {
@@ -681,9 +681,9 @@
     "y": 0.0027
    },
    "sent": {
-    "move": 23,
+    "move": 25,
     "tick": 60,
-    "use": 14,
+    "use": 10,
     "reload": 1
    }
   }
