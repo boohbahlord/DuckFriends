@@ -81,6 +81,7 @@ import {
 import { kindOf, MGJ_MELEE } from "./guns.js";
 import { draws } from "./bowdraw.js";
 import { gunsIn, itemsIn, PRIMARY } from "./kitslots.js";
+import { lootAt } from "./l4ddloot.js";
 import {
   isVd,
   VD_PHASES,
@@ -1027,6 +1028,8 @@ export function l4Bot(s, id, now, out) {
   const p = s.pos[id],
     h = s.hang;
   if (!p || !h || !h.l4 || h.l4.over || !l4Up(s, id)) return;
+  if (lootAt(s, p.x * W, p.y * H, now))
+    out.push({ t: "hang", k: "l4", do: "pick", id }); // (on something on the ground: E, as a player presses it, l4ddloot.js)
   if (isHelper(s, id)) return justinBot(s, id, now, out); // (the fireplace's Justin: his own, better brain)
   const wait = h.l4.wait;
   if (wait && !wait.v[id]) {

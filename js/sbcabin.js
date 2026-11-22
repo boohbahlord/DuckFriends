@@ -103,7 +103,7 @@ export function cabinSpawn(s, x, y, o) {
    that lets it while what it's after is higher. o.z: its feet, when it isn't on the ground; o.vz, o.top: falling */
 const FALL_T = 0.35, // (s: a fall from the gas station roof, as a duck's)
   CLIMB = 150; // (px a second, as a duck's)
-export const npcZ = (o) => (o.z != null ? o.z : heightAt(o.x, o.y));
+const npcZ = (o) => (o.z != null ? o.z : heightAt(o.x, o.y));
 function heights(s, o, to, dt, x0, y0) {
   const z0 = npcZ(o),
     roof = floorStep();
