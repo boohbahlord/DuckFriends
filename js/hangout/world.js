@@ -1636,8 +1636,7 @@ export function mountWorld(board, api) {
         const d = me.vz == null && !me.j ? L.deckAt(x, y, me.z) : null;
         me._sl = d && d.hAt ? d : null; // (on a slope: it holds my duck next frame too)
       }
-      me.x = x / L.W;
-      me.y = y / L.H;
+      [me.x, me.y] = L.landOff(me, x, y); // (not on a trunk's top: back the way it came)
       for (const a of acts()) a.after?.(me, ev, now, ctx); // (the trampoline: the next bounce)
       return ev;
     },

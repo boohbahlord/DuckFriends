@@ -5,11 +5,6 @@ import * as L from "./layout.js";
 export const C = L.CABIN,
   T = 12,
   n1 = (v) => Math.round(v * 10) / 10;
-export const hash = (s) => {
-  let h = 7;
-  for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) | 0;
-  return ((h >>> 0) % 1000) / 1000;
-};
 export const part = (svg, l, t, w, h, key, o = {}) => ({
   svg,
   box: { l, t, w, h },
