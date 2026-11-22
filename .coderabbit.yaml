@@ -1,0 +1,99 @@
+# CodeRabbit reads every pull request and leaves review comments (the owner's ask, Nov 22 20:12Z: "make it work for
+# more efficiency"). I want it quiet and short: only real bugs and broken house rules, never style nits (Prettier and
+# ESLint already handle those), no poems, no long summaries. The house rules it checks against are CLAUDE.md.
+# Docs: https://docs.coderabbit.ai/reference/configuration
+language: en-US
+tone_instructions: "Short and plain. Only real bugs and broken house rules. No praise, no style nits."
+early_access: false
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: false
+  high_level_summary_in_walkthrough: true
+  poem: false
+  review_status: false
+  collapse_walkthrough: true
+  changed_files_summary: false
+  sequence_diagrams: false
+  estimate_code_review_effort: false
+  assess_linked_issues: false
+  related_issues: false
+  related_prs: false
+  suggested_labels: false
+  suggested_reviewers: false
+  abort_on_close: true
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches: ["main", "claude/.*"]
+  path_filters:
+    # generated or stamped files, the owner's pictures and sounds, and the long request log: nothing to review
+    - "!index.html"
+    - "!offline.json"
+    - "!tools/**/pinned.json"
+    - "!tools/health/baseline.json"
+    - "!notes/**"
+    - "!assets/**"
+    - "!**/*.png"
+    - "!**/*.mp3"
+    - "!**/*.wav"
+    - "!**/*.mp4"
+    - "!js/updates.js"
+  path_instructions:
+    - path: "js/**/*.js"
+      instructions: |
+        House rules (CLAUDE.md). Flag only these and real bugs:
+        - One shared module per mechanic (zombies, players, computer players, guns, hits, gore, NPC brains, the hand
+          in js/hotpick.js, ammo). A new file that copies a mechanic for one mode, or a branch that checks a mode's
+          name (s.options.mode === 'mgj' and the like), is a bug: modes differ by data (breed tables, js/modes.js
+          fields) or hooks.
+        - No new `?? <number>` defaults in game rules: numbers belong in js/gamedefaults.js or the breed table.
+        - One owner module per state key: flag a file writing a state key another module owns.
+        - Files stay under about 1,500 lines.
+        - Replacing something must delete the old path in the same PR (look for dead exports left behind).
+        - js/rules.js and the *rules.js files are a reducer run by the host: no DOM, no Date.now() or Math.random()
+          inside reduce (the time comes in as `now`).
+        - Hot loops (per frame): no new objects or arrays every frame; no main-thread task over 50 ms.
+        - Code comments speak as the owner in first person ("I want", "we decided"), never "the user".
+        - Words players see: "Jumps" never "clicks"; "Specials" not "effects"; "contenders" never "seeds".
+    - path: "js/**/{music,musicbar,pianokeys,sound,sfx,audio}*.js"
+      instructions: |
+        Sounds follow .claude/rules/sound.md: every sound starts and ends at silence, is scheduled ahead, never jumps
+        a gain (ramps only), keeps headroom. Flag any setValueAtTime jump on a live gain or a source started at full
+        volume.
+    - path: "css/**/*.css"
+      instructions: |
+        Flag only: UI pieces that can overlap or clip on a phone in portrait; pixel-art pieces drawn with smooth
+        gradients, blur or rounded glows (all art is pixel art: image-rendering pixelated, hard edges).
+    - path: "database.rules.json"
+      instructions: "Firebase rules: flag anything that lets a player write another player's data or read `reports`."
+    - path: "tools/**"
+      instructions: "Test and build tools: flag only real bugs (a check that can never fail, a wrong path)."
+  tools:
+    eslint:
+      enabled: true
+    shellcheck:
+      enabled: true
+    actionlint:
+      enabled: true
+    gitleaks:
+      enabled: true
+    markdownlint:
+      enabled: false
+    languagetool:
+      enabled: false
+    biome:
+      enabled: false
+    yamllint:
+      enabled: true
+chat:
+  auto_reply: true
+knowledge_base:
+  opt_out: false
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "CLAUDE.md"
+      - ".claude/rules/*.md"
+  learnings:
+    scope: local
