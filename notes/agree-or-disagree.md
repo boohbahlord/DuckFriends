@@ -7858,3 +7858,8 @@ Single Player's game list: picked "Keep it as it is" (only Hangout, Dead Ducks A
 
 ## Nov 22 03:25Z (owner, on a choice card)
 Explosion rings: picked "One tile, as written" (each ring one tile, a quarter duck length: center 2x2 9 and always crits, first ring 9, then halving, stop under 0.5; grenades hurt out to about 1.5 duck lengths).
+
+## Owner, 06:18Z Nov 22 (screenshot: Downpour round 6, phone; he stands on the pump roof, zombies bunched by the red car and the plank)
+> Zombies got stuck and werent moving up to the gas pump roof, seemingly stuck on notbing. Check principles
+
+Decision: function first (before B2). Find why the zombies stop by the red car/plank instead of climbing to the pump roof; fix it in zombies.js/zombieroofs.js (one walk, the same ways up ducks use, walkable = what looks open); add a pin that fails if zombies can't reach a duck on the pump roof.
