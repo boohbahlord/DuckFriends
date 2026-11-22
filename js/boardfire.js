@@ -69,7 +69,19 @@ import {
 
 import { pwAdd, pwHit, DEATH } from "./wounds.js";
 
-import { isMgj, mgjZombieHit, mgjStab, mgjHurt, mgjSoak, mgjGone, mgjHitAt, MGJ_SCALE, MGJ_HAMMER, DMG, mgjHalf } from "./mgjrules.js";
+import {
+  isMgj,
+  mgjZombieHit,
+  mgjStab,
+  mgjHurt,
+  mgjSoak,
+  mgjGone,
+  mgjHitAt,
+  MGJ_SCALE,
+  MGJ_HAMMER,
+  DMG,
+  mgjHalf,
+} from "./mgjrules.js";
 import { mgjShot, mgjLgren } from "./mgjpicks.js";
 
 import { picBody, duOfRoom } from "./sbbody.js";
@@ -86,6 +98,7 @@ import { zOf, nearH } from "./heights.js";
 
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import { toPx } from "./units.js";
+import { blast as boom, reach } from "./blast.js";
 
 /* Justin knocked down by a player's weapon (the clown items unlock at 12): the last few, each numbered, so
    every device counts its own player's once (unlocks.js) */
@@ -535,96 +548,110 @@ export const shotAt = (sh, t) => ({
         : 0.41) * (sh.sc || 1), // (a bigger duck's from higher up: its hand, sizeShots)
 });
 /* a grenade going off at (x, y): every duck within GRENADE_R plays dead and is thrown away from it, three times as far as
-   the hammer throws one; Justin is knocked down (Mad God Justin: 1 damage), Duck Cabin's Justin and cats are hit. In
-   Hangout only on its side of the cabin's walls and at about its height. Every screen draws the blast (the boom fx) */
+   the hammer throws one; Justin is knocked down (Mad God Justin: 1 damage), Duck Cabin's Justin and cats are hit. Who
+   is in it: blast.js. Every screen draws the blast (the boom fx) */
 function blast(s, sh, x, y, now, o = {}) {
   const hang = isHang(s),
     w = o.w || "grenade",
     [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
     side = sh.hin || 0,
+    mine = sh.by !== JUSTIN_ID,
+    self = (id) => id === sh.by && (w === "grenade" || w === "glauncher"), // (my own grenade hurts me too: the owner's, Nov 16)
     hit = [];
-  const near = (px, py, pz, inSide, big = 1) => {
-    if (hang && (inSide !== side || !nearH(pz, sh.hz || 0))) return null;
-    const dx = (px - x) / rx,
-      dy = (py - y) / ry,
-      d = Math.max(0, Math.hypot(dx, dy) - (big - 1) / 2); // (big: a Seriat NPC's hitbox)
-    return d <= GRENADE_R * (o.wide || 1) ? { d, dx, dy } : null;
-  };
-  for (const id of s.seat) {
-    const p = s.pos[id],
-      P = s.players[id];
-    if (!p || p.x < 0 || !P || isGhost(s, id)) continue;
-    const self = id === sh.by && (w === "grenade" || w === "glauncher"); // (my own grenade hurts me too: the owner's, Nov 16)
-    if (isMgj(s) && sh.by !== JUSTIN_ID && !self) continue; // (Mad God Justin: the ducks are on one side)
-    if (vdSafe(s, id)) continue; // (Valentine's Duck Date: the two at the table)
-    const n = near(
-      p.x,
-      p.y,
-      zOf(p),
-      hang ? (inCabin(...toPx(p)) ? 1 : 0) : 0,
-      duckBig(s, id),
-    ); // (a duck bigger than 100%: its hitbox too, duck.js)
-    if (!n) continue;
-    if (self && isMgj(s)) {
-      if (mgjHalf(s, id, now)) hit.push(id);
-      continue;
-    } // (Mad God Justin: half my HP, rounded down, never down by it; no knock-back)
-    const killed = !P.dead && !soaks(s, id, now, dmgOf(s, "grenade"), sh.by);
-    if (P.dead || killed) {
-      if (!P.dead) playerKilled(s, sh.by, id, w);
-      P.dead = true;
-      holdDown(s, id, now);
-    } // (the normal game's HP: one hit's worth, and it still flies)
-    if (killed && pwOn(s)) pwAdd(s, id, DEATH, now, true); // (killed by it: torn apart, headless and burnt)
-    const a = n.d > 0.05 ? null : Math.random() * Math.PI * 2,
-      [tx, ty] = n.d > 0.05 ? [n.dx / n.d, n.dy / n.d] : [0, 0];
-    shove(
-      s,
-      id,
-      a === null ? tx : Math.cos(a),
-      a === null ? ty : Math.sin(a),
-      pushOf(s, "grenade"), // (the mode's own: push.js)
-      now,
-      side,
-      { ms: 650, h: 0.9, l: 0 },
-    );
-    hit.push(id);
-  }
-  if ((isMgj(s) || sbOnBoard(s)) && sh.by !== JUSTIN_ID)
-    mgjZombieHit(
-      s,
-      (zx, zy, big, body) => {
-        if (!body) return !!near(zx, zy, 0, 0, big);
-        const q = body.at(x, y); // (Sandbox's: its nearest part that shows, sbbody.js)
-        return !!q && !!near(q.x, q.y, 0, 0);
+  const near = reach({
+    x,
+    y,
+    rx,
+    ry,
+    r: GRENADE_R * (o.wide || 1),
+    ok: (px, py, pz, inSide) =>
+      !hang || (inSide === side && nearH(pz, sh.hz || 0)),
+  }); // (Hangout: only on its side of the cabin's walls and at about its height)
+  boom(near, [
+    [
+      s.seat,
+      (id) => {
+        const p = s.pos[id],
+          P = s.players[id];
+        if (!p || p.x < 0 || !P || isGhost(s, id)) return null;
+        if (isMgj(s) && mine && !self(id)) return null; // (Mad God Justin: the ducks are on one side)
+        if (vdSafe(s, id)) return null; // (Valentine's Duck Date: the two at the table)
+        return [
+          p.x,
+          p.y,
+          zOf(p),
+          hang ? (inCabin(...toPx(p)) ? 1 : 0) : 0,
+          duckBig(s, id),
+        ]; // (a duck bigger than 100%: its hitbox too, duck.js)
       },
-      "grenade",
-      now,
-      sh.by,
-    ); // (Mad God Justin's zombies in it: all their HP, as a grenade's blast in Dead Ducks Arcade)
-  if (!hang && sh.by !== JUSTIN_ID && justinShown(s)) {
-    const j = justinAt(s.justin, now);
-    if (j && near(j.x, j.y, 0, 0)) {
-      const got = isMgj(s)
-        ? mgjStab(s, sh.by, now, logLine, w === "glauncher" ? DMG.lgren : 1)
-        : justinHit(s, sh.by, now, logLine, w);
-      if (got) {
-        if (got === 2) justinKilled(s, sh.by, w);
-        hit.push(JUSTIN_ID);
-      }
-    }
-  }
-  if (hang)
-    for (const n of hangTargets(s, now, "grenade")) {
-      const q = n.at ? n.at(x, y) : { x: n.x / HW, y: n.y / HH }; // (Sandbox's NPCs: their nearest part that shows, sbbody.js)
-      if (
-        q &&
-        near(q.x, q.y, n.z, inCabin(n.x, n.y) ? 1 : 0, n.at ? 1 : n.r) &&
-        hangHit(s, n.id, sh.by, now, w) &&
-        n.id === "justin"
-      )
-        justinKilled(s, sh.by, w);
-    }
+      (id, n) => {
+        const P = s.players[id];
+        if (self(id) && isMgj(s)) {
+          if (mgjHalf(s, id, now)) hit.push(id);
+          return;
+        } // (Mad God Justin: half my HP, rounded down, never down by it; no knock-back)
+        const killed =
+          !P.dead && !soaks(s, id, now, dmgOf(s, "grenade"), sh.by);
+        if (P.dead || killed) {
+          if (!P.dead) playerKilled(s, sh.by, id, w);
+          P.dead = true;
+          holdDown(s, id, now);
+        } // (the normal game's HP: one hit's worth, and it still flies)
+        if (killed && pwOn(s)) pwAdd(s, id, DEATH, now, true); // (killed by it: torn apart, headless and burnt)
+        const a = n.d > 0.05 ? null : Math.random() * Math.PI * 2,
+          [tx, ty] = n.d > 0.05 ? [n.dx / n.d, n.dy / n.d] : [0, 0];
+        shove(
+          s,
+          id,
+          a === null ? tx : Math.cos(a),
+          a === null ? ty : Math.sin(a),
+          pushOf(s, "grenade"), // (the mode's own: push.js)
+          now,
+          side,
+          { ms: 650, h: 0.9, l: 0 },
+        );
+        hit.push(id);
+      },
+    ],
+    (near) =>
+      (isMgj(s) || sbOnBoard(s)) &&
+      mine &&
+      mgjZombieHit(
+        s,
+        (zx, zy, big, body) => {
+          if (!body) return !!near(zx, zy, 0, 0, big);
+          const q = body.at(x, y); // (Sandbox's: its nearest part that shows, sbbody.js)
+          return !!q && !!near(q.x, q.y, 0, 0);
+        },
+        "grenade",
+        now,
+        sh.by,
+      ), // (Mad God Justin's zombies in it: all their HP, as a grenade's blast in Dead Ducks Arcade)
+    [
+      !hang && mine && justinShown(s) ? [justinAt(s.justin, now)] : [],
+      (j) => j && [j.x, j.y, 0, 0],
+      () => {
+        const got = isMgj(s)
+          ? mgjStab(s, sh.by, now, logLine, w === "glauncher" ? DMG.lgren : 1)
+          : justinHit(s, sh.by, now, logLine, w);
+        if (got) {
+          if (got === 2) justinKilled(s, sh.by, w);
+          hit.push(JUSTIN_ID);
+        }
+      },
+    ],
+    [
+      hang ? hangTargets(s, now, "grenade") : [],
+      (n) => {
+        const q = n.at ? n.at(x, y) : { x: n.x / HW, y: n.y / HH }; // (Sandbox's NPCs: their nearest part that shows, sbbody.js)
+        return q && [q.x, q.y, n.z, inCabin(n.x, n.y) ? 1 : 0, n.at ? 1 : n.r];
+      },
+      (n) => {
+        if (hangHit(s, n.id, sh.by, now, w) && n.id === "justin")
+          justinKilled(s, sh.by, w);
+      },
+    ],
+  ]);
   s.fxN = (s.fxN || 0) + 1;
   s.fx = [
     ...(s.fx || []).slice(-19),

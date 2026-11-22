@@ -1035,19 +1035,13 @@ function shot(s, by, x, y, now, w, rx, ry, from, hit, H) {
   }
   return any;
 }
-/* a grenade's blast: all their HP (r: its reach, open(x, y, z): nothing solid between) */
-function blast(s, by, bx, bY, r, open, now, w, H) {
+/* a grenade's blast: all their HP (near(x, y, z): who is in it, blast.js) */
+function blast(s, by, near, now, w, H) {
   if (!gmOf(s)) return;
   const gm = (s.hang.gm = { ...gmOf(s) }); // (its own copy: allies.js writes the squad's friendly fire into it)
   let any = false;
   gm.gb = gm.gb.map((o) => {
-    if (
-      o.d ||
-      o.hid ||
-      Math.hypot(o.x - bx, (o.y - bY) * 1.25) >= r ||
-      !open(o.x, o.y, o.z || heightAt(o.x, o.y))
-    )
-      return o;
+    if (o.d || o.hid || !near(o.x, o.y, o.z || heightAt(o.x, o.y))) return o;
     const q = { ...o };
     takes(s, q, by, w || "grenade", q.k === "f" ? 1 : q.hp, now, H, "blast"); // (a player's explosive does 1 to the friendly squad)
     any = true;

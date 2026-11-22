@@ -16,8 +16,9 @@ barrelheat.js 70 a hot barrel
 bash.js 1360 the command line's language: a
 bbrules.js 380 the rules of Bicker Brackets
 beaks.js 138 beaks
+blast.js 37 explosions: one module
 bloodpool.js 50 a pool of blood: the
-boardfire.js 1319 the board's weapons: hits, shots,
+boardfire.js 1346 the board's weapons: hits, shots,
 boardjustin.js 691 Justin on the boards
 botduck.js 90 a computer's duck: a random
 botlines.js 188 What the computers write and
@@ -72,7 +73,7 @@ grenade.js 35 a grenade going off
 ground.js 53 what a duck walks on,
 gunart.js 437 every weapon, drawn: one drawing
 gunmen.js 110 the gunmen's looks
-gunmenrules.js 1132 Survival: the gunmen
+gunmenrules.js 1126 Survival: the gunmen
 gunmenview.js 137 Survival: the gunmen on the
 gunparts.js 15 the pieces every weapon's drawing
 guns.js 626 every weapon's numbers: one sheet
