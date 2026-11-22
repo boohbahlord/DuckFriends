@@ -20927,6 +20927,10 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
 .sb-tog.sb-tri.mid {
   opacity: 0.6;
   font-style: italic;
+  /* "Default (false)" on one line in the 7rem column, the default boxes' letters (.sb-box::placeholder) */
+  font-family: var(--font);
+  font-size: 0.85em;
+  white-space: nowrap;
 }
 /* a loot block's Starts: its picks are words, wider than a number box */
 .sb-row[data-row="lst"] {
