@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v244",
+    version: 244,
+    date: "Nov 22, 2026",
+    title: "Zombies spread out",
+    news: [
+      "For Dead Ducks Arcade, Survival and Mad God Justin: zombies now spread out a little instead of stacking into each other, and when two or three are already in the way, the next one goes around them.",
+    ],
+  },
+  {
     id: "v243",
     version: 243,
     date: "Nov 22, 2026",
