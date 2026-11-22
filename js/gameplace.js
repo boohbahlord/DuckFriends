@@ -9,7 +9,6 @@ import {
   hidden,
   me,
   mgjRv,
-  place,
   scZone,
   setBbZoom,
   setCam,
@@ -18,6 +17,7 @@ import {
   turned,
   world,
 } from "./game.js";
+import { place } from "./gameboard.js";
 import { actHTML } from "./gameact.js";
 import { fire } from "./gamehand.js";
 import { hurt } from "./gamefx.js";
