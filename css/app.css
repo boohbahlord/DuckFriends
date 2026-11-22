@@ -4293,16 +4293,10 @@ details.more[open] > summary {
 .map-pixel .col {
   border-right-color: #ffffff30;
 }
-/* every map's tiles are as see-through as every other's: one level, --board-a (set once, on :root), mixed here */
-.map-board .col,
-.map-sky .col,
-.map-pixel .col,
-.map-tiles .col,
-.map-rabbit .col,
-.map-stars .col,
-.map-carnival .col,
-.map-nwk .col,
-.map-vellum .col {
+/* every map's tiles are as see-through as every other's: one level, --board-a (set once, on :root), mixed here. On every
+   board, never a list of maps: a list missed the maps players make (the owner's Pandat, Nov 22: "the tiles ... are not
+   transparent like they once were anymore") */
+.board .col {
   background: color-mix(in srgb, var(--c) var(--board-a), transparent);
 }
 .map-sky .col {
