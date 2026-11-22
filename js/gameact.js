@@ -1,21 +1,27 @@
 /* ---------- the action window and the view's titles: what the buttons say each phase and mode ----------
    Moved out of game.js to keep that file small (a pure move). It imports back from game.js, which imports it. */
 import { late } from "./game.js";
+
 import {
   R,
-  bar,
   me,
+  world,
+} from "./game.js";
+import {
   sbGo,
   viewOver,
   viewResults,
   viewSubmit,
   whoHTML,
-  world,
-} from "./game.js";
+} from "./gameround.js";
+
 import { boardHTML } from "./gameboard.js";
+
 import { graceLeft, mgjTip } from "./gamehand.js";
-import { go } from "./router.js";
-import { esc, $ } from "./ui.js";
+
+import {
+  esc,
+} from "./ui.js";
 import {
   COLS,
   needed,
@@ -34,8 +40,11 @@ import {
   goOnVotes,
   goOnNeed,
 } from "./rules.js";
+
 import { votesDue } from "./voterules.js";
+
 import { isSudo } from "./roomrules.js";
+
 import {
   isCounsel,
   jury,
@@ -43,15 +52,25 @@ import {
   canGiveUp,
   ATT_PHASES,
 } from "./lawrules.js";
+
 import { SC_BOARD, zoneAt, scCanVote, scLineOf } from "./scrules.js";
+
 import { bbMatch } from "./bbrules.js";
+
 import { BOARD_HTML as HANG_HTML } from "./hangout/world.js";
+
 import { wordsHTML } from "./story.js";
+
 import { topicHTML, tvoteHTML, seedsHTML, podiumHTML } from "./brackets.js";
+
 import { watching, watchHTML } from "./spectate.js";
+
 import { sbOnBoard } from "./sandboxrules.js";
+
 import { profile } from "./store.js";
+
 import { now as clockNow } from "./clock.js";
+
 import {
   isQuack,
   QUACK_PHASES,
@@ -61,7 +80,9 @@ import {
   stillIn,
   canAccuse,
 } from "./quackrules.js";
+
 import { pickHTML } from "./quack.js";
+
 import {
   isDn,
   DN_SIDES,
@@ -71,7 +92,9 @@ import {
   endVotes,
   endNeed,
 } from "./duncerules.js";
+
 import { isMgj } from "./mgjrules.js";
+
 import {
   isVd,
   VD_PHASES,
@@ -80,9 +103,11 @@ import {
   turnedDown,
   vdTileAt,
 } from "./vddrules.js";
+
 import { isTv, TV_BOARD } from "./triviarules.js";
+
 import { tvWriteHTML, tvActHTML } from "./trivia.js";
-import { again } from "./fxmotion.js";
+
 
 export function actHTML(s) {
   const sbg = sbGo(s);
