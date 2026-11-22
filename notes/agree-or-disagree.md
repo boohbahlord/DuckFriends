@@ -7900,3 +7900,9 @@ and changing the map in Sandbox: Noah.
 
 13:25Z (screenshot /mnt/project-files/adam/bugs/2026-11-22-1325-bible-proposals.jpg): "Why the FUCK ARE THERE PROPOSALS IN THE BIBLE!? REVIEW THIS SHIT IT SHOULDNT BE LIKE THIS"
 Decision (Adam): the player reference (docs/seriat.md) holds only built, settled rules as plain facts; a check fails on owner, proposal, open, times, names or paths in it; `**` inside code shows as written.
+
+## 2026-11-22 16:03Z (owner, phone sideways in Sandbox on his made map: /mnt/project-files/adam/bugs/2026-11-22-1603-sideways-black-lines.jpg)
+
+"What are these black lines here on the screen when I turn it sideways?
+
+In the zones, it should say on or off by default. Also, I want to see if we can get the playtester to make a game mode or a game in the sandbox and then upload it like a game mode. Like maybe one's party game, one is some combat, and we use some of like the complex AI brain ideas for some of these as well for the AIs we add. Maybe a third one is like a hangout. Joseph can suggest ideas, and then I can be told if this can actually happen, and then we can make the playtester do it. I believe his name is Samuel. Whatever his name is. Tell me if we can do this."
