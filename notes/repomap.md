@@ -23,7 +23,7 @@ boardfire.js 1338 the board's weapons: hits,
 boardjustin.js 667 Justin on the boards
 botduck.js 90 a computer's duck: a
 botlines.js 188 What the computers write
-bots.js 1437 computers
+bots.js 1439 computers
 bowdraw.js 46 the bow, drawn to
 brackets.js 459 Bicker Brackets: what the
 brainbuild.js 333 Sandbox: M's Brain builder

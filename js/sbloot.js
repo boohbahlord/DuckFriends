@@ -2,7 +2,7 @@
    The owner's Sandbox file, "Loot Spawns" (sandboxrules.js SB_LOOT has the words): an orb lies on its loot point, holding
    one of the things picked for it (more than one picked: one of them at random each time). The first comes at once; a
    duck takes it with E, standing on it (the owner's, Nov 21 18:27Z: "You only pick them up by clicking E / Same for any
-   loot on the ground now"; an NPC its list names still takes it by walking over it), and with "Auto spawn" on (once
+   loot on the ground now"; computers press E too, bots.js; an NPC its list names still takes it by walking over it), and with "Auto spawn" on (once
    "Comes back"), the next comes "Seconds before a new one comes" later.
    - On the board and Duck Cabin, what's taken goes on the duck's hotbar (sbhot.js sbSlots: s.sb.hb.got), for good or
      for "Seconds you keep it".
