@@ -72,9 +72,9 @@ gfx.js 8 Low graphics
 gmodes.js 219 Sandbox Phase 6: made game
 grenade.js 35 a grenade going off
 ground.js 53 what a duck walks on,
-gspreview.js 86 Game Settings: the pictures in the preview box
-gssettings.js 773 Game Settings: every setting, its name, its choices and its category
-gstext.js 185 Game Settings: what a setting says, what is greyed, which rows a mode has
+gspreview.js 86 Game Settings: the pictures in
+gssettings.js 773 Game Settings: every setting, its
+gstext.js 185 Game Settings: what a setting
 gunart.js 437 every weapon, drawn: one drawing
 gunmen.js 110 the gunmen's looks
 gunmenrules.js 1145 Survival: the gunmen
@@ -258,7 +258,7 @@ umaps.js 371 Made maps: making them, and
 units.js 10 the game's units, in one
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an
-updates.js 3363 Updates
+updates.js 3372 Updates
 vdd.js 190 Valentine's Duck Date: what the
 vddrules.js 513 the rules of Valentine's Duck
 vellum.js 28 The King's Festival
@@ -275,12 +275,12 @@ zombies.js 1477 the zombies: one module for
 ## js/hangout/
 activities.js 23 every Hangout activity, so the
 ambience.js 112 the air: the wind round
-art.js 250 the drawings' table (ART), re-exporting the art files
-artbase.js 157 the drawings' shared pieces (ink, defs, string lights, fire, the CSS)
-artcabin.js 516 the cabin's shell: walls, doors, fireplace
-artindoor.js 1104 the cabin's inside: furniture, stage, kitchen, bathroom, beds
+art.js 252 Duck Cabin: the drawings
+artbase.js 156 the drawings' shared pieces
+artcabin.js 516 the cabin's shell: walls, doors,
+artindoor.js 1104 the cabin's inside: furniture, stage,
 artpool.js 358 the deck and the pool
-artyard.js 901 the yard: ground, trees, lamps, campfire, trampoline, soccer, jeep
+artyard.js 901 the yard: ground, trees, lamps,
 beachball.js 364 the beach ball
 blackjack.js 1382 the blackjack table in the
 book.js 170 the guestbook: a book on
