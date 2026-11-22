@@ -5,7 +5,7 @@
    heights) and longer. game.js draws and lands it, world.js follows it over steps and edges, and the rules ask whether
    a duck in the middle of one dodges. */
 import { DUCK } from "./hangout/layout.js";
-import { ELEV } from "./heights.js";
+import { ELEV, airWay } from "./heights.js";
 
 /* how high a duck jumps: 0.3 of an elevation (the owner's, Nov 21 10:48 AM ET: "we'll make it to where ducks can jump
    0.3 elevation high"), JUMP_UP world px: anything up to that high a duck can jump onto */
@@ -76,3 +76,10 @@ export function jumpDodges(
   const end = p.j + T;
   return now - p.j > T * 0.2 && end - now > T * 0.2;
 }
+/* a duck in a jump, on the room's clock: its arc's height now, from where it began (pos.b, world px: the maps' ducks;
+   heights.js zOf asks it), or null (not in a jump, or no maps' height) */
+airWay((p, now) =>
+  p && p.j && p.b !== undefined && now < landsAt(p)
+    ? p.b + jumpZ(p, now) * DUCK
+    : null,
+);

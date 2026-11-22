@@ -178,6 +178,7 @@ import {
   dodVoting,
 } from "./roomrules.js";
 import { countdown, nextVote, rolling, sbHere, votesDue } from "./voterules.js";
+import { zOf } from "./heights.js";
 
 /* ---------- the actions of a game: answers, moves, the specials, fights, the turn's end and the clock ---------- */
 export function act_submit({ state, s, a, now, me }) {
@@ -583,7 +584,7 @@ export function act_use({ state, s, a, now, me, boss }) {
       hang = {
         ...(isHang(s)
           ? {
-              hz: Math.round(+p.z || 0),
+              hz: Math.round(zOf(p, "body", now)), // (in a jump: its arc now, heights.js)
               hin: inCabin(p.x * HW, p.y * HH) ? 1 : 0,
             }
           : {}), // (Hangout: the height it flies at, and which side of the cabin's walls)

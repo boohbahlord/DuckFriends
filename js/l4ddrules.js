@@ -112,7 +112,7 @@ import { JUSTIN, ETHAN, jerseyOf } from "./hangout/npcart.js";
 import { MERCHANTS, merchantById, merchantLook } from "./merchants.js";
 import { linesOf } from "./merchantlines.js";
 import { invuln } from "./hangout/death.js";
-import { hOk, hLock, shotFeet, SAME_FLOOR, zOf, nearH } from "./heights.js";
+import { hOk, hLock, shotFeet, SAME_FLOOR, zOf, swingH } from "./heights.js";
 import { toPx, DUCK } from "./units.js";
 import { blast, reach, hitOf, REACH } from "./blast.js";
 import { carsBlast, carsSwing } from "./carpush.js";
@@ -3079,7 +3079,7 @@ export function l4Use(s, a, now) {
   const [dx, dy] = aimDir(a),
     face = dx < 0 ? -1 : 1,
     [px, py] = toPx(p),
-    hz = Math.round(zOf(p));
+    hz = Math.round(zOf(p, "body", now));
   const n = addFx(s, {
     kind: "use",
     what,
@@ -3946,11 +3946,14 @@ function meleeHits(s, now) {
     if (!p || k.miss || !standing(s, k.by)) continue;
     const sz = sizeOf(s, k.by), // (my Size: a bigger duck's swing reaches farther and wider, a smaller one's not as far, as they're drawn; the owner's, Nov 19 16:50Z)
       R = (A.r + 22) * sz,
+      hz = zOf(p, "body", now), // (in a jump: its arc now)
+      h = DUCK * sz, // (my height: a swing reaches only within it, heights.js swingH)
       [px, py] = toPx(p),
       bx = px + k.dx * A.at * sz,
       by = py + k.dy * A.at * sz;
     for (const z of zs) {
       if (z.st === 3 || k.hit.includes(z.i)) continue;
+      if (!swingH(hz, h, zOf(z, "zombie"))) continue;
       if (Math.hypot(z.x - bx, z.y - by) > R) continue; // (a round bubble: as far up and down as to the sides, the owner's, Nov 18 15:18Z "Make sure melee weapons have the same range in any direction". It was squashed up and down, 1.4 times shorter)
       k.hit.push(z.i);
       if (missed(s, k.by, k.w, z, now)) continue; // (this one isn't hit by this swing; the others in it still can be)
@@ -3970,7 +3973,8 @@ function meleeHits(s, now) {
       if (id === k.by || !q || k.hit.includes("p" + id) || !standing(s, id))
         continue;
       const [qx, qy] = toPx(q);
-      if (Math.hypot(qx - bx, qy - by) > R || !nearH(zOf(q), zOf(p))) continue;
+      if (Math.hypot(qx - bx, qy - by) > R) continue;
+      if (!swingH(hz, h, zOf(q, "body", now), DUCK * sizeOf(s, id))) continue;
       k.hit.push("p" + id);
       shovePx(
         s,

@@ -3,7 +3,7 @@ file lines job
 
 ## js/
 account.js 397 the Google account: the
-actplay.js 939 a game's actions
+actplay.js 940 a game's actions
 actroom.js 744 the room's actions
 actsb.js 156 Sandbox's windows, saves and
 allies.js 383 Survival: the friendly squad
@@ -18,7 +18,7 @@ bbrules.js 380 the rules of Bicker
 beaks.js 138 beaks
 blast.js 67 explosions: one module
 bloodpool.js 50 a pool of blood:
-boardfire.js 1314 the board's weapons: hits,
+boardfire.js 1316 the board's weapons: hits,
 boardjustin.js 675 Justin on the boards
 botduck.js 90 a computer's duck: a
 botlines.js 188 What the computers write
@@ -83,7 +83,7 @@ gunmenview.js 137 Survival: the gunmen on
 gunparts.js 15 the pieces every weapon's
 guns.js 642 every weapon's numbers: one
 hats.js 1096 hats
-heights.js 69 a shot's height, Doom's
+heights.js 82 a shot's height, Doom's
 helppages.js 1498 the command line's Help
 hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
@@ -96,7 +96,7 @@ idbstore.js 38 One place that opens
 invisible.js 11 Who is invisible right
 itemtip.js 104 hold I on an
 itemtone.js 98 the colors an outfit
-jump.js 78 a duck's jump: one
+jump.js 85 a duck's jump: one
 jumps.js 48 the jump counter
 justinmoves.js 34 Justin's moves on the
 keynav.js 204 menus by keyboard
@@ -112,7 +112,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power
 l4ddpowerui.js 278 Dead Ducks Arcade's power
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4993 the rules of Quacky
+l4ddrules.js 4997 the rules of Quacky
 l4ddsfx.js 545 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online:
 langname.js 5 the name of Sandbox's
