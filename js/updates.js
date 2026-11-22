@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v272",
+    version: 272,
+    date: "Nov 22, 2026",
+    title: "No black lines in Sandbox",
+    news: [
+      "For Sandbox: the board has no dark frame any more, so a phone turned sideways shows no black lines across the map.",
+    ],
+  },
+  {
     id: "v271",
     version: 271,
     date: "Nov 22, 2026",
