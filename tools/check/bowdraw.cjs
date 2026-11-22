@@ -115,8 +115,9 @@ const { url, fail, noErrors } = require("./lib.cjs");
       id = r.state.seat.find((q) => q !== r.me);
     R.give(r.state, id, "bow", "knife");
     r.state.pos[id] = { ...r.state.pos[id], w: "bow" };
+    r.send({ t: "hang", k: "l4", do: "endturn", on: true }); // (I'm ready too: the zombies come)
     const seen = new Map();
-    for (let i = 0; i < 60 && seen.size < 3; i++) {
+    for (let i = 0; i < 160 && seen.size < 3; i++) {
       for (const s of r.state.shots || [])
         if (s.k === "arrow" && s.by === id) seen.set(s.n, s.dr);
       await new Promise((ok) => setTimeout(ok, 250));
