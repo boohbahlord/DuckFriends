@@ -78,6 +78,7 @@ function add(kind, x, y, w, d, h, o = {}) {
   if (only4 !== undefined && p.l4 === undefined) p.l4 = only4;
   const n = (p.map ? p.map + "-" : p.l4 === 1 ? "l4-" : "") + kind; // (Quacky Zombies' own count apart: Hangout's ids stay as they were)
   p.id = o.id || n + (count[n] = (count[n] || 0) + 1);
+  if (p.fit) p.fit(p); // (sized from its id: Downpour's trees, stationmap.js treeFit)
   p.key = o.key ?? y + d;
   p.box = o.box || { l: x, t: y - p.z - h, w, h: d + h };
   if (p.solid && !p.block) p.block = [x, y, x + w, y + d];
@@ -798,6 +799,7 @@ function makeSolids() {
         roof: p.roof || 0, // (Downpour: under a roof, it stops a duck's feet up to the roof's height, a shot up to its top)
         zx: !!p.zx, // (zombies climb over it: the fallen tree)
         pass: !!p.pass, // (it stops shots only: walking over it is a floor's, a car's glass, vehicles.js)
+        noLand: !!p.noLand, // (its top can't be stood on: a trunk, landOff)
         car: p.car, // (Downpour's car i, or its glass: carClear)
       });
   for (const b of SOLIDS)
@@ -966,6 +968,15 @@ export function solidsAt(x, y, z = -Infinity) {
   return (
     grid.get(Math.floor(x / CELL) * 1000 + Math.floor(y / CELL)) || []
   ).filter((b) => hits(b, x, y) && z < Math.max(b.top, b.roof));
+}
+/* where my duck ends a step at (x, y), its feet at z, as the map's 0 … 1: a solid that can't be landed on (a trunk: the
+   owner's, Nov 21, "you can't land on a trunk's top, you fall off it the way you came, and only clear it by jumping
+   over") is cleared only over its top; come down into it and it is back at the last spot it stood off it */
+export function landOff(me, x, y) {
+  const on = solidsAt(x, y).filter((b) => b.noLand);
+  if (!on.length) me._off = [x, y];
+  else if (me._off && on.some((b) => me.z < b.top)) [x, y] = me._off;
+  return [x / W, y / H];
 }
 /* how fast a walker at (x, y), its feet at z (none: on the ground), goes in water, of its walk (gamedefaults.js WET):
    the one rule for every walker (the owner's, Nov 21 17:48Z: "water slows down entities equally"; Nov 18 15:35Z: "all

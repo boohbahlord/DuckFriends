@@ -15,6 +15,7 @@
    the road lies ROAD.low under it. */
 import { CAR_TOP, carDeck, ELEV_PLAN } from "./vehicles.js";
 import { WET } from "../gamedefaults.js";
+import { hash } from "../random.js";
 export const K = 0.6;
 export let GS_W = 4600,
   GS_H = 6200;
@@ -993,12 +994,74 @@ const CLEAR = [
   [GEN.x0 - 110, GEN.y0 - 110, GEN.x1 + 110, GEN.y1 + 110],
   [HOOD.x0 - 180, HOOD.y0 - 110, HOOD.x1 + 110, HOOD.y1 + 110],
 ];
-/* real sizes (world px, as the ducks: 64 across), so the numbers here are them over K. A trunk's foot is about a duck
-   across (the owner's sketch) and stops ducks and zombies as far as it reaches; a crown is 4 to 5 ducks across */
-const TRUNK = { x: 30 / K, y: 15 / K },
-  /* how far apart two trees stand at least: past the line, just inside it, and further in. Half as many trees as the
-     first forest (the owner's, Nov 17 05:46Z: sparser), and a duck or a zombie walks between any two trunks */
-  APART = { out: 285 / K, near: 400 / K, far: 520 / K },
+/* the trees' sizes, in the world's own px (a duck is 64; stationtrees.js draws them so): each look's leaves, w across
+   and h from back to front, their middle CROWN_LIFT of h over the trunk's foot; a trunk's body w across, its foot
+   flared to flare times that on the ground */
+export const SWAMP_CROWN = {
+  cypress: [
+    { w: 230, h: 190 },
+    { w: 250, h: 176 },
+    { w: 200, h: 170 },
+  ],
+  oak: [
+    { w: 330, h: 250 },
+    { w: 350, h: 236 },
+    { w: 290, h: 230 },
+  ],
+  willow: [
+    { w: 280, h: 230 },
+    { w: 300, h: 214 },
+    { w: 250, h: 214 },
+  ],
+};
+export const SWAMP_TRUNK = {
+    cypress: { w: 40, flare: 1.9 },
+    oak: { w: 54, flare: 1.4 },
+    willow: { w: 44, flare: 1.6 },
+  },
+  CROWN_LIFT = 0.3;
+/* which tree grows at a spot, from its id (the same on every device): about 3 cypresses to 3 willows to 2 oaks, each in
+   one of its three looks, two seeds, and mirrored half the time (shapes.js draws it) */
+const SWAMP_MIX = [
+  "cypress",
+  "cypress",
+  "cypress",
+  "willow",
+  "willow",
+  "willow",
+  "oak",
+  "oak",
+];
+export function swampPick(id) {
+  const h = hash(id + "k");
+  return {
+    kind: SWAMP_MIX[Math.floor(h * SWAMP_MIX.length)],
+    v: Math.floor(((h * 97) % 1) * 3),
+    flip: (h * 991) % 1 < 0.5,
+    seed: 1 + Math.floor(((h * 7919) % 1) * 2),
+  };
+}
+/* a tree's size k from big (0.85 … 1.15: drawn 0.9 … 1.08 of its own) */
+export const treeK = (big) => 0.9 + (big - 0.85) * 0.6;
+/* a tree as big as it's drawn (E4, the owner's, Nov 21: "elevation follows size; the trunk drawn and hit in the same
+   top-down perspective as everything else; you can't land on a trunk's top, you fall off it the way you came, and only
+   clear it by jumping over"): as tall as its leaves' top over its foot (their middle, then half of them), and its
+   trunk's foot as drawn, flared on the ground (about a duck across, the owner's sketch), stops whoever is under that
+   top, half as deep as it is wide (the ground's slant, as the drawn foot). noLand: layout.js landOff */
+function treeFit(p) {
+  const { kind, v } = swampPick(p.id),
+    k = treeK(p.big),
+    cx = p.x + p.w / 2,
+    cy = p.y + p.d / 2,
+    { w, flare } = SWAMP_TRUNK[kind],
+    hw = (w / 2) * flare * k;
+  p.h = SWAMP_CROWN[kind][v].h * (CROWN_LIFT + 0.5) * k;
+  p.top = p.z + p.h;
+  p.block = [cx - hw, cy - hw / 2, cx + hw, cy + hw / 2];
+}
+/* how far apart two trees stand at least: past the line, just inside it, and further in. Half as many trees as the
+   first forest (the owner's, Nov 17 05:46Z: sparser), and a duck or a zombie walks between any two trunks */
+const APART = { out: 285 / K, near: 400 / K, far: 520 / K },
   /* how likely a spot grows a tree: past the line, inside it within NEAR of it, and further in */
   GROW = { out: 0.92, near: 0.55, far: 0.3 },
   NEAR = 260 / K;
@@ -1015,11 +1078,12 @@ const toFallen = (x, y) => {
 };
 function forest(put) {
   const tree = (cx, cy, big) =>
-    put("tree", cx - 18, cy - 12, 36, 24, 320 * big, {
+    put("tree", cx - 18, cy - 12, 36, 24, 0, {
       z: groundAt(cx, cy),
       solid: true,
       big,
-      block: [cx - TRUNK.x, cy - TRUNK.y, cx + TRUNK.x, cy + TRUNK.y],
+      noLand: true,
+      fit: treeFit, // (its height and its trunk: layout.js runs it once its id is known)
     });
   /* every spot on a jittered grid, the forest's own way: past the line close together, inside it further apart the
      further in; a spot grows a tree if the dice say so and no tree stands within APART of it (a grid of buckets keeps
