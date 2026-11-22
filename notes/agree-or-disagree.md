@@ -8065,3 +8065,8 @@ Decision (Adam): add .coderabbit.yaml tuned to our rules (owner installs the fre
 When you add one, i just want to here ab it, so u can go shoppinng for more so we can opimize"
 Decision (Adam): add free tools that run on GitHub (not our usage), one at a time, one line to the owner each; Lighthouse first.
 Decision (Solomon, Adam OK'd 20:09Z): js/ammo.js is the one ammo file for every mode. Every gun has Dead Ducks Arcade's magazine and full amount (the pistol 7 and 133 more, the shotgun 72 with no magazine, and so on), the board and Mad God Justin included (Mad God Justin's own pistol too, and a gun picked up comes full; the Nov 17 one-magazine/endless-shotgun/LMG-30 rules give way). A game starts every gun full, with no refill during it. G has a new Unlimited ammo setting (off by default): on, guns still reload but never run out. Sandbox's God mode ammo and a loot's Unlimited ammo count as on. The bow, the Laser Rifle and the down pistol never run out. Check: tools/check/ammo.cjs.
+
+## Owner, Nov 22 21:54Z and 23:02Z
+21:54Z: "Y not now" (about adding the type checker and SonarCloud after Friday). Done: type checker #1086; SonarCloud waits on his sign-up.
+23:02Z: "Before i go to sonar cloud, is the graphics not going to the gpu but instead the gpu? My gpu should be able to crush a game like this, of this size, yeah it is only 4gb of vram, but that is nothing for a game like this. If you disagree, then you're the problem."
+Answer (Adam): agreed; the bottleneck is the page (DOM) layout and style on the main processor (55-67% measured), not the card. The real fix is a WebGL world renderer: a big rewrite, to plan with the owner after the Friday reset. Asked him to set Edge to High performance in Windows graphics settings.
