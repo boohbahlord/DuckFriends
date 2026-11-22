@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v246",
+    version: 246,
+    date: "Nov 22, 2026",
+    title: "Smaller map files",
+    news: [
+      "Behind the scenes: the walking maps' layout is split into smaller files (heights and decks in their own). Nothing plays differently.",
+    ],
+  },
+  {
     id: "v245",
     version: 245,
     date: "Nov 22, 2026",
