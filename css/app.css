@@ -22326,6 +22326,12 @@ textarea.um-in {
 .um-list-win {
   width: min(36rem, 100%);
 }
+.um-list-win .um-hint {
+  margin: 0.4rem 0 0;
+}
+.um-list-win .um-hint.bad {
+  color: var(--red);
+}
 .um-list {
   display: flex;
   flex-direction: column;
