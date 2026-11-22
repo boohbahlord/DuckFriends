@@ -42,7 +42,7 @@ color.js 165 choosing a color
 corners.js 94 full screen
 court.js 230 Lawyering: what the screen
 courtrules.js 17 the courtroom's seats: Lawyering
-crowd.js 242 crowds: walkers never stand
+crowd.js 249 crowds: walkers never stand
 customize.js 1776 Customize: the Armory
 datboi.js 115 here come dat boi
 democracy.js 233 Democracy of Ducklings:
@@ -92,7 +92,7 @@ gunparts.js 15 the pieces every weapon's
 guns.js 715 every weapon's numbers: one
 hats.js 1096 hats
 heat.js 74 a gun's heat: the
-heights.js 83 a shot's height, Doom's
+heights.js 87 a shot's height, Doom's
 helppages.js 1498 the command line's Help
 hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
@@ -173,7 +173,7 @@ playerinput.js 26 what I ask my
 players.js 342 the player menu and
 pointer.js 54 a computer or a
 powerart.js 377 Dead Ducks Arcade: the
-push.js 64 push and knock-back: one
+push.js 70 push and knock-back: one
 pxa.js 954 made by tools/pixel-art.cjs:
 pxbake.js 627 a map's pictures made
 pxcard.js 259 the player cards' pattern
@@ -283,8 +283,8 @@ weaponuse.js 104 using a weapon: one
 who.js 3 who this player is
 wounds.js 485 the wounds a hit
 zombiepath.js 187 the zombies' way to
-zombieroofs.js 326 the zombies' walk over
-zombies.js 1478 the zombies: one module
+zombieroofs.js 327 the zombies' walk over
+zombies.js 1498 the zombies: one module
 
 ## js/hangout/
 activities.js 25 every Hangout activity, so
@@ -343,7 +343,7 @@ stage.js 134 the stage: half an
 stationart.js 50 Downpour's things: the drawings
 stationbase.js 67 Downpour's drawings: the shared
 stationcars.js 513 Downpour's drawings: the cars,
-stationmap.js 1276 Dead Ducks Arcade's second
+stationmap.js 1304 Dead Ducks Arcade's second
 stationparts.js 455 Downpour's drawings: the gas
 stationroof.js 340 Downpour's drawings: the roofs,
 stationtrees.js 599 Downpour's drawings: the swamp's
