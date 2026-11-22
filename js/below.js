@@ -4,8 +4,8 @@
    on a higher elevation ... including for other ducks ... if you get high up enough from the tippy top of the tree ...
    the tree itself becomes darker as well. It applies to vehicles." One rule for every walking world: whatever's top
    (a prop, the ground) or floor (a duck, a zombie, an NPC) is under my floor shows darker by below(), a fraction of
-   BELOW.PER for each elevation, never past BELOW.MAX (gamedefaults.js). My floor is what I stand on, never my jump: it
-   changes only once my feet are on something. It's the pixels' own color made darker (css .below-me: brightness), so the
+   BELOW.PER for each elevation, on to all dark (gamedefaults.js). My floor is what I stand on, never my jump: it
+   changes once my feet are on something, or, falling, at each elevation I pass on the way down. It's the pixels' own color made darker (css .below-me: brightness), so the
    can't-hit darkening (.l4-unseen) still adds to it; the outlines take the same (outlines.js olAway) */
 import { BELOW } from "./gamedefaults.js";
 import { ELEV } from "./heights.js";
@@ -13,11 +13,12 @@ import { floorH, PROPS } from "./hangout/layout.js";
 import { activity } from "./hangout/registry.js";
 
 let mine = 0; // (my floor, world px)
-/* how much darker something at height h shows from my floor, 0 … BELOW.MAX, in steps of 2% */
+/* how much darker something at height h shows from my floor, 0 … 1 (all dark: the owner's, Nov 22 06:24Z, "darkness
+   keeps going up beyond 60%"), in steps of 2% */
 export const below = (h, me = mine) =>
   h >= me
     ? 0
-    : Math.round(Math.min(BELOW.MAX, (BELOW.PER * (me - h)) / ELEV) * 50) / 50;
+    : Math.round(Math.min(1, (BELOW.PER * (me - h)) / ELEV) * 50) / 50;
 /* an element's darkness, set only when it changes */
 function look(el, b) {
   if (el._below === b) return;
@@ -48,8 +49,13 @@ activity({
     const W = ctx.world,
       a = W.at(ctx.me);
     if (a) {
-      const f = floorH(a.x, a.y, a.z);
-      if (a.z - f < 1) mine = f; // (feet on it: not in a jump, not falling)
+      const f = floorH(a.x, a.y, a.z),
+        d = ctx.duck(),
+        falling = !!d && d.vz != null && !d.j;
+      if (a.z - f < 1)
+        mine = f; // (feet on it: not in a jump)
+      else if (falling)
+        mine = Math.min(mine, Math.max(f, ELEV * Math.ceil(a.z / ELEV - 1e-6))); // (falling, not jumping: each elevation it passes on the way down, the owner's, Nov 22 06:24Z: "if a duck is at max ground hieght and falls, the floor changes through all of it")
     }
     props ||= W.board.querySelector(".hang-props");
     ducks ||= W.board.querySelector(".ducks");

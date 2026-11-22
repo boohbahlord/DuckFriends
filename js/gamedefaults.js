@@ -58,5 +58,6 @@ export const SPRINT_BLUR_MIN_FPS = 40;
 
 /* darker below (B5, the owner's, Nov 21 16:17Z: "as you increase in elevation ... the layers by a certain fraction or
    percent become more dark ... including for other ducks ... that isn't true for jumping"): what's under my floor shows
-   PER darker for each elevation (heights.js ELEV) I stand over it, at most MAX (below.js) */
-export const BELOW = { PER: 0.2, MAX: 0.6 };
+   PER darker for each elevation (heights.js ELEV) I stand over it, on to all dark (below.js; Nov 22 06:24Z: "The first
+   recommended options is good ... but darkness keeps going up beyond 60%") */
+export const BELOW = { PER: 0.2 };

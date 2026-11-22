@@ -16,7 +16,7 @@ barrelheat.js 70 a hot barrel
 bash.js 1360 the command line's language: a
 bbrules.js 380 the rules of Bicker Brackets
 beaks.js 138 beaks
-below.js 75 darker below
+below.js 81 darker below
 blast.js 67 explosions: one module
 bloodpool.js 50 a pool of blood: the
 boardfire.js 1355 the board's weapons: hits, shots,
@@ -61,7 +61,7 @@ fxmotion.js 229 how a held weapon and
 game.js 5125 the game screen
 gameact.js 546 the action window and the
 gameboard.js 589 the board: each mode's board
-gamedefaults.js 62 the game's own numbers, for
+gamedefaults.js 63 the game's own numbers, for
 gamefx.js 874 the silly commands and the
 gamehand.js 604 the hand: the number-key specials,
 gameplace.js 738 where things are put on

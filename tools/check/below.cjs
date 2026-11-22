@@ -2,8 +2,10 @@
    increase in elevation ... the layers ... become more dark ... including for other ducks ... that isn't true for
    jumping"; below.js, gamedefaults.js BELOW). On Downpour: on the ground nothing is darker; up on the gas station's roof
    the ground, the ducks and the zombies on it are BELOW.PER darker (an elevation down), the props by their tops (a tree
-   taller than the roof not at all), my own duck never; a jump on the roof changes none of it; on the pumps' canopy (not
-   a whole elevation up) the ground is a little less dark than from the roof. */
+   taller than the roof not at all), my own duck never; a jump on the roof changes none of it; walking off the roof, the
+   fall never darkens anything more and lands on none; on the pumps' canopy (not a whole elevation up) the ground is a
+   little less dark than from the roof. No cap (Nov 22 06:24Z: "darkness keeps going up beyond 60%"): 4 elevations
+   down is 80%, 5 or more all dark. */
 const { chromium } = require("playwright");
 const { url, fail, noErrors } = require("./lib.cjs");
 (async () => {
@@ -86,7 +88,8 @@ const { url, fail, noErrors } = require("./lib.cjs");
     async () => (await import("./js/gamedefaults.js")).BELOW.PER,
   );
   const g = await look();
-  if (g.ground || g.me || g.others.some(Boolean) || g.low.some(Boolean))
+  if (g.ground || g.me || g.others.some((d) => d > 0.05) || g.low.some(Boolean))
+    // (a duck down in the road's bed: a little)
     fail(`on the ground something is darker: ${JSON.stringify(g)}`);
   await go("roof");
   await p.waitForTimeout(2000);
@@ -108,6 +111,33 @@ const { url, fail, noErrors } = require("./lib.cjs");
   else if (JSON.stringify({ ...j, z: 0 }) !== JSON.stringify({ ...r, z: 0 }))
     fail(`a jump changed how dark things are: ${JSON.stringify(j)}`);
   await p.waitForTimeout(1500);
+  /* off the roof's north edge on foot: a fall, never darker than from the roof, nothing darker once down */
+  const fall = [];
+  await p.keyboard.down("w");
+  for (let i = 0; i < 40; i++) {
+    await p.waitForTimeout(100);
+    const l = await look();
+    fall.push([Math.round(l.z), l.ground]);
+  }
+  await p.keyboard.up("w");
+  await p.waitForTimeout(1500);
+  const down = await look();
+  if (!fall.some(([z]) => z < 100))
+    fail(
+      `walking north never left the roof: ${JSON.stringify(fall.slice(-3))}`,
+    );
+  else if (fall.some(([, d], i) => d > r.ground || (i && d > fall[i - 1][1])))
+    fail(`falling made things darker: ${JSON.stringify(fall)}`);
+  else if (down.ground || down.others.some((d) => d > 0.05))
+    fail(
+      `down from the roof something is still darker: ${JSON.stringify(down)}`,
+    );
+  const cap = await p.evaluate(async () => {
+    const { below } = await import("./js/below.js");
+    return [4, 5, 10].map((n) => below(0, n * 108));
+  });
+  if (JSON.stringify(cap) !== "[0.8,1,1]")
+    fail(`4, 5, 10 elevations down: ${cap} (not 0.8, 1, 1)`);
   await go("canopy");
   await p.waitForTimeout(2000);
   const c = await look();
