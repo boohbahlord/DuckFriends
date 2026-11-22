@@ -107,7 +107,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 5004 the rules of Quacky Zombies
+l4ddrules.js 5003 the rules of Quacky Zombies
 l4ddsfx.js 545 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the
 langname.js 5 the name of Sandbox's number
@@ -162,7 +162,7 @@ playerinput.js 26 what I ask my duck
 players.js 342 the player menu and the
 pointer.js 54 a computer or a phone
 powerart.js 377 Dead Ducks Arcade: the power
-push.js 29 push and knock-back: one module
+push.js 33 push and knock-back: one module
 pxa.js 341 made by tools/pixel-art.cjs:
 pxbake.js 627 a map's pictures made into
 pxcard.js 259 the player cards' pattern motifs
@@ -178,7 +178,7 @@ report.js 114 Report Bug or Suggest Ideas
 roomrules.js 368 room governance: groups and permissions
 rooms.js 256 Play: create a room, and
 router.js 112 screens
-rules.js 1736 the rules of Agree or
+rules.js 1732 the rules of Agree or
 sandbox.js 1347 Sandbox: the key windows
 sandboxrules.js 2056 Sandbox: which map it plays
 sbarms.js 124 Sandbox: a made NPC's weapons

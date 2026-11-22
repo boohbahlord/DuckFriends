@@ -103,7 +103,6 @@ import {
   GRENADE_MS,
   daggerZ,
   inWorld,
-  walkOf,
   FASTER,
   shareOf,
   say,
@@ -116,7 +115,7 @@ import { invuln } from "./hangout/death.js";
 import { hOk, hLock, shotFeet, SAME_FLOOR, zOf, nearH } from "./heights.js";
 import { toPx } from "./units.js";
 import { blast, reach } from "./blast.js";
-import { pushAlong } from "./push.js";
+import { pushAlong, walkOf } from "./push.js";
 import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {

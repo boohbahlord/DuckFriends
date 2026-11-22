@@ -193,8 +193,8 @@ import {
   KB_LAND,
   catchLen,
   counselBounds,
-  walkOf,
 } from "./rules.js";
+import { walkOf } from "./push.js";
 
 import { isSudo, canOpen } from "./roomrules.js";
 

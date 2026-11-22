@@ -15,6 +15,10 @@ const PUSH = {
   hammer: 1.5, // (50% farther than it was: the owner's, Nov 4)
   grenade: 2, // (twice the hammer's in the normal game: the owner's, Nov 3 17:15Z)
 };
+/* the lobby's Walking speed: how much faster or slower than normal every duck walks. The zombies of Quacky Zombies and
+   the computers there go by it too, so the zombies stay as fast next to the ducks as the owner set them */
+const WALKS = { slow: 0.6, normal: 1, fast: 1.5 };
+export const walkOf = (s) => WALKS[s && s.options && s.options.walk] || 1;
 export const pushOf = (s, what) =>
   KB_FAR * ({ ...PUSH, ...modeOf(baseMode(s.options)).push }[what] ?? 1);
 /* the one loop: n steps from at ([x, y]); next(i, at) is step i's spot, ok(spot, at) says if the body can stand there,

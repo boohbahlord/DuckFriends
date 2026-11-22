@@ -27,7 +27,7 @@ import {
   onDeckAt,
 } from "./hangout/layout.js";
 import * as GS from "./hangout/stationmap.js";
-import { walkOf } from "./rules.js";
+import { walkOf } from "./push.js";
 import { zOf, heightWay } from "./heights.js";
 import { SLOW as SWIM } from "./hangout/water.js";
 import {

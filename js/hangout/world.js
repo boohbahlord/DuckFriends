@@ -22,7 +22,7 @@ import { duckRoom } from "../duck.js";
 import { esc } from "../ui.js";
 import { isInvisible } from "../invisible.js";
 import { low } from "../gfx.js";
-import { walkOf } from "../rules.js";
+import { walkOf } from "../push.js";
 import { survSet } from "../survrules.js";
 import {
   pixelOn,

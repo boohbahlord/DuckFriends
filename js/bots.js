@@ -28,9 +28,9 @@ import {
   endDone,
   playing,
   OPTIONS_DEFAULT,
-  walkOf,
   inWorld,
 } from "./rules.js";
+import { walkOf } from "./push.js";
 import { voteIds, DICE } from "./voterules.js";
 import { isCounsel, jury, canGiveUp, attCands, attRole } from "./lawrules.js";
 import { SC_WORDS, scWriter, scZones, scCanVote } from "./scrules.js";

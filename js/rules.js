@@ -474,10 +474,6 @@ export function setMode(s, mode) {
   say(s, `The game: ${modeOf(mode).name}!`);
 }
 
-/* the lobby's Walking speed: how much faster or slower than normal every duck walks. The zombies of Quacky Zombies and
-   the computers there go by it too, so the zombies stay as fast next to the ducks as the owner set them */
-const WALKS = { slow: 0.6, normal: 1, fast: 1.5 };
-export const walkOf = (s) => WALKS[s && s.options && s.options.walk] || 1;
 export const COUNTDOWN = 5;
 /* Single Player's start counts only 2, 1, 0 (the owner's, Nov 19 23:10Z: "it starts at second number 2, goes to 1, and
    then 0 in single player") */
