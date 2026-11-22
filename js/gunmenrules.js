@@ -18,14 +18,14 @@
    cv (where it hides), ls (where it last saw its target), tg (its target: "p:" a duck, "z:" a zombie), lo (its
    flashlight on), ad (where it aims, in degrees), mad ([who hurt it, until when]), nx (its next shot), bn (rounds left
    in this burst), bt (its last burn), w (its wounds: wounds.js codes), d (when it died) } */
-import { L4_HOOKS } from "./l4ddrules.js";
+import { L4_HOOKS, RX, RY } from "./l4ddrules.js";
 import { critOf } from "./guns.js";
 import { ARMS, GUN_BREEDS, reachOf as gunReach } from "./guns.js";
-import { clearShot, chaseField, chaseStep } from "./zombies.js";
+import { clearShot, chaseField, chaseStep, room } from "./zombies.js";
 import { heightAt, slabBetween, PROPS } from "./hangout/layout.js";
 import { zOf } from "./heights.js";
 import { DECKS } from "./hangout/stationmap.js";
-import { apart } from "./crowd.js";
+import { apart, otherWay, sideSpot, sideDone } from "./crowd.js";
 import { hpHurt } from "./hpmath.js";
 import { gunmanLook } from "./gunmen.js";
 import {
@@ -165,6 +165,7 @@ export function newGunman(s, k, x, y, H, ro = "") {
     st: "in",
     u: 0,
     lo: k === "c" ? 1 : 0, // (soldiers: laser sights, no flashlights)
+    ...(k === "c" ? otherWay("criminal") : {}), // (one of the 5% that come another way round: roundSide)
     ad: 0,
   };
 }
@@ -532,7 +533,8 @@ function crim(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
         o.lo = 1;
         break;
       }
-      const g = see || !o.ls ? [t.x, t.y] : o.ls;
+      let g = see || !o.ls ? [t.x, t.y] : o.ls;
+      if (o.fl) g = roundSide(o, t, H) || g; // (one of the 5%: round the side first)
       go(g[0], g[1]);
       if (!see && o.ls && Math.hypot(o.x - g[0], o.y - g[1]) < 40) o.ls = null; // (it got where it last saw it: on to where it is)
       o.ad = Math.round((Math.atan2(g[1] - o.y, g[0] - o.x) * 180) / Math.PI);
@@ -543,6 +545,23 @@ function crim(s, o, zs, ducks, pls, fieldTo, now, dt, H) {
   if (see) o.seen = now;
   if (see && d < reach) shoot(s, o, t, now, H);
   else o.ad = Math.round((Math.atan2(t.y - o.y, t.x - o.x) * 180) / Math.PI);
+}
+/* the other way round for criminal o going for t (crowd.js sideSpot, as the zombies' flankers): its spot round the side
+   (o.fw [x, y, the duck, done]), then straight on as the others. No room either side: as the others */
+function roundSide(o, t, H) {
+  const at = [t.x, t.y];
+  if (!o.fw || o.fw[2] !== t.id) {
+    const w = sideSpot("criminal", o, at, o.fl, RX, RY, (x, y) =>
+      H.stands(x, y, heightAt(x, y)),
+    );
+    o.fw = w ? [...w, t.id, 0] : [0, 0, t.id, 1];
+  }
+  if (o.fw[3]) return null;
+  if (sideDone("criminal", o, o.fw, at, room, RX)) {
+    o.fw = [...o.fw.slice(0, 3), 1];
+    return null;
+  }
+  return o.fw.slice(0, 2);
 }
 /* one soldier's beat. They leave zombies alone unless one claws them; shoot Justin only when there's nobody else; the
    squad keeps on one duck, but a soldier turns on whoever shoots it or comes near ("switch target when shot or

@@ -1,9 +1,44 @@
 /* ---------- Mad God Justin's pickups: what drops, what comes next, and what each one does ----------
    Moved out of mgjrules.js to keep that file small (a pure move). It imports back from mgjrules.js, which imports it. */
-import { DMG, GOOD_ID, MGJ_SCALE, PELLETS, PICKS, PICK_EVERY, PICK_FADE, PICK_HIT, PICK_LAND, PICK_USES, PICK_WEAPONS, PLUS_CHANCE, PLUS_EVERY, PLUS_LIFE, RX, RY, SKY_ID, SPREAD, armOf, dropHeld, goodComes, goodDown, goodUp, mgjBodies, mgjHitAt, mgjPHp, mgjStab, mgjZombieHit, pickAmmo, r3, rnd } from "./mgjrules.js";
-import { fxOf } from "./mgjbrain.js";
+import { r3, fxOf } from "./justinmoves.js";
+
+import {
+  DMG,
+  GOOD_ID,
+  MGJ_SCALE,
+  PELLETS,
+  PICKS,
+  PICK_EVERY,
+  PICK_FADE,
+  PICK_HIT,
+  PICK_LAND,
+  PICK_USES,
+  PICK_WEAPONS,
+  PLUS_CHANCE,
+  PLUS_EVERY,
+  PLUS_LIFE,
+  RX,
+  RY,
+  SKY_ID,
+  SPREAD,
+  armOf,
+  dropHeld,
+  goodComes,
+  goodDown,
+  goodUp,
+  mgjBodies,
+  mgjHitAt,
+  mgjPHp,
+  mgjStab,
+  mgjZombieHit,
+  pickAmmo,
+  rnd,
+} from "./mgjrules.js";
+
 import { hpHeal, hundredths } from "./hpmath.js";
+
 import { coneOf } from "./weaponuse.js";
+
 import {
   playing,
   say,
@@ -13,11 +48,17 @@ import {
   DUCK_PELLET_LIFE,
   DAGGER_SPEED,
 } from "./rules.js";
+
 import { strike } from "./boardfire.js";
+
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
+
 import { SLOT_ODDS, pierceOf } from "./l4ddrules.js";
+
 import { ARMS, MGJ_GUNS } from "./guns.js";
+
 import { sbOnBoard, boardDuck } from "./sandboxrules.js";
+
 import { shuffle, roll } from "./random.js";
 
 /* ---------- the pickups ---------- */
@@ -195,7 +236,11 @@ export function mgjUse(s, a, now, log) {
     delete lost[a.id];
     m.lost = lost;
     dropHeld(m, a.id);
-    fxOf(s, now)({ kind: "use", what: "medkit", by: a.id, who: [a.id] });
+    fxOf(
+      s,
+      now,
+      JUSTIN_ID,
+    )({ kind: "use", what: "medkit", by: a.id, who: [a.id] });
     return true;
   }
   const ax0 = Math.max(-3, Math.min(3, +a.ax || 0)),

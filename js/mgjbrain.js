@@ -51,7 +51,6 @@ import {
   mgjBodies,
   mgjHurt,
   mirror,
-  r3,
   reviveTick,
   rnd,
   teleport,
@@ -60,15 +59,27 @@ import {
   waveOn,
   wavesTick,
 } from "./mgjrules.js";
+
 import { pickTick } from "./mgjpicks.js";
+
 import { jumpDodges } from "./jump.js";
+
 import { coneOf } from "./weaponuse.js";
+
 import { playing, say, boardPhases } from "./rules.js";
+
 import { strike, shove } from "./boardfire.js";
+
 import { KB_FAR } from "./push.js";
+
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
+
+import { walkTo, stopAt, hammerFx, fxOf } from "./justinmoves.js";
+
 import { holdDown, invuln, hurtFx } from "./hangout/death.js";
+
 import { E_LINES, GOD_LINES, WIN_LINES } from "./hangout/justin.js";
+
 import { shuffle } from "./random.js";
 
 /* ---------- his brain, on the host's heartbeat: true when anything changed ---------- */
@@ -81,17 +92,10 @@ export function mgjTick(s, now, log) {
     ch = brain(s, now, log);
   return twin(s, now, n0) || ch || up || zw;
 }
-export const fxOf = (s, now) => (o) => {
-  s.fxN = (s.fxN || 0) + 1;
-  s.fx = [
-    ...(s.fx || []).slice(-19),
-    { n: s.fxN, by: JUSTIN_ID, t: now, ...o },
-  ];
-};
 function brain(s, now, log) {
   const m = s.mgj,
     j = s.justin;
-  const fx = fxOf(s, now);
+  const fx = fxOf(s, now, JUSTIN_ID);
   const line = (text) => log(s, { npc: JUSTIN_ID, name: "Justin", text });
   if (s.phase === "mgjend") {
     // a win: lightning on the podium, once
@@ -119,15 +123,7 @@ function brain(s, now, log) {
   const far = (p, q = at) => Math.hypot((p.x - q.x) / RX, (p.y - q.y) / RY); // in duck lengths
   const soon = (ms) =>
     ms * PACE * FAST_SOON ** (+j.fast || 0) * (waveOn(s) ? WAVE.CALM : 1); // (every attack sooner than it used to; after his Xbox and his meteor, sooner still; while his zombies are out, later)
-  const stop = () =>
-    Object.assign(j, {
-      k: null,
-      x0: r3(at.x),
-      y0: r3(at.y),
-      x1: r3(at.x),
-      y1: r3(at.y),
-      t: now,
-    });
+  const stop = () => stopAt(j, at, now);
   const godLine = () => {
     if (!(j.gods || []).length) j.gods = shuffle(GOD_LINES.map((_, i) => i));
     line(GOD_LINES[j.gods.shift()]);
@@ -212,15 +208,7 @@ function brain(s, now, log) {
     delete j.sg;
     m.cake = null;
     m.dup = null;
-    Object.assign(j, {
-      k: null,
-      x0: r3(at.x),
-      y0: r3(at.y),
-      x1: r3(to.x),
-      y1: r3(to.y),
-      t: now,
-      v,
-    });
+    walkTo(j, at, to, now, v);
     m.xbUsed = true;
     m.xb = {
       at: now,
@@ -363,15 +351,7 @@ function brain(s, now, log) {
       goodDown(s, now);
       hit.push(GOOD_ID);
     }
-    fx({
-      kind: "use",
-      what: "hammer",
-      who: [],
-      face: aim[0] < 0 ? -1 : 1,
-      ax: +aim[0].toFixed(3),
-      ay: +aim[1].toFixed(3),
-      ...(hit.length ? { hit } : {}),
-    });
+    hammerFx(fx, aim, hit);
     j.hamAt = now + soon(rnd(2500, 3500));
     j.next = now + 700;
   };
@@ -424,15 +404,7 @@ function brain(s, now, log) {
         },
         to = flip ? mirror(end) : end,
         v = DASH_V;
-      Object.assign(j, {
-        k: null,
-        x0: r3(at.x),
-        y0: r3(at.y),
-        x1: r3(to.x),
-        y1: r3(to.y),
-        t: now,
-        v,
-      });
+      walkTo(j, at, to, now, v);
       Object.assign(D, {
         go: 1,
         flip,
@@ -600,15 +572,7 @@ function brain(s, now, log) {
         y: Math.max(0, Math.min(1, p.y + (uy / d) * 1.4 * RY)),
       },
       v = SPEED * 1.9;
-    Object.assign(j, {
-      k: null,
-      x0: r3(at.x),
-      y0: r3(at.y),
-      x1: r3(to.x),
-      y1: r3(to.y),
-      t: now,
-      v,
-    });
+    walkTo(j, at, to, now, v);
     j.swing = {
       id,
       at: now + (Math.hypot(to.x - at.x, to.y - at.y) / v) * 1000 + 250,
@@ -650,14 +614,6 @@ function brain(s, now, log) {
     ang = Math.atan2((at.y - p.y) / RY, (at.x - p.x) / RX) + rnd(-0.9, 0.9);
   const x = Math.max(0.05, Math.min(0.95, p.x + Math.cos(ang) * want * RX)),
     y = Math.max(0.06, Math.min(0.94, p.y + Math.sin(ang) * want * RY));
-  Object.assign(j, {
-    k: null,
-    x0: r3(at.x),
-    y0: r3(at.y),
-    x1: r3(x),
-    y1: r3(y),
-    t: now,
-    v: SPEED,
-  });
+  walkTo(j, at, { x, y }, now, SPEED);
   return true;
 }

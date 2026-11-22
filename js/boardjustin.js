@@ -27,16 +27,37 @@
    become his target for it, nor does a duck a mode keeps safe (The Date and the Suitor at the table). At 0 HP he goes
    down for the room's knocked-down time, then gets up with his HP full. */
 import { modeOf } from "./modes.js";
+
 import { E_LINES, DEATH_LINES, GOD_LINES } from "./hangout/justin.js";
+
 import { holdDown, downFor, invuln, hurtFx } from "./hangout/death.js";
+
 import { JUSTIN } from "./hangout/npcart.js";
+
 import { shuffle } from "./random.js";
+
 import { hitWounds, WOUND_BREEDS } from "./wounds.js";
+
 import { critOf, armOfShot } from "./guns.js";
+
 import { isQuack, tileAt, tileCenter, stillIn } from "./quackrules.js";
-import { isMgj, throwIt, DMG, THROW_TELL, CHAIR_TELL, cakeAt, CAKE_EAT_MS } from "./mgjrules.js";
+
+import {
+  isMgj,
+  throwIt,
+  DMG,
+  THROW_TELL,
+  CHAIR_TELL,
+  cakeAt,
+  CAKE_EAT_MS,
+} from "./mgjrules.js";
+
 import { mgjTick } from "./mgjbrain.js";
+
+import { r3, walkTo, stopAt, hammerFx, fxOf } from "./justinmoves.js";
+
 import { vdSafe } from "./vddrules.js";
+
 import {
   twoSided,
   isSc,
@@ -47,7 +68,9 @@ import {
   playing,
   BOSS_SHOT_SPEED,
 } from "./rules.js";
+
 import { strike } from "./boardfire.js";
+
 import { scZones, scLineOf, zoneAt } from "./scrules.js";
 
 export const JUSTIN_ID = "justin";
@@ -63,20 +86,6 @@ const RX = 0.03,
   RY = 0.08; // a duck's length on the board, across and down (as rules.js' swing measures)
 const rnd = ([a, b]) => a + Math.random() * (b - a);
 const any = (xs) => xs[Math.floor(Math.random() * xs.length)];
-const r3 = (v) => Math.round(v * 1000) / 1000;
-/* Justin starts a walk from at to to (board units) at time now, at v a second (left out: the speed he had) */
-const walkTo = (j, at, to, now, v) =>
-  Object.assign(j, {
-    k: null,
-    x0: r3(at.x),
-    y0: r3(at.y),
-    x1: r3(to.x),
-    y1: r3(to.y),
-    t: now,
-    ...(v === undefined ? {} : { v }),
-  });
-/* Justin stops where he stands (at, at time now): no walk left to make */
-const stopAt = (j, at, now) => walkTo(j, at, at, now);
 /* he sprints at a duck (id) to swing the hammer once he's there */
 const dashTo = (j, at, to, now, v, id) => {
   walkTo(j, at, to, now, v);
@@ -103,18 +112,6 @@ const bossShot = (s, n, at, ax, ay, now) => {
     },
   ];
 };
-/* the hammer's swing, toward aim, the hit ducks with it */
-const hammerFx = (fx, aim, hit) =>
-  fx({
-    kind: "use",
-    what: "hammer",
-    who: [],
-    face: aim[0] < 0 ? -1 : 1,
-    ax: +aim[0].toFixed(3),
-    ay: +aim[1].toFixed(3),
-    ...(hit.length ? { hit } : {}),
-  });
-
 /* where he is at a moment (board units, like s.pos), and whether he's walking */
 export function justinAt(j, now) {
   if (!j) return null;
@@ -557,13 +554,7 @@ export function justinTick(s, now, log) {
       ch = true;
     }
   }
-  const fx = (o) => {
-    s.fxN = (s.fxN || 0) + 1;
-    s.fx = [
-      ...(s.fx || []).slice(-19),
-      { n: s.fxN, by: JUSTIN_ID, t: now, ...o },
-    ];
-  };
+  const fx = fxOf(s, now, JUSTIN_ID);
   const targets = () =>
     playing(s).filter(
       (id) => s.pos[id] && s.pos[id].x >= 0 && !s.players[id].dead,
@@ -664,15 +655,8 @@ export function justinTick(s, now, log) {
     const k = pick(sp, j.k);
     if (k == null || k === j.k) return ch;
     const to = sp.point(k);
-    Object.assign(j, {
-      k,
-      x0: r3(at.x),
-      y0: r3(at.y),
-      x1: r3(to.x),
-      y1: r3(to.y),
-      t: now,
-      v: SPEED,
-    });
+    walkTo(j, at, to, now, SPEED);
+    j.k = k; // (he stands at spot k: the walk above made it null, and the key keeps its place)
     return true;
   }
   if (at.moving || Math.random() > 0.35) return ch; // (wandering: now and then a few steps somewhere)
