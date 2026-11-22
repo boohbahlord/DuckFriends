@@ -9,6 +9,25 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v260",
+    version: 260,
+    date: "Nov 22, 2026",
+    title: "Gun names in the bar",
+    news: [
+      'The bottom bar now names what you\'re holding, with the caliber it fires, like "AK-47 (7.62x39mm)", on phone and computer. Melee weapons and items show just their name.',
+    ],
+  },
+  {
+    id: "v259",
+    version: 259,
+    date: "Nov 22, 2026",
+    title: "The chair hits what it covers",
+    news: [
+      "For Dead Ducks Arcade: a thrown chair now goes through every zombie it's over, hurting and shoving each one, instead of stopping at the first. For the boards and Mad God Justin: the chair hits exactly where its picture is.",
+      "Behind the scenes: Lawyering and Duncelation seat their audience with one shared rule. Nothing plays differently.",
+    ],
+  },
+  {
     id: "v258",
     version: 258,
     date: "Nov 22, 2026",
