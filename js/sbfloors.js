@@ -19,6 +19,8 @@ import {
 } from "./sandboxrules.js";
 import { valueOf } from "./numerat.js";
 import { boxText } from "./sbspawn.js";
+import { levelOf, levelZ } from "./heights.js";
+import { LEVEL } from "./gamedefaults.js";
 import {
   W,
   H,
@@ -44,7 +46,7 @@ export function sbSlope(p) {
   const n = Math.round(valueOf({ ok: boxText(p, "slto") }, SB_ZONE.slto));
   if (!Number.isFinite(n) || n < 1) return null;
   const lo = p.z || 0,
-    hi = (Math.min(6, n) - 1) * floorStep(),
+    hi = levelZ(Math.min(6, n)),
     d = boxText(p, "sldir").trim();
   return Math.abs(hi - lo) < 0.5
     ? null
@@ -68,12 +70,12 @@ export function sbSlopeH(s, p, sl, x, y) {
   const U = floorStep() * SIGHT_UNIT;
   return Math.round((sl.lo + (sl.hi - sl.lo) * along(s, p, sl, x, y)) / U) * U;
 }
-/* is zone p ground over the map's own: Ground on, over elevation 1 (or a slope up from it) */
+/* is zone p ground over the map's own: Ground on, over the ground's level (or a slope up from it) */
 export const sbIsFloor = (p) =>
   !!p &&
   p.k === "zone" &&
   boxText(p, "gnd") === "t" &&
-  ((p.z || 0) > 0.5 || !!sbSlope(p));
+  (levelOf(p.z || 0) > LEVEL.GROUND || !!sbSlope(p));
 
 function decks() {
   if (!cur || Date.now() - seen > FRESH) return NONE;

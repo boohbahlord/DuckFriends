@@ -970,11 +970,11 @@ export function solidsAt(x, y, z = -Infinity) {
 /* how fast a walker at (x, y), its feet at z (none: on the ground), goes in water, of its walk (gamedefaults.js WET):
    the one rule for every walker (the owner's, Nov 21 17:48Z: "water slows down entities equally"; Nov 18 15:35Z: "all
    of their sprinting and their movement speed is the same as the players"). In the map's flood (Downpour's:
-   stationmap.js FLOOD) with its feet in the water, no higher than its top: its shallow part waded, its deep end swum;
-   over it (on a car, jumping) it walks */
+   stationmap.js FLOOD) with its feet in the water, measured from the swim floor (no higher over it than the water is
+   deep): its shallow part waded, its deep end swum; over it (on a car, jumping) it walks */
 let flood = null;
 export const wetK = (x, y, z = heightAt(x, y)) =>
-  !flood || z > flood.top + 4
+  !flood || z - flood.floor > flood.depth + 4
     ? 1
     : flood.deep(x, y)
       ? WET.SWIM
