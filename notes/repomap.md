@@ -3,7 +3,7 @@ file lines job
 
 ## js/
 account.js 397 the Google account: the profile online,
-actplay.js 956 a game's actions
+actplay.js 945 a game's actions
 actroom.js 744 the room's actions
 actsb.js 156 Sandbox's windows, saves and maps
 allies.js 383 Survival: the friendly squad
@@ -17,7 +17,7 @@ bash.js 1360 the command line's language: a small
 bbrules.js 380 the rules of Bicker Brackets
 beaks.js 138 beaks
 bloodpool.js 50 a pool of blood: the one
-boardfire.js 1332 the board's weapons: hits, shots, blasts,
+boardfire.js 1319 the board's weapons: hits, shots, blasts,
 boardjustin.js 699 Justin on the boards
 botduck.js 90 a computer's duck: a random look,
 botlines.js 188 What the computers write and say
@@ -56,7 +56,7 @@ friends.js 236 friends
 front.js 151 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 229 how a held weapon and the
-game.js 5679 the game screen
+game.js 5663 the game screen
 gameact.js 526 the action window and the view's
 gameboard.js 579 the board: each mode's board HTML,
 gamedefaults.js 43 the game's own numbers, for every
@@ -126,7 +126,8 @@ merchants.js 376 the merchants
 meters.js 114 the thin bars under my duck's
 mgj.js 219 Mad God Justin: what the screen
 mgjart.js 96 Mad God Justin's new pictures
-mgjrules.js 2285 
+mgjpicks.js 487 Mad God Justin's pickups: what drops,
+mgjrules.js 1871 
 modes.js 444 the game modes
 music.js 590 the music: our own songs, played
 musicbar.js 169 the music bar: the song the
@@ -213,7 +214,7 @@ scrules.js 428 the rules of Story Chain
 secret.js 79 secrets between two browsers
 seriatbible.js 108 The Seriat bible in the game
 seriattheme.js 63 Seriat's and the command line's look:
-settings.js 298 Settings
+settings.js 306 Settings
 sfxlist.js 162 the sound files
 shared.js 497 Sandbox Phase 7: Shared, the game
 shell.js 1127 the command line: a small bash
@@ -245,11 +246,11 @@ triviabank.js 499 Trivia's auto questions
 triviarules.js 458 the rules of Trivia
 ui.js 380 small helpers every screen uses
 umaprules.js 72 Made maps: the room's part
-umaps.js 371 Made maps: making them, and keeping
+umaps.js 385 Made maps: making them, and keeping
 units.js 10 the game's units, in one place
 unlocks.js 414 things you unlock
 upbar.js 69 the green bar on an upload
-updates.js 3264 Updates
+updates.js 3276 Updates
 vdd.js 190 Valentine's Duck Date: what the screen
 vddrules.js 513 the rules of Valentine's Duck Date
 vellum.js 28 The King's Festival
