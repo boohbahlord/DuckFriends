@@ -5,7 +5,7 @@
    Also the stats: the awards (Most Damage, Killing Blow, Hit the Most, Most Jumps), each player's box, and every fight. */
 import { SHOTGUN } from "./gunart.js";
 import { esc, el } from "./ui.js";
-import { topOf, joinNames, awardCard, smallLine } from "./awards.js";
+import { jumpsTop, topOf, joinNames, awardCard, smallLine } from "./awards.js";
 import { hpText } from "./hpmath.js";
 import { duckSVG } from "./duck.js";
 import { nameHTML } from "./name.js";
@@ -178,13 +178,13 @@ function awardsHTML(s, all) {
   const dmg = top((p) => p.dmg),
     hit = top((p) => p.hits),
     kill = top((p) => p.kills),
-    jx = s.seat.map((id) => [id, (s.jumps || {})[id] || 0]),
-    jv = Math.max(0, ...jx.map((x) => x[1]));
+    jt = jumpsTop(s),
+    jv = jt ? jt.v : 0;
   return `<div class="awards">
     ${award("Most Damage", dmg && dmg.who, dmg ? `${plural(dmg.v, "stab")} on Justin.` : "")}
     ${award("Killing Blow", kill && kill.who, kill ? (all ? `${plural(kill.v, "killing blow")}.` : "The last stab.") : "")}
     ${award("Hit the Most", hit && hit.who, hit ? `Knocked down by Justin ${plural(hit.v, "time")}.` : "")}
-    ${award("Most Jumps", jv ? jx.filter((x) => x[1] === jv).map((x) => x[0]) : [], `${plural(jv, "jump")}.`)}</div>`;
+    ${award("Most Jumps", jt ? jt.who : [], `${plural(jv, "jump")}.`)}</div>`;
 }
 /* a player's box: their stabs, the times he got them, killing blows (this fight, or every fight) */
 export function mgjBoxHTML(s, id, all = false) {
