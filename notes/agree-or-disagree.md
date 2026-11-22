@@ -7876,3 +7876,13 @@ Decision: B5 keeps ground = 1 and 20% a level, with NO cap (only clamped at full
 Question: "How wide should a gun's cone get at full heat, per recoil point?" Chose: "15 degrees a point".
 
 Decision: K14+K18 recoil score as in /mnt/project-files/solomon/k14-recoil-scores.md (0.70 kick against dead weight, 0.20 fire rate, 0.10 barrel), widest cone 15 degrees x score; grenade launcher only kicks (Adam default, owner told 10:58Z); Solomon builds.
+
+## 2026-11-22 13:15Z (owner, phone screenshot of Sandbox: /mnt/project-files/adam/bugs/2026-11-22-1315-sandbox-red-border.jpg)
+
+"Why is this board in a red border? It shouldn't be at all
+
+Why is there not an ability to change maps in the gane?
+
+Where is the map change button?
+
+My maps should show in map vote when i have them made"
