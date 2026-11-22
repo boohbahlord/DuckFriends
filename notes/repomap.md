@@ -19,7 +19,7 @@ beaks.js 138 beaks
 below.js 89 darker below
 blast.js 67 explosions: one module
 bloodpool.js 50 a pool of blood:
-boardfire.js 1339 the board's weapons: hits,
+boardfire.js 1327 the board's weapons: hits,
 boardjustin.js 652 Justin on the boards
 botduck.js 90 a computer's duck: a
 botlines.js 188 What the computers write
@@ -89,7 +89,7 @@ gunmen.js 110 the gunmen's looks
 gunmenrules.js 1158 Survival: the gunmen
 gunmenview.js 135 Survival: the gunmen on
 gunparts.js 15 the pieces every weapon's
-guns.js 708 every weapon's numbers: one
+guns.js 721 every weapon's numbers: one
 hats.js 1096 hats
 heat.js 74 a gun's heat: the
 heights.js 87 a shot's height, Doom's
@@ -97,7 +97,7 @@ helppages.js 1498 the command line's Help
 hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
 hooks.js 3 hooks between screens that
-hotbar.js 506 the specials on the
+hotbar.js 515 the specials on the
 hotpick.js 324 What goes in my
 hpmath.js 68 HP in hundredths
 hpmeter.js 311 HP meters and the
@@ -114,7 +114,7 @@ l4dd.js 3338 Quacky Zombies on every
 l4ddangel.js 147 Dead Ducks Arcade's Angel
 l4ddangelui.js 204 Dead Ducks Arcade's Angel
 l4ddart.js 623 Quacky Zombies' pictures
-l4ddbar.js 332 Quacky Zombies' weapons bar
+l4ddbar.js 325 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell
 l4ddcatalog.js 233 Quacky Zombies: the Butler's
 l4dddrops.js 63 Quacky Zombies' drops, drawn
@@ -123,7 +123,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power
 l4ddpowerui.js 278 Dead Ducks Arcade's power
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4910 the rules of Quacky
+l4ddrules.js 4908 the rules of Quacky
 l4ddsfx.js 545 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online:
 langname.js 5 the name of Sandbox's
@@ -272,7 +272,7 @@ umaps.js 374 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 408 things you unlock
 upbar.js 69 the green bar on
-updates.js 3650 Updates
+updates.js 3661 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival

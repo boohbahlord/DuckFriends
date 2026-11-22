@@ -8054,3 +8054,13 @@ We wont add the gun item creation stuff till next week or the week after though"
 Decision (Solomon, through Adam): the cause was the crowd's, not the spots': one goal point a whole crowd shared (one wall foot to climb, a tree's one-zombie gap by the station wall, a doorway two made for at once) that only one could reach while they keep a duck apart, and a zombie in its goal's field cell with no way at all. Fixed once in the shared chase: straight at its goal when the field has none; up a wall anywhere a few ducks along from the foot; only one ahead (nearer its aim) holds a walker up (crowd.js into); trees stand 156 px out from a building's wall. Bodies walk into each other only where their heights overlap (heights.js overlapH: the swing rule, now one rule for both): a duck on a roof is never held up by the crowd under it. New check tools/check/zreach.cjs: a duck at every kind of height on both maps, a round's crowd must reach it. Renaming "ground level" to elevation everywhere and making guns/items: next week.
 
 Decision (Adam, Solomon): js/hotpick.js is the one hand file for every mode: the slot picked is what's in hand; its key again keeps it; an empty slot, or an item used rather than held (an effect, a thrown chair, the flashlight), leaves the hand empty; a game starts with slot 1 picked (check tools/check/hand.cjs). Dead Ducks Arcade's ammo in every mode (unless Unlimited ammo is on) is the next PR, Solomon. The pixel barrel glow is Adam's.
+
+## Owner, Nov 22 20:12Z (via coordinator): CodeRabbit and tools
+"have code rabbit set up for our repo for anything to work for us so we can use less usage, idk how it works just make it work for more efficiency and suggest other tools for better code or less bugs that may reduce usage"
+Decision (Adam): add .coderabbit.yaml tuned to our rules (owner installs the free app with one click at coderabbit.ai), plus a free GitHub check on every PR (smoke checks + ESLint) and Dependabot for the workflow actions.
+
+## Owner, Nov 22 20:33Z-20:35Z: Lighthouse and more tools
+20:33Z: "how does lighthouse work ?" / "okay is it working now ?" (CodeRabbit: connected; it skips bot PRs)
+20:35Z: "how we can use lighthouse, use as many tools you want as long as they improve game, reduce usage, improve code, imrpove ui, or reduce bugs AND MORE
+When you add one, i just want to here ab it, so u can go shoppinng for more so we can opimize"
+Decision (Adam): add free tools that run on GitHub (not our usage), one at a time, one line to the owner each; Lighthouse first.

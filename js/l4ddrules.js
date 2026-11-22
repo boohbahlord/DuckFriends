@@ -57,7 +57,7 @@ import {
   kindOf,
   GUN_NAMES,
   WEAPONS,
-  rollDmg,
+  armDmg,
   critOf,
   START_WEAR,
   loadTo,
@@ -313,8 +313,8 @@ const SKIP = 0.25,
   LATER = 10000, // ms into a round before they come twice as fast
   EARLY = 4000; // ms into a round they come half as fast
 const BLAST_HALF = 0.5; // (a grenade's wide here, which the Angelic ones' are against: its rings, blast.js; the owner's, Nov 19 19:27Z, "half the blast radius")
-/* a hit's damage: the weapon's, or a roll in its range (guns.js rollDmg) */
-const dmgOf = (A) => (Array.isArray(A.dmg) ? rollDmg(A) : A.dmg || 1);
+/* a hit's damage: the weapon's, or a roll in its range (guns.js armDmg, every mode's) */
+const dmgOf = armDmg;
 /* one of two, at even odds (the double barrel's 1 or 1.5); 0 with none */
 const oneOf = (two) => (two ? two[Math.random() < 0.5 ? 0 : 1] : 0);
 /* fire (the owner's): a zombie burns 8 s and takes 1 every 2 s (the first as it's lit: 4 in all), and fire on a zombie
@@ -2739,9 +2739,7 @@ function merchantShoots(s, zs, now) {
     len = dist(t) / 64,
     chance = t.z ? 0.85 : Math.max(0.06, 0.25 - 0.03 * len); // (as the gunmen aim, gunmenrules.js AIM)
   let dmg = 0;
-  for (let k = 0; k < burst; k++)
-    if (Math.random() < chance)
-      dmg += Array.isArray(A.dmg) ? rollDmg(A) : +A.dmg || 1;
+  for (let k = 0; k < burst; k++) if (Math.random() < chance) dmg += armDmg(A);
   const a = Math.random() * 2 * Math.PI,
     off = dmg ? 0 : 30 + Math.random() * 40;
   s.hang.l4m = {
