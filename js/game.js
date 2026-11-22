@@ -202,6 +202,7 @@ import {
   catchLen,
   counselBounds,
 } from "./rules.js";
+
 import { walkOf } from "./push.js";
 
 import { isSudo, canOpen } from "./roomrules.js";
@@ -573,6 +574,20 @@ import {
   again,
 } from "./fxmotion.js";
 
+import {
+  SHOT_EL,
+  SHOT_SEEN,
+  knockedOff,
+  shotDone,
+  shotPool,
+  stopped,
+} from "./gameshots.js";
+
+import { announce, pause, say, stopSays } from "./gameannounce.js";
+
+export { bloodBurst, neckSpray, stopped } from "./gameshots.js";
+export { PICK_NAMES } from "./gameannounce.js";
+
 export let R = null,
   S = null,
   off = null,
@@ -641,8 +656,7 @@ let lastSend = 0,
   lastBeep = -1,
   lastT = 0,
   geo = null,
-  lastGrace = -1,
-  sayJob = 0;
+  lastGrace = -1;
 let draftT = 0;
 let pm = null,
   idleOff = null,
@@ -2469,127 +2483,6 @@ function placePodium(board, now) {
   });
 }
 
-/* ---------- pools (owner 2026-11-15: "I agree with reusing objects") ----------
-   The bullets in the air and the blood bursts are made and thrown away many times a second. Done with, they're kept
-   (out of the page) and handed out again for the next one that looks the same, instead of building new elements every
-   time: fewer small freezes while the browser cleans up. Put back in the page, an element's CSS animation starts over
-   by itself. */
-const SHOT_EL = new Map(); // a shot's number → its element
-/* a shot that stops where it hits ends there on my screen, never drawn past it (the owner's, Nov 17 20:37Z: "BULLETS
-   THAT DO NOT PASS THROUGH ZOMBIES WILL NO LONGER PASS THRU ZOMBIES, BECAUSE IN GAME THEY ARE STILL PASSING THROUGH
-   ZOMBIES IN A GLITCHY WEIRD WAY. LIKE IF U SHOOT A PISTOL THE BULLET KIND IS SEEN GOING PAST THEM A BIT"). The host
-   finds the hit at its next beat and my screen hears of it later, so the shot I draw at where it is now flew on past
-   what it hit until then. Now, each frame, from where I last drew it to where it is now, I look for what stops it as I
-   draw things (Dead Ducks Arcade: a wall or a zombie, l4dd.js shotStop; Mad God Justin: his chair or a controller, a
-   wave zombie, him, mgjrules.js mgjStop), every gun and thrown thing but the grenade (which lands) and the chain gun's
-   and Laser Rifle's lines; the sniper's goes through as many as it does there. It ends at that spot, its hit shown
-   there at once (fx.js fxImpact). If the host then says it went on (a miss, a crit's slug, the sniper's: sh.ms, sh.hit,
-   sh.zp, sh.zh), or still has it once it should long have heard (STOP_WAIT), it flies on from there. True: it's
-   stopped, don't draw it */
-const STOP_WAIT = 700;
-export function stopped(s, sh, at, hang, now) {
-  const r = SHOT_SEEN.get(sh.n),
-    mgj = isMgj(s) || sbOnBoard(s); // (Sandbox's board: its spawns' zombies stop shots as his do)
-  if (
-    !r ||
-    !((hang && isL4dd(s)) || mgj) ||
-    sh.k === "grenade" ||
-    sh.k === "chain" ||
-    sh.k === "laser"
-  )
-    return false;
-  const missed = [...(sh.ms || []), ...(sh.zp || [])],
-    past = [...missed, ...(sh.hit || []), ...(sh.zh || [])];
-  for (const i of past) r.skip.add(i);
-  if (
-    r.stop &&
-    ((r.stop.i >= 0 && past.includes(r.stop.i)) || now - r.stop.at > STOP_WAIT)
-  ) {
-    if (r.stop.i >= 0 && missed.includes(r.stop.i)) r.n--; // (a miss isn't a hit)
-    r.stop = null;
-    r.fired = false;
-  } // (it went on: from where it stopped)
-  if (r.stop) return true;
-  const [x0, y0] = r.p || [sh.x0, sh.y0],
-    end = mgj
-      ? mgjStop(s, sh, r, x0, y0, at.x, at.y, now)
-      : shotStop(s, sh, r, x0, y0, at.x, at.y);
-  r.p = [at.x, at.y];
-  if (!end) return false;
-  r.stop = { i: end.i, at: now };
-  r.p = [end.x, end.y];
-  const e = { x: end.x, y: end.y, z: at.z },
-    a = hang ? world.place(e, sh.hz) : place(e, 0, 1, true);
-  r.x = a.left;
-  r.y = a.top;
-  fxImpact(r.x, r.y, r.k, r.vx, r.vy);
-  r.fired = true;
-  return true;
-}
-const SHOT_SEEN = new Map(); // a shot's number → { k, x, y (where last seen on the screen), vx, vy (its way) }: once it's gone, it hit there (fx.js fxImpact)
-const SHOTS_KEPT = new Map(); // class + look → elements ready to go again
-function shotPool(cls, inner) {
-  const k = cls + "|" + inner,
-    free = SHOTS_KEPT.get(k);
-  if (free && free.length) return free.pop();
-  const b = el(`<div class="${cls}">${inner}</div>`);
-  b._k = k;
-  return b;
-}
-function shotDone(b) {
-  b.remove();
-  let free = SHOTS_KEPT.get(b._k);
-  if (!free) SHOTS_KEPT.set(b._k, (free = []));
-  if (free.length < 24) free.push(b);
-  if (SHOTS_KEPT.size > 60) SHOTS_KEPT.clear(); // (many looks: start over)
-}
-/* blood bursting from (x, y): n drops all around, as pixels (fx.js); `near` is how far over its floor it bursts */
-export function bloodBurst(x, y, n, wide, near, far, delay = 0) {
-  const size = (geo && geo.size) || 60,
-    go = () => fxBurst(x, y + size * 0.5, size * 0.5, n, Math.round(n / 4));
-  if (delay) setTimeout(go, delay);
-  else go();
-}
-/* a headless duck's neck spurting blood for a moment after (owner 2026-11-04 06:44Z): small spurts, one after another,
-   as pixels (fx.js) */
-export function neckSpray(x, y) {
-  const size = geo && geo.size;
-  if (!size) return;
-  fxSpurt(x, y + size * 0.5, size * 0.5, 14, 1500);
-}
-
-/* what a hit just knocked off duck d (wounds.js codes it didn't have a moment ago: a hat h, a face item m, the beak p,
-   the eye e), flying off its head the way it looks away from, as pixels (fx.js). The owner's, Nov 16 */
-function knockedOff(d, wc, look, at, z, size, face) {
-  const was = d._wc || "";
-  d._wc = wc;
-  if (!look || !wc) return;
-  const fresh = (k) =>
-      wc.includes(k + "0") && !was.includes(k + "0") && !was.includes(k + "1"),
-    u = size / 120,
-    x = (v) => at.left + (v - 60) * u * face,
-    h = (v) => z + (108 - v) * u,
-    away = -face,
-    svg = (inner) =>
-      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${-HAT_TOP} 120 ${120 + HAT_TOP}" width="120" height="${120 + HAT_TOP}">${face < 0 ? `<g transform="translate(120 0) scale(-1 1)">${inner}</g>` : inner}</svg>`;
-  if (fresh("h") && look.hat) {
-    const H = hatLayers(look.hat, look, false);
-    fxKnock(svg(H.back + H.front), size, x(72), at.top, h(20), away, 1);
-  }
-  if (fresh("m") && look.face)
-    fxKnock(
-      svg(faceLayer(look.face, look, false)),
-      size,
-      x(84),
-      at.top,
-      h(36),
-      away,
-      0.9,
-    );
-  if (fresh("p"))
-    fxKnock(svg(beakSVG(look)), size, x(100), at.top, h(42), face, 1.1, true);
-  if (fresh("e")) fxEye(x(83), at.top, h(34), face);
-}
 /* Mad God Justin, beaten: he dies, lying on the LOSER podium in his blood, crying no more (the owner's, Nov 18 12:19Z:
    "when he has 0 HP in mad god justin, he dies (he starts crying when at 25 hp or lower but cry effect goes away for
    any dead player)", "mad god justin bleeds a puddle of blood when dead") */
@@ -3254,199 +3147,6 @@ function duckAt() {
   const r = board.getBoundingClientRect(),
     a = place(me, 0, 1);
   return { x: r.left + a.left, y: r.top + a.top };
-}
-
-/* ---------- the cloud's words: letters that fade in (with a sparkle) and out (with a breath) ---------- */
-function say(text, small = false) {
-  const el = S && $(".topover .lord-say", S);
-  if (!el) return;
-  let i = 0;
-  el.className = "lord-say" + (small ? " small" : "");
-  el.innerHTML = text
-    .split(" ")
-    .map(
-      (w) =>
-        `<span class="w">${[...w].map((ch) => `<span style="animation-delay:${i++ * 38}ms">${esc(ch)}</span>`).join("")}</span>`,
-    )
-    .join(" ");
-  sfx.letters(text.length);
-}
-function unsay() {
-  const el = S && $(".topover .lord-say", S);
-  if (!el || !el.textContent) return;
-  el.classList.add("out");
-  sfx.fade();
-}
-const pause = (ms) => new Promise((ok) => setTimeout(ok, ms));
-/* a question starts: "Vote" once voting opens; the votes are in: the news, then the question to talk over */
-async function announce(phase) {
-  if (isQuack(R.state)) return announceQuack(R.state);
-  if (isDn(R.state)) return announceDunce(R.state, phase);
-  if (isMgj(R.state)) return announceMgj(R.state, phase);
-  if (isVd(R.state)) return announceVd(R.state, phase);
-  if (isTv(R.state)) return; // (Trivia: the question says it all)
-  const job = ++sayJob;
-  if (
-    phase === "answer" ||
-    (isSc(R.state) && ["lvote", "wvote"].includes(phase))
-  ) {
-    await pause(Math.max(250, graceLeftMs(R.state)));
-    if (job === sayJob) say(isLaw(R.state) ? "Who will convince?" : "Vote");
-    return;
-  }
-  if (phase === "closing") {
-    sfx.boop();
-    say("Reconsider?");
-    return;
-  }
-  if (phase === "tie") {
-    sfx.boop();
-    say("Tie!");
-    return;
-  }
-  if (phase !== "discuss") return;
-  sfx.boop(); // End turn is open
-  await pause(350);
-  if (job !== sayJob) return;
-  if (isLaw(R.state)) {
-    // the verdict, then the winner bumps the loser off the cloud
-    const L = R.state.law || {},
-      w = L.w === 0 ? L.off : L.w === 1 ? L.def : null,
-      p = w && R.state.players[w];
-    const wn = p ? p.name : "The " + (L.w ? "defense" : "offense");
-    say(
-      L.w === -1
-        ? "Hung jury!"
-        : L.left
-          ? `${wn} wins: the other side left!`
-          : L.gave
-            ? `${wn} wins: the other side gave up!`
-            : `${wn} convinced the jury!`,
-    );
-    await pause(3200);
-    if (job !== sayJob) return;
-    unsay();
-    await pause(650);
-    if (job !== sayJob) return;
-    say("Who argued it best?", true);
-    return;
-  }
-  say("The votes are in!");
-  await pause(2400);
-  if (job !== sayJob) return;
-  unsay();
-  await pause(650);
-  if (job !== sayJob) return;
-  say(
-    isBb(R.state) ? "Why that one?" : "Why did you choose what you chose?",
-    true,
-  );
-}
-
-export const PICK_NAMES = Object.fromEntries(
-  PICK_WEAPONS.map((k) => [k, weaponName(k)]),
-); // (as Quacky Zombies names them)
-/* Mad God Justin: "Defeat Justin!" as the fight starts; then he's defeated, or time's up */
-async function announceMgj(s, phase) {
-  ++sayJob; // (any announcement still waiting stops)
-  if (phase === "boss") {
-    sfx.drum();
-    say("Defeat Justin!");
-    return;
-  }
-  if (phase !== "mgjend") return;
-  if (!(s.mgj && s.mgj.won)) {
-    sfx.bonk();
-    say("Justin Wins");
-    return;
-  }
-  sfx.done();
-  confettiRain(5000);
-  say("Justin defeated");
-}
-/* Duncelation: the cloud asks "Dunce or Not?" as a take starts; the verdict; the dunce */
-async function announceDunce(s, phase) {
-  const job = ++sayJob,
-    C = s.dn && s.dn.cur,
-    p = C && s.players[C.def],
-    [d, n] = (C && C.end) || [0, 0];
-  if (phase === "answer") {
-    sfx.boop();
-    say("Dunce or Not?");
-    return;
-  }
-  if (phase === "discuss") {
-    sfx.boop();
-    await pause(350);
-    if (job === sayJob) say(`Not a dunce! ${n}–${d}`);
-    return;
-  }
-  if (phase !== "dunced" || !p) return;
-  sfx.drum();
-  say(`${p.name} is a DUNCE!`);
-  await pause(3400);
-  if (job !== sayJob) return;
-  unsay();
-  await pause(650);
-  if (job !== sayJob) return;
-  say("LOSER!");
-}
-/* Valentine's Duck Date: the cloud as a date starts, at the pick, and the news */
-async function announceVd(s, phase) {
-  const job = ++sayJob,
-    V = s.vd;
-  if (!V) return;
-  if (phase === "vddate") {
-    sfx.boop();
-    say("Date time!");
-    return;
-  }
-  if (phase === "vdpick") {
-    sfx.drum();
-    say("Who's out?");
-    return;
-  }
-  if (phase === "vddown") {
-    const last = V.picks[V.picks.length - 1];
-    sfx.boop();
-    say(last && last.id ? "Turned Down!" : "Nobody!");
-    return;
-  }
-  if (phase === "vdval") {
-    sfx.drum();
-    await pause(400);
-    if (job === sayJob) say("Valentine!");
-  }
-}
-/* Who is the Quack?: whose clue it is; the vote; then the drumroll and the news, a line at a time */
-async function announceQuack(s) {
-  const job = ++sayJob,
-    lines = quackLines(s),
-    w = s.wq;
-  if (!lines.length) return;
-  if (s.phase === "clue") {
-    sfx.boop();
-    say(lines[0]);
-    return;
-  }
-  if (s.phase !== "reveal") {
-    await pause(Math.max(250, graceLeftMs(s)));
-    if (job === sayJob) say(lines[0]);
-    return;
-  }
-  for (let i = 0; i < lines.length; i++) {
-    if (i) {
-      await pause(w.lastOut && i === 1 ? 2600 : 2200);
-      if (job !== sayJob) return;
-      unsay();
-      await pause(650);
-      if (job !== sayJob) return;
-    }
-    say(lines[i]);
-    if (i === 0 && w.lastOut) sfx.drum();
-    if (i === 1 && w.lastOut)
-      (w.result && w.result.quacks.includes(w.lastOut) ? sfx.done : sfx.bonk)();
-  }
 }
 
 function paint(force) {
@@ -4623,7 +4323,7 @@ register("game", {
     if (scene) scene.destroy();
     scene = null;
     hooks.resetDuck = null;
-    sayJob++;
+    stopSays();
     lastGrace = -1;
     if (touchOff) touchOff();
     touchOff = null;

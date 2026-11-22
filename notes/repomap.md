@@ -57,8 +57,9 @@ friends.js 236 friends
 front.js 151 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 229 how a held weapon and
-game.js 5125 the game screen
+game.js 4825 the game screen
 gameact.js 546 the action window and the
+gameannounce.js 212 The cloud's words and what
 gameboard.js 589 the board: each mode's board
 gamedefaults.js 57 the game's own numbers, for
 gamefx.js 874 the silly commands and the
@@ -67,6 +68,7 @@ gameplace.js 738 where things are put on
 gameready.js 47 
 gameround.js 597 round
 gamesettings.js 764 Game Settings: the whole screen,
+gameshots.js 137 The bullets in the air,
 gamestats.js 191 what `stats` and `roundstats` print
 gfx.js 8 Low graphics
 gmodes.js 219 Sandbox Phase 6: made game
