@@ -39,6 +39,7 @@ import { shuffle } from "./random.js";
 import { hitWounds, WOUND_BREEDS } from "./wounds.js";
 
 import { critOf, armOfShot } from "./guns.js";
+import { drawCrit, drawDmg } from "./bowdraw.js";
 
 import { isQuack, tileAt, tileCenter, stillIn } from "./quackrules.js";
 
@@ -162,15 +163,20 @@ export const boardMgj = (s) =>
   !isMgj(s) && !!s.options.mgjBoard && justinShown(s);
 /* a duck's weapon hit him: 0 nothing, 1 a hit he takes (the board's Mad God Justin: HP off, and the duck is his
    target), 2 he went down */
-export function justinHit(s, by, now, log, w) {
+export function justinHit(s, by, now, log, w, sh) {
   const j = s.justin;
   if (!justinShown(s) || j.down || isMgj(s)) return 0;
   const at = justinAt(j, now),
     mgj = boardMgj(s),
-    crit = Math.random() < critOf(armOfShot(w)); // (a crit doubles it: guns.js critOf; w can be a shot's kind)
+    crit =
+      Math.random() <
+      (sh && sh.dr != null ? drawCrit(sh.dr) : critOf(armOfShot(w))); // (a crit doubles it: guns.js critOf; w can be a shot's kind; a drawn arrow: its draw's, bowdraw.js)
   if (mgj) {
     j.max = BJ_HP;
-    j.hp = Math.max(0, (j.hp ?? BJ_HP) - (DMG[w] || 1) * (crit ? 2 : 1));
+    j.hp = Math.max(
+      0,
+      (j.hp ?? BJ_HP) - ((DMG[w] || 1) + drawDmg(sh && sh.dr)) * (crit ? 2 : 1),
+    );
   }
   const dies = !mgj || j.hp <= 0;
   /* the hit feel of Dead Ducks Arcade on him too (the owner's, Nov 19 01:34Z: "not just players, not just Justin, but any
