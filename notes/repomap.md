@@ -57,7 +57,7 @@ friends.js 236 friends
 front.js 151 the front page
 fx.js 1200 the effects, drawn as pixels
 fxmotion.js 229 how a held weapon and
-game.js 5253 the game screen
+game.js 5125 the game screen
 gameact.js 521 the action window and the
 gameboard.js 571 the board: each mode's board
 gamedefaults.js 43 the game's own numbers, for
