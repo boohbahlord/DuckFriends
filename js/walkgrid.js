@@ -27,33 +27,34 @@ export function gridOf(q) {
   )
     return g;
   const n = q.gw * q.gh,
-    walk = new Uint8Array(n),
-    hts = new Float32Array(n);
-  for (let c = 0; c < n; c++) {
-    const x = q.x0 + (c % q.gw) * CELL + CELL / 2,
-      y = q.y0 + Math.floor(c / q.gw) * CELL + CELL / 2,
-      z = heightAt(x, y);
-    hts[c] = z;
-    walk[c] =
-      (!q.ok || q.ok(x, y)) &&
-      standable(x, y, z, 0, null, !!q.zombie) &&
-      !onPlatform(x, y) // (beds and tables: hopped onto, not walked)
-        ? 1
-        : 0;
-  }
-  const out = {
-    rev: layoutRev(),
-    x0: q.x0,
-    y0: q.y0,
-    gw: q.gw,
-    gh: q.gh,
-    walk,
-    hts,
-  };
+    out = {
+      rev: layoutRev(),
+      x0: q.x0,
+      y0: q.y0,
+      gw: q.gw,
+      gh: q.gh,
+      walk: new Uint8Array(n),
+      hts: new Float32Array(n),
+      q,
+    };
+  for (let c = 0; c < n; c++) cellOf(out, c);
   made.set(q.name, out);
   return out;
 }
-
+/* cell c of grid g, made from what stands there now */
+function cellOf(g, c) {
+  const { q } = g,
+    x = q.x0 + (c % q.gw) * CELL + CELL / 2,
+    y = q.y0 + Math.floor(c / q.gw) * CELL + CELL / 2,
+    z = heightAt(x, y);
+  g.hts[c] = z;
+  g.walk[c] =
+    (!q.ok || q.ok(x, y)) &&
+    standable(x, y, z, 0, null, !!q.zombie) &&
+    !onPlatform(x, y) // (beds and tables: hopped onto, not walked)
+      ? 1
+      : 0;
+}
 /* a random spot in the area a = { x0, y0, x1, y1, tries } that passes ok(x, y): x then y from rand() (0 … 1), up to
    a.tries times; null when none did. Every stroll picks its next spot this way: Hangout's characters (hangout/npc.js
    randomSpot, on the grid) and Justin out in Dead Ducks Arcade (bots.js wanderSpot) */
