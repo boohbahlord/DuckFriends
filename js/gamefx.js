@@ -33,6 +33,7 @@ import { W as HW, H as HH } from "./hangout/layout.js";
 import { zOf } from "./heights.js";
 
 import { grenadeBoom } from "./grenade.js";
+import { REACH } from "./blast.js";
 
 import { confettiRain, pressFX } from "./specials.js";
 
@@ -365,7 +366,7 @@ export function playFx(f) {
     const at = geo.hang
       ? world.place({ x: f.x, y: f.y }, f.hz || 0)
       : place({ x: f.x, y: f.y }, 0, 1, true);
-    grenadeBoom(fxl, board, at, size * (f.wide || 1));
+    grenadeBoom(fxl, board, at, size * 2 * (f.rr || REACH)); // (rr: its rings' reach, duck lengths: blast.js)
     boomShake(at, f.wide || 1);
     (f.wide > 1 ? sfx.boomBig : f.wide < 1 ? sfx.boomSmall : sfx.boom)(
       geo.hang ? { x: f.x * HW, y: f.y * HH } : {},

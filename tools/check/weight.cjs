@@ -6,7 +6,9 @@
      shot the same at any Size;
    - immobile: a body with im is never pushed;
    - dead weight (B6b, guns.js DEAD_WEIGHT): a duck holding the chain gun (0.25) is moved 1/1.25 as far, and walks as
-     fast; a 110% duck holding a knife (0.02), 1/1.12.
+     fast; a 110% duck holding a knife (0.02), 1/1.12;
+   - the rings (B6 P4, blast.js): rings of one tile, 9 in the center (always a crit, so 18) and in ring 2, then half each
+     ring out, none past ring 6; a grenade reaches 1.5 duck lengths.
    Run: node tools/check/run.mjs weight */
 const C = require("./lib.cjs");
 const { chromium } = require("playwright");
@@ -67,6 +69,17 @@ const near = (a, b, e = 0.002) => Math.abs(a - b) <= e;
       P.immobile({ sv: 0 }),
       P.pushTaken(5, Infinity),
     ];
+    // the rings (B6 P4): a point body by distance in world px, a tile 16 px, no lucky crits
+    const B = await import("./js/blast.js"),
+      r0 = Math.random;
+    Math.random = () => 0.99;
+    const at = B.reach({ x: 640, y: 640, rx: 64, ry: 64 });
+    out.rings = [0, 24, 40, 56, 72, 88, 104].map((d) => {
+      const n = at(640 + d, 640, 0, 0, 0.001);
+      return n ? [n.ring, n.dmg, B.hitOf(n).dmg] : null;
+    });
+    Math.random = r0;
+    out.reach = B.REACH;
     return out;
   });
   const w = got.walk,
@@ -98,6 +111,12 @@ const near = (a, b, e = 0.002) => Math.abs(a - b) <= e;
   )
     C.fail("dead weight: " + JSON.stringify(got.held));
   if (got.imm.join() !== "true,false,0") C.fail("immobile: " + got.imm);
+  if (
+    got.reach !== 1.5 ||
+    JSON.stringify(got.rings) !==
+      "[[1,9,18],[2,9,9],[3,4.5,4.5],[4,2.25,2.25],[5,1.125,1.125],[6,0.5625,0.5625],null]"
+  )
+    C.fail("the rings: " + got.reach + " " + JSON.stringify(got.rings));
   C.noErrors(errs);
   await b.close();
 })();

@@ -3,7 +3,9 @@
    in world px (W by H, hangout/layout.js); a duck length is DUCK of them; a tile is a quarter of a duck length (the
    owner's, Nov 21 19:13Z: distances in tiles, never duck lengths). On the boards a duck length is sandboxrules.js
    boardDuck(s). */
-import { W, H } from "./hangout/layout.js";
+import { W, H, DUCK } from "./hangout/layout.js";
+
+export { DUCK }; // (world px a duck length)
 
 export const TILE = 0.25; // (duck lengths)
 /* a spot's place in world px, [x, y] */

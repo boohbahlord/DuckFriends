@@ -112,8 +112,8 @@ import { MERCHANTS, merchantById, merchantLook } from "./merchants.js";
 import { linesOf } from "./merchantlines.js";
 import { invuln } from "./hangout/death.js";
 import { hOk, hLock, shotFeet, SAME_FLOOR, zOf, nearH } from "./heights.js";
-import { toPx } from "./units.js";
-import { blast, reach } from "./blast.js";
+import { toPx, DUCK } from "./units.js";
+import { blast, reach, hitOf, REACH } from "./blast.js";
 import { pushAlong, walkOf, pushTaken, immobile, sizeOf } from "./push.js";
 import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
@@ -298,8 +298,7 @@ function zombiesFor(r, p) {
 const SKIP = 0.25,
   LATER = 10000, // ms into a round before they come twice as fast
   EARLY = 4000; // ms into a round they come half as fast
-/* the grenade's and the grenade launcher's blast, half as wide (the owner's, Nov 19 19:27Z: "half the blast radius") */
-const BLAST_HALF = 0.5;
+const BLAST_HALF = 0.5; // (a grenade's wide here, which the Angelic ones' are against: its rings, blast.js; the owner's, Nov 19 19:27Z, "half the blast radius")
 /* a hit's damage: the weapon's, or a roll in its range (guns.js rollDmg) */
 const dmgOf = (A) => (Array.isArray(A.dmg) ? rollDmg(A) : A.dmg || 1);
 /* one of two, at even odds (the double barrel's 1 or 1.5); 0 with none */
@@ -4342,7 +4341,7 @@ export function l4Shots(s, now) {
 
 /* the Angelic grenade launcher's fire: a few burning patches round where it went off, as the flamethrower's ground */
 function burnAt(s, by, x, y, now, z0 = 0) {
-  const r = ARMS.grenade.r * ANGEL.GL_RADIUS * BLAST_HALF,
+  const r = REACH * DUCK * ANGEL.GL_RADIUS, // (its blast's rings: blast.js)
     out = [];
   for (let k = 0; k < ANGEL.GL_FIRE; k++) {
     const a = (k / ANGEL.GL_FIRE) * Math.PI * 2,
@@ -4377,9 +4376,9 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
     near = reach({
       x: bx,
       y: by,
-      rx: 1,
-      ry: 0.8,
-      r: ARMS.grenade.r * wide,
+      rx: DUCK,
+      ry: DUCK,
+      wide: wide / BLAST_HALF, // (its rings: blast.js; a grenade's is BLAST_HALF, the Angelic ones smaller)
       ok: (x, y, z) => !slabBetween(bx, by, z0, x, y, z),
     }),
     mine = sh.k && s.pos[sh.by];
@@ -4387,8 +4386,8 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
     [
       zs,
       (z) => z.st !== 3 && [z.x, z.y, zOf(z, "zombie")],
-      (z) => {
-        strike(s, z, z.hp, false, sh.by); // (all its HP: 5 points for each)
+      (z, n) => {
+        if (!strike(s, z, n.dmg, n.crit, sh.by)) return true; // (its ring's damage, a crit twice: blast.js; it lives)
         die(z, T);
         mark(s, z, "g0"); // (every chunk, cuts and big holes: l4ddart.js)
         gore.push([Math.round(z.x), Math.round(z.y)]);
@@ -4413,16 +4412,16 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
       () =>
         [merchantOf(s)].filter((m) => m && m.st !== "dead" && m.st !== "jump"),
       (m) => [m.x, m.y, heightAt(m.x, m.y)],
-      (m) =>
+      (m, n) =>
         merchantHurt(
           s,
           s.players[sh.by] ? sh.by : null,
-          m.hp,
+          hitOf(n).dmg,
           now,
           "grenade",
           "blast",
         ),
-    ], // (the merchant: all his HP)
+    ], // (the merchant: his ring's damage)
     [
       () =>
         [mine && (s.hang.l4p || {})[sh.by]].filter(
@@ -4457,6 +4456,7 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
     hz: sh.hz || 0,
     gore: gore.slice(0, 12), // (blood bursting out of each zombie it got: game.js)
     ...(wide !== 1 ? { wide } : {}),
+    rr: (REACH * wide) / BLAST_HALF, // (its rings' reach, as the screens draw it)
   });
   return any;
 }
