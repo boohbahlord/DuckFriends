@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v264",
+    version: 264,
+    date: "Nov 22, 2026",
+    title: "Draw the bow",
+    news: [
+      "For every mode with the bow: hold to draw it and let go to shoot. The longer you draw, the harder and faster the arrow (+1 damage every half second, up to 2.5 s, where it's a sure crit), shown filling red on the bar under your duck.",
+    ],
+  },
+  {
     id: "v263",
     version: 263,
     date: "Nov 22, 2026",
