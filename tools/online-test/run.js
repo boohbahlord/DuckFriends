@@ -59,6 +59,7 @@ const PLAYER = (scen) => {
     const net = await import("/js/net.js"),
       bots = await import("/js/bots.js"),
       rules = await import("/js/rules.js"),
+      room = await import("/js/roomrules.js"),
       pm = await import("/js/players.js");
     let lastAt = 0,
       lastKey = "";
@@ -98,7 +99,7 @@ const PLAYER = (scen) => {
         if (scen === "none" || ["lobby", "countdown", "over"].includes(s.phase))
           return;
         const others = s.seat.filter((id) => id !== me && !s.players[id].bot),
-          boss = rules.isSudo(s, me);
+          boss = room.isSudo(s, me);
         // the host (or sudo): give sudo, kick, skip
         if (scen === "boss" && boss) {
           if (me === s.hostId && others.length && Math.random() < 0.01)

@@ -1,0 +1,52 @@
+# The online test on GitHub's computers (the owner's ask, Nov 22 20:35Z: more tools that cut bugs and save usage). It
+# plays online rooms with several browsers against local Firebase emulators, never the real database
+# (tools/online-test). It runs every night, and on any pull request that changes what players share online.
+name: Online test
+on:
+  pull_request:
+    paths:
+      - "js/online.js"
+      - "js/net.js"
+      - "js/rules.js"
+      - "database.rules.json"
+      - "tools/online-test/**"
+      - ".github/workflows/online.yml"
+  schedule:
+    - cron: "30 9 * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: online-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  online:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: tools/online-test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Get the emulators, Firebase and Chromium
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+          cp ../../database.rules.json rules.json
+      - name: Play online rooms
+        run: >
+          npx firebase emulators:exec --only auth,database --project duckfriends-bd795
+          "node run.js aod 4 90 mixed && node run.js bb 4 90 storm && QUIT=1 node run.js wyr 3 90 lobby"
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: online-shots
+          path: tools/online-test/shots
+          retention-days: 7
