@@ -52,7 +52,7 @@ dunce.js 139 Duncelation: what the screen
 duncerules.js 388 the rules of Duncelation
 euclid.js 351 Euclid's Squares
 eyes.js 187 eyes
-faces.js 308 face items
+faces.js 297 face items
 feet.js 70 footsteps in every mode
 flamer.js 50 the flamethrower
 flowfield.js 173 the zombies' flow field,
