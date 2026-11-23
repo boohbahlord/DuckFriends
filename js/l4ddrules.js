@@ -4144,7 +4144,7 @@ export function l4Shots(s, now) {
       }
       if (w === "dbarrel") {
         /* the slug double barrel's slug: through the zombies in its way, each once, half as much to each one after
-           (sh.d: the next one's), at most ARMS.dbarrel.through (the owner's, Nov 23 00:32Z). A crit doubles
+           (sh.d: the next one's), at most ARMS.dbarrel.pierce (the owner's, Nov 23 00:32Z). A crit doubles
            that one's. One it kills blows to pieces (no bullet knocks back: the owner's, Nov 21 17:48Z) */
         let stop = false;
         for (const z of nearby(grid, zs, x, y))
@@ -4159,7 +4159,7 @@ export function l4Shots(s, now) {
             }
             hitAny = true;
             sh.d = hundredths(dmg * A.halve); // (half to the next one, guns.js)
-            if (sh.d < A.least || sh.hit.length >= A.through) {
+            if (sh.d < A.least || sh.hit.length >= A.pierce) {
               stop = true;
               break;
             }

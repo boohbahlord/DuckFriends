@@ -370,11 +370,11 @@ export const ARMS = {
     cal: "12 ga slug",
     barrel: "long",
     /* through each zombie its slug does half of what it did to the one before, and it stops once that would be under
-       least, or after through (the owner's, Nov 23 00:32Z: "every time it passes through an enemy, it only does half as
+       least, or after pierce, in every mode (the owner's, Nov 23 00:32Z: "every time it passes through an enemy, it only does half as
        much damage"; "stop passing through enemies, let's say after 3") */
     halve: 0.5,
     least: 0.5,
-    through: 3,
+    pierce: 3,
     speed: 1500,
     mag: 2,
     all: 150, // (the owner's, Nov 18 13:46Z: "there should be 150 rounds in the double barrel shotgun")
