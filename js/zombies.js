@@ -766,11 +766,19 @@ function walkAll(zs, c) {
         continue;
       }
       if (best > ROOF_BACK) {
-        const k = 1 - 1 / best; // (up to it, not into it)
+        const k = 1 - 1 / best, // (up to it, not into it)
+          at =
+            !target.j &&
+            best > CR.SUR.r + 1 && // (close in, straight at it: a roof's too tight to go round)
+            CR.surroundAim(z, target, taken, now, G.rx, G.ry, (x, y) =>
+              onDeckAt(e.d, x, y),
+            ); // (up here too, round to the free side of the duck, never queued behind the first one)
         roofStep(
           z,
-          z.x + (target.xy[0] - z.x) * k,
-          z.y + (target.xy[1] - z.y) * k,
+          ...(at || [
+            z.x + (target.xy[0] - z.x) * k,
+            z.y + (target.xy[1] - z.y) * k,
+          ]),
           v * dt,
           zs,
         ); // (and never into another one up there)
@@ -905,7 +913,7 @@ function walkAll(zs, c) {
          it round what's in between, as everywhere else (chaseStep, wayTo's callers) */
       aim ||= goal;
       if (z.fl && !z.cm && !close) aim = flank(z, target, now) || aim; // (a flanker: round the side first)
-      if (!z.cm && !target.j && best < CR.SUR.near)
+      if (!z.cm && !target.j && best < CR.SUR.near && zFloor(z) === target.dk)
         aim = CR.surround(z, target, taken, now, G, c.reach) || aim; // (round to the free side of the duck)
       else if (CR.stuck(z, target, now, G, c.reach)) delete z.cm; // (held up at a ladder: another way)
       if (z.ga) {

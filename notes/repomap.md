@@ -90,9 +90,9 @@ gunmen.js 110 the gunmen's looks
 gunmenrules.js 1158 Survival: the gunmen
 gunmenview.js 135 Survival: the gunmen on
 gunparts.js 15 the pieces every weapon's
-guns.js 695 every weapon's numbers: one
+guns.js 698 every weapon's numbers: one
 hats.js 1096 hats
-heat.js 74 a gun's heat: the
+heat.js 83 a gun's heat: the
 heights.js 87 a shot's height, Doom's
 helppages.js 1498 the command line's Help
 hideui.js 30 hide ui
@@ -111,7 +111,7 @@ jumps.js 48 the jump counter
 justinmoves.js 45 Justin's moves on the
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which
-l4dd.js 3337 Quacky Zombies on every
+l4dd.js 3340 Quacky Zombies on every
 l4ddangel.js 147 Dead Ducks Arcade's Angel
 l4ddangelui.js 204 Dead Ducks Arcade's Angel
 l4ddart.js 623 Quacky Zombies' pictures
@@ -124,7 +124,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power
 l4ddpowerui.js 278 Dead Ducks Arcade's power
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4889 the rules of Quacky
+l4ddrules.js 4909 the rules of Quacky
 l4ddsfx.js 545 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online:
 langname.js 5 the name of Sandbox's
@@ -174,7 +174,7 @@ playerinput.js 26 what I ask my
 players.js 342 the player menu and
 pointer.js 54 a computer or a
 powerart.js 377 Dead Ducks Arcade: the
-push.js 70 push and knock-back: one
+push.js 71 push and knock-back: one
 pxa.js 954 made by tools/pixel-art.cjs:
 pxbake.js 627 a map's pictures made
 pxcard.js 259 the player cards' pattern
@@ -274,7 +274,7 @@ umaps.js 374 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 408 things you unlock
 upbar.js 69 the green bar on
-updates.js 3683 Updates
+updates.js 3697 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival
@@ -286,7 +286,7 @@ who.js 3 who this player is
 wounds.js 483 the wounds a hit
 zombiepath.js 187 the zombies' way to
 zombieroofs.js 327 the zombies' walk over
-zombies.js 1489 the zombies: one module
+zombies.js 1497 the zombies: one module
 
 ## js/hangout/
 activities.js 25 every Hangout activity, so
