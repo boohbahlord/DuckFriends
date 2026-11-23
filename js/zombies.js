@@ -338,12 +338,13 @@ export function fenceSpot(pts, side) {
     (seenBy(pts, ...at) ? shown : hidden).push({
       q,
       at,
-      d: far(...at) * (CR.onCrowdSide(side, ...at) ? 3 : 1), // (the crowd's side of the ducks last: crowd.js crowdSide)
+      d: far(...at),
+      cs: CR.onCrowdSide(side, ...at) ? 1 : 0, // (the crowd's side of the ducks last: crowd.js crowdSide)
       land: [ix, iy],
     });
   }
-  hidden.sort((a, b) => a.d - b.d);
-  shown.sort((a, b) => b.d - a.d);
+  hidden.sort((a, b) => a.d * (1 + 2 * a.cs) - b.d * (1 + 2 * b.cs));
+  shown.sort((a, b) => a.cs - b.cs || b.d - a.d); // (all in sight: the far side first, then the farthest)
   const pick = hidden.length
     ? hidden[Math.floor(Math.random() * Math.min(4, hidden.length))]
     : shown[0];
@@ -412,7 +413,7 @@ export const l4Live = (s) =>
         .filter((z) => z.st !== 3)
         .map((z) => ({ i: z.i, x: z.x / W, y: z.y / H, sp: z.sp }))
     : [];
-export function moveZombies(s, zs, now, T, up) {
+export function moveZombies(s, zs, now, T, up, seers = up) {
   const R = roundOf(s.hang.l4.r),
     tk = (s.hidden && s.hidden.l4tk) || now - 200,
     dt = Math.min(0.35, Math.max(0.05, (now - tk) / 1000)),
@@ -510,6 +511,7 @@ export function moveZombies(s, zs, now, T, up) {
     brd,
     eating,
     ducks,
+    eyes: seers.filter((id) => s.pos[id]).map((id) => toPx(s.pos[id])), // (every duck's screen, God mode's too, though the zombies ignore it; never Justin's)
     cake: cakeDown(s, now),
     swipe: SWIPE,
     reach: CLAW,
@@ -562,7 +564,7 @@ function walkAll(zs, c) {
   ); // (no walking into one another: stepZombie)
   const taken = CR.spotsTaken(zs, now),
     G = { ...gr(), walk: walkable },
-    eyes = pls.filter((q) => !q.j).map((q) => q.xy),
+    eyes = c.eyes || pls.filter((q) => !q.j).map((q) => q.xy),
     rush = T >= ZOMBIE_GRACE; // (off every duck's screen they come twice as fast, but not in a round's first ZOMBIE_GRACE ms)
   for (const z of zs) {
     if (z.st === 3) continue;

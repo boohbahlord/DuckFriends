@@ -4629,10 +4629,17 @@ function l4Tick(s, now) {
   /* the zombies walk, tear boards down, climb in, swipe: at every duck standing, Justin out there too (the owner's,
      Nov 17 20:02Z: "zombies will attack justin now, because they literally arent"; he only doesn't keep the game going) */
   setZWall(sbZombieWall(s, W, H, true)); // (Sandbox: its walls)
-  moveZombies(s, zs, now, T, [
-    ...up.filter((id) => !godOn(s, id)), // (God mode: the zombies ignore it)
-    ...ids.filter((id) => isWild(s, id) && standing(s, id)),
-  ]);
+  moveZombies(
+    s,
+    zs,
+    now,
+    T,
+    [
+      ...up.filter((id) => !godOn(s, id)), // (God mode: the zombies ignore it)
+      ...ids.filter((id) => isWild(s, id) && standing(s, id)),
+    ],
+    up,
+  ); // (up: every duck's screen, God mode's too, for the off-screen speed)
   setZWall(null);
   if (isSurv(s) && L4_HOOKS.gm)
     L4_HOOKS.gm.tick(s, zs, now, mine, gmHelp(s, now)); // (Survival's gunmen: gunmenrules.js)
