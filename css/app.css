@@ -15497,40 +15497,32 @@ html.still:not(.low) .l4z.dead.nuked {
 }
 .l4-hud {
   position: absolute;
-  top: 0.5rem;
+  top: calc(0.75rem + clamp(1rem, 2.6vw, 1.45rem));
   left: 50%;
   transform: translateX(-50%);
   z-index: 31000;
   pointer-events: none;
   will-change: transform; /* (a layer of its own: the board's shake moved it by parts of a pixel, and its words were drawn again at each one) */
   font-family: "Lilita One", sans-serif;
-  font-size: clamp(1.7rem, 4.6vw, 2.8rem);
+  font-size: clamp(1rem, 2.6vw, 1.45rem);
   line-height: 1;
   color: #dc143c;
-  letter-spacing: 0.02em;
   white-space: nowrap;
-  -webkit-text-stroke: 0.06em #2a0408;
+  -webkit-text-stroke: 0.07em #2a0408;
   paint-order: stroke fill;
-  text-shadow:
-    0 0.06em 0 #2a0408,
-    0 0 0.5em #dc143c66;
+} /* (under my points, in their size and font: the owner's, Nov 23 00:32Z) */
+.l4-rline {
+  display: block;
+  opacity: 0;
+  transition: opacity 0.4s ease;
 }
-.l4-hud.new {
-  animation: l4-round 1.6s ease-out;
+.l4-rline.on {
+  opacity: 1;
 }
-@keyframes l4-round {
-  0% {
-    transform: translateX(-50%) scale(1.7);
-    opacity: 0;
-  }
-  25% {
-    transform: translateX(-50%) scale(1.25);
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(-50%) scale(1);
-  }
-}
+.l4-rline.gone {
+  opacity: 0;
+  transition-duration: 2s;
+} /* (roundline.js: in, 12 s, then slowly away; "Rest phase" stays) */
 /* the end box (the owner's, Nov 19 19:27Z): "that box should be a lot more transparent ... the words inside of it and its
    information isn't transparent at all", not at the center of the screen on a computer ("maybe it can be bigger on PC"),
    "make it to where it doesn't show up instantly. It only shows up like 3 seconds after": no dark backdrop, so my dead
@@ -16312,10 +16304,10 @@ html.moving .l4-heat.hot::after {
 .l4hp i.on {
   background: #1fb85c;
 }
-/* my points, under "Round N"; a +N rises off them for each one earned (a headshot's bigger) */
+/* my points, at the top middle over "Round N"; a +N rises off them for each one earned (a headshot's bigger) */
 .l4-pts {
   position: absolute;
-  top: calc(0.85rem + clamp(1.7rem, 4.6vw, 2.8rem));
+  top: 0.5rem;
   left: 50%;
   transform: translateX(-50%);
   z-index: 31000;
@@ -16327,9 +16319,6 @@ html.moving .l4-heat.hot::after {
   white-space: nowrap;
   -webkit-text-stroke: 0.07em #2a1e04;
   paint-order: stroke fill;
-}
-.l4-nohud .l4-pts {
-  top: 0.5rem; /* (Sandbox: no round title above them) */
 }
 .l4-pts > span {
   color: #f4e7b0;
@@ -17766,10 +17755,11 @@ html.still .hpm.low .hpm-badge {
   border-radius: 1rem;
   overflow: hidden;
 }
-.hpm-cool.off:not(.no),
-.hpm-ammo.off {
+.hpm-cool.off:not(.no) i,
+.hpm-ammo.off i {
   visibility: hidden;
-}
+} /* (off: the empty track stays, so the meters under my HP never come and go: the owner, Nov 23 00:32Z, "let's actually
+     keep them visible") */
 .hpm-cool i,
 .hpm-ammo i {
   position: absolute;
@@ -17959,6 +17949,11 @@ html.moving .hpm-ammo.rl {
   .hb-stack:has(.hpm-blocks > i:nth-child(5)) {
     --hp: 4.3;
   } /* (five HP or more: the bar is as long as it gets) */
+  .hb-stack:has(> .l4bar) {
+    --n: 8.4;
+  } /* (Dead Ducks Arcade's eight: its seven and the flashlight, 0, and a little for the gap before it. Counted as 7, the
+       row came out wider than the corner and the hotbar wrapped over the HP: the owner, Nov 23 00:32Z, "we want to put
+       it to the left of the health on computer") */
   .hb-stack > .hotbar,
   .hb-stack > .l4bar {
     --hk: var(--hkb);
@@ -17977,6 +17972,15 @@ html.moving .hpm-ammo.rl {
   .hb-stack > .hpm-me .hpm-blocks {
     width: min(calc(var(--nb, 3) * var(--bw)), calc(var(--h) * 6));
   }
+  .hb-stack > .hpm-me .hpm-bars {
+    gap: calc(var(--h) * 0.06);
+  }
+  .hb-stack > .hpm-me :is(.hpm-cool, .hpm-ammo) {
+    margin-top: calc(var(--h) * 0.04);
+  }
+  .hb-stack > .hpm-me .hpm-stam {
+    margin-top: calc(var(--h) * 0.08);
+  } /* (stacked tighter on a computer: the owner, Nov 23 00:32Z, "we don't have to make them as far apart") */
 }
 @media (any-pointer: fine) and (min-width: 861px) and (min-height: 521px) {
   .game .bbar-r {

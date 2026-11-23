@@ -65,7 +65,7 @@ friends.js 236 friends
 front.js 151 the front page
 fx.js 1187 the effects, drawn as
 fxmotion.js 233 how a held weapon
-game.js 4720 the game screen
+game.js 4727 the game screen
 gameact.js 546 the action window and
 gameannounce.js 212 The cloud's words and
 gameboard.js 589 the board: each mode's
@@ -111,7 +111,7 @@ jumps.js 48 the jump counter
 justinmoves.js 45 Justin's moves on the
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which
-l4dd.js 3338 Quacky Zombies on every
+l4dd.js 3337 Quacky Zombies on every
 l4ddangel.js 147 Dead Ducks Arcade's Angel
 l4ddangelui.js 204 Dead Ducks Arcade's Angel
 l4ddart.js 623 Quacky Zombies' pictures
@@ -143,7 +143,7 @@ manual.js 203 the command line's manual:
 maps.js 1123 maps: the world behind
 merchantlines.js 81 what the merchants say
 merchants.js 376 the merchants
-meters.js 138 the thin bars under
+meters.js 137 the thin bars under
 mgj.js 219 Mad God Justin: what
 mgjart.js 96 Mad God Justin's new
 mgjbrain.js 613 Mad God Justin's brain,
@@ -189,6 +189,7 @@ random.js 18 the two random helpers
 report.js 114 Report Bug or Suggest
 roomrules.js 368 room governance: groups and
 rooms.js 256 Play: create a room,
+roundline.js 36 Dead Ducks Arcade's round
 router.js 112 screens
 rules.js 1706 the rules of Agree
 sandbox.js 1351 Sandbox: the key windows
@@ -273,7 +274,7 @@ umaps.js 374 Made maps: making them,
 units.js 12 the game's units, in
 unlocks.js 408 things you unlock
 upbar.js 69 the green bar on
-updates.js 3672 Updates
+updates.js 3683 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival
