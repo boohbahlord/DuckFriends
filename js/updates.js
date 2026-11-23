@@ -9,6 +9,20 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v284",
+    version: 284,
+    date: "Nov 22, 2026",
+    title: "Zombies surround you",
+    news: [
+      "For Dead Ducks Arcade: zombies spread out and surround you from every side instead of lining up, stop queueing at ladders, come from the side with fewer zombies, and move twice as fast when you can't see them. A round's first 8 seconds bring fewer zombies.",
+      "For Dead Ducks Arcade: the hotbar sits left of your health on computers and sideways phones, the meters under your health always show, and your points sit at the top middle with the round under them in red. Between rounds it says Rest phase.",
+      "For Dead Ducks Arcade: the merchant comes half the time, plus 5% for each round he didn't, says \"The Merchant has Arrived\" as he sets off, and sometimes sells grenades at 75 points for each one you're missing.",
+      "For Dead Ducks Arcade: Ethan drops no pocket change, gasoline drops half as often, melee weapons last a third as long, the fire axe knocks back half as far as the sledgehammer, and each zombie a slug goes through halves its damage (3 at most).",
+      "Guns spread 50% more as you keep firing, and the spread builds up faster.",
+      'Holding a button that needs holding says "Hold down button to vote".',
+    ],
+  },
+  {
     id: "v283",
     version: 283,
     date: "Nov 22, 2026",
