@@ -24,7 +24,16 @@ import { ARMS, fireRate, recoilOf } from "./guns.js";
 import { crossLevel } from "./pixel.js";
 
 const DEG = Math.PI / 180;
-const HEAT = { COOL: 2, CONE: 15 * DEG, BOW: 6 * DEG, SHAKE: 0.3, TICKS: 4 };
+/* CONE and BUILD: 50% more scatter, built up 50% faster (the owner's, Nov 23 00:32Z: recoil "50% worse ... Maybe it can
+   stack up a little bit faster too"; CONE was 15 degrees) */
+const HEAT = {
+  COOL: 2,
+  CONE: 22.5 * DEG,
+  BUILD: 1.5,
+  BOW: 6 * DEG,
+  SHAKE: 0.3,
+  TICKS: 4,
+};
 /* the widest cone of weapon w, radians each way of its aim (0: it never spreads) */
 const coneOf = (w) =>
   w === "bow" ? HEAT.BOW : w === "glauncher" ? 0 : recoilOf(w) * HEAT.CONE;
@@ -50,7 +59,7 @@ export function spreadAim(
   const cone = coneOf(w);
   if (!cone || !aim) return aim;
   const h = heatOf(s, id, w, now),
-    up = Math.min(1, h + n / (fireRate(w) || 1));
+    up = Math.min(1, h + (HEAT.BUILD * n) / (fireRate(w) || 1));
   s.heat = { ...(s.heat || {}), [id + " " + w]: [+up.toFixed(3), now] };
   if (!h) return aim; // (the first shot goes where it's aimed)
   const a = (Math.random() * 2 - 1) * cone * h,

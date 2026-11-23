@@ -2517,6 +2517,7 @@ function shopFill(s, ctx) {
       saleOn(s),
       kit && kit.sl,
       kit && kit.am,
+      kit && kit.g,
       m && [m.v, m.id, m.roll],
       stock,
       upOffer(s, me),
@@ -2559,10 +2560,12 @@ function shopFill(s, ctx) {
               have &&
               kindOf(w) === "special" &&
               (w === "defib" || !hasLeft(s, me, w)), // (defibrillators stack: always one more)
-            price = stockPrice(s, p),
-            was = price < p ? `<s>${p}</s> ` : "",
-            off = (have && !again) || pts < price;
-          return `<li class="l4-up l4-buyw" data-item="${w}"><i class="l4-up-ic">${orbHTML(w)}</i><span class="l4-up-t"><b>${weaponName(w)}${n > 1 ? ` <span class="l4-up-n">x${n}</span>` : ""}</b><small>${kindWord(w)}</small>${statLineOf(w) ? `<small class="l4-up-s">${statLineOf(w)}</small>` : ""}</span><button type="button" class="btn small ${have && !again ? "" : "yellow"} l4-up-buy" data-buy="${w}"${off ? " disabled" : ""}>${have && !again ? "Owned" : was + price}</button></li>`;
+            price = stockPrice(s, p, w, kit),
+            full = price <= 0, // (grenades: I have them all)
+            whole = stockPrice(null, p, w, kit), // (no sale)
+            was = price < whole ? `<s>${whole}</s> ` : "",
+            off = full || (have && !again) || pts < price;
+          return `<li class="l4-up l4-buyw" data-item="${w}"><i class="l4-up-ic">${orbHTML(w)}</i><span class="l4-up-t"><b>${weaponName(w)}${n > 1 ? ` <span class="l4-up-n">x${n}</span>` : ""}</b><small>${kindWord(w)}</small>${statLineOf(w) ? `<small class="l4-up-s">${statLineOf(w)}</small>` : ""}</span><button type="button" class="btn small ${have && !again ? "" : "yellow"} l4-up-buy" data-buy="${w}"${off ? " disabled" : ""}>${full ? "Full" : have && !again ? "Owned" : was + price}</button></li>`;
         })
         .join("")
     : '<li class="l4-up l4-sold">Sold out</li>';
@@ -2645,7 +2648,7 @@ function shopEl(ctx) {
     /* from his stock: only once I say Yes (the owner's, Nov 16 22:21Z); No, the X and Esc keep my points */
     confirmBox(
       `Are you sure you want to buy the ${weaponName(w)}?`,
-      `${stockPrice(st, it[1])} points`,
+      `${stockPrice(st, it[1], w, kitOf(st, ctx.me))} points`,
     ).then((yes) => yes && send());
   });
   ctx.world.board.append(el);
