@@ -148,6 +148,7 @@ import {
 } from "./l4ddangelui.js";
 import { DROP_ICONS } from "./l4dddrops.js";
 import { popHP } from "./hpmeter.js";
+import { roundLine, REST } from "./roundline.js";
 import { fxHitAt, fxEye, heavyOff } from "./fx.js";
 import { vibrate, hitPx, HIT, again } from "./fxmotion.js";
 import { pixelOn, gridPx, raster, rasterReady } from "./pixel.js";
@@ -1206,27 +1207,24 @@ function survRecord(s, L) {
   st.games++;
   save();
 }
-/* ---------- the HUD: "Round N", and the end ---------- */
+/* ---------- the HUD: "Round N" (roundline.js), and the end ---------- */
+const rline = roundLine(() => hud);
 function seeHud(s, ctx) {
   const L = s.hang.l4;
   if (!hud || !L) return;
   if (isSurv(s)) {
     seeClock(s);
     survRecord(s, L);
-  } else if (roundShown !== L.r) {
-    if (roundShown >= 0 && L.r > roundShown)
-      record(s, L, L.r - roundShown === 1, ctx.me);
-    /* Sandbox: no rounds to count, and no big "Sandbox" over the map either (the bar at the top already says it: the
-       owner's row 199 test saw it over the map) */
-    hud.hidden = isSb(s);
-    ctx.world.board.classList.toggle("l4-nohud", isSb(s)); // (its points go up in its place)
-    hud.innerHTML = isSb(s)
-      ? ""
-      : `<span class="l4-round-w">Round</span> <b>${L.r}</b>`;
-    hud.classList.remove("new");
-    void hud.offsetWidth;
-    if (roundShown >= 0) hud.classList.add("new"); // (a new round: it pulses)
-    roundShown = L.r;
+  } else {
+    if (roundShown !== L.r) {
+      if (roundShown >= 0 && L.r > roundShown)
+        record(s, L, L.r - roundShown === 1, ctx.me);
+      /* Sandbox: no rounds to count, and no "Sandbox" over the map either (the bar at the top already says it: the
+         owner's row 199 test saw it over the map) */
+      hud.hidden = isSb(s);
+      roundShown = L.r;
+    }
+    if (!isSb(s)) rline.say(L.wait && !L.over ? REST : `Round ${L.r}`);
   }
   /* between rounds: End turn (Ready before round 1), with how many pressed it and how many it takes */
   const w = !L.over && !isSb(s) && L.wait, // (Sandbox: round 0 for good, with no Ready to press)
@@ -2892,6 +2890,7 @@ activity({
     D.clear();
     overShown = endSig = drawn = boxSig = slotSig = onSig = litSig = "";
     roundShown = clockShown = -1;
+    rline.reset();
     ptsShown = -1;
     l4Reset();
     boxSpun = false;
