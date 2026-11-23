@@ -36,6 +36,10 @@ export const WET = { WADE: 0.7, SWIM: 0.55, FREE: 5, DEEP: 16 };
 
 /* zombies (Nov 20 21:17Z: "zombies should have a slightly slower attack speed by, let's say, 0.2 seconds") */
 export const ZOMBIE_SWIPE_SLOWER = 200; // ms added to the wait between one swipe and the next, every zombie
+/* a round's first ms on the zombie maps: half as many zombies come, and none comes twice as fast off the ducks' screens
+   (the owner's, Nov 23 00:32Z: "slow down the spawn rate to about half as much for about a 6 to 10 second grace period
+   ... Let's just say 8 seconds") */
+export const ZOMBIE_GRACE = 8000;
 
 /* the handgun, one gun everywhere (Nov 20 21:38Z: "one gun named M1911"; 7 rounds, Nov 21 18:16Z): the specials' pistol
    and the zombie modes' handgun both read this */

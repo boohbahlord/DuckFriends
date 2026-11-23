@@ -1216,7 +1216,11 @@ export function mgjZombieHit(s, near, w, now, by, sh = null, take = null) {
   let hit = false;
   for (const o of got) {
     if (sh && (sh.zh || []).length >= most) break;
-    const t = take ? take(ns.get(o)) : zombieTakes(s, by, w, sh && sh.dr); // (a drawn arrow: its draw, bowdraw.js)
+    const t = take ? take(ns.get(o)) : zombieTakes(s, by, w, sh && sh.dr), // (a drawn arrow: its draw, bowdraw.js)
+      A = ARMS[w] || {},
+      cut = sh && A.halve ? A.halve ** (sh.zh || []).length : 1; // (the slug: half to each one after, guns.js)
+    if (t && t.dmg < ALL_HP && t.dmg * cut < (A.least || 0)) break;
+    if (t) t.dmg *= cut;
     if (!t) {
       if (sh) sh.zp = [...(sh.zp || []), o.i];
       fx({ kind: "l4miss", b: 1, x: o.x, y: o.y });

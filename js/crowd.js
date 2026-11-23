@@ -247,3 +247,135 @@ export function leastWay(k, ways, taken, far) {
   }
   return best;
 }
+
+/* ---------- the surround (the owner's, Nov 23 00:32Z: "We want the zombies to encircle the player and to try and
+   surround them as much as possible ... have them come from different directions as well") ----------
+   Near a duck (SUR.near duck lengths) each zombie takes one of SUR.n spots round it, SUR.r away: of the spots it can
+   stand at, the one with the fewest zombies on it, then the nearest round the circle. It walks round the duck to its
+   spot (SUR.turn of the circle a step at most, at the room it has, never through the duck), then in. Held up SUR.held
+   ms (behind another, at a ladder) it takes another spot or another way (heldUp). New ones come from the side of the
+   ducks with fewer zombies (crowdSide). z.sr: [the duck, its spot, until]; z.sx: the spot it gave up */
+export const SUR = {
+  near: 6,
+  r: 1.2,
+  n: 8,
+  turn: 0.9,
+  keep: 4000,
+  held: 1000,
+  moved: 0.25,
+  away: 0.75,
+};
+const angle = (k) => (k / SUR.n) * 2 * Math.PI,
+  turnOf = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+/* the spots taken round each duck: Map(duck id -> how many on each spot) */
+export function spotsTaken(zs, now) {
+  const m = new Map();
+  for (const z of zs)
+    if (z.sr && z.sr[2] > now && z.st !== 3) {
+      const c = m.get(z.sr[0]) || Array(SUR.n).fill(0);
+      c[z.sr[1]]++;
+      m.set(z.sr[0], c);
+    }
+  return m;
+}
+/* where zombie z goes next round duck q (q.xy, px; rx, ry: a duck length in px; ok(x, y): it can stand there), or
+   null: straight at the duck (there, or too far, or no spot it can stand at) */
+export function surroundAim(z, q, taken, now, rx, ry, ok) {
+  const [qx, qy] = q.xy,
+    dx = (z.x - qx) / rx,
+    dy = (z.y - qy) / ry,
+    d = Math.hypot(dx, dy),
+    az = Math.atan2(dy, dx),
+    spot = (a, r) => [qx + Math.cos(a) * r * rx, qy + Math.sin(a) * r * ry];
+  if (d > SUR.near) return null;
+  let c = taken.get(q.id);
+  if (!c) taken.set(q.id, (c = Array(SUR.n).fill(0)));
+  if (!z.sr || z.sr[0] !== q.id || z.sr[2] <= now) {
+    if (z.sr && z.sr[0] === q.id && z.sr[2] > now) c[z.sr[1]]--;
+    let best = -1,
+      bc = Infinity;
+    for (let k = 0; k < SUR.n; k++) {
+      if (k === z.sx || !ok(...spot(angle(k), SUR.r))) continue;
+      const cost = c[k] * 10 + Math.abs(turnOf(angle(k) - az)); // (the fewest on it first, then the nearest round)
+      if (cost < bc) [best, bc] = [k, cost];
+    }
+    delete z.sx;
+    if (best < 0) return null;
+    z.sr = [q.id, best, now + SUR.keep];
+    c[best]++;
+  }
+  const diff = turnOf(angle(z.sr[1]) - az);
+  if (Math.abs(diff) < 0.3)
+    return d > SUR.r + 0.2 ? spot(angle(z.sr[1]), SUR.r) : null; // (its side: in to its spot, then at the duck)
+  return spot(
+    az + Math.max(-SUR.turn, Math.min(SUR.turn, diff)),
+    Math.max(SUR.r + 0.6, d - 0.4),
+  ); // (round the duck to its side, a little nearer each step)
+}
+/* zombie z near duck q, in a world G ({ rx, ry, h, ok, walk }: zombies.js gr): its aim round to its spot, or null
+   (straight on); held up a second short of the duck's reach, it gives its spot up for another */
+export function surround(z, q, taken, now, G, reach) {
+  const at = surroundAim(z, q, taken, now, G.rx, G.ry, (x, y) =>
+    G.ok(x, y, G.h(z.x, z.y)),
+  );
+  if (stuck(z, q, now, G, reach) && z.sr) {
+    z.sx = z.sr[1];
+    delete z.sr;
+  }
+  return at && G.walk(z.x, z.y, ...at) ? at : null;
+}
+/* held up a second short of duck q's reach (behind another, at a ladder): true, and a way up it keeps to is given up
+   for a while (gaveUp) */
+export function stuck(z, q, now, G, reach) {
+  const far = Math.hypot((z.x - q.xy[0]) / G.rx, (z.y - q.xy[1]) / G.ry);
+  if (far <= reach + 0.3 || !heldUp(z, now, G.rx)) return false;
+  if (z.cm) z.na = [z.cm[3], now + SUR.keep];
+  return true;
+}
+/* how much farther a way up (k: its deck) looks to z when it gave that one up a while ago */
+export const gaveUp = (z, k, now) =>
+  z.na && z.na[0] === k && now < z.na[1] ? SUR.near : 0;
+/* z hardly moved for SUR.held ms: true once, then its clock starts again */
+function heldUp(z, now, rx) {
+  const h = z.hu;
+  if (h && Math.hypot(z.x - h[0], z.y - h[1]) <= SUR.moved * rx) {
+    if (now - h[2] < SUR.held) return false;
+  } else if (h) {
+    z.hu = [z.x, z.y, now];
+    return false;
+  }
+  z.hu = [Math.round(z.x), Math.round(z.y), now];
+  return !!h;
+}
+/* which way the zombies are from the ducks (pts, px): a unit [x, y], or null when they're all round (or none) */
+export function crowdSide(zs, pts) {
+  if (!pts.length) return null;
+  const cx = pts.reduce((a, p) => a + p[0], 0) / pts.length,
+    cy = pts.reduce((a, p) => a + p[1], 0) / pts.length;
+  let sx = 0,
+    sy = 0,
+    n = 0;
+  for (const z of zs) {
+    const l = z.st !== 3 && Math.hypot(z.x - cx, z.y - cy);
+    if (!l) continue;
+    sx += (z.x - cx) / l;
+    sy += (z.y - cy) / l;
+    n++;
+  }
+  const l = Math.hypot(sx, sy);
+  return n >= 3 && l > n * 0.25 ? [sx / l, sy / l, cx, cy] : null; // (most on one side)
+}
+/* a spawn at (x, y) is on the crowd's side (side: crowdSide's) */
+export const onCrowdSide = (side, x, y) =>
+  !!side && (x - side[2]) * side[0] + (y - side[3]) * side[1] > 0;
+/* the openings of pool (q.in: where it comes in, px) away from the crowd's side, SUR.away of the time (all when none) */
+export function awayFrom(side, pool) {
+  const away = pool.filter((q) => !onCrowdSide(side, ...q.in));
+  return away.length && Math.random() < SUR.away ? away : pool;
+}
+/* is (x, y) on a screen of one at pts (px; view: half a screen, l4ddrules.js VIEW): up and down a little more, a tall
+   phone held upright sees farther that way, 15% more since the owner's Nov 18 15:18Z (modes.js phoneOut) */
+export const seenBy = (pts, x, y, view) =>
+  pts.some(
+    ([a, b]) => Math.abs(x - a) < view.x + 60 && Math.abs(y - b) < view.y + 140,
+  );
