@@ -2559,11 +2559,9 @@ function shopFill(s, ctx) {
               kindOf(w) === "special" &&
               (w === "defib" || !hasLeft(s, me, w)), // (defibrillators stack: always one more)
             price = stockPrice(s, p, w, kit),
-            full = price <= 0, // (grenades: I have them all)
-            whole = stockPrice(null, p, w, kit), // (no sale)
-            was = price < whole ? `<s>${whole}</s> ` : "",
-            off = full || (have && !again) || pts < price;
-          return `<li class="l4-up l4-buyw" data-item="${w}"><i class="l4-up-ic">${orbHTML(w)}</i><span class="l4-up-t"><b>${weaponName(w)}${n > 1 ? ` <span class="l4-up-n">x${n}</span>` : ""}</b><small>${kindWord(w)}</small>${statLineOf(w) ? `<small class="l4-up-s">${statLineOf(w)}</small>` : ""}</span><button type="button" class="btn small ${have && !again ? "" : "yellow"} l4-up-buy" data-buy="${w}"${off ? " disabled" : ""}>${full ? "Full" : have && !again ? "Owned" : was + price}</button></li>`;
+            was = saleOn(s) ? `<s>${stockPrice(null, p, w, kit)}</s> ` : "",
+            off = price <= 0 || (have && !again) || pts < price; // (0: grenades, I have them all)
+          return `<li class="l4-up l4-buyw" data-item="${w}"><i class="l4-up-ic">${orbHTML(w)}</i><span class="l4-up-t"><b>${weaponName(w)}${n > 1 ? ` <span class="l4-up-n">x${n}</span>` : ""}</b><small>${kindWord(w)}</small>${statLineOf(w) ? `<small class="l4-up-s">${statLineOf(w)}</small>` : ""}</span><button type="button" class="btn small ${have && !again ? "" : "yellow"} l4-up-buy" data-buy="${w}"${off ? " disabled" : ""}>${price <= 0 ? "Full" : have && !again ? "Owned" : was + price}</button></li>`;
         })
         .join("")
     : '<li class="l4-up l4-sold">Sold out</li>';
