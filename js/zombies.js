@@ -1321,6 +1321,7 @@ export const zLook = (B) => [B.hp, 0, "", ...lookOf()];
    (the ducks it goes for), cake ([x, y] on the board, or null), claw(id, now) (a swipe at that duck: true once it's
    down). Returns whether any moved, swiped or was buried */
 const DL = 56; // the walk's px in a duck's length on the board (the map's own, RX)
+const BK = ["ga", "pk", "sr", "sx", "hu"]; // (what a board zombie keeps from one heartbeat to the next: KEEP is the map's)
 /* the board as a ground (gr()) for a duck of duck = [across, down] of it: [kx, ky] the walk's px in one of its shares,
    and the ground, open and flat to a little short of its edges */
 function boardGround(duck) {
@@ -1342,8 +1343,7 @@ export function boardWalk(s, M, now, B, h) {
       n: o.n || 0,
       wu: o.wu || 0,
       l: [o.hp, v, ""],
-      ...(o.ga ? { ga: o.ga } : {}),
-      ...(o.pk ? { pk: o.pk } : {}), // (round the ones in its way: crowd.js goRound)
+      ...Object.fromEntries(BK.filter((k) => o[k]).map((k) => [k, o[k]])), // (round the ones in its way: crowd.js goRound; its spot round the duck and how long it's been held up: crowd.js surround)
       o,
     })),
     pls = h.ids.map((id) => {
@@ -1387,7 +1387,7 @@ export function boardWalk(s, M, now, B, h) {
     Object.assign(o, { x, y, a: z.a, n: z.n });
     if (z.wu) o.wu = z.wu;
     else delete o.wu; // (its swing's wind-up since: the tell)
-    for (const k of ["ga", "pk"])
+    for (const k of BK)
       if (z[k]) o[k] = z[k];
       else delete o[k];
   }
