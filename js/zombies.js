@@ -1343,7 +1343,7 @@ export function boardWalk(s, M, now, B, h) {
       n: o.n || 0,
       wu: o.wu || 0,
       l: [o.hp, v, ""],
-      ...Object.fromEntries(BK.filter((k) => o[k]).map((k) => [k, o[k]])), // (round the ones in its way: crowd.js goRound; its spot round the duck and how long it's been held up: crowd.js surround)
+      ...Object.fromEntries(BK.filter((k) => k in o).map((k) => [k, o[k]])), // (round the ones in its way: crowd.js goRound; its spot round the duck and how long it's been held up: crowd.js surround)
       o,
     })),
     pls = h.ids.map((id) => {
@@ -1388,7 +1388,7 @@ export function boardWalk(s, M, now, B, h) {
     if (z.wu) o.wu = z.wu;
     else delete o.wu; // (its swing's wind-up since: the tell)
     for (const k of BK)
-      if (z[k]) o[k] = z[k];
+      if (z[k] !== undefined) o[k] = z[k];
       else delete o[k];
   }
   if (Object.keys(eating).length) M.ze = eating;
