@@ -5,7 +5,7 @@
    round the side, the jump onto the canopy, its claw, and what Sandbox's board zombies and the computers ask of it.
    Moved here from l4ddrules.js as it was (nothing it does changed); the way to the ducks is zombiepath.js. Next, Mad God
    Justin's waves and Sandbox's board zombies run on it too, each a breed. */
-import { ZOMBIE_SWIPE_SLOWER } from "./gamedefaults.js";
+import { ZOMBIE_SWIPE_SLOWER, ZOMBIE_GRACE } from "./gamedefaults.js";
 /* Dead Ducks Arcade's zombies' swipe in every round: its wind-up (from the tell to the hit) and the ms from one hit to the
    next, rounds 1 to 4's (the owner's, Nov 21 18:24Z: "all of the zombies have the default attack speed as they do in
    rounds 1 through 4"); the 0.2 s slower of Nov 20 is in the second */
@@ -43,6 +43,7 @@ import {
   fits,
   leastWay,
 } from "./crowd.js";
+import * as CR from "./crowd.js"; // (the surround: CR.SUR)
 import { isSurv, SV, survWatch } from "./survrules.js";
 import {
   L4_HOOKS,
@@ -138,28 +139,11 @@ export const zOk = (x, y, z, up = STEP) =>
    jc since when it chases Justin, jx till when it lets him be, nj never him (JCHASE). These went missing at every
    heartbeat before, so a zombie forgot its way up the moment it chose it (the owner's, Nov 17 19:11Z: "WHY THE FUCK ARE
    ZOMBIES NOT COMMITTING ON WALL CLIMBS EVEN WHEN IM STILL ON THE SAME FUCKING ROOF!!!") */
-const KEEP = [
-  "cm",
-  "k",
-  "fl",
-  "wp",
-  "j",
-  "jp",
-  "jc",
-  "jx",
-  "nj",
-  "sp",
-  "dm",
-  "wk",
-  "wt",
-  "wd",
-  "wn",
-  "lt",
-  "lw",
-  "ws",
-  "ga",
-  "pk",
-]; // (ga, pk: its spot round the ones in its way, and how many it waits behind: crowd.js goRound; ws: which way it goes round a Sandbox wall, sandboxrules.js sbWallGo; sp, dm: a Sandbox spawn's zombie, its spawn and its damage: sbspawn.js)
+const KEEP =
+  "cm k fl wp j jp jc jx nj sp dm wk wt wd wn lt lw ws ga pk sr sx hu na".split(
+    " ",
+  ); // (ga, pk: its spot round the ones in its way, and how many it waits behind: crowd.js goRound; ws: which way it goes round a Sandbox wall, sandboxrules.js sbWallGo; sp, dm: a Sandbox spawn's zombie, its spawn and its damage: sbspawn.js)
+// (sr, sx, hu, na: its spot round its duck, the one it gave up, since when it is held up, the way up it gave up: crowd.js SUR)
 /* the zombies as objects, from the state's three parts, and back (k in zp: hp · 16 + st, st up to 8, the jump) */
 export function zombies(s) {
   const zp = s.hang.zp || [],
@@ -257,7 +241,8 @@ export function newZombie(s, L, T, zs = []) {
     order = [...OPENINGS]
       .filter((o) => !dp() || o.kind === "fence") // (Downpour: they come over the fences)
       .sort((a, b) => near(a) - near(b)),
-    pool = [...order, ...order.slice(0, dp() ? 1 : 4)];
+    side = CR.crowdSide(zs, pts),
+    pool = CR.awayFrom(side, [...order, ...order.slice(0, dp() ? 1 : 4)]); // (mostly from the side with fewer zombies)
   let o = pool[Math.floor(Math.random() * pool.length)];
   /* Downpour: only from outside the fence, behind it anywhere round the map or out on the road's ends, and never where
      anyone sees it come (the owner's, Nov 17 12:28Z: "zombies can only spawn behind fences or at the ends of the road if
@@ -265,7 +250,7 @@ export function newZombie(s, L, T, zs = []) {
      one of the nearest to the ducks (so they don't walk round the map for a minute); if all are seen, the furthest */
   let from = o.from;
   if (dp()) {
-    const pick = fenceSpot(pts);
+    const pick = fenceSpot(pts, side);
     if (pick) {
       o = pick.q;
       from = pick.at;
@@ -328,16 +313,12 @@ export function roadEnd(pts) {
 /* Downpour: a spot behind a fence that no duck sees, one of the nearest to the ducks (pts: where they stand), where one
    coming over lands somewhere that leads to them: { q (its opening), at (outside, by the fence), land (inside) }, or
    null */
-export function fenceSpot(pts) {
+const seenBy = (pts, x, y) => CR.seenBy(pts, x, y, VIEW);
+export function fenceSpot(pts, side) {
   const dist = flowFrom(pts.map((q) => openNear(...q))),
     fences = OPENINGS.filter((q) => q.kind === "fence"),
     long = fences.map((q) => q.fence.climb[1] - q.fence.climb[0]),
     all = long.reduce((a, b) => a + b, 0),
-    seen = (x, y) =>
-      pts.some(
-        ([a, b]) =>
-          Math.abs(x - a) < VIEW.x + 60 && Math.abs(y - b) < VIEW.y + 140, // (up and down a little more: a tall phone held upright sees farther that way, 15% more since the owner's Nov 18 15:18Z, modes.js phoneOut)
-      ),
     far = (x, y) =>
       Math.min(...pts.map(([a, b]) => Math.hypot(x - a, y - b)), 1e9),
     hidden = [],
@@ -354,10 +335,10 @@ export function fenceSpot(pts) {
     if (c < 0 || !(dist[c] < Infinity) || !zOk(ix, iy, heightAt(ix, iy)))
       continue; // (it would land in a trunk, or where nobody can be reached)
     const at = byFence(f, FENCE.from, v);
-    (seen(...at) ? shown : hidden).push({
+    (seenBy(pts, ...at) ? shown : hidden).push({
       q,
       at,
-      d: far(...at),
+      d: far(...at) * (CR.onCrowdSide(side, ...at) ? 3 : 1), // (the crowd's side of the ducks last: crowd.js crowdSide)
       land: [ix, iy],
     });
   }
@@ -579,13 +560,18 @@ function walkAll(zs, c) {
     "zombie",
     dp() ? (z) => zOf(z, "zombie") : () => 0,
   ); // (no walking into one another: stepZombie)
+  const taken = CR.spotsTaken(zs, now),
+    G = { ...gr(), walk: walkable },
+    eyes = pls.filter((q) => !q.j).map((q) => q.xy),
+    rush = T >= ZOMBIE_GRACE; // (off every duck's screen they come twice as fast, but not in a round's first ZOMBIE_GRACE ms)
   for (const z of zs) {
     if (z.st === 3) continue;
     const o = z.l[2] ? openingById(z.l[2]) : null,
       v =
         z.l[1] *
         walkOf(s) * // (as much faster or slower as the ducks, by the lobby's Walking speed)
-        wetK(z.x, z.y, zOf(z, "zombie")), // (water: as slow of its own walk as a duck is of its, layout.js)
+        wetK(z.x, z.y, zOf(z, "zombie")) * // (water: as slow of its own walk as a duck is of its, layout.js)
+        (rush && !seenBy(eyes, z.x, z.y) ? 2 : 1), // (the owner's, Nov 23 00:32Z: "speed up the zombies by twice the amount of speed when they're not on a player screen")
       sp = o && sidesOf(o, z);
     if (z.st === 0) {
       // coming: to the spot outside its opening (Downpour: the foot of the fence)
@@ -859,7 +845,9 @@ function walkAll(zs, c) {
                         room(q.x, q.y, q.cm[1], q.cm[2]) <
                           room(z.x, z.y, ...a.goal)),
                   ).length, // (the ones ahead of it there: up it already, or nearer its foot)
-                (a) => room(z.x, z.y, ...a.goal),
+                (a) =>
+                  room(z.x, z.y, ...a.goal) +
+                  CR.gaveUp(z, GS.DECKS.indexOf(a.way), now),
               )
             : target, // (the canopy's ladder, or the red car, is nearer than the gas station's wall: that way, unless it's full: crowd.js leastWay)
           way = w.way;
@@ -917,6 +905,9 @@ function walkAll(zs, c) {
          it round what's in between, as everywhere else (chaseStep, wayTo's callers) */
       aim ||= goal;
       if (z.fl && !z.cm && !close) aim = flank(z, target, now) || aim; // (a flanker: round the side first)
+      if (!z.cm && !target.j && best < CR.SUR.near)
+        aim = CR.surround(z, target, taken, now, G, c.reach) || aim; // (round to the free side of the duck)
+      else if (CR.stuck(z, target, now, G, c.reach)) delete z.cm; // (held up at a ladder: another way)
       if (z.ga) {
         if (
           z.cm ||

@@ -63,7 +63,11 @@ import {
 } from "./guns.js";
 import { fullAmmo, infAmmo, fire, reloadTo, refill, reloadMs } from "./ammo.js";
 import { JUMP, jumpDodges } from "./jump.js";
-import { SPRINT as GAME_SPRINT, POCKET_CHANGE } from "./gamedefaults.js";
+import {
+  SPRINT as GAME_SPRINT,
+  POCKET_CHANGE,
+  ZOMBIE_GRACE,
+} from "./gamedefaults.js";
 import { hpHeal, hpHurt, hundredths, hpBreed, regenOf } from "./hpmath.js";
 import {
   baseMode,
@@ -307,11 +311,10 @@ function zombiesFor(r, p) {
 }
 /* spawning (the owner's): a zombie a second, 50% more for each player past the first, never more than 5 a second (3
    more for each player past the first), all twice that (Nov 16 21:21Z), and twice that again once a round is 10 s old
-   (Nov 16 22:21Z); each second a 25% chance that none comes. A round's first 4 s, half as many (Nov 18 10:38Z: "let's
-   make zombies spawn rate half as much for the first four seconds") */
+   (Nov 16 22:21Z); each second a 25% chance that none comes. A round's first ZOMBIE_GRACE ms, half as many (8 s since
+   the owner's Nov 23 00:32Z, gamedefaults.js) */
 const SKIP = 0.25,
-  LATER = 10000, // ms into a round before they come twice as fast
-  EARLY = 4000; // ms into a round they come half as fast
+  LATER = 10000; // ms into a round before they come twice as fast
 const BLAST_HALF = 0.5; // (a grenade's wide here, which the Angelic ones' are against: its rings, blast.js; the owner's, Nov 19 19:27Z, "half the blast radius")
 /* a hit's damage: the weapon's, or a roll in its range (guns.js armDmg, every mode's) */
 const dmgOf = armDmg;
@@ -4602,7 +4605,7 @@ function l4Tick(s, now) {
       L2.sec = sec;
       if (Math.random() >= SKIP) {
         const fast = dp() ? 4 : T >= LATER ? 2 : 1; // (after a round's first 10 s: twice as fast again. Downpour: twice that, from the start, the map's so big: the owner's, Nov 16 23:23Z)
-        const half = T < EARLY ? 0.5 : 1; // (a round's first 4 s: half as many)
+        const half = T < ZOMBIE_GRACE ? 0.5 : 1; // (a round's first 8 s: half as many)
         L2.acc += 2 * fast * half * Math.pow(1.5, extra); // (twice as fast: the owner's, Nov 16 21:21Z)
         const k = Math.min(
           Math.floor(L2.acc),
