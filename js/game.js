@@ -254,7 +254,7 @@ import {
 
 import { mountPlayers, trackIdle, lobbyVote, kickItems } from "./players.js";
 
-import { isMuted } from "./chat.js";
+import { chatNote, isMuted } from "./chat.js";
 
 import {
   specialById,
@@ -3618,9 +3618,16 @@ function holdPaint() {
   }
   held1.raf = requestAnimationFrame(holdPaint);
 }
+/* the chat says how, as a hold starts on a button that needs it (the owner's, Nov 23 00:32Z: "Says hold down button to
+   vote. And it only says that for buttons that you have to hold it down"); once in a while, not at every press */
+let holdSaid = -1e9;
 function holdStart(a, key) {
   holdEnd();
   const ms = holdMs();
+  if (performance.now() - holdSaid > 10000) {
+    holdSaid = performance.now();
+    chatNote("Hold down button to vote");
+  }
   held1 = {
     a,
     key,

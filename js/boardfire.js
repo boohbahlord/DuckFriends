@@ -350,15 +350,15 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
       playerKilled(s, by, h.id, sp);
     } // (the HP: a hit it can take keeps the duck up, still shoved back by a hammer)
     wounded(s, h.id, sp, now, crit); // (its wounds: wounds.js)
-    if (sp === "hammer") {
-      // shoved straight back from the swinger
+    if (sp === "hammer" || sp === "axe") {
+      // shoved straight back from the swinger (the fire axe half as far: push.js)
       const k = h.d > 0.05 ? 1 / h.d : 0;
       shove(
         s,
         h.id,
         h.d > 0.05 ? h.dx * k : ux,
         h.d > 0.05 ? h.dy * k : uy,
-        pushOf(s, "hammer") * sizeOf(s, by), // (the mode's own, and a bigger swinger's harder: push.js)
+        pushOf(s, sp) * sizeOf(s, by), // (the mode's own, and a bigger swinger's harder: push.js)
         now,
         side,
       );

@@ -20,7 +20,7 @@ const ITEM_COOL = 750;
    (not overkill), 450 for each, the cast iron pan only 50 ("cast irons is only 50 damage"). At 0% it is gone for good
    and its slot is empty; it is never refilled. An Angelic melee weapon never breaks. One number for each weapon: ARMS'
    dur */
-const MELEE_DUR = 450;
+const MELEE_DUR = 150; // (a third of 450: the owner's, Nov 23 00:32Z, "make it only a third as much durability on a melee weapon ... just make every melee just have less durability"; the hotbar's percent was right, it went down slowly)
 /* every pistol carries 20 magazines (the owner's, Nov 21 18:16Z) */
 const PISTOL_MAGS = 20;
 /* a hit's damage from a weapon's `dmg` range: one of its numbers a `step` apart (1 unless the weapon says: a gun's 0.05,
@@ -200,7 +200,7 @@ export const ARMS = {
     swing: ARM_SWING.axe,
     at: 66,
     r: 50,
-    knock: 28,
+    knock: 20, // (half the hammer's 40: the owner's, Nov 23 00:32Z)
   },
   sword: {
     kind: "melee",
@@ -214,7 +214,7 @@ export const ARMS = {
   },
   pan: {
     kind: "melee",
-    dur: 50,
+    dur: 17, // (a third of its 50, Nov 23)
     cool: ARM_COOL.pan,
     dmg: 5, // (5: the owner's, Nov 18 15:28Z, "The pan has 5 damage"; 2 to 6 at 15:25Z)
     crit: 0.5,
@@ -375,16 +375,19 @@ export const ARMS = {
      shells in all. Its crit counts its reload (critReload: the only one, the owner's, Nov 21 18:05Z). The flamethrower: its tank (flamer.js), everything in its cone catches
      fire. The burst rifle (an AUG): three rounds a press (burst, gap ms apart), 21 a clip, the AK-47's damage. Where the
      owner gave no number (the crits, the speeds, the burst rifle's ammo and reload) they are guesses */
-  /* the slug double barrel: its caliber's roll to the first one it hits, then through it and on, each next one taking 1
-     or 1.5 less than the one before (a new roll each time), until it would do nothing (the owner's, Nov 19 19:27Z: "it
-     will continuously pass through its targets until it cannot do any possible more damage"). The buckshot one is gone
-     (the owner's, Nov 21 17:25Z) */
+  /* the slug double barrel: its caliber's roll to the first one it hits, then through it and on (halve, least,
+     through below). The buckshot one is gone (the owner's, Nov 21 17:25Z) */
   dbarrel: {
     kind: "ranged",
     cool: 280,
     cal: "12 ga slug",
     barrel: "long",
-    less: [1, 1.5],
+    /* through each zombie its slug does half of what it did to the one before, and it stops once that would be under
+       least, or after pierce, in every mode (the owner's, Nov 23 00:32Z: "every time it passes through an enemy, it only does half as
+       much damage"; "stop passing through enemies, let's say after 3") */
+    halve: 0.5,
+    least: 0.5,
+    pierce: 3,
     speed: 1500,
     mag: 2,
     all: 150, // (the owner's, Nov 18 13:46Z: "there should be 150 rounds in the double barrel shotgun")

@@ -63,7 +63,11 @@ import {
 } from "./guns.js";
 import { fullAmmo, infAmmo, fire, reloadTo, refill, reloadMs } from "./ammo.js";
 import { JUMP, jumpDodges } from "./jump.js";
-import { SPRINT as GAME_SPRINT, POCKET_CHANGE } from "./gamedefaults.js";
+import {
+  SPRINT as GAME_SPRINT,
+  POCKET_CHANGE,
+  ZOMBIE_GRACE,
+} from "./gamedefaults.js";
 import { hpHeal, hpHurt, hundredths, hpBreed, regenOf } from "./hpmath.js";
 import {
   baseMode,
@@ -307,16 +311,13 @@ function zombiesFor(r, p) {
 }
 /* spawning (the owner's): a zombie a second, 50% more for each player past the first, never more than 5 a second (3
    more for each player past the first), all twice that (Nov 16 21:21Z), and twice that again once a round is 10 s old
-   (Nov 16 22:21Z); each second a 25% chance that none comes. A round's first 4 s, half as many (Nov 18 10:38Z: "let's
-   make zombies spawn rate half as much for the first four seconds") */
+   (Nov 16 22:21Z); each second a 25% chance that none comes. A round's first ZOMBIE_GRACE ms, half as many (8 s since
+   the owner's Nov 23 00:32Z, gamedefaults.js) */
 const SKIP = 0.25,
-  LATER = 10000, // ms into a round before they come twice as fast
-  EARLY = 4000; // ms into a round they come half as fast
+  LATER = 10000; // ms into a round before they come twice as fast
 const BLAST_HALF = 0.5; // (a grenade's wide here, which the Angelic ones' are against: its rings, blast.js; the owner's, Nov 19 19:27Z, "half the blast radius")
 /* a hit's damage: the weapon's, or a roll in its range (guns.js armDmg, every mode's) */
 const dmgOf = armDmg;
-/* one of two, at even odds (the double barrel's 1 or 1.5); 0 with none */
-const oneOf = (two) => (two ? two[Math.random() < 0.5 ? 0 : 1] : 0);
 /* fire (the owner's): a zombie burns 8 s and takes 1 every 2 s (the first as it's lit: 4 in all), and fire on a zombie
    already burning starts its 8 s again (the owner's, Nov 18 16:43Z, "1 damage for every 2 seconds for 8 seconds per
    enemy"; it was 6 s and 3 s); a duck takes 1 as it's lit and burns 3 s, and anyone on fire who touches a duck lights
@@ -1983,6 +1984,7 @@ export const WILD_BREEDS = {
       angry: GOD_LINES,
     },
     kill: true,
+    coins: true, // (his pocket change, POCKET_CHANGE: only Justin's, the owner's, Nov 23 00:32Z "Ethan ... does not drop pocket change")
   },
   ethan: {
     id: "b-ethan",
@@ -2225,6 +2227,9 @@ export function give(s, id, w, hand0) {
    three line bags, near: { id: 1 } the ducks he greeted standing by him, route: [legs], p: the leg he's on, t: since
    when, tk: his last step } */
 export const MERCH = {
+  NADE: 0.25, // (an item's chance to be grenades instead, NADE_EACH points for each one a duck is missing: the owner's, Nov 23 00:32Z, "sometimes sell grenades in place of items, and buying them just refills however many grenades you have missing. Each grenade only costing, let's say 75 points")
+  NADE_EACH: 75,
+  MISS: 0.05, // (each rest he didn't come adds this to the next rest's chance: the owner's, Nov 23 00:32Z "a 5% increased chance to show up for every time he doesn't show up")
   COME: 0.5, // (each rest's chance, round zero's too: the owner's, Nov 18 15:35Z "they come in at the rest phase, and it's a 50% chance that they do. It's not guaranteed")
   BOW: 250,
   PRICES: TIER_PRICES,
@@ -2276,7 +2281,12 @@ const setMh = (s, o) => {
 export const merchantPrice = (w) =>
   w === "bow" ? MERCH.BOW : MERCH.PRICES[TINTS[w] || "plain"];
 /* what he asks for it now (a Sale halves it, in fives) */
-export const stockPrice = (s, p) => (saleOn(s) ? fives(p / 2, 1) : p);
+/* grenades: each one I'm missing, so a buy fills me up (the owner's, Nov 23 00:32Z) */
+const lackOf = (w, kit) =>
+  w === "grenade" ? ARMS.grenade.most - ((kit && kit.g) || 0) : 1;
+/* what a buy costs me (w and kit: grenades count the ones I'm missing) */
+export const stockPrice = (s, p, w, kit) =>
+  (saleOn(s) ? fives(p / 2, 1) : p) * (w ? lackOf(w, kit) : 1);
 /* a new game: every merchant alive again, his bags new */
 function merchantSetUp(s) {
   s.hang.l4m = null;
@@ -2322,13 +2332,19 @@ function merchantStock(s) {
     extra = Math.max(0, players(s).filter((id) => !isWild(s, id)).length - 1);
   let bags = mh(s).bags || { b: {} },
     w;
+  const nade = () =>
+    !has("grenade") && Math.random() < MERCH.NADE
+      ? !!stock.push(["grenade", MERCH.NADE_EACH])
+      : false; // (grenades in place of the item)
   for (let k = survOn() ? 2 : 1; k > 0; k--) {
+    if (nade()) continue;
     [w, bags] = bagRoll(bags, has);
     if (w) stock.push([w, merchantPrice(w)]);
   } // (Survival: he's where the weapons come from now, "they're going to have more options for guns": two sure things)
   for (let k = 0; ; k++) {
     const p = MERCH.MORE - MERCH.LESS * k + MERCH.EACH * extra;
     if (p <= 0 || Math.random() >= p) break;
+    if (nade()) continue;
     [w, bags] = bagRoll(bags, has);
     if (!w) break;
     stock.push([w, merchantPrice(w)]);
@@ -2417,7 +2433,9 @@ function wayOut(x, y) {
 }
 /* a merchant comes, in a rest (round zero's, or between two rounds), half the time */
 function merchantCome(s, now, sure = false) {
-  if (!sure && Math.random() >= MERCH.COME) return; // (Survival: every rest, sure)
+  const miss = mh(s).miss || 0;
+  if (!sure && Math.random() >= MERCH.COME + MERCH.MISS * miss)
+    return setMh(s, { miss: miss + 1 }); // (Survival: every rest, sure)
   const m0 = merchantOf(s);
   if (m0 && m0.st !== "dead") return; // (one at a time)
   const h = mh(s),
@@ -2445,6 +2463,7 @@ function merchantCome(s, now, sure = false) {
   const hp = hp0(),
     vn = (h.vn || 0) + 1; // (his visit's number this game: before, it started over at 1 whenever the last one had left)
   setMh(s, {
+    miss: 0,
     vn,
     left,
     ban,
@@ -2488,6 +2507,7 @@ function merchantCome(s, now, sure = false) {
         }
       : {}),
   };
+  addFx(s, { kind: "l4drop", k: "merchant", who: [], t: now }); // ("The Merchant has Arrived" as he sets off, l4dd.js l4Got: the owner's, Nov 23 00:32Z, "as soon as they actually start coming")
 }
 /* the zombies are coming: a leaving line, and he runs */
 export function merchantGo(s, now) {
@@ -2792,7 +2812,7 @@ function merchantTick(s, now) {
         x: Math.round(BUTLER.x),
         y: Math.round(BUTLER.y),
       };
-      addFx(s, { kind: "l4drop", k: "merchant", who: [], t: now }); // ("The Merchant has Arrived", l4dd.js l4Got: as he gets to his spot. When he set off it was often at the game's very start, round zero, before anyone's screen was up to show it, and the owner never saw it)
+      // ("The Merchant has Arrived" shows as he sets off now: merchantCome)
     } else if (m0.st === "flee")
       s.hang.l4m = { ...m0, st: "hide" }; // (got away to another part of the map: he hides there)
     else s.hang.l4m = null;
@@ -2881,10 +2901,12 @@ function merchantBuy(s, id, w, mx, my, hand, now) {
   const i = m.stock.findIndex(([x]) => x === w),
     kit = kitOf(s, id);
   if (i < 0 || !kit) return false;
-  const price = stockPrice(s, m.stock[i][1]),
+  const price = stockPrice(s, m.stock[i][1], w, kit),
     have = kit.sl.includes(w);
-  if (ptsOf(s, id) < price) return false;
-  if (have && w === "defib") {
+  if (price <= 0 || ptsOf(s, id) < price) return false;
+  if (w === "grenade") {
+    s.hang.l4a = { ...s.hang.l4a, [id]: { ...kit, g: ARMS.grenade.most } };
+  } else if (have && w === "defib") {
     const c = (kit.am || {}).defib || [0, 0];
     s.hang.l4a = {
       ...s.hang.l4a,
@@ -3796,7 +3818,8 @@ function wildDown(s, id, by, now, w, all, codes, dmg = 1) {
         s.jkN = (s.jkN || 0) + 1;
         s.jk = [...(s.jk || []).slice(-9), { n: s.jkN, by, w }];
       }
-      if (Math.random() < POCKET_CHANGE.CHANCE) pocketChange(s, id, now); // (and a rare orb of coins where he fell)
+      if (wildBreedOf(s, id).coins && Math.random() < POCKET_CHANGE.CHANCE)
+        pocketChange(s, id, now); // (and a rare orb of coins where he fell)
     }
   }
   s.hang.l4p = p4;
@@ -4120,8 +4143,8 @@ export function l4Shots(s, now) {
         break;
       }
       if (w === "dbarrel") {
-        /* the slug double barrel's slug: through every zombie in its way, each once, 6 to the first and 1 or 1.5 less
-           to each one after (sh.d: the next one's), until it does nothing (the owner's, Nov 19 19:27Z). A crit doubles
+        /* the slug double barrel's slug: through the zombies in its way, each once, half as much to each one after
+           (sh.d: the next one's), at most ARMS.dbarrel.pierce (the owner's, Nov 23 00:32Z). A crit doubles
            that one's. One it kills blows to pieces (no bullet knocks back: the owner's, Nov 21 17:48Z) */
         let stop = false;
         for (const z of nearby(grid, zs, x, y))
@@ -4135,8 +4158,8 @@ export function l4Shots(s, now) {
               slugs.push([Math.round(z.x), Math.round(z.y), crit ? 1 : 0]);
             }
             hitAny = true;
-            sh.d = hundredths(dmg - oneOf(A.less));
-            if (sh.d <= 0) {
+            sh.d = hundredths(dmg * A.halve); // (half to the next one, guns.js)
+            if (sh.d < A.least || sh.hit.length >= A.pierce) {
               stop = true;
               break;
             }
@@ -4582,7 +4605,7 @@ function l4Tick(s, now) {
       L2.sec = sec;
       if (Math.random() >= SKIP) {
         const fast = dp() ? 4 : T >= LATER ? 2 : 1; // (after a round's first 10 s: twice as fast again. Downpour: twice that, from the start, the map's so big: the owner's, Nov 16 23:23Z)
-        const half = T < EARLY ? 0.5 : 1; // (a round's first 4 s: half as many)
+        const half = T < ZOMBIE_GRACE ? 0.5 : 1; // (a round's first 8 s: half as many)
         L2.acc += 2 * fast * half * Math.pow(1.5, extra); // (twice as fast: the owner's, Nov 16 21:21Z)
         const k = Math.min(
           Math.floor(L2.acc),
@@ -4606,10 +4629,17 @@ function l4Tick(s, now) {
   /* the zombies walk, tear boards down, climb in, swipe: at every duck standing, Justin out there too (the owner's,
      Nov 17 20:02Z: "zombies will attack justin now, because they literally arent"; he only doesn't keep the game going) */
   setZWall(sbZombieWall(s, W, H, true)); // (Sandbox: its walls)
-  moveZombies(s, zs, now, T, [
-    ...up.filter((id) => !godOn(s, id)), // (God mode: the zombies ignore it)
-    ...ids.filter((id) => isWild(s, id) && standing(s, id)),
-  ]);
+  moveZombies(
+    s,
+    zs,
+    now,
+    T,
+    [
+      ...up.filter((id) => !godOn(s, id)), // (God mode: the zombies ignore it)
+      ...ids.filter((id) => isWild(s, id) && standing(s, id)),
+    ],
+    up,
+  ); // (up: every duck's screen, God mode's too, for the off-screen speed)
   setZWall(null);
   if (isSurv(s) && L4_HOOKS.gm)
     L4_HOOKS.gm.tick(s, zs, now, mine, gmHelp(s, now)); // (Survival's gunmen: gunmenrules.js)

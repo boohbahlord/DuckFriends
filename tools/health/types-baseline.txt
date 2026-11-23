@@ -1,0 +1,900 @@
+js/account.js TS2339 Property '__duckTestSignIn' does not exist on type 'Window & typeof globalThis'.
+js/account.js TS2339 Property 'detail' does not exist on type 'Event'.
+js/account.js TS2339 Property 'detail' does not exist on type 'Event'.
+js/account.js TS2339 Property 'detail' does not exist on type 'Event'.
+js/account.js TS2339 Property 'detail' does not exist on type 'Event'.
+js/account.js TS2339 Property 'detail' does not exist on type 'Event'.
+js/account.js TS2339 Property 'detail' does not exist on type 'Event'.
+js/account.js TS2339 Property 'detail' does not exist on type 'Event'.
+js/actplay.js TS2339 Property 'inf' does not exist on type 'Readonly<{}>'.
+js/actplay.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/actplay.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/actplay.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/actplay.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/actplay.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/actplay.js TS2447 The '|' operator is not allowed for boolean types. Consider using '||' instead.
+js/allies.js TS2339 Property 'hm' does not exist on type '{ ad: number; fl: number; x: number; y: number; hp: any; l: any[]; f: number; dk: { face: any; hat: any; color: any; outfit: any; pattern: string; metal: string; keys: any; style: string; }; wp: { p: any; }; mg: any; rl: any; ... 6 more ...; k: any; } | { ...; }'.
+js/allies.js TS2339 Property 'ldr' does not exist on type '{ ad: number; fl: number; x: number; y: number; hp: any; l: any[]; f: number; dk: { face: any; hat: any; color: any; outfit: any; pattern: string; metal: string; keys: any; style: string; }; wp: { p: any; }; mg: any; rl: any; ... 6 more ...; k: any; } | { ...; }'.
+js/allies.js TS2339 Property 'nm' does not exist on type '{ ad: number; fl: number; x: number; y: number; hp: any; l: any[]; f: number; dk: { face: any; hat: any; color: any; outfit: any; pattern: string; metal: string; keys: any; style: string; }; wp: { p: any; }; mg: any; rl: any; ... 6 more ...; k: any; } | { ...; }'.
+js/audioimport.js TS2339 Property 'buffer' does not exist on type 'AllowSharedBufferSource'.
+js/bash.js TS18047 'cur' is possibly 'null'.
+js/bash.js TS18047 'cur' is possibly 'null'.
+js/bash.js TS2339 Property 'buf' does not exist on type 'string | { path: any; buf: string; }'.
+js/bash.js TS2339 Property 'files' does not exist on type '(a: any) => any'.
+js/bash.js TS2339 Property 'files' does not exist on type '(a: any) => any'.
+js/bash.js TS2339 Property 'files' does not exist on type '(a: any) => any'.
+js/bash.js TS2554 Expected 0 arguments, but got 1.
+js/boardjustin.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/boardjustin.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/boardjustin.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/boardjustin.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/boardjustin.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/boardjustin.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/boardjustin.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/boardjustin.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/boardjustin.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/boardjustin.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/bots.js TS2365 Operator '+' cannot be applied to types 'string | number' and 'number'.
+js/brainbuild.js TS2345 Argument of type '{ k: string; }' is not assignable to parameter of type '{ k: string; v: string; }'.
+js/brainbuild.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/brainbuild.js TS2741 Property 'v' is missing in type '{ k: any; }' but required in type '{ k: string; v: string; }'.
+js/card.js TS2339 Property 'pad' does not exist on type 'HTMLCanvasElement'.
+js/card.js TS2339 Property 'style' does not exist on type 'Element'.
+js/card.js TS2339 Property 'style' does not exist on type 'Element'.
+js/card.js TS2339 Property 'style' does not exist on type 'Element'.
+js/card.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/card.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/card.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/card.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/card.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/card.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/card.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/card.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/chat.js TS2339 Property 'altKey' does not exist on type 'Event'.
+js/chat.js TS2339 Property 'blur' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'clipboardData' does not exist on type 'Event'.
+js/chat.js TS2339 Property 'clipboardData' does not exist on type 'Event'.
+js/chat.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/chat.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/chat.js TS2339 Property 'ctrlKey' does not exist on type 'Event'.
+js/chat.js TS2339 Property 'dataset' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'dataset' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'dataset' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'dataset' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'dataset' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'focus' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'focus' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'key' does not exist on type 'Event'.
+js/chat.js TS2339 Property 'key' does not exist on type 'Event'.
+js/chat.js TS2339 Property 'key' does not exist on type 'Event'.
+js/chat.js TS2339 Property 'key' does not exist on type 'Event'.
+js/chat.js TS2339 Property 'key' does not exist on type 'Event'.
+js/chat.js TS2339 Property 'key' does not exist on type 'Event'.
+js/chat.js TS2339 Property 'key' does not exist on type 'Event'.
+js/chat.js TS2339 Property 'key' does not exist on type 'Event'.
+js/chat.js TS2339 Property 'key' does not exist on type 'Event'.
+js/chat.js TS2339 Property 'key' does not exist on type 'Event'.
+js/chat.js TS2339 Property 'maxLength' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'maxLength' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'metaKey' does not exist on type 'Event'.
+js/chat.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'selectionEnd' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'selectionEnd' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'selectionStart' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'selectionStart' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'value' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'value' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'value' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'value' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'value' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'value' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'value' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'value' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'value' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'value' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'value' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'value' does not exist on type 'Element'.
+js/chat.js TS2339 Property 'value' does not exist on type 'Element'.
+js/chatcmds.js TS2339 Property 'metal' does not exist on type '{ id: string; name: string; colors: string[][]; } | { id: string; name: string; colors?: undefined; } | {}'.
+js/chatcmds.js TS2339 Property 'toLowerCase' does not exist on type 'string | number'.
+js/chatcmds.js TS2339 Property 'toLowerCase' does not exist on type 'string | number'.
+js/chatcmds.js TS2339 Property 'toLowerCase' does not exist on type 'string | number'.
+js/chatcmds.js TS2339 Property 'toLowerCase' does not exist on type 'string | number'.
+js/collage.js TS2339 Property 'src' does not exist on type 'Element'.
+js/color.js TS2339 Property 'dataset' does not exist on type 'Element'.
+js/color.js TS2339 Property 'dataset' does not exist on type 'Element'.
+js/color.js TS2339 Property 'dataset' does not exist on type 'Element'.
+js/color.js TS2339 Property 'focus' does not exist on type 'Element'.
+js/color.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/color.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/color.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/color.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/color.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/color.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/color.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/color.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/color.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/color.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/color.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/color.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/color.js TS2339 Property 'oninput' does not exist on type 'Element'.
+js/color.js TS2339 Property 'oninput' does not exist on type 'Element'.
+js/color.js TS2339 Property 'value' does not exist on type 'Element'.
+js/color.js TS2339 Property 'value' does not exist on type 'Element'.
+js/color.js TS2339 Property 'value' does not exist on type 'Element'.
+js/color.js TS2339 Property 'value' does not exist on type 'Element'.
+js/color.js TS2339 Property 'value' does not exist on type 'Element'.
+js/color.js TS2345 Argument of type 'boolean' is not assignable to parameter of type 'string'.
+js/color.js TS2345 Argument of type 'boolean' is not assignable to parameter of type 'string'.
+js/corners.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/corners.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/corners.js TS2339 Property 'standalone' does not exist on type 'Navigator'.
+js/corners.js TS2551 Property 'webkitExitFullscreen' does not exist on type 'Document'. Did you mean 'exitFullscreen'?
+js/corners.js TS2551 Property 'webkitFullscreenElement' does not exist on type 'Document'. Did you mean 'fullscreenElement'?
+js/corners.js TS2551 Property 'webkitFullscreenEnabled' does not exist on type 'Document'. Did you mean 'fullscreenEnabled'?
+js/corners.js TS2551 Property 'webkitRequestFullscreen' does not exist on type 'HTMLElement'. Did you mean 'requestFullscreen'?
+js/court.js TS2554 Expected 0 arguments, but got 1.
+js/customize.js TS2339 Property 'dataset' does not exist on type 'Element'.
+js/customize.js TS2339 Property 'map' does not exist on type 'string | string[][]'.
+js/customize.js TS2339 Property 'offsetHeight' does not exist on type 'Element'.
+js/customize.js TS2339 Property 'offsetWidth' does not exist on type 'Element'.
+js/customize.js TS2339 Property 'offsetWidth' does not exist on type 'Element'.
+js/customize.js TS2339 Property 'some' does not exist on type 'string | string[][]'.
+js/customize.js TS2339 Property 'style' does not exist on type 'Element'.
+js/customize.js TS2339 Property 'style' does not exist on type 'Element'.
+js/customize.js TS2345 Argument of type 'any[]' is not assignable to parameter of type '[any, any, any]'.
+js/customize.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any, any]'.
+js/customize.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/customize.js TS2353 Object literal may only specify known properties, and 'px' does not exist in type '{ aspect?: number; side?: number; most?: number; }'.
+js/customize.js TS2538 Type 'string[][]' cannot be used as an index type.
+js/customize.js TS2538 Type 'string[][]' cannot be used as an index type.
+js/democracy.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/dock.js TS2367 This comparison appears to be unintentional because the types '"left"' and '"bottom"' have no overlap.
+js/dock.js TS2367 This comparison appears to be unintentional because the types '"left"' and '"hidden"' have no overlap.
+js/dock.js TS2367 This comparison appears to be unintentional because the types '"left"' and '"right"' have no overlap.
+js/dock.js TS2367 This comparison appears to be unintentional because the types '"left"' and '"right"' have no overlap.
+js/dock.js TS2367 This comparison appears to be unintentional because the types '"left"' and '"right"' have no overlap.
+js/duck.js TS2339 Property 'cut' does not exist on type '{ color: string; pattern: string; patternColor: string; metal: string; image: any; hat: any; face: any; eyes: string; beak: string; beakColor: string; beakColor2: string; build: number; size: number; special: any; keys: any; spc: any; style: string; outfit: any; }'.
+js/duck.js TS2339 Property 'matte' does not exist on type '{ color: string; pattern: string; patternColor: string; metal: string; image: any; hat: any; face: any; eyes: string; beak: string; beakColor: string; beakColor2: string; build: number; size: number; special: any; keys: any; spc: any; style: string; outfit: any; }'.
+js/duck.js TS2339 Property 'rank' does not exist on type '{ color: string; pattern: string; patternColor: string; metal: string; image: any; hat: any; face: any; eyes: string; beak: string; beakColor: string; beakColor2: string; build: number; size: number; special: any; keys: any; spc: any; style: string; outfit: any; }'.
+js/duck.js TS2339 Property 'tint' does not exist on type '{ color: string; pattern: string; patternColor: string; metal: string; image: any; hat: any; face: any; eyes: string; beak: string; beakColor: string; beakColor2: string; build: number; size: number; special: any; keys: any; spc: any; style: string; outfit: any; }'.
+js/duck.js TS2339 Property 'tint' does not exist on type '{ color: string; pattern: string; patternColor: string; metal: string; image: any; hat: any; face: any; eyes: string; beak: string; beakColor: string; beakColor2: string; build: number; size: number; special: any; keys: any; spc: any; style: string; outfit: any; }'.
+js/duck.js TS2339 Property 'tint' does not exist on type '{ color: string; pattern: string; patternColor: string; metal: string; image: any; hat: any; face: any; eyes: string; beak: string; beakColor: string; beakColor2: string; build: number; size: number; special: any; keys: any; spc: any; style: string; outfit: any; }'.
+js/duck.js TS2353 Object literal may only specify known properties, and 'gone' does not exist in type '{ extra: any; }'.
+js/duck.js TS2353 Object literal may only specify known properties, and 'gone' does not exist in type '{ extra: any; }'.
+js/duck.js TS2353 Object literal may only specify known properties, and 'gone' does not exist in type '{ extra: any; }'.
+js/duck.js TS2353 Object literal may only specify known properties, and 'gone' does not exist in type '{ extra: any; }'.
+js/duckparts.js TS2362 The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/duncerules.js TS2365 Operator '<=' cannot be applied to types 'string | number' and 'number'.
+js/euclid.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any, any, any]'.
+js/euclid.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any, any, any]'.
+js/friends.js TS2339 Property 'detail' does not exist on type 'Event'.
+js/friends.js TS2339 Property 'detail' does not exist on type 'Event'.
+js/friends.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/front.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/front.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/front.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/front.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/front.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/front.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/game.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/game.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/game.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any, any]'.
+js/game.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any, any]'.
+js/game.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any]'.
+js/game.js TS2353 Object literal may only specify known properties, and 'art' does not exist in type '{ cls?: string; attrs?: string; style?: string; }'.
+js/game.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/game.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/game.js TS2554 Expected 0 arguments, but got 1.
+js/game.js TS2554 Expected 0 arguments, but got 1.
+js/gamehand.js TS2339 Property 'toFixed' does not exist on type 'number | boolean'.
+js/gamehand.js TS2365 Operator '>=' cannot be applied to types 'number | boolean' and 'number'.
+js/gamesettings.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/gameshots.js TS2339 Property '_k' does not exist on type 'Element'.
+js/gmodes.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/gunmen.js TS2339 Property 'camo' does not exist on type '{}'.
+js/gunmenrules.js TS2339 Property 'sq' does not exist on type '{ ad: number; fl: number; x: number; y: number; hp: any; l: any[]; f: number; dk: { face: any; hat: any; color: any; outfit: any; pattern: string; metal: string; keys: any; style: string; }; wp: { p: any; }; mg: any; rl: any; ... 6 more ...; k: any; } | { ...; }'.
+js/hangout/artcabin.js TS2339 Property 'h' does not exist on type '{ axis?: string; wallH?: number; t?: number; doors?: undefined[]; windows?: undefined[]; plain?: boolean; open?: boolean; seamless?: boolean; }'.
+js/hangout/artcabin.js TS2339 Property 'h' does not exist on type '{ w?: number; wallH?: number; }'.
+js/hangout/artcabin.js TS2339 Property 'rowsH' does not exist on type '{ axis?: string; wallH?: number; t?: number; doors?: undefined[]; windows?: undefined[]; plain?: boolean; open?: boolean; seamless?: boolean; }'.
+js/hangout/artcabin.js TS2339 Property 'w' does not exist on type '{ axis?: string; wallH?: number; t?: number; doors?: undefined[]; windows?: undefined[]; plain?: boolean; open?: boolean; seamless?: boolean; }'.
+js/hangout/artindoor.js TS2339 Property 'h' does not exist on type '{ w?: number; d?: number; z?: number; steps?: number; dir?: string; }'.
+js/hangout/artindoor.js TS2339 Property 'h' does not exist on type '{ w?: number; sink?: null; upper?: boolean; }'.
+js/hangout/artpool.js TS2339 Property 'h' does not exist on type '{ w?: number; d?: number; depth?: number; c?: number; lights?: number; }'.
+js/hangout/artpool.js TS2339 Property 'h' does not exist on type '{ w?: number; d?: number; rail?: number; drop?: number; gapE?: number[]; lights?: number[]; bulbs?: boolean; }'.
+js/hangout/artpool.js TS2339 Property 'h' does not exist on type '{ w?: number; d?: number; rise?: number; steps?: number; landing?: number; rail?: number; }'.
+js/hangout/artyard.js TS2339 Property 'd' does not exist on type '{ w?: number; z?: number; }'.
+js/hangout/artyard.js TS2339 Property 'h' does not exist on type '{ axis?: string; }'.
+js/hangout/artyard.js TS2339 Property 'h' does not exist on type '{ kind?: string; seed?: number; }'.
+js/hangout/artyard.js TS2339 Property 'h' does not exist on type '{ w?: number; d?: number; z?: number; backZ?: number; }'.
+js/hangout/artyard.js TS2339 Property 'h' does not exist on type '{ w?: number; z?: number; }'.
+js/hangout/artyard.js TS2339 Property 'h' does not exist on type '{ w?: number; }'.
+js/hangout/artyard.js TS2339 Property 'pts' does not exist on type '{ w?: number; h?: number; width?: number; seed?: number; }'.
+js/hangout/artyard.js TS2339 Property 'w' does not exist on type '{ axis?: string; }'.
+js/hangout/artyard.js TS2339 Property 'w' does not exist on type '{ kind?: string; seed?: number; }'.
+js/hangout/artyard.js TS2362 The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/hangout/artyard.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/hangout/artyard.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/hangout/artyard.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/hangout/beachball.js TS2322 Type 'number' is not assignable to type 'string'.
+js/hangout/blackjack.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/hangout/book.js TS2339 Property 'blur' does not exist on type 'Element'.
+js/hangout/book.js TS2339 Property 'key' does not exist on type 'Event'.
+js/hangout/book.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/hangout/bricks.js TS2345 Argument of type '{ poly: any[][]; n: number[]; c: number; }' is not assignable to parameter of type '{ poly: any; top: any; }'.
+js/hangout/cabinend.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/hangout/cabinend.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/hangout/cats.js TS2554 Expected 0 arguments, but got 1.
+js/hangout/characters.js TS2339 Property 'style' does not exist on type 'Element'.
+js/hangout/characters.js TS2339 Property 'style' does not exist on type 'Element'.
+js/hangout/characters.js TS2339 Property 'style' does not exist on type 'Element'.
+js/hangout/characters.js TS2339 Property 'style' does not exist on type 'Element'.
+js/hangout/falls.js TS2322 Type 'number' is not assignable to type 'string'.
+js/hangout/justin.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/hangout/justin.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/hangout/justin.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/hangout/justin.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/hangout/justin.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/hangout/justin.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/hangout/justin.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/hangout/justin.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/hangout/justin.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/hangout/justin.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/hangout/justin.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/hangout/layout.js TS2339 Property 'a' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'a' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'a' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'a' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'a' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'a' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'a' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'a' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'a' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'at' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'at' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'at' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'at' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'at' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'at' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'at' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'at' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'at' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'at' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'at' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'at' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'at' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'at' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'at' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'at' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'axis' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'b' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'b' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'b' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'b' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'b' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'block' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'block' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'box' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'car' does not exist on type '{ kind: string; x0: number; y0: number; x1: number; y1: number; h: number; key: number; holes: ({ id: string; x0: number; y0: number; x1: number; y1: number; corner?: undefined; } | { id: string; x0: number; y0: number; x1: number; y1: number; corner: string; })[]; bldg: number; }'.
+js/hangout/layout.js TS2339 Property 'fit' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'fit' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'id' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'key' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'key' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'l4' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'l4' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'l4' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'l4' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'map' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'map' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'map' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'map' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'plat' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'plat' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'plat' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'roof' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'solid' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'solid' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'solid' does not exist on type '{ kind: string; x0: number; y0: number; x1: number; y1: number; h: number; key: number; holes: ({ id: string; x0: number; y0: number; x1: number; y1: number; corner?: undefined; } | { id: string; x0: number; y0: number; x1: number; y1: number; corner: string; })[]; bldg: number; }'.
+js/hangout/layout.js TS2339 Property 'top' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'top' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'top' does not exist on type '{ kind: any; x: any; y: any; w: any; d: any; h: any; z: any; }'.
+js/hangout/layout.js TS2339 Property 'wall' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'wall' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'x0' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2339 Property 'y1' does not exist on type 'number | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { x0: number; y0: number; x1: number; y1: number; wall: number; } | { id: string; axis: string; at: number; a: number; b: number; } | { ...; }'.
+js/hangout/layout.js TS2349 This expression is not callable.
+js/hangout/layout.js TS2365 Operator '<' cannot be applied to types 'number' and 'number | ((t: any, k: any) => any[])'.
+js/hangout/layoutheights.js TS2345 Argument of type '{ at: number; x0: number; x1: number; side: string; } | { at: number; y0: number; y1: number; side: string; }' is not assignable to parameter of type '{ at: number; x0: number; x1: number; side: string; }'.
+js/hangout/layoutheights.js TS2345 Argument of type '{ at: number; x0: number; x1: number; side: string; } | { at: number; y0: number; y1: number; side: string; }' is not assignable to parameter of type '{ at: number; x0: number; x1: number; side: string; }'.
+js/hangout/npc.js TS2554 Expected 0 arguments, but got 2.
+js/hangout/npcart.js TS2345 Argument of type '{ color: string; face: { id: string; }; outfit: { id: string; }; }' is not assignable to parameter of type '{ color: string; pattern: string; patternColor: string; metal: string; image: any; hat: any; face: any; eyes: string; beak: string; beakColor: string; beakColor2: string; build: number; size: number; special: any; keys: any; spc: any; style: string; outfit: any; }'.
+js/hangout/npcart.js TS2345 Argument of type '{ color: string; face: { id: string; }; outfit: { id: string; }; }' is not assignable to parameter of type '{ color: string; pattern: string; patternColor: string; metal: string; image: any; hat: any; face: any; eyes: string; beak: string; beakColor: string; beakColor2: string; build: number; size: number; special: any; keys: any; spc: any; style: string; outfit: any; }'.
+js/hangout/npcart.js TS2345 Argument of type '{ color: string; face: { id: string; }; outfit: { id: string; }; }' is not assignable to parameter of type '{ color: string; pattern: string; patternColor: string; metal: string; image: any; hat: any; face: any; eyes: string; beak: string; beakColor: string; beakColor2: string; build: number; size: number; special: any; keys: any; spc: any; style: string; outfit: any; }'.
+js/hangout/npcart.js TS2345 Argument of type '{ color: string; }' is not assignable to parameter of type '{ color: string; pattern: string; patternColor: string; metal: string; image: any; hat: any; face: any; eyes: string; beak: string; beakColor: string; beakColor2: string; build: number; size: number; special: any; keys: any; spc: any; style: string; outfit: any; }'.
+js/hangout/piano.js TS2554 Expected 0 arguments, but got 1.
+js/hangout/piano.js TS2554 Expected 0 arguments, but got 1.
+js/hangout/piano.js TS2554 Expected 0 arguments, but got 2.
+js/hangout/piano.js TS2554 Expected 0 arguments, but got 2.
+js/hangout/piano.js TS2554 Expected 0-2 arguments, but got 3.
+js/hangout/pianokeys.js TS2322 Type 'number' is not assignable to type 'string'.
+js/hangout/pianokeys.js TS2339 Property 'button' does not exist on type 'Event'.
+js/hangout/pianokeys.js TS2339 Property 'clientX' does not exist on type 'Event'.
+js/hangout/pianokeys.js TS2339 Property 'clientY' does not exist on type 'Event'.
+js/hangout/pianokeys.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/hangout/pianokeys.js TS2339 Property 'dataset' does not exist on type 'Element'.
+js/hangout/pianokeys.js TS2339 Property 'dataset' does not exist on type 'Element'.
+js/hangout/pianokeys.js TS2339 Property 'legend' does not exist on type '{ onNote?: () => void; onClose?: () => void; sheet?: boolean; closeButton?: boolean; }'.
+js/hangout/pianokeys.js TS2339 Property 'letters' does not exist on type '{ onNote?: () => void; onClose?: () => void; sheet?: boolean; closeButton?: boolean; }'.
+js/hangout/pianokeys.js TS2339 Property 'offsetHeight' does not exist on type 'Element'.
+js/hangout/pianokeys.js TS2339 Property 'pointerId' does not exist on type 'Event'.
+js/hangout/pianokeys.js TS2339 Property 'pointerId' does not exist on type 'Event'.
+js/hangout/pianokeys.js TS2339 Property 'pointerId' does not exist on type 'Event'.
+js/hangout/pianokeys.js TS2339 Property 'pointerId' does not exist on type 'Event'.
+js/hangout/pianokeys.js TS2339 Property 'pointerId' does not exist on type 'Event'.
+js/hangout/pianokeys.js TS2339 Property 'pointerId' does not exist on type 'Event'.
+js/hangout/pianokeys.js TS2339 Property 'pointerId' does not exist on type 'Event'.
+js/hangout/pianokeys.js TS2339 Property 'pointerId' does not exist on type 'Event'.
+js/hangout/pianokeys.js TS2339 Property 'pointerType' does not exist on type 'Event'.
+js/hangout/pianokeys.js TS2339 Property 'style' does not exist on type 'Element'.
+js/hangout/pianokeys.js TS2339 Property 'style' does not exist on type 'Element'.
+js/hangout/pianokeys.js TS2554 Expected 0 arguments, but got 1.
+js/hangout/pianokeys.js TS2554 Expected 0 arguments, but got 1.
+js/hangout/pianokeys.js TS2554 Expected 0 arguments, but got 1.
+js/hangout/pianokeys.js TS2554 Expected 0 arguments, but got 1.
+js/hangout/pianokeys.js TS2554 Expected 0 arguments, but got 2.
+js/hangout/pianokeys.js TS2554 Expected 0 arguments, but got 2.
+js/hangout/pianokeys.js TS2554 Expected 0 arguments, but got 2.
+js/hangout/poker.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/hangout/power.js TS2339 Property 'r' does not exist on type '() => any'.
+js/hangout/power.js TS2339 Property 'r' does not exist on type '() => any'.
+js/hangout/power.js TS2339 Property 'u' does not exist on type '() => any'.
+js/hangout/power.js TS2339 Property 'u' does not exist on type '() => any'.
+js/hangout/power.js TS2554 Expected 0 arguments, but got 1.
+js/hangout/rubberducks.js TS2322 Type 'string | number' is not assignable to type 'string'.
+js/hangout/rubberducks.js TS2345 Argument of type 'string | number' is not assignable to parameter of type 'number'.
+js/hangout/rubberducks.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/hangout/rubberducks.js TS2365 Operator '<' cannot be applied to types 'string | number' and 'number'.
+js/hangout/rubberducks.js TS2365 Operator '<' cannot be applied to types 'string | number' and 'number'.
+js/hangout/seats.js TS2353 Object literal may only specify known properties, and 'w' does not exist in type '{ axis?: string; }'.
+js/hangout/shadowduck.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/hangout/shadowduck.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/hangout/shadowduck.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/hangout/shadowduck.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/hangout/shadowduck.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/hangout/shadowduck.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/hangout/shapes.js TS2353 Object literal may only specify known properties, and 'backKey' does not exist in type '{ s?: number; z?: number; fade?: boolean; }'.
+js/hangout/shapes.js TS2353 Object literal may only specify known properties, and 'backKey' does not exist in type '{ s?: number; z?: number; fade?: boolean; }'.
+js/hangout/shapes.js TS2353 Object literal may only specify known properties, and 'backKey' does not exist in type '{ s?: number; z?: number; fade?: boolean; }'.
+js/hangout/shapes.js TS2353 Object literal may only specify known properties, and 'd' does not exist in type '{ w?: number; z?: number; }'.
+js/hangout/shapes.js TS2353 Object literal may only specify known properties, and 'h' does not exist in type '{ w?: number; }'.
+js/hangout/shapes.js TS2353 Object literal may only specify known properties, and 'w' does not exist in type '{ axis?: string; wallH?: number; t?: number; doors?: any[]; windows?: any[]; plain?: boolean; open?: boolean; seamless?: boolean; }'.
+js/hangout/shapes.js TS2353 Object literal may only specify known properties, and 'w' does not exist in type '{ axis?: string; wallH?: number; t?: number; doors?: any[]; windows?: any[]; plain?: boolean; open?: boolean; seamless?: boolean; }'.
+js/hangout/shapes.js TS2353 Object literal may only specify known properties, and 'w' does not exist in type '{ axis?: string; wallH?: number; t?: number; doors?: any[]; windows?: any[]; plain?: boolean; open?: boolean; seamless?: boolean; }'.
+js/hangout/shapes.js TS2353 Object literal may only specify known properties, and 'w' does not exist in type '{ axis?: string; wallH?: number; t?: number; doors?: any[]; windows?: any[]; plain?: boolean; open?: boolean; seamless?: boolean; }'.
+js/hangout/shapes.js TS2353 Object literal may only specify known properties, and 'w' does not exist in type '{ axis?: string; }'.
+js/hangout/shapesbase.js TS2339 Property 'backKey' does not exist on type '{ s?: number; z?: number; fade?: boolean; }'.
+js/hangout/shapesbase.js TS2339 Property 'frontKey' does not exist on type '{ s?: number; z?: number; fade?: boolean; }'.
+js/hangout/shapesbase.js TS2339 Property 'hit' does not exist on type '{ s?: number; z?: number; fade?: boolean; }'.
+js/hangout/shapesground.js TS2353 Object literal may only specify known properties, and 'pts' does not exist in type '{ w?: number; h?: number; width?: number; seed?: number; }'.
+js/hangout/shapesground.js TS2362 The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/hangout/shapeswalls.js TS2353 Object literal may only specify known properties, and 'w' does not exist in type '{ axis?: string; wallH?: number; t?: number; doors?: any[]; windows?: any[]; plain?: boolean; open?: boolean; seamless?: boolean; }'.
+js/hangout/shapeswalls.js TS2353 Object literal may only specify known properties, and 'w' does not exist in type '{ axis?: string; wallH?: number; t?: number; doors?: any[]; windows?: any[]; plain?: boolean; open?: boolean; seamless?: boolean; }'.
+js/hangout/shapeswalls.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/hangout/shapeswalls.js TS2365 Operator '<' cannot be applied to types 'number' and 'string | number'.
+js/hangout/soccer.js TS2554 Expected 0 arguments, but got 1.
+js/hangout/stationcars.js TS2554 Expected 0-1 arguments, but got 2.
+js/hangout/stationmap.js TS2339 Property 'x' does not exist on type '{ j: number; a: any; b: number; }'.
+js/hangout/stationmap.js TS2339 Property 'x' does not exist on type '{ j: number; a: any; b: number; }'.
+js/hangout/stationmap.js TS2339 Property 'x' does not exist on type '{ j: number; a: any; b: number; }'.
+js/hangout/stationmap.js TS2339 Property 'x' does not exist on type '{ j: number; a: any; b: number; }'.
+js/hangout/stationmap.js TS2339 Property 'x' does not exist on type '{ j: number; a: any; b: number; }'.
+js/hangout/stationmap.js TS2339 Property 'x' does not exist on type '{ j: number; a: any; b: number; }'.
+js/hangout/stationmap.js TS2339 Property 'x' does not exist on type '{ j: number; a: any; b: number; }'.
+js/hangout/stationmap.js TS2339 Property 'x' does not exist on type '{ j: number; a: any; b: number; }'.
+js/hangout/stationmap.js TS2339 Property 'y0' does not exist on type 'number | { x: number; y0: number; y1: number; climb: number[]; out: number; }'.
+js/hangout/stationmap.js TS2339 Property 'y1' does not exist on type 'number | { x: number; y0: number; y1: number; climb: number[]; out: number; }'.
+js/hangout/stationmap.js TS2353 Object literal may only specify known properties, and 'hAt' does not exist in type '{ kind: string; x0: number; y0: number; x1: number; y1: number; h: number; key: number; holes: ({ id: string; x0: number; y0: number; x1: number; y1: number; corner?: undefined; } | { id: string; x0: number; y0: number; x1: number; y1: number; corner: string; })[]; bldg: number; }'.
+js/hangout/stationmap.js TS2362 The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/hangout/stationparts.js TS2339 Property 'x' does not exist on type '{ j: number; a: any; b: number; } | { x: any; a: number; b: number; }'.
+js/hangout/stationparts.js TS2339 Property 'x' does not exist on type '{ j: number; a: any; b: number; } | { x: any; a: number; b: number; }'.
+js/hangout/stationparts.js TS2339 Property 'x' does not exist on type '{ j: number; a: any; b: number; }'.
+js/hangout/stationparts.js TS2339 Property 'x' does not exist on type '{ j: number; a: any; b: number; }'.
+js/hangout/stationparts.js TS2339 Property 'x' does not exist on type '{ j: number; a: any; b: number; }'.
+js/hangout/stationparts.js TS2339 Property 'x' does not exist on type '{ j: number; a: any; b: number; }'.
+js/hangout/stationparts.js TS2339 Property 'x' does not exist on type '{ j: number; a: any; b: number; }'.
+js/hangout/stationparts.js TS2339 Property 'x' does not exist on type '{ j: number; a: any; b: number; }'.
+js/hangout/stationparts.js TS2339 Property 'x' does not exist on type '{ j: number; a: any; b: number; }'.
+js/hangout/stationparts.js TS2339 Property 'x' does not exist on type '{ j: number; a: any; b: number; }'.
+js/hangout/trampoline.js TS2322 Type 'number' is not assignable to type 'string'.
+js/hangout/trampoline.js TS2322 Type 'number' is not assignable to type 'string'.
+js/hangout/trampoline.js TS2353 Object literal may only specify known properties, and 'd' does not exist in type '{ w?: number; z?: number; }'.
+js/hangout/water.js TS2322 Type 'number' is not assignable to type 'string'.
+js/hangout/world.js TS2322 Type 'number' is not assignable to type 'string'.
+js/hangout/world.js TS2339 Property '_box' does not exist on type 'HTMLDivElement'.
+js/hangout/world.js TS2339 Property '_frames' does not exist on type 'HTMLDivElement'.
+js/hangout/world.js TS2339 Property '_frames' does not exist on type 'HTMLDivElement'.
+js/hangout/world.js TS2339 Property '_src' does not exist on type 'HTMLDivElement'.
+js/hangout/world.js TS2345 Argument of type '{ at: number; x0: number; x1: number; side: string; } | { at: number; y0: number; y1: number; side: string; }' is not assignable to parameter of type '{ at: number; x0: number; x1: number; side: string; }'.
+js/hangout/world.js TS2554 Expected 0 arguments, but got 1.
+js/hangout/world.js TS2554 Expected 0 arguments, but got 1.
+js/hats.js TS2339 Property 'c1' does not exist on type '{ metal: string; ketchup: boolean; }'.
+js/hats.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any, any]'.
+js/hats.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any, any]'.
+js/hats.js TS2554 Expected 0 arguments, but got 1.
+js/hats.js TS2554 Expected 0 arguments, but got 2.
+js/heights.js TS2554 Expected 0 arguments, but got 2.
+js/hotbar.js TS2339 Property '_h' does not exist on type 'Element'.
+js/hotbar.js TS2339 Property '_h' does not exist on type 'Element'.
+js/hotbar.js TS2339 Property '_h' does not exist on type 'Element'.
+js/hotbar.js TS2339 Property 'className' does not exist on type 'ChildNode'.
+js/hotbar.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/hotbar.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/hotbar.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/hotbar.js TS2339 Property 'dataset' does not exist on type 'Element'.
+js/hotbar.js TS2339 Property 'innerHTML' does not exist on type 'ChildNode'.
+js/hotbar.js TS2339 Property 'opened' does not exist on type 'HTMLDivElement'.
+js/hotbar.js TS2339 Property 'style' does not exist on type 'Element'.
+js/hotbar.js TS2339 Property 'style' does not exist on type 'Element'.
+js/hotbar.js TS2339 Property 'tabIndex' does not exist on type 'Element'.
+js/hotpick.js TS2554 Expected 0 arguments, but got 1.
+js/hpmeter.js TS2339 Property '_fv' does not exist on type 'Element'.
+js/hpmeter.js TS2339 Property '_fv' does not exist on type 'Element'.
+js/hpmeter.js TS2339 Property '_ov' does not exist on type 'Element'.
+js/hpmeter.js TS2339 Property '_ov' does not exist on type 'Element'.
+js/hpmeter.js TS2339 Property '_wh' does not exist on type 'HTMLDivElement'.
+js/hpmeter.js TS2339 Property '_wh' does not exist on type 'HTMLDivElement'.
+js/hpmeter.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/hpmeter.js TS2339 Property 'style' does not exist on type 'Element'.
+js/hpmeter.js TS2339 Property 'style' does not exist on type 'Element'.
+js/hpmeter.js TS2339 Property 'style' does not exist on type 'Element'.
+js/hpmeter.js TS2339 Property 'style' does not exist on type 'Element'.
+js/hpmeter.js TS2339 Property 'style' does not exist on type 'Element'.
+js/hpmeter.js TS2339 Property 'style' does not exist on type 'Element'.
+js/hpmeter.js TS2339 Property 'style' does not exist on type 'Element'.
+js/hpmeter.js TS2345 Argument of type 'number' is not assignable to parameter of type 'string'.
+js/itemtip.js TS2339 Property 'dataset' does not exist on type 'Element'.
+js/l4dd.js TS2339 Property 'blur' does not exist on type 'Element'.
+js/l4dd.js TS2339 Property 'classList' does not exist on type 'ChildNode'.
+js/l4dd.js TS2339 Property 'classList' does not exist on type 'ChildNode'.
+js/l4dd.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/l4dd.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/l4dd.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/l4dd.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/l4dd.js TS2339 Property 'dataset' does not exist on type 'Element'.
+js/l4dd.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/l4dd.js TS2339 Property 'offsetWidth' does not exist on type 'Element'.
+js/l4dd.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/l4dd.js TS2339 Property 'style' does not exist on type 'ChildNode'.
+js/l4dd.js TS2339 Property 'style' does not exist on type 'ChildNode'.
+js/l4dd.js TS2339 Property 'style' does not exist on type 'ChildNode'.
+js/l4dd.js TS2339 Property 'style' does not exist on type 'ChildNode'.
+js/l4dd.js TS2339 Property 'style' does not exist on type 'ChildNode'.
+js/l4dd.js TS2339 Property 'style' does not exist on type 'ChildNode'.
+js/l4dd.js TS2339 Property 'style' does not exist on type 'ChildNode'.
+js/l4dd.js TS2339 Property 'style' does not exist on type 'ChildNode'.
+js/l4dd.js TS2339 Property 'style' does not exist on type 'ChildNode'.
+js/l4dd.js TS2339 Property 'style' does not exist on type 'ChildNode'.
+js/l4dd.js TS2339 Property 'toFixed' does not exist on type 'number | boolean'.
+js/l4dd.js TS2345 Argument of type 'boolean' is not assignable to parameter of type 'string'.
+js/l4dd.js TS2365 Operator '>=' cannot be applied to types 'number | boolean' and 'number'.
+js/l4ddangelui.js TS2339 Property 'fizz' does not exist on type '{ el: HTMLDivElement; sig: string; tr: string; k: number; orbSig: string; }'.
+js/l4ddangelui.js TS2339 Property 'fizz' does not exist on type '{ el: HTMLDivElement; sig: string; tr: string; k: number; orbSig: string; }'.
+js/l4ddangelui.js TS2339 Property 'img' does not exist on type '{ el: HTMLDivElement; sig: string; tr: string; k: number; orbSig: string; }'.
+js/l4ddangelui.js TS2339 Property 'orb' does not exist on type '{ el: HTMLDivElement; sig: string; tr: string; k: number; orbSig: string; }'.
+js/l4ddart.js TS2345 Argument of type '{ face?: { id: string; }; outfit?: { id: string; }; hat?: { id: string; }; color: string; pattern: string; metal: string; style: string; beak: string; beakColor: string; beakColor2: string; size: any; build: any; }' is not assignable to parameter of type '{ color: string; pattern: string; patternColor: string; metal: string; image: any; hat: any; face: any; eyes: string; beak: string; beakColor: string; beakColor2: string; build: number; size: number; special: any; keys: any; spc: any; style: string; outfit: any; }'.
+js/l4ddart.js TS2345 Argument of type '{ face?: { id: string; }; outfit?: { id: string; }; hat?: { id: string; }; color: string; pattern: string; metal: string; style: string; beak: string; beakColor: string; beakColor2: string; size: any; build: any; }' is not assignable to parameter of type '{ color: string; pattern: string; patternColor: string; metal: string; image: any; hat: any; face: any; eyes: string; beak: string; beakColor: string; beakColor2: string; build: number; size: number; special: any; keys: any; spc: any; style: string; outfit: any; }'.
+js/l4ddbar.js TS2339 Property '_k' does not exist on type 'Element'.
+js/l4ddbar.js TS2339 Property '_k' does not exist on type 'Element'.
+js/l4ddbar.js TS2339 Property '_k' does not exist on type 'Element'.
+js/l4ddcatalog.js TS2339 Property 'join' does not exist on type 'string | string[]'.
+js/l4ddmap.js TS2339 Property 'offsetParent' does not exist on type 'Element'.
+js/l4ddpower.js TS2554 Expected 0 arguments, but got 1.
+js/l4ddpowerui.js TS2339 Property 'fuel' does not exist on type '{ el: HTMLDivElement; sig: string; tr: string; k: number; }'.
+js/l4ddpowerui.js TS2339 Property 'gas' does not exist on type '{ el: HTMLDivElement; sig: string; tr: string; k: number; }'.
+js/l4ddpowerui.js TS2339 Property 'img' does not exist on type '{ el: HTMLDivElement; sig: string; tr: string; k: number; }'.
+js/l4ddrules.js TS1345 An expression of type 'void' cannot be tested for truthiness.
+js/l4ddrules.js TS2339 Property 'ammo' does not exist on type 'Readonly<{}>'.
+js/l4ddrules.js TS2339 Property 'ammoP' does not exist on type 'Readonly<{}>'.
+js/l4ddrules.js TS2339 Property 'brk' does not exist on type 'Readonly<{}>'.
+js/l4ddrules.js TS2339 Property 'brk' does not exist on type 'Readonly<{}>'.
+js/l4ddrules.js TS2339 Property 'cool' does not exist on type 'Readonly<{}>'.
+js/l4ddrules.js TS2339 Property 'cool' does not exist on type 'Readonly<{}>'.
+js/l4ddrules.js TS2339 Property 'dmg' does not exist on type 'Readonly<{}>'.
+js/l4ddrules.js TS2339 Property 'dmg' does not exist on type 'Readonly<{}>'.
+js/l4ddrules.js TS2339 Property 'dmg' does not exist on type '{}'.
+js/l4ddrules.js TS2339 Property 'dmgP' does not exist on type 'Readonly<{}>'.
+js/l4ddrules.js TS2339 Property 'dmgP' does not exist on type 'Readonly<{}>'.
+js/l4ddrules.js TS2339 Property 'inf' does not exist on type 'Readonly<{}>'.
+js/l4ddrules.js TS2339 Property 'inf' does not exist on type 'Readonly<{}>'.
+js/l4ddrules.js TS2339 Property 'miss' does not exist on type '{}'.
+js/l4ddrules.js TS2339 Property 'n' does not exist on type 'Readonly<{}>'.
+js/l4ddrules.js TS2339 Property 'rl' does not exist on type 'Readonly<{}>'.
+js/l4ddrules.js TS2339 Property 'rl' does not exist on type 'Readonly<{}>'.
+js/l4ddrules.js TS2339 Property 'weapon' does not exist on type '{}'.
+js/l4ddrules.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/l4ddrules.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/l4ddrules.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/l4ddrules.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/l4ddrules.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/l4ddrules.js TS2362 The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/l4ddrules.js TS2362 The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/l4ddrules.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/laserart.js TS2339 Property 'map' does not exist on type 'number | number[]'.
+js/laserart.js TS2362 The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/laserart.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/laserart.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/later.js TS2339 Property 'dfStarted' does not exist on type 'Window & typeof globalThis'.
+js/later.js TS2339 Property 'dfStuck' does not exist on type 'Window & typeof globalThis'.
+js/later.js TS2339 Property 'dfStuck' does not exist on type 'Window & typeof globalThis'.
+js/later.js TS2345 Argument of type '{ duck: any; ready: () => any; max: number; }' is not assignable to parameter of type '{ duck: any; ping: any; ready: any; max?: number; }'.
+js/loading.js TS2339 Property 'complete' does not exist on type 'Element'.
+js/loading.js TS2339 Property 'naturalWidth' does not exist on type 'Element'.
+js/loading.js TS2339 Property 'ping' does not exist on type '{ maxMs?: number; }'.
+js/lobby.js TS2339 Property '_tick' does not exist on type 'Element'.
+js/lobby.js TS2339 Property 'clientX' does not exist on type 'Event'.
+js/lobby.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/lobby.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/lobby.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/lobby.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/lobby.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/lobby.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/lobby.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/lobby.js TS2339 Property 'focus' does not exist on type 'Element'.
+js/lobby.js TS2339 Property 'onblur' does not exist on type 'Element'.
+js/lobby.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/lobby.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/lobby.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/lobby.js TS2339 Property 'onkeydown' does not exist on type 'Element'.
+js/lobby.js TS2339 Property 'select' does not exist on type 'Element'.
+js/lobby.js TS2339 Property 'value' does not exist on type 'Element'.
+js/lobby.js TS2339 Property 'value' does not exist on type 'Element'.
+js/lobby.js TS2345 Argument of type '{} | { footer: string; onMount(m: any, close: any): void; }' is not assignable to parameter of type '{ footer?: string; }'.
+js/lobby.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/lobbysettings.js TS2339 Property 'animationName' does not exist on type 'Event'.
+js/lobbysettings.js TS2339 Property 'offsetWidth' does not exist on type 'Element'.
+js/lobbysettings.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/lobbysettings.js TS2339 Property 'style' does not exist on type 'Element'.
+js/lobbysettings.js TS2339 Property 'style' does not exist on type 'Element'.
+js/main.js TS2345 Argument of type '{ duck: any; ready: () => Promise<any>; max: number; }' is not assignable to parameter of type '{ duck: any; ping: any; ready: any; max?: number; }'.
+js/maps.js TS2322 Type 'number' is not assignable to type 'string'.
+js/maps.js TS2339 Property '_k' does not exist on type 'SVGSVGElement'.
+js/maps.js TS2339 Property 'getContext' does not exist on type 'Element'.
+js/maps.js TS2339 Property 'glow' does not exist on type 'string | { src: string; glow: string; x: number; y: number; w: number; h: number; }'.
+js/maps.js TS2339 Property 'glow' does not exist on type 'string | { src: string; glow: string; x: number; y: number; w: number; h: number; }'.
+js/maps.js TS2339 Property 'style' does not exist on type 'Element'.
+js/maps.js TS2339 Property 'style' does not exist on type 'Element'.
+js/maps.js TS2339 Property 'style' does not exist on type 'Element'.
+js/maps.js TS2362 The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/maps.js TS2362 The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/maps.js TS2362 The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/maps.js TS2365 Operator '>' cannot be applied to types 'string | number' and 'number'.
+js/maps.js TS2367 This comparison appears to be unintentional because the types 'number' and 'string' have no overlap.
+js/maps.js TS2698 Spread types may only be created from object types.
+js/meters.js TS2349 This expression is not callable.
+js/meters.js TS2365 Operator '+' cannot be applied to types 'string | number | ((el: any) => any)' and 'number'.
+js/mgjbrain.js TS2345 Argument of type '{ x: any; y: any; moving: boolean; f: number; } | { x: number; y: number; }' is not assignable to parameter of type '{ x: any; y: any; moving: boolean; f: number; }'.
+js/mgjpicks.js TS2365 Operator '+=' cannot be applied to types 'number' and 'string | number'.
+js/modes.js TS2362 The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/modes.js TS2365 Operator '+' cannot be applied to types 'string | number' and 'number'.
+js/modes.js TS2365 Operator '+' cannot be applied to types 'string | number' and 'number'.
+js/modes.js TS2365 Operator '+' cannot be applied to types 'string | number' and 'number'.
+js/modes.js TS2365 Operator '+' cannot be applied to types 'string | number' and 'number'.
+js/music.js TS2339 Property 'at' does not exist on type '() => void'.
+js/music.js TS2339 Property 'at' does not exist on type '() => void'.
+js/music.js TS2339 Property 'at' does not exist on type '() => void'.
+js/music.js TS2345 Argument of type 'string | number' is not assignable to parameter of type 'string'.
+js/net.js TS2339 Property 'umap' does not exist on type '{ open: boolean; passkey: string; max: number; hostId: any; options: { submitTime: number; order: string; share: number; sbMap: string; l4map: string; answerTime: number; catchUp: number; writeCatch: number; ... 77 more ...; modeRules: {}; }; ... 25 more ...; test: boolean; }'.
+js/notes.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/notes.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/notes.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/notes.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/notes.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/notes.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/npcs.js TS2554 Expected 0 arguments, but got 3.
+js/npcview.js TS2339 Property 'style' does not exist on type 'ChildNode'.
+js/npcview.js TS2339 Property 'style' does not exist on type 'ChildNode'.
+js/npcview.js TS2339 Property 'style' does not exist on type 'ChildNode'.
+js/outfits.js TS2339 Property 'some' does not exist on type 'string | string[][]'.
+js/outfits.js TS2538 Type 'string[][]' cannot be used as an index type.
+js/outfits.js TS2538 Type 'string[][]' cannot be used as an index type.
+js/outfits.js TS2538 Type 'string[][]' cannot be used as an index type.
+js/phonepad.js TS2339 Property 'clientX' does not exist on type 'Event'.
+js/phonepad.js TS2339 Property 'clientY' does not exist on type 'Event'.
+js/phonepad.js TS2339 Property 'pointerId' does not exist on type 'Event'.
+js/phonepad.js TS2339 Property 'pointerId' does not exist on type 'Event'.
+js/phonepad.js TS2339 Property 'pointerId' does not exist on type 'Event'.
+js/picrop.js TS2339 Property 'px' does not exist on type '{ aspect?: number; side?: number; most?: number; }'.
+js/picrop.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/pixel.js TS2339 Property '__pxAsk' does not exist on type 'Window & typeof globalThis'.
+js/pixel.js TS2339 Property '__pxAsk' does not exist on type 'Window & typeof globalThis'.
+js/pixel.js TS2339 Property '__pxHear' does not exist on type 'Window & typeof globalThis'.
+js/pixel.js TS2339 Property '__pxHear' does not exist on type 'Window & typeof globalThis'.
+js/pixel.js TS2339 Property '__pxNoBaked' does not exist on type 'Window & typeof globalThis'.
+js/pixel.js TS2339 Property '__pxNoParts' does not exist on type 'Window & typeof globalThis'.
+js/pixel.js TS2339 Property 'classList' does not exist on type 'Node'.
+js/pixel.js TS2339 Property 'dataset' does not exist on type 'Node'.
+js/pixel.js TS2339 Property 'getAttribute' does not exist on type 'Node'.
+js/pixel.js TS2339 Property 'hasAttribute' does not exist on type 'Node'.
+js/pixel.js TS2339 Property 'offsetWidth' does not exist on type 'Element'.
+js/pixel.js TS2339 Property 'p' does not exist on type '{ im: any; in: boolean; }'.
+js/pixel.js TS2339 Property 'querySelectorAll' does not exist on type 'Node'.
+js/pixel.js TS2339 Property 'removeAttribute' does not exist on type 'Node'.
+js/pixel.js TS2339 Property 'replace' does not exist on type 'string | number'.
+js/pixel.js TS2339 Property 'replace' does not exist on type 'string | number'.
+js/pixel.js TS2339 Property 'split' does not exist on type 'string | number'.
+js/pixel.js TS2339 Property 'src' does not exist on type 'Element'.
+js/pixel.js TS2339 Property 'style' does not exist on type 'Element'.
+js/pixel.js TS2339 Property 'tagName' does not exist on type 'Node'.
+js/pixel.js TS2339 Property 'tagName' does not exist on type 'Node'.
+js/pixel.js TS2362 The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/pixel.js TS2362 The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/players.js TS2322 Type 'number' is not assignable to type 'string'.
+js/players.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/players.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/players.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/players.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/players.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/players.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/players.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/players.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/players.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/players.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/players.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/players.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/players.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/players.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/players.js TS2339 Property 'matches' does not exist on type 'EventTarget'.
+js/players.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/pointer.js TS2551 Property 'userAgentData' does not exist on type 'Navigator'. Did you mean 'userAgent'?
+js/pointer.js TS2551 Property 'userAgentData' does not exist on type 'Navigator'. Did you mean 'userAgent'?
+js/pxbake.js TS2322 Type 'number' is not assignable to type 'never'.
+js/pxbake.js TS2339 Property '_at' does not exist on type 'HTMLCanvasElement'.
+js/pxbake.js TS2339 Property '_at' does not exist on type 'HTMLCanvasElement'.
+js/pxbake.js TS2339 Property '_pad' does not exist on type 'HTMLCanvasElement'.
+js/pxbake.js TS2345 Argument of type 'string' is not assignable to parameter of type 'number'.
+js/quack.js TS2345 Argument of type 'string | number' is not assignable to parameter of type 'number'.
+js/report.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/rooms.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/rooms.js TS2339 Property 'dataset' does not exist on type 'Element'.
+js/rooms.js TS2339 Property 'disabled' does not exist on type 'Element'.
+js/rooms.js TS2339 Property 'disabled' does not exist on type 'Element'.
+js/rooms.js TS2339 Property 'focus' does not exist on type 'Element'.
+js/rooms.js TS2339 Property 'focus' does not exist on type 'Element'.
+js/rooms.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/rooms.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/rooms.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/rooms.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/rooms.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/rooms.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/rooms.js TS2339 Property 'onchange' does not exist on type 'Element'.
+js/rooms.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/rooms.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/rooms.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/rooms.js TS2339 Property 'value' does not exist on type 'Element'.
+js/rooms.js TS2339 Property 'value' does not exist on type 'Element'.
+js/rooms.js TS2339 Property 'value' does not exist on type 'Element'.
+js/rooms.js TS2345 Argument of type 'boolean' is not assignable to parameter of type 'string'.
+js/rooms.js TS2345 Argument of type 'boolean' is not assignable to parameter of type 'string'.
+js/router.js TS2339 Property 'dataset' does not exist on type 'Element'.
+js/rules.js TS2339 Property 'cool' does not exist on type 'Readonly<{}>'.
+js/rules.js TS2339 Property 'mode' does not exist on type '{}'.
+js/rules.js TS2362 The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/rules.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/sandbox.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/sandbox.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/sandbox.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/sandbox.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/sandbox.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/sandbox.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/sandbox.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/sandbox.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/sandbox.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/sandbox.js TS2339 Property 'hidden' does not exist on type 'ChildNode'.
+js/sandbox.js TS2339 Property 'hidden' does not exist on type 'ChildNode'.
+js/sandbox.js TS2339 Property 'hidden' does not exist on type 'Element'.
+js/sandbox.js TS2339 Property 'innerHTML' does not exist on type 'ChildNode'.
+js/sandbox.js TS2339 Property 'innerHTML' does not exist on type 'ChildNode'.
+js/sandbox.js TS2339 Property 'setAttribute' does not exist on type 'ChildNode'.
+js/sandbox.js TS2345 Argument of type '{ label: string; act: () => string; }' is not assignable to parameter of type '{ label: string; on: boolean; act: () => any; }'.
+js/sandbox.js TS2345 Argument of type '{ label: string; win: boolean; act: (r: any) => Promise<any>; }' is not assignable to parameter of type '{ label: string; on: boolean; act: () => any; }'.
+js/sandbox.js TS2554 Expected 0-2 arguments, but got 3.
+js/sandboxrules.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any, any, any]'.
+js/sandboxrules.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any, any, any]'.
+js/sbaudio.js TS2551 Property 'webkitAudioContext' does not exist on type 'Window & typeof globalThis'. Did you mean 'AudioContext'?
+js/sbaudio.js TS2551 Property 'webkitOfflineAudioContext' does not exist on type 'Window & typeof globalThis'. Did you mean 'OfflineAudioContext'?
+js/sbaudio.js TS2554 Expected 0 arguments, but got 1.
+js/sbaudio.js TS2554 Expected 0 arguments, but got 1.
+js/sbaudio.js TS2554 Expected 0 arguments, but got 1.
+js/sbaudio.js TS2554 Expected 0 arguments, but got 1.
+js/sbaudio.js TS2554 Expected 0 arguments, but got 2.
+js/sbaudio.js TS2554 Expected 0 arguments, but got 2.
+js/sbaudio.js TS2554 Expected 0 arguments, but got 2.
+js/sbaudio.js TS2554 Expected 0 arguments, but got 2.
+js/sbdrag.js TS2339 Property 'style' does not exist on type 'Element'.
+js/sbdrag.js TS2339 Property 'style' does not exist on type 'Element'.
+js/sbepview.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/sbgroupview.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/sbgroupview.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/sbgroupview.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/sbhelp.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/sbhotview.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/sbhotview.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/sbhotview.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/sbhotview.js TS2554 Expected 0 arguments, but got 1.
+js/sbhotview.js TS2554 Expected 0 arguments, but got 1.
+js/sbloot.js TS2339 Property 'ws' does not exist on type '{ x: any; y: any; z: any; w: any; at: any; } | { x?: undefined; y?: undefined; z?: undefined; w: any; at: any; } | { x: any; y: any; z: any; w: any; at: any; dn: any; } | { x?: undefined; y?: undefined; z?: undefined; w: any; at: any; dn: any; }'.
+js/sblootview.js TS2339 Property 'filter' does not exist on type 'string | string[]'.
+js/sblootview.js TS2339 Property 'map' does not exist on type 'string | string[]'.
+js/sblootview.js TS2339 Property 'some' does not exist on type 'string | string[]'.
+js/sblootview.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/sbmenu.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/sbmenu.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/sbmenu.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/sbmenu.js TS2362 The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/sbmenu.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/sbnpcart.js TS2345 Argument of type '{ face?: { id: string; }; outfit?: { id: string; }; hat?: { id: string; }; color: string; pattern: string; metal: string; style: string; beak: string; beakColor: string; beakColor2: string; size: any; build: any; }' is not assignable to parameter of type '{ color: string; pattern: string; patternColor: string; metal: string; image: any; hat: any; face: any; eyes: string; beak: string; beakColor: string; beakColor2: string; build: number; size: number; special: any; keys: any; spc: any; style: string; outfit: any; }'.
+js/sbrotate.js TS2339 Property 'pointerId' does not exist on type 'Event'.
+js/sbrotate.js TS2339 Property 'setPointerCapture' does not exist on type 'ChildNode'.
+js/sbsaves.js TS2322 Type 'Promise<boolean>' is not assignable to type 'Promise<void>'.
+js/sbsaves.js TS2339 Property 'matches' does not exist on type 'EventTarget'.
+js/sbsaves.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/sbsaves.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/sbsaves.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/sbspawnview.js TS2339 Property 'map' does not exist on type 'string | boolean | string[]'.
+js/sbspawnview.js TS2339 Property 'map' does not exist on type 'string | string[]'.
+js/sbspawnview.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/sbspawnview.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/sbspawnview.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/sbzone.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/sbzone.js TS2447 The '|' operator is not allowed for boolean types. Consider using '||' instead.
+js/seriat.js TS2339 Property 'end' does not exist on type 'Parser'.
+js/seriat.js TS2339 Property 'end' does not exist on type 'Parser'.
+js/seriat.js TS2339 Property 'end' does not exist on type 'Parser'.
+js/seriat.js TS2339 Property 'end' does not exist on type 'Parser'.
+js/seriat.js TS2339 Property 'end' does not exist on type 'Parser'.
+js/seriat.js TS2339 Property 'names' does not exist on type 'Parser'.
+js/seriat.js TS2339 Property 'names' does not exist on type 'Parser'.
+js/seriat.js TS2339 Property 'names' does not exist on type 'Parser'.
+js/seriat.js TS2339 Property 'names' does not exist on type 'Parser'.
+js/seriat.js TS2339 Property 'names' does not exist on type 'Parser'.
+js/seriat.js TS2339 Property 'names' does not exist on type 'Parser'.
+js/seriat.js TS2339 Property 'noArrows' does not exist on type 'Parser'.
+js/seriat.js TS2345 Argument of type '(any[] | { cur: number; used: number; limit: any; })[]' is not assignable to parameter of type '[any, any]'.
+js/seriat.js TS2345 Argument of type '(any[] | { cur: number; used: number; limit: any; })[]' is not assignable to parameter of type '[any, any]'.
+js/seriatbible.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/seriatrun.js TS2339 Property 'end' does not exist on type 'Parser'.
+js/seriatrun.js TS2339 Property 'end' does not exist on type 'Parser'.
+js/seriatrun.js TS2339 Property 'end' does not exist on type 'Parser'.
+js/seriatrun.js TS2339 Property 'names' does not exist on type 'Parser'.
+js/seriatrun.js TS2339 Property 'noArrows' does not exist on type 'Parser'.
+js/seriatrun.js TS2339 Property 'noArrows' does not exist on type 'Parser'.
+js/seriatwin.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/settings.js TS2345 Argument of type 'number' is not assignable to parameter of type 'string'.
+js/settings.js TS2345 Argument of type 'number' is not assignable to parameter of type 'string'.
+js/settings.js TS2345 Argument of type 'number' is not assignable to parameter of type 'string'.
+js/settings.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/settings.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/shared.js TS2339 Property 'why' does not exist on type 'Error'.
+js/shared.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/shared.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/shared.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/shared.js TS2353 Object literal may only specify known properties, and 'px' does not exist in type '{ aspect?: number; side?: number; most?: number; }'.
+js/shell.js TS2339 Property 'toLowerCase' does not exist on type 'string | number'.
+js/shell.js TS2339 Property 'toLowerCase' does not exist on type 'string | number'.
+js/shell.js TS2339 Property 'toLowerCase' does not exist on type 'string | number'.
+js/shell.js TS2345 Argument of type 'string | number' is not assignable to parameter of type 'string'.
+js/shell.js TS2362 The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/shell.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/shellpeople.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/shellstats.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any, any]'.
+js/slices.js TS2304 Cannot find name 'scheduler'.
+js/slices.js TS2304 Cannot find name 'scheduler'.
+js/sound.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/sound.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/sound.js TS2551 Property 'webkitAudioContext' does not exist on type 'Window & typeof globalThis'. Did you mean 'AudioContext'?
+js/specials.js TS2339 Property 'art' does not exist on type '{ cls?: string; attrs?: string; style?: string; }'.
+js/specials.js TS2339 Property 'match' does not exist on type 'string | CanvasGradient | CanvasPattern'.
+js/specials.js TS2339 Property 'slice' does not exist on type 'string | CanvasGradient | CanvasPattern'.
+js/specials.js TS2339 Property 'startsWith' does not exist on type 'string | CanvasGradient | CanvasPattern'.
+js/specials.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any, any]'.
+js/specials.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any, any]'.
+js/specials.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any, any]'.
+js/specials.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any, any]'.
+js/specials.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any, any]'.
+js/specials.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any, any]'.
+js/specials.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any, any]'.
+js/specials.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any, any]'.
+js/specials.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any, any]'.
+js/specials.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any, any]'.
+js/specials.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any]'.
+js/specials.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any]'.
+js/specials.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any]'.
+js/specials.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any]'.
+js/specials.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any]'.
+js/specials.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any]'.
+js/specials.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any]'.
+js/stats.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any, any]'.
+js/stats.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/survrules.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/survrules.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/survrules.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/survrules.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/survrules.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/survrules.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/textutils.js TS2356 An arithmetic operand must be of type 'any', 'number', 'bigint' or an enum type.
+js/textutils.js TS2365 Operator '>' cannot be applied to types 'string | number' and 'number'.
+js/trivia.js TS2554 Expected 0 arguments, but got 1.
+js/triviarules.js TS2339 Property 'map' does not exist on type 'string | number | string[]'.
+js/triviarules.js TS2339 Property 'map' does not exist on type 'string | number | string[]'.
+js/ui.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/ui.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/ui.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/ui.js TS2339 Property 'disabled' does not exist on type '{}'.
+js/ui.js TS2339 Property 'focus' does not exist on type 'Element'.
+js/ui.js TS2339 Property 'focus' does not exist on type 'Element'.
+js/ui.js TS2339 Property 'focus' does not exist on type 'Element'.
+js/ui.js TS2339 Property 'focus' does not exist on type 'Element'.
+js/ui.js TS2339 Property 'focus' does not exist on type 'Element'.
+js/ui.js TS2339 Property 'offsetHeight' does not exist on type 'Element'.
+js/ui.js TS2339 Property 'offsetHeight' does not exist on type 'Element'.
+js/ui.js TS2339 Property 'offsetWidth' does not exist on type 'Element'.
+js/ui.js TS2339 Property 'offsetWidth' does not exist on type 'Element'.
+js/ui.js TS2339 Property 'onMount' does not exist on type '{ footer?: string; }'.
+js/ui.js TS2339 Property 'onOpen' does not exist on type '{ cls?: string; cover?: boolean; }'.
+js/ui.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/ui.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/ui.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/ui.js TS2339 Property 'onclick' does not exist on type 'Element'.
+js/ui.js TS2339 Property 'style' does not exist on type 'Element'.
+js/ui.js TS2339 Property 'style' does not exist on type 'Element'.
+js/ui.js TS2339 Property 'style' does not exist on type 'Element'.
+js/ui.js TS2339 Property 'style' does not exist on type 'Element'.
+js/ui.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/ui.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/ui.js TS2551 Property 'close' does not exist on type 'Element'. Did you mean 'closest'?
+js/umaps.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/umaps.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/umaps.js TS2353 Object literal may only specify known properties, and 'px' does not exist in type '{ aspect?: number; side?: number; most?: number; }'.
+js/unlocks.js TS2554 Expected 0 arguments, but got 1.
+js/unlocks.js TS2554 Expected 0 arguments, but got 1.
+js/upbar.js TS2339 Property 'style' does not exist on type 'ChildNode'.
+js/updates.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
+js/vote.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/vote.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/vote.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
+js/wounds.js TS2339 Property 'blast' does not exist on type '{}'.
+js/wounds.js TS2339 Property 'dead' does not exist on type '{}'.
+js/wounds.js TS2339 Property 'head' does not exist on type '{}'.
+js/wounds.js TS2339 Property 'look' does not exist on type '{}'.
+js/wounds.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any, any]'.
+js/zombieroofs.js TS2339 Property 'hood' does not exist on type '{ kind: string; x0: number; y0: number; x1: number; y1: number; h: number; key: number; holes: ({ id: string; x0: number; y0: number; x1: number; y1: number; corner?: undefined; } | { id: string; x0: number; y0: number; x1: number; y1: number; corner: string; })[]; bldg: number; }'.
+js/zombieroofs.js TS2339 Property 'rev' does not exist on type 'Map<any, any>'.
+js/zombieroofs.js TS2339 Property 'solid' does not exist on type '{ kind: string; x0: number; y0: number; x1: number; y1: number; h: number; key: number; holes: ({ id: string; x0: number; y0: number; x1: number; y1: number; corner?: undefined; } | { id: string; x0: number; y0: number; x1: number; y1: number; corner: string; })[]; bldg: number; }'.
+js/zombies.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/zombies.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
+js/zombies.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/zombies.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/zombies.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/zombies.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/zombies.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/zombies.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/zombies.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/zombies.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/zombies.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/zombies.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/zombies.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/zombies.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/zombies.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/zombies.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/zombies.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+js/zombies.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.

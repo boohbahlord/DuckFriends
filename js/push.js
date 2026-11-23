@@ -49,6 +49,7 @@ export const KB_FAR = 2.4;
 /* how many KB_FAR the board's hammer and a grenade push a duck, unless the mode says otherwise (modes.js push) */
 const PUSH = {
   hammer: 1.5, // (50% farther than it was: the owner's, Nov 4)
+  axe: 0.75, // (the fire axe: half the hammer's, the owner's, Nov 23 00:32Z)
   grenade: 2, // (twice the hammer's in the normal game: the owner's, Nov 3 17:15Z)
 };
 /* the lobby's Walking speed: how much faster or slower than normal every duck walks. The zombies of Quacky Zombies and

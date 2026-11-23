@@ -116,8 +116,7 @@ export function mirrorBars(tag, host) {
     const src = tag && tag.querySelector(sel);
     let el = host.querySelector("." + cls);
     if (!el) {
-      if (!src) continue;
-      el = document.createElement("span");
+      el = document.createElement("span"); // (made even before its bar is under my name: they always show, empty when off)
       el.innerHTML = "<i></i>";
       host.append(el);
     }
