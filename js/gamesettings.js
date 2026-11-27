@@ -434,7 +434,7 @@ export function openGameSettings(R, start = null) {
     let p = peek;
     if (!p)
       p = isWorldMap(page)
-        ? CABIN_MODES.includes(o.mode)
+        ? CABIN_MODES.includes(o.mode) && !modeOf(o.mode).l4map
           ? { kind: "mode", id: o.mode }
           : { kind: "map", id: "cabin" }
         : page === "map"
@@ -485,10 +485,12 @@ export function openGameSettings(R, start = null) {
           p.id === "vote" ? "Vote Mode & Map" : "Random",
           PICK_TEXT[p.id === "vote" ? "vote" : "mapRandom"],
         );
-      const mode = CABIN_MODES.includes(o.mode)
-          ? o.mode
-          : isWorldMap(p.id)
-            ? "hang"
+      const mode = isWorldMap(p.id)
+          ? CABIN_MODES.includes(o.mode) && !modeOf(o.mode).l4map
+            ? o.mode
+            : "hang" // (the Duck Cabin row shows the cabin, never Downpour)
+          : CABIN_MODES.includes(o.mode)
+            ? o.mode
             : o.modePick
               ? "aod"
               : o.mode,
