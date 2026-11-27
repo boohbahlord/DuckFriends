@@ -310,15 +310,19 @@ export function openGameSettings(R, start = null) {
       const dis = !host() || dodOn(s, "vote");
       return (
         head("Duck Cabin") +
-        `<div class="arm-body"><ul class="arm-list">${CABIN_MODES.map((id) =>
-          row(
-            `data-mode="${id}"`,
-            modeOf(id).name,
-            "",
-            !o.modePick && o.mode === id,
-            dis,
-          ),
-        ).join("")}</ul></div>`
+        `<div class="arm-body"><ul class="arm-list">${CABIN_MODES.filter(
+          (id) => !modeOf(id).l4map,
+        )
+          .map((id) =>
+            row(
+              `data-mode="${id}"`,
+              modeOf(id).name,
+              "",
+              !o.modePick && o.mode === id,
+              dis,
+            ),
+          )
+          .join("")}</ul></div>`
       );
     }
     if (page === "map") {
@@ -348,7 +352,7 @@ export function openGameSettings(R, start = null) {
                   ),
                 )
                 .join("") // (Sandbox: the maps with a world of their own, walked whole: sandboxrules.js)
-            : `${row('data-map="cabin"', "Duck Cabin", "", isWorldMap(o.map) && o.l4map !== "downpour", pickDis)}${row('data-map="downpour"', "Downpour", "", modeOf(o.mode).l4map && o.l4map === "downpour", pickDis)}`
+            : `${row('data-map="cabin"', "Duck Cabin", "", isWorldMap(o.map) && !modeOf(o.mode).l4map, pickDis)}${row('data-map="downpour"', "Downpour", "", !!modeOf(o.mode).l4map, pickDis)}`
         }${LINE}${MAPS.map(([id, name]) =>
           row(
             `data-map="${id}"`,
@@ -734,7 +738,7 @@ export function openGameSettings(R, start = null) {
           }
           if (isWorldMap(r.dataset.map)) return go("cabin"); // (Duck Cabin's own games, on a page of their own)
           if (r.dataset.map === "downpour") {
-            if (boss) send({ mode: "l4dd", l4map: "downpour" }); // (Downpour: Dead Ducks Arcade's own map; its map vote still comes first, the owner's, Nov 17)
+            if (boss) send({ mode: "l4dd" }); // (Downpour: Dead Ducks Arcade's own map)
             return;
           }
           if (r.dataset.map && boss) {

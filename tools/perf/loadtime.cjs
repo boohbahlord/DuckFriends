@@ -12,13 +12,10 @@ const http = require("http"),
 const ROOT = path.resolve(__dirname, "../.."),
   SLOW = +process.env.SLOW || 1,
   PLAY = +(process.env.PLAY || 10),
-  SCENES = (process.env.SCENES || "cabin,downpour,surv,mgj,hang,board").split(
-    ",",
-  );
+  SCENES = (process.env.SCENES || "downpour,surv,mgj,hang,board").split(",");
 const ALL = {
-  cabin: { mode: "l4dd", map: "cabin", l4map: "cabin" },
-  downpour: { mode: "l4dd", map: "cabin", l4map: "downpour" },
-  surv: { mode: "surv", map: "cabin", l4map: "downpour" },
+  downpour: { mode: "l4dd", map: "cabin" },
+  surv: { mode: "surv", map: "cabin" },
   mgj: { mode: "mgj", map: "board" },
   hang: { mode: "hang", map: "cabin" },
   board: { mode: "aod", map: "board" },
@@ -186,7 +183,6 @@ async function once(cx, url, sc, b) {
       options: { modePick: "host", mapPick: "host", botWait: 1, ...o },
     });
     (await import("./js/router.js")).go("lobby", r);
-    r.state.zmapAsked = 1;
     window.__lt0 = window.__lt1 = 0;
     window.__asked = performance.now();
     r.send({ t: "start" });

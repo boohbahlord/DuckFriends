@@ -134,12 +134,10 @@ async function once(url) {
           mapPick: "host",
           mode,
           map: "cabin",
-          l4map: map,
           botWait: 1,
         },
       });
       (await import("./js/router.js")).go("lobby", r);
-      r.state.zmapAsked = 1;
       r.send({ t: "start" });
     },
     [MAP, MODE, BOTS],

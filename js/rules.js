@@ -16,13 +16,7 @@
    own rules in duncerules.js: one defender in the circle, everyone else walks to Dunce or Not a Dunce. Valentine's Duck
    Date has its own in vddrules.js: The Date at the dining table, a date with each Suitor, then a Suitor Turned Down. */
 
-import {
-  baseMode,
-  baseL4map,
-  isSb,
-  sbOnBoard,
-  sbItemMods,
-} from "./sandboxrules.js";
+import { baseMode, isSb, sbOnBoard, sbItemMods } from "./sandboxrules.js";
 
 import { survSet } from "./survrules.js";
 
@@ -179,8 +173,7 @@ export const SHORT = ["−−−", "−−", "−", "0", "+", "++", "+++"];
 export const OPTIONS_DEFAULT = {
   order: "random", // random | rotate: the order of the round's questions
   share: 0.67, // how many players must vote to start the countdown: .5, .67, .75, 1 (half by default with the Discussion round on)
-  sbMap: "", // Sandbox's world: "" (the board, on the room's map) | "cabin" (Duck Cabin) | "zcabin" (Dead Ducks Arcade's cabin) | "downpour" (sandboxrules.js)
-  l4map: "cabin", // Quacky Zombies' map: "cabin" | "downpour", picked by everyone in its own map vote before each game (ZMAPS)
+  sbMap: "", // Sandbox's world: "" (the board, on the room's map) | "cabin" (Duck Cabin) | "downpour" (sandboxrules.js)
   answerTime: 0, // the default answer time in seconds: 0 (off), 30, 60, 90. I want no answer timer by default; a question's writer can still pick one
   catchUp: 15, // 0 (off), 15, 30, 45: the countdown once enough players have voted (everyone voting ends it at once)
   writeCatch: 30, // 0 (off), 15, 30, 45, 60: the same countdown while writing (questions, topics, contenders, secret words): I want the last writers to get 30 s by default
@@ -1308,7 +1301,7 @@ export function reduce(state, a, now = Date.now()) {
 }
 function reduceStep(state, a, now) {
   survSet(state.options); // (Survival: survrules.js)
-  useMode(baseMode(state.options), baseL4map(state.options)); // (Duck Cabin as the room's mode has it, or Dead Ducks Arcade's Downpour, or Sandbox on one of them: hangout/layout.js)
+  useMode(baseMode(state.options)); // (Duck Cabin as the room's mode has it, or Dead Ducks Arcade's Downpour, or Sandbox on one of them: hangout/layout.js)
   carsAt(state); // (Downpour's cars where the state has them: carpush.js)
   const s = clone(state),
     P = s.players,
@@ -1544,7 +1537,6 @@ export function cabinTick(s, now) {
 export function backToLobby(s, why) {
   helperOut(s); // (the fireplace's Justin stays with his game)
   delete s.waiting;
-  delete s.zmapAsked; // (Quacky Zombies' map vote comes again next time)
   sbEnd(s); // (Sandbox: a save's settings give way to the room's again)
   const was = STAGE[s.phase];
   s.phase = "lobby";

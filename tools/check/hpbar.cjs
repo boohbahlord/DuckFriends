@@ -30,7 +30,7 @@ const EXPECT = {
 const PLAY = {
   aod: { mode: "aod", map: "night", justin: 1 },
   mgj: { mode: "mgj", map: "night" },
-  l4dd: { mode: "l4dd", l4map: "downpour" },
+  l4dd: { mode: "l4dd" },
 };
 (async () => {
   const b = await chromium.launch();
@@ -50,7 +50,6 @@ const PLAY = {
         options: { modePick: "host", mapPick: "host", ...o },
       });
       (await import("./js/router.js")).go("lobby", r);
-      r.state.zmapAsked = 1;
       r.send({ t: "start" });
       window._r = r;
       for (

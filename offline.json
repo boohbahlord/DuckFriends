@@ -1,5 +1,5 @@
 {
-"v": "202611230120",
+"v": "202611272301",
 "files": {
 "assets/app/apple-touch-icon.png": "cda48ff597",
 "assets/app/icon-192.png": "8e062adfdc",
@@ -77,7 +77,6 @@
 "assets/px/looks/downpour-grass.webp": "77d8eac66d",
 "assets/px/looks/downpour-roof.webp": "0b1c4cbb90",
 "assets/px/maps/downpour.webp": "1a1c7763bf",
-"assets/px/maps/duck-cabin-zombies.webp": "2c98751e47",
 "assets/px/maps/duck-cabin.webp": "7da6b7249b",
 "assets/px/maps/ethers-crossroads.webp": "6b4ac4cc53",
 "assets/px/maps/rabbit-hole.webp": "d38f9f8ad1",

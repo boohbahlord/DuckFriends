@@ -68,7 +68,6 @@ const EXPECT = {
         t: "options",
         options: { modePick: "host", mapPick: "host", mode, map: "night" },
       });
-      r.state.zmapAsked = 1;
       r.send({ t: "start" });
       const t0 = Date.now();
       while (Date.now() - t0 < 15000) {
@@ -128,7 +127,6 @@ const EXPECT = {
         options: { modePick: "host", mapPick: "host", mode, map: "night" },
       });
       (await import("./js/router.js")).go("lobby", r);
-      r.state.zmapAsked = 1;
       r.send({ t: "start" });
       window._r = r;
       const iv = setInterval(

@@ -65,7 +65,7 @@ friends.js 236 friends
 front.js 151 the front page
 fx.js 1187 the effects, drawn as
 fxmotion.js 233 how a held weapon
-game.js 4727 the game screen
+game.js 4724 the game screen
 gameact.js 546 the action window and
 gameannounce.js 212 The cloud's words and
 gameboard.js 589 the board: each mode's
@@ -75,14 +75,14 @@ gamehand.js 608 the hand: the number-key
 gameplace.js 734 where things are put
 gameready.js 47 
 gameround.js 572 round
-gamesettings.js 765 Game Settings: the whole
+gamesettings.js 769 Game Settings: the whole
 gameshots.js 136 The bullets in the
 gamestats.js 191 what `stats` and `roundstats`
 gfx.js 8 Low graphics
 gmodes.js 272 Sandbox Phase 6: made
 grenade.js 33 a grenade going off
 ground.js 53 what a duck walks
-gspreview.js 86 Game Settings: the pictures
+gspreview.js 88 Game Settings: the pictures
 gssettings.js 782 Game Settings: every setting,
 gstext.js 200 Game Settings: what a
 gunart.js 414 every weapon, drawn: one
@@ -111,7 +111,7 @@ jumps.js 48 the jump counter
 justinmoves.js 45 Justin's moves on the
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which
-l4dd.js 3340 Quacky Zombies on every
+l4dd.js 3338 Quacky Zombies on every
 l4ddangel.js 147 Dead Ducks Arcade's Angel
 l4ddangelui.js 204 Dead Ducks Arcade's Angel
 l4ddart.js 623 Quacky Zombies' pictures
@@ -148,8 +148,8 @@ mgj.js 219 Mad God Justin: what
 mgjart.js 96 Mad God Justin's new
 mgjbrain.js 613 Mad God Justin's brain,
 mgjpicks.js 502 Mad God Justin's pickups:
-mgjrules.js 1237 
-modes.js 446 the game modes
+mgjrules.js 1241 
+modes.js 444 the game modes
 music.js 590 the music: our own
 musicbar.js 169 the music bar: the
 name.js 165 fonts and how a
@@ -191,9 +191,9 @@ roomrules.js 368 room governance: groups and
 rooms.js 256 Play: create a room,
 roundline.js 36 Dead Ducks Arcade's round
 router.js 112 screens
-rules.js 1706 the rules of Agree
+rules.js 1698 the rules of Agree
 sandbox.js 1351 Sandbox: the key windows
-sandboxrules.js 2056 Sandbox: which map it
+sandboxrules.js 2040 Sandbox: which map it
 saybubble.js 78 a duck's speech bubble
 sbarms.js 124 Sandbox: a made NPC's
 sbaudio.js 211 Sandbox: songs players bring
@@ -221,7 +221,7 @@ sbnpcs.js 73 Sandbox: the NPCs I
 sbout.js 62 Sandbox off the zombie
 sbrotate.js 102 Sandbox, Direction's Rotate in
 sbsave.js 328 Sandbox: saving a Sandbox
-sbsaves.js 735 Sandbox's saves: kept on
+sbsaves.js 734 Sandbox's saves: kept on
 sbseriat.js 477 Sandbox: NPCs that run
 sbsfx.js 74 Sandbox's sounds
 sbspawn.js 1707 Sandbox: spawns and respawns
@@ -278,8 +278,8 @@ updates.js 3697 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival
-vote.js 279 Vote Mode & Map:
-voterules.js 349 the lobby's vote for
+vote.js 265 Vote Mode & Map:
+voterules.js 325 the lobby's vote for
 walkgrid.js 83 the walking grid: which
 weaponuse.js 104 using a weapon: one
 who.js 3 who this player is
@@ -293,7 +293,7 @@ activities.js 25 every Hangout activity, so
 ambience.js 112 the air: the wind
 art.js 252 Duck Cabin: the drawings
 artbase.js 156 the drawings' shared pieces
-artcabin.js 516 the cabin's shell: walls,
+artcabin.js 503 the cabin's shell: walls,
 artindoor.js 1104 the cabin's inside: furniture,
 artpool.js 358 the deck and the
 artyard.js 901 the yard: ground, trees,
@@ -315,7 +315,7 @@ flicker.js 83 now and then a
 ghosts.js 111 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck
 lamp.js 71 the lamps: the example
-layout.js 1203 Duck Cabin: the world
+layout.js 1075 Duck Cabin: the world
 layoutbase.js 78 Duck Cabin: the world's
 layoutheights.js 396 Duck Cabin: the heights
 npc.js 495 Duck Cabin's characters: how
@@ -338,7 +338,7 @@ shadowduck.js 254 the shadow duck
 shapes.js 931 Duck Cabin's props, drawn:
 shapesbase.js 54 Duck Cabin's props, drawn:
 shapesground.js 423 Duck Cabin's props, drawn:
-shapeswalls.js 318 Duck Cabin's props, drawn:
+shapeswalls.js 317 Duck Cabin's props, drawn:
 soccer.js 508 soccer: one ball on
 sounds.js 17 Duck Cabin's sounds
 stage.js 134 the stage: half an

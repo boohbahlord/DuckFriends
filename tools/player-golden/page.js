@@ -71,7 +71,6 @@ window.__pgSetup = async (sc) => {
       ...sc.options,
     },
   });
-  r.state.zmapAsked = 1;
   router.go("lobby", r);
   r.send({ t: "start" });
   const inGame = () =>

@@ -3141,10 +3141,7 @@ function paintNow(force) {
     $(".phase", S).textContent =
       (isSb(s) && "Sandbox") || // (on every map)
       (inWorld(s) && s.options.mode === "surv" && "Survival") ||
-      (inWorld(s) &&
-        s.options.mode === "l4dd" &&
-        s.options.l4map === "downpour" &&
-        "Downpour") || // (Dead Ducks Arcade's second map)
+      (inWorld(s) && s.options.mode === "l4dd" && "Downpour") || // (Dead Ducks Arcade's map)
       (isLaw(s) && LAW_TITLES[s.phase]) ||
       (isDn(s) && DN_TITLES[s.phase]) ||
       (isMgj(s) && MGJ_TITLES[s.phase]) ||

@@ -51,13 +51,11 @@ const { url, fail, noErrors } = require("./lib.cjs");
         mapPick: "host",
         mode: "l4dd",
         map: "cabin",
-        l4map: "cabin",
         botWait: 1,
         wildJustin: 0,
       },
     });
     (await import("./js/router.js")).go("lobby", r);
-    r.state.zmapAsked = 1;
     r.send({ t: "start" });
   });
   for (let i = 0; i < 300; i++) {

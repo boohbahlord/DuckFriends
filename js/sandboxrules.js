@@ -3,23 +3,15 @@
    Special with no rounds that never ends ("Leave Sandbox" at the top left, as in round zero of Dead Ducks Arcade or in
    Hangout), on any map. The simple board maps (Agree or Disagree's kind, whatever the background) are one map: the
    plain board. The maps with a world of their own are walked whole, with everything that map has in its own mode:
-   Duck Cabin as in Hangout, Dead Ducks Arcade's cabin and Downpour as in Dead Ducks Arcade, but with no rounds, no
+   Duck Cabin as in Hangout, Downpour as in Dead Ducks Arcade, but with no rounds, no
    zombies and no end (s.options.sbMap picks one of those; empty: the board).
    This file has no imports, so every part of the game (the rules, the world's layout, the screen) can ask it. */
 import { LANG } from "./langname.js";
 import { TILE } from "./units.js";
 
-/* the worlds Sandbox can be on: the mode whose world it is, and that mode's map */
-export const SB_WORLDS = {
-  cabin: ["hang", ""],
-  zcabin: ["l4dd", ""],
-  downpour: ["l4dd", "downpour"],
-};
-export const SB_WORLD_NAMES = {
-  cabin: "Duck Cabin",
-  zcabin: "Dead Ducks Arcade's cabin",
-  downpour: "Downpour",
-};
+/* the worlds Sandbox can be on: the mode whose world it is */
+export const SB_WORLDS = { cabin: "hang", downpour: "l4dd" };
+export const SB_WORLD_NAMES = { cabin: "Duck Cabin", downpour: "Downpour" };
 export const isSb = (s) => !!s && !!s.options && s.options.mode === "sandbox";
 /* Sandbox's world (a key of SB_WORLDS), or "" on the board (and in every other mode) */
 export const sbWorld = (o) =>
@@ -29,15 +21,7 @@ export const sbWorld = (o) =>
 export const baseMode = (o) => {
   const w = sbWorld(o);
   if (o && o.mode === "surv") return "l4dd"; // (Survival runs on Dead Ducks Arcade's engine: survrules.js)
-  return w ? SB_WORLDS[w][0] : (o && o.mode) || "";
-};
-/* the map that mode is on (Dead Ducks Arcade's Downpour: "downpour") */
-export const baseL4map = (o) => {
-  if (!o) return "";
-  if (o.mode === "surv") return "downpour"; // (Survival: Downpour only, the owner's, Nov 19 19:47Z)
-  if (o.mode !== "sandbox") return o.l4map;
-  const w = sbWorld(o);
-  return w ? SB_WORLDS[w][1] : "";
+  return w ? SB_WORLDS[w] : (o && o.mode) || "";
 };
 /* Sandbox on a world map (it runs as Hangout or Dead Ducks Arcade does there) */
 export const sbOnWorld = (s) => isSb(s) && !!sbWorld(s.options);

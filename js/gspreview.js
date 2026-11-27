@@ -54,8 +54,8 @@ function boardSketch(mode) {
   }
   return "";
 }
-/* the map large: Duck Cabin as the real map (one picture of all of it; dark with the power cut in Left 4 Dead Ducks), any
-   other map with the picked game's board on it */
+/* the map large: Duck Cabin as the real map (one picture of all of it; Downpour for Dead Ducks Arcade), any other map
+   with the picked game's board on it */
 export function mapPic(s, id, mode) {
   if (isUmap(id)) {
     const m = umapOf(id); // (a made map: its own picture, umaps.js)
@@ -64,7 +64,9 @@ export function mapPic(s, id, mode) {
       : "";
   }
   if (isWorldMap(id))
-    return `<img class="gs-cabin${modeOf(mode).darkCabin ? " dark" : ""}" src="assets/px/maps/duck-cabin.webp" data-pxready data-pxok alt="Duck Cabin" draggable="false">`;
+    return modeOf(mode).l4map
+      ? `<img src="assets/px/maps/downpour.webp" data-pxready data-pxok alt="Downpour" draggable="false">`
+      : `<img class="gs-cabin" src="assets/px/maps/duck-cabin.webp" data-pxready data-pxok alt="Duck Cabin" draggable="false">`;
   const f = mapForm(id),
     grey = f.grey || (id === "collage" && s.options.mapGrey) ? " grey" : "";
   return `<svg class="gs-map${grey}" viewBox="0 0 480 270" role="img" aria-label="${esc(mapName(id))}"><g class="gs-back">${artBackdrop(f.grey ? f.map : id)}</g>${CABIN_MODES.includes(mode) ? "" : boardSketch(mode)}</svg>`;

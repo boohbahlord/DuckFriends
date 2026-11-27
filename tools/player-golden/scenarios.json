@@ -195,8 +195,7 @@
   {
     "name": "dda-downpour",
     "options": {
-      "mode": "l4dd",
-      "l4map": "downpour"
+      "mode": "l4dd"
     },
     "frames": 780,
     "input": [
@@ -227,36 +226,10 @@
     "computers": 1
   },
   {
-    "name": "dda-cabin",
-    "options": {
-      "mode": "l4dd",
-      "l4map": "cabin",
-      "wildJustin": 0
-    },
-    "frames": 600,
-    "input": [
-      ["key", 10, "KeyD", 800],
-      ["key", 70, "KeyS", 500],
-      ["key", 120, "KeyA", 600],
-      ["key", 120, "KeyW", 600],
-      ["key", 200, "ShiftLeft", 1200],
-      ["key", 200, "KeyD", 1200],
-      ["key", 300, "Space", 100],
-      ["key", 330, "KeyA", 700],
-      ["mouse", 5, 0.3, 0.5],
-      ["key", 400, "Digit2", 100],
-      ["click", 420, 0.3, 0.5, 600],
-      ["key", 500, "Digit1", 100],
-      ["click", 520, 0.6, 0.4]
-    ],
-    "computers": 1
-  },
-  {
     "name": "dda-phone",
     "phone": 1,
     "options": {
-      "mode": "l4dd",
-      "l4map": "downpour"
+      "mode": "l4dd"
     },
     "frames": 720,
     "input": [
@@ -487,7 +460,6 @@
     "name": "dda-pick",
     "options": {
       "mode": "l4dd",
-      "l4map": "cabin",
       "wildJustin": 0
     },
     "kit": {

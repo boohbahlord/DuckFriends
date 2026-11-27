@@ -49,7 +49,6 @@ export function cabinOutside({
   lights = true,
   door = DOOR,
   dark = false,
-  holes = [], // (Quacky Zombies: [from, to] across the south wall, broken through it; no back door then)
 } = {}) {
   const id = uid(),
     Y0 = h - d,
@@ -120,16 +119,12 @@ export function cabinOutside({
     F`<path d="M${x - ww / 2 + 7} ${yb - hh + 7}h${ww * 0.2}l${-ww * 0.2} ${hh * 0.45}ZM${x + ww / 2 - 7} ${yb - hh + 7}h${-ww * 0.2}l${ww * 0.2} ${hh * 0.45}Z" fill="#c2562e" opacity=".85"/>` +
     F`<path d="M${x} ${yb - hh + 7}V${yb - 7}M${x - ww / 2 + 7} ${yb - hh / 2}H${x + ww / 2 - 7}" stroke="#8a4a1f" stroke-width="5"/>` +
     R(x - ww / 2 - 8, yb - 4, ww + 16, 9, "#c87a3c", ln(2.2));
-  const clear = (x, half) =>
-    !holes.some(([a, b]) => x + half > a - 10 && x - half < b + 10); // (not where a hole is)
-  for (const x of windows) if (clear(x, 70)) s += win(x, 124, 80, B - 38);
-  for (const x of [gx - 150, gx + 150])
-    if (clear(x, 54)) s += win(x, 92, 98, B - 30);
+  for (const x of windows) s += win(x, 124, 80, B - 38);
+  for (const x of [gx - 150, gx + 150]) s += win(x, 92, 98, B - 30);
   /* the back door (glass, lit) and two lanterns beside it */
-  if (!holes.length) s += doorBody(gx, B, door, `url(#${id}g)`);
+  s += doorBody(gx, B, door, `url(#${id}g)`);
   for (const x of [gx - 66, gx + 66])
-    if (clear(x, 20))
-      s += F`<circle cx="${x}" cy="${B - 92}" r="38" fill="url(#${id}p)" class="hg-flicker" style="animation-delay:-${x % 3}s"/><rect x="${x - 7}" y="${B - 104}" width="14" height="20" rx="3" fill="${dark ? BULB_OFF : "#ffd98a"}" ${ln(2)}/><path d="M${x - 9} ${B - 105}h18M${x} ${B - 84}v8" stroke="${O}" stroke-width="3"/>`;
+    s += F`<circle cx="${x}" cy="${B - 92}" r="38" fill="url(#${id}p)" class="hg-flicker" style="animation-delay:-${x % 3}s"/><rect x="${x - 7}" y="${B - 104}" width="14" height="20" rx="3" fill="${dark ? BULB_OFF : "#ffd98a"}" ${ln(2)}/><path d="M${x - 9} ${B - 105}h18M${x} ${B - 84}v8" stroke="${O}" stroke-width="3"/>`;
   /* the south slope (notched where the gable comes forward), its gradient, the eave's fascia and shadow */
   const sp = F`M0 ${ridge}H${w}V${sE}H${gx + gw}V${wt}H${gx - gw}V${sE}H0Z`;
   s +=
@@ -207,18 +202,10 @@ export function cabinOutside({
         1,
         dark,
       );
-  /* the holes: broken through the logs from the foundation up, the wall over each left whole */
-  if (holes.length)
-    return holed(
-      wrap(w, h, s, "hg-cabin", defs),
-      w,
-      h,
-      holes.map(([a, b], i) => holeCut(a, b, B - 140, B + 40, i + 3, 9)),
-    );
   return wrap(w, h, s, "hg-cabin", defs);
 }
 
-/* ---------- Quacky Zombies' holes (the owner's, Nov 15): broken through a wall, like the ones the zombies come in by ----------
+/* ---------- holes broken through a wall (Downpour's), like the ones the zombies come in by ----------
    holeCut: a hole's outline, a closed path: up its left side from (x0, bottom), across its top at y = top, down its right
    side to (x1, bottom), every edge zigzagging (jag px either way); one seed, the same zigzag every time */
 export function holeCut(x0, x1, top, bottom, seed = 1, jag = 7) {

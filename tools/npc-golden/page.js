@@ -67,7 +67,6 @@ window.__golden = async (sc) => {
     t: "options",
     options: { modePick: "", mapPick: "", botWait: 1, ...sc.options },
   });
-  r.state.zmapAsked = 1;
   r.send({ t: "start" });
   const pre = [...(sc.pre || [])]; // (moves before the game, as the host's Sandbox pick: each tried every beat till it takes)
   const inGame = () =>

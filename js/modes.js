@@ -240,8 +240,7 @@ export const MODES = [
     id: "l4dd",
     push: { grenade: 3 }, // (how many KB_FAR the hammer and a grenade push a duck: push.js)
     ownDeath: true,
-    darkCabin: true, // (its Duck Cabin picture in the settings' preview is the dark one)
-    l4map: true, // (it has its own map pick, Game Settings l4map: Duck Cabin or Downpour; layout.js' useMode turns to its cabin or Downpour)
+    l4map: true, // (it brings its own map, Downpour: layout.js' useMode turns to it; the owner cut the cabin as a zombie map, Nov 27)
     phoneOut: 1.15, // (on a phone, 15% more of the map each way, the owner's, Nov 18 15:18Z)
     downMs: 1000, // (its default: half a second longer than 0.5 s, the owner 2026-11-03 17:15Z)
     hp: "maps", // (its HP: the zombie maps', l4ddrules.js; Survival and Sandbox on its maps too, baseMode)
@@ -257,9 +256,8 @@ export const MODES = [
         ["Jumps", "jumps"],
       ],
     },
-    asksMap: true, // (its map vote opens before each game: zmapDue)
     inRandom: false, // (never from Random: Sandbox never ends; Survival and Quacky Zombies are vote-only, the owner's, Nov 19 19:53Z)
-    tip: "The power's out in Duck Cabin and zombie ducks are coming, round after round. Board up the doors and holes, revive each other, and see how long you last. It can only be played on the Duck Cabin map.",
+    tip: "Zombie ducks are coming, round after round. Revive each other and see how long you last. It plays on the Downpour map.",
   },
   /* Survival (the owner's, Nov 19 19:27Z): Dead Ducks Arcade's zombies without rounds, swelling and calming on Downpour.
      It stays out of every list (SURV_READY) until all of it is built: no unfinished mode goes live */

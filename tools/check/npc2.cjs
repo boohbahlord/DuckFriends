@@ -7,7 +7,7 @@ const W = (ms) => new Promise((r) => setTimeout(r, ms));
     ? JSON.parse(process.env.MAPS)
     : [
         ["cabin", { width: 1366, height: 768 }],
-        ["zcabin", { width: 390, height: 844 }],
+        ["downpour", { width: 390, height: 844 }],
       ]) {
     const p = await b.newPage({ viewport: vp });
     const tag = sbMap + vp.width;
@@ -35,7 +35,6 @@ const W = (ms) => new Promise((r) => setTimeout(r, ms));
         },
       });
       (await import("./js/router.js")).go("lobby", r);
-      r.state.zmapAsked = 1;
       r.send({ t: "start" });
       {
         const iv = setInterval(() => {

@@ -54,10 +54,8 @@ async function play(b, errs, where) {
           mapPick: "",
           botWait: 1,
           mode: "l4dd",
-          l4map: where.map,
         },
       });
-      room.state.zmapAsked = 1;
       room.send({ t: "start" });
       for (let k = 0; k < 600 && room.state.phase !== "hang"; k++) beat();
       (await import("./js/l4ddrules.js")).helperOut(room.state);
@@ -197,7 +195,6 @@ const SPOTS = [
   { name: "the canopy", map: "downpour", deck: 2 },
   { name: "the hood", map: "downpour", deck: 3 },
   { name: "a car's roof", map: "downpour", deck: 4 },
-  { name: "Duck Cabin, where I start", map: "cabin" },
 ];
 (async () => {
   const b = await chromium.launch(),
@@ -222,13 +219,11 @@ const SPOTS = [
         mapPick: "host",
         mode: "l4dd",
         map: "downpour",
-        l4map: "downpour",
         botWait: 1,
         wildJustin: 0,
       },
     });
     (await import("./js/router.js")).go("lobby", r);
-    r.state.zmapAsked = 1;
     r.send({ t: "start" });
   });
   let over = null;

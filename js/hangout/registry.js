@@ -44,7 +44,7 @@
                                  cabin, the deck and its stairs); the world never makes what stands wholly outside it
    ctx = { state(), me, send(action), world } (world: toScreen, heightAt, sc, vw and vh (the board's size, without making the
    browser lay the page out again), board, propEl(id), at(id) → where a duck is drawn { x, y, z } in world px, or null, shines(l) → is that light on now). */
-import { baseMode, baseL4map, isSb } from "../sandboxrules.js";
+import { baseMode, isSb } from "../sandboxrules.js";
 import { isSurv } from "../survrules.js";
 export const RULES = new Map(); // k → its rules
 const ACTS = new Map(); // id → its screen part
@@ -83,12 +83,12 @@ const CABIN_ONLY = ["seats", "stage", "bj", "piano", "tv"];
 const QUIET = ["near", "hold", "push", "jump", "keydown", "keyup", "pointer"];
 const hush = (a) =>
   Object.fromEntries(Object.entries(a).filter(([k]) => !QUIET.includes(k)));
-/* Dead Ducks Arcade on Downpour (its second map) has no cabin: it runs as its own "mode" here, with none of the cabin's
+/* Dead Ducks Arcade on Downpour (its only map) has no cabin: it runs as its own "mode" here, with none of the cabin's
    quiet parts (the couches, the stage, the card table, the piano, the TV) */
 const modeOf = (s) => {
   const o = (s && s.options) || {},
     m = baseMode(o) || "hang"; // (Sandbox on a world: that world's mode, sandboxrules.js)
-  return m === "l4dd" && baseL4map(o) === "downpour" ? "l4dd-dp" : m;
+  return m === "l4dd" ? "l4dd-dp" : m;
 };
 export const rulesOf = (s) =>
   [...RULES].filter(([k, r]) =>

@@ -24,7 +24,6 @@ const W = (ms) => new Promise((r) => setTimeout(r, ms));
       },
     });
     (await import("./js/router.js")).go("lobby", r);
-    r.state.zmapAsked = 1;
     r.send({ t: "start" });
   });
   await W(14000);

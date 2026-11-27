@@ -33,7 +33,6 @@ const room = async (p, options) =>
   const file = await p.evaluate(async () => {
     const R = window._r,
       w8 = (ms) => new Promise((r) => setTimeout(r, ms));
-    R.state.zmapAsked = 1;
     R.send({ t: "start" });
     for (let i = 0; i < 100 && !R.state.sbpk; i++) await w8(200);
     R.send({ t: "sbPick" });
@@ -157,7 +156,6 @@ const room = async (p, options) =>
     const play = await p.evaluate(async () => {
       const R = window._r,
         w8 = (ms) => new Promise((r) => setTimeout(r, ms));
-      R.state.zmapAsked = 1;
       R.send({ t: "start" });
       for (let i = 0; i < 100 && !R.state.gmPlay; i++) await w8(200);
       await w8(800);

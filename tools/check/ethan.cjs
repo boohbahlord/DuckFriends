@@ -34,10 +34,8 @@ const { url, fail, noErrors } = require("./lib.cjs");
           mapPick: "",
           botWait: 1,
           mode: "l4dd",
-          l4map: "downpour",
         },
       });
-      r.state.zmapAsked = 1;
       const beat = () => {
         window.__now += 200;
         r.send({ t: "tick", id: r.me });
@@ -80,10 +78,8 @@ const { url, fail, noErrors } = require("./lib.cjs");
         mapPick: "",
         botWait: 1,
         mode: "l4dd",
-        l4map: "downpour",
       },
     });
-    r.state.zmapAsked = 1;
     r.send({ t: "start" });
     for (let k = 0; k < 600 && r.state.phase !== "hang"; k++) {
       window.__now += 200;

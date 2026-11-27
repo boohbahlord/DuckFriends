@@ -1,5 +1,5 @@
 /* I want the zombies pinned before anyone changes how they are made (the owner's rule: pin before you touch). This plays the
-   zombie games from tools/npc-golden/scenarios.json (Dead Ducks Arcade on Downpour and on Cabin, Survival's three squads,
+   zombie games from tools/npc-golden/scenarios.json (Dead Ducks Arcade on Downpour, Survival's three squads,
    Mad God Justin's fight and his zombie waves), each from a fixed seed and a fixed clock for a fixed number of beats (no
    Math.random and no clock but the fake ones), and hashes the whole room every beat. A digest of all the beats and one hash
    every 50 beats are kept in tools/npc-golden/pinned.json; a run that gives other hashes fails, saying the first 50 beats

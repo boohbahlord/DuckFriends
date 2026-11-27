@@ -26,13 +26,11 @@ async function start(p, mode, map, keys) {
           mapPick: "host",
           mode,
           map,
-          l4map: map,
           botWait: 1,
           wildJustin: 0,
         },
       });
       (await import("./js/router.js")).go("lobby", r);
-      r.state.zmapAsked = 1;
       r.send({ t: "start" });
       for (
         let i = 0;

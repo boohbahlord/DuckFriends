@@ -33,10 +33,8 @@ const { url, fail, noErrors } = require("./lib.cjs");
         mapPick: "",
         botWait: 1,
         mode: "l4dd",
-        l4map: "downpour",
       },
     });
-    room.state.zmapAsked = 1;
     room.send({ t: "start" });
     let now = 1.8e12;
     window.__fake = true;

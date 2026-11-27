@@ -24,12 +24,10 @@ const { url, fail, noErrors } = require("./lib.cjs");
         mapPick: "host",
         mode: "surv",
         map: "cabin",
-        l4map: "downpour",
         botWait: 1,
       },
     });
     (await import("./js/router.js")).go("lobby", r);
-    r.state.zmapAsked = 1;
     r.send({ t: "start" });
   });
   await p.waitForTimeout(14000);

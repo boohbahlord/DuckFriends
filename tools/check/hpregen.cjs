@@ -25,15 +25,11 @@ const { url, fail, noErrors } = require("./lib.cjs");
         botWait: 1,
         mode: "l4dd",
         map: "cabin",
-        l4map: "downpour",
       },
     });
     (await import("./js/router.js")).go("lobby", r);
-    r.state.zmapAsked = 1;
     r.send({ t: "start" });
     for (let i = 0; i < 60 && (r.state.vt || r.state.phase === "lobby"); i++) {
-      if (r.state.vt && r.state.vt.k === "zmap")
-        r.send({ t: "vote", v: "downpour" });
       await new Promise((q) => setTimeout(q, 500));
     }
   });

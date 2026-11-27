@@ -2,36 +2,15 @@
   {
     "name": "qz-downpour",
     "options": {
-      "mode": "l4dd",
-      "l4map": "downpour"
+      "mode": "l4dd"
     },
     "computers": 3,
     "beats": 1500
   },
   {
-    "name": "qz-cabin",
-    "options": {
-      "mode": "l4dd",
-      "l4map": "cabin",
-      "wildJustin": 0
-    },
-    "computers": 3,
-    "beats": 1500,
-    "hang": {
-      "l4box": {
-        "$me": {
-          "w": "justin",
-          "t": "$now-6000",
-          "by": "$me"
-        }
-      }
-    }
-  },
-  {
     "name": "surv-criminals",
     "options": {
-      "mode": "surv",
-      "l4map": "downpour"
+      "mode": "surv"
     },
     "computers": 3,
     "beats": 1500,
@@ -45,8 +24,7 @@
   {
     "name": "surv-soldiers",
     "options": {
-      "mode": "surv",
-      "l4map": "downpour"
+      "mode": "surv"
     },
     "computers": 3,
     "beats": 1500,
@@ -63,8 +41,7 @@
   {
     "name": "surv-friends",
     "options": {
-      "mode": "surv",
-      "l4map": "downpour"
+      "mode": "surv"
     },
     "computers": 3,
     "beats": 2400,
@@ -320,29 +297,16 @@
   {
     "name": "qz-downpour-bait",
     "options": {
-      "mode": "l4dd",
-      "l4map": "downpour"
+      "mode": "l4dd"
     },
     "computers": 3,
     "beats": 1500,
     "bait": 100
   },
   {
-    "name": "qz-cabin-bait",
-    "options": {
-      "mode": "l4dd",
-      "l4map": "cabin",
-      "wildJustin": 0
-    },
-    "computers": 3,
-    "beats": 3000,
-    "bait": 100
-  },
-  {
     "name": "surv-zombies-bait",
     "options": {
-      "mode": "surv",
-      "l4map": "downpour"
+      "mode": "surv"
     },
     "computers": 3,
     "beats": 3000,
@@ -696,8 +660,7 @@
   {
     "name": "surv-sniper-bait",
     "options": {
-      "mode": "surv",
-      "l4map": "downpour"
+      "mode": "surv"
     },
     "computers": 3,
     "beats": 1500,
@@ -719,8 +682,7 @@
     "name": "surv-criminals-2",
     "seed": 5,
     "options": {
-      "mode": "surv",
-      "l4map": "downpour"
+      "mode": "surv"
     },
     "computers": 3,
     "beats": 1500,
@@ -747,8 +709,7 @@
   {
     "name": "surv-nade-gm",
     "options": {
-      "mode": "surv",
-      "l4map": "downpour"
+      "mode": "surv"
     },
     "computers": 3,
     "beats": 900,

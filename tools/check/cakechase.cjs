@@ -31,7 +31,6 @@ const EXPECT = {
         options: { modePick: "host", mapPick: "host", ...o },
       });
       (await import("./js/router.js")).go("lobby", r);
-      r.state.zmapAsked = 1;
       r.send({ t: "start" });
       const w8 = (ms) => new Promise((ok) => setTimeout(ok, ms));
       for (let i = 0; i < 300 && !r.state.justin; i++) await w8(50);
