@@ -1,11 +1,10 @@
 /* I want the one ammo rule checked in every mode with guns (js/ammo.js; the owner's, Nov 22 19:29Z: "WHEN THE GUNS ARE
-   SELECTED, THEY HAVE AMMO OF DEAD DUCKS ARCADE UNLESS UNLIMITED AMMO IS SELECTED"). In Agree or Disagree's board, Mad
-   God Justin's fight and Dead Ducks Arcade, with my pistol's last round in its magazine and nothing left besides:
+   SELECTED, THEY HAVE AMMO OF DEAD DUCKS ARCADE UNLESS UNLIMITED AMMO IS SELECTED"). In Agree or Disagree's board and
+   Dead Ducks Arcade, with my pistol's last round in its magazine and nothing left besides:
    1. a game starts my pistol full, Dead Ducks Arcade's 7 and 133 more;
    2. a click fires the last round; another click fires nothing and R reloads nothing (out of ammo);
    3. with G's Unlimited ammo on, R reloads it full and the rest stays as it was.
-   And Mad God Justin's gun picked up comes with Dead Ducks Arcade's whole amount, and goes once it's all fired; a
-   room's ammo kept the old way ({ n, r }) reads as full.
+   And a room's ammo kept the old way ({ n, r }) reads as full.
    Run: node tools/check/run.mjs ammo */
 const { chromium } = require("playwright");
 const { url, fail, noErrors } = require("./lib.cjs");
@@ -102,7 +101,6 @@ const reload = async (p) => {
       ["handgun", ...Array(9).fill(null)],
       "Digit1",
     ],
-    ["Mad God Justin", "mgj", "board", null, "Digit2"],
     ["Dead Ducks Arcade", "l4dd", "cabin", null, "Digit2"],
   ]) {
     const p = await b.newPage({ viewport: { width: 1366, height: 768 } });
@@ -126,21 +124,6 @@ const reload = async (p) => {
     await p.waitForTimeout(300);
     await reload(p);
     r.inf = await pistol(p);
-    if (mode === "mgj")
-      r.pick = await p.evaluate(async () => {
-        const s = window._r.state,
-          me = window._r.me,
-          A = await import("./js/ammo.js"),
-          M = await import("./js/mgjrules.js"),
-          now = (await import("./js/clock.js")).now();
-        s.options.infAmmo = 0;
-        s.mgj.held = { ...s.mgj.held, [me]: "smg" };
-        const full = A.magOf(s, me, now, "smg").c;
-        s.mag = { ...s.mag, [`${me} smg`]: { c: [1, 0], r: 0, d: 0 } };
-        A.shootMag(s, me, now, "smg", 1, false);
-        M.mgjSpent(s, me, now);
-        return { full, gone: !M.heldGun(s, me) };
-      });
     out.push(r);
     await p.close();
   }
@@ -171,8 +154,6 @@ const reload = async (p) => {
       );
     if (!same(r.inf, [7, 0]))
       fail(`${r.name}: Unlimited ammo didn't reload it (${r.inf})`);
-    if (r.pick && (!same(r.pick.full, [25, 315]) || !r.pick.gone))
-      fail(`${r.name}: the gun picked up: ${JSON.stringify(r.pick)}`);
   }
   console.log(
     "ammo: " + out.map((r) => `${r.name} ${r.full}->${r.inf}`).join(", "),

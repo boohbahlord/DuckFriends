@@ -60,7 +60,7 @@ export const reloadMs = (w, c, inf) =>
       )
     : ARMS[w].reload || 1500;
 
-/* ---------- the board's and Mad God Justin's: s.mag = { key: { c: the pair, r: when its reload ends (0: not
+/* ---------- the board's: s.mag = { key: { c: the pair, r: when its reload ends (0: not
    reloading), d: how long it takes, f: the pair once it's done } }, key: magKey ---------- */
 export const magKey = (id, w) => (w === "handgun" ? id : `${id} ${w}`);
 /* a game starts: every gun full again */
@@ -68,20 +68,15 @@ export const ammoReset = (s) => {
   delete s.mag;
 };
 /* duck id's gun w now: { c, r, d } (never fired this game, or kept the old way, { n, r }, by a room from before: full; a reload over: done), or null for none kept (not a
-   gun, or endless). down: the down pistol, its bullets never run out */
-export function magOf(s, id, now, w = "handgun", down) {
+   gun, or endless) */
+export function magOf(s, id, now, w = "handgun") {
   const m = (s.mag || {})[magKey(id, w)];
   if (!m || !m.c) {
     const full = ARMS[w] && ARMS[w].kind === "ranged" && fullAmmo(w);
-    return full && { c: down ? [full[0], 0] : full, r: 0, d: 0 };
+    return full && { c: full, r: 0, d: 0 };
   }
   return m.r && now >= m.r ? { c: m.f, r: 0, d: 0 } : m;
 }
-/* the rounds left in duck id's gun w, all told (Infinity: none kept) */
-export const leftOf = (s, id, now, w) => {
-  const m = magOf(s, id, now, w);
-  return m ? m.c[0] + m.c[1] : Infinity;
-};
 /* a reload of duck id's gun w starts (by R, or by itself once empty); false when it can't */
 export function reloadMag(s, id, now, w, inf, m = magOf(s, id, now, w)) {
   const to = m && !m.r && reloadTo(w, m.c, capOf(w), inf);

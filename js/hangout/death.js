@@ -12,8 +12,6 @@ export const DOWN_OK = [0, 500, 1000, 2000, 3000, 5000, 6000]; // (6 s only in D
 const cabin = (s) => !!modeOf(baseMode(s.options)).cabinHome; // (Sandbox on Duck Cabin too)
 const DOWN_NORMAL = 3000; // ms: the normal games' default (owner, Nov 16: their death lasts three seconds)
 export const downFor = (s) => {
-  const own = modeOf(s.options.mode);
-  if (own.downLocked) return own.downMs; // (Mad God Justin: always 5 s)
   const v = s.options.downMs;
   return DOWN_OK.includes(v) && (v !== DEAD_STILL || cabin(s))
     ? v
@@ -21,7 +19,7 @@ export const downFor = (s) => {
       ? DEAD_STILL
       : modeOf(baseMode(s.options)).downMs || DOWN_NORMAL;
 };
-/* I want the normal games (every mode but Quacky Zombies, Mad God Justin and Duck Cabin) to give a duck that comes
+/* I want the normal games (every mode but Quacky Zombies and Duck Cabin) to give a duck that comes
    back from dying its body back at once (its wounds, holes and knocked-off things gone) and then SPAWN_MS of spawn
    protection: nothing hurts it, and what it shoots, swings or blows up hurts nobody (s.prot[id] = until) */
 export const SPAWN_MS = 2500;
@@ -42,8 +40,8 @@ const live = (o, now) => {
   return st;
 };
 /* Invulnerability: no hit takes a duck down, it only flashes red (s.hurt[id] = when; the screens flash on a new stamp).
-   Never in Quacky Zombies or Mad God Justin (the owner's, Nov 4), from the settings or the command line */
-export const NO_INVULN = ["l4dd", "surv", "mgj"];
+   Never in Quacky Zombies (the owner's, Nov 4), from the settings or the command line */
+export const NO_INVULN = ["l4dd", "surv"];
 export const invuln = (s) =>
   +s.options.invuln === 1 && !NO_INVULN.includes(s.options.mode);
 export function hurtFx(s, id, now) {

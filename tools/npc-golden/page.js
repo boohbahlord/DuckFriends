@@ -123,8 +123,6 @@ window.__golden = async (sc) => {
       return false;
     }));
   patch();
-  /* Mad God Justin: his zombie wave state (s.mz) changed to bring a wave now ("mz": { "next": "$now" }) */
-  if (sc.mz) r.state.mz = { ...r.state.mz, ...fill(sc.mz) };
   /* the scenario's own first moves */
   for (const a of sc.setup || []) {
     const was = r.state;
@@ -151,7 +149,7 @@ window.__golden = async (sc) => {
     ever = new Set(); // (which NPCs came)
   const lastSwipe = {}; // (each zombie's last swipe, s.hang.zs: a new one is one more swipe)
   let swipes = 0,
-    mzPeak = 0, // (the most Mad God Justin's wave zombies out at once)
+    mzPeak = 0, // (the most of the board's zombies out at once, s.mz.zb)
     sbPeak = 0; // (the most of Sandbox's NPCs on a map at once, s.hang.sbz)
   /* "bait": from that beat on, my duck stands on the nearest zombie each beat (and keeps its health), so the zombies swipe
      at it: every run then pins swipes, their times and the damage (the computers otherwise keep away from the zombies) */
@@ -330,7 +328,7 @@ window.__golden = async (sc) => {
     gunmen: g.length,
     swipes,
     shots,
-    mgjWaveZombiesPeak: mzPeak,
+    boardZombiesPeak: mzPeak,
     sandboxMapNpcsPeak: sbPeak,
     zombies: ((r.state.hang && r.state.hang.zp) || []).length / 4,
     sandboxNpcs: [

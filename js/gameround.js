@@ -77,10 +77,6 @@ import { isDn, dnStats } from "./duncerules.js";
 
 import { DN_COLORS, dnStatsHTML, dnOverHTML } from "./dunce.js";
 
-import { isMgj, mgjStats } from "./mgjrules.js";
-
-import { mgjStatsHTML, mgjOverHTML } from "./mgj.js";
-
 import { isVd, isDate, turnedDown, vdStats } from "./vddrules.js";
 
 import { vdStatsHTML } from "./vdd.js";
@@ -170,7 +166,6 @@ export function statsHTML(s) {
   if (isWyr(s)) return wyrStatsHTML(s);
   if (isLaw(s)) return s.phase === "over" ? lawOverHTML(s) : lawStatsHTML(s);
   if (isDn(s)) return s.phase === "over" ? dnOverHTML(s) : dnStatsHTML(s);
-  if (isMgj(s)) return s.phase === "over" ? mgjOverHTML(s) : mgjStatsHTML(s);
   if (isVd(s)) return vdStatsHTML(s);
   if (isTv(s)) return tvStatsHTML(s);
   const boxes = (r) =>
@@ -224,7 +219,7 @@ export const viewResults = (s) =>
 export const viewOver = (
   s,
 ) => `<div class="over"><h1 class="over-title">${rainbowHTML("Game over")}</h1>
-    <p class="dim">${s.round + 1} round${s.round ? "s" : ""} · ${isMgj(s) ? `${(s.mgjPast || []).length} fight${(s.mgjPast || []).length === 1 ? "" : "s"}` : `${s.history.length} ${isLaw(s) ? "case" : isDn(s) ? "take" : "question"}${s.history.length === 1 ? "" : "s"}`}</p>
+    <p class="dim">${s.round + 1} round${s.round ? "s" : ""} · ${s.history.length} ${isLaw(s) ? "case" : isDn(s) ? "take" : "question"}${s.history.length === 1 ? "" : "s"}</p>
     <div class="statboxes grid"></div></div>`;
 
 /* a game counts once, with the first round I played in it */
@@ -319,22 +314,6 @@ export function recordRound(s) {
     if (V.val === R.me) st.wins++;
     else if (turnedDown(s, R.me)) st.losses++;
     if (isDate(s, R.me)) st.titles++;
-    save();
-    shareLook();
-    return;
-  }
-  if (isMgj(s)) {
-    // Mad God Justin: my fights, won and lost, my stabs, the times he got me, my killing blows
-    const f = (s.mgjPast || []).slice(-1)[0],
-      p = mgjStats(s).per[R.me];
-    if (!st || !f || !p || !(f.ids || []).includes(R.me)) return;
-    countGame(s, st);
-    st.rounds++;
-    st.answers += p.dmg;
-    st.majority += p.hits;
-    st.titles += p.kills;
-    if (f.won) st.wins++;
-    else st.losses++;
     save();
     shareLook();
     return;

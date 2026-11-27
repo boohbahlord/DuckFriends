@@ -1,6 +1,6 @@
 /* I want the one hand rule checked in every mode with a hotbar (js/hotpick.js; the owner's, Nov 22 19:24Z: "MAKE THE
    FUCKING GAME'S HOTBAR IN EVERY MODE NOT HAVE TOGGLE AND THE ITEM ALWAYS IN YOUR HAND IF IT ISNT AN EMPTY SLOT OR
-   SOMETHING LIKE FLASHLIGHT"). In Agree or Disagree's board, Mad God Justin's fight and Dead Ducks Arcade:
+   SOMETHING LIKE FLASHLIGHT"). In Agree or Disagree's board and Dead Ducks Arcade:
    1. the gun's number key puts it in my hand at once, and the same key again keeps it there (no toggle);
    2. a click fires it;
    3. an empty slot's key leaves my hand empty (the board: a game starts with slot 1 picked, its gun in hand).
@@ -87,7 +87,6 @@ async function click(p) {
       "handgun",
       "Digit2",
     ],
-    ["Mad God Justin", "mgj", "board", null, "Digit2", "handgun", "Digit5"],
     ["Dead Ducks Arcade", "l4dd", "cabin", null, "Digit2", "handgun", "Digit3"],
   ]) {
     const p = await b.newPage({ viewport: { width: 1366, height: 768 } });

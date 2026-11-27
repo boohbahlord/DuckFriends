@@ -3,7 +3,7 @@
    under it, a ring across the ground as wide as its rings (where it knocks ducks down), a few puffs of smoke rising, and the
    meteor's scorch mark left on the ground for a moment. The rules throw the ducks (rules.js blast); this only draws it. */
 import { el } from "./ui.js";
-import { SCORCH } from "./mgj.js";
+import { SCORCH } from "./fxart.js";
 
 const BURST = `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="${star(50, 50, 48, 30, 12)}" fill="#ff8c2b" stroke="#2a2d38" stroke-width="2.4" stroke-linejoin="round"/><path d="${star(50, 50, 34, 21, 12, 0.26)}" fill="#ffd23f"/><circle cx="50" cy="50" r="13" fill="#fff6d8"/></svg>`;
 function star(cx, cy, R, r, n, turn = 0) {

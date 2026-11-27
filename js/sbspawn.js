@@ -1642,7 +1642,7 @@ export function strike(s, now, me, foe, H, o, d = null, w = "claw") {
   if (q.hp <= 0) q.d = now;
 }
 
-/* ---------- the board's zombies: as Mad God Justin's wave zombies walk (mgjrules.js wavesTick), at each one's speed and
+/* ---------- the board's zombies: they walk at each one's speed and
    damage, and kept apart on a grid so 800 cost little ---------- */
 const MOVE_STOP = 0.1; // duck lengths: as near as a \move\'s spot is walked to
 function boardTick(s, now, H) {

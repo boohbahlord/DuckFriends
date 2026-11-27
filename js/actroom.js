@@ -46,8 +46,6 @@ import { isQuack, quackLeft } from "./quackrules.js";
 
 import { hangLeft } from "./hangout/rules.js";
 
-import { isMgj, mgjCount } from "./mgjrules.js";
-
 import { isWorldMap } from "./maps.js";
 
 import { SOLO_MODES } from "./modes.js";
@@ -114,7 +112,6 @@ export function act_join({ state, s, a, now, P }) {
   else if (!["lobby", "over", "countdown"].includes(s.phase))
     seatNewcomer(s, a.p.id);
   if (s.phase !== "lobby") rainbowJoin(s, a.p.id); // (Rainbow Ducks: a look for someone who joins mid-game)
-  if (isMgj(s)) mgjCount(s); // (Mad God Justin: a duck joining mid-fight adds its share of his HP)
   if (isSb(s) && s.sbsv) sbRekey(s, a.p.id); // (Sandbox: a player in the save gets their own settings back, by name)
   say(s, `${a.p.name} ${back ? "is back" : "joined"}.`);
   if (s.waiting && s.waiting.for === a.p.id) {

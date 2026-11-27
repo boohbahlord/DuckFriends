@@ -9,7 +9,7 @@
    sbHear(s, world): world true on Duck Cabin, the zombie cabin and Downpour (their activity below), false on the board
    (game.js). Cheat mode (sandbox.js) is my own switch, so its chime is played there (sbCheatSound).
    On a world, Sandbox's own NPCs (sbcabin.js) walk the zombies' step path every frame (l4ddsfx.js sbSteps); on the board
-   theirs are game.js' (mgjSteps). */
+   theirs are game.js' (boardSteps). */
 import { play } from "./sound.js";
 import { sbSteps } from "./l4ddsfx.js";
 import { isSb } from "./sandboxrules.js";

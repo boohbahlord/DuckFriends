@@ -22,7 +22,6 @@ import { lawBoxHTML } from "./court.js";
 import { boxHTML as scBoxHTML } from "./story.js";
 import { quackBoxHTML } from "./quack.js";
 import { dnBoxHTML } from "./dunce.js";
-import { mgjBoxHTML } from "./mgj.js";
 import { vdBoxHTML } from "./vdd.js";
 import { tvBoxHTML } from "./trivia.js";
 import { seenDuck, seenName } from "./looks.js";
@@ -136,7 +135,6 @@ export function openStats(s, id, me) {
                     quack: quackBoxHTML,
                     law: lawBoxHTML,
                     dunce: dnBoxHTML,
-                    mgj: mgjBoxHTML,
                     vdd: vdBoxHTML,
                     trivia: tvBoxHTML,
                   }[s.options.mode] || statBoxHTML

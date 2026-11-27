@@ -3,11 +3,11 @@ file lines job
 
 ## js/
 account.js 397 the Google account: the
-actplay.js 941 a game's actions
-actroom.js 768 the room's actions
+actplay.js 872 a game's actions
+actroom.js 765 the room's actions
 actsb.js 160 Sandbox's windows, saves and
 allies.js 383 Survival: the friendly squad
-ammo.js 117 THE ONE AMMO RULE,
+ammo.js 112 THE ONE AMMO RULE,
 armpage.js 142 a page of Customize's
 armspeed.js 34 how fast the weapons
 art.js 403 pictures drawn in code
@@ -20,11 +20,12 @@ beaks.js 138 beaks
 below.js 89 darker below
 blast.js 67 explosions: one module
 bloodpool.js 50 a pool of blood:
-boardfire.js 1327 the board's weapons: hits,
-boardjustin.js 652 Justin on the boards
+boardfire.js 1154 the board's weapons: hits,
+boardjustin.js 499 Justin on the boards
+boardzombies.js 122 the zombies on a
 botduck.js 90 a computer's duck: a
 botlines.js 188 What the computers write
-bots.js 1433 computers
+bots.js 1362 computers
 bowdraw.js 46 the bow, drawn to
 brackets.js 459 Bicker Brackets: what the
 brainbuild.js 333 Sandbox: M's Brain builder
@@ -64,33 +65,34 @@ format.js 15 numbers as the settings
 friends.js 236 friends
 front.js 151 the front page
 fx.js 1187 the effects, drawn as
+fxart.js 45 the effects' pictures: a
 fxmotion.js 233 how a held weapon
-game.js 4724 the game screen
-gameact.js 546 the action window and
-gameannounce.js 212 The cloud's words and
-gameboard.js 589 the board: each mode's
-gamedefaults.js 75 the game's own numbers,
-gamefx.js 840 the silly commands and
-gamehand.js 608 the hand: the number-key
-gameplace.js 734 where things are put
+game.js 4450 the game screen
+gameact.js 525 the action window and
+gameannounce.js 187 The cloud's words and
+gameboard.js 582 the board: each mode's
+gamedefaults.js 72 the game's own numbers,
+gamefx.js 700 the silly commands and
+gamehand.js 506 the hand: the number-key
+gameplace.js 480 where things are put
 gameready.js 47 
-gameround.js 572 round
+gameround.js 551 round
 gamesettings.js 769 Game Settings: the whole
-gameshots.js 136 The bullets in the
-gamestats.js 191 what `stats` and `roundstats`
+gameshots.js 135 The bullets in the
+gamestats.js 179 what `stats` and `roundstats`
 gfx.js 8 Low graphics
 gmodes.js 272 Sandbox Phase 6: made
 grenade.js 33 a grenade going off
 ground.js 53 what a duck walks
 gspreview.js 88 Game Settings: the pictures
-gssettings.js 782 Game Settings: every setting,
+gssettings.js 754 Game Settings: every setting,
 gstext.js 200 Game Settings: what a
 gunart.js 414 every weapon, drawn: one
 gunmen.js 110 the gunmen's looks
 gunmenrules.js 1158 Survival: the gunmen
 gunmenview.js 135 Survival: the gunmen on
 gunparts.js 15 the pieces every weapon's
-guns.js 698 every weapon's numbers: one
+guns.js 673 every weapon's numbers: one
 hats.js 1096 hats
 heat.js 83 a gun's heat: the
 heights.js 87 a shot's height, Doom's
@@ -98,8 +100,8 @@ helppages.js 1498 the command line's Help
 hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
 hooks.js 3 hooks between screens that
-hotbar.js 515 the specials on the
-hotpick.js 340 What goes in my
+hotbar.js 501 the specials on the
+hotpick.js 278 What goes in my
 hpmath.js 68 HP in hundredths
 hpmeter.js 311 HP meters and the
 idbstore.js 38 One place that opens
@@ -108,7 +110,7 @@ itemtip.js 104 hold I on an
 itemtone.js 98 the colors an outfit
 jump.js 85 a duck's jump: one
 jumps.js 48 the jump counter
-justinmoves.js 45 Justin's moves on the
+justinmoves.js 43 Justin's moves on the
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which
 l4dd.js 3338 Quacky Zombies on every
@@ -125,7 +127,7 @@ l4ddpower.js 329 Dead Ducks Arcade's power
 l4ddpowerui.js 278 Dead Ducks Arcade's power
 l4ddrain.js 326 Downpour's rain
 l4ddrules.js 4916 the rules of Quacky
-l4ddsfx.js 545 Dead Ducks Arcade's sounds
+l4ddsfx.js 543 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online:
 langname.js 5 the name of Sandbox's
 laserart.js 95 the laser gun, drawn
@@ -144,12 +146,7 @@ maps.js 1123 maps: the world behind
 merchantlines.js 81 what the merchants say
 merchants.js 376 the merchants
 meters.js 137 the thin bars under
-mgj.js 219 Mad God Justin: what
-mgjart.js 96 Mad God Justin's new
-mgjbrain.js 613 Mad God Justin's brain,
-mgjpicks.js 502 Mad God Justin's pickups:
-mgjrules.js 1241 
-modes.js 444 the game modes
+modes.js 411 the game modes
 music.js 590 the music: our own
 musicbar.js 169 the music bar: the
 name.js 165 fonts and how a
@@ -185,13 +182,13 @@ pxtext.js 263 emoji and tooltips in
 quack.js 294 Who is the Quack?:
 quackrules.js 789 the rules of Who
 rainbowskin.js 116 the rainbow skin
-random.js 18 the two random helpers
+random.js 15 the two random helpers
 report.js 114 Report Bug or Suggest
-roomrules.js 368 room governance: groups and
+roomrules.js 360 room governance: groups and
 rooms.js 256 Play: create a room,
 roundline.js 36 Dead Ducks Arcade's round
 router.js 112 screens
-rules.js 1698 the rules of Agree
+rules.js 1674 the rules of Agree
 sandbox.js 1351 Sandbox: the key windows
 sandboxrules.js 2040 Sandbox: which map it
 saybubble.js 78 a duck's speech bubble
@@ -257,8 +254,8 @@ splash.js 71 the start screen: your
 sprintblur.js 54 the sprint's blurred border
 stamina.js 41 my sprint's stamina, in
 statrows.js 87 I want one table
-stats.js 165 stats: a player's stat
-store.js 262 what this device remembers
+stats.js 163 stats: a player's stat
+store.js 257 what this device remembers
 story.js 205 Story Chain: what the
 styles.js 386 duck styles
 survrules.js 321 Survival
@@ -272,21 +269,21 @@ ui.js 380 small helpers every screen
 umaprules.js 72 Made maps: the room's
 umaps.js 374 Made maps: making them,
 units.js 12 the game's units, in
-unlocks.js 408 things you unlock
+unlocks.js 383 things you unlock
 upbar.js 69 the green bar on
 updates.js 3697 Updates
 vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival
 vote.js 265 Vote Mode & Map:
-voterules.js 325 the lobby's vote for
+voterules.js 320 the lobby's vote for
 walkgrid.js 83 the walking grid: which
 weaponuse.js 104 using a weapon: one
 who.js 3 who this player is
 wounds.js 483 the wounds a hit
 zombiepath.js 187 the zombies' way to
 zombieroofs.js 327 the zombies' walk over
-zombies.js 1499 the zombies: one module
+zombies.js 1418 the zombies: one module
 
 ## js/hangout/
 activities.js 25 every Hangout activity, so
@@ -305,7 +302,7 @@ cabinend.js 135 End Cabin / Exit
 cats.js 662 Duck Cabin's cats: Annabelle,
 chalk.js 627 the chalk floor: draw
 characters.js 592 Duck Cabin's characters on
-death.js 101 how long a knocked-down
+death.js 99 how long a knocked-down
 doors.js 32 the doors: they swing
 dpflood.js 72 Downpour's flood over its
 dpground.js 323 Downpour's ground

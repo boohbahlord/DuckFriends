@@ -7,7 +7,7 @@
 
    Where it plays: on the front page and the rooms page each player hears their own happier songs, one straight after
    another; in a room (the lobby and the game) everyone hears the same song at the same moment, with 20 seconds between
-   two songs. No music in Quacky Zombies and Mad God Justin (the game itself, not its lobby). The lobby's countdown to
+   two songs. No music in Quacky Zombies (the game itself, not its lobby). The lobby's countdown to
    the start fades the music out, gone by its last 2 seconds, and Vote for game mode and Vote for map have none (the
    owner, Nov 17 20:37Z). What the duck? only comes up
    in a room whose map is a scary one (Nous Within Kenoma, Shelter Sky & Null), never on a happy map or on the menus.
@@ -77,8 +77,8 @@ const SAD = names.filter((n) => !HAPPY.includes(n));
 /* the owner (Nov 16): What the duck? plays on the scarier maps, as a part of the shuffle, and never on a happy one */
 const SCARY_SONGS = ["What the duck?"],
   SCARY_MAPS = ["nwk", "collage"];
-/* the owner: no music in Quacky Zombies and Mad God Justin, until we figure out what fits them */
-const QUIET = ["l4dd", "surv", "mgj"];
+/* the owner: no music in Quacky Zombies, until we figure out what fits them */
+const QUIET = ["l4dd", "surv"];
 
 /* 100% music: under the game. The songs' files are about 7 dB louder than the old songs were made, so this keeps them as
    quiet as the old music was at 100% (the owner: music stays quiet by default). Nov 19, the owner: "the music's too

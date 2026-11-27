@@ -1,5 +1,5 @@
 /* How long each map's black loading screen lasts, and what is fetched or made in the first seconds of play after it.
-   node tools/perf/loadtime.cjs   env: SCENES (cabin,downpour,surv,mgj,hang,board), SLOW (cpu slowdown, 1), PLAY (s, 10),
+   node tools/perf/loadtime.cjs   env: SCENES (downpour,surv,hang,board), SLOW (cpu slowdown, 1), PLAY (s, 10),
    PHONE (1: a phone)
    Each scene runs cold (a new browser profile: nothing cached, no Cache Storage) and then warm (the page loaded again in
    the same profile). The rule (the owner's, Nov 20 20:46Z): entering a map loads everything; nothing is fetched or made
@@ -12,11 +12,10 @@ const http = require("http"),
 const ROOT = path.resolve(__dirname, "../.."),
   SLOW = +process.env.SLOW || 1,
   PLAY = +(process.env.PLAY || 10),
-  SCENES = (process.env.SCENES || "downpour,surv,mgj,hang,board").split(",");
+  SCENES = (process.env.SCENES || "downpour,surv,hang,board").split(",");
 const ALL = {
   downpour: { mode: "l4dd", map: "cabin" },
   surv: { mode: "surv", map: "cabin" },
-  mgj: { mode: "mgj", map: "board" },
   hang: { mode: "hang", map: "cabin" },
   board: { mode: "aod", map: "board" },
 };

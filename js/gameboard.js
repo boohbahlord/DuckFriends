@@ -71,10 +71,6 @@ import { isDn, DN_BW } from "./duncerules.js";
 
 import { dnColsHTML, dnTopHTML, DN_PODIUM as PODIUM_HTML } from "./dunce.js";
 
-import { isMgj } from "./mgjrules.js";
-
-import { mgjBoardHTML } from "./mgj.js";
-
 import { isVd } from "./vddrules.js";
 
 import { vdBoardHTML } from "./vdd.js";
@@ -82,7 +78,6 @@ import { vdBoardHTML } from "./vdd.js";
 import { isTv, TV_ROWS_END } from "./triviarules.js";
 
 import { tvBoardHTML } from "./trivia.js";
-
 
 /* ---------- the board ---------- */
 /* Would You Rather: two tiles, each choice in its writer's font, with an OR strip between them */
@@ -136,15 +131,13 @@ export const boardHTML = (s) =>
             ? lawBoardHTML(s)
             : isDn(s)
               ? dnBoardHTML(s)
-              : isMgj(s)
-                ? mgjBoardHTML(s)
-                : sbOnBoard(s)
-                  ? SB_BOARD(s)
-                  : isVd(s)
-                    ? vdBoardHTML(s, R.me)
-                    : isTv(s)
-                      ? tvBoardHTML(s, R.me)
-                      : `<div class="board${!isWyr(s) && !isDdr(s) && s.options.aodColors === "gr" ? " aod-gr" : ""}">
+              : sbOnBoard(s)
+                ? SB_BOARD(s)
+                : isVd(s)
+                  ? vdBoardHTML(s, R.me)
+                  : isTv(s)
+                    ? tvBoardHTML(s, R.me)
+                    : `<div class="board${!isWyr(s) && !isDdr(s) && s.options.aodColors === "gr" ? " aod-gr" : ""}">
   ${isWyr(s) ? wyrColsHTML(s) : isDdr(s) ? ddrColsHTML() : `<div class="cols">${COLS.map((c, i) => `<div class="col c${i + 1}" data-c="${i}"><span class="col-name">${esc(c)}<span class="cb-mark">${SHORT[i]}</span></span></div>`).join("")}</div>`}
   <div class="ducks"></div><div class="fxl"></div>
   ${s.phase === "answer" || s.phase === "discuss" ? `<div class="topover">${lordHTML(s)}<p class="question">${fontHTML(writerFont(s), esc(isWyr(s) ? "Would you rather" : s.qs[s.qi].text))}</p></div>` : ""}</div>`; // (Would You Rather: the choices are on the tiles)

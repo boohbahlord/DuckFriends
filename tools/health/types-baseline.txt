@@ -582,8 +582,6 @@ js/maps.js TS2367 This comparison appears to be unintentional because the types 
 js/maps.js TS2698 Spread types may only be created from object types.
 js/meters.js TS2349 This expression is not callable.
 js/meters.js TS2365 Operator '+' cannot be applied to types 'string | number | ((el: any) => any)' and 'number'.
-js/mgjbrain.js TS2345 Argument of type '{ x: any; y: any; moving: boolean; f: number; } | { x: number; y: number; }' is not assignable to parameter of type '{ x: any; y: any; moving: boolean; f: number; }'.
-js/mgjpicks.js TS2365 Operator '+=' cannot be applied to types 'number' and 'string | number'.
 js/modes.js TS2362 The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
 js/modes.js TS2365 Operator '+' cannot be applied to types 'string | number' and 'number'.
 js/modes.js TS2365 Operator '+' cannot be applied to types 'string | number' and 'number'.

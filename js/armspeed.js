@@ -1,7 +1,7 @@
 /* ---------- how fast the weapons work, in every mode ----------
    I want the guns, the arrows, the knife, the hammer and the daggers to work as fast as they do in Quacky Zombies, in
    every mode (the owner, Nov 4). These are Quacky Zombies' numbers, the one place they live: Quacky Zombies (l4ddrules.js
-   ARMS) and the other modes (rules.js, mgjrules.js) both read them from here.
+   ARMS) and the other modes (rules.js) both read them from here.
    Speeds are in Duck Cabin's pixels a second; the other modes' boards measure them in board widths a second, and a
    computer's board is about BOARD_PX wide. Times are in ms. */
 export const BOARD_PX = 1100;

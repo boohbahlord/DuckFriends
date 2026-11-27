@@ -2,11 +2,7 @@
    Moved out of game.js to keep that file small (a pure move). It imports back from game.js, which imports it. */
 import { late } from "./game.js";
 
-import {
-  R,
-  me,
-  world,
-} from "./game.js";
+import { R, me, world } from "./game.js";
 import {
   sbGo,
   viewOver,
@@ -17,11 +13,9 @@ import {
 
 import { boardHTML } from "./gameboard.js";
 
-import { graceLeft, mgjTip } from "./gamehand.js";
+import { graceLeft } from "./gamehand.js";
 
-import {
-  esc,
-} from "./ui.js";
+import { esc } from "./ui.js";
 import {
   COLS,
   needed,
@@ -93,8 +87,6 @@ import {
   endNeed,
 } from "./duncerules.js";
 
-import { isMgj } from "./mgjrules.js";
-
 import {
   isVd,
   VD_PHASES,
@@ -107,7 +99,6 @@ import {
 import { isTv, TV_BOARD } from "./triviarules.js";
 
 import { tvWriteHTML, tvActHTML } from "./trivia.js";
-
 
 export function actHTML(s) {
   const sbg = sbGo(s);
@@ -158,10 +149,6 @@ export function actHTML(s) {
     return `<div class="act-row"><button type="button" class="btn theme-btn${mine ? " done" : ""}" data-a="end">${mine ? "Waiting ✓" : s.bb.champ != null ? "On to the podium" : "Next match"} <kbd>Enter</kbd></button>${count}</div>`;
   if (s.phase === "answer" && isLaw(s) && s.law) return lawActHTML(s);
   if (s.phase === "answer" && isDn(s) && s.dn && s.dn.cur) return dnActHTML(s);
-  if (s.phase === "boss")
-    return `<span class="progress mgj-tip">${mgjTip(s)}</span>`;
-  if (s.phase === "mgjend")
-    return `<span class="progress">${s.mgj && s.mgj.won ? "Justin is defeated!" : "Justin Wins."} The stats are next.</span>`;
   if (s.phase === "dunced") {
     const p = s.players[((s.dn && s.dn.cur) || {}).def];
     return `<span class="progress">${p ? `${esc(p.name)} is the dunce` : "A dunce"}</span>`;
@@ -216,8 +203,8 @@ export function actHTML(s) {
   if (s.phase === "results") {
     const rv = reviewCount(s),
       lv = s.vote && s.vote.kind === "lobby";
-    return `<div class="act-row"><button type="button" class="btn${mine ? " yellow" : " green"}" data-a="end">${mine ? "Waiting ✓" : isBb(s) ? "Next tournament" : isMgj(s) ? "Try again" : "Next round"} <kbd>Enter</kbd></button>
-      ${s.round >= 1 && !s.review && !isMgj(s) ? `<button type="button" class="btn purple" data-a="review"${s.reviewVotes[R.me] ? " disabled" : ""} data-tip="Adds every round's stats after this round's. One vote each round.">All-rounds review ${rv}/${need}</button>` : ""}
+    return `<div class="act-row"><button type="button" class="btn${mine ? " yellow" : " green"}" data-a="end">${mine ? "Waiting ✓" : isBb(s) ? "Next tournament" : "Next round"} <kbd>Enter</kbd></button>
+      ${s.round >= 1 && !s.review ? `<button type="button" class="btn purple" data-a="review"${s.reviewVotes[R.me] ? " disabled" : ""} data-tip="Adds every round's stats after this round's. One vote each round.">All-rounds review ${rv}/${need}</button>` : ""}
       <button type="button" class="btn ${lv ? "red" : "ghost"}" data-a="lobbyvote"${s.round === 1 ? ' data-tip="You can also vote to go back to the lobby on the all-rounds stats screen."' : ""}>${lv ? "Vote yes: back to the lobby" : "Vote: back to the lobby"}</button>${newGameHTML(s)}${count}${voteBackNote(s)}</div>`;
   }
   if (s.phase === "over")
@@ -493,21 +480,13 @@ export const vdRound = (s) => {
   if (!V || !V.turn) return "";
   return `Turn ${V.turn}${["vdprompt", "vddate"].includes(s.phase) && V.order.length ? ` · Date ${Math.min(V.k + 1, V.order.length)} of ${V.order.length}` : ""}`;
 };
-export const MGJ_TITLES = {
-  boss: "Mad God Justin",
-  mgjend: "The end",
-  results: "The fight",
-};
 /* what the middle of the screen shows */
 export function viewHTML(s) {
   if (isHang(s)) return `<div class="stage hang-stage">${HANG_HTML}</div>`;
   if (isLaw(s) && s.phase === "counsel")
     return '<div class="law-counsel-wrap"></div>';
   if (isTv(s) && s.phase === "tvwrite") return tvWriteHTML(s, R.me, whoHTML(s));
-  if (
-    (isLaw(s) || isDn(s) || isMgj(s) || isVd(s) || isTv(s)) &&
-    s.phase === "results"
-  )
+  if ((isLaw(s) || isDn(s) || isVd(s) || isTv(s)) && s.phase === "results")
     return '<div class="bb-results"><div class="statpanel law-statpanel"></div></div>';
   if (isQuack(s))
     switch (s.phase) {

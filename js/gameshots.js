@@ -6,8 +6,7 @@ import { el, $ } from "./ui.js";
 import { isL4dd } from "./l4ddrules.js";
 import { shotStop } from "./l4dd.js";
 import { sbOnBoard } from "./sandboxrules.js";
-import { isMgj } from "./mgjrules.js";
-import { mgjStop } from "./mgjpicks.js";
+import { zombieStop } from "./boardzombies.js";
 import { hatLayers, HAT_TOP } from "./hats.js";
 import { faceLayer } from "./faces.js";
 import { beakSVG } from "./beaks.js";
@@ -25,8 +24,8 @@ export const SHOT_EL = new Map(); // a shot's number → its element
    ZOMBIES IN A GLITCHY WEIRD WAY. LIKE IF U SHOOT A PISTOL THE BULLET KIND IS SEEN GOING PAST THEM A BIT"). The host
    finds the hit at its next beat and my screen hears of it later, so the shot I draw at where it is now flew on past
    what it hit until then. Now, each frame, from where I last drew it to where it is now, I look for what stops it as I
-   draw things (Dead Ducks Arcade: a wall or a zombie, l4dd.js shotStop; Mad God Justin: his chair or a controller, a
-   wave zombie, him, mgjrules.js mgjStop), every gun and thrown thing but the grenade (which lands) and the Laser
+   draw things (Dead Ducks Arcade: a wall or a zombie, l4dd.js shotStop; Sandbox's board: a zombie, boardzombies.js
+   zombieStop), every gun and thrown thing but the grenade (which lands) and the Laser
    Rifle's line; the sniper's goes through as many as it does there. It ends at that spot, its hit shown
    there at once (fx.js fxImpact). If the host then says it went on (a miss, a crit's slug, the sniper's: sh.ms, sh.hit,
    sh.zp, sh.zh), or still has it once it should long have heard (STOP_WAIT), it flies on from there. True: it's
@@ -34,10 +33,10 @@ export const SHOT_EL = new Map(); // a shot's number → its element
 const STOP_WAIT = 700;
 export function stopped(s, sh, at, hang, now) {
   const r = SHOT_SEEN.get(sh.n),
-    mgj = isMgj(s) || sbOnBoard(s); // (Sandbox's board: its spawns' zombies stop shots as his do)
+    zb = sbOnBoard(s); // (Sandbox's board: its spawns' zombies stop shots)
   if (
     !r ||
-    !((hang && isL4dd(s)) || mgj) ||
+    !((hang && isL4dd(s)) || zb) ||
     sh.k === "grenade" ||
     sh.k === "laser"
   )
@@ -55,8 +54,8 @@ export function stopped(s, sh, at, hang, now) {
   } // (it went on: from where it stopped)
   if (r.stop) return true;
   const [x0, y0] = r.p || [sh.x0, sh.y0],
-    end = mgj
-      ? mgjStop(s, sh, r, x0, y0, at.x, at.y, now)
+    end = zb
+      ? zombieStop(s, sh, r, x0, y0, at.x, at.y)
       : shotStop(s, sh, r, x0, y0, at.x, at.y);
   r.p = [at.x, at.y];
   if (!end) return false;

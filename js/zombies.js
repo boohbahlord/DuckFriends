@@ -1297,16 +1297,8 @@ export function clearShot(x0, y0, x1, y1, z = 0) {
    touching it, at 1); swipe: [ms at the duck before its first swipe, ms between swipes]; deadMs: how long its body lies
    there */
 export const ZOMBIE_BREEDS = {
-  /* Mad God Justin's waves (mgjrules.js wavesTick), on the board */
-  mgjWave: {
-    speed: 3.2,
-    hp: 3,
-    reach: 1.2, // (it stops at 1, touching, as on the map; it used to stop at 0.8 and reach 1)
-    swipe: [0, 1200],
-    deadMs: 4000, // (as long as Dead Ducks Arcade's, L4.DEAD_MS: the owner's, Nov 19 01:34Z, "everything" with its feel)
-  },
   /* Sandbox's zombies, on the board and on Duck Cabin (sbspawn.js boardTick, sbcabin.js cabinTick, both by brainWalk):
-     they stop at 1, touching, as on the map, so they reach 1.2 as the waves do (they stopped at 0.8 of a reach of 1).
+     they stop at 1, touching, as on the map, so they reach 1.2 (they stopped at 0.8 of a reach of 1).
      The board's damage, the median of 5 seeds: 4,771 before, 5,585 after (1.1: 5,589) */
   sbBoard: { speed: 3.2, hp: 3, reach: 1.2, swipe: [0, 1200], deadMs: 4000 },
 };
@@ -1315,13 +1307,8 @@ export const zLook = (B) => [B.hp, 0, "", ...lookOf()];
 /* ---------- the board's zombies: the map's walk, on the board ----------
    The board's spots are fractions of it (x across, y down), and a duck's length there is duck = [across, down] of them.
    The walk's px on the board are DL to a duck's length both ways, so its steps, its crowd and its turns are the map's,
-   unchanged. This is the one place the board's units turn into the walk's and back.
-   M: the zombies' holder ({ zb: [{ i, x, y, hp, a (its last swipe), wu (its swing's wind-up since), n (since when it's at its duck), f (which way it
-   faces), l, d (when it died), w }], t (the last heartbeat), ze (the ones biting the cake) }). B: its breed. h: ids
-   (the ducks it goes for), cake ([x, y] on the board, or null), claw(id, now) (a swipe at that duck: true once it's
-   down). Returns whether any moved, swiped or was buried */
+   unchanged. This is the one place the board's units turn into the walk's and back (brainWalk below). */
 const DL = 56; // the walk's px in a duck's length on the board (the map's own, RX)
-const BK = ["ga", "pk", "sr", "sx", "hu"]; // (what a board zombie keeps from one heartbeat to the next: KEEP is the map's)
 /* the board as a ground (gr()) for a duck of duck = [across, down] of it: [kx, ky] the walk's px in one of its shares,
    and the ground, open and flat to a little short of its edges */
 function boardGround(duck) {
@@ -1330,79 +1317,11 @@ function boardGround(duck) {
       x >= 0.01 * kx && x <= 0.99 * kx && y >= 0.03 * ky && y <= 0.97 * ky;
   return [kx, ky, { rx: DL, ry: DL, h: () => 0, ok: inside, free: inside }];
 }
-export function boardWalk(s, M, now, B, h) {
-  const [kx, ky, ground] = boardGround(h.duck),
-    v = B.speed * DL,
-    dt = Math.min(0.35, Math.max(0.05, (now - (M.t || now - 200)) / 1000)),
-    zs = M.zb.map((o) => ({
-      i: o.i,
-      x: o.x * kx,
-      y: o.y * ky,
-      st: o.d ? 3 : 2,
-      a: o.a || 0,
-      n: o.n || 0,
-      wu: o.wu || 0,
-      l: [o.hp, v, ""],
-      ...Object.fromEntries(BK.filter((k) => o[k]).map((k) => [k, o[k]])), // (round the ones in its way: crowd.js goRound; its spot round the duck and how long it's been held up: crowd.js surround)
-      o,
-    })),
-    pls = h.ids.map((id) => {
-      const xy = [s.pos[id].x * kx, s.pos[id].y * ky];
-      return { id, p: s.pos[id], xy, zz: 0, dk: null, way: null, goal: xy };
-    }),
-    eating = { ...(M.ze || {}) };
-  M.t = now;
-  for (const k of Object.keys(eating))
-    if (k !== "fx" && eating[k] <= now) delete eating[k];
-  BOARD = ground;
-  try {
-    walkAll(zs, {
-      s,
-      now,
-      T: now,
-      dt,
-      pls,
-      dist: null,
-      brd: {},
-      eating,
-      ducks: pls,
-      cake: h.cake ? [h.cake[0] * kx, h.cake[1] * ky] : null,
-      swipe: B.swipe,
-      reach: B.reach,
-      way: (x, y, tx, ty) => [tx, ty],
-      bite: null,
-      claw: (target) => h.claw(target.id, now),
-    });
-  } finally {
-    BOARD = null;
-  }
-  let ch = false;
-  for (const z of zs) {
-    const o = z.o,
-      x = Math.round((z.x / kx) * 1000) / 1000,
-      y = Math.round((z.y / ky) * 1000) / 1000;
-    if (x !== o.x || y !== o.y || z.a !== (o.a || 0) || z.wu !== (o.wu || 0))
-      ch = true;
-    if (z.a !== (o.a || 0)) o.f = Math.abs(z.dir) > 157 ? -1 : 1; // (it swiped: it faces the duck)
-    Object.assign(o, { x, y, a: z.a, n: z.n });
-    if (z.wu) o.wu = z.wu;
-    else delete o.wu; // (its swing's wind-up since: the tell)
-    for (const k of BK)
-      if (z[k]) o[k] = z[k];
-      else delete o[k];
-  }
-  if (Object.keys(eating).length) M.ze = eating;
-  else delete M.ze; // (none biting: nothing kept)
-  /* the bodies go after a moment */
-  const n0 = M.zb.length;
-  M.zb = M.zb.filter((o) => !o.d || now - o.d < B.deadMs);
-  return ch || M.zb.length !== n0;
-}
 /* ---------- Sandbox's walkers: each one's brain says where, the zombies' walk takes it there ----------
    What their brains planned (sbbrain.js think: [{ me, o, d }]), walked with the zombies' own step (chaseStep: straight
    at it, down the field, round what's in the way, never into a duck) and kept apart with their own crowd (separate), on
    the ground they're on: a world's (sbcabin.js cabinTick) or the board's (sbspawn.js boardTick: its shares turn into
-   the walk's px here, as boardWalk's). Each kind's brain stays its own; the body is this one (the cornerstone: one
+   the walk's px here, boardGround). Each kind's brain stays its own; the body is this one (the cornerstone: one
    walk). c, each map's own: far(a, b) duck lengths apart; duck: the board's duck ([across, down], none on a world);
    ducks: [{ x, y, z }] the ducks it never walks into; field(to): the way to it (null: straight); speed(o, to, bd) duck
    lengths a second; reach (its claw's), stopK (how near a claw it stops), ptStop (how near a \move\'s spot);

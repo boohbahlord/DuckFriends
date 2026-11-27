@@ -43,7 +43,7 @@ import { play, setListener } from "./hangout/sounds.js";
 import { svgDataURL } from "./svgurl.js";
 import { justinSVG } from "./hangout/npcart.js";
 import { merchantById, merchantSVG, merchantLook } from "./merchants.js";
-import { FLAME, TELEPORT } from "./mgjart.js";
+import { FLAME, TELEPORT } from "./fxart.js";
 import { rainbowHTML } from "./art.js";
 import { low } from "./gfx.js";
 import { mapMount, mapUnmount, mapDraw } from "./l4ddmap.js";

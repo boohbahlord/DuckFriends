@@ -4,8 +4,6 @@
    actions. */
 import { CRIT_DOWN } from "./wounds.js";
 
-import { CAKE_SPEED, CAKE_EAT_MS } from "./mgjrules.js";
-
 import { critOf, armOfShot, armDmg } from "./guns.js";
 import { drawDmg } from "./bowdraw.js";
 
@@ -69,26 +67,13 @@ import {
   justinShown,
   justinAt,
   JUSTIN_ID,
-  boardMgj,
-  BJ_HP,
+  CAKE_SPEED,
+  CAKE_EAT_MS,
 } from "./boardjustin.js";
 
 import { pwAdd, pwHit, DEATH } from "./wounds.js";
 
-import {
-  isMgj,
-  mgjZombieHit,
-  mgjStab,
-  mgjHurt,
-  mgjSoak,
-  mgjGone,
-  mgjHitAt,
-  MGJ_SCALE,
-  MGJ_HAMMER,
-  DMG,
-  mgjHalf,
-} from "./mgjrules.js";
-import { mgjShot, mgjLgren } from "./mgjpicks.js";
+import { zombieHit, zombieShot } from "./boardzombies.js";
 
 import { isL4dd, l4Hurt, standing as l4Standing } from "./l4ddrules.js";
 
@@ -114,7 +99,7 @@ function justinKilled(s, by, w) {
 }
 /* a player knocked down by another player's weapon: the last few, each numbered, so every device counts its own player's
    kills once (unlocks.js: the shotgun opens at 144 kills, the grenade at 360, and Justin counts too) */
-/* the normal game's HP (every mode but Mad God Justin and Dead Ducks Arcade): a duck has PHP HP before it plays dead
+/* the normal game's HP (every mode but Dead Ducks Arcade): a duck has PHP HP before it plays dead
    (4: the owner's, Nov 18 16:50Z, "every player in other game modes has 4 hp by default"; it was 6), has them all back
    after PHP_BACK ms without a hit, and gets up with them all. s.php = { id: { n: HP lost, t: the last hit } }. True when the hit only took HP.
    What a hit takes (owner 2026-11-03 17:15Z, not in Quacky Zombies): the hammer, the chair and a grenade 3, the knife 2,
@@ -129,7 +114,6 @@ const phpLost = (s, id, now) => {
    armDmg; the owner's, Nov 22 20:51Z: one gun mechanic in every mode, no table of the board's own) */
 export const dmgOf = (s, k) => (isL4dd(s) ? 1 : armDmg(ARMS[armOfShot(k)]));
 export function soaks(s, id, now, dmg = 1, by, raw = false) {
-  if (isMgj(s)) return false;
   if (normalGame(s) && (shielded(s, id, now) || (by && shielded(s, by, now))))
     return true; // (spawn protection: nothing hurts a duck that just came back, and what it shoots hurts nobody)
   if (invuln(s)) return hurtFx(s, id, now); // (Invulnerability: the hit only flashes)
@@ -168,18 +152,11 @@ export const SB_H = {
   l4set: l4SetHp,
 };
 /* the board's HP (hpmath.js, every mode without its own: modes.js hp): a duck's PHP (a Sandbox spawn's or respawn's
-   for it), back after a while without a hit; Justin on the board has Mad God Justin's when the board has it, else 1 */
+   for it), back after a while without a hit; Justin on the board has 1 */
 hpBreed("board", {
   of(s, id, now, seated) {
     if (id === JUSTIN_ID)
-      return !justinShown(s)
-        ? null
-        : boardMgj(s)
-          ? [
-              s.justin.down ? 0 : Math.max(0, s.justin.hp ?? BJ_HP),
-              s.justin.max || BJ_HP,
-            ]
-          : [s.justin.down ? 0 : 1, 1]; // (one hit takes his 1, as always)
+      return !justinShown(s) ? null : [s.justin.down ? 0 : 1, 1]; // (one hit takes his 1, as always)
     if (!seated || !boardPhases(s).includes(s.phase)) return null;
     const max = sbHpOf(s, id) || PHP;
     return [
@@ -206,8 +183,7 @@ hpBreed("board", {
   bar(s, id, now, seated) {
     if (id === JUSTIN_ID) {
       if (!justinShown(s)) return null;
-      const most = boardMgj(s) ? s.justin.max || BJ_HP : 1;
-      return { hp: boardMgj(s) ? (s.justin.hp ?? most) : 1, most };
+      return { hp: 1, most: 1 };
     }
     if (!seated || !boardPhases(s).includes(s.phase)) return null;
     const most = sbHpOf(s, id) || PHP;
@@ -247,7 +223,7 @@ export function shovePx(s, id, ux, uy, far, now, side) {
     dY = 0.012 * HH;
   shove(s, id, ux, (uy * dX) / dY, far / dX, now, side);
 }
-export function shove(s, id, ux, uy, far0, now, side, more = {}) {
+function shove(s, id, ux, uy, far0, now, side, more = {}) {
   const far = pushTaken(far0, weightOf(s, id)), // (the ratio: a bigger duck is moved less far, push.js)
     p = s.pos[id],
     hang = isHang(s),
@@ -280,7 +256,7 @@ export function shove(s, id, ux, uy, far0, now, side, more = {}) {
    are in a duck's room, as for the bullets; in Hangout only on the same side of the cabin's walls and at about the same
    height. Justin can be hit too. Returns who was hit (JUSTIN_ID for Justin); done: who this swing already hit, never hit
    twice (Duck Cabin's own, Justin and the cats, go in it as "h:" and their id). */
-export const REACH = {
+const REACH = {
   knife: [2.3, 0.9],
   hammer: [3, 0.5],
   axe: [3, 0.5],
@@ -296,12 +272,7 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
     rx = hang ? 0.006 : boardDuck(s)[0],
     ry = hang ? (0.006 * HW) / HH : boardDuck(s)[1], // (in Hangout's world, a duck length the same in world px up and down as across, so a swing reaches as far every way: the owner's, Nov 18 15:18Z "Make sure melee weapons have the same range in any direction". It was 0.012, half as far again up and down)
     [far0, wide] = REACH[sp],
-    far =
-      far0 *
-      sizeOf(s, by) * // (a bigger duck's arm and weapon reach farther, a smaller one's not as far: as they're drawn, sizeShots)
-      (sp === "hammer" && by === JUSTIN_ID && isMgj(s)
-        ? MGJ_SCALE * MGJ_HAMMER
-        : 1); // (Mad God Justin's bigger hammer reaches farther)
+    far = far0 * sizeOf(s, by); // (a bigger duck's arm and weapon reach farther, a smaller one's not as far: as they're drawn, sizeShots)
   const al = Math.hypot(aim[0] / rx, aim[1] / ry) || 1,
     ux = aim[0] / rx / al,
     uy = aim[1] / ry / al;
@@ -325,7 +296,6 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
       P = s.players[id];
     if (id === by || !p || p.x < 0 || !P || P.dead || isGhost(s, id)) continue;
     if (done.includes(id)) continue;
-    if (isMgj(s) && by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
     if (vdSafe(s, id)) continue; // (Valentine's Duck Date: nothing knocks down the two at the table)
     if (jumpDodges(p, now)) continue; // (a duck in the air is missed)
     const n = near(
@@ -340,11 +310,7 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
   if (sp === "knife") hits = hits.sort((a, b) => a.d - b.d).slice(0, 1);
   for (const h of hits) {
     const crit = critRoll(s, sp);
-    if (
-      !(isMgj(s)
-        ? mgjSoak(s, h.id, now)
-        : hitSoaks(s, h.id, now, sp, crit, by, sizeOf(s, by)))
-    ) {
+    if (!hitSoaks(s, h.id, now, sp, crit, by, sizeOf(s, by))) {
       s.players[h.id].dead = true;
       holdDown(s, h.id, now);
       playerKilled(s, by, h.id, sp);
@@ -365,30 +331,14 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
     }
   }
   let stab = false;
-  if (!hang && by !== JUSTIN_ID && !done.includes(JUSTIN_ID) && isMgj(s))
-    stab = mgjHitAt(
-      s,
-      by,
-      now,
-      (b) =>
-        !!near(
-          p0.x + (b.x - p0.x) / MGJ_SCALE,
-          p0.y + (b.y - p0.y) / MGJ_SCALE,
-          0,
-          0,
-        ), // (he's bigger: a swing reaches him from MGJ_SCALE times as far)
-      logLine,
-      (DMG[sp] || 1) * sizeOf(s, by),
-    );
-  // (Mad God Justin: 1 damage; a hit on his double counts for nothing)
-  else if (
+  if (
     !hang &&
     by !== JUSTIN_ID &&
     !done.includes(JUSTIN_ID) &&
     justinShown(s) &&
     !s.justin.down
   ) {
-    // (the Justin option: he can be hit back; the board's Mad God Justin takes HP off first)
+    // (the Justin option: he can be hit back)
     const n = justinAt(s.justin, now),
       got = near(n.x, n.y, 0, 0) ? justinHit(s, by, now, logLine, sp) : 0;
     if (got === 2) justinKilled(s, by, sp);
@@ -397,8 +347,7 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
   if (
     !hang &&
     by !== JUSTIN_ID &&
-    (isMgj(s) || sbOnBoard(s)) &&
-    mgjZombieHit(
+    zombieHit(
       s,
       (x, y, big, body) => {
         if (!body) return !!near(x, y, 0, 0, big);
@@ -410,7 +359,7 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
       by,
     )
   )
-    stab = true; // (Mad God Justin's zombies in reach too)
+    stab = true; // (Sandbox's board zombies in reach too)
   if (hang)
     for (const n of hangTargets(s, now, sp)) {
       if (done.includes("h:" + n.id)) continue;
@@ -468,8 +417,7 @@ export function attacks(s, now) {
       from = a.at
         ? a.at
         : J
-          ? (isMgj(s) ? !mgjGone(s, now) : justinShown(s) && !s.justin.down) &&
-            justinAt(s.justin, now)
+          ? justinShown(s) && !s.justin.down && justinAt(s.justin, now)
           : !(s.players[a.by] || {}).dead && s.pos[a.by];
     if (!from || from.x < 0) {
       ch = true;
@@ -479,7 +427,6 @@ export function attacks(s, now) {
       hit = swing(s, a.by, a.sp, [a.ax, a.ay], now, from, a.hit);
     if (hit.length) {
       a.hit.push(...hit);
-      if (J) for (const id of hit) mgjHurt(s, id);
       s.fxN = (s.fxN || 0) + 1;
       s.fx = [
         ...(s.fx || []).slice(-19),
@@ -522,15 +469,13 @@ export const shotAt = (sh, t) => ({
 });
 /* a grenade going off at (x, y): every duck in its rings takes its ring's damage (blast.js) and is thrown away from it,
    three times as far as the hammer throws one, higher the nearer it was (the owner's, Nov 21 17:48Z: "Explosions should
-   change the height of a thing it knocks back based on how close they are"); Justin is knocked down (Mad God Justin: 1
-   damage), Duck Cabin's Justin and cats are hit. Every screen draws the blast (the boom fx) */
+   change the height of a thing it knocks back based on how close they are"); Justin is knocked down, Duck Cabin's Justin and cats are hit. Every screen draws the blast (the boom fx) */
 function blast(s, sh, x, y, now, o = {}) {
   const hang = isHang(s),
     w = o.w || "grenade",
     [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
     side = sh.hin || 0,
     mine = sh.by !== JUSTIN_ID,
-    self = (id) => id === sh.by && (w === "grenade" || w === "glauncher"), // (my own grenade hurts me too: the owner's, Nov 16)
     hit = [];
   const near = reach({
     x,
@@ -548,7 +493,6 @@ function blast(s, sh, x, y, now, o = {}) {
         const p = s.pos[id],
           P = s.players[id];
         if (!p || p.x < 0 || !P || isGhost(s, id)) return null;
-        if (isMgj(s) && mine && !self(id)) return null; // (Mad God Justin: the ducks are on one side)
         if (vdSafe(s, id)) return null; // (Valentine's Duck Date: the two at the table)
         return [
           p.x,
@@ -560,10 +504,6 @@ function blast(s, sh, x, y, now, o = {}) {
       },
       (id, n) => {
         const P = s.players[id];
-        if (self(id) && isMgj(s)) {
-          if (mgjHalf(s, id, now)) hit.push(id);
-          return;
-        } // (Mad God Justin: half my HP, rounded down, never down by it; no knock-back)
         const killed = !P.dead && !soaks(s, id, now, hitOf(n).dmg, sh.by); // (its ring's)
         if (P.dead || killed) {
           if (!P.dead) playerKilled(s, sh.by, id, w);
@@ -587,9 +527,8 @@ function blast(s, sh, x, y, now, o = {}) {
       },
     ],
     (near) =>
-      (isMgj(s) || sbOnBoard(s)) &&
       mine &&
-      mgjZombieHit(
+      zombieHit(
         s,
         (zx, zy, big, body) => {
           if (!body) return near(zx, zy, 0, 0, big);
@@ -601,20 +540,12 @@ function blast(s, sh, x, y, now, o = {}) {
         sh.by,
         null,
         hitOf,
-      ), // (Mad God Justin's zombies in it: their ring's damage, blast.js)
+      ), // (Sandbox's board zombies in it: their ring's damage, blast.js)
     [
       !hang && mine && justinShown(s) ? [justinAt(s.justin, now)] : [],
       (j) => j && [j.x, j.y, 0, 0],
       () => {
-        const got = isMgj(s)
-          ? mgjStab(
-              s,
-              sh.by,
-              now,
-              logLine,
-              w === "glauncher" ? DMG.lgren : 1 + drawDmg(sh.dr),
-            )
-          : justinHit(s, sh.by, now, logLine, w, sh);
+        const got = justinHit(s, sh.by, now, logLine, w, sh);
         if (got) {
           if (got === 2) justinKilled(s, sh.by, w);
           hit.push(JUSTIN_ID);
@@ -771,12 +702,7 @@ function shotCan(s, sh, id, now) {
     return false;
   if (sh.hin !== undefined && (inCabin(...toPx(p)) ? 1 : 0) !== sh.hin)
     return false;
-  return (
-    shotReach(s, sh, p) &&
-    !jumpDodges(p, now) &&
-    !vdSafe(s, id) &&
-    !(isMgj(s) && sh.by !== JUSTIN_ID)
-  );
+  return shotReach(s, sh, p) && !jumpDodges(p, now) && !vdSafe(s, id);
 }
 /* the first duck in the way of a shot from (sh.lx, sh.ly) to at, within a duck's room of the line: its id, how far
    along (0 … 1) and where, or null (not the shooter, a duck that's down or jumping over it, a ghost, the other side
@@ -806,87 +732,11 @@ function firstDuck(s, sh, at, now) {
 }
 /* the grenade launcher's grenade got to a duck: it stops there (where it goes off) */
 function lgrenHits(s, sh, at, now) {
-  if (isMgj(s)) return mgjLgren(s, sh, sh.lx, sh.ly, at, now); // (Mad God Justin: it goes off on him)
   const d = firstDuck(s, sh, at, now);
   if (!d) return false;
   at.x = d.x;
   at.y = d.y;
   return true;
-}
-/* the Laser Rifle's beam (Mad God Justin's pickup): at once, along the aim to the first duck or on past the board's
-   edge; anything else on that line is hit as a bullet hits it. Every screen draws its red line (the l4line fx, w
-   "laser"). The chain gun that shot this way too is gone (the owner's, Nov 22 19:26Z: "REMOVE CHAIN GUN") */
-const BEAM_FAR = 1.6; // (board widths: on past the board's edge)
-export function beamShot(s, by, p, aim, now) {
-  const hang = isHang(s),
-    l = Math.hypot(aim[0], aim[1]) || 1,
-    sh = {
-      n: s.fxN,
-      by,
-      k: "laser", // (1 damage: mgjrules.js shotDmg)
-      x0: p.x,
-      y0: p.y,
-      lx: p.x,
-      ly: p.y,
-      vx: 0,
-      vy: 0,
-      t: now,
-      ...(hang
-        ? {
-            hz: Math.round(zOf(p, "body", now)),
-            hin: inCabin(...toPx(p)) ? 1 : 0,
-          }
-        : {}),
-      ...floorFirst(s, by, p, aim, now), // (a duck on my floor in its line: it stays on my floor)
-    },
-    far = hang ? BEAM_FAR * 0.25 : BEAM_FAR, // (Hangout's world is far bigger than a board)
-    up = 0.41 * sizeOf(s, by); // (out of its gun, at my Size: sizeShots)
-  let at = {
-    x: p.x + (aim[0] / l) * far,
-    y: p.y + (aim[1] / l) * far,
-    z: up,
-  };
-  if (hang) {
-    // the cabin's walls stop it
-    for (let i = 1; i <= 80; i++) {
-      const x = p.x + ((aim[0] / l) * far * i) / 80,
-        y = p.y + ((aim[1] / l) * far * i) / 80;
-      if ((inCabin(x * HW, y * HH) ? 1 : 0) !== sh.hin) {
-        at = { x, y, z: up };
-        break;
-      }
-    }
-  }
-  const d = firstDuck(s, sh, at, now);
-  if (d) {
-    const [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s);
-    at = {
-      x: d.x + ((aim[0] / l) * rx) / 2,
-      y: d.y + ((aim[1] / l) * ry) / 2,
-      z: up,
-    }; // (a little past it, so the duck is surely on the line)
-  }
-  shotHits(s, sh, at, p.x, p.y, at.x - p.x, at.y - p.y, now);
-  const k = hang ? [HW, HH] : [1, 1];
-  s.fxN = (s.fxN || 0) + 1;
-  s.fx = [
-    ...(s.fx || []).slice(-19),
-    {
-      n: s.fxN,
-      kind: "l4line",
-      by,
-      who: [],
-      t: now,
-      w: "laser",
-      ...(d ? { hd: 1 } : {}), // (hd: it stopped at a duck, which smokes: game.js)
-      ...(hang ? {} : { b: 1 }),
-      x0: +(p.x * k[0]).toFixed(4),
-      y0: +(p.y * k[1]).toFixed(4),
-      x1: +(at.x * k[0]).toFixed(4),
-      y1: +(at.y * k[1]).toFixed(4),
-      hz: Math.round(zOf(p, "body", now)),
-    },
-  ]; // (b: board units; in Hangout, the world's pixels, as Quacky Zombies' own)
 }
 /* the flamethrower's puff (flamer.js), outside Dead Ducks Arcade: it reaches farther the longer it's held (Hangout: up to
    the cabin's walls); every duck in its cone is scorched (scorch), and the ground at its end burns for a while.
@@ -929,7 +779,7 @@ export function duckFlame(s, by, p, aim, now) {
     const q = s.pos[id],
       P = s.players[id];
     if (id === by || !q || q.x < 0 || !P || P.dead || isGhost(s, id)) continue;
-    if (isMgj(s) || vdSafe(s, id) || jumpDodges(q, now)) continue;
+    if (vdSafe(s, id) || jumpDodges(q, now)) continue;
     if (hang && ((inCabin(...toPx(q)) ? 1 : 0) !== side || !nearH(zOf(q), z0)))
       continue;
     if (inCone((q.x - p.x) / rx, (q.y - p.y) / ry, ux, uy, far + 0.3))
@@ -958,7 +808,7 @@ export function duckFlame(s, by, p, aim, now) {
 }
 /* everything that isn't a duck, in the flamethrower's fire or on its burning ground (the owner's, Nov 19 16:21Z:
    "everyone should be able to be on fire not just zombies, from the flamethrower or otherwise"): Sandbox's NPCs on the
-   board, Justin (the board's, Mad God Justin's and the cabin's), his double, the cabin's cats and made
+   board, Justin (the board's and the cabin's), the cabin's cats and made
    NPCs. Each takes 1 HP as it's lit, burns THING_BURN ms and isn't lit again while it burns, as a duck is in Dead Ducks
    Arcade (BURN.P). near(x, y, z, side, big): is that spot, in shares of the map, in the fire. True when something
    was lit */
@@ -974,8 +824,8 @@ function flameThings(s, by, near, now) {
   };
   const hang = isHang(s);
   let any = false;
-  if (!hang && (isMgj(s) || sbOnBoard(s)) && s.mz && s.mz.zb) {
-    /* Sandbox's NPCs and Mad God Justin's zombies: the ones not burning already */
+  if (!hang && sbOnBoard(s) && s.mz && s.mz.zb) {
+    /* Sandbox's NPCs: the ones not burning already */
     const ok = new Map(
       s.mz.zb
         .filter((o) => !o.d && !(o.bn > now))
@@ -984,7 +834,7 @@ function flameThings(s, by, near, now) {
     const hp0 = new Map([...ok.values()].map((o) => [o, o.hp]));
     if (
       ok.size &&
-      mgjZombieHit(
+      zombieHit(
         s,
         (x, y, big) => ok.has(x + "," + y) && !!near(x, y, 0, 0, big),
         "flamer",
@@ -998,19 +848,7 @@ function flameThings(s, by, near, now) {
           any = true;
         }
   }
-  if (!hang && isMgj(s)) {
-    if (
-      mgjHitAt(
-        s,
-        by,
-        now,
-        (b) => !!near(b.x, b.y, 0, 0, MGJ_SCALE) && lit("mgj:" + (b.id || "j")),
-        logLine,
-        DMG.flamer || 1,
-      )
-    )
-      any = true;
-  } else if (!hang && justinShown(s) && !s.justin.down) {
+  if (!hang && justinShown(s) && !s.justin.down) {
     const j = justinAt(s.justin, now);
     if (j && near(j.x, j.y, 0, 0) && lit("justin")) {
       const got = justinHit(s, by, now, logLine, "flamer");
@@ -1076,7 +914,7 @@ export function groundFire(s, now) {
   for (const id of s.seat) {
     const q = s.pos[id],
       P = s.players[id];
-    if (!q || q.x < 0 || !P || P.dead || isGhost(s, id) || isMgj(s)) continue;
+    if (!q || q.x < 0 || !P || P.dead || isGhost(s, id)) continue;
     if (vdSafe(s, id) || jumpDodges(q, now)) continue;
     const g = left.find(
       ([x, y, , by, side, z]) =>
@@ -1103,8 +941,8 @@ export function groundFire(s, now) {
       ch = true;
   return ch;
 }
-/* what a shot hit this beat, between (x0, y0) and at: the ducks, Mad God Justin, Justin, Duck Cabin's
-   Justin and cats; true when it's gone (Mad God Justin's own) */
+/* what a shot hit this beat, between (x0, y0) and at: the ducks, Sandbox's board zombies, Justin, Duck Cabin's
+   Justin and cats; true when it's gone */
 function shotHits(s, sh, at, x0, y0, dx, dy, now) {
   if (at.z > -0.15)
     for (const id of s.seat) {
@@ -1128,13 +966,9 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
         // (a duck bigger than 100%: its hitbox too, duck.js; an uploaded picture as a duck)
         if (sh.got && sh.got.includes(id)) continue; // (it already took HP from this duck)
         hLock(sh, duckH(s, p)); // (the first it passes over sets its height)
-        if (sh.fake) continue; // (Mad God Justin: his double's, or his own while the double is the real one: no harm)
+        if (sh.fake) continue; // (a shot that harms nobody)
         const crit = critRoll(s, sh.k, sh);
-        if (
-          isMgj(s)
-            ? mgjSoak(s, id, now, sh.k === "chair" ? 2 : 1)
-            : hitSoaks(s, id, now, sh.k, crit, sh.by, 1, drawDmg(sh.dr))
-        )
+        if (hitSoaks(s, id, now, sh.k, crit, sh.by, 1, drawDmg(sh.dr)))
           sh.got = [...(sh.got || []), id];
         else {
           P.dead = true;
@@ -1159,24 +993,18 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
           } // (the double barrel's slug: chunks blown through it where it stands, game.js; no bullet knocks back, the owner's, Nov 21 17:48Z)
         } // (the HP: a hit it can take keeps the duck up)
         wounded(s, id, sh.k, now, crit); // (its wounds: wounds.js)
-        if (sh.by === JUSTIN_ID) mgjHurt(s, id);
         if (sh.k === "chair") {
           const ul = Math.sqrt(len) || 1;
           if (od > 0.2)
             shove(s, id, ox / od, oy / od, KB_FAR, now, sh.hin || 0);
           else shove(s, id, ux / ul, uy / ul, KB_FAR, now, sh.hin || 0);
-        } // (Mad God Justin's office chair, or the Chair special's: shoved back, as the hammer does, away from it)
+        } // (the Chair special's: shoved back, as the hammer does, away from it)
       }
     }
-  if (
-    (isMgj(s) || sbOnBoard(s)) &&
-    mgjShot(s, sh, x0, y0, dx, dy, now, logLine, at.z)
-  )
-    return true; // (Mad God Justin: a duck's shot hit him, or his hit Good Justin)
+  if (zombieShot(s, sh, x0, y0, dx, dy, now, at.z)) return true; // (Sandbox's board: a zombie stopped it)
   if (
     sh.hin === undefined &&
     sh.by !== JUSTIN_ID &&
-    !isMgj(s) &&
     at.z > -0.15 &&
     at.z < 1.05 &&
     justinShown(s) &&
@@ -1227,8 +1055,8 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
 }
 
 /* ---------- the Zebra cake special ----------
-   One in the room at a time: s.zcake = { n, by, x0, y0, vx, vy, t, stop, eat, hin }. It flies the way it was thrown, as
-   Mad God Justin's does, and lands at the board's edge or after 6 s (Hangout: at the cabin's walls or the world's edge
+   One in the room at a time: s.zcake = { n, by, x0, y0, vx, vy, t, stop, eat, hin }. It flies the way it was thrown,
+   and lands at the board's edge or after 6 s (Hangout: at the cabin's walls or the world's edge
    too; hin, the side it's on). Justin runs after it wherever he is and eats it, and does nothing else meanwhile
    (boardjustin.js, hangout/justin.js: eat, when he started); with no Justin to eat it, it's gone 12 s after it lands */
 const CAKE_LEFT = 12000;
@@ -1277,7 +1105,6 @@ export function cakeGone(s, now) {
   if (!c) return false;
   if (
     !boardPhases(s).includes(s.phase) ||
-    isMgj(s) ||
     (c.eat ? now > c.eat + CAKE_EAT_MS + 3000 : now > c.stop + CAKE_LEFT)
   ) {
     s.zcake = null;
@@ -1286,8 +1113,8 @@ export function cakeGone(s, now) {
   return false;
 }
 
-/* ---------- the ducks' wounds and crits outside Quacky Zombies and Mad God Justin (wounds.js) ---------- */
-export const pwOn = (s) => !isMgj(s) && !isL4dd(s);
+/* ---------- the ducks' wounds and crits outside Dead Ducks Arcade (wounds.js) ---------- */
+export const pwOn = (s) => !isL4dd(s);
 export const critRoll = (s, w, sh) =>
   pwOn(s) && Math.random() < critOf(armOfShot(w), sh && sh.dr); // (a drawn arrow: its draw's, bowdraw.js)
 /* a hit of weapon (or shot kind) k on duck id: a crit doubles it (guns.js critOf); it takes exactly that much (raw),
