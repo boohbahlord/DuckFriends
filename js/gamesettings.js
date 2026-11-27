@@ -434,7 +434,7 @@ export function openGameSettings(R, start = null) {
     let p = peek;
     if (!p)
       p = isWorldMap(page)
-        ? CABIN_MODES.includes(o.mode)
+        ? CABIN_MODES.includes(o.mode) && !modeOf(o.mode).l4map
           ? { kind: "mode", id: o.mode }
           : { kind: "map", id: "cabin" }
         : page === "map"
