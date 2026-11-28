@@ -194,11 +194,13 @@ export function fire(id) {
   R.send({ t: "use", what: id, face: ax < 0 ? -1 : 1, ax, ay });
   if (bar) setTimeout(() => bar && bar.refresh(), 60); // (the handgun's dots, a cooldown's bar)
 }
-/* the bow (bowdraw.js): a press draws it (the host keeps when), letting go shoots, toward where I aim then. mouse: the
-   left button's coming up anywhere lets go, and so does anything that ends a press (game.js' held trigger's list); a key
-   or the phone's attack stick let go themselves (drawLet) */
+/* the bow (bowdraw.js): a press draws it (the host keeps when), letting go shoots, toward where I aim then. mouse
+   (true: the left button, a grenade; "right": the bow, the director plan, Nov 28): the button's coming up anywhere lets
+   go, and so does anything that ends a press (game.js' held trigger's list; the right button's own menu doesn't, it
+   never opens over the board: game.js drawPress); a key or the phone's attack stick let go themselves (drawLet) */
 let drawing = null; // { w, tm (a grenade's fuse's timer) }: my bow drawn (since when: bowdraw.js myDraw, for the meter)
 const DRAW_END = ["pointerup", "pointercancel", "blur", "contextmenu"];
+/** @param {string} w @param {boolean | "right"} [mouse] */
 export function drawHold(w, mouse = false) {
   if (!draws(w) || !R || !onBoardPhase() || drawing) return !!drawing;
   const d = (drawing = { w, tm: 0 });
@@ -206,7 +208,10 @@ export function drawHold(w, mouse = false) {
   R.send({ t: "draw", w });
   if (cooks(w))
     d.tm = setTimeout(() => drawing === d && drawLet(false), drawMost(w)); // (a grenade held to its fuse's end went off in my hand: the host's, l4ddrules.js)
-  if (mouse) for (const t of DRAW_END) addEventListener(t, drawUp, true);
+  if (mouse)
+    for (const t of DRAW_END)
+      if (mouse !== "right" || t !== "contextmenu")
+        addEventListener(t, drawUp, true);
   return true;
 }
 const drawUp = () => drawLet();

@@ -6,7 +6,7 @@ account.js 397 the Google account: the profile
 actplay.js 848 a game's actions
 actroom.js 754 the room's actions
 actsb.js 157 Sandbox's windows, saves and maps
-ammo.js 102 THE ONE AMMO RULE, every
+ammo.js 98 THE ONE AMMO RULE, every
 armpage.js 142 a page of Customize's tiles
 armspeed.js 34 how fast the weapons work,
 art.js 403 pictures drawn in code
@@ -23,8 +23,8 @@ boardjustin.js 499 Justin on the boards
 boardzombies.js 122 the zombies on a board
 botduck.js 90 a computer's duck: a random
 botlines.js 188 What the computers write and
-bots.js 1329 computers
-bowdraw.js 53 the bow, drawn to shoot
+bots.js 1328 computers
+bowdraw.js 52 the bow, drawn to shoot
 brackets.js 459 Bicker Brackets: what the screen
 brainbuild.js 330 Sandbox: M's Brain builder
 card.js 424 the player card
@@ -65,13 +65,13 @@ front.js 150 the front page
 fx.js 1187 the effects, drawn as pixels
 fxart.js 45 the effects' pictures: a duck
 fxmotion.js 233 how a held weapon and
-game.js 4417 the game screen
+game.js 4436 the game screen
 gameact.js 525 the action window and the
 gameannounce.js 187 The cloud's words and what
 gameboard.js 582 the board: each mode's board
-gamedefaults.js 137 the game's own numbers, for
+gamedefaults.js 148 the game's own numbers, for
 gamefx.js 691 the board's specials and the
-gamehand.js 509 the hand: the number-key specials,
+gamehand.js 514 the hand: the number-key specials,
 gamemsg.js 93 lines by the chat button:
 gameplace.js 480 where things are put on
 gameready.js 47 
@@ -87,7 +87,7 @@ gssettings.js 747 Game Settings: every setting, its
 gstext.js 200 Game Settings: what a setting
 gunart.js 467 every weapon, drawn: one drawing
 gunparts.js 15 the pieces every weapon's drawing
-guns.js 656 every weapon's numbers: one sheet
+guns.js 658 every weapon's numbers: one sheet
 hats.js 1003 hats
 heat.js 93 a gun's heat: the spread
 heights.js 95 a shot's height, Doom's way
@@ -110,9 +110,9 @@ l4dd.js 3294 Quacky Zombies on every screen
 l4ddangel.js 147 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
 l4ddart.js 608 Quacky Zombies' pictures
-l4ddbar.js 334 Quacky Zombies' weapons bar
+l4ddbar.js 332 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and
-l4ddcatalog.js 216 Quacky Zombies: the Butler's Items
+l4ddcatalog.js 214 Quacky Zombies: the Butler's Items
 l4dddrops.js 63 Quacky Zombies' drops, drawn
 l4ddloot.js 47 Dead Ducks Arcade: what lies
 l4ddmap.js 252 Quacky Zombies' minimap

@@ -4,16 +4,12 @@
    flamethrower) fires all it has and is empty. One pair everywhere: [in the magazine, the rest] (no magazine: [all of
    it, 0]). Dead Ducks Arcade keeps a duck's pairs in its kit (l4ddrules.js m.am); the board in s.mag.
    G's Unlimited ammo (s.options.infAmmo): the rest never goes down; a magazine still empties and reloads, and a gun
-   without one never runs out. The bow and the Laser Rifle never run out anywhere (no `all`). A game starts every gun
-   full (voterules.js beginGame). */
+   without one never runs out. Every gun has an `all`: none is endless (the bow and the Laser Rifle 300, the director
+   plan, Nov 28). A game starts every gun full (voterules.js beginGame). */
 import { ARMS, loadTo } from "./guns.js";
 import { afterShots } from "./weaponuse.js";
 
-/* a ranged weapon whose ammo never runs out (no `all`: the Laser Rifle, the bow) */
-export const endless = (w) =>
-  !!ARMS[w] && ARMS[w].kind === "ranged" && ARMS[w].all === undefined;
-/* a weapon's ammo, full: [in the magazine, the rest], or [all of it, 0] without a magazine; null: none kept (melee,
-   endless) */
+/* a weapon's ammo, full: [in the magazine, the rest], or [all of it, 0] without a magazine; null: none kept (melee) */
 export const fullAmmo = (w) => {
   const a = ARMS[w];
   if (!a || a.all === undefined) return null;
@@ -58,7 +54,7 @@ export const ammoReset = (s) => {
   delete s.mag;
 };
 /* duck id's gun w now: { c, r, d } (never fired this game, or kept the old way, { n, r }, by a room from before: full; a reload over: done), or null for none kept (not a
-   gun, or endless) */
+   gun) */
 export function magOf(s, id, now, w = "handgun") {
   const m = (s.mag || {})[magKey(id, w)];
   if (!m || !m.c) {

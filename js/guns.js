@@ -227,7 +227,8 @@ export const ARMS = {
     cal: "arrow",
     barrel: "none",
     speed: ARM_SPEED.bow,
-  }, // (no `all`: its arrows never run out, as the Laser Rifle's shots: the owner's, Nov 18 15:18Z "Make the bow have unlimited ammo")
+    all: 300,
+  }, // (300 arrows: nothing in a gun slot is endless, the director plan, Nov 28)
   dagger: {
     kind: "ranged",
     cool: ARM_COOL.dagger,
@@ -417,6 +418,7 @@ export const ARMS = {
     far: 3000,
     heat: 5,
     over: 8000,
+    all: 300, // (300 shots, as the bow's arrows: nothing in a gun slot is endless, the director plan, Nov 28)
   },
   /* the new specials: the zebra cake (thrown; every zombie goes for it and bites it until it's gone), the
      adrenaline shot (my duck walks at the game's usual speed for

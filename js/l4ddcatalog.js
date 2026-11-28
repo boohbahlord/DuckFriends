@@ -14,7 +14,6 @@ import {
   merchantPrice,
   missOf,
 } from "./l4ddrules.js";
-import { endless } from "./ammo.js";
 import {
   ARMS,
   kindOf,
@@ -38,7 +37,7 @@ const SAY = {
   pan: "Misses half the time, but half its hits are headshots.",
   handgun: "The gun you start with.",
   revolver: "Five big shots, three a second, then a reload.",
-  bow: "Arrows that never run out, one at a time.",
+  bow: "Click shoots at once. Hold the right button to draw it: the longer, the harder it hits. 300 arrows.",
   dagger: "Thrown. It falls to the floor after.",
   shotgun:
     "A cone of pellets that doesn't fly far. A tube of 8 shells, loaded one at a time.",
@@ -55,7 +54,7 @@ const SAY = {
     "Hold to burn everything in front of you; the longer you hold, the farther it reaches. The ground burns and the fire spreads.",
   burst: "Three rounds a click, as hard as the AK-47.",
   laser:
-    "Hold to fire. A red beam once a second through every zombie in its line. Never runs out, but six in a row overheat it for 8 seconds.",
+    "Hold to fire. A red beam once a second through every zombie in its line. 300 shots, and six in a row overheat it for 8 seconds.",
   glauncher:
     "Its grenades fly in a high arc over the zombies, land, and go off 3 seconds after the shot, killing every zombie in the blast.",
   medkit:
@@ -103,7 +102,6 @@ function stats(w) {
     out.push(["Rate", `${num(1000 / A.cool, 1)} a second`]);
   if (A.mag) out.push(["Magazine", A.mag]);
   if (A.kind === "ranged" && A.all && w !== "flamer") out.push(["Ammo", A.all]);
-  else if (endless(w)) out.push(["Ammo", "Unlimited"]);
   if (A.reload) out.push(["Reload", secs(A.reload)]);
   if (A.shell) out.push(["Reload", `${secs(A.shell)} a shell`]);
   if (A.burst) out.push(["Burst", `${A.burst} rounds`]);

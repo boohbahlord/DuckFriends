@@ -12,6 +12,17 @@ export const SPRINT = {
   refill: 1.5, // the bar fills this many times as slowly as it drains (2.5 s of sprint: 3.75 s to fill)
 };
 
+/* the bow drawn (bowdraw.js): full in FULL ms, +PER_STEP damage each whole STEP ms drawn, crit odds CRIT a second
+   (sure at full), the arrow up to FAST faster at full. The owner's, Nov 21 (2.5 s, +0.2 each tenth of a second, so +1
+   each half second, 25% a second); the director plan, Nov 28: the right button draws it in half that time, its damage
+   building the same way (+0.2 each twentieth, so +1 each quarter second, +5 at full; 50% a second) */
+export const DRAW = {
+  FULL: 1250,
+  STEP: 50,
+  PER_STEP: 0.2,
+  CRIT: 0.5,
+  FAST: 0.4,
+};
 /* grenades on the maps (weaponuse.js nadeFly; the director plan, Nov 28, cmsg_01LTpp6fzv8sfYUR5KoHADKtBFSt5xGqKea6TT5ehvSw7H):
    held, its pin is out and its fuse runs FUSE ms, my meter white, yellow from YELLOW of it, red from RED; let go, it's
    thrown, and it goes off when its fuse ends: in the hand, in the air or on the ground (so it can be cooked). Thrown,

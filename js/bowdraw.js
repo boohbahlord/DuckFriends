@@ -9,10 +9,9 @@
    How: the press sends { t: "draw" } and the host keeps when it began (s.draw { id: ms }); the release is the use, and
    the host counts the draw from its own clock, so every screen agrees and nobody can claim a longer one. The arrow
    carries its draw (dr, ms) to whatever it hits. Why its own file: one rule for every mode's bow (the boards, Mad God
-   Justin, Sandbox, Hangout and Dead Ducks Arcade), and for my screen's meter */
-import { NADE } from "./gamedefaults.js";
-
-const DRAW = { FULL: 2500, TENTH: 100, PER_TENTH: 0.2, CRIT: 0.25, FAST: 0.4 };
+   Justin, Sandbox, Hangout and Dead Ducks Arcade), and for my screen's meter. The director plan, Nov 28: a click shoots
+   at once, undrawn; the right button (V, a phone's held attack stick) draws it, in half the time (DRAW) */
+import { NADE, DRAW } from "./gamedefaults.js";
 /* does weapon w shoot only when drawn and let go? The bow; and a grenade, cooked while held: the press pulls its pin and
    its fuse runs from then (NADE: the director plan, Nov 28; on the maps, l4ddrules.js l4Use) */
 export const cooks = (w) => w === "grenade";
@@ -34,10 +33,10 @@ export function drawTaken(s, id, now, most = DRAW.FULL) {
   s.draw = d;
   return Math.max(0, Math.min(most, now - t0));
 }
-/* what a draw of dr ms adds: damage (+0.2 a whole tenth of a second, +1 a half second, up to +5), its crit chance
-   (25% a second, sure at full) and the arrow's speed (up to 40% faster) */
+/* what a draw of dr ms adds: damage (+0.2 each whole step, up to +5), its crit chance (sure at full) and the arrow's
+   speed (up to 40% faster): DRAW */
 export const drawDmg = (dr) =>
-  Math.round(Math.floor((dr || 0) / DRAW.TENTH) * DRAW.PER_TENTH * 100) / 100;
+  Math.round(Math.floor((dr || 0) / DRAW.STEP) * DRAW.PER_STEP * 100) / 100;
 export const drawCrit = (dr) =>
   (dr || 0) >= DRAW.FULL ? 1 : (DRAW.CRIT * (dr || 0)) / 1000;
 export const drawFast = (dr) => 1 + (DRAW.FAST * (dr || 0)) / DRAW.FULL;

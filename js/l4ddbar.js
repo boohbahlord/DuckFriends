@@ -27,7 +27,6 @@ import {
   slotFor,
   durLeft,
 } from "./l4ddrules.js";
-import { endless } from "./ammo.js";
 import {
   SLOT_KINDS,
   GRENADE,
@@ -51,7 +50,6 @@ const count = (w, m) => {
   if (w === "dg") return `${m.rw === "dg" ? "…" : m.dg} | ∞`; // (the down pistol: its bullets never run out)
   if (w === "grenade") return String(m.g);
   const c = (m.am || {})[w];
-  if (endless(w)) return "∞"; // (the Laser Rifle never runs out, it only overheats; nor do the bow's arrows)
   if (w === "flamer" && c)
     return Math.ceil((c[0] / ARMS.flamer.all) * 100) + "%"; // (its tank left)
   if (ARMS[w] && ARMS[w].kind === "melee" && ARMS[w].dur)

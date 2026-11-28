@@ -74,7 +74,6 @@ import {
   isWild,
   hasLeft,
 } from "./l4ddrules.js";
-import { endless } from "./ammo.js";
 import { kindOf } from "./guns.js";
 import { draws } from "./bowdraw.js";
 import { gunsIn, itemsIn } from "./kitslots.js";
@@ -910,8 +909,8 @@ const BOT_BREEDS = {
 /* a gun with something in it (not reloading); the Laser Rifle while it's cool enough */
 const loadedIn = (s, id, now, m) => (w) =>
   w === "laser"
-    ? laserOk(s, id, now)
-    : endless(w) || (w && m.am[w] && m.am[w][0] > 0 && m.rw !== w);
+    ? laserOk(s, id, now) && !!m.am.laser && m.am.laser[0] > 0
+    : w && m.am[w] && m.am[w][0] > 0 && m.rw !== w;
 /* how many of zs are within r of z, and whether that's a crowd worth a grenade from d away */
 const crowdOf = (zs, z, r) =>
   zs.filter((o) => Math.hypot(o.x - z.x, o.y - z.y) < r).length;

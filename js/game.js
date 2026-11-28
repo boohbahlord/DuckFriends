@@ -303,7 +303,7 @@ import {
   isWild,
 } from "./l4ddrules.js";
 import { GRENADE as NADE_KEY } from "./kitslots.js";
-import { draws } from "./bowdraw.js";
+import { draws, cooks } from "./bowdraw.js";
 
 import { AUTO, armOfShot } from "./guns.js";
 import { armedView, heatShake } from "./heat.js";
@@ -3838,23 +3838,26 @@ function autoPress(e) {
     !R ||
     isL4dd(R.state) ||
     e.pointerType !== "mouse" ||
-    !(repeats(hand.held) || draws(hand.held)) ||
+    !(repeats(hand.held) || cooks(hand.held)) ||
     !heldClick(e)
   )
     return;
   autoDid = true;
-  if (drawHold(hand.held, true)) return; // (the bow: drawn while held, gamehand.js)
+  if (drawHold(hand.held, true)) return; // (a grenade: cooked while held, gamehand.js)
   holdTrigger(() => {
     if (!R || !repeats(hand.held) || !onBoardPhase()) return 0;
     fire(hand.held);
     return Math.max(60, coolFor(hand.held) / grCool(R.state, R.me)); // (Sandbox: a group's Cooldown speed)
   });
 }
-/* Quacky Zombies: the left button down uses the weapon in hand, again as soon as it can while held (the bow: draws) */
+/* Quacky Zombies: the left button down uses the weapon in hand, again as soon as it can while held (a grenade: cooked
+   while held; the bow: one arrow a click, at once) */
 function l4Press(e) {
   if (!R || !isL4dd(R.state) || e.pointerType !== "mouse" || e.button !== 0)
     return;
-  if (!onBoardPhase() || !aimHere(e) || drawHold(heldNow(), true)) return; // (the bow: drawn while held, gamehand.js)
+  const w = heldNow();
+  if (!onBoardPhase() || !aimHere(e) || (cooks(w) && drawHold(w, true))) return; // (gamehand.js)
+  if (draws(w)) return void fire(w);
   holdTrigger(() => {
     if (!R || !isL4dd(R.state)) return 0;
     const w = heldNow();
@@ -3862,6 +3865,20 @@ function l4Press(e) {
     return Math.max(60, l4Cool(R.state, R.me, w));
   });
 }
+/* the bow, every mode: the right button held draws it, let go it shoots (the director plan, Nov 28; gamehand.js
+   drawHold); over the board its menu never opens while one is in hand */
+const bowIn = () =>
+  R && draws(heldNow()) && !cooks(heldNow()) ? heldNow() : "";
+function drawPress(e) {
+  if (e.button !== 2 || e.pointerType !== "mouse" || !onBoardPhase()) return;
+  const w = bowIn();
+  if (!w || !aimHere(e)) return;
+  e.preventDefault();
+  drawHold(w, "right");
+}
+const noMenu = (e) => {
+  if (bowIn() && aimHere(e)) e.preventDefault();
+};
 register("game", {
   guard: () => !!activeRoom(),
   /* the browser's Back in Single Player: back to its own lobby, never the online rooms */
@@ -4113,6 +4130,8 @@ register("game", {
       addEventListener(t, holdEnd);
     S.addEventListener("pointerdown", l4Press);
     S.addEventListener("pointerdown", autoPress);
+    S.addEventListener("pointerdown", drawPress);
+    S.addEventListener("contextmenu", noMenu);
     S.addEventListener("pointerdown", (e) => {
       if (e.target.closest(".wq-card.mine")) {
         e.preventDefault();

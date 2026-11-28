@@ -4677,17 +4677,17 @@ export const l4Down = (s, id) =>
    a weapon taken from an orb goes into duck id's slots as one bought or spun does (give), full; inf: unlimited ammo (as
    much as never runs out in a sitting); and an orb's damage on the duck that takes it (as a claw does) */
 /* the ammo weapon w comes with, set by loot or G (M: sbloot.js modsOf's form; inf: Unlimited ammo, or null for its own):
-   [in the magazine, spare], or null for none kept (unlimited, as the laser's and the bow's own) */
+   [in the magazine, spare], or null for none kept */
 function ammoFor(w, M, inf) {
   const full = fullAmmo(w),
     unl =
       inf != null
         ? inf || (w === "laser" && M.ammoP >= 100) // (the laser's 100% is unlimited: the owner's, Nov 19 22:55Z)
-        : !full; // (the laser and the bow: unlimited unless it's turned off)
+        : !full; // (an item without a count)
   if (unl) return full ? [full[0], 9999] : null;
-  /* Ammo: a number, or a share where 100% is Dead Ducks Arcade's own (the bow's 100% is 300); How many you get for an
-     item (a medkit, a zebra cake, a chair: its uses) */
-  const own = full ? full[0] + full[1] : w === "bow" ? 300 : 100,
+  /* Ammo: a number, or a share where 100% is Dead Ducks Arcade's own; How many you get for an item (a medkit, a zebra
+     cake, a chair: its uses) */
+  const own = full ? full[0] + full[1] : 100,
     n =
       M.n && (!full || !ARMS[w].mag)
         ? M.n
@@ -4720,7 +4720,7 @@ export function l4Loot(s, id, w, inf, mods = null) {
   if (inf === undefined) inf = M.inf;
   const a = ammoFor(w, M, inf);
   if (a) am[w] = a;
-  else delete am[w]; // (unlimited, as the laser's and the bow's own)
+  else delete am[w];
   const lm = {};
   if (M.dmg != null) lm.d = M.dmg;
   if (M.dmgP != null) lm.dp = M.dmgP;
