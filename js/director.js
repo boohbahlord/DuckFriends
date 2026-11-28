@@ -50,5 +50,13 @@ export const lowHp = (d) => d.hp < DIRECTOR.HP_LOW;
 const lowAmmo = (d) => d.ammo < DIRECTOR.AMMO_LOW;
 /* a supply crate is called for: some duck low on ammo that can't afford a refill (l4ddrules.js crateCome) */
 export const needsCrate = (s) => ducks(s).some((d) => lowAmmo(d) && !d.rich);
+/* how hard the director may press (pressure: the walkers' pace), 0 to 1: the team's average of health and ammo, never
+   over the middle while any duck is low on health */
+export function pressure(s) {
+  const ds = ducks(s);
+  if (!ds.length) return 0.5;
+  const k = ds.reduce((t, d) => t + (d.hp + d.ammo) / 2, 0) / ds.length;
+  return ds.some(lowHp) ? Math.min(0.5, k) : k;
+}
 /* doing badly: low on health or on ammo */
 export const badly = (d) => lowHp(d) || lowAmmo(d);

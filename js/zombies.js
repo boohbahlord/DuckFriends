@@ -5,7 +5,7 @@
    round the side, the jump onto the canopy, its claw, and what Sandbox's board zombies and the computers ask of it.
    Moved here from l4ddrules.js as it was (nothing it does changed); the way to the ducks is zombiepath.js. Next, Mad God
    Justin's waves and Sandbox's board zombies run on it too, each a breed. */
-import { ZOMBIE_SWIPE_SLOWER, ZOMBIE_GRACE } from "./gamedefaults.js";
+import { ZOMBIE_SWIPE_SLOWER, ZOMBIE_GRACE, DIRECTOR } from "./gamedefaults.js";
 /* Dead Ducks Arcade's zombies' swipe in every round: its wind-up (from the tell to the hit) and the ms from one hit to the
    next, rounds 1 to 4's (the owner's, Nov 21 18:24Z: "all of the zombies have the default attack speed as they do in
    rounds 1 through 4"); the 0.2 s slower of Nov 20 is in the second */
@@ -339,7 +339,7 @@ export function l4Spawn(s, x, y, o = {}) {
   return z.i;
 }
 /* a zombie at (wx, wy), in world px, already inside (st 2), its number the round's next (L.next goes on): o.hp, o.speed
-   (a share of a zombie's own), o.v (its speed itself), o.sp and o.dm (l4Spawn) */
+   (a share of a zombie's own), o.v (its speed itself), o.sp and o.dm (l4Spawn), o.wk (a rest's walker: walkerAt) */
 function zombieAt(L, wx, wy, o = {}) {
   syncMap();
   const op = [...OPENINGS].sort(
@@ -366,6 +366,7 @@ function zombieAt(L, wx, wy, o = {}) {
     dir: 0,
     ...(o.sp ? { sp: o.sp } : {}),
     ...(o.dm ? { dm: o.dm } : {}),
+    ...(o.wk ? { wk: 1 } : {}),
     l: [
       max,
       v,
@@ -376,6 +377,110 @@ function zombieAt(L, wx, wy, o = {}) {
       dress >= 0.4 ? rint(0, ZOUTFITS.length - 1) : -1,
     ],
   };
+}
+/* ---------- a rest's walkers (the director plan, Nov 28: old Survival's, DIRECTOR.WALKERS) ----------
+   z.wk: 1 wandering, 2 come for duck z.wt (it came close, its flashlight's close middle stayed on it, or it hit it:
+   l4ddrules.js strike); z.wd, z.wn: where it wanders to, and till when; z.lt, z.lw: since when a flashlight is on it, and
+   how long it takes this time. A new one turns up on open ground out of every building and out of every duck's sight
+   (ids: the ducks standing), slow; null when none is found */
+export function walkerAt(s, L, ids) {
+  const pts = ids.filter((id) => s.pos[id]).map((id) => toPx(s.pos[id]));
+  for (let t = 0; t < 20; t++) {
+    const x = Math.round(rnd(GS.RIM.x0, GS.RIM.x1)),
+      y = Math.round(rnd(GS.RIM.y0, GS.RIM.y1));
+    if (
+      openNear(x, y) >= 0 &&
+      !GS.buildingAt(x, y) &&
+      zOk(x, y, heightAt(x, y)) &&
+      !seenBy(pts, x, y)
+    )
+      return zombieAt(L, x, y, {
+        wk: 1,
+        v: Math.round(WALK * Z_SPEED[0] * DIRECTOR.WALKERS.SLOW),
+      });
+  }
+  return null;
+}
+/* the next round has come: a walker still up is one of its horde, at a zombie's walk */
+export function walkerJoins(z) {
+  for (const k of ["wk", "wt", "wd", "wn", "lt", "lw"]) delete z[k];
+  z.a = -1e6; // (its last swipe was on the rest's clock)
+  z.l = [...z.l];
+  z.l[1] = Math.round(WALK * rnd(...Z_SPEED));
+}
+/* does walker z go on wandering (true), or come for a duck? pls: the ducks (walkAll's), off: the flashlights switched
+   off */
+function walkerWatch(z, pls, now, off) {
+  const K = DIRECTOR.WALKERS;
+  if (z.wk === 2) {
+    const q = pls.find((q) => q.id === z.wt);
+    if (q && room(z.x, z.y, ...q.xy) <= K.LOSE) return false;
+    z.wk = 1;
+    delete z.wt;
+  }
+  let lit = null;
+  for (const q of pls) {
+    if (q.m) continue; // (never the merchant)
+    if (room(z.x, z.y, ...q.xy) < K.NEAR) {
+      [z.wk, z.wt] = [2, q.id];
+      return false;
+    }
+    if (!lit && litBy(z, q, off)) lit = q;
+  }
+  if (!lit) {
+    delete z.lt;
+    delete z.lw;
+    return true;
+  }
+  if (!z.lt) [z.lt, z.lw] = [now, Math.round(rnd(...K.SEEN))];
+  if (now - z.lt < z.lw) return true;
+  [z.wk, z.wt] = [2, lit.id];
+  delete z.lt;
+  delete z.lw;
+  return false;
+}
+/* is walker z in the close middle of duck q's flashlight (DIRECTOR.WALKERS.BEAM), with nothing between? */
+function litBy(z, q, off) {
+  const p = q.p,
+    B = DIRECTOR.WALKERS.BEAM;
+  if (!p || off[q.id]) return false;
+  const ax = (+p.ax || 0) * W,
+    ay = (+p.ay || 0) * H,
+    l = Math.hypot(ax, ay),
+    dx = z.x - q.xy[0],
+    dy = z.y - q.xy[1],
+    d = Math.hypot(dx, dy);
+  if (l < 1e-6 || d < 1 || d > B.far) return false;
+  if ((dx * ax + dy * ay) / (d * l) < Math.cos(B.half)) return false;
+  return clearShot(q.xy[0], q.xy[1], z.x, z.y);
+}
+/* a walker wandering, slowly, from one spot near it to the next, never into the church, standing about at each a while */
+function wander(z, far, pls, now) {
+  const K = DIRECTOR.WALKERS;
+  if (!z.wd && now < (z.wn || 0)) return;
+  if (!z.wd || now >= z.wn) {
+    delete z.wd;
+    for (let t = 0; t < 8 && !z.wd; t++) {
+      const a = Math.random() * 2 * Math.PI,
+        r = rnd(120, K.ROAM),
+        x = Math.round(z.x + Math.cos(a) * r),
+        y = Math.round(z.y + Math.sin(a) * r);
+      if (
+        openNear(x, y) >= 0 &&
+        GS.buildingAt(x, y) !== CHURCH &&
+        walkable(z.x, z.y, x, y)
+      )
+        z.wd = [x, y];
+    }
+    z.wn = now + (z.wd ? 12000 : rnd(...K.IDLE));
+    if (!z.wd) return;
+  }
+  if (Math.hypot(z.x - z.wd[0], z.y - z.wd[1]) < 24) {
+    delete z.wd;
+    z.wn = now + rnd(...K.IDLE);
+    return;
+  }
+  stepZombie(z, z.wd, far, pls);
 }
 /* Sandbox: the zombies standing now, each { i, x, y (shares of the map), sp (its spawn) } */
 export const l4Live = (s) =>
@@ -645,11 +750,28 @@ function walkAll(zs, c) {
       }
       continue;
     }
+    if (
+      z.wk &&
+      z.st === 2 &&
+      walkerWatch(z, pls, now, (s.hang && s.hang.l4f) || {})
+    ) {
+      wander(z, v * dt, pls, now);
+      continue;
+    } // (a rest's walker: it wanders till a duck makes it come)
     let target = null,
       best = Infinity;
-    /* how far a duck counts as, to this zombie: Justin twice his distance, or out of mind (JCHASE) */
+    /* how far a duck counts as, to this zombie: Justin twice his distance, or out of mind (JCHASE); a walker, only the
+       duck it came for */
     const far = (q) =>
-      !q.j ? 1 : z.nj || (z.jx || 0) > now ? Infinity : JCHASE.far;
+      z.wk
+        ? q.id === z.wt
+          ? 1
+          : Infinity
+        : !q.j
+          ? 1
+          : z.nj || (z.jx || 0) > now
+            ? Infinity
+            : JCHASE.far;
     if (z.st === 7) {
       /* on a roof: straight at the nearest duck up there; a hole underfoot and it falls in; nobody left up there (or
          the cake down), it walks off the nearest edge and drops */

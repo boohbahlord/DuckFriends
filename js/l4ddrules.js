@@ -157,6 +157,7 @@ import {
   powerAct,
   powerPump,
   powerGas,
+  powerOn,
 } from "./l4ddpower.js";
 import {
   ANGEL,
@@ -169,7 +170,7 @@ import {
 } from "./l4ddangel.js";
 
 import { NPC_RUN, NPC_DMG } from "./npcshared.js";
-import { ducks, lowHp, badly, needsCrate } from "./director.js";
+import { ducks, lowHp, badly, needsCrate, pressure } from "./director.js";
 import { grHp, grCool } from "./sbgroups.js";
 import { setGrid, openNear, flowFrom, heading } from "./zombiepath.js";
 import { CELL } from "./walkgrid.js";
@@ -198,6 +199,8 @@ import {
   setZWall,
   stepZombie,
   walkable,
+  walkerAt,
+  walkerJoins,
 } from "./zombies.js";
 
 /* what Sandbox lends these rules (sbcabin.js): npc(s, by, x, y, now, w, rx, ry, from, hit) puts a shot or a swing at
@@ -943,7 +946,11 @@ function addPts(s, id, n) {
 }
 
 /* ---------- a game, a round ---------- */
-const countFor = (s, r) => zombiesFor(r, Math.max(1, players(s).length));
+const countFor = (s, r) =>
+  Math.round(
+    zombiesFor(r, Math.max(1, players(s).length)) *
+      (powerOn(s) ? DIRECTOR.WALKERS.LIT_HORDE : 1),
+  ); // (the lights on: a bigger horde, the director plan's)
 export function newRound(s, r, now, wait) {
   s.hang.l4 = {
     ...s.hang.l4,
@@ -2204,6 +2211,46 @@ function restCome(s, now) {
   merchantCome(s, now);
   crateCome(s, now);
   bandagesCome(s, now);
+  if (dp() && !isSb(s))
+    s.hang.l4 = {
+      ...s.hang.l4,
+      wk: { at: now, lit: rnd(...DIRECTOR.WALKERS.LIT) },
+    }; // (its walkers: walkersTick)
+}
+/* a rest's walkers (DIRECTOR.WALKERS; old Survival's): one turns up every so often, out of every duck's sight, while
+   there are fewer than the most (zombies.js walkerAt); its pace by how the team does (director.js pressure) and the
+   lights; they wander, and come for a duck that makes them (zombies.js walkerWatch). up: the ducks standing. L.wk = {
+   at: when the last turned up, lit: how many more with the lights on, this rest } */
+function walkersTick(s, L, zs, now, T, up) {
+  const w = L.wk,
+    K = DIRECTOR.WALKERS;
+  if (!w) return;
+  const lit = powerOn(s) ? w.lit : 1,
+    most = Math.round((K.MOST[0] + K.MOST[1] * ducks(s).length) * lit),
+    pace =
+      K.EVERY / (lit * (K.RATE[0] + (K.RATE[1] - K.RATE[0]) * pressure(s)));
+  if (now - w.at >= pace) {
+    L.wk = { ...w, at: now };
+    if (zs.filter((z) => z.wk && z.st !== 3).length < most) {
+      const z = walkerAt(s, L, up);
+      if (z) zs.push(z);
+    }
+  }
+  moveZombies(
+    s,
+    zs,
+    now,
+    T,
+    up.filter((id) => !godOn(s, id)),
+    up,
+  );
+  store(
+    s,
+    zs.filter(
+      (z) => !(z.st === 3 && T - z.d > (nuked(s, z) ? NUKE.DEAD : L4.DEAD_MS)),
+    ),
+    false,
+  );
 }
 /* bandages (DIRECTOR.BANDAGE): in a rest where some duck is low on health and neither the crate nor a merchant brings
    a bandage, one or two drop by each duck low on health, half the time each (the owner's, Nov 28) */
@@ -3214,6 +3261,7 @@ function strike(s, z, dmg, crit, by, w = "", now = 0) {
     all = !!on.kill, // (Instant Kill: every hit takes all its HP, 5 points for each)
     took = all ? z.hp : Math.min(z.hp, dmg);
   z.hp = all ? 0 : hpHurt(z.hp, dmg);
+  if (z.wk && by && s.players[by]) [z.wk, z.wt] = [2, by]; // (a rest's walker hit: it comes for whoever hit it, zombies.js)
   if (z.hp > 0 && now) z.sg = Math.round(now + STAGGER.ms); // (a short stagger: zombies.js walkAll)
   const head = !!crit && z.hp <= 0;
   if (w) wound(s, z, w, crit);
@@ -4529,6 +4577,7 @@ function l4Tick(s, now) {
   if (s.hang.l4.wait && !isSb(s)) {
     if (waitTick(s, now)) return true;
     const Lw = { ...s.hang.l4 };
+    walkersTick(s, Lw, zs, now, T, up);
     dropTick(s, Lw, zs, now, T);
     s.hang.l4 = Lw;
     powerTick(s, zs, now, ids, PH);
@@ -4539,6 +4588,10 @@ function l4Tick(s, now) {
     live = zs.filter((z) => z.st !== 3).length,
     extra = Math.max(0, ids.length - 1),
     L2 = { ...s.hang.l4 };
+  if (L2.wk) {
+    for (const z of zs) if (z.wk) walkerJoins(z);
+    L2.wk = null;
+  } // (the rest's walkers still up come with the round)
   if (T >= 0 && !isSb(s) && L2.made + L2.owe < L2.n) {
     const sec = Math.floor(T / 1000);
     if (sec > L2.sec) {

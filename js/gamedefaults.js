@@ -95,4 +95,24 @@ export const DIRECTOR = {
   CRATE: { HEAR: 6000, SOLO: 2, ONE: 0.6, SPREAD: 70 },
   /* bandages (l4ddrules.js bandagesCome): 1 bandage ONE of the time, else 2, BY world px each side of the duck */
   BANDAGE: { ONE: 0.5, BY: 70 },
+  /* walkers in a rest (l4ddrules.js walkersTick, zombies.js walkerAt; old Survival's): one turns up every EVERY ms, up to
+     MOST[0] and MOST[1] more for each duck; that pace RATE[0] to RATE[1] times by how the team does (director.js
+     pressure), and with the lights on LIT[0] to LIT[1] times as many as fast (rolled each rest), the horde LIT_HORDE
+     times as big. Each walks the slowest zombie's walk times SLOW, wanders up to ROAM world px at a time and stands IDLE
+     ms; it comes for a duck NEAR duck lengths away, one whose flashlight's close middle (BEAM: world px, radians) is on it
+     SEEN ms, or one that hits it, and forgets one LOSE duck lengths away */
+  WALKERS: {
+    EVERY: 4000,
+    MOST: [4, 3],
+    RATE: [0.7, 1.3],
+    LIT: [1.5, 2],
+    LIT_HORDE: 1.1,
+    SLOW: 0.8,
+    ROAM: 320,
+    IDLE: [1000, 4000],
+    NEAR: 3,
+    LOSE: 9,
+    SEEN: [4000, 6000],
+    BEAM: { far: 336, half: (13.5 * Math.PI) / 180 },
+  },
 };
