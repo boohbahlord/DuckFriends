@@ -2340,6 +2340,8 @@ function merchantCome(s, now) {
     sp: 1,
     tired: false,
     near: {},
+    wt: null,
+    wn: 0,
     route,
     p: 0,
     t: now,
@@ -2462,14 +2464,15 @@ function merchantFight(s, m0, now, dt) {
         : d <= MERCH.FIGHT.handgun.reach && walkable(m.x, m.y, fx, fy)
           ? "handgun"
           : "",
-    F = MERCH.FIGHT[w];
-  if (!w) {
+    F = MERCH.FIGHT[w],
+    seen = !!w && mSeen(s, m0);
+  if (!seen) {
     const aim = walkable(m.x, m.y, fx, fy)
       ? [fx, fy]
       : heading(flowFrom([openNear(fx, fy)]), m.x, m.y) || [fx, fy];
     stepZombie(m, aim, WALK * walkOf(s) * MERCH.WALK * wetK(m.x, m.y) * dt, []);
-  } else if (now - (mh(s).stab || 0) >= F.ms && mSeen(s, m0)) {
-    setMh(s, { stab: now });
+  } else if (now - (mh(s).stab || 0) >= (mh(s).sms || 0)) {
+    setMh(s, { stab: now, sms: F.ms }); // (the wait after a swing or a shot is that weapon's, as his bar shows it)
     addFx(s, {
       kind: "l4mstab",
       by: m0.foe,
@@ -2521,10 +2524,11 @@ function merchantTick(s, now) {
   if (!m0 || m0.st === "dead") return;
   const h = mh(s);
   if (m0.st === "here") {
-    const near = { ...(h.near || {}) };
+    const near = {};
     let greet = false;
     for (const id of players(s)) {
       if (!standing(s, id) || isWild(s, id)) continue;
+      if (h.near && h.near[id]) near[id] = 1; // (a duck that left, went down or went wild is no longer by him)
       const [x, y] = toPx(s.pos[id]),
         d = Math.hypot(x - m0.x, y - m0.y);
       if (d < MERCH.GREET && !near[id]) {
@@ -2596,20 +2600,25 @@ function merchantTick(s, now) {
 /* selling with nobody by him: he walks about his building near his spot (MERCH.WANDER), standing a while at each place */
 function merchantWander(s, m0, now, h) {
   const W0 = MERCH.WANDER,
-    home = [BUTLER.x, BUTLER.y],
     dt = Math.min(0.35, Math.max(0.05, (now - (h.tk || now - 200)) / 1000));
   let to = h.wt;
-  if (
-    !to ||
-    (now >= (h.wn || 0) && Math.hypot(to[0] - m0.x, to[1] - m0.y) < 14)
-  ) {
+  const there = !!to && Math.hypot(to[0] - m0.x, to[1] - m0.y) < 14;
+  if (there && !h.wn) return setMh(s, { wn: now + rint(...W0.ms) }); // (his stand starts as he gets there)
+  if (there && now < h.wn) return; // (standing still till it's over)
+  if (!to || there) {
     const a = Math.random() * 2 * Math.PI,
       r = Math.random() * W0.r,
-      q = [home[0] + Math.cos(a) * r, home[1] + Math.sin(a) * r];
-    if (whereIn(...q) !== whereIn(...home) || !walkable(m0.x, m0.y, ...q))
-      return; // (not in his building, or a wall between: another try next beat)
-    to = q.map(Math.round);
-    setMh(s, { wt: to, wn: now + rint(...W0.ms) });
+      qx = BUTLER.x + Math.cos(a) * r,
+      qy = BUTLER.y + Math.sin(a) * r;
+    if (
+      whereIn(qx, qy) !== whereIn(BUTLER.x, BUTLER.y) ||
+      !walkable(m0.x, m0.y, qx, qy) ||
+      !standable(qx, qy, heightAt(qx, qy), 0) ||
+      !walkable(qx, qy, m0.x, m0.y) // (both ways: walkable leaves out its last 30 px, a pew's end there)
+    )
+      return; // (not in his building, or a wall or a pew between: another try next beat)
+    to = [Math.round(qx), Math.round(qy)];
+    setMh(s, { wt: to, wn: 0 });
   }
   const m = { x: m0.x, y: m0.y };
   walkTo(m, ...to, WALK * walkOf(s) * W0.k * dt);
