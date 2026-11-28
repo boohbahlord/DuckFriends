@@ -18,7 +18,7 @@ beaks.js 138 beaks
 below.js 89 darker below
 blast.js 69 explosions: one module
 bloodpool.js 50 a pool of blood: the
-boardfire.js 1155 the board's weapons: hits, shots,
+boardfire.js 1161 the board's weapons: hits, shots,
 boardjustin.js 499 Justin on the boards
 boardzombies.js 122 the zombies on a board
 botduck.js 90 a computer's duck: a random
@@ -65,11 +65,11 @@ front.js 150 the front page
 fx.js 1187 the effects, drawn as pixels
 fxart.js 45 the effects' pictures: a duck
 fxmotion.js 233 how a held weapon and
-game.js 4438 the game screen
+game.js 4449 the game screen
 gameact.js 525 the action window and the
 gameannounce.js 187 The cloud's words and what
 gameboard.js 582 the board: each mode's board
-gamedefaults.js 198 the game's own numbers, for
+gamedefaults.js 200 the game's own numbers, for
 gamefx.js 697 the board's specials and the
 gamehand.js 514 the hand: the number-key specials,
 gamemsg.js 108 lines by the chat button:
@@ -90,7 +90,7 @@ gunparts.js 15 the pieces every weapon's drawing
 guns.js 658 every weapon's numbers: one sheet
 hats.js 1003 hats
 heat.js 93 a gun's heat: the spread
-heights.js 95 a shot's height, Doom's way
+heights.js 97 a shot's height, Doom's way
 hideui.js 30 hide ui
 homeapp.js 44 Download Duck Friends
 hotbar.js 515 the specials on the number
@@ -267,7 +267,7 @@ weaponuse.js 199 using a weapon: one module
 who.js 3 who this player is beyond
 wounds.js 500 
 zombiepath.js 187 the zombies' way to the
-zombieroofs.js 323 the zombies' walk over Downpour's
+zombieroofs.js 331 the zombies' walk over Downpour's
 zombies.js 1643 the zombies: one module for
 
 ## js/hangout/
@@ -334,7 +334,7 @@ trampoline.js 142 the trampoline
 tv.js 117 the TV: seven channels, the
 vehicles.js 116 what a duck stands on
 water.js 442 the pool: ducks in the
-world.js 1781 Hangout on the screen: the
+world.js 1777 Hangout on the screen: the
 
 ## js/pxm/
 board-light.js 7 the menus' background in the
