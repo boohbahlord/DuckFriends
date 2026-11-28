@@ -20488,8 +20488,8 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   }
 }
 
-/* ---------- Sandbox: the Seriat window (js/seriatwin.js), as an editor: files on the left, the code, a terminal
-   line under it; every letter Cascadia Code ---------- */
+/* ---------- Sandbox: the Seriat window (js/seriatwin.js), as an editor: files on the left, the code, what it says
+   under it; every letter Cascadia Code ---------- */
 .nm-win {
   width: min(60rem, calc(100vw - 1.5rem));
 }

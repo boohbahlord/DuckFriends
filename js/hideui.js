@@ -18,7 +18,7 @@ export function setHideUi(on) {
   save();
   applySettings();
   return on
-    ? "UI hidden. hide ui again, or show ui, brings it back."
+    ? "UI hidden. \\hide ui again, or \\show ui, brings it back."
     : "UI back.";
 }
 
