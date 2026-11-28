@@ -1108,6 +1108,19 @@ function offWalls(x, y) {
   );
   return ways.find(clear) || ways[0];
 }
+/* no tree through the fence round the map (the owner's, Nov 28 04:58Z: "any tree that is no clipping through a fence
+   ... moved either outside a fence or inside"): every tree stands inside it, its leaves clear of the west and east
+   fences (the widest tree's half, which a fence piece would otherwise draw across) and its trunk clear of the north and
+   south ones (a tree there sorts in front of the north fence and behind the south one, as it stands). Moved, not
+   dropped, so the forest keeps its trees and their looks (their ids) */
+const WIDEST = Math.max(
+    ...Object.values(SWAMP_CROWN).flatMap((v) => v.map((c) => c.w)),
+  ),
+  RIM_ROOM = { x: (WIDEST * treeK(1.15)) / 2 / K, y: 120 },
+  offRim = (x, y) => [
+    Math.min(RIM.x1 - RIM_ROOM.x, Math.max(RIM.x0 + RIM_ROOM.x, x)),
+    Math.min(RIM.y1 - RIM_ROOM.y, Math.max(RIM.y0 + RIM_ROOM.y, y)),
+  ];
 function forest(put) {
   const tree = (cx, cy, big) =>
     put("tree", cx - 18, cy - 12, 36, 24, 0, {
@@ -1156,7 +1169,7 @@ function forest(put) {
       const k = keyOf(x, y);
       if (!bucket.has(k)) bucket.set(k, []);
       bucket.get(k).push([x, y]);
-      tree(...offWalls(x, y), big);
+      tree(...offRim(...offWalls(x, y)), big);
     }
 }
 

@@ -324,7 +324,7 @@ stage.js 134 the stage: half an oval
 stationart.js 50 Downpour's things: the drawings
 stationbase.js 67 Downpour's drawings: the shared pieces
 stationcars.js 513 Downpour's drawings: the cars, the
-stationmap.js 1308 Dead Ducks Arcade's second map:
+stationmap.js 1321 Dead Ducks Arcade's second map:
 stationparts.js 455 Downpour's drawings: the gas station's
 stationroof.js 340 Downpour's drawings: the roofs, their
 stationtrees.js 599 Downpour's drawings: the swamp's trees
