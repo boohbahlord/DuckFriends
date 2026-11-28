@@ -124,7 +124,7 @@ export const room = (ax, ay, bx, by) => {
 };
 /* where zombies can stand inside (the walls, the furniture, the beds stop them; the outside too) */
 export const zOk = (x, y, z, up = STEP) =>
-  playable(x, y) && standable(x, y, z, up, null, true) && !onPlatform(x, y); // (Downpour: zombies wade the deep flood, climb the fallen tree)
+  playable(x, y) && standable(x, y, z, up, null, true) && !onPlatform(x, y); // (Downpour: zombies wade the deep flood; the fallen tree stops them)
 /* what a zombie keeps from one heartbeat to the next besides its spot, hp and state (in s.hidden.l4z, the host's only):
    cm its way up kept to, k the roof it is up, fl its flank and wp its spot round the side, j its jump onto the canopy
    and jp the spot it jumps from (jumpOn);

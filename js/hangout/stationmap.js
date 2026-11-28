@@ -410,7 +410,10 @@ export const PLANK = {
   rest: REST,
   key: CANOPY.y1 + 10, // (over the canopy's roof and the car)
 };
-/* the fallen tree across the east end of the road: ducks jump it (TOP_TREE tall), zombies climb over */
+/* the fallen tree across the east end of the road: a log h thick lying straight from bank to bank over the flooded
+   road, so a duck jumps up on it and walks its whole length (harder from the water: it's that much higher), and no
+   zombie gets through it (the owner's, Nov 28 04:58Z: "you should be able to walk down the tree", "zombies can't go
+   through it") */
 export const FALLEN = {
   x0: 3500,
   y0: 2500,
@@ -419,6 +422,9 @@ export const FALLEN = {
   half: 55,
   h: 40,
 };
+const FALLEN_N = Math.ceil(
+  Math.hypot(FALLEN.x1 - FALLEN.x0, FALLEN.y1 - FALLEN.y0) / 40,
+); // (its blocks: one every 40 of the plan's numbers at most, fallenParts)
 /* where the power box's parts can turn up (the owner's): T toolbox (an empty shelf, the top, front or back of a car),
    G gas (a jerry can at a pump), F fuse (the storeroom, a pew), S switch (the restroom, a shelf, a car, a pew, a pump).
    x, y: where it lies; z: how high over the ground there (on a shelf, a car's roof, a pew) */
@@ -685,11 +691,9 @@ function planBuild(b) {
   };
   car(HOOD, { hood: true, smash: "side" });
   CARS.forEach((c, i) => car(c, { ...CAR_LOOKS[i], car: i })); // (car: its index, so a push moves it: layout.js carAt)
-  /* the fallen tree: a row of low blocks along it (a jump clears them; zombies climb over: zx) */
+  /* the fallen tree: its drawing, and its blocks (fallenParts) */
   {
-    const F = FALLEN,
-      len = Math.hypot(F.x1 - F.x0, F.y1 - F.y0),
-      n = Math.ceil(len / 40);
+    const F = FALLEN;
     put(
       "fallen",
       Math.min(F.x0, F.x1) - F.half,
@@ -702,17 +706,12 @@ function planBuild(b) {
         key: (F.y0 + F.y1) / 2,
       },
     );
-    for (let k = 0; k <= n; k++) {
-      const x = F.x0 + ((F.x1 - F.x0) * k) / n,
-        y = F.y0 + ((F.y1 - F.y0) * k) / n,
-        r = F.half * 0.8;
-      put("fallenpart", x - r, y - r, 2 * r, 2 * r, F.h, {
+    for (const q of fallenParts())
+      put("fallenpart", q.x0, q.y0, q.x1 - q.x0, q.y1 - q.y0, F.h, {
         solid: true,
-        zx: true,
         layer: "none",
-        top: groundAt(x, y) + F.h,
+        top: q.top,
       });
-    }
   }
   /* the rest of the fence round the map: west and east down to the road's edges, then the north and south sides, seen
      face on (fencex), and where they meet a piece that joins them (fencecorner: the owner's, Nov 28 04:58Z) */
@@ -1030,6 +1029,26 @@ const APART = { out: 285 / K, near: 400 / K, far: 520 / K },
   /* how likely a spot grows a tree: past the line, inside it within NEAR of it, and further in */
   GROW = { out: 0.92, near: 0.55, far: 0.3 },
   NEAR = 260 / K;
+/* the fallen tree's blocks, in the numbers FALLEN has now (the plan's while planBuild runs, then world px): squares along
+   its line, every 40 at most, their tops on a straight line h over the ground at its two ends */
+function fallenParts() {
+  const F = FALLEN,
+    n = FALLEN_N,
+    g0 = groundAt(F.x0, F.y0),
+    g1 = groundAt(F.x1, F.y1),
+    r = F.half * 0.8;
+  return Array.from({ length: n + 1 }, (_, k) => {
+    const x = F.x0 + ((F.x1 - F.x0) * k) / n,
+      y = F.y0 + ((F.y1 - F.y0) * k) / n;
+    return {
+      x0: x - r,
+      y0: y - r,
+      x1: x + r,
+      y1: y + r,
+      top: g0 + ((g1 - g0) * k) / n + F.h,
+    };
+  });
+}
 /* the fallen tree's line: no tree stands on it */
 const toFallen = (x, y) => {
   const { x0, y0, x1, y1 } = FALLEN,
@@ -1256,6 +1275,29 @@ DECKS.push(
     thin: true, // (slats with gaps: seen through, layout.js seeLine)
   }, // (the plank: a slope from the car's roof up to the canopy)
 );
+/* the fallen tree's top: a floor over its blocks, each at its own top, so a duck lands on it and walks its length (the
+   ground is the only floor under a top that isn't a deck: layout.js floorH), solid all the way down as a car's
+   (vehicles.js carDeck). It has no walls, so no zombie climbs it (zombieroofs.js climbSpot) */
+{
+  const parts = fallenParts(),
+    at = (x, y) =>
+      parts.filter((q) => x >= q.x0 && x < q.x1 && y >= q.y0 && y < q.y1),
+    F = FALLEN;
+  DECKS.push({
+    kind: "log",
+    x0: Math.min(...parts.map((q) => q.x0)),
+    y0: Math.min(...parts.map((q) => q.y0)),
+    x1: Math.max(...parts.map((q) => q.x1)),
+    y1: Math.max(...parts.map((q) => q.y1)),
+    h: Math.max(...parts.map((q) => q.top)),
+    hAt: (x, y) => Math.max(0, ...at(x, y).map((q) => q.top)),
+    inside: (x, y) => at(x, y).length > 0,
+    key: (F.y0 + F.y1) / 2,
+    holes: [],
+    bldg: 0,
+    solid: true,
+  });
+}
 export function build(b) {
   for (const [f, ...a] of CALLS) {
     if (f !== "add") {

@@ -303,8 +303,7 @@ const GS_DRAW = {
         b.t,
         b.w,
         b.h,
-        p.key,
-        { fade: true },
+        p.key, // (never see-through: it has no leaves, the owner's, Nov 28 04:58Z)
       ),
     ];
   },
