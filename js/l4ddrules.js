@@ -3140,6 +3140,7 @@ export function l4Use(s, a, now) {
   const m = { ...m0, u: { ...m0.u }, am: { ...m0.am } };
   finishReload(m, now, infAmmo(s));
   if (
+    !(kind === "grenade" && (a.dr || 0) >= NADE.FUSE) && // (a grenade cooked to its fuse goes off whatever the wait: it can't be put back)
     waiting(
       GATE_BREEDS.maps,
       { auto: !!A.auto, cool: l4Cool(s, id, what), last: m.u[what] || 0 },
