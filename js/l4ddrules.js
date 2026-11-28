@@ -2611,9 +2611,11 @@ function merchantWander(s, m0, now, h) {
       qy = BUTLER.y + Math.sin(a) * r;
     if (
       whereIn(qx, qy) !== whereIn(BUTLER.x, BUTLER.y) ||
-      !walkable(m0.x, m0.y, qx, qy)
+      !walkable(m0.x, m0.y, qx, qy) ||
+      !standable(qx, qy, heightAt(qx, qy), 0) ||
+      !walkable(qx, qy, m0.x, m0.y) // (both ways: walkable leaves out its last 30 px, a pew's end there)
     )
-      return; // (not in his building, or a wall between: another try next beat)
+      return; // (not in his building, or a wall or a pew between: another try next beat)
     to = [Math.round(qx), Math.round(qy)];
     setMh(s, { wt: to, wn: 0 });
   }
