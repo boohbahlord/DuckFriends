@@ -245,7 +245,7 @@ import {
 
 import { mountPlayers, trackIdle, lobbyVote, kickItems } from "./players.js";
 
-import { chatNote, isMuted } from "./chat.js";
+import { chatNote, isMuted, said } from "./chat.js";
 
 import {
   specialById,
@@ -2979,14 +2979,15 @@ function paintNow(force) {
         (!m.to || m.to === R.me || m.from === R.me) &&
         !isMuted(s, m.from, "bubble") &&
         !isMuted(s, m.from, "text")
-      )
+      ) {
+        const t = said(m);
         bubbles[m.from] = {
-          text:
-            m.text.length > 90 ? m.text.slice(0, 90).trimEnd() + "…" : m.text,
+          text: t.length > 90 ? t.slice(0, 90).trimEnd() + "…" : t,
           until: clockNow() + 5500,
           n: m.n,
           at: clockNow(),
-        }; // (a sent file opens only for sudo, unless chmod let its group or everyone)
+        };
+      }
     for (const m of s.log)
       if (
         m.n > lastLog &&

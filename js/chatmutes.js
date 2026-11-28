@@ -136,6 +136,9 @@ const sessionMutes = () => {
   return session.by;
 };
 /* is this player's text, ping or bubble muted for me? */
+/* what a message says: a file sent from the command line we cut (Nov 27) shows only its name, since it could be locked */
+export const said = (m) => (m.file ? `📄 ${m.file}` : m.text);
+
 export function isMuted(s, id, kind) {
   const p = s && s.players[id],
     a = sessionMutes(),

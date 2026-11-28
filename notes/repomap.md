@@ -30,8 +30,8 @@ brainbuild.js 330 Sandbox: M's Brain builder
 card.js 424 the player card
 carpush.js 101 a car pushed: Downpour's cars
 chair.js 14 the chair: one thing in
-chat.js 443 text chat
-chatmutes.js 281 The chat's suggestions, mutes and
+chat.js 445 text chat
+chatmutes.js 284 The chat's suggestions, mutes and
 cheatflag.js 16 a game with test commands
 cheats.js 78 test commands: round N, give
 claw.js 68 a claw's marks: three white
@@ -64,7 +64,7 @@ front.js 151 the front page
 fx.js 1187 the effects, drawn as pixels
 fxart.js 45 the effects' pictures: a duck
 fxmotion.js 233 how a held weapon and
-game.js 4360 the game screen
+game.js 4361 the game screen
 gameact.js 525 the action window and the
 gameannounce.js 187 The cloud's words and what
 gameboard.js 582 the board: each mode's board
