@@ -1271,11 +1271,16 @@ export function reduce(state, a, now = Date.now()) {
   }
   return s;
 }
-function reduceStep(state, a, now) {
+/* the map as state s has it: its mode's, its cars, its boarded holes torn down, the landed crate. Every action's first
+   step, and a screen's each time the host's state comes in (online.js rebuild), so walking agrees with what's there */
+export function syncWorld(state) {
   useMode(baseMode(state.options)); // (Duck Cabin as the room's mode has it, or Dead Ducks Arcade's Downpour, or Sandbox on one of them: hangout/layout.js)
   carsAt(state); // (Downpour's cars where the state has them: carpush.js)
   tornDown(state); // (and its boarded holes with every board down, which a duck walks through: l4ddrules.js)
   crateSolid(state); // (Dead Ducks Arcade's supply crate, landed: a box nothing walks through)
+}
+function reduceStep(state, a, now) {
+  syncWorld(state);
   const s = clone(state),
     P = s.players,
     me = P[a.id],
