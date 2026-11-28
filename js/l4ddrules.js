@@ -989,7 +989,7 @@ const laserMax = (s, id) =>
   angelOf(s, id, "laser") ? ANGEL.LASER.heat : ARMS.laser.heat;
 export function laserHeat(s, id, now) {
   const m = kitOf(s, id),
-    z = m ? m.lz : ((s && s.mgj && s.mgj.lz) || {})[id], // (Mad God Justin, picked up: s.mgj.lz, rules.js)
+    z = m && m.lz,
     max = laserMax(s, id);
   if (!z) return { h: 0, max, over: 0 };
   if (z.o > now)
@@ -1002,7 +1002,7 @@ export function laserHeat(s, id, now) {
   return { h: Math.max(0, z.h - Math.max(0, now - z.t - c) / c), max, over: 0 };
 }
 /* its heat after one more beam now: { lz (to keep), hot: this beam overheated it (the meter was full) } */
-export function laserNext(s, id, now) {
+function laserNext(s, id, now) {
   const { h, max } = laserHeat(s, id, now),
     hot = Math.round(h) >= max;
   return {

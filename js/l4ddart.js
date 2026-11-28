@@ -1,7 +1,7 @@
 /* ---------- Quacky Zombies' pictures (in the game's style; the owner OK'd them) ----------
    The zombie duck (a darker green rubber duck with X eyes, now and then in a hat or an outfit, a little bigger or
    fatter), the boards over the doors, the holes and the top of the deck's stairs, and the
-   flashlight's icon on the weapons bar (the bow and its arrow are Mad God Justin's: mgjart.js); a weapon as an orb in its
+   flashlight's icon on the weapons bar (the bow and its arrow: gunart.js); a weapon as an orb in its
    slot's color, and the pictures on Justin's Butler's upgrades. Preview: tools/l4dd-art.html */
 import { GOLD_CHAIR, GUNS } from "./gunart.js";
 import { duckSVG } from "./duck.js";

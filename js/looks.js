@@ -5,7 +5,7 @@
    - Rainbow Ducks (rainbowDucks, only with Hide customization): each duck is one of eight looks, dealt at random when
      the game starts: the seven colors of the rainbow, and a brown duck in Justin's costume (his glasses and jeans).
      Knocking down that duck is never a Justin kill (fakeJustin()).
-   - Vote colors (voteColor, never with Rainbow Ducks, never in Mad God Justin): a duck takes the color of the tile it
+   - Vote colors (voteColor, never with Rainbow Ducks): a duck takes the color of the tile it
      stands on, and goes back to its own color off the tiles. Every style takes it in its own way (tinted()).
    - Change player tag color (tagColor, with Vote colors): the name tag takes the duck's vote color too. */
 import { DUCK_DEFAULT, mix } from "./duck.js";

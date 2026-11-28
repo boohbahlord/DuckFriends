@@ -1,7 +1,5 @@
-/* Justin's moves on the board, written once: his walk, his hammer's swing and the number on a flash. The board's Justin
-   (boardjustin.js) and Mad God Justin (mgjbrain.js, mgjrules.js) are the same one: they move the same `s.justin`
-   ({ k, x0, y0, x1, y1, t, v }, board units) and show the same effects, and they only decide differently when to move
-   (the owner's, Nov 22: these were written out again in each, A4). A leaf: it imports nothing. */
+/* Justin's moves on the board (boardjustin.js): his walk, his hammer's swing and the number on a flash, on `s.justin`
+   ({ k, x0, y0, x1, y1, t, v }, board units). A leaf: it imports nothing. */
 export const r3 = (v) => Math.round(v * 1000) / 1000;
 /* Justin starts a walk from at to to (board units) at time now, at v a second (left out: the speed he had) */
 export const walkTo = (j, at, to, now, v) =>

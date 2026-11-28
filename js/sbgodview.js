@@ -27,7 +27,7 @@ export function syncHidden(s, me) {
   style.textContent = ids
     .map((id) => {
       const q = `[data-pid="${CSS.escape(id)}"]`;
-      return `.gduck${q},.held${q},.hpo-one${q},.mgj-rv${q},.mgj-snack${q}`;
+      return `.gduck${q},.held${q},.hpo-one${q},.mgj-snack${q}`;
     })
     .join(",")
     .concat("{display:none!important}");

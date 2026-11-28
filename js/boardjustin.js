@@ -20,17 +20,12 @@
    he was knocked down; w his wounds (wounds.js codes, justinHit). In
    Hangout he stays Duck Cabin's own (js/hangout/justin.js).
    A zebra cake thrown (the Zebra cake special, s.zcake): he runs after it, wherever he is, and eats it once it has
-   landed (j.eat), as Mad God Justin does; nothing else of his happens meanwhile.
-   The board's Mad God Justin (the mgjBoard option, only with Justin on): he has BJ_HP HP (j.hp of j.max), and a duck
-   that hurts him is his target for RAGE_MS (j.rage): he goes after it with Mad God Justin's attacks (the hammer, his
-   pistol, the controllers and the chair; never the edge lightning; no fireball, the owner's, Nov 18 10:38Z). A duck he hits by accident doesn't
-   become his target for it, nor does a duck a mode keeps safe (The Date and the Suitor at the table). At 0 HP he goes
-   down for the room's knocked-down time, then gets up with his HP full. */
+   landed (j.eat); nothing else of his happens meanwhile. */
 import { modeOf } from "./modes.js";
 
 import { E_LINES, DEATH_LINES, GOD_LINES } from "./hangout/justin.js";
 
-import { holdDown, downFor, invuln, hurtFx } from "./hangout/death.js";
+import { holdDown, invuln, hurtFx } from "./hangout/death.js";
 
 import { JUSTIN } from "./hangout/npcart.js";
 
@@ -39,24 +34,10 @@ import { shuffle } from "./random.js";
 import { hitWounds, WOUND_BREEDS } from "./wounds.js";
 
 import { critOf, armOfShot } from "./guns.js";
-import { drawDmg } from "./bowdraw.js";
 
 import { isQuack, tileAt, tileCenter, stillIn } from "./quackrules.js";
 
-import {
-  isMgj,
-  throwIt,
-  DMG,
-  THROW_TELL,
-  CHAIR_TELL,
-  chaseCake,
-} from "./mgjrules.js";
-
-import { mgjTick } from "./mgjbrain.js";
-
 import { r3, walkTo, stopAt, hammerFx, fxOf, nearSpot } from "./justinmoves.js";
-
-import { vdSafe } from "./vddrules.js";
 
 import {
   twoSided,
@@ -86,6 +67,14 @@ const RX = 0.03,
   RY = 0.08; // a duck's length on the board, across and down (as rules.js' swing measures)
 const rnd = ([a, b]) => a + Math.random() * (b - a);
 const any = (xs) => xs[Math.floor(Math.random() * xs.length)];
+/* the Zebra cake special (s.zcake, thrown: boardfire.js throwCake): it flies at CAKE_SPEED board widths a second to the
+   board's edge, and he eats it for CAKE_EAT_MS once it has landed */
+export const CAKE_SPEED = 0.45,
+  CAKE_EAT_MS = 2500;
+export const cakeAt = (c, now) => {
+  const t = (Math.min(now, c.stop) - c.t) / 1000;
+  return { x: c.x0 + c.vx * t, y: c.y0 + c.vy * t };
+};
 /* he sprints at a duck (id) to swing the hammer once he's there */
 const dashTo = (j, at, to, now, v, id) => {
   walkTo(j, at, to, now, v);
@@ -129,23 +118,21 @@ export function justinAt(j, now) {
 /* is he on the board now? */
 export const justinShown = (s) =>
   !!s.justin &&
-  (!!s.options.justin || isMgj(s)) &&
+  !!s.options.justin &&
   !modeOf(s.options.mode).noBoardJustin &&
   boardPhases(s).includes(s.phase);
 /* the turn he is in (a question, a round): not each stage of it */
 const turnKey = (s) => [s.round, s.qi, s.startedAt].join();
-/* shot or killed: down where he stands, one of his death lines, back on the next turn (the board's Mad God Justin: after the room's knocked-down time) */
+/* shot or killed: down where he stands, one of his death lines, back on the next turn */
 export function justinDown(s, now, log) {
   const j = s.justin;
-  if (!justinShown(s) || j.down || isMgj(s)) return false; // (Mad God Justin: he takes damage instead)
+  if (!justinShown(s) || j.down) return false;
   const at = justinAt(j, now);
   Object.assign(j, {
     down: now,
     dkey: turnKey(s), // (the turn he went down in: he stays down till the next one, see justinTick)
   });
   stopAt(j, at, now);
-  delete j.rage;
-  delete j.tell;
   delete j.swing;
   if (j.eat) {
     delete j.eat;
@@ -155,167 +142,36 @@ export function justinDown(s, now, log) {
   return true;
 }
 
-/* ---------- the board's Mad God Justin ---------- */
-export const BJ_HP = 10,
-  RAGE_MS = 10000;
-export const boardMgj = (s) =>
-  !isMgj(s) && !!s.options.mgjBoard && justinShown(s);
-/* a duck's weapon hit him: 0 nothing, 1 a hit he takes (the board's Mad God Justin: HP off, and the duck is his
-   target), 2 he went down */
+/* a duck's weapon hit him: 0 nothing, 2 he went down */
 export function justinHit(s, by, now, log, w, sh) {
   const j = s.justin;
-  if (!justinShown(s) || j.down || isMgj(s)) return 0;
+  if (!justinShown(s) || j.down) return 0;
   const at = justinAt(j, now),
-    mgj = boardMgj(s),
     crit = Math.random() < critOf(armOfShot(w), sh && sh.dr); // (a crit doubles it: guns.js critOf; w can be a shot's kind; a drawn arrow: its draw's)
-  if (mgj) {
-    j.max = BJ_HP;
-    j.hp = Math.max(
-      0,
-      (j.hp ?? BJ_HP) - ((DMG[w] || 1) + drawDmg(sh && sh.dr)) * (crit ? 2 : 1),
-    );
-  }
-  const dies = !mgj || j.hp <= 0;
   /* the hit feel of Dead Ducks Arcade on him too (the owner's, Nov 19 01:34Z: "not just players, not just Justin, but any
      NPC that can take damage"): its hitmarker, the wound it leaves (game.js draws them, his blood and "−1 HP"), and on
      the hit that kills him now and then a crit, his head blown off with a CRIT over it, as a duck's (rules.js wounded).
      Gone when he's back up (justinTick: "spawns back with gore effects lost on the next turn") */
   j.w = hitWounds(j.w, w, WOUND_BREEDS.justin, {
     head: crit,
-    dead: dies,
+    dead: true,
     look: JUSTIN,
   });
-  s.fxN = (s.fxN || 0) + 1;
-  s.fx = [
-    ...(s.fx || []).slice(-18),
-    {
-      n: s.fxN,
-      kind: "hitmark",
-      by,
-      who: [],
-      t: now,
-      x: r3(at.x),
-      y: r3(at.y),
-    },
-    ...(crit
-      ? [
-          {
-            n: ++s.fxN,
-            kind: "pcrit",
-            who: [JUSTIN_ID],
-            t: now,
-            x: r3(at.x),
-            y: r3(at.y),
-            ...(dies ? {} : { m: 1 }), // (m: only the small CRIT, he's still up)
-          },
-        ]
-      : []),
-  ];
-  if (dies) return justinDown(s, now, log) ? 2 : mgj ? 1 : 0;
-  if (s.players[by] && !vdSafe(s, by)) {
-    if (!j.rage) j.rage = { fireAt: now + 500, hamAt: now + 800 };
-    Object.assign(j.rage, { id: by, until: now + RAGE_MS });
-    j.ctlAt ??= now + 2500;
-    j.chairAt ??= now + 6000;
-  } // (the latest duck to hurt him is the one he goes after, for 10 s from its last hit)
-  return 1;
-}
-/* his rage: true while he is busy with his target (nothing else of his happens then) */
-function rageTick(s, now, at, fx, calm) {
-  const j = s.justin,
-    r = j.rage,
-    P = s.players[r.id],
-    p = s.pos[r.id];
-  const stop = () => stopAt(j, at, now);
-  if (now >= r.until || !P || !p || p.x < 0 || vdSafe(s, r.id) || calm) {
-    delete j.rage;
-    delete j.tell;
-    delete j.swing;
-    j.next = now + 1000;
-    return true;
+  if (crit) {
+    s.fxN = (s.fxN || 0) + 1;
+    s.fx = [
+      ...(s.fx || []).slice(-19),
+      {
+        n: s.fxN,
+        kind: "pcrit",
+        who: [JUSTIN_ID],
+        t: now,
+        x: r3(at.x),
+        y: r3(at.y),
+      },
+    ];
   }
-  if (P.dead) return false; // (his target is down: he waits by it)
-  const far = Math.hypot((p.x - at.x) / RX, (p.y - at.y) / RY),
-    dx = p.x - at.x,
-    dy = p.y - at.y,
-    d = Math.hypot(dx, dy) || 1;
-  /* a throw held up (the tell), then the controllers every way, or the chair at the duck */
-  if (j.tell) {
-    if (now < j.tell.at) return false;
-    const k = j.tell.k;
-    delete j.tell;
-    throwIt(s, k, at, p, now, fx);
-    r.fireAt = Math.max(r.fireAt, now + 900);
-    return true;
-  }
-  /* the hammer: on his way to the duck, then the swing toward where it stands by then */
-  if (j.swing) {
-    if (now < j.swing.at) return false;
-    delete j.swing;
-    const aim = Math.hypot(dx, dy) > 1e-4 ? [dx, dy] : [1, 0],
-      hit = strike(s, JUSTIN_ID, "hammer", aim, now, at);
-    hammerFx(fx, aim, hit);
-    r.fireAt = Math.max(r.fireAt, now + 600);
-    return true;
-  }
-  if (now >= r.hamAt) {
-    r.hamAt = now + rnd([3200, 4200]);
-    if (far < 1.8) {
-      stop();
-      j.swing = { id: r.id, at: now + 350 };
-      return true;
-    } // (up close: a moment's wind-up, so it can step away)
-    const to = nearSpot(at, p, RX, RY),
-      v = SPEED * 1.9;
-    dashTo(j, at, to, now, v, r.id);
-    return true;
-  } // (further off: he sprints at it, then swings)
-  if (now >= j.chairAt || now >= j.ctlAt) {
-    const k = now >= j.chairAt ? "chair" : "controller";
-    stop();
-    j.tell = {
-      k,
-      at: now + (k === "chair" ? CHAIR_TELL : THROW_TELL),
-    };
-    if (k === "chair") j.chairAt = now + rnd([15000, 22000]);
-    else j.ctlAt = now + rnd([8000, 12000]);
-    j.ctlAt = Math.max(j.ctlAt, now + 2500);
-    j.chairAt = Math.max(j.chairAt, now + 2500);
-    fx({ kind: "mgjtell", what: k, until: j.tell.at });
-    return true;
-  }
-  /* his pistol */
-  if (now >= r.fireAt) {
-    r.fireAt = now + rnd([650, 1150]);
-    const ax = dx / d,
-      ay = dy / d;
-    fx({
-      kind: "use",
-      what: "handgun",
-      who: [],
-      face: ax < 0 ? -1 : 1,
-      ax: +ax.toFixed(3),
-      ay: +ay.toFixed(3),
-    });
-    bossShot(s, s.fxN * 10, at, ax, ay, now);
-    return true;
-  }
-  /* where to stand: a few duck lengths from it, looked at again every 1.5 to 2.5 seconds */
-  if (now < (r.next || 0)) return false;
-  r.next = now + rnd([1500, 2500]);
-  const want = rnd([5, 8]),
-    ang = Math.atan2((at.y - p.y) / RY, (at.x - p.x) / RX) + rnd([-0.9, 0.9]);
-  walkTo(
-    j,
-    at,
-    {
-      x: Math.max(0.05, Math.min(0.95, p.x + Math.cos(ang) * want * RX)),
-      y: Math.max(0.06, Math.min(0.94, p.y + Math.sin(ang) * want * RY)),
-    },
-    now,
-    SPEED,
-  );
-  return true;
+  return justinDown(s, now, log) ? 2 : 0;
 }
 
 /* the roomiest of a few spots in x0..x1, y0..y1: the one furthest from the other ducks (so he never stands on one) */
@@ -413,29 +269,37 @@ function pick(sp, cur) {
   return any(best);
 }
 
-/* the Zebra cake special (rules.js' s.zcake): he runs after it, as after Mad God Justin's, and once it has landed he eats
-   it (j.eat, drawn at his beak) for CAKE_EAT_MS; then it's gone and he's back to his spot. True when anything changed */
+/* the Zebra cake special (s.zcake): he runs after it, and once it has landed he eats it (j.eat, drawn at his beak) for
+   CAKE_EAT_MS; then it's gone and he's back to his spot. True when anything changed */
 function cakeChase(s, now, at) {
-  const j = s.justin;
+  const j = s.justin,
+    c = s.zcake;
   delete j.god;
-  return chaseCake(
-    j,
-    s.zcake,
-    at,
-    now,
-    SPEED * 1.9,
-    (o) => fxOf(s, now, JUSTIN_ID)({ ...o, who: [] }),
-    () => {
-      s.zcake = null;
-      if (boardMgj(s) && j.hp > 0) j.hp = Math.min(j.max || BJ_HP, j.hp + 1); // (done eating: 1 HP back, owner 2026-11-03 23:17Z)
-      j.k = null;
-      j.next = now + 500;
-    },
-  );
+  delete j.swing;
+  if (c.eat) {
+    if (now < c.eat + CAKE_EAT_MS) return false;
+    delete j.eat;
+    s.zcake = null;
+    j.k = null;
+    j.next = now + 500;
+    return true;
+  }
+  const p = cakeAt(c, now),
+    d = Math.hypot((p.x - at.x) / RX, (p.y - at.y) / RY);
+  if (now >= c.stop && d < 1.3) {
+    c.eat = now;
+    stopAt(j, at, now);
+    j.eat = { k: "zebra", at: now, until: now + CAKE_EAT_MS, cake: true };
+    fxOf(s, now, JUSTIN_ID)({ kind: "eat", what: "zebra", who: [] });
+    return true;
+  }
+  if (Math.abs(j.x1 - p.x) < 0.004 && Math.abs(j.y1 - p.y) < 0.004)
+    return false;
+  walkTo(j, at, p, now, SPEED * 1.9); // (he runs after it)
+  return true;
 }
 /* the host's part, every heartbeat: true when s.justin changed. log: the rules' chat line */
 export function justinTick(s, now, log) {
-  if (isMgj(s)) return mgjTick(s, now, log); // (Mad God Justin: his boss brain, mgjrules.js)
   if (!s.options.justin || ["hang", "l4dd", "surv"].includes(s.options.mode)) {
     if (!s.justin) return false;
     delete s.justin;
@@ -455,7 +319,7 @@ export function justinTick(s, now, log) {
   }
   const j = s.justin;
   /* a new stage: he starts where the ducks start */
-  if (j.key !== key && j.down && !boardMgj(s) && j.dkey === turnKey(s)) {
+  if (j.key !== key && j.down && j.dkey === turnKey(s)) {
     j.key = key; // (dead: he stays where he fell through the turn's stages)
     ch = true;
   } else if (j.key !== key) {
@@ -481,13 +345,10 @@ export function justinTick(s, now, log) {
     /* in the normal modes he dies outright (the owner's, Nov 18 12:19Z: "Justin cannot be revived and he dies outright and
        spawns back with gore effects lost on the next turn", "justin cannot make dialog when outright dead"): he lies there,
        says nothing, and is back, whole, on the next turn */
-    if (boardMgj(s)) {
-      if (now - j.down < downFor(s)) return ch;
-    } else if (j.dkey === turnKey(s)) return ch;
+    if (j.dkey === turnKey(s)) return ch;
     delete j.down;
     delete j.dkey;
     delete j.w; // (whole again: his wounds are gone)
-    if (j.max) j.hp = j.max; // (the board's Mad God Justin: up with his HP full)
     j.next = now + 1000;
     j.say = Math.max(j.say, now + 4000);
     ch = true;
@@ -543,20 +404,6 @@ export function justinTick(s, now, log) {
       (id) => s.pos[id] && s.pos[id].x >= 0 && !s.players[id].dead,
     );
   const calm = !s.options.fun || (isQuack(s) && s.phase === "reveal");
-  /* the board's Mad God Justin: his HP, and the duck that hurt him */
-  if (boardMgj(s)) {
-    if (j.hp == null) {
-      j.hp = j.max = BJ_HP;
-      ch = true;
-    }
-    if (j.rage)
-      return rageTick(s, now, at, fx, isQuack(s) && s.phase === "reveal") || ch;
-  } else if (j.hp != null || j.rage) {
-    delete j.hp;
-    delete j.max;
-    delete j.rage;
-    ch = true;
-  }
   /* lightning or fire from the sky, a moment after his line */
   if (j.god && now >= j.god.at) {
     const id = j.god.id,

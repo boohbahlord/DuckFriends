@@ -3,13 +3,10 @@
 import { graceLeftMs } from "./gamehand.js";
 import { el, esc, $ } from "./ui.js";
 import { isBb, isLaw, isSc } from "./rules.js";
-import { confettiRain } from "./specials.js";
-import { weaponName } from "./l4ddrules.js";
 import { sfx } from "./sound.js";
 import { isQuack } from "./quackrules.js";
 import { quackLines } from "./quack.js";
 import { isDn } from "./duncerules.js";
-import { isMgj, PICK_WEAPONS } from "./mgjrules.js";
 import { isVd } from "./vddrules.js";
 import { isTv } from "./triviarules.js";
 import { R, S } from "./game.js";
@@ -44,7 +41,6 @@ export const pause = (ms) => new Promise((ok) => setTimeout(ok, ms));
 export async function announce(phase) {
   if (isQuack(R.state)) return announceQuack(R.state);
   if (isDn(R.state)) return announceDunce(R.state, phase);
-  if (isMgj(R.state)) return announceMgj(R.state, phase);
   if (isVd(R.state)) return announceVd(R.state, phase);
   if (isTv(R.state)) return; // (Trivia: the question says it all)
   const job = ++sayJob;
@@ -105,27 +101,6 @@ export async function announce(phase) {
   );
 }
 
-export const PICK_NAMES = Object.fromEntries(
-  PICK_WEAPONS.map((k) => [k, weaponName(k)]),
-); // (as Quacky Zombies names them)
-/* Mad God Justin: "Defeat Justin!" as the fight starts; then he's defeated, or time's up */
-async function announceMgj(s, phase) {
-  ++sayJob; // (any announcement still waiting stops)
-  if (phase === "boss") {
-    sfx.drum();
-    say("Defeat Justin!");
-    return;
-  }
-  if (phase !== "mgjend") return;
-  if (!(s.mgj && s.mgj.won)) {
-    sfx.bonk();
-    say("Justin Wins");
-    return;
-  }
-  sfx.done();
-  confettiRain(5000);
-  say("Justin defeated");
-}
 /* Duncelation: the cloud asks "Dunce or Not?" as a take starts; the verdict; the dunce */
 async function announceDunce(s, phase) {
   const job = ++sayJob,

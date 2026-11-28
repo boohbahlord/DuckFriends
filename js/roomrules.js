@@ -174,8 +174,6 @@ export const canOpen = (s, id, m) =>
   (!!m.grp && groupsOf(s, id).includes(m.grp));
 /* the stage a phase belongs to, and the running count of turns and of each stage (for forgame's timed mutes) */
 export const STAGE = {
-  boss: "voting",
-  mgjend: "discussing",
   dunced: "discussing",
   vdprompt: "writing",
   vddate: "discussing",
@@ -242,7 +240,6 @@ export function forgame(s, a, now) {
           "freeRoam",
           "fun",
           "justin",
-          "mgjBoard",
           "ghosts",
           "ghostBusy",
           "discuss",
@@ -250,11 +247,8 @@ export function forgame(s, a, now) {
         ].includes(k)
       )
         o[k] = v ? 1 : 0;
-      if (
-        ["justin", "mgjBoard"].includes(k) &&
-        ["l4dd", "surv", "mgj"].includes(s.options.mode)
-      )
-        delete o[k]; // (never Justin on the board in Quacky Zombies or Mad God Justin: the owner's, Nov 4)
+      if (k === "justin" && ["l4dd", "surv"].includes(s.options.mode))
+        delete o[k]; // (never Justin on the board in Quacky Zombies: the owner's, Nov 4)
       if (k === "share" && SHARE_OK.includes(v)) o.share = v;
       if (
         ["catchUp", "writeCatch", "answerTime", "submitTime"].includes(k) &&
@@ -289,19 +283,17 @@ export function forgame(s, a, now) {
               ? `knocked down for ${v ? v / 1000 + " s" : "no time"}`
               : k === "justin"
                 ? `Justin ${v ? "on" : "off"}`
-                : k === "mgjBoard"
-                  ? `Mad God Justin ${v ? "on" : "off"}`
-                  : k === "ghosts"
-                    ? `ghosts ${v ? "on" : "off"}`
-                    : k === "ghostBusy"
-                      ? `no ghosts while busy ${v ? "on" : "off"}`
-                      : k === "discuss"
-                        ? `discussion round ${v ? "on" : "off"}`
-                        : k === "unvoteStops"
-                          ? `unvoting ${v ? "stops" : "doesn't stop"} the countdown`
-                          : k === "freeRoam" || k === "fun"
-                            ? `${k === "fun" ? "silly commands" : "free roam"} ${v ? "on" : "off"}`
-                            : `${{ catchUp: "catch-up timer", writeCatch: "writing catch-up timer", answerTime: "answer timer", submitTime: "writing timer" }[k]} ${v ? v + " s" : "off"}`;
+                : k === "ghosts"
+                  ? `ghosts ${v ? "on" : "off"}`
+                  : k === "ghostBusy"
+                    ? `no ghosts while busy ${v ? "on" : "off"}`
+                    : k === "discuss"
+                      ? `discussion round ${v ? "on" : "off"}`
+                      : k === "unvoteStops"
+                        ? `unvoting ${v ? "stops" : "doesn't stop"} the countdown`
+                        : k === "freeRoam" || k === "fun"
+                          ? `${k === "fun" ? "silly commands" : "free roam"} ${v ? "on" : "off"}`
+                          : `${{ catchUp: "catch-up timer", writeCatch: "writing catch-up timer", answerTime: "answer timer", submitTime: "writing timer" }[k]} ${v ? v + " s" : "off"}`;
     sayFloat(
       s,
       `${me.name} changed the game: ${Object.entries(o)

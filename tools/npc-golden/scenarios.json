@@ -274,27 +274,6 @@
     "phase": "sandbox"
   },
   {
-    "name": "mgj",
-    "options": {
-      "mode": "mgj"
-    },
-    "computers": 3,
-    "beats": 400,
-    "phase": "boss"
-  },
-  {
-    "name": "mgj-waves",
-    "options": {
-      "mode": "mgj"
-    },
-    "computers": 7,
-    "beats": 400,
-    "phase": "boss",
-    "mz": {
-      "next": "$now"
-    }
-  },
-  {
     "name": "qz-downpour-bait",
     "options": {
       "mode": "l4dd"
@@ -315,19 +294,6 @@
       "GUNMEN": 0,
       "CRIM": 0,
       "STEP": 0
-    },
-    "bait": 0
-  },
-  {
-    "name": "mgj-waves-bait",
-    "options": {
-      "mode": "mgj"
-    },
-    "computers": 7,
-    "beats": 800,
-    "phase": "boss",
-    "mz": {
-      "next": "$now"
     },
     "bait": 0
   },

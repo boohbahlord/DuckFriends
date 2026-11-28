@@ -40,7 +40,7 @@ const fillOf = (i, k, hp, max) =>
   Math.max(0, Math.min(1, (hp - i * k) / Math.min(k, max - i * k)));
 
 /* the whole meter as html, for a picture made once (Justin's bar, a mini meter): hp of max */
-export function meterHTML(hp, max, cls = "", key = "") {
+function meterHTML(hp, max, cls = "", key = "") {
   const [n, k] = blocking(max);
   let bl = "";
   for (let i = 0; i < n; i++) {

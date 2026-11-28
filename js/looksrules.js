@@ -21,7 +21,7 @@ export const voteColorOn = (s) =>
   inGame(s) &&
   !!s.options.voteColor &&
   !rainbowOn(s) &&
-  !["mgj", "hang", "l4dd", "surv"].includes(s.options.mode);
+  !["hang", "l4dd", "surv"].includes(s.options.mode);
 export const tagColorOn = (s) => voteColorOn(s) && !!s.options.tagColor;
 
 /* the brown duck in Justin's costume is a player, not Justin: knocking it down never counts as a Justin kill */

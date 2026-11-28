@@ -150,7 +150,7 @@
  "map board\n✗ map: Permission denied (put sudo in front: sudo map board)",
  "sudo map sky\nMap: Sky.",
  "sudo map nosuch\n✗ map: no map nosuch (map lists them)",
- "mode\naod      Agree or Disagree  (now)\nwyr      Would You Rather\nddr      Does Duck Relate?\nbb       Bicker Brackets\nsc       Story Chain\nquack    Who is the Quack?\nlaw      Lawyering; Juryful of Ducklings\ndunce    Duncelation\nmgj      Mad God Justin\nvdd      Valentine's Duck Date\ntrivia   Trivia\nhang     Hangout\nl4dd     Dead Ducks Arcade\nsandbox  Sandbox",
+ "mode\naod      Agree or Disagree  (now)\nwyr      Would You Rather\nddr      Does Duck Relate?\nbb       Bicker Brackets\nsc       Story Chain\nquack    Who is the Quack?\nlaw      Lawyering; Juryful of Ducklings\ndunce    Duncelation\nvdd      Valentine's Duck Date\ntrivia   Trivia\nhang     Hangout\nl4dd     Dead Ducks Arcade\nsandbox  Sandbox",
  "mode wyr\n✗ mode: Permission denied (put sudo in front: sudo mode wyr)",
  "sudo mode wyr\nGame: Would You Rather.",
  "sudo mode aod\nGame: Agree or Disagree.",
@@ -207,7 +207,7 @@
  "jumps\nPlayer1: 0 Jumps this game · 0 of all time",
  "who\nPlayer1     host, sudo\nComputer-1  computer\nComputer-2  computer\nComputer-3  computer",
  "map\nboard       Night Show\nsky         Sky  (now)\npixel       Pixel\ncarnival    Carnival Night\nstars       Starry Night\nrabbit      Rabbit Hole of Ducklings\ncollage     Shelter Sky & Null\nnwk         Nous Within Kenoma\neuclid      Euclid's Squares\nvellum      The King's Festival\ntiles       Tiles\nec          Nous within Kenoma: Ether's Crossroads\nnwkarch     Nous within Kenoma: Architectured\nnwkten      Nous within Kenoma: Ten\nnwkchalice  Nous within Kenoma: Chalice\nnwkfool     Nous within Kenoma: the Fool\nHangout brings its own: Duck Cabin",
- "mode\naod      Agree or Disagree  (now)\nwyr      Would You Rather\nddr      Does Duck Relate?\nbb       Bicker Brackets\nsc       Story Chain\nquack    Who is the Quack?\nlaw      Lawyering; Juryful of Ducklings\ndunce    Duncelation\nmgj      Mad God Justin\nvdd      Valentine's Duck Date\ntrivia   Trivia\nhang     Hangout\nl4dd     Dead Ducks Arcade\nsandbox  Sandbox",
+ "mode\naod      Agree or Disagree  (now)\nwyr      Would You Rather\nddr      Does Duck Relate?\nbb       Bicker Brackets\nsc       Story Chain\nquack    Who is the Quack?\nlaw      Lawyering; Juryful of Ducklings\ndunce    Duncelation\nvdd      Valentine's Duck Date\ntrivia   Trivia\nhang     Hangout\nl4dd     Dead Ducks Arcade\nsandbox  Sandbox",
  "cheat\nNo test commands used in this game.",
  "cat t1/g\n✗ t1/g: No such file or directory",
  "ls\nseriat/"

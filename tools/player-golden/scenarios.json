@@ -249,37 +249,6 @@
     "ready": ".tpad-jump"
   },
   {
-    "name": "mgj",
-    "options": {
-      "mode": "mgj"
-    },
-    "phase": "boss",
-    "computers": 3,
-    "frames": 660,
-    "input": [
-      ["key", 10, "KeyD", 800],
-      ["key", 70, "KeyS", 500],
-      ["key", 120, "KeyA", 600],
-      ["key", 120, "KeyW", 600],
-      ["key", 200, "ShiftLeft", 1200],
-      ["key", 200, "KeyD", 1200],
-      ["key", 300, "Space", 100],
-      ["key", 330, "KeyA", 700],
-      ["key", 380, "Space", 100],
-      ["key", 420, "ArrowUp", 500],
-      ["key", 480, "ArrowRight", 400],
-      ["key", 520, "Space", 100],
-      ["key", 540, "KeyS", 700],
-      ["key", 540, "ShiftRight", 700],
-      ["key", 30, "ArrowLeft", 300],
-      ["key", 90, "ArrowDown", 300],
-      ["key", 560, "Digit2", 100],
-      ["click", 580, 0.6, 0.4, 600],
-      ["key", 630, "Digit1", 100],
-      ["click", 640, 0.4, 0.4]
-    ]
-  },
-  {
     "name": "sb-board",
     "options": {
       "mode": "sandbox",
@@ -491,43 +460,6 @@
     ]
   },
   {
-    "name": "mgj-pick",
-    "options": {
-      "mode": "mgj"
-    },
-    "phase": "boss",
-    "computers": 3,
-    "pick": "glauncher",
-    "frames": 720,
-    "input": [
-      ["mouse", 5, 0.6, 0.4],
-      ["key", 20, "Digit1", 100],
-      ["key", 40, "Digit4", 100],
-      ["click", 60, 0.6, 0.4, 100],
-      ["click", 110, 0.6, 0.4, 100],
-      ["key", 150, "Digit3", 100],
-      ["click", 170, 0.6, 0.4, 100],
-      ["key", 185, "KeyR", 100],
-      ["click", 230, 0.6, 0.45, 100],
-      ["click", 290, 0.6, 0.35, 100],
-      ["click", 340, 0.6, 0.4, 100],
-      ["key", 360, "KeyR", 100],
-      ["key", 370, "Digit2", 100],
-      ["key", 400, "Digit4", 100],
-      ["click", 420, 0.6, 0.4, 100],
-      ["click", 480, 0.6, 0.4, 100],
-      ["key", 510, "Digit1", 100],
-      ["key", 530, "Digit4", 100],
-      ["click", 550, 0.6, 0.4, 100],
-      ["click", 600, 0.6, 0.4, 100],
-      ["key", 630, "Digit3", 100],
-      ["key", 650, "Digit5", 100],
-      ["click", 665, 0.6, 0.4, 100],
-      ["key", 680, "Digit2", 100],
-      ["click", 695, 0.6, 0.4, 100]
-    ]
-  },
-  {
     "name": "board-reload",
     "options": {
       "mode": "aod"
@@ -555,27 +487,6 @@
       ["key", 420, "KeyR", 100]
     ],
     "computers": 1
-  },
-  {
-    "name": "mgj-reload",
-    "options": {
-      "mode": "mgj"
-    },
-    "phase": "boss",
-    "computers": 3,
-    "pick": "smg",
-    "frames": 420,
-    "input": [
-      ["mouse", 5, 0.6, 0.4],
-      ["key", 20, "Digit3", 100],
-      ["click", 40, 0.6, 0.4, 200],
-      ["key", 120, "KeyR", 100],
-      ["key", 200, "Digit2", 100],
-      ["key", 220, "KeyR", 100],
-      ["key", 300, "Digit3", 100],
-      ["click", 320, 0.6, 0.4, 100],
-      ["key", 360, "KeyR", 100]
-    ]
   },
   {
     "name": "board-big-walk",

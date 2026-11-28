@@ -14,7 +14,6 @@ import { scStats } from "./scrules.js";
 import { bbStats } from "./bbrules.js";
 import { quackStats, quackBlank } from "./quackrules.js";
 import { dnStats } from "./duncerules.js";
-import { mgjStats } from "./mgjrules.js";
 import { vdStats, turnedDown } from "./vddrules.js";
 import { tvStats } from "./triviarules.js";
 
@@ -126,17 +125,6 @@ export const GAME_LINES = {
       const p = per[id] || { right: 0, wrong: 0, asked: 0, got: 0, of: 0 };
       out.push(
         `${nm(id)}: right ${p.right} · wrong ${p.wrong} · ${p.asked} questions written${p.of ? ` · ${pct(p.got / p.of)} of their answers right` : ""} · ${jumps(id)} Jumps`,
-      );
-    }
-    return out;
-  },
-  mgj: ({ s, scope, round, ids, nm, jumps }) => {
-    const out = [];
-    const per = mgjStats(s, scope !== "round").per;
-    for (const id of ids) {
-      const p = per[id] || { dmg: 0, hits: 0, kills: 0, fights: 0, wins: 0 };
-      out.push(
-        `${nm(id)}: damage ${p.dmg} · knocked down ${p.hits} · killing blows ${p.kills} · ${p.fights} fights (${p.wins} won) · ${jumps(id)} Jumps`,
       );
     }
     return out;

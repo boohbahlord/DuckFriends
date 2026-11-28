@@ -387,7 +387,7 @@ export const SB_BOXES = {
     min: 10,
     max: 152,
     def: "100",
-  }, // (152: Justin's drawing is 152 tall where a duck's is 120 (duck.js), times his size in his mode, mgjrules.js MGJ_SCALE 1.2)
+  }, // (152: Justin's drawing is 152 tall where a duck's is 120, duck.js)
 };
 export const SB_FLAGS = {
   sets: { name: "Use these settings", kind: "bool", def: "t" }, // (off: what it spawns comes as it is, sbspawn.js ownOn)

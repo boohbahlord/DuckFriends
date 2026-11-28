@@ -32,7 +32,6 @@ const MODES = [
   "hang",
   "l4dd",
   "law",
-  "mgj",
   "quack",
   "sc",
   "surv",

@@ -8,7 +8,6 @@
    Lawyering: everyone writes a topic in secret; for each one, two attorneys argue it out and the room walks to a side.
    Duncelation: everyone writes a take; one by one, a duck defends the take it got and the room walks to Dunce or Not a
    Dunce, until someone is voted a dunce.
-   Mad God Justin: a boss fight; every duck has only a knife, and together they stab Justin to 0 HP before the time runs out.
    Valentine's Duck Date: a random duck is The Date; the Suitors take turns on a date with them at the dining table, and
    after each turn The Date turns one down, until the last one left is their Valentine.
    Trivia: everyone writes a question; for each one, walk onto the right answer (or type one and its writer grades it).
@@ -164,31 +163,6 @@ export const MODES = [
     tip: "Everyone writes a controversial take; defend the one you get while everyone else walks to Dunce or Not a Dunce. 3 players or more.",
   },
   {
-    id: "mgj",
-    hitMarks: true, // (hitmarkers show only here: the owner's, Nov 22 19:26Z, "HIT MARKERS SHOLDNT EVEN EXIST IN OTHER GAME MODES BUT ESPECIALLY SANDBOX"; gamefx.js)
-    push: { hammer: 1, grenade: 3 }, // (how many KB_FAR the hammer and a grenade push a duck: push.js)
-    ownDeath: true, // (it comes back its own way, not the boards' spawn protection: death.js normalGame)
-    downMs: 5000, // (how long a knocked-down duck can't move: always 5 s, whatever the host picks: death.js downFor)
-    downLocked: true,
-    hp: "mgj", // (its HP: the boss fight's, mgjrules.js; hpmath.js hpOf)
-    cat: "special",
-    name: "Mad God Justin",
-    stats: {
-      title: "Mad God Justin",
-      rows: [
-        ["Games", "games"],
-        ["Fights", "rounds"],
-        ["Won", "wins"],
-        ["Lost", "losses"],
-        ["Damage", "answers"],
-        ["Knocked down", "majority"],
-        ["Killing blows", "titles"],
-        ["Jumps", "jumps"],
-      ],
-    },
-    tip: "A boss fight: everyone gets a knife, and together you have to stab Justin down to 0 HP. He shoots back.",
-  },
-  {
     id: "vdd",
     noBoardJustin: true,
     cat: "comp",
@@ -303,7 +277,7 @@ export const modeName = (s) =>
     : modeOf(s.options.mode).name;
 /* Single Player (the owner's, Nov 18): the room on the device with no internet plays only these, and everything that
    lists the games (the votes, Random, Game Settings) lists only these there */
-export const SOLO_MODES = ["hang", "l4dd", "surv", "mgj", "sandbox"];
+export const SOLO_MODES = ["hang", "l4dd", "surv", "sandbox"];
 /* Survival is hidden from every list until a terminal command in the lobby turns it on for the room (the owner's, Nov
    21 18:59Z: `sudo survival on`; s.options.survOn). */
 export const HIDDEN_MODES = { surv: "survOn" };
@@ -356,13 +330,6 @@ const SYMBOLS = {
 <path d="M5 21.5L13 2L21 21.5Z" fill="#fbfbf6" stroke="#1c1c28" stroke-width="1.2" stroke-linejoin="round"/><path d="M13 2L21 21.5L17 21.5Z" fill="#000" opacity=".1"/>
 <text x="12.8" y="18.6" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="7" fill="#1c1c28">D</text><path d="M5 21.5C10 23 16 23 21 21.5" stroke="#1c1c28" stroke-width="1.2" fill="none"/>
 <text x="25.6" y="11" text-anchor="middle" font-family="'Lilita One', sans-serif" font-size="10" fill="#ffd23f" stroke="#1c1c28" stroke-width="1.6" paint-order="stroke fill">?</text></svg>`,
-  mgj: (m, size) =>
-    `<svg viewBox="0 0 30 24" width="${size}" height="${size * 0.8}" role="img" aria-label="${esc(m.name)}">
-<path d="M6.4 1.4L2 11.6H5.6L3.4 22.6L10.6 9.4H6.8L9.6 1.4Z" fill="#fff6b0" stroke="#1c1c28" stroke-width="1.1" stroke-linejoin="round"/>
-<ellipse cx="19.4" cy="14.6" rx="8.4" ry="8" fill="#ffd23f" stroke="#1c1c28" stroke-width="1.2"/><path d="M26.4 15.4l3.2.8-3.2 1.6z" fill="#ff8c2b" stroke="#1c1c28" stroke-width=".8" stroke-linejoin="round"/>
-<circle cx="22.2" cy="12" r="3.4" fill="#38b6ff" opacity=".45"/><circle cx="22.2" cy="12" r="1.9" fill="#bff1ff" stroke="#0b4a8a" stroke-width=".7"/>
-<path d="M17 8.4l7.4 1.6" stroke="#1c1c28" stroke-width="1.3" stroke-linecap="round"/>
-<path d="M15.8 7.4C14.8 5.4 13.6 3.6 12.2 2.2C12.4 4.6 12.9 6.6 13.7 8.6Z" fill="#a3121b" stroke="#3a0408" stroke-width=".9" stroke-linejoin="round"/><path d="M21.4 7C22.6 5 24.4 3.2 26.4 2C25.8 4.4 25 6.4 23.8 8.1Z" fill="#e3242b" stroke="#3a0408" stroke-width=".9" stroke-linejoin="round"/></svg>`,
   vdd: (m, size) =>
     `<svg viewBox="0 0 30 24" width="${size}" height="${size * 0.8}" role="img" aria-label="${esc(m.name)}">
 <path d="M15 7.2C13.2 4.8 9.8 5.6 9.8 8.4C9.8 10.8 12.6 12.6 15 14.8C17.4 12.6 20.2 10.8 20.2 8.4C20.2 5.6 16.8 4.8 15 7.2Z" fill="#ff3d6e" stroke="#1c1c28" stroke-width="1.1" stroke-linejoin="round"/>

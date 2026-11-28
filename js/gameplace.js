@@ -1,18 +1,15 @@
 /* ---------- where things are put on the screen: the dining table and its seats, the pick's tiles, the cake, the desk, the story's lines, the bracket's pan and zoom ----------
    Moved out of game.js to keep that file small (a pure move). It imports back from game.js, which imports it. */
 import {
-  JUSTIN2,
   R,
   S,
   bbZoom,
   geo,
   hidden,
   me,
-  mgjRv,
   scZone,
   setBbZoom,
   setCam,
-  setMgjRv,
   setScZone,
   turned,
   world,
@@ -23,40 +20,21 @@ import { fire } from "./gamehand.js";
 import { hurt } from "./gamefx.js";
 import { ZEBRA } from "./gunart.js";
 import { go } from "./router.js";
-import { el, esc, $, setHTML, ducksLayer } from "./ui.js";
+import { el, $, setHTML, ducksLayer } from "./ui.js";
 import { boardPhases } from "./rules.js";
-import { REACH } from "./boardfire.js";
 import { SC_VOTES, scZones, zoneAt, scCanVote, scLineOf } from "./scrules.js";
 import { treeSize } from "./brackets.js";
-import { hand, handIn } from "./hotpick.js";
+import { hand } from "./hotpick.js";
 import { olAdd } from "./outlines.js";
 import { zombieLook } from "./l4ddrules.js";
 import { clawMark } from "./claw.js";
 import { popHP } from "./hpmeter.js";
 import { sbOnBoard, noGoreOf, sbHasOl, sbOlColor } from "./sandboxrules.js";
 import { sbRoofed } from "./sbspawnview.js";
-import { justinAt, justinShown, JUSTIN_ID } from "./boardjustin.js";
-import { sfx } from "./sound.js";
+import { justinAt, justinShown, JUSTIN_ID, cakeAt } from "./boardjustin.js";
 import { feet } from "./feet.js";
 import { now as clockNow } from "./clock.js";
-import {
-  isMgj,
-  mgjFrozen,
-  PICK_FADE,
-  XB,
-  MGJ_SCALE,
-  MGJ_HAMMER,
-  downNear,
-  REVIVE,
-  EDGE_WARN,
-  GUN_TELL,
-  HAMMER_TELL,
-  BURST,
-  SPREAD,
-  DUCK_LEN,
-  cakeAt,
-} from "./mgjrules.js";
-import { FLAME, FOODS, edgeHTML } from "./mgjart.js";
+import { FLAME } from "./fxart.js";
 import {
   npcURL,
   npcBox,
@@ -70,10 +48,8 @@ import {
   npcShot,
 } from "./sbnpcart.js";
 import { goreFree, BY_WOUND, newWound } from "./wounds.js";
-import { DESK, pickHTML as mgjPickHTML } from "./mgj.js";
 import { VD_TABLE, seatOf, vdTileRects } from "./vddrules.js";
 import { TABLE_W, SEAT_OUT } from "./vdd.js";
-import { touchOnly } from "./pointer.js";
 import { fxHitAt, fxEye } from "./fx.js";
 import { vibrate, hitPx, HIT } from "./fxmotion.js";
 
@@ -141,50 +117,8 @@ export function placeTiles(board) {
   });
 }
 
-/* Mad God Justin: his Xbox's desk, where it came in; dark once he turns it off, gone a moment after he's back */
-export function placeDesk(board, s, now) {
-  const x = isMgj(s) && s.mgj && s.mgj.xb,
-    layer = ducksLayer(board);
-  let n = layer && layer.querySelector(".mgj-desk");
-  const on =
-    !!x &&
-    ["boss", "mgjend"].includes(s.phase) &&
-    (!x.done || now - x.done < XB.OUT);
-  if (n && (!on || +n.dataset.at !== x.at)) {
-    n.remove();
-    n = null;
-  }
-  if (!on || !layer || !geo) return;
-  if (!n) {
-    n = el(`<div class="mgj-desk" data-at="${x.at}">${DESK}</div>`);
-    n.style.setProperty("--in", XB.IN + "ms");
-    n.style.setProperty("--out", XB.OUT + "ms");
-    layer.append(n);
-  }
-  n.classList.toggle("off", !!x.off && now >= x.off);
-  n.classList.toggle("out", !!x.done);
-  putAt(n, x, 2.2, 3);
-}
-
-/* a board thing's element n put at the spot p, k duck widths wide, z under its top for the stacking (a square one gets
-   its height too): only when its place or size changed since the last time */
-function putAt(n, p, k, z, square) {
-  const c = place(p, 0, 1),
-    w = geo.size * k,
-    st = `${c.left.toFixed(1)},${c.top.toFixed(1)},${w.toFixed(1)}`;
-  if (n._st === st) return;
-  n._st = st;
-  Object.assign(n.style, {
-    left: c.left + "px",
-    top: c.top + "px",
-    width: w + "px",
-    ...(square ? { height: w + "px" } : {}),
-    zIndex: Math.round(c.top - z),
-  });
-}
-
-/* Mad God Justin: his zombie waves (mgjrules.js wavesTick), each where the host says it is, gliding there (css), the
-   way it last clawed; a dead one falls over and fades */
+/* Sandbox's board zombies (sbspawn.js), each where the host says it is, gliding there (css), the way it last clawed; a
+   dead one falls over and fades */
 const ZB_GLIDE = 100;
 /* Sandbox on the board: how big a duck is on my screen, in the board's shares, [a, b, c, d] (one duck width across the
    screen is (a, b) on the board, one down is (c, d)), so the host hits its NPCs where I see them (sbbody.js). Sent when
@@ -232,9 +166,7 @@ function walkFace(n, x, now) {
 }
 export function placeZombies(board, s, now) {
   const layer = ducksLayer(board),
-    zb =
-      (((isMgj(s) && s.phase === "boss") || sbOnBoard(s)) && s.mz && s.mz.zb) ||
-      []; // (and Sandbox's board: its spawns' zombies, sbspawn.js)
+    zb = (sbOnBoard(s) && s.mz && s.mz.zb) || [];
   if (!layer || !geo) return;
   sendDu(s);
   npcPics(s.sbpic); // (the room's uploaded pictures: a spawn's Appearance tab)
@@ -408,85 +340,10 @@ export function placeZombies(board, s, now) {
     n.style.setProperty("--k", k.toFixed(3));
   }
 }
-/* Mad God Justin: the pickup that faded in, where it lies (it goes once taken, or when the next one comes) */
-export function placePick(board, s) {
-  const m = isMgj(s) && s.phase === "boss" && s.mgj;
-  placeToken(board, m && m.pick, "");
-  placeToken(board, m && m.plus, "plus"); // (the little plus sign every 30 s: the owner's, Nov 17)
-}
-function placeToken(board, P, tag) {
-  const layer = ducksLayer(board),
-    sel = tag ? ".mgj-pick.k-" + tag : ".mgj-pick:not(.k-plus)";
-  let n = layer && layer.querySelector(sel);
-  if (n && (!P || +n.dataset.n !== P.n)) {
-    n.remove();
-    n = null;
-  }
-  if (!P || !layer || !geo) return;
-  if (!n) {
-    n = el(mgjPickHTML(P));
-    n.style.setProperty("--fade", PICK_FADE + "ms");
-    layer.append(n);
-  }
-  putAt(n, P, 0.9, 2, true);
-}
-
-/* Mad God Justin: getting a downed duck up (the owner's, Nov 3: hold 5 s, no medkit). Over the downed duck nearest me
-   a Revive button (hold it, or E), filling up while it's held; every revive going on shows its fill to everyone */
-export function placeRevive(board, s, now) {
-  const fxl = $(".fxl", board),
-    m = isMgj(s) && s.phase === "boss" && s.mgj,
-    near = m && me && !(s.players[R.me] || {}).dead && downNear(s, R.me),
-    want = new Map();
-  if (m) {
-    for (const [by, r] of Object.entries(m.rv || {}))
-      if (s.pos[r.id]) want.set(r.id, Math.min(1, (now - r.at) / REVIVE.MS));
-    if (near && !want.has(near)) want.set(near, 0);
-  }
-  for (const b of fxl.querySelectorAll(".mgj-rv"))
-    if (!want.has(b.dataset.pid)) b.remove();
-  if (!want.size && mgjRv) mgjRevive(false);
-  for (const [id, k] of want) {
-    let b = fxl.querySelector(`.mgj-rv[data-pid="${CSS.escape(id)}"]`);
-    if (!b) {
-      b = el(
-        `<button type="button" class="mgj-rv" data-pid="${esc(id)}"><i></i><span>${touchOnly() ? "Hold" : "Hold <kbd>E</kbd>"}</span></button>`,
-      );
-      const go = (on) => (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (on !== mgjRv) mgjRevive(on);
-      };
-      b.addEventListener("pointerdown", go(true));
-      for (const ev of ["pointerup", "pointercancel", "pointerleave"])
-        b.addEventListener(ev, go(false));
-      fxl.append(b);
-    }
-    const at = place(s.pos[id], 0, 1);
-    b.style.left = at.left.toFixed(1) + "px";
-    b.style.top = (at.top - geo.size * 1.25).toFixed(1) + "px";
-    b.style.setProperty("--rv", k.toFixed(3));
-    b.disabled = id !== near;
-  }
-}
-/* holding a revive (E, or the Revive button) or letting go */
-export function mgjRevive(on) {
-  setMgjRv(on);
-  if (R)
-    R.send({
-      t: "use",
-      what: "revive",
-      hold: on ? 1 : 0,
-      face: 1,
-      w: handIn() === "none" ? "" : handIn(),
-    }); // (w: the medkit out in my hand gets it up at once)
-}
-/* Mad God Justin's zebra cake, or the Zebra cake special's (s.zcake): spinning on its way, then lying where it landed
+/* the Zebra cake special's (s.zcake): spinning on its way, then lying where it landed
    until Justin eats it (Hangout: hidden on the other side of the cabin's walls) */
 export function placeCake(board, s, now) {
-  const c = isMgj(s)
-      ? s.phase === "boss" && s.mgj && s.mgj.cake
-      : boardPhases(s).includes(s.phase) && s.zcake,
+  const c = boardPhases(s).includes(s.phase) && s.zcake,
     layer = ducksLayer(board);
   let n = layer && layer.querySelector(".mgj-cake");
   if (n && (!c || c.eat || +n.dataset.n !== c.n)) {
@@ -518,16 +375,12 @@ export function placeCake(board, s, now) {
     visibility: geo.hang && world.hidden("", p) ? "hidden" : "",
   });
 }
-/* Mad God Justin's snack (a look only), or the zebra cake he picked up (the board's Justin too: the Zebra cake
-   special): at his beak, the way he faces, a bite at a time (his double eats too) */
+/* the zebra cake Justin picked up (the Zebra cake special): at his beak, the way he faces, a bite at a time */
 export function placeSnack(board, s, now) {
-  const e =
-      (isMgj(s) ? s.phase === "boss" : justinShown(s)) &&
-      s.justin &&
-      s.justin.eat,
+  const e = justinShown(s) && s.justin && s.justin.eat,
     layer = ducksLayer(board);
   if (!layer) return;
-  for (const id of [JUSTIN_ID, JUSTIN2]) {
+  for (const id of [JUSTIN_ID]) {
     let n = layer.querySelector(`.mgj-snack[data-pid="${id}"]`);
     const dk = layer.querySelector(`.gduck[data-pid="${id}"]`);
     if (n && (!e || !dk || n.dataset.k !== `${e.k} ${e.at}`)) {
@@ -537,14 +390,12 @@ export function placeSnack(board, s, now) {
     if (!e || !dk || !geo || now >= e.until) continue;
     if (!n) {
       n = el(
-        `<div class="mgj-snack" data-pid="${id}" data-k="${e.k} ${e.at}"><i>${FOODS[e.k] || FOODS.zebra}</i></div>`,
+        `<div class="mgj-snack" data-pid="${id}" data-k="${e.k} ${e.at}"><i>${ZEBRA}</i></div>`,
       );
       n.style.setProperty("--eat", e.until - e.at + "ms");
       layer.append(n);
     }
-    const j = justinAt(s.justin, now),
-      p = id === JUSTIN2 ? { x: 1 - j.x, y: 1 - j.y } : j,
-      at = place(p, 0, 1),
+    const at = place(justinAt(s.justin, now), 0, 1),
       side = (turned() ? 1 : dk._face) || 1,
       w = geo.size * 0.42;
     Object.assign(n.style, {
@@ -555,111 +406,6 @@ export function placeSnack(board, s, now) {
     });
     n.classList.toggle("left", side < 0);
   }
-}
-/* Mad God Justin's edge lightning: the edges glow for EDGE_WARN before it strikes (the strike itself: the "edge" fx) */
-export function placeEdge(board, s, now) {
-  const m = isMgj(s) && s.phase === "boss" && s.mgj,
-    warn =
-      !!m && !mgjFrozen(s) && m.edgeAt - now <= EDGE_WARN && m.edgeAt > now;
-  let n = board.querySelector(".mgj-edge.warn");
-  if (n && (!warn || +n.dataset.at !== m.edgeAt)) {
-    n.remove();
-    n = null;
-  }
-  if (!warn || n) return;
-  n = el(edgeHTML("warn"));
-  n.dataset.at = m.edgeAt;
-  n.style.animationDelay = -(EDGE_WARN - (m.edgeAt - now)) + "ms";
-  n.style.setProperty("--ew", EDGE_WARN + "ms");
-  board.append(n);
-  sfx.warn(Math.max(0.05, (m.edgeAt - now) / 1000));
-}
-
-/* Mad God Justin's hints, one for every attack that had none (the owner's, Nov 17 11:07Z: "Every player should have an
-   animated hint or something PER attack IF there isnt one"): while he winds up his hammer, the red wedge it will
-   sweep; while he aims a burst, a red sight line to its duck; while he aims the shotgun, its red cone. Each fills in
-   as the moment comes, with a red "!" over his head (his throws, his charge and the lightning have their own) */
-export function placeTells(board, s, now) {
-  const fxl = $(".fxl", board),
-    j = isMgj(s) && s.phase === "boss" && !mgjFrozen(s) && s.justin,
-    t = !j
-      ? null
-      : j.swing && s.pos[j.swing.id]
-        ? { k: "hammer", id: j.swing.id, at: j.swing.at, all: HAMMER_TELL }
-        : j.sg && s.pos[j.sg.id]
-          ? { k: "shotgun", id: j.sg.id, at: j.sg.at, all: GUN_TELL }
-          : j.burst &&
-              j.burst.left === BURST[j.burst.w].n &&
-              now < j.burst.at &&
-              s.pos[j.burst.id]
-            ? { k: "gun", id: j.burst.id, at: j.burst.at, all: GUN_TELL }
-            : null;
-  let n = fxl && fxl.querySelector(".mgj-tells"),
-    b = fxl && fxl.querySelector(".mgj-bang");
-  if (!t || !fxl || !geo) {
-    if (n) n.remove();
-    if (b) b.remove();
-    return;
-  }
-  if (!n) {
-    n = el(
-      `<svg class="mgj-tells" aria-hidden="true"><path class="w"/><line class="l"/><circle class="c" r="14"/></svg>`,
-    );
-    b = el(`<div class="mgj-bang" aria-hidden="true">!</div>`);
-    fxl.append(n, b);
-  }
-  const at = justinAt(j, now),
-    c = place(at, 0, 1, true),
-    q = t.id === R.me && me ? me : s.pos[t.id],
-    d = place(q, 0, 1, true),
-    /* a duck length along the board's x and along its y, on the screen (a phone held upright turns the board) */
-    px = place({ x: at.x + DUCK_LEN.x, y: at.y }, 0, 1, true),
-    py = place({ x: at.x, y: at.y + DUCK_LEN.y }, 0, 1, true),
-    ex = [px.left - c.left, px.top - c.top],
-    ey = [py.left - c.left, py.top - c.top],
-    det = ex[0] * ey[1] - ex[1] * ey[0] || 1,
-    ox = d.left - c.left,
-    oy = d.top - c.top,
-    a = Math.atan2(
-      (ex[0] * oy - ex[1] * ox) / det,
-      (ey[1] * ox - ey[0] * oy) / det,
-    ), // (the way to the duck, in duck lengths)
-    k = Math.max(0, Math.min(1, 1 - (t.at - now) / t.all)); // (how near it is: 0 to 1)
-  n.setAttribute("class", `mgj-tells k-${t.k}`);
-  n.style.setProperty("--k", k.toFixed(3));
-  const wedge = (far, half) => {
-    let p = `M${c.left.toFixed(1)} ${c.top.toFixed(1)}`;
-    for (let i = 0; i <= 12; i++) {
-      const u = a - half + (2 * half * i) / 12;
-      const fx = Math.cos(u) * far,
-        fy = Math.sin(u) * far;
-      p += `L${(c.left + fx * ex[0] + fy * ey[0]).toFixed(1)} ${(c.top + fx * ex[1] + fy * ey[1]).toFixed(1)}`;
-    }
-    return p + "Z";
-  };
-  const w = n.querySelector(".w"),
-    l = n.querySelector(".l"),
-    o = n.querySelector(".c");
-  if (t.k === "hammer")
-    w.setAttribute(
-      "d",
-      wedge(
-        REACH.hammer[0] * MGJ_SCALE * MGJ_HAMMER,
-        Math.acos(REACH.hammer[1]),
-      ),
-    );
-  // (where his swing hits: rules.js swing)
-  else if (t.k === "shotgun") w.setAttribute("d", wedge(9, SPREAD + 0.05));
-  else w.removeAttribute("d");
-  l.setAttribute("x1", c.left.toFixed(1));
-  l.setAttribute("y1", (c.top - geo.size * 0.5).toFixed(1));
-  l.setAttribute("x2", d.left.toFixed(1));
-  l.setAttribute("y2", (d.top - geo.size * 0.4).toFixed(1));
-  o.setAttribute("cx", d.left.toFixed(1));
-  o.setAttribute("cy", (d.top - geo.size * 0.4).toFixed(1));
-  /* the "!" over his head */
-  b.style.left = c.left.toFixed(1) + "px";
-  b.style.top = (c.top - geo.size * MGJ_SCALE * 1.3).toFixed(1) + "px";
 }
 /* Story Chain: the row under my duck lights up while voting, and the Vote button wears its color */
 export function storyMarks(s, board) {

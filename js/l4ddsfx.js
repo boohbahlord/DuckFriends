@@ -8,7 +8,7 @@
 
      l4Hear(s, ctx)        on every new state: the boards, the spin, a sale, a new round, where the zombies are going
      l4Steps(dt, ctx)      every frame: the footsteps and the groans
-     mgjSteps(s), sbSteps(ctx)   every frame: the wave zombies' and Sandbox's NPCs' (below)
+     boardSteps(s), sbSteps(ctx)   every frame: Sandbox's NPCs', on the board and on a world (below)
 
    Each fades with its distance from my duck (sound.js), and the voices are capped (here a few footsteps and groans at
    once at most). */
@@ -19,7 +19,6 @@ import { zombiesOf } from "./zombies.js";
 import { groundAt, stepOf } from "./ground.js";
 import { isSurv } from "./survrules.js";
 import { FILES } from "./sfxlist.js";
-import { DUCK_LEN } from "./mgjrules.js";
 
 const rnd = (a, b) => a + Math.random() * (b - a);
 export const SOUNDS = {};
@@ -43,7 +42,7 @@ const STRIDE = 44, // world px a duck walks for each footstep
   NEAR_MOST = 40, // only the nearest this many walkers count for their steps and groans (Sandbox can have 800: grouping them all would cost too much each frame)
   WINDUPS = 3, // zombies' wind-up growls in a second at most (the nearest first: the tell of a swing, from its wu)
   WINDUP_K = 1; // (sound.js VOL.zwindup sets how quiet)
-/* the budgets every walker shares, whichever path asks (who: "l4" the map's zombies, "mz" the wave zombies, "sb"
+/* the budgets every walker shares, whichever path asks (who: "l4" the map's zombies, "mz" the board's zombies, "sb"
    Sandbox's own): Z_PER_S steps a second, GROANS groans in 1.2 s; while another path is asking too, one takes at most two thirds
    of it, so a crowd of one kind never silences the other (Sandbox's ducks beside a zombie map's mob) */
 const crowd = { steps: [], groans: [], windups: [], asked: {} };
@@ -386,19 +385,19 @@ export function l4Steps(dt, ctx) {
   }
 }
 
-/* ---------- every other walker: the wave zombies on the board, Sandbox's own on a world ----------
-   Mad God Justin's wave zombies (mgjrules.js s.mz) shuffle and groan as Quacky Zombies' do (Adam, Nov 19, for the owner's
-   "this is the new feel and vibe of the game"). Sandbox's spawns walk the same path (the owner's spawn list: "Blank NPC /
+/* ---------- every other walker: Sandbox's own, on the board and on a world ----------
+   They shuffle and groan as Quacky Zombies' do (Adam, Nov 19, for the owner's "this is the new feel and vibe of the
+   game"). Sandbox's spawns (the owner's spawn list: "Blank NPC /
    zombie / Justin / NPCs from Test Mode / Custom NPCs"): on the board in s.mz.zb, on Duck Cabin and the zombie maps in
    s.hang.sbz.zb (sbcabin.js). A zombie shuffles and groans; every other kind steps as a duck does, quieter, and never
    groans. Only the nearest NEAR_MOST count, a close group of one kind as one, inside the same budgets as the map's
-   zombies (crowd). On the board every sound is heard by all (no distances; game.js calls mgjSteps every frame); on a
+   zombies (crowd). On the board every sound is heard by all (no distances; game.js calls boardSteps every frame); on a
    world each fades with its distance from my duck (sbsfx.js calls sbSteps every frame). */
 const MZ = {
-  STRIDE: 0.7, // duck lengths a wave zombie walks for each footstep
-  GROUP: 2, // duck lengths: wave zombies this close together are one group
+  STRIDE: 0.7, // duck lengths a board zombie walks for each footstep
+  GROUP: 2, // duck lengths: board zombies this close together are one group
   JUMP: 2, // duck lengths: a move longer than this in one frame is a new spot (a spawn), not a walk
-  K: 0.55, // a wave zombie's step, of a duck's
+  K: 0.55, // a board zombie's step, of a duck's
   GROAN_K: 0.7,
 };
 const DUCK_K = 0.55; // a Sandbox duck's step (a Blank NPC, Justin, a Test NPC, a made one), of mine
@@ -468,12 +467,11 @@ function walk(pool, list, now, o) {
 }
 
 let mz = null; // the board's walkers (walk's pool)
-export function mgjSteps(s) {
-  const zb =
-    (s && (s.phase === "boss" || s.phase === "sandbox") && s.mz && s.mz.zb) ||
-    null; // (and Sandbox's board: its spawns)
+const DUCK_LEN = { x: 0.03, y: 0.08 }; // (a duck's length on the board, in its widths and heights)
+export function boardSteps(s) {
+  const zb = (s && s.phase === "sandbox" && s.mz && s.mz.zb) || null; // (Sandbox's board: its spawns)
   if (!zb || !zb.length) {
-    mz = null; // (no waves: start fresh next time)
+    mz = null; // (none: start fresh next time)
     return;
   }
   if (!mz) {

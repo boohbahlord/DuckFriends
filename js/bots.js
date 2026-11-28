@@ -51,7 +51,6 @@ import {
   DN_GRACE,
   DUNCE_TAKES,
 } from "./duncerules.js";
-import { isMgj, mgjGone, PICK_WEAPONS } from "./mgjrules.js";
 import {
   isL4dd,
   L4,
@@ -78,7 +77,7 @@ import {
   hasLeft,
 } from "./l4ddrules.js";
 import { endless } from "./ammo.js";
-import { kindOf, MGJ_MELEE } from "./guns.js";
+import { kindOf } from "./guns.js";
 import { draws } from "./bowdraw.js";
 import { gunsIn, itemsIn, PRIMARY } from "./kitslots.js";
 import { lootAt } from "./l4ddloot.js";
@@ -91,7 +90,6 @@ import {
   seated,
   vdTileRects,
 } from "./vddrules.js";
-import { justinAt } from "./boardjustin.js";
 import {
   isTv,
   TV_PHASES,
@@ -254,71 +252,6 @@ function dnBot(s, id, late, now, out) {
   if (mine !== side) toSide(s, id, side, out);
 }
 
-/* Mad God Justin: up to him (stopping a little short, off to one side), a stab once he's in reach, a jump now and then */
-const stabbed = new Map(); // computer id → when it last stabbed
-function mgjBot(s, id, now, out) {
-  const p = s.pos[id],
-    P = s.players[id];
-  if (!p || !P || P.dead || !s.justin || mgjGone(s, now)) return;
-  const j = justinAt(s.justin, now),
-    dx = (j.x - p.x) / 0.03,
-    dy = (j.y - p.y) / 0.08,
-    d = Math.hypot(dx, dy) || 1,
-    len = Math.hypot(j.x - p.x, j.y - p.y) || 1,
-    ax = +((j.x - p.x) / len).toFixed(3),
-    ay = +((j.y - p.y) / len).toFixed(3);
-  const air = p.j && now - p.j < 700,
-    jump = !air && Math.random() < 0.015 ? now : air ? p.j : 0;
-  const m = s.mgj || {},
-    mine = (m.held || {})[id],
-    pk = m.pick;
-  if (mine === "medkit" && (m.lost || {})[id] > 0)
-    out.push({ t: "use", id, what: mine, face: 1 }); // (hurt: the medkit)
-  else if (mine && mine !== "medkit") {
-    out.push({ t: "use", id, what: mine, face: ax < 0 ? -1 : 1, ax, ay });
-    return;
-  } // (a gun picked up: fire it at him)
-  if (
-    pk &&
-    PICK_WEAPONS.includes(pk.k) &&
-    Math.hypot((pk.x - p.x) / 0.03, (pk.y - p.y) / 0.08) < d
-  ) {
-    const q = Math.hypot((pk.x - p.x) / 0.03, (pk.y - p.y) / 0.08) || 1,
-      k = Math.min(1, 0.7 / q);
-    out.push({
-      t: "move",
-      id,
-      x: p.x + (pk.x - p.x) * k,
-      y: p.y + (pk.y - p.y) * k,
-      j: jump,
-      w: MGJ_MELEE,
-      ax,
-      ay,
-    });
-    return;
-  } // (a weapon nearer than he is: go get it)
-  if (d > 1.6) {
-    const k = Math.min(1, 0.7 / d);
-    out.push({
-      t: "move",
-      id,
-      x: p.x + (j.x - p.x) * k,
-      y: p.y + (j.y - p.y) * k,
-      j: jump,
-      w: MGJ_MELEE,
-      ax,
-      ay,
-    });
-    return;
-  }
-  if (jump !== (p.j || 0))
-    out.push({ t: "move", id, x: p.x, y: p.y, j: jump, w: MGJ_MELEE, ax, ay });
-  if (now - (stabbed.get(id) || 0) > 1100 + Math.random() * 600) {
-    stabbed.set(id, now);
-    if (stabbed.size > 100) stabbed.delete(stabbed.keys().next().value);
-    out.push({ t: "use", id, what: MGJ_MELEE, face: ax < 0 ? -1 : 1, ax, ay });
-  }
-}
 /* Valentine's Duck Date: a computer that is The Date writes a topic, lets the date run (with the timer off, it moves on
    after a while) and picks a tile (now and then none); everyone else not at the table wanders about and jumps now and
    then */
@@ -481,10 +414,6 @@ function botThink(s, now) {
     }
     if (isSc(s)) {
       storyBot(s, id, now, wait, late, people, out);
-      return;
-    }
-    if (isMgj(s) && s.phase === "boss") {
-      if (now - s.at > 1500 + i * 300) mgjBot(s, id, now, out);
       return;
     }
     if (isVd(s) && VD_PHASES.includes(s.phase)) {
