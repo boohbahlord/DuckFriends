@@ -674,6 +674,15 @@ GS.roofHolesIn(ALL); // (the map's props wait in ALL till useMode turns to it)
 export const SOLIDS = [];
 const CELL = 200,
   grid = new Map();
+/* Dead Ducks Arcade's supply crate, landed (l4ddrules.js crateSolid): a box b { x0, y0, x1, y1 (world px), z0 (its
+   bottom), top } that stops everything from its bottom up, or null; gives back the one before */
+let crate = null;
+export function setCrateBlock(b) {
+  const was = crate;
+  crate = b && { id: "crate", kind: "crate", roof: 0, fy: FOOT, ...b };
+  makeSolids();
+  return was;
+}
 function makeSolids() {
   SOLIDS.length = 0;
   grid.clear();
@@ -693,6 +702,7 @@ function makeSolids() {
         car: p.car, // (Downpour's car i, or its glass: carClear)
         fy: p.fy ?? FOOT, // (how near feet get to it north and south: a fence seen face on, right up to its line)
       });
+  if (crate) SOLIDS.push(crate);
   for (const b of SOLIDS)
     for (
       let i = Math.floor((b.x0 - FOOT) / CELL);
@@ -846,7 +856,12 @@ const hits = (b, x, y) =>
 export function solidsAt(x, y, z = -Infinity) {
   return (
     grid.get(Math.floor(x / CELL) * 1000 + Math.floor(y / CELL)) || []
-  ).filter((b) => hits(b, x, y) && z < Math.max(b.top, b.roof));
+  ).filter(
+    (b) =>
+      hits(b, x, y) &&
+      z < Math.max(b.top, b.roof) &&
+      !(b.z0 > z + 1 && z > -Infinity), // (something up on a roof: nothing under it)
+  );
 }
 /* where my duck ends a step at (x, y), its feet at z, as the map's 0 … 1: a solid that can't be landed on (a trunk: the
    owner's, Nov 21, "you can't land on a trunk's top, you fall off it the way you came, and only clear it by jumping
