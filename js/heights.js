@@ -19,9 +19,11 @@ export const ELEV = 108;
    levelZero); levelZ(n): level n's height */
 export const levelOf = (z) => (z - levelZero()) / ELEV;
 export const levelZ = (n) => n * ELEV + levelZero();
-/* fall damage, a duck's (gamedefaults.js FALL): a fall h world px down and side px across, measured along its path in
-   elevations, takes this many HP (actplay.js act_land) */
+/* fall damage, a duck's (gamedefaults.js FALL): a fall h world px down takes this many HP (actplay.js act_land); side:
+   how far a hit threw it across, which counts along the way (game.js: 0 for any other fall), only with airtime: no drop,
+   no damage */
 export const fallHurt = (h, side = 0) => {
+  if (!(+h > 0)) return 0;
   const e = Math.hypot(+h || 0, +side || 0) / ELEV;
   if (e < FALL.from) return 0;
   return FALL.hp * (e < FALL.mid ? FALL.down : FALL.up) ** (e - FALL.mid);
