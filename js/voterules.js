@@ -31,7 +31,7 @@ import { CABIN_MODES } from "./modes.js";
 import { umapIds } from "./umaprules.js";
 import { startTourney } from "./bbrules.js";
 
-import { isSb, sbOnBoard } from "./sandboxrules.js";
+import { baseMode, isSb, sbOnBoard } from "./sandboxrules.js";
 
 import { sbAsk, sbAskDue, sbBegin, sbPick } from "./sbsave.js";
 
@@ -44,6 +44,8 @@ import { isTv, tvStart } from "./triviarules.js";
 import { isQuack, startQuackRound } from "./quackrules.js";
 
 import { hangStart } from "./hangout/rules.js";
+
+import { useMode } from "./hangout/layout.js";
 
 import { isWorldMap, ZOOM_MAP, GREY_MAP } from "./maps.js";
 
@@ -278,6 +280,7 @@ export function rotate(s, now) {
 /* the countdown is over: the game begins (Random: again for every new game) */
 export function beginGame(s, now) {
   const P = s.players;
+  useMode(baseMode(s.options)); // (a vote or Random may have changed the mode in this same action: its map first, so Dead Ducks Arcade starts on Downpour)
   s.startedAt = now;
   ammoReset(s); // (every gun full again)
   if (isSb(s)) sbBegin(s, now); // (a save's NPCs back, its session named: sbsave.js)
