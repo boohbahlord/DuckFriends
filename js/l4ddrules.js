@@ -1962,8 +1962,9 @@ export const MERCH = {
   MORE_OF: 0.5, // (each thing he has: the chance he has a second, then again a third: the owner's, Nov 19 22:25Z, "there's a 50% chance they sell one more ... and there's another 50% chance that's rolled again to see if they sell 3", for "any item that's sold, whether it be gun or otherwise")
   /* the director (director.js; the owner's, Nov 28, cmsg_01LTpp6fzv8sfYUR5KoHADKtCoUNw94KGwZjNsEiuJRsw8): a rest's chance
      while some duck is doing badly; who comes is a weighted pick, the one who just came at AGAIN, each one's weight
-     building back up by BUILD each visit he's away, to 1 */
+     building back up by BUILD each visit he's away, to W (where every one starts) */
   BAD: 0.9,
+  W: 1,
   CHAIN: 0.25, // (each one that comes brings another this often, chained)
   APART: 1500, // (ms: each one after the first sets off this much later …
   BESIDE: 70, // … and stands this far beside the one before, px)
@@ -2205,7 +2206,7 @@ function bringMerchant(s, now, k, came) {
     alive = MERCHANTS.map((m) => m.id).filter((id) => !out.includes(id));
   if (!alive.length) return false; // (every one of them killed, shot at, or here)
   const pw = { ...(h.pw || {}) },
-    wOf = (id) => pw[id] ?? 1;
+    wOf = (id) => pw[id] ?? MERCH.W;
   let r = Math.random() * alive.reduce((t, id) => t + wOf(id), 0),
     id = alive[alive.length - 1];
   for (const x of alive)
@@ -2213,7 +2214,7 @@ function bringMerchant(s, now, k, came) {
       id = x;
       break;
     }
-  for (const x of alive) pw[x] = Math.min(1, wOf(x) + MERCH.BUILD);
+  for (const x of alive) pw[x] = Math.min(MERCH.W, wOf(x) + MERCH.BUILD);
   pw[id] = MERCH.AGAIN;
   came.push(id);
   const [from, route] = wayIn();
