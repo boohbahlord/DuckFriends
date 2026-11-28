@@ -168,6 +168,7 @@ import {
   drawMost,
   drawFast,
   cookedOff,
+  cookedOut,
   drawSwitched,
 } from "./bowdraw.js";
 import { NADE } from "./gamedefaults.js";
@@ -216,19 +217,20 @@ export function act_move({ state, s, a, now, me }) {
   if (!me || !s.pos[a.id]) return state;
   if (!boardPhases(s).includes(s.phase)) return state;
   const was = s.pos[a.id],
-    j = +a.j || 0;
-  if (holdStill(s, a.id, now)) return state; // Who is the Quack?: the last duck plays dead for a moment
+    j = +a.j || 0,
+    keep = drawSwitched(s, a.id, a.w) ? s : state; // (another weapon picked: a cooking grenade put away, bowdraw.js, even by a duck that can't move now)
+  if (holdStill(s, a.id, now)) return keep; // Who is the Quack?: the last duck plays dead for a moment
   if (
     (isL4dd(s) || isSb(s)) &&
     was.tp &&
     now - was.tp < 1500 &&
     Math.hypot((+a.x || 0) - was.x, (+a.y || 0) - was.y) > 0.03
   )
-    return state; // (Quacky Zombies and Sandbox: the host just put it at a start spot; a move sent before that got there is old)
-  if (isHang(s) && hangStill(s, a.id, now)) return state; // Hangout: shot by Justin, it can't move for a while
-  if (downStill(s, a.id, now)) return state; // the boards: knocked down, it can't move for the host's time (1 s unless set)
-  if (sbOut(s, a.id)) return state; // (Sandbox: out of lives, it stays down: sbout.js)
-  if (seated(s, a.id)) return state; // (Valentine's Duck Date: the two at the table stay in their seats)
+    return keep; // (Quacky Zombies and Sandbox: the host just put it at a start spot; a move sent before that got there is old)
+  if (isHang(s) && hangStill(s, a.id, now)) return keep; // Hangout: shot by Justin, it can't move for a while
+  if (downStill(s, a.id, now)) return keep; // the boards: knocked down, it can't move for the host's time (1 s unless set)
+  if (sbOut(s, a.id)) return keep; // (Sandbox: out of lives, it stays down: sbout.js)
+  if (seated(s, a.id)) return keep; // (Valentine's Duck Date: the two at the table stay in their seats)
   let x = Math.max(0, Math.min(1, +a.x || 0)),
     y = Math.max(0, Math.min(1, +a.y || 0));
   // a vote keeps its answer: the duck walks only inside its own column until Vote is pressed again (a juror may walk over and change their vote)
@@ -307,7 +309,6 @@ export function act_move({ state, s, a, now, me }) {
       ? { kb: was.kb }
       : {}),
   }; // q: squashed against l/r/u/d; sp: sprinting; tb: a trampoline bounce's height
-  drawSwitched(s, a.id, a.w); // (another weapon picked: a cooking grenade put away, bowdraw.js)
   quackMoved(s, a.id); // (Who is the Quack?: first onto the Quack's tile)
   if (me.dead && (x !== was.x || y !== was.y)) {
     delete me.dead;
@@ -445,15 +446,16 @@ export function act_use({ state, s, a, now, me, boss }) {
   if (sp === "sound") return state; // (Sound is off for now: specials.js off)
   const k = `${a.id} ${sp}`; // (each item waits on its own)
   if (
-    waiting(
-      GATE_BREEDS.board,
-      {
-        auto: AUTO.includes(sp),
-        cool: coolFor(sp),
-        ends: coolEnds(s, a.id, sp),
-      },
-      now,
-    ) ||
+    (!cookedOut(sp, a.dr) && // (bowdraw.js)
+      waiting(
+        GATE_BREEDS.board,
+        {
+          auto: AUTO.includes(sp),
+          cool: coolFor(sp),
+          ends: coolEnds(s, a.id, sp),
+        },
+        now,
+      )) ||
     heldBack(s, sp, () => laserHeat(s, a.id, now).over)
   )
     return state; // (weaponuse.js: its wait, the one zebra cake, a Laser Rifle overheated)
@@ -798,7 +800,7 @@ export function act_tick({ state, s, a, now, host }) {
   if (sbEnd) return s;
   if (inWorld(s) && modeOf(s.options.mode).timed && s.ends && now >= s.ends)
     return cabinOver(s, now, "Time's up in the cabin."); // (Hangout from Random or the vote: its time limit)
-  cookedOff(s, now, (a) =>
+  const nades = cookedOff(s, now, (a) =>
     act_use({ state: s, s, a, now, me: s.players[a.id], boss: null }),
   ); // (a grenade held to its fuse's end: every mode's, bowdraw.js)
   const shots = isL4dd(s) ? l4Shots(s, now) : moveShots(s, now),
@@ -821,7 +823,9 @@ export function act_tick({ state, s, a, now, host }) {
   const sig = () => [s.phase, s.qi, s.catchEnds, s.round, s.at].join(),
     was = sig();
   advance(s, now);
-  return sig() === was && !shots && !hung && !jus && !up && !dv ? state : s;
+  return sig() === was && !nades && !shots && !hung && !jus && !up && !dv
+    ? state
+    : s;
 }
 export function act_land({ state, s, a, now, me }) {
   // my duck landed from a fall a.h world px high and a.s across a hit threw it (game.js: its own screen works the fall out): fall
