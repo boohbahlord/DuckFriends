@@ -49,8 +49,6 @@ import {
   swingOn,
   swinging,
   swingMisses,
-  knockOf,
-  KNOCK_DUCK,
 } from "./weaponuse.js";
 import {
   ARMS,
@@ -125,7 +123,14 @@ import { toPx, DUCK } from "./units.js";
 import { blast, reach, hitOf, REACH } from "./blast.js";
 import { carsBlast, carsSwing } from "./carpush.js";
 import { spreadAim } from "./heat.js";
-import { pushAlong, walkOf, pushTaken, immobile, sizeOf } from "./push.js";
+import {
+  pushAlong,
+  walkOf,
+  pushOn,
+  meleePush,
+  blastPush,
+  sizeOf,
+} from "./push.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
   hitWounds,
@@ -3626,11 +3631,17 @@ function meleeHits(s, now) {
       [px, py] = toPx(p),
       bx = px + k.dx * A.at * sz,
       by = py + k.dy * A.at * sz;
+    const push = meleePush(s, k.by, k.w); // (its push: its weapon's and my weight, push.js)
     for (const z of zs) {
-      if (z.st === 3 || k.hit.includes(z.i)) continue;
+      if (k.hit.includes(z.i)) continue;
       if (!overlapH(hz, h, zOf(z, "zombie"))) continue;
       if (Math.hypot(z.x - bx, z.y - by) > R) continue; // (a round bubble: as far up and down as to the sides, the owner's, Nov 18 15:18Z "Make sure melee weapons have the same range in any direction". It was squashed up and down, 1.4 times shorter)
       k.hit.push(z.i);
+      if (z.st === 3) {
+        knockZ(s, z, k.dx, k.dy, push);
+        any = true;
+        continue;
+      } // (a body slides by the same push: the owner's, Nov 28 04:05Z)
       if (missed(s, k.by, k.w, z, now)) continue; // (this one isn't hit by this swing; the others in it still can be)
       const dmg = Array.isArray(A.dmg)
         ? A.dmg[0] + Math.floor(Math.random() * (A.dmg[1] - A.dmg[0] + 1))
@@ -3639,10 +3650,10 @@ function meleeHits(s, now) {
         dead = strike(s, z, dmg * sz, critRoll(s, k.by, k.w), k.by, k.w, now);
       wearDown(s, k.by, k.w, hp0 - Math.max(0, z.hp)); // (the HP it took off, not the overkill)
       if (dead) die(z, T);
-      else if (z.st === 2) knockZ(z, k.dx, k.dy, knockOf(k.w) * sz); // (alive: pushed back, ARMS knock, harder from a bigger duck)
+      if (z.st === 2 || z.st === 3) knockZ(s, z, k.dx, k.dy, push); // (pushed back, alive or dead; not up a wall)
       any = true;
     }
-    /* another duck in the swing: a slight shove, no HP lost (nothing hurts another duck here) */
+    /* another duck in the swing: shoved by the same push over its weight, no HP lost (nothing hurts another duck here) */
     for (const id of s.seat) {
       const q = s.pos[id];
       if (id === k.by || !q || k.hit.includes("p" + id) || !standing(s, id))
@@ -3651,17 +3662,9 @@ function meleeHits(s, now) {
       if (Math.hypot(qx - bx, qy - by) > R) continue;
       if (!overlapH(hz, h, zOf(q, "body", now), DUCK * sizeOf(s, id))) continue;
       k.hit.push("p" + id);
-      shovePx(
-        s,
-        id,
-        k.dx,
-        k.dy,
-        knockOf(k.w) * KNOCK_DUCK * sz,
-        now,
-        inCabin(qx, qy) ? 1 : 0,
-      ); // (world px: boardfire.js)
+      shovePx(s, id, k.dx, k.dy, push, now, inCabin(qx, qy) ? 1 : 0); // (world px: boardfire.js)
     }
-    if (dp()) carsSwing(s, bx, by, R, k, knockOf(k.w) * KNOCK_DUCK * sz); // (Downpour's cars in it: carpush.js)
+    if (dp()) carsSwing(s, bx, by, R, k, push); // (Downpour's cars in it: carpush.js)
     if (L4_HOOKS.npc)
       L4_HOOKS.npc(s, k.by, bx, by, now, k.w, R, R, null, k.hit); // (Sandbox's NPCs in its bubble, each once a swing: sbcabin.js)
     for (const j of wilds(s))
@@ -3682,18 +3685,18 @@ const die = (z, T) => {
   Object.assign(z, { st: 3, d: T });
 };
 /* melee knockback (the owner's, Nov 18 15:25Z: "Every melee has slight knockback EVEN to players AND especially to
-   zombies EVEN WHILE THEY ARE ALIVE ... Fireaxe has more knockback and the hammer has most knockback"): guns.js ARMS
-   knock, read by weaponuse.js knockOf */
-/* a living zombie inside pushed `far` world px along (ux, uy) (a unit), a few px at a time, stopping where it can't
-   stand (a wall, furniture, a step too high) */
-function knockZ(z, ux, uy, far0) {
-  const far = pushTaken(far0, immobile(z) ? Infinity : 1), // (a zombie weighs 1; an immobile one never moves: push.js)
+   zombies EVEN WHILE THEY ARE ALIVE ... Fireaxe has more knockback and the hammer has most knockback"): push.js */
+/* a zombie, alive or dead, pushed by px world px along (ux, uy) (a way), over its weight (push.js pushOn), a few px at a
+   time, stopping where it can't stand (a wall, furniture, a step too high) */
+function knockZ(s, z, ux, uy, px) {
+  const u = Math.hypot(ux, uy) || 1,
+    far = pushOn(s, "zombie", z, px),
     n = Math.max(1, Math.ceil(far / 8)),
     h = heightAt(z.x, z.y);
   [z.x, z.y] = pushAlong(
     [z.x, z.y],
     n,
-    (i, [x, y]) => [x + (ux * far) / n, y + (uy * far) / n],
+    (i, [x, y]) => [x + (ux * far) / u / n, y + (uy * far) / u / n],
     ([x, y]) => zOk(x, y, h),
     ([x, y]) => [Math.round(x), Math.round(y)],
   ); // (one loop for every push: push.js)
@@ -3917,8 +3920,8 @@ export function l4Shots(s, now) {
             if (sniper && crit) sh.crit = 1;
             sh.hit = [...(sh.hit || []), z.i];
             if (strike(s, z, dmg, crit, sh.by, w, now)) die(z, T);
-            else if (w === "chair" && z.st === 2)
-              knockZ(z, sh.vx * W, sh.vy * H, knockOf("hammer")); // (the chair shoves like the hammer: the owner's, Nov 20 21:17Z)
+            else if (w === "chair")
+              knockZ(s, z, sh.vx * W, sh.vy * H, meleePush(s, null, "chair")); // (the chair shoves: the owner's, Nov 20 21:17Z; a thrown thing's push, push.js)
             hitAny = true;
             if (sh.hit.length >= pierce) break;
           }
@@ -4044,13 +4047,33 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
   const any = blast(near, [
     [
       zs,
-      (z) => z.st !== 3 && [z.x, z.y, zOf(z, "zombie")],
+      (z) => [z.x, z.y, zOf(z, "zombie")],
       (z, n) => {
-        if (!strike(s, z, n.dmg, n.crit, sh.by, "", now)) return true; // (its ring's damage, a crit twice: blast.js; it lives)
-        die(z, T);
-        mark(s, z, "g0"); // (every chunk, cuts and big holes: l4ddart.js)
-        gore.push([Math.round(z.x), Math.round(z.y)]);
-        return true;
+        const alive = z.st !== 3;
+        if (alive && strike(s, z, n.dmg, n.crit, sh.by, "", now)) {
+          die(z, T);
+          mark(s, z, "g0"); // (every chunk, cuts and big holes: l4ddart.js)
+          gore.push([Math.round(z.x), Math.round(z.y)]);
+        } // (its ring's damage, a crit twice: blast.js)
+        if (z.st === 2 || z.st === 3)
+          knockZ(s, z, n.dx, n.dy, blastPush(s, n.o).px); // (thrown away from it, a body too: push.js)
+        return alive;
+      },
+    ],
+    [
+      s.seat,
+      (id) => {
+        const q = s.pos[id];
+        return q && standing(s, id) && [...toPx(q), zOf(q, "body", now)];
+      },
+      (id, n) => {
+        const B = blastPush(s, n.o),
+          [qx, qy] = toPx(s.pos[id]);
+        shovePx(s, id, n.dx, n.dy, B.px, now, inCabin(qx, qy) ? 1 : 0, {
+          ms: 650,
+          h: B.h,
+          l: 0,
+        }); // (every duck in it thrown, higher the nearer the middle: push.js; its HP only the thrower's, below)
       },
     ],
     [

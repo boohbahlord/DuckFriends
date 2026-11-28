@@ -164,7 +164,7 @@ export const ARMS = {
     swing: ARM_SWING.knife,
     at: 58,
     r: 34,
-    knock: 16, // (how far a hit pushes a living zombie back, world px: weaponuse.js knockOf)
+    knock: 2, // (how far a hit pushes a body of weight 1, world px, push.js meleePush: a blade almost nothing, a blunt hit hard: the owner's, Nov 28 04:05Z)
   }, // (four a second, as in every mode)
   hammer: {
     kind: "melee",
@@ -197,7 +197,7 @@ export const ARMS = {
     swing: ARM_SWING.sword,
     at: 54,
     r: 40,
-    knock: 16,
+    knock: 6, // (a blade: a little)
   },
   pan: {
     kind: "melee",
@@ -209,7 +209,7 @@ export const ARMS = {
     swing: ARM_SWING.pan,
     at: 54,
     r: 40,
-    knock: 16,
+    knock: 30, // (blunt: next to the hammer)
   },
   handgun: {
     kind: "ranged",
@@ -421,9 +421,15 @@ export const ARMS = {
   zebra: { kind: "special", cool: ITEM_COOL, all: 1, speed: 650, far: 520 },
   adrenaline: { kind: "special", cool: ITEM_COOL, all: 1, ms: 20000 },
   /* Justin's office chair (the owner's, Nov 3): thrown the way I aim, 3 to 5 HP to the zombie it hits and it shoves it
-     back like the hammer; no ammo unless a Sandbox sets one */
+     back (knock: on the board 2.4 duck lengths, as it always has); no ammo unless a Sandbox sets one */
   safekeep: { kind: "special", cool: 300, all: 1 }, // (Safe Keeping: never used by hand, SAFE below)
-  chair: { kind: "special", cool: ITEM_COOL, dmg: [3, 5], speed: 600 }, // (no ammo, thrown as often as you like; 3 to 5 whole: the owner's, Nov 20 21:17Z)
+  chair: {
+    kind: "special",
+    cool: ITEM_COOL,
+    dmg: [3, 5],
+    speed: 600,
+    knock: 27,
+  }, // (no ammo, thrown as often as you like; 3 to 5 whole: the owner's, Nov 20 21:17Z)
 };
 /* each gun's damage: its caliber's range plus its barrel, in steps of DMG_STEP (CALIBERS) */
 const cents = (n) => Math.round(n * 100) / 100;

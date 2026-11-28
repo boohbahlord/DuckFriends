@@ -27,6 +27,13 @@ export const WEIGHT = {
   CAR: 15, // a car, in duck weights (carpush.js; a small 80s or 90s car, about 1,000 kg: Adam's OK, Nov 22 03:08Z)
 };
 
+/* the one push (push.js): melee, how many times its weapon's knock (guns.js ARMS, world px) a melee hit pushes; blast,
+   how far a blast pushes at its edge (world px, half that at its middle); lift, how high it throws at its middle (duck
+   sizes). The board's and Hangout's (in duck lengths of 64): the hammer's 40 shoves a duck 3.6 duck lengths (2.4, then
+   50% farther: the owner's, Nov 4); a grenade 4.8 at its edge (twice the old 2.4: Nov 3 17:15Z), 0.9 high; Dead Ducks
+   Arcade's grenade the same (modes.js push) */
+export const KNOCK = { melee: 5.76, blast: 307, lift: 0.9 };
+
 /* water (hangout/layout.js wetK): how fast every walker goes in it, of its walk, by how deep it is there (the owner's, Nov
    22 16:06Z: "if it's really, really shallow, then it doesn't slow down your walking. But it still has all the effects
    and visuals ... it slows you down once it's high up enough. And if it's even more then eventually you have to swim").

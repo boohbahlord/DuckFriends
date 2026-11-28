@@ -44,7 +44,7 @@ const near = (a, b, e = 0.002) => Math.abs(a - b) <= e;
     for (const sc of [50, 100, 110, 152]) out.walk[sc] = P.walkOf(sized(sc), a);
     for (const sc of [100, 110]) {
       const s = sized(sc);
-      BF.shove(s, a, 1, 0, 1, now, 0);
+      BF.shove(s, a, 1, 0, 64, now, 0); // (a push of a duck length, 64 world px)
       out.moved[sc] = s.pos[a].x - 0.3;
       const t = sized(sc);
       t.php = { [c]: { n: -20, t: now } };
@@ -61,7 +61,7 @@ const near = (a, b, e = 0.002) => Math.abs(a - b) <= e;
     const held = (sc, w) => {
       const s = sized(sc);
       s.pos[a] = { ...s.pos[a], w };
-      BF.shove(s, a, 1, 0, 1, now, 0);
+      BF.shove(s, a, 1, 0, 64, now, 0); // (a push of a duck length, 64 world px)
       return [s.pos[a].x - 0.3, P.walkOf(s, a)];
     };
     out.held = [held(100, "lmg"), held(110, "knife")];

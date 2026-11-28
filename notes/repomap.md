@@ -16,9 +16,9 @@ barrelheat.js 70 a hot barrel
 bbrules.js 380 the rules of Bicker Brackets
 beaks.js 138 beaks
 below.js 89 darker below
-blast.js 67 explosions: one module
+blast.js 69 explosions: one module
 bloodpool.js 50 a pool of blood: the
-boardfire.js 1154 the board's weapons: hits, shots,
+boardfire.js 1147 the board's weapons: hits, shots,
 boardjustin.js 499 Justin on the boards
 boardzombies.js 122 the zombies on a board
 botduck.js 90 a computer's duck: a random
@@ -28,7 +28,7 @@ bowdraw.js 46 the bow, drawn to shoot
 brackets.js 459 Bicker Brackets: what the screen
 brainbuild.js 330 Sandbox: M's Brain builder
 card.js 424 the player card
-carpush.js 101 a car pushed: Downpour's cars
+carpush.js 100 a car pushed: Downpour's cars
 chair.js 14 the chair: one thing in
 chat.js 445 text chat
 chatmutes.js 284 The chat's suggestions, mutes and
@@ -68,7 +68,7 @@ game.js 4359 the game screen
 gameact.js 525 the action window and the
 gameannounce.js 187 The cloud's words and what
 gameboard.js 582 the board: each mode's board
-gamedefaults.js 72 the game's own numbers, for
+gamedefaults.js 79 the game's own numbers, for
 gamefx.js 690 the board's specials and the
 gamehand.js 506 the hand: the number-key specials,
 gameplace.js 480 where things are put on
@@ -85,7 +85,7 @@ gssettings.js 747 Game Settings: every setting, its
 gstext.js 200 Game Settings: what a setting
 gunart.js 414 every weapon, drawn: one drawing
 gunparts.js 15 the pieces every weapon's drawing
-guns.js 646 every weapon's numbers: one sheet
+guns.js 652 every weapon's numbers: one sheet
 hats.js 1003 hats
 heat.js 83 a gun's heat: the spread
 heights.js 93 a shot's height, Doom's way
@@ -117,7 +117,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 337 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4525 the rules of Quacky Zombies
+l4ddrules.js 4548 the rules of Quacky Zombies
 l4ddsfx.js 509 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the
 langname.js 5 the name of Sandbox's number
@@ -161,7 +161,7 @@ playerinput.js 26 what I ask my duck
 players.js 342 the player menu and the
 pointer.js 54 a computer or a phone
 powerart.js 377 Dead Ducks Arcade: the power
-push.js 71 push and knock-back: one module
+push.js 87 push and knock-back: one module
 pxa.js 954 made by tools/pixel-art.cjs:
 pxbake.js 627 a map's pictures made into
 pxcard.js 259 the player cards' pattern motifs
@@ -259,7 +259,7 @@ vellum.js 28 The King's Festival
 vote.js 265 Vote Mode & Map: the
 voterules.js 323 the lobby's vote for the
 walkgrid.js 83 the walking grid: which 40-px
-weaponuse.js 104 using a weapon: one module
+weaponuse.js 100 using a weapon: one module
 who.js 3 who this player is beyond
 wounds.js 483 the wounds a hit leaves
 zombiepath.js 187 the zombies' way to the
