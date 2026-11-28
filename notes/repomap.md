@@ -4,7 +4,7 @@ file lines job
 ## js/
 account.js 397 the Google account: the
 actplay.js 872 a game's actions
-actroom.js 765 the room's actions
+actroom.js 766 the room's actions
 actsb.js 160 Sandbox's windows, saves and
 ammo.js 102 THE ONE AMMO RULE,
 armpage.js 142 a page of Customize's
