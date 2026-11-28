@@ -247,8 +247,7 @@ export function forgame(s, a, now) {
         ].includes(k)
       )
         o[k] = v ? 1 : 0;
-      if (k === "justin" && ["l4dd", "surv"].includes(s.options.mode))
-        delete o[k]; // (never Justin on the board in Quacky Zombies: the owner's, Nov 4)
+      if (k === "justin" && s.options.mode === "l4dd") delete o[k]; // (never Justin on the board in Quacky Zombies: the owner's, Nov 4)
       if (k === "share" && SHARE_OK.includes(v)) o.share = v;
       if (
         ["catchUp", "writeCatch", "answerTime", "submitTime"].includes(k) &&

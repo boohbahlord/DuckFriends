@@ -141,14 +141,6 @@ def game_over(sf2):
     return (a * env(len(a), 0.25, 2.6, 0.9)).astype(np.float32)
 
 
-def calm(sf2):
-    """Survival, a horde's last zombie down: the air letting go, not a fanfare (the phases are never announced). Slow
-    strings on a low, open D (D, A, D, and F sharp on top), swelling in over a second and fading away
-    """
-    a = play(sf2, [(0, 0, 0, 49, k, 64, 2.6) for k in (38, 45, 50, 54)], 4.2)
-    return (a * env(len(a), 1.0, 0.7, 0.8)).astype(np.float32)
-
-
 def orb(sf2):
     """Sandbox, a loot orb coming: a soft, small sparkle, two high notes on a celesta (E6, then B6), quiet"""
     a = play(sf2, [(0, 0, 0, 8, 88, 60, 0.4), (0.09, 0, 0, 8, 95, 50, 0.5)], 1.2)
@@ -205,7 +197,6 @@ MAKERS = {
     "vote_tick": vote_tick,
     "round_start": round_start,
     "game_over": game_over,
-    "calm": calm,
     "orb": orb,
     "cheat_on": cheat_on,
     "cheat_off": cheat_off,

@@ -12033,7 +12033,7 @@ html.sprint-blur .hang-board::after {
 .gact .act-row:has(.hang-btn) {
   order: -1;
 } /* (a Vote button, if one ever shows with it, stays under it) */
-/* Survival, my duck dead: the card of the duck I watch, where the Vote button goes (js/spectate.js), small as a button */
+/* my duck dead for good (Sandbox out of lives): the card of the duck I watch, where the Vote button goes (js/spectate.js), small as a button */
 .act-row.spec {
   flex-wrap: nowrap;
   gap: 0.4rem;
@@ -13984,26 +13984,6 @@ html.moving .eye-zap {
 }
 /* the flamethrower's fire on my duck (game.js crimson): my screen blinks in and out of crimson; with the heavy effects
    off, a steady faint red */
-/* Survival: an LMG's rounds flying by me darken my screen's corners a moment (gunmenview.js) */
-.gm-sup {
-  position: fixed;
-  inset: 0;
-  z-index: 8990;
-  pointer-events: none;
-  --sup: 0; /* (how long the LMG has kept on at me: 0 to 1, gunmenview.js) */
-  background: radial-gradient(
-    ellipse at center,
-    #0000 calc(55% - 30% * var(--sup)),
-    #000000d9 calc(100% - 15% * var(--sup)),
-    #000 100%
-  );
-  opacity: 0;
-  transition: opacity 0.35s;
-}
-.gm-sup.on {
-  opacity: calc(0.55 + 0.45 * var(--sup));
-  transition: opacity 0.12s;
-}
 html.crimson body::after {
   content: "";
   position: fixed;
@@ -17492,7 +17472,7 @@ html.keyboard .hp-pop:not(.small) {
 .l4z .hp-pop {
   bottom: calc(var(--k, 1) * 96px + var(--up, 0) * 0.7rem);
 }
-/* an NPC drawn by npcview.js (Sandbox's on the worlds, Survival's gunmen): just over its head (--top), over its name
+/* an NPC drawn by npcview.js (Sandbox's on the worlds): just over its head (--top), over its name
    when it has one */
 .l4z[data-sbi] .hp-pop {
   bottom: auto;

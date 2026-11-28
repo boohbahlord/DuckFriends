@@ -23,7 +23,6 @@ import { esc } from "../ui.js";
 import { isInvisible } from "../invisible.js";
 import { low } from "../gfx.js";
 import { walkOf, meets } from "../push.js";
-import { survSet } from "../survrules.js";
 import {
   pixelOn,
   gridPx,
@@ -55,7 +54,6 @@ const dirOf = (dx, dy) => (dx > 0 ? "r" : dx < 0 ? "l" : dy > 0 ? "d" : "u");
    my duck uses it (the Click to interact setting) */
 export function mountWorld(board, api) {
   const opt = (api.room().state || {}).options || {};
-  survSet(opt); // (Survival's ammo on this screen too: survrules.js)
   L.useMode(baseMode(opt)); // (Dead Ducks Arcade's Downpour, or Hangout's cabin, or Sandbox on one of them: layout.js)
   const canvas = board.querySelector(".hang-ground"),
     g = canvas.getContext("2d"),

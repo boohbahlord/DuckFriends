@@ -50,7 +50,6 @@ const count = (w, m) => {
   if (w === "grenade") return String(m.g);
   const c = (m.am || {})[w];
   if (endless(w)) return "∞"; // (the Laser Rifle never runs out, it only overheats; nor do the bow's arrows)
-  if (w === "defib" && c) return String(c[0]); // (they stack: how many I have)
   if (w === "flamer" && c)
     return Math.ceil((c[0] / ARMS.flamer.all) * 100) + "%"; // (its tank left)
   if (ARMS[w] && ARMS[w].kind === "melee" && ARMS[w].dur)

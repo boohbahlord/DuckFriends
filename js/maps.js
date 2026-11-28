@@ -17,7 +17,6 @@
    takes the Ether & Kenoma look (burnt amber) in the chapter's blackletter while it's played (vellum.js).
    The host picks the map in the lobby. Duck Cabin is Hangout's own world (hangout/world.js draws it); behind it, only a
    starry night sky, and it is not in the Map window. */
-import { modeOf } from "./modes.js";
 import { duckSVG } from "./duck.js";
 import { pixelOn, gridPx } from "./pixel.js";
 import { floorCanvas } from "./art.js";
@@ -1049,9 +1048,6 @@ export function mountMap(layer, s) {
     looks = [
       "map-on",
       ...(isUmap(map) ? madeLooks(map) : ["map-is-" + base, "map-is-" + map]),
-      ...(modeOf(s.options.mode).lookClass
-        ? [modeOf(s.options.mode).lookClass]
-        : []),
     ];
   layer.className = `map-layer map-${base} map-${map}`;
   layer.dataset.nopx = ""; // (the pixel look: the grid filter does maps, pxdom.js leaves them)

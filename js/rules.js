@@ -18,10 +18,6 @@
 
 import { baseMode, isSb, sbOnBoard, sbItemMods } from "./sandboxrules.js";
 
-import { survSet } from "./survrules.js";
-
-import "./gunmenrules.js"; // (Survival's gunmen: their rules hook into l4ddrules.js)
-
 import { sbGot } from "./sbhot.js";
 
 import { grCool } from "./sbgroups.js";
@@ -1278,7 +1274,6 @@ export function reduce(state, a, now = Date.now()) {
   return s;
 }
 function reduceStep(state, a, now) {
-  survSet(state.options); // (Survival: survrules.js)
   useMode(baseMode(state.options)); // (Duck Cabin as the room's mode has it, or Dead Ducks Arcade's Downpour, or Sandbox on one of them: hangout/layout.js)
   carsAt(state); // (Downpour's cars where the state has them: carpush.js)
   const s = clone(state),

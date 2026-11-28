@@ -41,7 +41,7 @@ const live = (o, now) => {
 };
 /* Invulnerability: no hit takes a duck down, it only flashes red (s.hurt[id] = when; the screens flash on a new stamp).
    Never in Quacky Zombies (the owner's, Nov 4), from the settings or the command line */
-export const NO_INVULN = ["l4dd", "surv"];
+export const NO_INVULN = ["l4dd"];
 export const invuln = (s) =>
   +s.options.invuln === 1 && !NO_INVULN.includes(s.options.mode);
 export function hurtFx(s, id, now) {

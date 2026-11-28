@@ -23,7 +23,7 @@ const ROOT = path.join(__dirname, ".."),
   OUT = path.join(ROOT, "assets", "px", "art");
 const MODES = (
   process.env.ONLY ||
-  "aod,wyr,ddr,bb,sc,quack,law,dunce,vdd,trivia,hang,l4dd:downpour,surv,sandbox"
+  "aod,wyr,ddr,bb,sc,quack,law,dunce,vdd,trivia,hang,l4dd:downpour,sandbox"
 ).split(",");
 const SCREENS = [
   ["computer", { viewport: { width: 1440, height: 900 } }],

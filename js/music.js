@@ -17,7 +17,7 @@
 import { profile } from "./store.js";
 import { activeRoom } from "./later.js"; // (the room code comes after the first screen)
 import { now as clockNow } from "./clock.js";
-import { ceiling, sfxContext, modeDb } from "./sound.js";
+import { ceiling, sfxContext } from "./sound.js";
 import { netLevel } from "./settings.js";
 import { baseMode } from "./sandboxrules.js";
 import { songUrl } from "./sbaudio.js";
@@ -78,17 +78,14 @@ const SAD = names.filter((n) => !HAPPY.includes(n));
 const SCARY_SONGS = ["What the duck?"],
   SCARY_MAPS = ["nwk", "collage"];
 /* the owner: no music in Quacky Zombies, until we figure out what fits them */
-const QUIET = ["l4dd", "surv"];
+const QUIET = ["l4dd"];
 
 /* 100% music: under the game. The songs' files are about 7 dB louder than the old songs were made, so this keeps them as
    quiet as the old music was at 100% (the owner: music stays quiet by default). Nov 19, the owner: "the music's too
    loud, maybe … it's something that you play with friends", so 4 dB under that (was 0.45) */
 const BASE = 0.28;
 const LV = () =>
-  BASE *
-  (profile.settings.sound / 100) *
-  (profile.settings.music / 100) *
-  10 ** (((modeDb() || {}).music || 0) / 20); // (a mode's own loudness: sound.js MODE_DB)
+  BASE * (profile.settings.sound / 100) * (profile.settings.music / 100);
 
 /* ---------- the next song ----------
    A random pick that leans away from the songs heard most recently (each song's chance grows with the minutes since it

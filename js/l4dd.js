@@ -98,7 +98,6 @@ import {
   fullFor,
   downArmed,
   wilds,
-  isWild,
   pierceOf,
   shotArm,
   shotWalled,
@@ -117,7 +116,6 @@ import { kindOf, ARMS, POOL, loadTo } from "./guns.js";
 import { fenceZ, zombiesOf } from "./zombies.js";
 import { zSortY } from "./zombieroofs.js";
 import { hOk, hLock, zOf } from "./heights.js";
-import { toPx } from "./units.js";
 import { ammoBar, stackBars, noReload, drawBar } from "./meters.js";
 import { myDrawShare } from "./bowdraw.js";
 import { laserMeter } from "./laserfx.js";
@@ -168,9 +166,6 @@ import {
   UP_ICONS,
   weaponIcon,
 } from "./l4ddart.js";
-import { isSurv, survTime, clockOf } from "./survrules.js";
-import { gunLights, gunBodies } from "./gunmenview.js";
-import { heldOf, npcShot } from "./sbnpcart.js";
 
 const RX = 56,
   RY = 25.6; // (a zombie's room on the floor, as the rules')
@@ -595,7 +590,7 @@ function claw(x, y, dir, ctx) {
   clawMark(fxl, f.left, f.top, ctx.world.sc * 1.25, Math.atan2(py - y, px - x)); // (a little bigger than the cats', and its swipe the way it swung, up and down too, as drawn)
   play("swipe", { x: px, y: py });
 }
-/* a zombie that got a new look (Survival's remodel: another hat, outfit and tilt, l4ddrules.js) shows it at once: its box
+/* a zombie that got a new look (another hat, outfit or tilt) shows it at once: its box
    and its picture are made again. Before, only a change of its wounds made its picture again, so it kept the old skin
    till its next hit and then popped into the new one, most often as it died (the owner's, Nov 20 19:02Z: "when zombies
    die ... they change skins"). Returns whether the look changed */
@@ -654,7 +649,7 @@ function goreCanvas(o, w, h) {
         o.img.replaceWith(cv);
         o.img = cv;
       }
-      const g = cv.getContext("2d", { willReadFrequently: true }); // (in memory: on a graphics card each zombie's canvas was a layer of its own, 52 more in a Survival crowd, and every frame took longer to put together)
+      const g = cv.getContext("2d", { willReadFrequently: true }); // (in memory: on a graphics card each zombie's canvas was a layer of its own, 52 more in a big crowd, and every frame took longer to put together)
       cv.width = c.width; // (set even when it's the same: that clears it)
       cv.height = c.height;
       g.drawImage(c, 0, 0);
@@ -786,7 +781,7 @@ function seeZombies(s, ctx, now) {
       o.el.classList.toggle("onfire", lit);
     } // (set on fire: one big flame over it, as a duck's)
     o.want = (s.hang.zw || {})[z.i] || "";
-    relook(o, z.l); // (a new look, Survival's remodel: its picture and box are made again at once, not at its next wound)
+    relook(o, z.l); // (a new look: its picture and box are made again at once, not at its next wound)
     o.l = z.l;
     o.ng = !!s.options.noGore;
     if (shown) wounds(o, z.l, z.i); // (the wounds its hits left: holes, cuts, bruises, an arrow, a chunk gone, its head blown off; l4ddart.js)
@@ -921,7 +916,7 @@ let sqEl = null,
 function spinSquare(s, ctx) {
   const L = s.hang.l4,
     Wd = ctx.world,
-    rest = !!(sqEl && L && !L.over && L.wait && !isSurv(s)); // (none in Survival: nothing there to buy or spin, the owner's, Nov 20 02:32Z)
+    rest = !!(sqEl && L && !L.over && L.wait);
   if (!sqEl) return;
   /* the car (or the fireplace), and on Downpour a square round each gas pump too: where something can be bought or
      done (the owner's, Nov 17 18:05Z: "the gas pumps now get a small sqaure around them in the rest phase as well") */
@@ -1033,13 +1028,11 @@ export function l4Got(k) {
   gotEl.innerHTML =
     k === "merchant"
       ? rainbowHTML("The Merchant has Arrived", { seed: 5 }) // (the owner's, Nov 18 13:46Z: "THe text for the merchant arriving is: \"The Merchant has Arrived\"")
-      : k === "help"
-        ? rainbowHTML("Help has Arrived", { seed: 9 }) // (Survival's friendly squad, as the merchant's: allies.js)
-        : k === "sale"
-          ? '<span class="l4-got-gold">Sale</span>' // (in gold metal letters, the owner's, Nov 16)
-          : k === "nuke"
-            ? '<span class="l4-got-nuke">Nuke</span>' // (crimson blood letters that hold still, the owner's, Nov 16)
-            : `<span class="l4-got-ic">${DROP_ICONS[k] || ""}</span>${rainbowHTML(dropName(k) + "!", { seed: DROPS_SEED[k] || 1 })}`;
+      : k === "sale"
+        ? '<span class="l4-got-gold">Sale</span>' // (in gold metal letters, the owner's, Nov 16)
+        : k === "nuke"
+          ? '<span class="l4-got-nuke">Nuke</span>' // (crimson blood letters that hold still, the owner's, Nov 16)
+          : `<span class="l4-got-ic">${DROP_ICONS[k] || ""}</span>${rainbowHTML(dropName(k) + "!", { seed: DROPS_SEED[k] || 1 })}`;
   if (k === "ammo")
     for (const b of document.querySelectorAll(".l4s, .sp-slot")) {
       b.classList.remove("l4-flash");
@@ -1189,43 +1182,20 @@ function recordKills(s, st, game, me) {
   if (k > kzDone) st.kills = (st.kills || 0) + k - kzDone;
   kzDone = Math.max(kzDone, k);
 }
-/* Survival: a timer where the round would be, in its font (the owner's: "a timer replaces the round number"); the
-   stats: a game once it starts, the best time (in seconds, as titles) once everyone's down */
-let clockShown = -1;
-function seeClock(s) {
-  if (!hud || !isSurv(s) || !s.hang.l4) return;
-  const t = Math.floor(survTime(s, clockNow()) / 1000);
-  if (t === clockShown) return;
-  clockShown = t;
-  hud.innerHTML = `<b>${clockOf(t)}</b>`;
-}
-function survRecord(s, L) {
-  const st = statsOf(s),
-    game = `${s.id}:${s.startedAt}:${L.g || 0}`;
-  if (!st || profile.stats.lastGame === game) return;
-  profile.stats.lastGame = game;
-  st.games++;
-  save();
-}
 /* ---------- the HUD: "Round N" (roundline.js), and the end ---------- */
 const rline = roundLine(() => hud);
 function seeHud(s, ctx) {
   const L = s.hang.l4;
   if (!hud || !L) return;
-  if (isSurv(s)) {
-    seeClock(s);
-    survRecord(s, L);
-  } else {
-    if (roundShown !== L.r) {
-      if (roundShown >= 0 && L.r > roundShown)
-        record(s, L, L.r - roundShown === 1, ctx.me);
-      /* Sandbox: no rounds to count, and no "Sandbox" over the map either (the bar at the top already says it: the
-         owner's row 199 test saw it over the map) */
-      hud.hidden = isSb(s);
-      roundShown = L.r;
-    }
-    if (!isSb(s)) rline.say(L.wait && !L.over ? REST : `Round ${L.r}`);
+  if (roundShown !== L.r) {
+    if (roundShown >= 0 && L.r > roundShown)
+      record(s, L, L.r - roundShown === 1, ctx.me);
+    /* Sandbox: no rounds to count, and no "Sandbox" over the map either (the bar at the top already says it: the
+       owner's row 199 test saw it over the map) */
+    hud.hidden = isSb(s);
+    roundShown = L.r;
   }
+  if (!isSb(s)) rline.say(L.wait && !L.over ? REST : `Round ${L.r}`);
   /* between rounds: End turn (Ready before round 1), with how many pressed it and how many it takes */
   const w = !L.over && !isSb(s) && L.wait, // (Sandbox: round 0 for good, with no Ready to press)
     mine = !!(w && w.v[ctx.me]),
@@ -1247,11 +1217,6 @@ function seeHud(s, ctx) {
     const st = statsOf(s);
     if (st) {
       recordKills(s, st, `${s.id}:${s.startedAt}:${L.g || 0}`, ctx.me);
-      if (isSurv(s))
-        st.titles = Math.max(
-          st.titles || 0,
-          Math.floor(survTime(s, L.over.at) / 1000),
-        ); // (Survival: the best time)
       save();
     }
   } // (the game ends: the zombies of its last round count too)
@@ -1270,9 +1235,7 @@ function seeHud(s, ctx) {
   const kz = ((s.hang && s.hang.l4kz) || {})[ctx.me] || 0,
     said = sbHow
       ? `You killed <b>${kz}</b> ${kz === 1 ? "zombie" : "zombies"}.`
-      : isSurv(s)
-        ? `You lasted <b>${clockOf(survTime(s, L.over.at) / 1000)}</b> and killed <b>${kz}</b> ${kz === 1 ? "zombie" : "zombies"}.`
-        : `You made it to <b>Round ${L.over.r}</b>.`;
+      : `You made it to <b>Round ${L.over.r}</b>.`;
   over.innerHTML = `<div class="l4-over-card"><h2>${sbHow ? "Everyone's out" : "Everyone's down"}</h2><p>${said}</p>${
     moving
       ? `<p class="small dim">${sbHow === "lobby" ? "Back to the lobby in a moment." : sbHow === "again" ? "Starting over in a moment." : votesDue(s).length ? "On to the vote in a moment." : "On to the next game in a moment."}</p>`
@@ -1390,7 +1353,6 @@ function paint(now, ctx) {
     cones = [],
     beams = []; // (the same flashlights in the world's px, for the names: litNames)
   const on = (x, y, r) => x + r > 0 && x - r < w && y + r > 0 && y - r < h;
-  seeClock(s); // (Survival's timer goes on between states too)
   lits();
   const lights = powerOn(s) ? LIT_ON : LIT;
   for (const l of Wd.inside ? lights.in : lights.out) {
@@ -1448,7 +1410,7 @@ function paint(now, ctx) {
   {
     const br = 0.5 + 0.5 * Math.sin((performance.now() / 2600) * 2 * Math.PI);
     for (const [x, y, z, r] of [
-      ...(isSurv(s) ? [] : [[ANGEL.X, ANGEL.Y, ANGEL.Z + 70, 90]]), // (Survival has no Angel machine, so no light where it stood: the owner's, Nov 20 02:32Z)
+      [ANGEL.X, ANGEL.Y, ANGEL.Z + 70, 90],
       [PW.X, PW.Y, heightAt(PW.X, PW.Y) + 70, 80],
     ]) {
       if (!seenFrom(x, y, Wd.inside)) continue;
@@ -1481,11 +1443,6 @@ function paint(now, ctx) {
     if (!up(s, id) || off[id] || sbNoLight(s, id)) continue; // (Sandbox: a flashlight only once taken from loot)
     const [dx, dy] = aimOf(s, id, ctx);
     beamOf(id, a, Math.atan2(dy, dx));
-  }
-  /* Survival's criminals' flashlights too (gunmenview.js) */
-  for (const [x, y, t] of gunLights()) {
-    const a = { x, y, z: heightAt(x, y) };
-    if (seenFrom(x, y, Wd.inside, a.z)) beamOf("", a, t);
   }
   /* one flashlight's cone from a (world px), its angle t: its rays stop at the walls */
   function beamOf(id, a, t) {
@@ -1532,7 +1489,6 @@ function paint(now, ctx) {
     }
     for (const o of Z.values())
       if (!o.el.hidden && o.st !== 3) lit(o.x, o.y, heightAt(o.x, o.y), 1.1);
-    for (const [x, y] of gunBodies()) lit(x, y, heightAt(x, y), 1);
   }
   litNames(s, ctx, beams);
   const f = (v) => v.toFixed(1),
@@ -1921,34 +1877,6 @@ function drawMerchant(ctx, t) {
   }
   /* his sprint, and Phil's knife: my own two thin bars, under his tag */
   mBars(s, m, dead);
-  /* Survival: armed and fighting back, his gun in his hand and his shots (l4ddrules.js merchantShoots) */
-  const gun = m.st === "shoot" && !dead ? m.gun || "" : "";
-  if (butler.gun !== gun) {
-    butler.gun = gun;
-    butler.body.querySelector(".sb-held")?.remove();
-    const hd = gun && heldOf({ hw: gun });
-    if (hd) {
-      butler.body.style.setProperty("--feet", butler.feet.toFixed(1) + "px");
-      butler.body.insertAdjacentHTML(
-        "beforeend",
-        `<img class="sb-held" alt="" draggable="false" src="${hd.url}" style="--gw:${hd.gw}">`,
-      );
-    }
-  }
-  if (butler.shot === undefined) butler.shot = m.sh ? m.sh[0] : 0; // (only shots from now on)
-  if (m.sh && m.sh[0] !== butler.shot) {
-    butler.shot = m.sh[0];
-    const to = Wd.toScreen(m.sh[1], m.sh[2], heightAt(m.sh[1], m.sh[2]));
-    if (Date.now() - m.sh[0] < 1500)
-      npcShot(
-        Wd.board.querySelector(".fxl"),
-        p.left + 0.42 * 64 * sc * (m.f < 0 ? -1 : 1),
-        p.top - 28.8 * sc,
-        to.left,
-        to.top - 29 * sc,
-        m.gun,
-      );
-  }
   /* his words */
   const now = clockNow(),
     say = m.say;
@@ -2554,10 +2482,7 @@ function shopFill(s, ctx) {
     ? stock
         .map(([w, p, n]) => {
           const have = !!kit && kit.sl.includes(w),
-            again =
-              have &&
-              kindOf(w) === "special" &&
-              (w === "defib" || !hasLeft(s, me, w)), // (defibrillators stack: always one more)
+            again = have && kindOf(w) === "special" && !hasLeft(s, me, w),
             price = stockPrice(s, p, w, kit),
             was = saleOn(s) ? `<s>${stockPrice(null, p, w, kit)}</s> ` : "",
             off = price <= 0 || (have && !again) || pts < price; // (0: grenades, I have them all)
@@ -2670,15 +2595,10 @@ function holdTarget(pos, ctx) {
     return { kind: "sk", d: 0 }; // (down, with Safe Keeping: E gets me up)
   if (!s.hang || !s.hang.l4 || s.hang.l4.over || !up(s, me)) return null;
   let best = null;
-  /* Survival: a dead player comes back with the defibrillator in my hand (l4ddrules.js defibUse) */
-  const defib = isSurv(s) && heldFn() === "defib" && hasLeft(s, me, "defib"),
-    back = (id) => defib && !isWild(s, id) && !(s.players[id] || {}).helper;
   for (const id of s.seat) {
     const p = P4(s, id);
-    const body = !!p && !!p.gh && !!p.ex && !!(s.hang.ghost || {})[id]; // (Survival's ghost: its body lies where it fell, only the defibrillator gets it up)
-    if (id === me || !p || (!p.dn && !body) || (p.ex && !back(id))) continue; // (dead for good: no revive, no button; the owner's, Nov 17 20:37Z, "JUSTIN CANNOT BE REVIVED WHEN DEAD NOR CAN ANY PLAYER WHEN DEAD SO THE FUCKING REVIVE BUTTON GOES AWAY")
-    const [bx, by] = body ? toPx(s.hang.ghost[id]) : [0, 0],
-      a = body ? { x: bx, y: by } : ctx.world.at(id);
+    if (id === me || !p || !p.dn || p.ex) continue; // (dead for good: no revive, no button; the owner's, Nov 17 20:37Z)
+    const a = ctx.world.at(id);
     if (!a) continue;
     const d = Math.hypot(a.x - pos.x, a.y - pos.y);
     if (d < L4.REACH && (!best || d < best.d))
@@ -2695,15 +2615,13 @@ function holdTarget(pos, ctx) {
   if (best) return best;
   const lt = lootAt(s, pos.x, pos.y, clockNow()); // (something on the ground: only E takes it, l4ddloot.js)
   if (lt) return { kind: "take", do: "pick", d: 0, w: lt.w, k: lt.k };
-  const sv = isSurv(s), // (Survival: no power, no pump, no Angel machine and no slot machine)
-    pt =
-      !sv &&
-      (pwTarget(pos, s, NEAR) || // (the power box, on the balcony: l4ddpowerui.js)
-        angelTarget(pos, s, NEAR)); // (the Angel machine, on the stage: l4ddangelui.js)
+  const pt =
+    pwTarget(pos, s, NEAR) || // (the power box, on the balcony: l4ddpowerui.js)
+    angelTarget(pos, s, NEAR); // (the Angel machine, on the stage: l4ddangelui.js)
   if (pt) return pt;
   const now = clockNow(),
     db = Math.max(Math.abs(BOX.zx - pos.x), Math.abs(BOX.y - pos.y)); // (a square, as its yellow line shows it: spinSquare)
-  if (db < NEAR && !sv) {
+  if (db < NEAR) {
     const b = boxNow(s, now, me); // (my own spin; anyone's still there stops every spin, l4ddloot.js)
     if (!b && !boxNow(s, now)) return { kind: "box", d: db };
     if (b && now >= b.t + BOX.spin && b.w !== HELPER.w)
@@ -2771,8 +2689,6 @@ function holdLabel(t, s, ctx, now) {
       return `Reviving… ${Math.max(0, Math.ceil((reviveMs(s, ctx.me) - (now - rv.at)) / 1000))}`;
     if (heldFn() === "medkit")
       return `Revive ${t.name || ""} with the medkit`.replace("  ", " "); // (at once: the owner's, Nov 16)
-    if (heldFn() === "defib")
-      return `Revive ${t.name || ""} with the defibrillator`.replace("  ", " ");
     return `Revive ${t.name || ""}`.trim();
   }
   const mine = ((s.hang.l4b || {})[ctx.me] || {}).o === t.o;
@@ -2857,7 +2773,7 @@ activity({
     mapMount(ctx.world.board);
     rainMount(ctx.world.board); // (Downpour's rain: l4ddrain.js)
     pwMount(ctx, layer);
-    if (!isSurv(ctx.state())) angelMount(ctx, layer); // (Survival has no Angel machine: the owner's, Nov 19 19:27Z)
+    angelMount(ctx, layer);
     sqEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     sqEl.classList.add("l4-spinsq");
     sqEl.setAttribute("data-nopx", ""); // (a thin line: no pixel picture of it)
@@ -2887,7 +2803,7 @@ activity({
     B.clear();
     D.clear();
     overShown = endSig = drawn = boxSig = slotSig = onSig = litSig = "";
-    roundShown = clockShown = -1;
+    roundShown = -1;
     rline.reset();
     ptsShown = -1;
     l4Reset();

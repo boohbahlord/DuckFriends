@@ -14,7 +14,7 @@ import { duckSVG } from "./duck.js";
 import { nameHTML } from "./name.js";
 import { openWindow, esc } from "./ui.js";
 import { profile, STAT_MODES } from "./store.js";
-import { SURV_READY, modeOf, statsOf } from "./modes.js";
+import { modeOf, statsOf } from "./modes.js";
 import { statRow } from "./statrows.js";
 import { fmtJumps } from "./format.js";
 import { bbBoxHTML } from "./brackets.js";
@@ -97,13 +97,11 @@ export function openStats(s, id, me) {
   const all = id === me ? profile.stats : p.stats;
   openWindow(
     `<h2>Stats</h2><div class="row stat-tabs" role="tablist"><button type="button" class="tile" data-st="game">This game</button><button type="button" class="tile" data-st="all">All time</button>
-      <select class="stat-mode" aria-label="Game mode">${STAT_MODES.filter(
-        ([m]) => m !== "surv" || SURV_READY,
-      )
-        .map(([m, n]) => `<option value="${m}">${esc(n)}</option>`)
-        .join(
-          "",
-        )}</select></div><div class="stats-one"></div><p class="small dim stat-note"></p>`,
+      <select class="stat-mode" aria-label="Game mode">${STAT_MODES.map(
+        ([m, n]) => `<option value="${m}">${esc(n)}</option>`,
+      ).join(
+        "",
+      )}</select></div><div class="stats-one"></div><p class="small dim stat-note"></p>`,
     {
       cls: "win-small",
       onOpen(w) {

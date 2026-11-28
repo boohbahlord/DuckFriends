@@ -3,7 +3,7 @@
    Sandbox, and the guns-board-* runs fire every one of the board's as a special). This pins the rest, for
    every weapon any mode has:
    - numbers: Dead Ducks Arcade's (ARMS, names, kinds, lists and bags), the board's (cooldowns, full auto), every
-     gun's ammo (ammo.js), the NPCs' (Sandbox's lists and reach, the gunmen's), and
+     gun's ammo (ammo.js), the NPCs' (Sandbox's lists and reach), and
      the feel (headshot odds, the kick's vibration, the swing and fire speeds);
    - specials: each one's entry in the specials list (the picker), its icon as the hotbar and Customize show it;
    - drawings: each weapon in the hand, its icon, its bullet and trace, as drawings and as pixels;
@@ -34,7 +34,6 @@ const INIT = fs.readFileSync(
         AM = await import("./js/ammo.js"),
         Rm = await import("./js/rules.js"),
         SA = await import("./js/sbarms.js"),
-        GM = await import("./js/gunmenrules.js"),
         WD = await import("./js/wounds.js"),
         FM = await import("./js/fxmotion.js"),
         AS = await import("./js/armspeed.js"),
@@ -110,11 +109,10 @@ const INIT = fs.readFileSync(
           "chair",
           "zebra",
           "medkit",
-          "defib",
         ]),
       ].sort();
       const board = { options: { mode: "aod" } };
-      /* the NPCs' reach: guns.js' since there is one breed row each (it was sbarms.js' and gunmenrules.js') */
+      /* the NPCs' reach: guns.js' since there is one breed row each (it was sbarms.js') */
       const sbReach = (w) =>
         GN.reachOf ? GN.reachOf(w, "sbnpc") : SA.reachOf(w);
       const per = (f) => Object.fromEntries(ids.map((w) => [w, f(w)]));
@@ -141,15 +139,9 @@ const INIT = fs.readFileSync(
       });
       out.npcs = H({
         sb: [NA.guns, NA.melee, per(sbReach)],
-        gunmen: GM.GM,
       });
-      /* how far the NPCs fire each gun from, in duck lengths: one row for the gunmen, one for Sandbox's made NPCs */
-      out.reach = H({
-        gunman: per((w) =>
-          GN.reachOf ? GN.reachOf(w, "gunman") : GM.reachOf(w) / GM.GM.DUCK,
-        ),
-        sb: per(sbReach),
-      });
+      /* how far Sandbox's made NPCs fire each gun from, in duck lengths */
+      out.reach = H({ sb: per(sbReach) });
       out.feel = H({
         crit: GN.critOf ? per(GN.critOf) : WD.PCRIT, // (one rule for every weapon since K1: guns.js critOf)
         vib: FM.VIB,

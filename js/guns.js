@@ -248,7 +248,6 @@ export const ARMS = {
     life: 420,
   },
   medkit: { kind: "special", cool: ITEM_COOL, all: 1 },
-  defib: { kind: "special", cool: ITEM_COOL, all: 1 }, // (Survival's defibrillator: DEFIB)
   grenade: {
     kind: "grenade",
     cool: ITEM_COOL,
@@ -513,7 +512,6 @@ export const GUN_NAMES = {
   dagger: "Dagger",
   shotgun: "Pump action shotgun", // (the owner's, Nov 21 17:25Z)
   medkit: "Medkit",
-  defib: "Defibrillator",
   safekeep: "Safe Keeping",
   grenade: "Grenade",
   sniper: "Barrett .50 Cal", // (the owner's, Nov 18 12:19Z: named after its look)
@@ -619,32 +617,7 @@ export const GUN_BREEDS = {
     },
     names: { dbarrel: "Double barrel" }, // (the board has only the one: Dead Ducks Arcade's slug double barrel)
   },
-  /* the NPCs that fire guns: how far each gun is fired from, in duck lengths (REACH if not named). The two rows don't
-     agree yet: the owner decides whether they become one */
-  gunman: {
-    /* how each gun is fired: rounds a burst, ms from one burst to the next (their hidden cooldowns; a gun not named: one
-       round, 1.2 to 1.8 s), and the magazine a gun with none gets (the shotgun 6 shells, any other 6) */
-    burst: {
-      handgun: { n: 1, gap: [1400, 2200] },
-      revolver: { n: 1, gap: [1600, 2400] },
-      smg: { n: 3, gap: [2200, 3200] },
-      tommy: { n: 3, gap: [2200, 3200] },
-      ump: { n: 3, gap: [2200, 3200] },
-      shotgun: { n: 1, gap: [2000, 2800] },
-      ak: { n: 4, gap: [1600, 2400] },
-      burst: { n: 3, gap: [1400, 2000] },
-      lmg: { n: 12, gap: [1200, 1800] }, // (long bursts: suppressive fire)
-    },
-    mag: { shotgun: 6 },
-    magAll: 6,
-    reach: {
-      shotgun: 3.5,
-      revolver: 8,
-      ak: 11, // (assault rifles reach as far as the LMG; the sniper's SNIPE reaches farther still. The owner's, Nov 20 18:23Z:
-      burst: 11, // "Any assault rifle should be able to have the range of the LMG, and the sniper even more so")
-      lmg: 11,
-    },
-  },
+  /* Sandbox's NPCs: how far each gun is fired from, in duck lengths (REACH if not named) */
   sbnpc: {
     reach: {
       sniper: 14, // (across the map; the shotguns only close)

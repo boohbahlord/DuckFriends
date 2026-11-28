@@ -300,7 +300,7 @@ function cakeChase(s, now, at) {
 }
 /* the host's part, every heartbeat: true when s.justin changed. log: the rules' chat line */
 export function justinTick(s, now, log) {
-  if (!s.options.justin || ["hang", "l4dd", "surv"].includes(s.options.mode)) {
+  if (!s.options.justin || ["hang", "l4dd"].includes(s.options.mode)) {
     if (!s.justin) return false;
     delete s.justin;
     return true;

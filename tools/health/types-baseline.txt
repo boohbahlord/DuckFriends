@@ -13,9 +13,6 @@ js/actplay.js TS2363 The right-hand side of an arithmetic operation must be of t
 js/actplay.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
 js/actplay.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
 js/actplay.js TS2447 The '|' operator is not allowed for boolean types. Consider using '||' instead.
-js/allies.js TS2339 Property 'hm' does not exist on type '{ ad: number; fl: number; x: number; y: number; hp: any; l: any[]; f: number; dk: { face: any; hat: any; color: any; outfit: any; pattern: string; metal: string; keys: any; style: string; }; wp: { p: any; }; mg: any; rl: any; ... 6 more ...; k: any; } | { ...; }'.
-js/allies.js TS2339 Property 'ldr' does not exist on type '{ ad: number; fl: number; x: number; y: number; hp: any; l: any[]; f: number; dk: { face: any; hat: any; color: any; outfit: any; pattern: string; metal: string; keys: any; style: string; }; wp: { p: any; }; mg: any; rl: any; ... 6 more ...; k: any; } | { ...; }'.
-js/allies.js TS2339 Property 'nm' does not exist on type '{ ad: number; fl: number; x: number; y: number; hp: any; l: any[]; f: number; dk: { face: any; hat: any; color: any; outfit: any; pattern: string; metal: string; keys: any; style: string; }; wp: { p: any; }; mg: any; rl: any; ... 6 more ...; k: any; } | { ...; }'.
 js/audioimport.js TS2339 Property 'buffer' does not exist on type 'AllowSharedBufferSource'.
 js/bash.js TS18047 'cur' is possibly 'null'.
 js/bash.js TS18047 'cur' is possibly 'null'.
@@ -201,8 +198,6 @@ js/gamehand.js TS2365 Operator '>=' cannot be applied to types 'number | boolean
 js/gamesettings.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
 js/gameshots.js TS2339 Property '_k' does not exist on type 'Element'.
 js/gmodes.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
-js/gunmen.js TS2339 Property 'camo' does not exist on type '{}'.
-js/gunmenrules.js TS2339 Property 'sq' does not exist on type '{ ad: number; fl: number; x: number; y: number; hp: any; l: any[]; f: number; dk: { face: any; hat: any; color: any; outfit: any; pattern: string; metal: string; keys: any; style: string; }; wp: { p: any; }; mg: any; rl: any; ... 6 more ...; k: any; } | { ...; }'.
 js/hangout/artcabin.js TS2339 Property 'h' does not exist on type '{ axis?: string; wallH?: number; t?: number; doors?: undefined[]; windows?: undefined[]; plain?: boolean; open?: boolean; seamless?: boolean; }'.
 js/hangout/artcabin.js TS2339 Property 'h' does not exist on type '{ w?: number; wallH?: number; }'.
 js/hangout/artcabin.js TS2339 Property 'rowsH' does not exist on type '{ axis?: string; wallH?: number; t?: number; doors?: undefined[]; windows?: undefined[]; plain?: boolean; open?: boolean; seamless?: boolean; }'.
@@ -823,12 +818,6 @@ js/specials.js TS2345 Argument of type 'string[]' is not assignable to parameter
 js/specials.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any]'.
 js/stats.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any, any]'.
 js/stats.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
-js/survrules.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
-js/survrules.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
-js/survrules.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
-js/survrules.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
-js/survrules.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
-js/survrules.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
 js/textutils.js TS2356 An arithmetic operand must be of type 'any', 'number', 'bigint' or an enum type.
 js/textutils.js TS2365 Operator '>' cannot be applied to types 'string | number' and 'number'.
 js/trivia.js TS2554 Expected 0 arguments, but got 1.
