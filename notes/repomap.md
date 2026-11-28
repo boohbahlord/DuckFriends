@@ -18,7 +18,7 @@ beaks.js 138 beaks
 below.js 89 darker below
 blast.js 69 explosions: one module
 bloodpool.js 50 a pool of blood: the
-boardfire.js 1155 the board's weapons: hits, shots,
+boardfire.js 1162 the board's weapons: hits, shots,
 boardjustin.js 499 Justin on the boards
 boardzombies.js 122 the zombies on a board
 botduck.js 90 a computer's duck: a random
@@ -71,7 +71,7 @@ gameannounce.js 187 The cloud's words and what
 gameboard.js 582 the board: each mode's board
 gamedefaults.js 198 the game's own numbers, for
 gamefx.js 697 the board's specials and the
-gamehand.js 514 the hand: the number-key specials,
+gamehand.js 524 the hand: the number-key specials,
 gamemsg.js 108 lines by the chat button:
 gameplace.js 480 where things are put on
 gameready.js 47 
@@ -106,7 +106,7 @@ jumps.js 48 the jump counter
 justinmoves.js 43 Justin's moves on the board
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which key
-l4dd.js 3422 Quacky Zombies on every screen
+l4dd.js 3429 Quacky Zombies on every screen
 l4ddangel.js 147 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
 l4ddart.js 608 Quacky Zombies' pictures
@@ -116,10 +116,10 @@ l4ddcatalog.js 214 Quacky Zombies: the Butler's Items
 l4dddrops.js 63 Quacky Zombies' drops, drawn
 l4ddloot.js 58 Dead Ducks Arcade: what lies
 l4ddmap.js 252 Quacky Zombies' minimap
-l4ddpower.js 327 Dead Ducks Arcade's power box
+l4ddpower.js 329 Dead Ducks Arcade's power box
 l4ddpowerui.js 276 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4942 the rules of Quacky Zombies
+l4ddrules.js 4944 the rules of Quacky Zombies
 l4ddsfx.js 514 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the
 langname.js 5 the name of Sandbox's number
@@ -268,7 +268,7 @@ who.js 3 who this player is beyond
 wounds.js 500 
 zombiepath.js 187 the zombies' way to the
 zombieroofs.js 323 the zombies' walk over Downpour's
-zombies.js 1643 the zombies: one module for
+zombies.js 1644 the zombies: one module for
 
 ## js/hangout/
 activities.js 25 every Hangout activity, so the
