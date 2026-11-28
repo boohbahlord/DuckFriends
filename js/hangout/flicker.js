@@ -18,24 +18,32 @@ const hash = (n) => {
   return s - Math.floor(s);
 };
 const still = () => document.documentElement.classList.contains("still");
-/* the stutter of the slot `now` is in: { target, at (ms), n (dips) } */
-const slotOf = (now) => {
-  const i = Math.floor(now / SLOT);
+/* the stutter of the slot `now` is in: { t (its target's place in a list of n), at (ms), n (dips) }; a slot `slot` ms
+   long, its stutter `within` ms into it */
+const slotOf = (now, n, slot = SLOT, within = WITHIN) => {
+  const i = Math.floor(now / slot);
   return {
-    target: TARGETS[Math.floor(hash(i + 0.1) * TARGETS.length)],
-    at: i * SLOT + hash(i + 0.2) * WITHIN,
+    t: Math.floor(hash(i + 0.1) * n),
+    at: i * slot + hash(i + 0.2) * within,
     n: 2 + Math.floor(hash(i + 0.3) * 3),
   };
 };
-function stutter(target, now) {
+function stutter(target, now, list = TARGETS, slot, within) {
   if (!target || still()) return 1;
-  const s = slotOf(now);
-  if (s.target !== target) return 1;
+  const s = slotOf(now, list.length, slot, within);
+  if (list[s.t] !== target) return 1;
   const u = now - s.at;
   if (u < 0 || u >= SPAN) return 1;
   const gap = SPAN / s.n;
   return u % gap < DIP_MS ? DIP : 1;
 }
+/* Downpour (the owner's, Nov 28): some of the gas station's tube lamps stutter now and then, the same way (stationmap.js
+   light.stut names them); and very rarely one duck's flashlight, picked by its seat, every BEAM_SLOT at most */
+const STUT = ["t1", "t2", "t3", "t4", "t5", "t6"],
+  BEAM_SLOT = 180000,
+  BEAM_WITHIN = 120000;
+export const beamStutter = (id, seat, now) =>
+  stutter(id, now, seat, BEAM_SLOT, BEAM_WITHIN);
 
 /* a light's (layout.js' LIGHTS) slow sway in size and strength, and its stutter now: power.js' dark follows both, world.js'
    pools of light only the stutter */
@@ -46,12 +54,14 @@ export const sway = (l, now) =>
       Math.sin(now / 47 + l.y) * 0.025 * l.flick
     : 1;
 export const stutterOf = (l, now) =>
-  l.flick
-    ? stutter(
-        l.porch ? "porch" : l.prop && l.prop.kind === "post" ? l.prop.id : "",
-        now,
-      )
-    : 1;
+  l.stut
+    ? stutter(l.stut, now, STUT)
+    : l.flick
+      ? stutter(
+          l.porch ? "porch" : l.prop && l.prop.kind === "post" ? l.prop.id : "",
+          now,
+        )
+      : 1;
 /* the lights' clock: it moves on 20 times a second, not every frame, so the dark is drawn again only then (a flicker
    needs no more), and the lanterns, the pools and the dark all keep the same beat */
 export const lightNow = (now) => Math.floor(now / 50) * 50;

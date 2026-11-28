@@ -11,7 +11,9 @@ import {
   ARMOR,
   SPECIAL_Z,
   DIRECTOR,
+  WEIGHT,
 } from "./gamedefaults.js";
+import { carsSwing } from "./carpush.js";
 import { badShare, doingWell, ducks, badly } from "./director.js";
 import { helmeted } from "./wounds.js";
 /* Dead Ducks Arcade's zombies' swipe in every round: its wind-up (from the tell to the hit) and the ms from one hit to the
@@ -90,6 +92,7 @@ import {
   clawDmg,
   hurtDuck,
   tugDuck,
+  zombieHit,
   walled,
 } from "./l4ddrules.js";
 import { openNear, flowFrom, heading } from "./zombiepath.js";
@@ -143,9 +146,9 @@ export const zOk = (x, y, z, up = STEP) =>
    heartbeat before, so a zombie forgot its way up the moment it chose it (the owner's, Nov 17 19:11Z: "WHY THE FUCK ARE
    ZOMBIES NOT COMMITTING ON WALL CLIMBS EVEN WHEN IM STILL ON THE SAME FUCKING ROOF!!!") */
 const KEEP =
-  "cm k fl wp j jp jc jx nj sp dm wk wt wd wn lt lw li ws sr sx hu na hd sg tc fy fc".split(
+  "cm k fl wp j jp jc jx nj sp dm wk wt wd wn lt lw li ws sr sx hu na hd sg tc fy fc fh gt gc gk tw".split(
     " ",
-  ); // (fy, fc: a Flyer's hold on a duck, and till when it waits to leap: flyerStep; ws: which way it goes round a Sandbox wall, sandboxrules.js sbWallGo; sp, dm: a Sandbox spawn's zombie, its spawn and its damage: sbspawn.js; hd, sg, tc: the way it faces, till when it staggers, how many it touches: steer)
+  ); // (gt, gc, gk: till when the Giant waits to throw a zombie, and to try a car, and the car it knocked: giantStep; tw: a zombie it threw; fy, fc, fh: a Flyer's hold on a duck, till when it waits to leap, and its held duck's last strike at it: flyerStep, l4ddrules.js flyHit; ws: which way it goes round a Sandbox wall, sandboxrules.js sbWallGo; sp, dm: a Sandbox spawn's zombie, its spawn and its damage: sbspawn.js; hd, sg, tc: the way it faces, till when it staggers, how many it touches: steer)
 // (sr, sx, hu, na: its spot round its duck, the one it gave up, since when it is held up, the way up it gave up: crowd.js SUR)
 /* the zombies as objects, from the state's three parts, and back (k in zp: hp · 16 + st, st up to 8, the jump) */
 export function zombies(s) {
@@ -268,7 +271,7 @@ export function newZombie(s, L, T, zs = [], kind = "") {
   const B = SPECIAL_Z[kind],
     arm = B ? Z_BREED[kind] : armorRoll(s),
     [size, build, hat, outfit] = B
-      ? [kind === "giant" ? 1 : 0, 0, -1, -1] // (no apparel; the Giant its biggest, until its own look and size)
+      ? [B.size || 0, 0, -1, -1] // (no apparel; its breed's size: the Giant's stand-in, the biggest)
       : lookOf(arm),
     max = B ? B.hp : Math.max(1, hp0()),
     jus = !B && Math.random() < Z_JUSTIN ? 1 : 0,
@@ -347,8 +350,9 @@ export function specialTick(s, L, zs, T) {
    It walks as any zombie does. Near a duck on its floor that nothing holds, with nothing in the way, it leaps at it
    (st 8; z.j[8] its height over the line: zombieroofs.js jumpZ), and landing on it, it holds on (st 9; z.fy: [the duck,
    its next bite, its next tug]): a bite every F.bite ms, a tug a random way every F.pull.ms, a little toward the horde;
-   the duck still walks. It lets go when its duck goes down, or when a melee crit throws it off (l4ddrules.js
-   meleeHits: only melee reaches it there); then, or after a leap that missed, it waits F.rest ms (z.fc) */
+   the duck still walks. Only melee reaches it there: the held duck strikes it on its meter (l4ddrules.js flyHit,
+   flymeter.js), a friend swings at it (meleeHits). It lets go when its duck goes down, or when a friend's crit throws
+   it off; then, or after a leap that missed, it waits F.rest ms (z.fc) */
 const F = SPECIAL_Z.flyer;
 /* the ducks held now, and where the horde is (its middle), for every Flyer this heartbeat */
 function flyers(zs) {
@@ -364,6 +368,15 @@ function flyers(zs) {
     ],
     none: !rest.length,
   };
+}
+/* the held duck's strike on its Flyer z (the owner's, Nov 28: "the closer the alignment, the more damage", 0 to 3):
+   off, how far its meter's red line was from the white one (a share of the meter; a bot sends none: somewhere in the
+   meter's first half). Its damage, the nearer the more, or -1 within F.meter.gap ms of the last (flymeter.js) */
+export function meterDmg(z, off, now) {
+  if (now - (z.fh || 0) < F.meter.gap) return -1;
+  z.fh = now;
+  const o = off !== null && Number.isFinite(+off) ? +off : Math.random() / 2;
+  return Math.round(F.meter.most * Math.max(0, 1 - Math.abs(o) / F.meter.near));
 }
 export function flyerOff(z, now) {
   z.st = 2;
@@ -382,7 +395,7 @@ function flyerStep(z, c, fly) {
       return true;
     }
     [z.x, z.y] = q.xy;
-    z.j = [Math.round(q.zz)]; // (its duck's height, up a floor or in a jump, for every screen: store's zj, zombieZ)
+    z.j = [Math.round(q.zz), q.id]; // (its duck's height, up a floor or in a jump, and which duck, for every screen: store's zj, zombieZ, l4dd.js's meter)
     if (now >= z.fy[1]) {
       z.fy = [z.fy[0], now + F.bite, z.fy[2]];
       if (c.latch(q, rnd(...F.dmg))) flyerOff(z, now);
@@ -440,7 +453,7 @@ function flyerLand(z, c, fly) {
     flyerOff(z, c.now);
     return;
   }
-  z.j = [Math.round(q.zz)]; // (its duck's height from the start: zombieZ)
+  z.j = [Math.round(q.zz), q.id]; // (its duck's height from the start, and which duck: zombieZ, l4dd.js's meter)
   z.st = 9;
   z.n = 0;
   z.fy = [q.id, c.now + F.bite, c.now + F.pull.ms];
@@ -452,6 +465,168 @@ function flyerLand(z, c, fly) {
     x: Math.round(z.x),
     y: Math.round(z.y),
   });
+}
+/* ---------- the Giant (the owner's 03:28Z; gamedefaults.js SPECIAL_Z.giant) ----------
+   It walks as any zombie does, as fast as a duck, climbing twice as fast and stepping up half an elevation, and nothing in
+   the crowd holds it back (still: they give way). Its swing throws a duck and hits the zombies beside it (giantHit);
+   now and then it throws a zombie beside it at a duck a way off (tossLand), and by a car with a duck past it, it knocks
+   the car at it a quarter of the times (giantCar) */
+const GT = SPECIAL_Z.giant;
+const noGo = (c, p) => !!(p.m || p.j || c.down(p)); // (never the merchant, Justin, or a duck down)
+function giantStep(z, c, zs) {
+  z.up = GT.up; // (how high it steps: stepZombie)
+  giantCar(z, c);
+  if (z.st !== 2 || (z.gt || 0) > c.now || c.cake) return;
+  const h = zOf(z, "zombie");
+  let q = null;
+  for (const p of c.pls) {
+    const d = room(z.x, z.y, ...p.xy);
+    if (
+      !noGo(c, p) &&
+      d > GT.toss.near &&
+      d < GT.toss.far &&
+      Math.abs(p.zz - h) < 20 &&
+      (!q || d < room(z.x, z.y, ...q.xy)) &&
+      walkable(z.x, z.y, ...p.xy)
+    )
+      q = p;
+  }
+  const o =
+    q &&
+    zs.find(
+      (o) =>
+        o !== z &&
+        o.st === 2 &&
+        !o.wk &&
+        !(o.l[8] >= Z_BREED.flyer) &&
+        room(z.x, z.y, o.x, o.y) < GT.toss.by,
+    );
+  if (!o) return;
+  z.gt = c.now + GT.toss.every;
+  z.a = c.T; // (its swing, seen on every screen)
+  z.dir = Math.round(Math.atan2(q.xy[1] - z.y, q.xy[0] - z.x) * 100);
+  o.j = [o.x, o.y, ...q.xy, zOf(o, "zombie"), q.zz, 0, GT.toss.fly, GT.toss.up]; // (the Flyer's flight: zombieroofs.js jumpZ)
+  o.st = 8;
+  o.n = 0;
+  o.tw = 1;
+}
+/* a zombie it threw comes down: on a duck there, it claws it and shoves it on the way it flew */
+function tossLand(z, c) {
+  const [x0, y0, , , , h1] = z.j,
+    q = c.pls.find(
+      (p) =>
+        !noGo(c, p) &&
+        room(z.x, z.y, ...p.xy) < c.reach &&
+        Math.abs(p.zz - h1) < 30,
+    );
+  z.st = 2;
+  z.n = 0;
+  delete z.tw;
+  delete z.j;
+  if (q) c.claw(q, z, [z.x - x0, z.y - y0, GT.toss.knock]);
+}
+/* its swing at duck q: every zombie in front of it in reach takes a claw and a push, and the duck is thrown (a grab and a
+   throw, GT.grab of the swings: farther and higher). True when the duck is down */
+function giantHit(q, z, c, zs) {
+  const ux = q.xy[0] - z.x,
+    uy = q.xy[1] - z.y,
+    h = zOf(z, "zombie");
+  for (const o of zs)
+    if (
+      o !== z &&
+      o.st === 2 &&
+      Math.abs(zOf(o, "zombie") - h) < 50 && // (on its floor only)
+      room(z.x, z.y, o.x, o.y) < c.reach &&
+      (o.x - z.x) * ux + (o.y - z.y) * uy > 0
+    )
+      c.hitZ(o, o.x - z.x, o.y - z.y, GT.zknock);
+  const grab = !q.m && Math.random() < GT.grab;
+  return c.claw(q, z, [
+    ux,
+    uy,
+    grab ? GT.throw : GT.knock,
+    { ms: GT.ms, h: grab ? GT.tlift : GT.lift, l: 0 },
+  ]);
+}
+/* car i's box now, world px (carpush.js: s.hang.cars, its way from where the map put it) */
+function carBox(s, i) {
+  const C = GS.CARS[i],
+    [ox, oy] = (s.hang.cars || {})[i] || [0, 0];
+  return [C.x0 + ox, C.y0 + oy, C.x1 + ox, C.y1 + oy];
+}
+/* the car it knocked slides on (z.gk: [the car, its way, px left, the ducks it hit]), every duck it runs into clawed and
+   thrown; or, beside a car with a duck past it, it tries (GT.car) */
+function giantCar(z, c) {
+  const { s, now, pls } = c,
+    h = zOf(z, "zombie");
+  if (z.gk) {
+    const [i, ux, uy, left, hit] = z.gk,
+      b = carBox(s, i);
+    carsSwing(
+      s,
+      (b[0] + b[2]) / 2,
+      (b[1] + b[3]) / 2,
+      1,
+      { dx: ux, dy: uy, hit: [] },
+      Math.min(left, GT.car.speed * c.dt) * WEIGHT.CAR, // (over its weight: push.js pushOn)
+    );
+    const [x0, y0, x1, y1] = carBox(s, i),
+      moved = Math.hypot(x0 - b[0], y0 - b[1]);
+    for (const q of pls)
+      if (
+        moved >= 1 && // (only a car that moved hits anyone)
+        !noGo(c, q) &&
+        !hit.includes(q.id) &&
+        Math.abs(q.zz - h) < 30 &&
+        q.xy[0] > x0 - 12 &&
+        q.xy[0] < x1 + 12 &&
+        q.xy[1] > y0 - 12 &&
+        q.xy[1] < y1 + 12
+      ) {
+        hit.push(q.id);
+        c.claw(q, z, [ux, uy, GT.car.knock, { ms: GT.ms, h: GT.lift, l: 0 }]);
+      }
+    if (moved < 1 || left - moved < 1) delete z.gk;
+    else z.gk = [i, ux, uy, left - moved, hit];
+    return;
+  }
+  if (z.st !== 2 || (z.gc || 0) > now || !dp()) return; // (Downpour's cars only)
+  for (let i = 0; i < GS.CARS.length; i++) {
+    const [x0, y0, x1, y1] = carBox(s, i),
+      cx = (x0 + x1) / 2,
+      cy = (y0 + y1) / 2,
+      d = Math.hypot(cx - z.x, cy - z.y) || 1,
+      [ux, uy] = [(cx - z.x) / d, (cy - z.y) / d];
+    if (
+      Math.hypot(
+        Math.max(x0 - z.x, 0, z.x - x1),
+        Math.max(y0 - z.y, 0, z.y - y1),
+      ) > GT.car.near
+    )
+      continue;
+    const q = pls.find((p) => {
+      if (noGo(c, p) || Math.abs(p.zz - h) > 30) return false;
+      const vx = p.xy[0] - cx,
+        vy = p.xy[1] - cy,
+        along = vx * ux + vy * uy;
+      return (
+        along > 0 &&
+        along < GT.car.far &&
+        Math.abs(vx * uy - vy * ux) < GT.car.wide
+      );
+    }); // (a duck past the car, on the way from it through the car)
+    if (!q) continue;
+    z.gc = now + GT.car.every;
+    if (Math.random() < GT.car.chance) {
+      const vx = q.xy[0] - cx,
+        vy = q.xy[1] - cy,
+        e = Math.hypot(vx, vy) || 1;
+      z.gk = [i, vx / e, vy / e, GT.car.far, []]; // (at the duck)
+      z.a = c.T;
+      z.dir = Math.round(Math.atan2(uy, ux) * 100);
+    }
+    return;
+  }
 }
 /* what a zombie of look l wears that stops hits: "", "helmet" or "swat" (wounds.js armorHit) */
 export const zArmor = (l) =>
@@ -773,7 +948,8 @@ export function moveZombies(s, zs, now, T, up, seers = up) {
     reach: CLAW,
     way: (x, y, tx, ty) => wayTo(x, y, tx, ty, now),
     bite: (x, y) => addFx(s, { kind: "l4bite", who: [], t: now, x, y }),
-    claw: (target, z) => mapClaw(s, p4, target, z, now),
+    claw: (target, z, fl) => mapClaw(s, p4, target, z, now, fl),
+    hitZ: (o, ux, uy, px) => zombieHit(s, o, clawDmg(), ux, uy, px, now, T), // (the Giant's swing on a zombie)
     down: (q) => !!(p4[q.id] || {}).dn, // (a duck down, Safe Keeping's too: a Flyer lets go)
     latch: (q, dmg) => hurtDuck(s, p4, q.id, now, "claw", dmg), // (a Flyer's bite: true once its duck is down)
     tug: (q, ux, uy) => tugDuck(s, q.id, ux, uy, F.pull.px, now), // (a Flyer's tug: as a shove, l4ddrules.js)
@@ -785,20 +961,23 @@ export function moveZombies(s, zs, now, T, up, seers = up) {
   s.hidden = { ...s.hidden, l4ze: eating };
 }
 /* a swipe on the map: at the merchant or a duck (p4: the ducks' points this heartbeat). True when the target
-   is down (no more swipes at it this heartbeat) */
-function mapClaw(s, p4, target, z, now) {
+   is down (no more swipes at it this heartbeat). fl: [ux, uy (any length), px, more], a duck it hits and leaves up is thrown so
+   (the Giant's: giantHit; tugDuck) */
+function mapClaw(s, p4, target, z, now, fl) {
   if (target.m) return merchantHurtAt(s, target.m - 1, null, 1, now, "claw"); // (the merchant: a swipe takes 1, and no line)
-  return (
-    !dodging(s, target.p, now) &&
-    hurtDuck(
-      s,
-      p4,
-      target.id,
-      now,
-      "claw",
-      z.dm ? (valueOf({ ok: z.dm }, SB_BOXES.damage) ?? 1) : clawDmg(), // (the owner's, Nov 19 19:27Z: "zombies could do anywhere from 0.6 to 1 damage")
-    )
+  if (dodging(s, target.p, now)) return false;
+  const down = hurtDuck(
+    s,
+    p4,
+    target.id,
+    now,
+    "claw",
+    z.dm ? (valueOf({ ok: z.dm }, SB_BOXES.damage) ?? 1) : clawDmg(), // (the owner's, Nov 19 19:27Z: "zombies could do anywhere from 0.6 to 1 damage")
   );
+  const u = fl && Math.hypot(fl[0], fl[1]);
+  if (u && !down)
+    tugDuck(s, target.id, fl[0] / u, fl[1] / u, fl[2], now, fl[3]); // (a way of length 1: boardfire.js shove)
+  return down;
 }
 /* ---------- the walk: every zombie's heartbeat, on whatever ground (the template every walk runs) ----------
    c: what the walk it is part of hands it: s, now, T (the clock its swipes keep), dt, pls (what they go for: ducks, and
@@ -816,7 +995,10 @@ function walkAll(zs, c) {
     rush = T >= ZOMBIE_GRACE, // (off every duck's screen they come twice as fast, but not in a round's first ZOMBIE_GRACE ms)
     fly = c.latch && flyers(zs);
   for (const z of zs) {
-    if (z.st === 3) continue;
+    if (z.st === 3) {
+      if (z.gk && fly) giantCar(z, c); // (a car the Giant knocked slides on after it falls)
+      continue;
+    }
     const o = z.l[2] ? openingById(z.l[2]) : null,
       v =
         z.l[1] *
@@ -824,8 +1006,12 @@ function walkAll(zs, c) {
         wetK(z.x, z.y, zOf(z, "zombie")) * // (water: as slow of its own walk as a duck is of its, layout.js)
         (rush && !seenBy(eyes, z.x, z.y) ? 2 : 1) * // (the owner's, Nov 23 00:32Z: "speed up the zombies by twice the amount of speed when they're not on a player screen")
         (z.sg > now ? STAGGER.k : 1), // (just hit: a short stagger)
-      sp = o && sidesOf(o, z);
+      sp = o && sidesOf(o, z),
+      gt = fly && z.l[8] === Z_BREED.giant, // (the Giant: giantStep, giantHit)
+      cl = gt ? GT.climb : 1, // (how much faster it climbs)
+      claw = gt ? (q) => giantHit(q, z, c, zs) : c.claw;
     if (fly && z.l[8] === Z_BREED.flyer && flyerStep(z, c, fly)) continue;
+    if (gt) giantStep(z, c, zs);
     if (z.st === 0) {
       // coming: to the spot outside its opening (Downpour: the foot of the fence)
       const [tx, ty] = sp.out;
@@ -848,7 +1034,7 @@ function walkAll(zs, c) {
           tx,
           ty,
           up
-            ? (FENCE.mid * v * dt) / GS.FENCE_H
+            ? (FENCE.mid * v * dt * cl) / GS.FENCE_H
             : f.open
               ? v * dt // (the road's ends: no fence, it walks in)
               : ((FENCE.across - FENCE.mid) * dt) / FENCE.FALL,
@@ -906,7 +1092,7 @@ function walkAll(zs, c) {
     if (z.st === 6) {
       // up a wall onto a roof (its own: z.k), straight in from its edge, slowly (its height: climbZ)
       const e = edgeOf(z.x, z.y, deckOf(z)),
-        far = v * dt * CL.speed;
+        far = v * dt * CL.speed * cl * (deckOf(z)?.kind === "car" ? CL.hop : 1); // (a car: a hop up)
       if (!pls.some((q) => reaches(q, e.d))) {
         /* nobody left up there (off the roof, not just jumping on it): it gives up its climb and climbs back down (the
            owner's, Nov 19 19:27Z: "If a player jumps off a roof, zombies will stop committing to their climb if they
@@ -951,9 +1137,9 @@ function walkAll(zs, c) {
       } // (a duck on the plank in its way: it stops there and claws at it)
       if (walkTo(z, x1, y1, (fall || (walk ? v : JUMP.speed)) * dt)) {
         if (z.j[8] && fly) {
-          flyerLand(z, c, fly);
+          (z.tw ? tossLand : flyerLand)(z, c, fly);
           continue;
-        } // (the Flyer's leap)
+        } // (the Flyer's leap, or a zombie the Giant threw)
         const fell = h1 < canopyDeck().h - 1;
         z.st = fell ? 2 : 7;
         z.n = 0;
@@ -966,7 +1152,8 @@ function walkAll(zs, c) {
     if (
       z.wk &&
       z.st === 2 &&
-      walkerWatch(z, pls, now, (s.hang && s.hang.l4f) || {})
+      walkerWatch(z, pls, now, (s.hang && s.hang.l4f) || {}) &&
+      !cake
     ) {
       wander(z, v * dt, pls, now);
       continue;
@@ -1174,7 +1361,9 @@ function walkAll(zs, c) {
         const far =
           v *
           dt *
-          Math.max(CROWD_SLOW.least, 1 - CROWD_SLOW.each * (z.tc || 0)); // (slower in a crowd, by how many it touches)
+          (gt
+            ? 1
+            : Math.max(CROWD_SLOW.least, 1 - CROWD_SLOW.each * (z.tc || 0))); // (slower in a crowd, by how many it touches; never the Giant, which shoves them aside)
         stepZombie(z, steer(z, aim, far, dt), far, pls);
       }
     }
@@ -1206,7 +1395,7 @@ function walkAll(zs, c) {
         z.dir = Math.round(
           Math.atan2(target.xy[1] - z.y, target.xy[0] - z.x) * 100,
         );
-        if (c.claw(target, z)) pls.splice(pls.indexOf(target), 1);
+        if (claw(target, z)) pls.splice(pls.indexOf(target), 1);
       }
     } else z.n = z.wu = 0; // (out of reach: the swing is lost)
   }
@@ -1459,7 +1648,10 @@ function separate(zs, zf = dp() ? zombieZ : null, k = "zombie") {
    position anymore to make room, since their movement being zero means zero"), and an immobile one (push.js); the other
    takes all of the push. Speed 0 still takes a hit's knock-back (Nov 21 14:52Z: "zero speed = can't move itself") */
 const still = (z) =>
-  immobile(z) || z.sv === 0 || (!!z.sp && !!z.l && z.l[1] === 0); // (a Sandbox spawn's Speed 0: a map's zombie, zombieAt; a Sandbox walker, brainWalk)
+  immobile(z) ||
+  z.sv === 0 ||
+  (!!z.sp && !!z.l && z.l[1] === 0) ||
+  (!!z.l && z.l[8] === Z_BREED.giant); // (the Giant never gives way: it shoves them aside, the owner's "they push all zombies out of the way") // (a Sandbox spawn's Speed 0: a map's zombie, zombieAt; a Sandbox walker, brainWalk)
 function nudge(z, dx, dy) {
   const x = z.x + dx,
     y = z.y + dy;

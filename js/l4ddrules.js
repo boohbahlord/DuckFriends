@@ -199,6 +199,7 @@ import {
   specialTick,
   zArmor,
   flyerOff,
+  meterDmg,
   moveZombies,
   STATION,
   zFloor,
@@ -2716,12 +2717,13 @@ function merchantFire(s, m0, now) {
         : null,
     zs = fp || !mInside(m0.x, m0.y) ? [] : zombies(s),
     z = zs
-      .filter(
-        (q) =>
+      .filter((q) => {
+        const w =
           q.st !== 3 &&
           mInside(q.x, q.y) &&
-          mWeapon(m0, q.x, q.y, zOf(q, "zombie")),
-      )
+          mWeapon(m0, q.x, q.y, zOf(q, "zombie"));
+        return w && (q.st !== 9 || w === "knife"); // (a Flyer on a duck: only melee reaches it, so his knife and never his handgun)
+      })
       .sort(
         (a, b) =>
           Math.hypot(a.x - m0.x, a.y - m0.y) -
@@ -3136,6 +3138,18 @@ export const addFx = (s, f) => {
   s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, ...f }];
   return s.fxN;
 };
+/* the Flyer holding duck id struck on that duck's meter: fm, how far apart its lines were (zombies.js
+   meterDmg, flymeter.js) */
+function flyHit(s, id, fm, now) {
+  const zs = zombies(s),
+    z = zs.find((q) => q.st === 9 && q.fy && q.fy[0] === id),
+    dmg = z ? meterDmg(z, fm, now) : -1;
+  if (dmg < 0) return false;
+  if (dmg > 0 && strike(s, z, dmg, false, id, "", now))
+    die(z, now - s.hang.l4.t0);
+  store(s, zs, true);
+  return true;
+}
 export function l4Use(s, a, now) {
   const id = a.id,
     what = String(a.what || ""),
@@ -3148,6 +3162,8 @@ export function l4Use(s, a, now) {
     rw = down ? "dg" : what;
   if (!L || L.over || !p || !m0 || !(down || standing(s, id)) || !A)
     return false;
+  if (Object.values(s.hang.zj || {}).some((j) => j.length === 2 && j[1] === id))
+    return flyHit(s, id, a.fm, now); // (a Flyer holds me (zombies.js flyerStep's z.j): my click strikes it on the meter, whatever's in hand)
   if (!down && kind !== "grenade" && !m0.sl.includes(what)) return false;
   if ((kind === "melee" || kind === "ranged") && swims(s, id)) return false; // (swimming: put away)
   if (what === "safekeep") return false; // (never by hand: it works by itself)
@@ -3820,9 +3836,10 @@ export function fireTick(s, zs, now, T, p4) {
     Object.keys(fz).length || Object.keys(fp).length ? { z: fz, p: fp } : null;
   if (JSON.stringify(out) !== JSON.stringify(F)) s.hang.l4fire = out;
 }
-/* duck id shoved px world px along (ux, uy), as a swing shoves it (a Flyer's tug: zombies.js flyerStep) */
-export const tugDuck = (s, id, ux, uy, px, now) =>
-  shovePx(s, id, ux, uy, px, now, inCabin(...toPx(s.pos[id])) ? 1 : 0);
+/* duck id shoved px world px along (ux, uy), as a swing shoves it (a Flyer's tug: zombies.js flyerStep); more: a throw's
+   flight (ms, h, l: boardfire.js shove; the Giant's: zombies.js giantHit) */
+export const tugDuck = (s, id, ux, uy, px, now, more) =>
+  shovePx(s, id, ux, uy, px, now, inCabin(...toPx(s.pos[id])) ? 1 : 0, more);
 /* a zombie's claw: 0.6 to 1, in tenths */
 export const clawDmg = () => 0.6 + Math.floor(Math.random() * 5) / 10;
 /* a duck takes 1 (a claw, fire); true when that put it down. A claw leaves a wound on it now and then, as hits do in
@@ -4050,13 +4067,10 @@ function meleeHits(s, now) {
     const push = meleePush(s, k.by, k.w); // (its push: its weapon's and my weight, push.js)
     for (const z of zs) {
       if (k.hit.includes(z.i)) continue;
-      const held = z.st === 9; // (a Flyer on a duck: at any height; the held duck's own swing always reaches it, a friend's as it reaches that duck)
+      const held = z.st === 9; // (a Flyer on a duck: at any height, as a friend's swing reaches that duck; the held duck strikes it on its meter, flyHit)
       if (!held && !overlapH(hz, h, zOf(z, "zombie"))) continue;
-      if (
-        !(held && z.fy && z.fy[0] === k.by) &&
-        Math.hypot(z.x - bx, z.y - by) > R
-      )
-        continue; // (a round bubble: as far up and down as to the sides, the owner's, Nov 18 15:18Z "Make sure melee weapons have the same range in any direction". It was squashed up and down, 1.4 times shorter)
+      if (held && z.fy && z.fy[0] === k.by) continue; // (my own swing, begun before it took hold: only my meter strikes it)
+      if (Math.hypot(z.x - bx, z.y - by) > R) continue; // (a round bubble: as far up and down as to the sides, the owner's, Nov 18 15:18Z "Make sure melee weapons have the same range in any direction". It was squashed up and down, 1.4 times shorter)
       k.hit.push(z.i);
       if (z.st === 3) {
         knockZ(s, z, k.dx, k.dy, push);
@@ -4107,6 +4121,11 @@ const die = (z, T) => {
   if (z.st !== 7) delete z.k;
   Object.assign(z, { st: 3, d: T });
 };
+/* a zombie the Giant's swing reaches (zombies.js giantHit): dmg, nobody's points, and pushed px along (ux, uy) */
+export function zombieHit(s, z, dmg, ux, uy, px, now, T) {
+  if (strike(s, z, dmg, false, null, "", now, false)) die(z, T);
+  knockZ(s, z, ux, uy, px);
+}
 /* melee knockback (the owner's, Nov 18 15:25Z: "Every melee has slight knockback EVEN to players AND especially to
    zombies EVEN WHILE THEY ARE ALIVE ... Fireaxe has more knockback and the hammer has most knockback"): push.js */
 /* a zombie, alive or dead, pushed by px world px along (ux, uy) (a way), over its weight (push.js pushOn), a few px at a
@@ -4377,6 +4396,7 @@ export function l4Shots(s, now) {
             now,
             BLAST_HALF * (ang ? ANGEL.GL_RADIUS : 1),
             blastZ(at.x, at.y, at.z),
+            at.z,
           ) || hitAny;
         if (ang) burnAt(s, sh.by, at.x, at.y, now, blastZ(at.x, at.y, at.z)); // (Angelic: a smaller blast, and the ground there on fire)
       },
@@ -4412,12 +4432,12 @@ function burnAt(s, by, x, y, now, z0 = 0) {
   ];
 }
 /* a blast (a grenade, the grenade launcher's, the Angelic pistol's crit) at (bx, by), its feet at bz (left out: the floor
-   there at its shooter's height, sh.hz): every zombie in it dies, and the duck that threw it, in it, loses half its HP;
+   there at its shooter's height, sh.hz; drawn at fz, where it is when it goes off, in the air or on that floor): every zombie in it dies, and the duck that threw it, in it, loses half its HP;
    true when it got any zombie. Who is in it: blast.js, reaching only what the shots' one rule lets it: nothing solid
    between (layout.js slabBetween; the owner's, Nov 17 20:02Z, "IT IS PHYISCALLY RETARDED"), so one on a roof never gets
    anything inside or under it, and one inside never gets anything up on it */
 const blastZ = (x, y, hz) => (dp() ? floorH(x, y, hz) : heightAt(x, y));
-function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
+function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null, fz = null) {
   const gore = [],
     z0 = bz ?? blastZ(bx, by, sh.hz || 0),
     near = reach({
@@ -4523,7 +4543,7 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
     x: +(bx / W).toFixed(4),
     y: +(by / H).toFixed(4),
     hit: [],
-    hz: Math.round(z0), // (where it went off: the roof it landed on, not the thrower's height)
+    hz: Math.round(fz ?? z0), // (where it went off: in the air, or the roof it landed on, not the thrower's height)
     gore: gore.slice(0, 12), // (blood bursting out of each zombie it got: game.js)
     ...(wide !== 1 ? { wide } : {}),
     rr: (REACH * wide) / BLAST_HALF, // (its rings' reach, as the screens draw it)
@@ -4715,6 +4735,7 @@ function l4Tick(s, now) {
   if (s.hang.l4.wait && !isSb(s)) {
     if (waitTick(s, now)) return true;
     const Lw = { ...s.hang.l4 };
+    nukeTick(s, zs, now, ids); // (a Nuke taken in a rest goes off too, on the rest's walkers; walkersTick keeps them)
     walkersTick(s, Lw, zs, now, T, up);
     dropTick(s, Lw, zs, now, T);
     s.hang.l4 = Lw;
@@ -4830,7 +4851,7 @@ function ammoFor(w, M, inf) {
       inf != null
         ? inf || (w === "laser" && M.ammoP >= 100) // (the laser's 100% is unlimited: the owner's, Nov 19 22:55Z)
         : !full; // (an item without a count)
-  if (unl) return full ? [full[0], 9999] : null;
+  if (unl) return full ? (ARMS[w].mag ? [full[0], 9999] : [9999, 0]) : null; // (one with no magazine, the Laser Rifle and the bow, shoots from its first count: never reloaded)
   /* Ammo: a number, or a share where 100% is Dead Ducks Arcade's own; How many you get for an item (a medkit, a zebra
      cake, a chair: its uses) */
   const own = full ? full[0] + full[1] : 100,

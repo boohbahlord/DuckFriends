@@ -8,6 +8,7 @@
    table (on Downpour in the chapel): E by him opens his shop (drawMerchant). My duck walks at half
    speed (Speed: 10% faster) and has 7 seconds of sprint (a thin blue bar under my name). The rules are the host's
    (l4ddrules.js); the weapons bar is l4ddbar.js. */
+import { flyMeter } from "./flymeter.js";
 import { holdGame, offView } from "./gameready.js";
 import { clawMark, warmClaw, leanBack } from "./claw.js";
 import { JPOOL, poolHTML, warmPool } from "./bloodpool.js";
@@ -38,7 +39,7 @@ import {
   onRoof,
 } from "./hangout/layout.js";
 import { meets } from "./push.js";
-import { sway, stutterOf, lightNow } from "./hangout/flicker.js";
+import { sway, stutterOf, lightNow, beamStutter } from "./hangout/flicker.js";
 import { play, setListener } from "./hangout/sounds.js";
 import { svgDataURL } from "./svgurl.js";
 import { justinSVG } from "./hangout/npcart.js";
@@ -151,7 +152,7 @@ import {
 import { DROP_ICONS } from "./l4dddrops.js";
 import { popHP } from "./hpmeter.js";
 import { roundLine, REST } from "./roundline.js";
-import { fxHitAt, fxEye, heavyOff } from "./fx.js";
+import { fxHitAt, fxEye, heavyOff, muzzleLights, MUZZLE_LIGHT } from "./fx.js";
 import { vibrate, hitPx, HIT, again } from "./fxmotion.js";
 import { pixelOn, gridPx, raster, rasterReady } from "./pixel.js";
 import { olAdd, olAway, olRoofed, olPic, DROP_OL } from "./outlines.js";
@@ -181,8 +182,11 @@ const CONE = { far: 560, half: (27 * Math.PI) / 180 }; // the flashlight: how fa
 const GLOW = 80; // world px: the faint light round every duck
 const FIRE_LIGHT = { r: 110, k: 0.5 }; // the light round a zombie or a duck on fire
 /* the screen's edges darker, in a circle: clear out to `clear` of the way from the middle to a corner, as much darker
-   as `k` at the corners; the flashlights and the lights still cut through it (the owner's, Nov 28 01:57Z) */
-const VIGNETTE = { clear: 0.55, k: 0.75 };
+   as `k` at `mid` of the way, and all black from `black` of the way out to the corners, far off in the night (the
+   owner's, Nov 28 01:57Z, and 03:28Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtLgUjArf16XwsJeAqka2pZ7: "the distance in the night
+   for line of sight eventually becomes completely black when it is far away enough"); the flashlights and the lights
+   still cut through it */
+const VIGNETTE = { clear: 0.55, k: 0.75, mid: 0.8, black: 0.97 };
 const LOW_DEAD = 2000; // ms a dead zombie shows on my screen with Low graphics or Data saving (the rules keep it L4.DEAD_MS)
 /* where each opening's moonlight falls: just inside its wall (the deck's stairs: on their top) */
 let moon = null,
@@ -414,6 +418,7 @@ export function shotStop(s, sh, r, x0, y0, x1, y1) {
     for (const [i, o] of Z) {
       if (
         o.st === 3 ||
+        o.st === 9 || // (a Flyer on a duck: the host's bullets go by it, only melee reaches it)
         o.z === undefined ||
         r.skip.has(i) ||
         Math.hypot((o.x - x) / 26, (o.y - y) / 22) >= 1
@@ -692,6 +697,7 @@ function plainImg(o) {
    over a beat, so it is still on its way when the next one comes instead of stopping and starting */
 const GLIDE = { min: 120, max: 400, even: 0.35, over: 1.1, same: 90 };
 const FACE_HOLD = 300; // ms a zombie keeps going the other way before it turns (no flipping back and forth on a bump)
+let myFly = null; // { i, hp, max }: the Flyer holding my duck (seeZombies), for its meter
 function seeZombies(s, ctx, now) {
   const zs = zombiesOf(s);
   let fresh = false;
@@ -713,8 +719,11 @@ function seeZombies(s, ctx, now) {
   const seen = new Set(),
     me = s.pos && s.pos[ctx.me],
     mz = me && zOf(me, "body", clockNow()); // (in a jump: from its arc, heights.js)
+  myFly = null;
   for (const z of zs) {
     seen.add(z.i);
+    if (z.st === 9 && z.j && z.j[1] === ctx.me)
+      myFly = { i: z.i, hp: z.hp, max: z.l[0] }; // (a Flyer holds my duck: its meter under me, flymeter.js)
     let o = Z.get(z.i);
     if (!o) {
       o = zombieEl(z);
@@ -809,6 +818,8 @@ function seeZombies(s, ctx, now) {
       o.bar.style.setProperty("--hp", sh);
       if (+sh < 1) o.el.classList.add("hurt"); // (its HP bar shows once it has taken damage, then stays: the owner's, Nov 17. A hit: what it lost turns white, then drains fast; dead, it drains to black, then fades: css/app.css, the owner's, Nov 17 17:41Z)
     }
+    if ((o.st === 9) !== (z.st === 9))
+      o.el.classList.toggle("riding", z.st === 9); // (on a duck: its HP shows in that duck's meter, not over it)
     o.hp = z.hp;
     o.st = z.st;
     o.k = z.k; // (the roof it climbs or walks, and its jump onto the canopy: heights.js zOf)
@@ -1384,6 +1395,52 @@ function litNames(s, ctx, beams) {
     if (el.dataset.pid)
       el.classList.toggle("l4-lit", lit.includes(el.dataset.pid));
 }
+/* a Flyer on a duck's back: facing the way that duck faces, RIDE_BACK world px behind it, so both read at once (its
+   height, its ride over the duck: zombies.js zombieZ) */
+const RIDE_BACK = 14;
+function riderBack(o, Wd) {
+  if (!o.j) return 0;
+  let d = o.rideEl; // (its duck, looked up once a hold, not every frame)
+  if (!d || !d.isConnected || d.dataset.pid !== o.j[1])
+    d = o.rideEl = ducksOn(Wd.board).find((e) => e.dataset.pid === o.j[1]);
+  if (!d) return 0;
+  o.face = d.classList.contains("left") ? -1 : 1;
+  return -o.face * RIDE_BACK;
+}
+/* a Flyer holding my duck: a light under its meter (flymeter.js), so its lines are as bright in the dark as anywhere,
+   and the meter kept whole on the board when my duck is near its edge (--fx). Where it sits from my glow (board px)
+   is measured every FLY_LOOK ms, not every frame, in case the screen changes size */
+const FLY_LOOK = 400,
+  FLY_HOLE = [0, 0, 0, 1];
+let flyAt = null;
+function flyLight(Wd, c, holes, q, now) {
+  if (!flyAt || flyAt.i !== myFly.i || now - flyAt.t >= FLY_LOOK) {
+    const m = Wd.board.querySelector(".gduck.mine .l4-fly:not(.off)");
+    if (!m) return;
+    const b = Wd.board.getBoundingClientRect(),
+      r = m.getBoundingClientRect();
+    flyAt = {
+      i: myFly.i,
+      t: now,
+      m,
+      cx: r.left - (m._fx || 0) + r.width / 2 - b.left - c.left, // (its middle unshifted, from my glow)
+      dy: r.top + r.height / 2 - b.top - c.top,
+      w: r.width,
+      bw: b.width,
+    };
+  }
+  /* kept on the board every frame (no measuring: my glow moves with my duck), as I'm tugged or walk to an edge */
+  const A = flyAt,
+    mid = c.left + A.cx,
+    fx = Math.round(
+      Math.max(6 + A.w / 2 - mid, Math.min(0, A.bw - 6 - A.w / 2 - mid)),
+    );
+  if (A.m._fx !== fx) A.m.style.setProperty("--fx", `${(A.m._fx = fx)}px`);
+  FLY_HOLE[0] = (mid + fx) * q;
+  FLY_HOLE[1] = (c.top + A.dy) * q;
+  FLY_HOLE[2] = A.w * 0.75 * q;
+  holes.push(FLY_HOLE);
+}
 function paint(now, ctx) {
   CTX = ctx;
   const Wd = ctx.world,
@@ -1477,6 +1534,12 @@ function paint(now, ctx) {
     if (on(p.left * q, p.top * q, r))
       holes.push([p.left * q, p.top * q, r, FIRE_LIGHT.k]);
   }
+  /* each shot's flash lights round the gun for a moment, fading (fx.js muzzleLights; already in my screen's px) */
+  for (const [x, y, r, t] of muzzleLights) {
+    const k = 1 - (pt - t) / MUZZLE_LIGHT.ms;
+    if (k > 0 && on(x * q, y * q, r * q))
+      holes.push([x * q, y * q, r * q, 0.6 * k]);
+  }
   /* the drops glow on the floor */
   for (const o of D.values()) {
     if (!seenFrom(o.x, o.y, Wd.inside)) continue;
@@ -1498,7 +1561,9 @@ function paint(now, ctx) {
     if (id !== ctx.me && invOn(s, id)) continue; // (invisible: no glow, no flashlight to anyone else, sbgod.js)
     const c = Wd.toScreen(a.x, a.y, a.z + 26);
     holes.push([c.left * q, c.top * q, GLOW * sc, 0.55]);
+    if (id === ctx.me && myFly) flyLight(Wd, c, holes, q, now);
     if (!up(s, id) || off[id] || sbNoLight(s, id)) continue; // (Sandbox: a flashlight only once taken from loot)
+    if (dp() && beamStutter(id, s.seat, ln) < 1) continue; // (Downpour: very rarely a flashlight flickers out a moment, flicker.js)
     const [dx, dy] = aimOf(s, id, ctx);
     beamOf(id, a, Math.atan2(dy, dx));
   }
@@ -1589,7 +1654,14 @@ function paint(now, ctx) {
       vr,
     );
   vg.addColorStop(0, "rgba(3,4,10,0)");
-  vg.addColorStop(1, `rgba(3,4,10,${(VIGNETTE.k * dk) / DARK})`); // (as dark as the night is: none in a lit room)
+  vg.addColorStop(
+    (VIGNETTE.mid - VIGNETTE.clear) / (1 - VIGNETTE.clear),
+    `rgba(3,4,10,${(VIGNETTE.k * dk) / DARK})`,
+  ); // (as dark as the night is: none in a lit room)
+  vg.addColorStop(
+    (VIGNETTE.black - VIGNETTE.clear) / (1 - VIGNETTE.clear),
+    `rgba(3,4,10,${dk / DARK})`,
+  ); // (far off: black, at night)
   g.fillStyle = vg;
   g.fillRect(0, 0, w, h); // (the edges, in a circle)
   g.globalCompositeOperation = "destination-out";
@@ -2593,6 +2665,13 @@ function holdStop(el, done) {
 /* what kind of thing it is, under its name */
 const kindWord = (w) =>
   ({ melee: "Melee", ranged: "Gun", special: "Item" })[kindOf(w)] || "";
+/* the shop's tabs: his shop (or the crate's things), or every item in this mode (l4ddcatalog.js) */
+function pickTab(el, name) {
+  for (const t of el.querySelectorAll("[data-tab]"))
+    t.setAttribute("aria-selected", t.dataset.tab === name);
+  for (const p of el.querySelectorAll("[data-pane]"))
+    p.hidden = p.dataset.pane !== name;
+}
 function openShop(ctx, crate = false) {
   if (!shop || shop.open) return;
   shop.open = true;
@@ -2604,6 +2683,7 @@ function openShop(ctx, crate = false) {
     ? "Inside"
     : "Weapons";
   shop.pts.parentElement.hidden = crate;
+  if (crate) pickTab(shop.el, "buy"); // (a crate opens on its things, whatever tab was last picked)
   ctx.world.board.classList.add("l4-shopping");
   shop.sig = "";
   shop.el.hidden = false;
@@ -2653,13 +2733,7 @@ function shopEl(ctx) {
   el.addEventListener("focusout", () => (shopTo = ""));
   el.addEventListener("click", (e) => {
     const tab = e.target.closest("[data-tab]");
-    if (tab) {
-      /* the tabs: his shop, or every item in this mode (l4ddcatalog.js) */
-      for (const t of el.querySelectorAll("[data-tab]"))
-        t.setAttribute("aria-selected", t === tab);
-      for (const p of el.querySelectorAll("[data-pane]"))
-        p.hidden = p.dataset.pane !== tab.dataset.tab;
-    }
+    if (tab) pickTab(el, tab.dataset.tab);
   });
   /* buying: I hold its button 0.4 s while it fills, and letting go early buys nothing (the owner's, Nov 28) */
   const holdGo = (e) => {
@@ -2805,6 +2879,12 @@ function tap(t, ctx) {
 const PW_HOLD = 500;
 let pwHold = 0,
   atBox = false;
+/* the hold ends with no switch: E let go, the game left, or the window losing focus (its keyup never comes) */
+const pwLetGo = () => {
+  clearTimeout(pwHold);
+  pwHold = 0;
+  removeEventListener("blur", pwLetGo);
+};
 const TAPS = ["take", "shop", "crate", "sk", "power", "pump", "angel"];
 function startHold(t, ctx) {
   if (!t) return;
@@ -2973,8 +3053,7 @@ activity({
     hud?.remove();
     over?.remove();
     closeShop();
-    clearTimeout(pwHold); // (an E held as I leave switches nothing)
-    pwHold = 0;
+    pwLetGo(); // (an E held as I leave switches nothing)
     ctx.world.board.classList.remove("l4-waiting");
     for (const e of [
       ptsEl,
@@ -3086,17 +3165,19 @@ activity({
       const u = Math.min(1, (t - o.t0) / (o.g || gap));
       o.x = o.fx + (o.tx - o.fx) * u;
       o.y = o.fy + (o.ty - o.fy) * u;
-      const up =
+      const rb = o.st === 9 ? riderBack(o, Wd) : 0,
+        up =
           o.st === 5
             ? fenceZ(o.x, o.y, o.l[2])
             : o.st === 6 ||
                 o.st === 7 ||
                 o.st === 8 ||
+                o.st === 9 ||
                 (o.st === 3 && o.k !== undefined)
               ? zOf(o, "zombie") - heightAt(o.x, o.y)
-              : 0, // (Downpour: up a fence, or dropping off it; up a wall, or on a roof, alive or dead)
+              : 0, // (Downpour: up a fence, or dropping off it; up a wall, or on a roof, alive or dead; a Flyer on a duck's back)
         z = heightAt(o.x, o.y) + up,
-        f = Wd.toScreen(o.x, o.y, z),
+        f = Wd.toScreen(o.x + rb, o.y, z),
         door = atBoards(o, Wd.inside),
         hole = !Wd.inside && roofHoleOver(o.x, o.y, z), // (Downpour: seen from outside through a hole in the gas station's roof)
         unseen = !(door || hole || EYES.some((a) => duckSees(a, o.x, o.y, z))),
@@ -3106,7 +3187,7 @@ activity({
             ? Math.round(hole.key) + 11 // (over the roof, in its hole)
             : o.st === 3
               ? bodyZ(o.x, o.y, z) // (dead: under every duck, layout.js)
-              : Math.round(zSortY(o, z)) + 10, // (up a wall: in front of its roof, zombies.js)
+              : Math.round(zSortY(o, z)) + 10 + (o.st === 9 ? 1 : 0), // (up a wall: in front of its roof, zombies.js; a Flyer on a duck's back: in front of that duck, or the duck hides it)
         onCam = Wd.onView(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc),
         hide =
           unseen ||
@@ -3324,6 +3405,7 @@ activity({
       coolBar(tag, st, ctx.me);
       ammoBars(tag, st, ctx.me); // (and the yellow ammo bar, the three stacked: meters.js)
       laserMeter(tag, st, ctx.me, heldFn()); // (the Laser Rifle's heat: laserfx.js)
+      flyMeter(tag, myFly); // (a Flyer holding me: its meter, flymeter.js)
       peek(tag, st, ctx.me);
     }
     safeLook(ctx);
@@ -3359,9 +3441,10 @@ activity({
         t = me && holdTarget({ x: me.x * W, y: me.y * H }, ctx);
       if (!t) return false; // (nothing of mine: the world's E, a Sandbox orb too, sblootview.js)
       if (t.kind === "power") {
-        clearTimeout(pwHold);
+        pwLetGo();
+        addEventListener("blur", pwLetGo);
         pwHold = setTimeout(() => {
-          pwHold = 0;
+          pwLetGo();
           pwTap(ctx, true);
         }, PW_HOLD); // (held: the switch; let go before: a tap, l4ddpowerui.js)
         return true;
@@ -3374,8 +3457,7 @@ activity({
   keyup(e, ctx) {
     if (e.code === "KeyE") {
       if (pwHold) {
-        clearTimeout(pwHold);
-        pwHold = 0;
+        pwLetGo();
         pwTap(ctx, false);
       }
       stopHold(ctx);

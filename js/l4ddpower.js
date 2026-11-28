@@ -114,7 +114,8 @@ export const powerOn = (s) => !!(s && s.hang && s.hang.power);
 export function roundsLeft(s) {
   const pw = pwState(s);
   if (!pw || !pw.on) return 0;
-  return Math.max(0, pw.left - (s.hang.l4 && s.hang.l4.wait ? 1 : 0));
+  const L = s.hang.l4;
+  return Math.max(0, pw.left - (L && L.wait && pw.at === L.r ? 1 : 0)); // (in a rest: the round that ran in it is still owed)
 }
 /* the row of jerry cans at the left of the screen, each its gas in quarter cans, the fullest first: the full ones, then
    the one being filled; an empty one after the full ones while there is room for it (the owner's, Nov 18 12:19Z: "when
@@ -175,11 +176,12 @@ export function powerRound(s, r, now, h) {
   const pw = s.hang.pw,
     L = s.hang.l4;
   if (!pw || !L || r < 1) return;
-  if (pw.on || pw.at === r - 1) {
-    const left = Math.max(0, pw.left - 1); // (the round that ended, if it ran in it at all)
-    s.hang.pw = { ...pw, left, ...(pw.on ? { at: r } : {}) };
+  if (pw.at === r - 1) {
+    const left = Math.max(0, pw.left - 1); // (the round that ended, if it ran in it at all: switched on in a rest, nothing ran)
+    s.hang.pw = { ...pw, left };
     if (pw.on && left <= 0) setPower(s, false, now, h);
   }
+  if (s.hang.pw.on) s.hang.pw = { ...s.hang.pw, at: r }; // (this round runs in it)
   if (canCome(s) && Math.random() < canOdds(s, PW.CAN_ROUND)) {
     const busy = (s.hang.pk || []).map((o) => o.at),
       free = spots().filter((k) => !busy.includes(k));
@@ -253,8 +255,7 @@ export function powerTick(s, zs, now, ids, h) {
    unless someone switched it off. Held (sw): the switch, on or off, whatever fuel is left (the director plan, Nov 28):
    off keeps its fuel (pw.sw: switched off by hand), on only with fuel left */
 export function powerAct(s, id, now, mx, my, h, sw = false) {
-  const pw = s.hang.pw,
-    L = s.hang.l4;
+  const pw = s.hang.pw;
   if (!pw || Math.hypot(mx - PW.E[0], my - PW.E[1]) > PW.REACH * 1.6)
     return false;
   if (sw) {
@@ -265,12 +266,7 @@ export function powerAct(s, id, now, mx, my, h, sw = false) {
   }
   const r = canRow(s)[0];
   if (!r) return false;
-  const between = !!(L && L.wait); // (between rounds the next one is counted too)
-  s.hang.pw = {
-    ...pw,
-    gas: pw.gas - r,
-    left: pw.on || pw.left > 0 ? pw.left + r : r + (between ? 1 : 0),
-  };
+  s.hang.pw = { ...pw, gas: pw.gas - r, left: (pw.left || 0) + r }; // (only a round it ran in is paid for: powerRound)
   h.addFx(s, { kind: "l4pwgas", r, by: id, who: [], t: now });
   if (!pw.on && !pw.sw) setPower(s, true, now, h);
   return true;
