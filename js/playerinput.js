@@ -25,17 +25,21 @@ export function walkIntent(keys, aims) {
     sprint: k("ShiftLeft") || k("ShiftRight") || !!stick.sprint,
   };
 }
-/* the walk asked for, eased (WALK_EASE): it goes toward w at a steady rate, the whole way in `up` seconds while I ask
-   for a way, `down` while I let go (a steady acceleration, as a platformer's run). dt: seconds since the last frame */
-let eased = { x: 0, y: 0 };
-export function easeWalk(w, dt) {
-  const dx = w.x - eased.x,
-    dy = w.y - eased.y,
+/* the walk wanted (x, y), eased (WALK_EASE): it goes toward it at a steady rate, the whole way in `up` seconds while I
+   go somewhere, `down` while I stop (a steady acceleration, as a platformer's run). dt: seconds since the last frame.
+   The keys, the stick and a tapped target all ease the same. Returns the same { x, y } each time (it's every frame) */
+const eased = { x: 0, y: 0 };
+export function easeWalk(x, y, dt) {
+  const dx = x - eased.x,
+    dy = y - eased.y,
     d = Math.hypot(dx, dy),
-    most = dt / (w.x || w.y ? WALK_EASE.up : WALK_EASE.down);
-  eased =
-    d <= most
-      ? { x: w.x, y: w.y }
-      : { x: eased.x + (dx / d) * most, y: eased.y + (dy / d) * most };
-  return { ...w, ...eased };
+    most = dt / (x || y ? WALK_EASE.up : WALK_EASE.down);
+  if (d <= most) {
+    eased.x = x;
+    eased.y = y;
+  } else {
+    eased.x += (dx / d) * most;
+    eased.y += (dy / d) * most;
+  }
+  return eased;
 }
