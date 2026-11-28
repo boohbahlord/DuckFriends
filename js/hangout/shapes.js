@@ -93,7 +93,17 @@ function swampTree(id) {
 }
 /* Downpour's things are drawn as the floor plan has them, then shown at K of that size (stationmap.js K: the owner's,
    Nov 17, the whole map at 60%), so each looks just as it did, only smaller. SK: stationart.js' drawings that way */
-const PLAN = new Set(["w", "d", "h", "edge", "cable", "up", "half", "z"]),
+const PLAN = new Set([
+    "w",
+    "d",
+    "h",
+    "edge",
+    "cable",
+    "up",
+    "half",
+    "z",
+    "sunk",
+  ]),
   PLAN_AT = new Set(["x0", "y0", "x1", "y1"]);
 const atK =
   (fn) =>
@@ -148,6 +158,7 @@ const GS_DRAW = {
           up,
           smash: p.smash || "",
           dead: p.dead || "",
+          sunk: Math.max(0, GS.FLOOD.top - p.z),
         }),
       { up },
     ));

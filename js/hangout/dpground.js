@@ -2,7 +2,7 @@
    Flat pieces under everything, as shapes.js' GROUND() gives them to world.js (each { svg, x, y, w, h }, painted into
    tiles once): the swamp's grass everywhere (past the map's edges too) with mud and puddles, the concrete in
    front of the gas station and under the canopy, the gravel path to the chapel, the sunken road (the
-   asphalt, cracks, the faded lines), its banks sloping down into the flood over the whole road (deep at the west end), and the floors: the gas station's
+   asphalt, cracks, the faded lines), its banks sloping down into the flood over the whole road, and the floors: the gas station's
    worn tiles, the chapel's planks and its red runner up the aisle. Night colors; the rain, the ripples and the lights
    go over it later (the owner's order: details, then rain and water, then lighting). Seeded: every screen the same. */
 import * as GS from "./stationmap.js";
@@ -298,16 +298,17 @@ export function downpourGround() {
   }
   return G;
 }
-/* the flood over the whole road (the owner's, Nov 17 11:07Z), its west end deep (swum: Nov 17 05:46Z), the same water:
+/* the flood over the whole road (the owner's, Nov 17 11:07Z), the same depth all along:
    past the map's edges with the road; one blue (the pixel look's nearest color to the old teal was a grass green, so it
    read as ground). Darker along its north edge, in the bank's shadow; a pale line where it meets each bank. Not in the
    ground's pieces: drawn over the road's bed by dpflood.js, see-through enough that the bed shows (the owner's, Nov 22
    16:36Z: "water itself doesnt get darker ... the ground underneath it does") */
-export const DP_WATER_A = 0.62; // (how much of the bed the water hides, over most of it: dpflood.js)
+export const DP_WATER_A = 0.62, // (how much of the bed the water hides, over most of it: dpflood.js)
+  DP_WATER = "#264660"; // (its blue: a car's wheels under it too, stationcars.js)
 export function dpWater() {
   const OUT = 800,
     RW = GS.GS_W + 2 * OUT,
-    [, y0, , y1] = GS.DEEP,
+    [, y0, , y1] = GS.WATER,
     h = y1 - y0;
   return piece(
     `<rect width="${RW}" height="${h}" fill="url(#dpw)"/><rect width="${RW}" height="2" fill="#9fb3c0" opacity=".35"/><rect y="${h - 2}" width="${RW}" height="2" fill="#9fb3c0" opacity=".35"/>`,
@@ -315,7 +316,7 @@ export function dpWater() {
     y0,
     RW,
     h,
-    `<linearGradient id="dpw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a3248" stop-opacity=".78"/><stop offset=".18" stop-color="#264660" stop-opacity="${DP_WATER_A}"/><stop offset="1" stop-color="#264660" stop-opacity="${DP_WATER_A}"/></linearGradient>`,
+    `<linearGradient id="dpw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a3248" stop-opacity=".78"/><stop offset=".18" stop-color="${DP_WATER}" stop-opacity="${DP_WATER_A}"/><stop offset="1" stop-color="${DP_WATER}" stop-opacity="${DP_WATER_A}"/></linearGradient>`,
   );
 }
 /* the plain color under a tile till it's painted */

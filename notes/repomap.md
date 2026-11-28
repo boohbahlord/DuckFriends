@@ -114,7 +114,7 @@ l4ddbell.js 136 Downpour: the church bell and
 l4ddcatalog.js 231 Quacky Zombies: the Butler's Items
 l4dddrops.js 63 Quacky Zombies' drops, drawn
 l4ddloot.js 42 Dead Ducks Arcade: what lies
-l4ddmap.js 253 Quacky Zombies' minimap
+l4ddmap.js 252 Quacky Zombies' minimap
 l4ddpower.js 337 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
@@ -287,7 +287,7 @@ characters.js 592 Duck Cabin's characters on the
 death.js 99 how long a knocked-down duck
 doors.js 32 the doors: they swing open
 dpflood.js 89 Downpour's flood over its bed
-dpground.js 323 Downpour's ground
+dpground.js 324 Downpour's ground
 falls.js 118 falling a long way
 fireflies.js 174 fireflies
 flicker.js 83 now and then a light
@@ -314,7 +314,7 @@ rubberducks.js 183 the little rubber ducks in
 rules.js 88 Hangout's rules: s.hang and the
 seats.js 440 the couches, the campfire's logs,
 shadowduck.js 254 the shadow duck
-shapes.js 931 Duck Cabin's props, drawn: art.js's
+shapes.js 942 Duck Cabin's props, drawn: art.js's
 shapesbase.js 54 Duck Cabin's props, drawn: the
 shapesground.js 423 Duck Cabin's props, drawn: the
 shapeswalls.js 317 Duck Cabin's props, drawn: walls,
@@ -323,8 +323,8 @@ sounds.js 17 Duck Cabin's sounds
 stage.js 134 the stage: half an oval
 stationart.js 50 Downpour's things: the drawings
 stationbase.js 67 Downpour's drawings: the shared pieces
-stationcars.js 513 Downpour's drawings: the cars, the
-stationmap.js 1308 Dead Ducks Arcade's second map:
+stationcars.js 523 Downpour's drawings: the cars, the
+stationmap.js 1292 Dead Ducks Arcade's second map:
 stationparts.js 455 Downpour's drawings: the gas station's
 stationroof.js 340 Downpour's drawings: the roofs, their
 stationtrees.js 599 Downpour's drawings: the swamp's trees

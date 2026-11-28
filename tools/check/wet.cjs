@@ -2,8 +2,8 @@
    - layout.js wetK, the one rule, by the water's depth over the bed (the owner's, Nov 22 16:06Z: "if it's really,
      really shallow, then it doesn't slow down your walking ... it slows you down once it's high up enough. And if it's
      even more then eventually you have to swim"): the water's edge up the bank not slowed but still water (its looks
-     and sounds), the flat road waded (WET.WADE), the deep end swum (WET.SWIM), its bed sloping down to the west, the
-     lowest the map's 0; dry ground and anyone over the water (on a car's top) not slowed;
+     and sounds), the flat road waded (WET.WADE), the same depth all along (the owner's, Nov 28 04:58Z: the deep west
+     end went), the lowest the map's 0; dry ground and anyone over the water (on a car's top) not slowed;
    - a walker stepped by zombies.js chaseStep (gunmen, allies, Sandbox brains) goes WET.WADE as far in the shallow
      flood as on the dry road bank.
    Run: node tools/check/run.mjs wet */
@@ -34,7 +34,6 @@ const { chromium } = require("playwright");
     return {
       WET,
       shallow: L.wetK(2400, y),
-      deep: L.wetK(300, y),
       dry: L.wetK(2400, GS.ROAD.y0 - 200),
       onCar: L.wetK(car.x0 + 10, car.y0 + 10, car.h),
       edge: L.wetK(2400, edge),
@@ -47,12 +46,12 @@ const { chromium } = require("playwright");
     };
   });
   const { WET } = got;
-  const want = { shallow: WET.WADE, deep: WET.SWIM, dry: 1, onCar: 1, edge: 1 };
+  const want = { shallow: WET.WADE, dry: 1, onCar: 1, edge: 1 };
   if (!got.edgeWet) C.fail("the water's edge isn't water");
   if (!got.lowest) C.fail("the flood's floor isn't its bed's lowest");
   for (let i = 1; i < got.bed.length; i++)
-    if (!(got.bed[i] >= got.bed[i - 1]))
-      C.fail("the bed doesn't slope down to the west: " + got.bed);
+    if (got.bed[i] !== got.bed[0])
+      C.fail("the bed isn't the same depth all along: " + got.bed);
   for (const k in want)
     if (Math.abs(got[k] - want[k]) > 1e-9)
       C.fail(`wetK ${k}: ${got[k]}, not ${want[k]}`);
