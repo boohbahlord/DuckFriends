@@ -6,12 +6,10 @@
        nothing does; it blinks when it takes damage;
      - my own duck: the same, in a darker blue, which only I see (the owner's, Nov 17 20:10Z);
      - Justin (Good Justin in Mad God Justin, Downpour's Justin): the same, in yellow (20:10Z, he was blue);
-     - zombies: a plain thin red line, no glow, while something hides them (then the line only) and a floor away;
-     - under a roof I'm not under (the gas station's, the pumps' canopy): hidden by it, always (the owner's, 20:02Z:
-       "ZOMBIES GET A RED OUTLINE WHEN UNDER THE ROOF! THEY JUST DO!"), unless I see them through a hole in it;
+     - zombies: none (the owner's, Nov 28 01:57Z): one out of every duck's sight isn't drawn at all (l4dd.js);
      - a floor away: an arrow inside the outline, drawn as an outline too, of the same line and color (20:10Z: "the down
-       arrow in the shape outline with the lines of the arrow made of the same outline and it's color and an up arrow
-       equivalent for zombies on the roof, so that way a zombies elevation is know"): up, they're above me; down, below.
+       arrow in the shape outline with the lines of the arrow made of the same outline and it's color"): up, they're
+       above me; down, below.
    One canvas over the board, on the pixel grid (pixel.js), so a line is one pixel of the pixel look. Each outline is made
    once from the picture already on the screen (the duck's or the zombie's pixel image) and kept until that picture
    changes; a frame only draws the kept ones where they stand, so a crowd of zombies costs a few image draws.
@@ -31,18 +29,16 @@ import { below } from "./below.js";
 
 const GREEN = "#2f9e44", // (the other players, the owner's, Nov 19 19:27Z)
   DARK_BLUE = "#2a5bd7",
-  YELLOW = "#ffd23f",
-  RED = "#8a1018";
+  YELLOW = "#ffd23f";
 const COLOR = {
   ally: GREEN,
   me: DARK_BLUE,
   justin: YELLOW,
-  zombie: RED,
 };
 /* the drops lying on the ground (the owner's, Nov 18 13:58Z: "special drops like instant kill, full ammo, and all of
    those an outline of their own color AND an arrow if a floor above or below WHEN it is on the ground ... so it is not
-   missed, and gas gets an orange outline"): each its own color, none of the ducks' green, blue or yellow or the
-   zombies' red, and the jerry cans orange. Kind "drop_<its kind>" (l4dd.js, l4ddpowerui.js) */
+   missed, and gas gets an orange outline"): each its own color, none of the ducks' green, blue or yellow, and the
+   jerry cans orange. Kind "drop_<its kind>" (l4dd.js, l4ddpowerui.js) */
 export const DROP_OL = {
   kill: "#ff3df5", // (Instant Kill: magenta)
   ammo: "#3fdcff", // (Max Ammo: cyan)
@@ -173,7 +169,7 @@ function outline(img, kind, key = img.currentSrc || img.src) {
 let list = new Map(); // id → what to outline (one each: the last one asked for this frame)
 const HP = new Map(); // id → [its HP last seen, when it last went down]
 /* something to outline this frame: { id, img (its picture on the screen), x, y, w, h (where the picture is, css px on
-   the board), flip (turned left), kind ("ally" | "me" | "justin" | "zombie", or a drop's: "drop_" + its kind,
+   the board), flip (turned left), kind ("ally" | "me" | "justin", or a drop's: "drop_" + its kind,
    DROP_OL), hidden (something hides it), floor (its floor against mine: 1 above, -1 below, 0 the same), hp (to blink when it drops), down (lying down, out of HP: [its body's
    bottom, its body's height], css px), mid (lying down: its body's middle, css px, where its arrow goes) }. A kind that's
    a color ("#rrggbb") is a Sandbox zone's Outlines row (sandboxrules.js sbOlColor) */
@@ -264,14 +260,10 @@ export function olDraw(host, W, H, now = performance.now()) {
     const hit = !!h && now - h[1] < BLINK,
       blink = hit && Math.floor((now - h[1]) / 90) % 2 === 0;
     /* only what something hides shows its outline as it should (its picture is hidden then: the outline only, the
-       owner's, Nov 17 17:41Z); a player in plain sight keeps the very faint one (12:28Z); a zombie in plain sight none,
-       but a floor away it has its line and its arrow all the same, so its floor shows (20:10Z) */
-    const zombie = o.kind === "zombie",
-      drop = o.kind.startsWith("drop_"), // (a drop on the ground: always its line and its glow, till it's picked up)
+       owner's, Nov 17 17:41Z); a player in plain sight keeps the very faint one (12:28Z) */
+    const drop = o.kind.startsWith("drop_"), // (a drop on the ground: always its line and its glow, till it's picked up)
       zone = o.kind[0] === "#", // (a Sandbox zone's Outlines: its color, always plain to see)
-      away = o.floor || 0,
-      shown = zombie ? o.hidden || !!away : true;
-    if (!shown && !hit) continue;
+      away = o.floor || 0;
     let a = zone
       ? 0.95
       : drop
@@ -279,18 +271,13 @@ export function olDraw(host, W, H, now = performance.now()) {
           ? 0.95
           : 0.6
         : o.hidden
-          ? zombie
-            ? 0.85
-            : away > 0
-              ? 0.55 // (above me: fainter)
-              : 0.9
-          : zombie
-            ? 0.85
-            : 0.14; // (nothing hides it: very faint)
+          ? away > 0
+            ? 0.55 // (above me: fainter)
+            : 0.9
+          : 0.14; // (nothing hides it: very faint)
     if (hit) a = blink ? 1 : 0.15;
     const kind = darkKind(
-        o.kind +
-          (drop || (!zombie && !zone && (o.hidden || hit)) ? "-glow" : ""),
+        o.kind + (drop || (!zone && (o.hidden || hit)) ? "-glow" : ""),
         o.dk,
       ), // (darker under my floor: olAway)
       c = outline(o.img, kind);
