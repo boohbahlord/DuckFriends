@@ -1,6 +1,6 @@
 /* ---------- Quacky Zombies' weapons bar ----------
    Five slots, each in its own color (the owner's): the melee weapon (1, blue), two ranged weapons (2 and 3, red: the
-   magazine and the rest, or how many are left), the special (4, purple; empty until the fireplace gives one) and the
+   magazine and the rest, or how many are left), the special (4, purple; empty until one is bought or picked up) and the
    grenades (6, white: how many). Then the flashlight (0). The one in hand glows. On a computer the bar sits in the
    bottom bar's right corner (where the specials' keys go), my HP under it as green blocks; a click on a slot picks it.
    On a phone the slots are the specials' slider in the bottom middle, as in every mode (hotbar.js, l4Slider below), the

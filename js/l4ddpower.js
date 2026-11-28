@@ -67,17 +67,6 @@ const canRounds = () => PW.FULL;
 /* a can's gas in percent: 100, 75, 50, 25, 0 */
 export const canPct = (r) => Math.round((r / PW.FULL) * 100);
 export const partName = (k) => NAMES[k] || k;
-/* the fireplace's weapon string for a part or a jerry can ("pw:fuse", "pw:can:3"): none come from it any more, but a
-   spin already turning keeps working */
-export const isPw = (w) => typeof w === "string" && w.startsWith("pw:");
-export const pwOf = (w) => {
-  const [, k, r] = w.split(":");
-  return { k, r: +r || 0 };
-};
-export const pwName = (w) => {
-  const { k, r } = pwOf(w);
-  return k === "can" ? `${partName(k)} (${canPct(r)}%)` : partName(k);
-};
 
 /* where the parts lie: on the bathroom's sink, the kitchen's first counter, the great room's couch; each with the floor
    in front of it, where a duck takes it */

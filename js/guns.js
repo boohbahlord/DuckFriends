@@ -564,7 +564,7 @@ export const WEAPONS = [
   "flamer",
   "laser",
 ];
-const ITEMS = ["medkit", "bandage", "zebra", "adrenaline", "safekeep", "chair"]; // (no Jetpack any more: the owner's, Nov 18 12:19Z, "long jump is removed from zombies bag and slots", "normal jaime is removed from all zombie modes", "remove jet pack from the whole game")
+const ITEMS = ["medkit", "bandage", "zebra", "adrenaline", "safekeep"]; // (no chair in Dead Ducks Arcade: the owner's, Nov 28 04:05Z; no Jetpack any more: the owner's, Nov 18 12:19Z, "long jump is removed from zombies bag and slots", "normal jaime is removed from all zombie modes", "remove jet pack from the whole game")
 export const POOL = [...WEAPONS, ...ITEMS];
 /* the guns that fire while the button is down, in every mode: ARMS' auto (the Laser Rifle only as a Mad God Justin
    pickup) */
