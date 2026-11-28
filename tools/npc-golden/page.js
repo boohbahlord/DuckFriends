@@ -129,7 +129,8 @@ window.__golden = async (sc) => {
     sbPeak = 0; // (the most of Sandbox's NPCs on a map at once, s.hang.sbz)
   /* "bait": from that beat on, my duck stands on the nearest zombie each beat (and keeps its health), so the zombies swipe
      at it: every run then pins swipes, their times and the damage (the computers otherwise keep away from the zombies) */
-  let hp0 = null;
+  let hp0 = null,
+    up = null; // (my duck's health the last beat it stood: zombies that reach it quickly can have it down before the bait starts)
   /* my duck stands on the nearest of these spots (shares of the map) and keeps its health */
   const parkOn = (list) => {
     const s = r.state,
@@ -143,7 +144,7 @@ window.__golden = async (sc) => {
     s.pos = { ...s.pos, [r.me]: { ...me, x: list[0][0], y: list[0][1] } };
     const l4p = s.hang && s.hang.l4p && s.hang.l4p[r.me];
     if (l4p) {
-      if (hp0 === null) hp0 = l4p;
+      if (hp0 === null) hp0 = up || l4p;
       s.hang = { ...s.hang, l4p: { ...s.hang.l4p, [r.me]: hp0 } };
     }
   };
@@ -234,6 +235,8 @@ window.__golden = async (sc) => {
   for (b = 0; b < sc.beats; b++) {
     if (patches.length) patch();
     if (sc.nade) nade();
+    const l4 = r.state.hang && r.state.hang.l4p && r.state.hang.l4p[r.me];
+    if (l4 && !l4.dn && hp0 === null) up = l4;
     if (sc.bait !== undefined && b >= sc.bait) bait();
     if (sc.fire) fire();
     beat();

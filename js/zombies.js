@@ -33,10 +33,6 @@ import { walkOf, immobile } from "./push.js";
 import { zOf, heightWay, overlapH } from "./heights.js";
 import {
   apart,
-  crowdOf,
-  into,
-  goRound,
-  tooNear,
   otherWay,
   sideSpot,
   sideDone,
@@ -47,12 +43,11 @@ import * as CR from "./crowd.js"; // (the surround: CR.SUR)
 import {
   L4,
   WALK,
-  Z_SLOW,
-  roundOf,
+  Z_SPEED,
   RX,
   RY,
   CLAW,
-  QUEUE,
+  STAGGER,
   ROOF_BACK,
   hp0,
   ZHATS,
@@ -135,9 +130,9 @@ export const zOk = (x, y, z, up = STEP) =>
    heartbeat before, so a zombie forgot its way up the moment it chose it (the owner's, Nov 17 19:11Z: "WHY THE FUCK ARE
    ZOMBIES NOT COMMITTING ON WALL CLIMBS EVEN WHEN IM STILL ON THE SAME FUCKING ROOF!!!") */
 const KEEP =
-  "cm k fl wp j jp jc jx nj sp dm wk wt wd wn lt lw ws ga pk sr sx hu na".split(
+  "cm k fl wp j jp jc jx nj sp dm wk wt wd wn lt lw ws sr sx hu na hd sg tc".split(
     " ",
-  ); // (ga, pk: its spot round the ones in its way, and how many it waits behind: crowd.js goRound; ws: which way it goes round a Sandbox wall, sandboxrules.js sbWallGo; sp, dm: a Sandbox spawn's zombie, its spawn and its damage: sbspawn.js)
+  ); // (ws: which way it goes round a Sandbox wall, sandboxrules.js sbWallGo; sp, dm: a Sandbox spawn's zombie, its spawn and its damage: sbspawn.js; hd, sg, tc: the way it faces, till when it staggers, how many it touches: steer)
 // (sr, sx, hu, na: its spot round its duck, the one it gave up, since when it is held up, the way up it gave up: crowd.js SUR)
 /* the zombies as objects, from the state's three parts, and back (k in zp: hp · 16 + st, st up to 8, the jump) */
 export function zombies(s) {
@@ -225,8 +220,7 @@ export const minus = (a, b) => [a[0] - b[0], a[1] - b[1]];
 export function newZombie(s, L, T, zs = []) {
   const nj = L.made >= L.n * (1 - JCHASE.last); // (the round's last tenth: never after Justin)
   syncMap();
-  const R = roundOf(L.r),
-    ids = players(s).filter((id) => standing(s, id)),
+  const ids = players(s).filter((id) => standing(s, id)),
     pts = ids.map((id) => toPx(s.pos[id])),
     near = (o) =>
       Math.min(
@@ -255,7 +249,7 @@ export function newZombie(s, L, T, zs = []) {
   const [size, build, hat, outfit] = lookOf(),
     max = Math.max(1, hp0()),
     jus = Math.random() < Z_JUSTIN ? 1 : 0,
-    v = Math.round(WALK * Z_SLOW * rnd(R[1][0], R[1][1])),
+    v = Math.round(WALK * rnd(...Z_SPEED)), // (its own speed, every round the same: the owner's, Nov 28 01:57Z, "make every zombie as fast as they are already on round 8")
     [sx, sy] = from || o.out;
   return {
     ...otherWay("zombie"), // (a flanker: flank)
@@ -346,15 +340,12 @@ function zombieAt(L, wx, wy, o = {}) {
         Math.hypot(a.in[0] - wx, a.in[1] - wy) -
         Math.hypot(b.in[0] - wx, b.in[1] - wy),
     )[0],
-    R = roundOf(1),
     i = L.next || 1,
     dress = Math.random() < 0.2 ? Math.random() : -1,
     odd = Math.random() < 0.25,
     size = odd && Math.random() < 0.5 ? +rnd(-1, 1).toFixed(2) : 0,
     max = Math.max(1, o.hp ? Math.round(o.hp) : hp0()),
-    v =
-      o.v ||
-      Math.round(WALK * Z_SLOW * ((R[1][0] + R[1][1]) / 2) * (o.speed ?? 1)); // (a Sandbox spawn's Speed 0: it stays put)
+    v = o.v || Math.round(zWalk() * (o.speed ?? 1)); // (a Sandbox spawn's Speed 0: it stays put)
   L.next = i + 1;
   return {
     i,
@@ -387,8 +378,7 @@ export const l4Live = (s) =>
         .map((z) => ({ i: z.i, x: z.x / W, y: z.y / H, sp: z.sp }))
     : [];
 export function moveZombies(s, zs, now, T, up, seers = up) {
-  const R = roundOf(s.hang.l4.r),
-    tk = (s.hidden && s.hidden.l4tk) || now - 200,
+  const tk = (s.hidden && s.hidden.l4tk) || now - 200,
     dt = Math.min(0.35, Math.max(0.05, (now - tk) / 1000)),
     brd = { ...(s.hang.brd || {}) },
     pls = up.map((id) => {
@@ -501,11 +491,6 @@ function walkAll(zs, c) {
   const { s, now, T, dt, pls, dist, brd, eating, cake } = c;
   const onWay = {}; // (the ones keeping to each way up, by its place in DECKS: crowd.js leastWay)
   for (const z of zs) if (z.cm && z.st !== 3) (onWay[z.cm[3]] ||= []).push(z);
-  ZC = crowdOf(
-    zs.filter((z) => z.st !== 3),
-    "zombie",
-    dp() ? (z) => zOf(z, "zombie") : () => 0,
-  ); // (no walking into one another: stepZombie)
   const taken = CR.spotsTaken(zs, now),
     G = { ...gr(), walk: walkable },
     eyes = c.eyes || pls.filter((q) => !q.j).map((q) => q.xy),
@@ -517,7 +502,8 @@ function walkAll(zs, c) {
         z.l[1] *
         walkOf(s) * // (as much faster or slower as the ducks, by the lobby's Walking speed)
         wetK(z.x, z.y, zOf(z, "zombie")) * // (water: as slow of its own walk as a duck is of its, layout.js)
-        (rush && !seenBy(eyes, z.x, z.y) ? 2 : 1), // (the owner's, Nov 23 00:32Z: "speed up the zombies by twice the amount of speed when they're not on a player screen")
+        (rush && !seenBy(eyes, z.x, z.y) ? 2 : 1) * // (the owner's, Nov 23 00:32Z: "speed up the zombies by twice the amount of speed when they're not on a player screen")
+        (z.sg > now ? STAGGER.k : 1), // (just hit: a short stagger)
       sp = o && sidesOf(o, z);
     if (z.st === 0) {
       // coming: to the spot outside its opening (Downpour: the foot of the fence)
@@ -698,8 +684,7 @@ function walkAll(zs, c) {
             z.y + (target.xy[1] - z.y) * k,
           ]),
           v * dt,
-          zs,
-        ); // (and never into another one up there)
+        );
         const o2 = edgeOf(z.x, z.y, e.d),
           P = target.on && target.on.kind === "plank" ? target.on : null;
         if (P && e.d !== P && onDeckAt(P, z.x, z.y))
@@ -817,7 +802,7 @@ function walkAll(zs, c) {
         ? goal
         : z.cm || target.j
           ? c.way(z.x, z.y, goal[0], goal[1]) // (its own way up's foot, wherever the duck goes meanwhile; Justin: the field is the players')
-          : heading(dist, z.x, z.y);
+          : lane(z, heading(dist, z.x, z.y));
       /* the field has no way on when the zombie's cell is already its goal's, or the nearest open one to it (pressed
          into a wall's foot under a duck on the roof, or across a trunk from a duck): it went nowhere, and the crowd
          behind it waited for good (the owner's, Nov 22 18:07Z and 18:13Z: "stuck on a tree ... not moving around it",
@@ -828,15 +813,6 @@ function walkAll(zs, c) {
       if (!z.cm && !target.j && best < CR.SUR.near && zFloor(z) === target.dk)
         aim = CR.surround(z, target, taken, now, G, c.reach) || aim; // (round to the free side of the duck)
       else if (CR.stuck(z, target, now, G, c.reach)) delete z.cm; // (held up at a ladder: another way)
-      if (z.ga) {
-        if (
-          z.cm ||
-          now > z.ga[2] ||
-          Math.hypot(z.ga[0] - z.x, z.ga[1] - z.y) < 6
-        )
-          delete z.ga;
-        else aim = [z.ga[0], z.ga[1]]; // (round the ones in its way: crowd.js goRound)
-      }
       /* Downpour: its way goes through a boarded hole with its boards up: it stops there and tears them down */
       const bh = aim && dp() && boardsAhead(z, aim, brd);
       if (bh) {
@@ -848,17 +824,11 @@ function walkAll(zs, c) {
         continue;
       }
       if (aim) {
-        stepZombie(z, aim, v * dt, pls);
-        if (!z.bl)
-          delete z.pk; // (nothing in its way: its next pick is rolled anew)
-        else if (!z.ga && !z.cm) {
-          const g = gr(),
-            zz = g.h(z.x, z.y),
-            at = goRound(ZC, z, z.bl, target.xy, room, g.rx, g.ry, (x, y) =>
-              g.ok(x, y, zz),
-            );
-          if (at) z.ga = [Math.round(at[0]), Math.round(at[1]), now + GO_ROUND];
-        }
+        const far =
+          v *
+          dt *
+          Math.max(CROWD_SLOW.least, 1 - CROWD_SLOW.each * (z.tc || 0)); // (slower in a crowd, by how many it touches)
+        stepZombie(z, steer(z, aim, far, dt), far, pls);
       }
     }
     /* after Justin: only so long, then it lets him be a while (JCHASE) */
@@ -872,15 +842,9 @@ function walkAll(zs, c) {
     } else delete z.jc;
     /* the claw: at a duck long enough, then again every so often (it keeps walking meanwhile); only one on its own
        floor (zFloor), never one up on a roof over it or down below it, nor one up the ladder */
-    const d = room(z.x, z.y, ...target.xy),
-      queued =
-        !!z.bl &&
-        room(z.bl.x, z.bl.y, ...target.xy) < c.reach + QUEUE.near + GAP; // (its way blocked by one at this duck)
+    const d = room(z.x, z.y, ...target.xy);
     if (
-      d <
-        c.reach +
-          (duckBig(s, target.id) - 1) / 2 +
-          (queued ? QUEUE.reach + GAP : 0) && // (a duck bigger than 100% is reached sooner: duck.js)
+      d < c.reach + (duckBig(s, target.id) - 1) / 2 && // (a duck bigger than 100% is reached sooner: duck.js)
       zFloor(z) === target.dk &&
       Math.abs(target.zz - zOf(z, "zombie")) < 50
     ) {
@@ -899,7 +863,6 @@ function walkAll(zs, c) {
       }
     } else z.n = z.wu = 0; // (out of reach: the swing is lost)
   }
-  ZC = null;
   separate(zs);
 }
 /* how high a zombie climbing a fence (its opening id) is, at (x, y) (0 once down): up at its walking speed, then falling
@@ -1013,17 +976,44 @@ const TURNS = [0, 0.52, -0.52, 1.05, -1.05, 1.57, -1.57];
 /* Sandbox's walls (sandboxrules.js sbZombieWall), while the zombies of a Sandbox walk */
 let ZW = null;
 export const setZWall = (f) => (ZW = f);
-/* the zombies walking this heartbeat (moveZombies), so one never walks into another on its floor, as a duck never
-   walks into one (world.js crowd): crowd.js crowdOf and into */
-let ZC = null;
-/* how long it makes for its spot round the ones in its way at most (ms: crowd.js goRound), and the room the zombies keep
-   between them (the queue's claw reaches that much farther: a crowd hits as hard as before) */
-const GO_ROUND = 1500,
-  GAP = tooNear("zombie") - 1;
+/* Reynolds' steering (1999): a zombie turns toward aim at most its own turn rate (TURN, radians a second, each its
+   own by its number), so a crowd swings round as it comes instead of snapping about; near aim it goes straight there.
+   The point it heads for now, far px a step */
+const TURN = [2.5, 5];
+export function steer(z, aim, far, dt) {
+  const dx = aim[0] - z.x,
+    dy = aim[1] - z.y,
+    d = Math.hypot(dx, dy);
+  if (d < 1) return aim;
+  const want = Math.atan2(dy, dx),
+    was = z.hd === undefined ? want : z.hd / 100,
+    tr = TURN[0] + ((z.i * 0.618034) % 1) * (TURN[1] - TURN[0]),
+    diff = Math.atan2(Math.sin(want - was), Math.cos(want - was)),
+    h = was + Math.max(-tr * dt, Math.min(tr * dt, diff));
+  z.hd = Math.round(h * 100);
+  if (d <= far * 2) return aim; // (arriving)
+  return [z.x + Math.cos(h) * far * 2, z.y + Math.sin(h) * far * 2];
+}
+/* each its own lane along the flow field, a little to one side of it (LANE duck lengths at most, by its number), so a
+   crowd fans out instead of walking in one line */
+const LANE = 0.45;
+function lane(z, at) {
+  if (!at) return at;
+  const dx = at[0] - z.x,
+    dy = at[1] - z.y,
+    d = Math.hypot(dx, dy),
+    g = gr();
+  if (d < 1) return at;
+  const k = (((z.i * 0.381966) % 1) * 2 - 1) * LANE * g.rx,
+    x = at[0] - (dy / d) * k,
+    y = at[1] + (dx / d) * k;
+  return g.ok(x, y, g.h(z.x, z.y)) ? [x, y] : at;
+}
+/* slower in a crowd: each one it touches takes CROWD_SLOW.each off its speed, down to CROWD_SLOW.least */
+const CROWD_SLOW = { each: 0.08, least: 0.6 };
 export function stepZombie(z, aim, far, pls) {
   const g = gr(),
     n = Math.max(1, Math.ceil(far / 8)),
-    crowd = !!ZC && ZC.h.has(z),
     side = z.i % 2 ? -1 : 1; // (when it has to turn, its own side first: one way, then the other, and it swung about)
   for (let k = 0; k < n; k++) {
     const dx = aim[0] - z.x,
@@ -1044,9 +1034,7 @@ export function stepZombie(z, aim, far, pls) {
           then = room(x, y, ...q.xy);
         if (then < 1 && then < now) return false;
       }
-      const o = crowd && into(ZC, z, x, y, room, aim);
-      if (o) z.bl = o; // (the one in its way, this heartbeat: QUEUE)
-      return !o;
+      return true;
     };
     if (ZW) {
       const sx = z.x + ux * len,
@@ -1099,20 +1087,24 @@ export function walkable(x0, y0, x1, y1) {
       return false;
   return true;
 }
-/* zombies never stand in each other: two too close are pushed apart (crowd.js apart), where it's open. Only two on the
+/* zombies ease out of each other: two that overlap are pushed a little apart (crowd.js apart), where it's open. Only two on the
    same floor (SAME_FLOOR): one up on a roof and one under it, or one on the canopy and one on the ground by the pumps,
    pushed each other every heartbeat and walked back, so they shook in place ("zombies shouldnt viibrate on roof of gas
    pump", the owner's, Nov 20 03:58Z) */
 function separate(zs, zf = dp() ? zombieZ : null, k = "zombie") {
   const g = gr(),
-    live = zs.filter((z) => z.st !== 3);
-  apart(live, k, {
-    rx: g.rx,
-    ry: g.ry,
-    fl: new Map(zf ? live.map((z) => [z, zf(z)]) : []),
-    still,
-    move: nudge,
-  });
+    live = zs.filter((z) => z.st !== 3),
+    touch = apart(live, k, {
+      rx: g.rx,
+      ry: g.ry,
+      fl: new Map(zf ? live.map((z) => [z, zf(z)]) : []),
+      still,
+      move: nudge,
+    });
+  if (k === "zombie")
+    for (const z of live)
+      if (touch.has(z)) z.tc = touch.get(z);
+      else delete z.tc; // (how many it touches: the crowd's slowdown, walkAll)
 }
 /* one that never moves to make room: Speed 0 (the owner's, Nov 20 17:25Z: "Spawns or respawns dont move off their
    position anymore to make room, since their movement being zero means zero"), and an immobile one (push.js); the other
@@ -1165,10 +1157,7 @@ export function chaseStep(z, dist, goal, far, ducks = []) {
   stepZombie(z, aim, far * wetK(z.x, z.y, z.z), ducks); // (water: layout.js)
 }
 /* a zombie's walk in world px a second at round 1, before its spawn's speed box */
-export const zWalk = () => {
-  const R = roundOf(1);
-  return WALK * Z_SLOW * ((R[1][0] + R[1][1]) / 2);
-};
+export const zWalk = () => (WALK * (Z_SPEED[0] + Z_SPEED[1])) / 2;
 /* can a shot from (x0, y0) reach (x1, y1)? (no wall or furniture in between, at height z) */
 export function clearShot(x0, y0, x1, y1, z = 0) {
   const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 16));

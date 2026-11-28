@@ -151,6 +151,14 @@ const canCome = (s) => {
   const L = s.hang.l4;
   return !!L && L.r >= 1 && s.hang.pw.cr !== L.r;
 };
+/* a jerry can's odds, base times CAN_ODDS: more when the generator is low, rarely when it's full (the owner's, Nov 28
+   02:07Z, on whether gas drops too often). How full: its rounds left and the row's, against Downpour's DP_GAS */
+const CAN_ODDS = { dry: 3, full: 0.25 };
+const canOdds = (s, base) => {
+  const pw = s.hang.pw,
+    f = Math.min(1, ((pw.on ? pw.left : 0) + (pw.gas || 0)) / PW.DP_GAS);
+  return base * (CAN_ODDS.dry + (CAN_ODDS.full - CAN_ODDS.dry) * f);
+};
 
 /* ---------- the rules' side (l4ddrules.js calls these; h: its helpers) ---------- */
 /* a new game: the box built, the power off and no gas (Downpour: dpSetUp) */
@@ -195,7 +203,7 @@ export function powerRound(s, r, now, h) {
     s.hang.pw = { ...pw, left };
     if (left <= 0) setPower(s, false, now, h);
   }
-  if (canCome(s) && Math.random() < PW.CAN_ROUND) {
+  if (canCome(s) && Math.random() < canOdds(s, PW.CAN_ROUND)) {
     const busy = (s.hang.pk || []).map((o) => o.at),
       free = spots().filter((k) => !busy.includes(k));
     if (free.length) {
@@ -210,8 +218,8 @@ function lay(s, o) {
   s.hang.pw = { ...s.hang.pw, n, cr: s.hang.l4.r };
   s.hang.pk = [...(s.hang.pk || []), { n, ...o }];
 }
-/* every heartbeat: a zombie dying drops a jerry can 1 time in 100; a duck walking over one pours what fits of it into
-   the row */
+/* every heartbeat: a zombie dying may drop a jerry can (canOdds); a duck walking over one pours what fits of it into
+   the row, no E needed */
 export function powerTick(s, zs, now, ids, h) {
   const pw = s.hang.pw;
   if (!pw) return;
@@ -223,7 +231,7 @@ export function powerTick(s, zs, now, ids, h) {
     next[z.i] = 1;
     if (seen[z.i]) continue;
     changed = true;
-    if (!canCome(s) || Math.random() >= PW.CAN_ZOMBIE) continue;
+    if (!canCome(s) || Math.random() >= canOdds(s, PW.CAN_ZOMBIE)) continue;
     const [x, y] = h.playable(z.x, z.y)
       ? [z.x, z.y]
       : h.dropSpot(s) || [z.x, z.y];

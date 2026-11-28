@@ -11,11 +11,9 @@ import { sbAgainAct } from "./sbout.js";
 import { sbHotAct } from "./sbhot.js";
 import { sbLootAct } from "./sbloot.js";
 import { nbPermAct, nbShareAct } from "./nbperms.js";
-import { sbLandAct } from "./sbzone.js";
 import { sbGroupAct } from "./sbgroups.js";
 import { sbPick, sbRename, saveMap } from "./sbsave.js";
 import { umapAct } from "./umaprules.js";
-import { SB_H } from "./boardfire.js";
 import { beginGame, countdown, nextVote, placeMap } from "./voterules.js";
 
 /* ---------- the actions of Sandbox's windows, saves and maps (dispatch only: its rules live in the sb files) ---------- */
@@ -49,7 +47,6 @@ export function act_sbOk({ state, s, a, me, host }) {
 
 export function act_sb({ state, s, a, now }) {
   // Sandbox's spawns and respawns: place one, change a box, press one (sbspawn.js)
-  if (a.k === "land") return sbLandAct(s, a, now, SB_H) ? s : state; // (a fall onto a zone that hurts: sbzone.js)
   return sbAct(s, a, now) ? s : state;
 }
 

@@ -51,6 +51,7 @@ import {
   onStage,
   onStageStairs,
   platAt,
+  slabBetween,
   terrainAt,
   whereIn,
 } from "./layoutheights.js";
@@ -725,14 +726,20 @@ export const setHere = (b) => (here = b);
 /* is (x, y) on my side of the walls (inside: am I in a building)? My side, or through a hole (the minimap's sight):
    from inside, out through my building's holes; from outside, in through any building's (the gas station's front door
    too: the owner's, Nov 17 19:11Z, both ways, "I CAN LITERALLY KNOW BY LOOKING") */
-export const wallsSee = (x, y, inside, z) =>
-  (variant === "l4gs" ? whereIn(x, y, z) === here : inCabin(x, y) === inside) ||
+export const wallsSee = (x, y, inside, z, h = here) =>
+  (variant === "l4gs" ? whereIn(x, y, z) === h : inCabin(x, y) === inside) ||
   (PEEKS.length > 0 &&
     PEEKS.some(
       (k) =>
-        (!inside || !k.bldg || k.bldg === here) &&
+        (!inside || !k.bldg || k.bldg === h) &&
         inR(x, y, inside ? k.out : k.in),
     ));
+/* does a duck at a ({ x, y, z }: world px, its feet) see (x, y, z)? On its side of the walls (wallsSee, from its own
+   building) with no floor between (the sightline: slabBetween) */
+export function duckSees(a, x, y, z) {
+  const h = whereIn(a.x, a.y, a.z);
+  return wallsSee(x, y, h > 0, z, h) && !slabBetween(a.x, a.y, a.z, x, y, z);
+}
 /* Downpour: someone on a building's floor (x, y, its feet z) seen from outside through a hole in that building's roof:
    the roof's deck (layout.js floorAt's), or null. The hole is drawn the roof's height up, so through it shows the floor
    that far north of it; seen means its whole body, feet to head (a duck's size), shows inside the hole's dark middle

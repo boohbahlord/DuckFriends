@@ -79,7 +79,7 @@ async function play(b, errs, o) {
       };
       const l4p = s.hang.l4p && s.hang.l4p[room.me];
       if (l4p) {
-        if (hp0 === null) hp0 = l4p;
+        if (hp0 === null) hp0 = { ...l4p, hp: 1e6 }; // (more than a beat's claws can take: since the crowd touches, six at once downed it in one slow beat, and nobody up there sends them off the edge)
         s.hang = { ...s.hang, l4p: { ...s.hang.l4p, [room.me]: hp0 } };
       }
       if (s.hang.l4 && s.hang.l4.wait && !(s.hang.l4.wait.v || {})[room.me])
