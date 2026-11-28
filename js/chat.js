@@ -16,6 +16,7 @@ import { shareLook } from "./customize.js";
 
 import { nameHTML, fontHTML } from "./name.js";
 import { sfx } from "./sound.js";
+import { chatFloat, clearLines } from "./gamemsg.js";
 
 import { settingText } from "./gamesettings.js";
 
@@ -320,8 +321,8 @@ export function chatWidget() {
 
   /* the newest message floats by the chat button for a few seconds (Settings → Chat → Floating messages, on unless turned
      off), see-through and in its writer's font; so do the room's rule changes, silly commands and group changes others
-     make. One at a time, never while the chat is open, and it lets every tap through */
-  let float = null;
+     make. One at a time, never while the chat is open, and it lets every tap through (gamemsg.js, with the game's own
+     messages) */
   const floatable = (s, me, m) => {
     if (m.npc || m.mine) return false;
     if (m.sys) return !!m.float && m.by !== me;
@@ -333,33 +334,16 @@ export function chatWidget() {
     );
   };
   const showFloat = (s, me, m) => {
-    if (!float) {
-      float = el('<div class="chat-float" aria-hidden="true"></div>');
-      document.body.append(float);
-    }
     const p = s.players[m.from],
       words = said(m),
       text = words.length > 160 ? words.slice(0, 160).trimEnd() + "…" : words;
-    float.innerHTML = m.opts
-      ? `<span class="cf-sys">${s.players[m.by] ? nameHTML(s.players[m.by].name, s.players[m.by].nameStyle) : "The host"} ${esc(optsWords(m))}</span>`
-      : m.sys
-        ? `<span class="cf-sys">${esc(m.text)}</span>`
-        : `<b class="cf-name">${nameHTML(p.name, p.nameStyle)}</b>: <span class="cf-text">${fontHTML((p.nameStyle || {}).font, esc(text))}</span>`;
-    const r = btn.getBoundingClientRect(),
-      right = r.width && r.left > innerWidth / 2; // (by the button, wherever Settings put it)
-    float.style.left =
-      r.width && !right
-        ? `${Math.max(8, r.left).toFixed(0)}px`
-        : right
-          ? "auto"
-          : "8px";
-    float.style.right = right
-      ? `${Math.max(8, innerWidth - r.right).toFixed(0)}px`
-      : "auto";
-    float.style.bottom = `${Math.max(8, r.width ? innerHeight - r.top + 8 : 8).toFixed(0)}px`;
-    float.classList.remove("on");
-    void float.offsetWidth;
-    float.classList.add("on"); // (the fade starts over for a newer one)
+    chatFloat(
+      m.opts
+        ? `<span class="cf-sys">${s.players[m.by] ? nameHTML(s.players[m.by].name, s.players[m.by].nameStyle) : "The host"} ${esc(optsWords(m))}</span>`
+        : m.sys
+          ? `<span class="cf-sys">${esc(m.text)}</span>`
+          : `<b class="cf-name">${nameHTML(p.name, p.nameStyle)}</b>: <span class="cf-text">${fontHTML((p.nameStyle || {}).font, esc(text))}</span>`,
+    );
   };
 
   /* new messages: pings for @you; a "!" on the closed button */
@@ -413,8 +397,7 @@ export function chatWidget() {
   const unsub = r0 ? r0.on(onState) : () => {};
   w.destroy = () => {
     unsub();
-    if (float) float.remove();
-    float = null;
+    clearLines();
     if (current === w) current = null;
   };
   w.isOpen = () => ui.open;

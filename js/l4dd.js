@@ -6,7 +6,7 @@
    at the top, my points under it (a +N pops up for each one earned); the end. Hold E by a downed duck to revive it, or
    by an opening to board it up; key 0 switches my flashlight. A merchant comes now and then and stands by the card
    table (on Downpour in the chapel): E by him opens his shop (drawMerchant). E at the fireplace spins it for a weapon: it flickers through them over the fire, lands on one, and E takes
-   it (a ranged one only with a ranged weapon in hand to swap: else big words and a buzz say so). My duck walks at half
+   it (a ranged one only with a ranged weapon in hand to swap: else a game message says so). My duck walks at half
    speed (Speed: 10% faster) and has 7 seconds of sprint (a thin blue bar under my name). The rules are the host's
    (l4ddrules.js); the weapons bar is l4ddbar.js. */
 import { holdGame, offView } from "./gameready.js";
@@ -125,6 +125,7 @@ import { laserMeter } from "./laserfx.js";
 import { goreFree, BY_WOUND, newWound, woundLook } from "./wounds.js";
 import { catalogHTML, statLineOf } from "./l4ddcatalog.js";
 import { mountItemTip } from "./itemtip.js";
+import { gameMsg } from "./gamemsg.js";
 import {
   pwMount,
   pwUnmount,
@@ -428,7 +429,6 @@ let butler = null,
   gotEl = null,
   boxEl = null,
   ptsEl = null,
-  sayEl = null,
   shop = null,
   ptsShown = -1,
   boxSig = "",
@@ -2469,14 +2469,7 @@ function peek(tag, s, me) {
   });
 }
 let peekTok = 0;
-function say(text) {
-  if (!sayEl) return;
-  sayEl.textContent = text;
-  sayEl.classList.remove("on");
-  void sayEl.offsetWidth;
-  sayEl.classList.add("on");
-  sfx.nope();
-}
+const say = (text) => gameMsg(text); // (what can't be done, and why: a game message, gamemsg.js)
 
 /* ---------- the merchant's shop: a page over the board, as the guestbook's ---------- */
 function shopFill(s, ctx) {
@@ -2666,7 +2659,15 @@ function shopEl(ctx) {
       if (!e.repeat) holdGo(e);
     }
   });
-  for (const t of ["pointerup", "pointercancel", "pointerleave", "keyup"])
+  /* let go before it's full: a tap says to hold it (a game message; tapped again, it blinks and dings again: gamemsg.js) */
+  const letGo = () => {
+    if (buyHold && performance.now() - buyHold.at < BUY_HOLD)
+      gameMsg("Hold to buy");
+    holdStop(el);
+  };
+  el.addEventListener("pointerup", letGo);
+  el.addEventListener("keyup", letGo);
+  for (const t of ["pointercancel", "pointerleave"])
     el.addEventListener(t, () => holdStop(el));
   el.addEventListener("pointerout", (e) => {
     const b = buyHold && e.target.closest && e.target.closest("[data-buy]");
@@ -2850,9 +2851,6 @@ activity({
     ptsEl.className = "l4-pts";
     ptsEl.setAttribute("role", "status");
     ptsEl.innerHTML = "<span><b>0</b> points</span>";
-    sayEl = document.createElement("div");
-    sayEl.className = "l4-say";
-    sayEl.setAttribute("role", "alert");
     onEl = document.createElement("div");
     onEl.className = "l4-on";
     onEl.hidden = true;
@@ -2869,7 +2867,7 @@ activity({
     killEl.className = "l4-killglow";
     killEl.hidden = true;
     killEl.setAttribute("aria-hidden", "true");
-    ctx.world.board.append(hud, over, ptsEl, endEl, sayEl, onEl, gotEl, killEl);
+    ctx.world.board.append(hud, over, ptsEl, endEl, onEl, gotEl, killEl);
     mapMount(ctx.world.board);
     rainMount(ctx.world.board); // (Downpour's rain: l4ddrain.js)
     pwMount(ctx, layer);
@@ -2931,7 +2929,6 @@ activity({
     for (const e of [
       ptsEl,
       endEl,
-      sayEl,
       onEl,
       gotEl,
       killEl,
@@ -2946,7 +2943,7 @@ activity({
       e?.remove();
     sqEl = poolEl = null;
     cv = g = hud = endEl = over = layer = fxl = null;
-    ptsEl = sayEl = onEl = gotEl = killEl = boxEl = butler = shop = null;
+    ptsEl = onEl = gotEl = killEl = boxEl = butler = shop = null;
     vitEl = null;
     bellReset();
     vitShown = "";

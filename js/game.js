@@ -386,6 +386,7 @@ import {
 } from "./settings.js";
 
 import { setHideUi, uiHidden } from "./hideui.js";
+import { gameMsg } from "./gamemsg.js";
 
 import { musicBarHTML, mountMusicBar } from "./musicbar.js";
 
@@ -2814,13 +2815,12 @@ function paintNow(force) {
     if (was && was.split("|")[0] === "answer" && s.phase === "discuss")
       scene.cheer(topColors(s)); // the votes are in
     if ((s.phase === "answer" || inWorld(s)) && !touchTold && touchOnly()) {
-      // a touch screen: how to move, once
+      // a touch screen: how to move, once (a game message: gamemsg.js)
       touchTold = true;
-      toast(
+      gameMsg(
         profile.settings.touch === "tap"
           ? "Tap: walk there · Fast swipe: sprint · ⬆ jumps"
           : "Hold and drag: walk · Flick twice: sprint · ⬆ jumps",
-        5000,
       );
     }
     $(".phase", S).textContent =
@@ -3251,7 +3251,7 @@ function openPause() {
             resume() {},
             custom: () => openCustomize(),
             settings: () => openSettings(),
-            hideui: () => toast(setHideUi(!uiHidden())), // (hide ui: hideui.js)
+            hideui: () => gameMsg(setHideUi(!uiHidden())), // (hide ui: hideui.js; a game message, gamemsg.js)
             friends: () => openFriends(),
             lobby: () => R.send({ t: "toLobby" }),
             leave: () =>
