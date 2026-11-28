@@ -471,6 +471,7 @@ const shotOn = (sh, t) => ({
    change the height of a thing it knocks back based on how close they are"); Justin is knocked down, Duck Cabin's Justin and cats are hit. Every screen draws the blast (the boom fx) */
 export function blast(s, sh, x, y, now, o = {}) {
   const hang = isHang(s),
+    hz = o.z ?? (sh.hz || 0), // (where it went off: a thrown grenade's own height, else its thrower's)
     w = o.w || "grenade",
     [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
     side = sh.hin || 0,
@@ -482,8 +483,7 @@ export function blast(s, sh, x, y, now, o = {}) {
     rx,
     ry,
     wide: o.wide,
-    ok: (px, py, pz, inSide) =>
-      !hang || (inSide === side && nearH(pz, sh.hz || 0)),
+    ok: (px, py, pz, inSide) => !hang || (inSide === side && nearH(pz, hz)),
   }); // (Hangout: only on its side of the cabin's walls and at about its height)
   boom(near, [
     [
@@ -576,7 +576,7 @@ export function blast(s, sh, x, y, now, o = {}) {
       x: +x.toFixed(4),
       y: +y.toFixed(4),
       hit,
-      ...(hang ? { hz: sh.hz || 0 } : {}),
+      ...(hang ? { hz: Math.round(hz) } : {}),
       ...(o.wide ? { wide: o.wide } : {}),
       rr: BLAST_REACH * (o.wide || 1),
     },
@@ -601,7 +601,7 @@ export function moveShots(s, now) {
       wallAt: (x, y, z, sh) => FLAT.wallAt(x, y) || walled(sh, { x, y }),
       at: shotAt,
       walled,
-      boom: (sh, at) => on() && blast(s, sh, at.x, at.y, now), // (a grenade hits nothing on its way)
+      boom: (sh, at) => on() && blast(s, sh, at.x, at.y, now, { z: at.z }), // (a grenade hits nothing on its way; it goes off at the height it fell to)
       launched: (sh, age) => {
         // the grenade launcher's: straight, and it goes off on the first duck it gets to, a wall, or at its range
         const at = shotAt(sh, Math.min(age, sh.life)),

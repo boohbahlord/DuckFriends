@@ -103,6 +103,7 @@ import {
   merchantOf,
   merchantsOf,
   nearestMerchant,
+  merchantKey,
   slotFor,
   upOffer,
   stockPrice,
@@ -2481,6 +2482,7 @@ function shopFill(s, ctx) {
     ]);
   if (sig === shop.sig) return;
   shop.sig = sig;
+  shop.mk = merchantKey(m);
   shop.pts.textContent = pts;
   /* who's selling: his name over the page, his picture by his words */
   const who = m && m.who ? [m.v, m.id, m.roll].join() : "";
@@ -2677,6 +2679,7 @@ function shopEl(ctx) {
           do: shop.crate ? "crate" : "buy",
           what: w,
           hand: heldFn(),
+          ...(shop.crate ? {} : { mk: shop.mk }), // (the merchant whose page it is, l4ddrules.js buy)
         }); // (a gun takes the place of the ranged one in hand, as the fireplace's)
       }, BUY_HOLD),
     };
@@ -2722,6 +2725,7 @@ function shopEl(ctx) {
     title: el.querySelector(".hang-book-title"),
     me: el.querySelector(".l4-shop-me"),
     who: "",
+    mk: "", // (whose page it is: l4ddrules.js merchantKey)
   };
 }
 

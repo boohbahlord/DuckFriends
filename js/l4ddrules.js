@@ -1607,7 +1607,16 @@ function l4Act(s, a, now) {
     return true;
   }
   if (a.do === "buy")
-    return buy(s, id, String(a.what || ""), mx, my, a.hand, now);
+    return buy(
+      s,
+      id,
+      String(a.what || ""),
+      mx,
+      my,
+      a.hand,
+      now,
+      String(a.mk || ""),
+    );
   if (a.do === "pick") return pickLoot(s, id, mx, my, a.hand, now);
   if (a.do === "crate") return crateTake(s, id, a, mx, my, now);
   if (a.do === "power") return powerAct(s, id, now, mx, my, PH, !!a.sw);
@@ -1627,8 +1636,13 @@ const soldSays = (s, id, text) => {
 };
 /* the merchant: the one upgrade he offers me this visit (upOffer; the Butler's, SHOP), from beside him while he's
    selling, while I have the points; gas in the cabin (powerGas); or something from his stock (merchantBuy) */
-function buy(s, id, what, mx, my, hand, now) {
-  const k = nearestMerchant(s, mx, my); // (several here: the one I'm at)
+export const merchantKey = (m) => (m ? `${m.v}:${m.id}` : "");
+function buy(s, id, what, mx, my, hand, now, mk) {
+  const k = mk
+    ? merchantsOf(s).findIndex(
+        (m) => m && m.st === "here" && merchantKey(m) === mk,
+      )
+    : nearestMerchant(s, mx, my); // (several here: the one whose page I bought from (mk), else the one I'm at)
   return k >= 0 && asMerchant(s, k, () => buy1(s, id, what, mx, my, hand, now));
 }
 function buy1(s, id, what, mx, my, hand, now) {

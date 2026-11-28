@@ -31,6 +31,16 @@ export const drawOf = (s, id, w) => {
   const d = s.draw && s.draw[id];
   return d && d.w === w ? d : null;
 };
+/* the host, at a move of duck id with w in hand: another weapon picked puts a cooking grenade away (its draw ends; on the
+   maps a grenade in hand isn't kept in s.pos, so the move's own w says what it holds) */
+export function drawSwitched(s, id, w) {
+  const d = s.draw && s.draw[id];
+  if (d && cooks(d.w) && w !== d.w) {
+    const o = { ...s.draw };
+    delete o[id];
+    s.draw = o;
+  }
+}
 /* the host, at the release (the use) of w: how long duck id drew it, 0 … most ms (0 with no draw of it begun), and the
    draw ends */
 export function drawTaken(s, id, now, most = DRAW.FULL, w) {
@@ -46,8 +56,7 @@ export function drawTaken(s, id, now, most = DRAW.FULL, w) {
 export function cookedOff(s, now, use) {
   for (const id in s.draw || {}) {
     const d = s.draw[id];
-    if (cooks(d.w) && cooks((s.pos[id] || {}).w) && now - d.t >= NADE.FUSE)
-      use({ id, what: d.w, face: 1 });
+    if (cooks(d.w) && now - d.t >= NADE.FUSE) use({ id, what: d.w, face: 1 });
   }
 }
 /* what a draw of dr ms adds: damage (+0.2 each whole step, up to +5), its crit chance (sure at full) and the arrow's

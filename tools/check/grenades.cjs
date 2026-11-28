@@ -110,13 +110,31 @@ const NADE_FUSE = 5000; // (gamedefaults.js NADE.FUSE)
     ready("grenade", ox, oy);
     const g0 = R.kitOf(room.state, me).g;
     room.send({ t: "draw", w: "grenade" });
-    tick(NADE.FUSE + 300);
+    const walk = (w) => {
+      const p = room.state.pos[me];
+      room.send({ t: "move", x: p.x, y: p.y, j: 0, w, ax: 1, ay: 0 }); // (moves come all through a hold, as in play)
+    };
+    tick(NADE.FUSE + 300, () => walk("grenade"));
     out.hand = {
       left: R.kitOf(room.state, me).g,
       was: g0,
       drawn: !!(room.state.draw || {})[me],
       boom: (room.state.fx || []).some(
         (f) => f.kind === "boom" && f.t >= window.__now - 400,
+      ),
+    };
+    /* cooking, then another weapon picked: it's put away, no boom, none spent */
+    ready("grenade", ox, oy);
+    const g1 = R.kitOf(room.state, me).g;
+    room.send({ t: "draw", w: "grenade" });
+    tick(1000, () => walk("grenade"));
+    walk("handgun");
+    tick(NADE.FUSE);
+    out.away = {
+      left: R.kitOf(room.state, me).g,
+      was: g1,
+      boom: (room.state.fx || []).some(
+        (f) => f.kind === "boom" && f.t >= window.__now - NADE.FUSE,
       ),
     };
     /* at the church's west wall, 80 px off */
@@ -214,6 +232,11 @@ const NADE_FUSE = 5000; // (gamedefaults.js NADE.FUSE)
     bad("under the pump roof, it stays under it");
   if (got.hand.left !== got.hand.was - 1 || got.hand.drawn || !got.hand.boom)
     bad("held to the end: it goes off in the hand");
+  if (got.away.left !== got.away.was || got.away.boom)
+    fail(
+      "grenades: one put away while cooking still went off " +
+        JSON.stringify(got.away),
+    );
   if (got.wall === null || !(got.wall < 0) || !got.rev)
     bad("off the church's wall, back");
   if (got.lfuse !== 3000) bad("the launcher's: 3 s");

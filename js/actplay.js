@@ -168,6 +168,7 @@ import {
   drawMost,
   drawFast,
   cookedOff,
+  drawSwitched,
 } from "./bowdraw.js";
 import { NADE } from "./gamedefaults.js";
 
@@ -306,6 +307,7 @@ export function act_move({ state, s, a, now, me }) {
       ? { kb: was.kb }
       : {}),
   }; // q: squashed against l/r/u/d; sp: sprinting; tb: a trampoline bounce's height
+  drawSwitched(s, a.id, a.w); // (another weapon picked: a cooking grenade put away, bowdraw.js)
   quackMoved(s, a.id); // (Who is the Quack?: first onto the Quack's tile)
   if (me.dead && (x !== was.x || y !== was.y)) {
     delete me.dead;
