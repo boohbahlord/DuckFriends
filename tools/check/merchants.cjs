@@ -4,50 +4,16 @@
    3. several can come at once (MERCH.CHAIN, every roll held low: all of them), each a different one;
    4. killed, he drops a purse of MERCH.PURSE points (every roll held low), and the duck that takes it gets them.
    Run: node tools/check/run.mjs merchants */
-const fs = require("fs"),
-  path = require("path");
-const { chromium } = require("playwright");
-const { url, fail, noErrors } = require("./lib.cjs");
+const { fail, noErrors, fakedPage } = require("./lib.cjs");
 (async () => {
-  const b = await chromium.launch(),
-    p = await b.newPage(),
-    errs = [];
-  p.on("pageerror", (e) => errs.push(e.message));
-  await p.addInitScript(
-    fs.readFileSync(path.resolve(__dirname, "../npc-golden/init.js"), "utf8"),
-  ); // (the clock faked, as knock.cjs)
-  await p.goto(url, { waitUntil: "networkidle" });
+  const { b, p, errs } = await fakedPage();
   const got = await p.evaluate(async () => {
-    const net = await import("./js/net.js"),
-      R = await import("./js/l4ddrules.js");
-    let now = 1.8e12;
-    window.__fake = true;
-    window.__now = now;
+    const R = await import("./js/l4ddrules.js");
     const rnd = Math.random;
     Math.random = () => 0.01;
-    const room = net.createLocalRoom({ name: "M", test: true, computers: 1 });
-    room.close();
-    room.send({
-      t: "options",
-      options: {
-        modePick: "host",
-        mapPick: "host",
-        mode: "l4dd",
-        map: "downpour",
-        botWait: 1,
-        wildJustin: 0,
-      },
-    });
-    room.send({ t: "start" });
-    for (let k = 0; k < 600 && !R.merchantOf(room.state); k++) {
-      const w =
-        room.state.hang && room.state.hang.l4 && room.state.hang.l4.wait;
-      for (const id of room.state.seat)
-        if (w && !(w.v || {})[id])
-          room.send({ t: "hang", k: "l4", do: "endturn", on: true, id });
-      window.__now = now += 200;
-      room.send({ t: "tick", id: room.me });
-    }
+    const { l4Room } = await import("./tools/check/l4room.js"),
+      room = await l4Room("M", (r) => R.merchantOf(r.state));
+    let now = window.__now;
     const s = JSON.parse(JSON.stringify(room.state)),
       m = R.merchantOf(s),
       out = {};

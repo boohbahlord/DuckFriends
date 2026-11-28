@@ -11,4 +11,20 @@ const noErrors = (errs, what = "page errors") => {
   const real = errs.filter(Boolean);
   if (real.length) fail(what + ": " + JSON.stringify(real.slice(0, 3)));
 };
-module.exports = { url, fail, noErrors };
+/* a page on the game with the clock faked (npc-golden/init.js, as knock.cjs) and its page errors collected; the
+   Dead Ducks Arcade checks start their game in it with l4room.js */
+const fakedPage = async () => {
+  const fs = require("fs"),
+    path = require("path"),
+    { chromium } = require("playwright");
+  const b = await chromium.launch(),
+    p = await b.newPage(),
+    errs = [];
+  p.on("pageerror", (e) => errs.push(e.message));
+  await p.addInitScript(
+    fs.readFileSync(path.resolve(__dirname, "../npc-golden/init.js"), "utf8"),
+  );
+  await p.goto(url, { waitUntil: "networkidle" });
+  return { b, p, errs };
+};
+module.exports = { url, fail, noErrors, fakedPage };
