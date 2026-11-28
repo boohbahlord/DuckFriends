@@ -760,12 +760,6 @@ export const sbSfx = (p) => {
 /* the owner's: "Effects can be chosen to either happen below all entities or above" (never over the map's own roofs) */
 /* a fall, world px down from its top (about a floor; game.js's bonk) */
 export const SB_LAND_MIN = 90;
-/* is there a zone here that hurts whoever lands on it from a fall (game.js: then my falls are sent) */
-export const sbLands = (s) =>
-  isSb(s) &&
-  Object.values((s.sb && s.sb.pts) || {}).some(
-    (p) => p.k === "zone" && p.f && p.f.land && p.f.land.ok,
-  );
 export const SB_SFX_Z = {
   above: "Above everything",
   below: "Below everything",

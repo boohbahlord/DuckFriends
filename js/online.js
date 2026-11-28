@@ -281,6 +281,7 @@ const REMOTE = new Set([
   "groupmod",
   "forgame",
   "move",
+  "land", // (a fall: its damage, actplay.js act_land)
   "end",
   "voteReview",
   "voteStart",
