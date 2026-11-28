@@ -1,7 +1,7 @@
 /* ---------- Seriat's help files (the Seriat window's read-only help/ folder) ----------
    The owner's (Nov 19 12:59Z): "the help files for numerat have a directory called "help", where simple or more complex
    help lies and their given principles or basic operators help files; the help files are text files that cannot be
-   copied or deleted or changed". shell.js puts these in the Seriat folder at the start of every game (never kept in the
+   copied or deleted or changed". seriatfiles.js puts these in the Seriat folder at the start of every game (never kept in the
    profile) and refuses every change to them. Only what is built is written here (part A: values, orders, brackets,
    math, asterisks, percents; part B: line rules and limits; part C: statements).
    The owner's (Nov 19 16:12Z, with a drawing): help/ itself holds the general files, the examples (.se files) have their
@@ -508,7 +508,7 @@ In front of a value, the count plays just that value:
 `,
 };
 
-/* every help file by its path in help/ ("numbers/values.txt"), as shell.js puts them in */
+/* every help file by its path in help/ ("numbers/values.txt"), as seriatfiles.js puts them in */
 export const HELP = Object.fromEntries(
   Object.entries(HELP_FLAT).map(([f, t]) => [helpAt(f).slice(5), t]),
 );

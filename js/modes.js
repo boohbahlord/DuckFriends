@@ -17,7 +17,7 @@
    Sandbox: no rounds, no end; on any map, mess around (sandboxrules.js, sandbox.js). */
 import { esc } from "./ui.js";
 
-export const MODES = [
+const MODES = [
   {
     id: "aod",
     boardSymbol: true, // (its symbol is the board's own drawing: art.js)

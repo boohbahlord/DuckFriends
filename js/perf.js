@@ -12,7 +12,6 @@ let on = false,
   last = 0,
   obs = null;
 
-export const perfOn = () => on;
 export const stamp = () => (on ? performance.now() : 0);
 
 /* the time one part of the frame took, since its stamp() */

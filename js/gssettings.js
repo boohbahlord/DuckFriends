@@ -88,13 +88,6 @@ export const HOST = [
     d: "Turns off text chat for every player, the host included, in the lobby and in the game. The game's own messages still show.",
   },
   {
-    k: "noTerm",
-    n: "No Terminal",
-    c: ON_OFF,
-    cat: "rules",
-    d: "Turns off the command line for every player, the host included, in the lobby and in the game.",
-  },
-  {
     k: "lateJoin",
     n: "Players who join mid-game",
     c: [
@@ -243,7 +236,7 @@ export const HOST = [
       [0, "Off"],
     ],
     cat: "more",
-    d: "The lightning, love, kill and hotdog commands in the command line.",
+    d: "The weapons and items ducks use on the board.",
   },
   /* the owner's, Nov 22 19:29Z: "WHEN THE GUNS ARE SELECTED, THEY HAVE AMMO OF DEAD DUCKS ARCADE UNLESS UNLIMITED AMMO IS
      SELECTED" (ammo.js) */

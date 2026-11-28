@@ -23,7 +23,7 @@ const DOD_TEXT = {
   justin:
     "Justin joins every game he can be in, and nobody can send him away, the host neither.",
   settings: "Every duck can change the game settings, not only the host.",
-  sudo: "Every duck gets sudo: the host's powers in the command line and the room.",
+  sudo: "Every duck gets sudo: the host's powers in the room.",
   host: "Pick the duck to become the new host. It takes every duck's vote, and the host can't vote.",
 };
 const HOW =

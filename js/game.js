@@ -196,7 +196,7 @@ import {
 
 import { walkOf } from "./push.js";
 
-import { isSudo, canOpen } from "./roomrules.js";
+import { isSudo } from "./roomrules.js";
 
 import { shotAt } from "./boardfire.js";
 
@@ -245,7 +245,7 @@ import {
 
 import { mountPlayers, trackIdle, lobbyVote, kickItems } from "./players.js";
 
-import { chatNote, isMuted } from "./chat.js";
+import { chatNote, isMuted, said } from "./chat.js";
 
 import {
   specialById,
@@ -416,8 +416,6 @@ import { feet } from "./feet.js";
 
 import { mountMap, mapKey } from "./maps.js";
 
-import { hooks } from "./hooks.js";
-
 import { mountTouch, stick } from "./touch.js";
 
 import { walkIntent } from "./playerinput.js";
@@ -559,8 +557,7 @@ let squash = { q: "", t: 0 },
   moving = false,
   sprinting = false;
 let lastFx = -1,
-  hotdogs = [],
-  follows = []; // the silly commands seen so far; hotdogs and items following their ducks
+  follows = []; // the specials seen so far; items following their ducks
 export let bar = null,
   meter = null, // my HP meter, under the hotbar (hpmeter.js)
   pad = null; // phones: the jump button and the attack button
@@ -1948,7 +1945,7 @@ function drawDucks(now = clockNow()) {
     mark.classList.remove("gone");
     mark.classList.toggle("sprint", !!target.sprint);
   } else if (mark) mark.classList.add("gone");
-  // hotdogs hang around their duck, then fade; an item (mug, gun, spray, trombone) stays with its duck while it walks
+  // an item (mug, gun, spray, trombone) stays with its duck while it walks
   // (Hangout: sorted with their duck, so the stage or a couch covers them too)
   const withDuck = (e, id, pos) => {
     if (e.parentNode !== layer) layer.append(e);
@@ -1958,26 +1955,6 @@ function drawDucks(now = clockNow()) {
       e.style.zIndex = zi;
     }
   };
-  hotdogs = hotdogs.filter((h) => {
-    if (now > h.until || !s.pos[h.id]) {
-      h.el.remove();
-      return false;
-    }
-    return true;
-  });
-  for (const h of hotdogs) {
-    const pos = posOf(h.id),
-      at = place(pos, lane.indexOf(h.id), lane.length),
-      z = liftOf(h.id, pos);
-    if (hang) {
-      h.el.style.visibility = world.hidden(h.id, pos) ? "hidden" : "";
-      withDuck(h.el, h.id, pos);
-    }
-    const hd = duckEl(h.id),
-      side = (turned() ? 1 : hd && hd._face) || 1; // (the hotdog is at the beak of the way the duck faces)
-    h.el.style.transform = `translate(${(at.left + side * size * 0.62).toFixed(1)}px, ${(at.top - size * 0.9 - z).toFixed(1)}px)`;
-    h.el.classList.toggle("going", now > h.until - 900);
-  }
   follows = follows.filter((f) => {
     if (now > f.until || !s.pos[f.id]) {
       f.el.remove();
@@ -2695,63 +2672,6 @@ function hangStep(dt, now) {
     }); // (Sandbox: a zone that hurts whoever lands on it from a fall, sbzone.js)
   sendMove(!!(ev.land || ev.thud || ev.force));
 }
-/* reset duck: somewhere random on the board, or inside your column once you have voted (never inside another duck) */
-function resetDuck() {
-  if (!me || !onBoardPhase() || !geo) return "✗ That works on the board.";
-  if (isSc(R.state) && locked()) return "✗ Your vote holds your duck there.";
-  if (isHang(R.state)) {
-    // Hangout: back outside the front door
-    if (!world) return "✗ That works on the board.";
-    const p = world.spawn();
-    Object.assign(me, p, {
-      j: 0,
-      b: p.z,
-      vz: null,
-    });
-    target = null;
-    R.send({
-      t: "move",
-      x: p.x,
-      y: p.y,
-      j: 0,
-      z: Math.round(p.z),
-      b: Math.round(p.z),
-      reset: true,
-    });
-    return "Duck reset: back at the front door.";
-  }
-  const s = R.state,
-    inCol =
-      s.phase === "bracket" || isSc(s) || isQuack(s)
-        ? null
-        : s.phase !== "answer"
-          ? s.lock[R.me]
-          : s.done[R.me] && !s.options.freeRoam
-            ? colAt(s, me.x)
-            : null;
-  if (inCol === undefined) return "✗ No answer, no column to go back to.";
-  const [lo, hi] = attorney()
-      ? [0.47, 0.53]
-      : inCol === null
-        ? [0.04, 0.96]
-        : colBoundsAt(s, inCol),
-    now = clockNow();
-  let x = me.x,
-    y = me.y;
-  for (let k = 0; k < 30; k++) {
-    x = lo + Math.random() * (hi - lo);
-    y = attorney() ? 0.4 + Math.random() * 0.2 : Math.random();
-    if (!bumps(x, y, now)) break;
-  }
-  me.x = x;
-  me.y = y;
-  me.j = 0;
-  target = null;
-  R.send({ t: "move", x, y, j: 0, reset: true });
-  return inCol === null
-    ? "Duck reset: somewhere new."
-    : "Duck reset: somewhere new in your column.";
-}
 /* Space or a tap */
 function jump() {
   if (!me || !onBoardPhase()) return;
@@ -3059,17 +2979,15 @@ function paintNow(force) {
         (!m.to || m.to === R.me || m.from === R.me) &&
         !isMuted(s, m.from, "bubble") &&
         !isMuted(s, m.from, "text")
-      )
+      ) {
+        const t = said(m);
         bubbles[m.from] = {
-          text: !canOpen(s, R.me, m)
-            ? `📄 ${m.file}`
-            : m.text.length > 90
-              ? m.text.slice(0, 90).trimEnd() + "…"
-              : m.text,
+          text: t.length > 90 ? t.slice(0, 90).trimEnd() + "…" : t,
           until: clockNow() + 5500,
           n: m.n,
           at: clockNow(),
-        }; // (a sent file opens only for sudo, unless chmod let its group or everyone)
+        };
+      }
     for (const m of s.log)
       if (
         m.n > lastLog &&
@@ -3923,7 +3841,6 @@ register("game", {
     setGeo(null);
     keys.clear();
     lastFx = -1;
-    hotdogs = [];
     follows = [];
     if (pm) pm.destroy();
     pm = null;
@@ -3954,7 +3871,6 @@ register("game", {
     removeEventListener("wheel", onWheel);
     if (scene) scene.destroy();
     scene = null;
-    hooks.resetDuck = null;
     stopSays();
     lastGrace = -1;
     if (touchOff) touchOff();
@@ -4021,7 +3937,6 @@ register("game", {
       : null;
     placed = placeKey(R.state);
     idleOff = trackIdle(() => R);
-    hooks.resetDuck = resetDuck;
     if (isL4dd(R.state)) {
       l4Held(heldNow); // (the fireplace asks which ranged weapon is in hand)
       const l4 = {
@@ -4443,4 +4358,4 @@ pickWith({
   playDuck,
   turned,
 });
-export { follows, geo, hotdogs }; // (what the files moved out of here read)
+export { follows, geo }; // (what the files moved out of here read)

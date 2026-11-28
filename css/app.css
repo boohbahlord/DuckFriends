@@ -54,7 +54,7 @@
   font-weight: 500;
   font-display: swap;
 }
-/* Cascadia Code, the command line's and Seriat's letters, self-hosted (SIL Open Font License:
+/* Cascadia Code, Seriat's letters, self-hosted (SIL Open Font License:
    assets/fonts/cascadia-code-OFL.txt) */
 @font-face {
   font-family: "Cascadia Code";
@@ -3702,8 +3702,7 @@ html.mouse-move .board {
   } /* (a full-screen stats panel scrolls inside its own space, never under the buttons) */
 }
 
-/* ---------- text chat and the command line (the button in the bottom bar; the panel in a dock) ----------
-   The round symbol shows the mode: ABC on white for the chat, a green $ on black for the command line. */
+/* ---------- text chat (the button in the bottom bar; the panel in a dock) ---------- */
 .mode-icon {
   flex: none;
   width: 2.5rem;
@@ -3721,13 +3720,6 @@ html.mouse-move .board {
   position: relative;
   box-shadow: 0 0.15rem 0 var(--line);
   padding: 0;
-}
-.mode-icon[data-mode="cmd"] {
-  background: #000;
-  color: #33ff66;
-  font-family: "Cascadia Code", Consolas, monospace;
-  font-size: 1.2rem;
-  text-shadow: 0 0 0.35rem #33ff6699;
 }
 .chat-btn[aria-pressed="true"] {
   box-shadow: inset 0 0.12rem 0 #0003;
@@ -3788,129 +3780,10 @@ html.mouse-move .board {
   font-weight: 700;
   color: var(--purple);
 }
-.chat-log .cmd-line {
-  font-family: "Cascadia Code", Consolas, monospace;
-  font-weight: 200;
-  white-space: pre-wrap;
-}
-.chat-log .cmd-line.echo {
-  color: var(--dim);
-}
-.chat-log .cmd-line.echo > .k-prompt {
-  color: var(--dim);
-}
-/* the command line's colors: each kind of command its own (help · kindOf in helppages.js), then flags, operators … */
-:root {
-  --k-help: #138a0c;
-  --k-bash: #0b6fc2;
-  --k-file: #087f74;
-  --k-text: #9a6b00;
-  --k-group: #7a3fd0;
-  --k-people: #c2306e;
-  --k-game: #c25a00;
-  --k-silly: #d01f1f;
-  --k-chat: #5d6072;
-  --k-flag: #6b6f85;
-  --k-op: #1c1c28;
-  --k-var: #8a3fb0;
-  --k-str: #6d5a00;
-}
-html.dark,
-html.map-is-nwk,
-html.map-is-vellum {
-  --k-help: #4be03a;
-  --k-bash: #4fb3ff;
-  --k-file: #2fd8c4;
-  --k-text: #ffd23f;
-  --k-group: #b996f5;
-  --k-people: #ff8cc0;
-  --k-game: #ff9a45;
-  --k-silly: #ff5c5c;
-  --k-chat: #b8bbcc;
-  --k-flag: #a9acbf;
-  --k-op: #ffffff;
-  --k-var: #e2a8ff;
-  --k-str: #f3e3a0;
-}
-.chat-log .k-help {
-  color: var(--k-help);
-  font-weight: 600;
-}
-.chat-log .k-bash {
-  color: var(--k-bash);
-  font-weight: 600;
-}
-.chat-log .k-file {
-  color: var(--k-file);
-  font-weight: 600;
-}
-.chat-log .k-text {
-  color: var(--k-text);
-  font-weight: 600;
-}
-.chat-log .k-group {
-  color: var(--k-group);
-  font-weight: 600;
-}
-.chat-log .k-people {
-  color: var(--k-people);
-  font-weight: 600;
-}
-.chat-log .k-game {
-  color: var(--k-game);
-  font-weight: 600;
-}
-.chat-log .k-silly {
-  color: var(--k-silly);
-  font-weight: 600;
-}
-.chat-log .k-chat {
-  color: var(--k-chat);
-  font-weight: 600;
-}
-.chat-log .k-flag {
-  color: var(--k-flag);
-  white-space: nowrap;
-}
-.chat-log .k-op {
-  color: var(--k-op);
-  font-weight: 700;
-}
-.chat-log .k-var {
-  color: var(--k-var);
-}
-.chat-log .k-str {
-  color: var(--k-str);
-}
-.chat-log .k-at {
-  color: var(--blue);
-}
 .chat-log .k-ph,
 .chat-log .k-note {
   color: var(--dim);
   font-style: italic;
-}
-.chat-log .k-prompt {
-  color: var(--k-help);
-}
-.chat-log .k-head {
-  display: inline-block;
-  margin-top: 0.2rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  font-size: 0.85em;
-  color: var(--ink);
-}
-.chat-log .k-title {
-  font-weight: 700;
-  color: var(--ink);
-}
-.chat-log .k-err {
-  color: var(--k-silly);
-}
-.chat-log .cmd-line .ind {
-  display: block;
-  padding-left: calc(var(--i) * 1ch);
 }
 .chat-sugg {
   list-style: none;
@@ -3942,13 +3815,6 @@ html.map-is-vellum {
 .chat-row .chat-in {
   flex: 1;
   min-width: 0;
-}
-.chat-panel[data-mode="cmd"] .chat-in {
-  background: #000;
-  color: #fff;
-  border-color: #000;
-  font-family: "Cascadia Code", Consolas, monospace;
-  caret-color: #33ff66;
 }
 .sect.muted .swatches,
 .sect.muted > .row {
@@ -4169,27 +4035,6 @@ svg.l4-gun {
   100% {
     transform: translateY(var(--rise)) scale(1.05);
     opacity: 0;
-  }
-}
-.fx-hotdog {
-  position: absolute;
-  left: 0;
-  top: 0;
-  margin-left: -0.5rem;
-  transition: opacity 0.8s;
-  animation: hotdogbob 1.4s ease-in-out infinite;
-}
-.fx-hotdog svg {
-  display: block;
-  transform: rotate(-12deg);
-  filter: drop-shadow(0 0.2rem 0.2rem #0004);
-}
-.fx-hotdog.going {
-  opacity: 0;
-}
-@keyframes hotdogbob {
-  50% {
-    margin-top: -6px;
   }
 }
 html.still .fx-heart {
@@ -10252,7 +10097,7 @@ html.map-is-vellum .tmeter i {
 /* The King's Festival takes the Ether & Kenoma look above, in the colors of my book site's burnt amber (owner
    2026-11-06: the burnt amber look, following what the book site does: near-black like an amber terminal, amber
    letters, a burnt orange accent, dark hairlines; source/theme/site.css :root there), in the chapter's blackletter
-   (Grenze Gotisch) for every letter. The command line keeps its typewriter letters, Dyslexic mode its clear ones,
+   (Grenze Gotisch) for every letter. Dyslexic mode keeps its clear letters,
    and players their own fonts on names and prompts. Meters and keys in the same amber; the HP blocks the game's
    heart red. */
 html.map-is-vellum {
@@ -10433,33 +10278,6 @@ html.map-is-vellum .hpm-stam i {
 }
 html.map-is-vellum .hpm-stam.tired i {
   background: #6a5040;
-}
-
-/* a message sent from the command line: the command in small print, then its output as it came out */
-.chat-log .from-cmd .cmd-tag {
-  display: block;
-  font-size: calc(0.72rem * var(--ts));
-  color: var(--dim);
-  margin: 0.05rem 0 0.15rem;
-}
-.chat-log .from-cmd code {
-  font-family: "Cascadia Code", Consolas, monospace;
-  font-weight: 200;
-}
-.chat-log .from-cmd .cmd-out {
-  display: block;
-  white-space: pre-wrap;
-  font-family: "Cascadia Code", Consolas, monospace;
-  font-weight: 200;
-  font-size: calc(0.86rem * var(--ts));
-  background: color-mix(in srgb, var(--panel2) 70%, transparent);
-  border-radius: 0.4rem;
-  padding: 0.25rem 0.45rem;
-  overflow-wrap: anywhere;
-}
-.chat-log .from-cmd .cmd-file {
-  display: block;
-  font-weight: 600;
 }
 
 /* Bicker Brackets: the cards still being written light up, apart from what was already written */
@@ -18586,14 +18404,8 @@ html.pixel *::after {
   font-family: "Jersey 15", monospace !important;
   font-size-adjust: 0.52;
 }
-/* except the command line's and Seriat's letters: Cascadia Code in every look (the owner's Sandbox file: "All terminal
-   text and numerat text should be cascadia monospace font") */
-html.pixel .chat-panel[data-mode="cmd"] .chat-in,
-html.pixel .chat-log .cmd-line,
-html.pixel .chat-log .cmd-line *,
-html.pixel .chat-log .from-cmd code,
-html.pixel .chat-log .from-cmd .cmd-out,
-html.pixel .chat-log .from-cmd .cmd-out *,
+/* except Seriat's letters: Cascadia Code in every look (the owner's Sandbox file: "All terminal text and numerat text
+   should be cascadia monospace font") */
 html.pixel .chat-sugg li,
 html.pixel .chat-sugg li *,
 html.pixel .nm,
@@ -18734,7 +18546,6 @@ html.pixel .bslot.open,
 html.pixel .btn.big,
 html.pixel .chat-float,
 html.pixel .chat-log .fold,
-html.pixel .chat-log .from-cmd .cmd-out,
 html.pixel .chat-log .hit,
 html.pixel .chat-log .priv,
 html.pixel .chat-sugg,
@@ -20677,8 +20488,8 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   }
 }
 
-/* ---------- Sandbox: the Seriat window (js/seriatwin.js), as an editor: files on the left, the code, a terminal
-   line under it; every letter Cascadia Code, as the command line's ---------- */
+/* ---------- Sandbox: the Seriat window (js/seriatwin.js), as an editor: files on the left, the code, what it says
+   under it; every letter Cascadia Code ---------- */
 .nm-win {
   width: min(60rem, calc(100vw - 1.5rem));
 }
@@ -20921,8 +20732,7 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   white-space: pre-wrap;
   overflow-wrap: break-word;
 }
-.nm-ac,
-.nm-sugg {
+.nm-ac {
   margin: 0;
   padding: 0.15rem;
   list-style: none;
@@ -20937,25 +20747,16 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   border: 0.12rem solid var(--line);
   border-radius: 0.4rem;
 }
-.nm-ac[hidden],
-.nm-sugg[hidden] {
+.nm-ac[hidden] {
   display: none;
 }
-.nm-ac li,
-.nm-sugg li {
+.nm-ac li {
   padding: 0.1rem 0.5rem;
   cursor: pointer;
   border-radius: 0.25rem;
 }
-.nm-ac li[aria-selected="true"],
-.nm-sugg li[aria-selected="true"] {
+.nm-ac li[aria-selected="true"] {
   background: color-mix(in srgb, var(--blue, #3f8cff) 35%, transparent);
-}
-.nm-sugg {
-  flex: none;
-  max-height: 6.5rem;
-  overflow: auto;
-  border-top: 0.1rem solid var(--line);
 }
 .nm-wrap {
   display: flex;
@@ -20987,15 +20788,6 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   font-weight: 200;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-}
-.nm-line {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0 0.4rem 0.4rem;
-}
-.nm-line .nm-in {
-  flex: 1;
 }
 /* a phone: the files over the code, and the terminal smaller than the code (the owner's, Nov 21 18:59Z: "Make sure that
    the terminal isn't too big on vertical version when writing the Seriat") */

@@ -12,9 +12,9 @@ import {
   DUCK_METALS,
 } from "/js/duck.js";
 import { STYLES } from "/js/styles.js";
-import { HATS, NPC_HATS } from "/js/hats.js";
-import { FACES, NPC_FACES } from "/js/faces.js";
-import { OUTFITS, NPC_OUTFITS } from "/js/outfits.js";
+import { HATS } from "/js/hats.js";
+import { FACES } from "/js/faces.js";
+import { OUTFITS } from "/js/outfits.js";
 import { EYES } from "/js/eyes.js";
 import { BEAKS } from "/js/beaks.js";
 import {
@@ -35,7 +35,7 @@ function looks({ WOUNDS, hitsOf, ZOUTFITS }) {
     styles = STYLES.filter((s) => s.id !== "jack" && s.id !== "datboi"),
     metals = DUCK_METALS.map(([m]) => m),
     outfits = [];
-  for (const o of [...OUTFITS, ...NPC_OUTFITS]) {
+  for (const o of OUTFITS) {
     let picks = [{ id: o.id }];
     for (const [k, choices] of o.opts || [])
       picks = picks.flatMap((p) => choices.map(([v]) => ({ ...p, [k]: v })));
@@ -78,7 +78,7 @@ function looks({ WOUNDS, hitsOf, ZOUTFITS }) {
           { ...DB, rank },
           { dead, shadow: sh },
         ]);
-  for (const h of [...HATS, ...NPC_HATS])
+  for (const h of HATS)
     for (const m of h.metal ? metals.filter((x) => x !== "none") : [undefined])
       for (const k of h.ketchup ? [false, true] : [undefined])
         for (const dead of [false, true])
@@ -93,10 +93,10 @@ function looks({ WOUNDS, hitsOf, ZOUTFITS }) {
             },
             { dead },
           ]);
-  for (const f of [...FACES, ...NPC_FACES])
+  for (const f of FACES)
     for (const dead of [false, true])
       out.push([{ ...DB, face: { id: f.id } }, { dead }]);
-  for (const h of [...HATS, ...NPC_HATS])
+  for (const h of HATS)
     for (const m of h.metal ? metals.filter((x) => x !== "none") : [undefined])
       for (const k of h.ketchup ? [false, true] : [undefined]) // (the hotdog's, with ketchup or without)
         for (const e of h.id === "antennae" ? eyes : ["default"])
@@ -113,7 +113,7 @@ function looks({ WOUNDS, hitsOf, ZOUTFITS }) {
               },
               { dead },
             ]);
-  for (const f of [...FACES, ...NPC_FACES])
+  for (const f of FACES)
     for (const bk of beaks)
       for (const e of f.id === "clownpaint" ? eyes : ["default"])
         for (const dead of [false, true])

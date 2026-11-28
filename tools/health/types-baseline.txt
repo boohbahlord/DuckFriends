@@ -14,13 +14,6 @@ js/actplay.js TS2363 The right-hand side of an arithmetic operation must be of t
 js/actplay.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
 js/actplay.js TS2447 The '|' operator is not allowed for boolean types. Consider using '||' instead.
 js/audioimport.js TS2339 Property 'buffer' does not exist on type 'AllowSharedBufferSource'.
-js/bash.js TS18047 'cur' is possibly 'null'.
-js/bash.js TS18047 'cur' is possibly 'null'.
-js/bash.js TS2339 Property 'buf' does not exist on type 'string | { path: any; buf: string; }'.
-js/bash.js TS2339 Property 'files' does not exist on type '(a: any) => any'.
-js/bash.js TS2339 Property 'files' does not exist on type '(a: any) => any'.
-js/bash.js TS2339 Property 'files' does not exist on type '(a: any) => any'.
-js/bash.js TS2554 Expected 0 arguments, but got 1.
 js/boardjustin.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
 js/boardjustin.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
 js/boardjustin.js TS2345 Argument of type 'number[]' is not assignable to parameter of type '[any, any]'.
@@ -101,11 +94,6 @@ js/chat.js TS2339 Property 'value' does not exist on type 'Element'.
 js/chat.js TS2339 Property 'value' does not exist on type 'Element'.
 js/chat.js TS2339 Property 'value' does not exist on type 'Element'.
 js/chat.js TS2339 Property 'value' does not exist on type 'Element'.
-js/chatcmds.js TS2339 Property 'metal' does not exist on type '{ id: string; name: string; colors: string[][]; } | { id: string; name: string; colors?: undefined; } | {}'.
-js/chatcmds.js TS2339 Property 'toLowerCase' does not exist on type 'string | number'.
-js/chatcmds.js TS2339 Property 'toLowerCase' does not exist on type 'string | number'.
-js/chatcmds.js TS2339 Property 'toLowerCase' does not exist on type 'string | number'.
-js/chatcmds.js TS2339 Property 'toLowerCase' does not exist on type 'string | number'.
 js/collage.js TS2339 Property 'src' does not exist on type 'Element'.
 js/color.js TS2339 Property 'dataset' does not exist on type 'Element'.
 js/color.js TS2339 Property 'dataset' does not exist on type 'Element'.
@@ -586,7 +574,7 @@ js/music.js TS2339 Property 'at' does not exist on type '() => void'.
 js/music.js TS2339 Property 'at' does not exist on type '() => void'.
 js/music.js TS2339 Property 'at' does not exist on type '() => void'.
 js/music.js TS2345 Argument of type 'string | number' is not assignable to parameter of type 'string'.
-js/net.js TS2339 Property 'umap' does not exist on type '{ open: boolean; passkey: string; max: number; hostId: any; options: { submitTime: number; order: string; share: number; sbMap: string; answerTime: number; catchUp: number; writeCatch: number; endBtn: number; ... 74 more ...; modeRules: {}; }; ... 25 more ...; test: boolean; }'.
+js/net.js TS2339 Property 'umap' does not exist on type '{ open: boolean; passkey: string; max: number; hostId: any; options: { submitTime: number; order: string; share: number; sbMap: string; answerTime: number; catchUp: number; writeCatch: number; endBtn: number; ... 73 more ...; modeRules: {}; }; ... 25 more ...; test: boolean; }'.
 js/notes.js TS2339 Property 'hidden' does not exist on type 'Element'.
 js/notes.js TS2339 Property 'hidden' does not exist on type 'Element'.
 js/notes.js TS2339 Property 'onclick' does not exist on type 'Element'.
@@ -782,14 +770,6 @@ js/shared.js TS2353 Object literal may only specify known properties, and 'onOpe
 js/shared.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
 js/shared.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
 js/shared.js TS2353 Object literal may only specify known properties, and 'px' does not exist in type '{ aspect?: number; side?: number; most?: number; }'.
-js/shell.js TS2339 Property 'toLowerCase' does not exist on type 'string | number'.
-js/shell.js TS2339 Property 'toLowerCase' does not exist on type 'string | number'.
-js/shell.js TS2339 Property 'toLowerCase' does not exist on type 'string | number'.
-js/shell.js TS2345 Argument of type 'string | number' is not assignable to parameter of type 'string'.
-js/shell.js TS2362 The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
-js/shell.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
-js/shellpeople.js TS2363 The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
-js/shellstats.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any, any]'.
 js/slices.js TS2304 Cannot find name 'scheduler'.
 js/slices.js TS2304 Cannot find name 'scheduler'.
 js/sound.js TS2339 Property 'closest' does not exist on type 'EventTarget'.
@@ -818,8 +798,6 @@ js/specials.js TS2345 Argument of type 'string[]' is not assignable to parameter
 js/specials.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any]'.
 js/stats.js TS2345 Argument of type 'string[]' is not assignable to parameter of type '[any, any, any]'.
 js/stats.js TS2353 Object literal may only specify known properties, and 'onOpen' does not exist in type '{ cls?: string; cover?: boolean; }'.
-js/textutils.js TS2356 An arithmetic operand must be of type 'any', 'number', 'bigint' or an enum type.
-js/textutils.js TS2365 Operator '>' cannot be applied to types 'string | number' and 'number'.
 js/trivia.js TS2554 Expected 0 arguments, but got 1.
 js/triviarules.js TS2339 Property 'map' does not exist on type 'string | number | string[]'.
 js/triviarules.js TS2339 Property 'map' does not exist on type 'string | number | string[]'.
