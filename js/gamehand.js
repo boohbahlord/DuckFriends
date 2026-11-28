@@ -1,5 +1,6 @@
 /* ---------- the hand: the number-key specials, firing, reloading, the wheel and the aim keys ----------
    Moved out of game.js to keep that file small (a pure move). It imports back from game.js, which imports it. */
+import { meterOn, meterStrike } from "./flymeter.js";
 import { onBoardPhase } from "./game.js";
 import {
   R,
@@ -191,7 +192,14 @@ export function fire(id) {
     return;
   }
   const [ax, ay] = myAim();
-  R.send({ t: "use", what: id, face: ax < 0 ? -1 : 1, ax, ay });
+  R.send({
+    t: "use",
+    what: id,
+    face: ax < 0 ? -1 : 1,
+    ax,
+    ay,
+    ...(meterOn() ? { fm: meterStrike() } : null), // (a Flyer holds me: a strike on its meter, flymeter.js)
+  });
   if (bar) setTimeout(() => bar && bar.refresh(), 60); // (the handgun's dots, a cooldown's bar)
 }
 /* the bow (bowdraw.js): a press draws it (the host keeps when), letting go shoots, toward where I aim then. mouse

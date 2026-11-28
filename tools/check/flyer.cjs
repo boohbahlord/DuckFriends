@@ -1,6 +1,7 @@
 /* I want the Flyer checked (zombies.js flyerStep; the owner's, Nov 28): on round 5, made to come at once
    (SPECIAL_Z.AT), it climbs in, leaps on my duck and holds on; its bites take my HP and every screen hears it hold on;
-   a melee crit throws it off, still alive. Run: node tools/check/run.mjs flyer */
+   my click strikes it on its meter: lines right on each other take its 3 HP, and another strike at once does nothing
+   (SPECIAL_Z.flyer.meter.gap), while it holds on. Run: node tools/check/run.mjs flyer */
 const fs = require("fs"),
   path = require("path");
 const { chromium } = require("playwright");
@@ -88,27 +89,28 @@ const { url, fail, noErrors } = require("./lib.cjs");
         };
       if (out.after && !out.hit) {
         const kit = R.kitOf(room.state, room.me),
-          real = Math.random,
-          seq = [0.99, 0];
-        Math.random = () => (seq.length ? seq.shift() : real());
-        room.send({
-          t: "use",
-          id: room.me,
-          what: kit.sl[0],
-          ax: 1,
-          ay: 0,
-          dx: 1,
-          dy: 0,
-        });
-        Math.random = real;
-        const f2 = Z.zombies(room.state).find(
-          (z) => z.l[8] === R.Z_BREED.flyer,
-        );
+          strike = () =>
+            room.send({
+              t: "use",
+              id: room.me,
+              what: kit.sl[0],
+              ax: 1,
+              ay: 0,
+              dx: 1,
+              dy: 0,
+              fm: 0,
+            }),
+          flyer = () =>
+            Z.zombies(room.state).find((z) => z.l[8] === R.Z_BREED.flyer);
+        strike();
+        const f2 = flyer();
+        strike(); // (again at once: too soon)
+        const f3 = flyer();
         out.hit = {
           w: kit.sl[0],
           st: f2 && f2.st,
           hp: f2 && f2.hp,
-          fc: f2 && f2.fc,
+          again: f3 && f3.hp,
         };
       }
       if (out.hit && k > out.held.k + 12) break;
@@ -128,7 +130,8 @@ const { url, fail, noErrors } = require("./lib.cjs");
   else {
     if (!(got.after.hp < got.held.hp)) bad("its bites hurt");
     if (!got.after.fx) bad("every screen hears it hold on (l4latch)");
-    if (!got.hit || got.hit.st !== 2 || got.hit.hp !== 3)
-      bad("a melee crit throws it off, alive, 2 HP down");
+    if (!got.hit || got.hit.st !== 9 || got.hit.hp !== 2)
+      bad("a strike right on the white line takes 3 HP, and it holds on");
+    else if (got.hit.again !== 2) bad("a second strike at once does nothing");
   }
 })();

@@ -8,6 +8,7 @@
    table (on Downpour in the chapel): E by him opens his shop (drawMerchant). My duck walks at half
    speed (Speed: 10% faster) and has 7 seconds of sprint (a thin blue bar under my name). The rules are the host's
    (l4ddrules.js); the weapons bar is l4ddbar.js. */
+import { flyMeter } from "./flymeter.js";
 import { holdGame, offView } from "./gameready.js";
 import { clawMark, warmClaw, leanBack } from "./claw.js";
 import { JPOOL, poolHTML, warmPool } from "./bloodpool.js";
@@ -692,6 +693,7 @@ function plainImg(o) {
    over a beat, so it is still on its way when the next one comes instead of stopping and starting */
 const GLIDE = { min: 120, max: 400, even: 0.35, over: 1.1, same: 90 };
 const FACE_HOLD = 300; // ms a zombie keeps going the other way before it turns (no flipping back and forth on a bump)
+let myFly = null; // { i, hp, max }: the Flyer holding my duck (seeZombies), for its meter
 function seeZombies(s, ctx, now) {
   const zs = zombiesOf(s);
   let fresh = false;
@@ -713,8 +715,11 @@ function seeZombies(s, ctx, now) {
   const seen = new Set(),
     me = s.pos && s.pos[ctx.me],
     mz = me && zOf(me, "body", clockNow()); // (in a jump: from its arc, heights.js)
+  myFly = null;
   for (const z of zs) {
     seen.add(z.i);
+    if (z.st === 9 && z.j && z.j[1] === ctx.me)
+      myFly = { i: z.i, hp: z.hp, max: z.l[0] }; // (a Flyer holds my duck: its meter under me, flymeter.js)
     let o = Z.get(z.i);
     if (!o) {
       o = zombieEl(z);
@@ -809,6 +814,8 @@ function seeZombies(s, ctx, now) {
       o.bar.style.setProperty("--hp", sh);
       if (+sh < 1) o.el.classList.add("hurt"); // (its HP bar shows once it has taken damage, then stays: the owner's, Nov 17. A hit: what it lost turns white, then drains fast; dead, it drains to black, then fades: css/app.css, the owner's, Nov 17 17:41Z)
     }
+    if ((o.st === 9) !== (z.st === 9))
+      o.el.classList.toggle("riding", z.st === 9); // (on a duck: its HP shows in that duck's meter, not over it)
     o.hp = z.hp;
     o.st = z.st;
     o.k = z.k; // (the roof it climbs or walks, and its jump onto the canopy: heights.js zOf)
@@ -3324,6 +3331,7 @@ activity({
       coolBar(tag, st, ctx.me);
       ammoBars(tag, st, ctx.me); // (and the yellow ammo bar, the three stacked: meters.js)
       laserMeter(tag, st, ctx.me, heldFn()); // (the Laser Rifle's heat: laserfx.js)
+      flyMeter(tag, myFly); // (a Flyer holding me: its meter, flymeter.js)
       peek(tag, st, ctx.me);
     }
     safeLook(ctx);

@@ -17,6 +17,7 @@
    Hangout walks around Duck Cabin instead of a board: the world (hangout/world.js) draws it, follows my duck with its
    camera and works out how it stands and falls; this file only hands it the keys, the stick and the taps, and puts its
    one context button where the Vote button goes. */
+import { meterOn } from "./flymeter.js";
 import {
   bbMarks,
   celebrate,
@@ -3869,7 +3870,9 @@ function l4Press(e) {
   if (!R || !isL4dd(R.state) || e.pointerType !== "mouse" || e.button !== 0)
     return;
   const w = heldNow();
-  if (!onBoardPhase() || !aimHere(e) || (cooks(w) && drawHold(w, true))) return; // (gamehand.js)
+  if (!onBoardPhase() || !aimHere(e)) return;
+  if (meterOn()) return void (w && fire(w)); // (a Flyer holds me: one strike on its meter a click, flymeter.js)
+  if (cooks(w) && drawHold(w, true)) return; // (gamehand.js)
   if (draws(w)) return void fire(w);
   holdTrigger(() => {
     if (!R || !isL4dd(R.state)) return 0;

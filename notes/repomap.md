@@ -59,19 +59,20 @@ faces.js 264 face items
 feet.js 70 footsteps in every mode
 flamer.js 49 the flamethrower
 flowfield.js 173 the zombies' flow field, worked
+flymeter.js 63 the Flyer's meter under my
 format.js 15 numbers as the settings ask
 friends.js 236 friends
 front.js 150 the front page
 fx.js 1187 the effects, drawn as pixels
 fxart.js 45 the effects' pictures: a duck
 fxmotion.js 233 how a held weapon and
-game.js 4449 the game screen
+game.js 4452 the game screen
 gameact.js 525 the action window and the
 gameannounce.js 187 The cloud's words and what
 gameboard.js 582 the board: each mode's board
-gamedefaults.js 200 the game's own numbers, for
+gamedefaults.js 206 the game's own numbers, for
 gamefx.js 697 the board's specials and the
-gamehand.js 514 the hand: the number-key specials,
+gamehand.js 522 the hand: the number-key specials,
 gamemsg.js 108 lines by the chat button:
 gameplace.js 480 where things are put on
 gameready.js 47 
@@ -106,7 +107,7 @@ jumps.js 48 the jump counter
 justinmoves.js 43 Justin's moves on the board
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which key
-l4dd.js 3422 Quacky Zombies on every screen
+l4dd.js 3430 Quacky Zombies on every screen
 l4ddangel.js 147 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
 l4ddart.js 608 Quacky Zombies' pictures
@@ -119,7 +120,7 @@ l4ddmap.js 252 Quacky Zombies' minimap
 l4ddpower.js 327 Dead Ducks Arcade's power box
 l4ddpowerui.js 276 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4942 the rules of Quacky Zombies
+l4ddrules.js 4953 the rules of Quacky Zombies
 l4ddsfx.js 514 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the
 langname.js 5 the name of Sandbox's number
@@ -268,7 +269,7 @@ who.js 3 who this player is beyond
 wounds.js 500 
 zombiepath.js 187 the zombies' way to the
 zombieroofs.js 331 the zombies' walk over Downpour's
-zombies.js 1643 the zombies: one module for
+zombies.js 1653 the zombies: one module for
 
 ## js/hangout/
 activities.js 25 every Hangout activity, so the

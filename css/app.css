@@ -15032,6 +15032,66 @@ html.moving .l4-ammo.rl {
 .l4-heat.off {
   opacity: 0;
 }
+/* a Flyer holding my duck: its meter under the bars (flymeter.js, the owner's, Nov 28): black, a red line sweeping it,
+   a white line flashing where to strike, the Flyer's HP in its middle; the slot box and the heat meter step aside */
+.l4-fly {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + max(0.62rem, var(--bt, 0rem)));
+  translate: -50% 0;
+  width: 4.6rem;
+  height: 0.66rem;
+  background: #0b0b0f;
+  border: 0.07rem solid #000;
+  border-radius: 0.18rem;
+  box-shadow: 0 0 0 0.05rem #fff3;
+  overflow: hidden;
+  transition: opacity 0.2s;
+}
+.l4-fly.off {
+  opacity: 0;
+}
+.l4-fly b {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0.14rem;
+  translate: -50% 0;
+  z-index: 1;
+}
+.l4-fly .w {
+  left: calc(var(--w, 0.5) * 100%);
+  background: #fff;
+}
+html.moving .l4-fly .w {
+  animation: l4-fly-blink 0.24s steps(1) infinite;
+}
+.l4-fly .r {
+  left: calc(var(--r, 0) * 100%);
+  background: #ff2d3a;
+}
+.l4-fly em {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: 700 0.46rem/1 var(--font, inherit);
+  font-style: normal;
+  color: #ff8a90;
+}
+.l4-fly.hit {
+  background: #3a0d12;
+}
+@keyframes l4-fly-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+.flying .l4-peek,
+.flying .l4-heat,
+.l4z.riding .l4z-hp {
+  display: none;
+}
 .l4-heat i {
   width: 0.4rem;
   height: 0.24rem;
