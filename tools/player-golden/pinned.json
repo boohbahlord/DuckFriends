@@ -28,23 +28,23 @@
  },
  "board-click": {
   "frames": 600,
-  "digest": "35obkj",
+  "digest": "now16b",
   "every": [
    "sq2snd",
-   "1lrz9n2",
-   "4fxifg",
-   "35rm",
-   "j9hgcx",
-   "193wabh",
-   "kv4r42",
-   "q7onwv",
-   "1rs9m4y",
-   "1rs9m4y"
+   "kwtt4",
+   "1jh6ja6",
+   "ar1kup",
+   "1yowgj2",
+   "uwb2qx",
+   "148p6wr",
+   "kvu9jm",
+   "gyihpv",
+   "gyihpv"
   ],
   "seen": {
    "me": {
-    "x": 0.593,
-    "y": 0.6108
+    "x": 0.594,
+    "y": 0.5677
    },
    "sent": {
     "tick": 50,
@@ -80,46 +80,46 @@
  },
  "board-phone-tap": {
   "frames": 600,
-  "digest": "22j9ip",
+  "digest": "8ehcb5",
   "every": [
    "sq2snd",
-   "t75kzg",
-   "md7v7r",
-   "tivwic",
-   "wjtry5",
-   "v5m6p3",
-   "434654",
-   "1gw5dnq",
-   "19nd63y",
-   "1nxtuf1"
+   "18wnrxc",
+   "tx4sp6",
+   "1erkpml",
+   "80pbmk",
+   "1vdohde",
+   "12oqb3k",
+   "5xrswm",
+   "srh02q",
+   "1rdandl"
   ],
   "seen": {
    "me": {
-    "x": 0.303,
+    "x": 0.3314,
     "y": 0.5
    },
    "sent": {
-    "tick": 50,
-    "move": 61
+    "move": 77,
+    "tick": 50
    }
   }
  },
  "board-specials": {
   "frames": 720,
-  "digest": "z9a954",
+  "digest": "rz9rfo",
   "every": [
    "8baa2g",
-   "dehleh",
-   "gdichv",
-   "1gzucnm",
-   "1aeij7g",
-   "1ebvvvr",
-   "1u41ydk",
-   "k7y4r5",
-   "6czrvl",
-   "17lhpij",
-   "1i8cb8w",
-   "1mq2d8r"
+   "408jad",
+   "vd4di2",
+   "1fzhbyj",
+   "19uah9a",
+   "j4ld2z",
+   "1yzoiqs",
+   "dhjrcj",
+   "isainp",
+   "1i17av0",
+   "3qkuzl",
+   "gooxak"
   ],
   "seen": {
    "me": {
@@ -130,8 +130,7 @@
     "move": 28,
     "tick": 60,
     "use": 21,
-    "reload": 1,
-    "draw": 1
+    "reload": 1
    }
   }
  },
@@ -192,21 +191,21 @@
  },
  "dda-downpour": {
   "frames": 780,
-  "digest": "15cnx28",
+  "digest": "13451ns",
   "every": [
-   "16ktgd3",
-   "9jt1qn",
-   "cjpi5u",
-   "c4o8sl",
-   "1pa773n",
-   "17kk5mk",
-   "l5ejds",
-   "1j66gf8",
-   "1o47rwi",
-   "h04e5h",
-   "13ki25h",
-   "kojxb1",
-   "1we8aau"
+   "1c15xn9",
+   "1ou2prx",
+   "1o3fsnx",
+   "1r860sk",
+   "1a5r6fc",
+   "11gsaci",
+   "1ms1rxh",
+   "1r5xpo7",
+   "1na6odx",
+   "efit55",
+   "19wjm8p",
+   "1mz20db",
+   "1ws6vr2"
   ],
   "seen": {
    "me": {
@@ -215,7 +214,7 @@
     "z": 0
    },
    "sent": {
-    "move": 103,
+    "move": 99,
     "tick": 65,
     "use": 7,
     "reload": 1
@@ -224,20 +223,20 @@
  },
  "dda-phone": {
   "frames": 720,
-  "digest": "t7w9k3",
+  "digest": "160qpxf",
   "every": [
-   "1rjb78m",
-   "19qn6rs",
-   "e2lid",
-   "4wnyj7",
-   "13eq6gb",
-   "1wuwzl",
-   "ess1nb",
-   "1jzt0bi",
-   "1eesnvj",
-   "1nnf5o8",
-   "1kxpclh",
-   "1l57mez"
+   "8ceotg",
+   "1vsn1zk",
+   "1q2auv1",
+   "12xuexr",
+   "tu8zv2",
+   "1oxhn13",
+   "nk3o6i",
+   "1wp66o1",
+   "1w3fm0g",
+   "15qdyc4",
+   "1nxjxio",
+   "c6qjjf"
   ],
   "seen": {
    "me": {
@@ -384,74 +383,74 @@
  },
  "hang-click": {
   "frames": 600,
-  "digest": "i1z8eb",
+  "digest": "1wzltiz",
   "every": [
    "x8os7p",
-   "1blgolq",
-   "z0npcr",
-   "kdoguw",
-   "kdoguw",
-   "cbpgvb",
-   "1umfuzs",
-   "1k3n4v5",
-   "60l9q3",
-   "c38c0h"
+   "uto35e",
+   "v7mvkh",
+   "1d82tds",
+   "1d82tds",
+   "1m85zrf",
+   "1o5bje0",
+   "91s00l",
+   "19b93nu",
+   "laxxhe"
   ],
   "seen": {
    "me": {
-    "x": 0.5545,
-    "y": 0.5448,
+    "x": 0.5519,
+    "y": 0.524,
     "z": 0
    },
    "sent": {
     "tick": 50,
-    "move": 35
+    "move": 39
    }
   }
  },
  "hang-phone-tap": {
   "frames": 600,
-  "digest": "1fjuyls",
+  "digest": "1tiwayb",
   "every": [
    "x8os7p",
-   "1b7hdre",
-   "836vz5",
-   "oui61m",
-   "oui61m",
-   "19a47oi",
-   "1ypzf6b",
-   "1y4c9wo",
-   "vkes7m",
-   "ctz0wb"
+   "j5sypm",
+   "1250agt",
+   "1fk03md",
+   "1fk03md",
+   "gboebp",
+   "skp1wo",
+   "skp1wo",
+   "wbque2",
+   "oskwub"
   ],
   "seen": {
    "me": {
-    "x": 0.5563,
-    "y": 0.5336,
+    "x": 0.5646,
+    "y": 0.5533,
     "z": 0
    },
    "sent": {
-    "move": 47,
+    "move": 37,
     "tick": 50
    }
   }
  },
  "dda-pick": {
   "frames": 720,
-  "digest": "l72whc",
+  "digest": "i8q0ol",
   "every": [
-   "1ttgrkz",
-   "ct21sy",
-   "6w8t9e",
-   "12lmxy3",
-   "6ty3ox",
-   "174yfil",
-   "1hrz3c0",
-   "1ud8yah",
-   "1dopsp3",
-   "r1mcdm",
-   "1vd93ct",
-   "xzdzxh"
+   "116k7fj",
+   "17s8xjd",
+   "1a5ztsx",
+   "1eps1tw",
+   "15ncy6x",
+   "o8rfbj",
+   "1toqcur",
+   "18cmetj",
+   "18r5zro",
+   "af0dbd",
+   "10xp8gg",
+   "4mwc1z"
   ],
   "seen": {
    "me": {
@@ -460,7 +459,7 @@
     "z": 0
    },
    "sent": {
-    "move": 14,
+    "move": 15,
     "tick": 60,
     "use": 8,
     "draw": 2
@@ -469,16 +468,16 @@
  },
  "board-reload": {
   "frames": 480,
-  "digest": "5wdbu8",
+  "digest": "1r2f46h",
   "every": [
    "ugbtxn",
-   "1d42g12",
-   "brvvrh",
-   "brvvrh",
-   "e9sx0i",
-   "10qkjw0",
-   "10qkjw0",
-   "1mokcec"
+   "19ot9fu",
+   "1oltxd1",
+   "1oltxd1",
+   "sce5db",
+   "ogtdws",
+   "ogtdws",
+   "2shiju"
   ],
   "seen": {
    "me": {
@@ -549,20 +548,20 @@
  },
  "board-big-swing": {
   "frames": 720,
-  "digest": "1hzkoux",
+  "digest": "duqk8i",
   "every": [
    "1miz95h",
-   "1hmdp07",
-   "1vwcn4v",
-   "1e0inl1",
-   "1ui7w7f",
-   "maor5q",
-   "boqo91",
-   "yi8prm",
-   "11zem1g",
-   "jxy1ff",
-   "178o9d9",
-   "kfjpxi"
+   "1425wtp",
+   "rttzxu",
+   "1wtuy4d",
+   "1uc0kpz",
+   "193qbk2",
+   "42xwi2",
+   "10tp03y",
+   "l0tx0u",
+   "1t19bs6",
+   "aokbt8",
+   "10w5smx"
   ],
   "seen": {
    "me": {

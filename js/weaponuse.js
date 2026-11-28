@@ -7,7 +7,7 @@
    8f-4, melee: a swing's life, the pan's miss and the knock-back as data (ARMS knock). */
 import { ARMS } from "./guns.js";
 import { NADE } from "./gamedefaults.js";
-import { DUCK } from "./units.js";
+import { DUCK } from "./hangout/layoutbase.js"; // (the leaf, not units.js: this file runs in node checks too, tools/check/gate.cjs)
 
 /* full auto: the shots can come a little bunched over the network, so they may come this share of the wait early */
 const AUTO_SLACK = 0.2;
