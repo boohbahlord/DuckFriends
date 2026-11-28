@@ -9,6 +9,25 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v288",
+    version: 288,
+    date: "Nov 28, 2026",
+    title: "The director",
+    news: [
+      "Falls hurt only from 1.5 elevations up, and only the drop counts: moving in the air adds nothing. Being thrown by a hit still adds the distance it threw you.",
+      "Grenades: hold to pull the pin and cook it (5 s fuse, white to yellow to red), let go to throw. They fly in an arc, bounce off walls and cars, and lie there until they go off. In every mode.",
+      "The bow: click to shoot at once, or hold the right button to draw it for more damage. The bow and the Laser Rifle have 300 shots each.",
+      "Game messages sit above the keys list, never over it.",
+      "For Dead Ducks Arcade: a director now watches how the team is doing: it sends help when someone is low on health or ammo, and pushes harder when everyone is doing well.",
+      "For Dead Ducks Arcade: there can be more than one merchant, and merchants run and fight back.",
+      "For Dead Ducks Arcade: some zombies wear helmets or SWAT armor. From round 5, Giants and Flyers can turn up. A Flyer leaps on you and holds on, and only melee can hit it.",
+      "For Dead Ducks Arcade: when someone is low on ammo and can't afford more, a helicopter may drop a supply crate on the gas station roof. Press E at it and hold on what you want to take.",
+      "For Dead Ducks Arcade: a duck low on health gets a bandage or two dropped beside it. Between rounds, a few walkers wander about and come for you if you get close, shine a light on them or hit them.",
+      "For Dead Ducks Arcade: once every board on a church window is down, you can walk through it. At the generator, tap E to pour a jerry can and hold E to switch the power.",
+      "For Dead Ducks Arcade: red outlines no longer flash when zombies jump from roof to roof.",
+    ],
+  },
+  {
     id: "v287",
     version: 287,
     date: "Nov 28, 2026",
