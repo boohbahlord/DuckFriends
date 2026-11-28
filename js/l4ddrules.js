@@ -402,22 +402,15 @@ const PTS = {
 }; // (a board: 5, the owner's, Nov 3)
 /* Justin's Butler's upgrades (the owner's prices; attack speed's are Adam's plan's guess, question 3): the price of the
    next one when n are bought already, how many at most */
+/* the upgrades, how many of each I can buy, and their prices (UP_PRICE): the owner's, Nov 28 04:05Z
+   (cmsg_01LTpp6fzv8sfYUR5KoHADKtBFSt5xGqKea6TT5ehvSw7H); Attack speed is gone */
 export const SHOP = [
-  /* the upgrades never run out at the merchant (the owner's, Nov 19 19:27Z: "they do not go away. They are not a
-     limited resource anymore"), and each one stacks up to 5 ("it can increase to 5"), so crits, cooldowns and reloads
-     never run away. Quick Revive is a switch, so it stays one */
   {
     id: "acc",
     name: "Critical Chance",
     what: "+2.5% crits",
-    most: 5,
-  }, // (600 each, +2.5%: the owner's, Nov 16 21:47Z)
-  {
-    id: "as",
-    name: "Attack speed",
-    what: "Cooldowns 10% faster",
-    most: 5,
-  }, // (each one 10% faster than the last)
+    most: 2,
+  },
   {
     id: "hp",
     name: "Increase HP",
@@ -428,7 +421,7 @@ export const SHOP = [
     id: "rl",
     name: "Faster reload",
     what: "Reloads 30% faster",
-    most: 5,
+    most: 1,
   },
   {
     id: "qr",
@@ -437,9 +430,13 @@ export const SHOP = [
     most: 1,
   }, // (750, kept until I go down: the owner's, Nov 17 11:07Z + 11:19Z)
 ];
-/* his guns and their ammo went with the merchants (the owner's, Nov 18 13:46Z: "never any ammo"): what a merchant sells
-   is his stock (merchantStock). Every upgrade is 20% dearer (the owner's, Nov 4) */
-const SHOP_MORE = 1.2;
+/* the nth one's price (n from 0) */
+const UP_PRICE = {
+  acc: (n) => [600, 750][n],
+  hp: (n) => 240 + 200 * n, // (200 more each buy)
+  rl: () => 1500,
+  qr: () => 750, // (kept until I go down: the owner's, Nov 17 11:07Z + 11:19Z)
+};
 /* a number of points as a whole number of fives: dir 1 rounds up, -1 down, 0 to the nearest (5 points is the smallest
    unit of money, for everything: the owner's, Nov 17 19:11Z) */
 const fives = (n, dir = 0) =>
@@ -449,27 +446,9 @@ const fives = (n, dir = 0) =>
     : dir < 0
       ? Math.floor(n / 5)
       : Math.round(n / 5));
-export const priceOf = (id, n) =>
-  id === "acc"
-    ? ACC_PRICE
-    : id === "qr"
-      ? QR_PRICE
-      : fives(
-          UP_TIMES *
-            SHOP_MORE *
-            {
-              acc: 300 + 50 * n,
-              as: 250 + 50 * n,
-              hp: n ? 125 : 100,
-              sp: 250,
-              rl: 300,
-            }[id],
-        );
-const ACC_PRICE = 600; // (every Critical Chance the same: the owner's, Nov 16 21:47Z)
-const QR_PRICE = 750; // (Quick Revive: "it costs only 750", the owner's, Nov 17 11:19Z)
+export const priceOf = (id, n) => UP_PRICE[id](n);
 /* how long duck `by` holds E to get a downed duck up: Quick Revive makes it 3 s */
 export const reviveMs = (s, by) => (upOf(s, by).qr ? L4.QUICK : L4.REVIVE);
-const UP_TIMES = 2; // (every upgrade twice its old price, for now: the owner's, Nov 3; then 20% more, SHOP_MORE)
 /* the price I pay now: a Sale (a drop) halves what I buy for the rest of the round, each of the Butler's upgrades only
    once (the owner's: "increased health or accuracy is only half off for that item once"), the fireplace every time.
    It lasts 45 s (DROP.FOR, the owner's, Nov 16; it was the rest of the round) */
@@ -895,11 +874,11 @@ export const ptsOf = (s, id) => ((s && s.hang && s.hang.l4pt) || {})[id] ?? 0;
 export const upOf = (s, id) => ((s && s.hang && s.hang.l4u) || {})[id] || {};
 export const maxHp = (s, id) =>
   isWild(s, id) ? wildMax(s, id) : grHp(s, id, L4.HP + (upOf(s, id).hp || 0)); // (Sandbox: a group's Max HP over it, sbgroups.js)
-/* a weapon's wait between uses (each Attack speed: 10% shorter), a reload's time (Faster reload: 30% shorter), the
+/* a weapon's wait between uses, a reload's time (Faster reload: 30% shorter), the
    headshot chance (headOf, below) */
 export const l4Cool = (s, id, w) =>
   ARMS[w]
-    ? (((lmOf(s, id, w) || {}).c ||
+    ? ((lmOf(s, id, w) || {}).c ||
         (w === "laser" && angelOf(s, id, w)
           ? ANGEL.LASER.cool // (the Angelic Laser Rifle: its own, a beam every 0.75 s)
           : ARMS[w].cool *
@@ -907,8 +886,7 @@ export const l4Cool = (s, id, w) =>
               ? w === "handgun"
                 ? ANGEL.PISTOL.FIRE
                 : ANGEL.FAST
-              : 1))) * // (Angelic: 20% faster; the dual pistols twice as fast, l4ddangel.js; a loot orb's own wait first)
-        Math.pow(0.9, upOf(s, id).as || 0)) /
+              : 1))) / // (Angelic: 20% faster; the dual pistols twice as fast, l4ddangel.js; a loot orb's own wait first)
       grCool(s, id) // (Sandbox: a group's Cooldown speed, sbgroups.js)
     : 400;
 /* ---------- the Laser Rifle's heat ----------
@@ -1686,12 +1664,12 @@ function buy(s, id, what, mx, my, hand, now) {
   } // (its half price is spent)
   s.hang.l4u = { ...(s.hang.l4u || {}), [id]: { ...up, [what]: n + 1 } };
   soldSays(s, id, `bought ${it.name} from the merchant for ${price}.`);
-  /* he never runs out of upgrades (the owner's, Nov 19 22:25Z: "Upgrades are unlimited in terms of however many there
-     are"): the same one again while I can have more of it, else another I can still get */
+  /* the same one again while I can have more of it; once it's maxed he has no upgrade for me until his next visit
+     (the owner's, Nov 28) */
   const mm = merchantOf(s);
   s.hang.l4m = {
     ...mm,
-    ups: { ...(mm.ups || {}), [id]: n + 1 < it.most ? what : upFor(s, id) },
+    ups: { ...(mm.ups || {}), [id]: n + 1 < it.most ? what : "" },
   };
   if (what === "hp") {
     const p4 = s.hang.l4p || {};
@@ -2203,7 +2181,7 @@ function merchantStock(s) {
   ]); // (grenades: enough for a full belt, one a buy)
 }
 /* his upgrades this visit: one for each duck, from the ones it can still get (the owner's, Nov 18 14:20Z); bought, it's
-   there again (buy); { id: upgrade id, or "" (none left) } */
+   there again till it's maxed (buy); { id: upgrade id, or "" (none left) } */
 function upOffers(s) {
   const ups = {};
   for (const id of players(s)) if (!isWild(s, id)) ups[id] = upFor(s, id);
