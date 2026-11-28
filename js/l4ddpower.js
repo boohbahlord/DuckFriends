@@ -255,8 +255,7 @@ export function powerTick(s, zs, now, ids, h) {
    unless someone switched it off. Held (sw): the switch, on or off, whatever fuel is left (the director plan, Nov 28):
    off keeps its fuel (pw.sw: switched off by hand), on only with fuel left */
 export function powerAct(s, id, now, mx, my, h, sw = false) {
-  const pw = s.hang.pw,
-    L = s.hang.l4;
+  const pw = s.hang.pw;
   if (!pw || Math.hypot(mx - PW.E[0], my - PW.E[1]) > PW.REACH * 1.6)
     return false;
   if (sw) {
@@ -267,12 +266,7 @@ export function powerAct(s, id, now, mx, my, h, sw = false) {
   }
   const r = canRow(s)[0];
   if (!r) return false;
-  const between = !!(L && L.wait); // (between rounds the next one is counted too)
-  s.hang.pw = {
-    ...pw,
-    gas: pw.gas - r,
-    left: pw.on || pw.left > 0 ? pw.left + r : r + (between ? 1 : 0),
-  };
+  s.hang.pw = { ...pw, gas: pw.gas - r, left: (pw.left || 0) + r }; // (only a round it ran in is paid for: powerRound)
   h.addFx(s, { kind: "l4pwgas", r, by: id, who: [], t: now });
   if (!pw.on && !pw.sw) setPower(s, true, now, h);
   return true;
