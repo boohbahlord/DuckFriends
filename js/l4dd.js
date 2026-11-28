@@ -1391,6 +1391,24 @@ function litNames(s, ctx, beams) {
     if (el.dataset.pid)
       el.classList.toggle("l4-lit", lit.includes(el.dataset.pid));
 }
+/* a Flyer holding my duck: a light under its meter (flymeter.js), so its lines are as bright in the dark as anywhere.
+   Where the meter sits from my glow (board px) is measured once a hold, once the meter shows */
+let flyAt = null;
+function flyLight(Wd, c, holes, q) {
+  if (!flyAt || flyAt.i !== myFly.i) {
+    const m = Wd.board.querySelector(".gduck.mine .l4-fly:not(.off)");
+    if (!m) return;
+    const b = Wd.board.getBoundingClientRect(),
+      r = m.getBoundingClientRect();
+    flyAt = {
+      i: myFly.i,
+      dx: r.left + r.width / 2 - b.left - c.left,
+      dy: r.top + r.height / 2 - b.top - c.top,
+      r: r.width * 0.75,
+    };
+  }
+  holes.push([(c.left + flyAt.dx) * q, (c.top + flyAt.dy) * q, flyAt.r * q, 1]);
+}
 function paint(now, ctx) {
   CTX = ctx;
   const Wd = ctx.world,
@@ -1505,6 +1523,7 @@ function paint(now, ctx) {
     if (id !== ctx.me && invOn(s, id)) continue; // (invisible: no glow, no flashlight to anyone else, sbgod.js)
     const c = Wd.toScreen(a.x, a.y, a.z + 26);
     holes.push([c.left * q, c.top * q, GLOW * sc, 0.55]);
+    if (id === ctx.me && myFly) flyLight(Wd, c, holes, q);
     if (!up(s, id) || off[id] || sbNoLight(s, id)) continue; // (Sandbox: a flashlight only once taken from loot)
     const [dx, dy] = aimOf(s, id, ctx);
     beamOf(id, a, Math.atan2(dy, dx));
@@ -3113,7 +3132,7 @@ activity({
             ? Math.round(hole.key) + 11 // (over the roof, in its hole)
             : o.st === 3
               ? bodyZ(o.x, o.y, z) // (dead: under every duck, layout.js)
-              : Math.round(zSortY(o, z)) + 10, // (up a wall: in front of its roof, zombies.js)
+              : Math.round(zSortY(o, z)) + 10 + (o.st === 9 ? 1 : 0), // (up a wall: in front of its roof, zombies.js; a Flyer on a duck's back: in front of that duck, or the duck hides it)
         onCam = Wd.onView(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc),
         hide =
           unseen ||

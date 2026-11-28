@@ -15039,12 +15039,13 @@ html.moving .l4-ammo.rl {
   left: 50%;
   top: calc(100% + max(0.62rem, var(--bt, 0rem)));
   translate: -50% 0;
-  width: 4.6rem;
-  height: 0.66rem;
+  --hpw: 2.3rem; /* (the Flyer's HP, in its own end: the lines never cover it) */
+  width: 9rem;
+  height: 1.15rem;
   background: #0b0b0f;
-  border: 0.07rem solid #000;
-  border-radius: 0.18rem;
-  box-shadow: 0 0 0 0.05rem #fff3;
+  border: 0.1rem solid #000;
+  border-radius: 0.24rem;
+  box-shadow: 0 0 0 0.08rem #fff5;
   overflow: hidden;
   transition: opacity 0.2s;
 }
@@ -15055,27 +15056,32 @@ html.moving .l4-ammo.rl {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 0.14rem;
+  width: 0.26rem;
   translate: -50% 0;
   z-index: 1;
 }
 .l4-fly .w {
-  left: calc(var(--w, 0.5) * 100%);
+  left: calc(var(--hpw) + var(--w, 0.5) * (100% - var(--hpw)));
   background: #fff;
+  box-shadow: 0 0 0.3rem #fff;
 }
 html.moving .l4-fly .w {
   animation: l4-fly-blink 0.24s steps(1) infinite;
 }
 .l4-fly .r {
-  left: calc(var(--r, 0) * 100%);
+  left: calc(var(--hpw) + var(--r, 0) * (100% - var(--hpw)));
   background: #ff2d3a;
+  box-shadow: 0 0 0.3rem #ff2d3a;
+  z-index: 2;
 }
 .l4-fly em {
   position: absolute;
-  inset: 0;
+  inset: 0 auto 0 0;
+  width: var(--hpw);
   display: grid;
   place-items: center;
-  font: 700 0.46rem/1 var(--font, inherit);
+  border-right: 0.08rem solid #3a3c46;
+  font: 700 0.62rem/1 var(--font, inherit);
   font-style: normal;
   color: #ff8a90;
 }
@@ -15084,7 +15090,7 @@ html.moving .l4-fly .w {
 }
 @keyframes l4-fly-blink {
   50% {
-    opacity: 0.25;
+    opacity: 0.55;
   }
 }
 .flying .l4-peek,

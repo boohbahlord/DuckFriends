@@ -79,7 +79,8 @@ const { url, fail, noErrors } = require("./lib.cjs");
         ]);
         last = line;
       }
-      if (f && f.st === 9 && !out.held) out.held = { k, hp };
+      if (f && f.st === 9 && !out.held)
+        out.held = { k, hp, max: f.l[0], fhp: f.hp };
       if (out.held && k === out.held.k + 6)
         out.after = {
           hp,
@@ -128,6 +129,7 @@ const { url, fail, noErrors } = require("./lib.cjs");
   const bad = (m) => fail("flyer: " + m + " " + JSON.stringify(got));
   if (!got.held) bad("it leaps on and holds the duck");
   else {
+    if (got.held.max !== 5) bad("the Flyer has 5 HP, never scaled");
     if (!(got.after.hp < got.held.hp)) bad("its bites hurt");
     if (!got.after.fx) bad("every screen hears it hold on (l4latch)");
     if (!got.hit || got.hit.st !== 9 || got.hit.hp !== 2)
