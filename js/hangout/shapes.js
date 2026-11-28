@@ -70,12 +70,9 @@ const gsPart = (p, svg, o = {}) => [
   ),
 ];
 const seedOf = (p) => GS.seedAt(p.x, p.y);
-/* a leaning fence's box (stationparts.js fenceSVG, lean + 8 wide in the plan): its foot right on its line, the middle of
-   its footprint, so a fence and the corner piece that joins it meet the straight fences' ends */
-const fenceBox = (p, lean, dir) => ({
-  left: -p.w / 2 + (dir > 0 ? 0 : lean) + 4 * GS.K,
-  w: lean + 8 * GS.K,
-});
+/* an upright piece round the map's edge (stationparts.js fenceSVG, fenceCornerSVG: w wide in the plan), on the middle of
+   its footprint, so the side fences and the corner pillars meet the straight fences' ends */
+const edgeBox = (p, w) => ({ left: -p.w / 2 + (w / 2) * GS.K, w: w * GS.K });
 /* Downpour's trees: which one grows where is the map's (stationmap.js swampPick, from the tree's id, as its size); each
    drawing is made once */
 const SWAMP_URL = {};
@@ -108,7 +105,6 @@ const PLAN = new Set([
     "up",
     "half",
     "z",
-    "lean",
     "sunk",
   ]),
   PLAN_AT = new Set(["x0", "y0", "x1", "y1"]);
@@ -177,29 +173,18 @@ const GS_DRAW = {
       w: p.w + cable,
     });
   },
-  fence: (p) => {
-    const t = SA.fenceLean(p, L.W), // (its top leans out, toward the map's edge: stationart.js)
-      dir = Math.sign(t),
-      lean = Math.abs(t);
-    return gsPart(
+  fence: (p) =>
+    gsPart(
       p,
-      () => SK.fenceSVG({ d: p.d, h: p.h, lean, dir, seed: seedOf(p) }),
-      fenceBox(p, lean, dir),
-    );
-  },
-  fencecorner: (p) => {
-    const t = SA.fenceLean(p, L.W);
-    return gsPart(
+      () => SK.fenceSVG({ d: p.d, h: p.h, seed: seedOf(p) }),
+      edgeBox(p, SA.FENCE_W),
+    ),
+  fencecorner: (p) =>
+    gsPart(
       p,
-      () =>
-        SK.fenceCornerSVG({
-          d: p.d,
-          h: p.h,
-          lean: Math.abs(t),
-        }),
-      fenceBox(p, Math.abs(t), Math.sign(t)),
-    );
-  }, // (where two fences meet: stationparts.js)
+      () => SK.fenceCornerSVG({ d: p.d, h: p.h }),
+      edgeBox(p, SA.PILLAR_W),
+    ), // (where two fences meet: stationparts.js)
   fencex: (p) =>
     gsPart(p, () => SK.fenceXSVG({ w: p.w, d: p.d, h: p.h, seed: seedOf(p) })), // (the map's north and south sides: stationart.js)
   pew: (p) =>

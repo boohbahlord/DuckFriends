@@ -63,7 +63,6 @@ import {
   PUMPS,
 } from "./hangout/stationmap.js";
 import { floatDuck, SINK, WADE_SINK } from "./hangout/water.js";
-import { fenceLean } from "./hangout/stationart.js";
 import { cutRoofsOver, roofOver } from "./lightlevel.js";
 import { bellSwing, bellReset, flareDraw, flareOn } from "./l4ddbell.js";
 import {
@@ -1668,14 +1667,7 @@ function litBy(c, Wd) {
     y1 = Math.max(y1, y);
   }
   return litProps().filter((p) => {
-    let l = p.x,
-      r = p.x + p.w;
-    if (p.kind === "fence") {
-      const t = fenceLean(p, W); // (its top leans out toward the map's edge: all of that lights)
-      if (t > 0) r += t;
-      else l += t;
-    }
-    if (l > x1 || r < x0 || p.y > y1 || p.y + p.d < y0) return false;
+    if (p.x > x1 || p.x + p.w < x0 || p.y > y1 || p.y + p.d < y0) return false;
     const el = Wd.propEl(p.id); // (only what's drawn now: not what's left out of this map, or hidden from in here)
     return !!el && !el.hidden;
   });
@@ -1690,14 +1682,7 @@ function shineProps(g, Wd, cones, q) {
     const [ax, ay, ends] = c[4],
       poly = [[ax, ay], ...ends];
     for (const p of litBy(c, Wd)) {
-      let l = p.x,
-        r = p.x + p.w;
-      if (p.kind === "fence") {
-        const t = fenceLean(p, W); // (its top leans out toward the map's edge: all of that lights)
-        if (t > 0) r += t;
-        else l += t;
-      }
-      const part = clipBox(poly, l, p.y, r, p.y + p.d);
+      const part = clipBox(poly, p.x, p.y, p.x + p.w, p.y + p.d);
       if (!part) continue;
       /* as bright as the cone's floor that far out (its three passes: about 0.9 near, fading out from 0.7 of the way) */
       let mx = 0,
@@ -2946,11 +2931,7 @@ activity({
               ? zOf(o, "zombie") - heightAt(o.x, o.y)
               : 0, // (Downpour: up a fence, or dropping off it; up a wall, or on a roof, alive or dead)
         z = heightAt(o.x, o.y) + up,
-        lean =
-          o.st === 5 && up && openingById(o.l[2])?.axis === "y"
-            ? fenceLean({ x: o.x, h: up }, W)
-            : 0, // (on the west or east fence: on its face, which leans out as it goes up, stationart.js)
-        f = Wd.toScreen(o.x + lean, o.y, z),
+        f = Wd.toScreen(o.x, o.y, z),
         door = atBoards(o, Wd.inside),
         hole = !Wd.inside && roofHoleOver(o.x, o.y, z), // (Downpour: seen from outside through a hole in the gas station's roof)
         unseen = !(door || hole || EYES.some((a) => duckSees(a, o.x, o.y, z))),
