@@ -77,7 +77,7 @@ gamehand.js 506 the hand: the number-key
 gameplace.js 480 where things are put
 gameready.js 47 
 gameround.js 551 round
-gamesettings.js 771 Game Settings: the whole
+gamesettings.js 775 Game Settings: the whole
 gameshots.js 135 The bullets in the
 gamestats.js 179 what `stats` and `roundstats`
 gfx.js 8 Low graphics
@@ -100,7 +100,7 @@ helppages.js 1498 the command line's Help
 hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
 hooks.js 3 hooks between screens that
-hotbar.js 501 the specials on the
+hotbar.js 515 the specials on the
 hotpick.js 278 What goes in my
 hpmath.js 68 HP in hundredths
 hpmeter.js 311 HP meters and the
