@@ -70,7 +70,7 @@ let openList = ""; // (the drop-down left open: it stays open as the page is dra
 const HEX_INFO =
   "A hex color is # and six characters, each 0–9 or A–F: two for red, two for green, two for blue. 00 is none, FF is the most. #FF0000 is red, #00FF00 green, #FFFFFF white, #000000 black.";
 const HEX_OK = /^#[0-9a-f]{6}$/i;
-export const normHex = (s) => {
+const normHex = (s) => {
   s = String(s || "").trim();
   if (!s.startsWith("#")) s = "#" + s;
   if (/^#[0-9a-f]{3}$/i.test(s))

@@ -16,17 +16,7 @@
    own rules in duncerules.js: one defender in the circle, everyone else walks to Dunce or Not a Dunce. Valentine's Duck
    Date has its own in vddrules.js: The Date at the dining table, a date with each Suitor, then a Suitor Turned Down. */
 
-import {
-  baseMode,
-  baseL4map,
-  isSb,
-  sbOnBoard,
-  sbItemMods,
-} from "./sandboxrules.js";
-
-import { survSet } from "./survrules.js";
-
-import "./gunmenrules.js"; // (Survival's gunmen: their rules hook into l4ddrules.js)
+import { baseMode, isSb, sbOnBoard, sbItemMods } from "./sandboxrules.js";
 
 import { sbGot } from "./sbhot.js";
 
@@ -86,14 +76,6 @@ import { hangJoin, hangLeft } from "./hangout/rules.js";
 
 import { useMode } from "./hangout/layout.js";
 import { carsAt } from "./carpush.js";
-
-import {
-  isMgj,
-  mgjAdvance,
-  mgjCool,
-  PELLET_SPEED,
-  PELLET_LIFE,
-} from "./mgjrules.js";
 
 import { helperOut } from "./l4ddrules.js";
 
@@ -179,8 +161,7 @@ export const SHORT = ["−−−", "−−", "−", "0", "+", "++", "+++"];
 export const OPTIONS_DEFAULT = {
   order: "random", // random | rotate: the order of the round's questions
   share: 0.67, // how many players must vote to start the countdown: .5, .67, .75, 1 (half by default with the Discussion round on)
-  sbMap: "", // Sandbox's world: "" (the board, on the room's map) | "cabin" (Duck Cabin) | "zcabin" (Dead Ducks Arcade's cabin) | "downpour" (sandboxrules.js)
-  l4map: "cabin", // Quacky Zombies' map: "cabin" | "downpour", picked by everyone in its own map vote before each game (ZMAPS)
+  sbMap: "", // Sandbox's world: "" (the board, on the room's map) | "cabin" (Duck Cabin) | "downpour" (sandboxrules.js)
   answerTime: 0, // the default answer time in seconds: 0 (off), 30, 60, 90. I want no answer timer by default; a question's writer can still pick one
   catchUp: 15, // 0 (off), 15, 30, 45: the countdown once enough players have voted (everyone voting ends it at once)
   writeCatch: 30, // 0 (off), 15, 30, 45, 60: the same countdown while writing (questions, topics, contenders, secret words): I want the last writers to get 30 s by default
@@ -189,9 +170,9 @@ export const OPTIONS_DEFAULT = {
   discuss: 0, // 1: the Discussion round after each vote comes back (Agree or Disagree, Would You Rather, Bicker Brackets, Lawyering)
   submitTime: 132, // 0 (off), 60, 90, 120, 132 (2:12): a time limit on writing questions; Bicker Brackets starts with none (0)
   botWait: 5, // TEST rooms: seconds before computers act
-  fun: 1, // the silly commands (lightning, love, kill, hotdog): 1 on, 0 off
+  fun: 1, // the board's weapons and items: 1 on, 0 off
   ghosts: 0, // 1: Duck Cabin's ghosts (hangout/ghosts.js): a knocked-down duck's ghost walks about until Space
-  sbTint: 0, // Sandbox on the board: 1 puts Mad God Justin's colored field over the map (off: the map shows plain)
+  sbTint: 0, // Sandbox on the board: 1 puts a slowly changing colored field over the map (off: the map shows plain)
   sbAll: 0, // Sandbox: 1, every player has all of Sandbox's rights (sandboxrules.js sbCan); 0, the host and whoever it lets
   sbOkB: 0, // Sandbox: 1, every player may use Build (B) without the rights; the same for M, N, H and G (sandboxrules.js sbMay)
   sbOkM: 0,
@@ -201,7 +182,6 @@ export const OPTIONS_DEFAULT = {
   hangTime: 15, // Hangout's time limit in minutes when Random or the vote picked it: 0 (none), 5, 10, 15, 20, 30 (never when the host picks it)
   ghostBusy: 1, // 1: no ghost from a duck busy with an activity (chalk, piano, guestbook, cards, a seat …): it just gets up
   justin: 0, // 1: Duck Cabin's Justin walks the boards too, as a joke (js/boardjustin.js); he never counts
-  mgjBoard: 0, // 1: the board's Mad God Justin (only with justin on): 10 HP, and the duck that hurts him is his target for 10 s
   freeRoam: 0, // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
   map: "board", // board | sky | pixel | carnival | stars | rabbit | collage | euclid | ec | vellum | tiles | cabin (Duck Cabin: only for its own games, the Cabin ones)
   mapPick: "vote", // "" (the host's map) | vote (Vote for Map, part of Vote Mode & Map) | random: settled when the game starts
@@ -209,7 +189,7 @@ export const OPTIONS_DEFAULT = {
   modePick: "vote", // "" (the host's game) | vote (Vote for Game Mode: Vote Mode & Map is on by default, owner 2026-11-04) | random (a new game every round)
   voteBack: 3, // Vote return: the games until both votes come back: 1 … 6, "r" (a random 1 to 6 each time) or 0 (never)
   trueRandom: 0, // with Random: 1 = any game can come next; 0 = every game once before a new shuffle
-  mode: "aod", // the game: aod (Agree or Disagree) | wyr (Would You Rather) | ddr (Does Duck Relate?) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?) | law (Lawyering) | dunce (Duncelation) | mgj (Mad God Justin) | vdd (Valentine's Duck Date) | trivia (Trivia) | hang (Hangout)
+  mode: "aod", // the game: aod (Agree or Disagree) | wyr (Would You Rather) | ddr (Does Duck Relate?) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?) | law (Lawyering) | dunce (Duncelation) | vdd (Valentine's Duck Date) | trivia (Trivia) | hang (Hangout)
   bbSeeds: "t8", // Bicker Brackets: t8, t12, t16, t32, t64 seeds shared out, or p1 … p4 seeds for each player
   bbTopic: "vote", // vote (everyone writes one, then votes) | random (one of BB_TOPICS)
   bbBlind: 0, // 1: a seed's writer stays hidden until it is knocked out or wins
@@ -233,7 +213,6 @@ export const OPTIONS_DEFAULT = {
   mapZoom: 0, // Euclid's Squares, picked by the host: 1 zooms into its tiny squares forever (s.mapZoomed in the game)
   invuln: 0, // 1: Invulnerability: nothing takes a duck down or takes its HP, hits only flash red
   noChat: 0, // 1: No Chat: text chat is off for everyone, the host too (the game's own messages still show)
-  noTerm: 0, // 1: No Terminal: the command line is off for everyone, the host too
   aodColors: "rainbow", // Agree or Disagree's board: rainbow | gr (shades of green and red, Neutral fading black, grey, white)
   hideNames: 0, // 1: name tags stay hidden while answering (Agree or Disagree, Would You Rather, Does Duck Relate?)
   showWriter: 0, // 1: the question's writer is named after the vote (Agree or Disagree, Would You Rather)
@@ -246,9 +225,8 @@ export const OPTIONS_DEFAULT = {
   infAmmo: 0, // Unlimited ammo: 1 = guns reload but never run out (ammo.js)
   noFx: 0, // Heavy effects off: 1 = no gun smoke, muzzle flashes or screen shake, the effects that are hard on the game (fx.js)
   rainbowDucks: 0, // … Rainbow Ducks (with hideLooks only): the seven rainbow colors and a brown Justin-costume duck, dealt at random
-  voteColor: 0, // Vote colors: 1 = a duck takes the color of the tile it stands on (never with Rainbow Ducks, never in Mad God Justin)
+  voteColor: 0, // Vote colors: 1 = a duck takes the color of the tile it stands on (never with Rainbow Ducks)
   tagColor: 0, // … Change player tag color: 1 = the name tag takes the vote color too
-  mgjHp: 6, // … Player HP: 0 (off), 1, 5, 6, 10, 15
   l4start: 1, // Quacky Zombies' Start on round: 1, 5, 9, 13 or 21 (round 0 goes on to it, everyone with bonus points: l4ddrules.js START_PTS)
   wildJustin: 1, // Quacky Zombies: 1 = Justin is out in Duck Cabin too, unarmed, as on Downpour (the owner's, Nov 17; Downpour always has him). On by default: the owner's, Nov 17 20:02Z, "he spawns in cabin now by default the same, without a weapon and cannot get a weapon"
   vdTime: 60, // Valentine's Duck Date: seconds a date's timer runs once The Date starts it: 0 (off, no timer button), 60, 90, 120
@@ -278,10 +256,8 @@ export const GEN_RULES = [
   "endBtn",
   "freeRoam",
   "justin",
-  "mgjBoard",
   "invuln",
   "noChat",
-  "noTerm",
   "lateJoin",
   "textMax",
 ];
@@ -576,13 +552,11 @@ export const boardPhases = (s) =>
               ? ["answer", "discuss", ...ATT_PHASES]
               : isDn(s)
                 ? ["answer", "discuss", "dunced"]
-                : isMgj(s)
-                  ? ["boss", "mgjend"]
-                  : isVd(s)
-                    ? VD_PHASES
-                    : isTv(s)
-                      ? TV_BOARD
-                      : ["answer", "discuss", "results"];
+                : isVd(s)
+                  ? VD_PHASES
+                  : isTv(s)
+                    ? TV_BOARD
+                    : ["answer", "discuss", "results"];
 export const humanIds = (s) => s.seat.filter((id) => !s.players[id].bot);
 /* who plays now: a player who joined in the middle of a turn they can't take part in walks around until the next one */
 export const playing = (s) =>
@@ -747,17 +721,17 @@ export const turnKey = (s) =>
         : `${s.phase}${s.round}.${s.qi}`;
 export const VOTE_TIME = 30; // seconds a kick or back-to-lobby vote stays open
 /* every duck's arrows, bullets and thrown daggers fly this much faster than they first did, in every mode (the owner,
-   Nov 3: "slightly faster"); Mad God Justin's own bullets keep their speed (mgjrules.js JUSTIN_SHOT) */
+   Nov 3: "slightly faster") */
 export const FASTER = 1.15;
 /* the bow's arrow: it flies straight and fast the way it was aimed, on to the screen's edge */
 export const ARROW_SPEED = boardSpeed("bow") * FASTER;
 /* (Quacky Zombies' speeds, armspeed.js, in every mode; Justin's own bullets on the boards keep the old, slow BOSS_SHOT_SPEED) */
 export const BOSS_SHOT_SPEED = 0.22 * FASTER;
-/* a duck's shotgun pellet: the same speed, and so a shorter life, to fly as far as it did */
+/* a duck's shotgun pellet: the same speed, and so a shorter life, to fly as far as it did (1400 ms at 0.3 board widths
+   a second), in a cone PELLET_SPREAD wide (radians) */
 export const PELLET_V = boardSpeed("shotgun") * FASTER;
-export const DUCK_PELLET_LIFE = Math.round(
-  (PELLET_LIFE * PELLET_SPEED * FASTER) / PELLET_V,
-);
+export const DUCK_PELLET_LIFE = Math.round((1400 * 0.3 * FASTER) / PELLET_V),
+  PELLET_SPREAD = 0.34;
 export const SHOT_SPEED = boardSpeed("handgun") * FASTER; // the handgun special's bullet: board widths a second (slow enough to see, and to jump over)
 /* the thrown dagger: across the board at DAGGER_SPEED (board widths a second) while its height (in duck sizes) rises
    from the beak and falls: z = DAGGER_Z + DAGGER_UP·t − DAGGER_G·t²/2; it hits ducks only at their height, then falls
@@ -808,16 +782,15 @@ export const PRESS = [
   "trombone",
   "confetti",
 ]; // the items, used with their number key
-export const coolFor = (sp, s) =>
-  (s && isMgj(s) && mgjCool(sp)) ||
+export const coolFor = (sp) =>
   GUN_BREEDS.board.cool[sp] ||
   (BOARD_GUNS.includes(sp) && ARMS[sp].cool) ||
-  1500; // (Mad God Justin has its own for the knife and the bow; Quacky Zombies' guns keep theirs, l4ddrules.js ARMS)
+  1500; // (Quacky Zombies' guns keep theirs, l4ddrules.js ARMS)
 export const coolEnds = (s, id, sp) =>
   Math.max(
     ((s.lastUse || {})[`${id} ${sp}`] || 0) +
       ((isSb(s) && (sbItemMods(s, sp).cool || (sbGot(s, id, sp) || {}).c)) ||
-        coolFor(sp, s)) /
+        coolFor(sp)) /
         grCool(s, id), // (Sandbox: a loot orb's own wait, sbhot.js; a group's Cooldown speed, sbgroups.js)
     ((s.mag || {})[magKey(id, sp)] || {}).r || 0, // (a reload: ammo.js)
   ); // (a time on the room's clock)
@@ -1114,14 +1087,6 @@ export function advance(s, now, force = false) {
     return quackAdvance(s, now, force);
   if (isHang(s)) return s; // (no turns: the cabin stays open until the room goes back to the lobby)
   if (sbOnBoard(s)) return s; // (Sandbox: no turns either, till Leave Sandbox)
-  if (isMgj(s)) {
-    const was = s.phase,
-      next = mgjAdvance(s, now, force, logLine);
-    return (
-      (was === "results" && next.phase !== "results" && gameOver(next, now)) ||
-      next
-    );
-  } // (Mad God Justin: his HP, the timer, the podium, Try again; each fight is a game: Vote return counts it, and with Random the next game comes instead)
   if (isVd(s) && VD_PHASES.includes(s.phase)) return vdAdvance(s, now, force); // (Valentine's Duck Date: its timers)
   if (isTv(s) && TV_BOARD.includes(s.phase)) return tvAdvance(s, now, force); // (Trivia: a question's votes, answers, grades)
   const on = playing(s),
@@ -1307,8 +1272,7 @@ export function reduce(state, a, now = Date.now()) {
   return s;
 }
 function reduceStep(state, a, now) {
-  survSet(state.options); // (Survival: survrules.js)
-  useMode(baseMode(state.options), baseL4map(state.options)); // (Duck Cabin as the room's mode has it, or Dead Ducks Arcade's Downpour, or Sandbox on one of them: hangout/layout.js)
+  useMode(baseMode(state.options)); // (Duck Cabin as the room's mode has it, or Dead Ducks Arcade's Downpour, or Sandbox on one of them: hangout/layout.js)
   carsAt(state); // (Downpour's cars where the state has them: carpush.js)
   const s = clone(state),
     P = s.players,
@@ -1443,7 +1407,7 @@ export function reopenMatch(s, id) {
    screen, the next round starts */
 function skipRound(s, now) {
   say(s, "The room voted to skip this round.");
-  if (s.phase === "results" || isMgj(s)) return advance(s, now, true); // (Mad God Justin: the fight ends as if time ran out)
+  if (s.phase === "results") return advance(s, now, true);
   const over = gameOver(s, now); // (a skipped round ends like any other: Vote return, or Random's next game)
   if (over) return over;
   if (isBb(s)) {
@@ -1544,7 +1508,6 @@ export function cabinTick(s, now) {
 export function backToLobby(s, why) {
   helperOut(s); // (the fireplace's Justin stays with his game)
   delete s.waiting;
-  delete s.zmapAsked; // (Quacky Zombies' map vote comes again next time)
   sbEnd(s); // (Sandbox: a save's settings give way to the room's again)
   const was = STAGE[s.phase];
   s.phase = "lobby";
@@ -1573,9 +1536,7 @@ export function backToLobby(s, why) {
   s.law = null;
   s.dn = null;
   s.vd = null;
-  s.mgj = null;
   s.mz = null;
-  s.mgjPast = [];
   s.wq = null;
   delete s.hidden;
   s.wqPast = [];

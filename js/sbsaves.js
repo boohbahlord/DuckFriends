@@ -504,7 +504,6 @@ async function saveAs(R) {
 let W = null; // the window while it's up: { el, R, key, list }
 const picOf = (sv) => {
   if (sv.world === "downpour") return "assets/px/maps/downpour.webp";
-  if (sv.world === "zcabin") return "assets/px/maps/duck-cabin-zombies.webp";
   if (sv.world === "cabin") return "assets/px/maps/duck-cabin.webp";
   const m = mapForm(sv.map || "board").map;
   return `assets/px/vote/${["board", "carnival", "collage", "euclid", "pixel", "rabbit", "sky", "stars", "tiles", "vellum"].includes(m) ? m : "board"}.webp`;

@@ -309,7 +309,6 @@ export const cabinSVG = (dark = false) => {
     h: d + 290,
     wallH: C.wall,
     windows: [1550, 2080, 3300, 3700, 4080].map((x) => x - C.x0),
-    holes: L.HOLES.filter((o) => o.out).map((o) => [o.a - C.x0, o.b - C.x0]), // (Quacky Zombies')
     backDoor: L.DOORS.back.x - C.x0,
     frontDoor: L.DOORS.front.x - C.x0,
     chimney: 2300 - C.x0,

@@ -51,7 +51,6 @@ import {
   DN_GRACE,
   DUNCE_TAKES,
 } from "./duncerules.js";
-import { isMgj, mgjGone, PICK_WEAPONS } from "./mgjrules.js";
 import {
   isL4dd,
   L4,
@@ -78,7 +77,7 @@ import {
   hasLeft,
 } from "./l4ddrules.js";
 import { endless } from "./ammo.js";
-import { kindOf, MGJ_MELEE } from "./guns.js";
+import { kindOf } from "./guns.js";
 import { draws } from "./bowdraw.js";
 import { gunsIn, itemsIn, PRIMARY } from "./kitslots.js";
 import { lootAt } from "./l4ddloot.js";
@@ -91,7 +90,6 @@ import {
   seated,
   vdTileRects,
 } from "./vddrules.js";
-import { justinAt } from "./boardjustin.js";
 import {
   isTv,
   TV_PHASES,
@@ -111,7 +109,6 @@ import { SPRINT as GAME_SPRINT } from "./gamedefaults.js";
 import { W, H, heightAt, standable, STEP } from "./hangout/layout.js";
 import { spotIn } from "./walkgrid.js";
 import { zombiesOf, wayTo, clearShot } from "./zombies.js";
-import { isSurv } from "./survrules.js";
 import { WANDER } from "./hangout/justin.js";
 import { NPC_RUN } from "./npcshared.js";
 import { anyOf, shuffle } from "./random.js";
@@ -254,71 +251,6 @@ function dnBot(s, id, late, now, out) {
   if (mine !== side) toSide(s, id, side, out);
 }
 
-/* Mad God Justin: up to him (stopping a little short, off to one side), a stab once he's in reach, a jump now and then */
-const stabbed = new Map(); // computer id → when it last stabbed
-function mgjBot(s, id, now, out) {
-  const p = s.pos[id],
-    P = s.players[id];
-  if (!p || !P || P.dead || !s.justin || mgjGone(s, now)) return;
-  const j = justinAt(s.justin, now),
-    dx = (j.x - p.x) / 0.03,
-    dy = (j.y - p.y) / 0.08,
-    d = Math.hypot(dx, dy) || 1,
-    len = Math.hypot(j.x - p.x, j.y - p.y) || 1,
-    ax = +((j.x - p.x) / len).toFixed(3),
-    ay = +((j.y - p.y) / len).toFixed(3);
-  const air = p.j && now - p.j < 700,
-    jump = !air && Math.random() < 0.015 ? now : air ? p.j : 0;
-  const m = s.mgj || {},
-    mine = (m.held || {})[id],
-    pk = m.pick;
-  if (mine === "medkit" && (m.lost || {})[id] > 0)
-    out.push({ t: "use", id, what: mine, face: 1 }); // (hurt: the medkit)
-  else if (mine && mine !== "medkit") {
-    out.push({ t: "use", id, what: mine, face: ax < 0 ? -1 : 1, ax, ay });
-    return;
-  } // (a gun picked up: fire it at him)
-  if (
-    pk &&
-    PICK_WEAPONS.includes(pk.k) &&
-    Math.hypot((pk.x - p.x) / 0.03, (pk.y - p.y) / 0.08) < d
-  ) {
-    const q = Math.hypot((pk.x - p.x) / 0.03, (pk.y - p.y) / 0.08) || 1,
-      k = Math.min(1, 0.7 / q);
-    out.push({
-      t: "move",
-      id,
-      x: p.x + (pk.x - p.x) * k,
-      y: p.y + (pk.y - p.y) * k,
-      j: jump,
-      w: MGJ_MELEE,
-      ax,
-      ay,
-    });
-    return;
-  } // (a weapon nearer than he is: go get it)
-  if (d > 1.6) {
-    const k = Math.min(1, 0.7 / d);
-    out.push({
-      t: "move",
-      id,
-      x: p.x + (j.x - p.x) * k,
-      y: p.y + (j.y - p.y) * k,
-      j: jump,
-      w: MGJ_MELEE,
-      ax,
-      ay,
-    });
-    return;
-  }
-  if (jump !== (p.j || 0))
-    out.push({ t: "move", id, x: p.x, y: p.y, j: jump, w: MGJ_MELEE, ax, ay });
-  if (now - (stabbed.get(id) || 0) > 1100 + Math.random() * 600) {
-    stabbed.set(id, now);
-    if (stabbed.size > 100) stabbed.delete(stabbed.keys().next().value);
-    out.push({ t: "use", id, what: MGJ_MELEE, face: ax < 0 ? -1 : 1, ax, ay });
-  }
-}
 /* Valentine's Duck Date: a computer that is The Date writes a topic, lets the date run (with the timer off, it moves on
    after a while) and picks a tile (now and then none); everyone else not at the table wanders about and jumps now and
    then */
@@ -481,10 +413,6 @@ function botThink(s, now) {
     }
     if (isSc(s)) {
       storyBot(s, id, now, wait, late, people, out);
-      return;
-    }
-    if (isMgj(s) && s.phase === "boss") {
-      if (now - s.at > 1500 + i * 300) mgjBot(s, id, now, out);
       return;
     }
     if (isVd(s) && VD_PHASES.includes(s.phase)) {
@@ -906,7 +834,7 @@ function storyBot(s, id, now, wait, late, people, out) {
     }
   }
 }
-/* ---------- the computers on a walkable map: Quacky Zombies, Survival, Sandbox (TEST rooms) ----------
+/* ---------- the computers on a walkable map: Quacky Zombies, Sandbox (TEST rooms) ----------
    A computer goes to a downed teammate and holds E by it; otherwise it shoots the nearest zombie it can see (a ranged
    weapon with something left in it, the melee weapon up close, the medkit when it's hurt), backs away from one that's
    too close, throws a grenade into a crowd now and then, and keeps near the middle of the great room. With no zombie in
@@ -994,24 +922,14 @@ const nadeOk = (b, crowd, m, d, now) =>
   m.g > 0 &&
   d > b.nadeMin &&
   now - ((m.u || {}).grenade || 0) > b.nadeGap;
-/* the nearest downed teammate: down, not dead (the dead only with a defibrillator, and never the wild or Justin); with zs,
-   only one with no zombie within KEEP of it */
-function downMate(s, id, x, y, defib, zs) {
-  const l4p = s.hang.l4p || {},
-    dead = (t) => !!(l4p[t] || {}).ex,
-    body = (t) => !!(l4p[t] || {}).gh && dead(t) && !!(s.hang.ghost || {})[t];
+/* the nearest downed teammate: down, not dead for good; with zs, only one with no zombie within KEEP of it */
+function downMate(s, id, x, y, zs) {
+  const l4p = s.hang.l4p || {};
   return s.seat
     .filter(
-      (t) =>
-        t !== id &&
-        ((l4p[t] || {}).dn || body(t)) &&
-        (!dead(t) || (defib && !isWild(s, t) && !isHelper(s, t))) &&
-        s.pos[t],
+      (t) => t !== id && (l4p[t] || {}).dn && !(l4p[t] || {}).ex && s.pos[t],
     )
-    .map((t) => {
-      const q = body(t) ? s.hang.ghost[t] : s.pos[t]; // (Survival's ghost: its body, where it fell)
-      return { t, x: q.x * W, y: q.y * H, dead: dead(t) };
-    })
+    .map((t) => ({ t, x: s.pos[t].x * W, y: s.pos[t].y * H }))
     .filter(
       (t) => !zs || zs.every((z) => Math.hypot(z.x - t.x, z.y - t.y) > KEEP),
     )
@@ -1049,13 +967,11 @@ export function l4Bot(s, id, now, out) {
     sl = m.sl,
     b = BOT_BREEDS.computer,
     send = (nx, ny, w, ax, ay) => out.push(moveOf(id, nx, ny, w, ax, ay));
-  /* a teammate down: go to it and hold E (the hold goes on by itself until the revive is done); in Survival with a
-     defibrillator, a dead player too (the defibrillator out in hand) */
-  const down = downMate(s, id, x, y, isSurv(s) && hasLeft(s, id, "defib"));
+  /* a teammate down: go to it and hold E (the hold goes on by itself until the revive is done) */
+  const down = downMate(s, id, x, y);
   if (down && Math.hypot(down.x - x, down.y - y) < b.revive) {
     const d = Math.hypot(down.x - x, down.y - y);
     if (d < L4.REACH * 0.9) {
-      if (down.dead) send(x, y, "defib", down.x - x, down.y - y); // (in hand first)
       holdE(s, id, down.t, out);
       return;
     }
@@ -1261,7 +1177,7 @@ function justinBot(s, id, now, out) {
       );
   let gun = others[0] || (guns.includes("shotgun") ? "shotgun" : "");
   /* a downed teammate with no zombie on it (nor on him): go and hold E by it */
-  const down = downMate(s, id, x, y, false, zs);
+  const down = downMate(s, id, x, y, zs);
   if (down && d0 > CLOSE && Math.hypot(down.x - x, down.y - y) < b.revive) {
     const d = Math.hypot(down.x - x, down.y - y);
     if (d < L4.REACH * 0.9) {

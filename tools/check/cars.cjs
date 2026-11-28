@@ -26,7 +26,7 @@ const { chromium } = require("playwright");
       { WEIGHT } = await import("./js/gamedefaults.js"),
       { DUCK } = await import("./js/units.js");
     L.useMode("l4dd", "downpour");
-    const s = { hang: {}, options: { mode: "l4dd", l4map: "downpour" } },
+    const s = { hang: {}, options: { mode: "l4dd" } },
       all = () => ({ d: 0 }), // (a blast that reaches every car)
       grid = (name) =>
         WG.gridOf({ name, x0: 0, y0: 0, gw: ZP.GW, gh: ZP.GH, zombie: true })

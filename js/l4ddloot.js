@@ -7,7 +7,8 @@
      (l4ddrules.js bagsNow): a weapon from the chair, special and weapon bags by their odds, an item from the item bag.
    - It lies where it fell among the other drops (s.hang.l4dr: { n, k, x, y, until }, here k "arm" and w what it is)
      and fades as they do.
-   - Nothing on the ground is taken by walking over it any more: only E, near enough (lootAt; l4ddrules.js pickLoot).
+   - A weapon or an item is taken only with E, near enough (lootAt; l4ddrules.js pickLoot); a special drop (Max Ammo, Nuke
+     ...) by walking over it (the owner's, Nov 28: l4ddrules.js dropTick).
      Computers press E too when they stand on one (bots.js).
    - The fireplace (Downpour's car) can't be spun while anything it landed on is still there (l4ddrules.js fireplace) */
 import { anyOf } from "./random.js";

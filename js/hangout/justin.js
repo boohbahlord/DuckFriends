@@ -149,7 +149,7 @@ const DRANK = "I drank too much, but I swear it isn't a problem.";
 const POOL_LINE = "Why would I go to the pool?! IT'S JUST WATER! I don't care!";
 /* poker (poker.js): my new lines for his winning and losing, word for word, and his old ones that fit them (mostly the
    new ones); busted, he says one of his own insults or rage lines */
-export const WIN_LINES = `YES!
+const WIN_LINES = `YES!
 YES! YES!
 OMG YES!!
 I'M SO GOOD AT THIS GAME!
@@ -283,8 +283,8 @@ const sec = (rand, [a, b]) => (a + rand() * (b - a)) * 1000;
 /* his stroll: off to a spot, then he stands about there until WANDER seconds have gone by since he set off (Dead Ducks
    Arcade's Justin strolls the same way: bots.js wanderSpot) */
 export const WANDER = [10, 40];
-const CAKE_EAT_MS = 2500; // (as Mad God Justin's)
-/* where the zebra cake is (world px): as mgjrules.js' cakeAt */
+const CAKE_EAT_MS = 2500; // (as the board's Justin's)
+/* where the zebra cake is (world px): as boardjustin.js' cakeAt */
 const cakeAt = (k, now) => {
   const t = (Math.min(now, k.stop) - k.t) / 1000;
   return { x: (k.x0 + k.vx * t) * W, y: (k.y0 + k.vy * t) * H };

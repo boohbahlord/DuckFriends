@@ -27,26 +27,19 @@ const phone = () => !document.documentElement.classList.contains("keyboard");
 const TITLE = {
   mode: "Vote for Game Mode",
   map: "Vote for Map",
-  zmap: "Vote for Map",
 };
 /* Single Player (the owner's, Nov 18): "Select" in place of "Vote", no clock and no Next; a click picks at once */
 const SOLO_TITLE = {
   mode: "Select Game Mode",
   map: "Select Map",
-  zmap: "Select Map",
 };
 const titleOf = (s, k) => (s.solo ? SOLO_TITLE : TITLE)[k];
-/* Quacky Zombies' own map vote (rules.js ZMAPS): each of its maps as one picture of it */
-const ZPIC = {
-  cabin: ["assets/px/maps/duck-cabin-zombies.webp", "Duck Cabin"], // (closer in and a little lighter than the whole map's picture, so it reads as clearly as Downpour's: the owner, Nov 17)
-  downpour: ["assets/px/maps/downpour.webp", "Downpour"],
-};
 
 /* one choice: a game's row or a map's picture */
 function modeRow(id) {
   const dice = id === DICE,
     cabin = CABIN_MODES.includes(id);
-  return `<button type="button" class="vt-mode${dice ? " vt-dice" : ""}" data-v="${id}"><span class="sym">${dice ? diceSVG(50) : gameSymbol(id, 50)}</span><span class="t">${esc(dice ? "Random" : modeOf(id).name)}${cabin ? "<small>Duck Cabin</small>" : ""}</span><span class="n"></span><span class="who"></span></button>`;
+  return `<button type="button" class="vt-mode${dice ? " vt-dice" : ""}" data-v="${id}"><span class="sym">${dice ? diceSVG(50) : gameSymbol(id, 50)}</span><span class="t">${esc(dice ? "Random" : modeOf(id).name)}${cabin ? `<small>${modeOf(id).l4map ? "Downpour" : "Duck Cabin"}</small>` : ""}</span><span class="n"></span><span class="who"></span></button>`;
 }
 /* a map's picture: its drawing (tools/pixel-src/backdrops.js; Nous Within Kenoma's, a still of the map itself) made into
    pixels ahead of time (tools/pixel-files.cjs), so nothing is made on the device and the vote shows at once (the owner's, Nov 19 20:04Z: black pictures on a slow phone) */
@@ -59,15 +52,8 @@ function mapTile(id) {
     [name, form] = mapName(id).split(/ \((.+)\)$/);
   return `<button type="button" class="vt-map" data-v="${id}"><span class="vt-pic"><img class="vt-still${f.grey ? " grey" : ""}" src="assets/px/vote/${f.map}.webp" data-pxready data-pxok alt="" draggable="false"></span><span class="vt-name">${esc(name)}${form ? ` <i>(${esc(form)})</i>` : ""}</span><span class="vt-n"></span><span class="vt-ducks"></span></button>`;
 }
-function zmapTile(id) {
-  if (id === DICE) return mapTile(DICE);
-  const [src, name] = ZPIC[id];
-  return `<button type="button" class="vt-map" data-v="${id}"><span class="vt-pic"><img class="vt-still" src="${src}" data-pxready data-pxok alt="" draggable="false"></span><span class="vt-name">${esc(name)}</span><span class="vt-n"></span><span class="vt-ducks"></span></button>`;
-}
 function bodyHTML(s, k) {
   const ids = voteIds(s, k);
-  if (k === "zmap")
-    return `<div class="vt-maps">${[DICE, ...ids].map(zmapTile).join("")}</div>`;
   if (k === "map")
     return `<div class="vt-maps">${[DICE, ...ids].map(mapTile).join("")}</div>`;
   return `<div class="vt-modes">${modeRow(DICE)}${CATS.map(([cat, name]) => {

@@ -10,6 +10,7 @@ import {
   CHAIR_MS,
   DAGGER_SPEED,
   DUCK_PELLET_LIFE,
+  PELLET_SPREAD,
   EFFECTS,
   GRENADE_FAR,
   GRENADE_MS,
@@ -88,7 +89,6 @@ import {
   vdTimer,
   vdTick,
   vdWrite,
-  vdSafe,
   seated,
 } from "./vddrules.js";
 import {
@@ -110,7 +110,6 @@ import {
   quackMoved,
 } from "./quackrules.js";
 import {
-  holdDown,
   shielded,
   comeBack,
   normalGame,
@@ -120,19 +119,8 @@ import {
 } from "./hangout/death.js";
 import { hangAction, hangTick, hangStill } from "./hangout/rules.js";
 import { inCabin, W as HW, H as HH } from "./hangout/layout.js";
-import { justinTick, justinDown } from "./boardjustin.js";
+import { justinTick } from "./boardjustin.js";
 import { pwTick } from "./wounds.js";
-import {
-  isMgj,
-  mgjTeamUse,
-  mgjHolds,
-  PELLETS,
-  SPREAD,
-  mgjOut,
-  heldGun,
-  mgjSpent,
-} from "./mgjrules.js";
-import { mgjUse } from "./mgjpicks.js";
 import {
   isL4dd,
   l4Use,
@@ -140,18 +128,9 @@ import {
   l4Shots,
   l4Holds,
   laserHeat,
-  laserNext,
   l4Again,
 } from "./l4ddrules.js";
-import {
-  ARMS,
-  BOARD_GUNS,
-  BOARD_WEAPONS,
-  AUTO,
-  THROWS,
-  MGJ_GUNS,
-  MGJ_MELEE,
-} from "./guns.js";
+import { ARMS, BOARD_GUNS, BOARD_WEAPONS, AUTO, THROWS } from "./guns.js";
 import { modeOf } from "./modes.js";
 import { SC_VOTES, scVote, scWrite } from "./scrules.js";
 import {
@@ -169,7 +148,6 @@ import {
   MELEE,
   SB_H,
   attacks,
-  beamShot,
   duckFlame,
   floorFirst,
   groundFire,
@@ -177,13 +155,7 @@ import {
   moveShots,
   strike,
 } from "./boardfire.js";
-import {
-  denied,
-  dodRoom,
-  dodSettle,
-  dodStarts,
-  dodVoting,
-} from "./roomrules.js";
+import { dodRoom, dodSettle, dodStarts, dodVoting } from "./roomrules.js";
 import { countdown, nextVote, rolling, sbHere, votesDue } from "./voterules.js";
 import { zOf } from "./heights.js";
 import { act_draw, draws, drawTaken, drawFast } from "./bowdraw.js";
@@ -280,7 +252,6 @@ export function act_move({ state, s, a, now, me }) {
     !me.late &&
     !isQuack(s) &&
     !isHang(s) &&
-    !isMgj(s) &&
     !isVd(s) &&
     !isTv(s) &&
     !isSb(s)
@@ -298,9 +269,7 @@ export function act_move({ state, s, a, now, me }) {
   const w = (
       isL4dd(s)
         ? l4Holds(s, a.id, a.w)
-        : isMgj(s)
-          ? mgjHolds(s, a.id, a.w)
-          : BOARD_WEAPONS.includes(a.w) && onKeys(me.duck, a.w) && s.options.fun
+        : BOARD_WEAPONS.includes(a.w) && onKeys(me.duck, a.w) && s.options.fun
     )
       ? a.w
       : "",
@@ -341,7 +310,6 @@ export function act_end({ state, s, a, now, me }) {
     return quackEnd(s, a, now) || state;
   if (isSc(s)) return scVote(s, a, now) || state;
   if (isHang(s)) return state; // (Hangout's button is its own action, below)
-  if (isMgj(s) && s.phase !== "results") return state; // (Mad God Justin: only Try again, on the stats)
   if (isVd(s) && VD_PHASES.includes(s.phase)) return vdEnd(s, a, now) || state; // (Valentine's Duck Date: only The Date's Next duck and Turn down)
   if (isTv(s) && TV_BOARD.includes(s.phase)) return state; // (Trivia: its own action, below)
   if (
@@ -415,47 +383,6 @@ export function act_toLobby({ s, a, P, me, boss }) {
   return s;
 }
 
-export function act_fx({ state, s, a, now, P, me }) {
-  // the silly commands, seen by everyone on the board
-  const who = (a.who || []).filter((id) => P[id]);
-  if (
-    a.justin &&
-    a.kind === "kill" &&
-    me &&
-    s.options.fun &&
-    !denied(s, a.id, "nofun")
-  )
-    return justinDown(s, now, logLine) ? s : state; // (the Justin option: kill @Justin on the boards)
-  if (
-    !me ||
-    !s.options.fun ||
-    denied(s, a.id, "nofun") ||
-    !who.length ||
-    !["lightning", "love", "kill", "hotdog", "fire"].includes(a.kind)
-  )
-    return state;
-  if (a.kind === "kill") {
-    for (const id of who)
-      if (!isGhost(s, id) && !vdSafe(s, id)) {
-        P[id].dead = true;
-        holdDown(s, id, now);
-      }
-  } // (it can't move for the knocked-down time: 6 s in Duck Cabin, as from Justin's gun)
-  logLine(s, {
-    sys: true,
-    small: true,
-    float: true,
-    by: a.id,
-    text: `${me.name} used ${a.kind} on ${who.map((id) => P[id].name).join(" and ")}.`,
-  }); // who did it, in small print
-  s.fxN = (s.fxN || 0) + 1;
-  s.fx = [
-    ...(s.fx || []).slice(-19),
-    { n: s.fxN, kind: a.kind, who, by: a.id, t: now },
-  ];
-  return s;
-}
-
 export function act_jumps({ s, a, me }) {
   if (me) s.jumps[a.id] = Math.max(0, +a.n || 0);
   return s; // completed jumps this game
@@ -489,25 +416,12 @@ export function act_use({ state, s, a, now, me, boss }) {
   if (normalGame(s) && !isSb(s) && (me.dead || shielded(s, a.id, now)))
     return state;
   if (isSb(s) && me.dead) return state; // (Sandbox: a downed duck can't use a weapon either)
-  const downGun = isMgj(s) && sp === "handgun" && !!me.dead && mgjOut(s, a.id); // (Mad God Justin: out of HP, the down pistol still fires: the owner's, Nov 17 11:07Z)
   if (
-    isMgj(s)
-      ? s.phase !== "boss" || (me.dead && !downGun)
-      : !PRESS.includes(sp) ||
-        !(isSb(s) ? sbSlots(s, a.id).includes(sp) : onKeys(me.duck, sp))
+    !PRESS.includes(sp) ||
+    !(isSb(s) ? sbSlots(s, a.id).includes(sp) : onKeys(me.duck, sp))
   )
-    return state; // (Mad God Justin: not while down, but the down pistol)
-  if (isMgj(s) && ["revive", "zebra"].includes(sp))
-    return mgjTeamUse(s, a, now, logLine) ? s : state; // (Mad God Justin: a revive held or let go, the zebra cake)
-  const mgjGun = isMgj(s) && MGJ_GUNS.includes(sp);
-  if (isMgj(s) && sp !== MGJ_MELEE && sp !== "handgun" && !mgjGun)
-    return mgjUse(s, a, now, logLine) ? s : state; // (Mad God Justin: the medkit picked up)
-  if (mgjGun && heldGun(s, a.id) !== sp) return state; // (Mad God Justin: a gun picked up, until its ammo is gone)
-  if (
-    (BOARD_WEAPONS.includes(sp) || sp === "chair") &&
-    !s.options.fun &&
-    !isMgj(s)
-  )
+    return state;
+  if ((BOARD_WEAPONS.includes(sp) || sp === "chair") && !s.options.fun)
     return state; // the silly-commands switch covers them
   if (isGhost(s, a.id)) return state; // (Duck Cabin: a ghost can't use anything)
   const gotM = isSb(s) && sbGot(s, a.id, sp); // (Sandbox: taken from a loot orb with its own numbers, sbhot.js)
@@ -519,20 +433,18 @@ export function act_use({ state, s, a, now, me, boss }) {
       GATE_BREEDS.board,
       {
         auto: AUTO.includes(sp),
-        cool: coolFor(sp, s),
+        cool: coolFor(sp),
         ends: coolEnds(s, a.id, sp),
       },
       now,
     ) ||
     heldBack(s, sp, () => laserHeat(s, a.id, now).over)
   )
-    return state; // (weaponuse.js: its wait, the one zebra cake, Mad God Justin's Laser Rifle overheated)
-  const m = magOf(s, a.id, now, sp, downGun),
-    many = sp === "burst" && !isMgj(s) && m ? roundsOf(ARMS.burst, m.c[0]) : 1; // (the burst rifle: three rounds a press, or the rest of its clip)
-  if (!shootMag(s, a.id, now, sp, many, unlimited(s, a.id, sp, downGun)))
-    return state; // (Dead Ducks Arcade's ammo in every mode, ammo.js: empty, or reloading)
+    return state; // (weaponuse.js: its wait, the one zebra cake, a Laser Rifle overheated)
+  const m = magOf(s, a.id, now, sp),
+    many = sp === "burst" && m ? roundsOf(ARMS.burst, m.c[0]) : 1; // (the burst rifle: three rounds a press, or the rest of its clip)
+  if (!shootMag(s, a.id, now, sp, many, unlimited(s, a.id, sp))) return state; // (Dead Ducks Arcade's ammo in every mode, ammo.js: empty, or reloading)
   s.lastUse = { ...(s.lastUse || {}), [k]: now };
-  if (mgjGun) mgjSpent(s, a.id, now);
   if (gotM) sbSpend(s, a.id, sp); // (one of its uses: sbhot.js)
   const face = a.face < 0 ? -1 : 1,
     u = isHang(s) ? [0.006, 0.012] : boardDuck(s), // (a duck's size each way)
@@ -561,20 +473,7 @@ export function act_use({ state, s, a, now, me, boss }) {
       ...(hit ? { hit } : {}),
     },
   ];
-  if (aim && !hit && sp === "laser" && isMgj(s)) {
-    /* Mad God Justin's Laser Rifle (picked up): a red line through everything on it, 1 damage; it heats up as in Dead
-           Ducks Arcade (l4ddrules.js laserNext), its heat in s.mgj.lz */
-    beamShot(s, a.id, p, aim, now);
-    const next = laserNext(s, a.id, now);
-    s.mgj.lz = { ...(s.mgj.lz || {}), [a.id]: next.lz };
-    if (next.hot) {
-      s.fxN = (s.fxN || 0) + 1;
-      s.fx = [
-        ...(s.fx || []).slice(-19),
-        { n: s.fxN, kind: "l4hot", by: a.id, who: [], t: now },
-      ];
-    }
-  } else if (aim && !hit && sp === "flamer") duckFlame(s, a.id, p, aim, now);
+  if (aim && !hit && sp === "flamer") duckFlame(s, a.id, p, aim, now);
   else if (aim && !hit) {
     const v =
         (sp === "dagger"
@@ -615,12 +514,12 @@ export function act_use({ state, s, a, now, me, boss }) {
       dy = aim[1] / ry,
       dl = Math.hypot(dx, dy) || 1; // (the aim in duck lengths: the shotgun's cone and the grenade's throw are measured in them)
     if (sp === "shotgun") {
-      // a cone of pellets, as Mad God Justin's shotgun
+      // a cone of pellets
       const out = [];
       for (const [i, an] of coneOf(
         Math.atan2(dy, dx),
-        PELLETS,
-        SPREAD,
+        ARMS.shotgun.pellets,
+        PELLET_SPREAD,
       ).entries()) {
         const bx = Math.cos(an) * rx,
           by = Math.sin(an) * ry,
@@ -677,40 +576,23 @@ export function act_reload({ state, s, a, now, me }) {
   // R: the handgun reloads before its magazine is empty
   if (me && isL4dd(s)) return l4Reload(s, a, now) ? s : state;
   if (!me) return state;
-  const down = isMgj(s) && a.w === "handgun" && !!me.dead && mgjOut(s, a.id), // (Mad God Justin: the down pistol)
-    w = isMgj(s) ? a.w : capOf(a.w) ? a.w : "handgun"; // (the board: the gun named, or the handgun)
+  const w = capOf(a.w) ? a.w : "handgun"; // (the board: the gun named, or the handgun)
   if (
-    isMgj(s)
-      ? w === "handgun"
-        ? me.dead && !down
-        : me.dead || heldGun(s, a.id) !== w
-      : !(isSb(s) ? sbSlots(s, a.id).includes(w) : onKeys(me.duck, w)) ||
-        !s.options.fun
+    !(isSb(s) ? sbSlots(s, a.id).includes(w) : onKeys(me.duck, w)) ||
+    !s.options.fun
   )
-    return state; // (Mad God Justin: the pistol, the gun picked up, or the down pistol)
-  return reloadMag(
-    s,
-    a.id,
-    now,
-    w,
-    unlimited(s, a.id, w, down),
-    magOf(s, a.id, now, w, down),
-  )
-    ? s
-    : state;
+    return state;
+  return reloadMag(s, a.id, now, w, unlimited(s, a.id, w)) ? s : state;
 }
-/* G's Unlimited ammo, the down pistol's bullets, or Sandbox's God mode or a loot's own Unlimited ammo: the rest never
-   goes down (ammo.js) */
-export const unlimited = (s, id, w, down) =>
-  down ||
+/* G's Unlimited ammo, or Sandbox's God mode or a loot's own Unlimited ammo: the rest never goes down (ammo.js) */
+export const unlimited = (s, id, w) =>
   infAmmo(s) ||
   (isSb(s) && (godHas(s, id, "ammo") || sbItemMods(s, w).inf === true));
 
 export function act_aura({ state, s, a, now, me }) {
   // an effect around a duck's head, seen by everyone: 5 seconds, or kept on (keep) until kept off
   const what = a.what;
-  if (!me || !EFFECTS.includes(what) || !onKeys(me.duck, what) || isMgj(s))
-    return state; // (Mad God Justin: no specials)
+  if (!me || !EFFECTS.includes(what) || !onKeys(me.duck, what)) return state;
   const cur = (s.aura || {})[a.id] || {},
     next = {};
   for (const [k, u] of Object.entries(cur)) if (!u || u > now) next[k] = u; // (0: kept on)
@@ -919,7 +801,6 @@ export const PLAY_ACTS = {
   voteReview: act_voteReview,
   cabinEnd: act_cabinEnd,
   toLobby: act_toLobby,
-  fx: act_fx,
   jumps: act_jumps,
   ping: act_ping,
   idle: act_idle,

@@ -47,10 +47,8 @@ async function play(b, errs, o) {
         mapPick: "",
         botWait: 1,
         mode: "l4dd",
-        l4map: "downpour",
       },
     });
-    room.state.zmapAsked = 1;
     room.send({ t: "start" });
     for (let k = 0; k < 600 && room.state.phase !== "hang"; k++) beat();
     /* the ducks out there (Justin, Ethan) run about the ground and the zombies go after them, off the canopy's way (two

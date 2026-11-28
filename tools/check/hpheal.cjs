@@ -1,22 +1,14 @@
 /* I want every mode's heal pinned (a Sandbox zone's or group's heal: hpmath.js hpHealOf), so moving HP never changes a
-   number: the board's HP (Agree or Disagree), Mad God Justin's (it heals as the board does) and the zombie maps' (Dead
+   number: the board's HP (Agree or Disagree) and the zombie maps' (Dead
    Ducks Arcade). Each case sets a duck's HP, heals it and compares what's left, and whether the state changed, with
    the numbers the game gave before HP was one module (Nov 21), but the first of each: since Nov 22 a heal adds just
    what it is, a point or a part of one (B7, the owner's 06:24Z), so 1.5 HP left healed by 1 is 2.5, not 2. Then my
-   HP meter (game.js drawMeters, hpOf) a moment into Mad God Justin, Dead Ducks Arcade and Sandbox's board. Run: node
+   HP meter (game.js drawMeters, hpOf) a moment into Dead Ducks Arcade and Sandbox's board. Run: node
    tools/check/run.mjs hpheal */
 const C = require("./lib.cjs");
 const { chromium } = require("playwright");
 const EXPECT = {
   aod: [
-    [true, 1.5],
-    [true, 1.2],
-    [true, 1],
-    [true, 0],
-    [false, 2],
-    [false, 0],
-  ],
-  mgj: [
     [true, 1.5],
     [true, 1.2],
     [true, 1],
@@ -33,7 +25,6 @@ const EXPECT = {
     [false, 1],
     [false, 3],
   ],
-  "meter-mgj": ["boss", true, "6", "6"],
   "meter-l4dd": ["hang", true, "3", "3"],
   "meter-sandbox": ["sandbox", true, "4", "4"],
 };
@@ -45,7 +36,7 @@ const EXPECT = {
   await p.goto(C.url);
   await p.waitForTimeout(1500);
   const got = {};
-  for (const mode of ["aod", "mgj", "l4dd"]) {
+  for (const mode of ["aod", "l4dd"]) {
     got[mode] = await p.evaluate(async (mode) => {
       const H = await import("./js/hpmath.js"),
         BF = await import("./js/boardfire.js"),
@@ -68,7 +59,6 @@ const EXPECT = {
         t: "options",
         options: { modePick: "host", mapPick: "host", mode, map: "night" },
       });
-      r.state.zmapAsked = 1;
       r.send({ t: "start" });
       const t0 = Date.now();
       while (Date.now() - t0 < 15000) {
@@ -114,7 +104,7 @@ const EXPECT = {
     }, mode);
   }
   /* my HP meter under the hotbar (game.js drawMeters: hpmath.js hpOf), a few seconds into each mode */
-  for (const mode of ["mgj", "l4dd", "sandbox"]) {
+  for (const mode of ["l4dd", "sandbox"]) {
     const q = await b.newPage({ viewport: { width: 1366, height: 768 } });
     q.on("pageerror", (e) => errs.push(mode + ": " + e));
     await q.goto(C.url);
@@ -128,7 +118,6 @@ const EXPECT = {
         options: { modePick: "host", mapPick: "host", mode, map: "night" },
       });
       (await import("./js/router.js")).go("lobby", r);
-      r.state.zmapAsked = 1;
       r.send({ t: "start" });
       window._r = r;
       const iv = setInterval(

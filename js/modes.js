@@ -8,7 +8,6 @@
    Lawyering: everyone writes a topic in secret; for each one, two attorneys argue it out and the room walks to a side.
    Duncelation: everyone writes a take; one by one, a duck defends the take it got and the room walks to Dunce or Not a
    Dunce, until someone is voted a dunce.
-   Mad God Justin: a boss fight; every duck has only a knife, and together they stab Justin to 0 HP before the time runs out.
    Valentine's Duck Date: a random duck is The Date; the Suitors take turns on a date with them at the dining table, and
    after each turn The Date turns one down, until the last one left is their Valentine.
    Trivia: everyone writes a question; for each one, walk onto the right answer (or type one and its writer grades it).
@@ -18,9 +17,7 @@
    Sandbox: no rounds, no end; on any map, mess around (sandboxrules.js, sandbox.js). */
 import { esc } from "./ui.js";
 
-/* Survival shows in the lists once it's all built (true then) */
-export const SURV_READY = true;
-export const MODES = [
+const MODES = [
   {
     id: "aod",
     boardSymbol: true, // (its symbol is the board's own drawing: art.js)
@@ -164,31 +161,6 @@ export const MODES = [
     tip: "Everyone writes a controversial take; defend the one you get while everyone else walks to Dunce or Not a Dunce. 3 players or more.",
   },
   {
-    id: "mgj",
-    hitMarks: true, // (hitmarkers show only here: the owner's, Nov 22 19:26Z, "HIT MARKERS SHOLDNT EVEN EXIST IN OTHER GAME MODES BUT ESPECIALLY SANDBOX"; gamefx.js)
-    push: { hammer: 1, grenade: 3 }, // (how many KB_FAR the hammer and a grenade push a duck: push.js)
-    ownDeath: true, // (it comes back its own way, not the boards' spawn protection: death.js normalGame)
-    downMs: 5000, // (how long a knocked-down duck can't move: always 5 s, whatever the host picks: death.js downFor)
-    downLocked: true,
-    hp: "mgj", // (its HP: the boss fight's, mgjrules.js; hpmath.js hpOf)
-    cat: "special",
-    name: "Mad God Justin",
-    stats: {
-      title: "Mad God Justin",
-      rows: [
-        ["Games", "games"],
-        ["Fights", "rounds"],
-        ["Won", "wins"],
-        ["Lost", "losses"],
-        ["Damage", "answers"],
-        ["Knocked down", "majority"],
-        ["Killing blows", "titles"],
-        ["Jumps", "jumps"],
-      ],
-    },
-    tip: "A boss fight: everyone gets a knife, and together you have to stab Justin down to 0 HP. He shoots back.",
-  },
-  {
     id: "vdd",
     noBoardJustin: true,
     cat: "comp",
@@ -240,11 +212,10 @@ export const MODES = [
     id: "l4dd",
     push: { grenade: 3 }, // (how many KB_FAR the hammer and a grenade push a duck: push.js)
     ownDeath: true,
-    darkCabin: true, // (its Duck Cabin picture in the settings' preview is the dark one)
-    l4map: true, // (it has its own map pick, Game Settings l4map: Duck Cabin or Downpour; layout.js' useMode turns to its cabin or Downpour)
+    l4map: true, // (it brings its own map, Downpour: layout.js' useMode turns to it; the owner cut the cabin as a zombie map, Nov 27)
     phoneOut: 1.15, // (on a phone, 15% more of the map each way, the owner's, Nov 18 15:18Z)
     downMs: 1000, // (its default: half a second longer than 0.5 s, the owner 2026-11-03 17:15Z)
-    hp: "maps", // (its HP: the zombie maps', l4ddrules.js; Survival and Sandbox on its maps too, baseMode)
+    hp: "maps", // (its HP: the zombie maps', l4ddrules.js; Sandbox on its maps too, baseMode)
     cat: "special",
     name: "Dead Ducks Arcade",
     stats: {
@@ -257,35 +228,9 @@ export const MODES = [
         ["Jumps", "jumps"],
       ],
     },
-    asksMap: true, // (its map vote opens before each game: zmapDue)
-    inRandom: false, // (never from Random: Sandbox never ends; Survival and Quacky Zombies are vote-only, the owner's, Nov 19 19:53Z)
-    tip: "The power's out in Duck Cabin and zombie ducks are coming, round after round. Board up the doors and holes, revive each other, and see how long you last. It can only be played on the Duck Cabin map.",
+    inRandom: false, // (never from Random: Sandbox never ends; Quacky Zombies is vote-only, the owner's, Nov 19 19:53Z)
+    tip: "Zombie ducks are coming, round after round. Revive each other and see how long you last. It plays on the Downpour map.",
   },
-  /* Survival (the owner's, Nov 19 19:27Z): Dead Ducks Arcade's zombies without rounds, swelling and calming on Downpour.
-     It stays out of every list (SURV_READY) until all of it is built: no unfinished mode goes live */
-  ...(SURV_READY
-    ? [
-        {
-          id: "surv",
-          onlyMap: "Downpour", // (the only map it plays: Game Settings offers that one and nothing else)
-          lookClass: "map-is-nwk", // (its map wears Nous Within Kenoma's look: maps.js)
-          ownDeath: true,
-          cat: "special",
-          name: "Survival",
-          stats: {
-            title: "Survival",
-            rows: [
-              ["Games", "games"],
-              ["Best time", "titles", "clock"],
-              ["Zombies killed", "kills"],
-              ["Jumps", "jumps"],
-            ],
-          },
-          inRandom: false,
-          tip: "No rounds: the zombies keep coming on Downpour, calm one moment and a horde the next. Buy from the merchants, stay together and see how long you last.",
-        },
-      ]
-    : []),
   {
     id: "sandbox",
     cat: "special",
@@ -305,18 +250,9 @@ export const modeName = (s) =>
     : modeOf(s.options.mode).name;
 /* Single Player (the owner's, Nov 18): the room on the device with no internet plays only these, and everything that
    lists the games (the votes, Random, Game Settings) lists only these there */
-export const SOLO_MODES = ["hang", "l4dd", "surv", "mgj", "sandbox"];
-/* Survival is hidden from every list until a terminal command in the lobby turns it on for the room (the owner's, Nov
-   21 18:59Z: `sudo survival on`; s.options.survOn). */
-export const HIDDEN_MODES = { surv: "survOn" };
-const modeShown = (s, m) => {
-  const k = HIDDEN_MODES[m.id];
-  return !k || !!(s && s.options && s.options[k]);
-};
+export const SOLO_MODES = ["hang", "l4dd", "sandbox"];
 export const modesFor = (s) =>
-  (s && s.solo ? MODES.filter((m) => SOLO_MODES.includes(m.id)) : MODES).filter(
-    (m) => modeShown(s, m),
-  );
+  s && s.solo ? MODES.filter((m) => SOLO_MODES.includes(m.id)) : MODES;
 export const CABIN_MODES = ["hang", "l4dd"]; // (Duck Cabin's own games: picking one picks the map)
 /* the three kinds of game on the Game Settings screen's Game mode page. Duck Cabin's own games sit with the others
    (Hangout with the social games, Quacky Zombies by Mad God Justin with the special ones); the Map page's Duck Cabin
@@ -358,13 +294,6 @@ const SYMBOLS = {
 <path d="M5 21.5L13 2L21 21.5Z" fill="#fbfbf6" stroke="#1c1c28" stroke-width="1.2" stroke-linejoin="round"/><path d="M13 2L21 21.5L17 21.5Z" fill="#000" opacity=".1"/>
 <text x="12.8" y="18.6" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="7" fill="#1c1c28">D</text><path d="M5 21.5C10 23 16 23 21 21.5" stroke="#1c1c28" stroke-width="1.2" fill="none"/>
 <text x="25.6" y="11" text-anchor="middle" font-family="'Lilita One', sans-serif" font-size="10" fill="#ffd23f" stroke="#1c1c28" stroke-width="1.6" paint-order="stroke fill">?</text></svg>`,
-  mgj: (m, size) =>
-    `<svg viewBox="0 0 30 24" width="${size}" height="${size * 0.8}" role="img" aria-label="${esc(m.name)}">
-<path d="M6.4 1.4L2 11.6H5.6L3.4 22.6L10.6 9.4H6.8L9.6 1.4Z" fill="#fff6b0" stroke="#1c1c28" stroke-width="1.1" stroke-linejoin="round"/>
-<ellipse cx="19.4" cy="14.6" rx="8.4" ry="8" fill="#ffd23f" stroke="#1c1c28" stroke-width="1.2"/><path d="M26.4 15.4l3.2.8-3.2 1.6z" fill="#ff8c2b" stroke="#1c1c28" stroke-width=".8" stroke-linejoin="round"/>
-<circle cx="22.2" cy="12" r="3.4" fill="#38b6ff" opacity=".45"/><circle cx="22.2" cy="12" r="1.9" fill="#bff1ff" stroke="#0b4a8a" stroke-width=".7"/>
-<path d="M17 8.4l7.4 1.6" stroke="#1c1c28" stroke-width="1.3" stroke-linecap="round"/>
-<path d="M15.8 7.4C14.8 5.4 13.6 3.6 12.2 2.2C12.4 4.6 12.9 6.6 13.7 8.6Z" fill="#a3121b" stroke="#3a0408" stroke-width=".9" stroke-linejoin="round"/><path d="M21.4 7C22.6 5 24.4 3.2 26.4 2C25.8 4.4 25 6.4 23.8 8.1Z" fill="#e3242b" stroke="#3a0408" stroke-width=".9" stroke-linejoin="round"/></svg>`,
   vdd: (m, size) =>
     `<svg viewBox="0 0 30 24" width="${size}" height="${size * 0.8}" role="img" aria-label="${esc(m.name)}">
 <path d="M15 7.2C13.2 4.8 9.8 5.6 9.8 8.4C9.8 10.8 12.6 12.6 15 14.8C17.4 12.6 20.2 10.8 20.2 8.4C20.2 5.6 16.8 4.8 15 7.2Z" fill="#ff3d6e" stroke="#1c1c28" stroke-width="1.1" stroke-linejoin="round"/>
@@ -426,13 +355,6 @@ ${[
 <ellipse cx="14" cy="14.4" rx="10.6" ry="8.6" fill="#3f7a34" stroke="#1c1c28" stroke-width="1.2"/><path d="M23.6 14.6l5 1.2-5 2.4z" fill="#b06a1e" stroke="#1c1c28" stroke-width=".9" stroke-linejoin="round"/>
 <path d="M16 9.6l3.6 3.6M19.6 9.6L16 13.2" stroke="#1c1c28" stroke-width="1.5" stroke-linecap="round"/><path d="M8.4 18.4c2.4 1.4 5.6 1.4 8 .2" stroke="#1c1c28" stroke-width="1.1" fill="none" stroke-linecap="round"/>
 <path d="M3 3.4l3.4 4.2M6.6 2.4l.4 4.6M1.6 7.4l4 1.4" stroke="#c0182b" stroke-width="1.3" stroke-linecap="round"/></svg>`,
-  surv: (m, size) =>
-    `<svg viewBox="0 0 30 24" width="${size}" height="${size * 0.8}" role="img" aria-label="${esc(m.name)}">
-<path d="M3 4H26.4C27.3 4 28 4.7 28 5.6V10.4H14.6L13.4 11.2H9.4V4Z M3 4V10.4H9.4" fill="#8a93a3" stroke="#1c1c28" stroke-width="1.2" stroke-linejoin="round"/>
-<path d="M9.4 10.4H13.4L12.2 21.2C12.1 22.1 11.4 22.7 10.5 22.7H9.4C8.5 22.7 7.8 22 7.9 21.1Z" fill="#a85a26" stroke="#1c1c28" stroke-width="1.2" stroke-linejoin="round"/>
-<path d="M14.6 10.4C14.6 14 17.4 14 17.4 10.4" fill="none" stroke="#1c1c28" stroke-width="1.2" stroke-linecap="round"/>
-<rect x="5" y="6" width="3" height="2" rx=".6" fill="#ffd23f" stroke="#1c1c28" stroke-width=".8"/>
-<path d="M28.6 6.2L30 5.4" stroke="#ef3b3b" stroke-width="1.3" stroke-linecap="round"/></svg>`,
   sandbox: (m, size) =>
     `<svg viewBox="0 0 30 24" width="${size}" height="${size * 0.8}" role="img" aria-label="${esc(m.name)}">
 <path d="M2 12H28V21.4C28 22.3 27.3 23 26.4 23H3.6C2.7 23 2 22.3 2 21.4Z" fill="#e8c27a" stroke="#1c1c28" stroke-width="1.2" stroke-linejoin="round"/><path d="M2 12C6 9.6 9.4 10.8 13 12C17 13.2 22 9.8 28 12" fill="#f4d998" stroke="#1c1c28" stroke-width="1.1" stroke-linejoin="round"/>

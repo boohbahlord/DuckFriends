@@ -120,7 +120,9 @@ export function openGameSettings(R, start = null) {
       ? "Vote Mode & Map"
       : s.options.mapPick === "random"
         ? "Random"
-        : mapName(s.options.map);
+        : modeOf(s.options.mode).l4map
+          ? "Downpour"
+          : mapName(s.options.map);
 
   /* Gore and Heavy effects: a "Low" chip by their name while my own Low graphics (Settings → Performance: Graphics Low,
      Data saving or Poor connection) lighten them on my screen, whatever the room picked (fx.js) */
@@ -310,15 +312,19 @@ export function openGameSettings(R, start = null) {
       const dis = !host() || dodOn(s, "vote");
       return (
         head("Duck Cabin") +
-        `<div class="arm-body"><ul class="arm-list">${CABIN_MODES.map((id) =>
-          row(
-            `data-mode="${id}"`,
-            modeOf(id).name,
-            "",
-            !o.modePick && o.mode === id,
-            dis,
-          ),
-        ).join("")}</ul></div>`
+        `<div class="arm-body"><ul class="arm-list">${CABIN_MODES.filter(
+          (id) => !modeOf(id).l4map,
+        )
+          .map((id) =>
+            row(
+              `data-mode="${id}"`,
+              modeOf(id).name,
+              "",
+              !o.modePick && o.mode === id,
+              dis,
+            ),
+          )
+          .join("")}</ul></div>`
       );
     }
     if (page === "map") {
@@ -328,11 +334,6 @@ export function openGameSettings(R, start = null) {
         mid = running(s), // (in a game: only Sandbox on the board takes a new map, at once, actroom.js; the rest waits)
         boardDis = dis || (mid && !sbOnBoard(s)),
         pickDis = dis || mid;
-      if (modeOf(o.mode).onlyMap)
-        return (
-          head("Map") +
-          `<div class="arm-body"><ul class="arm-list">${row('data-map="surv"', modeOf(o.mode).onlyMap, "", true, true)}</ul></div>`
-        ); // (Survival plays only Downpour: nothing else is offered, the owner's, Nov 20)
       return (
         head("Map") +
         `<div class="arm-body"><ul class="arm-list">${row('data-pick="map" data-v="random"', "Random", "", o.mapPick === "random", pickDis)}${
@@ -348,7 +349,7 @@ export function openGameSettings(R, start = null) {
                   ),
                 )
                 .join("") // (Sandbox: the maps with a world of their own, walked whole: sandboxrules.js)
-            : `${row('data-map="cabin"', "Duck Cabin", "", isWorldMap(o.map) && o.l4map !== "downpour", pickDis)}${row('data-map="downpour"', "Downpour", "", modeOf(o.mode).l4map && o.l4map === "downpour", pickDis)}`
+            : `${row('data-map="cabin"', "Duck Cabin", "", isWorldMap(o.map) && !modeOf(o.mode).l4map, pickDis)}${row('data-map="downpour"', "Downpour", "", !!modeOf(o.mode).l4map, pickDis)}`
         }${LINE}${MAPS.map(([id, name]) =>
           row(
             `data-map="${id}"`,
@@ -426,15 +427,17 @@ export function openGameSettings(R, start = null) {
       `<div class="gs-pic gs-keep">${keep}</div><div class="gs-text">`,
     );
   }
+  /* the map the options name, as its row says it: Dead Ducks Arcade's Duck Cabin is Downpour */
+  const mapShown = (o) => (modeOf(o.mode).l4map ? "downpour" : o.map);
   function stageCard(s, o) {
     let p = peek;
     if (!p)
       p = isWorldMap(page)
-        ? CABIN_MODES.includes(o.mode)
+        ? CABIN_MODES.includes(o.mode) && !modeOf(o.mode).l4map
           ? { kind: "mode", id: o.mode }
           : { kind: "map", id: "cabin" }
         : page === "map"
-          ? { kind: "map", id: o.mapPick ? o.mapPick : o.map }
+          ? { kind: "map", id: o.mapPick || mapShown(o) }
           : page === "opts"
             ? { kind: "opts" }
             : page && page.startsWith("cat:")
@@ -476,15 +479,19 @@ export function openGameSettings(R, start = null) {
           .join(", "),
       );
     if (p.kind === "map") {
+      if (p.id === "downpour")
+        return card("Downpour", "", mapPic(s, "cabin", "l4dd")); // (Dead Ducks Arcade's own map)
       if (p.id === "vote" || p.id === "random")
         return card(
           p.id === "vote" ? "Vote Mode & Map" : "Random",
           PICK_TEXT[p.id === "vote" ? "vote" : "mapRandom"],
         );
-      const mode = CABIN_MODES.includes(o.mode)
-          ? o.mode
-          : isWorldMap(p.id)
-            ? "hang"
+      const mode = isWorldMap(p.id)
+          ? CABIN_MODES.includes(o.mode) && !modeOf(o.mode).l4map
+            ? o.mode
+            : "hang" // (the Duck Cabin row shows the cabin, never Downpour)
+          : CABIN_MODES.includes(o.mode)
+            ? o.mode
             : o.modePick
               ? "aod"
               : o.mode,
@@ -589,7 +596,7 @@ export function openGameSettings(R, start = null) {
     else if (r && r.dataset.p === "mode")
       p = { kind: "mode", id: S().options.modePick || S().options.mode };
     else if (r && r.dataset.p === "map")
-      p = { kind: "map", id: S().options.mapPick || S().options.map };
+      p = { kind: "map", id: S().options.mapPick || mapShown(S().options) };
     else if (r && r.dataset.p === "opts") p = { kind: "opts" };
     else if (set) p = describe(set.dataset.d);
     if (!p || JSON.stringify(p) === JSON.stringify(peek)) return;
@@ -734,7 +741,7 @@ export function openGameSettings(R, start = null) {
           }
           if (isWorldMap(r.dataset.map)) return go("cabin"); // (Duck Cabin's own games, on a page of their own)
           if (r.dataset.map === "downpour") {
-            if (boss) send({ mode: "l4dd", l4map: "downpour" }); // (Downpour: Dead Ducks Arcade's own map; its map vote still comes first, the owner's, Nov 17)
+            if (boss) send({ mode: "l4dd" }); // (Downpour: Dead Ducks Arcade's own map)
             return;
           }
           if (r.dataset.map && boss) {

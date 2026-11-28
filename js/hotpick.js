@@ -1,5 +1,5 @@
 /* What goes in my duck's hand when I pick a hotbar key, in every mode (step 8e): the board's weapons, Quacky Zombies'
-   slots and Mad God Justin's. game.js hands it the room through pickWith(); hotbar.js draws the bar.
+   slots. game.js hands it the room through pickWith(); hotbar.js draws the bar.
    THE ONE HAND RULE, every mode (the owner's, Nov 22 19:24Z: "MAKE THE FUCKING GAME'S HOTBAR IN EVERY MODE NOT HAVE
    TOGGLE AND THE ITEM ALWAYS IN YOUR HAND IF IT ISNT AN EMPTY SLOT OR SOMETHING LIKE FLASHLIGHT"): the slot picked is
    what's in my hand. Its key again keeps it there (nothing toggles a weapon away); an empty slot, or a slot whose item
@@ -9,8 +9,7 @@ import { now as clockNow } from "./clock.js";
 import { toast } from "./ui.js";
 import { unlocked } from "./unlocks.js";
 import { hasKey, keysOf, specialById } from "./specials.js";
-import { BOARD_WEAPONS, MGJ_MELEE, THROWS, loadTo } from "./guns.js";
-import { CAKE_EVERY, isMgj } from "./mgjrules.js";
+import { BOARD_WEAPONS, THROWS, loadTo } from "./guns.js";
 import { capOf, magOf, reloadTo } from "./ammo.js";
 import { unlimited } from "./actplay.js";
 import { l4Ammo } from "./l4dd.js";
@@ -22,36 +21,32 @@ import { sbSlots, spawnOf } from "./sbhot.js";
 
 /* One machine for every mode: what's out in my hand (hand.in) and what comes back once it's put away or used up
    (hand.back). Each mode is a row of data:
-   - in: the board and Mad God Justin keep a weapon's id; Quacky Zombies a pick (a slot of the kit, then the grenades:
+   - in: the board keeps a weapon's id; Quacky Zombies a pick (a slot of the kit, then the grenades:
      key = pick + 1, kitslots.js)
-   - start: what's in hand at first (Mad God Justin: the pistol, each fight; the owner's, Nov 16)
+   - start: what's in hand at first
    - stays: a weapon that stays in hand once picked; toggles: picked again, it goes away and the one back comes back
      (only Dead Ducks Arcade's items that switch on and off: the flashlight)
    - self: picking a weapon that stays makes it the one to come back (Quacky Zombies), or else the one before stays it
    - held(s): the weapon out in hand, for the board's ways (the board: the one in the slot picked)
-   - reloads(s): the gun R reloads (null: none; Quacky Zombies: the one
+   - reloads(): the gun R reloads (null: none; Quacky Zombies: the one
      in hand, "" too, the rules say no); ready(s, w, now): R can reload it now; dry(s, w): no ammo left to reload with
-   - empty(s): the hand empties itself (Quacky Zombies: no grenades or no slot left; Mad God Justin: the picked-up
-     weapon used up or the zebra cake thrown), and backTo(s) is what comes back then */
-/* the board's and Mad God Justin's gun w in my hand (ammo.js): R can reload it now (its magazine not full, or full and
+   - empty(s): the hand empties itself (Quacky Zombies: no grenades or no slot left), and backTo(s) is what comes back then */
+/* the board's gun w in my hand (ammo.js): R can reload it now (its magazine not full, or full and
    one more in the chamber, guns.js loadTo; not reloading; something left to load), or it has nothing left to load */
-const down = (w) => w === "handgun" && !!C.mgjDownGun && C.mgjDownGun();
 const magReady = (s, w, now) => {
-  const m = magOf(s, C.R.me, now, w, down(w));
+  const m = magOf(s, C.R.me, now, w);
   return (
-    !!m &&
-    !(m.r > now) &&
-    !!reloadTo(w, m.c, capOf(w), unlimited(s, C.R.me, w, down(w)))
+    !!m && !(m.r > now) && !!reloadTo(w, m.c, capOf(w), unlimited(s, C.R.me, w))
   );
 };
 const magDry = (s, w) => {
-  const m = magOf(s, C.R.me, clockNow(), w, down(w));
+  const m = magOf(s, C.R.me, clockNow(), w);
   return (
     !!m &&
     !!capOf(w) &&
     !m.r &&
     !!loadTo(w, m.c[0], capOf(w)) &&
-    !reloadTo(w, m.c, capOf(w), unlimited(s, C.R.me, w, down(w)))
+    !reloadTo(w, m.c, capOf(w), unlimited(s, C.R.me, w))
   );
 };
 const ROWS = {
@@ -105,45 +100,16 @@ const ROWS = {
       return !!(a && (a.dry || a.nr));
     },
   },
-  mgj: {
-    start: "handgun",
-    held: (s) => (s.phase === "boss" ? hand.in : null), // (only in the fight)
-    byFight: true, // (a new screen keeps it: it starts over each fight)
-    stays: (id) => id === MGJ_MELEE || id === "handgun",
-    toggles: () => false,
-    empty: (s) =>
-      (hand.in !== MGJ_MELEE &&
-        hand.in !== "none" && // (an empty slot picked: nothing in hand)
-        hand.in !== "handgun" &&
-        hand.in !== "zebra" &&
-        hand.in !== C.myPick()) ||
-      (hand.in === "zebra" &&
-        !!s.mgj &&
-        !!(s.mgj.cake || clockNow() - (s.mgj.zebraAt || 0) < CAKE_EVERY)),
-    backTo: () => hand.back || MGJ_MELEE,
-    /* the pistol or the gun picked up, out in my hand, or the down pistol */
-    reloads: () =>
-      C.mgjDownGun()
-        ? "handgun"
-        : hand.held &&
-            (hand.held === "handgun" || hand.held === C.myPick()) &&
-            capOf(hand.held)
-          ? hand.held
-          : null,
-    ready: magReady,
-    dry: magDry,
-  },
 };
-const rowOf = (s) => (isL4dd(s) ? "l4" : isMgj(s) ? "mgj" : "board");
-/* the key last pressed (lastKey: V presses it again); fight: the Mad God Justin fight the hand was set for */
+const rowOf = (s) => (isL4dd(s) ? "l4" : "board");
+/* the key last pressed (lastKey: V presses it again) */
 export const hand = {
   of: "",
   in: null,
   back: null,
   lastKey: -1,
-  fight: -1,
   bare: false, // (Dead Ducks Arcade: an empty slot picked, nothing in hand)
-  /* the board's and Mad God Justin's weapon out in hand (Mad God Justin: only in the fight), or null */
+  /* the board's weapon out in hand, or null */
   get held() {
     return mine().held(C && C.R && C.R.state);
   },
@@ -172,14 +138,14 @@ function mine() {
 }
 /* what's in hand now, in my mode's way (Quacky Zombies: the pick) */
 export const handIn = () => (mine(), hand.in);
-/* a new screen: the board and Quacky Zombies start over (Mad God Justin's hand goes by its fight) */
+/* a new screen: the hand starts over */
 export function handReset() {
   hand.lastKey = -1;
   if (win) win.close();
-  if (!(ROWS[hand.of] || {}).byFight) hand.of = "";
+  hand.of = "";
 }
 /* the bars and R ask the hand: the gun R reloads, can it now, is it out of ammo */
-export const reloadsNow = () => mine().reloads(C.R.state);
+export const reloadsNow = () => mine().reloads();
 export const reloadReady = (s, w, now) => mine().ready(s, w, now);
 export const reloadDry = (s, w) => !!(mine().dry && mine().dry(s, w));
 /* x picked: the one machine */
@@ -202,30 +168,9 @@ function settle(s) {
   hand.in = M.backTo(s);
   return true;
 }
-/* game.js's side: R, me, bar (getters), sendMove, fire, myPick, mgjDownGun, onBoardPhase, playDuck, turned */
+/* game.js's side: R, me, bar (getters), sendMove, fire, onBoardPhase, playDuck, turned */
 let C = null;
 export const pickWith = (c) => (C = c);
-/* Mad God Justin: a picked-up weapon used up, or the zebra cake thrown: back to the one out before (on each new state,
-   and when the slider asks what's in hand, so it never picks the next one over by itself) */
-export function mgjBackIfGone(s) {
-  mine();
-  if (s.mgj && s.mgj.n !== hand.fight) {
-    hand.fight = s.mgj.n;
-    hand.in = hand.back = "handgun"; // (a new fight: the pistol in hand, the short sword on 1)
-  }
-  if (settle(s) && C.me && s.phase === "boss")
-    setTimeout(() => C.sendMove(true), 0);
-}
-/* Mad God Justin: what a key puts out in my hand, kept there (the owner's, Nov 3) */
-export const mgjInHand = (id) =>
-  id === MGJ_MELEE ||
-  id === "handgun" ||
-  id === "zebra" ||
-  (!!id && id === C.myPick());
-export function mgjOut2(id) {
-  put(id);
-  C.sendMove(true);
-}
 /* the weapon in my duck's hand: the one in the slot picked; Quacky Zombies: the one in the slot picked (the melee
    weapon at first; back to the one before when the special is used up), none while I'm down or a ghost */
 export function heldNow() {
@@ -269,17 +214,10 @@ export function useKey(i, keep) {
      hotbar using the number key") */
   if (!keysOf(C.playDuck())[i]) {
     if (mine() === ROWS.board && C.bar && C.bar.flash) C.bar.flash(); // ("Press H" over the bar: P5)
-    if (isMgj(C.R.state)) hand.in = "none";
-    else hand.lastKey = i;
+    hand.lastKey = i;
     C.sendMove(true);
     return;
   }
-  if (isMgj(C.R.state)) {
-    const id = keysOf(C.playDuck())[i];
-    if (mgjInHand(id)) mgjOut2(id); // (kept out once picked: a click or V uses it)
-    if (C.bar) setTimeout(() => C.bar && C.bar.refresh(), 60);
-    return;
-  } // (Mad God Justin's own keys)
   const id = keysOf(C.playDuck())[i],
     sp = specialById(id);
   if (!sp || sp.off || !(unlocked("special", id) || sbHotOn(C.R.state))) return; // (a special that's off for now, or still locked, does nothing; in Sandbox the loot is everyone's)

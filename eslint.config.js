@@ -32,11 +32,4 @@ export default [
       ],
     },
   },
-  {
-    /* the command line's own numbers (exit codes, head and fold sizes) are the shell's, not game rules */
-    files: ["js/shell.js", "js/bash.js", "js/textutils.js"],
-    rules: {
-      "no-restricted-syntax": ["warn", modeCompare("==="), modeCompare("!==")],
-    },
-  },
 ];

@@ -194,7 +194,7 @@ let cv = null,
   slid = "";
 const darkURL = () => {
   if (darkURL.r !== layoutRev()) {
-    darkURL.r = layoutRev(); // (the room's cabin's: Quacky Zombies' has holes in its south wall)
+    darkURL.r = layoutRev();
     darkURL.u = svgDataURL(cabinSVG(true));
   }
   return darkURL.u;

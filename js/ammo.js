@@ -2,32 +2,22 @@
    ARCADE UNLESS UNLIMITED AMMO IS SELECTED"). Every gun has Dead Ducks Arcade's ammo (guns.js ARMS): its magazine (mag)
    and all it carries (all), reloaded from the rest; a gun without a magazine (the shotgun, the grenade launcher, the
    flamethrower) fires all it has and is empty. One pair everywhere: [in the magazine, the rest] (no magazine: [all of
-   it, 0]). Dead Ducks Arcade keeps a duck's pairs in its kit (l4ddrules.js m.am); the board and Mad God Justin in s.mag.
+   it, 0]). Dead Ducks Arcade keeps a duck's pairs in its kit (l4ddrules.js m.am); the board in s.mag.
    G's Unlimited ammo (s.options.infAmmo): the rest never goes down; a magazine still empties and reloads, and a gun
    without one never runs out. The bow and the Laser Rifle never run out anywhere (no `all`). A game starts every gun
    full (voterules.js beginGame). */
 import { ARMS, loadTo } from "./guns.js";
 import { afterShots } from "./weaponuse.js";
-import { survOn, SV } from "./survrules.js";
 
 /* a ranged weapon whose ammo never runs out (no `all`: the Laser Rifle, the bow) */
 export const endless = (w) =>
-  !!ARMS[w] &&
-  ARMS[w].kind === "ranged" &&
-  ARMS[w].all === undefined &&
-  !(w === "bow" && survOn()); // (Survival: the bow has 300 arrows)
+  !!ARMS[w] && ARMS[w].kind === "ranged" && ARMS[w].all === undefined;
 /* a weapon's ammo, full: [in the magazine, the rest], or [all of it, 0] without a magazine; null: none kept (melee,
-   endless). Survival: every gun holds half as much ("every weapon now has half as much ammo"), never less than a
-   magazine; the bow 300 arrows */
+   endless) */
 export const fullAmmo = (w) => {
   const a = ARMS[w];
-  if (w === "bow" && survOn()) return [SV.ARROWS, 0];
   if (!a || a.all === undefined) return null;
-  const all =
-    survOn() && a.kind === "ranged"
-      ? Math.max(a.mag || 1, Math.ceil(a.all / 2))
-      : a.all;
-  return a.mag ? [a.mag, all - a.mag] : [all, 0];
+  return a.mag ? [a.mag, a.all - a.mag] : [a.all, 0];
 };
 /* G's Unlimited ammo is on */
 export const infAmmo = (s) => !!(s && s.options && s.options.infAmmo);
@@ -60,7 +50,7 @@ export const reloadMs = (w, c, inf) =>
       )
     : ARMS[w].reload || 1500;
 
-/* ---------- the board's and Mad God Justin's: s.mag = { key: { c: the pair, r: when its reload ends (0: not
+/* ---------- the board's: s.mag = { key: { c: the pair, r: when its reload ends (0: not
    reloading), d: how long it takes, f: the pair once it's done } }, key: magKey ---------- */
 export const magKey = (id, w) => (w === "handgun" ? id : `${id} ${w}`);
 /* a game starts: every gun full again */
@@ -68,20 +58,15 @@ export const ammoReset = (s) => {
   delete s.mag;
 };
 /* duck id's gun w now: { c, r, d } (never fired this game, or kept the old way, { n, r }, by a room from before: full; a reload over: done), or null for none kept (not a
-   gun, or endless). down: the down pistol, its bullets never run out */
-export function magOf(s, id, now, w = "handgun", down) {
+   gun, or endless) */
+export function magOf(s, id, now, w = "handgun") {
   const m = (s.mag || {})[magKey(id, w)];
   if (!m || !m.c) {
     const full = ARMS[w] && ARMS[w].kind === "ranged" && fullAmmo(w);
-    return full && { c: down ? [full[0], 0] : full, r: 0, d: 0 };
+    return full && { c: full, r: 0, d: 0 };
   }
   return m.r && now >= m.r ? { c: m.f, r: 0, d: 0 } : m;
 }
-/* the rounds left in duck id's gun w, all told (Infinity: none kept) */
-export const leftOf = (s, id, now, w) => {
-  const m = magOf(s, id, now, w);
-  return m ? m.c[0] + m.c[1] : Infinity;
-};
 /* a reload of duck id's gun w starts (by R, or by itself once empty); false when it can't */
 export function reloadMag(s, id, now, w, inf, m = magOf(s, id, now, w)) {
   const to = m && !m.r && reloadTo(w, m.c, capOf(w), inf);

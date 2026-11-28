@@ -1,7 +1,6 @@
-/* ---------- the silly commands (lightning, love, kill, hotdog) and the room's shots and blasts, as they are drawn ----------
+/* ---------- the board's specials (lightning, love, kill) and the room's shots and blasts, as they are drawn ----------
    Moved out of game.js to keep that file small (a pure move). It imports back from game.js, which imports it. */
 import {
-  JUSTIN2,
   R,
   S,
   bigOf,
@@ -10,7 +9,6 @@ import {
   follows,
   frameNo,
   geo,
-  hotdogs,
   me,
   neckSpray,
   podLift,
@@ -20,12 +18,10 @@ import {
 } from "./game.js";
 import { place } from "./gameboard.js";
 import { heard } from "./gamehand.js";
-import { CHAIR } from "./gunart.js";
 
 import { el, $ } from "./ui.js";
 
 import { isLaw, KB_LAND } from "./rules.js";
-import { modeOf } from "./modes.js";
 
 import { W as HW, H as HH } from "./hangout/layout.js";
 
@@ -58,12 +54,6 @@ import { sfx } from "./sound.js";
 
 import { now as clockNow } from "./clock.js";
 
-import { isMgj, MGJ_SCALE } from "./mgjrules.js";
-
-import { POOF, TELEPORT, HITMARK, edgeHTML } from "./mgjart.js";
-
-import { dropMeteor, CONTROLLER } from "./mgj.js";
-
 import {
   fxImpact,
   fxSmolder,
@@ -87,8 +77,6 @@ import { low } from "./gfx.js";
 import { kick, shake, vibrate, VIB } from "./fxmotion.js";
 import { heatShake } from "./heat.js";
 
-/* ---------- the silly commands: lightning, love, kill, hotdog ---------- */
-const HOTDOG = `<svg viewBox="-34 -24 68 30" width="100%"><path d="M-24-13C-26-18-20-21-12-19L14-19C22-21 27-17 25-12Z" fill="#e2a65a" stroke="#1c1c28" stroke-width="1.6"/><rect x="-31" y="-17" width="62" height="10" rx="5" fill="#c0502b" stroke="#1c1c28" stroke-width="1.6"/><path d="M-24-13l4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3" stroke="#f2c230" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M-27-9C-28-1-20 2-10 2L10 2C20 2 28-1 27-9C18-6-18-6-27-9Z" fill="#eab36a" stroke="#1c1c28" stroke-width="1.6"/></svg>`;
 /* a card's color, lifted when it's too dark to see on the name tag (a black card's meter showed black on black) */
 export function seen(hex) {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex || "");
@@ -385,20 +373,12 @@ export function playFx(f) {
       }
     for (const id of f.hit) {
       const dk = S.querySelector(`.gduck[data-pid="${CSS.escape(id)}"]`);
-      if (id === JUSTIN_ID && isMgj(s)) {
-        hurt(dk);
-        sfx.hit();
-      }
       burn(dk);
     }
   } else if (f.kind === "hit") {
     // the knife or the hammer touched someone after the press, while it swung
     const by = S.querySelector(`.gduck[data-pid="${CSS.escape(f.by)}"]`);
     for (const id of f.hit || []) fxMelee(id, f.what, by && by._at); // (its blood: fx.js fxHitAt)
-    if (f.hit.includes(JUSTIN_ID) && isMgj(s)) {
-      hurt(S.querySelector(`.gduck[data-pid="${JUSTIN_ID}"]`));
-      sfx.hit();
-    }
     if (f.what === "hammer") setTimeout(() => sfx.bonk(), KB_LAND);
   } else if (f.kind === "use") {
     // an item at its duck, moving with it (drawDucks places it each frame)
@@ -463,33 +443,7 @@ export function playFx(f) {
       setTimeout(() => sfx.pump(heard(f.by)), 520);
       return;
     }
-    if (
-      isMgj(s) &&
-      f.by === JUSTIN_ID &&
-      (f.what === "lmg" || f.what === "smg")
-    ) {
-      // Mad God Justin's LMG and SMG (in place of his pistol): turned toward each bullet's aim, the quick rattle
-      shows[f.by] = {
-        what: f.what,
-        t: now,
-        until: now + 400,
-        ax: f.ax || f.face || 1,
-        ay: f.ay || 0,
-      };
-      if (s.mgj && s.mgj.dup)
-        shows[JUSTIN2] = {
-          ...shows[f.by],
-          ax: -shows[f.by].ax,
-          ay: -shows[f.by].ay,
-        }; // (his double does the same, mirrored)
-      (f.what === "lmg" ? sfx.lmg : sfx.smg)(heard(f.by));
-      return;
-    }
     if (BOARD_WEAPONS.includes(f.what)) {
-      if ((f.hit || []).includes(JUSTIN_ID) && isMgj(s)) {
-        hurt(S.querySelector(`.gduck[data-pid="${JUSTIN_ID}"]`));
-        sfx.hit();
-      } // (Mad God Justin stabbed: he flashes red, and the hit sound; anyone else flashes as they go down)
       shows[f.by] = {
         what: f.what,
         t: now,
@@ -508,12 +462,6 @@ export function playFx(f) {
         ax: f.ax || f.face || 1,
         ay: f.ay || 0,
       };
-      if (f.by === JUSTIN_ID && isMgj(s) && s.mgj && s.mgj.dup)
-        shows[JUSTIN2] = {
-          ...shows[f.by],
-          ax: -shows[f.by].ax,
-          ay: -shows[f.by].ay,
-        }; // (his double does the same, mirrored)
       (
         ({
           handgun: sfx.handgun,
@@ -560,88 +508,6 @@ export function playFx(f) {
     if (!dk) return;
     burn(dk, 1600);
     sfx.fire(heard(f.who[0]));
-  } else if (f.kind === "meteor") {
-    // Mad God Justin's meteor, onto the middle of the board
-    const board = $(".board", S);
-    if (!board) return;
-    dropMeteor(
-      fxl,
-      board,
-      place(f.x != null ? { x: f.x, y: f.y } : { x: 0.5, y: 0.55 }, 0, 1),
-      f.small ? size * 0.6 : size,
-      f.land - now,
-    );
-    sfx.meteor(Math.max(0.15, (f.land - now) / 1000));
-  } else if (f.kind === "pump") {
-    // he's back, with the shotgun
-    sfx.pump();
-  } else if (f.kind === "xboff") {
-    sfx.tick(); // (Mad God Justin turns his Xbox off: a click, and the light and the screen go dark)
-  } else if (f.kind === "mgjtell") {
-    // Mad God Justin holds up what he's about to throw: the controllers, or the chair over his head
-    const lift = S.querySelector(`.gduck[data-pid="${JUSTIN_ID}"] .gduck-lift`),
-      left = (f.until || 0) - now;
-    if (!lift || left <= 0) return;
-    const up = el(
-      `<div class="mgj-tellup k-${f.what}" style="--tell:${left}ms">${f.what === "chair" ? CHAIR : CONTROLLER.repeat(2)}</div>`,
-    );
-    lift.append(up);
-    setTimeout(() => up.remove(), left);
-    sfx.boop();
-  } else if (f.kind === "mgjcharge") {
-    // Mad God Justin about to charge a duck: he shakes, flushed red, for the tell (his double too)
-    const left = (f.until || 0) - now;
-    if (left <= 0) return;
-    for (const pid of [JUSTIN_ID, JUSTIN2]) {
-      const d = S.querySelector(`.gduck[data-pid="${pid}"]`);
-      if (!d) continue;
-      d.classList.add("mgj-charge");
-      setTimeout(() => d.classList.remove("mgj-charge"), left);
-    }
-    sfx.boop();
-  } else if (f.kind === "mgjbonk") {
-    sfx.bonk(); // (his charge sent a duck flying)
-  } else if (f.kind === "pickup") {
-    sfx.pop(); // (Mad God Justin: a weapon picked up)
-  } else if (f.kind === "teleport") {
-    // Mad God Justin's blue flash where he leaves and where he lands (his double: where it shows up)
-    for (const [x, y] of f.dup
-      ? [[f.x, f.y]]
-      : [
-          [f.x0, f.y0],
-          [f.x, f.y],
-        ]) {
-      const at = place({ x, y }, 0, 1),
-        n = el(
-          `<div class="mgj-tp" style="left:${at.left.toFixed(1)}px;top:${at.top.toFixed(1)}px;width:${(size * 1.6).toFixed(0)}px">${TELEPORT}</div>`,
-        );
-      fxl.append(n);
-      setTimeout(() => n.remove(), 600);
-    }
-    sfx.teleport();
-  } else if (f.kind === "hitmark") {
-    // a hit on Justin, his double (the same marker: the owner's): the hitmarker, only where the mode has them (modes.js hitMarks)
-    if (!modeOf(s.options.mode).hitMarks) return;
-    const at = geo.hang
-        ? world.place({ x: f.x, y: f.y }, f.hz || 0)
-        : place({ x: f.x, y: f.y }, 0, 1),
-      n = el(
-        `<div class="mgj-hit" style="left:${at.left.toFixed(1)}px;top:${(at.top - size * 0.5 * MGJ_SCALE).toFixed(1)}px;width:${(size * 0.55).toFixed(0)}px">${HITMARK}</div>`,
-      );
-    fxl.append(n);
-    setTimeout(() => n.remove(), 500);
-  } else if (f.kind === "poof") {
-    // Good Justin God gone in a cloud
-    const at = place({ x: f.x, y: f.y }, 0, 1),
-      n = el(
-        `<div class="mgj-poof" style="left:${at.left.toFixed(1)}px;top:${(at.top - size * 0.4).toFixed(1)}px;width:${(size * 1.3).toFixed(0)}px">${POOF}</div>`,
-      );
-    fxl.append(n);
-    setTimeout(() => n.remove(), 800);
-    sfx.puff();
-  } else if (f.kind === "revive") {
-    // a downed duck got up (held 5 s by another: the owner's, in place of the medkit): a pop
-    sfx.pop();
   } else if (f.kind === "l4line") {
     /* the Laser Rifle's beam: one red line from the end of its barrel out to what it hit (laserart.js BEAM) */
     if (!geo.hang && !f.b) return;
@@ -775,7 +641,7 @@ export function playFx(f) {
     const a = f.b
         ? place({ x: f.x, y: f.y }, 0, 1)
         : world.place({ x: f.x / HW, y: f.y / HH }, 0),
-      top = a.top - size * 0.78; // (f.b: on a board, Mad God Justin's zombies; mgjrules.js mgjZombieHit)
+      top = a.top - size * 0.78; // (f.b: on a board, Sandbox's zombies; boardzombies.js zombieHit)
     if (f.m) return critMark(a.left, top - size * 0.3); // (a crit that didn't kill: only the small CRIT)
     sfx.gore(f.b ? {} : { x: f.x, y: f.y }); // (a gush of gore: the owner's, Nov 17 12:28Z)
     bloodBurst(a.left, top, 12, 2.6, size * 0.3, size * 0.5); // (a smaller burst than it was, as a duck's crit: the owner's, Nov 4)
@@ -820,21 +686,5 @@ export function playFx(f) {
     setTimeout(() => word.remove(), 1200);
   } else if (f.kind === "eat") {
     sfx.chomp();
-  } else if (f.kind === "edge") {
-    // the edge lightning strikes (its glow before it: drawEdge)
-    const board = $(".board", S);
-    if (!board) return;
-    board.querySelector(".mgj-edge.warn")?.remove();
-    const n = el(edgeHTML("zap"));
-    board.append(n);
-    setTimeout(() => n.remove(), 400);
-    sfx.zap();
-  } else if (f.kind === "hotdog") {
-    const node = el(
-      `<div class="fx-hotdog" style="width:${(size * 0.8).toFixed(0)}px">${HOTDOG}</div>`,
-    );
-    fxl.append(node);
-    hotdogs.push({ id: f.who[0], el: node, until: now + 7000 });
-    sfx.hotdog();
   }
 }

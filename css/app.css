@@ -54,7 +54,7 @@
   font-weight: 500;
   font-display: swap;
 }
-/* Cascadia Code, the command line's and Seriat's letters, self-hosted (SIL Open Font License:
+/* Cascadia Code, Seriat's letters, self-hosted (SIL Open Font License:
    assets/fonts/cascadia-code-OFL.txt) */
 @font-face {
   font-family: "Cascadia Code";
@@ -1299,72 +1299,8 @@ html.dys * {
    the ones that tell something (the owner's, Nov 19 19:27Z: "make sure the performance modes don't just make certain
    things disappear, like the loading screen or the countdown"): the screen darkening over the start's countdown and
    the loading screen's bar, the notes that come and go (what a drop is, the merchant's arrival, Democracy's news, a
-   duck's chat, a duck's words), the points and the HP gained or lost, the hitmarkers, the red edge when I'm hurt.
+   duck's chat, a duck's words), the points and the HP gained or lost, the red edge when I'm hurt.
    Without their time they showed for no time at all (the countdown sat under a black screen). */
-html.still
-  *:not(
-    :where(
-      .veil,
-      .veil *,
-      .dod-news,
-      .chat-float,
-      .hurt-edge,
-      .hp-pop,
-      .mgj-hit,
-      .mgj-pick,
-      .l4-got,
-      .l4-say,
-      .l4-pts-pop,
-      .l4-duck-pop,
-      .l4-nuke,
-      .l4-peek,
-      .l4-vitals
-    )
-  ),
-html.still
-  *:not(
-    :where(
-      .veil,
-      .veil *,
-      .dod-news,
-      .chat-float,
-      .hurt-edge,
-      .hp-pop,
-      .mgj-hit,
-      .mgj-pick,
-      .l4-got,
-      .l4-say,
-      .l4-pts-pop,
-      .l4-duck-pop,
-      .l4-nuke,
-      .l4-peek,
-      .l4-vitals
-    )
-  )::before,
-html.still
-  *:not(
-    :where(
-      .veil,
-      .veil *,
-      .dod-news,
-      .chat-float,
-      .hurt-edge,
-      .hp-pop,
-      .mgj-hit,
-      .mgj-pick,
-      .l4-got,
-      .l4-say,
-      .l4-pts-pop,
-      .l4-duck-pop,
-      .l4-nuke,
-      .l4-peek,
-      .l4-vitals
-    )
-  )::after {
-  animation-duration: 0s !important;
-  animation-iteration-count: 1 !important;
-  transition-duration: 0s !important;
-}
 
 /* ---------- panels, fields ---------- */
 .panel {
@@ -3766,8 +3702,7 @@ html.mouse-move .board {
   } /* (a full-screen stats panel scrolls inside its own space, never under the buttons) */
 }
 
-/* ---------- text chat and the command line (the button in the bottom bar; the panel in a dock) ----------
-   The round symbol shows the mode: ABC on white for the chat, a green $ on black for the command line. */
+/* ---------- text chat (the button in the bottom bar; the panel in a dock) ---------- */
 .mode-icon {
   flex: none;
   width: 2.5rem;
@@ -3785,13 +3720,6 @@ html.mouse-move .board {
   position: relative;
   box-shadow: 0 0.15rem 0 var(--line);
   padding: 0;
-}
-.mode-icon[data-mode="cmd"] {
-  background: #000;
-  color: #33ff66;
-  font-family: "Cascadia Code", Consolas, monospace;
-  font-size: 1.2rem;
-  text-shadow: 0 0 0.35rem #33ff6699;
 }
 .chat-btn[aria-pressed="true"] {
   box-shadow: inset 0 0.12rem 0 #0003;
@@ -3852,129 +3780,10 @@ html.mouse-move .board {
   font-weight: 700;
   color: var(--purple);
 }
-.chat-log .cmd-line {
-  font-family: "Cascadia Code", Consolas, monospace;
-  font-weight: 200;
-  white-space: pre-wrap;
-}
-.chat-log .cmd-line.echo {
-  color: var(--dim);
-}
-.chat-log .cmd-line.echo > .k-prompt {
-  color: var(--dim);
-}
-/* the command line's colors: each kind of command its own (help · kindOf in helppages.js), then flags, operators … */
-:root {
-  --k-help: #138a0c;
-  --k-bash: #0b6fc2;
-  --k-file: #087f74;
-  --k-text: #9a6b00;
-  --k-group: #7a3fd0;
-  --k-people: #c2306e;
-  --k-game: #c25a00;
-  --k-silly: #d01f1f;
-  --k-chat: #5d6072;
-  --k-flag: #6b6f85;
-  --k-op: #1c1c28;
-  --k-var: #8a3fb0;
-  --k-str: #6d5a00;
-}
-html.dark,
-html.map-is-nwk,
-html.map-is-vellum {
-  --k-help: #4be03a;
-  --k-bash: #4fb3ff;
-  --k-file: #2fd8c4;
-  --k-text: #ffd23f;
-  --k-group: #b996f5;
-  --k-people: #ff8cc0;
-  --k-game: #ff9a45;
-  --k-silly: #ff5c5c;
-  --k-chat: #b8bbcc;
-  --k-flag: #a9acbf;
-  --k-op: #ffffff;
-  --k-var: #e2a8ff;
-  --k-str: #f3e3a0;
-}
-.chat-log .k-help {
-  color: var(--k-help);
-  font-weight: 600;
-}
-.chat-log .k-bash {
-  color: var(--k-bash);
-  font-weight: 600;
-}
-.chat-log .k-file {
-  color: var(--k-file);
-  font-weight: 600;
-}
-.chat-log .k-text {
-  color: var(--k-text);
-  font-weight: 600;
-}
-.chat-log .k-group {
-  color: var(--k-group);
-  font-weight: 600;
-}
-.chat-log .k-people {
-  color: var(--k-people);
-  font-weight: 600;
-}
-.chat-log .k-game {
-  color: var(--k-game);
-  font-weight: 600;
-}
-.chat-log .k-silly {
-  color: var(--k-silly);
-  font-weight: 600;
-}
-.chat-log .k-chat {
-  color: var(--k-chat);
-  font-weight: 600;
-}
-.chat-log .k-flag {
-  color: var(--k-flag);
-  white-space: nowrap;
-}
-.chat-log .k-op {
-  color: var(--k-op);
-  font-weight: 700;
-}
-.chat-log .k-var {
-  color: var(--k-var);
-}
-.chat-log .k-str {
-  color: var(--k-str);
-}
-.chat-log .k-at {
-  color: var(--blue);
-}
 .chat-log .k-ph,
 .chat-log .k-note {
   color: var(--dim);
   font-style: italic;
-}
-.chat-log .k-prompt {
-  color: var(--k-help);
-}
-.chat-log .k-head {
-  display: inline-block;
-  margin-top: 0.2rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  font-size: 0.85em;
-  color: var(--ink);
-}
-.chat-log .k-title {
-  font-weight: 700;
-  color: var(--ink);
-}
-.chat-log .k-err {
-  color: var(--k-silly);
-}
-.chat-log .cmd-line .ind {
-  display: block;
-  padding-left: calc(var(--i) * 1ch);
 }
 .chat-sugg {
   list-style: none;
@@ -4006,13 +3815,6 @@ html.map-is-vellum {
 .chat-row .chat-in {
   flex: 1;
   min-width: 0;
-}
-.chat-panel[data-mode="cmd"] .chat-in {
-  background: #000;
-  color: #fff;
-  border-color: #000;
-  font-family: "Cascadia Code", Consolas, monospace;
-  caret-color: #33ff66;
 }
 .sect.muted .swatches,
 .sect.muted > .row {
@@ -4160,7 +3962,7 @@ html.moving .hat-float {
 .gduck.see .gduck-shadow {
   opacity: 0.4;
 }
-/* the Chair special's icon: Mad God Justin's black chair, with a light edge so it shows on the dark keys */
+/* the Chair special's icon: the black chair, with a light edge so it shows on the dark keys */
 svg.sp-chair {
   filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.75));
 }
@@ -4233,27 +4035,6 @@ svg.l4-gun {
   100% {
     transform: translateY(var(--rise)) scale(1.05);
     opacity: 0;
-  }
-}
-.fx-hotdog {
-  position: absolute;
-  left: 0;
-  top: 0;
-  margin-left: -0.5rem;
-  transition: opacity 0.8s;
-  animation: hotdogbob 1.4s ease-in-out infinite;
-}
-.fx-hotdog svg {
-  display: block;
-  transform: rotate(-12deg);
-  filter: drop-shadow(0 0.2rem 0.2rem #0004);
-}
-.fx-hotdog.going {
-  opacity: 0;
-}
-@keyframes hotdogbob {
-  50% {
-    margin-top: -6px;
   }
 }
 html.still .fx-heart {
@@ -5608,9 +5389,6 @@ html.moving .pix-sun {
   aspect-ratio: 1280 / 988;
   width: min(100%, 52rem, (100dvh - 15rem) * 1.3);
 } /* (the whole cabin map is nearly square) */
-.gs-cabin.dark {
-  filter: brightness(0.42) saturate(0.7);
-} /* (Left 4 Dead Ducks: the power is cut) */
 .gs-map.grey .gs-back {
   filter: grayscale(1);
 }
@@ -6561,7 +6339,7 @@ html.still .gduck-zz i {
   display: none;
 }
 /* fire: one big flame over the whole duck for a moment (the owner: "the whole duck covered in one large enough flame";
-   art: FLAME in mgjart.js), then a charred duck whose burns fade. Its three layers flicker out of step */
+   art: FLAME in fxart.js), then a charred duck whose burns fade. Its three layers flicker out of step */
 .gduck-fire {
   display: none;
   position: absolute;
@@ -7404,7 +7182,7 @@ html.still .spx-disco .disco-spot {
   width: calc(var(--s) * 0.22);
   animation-duration: 0.8s;
 }
-/* Customize's previews of the bow, the chair, the zebra cake (the art is Mad God Justin's, mgjart.js) */
+/* Customize's previews of the bow, the chair, the zebra cake (the art: fxart.js and gunart.js) */
 .spe-wield[data-w="bow"] {
   animation: wdraw 1.3s ease-out forwards;
 }
@@ -10319,7 +10097,7 @@ html.map-is-vellum .tmeter i {
 /* The King's Festival takes the Ether & Kenoma look above, in the colors of my book site's burnt amber (owner
    2026-11-06: the burnt amber look, following what the book site does: near-black like an amber terminal, amber
    letters, a burnt orange accent, dark hairlines; source/theme/site.css :root there), in the chapter's blackletter
-   (Grenze Gotisch) for every letter. The command line keeps its typewriter letters, Dyslexic mode its clear ones,
+   (Grenze Gotisch) for every letter. Dyslexic mode keeps its clear letters,
    and players their own fonts on names and prompts. Meters and keys in the same amber; the HP blocks the game's
    heart red. */
 html.map-is-vellum {
@@ -10500,33 +10278,6 @@ html.map-is-vellum .hpm-stam i {
 }
 html.map-is-vellum .hpm-stam.tired i {
   background: #6a5040;
-}
-
-/* a message sent from the command line: the command in small print, then its output as it came out */
-.chat-log .from-cmd .cmd-tag {
-  display: block;
-  font-size: calc(0.72rem * var(--ts));
-  color: var(--dim);
-  margin: 0.05rem 0 0.15rem;
-}
-.chat-log .from-cmd code {
-  font-family: "Cascadia Code", Consolas, monospace;
-  font-weight: 200;
-}
-.chat-log .from-cmd .cmd-out {
-  display: block;
-  white-space: pre-wrap;
-  font-family: "Cascadia Code", Consolas, monospace;
-  font-weight: 200;
-  font-size: calc(0.86rem * var(--ts));
-  background: color-mix(in srgb, var(--panel2) 70%, transparent);
-  border-radius: 0.4rem;
-  padding: 0.25rem 0.45rem;
-  overflow-wrap: anywhere;
-}
-.chat-log .from-cmd .cmd-file {
-  display: block;
-  font-weight: 600;
 }
 
 /* Bicker Brackets: the cards still being written light up, apart from what was already written */
@@ -11252,7 +11003,7 @@ html.moving .wq-tile.speaker {
     opacity: 1;
   }
 }
-/* down and dying (Quacky Zombies, Mad God Justin): greyer as its time runs out (--dg, 0.15 to 1: game.js) */
+/* down and dying (Quacky Zombies): greyer as its time runs out (--dg, 0.15 to 1: game.js) */
 .gduck.dying .gduck-body {
   filter: grayscale(var(--dg)) brightness(calc(1 - 0.2 * var(--dg)));
 }
@@ -12100,7 +11851,7 @@ html.sprint-blur .hang-board::after {
 .gact .act-row:has(.hang-btn) {
   order: -1;
 } /* (a Vote button, if one ever shows with it, stays under it) */
-/* Survival, my duck dead: the card of the duck I watch, where the Vote button goes (js/spectate.js), small as a button */
+/* my duck dead for good (Sandbox out of lives): the card of the duck I watch, where the Vote button goes (js/spectate.js), small as a button */
 .act-row.spec {
   flex-wrap: nowrap;
   gap: 0.4rem;
@@ -13780,10 +13531,9 @@ svg.defs {
     }
   }
 }
-/* ---------- Mad God Justin ---------- */
-/* the arena: one see-through field over the map, at every board's one level (.board .col mixes it). Its color turns
-   slowly through the rainbow, one full turn about every 30 seconds (the owner's pick, Nov 22 02:57Z: "Mad God Justin
-   doesn't need a board that's a single caller. His board can be maybe rainbow or slowly changes") */
+/* ---------- Sandbox's board (it was Mad God Justin's, cut Nov 27) ---------- */
+/* one see-through field over the map, at every board's one level (.board .col mixes it). Its color turns slowly
+   through the rainbow, one full turn about every 30 seconds (the owner's pick, Nov 22 02:57Z) */
 @property --mgjc {
   syntax: "<color>";
   inherits: true;
@@ -13849,170 +13599,6 @@ html.moving .mgj-field {
   background: radial-gradient(ellipse at 50% 55%, #ffffff14, transparent 70%);
   pointer-events: none;
 }
-/* the edge lightning (art: edgeHTML in mgjart.js): "warn" glows electric blue along the edges and corners, as deep as the
-   strip it will hit (--edge-x on the sides, --edge-y top and bottom, as parts of the board), brightening for 0.6 s; "zap" strikes: a white flash in the strip and bolts along the sides */
-.mgj-edge {
-  --edge-x: 5%;
-  --edge-y: 9%;
-  position: absolute;
-  inset: 0;
-  z-index: 6;
-  border-radius: inherit;
-  pointer-events: none;
-}
-.mgj-edge.warn {
-  background:
-    linear-gradient(
-      to bottom,
-      #38b6ffb0,
-      #38b6ff30 var(--edge-y),
-      transparent calc(var(--edge-y) + 2%)
-    ),
-    linear-gradient(
-      to top,
-      #38b6ffb0,
-      #38b6ff30 var(--edge-y),
-      transparent calc(var(--edge-y) + 2%)
-    ),
-    linear-gradient(
-      to right,
-      #38b6ffb0,
-      #38b6ff30 var(--edge-x),
-      transparent calc(var(--edge-x) + 1.2%)
-    ),
-    linear-gradient(
-      to left,
-      #38b6ffb0,
-      #38b6ff30 var(--edge-x),
-      transparent calc(var(--edge-x) + 1.2%)
-    );
-  box-shadow:
-    inset 0 0 0 0.18rem #9be8ff,
-    inset 0 0 1rem 0.3rem #38b6ffcc;
-  animation: edge-warn var(--ew, 1.2s) ease-in forwards;
-}
-@keyframes edge-warn {
-  0% {
-    opacity: 0.15;
-  }
-  18% {
-    opacity: 0.6;
-  }
-  30% {
-    opacity: 0.2;
-  }
-  50% {
-    opacity: 0.75;
-  }
-  62% {
-    opacity: 0.3;
-  }
-  82% {
-    opacity: 0.9;
-  }
-  100% {
-    opacity: 1;
-  }
-} /* (three blinks, brighter each time, then it strikes: the owner's, Nov 17 11:07Z, "more of a hint") */
-/* Mad God Justin's hints (game.js placeTells): the hammer's red wedge, the burst's sight line, the shotgun's cone, filling
-   in as the moment comes (--k, 0 to 1), and a red "!" over his head */
-.mgj-tells {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  pointer-events: none;
-  z-index: 5;
-}
-.mgj-tells .w {
-  fill: #ff3b4a;
-  fill-opacity: calc(0.22 + 0.3 * var(--k, 0));
-  stroke: #ffd0d4;
-  stroke-width: 3;
-  stroke-opacity: calc(0.7 + 0.3 * var(--k, 0));
-  stroke-dasharray: 7 5;
-  animation: tell-march 0.4s linear infinite;
-}
-.mgj-tells .l,
-.mgj-tells .c {
-  fill: none;
-  stroke: #ff2a3a;
-  stroke-width: 4.5;
-  stroke-linecap: round;
-  stroke-opacity: calc(0.65 + 0.35 * var(--k, 0));
-  filter: drop-shadow(0 0 3px #fff8);
-  display: none;
-}
-.mgj-tells .l {
-  stroke-dasharray: 8 6;
-  animation: tell-march 0.35s linear infinite;
-}
-.mgj-tells.k-gun .l,
-.mgj-tells.k-gun .c,
-.mgj-tells.k-shotgun .c {
-  display: inline;
-}
-@keyframes tell-march {
-  to {
-    stroke-dashoffset: -12;
-  }
-}
-.mgj-bang {
-  position: absolute;
-  z-index: 7;
-  width: 2rem;
-  height: 2rem;
-  translate: -50% -50%;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: #e8424d;
-  border: 0.15rem solid #fff;
-  color: #fff;
-  font-family: var(--fun);
-  font-size: 1.45rem;
-  line-height: 1;
-  pointer-events: none;
-  box-shadow: 0 0 0.6rem #ff3b4acc;
-  animation: bang-pop 0.32s ease-in-out infinite alternate;
-}
-@keyframes bang-pop {
-  from {
-    scale: 0.85;
-  }
-  to {
-    scale: 1.15;
-  }
-}
-.mgj-edge.zap {
-  box-shadow:
-    inset 0 0 0 0.3rem #ffffff,
-    inset 0 0 2rem 0.8rem #bff1ffdd;
-  animation: edge-zap 0.35s linear forwards;
-}
-.mgj-edge.zap svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-@keyframes edge-zap {
-  0%,
-  22% {
-    opacity: 1;
-  }
-  32% {
-    opacity: 0.35;
-  }
-  44% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
 /* his teleport flash (TELEPORT), half a second where he leaves and where he lands: up from the ground, then gone */
 .mgj-tp {
   position: absolute;
@@ -14039,42 +13625,6 @@ html.moving .mgj-field {
     transform: translate(-50%, -88%) scale(0.7, 1.15);
   }
 }
-/* a hitmarker (HITMARK, HITMARK_FAKE): pops in big over what was hit, settles and fades */
-.mgj-hit {
-  position: absolute;
-  pointer-events: none;
-  animation: mgj-hit 0.45s ease-out forwards;
-}
-.mgj-hit svg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-@keyframes mgj-hit {
-  0% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.5);
-  }
-  30% {
-    transform: translate(-50%, -50%) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(1);
-  }
-}
-/* the rework's (game.js): a duck nothing can hurt for a second after a hit flickers fast, in and out */
-.gduck.mgj-blink .gduck-body {
-  animation: mgj-blink 0.12s steps(2, jump-none) infinite;
-}
-@keyframes mgj-blink {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0.25;
-  }
-}
 /* a duck that just came back from dying (the normal games): 2.5 s of spawn protection, it blinks see-through and fades in
    (the start is set in --pd) */
 .gduck.prot {
@@ -14097,19 +13647,6 @@ html.moving .mgj-field {
   }
   to {
     opacity: 0.4;
-  }
-}
-/* his charge's tell (game.js' mgjcharge): a fast shake, flushed red, then he sprints */
-.gduck.mgj-charge .gduck-body {
-  animation: mgj-charge 0.08s linear infinite alternate;
-  filter: url(#hurt1);
-}
-@keyframes mgj-charge {
-  from {
-    transform: translateX(-4%) rotate(-3deg);
-  }
-  to {
-    transform: translateX(4%) rotate(3deg);
   }
 }
 /* the bow's arrow, pointing the way it flies */
@@ -14146,8 +13683,7 @@ html.moving .mgj-field {
   animation: none;
 }
 .mgj-cake svg,
-.mgj-snack svg,
-.mgj-poof svg {
+.mgj-snack svg {
   display: block;
   width: 100%;
   height: auto;
@@ -14168,115 +13704,6 @@ html.moving .mgj-field {
 @keyframes mgj-bite {
   50% {
     transform: translateY(-12%) rotate(-8deg);
-  }
-}
-/* Good Justin God gone in a cloud */
-.mgj-poof {
-  position: absolute;
-  pointer-events: none;
-  transform: translate(-50%, -50%);
-  animation: mgj-poof 0.8s ease-out forwards;
-}
-/* a revive (the owner's, Nov 3: hold 5 s by a downed duck): the Hold button over it, filling up green while held */
-.mgj-rv {
-  position: absolute;
-  z-index: 40;
-  transform: translate(-50%, -100%);
-  display: flex;
-  align-items: center;
-  gap: 0.3em;
-  padding: 0.3em 0.8em;
-  border: 2px solid #6dff8a;
-  border-radius: 999px;
-  background: #1c1e2ae6;
-  color: #fff;
-  font: inherit;
-  font-size: 0.85rem;
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  cursor: pointer;
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
-  pointer-events: auto;
-}
-.mgj-rv i {
-  position: absolute;
-  inset: 0;
-  background: #3ee06a99;
-  transform-origin: 0 50%;
-  transform: scaleX(var(--rv, 0));
-}
-.mgj-rv span {
-  position: relative;
-}
-.mgj-rv:disabled {
-  cursor: default;
-  border-color: #6dff8a80;
-}
-@keyframes mgj-poof {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.4);
-  }
-  20% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -70%) scale(1.2);
-  }
-}
-
-/* his HP, beside the cloud */
-.question.mgj-hp {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  min-width: min(20rem, 46vw);
-  font-size: calc(1rem * var(--ts));
-}
-.mgj-hp-name {
-  font-family: var(--fun);
-  font-weight: 400;
-  font-size: calc(1.15rem * var(--ts));
-}
-.mgj-bar {
-  flex: 1;
-  min-width: 5rem;
-  height: 0.95rem;
-  border-radius: 1rem;
-  background: #0008;
-  border: 0.15rem solid var(--line);
-  overflow: hidden;
-}
-.mgj-bar i {
-  display: block;
-  height: 100%;
-  background: linear-gradient(90deg, #ef3b3b, #ff8c2b);
-  box-shadow: inset 0 0.18rem 0 #ffffff55;
-  transition: width 0.25s ease-out;
-}
-html.moving .mgj-bar.low i {
-  animation: mgjlow 0.8s ease-in-out infinite alternate;
-}
-@keyframes mgjlow {
-  to {
-    filter: brightness(1.45);
-  }
-}
-.mgj-hp-n {
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-@media (orientation: portrait) and (max-width: 760px) {
-  .question.mgj-hp {
-    min-width: 0;
-  }
-  .mgj-hp-name {
-    display: none;
   }
 }
 /* lightning eyes flicker (on everyone wearing them, and on him) */
@@ -14307,73 +13734,6 @@ html.moving .eye-zap {
   }
   58% {
     opacity: 1;
-  }
-}
-/* him: faded away for the meteor, flashing when stabbed, burnt on the podium */
-.mgj .gduck[data-pid="justin"] {
-  transition: opacity 0.9s ease;
-}
-/* (he fades out; he's back at once. Everything of him fades but what he's saying: his Xbox line comes as he goes, and
-   it stays readable, the owner's, Nov 17 19:11Z: "WHY THE FUCK IS JUSTIN NOT DIALOGUING ANYMORE") */
-.gduck.mgj-gone > :not(.gduck-lift),
-.gduck.mgj-gone .gduck-lift > :not(.gduck-say) {
-  opacity: 0;
-  transition: opacity 0.5s ease-in;
-}
-/* he's not there for his first 3 s: his avatar fades in with a red glow, then he's there (the start is set in --sp) */
-.gduck.mgj-spawn {
-  animation: mgj-spawn 3s linear var(--sp, 0s) both;
-}
-@keyframes mgj-spawn {
-  0% {
-    opacity: 0;
-    filter: drop-shadow(0 0 0 #ff2a2a);
-  }
-  70% {
-    opacity: 0.7;
-    filter: drop-shadow(0 0 10px #ff2a2a) drop-shadow(0 0 22px #ff2a2a);
-  }
-  100% {
-    opacity: 1;
-    filter: drop-shadow(0 0 0 #ff2a2a);
-  }
-}
-/* his Xbox's desk: it comes in, and fades away a moment after he's back; turned off, the screen and the light go dark */
-.mgj-desk {
-  position: absolute;
-  transform: translate(-50%, -88%);
-  pointer-events: none;
-  filter: drop-shadow(0 0.3rem 0.25rem #0007);
-  animation: mgjdeskin var(--in, 900ms) ease-out both;
-}
-.mgj-desk.out {
-  opacity: 0;
-  transition: opacity var(--out, 1200ms) ease-in;
-}
-.mgj-desk svg {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-.mgj-desk .xb-scr,
-.mgj-desk .xb-led {
-  transition: opacity 0.35s ease-in;
-}
-.mgj-desk .xb-dark {
-  opacity: 0;
-  transition: opacity 0.35s ease-in;
-}
-.mgj-desk.off .xb-scr,
-.mgj-desk.off .xb-led {
-  opacity: 0;
-}
-.mgj-desk.off .xb-dark {
-  opacity: 1;
-}
-@keyframes mgjdeskin {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -70%) scale(0.85);
   }
 }
 /* hit: a short, see-through red flash over the drawing (Justin hit, any duck knocked down; Duck Cabin's Justin too) */
@@ -14413,24 +13773,6 @@ html.moving .eye-zap {
     filter: none;
   }
 }
-.gduck.mgj-burnt .gduck-body > svg:not(.mgj-cry) {
-  filter: brightness(0.3) saturate(0.3) sepia(0.5);
-  transition: filter 0.3s;
-}
-.gduck.mgj-unburn .gduck-body > svg:not(.mgj-cry) {
-  transition: filter 2.5s ease-in;
-}
-/* his tears on the loser podium: a copy of the duck on top that shows only the tears, so the burn doesn't darken them */
-.gduck-body > svg.mgj-cry {
-  position: absolute;
-  left: 0;
-  top: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-.mgj-cry .eye-tears {
-  visibility: visible;
-}
 /* his shotgun and its pellets */
 .bullet.pellet {
   width: 16px;
@@ -14460,26 +13802,6 @@ html.moving .eye-zap {
 }
 /* the flamethrower's fire on my duck (game.js crimson): my screen blinks in and out of crimson; with the heavy effects
    off, a steady faint red */
-/* Survival: an LMG's rounds flying by me darken my screen's corners a moment (gunmenview.js) */
-.gm-sup {
-  position: fixed;
-  inset: 0;
-  z-index: 8990;
-  pointer-events: none;
-  --sup: 0; /* (how long the LMG has kept on at me: 0 to 1, gunmenview.js) */
-  background: radial-gradient(
-    ellipse at center,
-    #0000 calc(55% - 30% * var(--sup)),
-    #000000d9 calc(100% - 15% * var(--sup)),
-    #000 100%
-  );
-  opacity: 0;
-  transition: opacity 0.35s;
-}
-.gm-sup.on {
-  opacity: calc(0.55 + 0.45 * var(--sup));
-  transition: opacity 0.12s;
-}
 html.crimson body::after {
   content: "";
   position: fixed;
@@ -14533,36 +13855,6 @@ html.crimson.crimson-still body::after {
   }
 }
 /* the meteor: down from the top right, then the flash, a ring along the ground, the scorch, and the board shakes */
-.mgj-meteor {
-  position: absolute;
-  width: var(--w);
-  height: var(--w);
-  margin: calc(var(--w) * -0.61) 0 0 calc(var(--w) * -0.39);
-  z-index: 9000;
-  pointer-events: none;
-  animation: mgjfall var(--t) cubic-bezier(0.35, 0.1, 0.85, 0.8) forwards;
-}
-.mgj-meteor svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-  filter: drop-shadow(0 0 0.6rem #ff8c2b);
-}
-@keyframes mgjfall {
-  from {
-    transform: translate(var(--dx), var(--dy)) scale(0.75);
-  }
-  to {
-    transform: none;
-  }
-}
-.mgj-boom {
-  position: absolute;
-  width: 0;
-  height: 0;
-  z-index: 8999;
-  pointer-events: none;
-}
 .mgj-ring {
   position: absolute;
   left: calc(var(--w) / -2);
@@ -14612,9 +13904,6 @@ html.crimson.crimson-still body::after {
     opacity: 0;
   }
 }
-.fx-flash.mgj-flash {
-  background: #ffd9a0;
-}
 html.moving .board.quake {
   animation: shake 0.09s linear 6;
 }
@@ -14653,13 +13942,11 @@ html.moving .board.quake {
   background: linear-gradient(90deg, #e9f9ff, #7cc8f2);
   animation: none;
 }
-.mgj .law-statpanel .statboxes,
 .vd .law-statpanel .statboxes {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
 } /* (short boxes side by side, no dead space) */
-/* Mad God Justin's throws: the controllers spin as they fly and the chair turns slowly, each with a light rim so it
-   shows on any map; before they fly he holds them up over his head (the tell) */
+/* a thrown chair turns slowly as it flies, with a light rim so it shows on any map */
 .thrown.mgj-throw i {
   filter: drop-shadow(0 0 0.2rem #fff9) drop-shadow(0 0.15rem 0.15rem #0009);
 }
@@ -14687,48 +13974,7 @@ html.moving .board.quake {
   width: calc(var(--s) * 2);
   animation-duration: 2.6s;
 }
-.mgj-tellup {
-  position: absolute;
-  left: 50%;
-  bottom: 88%;
-  width: calc(var(--sz) * 1.5);
-  display: flex;
-  justify-content: center;
-  gap: 6%;
-  translate: -50% 0;
-  pointer-events: none;
-  transform-origin: 50% 100%;
-  filter: drop-shadow(0 0 0.25rem #fffa);
-  animation: mgjtell var(--tell, 800ms) ease-out both;
-}
-.mgj-tellup.k-chair {
-  width: calc(var(--sz) * 1.7);
-}
-.mgj-tellup svg {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-.mgj-tellup.k-controller svg {
-  width: 47%;
-}
-@keyframes mgjtell {
-  from {
-    opacity: 0;
-    transform: translateY(35%) scale(0.5);
-  }
-  25% {
-    opacity: 1;
-    transform: none;
-  }
-  70% {
-    transform: rotate(-7deg);
-  }
-  to {
-    transform: translateY(-14%) rotate(9deg);
-  }
-}
-/* Mad God Justin's zombie waves: Dead Ducks Arcade's own zombie pictures, gliding between the host's beats, a lunge
+/* the board's zombies (Sandbox's): Dead Ducks Arcade's own zombie pictures, gliding between the host's beats, a lunge
    when one claws, and a dead one falls over, lies there and fades as Dead Ducks Arcade's do (.l4z.dead below). Their HP
    bar and "−1 HP" are Dead Ducks Arcade's too, under their feet and over their heads (the owner's, Nov 19 01:34Z) */
 .mgj-z {
@@ -14900,92 +14146,6 @@ html.moving .board.quake {
   width: calc(64px * var(--gw, 0.34) * var(--zk, 1));
   transform: translate(-50%, -50%);
 } /* (--zk: its spawn's Size, sbspawnview.js) */
-/* Mad God Justin's pickups: a glowing token that fades in where it lies, bobbing a little */
-.mgj-pick {
-  position: absolute;
-  transform: translate(-50%, -70%);
-  pointer-events: none;
-  animation: mgjpickin var(--fade, 700ms) ease-out both;
-}
-.mgj-pick-glow {
-  position: absolute;
-  inset: -18%;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    #fff6b0cc 0%,
-    #ffd23f66 40%,
-    #ffd23f00 70%
-  );
-  animation: mgjpickglow 1.6s ease-in-out infinite;
-}
-.mgj-pick.k-lightning .mgj-pick-glow,
-.mgj-pick.k-good .mgj-pick-glow {
-  background: radial-gradient(
-    circle,
-    #e8f8ffdd 0%,
-    #7fd4ff77 40%,
-    #7fd4ff00 70%
-  );
-}
-.mgj-pick.k-plus .mgj-pick-glow {
-  background: radial-gradient(
-    circle,
-    #e6ffe0dd 0%,
-    #58d36b77 40%,
-    #58d36b00 70%
-  );
-}
-.mgj-pick.k-fire .mgj-pick-glow,
-.mgj-pick.k-meteor .mgj-pick-glow {
-  background: radial-gradient(
-    circle,
-    #ffe0b0dd 0%,
-    #ff8c2b77 40%,
-    #ff8c2b00 70%
-  );
-}
-.mgj-pick-art {
-  position: absolute;
-  inset: 8%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: mgjpickbob 1.6s ease-in-out infinite;
-}
-.mgj-pick-art svg {
-  width: 100%;
-  height: auto;
-  max-height: 100%;
-  filter: drop-shadow(0 0.12rem 0 #0006);
-}
-@keyframes mgjpickin {
-  from {
-    opacity: 0;
-    scale: 0.4;
-  }
-}
-@keyframes mgjpickglow {
-  50% {
-    opacity: 0.55;
-    scale: 0.88;
-  }
-}
-@keyframes mgjpickbob {
-  50% {
-    translate: 0 -12%;
-  }
-}
-/* Good Justin God fades in */
-.gduck.mgj-good .gduck-lift {
-  animation: mgjgoodin 0.9s ease-out both;
-}
-@keyframes mgjgoodin {
-  from {
-    opacity: 0;
-    filter: brightness(2.2);
-  }
-}
 /* the tears eyes: the stream flows down and drops fall off it */
 html.moving .eye-tears .tflow {
   stroke-dasharray: 3 4;
@@ -15019,9 +14179,7 @@ html.moving .eye-tears .tdrop.t2 {
 }
 @media (prefers-reduced-motion: reduce) {
   .eye-tears .tflow,
-  .eye-tears .tdrop,
-  .mgj-pick-art,
-  .mgj-pick-glow {
+  .eye-tears .tdrop {
     animation: none;
   }
 }
@@ -18003,8 +17161,8 @@ html.phone-land .hb-stack > .hpm-me {
   --h: 0.86rem;
   --bw: 1rem;
 }
-/* the other players' meters, small, each name over it, in the board's bottom right corner (Quacky Zombies and Mad God
-   Justin on a computer). They're UI: over everything on the board, the dark outside and the shelves too, as the other
+/* the other players' meters, small, each name over it, in the board's bottom right corner (Quacky Zombies on a
+   computer). They're UI: over everything on the board, the dark outside and the shelves too, as the other
    bars of Dead Ducks Arcade (.l4-pts); a tiny bit bigger than they were, and see-through on my screen while any duck or
    zombie is under them (the owner's, Nov 17 17:41Z) */
 .hpo {
@@ -18052,23 +17210,6 @@ html.phone-land .hb-stack > .hpm-me {
 @media (max-width: 760px) {
   .hpo {
     display: none;
-  }
-}
-/* Justin's HP over the board in Mad God Justin: the same bar, a lot thinner (his HP is huge) */
-.mgj-hp .hpm {
-  --h: 0.85rem;
-  --t: 0.36;
-  --bw: 0.42rem;
-}
-.mgj-hp .hpm-blocks {
-  width: min(calc(var(--nb, 3) * var(--bw)), 15rem);
-}
-@media (max-width: 760px) {
-  .mgj-hp .hpm {
-    --h: 0.62rem;
-  }
-  .mgj-hp .hpm-blocks {
-    width: min(calc(var(--nb, 3) * var(--bw)), 9rem);
   }
 }
 /* "+1 HP" / "−1 HP" over a duck, Justin or a zombie: small, rising and fading (a phone: smaller) */
@@ -18149,7 +17290,7 @@ html.keyboard .hp-pop:not(.small) {
 .l4z .hp-pop {
   bottom: calc(var(--k, 1) * 96px + var(--up, 0) * 0.7rem);
 }
-/* an NPC drawn by npcview.js (Sandbox's on the worlds, Survival's gunmen): just over its head (--top), over its name
+/* an NPC drawn by npcview.js (Sandbox's on the worlds): just over its head (--top), over its name
    when it has one */
 .l4z[data-sbi] .hp-pop {
   bottom: auto;
@@ -19263,14 +18404,8 @@ html.pixel *::after {
   font-family: "Jersey 15", monospace !important;
   font-size-adjust: 0.52;
 }
-/* except the command line's and Seriat's letters: Cascadia Code in every look (the owner's Sandbox file: "All terminal
-   text and numerat text should be cascadia monospace font") */
-html.pixel .chat-panel[data-mode="cmd"] .chat-in,
-html.pixel .chat-log .cmd-line,
-html.pixel .chat-log .cmd-line *,
-html.pixel .chat-log .from-cmd code,
-html.pixel .chat-log .from-cmd .cmd-out,
-html.pixel .chat-log .from-cmd .cmd-out *,
+/* except Seriat's letters: Cascadia Code in every look (the owner's Sandbox file: "All terminal text and numerat text
+   should be cascadia monospace font") */
 html.pixel .chat-sugg li,
 html.pixel .chat-sugg li *,
 html.pixel .nm,
@@ -19411,7 +18546,6 @@ html.pixel .bslot.open,
 html.pixel .btn.big,
 html.pixel .chat-float,
 html.pixel .chat-log .fold,
-html.pixel .chat-log .from-cmd .cmd-out,
 html.pixel .chat-log .hit,
 html.pixel .chat-log .priv,
 html.pixel .chat-sugg,
@@ -19490,8 +18624,6 @@ html.pixel .map-vellum .col-name,
 html.pixel .mbar,
 html.pixel .mbar-def,
 html.pixel .mc-b,
-html.pixel .mgj-bar,
-html.pixel .mgj-rv,
 html.pixel .mini-board,
 html.pixel .mini-map,
 html.pixel .mm-all > .mini-map,
@@ -19811,12 +18943,6 @@ html.pixel .hang-board.hang-pen {
 html.pixel .splash {
   cursor: var(--cur-hand), pointer;
 }
-html.pixel .mgj-rv {
-  cursor: var(--cur-hand), pointer;
-}
-html.pixel .mgj-rv:disabled {
-  cursor: var(--cur-arrow), default;
-}
 html.pixel .l4s {
   cursor: var(--cur-hand), pointer;
 }
@@ -19881,25 +19007,8 @@ html.pixel.armed :is(.board, .hang-board) {
 .hang-board .ol-px {
   z-index: 24001;
 } /* (over everything on the board: Dead Ducks Arcade's and Hangout's world alike) */
-/* Quacky Zombies' own map vote (vote.js zmapTile): the dice and its two maps, three in a row, each a picture */
-.vt-k-zmap .vt-box {
-  flex: 0 1 auto; /* (only as tall as its maps, no empty box under them; it still scrolls on a short screen) */
-}
-.vt-k-zmap .vt-maps {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
 img.vt-still {
   object-fit: cover;
-}
-/* a phone: one above another, bigger, the dice a short bar so both maps fit under it */
-@media (max-width: 760px) {
-  .vt-k-zmap .vt-maps {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .vt-k-zmap .vt-map.vt-dice {
-    aspect-ratio: auto;
-    height: 4.6rem;
-  }
 }
 
 /* ---------- full screen on a phone (js/fullscreen.js) ---------- */
@@ -21379,8 +20488,8 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   }
 }
 
-/* ---------- Sandbox: the Seriat window (js/seriatwin.js), as an editor: files on the left, the code, a terminal
-   line under it; every letter Cascadia Code, as the command line's ---------- */
+/* ---------- Sandbox: the Seriat window (js/seriatwin.js), as an editor: files on the left, the code, what it says
+   under it; every letter Cascadia Code ---------- */
 .nm-win {
   width: min(60rem, calc(100vw - 1.5rem));
 }
@@ -21623,8 +20732,7 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   white-space: pre-wrap;
   overflow-wrap: break-word;
 }
-.nm-ac,
-.nm-sugg {
+.nm-ac {
   margin: 0;
   padding: 0.15rem;
   list-style: none;
@@ -21639,25 +20747,16 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   border: 0.12rem solid var(--line);
   border-radius: 0.4rem;
 }
-.nm-ac[hidden],
-.nm-sugg[hidden] {
+.nm-ac[hidden] {
   display: none;
 }
-.nm-ac li,
-.nm-sugg li {
+.nm-ac li {
   padding: 0.1rem 0.5rem;
   cursor: pointer;
   border-radius: 0.25rem;
 }
-.nm-ac li[aria-selected="true"],
-.nm-sugg li[aria-selected="true"] {
+.nm-ac li[aria-selected="true"] {
   background: color-mix(in srgb, var(--blue, #3f8cff) 35%, transparent);
-}
-.nm-sugg {
-  flex: none;
-  max-height: 6.5rem;
-  overflow: auto;
-  border-top: 0.1rem solid var(--line);
 }
 .nm-wrap {
   display: flex;
@@ -21689,15 +20788,6 @@ html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   font-weight: 200;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-}
-.nm-line {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0 0.4rem 0.4rem;
-}
-.nm-line .nm-in {
-  flex: 1;
 }
 /* a phone: the files over the code, and the terminal smaller than the code (the owner's, Nov 21 18:59Z: "Make sure that
    the terminal isn't too big on vertical version when writing the Seriat") */

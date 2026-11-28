@@ -48,16 +48,10 @@ import {
 } from "./gameboard.js";
 
 import {
-  mgjRevive,
   panTree,
   placeCake,
-  placeDesk,
-  placeEdge,
-  placePick,
-  placeRevive,
   placeSnack,
   placeTable,
-  placeTells,
   placeTiles,
   placeZombies,
   seatAt,
@@ -68,7 +62,6 @@ import {
 import {
   DN_TITLES,
   LAW_TITLES,
-  MGJ_TITLES,
   TITLES,
   VD_TITLES,
   actHTML,
@@ -78,7 +71,6 @@ import {
 
 import {
   ARROWS,
-  DYING_MS,
   aimAt,
   ammo,
   arrowsAim,
@@ -114,8 +106,6 @@ import {
   slidTap,
   tileKnock,
   toggleSight,
-  myPick,
-  mgjDownGun,
 } from "./gamehand.js";
 
 import {
@@ -174,7 +164,7 @@ import { activeRoom } from "./net.js";
 
 import { sprintStep } from "./stamina.js";
 
-import { SPRINT, MGJ_HP_UNKNOWN } from "./gamedefaults.js";
+import { SPRINT } from "./gamedefaults.js";
 
 import { sprintBlur } from "./sprintblur.js";
 
@@ -206,7 +196,7 @@ import {
 
 import { walkOf } from "./push.js";
 
-import { isSudo, canOpen } from "./roomrules.js";
+import { isSudo } from "./roomrules.js";
 
 import { shotAt } from "./boardfire.js";
 
@@ -255,7 +245,7 @@ import {
 
 import { mountPlayers, trackIdle, lobbyVote, kickItems } from "./players.js";
 
-import { chatNote, isMuted } from "./chat.js";
+import { chatNote, isMuted, said } from "./chat.js";
 
 import {
   specialById,
@@ -281,7 +271,6 @@ import {
   handIn,
   handReset,
   pickWith,
-  mgjBackIfGone,
   heldNow,
   useKey,
   l4Pick,
@@ -290,13 +279,7 @@ import {
 
 import { heatUp, heatDraw, heldOn } from "./barrelheat.js";
 
-import {
-  laserLook,
-  laserArt,
-  laserGlow,
-  laserFrame,
-  laserMeter,
-} from "./laserfx.js";
+import { laserLook, laserArt, laserGlow, laserFrame } from "./laserfx.js";
 
 import { olAdd, olDraw, olAway, olRoofed } from "./outlines.js";
 
@@ -322,7 +305,7 @@ import {
 import { GRENADE as NADE_KEY } from "./kitslots.js";
 import { draws } from "./bowdraw.js";
 
-import { AUTO, MGJ_MELEE, armOfShot } from "./guns.js";
+import { AUTO, armOfShot } from "./guns.js";
 import { armedView, heatShake } from "./heat.js";
 
 import { watching, watchNext } from "./spectate.js";
@@ -427,13 +410,11 @@ import { countJump } from "./jumps.js";
 
 import { sfx, loadSounds, weaponsOff } from "./sound.js";
 
-import { mgjSteps } from "./l4ddsfx.js";
+import { boardSteps } from "./l4ddsfx.js";
 
 import { feet } from "./feet.js";
 
 import { mountMap, mapKey } from "./maps.js";
-
-import { hooks } from "./hooks.js";
 
 import { mountTouch, stick } from "./touch.js";
 
@@ -474,28 +455,8 @@ import {
 
 import { dunceDuck } from "./dunce.js";
 
-import {
-  isMgj,
-  MGJ_ZAP,
-  mgjGone,
-  mgjSpawning,
-  SPAWN_MS,
-  GOOD_ID,
-  PICK_WEAPONS,
-  MGJ_DOWN,
-  MGJ_SCALE,
-  MGJ_HAMMER,
-  downNear,
-  mgjOut,
-  mgjSafe,
-} from "./mgjrules.js";
-
 import { sayRead, sayPlace } from "./saybubble.js";
-import { mgjStop } from "./mgjpicks.js";
-
-import { FLAME } from "./mgjart.js";
-
-import { gunLasers } from "./gunmenview.js";
+import { FLAME } from "./fxart.js";
 
 import { sbWalkOf } from "./sbspawn.js";
 
@@ -513,14 +474,6 @@ import { hatLayers, HAT_TOP } from "./hats.js";
 import { faceLayer } from "./faces.js";
 
 import { beakSVG } from "./beaks.js";
-
-import {
-  mgjHPHTML,
-  MAD_JUSTIN,
-  SAD_JUSTIN,
-  CONTROLLER,
-  GOOD_JUSTIN,
-} from "./mgj.js";
 
 import { isVd, seated, seatOf, turnedDown, vdTileAt } from "./vddrules.js";
 
@@ -586,7 +539,6 @@ import {
 import { announce, pause, say, stopSays } from "./gameannounce.js";
 
 export { bloodBurst, neckSpray, stopped } from "./gameshots.js";
-export { PICK_NAMES } from "./gameannounce.js";
 
 export let R = null,
   S = null,
@@ -605,25 +557,18 @@ let squash = { q: "", t: 0 },
   moving = false,
   sprinting = false;
 let lastFx = -1,
-  hotdogs = [],
-  follows = []; // the silly commands seen so far; hotdogs and items following their ducks
+  follows = []; // the specials seen so far; items following their ducks
 export let bar = null,
   meter = null, // my HP meter, under the hotbar (hpmeter.js)
   pad = null; // phones: the jump button and the attack button
 export const kept = new Set(); // the jumps kept on here (Shift and the key); kept effects are in the room's state
 const DOWN_TURN = (-100 * Math.PI) / 180; // (a duck lying dead is turned this far: css .gduck-body, rotate(-100deg))
 const BODY = "~body"; // a Duck Cabin ghost's body is drawn as a duck of its own: its player's id and this
-export const JUSTIN2 = "justin2"; // Mad God Justin's double, drawn as a duck of its own
-const isJustin = (id) => id === JUSTIN_ID || id === JUSTIN2;
-/* how big a duck is drawn against the others: Mad God Justin and his double a little bigger; a player at their own Size
-   (Customize, duck.js scaleOf: 50% to 152%, every mode) */
+/* how big a duck is drawn against the others: a player at their own Size (Customize, duck.js scaleOf: 50% to 152%,
+   every mode) */
 export const bigOf = (s, id) =>
-  (isJustin(id) && isMgj(s) ? MGJ_SCALE : 1) *
-  (s.players[id] ? scaleOf(shownDuck(s, s.players[id])) : 1);
-/* (the camera, the story's zone, the revive key and the bracket's zoom are set from the placing code in gameplace.js) */
-export const setMgjRv = (v) => {
-  mgjRv = v;
-};
+  s.players[id] ? scaleOf(shownDuck(s, s.players[id])) : 1;
+/* (the camera, the story's zone and the bracket's zoom are set from the placing code in gameplace.js) */
 export const setScZone = (v) => {
   scZone = v;
 };
@@ -633,8 +578,7 @@ export const setCam = (v) => {
 export const setBbZoom = (v) => {
   bbZoom = v;
 };
-export let mgjRv = false, // (E held down for a revive, or the phone's Revive button)
-  shovedAt = 0,
+export let shovedAt = 0,
   putAt = 0; // the handgun or dagger kept out (Shift and its key), and where the mouse is on the screen
 export let shows = {}; // a handgun just fired, shown turned toward its aim for a moment: by player id
 let scene = null; // the map: its world fills the page behind the game
@@ -709,7 +653,6 @@ export let cam = null; // the bracket's camera: the diagram's corner on the boar
 
 /* ---------- movement numbers (board widths or heights per second) ---------- */
 const SPEED = { x: 0.45, y: 1.0, px: 0.5, py: 0.85, sprint: SPRINT.speed }; // (sprint: the whole game's, gamedefaults.js)
-const MGJ_SLOW = 0.8;
 
 /* ---------- drawing the ducks (every frame: jumps and glides) ---------- */
 const SQ = {
@@ -746,7 +689,7 @@ function drawMeters(s, board, layer, now) {
   if (!meter) return;
   const hv = R.me && hpOf(s, R.me, now);
   if (hv) {
-    const [sp, tired] = isMgj(s) ? [null, false] : sprintLeft(); // (every mode's sprint (gamedefaults.js), stamina.js; Mad God Justin has no sprint, so no sprint bar)
+    const [sp, tired] = sprintLeft(); // (every mode's sprint (gamedefaults.js), stamina.js)
     meter.set(hv[0], hv[1], sp, tired);
     meter.bars(board && board.querySelector(".gduck.mine .gduck-name")); // (the cooldown and the ammo under it too)
     if (board && meter.edge.parentNode !== board) board.append(meter.edge); // (the red corners: the board's, not the window's)
@@ -865,29 +808,12 @@ function drawDucks(now = clockNow()) {
     };
   if (hang) world.frame(now); // (the camera first: ducks stand in the world)
   const sbOl = sbHasOl(s), // (Sandbox: a zone with Outlines, sandboxrules.js)
-    ol = isL4dd(s) || isMgj(s) || hang || sbOl, // (the outlines, outlines.js: every zombie game, and Hangout's world too, the universal way to see who's hidden: the owner's, Nov 17 17:41Z)
+    ol = isL4dd(s) || hang || sbOl, // (the outlines, outlines.js: every zombie game, and Hangout's world too, the universal way to see who's hidden: the owner's, Nov 17 17:41Z)
     olAt = ol && hang ? world.at(R.me) : null,
     olMe = olAt ? olAway(olAt.x, olAt.y, olAt.z).f : null; // (my floor)
   trackWalk();
   drawMeters(s, board, layer, now);
-  const jp =
-    !hang && justinShown(s)
-      ? {
-          ...justinAt(s.justin, now),
-          ...(isMgj(s) && s.phase === "boss" && s.justin.w
-            ? { w: s.justin.w, ax: s.justin.ax, ay: s.justin.ay }
-            : {}),
-        }
-      : null; // (the Justin option: he walks the board, never a player; Mad God Justin: with his gun out)
-  const jp2 =
-    jp && isMgj(s) && s.mgj && s.mgj.dup && s.phase === "boss"
-      ? {
-          ...jp,
-          x: 1 - jp.x,
-          y: 1 - jp.y,
-          ...(jp.ax !== undefined ? { ax: -jp.ax, ay: -jp.ay } : {}),
-        }
-      : null; // (Mad God Justin's double: mirrored through the board's middle)
+  const jp = !hang && justinShown(s) ? justinAt(s.justin, now) : null; // (the Justin option: he walks the board, never a player)
   /* a duck the hammer shoved or a grenade threw (pos.kb): drawn sliding back from where it stood, over a little hop (a
      grenade's: higher, longer, at once) */
   const kbT = (id) => {
@@ -921,13 +847,11 @@ function drawDucks(now = clockNow()) {
           id,
           id === JUSTIN_ID
             ? jp
-            : id === JUSTIN2
-              ? jp2
-              : id === R.me && me
-                ? me
-                : hang
-                  ? world.shown(id, s.pos[id])
-                  : s.pos[id],
+            : id === R.me && me
+              ? me
+              : hang
+                ? world.shown(id, s.pos[id])
+                : s.pos[id],
         );
   const liftOf = (id, pos) =>
     (hang ? world.lift(id, pos) : jumpZ(pos, now) * size) +
@@ -943,8 +867,6 @@ function drawDucks(now = clockNow()) {
   const ids = [
       ...s.seat.filter((id) => s.pos[id]),
       ...(jp ? [JUSTIN_ID] : []),
-      ...(jp2 ? [JUSTIN2] : []),
-      ...(isMgj(s) && s.mgj && s.mgj.gj && s.pos[GOOD_ID] ? [GOOD_ID] : []),
       ...Object.keys(ghosts)
         .filter((id) => s.players[id] && !ghosts[id].l4)
         .map((id) => id + BODY), // (Quacky Zombies' ghosts leave no body)
@@ -991,24 +913,15 @@ function drawDucks(now = clockNow()) {
     !landing(id) &&
     !(wq && (wq.dead || []).includes(id) && rt < 6100);
   for (const id of ids) {
-    const size = geo.size * bigOf(s, id); // (this duck's own size: bigger for Mad God Justin)
+    const size = geo.size * bigOf(s, id); // (this duck's own size)
     const g = bodyOf(id),
       p = g
         ? { ...s.players[id.slice(0, -BODY.length)], dead: true }
         : s.players[id] ||
           (id === JUSTIN_ID && {
-            ...(isMgj(s)
-              ? !mgjDead(s) && s.mgj && s.mgj.hp <= MGJ_CRY
-                ? SAD_JUSTIN
-                : MAD_JUSTIN
-              : JUSTIN_PLAYER),
-            dead: !!s.justin.down || mgjDead(s),
-          }) ||
-          (id === GOOD_ID && {
-            ...GOOD_JUSTIN,
-            dead: !!(s.mgj && s.mgj.gj && s.mgj.gj.down),
-          }) ||
-          (id === JUSTIN2 && MAD_JUSTIN),
+            ...JUSTIN_PLAYER,
+            dead: !!s.justin.down,
+          }),
       pos = posOf(id);
     if (!p) continue;
     let d = duckEl(id);
@@ -1042,18 +955,16 @@ function drawDucks(now = clockNow()) {
       cried =
         isL4dd(s) && own && wildCrying(s, id, now)
           ? { ...own, eyes: "tears" }
-          : own, // (Justin out there, hurt: the tears eyes for 10 s, Mad God Justin's crying, l4ddrules.js CRY)
+          : own, // (Justin out there, hurt: the tears eyes for 10 s, l4ddrules.js CRY)
       worn = dnHat(s, id, now) ? dunceDuck(cried) : cried,
       look = vc ? tinted(worn, vc) : worn, // (Vote colors: the tile's color under the duck)
       role = lawRole(s, id),
       wc =
-        id === JUSTIN_ID && isMgj(s)
-          ? mgjGore(s)
-          : id === JUSTIN_ID
-            ? s.justin.w || ""
-            : s.players[id] && !g && s.pw
-              ? pwCodes(s, id, now)
-              : "", // (its wounds: wounds.js; Mad God Justin's by his HP, mgjGore; Justin on the board's by his hits, boardjustin.js justinHit)
+        id === JUSTIN_ID
+          ? s.justin.w || ""
+          : s.players[id] && !g && s.pw
+            ? pwCodes(s, id, now)
+            : "", // (its wounds: wounds.js; Justin on the board's by his hits, boardjustin.js justinHit)
       sig = JSON.stringify([
         look,
         p.name,
@@ -1097,7 +1008,7 @@ function drawDucks(now = clockNow()) {
         d._pic.style.marginLeft = `${((F.x / 120) * 100).toFixed(2)}%`;
       } // (as wide as its box, the duck's square still in the middle)
       if (look && look.eyes === "tears" && !pixelOn()) {
-        // his tears stay bright over the burnt duck: a copy on top shows only the tears (css: .mgj-cry)
+        // the tears stay bright over a burnt duck: a copy on top shows only the tears (css: .mgj-cry)
         const cry = d.querySelector(".gduck-body svg").cloneNode(true);
         cry.classList.add("mgj-cry");
         d.querySelector(".gduck-body").append(cry);
@@ -1133,27 +1044,16 @@ function drawDucks(now = clockNow()) {
       }
     }
     /* knocked down: the meter on the name tag empties until the duck stands up (s.up), behind the letters */
-    const upAt =
-        dead &&
-        !g &&
-        (id === GOOD_ID
-          ? s.mgj && s.mgj.gj && s.mgj.gj.down
-          : (s.up || {})[id]),
+    const upAt = dead && !g && (s.up || {})[id],
       l4dn = isL4dd(s) && !g ? l4Down(s, id) : 0,
-      dn = l4dn ? l4dn : upAt > now && !mgjOut(s, id) ? upAt : 0; // (Good Justin God keeps his own time down; a duck out of HP has no meter: it's down until the fight ends; Quacky Zombies: the time it has to be revived)
+      dn = l4dn ? l4dn : upAt > now ? upAt : 0; // (Quacky Zombies: the time it has to be revived)
     const wait = !!l4dn && l4Dying(s, id, now).wait; // (Quacky Zombies: someone reviving it: the bleeding-out waits)
     if (d._dwait !== wait) {
       d._dwait = wait;
       d.classList.toggle("dn-wait", wait);
     }
-    /* down and dying: greyer and greyer (the owner's, Nov 17 11:07Z): Quacky Zombies as its bleeding-out runs, Mad God
-       Justin over DYING_MS out of HP (there's no bleeding-out there) */
-    const out = isMgj(s) && dead && mgjOut(s, id) && s.mgj.out[id],
-      dg = l4dn
-        ? l4Dying(s, id, now).k
-        : out
-          ? Math.min(1, (now - out) / DYING_MS)
-          : -1,
+    /* down and dying: greyer and greyer (the owner's, Nov 17 11:07Z): Quacky Zombies as its bleeding-out runs */
+    const dg = l4dn ? l4Dying(s, id, now).k : -1,
       dgk = dg < 0 ? -1 : Math.round((0.15 + 0.85 * dg) * 50) / 50;
     if (d._dg !== dgk) {
       d._dg = dgk;
@@ -1165,12 +1065,7 @@ function drawDucks(now = clockNow()) {
       d.classList.toggle("downed", !!dn);
       const m = dn && d.querySelector(".gduck-down i");
       if (m) {
-        const all =
-          id === GOOD_ID
-            ? MGJ_DOWN
-            : l4dn
-              ? L4.BLEED
-              : Math.max(downFor(s), GET_UP_MIN);
+        const all = l4dn ? L4.BLEED : Math.max(downFor(s), GET_UP_MIN);
         m.style.animation = "none";
         void m.offsetWidth;
         m.style.animation = "";
@@ -1214,16 +1109,13 @@ function drawDucks(now = clockNow()) {
         }
       }
     }
-    /* a duck, Justin or his double gaining or losing HP: "+1 HP" or "−1 HP" over it for a moment (not when a fight or a
-       round starts the HP over) */
-    const hv = !g && hpOf(s, id === JUSTIN2 ? JUSTIN_ID : id, now),
+    /* a duck or Justin gaining or losing HP: "+1 HP" or "−1 HP" over it for a moment (not when a round starts the HP
+       over) */
+    const hv = !g && hpOf(s, id, now),
       hk = hv ? hv[1] + "/" + s.phase : "";
-    const bled =
-        hv && d._hk === hk && d._hv > hv[0] && id !== JUSTIN2
-          ? d._hv - hv[0]
-          : 0,
+    const bled = hv && d._hk === hk && d._hv > hv[0] ? d._hv - hv[0] : 0,
       rose = id === JUSTIN_ID && d._hv === 0 && hv && hv[0] > 0; // (Justin back up, whole: no "+N HP" for it)
-    if (hv && d._hk === hk && d._hv !== hv[0] && id !== JUSTIN2 && !rose)
+    if (hv && d._hk === hk && d._hv !== hv[0] && !rose)
       popHP(d.querySelector(".gduck-lift"), hv[0] - d._hv, touchOnly());
     d._hk = hk;
     d._hv = hv ? hv[0] : -1;
@@ -1234,7 +1126,7 @@ function drawDucks(now = clockNow()) {
       fxHitAt(
         at.left,
         at.top,
-        z + size * (isJustin(id) ? 0.5 * MGJ_SCALE : 0.42),
+        z + size * (id === JUSTIN_ID ? 0.6 : 0.42), // (Justin's head is higher)
         id,
         size,
         "small",
@@ -1359,23 +1251,15 @@ function drawDucks(now = clockNow()) {
         ? olZone
         : !ol || sbOnBoard(s)
           ? ""
-          : isMgj(s)
-            ? id === GOOD_ID
-              ? "justin"
-              : olP && id !== JUSTIN_ID
-                ? olMine
-                  ? "me"
-                  : "ally"
-                : ""
-            : olP
-              ? olP.helper || olP.wild
-                ? dead
-                  ? "" // (dead, no outline round him: the owner's, Nov 19 19:27Z "when he dies, there's no outline around his character")
-                  : "justin" // (Dead Ducks Arcade's Justins: the helper from the fireplace, and Downpour's, out there)
-                : olMine
-                  ? "me"
-                  : "ally"
-              : "";
+          : olP
+            ? olP.helper || olP.wild
+              ? dead
+                ? "" // (dead, no outline round him: the owner's, Nov 19 19:27Z "when he dies, there's no outline around his character")
+                : "justin" // (Dead Ducks Arcade's Justins: the helper from the fireplace, and Downpour's, out there)
+              : olMine
+                ? "me"
+                : "ally"
+            : "";
     /* a duck lying dead: where the middle of its body is on the board, as css lays it down (.gduck-body: rotate(-100deg)
        translateY(-12%) round the bottom middle of its body; DOWN_TURN). Its outline's arrow goes in it, what hides it is
        looked for there, and its pool of blood spreads under it (a duck lies a little to the side of where it stood: the
@@ -1506,26 +1390,15 @@ function drawDucks(now = clockNow()) {
       shows[id].what !== "grenade" &&
       shows[id].what; // (a dagger or a grenade thrown without keeping it out: only the one in the air)
     const w =
-      mine && hand.held === "none" && isMgj(s)
-        ? null // (Mad God Justin: an empty slot picked, nothing in hand)
-        : (id === JUSTIN_ID || id === JUSTIN2) && isMgj(s)
-          ? !mgjGone(s, now) &&
-            (shows[id] && now < shows[id].until ? shows[id].what : pos.w)
-          : (isMgj(s) && s.phase === "boss"
-              ? (mgjOut(s, id) && (s.players[id] || {}).dead
-                  ? "handgun" // (out of HP: the down pistol, the owner's, Nov 17 11:07Z)
-                  : mine
-                    ? hand.held
-                    : pos.w) || MGJ_MELEE
-              : isL4dd(s)
-                ? downArmed(s, id)
-                  ? "handgun" // (down: the down pistol, the owner's, Nov 17 11:07Z)
-                  : l4Hp(s, id) > 0 &&
-                    !l4Swims(s, id) && // (Downpour: swimming, it's put away)
-                    inHand(mine ? heldNow() : pos.w, s, id)
-                : mine
-                  ? hand.held && hasKey(p.duck, hand.held) && hand.held
-                  : pos.w) || shown; // (Quacky Zombies: in hand while it's up) // (Mad God Justin: every duck's knife always out; his hammer swing over his gun)   // (Mad God Justin: every duck's knife always out)   // (a dagger thrown without keeping it out: only the one in the air)
+      (isL4dd(s)
+        ? downArmed(s, id)
+          ? "handgun" // (down: the down pistol, the owner's, Nov 17 11:07Z)
+          : l4Hp(s, id) > 0 &&
+            !l4Swims(s, id) && // (Downpour: swimming, it's put away)
+            inHand(mine ? heldNow() : pos.w, s, id)
+        : mine
+          ? hand.held && hasKey(p.duck, hand.held) && hand.held
+          : pos.w) || shown; // (Quacky Zombies: in hand while it's up; a dagger thrown without keeping it out: only the one in the air)
     if (w) arms.push([id, w, pos, p.duck, mine]);
     const lx = losers.has(id) || wearsX.has(id);
     if (d._lx !== lx) {
@@ -1542,22 +1415,6 @@ function drawDucks(now = clockNow()) {
       d._bw = bw;
       d.classList.toggle("dn-bw", bw);
     } // Duncelation: a dunce, in black and white (Valentine's Duck Date: Turned Down)
-    const spawning = id === JUSTIN_ID && isMgj(s) && mgjSpawning(s, now);
-    if (d._spawn !== spawning) {
-      d._spawn = spawning;
-      d.classList.toggle("mgj-spawn", spawning);
-      if (spawning)
-        d.style.setProperty("--sp", `-${now - (s.mgj.spawn - SPAWN_MS)}ms`);
-    } // Mad God Justin: fading in with a red glow for his first 3 s
-    const gone = id === JUSTIN_ID && !spawning && mgjGone(s, now);
-    if (d._gone !== gone) {
-      d._gone = gone;
-      d.classList.toggle("mgj-gone", gone);
-    } // Mad God Justin: faded away for the meteor
-    if (id === GOOD_ID && !d._gj) {
-      d._gj = true;
-      d.classList.add("mgj-good");
-    } // (Good Justin God fades in)
     const prot = !!(s.prot && s.prot[id] > now && normalGame(s));
     if (d._prot !== prot) {
       d._prot = prot;
@@ -1565,50 +1422,12 @@ function drawDucks(now = clockNow()) {
       if (prot)
         d.style.setProperty("--pd", `-${now - (s.prot[id] - PROT_MS)}ms`);
     } // the normal games: a duck that just came back blinks and fades in for its 2.5 s of spawn protection
-    const zapT =
-        id === JUSTIN_ID &&
-        isMgj(s) &&
-        s.phase === "mgjend" &&
-        !!(s.mgj && s.mgj.won)
-          ? now - s.at - MGJ_ZAP
-          : -1,
-      scorched =
-        zapT >= 0 && zapT < 4000 ? 1 : zapT >= 4000 && zapT < 6600 ? 2 : 0;
-    if (d._sco !== scorched) {
-      d._sco = scorched;
-      d.classList.toggle("mgj-burnt", scorched === 1);
-      d.classList.toggle("mgj-unburn", scorched === 2);
-    } // (burnt by the lightning on the podium, then the burn fades like a fire's: 4 s, then 2.5 s)
-    /* Mad God Justin: nothing can hurt it for a second after a hit, and it flickers meanwhile; a burn: one big
-       flame over the duck, then charred, then the burn fades (the rules keep s.mgj.burn and burnt) */
-    const blink = isMgj(s) && s.phase === "boss" && mgjSafe(s, id, now);
-    if (d._blink !== blink) {
-      d._blink = blink;
-      d.classList.toggle("mgj-blink", blink);
-    }
-    const bn =
-      isMgj(s) && s.mgj && s.phase === "boss"
-        ? (s.mgj.burn || {})[id] > now
-          ? 2
-          : (s.mgj.burnt || {})[id] > now
-            ? 1
-            : 0
-        : isL4dd(s) && ((s.hang.l4fire || {}).p || {})[id] > now
-          ? 3
-          : 0; // (Quacky Zombies: on fire, BURN.P)
-    if ((d._bn || 0) !== bn) {
-      const was = d._bn || 0;
+    const bn = isL4dd(s) && ((s.hang.l4fire || {}).p || {})[id] > now; // (Quacky Zombies: on fire, BURN.P)
+    if (!!d._bn !== bn) {
       d._bn = bn;
-      d.classList.toggle("onfire", bn >= 2);
-      d.classList.toggle("burnt", bn === 1);
-      if (bn === 2)
-        sfx.burn(Math.max(0.3, (s.mgj.burn[id] - now) / 1000), heard(id));
-      if (bn === 3) sfx.burn(BURN.P / 1000, heard(id));
-      if (bn === 3 && id === R.me) crimson(BURN.P); // (my duck on fire: my screen blinks crimson while it shakes)
-      if (!bn && was && was < 3) {
-        d.classList.add("unburn");
-        setTimeout(() => d.classList.remove("unburn"), 2600);
-      }
+      d.classList.toggle("onfire", bn);
+      if (bn) sfx.burn(BURN.P / 1000, heard(id));
+      if (bn && id === R.me) crimson(BURN.P); // (my duck on fire: my screen blinks crimson while it shakes)
     }
     const op = podLift(s, id, now) > 0.2;
     if (d._op !== op) {
@@ -1684,7 +1503,6 @@ function drawDucks(now = clockNow()) {
     if (
       !s.pos[d.dataset.pid] &&
       !(jp && d.dataset.pid === JUSTIN_ID) &&
-      !(jp2 && d.dataset.pid === JUSTIN2) &&
       !bodyOf(d.dataset.pid)
     ) {
       d.remove();
@@ -1708,7 +1526,7 @@ function drawDucks(now = clockNow()) {
         y: NaN,
         vx: sh.vx,
         vy: sh.vy,
-        skip: new Set(), // (where it stops on my screen: shotStop, mgjStop)
+        skip: new Set(), // (where it stops on my screen: shotStop, zombieStop)
         n: 0,
         p: null,
         stop: null,
@@ -1771,10 +1589,10 @@ function drawDucks(now = clockNow()) {
       const [cls, inner, style] =
         sh.k === "arrow"
           ? [`bullet k-${sh.k}`, ARROW, `${sz};${ang}`] // (the bow's arrow: pointing the way it flies)
-          : sh.k === "controller" || sh.k === "chair"
+          : sh.k === "chair"
             ? [
                 `thrown mgj-throw k-${sh.k}`,
-                `<i class="${spin}">${sh.k === "chair" ? (isL4dd(s) ? GOLD_CHAIR : CHAIR) : CONTROLLER}</i>`, // (Quacky Zombies' chair is golden)
+                `<i class="${spin}">${isL4dd(s) ? GOLD_CHAIR : CHAIR}</i>`, // (Quacky Zombies' chair is golden)
                 sz,
               ]
             : sh.k === "dagger" || sh.k === "grenade" || sh.k === "lgren"
@@ -1850,14 +1668,14 @@ function drawDucks(now = clockNow()) {
     let h = heldEls.get(id);
     if (h && !heldOn(h, fxl)) h = null;
     const holy = isL4dd(s) && angelOf(s, id, w), // (Dead Ducks Arcade's Angelic weapons: l4ddangel.js)
-      lz = w === "laser" && (isL4dd(s) || isMgj(s)) ? laserLook(s, id) : null, // (the Laser Rifle: its barrel as hot as it is now, laserfx.js)
+      lz = w === "laser" && isL4dd(s) ? laserLook(s, id) : null, // (the Laser Rifle: its barrel as hot as it is now, laserfx.js)
       hk =
         w +
         (w === "hammer" && duck && duck.wrench ? "-w" : "") +
         (holy ? "-a" : "") +
         (lz ? lz.key : ""), // (the hammer, or the wrench in its place)
       ds = size * bigOf(s, id), // (a bigger Justin holds it farther out)
-      hs = ds * (w === "hammer" && isJustin(id) ? MGJ_HAMMER : 1); // (Justin's hammer is bigger)
+      hs = ds * (w === "hammer" && id === JUSTIN_ID ? 1.35 : 1); // (Justin's hammer is bigger)
     if (!h || h._k !== hk || h._hs !== hs) {
       if (h) h.remove();
       const dual = holy && w === "handgun", // (the Angelic pistol: two of them)
@@ -1945,7 +1763,7 @@ function drawDucks(now = clockNow()) {
       hy + Math.sin(rot) * (reach + gl * 0.5),
       rot,
     ];
-    h._aim = [c.left, c.top, ang]; // (where it aims from, and which way: Mad God Justin's laser sight)
+    h._aim = [c.left, c.top, ang]; // (where it aims from, and which way: the board's laser sight)
     if (h.classList.contains("dual")) {
       /* the Angelic pistols: each one's muzzle on the board, for its own laser sight and its own flash (specials.js
          DUAL; the picture's middle is the drawing's middle) */
@@ -2060,12 +1878,9 @@ function drawDucks(now = clockNow()) {
       if (end)
         for (const m of hd._ends || [e]) lz.push([m[0], m[1], end[0], end[1]]); // (the Angelic pistols: two sights, meeting where it aims, the owner's Nov 17)
     }
-  /* Mad God Justin: the same laser sights (the owner's, Nov 16), with no flashlight to end in: on through where it aims
+  /* the board: the same laser sights (the owner's, Nov 16), with no flashlight to end in: on through where it aims
      (my mouse) to the board's edge */
-  if (
-    ((isMgj(s) && s.phase === "boss") || !(isMgj(s) || isL4dd(s))) &&
-    sightOn()
-  )
+  if (!isL4dd(s) && sightOn())
     for (const [id, w] of arms) {
       if (id !== R.me || !MUZZLE[w]) continue;
       const hd = heldAll.get(id),
@@ -2081,15 +1896,10 @@ function drawDucks(now = clockNow()) {
       if (t > 0 && t < Infinity)
         lz.push([e[0], e[1], A[0] + ux * t, A[1] + uy * t]);
     }
-  if (isL4dd(s)) lz.push(...gunLasers()); // (Survival's soldiers: gunmenview.js)
   fxLasers(lz);
   heatDraw(heldAll, fxl, size);
-  if (isL4dd(s) || isMgj(s)) laserFrame(s, heldAll, fxl, size, heard); // (the Laser Rifle's steam and fire: laserfx.js)
-  olDraw(ol ? (hang ? board : fxl) : null, geo.W, geo.H); // (the outlines: over the dark and the rain in Dead Ducks Arcade, over the board in Mad God Justin)
-  if (isMgj(s)) {
-    const tag = S.querySelector(".gduck.mine .gduck-name");
-    if (tag) laserMeter(tag, s, R.me, hand.held); // (and its heat under my duck, as in Dead Ducks Arcade)
-  }
+  if (isL4dd(s)) laserFrame(s, heldAll, fxl, size, heard); // (the Laser Rifle's steam and fire: laserfx.js)
+  olDraw(ol ? (hang ? board : fxl) : null, geo.W, geo.H); // (the outlines: over the dark and the rain in Dead Ducks Arcade)
   if (!isL4dd(s)) handBars(s); // (the white and yellow bars under my duck: meters.js)
   flames(s, now, hang, size, fxl, heldAll);
   /* ducklings: three in a row behind their duck, along the way it walked */
@@ -2133,9 +1943,9 @@ function drawDucks(now = clockNow()) {
       mark.style.transform = tr;
     }
     mark.classList.remove("gone");
-    mark.classList.toggle("sprint", !!target.sprint && !isMgj(s)); // (Mad God Justin: no sprint, so no sprint mark)
+    mark.classList.toggle("sprint", !!target.sprint);
   } else if (mark) mark.classList.add("gone");
-  // hotdogs hang around their duck, then fade; an item (mug, gun, spray, trombone) stays with its duck while it walks
+  // an item (mug, gun, spray, trombone) stays with its duck while it walks
   // (Hangout: sorted with their duck, so the stage or a couch covers them too)
   const withDuck = (e, id, pos) => {
     if (e.parentNode !== layer) layer.append(e);
@@ -2145,26 +1955,6 @@ function drawDucks(now = clockNow()) {
       e.style.zIndex = zi;
     }
   };
-  hotdogs = hotdogs.filter((h) => {
-    if (now > h.until || !s.pos[h.id]) {
-      h.el.remove();
-      return false;
-    }
-    return true;
-  });
-  for (const h of hotdogs) {
-    const pos = posOf(h.id),
-      at = place(pos, lane.indexOf(h.id), lane.length),
-      z = liftOf(h.id, pos);
-    if (hang) {
-      h.el.style.visibility = world.hidden(h.id, pos) ? "hidden" : "";
-      withDuck(h.el, h.id, pos);
-    }
-    const hd = duckEl(h.id),
-      side = (turned() ? 1 : hd && hd._face) || 1; // (the hotdog is at the beak of the way the duck faces)
-    h.el.style.transform = `translate(${(at.left + side * size * 0.62).toFixed(1)}px, ${(at.top - size * 0.9 - z).toFixed(1)}px)`;
-    h.el.classList.toggle("going", now > h.until - 900);
-  }
   follows = follows.filter((f) => {
     if (now > f.until || !s.pos[f.id]) {
       f.el.remove();
@@ -2225,17 +2015,12 @@ function drawDucks(now = clockNow()) {
   placePodium(board, now);
   placeTable(board);
   placeTiles(board);
-  placePick(board, s);
   placeZombies(board, s, now);
   if (geo) sbBoardMarks(board, s, (o) => place(o, 0, 1), geo.size); // (Sandbox: its spawns and respawns on the board)
   if (sbOnBoard(s)) sbHear(s, false); // (… and its sounds there: sbsfx.js)
-  mgjSteps(s); // (the wave zombies' steps and groans: l4ddsfx.js)
-  placeDesk(board, s, now);
+  boardSteps(s); // (the board zombies' steps and groans: l4ddsfx.js)
   placeCake(board, s, now);
-  placeRevive(board, s, now);
   placeSnack(board, s, now);
-  placeEdge(board, s, now);
-  placeTells(board, s, now);
   for (const [o, L, T, w, h] of overBoxes.list) {
     const hit = boxes.some(
       (b) => b.r > L && b.l < L + w && b.b > T && b.t < T + h,
@@ -2397,42 +2182,6 @@ function placePodium(board, now) {
   });
 }
 
-/* Mad God Justin, beaten: he dies, lying on the LOSER podium in his blood, crying no more (the owner's, Nov 18 12:19Z:
-   "when he has 0 HP in mad god justin, he dies (he starts crying when at 25 hp or lower but cry effect goes away for
-   any dead player)", "mad god justin bleeds a puddle of blood when dead") */
-const MGJ_CRY = 25;
-const mgjDead = (s) => isMgj(s) && !!s.mgj && !!s.mgj.won && s.mgj.hp <= 0;
-/* his gore by his HP (the owner's, Nov 18 12:19Z: "justin gets more gored every 10 health points when he has 100 HP,
-   and once he hits 10 HP, every bit of damage does even more gore"): from 100 HP down, one more wound for every 10 HP
-   he has lost, and under 10 HP one more for every HP; each step adds the next of MGJ_GORE (wounds.js codes: bruises
-   and cuts first, then holes, an eye, chunks, his beak, the last the worst). Gore off: game.js shows only what
-   goreFree keeps */
-const MGJ_GORE = [
-  "r1",
-  "c0",
-  "b4",
-  "c6",
-  "B2",
-  "r5",
-  "s1",
-  "c3",
-  "b7",
-  "e0",
-  "B0",
-  "k1",
-  "c7",
-  "b5",
-  "p0",
-  "k2",
-  "B6",
-  "s4",
-  "g0",
-];
-function mgjGore(s) {
-  const hp = s.mgj ? Math.max(0, s.mgj.hp ?? MGJ_HP_UNKNOWN) : 999,
-    n = hp > 100 ? 0 : hp >= 10 ? Math.floor((100 - hp) / 10) : 9 + (10 - hp);
-  return MGJ_GORE.slice(0, n).join("");
-}
 /* ---------- my duck ---------- */
 export const onBoardPhase = () =>
   R && boardPhases(R.state).includes(R.state.phase);
@@ -2449,7 +2198,6 @@ const votedCol = () => {
 export const late = () => !!(R.state.players[R.me] || {}).late; // joined mid-turn: walks anywhere, plays from the next turn
 const roams = () =>
   ["answer", "bracket", "dunced"].includes(R.state.phase) ||
-  isMgj(R.state) ||
   isSc(R.state) ||
   late() ||
   isQuack(R.state) ||
@@ -2695,12 +2443,11 @@ export function step(dt, now) {
     countJump();
     sendMove(true);
   }
-  const want = walkIntent(keys, arrowsAim()), // (Mad God Justin: WASD walks, the arrows aim)
+  const want = walkIntent(keys, arrowsAim()), // (the arrows aim: WASD walks)
     hx = want.x,
     vy = want.y; // on screen: right, down
   if (hx || vy) target = null;
   sprinting = want.sprint || !!(target && target.sprint);
-  if (isMgj(s)) sprinting = false; // (no sprint in Mad God Justin: Shift, the stick's edge and a double tap all walk. The owner's, Nov 17 19:11Z: "the sprint should be removed from mad god justin")
   sprinting = sprintStep(
     sprinting && !!(hx || vy || target),
     dt,
@@ -2771,10 +2518,7 @@ export function step(dt, now) {
     onTree = [1, (geo.tl.h * share) / row.h];
   } // (Trivia: the same speed on the screen in any row, however tall)
   const mul =
-    (sprinting ? SPEED.sprint : 1) *
-    (isMgj(s) ? MGJ_SLOW : 1) *
-    walkOf(s, R.me) *
-    sbWalkOf(s, R.me); // (Mad God Justin: the ducks a fifth slower; the lobby's Walking speed; Sandbox: a spawn's or a respawn's speed for me)
+    (sprinting ? SPEED.sprint : 1) * walkOf(s, R.me) * sbWalkOf(s, R.me); // (the lobby's Walking speed; Sandbox: a spawn's or a respawn's speed for me)
   const sx = (turned() ? SPEED.px : SPEED.x) * mul * onTree[0],
     sy = (turned() ? SPEED.py : SPEED.y) * mul * onTree[1];
   let [lo, hi] = xBounds();
@@ -2928,63 +2672,6 @@ function hangStep(dt, now) {
     }); // (Sandbox: a zone that hurts whoever lands on it from a fall, sbzone.js)
   sendMove(!!(ev.land || ev.thud || ev.force));
 }
-/* reset duck: somewhere random on the board, or inside your column once you have voted (never inside another duck) */
-function resetDuck() {
-  if (!me || !onBoardPhase() || !geo) return "✗ That works on the board.";
-  if (isSc(R.state) && locked()) return "✗ Your vote holds your duck there.";
-  if (isHang(R.state)) {
-    // Hangout: back outside the front door
-    if (!world) return "✗ That works on the board.";
-    const p = world.spawn();
-    Object.assign(me, p, {
-      j: 0,
-      b: p.z,
-      vz: null,
-    });
-    target = null;
-    R.send({
-      t: "move",
-      x: p.x,
-      y: p.y,
-      j: 0,
-      z: Math.round(p.z),
-      b: Math.round(p.z),
-      reset: true,
-    });
-    return "Duck reset: back at the front door.";
-  }
-  const s = R.state,
-    inCol =
-      s.phase === "bracket" || isSc(s) || isQuack(s)
-        ? null
-        : s.phase !== "answer"
-          ? s.lock[R.me]
-          : s.done[R.me] && !s.options.freeRoam
-            ? colAt(s, me.x)
-            : null;
-  if (inCol === undefined) return "✗ No answer, no column to go back to.";
-  const [lo, hi] = attorney()
-      ? [0.47, 0.53]
-      : inCol === null
-        ? [0.04, 0.96]
-        : colBoundsAt(s, inCol),
-    now = clockNow();
-  let x = me.x,
-    y = me.y;
-  for (let k = 0; k < 30; k++) {
-    x = lo + Math.random() * (hi - lo);
-    y = attorney() ? 0.4 + Math.random() * 0.2 : Math.random();
-    if (!bumps(x, y, now)) break;
-  }
-  me.x = x;
-  me.y = y;
-  me.j = 0;
-  target = null;
-  R.send({ t: "move", x, y, j: 0, reset: true });
-  return inCol === null
-    ? "Duck reset: somewhere new."
-    : "Duck reset: somewhere new in your column.";
-}
 /* Space or a tap */
 function jump() {
   if (!me || !onBoardPhase()) return;
@@ -3086,7 +2773,6 @@ function paintNow(force) {
     S.classList.toggle("wq", isQuack(s));
     S.classList.toggle("law", isLaw(s) || isDn(s));
     S.classList.toggle("dn", isDn(s));
-    S.classList.toggle("mgj", isMgj(s));
     S.classList.toggle("vd", isVd(s));
     S.classList.toggle("tv", isTv(s));
     S.classList.toggle("hang", isHang(s));
@@ -3140,14 +2826,9 @@ function paintNow(force) {
     }
     $(".phase", S).textContent =
       (isSb(s) && "Sandbox") || // (on every map)
-      (inWorld(s) && s.options.mode === "surv" && "Survival") ||
-      (inWorld(s) &&
-        s.options.mode === "l4dd" &&
-        s.options.l4map === "downpour" &&
-        "Downpour") || // (Dead Ducks Arcade's second map)
+      (inWorld(s) && s.options.mode === "l4dd" && "Downpour") || // (Dead Ducks Arcade's map)
       (isLaw(s) && LAW_TITLES[s.phase]) ||
       (isDn(s) && DN_TITLES[s.phase]) ||
-      (isMgj(s) && MGJ_TITLES[s.phase]) ||
       (isVd(s) && VD_TITLES[s.phase]) ||
       (isTv(s) && TV_TITLES[s.phase]) ||
       TITLES[s.phase] ||
@@ -3161,21 +2842,14 @@ function paintNow(force) {
   }
   heardReloads(s);
   if (world) world.state(s); // (a lamp switched off …)
-  if (isMgj(s)) {
-    mgjBackIfGone(s);
-    const hp = $(".mgj-hp", S);
-    if (hp) setHTML(hp, mgjHPHTML(s));
-  } // Mad God Justin: the knife always out; his HP
   const round =
     s.phase === "over" || isHang(s) || isSb(s)
       ? ""
-      : isMgj(s)
-        ? `Fight ${s.round + 1}`
-        : isVd(s)
-          ? vdRound(s)
-          : isTv(s)
-            ? `Round ${s.round + 1}${tvRound(s)}`
-            : `Round ${s.round + 1}${isQuack(s) ? (s.wq && s.wq.lap && QUACK_PHASES.includes(s.phase) ? ` · Lap ${s.wq.lap}` : "") : isSc(s) ? (s.phase === "write" ? ` · Line ${s.sc.turn + 1} of ${s.sc.order.length}` : "") : isBb(s) ? (bbMatch(s) ? ` · ${roundName(s.bb, s.bb.r)}` : "") : s.qs.length && ["answer", "discuss", "counsel", "dunced", ...ATT_PHASES].includes(s.phase) ? ` · ${isLaw(s) ? "Case" : isDn(s) ? "Take" : "Question"} ${s.qi + 1} of ${s.qs.length}` : ""}`;
+      : isVd(s)
+        ? vdRound(s)
+        : isTv(s)
+          ? `Round ${s.round + 1}${tvRound(s)}`
+          : `Round ${s.round + 1}${isQuack(s) ? (s.wq && s.wq.lap && QUACK_PHASES.includes(s.phase) ? ` · Lap ${s.wq.lap}` : "") : isSc(s) ? (s.phase === "write" ? ` · Line ${s.sc.turn + 1} of ${s.sc.order.length}` : "") : isBb(s) ? (bbMatch(s) ? ` · ${roundName(s.bb, s.bb.r)}` : "") : s.qs.length && ["answer", "discuss", "counsel", "dunced", ...ATT_PHASES].includes(s.phase) ? ` · ${isLaw(s) ? "Case" : isDn(s) ? "Take" : "Question"} ${s.qi + 1} of ${s.qs.length}` : ""}`;
   if ($(".round", S).textContent !== round) $(".round", S).textContent = round; // (every paint: a Story Chain line can be added for someone who joined)
   if (bar) bar.refresh(); // (a key kept on, or kept off)
   if (isTv(s) && TV_BOARD.includes(s.phase) && tvRefresh(S, s, R.me))
@@ -3305,21 +2979,19 @@ function paintNow(force) {
         (!m.to || m.to === R.me || m.from === R.me) &&
         !isMuted(s, m.from, "bubble") &&
         !isMuted(s, m.from, "text")
-      )
+      ) {
+        const t = said(m);
         bubbles[m.from] = {
-          text: !canOpen(s, R.me, m)
-            ? `📄 ${m.file}`
-            : m.text.length > 90
-              ? m.text.slice(0, 90).trimEnd() + "…"
-              : m.text,
+          text: t.length > 90 ? t.slice(0, 90).trimEnd() + "…" : t,
           until: clockNow() + 5500,
           n: m.n,
           at: clockNow(),
-        }; // (a sent file opens only for sudo, unless chmod let its group or everyone)
+        };
+      }
     for (const m of s.log)
       if (
         m.n > lastLog &&
-        (m.npc === JUSTIN_ID || m.npc === GOOD_ID) &&
+        m.npc === JUSTIN_ID &&
         s.options.mode !== "hang" &&
         !isMuted(s, JUSTIN_ID, "bubble") &&
         !isMuted(s, JUSTIN_ID, "text")
@@ -3379,13 +3051,6 @@ function showTimer() {
     const pl = $(".pod-left", S);
     if (pl)
       pl.textContent = `The stats in ${Math.max(0, Math.ceil((s.ends - now) / 1000))} s`;
-  }
-  if (isMgj(s) && s.phase === "boss" && s.mgj) {
-    // Mad God Justin: no time limit (the owner's, Nov 3), so no clock
-    if (meter && !meter.hidden) meter.hidden = true;
-    if (t.textContent) t.textContent = "";
-    if (t.className !== "timer") t.className = "timer";
-    return;
   }
   if (
     !end ||
@@ -3756,24 +3421,12 @@ function keydown(e) {
   } // the handgun reloads
   if (e.code === "KeyV" && !e.repeat && onBoardPhase()) {
     e.preventDefault();
-    if (isMgj(R.state))
-      drawHold(hand.held) || fire(hand.held || MGJ_MELEE); // (out of HP: fire() makes it the down pistol; the bow: V held draws it)
-    else if (heldNow())
+    if (heldNow())
       drawHold(heldNow()) || fire(heldNow()); // (the bow: V held draws it)
     else if (hand.lastKey >= 0) useKey(hand.lastKey, false);
     else if (bar) bar.show();
     return;
-  } // V: the weapon in hand, or else the one I used last (Mad God Justin: what's in hand)
-  if (
-    e.code === "KeyE" &&
-    isMgj(R.state) &&
-    R.state.phase === "boss" &&
-    downNear(R.state, R.me)
-  ) {
-    e.preventDefault();
-    if (!e.repeat) mgjRevive(true);
-    return;
-  } // Mad God Justin: E held by a downed duck gets it up in 5 s
+  } // V: the weapon in hand, or else the one I used last
   if (e.code === "KeyQ" && isQuack(R.state)) {
     e.preventDefault();
     peek(true);
@@ -3801,7 +3454,6 @@ function keydown(e) {
 const keyup = (e) => {
   if (world) world.keyup(e);
   if (e.code === "Enter" || e.code === "NumpadEnter") holdEnd(e);
-  if (e.code === "KeyE" && mgjRv) mgjRevive(false); // (Mad God Justin: let go of E, the revive stops)
   keys.delete(e.code);
   if (e.key === "Tab" && pm) pm.keyup(e);
   if (e.code === "KeyQ") peek(false);
@@ -4079,7 +3731,7 @@ function heldClick(e) {
   return (
     !!hand.held &&
     !!R &&
-    (isMgj(R.state) || hasKey(playDuck(), hand.held)) &&
+    hasKey(playDuck(), hand.held) &&
     e.button === 0 &&
     onBoardPhase() &&
     aimHere(e)
@@ -4121,12 +3773,9 @@ function holdTrigger(shoot) {
   };
   go();
 }
-/* the full-auto guns kept out (outside Quacky Zombies), and every Mad God Justin weapon (owner Nov 17 19:11Z: "MAKE THE
-   WEAPONS BEHAVE AS THEY DO IN THE ZOMBIE GAME MODE"): fires while the left button is down; the Chair and the Zebra
-   cake once a click; the bow draws while held (gamehand.js drawHold) */
-const repeats = (w) =>
-  AUTO.includes(w) ||
-  (!!w && !!R && isMgj(R.state) && !["zebra", "chair"].includes(w));
+/* the full-auto guns kept out (outside Quacky Zombies): fires while the left button is down; the bow draws while held
+   (gamehand.js drawHold) */
+const repeats = (w) => AUTO.includes(w);
 let autoDid = false;
 function autoPress(e) {
   if (
@@ -4142,7 +3791,7 @@ function autoPress(e) {
   holdTrigger(() => {
     if (!R || !repeats(hand.held) || !onBoardPhase()) return 0;
     fire(hand.held);
-    return Math.max(60, coolFor(hand.held, R.state) / grCool(R.state, R.me)); // (Sandbox: a group's Cooldown speed)
+    return Math.max(60, coolFor(hand.held) / grCool(R.state, R.me)); // (Sandbox: a group's Cooldown speed)
   });
 }
 /* Quacky Zombies: the left button down uses the weapon in hand, again as soon as it can while held (the bow: draws) */
@@ -4192,7 +3841,6 @@ register("game", {
     setGeo(null);
     keys.clear();
     lastFx = -1;
-    hotdogs = [];
     follows = [];
     if (pm) pm.destroy();
     pm = null;
@@ -4223,7 +3871,6 @@ register("game", {
     removeEventListener("wheel", onWheel);
     if (scene) scene.destroy();
     scene = null;
-    hooks.resetDuck = null;
     stopSays();
     lastGrace = -1;
     if (touchOff) touchOff();
@@ -4257,12 +3904,7 @@ register("game", {
         : isHang(R.state)
           ? HINTS.replace("<kbd>Enter</kbd> End turn", "<kbd>E</kbd> Use") +
             KEEP_HINT
-          : isMgj(R.state)
-            ? HINTS.replace(
-                "<kbd>Enter</kbd> End turn",
-                "<kbd>Click</kbd> Stab",
-              )
-            : HINTS + KEEP_HINT,
+          : HINTS + KEEP_HINT,
     );
     mbarOff = mountMusicBar(S);
     insetsOff = watchInsets(S);
@@ -4295,7 +3937,6 @@ register("game", {
       : null;
     placed = placeKey(R.state);
     idleOff = trackIdle(() => R);
-    hooks.resetDuck = resetDuck;
     if (isL4dd(R.state)) {
       l4Held(heldNow); // (the fireplace asks which ranged weapon is in hand)
       const l4 = {
@@ -4349,11 +3990,6 @@ register("game", {
         dots,
         select: slidPick,
         tap: slidTap,
-        current: () => {
-          if (!R || !isMgj(R.state) || R.state.phase !== "boss") return null;
-          mgjBackIfGone(R.state);
-          return hand.held;
-        },
         tag: () => S && S.querySelector(".gduck.mine .gduck-name"), // (the switch's box under my duck, on a phone: hotbar.js peekSwitch)
       });
       bar.slider.classList.add("on-duck"); // (on a phone in the bottom middle, and in every mode a swipe on my duck picks too, touch.js swipe; the owner's, Nov 18 20:58Z, "every", and Nov 19 10:22Z)
@@ -4718,10 +4354,8 @@ pickWith({
   },
   sendMove,
   fire,
-  myPick,
-  mgjDownGun,
   onBoardPhase,
   playDuck,
   turned,
 });
-export { follows, geo, hotdogs }; // (what the files moved out of here read)
+export { follows, geo }; // (what the files moved out of here read)

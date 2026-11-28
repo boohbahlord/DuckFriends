@@ -95,7 +95,7 @@ export const SB_SHEET = [
   ],
   [
     "N",
-    `${LANG}: your files, kept on this device, with a terminal line. Run a file there, or chmod +x it and ./file it. ${LANG} only runs in Sandbox.`,
+    `${LANG}: your files, kept on this device. Open one and Run it. ${LANG} only runs in Sandbox.`,
   ],
   [
     "H",
@@ -1311,11 +1311,8 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
   const share = setInterval(async () => {
     const R = getR();
     if (!R || !isSb(R.state) || R.state.phase === "lobby") return;
-    const [{ numerat }, { shellCtx }] = await Promise.all([
-      import("./shell.js"),
-      import("./chat.js"),
-    ]);
-    numerat.share(shellCtx());
+    const { numerat, filesCtx } = await import("./seriatfiles.js");
+    numerat.share(filesCtx());
   }, 3000);
   return {
     paint,

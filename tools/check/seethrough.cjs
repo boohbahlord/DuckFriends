@@ -19,7 +19,7 @@ const MAPS = [
   "vellum",
   "tiles",
 ];
-const MODES = ["law", "mgj", "wyr", "dunce", "vdd", "ddr"];
+const MODES = ["law", "wyr", "dunce", "vdd", "ddr"];
 const alphaOf = (bg) => {
   const m =
     /\/\s*([\d.]+)\)$/.exec(bg) || /rgba\([^)]*,\s*([\d.]+)\)$/.exec(bg);

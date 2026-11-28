@@ -160,7 +160,6 @@ const NONE = () => ({});
 export const WOUND_BREEDS = {
   zombie: { head: "kill", can: NONE }, // (Dead Ducks Arcade's, Mad God Justin's waves, Sandbox's on a map)
   justin: { head: "kill", can: knockable }, // (on the board and in Hangout)
-  gunman: { head: "kill", blast: true, can: NONE }, // (Survival's gunmen and the friendly squad)
   merchant: { head: "kill", blast: true, can: knockable },
   duck: { can: knockable }, // (its wounds come and go: pwHit)
 };
@@ -277,7 +276,7 @@ export function pwTick(s, now, keep = false) {
    coming back on (spot 1) */
 /* the modes that aren't the normal games: there a knocked-off hat comes back by itself, as it did (in the normal games it
    stays off until the duck comes back from dying: rules.js) */
-const NOT_NORMAL = ["l4dd", "surv", "mgj", "hang"];
+const NOT_NORMAL = ["l4dd", "hang"];
 export function pwCodes(s, id, now) {
   const w = (s.pw || {})[id];
   if (!w) return "";
