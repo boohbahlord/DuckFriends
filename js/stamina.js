@@ -10,11 +10,30 @@ import { SPRINT } from "./gamedefaults.js";
 
 let left = 1,
   tired = false,
-  was = false; // (sprinting last frame)
+  was = false, // (sprinting last frame)
+  asked = false; // (asking to sprint last frame)
+
+/* a sprint tried while it can't be (empty, or not full again): my sprint bars flash white once, each try (the owner's,
+   Nov 28 03:28Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtLgUjArf16XwsJeAqka2pZ7: "the stamina flashes white once for every time
+   you try to spring in every game mode before it is filled back up"); the bar under my HP meter and the one under my
+   name, by the browser's own animations */
+const WHITE = "brightness(0) invert(1)",
+  FLASH = [
+    { filter: WHITE },
+    { filter: WHITE, offset: 0.6 },
+    { filter: "none" },
+  ];
+function flash() {
+  if (typeof document === "undefined") return;
+  for (const e of document.querySelectorAll(".hpm-stam, .l4-sprint"))
+    e.animate(FLASH, 220);
+}
 
 /* one frame: on, I want to sprint and am walking; true when my duck sprints this frame. fill: how many times as fast it
    fills again (Sandbox: a group's Regen stamina, sbgroups.js grStam) */
 export function sprintStep(on, dt, fill = 1) {
+  if (on && !asked && tired) flash();
+  asked = on;
   if (on && !tired && left > 0) {
     left = Math.max(0, left - (dt * 1000) / L4.SPRINT);
     if (left <= 0) tired = true;
@@ -38,4 +57,5 @@ export function sprintReset() {
   left = 1;
   tired = false;
   was = false;
+  asked = false;
 }

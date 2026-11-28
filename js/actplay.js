@@ -217,16 +217,16 @@ export function act_move({ state, s, a, now, me }) {
   if (!me || !s.pos[a.id]) return state;
   if (!boardPhases(s).includes(s.phase)) return state;
   const was = s.pos[a.id],
-    j = +a.j || 0,
-    keep = drawSwitched(s, a.id, a.w) ? s : state; // (another weapon picked: a cooking grenade put away, bowdraw.js, even by a duck that can't move now)
-  if (holdStill(s, a.id, now)) return keep; // Who is the Quack?: the last duck plays dead for a moment
+    j = +a.j || 0;
   if (
     (isL4dd(s) || isSb(s)) &&
     was.tp &&
     now - was.tp < 1500 &&
     Math.hypot((+a.x || 0) - was.x, (+a.y || 0) - was.y) > 0.03
   )
-    return keep; // (Quacky Zombies and Sandbox: the host just put it at a start spot; a move sent before that got there is old)
+    return state; // (Quacky Zombies and Sandbox: the host just put it at a start spot; a move sent before that got there is old, its weapon too)
+  const keep = drawSwitched(s, a.id, a.w) ? s : state; // (another weapon picked: a cooking grenade put away, bowdraw.js, even by a duck that can't move now)
+  if (holdStill(s, a.id, now)) return keep; // Who is the Quack?: the last duck plays dead for a moment
   if (isHang(s) && hangStill(s, a.id, now)) return keep; // Hangout: shot by Justin, it can't move for a while
   if (downStill(s, a.id, now)) return keep; // the boards: knocked down, it can't move for the host's time (1 s unless set)
   if (sbOut(s, a.id)) return keep; // (Sandbox: out of lives, it stays down: sbout.js)

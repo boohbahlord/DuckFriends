@@ -49,6 +49,17 @@ export const NADE = {
    `down` times less for each elevation less (0.25 HP at 1.5) */
 export const FALL = { from: 1.5, mid: 2, hp: 2, up: 2, down: 64 };
 
+/* my duck speeds up and slows down instead of starting and stopping at once (the owner's, Nov 28 03:28Z, "I APPROVE",
+   cmsg_01LTpp6fzv8sfYUR5KoHADKtLgUjArf16XwsJeAqka2pZ7; playerinput.js easeWalk): up, the seconds from standing to full
+   speed (or a turn right round); down, from full speed to standing. Mine, short so it still answers at once */
+export const WALK_EASE = { up: 0.15, down: 0.1 };
+
+/* my aim sways as I move, the flashlight, the laser sight, my gun and my shots together (the owner's, Nov 28 03:28Z,
+   cmsg_01LTpp6fzv8sfYUR5KoHADKtLgUjArf16XwsJeAqka2pZ7: "swaying gets worse with sprinting"; game.js myAim, Dead Ducks
+   Arcade's): at most `walk` degrees either way walking, `sprint` sprinting, one sway back and forth each `ms`; it grows
+   and dies away over `ease` seconds. Mine (the gun's walk sway was 3 degrees) */
+export const SWAY = { walk: 2, sprint: 5, ms: 1100, ease: 0.3 };
+
 /* a blast's rings (blast.js; the owner's, Nov 21 19:07Z: "the center of a grenade's explosion is at ... the
    intersection of the plus of 4 squares of the pixel hitbox ... it's 4 boxes in the center of the hitbox, those have crit
    automatically. The outside boxes ... 25% chance of crit ... We can cut off the corners though, to make it more
@@ -192,8 +203,62 @@ export const SPECIAL_Z = {
     bite: 250,
     pull: { ms: 500, px: 12, horde: 0.25 },
     rest: 1500,
+    /* its meter (the owner's, Nov 28): while it holds a duck, that duck's click (the attack button on a phone) strikes it
+       instead of swinging: a red line sweeps the meter one way in `sweep` ms ("moves fast"), a white line flashes at a
+       spot that moves every `move` ms and after each strike; how near they are (a share of the meter, under `near`) is
+       the damage, up to `most` ("0-3 damage ... the closer the alignment, the more damage"); a strike at most every
+       `gap` ms (zombies.js meterDmg, flymeter.js) */
+    meter: { most: 3, near: 0.25, sweep: 450, move: 1200, gap: 400 },
   },
-  giant: { from: 8, chance: 0.2, step: 0.05, most: 0.5, hp: 150, speed: 1 },
+  /* the Giant (zombies.js giantStep, giantHit; the owner's 03:28Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtLgUjArf16XwsJeAqka2pZ7).
+     size: its look's size (the stand-in, the biggest a zombie is, till the owner picks 1.52x or 2x). Its hit throws a
+     duck `knock` world px (push.js, over the duck's weight; a grenade's edge is 307: "to a ridiculous extent"), `lift`
+     duck sizes high, for `ms`; a swing in `grab` is a pick-up and a throw instead, `throw` px and `tlift` high. The
+     zombies its swing reaches take a claw and `zknock` px; the ones in its way are shoved aside (crowd.js: it never
+     gives way). It climbs `climb` times as fast and steps up `up` px (half an elevation, heights.js ELEV 108). Every
+     `toss.every` ms at most it throws a zombie beside it (within `toss.by` duck rooms) at a duck `toss.near` to
+     `toss.far` rooms off, flying `toss.fly` px/s, `toss.up` px over the line; landing on the duck it claws it and shoves
+     it `toss.knock` px. Next to a car (`car.near` px) with a duck past it (up to `car.far` px on, `car.wide` px off the
+     line), it tries, `car.chance` of the times (once each `car.every` ms), to knock the car at it: the car slides
+     `car.far` px at `car.speed` px/s and every duck it hits takes a claw and `car.knock` px. The throws' and the car's
+     numbers are Adam's and mine; the owner's are 150 HP, "as fast as the players", twice the climb, half an elevation
+     and the quarters */
+  giant: {
+    from: 8,
+    chance: 0.2,
+    step: 0.05,
+    most: 0.5,
+    hp: 150,
+    speed: 1,
+    size: 1,
+    knock: 700,
+    lift: 1.5,
+    ms: 700,
+    grab: 0.25,
+    throw: 1000,
+    tlift: 2.5,
+    zknock: 160,
+    climb: 2,
+    up: 54,
+    toss: {
+      every: 6000,
+      by: 1.5,
+      near: 3,
+      far: 10,
+      fly: 420,
+      up: 90,
+      knock: 200,
+    },
+    car: {
+      near: 40,
+      far: 420,
+      wide: 60,
+      chance: 0.25,
+      every: 3000,
+      speed: 900,
+      knock: 500,
+    },
+  },
   WELL: 1.5,
   AT: 30000,
   MARKS: [1 / 3, 1 / 2, 2 / 3],
