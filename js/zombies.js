@@ -142,6 +142,7 @@ export function zombies(s) {
     zs = s.hang.zs || {},
     zl = s.hang.zl || {},
     mine = (s.hidden && s.hidden.l4z) || {},
+    zj = s.hang.zj || {}, // (a jump or a fall under way: every screen draws it, not only the host's)
     out = [];
   for (let k = 0; k + 3 < zp.length; k += 4) {
     const i = zp[k],
@@ -162,6 +163,7 @@ export function zombies(s) {
       d: h[1],
       l,
       ...(h[2] || {}), // (its way up kept to, its roof, its flank, its jump: KEEP)
+      ...(!(h[2] && h[2].j) && zj[i] ? { j: zj[i] } : null),
     });
   }
   return out;
@@ -170,7 +172,8 @@ export function store(s, zs, keepStatic) {
   const zp = [],
     sw = {},
     mine = {},
-    zl = {};
+    zl = {},
+    zj = {};
   for (const z of zs) {
     zp.push(
       z.i,
@@ -187,11 +190,13 @@ export function store(s, zs, keepStatic) {
     for (const k of KEEP) if (z[k] !== undefined) x[k] = z[k];
     if (Object.keys(x).length) mine[z.i].push(x);
     zl[z.i] = z.l;
+    if (z.st === 8 && z.j) zj[z.i] = z.j;
   }
   const sig = (o) => JSON.stringify(o);
   if (sig(zp) !== sig(s.hang.zp)) s.hang.zp = zp;
   if (sig(sw) !== sig(s.hang.zs)) s.hang.zs = sw;
   if (!keepStatic && sig(zl) !== sig(s.hang.zl)) s.hang.zl = zl;
+  if (sig(zj) !== sig(s.hang.zj || {})) s.hang.zj = zj;
   if (s.hang.zw) {
     // (the wounds go with their zombie)
     const zw = {};
@@ -648,7 +653,13 @@ function walkAll(zs, c) {
       const e = edgeOf(z.x, z.y, deckOf(z));
       if (!deckAt(z.x, z.y, e.d.h)) {
         const a = (z.dir || 0) / 100;
-        dropOff(z, Math.cos(a), Math.sin(a), e.d.h, FALL.out / 3); // (a hole underfoot: down through it, seen falling)
+        dropOff(
+          z,
+          Math.cos(a),
+          Math.sin(a),
+          deckH(e.d, z.x, z.y),
+          FALL.out / 3,
+        ); // (a hole underfoot: down through it, seen falling)
         continue;
       }
       for (const q of pls)
@@ -663,7 +674,8 @@ function walkAll(zs, c) {
       if (!target && !cake && jumpOn(z, pls, v * dt, e.d)) continue; // (nobody up here, a duck on the canopy: to the roof's edge facing it, then the jump)
       if (!target || cake) {
         walkTo(z, z.x + e.nx * 200, z.y + e.ny * 200, v * dt);
-        if (edgeOf(z.x, z.y, e.d).o >= CL.out) dropOff(z, e.nx, e.ny, e.d.h); // (off the edge: it falls, seen falling)
+        if (edgeOf(z.x, z.y, e.d).o >= CL.out)
+          dropOff(z, e.nx, e.ny, deckH(e.d, z.x, z.y)); // (off the edge: it falls, seen falling)
         continue;
       }
       if (best > ROOF_BACK) {

@@ -109,7 +109,7 @@ export function olRoofed(x, y, z, me) {
 const MADE = new Map(); // picture (its src: the pixel images are short blob: urls, shared by every zombie that looks the same) → { kind → canvas }
 const P = 2; // (room round a picture for its line and its glow, in pixels)
 /* img: a picture on the screen, or a shape of my own on a canvas (the arrows), key then naming it */
-function outline(img, kind, key = img.currentSrc || img.src) {
+function outline(img, kind, key = img.currentSrc || img.src || img.dataset.ok) {
   let m = MADE.get(key);
   if (!m) {
     if (MADE.size > 600) MADE.clear(); // (old looks: made again if they come back)
@@ -289,8 +289,8 @@ export function olDraw(host, W, H, now = performance.now()) {
       ), // (darker under my floor: olAway)
       c = outline(o.img, kind);
     if (!c) continue;
-    const sw = o.w / gp / o.img.naturalWidth, // (the picture's pixels against the grid's: about 1)
-      sh = o.h / gp / o.img.naturalHeight,
+    const sw = o.w / gp / (o.img.naturalWidth || o.img.width), // (the picture's pixels against the grid's: about 1; a wounded zombie's canvas has only width)
+      sh = o.h / gp / (o.img.naturalHeight || o.img.height),
       x = Math.round(o.x / gp),
       y = Math.round(o.y / gp),
       dw = c.width * sw,
