@@ -9,6 +9,20 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v286",
+    version: 286,
+    date: "Nov 28, 2026",
+    title: "Zombies move as a crowd",
+    news: [
+      "For Dead Ducks Arcade: zombies move as a crowd now. They bump and press together, turn more naturally, fan out, stagger when hit, slow down in a crush, and take turns around you. Every zombie is at least as fast as round 8's.",
+      "For Dead Ducks Arcade: zombies no longer have red outlines. A zombie no duck can see isn't shown, and it fades in when it comes into sight.",
+      "For Dead Ducks Arcade: at night the edges of the screen are darker in a circle, and anything on fire lights up the dark around it.",
+      "For Dead Ducks Arcade: jerry cans turn up more often when the generator is low, and rarely when it's full.",
+      "For Dead Ducks Arcade: the merchant walks around the chapel while he sells. He fights back with a knife up close or a weak pistol at range, but only if you hit him up close or twice, and only when someone can see him.",
+      "Falls hurt: nothing for one elevation or less, then 10% of your health per elevation, at most 50%.",
+    ],
+  },
+  {
     id: "v285",
     version: 285,
     date: "Nov 27, 2026",
