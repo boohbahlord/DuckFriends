@@ -76,7 +76,7 @@ const { url, fail, noErrors } = require("./lib.cjs");
     out.cabinSave = old("cabin");
     out.dpSave = old("downpour");
     out.dpWant = [2, 3, 1]
-      .map((n) => String(Math.round((n - 1 + out.dp[1]) * 20) / 20))
+      .map((n) => String(Math.round((n - 1 + 48 / H.ELEV) * 20) / 20)) // (its grass over its flood's bottom then: sbsave.js DP_FLOOR_V3)
       .concat("0");
     return out;
   });

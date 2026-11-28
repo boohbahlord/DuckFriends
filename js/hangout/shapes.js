@@ -109,6 +109,7 @@ const PLAN = new Set([
     "half",
     "z",
     "lean",
+    "sunk",
   ]),
   PLAN_AT = new Set(["x0", "y0", "x1", "y1"]);
 const atK =
@@ -165,6 +166,7 @@ const GS_DRAW = {
           up,
           smash: p.smash || "",
           dead: p.dead || "",
+          sunk: Math.max(0, GS.FLOOD.top - p.z),
         }),
       { up },
     ));

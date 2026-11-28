@@ -28,7 +28,6 @@ import {
   SB_WORLD_NAMES,
 } from "./sandboxrules.js";
 import { TILE } from "./units.js";
-import { FLOOD } from "./hangout/stationmap.js";
 import { ELEV } from "./heights.js";
 
 export const SAVE_V = 3; // (a save's version: a newer game still opens an older save. 2: sizes typed in tiles; 3: the ground at elevation 0)
@@ -126,8 +125,9 @@ const down = (t, f, by) =>
         ),
       )
     : t;
+const DP_FLOOR_V3 = -48; // (Downpour's flood bottom, world px, when version 3 came: its deep west end, gone since Nov 28)
 function fromGround1(sb, world) {
-  const by = world === "downpour" ? 1 + FLOOD.floor / ELEV : 1;
+  const by = world === "downpour" ? 1 + DP_FLOOR_V3 / ELEV : 1;
   for (const p of Object.values((sb && sb.pts) || {}))
     for (const f of LEVELED)
       if (p && p.f && p.f[f])

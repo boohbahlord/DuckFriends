@@ -10,6 +10,8 @@ import { rnd } from "./stationmap.js";
 
 import { CAR_TOP } from "./vehicles.js";
 
+import { DP_WATER, DP_WATER_A } from "./dpground.js";
+
 import {
   F,
   O,
@@ -149,7 +151,8 @@ export function corpseSVG({ w = 140, d = 70, kind = "body", only = "" } = {}) {
    its south side with the doors, the windows and the wheels. east: which way it faces. seed: its colour, a broken
    window. hood: its hood up, the engine showing (it stands taller than its box: up px over it). smash: its windows
    broken in (the owner's, Nov 17 12:28Z): "front" the windshield, "side" a south window, "both". dead: a dead duck
-   lying on its hood (corpse above) */
+   lying on its hood (corpse above). sunk: how deep it stands in the flood, the water over its wheels that far up (the
+   owner's, Nov 28 04:58Z: "that car should be as submerged as its depth") */
 export function carSVG({
   w = 420,
   d = 200,
@@ -160,6 +163,7 @@ export function carSVG({
   up = 0,
   smash = "",
   dead = "",
+  sunk = 0,
 } = {}) {
   const r = rnd(seed * 97 + 11),
     [c, cd] = hood
@@ -347,8 +351,14 @@ export function carSVG({
   ); // (a tail light)
   s += `<path d="M${P(26, y1, zb + 4)}L${P(w - 30, y1, zb + 4)}" stroke="#353636" stroke-width="5"/>`;
   // the near wheels, in front of the body
-  for (const x of [w * 0.2, w * 0.79])
+  for (const x of [w * 0.2, w * 0.79]) {
     s += F`<ellipse cx="${X(x)}" cy="${y1 - 14 + H}" rx="30" ry="24" fill="#111417" ${ln(2.4)}/><ellipse cx="${X(x)}" cy="${y1 - 14 + H}" rx="13" ry="11" fill="#849097" ${ln(1.6)}/>`;
+    if (sunk > 0) {
+      const v = Math.min(sunk, 24) - 24, // (the water's top on it, from its middle: it touches the road at its bottom)
+        u = 30 * Math.sqrt(1 - (v / 24) ** 2);
+      s += F`<path d="M${X(x) - u} ${y1 - v - 14 + H}A30 24 0 0 0 ${X(x) + u} ${y1 - v - 14 + H}Z" fill="${DP_WATER}" opacity="${DP_WATER_A}"/>`;
+    }
+  }
   if (dead) {
     // a dead duck on its hood, its blood running down the front
     const hx = (g1 + w - 8) / 2 + 4,
