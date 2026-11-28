@@ -146,9 +146,9 @@ export const zOk = (x, y, z, up = STEP) =>
    heartbeat before, so a zombie forgot its way up the moment it chose it (the owner's, Nov 17 19:11Z: "WHY THE FUCK ARE
    ZOMBIES NOT COMMITTING ON WALL CLIMBS EVEN WHEN IM STILL ON THE SAME FUCKING ROOF!!!") */
 const KEEP =
-  "cm k fl wp j jp jc jx nj sp dm wk wt wd wn lt lw li ws sr sx hu na hd sg tc fy fc gt gc gk tw".split(
+  "cm k fl wp j jp jc jx nj sp dm wk wt wd wn lt lw li ws sr sx hu na hd sg tc fy fc fh gt gc gk tw".split(
     " ",
-  ); // (gt, gc, gk: till when the Giant waits to throw a zombie, and to try a car, and the car it knocked: giantStep; tw: a zombie it threw; fy, fc: a Flyer's hold on a duck, and till when it waits to leap: flyerStep; ws: which way it goes round a Sandbox wall, sandboxrules.js sbWallGo; sp, dm: a Sandbox spawn's zombie, its spawn and its damage: sbspawn.js; hd, sg, tc: the way it faces, till when it staggers, how many it touches: steer)
+  ); // (gt, gc, gk: till when the Giant waits to throw a zombie, and to try a car, and the car it knocked: giantStep; tw: a zombie it threw; fy, fc, fh: a Flyer's hold on a duck, till when it waits to leap, and its held duck's last strike at it: flyerStep, l4ddrules.js flyHit; ws: which way it goes round a Sandbox wall, sandboxrules.js sbWallGo; sp, dm: a Sandbox spawn's zombie, its spawn and its damage: sbspawn.js; hd, sg, tc: the way it faces, till when it staggers, how many it touches: steer)
 // (sr, sx, hu, na: its spot round its duck, the one it gave up, since when it is held up, the way up it gave up: crowd.js SUR)
 /* the zombies as objects, from the state's three parts, and back (k in zp: hp · 16 + st, st up to 8, the jump) */
 export function zombies(s) {
@@ -350,8 +350,9 @@ export function specialTick(s, L, zs, T) {
    It walks as any zombie does. Near a duck on its floor that nothing holds, with nothing in the way, it leaps at it
    (st 8; z.j[8] its height over the line: zombieroofs.js jumpZ), and landing on it, it holds on (st 9; z.fy: [the duck,
    its next bite, its next tug]): a bite every F.bite ms, a tug a random way every F.pull.ms, a little toward the horde;
-   the duck still walks. It lets go when its duck goes down, or when a melee crit throws it off (l4ddrules.js
-   meleeHits: only melee reaches it there); then, or after a leap that missed, it waits F.rest ms (z.fc) */
+   the duck still walks. Only melee reaches it there: the held duck strikes it on its meter (l4ddrules.js flyHit,
+   flymeter.js), a friend swings at it (meleeHits). It lets go when its duck goes down, or when a friend's crit throws
+   it off; then, or after a leap that missed, it waits F.rest ms (z.fc) */
 const F = SPECIAL_Z.flyer;
 /* the ducks held now, and where the horde is (its middle), for every Flyer this heartbeat */
 function flyers(zs) {
@@ -367,6 +368,15 @@ function flyers(zs) {
     ],
     none: !rest.length,
   };
+}
+/* the held duck's strike on its Flyer z (the owner's, Nov 28: "the closer the alignment, the more damage", 0 to 3):
+   off, how far its meter's red line was from the white one (a share of the meter; a bot sends none: somewhere in the
+   meter's first half). Its damage, the nearer the more, or -1 within F.meter.gap ms of the last (flymeter.js) */
+export function meterDmg(z, off, now) {
+  if (now - (z.fh || 0) < F.meter.gap) return -1;
+  z.fh = now;
+  const o = off !== null && Number.isFinite(+off) ? +off : Math.random() / 2;
+  return Math.round(F.meter.most * Math.max(0, 1 - Math.abs(o) / F.meter.near));
 }
 export function flyerOff(z, now) {
   z.st = 2;
@@ -385,7 +395,7 @@ function flyerStep(z, c, fly) {
       return true;
     }
     [z.x, z.y] = q.xy;
-    z.j = [Math.round(q.zz)]; // (its duck's height, up a floor or in a jump, for every screen: store's zj, zombieZ)
+    z.j = [Math.round(q.zz), q.id]; // (its duck's height, up a floor or in a jump, and which duck, for every screen: store's zj, zombieZ, l4dd.js's meter)
     if (now >= z.fy[1]) {
       z.fy = [z.fy[0], now + F.bite, z.fy[2]];
       if (c.latch(q, rnd(...F.dmg))) flyerOff(z, now);
@@ -443,7 +453,7 @@ function flyerLand(z, c, fly) {
     flyerOff(z, c.now);
     return;
   }
-  z.j = [Math.round(q.zz)]; // (its duck's height from the start: zombieZ)
+  z.j = [Math.round(q.zz), q.id]; // (its duck's height from the start, and which duck: zombieZ, l4dd.js's meter)
   z.st = 9;
   z.n = 0;
   z.fy = [q.id, c.now + F.bite, c.now + F.pull.ms];

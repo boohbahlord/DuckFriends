@@ -15036,6 +15036,71 @@ html.moving .l4-ammo.rl {
 .l4-heat.off {
   opacity: 0;
 }
+/* a Flyer holding my duck: its meter under the bars (flymeter.js, the owner's, Nov 28): black, a red line sweeping it,
+   a white line flashing where to strike, the Flyer's HP in its middle; the slot box and the heat meter step aside */
+.l4-fly {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + max(0.62rem, var(--bt, 0rem)));
+  translate: calc(-50% + var(--fx, 0px)) 0; /* (--fx: kept on the board, l4dd.js flyLight) */
+  --hpw: 2.3rem; /* (the Flyer's HP, in its own end: the lines never cover it) */
+  width: 9rem;
+  height: 1.15rem;
+  background: #0b0b0f;
+  border: 0.1rem solid #000;
+  box-shadow: 0 0 0 0.08rem #fff5;
+  overflow: hidden;
+  transition: opacity 0.2s;
+}
+.l4-fly.off {
+  opacity: 0;
+}
+.l4-fly b {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0.26rem;
+  translate: -50% 0;
+  z-index: 1;
+}
+.l4-fly .w {
+  left: calc(var(--hpw) + var(--w, 0.5) * (100% - var(--hpw)));
+  background: #fff;
+  box-shadow: 0 0 0 0.08rem #000;
+}
+html.moving .l4-fly .w {
+  animation: l4-fly-blink 0.24s steps(1) infinite;
+}
+.l4-fly .r {
+  left: calc(var(--hpw) + var(--r, 0) * (100% - var(--hpw)));
+  background: #ff2d3a;
+  box-shadow: 0 0 0 0.08rem #000;
+  z-index: 2;
+}
+.l4-fly em {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--hpw);
+  display: grid;
+  place-items: center;
+  border-right: 0.08rem solid #3a3c46;
+  font: 700 0.62rem/1 var(--font, inherit);
+  font-style: normal;
+  color: #ff8a90;
+}
+.l4-fly.hit {
+  background: #3a0d12;
+}
+@keyframes l4-fly-blink {
+  50% {
+    opacity: 0.55;
+  }
+}
+.flying .l4-peek,
+.flying .l4-heat,
+.l4z.riding .l4z-hp {
+  display: none;
+}
 .l4-heat i {
   width: 0.4rem;
   height: 0.24rem;

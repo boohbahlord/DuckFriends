@@ -199,6 +199,7 @@ import {
   specialTick,
   zArmor,
   flyerOff,
+  meterDmg,
   moveZombies,
   STATION,
   zFloor,
@@ -3137,6 +3138,18 @@ export const addFx = (s, f) => {
   s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, ...f }];
   return s.fxN;
 };
+/* the Flyer holding duck id struck on that duck's meter: fm, how far apart its lines were (zombies.js
+   meterDmg, flymeter.js) */
+function flyHit(s, id, fm, now) {
+  const zs = zombies(s),
+    z = zs.find((q) => q.st === 9 && q.fy && q.fy[0] === id),
+    dmg = z ? meterDmg(z, fm, now) : -1;
+  if (dmg < 0) return false;
+  if (dmg > 0 && strike(s, z, dmg, false, id, "", now))
+    die(z, now - s.hang.l4.t0);
+  store(s, zs, true);
+  return true;
+}
 export function l4Use(s, a, now) {
   const id = a.id,
     what = String(a.what || ""),
@@ -3149,6 +3162,8 @@ export function l4Use(s, a, now) {
     rw = down ? "dg" : what;
   if (!L || L.over || !p || !m0 || !(down || standing(s, id)) || !A)
     return false;
+  if (Object.values(s.hang.zj || {}).some((j) => j.length === 2 && j[1] === id))
+    return flyHit(s, id, a.fm, now); // (a Flyer holds me (zombies.js flyerStep's z.j): my click strikes it on the meter, whatever's in hand)
   if (!down && kind !== "grenade" && !m0.sl.includes(what)) return false;
   if ((kind === "melee" || kind === "ranged") && swims(s, id)) return false; // (swimming: put away)
   if (what === "safekeep") return false; // (never by hand: it works by itself)
@@ -4052,13 +4067,10 @@ function meleeHits(s, now) {
     const push = meleePush(s, k.by, k.w); // (its push: its weapon's and my weight, push.js)
     for (const z of zs) {
       if (k.hit.includes(z.i)) continue;
-      const held = z.st === 9; // (a Flyer on a duck: at any height; the held duck's own swing always reaches it, a friend's as it reaches that duck)
+      const held = z.st === 9; // (a Flyer on a duck: at any height, as a friend's swing reaches that duck; the held duck strikes it on its meter, flyHit)
       if (!held && !overlapH(hz, h, zOf(z, "zombie"))) continue;
-      if (
-        !(held && z.fy && z.fy[0] === k.by) &&
-        Math.hypot(z.x - bx, z.y - by) > R
-      )
-        continue; // (a round bubble: as far up and down as to the sides, the owner's, Nov 18 15:18Z "Make sure melee weapons have the same range in any direction". It was squashed up and down, 1.4 times shorter)
+      if (held && z.fy && z.fy[0] === k.by) continue; // (my own swing, begun before it took hold: only my meter strikes it)
+      if (Math.hypot(z.x - bx, z.y - by) > R) continue; // (a round bubble: as far up and down as to the sides, the owner's, Nov 18 15:18Z "Make sure melee weapons have the same range in any direction". It was squashed up and down, 1.4 times shorter)
       k.hit.push(z.i);
       if (z.st === 3) {
         knockZ(s, z, k.dx, k.dy, push);

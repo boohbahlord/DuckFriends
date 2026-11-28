@@ -203,6 +203,12 @@ export const SPECIAL_Z = {
     bite: 250,
     pull: { ms: 500, px: 12, horde: 0.25 },
     rest: 1500,
+    /* its meter (the owner's, Nov 28): while it holds a duck, that duck's click (the attack button on a phone) strikes it
+       instead of swinging: a red line sweeps the meter one way in `sweep` ms ("moves fast"), a white line flashes at a
+       spot that moves every `move` ms and after each strike; how near they are (a share of the meter, under `near`) is
+       the damage, up to `most` ("0-3 damage ... the closer the alignment, the more damage"); a strike at most every
+       `gap` ms (zombies.js meterDmg, flymeter.js) */
+    meter: { most: 3, near: 0.25, sweep: 450, move: 1200, gap: 400 },
   },
   /* the Giant (zombies.js giantStep, giantHit; the owner's 03:28Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtLgUjArf16XwsJeAqka2pZ7).
      size: its look's size (the stand-in, the biggest a zombie is, till the owner picks 1.52x or 2x). Its hit throws a
