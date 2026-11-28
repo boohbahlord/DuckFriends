@@ -15038,7 +15038,7 @@ html.moving .l4-ammo.rl {
   position: absolute;
   left: 50%;
   top: calc(100% + max(0.62rem, var(--bt, 0rem)));
-  translate: -50% 0;
+  translate: calc(-50% + var(--fx, 0px)) 0; /* (--fx: kept on the board, l4dd.js flyLight) */
   --hpw: 2.3rem; /* (the Flyer's HP, in its own end: the lines never cover it) */
   width: 9rem;
   height: 1.15rem;

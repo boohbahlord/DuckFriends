@@ -1391,9 +1391,6 @@ function litNames(s, ctx, beams) {
     if (el.dataset.pid)
       el.classList.toggle("l4-lit", lit.includes(el.dataset.pid));
 }
-/* a Flyer holding my duck: a light under its meter (flymeter.js), so its lines are as bright in the dark as anywhere.
-   Where the meter sits from my glow (board px) is measured once a hold, once the meter shows */
-let flyAt = null;
 /* a Flyer on a duck's back: facing the way that duck faces, RIDE_BACK world px behind it, so both read at once (its
    height, its ride over the duck: zombies.js zombieZ) */
 const RIDE_BACK = 14;
@@ -1403,20 +1400,38 @@ function riderBack(o, Wd) {
   o.face = d.classList.contains("left") ? -1 : 1;
   return -o.face * RIDE_BACK;
 }
-function flyLight(Wd, c, holes, q) {
-  if (!flyAt || flyAt.i !== myFly.i) {
+/* a Flyer holding my duck: a light under its meter (flymeter.js), so its lines are as bright in the dark as anywhere,
+   and the meter kept whole on the board when my duck is near its edge (--fx). Where it sits from my glow (board px)
+   is measured every FLY_LOOK ms, not every frame, as its tugs move me and the screen may change size */
+const FLY_LOOK = 400,
+  FLY_HOLE = [0, 0, 0, 1];
+let flyAt = null;
+function flyLight(Wd, c, holes, q, now) {
+  if (!flyAt || flyAt.i !== myFly.i || now - flyAt.t >= FLY_LOOK) {
     const m = Wd.board.querySelector(".gduck.mine .l4-fly:not(.off)");
     if (!m) return;
     const b = Wd.board.getBoundingClientRect(),
-      r = m.getBoundingClientRect();
+      r = m.getBoundingClientRect(),
+      was = m._fx || 0,
+      fx = Math.round(
+        Math.max(
+          b.left + 6 - (r.left - was),
+          Math.min(0, b.right - 6 - (r.right - was)),
+        ),
+      );
+    if (fx !== was) m.style.setProperty("--fx", `${(m._fx = fx)}px`);
     flyAt = {
       i: myFly.i,
-      dx: r.left + r.width / 2 - b.left - c.left,
+      t: now,
+      dx: r.left - was + fx + r.width / 2 - b.left - c.left,
       dy: r.top + r.height / 2 - b.top - c.top,
       r: r.width * 0.75,
     };
   }
-  holes.push([(c.left + flyAt.dx) * q, (c.top + flyAt.dy) * q, flyAt.r * q, 1]);
+  FLY_HOLE[0] = (c.left + flyAt.dx) * q;
+  FLY_HOLE[1] = (c.top + flyAt.dy) * q;
+  FLY_HOLE[2] = flyAt.r * q;
+  holes.push(FLY_HOLE);
 }
 function paint(now, ctx) {
   CTX = ctx;
@@ -1532,7 +1547,7 @@ function paint(now, ctx) {
     if (id !== ctx.me && invOn(s, id)) continue; // (invisible: no glow, no flashlight to anyone else, sbgod.js)
     const c = Wd.toScreen(a.x, a.y, a.z + 26);
     holes.push([c.left * q, c.top * q, GLOW * sc, 0.55]);
-    if (id === ctx.me && myFly) flyLight(Wd, c, holes, q);
+    if (id === ctx.me && myFly) flyLight(Wd, c, holes, q, now);
     if (!up(s, id) || off[id] || sbNoLight(s, id)) continue; // (Sandbox: a flashlight only once taken from loot)
     const [dx, dy] = aimOf(s, id, ctx);
     beamOf(id, a, Math.atan2(dy, dx));
