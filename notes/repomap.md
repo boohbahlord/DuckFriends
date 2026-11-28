@@ -105,7 +105,7 @@ jumps.js 48 the jump counter
 justinmoves.js 43 Justin's moves on the board
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which key
-l4dd.js 3260 Quacky Zombies on every screen
+l4dd.js 3241 Quacky Zombies on every screen
 l4ddangel.js 147 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
 l4ddart.js 608 Quacky Zombies' pictures
@@ -314,18 +314,18 @@ rubberducks.js 183 the little rubber ducks in
 rules.js 88 Hangout's rules: s.hang and the
 seats.js 440 the couches, the campfire's logs,
 shadowduck.js 254 the shadow duck
-shapes.js 955 Duck Cabin's props, drawn: art.js's
+shapes.js 940 Duck Cabin's props, drawn: art.js's
 shapesbase.js 54 Duck Cabin's props, drawn: the
 shapesground.js 423 Duck Cabin's props, drawn: the
 shapeswalls.js 317 Duck Cabin's props, drawn: walls,
 soccer.js 508 soccer: one ball on the
 sounds.js 17 Duck Cabin's sounds
 stage.js 134 the stage: half an oval
-stationart.js 51 Downpour's things: the drawings
+stationart.js 52 Downpour's things: the drawings
 stationbase.js 67 Downpour's drawings: the shared pieces
 stationcars.js 523 Downpour's drawings: the cars, the
 stationmap.js 1309 Dead Ducks Arcade's second map:
-stationparts.js 477 Downpour's drawings: the gas station's
+stationparts.js 452 Downpour's drawings: the gas station's
 stationroof.js 340 Downpour's drawings: the roofs, their
 stationtrees.js 592 Downpour's drawings: the swamp's trees
 trampoline.js 142 the trampoline
