@@ -6,6 +6,7 @@
    never stops one.
    sh.hz: the shooter's feet, as the rules always kept it; sh.lh: its height once a target has set it (world px) */
 import { DUCK, slabBetween, levelZero } from "./hangout/layout.js";
+import { FALL } from "./gamedefaults.js";
 
 const MID = DUCK / 2;
 /* one elevation: the gas station's roof over the ground (world px; the owner's, Nov 21 14:06Z). Heights the owner
@@ -18,13 +19,12 @@ export const ELEV = 108;
    levelZero); levelZ(n): level n's height */
 export const levelOf = (z) => (z - levelZero()) / ELEV;
 export const levelZ = (n) => n * ELEV + levelZero();
-/* fall damage, every mode with falls (the owner's, Nov 28 03:28Z: "fall damage includes elevation added laterally and
-   takes effect at elevation of 1.5 or higher", doubling each elevation; Adam's 0.25 HP at 1.5): a fall h world px down
-   and side px across, along its path, takes this many HP (actplay.js act_land) */
-export const FALL = { from: 1.5, hp: 0.25 };
+/* fall damage, a duck's (gamedefaults.js FALL): a fall h world px down and side px across, measured along its path in
+   elevations, takes this many HP (actplay.js act_land) */
 export const fallHurt = (h, side = 0) => {
   const e = Math.hypot(+h || 0, +side || 0) / ELEV;
-  return e < FALL.from ? 0 : FALL.hp * 2 ** (e - FALL.from);
+  if (e < FALL.from) return 0;
+  return FALL.hp * (e < FALL.mid ? FALL.down : FALL.up) ** (e - FALL.mid);
 };
 /* how high shot sh flies now (world px) */
 const shotH = (sh) => sh.lh ?? (sh.hz || 0) + MID;
