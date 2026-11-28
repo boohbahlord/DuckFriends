@@ -408,6 +408,7 @@ function flyerStep(z, c, fly) {
       !p.j &&
       !p.m &&
       !fly.held.has(p.id) &&
+      !c.down(p) && // (Safe Keeping keeps a downed duck in pls)
       d > 1 &&
       d < F.leap &&
       Math.abs(p.zz - h) < 20 &&
@@ -430,14 +431,15 @@ function flyerLand(z, c, fly) {
       !p.j &&
       !p.m &&
       !fly.held.has(p.id) &&
+      !c.down(p) &&
       room(z.x, z.y, ...p.xy) < c.reach &&
       Math.abs(p.zz - z.j[5]) < 30,
   );
-  delete z.j;
   if (!q) {
     flyerOff(z, c.now);
     return;
   }
+  z.j = [Math.round(q.zz)]; // (its duck's height from the start: zombieZ)
   z.st = 9;
   z.n = 0;
   z.fy = [q.id, c.now + F.bite, c.now + F.pull.ms];
