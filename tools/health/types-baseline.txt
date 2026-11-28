@@ -591,7 +591,7 @@ js/music.js TS2339 Property 'at' does not exist on type '() => void'.
 js/music.js TS2339 Property 'at' does not exist on type '() => void'.
 js/music.js TS2339 Property 'at' does not exist on type '() => void'.
 js/music.js TS2345 Argument of type 'string | number' is not assignable to parameter of type 'string'.
-js/net.js TS2339 Property 'umap' does not exist on type '{ open: boolean; passkey: string; max: number; hostId: any; options: { submitTime: number; order: string; share: number; sbMap: string; answerTime: number; catchUp: number; writeCatch: number; endBtn: number; ... 76 more ...; modeRules: {}; }; ... 25 more ...; test: boolean; }'.
+js/net.js TS2339 Property 'umap' does not exist on type '{ open: boolean; passkey: string; max: number; hostId: any; options: { submitTime: number; order: string; share: number; sbMap: string; answerTime: number; catchUp: number; writeCatch: number; endBtn: number; ... 74 more ...; modeRules: {}; }; ... 25 more ...; test: boolean; }'.
 js/notes.js TS2339 Property 'hidden' does not exist on type 'Element'.
 js/notes.js TS2339 Property 'hidden' does not exist on type 'Element'.
 js/notes.js TS2339 Property 'onclick' does not exist on type 'Element'.

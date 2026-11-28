@@ -28,7 +28,7 @@ import { sbSlots, spawnOf } from "./sbhot.js";
      (only Dead Ducks Arcade's items that switch on and off: the flashlight)
    - self: picking a weapon that stays makes it the one to come back (Quacky Zombies), or else the one before stays it
    - held(s): the weapon out in hand, for the board's ways (the board: the one in the slot picked)
-   - reloads(s): the gun R reloads (null: none; Quacky Zombies: the one
+   - reloads(): the gun R reloads (null: none; Quacky Zombies: the one
      in hand, "" too, the rules say no); ready(s, w, now): R can reload it now; dry(s, w): no ammo left to reload with
    - empty(s): the hand empties itself (Quacky Zombies: no grenades or no slot left), and backTo(s) is what comes back then */
 /* the board's gun w in my hand (ammo.js): R can reload it now (its magazine not full, or full and
@@ -145,7 +145,7 @@ export function handReset() {
   hand.of = "";
 }
 /* the bars and R ask the hand: the gun R reloads, can it now, is it out of ammo */
-export const reloadsNow = () => mine().reloads(C.R.state);
+export const reloadsNow = () => mine().reloads();
 export const reloadReady = (s, w, now) => mine().ready(s, w, now);
 export const reloadDry = (s, w) => !!(mine().dry && mine().dry(s, w));
 /* x picked: the one machine */
