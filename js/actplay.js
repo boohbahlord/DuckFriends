@@ -824,7 +824,7 @@ export function act_tick({ state, s, a, now, host }) {
   return sig() === was && !shots && !hung && !jus && !up && !dv ? state : s;
 }
 export function act_land({ state, s, a, now, me }) {
-  // my duck landed from a fall a.h world px high and a.s across (game.js: its own screen works the fall out): fall
+  // my duck landed from a fall a.h world px high and a.s across a hit threw it (game.js: its own screen works the fall out): fall
   // damage in every mode with HP (heights.js fallHurt), and a Sandbox zone that hurts whoever lands on it (sbzone.js)
   if (!me || !s.pos[a.id] || !SB_H.ducks(s).includes(a.id)) return state;
   let ch = sbLandAct(s, a, now, SB_H);

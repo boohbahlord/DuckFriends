@@ -169,11 +169,19 @@ export function jumpOn(z, pls, far, S) {
     : [x, y, x1, y1, h0, C.h, walk];
   return true;
 }
+/* how far along its way a jumping or falling zombie is (0 to 1): where it stands put onto the way, so a screen still
+   gliding it up to where the jump starts (l4dd.js, a heartbeat behind the host) has it at the start, never as far
+   along as it is short of it */
 export const jumpZ = (z) => {
   const [x0, y0, x1, y1, h0, h1] = z.j,
+    dx = x1 - x0,
+    dy = y1 - y0,
     u = Math.min(
       1,
-      Math.hypot(z.x - x0, z.y - y0) / (Math.hypot(x1 - x0, y1 - y0) || 1),
+      Math.max(
+        0,
+        ((z.x - x0) * dx + (z.y - y0) * dy) / (dx * dx + dy * dy || 1),
+      ),
     );
   if (z.j[7]) return h0 + (h1 - h0) * u * u; // (a fall: faster as it goes, dropOff)
   return h0 + (h1 - h0) * u + (z.j[6] ? 0 : JUMP.arc * 4 * u * (1 - u));

@@ -214,7 +214,7 @@ function playerKilled(s, by, id, w) {
 /* a duck knocked flying (a melee hit, a grenade): a push of px world px (push.js) along (ux, uy), a direction in duck
    lengths, over its weight, as far as it goes before a wall, a tree or the edge (Hangout: only on its side of the
    cabin's walls), or the board's edge.
-   pos.kb = { t, x, y: where it was } lets every screen draw it; a grenade's adds ms (how long it flies), h (how high)
+   pos.kb = { t, x, y: where it was, d: how far it went (world px) } lets every screen draw it; a grenade's adds ms (how long it flies), h (how high)
    and l: 0 (it falls at once, not when a swing gets there) */
 /* a shove counted in world px (the maps' own): px world px whichever way (ux, uy: a way in world px), in shove's duck
    lengths */
@@ -248,7 +248,13 @@ export function shove(s, id, ux, uy, px, now, side, more = {}) {
     x: +x.toFixed(4),
     y: +y.toFixed(4),
     j: 0,
-    kb: { t: now, x: p.x, y: p.y, ...more },
+    kb: {
+      t: now,
+      x: p.x,
+      y: p.y,
+      d: Math.round(Math.hypot((x - p.x) * HW, (y - p.y) * HH)), // (how far it threw it, world px: its fall damage, game.js)
+      ...more,
+    },
   };
 }
 /* the knife's stab and the hammer's swing, from duck `by` toward its aim: every duck on the ground in reach plays dead

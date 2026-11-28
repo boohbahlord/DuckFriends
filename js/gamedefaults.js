@@ -42,10 +42,12 @@ export const NADE = {
   LFUSE: 3000,
 };
 
-/* fall damage, ducks only (heights.js fallHurt; the owner's, Nov 28 04:05Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtBFSt5xGqKea6TT5ehvSw7H):
-   measured along the fall's path, in elevations. None under `from`; hp at `mid`, then times `up` for each elevation
-   more, with no cap; under `mid` it drops off fast, `down` times less for each elevation less (0.25 HP at 1) */
-export const FALL = { from: 1, mid: 1.5, hp: 2, up: 2, down: 64 };
+/* fall damage, ducks only (heights.js fallHurt; the owner's, Nov 28 04:05Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtBFSt5xGqKea6TT5ehvSw7H,
+   moved up half an elevation 07:39Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtWKA8ofj7AENMi1pBK2yGMN): the drop, in elevations
+   (the way across counts only for a duck a hit threw: 07:38Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtLW5YEtHzaRtQz2MurzDnGc).
+   None under `from`; hp at `mid`, then times `up` for each elevation more, with no cap; under `mid` it drops off fast,
+   `down` times less for each elevation less (0.25 HP at 1.5) */
+export const FALL = { from: 1.5, mid: 2, hp: 2, up: 2, down: 64 };
 
 /* a blast's rings (blast.js; the owner's, Nov 21 19:07Z: "the center of a grenade's explosion is at ... the
    intersection of the plus of 4 squares of the pixel hitbox ... it's 4 boxes in the center of the hitbox, those have crit
