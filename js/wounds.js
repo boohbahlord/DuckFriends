@@ -1,3 +1,5 @@
+import { ARMOR } from "./gamedefaults.js";
+import { ARMS } from "./guns.js";
 /* ---------- the wounds a hit leaves (Quacky Zombies' zombies, and every other mode's ducks: the owner's, Nov 4) ----------
    A wound is a code of 2 characters, its kind and its spot (hitsOf, below, draws them): b a small bullet hole, B a
    big one, s pellets, c a bleeding cut, r a bruise, a a stuck arrow, k a chunk torn out, p the beak shot off, x the head
@@ -173,6 +175,21 @@ export function hitWounds(had, w, b, { head, dead, blast, look } = {}) {
   if (b.blast && dead && blast)
     return had + DEATH.filter((c) => !had.includes(c)).join("");
   return had + woundCode(had, w, b.can(look));
+}
+/* ---------- armor (gamedefaults.js ARMOR) ----------
+   look: in a helmet? Any NPC in one is armored as a helmet zombie is (the owner's, Nov 28) */
+export const helmeted = (look) =>
+  ARMOR.HATS.includes(idOf(look && look.hat)) ||
+  ARMOR.FACES.includes(idOf(look && look.face));
+/* weapon w goes through armor: a .50 or a heavy melee */
+const piercesArmor = (w) =>
+  ARMOR.PIERCE.includes(w) || ARMOR.PIERCE.includes((ARMS[w] || {}).cal);
+/* a hit of dmg (crit: a crit) from weapon w on one in armor arm ("", "helmet" or "swat"; boom: a blast's): what it
+   takes, { dmg, crit, defl (a crit the armor turned away: "Deflected") } */
+export function armorHit(arm, w, dmg, crit, boom = false) {
+  if (!arm || (!boom && piercesArmor(w))) return { dmg, crit, defl: false };
+  const k = arm === "swat" ? (boom ? ARMOR.BOOM : ARMOR.SWAT) : 1;
+  return { dmg: dmg * k, crit: false, defl: !!crit };
 }
 /* the weapon a newest wound tells of, for its blood when no shot hit it (a knife, a hammer): fx.js fxHitAt's kinds */
 export const BY_WOUND = {

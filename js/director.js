@@ -50,3 +50,8 @@ export const lowHp = (d) => d.hp < DIRECTOR.HP_LOW;
 const lowAmmo = (d) => d.ammo < DIRECTOR.AMMO_LOW;
 /* doing badly: low on health or on ammo */
 export const badly = (d) => lowHp(d) || lowAmmo(d);
+/* the share of the ducks doing badly, 0 to 1 (armored zombies come fewer by it: zombies.js armorRoll) */
+export function badShare(s) {
+  const all = ducks(s);
+  return all.length ? all.filter(badly).length / all.length : 0;
+}

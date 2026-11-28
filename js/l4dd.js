@@ -107,6 +107,7 @@ import {
   MERCH,
   ZHATS,
   ZOUTFITS,
+  Z_ARMOR,
   standing,
 } from "./l4ddrules.js";
 import { SLOT_KINDS } from "./kitslots.js";
@@ -529,10 +530,12 @@ function warmZombies(sc) {
     ...ZHATS.map((_, h) => [h, -1]),
     ...ZOUTFITS.map((_, o) => [-1, o]),
     [-1, -1],
+    [-1, -1, Z_ARMOR.moto], // (a motorcycle helmet: armor, zombies.js armorRoll)
+    [ZHATS.indexOf("helmet"), ZOUTFITS.indexOf("police"), Z_ARMOR.swat],
   ];
   for (const size of [-1, 0, 1])
-    for (const [h, o] of looks) {
-      const l = [0, 0, "", size, 0, h, o, 0, 0],
+    for (const [h, o, arm = 0] of looks) {
+      const l = [0, 0, "", size, 0, h, o, 0, arm],
         url = zombieURL(l, 0),
         box = zombieBox(l);
       rasterReady("z" + ukOf(url), url, box.w * sc, box.h * sc);

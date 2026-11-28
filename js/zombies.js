@@ -5,7 +5,9 @@
    round the side, the jump onto the canopy, its claw, and what Sandbox's board zombies and the computers ask of it.
    Moved here from l4ddrules.js as it was (nothing it does changed); the way to the ducks is zombiepath.js. Next, Mad God
    Justin's waves and Sandbox's board zombies run on it too, each a breed. */
-import { ZOMBIE_SWIPE_SLOWER, ZOMBIE_GRACE } from "./gamedefaults.js";
+import { ZOMBIE_SWIPE_SLOWER, ZOMBIE_GRACE, ARMOR } from "./gamedefaults.js";
+import { badShare } from "./director.js";
+import { helmeted } from "./wounds.js";
 /* Dead Ducks Arcade's zombies' swipe in every round: its wind-up (from the tell to the hit) and the ms from one hit to the
    next, rounds 1 to 4's (the owner's, Nov 21 18:24Z: "all of the zombies have the default attack speed as they do in
    rounds 1 through 4"); the 0.2 s slower of Nov 20 is in the second */
@@ -53,6 +55,8 @@ import {
   ZHATS,
   ZOUTFITS,
   Z_JUSTIN,
+  Z_ARMOR,
+  zombieLook,
   VIEW,
   playable,
   FENCE,
@@ -253,7 +257,8 @@ export function newZombie(s, L, T, zs = []) {
     } else from = byFence(o.fence, FENCE.from, rnd(...o.fence.climb)); // (nowhere to land that leads to anyone: anywhere along it)
   }
   const i = L.next++;
-  const [size, build, hat, outfit] = lookOf(),
+  const arm = armorRoll(s),
+    [size, build, hat, outfit] = lookOf(arm),
     max = Math.max(1, hp0()),
     jus = Math.random() < Z_JUSTIN ? 1 : 0,
     v = Math.round(WALK * rnd(...Z_SPEED)), // (its own speed, every round the same: the owner's, Nov 28 01:57Z, "make every zombie as fast as they are already on round 8")
@@ -272,14 +277,48 @@ export function newZombie(s, L, T, zs = []) {
     dir: 0,
     l: jus
       ? [max, v, o.id, 0, 0, -1, -1, 1]
-      : [max, v, o.id, size, build, hat, outfit],
+      : [max, v, o.id, size, build, hat, outfit, ...(arm ? [0, arm] : [])],
   };
 }
-/* a new zombie's look, every kind's: [size, build, hat, outfit] (l: its look, after its HP, speed and opening) */
-function lookOf() {
+/* what a zombie of look l wears that stops hits: "", "helmet" or "swat" (wounds.js armorHit) */
+export const zArmor = (l) =>
+  l[8] === Z_ARMOR.swat ? "swat" : helmeted(zombieLook(l)) ? "helmet" : "";
+/* armor (the owner's, Nov 28; gamedefaults.js ARMOR): a new zombie's, Z_ARMOR's or 0. Each kind ARMOR.SPAWN of them,
+   from round 1, fewer only while ducks do badly: times 1 - 2 x (ducks doing badly / ducks). Half the helmets an army
+   one, half a motorcycle one */
+function armorRoll(s) {
+  const k = Math.max(0, 1 - 2 * badShare(s)),
+    r = Math.random();
+  if (r < ARMOR.SPAWN.swat * k) return Z_ARMOR.swat;
+  if (r < (ARMOR.SPAWN.swat + ARMOR.SPAWN.helmet) * k)
+    return Math.random() < 0.5 ? Z_ARMOR.helmet : Z_ARMOR.moto;
+  return 0;
+}
+/* every helmet but on an armored one: any helmet stops crits, so only armorRoll's wear one (made on first use:
+   l4ddrules.js, which ZHATS is from, may load after this) */
+let HATS;
+const hats = () =>
+  (HATS ||= ZHATS.map((_, i) => i).filter(
+    (i) => !ARMOR.HATS.includes(ZHATS[i]),
+  ));
+/* a new zombie's look, every kind's: [size, build, hat, outfit] (l: its look, after its HP, speed and opening); arm:
+   its armor's (armorRoll) */
+function lookOf(arm = 0) {
   const dress = Math.random() < 0.2 ? Math.random() : -1, // (20% wear something: a hat, an outfit or both)
-    hat = dress >= 0 && dress < 0.6 ? rint(0, ZHATS.length - 1) : -1,
-    outfit = dress >= 0.4 ? rint(0, ZOUTFITS.length - 1) : -1,
+    hat =
+      arm === Z_ARMOR.helmet || arm === Z_ARMOR.swat
+        ? ZHATS.indexOf("helmet")
+        : arm
+          ? -1
+          : dress >= 0 && dress < 0.6
+            ? hats()[rint(0, hats().length - 1)]
+            : -1,
+    outfit =
+      arm === Z_ARMOR.swat
+        ? ZOUTFITS.indexOf("police")
+        : dress >= 0.4
+          ? rint(0, ZOUTFITS.length - 1)
+          : -1,
     odd = Math.random() < 0.25, // (25% are another size or build; every one has the same room on the floor)
     size = odd && Math.random() < 0.5 ? +rnd(-1, 1).toFixed(2) : 0,
     build = odd && !size ? +rnd(-1, 1).toFixed(2) : 0;
@@ -348,9 +387,6 @@ function zombieAt(L, wx, wy, o = {}) {
         Math.hypot(b.in[0] - wx, b.in[1] - wy),
     )[0],
     i = L.next || 1,
-    dress = Math.random() < 0.2 ? Math.random() : -1,
-    odd = Math.random() < 0.25,
-    size = odd && Math.random() < 0.5 ? +rnd(-1, 1).toFixed(2) : 0,
     max = Math.max(1, o.hp ? Math.round(o.hp) : hp0()),
     v = o.v || Math.round(zWalk() * (o.speed ?? 1)); // (a Sandbox spawn's Speed 0: it stays put)
   L.next = i + 1;
@@ -366,15 +402,7 @@ function zombieAt(L, wx, wy, o = {}) {
     dir: 0,
     ...(o.sp ? { sp: o.sp } : {}),
     ...(o.dm ? { dm: o.dm } : {}),
-    l: [
-      max,
-      v,
-      op ? op.id : 0,
-      size,
-      odd && !size ? +rnd(-1, 1).toFixed(2) : 0,
-      dress >= 0 && dress < 0.6 ? rint(0, ZHATS.length - 1) : -1,
-      dress >= 0.4 ? rint(0, ZOUTFITS.length - 1) : -1,
-    ],
+    l: [max, v, op ? op.id : 0, ...lookOf()],
   };
 }
 /* Sandbox: the zombies standing now, each { i, x, y (shares of the map), sp (its spawn) } */
