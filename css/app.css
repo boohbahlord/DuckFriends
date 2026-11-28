@@ -15784,6 +15784,12 @@ body:has(> .win-back) .screen > .l4-srb,
 .l4-up-buy {
   width: 100%;
   justify-content: center;
+  position: relative; /* (its hold's stripe: .holding) */
+  overflow: hidden;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 /* its two tabs: the shop, and every item in this mode, each category under its heading; a tap on an item opens what
    it does and its numbers (l4ddcatalog.js) */

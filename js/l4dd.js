@@ -155,7 +155,7 @@ import { vibrate, hitPx, HIT, again } from "./fxmotion.js";
 import { pixelOn, gridPx, raster, rasterReady } from "./pixel.js";
 import { olAdd, olAway, olRoofed, olPic, DROP_OL } from "./outlines.js";
 import { belowBody } from "./below.js";
-import { confirmBox, ducksOn, kept, windowOpen } from "./ui.js";
+import { ducksOn, kept, windowOpen } from "./ui.js";
 import { angelOf, ANGEL } from "./l4ddangel.js";
 import { angelic, jerrySVG } from "./powerart.js"; // (after l4ddart.js, as game.js imports it)
 import { hashText } from "./pxdom.js";
@@ -2546,6 +2546,31 @@ function shopFill(s, ctx) {
     shop.guns.innerHTML += `<li class="l4-up l4-buyw"><i class="l4-up-ic"><span class="l4orb c-orange"><i>${jerrySVG(25)}</i></span></i><span class="l4-up-t"><b>Gas</b><small>25% of a jerry can</small></span><button type="button" class="btn small ${full ? "" : "yellow"} l4-up-buy" data-buy="gas"${full || pts < PW.PUMP ? " disabled" : ""}>${full ? "Full" : PW.PUMP}</button></li>`;
   }
 }
+/* a buy being held: which, since when, its timer; it fills the way the Vote button does (css .holding, its sounds,
+   game.js holdPaint), on whichever button stands there now, as the list redraws under it */
+const BUY_HOLD = 400;
+let buyHold = null;
+function holdShow(el) {
+  if (!buyHold) return;
+  const b = el.querySelector(`[data-buy="${buyHold.w}"]`);
+  if (b) {
+    b.classList.add("holding");
+    b.style.setProperty(
+      "--hold",
+      Math.min(1, (performance.now() - buyHold.at) / BUY_HOLD).toFixed(3),
+    );
+  }
+  buyHold.raf = requestAnimationFrame(() => holdShow(el));
+}
+function holdStop(el, done) {
+  if (!buyHold) return;
+  clearTimeout(buyHold.t);
+  cancelAnimationFrame(buyHold.raf);
+  if (!done) sfx.holdStop(); // (let go early: the filling sound fades out)
+  for (const b of el.querySelectorAll(".holding"))
+    b.classList.remove("holding");
+  buyHold = null;
+}
 /* what kind of thing it is, under its name */
 const kindWord = (w) =>
   ({ melee: "Melee", ranged: "Gun", special: "Item" })[kindOf(w)] || "";
@@ -2562,6 +2587,7 @@ function closeShop() {
   shopTo = "";
   if (!shop || !shop.open) return;
   shop.open = false;
+  holdStop(shop.el);
   shop.el.hidden = true;
   shop.el.parentNode?.classList.remove("l4-shopping");
   if (shop.el.contains(document.activeElement)) document.activeElement.blur();
@@ -2606,21 +2632,45 @@ function shopEl(ctx) {
         t.setAttribute("aria-selected", t === tab);
       for (const p of el.querySelectorAll("[data-pane]"))
         p.hidden = p.dataset.pane !== tab.dataset.tab;
-      return;
     }
-    const b = e.target.closest("[data-buy]");
-    if (!b || b.disabled) return;
-    const w = b.dataset.buy,
-      hand = heldFn(),
-      send = () => ctx.send({ t: "hang", k: "l4", do: "buy", what: w, hand }); // (a gun takes the place of the ranged one in hand, as the fireplace's)
-    const st = ctx.state(),
-      it = ((merchantOf(st) || {}).stock || []).find(([x]) => x === w);
-    if (!it) return send(); // (an upgrade, or gas)
-    /* from his stock: only once I say Yes (the owner's, Nov 16 22:21Z); No, the X and Esc keep my points */
-    confirmBox(
-      `Are you sure you want to buy the ${weaponName(w)}?`,
-      `${stockPrice(st, it[1], w, kitOf(st, ctx.me))} points`,
-    ).then((yes) => yes && send());
+  });
+  /* buying: I hold its button 0.4 s while it fills, and letting go early buys nothing (the owner's, Nov 28) */
+  const holdGo = (e) => {
+    const b = e.target.closest && e.target.closest("[data-buy]");
+    if (!b || b.disabled || buyHold) return;
+    const w = b.dataset.buy;
+    buyHold = {
+      w,
+      at: performance.now(),
+      t: setTimeout(() => {
+        const ok = el.querySelector(`[data-buy="${w}"]`);
+        holdStop(el, true);
+        if (!ok || ok.disabled) return;
+        sfx.holdClick(); // (full: a click, as the Vote button's)
+        ctx.send({ t: "hang", k: "l4", do: "buy", what: w, hand: heldFn() }); // (a gun takes the place of the ranged one in hand, as the fireplace's)
+      }, BUY_HOLD),
+    };
+    sfx.holdFill(BUY_HOLD); // (a sound rising as it fills)
+    holdShow(el);
+  };
+  el.addEventListener("pointerdown", (e) => {
+    if (e.button === 0) holdGo(e);
+  });
+  el.addEventListener("keydown", (e) => {
+    if (
+      (e.key === "Enter" || e.key === " ") &&
+      e.target.closest("[data-buy]")
+    ) {
+      e.preventDefault();
+      e.stopPropagation(); // (not a jump, nor the board's Enter)
+      if (!e.repeat) holdGo(e);
+    }
+  });
+  for (const t of ["pointerup", "pointercancel", "pointerleave", "keyup"])
+    el.addEventListener(t, () => holdStop(el));
+  el.addEventListener("pointerout", (e) => {
+    const b = buyHold && e.target.closest && e.target.closest("[data-buy]");
+    if (b && !b.contains(e.relatedTarget)) holdStop(el);
   });
   ctx.world.board.append(el);
   return {
