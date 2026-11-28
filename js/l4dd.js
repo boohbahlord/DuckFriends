@@ -1844,6 +1844,7 @@ function drawMerchant(ctx, t) {
       !Wd.onView(p.left - 60, p.top - 140, 120, 160);
   if (butler.el.hidden !== hide) butler.el.hidden = hide;
   mHurt(s, m, dead, p, sc, hide);
+  mStabs(s);
   if (hide) return;
   const tr = Wd.boxTr(p.left, p.top);
   if (butler.tr !== tr || butler.dz !== dead) {
@@ -2003,6 +2004,19 @@ function mHurt(s, m, dead, p, sc, hide) {
   butler.hitW = butler.wc;
 }
 /* his sprint (m.sp, the rules': 0 to 1) and his knife or handgun waiting to go again (the rules' l4mstab fx, f.ms) */
+/* his shots and stabs as they come, heard even while I can't see him */
+function mStabs(s) {
+  const top = fxTop(s);
+  if (top > mSeen.fx) {
+    for (const f of s.fx || [])
+      if (f && f.n > mSeen.fx && f.kind === "l4mstab" && f.t >= mSeen.stab) {
+        mSeen.stab = f.t || 0;
+        mSeen.ms = f.ms || 1200;
+        (f.w === "handgun" ? sfx.handgun : sfx.knife)({ x: f.x, y: f.y }); // (his shot or his stab, where he is)
+      }
+    mSeen.fx = top;
+  }
+}
 function mBars(s, m, dead) {
   const tag = butler.tag;
   if (!tag) return;
@@ -2021,16 +2035,6 @@ function mBars(s, m, dead) {
     sp.style.setProperty("--sp", v);
     sp.classList.toggle("full", left >= 1);
     sp.classList.toggle("tired", left <= 0.05);
-  }
-  const top = fxTop(s);
-  if (top > mSeen.fx) {
-    for (const f of s.fx || [])
-      if (f && f.n > mSeen.fx && f.kind === "l4mstab" && f.t >= mSeen.stab) {
-        mSeen.stab = f.t || 0;
-        mSeen.ms = f.ms || 1200;
-        (f.w === "handgun" ? sfx.handgun : sfx.knife)({ x: f.x, y: f.y }); // (his shot or his stab, where he is)
-      }
-    mSeen.fx = top;
   }
   let cl = tag.querySelector(".l4-cool");
   if (!cl) {
