@@ -82,3 +82,12 @@ export const SPRINT_BLUR_MIN_FPS = 40;
    PER darker for each elevation (heights.js ELEV) I stand over it, on to all dark (below.js; Nov 22 06:24Z: "The first
    recommended options is good ... but darkness keeps going up beyond 60%") */
 export const BELOW = { PER: 0.2, WATER: 20 }; // (WATER: each level of water over a bed counts this many: dpflood.js. 20: the road's whole depth reads about a third darker from its bank, the owner's, Nov 28 04:58Z: "noticeable by pretty fast increments")
+
+/* the director (director.js; the owner approved the plan, Nov 28, cmsg_01LTpp6fzv8sfYUR5KoHADKtBFSt5xGqKea6TT5ehvSw7H):
+   a duck is low on ammo under AMMO_LOW of its guns' rounds and low on health under HP_LOW of its most HP; the team does
+   well over WELL.hp average health and WELL.ammo average ammo */
+export const DIRECTOR = {
+  AMMO_LOW: 0.3,
+  HP_LOW: 0.4,
+  WELL: { hp: 0.7, ammo: 0.5 },
+};
