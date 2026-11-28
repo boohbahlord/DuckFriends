@@ -380,8 +380,8 @@ function zombieAt(L, wx, wy, o = {}) {
 }
 /* ---------- a rest's walkers (the director plan, Nov 28: old Survival's, DIRECTOR.WALKERS) ----------
    z.wk: 1 wandering, 2 come for duck z.wt (it came close, its flashlight's close middle stayed on it, or it hit it:
-   l4ddrules.js strike); z.wd, z.wn: where it wanders to, and till when; z.lt, z.lw: since when a flashlight is on it, and
-   how long it takes this time. A new one turns up on open ground out of every building and out of every duck's sight
+   l4ddrules.js strike); z.wd, z.wn: where it wanders to, and till when; z.lt, z.lw, z.li: since when a flashlight is on it, and
+   how long it takes this time, and whose. A new one turns up on open ground out of every building and out of every duck's sight
    (ids: the ducks standing), slow; null when none is found */
 export function walkerAt(s, L, ids) {
   const pts = ids.filter((id) => s.pos[id]).map((id) => toPx(s.pos[id]));
@@ -389,6 +389,7 @@ export function walkerAt(s, L, ids) {
     const x = Math.round(rnd(GS.RIM.x0, GS.RIM.x1)),
       y = Math.round(rnd(GS.RIM.y0, GS.RIM.y1));
     if (
+      GS.inOpen(x, y) &&
       openNear(x, y) >= 0 &&
       !GS.buildingAt(x, y) &&
       zOk(x, y, heightAt(x, y)) &&
@@ -403,7 +404,7 @@ export function walkerAt(s, L, ids) {
 }
 /* the next round has come: a walker still up is one of its horde, at a zombie's walk */
 export function walkerJoins(z) {
-  for (const k of ["wk", "wt", "wd", "wn", "lt", "lw"]) delete z[k];
+  for (const k of ["wk", "wt", "wd", "wn", "lt", "lw", "li"]) delete z[k];
   z.a = -1e6; // (its last swipe was on the rest's clock)
   z.l = [...z.l];
   z.l[1] = Math.round(WALK * rnd(...Z_SPEED));
@@ -425,18 +426,17 @@ function walkerWatch(z, pls, now, off) {
       [z.wk, z.wt] = [2, q.id];
       return false;
     }
-    if (!lit && litBy(z, q, off)) lit = q;
+    if ((!lit || q.id === z.li) && litBy(z, q, off)) lit = q; // (the duck already lighting it first)
   }
   if (!lit) {
-    delete z.lt;
-    delete z.lw;
+    for (const k of ["lt", "lw", "li"]) delete z[k];
     return true;
   }
-  if (!z.lt) [z.lt, z.lw] = [now, Math.round(rnd(...K.SEEN))];
+  if (lit.id !== z.li)
+    [z.lt, z.lw, z.li] = [now, Math.round(rnd(...K.SEEN)), lit.id]; // (each duck's light counts on its own)
   if (now - z.lt < z.lw) return true;
   [z.wk, z.wt] = [2, lit.id];
-  delete z.lt;
-  delete z.lw;
+  for (const k of ["lt", "lw", "li"]) delete z[k];
   return false;
 }
 /* is walker z in the close middle of duck q's flashlight (DIRECTOR.WALKERS.BEAM), with nothing between? */
@@ -729,6 +729,7 @@ function walkAll(zs, c) {
           walk &&
           pls.find(
             (q) =>
+              (!z.wk || q.id === z.wt) && // (a rest's walker claws only the duck it came for)
               room(z.x, z.y, ...q.xy) < c.reach &&
               Math.abs(q.zz - jumpZ(z)) < 50,
           );

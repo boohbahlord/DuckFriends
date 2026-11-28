@@ -165,8 +165,10 @@ export function l4Hear(s, ctx) {
     st.over = L.over.at;
   }
   /* the merchant: a little shop bell as he gets to his spot, the same bell down as he runs off; from where he stands */
-  const mst = {}; // (each one here, by his visit: several can be)
-  for (const mc of [h.l4m, ...(h.l4mx || [])]) {
+  const same = h.l4m === st.mA && h.l4mx === st.mB; // (nothing to hear unless one of them changed)
+  const mst = same ? st.mst : {}; // (each one here, by his visit: several can be)
+  if (!same) [st.mA, st.mB] = [h.l4m, h.l4mx];
+  for (const mc of same ? [] : [h.l4m, ...(h.l4mx || [])]) {
     if (!mc) continue;
     mst[mc.v] = mc.st;
     if (

@@ -153,7 +153,7 @@ import { vibrate, hitPx, HIT, again } from "./fxmotion.js";
 import { pixelOn, gridPx, raster, rasterReady } from "./pixel.js";
 import { olAdd, olAway, olRoofed, olPic, DROP_OL } from "./outlines.js";
 import { belowBody } from "./below.js";
-import { ducksOn, kept, windowOpen } from "./ui.js";
+import { ducksOn, kept, windowOpen, esc } from "./ui.js";
 import { angelOf, ANGEL } from "./l4ddangel.js";
 import { angelic, jerrySVG } from "./powerart.js"; // (after l4ddart.js, as game.js imports it)
 import { hashText } from "./pxdom.js";
@@ -1838,7 +1838,9 @@ function drawMerchants(ctx, t) {
         }),
       ); // (made once a visit, then kept: nothing new each frame)
     ({ butler, mSig, mAt, mSeen, mPoolAt } = o);
-    drawMerchant(ctx, t, { ...mm, who: merchantById(mm.id) });
+    if (o.src !== mm)
+      [o.src, o.view] = [mm, { ...mm, who: merchantById(mm.id) }]; // (remade only when he changes)
+    drawMerchant(ctx, t, o.view);
     o.butler = butler;
     o.mSig = mSig;
     o.mAt = mAt;
@@ -1988,11 +1990,11 @@ function drawCorpses(ctx) {
     Wd = ctx.world,
     sc = Wd.sc,
     list = Array.isArray(s.hang.l4mc) ? s.hang.l4mc : [],
-    cur = merchantOf(s),
+    here = merchantsOf(s),
     gore = !+s.options.noGore,
     seen = new Set();
   for (const c of list) {
-    if (!c || (cur && cur.v === c.v && cur.st === "dead")) continue; // (the first one lying dead: drawMerchant's)
+    if (!c || here.some((m) => m.v === c.v && m.st === "dead")) continue; // (one lying dead still listed here: drawMerchant's)
     const who = merchantById(c.id);
     if (!who) continue;
     const wc = gore ? c.w || "" : goreFree(c.w || ""),
@@ -2537,6 +2539,7 @@ function crateFill(s, ctx) {
   shop.list.innerHTML = "";
   shop.guns.innerHTML = w.length
     ? w
+        .map(esc) // (the names come over the network: never markup)
         .map(
           (x) =>
             `<li class="l4-up l4-buyw" data-item="${x}"><i class="l4-up-ic">${orbHTML(x)}</i><span class="l4-up-t"><b>${weaponName(x)}</b><small>${kindWord(x)}</small>${statLineOf(x) ? `<small class="l4-up-s">${statLineOf(x)}</small>` : ""}</span>${

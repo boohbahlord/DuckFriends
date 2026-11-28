@@ -10,7 +10,7 @@ const { fail, noErrors, fakedPage } = require("./lib.cjs");
     const Z = await import("./js/zombies.js"),
       R = await import("./js/l4ddrules.js"),
       GS = await import("./js/hangout/stationmap.js"),
-      { W, H } = await import("./js/hangout/layout.js"),
+      LY = await import("./js/hangout/layout.js"),
       { DIRECTOR } = await import("./js/gamedefaults.js"),
       { l4Room } = await import("./tools/check/l4room.js");
     const tick = (room, ms, each) => {
@@ -44,11 +44,14 @@ const { fail, noErrors, fakedPage } = require("./lib.cjs");
       first = {},
       out = { rest: !!s.hang.l4.wait, most: 0, seen: 0, inB: 0, church: 0 };
     tick(room, 40000, () => {
-      const ws = Z.zombies(room.state).filter((z) => z.wk);
+      const ws = Z.zombies(room.state).filter((z) => z.wk && z.st !== 3); // (the standing ones)
       out.most = Math.max(out.most, ws.length);
       const pts = room.state.seat
         .filter((id) => room.state.pos[id])
-        .map((id) => [room.state.pos[id].x * W, room.state.pos[id].y * H]);
+        .map((id) => [
+          room.state.pos[id].x * LY.W,
+          room.state.pos[id].y * LY.H,
+        ]);
       for (const z of ws) {
         if (!first[z.i]) {
           first[z.i] = 1;
@@ -83,8 +86,13 @@ const { fail, noErrors, fakedPage } = require("./lib.cjs");
     }
     /* the lights on, then the next round: they join it, and it's a tenth bigger */
     room.state.hang.power = 1;
+    const up = Z.zombies(room.state)
+      .filter((z) => z.wk && z.st !== 3)
+      .map((z) => z.i);
     vote(room);
     out.left = Z.zombies(room.state).filter((z) => z.wk).length;
+    const ids = new Set(Z.zombies(room.state).map((z) => z.i));
+    out.joined = up.every((i) => ids.has(i)); // (the same ones, now of the horde)
     out.litN = room.state.hang.l4.n;
     room.leave && room.leave();
     const dark = await toRest("W2");
@@ -103,7 +111,7 @@ const { fail, noErrors, fakedPage } = require("./lib.cjs");
   if (got.inB) bad("every one out of every building");
   if (got.church) bad("a wandering one never in the church");
   if (!got.came) bad("one my duck walks up to comes for it");
-  if (got.left) bad("the next round: they're its horde");
+  if (got.left || !got.joined) bad("the next round: they're its horde");
   if (got.litN !== Math.round(got.darkN * 1.1))
     bad("the lights on: a tenth bigger horde");
 })();

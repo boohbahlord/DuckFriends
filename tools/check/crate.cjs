@@ -105,7 +105,8 @@ const { fail, noErrors, fakedPage } = require("./lib.cjs");
       const w = room.state.hang.l4cr.w[0];
       room.send({ t: "hang", k: "l4", do: "crate", what: w });
       out.took = room.state.hang.l4cr.w.length === out.coming - 1;
-      /* the next round, ended with everyone full: it's gone */
+      /* the next round, ended with everyone able to buy a refill (no new crate): it's gone */
+      room.state.hang.l4pt = { ...room.state.hang.l4pt, [me]: 1e6 };
       for (const id of room.state.seat)
         room.send({ t: "hang", k: "l4", do: "endturn", on: true, id });
       tick(room, 12000);
