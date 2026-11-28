@@ -259,11 +259,16 @@ const ROUNDS = [
   [Infinity, 50],
 ];
 export const roundOf = (r) => ROUNDS.find((x) => r <= x[0]);
-/* the zombies in round r with p players: the same every round, Z_EACH for each player, never more than Z_MOST in all
-   (the owner's, Nov 28 04:33Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtKzoSPgUvvs7UR1hjujBsBt: "the same amount of zombies per round
-   always. We'll try 20 ... 20 per player"). Later rounds get harder by speed, specials and the director, not numbers */
-const Z_EACH = 20;
-const zombiesFor = (r, p) => Math.min(Z_EACH * p, Z_MOST);
+/* the zombies in round r for each player: 32 in rounds 1 to 8, then 48 from round 9 on, and it stays there; never more
+   than Z_MOST in all (the owner's, Nov 28 04:58Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtStui5wgzS5J5C6XuzDdAeo: "24 first 4 rounds.
+   32 next 4 rounds after that. And it goes up to 48 per round and stays there ... per player ... start with 32 per round
+   for the first 4 rounds") */
+const Z_EACH = [
+  [8, 32],
+  [Infinity, 48],
+]; // (up to which round, the zombies a round for each player)
+const zombiesFor = (r, p) =>
+  Math.min(Z_EACH.find(([last]) => r <= last)[1] * p, Z_MOST);
 /* spawning (the owner's): a zombie a second, 50% more for each player past the first, never more than 5 a second (3
    more for each player past the first), all twice that (Nov 16 21:21Z), and twice that again once a round is 10 s old
    (Nov 16 22:21Z); each second a 25% chance that none comes. A round's first ZOMBIE_GRACE ms, half as many (8 s since
