@@ -43,7 +43,8 @@ const SAY = {
   revolver: "Five big shots, three a second, then a reload.",
   bow: "Arrows that never run out, one at a time.",
   dagger: "Thrown. It falls to the floor after.",
-  shotgun: "A cone of pellets that doesn't fly far. No magazine.",
+  shotgun:
+    "A cone of pellets that doesn't fly far. A tube of 8 shells, loaded one at a time.",
   sniper:
     "Each bullet goes through 3 zombies, 1 less damage to each after the first. A bolt action between shots.",
   smg: "Hold to fire. Fast, light bullets.",

@@ -242,7 +242,9 @@ export const ARMS = {
     cal: "12 ga buckshot",
     barrel: "long",
     speed: ARM_SPEED.shotgun,
-    all: 72, // (no magazine: the owner's, Nov 4; 48, and 50% more: the owner's, Nov 16)
+    all: 72, // (48, and 50% more: the owner's, Nov 16)
+    mag: 8, // (a tube of 8, as the real SPAS-12's, loaded a shell at a time: the owner's, Nov 28 04:05Z)
+    shell: 500,
     pellets: 5,
     spread: 0.3,
     life: 420,

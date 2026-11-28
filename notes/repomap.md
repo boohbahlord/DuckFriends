@@ -85,9 +85,9 @@ gssettings.js 747 Game Settings: every setting, its
 gstext.js 200 Game Settings: what a setting
 gunart.js 414 every weapon, drawn: one drawing
 gunparts.js 15 the pieces every weapon's drawing
-guns.js 646 every weapon's numbers: one sheet
+guns.js 648 every weapon's numbers: one sheet
 hats.js 1003 hats
-heat.js 83 a gun's heat: the spread
+heat.js 93 a gun's heat: the spread
 heights.js 93 a shot's height, Doom's way
 hideui.js 30 hide ui
 homeapp.js 44 Download Duck Friends
@@ -110,7 +110,7 @@ l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
 l4ddart.js 609 Quacky Zombies' pictures
 l4ddbar.js 324 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and
-l4ddcatalog.js 228 Quacky Zombies: the Butler's Items
+l4ddcatalog.js 229 Quacky Zombies: the Butler's Items
 l4dddrops.js 63 Quacky Zombies' drops, drawn
 l4ddloot.js 42 Dead Ducks Arcade: what lies
 l4ddmap.js 253 Quacky Zombies' minimap
