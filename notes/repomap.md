@@ -64,7 +64,7 @@ front.js 150 the front page
 fx.js 1187 the effects, drawn as pixels
 fxart.js 45 the effects' pictures: a duck
 fxmotion.js 233 how a held weapon and
-game.js 4359 the game screen
+game.js 4364 the game screen
 gameact.js 525 the action window and the
 gameannounce.js 187 The cloud's words and what
 gameboard.js 582 the board: each mode's board
@@ -114,7 +114,7 @@ l4ddcatalog.js 228 Quacky Zombies: the Butler's Items
 l4dddrops.js 63 Quacky Zombies' drops, drawn
 l4ddloot.js 42 Dead Ducks Arcade: what lies
 l4ddmap.js 253 Quacky Zombies' minimap
-l4ddpower.js 337 Dead Ducks Arcade's power box
+l4ddpower.js 323 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
 l4ddrules.js 4503 the rules of Quacky Zombies

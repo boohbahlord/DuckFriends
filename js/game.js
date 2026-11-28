@@ -1701,6 +1701,11 @@ function drawDucks(now = clockNow()) {
       h._hs = hs;
       h._fxl = fxl; // (its board's: where it is drawn, fxl or the ducks' layer, below)
       fxl.append(h);
+      /* it fades in once, as it comes to hand: moved under a roof or out again (below), it would fade in again, a blink
+         every time a sprint takes it past something (the owner's, Nov 28) */
+      h.addEventListener("animationend", (e) => {
+        if (e.target === h) h.style.animation = "none";
+      });
       heldEls.set(id, h);
       if (holy) angelGlow(h); // (its glow as thin as every other Angelic weapon's: powerart.js)
     }
