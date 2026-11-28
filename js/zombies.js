@@ -100,6 +100,8 @@ import {
   climbFrom,
   roofStep,
   chaseDeck,
+  dropOff,
+  FALL,
 } from "./zombieroofs.js";
 /* the most zombies a round in all, every player counted (l4ddrules.js zombiesFor; was 400); Sandbox keeps its NPCs alive
    under it too (sbspawn.js) */
@@ -609,7 +611,7 @@ function walkAll(zs, c) {
     }
     if (z.st === 8) {
       // jumping from the gas station's roof onto the canopy (or, 1 time in 20, short of it, down to the ground), or walking up the plank
-      const [, , x1, y1, , h1, walk] = z.j,
+      const [, , x1, y1, , h1, walk, fall] = z.j,
         q =
           walk &&
           pls.find(
@@ -625,7 +627,7 @@ function walkAll(zs, c) {
         }
         continue;
       } // (a duck on the plank in its way: it stops there and claws at it)
-      if (walkTo(z, x1, y1, walk ? v * dt : JUMP.speed * dt)) {
+      if (walkTo(z, x1, y1, (fall || (walk ? v : JUMP.speed)) * dt)) {
         const fell = h1 < canopyDeck().h - 1;
         z.st = fell ? 2 : 7;
         z.n = 0;
@@ -645,9 +647,8 @@ function walkAll(zs, c) {
          the cake down), it walks off the nearest edge and drops */
       const e = edgeOf(z.x, z.y, deckOf(z));
       if (!deckAt(z.x, z.y, e.d.h)) {
-        z.st = 2;
-        z.n = 0;
-        delete z.k;
+        const a = (z.dir || 0) / 100;
+        dropOff(z, Math.cos(a), Math.sin(a), e.d.h, FALL.out / 3); // (a hole underfoot: down through it, seen falling)
         continue;
       }
       for (const q of pls)
@@ -662,11 +663,7 @@ function walkAll(zs, c) {
       if (!target && !cake && jumpOn(z, pls, v * dt, e.d)) continue; // (nobody up here, a duck on the canopy: to the roof's edge facing it, then the jump)
       if (!target || cake) {
         walkTo(z, z.x + e.nx * 200, z.y + e.ny * 200, v * dt);
-        if (edgeOf(z.x, z.y, e.d).o >= CL.out) {
-          delete z.k;
-          z.st = 2;
-          z.n = 0;
-        }
+        if (edgeOf(z.x, z.y, e.d).o >= CL.out) dropOff(z, e.nx, e.ny, e.d.h); // (off the edge: it falls, seen falling)
         continue;
       }
       if (best > ROOF_BACK) {

@@ -263,8 +263,8 @@ weaponuse.js 104 using a weapon: one module
 who.js 3 who this player is beyond
 wounds.js 483 the wounds a hit leaves
 zombiepath.js 187 the zombies' way to the
-zombieroofs.js 294 the zombies' walk over Downpour's
-zombies.js 1294 the zombies: one module for
+zombieroofs.js 314 the zombies' walk over Downpour's
+zombies.js 1291 the zombies: one module for
 
 ## js/hangout/
 activities.js 25 every Hangout activity, so the
