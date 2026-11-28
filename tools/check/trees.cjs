@@ -198,8 +198,15 @@ const { url, fail, noErrors } = require("./lib.cjs");
       "trunks too near a wall (tree, wall, px): " +
         JSON.stringify(got.room.slice(0, 4)),
     );
-  const by = crowd.filter((d) => d <= 64).length;
-  if (by < 6)
+  /* the crowd stands round my duck on its attack spots (crowd.js SUR.r duck lengths out) and waits on the ring farther out
+     (SUR.wait) when the spots are taken or against the wall: 6 at the spots or nearer, and none left behind the ring */
+  const [near, ring] = await p.evaluate(async () => {
+    const { SUR } = await import("./js/crowd.js"),
+      { RX } = await import("./js/l4ddrules.js");
+    return [(SUR.r + 0.2) * RX, (SUR.wait + 0.2) * RX];
+  });
+  const by = crowd.filter((d) => d <= near).length;
+  if (by < 6 || crowd.some((d) => d > ring))
     fail(
       `by the tree at the station's east wall, only ${by} of 8 zombies got to my duck (${crowd})`,
     );

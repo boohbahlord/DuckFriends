@@ -115,6 +115,7 @@ import {
 } from "./rules.js";
 import { JUSTIN, ETHAN, jerseyOf } from "./hangout/npcart.js";
 import { MERCHANTS, merchantById, merchantLook } from "./merchants.js";
+import { seenBy } from "./crowd.js";
 import { linesOf } from "./merchantlines.js";
 import { invuln } from "./hangout/death.js";
 import { kitSlots, gunSlotFor, ITEM_SLOTS } from "./kitslots.js";
@@ -242,17 +243,21 @@ const hasSafe = (s, id) => hasLeft(s, id, "safekeep");
 const invulnOf = (s, id, now) =>
   ((s && s.hang && s.hang.l4inv) || {})[id] > now;
 export const WALK = 380 * 0.6 * 1.05; // world px a second: ducks at 63% of Duck Cabin's walk (world.js SPEED, l4dd.js SPEED: 5% faster than 60%, the owner's, Nov 3), at the Normal Walking speed; every zombie's speed is a share of it
-export const Z_SLOW = 0.8 / 1.05; // (and the zombies 20% slower than they were, whatever the ducks' speed did)
-/* the owner's rounds: up to which round, the zombies' speed as a share of the ducks' [slowest, fastest] and the most on
-   the board at once. The steps come every 4 rounds, not 5 (the owner's, Nov 4: 5, 10, 15 and 25 became 4, 8, 12 and
-   20). How many come: zombiesFor. Their swipes are rounds 1 to 4's in every round (zombies.js SWIPE) */
+/* a zombie's speed as a share of the ducks' [slowest, fastest], each zombie its own, in every round: as fast as round 8's
+   fastest, or faster (the owner's, Nov 28 01:57Z: "we will make every zombie as fast as they are already on round 8
+   let's say, if not faster"). Hit, it staggers: STAGGER.ms at STAGGER.k of its speed */
+export const Z_SPEED = [0.6, 0.8],
+  STAGGER = { ms: 300, k: 0.3 };
+/* the owner's rounds: up to which round, the most on the board at once. The steps come every 4 rounds, not 5 (the
+   owner's, Nov 4: 5, 10, 15 and 25 became 4, 8, 12 and 20). How many come: zombiesFor. Their swipes are rounds 1 to
+   4's in every round (zombies.js SWIPE) */
 const ROUNDS = [
-  [4, [0.5, 0.67], Infinity],
-  [8, [0.5, 0.75], 35],
-  [12, [0.75, 0.75], 35],
-  [20, [0.75, 0.75], 45],
-  [Infinity, [0.75, 0.75], 50],
-]; // (after round 12, every zombie keeps round 9-12's speed and swipes; only the most at once still grows: the owner's, Nov 18 13:46Z, "the stat for every zombie AFTER round 12 now (but ignore the most at map at once, that still changes as the rounds go up)")
+  [4, Infinity],
+  [8, 35],
+  [12, 35],
+  [20, 45],
+  [Infinity, 50],
+];
 export const roundOf = (r) => ROUNDS.find((x) => r <= x[0]);
 /* the zombies in round r with p players (the owner's, Nov 16 22:11Z and 22:16Z; the sheet: charts/zombies-per-round.xlsx).
    Each phase of rounds has its base [first round, last round, base]; every player past the first adds a share of it
@@ -542,10 +547,6 @@ const SHOT_LIFE = 2000;
 export const RX = 56,
   RY = 25.6,
   CLAW = 1.35,
-  /* a zombie waiting behind another that's at a duck (it never walks into it: stepZombie, roofStep) claws from where it
-     stands, this much farther (duck lengths), so a crowd hits a duck as hard as when they squeezed in on top of each
-     other: one that's at the duck counts if it's within CLAW + near of it */
-  QUEUE = { reach: 1, near: 0.4 },
   ROOF_BACK = 1.25; // (on a roof: one pushed back by the others (separate) goes for its duck again only past this, still in reach, so it doesn't shake there)
 /* a new zombie's HP (the owner's, Nov 16 21:47Z: 3, then a 50% roll for 4; if that fails, a 50% roll for 5): 5 a
    quarter of the time, 3 a quarter, 4 half. Rolled the rarer first (the owner's, Nov 18 10:38Z), the same odds */
@@ -2128,9 +2129,19 @@ export const MERCH = {
   SPRINT: NPC_RUN, // (getting away: the shared slow speed, npcshared.js; "Merchants should be less fast when they try to escape" (the owner's, Nov 19 19:27Z). His meter still runs as long as a duck's (L4.SPRINT), and as long to fill …
   CHASED: 450, // … used running away when a zombie is this near (world px) or a player just hurt him (HURT_MS)
   HURT_MS: 3000,
-  STAB: 70, // (world px: Phil's knife reaches a duck this near …
-  STAB_MS: 600, // … and stabs this often (my guesses) …
-  FOE_FAR: 900, // … and lets a duck this far off be, and runs)
+  /* every merchant fights back (the owner's, Nov 28 01:57Z: "weak handguns and a knife", "reasonable difficulty"; 02:07Z:
+     "defend themselves even after one hit if it is up close"): only after a hit from within `close`, or a second hit,
+     and only while some duck's screen shows him. His knife up close, his weak handgun out to its reach; each misses
+     `miss` of the time and takes `dmg` HP, every `ms` */
+  FIGHT: {
+    close: 160,
+    knife: { reach: 70, ms: 1200, miss: 0.5, dmg: 0.35 },
+    handgun: { reach: 600, ms: 1600, miss: 0.6, dmg: 0.3 },
+  },
+  FOE_FAR: 900, // (world px: he lets a duck this far off be, and runs)
+  /* selling, he walks about his building (Downpour's chapel), never further than r from his spot, a few seconds at each
+     place, at k of his walk; he stands still while a duck is by him */
+  WANDER: { r: 260, ms: [2500, 6000], k: 0.5 },
   GREET: 220, // (world px: a duck this near gets a greeting)
   SAY: 3500, // (ms a line shows: l4dd.js)
   LATE: 25000, // (ms: stuck on his way in, he's at his spot; running away this long, he's gone)
@@ -2329,6 +2340,8 @@ function merchantCome(s, now) {
     sp: 1,
     tired: false,
     near: {},
+    wt: null,
+    wn: 0,
     route,
     p: 0,
     t: now,
@@ -2414,11 +2427,10 @@ export function merchantHurt(s, by, n, now, w = "", how = "") {
     setMh(s, { hurt: 1 });
     merchantSays(s, "hurt", now); // ("these are the lines they will say once when they take damage from a player")
   }
-  /* Phil the Murderous (merchants.js fights) hits back: from his second hit on he goes after whoever hurt him with
-     his knife (the owner's, Nov 18 14:10Z: "he will hit back at players when he takes second damage with a knife (has
-     a 50% chance of missing when he uses it and it does 1 damage only)") */
-  const F = (merchantById(m.id) || {}).fights;
-  if (by && F && hits >= F.after && s.players[by]) {
+  /* he fights back (MERCH.FIGHT): a hit from up close, or his second, while a duck's screen shows him */
+  const bp = by && s.pos[by] && toPx(s.pos[by]),
+    close = !!bp && Math.hypot(bp[0] - m.x, bp[1] - m.y) < MERCH.FIGHT.close;
+  if (bp && (close || hits >= 2) && mSeen(s, m)) {
     s.hang.l4m = { ...merchantOf(s), st: "fight", foe: by };
     setMh(s, { route: null, t: now });
     return false;
@@ -2426,37 +2438,57 @@ export function merchantHurt(s, by, n, now, w = "", how = "") {
   if (by && m.st !== "out" && m.st !== "fight") merchantRun(s, now);
   return false;
 }
-/* Phil, fighting: after his foe (by the zombies' field when there's something in the way), a stab whenever it's near
-   enough; he runs once his foe is down, gone or far off */
+/* does some duck's screen show him (the zombies' screens, crowd.js seenBy)? */
+const mSeen = (s, m) =>
+  seenBy(
+    players(s)
+      .filter((id) => s.pos[id])
+      .map((id) => toPx(s.pos[id])),
+    m.x,
+    m.y,
+    VIEW,
+  );
+/* fighting: his knife when his foe is near enough, his handgun out to its reach when nothing is between them, else
+   after it (by the zombies' field when there's something in the way); never while no duck's screen shows him. He
+   runs once his foe is down, gone or far off */
 function merchantFight(s, m0, now, dt) {
-  const F = (merchantById(m0.id) || {}).fights || {},
-    p = s.pos[m0.foe];
+  const p = s.pos[m0.foe];
   if (!p || !standing(s, m0.foe)) return merchantRun(s, now);
   const [fx, fy] = toPx(p),
     d = Math.hypot(fx - m0.x, fy - m0.y);
   if (d > MERCH.FOE_FAR) return merchantRun(s, now);
-  const m = { x: m0.x, y: m0.y };
-  if (d > MERCH.STAB) {
+  const m = { x: m0.x, y: m0.y },
+    w =
+      d <= MERCH.FIGHT.knife.reach
+        ? "knife"
+        : d <= MERCH.FIGHT.handgun.reach && walkable(m.x, m.y, fx, fy)
+          ? "handgun"
+          : "",
+    F = MERCH.FIGHT[w],
+    seen = !!w && mSeen(s, m0);
+  if (!seen) {
     const aim = walkable(m.x, m.y, fx, fy)
       ? [fx, fy]
       : heading(flowFrom([openNear(fx, fy)]), m.x, m.y) || [fx, fy];
     stepZombie(m, aim, WALK * walkOf(s) * MERCH.WALK * wetK(m.x, m.y) * dt, []);
-  } else if (now - (mh(s).stab || 0) >= MERCH.STAB_MS) {
-    setMh(s, { stab: now });
+  } else if (now - (mh(s).stab || 0) >= (mh(s).sms || 0)) {
+    setMh(s, { stab: now, sms: F.ms }); // (the wait after a swing or a shot is that weapon's, as his bar shows it)
     addFx(s, {
       kind: "l4mstab",
       by: m0.foe,
+      w,
+      ms: F.ms,
       who: [],
       t: now,
       x: m0.x,
       y: m0.y,
     });
-    if (Math.random() >= (F.miss || 0)) {
+    if (Math.random() >= F.miss) {
       const p4 = { ...(s.hang.l4p || {}) };
-      for (let k = 0; k < (F.dmg || 1); k++)
-        hurtDuck(s, p4, m0.foe, now, F.weapon || "knife");
+      hurtDuck(s, p4, m0.foe, now, w, F.dmg);
       s.hang.l4p = p4;
-    }
+    } else if (w === "handgun")
+      addFx(s, { kind: "l4miss", who: [], t: now, x: fx, y: fy }); // (missed: over the duck, as a miss on a zombie)
   }
   s.hang.l4m = {
     ...merchantOf(s),
@@ -2492,10 +2524,11 @@ function merchantTick(s, now) {
   if (!m0 || m0.st === "dead") return;
   const h = mh(s);
   if (m0.st === "here") {
-    const near = { ...(h.near || {}) };
+    const near = {};
     let greet = false;
     for (const id of players(s)) {
       if (!standing(s, id) || isWild(s, id)) continue;
+      if (h.near && h.near[id]) near[id] = 1; // (a duck that left, went down or went wild is no longer by him)
       const [x, y] = toPx(s.pos[id]),
         d = Math.hypot(x - m0.x, y - m0.y);
       if (d < MERCH.GREET && !near[id]) {
@@ -2506,6 +2539,7 @@ function merchantTick(s, now) {
     setMh(s, { near, tk: now });
     if (greet && now - ((m0.say && m0.say.t) || 0) > 2500)
       merchantSays(s, "greet", now);
+    if (!Object.keys(near).length) merchantWander(s, m0, now, h);
     return;
   }
   const route = h.route || [],
@@ -2562,6 +2596,40 @@ function merchantTick(s, now) {
     ...(leg.jump ? { st: "jump" } : {}),
   };
   if (done) setMh(s, { p: (h.p || 0) + 1 });
+}
+/* selling with nobody by him: he walks about his building near his spot (MERCH.WANDER), standing a while at each place */
+function merchantWander(s, m0, now, h) {
+  const W0 = MERCH.WANDER,
+    dt = Math.min(0.35, Math.max(0.05, (now - (h.tk || now - 200)) / 1000));
+  let to = h.wt;
+  const there = !!to && Math.hypot(to[0] - m0.x, to[1] - m0.y) < 14;
+  if (there && !h.wn) return setMh(s, { wn: now + rint(...W0.ms) }); // (his stand starts as he gets there)
+  if (there && now < h.wn) return; // (standing still till it's over)
+  if (!to || there) {
+    const a = Math.random() * 2 * Math.PI,
+      r = Math.random() * W0.r,
+      qx = BUTLER.x + Math.cos(a) * r,
+      qy = BUTLER.y + Math.sin(a) * r;
+    if (
+      whereIn(qx, qy) !== whereIn(BUTLER.x, BUTLER.y) ||
+      !walkable(m0.x, m0.y, qx, qy) ||
+      !standable(qx, qy, heightAt(qx, qy), 0) ||
+      !walkable(qx, qy, m0.x, m0.y) // (both ways: walkable leaves out its last 30 px, a pew's end there)
+    )
+      return; // (not in his building, or a wall or a pew between: another try next beat)
+    to = [Math.round(qx), Math.round(qy)];
+    setMh(s, { wt: to, wn: 0 });
+  }
+  const m = { x: m0.x, y: m0.y };
+  stepZombie(m, to, WALK * walkOf(s) * W0.k * dt, []); // (each step checked, as in his fight: never into a pew)
+  const dx = m.x - m0.x;
+  if (Math.abs(dx) + Math.abs(m.y - m0.y) < 0.5) return setMh(s, { wt: null }); // (held up short of it: another spot)
+  s.hang.l4m = {
+    ...m0,
+    x: Math.round(m.x),
+    y: Math.round(m.y),
+    f: Math.abs(dx) > 0.5 ? Math.sign(dx) : m0.f,
+  };
 }
 /* fleeing, does he sprint this step? Only if he must (a zombie near, or a player hurt him) and has breath left; it
    drains in L4.SPRINT ms and fills as slowly, and once empty he walks until it's full (h.sp: left, 0 to 1; h.tired) */
@@ -2942,6 +3010,7 @@ function strike(s, z, dmg, crit, by, w = "", now = 0) {
     all = !!on.kill, // (Instant Kill: every hit takes all its HP, 5 points for each)
     took = all ? z.hp : Math.min(z.hp, dmg);
   z.hp = all ? 0 : hpHurt(z.hp, dmg);
+  if (z.hp > 0 && now) z.sg = Math.round(now + STAGGER.ms); // (a short stagger: zombies.js walkAll)
   const head = !!crit && z.hp <= 0;
   if (w) wound(s, z, w, crit);
   if (crit)
@@ -4266,7 +4335,7 @@ function l4Tick(s, now) {
     }
   }
   if (L2.owe > 0) {
-    const room = Math.max(0, R[2] - live),
+    const room = Math.max(0, R[1] - live),
       k = Math.min(L2.owe, room);
     for (let q = 0; q < k; q++) {
       zs.push(newZombie(s, L2, T, zs));

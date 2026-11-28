@@ -1,20 +1,19 @@
-/* ---------- crowds: walkers never stand in each other (the cornerstone, Nov 20: one module per mechanic) ----------
-   Every walker that keeps out of the others goes through here: the zombies of Quacky Zombies, Survival and Sandbox,
-   Sandbox's NPCs on the maps (zombies.js). Two ways:
-   - crowdOf and into, the block test: a walker's step that takes it closer into another on its floor is refused
-     (stepping away is always free), so the ones behind wait instead of walking in and being pushed out every heartbeat,
-     which shook a crowd in place (the owner's, Nov 20 03:58Z: "zombies shouldnt viibrate on roof of gas pump").
-   - apart, the push-apart: two too close are pushed apart, half each (all of it on one when the other never moves).
+/* ---------- crowds: walkers keep out of each other (the cornerstone, Nov 20: one module per mechanic) ----------
+   Every walker that keeps out of the others goes through here: the zombies of Dead Ducks Arcade and Sandbox, Sandbox's
+   NPCs on the maps (zombies.js). We use Reynolds' steering (1999, "Steering Behaviors For Autonomous Characters"):
+   - apart, separation: two that overlap are pushed a share of the way apart (CROWD_BREEDS soft) every heartbeat, half
+     each (all of it on one when the other never moves), so a crowd touches and stacks and eases apart instead of
+     shaking (the owner's, Nov 20 03:58Z: "zombies shouldnt viibrate on roof of gas pump"); it hands back how many each
+     one touches, for the slowdown in a crowd (zombies.js).
+   - the turns and the speed are each walker's own (zombies.js steer).
    What differs between walkers is data (CROWD_BREEDS); what a walker's world lets it do is the caller's (the hooks).
    Pairs come from nearPairs: one grid, made once, never every walker against every other. */
 import { SAME_FLOOR } from "./heights.js";
-import { TILE } from "./units.js";
 
-/* cw x ch: the push-apart's grid (world px); passes: how many times over them all; rx, ry: the room two of them take
-   (world px; the zombies' is their map's, given by the caller, one duck length across); zero(rx, ry, T): the push
-   when two stand on one spot; block: the block test's grid (world px); gap: the room they keep between them (duck
-   lengths, on top of touching); line: how many in its way it waits behind before it goes round (one of them, picked
-   at random each time it's held up) */
+/* cw x ch: the push-apart's grid (world px); passes: how many times over them all; soft: the share of an overlap
+   pushed out each pass (1: all of it); rx, ry: the room two of them take (world px; the zombies' is their map's, given
+   by the caller, one duck length across); zero(rx, ry, T): the push when two stand on one spot; gap: the room they keep
+   between them (duck lengths, on top of touching) */
 const ZERO = (rx, ry, T) => {
   const ex = Math.random() - 0.5,
     ey = Math.random() - 0.5,
@@ -23,21 +22,10 @@ const ZERO = (rx, ry, T) => {
   return [(ex / e) * p * rx, (ey / e) * p * ry]; // (a random way out)
 };
 const CROWD_BREEDS = {
-  /* the zombies (the owner's, Nov 21 16:00Z): "naturally, zombies try to keep a very small amount of space from each
-     other, and that space, we'll say, is maybe one of the smallest units, the hitbox" (one tile), "kind of like in a
-     way where magnets push each other apart"; only an outside force (a knock-back) presses them together, and the
-     ducks may touch them. "It is two or three ... it randomly chooses between the two": two or three in the way, and
-     the next goes round */
-  zombie: {
-    cw: 80,
-    ch: 80,
-    passes: 2,
-    block: 96,
-    zero: ZERO,
-    gap: TILE,
-    line: [2, 3],
-  },
-  npc: { cw: 64, ch: 64, passes: 2, block: 96, zero: ZERO }, // (Sandbox's NPCs walk as the zombies do, touching: zombies.js brainWalk)
+  /* the zombies touch and stack (the owner's, Nov 28 01:57Z: they don't "stack like they should"): no gap, and a soft
+     push, "kind of like in a way where magnets push each other apart" (Nov 21 16:00Z) */
+  zombie: { cw: 80, ch: 80, passes: 1, soft: 0.35, zero: ZERO },
+  npc: { cw: 64, ch: 64, passes: 2, zero: ZERO }, // (Sandbox's NPCs walk as the zombies do, touching: zombies.js brainWalk)
 };
 
 /* every pair of walkers near enough to touch, each pair once (b numbered after a: b.i > a.i): the ones in a's cell of a
@@ -68,14 +56,17 @@ function nearPairs(live, cw, ch, fn, passes = 1, most = Infinity) {
 
 /* the push-apart of breed k over live. H: rx, ry (the room, when the breed has none of its own); fl (each one's
    height, a Map: only two on one floor, SAME_FLOOR, push; none: every pair); still(o) (one that never moves to make
-   room: the other takes all of the push); move(o, dx, dy) (the push, where its world lets it) */
+   room: the other takes all of the push); move(o, dx, dy) (the push, where its world lets it). Hands back how many
+   others each one touches (a Map) */
 export function apart(live, k, H) {
   const B = CROWD_BREEDS[k],
     rx = B.rx || H.rx,
     ry = B.ry || H.ry,
     fl = H.fl && H.fl.size ? H.fl : null,
     still = H.still || (() => false),
-    T = tooNear(k); // (touching, and the gap)
+    T = tooNear(k), // (touching, and the gap)
+    soft = B.soft || 1,
+    touch = new Map();
   nearPairs(
     live,
     B.cw,
@@ -86,10 +77,13 @@ export function apart(live, k, H) {
         ey = (a.y - b.y) / ry,
         e = Math.hypot(ex, ey);
       if (e >= T) return;
-      const [ux, uy] =
+      touch.set(a, (touch.get(a) || 0) + 1);
+      touch.set(b, (touch.get(b) || 0) + 1);
+      const [ux, uy] = (
           e < 1e-3
             ? B.zero(rx, ry, T)
-            : [(ex / e) * ((T - e) / 2) * rx, (ey / e) * ((T - e) / 2) * ry],
+            : [(ex / e) * ((T - e) / 2) * rx, (ey / e) * ((T - e) / 2) * ry]
+        ).map((u) => u * soft),
         sa = still(a),
         sb = still(b);
       if (sa && sb) return;
@@ -98,95 +92,11 @@ export function apart(live, k, H) {
     },
     B.passes,
   );
+  return touch;
 }
 
-/* the block test's crowd, made once a heartbeat: list's walkers by the breed's block cells, and each one's height
-   (h(o)). { cells, h, cell, T: how near is too near (touching, and the breed's gap), line } */
-export function crowdOf(list, k, h) {
-  const B = CROWD_BREEDS[k],
-    cell = B.block,
-    cells = new Map(),
-    hs = new Map();
-  for (const o of list) {
-    hs.set(o, h(o));
-    const c = Math.floor(o.x / cell) * 100000 + Math.floor(o.y / cell);
-    if (!cells.has(c)) cells.set(c, []);
-    cells.get(c).push(o);
-  }
-  return { cells, h: hs, cell, T: tooNear(k), line: B.line || null };
-}
-/* the first other of crowd C on z's floor in the cells round (x, y) that f(o) picks, or null */
-function first(C, z, x, y, f) {
-  const hz = C.h.get(z),
-    i0 = Math.floor(x / C.cell),
-    j0 = Math.floor(y / C.cell);
-  for (let di = -1; di <= 1; di++)
-    for (let dj = -1; dj <= 1; dj++)
-      for (const o of C.cells.get((i0 + di) * 100000 + j0 + dj) || []) {
-        if (o === z || o.st === 3) continue; // (dead since the crowd was made)
-        if (Math.abs(C.h.get(o) - hz) >= SAME_FLOOR) continue;
-        if (f(o)) return o;
-      }
-  return null;
-}
-/* would walker z stepping to (x, y) on its way to aim ([x, y]) walk into another of crowd C on its floor (nearer than
-   touching and the gap)? That one, or null (only closer to one it's already that near or about to be: stepping away is
-   always free). Only one ahead of it holds it up, no farther from its aim than it is: two making for the same spot
-   (a doorway, a wall's foot) each held the other up for good, so neither went on (the owner's, Nov 22 18:13Z:
-   "zombies that will not move and will not kill me"); now the nearer goes first and the other waits behind it.
-   room(ax, ay, bx, by): how far apart, 1 touching */
-export const into = (C, z, x, y, room, aim) =>
-  first(C, z, x, y, (o) => {
-    const then = room(x, y, o.x, o.y);
-    return (
-      then < C.T &&
-      then < room(z.x, z.y, o.x, o.y) &&
-      (!aim || room(o.x, o.y, ...aim) <= room(z.x, z.y, ...aim))
-    );
-  });
 /* how near is too near for breed k (room units: touching, 1, and its gap) */
 export const tooNear = (k) => 1 + (CROWD_BREEDS[k].gap || 0);
-/* the others of crowd C on z's floor within r of (x, y) (room units) */
-function near(C, z, x, y, r, room) {
-  const out = [];
-  first(C, z, x, y, (o) => {
-    if (room(x, y, o.x, o.y) < r) out.push(o);
-    return false;
-  });
-  return out;
-}
-/* going round (the owner's, Nov 21 16:00Z: "they can take a position where there's no more two or three in the way
-   anymore"): walker z, held up by o on its way to t ([x, y]), counts the ones in its way (o, and the others as near o
-   as the gap that are nearer t than z is). Once they are as many as its pick (z.pk, one of the breed's line, rolled
-   when it was first held up), it makes for a free spot beside them: round t at its own distance, a body and a gap
-   along at a time, the side with fewer of them first, up to SIDE_STEPS each way, where ok(x, y) lets it stand. The spot
-   [x, y], or null (wait in line). rx, ry: the room, in world px */
-const SIDE_STEPS = 4;
-export function goRound(C, z, o, t, room, rx, ry, ok) {
-  if (!C.line) return null;
-  if (!z.pk) z.pk = C.line[Math.floor(Math.random() * C.line.length)];
-  const dz = room(z.x, z.y, t[0], t[1]),
-    way = [o, ...near(C, o, o.x, o.y, C.T + 0.05, room)].filter(
-      (q, i, a) =>
-        q !== z && a.indexOf(q) === i && room(q.x, q.y, t[0], t[1]) < dz,
-    );
-  if (way.length < z.pk || dz < 1e-3) return null;
-  const a0 = Math.atan2((z.y - t[1]) / ry, (z.x - t[0]) / rx),
-    step = C.T / dz, // (one body and its gap along the circle, in radians)
-    left = way.filter(
-      (q) =>
-        Math.sin(Math.atan2((q.y - t[1]) / ry, (q.x - t[0]) / rx) - a0) > 0,
-    ).length,
-    first = left * 2 > way.length ? -1 : 1; // (the side with fewer of them first)
-  for (let k = 1; k <= SIDE_STEPS; k++)
-    for (const sgn of [first, -first]) {
-      const a = a0 + sgn * k * step,
-        x = t[0] + Math.cos(a) * dz * rx,
-        y = t[1] + Math.sin(a) * dz * ry;
-      if (ok(x, y) && !near(C, z, x, y, C.T, room).length) return [x, y];
-    }
-  return null;
-}
 
 /* ---------- the other way round ----------
    The owner's, Nov 17 17:41Z: "5% of zombies who spawn in will have a pattern where they try to attack the player from a
@@ -244,16 +154,20 @@ export function leastWay(k, ways, taken, far) {
 }
 
 /* ---------- the surround (the owner's, Nov 23 00:32Z: "We want the zombies to encircle the player and to try and
-   surround them as much as possible ... have them come from different directions as well") ----------
-   Near a duck (SUR.near duck lengths) each zombie takes one of SUR.n spots round it, SUR.r away: of the spots it can
-   stand at, the one with the fewest zombies on it, then the nearest round the circle. It walks round the duck to its
-   spot (SUR.turn of the circle a step at most, at the room it has, never through the duck), then in. Held up SUR.held
-   ms (behind another, at a ladder) it takes another spot or another way (heldUp). New ones come from the side of the
+   surround them as much as possible ... have them come from different directions as well"; Nov 28 01:57Z: "our behavior
+   doesn't sourround the player well") ----------
+   Attack spots and a waiting ring, as melee games keep a crowd round a player (the "attack slots" of Assassin's Creed
+   and Batman: Arkham's crowds): near a duck (SUR.near duck lengths) each zombie takes one of SUR.n spots round it,
+   SUR.r away, one zombie a spot: of the free ones it can stand at, the nearest round the circle. With every spot taken
+   it waits on a ring farther out (SUR.wait), on its own side, and takes a spot the moment one frees. It walks round
+   the duck to its spot (SUR.turn of the circle a step at most, never through the duck), then in. Held up SUR.held ms
+   (behind another, at a ladder) it takes another spot or another way (heldUp). New ones come from the side of the
    ducks with fewer zombies (crowdSide). z.sr: [the duck, its spot, until]; z.sx: the spot it gave up */
 export const SUR = {
   near: 6,
   r: 1.2,
-  n: 8,
+  n: 6,
+  wait: 2.3,
   turn: 0.9,
   keep: 4000,
   held: 1000,
@@ -274,7 +188,7 @@ export function spotsTaken(zs, now) {
   return m;
 }
 /* where zombie z goes next round duck q (q.xy, px; rx, ry: a duck length in px; ok(x, y): it can stand there), or
-   null: straight at the duck (there, or too far, or no spot it can stand at) */
+   null: straight at the duck (there, or too far, or nowhere round it it can stand) */
 export function surroundAim(z, q, taken, now, rx, ry, ok) {
   const [qx, qy] = q.xy,
     dx = (z.x - qx) / rx,
@@ -286,16 +200,23 @@ export function surroundAim(z, q, taken, now, rx, ry, ok) {
   let c = taken.get(q.id);
   if (!c) taken.set(q.id, (c = Array(SUR.n).fill(0)));
   if (!z.sr || z.sr[0] !== q.id || z.sr[2] <= now) {
-    if (z.sr && z.sr[0] === q.id && z.sr[2] > now) c[z.sr[1]]--;
     let best = -1,
-      bc = Infinity;
+      bc = Infinity,
+      any = false; // (a spot round the duck it could stand on, taken or not)
     for (let k = 0; k < SUR.n; k++) {
       if (k === z.sx || !ok(...spot(angle(k), SUR.r))) continue;
-      const cost = c[k] * 10 + Math.abs(turnOf(angle(k) - az)); // (the fewest on it first, then the nearest round)
+      any = true;
+      if (c[k] > 0) continue;
+      const cost = Math.abs(turnOf(angle(k) - az)); // (the nearest free one round the circle)
       if (cost < bc) [best, bc] = [k, cost];
     }
     delete z.sx;
-    if (best < 0) return null;
+    delete z.sr;
+    if (best < 0) {
+      const w = spot(az, SUR.wait); // (every spot taken: it waits farther out, on its own side)
+      if (d <= SUR.wait + 0.2) return any ? [z.x, z.y] : null; // (there: it stands, ready; no spot at all, straight at the duck)
+      return ok(...w) ? w : null;
+    }
     z.sr = [q.id, best, now + SUR.keep];
     c[best]++;
   }

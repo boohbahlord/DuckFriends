@@ -148,7 +148,7 @@ export function sbZoneTick(s, now, H0) {
   return ch || stepped;
 }
 
-/* { t: "sb", k: "land", h, x, y, z }: my duck landed from a fall h world px high (game.js: its own screen works the fall
+/* { t: "land", h, x, y, z } (actplay.js act_land): my duck landed from a fall h world px high (game.js: its own screen works the fall
    out), at (x, y, z), near where the room has it. Each zone it landed in on a working square hurts as its "Landing on it
    from a fall hurts" says (the owner's floor-is-lava idea: "you hit that ground, boom, you're dead"); the most of them */
 export function sbLandAct(s, a, now, H0) {

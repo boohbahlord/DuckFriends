@@ -86,6 +86,7 @@ const WOUND_OF = {
   arrow: "arrow",
   claw: "claw",
   laser: "laser",
+  fall: "blunt", // (a fall: bruises, actplay.js act_land)
 };
 /* what can be knocked off: every hat and face item but hair, horns, what floats or grows on the head, a full helmet or
    head cover, and paint (the owner's "only appropriate ones, so not a full helmet like a motorcycle helmet or face

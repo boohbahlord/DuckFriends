@@ -53,6 +53,7 @@ import {
   shareOf,
 } from "./rules.js";
 import { cakeGone, throwCake } from "./boardfire.js";
+import { hpOf } from "./hpmath.js";
 import {
   GATE_BREEDS,
   waiting,
@@ -70,7 +71,7 @@ import { sbTick } from "./sbspawn.js";
 import { sbOut, sbOutTick } from "./sbout.js";
 import { sbSlots, sbGot, sbSpend } from "./sbhot.js";
 import { sbLootTick } from "./sbloot.js";
-import { sbZoneTick } from "./sbzone.js";
+import { sbZoneTick, sbLandAct } from "./sbzone.js";
 import { sbGroupTick } from "./sbgroups.js";
 import { sbEnd } from "./sbsave.js";
 import { took } from "./perf.js";
@@ -157,7 +158,7 @@ import {
 } from "./boardfire.js";
 import { dodRoom, dodSettle, dodStarts, dodVoting } from "./roomrules.js";
 import { countdown, nextVote, rolling, sbHere, votesDue } from "./voterules.js";
-import { zOf } from "./heights.js";
+import { zOf, fallShare } from "./heights.js";
 import { act_draw, draws, drawTaken, drawFast } from "./bowdraw.js";
 
 /* ---------- the actions of a game: answers, moves, the specials, fights, the turn's end and the clock ---------- */
@@ -792,7 +793,21 @@ export function act_tick({ state, s, a, now, host }) {
   advance(s, now);
   return sig() === was && !shots && !hung && !jus && !up && !dv ? state : s;
 }
+export function act_land({ state, s, a, now, me }) {
+  // my duck landed from a fall a.h world px high (game.js: its own screen works the fall out): fall damage in every
+  // mode with HP (heights.js fallShare), and a Sandbox zone that hurts whoever lands on it (sbzone.js)
+  if (!me || !s.pos[a.id] || !SB_H.ducks(s).includes(a.id)) return state;
+  let ch = sbLandAct(s, a, now, SB_H);
+  const hp = hpOf(s, a.id, now),
+    k = fallShare(a.h);
+  if (hp && hp[0] > 0 && k > 0) {
+    SB_H.claw(s, a.id, Math.round(k * hp[1] * 100) / 100, now, "fall");
+    ch = true;
+  }
+  return ch ? s : state;
+}
 export const PLAY_ACTS = {
+  land: act_land,
   submit: act_submit,
   draft: act_draft,
   move: act_move,
