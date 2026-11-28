@@ -2356,7 +2356,7 @@ function ammoBars(tag, s, me) {
   if (dry && dry !== dryW && w !== "grenade") noReload();
   dryW = dry;
   ammoBar(tag, a);
-  drawBar(tag, myDrawShare(clockNow())); // (the bow drawn: bowdraw.js)
+  drawBar(tag, myDrawShare(clockNow()), w === "grenade"); // (the bow drawn, a grenade cooking: bowdraw.js)
   stackBars(tag);
 }
 /* a slot switch: a small box under my duck, the phone's slider in little (hotbar.js, the same slots in their colors): it

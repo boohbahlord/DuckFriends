@@ -3,7 +3,7 @@ file lines job
 
 ## js/
 account.js 397 the Google account: the profile
-actplay.js 837 a game's actions
+actplay.js 848 a game's actions
 actroom.js 754 the room's actions
 actsb.js 157 Sandbox's windows, saves and maps
 ammo.js 102 THE ONE AMMO RULE, every
@@ -18,13 +18,13 @@ beaks.js 138 beaks
 below.js 89 darker below
 blast.js 69 explosions: one module
 bloodpool.js 50 a pool of blood: the
-boardfire.js 1147 the board's weapons: hits, shots,
+boardfire.js 1160 the board's weapons: hits, shots,
 boardjustin.js 499 Justin on the boards
 boardzombies.js 122 the zombies on a board
 botduck.js 90 a computer's duck: a random
 botlines.js 188 What the computers write and
-bots.js 1327 computers
-bowdraw.js 46 the bow, drawn to shoot
+bots.js 1329 computers
+bowdraw.js 53 the bow, drawn to shoot
 brackets.js 459 Bicker Brackets: what the screen
 brainbuild.js 330 Sandbox: M's Brain builder
 card.js 424 the player card
@@ -65,19 +65,19 @@ front.js 150 the front page
 fx.js 1187 the effects, drawn as pixels
 fxart.js 45 the effects' pictures: a duck
 fxmotion.js 233 how a held weapon and
-game.js 4385 the game screen
+game.js 4417 the game screen
 gameact.js 525 the action window and the
 gameannounce.js 187 The cloud's words and what
 gameboard.js 582 the board: each mode's board
-gamedefaults.js 118 the game's own numbers, for
+gamedefaults.js 137 the game's own numbers, for
 gamefx.js 691 the board's specials and the
-gamehand.js 506 the hand: the number-key specials,
+gamehand.js 509 the hand: the number-key specials,
 gamemsg.js 93 lines by the chat button:
 gameplace.js 480 where things are put on
 gameready.js 47 
 gameround.js 551 round
 gamesettings.js 772 Game Settings: the whole screen,
-gameshots.js 135 The bullets in the air,
+gameshots.js 136 The bullets in the air,
 gfx.js 8 Low graphics
 gmodes.js 272 Sandbox Phase 6: made game
 grenade.js 33 a grenade going off
@@ -112,14 +112,14 @@ l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
 l4ddart.js 608 Quacky Zombies' pictures
 l4ddbar.js 334 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and
-l4ddcatalog.js 215 Quacky Zombies: the Butler's Items
+l4ddcatalog.js 216 Quacky Zombies: the Butler's Items
 l4dddrops.js 63 Quacky Zombies' drops, drawn
 l4ddloot.js 47 Dead Ducks Arcade: what lies
 l4ddmap.js 252 Quacky Zombies' minimap
 l4ddpower.js 312 Dead Ducks Arcade's power box
 l4ddpowerui.js 270 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4816 the rules of Quacky Zombies
+l4ddrules.js 4796 the rules of Quacky Zombies
 l4ddsfx.js 510 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the
 langname.js 5 the name of Sandbox's number
@@ -138,7 +138,7 @@ main.js 163 the start: settings on the
 maps.js 1119 maps: the world behind the
 merchantlines.js 81 what the merchants say
 merchants.js 375 the merchants
-meters.js 137 the thin bars under my
+meters.js 143 the thin bars under my
 modes.js 368 the game modes
 music.js 587 the music: our own songs,
 musicbar.js 169 the music bar: the song
@@ -263,7 +263,7 @@ vellum.js 28 The King's Festival
 vote.js 265 Vote Mode & Map: the
 voterules.js 323 the lobby's vote for the
 walkgrid.js 83 the walking grid: which 40-px
-weaponuse.js 100 using a weapon: one module
+weaponuse.js 202 using a weapon: one module
 who.js 3 who this player is beyond
 wounds.js 483 the wounds a hit leaves
 zombiepath.js 187 the zombies' way to the

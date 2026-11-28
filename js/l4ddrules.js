@@ -43,6 +43,7 @@ import {
   coneOf,
   roundAt,
   flyShots,
+  nadeThrow,
   swingOn,
   swinging,
   swingMisses,
@@ -63,6 +64,7 @@ import {
   POCKET_CHANGE,
   ZOMBIE_GRACE,
   DIRECTOR,
+  NADE,
 } from "./gamedefaults.js";
 import { hpHeal, hpHurt, hundredths, hpBreed, regenOf } from "./hpmath.js";
 import {
@@ -100,22 +102,14 @@ import {
   floorH,
 } from "./hangout/layout.js";
 import * as GS from "./hangout/stationmap.js";
-import {
-  GRENADE_MS,
-  daggerZ,
-  inWorld,
-  FASTER,
-  shareOf,
-  say,
-  shovePx,
-} from "./rules.js";
+import { daggerZ, inWorld, FASTER, shareOf, say, shovePx } from "./rules.js";
 import { JUSTIN, ETHAN, jerseyOf } from "./hangout/npcart.js";
 import { MERCHANTS, merchantById, merchantLook } from "./merchants.js";
 import { seenBy } from "./crowd.js";
 import { linesOf } from "./merchantlines.js";
 import { invuln } from "./hangout/death.js";
 import { kitSlots, gunSlotFor, ITEM_SLOTS } from "./kitslots.js";
-import { drawDmg, drawFast } from "./bowdraw.js";
+import { drawDmg, drawFast, cooks, drawTaken } from "./bowdraw.js";
 import { hOk, hLock, shotFeet, SAME_FLOOR, zOf, overlapH } from "./heights.js";
 import { toPx, DUCK } from "./units.js";
 import { blast, reach, hitOf, REACH } from "./blast.js";
@@ -2901,6 +2895,17 @@ export function tornDown(s) {
     new Set(GS.BOARDED.filter((o) => brd && brd[o.id] === 0).map((o) => o.id)),
   );
 }
+/* a grenade held past its fuse goes off in the hand, its pin out since the press (bowdraw.js; NADE: the director plan,
+   Nov 28): thrown with no time left, where the duck stands */
+function cookedOff(s, now) {
+  for (const [id, t0] of Object.entries(s.draw || {}))
+    if (cooks((s.pos[id] || {}).w) && now - t0 >= NADE.FUSE)
+      l4Use(
+        s,
+        { id, what: "grenade", dr: drawTaken(s, id, now, NADE.FUSE), face: 1 },
+        now,
+      );
+}
 /* the boards of opening `o` torn down at once (the merchant on his way in: "breaks the barricade (the wooden
    barricade) IF it is in the way") */
 function breakBoards(s, o, now) {
@@ -3171,7 +3176,25 @@ export function l4Use(s, a, now) {
       hin: inCabin(px, py) ? 1 : 0,
       ...more,
     });
-    if (A.pellets) {
+    if (what === "grenade" || what === "glauncher") {
+      const g = what === "grenade",
+        T = g ? NADE.T : (A.far / A.speed) * 1000; // (its range, guns.js far, in that time)
+      s.shots = [
+        ...(s.shots || []),
+        shot(shotKind(what), 0, 0, 0, {
+          ...nadeThrow(
+            dx,
+            dy,
+            A.far,
+            T,
+            g ? NADE.PEAK : NADE.LPEAK,
+            now + (g ? NADE.FUSE - Math.min(NADE.FUSE, a.dr || 0) : NADE.LFUSE),
+            now,
+            [W, H],
+          ),
+        }),
+      ]; // (a map's grenade: an arc that turns back off what's taller, and goes off when its fuse ends, weaponuse.js nadeFly)
+    } else if (A.pellets) {
       const out = coneOf(Math.atan2(dy, dx), A.pellets, A.spread).map((an, i) =>
         shot(shotKind(what), Math.cos(an), Math.sin(an), A.speed * FASTER, {
           n: n * 10 + i,
@@ -3180,18 +3203,13 @@ export function l4Use(s, a, now) {
       );
       s.shots = [...(s.shots || []), ...out];
     } else {
-      const v =
-          what === "grenade"
-            ? ARMS.grenade.far / (GRENADE_MS / 1000)
-            : A.speed * (BULLETS.has(what) ? FASTER : 1) * drawFast(a.dr), // (arrows, bullets and daggers: a little faster, as in every mode; a drawn arrow more, bowdraw.js)
+      const v = A.speed * (BULLETS.has(what) ? FASTER : 1) * drawFast(a.dr), // (arrows, bullets and daggers: a little faster, as in every mode; a drawn arrow more, bowdraw.js)
         k = shotKind(what); // (the new guns' bullets each look their own way)
       const out = [];
       for (let i = 0; i < many; i++)
         out.push(
           shot(k, dx, dy, v, {
-            ...(what === "glauncher"
-              ? { life: (A.far / A.speed) * 1000 }
-              : roundAt(n, i, now, A.gap || 60)),
+            ...roundAt(n, i, now, A.gap || 60),
             ...(dual ? { al: m.alt } : {}), // (the Angelic pistols: which one fired it, game.js' muzzle flash)
             ...(a.dr != null ? { dr: a.dr } : {}), // (an arrow: its draw)
           }),
@@ -4059,53 +4077,6 @@ export function l4Shots(s, now) {
     return true;
   };
   let hitAny = false;
-  const launched = (sh, age) => {
-    /* the grenade launcher's: straight, and off at the first zombie, a wall or its range */
-    const u = age / 1000,
-      x0 = sh.lx * W,
-      y0 = sh.ly * H,
-      x1 = (sh.x0 + sh.vx * u) * W,
-      y1 = (sh.y0 + sh.vy * u) * H,
-      n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 12));
-    let at = null;
-    for (let k = 1; k <= n && !at; k++) {
-      const x = x0 + ((x1 - x0) * k) / n,
-        y = y0 + ((y1 - y0) * k) / n;
-      if (walled(x, y, shotFeet(sh)))
-        at = [x0 + ((x1 - x0) * (k - 1)) / n, y0 + ((y1 - y0) * (k - 1)) / n];
-      else if (
-        nearby(grid, zs, x, y).some(
-          (z) =>
-            z.st !== 3 &&
-            Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1 &&
-            hOk(sh, zOf(z, "zombie"), z.x, z.y, sh.x0 * W, sh.y0 * H) &&
-            !past(sh, "glauncher", z),
-        )
-      )
-        at = [x, y];
-    }
-    if (!at && age >= sh.life) at = [x1, y1];
-    if (at) {
-      const ang = angelOf(s, sh.by, "glauncher");
-      hitAny =
-        boom(
-          s,
-          sh,
-          at[0],
-          at[1],
-          zs,
-          T,
-          now,
-          BLAST_HALF * (ang ? ANGEL.GL_RADIUS : 1),
-        ) || hitAny;
-      if (ang)
-        burnAt(s, sh.by, at[0], at[1], now, blastZ(at[0], at[1], sh.hz || 0)); // (Angelic: a smaller blast, and the ground there on fire)
-      return false;
-    }
-    sh.lx = x1 / W;
-    sh.ly = y1 / H;
-    return true;
-  };
   const bullet = (sh, age) => {
     const x0 = sh.lx * W,
       y0 = sh.ly * H,
@@ -4248,17 +4219,25 @@ export function l4Shots(s, now) {
     list.map((sh) => ({ ...sh })),
     now,
     {
-      fuse: GRENADE_MS,
       U: [W, H],
-      at: (sh, t) => ({
-        x: (sh.x0 + sh.vx * (t / 1000)) * W,
-        y: (sh.y0 + sh.vy * (t / 1000)) * H,
-      }),
-      walled: (sh, at) => walled(at.x, at.y, sh.hz),
+      wallAt: (x, y, z) => walled(x, y, z - 20), // (walled takes a shot's feet, its bullet 20 over them; a grenade is where it is)
+      floor: (x, y, z) => blastZ(x, y, z),
       boom: (sh, at) => {
-        hitAny = boom(s, sh, at.x, at.y, zs, T, now, BLAST_HALF) || hitAny;
+        const ang = sh.k === "lgren" && angelOf(s, sh.by, "glauncher");
+        hitAny =
+          boom(
+            s,
+            sh,
+            at.x,
+            at.y,
+            zs,
+            T,
+            now,
+            BLAST_HALF * (ang ? ANGEL.GL_RADIUS : 1),
+            blastZ(at.x, at.y, at.z),
+          ) || hitAny;
+        if (ang) burnAt(s, sh.by, at.x, at.y, now, blastZ(at.x, at.y, at.z)); // (Angelic: a smaller blast, and the ground there on fire)
       },
-      launched,
       bullet,
     },
   );
@@ -4413,6 +4392,7 @@ function l4Tick(s, now) {
   if (!L) return false;
   if (L.over) return false;
   meleeHits(s, now); // (first: the zombies below are read after it)
+  cookedOff(s, now);
   const T = now - (isSb(s) && L.t0 == null ? 0 : L.t0), // (Sandbox: no round started, its zombies still claw)
     zs = zombies(s);
   /* the ducks: HP coming back, revives, bleeding out, boards going up, reloads */

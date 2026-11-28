@@ -19,7 +19,13 @@ import {
   playing,
 } from "./rules.js";
 
-import { flyShots, swingOn, swinging, swingMisses } from "./weaponuse.js";
+import {
+  flyShots,
+  swingOn,
+  swinging,
+  swingMisses,
+  nadeAt,
+} from "./weaponuse.js";
 import { meleePush, blastPush, pushOn, pushAlong, sizeOf } from "./push.js";
 
 import { jumpDodges } from "./jump.js";
@@ -449,7 +455,14 @@ export function sizeShots(s) {
 }
 /* how high a swing is, in duck widths over the swinger's feet: their hand, as the screens draw it (game.js bodyAt) */
 const handUp = (s, id) => 0.45 * sizeOf(s, id);
-export const shotAt = (sh, t) => ({
+export const shotAt = (sh, t) =>
+  sh.tb != null ? nadeOn(sh, t) : shotOn(sh, t);
+/* a map's grenade: on its leg (weaponuse.js nadeAt), its height in duck sizes */
+const nadeOn = (sh, t) => {
+  const p = nadeAt(sh, sh.t + t);
+  return { x: p.x, y: p.y, z: p.z / DUCK };
+};
+const shotOn = (sh, t) => ({
   x: sh.x0 + (sh.vx * t) / 1000,
   y: sh.y0 + (sh.vy * t) / 1000,
   z:

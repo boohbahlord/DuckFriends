@@ -380,7 +380,9 @@ function tvBot(s, id, now, late, out) {
 export const botActions = (s, now) =>
   botThink(s, now).flatMap((a) =>
     a.t === "use" && draws(a.what)
-      ? [a, { t: "draw", id: a.id, w: a.what }]
+      ? a.what === "grenade"
+        ? [{ t: "draw", id: a.id, w: a.what }, a] // (a grenade: its pin out, then thrown at once)
+        : [a, { t: "draw", id: a.id, w: a.what }]
       : [a],
   );
 function botThink(s, now) {

@@ -790,6 +790,42 @@ function readBoxes(now) {
     }
   }
 }
+/* a map's grenade's pin pulled (the press, bowdraw.js s.draw; the director plan, Nov 28): on every screen it drops from
+   that duck's hand and fades, as soon as the pin is out, not when it's thrown */
+const PINS = new Set();
+function pinsOut(s, fxl, size, now) {
+  for (const [id, t0] of Object.entries(s.draw || {})) {
+    const p = s.pos[id],
+      k = id + "@" + t0;
+    if (
+      !p ||
+      (id === R.me ? heldNow() : p.w) !== "grenade" ||
+      PINS.has(k) ||
+      now - t0 > 400
+    )
+      continue;
+    PINS.add(k);
+    const a = world.place({ x: p.x, y: p.y }, zOf(p)),
+      f = (id === R.me && me ? me.face : world.face(id)) || 1; // (from the hand, on the side it faces)
+    pinDrop(
+      fxl,
+      (s.players[id] || {}).duck,
+      size,
+      a.left + f * 0.42 * size,
+      a.top - 0.4 * size,
+      f < 0,
+    );
+  }
+  if (PINS.size > 64) PINS.clear();
+}
+/* a grenade's pin at (x, y) on the screen: it drops from the hand and fades */
+function pinDrop(fxl, duck, size, x, y, ccw = false) {
+  const pin = el(
+    `<div class="gpin" style="--s:${size.toFixed(0)}px;transform:translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)"><i class="${ccw ? "ccw" : ""}">${GRENADE_PIN(colorsOf(duck, "grenade"))}</i></div>`,
+  );
+  fxl.append(pin);
+  setTimeout(() => pin.remove(), 1300);
+}
 function drawDucks(now = clockNow()) {
   frameNo++;
   const board = S && $(".board", S);
@@ -1635,13 +1671,8 @@ function drawDucks(now = clockNow()) {
       b.classList.remove("blk");
       SHOT_EL.set(sh.n, b);
       fxl.append(b);
-      if (sh.k === "grenade" && now - sh.t < 400) {
-        const pin = el(
-          `<div class="gpin" style="--s:${(size * (sh.sc || 1)).toFixed(0)}px;transform:translate(${a.left.toFixed(1)}px, ${top.toFixed(1)}px)"><i class="${vx < 0 ? "ccw" : ""}">${GRENADE_PIN(colorsOf(duck, "grenade"))}</i></div>`,
-        );
-        fxl.append(pin);
-        setTimeout(() => pin.remove(), 1300);
-      } // (its pin stays behind: it drops from the hand and fades)
+      if (sh.k === "grenade" && sh.tb == null && now - sh.t < 400)
+        pinDrop(fxl, duck, size * (sh.sc || 1), a.left, top, vx < 0); // (its pin stays behind: it drops from the hand and fades)
     }
     b.style.transform = `translate(${a.left.toFixed(1)}px, ${top.toFixed(1)}px)`;
     if (sh.blk && b._blk !== sh.blk) {
@@ -1651,6 +1682,7 @@ function drawDucks(now = clockNow()) {
       b.classList.add("blk");
     } // (a bullet stopped on his chair or controller: it blinks a see-through white, the owner's, Nov 17 13:07Z)
   }
+  if (hang) pinsOut(s, fxl, size, now);
   for (const [n, b] of SHOT_EL)
     if (!live.has(n)) {
       SHOT_EL.delete(n);

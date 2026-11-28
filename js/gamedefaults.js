@@ -12,6 +12,25 @@ export const SPRINT = {
   refill: 1.5, // the bar fills this many times as slowly as it drains (2.5 s of sprint: 3.75 s to fill)
 };
 
+/* grenades on the maps (weaponuse.js nadeFly; the director plan, Nov 28, cmsg_01LTpp6fzv8sfYUR5KoHADKtBFSt5xGqKea6TT5ehvSw7H):
+   held, its pin is out and its fuse runs FUSE ms, my meter white, yellow from YELLOW of it, red from RED; let go, it's
+   thrown, and it goes off when its fuse ends: in the hand, in the air or on the ground (so it can be cooked). Thrown,
+   it goes its range (guns.js far) in T ms over an arc PEAK duck heights high, from HAND up: over whatever is lower than
+   it and through the trees' crowns; what's taller (a wall, a car, a building) turns it back with KEEP of its speed (a
+   light thing off a heavy one), and a floor under it stops it. The grenade launcher's: its range (guns.js far, at its
+   speed) over an arc LPEAK high, over a crowd, its fuse LFUSE ms from the shot */
+export const NADE = {
+  FUSE: 5000,
+  YELLOW: 0.5,
+  RED: 0.8,
+  T: 900,
+  PEAK: 1.5,
+  HAND: 0.45,
+  KEEP: 0.5,
+  LPEAK: 3,
+  LFUSE: 3000,
+};
+
 /* fall damage, ducks only (heights.js fallHurt; the owner's, Nov 28 04:05Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtBFSt5xGqKea6TT5ehvSw7H):
    measured along the fall's path, in elevations. None under `from`; hp at `mid`, then times `up` for each elevation
    more, with no cap; under `mid` it drops off fast, `down` times less for each elevation less (0.25 HP at 1) */

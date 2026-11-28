@@ -27,7 +27,7 @@ import {
 } from "./guns.js";
 import { orbHTML, UP_ICONS } from "./l4ddart.js";
 import { DROP_ICONS } from "./l4dddrops.js";
-import { draws } from "./bowdraw.js";
+import { draws, cooks } from "./bowdraw.js";
 
 /* what each one does, in a line */
 const SAY = {
@@ -57,7 +57,7 @@ const SAY = {
   laser:
     "Hold to fire. A red beam once a second through every zombie in its line. Never runs out, but six in a row overheat it for 8 seconds.",
   glauncher:
-    "Its grenades fly straight and go off on the first zombie or wall they hit, and kill every zombie in the blast.",
+    "Its grenades fly in a high arc over the zombies, land, and go off 3 seconds after the shot, killing every zombie in the blast.",
   medkit:
     "Puts your HP back to full. Held while you revive someone, it gets them up at once.",
   bandage: "Gives back half the HP you've lost, at least 1. You can hold one.",
@@ -66,7 +66,8 @@ const SAY = {
   zebra:
     "Thrown. Every zombie goes for it and bites it until it's gone. Justin's favorite.",
   adrenaline: "You walk at the game's usual speed for 20 seconds.",
-  grenade: "Thrown with G. Kills every zombie in its blast.",
+  grenade:
+    "Hold to pull the pin, let go to throw: it goes off 5 seconds after the pin. Kills every zombie in its blast.",
   kill: "Every hit kills, for 45 seconds.",
   ammo: "Fills everyone's ammo and grenades (not the medkit).",
   nuke: "Kills every zombie on the map, and everyone gets the points.",
@@ -110,7 +111,7 @@ function stats(w) {
     out.push(["Tank", `${num((1000 / A.cool / A.all) * 100)}% a second`]);
     out.push(["Burns", `1 every ${secs(BURN.EVERY)} for ${secs(BURN.Z)}`]);
   }
-  if (draws(w))
+  if (draws(w) && !cooks(w))
     out.push(["Crit", "Up to 100%, drawn"]); // (bowdraw.js drawCrit)
   else if (critOf(w)) out.push(["Crit", `${num(critOf(w) * 100, 1)}%`]);
   if (missOf(w)) out.push(["Misses", `${num(missOf(w) * 100, 1)}%`]);

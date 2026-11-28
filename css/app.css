@@ -14941,6 +14941,16 @@ html.phone-land .l4-end {
 .l4-cool.draw.full i {
   animation: l4-drawn 0.45s steps(1) 1;
 }
+/* a grenade cooking (meters.js drawBar): its fuse, white, then yellow, then red */
+.l4-cool.draw.cook i {
+  background: #fff;
+}
+.l4-cool.draw.cook.y i {
+  background: #ffd23f;
+}
+.l4-cool.draw.cook.r i {
+  background: #e8323c;
+}
 @keyframes l4-drawn {
   0%,
   44% {
