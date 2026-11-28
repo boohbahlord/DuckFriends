@@ -261,10 +261,16 @@ export function pwLabel(s) {
     const n = roundsLeft(s);
     return `Power on · ${n} ${n === 1 ? "round" : "rounds"} of fuel`;
   }
+  if ((pwState(s) || {}).left > 0) return "Switched off · hold to turn on";
   return layoutVariant() === "l4gs"
     ? "Out of fuel · fill a jerry can"
     : "No power · find a jerry can";
 }
-export function pwTap(ctx) {
-  ctx.send({ t: "hang", k: "l4", do: "power" });
+/* E at the box: a tap pours in a can, held (sw) it switches the power on or off (l4ddpower.js powerAct); a phone's
+   button, a tap only, switches it when there's no can to pour */
+export function pwTap(ctx, sw = powerNext(ctx.state()) === "switch") {
+  ctx.send({ t: "hang", k: "l4", do: "power", sw });
 }
+/* the tip, each time I come up to the box (gamemsg.js) */
+export const PW_TIP =
+  "Tap E to pour in a jerry can. Hold E to turn the generator on or off.";

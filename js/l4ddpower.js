@@ -247,22 +247,30 @@ export function powerTick(s, zs, now, ids, h) {
   }
   if (left !== pk) s.hang.pk = left;
 }
-/* E at the box: the row's fullest can is poured in, and the power comes on (or runs that many rounds longer) */
-export function powerAct(s, id, now, mx, my, h) {
+/* E at the box. A tap: the row's fullest can is poured in, and the power comes on (or runs that many rounds longer),
+   unless someone switched it off. Held (sw): the switch, on or off, whatever fuel is left (the director plan, Nov 28):
+   off keeps its fuel (pw.sw: switched off by hand), on only with fuel left */
+export function powerAct(s, id, now, mx, my, h, sw = false) {
   const pw = s.hang.pw,
     L = s.hang.l4;
   if (!pw || Math.hypot(mx - PW.E[0], my - PW.E[1]) > PW.REACH * 1.6)
     return false;
+  if (sw) {
+    if (!pw.on && !(pw.left > 0)) return false; // (nothing to run on)
+    s.hang.pw = { ...pw, sw: pw.on ? 1 : 0 };
+    setPower(s, !pw.on, now, h);
+    return true;
+  }
   const r = canRow(s)[0];
   if (!r) return false;
   const between = !!(L && L.wait); // (between rounds the next one is counted too)
   s.hang.pw = {
     ...pw,
     gas: pw.gas - r,
-    left: pw.on ? pw.left + r : r + (between ? 1 : 0),
+    left: pw.on || pw.left > 0 ? pw.left + r : r + (between ? 1 : 0),
   };
   h.addFx(s, { kind: "l4pwgas", r, by: id, who: [], t: now });
-  if (!pw.on) setPower(s, true, now, h);
+  if (!pw.on && !pw.sw) setPower(s, true, now, h);
   return true;
 }
 /* Downpour: E at a pump puts a quarter can of gas into the row (PW.PUMP points), power or not. Only close by it, on
@@ -308,5 +316,10 @@ export function powerGas(s, id, now, h) {
 }
 /* what E at the box would do now, for its button: "pour" or "" */
 export function powerNext(s) {
-  return pwState(s) && canRow(s)[0] ? "pour" : "";
+  const pw = pwState(s);
+  return pw && canRow(s)[0]
+    ? "pour"
+    : pw && (pw.on || pw.left > 0)
+      ? "switch"
+      : "";
 }

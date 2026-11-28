@@ -1609,7 +1609,7 @@ function l4Act(s, a, now) {
     return buy(s, id, String(a.what || ""), mx, my, a.hand, now);
   if (a.do === "pick") return pickLoot(s, id, mx, my, a.hand, now);
   if (a.do === "crate") return crateTake(s, id, a, mx, my, now);
-  if (a.do === "power") return powerAct(s, id, now, mx, my, PH);
+  if (a.do === "power") return powerAct(s, id, now, mx, my, PH, !!a.sw);
   if (a.do === "pump") return powerPump(s, id, now, mx, my, PH);
   if (a.do === "angel") return angelAct(s, id, a, now, mx, my, PH);
   return false;

@@ -106,7 +106,7 @@ jumps.js 48 the jump counter
 justinmoves.js 43 Justin's moves on the board
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which key
-l4dd.js 3387 Quacky Zombies on every screen
+l4dd.js 3408 Quacky Zombies on every screen
 l4ddangel.js 147 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
 l4ddart.js 608 Quacky Zombies' pictures
@@ -116,8 +116,8 @@ l4ddcatalog.js 214 Quacky Zombies: the Butler's Items
 l4dddrops.js 63 Quacky Zombies' drops, drawn
 l4ddloot.js 47 Dead Ducks Arcade: what lies
 l4ddmap.js 252 Quacky Zombies' minimap
-l4ddpower.js 312 Dead Ducks Arcade's power box
-l4ddpowerui.js 270 Dead Ducks Arcade's power box
+l4ddpower.js 325 Dead Ducks Arcade's power box
+l4ddpowerui.js 276 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
 l4ddrules.js 4841 the rules of Quacky Zombies
 l4ddsfx.js 510 Dead Ducks Arcade's sounds

@@ -133,6 +133,7 @@ import {
   pwLabel,
   pumpLabel,
   pwTap,
+  PW_TIP,
 } from "./l4ddpowerui.js";
 import { powerOn, powerNext, PW, gasFull, pumpZone } from "./l4ddpower.js";
 import {
@@ -2787,6 +2788,11 @@ function tap(t, ctx) {
     ctx.send({ t: "hang", k: "l4", do: "pump" });
   } else if (t.kind === "angel") angelTap(ctx, heldFn(), say);
 }
+/* E at the generator: held PW_HOLD ms, its switch; let go before, a tap; and whether I'm at it (its tip, once each
+   time I come up to it) */
+const PW_HOLD = 500;
+let pwHold = 0,
+  atBox = false;
 const TAPS = ["take", "shop", "crate", "sk", "power", "pump", "angel"];
 function startHold(t, ctx) {
   if (!t) return;
@@ -3311,6 +3317,8 @@ activity({
   near(pos, ctx) {
     const t = holdTarget(pos, ctx);
     nearTo = t && t.kind === "take" ? t.w : "";
+    if (!!t && t.kind === "power" && !atBox) gameMsg(PW_TIP); // (each time I come up to it)
+    atBox = !!t && t.kind === "power";
     if (!t) return null;
     const s = ctx.state();
     return {
@@ -3336,6 +3344,14 @@ activity({
       const me = ctx.duck(),
         t = me && holdTarget({ x: me.x * W, y: me.y * H }, ctx);
       if (!t) return false; // (nothing of mine: the world's E, a Sandbox orb too, sblootview.js)
+      if (t.kind === "power") {
+        clearTimeout(pwHold);
+        pwHold = setTimeout(() => {
+          pwHold = 0;
+          pwTap(ctx, true);
+        }, PW_HOLD); // (held: the switch; let go before: a tap, l4ddpowerui.js)
+        return true;
+      }
       (TAPS.includes(t.kind) ? tap : startHold)(t, ctx);
       return true;
     }
@@ -3343,6 +3359,11 @@ activity({
   },
   keyup(e, ctx) {
     if (e.code === "KeyE") {
+      if (pwHold) {
+        clearTimeout(pwHold);
+        pwHold = 0;
+        pwTap(ctx, false);
+      }
       stopHold(ctx);
       return true;
     }
