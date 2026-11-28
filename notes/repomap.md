@@ -107,7 +107,7 @@ kitslots.js 56 the walk-around hotbar: which key
 l4dd.js 3365 Quacky Zombies on every screen
 l4ddangel.js 147 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
-l4ddart.js 609 Quacky Zombies' pictures
+l4ddart.js 608 Quacky Zombies' pictures
 l4ddbar.js 324 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and
 l4ddcatalog.js 228 Quacky Zombies: the Butler's Items
@@ -117,7 +117,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 337 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4525 the rules of Quacky Zombies
+l4ddrules.js 4503 the rules of Quacky Zombies
 l4ddsfx.js 509 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the
 langname.js 5 the name of Sandbox's number
