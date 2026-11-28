@@ -572,9 +572,11 @@ export const zombieLook = (l) => ({
 /* about how far a player sees from its duck, either way (a computer's view, the wider one) */
 export const VIEW = { x: 720, y: 460 };
 const LAND = { x0: STAIRS.x0, x1: STAIRS.x1, y0: STAIRS.y0, y1: STAIRS.land };
-/* Downpour: the forest, short of the world's edge (the forest line stops nobody: the owner's, Nov 17 03:34Z). Past the
-   fences only the road is open, so zombies there still climb them */
-const inWoods = (x, y) => x >= 70 && x <= W - 70 && y >= 70 && y <= H - 70;
+/* Downpour: the forest, up to the fence round the map (the forest line stops nobody: the owner's, Nov 17 03:34Z; the
+   fence stops a duck right at it, as a wall does: Nov 28 04:05Z). Past the fences only the road is open, so zombies
+   there still climb them */
+const inWoods = (x, y) =>
+  x >= GS.RIM.x0 && x <= GS.RIM.x1 && y >= GS.RIM.y0 && y <= GS.RIM.y1;
 /* Duck Cabin (Sandbox's zombies there, sbcabin.js): the whole world; only what stands in it stops them (standable) */
 const hangMap = () => layoutVariant() === "";
 export const playable = (x, y) =>
