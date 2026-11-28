@@ -2733,10 +2733,10 @@ function hangStep(dt, now) {
       ay = a.ay;
     }
   }
-  if (!canWalk()) ax = ay = 0;
-  const want = easeWalk(ax, ay, dt); // (the keys, the stick or a tap: it speeds up and slows down, playerinput.js)
-  ax = want.x;
-  ay = want.y;
+  const ok = canWalk(),
+    want = easeWalk(ok ? ax : 0, ok ? ay : 0, dt); // (the keys, the stick or a tap: it speeds up and slows down, playerinput.js)
+  ax = ok ? want.x : 0; // (held still means still, not a slide; after, it eases in again)
+  ay = ok ? want.y : 0;
   sprinting = sprintStep(
     sprinting && !!(ax || ay),
     dt,
