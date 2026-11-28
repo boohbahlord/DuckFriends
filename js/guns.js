@@ -248,7 +248,7 @@ export const ARMS = {
     life: 420,
   },
   medkit: { kind: "special", cool: ITEM_COOL, all: 1 },
-  bandage: { kind: "special", cool: ITEM_COOL, all: 1, heal: 0.5 }, // (half the HP I've lost back, one held: the owner's, Nov 28 03:28Z)
+  bandage: { kind: "special", cool: ITEM_COOL, all: 1, heal: 0.5, least: 1 }, // (half the HP I've lost back, but at least 1 and never more than I lost; one held: the owner's, Nov 28 03:28Z and 04:05Z)
   grenade: {
     kind: "grenade",
     cool: ITEM_COOL,

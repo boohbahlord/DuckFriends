@@ -2894,7 +2894,11 @@ export function l4Use(s, a, now) {
       most = maxHp(s, id);
     s.hang.l4p = {
       ...p4,
-      [id]: { ...p4[id], hp: hpHeal(hp, (most - hp) * A.heal, most), at: now },
+      [id]: {
+        ...p4[id],
+        hp: hpHeal(hp, Math.max(A.least, (most - hp) * A.heal), most),
+        at: now,
+      },
     };
     if (!spare) m.am.bandage = [0, 0];
   } else if (what === "adrenaline")
