@@ -294,7 +294,7 @@ flicker.js 83 now and then a light
 ghosts.js 111 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in
 lamp.js 71 the lamps: the example activity
-layout.js 1082 Duck Cabin: the world of
+layout.js 1081 Duck Cabin: the world of
 layoutbase.js 78 Duck Cabin: the world's numbers
 layoutheights.js 396 Duck Cabin: the heights :
 npc.js 495 Duck Cabin's characters: how they
@@ -314,7 +314,7 @@ rubberducks.js 183 the little rubber ducks in
 rules.js 88 Hangout's rules: s.hang and the
 seats.js 440 the couches, the campfire's logs,
 shadowduck.js 254 the shadow duck
-shapes.js 931 Duck Cabin's props, drawn: art.js's
+shapes.js 930 Duck Cabin's props, drawn: art.js's
 shapesbase.js 54 Duck Cabin's props, drawn: the
 shapesground.js 423 Duck Cabin's props, drawn: the
 shapeswalls.js 317 Duck Cabin's props, drawn: walls,
@@ -324,10 +324,10 @@ stage.js 134 the stage: half an oval
 stationart.js 50 Downpour's things: the drawings
 stationbase.js 67 Downpour's drawings: the shared pieces
 stationcars.js 513 Downpour's drawings: the cars, the
-stationmap.js 1308 Dead Ducks Arcade's second map:
+stationmap.js 1312 Dead Ducks Arcade's second map:
 stationparts.js 455 Downpour's drawings: the gas station's
 stationroof.js 340 Downpour's drawings: the roofs, their
-stationtrees.js 599 Downpour's drawings: the swamp's trees
+stationtrees.js 592 Downpour's drawings: the swamp's trees
 trampoline.js 142 the trampoline
 tv.js 117 the TV: seven channels, the
 vehicles.js 116 what a duck stands on

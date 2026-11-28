@@ -420,7 +420,10 @@ export const PLANK = {
   rest: REST,
   key: CANOPY.y1 + 10, // (over the canopy's roof and the car)
 };
-/* the fallen tree across the east end of the road: ducks jump it (TOP_TREE tall), zombies climb over */
+/* the fallen tree across the east end of the road: a log h thick lying straight from bank to bank over the flooded
+   road, so a duck jumps up on it and walks its whole length (harder from the water: it's that much higher), and no
+   zombie gets through it (the owner's, Nov 28 04:58Z: "you should be able to walk down the tree", "zombies can't go
+   through it") */
 export const FALLEN = {
   x0: 3500,
   y0: 2500,
@@ -706,11 +709,13 @@ function planBuild(b) {
     },
   });
   CARS.forEach((c, i) => car(c, { ...CAR_LOOKS[i], car: i })); // (car: its index, so a push moves it: layout.js carAt)
-  /* the fallen tree: a row of low blocks along it (a jump clears them; zombies climb over: zx) */
+  /* the fallen tree: a row of blocks along it, their tops on a straight line h over the ground at its two ends */
   {
     const F = FALLEN,
       len = Math.hypot(F.x1 - F.x0, F.y1 - F.y0),
-      n = Math.ceil(len / 40);
+      n = Math.ceil(len / 40),
+      g0 = groundAt(F.x0, F.y0),
+      g1 = groundAt(F.x1, F.y1);
     put(
       "fallen",
       Math.min(F.x0, F.x1) - F.half,
@@ -729,9 +734,8 @@ function planBuild(b) {
         r = F.half * 0.8;
       put("fallenpart", x - r, y - r, 2 * r, 2 * r, F.h, {
         solid: true,
-        zx: true,
         layer: "none",
-        top: groundAt(x, y) + F.h,
+        top: g0 + ((g1 - g0) * k) / n + F.h,
       });
     }
   }
