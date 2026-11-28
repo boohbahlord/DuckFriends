@@ -655,6 +655,21 @@ export let cam = null; // the bracket's camera: the diagram's corner on the boar
 const SPEED = { x: 0.45, y: 1.0, px: 0.5, py: 0.85, sprint: SPRINT.speed }; // (sprint: the whole game's, gamedefaults.js)
 
 /* ---------- drawing the ducks (every frame: jumps and glides) ---------- */
+/* a duck turned toward where it aims (the owner's, Nov 28 04:05Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtBFSt5xGqKea6TT5ehvSw7H):
+   its own drawing, turned in steps of 45 degrees from the side it faces (face: 1 right, -1 left; the flip stays), never
+   more than 90 so it's never upside down; its shadow doesn't turn, and its weapon aims at once. Degrees, clockwise */
+const TILT_STEP = 45,
+  TILT_MOST = 90,
+  TILT_ORG = "50% 55%"; // (about its middle)
+const tiltOf = ([dx, dy], face) =>
+  Math.max(
+    -TILT_MOST,
+    Math.min(
+      TILT_MOST,
+      Math.round((Math.atan2(dy, dx * face) * 180) / Math.PI / TILT_STEP) *
+        TILT_STEP,
+    ),
+  ) || 0;
 const SQ = {
   l: ["0% 100%", 0.8, 1.12],
   r: ["100% 100%", 0.8, 1.12],
@@ -1223,10 +1238,15 @@ function drawDucks(now = clockNow()) {
     let pic = d._pic;
     if (!pic || !d._bodyEl.contains(pic))
       pic = d._pic = d._bodyEl.querySelector("svg.duck, img.px"); // (found again only if its body was redrawn elsewhere)
-    if (pic && pic._sq !== squish + org) {
-      pic._sq = squish + org;
-      pic.style.transformOrigin = org;
-      pic.style.transform = squish;
+    /* turned toward where it aims (the weapons below set d._tilt each frame, for the next): about its middle */
+    const tilt = deadPose ? 0 : d._tilt || 0,
+      turn = tilt ? `rotate(${tilt}deg) ${squish}` : squish,
+      tOrg = tilt ? TILT_ORG : org;
+    d._tilt = 0;
+    if (pic && pic._sq !== turn + tOrg) {
+      pic._sq = turn + tOrg;
+      pic.style.transformOrigin = tOrg;
+      pic.style.transform = turn; // (its 0.1 s transition turns it: css .gduck-body svg)
     }
     /* the outlines (outlines.js; every zombie game and Hangout's world), seen through a wall, under a roof and a floor
        away: my own duck a darker blue that only I see, every other player green, Justin yellow (Good Justin God in Mad
@@ -1664,6 +1684,8 @@ function drawDucks(now = clockNow()) {
           : dk && dk._face < 0
             ? Math.PI
             : 0;
+    if (dk && dir && Math.hypot(dir[0], dir[1]) > 1)
+      dk._tilt = tiltOf(dir, turned() ? 1 : dk._face || 1); // (its body turns toward it: the duck loop above, next frame)
     handed.add(id);
     let h = heldEls.get(id);
     if (h && !heldOn(h, fxl)) h = null;
