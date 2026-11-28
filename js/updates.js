@@ -19,6 +19,7 @@ export const UPDATES = [
       "For Dead Ducks Arcade: at night the edges of the screen are darker in a circle, and anything on fire lights up the dark around it.",
       "For Dead Ducks Arcade: jerry cans turn up more often when the generator is low, and rarely when it's full.",
       "For Dead Ducks Arcade: the merchant walks around the chapel while he sells. He fights back with a knife up close or a weak pistol at range, but only if you hit him up close or twice, and only when someone can see him.",
+      "Lightning eyes are free for everyone in Customize.",
       "Falls hurt: nothing for one elevation or less, then 10% of your health per elevation, at most 50%.",
     ],
   },

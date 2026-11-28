@@ -250,9 +250,9 @@ ui.js 380 small helpers every screen uses
 umaprules.js 72 Made maps: the room's part
 umaps.js 374 Made maps: making them, and
 units.js 12 the game's units, in one
-unlocks.js 381 things you unlock
+unlocks.js 379 things you unlock
 upbar.js 69 the green bar on an
-updates.js 3724 Updates
+updates.js 3725 Updates
 vdd.js 191 Valentine's Duck Date: what the
 vddrules.js 513 the rules of Valentine's Duck
 vellum.js 28 The King's Festival
