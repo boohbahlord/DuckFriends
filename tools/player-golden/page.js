@@ -113,10 +113,9 @@ window.__pgSetup = async (sc) => {
   return r.state.phase;
 };
 window.__pgPlay = async (sc) => {
-  const r = window.__pgR,
-    { hooks } = await import("../../js/hooks.js");
+  const r = window.__pgR;
   window.__pgAll(sc.seed || 1);
-  const said = hooks.resetDuck ? hooks.resetDuck() : "no reset";
+  const said = "no reset"; // (the command line's reset duck went with it, Nov 27)
   /* the scenario's input, by frame (x, y in shares of the screen, ms how long it's held):
      ["key", f, code, ms] a key; ["mouse", f, x, y] the mouse moved there; ["click", f, x, y, ms] the left button there;
      ["wheel", f, dy]; ["tap", f, x, y] a finger down and up; ["drag", f, x0, y0, x1, y1, ms, hold] a finger moved

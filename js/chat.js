@@ -27,11 +27,12 @@ import {
   chatCommand,
   chatSuggest,
   isMuted,
+  said,
   byTag,
   tag,
 } from "./chatmutes.js";
 
-export { isMuted, tag } from "./chatmutes.js";
+export { isMuted, said, tag } from "./chatmutes.js";
 
 /* a settings change in the chat, after the name tag of whoever made it: "changed Map to Tiles and Turn ends when done to
    2 of 3", or "put the game settings back to the defaults" */
@@ -143,10 +144,11 @@ export function chatWidget() {
             (m.to === me || mentionRe(meName).test(m.text)) &&
             !isMuted(s, m.from, "ping");
         /* over 250 characters: folded under an arrow (a ! beside it if it pings you), open until the chat closes */
-        const long = m.text.length > 250,
+        const words = said(m),
+          long = words.length > 250,
           open = long && ui.long.has(m.n);
         const text = esc(
-          long && !open ? m.text.slice(0, 250).trimEnd() + "…" : m.text,
+          long && !open ? words.slice(0, 250).trimEnd() + "…" : words,
         ).replace(
           /(\\?)@([\p{L}\p{N}_-]+)/gu,
           (a, b, n) => `<b class="at">${b}@${n}</b>`,
@@ -336,8 +338,8 @@ export function chatWidget() {
       document.body.append(float);
     }
     const p = s.players[m.from],
-      text =
-        m.text.length > 160 ? m.text.slice(0, 160).trimEnd() + "…" : m.text;
+      words = said(m),
+      text = words.length > 160 ? words.slice(0, 160).trimEnd() + "…" : words;
     float.innerHTML = m.opts
       ? `<span class="cf-sys">${s.players[m.by] ? nameHTML(s.players[m.by].name, s.players[m.by].nameStyle) : "The host"} ${esc(optsWords(m))}</span>`
       : m.sys

@@ -95,7 +95,7 @@ export const SB_SHEET = [
   ],
   [
     "N",
-    `${LANG}: your files, kept on this device, with a terminal line. Run a file there, or chmod +x it and ./file it. ${LANG} only runs in Sandbox.`,
+    `${LANG}: your files, kept on this device. Open one and Run it. ${LANG} only runs in Sandbox.`,
   ],
   [
     "H",
