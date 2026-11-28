@@ -2716,13 +2716,13 @@ function merchantFire(s, m0, now) {
         : null,
     zs = fp || !mInside(m0.x, m0.y) ? [] : zombies(s),
     z = zs
-      .filter(
-        (q) =>
+      .filter((q) => {
+        const w =
           q.st !== 3 &&
-          q.st !== 9 && // (a Flyer on a duck: only melee reaches it)
           mInside(q.x, q.y) &&
-          mWeapon(m0, q.x, q.y, zOf(q, "zombie")),
-      )
+          mWeapon(m0, q.x, q.y, zOf(q, "zombie"));
+        return w && (q.st !== 9 || w === "knife"); // (a Flyer on a duck: only melee reaches it, so his knife and never his handgun)
+      })
       .sort(
         (a, b) =>
           Math.hypot(a.x - m0.x, a.y - m0.y) -
