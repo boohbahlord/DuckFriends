@@ -54,7 +54,8 @@ export function floatLine(html, kind) {
   const p = el(`<p class="gmsg ${kind}"></p>`);
   p.innerHTML = html;
   p.addEventListener("animationend", (e) => {
-    if (e.animationName.startsWith("gmsg-out")) p.remove();
+    if (/** @type {AnimationEvent} */ (e).animationName.startsWith("gmsg-out"))
+      p.remove();
   });
   box.append(p);
   while (box.children.length > MOST) box.firstElementChild.remove();
