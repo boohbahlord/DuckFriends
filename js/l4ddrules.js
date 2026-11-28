@@ -185,6 +185,7 @@ import {
   newZombie,
   specialTick,
   zArmor,
+  flyerOff,
   moveZombies,
   STATION,
   zFloor,
@@ -3294,6 +3295,9 @@ export function fireTick(s, zs, now, T, p4) {
     Object.keys(fz).length || Object.keys(fp).length ? { z: fz, p: fp } : null;
   if (JSON.stringify(out) !== JSON.stringify(F)) s.hang.l4fire = out;
 }
+/* duck id shoved px world px along (ux, uy), as a swing shoves it (a Flyer's tug: zombies.js flyerStep) */
+export const tugDuck = (s, id, ux, uy, px, now) =>
+  shovePx(s, id, ux, uy, px, now, inCabin(...toPx(s.pos[id])) ? 1 : 0);
 /* a zombie's claw: 0.6 to 1, in tenths */
 export const clawDmg = () => 0.6 + Math.floor(Math.random() * 5) / 10;
 /* a duck takes 1 (a claw, fire); true when that put it down. A claw leaves a wound on it now and then, as hits do in
@@ -3521,8 +3525,14 @@ function meleeHits(s, now) {
     const push = meleePush(s, k.by, k.w); // (its push: its weapon's and my weight, push.js)
     for (const z of zs) {
       if (k.hit.includes(z.i)) continue;
-      if (!overlapH(hz, h, zOf(z, "zombie"))) continue;
-      if (Math.hypot(z.x - bx, z.y - by) > R) continue; // (a round bubble: as far up and down as to the sides, the owner's, Nov 18 15:18Z "Make sure melee weapons have the same range in any direction". It was squashed up and down, 1.4 times shorter)
+      const held = z.st === 9; // (a Flyer on a duck: any swing that reaches that duck reaches it, at any height)
+      if (!held && !overlapH(hz, h, zOf(z, "zombie"))) continue;
+      if (
+        held
+          ? Math.hypot(z.x - px, z.y - py) > A.at * sz + R
+          : Math.hypot(z.x - bx, z.y - by) > R
+      )
+        continue; // (a round bubble: as far up and down as to the sides, the owner's, Nov 18 15:18Z "Make sure melee weapons have the same range in any direction". It was squashed up and down, 1.4 times shorter)
       k.hit.push(z.i);
       if (z.st === 3) {
         knockZ(s, z, k.dx, k.dy, push);
@@ -3534,9 +3544,11 @@ function meleeHits(s, now) {
         ? A.dmg[0] + Math.floor(Math.random() * (A.dmg[1] - A.dmg[0] + 1))
         : A.dmg; // (the fire axe: 1 to 4; times my Size, push.js)
       const hp0 = z.hp,
-        dead = strike(s, z, dmg * sz, critRoll(s, k.by, k.w), k.by, k.w, now);
+        crit = critRoll(s, k.by, k.w),
+        dead = strike(s, z, dmg * sz, crit, k.by, k.w, now);
       wearDown(s, k.by, k.w, hp0 - Math.max(0, z.hp)); // (the HP it took off, not the overkill)
       if (dead) die(z, T);
+      else if (held && crit) flyerOff(z, now); // (a crit throws the Flyer off at once; still alive if it didn't kill it: the owner's, Nov 28)
       if (z.st === 2 || z.st === 3) knockZ(s, z, k.dx, k.dy, push); // (pushed back, alive or dead; not up a wall)
       any = true;
     }
@@ -3756,6 +3768,7 @@ export function l4Shots(s, now) {
         big = w === "chair" ? chairReach(sh.sc) : 1, // (the chair: as far as its picture, chair.js)
         near = (z) =>
           z.st !== 3 &&
+          z.st !== 9 && // (a Flyer on a duck: only melee reaches it, the owner's "Only melee can be used against it")
           Math.hypot((z.x - x) / (26 * big), (z.y - y) / (22 * big)) < 1 &&
           hOk(sh, zOf(z, "zombie"), z.x, z.y, sh.x0 * W, sh.y0 * H) &&
           !hLock(sh, zOf(z, "zombie")), // (at its height, the first one setting it: heights.js)
@@ -3935,7 +3948,7 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
       zs,
       (z) => [z.x, z.y, zOf(z, "zombie")],
       (z, n) => {
-        const alive = z.st !== 3;
+        const alive = z.st !== 3 && z.st !== 9; // (a Flyer on a duck: only melee reaches it)
         if (alive && strike(s, z, n.dmg, n.crit, sh.by, "", now, true)) {
           die(z, T);
           mark(s, z, "g0"); // (every chunk, cuts and big holes: l4ddart.js)

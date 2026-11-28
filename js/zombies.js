@@ -88,6 +88,7 @@ import {
   fireTick,
   clawDmg,
   hurtDuck,
+  tugDuck,
   walled,
 } from "./l4ddrules.js";
 import { openNear, flowFrom, heading } from "./zombiepath.js";
@@ -141,9 +142,9 @@ export const zOk = (x, y, z, up = STEP) =>
    heartbeat before, so a zombie forgot its way up the moment it chose it (the owner's, Nov 17 19:11Z: "WHY THE FUCK ARE
    ZOMBIES NOT COMMITTING ON WALL CLIMBS EVEN WHEN IM STILL ON THE SAME FUCKING ROOF!!!") */
 const KEEP =
-  "cm k fl wp j jp jc jx nj sp dm wk wt wd wn lt lw ws sr sx hu na hd sg tc".split(
+  "cm k fl wp j jp jc jx nj sp dm wk wt wd wn lt lw ws sr sx hu na hd sg tc fy fc".split(
     " ",
-  ); // (ws: which way it goes round a Sandbox wall, sandboxrules.js sbWallGo; sp, dm: a Sandbox spawn's zombie, its spawn and its damage: sbspawn.js; hd, sg, tc: the way it faces, till when it staggers, how many it touches: steer)
+  ); // (fy, fc: a Flyer's hold on a duck, and till when it waits to leap: flyerStep; ws: which way it goes round a Sandbox wall, sandboxrules.js sbWallGo; sp, dm: a Sandbox spawn's zombie, its spawn and its damage: sbspawn.js; hd, sg, tc: the way it faces, till when it staggers, how many it touches: steer)
 // (sr, sx, hu, na: its spot round its duck, the one it gave up, since when it is held up, the way up it gave up: crowd.js SUR)
 /* the zombies as objects, from the state's three parts, and back (k in zp: hp · 16 + st, st up to 8, the jump) */
 export function zombies(s) {
@@ -338,6 +339,112 @@ export function specialTick(s, L, zs, T) {
     zs.push(newZombie(s, L, T, zs, k));
   }
   L.sz = q;
+}
+/* ---------- the Flyer (the owner's, Nov 28; gamedefaults.js SPECIAL_Z.flyer) ----------
+   It walks as any zombie does. Near a duck on its floor that nothing holds, with nothing in the way, it leaps at it
+   (st 8; z.j[8] its height over the line: zombieroofs.js jumpZ), and landing on it, it holds on (st 9; z.fy: [the duck,
+   its next bite, its next tug]): a bite every F.bite ms, a tug a random way every F.pull.ms, a little toward the horde;
+   the duck still walks. It lets go when its duck goes down, or when a melee crit throws it off (l4ddrules.js
+   meleeHits: only melee reaches it there); then, or after a leap that missed, it waits F.rest ms (z.fc) */
+const F = SPECIAL_Z.flyer;
+/* the ducks held now, and where the horde is (its middle), for every Flyer this heartbeat */
+function flyers(zs) {
+  const held = new Set(),
+    rest = zs.filter((z) => z.st !== 3 && z.st !== 9),
+    n = rest.length || 1;
+  for (const z of zs) if (z.st === 9 && z.fy) held.add(z.fy[0]);
+  return {
+    held,
+    horde: [
+      rest.reduce((t, z) => t + z.x, 0) / n,
+      rest.reduce((t, z) => t + z.y, 0) / n,
+    ],
+    none: !rest.length,
+  };
+}
+export function flyerOff(z, now) {
+  z.st = 2;
+  z.n = 0;
+  z.fc = now + F.rest;
+  delete z.fy;
+}
+/* a Flyer's heartbeat, before the walk every zombie has: true when this did it (it holds on, or leapt) */
+function flyerStep(z, c, fly) {
+  const { now, pls } = c;
+  if (z.st === 9) {
+    const q = z.fy && pls.find((p) => p.id === z.fy[0]);
+    if (!q) {
+      flyerOff(z, now); // (its duck is down, or gone)
+      return true;
+    }
+    [z.x, z.y] = q.xy;
+    if (now >= z.fy[1]) {
+      z.fy = [z.fy[0], now + F.bite, z.fy[2]];
+      if (c.latch(q, rnd(...F.dmg))) flyerOff(z, now);
+    }
+    if (z.st === 9 && now >= z.fy[2]) {
+      z.fy = [z.fy[0], z.fy[1], now + F.pull.ms];
+      const a = Math.random() * 2 * Math.PI,
+        [hx, hy] = fly.none ? q.xy : minus(fly.horde, q.xy),
+        hd = Math.hypot(hx, hy) || 1;
+      c.tug(
+        q,
+        Math.cos(a) + (F.pull.horde * hx) / hd,
+        Math.sin(a) + (F.pull.horde * hy) / hd,
+      );
+    }
+    return true;
+  }
+  if (z.st !== 2 || (z.fc || 0) > now) return false;
+  const h = zOf(z, "zombie");
+  let q = null;
+  for (const p of pls) {
+    const d = room(z.x, z.y, ...p.xy);
+    if (
+      !p.j &&
+      !p.m &&
+      !fly.held.has(p.id) &&
+      d > 1 &&
+      d < F.leap &&
+      Math.abs(p.zz - h) < 20 &&
+      walkable(z.x, z.y, ...p.xy) &&
+      (!q || d < room(z.x, z.y, ...q.xy))
+    )
+      q = p;
+  }
+  if (!q) return false;
+  z.st = 8;
+  z.n = 0;
+  z.j = [z.x, z.y, ...q.xy, h, q.zz, 0, F.speed, F.up]; // (at its speed along the line, j[7]; its height, j[8])
+  return true;
+}
+/* a Flyer's leap ends: on a duck there that nothing holds, it holds on (every screen hears it, and that duck's hand goes
+   to its melee weapon: the owner's "melee is automatically switched to"); else it lands and waits */
+function flyerLand(z, c, fly) {
+  const q = c.pls.find(
+    (p) =>
+      !p.j &&
+      !p.m &&
+      !fly.held.has(p.id) &&
+      room(z.x, z.y, ...p.xy) < c.reach &&
+      Math.abs(p.zz - z.j[5]) < 30,
+  );
+  delete z.j;
+  if (!q) {
+    flyerOff(z, c.now);
+    return;
+  }
+  z.st = 9;
+  z.n = 0;
+  z.fy = [q.id, c.now + F.bite, c.now + F.pull.ms];
+  fly.held.add(q.id);
+  addFx(c.s, {
+    kind: "l4latch",
+    who: [q.id],
+    t: c.now,
+    x: Math.round(z.x),
+    y: Math.round(z.y),
+  });
 }
 /* what a zombie of look l wears that stops hits: "", "helmet" or "swat" (wounds.js armorHit) */
 export const zArmor = (l) =>
@@ -549,6 +656,8 @@ export function moveZombies(s, zs, now, T, up, seers = up) {
     way: (x, y, tx, ty) => wayTo(x, y, tx, ty, now),
     bite: (x, y) => addFx(s, { kind: "l4bite", who: [], t: now, x, y }),
     claw: (target, z) => mapClaw(s, p4, target, z, now),
+    latch: (q, dmg) => hurtDuck(s, p4, q.id, now, "claw", dmg), // (a Flyer's bite: true once its duck is down)
+    tug: (q, ux, uy) => tugDuck(s, q.id, ux, uy, F.pull.px, now), // (a Flyer's tug: as a shove, l4ddrules.js)
   };
   walkAll(zs, c);
   fireTick(s, zs, now, T, p4);
@@ -585,7 +694,8 @@ function walkAll(zs, c) {
   const taken = CR.spotsTaken(zs, now),
     G = { ...gr(), walk: walkable },
     eyes = c.eyes || pls.filter((q) => !q.j).map((q) => q.xy),
-    rush = T >= ZOMBIE_GRACE; // (off every duck's screen they come twice as fast, but not in a round's first ZOMBIE_GRACE ms)
+    rush = T >= ZOMBIE_GRACE, // (off every duck's screen they come twice as fast, but not in a round's first ZOMBIE_GRACE ms)
+    fly = c.latch && flyers(zs);
   for (const z of zs) {
     if (z.st === 3) continue;
     const o = z.l[2] ? openingById(z.l[2]) : null,
@@ -596,6 +706,7 @@ function walkAll(zs, c) {
         (rush && !seenBy(eyes, z.x, z.y) ? 2 : 1) * // (the owner's, Nov 23 00:32Z: "speed up the zombies by twice the amount of speed when they're not on a player screen")
         (z.sg > now ? STAGGER.k : 1), // (just hit: a short stagger)
       sp = o && sidesOf(o, z);
+    if (fly && z.l[8] === Z_BREED.flyer && flyerStep(z, c, fly)) continue;
     if (z.st === 0) {
       // coming: to the spot outside its opening (Downpour: the foot of the fence)
       const [tx, ty] = sp.out;
@@ -719,6 +830,10 @@ function walkAll(zs, c) {
         continue;
       } // (a duck on the plank in its way: it stops there and claws at it)
       if (walkTo(z, x1, y1, (fall || (walk ? v : JUMP.speed)) * dt)) {
+        if (z.j[8] && fly) {
+          flyerLand(z, c, fly);
+          continue;
+        } // (the Flyer's leap)
         const fell = h1 < canopyDeck().h - 1;
         z.st = fell ? 2 : 7;
         z.n = 0;
@@ -1021,7 +1136,9 @@ const zombieZ = (z) =>
         ? deckH(edgeOf(z.x, z.y, deckOf(z)).d, z.x, z.y)
         : z.st === 8 && z.j
           ? jumpZ(z)
-          : gr().h(z.x, z.y);
+          : z.st === 9
+            ? gr().h(z.x, z.y) + F.ride // (a Flyer on a duck: on its back)
+            : gr().h(z.x, z.y);
 heightWay("zombie", zombieZ); // (every zombie's height is asked through heights.js zOf)
 /* an opening's two spots for zombie z: out (where it waits and tears) and in (where it's through). A fence's at the
    zombie's own place along it; a boarded hole on Downpour from the side it came to it (z.n: 1 outside, -1 inside) */
@@ -1188,7 +1305,7 @@ export function walkable(x0, y0, x1, y1) {
    pump", the owner's, Nov 20 03:58Z) */
 function separate(zs, zf = dp() ? zombieZ : null, k = "zombie") {
   const g = gr(),
-    live = zs.filter((z) => z.st !== 3),
+    live = zs.filter((z) => z.st !== 3 && z.st !== 9), // (a Flyer on a duck rides it: it takes no room)
     touch = apart(live, k, {
       rx: g.rx,
       ry: g.ry,

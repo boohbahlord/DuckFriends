@@ -41,6 +41,7 @@ import { isL4dd, inHand } from "./l4ddrules.js";
 import { ARMS, BOARD_WEAPONS, AUTO } from "./guns.js";
 
 import { l4Got } from "./l4dd.js";
+import { l4Pick } from "./hotpick.js";
 
 import { isSb, boardDuck, sbSfx, sbCellMids } from "./sandboxrules.js";
 
@@ -667,6 +668,8 @@ export function playFx(f) {
     setTimeout(() => word.remove(), 1100);
   } else if (f.kind === "l4drop") {
     l4Got(f.k); // (a drop was taken: its name for everyone)
+  } else if (f.kind === "l4latch") {
+    if (f.who[0] === R.me) l4Pick(0); // (a Flyer holds my duck: my melee weapon in hand at once, the owner's, Nov 28; key 1, kitslots.js)
   } else if (f.kind === "l4bite") {
     sfx.chomp(); // (a zombie ate the zebra cake)
   } else if (f.kind === "pcrit") {

@@ -114,7 +114,27 @@ export const ARMOR = {
    zombies are dead, whichever is first; never while the other one is alive (then it waits for the next round). hp, and
    speed: a share of a duck's walk (the Giant's "as fast as the players"), or none for a zombie's own */
 export const SPECIAL_Z = {
-  flyer: { from: 5, chance: 0.35, step: 0.05, most: 0.6, hp: 5 },
+  flyer: {
+    from: 5,
+    chance: 0.35,
+    step: 0.05,
+    most: 0.6,
+    hp: 5,
+    /* its leap and hold (zombies.js flyerStep): it leaps at a duck on its floor up to `leap` duck rooms away, at speed
+       px/s, up to `up` px over the line, rising the first `peak` of the way (fast, then slowing) and falling the rest
+       (slow, then as a falling body); on a duck it rides `ride` px up, bites `dmg` HP every `bite` ms ("every 0.25
+       seconds ... for 0.1-0.2 damage") and tugs it `pull.px` px a random way every `pull.ms` ms, `pull.horde` of the
+       way toward the zombies ("a tiny bias towards the horde"); thrown off or missing, it waits `rest` ms */
+    leap: 6,
+    speed: 360,
+    up: 70,
+    peak: 0.35,
+    ride: 18,
+    dmg: [0.1, 0.2],
+    bite: 250,
+    pull: { ms: 500, px: 12, horde: 0.25 },
+    rest: 1500,
+  },
   giant: { from: 8, chance: 0.2, step: 0.05, most: 0.5, hp: 150, speed: 1 },
   WELL: 1.5,
   AT: 30000,
