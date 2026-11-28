@@ -30,11 +30,14 @@ function place() {
   box.style.right = right
     ? `${Math.round(Math.max(8, innerWidth - (side ? r.left - 8 : r.right)))}px`
     : "auto";
-  /* over the chat button, and on a phone over the weapons beside it too (their caption included) */
+  /* over the chat button and the keys' words by it, however many lines they take (nothing overlaps: the owner's rule),
+     and on a phone over the weapons beside it too (their caption included) */
   let top = on ? r.top : innerHeight;
-  if (on && !side)
-    for (const e of document.querySelectorAll(".sp-phone:not(.gone), .sp-cap"))
-      top = Math.min(top, e.getBoundingClientRect().top || top);
+  for (const e of document.querySelectorAll(
+    on && !side ? ".hints, .sp-phone:not(.gone), .sp-cap" : ".hints",
+  ))
+    top = Math.min(top, e.getBoundingClientRect().top || top);
+  watch();
   box.style.bottom = `${Math.round(Math.max(8, innerHeight - top + 8))}px`;
   /* and short of the touch pad (game.js: its ring and its column of buttons) */
   let to = innerWidth;
@@ -47,6 +50,18 @@ function place() {
     to < innerWidth
       ? `${Math.round(Math.max(120, to - box.offsetLeft - 8))}px`
       : "";
+}
+/* the keys' words change their lines (a tip comes, the window narrows): the column moves with them */
+let seen = null;
+const ro =
+  typeof ResizeObserver === "function"
+    ? new ResizeObserver(() => box && box.children.length && place())
+    : null;
+function watch() {
+  const h = document.querySelector(".hints");
+  if (!ro || h === seen) return;
+  if (seen) ro.unobserve(seen);
+  if ((seen = h)) ro.observe(h);
 }
 /* a line: html in it, kind its look ("chat": the chat's float, "game": a game message); returns it */
 export function floatLine(html, kind) {

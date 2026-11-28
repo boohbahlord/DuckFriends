@@ -13,18 +13,37 @@ import { anyOf } from "./random.js";
 export const KILL = { ARM: 0.0001, ITEM: 0.0001 };
 export const REACH = 70; // world px: how near E takes one (and how near a Sandbox orb is walked over, l4ddrules.js DROP.REACH)
 /* what a zombie just killed leaves (bags: SLOT_BAGS and WEAPON_BAGS): a weapon, an item or "" (one roll for both) */
-export function killLoot({ odds, slot, weapon }) {
+export function killLoot(bags) {
   const r = Math.random();
   if (r >= KILL.ARM + KILL.ITEM) return "";
-  if (r >= KILL.ARM) return anyOf(slot.item);
+  return bagLoot(bags, r >= KILL.ARM);
+}
+/* one thing from the bags: an item (item true), else a weapon from the special and weapon bags by their odds; item left
+   out, an item as often as a merchant's bags give one (odds.item: the supply crate, l4ddrules.js crateTick) */
+export function bagLoot(
+  { odds, slot, weapon },
+  item = Math.random() < odds.item,
+) {
+  if (item) return anyOf(slot.item);
   if (Math.random() < odds.special) return anyOf(slot.special);
   return anyOf(weapon[anyOf(Object.keys(weapon))]); // (each weapon bag as likely)
 }
-/* drop k (w: the weapon or item it is) lies at (x, y) in world px until `until`; n: its number, when it fell */
-export function layDrop(s, k, x, y, n, until, w = "") {
+/* drop k (w: the weapon or item it is; more: anything else it carries) lies at (x, y) in world px until `until`; n:
+   its number, when it fell, never two the same (the screens key the drops by it) */
+export function layDrop(s, k, x, y, n, until, w = "", more = {}) {
+  const all = s.hang.l4dr || [];
+  while (all.some((d) => d.n === n)) n += 0.01;
   s.hang.l4dr = [
-    ...(s.hang.l4dr || []),
-    { n, k, ...(w ? { w } : {}), x: Math.round(x), y: Math.round(y), until },
+    ...all,
+    {
+      n,
+      k,
+      ...(w ? { w } : {}),
+      ...more,
+      x: Math.round(x),
+      y: Math.round(y),
+      until,
+    },
   ];
 }
 /* the nearest drop E takes from (x, y) in world px, or null */

@@ -2,49 +2,14 @@
    at full health with full guns reads 1, 1 and rich; a duck down to a quarter of its rounds is doing badly; a duck
    under 40% health is low; no points make it not rich (the cheapest gun the merchants sell).
    Run: node tools/check/run.mjs director */
-const fs = require("fs"),
-  path = require("path");
-const { chromium } = require("playwright");
-const { url, fail, noErrors } = require("./lib.cjs");
+const { fail, noErrors, fakedPage } = require("./lib.cjs");
 (async () => {
-  const b = await chromium.launch(),
-    p = await b.newPage(),
-    errs = [];
-  p.on("pageerror", (e) => errs.push(e.message));
-  await p.addInitScript(
-    fs.readFileSync(path.resolve(__dirname, "../npc-golden/init.js"), "utf8"),
-  ); // (the clock faked, as knock.cjs)
-  await p.goto(url, { waitUntil: "networkidle" });
+  const { b, p, errs } = await fakedPage();
   const got = await p.evaluate(async () => {
-    const net = await import("./js/net.js"),
-      D = await import("./js/director.js"),
+    const D = await import("./js/director.js"),
       R = await import("./js/l4ddrules.js");
-    let now = 1.8e12;
-    window.__fake = true;
-    window.__now = now;
-    const room = net.createLocalRoom({ name: "D", test: true, computers: 1 });
-    room.close();
-    room.send({
-      t: "options",
-      options: {
-        modePick: "host",
-        mapPick: "host",
-        mode: "l4dd",
-        map: "downpour",
-        botWait: 1,
-        wildJustin: 0,
-      },
-    });
-    room.send({ t: "start" });
-    for (let k = 0; k < 600 && !R.kitOf(room.state, room.me); k++) {
-      const w =
-        room.state.hang && room.state.hang.l4 && room.state.hang.l4.wait;
-      for (const id of room.state.seat)
-        if (w && !(w.v || {})[id])
-          room.send({ t: "hang", k: "l4", do: "endturn", on: true, id });
-      window.__now = now += 200;
-      room.send({ t: "tick", id: room.me });
-    }
+    const { l4Room } = await import("./tools/check/l4room.js"),
+      room = await l4Room("D", (r) => R.kitOf(r.state, r.me));
     const s = JSON.parse(JSON.stringify(room.state)),
       me = room.me,
       out = {},

@@ -14,7 +14,6 @@ import {
   merchantPrice,
   missOf,
 } from "./l4ddrules.js";
-import { endless } from "./ammo.js";
 import {
   ARMS,
   kindOf,
@@ -27,7 +26,7 @@ import {
 } from "./guns.js";
 import { orbHTML, UP_ICONS } from "./l4ddart.js";
 import { DROP_ICONS } from "./l4dddrops.js";
-import { draws } from "./bowdraw.js";
+import { draws, cooks } from "./bowdraw.js";
 
 /* what each one does, in a line */
 const SAY = {
@@ -38,7 +37,7 @@ const SAY = {
   pan: "Misses half the time, but half its hits are headshots.",
   handgun: "The gun you start with.",
   revolver: "Five big shots, three a second, then a reload.",
-  bow: "Arrows that never run out, one at a time.",
+  bow: "Click shoots at once. Hold the right button to draw it: the longer, the harder it hits. 300 arrows.",
   dagger: "Thrown. It falls to the floor after.",
   shotgun:
     "A cone of pellets that doesn't fly far. A tube of 8 shells, loaded one at a time.",
@@ -55,9 +54,9 @@ const SAY = {
     "Hold to burn everything in front of you; the longer you hold, the farther it reaches. The ground burns and the fire spreads.",
   burst: "Three rounds a click, as hard as the AK-47.",
   laser:
-    "Hold to fire. A red beam once a second through every zombie in its line. Never runs out, but six in a row overheat it for 8 seconds.",
+    "Hold to fire. A red beam once a second through every zombie in its line. 300 shots, and six in a row overheat it for 8 seconds.",
   glauncher:
-    "Its grenades fly straight and go off on the first zombie or wall they hit, and kill every zombie in the blast.",
+    "Its grenades fly in a high arc over the zombies, land, and go off 3 seconds after the shot, killing every zombie in the blast.",
   medkit:
     "Puts your HP back to full. Held while you revive someone, it gets them up at once.",
   bandage: "Gives back half the HP you've lost, at least 1. You can hold one.",
@@ -66,7 +65,8 @@ const SAY = {
   zebra:
     "Thrown. Every zombie goes for it and bites it until it's gone. Justin's favorite.",
   adrenaline: "You walk at the game's usual speed for 20 seconds.",
-  grenade: "Thrown with G. Kills every zombie in its blast.",
+  grenade:
+    "Hold to pull the pin, let go to throw: it goes off 5 seconds after the pin. Kills every zombie in its blast.",
   kill: "Every hit kills, for 45 seconds.",
   ammo: "Fills everyone's ammo and grenades (not the medkit).",
   nuke: "Kills every zombie on the map, and everyone gets the points.",
@@ -102,7 +102,6 @@ function stats(w) {
     out.push(["Rate", `${num(1000 / A.cool, 1)} a second`]);
   if (A.mag) out.push(["Magazine", A.mag]);
   if (A.kind === "ranged" && A.all && w !== "flamer") out.push(["Ammo", A.all]);
-  else if (endless(w)) out.push(["Ammo", "Unlimited"]);
   if (A.reload) out.push(["Reload", secs(A.reload)]);
   if (A.shell) out.push(["Reload", `${secs(A.shell)} a shell`]);
   if (A.burst) out.push(["Burst", `${A.burst} rounds`]);
@@ -110,7 +109,7 @@ function stats(w) {
     out.push(["Tank", `${num((1000 / A.cool / A.all) * 100)}% a second`]);
     out.push(["Burns", `1 every ${secs(BURN.EVERY)} for ${secs(BURN.Z)}`]);
   }
-  if (draws(w))
+  if (draws(w) && !cooks(w))
     out.push(["Crit", "Up to 100%, drawn"]); // (bowdraw.js drawCrit)
   else if (critOf(w)) out.push(["Crit", `${num(critOf(w) * 100, 1)}%`]);
   if (missOf(w)) out.push(["Misses", `${num(missOf(w) * 100, 1)}%`]);

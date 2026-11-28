@@ -303,7 +303,7 @@ import {
   isWild,
 } from "./l4ddrules.js";
 import { GRENADE as NADE_KEY } from "./kitslots.js";
-import { draws } from "./bowdraw.js";
+import { draws, cooks } from "./bowdraw.js";
 
 import { AUTO, armOfShot } from "./guns.js";
 import { armedView, heatShake } from "./heat.js";
@@ -789,6 +789,44 @@ function readBoxes(now) {
       ]);
     }
   }
+}
+/* a map's grenade's pin pulled (the press, bowdraw.js s.draw; the director plan, Nov 28): on every screen it drops from
+   that duck's hand and fades, as soon as the pin is out, not when it's thrown */
+const PINS = new Set();
+function pinsOut(s, fxl, size, now) {
+  for (const id in s.draw || {}) {
+    const p = s.pos[id],
+      { t: t0, w } = s.draw[id],
+      k = id + "@" + t0;
+    if (
+      !p ||
+      w !== "grenade" ||
+      (id === R.me ? heldNow() : p.w) !== "grenade" ||
+      PINS.has(k) ||
+      now - t0 > 400
+    )
+      continue;
+    PINS.add(k);
+    const a = world.place({ x: p.x, y: p.y }, zOf(p)),
+      f = (id === R.me && me ? me.face : world.face(id)) || 1; // (from the hand, on the side it faces)
+    pinDrop(
+      fxl,
+      (s.players[id] || {}).duck,
+      size,
+      a.left + f * 0.42 * size,
+      a.top - 0.4 * size,
+      f < 0,
+    );
+  }
+  if (PINS.size > 64) PINS.clear();
+}
+/* a grenade's pin at (x, y) on the screen: it drops from the hand and fades */
+function pinDrop(fxl, duck, size, x, y, ccw = false) {
+  const pin = el(
+    `<div class="gpin" style="--s:${size.toFixed(0)}px;transform:translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)"><i class="${ccw ? "ccw" : ""}">${GRENADE_PIN(colorsOf(duck, "grenade"))}</i></div>`,
+  );
+  fxl.append(pin);
+  setTimeout(() => pin.remove(), 1300);
 }
 function drawDucks(now = clockNow()) {
   frameNo++;
@@ -1635,13 +1673,8 @@ function drawDucks(now = clockNow()) {
       b.classList.remove("blk");
       SHOT_EL.set(sh.n, b);
       fxl.append(b);
-      if (sh.k === "grenade" && now - sh.t < 400) {
-        const pin = el(
-          `<div class="gpin" style="--s:${(size * (sh.sc || 1)).toFixed(0)}px;transform:translate(${a.left.toFixed(1)}px, ${top.toFixed(1)}px)"><i class="${vx < 0 ? "ccw" : ""}">${GRENADE_PIN(colorsOf(duck, "grenade"))}</i></div>`,
-        );
-        fxl.append(pin);
-        setTimeout(() => pin.remove(), 1300);
-      } // (its pin stays behind: it drops from the hand and fades)
+      if (sh.k === "grenade" && sh.tb == null && now - sh.t < 400)
+        pinDrop(fxl, duck, size * (sh.sc || 1), a.left, top, vx < 0); // (its pin stays behind: it drops from the hand and fades)
     }
     b.style.transform = `translate(${a.left.toFixed(1)}px, ${top.toFixed(1)}px)`;
     if (sh.blk && b._blk !== sh.blk) {
@@ -1651,6 +1684,7 @@ function drawDucks(now = clockNow()) {
       b.classList.add("blk");
     } // (a bullet stopped on his chair or controller: it blinks a see-through white, the owner's, Nov 17 13:07Z)
   }
+  if (hang) pinsOut(s, fxl, size, now);
   for (const [n, b] of SHOT_EL)
     if (!live.has(n)) {
       SHOT_EL.delete(n);
@@ -3806,23 +3840,26 @@ function autoPress(e) {
     !R ||
     isL4dd(R.state) ||
     e.pointerType !== "mouse" ||
-    !(repeats(hand.held) || draws(hand.held)) ||
+    !(repeats(hand.held) || cooks(hand.held)) ||
     !heldClick(e)
   )
     return;
   autoDid = true;
-  if (drawHold(hand.held, true)) return; // (the bow: drawn while held, gamehand.js)
+  if (drawHold(hand.held, true)) return; // (a grenade: cooked while held, gamehand.js)
   holdTrigger(() => {
     if (!R || !repeats(hand.held) || !onBoardPhase()) return 0;
     fire(hand.held);
     return Math.max(60, coolFor(hand.held) / grCool(R.state, R.me)); // (Sandbox: a group's Cooldown speed)
   });
 }
-/* Quacky Zombies: the left button down uses the weapon in hand, again as soon as it can while held (the bow: draws) */
+/* Quacky Zombies: the left button down uses the weapon in hand, again as soon as it can while held (a grenade: cooked
+   while held; the bow: one arrow a click, at once) */
 function l4Press(e) {
   if (!R || !isL4dd(R.state) || e.pointerType !== "mouse" || e.button !== 0)
     return;
-  if (!onBoardPhase() || !aimHere(e) || drawHold(heldNow(), true)) return; // (the bow: drawn while held, gamehand.js)
+  const w = heldNow();
+  if (!onBoardPhase() || !aimHere(e) || (cooks(w) && drawHold(w, true))) return; // (gamehand.js)
+  if (draws(w)) return void fire(w);
   holdTrigger(() => {
     if (!R || !isL4dd(R.state)) return 0;
     const w = heldNow();
@@ -3830,6 +3867,20 @@ function l4Press(e) {
     return Math.max(60, l4Cool(R.state, R.me, w));
   });
 }
+/* the bow, every mode: the right button held draws it, let go it shoots (the director plan, Nov 28; gamehand.js
+   drawHold); over the board its menu never opens while one is in hand */
+const bowIn = () =>
+  R && draws(heldNow()) && !cooks(heldNow()) ? heldNow() : "";
+function drawPress(e) {
+  if (e.button !== 2 || e.pointerType !== "mouse" || !onBoardPhase()) return;
+  const w = bowIn();
+  if (!w || !aimHere(e)) return;
+  e.preventDefault();
+  drawHold(w, "right");
+}
+const noMenu = (e) => {
+  if (bowIn() && aimHere(e)) e.preventDefault();
+};
 register("game", {
   guard: () => !!activeRoom(),
   /* the browser's Back in Single Player: back to its own lobby, never the online rooms */
@@ -4081,6 +4132,8 @@ register("game", {
       addEventListener(t, holdEnd);
     S.addEventListener("pointerdown", l4Press);
     S.addEventListener("pointerdown", autoPress);
+    S.addEventListener("pointerdown", drawPress);
+    S.addEventListener("contextmenu", noMenu);
     S.addEventListener("pointerdown", (e) => {
       if (e.target.closest(".wq-card.mine")) {
         e.preventDefault();

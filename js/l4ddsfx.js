@@ -112,7 +112,10 @@ export function l4Hear(s, ctx) {
         const a = ctx.world.at(f.by);
         play("l4till", a ? { x: a.x, y: a.y } : {});
         rang.add(f.by);
-      }
+      } else if (f.n > st.fx && f.kind === "l4heli")
+        play("heli"); // (the supply crate's helicopter, heard everywhere: the rules' crateCome)
+      else if (f.n > st.fx && f.kind === "l4thud")
+        play("thud", { x: f.x, y: f.y }); // (the supply crate lands: the rules' crateTick)
     st.fx = s.fxN || 0;
   }
   for (const id of s.seat || []) {
@@ -162,11 +165,23 @@ export function l4Hear(s, ctx) {
     st.over = L.over.at;
   }
   /* the merchant: a little shop bell as he gets to his spot, the same bell down as he runs off; from where he stands */
-  const mc = h.l4m,
-    mst = mc ? mc.st : "";
-  if (mst !== st.mst) {
-    if (!st.first && mc && (mst === "here" || mst === "out"))
-      play(mst === "here" ? "merchantIn" : "merchantOut", { x: mc.x, y: mc.y });
+  if (h.l4m !== st.mA || h.l4mx !== st.mB) {
+    // (nothing to hear unless one of them changed)
+    [st.mA, st.mB] = [h.l4m, h.l4mx];
+    const mst = {}; // (each one here, by his visit: several can be)
+    for (const mc of [h.l4m, ...(h.l4mx || [])]) {
+      if (!mc) continue;
+      mst[mc.v] = mc.st;
+      if (
+        mc.st !== (st.mst || {})[mc.v] &&
+        !st.first &&
+        (mc.st === "here" || mc.st === "out")
+      )
+        play(mc.st === "here" ? "merchantIn" : "merchantOut", {
+          x: mc.x,
+          y: mc.y,
+        });
+    }
     st.mst = mst;
   }
   /* a new round (not the first look at the game, nor once it's over) */
