@@ -215,7 +215,7 @@ import { bbMatch, roundName } from "./bbrules.js";
 
 import { mountWorld } from "./hangout/world.js";
 
-import { W as HW, H as HH } from "./hangout/layout.js";
+import { W as HW, H as HH, floorH } from "./hangout/layout.js";
 
 import { zOf, fallHurt } from "./heights.js";
 
@@ -2955,7 +2955,11 @@ function paintNow(force) {
     const p = s.pos[R.me];
     if (p.kb && p.kb.t !== shovedAt) {
       shovedAt = p.kb.t;
-      thrown = Math.hypot((p.x - p.kb.x) * HW, (p.y - p.kb.y) * HH); // (how far the hit itself threw me, never my own steering: its fall damage, below)
+      const z = zOf(p);
+      thrown =
+        isHang(s) && floorH(p.x * HW, p.y * HH, z) >= z - 1
+          ? 0 // (it left me standing: a walk off later is my own fall)
+          : p.kb.d || 0; // (how far the hit itself threw me, as the host had it, never my own steering: its fall damage, below)
       me.x = p.x;
       me.y = p.y;
       target = null;

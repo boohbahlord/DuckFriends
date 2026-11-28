@@ -77,7 +77,7 @@ const { chromium } = require("playwright");
       fail(`fall: off the pumps' roof ${k} took ${v} ` + JSON.stringify(edges));
   /* knocked off the pumps' roof northward (boardfire.js shovePx), steering along, against, or not at all */
   const throws = [];
-  for (const key of ["", "ArrowUp", "ArrowDown"]) {
+  for (const key of ["", "KeyW", "KeyS"]) {
     await p.evaluate(async () => {
       const r = window._r,
         L = await import("./js/hangout/layout.js"),
@@ -98,20 +98,24 @@ const { chromium } = require("playwright");
       });
     });
     await p.waitForTimeout(800);
-    if (key) await p.keyboard.down(key);
     await p.evaluate(async () => {
       const r = window._r,
         { shovePx } = await import("./js/boardfire.js");
       shovePx(r.state, r.me, 0, -1, 160, Date.now(), 0);
       r.send({ t: "tick", id: r.me });
     });
+    if (key) await p.keyboard.down(key); // (steered once it's thrown, from the same spot every time)
     await p.waitForTimeout(1500);
     if (key) await p.keyboard.up(key);
-    throws.push(await p.evaluate(() => window._lands.map((a) => a.s)));
+    throws.push(await p.evaluate(() => window._lands.map((a) => [a.s, a.y])));
   }
   await b.close();
   noErrors(errs);
-  const [none, along, against] = throws.map((t) => t[0]);
+  const [[none, y0], [along, y1], [against, y2]] = throws.map(
+    (t) => t[0] || [],
+  );
+  if (y1 === y0 && y2 === y0)
+    fail("fall: steering in the air moves the duck " + JSON.stringify(throws)); // (the keys walk it: W and S, never the arrows a held weapon aims with)
   if (!(none > 0) || along !== none || against !== none)
     fail(
       "fall: a knock off the pumps' roof, steered or not, lands with its own throw " +

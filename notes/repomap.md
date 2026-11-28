@@ -18,7 +18,7 @@ beaks.js 138 beaks
 below.js 89 darker below
 blast.js 69 explosions: one module
 bloodpool.js 50 a pool of blood: the
-boardfire.js 1147 the board's weapons: hits, shots,
+boardfire.js 1153 the board's weapons: hits, shots,
 boardjustin.js 499 Justin on the boards
 boardzombies.js 122 the zombies on a board
 botduck.js 90 a computer's duck: a random
@@ -64,7 +64,7 @@ front.js 150 the front page
 fx.js 1187 the effects, drawn as pixels
 fxart.js 45 the effects' pictures: a duck
 fxmotion.js 233 how a held weapon and
-game.js 4392 the game screen
+game.js 4396 the game screen
 gameact.js 525 the action window and the
 gameannounce.js 187 The cloud's words and what
 gameboard.js 582 the board: each mode's board
