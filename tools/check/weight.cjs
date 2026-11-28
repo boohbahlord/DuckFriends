@@ -2,7 +2,8 @@
    more weight and also 10% less speed ... more melee damage. In the same ratio ... knockback becomes 10% more"):
    - walk: 50% 1.5, 100% 1, 110% 0.9, 152% WEIGHT.SLOWEST (0.5);
    - the ratio: a push on a 110% duck moves it 1/1.1 as far as on a 100% one;
-   - melee: a board hit at 110% takes 1.1 times the HP; a zombie map's melee does 1.1 times the damage (zombieTakes), a
+   - melee: a board hammer hit at 110% takes 1.1 times the HP (its target with 20 HP to spare first: the hammer's 4 to 6
+     can take all of a duck's 4, and one roll for both); a zombie map's melee does 1.1 times the damage (zombieTakes), a
      shot the same at any Size;
    - immobile: a body with im is never pushed;
    - dead weight (B6b, guns.js DEAD_WEIGHT): a duck holding the LMG (0.15) is moved 1/1.15 as far, and walks as
@@ -43,14 +44,14 @@ const near = (a, b, e = 0.002) => Math.abs(a - b) <= e;
     for (const sc of [50, 100, 110, 152]) out.walk[sc] = P.walkOf(sized(sc), a);
     for (const sc of [100, 110]) {
       const s = sized(sc);
-      BF.shove(s, a, 1, 0, 1, now, 0);
+      BF.shove(s, a, 1, 0, 64, now, 0); // (a push of a duck length, 64 world px)
       out.moved[sc] = s.pos[a].x - 0.3;
       const t = sized(sc);
-      t.php = {};
-      BF.hitSoaks(t, c, now, "hammer", false, a, P.sizeOf(t, a));
-      out.lost[sc] = (t.php[c] || {}).n || 0;
+      t.php = { [c]: { n: -20, t: now } };
       const rnd = Math.random;
-      Math.random = () => 0.999; // (no miss, no crit)
+      Math.random = () => 0.999; // (no miss, no crit, the same roll of the hammer's damage each time)
+      BF.hitSoaks(t, c, now, "hammer", false, a, P.sizeOf(t, a));
+      out.lost[sc] = ((t.php[c] || {}).n ?? -20) + 20;
       out.dmg[sc] = [
         L4.zombieTakes(t, a, "knife").dmg,
         L4.zombieTakes(t, a, "handgun").dmg,
@@ -60,7 +61,7 @@ const near = (a, b, e = 0.002) => Math.abs(a - b) <= e;
     const held = (sc, w) => {
       const s = sized(sc);
       s.pos[a] = { ...s.pos[a], w };
-      BF.shove(s, a, 1, 0, 1, now, 0);
+      BF.shove(s, a, 1, 0, 64, now, 0); // (a push of a duck length, 64 world px)
       return [s.pos[a].x - 0.3, P.walkOf(s, a)];
     };
     out.held = [held(100, "lmg"), held(110, "knife")];

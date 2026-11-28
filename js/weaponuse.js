@@ -98,7 +98,3 @@ export const swingMisses = (w) => {
   const m = (ARMS[w] || {}).miss;
   return !!m && Math.random() < m;
 };
-/* how far a melee hit pushes a living zombie back, in world px (a duck is 64; ARMS knock), and how much of that another
-   duck in the swing is shoved */
-export const knockOf = (w) => (ARMS[w] || ARMS.knife).knock || ARMS.knife.knock;
-export const KNOCK_DUCK = 0.5;
