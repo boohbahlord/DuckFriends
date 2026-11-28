@@ -10,14 +10,12 @@ const { fakedPage, fail, noErrors } = require("./lib.cjs");
       G = await import("./js/gamedefaults.js");
     const up = G.WALK_EASE.up,
       dn = G.WALK_EASE.down,
-      go = { x: 1, y: 0, sprint: false },
-      stop = { x: 0, y: 0, sprint: false };
-    const out = {
-      first: W.easeWalk(go, up / 2).x,
-      full: W.easeWalk(go, up).x,
-      half: W.easeWalk(stop, dn / 2).x,
-      still: W.easeWalk(stop, dn).x,
-    };
+      out = {
+        first: W.easeWalk(1, 0, up / 2).x,
+        full: W.easeWalk(1, 0, up).x,
+        half: W.easeWalk(0, 0, dn / 2).x,
+        still: W.easeWalk(0, 0, dn).x,
+      };
     const bar = document.createElement("span");
     bar.className = "hpm-stam";
     document.body.append(bar);
@@ -29,6 +27,9 @@ const { fakedPage, fail, noErrors } = require("./lib.cjs");
     out.after = bar.getAnimations().length;
     S.sprintStep(true, 0.05);
     out.held = bar.getAnimations().length;
+    S.sprintStep(false, 0.05);
+    S.sprintStep(false, 0.05, 1, true); // (asked standing still: it flashes too)
+    out.still2 = bar.getAnimations().length;
     return out;
   });
   await b.close();
@@ -40,4 +41,5 @@ const { fakedPage, fail, noErrors } = require("./lib.cjs");
     bad("it slows over WALK_EASE.down");
   if (got.before !== 0 || got.after !== 1 || got.held !== 1)
     bad("one flash each tired try");
+  if (got.still2 !== 2) bad("a try standing still flashes");
 })();

@@ -2366,34 +2366,37 @@ function trackWalk() {
    cmsg_01LTpp6fzv8sfYUR5KoHADKtLgUjArf16XwsJeAqka2pZ7: "the laser sight and flashlight sway together, with the laser
    sight changing where bullets first land ... swaying gets worse with sprinting"; gamedefaults.js SWAY), Dead Ducks
    Arcade's. Radians now, clockwise; it grows and dies away with my walk */
-let aimSway = { a: 0, t: 0 };
+const aimSway = { a: 0, t: 0 };
 function swayNow() {
   if (!R || !isL4dd(R.state)) return 0;
   const t = performance.now(),
     want = moving ? (sprinting ? SWAY.sprint : SWAY.walk) : 0,
     k = Math.min(1, (t - (aimSway.t || t)) / 1000 / SWAY.ease);
-  aimSway = { a: aimSway.a + (want - aimSway.a) * k, t };
+  aimSway.a += (want - aimSway.a) * k;
+  aimSway.t = t;
   return ((aimSway.a * Math.PI) / 180) * Math.sin((2 * Math.PI * t) / SWAY.ms);
 }
-function swayed([x, y]) {
+/* the way (x, y) on the screen, swayed, on the board: turned on the screen first, so my gun (drawn turned by the same
+   sway) and my shots agree */
+function swayed(x, y) {
   const r = swayNow(),
     c = Math.cos(r),
     s = Math.sin(r);
-  return [x * c - y * s, x * s + y * c];
+  return toBoard(x * c - y * s, x * s + y * c);
 }
 export function myAim() {
   const face = turned() ? 1 : (me && me.face) || 1;
   if (!geo || !me) return [face, 0];
-  const at = (a) => (a ? swayed(a) : [face, 0]);
-  if (keyAim) return at(toBoard(keyAim[0], keyAim[1])); // (the arrow keys moved last)
-  if (phoneAim() && walkScr) return at(toBoard(walkScr[0], walkScr[1])); // (a phone: the way I walk)
+  const at = (x, y) => swayed(x, y) || [face, 0];
+  if (keyAim) return at(keyAim[0], keyAim[1]); // (the arrow keys moved last)
+  if (phoneAim() && walkScr) return at(walkScr[0], walkScr[1]); // (a phone: the way I walk)
   if (!mouse) return toBoard(face, 0) || [face, 0];
   const board = origin($(".board", S));
   if (!board) return [face, 0];
   const r = board.getBoundingClientRect(),
     c = bodyAt(R.me, me),
     up = isL4dd(R.state) && world ? world.lift(R.me, me) : 0; // (Quacky Zombies, up in the air (a jump): it aims from where it stands, as its shot flies along the ground from its feet, so it goes where I point; the owner's, Nov 15)
-  return at(toBoard(mouse.x - r.left - c.left, mouse.y - r.top - c.top - up));
+  return at(mouse.x - r.left - c.left, mouse.y - r.top - c.top - up);
 }
 const STILL_MS = 600; // ms between my duck's updates on a Poor connection while it stands still (moving: 220)
 export function sendMove(force) {
@@ -2520,15 +2523,15 @@ export function step(dt, now) {
     sendMove(true);
   }
   const asked = walkIntent(keys, arrowsAim()), // (the arrows aim: WASD walks)
-    want = easeWalk(asked, dt), // (it speeds up and slows down: playerinput.js)
-    hx = want.x,
-    vy = want.y; // on screen: right, down
-  if (asked.x || asked.y) target = null;
-  sprinting = want.sprint || !!(target && target.sprint);
+    hx = asked.x,
+    vy = asked.y; // on screen: right, down
+  if (hx || vy) target = null;
+  sprinting = asked.sprint || !!(target && target.sprint);
   sprinting = sprintStep(
     sprinting && !!(hx || vy || target),
     dt,
     grStam(s, R.me),
+    sprinting,
   ); // (sprint till the bar is empty, then a walk till it's full again: stamina.js, every mode; Sandbox: a group's Regen stamina)
   let ax, ay; // in board terms
   if (turned()) {
@@ -2555,6 +2558,9 @@ export function step(dt, now) {
       ay = dy / dist;
     }
   }
+  const want = easeWalk(ax, ay, dt); // (the keys, the stick or a tap: it speeds up and slows down, playerinput.js)
+  ax = want.x;
+  ay = want.y;
   moving = !!(ax || ay) && canWalk();
   /* a jump can end inside another duck (in the air they pass over each other); on the ground they ease apart */
   const other = canWalk() && bumps(me.x, me.y, now);
@@ -2709,12 +2715,11 @@ export function step(dt, now) {
 /* Hangout: the keys, the stick or a tap say which way; the world walks my duck (walls, steps, edges, falls) */
 function hangStep(dt, now) {
   if (!world || !geo) return;
-  const asked = walkIntent(keys, arrowsAim()), // (the arrows aim: WASD walks)
-    want = easeWalk(asked, dt); // (it speeds up and slows down: playerinput.js)
-  let ax = want.x,
-    ay = want.y;
-  if (asked.x || asked.y) target = null;
-  sprinting = want.sprint || !!(target && target.sprint);
+  const asked = walkIntent(keys, arrowsAim()); // (the arrows aim: WASD walks)
+  let ax = asked.x,
+    ay = asked.y;
+  if (ax || ay) target = null;
+  sprinting = asked.sprint || !!(target && target.sprint);
   if (target) {
     // a click or a tap: there, or held up by something
     const a = world.aim(me, target);
@@ -2728,8 +2733,16 @@ function hangStep(dt, now) {
       ay = a.ay;
     }
   }
-  if (!canWalk()) ax = ay = 0;
-  sprinting = sprintStep(sprinting && !!(ax || ay), dt, grStam(R.state, R.me)); // (sprint till the bar is empty, then a walk till it's full again: stamina.js, every mode, Dead Ducks Arcade's too; Sandbox: a group's Regen stamina)
+  const ok = canWalk(),
+    want = easeWalk(ok ? ax : 0, ok ? ay : 0, dt); // (the keys, the stick or a tap: it speeds up and slows down, playerinput.js)
+  ax = ok ? want.x : 0; // (held still means still, not a slide; after, it eases in again)
+  ay = ok ? want.y : 0;
+  sprinting = sprintStep(
+    sprinting && !!(ax || ay),
+    dt,
+    grStam(R.state, R.me),
+    sprinting,
+  ); // (sprint till the bar is empty, then a walk till it's full again: stamina.js, every mode, Dead Ducks Arcade's too; Sandbox: a group's Regen stamina)
   const kx = ax;
   const ev = world.step(me, ax, ay, sprinting, dt, now);
   moving = ev.moved;

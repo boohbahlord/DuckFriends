@@ -31,9 +31,9 @@ function flash() {
 
 /* one frame: on, I want to sprint and am walking; true when my duck sprints this frame. fill: how many times as fast it
    fills again (Sandbox: a group's Regen stamina, sbgroups.js grStam) */
-export function sprintStep(on, dt, fill = 1) {
-  if (on && !asked && tired) flash();
-  asked = on;
+export function sprintStep(on, dt, fill = 1, ask = on) {
+  if (ask && !asked && tired) flash(); // (ask: sprint asked for, moving or not)
+  asked = ask;
   if (on && !tired && left > 0) {
     left = Math.max(0, left - (dt * 1000) / L4.SPRINT);
     if (left <= 0) tired = true;

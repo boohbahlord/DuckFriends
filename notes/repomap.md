@@ -66,7 +66,7 @@ front.js 150 the front page
 fx.js 1198 the effects, drawn as pixels
 fxart.js 45 the effects' pictures: a duck
 fxmotion.js 233 how a held weapon and
-game.js 4475 the game screen
+game.js 4488 the game screen
 gameact.js 525 the action window and the
 gameannounce.js 187 The cloud's words and what
 gameboard.js 582 the board: each mode's board
@@ -161,7 +161,7 @@ phonepad.js 144 phones: the aim-and-attack stick and
 picrop.js 268 cropping a picture: every picture
 pixel.js 767 the pixel look
 pixelpalette.js 192 the pixel look's colors
-playerinput.js 41 what I ask my duck
+playerinput.js 45 what I ask my duck
 players.js 342 the player menu and the
 pointer.js 54 a computer or a phone
 powerart.js 377 Dead Ducks Arcade: the power
