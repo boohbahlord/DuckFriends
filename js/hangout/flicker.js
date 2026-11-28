@@ -6,6 +6,7 @@
    stutter(target, now) → the light's strength: 1, or DIP in a dip (world.js lays the ground's pools of light with it).
    The lamp's lantern and the porch's bulbs dim the same way on the screen. */
 import { activity } from "./registry.js";
+import { FLASH_FLICKER as FF } from "../gamedefaults.js";
 
 const TARGETS = ["post1", "post2", "post3", "post4", "post5", "post6", "porch"];
 const SLOT = 40000,
@@ -31,10 +32,32 @@ function stutter(target, now) {
   if (!target || still()) return 1;
   const s = slotOf(now);
   if (s.target !== target) return 1;
+  return dips(s, now);
+}
+/* a stutter's dips: DIP in one, else 1 */
+function dips(s, now) {
   const u = now - s.at;
   if (u < 0 || u >= SPAN) return 1;
   const gap = SPAN / s.n;
   return u % gap < DIP_MS ? DIP : 1;
+}
+/* duck id's flashlight now: 1, or DIP while it stutters (l4dd.js leaves its cone out then). The room's clock alone says
+   when, so every screen sees it together */
+export function flashStutter(id, now) {
+  if (still()) return 1;
+  const k = [...String(id)].reduce(
+      (a, c) => (a * 31 + c.charCodeAt(0)) % 9973,
+      7,
+    ),
+    i = Math.floor(now / FF.slot);
+  if (hash(i + k * 0.37) > FF.chance) return 1;
+  return dips(
+    {
+      at: i * FF.slot + hash(i + k + 0.2) * (FF.slot - SPAN),
+      n: 2 + Math.floor(hash(i + k + 0.3) * 3),
+    },
+    now,
+  );
 }
 
 /* a light's (layout.js' LIGHTS) slow sway in size and strength, and its stutter now: power.js' dark follows both, world.js'

@@ -69,7 +69,7 @@ game.js 4466 the game screen
 gameact.js 525 the action window and the
 gameannounce.js 187 The cloud's words and what
 gameboard.js 582 the board: each mode's board
-gamedefaults.js 259 the game's own numbers, for
+gamedefaults.js 262 the game's own numbers, for
 gamefx.js 697 the board's specials and the
 gamehand.js 514 the hand: the number-key specials,
 gamemsg.js 108 lines by the chat button:
@@ -106,7 +106,7 @@ jumps.js 48 the jump counter
 justinmoves.js 43 Justin's moves on the board
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which key
-l4dd.js 3438 Quacky Zombies on every screen
+l4dd.js 3439 Quacky Zombies on every screen
 l4ddangel.js 147 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
 l4ddart.js 608 Quacky Zombies' pictures
@@ -293,7 +293,7 @@ dpflood.js 89 Downpour's flood over its bed
 dpground.js 324 Downpour's ground
 falls.js 118 falling a long way
 fireflies.js 174 fireflies
-flicker.js 83 now and then a light
+flicker.js 106 now and then a light
 ghosts.js 111 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in
 lamp.js 71 the lamps: the example activity

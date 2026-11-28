@@ -59,6 +59,9 @@ export const WALK_EASE = { up: 0.15, down: 0.1 };
    Arcade's): at most `walk` degrees either way walking, `sprint` sprinting, one sway back and forth each `ms`; it grows
    and dies away over `ease` seconds. Mine (the gun's walk sway was 3 degrees) */
 export const SWAY = { walk: 2, sprint: 5, ms: 1100, ease: 0.3 };
+/* now and then a flashlight stutters (owner, Nov 28 04:30Z): each duck's light, in each slot of `slot` ms, by this
+   chance (so once in about four minutes), dips out 2 to 4 times over half a second (hangout/flicker.js) */
+export const FLASH_FLICKER = { slot: 60000, chance: 0.25 };
 
 /* a blast's rings (blast.js; the owner's, Nov 21 19:07Z: "the center of a grenade's explosion is at ... the
    intersection of the plus of 4 squares of the pixel hitbox ... it's 4 boxes in the center of the hitbox, those have crit
