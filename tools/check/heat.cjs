@@ -57,12 +57,12 @@ const { chromium } = require("playwright");
     );
     return out;
   });
-  const want = [0, 0.2, 1.47, 0.4, 2.94, 0.6, 4.41, 0.8, 5.88, 1, 7.35, 1]; // (each shot: its angle off, then the heat after it)
+  const want = [0, 0.3, 3.31, 0.6, 6.61, 0.9, 9.92, 1, 11.03, 1, 11.03, 1]; // (each shot: its angle off, then the heat after it)
   if (JSON.stringify(got.shots) !== JSON.stringify(want))
     C.fail("the pistol's heat and spread: " + JSON.stringify(got.shots));
   if (got.shake[0] !== 1.3 || got.shake[1] !== 1)
     C.fail("a hot gun's shake: " + got.shake);
-  if (got.cool !== 0 || got.coolHeat !== 0.2)
+  if (got.cool !== 0 || got.coolHeat !== 0.3)
     C.fail("not cool half a second after: " + got.cool + ", " + got.coolHeat);
   if (JSON.stringify(got.dagger) !== "[1,0]" || got.kept.length)
     C.fail("the dagger or grenade spread: " + JSON.stringify(got));
