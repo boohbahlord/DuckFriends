@@ -106,3 +106,17 @@ export const ARMOR = {
   PIERCE: [".50 BMG", ".50 AE", "hammer", "axe"],
   SPAWN: { helmet: 0.005, swat: 0.005 },
 };
+/* the special zombies (the owner's, Nov 28: cmsg_01LTpp6fzv8sfYUR5KoHADKtLgUjArf16XwsJeAqka2pZ7,
+   cmsg_01LTpp6fzv8sfYUR5KoHADKtBFSt5xGqKea6TT5ehvSw7H and cmsg_01LTpp6fzv8sfYUR5KoHADKtCoUNw94KGwZjNsEiuJRsw8; zombies.js
+   specialTick). Each from round `from`: its chance a round `chance`, `step` more each round up to `most`, times WELL
+   while the team does well; a round when the team does badly at its moment, it waits for the next round and its chance
+   goes back a step. It comes once a round at most, at AT ms or when MARKS (one picked each round) of the round's
+   zombies are dead, whichever is first; never while the other one is alive (then it waits for the next round). hp, and
+   speed: a share of a duck's walk (the Giant's "as fast as the players"), or none for a zombie's own */
+export const SPECIAL_Z = {
+  flyer: { from: 5, chance: 0.35, step: 0.05, most: 0.6, hp: 5 },
+  giant: { from: 8, chance: 0.2, step: 0.05, most: 0.5, hp: 150, speed: 1 },
+  WELL: 1.5,
+  AT: 30000,
+  MARKS: [1 / 3, 1 / 2, 2 / 3],
+};

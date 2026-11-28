@@ -5,8 +5,13 @@
    round the side, the jump onto the canopy, its claw, and what Sandbox's board zombies and the computers ask of it.
    Moved here from l4ddrules.js as it was (nothing it does changed); the way to the ducks is zombiepath.js. Next, Mad God
    Justin's waves and Sandbox's board zombies run on it too, each a breed. */
-import { ZOMBIE_SWIPE_SLOWER, ZOMBIE_GRACE, ARMOR } from "./gamedefaults.js";
-import { badShare } from "./director.js";
+import {
+  ZOMBIE_SWIPE_SLOWER,
+  ZOMBIE_GRACE,
+  ARMOR,
+  SPECIAL_Z,
+} from "./gamedefaults.js";
+import { badShare, doingWell, ducks, badly } from "./director.js";
 /* Dead Ducks Arcade's zombies' swipe in every round: its wind-up (from the tell to the hit) and the ms from one hit to the
    next, rounds 1 to 4's (the owner's, Nov 21 18:24Z: "all of the zombies have the default attack speed as they do in
    rounds 1 through 4"); the 0.2 s slower of Nov 20 is in the second */
@@ -54,7 +59,7 @@ import {
   ZHATS,
   ZOUTFITS,
   Z_JUSTIN,
-  Z_ARMOR,
+  Z_BREED,
   VIEW,
   playable,
   FENCE,
@@ -225,8 +230,9 @@ export function l4SetHp(s, ch) {
   store(s, zs, false);
 }
 export const minus = (a, b) => [a[0] - b[0], a[1] - b[1]];
-/* a new zombie, at one of the openings (the ones nearer the ducks twice as likely) */
-export function newZombie(s, L, T, zs = []) {
+/* a new zombie, at one of the openings (the ones nearer the ducks twice as likely); kind: a special one's breed
+   (SPECIAL_Z: "flyer", "giant"), or "" a plain one */
+export function newZombie(s, L, T, zs = [], kind = "") {
   const nj = L.made >= L.n * (1 - JCHASE.last); // (the round's last tenth: never after Justin)
   syncMap();
   const ids = players(s).filter((id) => standing(s, id)),
@@ -255,11 +261,14 @@ export function newZombie(s, L, T, zs = []) {
     } else from = byFence(o.fence, FENCE.from, rnd(...o.fence.climb)); // (nowhere to land that leads to anyone: anywhere along it)
   }
   const i = L.next++;
-  const arm = armorRoll(s),
-    [size, build, hat, outfit] = lookOf(arm),
-    max = Math.max(1, hp0()),
-    jus = Math.random() < Z_JUSTIN ? 1 : 0,
-    v = Math.round(WALK * rnd(...Z_SPEED)), // (its own speed, every round the same: the owner's, Nov 28 01:57Z, "make every zombie as fast as they are already on round 8")
+  const B = SPECIAL_Z[kind],
+    arm = B ? Z_BREED[kind] : armorRoll(s),
+    [size, build, hat, outfit] = B
+      ? [kind === "giant" ? 1 : 0, 0, -1, -1] // (no apparel; the Giant its biggest, until its own look and size)
+      : lookOf(arm),
+    max = B ? B.hp : Math.max(1, hp0()),
+    jus = !B && Math.random() < Z_JUSTIN ? 1 : 0,
+    v = Math.round(B && B.speed ? WALK * B.speed : WALK * rnd(...Z_SPEED)), // (its own speed, every round the same: the owner's, Nov 28 01:57Z, "make every zombie as fast as they are already on round 8")
     [sx, sy] = from || o.out;
   return {
     ...otherWay("zombie"), // (a flanker: flank)
@@ -278,15 +287,65 @@ export function newZombie(s, L, T, zs = []) {
       : [max, v, o.id, size, build, hat, outfit, ...(arm ? [0, arm] : [])],
   };
 }
-/* armor (the owner's, Nov 28; gamedefaults.js ARMOR): a new zombie's, Z_ARMOR's or 0. Each kind ARMOR.SPAWN of them,
+/* ---------- the special zombies: the Flyer and the Giant (gamedefaults.js SPECIAL_Z) ----------
+   Every heartbeat of a round (L: the round, s.hang.l4's copy; zs: the zombies, the new ones pushed on). L.sz keeps
+   this round's: r its round, m its mark (MARKS), and for each kind s its steps up (back one for each wait), o owed (it
+   waited: it comes at its next moment without a roll), d done this round. The Giant first, so a Flyer waits for it */
+const KINDS = ["giant", "flyer"];
+const badNow = (s) => ducks(s).some(badly); // (the team doing badly: any duck low on health or ammo)
+export function specialTick(s, L, zs, T) {
+  let q = L.sz;
+  if (!q || q.r !== L.r) {
+    q = { r: L.r, m: Math.floor(Math.random() * SPECIAL_Z.MARKS.length) };
+    for (const k of KINDS) {
+      const B = SPECIAL_Z[k],
+        o = (L.sz && L.sz[k]) || { s: -1, o: 0 },
+        top = Math.round((B.most - B.chance) / B.step);
+      q[k] = {
+        s: L.r >= B.from ? Math.min(top, o.s + 1) : -1, // (its first round 0 steps)
+        o: o.o,
+        d: 0,
+      };
+    }
+    L.sz = q;
+  }
+  const alive = (k) => zs.some((z) => z.st !== 3 && z.l[8] === Z_BREED[k]),
+    plain = zs.filter((z) => z.st !== 3 && !(z.l[8] >= Z_BREED.flyer)).length,
+    moment = T >= SPECIAL_Z.AT || L.made - plain >= SPECIAL_Z.MARKS[q.m] * L.n;
+  if (!moment || KINDS.every((k) => q[k].d || L.r < SPECIAL_Z[k].from)) return;
+  q = { ...q };
+  for (const k of KINDS) {
+    const B = SPECIAL_Z[k];
+    if (L.r < B.from || q[k].d) continue;
+    const o = { ...q[k], d: 1 },
+      chance =
+        Math.max(0, B.chance + B.step * o.s) *
+        (doingWell(s) ? SPECIAL_Z.WELL : 1);
+    q[k] = o;
+    if (!o.o && Math.random() >= chance) continue; // (not this round)
+    if (KINDS.some((x) => x !== k && alive(x))) {
+      o.o = 1; // (the other is alive: next round)
+      continue;
+    }
+    if (badNow(s)) {
+      o.o = 1;
+      o.s -= 1; // (the team doing badly: next round, and its chance a step back)
+      continue;
+    }
+    o.o = 0;
+    zs.push(newZombie(s, L, T, zs, k));
+  }
+  L.sz = q;
+}
+/* armor (the owner's, Nov 28; gamedefaults.js ARMOR): a new zombie's, Z_BREED's or 0. Each kind ARMOR.SPAWN of them,
    from round 1, fewer only while ducks do badly: times 1 - 2 x (ducks doing badly / ducks). Half the helmets an army
    one, half a motorcycle one */
 function armorRoll(s) {
   const k = Math.max(0, 1 - 2 * badShare(s)),
     r = Math.random();
-  if (r < ARMOR.SPAWN.swat * k) return Z_ARMOR.swat;
+  if (r < ARMOR.SPAWN.swat * k) return Z_BREED.swat;
   if (r < (ARMOR.SPAWN.swat + ARMOR.SPAWN.helmet) * k)
-    return Math.random() < 0.5 ? Z_ARMOR.helmet : Z_ARMOR.moto;
+    return Math.random() < 0.5 ? Z_BREED.helmet : Z_BREED.moto;
   return 0;
 }
 /* every helmet but on an armored one: any helmet stops crits, so only armorRoll's wear one */
@@ -298,7 +357,7 @@ const HATS = ZHATS.map((_, i) => i).filter(
 function lookOf(arm = 0) {
   const dress = Math.random() < 0.2 ? Math.random() : -1, // (20% wear something: a hat, an outfit or both)
     hat =
-      arm === Z_ARMOR.helmet || arm === Z_ARMOR.swat
+      arm === Z_BREED.helmet || arm === Z_BREED.swat
         ? ZHATS.indexOf("helmet")
         : arm
           ? -1
@@ -306,7 +365,7 @@ function lookOf(arm = 0) {
             ? HATS[rint(0, HATS.length - 1)]
             : -1,
     outfit =
-      arm === Z_ARMOR.swat
+      arm === Z_BREED.swat
         ? ZOUTFITS.indexOf("police")
         : dress >= 0.4
           ? rint(0, ZOUTFITS.length - 1)
