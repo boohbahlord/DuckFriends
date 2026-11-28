@@ -1967,7 +1967,7 @@ export const MERCH = {
   W: 1,
   CHAIN: 0.25, // (each one that comes brings another this often, chained)
   APART: 1500, // (ms: each one after the first sets off this much later …
-  BESIDE: 70, // … and stands this far beside the one before, px)
+  BESIDE: 70, // … and stands this far beside the one before, px, on either side of the first in turn)
   AGAIN: 0.25,
   BUILD: 0.25,
   /* killed, he drops one gun of his stock GUN of the time, and, apart from that, PURSE points PURSE_P of the time */
@@ -2017,6 +2017,8 @@ export const stockPrice = (s, p, w, kit) =>
 /* a new game: every merchant alive again, his bags new */
 function merchantSetUp(s) {
   s.hang.l4m = null;
+  s.hang.l4mx = []; // (the extra ones too: none carried into a new game)
+  s.hidden = { ...(s.hidden || {}), l4mhx: [] };
   s.hang.l4mc = []; // (the bodies of the ones killed: a new game, none)
   setMh(s, {
     pw: {},
@@ -2563,11 +2565,14 @@ function merchantTick1(s, now) {
   if (!leg || now - (h.t || now) > MERCH.LATE) {
     /* his way done (or taking too long): at his spot, or gone */
     if (m0.st === "in") {
-      const sx = BUTLER.x + (m0.k || 0) * MERCH.BESIDE,
+      const k = m0.k || 0,
+        sx = BUTLER.x + Math.ceil(k / 2) * (k % 2 ? 1 : -1) * MERCH.BESIDE, // (one after the first: beside him, a side each in turn)
         at =
-          m0.k && standable(sx, BUTLER.y, heightAt(sx, BUTLER.y), 0)
+          k &&
+          whereIn(sx, BUTLER.y) === whereIn(BUTLER.x, BUTLER.y) &&
+          standable(sx, BUTLER.y, heightAt(sx, BUTLER.y), 0)
             ? sx
-            : BUTLER.x; // (one after the first: beside him)
+            : BUTLER.x; // (never out of his building)
       s.hang.l4m = {
         ...m0,
         st: "here",
