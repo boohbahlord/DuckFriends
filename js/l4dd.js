@@ -2983,7 +2983,7 @@ activity({
           ? 0
           : inDeep(o.x, o.y)
             ? SINK + Math.sin(t / 520 + o.i) * 2.2
-            : inShallow(o.x, o.y) && o.st !== 5
+            : inShallow(o.x, o.y) && !(o.st === 5 && up) // (up a fence: out of it)
               ? WADE_SINK * o.feet
               : 0;
       const olOnly =

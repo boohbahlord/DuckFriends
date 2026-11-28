@@ -521,7 +521,7 @@ function walkAll(zs, c) {
          drop from the top down the inside (fenceZ) */
       const f = o.fence,
         top = FENCE.out - FENCE.mid,
-        up = acrossFence(f, z.x, z.y) > top + 1,
+        up = !f.open && acrossFence(f, z.x, z.y) > top + 1,
         [tx, ty] = up ? byFence(f, top, f.axis === "y" ? z.y : z.x) : sp.in;
       if (
         walkTo(
@@ -530,7 +530,9 @@ function walkAll(zs, c) {
           ty,
           up
             ? (FENCE.mid * v * dt) / GS.FENCE_H
-            : ((FENCE.across - FENCE.mid) * dt) / FENCE.FALL,
+            : f.open
+              ? v * dt // (the road's ends: no fence, it walks in)
+              : ((FENCE.across - FENCE.mid) * dt) / FENCE.FALL,
         ) &&
         !up
       ) {
@@ -867,7 +869,7 @@ function walkAll(zs, c) {
 export function fenceZ(x, y, id) {
   const o = openingById(id),
     f = o && o.fence;
-  if (!f) return 0;
+  if (!f || f.open) return 0;
   const u = (FENCE.out - acrossFence(f, x, y)) / FENCE.across;
   if (u <= 0 || u >= 1) return 0;
   const m = FENCE.mid / FENCE.across;
@@ -916,7 +918,7 @@ export const duckFloor = (p) => (dp() ? deckAt(...toPx(p), zOf(p)) : null);
    or on the ground */
 const zombieZ = (z) =>
   z.st === 5
-    ? fenceZ(z.x, z.y, z.l[2])
+    ? fenceZ(z.x, z.y, z.l[2]) || gr().h(z.x, z.y) // (off it, or walking in at the road's ends: the ground)
     : z.st === 6
       ? climbZ(z.x, z.y, deckOf(z))
       : z.st === 7 || (z.st === 3 && deckOf(z))

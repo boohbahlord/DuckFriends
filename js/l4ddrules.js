@@ -638,9 +638,17 @@ export const FENCE = { from: 45, out: 22, mid: 34, across: 68, FALL: 0.35 };
 /* how far out from fence f's line (x, y) is (inside: below 0) */
 export const acrossFence = (f, x, y) =>
   ((f.axis === "y" ? x : y) - f.at) * f.out;
+/* the west and east sides stop at the road's banks: the road runs open off both ends, with no fence across it (the
+   owner's, Nov 28), so there a zombie walks in instead of climbing (open) */
 const RIM_SIDES = () => [
-  { axis: "y", at: GS.RIM.x0, out: -1, climb: [GS.RIM.y0, GS.RIM.y1] },
-  { axis: "y", at: GS.RIM.x1, out: 1, climb: [GS.RIM.y0, GS.RIM.y1] },
+  ...[
+    [GS.RIM.x0, -1],
+    [GS.RIM.x1, 1],
+  ].flatMap(([at, out]) => [
+    { axis: "y", at, out, climb: [GS.RIM.y0, GS.ROAD.y0] },
+    { axis: "y", at, out, climb: [GS.ROAD.y0, GS.ROAD.y1], open: true },
+    { axis: "y", at, out, climb: [GS.ROAD.y1, GS.RIM.y1] },
+  ]),
   { axis: "x", at: GS.RIM.y0, out: -1, climb: [GS.RIM.x0, GS.RIM.x1] },
   { axis: "x", at: GS.RIM.y1, out: 1, climb: [GS.RIM.x0, GS.RIM.x1] },
 ];
@@ -664,7 +672,7 @@ const DP_OPENINGS = [
       in: byFence(f, FENCE.out - FENCE.across, 0),
       from: byFence(f, FENCE.from, 0),
       fence: f,
-      ...(f.axis === "x" ? { rim: true } : {}), // (no moonlight pooled at its middle: l4dd.js)
+      ...(f.axis === "x" || f.open ? { rim: true } : {}), // (no moonlight pooled at its middle: l4dd.js)
     };
   }),
   ...GS.BOARDED.map((o) => {
