@@ -2203,10 +2203,38 @@ function wayOut(x, y) {
 function restCome(s, now) {
   merchantCome(s, now);
   crateCome(s, now);
+  bandagesCome(s, now);
+}
+/* bandages (DIRECTOR.BANDAGE): in a rest where some duck is low on health and neither the crate nor a merchant brings
+   a bandage, one or two drop by each duck low on health, half the time each (the owner's, Nov 28) */
+function bandagesCome(s, now) {
+  const low = ducks(s).filter(lowHp),
+    B = DIRECTOR.BANDAGE,
+    rolled =
+      ((s.hang.l4cr && s.hang.l4cr.w) || []).includes("bandage") ||
+      merchantsOf(s).some((m) =>
+        (m.stock || []).some(([w]) => w === "bandage"),
+      );
+  if (!low.length || isSb(s) || rolled) return;
+  low.forEach((d) => {
+    const { x, y } = s.pos[d.id];
+    for (let i = 0, n = Math.random() < B.ONE ? 1 : 2; i < n; i++) {
+      const bx = x + (i ? B.BY : -B.BY) * (n - 1); // (two: one each side of it)
+      layDrop(
+        s,
+        "arm",
+        standable(bx, y, heightAt(bx, y), 0) ? bx : x,
+        y,
+        now + i,
+        now + DROP.LIFE,
+        "bandage",
+      );
+    }
+  });
 }
 /* the supply crate (DIRECTOR.CRATE): on Downpour, in a rest where some duck is low on ammo and can't afford a refill
    (director.js needsCrate), a helicopter is heard, then it falls by the soldier's red flare (on the ground nearest it:
-   crateSpot) with a thud and its things lie there: two for one duck, else one or two for each. s.hang.l4cr = { t: when it lands, n: how many things } */
+   crateSpot) with a thud and its things lie there: two for one duck, else one or two for each. s.hang.l4cr = { t: when it lands, w: its things } */
 function crateCome(s, now) {
   if (!dp() || isSb(s) || !needsCrate(s)) return;
   const C = DIRECTOR.CRATE,
@@ -2217,7 +2245,10 @@ function crateCome(s, now) {
         : Array.from({ length: k }, () =>
             Math.random() < C.ONE ? 1 : 2,
           ).reduce((a, b) => a + b, 0);
-  s.hang.l4cr = { t: now + C.HEAR, n };
+  s.hang.l4cr = {
+    t: now + C.HEAR,
+    w: Array.from({ length: n }, () => bagLoot(BAGS)), // (rolled now, so bandagesCome sees them)
+  };
   addFx(s, { kind: "l4heli", who: [], t: now, x: GS.FLARE.x, y: GS.FLARE.y }); // (the helicopter: l4ddsfx.js)
 }
 /* where it lands: the open ground nearest the flare (the flare burns on the gas station's roof, and things lie on the
@@ -2250,8 +2281,8 @@ function crateTick(s, now) {
   s.hang.l4cr = null;
   const C = DIRECTOR.CRATE,
     [x, y] = crateSpot();
-  for (let i = 0; i < c.n; i++) {
-    const a = (i / c.n) * 2 * Math.PI;
+  c.w.forEach((w, i) => {
+    const a = (i / c.w.length) * 2 * Math.PI;
     layDrop(
       s,
       "arm",
@@ -2259,9 +2290,9 @@ function crateTick(s, now) {
       y + Math.sin(a) * C.SPREAD * Math.min(1, i),
       now + i,
       now + DROP.LIFE,
-      bagLoot(BAGS),
+      w,
     );
-  }
+  });
   addFx(s, { kind: "l4thud", who: [], t: now, x, y }); // (it lands: l4ddsfx.js)
 }
 /* a merchant comes, in a rest (round zero's, or between two rounds): half the time, and very likely while some duck

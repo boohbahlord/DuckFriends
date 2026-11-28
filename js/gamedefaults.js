@@ -93,4 +93,6 @@ export const DIRECTOR = {
   /* the supply crate (l4ddrules.js crateCome): heard HEAR ms before it lands by the flare; SOLO things for one duck,
      else 1 or 2 for each duck, one ONE of the time; its things lie up to SPREAD world px from where it landed */
   CRATE: { HEAR: 6000, SOLO: 2, ONE: 0.6, SPREAD: 70 },
+  /* bandages (l4ddrules.js bandagesCome): 1 bandage ONE of the time, else 2, BY world px each side of the duck */
+  BANDAGE: { ONE: 0.5, BY: 70 },
 };
