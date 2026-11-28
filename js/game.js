@@ -331,7 +331,6 @@ import {
   sbOnBoard,
   sbBoardK,
   noGoreOf,
-  sbLands,
   SB_LAND_MIN,
   sbWalls,
   sbWallGo,
@@ -2661,15 +2660,14 @@ function hangStep(dt, now) {
   if (isL4dd(R.state)) me.aim = myAim(); // (Quacky Zombies: my flashlight shines where I aim)
   if (ev.whee) sfx.fall(); // off the deck: a slide whistle
   if (ev.thud > 90) sfx.bonk(); // and the landing
-  if (ev.thud >= SB_LAND_MIN && sbLands(R.state))
+  if (ev.thud >= SB_LAND_MIN)
     R.send({
-      t: "sb",
-      k: "land",
+      t: "land",
       h: Math.round(ev.thud),
       x: +me.x.toFixed(4),
       y: +me.y.toFixed(4),
       z: Math.round(me.z || 0),
-    }); // (Sandbox: a zone that hurts whoever lands on it from a fall, sbzone.js)
+    }); // (a fall: its damage, and a Sandbox zone that hurts whoever lands on it: actplay.js act_land)
   sendMove(!!(ev.land || ev.thud || ev.force));
 }
 /* Space or a tap */

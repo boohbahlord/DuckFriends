@@ -24,6 +24,7 @@ import {
   STAIRS,
   inCabin,
   seenFrom,
+  duckSees,
   sortY,
   bodyZ,
   roofHoleOver,
@@ -52,6 +53,7 @@ import { nameHTML } from "./name.js";
 import { profile, save } from "./store.js";
 import { statsOf } from "./cheatflag.js";
 import { sfx } from "./sound.js";
+import { watching } from "./spectate.js";
 import { l4Hear, l4Steps, l4Reset } from "./l4ddsfx.js";
 import { now as clockNow } from "./clock.js";
 import {
@@ -109,6 +111,7 @@ import {
   MERCH,
   ZHATS,
   ZOUTFITS,
+  standing,
 } from "./l4ddrules.js";
 import { SLOT_KINDS } from "./kitslots.js";
 import { lootAt } from "./l4ddloot.js";
@@ -492,11 +495,14 @@ function lits() {
   };
 }
 
-/* a zombie's outline (outlines.js), f: where it stands on the screen, dip: how far it's sunk in the flood, hidden: true
+/* a zombie coming into any duck's sight fades in (the owner's, Nov 28 01:57Z) */
+const FADE_IN = [{ opacity: 0 }, { opacity: 1 }];
+const EYES = []; // (the ducks whose sight counts, this frame: draw)
+/* a zombie's outline in a Sandbox zone's color (outlines.js), f: where it stands on the screen, dip: how far it's sunk in the flood, hidden: true
    when a wall hides it, or null to ask whether a wall, a roof or a crown drawn over it covers it (zi: the z-index it's
    drawn at, so only what is really drawn over it counts: the owner's, Nov 17 19:11Z). Returns whether something hides
    it: then it shows only as its line, never its picture (the owner's, Nov 17 17:41Z) */
-function zOutline(Wd, o, f, dip, sc, hidden, z, myFloor, zi = 0, kind = "") {
+function zOutline(Wd, o, f, dip, sc, hidden, z, myFloor, zi, kind) {
   const w = o.bw * sc,
     h = o.bh * sc,
     y = f.top + (dip - o.feet) * sc,
@@ -511,7 +517,7 @@ function zOutline(Wd, o, f, dip, sc, hidden, z, myFloor, zi = 0, kind = "") {
     w,
     h,
     flip: o.face < 0,
-    kind: kind || "zombie", // (or a Sandbox zone's Outlines color)
+    kind, // (a Sandbox zone's Outlines color)
     hidden: hid,
     ...olAway(o.x, o.y, z, myFloor), // (its floor against mine, its elevation, how much darker)
   });
@@ -545,6 +551,7 @@ function zombieEl(z) {
   const el = document.createElement("div"),
     box = zombieBox(z.l);
   el.className = "l4z";
+  el.hidden = true; // (shown by its first draw, fading in as one coming into sight does)
   const url = zombieURL(z.l, z.i);
   /* the pixel look: no src yet, its pixels come in draw() (pxPic) at once when a zombie that looks the same has them
      already; until then it shows nothing rather than its live drawing (a whole wave of them would be drawn as drawings
@@ -1786,8 +1793,8 @@ function butlerEl(svg, name) {
      - a hit: the red blink, the shake, "−1 HP" over him, and his blood with bits of him in his color, as a zombie's;
      - his wounds (m.w, wounds.js codes, as a player's) on his picture, his head gone after a crit (the rules' l4crit
        fx bursts it, as a zombie's: game.js); none with Gore off;
-     - his sprint (m.sp, 0 to 1) as my thin blue bar under his tag while it isn't full; Phil's knife (the rules'
-       l4mstab fx) as my white cooldown bar, MERCH.STAB_MS long;
+     - his sprint (m.sp, 0 to 1) as my thin blue bar under his tag while it isn't full; his knife or his handgun
+       (the rules' l4mstab fx) as my white cooldown bar, as long as its wait (f.ms);
      - dead: a pool of blood spreads under him (as every duck's: game.js .gduck-pool), and he and it stay for good */
 let mSig = "",
   mAt = null,
@@ -1881,6 +1888,7 @@ function drawMerchant(ctx, t) {
       !Wd.onView(p.left - 60, p.top - 140, 120, 160);
   if (butler.el.hidden !== hide) butler.el.hidden = hide;
   mHurt(s, m, dead, p, sc, hide);
+  mStabs(s);
   if (hide) return;
   const tr = Wd.boxTr(p.left, p.top);
   if (butler.tr !== tr || butler.dz !== dead) {
@@ -2039,7 +2047,20 @@ function mHurt(s, m, dead, p, sc, hide) {
   ); // (his blood, by the wound he got, with bits of him in his color, fx.js)
   butler.hitW = butler.wc;
 }
-/* his sprint (m.sp, the rules': 0 to 1) and Phil's knife waiting to stab again (the rules' l4mstab fx, MERCH.STAB_MS) */
+/* his sprint (m.sp, the rules': 0 to 1) and his knife or handgun waiting to go again (the rules' l4mstab fx, f.ms) */
+/* his shots and stabs as they come, heard even while I can't see him */
+function mStabs(s) {
+  const top = fxTop(s);
+  if (top > mSeen.fx) {
+    for (const f of s.fx || [])
+      if (f && f.n > mSeen.fx && f.kind === "l4mstab" && f.t >= mSeen.stab) {
+        mSeen.stab = f.t || 0;
+        mSeen.ms = f.ms || 1200;
+        (f.w === "handgun" ? sfx.handgun : sfx.knife)({ x: f.x, y: f.y }); // (his shot or his stab, where he is)
+      }
+    mSeen.fx = top;
+  }
+}
 function mBars(s, m, dead) {
   const tag = butler.tag;
   if (!tag) return;
@@ -2059,13 +2080,6 @@ function mBars(s, m, dead) {
     sp.classList.toggle("full", left >= 1);
     sp.classList.toggle("tired", left <= 0.05);
   }
-  const top = fxTop(s);
-  if (top > mSeen.fx) {
-    for (const f of s.fx || [])
-      if (f && f.n > mSeen.fx && f.kind === "l4mstab")
-        mSeen.stab = Math.max(mSeen.stab, f.t || 0);
-    mSeen.fx = top;
-  }
   let cl = tag.querySelector(".l4-cool");
   if (!cl) {
     cl = document.createElement("span");
@@ -2074,8 +2088,8 @@ function mBars(s, m, dead) {
     cl.innerHTML = "<i></i>";
     tag.append(cl);
   }
-  const wait = mSeen.stab ? mSeen.stab + MERCH.STAB_MS - clockNow() : 0,
-    cv = !dead && wait > 0 ? Math.min(1, wait / MERCH.STAB_MS).toFixed(3) : "0";
+  const wait = mSeen.stab ? mSeen.stab + mSeen.ms - clockNow() : 0,
+    cv = !dead && wait > 0 ? Math.min(1, wait / mSeen.ms).toFixed(3) : "0";
   if (cl._v !== cv) {
     cl._v = cv;
     cl.style.setProperty("--cl", cv);
@@ -2962,7 +2976,16 @@ activity({
       meAt = Wd.at(ctx.me),
       myFloor = meAt ? olAway(meAt.x, meAt.y, meAt.z).f : 0, // (for the outlines: a zombie a floor away)
       st0 = ctx.state(),
-      sbOl = sbHasOl(st0); // (Sandbox: zones with Outlines)
+      sbOl = sbHasOl(st0), // (Sandbox: zones with Outlines)
+      wid = watching(st0, ctx.me);
+    /* every duck standing, mine, and the one I watch (down or not): a zombie none of them sees isn't drawn */
+    EYES.length = 0;
+    if (meAt) EYES.push(meAt);
+    for (const id of st0.seat)
+      if (id !== ctx.me && (id === wid || standing(st0, id))) {
+        const a = Wd.at(id);
+        if (a) EYES.push(a);
+      }
     /* the zombies, gliding from where they were to where the host says, one heartbeat's time */
     for (const o of Z.values()) {
       const u = Math.min(1, (t - o.t0) / (o.g || gap));
@@ -2985,7 +3008,7 @@ activity({
         f = Wd.toScreen(o.x + lean, o.y, z),
         door = atBoards(o, Wd.inside),
         hole = !Wd.inside && roofHoleOver(o.x, o.y, z), // (Downpour: seen from outside through a hole in the gas station's roof)
-        unseen = !(door || hole || seenFrom(o.x, o.y, Wd.inside, z)),
+        unseen = !(door || hole || EYES.some((a) => duckSees(a, o.x, o.y, z))),
         zi = door
           ? AT_BOARDS
           : hole
@@ -2998,14 +3021,15 @@ activity({
           unseen ||
           !onCam ||
           (o.diedAt !== undefined && t - o.diedAt > LOW_DEAD && low()); // (Low graphics or Data saving: a body is gone from my screen at 2 s, css/app.css html.low; the rules still keep it its 4 s)
-      if (o.el.hidden !== hide) o.el.hidden = hide;
+      if (o.el.hidden !== hide) {
+        o.el.hidden = hide;
+        if (!hide && o.st !== 3) o.el.animate(FADE_IN, 400); // (coming into sight: it fades in)
+      }
       o.z = z; // (its height as I draw it: shotStop)
       const zc =
         sbOl && o.st !== 3
           ? sbOlColor(st0, { k: "zombie", sp: o.sp }, o.x / W, o.y / H, z, W, H)
           : "";
-      if (onCam && unseen && o.st !== 3)
-        zOutline(Wd, o, f, 0, sc, true, z, myFloor, 0, zc); // (on the other side of a wall: its red line)
       if (o.st !== 3 || !hide) {
         wounds(o, o.l, o.i); // (its wounds, and its picture made into pixels wherever it is: ready before it comes into sight)
         pxPic(o, o.img, o.bw * sc, o.bh * sc);
@@ -3025,6 +3049,7 @@ activity({
               ? WADE_SINK * o.feet
               : 0;
       const olOnly =
+        !!zc &&
         o.st !== 3 &&
         zOutline(
           Wd,
@@ -3037,7 +3062,7 @@ activity({
           myFloor,
           zi,
           zc,
-        ); // (really behind a wall, under a roof: its line only)
+        ); // (Sandbox: a zone's Outlines, in its own color; really behind a wall, under a roof: its line only)
       if (o.olOnly !== olOnly) {
         o.olOnly = olOnly;
         o.el.classList.toggle("ol-only", olOnly);

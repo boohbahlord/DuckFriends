@@ -4,8 +4,7 @@
    jump open at 144 jumps. The clown wig, costume and paint open when you've killed Justin with a weapon special 12
    times, and until then nobody is told how. The shotgun opens at 144 kills and the grenade at 360: a kill is another
    player knocked down with a weapon (a computer doesn't count), or any Justin. The dunce hat opens once you've been
-   voted a dunce in Duncelation 12 times (TEST rooms don't count). The lightning eyes open once you've beaten Mad God
-   Justin 12 times at the default time, and the Tears eyes after losing to him 24 times or losing 144 rounds (TEST rooms
+   voted a dunce in Duncelation 12 times (TEST rooms don't count). The lightning eyes are free (the owner's, Nov 28), and the Tears eyes open after losing 144 rounds (TEST rooms
    don't count either). Dat Boi opens at 1,728 jumps and his ranks after him: bronze at 5,184, silver and chrome at 15,552,
    gold and rose gold at 31,104, rainbow at 62,208; the Rainbow skin on any duck at 62,208 too. The Chair at 1,123 Justin kills
    in Duck Cabin (Hangout); the Invisible duck once you've hit the cabin's shadow duck with a thrown chair; the Zebra cake
@@ -115,7 +114,6 @@ const LOCKS = [
     name: "Clown paint",
   },
   { kind: "hat", id: "dunce", dunced: 12, name: "Dunce hat" },
-  { kind: "eyes", id: "lightning", later: true, name: "Lightning eyes" }, // (it came from beating Mad God Justin, cut Nov 27: how it unlocks now is still to say)
   { kind: "eyes", id: "tears", lost: 144, name: "Tears" },
 ];
 const lockOf = (kind, id) => LOCKS.find((l) => l.kind === kind && l.id === id);

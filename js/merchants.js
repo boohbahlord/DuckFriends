@@ -7,8 +7,8 @@
    looks: a merchant with more than one look shuffles them ("it is random and will be different everytime they show
    up"): the rules roll a number when he arrives, so every player sees the same one (merchantLook). extra: a piece drawn
    over the duck that no item has (Hunter's cigarette holder). hideName: no name shown over him (the soldier's: "his name
-   will not be shown since his name is classified info"). fights: he hits back (Phil's, the rules': after his second hit
-   from a player, a knife, half its swings miss, 1 damage). The Butler and the Priest stay in the cast. */
+   will not be shown since his name is classified info"). Every one of them fights back alike (l4ddrules.js MERCH.FIGHT).
+   The Butler and the Priest stay in the cast. */
 import { duckSVG } from "./duck.js";
 import { BUTLER, PRIEST } from "./hangout/npcart.js";
 
@@ -342,7 +342,6 @@ export const MERCHANTS = [
     id: "phil",
     name: "Phil the Murderous",
     tip: "Ski mask and a dark hoodie; he knifes back",
-    fights: { after: 2, weapon: "knife", miss: 0.5, dmg: 1 },
     looks: [
       {
         color: "#ffd23f",
