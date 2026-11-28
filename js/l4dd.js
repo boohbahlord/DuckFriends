@@ -1789,8 +1789,8 @@ function butlerEl(svg, name) {
      - a hit: the red blink, the shake, "−1 HP" over him, and his blood with bits of him in his color, as a zombie's;
      - his wounds (m.w, wounds.js codes, as a player's) on his picture, his head gone after a crit (the rules' l4crit
        fx bursts it, as a zombie's: game.js); none with Gore off;
-     - his sprint (m.sp, 0 to 1) as my thin blue bar under his tag while it isn't full; Phil's knife (the rules'
-       l4mstab fx) as my white cooldown bar, MERCH.STAB_MS long;
+     - his sprint (m.sp, 0 to 1) as my thin blue bar under his tag while it isn't full; his knife or his handgun
+       (the rules' l4mstab fx) as my white cooldown bar, as long as its wait (f.ms);
      - dead: a pool of blood spreads under him (as every duck's: game.js .gduck-pool), and he and it stay for good */
 let mSig = "",
   mAt = null,
@@ -2042,7 +2042,7 @@ function mHurt(s, m, dead, p, sc, hide) {
   ); // (his blood, by the wound he got, with bits of him in his color, fx.js)
   butler.hitW = butler.wc;
 }
-/* his sprint (m.sp, the rules': 0 to 1) and Phil's knife waiting to stab again (the rules' l4mstab fx, MERCH.STAB_MS) */
+/* his sprint (m.sp, the rules': 0 to 1) and his knife or handgun waiting to go again (the rules' l4mstab fx, f.ms) */
 function mBars(s, m, dead) {
   const tag = butler.tag;
   if (!tag) return;
@@ -2065,8 +2065,11 @@ function mBars(s, m, dead) {
   const top = fxTop(s);
   if (top > mSeen.fx) {
     for (const f of s.fx || [])
-      if (f && f.n > mSeen.fx && f.kind === "l4mstab")
-        mSeen.stab = Math.max(mSeen.stab, f.t || 0);
+      if (f && f.n > mSeen.fx && f.kind === "l4mstab" && f.t >= mSeen.stab) {
+        mSeen.stab = f.t || 0;
+        mSeen.ms = f.ms || 1200;
+        (f.w === "handgun" ? sfx.handgun : sfx.knife)({ x: f.x, y: f.y }); // (his shot or his stab, where he is)
+      }
     mSeen.fx = top;
   }
   let cl = tag.querySelector(".l4-cool");
@@ -2077,8 +2080,8 @@ function mBars(s, m, dead) {
     cl.innerHTML = "<i></i>";
     tag.append(cl);
   }
-  const wait = mSeen.stab ? mSeen.stab + MERCH.STAB_MS - clockNow() : 0,
-    cv = !dead && wait > 0 ? Math.min(1, wait / MERCH.STAB_MS).toFixed(3) : "0";
+  const wait = mSeen.stab ? mSeen.stab + mSeen.ms - clockNow() : 0,
+    cv = !dead && wait > 0 ? Math.min(1, wait / mSeen.ms).toFixed(3) : "0";
   if (cl._v !== cv) {
     cl._v = cv;
     cl.style.setProperty("--cl", cv);
