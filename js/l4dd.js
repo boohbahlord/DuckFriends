@@ -417,6 +417,7 @@ export function shotStop(s, sh, r, x0, y0, x1, y1) {
     for (const [i, o] of Z) {
       if (
         o.st === 3 ||
+        o.st === 9 || // (a Flyer on a duck: the host's bullets go by it, only melee reaches it)
         o.z === undefined ||
         r.skip.has(i) ||
         Math.hypot((o.x - x) / 26, (o.y - y) / 22) >= 1
