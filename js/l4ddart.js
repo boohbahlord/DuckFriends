@@ -597,11 +597,10 @@ export const weaponIcon = (w, duck) =>
    ranged, purple special, white grenades) */
 export const orbHTML = (w) =>
   `<span class="l4orb k-${kindOf(w) || "special"}${tintOf(w) ? " " + tintOf(w) : ""}"><i>${w === "justin" ? justinSVG({ size: 30, shadow: false }) : weaponIcon(w)}</i></span>`; // (the fireplace's 1 in 100: Justin himself)
-/* Justin's Butler's upgrades: accuracy (a crosshair), attack speed (a lightning bolt), max HP (a green heart), speed
-   (a running arrow), faster reload (a bullet in a turning arrow) */
+/* the merchant's upgrades: accuracy (a crosshair), max HP (a green heart), speed (a running arrow), faster reload (a
+   bullet in a turning arrow) */
 export const UP_ICONS = {
   acc: `<svg viewBox="0 0 30 30"><circle cx="15" cy="15" r="10" fill="#f4f4f0" stroke="${INK}" stroke-width="1.6"/><circle cx="15" cy="15" r="6.2" fill="#e8424d" stroke="${INK}" stroke-width="1.3"/><circle cx="15" cy="15" r="2.4" fill="#f4f4f0" stroke="${INK}" stroke-width="1"/><path d="M15 1.5V8M15 22V28.5M1.5 15H8M22 15H28.5" stroke="${INK}" stroke-width="2.2" stroke-linecap="round"/></svg>`,
-  as: `<svg viewBox="0 0 30 30"><path d="M18 2L6 17H14L11 28L24 12H16Z" fill="#ffd23f" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/><path d="M15.5 5.5L10.5 13" stroke="#fff6c8" stroke-width="1.6" stroke-linecap="round"/></svg>`,
   hp: `<svg viewBox="0 0 30 30"><path d="M15 26C6 19 2.5 14.5 2.5 9.8 2.5 6.2 5.3 3.5 8.8 3.5 11.6 3.5 13.7 5.1 15 7.4 16.3 5.1 18.4 3.5 21.2 3.5 24.7 3.5 27.5 6.2 27.5 9.8 27.5 14.5 24 19 15 26Z" fill="#1fb85c" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/><path d="M15 10V19M10.5 14.5H19.5" stroke="#f4f4f0" stroke-width="2.6" stroke-linecap="round"/></svg>`,
   sp: `<svg viewBox="0 0 30 30"><path d="M3 9H11M1.5 15H9M3 21H11" stroke="#9cc2ff" stroke-width="2.2" stroke-linecap="round"/><path d="M12 6L21 15L12 24M18 6L27 15L18 24" fill="none" stroke="#3d7be0" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   rl: `<svg viewBox="0 0 30 30"><path d="M24.5 11A10.5 10.5 0 1 0 25 19" fill="none" stroke="#c9a24a" stroke-width="2.6" stroke-linecap="round"/><path d="M26.5 5.5L25.2 12.2L18.8 10.2" fill="none" stroke="#c9a24a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 11H16A4 4 0 0 1 16 19H12Z" fill="#e0a43a" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/><rect x="9" y="11" width="3.6" height="8" rx="1" fill="#c98a3a" stroke="${INK}" stroke-width="1.3"/></svg>`,

@@ -49,8 +49,6 @@ import {
   swingOn,
   swinging,
   swingMisses,
-  knockOf,
-  KNOCK_DUCK,
 } from "./weaponuse.js";
 import {
   ARMS,
@@ -125,7 +123,14 @@ import { toPx, DUCK } from "./units.js";
 import { blast, reach, hitOf, REACH } from "./blast.js";
 import { carsBlast, carsSwing } from "./carpush.js";
 import { spreadAim } from "./heat.js";
-import { pushAlong, walkOf, pushTaken, immobile, sizeOf } from "./push.js";
+import {
+  pushAlong,
+  walkOf,
+  pushOn,
+  meleePush,
+  blastPush,
+  sizeOf,
+} from "./push.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
   hitWounds,
@@ -210,7 +215,6 @@ keepOnly(
 /* ---------- the numbers ---------- */
 export const L4 = {
   HP: 3,
-  REGEN: 15000, // ms for 1 HP to come back on its own, a hundredth at a time (hpmath.js regenOf)
   REVIVE: 5000, // ms of holding E by a downed duck (5 s: the owner's, Nov 17 11:07Z; it was 10)
   QUICK: 3000, // … with Quick Revive bought (the Butler's, 750: the owner's, Nov 17 11:19Z)
   BACK_HP: 2, // a revived duck comes up with 2 HP
@@ -318,7 +322,7 @@ export const SLOT_ODDS = { chair: 0.01, special: 0.05, item: 0.2 };
 export const SLOT_BAGS = {
   chair: ["chair"],
   special: ["flamer", "laser"], // (no chain gun: the owner's, Nov 22 19:26Z, "REMOVE CHAIN GUN")
-  item: ["medkit", "zebra", "adrenaline", "safekeep"],
+  item: ["medkit", "bandage", "zebra", "adrenaline", "safekeep"], // (the bandage: the merchant's, 300 points, the owner's, Nov 28 03:28Z)
 };
 export const WEAPON_BAGS = {
   melee: ["axe", "sword", "hammer"],
@@ -352,6 +356,7 @@ const TINTS = {
   adrenaline: "plain",
   bow: "plain",
   medkit: "green",
+  bandage: "plain",
   axe: "green",
   sword: "green",
   hammer: "green",
@@ -402,22 +407,15 @@ const PTS = {
 }; // (a board: 5, the owner's, Nov 3)
 /* Justin's Butler's upgrades (the owner's prices; attack speed's are Adam's plan's guess, question 3): the price of the
    next one when n are bought already, how many at most */
+/* the upgrades, how many of each I can buy, and their prices (UP_PRICE): the owner's, Nov 28 04:05Z
+   (cmsg_01LTpp6fzv8sfYUR5KoHADKtBFSt5xGqKea6TT5ehvSw7H); Attack speed is gone */
 export const SHOP = [
-  /* the upgrades never run out at the merchant (the owner's, Nov 19 19:27Z: "they do not go away. They are not a
-     limited resource anymore"), and each one stacks up to 5 ("it can increase to 5"), so crits, cooldowns and reloads
-     never run away. Quick Revive is a switch, so it stays one */
   {
     id: "acc",
     name: "Critical Chance",
     what: "+2.5% crits",
-    most: 5,
-  }, // (600 each, +2.5%: the owner's, Nov 16 21:47Z)
-  {
-    id: "as",
-    name: "Attack speed",
-    what: "Cooldowns 10% faster",
-    most: 5,
-  }, // (each one 10% faster than the last)
+    most: 2,
+  },
   {
     id: "hp",
     name: "Increase HP",
@@ -428,7 +426,7 @@ export const SHOP = [
     id: "rl",
     name: "Faster reload",
     what: "Reloads 30% faster",
-    most: 5,
+    most: 1,
   },
   {
     id: "qr",
@@ -437,9 +435,13 @@ export const SHOP = [
     most: 1,
   }, // (750, kept until I go down: the owner's, Nov 17 11:07Z + 11:19Z)
 ];
-/* his guns and their ammo went with the merchants (the owner's, Nov 18 13:46Z: "never any ammo"): what a merchant sells
-   is his stock (merchantStock). Every upgrade is 20% dearer (the owner's, Nov 4) */
-const SHOP_MORE = 1.2;
+/* the nth one's price (n from 0) */
+const UP_PRICE = {
+  acc: (n) => [600, 750][n],
+  hp: (n) => 240 + 200 * n, // (200 more each buy)
+  rl: () => 1500,
+  qr: () => 750, // (kept until I go down: the owner's, Nov 17 11:07Z + 11:19Z)
+};
 /* a number of points as a whole number of fives: dir 1 rounds up, -1 down, 0 to the nearest (5 points is the smallest
    unit of money, for everything: the owner's, Nov 17 19:11Z) */
 const fives = (n, dir = 0) =>
@@ -449,27 +451,9 @@ const fives = (n, dir = 0) =>
     : dir < 0
       ? Math.floor(n / 5)
       : Math.round(n / 5));
-export const priceOf = (id, n) =>
-  id === "acc"
-    ? ACC_PRICE
-    : id === "qr"
-      ? QR_PRICE
-      : fives(
-          UP_TIMES *
-            SHOP_MORE *
-            {
-              acc: 300 + 50 * n,
-              as: 250 + 50 * n,
-              hp: n ? 125 : 100,
-              sp: 250,
-              rl: 300,
-            }[id],
-        );
-const ACC_PRICE = 600; // (every Critical Chance the same: the owner's, Nov 16 21:47Z)
-const QR_PRICE = 750; // (Quick Revive: "it costs only 750", the owner's, Nov 17 11:19Z)
+export const priceOf = (id, n) => UP_PRICE[id](n);
 /* how long duck `by` holds E to get a downed duck up: Quick Revive makes it 3 s */
 export const reviveMs = (s, by) => (upOf(s, by).qr ? L4.QUICK : L4.REVIVE);
-const UP_TIMES = 2; // (every upgrade twice its old price, for now: the owner's, Nov 3; then 20% more, SHOP_MORE)
 /* the price I pay now: a Sale (a drop) halves what I buy for the rest of the round, each of the Butler's upgrades only
    once (the owner's: "increased health or accuracy is only half off for that item once"), the fireplace every time.
    It lasts 45 s (DROP.FOR, the owner's, Nov 16; it was the rest of the round) */
@@ -588,9 +572,11 @@ export const zombieLook = (l) => ({
 /* about how far a player sees from its duck, either way (a computer's view, the wider one) */
 export const VIEW = { x: 720, y: 460 };
 const LAND = { x0: STAIRS.x0, x1: STAIRS.x1, y0: STAIRS.y0, y1: STAIRS.land };
-/* Downpour: the forest, short of the world's edge (the forest line stops nobody: the owner's, Nov 17 03:34Z). Past the
-   fences only the road is open, so zombies there still climb them */
-const inWoods = (x, y) => x >= 70 && x <= W - 70 && y >= 70 && y <= H - 70;
+/* Downpour: the forest, up to the fence round the map (the forest line stops nobody: the owner's, Nov 17 03:34Z; the
+   fence stops a duck right at it, as a wall does: Nov 28 04:05Z). Past the fences only the road is open, so zombies
+   there still climb them */
+const inWoods = (x, y) =>
+  x >= GS.RIM.x0 && x <= GS.RIM.x1 && y >= GS.RIM.y0 && y <= GS.RIM.y1;
 /* Duck Cabin (Sandbox's zombies there, sbcabin.js): the whole world; only what stands in it stops them (standable) */
 const hangMap = () => layoutVariant() === "";
 export const playable = (x, y) =>
@@ -895,11 +881,11 @@ export const ptsOf = (s, id) => ((s && s.hang && s.hang.l4pt) || {})[id] ?? 0;
 export const upOf = (s, id) => ((s && s.hang && s.hang.l4u) || {})[id] || {};
 export const maxHp = (s, id) =>
   isWild(s, id) ? wildMax(s, id) : grHp(s, id, L4.HP + (upOf(s, id).hp || 0)); // (Sandbox: a group's Max HP over it, sbgroups.js)
-/* a weapon's wait between uses (each Attack speed: 10% shorter), a reload's time (Faster reload: 30% shorter), the
+/* a weapon's wait between uses, a reload's time (Faster reload: 30% shorter), the
    headshot chance (headOf, below) */
 export const l4Cool = (s, id, w) =>
   ARMS[w]
-    ? (((lmOf(s, id, w) || {}).c ||
+    ? ((lmOf(s, id, w) || {}).c ||
         (w === "laser" && angelOf(s, id, w)
           ? ANGEL.LASER.cool // (the Angelic Laser Rifle: its own, a beam every 0.75 s)
           : ARMS[w].cool *
@@ -907,8 +893,7 @@ export const l4Cool = (s, id, w) =>
               ? w === "handgun"
                 ? ANGEL.PISTOL.FIRE
                 : ANGEL.FAST
-              : 1))) * // (Angelic: 20% faster; the dual pistols twice as fast, l4ddangel.js; a loot orb's own wait first)
-        Math.pow(0.9, upOf(s, id).as || 0)) /
+              : 1))) / // (Angelic: 20% faster; the dual pistols twice as fast, l4ddangel.js; a loot orb's own wait first)
       grCool(s, id) // (Sandbox: a group's Cooldown speed, sbgroups.js)
     : 400;
 /* ---------- the Laser Rifle's heat ----------
@@ -1314,6 +1299,7 @@ function maxAmmo(s) {
       if (
         fullAmmo(w) &&
         w !== "medkit" &&
+        w !== "bandage" &&
         !angelOf(s, id, w) // (an Angelic gun never refills, not even here: the owner's, Nov 16 22:21Z)
       )
         m.am[w] = fullFor(s, id, w);
@@ -1685,12 +1671,12 @@ function buy(s, id, what, mx, my, hand, now) {
   } // (its half price is spent)
   s.hang.l4u = { ...(s.hang.l4u || {}), [id]: { ...up, [what]: n + 1 } };
   soldSays(s, id, `bought ${it.name} from the merchant for ${price}.`);
-  /* he never runs out of upgrades (the owner's, Nov 19 22:25Z: "Upgrades are unlimited in terms of however many there
-     are"): the same one again while I can have more of it, else another I can still get */
+  /* the same one again while I can have more of it; once it's maxed he has no upgrade for me until his next visit
+     (the owner's, Nov 28) */
   const mm = merchantOf(s);
   s.hang.l4m = {
     ...mm,
-    ups: { ...(mm.ups || {}), [id]: n + 1 < it.most ? what : upFor(s, id) },
+    ups: { ...(mm.ups || {}), [id]: n + 1 < it.most ? what : "" },
   };
   if (what === "hp") {
     const p4 = s.hang.l4p || {};
@@ -2089,8 +2075,8 @@ export function give(s, id, w, hand0) {
    three line bags, near: { id: 1 } the ducks he greeted standing by him, route: [legs], p: the leg he's on, t: since
    when, tk: his last step } */
 export const MERCH = {
-  NADE: 0.25, // (an item's chance to be grenades instead, NADE_EACH points for each one a duck is missing: the owner's, Nov 23 00:32Z, "sometimes sell grenades in place of items, and buying them just refills however many grenades you have missing. Each grenade only costing, let's say 75 points")
-  NADE_EACH: 75,
+  NADE: 0.25, // (an item's chance to be grenades instead: the owner's, Nov 23 00:32Z, "sometimes sell grenades in place of items")
+  NADE_EACH: 150, // (a grenade a buy, up to ARMS.grenade.most: the owner's, Nov 28 03:28Z, "they buy 1 grenade at a time with a maximum of 4"; Adam's 150)
   MISS: 0.05, // (each rest he didn't come adds this to the next rest's chance: the owner's, Nov 23 00:32Z "a 5% increased chance to show up for every time he doesn't show up")
   COME: 0.5, // (each rest's chance, round zero's too: the owner's, Nov 18 15:35Z "they come in at the rest phase, and it's a 50% chance that they do. It's not guaranteed")
   BOW: 250,
@@ -2134,10 +2120,10 @@ const setMh = (s, o) => {
 export const merchantPrice = (w) =>
   w === "bow" ? MERCH.BOW : MERCH.PRICES[TINTS[w] || "plain"];
 /* what he asks for it now (a Sale halves it, in fives) */
-/* grenades: each one I'm missing, so a buy fills me up (the owner's, Nov 23 00:32Z) */
+/* grenades: one a buy, none once I have them all */
 const lackOf = (w, kit) =>
-  w === "grenade" ? ARMS.grenade.most - ((kit && kit.g) || 0) : 1;
-/* what a buy costs me (w and kit: grenades count the ones I'm missing) */
+  w === "grenade" ? +(((kit && kit.g) || 0) < ARMS.grenade.most) : 1;
+/* what a buy costs me (w and kit: nothing to buy when my grenades are full) */
 export const stockPrice = (s, p, w, kit) =>
   (saleOn(s) ? fives(p / 2, 1) : p) * (w ? lackOf(w, kit) : 1);
 /* a new game: every merchant alive again, his bags new */
@@ -2195,10 +2181,14 @@ function merchantStock(s) {
     stock.push([w, merchantPrice(w)]);
   }
   setMh(s, { bags });
-  return stock.map(([w, p]) => [w, p, howMany()]);
+  return stock.map(([w, p]) => [
+    w,
+    p,
+    w === "grenade" ? ARMS.grenade.most : howMany(),
+  ]); // (grenades: enough for a full belt, one a buy)
 }
 /* his upgrades this visit: one for each duck, from the ones it can still get (the owner's, Nov 18 14:20Z); bought, it's
-   there again (buy); { id: upgrade id, or "" (none left) } */
+   there again till it's maxed (buy); { id: upgrade id, or "" (none left) } */
 function upOffers(s) {
   const ups = {};
   for (const id of players(s)) if (!isWild(s, id)) ups[id] = upFor(s, id);
@@ -2659,7 +2649,10 @@ function merchantBuy(s, id, w, mx, my, hand, now) {
     have = kit.sl.includes(w);
   if (price <= 0 || ptsOf(s, id) < price) return false;
   if (w === "grenade") {
-    s.hang.l4a = { ...s.hang.l4a, [id]: { ...kit, g: ARMS.grenade.most } };
+    s.hang.l4a = {
+      ...s.hang.l4a,
+      [id]: { ...kit, g: Math.min(ARMS.grenade.most, (kit.g || 0) + 1) },
+    };
   } else if (have) {
     if (kindOf(w) !== "special" || hasLeft(s, id, w)) return false; // (one I have, or a gun of mine: no ammo from him)
     s.hang.l4a = {
@@ -2792,7 +2785,11 @@ export function l4Use(s, a, now) {
   const c = down ? [m.dg, ARMS.handgun.mag] : m.am[what];
   if (kind === "grenade" ? m.g <= 0 : c && (c[0] <= 0 || m.rw === rw))
     return false; // (empty, or reloading)
-  if (what === "medkit" && (P4(s, id) || {}).hp >= maxHp(s, id)) return false; // (nothing to heal)
+  if (
+    (what === "medkit" || what === "bandage") &&
+    (P4(s, id) || {}).hp >= maxHp(s, id)
+  )
+    return false; // (nothing to heal)
   if (heldBack(s, what, () => laserHeat(s, id, now).over)) return false; // (one zebra cake in the room at a time; the Laser Rifle overheated)
   m.u[what] = now;
   if (m.rw && m.rw !== rw) {
@@ -2861,6 +2858,19 @@ export function l4Use(s, a, now) {
     const p4 = s.hang.l4p || {};
     s.hang.l4p = { ...p4, [id]: { ...p4[id], hp: maxHp(s, id), at: now } };
     if (!spare) m.am.medkit = [0, 0]; // (used up: it stays in its slot, empty, the owner's, Nov 18 12:19Z)
+  } else if (what === "bandage") {
+    const p4 = s.hang.l4p || {},
+      hp = p4[id].hp,
+      most = maxHp(s, id);
+    s.hang.l4p = {
+      ...p4,
+      [id]: {
+        ...p4[id],
+        hp: hpHeal(hp, Math.max(A.least, (most - hp) * A.heal), most),
+        at: now,
+      },
+    };
+    if (!spare) m.am.bandage = [0, 0];
   } else if (what === "adrenaline")
     s.hang.l4ad = { ...(s.hang.l4ad || {}), [id]: now + A.ms };
   else if (what === "zebra") cakeOut(s, id, p, dx, dy, now);
@@ -3604,11 +3614,17 @@ function meleeHits(s, now) {
       [px, py] = toPx(p),
       bx = px + k.dx * A.at * sz,
       by = py + k.dy * A.at * sz;
+    const push = meleePush(s, k.by, k.w); // (its push: its weapon's and my weight, push.js)
     for (const z of zs) {
-      if (z.st === 3 || k.hit.includes(z.i)) continue;
+      if (k.hit.includes(z.i)) continue;
       if (!overlapH(hz, h, zOf(z, "zombie"))) continue;
       if (Math.hypot(z.x - bx, z.y - by) > R) continue; // (a round bubble: as far up and down as to the sides, the owner's, Nov 18 15:18Z "Make sure melee weapons have the same range in any direction". It was squashed up and down, 1.4 times shorter)
       k.hit.push(z.i);
+      if (z.st === 3) {
+        knockZ(s, z, k.dx, k.dy, push);
+        any = true;
+        continue;
+      } // (a body slides by the same push: the owner's, Nov 28 04:05Z)
       if (missed(s, k.by, k.w, z, now)) continue; // (this one isn't hit by this swing; the others in it still can be)
       const dmg = Array.isArray(A.dmg)
         ? A.dmg[0] + Math.floor(Math.random() * (A.dmg[1] - A.dmg[0] + 1))
@@ -3617,10 +3633,10 @@ function meleeHits(s, now) {
         dead = strike(s, z, dmg * sz, critRoll(s, k.by, k.w), k.by, k.w, now);
       wearDown(s, k.by, k.w, hp0 - Math.max(0, z.hp)); // (the HP it took off, not the overkill)
       if (dead) die(z, T);
-      else if (z.st === 2) knockZ(z, k.dx, k.dy, knockOf(k.w) * sz); // (alive: pushed back, ARMS knock, harder from a bigger duck)
+      if (z.st === 2 || z.st === 3) knockZ(s, z, k.dx, k.dy, push); // (pushed back, alive or dead; not up a wall)
       any = true;
     }
-    /* another duck in the swing: a slight shove, no HP lost (nothing hurts another duck here) */
+    /* another duck in the swing: shoved by the same push over its weight, no HP lost (nothing hurts another duck here) */
     for (const id of s.seat) {
       const q = s.pos[id];
       if (id === k.by || !q || k.hit.includes("p" + id) || !standing(s, id))
@@ -3629,17 +3645,9 @@ function meleeHits(s, now) {
       if (Math.hypot(qx - bx, qy - by) > R) continue;
       if (!overlapH(hz, h, zOf(q, "body", now), DUCK * sizeOf(s, id))) continue;
       k.hit.push("p" + id);
-      shovePx(
-        s,
-        id,
-        k.dx,
-        k.dy,
-        knockOf(k.w) * KNOCK_DUCK * sz,
-        now,
-        inCabin(qx, qy) ? 1 : 0,
-      ); // (world px: boardfire.js)
+      shovePx(s, id, k.dx, k.dy, push, now, inCabin(qx, qy) ? 1 : 0); // (world px: boardfire.js)
     }
-    if (dp()) carsSwing(s, bx, by, R, k, knockOf(k.w) * KNOCK_DUCK * sz); // (Downpour's cars in it: carpush.js)
+    if (dp()) carsSwing(s, bx, by, R, k, push); // (Downpour's cars in it: carpush.js)
     if (L4_HOOKS.npc)
       L4_HOOKS.npc(s, k.by, bx, by, now, k.w, R, R, null, k.hit); // (Sandbox's NPCs in its bubble, each once a swing: sbcabin.js)
     for (const j of wilds(s))
@@ -3660,18 +3668,18 @@ const die = (z, T) => {
   Object.assign(z, { st: 3, d: T });
 };
 /* melee knockback (the owner's, Nov 18 15:25Z: "Every melee has slight knockback EVEN to players AND especially to
-   zombies EVEN WHILE THEY ARE ALIVE ... Fireaxe has more knockback and the hammer has most knockback"): guns.js ARMS
-   knock, read by weaponuse.js knockOf */
-/* a living zombie inside pushed `far` world px along (ux, uy) (a unit), a few px at a time, stopping where it can't
-   stand (a wall, furniture, a step too high) */
-function knockZ(z, ux, uy, far0) {
-  const far = pushTaken(far0, immobile(z) ? Infinity : 1), // (a zombie weighs 1; an immobile one never moves: push.js)
+   zombies EVEN WHILE THEY ARE ALIVE ... Fireaxe has more knockback and the hammer has most knockback"): push.js */
+/* a zombie, alive or dead, pushed by px world px along (ux, uy) (a way), over its weight (push.js pushOn), a few px at a
+   time, stopping where it can't stand (a wall, furniture, a step too high) */
+function knockZ(s, z, ux, uy, px) {
+  const u = Math.hypot(ux, uy) || 1,
+    far = pushOn(s, "zombie", z, px),
     n = Math.max(1, Math.ceil(far / 8)),
     h = heightAt(z.x, z.y);
   [z.x, z.y] = pushAlong(
     [z.x, z.y],
     n,
-    (i, [x, y]) => [x + (ux * far) / n, y + (uy * far) / n],
+    (i, [x, y]) => [x + (ux * far) / u / n, y + (uy * far) / u / n],
     ([x, y]) => zOk(x, y, h),
     ([x, y]) => [Math.round(x), Math.round(y)],
   ); // (one loop for every push: push.js)
@@ -3895,8 +3903,8 @@ export function l4Shots(s, now) {
             if (sniper && crit) sh.crit = 1;
             sh.hit = [...(sh.hit || []), z.i];
             if (strike(s, z, dmg, crit, sh.by, w, now)) die(z, T);
-            else if (w === "chair" && z.st === 2)
-              knockZ(z, sh.vx * W, sh.vy * H, knockOf("hammer")); // (the chair shoves like the hammer: the owner's, Nov 20 21:17Z)
+            else if (w === "chair")
+              knockZ(s, z, sh.vx * W, sh.vy * H, meleePush(s, null, "chair")); // (the chair shoves: the owner's, Nov 20 21:17Z; a thrown thing's push, push.js)
             hitAny = true;
             if (sh.hit.length >= pierce) break;
           }
@@ -4022,13 +4030,33 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
   const any = blast(near, [
     [
       zs,
-      (z) => z.st !== 3 && [z.x, z.y, zOf(z, "zombie")],
+      (z) => [z.x, z.y, zOf(z, "zombie")],
       (z, n) => {
-        if (!strike(s, z, n.dmg, n.crit, sh.by, "", now)) return true; // (its ring's damage, a crit twice: blast.js; it lives)
-        die(z, T);
-        mark(s, z, "g0"); // (every chunk, cuts and big holes: l4ddart.js)
-        gore.push([Math.round(z.x), Math.round(z.y)]);
-        return true;
+        const alive = z.st !== 3;
+        if (alive && strike(s, z, n.dmg, n.crit, sh.by, "", now)) {
+          die(z, T);
+          mark(s, z, "g0"); // (every chunk, cuts and big holes: l4ddart.js)
+          gore.push([Math.round(z.x), Math.round(z.y)]);
+        } // (its ring's damage, a crit twice: blast.js)
+        if (z.st === 2 || z.st === 3)
+          knockZ(s, z, n.dx, n.dy, blastPush(s, n.o).px); // (thrown away from it, a body too: push.js)
+        return alive;
+      },
+    ],
+    [
+      s.seat,
+      (id) => {
+        const q = s.pos[id];
+        return q && standing(s, id) && [...toPx(q), zOf(q, "body", now)];
+      },
+      (id, n) => {
+        const B = blastPush(s, n.o),
+          [qx, qy] = toPx(s.pos[id]);
+        shovePx(s, id, n.dx, n.dy, B.px, now, inCabin(qx, qy) ? 1 : 0, {
+          ms: 650,
+          h: B.h,
+          l: 0,
+        }); // (every duck in it thrown, higher the nearer the middle: push.js; its HP only the thrower's, below)
       },
     ],
     [
@@ -4199,9 +4227,8 @@ function l4Tick(s, now) {
       continue;
     } // (Sandbox: no next round to wait for, so a ghost is back up a moment later, at a start spot, with its weapons)
     if (p.gh) continue;
-    if (p.hp < maxHp(s, id)) {
-      const w = isWild(s, id),
-        [amt, at] = regenOf(s, p.at, now, w ? WILD.regen : L4.REGEN, w); // (a duck's in hundredths, smoothly; Justin's in whole HP: hpmath.js)
+    if (isWild(s, id) && p.hp < maxHp(s, id)) {
+      const [amt, at] = regenOf(p.at, now, WILD.regen); // (Justin's, in whole HP; a player's never comes back by itself: hpmath.js)
       if (amt) p4[id] = { ...p, hp: hpHeal(p.hp, amt, maxHp(s, id)), at };
     }
   }

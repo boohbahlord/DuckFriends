@@ -1,8 +1,6 @@
-/* I want HP to come back on its own smoothly (B7, the owner's, Nov 21 16:17Z: "it doesn't wait for an entire health
-   point until it comes back ... split into fractions ... of either a 10th or 100th place ... for players"; Nov 22
-   06:24Z: "that HP isn't like darkened out while it regens anymore"): in Dead Ducks Arcade a duck at 1.5 HP is back
-   about a fifteenth of an HP each second (one HP in L4.REGEN, as ever), in hundredths, and my meter shows no faint
-   regen part, only its blocks filling. Run: node tools/check/run.mjs hpregen */
+/* I want a player's HP never to come back on its own (the owner's, Nov 28 03:28Z: "health doesnt regenerate anymore",
+   only a bandage): in Dead Ducks Arcade a duck at 1.5 HP is still at 1.5 four seconds on, and my meter shows no faint
+   regen part. Run: node tools/check/run.mjs hpregen */
 const { chromium } = require("playwright");
 const { url, fail, noErrors } = require("./lib.cjs");
 (async () => {
@@ -45,7 +43,6 @@ const { url, fail, noErrors } = require("./lib.cjs");
   const seen = await p.evaluate(async () => {
     const r = window._r,
       { now } = await import("./js/clock.js"),
-      { L4 } = await import("./js/l4ddrules.js"),
       l4p = r.state.hang.l4p,
       t0 = now();
     r.state.hang.l4p = { ...l4p, [r.me]: { ...l4p[r.me], hp: 1.5, at: t0 } };
@@ -63,26 +60,14 @@ const { url, fail, noErrors } = require("./lib.cjs");
           ),
       });
     }
-    return { out, ms: L4.REGEN };
+    return { out };
   });
-  const last = seen.out[seen.out.length - 1],
-    want = 1.5 + last.t / seen.ms,
-    steps = new Set(seen.out.map((o) => o.hp)).size;
-  if (Math.abs(last.hp - want) > 0.05)
-    fail(
-      `after ${Math.round(last.t)} ms at 1.5 HP: ${last.hp}, not about ${want.toFixed(2)}`,
-    );
-  if (steps < 8)
-    fail(
-      `HP came back in ${steps} steps in 4 s, not smoothly: ${JSON.stringify(seen.out)}`,
-    );
-  if (seen.out.some((o) => Math.round(o.hp * 100) !== o.hp * 100))
-    fail(`HP not in hundredths: ${seen.out.map((o) => o.hp)}`);
+  const last = seen.out[seen.out.length - 1];
+  if (seen.out.some((o) => o.hp !== 1.5))
+    fail(`HP came back on its own: ${seen.out.map((o) => o.hp)}`);
   if (seen.out.some((o) => o.ghost))
     fail("my meter still shows a faint regen part");
   noErrors(errs);
-  console.log(
-    `hpregen: 1.5 → ${last.hp} in ${Math.round(last.t)} ms, ${steps} steps`,
-  );
+  console.log(`hpregen: 1.5 → ${last.hp} in ${Math.round(last.t)} ms`);
   await b.close();
 })();

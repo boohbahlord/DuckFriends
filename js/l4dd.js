@@ -6,7 +6,7 @@
    at the top, my points under it (a +N pops up for each one earned); the end. Hold E by a downed duck to revive it, or
    by an opening to board it up; key 0 switches my flashlight. A merchant comes now and then and stands by the card
    table (on Downpour in the chapel): E by him opens his shop (drawMerchant). E at the fireplace spins it for a weapon: it flickers through them over the fire, lands on one, and E takes
-   it (a ranged one only with a ranged weapon in hand to swap: else big words and a buzz say so). My duck walks at half
+   it (a ranged one only with a ranged weapon in hand to swap: else a game message says so). My duck walks at half
    speed (Speed: 10% faster) and has 7 seconds of sprint (a thin blue bar under my name). The rules are the host's
    (l4ddrules.js); the weapons bar is l4ddbar.js. */
 import { holdGame, offView } from "./gameready.js";
@@ -125,6 +125,7 @@ import { laserMeter } from "./laserfx.js";
 import { goreFree, BY_WOUND, newWound, woundLook } from "./wounds.js";
 import { catalogHTML, statLineOf } from "./l4ddcatalog.js";
 import { mountItemTip } from "./itemtip.js";
+import { gameMsg } from "./gamemsg.js";
 import {
   pwMount,
   pwUnmount,
@@ -155,7 +156,7 @@ import { vibrate, hitPx, HIT, again } from "./fxmotion.js";
 import { pixelOn, gridPx, raster, rasterReady } from "./pixel.js";
 import { olAdd, olAway, olRoofed, olPic, DROP_OL } from "./outlines.js";
 import { belowBody } from "./below.js";
-import { confirmBox, ducksOn, kept, windowOpen } from "./ui.js";
+import { ducksOn, kept, windowOpen } from "./ui.js";
 import { angelOf, ANGEL } from "./l4ddangel.js";
 import { angelic, jerrySVG } from "./powerart.js"; // (after l4ddart.js, as game.js imports it)
 import { hashText } from "./pxdom.js";
@@ -428,7 +429,6 @@ let butler = null,
   gotEl = null,
   boxEl = null,
   ptsEl = null,
-  sayEl = null,
   shop = null,
   ptsShown = -1,
   boxSig = "",
@@ -2470,14 +2470,7 @@ function peek(tag, s, me) {
   });
 }
 let peekTok = 0;
-function say(text) {
-  if (!sayEl) return;
-  sayEl.textContent = text;
-  sayEl.classList.remove("on");
-  void sayEl.offsetWidth;
-  sayEl.classList.add("on");
-  sfx.nope();
-}
+const say = (text) => gameMsg(text); // (what can't be done, and why: a game message, gamemsg.js)
 
 /* ---------- the merchant's shop: a page over the board, as the guestbook's ---------- */
 function shopFill(s, ctx) {
@@ -2547,6 +2540,31 @@ function shopFill(s, ctx) {
     shop.guns.innerHTML += `<li class="l4-up l4-buyw"><i class="l4-up-ic"><span class="l4orb c-orange"><i>${jerrySVG(25)}</i></span></i><span class="l4-up-t"><b>Gas</b><small>25% of a jerry can</small></span><button type="button" class="btn small ${full ? "" : "yellow"} l4-up-buy" data-buy="gas"${full || pts < PW.PUMP ? " disabled" : ""}>${full ? "Full" : PW.PUMP}</button></li>`;
   }
 }
+/* a buy being held: which, since when, its timer; it fills the way the Vote button does (css .holding, its sounds,
+   game.js holdPaint), on whichever button stands there now, as the list redraws under it */
+const BUY_HOLD = 400;
+let buyHold = null;
+function holdShow(el) {
+  if (!buyHold) return;
+  const b = el.querySelector(`[data-buy="${buyHold.w}"]`);
+  if (b) {
+    b.classList.add("holding");
+    b.style.setProperty(
+      "--hold",
+      Math.min(1, (performance.now() - buyHold.at) / BUY_HOLD).toFixed(3),
+    );
+  }
+  buyHold.raf = requestAnimationFrame(() => holdShow(el));
+}
+function holdStop(el, done) {
+  if (!buyHold) return;
+  clearTimeout(buyHold.t);
+  cancelAnimationFrame(buyHold.raf);
+  if (!done) sfx.holdStop(); // (let go early: the filling sound fades out)
+  for (const b of el.querySelectorAll(".holding"))
+    b.classList.remove("holding");
+  buyHold = null;
+}
 /* what kind of thing it is, under its name */
 const kindWord = (w) =>
   ({ melee: "Melee", ranged: "Gun", special: "Item" })[kindOf(w)] || "";
@@ -2563,6 +2581,7 @@ function closeShop() {
   shopTo = "";
   if (!shop || !shop.open) return;
   shop.open = false;
+  holdStop(shop.el);
   shop.el.hidden = true;
   shop.el.parentNode?.classList.remove("l4-shopping");
   if (shop.el.contains(document.activeElement)) document.activeElement.blur();
@@ -2607,21 +2626,53 @@ function shopEl(ctx) {
         t.setAttribute("aria-selected", t === tab);
       for (const p of el.querySelectorAll("[data-pane]"))
         p.hidden = p.dataset.pane !== tab.dataset.tab;
-      return;
     }
-    const b = e.target.closest("[data-buy]");
-    if (!b || b.disabled) return;
-    const w = b.dataset.buy,
-      hand = heldFn(),
-      send = () => ctx.send({ t: "hang", k: "l4", do: "buy", what: w, hand }); // (a gun takes the place of the ranged one in hand, as the fireplace's)
-    const st = ctx.state(),
-      it = ((merchantOf(st) || {}).stock || []).find(([x]) => x === w);
-    if (!it) return send(); // (an upgrade, or gas)
-    /* from his stock: only once I say Yes (the owner's, Nov 16 22:21Z); No, the X and Esc keep my points */
-    confirmBox(
-      `Are you sure you want to buy the ${weaponName(w)}?`,
-      `${stockPrice(st, it[1], w, kitOf(st, ctx.me))} points`,
-    ).then((yes) => yes && send());
+  });
+  /* buying: I hold its button 0.4 s while it fills, and letting go early buys nothing (the owner's, Nov 28) */
+  const holdGo = (e) => {
+    const b = e.target.closest && e.target.closest("[data-buy]");
+    if (!b || b.disabled || buyHold) return;
+    const w = b.dataset.buy;
+    buyHold = {
+      w,
+      at: performance.now(),
+      t: setTimeout(() => {
+        const ok = el.querySelector(`[data-buy="${w}"]`);
+        holdStop(el, true);
+        if (!ok || ok.disabled) return;
+        sfx.holdClick(); // (full: a click, as the Vote button's)
+        ctx.send({ t: "hang", k: "l4", do: "buy", what: w, hand: heldFn() }); // (a gun takes the place of the ranged one in hand, as the fireplace's)
+      }, BUY_HOLD),
+    };
+    sfx.holdFill(BUY_HOLD); // (a sound rising as it fills)
+    holdShow(el);
+  };
+  el.addEventListener("pointerdown", (e) => {
+    if (e.button === 0) holdGo(e);
+  });
+  el.addEventListener("keydown", (e) => {
+    if (
+      (e.key === "Enter" || e.key === " ") &&
+      e.target.closest("[data-buy]")
+    ) {
+      e.preventDefault();
+      e.stopPropagation(); // (not a jump, nor the board's Enter)
+      if (!e.repeat) holdGo(e);
+    }
+  });
+  /* let go before it's full: a tap says to hold it (a game message; tapped again, it blinks and dings again: gamemsg.js) */
+  const letGo = () => {
+    if (buyHold && performance.now() - buyHold.at < BUY_HOLD)
+      gameMsg("Hold to buy");
+    holdStop(el);
+  };
+  el.addEventListener("pointerup", letGo);
+  el.addEventListener("keyup", letGo);
+  for (const t of ["pointercancel", "pointerleave"])
+    el.addEventListener(t, () => holdStop(el));
+  el.addEventListener("pointerout", (e) => {
+    const b = buyHold && e.target.closest && e.target.closest("[data-buy]");
+    if (b && !b.contains(e.relatedTarget)) holdStop(el);
   });
   ctx.world.board.append(el);
   return {
@@ -2801,9 +2852,6 @@ activity({
     ptsEl.className = "l4-pts";
     ptsEl.setAttribute("role", "status");
     ptsEl.innerHTML = "<span><b>0</b> points</span>";
-    sayEl = document.createElement("div");
-    sayEl.className = "l4-say";
-    sayEl.setAttribute("role", "alert");
     onEl = document.createElement("div");
     onEl.className = "l4-on";
     onEl.hidden = true;
@@ -2820,7 +2868,7 @@ activity({
     killEl.className = "l4-killglow";
     killEl.hidden = true;
     killEl.setAttribute("aria-hidden", "true");
-    ctx.world.board.append(hud, over, ptsEl, endEl, sayEl, onEl, gotEl, killEl);
+    ctx.world.board.append(hud, over, ptsEl, endEl, onEl, gotEl, killEl);
     mapMount(ctx.world.board);
     rainMount(ctx.world.board); // (Downpour's rain: l4ddrain.js)
     pwMount(ctx, layer);
@@ -2882,7 +2930,6 @@ activity({
     for (const e of [
       ptsEl,
       endEl,
-      sayEl,
       onEl,
       gotEl,
       killEl,
@@ -2897,7 +2944,7 @@ activity({
       e?.remove();
     sqEl = poolEl = null;
     cv = g = hud = endEl = over = layer = fxl = null;
-    ptsEl = sayEl = onEl = gotEl = killEl = boxEl = butler = shop = null;
+    ptsEl = onEl = gotEl = killEl = boxEl = butler = shop = null;
     vitEl = null;
     bellReset();
     vitShown = "";

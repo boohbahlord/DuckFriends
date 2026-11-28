@@ -6,6 +6,7 @@
    never stops one.
    sh.hz: the shooter's feet, as the rules always kept it; sh.lh: its height once a target has set it (world px) */
 import { DUCK, slabBetween, levelZero } from "./hangout/layout.js";
+import { FALL } from "./gamedefaults.js";
 
 const MID = DUCK / 2;
 /* one elevation: the gas station's roof over the ground (world px; the owner's, Nov 21 14:06Z). Heights the owner
@@ -18,12 +19,13 @@ export const ELEV = 108;
    levelZero); levelZ(n): level n's height */
 export const levelOf = (z) => (z - levelZero()) / ELEV;
 export const levelZ = (n) => n * ELEV + levelZero();
-/* fall damage, every mode with falls (the owner's, Nov 28 02:07Z: yes, "not too punishing"; Adam's numbers): a fall of
-   h world px takes this share of a duck's most HP: none for 1 elevation or less, 10% for each elevation past that, 50%
-   at most (actplay.js act_land) */
-export const FALL = { free: 1, each: 0.1, most: 0.5 };
-export const fallShare = (h) =>
-  Math.min(FALL.most, Math.max(0, (+h || 0) / ELEV - FALL.free) * FALL.each);
+/* fall damage, a duck's (gamedefaults.js FALL): a fall h world px down and side px across, measured along its path in
+   elevations, takes this many HP (actplay.js act_land) */
+export const fallHurt = (h, side = 0) => {
+  const e = Math.hypot(+h || 0, +side || 0) / ELEV;
+  if (e < FALL.from) return 0;
+  return FALL.hp * (e < FALL.mid ? FALL.down : FALL.up) ** (e - FALL.mid);
+};
 /* how high shot sh flies now (world px) */
 const shotH = (sh) => sh.lh ?? (sh.hz || 0) + MID;
 /* ---------- the height of a body: one way to ask it, for every body in every mode (the cornerstone's one module per
