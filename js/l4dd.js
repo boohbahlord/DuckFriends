@@ -103,6 +103,7 @@ import {
   merchantOf,
   merchantsOf,
   nearestMerchant,
+  slotFor,
   upOffer,
   stockPrice,
   MERCH,
@@ -2346,8 +2347,8 @@ function coolBar(tag, s, me) {
     el.classList.toggle("off", v === "0");
   }
 }
-/* the ammo of what's in my hand, for the yellow bar (meters.js): { f, rl, dry, nr: a reload can't be done } or null (a melee weapon, the Laser
-   Rifle: its heat has its own meter) */
+/* the ammo of what's in my hand, for the yellow bar (meters.js): { f, rl, dry, nr: a reload can't be done } or null (a melee weapon; the Laser
+   Rifle's shots run out too, its heat is its own meter under these) */
 export function l4Ammo(s, me, w) {
   const m = kitOf(s, me),
     now = clockNow();
@@ -2360,7 +2361,7 @@ export function l4Ammo(s, me, w) {
       : { f: rl ? 0 : m.dg / ARMS.handgun.mag, rl, dry: false }; // (its bullets never run out)
   if (w === "grenade")
     return { f: m.g / ARMS.grenade.most, rl: false, dry: m.g <= 0 };
-  if (!w || !ARMS[w] || kindOf(w) !== "ranged" || w === "laser") return null;
+  if (!w || !ARMS[w] || kindOf(w) !== "ranged") return null;
   const c = (m.am || {})[w];
   if (!c) return null;
   if (w === "flamer") return { f: c[0] / ARMS.flamer.all, rl, dry: c[0] <= 0 }; // (its tank)
@@ -2528,8 +2529,8 @@ function shopFill(s, ctx) {
 /* the supply crate opened (the rules' crateTake): its things on the merchant's page, each taken by holding it */
 function crateFill(s, ctx) {
   const w = (s.hang.l4cr && s.hang.l4cr.w) || [],
-    kit = kitOf(s, ctx.me),
-    sig = JSON.stringify(["crate", w, kit && kit.sl, kit && kit.g]);
+    can = w.map((x) => slotFor(s, ctx.me, x) >= 0), // (what give takes: an item I hold used up, yes; one I hold still full, no)
+    sig = JSON.stringify(["crate", w, can]);
   if (sig === shop.sig) return;
   shop.sig = sig;
   shop.who = "";
@@ -2541,9 +2542,9 @@ function crateFill(s, ctx) {
     ? w
         .map(esc) // (the names come over the network: never markup)
         .map(
-          (x) =>
+          (x, i) =>
             `<li class="l4-up l4-buyw" data-item="${x}"><i class="l4-up-ic">${orbHTML(x)}</i><span class="l4-up-t"><b>${weaponName(x)}</b><small>${kindWord(x)}</small>${statLineOf(x) ? `<small class="l4-up-s">${statLineOf(x)}</small>` : ""}</span>${
-              kit && kit.sl.includes(x) && kindOf(x) !== "special"
+              !can[i]
                 ? `<button type="button" class="btn small l4-up-buy" data-buy="${x}" disabled>Owned</button>`
                 : `<button type="button" class="btn small yellow l4-up-buy" data-buy="${x}">Take</button>`
             }</li>`,

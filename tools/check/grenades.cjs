@@ -103,7 +103,7 @@ const NADE_FUSE = 5000; // (gamedefaults.js NADE.FUSE)
       if (q) seen++;
     });
     out.under = [
-      seen ? Math.round(under) : Infinity, // (none thrown: no pass)
+      seen === 15 ? Math.round(under) : Infinity, // (thrown, and there at every look before its fuse: else no pass)
       LY.floorH(2600 * 0.6 + 100, 2100 * 0.6, 200),
     ];
     /* held to the end of its fuse */

@@ -132,7 +132,7 @@ export const zOk = (x, y, z, up = STEP) =>
    heartbeat before, so a zombie forgot its way up the moment it chose it (the owner's, Nov 17 19:11Z: "WHY THE FUCK ARE
    ZOMBIES NOT COMMITTING ON WALL CLIMBS EVEN WHEN IM STILL ON THE SAME FUCKING ROOF!!!") */
 const KEEP =
-  "cm k fl wp j jp jc jx nj sp dm wk wt wd wn lt lw ws sr sx hu na hd sg tc".split(
+  "cm k fl wp j jp jc jx nj sp dm wk wt wd wn lt lw li ws sr sx hu na hd sg tc".split(
     " ",
   ); // (ws: which way it goes round a Sandbox wall, sandboxrules.js sbWallGo; sp, dm: a Sandbox spawn's zombie, its spawn and its damage: sbspawn.js; hd, sg, tc: the way it faces, till when it staggers, how many it touches: steer)
 // (sr, sx, hu, na: its spot round its duck, the one it gave up, since when it is held up, the way up it gave up: crowd.js SUR)
@@ -406,7 +406,8 @@ export function walkerAt(s, L, ids) {
 export function walkerJoins(z) {
   for (const k of ["wk", "wt", "wd", "wn", "lt", "lw", "li"]) delete z[k];
   z.a = -1e6; // (its last swipe was on the rest's clock)
-  if (z.st === 2) z.n = z.wu = 0; // (and so was its wind-up by a duck)
+  if (z.st !== 1) z.n = 0; // (and so was its wind-up by a duck; at the boards n is the side it tears from)
+  z.wu = z.d = 0; // (and the boards' tearing time)
   z.l = [...z.l];
   z.l[1] = Math.round(WALK * rnd(...Z_SPEED));
 }
@@ -936,7 +937,7 @@ function walkAll(zs, c) {
             walkable(z.x, z.y, ...goal)); // (straight at it only with nothing in between: a trunk, a car or a pew in the way and it goes round by the field)
       let aim = close
         ? goal
-        : z.cm || target.j
+        : z.cm || target.j || z.wk
           ? c.way(z.x, z.y, goal[0], goal[1]) // (its own way up's foot, wherever the duck goes meanwhile; Justin: the field is the players')
           : lane(z, heading(dist, z.x, z.y));
       /* the field has no way on when the zombie's cell is already its goal's, or the nearest open one to it (pressed
