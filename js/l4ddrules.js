@@ -259,38 +259,11 @@ const ROUNDS = [
   [Infinity, 50],
 ];
 export const roundOf = (r) => ROUNDS.find((x) => r <= x[0]);
-/* the zombies in round r with p players (the owner's, Nov 16 22:11Z and 22:16Z; the sheet: charts/zombies-per-round.xlsx).
-   Each phase of rounds has its base [first round, last round, base]; every player past the first adds a share of it
-   that grows through the phase, the round's place in it over the phase's length (1/4, 2/4 …), rounded down. Never
-   more than 100 a player nor 400 in all, and never fewer than the round before (a round that would have fewer keeps
-   the round before's). From round 21 on: 144 (as far as the cap lets), and never fewer than round 20 */
-/* Nov 18 12:39Z + 12:40Z: every player earns about what one player alone earns, each round. So each round is its own
-   phase (its share is then always the whole base: every extra player adds as many zombies as one player gets), rounds
-   1-4 have as many as rounds 5-8 (24; it was 12), and the caps in all are 800 (8 players x 100). Spawn rates stay. The
-   chart: sheets/zombie-spawns-per-player.xlsx */
-const PHASE_BASE = [
-  [8, 24],
-  [12, 36],
-  [20, 72],
-]; // (up to which round, the zombies a round for one player)
-const PHASES = Array.from({ length: 20 }, (_, i) => [
-  i + 1,
-  i + 1,
-  PHASE_BASE.find(([last]) => i + 1 <= last)[1],
-]);
-const Z_EACH = 72, // the most zombies a round for each player …
-  Z_LATE = 800; // from round 21 on (was 144), and Z_MOST in all (zombies.js)
-function zombiesFor(r, p) {
-  const cap = Math.min(Z_EACH * p, Z_MOST);
-  let n = 0;
-  for (let k = 1; k <= Math.min(r, 20); k++) {
-    const [a, b, base] = PHASES.find((f) => k <= f[1]),
-      d = b - a + 1,
-      raw = Math.floor((base * (d + (p - 1) * (k - a + 1))) / d);
-    n = Math.max(n, Math.min(raw, cap));
-  }
-  return r > 20 ? Math.max(n, Math.min(Z_LATE, cap)) : n;
-}
+/* the zombies in round r with p players: the same every round, Z_EACH for each player, never more than Z_MOST in all
+   (the owner's, Nov 28 04:33Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtKzoSPgUvvs7UR1hjujBsBt: "the same amount of zombies per round
+   always. We'll try 20 ... 20 per player"). Later rounds get harder by speed, specials and the director, not numbers */
+const Z_EACH = 20;
+const zombiesFor = (r, p) => Math.min(Z_EACH * p, Z_MOST);
 /* spawning (the owner's): a zombie a second, 50% more for each player past the first, never more than 5 a second (3
    more for each player past the first), all twice that (Nov 16 21:21Z), and twice that again once a round is 10 s old
    (Nov 16 22:21Z); each second a 25% chance that none comes. A round's first ZOMBIE_GRACE ms, half as many (8 s since
