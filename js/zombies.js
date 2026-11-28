@@ -7,6 +7,7 @@
    Justin's waves and Sandbox's board zombies run on it too, each a breed. */
 import { ZOMBIE_SWIPE_SLOWER, ZOMBIE_GRACE, ARMOR } from "./gamedefaults.js";
 import { badShare } from "./director.js";
+import { helmeted } from "./wounds.js";
 /* Dead Ducks Arcade's zombies' swipe in every round: its wind-up (from the tell to the hit) and the ms from one hit to the
    next, rounds 1 to 4's (the owner's, Nov 21 18:24Z: "all of the zombies have the default attack speed as they do in
    rounds 1 through 4"); the 0.2 s slower of Nov 20 is in the second */
@@ -55,6 +56,7 @@ import {
   ZOUTFITS,
   Z_JUSTIN,
   Z_ARMOR,
+  zombieLook,
   VIEW,
   playable,
   FENCE,
@@ -278,6 +280,9 @@ export function newZombie(s, L, T, zs = []) {
       : [max, v, o.id, size, build, hat, outfit, ...(arm ? [0, arm] : [])],
   };
 }
+/* what a zombie of look l wears that stops hits: "", "helmet" or "swat" (wounds.js armorHit) */
+export const zArmor = (l) =>
+  l[8] === Z_ARMOR.swat ? "swat" : helmeted(zombieLook(l)) ? "helmet" : "";
 /* armor (the owner's, Nov 28; gamedefaults.js ARMOR): a new zombie's, Z_ARMOR's or 0. Each kind ARMOR.SPAWN of them,
    from round 1, fewer only while ducks do badly: times 1 - 2 x (ducks doing badly / ducks). Half the helmets an army
    one, half a motorcycle one */
