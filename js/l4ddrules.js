@@ -2295,7 +2295,7 @@ function bandagesCome(s, now) {
 }
 /* the supply crate (DIRECTOR.CRATE): on Downpour, in a rest where some duck is low on ammo and can't afford a refill
    (director.js needsCrate), a helicopter is heard, then it falls on the gas station's roof by the soldier's red flare
-   with a thud (crateSpot) and stays there, solid to ducks and zombies alike (crateSolid), until it's opened; opened, it
+   with a thud (crateSpot) and stays there, solid to ducks and zombies alike (crateSolid), opened or not; opened, it
    goes when the next rest begins (the owner's, Nov 28, cmsg_01LTpp6fzv8sfYUR5KoHADKtBUzMwY1XKox5HKv4m8BzaU). E opens it
    and its things are taken by holding them, as the merchant's (l4dd.js; crateTake). Its things roll from the
    fireplace's old slots (BAGS): two for one duck, else one or two for each. s.hang.l4cr = { t: when it lands, w: its
