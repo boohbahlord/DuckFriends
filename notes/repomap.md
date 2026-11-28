@@ -106,7 +106,7 @@ jumps.js 48 the jump counter
 justinmoves.js 43 Justin's moves on the board
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which key
-l4dd.js 3422 Quacky Zombies on every screen
+l4dd.js 3423 Quacky Zombies on every screen
 l4ddangel.js 147 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
 l4ddart.js 608 Quacky Zombies' pictures
@@ -293,7 +293,7 @@ dpflood.js 89 Downpour's flood over its bed
 dpground.js 324 Downpour's ground
 falls.js 118 falling a long way
 fireflies.js 174 fireflies
-flicker.js 83 now and then a light
+flicker.js 93 now and then a light
 ghosts.js 111 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in
 lamp.js 71 the lamps: the example activity
@@ -326,7 +326,7 @@ stage.js 134 the stage: half an oval
 stationart.js 52 Downpour's things: the drawings
 stationbase.js 67 Downpour's drawings: the shared pieces
 stationcars.js 523 Downpour's drawings: the cars, the
-stationmap.js 1309 Dead Ducks Arcade's second map:
+stationmap.js 1320 Dead Ducks Arcade's second map:
 stationparts.js 452 Downpour's drawings: the gas station's
 stationroof.js 340 Downpour's drawings: the roofs, their
 stationtrees.js 592 Downpour's drawings: the swamp's trees

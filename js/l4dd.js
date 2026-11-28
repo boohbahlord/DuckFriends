@@ -38,7 +38,7 @@ import {
   onRoof,
 } from "./hangout/layout.js";
 import { meets } from "./push.js";
-import { sway, stutterOf, lightNow } from "./hangout/flicker.js";
+import { sway, stutterOf, lightNow, beamStutter } from "./hangout/flicker.js";
 import { play, setListener } from "./hangout/sounds.js";
 import { svgDataURL } from "./svgurl.js";
 import { justinSVG } from "./hangout/npcart.js";
@@ -1499,6 +1499,7 @@ function paint(now, ctx) {
     const c = Wd.toScreen(a.x, a.y, a.z + 26);
     holes.push([c.left * q, c.top * q, GLOW * sc, 0.55]);
     if (!up(s, id) || off[id] || sbNoLight(s, id)) continue; // (Sandbox: a flashlight only once taken from loot)
+    if (dp() && beamStutter(id, s.seat, ln) < 1) continue; // (Downpour: very rarely a flashlight flickers out a moment, flicker.js)
     const [dx, dy] = aimOf(s, id, ctx);
     beamOf(id, a, Math.atan2(dy, dx));
   }
