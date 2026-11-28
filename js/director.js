@@ -48,5 +48,7 @@ export const ducks = (s) =>
     .filter(Boolean);
 export const lowHp = (d) => d.hp < DIRECTOR.HP_LOW;
 const lowAmmo = (d) => d.ammo < DIRECTOR.AMMO_LOW;
+/* a supply crate is called for: some duck low on ammo that can't afford a refill (l4ddrules.js crateCome) */
+export const needsCrate = (s) => ducks(s).some((d) => lowAmmo(d) && !d.rich);
 /* doing badly: low on health or on ammo */
 export const badly = (d) => lowHp(d) || lowAmmo(d);

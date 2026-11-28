@@ -90,4 +90,7 @@ export const DIRECTOR = {
   AMMO_LOW: 0.3,
   HP_LOW: 0.4,
   WELL: { hp: 0.7, ammo: 0.5 },
+  /* the supply crate (l4ddrules.js crateCome): heard HEAR ms before it lands by the flare; SOLO things for one duck,
+     else 1 or 2 for each duck, one ONE of the time; its things lie up to SPREAD world px from where it landed */
+  CRATE: { HEAR: 6000, SOLO: 2, ONE: 0.6, SPREAD: 70 },
 };

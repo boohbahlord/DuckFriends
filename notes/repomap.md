@@ -45,7 +45,7 @@ crowd.js 297 crowds: walkers keep out of
 customize.js 1760 Customize: the Armory
 datboi.js 115 here come dat boi
 democracy.js 233 Democracy of Ducklings:
-director.js 52 the director: how Dead Ducks
+director.js 54 the director: how Dead Ducks
 dock.js 73 the docks: where Notes and
 duck.js 799 the rubber duck avatar
 duckparts.js 598 the ducks made from pixel
@@ -69,7 +69,7 @@ game.js 4385 the game screen
 gameact.js 525 the action window and the
 gameannounce.js 187 The cloud's words and what
 gameboard.js 582 the board: each mode's board
-gamedefaults.js 93 the game's own numbers, for
+gamedefaults.js 96 the game's own numbers, for
 gamefx.js 691 the board's specials and the
 gamehand.js 506 the hand: the number-key specials,
 gamemsg.js 93 lines by the chat button:
@@ -114,13 +114,13 @@ l4ddbar.js 334 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and
 l4ddcatalog.js 215 Quacky Zombies: the Butler's Items
 l4dddrops.js 63 Quacky Zombies' drops, drawn
-l4ddloot.js 39 Dead Ducks Arcade: what lies
+l4ddloot.js 47 Dead Ducks Arcade: what lies
 l4ddmap.js 252 Quacky Zombies' minimap
 l4ddpower.js 312 Dead Ducks Arcade's power box
 l4ddpowerui.js 270 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4644 the rules of Quacky Zombies
-l4ddsfx.js 507 Dead Ducks Arcade's sounds
+l4ddrules.js 4717 the rules of Quacky Zombies
+l4ddsfx.js 508 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the
 langname.js 5 the name of Sandbox's number
 laserart.js 95 the laser gun, drawn

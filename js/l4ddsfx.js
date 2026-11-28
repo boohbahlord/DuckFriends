@@ -112,7 +112,8 @@ export function l4Hear(s, ctx) {
         const a = ctx.world.at(f.by);
         play("l4till", a ? { x: a.x, y: a.y } : {});
         rang.add(f.by);
-      }
+      } else if (f.n > st.fx && f.kind === "l4thud")
+        play("thud", { x: f.x, y: f.y }); // (the supply crate lands: the rules' crateTick)
     st.fx = s.fxN || 0;
   }
   for (const id of s.seat || []) {

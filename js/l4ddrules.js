@@ -62,6 +62,7 @@ import {
   SPRINT as GAME_SPRINT,
   POCKET_CHANGE,
   ZOMBIE_GRACE,
+  DIRECTOR,
 } from "./gamedefaults.js";
 import { hpHeal, hpHurt, hundredths, hpBreed, regenOf } from "./hpmath.js";
 import {
@@ -168,11 +169,17 @@ import {
 } from "./l4ddangel.js";
 
 import { NPC_RUN, NPC_DMG } from "./npcshared.js";
-import { ducks, lowHp, badly } from "./director.js";
+import { ducks, lowHp, badly, needsCrate } from "./director.js";
 import { grHp, grCool } from "./sbgroups.js";
 import { setGrid, openNear, flowFrom, heading } from "./zombiepath.js";
 import { CELL } from "./walkgrid.js";
-import { killLoot, layDrop, lootAt, REACH as LOOT_REACH } from "./l4ddloot.js";
+import {
+  killLoot,
+  bagLoot,
+  layDrop,
+  lootAt,
+  REACH as LOOT_REACH,
+} from "./l4ddloot.js";
 import { chairReach } from "./chair.js";
 import {
   zOk,
@@ -1322,7 +1329,7 @@ function setUp(s, now) {
   }; // (round 0: no zombies until enough ducks are ready)
   giveBonus(s, s.hang.l4.sr);
   merchantSetUp(s);
-  merchantCome(s, now); // (round zero's rest: half the time, as every rest)
+  restCome(s, now); // (round zero's rest)
 }
 /* the starting round (the owner's, Nov 16): every game begins in round 0 and goes on to round `sr` (the "Start on round"
    setting: 1, 5, 9, 13 or 21) once everyone is ready; a starting round past 1 gives every duck bonus points, in round 0
@@ -2191,6 +2198,71 @@ function wayOut(x, y) {
       jump: 1,
     },
   ];
+}
+/* ---------- what the director sends in a rest (the owner approved the plan, Nov 28) ---------- */
+function restCome(s, now) {
+  merchantCome(s, now);
+  crateCome(s, now);
+}
+/* the supply crate (DIRECTOR.CRATE): on Downpour, in a rest where some duck is low on ammo and can't afford a refill
+   (director.js needsCrate), a helicopter is heard, then it falls by the soldier's red flare (on the ground nearest it:
+   crateSpot) with a thud and its things lie there: two for one duck, else one or two for each. s.hang.l4cr = { t: when it lands, n: how many things } */
+function crateCome(s, now) {
+  if (!dp() || isSb(s) || !needsCrate(s)) return;
+  const C = DIRECTOR.CRATE,
+    k = ducks(s).length,
+    n =
+      k === 1
+        ? C.SOLO
+        : Array.from({ length: k }, () =>
+            Math.random() < C.ONE ? 1 : 2,
+          ).reduce((a, b) => a + b, 0);
+  s.hang.l4cr = { t: now + C.HEAR, n };
+  addFx(s, { kind: "l4heli", who: [], t: now, x: GS.FLARE.x, y: GS.FLARE.y }); // (the helicopter: l4ddsfx.js)
+}
+/* where it lands: the open ground nearest the flare (the flare burns on the gas station's roof, and things lie on the
+   ground: l4dd.js draws drops there), out of every building, where a duck can stand */
+let crateAt = null;
+function crateSpot() {
+  if (crateAt) return crateAt;
+  const { x: fx, y: fy } = GS.FLARE;
+  for (let r = 0; r < 1200 && !crateAt; r += 30)
+    for (let k = 0; k < 16 && !crateAt; k++) {
+      const x = fx + Math.cos((k / 16) * 2 * Math.PI) * r,
+        y = fy + Math.sin((k / 16) * 2 * Math.PI) * r;
+      if (
+        [0, 1, 2, 3, 4].every((i) => {
+          const d = i ? DIRECTOR.CRATE.SPREAD * 2 : 0, // (room round it for all its things, clear of every wall)
+            qx = x + d * Math.round(Math.cos((i * Math.PI) / 2)),
+            qy = y + d * Math.round(Math.sin((i * Math.PI) / 2));
+          return (
+            !whereIn(qx, qy) && !heightAt(qx, qy) && standable(qx, qy, 0, 0)
+          );
+        })
+      )
+        crateAt = [Math.round(x), Math.round(y)];
+    }
+  return crateAt || [fx, fy];
+}
+function crateTick(s, now) {
+  const c = s.hang.l4cr;
+  if (!c || now < c.t) return;
+  s.hang.l4cr = null;
+  const C = DIRECTOR.CRATE,
+    [x, y] = crateSpot();
+  for (let i = 0; i < c.n; i++) {
+    const a = (i / c.n) * 2 * Math.PI;
+    layDrop(
+      s,
+      "arm",
+      x + Math.cos(a) * C.SPREAD * Math.min(1, i),
+      y + Math.sin(a) * C.SPREAD * Math.min(1, i),
+      now + i,
+      now + DROP.LIFE,
+      bagLoot(BAGS),
+    );
+  }
+  addFx(s, { kind: "l4thud", who: [], t: now, x, y }); // (it lands: l4ddsfx.js)
 }
 /* a merchant comes, in a rest (round zero's, or between two rounds): half the time, and very likely while some duck
    is doing badly (the director); each one that comes brings another MERCH.CHAIN of the time, chained (the owner's,
@@ -4420,6 +4492,7 @@ function l4Tick(s, now) {
     }
   }
   merchantTick(s, now); // (the merchant walks in or out, and greets)
+  crateTick(s, now);
   troopTick(s, now, ids); // (the rests between rounds too)
   /* between rounds: no zombies; the drops still lie there to be taken */
   if (s.hang.l4.wait && !isSb(s)) {
@@ -4496,7 +4569,7 @@ function l4Tick(s, now) {
   if (L2.made >= L2.n && left.length === bodies.length && T >= 0 && !isSb(s)) {
     s.hang.l4 = { ...L2, wait: { r: L2.r + 1, v: {} } }; // (the next round waits for End turn)
     store(s, bodies, false);
-    merchantCome(s, now); // (the rest before the next round: half the time)
+    restCome(s, now); // (the rest before the next round)
     ids.forEach((id, k) => {
       if (isGhost4(s, id)) bringBack(s, id, now, k, false);
     });
