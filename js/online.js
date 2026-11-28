@@ -10,7 +10,7 @@
    locked so only that player can open it, and the picker's word comes to the host locked too (secret.js).
    A private room's path is made from its passkey, so only players who know the passkey can find it. The rules that
    enforce all this are in database.rules.json. The Firebase code loads only when online rooms are first used. */
-import { reduce, safeReduce, newRoom } from "./rules.js";
+import { reduce, safeReduce, newRoom, syncWorld } from "./rules.js";
 import { botActions } from "./bots.js";
 import { NAME_OK, cleanStats } from "./store.js";
 import { myPlayer, setActive, dropActive } from "./net.js";
@@ -705,6 +705,7 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
         /* the host's state stands */
       }
     }
+    syncWorld(s); // (the host's state may have moved the map with no action of mine: a torn window, the crate)
     state = s;
     emit();
     openCard(s);

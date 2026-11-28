@@ -1,7 +1,7 @@
 /* ---------- the director: how Dead Ducks Arcade measures the team (the owner approved it, Nov 28,
    cmsg_01LTpp6fzv8sfYUR5KoHADKtBFSt5xGqKea6TT5ehvSw7H; Left 4 Dead's director in small) ----------
    Each duck: its health (HP over its most HP), its ammo (the average over its guns of rounds left over their most, an
-   endless one full; melee, items and grenades left out) and whether it can afford a refill (the merchants sell no ammo,
+   melee, items and grenades left out) and whether it can afford a refill (the merchants sell no ammo,
    so: the cheapest gun they sell, which comes full, at today's price). Help (the crate, bandages, the merchant) reads
    the ducks doing badly; pressure (specials, more walkers) reads the team, and never presses while any duck is low on
    health. Numbers: gamedefaults.js */
@@ -28,7 +28,7 @@ function duckState(s, id) {
     share = (w) => {
       const f = fullFor(s, id, w),
         [m, r] = (kit.am || {})[w] || [0, 0];
-      return f ? Math.min(1, (m + r) / (f[0] + f[1] || 1)) : 1; // (an endless one: full)
+      return f ? Math.min(1, (m + r) / (f[0] + f[1] || 1)) : 1;
     };
   return {
     id,
@@ -48,6 +48,16 @@ export const ducks = (s) =>
     .filter(Boolean);
 export const lowHp = (d) => d.hp < DIRECTOR.HP_LOW;
 const lowAmmo = (d) => d.ammo < DIRECTOR.AMMO_LOW;
+/* a supply crate is called for: some duck low on ammo that can't afford a refill (l4ddrules.js crateCome) */
+export const needsCrate = (s) => ducks(s).some((d) => lowAmmo(d) && !d.rich);
+/* how hard the director may press (pressure: the walkers' pace), 0 to 1: the team's average of health and ammo, never
+   over the middle while any duck is low on health */
+export function pressure(s) {
+  const ds = ducks(s);
+  if (!ds.length) return 0.5;
+  const k = ds.reduce((t, d) => t + (d.hp + d.ammo) / 2, 0) / ds.length;
+  return ds.some(lowHp) ? Math.min(0.5, k) : k;
+}
 /* doing badly: low on health or on ammo */
 export const badly = (d) => lowHp(d) || lowAmmo(d);
 /* for pressure: the team doing well (its average health and ammo high, and no duck low on health): the Flyer and the

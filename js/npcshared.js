@@ -12,6 +12,9 @@
    escape were a duck's sprint (1.75) before: "Merchants should be less fast when they try to escape", "if he does
    sprint, he sprints slower" */
 export const NPC_RUN = 1;
+/* every NPC's hit on a player does this share of its damage (the owner's, Nov 28, cmsg_01LTpp6fzv8sfYUR5KoHADKtCoUNw94KGwZjNsEiuJRsw8:
+   all NPCs do half damage to players) */
+export const NPC_DMG = 0.5;
 
 /* is player `id` an NPC (Justin in Dead Ducks Arcade: helper)? Players and TEST rooms' computers are not: the owner's
    "only for the NPCs" */

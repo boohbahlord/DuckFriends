@@ -25,7 +25,9 @@ const PIN = path.join(__dirname, "knock.json");
       R = await import("./js/l4ddrules.js"),
       Z = await import("./js/zombies.js"),
       LY = await import("./js/hangout/layout.js"),
-      GS = await import("./js/hangout/stationmap.js");
+      GS = await import("./js/hangout/stationmap.js"),
+      { ARMS } = await import("./js/guns.js"),
+      { NADE } = await import("./js/gamedefaults.js");
     const r4 = (n) => Math.round(n * 1e4) / 1e4,
       r1 = (n) => Math.round(n * 10) / 10,
       out = {};
@@ -114,7 +116,9 @@ const PIN = path.join(__dirname, "knock.json");
       for (let k = 0; k < 600 && room.state.phase !== "hang"; k++) beat();
       for (
         let k = 0;
-        k < 400 && Z.zombies(room.state).filter((z) => z.st !== 3).length < 2;
+        k < 400 &&
+        (Z.zombies(room.state).filter((z) => z.st !== 3 && !z.wk).length < 2 ||
+          !(room.state.hang.l4.r >= 1)); // (a round's zombies, not a rest's walkers)
         k++
       )
         beat();
@@ -168,11 +172,11 @@ const PIN = path.join(__dirname, "knock.json");
           z = Z.zombies(t)[0];
         return [r1(z.x - at[0] - 40), r1(z.y - at[1])];
       };
-      const use = (w, ax, ay) =>
+      const use = (w, ax, ay, dr) =>
         held(() =>
           R.l4Use(
             s,
-            { id: me, what: w, ax: ax / W, ay: ay / H },
+            { id: me, what: w, ax: ax / W, ay: ay / H, dr },
             (now += 3000),
           ),
         );
@@ -198,17 +202,18 @@ const PIN = path.join(__dirname, "knock.json");
       s.pos[me] = { ...s.pos[me], x: cx / W, y: cy / H };
       use("hammer", 40, 0);
       out.dda["hammer car"] = (s.hang.cars || {})[3] || [0, 0];
-      /* a grenade thrown 200 px south of me, from the dry ground north of the car; it lands 48 px short of the car,
-         with a zombie and the other duck 60 px either side of it: each one's move over the beat it goes off in */
+      /* a grenade thrown its range (ARMS) south of me, cooked till 0.3 s after it lands, from the dry ground north of
+         the car; it comes down about 30 px short of the car (a little past its range: the road's bed is lower), with a
+         zombie and the other duck 60 px either side of where it was aimed: each one's move over the beat it goes off in */
       const gx = (C.x0 + C.x1) / 2,
         gy = C.y0 - 48;
       place({ w: "hammer", z: 2, bot: 1 });
-      s.pos[me] = { ...s.pos[me], x: gx / W, y: (gy - 200) / H };
+      s.pos[me] = { ...s.pos[me], x: gx / W, y: (gy - ARMS.grenade.far) / H };
       const zs = Z.zombies(s);
       Object.assign(zs[0], { x: gx - 60, y: gy });
       Z.store(s, zs, true);
       s.pos[bot] = { ...s.pos[bot], x: (gx + 60) / W, y: gy / H };
-      use("grenade", 0, 200);
+      use("grenade", 0, 200, NADE.FUSE - NADE.T - 300);
       const look = () => {
         const t = room.state,
           z = Z.zombies(t)[0],

@@ -77,6 +77,7 @@ import { low } from "./gfx.js";
 
 import { kick, shake, vibrate, VIB } from "./fxmotion.js";
 import { heatShake } from "./heat.js";
+import { gameMsg } from "./gamemsg.js";
 
 /* a card's color, lifted when it's too dark to see on the name tag (a black card's meter showed black on black) */
 export function seen(hex) {
@@ -670,6 +671,8 @@ export function playFx(f) {
     l4Got(f.k); // (a drop was taken: its name for everyone)
   } else if (f.kind === "l4latch") {
     if (f.who[0] === R.me) l4Pick(0); // (a Flyer holds my duck: my melee weapon in hand at once, the owner's, Nov 28; key 1, kitslots.js)
+  } else if (f.kind === "l4thud") {
+    gameMsg("A helicopter dropped a crate on the gas station roof."); // (the supply crate landed: the owner's words, Nov 28, cmsg_01LTpp6fzv8sfYUR5KoHADKtWmvetXKX5VuDrMVgtW1GSM)
   } else if (f.kind === "l4bite") {
     sfx.chomp(); // (a zombie ate the zebra cake)
   } else if (f.kind === "pcrit") {
