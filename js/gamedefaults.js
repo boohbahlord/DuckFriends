@@ -193,7 +193,55 @@ export const SPECIAL_Z = {
     pull: { ms: 500, px: 12, horde: 0.25 },
     rest: 1500,
   },
-  giant: { from: 8, chance: 0.2, step: 0.05, most: 0.5, hp: 150, speed: 1 },
+  /* the Giant (zombies.js giantStep, giantHit; the owner's 03:28Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtLgUjArf16XwsJeAqka2pZ7).
+     size: its look's size (the stand-in, the biggest a zombie is, till the owner picks 1.52x or 2x). Its hit throws a
+     duck `knock` world px (push.js, over the duck's weight; a grenade's edge is 307: "to a ridiculous extent"), `lift`
+     duck sizes high, for `ms`; a swing in `grab` is a pick-up and a throw instead, `throw` px and `tlift` high. The
+     zombies its swing reaches take a claw and `zknock` px; the ones in its way are shoved aside (crowd.js: it never
+     gives way). It climbs `climb` times as fast and steps up `up` px (half an elevation, heights.js ELEV 108). Every
+     `toss.every` ms at most it throws a zombie beside it (within `toss.by` duck rooms) at a duck `toss.near` to
+     `toss.far` rooms off, flying `toss.fly` px/s, `toss.up` px over the line; landing on the duck it claws it and shoves
+     it `toss.knock` px. Next to a car (`car.near` px) with a duck past it (up to `car.far` px on, `car.wide` px off the
+     line), it tries, `car.chance` of the times (once each `car.every` ms), to knock the car at it: the car slides
+     `car.far` px at `car.speed` px/s and every duck it hits takes a claw and `car.knock` px. The throws' and the car's
+     numbers are Adam's and mine; the owner's are 150 HP, "as fast as the players", twice the climb, half an elevation
+     and the quarters */
+  giant: {
+    from: 8,
+    chance: 0.2,
+    step: 0.05,
+    most: 0.5,
+    hp: 150,
+    speed: 1,
+    size: 1,
+    knock: 700,
+    lift: 1.5,
+    ms: 700,
+    grab: 0.25,
+    throw: 1000,
+    tlift: 2.5,
+    zknock: 160,
+    climb: 2,
+    up: 54,
+    toss: {
+      every: 6000,
+      by: 1.5,
+      near: 3,
+      far: 10,
+      fly: 420,
+      up: 90,
+      knock: 200,
+    },
+    car: {
+      near: 40,
+      far: 420,
+      wide: 60,
+      chance: 0.25,
+      every: 3000,
+      speed: 900,
+      knock: 500,
+    },
+  },
   WELL: 1.5,
   AT: 30000,
   MARKS: [1 / 3, 1 / 2, 2 / 3],

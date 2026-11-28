@@ -3820,9 +3820,10 @@ export function fireTick(s, zs, now, T, p4) {
     Object.keys(fz).length || Object.keys(fp).length ? { z: fz, p: fp } : null;
   if (JSON.stringify(out) !== JSON.stringify(F)) s.hang.l4fire = out;
 }
-/* duck id shoved px world px along (ux, uy), as a swing shoves it (a Flyer's tug: zombies.js flyerStep) */
-export const tugDuck = (s, id, ux, uy, px, now) =>
-  shovePx(s, id, ux, uy, px, now, inCabin(...toPx(s.pos[id])) ? 1 : 0);
+/* duck id shoved px world px along (ux, uy), as a swing shoves it (a Flyer's tug: zombies.js flyerStep); more: a throw's
+   flight (ms, h, l: boardfire.js shove; the Giant's: zombies.js giantHit) */
+export const tugDuck = (s, id, ux, uy, px, now, more) =>
+  shovePx(s, id, ux, uy, px, now, inCabin(...toPx(s.pos[id])) ? 1 : 0, more);
 /* a zombie's claw: 0.6 to 1, in tenths */
 export const clawDmg = () => 0.6 + Math.floor(Math.random() * 5) / 10;
 /* a duck takes 1 (a claw, fire); true when that put it down. A claw leaves a wound on it now and then, as hits do in
@@ -4107,6 +4108,11 @@ const die = (z, T) => {
   if (z.st !== 7) delete z.k;
   Object.assign(z, { st: 3, d: T });
 };
+/* a zombie the Giant's swing reaches (zombies.js giantHit): dmg, nobody's points, and pushed px along (ux, uy) */
+export function zombieHit(s, z, dmg, ux, uy, px, now, T) {
+  if (strike(s, z, dmg, false, null, "", now, false)) die(z, T);
+  knockZ(s, z, ux, uy, px);
+}
 /* melee knockback (the owner's, Nov 18 15:25Z: "Every melee has slight knockback EVEN to players AND especially to
    zombies EVEN WHILE THEY ARE ALIVE ... Fireaxe has more knockback and the hammer has most knockback"): push.js */
 /* a zombie, alive or dead, pushed by px world px along (ux, uy) (a way), over its weight (push.js pushOn), a few px at a

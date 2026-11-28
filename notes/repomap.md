@@ -69,7 +69,7 @@ game.js 4449 the game screen
 gameact.js 525 the action window and the
 gameannounce.js 187 The cloud's words and what
 gameboard.js 582 the board: each mode's board
-gamedefaults.js 200 the game's own numbers, for
+gamedefaults.js 248 the game's own numbers, for
 gamefx.js 697 the board's specials and the
 gamehand.js 514 the hand: the number-key specials,
 gamemsg.js 108 lines by the chat button:
@@ -119,7 +119,7 @@ l4ddmap.js 252 Quacky Zombies' minimap
 l4ddpower.js 327 Dead Ducks Arcade's power box
 l4ddpowerui.js 276 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4942 the rules of Quacky Zombies
+l4ddrules.js 4948 the rules of Quacky Zombies
 l4ddsfx.js 514 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the
 langname.js 5 the name of Sandbox's number
@@ -268,7 +268,7 @@ who.js 3 who this player is beyond
 wounds.js 500 
 zombiepath.js 187 the zombies' way to the
 zombieroofs.js 331 the zombies' walk over Downpour's
-zombies.js 1643 the zombies: one module for
+zombies.js 1818 the zombies: one module for
 
 ## js/hangout/
 activities.js 25 every Hangout activity, so the
