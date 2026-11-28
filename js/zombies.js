@@ -297,6 +297,7 @@ export function newZombie(s, L, T, zs = [], kind = "") {
 const KINDS = ["giant", "flyer"];
 const badNow = (s) => ducks(s).some(badly); // (the team doing badly: any duck low on health or ammo)
 export function specialTick(s, L, zs, T) {
+  if (KINDS.every((k) => L.r < SPECIAL_Z[k].from)) return; // (before either one's round: nothing, not even a roll)
   let q = L.sz;
   if (!q || q.r !== L.r) {
     q = { r: L.r, m: Math.floor(Math.random() * SPECIAL_Z.MARKS.length) };
@@ -415,7 +416,7 @@ function flyerStep(z, c, fly) {
   if (!q) return false;
   z.st = 8;
   z.n = 0;
-  z.j = [z.x, z.y, ...q.xy, h, q.zz, 0, F.speed, F.up]; // (at its speed along the line, j[7]; its height, j[8])
+  z.j = [z.x, z.y, ...q.xy, h, q.zz, 0, F.fly, F.up]; // (at its speed along the line, j[7]; its height, j[8])
   return true;
 }
 /* a Flyer's leap ends: on a duck there that nothing holds, it holds on (every screen hears it, and that duck's hand goes

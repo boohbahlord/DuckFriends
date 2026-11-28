@@ -79,7 +79,7 @@ const { url, fail, noErrors } = require("./lib.cjs");
         last = line;
       }
       if (f && f.st === 9 && !out.held) out.held = { k, hp };
-      if (out.held && k === out.held.k + 20)
+      if (out.held && k === out.held.k + 6)
         out.after = {
           hp,
           x: pos.x,
@@ -111,7 +111,7 @@ const { url, fail, noErrors } = require("./lib.cjs");
           fc: f2 && f2.fc,
         };
       }
-      if (out.hit && k > out.held.k + 40) break;
+      if (out.hit && k > out.held.k + 12) break;
     }
     out.sz = room.state.hang.l4.sz;
     out.r = room.state.hang.l4.r;

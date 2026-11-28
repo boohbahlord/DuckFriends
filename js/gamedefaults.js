@@ -120,13 +120,13 @@ export const SPECIAL_Z = {
     step: 0.05,
     most: 0.6,
     hp: 5,
-    /* its leap and hold (zombies.js flyerStep): it leaps at a duck on its floor up to `leap` duck rooms away, at speed
+    /* its leap and hold (zombies.js flyerStep): it leaps at a duck on its floor up to `leap` duck rooms away, at `fly`
        px/s, up to `up` px over the line, rising the first `peak` of the way (fast, then slowing) and falling the rest
        (slow, then as a falling body); on a duck it rides `ride` px up, bites `dmg` HP every `bite` ms ("every 0.25
        seconds ... for 0.1-0.2 damage") and tugs it `pull.px` px a random way every `pull.ms` ms, `pull.horde` of the
        way toward the zombies ("a tiny bias towards the horde"); thrown off or missing, it waits `rest` ms */
     leap: 6,
-    speed: 360,
+    fly: 360,
     up: 70,
     peak: 0.35,
     ride: 18,
