@@ -223,7 +223,7 @@ export function shovePx(s, id, ux, uy, far, now, side) {
     dY = 0.012 * HH;
   shove(s, id, ux, (uy * dX) / dY, far / dX, now, side);
 }
-function shove(s, id, ux, uy, far0, now, side, more = {}) {
+export function shove(s, id, ux, uy, far0, now, side, more = {}) {
   const far = pushTaken(far0, weightOf(s, id)), // (the ratio: a bigger duck is moved less far, push.js)
     p = s.pos[id],
     hang = isHang(s),
