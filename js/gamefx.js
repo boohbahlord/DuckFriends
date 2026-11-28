@@ -411,6 +411,7 @@ export function playFx(f) {
         dagger: sfx.throw,
         shotgun: sfx.shotgun,
         medkit: sfx.medkit,
+        bandage: sfx.medkit,
         grenade: sfx.throw,
         sniper: sfx.sniper,
         revolver: sfx.revolver,

@@ -23,7 +23,7 @@ boardjustin.js 499 Justin on the boards
 boardzombies.js 122 the zombies on a board
 botduck.js 90 a computer's duck: a random
 botlines.js 188 What the computers write and
-bots.js 1349 computers
+bots.js 1351 computers
 bowdraw.js 46 the bow, drawn to shoot
 brackets.js 459 Bicker Brackets: what the screen
 brainbuild.js 330 Sandbox: M's Brain builder
@@ -69,7 +69,7 @@ gameact.js 525 the action window and the
 gameannounce.js 187 The cloud's words and what
 gameboard.js 582 the board: each mode's board
 gamedefaults.js 72 the game's own numbers, for
-gamefx.js 690 the board's specials and the
+gamefx.js 691 the board's specials and the
 gamehand.js 506 the hand: the number-key specials,
 gameplace.js 480 where things are put on
 gameready.js 47 
@@ -83,9 +83,9 @@ ground.js 53 what a duck walks on,
 gspreview.js 88 Game Settings: the pictures in
 gssettings.js 747 Game Settings: every setting, its
 gstext.js 200 Game Settings: what a setting
-gunart.js 414 every weapon, drawn: one drawing
+gunart.js 423 every weapon, drawn: one drawing
 gunparts.js 15 the pieces every weapon's drawing
-guns.js 646 every weapon's numbers: one sheet
+guns.js 648 every weapon's numbers: one sheet
 hats.js 1003 hats
 heat.js 83 a gun's heat: the spread
 heights.js 93 a shot's height, Doom's way
@@ -93,7 +93,7 @@ hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
 hotbar.js 515 the specials on the number
 hotpick.js 278 What goes in my duck's
-hpmath.js 68 HP in hundredths
+hpmath.js 63 HP in hundredths
 hpmeter.js 311 HP meters and the little
 idbstore.js 38 One place that opens a
 invisible.js 11 Who is invisible right now
@@ -110,14 +110,14 @@ l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
 l4ddart.js 609 Quacky Zombies' pictures
 l4ddbar.js 324 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and
-l4ddcatalog.js 228 Quacky Zombies: the Butler's Items
+l4ddcatalog.js 229 Quacky Zombies: the Butler's Items
 l4dddrops.js 63 Quacky Zombies' drops, drawn
 l4ddloot.js 42 Dead Ducks Arcade: what lies
 l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 337 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4525 the rules of Quacky Zombies
+l4ddrules.js 4538 the rules of Quacky Zombies
 l4ddsfx.js 509 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the
 langname.js 5 the name of Sandbox's number
@@ -231,7 +231,7 @@ sfxlist.js 157 the sound files
 shared.js 497 Sandbox Phase 7: Shared, the
 slices.js 31 long work cut into slices
 sound.js 886 the game's sounds: real recordings,
-specials.js 849 Specials
+specials.js 851 Specials
 spectate.js 98 Sandbox: watching the others once
 splash.js 71 the start screen: your duck
 sprintblur.js 54 the sprint's blurred border of

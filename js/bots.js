@@ -1028,9 +1028,11 @@ export function l4Bot(s, id, now, out) {
     w =
       hasLeft(s, id, "medkit") && hp <= 1 && hp < maxHp(s, id)
         ? "medkit"
-        : bd < 75 || !loaded.length
-          ? sl[0]
-          : (bd < 220 && loaded.find((v) => v === "shotgun")) || loaded[0];
+        : hasLeft(s, id, "bandage") && hp <= maxHp(s, id) / 2
+          ? "bandage"
+          : bd < 75 || !loaded.length
+            ? sl[0]
+            : (bd < 220 && loaded.find((v) => v === "shotgun")) || loaded[0];
   /* too close: back away while it shoots */
   let [nx, ny] = [x, y];
   if (bd < TOO_CLOSE && kindOf(w) !== "melee")

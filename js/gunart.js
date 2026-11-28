@@ -358,6 +358,15 @@ export const MEDKIT = `<svg viewBox="0 0 48 40" aria-hidden="true">
 <path d="M20.4 15H27.6V20.4H33V27.6H27.6V33H20.4V27.6H15V20.4H20.4Z" fill="#e63946" stroke="${INK_DARK}" stroke-width="1.4" stroke-linejoin="round"/>
 <path d="M7 13.6Q7 12 9 12" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/><path d="M21.6 16.4V20" stroke="#fff" stroke-width="1" opacity=".5" stroke-linecap="round"/></svg>`;
 
+/* the bandage: a white roll on its side, its loose end hanging down, a red stripe along it */
+export const BANDAGE = `<svg viewBox="0 0 40 34" aria-hidden="true">
+<path d="M26 22H33V31H26Z" fill="#eef0f5" stroke="${INK_DARK}" stroke-width="1.6" stroke-linejoin="round"/>
+<circle cx="18" cy="16" r="13" fill="#f4f6fa" stroke="${INK_DARK}" stroke-width="2"/>
+<circle cx="18" cy="16" r="8.6" fill="none" stroke="#d6dbe5" stroke-width="1.4"/>
+<circle cx="18" cy="16" r="4" fill="#c9cfdb" stroke="${INK_DARK}" stroke-width="1.4"/>
+<path d="M5.6 12.4H30.4" stroke="#e63946" stroke-width="2.2"/>
+<path d="M9 7.6Q12 5 16 4.4" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/></svg>`;
+
 /* Mad God Justin's big black office chair (padded back, a seat, one post, five legs on wheels; no arms): his throw, and
    the Chair special's (specials.js) */
 export const CHAIR = `<svg viewBox="0 0 100 120" aria-hidden="true">
