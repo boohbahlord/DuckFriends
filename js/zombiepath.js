@@ -18,7 +18,7 @@ export let GW = 82,
   GH = 52; // (Downpour's grid covers its whole world: syncMap)
 export const setGrid = (g) => ([GX, GY, GW, GH] = g); // (the map's grid, as syncMap finds it: l4ddrules.js)
 const BOARD_COST = 6; // (cells' worth of walking)
-export let walk = null;
+let walk = null;
 let extra = null,
   walkRev = -1, // (the cabin it was made for: layout.js' layoutRev)
   hts = null,
@@ -28,11 +28,11 @@ const cellAt = (x, y) => {
     j = Math.floor((y - GY) / CELL);
   return i < 0 || j < 0 || i >= GW || j >= GH ? -1 : j * GW + i;
 };
-export const mid = (c) => [
+const mid = (c) => [
   GX + (c % GW) * CELL + CELL / 2,
   GY + Math.floor(c / GW) * CELL + CELL / 2,
 ];
-export function cells() {
+function cells() {
   syncMap();
   if (walk && walkRev === layoutRev()) {
     if (mvRev !== moveRev()) {

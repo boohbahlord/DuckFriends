@@ -9,6 +9,19 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v285",
+    version: 285,
+    date: "Nov 27, 2026",
+    title: "A smaller game",
+    news: [
+      "DuckFriends is back to being a party game first. We removed what friends weren't playing, so the game is smaller and loads faster.",
+      "Dead Ducks Arcade now plays only on Downpour: voting it takes you straight there, with no map vote. Hangout keeps Duck Cabin.",
+      "Mad God Justin is gone, and so is his attack on the board.",
+      "Survival is gone.",
+      "The command line is gone; chat is just chat now.",
+    ],
+  },
+  {
     id: "v284",
     version: 284,
     date: "Nov 22, 2026",

@@ -11,7 +11,6 @@ instruments (its license: LICENSES.md).
 | countGo | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
 | voteTick | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
 | l4round | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
-| svCalm | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
 | l4over | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
 | step | Kenney, Impact Sounds (footstep_wood) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
 | zstep | Kenney, Impact Sounds (footstep_carpet) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
@@ -92,8 +91,6 @@ instruments (its license: LICENSES.md).
 | sbOrb | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
 | cheatOn | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
 | cheatOff | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
-| defib | Electricity Game Sound Pack (charge, snaploop); Kenney, Impact Sounds (impactSoft_heavy) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
-| svHorde | artisticdude, Zombies Sound Pack — https://opengameart.org/content/zombies-sound-pack | CC0 1.0 |
 | l4slot | Kenney, RPG Audio (metalClick) and Impact Sounds (impactBell_heavy) — https://kenney.nl/assets/rpg-audio | CC0 1.0 |
 | l4till | Kenney, RPG Audio (handleCoins) and Interface Sounds (glass) — https://kenney.nl/assets/rpg-audio | CC0 1.0 |
 | dropIn | Kenney, Interface Sounds (glass) — https://kenney.nl/assets/interface-sounds | CC0 1.0 |

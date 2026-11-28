@@ -63,11 +63,10 @@ export { GS, JEEP };
    overrides it) up to the height top (none: always). layer 'floor': drawn under every duck. only 'in' | 'out': shown
    only while my duck is inside (or outside) the cabin. fade: turns see-through while it hides a duck. plat: its top can
    be stood on (a jump gets up; walking can't). light: { x, y, r, c, k,
-   flick } a pool of light on the ground. l4: 0: left out in Quacky Zombies (useMode below). Drawings: shapes.js
+   flick } a pool of light on the ground. Drawings: shapes.js
    (placeholders) by kind. */
 const ALL = []; // (every prop; PROPS: the ones the room's mode has)
 const count = {};
-let only4; // (while it's set, every prop made is one cabin's only: 0 Hangout's, 1 Quacky Zombies')
 /* the roof (or the canopy) over (x, y): what stands under it stops a duck only up to it, so one up on it walks over (the
    pumps under the canopy never block a duck walking on it: the owner's, Nov 17 17:41Z, "the top of the roof for the gas
    pump shouldn't block the movement patterns of players") */
@@ -75,8 +74,7 @@ const underRoof = (x, y) =>
   GS.DECKS.find((d) => x >= d.x0 && x < d.x1 && y >= d.y0 && y < d.y1);
 function add(kind, x, y, w, d, h, o = {}) {
   const p = { kind, x, y, w, d, h, z: heightAt(x + w / 2, y + d - 1), ...o };
-  if (only4 !== undefined && p.l4 === undefined) p.l4 = only4;
-  const n = (p.map ? p.map + "-" : p.l4 === 1 ? "l4-" : "") + kind; // (Quacky Zombies' own count apart: Hangout's ids stay as they were)
+  const n = (p.map ? p.map + "-" : "") + kind; // (the second map's own count apart: Hangout's ids stay as they were)
   p.id = o.id || n + (count[n] = (count[n] || 0) + 1);
   if (p.fit) p.fit(p); // (sized from its id: Downpour's trees, stationmap.js treeFit)
   p.key = o.key ?? y + d;
@@ -87,8 +85,8 @@ function add(kind, x, y, w, d, h, o = {}) {
     p.top = p.plat || r ? p.z + h : Infinity;
     if (r) p.roof = r.h;
   } // (Downpour: whatever stands under a roof, its walls too, stops a duck up to the roof (a duck up on the roof walks over it), and a shot only up to its own top)
-  if (p.l4 === 1 || p.map) {
-    ALL.push(p); // (Quacky Zombies' only, or the second map's: in PROPS once useMode turns to it)
+  if (p.map) {
+    ALL.push(p); // (the second map's: in PROPS once useMode turns to it)
     return p;
   }
   if (p.plat)
@@ -103,12 +101,6 @@ function add(kind, x, y, w, d, h, o = {}) {
   PROPS.push(p);
   ALL.push(p);
   return p;
-}
-/* the props fn makes are one cabin's only (k: 0 Hangout's, 1 Quacky Zombies') */
-function onlyIn(k, fn) {
-  only4 = k;
-  fn();
-  only4 = undefined;
 }
 const WARM = "#ffb24a",
   HOT = "#ff8a2a";
@@ -163,27 +155,11 @@ function southWall(gaps) {
     }); // inside: it goes away, a low line left
   }
 }
-onlyIn(0, () => {
-  southWall([BD]);
-  add("doorway", BD[0], C.y1 - T, BD[1] - BD[0], 2 * T, C.wall, {
-    only: "out",
-    z: 0,
-  }); // the back door, open, warm light inside
-});
-/* Quacky Zombies' cabin (the owner's, Nov 15): holes in the walls instead of the back door, and wider doorways on the
-   east side, to dodge the zombies through. A hole is a gap anyone walks through, like a doorway, never boarded up; it
-   looks like the holes the zombies come in by. axis "x": in an east-west wall at y = at, across x a … b; "y": in a
-   north-south wall at x = at, from y = a to b. out: in the south wall, onto the deck (the back door's place is the
-   large one): the deck shows from inside through it, and the room just behind it from the deck */
-const L4_HOLES = [
-  { id: "hole-kitchen", axis: "x", at: 1100, a: 4080, b: 4250 }, // the kitchen | the top bedroom
-  { id: "hole-bath", axis: "y", at: 3900, a: 1175, b: 1335 }, // the bathroom | the top bedroom
-  { id: "hole-beds", axis: "x", at: 1750, a: 3990, b: 4230 }, // the top bedroom | the bottom one
-  { id: "hole-porch", axis: "x", at: C.y1, a: 2570, b: 2880, out: true }, // the great room | the deck
-  { id: "hole-hall", axis: "x", at: C.y1, a: 3320, b: 3480, out: true }, // the hall | the deck
-];
-const L4_SOUTH = L4_HOLES.filter((o) => o.out).map((o) => [o.a, o.b]);
-onlyIn(1, () => southWall(L4_SOUTH));
+southWall([BD]);
+add("doorway", BD[0], C.y1 - T, BD[1] - BD[0], 2 * T, C.wall, {
+  only: "out",
+  z: 0,
+}); // the back door, open, warm light inside
 // inside: the great room | the hall | the kitchen, the bathroom, a nook, bedroom 1, bedroom 2 (doors are gaps). An
 // east-west wall hides the floor just north of it (its height, drawn up the screen), so every doorway sits where the
 // floor on both its sides shows: a duck going through is never behind a wall. The nook is deep enough for its two
@@ -199,80 +175,24 @@ function innerWalls(w) {
   wallX(1450, 3500, 3900, C.inner, IN); // the bathroom's south wall
   for (const [a, b] of w.bed2) wallX(1750, a, b, C.inner, IN); // bedroom 2's north wall
 }
-onlyIn(0, () =>
-  innerWalls({
-    great: [
-      [C.y0, 1275],
-      [1425, C.y1],
-    ],
-    hall: [
-      [C.y0, 790],
-      [940, 1200],
-      [1340, 1480],
-      [1600, 1860],
-      [2010, C.y1],
-    ],
-    kitchen: [[3500, C.x1]],
-    bed1: [
-      [1100, 1480],
-      [1600, 1750],
-    ],
-    bed2: [[3500, C.x1]],
-  }),
-);
-onlyIn(1, () =>
-  innerWalls({
-    great: [
-      [C.y0, 1250],
-      [1450, C.y1],
-    ],
-    hall: [
-      [C.y0, 760],
-      [970, 1215],
-      [1395, 1460],
-      [1640, 1830],
-      [2060, C.y1],
-    ],
-    kitchen: [
-      [3500, 4080],
-      [4250, C.x1],
-    ],
-    bed1: [
-      [1100, 1175],
-      [1335, 1460],
-      [1640, 1750],
-    ],
-    bed2: [
-      [3500, 3990],
-      [4230, C.x1],
-    ],
-  }),
-);
-/* the holes' broken edges (shapes.js draws them): nothing solid, the walls either side are */
-onlyIn(1, () => {
-  for (const o of L4_HOLES)
-    if (o.axis === "x")
-      add(
-        "hole",
-        o.a - T,
-        o.at - T,
-        o.b - o.a + 2 * T,
-        2 * T,
-        o.out ? 14 : C.inner,
-        {
-          ...IN,
-          z: 0,
-          hole: o,
-          fade: !o.out,
-        },
-      );
-    else
-      add("hole", o.at - T, o.a - T, 2 * T, o.b - o.a + 2 * T, C.inner, {
-        ...IN,
-        z: 0,
-        hole: o,
-        key: o.b + T,
-      });
+innerWalls({
+  great: [
+    [C.y0, 1275],
+    [1425, C.y1],
+  ],
+  hall: [
+    [C.y0, 790],
+    [940, 1200],
+    [1340, 1480],
+    [1600, 1860],
+    [2010, C.y1],
+  ],
+  kitchen: [[3500, C.x1]],
+  bed1: [
+    [1100, 1480],
+    [1600, 1750],
+  ],
+  bed2: [[3500, C.x1]],
 });
 /* the doors, in the gaps of the outside walls (the front door, the back door to the deck): in an east-west wall at y = at,
    across x a … b. hinge: the end it turns on; swing: the side it opens to. They never block walking: doors.js swings each
@@ -300,8 +220,7 @@ export const DOORWAYS = [
   },
 ];
 /* the doorways inside: open gaps, no doors (I said: only the front door and the deck's), in north-south walls at x =
-   at, from y = a to b (the walls either side reach T into it). Quacky Zombies' are wider, and its hole in bedroom 1's
-   west wall is one too (useMode puts the room's mode's in OPENINGS) */
+   at, from y = a to b (the walls either side reach T into it). */
 const HANG_OPENINGS = [
   { id: "gap-great", at: 3300, a: 1275, b: 1425 },
   { id: "gap-kitchen", at: 3500, a: 790, b: 940 },
@@ -310,15 +229,6 @@ const HANG_OPENINGS = [
   { id: "gap-bed2", at: 3500, a: 1860, b: 2010 },
   { id: "gap-bed1", at: 3900, a: 1480, b: 1600 },
 ];
-const L4_OPENINGS = [
-  { id: "gap-great", at: 3300, a: 1250, b: 1450 },
-  { id: "gap-kitchen", at: 3500, a: 760, b: 970 },
-  { id: "gap-bath", at: 3500, a: 1215, b: 1395 },
-  { id: "gap-nook", at: 3500, a: 1460, b: 1640 },
-  { id: "gap-bed2", at: 3500, a: 1830, b: 2060 },
-  { id: "gap-bed1", at: 3900, a: 1460, b: 1640 },
-  ...L4_HOLES.filter((o) => o.axis === "y"),
-];
 export const OPENINGS = [...HANG_OPENINGS];
 for (const d of DOORWAYS)
   add("door", d.a, d.at - T, d.b - d.a, 2 * T, d.h, {
@@ -326,7 +236,6 @@ for (const d of DOORWAYS)
     z: 0,
     door: d,
     key: d.at + 6,
-    ...(d.id === "door-back" ? { l4: 0 } : {}), // (Quacky Zombies: a hole in its place)
   });
 
 /* the great room: along the north wall the piano, the coat rack, the front door with its mat and boots, the guestbook,
@@ -456,7 +365,6 @@ for (let k = 0; k < 8; k++) {
   add("stool", q.x - r, q.y - r, 2 * r, 2 * r, BJ.sh, {
     solid: true,
     ...IN,
-    l4: 0,
     n: k,
     tag: BJ.tag[k],
     key: q.y - 2,
@@ -472,7 +380,7 @@ add(
   { solid: true, ...IN, key: BJ.by - 2 },
 );
 add("plant", 1320, 2120, 50, 50, 90, { solid: true, ...IN });
-add("plant", 2650, 2120, 50, 50, 90, { solid: true, ...IN, l4: 0 }); // (by the back door)
+add("plant", 2650, 2120, 50, 50, 90, { solid: true, ...IN }); // (by the back door)
 add(
   "stage",
   STAGE.cx - STAGE.rx,
@@ -537,7 +445,6 @@ add("bed", 4060, 1130, 210, 270, 45, {
   solid: true,
   plat: true,
   ...IN,
-  l4: 0,
 });
 add("rug", 3950, 1420, 300, 190, 0, FLOOR);
 add("lamp", 3960, 1112, 40, 30, 110, {
@@ -549,7 +456,6 @@ add("bed", 3960, 1790, 300, 270, 45, {
   solid: true,
   plat: true,
   ...IN,
-  l4: 0,
 });
 add("rug", 3600, 1800, 330, 300, 0, FLOOR);
 add("lamp", 3900, 1772, 40, 30, 110, {
@@ -603,26 +509,10 @@ railX(DECK.y1, DECK.x0, DECK.x1);
 railY(STAIRS.x0, STAIRS.land, STAIRS.y1);
 railY(STAIRS.x1, STAIRS.y0, STAIRS.y1);
 railX(STAIRS.y0, STAIRS.x0, STAIRS.x1);
-/* the rocking chairs and their table; Quacky Zombies' stand further east, out of the way of the hole from the hall */
-for (const [k, dx] of [
-  [0, 0],
-  [1, 400],
-])
-  onlyIn(k, () => {
-    add("rocker", 3330 + dx, 2240, 80, 60, 80, { solid: true });
-    add("rocker", 3560 + dx, 2240, 80, 60, 80, { solid: true });
-    add("deck-table", 3460 + dx, 2260, 60, 50, 45, { solid: true, plat: true });
-  });
-/* Dead Ducks Arcade's power box, back left on the balcony against the cabin wall (l4ddpower.js PW; l4ddpowerui.js draws
-   it): only its footprint here, so nobody walks through it */
-onlyIn(1, () => add("l4power", 2266, 2208, 68, 28, 120, { solid: true }));
-/* … and its Angel machine on the stage, toward the back (l4ddangel.js ANGEL; l4ddangelui.js draws it) */
-onlyIn(1, () =>
-  add("l4angel", STAGE.cx - 130, STAGE.cy - 64, 100, 26, 140, {
-    solid: true,
-    ...IN,
-  }),
-);
+/* the rocking chairs and their table */
+add("rocker", 3330, 2240, 80, 60, 80, { solid: true });
+add("rocker", 3560, 2240, 80, 60, 80, { solid: true });
+add("deck-table", 3460, 2260, 60, 50, 45, { solid: true, plat: true });
 const GLOWS = []; // lights with no prop of their own: the south windows on the deck, the deck's string lights
 for (const x of WIN)
   GLOWS.push({
@@ -795,7 +685,7 @@ function makeSolids() {
         y0: p.block[1],
         x1: p.block[2],
         y1: p.block[3],
-        top: p.plat && variant === "l4" ? Infinity : p.top, // (Quacky Zombies: nothing to jump up onto)
+        top: p.top,
         roof: p.roof || 0, // (Downpour: under a roof, it stops a duck's feet up to the roof's height, a shot up to its top)
         zx: !!p.zx, // (zombies climb over it: the fallen tree)
         pass: !!p.pass, // (it stops shots only: walking over it is a floor's, a car's glass, vehicles.js)
@@ -820,21 +710,13 @@ function makeSolids() {
 }
 makeSolids();
 
-/* ---------- Quacky Zombies' own cabin (the owner's, Nov 15) ----------
-   The same cabin with a few things left out (a prop with l4: 0: the stools round the card table, the beds, the plant
-   by the back door, the back door itself), a few of its own (l4: 1: the holes, the walls round them, the wider
-   doorways, the rocking chairs moved along) and nothing to jump up onto: a table is only in the way, so the zombies can
-   always reach a duck.
-   useMode(mode) turns PROPS, the platforms and the solids to the room's mode (the rules call it for every action,
-   the world as it opens); layoutRev() moves on each time, so whatever was made from them can be made again. Hangout's
-   cabin stays as it was. */
+/* useMode(mode) turns PROPS, the platforms and the solids to the room's mode (the rules call it for every action, the
+   world as it opens): Hangout's cabin, or Dead Ducks Arcade's Downpour; layoutRev() moves on each time, so whatever was
+   made from them can be made again. */
 export const layoutRev = () => rev;
 export const layoutVariant = () => variant;
-/* Quacky Zombies' holes (L4_HOLES above; none in Hangout) and what shows through the ones onto the deck: in, the room
-   just behind one, seen from the deck (as deep as the cabin's front wall is tall: the floor that shows through it);
-   out, the deck in front of one, seen from inside */
-export const HOLES = [],
-  PEEKS = [];
+/* what shows through Downpour's ways through a wall (useMode) */
+export const PEEKS = [];
 const PEEK = { side: 60, deep: 260 };
 /* the building my duck is in (world.js sets it every frame): on Downpour, from inside one building the other is out of
    sight too */
@@ -878,8 +760,8 @@ export function roofHoleOver(x, y, z = 0) {
    building's inside never shows, its roof stays as it is; whoever is in there shows only as their outline (the owner's,
    Nov 17 17:41Z: "it will not make it transparent unless ur player is in it") */
 export const seenFrom = (x, y, inside, z) => wallsSee(x, y, inside, z);
-export function useMode(mode, map) {
-  const v = modeOf(mode).l4map ? (map === "downpour" ? "l4gs" : "l4") : "";
+export function useMode(mode) {
+  const v = modeOf(mode).l4map ? "l4gs" : "";
   if (v === variant) return;
   setVariant(v);
   flood = v === "l4gs" ? GS.FLOOD : null;
@@ -887,24 +769,14 @@ export function useMode(mode, map) {
   setWorldSize(...(v === "l4gs" ? [GS.GS_W, GS.GS_H] : [6000, 4400]));
   PROPS.length = 0;
   for (const p of ALL)
-    if (v === "l4gs" ? p.map === "gs" : !p.map && p.l4 !== (v === "l4" ? 0 : 1))
-      PROPS.push(p);
+    if (v === "l4gs" ? p.map === "gs" : !p.map) PROPS.push(p);
   OPENINGS.length = 0;
   OPENINGS.push(
-    ...(v === "l4"
-      ? L4_OPENINGS
-      : v === "l4gs"
-        ? GS.INNER_DOORS.map((d) => ({ ...d, a: d.a - T, b: d.b + T })) // (Downpour's walls reach T past their pieces, not into the gap: the same doorway as the cabin's)
-        : HANG_OPENINGS),
+    ...(v === "l4gs"
+      ? GS.INNER_DOORS.map((d) => ({ ...d, a: d.a - T, b: d.b + T })) // (Downpour's walls reach T past their pieces, not into the gap: the same doorway as the cabin's)
+      : HANG_OPENINGS),
   );
-  HOLES.length = PEEKS.length = 0;
-  if (v === "l4") HOLES.push(...L4_HOLES);
-  for (const o of HOLES)
-    if (o.out)
-      PEEKS.push({
-        in: [o.a, C.y1 - C.wall, o.b, C.y1],
-        out: [o.a - PEEK.side, C.y1, o.b + PEEK.side, C.y1 + PEEK.deep],
-      });
+  PEEKS.length = 0;
   /* Downpour: every way through a wall (the gas station's front door and its two holes in the north wall, and the
      chapel's wide entrance) is a hole too, and from inside the way out always shows through it (the owner's, Nov 17
      05:46Z: "exit?"), only from inside that building (bldg). The owner, Nov 18 15:18Z: "the zombies cannot be seen

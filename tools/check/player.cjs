@@ -1,7 +1,7 @@
 /* I want my own duck pinned before anyone moves how it walks, sprints, jumps and uses its hotbar (the owner's rule: pin
    before you touch). This plays tools/player-golden/scenarios.json on the real game screen: keys, the mouse, the wheel, and
    on a phone the stick, taps, swipes and the pad's buttons, on the boards (Agree or Disagree, Sandbox's board), in
-   Hangout, in Dead Ducks Arcade on Downpour and on Cabin, in Mad God Justin and on Sandbox's Duck Cabin. Once the screen is
+   Hangout, in Dead Ducks Arcade on Downpour and on Sandbox's Duck Cabin. Once the screen is
    up and loaded, the clock, the frames, the timers and Math.random are all fake (tools/player-golden/init.js), so the same
    input gives the same game frame for frame; a hash of the whole room each frame. A digest of all the frames and one hash
    every 60 frames are kept in tools/player-golden/pinned.json; a run that gives other hashes fails, saying where it changed.

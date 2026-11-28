@@ -136,13 +136,6 @@ SOUNDS = {
         kbps=48,
         credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
     ),
-    # Survival, a horde's last zombie down (s.hang.sv: the peak turns to its tail): soundfont.py calm
-    "svCalm": dict(
-        sf="calm",
-        lp=3000,
-        kbps=48,
-        credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
-    ),
     # everyone's down (Dead Ducks Arcade's ending, both maps): soundfont.py game_over
     "l4over": dict(
         sf="game_over",
@@ -770,39 +763,6 @@ SOUNDS = {
         sf="cheat_off",
         lp=4000,
         credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
-    ),
-    # Survival's defibrillator bringing a dead duck back, at once (no charging up): a short electric whine, then the
-    # shock, a heavy soft thump with a snap of sparks on it
-    "defib": dict(
-        layers=[
-            ("gh:angel/charge.opus", 1.0, 0.35, 0, 0.35, 3000),
-            ("kn:jump-land/impactSoft_heavy_000.ogg", 0, 0.5, 0.33, 1),
-            ("gh:angel/snaploop.opus", 0.5, 0.12, 0.33, 0.35, 2500),
-        ],
-        lp=4000,
-        credit=(
-            "Electricity Game Sound Pack (charge, snaploop); Kenney, Impact Sounds (impactSoft_heavy)",
-            "https://kenney.nl/assets/impact-sounds",
-        ),
-    ),
-    # Survival, a horde coming (s.hang.sv: the rest turns to a peak): many zombies groaning far off at once, low, dark
-    # and swelling in, heard rather than announced (the phases are never announced)
-    "svHorde": dict(
-        layers=[
-            ("oga:zombie-groan/zombie-1.wav", 0, 0.85, 0, 0.8),
-            ("oga:zombie-groan/zombie-10.wav", 0, 0.68, 0.25, 0.7),
-            ("oga:zombie-groan/zombie-15.wav", 0, 0.87, 0.55, 0.9),
-            ("oga:zombie-groan/zombie-5.wav", 0, 0.5, 0.85, 0.6),
-            ("oga:zombie-groan/zombie-1.wav", 0, 0.85, 1.1, 0.7),
-            ("oga:zombie-groan/zombie-10.wav", 0, 0.68, 1.45, 0.8),
-            ("oga:zombie-groan/zombieYell1.wav", 0, 0.38, 1.7, 0.4),
-            ("oga:zombie-groan/zombie-15.wav", 0, 0.87, 1.9, 0.6),
-        ],
-        rate=0.8,
-        lp=1300,
-        fin=0.9,
-        pre="afade=t=out:st=2.4:d=0.9",
-        credit=("artisticdude, Zombies Sound Pack", OGA_URL["zombies"]),
     ),
     # the fireplace's spin, 4.2 s: a prize wheel's clicker slowing down, then a bell as it stops on a weapon
     "l4slot": dict(

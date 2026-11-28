@@ -38,10 +38,8 @@ const INIT = path.resolve(__dirname, "../npc-golden/init.js"),
           mapPick: "",
           botWait: 1,
           mode: "l4dd",
-          l4map: "downpour",
         },
       });
-      r.state.zmapAsked = 1;
       r.send({ t: "start" });
       for (let k = 0; k < 600 && r.state.phase !== "hang"; k++) beat();
       const J = "b-justin",

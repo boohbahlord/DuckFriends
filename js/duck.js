@@ -139,7 +139,7 @@ export function picFrame(L) {
     y = Math.min(0, Math.floor(102 - 92 * z));
   return { x, y, w: 120 - 2 * x, h: 120 - y, z };
 }
-/* player id's, in room state s (the rules' hits: rules.js, mgjrules.js, l4ddrules.js, sbarms.js) */
+/* player id's, in room state s (the rules' hits: rules.js, l4ddrules.js, sbarms.js) */
 export const duckBig = (s, id) =>
   hitScaleOf(((s && s.players && s.players[id]) || {}).duck);
 

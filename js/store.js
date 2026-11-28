@@ -72,11 +72,9 @@ const PROFILE_DEFAULT = {
   cabinKills: 0,
   shadowHits: 0,
   dunced: 0,
-  mgjWins: 0,
-  mgjLosses: 0,
   lostRounds: 0,
   secrets: {},
-  unlockSeen: {}, // what unlocks things (unlocks.js): Justin killed with a weapon (in Duck Cabin too), the shadow duck hit with a chair, Jaimes' stabs on Mad God Justin, voted a dunce, Mad God Justin beaten, the codes on, the unlocks already announced
+  unlockSeen: {}, // what unlocks things (unlocks.js): Justin killed with a weapon (in Duck Cabin too), the shadow duck hit with a chair, voted a dunce, the codes on, the unlocks already announced
 };
 
 /* all-time stats, one set per game mode (test rooms don't count, except their jumps); others see them too, so a
@@ -91,12 +89,10 @@ export const STAT_MODES = [
   ["quack", "Who is the Quack?"],
   ["law", "Lawyering; Juryful of Ducklings"],
   ["dunce", "Duncelation"],
-  ["mgj", "Mad God Justin"],
   ["vdd", "Valentine's Duck Date"],
   ["trivia", "Trivia"],
   ["l4dd", "Dead Ducks Arcade"],
   ["l4r16", "Round 16 Start"], // (Quacky Zombies with the Round 16 Start setting: its own stats, the owner's)
-  ["surv", "Survival"], // (games, its best time survived in titles (seconds), zombies killed)
 ];
 /* which stats a game counts toward: its mode's, or Round 16 Start's for Quacky Zombies starting on round 13 or later */
 export const statMode = (s) => {
@@ -206,8 +202,6 @@ function normalize(p) {
   out.cabinKills = Math.max(0, Math.floor(+p.cabinKills || 0));
   out.shadowHits = Math.max(0, Math.floor(+p.shadowHits || 0));
   out.dunced = Math.max(0, Math.floor(+p.dunced || 0));
-  out.mgjWins = Math.max(0, Math.floor(+p.mgjWins || 0));
-  out.mgjLosses = Math.max(0, Math.floor(+p.mgjLosses || 0));
   out.lostRounds = Math.max(0, Math.floor(+p.lostRounds || 0));
   const flags = (o) =>
     Object.fromEntries(

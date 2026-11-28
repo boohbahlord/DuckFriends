@@ -1,5 +1,5 @@
 /* I want hits and gore pinned before they become one module (the owner's rule: pin before you touch). The modes' games
-   are pinned by the NPC golden (tools/check/npcgolden.cjs: Dead Ducks Arcade, Survival, Sandbox, Mad God Justin, with
+   are pinned by the NPC golden (tools/check/npcgolden.cjs: Dead Ducks Arcade, Survival, Sandbox, with
    their zombies', gunmen's, merchant's, Justin's and ducks' wounds in the room every beat). This pins the rest, from a
    fixed seed and clock:
    - codes: the wound every weapon leaves, with and without a headshot, on what can and can't lose a hat, a face item or

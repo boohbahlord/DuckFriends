@@ -23,7 +23,7 @@ const ROOT = path.join(__dirname, ".."),
   OUT = path.join(ROOT, "assets", "px", "art");
 const MODES = (
   process.env.ONLY ||
-  "aod,wyr,ddr,bb,sc,quack,law,dunce,mgj,vdd,trivia,hang,l4dd:downpour,l4dd:cabin,surv,sandbox"
+  "aod,wyr,ddr,bb,sc,quack,law,dunce,vdd,trivia,hang,l4dd:downpour,sandbox"
 ).split(",");
 const SCREENS = [
   ["computer", { viewport: { width: 1440, height: 900 } }],
@@ -137,7 +137,7 @@ async function play(p, mode) {
       const room = net.createLocalRoom({ name: "T", test: true, computers: 2 });
       window.room = room;
       const o = { mode: id, modePick: "host", mapPick: "host" };
-      if (id === "l4dd") Object.assign(o, { l4map: map, l4start: 5 });
+      if (id === "l4dd") Object.assign(o, { l4start: 5 });
       room.send({ t: "options", id: room.state.host, options: o });
       router.go("lobby", room);
       await wait(800);
@@ -146,11 +146,7 @@ async function play(p, mode) {
       document.querySelector(".win-x, [data-close]")?.click();
       room.send({ t: "start", id: room.state.host });
       await wait(5000);
-      for (let i = 0; i < 30 && room.state.vt; i++) {
-        if (room.state.vt.k === "zmap")
-          room.send({ t: "vote", v: map || "downpour" });
-        await wait(1000);
-      }
+      for (let i = 0; i < 30 && room.state.vt; i++) await wait(1000);
       if (room.state.hang) room.send({ t: "hang", k: "l4ready", id: room.me });
       await wait(4000);
     },

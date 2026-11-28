@@ -32,10 +32,8 @@ const MODES = [
   "hang",
   "l4dd",
   "law",
-  "mgj",
   "quack",
   "sc",
-  "surv",
   "trivia",
   "vdd",
   "wyr",
@@ -47,7 +45,6 @@ const ITEMS = [
   ["maps/ethers-crossroads.png", 320, 180, "keep"], // (drawn 4 times its size: its own pixels, back at their size)
   ["maps/vellum.webp", 565, 835, "avg"],
   ["maps/duck-cabin.jpg", 640, 534, "avg"],
-  ["maps/duck-cabin-zombies.jpg", 640, 360, "avg"],
   ["maps/downpour.jpg", 640, 360, "avg"],
   ...MODES.map((m) => [`modes/${m}.webp`, 480, 270, "avg"]),
   ...TV.map((c) => [`tv/${c}.webp`, 156, 120, "avg"]),

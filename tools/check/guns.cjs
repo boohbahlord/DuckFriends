@@ -1,9 +1,9 @@
 /* I want the guns pinned before they become one module (the owner's rule: pin before you touch). Their play is pinned
-   by the NPC golden (tools/check/npcgolden.cjs: the computers and NPCs fire them in Dead Ducks Arcade, Survival, Sandbox
-   and Mad God Justin, and the guns-board-* runs fire every one of the board's as a special). This pins the rest, for
+   by the NPC golden (tools/check/npcgolden.cjs: the computers and NPCs fire them in Dead Ducks Arcade, Survival and
+   Sandbox, and the guns-board-* runs fire every one of the board's as a special). This pins the rest, for
    every weapon any mode has:
    - numbers: Dead Ducks Arcade's (ARMS, names, kinds, lists and bags), the board's (cooldowns, full auto), every
-     gun's ammo (ammo.js), Mad God Justin's (cooldowns, damage, pickups), the NPCs' (Sandbox's lists and reach, the gunmen's), and
+     gun's ammo (ammo.js), the NPCs' (Sandbox's lists and reach), and
      the feel (headshot odds, the kick's vibration, the swing and fire speeds);
    - specials: each one's entry in the specials list (the picker), its icon as the hotbar and Customize show it;
    - drawings: each weapon in the hand, its icon, its bullet and trace, as drawings and as pixels;
@@ -33,9 +33,7 @@ const INIT = fs.readFileSync(
         GN = await import("./js/guns.js"),
         AM = await import("./js/ammo.js"),
         Rm = await import("./js/rules.js"),
-        MGm = await import("./js/mgjrules.js"),
         SA = await import("./js/sbarms.js"),
-        GM = await import("./js/gunmenrules.js"),
         WD = await import("./js/wounds.js"),
         FM = await import("./js/fxmotion.js"),
         AS = await import("./js/armspeed.js"),
@@ -58,19 +56,14 @@ const INIT = fs.readFileSync(
         POOL: GN.POOL || L4m.POOL,
       };
       L4.ITEMS = L4m.ITEMS || L4.POOL.filter((w) => !L4.WEAPONS.includes(w)); // (guns.js keeps its ITEMS to itself: POOL's)
-      /* the board's and Mad God Justin's lists: guns.js since part 2 (they were rules.js' and mgjrules.js') */
+      /* the board's lists: guns.js since part 2 (they were rules.js') */
       const R = {
-          ...Rm,
-          WEAPONS: GN.BOARD_WEAPONS || Rm.WEAPONS,
-          GUNS_NEW: GN.BOARD_GUNS || Rm.GUNS_NEW,
-          AUTO: GN.AUTO || Rm.AUTO,
-          THROWS: GN.THROWS || Rm.THROWS,
-        },
-        MG = {
-          ...MGm,
-          MGJ_GUNS: GN.MGJ_GUNS || MGm.MGJ_GUNS,
-          MGJ_MELEE: GN.MGJ_MELEE || MGm.MGJ_MELEE,
-        };
+        ...Rm,
+        WEAPONS: GN.BOARD_WEAPONS || Rm.WEAPONS,
+        GUNS_NEW: GN.BOARD_GUNS || Rm.GUNS_NEW,
+        AUTO: GN.AUTO || Rm.AUTO,
+        THROWS: GN.THROWS || Rm.THROWS,
+      };
       /* Sandbox's made NPCs' lists: made when first asked since V209 (sbarms.js npcArms) */
       const NA = SA.npcArms
         ? SA.npcArms()
@@ -109,8 +102,6 @@ const INIT = fs.readFileSync(
           ...Object.keys(L4.ARMS),
           ...R.WEAPONS,
           ...R.GUNS_NEW,
-          ...MG.MGJ_GUNS,
-          ...MG.PICK_WEAPONS,
           ...NA.guns,
           ...NA.melee,
           ...Object.keys(GA.GUNS),
@@ -118,12 +109,10 @@ const INIT = fs.readFileSync(
           "chair",
           "zebra",
           "medkit",
-          "defib",
         ]),
       ].sort();
-      const board = { options: { mode: "aod" } },
-        mgj = { options: { mode: "mgj" } };
-      /* the NPCs' reach: guns.js' since there is one breed row each (it was sbarms.js' and gunmenrules.js') */
+      const board = { options: { mode: "aod" } };
+      /* the NPCs' reach: guns.js' since there is one breed row each (it was sbarms.js') */
       const sbReach = (w) =>
         GN.reachOf ? GN.reachOf(w, "sbnpc") : SA.reachOf(w);
       const per = (f) => Object.fromEntries(ids.map((w) => [w, f(w)]));
@@ -148,22 +137,11 @@ const INIT = fs.readFileSync(
         cap: per(AM.capOf),
         reload: per((w) => (AM.capOf(w) ? AM.reloadMs(w, [0, 99]) : 0)),
       });
-      out.mgj = H({
-        cool: per((w) => [R.coolFor(w, mgj), MG.mgjCool(w)]),
-        dmg: MG.DMG,
-        lists: [MG.MGJ_GUNS, MG.PICK_WEAPONS, MG.MGJ_MELEE],
-      });
       out.npcs = H({
         sb: [NA.guns, NA.melee, per(sbReach)],
-        gunmen: GM.GM,
       });
-      /* how far the NPCs fire each gun from, in duck lengths: one row for the gunmen, one for Sandbox's made NPCs */
-      out.reach = H({
-        gunman: per((w) =>
-          GN.reachOf ? GN.reachOf(w, "gunman") : GM.reachOf(w) / GM.GM.DUCK,
-        ),
-        sb: per(sbReach),
-      });
+      /* how far Sandbox's made NPCs fire each gun from, in duck lengths */
+      out.reach = H({ sb: per(sbReach) });
       out.feel = H({
         crit: GN.critOf ? per(GN.critOf) : WD.PCRIT, // (one rule for every weapon since K1: guns.js critOf)
         vib: FM.VIB,

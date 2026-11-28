@@ -4,7 +4,7 @@
 export let W = 6000,
   H = 4400;
 export const DUCK = 64;
-export let variant = "", // "l4": Quacky Zombies' cabin, "l4gs": its second map (useMode below)
+export let variant = "", // "l4gs": Dead Ducks Arcade's Downpour (useMode below)
   rev = 0; // (rev: counts each turn of useMode, layoutRev)
 export const EDGE = 150; // the forest: nobody walks closer to the world's edge than this
 export const STEP = 12; // a duck walks up this much without jumping

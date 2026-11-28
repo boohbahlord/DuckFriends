@@ -117,10 +117,8 @@ const { url, fail, noErrors } = require("./lib.cjs");
         mapPick: "",
         botWait: 1,
         mode: "l4dd",
-        l4map: "downpour",
       },
     });
-    room.state.zmapAsked = 1;
     room.send({ t: "start" });
     for (let k = 0; k < 600 && room.state.phase !== "hang"; k++) beat();
     (await import("./js/l4ddrules.js")).helperOut(room.state);

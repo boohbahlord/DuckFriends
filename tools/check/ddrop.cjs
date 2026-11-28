@@ -31,12 +31,10 @@ const URL = C.url;
         mapPick: "host",
         mode: m,
         map: "cabin",
-        l4map: "downpour",
         botWait: 1,
       },
     });
     (await import("./js/router.js")).go("lobby", r);
-    r.state.zmapAsked = 1;
     r.send({ t: "start" });
   }, process.env.M || "l4dd");
   const t0 = Date.now();

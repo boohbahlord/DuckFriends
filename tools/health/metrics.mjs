@@ -4,7 +4,7 @@
    - nullishNumbers: `?? 5` style hidden defaults (same file);
    - unusedExports and unusedFiles: from tools/unused-exports.mjs;
    - clones: pieces of 50 or more tokens that appear twice (jscpd), in hand-written code, big files included (the pxw-*.js files tools/pixel-world.cjs makes are skipped);
-   - bigFiles: each js file over 1,500 lines, with its line count.
+   - bigFiles: each js file over 1,500 lines, with its line count (shown only, never a failure).
    Run: node tools/health/metrics.mjs          prints today's numbers
         node tools/health/metrics.mjs --check  prints only what rose above the baseline and exits 1 (silent when fine)
         node tools/health/metrics.mjs --write  saves today's numbers as the new baseline (do it when a count went down)
@@ -99,14 +99,7 @@ export function rises(now, base) {
     "clones",
   ])
     if (now[k] > base[k]) out.push(`${k}: ${base[k]} -> ${now[k]}`);
-  // js/updates.js is the Updates pages' text: it grows by one page every deploy, by design
-  const GROWS = new Set(["js/updates.js"]);
-  for (const [f, n] of Object.entries(now.bigFiles)) {
-    if (GROWS.has(f)) continue;
-    const was = base.bigFiles[f];
-    if (was === undefined) out.push(`new file over 1500 lines: ${f} (${n})`);
-    else if (n > was) out.push(`${f} grew: ${was} -> ${n} lines`);
-  }
+  // (big files are counted, never a failure: the owner, Nov 27, "I don't remember recalling to tell you to make the limit that short")
   return out;
 }
 

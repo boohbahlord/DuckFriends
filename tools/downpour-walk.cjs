@@ -29,23 +29,17 @@ const PORT = process.env.PORT || 8780,
         mode: "l4dd",
         modePick: "host",
         mapPick: "host",
-        l4map: "downpour",
         l4start: 1,
       },
     });
     router.go("lobby", room);
     await wait(300);
     room.send({ t: "start" });
-    let voted = 0;
     for (
       let i = 0;
       i < 40 && (room.state.vt || room.state.phase !== "hang");
       i++
     ) {
-      if (!voted && room.state.vt && room.state.vt.k === "zmap") {
-        room.send({ t: "vote", v: "downpour" });
-        voted = 1;
-      }
       await wait(1000);
     }
     await wait(1500);

@@ -31,7 +31,7 @@ import { CABIN_MODES } from "./modes.js";
 import { umapIds } from "./umaprules.js";
 import { startTourney } from "./bbrules.js";
 
-import { baseMode, baseL4map, isSb, sbOnBoard } from "./sandboxrules.js";
+import { baseMode, isSb, sbOnBoard } from "./sandboxrules.js";
 
 import { sbAsk, sbAskDue, sbBegin, sbPick } from "./sbsave.js";
 
@@ -46,8 +46,6 @@ import { isQuack, startQuackRound } from "./quackrules.js";
 import { hangStart } from "./hangout/rules.js";
 
 import { useMode } from "./hangout/layout.js";
-
-import { isMgj, mgjStart } from "./mgjrules.js";
 
 import { isWorldMap, ZOOM_MAP, GREY_MAP } from "./maps.js";
 
@@ -66,10 +64,10 @@ import { dodOn } from "./roomrules.js";
    shareOf), the clock drops to 6 s and runs at its normal speed (owner 2026-11-15: "only six seconds and NOT double
    speed"). The full times only run out when the majority never votes. The most votes win, and a tie is a random pick between the tied ones (no votes at all: any of them). Vote
    return brings both votes back after that many games (a round is a game; a whole Hangout or Quacky Zombies is one) */
-const PICK_TIME = { mode: 65, map: 20, zmap: 20 };
+const PICK_TIME = { mode: 65, map: 20 };
 export const ALL_IN = 6000; // a vote's clock once the majority has voted: 6 s, at normal speed
 export const DICE = "dice";
-const NO_MAP_VOTE = [...CABIN_MODES, "mgj", "surv"]; // (Survival plays only Downpour: no map vote)
+const NO_MAP_VOTE = CABIN_MODES;
 const voteModes = (s) => {
   const all = modesFor(s)
       .map((m) => m.id)
@@ -79,11 +77,7 @@ const voteModes = (s) => {
   return on.length ? on : all; // (Modes in Random & Vote: the games turned off aren't on the vote either)
 };
 export const voteIds = (s, k) =>
-  k === "mode"
-    ? voteModes(s)
-    : k === "zmap"
-      ? ZMAPS
-      : [...VOTE_MAPS, ...umapIds(s)]; // (and the maps the host made and brought in: umaprules.js)
+  k === "mode" ? voteModes(s) : [...VOTE_MAPS, ...umapIds(s)]; // (and the maps the host made and brought in: umaprules.js)
 /* the maps the room's map pick can land on, for the lobby's picture to cycle through and no others (the owner's, Nov 21
    18:05Z: the lobby's map preview "follows vote or random"): the vote's list (every form, and the host's made maps), or
    Random's (every map in each of its forms), the very lists they choose from. None when the map isn't a pick, or when
@@ -95,9 +89,6 @@ export const mapChoices = (s) =>
     : s.options.mapPick === "vote"
       ? voteIds(s, "map")
       : VOTE_MAPS;
-/* Quacky Zombies' own maps: before each of its games everyone votes for one of them, the vote showing only these
-   (the owner's, Nov 17 00:17Z). Its "zmap" vote works as the map vote does, its time as long */
-const ZMAPS = ["cabin", "downpour"];
 /* the time a vote shows. Its clock can run faster than real time (Next, below): vt.c { at, left, rate } is the time it
    showed at "at" and how fast it has run since; s.ends stays the real moment it reaches 0 */
 export const voteLeft = (s, now) => {
@@ -147,11 +138,6 @@ function closeVote(s) {
         ? anyOf(randomPool(s).length ? randomPool(s) : ids)
         : pickMap(s); // (the map's dice: the bags, as Random)
   if (vt.k === "mode") return setMode(s, won || "aod");
-  if (vt.k === "zmap") {
-    s.options.l4map = ZMAPS.includes(won) ? won : anyOf(ZMAPS); // (the dice: either one)
-    useMode(baseMode(s.options), baseL4map(s.options));
-    return;
-  }
   setMap(s, won);
   s.mapVoted = 1;
 }
@@ -233,16 +219,8 @@ export function nextVote(s, now) {
     return s;
   }
   delete s.voteQ;
-  if (zmapDue(s, now)) return s;
   placeMap(s);
   return beginGame(s, now);
-}
-/* Quacky Zombies: its map vote opens before each of its games (once: zmapAsked till the game begins) */
-function zmapDue(s, now) {
-  if (!modeOf(s.options.mode).asksMap || s.zmapAsked) return false;
-  s.zmapAsked = 1;
-  openVote(s, "zmap", now);
-  return true;
 }
 /* the start: Democracy's locks, Random's first game, then the 5 s countdown (the votes come after it). Returns null
    when the room has too few players for the host's game (the lobby says how many it needs) */
@@ -297,12 +275,12 @@ export function rotate(s, now) {
   s.options.mode = mode;
   writeTimerFor(s, was);
   cabinMap(s); // (into Duck Cabin, or out of it)
-  if (zmapDue(s, now)) return s; // (Quacky Zombies: its map vote first)
   return beginGame(s, now);
 }
 /* the countdown is over: the game begins (Random: again for every new game) */
 export function beginGame(s, now) {
   const P = s.players;
+  useMode(baseMode(s.options)); // (a vote or Random may have changed the mode in this same action: its map first, so Dead Ducks Arcade starts on Downpour)
   s.startedAt = now;
   ammoReset(s); // (every gun full again)
   if (isSb(s)) sbBegin(s, now); // (a save's NPCs back, its session named: sbsave.js)
@@ -316,7 +294,6 @@ export function beginGame(s, now) {
   s.wqScore = { quack: 0, room: 0 };
   s.wqPickers = [];
   for (const id of s.seat) P[id].ready = false;
-  delete s.zmapAsked;
   if (isSc(s)) {
     s.sc = { stories: [] };
     return startStory(s, now, true);
@@ -333,10 +310,7 @@ export function beginGame(s, now) {
   }
   s.dn = null;
   if (isDn(s)) dnStart(s);
-  s.mgj = null;
   s.mz = null;
-  s.mgjPast = [];
-  if (isMgj(s)) return mgjStart(s, now);
   s.vd = null;
   if (isVd(s)) return vdStart(s, now);
   s.tv = null;

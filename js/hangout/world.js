@@ -11,7 +11,7 @@
    ducks glide to where the room says they are, and jump and fall from their own numbers (z: height, b: where the jump
    began). The activities (registry.js) add the context button, and whatever they draw. */
 import { SPRINT as GAME_SPRINT } from "../gamedefaults.js";
-import { baseMode, baseL4map } from "../sandboxrules.js";
+import { baseMode } from "../sandboxrules.js";
 import * as L from "./layout.js";
 import { DRAW, GROUND, DECOR, groundColor } from "./shapes.js";
 import { svgDataURL, useHangArtCSS } from "./art.js";
@@ -23,7 +23,6 @@ import { esc } from "../ui.js";
 import { isInvisible } from "../invisible.js";
 import { low } from "../gfx.js";
 import { walkOf, meets } from "../push.js";
-import { survSet } from "../survrules.js";
 import {
   pixelOn,
   gridPx,
@@ -55,8 +54,7 @@ const dirOf = (dx, dy) => (dx > 0 ? "r" : dx < 0 ? "l" : dy > 0 ? "d" : "u");
    my duck uses it (the Click to interact setting) */
 export function mountWorld(board, api) {
   const opt = (api.room().state || {}).options || {};
-  survSet(opt); // (Survival's ammo on this screen too: survrules.js)
-  L.useMode(baseMode(opt), baseL4map(opt)); // (Quacky Zombies' cabin or its Downpour, or Hangout's, or Sandbox on one of them: layout.js)
+  L.useMode(baseMode(opt)); // (Dead Ducks Arcade's Downpour, or Hangout's cabin, or Sandbox on one of them: layout.js)
   const canvas = board.querySelector(".hang-ground"),
     g = canvas.getContext("2d"),
     propsBox = board.querySelector(".hang-props"),

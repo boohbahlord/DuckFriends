@@ -39,7 +39,6 @@ const { chromium } = require("playwright");
         },
       });
       (await import("./js/router.js")).go("lobby", r);
-      r.state.zmapAsked = 1;
       r.send({ t: "start" });
       {
         const iv = setInterval(() => {

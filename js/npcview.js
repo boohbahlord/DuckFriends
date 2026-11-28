@@ -19,7 +19,7 @@ import { goreFree } from "./wounds.js";
 import { clawMark } from "./claw.js";
 import { popHP } from "./hpmeter.js";
 import { belowBody } from "./below.js";
-import { FLAME } from "./mgjart.js";
+import { FLAME } from "./fxart.js";
 import { now as clockNow } from "./clock.js";
 
 const GLIDE = 220; // ms (a heartbeat is 200)

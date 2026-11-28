@@ -36,11 +36,7 @@ async function start(p, mode, extra) {
       await wait(300);
       room.send({ t: "start", id: room.state.host });
       await wait(6000);
-      for (let i = 0; i < 40 && room.state.vt; i++) {
-        if (room.state.vt.k === "zmap")
-          room.send({ t: "vote", v: extra.l4map || "downpour" });
-        await wait(1000);
-      }
+      for (let i = 0; i < 40 && room.state.vt; i++) await wait(1000);
       await wait(settle);
     },
     [mode, extra, +process.env.SETTLE || 2000],
@@ -138,7 +134,7 @@ const SCENES = {
   board: (b) => scene(b, "aod", { map: process.env.MAP || "board" }),
   cabin: (b) => scene(b, "hang", {}),
   downpour: (b) =>
-    scene(b, "l4dd", { l4map: "downpour", l4start: 21 }, async (p) => {
+    scene(b, "l4dd", { l4start: 21 }, async (p) => {
       await p.evaluate(() =>
         window.room.send({ t: "hang", k: "l4", do: "endturn" }),
       ); // (ready: round 21 starts)

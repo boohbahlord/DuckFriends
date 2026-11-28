@@ -29,7 +29,7 @@ import {
 import { levelOf } from "./heights.js";
 import { below } from "./below.js";
 
-const GREEN = "#2f9e44", // (the other players: a slightly darker green than the friendly squad's light green, the owner's, Nov 19 19:27Z)
+const GREEN = "#2f9e44", // (the other players, the owner's, Nov 19 19:27Z)
   DARK_BLUE = "#2a5bd7",
   YELLOW = "#ffd23f",
   RED = "#8a1018";
@@ -38,7 +38,6 @@ const COLOR = {
   me: DARK_BLUE,
   justin: YELLOW,
   zombie: RED,
-  friend: "#b6f5a6", // (Survival's friendly squad: a light green, the owner's, Nov 19)
 };
 /* the drops lying on the ground (the owner's, Nov 18 13:58Z: "special drops like instant kill, full ammo, and all of
    those an outline of their own color AND an arrow if a floor above or below WHEN it is on the ground ... so it is not

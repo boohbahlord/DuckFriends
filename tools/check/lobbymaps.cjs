@@ -90,7 +90,6 @@ const room = (p, options) =>
   const save = await p.evaluate(async () => {
     const r = window._r,
       w8 = (ms) => new Promise((ok) => setTimeout(ok, ms));
-    r.state.zmapAsked = 1;
     r.send({ t: "start" });
     for (let i = 0; i < 100 && !r.state.sbpk; i++) await w8(200);
     r.send({
@@ -170,7 +169,6 @@ const room = (p, options) =>
   await p.evaluate(async () => {
     const r = window._r,
       w8 = (ms) => new Promise((ok) => setTimeout(ok, ms));
-    r.state.zmapAsked = 1;
     r.send({ t: "start" });
     for (let i = 0; i < 100 && !r.state.sbpk; i++) await w8(200);
     r.send({ t: "sbPick" });

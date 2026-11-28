@@ -1,7 +1,6 @@
 /* I want the HP bar over each duck pinned before it becomes one pass (A3b: game.js read it a different way in each
    mode). For each HP breed, a duck's bar as the game draws it (shown or not, how full, how many blocks) at a few HPs:
-   the board's (Agree or Disagree with Justin on: a duck, then Justin), Mad God Justin's (a duck in the fight, Justin
-   himself, Player HP off) and the zombie maps' (Dead Ducks Arcade on Downpour: a duck, a duck at 0, wild Justin
+   the board's (Agree or Disagree with Justin on: a duck, then Justin) and the zombie maps' (Dead Ducks Arcade on Downpour: a duck, a duck at 0, wild Justin
    untouched and hit: he's seated, so his shows full too). Run: node tools/check/run.mjs hpbar */
 const C = require("./lib.cjs");
 const { chromium } = require("playwright");
@@ -13,12 +12,6 @@ const EXPECT = {
     ["justin", true, "1.000", "1"],
     ["justin down", false],
   ],
-  mgj: [
-    ["me", true, "1.000", "6"],
-    ["me lost 2", true, "0.667", "6"],
-    ["justin", false],
-    ["hp off", false],
-  ],
   l4dd: [
     ["me", true, "1.000", "3"],
     ["me 1.5", true, "0.500", "3"],
@@ -29,8 +22,7 @@ const EXPECT = {
 };
 const PLAY = {
   aod: { mode: "aod", map: "night", justin: 1 },
-  mgj: { mode: "mgj", map: "night" },
-  l4dd: { mode: "l4dd", l4map: "downpour" },
+  l4dd: { mode: "l4dd" },
 };
 (async () => {
   const b = await chromium.launch();
@@ -50,7 +42,6 @@ const PLAY = {
         options: { modePick: "host", mapPick: "host", ...o },
       });
       (await import("./js/router.js")).go("lobby", r);
-      r.state.zmapAsked = 1;
       r.send({ t: "start" });
       window._r = r;
       for (
@@ -61,7 +52,7 @@ const PLAY = {
         await new Promise((ok) => setTimeout(ok, 50));
       if (o.mode === "aod") r.send({ t: "submit", text: "Ducks can fly" }); // (my question: the board comes next)
     }, PLAY[mode]);
-    const want = { aod: "answer", mgj: "boss", l4dd: "hang" }[mode];
+    const want = { aod: "answer", l4dd: "hang" }[mode];
     await q
       .waitForFunction((ph) => window._r.state.phase === ph, want, {
         timeout: 40000,
@@ -114,11 +105,6 @@ const PLAY = {
         s().players[me].dead = false;
         await look("justin", "justin", () => (s().justin.down = false));
         await look("justin down", "justin", () => (s().justin.down = true));
-      } else if (mode === "mgj") {
-        await look("me", me, () => (s().mgj.lost = {}));
-        await look("me lost 2", me, () => (s().mgj.lost = { [me]: 2 }));
-        await look("justin", "justin", () => {});
-        await look("hp off", me, () => (s().options.mgjHp = 0));
       } else {
         const hp = (id, v, more = {}) =>
           (s().hang.l4p = {

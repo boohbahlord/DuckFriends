@@ -2,15 +2,14 @@
    The owner's Sandbox file: "clicking “n” will bring up the numerat files you have made ... You can click (new file) OR
    (new directory) at the left (similar to VS code). You can also see a terminal line in the bottom half of this numerat
    window, and you can see the code above the long ractangle of terminal window (like VS code)."
-   The files are the command line's own (shell.js numerat: notes/seriat/, kept on this device from game to game), so
-   what's made here shows in ls and what's made there shows here. The code saves as it's typed. Run starts the open file
-   (a stub until the language comes: it only runs until it's stopped); its terminal line is the command line itself.
-   Every letter in it is Cascadia Code, as the command line's.
+   The files are seriatfiles.js' (notes/seriat/, kept on this device from game to game). The code saves as it's typed.
+   Run starts the open file (a stub until the language comes: it only runs until it's stopped); what it says shows in
+   the terminal below. Every letter in it is Cascadia Code.
    The owner's (Nov 19 12:59Z): "the number lines should be able to be seen automatically, and text extends outwards without
    wrap unless text wrap is turned on" (the gutter, Wrap); "auto complete is there by default" (the code's words, the
    terminal's commands); "there should be other options besides run ... such as something to test code without running it"
-   (Check); "the help files ... cannot be copied or deleted or changed" (the help/ folder, read-only here too);
-   "anything can be done in that terminal as it can be in the terminal in the bottom left" (the command line itself).
+   (Check); "the help files ... cannot be copied or deleted or changed" (the help/ folder, read-only here too). We cut
+   the command line on Nov 27, so the terminal only shows what Run, Check and the Brains say.
    Part D (sbseriat.js): a spawn's Brain box names a file here; what its NPCs print, and its mistakes, show in this
    terminal too, and a file a Brain uses goes to the room again once it's saved with no mistakes.
    The left side is File Explorer (the owner's, Nov 19 16:12Z and 17:15Z): one folder at a time; a folder is clicked
@@ -19,9 +18,8 @@
    folder shown for it. Folders never fold open or shut in place. */
 import { esc, openWindow } from "./ui.js";
 import { sfx } from "./sound.js";
-import { numerat, shellRun, shellSuggest, shellHistory } from "./shell.js";
+import { numerat, filesCtx } from "./seriatfiles.js";
 import { check, WORDS } from "./seriatbox.js";
-import { shellCtx } from "./chat.js";
 import { activeRoom } from "./net.js";
 import {
   SERIAT_THEMES,
@@ -39,7 +37,7 @@ const SEND_MOST = 20; // (files sent with one Brain: 20 of 8,000 letters stay un
 /* a spawn's Brain box: the files it sends to the room, each by the name it's written with; null when there's no such
    file */
 export function brainFiles(name) {
-  const all = numerat.bundle(shellCtx(), name);
+  const all = numerat.bundle(filesCtx(), name);
   if (!all) return null;
   return Object.fromEntries(
     Object.entries(all)
@@ -77,9 +75,9 @@ const $b = (w) =>
     );
 
 export function openNumerat() {
-  const ctx = shellCtx(),
+  const ctx = filesCtx(),
     root = numerat.root(ctx),
-    st = { file: "", dir: root, q: "", out: [], busy: false };
+    st = { file: "", dir: root, q: "", out: [] };
   const html = `<h2>${esc(LANG)}</h2><button type="button" class="btn small ghost nm-bible" data-bible>${esc(LANG)} bible</button>
   <div class="nm">
     <aside class="nm-side">
@@ -91,7 +89,7 @@ export function openNumerat() {
     <section class="nm-main">
       <div class="nm-bar"><span class="nm-path"></span><label class="nm-wrap"><input type="checkbox" data-wrap> Wrap</label><button type="button" class="btn small ghost" data-perm disabled>Permissions</button><button type="button" class="btn small ghost" data-check disabled>Check</button><button type="button" class="btn small" data-run disabled>Run</button></div>
       <div class="nm-perm" hidden></div><div class="nm-ed"><pre class="nm-gut" aria-hidden="true"><div>1</div></pre><textarea class="nm-code" wrap="off" spellcheck="false" autocomplete="off" aria-label="Code" placeholder="Pick a file, or make a new one" disabled></textarea><div class="nm-mirror" aria-hidden="true"></div><ul class="nm-ac" role="listbox" hidden></ul></div>
-      <div class="nm-term" aria-label="Terminal"><div class="nm-out" aria-live="polite"></div><ul class="nm-sugg" role="listbox" hidden></ul><form class="nm-line"><span class="nm-ps">$</span><input class="nm-in" spellcheck="false" autocomplete="off" aria-label="Command"></form></div>
+      <div class="nm-term" aria-label="Terminal"><div class="nm-out" aria-live="polite"></div></div>
     </section>
   </div>`;
   useSeriatTheme("window"); // (the book's look while it is up)
@@ -536,9 +534,7 @@ export function openNumerat() {
         if (!t) return paint();
         const r = numerat.at(ctx, t, st.dir);
         if (r.kind && !r.inside) {
-          say([
-            `✗ ${t}: only home/ shows here (the terminal below reaches the rest)`,
-          ]);
+          say([`✗ ${t}: only home/ shows here`]);
           return paint();
         }
         if (r.kind === "dir") return go(r.path);
@@ -551,103 +547,6 @@ export function openNumerat() {
       });
       addr.addEventListener("focus", () => addr.select());
       addr.addEventListener("blur", () => setTimeout(paint, 0));
-      /* the terminal line: the command line itself */
-      const line = $(".nm-line"),
-        lineIn = line.querySelector(".nm-in"),
-        sugg = $(".nm-sugg");
-      /* its autocomplete is the command line's own (shell.js shellSuggest): Tab takes the picked one, the arrows pick, and
-         with none showing they walk back through what was typed */
-      let list = [],
-        sel = 0,
-        back = -1;
-      const drawSugg = () => {
-        sugg.hidden = !list.length || document.activeElement !== lineIn;
-        sugg.innerHTML = list
-          .slice(0, 8)
-          .map(
-            (x, i) =>
-              `<li role="option" data-i="${i}" aria-selected="${i === sel}">${esc(x.label)}</li>`,
-          )
-          .join("");
-      };
-      const refresh = () => {
-        list = lineIn.value ? shellSuggest(lineIn.value, shellCtx()) : [];
-        sel = Math.min(sel, Math.max(0, list.length - 1));
-        drawSugg();
-      };
-      lineIn.addEventListener("input", () => {
-        back = -1;
-        refresh();
-      });
-      lineIn.addEventListener("blur", () => setTimeout(drawSugg, 120));
-      lineIn.addEventListener("focus", refresh);
-      sugg.addEventListener("mousedown", (e) => {
-        const li = e.target.closest("li");
-        if (!li) return;
-        e.preventDefault();
-        lineIn.value = list[+li.dataset.i].apply();
-        sel = 0;
-        refresh();
-        lineIn.focus();
-      });
-      lineIn.addEventListener("keydown", (e) => {
-        if (e.key === "Tab") {
-          e.preventDefault();
-          if (list.length) {
-            lineIn.value = list[sel].apply();
-            sel = 0;
-            refresh();
-          }
-          return;
-        }
-        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-          const up = e.key === "ArrowUp",
-            n = Math.min(8, list.length);
-          if (n) {
-            e.preventDefault();
-            sel = (sel + (up ? -1 : 1) + n) % n;
-            drawSugg();
-            return;
-          }
-          const h = shellHistory();
-          if (!h.length) return;
-          e.preventDefault();
-          back = up ? Math.min(h.length - 1, back + 1) : Math.max(-1, back - 1);
-          lineIn.value = back < 0 ? "" : h[h.length - 1 - back];
-          return;
-        }
-        if (e.key === "Escape" && list.length) {
-          e.preventDefault();
-          e.stopPropagation(); // (Escape puts the suggestions away, not the window)
-          list = [];
-          drawSugg();
-        }
-      });
-      line.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const text = lineIn.value.trim();
-        if (!text || st.busy) return;
-        lineIn.value = "";
-        list = [];
-        back = -1;
-        drawSugg();
-        st.busy = true;
-        keep();
-        say(["$ " + text]);
-        try {
-          const r = await shellRun(text, shellCtx());
-          if (r.cleared) st.out = [];
-          say(r.lines);
-        } finally {
-          st.busy = false;
-        }
-        if (st.file && numerat.read(ctx, st.file) == null) {
-          st.file = ""; // (removed or moved from here)
-          setText("");
-        } else if (st.file) setText(numerat.read(ctx, st.file));
-        if (numerat.at(ctx, st.dir, root).kind !== "dir") go(root);
-        else paint();
-      });
       setWrap(wrapOn);
       paint();
     },

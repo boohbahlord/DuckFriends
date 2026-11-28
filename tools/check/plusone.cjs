@@ -5,7 +5,7 @@
       already over full, a revolver, the double barrel, the Tommy gun and a gun with no magazine get none;
    2. in Dead Ducks Arcade, R with my full pistol: the reload takes half as long and the pistol then holds 8 of its 7,
       one taken from the rest; its bar stays full and the phone's R shows while a full one can take one more;
-   3. on the boards and in Mad God Justin, a full pistol reloaded holds 8, the one more taken from the rest (ammo.js).
+   3. on the boards, a full pistol reloaded holds 8, the one more taken from the rest (ammo.js).
    Run: node tools/check/run.mjs plusone */
 const { chromium } = require("playwright");
 const { url, fail, noErrors } = require("./lib.cjs");
@@ -57,12 +57,10 @@ const { url, fail, noErrors } = require("./lib.cjs");
         mapPick: "host",
         mode: "l4dd",
         map: "cabin",
-        l4map: "cabin",
         botWait: 1,
       },
     });
     (await import("./js/router.js")).go("lobby", r);
-    r.state.zmapAsked = 1;
     r.send({ t: "start" });
   });
   for (let i = 0; i < 300; i++) {

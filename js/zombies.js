@@ -44,9 +44,7 @@ import {
   leastWay,
 } from "./crowd.js";
 import * as CR from "./crowd.js"; // (the surround: CR.SUR)
-import { isSurv, SV, survWatch } from "./survrules.js";
 import {
-  L4_HOOKS,
   L4,
   WALK,
   Z_SLOW,
@@ -77,9 +75,7 @@ import {
   dodging,
   JCHASE,
   isWild,
-  MERCH,
   merchantOf,
-  merchantGo,
   merchantHurt,
   addFx,
   CAKE_R,
@@ -89,7 +85,6 @@ import {
   clawDmg,
   hurtDuck,
   walled,
-  gmHelp,
 } from "./l4ddrules.js";
 import { openNear, flowFrom, heading } from "./zombiepath.js";
 import { toPx } from "./units.js";
@@ -289,32 +284,11 @@ function lookOf() {
     build = odd && !size ? +rnd(-1, 1).toFixed(2) : 0;
   return [size, build, hat, outfit];
 }
-/* Downpour: one of the road's two ends (just inside the map's edge, on the road) that no duck sees and that leads to the
-   ducks (pts: where they stand), or null */
-export function roadEnd(pts) {
-  const dist = flowFrom(pts.map((q) => openNear(...q))),
-    ends = [GS.RIM.x0 + 60, GS.RIM.x1 - 60]
-      .map((x) => [x, GS.ROAD.mid + rnd(-120, 120)])
-      .filter(
-        ([x, y]) =>
-          !pts.some(
-            ([a, b]) =>
-              Math.abs(x - a) < VIEW.x + 60 && Math.abs(y - b) < VIEW.y + 140,
-          ),
-      )
-      .filter(([x, y]) => {
-        const c = openNear(x, y);
-        return c >= 0 && dist[c] < Infinity && zOk(x, y, heightAt(x, y));
-      });
-  if (!ends.length) return null;
-  const e = ends[Math.floor(Math.random() * ends.length)];
-  return [Math.round(e[0]), Math.round(e[1])];
-}
 /* Downpour: a spot behind a fence that no duck sees, one of the nearest to the ducks (pts: where they stand), where one
    coming over lands somewhere that leads to them: { q (its opening), at (outside, by the fence), land (inside) }, or
    null */
 const seenBy = (pts, x, y) => CR.seenBy(pts, x, y, VIEW);
-export function fenceSpot(pts, side) {
+function fenceSpot(pts, side) {
   const dist = flowFrom(pts.map((q) => openNear(...q))),
     fences = OPENINGS.filter((q) => q.kind === "fence"),
     long = fences.map((q) => q.fence.climb[1] - q.fence.climb[0]),
@@ -364,8 +338,8 @@ export function l4Spawn(s, x, y, o = {}) {
   return z.i;
 }
 /* a zombie at (wx, wy), in world px, already inside (st 2), its number the round's next (L.next goes on): o.hp, o.speed
-   (a share of a zombie's own), o.v (its speed itself), o.sp and o.dm (l4Spawn), o.wk (a walker: survrules.js) */
-export function zombieAt(L, wx, wy, o = {}) {
+   (a share of a zombie's own), o.v (its speed itself), o.sp and o.dm (l4Spawn) */
+function zombieAt(L, wx, wy, o = {}) {
   syncMap();
   const op = [...OPENINGS].sort(
       (a, b) =>
@@ -394,7 +368,6 @@ export function zombieAt(L, wx, wy, o = {}) {
     dir: 0,
     ...(o.sp ? { sp: o.sp } : {}),
     ...(o.dm ? { dm: o.dm } : {}),
-    ...(o.wk ? { wk: 1 } : {}),
     l: [
       max,
       v,
@@ -453,14 +426,7 @@ export function moveZombies(s, zs, now, T, up, seers = up) {
      13:46Z: "zombies might try and chase them like they are a player UNLESS they climb a fence OR jump off the
      balcony, then they give up"); never his body */
   const mm = merchantOf(s);
-  if (
-    mm &&
-    (mm.st === "out" ||
-      mm.st === "fight" ||
-      mm.st === "flee" ||
-      (mm.st === "here" && isSurv(s))) && // (Survival: he stays at his spot through a wave until zombies come for him, the owner's, Nov 20 18:23Z)
-    !mm.c
-  )
+  if (mm && (mm.st === "out" || mm.st === "fight") && !mm.c)
     pls.push({
       id: "@m",
       p: null,
@@ -472,20 +438,6 @@ export function moveZombies(s, zs, now, T, up, seers = up) {
       j: true,
       m: true,
     });
-  /* Survival's gunmen: chased as Justin is (gunmenrules.js near: the ones a zombie may go for) */
-  if (L4_HOOKS.gm)
-    for (const g of L4_HOOKS.gm.near(s))
-      pls.push({
-        id: "@g" + g.i,
-        p: null,
-        xy: [g.x, g.y],
-        zz: g.z || heightAt(g.x, g.y),
-        dk: null,
-        way: null,
-        goal: [g.x, g.y],
-        j: true,
-        g: g.i,
-      });
   s.hidden = { ...(s.hidden || {}), l4tk: now };
   const field = pls.filter((q) => !q.j),
     dist = flowFrom(
@@ -497,8 +449,7 @@ export function moveZombies(s, zs, now, T, up, seers = up) {
       true,
     ); // (to a duck up on a roof: to the foot of its wall. The players only: a zombie after Justin finds its own way, wayTo)
   const p4 = { ...s.hang.l4p },
-    eating = { ...((s.hidden && s.hidden.l4ze) || {}) },
-    ducks = pls.filter((q) => !q.m); // (what a walker notices: never the merchant)
+    eating = { ...((s.hidden && s.hidden.l4ze) || {}) };
   for (const k of Object.keys(eating))
     if (k !== "fx" && eating[k] <= now) delete eating[k];
   const c = {
@@ -510,7 +461,6 @@ export function moveZombies(s, zs, now, T, up, seers = up) {
     dist,
     brd,
     eating,
-    ducks,
     eyes: seers.filter((id) => s.pos[id]).map((id) => toPx(s.pos[id])), // (every duck's screen, God mode's too, though the zombies ignore it; never Justin's)
     cake: cakeDown(s, now),
     swipe: SWIPE,
@@ -520,21 +470,15 @@ export function moveZombies(s, zs, now, T, up, seers = up) {
     claw: (target, z) => mapClaw(s, p4, target, z, now),
   };
   walkAll(zs, c);
-  /* Survival: the merchant runs only once the zombies actually come for him (the owner's, Nov 20 18:23Z: "the merchant
-     doesn't run away on survival until the zombies actually start chasing them. So that way it's like feels less
-     scripted and more natural") */
-  if (c.chasedM && (merchantOf(s) || {}).st === "here") merchantGo(s, now);
   fireTick(s, zs, now, T, p4);
   s.hang.l4p = p4;
   s.hang.brd = brd;
   s.hidden = { ...s.hidden, l4ze: eating };
 }
-/* a swipe on the map: at the merchant, a gunman or a duck (p4: the ducks' points this heartbeat). True when the target
+/* a swipe on the map: at the merchant or a duck (p4: the ducks' points this heartbeat). True when the target
    is down (no more swipes at it this heartbeat) */
 function mapClaw(s, p4, target, z, now) {
   if (target.m) return merchantHurt(s, null, 1, now, "claw"); // (the merchant: a swipe takes 1, and no line)
-  if (target.g)
-    return L4_HOOKS.gm.claw(s, target.g, z, clawDmg(), now, gmHelp(s, now)); // (a gunman: gunmenrules.js)
   return (
     !dodging(s, target.p, now) &&
     hurtDuck(
@@ -549,12 +493,12 @@ function mapClaw(s, p4, target, z, now) {
 }
 /* ---------- the walk: every zombie's heartbeat, on whatever ground (the template every walk runs) ----------
    c: what the walk it is part of hands it: s, now, T (the clock its swipes keep), dt, pls (what they go for: ducks, and
-   on the map the merchant and the gunmen), dist (the flow field to them; none on open ground: straight at them), brd
-   (the boards up), eating, ducks, cake ([x, y] or null), swipe ([wind-up, between]), reach (duck lengths), way(x, y,
-   tx, ty) (the next point toward a spot), bite(x, y) (a chomp at the cake, or null) and claw(target, z) (a swipe's hit:
-   true once the target is down). It sets c.chasedM when one comes close for the merchant */
+   on the map the merchant), dist (the flow field to them; none on open ground: straight at them), brd (the boards up),
+   eating, cake ([x, y] or null), swipe ([wind-up, between]), reach (duck lengths), way(x, y, tx, ty) (the next point
+   toward a spot), bite(x, y) (a chomp at the cake, or null) and claw(target, z) (a swipe's hit: true once the target is
+   down) */
 function walkAll(zs, c) {
-  const { s, now, T, dt, pls, dist, brd, eating, ducks, cake } = c;
+  const { s, now, T, dt, pls, dist, brd, eating, cake } = c;
   const onWay = {}; // (the ones keeping to each way up, by its place in DECKS: crowd.js leastWay)
   for (const z of zs) if (z.cm && z.st !== 3) (onWay[z.cm[3]] ||= []).push(z);
   ZC = crowdOf(
@@ -705,39 +649,11 @@ function walkAll(zs, c) {
       }
       continue;
     }
-    /* Survival: a walker wanders about until a duck comes close or shines its flashlight on it, then comes for that one
-       only (survrules.js survWatch) */
-    if (
-      z.wk &&
-      z.st === 2 &&
-      survWatch(
-        z,
-        ducks,
-        now,
-        W,
-        H,
-        s.hang.l4f || {},
-        (xy) => room(z.x, z.y, ...xy),
-        clearShot,
-      )
-    ) {
-      wander(z, v * dt, pls, now);
-      continue;
-    }
     let target = null,
       best = Infinity;
-    /* how far a duck counts as, to this zombie: Justin twice his distance, or out of mind (JCHASE); a walker, only the
-       one it came for */
+    /* how far a duck counts as, to this zombie: Justin twice his distance, or out of mind (JCHASE) */
     const far = (q) =>
-      z.wk
-        ? q.id === z.wt
-          ? 1
-          : Infinity
-        : !q.j
-          ? 1
-          : z.nj || (z.jx || 0) > now
-            ? Infinity
-            : JCHASE.far;
+      !q.j ? 1 : z.nj || (z.jx || 0) > now ? Infinity : JCHASE.far;
     if (z.st === 7) {
       /* on a roof: straight at the nearest duck up there; a hole underfoot and it falls in; nobody left up there (or
          the cake down), it walks off the nearest edge and drops */
@@ -836,12 +752,6 @@ function walkAll(zs, c) {
           }
         }
         if (!target) continue;
-        if (
-          target.m &&
-          !z.wk &&
-          room(z.x, z.y, ...target.xy) < MERCH.CHASE_NEAR
-        )
-          c.chasedM = true; // (a zombie of the wave coming for the merchant, and close: he goes, below)
         const w = (target.alts || []).length
             ? leastWay(
                 "zombie",
@@ -991,29 +901,6 @@ function walkAll(zs, c) {
   }
   ZC = null;
   separate(zs);
-}
-/* Survival: a walker wandering, slowly, from one spot near it to the next, standing about at each a while (z.wd: where
-   it's going, z.wn: when it goes on, or gives up going there) */
-function wander(z, far, pls, now) {
-  if (!z.wd && now < (z.wn || 0)) return;
-  if (!z.wd || now >= z.wn) {
-    delete z.wd;
-    for (let t = 0; t < 8 && !z.wd; t++) {
-      const a = Math.random() * 2 * Math.PI,
-        r = rnd(120, SV.ROAM),
-        x = Math.round(z.x + Math.cos(a) * r),
-        y = Math.round(z.y + Math.sin(a) * r);
-      if (openNear(x, y) >= 0 && walkable(z.x, z.y, x, y)) z.wd = [x, y];
-    }
-    z.wn = now + (z.wd ? 12000 : rnd(...SV.IDLE));
-    if (!z.wd) return;
-  }
-  if (Math.hypot(z.x - z.wd[0], z.y - z.wd[1]) < 24) {
-    delete z.wd;
-    z.wn = now + rnd(...SV.IDLE);
-    return;
-  }
-  stepZombie(z, z.wd, far, pls);
 }
 /* how high a zombie climbing a fence (its opening id) is, at (x, y) (0 once down): up at its walking speed, then falling
    from the top */
@@ -1297,16 +1184,8 @@ export function clearShot(x0, y0, x1, y1, z = 0) {
    touching it, at 1); swipe: [ms at the duck before its first swipe, ms between swipes]; deadMs: how long its body lies
    there */
 export const ZOMBIE_BREEDS = {
-  /* Mad God Justin's waves (mgjrules.js wavesTick), on the board */
-  mgjWave: {
-    speed: 3.2,
-    hp: 3,
-    reach: 1.2, // (it stops at 1, touching, as on the map; it used to stop at 0.8 and reach 1)
-    swipe: [0, 1200],
-    deadMs: 4000, // (as long as Dead Ducks Arcade's, L4.DEAD_MS: the owner's, Nov 19 01:34Z, "everything" with its feel)
-  },
   /* Sandbox's zombies, on the board and on Duck Cabin (sbspawn.js boardTick, sbcabin.js cabinTick, both by brainWalk):
-     they stop at 1, touching, as on the map, so they reach 1.2 as the waves do (they stopped at 0.8 of a reach of 1).
+     they stop at 1, touching, as on the map, so they reach 1.2 (they stopped at 0.8 of a reach of 1).
      The board's damage, the median of 5 seeds: 4,771 before, 5,585 after (1.1: 5,589) */
   sbBoard: { speed: 3.2, hp: 3, reach: 1.2, swipe: [0, 1200], deadMs: 4000 },
 };
@@ -1315,13 +1194,8 @@ export const zLook = (B) => [B.hp, 0, "", ...lookOf()];
 /* ---------- the board's zombies: the map's walk, on the board ----------
    The board's spots are fractions of it (x across, y down), and a duck's length there is duck = [across, down] of them.
    The walk's px on the board are DL to a duck's length both ways, so its steps, its crowd and its turns are the map's,
-   unchanged. This is the one place the board's units turn into the walk's and back.
-   M: the zombies' holder ({ zb: [{ i, x, y, hp, a (its last swipe), wu (its swing's wind-up since), n (since when it's at its duck), f (which way it
-   faces), l, d (when it died), w }], t (the last heartbeat), ze (the ones biting the cake) }). B: its breed. h: ids
-   (the ducks it goes for), cake ([x, y] on the board, or null), claw(id, now) (a swipe at that duck: true once it's
-   down). Returns whether any moved, swiped or was buried */
+   unchanged. This is the one place the board's units turn into the walk's and back (brainWalk below). */
 const DL = 56; // the walk's px in a duck's length on the board (the map's own, RX)
-const BK = ["ga", "pk", "sr", "sx", "hu"]; // (what a board zombie keeps from one heartbeat to the next: KEEP is the map's)
 /* the board as a ground (gr()) for a duck of duck = [across, down] of it: [kx, ky] the walk's px in one of its shares,
    and the ground, open and flat to a little short of its edges */
 function boardGround(duck) {
@@ -1330,79 +1204,11 @@ function boardGround(duck) {
       x >= 0.01 * kx && x <= 0.99 * kx && y >= 0.03 * ky && y <= 0.97 * ky;
   return [kx, ky, { rx: DL, ry: DL, h: () => 0, ok: inside, free: inside }];
 }
-export function boardWalk(s, M, now, B, h) {
-  const [kx, ky, ground] = boardGround(h.duck),
-    v = B.speed * DL,
-    dt = Math.min(0.35, Math.max(0.05, (now - (M.t || now - 200)) / 1000)),
-    zs = M.zb.map((o) => ({
-      i: o.i,
-      x: o.x * kx,
-      y: o.y * ky,
-      st: o.d ? 3 : 2,
-      a: o.a || 0,
-      n: o.n || 0,
-      wu: o.wu || 0,
-      l: [o.hp, v, ""],
-      ...Object.fromEntries(BK.filter((k) => o[k]).map((k) => [k, o[k]])), // (round the ones in its way: crowd.js goRound; its spot round the duck and how long it's been held up: crowd.js surround)
-      o,
-    })),
-    pls = h.ids.map((id) => {
-      const xy = [s.pos[id].x * kx, s.pos[id].y * ky];
-      return { id, p: s.pos[id], xy, zz: 0, dk: null, way: null, goal: xy };
-    }),
-    eating = { ...(M.ze || {}) };
-  M.t = now;
-  for (const k of Object.keys(eating))
-    if (k !== "fx" && eating[k] <= now) delete eating[k];
-  BOARD = ground;
-  try {
-    walkAll(zs, {
-      s,
-      now,
-      T: now,
-      dt,
-      pls,
-      dist: null,
-      brd: {},
-      eating,
-      ducks: pls,
-      cake: h.cake ? [h.cake[0] * kx, h.cake[1] * ky] : null,
-      swipe: B.swipe,
-      reach: B.reach,
-      way: (x, y, tx, ty) => [tx, ty],
-      bite: null,
-      claw: (target) => h.claw(target.id, now),
-    });
-  } finally {
-    BOARD = null;
-  }
-  let ch = false;
-  for (const z of zs) {
-    const o = z.o,
-      x = Math.round((z.x / kx) * 1000) / 1000,
-      y = Math.round((z.y / ky) * 1000) / 1000;
-    if (x !== o.x || y !== o.y || z.a !== (o.a || 0) || z.wu !== (o.wu || 0))
-      ch = true;
-    if (z.a !== (o.a || 0)) o.f = Math.abs(z.dir) > 157 ? -1 : 1; // (it swiped: it faces the duck)
-    Object.assign(o, { x, y, a: z.a, n: z.n });
-    if (z.wu) o.wu = z.wu;
-    else delete o.wu; // (its swing's wind-up since: the tell)
-    for (const k of BK)
-      if (z[k]) o[k] = z[k];
-      else delete o[k];
-  }
-  if (Object.keys(eating).length) M.ze = eating;
-  else delete M.ze; // (none biting: nothing kept)
-  /* the bodies go after a moment */
-  const n0 = M.zb.length;
-  M.zb = M.zb.filter((o) => !o.d || now - o.d < B.deadMs);
-  return ch || M.zb.length !== n0;
-}
 /* ---------- Sandbox's walkers: each one's brain says where, the zombies' walk takes it there ----------
    What their brains planned (sbbrain.js think: [{ me, o, d }]), walked with the zombies' own step (chaseStep: straight
    at it, down the field, round what's in the way, never into a duck) and kept apart with their own crowd (separate), on
    the ground they're on: a world's (sbcabin.js cabinTick) or the board's (sbspawn.js boardTick: its shares turn into
-   the walk's px here, as boardWalk's). Each kind's brain stays its own; the body is this one (the cornerstone: one
+   the walk's px here, boardGround). Each kind's brain stays its own; the body is this one (the cornerstone: one
    walk). c, each map's own: far(a, b) duck lengths apart; duck: the board's duck ([across, down], none on a world);
    ducks: [{ x, y, z }] the ducks it never walks into; field(to): the way to it (null: straight); speed(o, to, bd) duck
    lengths a second; reach (its claw's), stopK (how near a claw it stops), ptStop (how near a \move\'s spot);

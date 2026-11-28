@@ -19,7 +19,7 @@ const ON_OFF = [
   [0, "Off"],
   [1, "On"],
 ];
-const NO_TURNS = ["hang", "l4dd", "surv", "vdd"];
+const NO_TURNS = ["hang", "l4dd", "vdd"];
 export const HOST = [
   {
     k: "share",
@@ -42,7 +42,7 @@ export const HOST = [
       [1, "Yes"],
     ],
     cat: "rules",
-    off: ["mgj", "quack", ...NO_TURNS],
+    off: ["quack", ...NO_TURNS],
     d: "Whether taking a vote back below the needed share stops the catch-up timer. With No, a timer that has started runs out.",
   },
   {
@@ -61,7 +61,7 @@ export const HOST = [
       [1, "Free roam"],
     ],
     cat: "rules",
-    off: ["mgj", "sc", "quack", "law", "dunce", ...NO_TURNS],
+    off: ["sc", "quack", "law", "dunce", ...NO_TURNS],
     d: "Lock answers: a player ends their turn to lock where their duck stands. Free roam: there is no locking and no talk-it-over step, and where each duck stands when the turn ends is its answer.",
   },
   {
@@ -69,25 +69,15 @@ export const HOST = [
     n: "Justin",
     c: ON_OFF,
     cat: "rules",
-    off: ["mgj", ...NO_TURNS],
+    off: [...NO_TURNS],
     d: "Justin from Duck Cabin walks the board, talks and shoots now and then. He never votes and never counts toward a turn. He isn't in Dead Ducks Arcade.",
-  },
-  {
-    k: "mgjBoard",
-    n: "Mad God Justin",
-    c: ON_OFF,
-    cat: "rules",
-    off: ["mgj", ...NO_TURNS],
-    need: "justin",
-    when: (s) => "mgjBoard" in s.options,
-    d: "Needs Justin on. Justin has 10 HP. A player who damages him becomes his target for 10 s, and he uses his Mad God Justin attacks on them, without the electric walls. Players a game mode keeps safe are never targeted. At 0 HP he is knocked down like any duck and comes back after the same time.",
   },
   {
     k: "invuln",
     n: "Invulnerability",
     c: ON_OFF,
     cat: "rules",
-    off: NO_INVULN, // (never in Quacky Zombies or Mad God Justin)
+    off: NO_INVULN, // (never in Quacky Zombies)
     d: "Players take no damage and are never knocked down. Bullets, blades, grenades, Justin's attacks and zombies only flash a duck red.",
   },
   {
@@ -96,13 +86,6 @@ export const HOST = [
     c: ON_OFF,
     cat: "rules",
     d: "Turns off text chat for every player, the host included, in the lobby and in the game. The game's own messages still show.",
-  },
-  {
-    k: "noTerm",
-    n: "No Terminal",
-    c: ON_OFF,
-    cat: "rules",
-    d: "Turns off the command line for every player, the host included, in the lobby and in the game.",
   },
   {
     k: "lateJoin",
@@ -138,7 +121,7 @@ export const HOST = [
       [90, "90 s"],
     ],
     cat: "time",
-    off: ["mgj", "bb", "sc", "quack", "law", "dunce", ...NO_TURNS],
+    off: ["bb", "sc", "quack", "law", "dunce", ...NO_TURNS],
     d: "The time to answer each question. A question's writer can choose another time for it.",
   },
   {
@@ -151,7 +134,7 @@ export const HOST = [
       [45, "45 s"],
     ],
     cat: "time",
-    off: ["mgj", "quack", ...NO_TURNS],
+    off: ["quack", ...NO_TURNS],
     d: "The time the remaining players get once enough players have voted. Off: the turn ends as soon as enough players have voted.",
   },
   {
@@ -165,7 +148,7 @@ export const HOST = [
       [60, "60 s"],
     ],
     cat: "time",
-    off: ["mgj", "quack", ...NO_TURNS],
+    off: ["quack", ...NO_TURNS],
     d: "The time the last writers get once enough players have sent theirs. Off: writing ends as soon as enough players have sent theirs.",
   },
   {
@@ -179,7 +162,7 @@ export const HOST = [
       [132, "2:12"],
     ],
     cat: "time",
-    off: ["mgj", "sc", "quack", ...NO_TURNS],
+    off: ["sc", "quack", ...NO_TURNS],
     d: "The time limit for writing questions, topics and takes. 2:12 by default in every mode except Bicker Brackets.",
   },
   {
@@ -195,7 +178,6 @@ export const HOST = [
       [6000, "6 s"],
     ],
     cat: "time",
-    off: ["mgj"],
     d: "How long a duck that is shot, stabbed or killed stays down before it can move. 1 s on the boards and 6 s in Duck Cabin unless set.",
   },
   {
@@ -206,7 +188,7 @@ export const HOST = [
       ["rotate", "Rotating"],
     ],
     cat: "round",
-    off: ["mgj", "bb", "sc", "quack", "dunce", ...NO_TURNS],
+    off: ["bb", "sc", "quack", "dunce", ...NO_TURNS],
     d: "The order of each round's questions. Rotating goes through the players in turn.",
   },
   {
@@ -214,7 +196,7 @@ export const HOST = [
     n: "Discussion round",
     c: ON_OFF,
     cat: "round",
-    off: ["mgj", "sc", "quack", ...NO_TURNS],
+    off: ["sc", "quack", ...NO_TURNS],
     d: "A step after each vote to look at where everyone stood and talk it over.",
   },
   {
@@ -225,7 +207,6 @@ export const HOST = [
       [0, "Off"],
     ],
     cat: "round",
-    off: ["mgj"],
     d: "The stats after each round. Off: the next round starts at once, and in Story Chain the story goes on.",
   },
   {
@@ -255,7 +236,7 @@ export const HOST = [
       [0, "Off"],
     ],
     cat: "more",
-    d: "The lightning, love, kill and hotdog commands in the command line.",
+    d: "The weapons and items ducks use on the board.",
   },
   /* the owner's, Nov 22 19:29Z: "WHEN THE GUNS ARE SELECTED, THEY HAVE AMMO OF DEAD DUCKS ARCADE UNLESS UNLIMITED AMMO IS
      SELECTED" (ammo.js) */
@@ -321,7 +302,7 @@ export const HOST = [
     n: "Vote colors",
     c: ON_OFF,
     cat: "more",
-    off: ["mgj", ...CABIN_MODES],
+    off: [...CABIN_MODES],
     when: (s) => !+s.options.rainbowDucks,
     d: "A duck takes the color of the tile it stands on, and its own color off the tiles. Not with Rainbow Ducks.",
   },
@@ -330,7 +311,7 @@ export const HOST = [
     n: "Change player tag color",
     c: ON_OFF,
     cat: "more",
-    off: ["mgj", ...CABIN_MODES],
+    off: [...CABIN_MODES],
     need: "voteColor",
     when: (s) => !+s.options.rainbowDucks,
     d: "Needs Vote colors on. The name tag takes the duck's vote color too.",
@@ -597,22 +578,6 @@ export const BY_MODE = {
       d: "A player never defends a take they wrote. Write your own overrides this.",
     },
   ],
-  mgj: [
-    {
-      k: "mgjHp",
-      n: "Player HP",
-      c: [
-        [0, "Off"],
-        [1, "1"],
-        [5, "5"],
-        [6, "6"],
-        [10, "10"],
-        [15, "15"],
-      ],
-      cat: "rules",
-      d: "The HP of each duck. A hit from Justin takes 1 HP, and nothing hurts the duck for a second after. The last one knocks it down until another duck holds E by it for 5 seconds, or the fight's end. Off: one hit knocks a duck down for 5 s.",
-    },
-  ],
   l4dd: [
     {
       k: "l4start",
@@ -727,7 +692,7 @@ export const BY_MODE = {
       c: ON_OFF,
       cat: "more",
       when: (s) => !SB_WORLDS[s.options.sbMap],
-      d: "On: the board in Sandbox gets Mad God Justin's slowly changing color over the map. Off: the map shows plain.",
+      d: "On: the board in Sandbox gets a slowly changing color over the map. Off: the map shows plain.",
     },
     {
       k: "sbAll",

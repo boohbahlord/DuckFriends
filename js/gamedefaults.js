@@ -57,9 +57,6 @@ export const POCKET_CHANGE = {
 /* a made NPC rule's Chance (%) when it has none: every time (brainbuild.js) */
 export const BRAIN_RULE = { CHANCE: 100 };
 
-/* Mad God Justin's HP before his HP is known: more than he ever has, so no gore shows (game.js mgjGore) */
-export const MGJ_HP_UNKNOWN = 999;
-
 /* the TV's channel before anyone changed it (hangout/tv.js) */
 export const TV_FIRST_CHANNEL = 1;
 

@@ -46,11 +46,9 @@ import { isQuack, quackLeft } from "./quackrules.js";
 
 import { hangLeft } from "./hangout/rules.js";
 
-import { isMgj, mgjCount } from "./mgjrules.js";
-
 import { isWorldMap } from "./maps.js";
 
-import { SOLO_MODES } from "./modes.js";
+import { SOLO_MODES, modeOf } from "./modes.js";
 
 import { rainbowJoin } from "./looksrules.js";
 
@@ -114,7 +112,6 @@ export function act_join({ state, s, a, now, P }) {
   else if (!["lobby", "over", "countdown"].includes(s.phase))
     seatNewcomer(s, a.p.id);
   if (s.phase !== "lobby") rainbowJoin(s, a.p.id); // (Rainbow Ducks: a look for someone who joins mid-game)
-  if (isMgj(s)) mgjCount(s); // (Mad God Justin: a duck joining mid-fight adds its share of his HP)
   if (isSb(s) && s.sbsv) sbRekey(s, a.p.id); // (Sandbox: a player in the save gets their own settings back, by name)
   say(s, `${a.p.name} ${back ? "is back" : "joined"}.`);
   if (s.waiting && s.waiting.for === a.p.id) {
@@ -186,6 +183,7 @@ export function act_options({ s, a, me, host, boss }) {
   const o = { ...a.options };
   delete o.dod; // (Democracy of Ducklings is set when the room is made, and stays)
   if (s.solo && o.mode && !SOLO_MODES.includes(o.mode)) delete o.mode; // (Single Player: only its games)
+  if (o.mode && modeOf(o.mode).id !== o.mode) delete o.mode; // (an old save slot can hold a mode we took out)
   if (dodOn(s, "vote"))
     for (const k of ["mode", "modePick", "map", "mapPick", "voteBack"])
       delete o[k]; // (Ducks Vote Mode & Game: the votes stay as they are)
@@ -537,17 +535,13 @@ export function act_voteCast({ state, s, a, now, me }) {
 }
 
 export function act_chat({ state, s, a, now, P, me }) {
-  // a message; from the command line (send) it carries the command (cmd) and may be a file
+  // a message
   if (!me) return s;
-  if (
-    denied(s, a.id, "nochat") ||
-    (a.cmd && (denied(s, a.id, "nocmd") || denied(s, a.id, "nosend")))
-  )
-    return state;
+  if (denied(s, a.id, "nochat")) return state;
   if (now - ((s.lastChat || {})[a.id] || 0) < slowMs(s, a.id)) return state; // slow: one message every 15 s (slow30: 30 s)
   const text = String(a.text || "")
     .trim()
-    .slice(0, a.cmd ? 2000 : 500);
+    .slice(0, 500);
   if (!text) return state;
   if (a.to && !P[a.to]) return state;
   s.lastChat = { ...(s.lastChat || {}), [a.id]: now };
@@ -555,14 +549,6 @@ export function act_chat({ state, s, a, now, P, me }) {
     from: a.id,
     to: a.to || null,
     text,
-    ...(a.cmd ? { cmd: String(a.cmd).slice(0, 200) } : {}),
-    ...(a.file
-      ? {
-          file: String(a.file).slice(0, 40),
-          ...(a.pub ? { pub: true } : {}),
-          ...(a.grp && groupsOf0(s)[a.grp] ? { grp: String(a.grp) } : {}),
-        }
-      : {}),
   });
   return s;
 }

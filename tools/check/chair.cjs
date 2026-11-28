@@ -27,7 +27,7 @@ const { chromium } = require("playwright");
       y = 1400,
       x0 = 1530, // (thrown from on the middle one: its picture over all three)
       s = {
-        options: { mode: "l4dd", l4map: "downpour" },
+        options: { mode: "l4dd" },
         hang: { l4: { t0: 0, r: 6 } },
         players: { a: { name: "a" } },
         seat: ["a"],

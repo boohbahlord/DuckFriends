@@ -740,8 +740,7 @@ export function quackMoved(s, id) {
 }
 
 /* ---------- stats ---------- */
-/* a player's stats before any round: every count at 0 (the stats here, the View stats box in quack.js, the command line's
-   stats in shell.js all start from it) */
+/* a player's stats before any round: every count at 0 (the stats here and the View stats box in quack.js start from it) */
 export const quackBlank = () => ({
   right: 0,
   votes: 0,

@@ -9,11 +9,11 @@
    don't count either). Dat Boi opens at 1,728 jumps and his ranks after him: bronze at 5,184, silver and chrome at 15,552,
    gold and rose gold at 31,104, rainbow at 62,208; the Rainbow skin on any duck at 62,208 too. The Chair at 1,123 Justin kills
    in Duck Cabin (Hangout); the Invisible duck once you've hit the cabin's shadow duck with a thrown chair; the Zebra cake
-   once you've beaten Justin 72 times (any Justin, any weapon, Mad God Justin's wins too); What counts
+   once you've beaten Justin 72 times (any Justin, any weapon); What counts
    lives in the profile (so it stays on the device and the account): jumps, justinKills, cabinKills, shadowHits,
    kills, dunced,
    (Quacky Zombies' guns stay locked until I say how they unlock: only the secret code opens them for now)
-   mgjWins, mgjLosses, lostRounds, secrets (the codes turned on) and unlockSeen (the unlocks already announced, so each
+   lostRounds, secrets (the codes turned on) and unlockSeen (the unlocks already announced, so each
    "Unlocked!" shows once). */
 import { profile, save } from "./store.js";
 import { fmtJumps } from "./format.js";
@@ -115,8 +115,8 @@ const LOCKS = [
     name: "Clown paint",
   },
   { kind: "hat", id: "dunce", dunced: 12, name: "Dunce hat" },
-  { kind: "eyes", id: "lightning", mgjWins: 12, name: "Lightning eyes" },
-  { kind: "eyes", id: "tears", mgjLosses: 24, lost: 144, name: "Tears" }, // (lose to Mad God Justin 24 times, or lose 144 rounds)
+  { kind: "eyes", id: "lightning", later: true, name: "Lightning eyes" }, // (it came from beating Mad God Justin, cut Nov 27: how it unlocks now is still to say)
+  { kind: "eyes", id: "tears", lost: 144, name: "Tears" },
 ];
 const lockOf = (kind, id) => LOCKS.find((l) => l.kind === kind && l.id === id);
 const earned = (l) =>
@@ -130,16 +130,13 @@ const earned = (l) =>
 const earnedElse = (l) =>
   l.jumps
     ? (profile.jumps || 0) >= l.jumps
-    : l.mgjLosses
-      ? (profile.mgjLosses || 0) >= l.mgjLosses ||
-        (profile.lostRounds || 0) >= l.lost
+    : l.lost
+      ? (profile.lostRounds || 0) >= l.lost
       : l.frags
         ? (profile.kills || 0) >= l.frags
-        : l.mgjWins
-          ? (profile.mgjWins || 0) >= l.mgjWins
-          : l.dunced
-            ? (profile.dunced || 0) >= l.dunced
-            : (profile.justinKills || 0) >= l.kills;
+        : l.dunced
+          ? (profile.dunced || 0) >= l.dunced
+          : (profile.justinKills || 0) >= l.kills;
 /* the secret code opens every unlockable at once; what you've earned still counts on toward each one */
 const coded = () => !!(profile.secrets || {})[CODE];
 /* is it yours to wear? (anything not in the list always is) */
@@ -161,25 +158,19 @@ export function lockHint(kind, id) {
           ? `Unlocked: you beat Justin ${l.kills} times`
           : l.jumps
             ? `Unlocked: ${fmtJumps(l.jumps)} jumps`
-            : l.mgjLosses
-              ? (profile.mgjLosses || 0) >= l.mgjLosses
-                ? `Unlocked: lost to Mad God Justin ${l.mgjLosses} times`
-                : `Unlocked: lost ${l.lost} rounds`
+            : l.lost
+              ? `Unlocked: lost ${l.lost} rounds`
               : l.frags
                 ? `Unlocked: ${l.frags} kills`
-                : l.mgjWins
-                  ? `Unlocked: beat Mad God Justin ${l.mgjWins} times`
-                  : l.dunced
-                    ? `Unlocked: voted a dunce ${l.dunced} times`
-                    : `Unlocked: you killed Justin with a weapon ${l.kills} times`;
+                : l.dunced
+                  ? `Unlocked: voted a dunce ${l.dunced} times`
+                  : `Unlocked: you killed Justin with a weapon ${l.kills} times`;
   const pre = coded(l) ? "Unlocked: a secret code. " : "";
   if (l.later) return pre.trim() || "How to unlock this is coming soon.";
   if (l.frags)
     return `${pre}Knock down ${l.frags} players with a weapon (any Justin counts) (${Math.min(l.frags, profile.kills || 0)}/${l.frags})`;
-  if (l.mgjLosses)
-    return `${pre}Lose to Mad God Justin ${l.mgjLosses} times (${Math.min(l.mgjLosses, profile.mgjLosses || 0)}/${l.mgjLosses}), or lose ${l.lost} rounds (${Math.min(l.lost, profile.lostRounds || 0)}/${l.lost})`;
-  if (l.mgjWins)
-    return `${pre}Beat Mad God Justin ${l.mgjWins} times at the default time (${Math.min(l.mgjWins, profile.mgjWins || 0)}/${l.mgjWins})`;
+  if (l.lost)
+    return `${pre}Lose ${l.lost} rounds (${Math.min(l.lost, profile.lostRounds || 0)}/${l.lost})`;
   if (l.dunced)
     return `${pre}Be voted a dunce in Duncelation ${l.dunced} times (${Math.min(l.dunced, profile.dunced || 0)}/${l.dunced})`;
   if (l.cabin)
@@ -207,7 +198,7 @@ export function checkUnlocks() {
   save();
   toast("Unlocked: " + and(fresh.map((l) => l.name)));
 }
-/* a Justin kill with a weapon special, seen on your own device; or a Mad God Justin win I was in the fight for. Noah's
+/* a Justin kill with a weapon special, seen on your own device. Noah's
    brown Justin-costume duck (Rainbow Ducks) never counts: it's a player, so knocking it down is a player kill */
 function countJustinKill() {
   profile.justinKills = (profile.justinKills || 0) + 1;
@@ -215,16 +206,14 @@ function countJustinKill() {
   checkUnlocks();
   document.dispatchEvent(new Event("jumpsbox"));
 }
-/* is Justin in this room's game: the Justin option (not in Valentine's Duck Date or Left 4 Dead Ducks), Mad God Justin,
-   or Hangout, where he lives */
+/* is Justin in this room's game: the Justin option (not in Valentine's Duck Date or Left 4 Dead Ducks), or Hangout,
+   where he lives */
 export const justinIn = (s) =>
   !!s &&
   !!s.options &&
-  (["mgj", "hang"].includes(s.options.mode) ||
-    (!!s.options.justin && !["vdd", "l4dd", "surv"].includes(s.options.mode)) ||
-    (["l4dd", "surv"].includes(s.options.mode) &&
-      !!s.players &&
-      !!s.players["b-justin"])); // (Quacky Zombies: the Justin out there, Nov 17)
+  (s.options.mode === "hang" ||
+    (!!s.options.justin && !["vdd", "l4dd"].includes(s.options.mode)) ||
+    (s.options.mode === "l4dd" && !!s.players && !!s.players["b-justin"])); // (Quacky Zombies: the Justin out there, Nov 17)
 /* another player (not a computer) or Justin knocked down by me with a weapon: toward the shotgun and the grenade */
 function countKill() {
   profile.kills = (profile.kills || 0) + 1;
@@ -233,12 +222,11 @@ function countKill() {
 }
 /* a room's kills (the rules' s.pk, numbered by s.pkN, and Justin's s.jk, numbered by s.jkN): mine count, each once;
    what happened before I joined doesn't. The same for Duncelation's dunces (s.dn.dk, numbered by s.dn.dkN): me voted a dunce,
-   outside TEST rooms; and Mad God Justin's wins (s.mgjWins, numbered by s.mgjWinN) I played in. None in a game with
+   outside TEST rooms. None in a game with
    test commands used (cheatflag.js) */
 export function watchKills(room) {
   let seen = null,
     seenD = null,
-    seenW = null,
     seenL = null,
     seenP = null,
     seenS = null,
@@ -251,11 +239,10 @@ export function watchKills(room) {
       document.dispatchEvent(new Event("jumpsbox"));
     } // (the Justin Kills line comes and goes with him)
     if (cheated(s)) {
-      [seenP, seen, seenD, seenW, seenL, seenS] = [
+      [seenP, seen, seenD, seenL, seenS] = [
         topP,
         s.jkN || 0,
         (s.dn || {}).dkN || 0,
-        s.mgjWinN || 0,
         s.lossN || 0,
         s.shkN || 0,
       ];
@@ -275,31 +262,17 @@ export function watchKills(room) {
     const top = (s && s.jkN) || 0,
       dn = (s && s.dn) || {},
       topD = dn.dkN || 0,
-      topW = (s && s.mgjWinN) || 0,
       topL = (s && s.lossN) || 0;
     if (seenL === null || topL < seenL) seenL = topL;
     else {
       for (const k of (s && s.losses) || [])
         if (k.n > seenL && (k.ids || []).includes(room.me) && !s.test) {
           profile.lostRounds = (profile.lostRounds || 0) + 1;
-          if (k.k === "mgj") profile.mgjLosses = (profile.mgjLosses || 0) + 1;
           save();
           checkUnlocks();
         }
       seenL = topL;
     } // (a clear loss: rules.js lostRound)
-    if (seenW === null || topW < seenW) seenW = topW;
-    else {
-      for (const k of (s && s.mgjWins) || [])
-        if (k.n > seenW && (k.ids || []).includes(room.me)) {
-          if (k.def && !s.test) {
-            profile.mgjWins = (profile.mgjWins || 0) + 1;
-            save();
-          }
-          countJustinKill(); // (a win is a Justin kill for every duck in the fight, at any time)
-        }
-      seenW = topW;
-    }
     const topS = (s && s.shkN) || 0;
     if (seenS === null || topS < seenS) seenS = topS;
     else {

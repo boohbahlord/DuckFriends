@@ -1,7 +1,7 @@
 /* ---------- every weapon's numbers: one sheet for every mode ----------
    Dead Ducks Arcade's are the base (ARMS: each weapon's kind, damage, speed, ammo and the rest; its name as players see
    it; its kind). A mode that does a weapon its own way gives only the numbers that differ (Type Object: GUN_BREEDS);
-   the rules ask through their own functions (rules.js coolFor, mgjrules.js mgjCool; every gun's ammo: ammo.js). Drawings:
+   the rules ask through their own functions (rules.js coolFor; every gun's ammo: ammo.js). Drawings:
    gunart.js */
 import { HANDGUN } from "./gamedefaults.js";
 import { ARM_SPEED, ARM_COOL, ARM_SWING, ARM_RELOAD } from "./armspeed.js";
@@ -261,7 +261,6 @@ export const ARMS = {
     life: 420,
   },
   medkit: { kind: "special", cool: ITEM_COOL, all: 1 },
-  defib: { kind: "special", cool: ITEM_COOL, all: 1 }, // (Survival's defibrillator: DEFIB)
   grenade: {
     kind: "grenade",
     cool: ITEM_COOL,
@@ -526,7 +525,6 @@ export const GUN_NAMES = {
   dagger: "Dagger",
   shotgun: "Pump action shotgun", // (the owner's, Nov 21 17:25Z)
   medkit: "Medkit",
-  defib: "Defibrillator",
   safekeep: "Safe Keeping",
   grenade: "Grenade",
   sniper: "Barrett .50 Cal", // (the owner's, Nov 18 12:19Z: named after its look)
@@ -605,27 +603,11 @@ export const BOARD_WEAPONS = [
   "grenade",
   "bow",
   ...BOARD_GUNS,
-  "laser", // (not a special: only Mad God Justin's pickup, mgjrules.js)
+  "laser", // (not a duck's own special: Sandbox's loot and the hotbar it gives)
 ]; // aimed (with the mouse), and kept out with Shift and their key
 /* thrown the way the mouse aims, but never kept out: the Chair special (the silly commands' switch covers it, as the
    weapons) and the Zebra cake */
 export const THROWS = ["chair", "zebra"];
-/* Mad God Justin: what the ducks hold (rules.js' move: w) */
-export const MGJ_MELEE = "sword"; // (the owner's, Nov 17: the ducks start with the short sword, not the knife)
-/* a gun picked up works as it does in Quacky Zombies (its magazine, R to reload, full auto, the shotgun's spread, the
-   sniper's bullet going through) and stays on key 4 until its shots are gone (MGJ_GUNS); the medkit puts my HP back to
-   full, or gets a downed duck up at once when I hold it out over it */
-export const MGJ_GUNS = [
-  "glauncher",
-  "lmg",
-  "tommy",
-  "ump",
-  "smg",
-  "ak",
-  "burst",
-  "shotgun",
-  "dbarrel",
-]; // (no sniper, Laser Rifle or flamethrower here: the owner's, Nov 18 12:19Z and 12:32Z)
 /* the modes' own numbers, where a weapon works its own way there */
 export const GUN_BREEDS = {
   /* the board's specials (the normal games): how long one waits before its key works again (ms; the key shows a bar
@@ -644,36 +626,11 @@ export const GUN_BREEDS = {
       confetti: 15000,
       bow: ARM_COOL.bow,
       chair: 15000,
-      zebra: 30000, // (as Mad God Justin's CAKE_EVERY)
+      zebra: 30000,
     },
     names: { dbarrel: "Double barrel" }, // (the board has only the one: Dead Ducks Arcade's slug double barrel)
   },
-  /* the NPCs that fire guns: how far each gun is fired from, in duck lengths (REACH if not named). The two rows don't
-     agree yet: the owner decides whether they become one */
-  gunman: {
-    /* how each gun is fired: rounds a burst, ms from one burst to the next (their hidden cooldowns; a gun not named: one
-       round, 1.2 to 1.8 s), and the magazine a gun with none gets (the shotgun 6 shells, any other 6) */
-    burst: {
-      handgun: { n: 1, gap: [1400, 2200] },
-      revolver: { n: 1, gap: [1600, 2400] },
-      smg: { n: 3, gap: [2200, 3200] },
-      tommy: { n: 3, gap: [2200, 3200] },
-      ump: { n: 3, gap: [2200, 3200] },
-      shotgun: { n: 1, gap: [2000, 2800] },
-      ak: { n: 4, gap: [1600, 2400] },
-      burst: { n: 3, gap: [1400, 2000] },
-      lmg: { n: 12, gap: [1200, 1800] }, // (long bursts: suppressive fire)
-    },
-    mag: { shotgun: 6 },
-    magAll: 6,
-    reach: {
-      shotgun: 3.5,
-      revolver: 8,
-      ak: 11, // (assault rifles reach as far as the LMG; the sniper's SNIPE reaches farther still. The owner's, Nov 20 18:23Z:
-      burst: 11, // "Any assault rifle should be able to have the range of the LMG, and the sniper even more so")
-      lmg: 11,
-    },
-  },
+  /* Sandbox's NPCs: how far each gun is fired from, in duck lengths (REACH if not named) */
   sbnpc: {
     reach: {
       sniper: 14, // (across the map; the shotguns only close)
@@ -681,15 +638,6 @@ export const GUN_BREEDS = {
       revolver: 8,
       shotgun: 3.5,
       dbarrel: 3.5,
-    },
-  },
-  /* Mad God Justin: the knife, the sword and the pistol as fast as in every mode (the knife four a second, the pistol
-     five), a gun picked up Quacky Zombies' own, its ammo too (ammo.js) */
-  mgj: {
-    cool: {
-      sword: ARM_COOL.sword,
-      knife: ARM_COOL.knife,
-      handgun: ARM_COOL.handgun,
     },
   },
 };

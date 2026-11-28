@@ -324,7 +324,7 @@ export const DRAW = {
       { layer: "floor" },
     ),
   ],
-  /* Quacky Zombies' holes (layout.js' L4_HOLES): the wall's own drawing over the gap with the hole broken through it,
+  /* Downpour's holes (stationmap.js): the wall's own drawing over the gap with the hole broken through it,
      sorted just in front of the wall pieces either side (it covers their ends, whichever came into view first) */
   hole(p) {
     const o = p.hole,

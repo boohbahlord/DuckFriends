@@ -128,7 +128,6 @@ const hold = async (p, keys, ms) => {
             mode,
             modePick: "host",
             mapPick: "host",
-            l4map: map,
             map: "cabin",
             botWait: 1,
           },
@@ -146,7 +145,6 @@ const hold = async (p, keys, ms) => {
   await sleep(2500);
   await host.evaluate(async () => {
     const R = (await import("/js/net.js")).activeRoom();
-    R.state.zmapAsked = 1;
     R.send({ t: "start" });
   });
   /* both on the map, loaded */

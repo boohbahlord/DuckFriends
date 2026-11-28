@@ -433,7 +433,7 @@ export const SPECIALS = [
     id: "laser",
     name: nameOf("laser", "board"),
     kind: "item",
-    only: "mgj", // (never a duck's own special: Dead Ducks Arcade's weapon spin gives it, and Mad God Justin's pickups)
+    only: "l4dd", // (never a duck's own special: Dead Ducks Arcade's weapon spin gives it)
     get icon() {
       return GUNS.laser.icon;
     },

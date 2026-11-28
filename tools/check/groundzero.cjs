@@ -27,7 +27,7 @@ const { url, fail, noErrors } = require("./lib.cjs");
       O = await import("./js/outlines.js"),
       r3 = (v) => Math.round(v * 1000) / 1000,
       out = {};
-    L.useMode("l4dd", "cabin");
+    L.useMode("hang"); // (Duck Cabin is Hangout's alone since Nov 27)
     out.cabin = [H.levelOf(0), H.levelOf(H.ELEV), H.levelZ(1)].map(r3);
     const g = [L.spawnAt(0)]
       .concat(
