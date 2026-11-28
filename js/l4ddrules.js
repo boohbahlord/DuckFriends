@@ -2621,9 +2621,9 @@ function merchantWander(s, m0, now, h) {
     setMh(s, { wt: to, wn: 0 });
   }
   const m = { x: m0.x, y: m0.y };
-  walkTo(m, ...to, WALK * walkOf(s) * W0.k * dt);
+  stepZombie(m, to, WALK * walkOf(s) * W0.k * dt, []); // (each step checked, as in his fight: never into a pew)
   const dx = m.x - m0.x;
-  if (Math.abs(dx) + Math.abs(m.y - m0.y) < 0.5) return;
+  if (Math.abs(dx) + Math.abs(m.y - m0.y) < 0.5) return setMh(s, { wt: null }); // (held up short of it: another spot)
   s.hang.l4m = {
     ...m0,
     x: Math.round(m.x),
