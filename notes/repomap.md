@@ -104,7 +104,7 @@ jumps.js 48 the jump counter
 justinmoves.js 43 Justin's moves on the board
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which key
-l4dd.js 3254 Quacky Zombies on every screen
+l4dd.js 3269 Quacky Zombies on every screen
 l4ddangel.js 147 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
 l4ddart.js 609 Quacky Zombies' pictures
@@ -151,7 +151,7 @@ nwk.js 543 Nous Within Kenoma: the map
 offline.js 45 Single Player's files on the
 online.js 974 online rooms
 outfits.js 990 outfits
-outlines.js 420 the outlines
+outlines.js 407 the outlines
 perf.js 91 the frame-rate readout
 phonepad.js 144 phones: the aim-and-attack stick and
 picrop.js 268 cropping a picture: every picture
@@ -293,7 +293,7 @@ flicker.js 83 now and then a light
 ghosts.js 111 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in
 lamp.js 71 the lamps: the example activity
-layout.js 1075 Duck Cabin: the world of
+layout.js 1085 Duck Cabin: the world of
 layoutbase.js 78 Duck Cabin: the world's numbers
 layoutheights.js 396 Duck Cabin: the heights :
 npc.js 495 Duck Cabin's characters: how they

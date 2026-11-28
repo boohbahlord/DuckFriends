@@ -24,6 +24,7 @@ import {
   STAIRS,
   inCabin,
   seenFrom,
+  duckSees,
   sortY,
   bodyZ,
   roofHoleOver,
@@ -109,6 +110,7 @@ import {
   MERCH,
   ZHATS,
   ZOUTFITS,
+  standing,
 } from "./l4ddrules.js";
 import { SLOT_KINDS } from "./kitslots.js";
 import { lootAt } from "./l4ddloot.js";
@@ -488,11 +490,13 @@ function lits() {
   };
 }
 
-/* a zombie's outline (outlines.js), f: where it stands on the screen, dip: how far it's sunk in the flood, hidden: true
+/* a zombie coming into any duck's sight fades in (the owner's, Nov 28 01:57Z) */
+const FADE_IN = [{ opacity: 0 }, { opacity: 1 }];
+/* a zombie's outline in a Sandbox zone's color (outlines.js), f: where it stands on the screen, dip: how far it's sunk in the flood, hidden: true
    when a wall hides it, or null to ask whether a wall, a roof or a crown drawn over it covers it (zi: the z-index it's
    drawn at, so only what is really drawn over it counts: the owner's, Nov 17 19:11Z). Returns whether something hides
    it: then it shows only as its line, never its picture (the owner's, Nov 17 17:41Z) */
-function zOutline(Wd, o, f, dip, sc, hidden, z, myFloor, zi = 0, kind = "") {
+function zOutline(Wd, o, f, dip, sc, hidden, z, myFloor, zi, kind) {
   const w = o.bw * sc,
     h = o.bh * sc,
     y = f.top + (dip - o.feet) * sc,
@@ -507,7 +511,7 @@ function zOutline(Wd, o, f, dip, sc, hidden, z, myFloor, zi = 0, kind = "") {
     w,
     h,
     flip: o.face < 0,
-    kind: kind || "zombie", // (or a Sandbox zone's Outlines color)
+    kind, // (a Sandbox zone's Outlines color)
     hidden: hid,
     ...olAway(o.x, o.y, z, myFloor), // (its floor against mine, its elevation, how much darker)
   });
@@ -2925,7 +2929,14 @@ activity({
       meAt = Wd.at(ctx.me),
       myFloor = meAt ? olAway(meAt.x, meAt.y, meAt.z).f : 0, // (for the outlines: a zombie a floor away)
       st0 = ctx.state(),
-      sbOl = sbHasOl(st0); // (Sandbox: zones with Outlines)
+      sbOl = sbHasOl(st0), // (Sandbox: zones with Outlines)
+      eyes = [
+        ...(meAt ? [meAt] : []),
+        ...st0.seat
+          .filter((id) => id !== ctx.me && standing(st0, id))
+          .map((id) => Wd.at(id))
+          .filter(Boolean),
+      ]; // (every duck standing, and mine, or the one I watch: a zombie none of them sees isn't drawn)
     /* the zombies, gliding from where they were to where the host says, one heartbeat's time */
     for (const o of Z.values()) {
       const u = Math.min(1, (t - o.t0) / (o.g || gap));
@@ -2948,7 +2959,7 @@ activity({
         f = Wd.toScreen(o.x + lean, o.y, z),
         door = atBoards(o, Wd.inside),
         hole = !Wd.inside && roofHoleOver(o.x, o.y, z), // (Downpour: seen from outside through a hole in the gas station's roof)
-        unseen = !(door || hole || seenFrom(o.x, o.y, Wd.inside, z)),
+        unseen = !(door || hole || eyes.some((a) => duckSees(a, o.x, o.y, z))),
         zi = door
           ? AT_BOARDS
           : hole
@@ -2961,14 +2972,17 @@ activity({
           unseen ||
           !onCam ||
           (o.diedAt !== undefined && t - o.diedAt > LOW_DEAD && low()); // (Low graphics or Data saving: a body is gone from my screen at 2 s, css/app.css html.low; the rules still keep it its 4 s)
-      if (o.el.hidden !== hide) o.el.hidden = hide;
+      if (o.el.hidden !== hide) {
+        o.el.hidden = hide;
+        if (!hide && o.st !== 3 && o.seenAt !== undefined)
+          o.el.animate(FADE_IN, 400); // (coming into sight: it fades in)
+      }
+      if (!unseen) o.seenAt = t;
       o.z = z; // (its height as I draw it: shotStop)
       const zc =
         sbOl && o.st !== 3
           ? sbOlColor(st0, { k: "zombie", sp: o.sp }, o.x / W, o.y / H, z, W, H)
           : "";
-      if (onCam && unseen && o.st !== 3)
-        zOutline(Wd, o, f, 0, sc, true, z, myFloor, 0, zc); // (on the other side of a wall: its red line)
       if (o.st !== 3 || !hide) {
         wounds(o, o.l, o.i); // (its wounds, and its picture made into pixels wherever it is: ready before it comes into sight)
         pxPic(o, o.img, o.bw * sc, o.bh * sc);
@@ -2988,6 +3002,7 @@ activity({
               ? WADE_SINK * o.feet
               : 0;
       const olOnly =
+        !!zc &&
         o.st !== 3 &&
         zOutline(
           Wd,
@@ -3000,7 +3015,7 @@ activity({
           myFloor,
           zi,
           zc,
-        ); // (really behind a wall, under a roof: its line only)
+        ); // (Sandbox: a zone's Outlines, in its own color; really behind a wall, under a roof: its line only)
       if (o.olOnly !== olOnly) {
         o.olOnly = olOnly;
         o.el.classList.toggle("ol-only", olOnly);
