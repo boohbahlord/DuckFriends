@@ -117,7 +117,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 337 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4525 the rules of Quacky Zombies
+l4ddrules.js 4532 the rules of Quacky Zombies
 l4ddsfx.js 509 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the
 langname.js 5 the name of Sandbox's number
