@@ -2353,7 +2353,7 @@ function crateTick(s, now) {
    comes or goes, and the walking grids under it made again (walkgrid.js regrid) */
 let crateKey = "";
 export function crateSolid(s) {
-  const at = (s && s.hang && s.hang.l4cr && s.hang.l4cr.at) || null,
+  const at = (dp() && s && s.hang && s.hang.l4cr && s.hang.l4cr.at) || null, // (on Downpour only: the room gone back to the cabin has none)
     key = at ? at.join() : "";
   if (key === crateKey) return;
   crateKey = key;
@@ -4463,7 +4463,7 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
     x: +(bx / W).toFixed(4),
     y: +(by / H).toFixed(4),
     hit: [],
-    hz: sh.hz || 0,
+    hz: Math.round(z0), // (where it went off: the roof it landed on, not the thrower's height)
     gore: gore.slice(0, 12), // (blood bursting out of each zombie it got: game.js)
     ...(wide !== 1 ? { wide } : {}),
     rr: (REACH * wide) / BLAST_HALF, // (its rings' reach, as the screens draw it)

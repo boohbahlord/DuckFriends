@@ -106,7 +106,7 @@ jumps.js 48 the jump counter
 justinmoves.js 43 Justin's moves on the board
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which key
-l4dd.js 3413 Quacky Zombies on every screen
+l4dd.js 3414 Quacky Zombies on every screen
 l4ddangel.js 147 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
 l4ddart.js 608 Quacky Zombies' pictures
@@ -120,7 +120,7 @@ l4ddpower.js 327 Dead Ducks Arcade's power box
 l4ddpowerui.js 276 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
 l4ddrules.js 4882 the rules of Quacky Zombies
-l4ddsfx.js 512 Dead Ducks Arcade's sounds
+l4ddsfx.js 514 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the
 langname.js 5 the name of Sandbox's number
 laserart.js 95 the laser gun, drawn
@@ -152,7 +152,7 @@ npcshared.js 32 what every NPC shares, whatever
 npcview.js 216 an NPC on a world
 nwk.js 543 Nous Within Kenoma: the map
 offline.js 45 Single Player's files on the
-online.js 975 online rooms
+online.js 976 online rooms
 outfits.js 990 outfits
 outlines.js 414 the outlines
 perf.js 91 the frame-rate readout
@@ -181,7 +181,7 @@ roomrules.js 347 room governance: groups and permissions
 rooms.js 256 Play: create a room, and
 roundline.js 36 Dead Ducks Arcade's round line,
 router.js 112 screens
-rules.js 1669 the rules of Agree or
+rules.js 1674 the rules of Agree or
 sandbox.js 1348 Sandbox: the key windows
 sandboxrules.js 2033 Sandbox: which map it plays
 saybubble.js 78 a duck's speech bubble kept
@@ -268,7 +268,7 @@ who.js 3 who this player is beyond
 wounds.js 483 the wounds a hit leaves
 zombiepath.js 187 the zombies' way to the
 zombieroofs.js 314 the zombies' walk over Downpour's
-zombies.js 1430 the zombies: one module for
+zombies.js 1431 the zombies: one module for
 
 ## js/hangout/
 activities.js 25 every Hangout activity, so the
