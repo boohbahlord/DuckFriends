@@ -162,13 +162,21 @@ export function l4Hear(s, ctx) {
     st.over = L.over.at;
   }
   /* the merchant: a little shop bell as he gets to his spot, the same bell down as he runs off; from where he stands */
-  const mc = h.l4m,
-    mst = mc ? mc.st : "";
-  if (mst !== st.mst) {
-    if (!st.first && mc && (mst === "here" || mst === "out"))
-      play(mst === "here" ? "merchantIn" : "merchantOut", { x: mc.x, y: mc.y });
-    st.mst = mst;
+  const mst = {}; // (each one here, by his visit: several can be)
+  for (const mc of [h.l4m, ...(h.l4mx || [])]) {
+    if (!mc) continue;
+    mst[mc.v] = mc.st;
+    if (
+      mc.st !== (st.mst || {})[mc.v] &&
+      !st.first &&
+      (mc.st === "here" || mc.st === "out")
+    )
+      play(mc.st === "here" ? "merchantIn" : "merchantOut", {
+        x: mc.x,
+        y: mc.y,
+      });
   }
+  st.mst = mst;
   /* a new round (not the first look at the game, nor once it's over) */
   if (L && L.r !== st.r) {
     if (st.r >= 0 && L.r > st.r && L.r > 0 && !L.over) {

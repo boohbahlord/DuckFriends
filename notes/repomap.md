@@ -23,7 +23,7 @@ boardjustin.js 499 Justin on the boards
 boardzombies.js 122 the zombies on a board
 botduck.js 90 a computer's duck: a random
 botlines.js 188 What the computers write and
-bots.js 1325 computers
+bots.js 1327 computers
 bowdraw.js 46 the bow, drawn to shoot
 brackets.js 459 Bicker Brackets: what the screen
 brainbuild.js 330 Sandbox: M's Brain builder
@@ -106,7 +106,7 @@ jumps.js 48 the jump counter
 justinmoves.js 43 Justin's moves on the board
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which key
-l4dd.js 3241 Quacky Zombies on every screen
+l4dd.js 3283 Quacky Zombies on every screen
 l4ddangel.js 147 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
 l4ddart.js 608 Quacky Zombies' pictures
@@ -119,8 +119,8 @@ l4ddmap.js 252 Quacky Zombies' minimap
 l4ddpower.js 312 Dead Ducks Arcade's power box
 l4ddpowerui.js 270 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4453 the rules of Quacky Zombies
-l4ddsfx.js 499 Dead Ducks Arcade's sounds
+l4ddrules.js 4580 the rules of Quacky Zombies
+l4ddsfx.js 507 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the
 langname.js 5 the name of Sandbox's number
 laserart.js 95 the laser gun, drawn
@@ -267,7 +267,7 @@ who.js 3 who this player is beyond
 wounds.js 483 the wounds a hit leaves
 zombiepath.js 187 the zombies' way to the
 zombieroofs.js 314 the zombies' walk over Downpour's
-zombies.js 1305 the zombies: one module for
+zombies.js 1306 the zombies: one module for
 
 ## js/hangout/
 activities.js 25 every Hangout activity, so the

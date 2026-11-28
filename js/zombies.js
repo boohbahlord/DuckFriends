@@ -70,8 +70,8 @@ import {
   dodging,
   JCHASE,
   isWild,
-  merchantOf,
-  merchantHurt,
+  merchantsOf,
+  merchantHurtAt,
   addFx,
   CAKE_R,
   CAKE_BITE,
@@ -422,19 +422,20 @@ export function moveZombies(s, zs, now, T, up, seers = up) {
   /* the merchant running away: chased as Justin is, until he's over the fence or off the balcony (the owner's, Nov 18
      13:46Z: "zombies might try and chase them like they are a player UNLESS they climb a fence OR jump off the
      balcony, then they give up"); never his body */
-  const mm = merchantOf(s);
-  if (mm && (mm.st === "out" || mm.st === "fight") && !mm.c)
-    pls.push({
-      id: "@m",
-      p: null,
-      xy: [mm.x, mm.y],
-      zz: heightAt(mm.x, mm.y),
-      dk: null,
-      way: null,
-      goal: [mm.x, mm.y],
-      j: true,
-      m: true,
-    });
+  merchantsOf(s).forEach((mm, k) => {
+    if ((mm.st === "out" || mm.st === "fight") && !mm.c)
+      pls.push({
+        id: "@m" + k,
+        p: null,
+        xy: [mm.x, mm.y],
+        zz: heightAt(mm.x, mm.y),
+        dk: null,
+        way: null,
+        goal: [mm.x, mm.y],
+        j: true,
+        m: k + 1, // (which one: merchantHurtAt)
+      });
+  });
   s.hidden = { ...(s.hidden || {}), l4tk: now };
   const field = pls.filter((q) => !q.j),
     dist = flowFrom(
@@ -475,7 +476,7 @@ export function moveZombies(s, zs, now, T, up, seers = up) {
 /* a swipe on the map: at the merchant or a duck (p4: the ducks' points this heartbeat). True when the target
    is down (no more swipes at it this heartbeat) */
 function mapClaw(s, p4, target, z, now) {
-  if (target.m) return merchantHurt(s, null, 1, now, "claw"); // (the merchant: a swipe takes 1, and no line)
+  if (target.m) return merchantHurtAt(s, target.m - 1, null, 1, now, "claw"); // (the merchant: a swipe takes 1, and no line)
   return (
     !dodging(s, target.p, now) &&
     hurtDuck(

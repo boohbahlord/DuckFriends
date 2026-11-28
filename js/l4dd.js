@@ -101,8 +101,9 @@ import {
   shotWalled,
   hasLeft,
   merchantOf,
+  merchantsOf,
+  nearestMerchant,
   upOffer,
-  selling,
   stockPrice,
   MERCH,
   ZHATS,
@@ -201,13 +202,19 @@ const MOON = () => {
   return moon;
 };
 const P4 = (s, id) => ((s && s.hang && s.hang.l4p) || {})[id] || null;
-/* the merchant here now (the rules' s.hang.l4m) and who he is (merchants.js) */
-const merchantNow = (s) => {
-  const m = merchantOf(s);
+/* the merchant here now (the rules' s.hang.l4m; several: the selling one nearest `at`, world px) and who he is
+   (merchants.js) */
+const merchantNow = (s, at = null) => {
+  const k = at ? nearestMerchant(s, at[0], at[1]) : 0,
+    m = merchantsOf(s)[Math.max(0, k)] || null;
   return m ? { ...m, who: merchantById(m.id) } : null;
 };
-const shopName = (s) => {
-  const m = merchantNow(s);
+/* where my duck is (world px), or null */
+const meAt = (ctx) => {
+  const d = ctx.duck();
+  return d ? [d.x * W, d.y * H] : null;
+};
+const shopName = (s, m) => {
   return (m && m.who && !m.who.hideName && m.who.name) || "The Merchant"; // (the soldier's name is never shown: "his name is classified info", the owner's, Nov 18 14:10Z)
 };
 const NEAR = 130; // world px: how near E works at the merchant
@@ -1006,8 +1013,9 @@ function seeOn(s) {
   const kill = on.kill > now;
   if (killEl && killEl.hidden === kill) killEl.hidden = !kill;
   const sale = saleOn(s);
-  if (butler && butler.el.classList.contains("l4-sale") !== sale)
-    butler.el.classList.toggle("l4-sale", sale);
+  for (const o of MDRAWN.values())
+    if (o.butler && o.butler.el.classList.contains("l4-sale") !== sale)
+      o.butler.el.classList.toggle("l4-sale", sale);
   const sig = JSON.stringify(rows);
   if (sig === onSig) return;
   onSig = sig;
@@ -1025,11 +1033,13 @@ export function l4Got(k) {
   gotEl.innerHTML =
     k === "merchant"
       ? rainbowHTML("The Merchant has Arrived", { seed: 5 }) // (the owner's, Nov 18 13:46Z: "THe text for the merchant arriving is: \"The Merchant has Arrived\"")
-      : k === "sale"
-        ? '<span class="l4-got-gold">Sale</span>' // (in gold metal letters, the owner's, Nov 16)
-        : k === "nuke"
-          ? '<span class="l4-got-nuke">Nuke</span>' // (crimson blood letters that hold still, the owner's, Nov 16)
-          : `<span class="l4-got-ic">${DROP_ICONS[k] || ""}</span>${rainbowHTML(dropName(k) + "!", { seed: DROPS_SEED[k] || 1 })}`;
+      : k === "merchants"
+        ? rainbowHTML("The Merchants have Arrived", { seed: 5 }) // (several at once: the owner's, Nov 28)
+        : k === "sale"
+          ? '<span class="l4-got-gold">Sale</span>' // (in gold metal letters, the owner's, Nov 16)
+          : k === "nuke"
+            ? '<span class="l4-got-nuke">Nuke</span>' // (crimson blood letters that hold still, the owner's, Nov 16)
+            : `<span class="l4-got-ic">${DROP_ICONS[k] || ""}</span>${rainbowHTML(dropName(k) + "!", { seed: DROPS_SEED[k] || 1 })}`;
   if (k === "ammo")
     for (const b of document.querySelectorAll(".l4s, .sp-slot")) {
       b.classList.remove("l4-flash");
@@ -1039,12 +1049,13 @@ export function l4Got(k) {
   gotEl.classList.remove("on", "nuke", "merchant");
   void gotEl.offsetWidth;
   gotEl.classList.add("on");
-  if (k === "merchant" || k === "help") gotEl.classList.add("merchant"); // (3 s, then a 1 s fade: css l4-got-merchant)
+  if (k === "merchant" || k === "merchants" || k === "help")
+    gotEl.classList.add("merchant"); // (3 s, then a 1 s fade: css l4-got-merchant)
   if (k === "nuke") {
     gotEl.classList.add("nuke");
     nukeScreen(gotEl);
     sfx.nuke();
-  } else if (k !== "merchant") sfx.dropGot(); // (the merchant's arrival has his own bell: l4ddsfx.js)
+  } else if (!k.startsWith("merchant")) sfx.dropGot(); // (the merchant's arrival has his own bell: l4ddsfx.js)
 }
 /* ---------- the Nuke on the screen (owner 2026-11-16) ----------
    Grey pixel static sweeps out from the middle in a circle and covers the screen in a second (NUKE.SWEEP: the zombies
@@ -1384,8 +1395,8 @@ function paint(now, ctx) {
   }
   /* the merchant stands in a little light while he sells */
   if (dp() || Wd.inside) {
-    const mm = merchantOf(s);
-    if (mm && mm.st === "here") {
+    for (const mm of merchantsOf(s)) {
+      if (mm.st !== "here") continue;
       const p = Wd.toScreen(mm.x, mm.y, 30);
       if (
         seenFrom(mm.x, mm.y, Wd.inside) &&
@@ -1778,9 +1789,34 @@ const mWounds = (s, m) => {
   return +s.options.noGore ? goreFree(w) : w;
 };
 const mMax = (m) => Math.max(1, +m.max || 4.5); // (m.max: the HP he rolled, as a zombie's: the rules' hp0)
-function drawMerchant(ctx, t) {
+/* several merchants here (the rules' merchantsOf): each one drawn by drawMerchant in turn, his own drawing kept by his
+   visit (butler, mSig, mAt, mSeen and mPoolAt are the one being drawn's) */
+const MDRAWN = new Map(); // visit → { butler, mSig, mAt, mSeen, mPoolAt }
+function drawMerchants(ctx, t) {
+  const list = merchantsOf(ctx.state()),
+    seen = new Set();
+  for (const mm of list) {
+    const o = MDRAWN.get(mm.v) || {
+      butler: null,
+      mSig: "",
+      mAt: null,
+      mSeen: { v: null, hp: null, alive: false, fx: 0, stab: 0 },
+      mPoolAt: 0,
+    };
+    ({ butler, mSig, mAt, mSeen, mPoolAt } = o);
+    drawMerchant(ctx, t, { ...mm, who: merchantById(mm.id) });
+    MDRAWN.set(mm.v, { butler, mSig, mAt, mSeen, mPoolAt });
+    seen.add(mm.v);
+  }
+  for (const [v, o] of MDRAWN)
+    if (!seen.has(v)) {
+      o.butler?.el.remove();
+      MDRAWN.delete(v);
+    }
+  butler = list.length ? MDRAWN.get(list[0].v).butler : null;
+}
+function drawMerchant(ctx, t, m) {
   const s = ctx.state(),
-    m = merchantNow(s),
     Wd = ctx.world,
     sc = Wd.sc,
     dead = !!m && m.st === "dead",
@@ -1860,7 +1896,7 @@ function drawMerchant(ctx, t) {
       !Wd.onView(p.left - 60, p.top - 140, 120, 160);
   if (butler.el.hidden !== hide) butler.el.hidden = hide;
   mHurt(s, m, dead, p, sc, hide);
-  mStabs(s);
+  mStabs(s, m);
   if (hide) return;
   const tr = Wd.boxTr(p.left, p.top);
   if (butler.tr !== tr || butler.dz !== dead) {
@@ -1918,7 +1954,7 @@ function drawCorpses(ctx) {
     gore = !+s.options.noGore,
     seen = new Set();
   for (const c of list) {
-    if (!c || (cur && cur.v === c.v && cur.st === "dead")) continue;
+    if (!c || (cur && cur.v === c.v && cur.st === "dead")) continue; // (the first one lying dead: drawMerchant's)
     const who = merchantById(c.id);
     if (!who) continue;
     const wc = gore ? c.w || "" : goreFree(c.w || ""),
@@ -2021,11 +2057,17 @@ function mHurt(s, m, dead, p, sc, hide) {
 }
 /* his sprint (m.sp, the rules': 0 to 1) and his knife or handgun waiting to go again (the rules' l4mstab fx, f.ms) */
 /* his shots and stabs as they come, heard even while I can't see him */
-function mStabs(s) {
+function mStabs(s, m) {
   const top = fxTop(s);
   if (top > mSeen.fx) {
     for (const f of s.fx || [])
-      if (f && f.n > mSeen.fx && f.kind === "l4mstab" && f.t >= mSeen.stab) {
+      if (
+        f &&
+        f.n > mSeen.fx &&
+        f.kind === "l4mstab" &&
+        (f.v ?? m.v) === m.v &&
+        f.t >= mSeen.stab
+      ) {
         mSeen.stab = f.t || 0;
         mSeen.ms = f.ms || 1200;
         (f.w === "handgun" ? sfx.handgun : sfx.knife)({ x: f.x, y: f.y }); // (his shot or his stab, where he is)
@@ -2380,7 +2422,7 @@ function shopFill(s, ctx) {
     up = upOf(s, me),
     pts = ptsOf(s, me),
     kit = kitOf(s, me),
-    m = merchantNow(s),
+    m = merchantNow(s, meAt(ctx)),
     stock = (m && m.stock) || [],
     sig = JSON.stringify([
       up,
@@ -2392,7 +2434,7 @@ function shopFill(s, ctx) {
       kit && kit.g,
       m && [m.v, m.id, m.roll],
       stock,
-      upOffer(s, me),
+      upOffer(s, me, m),
       gasFull(s),
     ]);
   if (sig === shop.sig) return;
@@ -2402,14 +2444,14 @@ function shopFill(s, ctx) {
   const who = m && m.who ? [m.v, m.id, m.roll].join() : "";
   if (shop.who !== who) {
     shop.who = who;
-    shop.title.innerHTML = rainbowHTML(shopName(s), { seed: 5 });
+    shop.title.innerHTML = rainbowHTML(shopName(s, m), { seed: 5 });
     shop.me.innerHTML =
       m && m.who
-        ? merchantSVG(m.who, m.roll, { size: 40, title: shopName(s) })
+        ? merchantSVG(m.who, m.roll, { size: 40, title: shopName(s, m) })
         : "";
   }
   /* the one upgrade he offers me this visit (the owner's, Nov 18 14:20Z: "they only sell one per visit") */
-  const offer = SHOP.filter((it) => it.id === upOffer(s, me));
+  const offer = SHOP.filter((it) => it.id === upOffer(s, me, m));
   shop.list.innerHTML = offer.length
     ? offer
         .map((it) => {
@@ -2625,9 +2667,10 @@ function holdTarget(pos, ctx) {
     pwTarget(pos, s, NEAR) || // (the power box, on the balcony: l4ddpowerui.js)
     angelTarget(pos, s, NEAR); // (the Angel machine, on the stage: l4ddangelui.js)
   if (pt) return pt;
-  const m = merchantOf(s);
-  if (!selling(s)) return null;
-  const ds = Math.hypot(m.x - pos.x, m.y - pos.y);
+  const k = nearestMerchant(s, pos.x, pos.y);
+  if (k < 0) return null;
+  const m = merchantsOf(s)[k],
+    ds = Math.hypot(m.x - pos.x, m.y - pos.y);
   if (ds < NEAR || (shop && shop.open && ds < AWAY))
     return { kind: "shop", d: ds };
   return null;
@@ -2774,6 +2817,7 @@ activity({
     layer.append(poolEl);
     shop = shopEl(ctx);
     butler = null; // (the merchant: drawMerchant makes him when he comes)
+    MDRAWN.clear();
     mSig = "";
     mAt = null;
     mSeen = { v: null, hp: null, alive: false, fx: 0, stab: 0 };
@@ -2818,7 +2862,7 @@ activity({
       gotEl,
       killEl,
       vitEl,
-      butler && butler.el,
+      ...[...MDRAWN.values()].map((o) => o.butler && o.butler.el),
       egg && egg.el,
       shop && shop.el,
       sqEl,
@@ -2856,11 +2900,10 @@ activity({
       sl.some((w) => w && !had.includes(w)) &&
       !(
         ctx.duck() &&
-        merchantOf(s) &&
-        Math.hypot(
-          ctx.duck().x * W - merchantOf(s).x,
-          ctx.duck().y * H - merchantOf(s).y,
-        ) < 320
+        merchantsOf(s).some(
+          (m) =>
+            Math.hypot(ctx.duck().x * W - m.x, ctx.duck().y * H - m.y) < 320,
+        )
       )
     )
       sfx.done(); // (not for what I bought from the merchant: his till rings)
@@ -2873,15 +2916,14 @@ activity({
     if (me) {
       const x = me.x * W,
         y = me.y * H;
+      const mk = nearestMerchant(ctx.state(), x, y),
+        mm = mk >= 0 ? merchantsOf(ctx.state())[mk] : null; // (several here: the one I'm at)
       if (
         shop.open &&
         (!up(ctx.state(), ctx.me) ||
           !ctx.world.inside ||
-          !selling(ctx.state()) ||
-          Math.hypot(
-            merchantOf(ctx.state()).x - x,
-            merchantOf(ctx.state()).y - y,
-          ) > AWAY)
+          !mm ||
+          Math.hypot(mm.x - x, mm.y - y) > AWAY)
       )
         closeShop(); // (walked off, down, or he ran: it closes)
       if (holding) {
@@ -3117,7 +3159,7 @@ activity({
     seeOn(ctx.state());
     restSquares(ctx.state(), ctx);
     seePool(ctx.state(), ctx);
-    drawMerchant(ctx, t);
+    drawMerchants(ctx, t);
     drawCorpses(ctx);
     const tg = !!(ctx.state().hang.l4 || {}).tg;
     if (ctx.world.board.classList.contains("trooper-gone") !== tg)

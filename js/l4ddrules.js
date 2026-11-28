@@ -1608,6 +1608,10 @@ const soldSays = (s, id, text) => {
 /* the merchant: the one upgrade he offers me this visit (upOffer; the Butler's, SHOP), from beside him while he's
    selling, while I have the points; gas in the cabin (powerGas); or something from his stock (merchantBuy) */
 function buy(s, id, what, mx, my, hand, now) {
+  const k = nearestMerchant(s, mx, my); // (several here: the one I'm at)
+  return k >= 0 && asMerchant(s, k, () => buy1(s, id, what, mx, my, hand, now));
+}
+function buy1(s, id, what, mx, my, hand, now) {
   if (what === "gas") {
     const ok = !dp() && atMerchant(s, mx, my) && powerGas(s, id, now, PH);
     if (ok) soldSays(s, id, "bought 25% of a jerry can from the merchant.");
@@ -1960,6 +1964,9 @@ export const MERCH = {
      while some duck is doing badly; who comes is a weighted pick, the one who just came at AGAIN, each one's weight
      building back up by BUILD each visit he's away, to 1 */
   BAD: 0.9,
+  CHAIN: 0.25, // (each one that comes brings another this often, chained)
+  APART: 1500, // (ms: each one after the first sets off this much later …
+  BESIDE: 70, // … and stands this far beside the one before, px)
   AGAIN: 0.25,
   BUILD: 0.25,
   /* killed, he drops one gun of his stock GUN of the time, and, apart from that, PURSE points PURSE_P of the time */
@@ -1992,7 +1999,7 @@ export const MERCH = {
 };
 export const merchantOf = (s) => (s && s.hang && s.hang.l4m) || null;
 /* is he standing at his spot, selling? */
-export const selling = (s) => (merchantOf(s) || {}).st === "here";
+export const selling = (s) => merchantsOf(s).some((m) => m.st === "here");
 const mh = (s) => (s.hidden && s.hidden.l4mh) || {};
 const setMh = (s, o) => {
   s.hidden = { ...(s.hidden || {}), l4mh: { ...mh(s), ...o } };
@@ -2096,7 +2103,8 @@ function upFor(s, id) {
   return can.length ? can[rint(0, can.length - 1)].id : "";
 }
 /* the upgrade he offers duck id this visit ("" none) */
-export const upOffer = (s, id) => ((merchantOf(s) || {}).ups || {})[id] || "";
+export const upOffer = (s, id, m = merchantOf(s)) =>
+  ((m || {}).ups || {})[id] || "";
 /* the fences round Downpour (its openings', their ends trimmed) */
 const fences = () =>
   OPENINGS.filter((o) => o.kind === "fence").map((o) => o.fence);
@@ -2161,26 +2169,41 @@ function wayOut(x, y) {
   ];
 }
 /* a merchant comes, in a rest (round zero's, or between two rounds): half the time, and very likely while some duck
-   is doing badly (the director) */
+   is doing badly (the director); each one that comes brings another MERCH.CHAIN of the time, chained (the owner's,
+   Nov 28), and several say "The Merchants have Arrived" */
 function merchantCome(s, now) {
   const miss = mh(s).miss || 0,
     p = ducks(s).some(badly) ? MERCH.BAD : MERCH.COME + MERCH.MISS * miss;
   if (Math.random() >= p) return setMh(s, { miss: miss + 1 });
-  const m0 = merchantOf(s);
-  if (m0 && m0.st !== "dead") return; // (one at a time)
+  if (merchantsOf(s).some((m) => m.st !== "dead")) return; // (not while some are still here)
+  s.hang.l4mx = [];
+  s.hidden = { ...s.hidden, l4mhx: [] };
+  const came = [];
+  if (!bringMerchant(s, now, 0, came)) return;
+  let n = 1;
+  while (Math.random() < MERCH.CHAIN) {
+    s.hang.l4mx = [...s.hang.l4mx, null];
+    if (!asMerchant(s, n, () => bringMerchant(s, now, n, came))) {
+      s.hang.l4mx = s.hang.l4mx.slice(0, -1);
+      break;
+    }
+    n++;
+  }
+  addFx(s, {
+    kind: "l4drop",
+    k: n > 1 ? "merchants" : "merchant",
+    who: [],
+    t: now,
+  }); // ("The Merchant has Arrived" as he sets off, l4dd.js l4Got: the owner's, Nov 23 00:32Z, "as soon as they actually start coming")
+}
+/* one merchant on his way in as "the" merchant (the k-th here: his own spot beside the first's), by a weighted pick,
+   not a shuffle: the one who just came is less likely, his weight building back up (MERCH.AGAIN, BUILD). One a player
+   hurt never comes back (merchantHurt's ban). False: nobody left to come */
+function bringMerchant(s, now, k, came) {
   const h = mh(s),
-    dead = h.dead || [],
-    ban = [...(h.ban || [])],
-    prev = h.cur;
-  /* one a player hurt and who lived never comes back (the owner's, Nov 19 19:27Z: "Merchants that are shot at go
-     straight to the back of the line forever") */
-  if (prev && h.hurt && !dead.includes(prev) && !ban.includes(prev))
-    ban.push(prev);
-  const alive = MERCHANTS.map((m) => m.id).filter(
-    (id) => !dead.includes(id) && !ban.includes(id),
-  );
-  if (!alive.length) return setMh(s, { ban, cur: "" }); // (every one of them killed or shot at)
-  /* who comes: a weighted pick, not a shuffle; the one who just came is less likely, his weight building back up */
+    out = [...(h.dead || []), ...(h.ban || []), ...came],
+    alive = MERCHANTS.map((m) => m.id).filter((id) => !out.includes(id));
+  if (!alive.length) return false; // (every one of them killed, shot at, or here)
   const pw = { ...(h.pw || {}) },
     wOf = (id) => pw[id] ?? 1;
   let r = Math.random() * alive.reduce((t, id) => t + wOf(id), 0),
@@ -2192,6 +2215,7 @@ function merchantCome(s, now) {
     }
   for (const x of alive) pw[x] = Math.min(1, wOf(x) + MERCH.BUILD);
   pw[id] = MERCH.AGAIN;
+  came.push(id);
   const [from, route] = wayIn();
   const hp = hp0(),
     vn = (h.vn || 0) + 1; // (his visit's number this game: before, it started over at 1 whenever the last one had left)
@@ -2199,7 +2223,6 @@ function merchantCome(s, now) {
     miss: 0,
     vn,
     pw,
-    ban,
     cur: id,
     lines: {},
     hurt: 0,
@@ -2210,7 +2233,7 @@ function merchantCome(s, now) {
     wn: 0,
     route,
     p: 0,
-    t: now,
+    t: now + k * MERCH.APART, // (the next one a little behind)
     tk: now,
   });
   s.hang.l4m = {
@@ -2225,14 +2248,95 @@ function merchantCome(s, now) {
     max: hp,
     w: "",
     sp: 1,
+    k,
     stock: favStock(s, id),
     ups: upOffers(s),
     say: null,
   };
-  addFx(s, { kind: "l4drop", k: "merchant", who: [], t: now }); // ("The Merchant has Arrived" as he sets off, l4dd.js l4Got: the owner's, Nov 23 00:32Z, "as soon as they actually start coming")
+  return true;
+}
+/* ---------- several merchants at once ----------
+   s.hang.l4m is the first one here and s.hang.l4mx the others (online); s.hidden.l4mhx holds each other one's own part
+   of l4mh (MINE). The rules for one merchant run for each in turn as "the" merchant (asMerchant), so there is one
+   merchant's way of doing things, not one for several */
+const MINE = [
+  "route",
+  "p",
+  "t",
+  "tk",
+  "near",
+  "lines",
+  "sp",
+  "tired",
+  "wt",
+  "wn",
+  "hurt",
+  "hurtAt",
+  "stab",
+  "sms",
+];
+const mineOf = (h) => Object.fromEntries(MINE.map((k) => [k, h[k]]));
+/* every merchant here (alive, running, or the first one lying dead) */
+export const merchantsOf = (s) =>
+  [merchantOf(s), ...((s && s.hang && s.hang.l4mx) || [])].filter(Boolean);
+/* fn run with the k-th merchant here as "the" merchant (0: the first) */
+function asMerchant(s, k, fn) {
+  if (!k) return fn();
+  const xs = [...(s.hang.l4mx || [])],
+    hx = [...((s.hidden && s.hidden.l4mhx) || [])],
+    m0 = s.hang.l4m,
+    h0 = mineOf(mh(s));
+  s.hang.l4m = xs[k - 1];
+  setMh(s, mineOf(hx[k - 1] || {}));
+  const r = fn();
+  xs[k - 1] = s.hang.l4m;
+  hx[k - 1] = mineOf(mh(s));
+  s.hang.l4m = m0;
+  setMh(s, h0);
+  s.hang.l4mx = xs;
+  s.hidden = { ...s.hidden, l4mhx: hx };
+  return r;
+}
+/* fn(k) for each merchant here in turn; the first true it returns stops it, and is returned */
+function eachMerchant(s, fn) {
+  const n = 1 + (s.hang.l4mx || []).length;
+  for (let k = 0; k < n; k++) {
+    const r = asMerchant(s, k, () => fn(k));
+    if (r) return r;
+  }
+  return false;
+}
+/* the one here nearest (x, y) and selling, as k (or -1) */
+export function nearestMerchant(s, x, y) {
+  let best = -1,
+    bd = Infinity;
+  merchantsOf(s).forEach((m, k) => {
+    const d = Math.hypot(m.x - x, m.y - y);
+    if (m.st === "here" && d < bd) [best, bd] = [k, d];
+  });
+  return best;
+}
+/* the ones gone or dead leave the list (a dead one's body is in l4mc for good); the first gone or dead while others
+   are here: the next is the first */
+function tidyMerchants(s) {
+  const xs = s.hang.l4mx || [];
+  if (!xs.length) return;
+  const hx = (s.hidden && s.hidden.l4mhx) || [],
+    all = [[s.hang.l4m, mineOf(mh(s))], ...xs.map((m, i) => [m, hx[i] || {}])],
+    keep = all.filter(([m]) => m && m.st !== "dead");
+  if (keep.length === all.length) return;
+  if (keep.length) {
+    s.hang.l4m = keep[0][0];
+    setMh(s, keep[0][1]);
+  }
+  s.hang.l4mx = keep.slice(1).map(([m]) => m);
+  s.hidden = { ...s.hidden, l4mhx: keep.slice(1).map(([, h]) => h) };
 }
 /* the zombies are coming: a leaving line, and he runs */
 export function merchantGo(s, now) {
+  eachMerchant(s, () => merchantGo1(s, now));
+}
+function merchantGo1(s, now) {
   const m = merchantOf(s);
   if (!m || !["in", "here", "fight"].includes(m.st)) return;
   merchantSays(s, "leave", now);
@@ -2244,6 +2348,9 @@ function merchantRun(s, now) {
   s.hang.l4m = { ...merchantOf(s), st: "out", stock: [] };
 }
 /* he's hurt: by player `by` (a line, once a visit, then he runs) or by a zombie (null); n HP. True when it killed him */
+/* the k-th merchant here hurt (zombies.js: a claw on one running off) */
+export const merchantHurtAt = (s, k, ...a) =>
+  asMerchant(s, k, () => merchantHurt(s, ...a));
 export function merchantHurt(s, by, n, now, w = "", how = "") {
   const m = merchantOf(s);
   if (!m || m.st === "dead" || m.st === "jump") return false;
@@ -2291,7 +2398,7 @@ export function merchantHurt(s, by, n, now, w = "", how = "") {
   if (by) setMh(s, { hurtAt: now });
   s.hang.l4m = { ...m, hp, hits, w: wd };
   if (by && !mh(s).hurt) {
-    setMh(s, { hurt: 1 });
+    setMh(s, { hurt: 1, ban: [...(mh(s).ban || []), m.id] }); // (shot at and alive: he never comes back, the owner's, Nov 19 19:27Z "Merchants that are shot at go straight to the back of the line forever")
     merchantSays(s, "hurt", now); // ("these are the lines they will say once when they take damage from a player")
   }
   /* he fights back (MERCH.FIGHT): a hit from up close, or his second, while a duck's screen shows him */
@@ -2371,6 +2478,7 @@ function merchantFight(s, m0, now, dt) {
     setMh(s, { stab: now, sms: F.ms }); // (the wait after a swing or a shot is that weapon's, as his bar shows it)
     addFx(s, {
       kind: "l4mstab",
+      v: m0.v, // (which one: several can be here)
       by: m0.foe,
       w,
       ms: F.ms,
@@ -2394,7 +2502,10 @@ function merchantFight(s, m0, now, dt) {
   };
 }
 /* a shot or a swing at (x, y) by duck `by` with weapon w: on him? (as wildHurt for Justin: 1 HP, a crit 2) */
-function merchantShot(s, by, x, y, now, w, rx, ry, from, dr) {
+function merchantShot(s, ...a) {
+  return eachMerchant(s, () => merchantShot1(s, ...a));
+}
+function merchantShot1(s, by, x, y, now, w, rx, ry, from, dr) {
   const m = merchantOf(s);
   if (!m || m.st === "dead" || m.st === "jump" || !s.players[by]) return false;
   if (Math.hypot((m.x - x) / rx, (m.y - y) / ry) >= 1) return false;
@@ -2416,9 +2527,14 @@ function merchantShot(s, by, x, y, now, w, rx, ry, from, dr) {
 }
 /* every heartbeat: he walks his way (in, or out), breaks the boards in it, and greets the ducks that walk up to him */
 function merchantTick(s, now) {
+  eachMerchant(s, () => merchantTick1(s, now));
+  tidyMerchants(s);
+}
+function merchantTick1(s, now) {
   const m0 = merchantOf(s);
   if (!m0 || m0.st === "dead") return;
   const h = mh(s);
+  if (m0.st === "in" && now < (h.t || 0)) return setMh(s, { tk: now }); // (one after the first: a little behind)
   if (m0.st === "here") {
     const near = {};
     let greet = false;
@@ -2446,10 +2562,15 @@ function merchantTick(s, now) {
   if (!leg || now - (h.t || now) > MERCH.LATE) {
     /* his way done (or taking too long): at his spot, or gone */
     if (m0.st === "in") {
+      const sx = BUTLER.x + (m0.k || 0) * MERCH.BESIDE,
+        at =
+          m0.k && standable(sx, BUTLER.y, heightAt(sx, BUTLER.y), 0)
+            ? sx
+            : BUTLER.x; // (one after the first: beside him)
       s.hang.l4m = {
         ...m0,
         st: "here",
-        x: Math.round(BUTLER.x),
+        x: Math.round(at),
         y: Math.round(BUTLER.y),
       };
       // ("The Merchant has Arrived" shows as he sets off now: merchantCome)
@@ -3181,18 +3302,20 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
     )
       wildFire(s, j, id, now); // (Justin with no weapon burns too)
   }
-  const mm = merchantOf(s);
-  if (
-    mm &&
-    mm.st !== "dead" &&
-    mm.st !== "jump" &&
-    now - (mm.burnt || 0) >= BURN.EVERY &&
-    inCone((mm.x - px) / D, (mm.y - py) / D, dx, dy, far / D + 0.4) &&
-    !slabBetween(px, py, hz, mm.x, mm.y, heightAt(mm.x, mm.y))
-  ) {
-    s.hang.l4m = { ...mm, burnt: now };
-    merchantHurt(s, id, 1, now, "flamer"); // (the merchant in the flame: 1 HP, once every 3 s while he's in it)
-  }
+  eachMerchant(s, () => {
+    const mm = merchantOf(s);
+    if (
+      mm &&
+      mm.st !== "dead" &&
+      mm.st !== "jump" &&
+      now - (mm.burnt || 0) >= BURN.EVERY &&
+      inCone((mm.x - px) / D, (mm.y - py) / D, dx, dy, far / D + 0.4) &&
+      !slabBetween(px, py, hz, mm.x, mm.y, heightAt(mm.x, mm.y))
+    ) {
+      s.hang.l4m = { ...mm, burnt: now };
+      merchantHurt(s, id, 1, now, "flamer"); // (the merchant in the flame: 1 HP, once every 3 s while he's in it)
+    }
+  });
   const gx = px + dx * far,
     gy = py + dy * far,
     gd = deckAt(gx, gy, hz),
@@ -4000,16 +4123,20 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
     },
     [
       () =>
-        [merchantOf(s)].filter((m) => m && m.st !== "dead" && m.st !== "jump"),
+        merchantsOf(s)
+          .map((m, k) => ({ ...m, k }))
+          .filter((m) => m.st !== "dead" && m.st !== "jump"),
       (m) => [m.x, m.y, heightAt(m.x, m.y)],
       (m, n) =>
-        merchantHurt(
-          s,
-          s.players[sh.by] ? sh.by : null,
-          hitOf(n).dmg,
-          now,
-          "grenade",
-          "blast",
+        asMerchant(s, m.k, () =>
+          merchantHurt(
+            s,
+            s.players[sh.by] ? sh.by : null,
+            hitOf(n).dmg,
+            now,
+            "grenade",
+            "blast",
+          ),
         ),
     ], // (the merchant: his ring's damage)
     [
