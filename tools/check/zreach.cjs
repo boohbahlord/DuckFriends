@@ -241,7 +241,13 @@ const SPOTS = [
         a = actsOf(s).find((x) => x.crowd),
         z = Z.zombies(s).find((o) => o.st === 2);
       if (!a || !z) return null;
-      await new Promise((ok) => setTimeout(ok, 300)); // (drawn on the screen)
+      /* held still, so where my screen draws it (gliding to where the host says, a heartbeat behind: l4dd.js, which my
+         duck's crowd reads) is where the host has it: a zombie walking (twice as fast off every screen) was drawn up to a
+         heartbeat's walk back, and asked about where it wasn't drawn yet */
+      const zs = Z.zombies(r.state);
+      zs.find((x) => x.i === z.i).l[1] = 0;
+      Z.store(r.state, zs, true);
+      await new Promise((ok) => setTimeout(ok, 1000)); // (drawn on the screen, still)
       const ctx = { state: () => r.state, me: r.me },
         o = Z.zombies(r.state).find((x) => x.i === z.i && x.st === 2);
       if (!o) return null;

@@ -184,7 +184,7 @@ export function angelLabel(s, me, held) {
   if (angelOf(s, me, held)) return `The ${weaponName(held)} is Angelic`;
   return `Make the ${weaponName(held)} Angelic · ${ANGEL.PRICE.toLocaleString("en-US")}`;
 }
-/* E: the weapon in hand goes in, or my orb comes out; a buzz and big words when it can't (say) */
+/* E: the weapon in hand goes in, or my orb comes out; a game message when it can't (say) */
 export function angelTap(ctx, held, say) {
   const s = ctx.state(),
     me = ctx.me,

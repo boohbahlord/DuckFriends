@@ -1,6 +1,6 @@
 /* ---------- Dead Ducks Arcade's second map: the gas station, the road and the chapel ----------
    The owner's map (Nov 16 23:15Z), night and rain in a swamp: the gas station in the north, a sunken two-lane road
-   across the middle (flooded: deep at the west end, shallow over the rest), the chapel in the south, and forest all
+   across the middle (flooded, the same depth all along), the chapel in the south, and forest all
    round, behind the owner's own forest line. Plain numbers and geometry, like layout.js; layout.js builds the props
    from build() below and switches to them in useMode (variant "l4gs"). Floor plan:
    /mnt/project-files/refs/zombie-map-plans-2026-11-16/plan3.py.
@@ -19,25 +19,22 @@ import { hash } from "../random.js";
 export const K = 0.6;
 export let GS_W = 4600,
   GS_H = 6200;
-/* the road: y0 … y1, its middle line at mid; its bed `low` under the grass, sloping down over `ramp` at each side, and
-   under the water at the west end `deep` lower again, sloping down over `run` west of DEEP's east edge (the owner's, Nov
-   22 16:06Z: the water's lowest point is elevation 0, and it gets deeper till you swim) */
+/* the road: y0 … y1, its middle line at mid; its bed `low` under the grass, sloping down over `ramp` at each side (the
+   owner's, Nov 22 16:06Z: the water's lowest point is elevation 0). The same depth all along: the deep west end went
+   (the owner's, Nov 28 04:58Z: "the most simplest thing is that we make it the same amount of depth as everything else
+   already is") */
 export const ROAD = {
   y0: 2750,
   y1: 3350,
   mid: 3050,
   low: -40,
   ramp: 120,
-  deep: -40,
-  run: 400,
 }; // (a ramp of 120: never more than 20 up between two zombie path cells 40 apart)
-/* the flood over the road: deep at the west end (ducks and zombies swim it, as in the Hangout pool: water.js), shallow
-   over the rest, the whole road to the east edge (ducks walk 30% slower in it, sunk by a fifth: the owner's, Nov 17
+/* the flood over the road, the whole road from edge to edge (ducks walk 30% slower in it, sunk by a fifth: the owner's, Nov 17
    11:07Z "the water should be seen over the entire road"). It fills the road's bed up to SHORE in from each side, a
    little over half way down its banks; their upper parts show, sloping down into it (dpground.js) */
 export let SHORE = ROAD.ramp * 0.6;
-export const DEEP = [0, ROAD.y0 + SHORE, 1000, ROAD.y1 - SHORE],
-  SHALLOW = [1000, ROAD.y0 + SHORE, GS_W, ROAD.y1 - SHORE];
+export const WATER = [0, ROAD.y0 + SHORE, GS_W, ROAD.y1 - SHORE];
 /* the owner's forest line: inside TOP (north of the road) and BOT (south of it) is open ground; outside them, forest */
 export const TOP = [
   [0, ROAD.y0],
@@ -79,20 +76,12 @@ export const STATION = {
 export const CHAPEL = { x0: 1600, y0: 3650, x1: 3000, y1: 5750, wall: 240 };
 export const TOWER = { x0: 3000, y0: 3650, x1: 3300, y1: 3950, h: 520 };
 const INNER = 120;
-/* the fences across the road's two ends: tall and solid. Zombies climb them like a ladder, at their own walking speed,
-   and drop down the other side from the top (the owner's, Nov 16 23:32Z). x: the fence's line; y0 … y1: how far it
-   runs (into the trees at both ends); climb: where along it a zombie comes over (the open ground); out: the side the
-   zombies come from (-1 west, 1 east) */
 export let FENCE_H = 200;
-export const FENCES = [
-  { x: 60, y0: 2560, y1: 3500, climb: [2680, 3360], out: -1 },
-  { x: 4540, y0: 2700, y1: 3420, climb: [2780, 3320], out: 1 },
-];
 /* the fence round the whole map, where a duck's walking stops (the owner's, Nov 17 11:11Z: "There must be a fence around
-   the whole map WHERE the invisible wall is"): on the road fences' lines west and east, as far in from the north and
-   south edges. The road's two fences are its pieces across the road; zombies only climb those */
+   the whole map WHERE the invisible wall is"), but across the road: that's open (the owner's, Nov 28 04:58Z: "remove the
+   fences on the road. We'll just leave it open"; the road's side fences out past the map's edges went with them: "Why is
+   there just a random fence just laying on the ground ... Remove that") */
 export const RIM = { x0: 60, x1: 4540, y0: 60, y1: 6140 };
-const OUT_ROAD = 300; // (how far past the map's west and east edges the road's own fences go: past what the camera shows)
 /* holes anyone walks through, smashed through the wall like the cabin's, and only where the owner circled them (Nov 17
    05:46Z): the storeroom's north wall at its north-west corner, the north wall over the counter, and the front door,
    which is one big hole (the door gone, and some of the wall and the glass either side with it). Zombies come in by
@@ -347,7 +336,7 @@ export const INNER_DOORS = [
   { id: "gs-rest", at: 1600, a: 1400, b: 1560 },
 ];
 /* where things stand. GEN: the generator and the power box, east of the gas station. HOOD: the car with its hood up
-   (it does the fireplace's job, and glows until it's first used); spot: its open hood, where E uses it. PRIEST (he
+   (scenery that blocks the way; it no longer spins for a weapon, the owner's, Nov 28). PRIEST (he
    does Justin's Butler's job, at the chapel's south end). ANGEL: the Angel machine, against the south wall. START: where everyone starts,
    inside the gas station by the front door */
 export const GEN = { x0: 3650, y0: 1000, x1: 3850, y1: 1160 };
@@ -357,7 +346,6 @@ export const HOOD = {
   y0: 1990,
   x1: 3710,
   y1: 2190,
-  spot: { x: 3270, y: 2090 },
 };
 export const PRIEST = { x: 2550, y: 5360 };
 export const ANGEL = { x: 2250, y: 5717 }; // (against the chapel's south wall: its front on the wall's inside face)
@@ -381,8 +369,7 @@ const CAR_LOOKS = [
 ];
 /* a seed from where a thing stands (world px): its look, the same on every device */
 export const seedAt = (x, y) => Math.abs(Math.round(x / 7 + y / 13)) + 1;
-/* which way a car faces (its box's corner, world px): east on an even seed; the hood-up car west, its hood where E uses
-   it */
+/* which way a car faces (its box's corner, world px): east on an even seed; the hood-up car west */
 export const carEast = (x, y, hood) => !hood && seedAt(x, y) % 2 === 0;
 /* the cars stopped on the road (420 by 200 each; one more by the hood-up car is HOOD) */
 export const CARS = [
@@ -420,7 +407,10 @@ export const PLANK = {
   rest: REST,
   key: CANOPY.y1 + 10, // (over the canopy's roof and the car)
 };
-/* the fallen tree across the east end of the road: ducks jump it (TOP_TREE tall), zombies climb over */
+/* the fallen tree across the east end of the road: a log h thick lying straight from bank to bank over the flooded
+   road, so a duck jumps up on it and walks its whole length (harder from the water: it's that much higher), and no
+   zombie gets through it (the owner's, Nov 28 04:58Z: "you should be able to walk down the tree", "zombies can't go
+   through it") */
 export const FALLEN = {
   x0: 3500,
   y0: 2500,
@@ -429,6 +419,9 @@ export const FALLEN = {
   half: 55,
   h: 40,
 };
+const FALLEN_N = Math.ceil(
+  Math.hypot(FALLEN.x1 - FALLEN.x0, FALLEN.y1 - FALLEN.y0) / 40,
+); // (its blocks: one every 40 of the plan's numbers at most, fallenParts)
 /* where the power box's parts can turn up (the owner's): T toolbox (an empty shelf, the top, front or back of a car),
    G gas (a jerry can at a pump), F fuse (the storeroom, a pew), S switch (the restroom, a shelf, a car, a pew, a pump).
    x, y: where it lies; z: how high over the ground there (on a shelf, a car's roof, a pew) */
@@ -471,12 +464,10 @@ export const inOpen = (x, y) =>
 export const waterAt = (x, y) => Math.max(0, FLOOD.top - groundAt(x, y));
 export const inDeep = (x, y) => waterAt(x, y) >= WET.DEEP;
 export const inShallow = (x, y) => waterAt(x, y) > 0 && !inDeep(x, y);
-/* the ground's height: 0, but the road's bed, sloping down at its edges, and under the water deeper to the west */
+/* the ground's height: 0, but the road's bed, sloping down at its edges */
 export function groundAt(x, y) {
   if (y < ROAD.y0 || y >= ROAD.y1) return 0;
-  const t = Math.min(y - ROAD.y0, ROAD.y1 - y) / ROAD.ramp,
-    w = (DEEP[2] - x) / ROAD.run; // (0 at DEEP's east edge, 1 a run west of it)
-  return ROAD.low * smooth(t) + ROAD.deep * smooth(w) * smooth((t - 0.6) / 0.4); // (the deep end under the waterline only)
+  return ROAD.low * smooth(Math.min(y - ROAD.y0, ROAD.y1 - y) / ROAD.ramp);
 }
 /* which building (x, y) is in: 1 the gas station, 2 the chapel, 0 outside (the walls' middle lines) */
 export function buildingAt(x, y) {
@@ -693,24 +684,11 @@ function planBuild(b) {
     ); // (its glass and roof: they stop a shot up to the roof; walking over them is its floor's)
     return solid("car", r, T.h, { top: z + T.waist, pass: true, ...o });
   };
-  car(HOOD, {
-    hood: true,
-    smash: "side",
-    light: {
-      x: HOOD.spot.x + 40,
-      y: HOOD.spot.y,
-      r: 300,
-      c: "#ffb24a",
-      k: 0.45,
-      flick: 0.6,
-    },
-  });
+  car(HOOD, { hood: true, smash: "side" });
   CARS.forEach((c, i) => car(c, { ...CAR_LOOKS[i], car: i })); // (car: its index, so a push moves it: layout.js carAt)
-  /* the fallen tree: a row of low blocks along it (a jump clears them; zombies climb over: zx) */
+  /* the fallen tree: its drawing, and its blocks (fallenParts) */
   {
-    const F = FALLEN,
-      len = Math.hypot(F.x1 - F.x0, F.y1 - F.y0),
-      n = Math.ceil(len / 40);
+    const F = FALLEN;
     put(
       "fallen",
       Math.min(F.x0, F.x1) - F.half,
@@ -723,55 +701,36 @@ function planBuild(b) {
         key: (F.y0 + F.y1) / 2,
       },
     );
-    for (let k = 0; k <= n; k++) {
-      const x = F.x0 + ((F.x1 - F.x0) * k) / n,
-        y = F.y0 + ((F.y1 - F.y0) * k) / n,
-        r = F.half * 0.8;
-      put("fallenpart", x - r, y - r, 2 * r, 2 * r, F.h, {
+    for (const q of fallenParts())
+      put("fallenpart", q.x0, q.y0, q.x1 - q.x0, q.y1 - q.y0, F.h, {
         solid: true,
-        zx: true,
         layer: "none",
-        top: groundAt(x, y) + F.h,
+        top: q.top,
       });
-    }
   }
-  /* the fences across the road's ends, in pieces of 200 at most, each on the ground under it */
-  for (const f of FENCES)
-    for (let y = f.y0; y < f.y1; y += 200) {
-      const e = Math.min(f.y1, y + 200);
-      put("fence", f.x - 6, y, 12, e - y, FENCE_H, {
-        solid: true,
-        z: Math.min(groundAt(f.x, y), groundAt(f.x, e - 1)),
-        key: e,
-      });
-    }
-  /* the rest of the fence round the map: west and east (but where the road's fences are), then the north and south
-     sides, seen face on (fencex) */
-  for (const [x, f] of [
-    [RIM.x0, FENCES[0]],
-    [RIM.x1, FENCES[1]],
-  ])
+  /* the rest of the fence round the map: west and east down to the road's edges, then the north and south sides, seen
+     face on (fencex), and where they meet a piece that joins them (fencecorner: the owner's, Nov 28 04:58Z) */
+  for (const x of [RIM.x0, RIM.x1])
     for (const [a, c] of [
-      [RIM.y0, f.y0],
-      [f.y1, RIM.y1],
+      [RIM.y0, ROAD.y0],
+      [ROAD.y1, RIM.y1],
     ])
       for (let y = a; y < c; y += 200) {
         const e = Math.min(c, y + 200);
         put("fence", x - 6, y, 12, e - y, FENCE_H, { solid: true, key: e });
       }
+  for (const x of [RIM.x0, RIM.x1])
+    for (const y of [RIM.y0, RIM.y1])
+      put("fencecorner", x - 6, y - 6, 12, 12, FENCE_H, { key: y + 7 });
   for (const y of [RIM.y0, RIM.y1])
     for (let x = RIM.x0; x < RIM.x1; x += 400) {
       const e = Math.min(RIM.x1, x + 400);
-      put("fencex", x, y - 6, e - x, 12, FENCE_H, { solid: true, key: y + 6 });
+      put("fencex", x, y - 6, e - x, 12, FENCE_H, {
+        solid: true,
+        key: y + 6,
+        fy: 0, // (feet stop right at its line, north or south of it, where it's drawn standing: the owner's, Nov 28 04:05Z)
+      });
     }
-  /* the road on out past the map's edges, a fence along its top on either side, as far as the camera ever shows (the
-     owner's, Nov 17 12:28Z: the fence on either side of the road; nobody gets out there, so they're only drawn) */
-  for (const y of [ROAD.y0, ROAD.y1])
-    for (const [a, c] of [
-      [-OUT_ROAD, RIM.x0],
-      [RIM.x1, GS_W + OUT_ROAD],
-    ])
-      put("fencex", a, y - 6, c - a, 12, FENCE_H, { key: y + 6 });
   /* the chapel: its walls (the wide entrance in the north wall, boarded windows down both sides), the tower, the altar
      with the Angel machine on it, the Priest beside it, and the pews: two rows down each side of the aisle, a few broken
      in half or missing (the owner's plan) */
@@ -1065,6 +1024,26 @@ const APART = { out: 285 / K, near: 400 / K, far: 520 / K },
   /* how likely a spot grows a tree: past the line, inside it within NEAR of it, and further in */
   GROW = { out: 0.92, near: 0.55, far: 0.3 },
   NEAR = 260 / K;
+/* the fallen tree's blocks, in the numbers FALLEN has now (the plan's while planBuild runs, then world px): squares along
+   its line, every 40 at most, their tops on a straight line h over the ground at its two ends */
+function fallenParts() {
+  const F = FALLEN,
+    n = FALLEN_N,
+    g0 = groundAt(F.x0, F.y0),
+    g1 = groundAt(F.x1, F.y1),
+    r = F.half * 0.8;
+  return Array.from({ length: n + 1 }, (_, k) => {
+    const x = F.x0 + ((F.x1 - F.x0) * k) / n,
+      y = F.y0 + ((F.y1 - F.y0) * k) / n;
+    return {
+      x0: x - r,
+      y0: y - r,
+      x1: x + r,
+      y1: y + r,
+      top: g0 + ((g1 - g0) * k) / n + F.h,
+    };
+  });
+}
 /* the fallen tree's line: no tree stands on it */
 const toFallen = (x, y) => {
   const { x0, y0, x1, y1 } = FALLEN,
@@ -1104,6 +1083,19 @@ function offWalls(x, y) {
   );
   return ways.find(clear) || ways[0];
 }
+/* no tree through the fence round the map (the owner's, Nov 28 04:58Z: "any tree that is no clipping through a fence
+   ... moved either outside a fence or inside"): every tree stands inside it, its leaves clear of the west and east
+   fences (the widest tree's half, which a fence piece would otherwise draw across) and its trunk clear of the north and
+   south ones (a tree there sorts in front of the north fence and behind the south one, as it stands). Moved, not
+   dropped, so the forest keeps its trees and their looks (their ids) */
+const WIDEST = Math.max(
+    ...Object.values(SWAMP_CROWN).flatMap((v) => v.map((c) => c.w)),
+  ),
+  RIM_ROOM = { x: (WIDEST * treeK(1.15)) / 2 / K, y: 120 },
+  offRim = (x, y) => [
+    Math.min(RIM.x1 - RIM_ROOM.x, Math.max(RIM.x0 + RIM_ROOM.x, x)),
+    Math.min(RIM.y1 - RIM_ROOM.y, Math.max(RIM.y0 + RIM_ROOM.y, y)),
+  ];
 function forest(put) {
   const tree = (cx, cy, big) =>
     put("tree", cx - 18, cy - 12, 36, 24, 0, {
@@ -1152,7 +1144,7 @@ function forest(put) {
       const k = keyOf(x, y);
       if (!bucket.has(k)) bucket.set(k, []);
       bucket.get(k).push([x, y]);
-      tree(...offWalls(x, y), big);
+      tree(...offRim(...offWalls(x, y)), big);
     }
 }
 
@@ -1192,19 +1184,7 @@ planBuild({
   wallY: (...a) => CALLS.push(["wallY", ...a]),
   T: 12 / K,
 });
-for (const o of [
-  ROAD,
-  DEEP,
-  SHALLOW,
-  TOP,
-  BOT,
-  STATION,
-  CHAPEL,
-  TOWER,
-  FENCES,
-  RIM,
-])
-  scaled(o);
+for (const o of [ROAD, WATER, TOP, BOT, STATION, CHAPEL, TOWER, RIM]) scaled(o);
 for (const o of [
   WALK_HOLES,
   BOARDED,
@@ -1229,7 +1209,7 @@ FENCE_H *= K;
 SHORE *= K;
 /* the flood, for every walker's one water rule (layout.js wetK): its floor, its bed's lowest (the map's elevation 0),
    its top (where it meets the banks, SHORE in) and its depth over that floor */
-export const FLOOD = { floor: ROAD.low + ROAD.deep };
+export const FLOOD = { floor: ROAD.low };
 FLOOD.top = groundAt(GS_W, ROAD.y0 + SHORE);
 FLOOD.depth = FLOOD.top - FLOOD.floor;
 /* Part B: what a duck stands on over the ground (layout.js floorAt), at K already. The two roofs at their walls' height,
@@ -1289,6 +1269,31 @@ DECKS.push(
     thin: true, // (slats with gaps: seen through, layout.js seeLine)
   }, // (the plank: a slope from the car's roof up to the canopy)
 );
+/* the fallen tree's top: a floor over its blocks, each at its own top, so a duck lands on it and walks its length (the
+   ground is the only floor under a top that isn't a deck: layout.js floorH), solid all the way down as a car's
+   (vehicles.js carDeck). It has no walls, so no zombie climbs it (zombieroofs.js climbSpot) */
+{
+  const parts = fallenParts(),
+    at = (x, y) =>
+      parts.filter((q) => x >= q.x0 && x < q.x1 && y >= q.y0 && y < q.y1),
+    F = FALLEN;
+  DECKS.push(
+    /** @type {(typeof DECKS)[0]} */ ({
+      kind: "log",
+      x0: Math.min(...parts.map((q) => q.x0)),
+      y0: Math.min(...parts.map((q) => q.y0)),
+      x1: Math.max(...parts.map((q) => q.x1)),
+      y1: Math.max(...parts.map((q) => q.y1)),
+      h: Math.max(...parts.map((q) => q.top)),
+      hAt: (x, y) => Math.max(0, ...at(x, y).map((q) => q.top)),
+      inside: (x, y) => at(x, y).length > 0,
+      key: (F.y0 + F.y1) / 2,
+      holes: [],
+      bldg: 0,
+      solid: true,
+    }),
+  );
+}
 export function build(b) {
   for (const [f, ...a] of CALLS) {
     if (f !== "add") {

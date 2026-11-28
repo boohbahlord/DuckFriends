@@ -1,12 +1,11 @@
 /* ---------- Dead Ducks Arcade's sounds ----------
    What the owner asked for (Nov 4): footsteps for the ducks and quieter ones for the zombies, paced to how fast each
-   moves; a board nailed up and a board torn off; the fireplace's spin as a slot machine and the Butler's sale as a cash
-   register; a new round's sound, a faint, far-off, eerie swell that fades away; and the zombie ducks' groans, heard but
+   moves; a board nailed up and a board torn off; the Butler's sale as a cash register; a new round's sound, a faint, far-off, eerie swell that fades away; and the zombie ducks' groans, heard but
    not too often, a close group of them counting as one. Since Nov 16 each is a real recording (sound.js; the owner:
-   "very quiet for ducks, even far quieter for zombies"); the boards, the spin, the sale and the groans are silent until
+   "very quiet for ducks, even far quieter for zombies"); the boards, the sale and the groans are silent until
    their recordings come in the next batch.
 
-     l4Hear(s, ctx)        on every new state: the boards, the spin, a sale, a new round, where the zombies are going
+     l4Hear(s, ctx)        on every new state: the boards, a sale, a new round, where the zombies are going
      l4Steps(dt, ctx)      every frame: the footsteps and the groans
      boardSteps(s), sbSteps(ctx)   every frame: Sandbox's NPCs', on the board and on a world (below)
 
@@ -14,7 +13,7 @@
    once at most). */
 import { play, loadSounds } from "./sound.js";
 import { heightAt, layoutVariant } from "./hangout/layout.js";
-import { OPENINGS, BUTLER, BOX, ptsOf } from "./l4ddrules.js";
+import { OPENINGS, BUTLER, ptsOf } from "./l4ddrules.js";
 import { zombiesOf } from "./zombies.js";
 import { groundAt, stepOf } from "./ground.js";
 
@@ -69,7 +68,6 @@ let st = null;
 function fresh() {
   return {
     brd: null,
-    box: {},
     pts: {},
     r: -1,
     ducks: new Map(),
@@ -87,7 +85,7 @@ export function l4Reset() {
   loadSounds("l4dd"); // (its own sounds, fetched as the mode starts)
 }
 
-/* the state's news: boards up and down, a spin, a sale, a new round, the zombies' new spots */
+/* the state's news: boards up and down, a sale, a new round, the zombies' new spots */
 export function l4Hear(s, ctx) {
   if (!st) st = fresh();
   const h = s.hang,
@@ -104,16 +102,8 @@ export function l4Hear(s, ctx) {
         play("l4nail", { x: o.x, y: o.y });
   }
   st.brd = { ...brd };
-  /* the fireplace: a new spin (by anyone) */
-  const box = h.l4box || {};
-  for (const [id, b] of Object.entries(box))
-    if (b && b.t && (st.box[id] || 0) !== b.t) {
-      if (st.r >= 0)
-        play("l4slot", { x: BOX.x, y: BOX.y, secs: BOX.spin / 1000 });
-      st.box[id] = b.t;
-    }
   /* a sale: the rules' l4buy (ammo or a gun, anywhere: B) rings where the buyer stands; anything else bought by the
-     Butler (his upgrades) is someone's points going down near him (the fireplace's spin is the slot machine instead) */
+     Butler (his upgrades) is someone's points going down near him */
   const rang = new Set();
   if (st.fx < 0) st.fx = s.fxN || 0;
   if ((s.fxN || 0) > st.fx) {

@@ -4,14 +4,12 @@
    numbers come from the rules (l4ddrules.js), so they stay right when the rules change. */
 import {
   BURN,
-  SLOT_ODDS,
   SLOT_BAGS,
   SHOP,
   DROPS,
   weaponName,
   dropName,
   priceOf,
-  BOX,
   WEAPON_BAGS,
   merchantPrice,
   missOf,
@@ -21,7 +19,6 @@ import {
   ARMS,
   kindOf,
   POOL,
-  WEAPONS,
   critOf,
   recoilOf,
   recoilWord,
@@ -43,7 +40,8 @@ const SAY = {
   revolver: "Five big shots, three a second, then a reload.",
   bow: "Arrows that never run out, one at a time.",
   dagger: "Thrown. It falls to the floor after.",
-  shotgun: "A cone of pellets that doesn't fly far. No magazine.",
+  shotgun:
+    "A cone of pellets that doesn't fly far. A tube of 8 shells, loaded one at a time.",
   sniper:
     "Each bullet goes through 3 zombies, 1 less damage to each after the first. A bolt action between shots.",
   smg: "Hold to fire. Fast, light bullets.",
@@ -62,20 +60,19 @@ const SAY = {
     "Its grenades fly straight and go off on the first zombie or wall they hit, and kill every zombie in the blast.",
   medkit:
     "Puts your HP back to full. Held while you revive someone, it gets them up at once.",
+  bandage: "Gives back half the HP you've lost, at least 1. You can hold one.",
   safekeep:
     "A halo, used once. When you go down it gets you up: E while down, or by itself when nobody else is standing, and 6 seconds nothing hurts you after. If you die instead, you come back with your upgrades.",
   zebra:
     "Thrown. Every zombie goes for it and bites it until it's gone. Justin's favorite.",
   adrenaline: "You walk at the game's usual speed for 20 seconds.",
-  chair:
-    "Justin's office chair, thrown the way you aim, as often as you like; it shoves what it hits.",
   grenade: "Thrown with G. Kills every zombie in its blast.",
   kill: "Every hit kills, for 45 seconds.",
   ammo: "Fills everyone's ammo and grenades (not the medkit).",
   nuke: "Kills every zombie on the map, and everyone gets the points.",
   speed: "Everyone walks faster for a minute.",
   double: "Double points for 45 seconds.",
-  sale: "Half price at the merchant and the fireplace for 45 seconds (each upgrade once).",
+  sale: "Half price at the merchant for 45 seconds (each upgrade once).",
 };
 
 /* a number without its trailing zeros (1.75, 5, 0.4) */
@@ -136,15 +133,6 @@ function stats(w) {
     )
   )
     out.push(["A merchant may sell it", merchantPrice(w)]);
-  /* where the fireplace has it: its bag, and that bag's chance on a spin (l4ddrules.js fireRoll) */
-  const bag = Object.keys(SLOT_BAGS).find((k) => SLOT_BAGS[k].includes(w));
-  if (bag)
-    out.push([
-      "Where",
-      `The fireplace, the ${bag === "chair" ? "golden chair" : bag} bag (${Math.round(SLOT_ODDS[bag] * 100)}% of spins)`,
-    ]);
-  else if (WEAPONS.includes(w) && POOL.includes(w))
-    out.push(["Where", "The fireplace, the weapon bags (the rest of spins)"]);
   return out;
 }
 
@@ -157,6 +145,8 @@ const row = (ic, name, say, list, item = "") =>
 
 const weaponRow = (w) =>
   row(orbHTML(w), weaponName(w), SAY[w] || "", stats(w), w);
+/* what one does, in a line (a game message as it's switched to: l4ddbar.js) */
+export const noteOf = (w) => SAY[w] || "";
 /* a weapon's numbers in one line for the merchant's list: damage, rate, caliber and barrel, and its recoil as a word (only a gun that has recoil) */
 export const statLineOf = (w) => {
   const m = Object.fromEntries(stats(w));
@@ -174,7 +164,7 @@ export const statLineOf = (w) => {
 export const itemCardHTML = (w) =>
   ARMS[w] || w === "grenade"
     ? `<b class="itip-name">${weaponName(w)}</b><p>${SAY[w] || ""}</p>${(() => {
-        const list = stats(w).filter(([k]) => k !== "Where");
+        const list = stats(w);
         return list.length
           ? `<dl>${list.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>`
           : "";
@@ -216,13 +206,10 @@ export function catalogHTML() {
       ),
     ],
   ];
-  return (
-    cats
-      .map(
-        ([h, rows]) =>
-          `<h4 class="l4-shop-h">${h}</h4><ul class="l4-cat">${rows.join("")}</ul>`,
-      )
-      .join("") +
-    `<p class="l4-shop-key">A spin at the fireplace: ${BOX.price} points.</p>`
-  );
+  return cats
+    .map(
+      ([h, rows]) =>
+        `<h4 class="l4-shop-h">${h}</h4><ul class="l4-cat">${rows.join("")}</ul>`,
+    )
+    .join("");
 }

@@ -9,6 +9,30 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v287",
+    version: 287,
+    date: "Nov 28, 2026",
+    title: "Heavier hits, harder falls",
+    news: [
+      "Download Duck Friends is on the front page now, where My Other Website was.",
+      "Ducks face the side they aim at and lean just a little toward it; the weapon in hand points exactly where you aim.",
+      "Hits push by weight now, one rule for everything: blunt weapons knock hard, a knife barely, explosions throw you higher the closer you are, and bodies slide.",
+      "Falls hurt from 1 elevation up: a short drop takes a little HP, a high one can kill.",
+      "Game messages show in the bottom left, with a soft ding: what you can't do, your weapon's name and caliber when you switch, what an item does.",
+      "For Dead Ducks Arcade: HP doesn't come back on its own anymore. The merchant sells bandages (300 points), each giving back half the HP you've lost; you can hold one.",
+      "For Dead Ducks Arcade: you start without grenades; the merchant sells them one at a time for 150 points, up to 4.",
+      "For Dead Ducks Arcade: hold a button at the merchant to buy. Critical Chance can be bought twice, Increase HP five times (dearer each time), Faster reload once for 1,500. Attack speed is gone.",
+      "For Dead Ducks Arcade: the hood-up car no longer spins for weapons, and the chair is gone from this mode.",
+      "For Dead Ducks Arcade: the SPAS-12 holds 8 shells and reloads them one at a time. Shooting while sprinting is less accurate.",
+      "For Dead Ducks Arcade: rounds 1 to 8 bring 32 zombies for each player, then 48 from round 9 on. Zombies falling off a roof are seen falling.",
+      "For Dead Ducks Arcade: the gas station starts without power. A zombie you can see that a wall or tree is drawn over shows a red outline. Your weapon no longer blinks when you sprint.",
+      "For Downpour: the road is flooded to one depth, darker the deeper it is, and the cars stand in it. It runs open off both ends; zombies walk in there.",
+      "For Downpour: the fences stand straight up and meet stone corner pillars, stop you right at the fence, and no tree grows through them. You can walk along the fallen tree, and zombies can't get through it.",
+      "For Downpour: looking out of a building fades in gently, and a flashlight under a roof no longer lights the roof or what's on it.",
+      "The bandage has a new look.",
+    ],
+  },
+  {
     id: "v286",
     version: 286,
     date: "Nov 28, 2026",

@@ -1,13 +1,11 @@
 /* I want what lies on the ground in Dead Ducks Arcade checked (K16, js/l4ddloot.js; the owner's, Nov 21 18:27Z: "a 0.01%
    chance that a zombie drops a weapon ... a 0.01% additional chance they drop certain items ... based on the slot's
-   chances"; "You only pick them up by clicking E / Same for any loot on the ground now. / you cannot spin for wheel
-   WHIle loot is on the ground FROM the slot machine, no player can, it has to fade away first"):
-   1. killLoot gives a weapon 0.01% of the time and an item 0.01% (a million rolls), each from the fireplace's bags;
+   chances"; "You only pick them up by clicking E / Same for any loot on the ground now"):
+   1. killLoot gives a weapon 0.01% of the time and an item 0.01% (a million rolls), each from the merchants' bags;
    2. a special drop at my feet (Max Ammo, for everyone) is taken by standing on it, with no Take button (the owner's,
       Nov 28: no E for special drops);
    3. a weapon a zombie left goes into my slots with E;
-   4. nobody spins the fireplace while what it landed on for another duck is still there, and can once it's gone;
-   5. a zombie killed with the odds at 1 leaves a weapon where it fell.
+   4. a zombie killed with the odds at 1 leaves a weapon where it fell.
    Run: node tools/check/run.mjs killloot */
 const { chromium } = require("playwright");
 const { url, fail, noErrors } = require("./lib.cjs");
@@ -24,7 +22,6 @@ const { url, fail, noErrors } = require("./lib.cjs");
       bags = { odds: R.SLOT_ODDS, slot: R.SLOT_BAGS, weapon: R.WEAPON_BAGS },
       items = new Set(R.SLOT_BAGS.item),
       arms = new Set([
-        ...R.SLOT_BAGS.chair,
         ...R.SLOT_BAGS.special,
         ...Object.values(R.WEAPON_BAGS).flat(),
       ]);
@@ -119,27 +116,7 @@ const { url, fail, noErrors } = require("./lib.cjs");
       left: (r.state.hang.l4dr || []).filter((d) => d.k === "arm").length,
     };
   });
-  /* 4. the fireplace */
-  const spin = await p.evaluate(async () => {
-    const r = window._r,
-      R = await import("./js/l4ddrules.js"),
-      { W, H } = await import("./js/hangout/layout.js"),
-      id = r.state.seat.find((q) => q !== r.me),
-      now = Date.now();
-    r.state.pos[r.me] = {
-      ...r.state.pos[r.me],
-      x: R.BOX.x / W,
-      y: R.BOX.y / H,
-    };
-    r.state.hang.l4pt = { ...r.state.hang.l4pt, [r.me]: 5000 };
-    r.state.hang.l4box = { [id]: { by: id, t: now - 5000, w: "ak" } };
-    r.send({ t: "hang", k: "l4", do: "box" });
-    const blocked = !r.state.hang.l4box[r.me];
-    r.state.hang.l4box = {};
-    r.send({ t: "hang", k: "l4", do: "box" });
-    return { blocked, after: !!r.state.hang.l4box[r.me] };
-  });
-  /* 5. a kill with the odds at 1: the zombies come at me by the fireplace, and I shoot the nearest with the AK-47 */
+  /* 4. a kill with the odds at 1: the zombies come at me, and I shoot the nearest with the AK-47 */
   const kill = await p.evaluate(async () => {
     const r = window._r,
       L = await import("./js/l4ddloot.js"),
@@ -185,10 +162,6 @@ const { url, fail, noErrors } = require("./lib.cjs");
   if (label) fail("a Take button over a special drop");
   if (!took.sl.includes("ak") || took.left)
     fail("a weapon on the ground with E: " + JSON.stringify(took));
-  if (!spin.blocked || !spin.after)
-    fail(
-      "the fireplace while another's weapon is there: " + JSON.stringify(spin),
-    );
   if (!kill || !kill.w || !kill.el)
     fail("a zombie killed with the odds at 1 left: " + JSON.stringify(kill));
 })();

@@ -6,7 +6,8 @@
        nothing does; it blinks when it takes damage;
      - my own duck: the same, in a darker blue, which only I see (the owner's, Nov 17 20:10Z);
      - Justin (Good Justin in Mad God Justin, Downpour's Justin): the same, in yellow (20:10Z, he was blue);
-     - zombies: none (the owner's, Nov 28 01:57Z): one out of every duck's sight isn't drawn at all (l4dd.js);
+     - zombies: a plain thin red line, no glow, only for one my duck can see but a wall's drawing or a tree's crown is
+       drawn over (then the line only; the owner's, Nov 28); one out of every duck's sight isn't drawn at all (l4dd.js);
      - a floor away: an arrow inside the outline, drawn as an outline too, of the same line and color (20:10Z: "the down
        arrow in the shape outline with the lines of the arrow made of the same outline and it's color"): up, they're
        above me; down, below.
@@ -29,11 +30,13 @@ import { below } from "./below.js";
 
 const GREEN = "#2f9e44", // (the other players, the owner's, Nov 19 19:27Z)
   DARK_BLUE = "#2a5bd7",
-  YELLOW = "#ffd23f";
+  YELLOW = "#ffd23f",
+  RED = "#8a1018";
 const COLOR = {
   ally: GREEN,
   me: DARK_BLUE,
   justin: YELLOW,
+  zombie: RED,
 };
 /* the drops lying on the ground (the owner's, Nov 18 13:58Z: "special drops like instant kill, full ammo, and all of
    those an outline of their own color AND an arrow if a floor above or below WHEN it is on the ground ... so it is not
@@ -106,7 +109,7 @@ export function olRoofed(x, y, z, me) {
 const MADE = new Map(); // picture (its src: the pixel images are short blob: urls, shared by every zombie that looks the same) → { kind → canvas }
 const P = 2; // (room round a picture for its line and its glow, in pixels)
 /* img: a picture on the screen, or a shape of my own on a canvas (the arrows), key then naming it */
-function outline(img, kind, key = img.currentSrc || img.src) {
+function outline(img, kind, key = img.currentSrc || img.src || img.dataset.ok) {
   let m = MADE.get(key);
   if (!m) {
     if (MADE.size > 600) MADE.clear(); // (old looks: made again if they come back)
@@ -261,29 +264,33 @@ export function olDraw(host, W, H, now = performance.now()) {
       blink = hit && Math.floor((now - h[1]) / 90) % 2 === 0;
     /* only what something hides shows its outline as it should (its picture is hidden then: the outline only, the
        owner's, Nov 17 17:41Z); a player in plain sight keeps the very faint one (12:28Z) */
-    const drop = o.kind.startsWith("drop_"), // (a drop on the ground: always its line and its glow, till it's picked up)
+    const zombie = o.kind === "zombie", // (only ever asked for while it's hidden: l4dd.js zOutline)
+      drop = o.kind.startsWith("drop_"), // (a drop on the ground: always its line and its glow, till it's picked up)
       zone = o.kind[0] === "#", // (a Sandbox zone's Outlines: its color, always plain to see)
       away = o.floor || 0;
     let a = zone
       ? 0.95
-      : drop
-        ? o.hidden
-          ? 0.95
-          : 0.6
-        : o.hidden
-          ? away > 0
-            ? 0.55 // (above me: fainter)
-            : 0.9
-          : 0.14; // (nothing hides it: very faint)
+      : zombie
+        ? 0.85
+        : drop
+          ? o.hidden
+            ? 0.95
+            : 0.6
+          : o.hidden
+            ? away > 0
+              ? 0.55 // (above me: fainter)
+              : 0.9
+            : 0.14; // (nothing hides it: very faint)
     if (hit) a = blink ? 1 : 0.15;
     const kind = darkKind(
-        o.kind + (drop || (!zone && (o.hidden || hit)) ? "-glow" : ""),
+        o.kind +
+          (drop || (!zombie && !zone && (o.hidden || hit)) ? "-glow" : ""),
         o.dk,
       ), // (darker under my floor: olAway)
       c = outline(o.img, kind);
     if (!c) continue;
-    const sw = o.w / gp / o.img.naturalWidth, // (the picture's pixels against the grid's: about 1)
-      sh = o.h / gp / o.img.naturalHeight,
+    const sw = o.w / gp / (o.img.naturalWidth || o.img.width), // (the picture's pixels against the grid's: about 1; a wounded zombie's canvas has only width)
+      sh = o.h / gp / (o.img.naturalHeight || o.img.height),
       x = Math.round(o.x / gp),
       y = Math.round(o.y / gp),
       dw = c.width * sw,

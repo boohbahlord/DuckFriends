@@ -4,15 +4,32 @@
    (dpground.js dpWater, see-through enough that the bed shows). The shade makes each spot of the bed under the water as
    much darker as below.js' one rule says for how far it lies under my floor, over what the whole ground already shows
    (below(0)), as it looks through the water (the shade is that much stronger than the rule, under it); standing as low as it or lower, none. The water's own color never changes. The shade is made again only
-   when my floor moves a tenth of an elevation; the camera only slides it. */
+   when my floor moves a tenth of an elevation; the camera only slides it.
+   Depth reads more (the owner's, Nov 28 00:10Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtY4sfpJdxMCPtU4PnDZdaNM): of the levels
+   between my floor and the bed, the ones under the water's top count BELOW.WATER times (gamedefaults.js), the ones in
+   the air above it once, as below.js counts them. */
 import { activity } from "./registry.js";
 import { heightAt, variant } from "./layout.js";
 import { below, myFloor } from "../below.js";
 import { levelOf } from "../heights.js";
+import { BELOW } from "../gamedefaults.js";
+import { FLOOD } from "./stationmap.js";
 import { dpWater, DP_WATER_A } from "./dpground.js";
 import { svgDataURL } from "../svgurl.js";
 
 const CELL = 12; // (world px a square of the shade covers)
+/* how much darker the bed at height h shows from my floor `me` (world px), 0 … 1, in steps of 2% as below.js */
+const bedDark = (h, me) => {
+  const m = levelOf(me),
+    top = levelOf(FLOOD.top),
+    bed = levelOf(h);
+  if (bed >= m) return 0;
+  const air = Math.max(0, m - Math.max(top, bed)),
+    water = Math.max(0, Math.min(m, top) - bed);
+  return (
+    Math.round(Math.min(1, BELOW.PER * (air + BELOW.WATER * water)) * 50) / 50
+  );
+};
 let v = null;
 activity({
   id: "dpflood",
@@ -62,7 +79,7 @@ activity({
         const x = w.x + (i + 0.5) * CELL,
           y = w.y + (j + 0.5) * CELL,
           k =
-            (1 - (1 - below(heightAt(x, y), mine)) / (1 - b0)) /
+            (1 - (1 - bedDark(heightAt(x, y), mine)) / (1 - b0)) /
             (1 - DP_WATER_A); // (darker than the ground round it by this, as seen through the water)
         if (k <= 0.004) continue;
         g.fillStyle = `rgba(0,0,0,${Math.min(1, k).toFixed(3)})`;

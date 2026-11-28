@@ -1,6 +1,6 @@
 /* I want Downpour's cars pushed by a blast checked (B6d, carpush.js; the owner's, Nov 21 19:07Z: "cars can be moved
    around ... So like an explosion might be able to move it"):
-   - a car with room round it moves as far as a blast pushes a duck, over its weight (WEIGHT.CAR), away from the blast;
+   - a car with room round it moves its blast's push (push.js blastPush), over its weight (WEIGHT.CAR), away from it;
    - the walk grid made again round it only (walkgrid.js regrid) is the same as the whole grid made new, so zombies
      path round the car where it is now;
    - a car stops before another car or a wall (layout.js carClear), and put back, the map is as it was;
@@ -22,19 +22,18 @@ const { chromium } = require("playwright");
       CP = await import("./js/carpush.js"),
       WG = await import("./js/walkgrid.js"),
       ZP = await import("./js/zombiepath.js"),
-      { pushOf } = await import("./js/push.js"),
-      { WEIGHT } = await import("./js/gamedefaults.js"),
-      { DUCK } = await import("./js/units.js");
+      { blastPush } = await import("./js/push.js"),
+      { WEIGHT } = await import("./js/gamedefaults.js");
     L.useMode("l4dd", "downpour");
     const s = { hang: {}, options: { mode: "l4dd" } },
-      all = () => ({ d: 0 }), // (a blast that reaches every car)
+      all = () => ({ d: 0, o: 1 }), // (a blast that reaches every car, each at its edge)
       grid = (name) =>
         WG.gridOf({ name, x0: 0, y0: 0, gw: ZP.GW, gh: ZP.GH, zombie: true })
           .walk,
       same = (a, b) => a.reduce((n, v, i) => n + (v !== b[i]), 0),
       kept = grid("check-kept"), // (made with every car in its place: patched from here on)
       base = kept.slice(),
-      out = { far: (pushOf(s, "grenade") * DUCK) / WEIGHT.CAR },
+      out = { far: blastPush(s, 1).px / WEIGHT.CAR },
       c = GS.CARS[1],
       t0 = performance.now();
     CP.carsBlast(s, all, c.x0 - 10, (c.y0 + c.y1) / 2); // (just west of car 1's middle)

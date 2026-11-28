@@ -358,6 +358,59 @@ export const MEDKIT = `<svg viewBox="0 0 48 40" aria-hidden="true">
 <path d="M20.4 15H27.6V20.4H33V27.6H27.6V33H20.4V27.6H15V20.4H20.4Z" fill="#e63946" stroke="${INK_DARK}" stroke-width="1.4" stroke-linejoin="round"/>
 <path d="M7 13.6Q7 12 9 12" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/><path d="M21.6 16.4V20" stroke="#fff" stroke-width="1" opacity=".5" stroke-linecap="round"/></svg>`;
 
+/* a drawing made as pixels (the owner's, Nov 19 23:41Z: all art pixels first): its rows, one letter a pixel and its color
+   in pal ('.' none); each run of one color is one rect */
+const pixelsSVG = (rows, pal) =>
+  `<svg viewBox="0 0 ${rows[0].length} ${rows.length}" shape-rendering="crispEdges" aria-hidden="true">${rows
+    .flatMap((r, y) =>
+      [...r.matchAll(/([^.])\1*/g)].map(
+        (m) =>
+          `<rect x="${m.index}" y="${y}" width="${m[0].length}" height="1" fill="${pal[m[1]]}"/>`,
+      ),
+    )
+    .join("")}</svg>`;
+
+/* the bandage: a pale roll lying on its side, the end toward us showing its spiral, a red band round its middle with a
+   white cross, its loose end over the top (the owner's reference, Nov 28 05:21Z, made our own) */
+export const BANDAGE = pixelsSVG(
+  [
+    "........................",
+    "...........oooooo.......",
+    "...ooooooooppppppoooo...",
+    "..oEEEwwwwwppppppwwwwo..",
+    ".oEFFFEewwwppppppwwwwo..",
+    ".oEFFFFeeeerrrrrrwwwwwo.",
+    ".oFFssFEbbbrrrrrrbbbbbo.",
+    "oEFsFsFEbbbrrxxrrbbbbbo.",
+    "oEFsFFFEbbbrrxxrrbbbbbo.",
+    "oEFFoFsFbbbrxxxxrbbbbbo.",
+    "oEFFoFsFbbbrxxxxrbbbbbo.",
+    "oEFsFFFEsssrrxxrrssssso.",
+    "oEFsFsFEsssrrxxrrssssso.",
+    ".oFFssFEsssrrrrrrssssso.",
+    ".oEFFFFssssRRRRRRssssso.",
+    ".oEFFFEddddRRRRRRddddo..",
+    "..oEEEdddddRRRRRRddddo..",
+    "...ooooooooRRRRRRoooo...",
+    "...........oooooo.......",
+    "........................",
+  ],
+  {
+    o: INK_DARK,
+    F: "#f4fbfd", // (its end)
+    E: "#bfe2ec", // (the end's rim)
+    w: "#f4fbfd",
+    b: "#d3edf5",
+    s: "#9fd0df",
+    d: "#69a6ba",
+    e: "#9fd0df", // (the loose end's edge)
+    p: "#ef6a58",
+    r: "#d8352a",
+    R: "#9c2118",
+    x: "#ffffff",
+  },
+);
+
 /* Mad God Justin's big black office chair (padded back, a seat, one post, five legs on wheels; no arms): his throw, and
    the Chair special's (specials.js) */
 export const CHAIR = `<svg viewBox="0 0 100 120" aria-hidden="true">

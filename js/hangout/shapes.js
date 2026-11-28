@@ -70,6 +70,9 @@ const gsPart = (p, svg, o = {}) => [
   ),
 ];
 const seedOf = (p) => GS.seedAt(p.x, p.y);
+/* an upright piece round the map's edge (stationparts.js fenceSVG, fenceCornerSVG: w wide in the plan), on the middle of
+   its footprint, so the side fences and the corner pillars meet the straight fences' ends */
+const edgeBox = (p, w) => ({ left: -p.w / 2 + (w / 2) * GS.K, w: w * GS.K });
 /* Downpour's trees: which one grows where is the map's (stationmap.js swampPick, from the tree's id, as its size); each
    drawing is made once */
 const SWAMP_URL = {};
@@ -93,7 +96,17 @@ function swampTree(id) {
 }
 /* Downpour's things are drawn as the floor plan has them, then shown at K of that size (stationmap.js K: the owner's,
    Nov 17, the whole map at 60%), so each looks just as it did, only smaller. SK: stationart.js' drawings that way */
-const PLAN = new Set(["w", "d", "h", "edge", "cable", "up", "half", "z"]),
+const PLAN = new Set([
+    "w",
+    "d",
+    "h",
+    "edge",
+    "cable",
+    "up",
+    "half",
+    "z",
+    "sunk",
+  ]),
   PLAN_AT = new Set(["x0", "y0", "x1", "y1"]);
 const atK =
   (fn) =>
@@ -115,6 +128,7 @@ const SK = Object.fromEntries(
     "generatorSVG",
     "fenceSVG",
     "fenceXSVG",
+    "fenceCornerSVG",
     "pewSVG",
     "altarSVG",
     "towerSVG",
@@ -148,6 +162,7 @@ const GS_DRAW = {
           up,
           smash: p.smash || "",
           dead: p.dead || "",
+          sunk: Math.max(0, GS.FLOOD.top - p.z),
         }),
       { up },
     ));
@@ -158,23 +173,18 @@ const GS_DRAW = {
       w: p.w + cable,
     });
   },
-  fence: (p) => {
-    const t = SA.fenceLean(p, L.W), // (its top leans out, toward the map's edge: stationart.js)
-      lean = Math.abs(t),
-      mid = p.x + p.w / 2; // (its line)
-    return gsPart(
+  fence: (p) =>
+    gsPart(
       p,
-      () =>
-        SK.fenceSVG({
-          d: p.d,
-          h: p.h,
-          lean,
-          dir: Math.sign(t),
-          seed: seedOf(p),
-        }),
-      { left: p.x - mid + (t > 0 ? 4 : lean + 4), w: lean + 8 },
-    );
-  },
+      () => SK.fenceSVG({ d: p.d, h: p.h, seed: seedOf(p) }),
+      edgeBox(p, SA.FENCE_W),
+    ),
+  fencecorner: (p) =>
+    gsPart(
+      p,
+      () => SK.fenceCornerSVG({ d: p.d, h: p.h }),
+      edgeBox(p, SA.PILLAR_W),
+    ), // (where two fences meet: stationparts.js)
   fencex: (p) =>
     gsPart(p, () => SK.fenceXSVG({ w: p.w, d: p.d, h: p.h, seed: seedOf(p) })), // (the map's north and south sides: stationart.js)
   pew: (p) =>
@@ -280,8 +290,7 @@ const GS_DRAW = {
         b.t,
         b.w,
         b.h,
-        p.key,
-        { fade: true },
+        p.key, // (never see-through: it has no leaves, the owner's, Nov 28 04:58Z)
       ),
     ];
   },

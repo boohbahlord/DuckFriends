@@ -58,7 +58,6 @@
         forest: "#14200f",
         road: "#3a3a3e",
         shallow: "rgba(90,140,200,.55)",
-        deep: "rgba(40,80,170,.85)",
         reach: "rgba(255,216,77,.2)",
         floor: "#4a3d30",
         wall: "#e8e8e8",
@@ -87,8 +86,7 @@
       g.lineTo(L.W, GS.ROAD.mid);
       g.stroke();
       g.setLineDash([]);
-      rect(GS.SHALLOW, COL.shallow);
-      rect(GS.DEEP, COL.deep);
+      rect(GS.WATER, COL.shallow);
       for (const B of [GS.STATION, GS.CHAPEL])
         rect([B.x0, B.y0, B.x1, B.y1], COL.floor);
       // where a duck can walk from the start, and where zombies can walk from past the fences
@@ -130,10 +128,10 @@
       }
       const sp = L.spawnAt(0),
         duck = fill([[sp.x, sp.y]], false);
-      /* the zombies' ground: from just inside each fence's climbing spot (the forest line stops nobody now: the owner's,
+      /* the zombies' ground: from just inside the road's two open ends (the forest line stops nobody now: the owner's,
          Nov 17 03:34Z, so a zombie walks the forest too) */
       const zomb = fill(
-        GS.FENCES.map((f) => [f.x - f.out * 80, (f.climb[0] + f.climb[1]) / 2]),
+        [GS.RIM.x0 + 50, GS.RIM.x1 - 50].map((x) => [x, GS.ROAD.mid]),
         true,
       );
       g.fillStyle = COL.reach;
@@ -212,17 +210,6 @@
           rect(r, "#c98a3a");
         } else if (p.layer !== "none" && p.solid) rect(r, COL.thing);
       }
-      // where zombies climb the fences
-      for (const f of GS.FENCES)
-        rect(
-          [
-            f.x + f.out * 40 - 14,
-            f.climb[0],
-            f.x + f.out * 40 + 14,
-            f.climb[1],
-          ],
-          "#ff9a3a",
-        );
       // the power box parts' spots
       g.font = `bold ${70 * GS.K}px sans-serif`;
       g.textAlign = "center";
@@ -240,8 +227,7 @@
       for (const [t, x, y] of [
         ["GAS STATION", 2300, 470],
         ["CHAPEL", 2300, 3560],
-        ["deep flood", 500, 3290],
-        ["shallow flood (slow)", 2250, 3290],
+        ["flood (slow)", 2250, 3290],
         ["Priest", 2550, 5270],
         ["hood up", 3520, 2310],
         ["generator", 3750, 960],
@@ -258,8 +244,7 @@
           "rgba(255,255,255,.55)",
           "the forest line (dashed: trees thin out inside it)",
         ],
-        [COL.shallow, "shallow flood"],
-        [COL.deep, "deep flood (no ducks)"],
+        [COL.shallow, "flood"],
         ["#ffd84d", "power box"],
         ["#ff5a8a", "Angel machine"],
         ["#ff5a5a", "part spot (T toolbox, G gas, F fuse, S switch)"],

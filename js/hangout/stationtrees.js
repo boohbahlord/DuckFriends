@@ -557,7 +557,7 @@ export function swampTrunkSVG(kind = "cypress", v = 0, seed = 1, flip = false) {
 }
 
 /* the fallen tree across the road's east end: a log from (x0, y0) to (x1, y1) in a box w × h, `half` thick each side
-   and lying `z` high at its middle; its roots torn up at the south end, its broken crown at the north, moss along it */
+   and lying `z` high at its middle; its broken crown at the north end (no roots, no moss: the owner's, Nov 28 04:58Z) */
 export function fallenSVG({ w, h, x0, y0, x1, y1, half = 55, z = 30 }) {
   const id = uid(),
     dx = x1 - x0,
@@ -577,14 +577,7 @@ export function fallenSVG({ w, h, x0, y0, x1, y1, half = 55, z = 30 }) {
   const r = rnd(7);
   for (let x = 30; x < len - 30; x += 26 + r() * 18)
     g += F`<path d="M${x} ${-half * 0.8}Q${x + 10} 0 ${x - 4} ${half * 0.8}" stroke="#381e10" stroke-width="3" fill="none"/>`;
-  for (let x = 60; x < len - 60; x += 70 + r() * 60)
-    g += F`<path d="M${x} ${-half * 0.9}c10 -6 30 -6 40 0c-8 6 -30 6 -40 0Z" fill="#788b59" ${ln(1.4)}/>`; // (moss on its top)
-  // the roots at the far end, a broken crown at the near one, a few snapped branches
-  for (let i = 0; i < 9; i++) {
-    const t = (i / 8) * Math.PI * 1.4 - Math.PI * 0.7;
-    g += F`<path d="M${len - 10} 0L${len + 30 + Math.cos(t) * 50} ${Math.sin(t) * (half + 40)}" stroke="${O}" stroke-width="9" stroke-linecap="round"/><path d="M${len - 10} 0L${len + 30 + Math.cos(t) * 50} ${Math.sin(t) * (half + 40)}" stroke="#5e3215" stroke-width="5" stroke-linecap="round"/>`;
-  }
-  g += F`<ellipse cx="${len + 10}" cy="0" rx="34" ry="${half + 10}" fill="#453219" ${ln(2.4)}/>`;
+  // a broken crown at the near end, a few snapped branches
   g += F`<path d="M8 ${-half * 0.7}l-22 -16l10 22l-24 0l22 14l-20 18l26 -8" fill="#ae7838" ${ln(2)}/>`;
   for (const [x, k] of [
     [len * 0.3, -1],

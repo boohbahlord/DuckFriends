@@ -140,7 +140,8 @@ export function mountWorld(board, api) {
      (in its own px, at the camera's scale). It used to be one big box-shadow cut by a clip-path; on a graphics card that
      clip-path made the whole 11000 px layer a mask every frame (Downpour standing: 15-20 fps against 35-44 without it) */
   const peeks = () => L.PEEKS.filter((k) => !k.bldg || k.bldg === bldg); // (Downpour: the building I'm in's only)
-  const SPREAD = 4000;
+  const SPREAD = 4000,
+    FADE = 110; // (world px: how far in from a notch's edge the black fades out)
   const shadeRects = () => {
     const k = cam.sc,
       W0 = (HOLE.r - HOLE.l) * k,
@@ -197,10 +198,38 @@ export function mountWorld(board, api) {
       });
       above = now;
     }
+    /* the way out seen through a hole fades into the black at its edges, never a stark line (the owner's, Nov 28 04:58Z:
+       "gradually becomes more easy to see outside of it, rather than it just being like a stark contrast"): along each
+       side of a notch that meets the black, a band inside it going from the black to clear */
+    for (const [x0, y0, x1, y1] of open.slice(1))
+      for (const to of ["right", "left", "bottom", "top"]) {
+        /* each side in pieces cut where the building's edges cross it: a piece in the building or in another notch is
+           open (no band); the rest meets the black */
+        const across = to === "right" || to === "left", // (a band up the notch's side)
+          e = Math.min(FADE * k, (across ? x1 - x0 : y1 - y0) * 0.4),
+          [s0, s1, n] = across ? [y0, y1, H0] : [x0, x1, W0],
+          cut = [s0, ...[0, n].filter((c) => c > s0 && c < s1), s1];
+        for (let i = 0; i + 1 < cut.length; i++) {
+          const m = (cut[i] + cut[i + 1]) / 2;
+          if (
+            across
+              ? isOpen(to === "right" ? x0 - 1 : x1 + 1, m)
+              : isOpen(m, to === "bottom" ? y0 - 1 : y1 + 1)
+          )
+            continue;
+          out.push({
+            x0: to === "left" ? x1 - e : across ? x0 : cut[i],
+            y0: to === "top" ? y1 - e : across ? cut[i] : y0,
+            x1: to === "right" ? x0 + e : across ? x1 : cut[i + 1],
+            y1: to === "bottom" ? y0 + e : across ? cut[i + 1] : y1,
+            to,
+          });
+        }
+      }
     return out
       .map(
         (r) =>
-          `<i style="left:${r.x0.toFixed(1)}px;top:${r.y0.toFixed(1)}px;width:${(r.x1 - r.x0).toFixed(1)}px;height:${(r.y1 - r.y0).toFixed(1)}px"></i>`,
+          `<i style="left:${r.x0.toFixed(1)}px;top:${r.y0.toFixed(1)}px;width:${(r.x1 - r.x0).toFixed(1)}px;height:${(r.y1 - r.y0).toFixed(1)}px${r.to ? `;--to:to ${r.to}" class="fade` : ""}"></i>`,
       )
       .join("");
   };
@@ -1127,9 +1156,10 @@ export function mountWorld(board, api) {
     if (me.vz != null) {
       if (me.z <= gnd) {
         ev.thud = Math.max(ev.thud || 0, me.top - gnd);
+        ev.side = me._fx == null ? 0 : Math.hypot(x - me._fx, y - me._fy); // (how far across it fell: its fall damage)
         me.z = gnd;
         me.vz = null;
-        me._ft = undefined;
+        me._ft = me._fx = undefined;
       }
       return;
     }
@@ -1570,6 +1600,8 @@ export function mountWorld(board, api) {
         // with its pull cut to roof / D, so it lasts D / roof times the roof's own fall)
         if (me._ft !== me.top) {
           me._ft = me.top;
+          me._fx = x; // (where the fall began)
+          me._fy = y;
           const D = me.top - floor(me, x, y),
             roof = L.floorStep();
           me._fg = L.fallsByFloors() && D > roof ? roof / D : 1;
@@ -1579,9 +1611,10 @@ export function mountWorld(board, api) {
         const gnd = floor(me, x, y);
         if (me.z <= gnd) {
           ev.thud = me.top - gnd;
+          ev.side = me._fx == null ? 0 : Math.hypot(x - me._fx, y - me._fy);
           me.z = gnd;
           me.vz = null;
-          me._ft = undefined;
+          me._ft = me._fx = undefined;
         }
       }
       const n0 = Math.hypot(ax, ay);

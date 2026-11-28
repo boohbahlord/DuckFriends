@@ -24,7 +24,9 @@ export function groundAt(x, y, z = 0) {
   if (v === "l4gs") {
     // Downpour: the roofs and the pumps' canopy (the map's own floors: layout.js floorAt), the flood (deep at the
     // road's west end, shallow over the rest), the buildings, cars' tops, and grass everywhere else
-    if (L.floorAt(x, y, z).kind !== "ground") return "metal";
+    const on = L.floorAt(x, y, z).kind;
+    if (on === "log") return "wood"; // (the fallen tree)
+    if (on !== "ground") return "metal";
     const up = z - GS.groundAt(x, y) > HIGH; // (up on a car)
     if (!up && GS.inDeep(x, y)) return "deep";
     if (!up && GS.inShallow(x, y)) return "water";

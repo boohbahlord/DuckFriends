@@ -25,6 +25,7 @@ import {
   iconOf,
   KNIFE,
   MEDKIT,
+  BANDAGE,
   PAN,
   PISTOL,
   SHOTGUN,
@@ -813,6 +814,7 @@ export function heldHTML(id, duck) {
   if (id === "shotgun") return SHOTGUN;
   if (id === "bow") return BOW;
   if (id === "medkit") return MEDKIT;
+  if (id === "bandage") return BANDAGE;
   if (GUNS[id]) return GUNS[id].held; // (Quacky Zombies' new guns)
   if (id === "zebra") return ZEBRA;
   if (id === "chair") return CHAIR; // (Quacky Zombies: the chair from the fireplace, held out before it's thrown)

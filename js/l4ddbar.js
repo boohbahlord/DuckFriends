@@ -1,6 +1,6 @@
 /* ---------- Quacky Zombies' weapons bar ----------
    Five slots, each in its own color (the owner's): the melee weapon (1, blue), two ranged weapons (2 and 3, red: the
-   magazine and the rest, or how many are left), the special (4, purple; empty until the fireplace gives one) and the
+   magazine and the rest, or how many are left), the special (4, purple; empty until one is bought or picked up) and the
    grenades (6, white: how many). Then the flashlight (0). The one in hand glows. On a computer the bar sits in the
    bottom bar's right corner (where the specials' keys go), my HP under it as green blocks; a click on a slot picks it.
    On a phone the slots are the specials' slider in the bottom middle, as in every mode (hotbar.js, l4Slider below), the
@@ -42,6 +42,8 @@ import { ARMS, heldTag as armTag } from "./guns.js";
 import { now as clockNow } from "./clock.js";
 import { sbNoLight } from "./sandboxrules.js";
 import { mountItemTip } from "./itemtip.js";
+import { gameMsg } from "./gamemsg.js";
+import { noteOf } from "./l4ddcatalog.js";
 
 /* what a slot says under it: the magazine and the rest, or how many are left */
 const count = (w, m) => {
@@ -61,6 +63,15 @@ const count = (w, m) => {
 };
 /* what's in my hand, by Dead Ducks Arcade's names (guns.js heldTag, every mode's) */
 const heldTag = (w) => armTag(w, weaponName(w));
+/* what switching to it says (a game message, gamemsg.js; the owner's, Nov 28 04:05Z): a weapon its name and caliber,
+   an item its name and what it does */
+const switchWords = (w) => {
+  const A = ARMS[w];
+  if (!w || (A && (A.kind === "melee" || A.kind === "ranged")))
+    return heldTag(w);
+  const note = noteOf(w);
+  return note ? `${weaponName(w)}: ${note}` : heldTag(w);
+};
 /* a slot with nothing left in it (no grenades, a weapon out of ammo) */
 const spent = (w, m) => {
   const c = m && (m.am || {})[w];
@@ -94,9 +105,7 @@ export function mountL4Bar(S, api) {
   mountItemTip(); // (hold I or press long on a slot: its card, itemtip.js; mounted once)
   const row = document.createElement("div");
   row.className = "l4bar";
-  const tag = document.createElement("small");
-  tag.className = "l4-held";
-  row.append(tag);
+  let shown = null; // (what's in my hand, last said)
   let sig = "";
   function draw() {
     const s = api.state();
@@ -115,7 +124,8 @@ export function mountL4Bar(S, api) {
     if (next === sig) return;
     sig = next;
     const t = heldTag(down ? "handgun" : held);
-    if (tag.textContent !== t) tag.textContent = t;
+    if (shown !== null && t && t !== shown && !down) gameMsg(switchWords(held)); // (a switch: its words; not the first, nor going down or getting up)
+    shown = down ? null : t;
     /* each icon made once and kept (ui.js kept), put in its slot's <i>: the row is made again at every shot (its
        counts), and made again with it, every icon went through pxdom again */
     const icons = (list) =>

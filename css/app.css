@@ -11832,6 +11832,9 @@ html.sprint-blur .hang-board::after {
   position: absolute;
   background: #05080f;
 } /* (its black: plain boxes all round the building, its notches left open: world.js shadeRects) */
+.hang-shade > i.fade {
+  background: linear-gradient(var(--to), #05080f, #05080f00);
+} /* (a notch's edge fading in from the black) */
 .hang-btn {
   background: var(--yellow, #ffd23f);
   color: #1c1c28;
@@ -13474,18 +13477,30 @@ svg.defs {
   height: 0;
   overflow: hidden;
 }
-/* the newest message, floating by the chat button for a moment (see-through; every tap goes through it) */
-.chat-float {
+/* the lines by the chat button: chat's newest message and the game's messages (gamemsg.js; see-through, every tap goes
+   through them; newest at the bottom) */
+.gmsgs {
   position: fixed;
   z-index: 45;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
   max-width: min(22rem, calc(100vw - 1rem));
+  pointer-events: none;
+}
+.gmsgs.right {
+  align-items: flex-end;
+}
+.gmsg {
+  margin: 0;
+  max-width: 100%;
   padding: 0.35rem 0.7rem;
   border-radius: 0.7rem;
   background: color-mix(in srgb, var(--panel) 62%, transparent);
   color: var(--ink);
   font-size: calc(0.95rem * var(--ts));
   line-height: 1.3;
-  pointer-events: none;
   opacity: 0;
   overflow-wrap: anywhere;
   display: -webkit-box;
@@ -13494,14 +13509,22 @@ svg.defs {
   overflow: hidden;
   text-shadow: 0 0.05rem 0.15rem #0006;
 }
-.chat-float.on {
-  animation: cfloat 5s ease forwards;
+.gmsg.game {
+  font-size: calc(
+    1.1rem * var(--ts)
+  ); /* (a little bigger than chat's: the owner's, Nov 28) */
 }
-.chat-float .cf-sys {
+.gmsg.chat.on {
+  animation: gmsg-out-chat 5s ease forwards;
+}
+.gmsg.game.on {
+  animation: gmsg-out-game 4.5s ease forwards;
+}
+.gmsg .cf-sys {
   font-style: italic;
   opacity: 0.9;
 }
-@keyframes cfloat {
+@keyframes gmsg-out-chat {
   0% {
     opacity: 0;
     transform: translateY(0.4rem);
@@ -13517,18 +13540,36 @@ svg.defs {
     opacity: 0;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .chat-float.on {
-    animation-name: cfloatstill;
+/* a game message: in, two soft blinks, a while, then out */
+@keyframes gmsg-out-game {
+  0% {
+    opacity: 0;
+    transform: translateY(0.4rem);
   }
-  @keyframes cfloatstill {
-    0%,
-    78% {
-      opacity: 0.92;
-    }
-    100% {
-      opacity: 0;
-    }
+  5% {
+    opacity: 0.95;
+    transform: none;
+  }
+  10% {
+    opacity: 0.5;
+  }
+  15% {
+    opacity: 0.95;
+  }
+  20% {
+    opacity: 0.5;
+  }
+  25%,
+  80% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gmsg.on {
+    transform: none !important;
   }
 }
 /* ---------- Sandbox's board (it was Mad God Justin's, cut Nov 27) ---------- */
@@ -15233,11 +15274,6 @@ html.moving .l4-heat.hot::after {
   --cl: #dcbcff;
   --cd: #461a80;
 }
-:is(.l4s, .l4orb, .sp-slot, .l4to).c-gold {
-  --c: #e2b12a;
-  --cl: #fff0a8;
-  --cd: #7a5608;
-}
 :is(.l4s, .l4orb, .sp-slot, .l4to).c-red {
   --c: #e0463d;
   --cl: #ffb0a6;
@@ -15333,10 +15369,8 @@ html.moving .l4-heat.hot::after {
   display: flex;
   gap: 0.3rem;
 }
-/* what's in my hand, in very small text over the slots (K4; l4ddbar.js heldTag): in the row's own column on a computer,
-   so it stays inside the bottom bar's box (its line kept even with nothing in hand, so the bar never jumps); over the
-   slider on a phone (.sp-cap) */
-.l4-held,
+/* the specials slider's middle one, in very small text over it on a phone (hotbar.js caption); on a computer, a switch
+   says it as a game message (gamemsg.js) */
 .sp-cap {
   max-width: min(70vw, 18rem);
   overflow: hidden;
@@ -15348,13 +15382,6 @@ html.moving .l4-heat.hot::after {
   white-space: nowrap;
   text-overflow: ellipsis;
   pointer-events: none;
-}
-.l4-held {
-  align-self: stretch;
-  max-width: none;
-  min-height: 1.15em;
-  margin-bottom: -0.15rem;
-  text-align: center;
 }
 .sp-cap {
   position: absolute;
@@ -15535,90 +15562,6 @@ html.moving .l4-heat.hot::after {
     opacity: 0;
   }
 }
-/* big words when something can't be done (switch to a ranged weapon first, not enough points) */
-.l4-say {
-  position: absolute;
-  left: 50%;
-  top: 34%;
-  transform: translateX(-50%);
-  z-index: 31100;
-  width: max-content;
-  max-width: calc(100% - 2rem);
-  text-align: center;
-  pointer-events: none;
-  font-family: "Lilita One", sans-serif;
-  font-size: clamp(1.5rem, 4.4vw, 2.6rem);
-  line-height: 1.1;
-  color: #fff;
-  -webkit-text-stroke: 0.07em #3a0408;
-  paint-order: stroke fill;
-  text-shadow: 0 0.06em 0 #3a0408;
-  opacity: 0;
-}
-.l4-say.on {
-  animation: l4-say 2.4s ease-out forwards;
-}
-@keyframes l4-say {
-  0% {
-    opacity: 0;
-    transform: translateX(-50%) scale(1.25);
-  }
-  8% {
-    opacity: 1;
-    transform: translateX(-50%) scale(1);
-  }
-  12% {
-    transform: translateX(calc(-50% - 0.4rem));
-  }
-  16% {
-    transform: translateX(calc(-50% + 0.4rem));
-  }
-  20% {
-    transform: translateX(-50%);
-  }
-  80% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-} /* (it shakes once, as a "no") */
-/* the fireplace's weapon: an orb floating over the fire, flickering through the weapons, then glowing; the name of who
-   paid for it under it; blinking in its last seconds */
-.l4-box {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-}
-.l4-box-orb {
-  position: absolute;
-  left: calc(-27px * var(--k, 1));
-  top: calc(-54px * var(--k, 1));
-  width: calc(54px * var(--k, 1));
-  height: calc(54px * var(--k, 1));
-  animation: l4-bob 1.6s ease-in-out infinite;
-}
-.l4-box-orb .l4orb {
-  width: 100%;
-  height: 100%;
-}
-.l4-box-orb .l4orb i {
-  font-size: calc(28px * var(--k, 1));
-}
-.l4-box.landed .l4orb {
-  animation: l4-glow 0.8s ease-in-out infinite alternate;
-}
-.l4-box.ending {
-  animation: l4-blink 0.5s steps(2) infinite;
-}
-.l4-box-who {
-  left: 0;
-  top: calc(8px * var(--k, 1));
-  transform: translateX(-50%);
-}
 @keyframes l4-bob {
   50% {
     transform: translateY(calc(-6px * var(--k, 1)));
@@ -15629,11 +15572,6 @@ html.moving .l4-heat.hot::after {
     box-shadow:
       0 0 1.6rem 0.5rem color-mix(in srgb, var(--c) 85%, transparent),
       inset 0 -0.3rem 0.5rem #0006;
-  }
-}
-@keyframes l4-blink {
-  50% {
-    opacity: 0.35;
   }
 }
 /* Justin's Butler's shop: the guestbook's page; each upgrade a row (its picture, name, what it does, how many bought,
@@ -15724,11 +15662,6 @@ body:has(> .win-back) .screen > .l4-srb,
   width: 2.2rem;
   height: 2.2rem;
 }
-.l4-shop-key {
-  margin: 0;
-  font-size: calc(0.85rem * var(--ts));
-  color: var(--dim);
-}
 .l4-up {
   display: grid;
   grid-template-columns: 2.2rem 1fr auto 4.2rem;
@@ -15784,6 +15717,12 @@ body:has(> .win-back) .screen > .l4-srb,
 .l4-up-buy {
   width: 100%;
   justify-content: center;
+  position: relative; /* (its hold's stripe: .holding) */
+  overflow: hidden;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 /* its two tabs: the shop, and every item in this mode, each category under its heading; a tap on an item opens what
    it does and its numbers (l4ddcatalog.js) */
@@ -15882,9 +15821,6 @@ body:has(> .win-back) .screen > .l4-srb,
   display: block;
   width: 100%;
   height: auto;
-}
-.l4-shop-say q {
-  font-style: italic;
 }
 /* the merchant on the board (l4dd.js drawMerchant): facing the way he walks, fading as he jumps off the balcony or
    drops over the fence, lying on his side once dead; "Sold out" when his stock is gone */
@@ -16228,11 +16164,6 @@ body:has(> .win-back) .screen > .l4-srb,
   display: block;
   width: 100%;
   height: 100%;
-}
-.l4orb.k-part {
-  --c: #c9a24a;
-  --cl: #ffe7a6;
-  --cd: #6b5016;
 }
 .l4-parts {
   position: absolute;
@@ -18544,7 +18475,7 @@ html.pixel .bj-stat,
 html.pixel .bslot.bye,
 html.pixel .bslot.open,
 html.pixel .btn.big,
-html.pixel .chat-float,
+html.pixel .gmsg,
 html.pixel .chat-log .fold,
 html.pixel .chat-log .hit,
 html.pixel .chat-log .priv,
@@ -19371,8 +19302,8 @@ html.moving svg.angelic {
 }
 
 /* ---------- Dead Ducks Arcade's glows (the owner, Nov 17) ---------- */
-/* between rounds: the thin yellow square round the fireplace or Downpour's car, where E spins for a weapon (l4dd.js) */
-.l4-spinsq {
+/* between rounds: the thin yellow square round each of Downpour's gas pumps (l4dd.js restSquares) */
+.l4-restsq {
   position: absolute;
   left: 0;
   top: 0;
@@ -19382,7 +19313,7 @@ html.moving svg.angelic {
   z-index: 3; /* (on the floor, under the ducks) */
   pointer-events: none;
 }
-.l4-spinsq polygon {
+.l4-restsq polygon {
   fill: #ffd23f14;
   stroke: #ffd23f;
   stroke-width: calc(2.4px * var(--k, 1));
