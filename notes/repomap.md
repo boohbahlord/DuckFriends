@@ -84,7 +84,7 @@ ground.js 53 what a duck walks on,
 gspreview.js 88 Game Settings: the pictures in
 gssettings.js 747 Game Settings: every setting, its
 gstext.js 200 Game Settings: what a setting
-gunart.js 423 every weapon, drawn: one drawing
+gunart.js 467 every weapon, drawn: one drawing
 gunparts.js 15 the pieces every weapon's drawing
 guns.js 654 every weapon's numbers: one sheet
 hats.js 1003 hats
