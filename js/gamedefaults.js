@@ -49,6 +49,17 @@ export const NADE = {
    `down` times less for each elevation less (0.25 HP at 1.5) */
 export const FALL = { from: 1.5, mid: 2, hp: 2, up: 2, down: 64 };
 
+/* my duck speeds up and slows down instead of starting and stopping at once (the owner's, Nov 28 03:28Z, "I APPROVE",
+   cmsg_01LTpp6fzv8sfYUR5KoHADKtLgUjArf16XwsJeAqka2pZ7; playerinput.js easeWalk): up, the seconds from standing to full
+   speed (or a turn right round); down, from full speed to standing. Mine, short so it still answers at once */
+export const WALK_EASE = { up: 0.15, down: 0.1 };
+
+/* my aim sways as I move, the flashlight, the laser sight, my gun and my shots together (the owner's, Nov 28 03:28Z,
+   cmsg_01LTpp6fzv8sfYUR5KoHADKtLgUjArf16XwsJeAqka2pZ7: "swaying gets worse with sprinting"; game.js myAim, Dead Ducks
+   Arcade's): at most `walk` degrees either way walking, `sprint` sprinting, one sway back and forth each `ms`; it grows
+   and dies away over `ease` seconds. Mine (the gun's walk sway was 3 degrees) */
+export const SWAY = { walk: 2, sprint: 5, ms: 1100, ease: 0.3 };
+
 /* a blast's rings (blast.js; the owner's, Nov 21 19:07Z: "the center of a grenade's explosion is at ... the
    intersection of the plus of 4 squares of the pixel hitbox ... it's 4 boxes in the center of the hitbox, those have crit
    automatically. The outside boxes ... 25% chance of crit ... We can cut off the corners though, to make it more

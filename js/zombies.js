@@ -1076,7 +1076,7 @@ function walkAll(zs, c) {
     if (z.st === 6) {
       // up a wall onto a roof (its own: z.k), straight in from its edge, slowly (its height: climbZ)
       const e = edgeOf(z.x, z.y, deckOf(z)),
-        far = v * dt * CL.speed * cl;
+        far = v * dt * CL.speed * cl * (deckOf(z)?.kind === "car" ? CL.hop : 1); // (a car: a hop up)
       if (!pls.some((q) => reaches(q, e.d))) {
         /* nobody left up there (off the roof, not just jumping on it): it gives up its climb and climbs back down (the
            owner's, Nov 19 19:27Z: "If a player jumps off a roof, zombies will stop committing to their climb if they

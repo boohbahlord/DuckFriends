@@ -6,6 +6,7 @@ import { heightAt, seenFrom, sortY, layoutVariant } from "./hangout/layout.js";
 import { olAdd, olAway, olPic } from "./outlines.js";
 import { svgDataURL } from "./svgurl.js";
 import { play } from "./sound.js";
+import { gameMsg } from "./gamemsg.js";
 import {
   PW,
   pwState,
@@ -134,9 +135,11 @@ export function pwSee(s, ctx) {
       if (f.kind === "l4pwgot") {
         const a = ctx.world.at(f.by);
         play("partGot", a ? { x: a.x, y: a.y } : {});
+        if (f.k === "can" && f.by === ctx.me) gameMsg(GAS_TIP);
       } else if (f.kind === "l4pwfill") {
         const a = ctx.world.at(f.by);
         play("gasPour", a ? { x: a.x, y: a.y } : {}); // (a pump filling the row)
+        if (f.by === ctx.me) gameMsg(GAS_TIP);
       } else if (f.kind === "l4pwgas") play("gasPour", { x: PW.X, y: PW.Y });
     }
     fxSeen = s.fxN || 0;
@@ -272,5 +275,8 @@ export function pwTap(ctx, sw = powerNext(ctx.state()) === "switch") {
   ctx.send({ t: "hang", k: "l4", do: "power", sw });
 }
 /* the tip, each time I come up to the box (gamemsg.js) */
+/* gas I picked up or bought says where it goes, in the chat at the bottom left (the owner's, Nov 28 03:28Z,
+   cmsg_01LTpp6fzv8sfYUR5KoHADKtLgUjArf16XwsJeAqka2pZ7: "picking up gas says to add it to the generator in the same chat") */
+const GAS_TIP = "Gas! Take it to the generator and tap E to pour it in.";
 export const PW_TIP =
   "Tap E to pour in a jerry can. Hold E to turn the generator on or off.";
