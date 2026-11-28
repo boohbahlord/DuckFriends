@@ -1395,7 +1395,10 @@ function litNames(s, ctx, beams) {
    height, its ride over the duck: zombies.js zombieZ) */
 const RIDE_BACK = 14;
 function riderBack(o, Wd) {
-  const d = o.j && ducksOn(Wd.board).find((e) => e.dataset.pid === o.j[1]);
+  if (!o.j) return 0;
+  let d = o.rideEl; // (its duck, looked up once a hold, not every frame)
+  if (!d || !d.isConnected || d.dataset.pid !== o.j[1])
+    d = o.rideEl = ducksOn(Wd.board).find((e) => e.dataset.pid === o.j[1]);
   if (!d) return 0;
   o.face = d.classList.contains("left") ? -1 : 1;
   return -o.face * RIDE_BACK;

@@ -3859,7 +3859,13 @@ function autoPress(e) {
   autoDid = true;
   if (drawHold(hand.held, true)) return; // (a grenade: cooked while held, gamehand.js)
   holdTrigger(() => {
-    if (!R || !repeats(hand.held) || !onBoardPhase() || meterOn()) return 0;
+    if (
+      !R ||
+      !repeats(hand.held) ||
+      !onBoardPhase() ||
+      (isL4dd(R.state) && meterOn()) // (a Flyer holds me: one strike a click; only in Quacky Zombies, whose frames clear it)
+    )
+      return 0;
     fire(hand.held);
     return Math.max(60, coolFor(hand.held) / grCool(R.state, R.me)); // (Sandbox: a group's Cooldown speed)
   });
